@@ -24,10 +24,9 @@
 #  include "gl/gl_texmanager.h" // GL_TextureVariantSpecificationForContext
 #  include "MaterialSnapshot"
 #endif
-#include <de/Error>
 #include <de/Log>
-#include <de/PathTree>
 #include <de/math.h>
+#include <de/memory.h>
 #include <QtAlgorithms>
 
 #include "resource/materials.h"
@@ -44,6 +43,7 @@ D_CMD(PrintMaterialStats);
 namespace de {
 
 #ifdef __CLIENT__
+
 static void applyVariantSpec(MaterialVariantSpec &spec, materialcontext_t mc,
     texturevariantspecification_t &primarySpec)
 {
@@ -54,7 +54,6 @@ static void applyVariantSpec(MaterialVariantSpec &spec, materialcontext_t mc,
 
 /// A list of specifications for material variants.
 typedef QList<MaterialVariantSpec *> VariantSpecs;
-#endif
 
 /**
  * Stores the arguments for a material variant cache work item.
@@ -76,6 +75,8 @@ struct VariantCacheTask
 /// Implemented as a list because we may need to remove tasks from the queue if
 /// the material is destroyed in the mean time.
 typedef QList<VariantCacheTask *> VariantCacheQueue;
+
+#endif // __CLIENT__
 
 DENG2_PIMPL(Materials)
 {
@@ -113,6 +114,10 @@ DENG2_PIMPL(Materials)
 
     ~Instance()
     {
+#ifdef __CLIENT__
+        self.purgeCacheQueue();
+#endif
+
         clearGroups();
         clearManifests();
         clearMaterials();
@@ -224,9 +229,6 @@ Materials::Materials() : d(new Instance(this))
 
 Materials::~Materials()
 {
-#ifdef __CLIENT__
-    purgeCacheQueue();
-#endif
     delete d;
 }
 
@@ -307,66 +309,65 @@ Materials::Manifest &Materials::toManifest(materialid_t id) const
     throw InvalidMaterialIdError("Materials::toManifest", QString("Invalid material ID %1, valid range [1..%2)").arg(id).arg(d->manifestCount + 1));
 }
 
-bool Materials::validateUri(Uri const &uri, UriValidationFlags flags, bool quiet) const
+void Materials::validateUri(Uri const &uri, UriValidationFlags flags) const
 {
-    LOG_AS("Materials::validateUri");
-
     if(uri.isEmpty())
     {
-        if(!quiet) LOG_MSG("Empty path in material URI \"%s\".") << uri;
-        return false;
+        /// @throw UriMissingPathError The URI is missing the required path component.
+        throw UriMissingPathError("Materials::validateUri", "Missing path in URI \"" + uri.asText() + "\"");
     }
 
     if(uri.scheme().isEmpty())
     {
         if(!flags.testFlag(AnyScheme))
         {
-            if(!quiet) LOG_MSG("Missing scheme in material URI \"%s\".") << uri;
-            return false;
+            /// @throw UriMissingSchemeError The URI is missing the required scheme component.
+            throw UriMissingSchemeError("Materials::validateUri", "Missing scheme in URI \"" + uri.asText() + "\"");
         }
     }
     else if(!knownScheme(uri.scheme()))
     {
-        if(!quiet) LOG_MSG("Unknown scheme in material URI \"%s\".") << uri;
-        return false;
+        /// @throw UriUnknownSchemeError The URI specifies an unknown scheme.
+        throw UriUnknownSchemeError("Materials::validateUri", "Unknown scheme in URI \"" + uri.asText() + "\"");
     }
-
-    return true;
 }
 
 Materials::Manifest &Materials::find(Uri const &uri) const
 {
     LOG_AS("Materials::find");
 
-    if(!validateUri(uri, AnyScheme, true /*quiet please*/))
-        /// @throw NotFoundError Failed to locate a matching manifest.
-        throw NotFoundError("Materials::find", "URI \"" + uri.asText() + "\" failed validation");
-
-    // Perform the search.
-    String const &path = uri.path();
-
-    // Does the user want a manifest in a specific scheme?
-    if(!uri.scheme().isEmpty())
+    try
     {
-        try
-        {
-            return scheme(uri.scheme()).find(path);
-        }
-        catch(Scheme::NotFoundError const &)
-        {} // Ignore, we'll throw our own...
-    }
-    else
-    {
-        // No, check each scheme in priority order.
-        foreach(Scheme *scheme, d->schemeCreationOrder)
+        validateUri(uri, AnyScheme);
+
+        // Does the user want a manifest in a specific scheme?
+        if(!uri.scheme().isEmpty())
         {
             try
             {
-                return scheme->find(path);
+                return scheme(uri.scheme()).find(uri.path());
             }
             catch(Scheme::NotFoundError const &)
-            {} // Ignore this error.
+            {} // Ignore, we'll throw our own...
         }
+        else
+        {
+            // No, check each scheme in priority order.
+            foreach(Scheme *scheme, d->schemeCreationOrder)
+            {
+                try
+                {
+                    return scheme->find(uri.path());
+                }
+                catch(Scheme::NotFoundError const &)
+                {} // Ignore, we'll throw our own...
+            }
+        }
+    }
+    catch(UriValidationError const &er)
+    {
+        /// @throw NotFoundError Failed to locate a matching manifest.
+        throw NotFoundError("Materials::find", er.asText());
     }
 
     /// @throw NotFoundError Failed to locate a matching manifest.
@@ -389,13 +390,12 @@ Materials::Manifest &Materials::newManifest(de::Uri const &uri)
 {
     LOG_AS("Materials::newManifest");
 
-    // We require a properly formed URI (but not a URN - this is a resource path).
-    if(!validateUri(uri, 0, (verbose >= 1)))
-        throw Error("Materials::newManifest", "Invalid URI \"" + uri.asText() + "\"");
-
     // Have we already created a manifest for this?
     try
     {
+        // We require a properly formed URI (but not a URN - this is a resource path).
+        validateUri(uri, 0);
+
         return find(uri);
     }
     catch(NotFoundError const &)
@@ -416,8 +416,6 @@ Materials::Manifest &Materials::newManifest(de::Uri const &uri)
 
         return *manifest;
     }
-
-    throw Error("Materials::newManifest", "An unknown error occured declaring the new material");
 }
 
 void Materials::addMaterial(Material &material)

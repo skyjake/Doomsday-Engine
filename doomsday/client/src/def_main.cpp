@@ -1200,9 +1200,9 @@ static void interpretMaterialDef(ded_material_t const &def)
 
         material.markValid(true);
     }
-    catch(...)
+    catch(Materials::UriValidationError const &er)
     {
-        LOG_WARNING("Failed declaring material \"%s\", ignoring.")
+        LOG_WARNING(er.asText() + ". Failed declaring material \"%s\", ignoring.")
             << *reinterpret_cast<de::Uri *>(def.uri);
     }
 }
