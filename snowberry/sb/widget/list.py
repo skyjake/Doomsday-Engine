@@ -163,6 +163,15 @@ class List (base.Widget):
                                         width=colWidth)
         self.columns.append(identifier)
         
+    def retranslateColumns(self):
+        w = self.getWxWidget()
+        numCols = w.GetColumnCount()
+        for i in range(numCols):
+            col = w.GetColumn(i)
+            col.SetMask(wx.LIST_MASK_TEXT)
+            col.SetText(language.translate(self.columns[i]))
+            w.SetColumn(i, col)
+        
     def addItemWithColumns(self, identifier, *columns):
         w = self.getWxWidget()
 
