@@ -67,8 +67,13 @@ bool TextApp::notify(QObject *receiver, QEvent *event)
 
 int TextApp::execLoop()
 {
+    LOG_MSG("Starting TextApp event loop...");
+
     d->loop.start();
-    return QCoreApplication::exec();
+    int code = QCoreApplication::exec();
+
+    LOG_MSG("TextApp event loop exited with code %i") << code;
+    return code;
 }
 
 void TextApp::stopLoop(int code)

@@ -31,6 +31,8 @@
 #include "de_ui.h"
 #include "de_misc.h"
 
+#include <de/App>
+
 #ifdef __SERVER__
 #  include <de/TextApp>
 #endif
@@ -100,7 +102,7 @@ int DD_GameLoopExitCode(void)
 int DD_GameLoop(void)
 {
     // Start the deng2 event loop.
-    return LegacyCore_RunEventLoop();
+    return DENG2_APP->execLoop();
 }
 
 float DD_GetFrameRate(void)

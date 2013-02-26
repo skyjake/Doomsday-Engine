@@ -45,7 +45,6 @@ class DENG2_PUBLIC TextApp : public QCoreApplication, public App,
 
 public:
     TextApp(int &argc, char **argv);
-
     ~TextApp();
 
     bool notify(QObject *receiver, QEvent *event);

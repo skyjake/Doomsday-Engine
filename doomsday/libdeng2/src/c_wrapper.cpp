@@ -55,48 +55,6 @@ LegacyCore *LegacyCore_Instance()
     return reinterpret_cast<LegacyCore *>(&de::LegacyCore::instance());
 }
 
-int LegacyCore_RunEventLoop()
-{
-    return DENG2_LEGACYCORE().runEventLoop();
-}
-
-void LegacyCore_Stop(int exitCode)
-{
-    DENG2_LEGACYCORE().stop(exitCode);
-}
-
-/*
-void LegacyCore_SetLoopRate(int freqHz)
-{
-    DENG2_LEGACYCORE().setLoopRate(freqHz);
-}
-
-void LegacyCore_SetLoopFunc(void (*callback)(void))
-{
-    return DENG2_LEGACYCORE().setLoopFunc(callback);
-}
-
-void LegacyCore_PushLoop()
-{
-    DENG2_LEGACYCORE().pushLoop();
-}
-
-void LegacyCore_PopLoop()
-{
-    DENG2_LEGACYCORE().popLoop();
-}
-
-void LegacyCore_PauseLoop()
-{
-    DENG2_LEGACYCORE().pauseLoop();
-}
-
-void LegacyCore_ResumeLoop()
-{
-    DENG2_LEGACYCORE().resumeLoop();
-}
-*/
-
 void LegacyCore_Timer(unsigned int milliseconds, void (*callback)(void))
 {
     DENG2_LEGACYCORE().timer(milliseconds, callback);

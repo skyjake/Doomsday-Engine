@@ -69,12 +69,19 @@ void GuiApp::notifyDisplayModeChanged()
 
 int GuiApp::execLoop()
 {
+    LOG_MSG("Starting GuiApp event loop...");
+
     d->loop.start();
-    return QApplication::exec();
+    int code = QApplication::exec();
+
+    LOG_MSG("GuiApp event loop exited with code %i") << code;
+    return code;
 }
 
 void GuiApp::stopLoop(int code)
 {
+    LOG_MSG("Stopping GuiApp event loop");
+
     d->loop.stop();
     return QApplication::exit(code);
 }
@@ -86,8 +93,8 @@ Loop &GuiApp::loop()
 
 void GuiApp::loopIteration()
 {
-    // Update the clock time. App listens to this clock and will inform
-    // subsystems in the order they've been added in.
+    // Update the clock time. de::App listens to this clock and will inform
+    // subsystems in the order they've been added.
     Clock::appClock().setTime(Time());
 }
 

@@ -45,6 +45,8 @@
 #include "network/net_buf.h"
 #include "audio/s_main.h"
 
+#include <de/App>
+
 int novideo;                // if true, stay in text mode for debugging
 
 static boolean appShutdown = false; ///< Set to true when we should exit (normally).
@@ -285,5 +287,5 @@ DENG_EXTERN_C void Sys_Quit(void)
     appShutdown = true;
 
     // It's time to stop the main loop.
-    LegacyCore_Stop(DD_GameLoopExitCode());
+    DENG2_APP->stopLoop(DD_GameLoopExitCode());
 }

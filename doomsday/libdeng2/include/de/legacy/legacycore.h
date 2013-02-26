@@ -30,9 +30,6 @@ namespace de {
  * libdeng2 functionality. The legacy engine needs to construct one of these
  * via the deng2 C API and make sure it gets destroyed at shutdown. The C API
  * can be used to access functionality in LegacyCore.
- *
- * @todo Move the Loop into its own class and get rid of this one. A Loop
- * instance should then be owned by GuiApp and TextApp.
  */
 class DENG2_PUBLIC LegacyCore : public QObject
 {
@@ -46,53 +43,6 @@ public:
 
     ~LegacyCore();
 
-    /**
-     * Starts the deng2 event loop in the current thread. Does not return until
-     * the loop is stopped.
-     *
-     * @return  Exit code.
-     */
-    int runEventLoop();
-
-#if 0
-    /**
-     * Sets the frequency for calling the loop function (e.g., 35 Hz for a
-     * dedicated server). Not very accurate: the actual rate at which the
-     * function is called is probably less.
-     *
-     * @param freqHz  Frequency in Hz.
-     */
-    void setLoopRate(int freqHz);
-
-    /**
-     * Sets the callback function that gets called periodically from the main
-     * loop. The calls are made as often as possible without blocking the loop.
-     *
-     * @param callback  Loop callback function.
-     */
-    void setLoopFunc(void (*callback)(void));
-
-    /**
-     * Saves the current loop rate and function and pushes them on a stack.
-     */
-    void pushLoop();
-
-    /**
-     * Pops the loop rate and function from the stack and replaces the current
-     * with the popped ones.
-     */
-    void popLoop();
-
-    /**
-     * Pauses the loop function callback.
-     */
-    void pauseLoop();
-
-    /**
-     * Resumes calls to the loop function callback.
-     */
-    void resumeLoop();
-#endif
     /**
      * Stops the event loop. This is automatically called when the core is
      * destroyed.

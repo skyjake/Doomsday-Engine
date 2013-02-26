@@ -179,5 +179,6 @@ void LegacyWidget::draw()
 
 bool LegacyWidget::handleEvent(Event const &/*event*/)
 {
+    /// @todo Event processing should occur here, not during Loop_RunTics().
     return false;
 }

@@ -46,7 +46,6 @@
 
 using namespace de;
 
-static String const BUSY_WIDGET_NAME = "busy";
 static String const LEGACY_WIDGET_NAME = "legacy";
 
 DENG2_PIMPL(CanvasWindow)
@@ -85,7 +84,7 @@ DENG2_PIMPL(CanvasWindow)
         legacy->disable();
 
         // For busy mode we have an entirely different widget tree.
-        BusyWidget *busy = new BusyWidget(BUSY_WIDGET_NAME);
+        BusyWidget *busy = new BusyWidget;
         busy->rule()
                 .setLeftTop    (busyRoot.viewLeft(),  busyRoot.viewTop())
                 .setRightBottom(busyRoot.viewRight(), busyRoot.viewBottom());
@@ -130,7 +129,7 @@ CanvasWindow::CanvasWindow(QWidget *parent)
     d = new Instance(this);
 
     // Create the drawing canvas for this window.
-    setCentralWidget(d->canvas = new Canvas(this)); // takes ownership
+    setCentralWidget(d->canvas = new Canvas(this)); // window takes ownership
 
     // All input goes to the canvas.
     d->canvas->setFocus();
@@ -160,7 +159,7 @@ float CanvasWindow::frameRate() const
 void CanvasWindow::initCanvasAfterRecreation(Canvas &canvas)
 {
     CanvasWindow *self = dynamic_cast<CanvasWindow *>(canvas.parentWidget());
-    assert(self);
+    DENG2_ASSERT(self);
 
     LOG_DEBUG("About to replace Canvas %p with %p")
             << de::dintptr(self->d->canvas) << de::dintptr(self->d->recreated);
@@ -218,7 +217,7 @@ void CanvasWindow::recreateCanvas()
 
 Canvas& CanvasWindow::canvas()
 {
-    assert(d->canvas != 0);
+    DENG2_ASSERT(d->canvas != 0);
     return *d->canvas;
 }
 
