@@ -38,24 +38,11 @@ extern boolean tickFrame;
 void DD_RegisterLoop(void);
 
 /**
- * Starts the game loop.
- */
-int DD_GameLoop(void);
-
-/**
  * Runs one or more tics depending on how much time has passed since the
  * previous call to this function. This gets called once per each main loop
  * iteration. Finishes as quickly as possible.
  */
 void Loop_RunTics(void);
-
-/**
- * Window drawing callback.
- *
- * Drawing anything outside this routine is frowned upon.
- * Seriously frowned! (Don't do it.)
- */
-void DD_GameLoopDrawer(void);
 
 /**
  * Waits until it's time to show the drawn frame on screen. The frame must be

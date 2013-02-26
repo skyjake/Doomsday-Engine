@@ -58,9 +58,6 @@ static void handleLegacyCoreTerminate(char const *msg)
 
 static void continueInitWithEventLoopRunning(void)
 {
-    // This function only needs to be called once, so clear the callback.
-    //LegacyCore_SetLoopFunc(0);
-
     // Show the main window. This causes initialization to finish (in busy mode)
     // as the canvas is visible and ready for initialization.
     Window_Show(Window_Main(), true);

@@ -109,7 +109,7 @@ int main(int argc, char** argv)
     }
 
     // Run the main loop.
-    int result = DD_GameLoop();
+    int result = dengApp->execLoop();
 
     // Cleanup.
     Sys_Shutdown();

@@ -1704,10 +1704,10 @@ void DD_FinishInitializationAfterWindowReady(void)
     LOG_DEBUG("Window is ready, finishing initialization");
 
 #ifdef __CLIENT__
-#ifdef WIN32
+# ifdef WIN32
     // Now we can get the color transfer table as the window is available.
     DisplayMode_SaveOriginalColorTransfer();
-#endif
+# endif
     if(!Sys_GLInitialize())
     {
         Con_Error("Error initializing OpenGL.\n");
@@ -1720,20 +1720,12 @@ void DD_FinishInitializationAfterWindowReady(void)
     }
 #endif
 
-    // Now we can start executing the engine's main loop.
-    //LegacyCore_SetLoopFunc(DD_GameLoopCallback);
-
     // Initialize engine subsystems and initial state.
     if(!DD_Init())
     {
         exit(2); // Cannot continue...
         return;
     }
-
-#ifdef __CLIENT__
-    // Start drawing with the game loop drawer.
-    //Window_SetDrawFunc(Window_Main(), DD_GameLoopDrawer);
-#endif
 }
 
 /**
@@ -1836,16 +1828,6 @@ boolean DD_Init(void)
     // Try to locate all required data files for all registered games.
     Con_InitProgress2(200, .25f, 1); // Second half.
     games->locateAllResources();
-
-    /*
-    // Unless we reenter busy-mode due to automatic game selection, we won't be
-    // drawing anything further until DD_GameLoop; so lets clean up.
-    if(!novideo)
-    {
-        glClear(GL_COLOR_BUFFER_BIT);
-        GL_DoUpdate();
-    }
-    */
 
     // Attempt automatic game selection.
     if(!CommandLine_Exists("-noautoselect") || isDedicated)
@@ -1971,9 +1953,8 @@ boolean DD_Init(void)
         if(CommandLine_CheckWith("-port", 1))
             Con_Executef(CMDS_CMDLINE, false, "net-ip-port %s", CommandLine_Next());
 
-        // Server start command.
-        // (shortcut for -command "net init tcpip; net server start").
 #ifdef __SERVER__
+        // Automatically start the server.
         Con_Executef(CMDS_CMDLINE, false, "net server start");
 #endif
     }

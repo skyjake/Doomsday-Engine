@@ -1289,18 +1289,6 @@ void* Window_NativeHandle(const Window* wnd)
     return reinterpret_cast<void*>(wnd->widget->winId());
 }
 
-/*
-void Window_SetDrawFunc(Window* win, void (*drawFunc)(void))
-{
-    assert(win);
-    assert(win->widget);
-
-    win->drawFunc = drawFunc;
-    win->widget->canvas().setDrawFunc(drawFunc? drawCanvasWithCallback : 0);
-    win->widget->update();
-}
-*/
-
 void Window_Draw(Window* win)
 {
     assert(win);

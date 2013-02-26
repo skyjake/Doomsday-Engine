@@ -99,12 +99,6 @@ int DD_GameLoopExitCode(void)
     return gameLoopExitCode;
 }
 
-int DD_GameLoop(void)
-{
-    // Start the deng2 event loop.
-    return DENG2_APP->execLoop();
-}
-
 float DD_GetFrameRate(void)
 {
 #ifdef __CLIENT__

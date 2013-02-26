@@ -218,16 +218,6 @@ void Window_Show(Window* wnd, boolean show);
  */
 boolean Window_ChangeAttributes(Window* wnd, int* attribs);
 
-#if 0
-/**
- * Sets the function who will draw the contents of the window when needed.
- *
- * @param win       Window instance.
- * @param drawFunc  Callback function.
- */
-void Window_SetDrawFunc(Window* win, void (*drawFunc)(void));
-#endif
-
 /**
  * Request drawing the contents of the window as soon as possible.
  *

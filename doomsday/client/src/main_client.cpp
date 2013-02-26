@@ -69,7 +69,7 @@ int main(int argc, char** argv)
     try
     {
         clientApp.initialize();
-        return DD_GameLoop();
+        return clientApp.execLoop();
     }
     catch(de::Error const &er)
     {

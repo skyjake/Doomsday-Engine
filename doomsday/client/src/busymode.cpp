@@ -395,10 +395,6 @@ int BusyMode_RunNewTask(int mode, busyworkerfunc_t worker, void* workerData)
  */
 static void stopEventLoopWithValue(int result)
 {
-    // After the event loop is gone, we don't want any loop callbacks until the
-    // busy state has been properly torn down.
-    //LegacyCore_SetLoopFunc(0);
-
     DENG_ASSERT(eventLoop != 0);
     eventLoop->exit(result);
 }
