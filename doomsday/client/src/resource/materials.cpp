@@ -36,7 +36,7 @@
 
 D_CMD(InspectMaterial);
 D_CMD(ListMaterials);
-#if _DEBUG
+#ifdef DENG_DEBUG
 D_CMD(PrintMaterialStats);
 #endif
 
@@ -267,27 +267,6 @@ Materials::Schemes const& Materials::allSchemes() const
     return d->schemes;
 }
 
-#ifdef __CLIENT__
-
-void Materials::purgeCacheQueue()
-{
-    qDeleteAll(d->variantCacheQueue);
-    d->variantCacheQueue.clear();
-}
-
-void Materials::processCacheQueue()
-{
-    while(!d->variantCacheQueue.isEmpty())
-    {
-         QScopedPointer<VariantCacheTask> task(d->variantCacheQueue.takeFirst());
-
-         /// @todo $revise-texture-animation: prepare all textures in the animation (if animated).
-         task->material->prepare(*task->spec);
-    }
-}
-
-#endif // __CLIENT__
-
 Materials::Manifest &Materials::toManifest(materialid_t id) const
 {
     if(id > 0 && id <= d->manifestCount)
@@ -417,7 +396,29 @@ void Materials::addMaterial(Material &material)
     d->materials.push_back(&material);
 }
 
+Materials::All const &Materials::all() const
+{
+    return d->materials;
+}
+
 #ifdef __CLIENT__
+
+void Materials::purgeCacheQueue()
+{
+    qDeleteAll(d->variantCacheQueue);
+    d->variantCacheQueue.clear();
+}
+
+void Materials::processCacheQueue()
+{
+    while(!d->variantCacheQueue.isEmpty())
+    {
+         QScopedPointer<VariantCacheTask> task(d->variantCacheQueue.takeFirst());
+
+         /// @todo $revise-texture-animation: prepare all textures in the animation (if animated).
+         task->material->prepare(*task->spec);
+    }
+}
 
 void Materials::cache(Material &material, MaterialVariantSpec const &spec,
     bool cacheGroups)
@@ -491,11 +492,6 @@ void Materials::destroyAllGroups()
 {
     qDeleteAll(d->groups);
     d->groups.clear();
-}
-
-Materials::All const &Materials::all() const
-{
-    return d->materials;
 }
 
 #ifdef __CLIENT__
@@ -831,7 +827,7 @@ D_CMD(InspectMaterial)
     return false;
 }
 
-#if _DEBUG
+#ifdef DENG_DEBUG
 D_CMD(PrintMaterialStats)
 {
     DENG2_UNUSED3(src, argc, argv);
