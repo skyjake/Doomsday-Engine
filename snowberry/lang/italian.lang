@@ -1,0 +1,585 @@
+# $Id$
+#
+# Strings for italian Language
+#
+# Note that all of these are automatically inserted into the "english"
+# language, even with no "language english" block in the beginning of
+# the file.
+#
+# This file is the default language file.  If another language does
+# not have a translation for a certain string, the translation is
+# looked up in this language file.
+
+# The key 'language-italian' comes from the name of this file.
+# Supposed to appear in the language selection list.
+language-italian: Italiano
+
+#
+# Documentation URL
+#
+documentation-url: http://dengine.net/dew/index.php?title=Snowberry_Main_Page
+
+#
+# Setup Wizard
+#
+run-setup-wizard: Assistente Impostazioni
+setup-wizard: Assistente Impostazioni
+wizard-language: Lingua
+wizard-language-explanation: Questo Frontend Doomsday Engine ha supporto per diverse Lingue. Selezionare la Lingua che vorreste usare.
+wizard-games: Profili del Gioco
+wizard-games-all: Seleziona tutti
+wizard-games-clear: Deseleziona tutti
+wizard-select-games: Selezionare i giochi che vorreste configurare. Notate che dovete avere una copia dei file dati del gioco originale.
+wizard-locate-iwad: Per poter giocare a questo gioco, necessitate di selezionare il suo file dati principale.
+wizard-locate-iwad-deathkings: A differenza degli altri giochi, il file WAD Death Kings sarà installato come addon. Death Kings è l'estensione di Hexen.
+wizard-suggested-iwad: Nome originale
+deathkings-selection-title: Selezionare HEXDD.WAD
+wizard-addon-paths: Le mie cartelle degli Addon
+wizard-addon-paths-explanation: Se avete già dei file WAD, resource pack, o altri addon sul vostro disco rigido potete fare in modo che l'avviatore li carichi dalla loro locazione attuale. Specificare le cartelle sotto. Le cartelle possono essere modificate più tardi nella pagina Impostazioni Condivise -> Impostazioni -> Frontend. Se successivamente installate gli addon usando la scheda Addon, essi saranno copiati nella Cartella Degli Addon dell'avviatore.
+wizard-launching: Opzioni di Avvio
+wizard-launching-explanation: Il frontend deve essere chiuso quando si avvia un gioco ?
+wizard-unlaunchable-profiles: Alcuni Profili Non Avviabili
+wizard-unlaunchable-profiles-listed =
+"I profili seguenti non possono essere avviati al momento.
+A loro manca un file dati del gioco (IWAD) e sono stati
+nascosti. Potete renderli visibili tramite Profilo -> Mostra ..."
+
+#
+# Windows and Dialogs
+#
+about-dialog: Informazioni su Snowberry
+about-subtitle: Frontend Estensibile per Doomsday Engine
+about-version: Versione
+about-license = "Questo programma è distribuito con la licenza
+GNU General Public."
+about-website: http://sourceforge.net/projects/deng/
+show-credits: Crediti
+about-credits: Crediti
+credits = "<html><table width=''100%'' height=''100%'' border=''0''
+cellspacing=''0'' cellpadding=''10''>
+<tr>
+<td width=''30%'' valign=top align=''right''><b>Concetto:</b>
+<td align=left>Jaakko Keranen, Antti Kopponen, Jari Asp, Toni Kokkonen, Emma Kallio, Veikko Eeva
+<tr>
+<td width=''30%'' valign=top align=''right''><b>Codice:</b>
+<td align=left>Jaakko Keranen
+<tr>
+<td width=''30%'' valign=top align=''right''><b>Grafica:</b>
+<td align=left valign=top>Daniel Swanson, Jaakko Keranen
+<tr>
+<td width=''30%'' valign=top align=''right''><b>Verifica e Sviluppo:</b>
+<td align=left valign=top>The deng Team
+<tr>
+<td width=''30%'' valign=top align=''right''><b>Documentazione:</b>
+<td align=left valign=top>Jari Asp, Antti Kopponen, Emma Kallio, Jaakko Keranen, the deng Team
+</table>"
+
+ok: OK
+cancel: Annulla
+close: Chiudi
+reset: Reimposta
+browse: Sfoglia
+install: Installa
+launch-message: Avvio ...
+new-profile-dialog: Crea Nuovo Profilo
+new-profile-name: Nome
+new-profile-game: Libreria Gioco
+rename-profile-dialog: Rinomina Profilo
+rename-profile-name: Nuovo nome
+reset-profile-dialog: Reimposta Profilo
+reset-profile-query: State per reimpostare <b>%1</b> ai valori predefiniti. Volete reimpostare i valori di tutte le impostazioni nel profilo, gli addon selezionati da caricare nel profilo, o entrambi ?
+reset-profile-values: Reimposta Valori
+reset-profile-addons: Reimposta Addon
+reset-profile-everything: Reimposta Tutto
+delete-profile-dialog: Elimina Profilo
+delete-profile-query: Siete sicuri di voler di eliminare <b>%1</b> ?
+duplicate-profile-dialog: Duplica Profilo
+duplicating-profile: State creando un duplicato di <b>%1</b>.
+unhide-profile-dialog: Mostra Profili
+unhiding-profiles: Selezionare uno o più profili nascosti da mostrare.
+unhide-select-all: Seleziona tutti
+unhide-clear-all: Deseleziona tutti
+view-command-line-dialog: Linea di Comando
+install-addon-dialog: Installatore Addon
+addon-dialog-folder: Cartella:
+addon-dialog-folder-browse: ...
+addon-dialog-folder-uninstalled: Mostra Disinstallati
+addon-dialog-add-to-custom-folders: Aggiungi alle Cartelle Dei Miei Addon
+addon-dialog-browse-prompt: Scegli Cartella
+addon-dialog-found: Addon nella cartella selezionata:
+addon-dialog-addons-copied: Gli addon installati sono copiati nella vostra cartella personale degli addon. Se volete evitare di copiare, aggiungete la cartella alle vostre cartelle degli addon.
+addon-dialog-name: Nome
+addon-dialog-type: Tipo
+addon-dialog-type-box: Contenitore Box
+addon-dialog-type-wad: File Dati WAD
+addon-dialog-type-addon: Bundle
+addon-dialog-type-pk3: Pacchetto
+addon-dialog-type-zip: Archivio ZIP
+addon-dialog-type-ded: File Definizione
+addon-dialog-type-deh: Correzione DeHackEd
+addon-dialog-type-manifest: Manifest Addon
+uninstall-addon-dialog: Disinstalla Addon
+uninstall-addon-query: Siete sicuri di voler disinstallare <b>%1</b> ?
+uninstall-addon-query-several: Siete siciri di voler disinstallare questi addon:
+load-order-dialog: Ordine di Caricamento
+load-order-message: Gli addon saranno caricati in questo ordine:
+load-order-move-up: Su
+load-order-move-down: Giù
+load-order-move-top: Primo
+load-order-move-bottom: Ultimo
+
+addon-inspector-dialog: Informatore Addon
+addon-type-generic: Addon Generico
+addon-type-box: Box Snowberry
+addon-type-bundle: Bundle Snowberry
+addon-type-pk3: Pacchetto PK3
+addon-type-wad: File WAD
+addon-type-dehacked: Correzione DeHackEd
+addon-type-ded: Definizioni Doomsday Engine
+addon-type-lump: Data Lump
+
+conflict-wizard: Assistente Addon
+
+category-conflict-messaggio = "<b>%1</b> esclude i
+seguenti addon:%2 <p>Selezionare quali di questi addon devono
+essere caricati."
+
+conflict-choice1 = "Caricare %1.
+Gli addon esclusi non sono caricati."
+conflict-choice2: Non caricare %1.
+
+value-conflict-messaggio = "<b>%1</b> non può essere usato con
+le impostazioni seguenti:%2 <p>%1 non sarà caricato."
+
+keyword-conflict-messaggio = "<b>%1</b> esclude le risorse
+seguenti:%2 <p>Selezionare quali di questi addon devono essere caricati."
+
+provide-conflict-messaggio = "Ci sono risorse in conflitto:%1
+<p>Gli addon elencati sotto forniscono versioni in conflitto della stessa
+risorsa. Solo uno di questi addon possono essere caricati.
+<p>Selezionare quello che deve essere caricato."
+
+missing-requirements-messaggio = "<b>%1</b> non può essere usato in quanto tutte
+le risorse che richiede non sono state caricate.  <p>Per fare in modo di usare %1,
+dovete caricare anche gli addon che forniscono queste risorse richieste:"
+
+#
+# Profiles and Components
+#
+defaults-profile: Impostazioni Condivise
+game-jdoom: libdoom
+game-jheretic: libheretic
+game-jhexen: libhexen
+game-jdoom-icon: orb-doom
+game-jheretic-icon: orb-heretic
+game-jhexen-icon: orb-hexen
+game-mode: Modalità gioco
+game-mode-chex: Chex Quest
+game-mode-doom1: DOOM Registrato
+game-mode-doom1-ultimate: DOOM Ultimate
+game-mode-doom1-share: DOOM Shareware
+game-mode-doom2: DOOM II
+game-mode-doom2-plut: Final Doom: Plutonia Experiment
+game-mode-doom2-tnt: Final Doom: TNT Evilution
+game-mode-hacx: HacX
+game-mode-heretic: Heretic Registrato
+game-mode-heretic-share: Heretic Shareware
+game-mode-heretic-ext: Heretic: Shadow of the Serpent Riders
+game-mode-hexen: Hexen v1.1
+game-mode-hexen-v10: Hexen v1.0
+game-mode-hexen-demo: Hexen (Demo di 4 livelli)
+game-mode-hexen-dk: Hexen: Death Kings of the Dark Citadel
+
+#
+# Button Labels
+#
+play: Gioca
+stop: Ferma
+continue: Continua...
+new-profile: +
+delete-profile: -
+duplicate-profile: Duplica
+refresh-addon-database: Aggiorna
+install-addon: +
+uninstall-addon: -
+load-order: Ordine di Caricamento
+addon-info: Informazioni
+addon-settings: Impostazioni
+show-addon-paths: Mie Cartelle
+about: Informazioni su
+popup-menu: Menu
+preferences: Preferenze
+
+#
+# Menu Items
+#
+menu-0: File
+menu-1: Profilo
+menu-2: Strumenti
+menu-3: Aiuto
+menu-new-profile: Nuovo...
+menu-rename-profile: Rinomina
+menu-reset-profile: Reimposta ai Valori Predefiniti
+menu-duplicate-profile: Duplica
+menu-delete-profile: Elimina
+menu-hide-profile: Nascondi
+menu-unhide-profiles: Mostra...
+menu-uninstall-addon: Disinstalla
+menu-addon-info: Informazione
+menu-load-order: Ordine di Caricamento...
+menu-install-addon: Installa Addon...
+menu-addon-settings: Impostazioni
+menu-check-category: Selezionare Categoria
+menu-uncheck-category: Deselezionare Categoria
+menu-expand-all-categories: Espandi Tutto
+menu-collapse-all-categories: Comprimi Tutto
+menu-reset-slider: Reimposta ai Valori Predefiniti
+menu-play: Avvia il Gioco Selezionato
+menu-play-accel: Ctrl-L
+menu-view-command-line: Anteprima della Linea di Comando
+menu-view-command-line-accel: Alt-P
+menu-run-setup-wizard: Mostra Assistente Impostazioni
+menu-show-snowberry-settings: Preferenze
+menu-show-snowberry-settings-accel: Ctrl-,
+menu-about: Informazioni su Snowberry
+menu-quit: Esci
+menu-quit-accel: Ctrl-Q
+menu-open-documentation: Guida di Snowberry
+menu-open-documentation-accel: Ctrl-?
+
+#
+# Tab Labels
+#
+tab-summary: Sommario
+tab-maps: Mappe
+tab-addons: Addon
+tab-settings: Impostazioni
+general-options: Frontend
+game-options: Gioco
+display-options: Schermo
+graphics-options: Grafica
+sound-options: Audio
+input-options: Ingresso
+addons-options: Addon
+developer-options: Sviluppatore
+
+#
+# Tab Icons
+#
+general-options-icon: general
+#game-options-icon: deng2
+display-options-icon: display
+graphics-options-icon: graphics
+sound-options-icon: sound
+input-options-icon: input
+addons-options-icon: addons
+developer-options-icon: developer
+
+#
+# Labels for the Summary Tab
+#
+loaded-addons: Addon Caricati
+custom-settings: Impostazioni
+system-settings: Configurazione
+summary-run-in-window: esegui in finestra
+summary-color-depth-16: colori a 16 bit
+summary-color-depth-32: colori a 32 bit
+
+#
+# Labels for the Maps Tab
+#
+maps-list-icon:
+maps-list-identifier: Addon PWAD
+maps-list-count: Contenuti
+maps-list-clear: Cancella Tutto
+
+wad-analysis-maps: %1 mappa(e)
+wad-analysis-custom-textures: immagini trama
+
+#
+# Addons Tab
+#
+addon-counter: %1 di %2 addon
+addon-list-check:
+addon-list-name: Nome
+addon-list-version: Versione
+addon-list-in-box: (in box)
+menu-addon-list-check-selected: Spunta Selezionati
+menu-addon-list-uncheck-selected: Non Spuntare Selezionati
+menu-addon-list-check-all: Seleziona Tutto
+menu-addon-list-uncheck-all: Deseleziona Tutto
+menu-addon-show-parent-box: Mostra Box
+menu-addon-show-box-category: Mostra Contenuti Box
+
+addon-list-filter: Filtro:
+addon-list-filter-mode-all: Mostra Tutti
+addon-list-filter-mode-compatible: Solo Compatibili
+addon-list-filter-mode-pwad: Solo PWAD
+addon-list-filter-mode-compatible-pwad: Solo PWAD Compatibili
+addon-list-filter-mode-all-with-boxes: Mostra Tutti (anche cont. box)
+
+category-tree-root: Tutti gli Addon
+category-graphics: Grafica
+category-graphics-3d: Risorse 3D
+category-graphics-textures: Immagini Trama
+category-graphics-ui: Interfaccia Utente
+category-music: Musica
+category-sound: Audio
+category-effects: Effetti
+category-effects-particle: Effetti Particella
+category-effects-light: Effetti Luce
+category-gamedata: Dati Gioco
+category-gamedata-doomsday: File Dati Gioco di Doomsday
+category-gamedata-primary: File Dati Primari
+category-gamedata-maps: Mappe
+category-gamedata-maps-ag: A-G
+category-gamedata-maps-hm: H-M
+category-gamedata-maps-ns: N-S
+category-gamedata-maps-tz: T-Z
+category-gamedata-maps-09: 0-9
+category-gamedata-lumps: Data Lump
+category-patches: Correzione DeHackEd
+category-definitions: Definizioni Doomsday Engine
+
+#
+# File Types
+#
+file-type-iwad: File dati gioco (*.wad)
+file-type-box: Box (*.box)
+file-type-bundle: Bundle Addon (*.addon)
+file-type-pk3: File PK3 (*.pk3)
+file-type-wad: File WAD (*.wad)
+file-type-ded: File definizione (*.ded)
+file-type-dehacked: Correzione DeHackEd (*.deh)
+file-type-anything: Tutti i file
+
+#
+# Settings
+#
+no: No
+yes: Sì
+default: Predefinito
+browse-button: ...
+#toggle-use-default-value = "predefinito: "
+toggle-use-default-value = ""
+
+language: Lingua
+quit-on-launch: Chiudi il Frontend quando si avvia il gioco
+game: Componente gioco
+iwad: File dati gioco
+iwad-selection-title: Scegliere il File Dati del Gioco
+memory-zone: Utilizzo Memoria (MB)
+dedicated-server: Esegui come un server dedicato
+server-port: Porta TCP di ingresso
+
+color-depth: Profondità Colore
+color-depth-16: 16 bit
+color-depth-32: 32 bit
+
+start-in-window: Avvia sempre in modalità finestra
+start-in-fullscreen: Avvia sempre in modalità schermo intero
+safe-resolution: Forza a risoluzione sicura (640 x 480)
+center-window: Centra finestra
+
+refresh-rate: Aggiorna frequenza (Hz)
+triple-buffering: Buffer Triplo
+
+enable-gamma: Usa regolazioni colore
+enable-highres-textures: Usa immagini trama esterne
+enable-highres-patches: Usa correzioni esterne
+
+texture-compression: Usa compressione immagine trama
+disable-genmips: Disabilita SGIS_generate_mipmap
+
+zbuffer-depth: Profondità Z-buffer
+zbuffer-depth-16: 16 bit
+zbuffer-depth-32: 32 bit
+
+texture-depth: Profondità colore immagine trama
+texture-depth-16: 16 bit
+texture-depth-32: 32 bit
+
+texture-options: Opzioni Immagine Trama
+extres-with-pwad: Permetti esterne con PWAD
+disable-anisotropic-filter: Disabilita filtro anisotropico
+
+maximum-texture-size: Dimensioni massime
+maximum-texture-size-unlimited: Hardware
+maximum-texture-size-64: 64 x 64
+maximum-texture-size-128: 128 x 128
+maximum-texture-size-256: 256 x 256
+maximum-texture-size-512: 512 x 512
+maximum-texture-size-1024: 1024 x 1024
+maximum-texture-size-2048: 2048 x 2048
+maximum-texture-size-4096: 4096 x 4096
+
+sound-driver: Driver audio
+sound-driver-fmod: FMOD Ex
+sound-driver-directsound: DirectSound
+sound-driver-sdlmixer: SDL_mixer
+sound-driver-openal: OpenAL
+sound-driver-dummy: Fittizi (nessun suono)
+
+sound-channels: Canali audio
+disable-audio: Disabilita completamente l'audio
+disable-sound-effects: Disabilita effetti audio
+disable-music: Disabilita musica
+disable-primary-buffer: Non impostare formato buffer primario
+
+eax-options: Opzioni EAX
+disable-eax: Disabilita EAX
+ignore-eax-errors: Ignora errori EAX
+
+disable-win-sys-keys: Disabilita combinazioni tasti di sistema di Windows
+disable-mouse: Disabilita mouse
+disable-joystick: Disabilita joystick
+
+verbosity: Verbosità messaggi
+verbosity-none: Nessuna
+verbosity-devel: Livello 1
+verbosity-extra: Livello 2
+
+custom-cmdline: Opzioni personalizzate
+
+addon-paths: Le Mie Cartelle degli Addon
+new-addon-path: +
+delete-addon-path: -
+addon-paths-add-prompt: Aggiungi ai Miei Percorsi degli Addon
+
+ui-parts: Interfaccia Utente
+main-hide-title: Nascondi il banner del titolo
+main-hide-help: Nascondi il pannello aiuto
+profile-hide-buttons: Nascondi i bottoni del profilo
+summary-profile-change-autoselect: Cambio profilo mostra la scheda sommario
+profile-large-icons: Icone grandi nel profilo
+profile-minimal-mode: Elenco minimale del profilo
+
+refresh-required: Ricordate di aggiornare gli Addon.
+restart-required: I cambiamenti hanno effetto dopo il riavvio.
+
+#
+# Help
+#
+help-welcome = "<b><font size=''+1''>Benvenuti in Snowberry !</font></b><p>
+Questa è un'applicazione frontend che vi lascia avviare <b>Doomsday Engine</b>
+con facilità. Selezionare un profilo di gioco dall'elenco a sinistra e fare clic su <b>Gioca</b>.
+<p>L'interfaccia del frontend può essere
+modificata in <b>Impostazioni Condivise</b> -&gt; <b>Impostazioni</b> -&gt;
+<b><a href=''show-snowberry-settings''>Frontend</a></b>."
+
+help-command = "Per avviare un gioco, fare clic sul bottone <b>Gioca</b>."
+
+help-command-defaults = "Il profilo <b>Impostazioni Condivise</b> contiene le
+impostazioni comuni a tutti i profili."
+
+help-tab-summary = "<b><font size=''+1''>Scheda Sommario</font></b><p>
+La scheda Sommario mostra le informazioni più importanti
+riguardo il profilo attuale."
+
+help-tab-maps = "<b><font size=''+1''>Scheda Mappe</font></b><p>
+Le scheda Mappe fornisce un modo rapido per selezionare quali addon WAD
+sono da usare con il profilo attuale. Le selezioni fatte qui sono
+riflesse nella scheda Addon."
+
+help-tab-addons = "<b><font size=''+1''>Scheda Addon</font></b><p>
+Selezionare gli addon che vorreste usare con il profilo
+attuale.<p>Il bottone <b>Impostazioni</b> vi permette di personalizzare
+gli addon selezionati.<p>Per cambiare l'ordine nel quale gli addon
+sono caricati, fare clic sul bottone <b>Ordine di Caricamento</b>."
+
+help-tab-settings = "<b><font size=''+1''>Scheda Impostazioni</font></b><p>
+La scheda Impostazioni vi permette di personalizzare
+il profilo attuale e gli addon che avete selezionato per il caricamento.
+<p>Per modificare le impostazioni predefinite per tutti i profili,
+selezionare il profilo <b>Impostazioni Condivise</b>."
+
+#
+# Settings Help
+#
+help-value-from-defaults = "Il valore di questa impostazione proviene dal profilo
+<b>%1</b>."
+help-value-current: Valore attuale
+help-value-min: Min
+help-value-max: Max
+help-value-default: Predefinito
+
+iwad-help = "Il file dati del gioco contiene tutte le mappe, grafica, effetti audio,
+e altro contenuto del gioco. Dovete specificare un file dati del gioco per
+giocare.  <p>I file dati del gioco sono chiamati file IWAD e usano
+l'estensione del nome file WAD. Essi hanno di solito 4-20 MB di
+dimensione. Troverete uno di essi nella cartella dove avete installato
+una copia originale di Doom, Heretic, o Hexen."
+
+window-size-help = "Per definire una risoluzione personalizzata (per esempio per giocare
+in modalità schermo intero):
+<ul>
+<li>Impostare questa in Personalizzata.
+<li>Immettere la larghezza e altezza nei campi corrispondenti.
+</ul>"
+
+window-width-help = "La larghezza della finestra di gioco, o risoluzione orizzontale personalizzata."
+
+window-height-help = "L'altezza della finestra di gioco, o risoluzione verticale personalizzata."
+
+center-window-help: La finestra di gioco è posizionata nel centro dello schermo.
+
+#
+# Addon Help
+#
+help-addon-mode-brief: Beve
+help-addon-mode-detailed: Dettagliata
+help-addon-version: Versione
+help-addon-summary: Sommario
+help-addon-contact: Contatto
+help-addon-author: Autore
+help-addon-copyright: Copyright
+help-addon-license: Licenza
+help-addon-date: Data
+help-addon-dependencies: Dipendenze
+help-addon-excluded-categories: Categorie escluse
+help-addon-excludes: Esclude
+help-addon-requires: Richiede
+help-addon-provides: Fornisce
+help-addon-offers: Offre
+help-addon-part-of-box: Questo addon è una parte di <a href="%1">%2</a>.
+
+#
+# Issues
+#
+issue-dialog: Problemi Rilevati
+
+error-runtime-exception-during-event: Errore Runtime
+error-runtime-exception-during-event-text: Un errore inaspettato è occorso durante il processo dell'evento <b>%1</b>. Per favore riportate questo incidente a <tt>skyjake@users.sourceforge.net</tt>.<p><b>Exception:</b><p>%2<p><b>Traceback:</b><p>%3
+
+error-addon-installation-failed: Errore Installazione Addon
+error-addon-installation-failed-text: Installazione degli addon <tt>%1</tt> fallita. <p><b>Ragione:</b><p>%2
+
+error-read-config-file: Errore Configurazione
+error-read-config-file-text: Un errore è stato rilevato nel file configurazione <tt>%1</tt>.<p><b>Ragione:</b><p>%2
+
+error-read-info-file: Errore Informazione Addon
+error-read-info-file-text: C'è stato un errore nel file metadati <tt>%1</tt> dell'addon <b>%2</b>.
+
+error-read-zip-info-file: Errore Informazione PK3
+error-read-zip-info-file-text: C'è stato un errore nella voce metadati dell'addon <b>%2</b>, nel file <tt>%1</tt>.
+
+error-parsing-profile: Errore profilo
+error-parsing-profile-text: Il profilo <tt>%1</tt> potrebbe non essere caricato in quanto i suoi contentuti sono stati rilevati non validi. Per correggere il problema dovete modificare manualmente il file e sistemare le porzioni non valide, o eliminare il file.<p><b>Ragione:</b><p>%2
+
+error-read-profile: Errore Profilo
+error-read-profile-text: Il profilo <tt>%1</tt> potrebbe non essere caricato in quanto è occorso un errore inaspettato. Per correggere il problema dovete modificare manualmente il file e sistemare le porzioni non valide, o eliminare il file.<p><b>Traceback:</b><p>%2
+
+error-read-manifest: Errore Manifest Addon
+error-read-manifest-text: Un errore è stato rilevato nel file manifest <tt>%1</tt>.<p><b>Ragione:</b><p>%2
+
+error-plugin-init-failed: Errore plugin
+error-plugin-init-failed-text: Il caricamento di un plugin è fallito, durante l'esecuzione <tt>%1</tt>.<p><b>Ragione:</b><p>%2
+
+error-remove-addon-path-not-found: Errore Interno
+error-remove-addon-path-not-found-text: Qualcuno ha provato a rimuovere un percorso dell'addon che non è stato registrato: <tt>%1</tt>
+
+warning-obsolete-plugin: Plugin Obsoleto
+warning-obsolete-plugin-text: Il plugin <b>%1</b> caricato da <tt>%2</tt> proviene da una versione obsoleta. Dovete eliminare questo plugin. Altrimenti potrebbe occorrere una caratteristica inaspettata.
+
+warning-read-language: Definizione Lingua
+warning-read-language-text: C'è stato un problema nella lettura della definizione della Lingua <b>%1</b> da <tt>%2</tt>. Soltanto una porzione del file è stato letto con successo. Come risultato, alcune stringhe di testo potrebbero mancare.
