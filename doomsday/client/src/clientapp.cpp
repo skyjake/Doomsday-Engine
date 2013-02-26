@@ -16,6 +16,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
+#include "de_platform.h"
+
 #include <QMenuBar>
 #include <QAction>
 #include <QNetworkProxyFactory>
@@ -28,7 +30,6 @@
 #include <de/garbage.h>
 
 #include "clientapp.h"
-#include "de_platform.h"
 #include "dd_main.h"
 #include "dd_def.h"
 #include "dd_loop.h"

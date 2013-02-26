@@ -22,8 +22,8 @@
  * 02110-1301 USA</small>
  */
 
-#include "clientapp.h"
 #include "de_console.h"
+#include "clientapp.h"
 
 using namespace de;
 

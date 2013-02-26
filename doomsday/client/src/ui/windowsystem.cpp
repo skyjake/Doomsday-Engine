@@ -16,6 +16,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
+#include "de_platform.h"
 #include "ui/windowsystem.h"
 #include "ui/window.h"
 
