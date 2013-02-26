@@ -60,16 +60,17 @@ public:
     DENG2_SUB_ERROR(ResolveError, ResolveSymbolError);
 
     /**
-     * Flags for printing URIs.
+     * Flags determining the composition of textual representation:
      */
-    enum PrintFlag
+    enum ComposeAsTextFlag
     {
-        OutputResolved = 0x1,   ///< Include the resolved path in the output.
-        PrettifyPath   = 0x2,   ///< Transform paths making them "pretty".
+        OmitScheme      = 0x1, ///< Exclude the scheme.
+        OmitPath        = 0x2, ///< Exclude the path.
+        DecodePath      = 0x4, ///< Decode percent-endcoded characters in the path.
 
-        DefaultPrintFlags = OutputResolved | PrettifyPath
+        DefaultComposeAsTextFlags = 0
     };
-    Q_DECLARE_FLAGS(PrintFlags, PrintFlag)
+    Q_DECLARE_FLAGS(ComposeAsTextFlags, ComposeAsTextFlag)
 
 public:
     /**
@@ -275,36 +276,27 @@ public:
     Uri &setUri(String newUri, resourceclassid_t defaultResourceClass = RC_UNKNOWN, QChar sep = '/');
 
     /**
-     * Compose from this URI a plain-text representation. Any internal encoding
-     * method or symbolic identifiers will be left unchanged in the resultant
-     * string (not decoded, not resolved).
+     * Compose from this URI a plain-text representation. Any symbolic identifiers
+     * will be left unchanged in the resultant string (not resolved).
      *
+     * @param compositionFlags  Flags determining how the textual representation
+     *                          is composited.
      * @param sep  Character to use to replace path segment separators.
      *
      * @return  Plain-text String representation.
-     *
-     * @todo Should define a set of flags to determine which components of the
-     *       URI to include in the string, like @ref debugPrint() -ds
      */
-    String compose(QChar sep = '/') const;
+    String compose(ComposeAsTextFlags compositionFlags = DefaultComposeAsTextFlags,
+                   QChar sep = '/') const;
 
     /**
      * Transform the URI into a human-friendly representation. Percent-encoded
      * symbols are decoded.
      *
      * @return  Human-friendly representation of the URI.
+     *
+     * Same as @code compose(DefaultComposeAsTextFlags | DecodePath); @endcode
      */
     String asText() const;
-
-    /**
-     * Print debug ouput for the URI.
-     *
-     * @param indent            Number of characters to indent the print output.
-     * @param flags             @ref printUriFlags
-     * @param unresolvedText    Text string to be printed if not resolvable.
-     */
-    void debugPrint(int indent, PrintFlags flags = DefaultPrintFlags,
-                    String unresolvedText = "") const;
 
     // Implements LogEntry::Arg::Base.
     LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::STRING; }
@@ -317,7 +309,7 @@ private:
     DENG2_PRIVATE(d)
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(Uri::PrintFlags)
+Q_DECLARE_OPERATORS_FOR_FLAGS(Uri::ComposeAsTextFlags)
 
 } // namespace de
 
