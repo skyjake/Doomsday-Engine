@@ -73,7 +73,7 @@ public:
      */
     enum UriValidationFlag
     {
-        /// The scheme of the URI may be of zero-length; signifying "any scheme".
+        /// The scheme component may be empty; signifying "any scheme".
         AnyScheme = 0x1
     };
     Q_DECLARE_FLAGS(UriValidationFlags, UriValidationFlag)
@@ -115,7 +115,7 @@ public:
 
 public:
     /**
-     * Constructs a new material collection.
+     * Construct a new material collection.
      */
     Materials();
 

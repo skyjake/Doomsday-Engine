@@ -429,9 +429,9 @@ void Materials::cache(Material &material, MaterialVariantSpec const &spec,
     bool cacheGroups)
 {
     // Already in the queue?
-    DENG2_FOR_EACH_CONST(VariantCacheQueue, i, d->variantCacheQueue)
+    foreach(VariantCacheTask *task, d->variantCacheQueue)
     {
-        if(&material == (*i)->material && &spec == (*i)->spec) return;
+        if(&material == task->material && &spec == task->spec) return;
     }
 
     VariantCacheTask *newTask = new VariantCacheTask(material, spec);
@@ -506,28 +506,28 @@ Materials::All const &Materials::all() const
 #ifdef __CLIENT__
 static void printVariantInfo(MaterialVariant &variant, int variantIdx)
 {
-    Con_Printf("Variant #%i: Spec:%p\n", variantIdx, de::dintptr(&variant.spec()));
+    Con_Message("Variant #%i: Spec:%p", variantIdx, de::dintptr(&variant.spec()));
 
     // Print layer state info:
     int const layerCount = variant.generalCase().layerCount();
     for(int i = 0; i < layerCount; ++i)
     {
         MaterialVariant::LayerState const &l = variant.layer(i);
-        Con_Printf("  Layer #%i: Stage:%i Tics:%i\n", i, l.stage, int(l.tics));
+        Con_Message("  Layer #%i: Stage:%i Tics:%i", i, l.stage, int(l.tics));
     }
 
     // Print detail layer state info:
     if(variant.generalCase().isDetailed())
     {
         MaterialVariant::LayerState const &l = variant.detailLayer();
-        Con_Printf("  DetailLayer #0: Stage:%i Tics:%i\n", l.stage, int(l.tics));
+        Con_Message("  DetailLayer #0: Stage:%i Tics:%i", l.stage, int(l.tics));
     }
 
     // Print shine layer state info:
     if(variant.generalCase().isShiny())
     {
         MaterialVariant::LayerState const &l = variant.shineLayer();
-        Con_Printf("  ShineLayer #0: Stage:%i Tics:%i\n", l.stage, int(l.tics));
+        Con_Message("  ShineLayer #0: Stage:%i Tics:%i", l.stage, int(l.tics));
     }
 
     // Print decoration state info:
@@ -535,7 +535,7 @@ static void printVariantInfo(MaterialVariant &variant, int variantIdx)
     for(int i = 0; i < decorationCount; ++i)
     {
         MaterialVariant::DecorationState const &l = variant.decoration(i);
-        Con_Printf("  Decoration #%i: Stage:%i Tics:%i\n", i, l.stage, int(l.tics));
+        Con_Message("  Decoration #%i: Stage:%i Tics:%i", i, l.stage, int(l.tics));
     }
 }
 #endif
@@ -564,80 +564,70 @@ static void printMaterialInfo(Material &material)
 #endif // __CLIENT__
 }
 
-static void printMaterialSummary(MaterialManifest &manifest, bool printSchemeName = true)
+static void printManifestInfo(MaterialManifest &manifest,
+    de::Uri::ComposeAsTextFlags uriCompositionFlags = de::Uri::DefaultComposeAsTextFlags)
 {
-    Uri uri = manifest.composeUri();
-    QByteArray path = printSchemeName? uri.asText().toUtf8() : QByteArray::fromPercentEncoding(uri.path().toStringRef().toUtf8());
-    QByteArray sourceDescription = manifest.sourceDescription().toUtf8();
+    String info = String("%1 %2")
+                      .arg(manifest.composeUri().compose(uriCompositionFlags | de::Uri::DecodePath),
+                           ( uriCompositionFlags.testFlag(de::Uri::OmitScheme)? -14 : -22 ) )
+                      .arg(manifest.sourceDescription(), -7);
+#ifdef __CLIENT__
+    info += String("x%1").arg(!manifest.hasMaterial()? 0 : manifest.material().variantCount());
+#endif
 
-    Con_FPrintf(!manifest.hasMaterial()? CPF_LIGHT : CPF_WHITE,
-#ifdef __CLIENT__
-                "%-*s %-6s x%u\n",
-#else
-                "%-*s %-6s\n",
-#endif
-                printSchemeName? 22 : 14, path.constData(),
-                sourceDescription.constData()
-#ifdef __CLIENT__
-                , !manifest.hasMaterial()? 0 : manifest.material().variantCount()
-#endif
-                );
+    info += "\n";
+    Con_FPrintf(!manifest.hasMaterial()? CPF_LIGHT : CPF_WHITE, info.toUtf8().constData());
+}
+
+static bool pathBeginsWithComparator(MaterialManifest const &manifest, void *parameters)
+{
+    Path const *path = reinterpret_cast<Path*>(parameters);
+    /// @todo Use PathTree::Node::compare()
+    return manifest.path().toStringRef().beginsWith(*path, Qt::CaseInsensitive);
 }
 
 /**
  * @todo This logic should be implemented in de::PathTree -ds
  */
-static QList<MaterialManifest *> collectMaterialManifests(MaterialScheme *scheme,
+static int collectManifestsInScheme(MaterialScheme const &scheme,
+    bool (*predicate)(MaterialManifest const &manifest, void *parameters), void *parameters,
+    QList<MaterialManifest *> *storage = 0)
+{
+    int count = 0;
+    PathTreeIterator<MaterialScheme::Index> iter(scheme.index().leafNodes());
+    while(iter.hasNext())
+    {
+        MaterialManifest &manifest = iter.next();
+        if(predicate(manifest, parameters))
+        {
+            count += 1;
+            if(storage) // Store mode?
+            {
+                storage->push_back(&manifest);
+            }
+        }
+    }
+    return count;
+}
+
+static QList<MaterialManifest *> collectManifests(MaterialScheme *scheme,
     Path const &path, QList<MaterialManifest *> *storage = 0)
 {
     int count = 0;
 
-    if(scheme)
+    if(!path.isEmpty())
     {
-        // Only consider materials in this scheme.
-        PathTreeIterator<MaterialScheme::Index> iter(scheme->index().leafNodes());
-        while(iter.hasNext())
+        if(scheme)
         {
-            MaterialManifest &manifest = iter.next();
-            if(!path.isEmpty())
-            {
-                /// @todo Use PathTree::Node::compare()
-                if(!manifest.path().toString().beginsWith(path, Qt::CaseInsensitive)) continue;
-            }
-
-            if(storage) // Store mode.
-            {
-                storage->push_back(&manifest);
-            }
-            else // Count mode.
-            {
-                ++count;
-            }
+            // Consider materials in the specified scheme only.
+            count += collectManifestsInScheme(*scheme, pathBeginsWithComparator, (void*)&path, storage);
         }
-    }
-    else
-    {
-        // Consider materials in any scheme.
-        foreach(MaterialScheme *scheme, App_Materials().allSchemes())
+        else
         {
-            PathTreeIterator<MaterialScheme::Index> iter(scheme->index().leafNodes());
-            while(iter.hasNext())
+            // Consider materials in any scheme.
+            foreach(MaterialScheme *scheme, App_Materials().allSchemes())
             {
-                MaterialManifest &manifest = iter.next();
-                if(!path.isEmpty())
-                {
-                    /// @todo Use PathTree::Node::compare()
-                    if(!manifest.path().toString().beginsWith(path, Qt::CaseInsensitive)) continue;
-                }
-
-                if(storage) // Store mode.
-                {
-                    storage->push_back(&manifest);
-                }
-                else // Count mode.
-                {
-                    ++count;
-                }
+                count += collectManifestsInScheme(*scheme, pathBeginsWithComparator, (void*)&path, storage);
             }
         }
     }
@@ -653,7 +643,7 @@ static QList<MaterialManifest *> collectMaterialManifests(MaterialScheme *scheme
 #ifdef DENG2_QT_4_7_OR_NEWER
     result.reserve(count);
 #endif
-    return collectMaterialManifests(scheme, path, &result);
+    return collectManifests(scheme, path, &result);
 }
 
 /**
@@ -668,49 +658,36 @@ static bool compareMaterialManifestPathsAssending(MaterialManifest const *a, Mat
 }
 
 /**
- * @defgroup printMaterialFlags  Print Material Flags
- * @ingroup flags
- */
-///@{
-#define PTF_TRANSFORM_PATH_NO_SCHEME        0x1 ///< Do not print the scheme.
-///@}
-
-#define DEFAULT_PRINTMATERIALFLAGS          0
-
-/**
  * @param scheme    Material subspace scheme being printed. Can be @c NULL in
  *                  which case textures are printed from all schemes.
  * @param like      Material path search term.
- * @param flags     @ref printTextureFlags
+ * @param composeUriFlags  Flags governing how URIs should be composed.
  */
-static int printMaterials2(MaterialScheme *scheme, Path const &like, int flags)
+static int printMaterials2(MaterialScheme *scheme, Path const &like, Uri::ComposeAsTextFlags composeUriflags)
 {
-    QList<MaterialManifest *> found = collectMaterialManifests(scheme, like);
+    QList<MaterialManifest *> found = collectManifests(scheme, like);
     if(found.isEmpty()) return 0;
 
-    bool const printSchemeName = !(flags & PTF_TRANSFORM_PATH_NO_SCHEME);
+    bool const printSchemeName = !(composeUriflags & Uri::OmitScheme);
 
-    // Compose a heading.
+    // Print a heading.
     String heading = "Known materials";
     if(!printSchemeName && scheme)
         heading += " in scheme '" + scheme->name() + "'";
     if(!like.isEmpty())
         heading += " like \"" + like + "\"";
-    heading += ":\n";
+    heading += ":";
+    Con_FPrintf(CPF_YELLOW, "%s\n", heading.toUtf8().constData());
 
-    // Print the result heading.
-    Con_FPrintf(CPF_YELLOW, "%s", heading.toUtf8().constData());
-
-    // Print the result index key.
-    int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
-
+    // Print an index key.
+    int const numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
+    String indexKey = QString(" %1  %2 source")
+                          .arg("idx", -numFoundDigits)
+                          .arg(printSchemeName? "scheme:path" : "path", printSchemeName? -22 : -14);
 #ifdef __CLIENT__
-    Con_Printf(" %*s: %-*s source n#\n", numFoundDigits, "idx",
-               printSchemeName? 22 : 14, printSchemeName? "scheme:path" : "path");
-#else
-    Con_Printf(" %*s: %-*s source\n", numFoundDigits, "idx",
-               printSchemeName? 22 : 14, printSchemeName? "scheme:path" : "path");
+    indexKey += " n#";
 #endif
+    Con_Message(indexKey.toUtf8().constData());
     Con_PrintRuler();
 
     // Sort and print the index.
@@ -719,13 +696,14 @@ static int printMaterials2(MaterialScheme *scheme, Path const &like, int flags)
     foreach(MaterialManifest *manifest, found)
     {
         Con_Printf(" %*i: ", numFoundDigits, idx++);
-        printMaterialSummary(*manifest, printSchemeName);
+        printManifestInfo(*manifest, composeUriflags);
     }
 
     return found.count();
 }
 
-static void printMaterials(de::Uri const &search, int flags = DEFAULT_PRINTMATERIALFLAGS)
+static void printMaterials(de::Uri const &search,
+    de::Uri::ComposeAsTextFlags flags = de::Uri::DefaultComposeAsTextFlags)
 {
     Materials &materials = App_Materials();
 
@@ -734,13 +712,13 @@ static void printMaterials(de::Uri const &search, int flags = DEFAULT_PRINTMATER
     // Collate and print results from all schemes?
     if(search.scheme().isEmpty() && !search.path().isEmpty())
     {
-        printTotal = printMaterials2(0/*any scheme*/, search.path(), flags & ~PTF_TRANSFORM_PATH_NO_SCHEME);
+        printTotal = printMaterials2(0/*any scheme*/, search.path(), flags & ~de::Uri::OmitScheme);
         Con_PrintRuler();
     }
     // Print results within only the one scheme?
     else if(materials.knownScheme(search.scheme()))
     {
-        printTotal = printMaterials2(&materials.scheme(search.scheme()), search.path(), flags | PTF_TRANSFORM_PATH_NO_SCHEME);
+        printTotal = printMaterials2(&materials.scheme(search.scheme()), search.path(), flags | de::Uri::OmitScheme);
         Con_PrintRuler();
     }
     else
@@ -748,7 +726,7 @@ static void printMaterials(de::Uri const &search, int flags = DEFAULT_PRINTMATER
         // Collect and sort results in each scheme separately.
         foreach(MaterialScheme *scheme, materials.allSchemes())
         {
-            int numPrinted = printMaterials2(scheme, search.path(), flags | PTF_TRANSFORM_PATH_NO_SCHEME);
+            int numPrinted = printMaterials2(scheme, search.path(), flags | de::Uri::OmitScheme);
             if(numPrinted)
             {
                 Con_PrintRuler();
@@ -846,7 +824,7 @@ D_CMD(InspectMaterial)
         }
         else
         {
-            de::printMaterialSummary(manifest);
+            de::printManifestInfo(manifest);
         }
         return true;
     }
