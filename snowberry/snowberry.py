@@ -29,11 +29,11 @@ def main():
     # Load all plugins.
     plugins.loadAll()
 
-    # Prepare window layout and contents.
-    ui.prepareWindows()
-
     # Load all profiles from disk.
     sb.profdb.restore()
+
+    # Prepare window layout and contents.
+    ui.prepareWindows()
 
     # Start the main loop.
     #import profile
