@@ -34,7 +34,7 @@ namespace de {
  *
  * @ingroup core
  */
-class Loop : public QObject
+class DENG2_PUBLIC Loop : public QObject
 {
     Q_OBJECT
 
