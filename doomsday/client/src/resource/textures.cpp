@@ -443,83 +443,73 @@ static void printTextureInfo(Texture &tex)
 #endif
 }
 
-static void printTextureSummary(TextureManifest &manifest, bool printSchemeName = true)
+static void printManifestInfo(TextureManifest &manifest,
+    de::Uri::ComposeAsTextFlags uriCompositionFlags = de::Uri::DefaultComposeAsTextFlags)
 {
-    Texture *texture = manifest.hasTexture()? &manifest.texture() : 0;
-    Uri uri = manifest.composeUri();
-    QByteArray path = printSchemeName? uri.asText().toUtf8() : QByteArray::fromPercentEncoding(uri.path().toStringRef().toUtf8());
+    String sourceDescription = !manifest.hasTexture()? "unknown" : manifest.texture().flags().testFlag(Texture::Custom)? "addon" : "game";
 
-    QByteArray resourceUri = manifest.resourceUri().asText().toUtf8();
-    if(resourceUri.isEmpty()) resourceUri = "N/A";
+    String info = String("%1 %2")
+                    .arg(manifest.composeUri().compose(uriCompositionFlags | de::Uri::DecodePath),
+                         ( uriCompositionFlags.testFlag(de::Uri::OmitScheme)? -14 : -22 ) )
+                    .arg(sourceDescription, -7);
+#ifdef __CLIENT__
+    info += String("x%1").arg(!manifest.hasTexture()? 0 : manifest.texture().variantCount());
+#endif
+    info += " " + (manifest.resourceUri().isEmpty()? "N/A" : manifest.resourceUri().asText());
 
-    Con_FPrintf(!texture? CPF_LIGHT : CPF_WHITE,
-#ifdef __CLIENT__
-                "%-*s %-6s x%u %s\n",
-#else
-                "%-*s %-6s %s\n",
-#endif
-                printSchemeName? 22 : 14, path.constData(),
-                !texture? "unknown" : texture->flags().testFlag(Texture::Custom)? "addon" : "game",
-#ifdef __CLIENT__
-                !texture? 0 : texture->variantCount(),
-#endif
-                resourceUri.constData());
+    info += "\n";
+    Con_FPrintf(!manifest.hasTexture()? CPF_LIGHT : CPF_WHITE, info.toUtf8().constData());
+}
+
+static bool pathBeginsWithComparator(TextureManifest const &manifest, void *parameters)
+{
+    Path const *path = reinterpret_cast<Path*>(parameters);
+    /// @todo Use PathTree::Node::compare()
+    return manifest.path().toStringRef().beginsWith(*path, Qt::CaseInsensitive);
 }
 
 /**
  * @todo This logic should be implemented in de::PathTree -ds
  */
-static QList<TextureManifest *> collectTextureManifests(TextureScheme *scheme,
+static int collectManifestsInScheme(TextureScheme const &scheme,
+    bool (*predicate)(TextureManifest const &manifest, void *parameters), void *parameters,
+    QList<TextureManifest *> *storage = 0)
+{
+    int count = 0;
+    PathTreeIterator<TextureScheme::Index> iter(scheme.index().leafNodes());
+    while(iter.hasNext())
+    {
+        TextureManifest &manifest = iter.next();
+        if(predicate(manifest, parameters))
+        {
+            count += 1;
+            if(storage) // Store mode?
+            {
+                storage->push_back(&manifest);
+            }
+        }
+    }
+    return count;
+}
+
+static QList<TextureManifest *> collectManifests(TextureScheme *scheme,
     Path const &path, QList<TextureManifest *> *storage = 0)
 {
     int count = 0;
 
-    if(scheme)
+    if(!path.isEmpty())
     {
-        // Only consider textures in this scheme.
-        PathTreeIterator<TextureScheme::Index> iter(scheme->index().leafNodes());
-        while(iter.hasNext())
+        if(scheme)
         {
-            TextureManifest &manifest = iter.next();
-            if(!path.isEmpty())
-            {
-                /// @todo Use PathTree::Node::compare()
-                if(!manifest.path().toString().beginsWith(path, Qt::CaseInsensitive)) continue;
-            }
-
-            if(storage) // Store mode.
-            {
-                storage->push_back(&manifest);
-            }
-            else // Count mode.
-            {
-                ++count;
-            }
+            // Consider materials in the specified scheme only.
+            count += collectManifestsInScheme(*scheme, pathBeginsWithComparator, (void*)&path, storage);
         }
-    }
-    else
-    {
-        // Consider textures in any scheme.
-        foreach(TextureScheme *scheme, App_Textures().allSchemes())
+        else
         {
-            PathTreeIterator<TextureScheme::Index> iter(scheme->index().leafNodes());
-            while(iter.hasNext())
+            // Consider materials in any scheme.
+            foreach(TextureScheme *scheme, App_Textures().allSchemes())
             {
-                TextureManifest &manifest = iter.next();
-                if(!path.isEmpty())
-                {
-                    /// @todo Use PathTree::Node::compare()
-                    if(!manifest.path().toString().beginsWith(path, Qt::CaseInsensitive)) continue;
-                }
-
-                if(storage) // Store mode.
-                {
-                    storage->push_back(&manifest);
-                }
-                else // Count mode.
-                {
-                    ++count;
-                }
+                count += collectManifestsInScheme(*scheme, pathBeginsWithComparator, (void*)&path, storage);
             }
         }
     }
@@ -529,13 +519,13 @@ static QList<TextureManifest *> collectTextureManifests(TextureScheme *scheme,
         return *storage;
     }
 
-    QList<TextureManifest*> result;
+    QList<TextureManifest *> result;
     if(count == 0) return result;
 
 #ifdef DENG2_QT_4_7_OR_NEWER
     result.reserve(count);
 #endif
-    return collectTextureManifests(scheme, path, &result);
+    return collectManifests(scheme, path, &result);
 }
 
 /**
@@ -551,38 +541,27 @@ static bool compareTextureManifestPathsAssending(TextureManifest const *a,
 }
 
 /**
- * @defgroup printTextureFlags  Print Texture Flags
- * @ingroup flags
- */
-///@{
-#define PTF_TRANSFORM_PATH_NO_SCHEME        0x1 ///< Do not print the scheme.
-///@}
-
-#define DEFAULT_PRINTTEXTUREFLAGS           0
-
-/**
  * @param scheme    Texture subspace scheme being printed. Can be @c NULL in
  *                  which case textures are printed from all schemes.
  * @param like      Texture path search term.
- * @param flags     @ref printTextureFlags
+ * @param composeUriFlags  Flags governing how URIs should be composed.
  */
-static int printTextures2(TextureScheme *scheme, Path const &like, int flags)
+static int printTextures2(TextureScheme *scheme, Path const &like,
+                          Uri::ComposeAsTextFlags composeUriFlags)
 {
-    QList<TextureManifest *> found = collectTextureManifests(scheme, like);
+    QList<TextureManifest *> found = collectManifests(scheme, like);
     if(found.isEmpty()) return 0;
 
-    bool const printSchemeName = !(flags & PTF_TRANSFORM_PATH_NO_SCHEME);
+    bool const printSchemeName = !(composeUriFlags & Uri::OmitScheme);
 
-    // Compose a heading.
+    // Print a heading.
     String heading = "Known textures";
     if(!printSchemeName && scheme)
         heading += " in scheme '" + scheme->name() + "'";
     if(!like.isEmpty())
-        heading += " like \"" + NativePath(like).withSeparators('/') + "\"";
-    heading += ":\n";
-
-    // Print the result heading.
-    Con_FPrintf(CPF_YELLOW, "%s", heading.toUtf8().constData());
+        heading += " like \"" + like + "\"";
+    heading += ":";
+    Con_FPrintf(CPF_YELLOW, "%s\n", heading.toUtf8().constData());
 
     // Print the result index key.
     int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
@@ -602,13 +581,14 @@ static int printTextures2(TextureScheme *scheme, Path const &like, int flags)
     foreach(TextureManifest *manifest, found)
     {
         Con_Printf(" %*i: ", numFoundDigits, idx++);
-        printTextureSummary(*manifest, printSchemeName);
+        printManifestInfo(*manifest, composeUriFlags);
     }
 
     return found.count();
 }
 
-static void printTextures(de::Uri const &search, int flags = DEFAULT_PRINTTEXTUREFLAGS)
+static void printTextures(de::Uri const &search,
+    de::Uri::ComposeAsTextFlags flags = de::Uri::DefaultComposeAsTextFlags)
 {
     Textures &textures = App_Textures();
 
@@ -617,21 +597,21 @@ static void printTextures(de::Uri const &search, int flags = DEFAULT_PRINTTEXTUR
     // Collate and print results from all schemes?
     if(search.scheme().isEmpty() && !search.path().isEmpty())
     {
-        printTotal = printTextures2(0/*any scheme*/, search.path(), flags & ~PTF_TRANSFORM_PATH_NO_SCHEME);
+        printTotal = printTextures2(0/*any scheme*/, search.path(), flags & ~de::Uri::OmitScheme);
         Con_PrintRuler();
     }
     // Print results within only the one scheme?
     else if(textures.knownScheme(search.scheme()))
     {
-        printTotal = printTextures2(&textures.scheme(search.scheme()), search.path(), flags | PTF_TRANSFORM_PATH_NO_SCHEME);
+        printTotal = printTextures2(&textures.scheme(search.scheme()), search.path(), flags | de::Uri::OmitScheme);
         Con_PrintRuler();
     }
     else
     {
         // Collect and sort results in each scheme separately.
-        foreach(Textures::Scheme *scheme, textures.allSchemes())
+        foreach(TextureScheme *scheme, textures.allSchemes())
         {
-            int numPrinted = printTextures2(scheme, search.path(), flags | PTF_TRANSFORM_PATH_NO_SCHEME);
+            int numPrinted = printTextures2(scheme, search.path(), flags | de::Uri::OmitScheme);
             if(numPrinted)
             {
                 Con_PrintRuler();
@@ -729,7 +709,7 @@ D_CMD(InspectTexture)
         }
         else
         {
-            de::printTextureSummary(manifest);
+            de::printManifestInfo(manifest);
         }
         return true;
     }
