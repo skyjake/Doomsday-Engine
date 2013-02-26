@@ -26,6 +26,7 @@
 #endif
 #include <de/Log>
 #include <de/math.h>
+#include <de/mathutil.h> // for M_NumDigits
 #include <de/memory.h>
 #include <QtAlgorithms>
 
@@ -654,7 +655,8 @@ static bool compareMaterialManifestPathsAssending(MaterialManifest const *a, Mat
  * @param like      Material path search term.
  * @param composeUriFlags  Flags governing how URIs should be composed.
  */
-static int printMaterials2(MaterialScheme *scheme, Path const &like, Uri::ComposeAsTextFlags composeUriflags)
+static int printMaterials2(MaterialScheme *scheme, Path const &like,
+                           Uri::ComposeAsTextFlags composeUriflags)
 {
     QList<MaterialManifest *> found = collectManifests(scheme, like);
     if(found.isEmpty()) return 0;

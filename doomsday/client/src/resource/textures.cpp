@@ -23,25 +23,21 @@
 #  include "gl/gl_texmanager.h"
 #endif
 #include "resource/compositetexture.h"
-#include "TextureManifest"
-#include <de/Error>
 #include <de/Log>
-#include <de/PathTree>
+#include <de/math.h>
 #include <de/mathutil.h> // for M_NumDigits
-#include <QList>
 #include <QtAlgorithms>
 
 #include "resource/textures.h"
 
 D_CMD(ListTextures);
 D_CMD(InspectTexture);
-#if _DEBUG
+
+#ifdef DENG_DEBUG
 D_CMD(PrintTextureStats);
 #endif
 
 namespace de {
-
-static Uri emptyUri;
 
 Texture *Textures::ResourceClass::interpret(TextureManifest &manifest, void *userData)
 {
@@ -83,7 +79,8 @@ void Textures::consoleRegister()
     C_CMD("listtextures",   "ss",   ListTextures)
     C_CMD("listtextures",   "s",    ListTextures)
     C_CMD("listtextures",   "",     ListTextures)
-#if _DEBUG
+
+#ifdef DENG_DEBUG
     C_CMD("texturestats",   NULL,   PrintTextureStats)
 #endif
 }
@@ -721,22 +718,20 @@ D_CMD(InspectTexture)
     return false;
 }
 
-#if _DEBUG
+#ifdef DENG_DEBUG
 D_CMD(PrintTextureStats)
 {
-    DENG2_UNUSED(src); DENG2_UNUSED(argc); DENG2_UNUSED(argv);
+    DENG2_UNUSED3(src, argc, argv);
 
     de::Textures &textures = App_Textures();
 
     Con_FPrintf(CPF_YELLOW, "Texture Statistics:\n");
-    de::Textures::Schemes const &schemes = textures.allSchemes();
-    DENG2_FOR_EACH_CONST(de::Textures::Schemes, i, schemes)
+    foreach(de::TextureScheme *scheme, textures.allSchemes())
     {
-        de::Textures::Scheme &scheme = **i;
-        de::Textures::Scheme::Index const &index = scheme.index();
+        de::TextureScheme::Index const &index = scheme->index();
 
         uint const count = index.count();
-        Con_Printf("Scheme: %s (%u %s)\n", scheme.name().toUtf8().constData(), count, count == 1? "texture" : "textures");
+        Con_Printf("Scheme: %s (%u %s)\n", scheme->name().toUtf8().constData(), count, count == 1? "texture" : "textures");
         index.debugPrintHashDistribution();
         index.debugPrint();
     }
