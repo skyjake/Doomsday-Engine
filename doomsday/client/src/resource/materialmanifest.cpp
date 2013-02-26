@@ -69,7 +69,7 @@ MaterialScheme &MaterialManifest::scheme() const
 {
     LOG_AS("MaterialManifest::scheme");
     /// @todo Optimize: MaterialManifest should contain a link to the owning MaterialScheme.
-    foreach(Materials::Scheme *scheme, materials().allSchemes())
+    foreach(MaterialScheme *scheme, materials().allSchemes())
     {
         if(&scheme->index() == &tree()) return *scheme;
     }

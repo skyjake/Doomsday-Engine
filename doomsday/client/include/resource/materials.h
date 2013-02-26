@@ -54,68 +54,17 @@ namespace de {
  */
 class Materials
 {
-public:
+    /// Internal typedefs for brevity/cleanliness.
     typedef class MaterialScheme Scheme;
     typedef class MaterialManifest Manifest;
     typedef struct MaterialVariantSpec VariantSpec;
 
+public:
     /**
-     * Defines a group of one or more material manifests.
+     * Defines a set of one or more material manifests.
      */
-    class ManifestGroup
-    {
-    public:
-        /// Manifests.
-        typedef QList<Manifest *> All;
-
-    public:
-        /// An invalid group member reference was specified. @ingroup errors
-        DENG2_ERROR(InvalidManifestError);
-
-    public:
-        ManifestGroup(int id);
-        ~ManifestGroup();
-
-        /**
-         * Returns the group's unique identifier.
-         */
-        int id() const;
-
-        /**
-         * Returns the total number of material manifests in the group.
-         */
-        int count() const { return all().count(); }
-
-        /**
-         * Lookup a manifest in the group by number.
-         *
-         * @param number  Material manifest number to lookup.
-         * @return  Found manifest.
-         */
-        Manifest &toManifest(int number) const;
-
-        /**
-         * Extend the group by adding a new manifest to the end of the group.
-         *
-         * @param manifest  Manifest to add.
-         */
-        void add(Manifest &manifest);
-
-        /**
-         * Returns @c true iff @a manifest is part of this group.
-         *
-         * @param mat  Manifest to search for.
-         */
-        bool has(Manifest &manifest) const;
-
-        /**
-         * Provides access to the manifest list for efficient traversal.
-         */
-        All const &all() const;
-
-    private:
-        DENG2_PRIVATE(d)
-    };
+    typedef QSet<Manifest *> ManifestSet;
+    typedef ManifestSet ManifestGroup; // Alias
 
     /**
      * Flags determining URI validation logic.

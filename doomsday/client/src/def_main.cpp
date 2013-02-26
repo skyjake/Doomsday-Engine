@@ -1633,7 +1633,7 @@ static void initMaterialGroup(ded_group_t &def)
                     group = &App_Materials().createGroup();
                 }
 
-                group->add(manifest);
+                group->insert(&manifest);
             }
 #if 0 /// @todo $revise-texture-animation
             else // An animation group.

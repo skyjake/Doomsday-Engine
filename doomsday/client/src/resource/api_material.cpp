@@ -4,6 +4,8 @@
 #include "de_resource.h"
 #include "api_material.h"
 
+using namespace de;
+
 #undef DD_MaterialForTextureUri
 DENG_EXTERN_C Material *DD_MaterialForTextureUri(uri_s const *textureUri)
 {
@@ -15,19 +17,19 @@ DENG_EXTERN_C Material *DD_MaterialForTextureUri(uri_s const *textureUri)
         uri.setScheme(DD_MaterialSchemeNameForTextureScheme(uri.scheme()));
         return &App_Materials().find(uri).material();
     }
-    catch(de::Materials::UnknownSchemeError const &er)
+    catch(Materials::UnknownSchemeError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_WARNING(er.asText() + ", ignoring.");
     }
-    catch(de::Materials::NotFoundError const &)
+    catch(Materials::NotFoundError const &)
     {} // Ignore this error.
-    catch(de::Textures::UnknownSchemeError const &er)
+    catch(Textures::UnknownSchemeError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_WARNING(er.asText() + ", ignoring.");
     }
-    catch(de::Textures::NotFoundError const &)
+    catch(Textures::NotFoundError const &)
     {} // Ignore this error.
 
     return 0; // Not found.
@@ -36,7 +38,7 @@ DENG_EXTERN_C Material *DD_MaterialForTextureUri(uri_s const *textureUri)
 #undef Materials_ComposeUri
 DENG_EXTERN_C struct uri_s *Materials_ComposeUri(materialid_t materialId)
 {
-    de::Materials::Manifest &manifest = App_Materials().toManifest(materialId);
+    MaterialManifest &manifest = App_Materials().toManifest(materialId);
     return reinterpret_cast<uri_s *>(new de::Uri(manifest.composeUri()));
 }
 
@@ -47,7 +49,7 @@ DENG_EXTERN_C materialid_t Materials_ResolveUri(struct uri_s const *uri)
     {
         return App_Materials().find(*reinterpret_cast<de::Uri const *>(uri)).id();
     }
-    catch(de::Materials::NotFoundError const &)
+    catch(Materials::NotFoundError const &)
     {} // Ignore this error.
     return NOMATERIALID;
 }
@@ -61,7 +63,7 @@ DENG_EXTERN_C materialid_t Materials_ResolveUriCString(char const *uriCString)
         {
             return App_Materials().find(de::Uri(uriCString, RC_NULL)).id();
         }
-        catch(de::Materials::NotFoundError const &)
+        catch(Materials::NotFoundError const &)
         {} // Ignore this error.
     }
     return NOMATERIALID;

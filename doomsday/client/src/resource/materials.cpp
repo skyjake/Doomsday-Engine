@@ -43,59 +43,6 @@ D_CMD(PrintMaterialStats);
 
 namespace de {
 
-struct Materials::ManifestGroup::Instance
-{
-    /// Unique identifier.
-    int id;
-
-    /// All material manifests in the group.
-    Materials::ManifestGroup::All manifests;
-
-    Instance(int _id) : id(_id)
-    {}
-};
-
-Materials::ManifestGroup::ManifestGroup(int id) : d(new Instance(id))
-{}
-
-Materials::ManifestGroup::~ManifestGroup()
-{
-    delete d;
-}
-
-int Materials::ManifestGroup::id() const
-{
-    return d->id;
-}
-
-Materials::Manifest &Materials::ManifestGroup::toManifest(int number) const
-{
-    if(number >= 0 && number < count())
-    {
-        return *d->manifests[number];
-    }
-    /// @throw InvalidManifestError Attempt to access an invalid manifest.
-    throw InvalidManifestError("Materials::Group::manifest", QString("Invalid manifest #%1, valid range [0..%2)").arg(number).arg(count()));
-}
-
-void Materials::ManifestGroup::add(Materials::Manifest &manifest)
-{
-    LOG_AS("Materials::Group::addManifest");
-    // Ensure the manifest is not already a group member.
-    if(has(manifest)) return;
-    d->manifests.push_back(&manifest);
-}
-
-bool Materials::ManifestGroup::has(Materials::Manifest &manifest) const
-{
-    return d->manifests.contains(&manifest);
-}
-
-Materials::ManifestGroup::All const &Materials::ManifestGroup::all() const
-{
-    return d->manifests;
-}
-
 #ifdef __CLIENT__
 static void applyVariantSpec(MaterialVariantSpec &spec, materialcontext_t mc,
     texturevariantspecification_t &primarySpec)
@@ -500,9 +447,9 @@ void Materials::cache(Material &material, MaterialVariantSpec const &spec,
     // sure there are no overlapping tasks.
     foreach(ManifestGroup *group, d->groups)
     {
-        if(!group->has(material.manifest())) continue;
+        if(!group->contains(&material.manifest())) continue;
 
-        foreach(Manifest *manifest, group->all())
+        foreach(Manifest *manifest, *group)
         {
             if(!manifest->hasMaterial()) continue;
             if(&manifest->material() == &material) continue; // We've already enqueued this.
@@ -527,9 +474,7 @@ MaterialVariantSpec const &Materials::variantSpecForContext(
 Materials::ManifestGroup &Materials::createGroup()
 {
     // Allocating one by one is inefficient, but it doesn't really matter.
-    // The group number is (index + 1)
-    int groupNumber = d->groups.count() + 1;
-    d->groups.push_back(new ManifestGroup(groupNumber));
+    d->groups.push_back(new ManifestGroup());
     return *d->groups.back();
 }
 
@@ -621,7 +566,7 @@ static void printMaterialInfo(Material &material)
 #endif // __CLIENT__
 }
 
-static void printMaterialSummary(Materials::Manifest &manifest, bool printSchemeName = true)
+static void printMaterialSummary(MaterialManifest &manifest, bool printSchemeName = true)
 {
     Uri uri = manifest.composeUri();
     QByteArray path = printSchemeName? uri.asText().toUtf8() : QByteArray::fromPercentEncoding(uri.path().toStringRef().toUtf8());
@@ -644,18 +589,18 @@ static void printMaterialSummary(Materials::Manifest &manifest, bool printScheme
 /**
  * @todo This logic should be implemented in de::PathTree -ds
  */
-static QList<Materials::Manifest *> collectMaterialManifests(Materials::Scheme *scheme,
-    Path const &path, QList<Materials::Manifest *> *storage = 0)
+static QList<MaterialManifest *> collectMaterialManifests(MaterialScheme *scheme,
+    Path const &path, QList<MaterialManifest *> *storage = 0)
 {
     int count = 0;
 
     if(scheme)
     {
         // Only consider materials in this scheme.
-        PathTreeIterator<Materials::Scheme::Index> iter(scheme->index().leafNodes());
+        PathTreeIterator<MaterialScheme::Index> iter(scheme->index().leafNodes());
         while(iter.hasNext())
         {
-            Materials::Manifest &manifest = iter.next();
+            MaterialManifest &manifest = iter.next();
             if(!path.isEmpty())
             {
                 /// @todo Use PathTree::Node::compare()
@@ -675,12 +620,12 @@ static QList<Materials::Manifest *> collectMaterialManifests(Materials::Scheme *
     else
     {
         // Consider materials in any scheme.
-        foreach(Materials::Scheme *scheme, App_Materials().allSchemes())
+        foreach(MaterialScheme *scheme, App_Materials().allSchemes())
         {
-            PathTreeIterator<Materials::Scheme::Index> iter(scheme->index().leafNodes());
+            PathTreeIterator<MaterialScheme::Index> iter(scheme->index().leafNodes());
             while(iter.hasNext())
             {
-                Materials::Manifest &manifest = iter.next();
+                MaterialManifest &manifest = iter.next();
                 if(!path.isEmpty())
                 {
                     /// @todo Use PathTree::Node::compare()
@@ -704,7 +649,7 @@ static QList<Materials::Manifest *> collectMaterialManifests(Materials::Scheme *
         return *storage;
     }
 
-    QList<Materials::Manifest *> result;
+    QList<MaterialManifest *> result;
     if(count == 0) return result;
 
 #ifdef DENG2_QT_4_7_OR_NEWER
@@ -717,7 +662,7 @@ static QList<Materials::Manifest *> collectMaterialManifests(Materials::Scheme *
  * Decode and then lexicographically compare the two manifest
  * paths, returning @c true if @a is less than @a b.
  */
-static bool compareMaterialManifestPathsAssending(Materials::Manifest const *a, Materials::Manifest const *b)
+static bool compareMaterialManifestPathsAssending(MaterialManifest const *a, MaterialManifest const *b)
 {
     String pathA = QString(QByteArray::fromPercentEncoding(a->path().toUtf8()));
     String pathB = QString(QByteArray::fromPercentEncoding(b->path().toUtf8()));
@@ -740,9 +685,9 @@ static bool compareMaterialManifestPathsAssending(Materials::Manifest const *a, 
  * @param like      Material path search term.
  * @param flags     @ref printTextureFlags
  */
-static int printMaterials2(Materials::Scheme *scheme, Path const &like, int flags)
+static int printMaterials2(MaterialScheme *scheme, Path const &like, int flags)
 {
-    QList<Materials::Manifest *> found = collectMaterialManifests(scheme, like);
+    QList<MaterialManifest *> found = collectMaterialManifests(scheme, like);
     if(found.isEmpty()) return 0;
 
     bool const printSchemeName = !(flags & PTF_TRANSFORM_PATH_NO_SCHEME);
@@ -773,7 +718,7 @@ static int printMaterials2(Materials::Scheme *scheme, Path const &like, int flag
     // Sort and print the index.
     qSort(found.begin(), found.end(), compareMaterialManifestPathsAssending);
     int idx = 0;
-    foreach(Materials::Manifest *manifest, found)
+    foreach(MaterialManifest *manifest, found)
     {
         Con_Printf(" %*i: ", numFoundDigits, idx++);
         printMaterialSummary(*manifest, printSchemeName);
@@ -803,7 +748,7 @@ static void printMaterials(de::Uri const &search, int flags = DEFAULT_PRINTMATER
     else
     {
         // Collect and sort results in each scheme separately.
-        foreach(Materials::Scheme *scheme, materials.allSchemes())
+        foreach(MaterialScheme *scheme, materials.allSchemes())
         {
             int numPrinted = printMaterials2(scheme, search.path(), flags | PTF_TRANSFORM_PATH_NO_SCHEME);
             if(numPrinted)
@@ -896,7 +841,7 @@ D_CMD(InspectMaterial)
 
     try
     {
-        de::Materials::Manifest &manifest = materials.find(search);
+        de::MaterialManifest &manifest = materials.find(search);
         if(manifest.hasMaterial())
         {
             de::printMaterialInfo(manifest.material());
@@ -923,9 +868,9 @@ D_CMD(PrintMaterialStats)
     de::Materials &materials = App_Materials();
 
     Con_FPrintf(CPF_YELLOW, "Material Statistics:\n");
-    foreach(de::Materials::Scheme *scheme, materials.allSchemes())
+    foreach(de::MaterialScheme *scheme, materials.allSchemes())
     {
-        de::Materials::Scheme::Index const &index = scheme->index();
+        de::MaterialScheme::Index const &index = scheme->index();
 
         uint count = index.count();
         Con_Printf("Scheme: %s (%u %s)\n", scheme->name().toUtf8().constData(), count, count == 1? "material":"materials");
