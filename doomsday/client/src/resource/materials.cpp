@@ -438,22 +438,25 @@ bool Materials::has(Uri const &path) const
     return false;
 }
 
-Materials::Manifest &Materials::newManifest(Materials::Scheme &scheme, Path const &path)
+Materials::Manifest &Materials::newManifest(de::Uri const &uri)
 {
     LOG_AS("Materials::newManifest");
 
+    // We require a properly formed URI (but not a URN - this is a resource path).
+    if(!validateUri(uri, 0, (verbose >= 1)))
+        throw Error("Materials::newManifest", "Invalid URI \"" + uri.asText() + "\"");
+
     // Have we already created a manifest for this?
-    Manifest *manifest = 0;
     try
     {
-        manifest = &find(de::Uri(scheme.name(), path));
+        return find(uri);
     }
     catch(NotFoundError const &)
     {
         // Acquire a new unique identifier for the manifest.
         materialid_t const id = ++d->manifestCount;
 
-        manifest = &scheme.insertManifest(path, id);
+        Manifest *manifest = &scheme(uri.scheme()).insertManifest(uri.path(), id);
 
         // Add the new manifest to the id index/map.
         if(d->manifestCount > d->manifestIdMapSize)
@@ -463,9 +466,11 @@ Materials::Manifest &Materials::newManifest(Materials::Scheme &scheme, Path cons
             d->manifestIdMap = (Manifest **) M_Realloc(d->manifestIdMap, sizeof *d->manifestIdMap * d->manifestIdMapSize);
         }
         d->manifestIdMap[d->manifestCount - 1] = manifest; /* 1-based index */
+
+        return *manifest;
     }
 
-    return *manifest;
+    throw Error("Materials::newManifest", "An unknown error occured declaring the new material");
 }
 
 void Materials::addMaterial(Material &material)

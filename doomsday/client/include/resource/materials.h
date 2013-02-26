@@ -288,7 +288,7 @@ public:
     inline int groupCount() const { return allGroups().count(); }
 
     ///
-    Manifest &newManifest(Scheme &scheme, Path const &path);
+    Manifest &newManifest(Uri const &uri);
 
     ///
     void addMaterial(Material &material);
