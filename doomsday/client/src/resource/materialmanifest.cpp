@@ -55,6 +55,20 @@ Materials &MaterialManifest::materials()
     return App_Materials();
 }
 
+Material *MaterialManifest::derive()
+{
+    if(!hasMaterial())
+    {
+        // Instantiate and associate the new material with this.
+        setMaterial(new Material(*this));
+
+        // Include the material in the app's scheme-agnostic list of instances.
+        /// @todo de::Materials should observe instead.
+        materials().addMaterial(*d->material);
+    }
+    return &material();
+}
+
 materialid_t MaterialManifest::id() const
 {
     return d->id;

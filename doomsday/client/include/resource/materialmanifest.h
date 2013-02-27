@@ -60,6 +60,13 @@ public:
     virtual ~MaterialManifest();
 
     /**
+     * Derive a new logical Material instance by interpreting the manifest.
+     * The first time a material is derived from the manifest, said material
+     * is assigned to the manifest (ownership is assumed).
+     */
+    Material *derive();
+
+    /**
      * Returns the owning scheme of the manifest.
      */
     MaterialScheme &scheme() const;

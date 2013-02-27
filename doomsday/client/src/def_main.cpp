@@ -1133,6 +1133,14 @@ static void rebuildMaterialDecorations(Material &material, ded_material_t const 
 }
 #endif // __CLIENT__
 
+static Material::Flags translateMaterialDefFlags(ded_flags_t flags)
+{
+    Material::Flags mf;
+    if(flags & MATF_NO_DRAW) mf |= Material::NoDraw;
+    if(flags & MATF_SKYMASK) mf |= Material::SkyMask;
+    return mf;
+}
+
 static void interpretMaterialDef(ded_material_t const &def)
 {
     LOG_AS("interpretMaterialDef");
@@ -1169,28 +1177,14 @@ static void interpretMaterialDef(ded_material_t const &def)
             }
         }
 
-        // An entirely new material?
-        if(!manifest->hasMaterial())
-        {
-            // Instantiate and associate the new material with the manifest.
-            manifest->setMaterial(new Material(*manifest));
-
-            // Include the material in the scheme-agnostic list of instances.
-            App_Materials().addMaterial(manifest->material());
-        }
-
         /*
          * (Re)configure the material:
          */
-        Material &material = manifest->material();
+        /// @todo Defer until necessary.
+        Material &material = *manifest->derive();
 
-        Material::Flags newFlags;
-        if(def.flags & MATF_NO_DRAW) newFlags |= Material::NoDraw;
-        if(def.flags & MATF_SKYMASK) newFlags |= Material::SkyMask;
-        material.setFlags(newFlags);
-
+        material.setFlags(translateMaterialDefFlags(def.flags));
         material.setDimensions(Vector2i(def.width, def.height));
-
         material.setAudioEnvironment(S_AudioEnvironmentForMaterial(def.uri));
 
         rebuildMaterialLayers(material, def);
