@@ -38,14 +38,10 @@ Lockable::Lockable() : d(new Instance)
 
 Lockable::~Lockable()
 {    
-    d->countMutex.lock();
-    while(d->lockCount > 0)
+    while(isLocked())
     {
-        d->mutex.unlock();
-        d->lockCount--;
+        unlock();
     }
-    d->countMutex.unlock();
-
     delete d;
 }
 
