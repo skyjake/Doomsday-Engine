@@ -260,6 +260,8 @@ void LogBuffer::flush()
         {
             DENG2_FOR_EACH(Instance::EntryList, i, d->toBeFlushed)
             {
+                DENG2_GUARD_FOR(**i, guardingCurrentLogEntry);
+
                 foreach(LogSink *sink, d->sinks)
                 {
                     if(sink->willAccept(**i))
@@ -269,7 +271,7 @@ void LogBuffer::flush()
                 }
             }
         }
-        catch(de::Error const &error)
+        catch(Error const &error)
         {
             foreach(LogSink *sink, d->sinks)
             {
