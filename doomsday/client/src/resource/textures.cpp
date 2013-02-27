@@ -450,7 +450,7 @@ static void printManifestInfo(TextureManifest &manifest,
 #ifdef __CLIENT__
     info += String("x%1").arg(!manifest.hasTexture()? 0 : manifest.texture().variantCount());
 #endif
-    info += " " + (manifest.resourceUri().isEmpty()? "N/A" : manifest.resourceUri().asText());
+    info += " " + (!manifest.hasResourceUri()? "N/A" : manifest.resourceUri().asText());
 
     info += "\n";
     Con_FPrintf(!manifest.hasTexture()? CPF_LIGHT : CPF_WHITE, info.toUtf8().constData());

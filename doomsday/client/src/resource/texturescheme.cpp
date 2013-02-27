@@ -215,9 +215,12 @@ TextureManifest const &TextureScheme::findByResourceUri(de::Uri const &uri) cons
         while(iter.hasNext())
         {
             TextureManifest &manifest = iter.next();
-            if(manifest.resourceUri() == uri)
+            if(manifest.hasResourceUri())
             {
-                return manifest;
+                if(manifest.resourceUri() == uri)
+                {
+                    return manifest;
+                }
             }
         }
     }

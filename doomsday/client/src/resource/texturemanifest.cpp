@@ -103,12 +103,22 @@ Textures::Scheme &TextureManifest::scheme() const
         if(&scheme->index() == &tree()) return *scheme;
     }
     /// @throw Error Failed to determine the scheme of the manifest (should never happen...).
-    throw Error("TextureManifest::scheme", String("Failed to determine scheme for manifest [%1].").arg(de::dintptr(this)));
+    throw Error("TextureManifest::scheme", String("Failed to determine scheme for manifest [%1]").arg(de::dintptr(this)));
 }
 
-de::Uri const &TextureManifest::resourceUri() const
+bool TextureManifest::hasResourceUri() const
 {
-    return d->resourceUri;
+    return !d->resourceUri.isEmpty();
+}
+
+de::Uri TextureManifest::resourceUri() const
+{
+    if(hasResourceUri())
+    {
+        return d->resourceUri;
+    }
+    /// @throw MissingResourceUriError There is no resource URI defined.
+    throw MissingResourceUriError("TextureManifest::scheme", "No resource URI is defined");
 }
 
 bool TextureManifest::setResourceUri(de::Uri const &newUri)

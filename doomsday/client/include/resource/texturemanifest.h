@@ -46,6 +46,9 @@ public:
     /// Required texture instance is missing. @ingroup errors
     DENG2_ERROR(MissingTextureError);
 
+    /// Required resource URI is not defined. @ingroup errors
+    DENG2_ERROR(MissingResourceUriError);
+
 public:
     TextureManifest(PathTree::NodeArgs const &args);
     virtual ~TextureManifest();
@@ -97,9 +100,14 @@ public:
     }
 
     /**
-     * Returns the URI to the associated resource. May be empty.
+     * Returns @c true if a URI to an associated resource is defined.
      */
-    Uri const &resourceUri() const;
+    bool hasResourceUri() const;
+
+    /**
+     * Returns the URI to the associated resource.
+     */
+    Uri resourceUri() const;
 
     /**
      * Change the resource URI associated with the manifest.

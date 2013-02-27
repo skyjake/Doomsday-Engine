@@ -661,22 +661,25 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
 
         if(source == TEXS_NONE)
         {
-            de::Uri const &resourceUri = tex.manifest().resourceUri();
-            if(!resourceUri.scheme().compareWithoutCase("LumpIndex"))
+            if(tex.manifest().hasResourceUri())
             {
-                try
+                de::Uri resourceUri = tex.manifest().resourceUri();
+                if(!resourceUri.scheme().compareWithoutCase("LumpIndex"))
                 {
-                    lumpnum_t lumpNum = resourceUri.path().toString().toInt();
-                    de::File1 &lump = App_FileSystem().nameIndex().lump(lumpNum);
-                    de::FileHandle &hndl = App_FileSystem().openLump(lump);
+                    try
+                    {
+                        lumpnum_t lumpNum = resourceUri.path().toString().toInt();
+                        de::File1 &lump = App_FileSystem().nameIndex().lump(lumpNum);
+                        de::FileHandle &hndl = App_FileSystem().openLump(lump);
 
-                    source = loadFlat(image, hndl);
+                        source = loadFlat(image, hndl);
 
-                    App_FileSystem().releaseFile(hndl.file());
-                    delete &hndl;
+                        App_FileSystem().releaseFile(hndl.file());
+                        delete &hndl;
+                    }
+                    catch(LumpIndex::NotFoundError const&)
+                    {} // Ignore this error.
                 }
-                catch(LumpIndex::NotFoundError const&)
-                {} // Ignore this error.
             }
         }
     }
@@ -699,22 +702,25 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
 
         if(source == TEXS_NONE)
         {
-            de::Uri const &resourceUri = tex.manifest().resourceUri();
-            if(!resourceUri.scheme().compareWithoutCase("LumpIndex"))
+            if(tex.manifest().hasResourceUri())
             {
-                try
+                de::Uri resourceUri = tex.manifest().resourceUri();
+                if(!resourceUri.scheme().compareWithoutCase("LumpIndex"))
                 {
-                    lumpnum_t lumpNum = resourceUri.path().toString().toInt();
-                    de::File1 &lump = App_FileSystem().nameIndex().lump(lumpNum);
-                    de::FileHandle &hndl = App_FileSystem().openLump(lump);
+                    try
+                    {
+                        lumpnum_t lumpNum = resourceUri.path().toString().toInt();
+                        de::File1 &lump = App_FileSystem().nameIndex().lump(lumpNum);
+                        de::FileHandle &hndl = App_FileSystem().openLump(lump);
 
-                    source = loadPatch(image, hndl, tclass, tmap, spec.border);
+                        source = loadPatch(image, hndl, tclass, tmap, spec.border);
 
-                    App_FileSystem().releaseFile(hndl.file());
-                    delete &hndl;
+                        App_FileSystem().releaseFile(hndl.file());
+                        delete &hndl;
+                    }
+                    catch(LumpIndex::NotFoundError const&)
+                    {} // Ignore this error.
                 }
-                catch(LumpIndex::NotFoundError const&)
-                {} // Ignore this error.
             }
         }
     }
@@ -751,16 +757,46 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
 
         if(source == TEXS_NONE)
         {
-            de::Uri const &resourceUri = tex.manifest().resourceUri();
-            if(!resourceUri.scheme().compareWithoutCase("LumpIndex"))
+            if(tex.manifest().hasResourceUri())
             {
+                de::Uri resourceUri = tex.manifest().resourceUri();
+                if(!resourceUri.scheme().compareWithoutCase("LumpIndex"))
+                {
+                    try
+                    {
+                        lumpnum_t lumpNum = resourceUri.path().toString().toInt();
+                        de::File1 &lump = App_FileSystem().nameIndex().lump(lumpNum);
+                        de::FileHandle &hndl = App_FileSystem().openLump(lump);
+
+                        source = loadPatch(image, hndl, tclass, tmap, spec.border);
+
+                        App_FileSystem().releaseFile(hndl.file());
+                        delete &hndl;
+                    }
+                    catch(LumpIndex::NotFoundError const&)
+                    {} // Ignore this error.
+                }
+            }
+        }
+    }
+    else if(!tex.manifest().schemeName().compareWithoutCase("Details"))
+    {
+        if(tex.manifest().hasResourceUri())
+        {
+            de::Uri resourceUri = tex.manifest().resourceUri();
+            if(resourceUri.scheme().compareWithoutCase("Lumps"))
+            {
+                source = loadExternalTexture(image, resourceUri.compose());
+            }
+            else
+            {
+                lumpnum_t lumpNum = App_FileSystem().lumpNumForName(resourceUri.path());
                 try
                 {
-                    lumpnum_t lumpNum = resourceUri.path().toString().toInt();
                     de::File1 &lump = App_FileSystem().nameIndex().lump(lumpNum);
                     de::FileHandle &hndl = App_FileSystem().openLump(lump);
 
-                    source = loadPatch(image, hndl, tclass, tmap, spec.border);
+                    source = loadDetail(image, hndl);
 
                     App_FileSystem().releaseFile(hndl.file());
                     delete &hndl;
@@ -770,34 +806,13 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
             }
         }
     }
-    else if(!tex.manifest().schemeName().compareWithoutCase("Details"))
-    {
-        de::Uri const &resourceUri = tex.manifest().resourceUri();
-        if(resourceUri.scheme().compareWithoutCase("Lumps"))
-        {
-            source = loadExternalTexture(image, resourceUri.compose());
-        }
-        else
-        {
-            lumpnum_t lumpNum = App_FileSystem().lumpNumForName(resourceUri.path());
-            try
-            {
-                de::File1 &lump = App_FileSystem().nameIndex().lump(lumpNum);
-                de::FileHandle &hndl = App_FileSystem().openLump(lump);
-
-                source = loadDetail(image, hndl);
-
-                App_FileSystem().releaseFile(hndl.file());
-                delete &hndl;
-            }
-            catch(LumpIndex::NotFoundError const&)
-            {} // Ignore this error.
-        }
-    }
     else
     {
-        de::Uri const &resourceUri = tex.manifest().resourceUri();
-        source = loadExternalTexture(image, resourceUri.compose());
+        if(tex.manifest().hasResourceUri())
+        {
+            de::Uri resourceUri = tex.manifest().resourceUri();
+            source = loadExternalTexture(image, resourceUri.compose());
+        }
     }
     return source;
 }
@@ -2012,13 +2027,13 @@ void GL_UploadTextureContent(texturecontent_t const &content)
     }
 }
 
-static TexSource loadExternalTexture(image_t &image, String searchPath,
+static TexSource loadExternalTexture(image_t &image, String encodedSearchPath,
     String optionalSuffix)
 {
     // First look for a version with an optional suffix.
     try
     {
-        String foundPath = App_FileSystem().findPath(de::Uri(searchPath + optionalSuffix, RC_GRAPHIC),
+        String foundPath = App_FileSystem().findPath(de::Uri(encodedSearchPath + optionalSuffix, RC_GRAPHIC),
                                                      RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
         // Ensure the found path is absolute.
         foundPath = App_BasePath() / foundPath;
@@ -2033,7 +2048,7 @@ static TexSource loadExternalTexture(image_t &image, String searchPath,
     {
         try
         {
-            String foundPath = App_FileSystem().findPath(de::Uri(searchPath, RC_GRAPHIC),
+            String foundPath = App_FileSystem().findPath(de::Uri(encodedSearchPath, RC_GRAPHIC),
                                                          RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
             // Ensure the found path is absolute.
             foundPath = App_BasePath() / foundPath;
