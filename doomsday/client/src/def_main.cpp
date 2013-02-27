@@ -899,7 +899,7 @@ static void readAllDefinitions()
      */
     Def_ReadLumpDefs();
 
-    LOG_INFO(String("readAllDefinitions: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_INFO(String("readAllDefinitions: Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 static animgroup_t const *findAnimGroupForTexture(TextureManifest &manifest)

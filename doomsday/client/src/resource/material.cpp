@@ -642,12 +642,14 @@ void Material::markValid(bool yes)
 
 String Material::composeDescription() const
 {
-    String str = String("Material \"%1\" [%2]")
-                     .arg(manifest().composeUri().asText())
-                     .arg(de::dintptr(this))
-               + " Dimensions:" + (width() == 0 && height() == 0? String("unknown (not yet prepared)")
-                                                                : String("(%1 x %2)").arg(width()).arg(height()))
-               + " Source:" + manifest().sourceDescription();
+    String str = String("Material \"%1\"").arg(manifest().composeUri().asText());
+#ifdef DENG_DEBUG
+    str += String(" [%2]").arg(de::dintptr(this));
+#endif
+    str += " Dimensions:"
+        +  (width() == 0 && height() == 0? String("unknown (not yet prepared)")
+                                         : dimensions().asText())
+        +  " Source:" + manifest().sourceDescription();
 #ifdef __CLIENT__
     str += String(" x%1").arg(variantCount());
 #endif
