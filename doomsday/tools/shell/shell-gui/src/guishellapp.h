@@ -52,6 +52,9 @@ public slots:
     void preferencesDone();
     void updateMenu();
 
+signals:
+    void consoleFontChanged();
+
 protected slots:
     void windowClosed(LinkWindow *window);
 

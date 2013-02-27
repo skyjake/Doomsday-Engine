@@ -52,6 +52,7 @@ public slots:
     void switchToStatus();
     void switchToConsole();
     void updateWhenConnected();
+    void updateConsoleFontFromPreferences();
 
 protected slots:
     void handleIncomingPackets();
