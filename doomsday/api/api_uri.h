@@ -1,5 +1,9 @@
-/** @file api_uri.h
- * Universal Resource Identifier (C wrapper). @ingroup base
+/** @file api_uri.h Public API for Universal Resource Identifiers.
+ * @ingroup base
+ *
+ * @todo de::Uri will eventually be moved to libdeng2, at which point this API
+ * is deprecated and the libdeng2 c_wrapper will provide C API functions
+ * equivalent to these.
  *
  * @author Copyright &copy; 2010-2013 Daniel Swanson <danij@dengine.net>
  * @author Copyright &copy; 2010-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
