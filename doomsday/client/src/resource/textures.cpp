@@ -135,25 +135,22 @@ Textures::Schemes const& Textures::allSchemes() const
     return d->schemes;
 }
 
-bool Textures::validateUri(Uri const &uri, UriValidationFlags flags, bool quiet) const
+void Textures::validateUri(Uri const &uri, UriValidationFlags flags) const
 {
-    LOG_AS("Textures::validateUri");
-    bool const isUrn = !uri.scheme().compareWithoutCase("urn");
-
     if(uri.isEmpty())
     {
-        if(!quiet) LOG_MSG("Empty path in texture %s \"%s\".") << uri << (isUrn? "URN" : "URI");
-        return false;
+        /// @throw UriMissingPathError The URI is missing the required path component.
+        throw UriMissingPathError("Textures::validateUri", "Missing path in URI \"" + uri.asText() + "\"");
     }
 
     // If this is a URN we extract the scheme from the path.
     String schemeString;
-    if(isUrn)
+    if(!uri.scheme().compareWithoutCase("urn"))
     {
         if(flags.testFlag(NotUrn))
         {
-            if(!quiet) LOG_MSG("Texture URN \"%s\" supplied, URI required.") << uri;
-            return false;
+            /// @throw UriIsUrnError The URI uses URN notation.
+            throw UriIsUrnError("Textures::validateUri", "URI \"" + uri.asText() + "\" uses URN notation");
         }
 
         String const &pathStr = uri.path().toStringRef();
@@ -172,74 +169,78 @@ bool Textures::validateUri(Uri const &uri, UriValidationFlags flags, bool quiet)
     {
         if(!flags.testFlag(AnyScheme))
         {
-            if(!quiet) LOG_MSG("Missing scheme in texture %s \"%s\".") << uri << (isUrn? "URN" : "URI");
-            return false;
+            /// @throw UriMissingSchemeError The URI is missing the required scheme component.
+            throw UriMissingSchemeError("Textures::validateUri", "Missing scheme in URI \"" + uri.asText() + "\"");
         }
     }
     else if(!knownScheme(schemeString))
     {
-        if(!quiet) LOG_MSG("Unknown scheme in texture %s \"%s\".") << uri << (isUrn? "URN" : "URI");
-        return false;
+        /// @throw UriUnknownSchemeError The URI specifies an unknown scheme.
+        throw UriUnknownSchemeError("Textures::validateUri", "Unknown scheme in URI \"" + uri.asText() + "\"");
     }
-
-    return true;
 }
 
 Textures::Manifest &Textures::find(Uri const &uri) const
 {
     LOG_AS("Textures::find");
 
-    if(!validateUri(uri, AnyScheme, true /*quiet please*/))
-        /// @throw NotFoundError Failed to locate a matching manifest.
-        throw NotFoundError("Textures::find", "URI \"" + uri.asText() + "\" failed validation");
-
-    // Perform the search.
-    // Is this a URN? (of the form "urn:schemename:uniqueid")
-    if(!uri.scheme().compareWithoutCase("urn"))
+    try
     {
-        String const &pathStr = uri.path().toStringRef();
-        int uIdPos = pathStr.indexOf(':');
-        if(uIdPos > 0)
-        {
-            String schemeName = pathStr.left(uIdPos);
-            int uniqueId      = pathStr.mid(uIdPos + 1 /*skip delimiter*/).toInt();
+        validateUri(uri, AnyScheme);
 
-            try
-            {
-                return scheme(schemeName).findByUniqueId(uniqueId);
-            }
-            catch(Scheme::NotFoundError const &)
-            {} // Ignore, we'll throw our own...
-        }
-    }
-    else
-    {
-        // No, this is a URI.
-        String const &path = uri.path();
-
-        // Does the user want a manifest in a specific scheme?
-        if(!uri.scheme().isEmpty())
+        // Perform the search.
+        // Is this a URN? (of the form "urn:schemename:uniqueid")
+        if(!uri.scheme().compareWithoutCase("urn"))
         {
-            try
+            String const &pathStr = uri.path().toStringRef();
+            int uIdPos = pathStr.indexOf(':');
+            if(uIdPos > 0)
             {
-                return scheme(uri.scheme()).find(path);
+                String schemeName = pathStr.left(uIdPos);
+                int uniqueId      = pathStr.mid(uIdPos + 1 /*skip delimiter*/).toInt();
+
+                try
+                {
+                    return scheme(schemeName).findByUniqueId(uniqueId);
+                }
+                catch(Scheme::NotFoundError const &)
+                {} // Ignore, we'll throw our own...
             }
-            catch(Scheme::NotFoundError const &)
-            {} // Ignore, we'll throw our own...
         }
         else
         {
-            // No, check each scheme in priority order.
-            foreach(Scheme *scheme, d->schemeCreationOrder)
+            // No, this is a URI.
+            String const &path = uri.path();
+
+            // Does the user want a manifest in a specific scheme?
+            if(!uri.scheme().isEmpty())
             {
                 try
                 {
-                    return scheme->find(path);
+                    return scheme(uri.scheme()).find(path);
                 }
                 catch(Scheme::NotFoundError const &)
-                {} // Ignore this error.
+                {} // Ignore, we'll throw our own...
+            }
+            else
+            {
+                // No, check each scheme in priority order.
+                foreach(Scheme *scheme, d->schemeCreationOrder)
+                {
+                    try
+                    {
+                        return scheme->find(path);
+                    }
+                    catch(Scheme::NotFoundError const &)
+                    {} // Ignore, we'll throw our own...
+                }
             }
         }
+    }
+    catch(UriValidationError const &er)
+    {
+        /// @throw NotFoundError Failed to locate a matching manifest.
+        throw NotFoundError("Textures::find", er.asText());
     }
 
     /// @throw NotFoundError Failed to locate a matching manifest.
@@ -265,26 +266,22 @@ TextureManifest *Textures::declare(Uri const &uri, de::Texture::Flags flags,
 
     if(uri.isEmpty()) return 0;
 
-    // We require a properly formed uri (but not a urn - this is a path).
-    if(!validateUri(uri, NotUrn, (verbose >= 1)))
-    {
-        LOG_WARNING("Failed declaring texture \"%s\" (invalid URI), ignoring.") << uri;
-        return 0;
-    }
-
     // Have we already created a manifest for this?
     TextureManifest *manifest = 0;
     try
     {
+        // We require a properly formed uri (but not a urn - this is a path).
+        validateUri(uri, NotUrn);
+
         manifest = &find(uri);
     }
     catch(NotFoundError const &)
     {
         manifest = &scheme(uri.scheme()).insertManifest(uri.path());
     }
-    catch(...)
+    catch(UriValidationError const &er)
     {
-        throw Error("Textures::declare", "Unexpected error declaring texture \"" + uri + "\"");
+        throw Error("Textures::declare", er.asText() + ". Failed declaring texture \"" + uri + "\"");
     }
 
     /*
@@ -443,7 +440,8 @@ static void printTextureInfo(Texture &tex)
 static void printManifestInfo(TextureManifest &manifest,
     de::Uri::ComposeAsTextFlags uriCompositionFlags = de::Uri::DefaultComposeAsTextFlags)
 {
-    String sourceDescription = !manifest.hasTexture()? "unknown" : manifest.texture().flags().testFlag(Texture::Custom)? "addon" : "game";
+    String sourceDescription = !manifest.hasTexture()? "unknown"
+        : manifest.texture().flags().testFlag(Texture::Custom)? "addon" : "game";
 
     String info = String("%1 %2")
                     .arg(manifest.composeUri().compose(uriCompositionFlags | de::Uri::DecodePath),

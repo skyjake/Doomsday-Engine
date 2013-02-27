@@ -96,6 +96,21 @@ public:
     typedef QMap<String, Scheme *> Schemes;
 
 public:
+    /// Base class for all URI validation errors. @ingroup errors
+    DENG2_ERROR(UriValidationError);
+
+    /// The validation URI is missing the scheme component. @ingroup errors
+    DENG2_SUB_ERROR(UriValidationError, UriMissingSchemeError);
+
+    /// The validation URI is missing the path component. @ingroup errors
+    DENG2_SUB_ERROR(UriValidationError, UriMissingPathError);
+
+    /// The validation URI specifies an unknown scheme. @ingroup errors
+    DENG2_SUB_ERROR(UriValidationError, UriUnknownSchemeError);
+
+    /// The validation URI is a URN. @ingroup errors
+    DENG2_SUB_ERROR(UriValidationError, UriIsUrnError);
+
     /// The referenced texture was not found. @ingroup errors
     DENG2_ERROR(NotFoundError);
 
@@ -119,14 +134,10 @@ public:
      *
      * @param uri       Uri to be validated.
      * @param flags     Validation flags.
-     * @param quiet     @c true= Do not output validation remarks to the log.
      *
-     * @return  @c true if @a Uri passes validation.
-     *
-     * @todo Should throw de::Error exceptions -ds
+     * @throws UriValidationError if not valid.
      */
-    bool validateUri(Uri const &uri, UriValidationFlags flags = 0,
-                     bool quiet = false) const;
+    void validateUri(Uri const &uri, UriValidationFlags flags = 0) const;
 
     /**
      * Determines if a manifest exists for a declared texture on @a path.
