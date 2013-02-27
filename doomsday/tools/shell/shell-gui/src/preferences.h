@@ -31,12 +31,15 @@ public:
     ~Preferences();
     
     static de::NativePath iwadFolder();
+    static QFont consoleFont();
 
 signals:
-    
+    void consoleFontChanged();
+
 public slots:
     void saveState();
     void validate();
+    void selectFont();
     
 private:
     DENG2_PRIVATE(d)

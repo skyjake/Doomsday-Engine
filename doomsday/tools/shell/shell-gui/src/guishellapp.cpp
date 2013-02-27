@@ -267,6 +267,10 @@ void GuiShellApp::showPreferences()
     {
         d->prefs = new Preferences;
         connect(d->prefs, SIGNAL(finished(int)), this, SLOT(preferencesDone()));
+        foreach(LinkWindow *win, d->windows)
+        {
+            connect(d->prefs, SIGNAL(consoleFontChanged()), win, SLOT(updateConsoleFontFromPreferences()));
+        }
         d->prefs->open();
     }
     else

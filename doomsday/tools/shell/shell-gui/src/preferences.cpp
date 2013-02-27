@@ -7,15 +7,23 @@
 #include <QDialogButtonBox>
 #include <QPushButton>
 #include <QGroupBox>
+#include <QLabel>
+#include <QFontDialog>
 
 DENG2_PIMPL(Preferences)
 {
     QCheckBox *useCustomIwad;
     FolderSelection *iwadFolder;
+    QFont consoleFont;
+    QLabel *fontDesc;
 
-    Instance(Public &i) : Base(i)
+    Instance(Public &i) : Base(i), consoleFont(defaultConsoleFont())
     {
         QSettings st;
+        if(st.contains("Preferences/consoleFont"))
+        {
+            consoleFont.fromString(st.value("Preferences/consoleFont").toString());
+        }
 
         self.setWindowTitle(tr("Preferences"));
 
@@ -23,6 +31,21 @@ DENG2_PIMPL(Preferences)
         self.setLayout(mainLayout);
 
         mainLayout->addStretch(1);
+
+        QGroupBox *fontGroup = new QGroupBox(tr("Console Font"));
+        mainLayout->addWidget(fontGroup);
+
+        fontDesc = new QLabel;
+
+        QPushButton *selFont = new QPushButton(tr("Select..."));
+        QObject::connect(selFont, SIGNAL(clicked()), thisPublic, SLOT(selectFont()));
+
+        QHBoxLayout *fl = new QHBoxLayout;
+        fl->addWidget(fontDesc, 1);
+        fl->addWidget(selFont, 0);
+        fontGroup->setLayout(fl);
+
+        updateFontDesc();
 
         QGroupBox *group = new QGroupBox(tr("IWAD Folder"));
         mainLayout->addWidget(group);
@@ -54,6 +77,29 @@ DENG2_PIMPL(Preferences)
         QObject::connect(act, SIGNAL(clicked()), &self, SLOT(saveState()));
         yes->setDefault(true);
     }
+
+    void updateFontDesc()
+    {
+        fontDesc->setText(QString("%1 %2 pt.").arg(consoleFont.family()).arg(consoleFont.pointSize()));
+        fontDesc->setFont(consoleFont);
+    }
+
+    static QFont defaultConsoleFont()
+    {
+        QFont font;
+#ifdef MACOSX
+        font = QFont("Menlo", 13);
+        if(!font.exactMatch())
+        {
+            font = QFont("Monaco", 12);
+        }
+#elif WIN32
+        font = QFont("Fixedsys", 9);
+#else
+        font = QFont("Monospace", 11);
+#endif
+        return font;
+    }
 };
 
 Preferences::Preferences(QWidget *parent) :
@@ -79,14 +125,36 @@ de::NativePath Preferences::iwadFolder()
     return "";
 }
 
+QFont Preferences::consoleFont()
+{
+    QFont font;
+    font.fromString(QSettings().value("Preferences/consoleFont",
+                                      Instance::defaultConsoleFont().toString()).toString());
+    return font;
+}
+
 void Preferences::saveState()
 {
     QSettings st;
     st.setValue("Preferences/customIwad", d->useCustomIwad->isChecked());
     st.setValue("Preferences/iwadFolder", d->iwadFolder->path().toString());
+    st.setValue("Preferences/consoleFont", d->consoleFont.toString());
+
+    emit consoleFontChanged();
 }
 
 void Preferences::validate()
 {
     d->iwadFolder->setEnabled(d->useCustomIwad->isChecked());
+}
+
+void Preferences::selectFont()
+{
+    bool ok;
+    QFont font = QFontDialog::getFont(&ok, d->consoleFont, this);
+    if(ok)
+    {
+        d->consoleFont = font;
+        d->updateFontDesc();
+    }
 }

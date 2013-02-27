@@ -21,6 +21,7 @@
 #include "qtrootwidget.h"
 #include "qttextcanvas.h"
 #include "guishellapp.h"
+#include "preferences.h"
 #include <de/LogBuffer>
 #include <de/shell/LogWidget>
 #include <de/shell/CommandLineWidget>
@@ -203,17 +204,8 @@ LinkWindow::LinkWindow(QWidget *parent)
     d->root = new QtRootWidget;
     d->stack->addWidget(d->root);
 
-#ifdef MACOSX
-    d->root->setFont(QFont("Menlo", 13));
-    if(!d->root->font().exactMatch())
-    {
-        d->root->setFont(QFont("Monaco", 12));
-    }
-#elif WIN32
-    d->root->setFont(QFont("Fixedsys", 9));
-#else
-    d->root->setFont(QFont("Monospace", 11));
-#endif
+    d->root->setFont(Preferences::consoleFont());
+
     d->updateStyle();
 
     d->stack->setCurrentIndex(0); // status
@@ -509,4 +501,9 @@ void LinkWindow::askForPassword()
     }
 
     QTimer::singleShot(1, this, SLOT(closeConnection()));
+}
+
+void LinkWindow::updateConsoleFontFromPreferences()
+{
+    d->root->setFont(Preferences::consoleFont());
 }
