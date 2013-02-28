@@ -744,11 +744,11 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
 
     // Map RTU configuration from prepared MaterialSnapshot(s).
     rtexmapunit_t const *primaryRTU       = (!(p.flags & RPF_SKYMASK))? &ms.unit(RTU_PRIMARY) : NULL;
-    rtexmapunit_t const *primaryDetailRTU = (r_detail && !(p.flags & RPF_SKYMASK) && Rtu_HasTexture(&ms.unit(RTU_PRIMARY_DETAIL)))? &ms.unit(RTU_PRIMARY_DETAIL) : NULL;
-    rtexmapunit_t const *interRTU         = (!(p.flags & RPF_SKYMASK) && Rtu_HasTexture(&ms.unit(RTU_INTER)))? &ms.unit(RTU_INTER) : NULL;
-    rtexmapunit_t const *interDetailRTU   = (r_detail && !(p.flags & RPF_SKYMASK) && Rtu_HasTexture(&ms.unit(RTU_INTER_DETAIL)))? &ms.unit(RTU_INTER_DETAIL) : NULL;
-    rtexmapunit_t const *shinyRTU         = (useShinySurfaces && !(p.flags & RPF_SKYMASK) && Rtu_HasTexture(&ms.unit(RTU_REFLECTION)))? &ms.unit(RTU_REFLECTION) : NULL;
-    rtexmapunit_t const *shinyMaskRTU     = (useShinySurfaces && !(p.flags & RPF_SKYMASK) && Rtu_HasTexture(&ms.unit(RTU_REFLECTION)) && Rtu_HasTexture(&ms.unit(RTU_REFLECTION_MASK)))? &ms.unit(RTU_REFLECTION_MASK) : NULL;
+    rtexmapunit_t const *primaryDetailRTU = (r_detail && !(p.flags & RPF_SKYMASK) && ms.unit(RTU_PRIMARY_DETAIL).hasTexture())? &ms.unit(RTU_PRIMARY_DETAIL) : NULL;
+    rtexmapunit_t const *interRTU         = (!(p.flags & RPF_SKYMASK) && ms.unit(RTU_INTER).hasTexture())? &ms.unit(RTU_INTER) : NULL;
+    rtexmapunit_t const *interDetailRTU   = (r_detail && !(p.flags & RPF_SKYMASK) && ms.unit(RTU_INTER_DETAIL).hasTexture())? &ms.unit(RTU_INTER_DETAIL) : NULL;
+    rtexmapunit_t const *shinyRTU         = (useShinySurfaces && !(p.flags & RPF_SKYMASK) && ms.unit(RTU_REFLECTION).hasTexture())? &ms.unit(RTU_REFLECTION) : NULL;
+    rtexmapunit_t const *shinyMaskRTU     = (useShinySurfaces && !(p.flags & RPF_SKYMASK) && ms.unit(RTU_REFLECTION).hasTexture() && ms.unit(RTU_REFLECTION_MASK).hasTexture())? &ms.unit(RTU_REFLECTION_MASK) : NULL;
 
     ColorRawf *rcolors          = !skyMaskedMaterial? R_AllocRendColors(realNumVertices) : 0;
     rtexcoord_t *primaryCoords  = R_AllocRendTexCoords(realNumVertices);

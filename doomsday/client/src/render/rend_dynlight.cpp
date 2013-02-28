@@ -106,7 +106,8 @@ int RIT_RenderLightProjectionIterator(const dynlight_t* dyn, void* paramaters)
         }
 
         RL_LoadDefaultRtus();
-        RL_Rtu_SetTextureUnmanaged(RTU_PRIMARY, dyn->texture);
+        RL_Rtu_SetTextureUnmanaged(RTU_PRIMARY, dyn->texture,
+                                   GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
         if(p->isWall && (p->wall.left.divCount || p->wall.right.divCount))
         {

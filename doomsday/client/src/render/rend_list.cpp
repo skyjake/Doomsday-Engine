@@ -187,6 +187,8 @@ typedef struct rendlist_texmapunit_s {
     rtexmapunit_texture_t texture;
     float opacity; // Blend amount.
     blendmode_t blendMode; // Currently used only with shiny pass.
+
+    inline bool hasTexture() const { return texture.hasTexture(); }
 } rendlist_texmapunit_t;
 
 /**
@@ -270,13 +272,6 @@ void RL_Register()
     C_VAR_INT("rend-light-blend", &dynlightBlend, 0, 0, 2);
 }
 
-static inline boolean unitHasTexture(rtexmapunit_texture_t const *tu)
-{
-    if(tu->flags & TUF_TEXTURE_IS_MANAGED)
-        return reinterpret_cast<de::Texture::Variant *>(tu->variant)->glName() != 0;
-    return tu->gl.name != 0;
-}
-
 static inline ushort unitHashForTexture(rtexmapunit_texture_t const *tu)
 {
     DGLuint glName;
@@ -294,7 +289,8 @@ static inline ushort unitHashForTexture(rtexmapunit_texture_t const *tu)
 static boolean compareUnitTexture(rtexmapunit_texture_t const *ltu,
     rtexmapunit_texture_t const *rtu)
 {
-    if(unitHasTexture(ltu) != unitHasTexture(rtu)) return false;
+    if(ltu->hasTexture() != rtu->hasTexture()) return false;
+
     if((ltu->flags & TUF_TEXTURE_IS_MANAGED) != (rtu->flags & TUF_TEXTURE_IS_MANAGED)) return false;
     if(ltu->flags & TUF_TEXTURE_IS_MANAGED)
     {
@@ -302,8 +298,10 @@ static boolean compareUnitTexture(rtexmapunit_texture_t const *ltu,
     }
     else
     {
-        if(ltu->gl.name != rtu->gl.name)  return false;
+        if(ltu->gl.name    != rtu->gl.name)    return false;
         if(ltu->gl.magMode != rtu->gl.magMode) return false;
+        if(ltu->gl.wrapS   != rtu->gl.wrapS)   return false;
+        if(ltu->gl.wrapT   != rtu->gl.wrapT)   return false;
     }
     return true;
 }
@@ -324,7 +322,8 @@ static inline void copyUnit(rendlist_texmapunit_t *ltu, rtexmapunit_t const *rtu
 
 static void rlBind(rendlist_texmapunit_t const *tmu)
 {
-    if(!unitHasTexture(&tmu->texture)) return;
+    DENG2_ASSERT(tmu);
+    if(!tmu->hasTexture()) return;
 
     if(!renderTextures)
     {
@@ -338,21 +337,20 @@ static void rlBind(rendlist_texmapunit_t const *tmu)
     }
     else
     {
-        /// @todo fixme: Do not assume texture wrap modes.
-        GL_BindTextureUnmanaged(tmu->texture.gl.name,
-                                GL_REPEAT, GL_REPEAT, tmu->texture.gl.magMode);
+        GL_BindTextureUnmanaged(tmu->texture.gl.name, tmu->texture.gl.wrapS,
+                                tmu->texture.gl.wrapT, tmu->texture.gl.magMode);
     }
 }
 
 static void rlBindTo(int unit, rendlist_texmapunit_t const *tmu)
 {
-    DENG_ASSERT(tmu);
-    if(!unitHasTexture(&tmu->texture)) return;
+    DENG2_ASSERT(tmu);
+    if(!tmu->hasTexture()) return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
-
     glActiveTexture(GL_TEXTURE0 + byte(unit));
+
     rlBind(tmu);
 }
 
@@ -618,15 +616,15 @@ static rendlist_t *getListFor(rendpolytype_t polyType, boolean isLit)
             compareUnit(TU(dest, TU_PRIMARY), texunits[TU_PRIMARY]) &&
             compareUnit(TU(dest, TU_PRIMARY_DETAIL), texunits[TU_PRIMARY_DETAIL])))
         {
-            if(!unitHasTexture(&TU(dest, TU_INTER)->texture) &&
-               !unitHasTexture(&texunits[TU_INTER]->texture))
+            if(!TU(dest, TU_INTER)->hasTexture() &&
+               !texunits[TU_INTER]->hasTexture())
             {
                 // This will do great.
                 return dest;
             }
 
             // Is this eligible for conversion to a blended list?
-            if(!dest->last && !convertable && unitHasTexture(&texunits[TU_INTER]->texture))
+            if(!dest->last && !convertable && texunits[TU_INTER]->hasTexture())
             {
                 // If necessary, this empty list will be selected.
                 convertable = dest;
@@ -668,7 +666,7 @@ static rendlist_t *getListFor(rendpolytype_t polyType, boolean isLit)
     if(polyType == PT_SHINY)
     {
         copyUnit(TU(dest, TU_PRIMARY), texunits[TU_PRIMARY]);
-        if(unitHasTexture(&texunits[TU_INTER]->texture))
+        if(texunits[TU_INTER]->hasTexture())
             copyUnit(TU(dest, TU_INTER), texunits[TU_INTER]);
     }
     else
@@ -676,7 +674,7 @@ static rendlist_t *getListFor(rendpolytype_t polyType, boolean isLit)
         copyUnit(TU(dest, TU_PRIMARY), texunits[TU_PRIMARY]);
         copyUnit(TU(dest, TU_PRIMARY_DETAIL), texunits[TU_PRIMARY_DETAIL]);
 
-        if(unitHasTexture(&texunits[TU_INTER]->texture))
+        if(texunits[TU_INTER]->hasTexture())
         {
             copyUnit(TU(dest, TU_INTER), texunits[TU_INTER]);
             copyUnit(TU(dest, TU_INTER_DETAIL), texunits[TU_INTER_DETAIL]);
@@ -792,7 +790,7 @@ static void writePrimitive(rendlist_t const *list, uint base,
         if(type == PT_SKY_MASK) continue;
 
         // Primary texture coordinates.
-        if(unitHasTexture(&TU(list, TU_PRIMARY)->texture))
+        if(TU(list, TU_PRIMARY)->hasTexture())
         {
             rtexcoord_t const *rtc = &coords[i];
             dgl_texcoord_t *tc = &texCoords[TCA_MAIN][base + i];
@@ -802,7 +800,7 @@ static void writePrimitive(rendlist_t const *list, uint base,
         }
 
         // Secondary texture coordinates.
-        if(unitHasTexture(&TU(list, TU_INTER)->texture))
+        if(TU(list, TU_INTER)->hasTexture())
         {
             rtexcoord_t const *rtc = &coords1[i];
             dgl_texcoord_t *tc = &texCoords[TCA_BLEND][base + i];
@@ -892,14 +890,14 @@ END_PROF( PROF_RL_GET_LIST );
     hdr->modColor[CB] = modColor? modColor->blue  : 0;
     hdr->modColor[CA] = 0;
 
-    if(polyType == PT_SHINY && unitHasTexture(&texunits[TU_INTER]->texture))
+    if(polyType == PT_SHINY && texunits[TU_INTER]->hasTexture())
     {
         hdr->ptexScale[0] = texunits[TU_INTER]->scale[0];
         hdr->ptexScale[1] = texunits[TU_INTER]->scale[1];
         hdr->ptexOffset[0] = texunits[TU_INTER]->offset[0] * texunits[TU_INTER]->scale[0];
         hdr->ptexOffset[1] = texunits[TU_INTER]->offset[1] * texunits[TU_INTER]->scale[1];
     }
-    else if(unitHasTexture(&texunits[TU_PRIMARY]->texture))
+    else if(texunits[TU_PRIMARY]->hasTexture())
     {
         hdr->ptexScale[0] = texunits[TU_PRIMARY]->scale[0];
         hdr->ptexScale[1] = texunits[TU_PRIMARY]->scale[1];
@@ -907,7 +905,7 @@ END_PROF( PROF_RL_GET_LIST );
         hdr->ptexOffset[1] = texunits[TU_PRIMARY]->offset[1] * texunits[TU_PRIMARY]->scale[1];
     }
 
-    if(unitHasTexture(&texunits[TU_PRIMARY_DETAIL]->texture))
+    if(texunits[TU_PRIMARY_DETAIL]->hasTexture())
     {
         hdr->texScale[0] = texunits[TU_PRIMARY_DETAIL]->scale[0];
         hdr->texScale[1] = texunits[TU_PRIMARY_DETAIL]->scale[1];
@@ -1102,11 +1100,13 @@ void RL_Rtu_TranslateOffsetv(uint idx, float const xy[2])
     Rtu_TranslateOffsetv(rtuState + idx, xy);
 }
 
-void RL_Rtu_SetTextureUnmanaged(uint idx, DGLuint glName)
+void RL_Rtu_SetTextureUnmanaged(uint idx, DGLuint glName, int wrapS, int wrapT)
 {
     errorIfNotValidRTUIndex(idx, "RL_Rtu_SetTextureUnmanaged");
     copyMappedRtuToState(idx);
     rtuState[idx].texture.gl.name = glName;
+    rtuState[idx].texture.gl.wrapS = wrapS;
+    rtuState[idx].texture.gl.wrapT = wrapT;
     rtuState[idx].texture.flags &= ~TUF_TEXTURE_IS_MANAGED;
 }
 
@@ -1156,7 +1156,7 @@ void RL_AddPolyWithCoordsModulationReflection(primtype_t primType, int flags,
 
     // We are currently limited to two texture units, therefore shiny effects
     // must be drawn in a separate pass using a new primitive.
-    if(!unitHasTexture(&rtuMap[RTU_REFLECTION]->texture)) return;
+    if(!rtuMap[RTU_REFLECTION]->hasTexture()) return;
 
     prepareTextureUnitMapForShinyPoly();
     writePoly(primType, PT_SHINY, flags & ~RPF_HAS_DYNLIGHTS, numElements,
@@ -1213,7 +1213,7 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     boolean bypass = false;
-    if(unitHasTexture(&TU(list, TU_INTER)->texture))
+    if(TU(list, TU_INTER)->hasTexture())
     {
         // Is blending allowed?
         if(conditions & DCF_NO_BLEND) return;
@@ -1260,7 +1260,8 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
             {
                 // Use the correct texture and color for the light.
                 glActiveTexture((conditions & DCF_SET_LIGHT_ENV0)? GL_TEXTURE0 : GL_TEXTURE1);
-                GL_BindTextureUnmanaged(!renderTextures? 0 : hdr->modTex);
+                GL_BindTextureUnmanaged(!renderTextures? 0 : hdr->modTex,
+                                        GL_CLAMP, GL_CLAMP);
 
                 glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, hdr->modColor);
             }
@@ -1413,7 +1414,7 @@ static int setupListState(listmode_t mode, rendlist_t *list)
 
     case LM_ALL: // All surfaces.
         // Should we do blending?
-        if(unitHasTexture(&TU(list, TU_INTER)->texture))
+        if(TU(list, TU_INTER)->hasTexture())
         {
             // Blend between two textures, modulate with primary color.
 #ifdef DENG_DEBUG
@@ -1431,7 +1432,7 @@ static int setupListState(listmode_t mode, rendlist_t *list)
             color[3] = TU(list, TU_INTER)->opacity;
             glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
         }
-        else if(!unitHasTexture(&TU(list, TU_PRIMARY)->texture))
+        else if(!TU(list, TU_PRIMARY)->hasTexture())
         {
             // Opaque texture-less surface.
             return 0;
@@ -1443,7 +1444,7 @@ static int setupListState(listmode_t mode, rendlist_t *list)
             rlBind(TU(list, TU_PRIMARY));
             GL_ModulateTexture(1);
         }
-        return DCF_SET_MATRIX_TEXTURE0 | (unitHasTexture(&TU(list, TU_INTER)->texture)? DCF_SET_MATRIX_TEXTURE1 : 0);
+        return DCF_SET_MATRIX_TEXTURE0 | (TU(list, TU_INTER)->hasTexture()? DCF_SET_MATRIX_TEXTURE1 : 0);
 
     case LM_LIGHT_MOD_TEXTURE:
         // Modulate sector light, dynamic light and regular texture.
@@ -1461,7 +1462,7 @@ static int setupListState(listmode_t mode, rendlist_t *list)
 
     case LM_BLENDED: {
         // Only render the blended surfaces.
-        if(!unitHasTexture(&TU(list, TU_INTER)->texture))
+        if(!TU(list, TU_INTER)->hasTexture())
             return DCF_SKIP;
 
 #ifdef DENG_DEBUG
@@ -1483,7 +1484,7 @@ static int setupListState(listmode_t mode, rendlist_t *list)
 
     case LM_BLENDED_FIRST_LIGHT:
         // Only blended surfaces.
-        if(!unitHasTexture(&TU(list, TU_INTER)->texture))
+        if(!TU(list, TU_INTER)->hasTexture())
             return DCF_SKIP;
         return DCF_SET_MATRIX_TEXTURE1 | DCF_SET_LIGHT_ENV0;
 
@@ -1498,13 +1499,13 @@ static int setupListState(listmode_t mode, rendlist_t *list)
 
     case LM_BLENDED_MOD_TEXTURE:
         // Blending required.
-        if(!unitHasTexture(&TU(list, TU_INTER)->texture))
+        if(!TU(list, TU_INTER)->hasTexture())
             break;
     case LM_MOD_TEXTURE:
     case LM_MOD_TEXTURE_MANY_LIGHTS:
         // Texture for surfaces with (many) dynamic lights.
         // Should we do blending?
-        if(unitHasTexture(&TU(list, TU_INTER)->texture))
+        if(TU(list, TU_INTER)->hasTexture())
         {
             // Mode 3 actually just disables the second texture stage,
             // which would modulate with primary color.
@@ -1533,9 +1534,10 @@ static int setupListState(listmode_t mode, rendlist_t *list)
 
     case LM_UNBLENDED_MOD_TEXTURE_AND_DETAIL:
         // Blending is not done now.
-        if(unitHasTexture(&TU(list, TU_INTER)->texture))
+        if(TU(list, TU_INTER)->hasTexture())
             break;
-        if(unitHasTexture(&TU(list, TU_PRIMARY_DETAIL)->texture))
+
+        if(TU(list, TU_PRIMARY_DETAIL)->hasTexture())
         {
             selectTexUnits(2);
             GL_ModulateTexture(9); // Tex+Detail, no color.
@@ -1553,7 +1555,7 @@ static int setupListState(listmode_t mode, rendlist_t *list)
         break;
 
     case LM_ALL_DETAILS:
-        if(unitHasTexture(&TU(list, TU_PRIMARY_DETAIL)->texture))
+        if(TU(list, TU_PRIMARY_DETAIL)->hasTexture())
         {
             rlBind(TU(list, TU_PRIMARY_DETAIL));
             // Render all surfaces on the list.
@@ -1563,9 +1565,10 @@ static int setupListState(listmode_t mode, rendlist_t *list)
 
     case LM_UNBLENDED_TEXTURE_AND_DETAIL:
         // Only unblended. Details are optional.
-        if(unitHasTexture(&TU(list, TU_INTER)->texture))
+        if(TU(list, TU_INTER)->hasTexture())
             break;
-        if(unitHasTexture(&TU(list, TU_PRIMARY_DETAIL)->texture))
+
+        if(TU(list, TU_PRIMARY_DETAIL)->hasTexture())
         {
             selectTexUnits(2);
             GL_ModulateTexture(8);
@@ -1585,9 +1588,11 @@ static int setupListState(listmode_t mode, rendlist_t *list)
 
     case LM_BLENDED_DETAILS: {
         // We'll only render blended primitives.
-        if(!unitHasTexture(&TU(list, TU_INTER)->texture)) break;
-        if(!unitHasTexture(&TU(list, TU_PRIMARY_DETAIL)->texture) ||
-           !unitHasTexture(&TU(list, TU_INTER_DETAIL)->texture))
+        if(!TU(list, TU_INTER)->hasTexture())
+            break;
+
+        if(!TU(list, TU_PRIMARY_DETAIL)->hasTexture() ||
+           !TU(list, TU_INTER_DETAIL)->hasTexture())
             break;
 
         rlBindTo(0, TU(list, TU_PRIMARY_DETAIL));
@@ -1600,12 +1605,12 @@ static int setupListState(listmode_t mode, rendlist_t *list)
 
     case LM_SHADOW:
         // Render all primitives.
-        if(unitHasTexture(&TU(list, TU_PRIMARY)->texture))
+        if(TU(list, TU_PRIMARY)->hasTexture())
             rlBind(TU(list, TU_PRIMARY));
         else
             GL_BindTextureUnmanaged(0);
 
-        if(!unitHasTexture(&TU(list, TU_PRIMARY)->texture))
+        if(!TU(list, TU_PRIMARY)->hasTexture())
         {
             // Apply a modelview shift.
             glMatrixMode(GL_MODELVIEW);
@@ -1619,14 +1624,14 @@ static int setupListState(listmode_t mode, rendlist_t *list)
         return 0;
 
     case LM_MASKED_SHINY:
-        if(unitHasTexture(&TU(list, TU_INTER)->texture))
+        if(TU(list, TU_INTER)->hasTexture())
         {
             selectTexUnits(2);
             // The intertex holds the info for the mask texture.
             rlBindTo(1, TU(list, TU_INTER));
-            { float color[4];
+            float color[4];
             color[0] = color[1] = color[2] = 0; color[3] = 1.0f;
-            glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color); }
+            glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
         }
 
         // Intentional fall-through.
@@ -1634,7 +1639,7 @@ static int setupListState(listmode_t mode, rendlist_t *list)
     case LM_ALL_SHINY:
     case LM_SHINY:
         rlBindTo(0, TU(list, TU_PRIMARY));
-        if(!unitHasTexture(&TU(list, TU_INTER)->texture))
+        if(!TU(list, TU_INTER)->hasTexture())
             selectTexUnits(1);
 
         // Render all primitives.
@@ -1660,7 +1665,7 @@ static void finishListState(listmode_t mode, rendlist_t *list)
         break;
 
     case LM_SHADOW:
-        if(!unitHasTexture(&TU(list, TU_PRIMARY)->texture))
+        if(!TU(list, TU_PRIMARY)->hasTexture())
         {
             // Restore original modelview matrix.
             glMatrixMode(GL_MODELVIEW);

@@ -62,11 +62,22 @@ typedef struct rtexmapunit_texture_s {
         struct {
             DGLuint name; ///< Texture used on this layer (if any).
             int magMode; ///< GL texture magnification filter.
+            int wrapS; ///< GL texture S axis wrap mode.
+            int wrapT; ///< GL texture T axis wrap mode.
         } gl;
-        de::Texture::Variant *variant;
+        de::TextureVariant *variant;
     };
     /// @ref textureUnitFlags
     int flags;
+
+#ifdef __cplusplus
+    inline bool hasTexture() const
+    {
+        if(flags & TUF_TEXTURE_IS_MANAGED)
+            return variant && variant->glName() != 0;
+        return gl.name != 0;
+    }
+#endif
 } rtexmapunit_texture_t;
 
 /**
@@ -90,6 +101,10 @@ typedef struct rtexmapuint_s {
 
     /// Texture-space origin translation (unscaled).
     vec2f_t offset;
+
+#ifdef __cplusplus
+    bool hasTexture() const { return texture.hasTexture(); }
+#endif
 } rtexmapunit_t;
 
 #ifdef __cplusplus
@@ -161,8 +176,6 @@ void R_FreeRendTexCoords(rtexcoord_t *rtexcoords);
 
 /// Manipulators, for convenience.
 void Rtu_Init(rtexmapunit_t *rtu);
-
-boolean Rtu_HasTexture(rtexmapunit_t const *rtu);
 
 /// Change the scale property.
 void Rtu_SetScale(rtexmapunit_t *rtu, float s, float t);

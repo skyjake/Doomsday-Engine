@@ -300,7 +300,7 @@ void R_FreeRendColors(ColorRawf* rcolors)
     DEBUG_Message(("R_FreeRendPoly: Dangling poly ptr!\n"));
 }
 
-void R_FreeRendTexCoords(rtexcoord_t* rtexcoords)
+void R_FreeRendTexCoords(rtexcoord_t *rtexcoords)
 {
     if(!rtexcoords) return;
 
@@ -319,20 +319,15 @@ void R_FreeRendTexCoords(rtexcoord_t* rtexcoords)
 void Rtu_Init(rtexmapunit_t* rtu)
 {
     DENG_ASSERT(rtu);
-    rtu->texture.gl.name = 0;
+    rtu->texture.gl.name    = 0;
+    rtu->texture.gl.wrapS   = GL_REPEAT;
+    rtu->texture.gl.wrapT   = GL_REPEAT;
     rtu->texture.gl.magMode = GL_LINEAR;
-    rtu->texture.flags = 0;
+    rtu->texture.flags      = 0;
     rtu->blendMode = BM_NORMAL;
     rtu->opacity = 1;
     rtu->scale[0] = rtu->scale[1] = 1;
     rtu->offset[0] = rtu->offset[1] = 0;
-}
-
-boolean Rtu_HasTexture(rtexmapunit_t const *rtu)
-{
-    if(rtu->texture.flags & TUF_TEXTURE_IS_MANAGED)
-        return rtu->texture.variant->glName() != 0;
-    return rtu->texture.gl.name != 0;
 }
 
 void Rtu_SetScale(rtexmapunit_t* rtu, float s, float t)

@@ -158,12 +158,8 @@ static void initShadowPrimitive(void)
 #undef SETCOLOR_BLACK
 }
 
-void Rend_RenderMobjShadows(void)
+void Rend_RenderMobjShadows()
 {
-    const Sector* sec;
-    mobj_t* mo;
-    uint i;
-
     if(!theMap) return;
 
     // Disabled for now, awaiting a heuristic analyser to enable it on selective mobjs.
@@ -172,22 +168,23 @@ void Rend_RenderMobjShadows(void)
 
     // Configure the render list primitive writer's texture unit state now.
     RL_LoadDefaultRtus();
-    RL_Rtu_SetTextureUnmanaged(RTU_PRIMARY, GL_PrepareLSTexture(LST_DYNAMIC));
+    RL_Rtu_SetTextureUnmanaged(RTU_PRIMARY, GL_PrepareLSTexture(LST_DYNAMIC),
+                               GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
     // Initialize the invariant parts of our shadow primitive now.
     initShadowPrimitive();
 
     // Process all sectors:
-    for(i = 0; i < NUM_SECTORS; ++i)
+    for(uint i = 0; i < NUM_SECTORS; ++i)
     {
-        sec = GameMap_Sector(theMap, i);
+        Sector const *sec = GameMap_Sector(theMap, i);
 
         // We are only interested in those mobjs within sectors marked as
         // 'visible' for the current render frame (viewer dependent).
         if(!(sec->frameFlags & SIF_VISIBLE)) continue;
 
         // Process all mobjs linked to this sector:
-        for(mo = sec->mobjList; mo; mo = mo->sNext)
+        for(mobj_t *mo = sec->mobjList; mo; mo = mo->sNext)
         {
             processMobjShadow(mo);
         }
@@ -298,12 +295,13 @@ int RIT_RenderShadowProjectionIterator(const shadowprojection_t* sp, void* param
     return 0; // Continue iteration.
 }
 
-void Rend_RenderShadowProjections(uint listIdx, rendershadowprojectionparams_t* p)
+void Rend_RenderShadowProjections(uint listIdx, rendershadowprojectionparams_t *p)
 {
     // Configure the render list primitive writer's texture unit state now.
     RL_LoadDefaultRtus();
-    RL_Rtu_SetTextureUnmanaged(RTU_PRIMARY, GL_PrepareLSTexture(LST_DYNAMIC));
+    RL_Rtu_SetTextureUnmanaged(RTU_PRIMARY, GL_PrepareLSTexture(LST_DYNAMIC),
+                               GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
     // Write shadows to the render lists.
-    R_IterateShadowProjections2(listIdx, RIT_RenderShadowProjectionIterator, (void*)p);
+    R_IterateShadowProjections2(listIdx, RIT_RenderShadowProjectionIterator, (void *)p);
 }

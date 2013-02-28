@@ -1008,7 +1008,8 @@ static void renderShadowSeg(rvertex_t const *origVertices, rendershadowseg_param
     {
         // Write multiple polys depending on rend params.
         RL_LoadDefaultRtus();
-        RL_Rtu_SetTextureUnmanaged(RTU_PRIMARY, GL_PrepareLSTexture(segp->texture));
+        RL_Rtu_SetTextureUnmanaged(RTU_PRIMARY, GL_PrepareLSTexture(segp->texture),
+                                   GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
         if(p->wall.left.divCount || p->wall.right.divCount)
         {
