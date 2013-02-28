@@ -1,5 +1,11 @@
 /** @file doomsdayinfo.cpp  Information about Doomsday Engine and its plugins.
  *
+ * @todo This information should not be hardcoded. Instead, it should be read
+ * from Info files, and some functionality could be determined using Doomsday
+ * Script or a shared Game Rules library.
+ *
+ * @todo Option to order games by release date, name, or some other criteria.
+ *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
