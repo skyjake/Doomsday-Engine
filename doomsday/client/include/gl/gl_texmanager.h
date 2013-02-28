@@ -294,7 +294,6 @@ inline de::TextureVariant *GL_PrepareTexture(de::Texture &texture,
 
 DGLuint GL_PrepareSysFlaremap(flaretexid_t which);
 DGLuint GL_PrepareLSTexture(lightingtexid_t which);
-DGLuint GL_PrepareUITexture(uitexid_t which);
 
 DGLuint GL_PrepareRawTexture(rawtex_t &rawTex);
 

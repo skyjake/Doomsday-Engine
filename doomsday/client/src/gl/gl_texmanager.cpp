@@ -141,9 +141,6 @@ DGLuint lightingTextures[NUM_LIGHTING_TEXTURES];
 // Names of the flare textures (halos).
 DGLuint sysFlareTextures[NUM_SYSFLARE_TEXTURES];
 
-// Names of the UI textures.
-DGLuint uiTextures[NUM_UITEXTURES];
-
 static boolean initedOk = false; // Init done.
 
 // Graphic resource types.
@@ -1086,7 +1083,6 @@ void GL_InitTextureManager()
     // System textures loaded in GL_LoadSystemTextures.
     std::memset(sysFlareTextures, 0, sizeof(sysFlareTextures));
     std::memset(lightingTextures, 0, sizeof(lightingTextures));
-    std::memset(uiTextures, 0, sizeof(uiTextures));
 
     // Initialization done.
     initedOk = true;
@@ -1237,12 +1233,6 @@ void GL_LoadSystemTextures()
 {
     if(novideo || !initedOk) return;
 
-    // Preload all UI textures.
-    for(int i = 0; i < NUM_UITEXTURES; ++i)
-    {
-        GL_PrepareUITexture(uitexid_t(i));
-    }
-
     // Preload lighting system textures.
     GL_PrepareLSTexture(LST_DYNAMIC);
     GL_PrepareLSTexture(LST_GRADIENT);
@@ -1274,9 +1264,6 @@ void GL_ReleaseSystemTextures()
 
     glDeleteTextures(NUM_SYSFLARE_TEXTURES, (GLuint const *) sysFlareTextures);
     std::memset(sysFlareTextures, 0, sizeof(sysFlareTextures));
-
-    glDeleteTextures(NUM_UITEXTURES, (GLuint const *) uiTextures);
-    std::memset(uiTextures, 0, sizeof(uiTextures));
 
     GL_ReleaseTexturesByScheme("System");
     Rend_ParticleReleaseSystemTextures();
@@ -2106,51 +2093,6 @@ DGLuint GL_PrepareLSTexture(lightingtexid_t which)
 
     DENG_ASSERT(lightingTextures[which] != 0);
     return lightingTextures[which];
-}
-
-DGLuint GL_PrepareUITexture(uitexid_t which)
-{
-    if(novideo) return 0;
-    if(which < 0 || which >= NUM_UITEXTURES) return 0;
-
-    static const struct TexDef {
-        char const *name;
-        gfxmode_t mode;
-    } texDefs[NUM_UITEXTURES] = {
-        /* UITEX_MOUSE */       { "Mouse",      LGM_NORMAL },
-        /* UITEX_CORNER */      { "BoxCorner",  LGM_NORMAL },
-        /* UITEX_FILL */        { "BoxFill",    LGM_NORMAL },
-        /* UITEX_SHADE */       { "BoxShade",   LGM_NORMAL },
-        /* UITEX_HINT */        { "Hint",       LGM_NORMAL },
-        /* UITEX_LOGO */        { "Logo",       LGM_NORMAL },
-        /* UITEX_BACKGROUND */  { "Background", LGM_GRAYSCALE }
-    };
-    struct TexDef const &def = texDefs[which];
-
-    if(!uiTextures[which])
-    {
-        image_t image;
-
-        if(GL_LoadExtImage(image, def.name, def.mode))
-        {
-            // Loaded successfully and converted accordingly.
-            // Upload the image to GL.
-            DGLuint glName = GL_NewTextureWithParams(
-                ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
-                  image.pixelSize == 3 ? DGL_RGB :
-                  image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE ),
-                image.size.width, image.size.height, image.pixels,
-                TXCF_NO_COMPRESSION, 0, GL_LINEAR, GL_LINEAR,
-                0 /*no anisotropy*/, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-
-            uiTextures[which] = glName;
-        }
-
-        Image_Destroy(&image);
-    }
-
-    //DENG_ASSERT(uiTextures[which] != 0);
-    return uiTextures[which];
 }
 
 DGLuint GL_PrepareSysFlaremap(flaretexid_t which)

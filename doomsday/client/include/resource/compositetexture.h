@@ -161,7 +161,7 @@ public:
     /**
      * Returns @c true if the texture has flagged @a flagsToTest.
      */
-    inline bool isFlagged(Flags flagsToTest) const { return flags() & flagsToTest; }
+    inline bool isFlagged(Flags flagsToTest) const { return !!(flags() & flagsToTest); }
 
     /**
      * Returns the flags for the composite texture.
