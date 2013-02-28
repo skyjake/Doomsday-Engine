@@ -23,18 +23,18 @@
  * @todo Needs to be redesigned.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <de/memory.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 #include "de_platform.h"
 #include "de_console.h"
 #include "de_misc.h"
 #include "de_graphics.h"
-
-#include "render/sky.h"
+#include "dd_def.h"
 #include "def_data.h"
+#include "render/sky.h"
+#include <de/memory.h>
 
 // Helper Routines -------------------------------------------------------
 

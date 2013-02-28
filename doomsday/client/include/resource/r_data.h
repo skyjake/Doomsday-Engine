@@ -21,17 +21,10 @@
 #ifndef LIBDENG_REFRESH_DATA_H
 #define LIBDENG_REFRESH_DATA_H
 
-#include "dd_types.h"
-#ifdef __CLIENT__
-#  include "gl/gl_main.h"
-#endif
-#include "dd_def.h"
-#include "def_data.h"
 #include "Textures"
-#include "api_thinker.h"
 #include <de/Vector>
 
-struct font_s;
+//struct font_s;
 
 /**
  * Textures used in the lighting system.
@@ -66,10 +59,10 @@ typedef enum uitexid_e {
     NUM_UITEXTURES
 } uitexid_t;
 
-void R_InitSystemTextures(void);
-void R_InitCompositeTextures(void);
-void R_InitFlatTextures(void);
-void R_InitSpriteTextures(void);
+void R_InitSystemTextures();
+void R_InitCompositeTextures();
+void R_InitFlatTextures();
+void R_InitSpriteTextures();
 
 /**
  * Search the application's Textures collection for a texture with the specified

@@ -53,6 +53,7 @@
 #  include "serversystem.h"
 #endif
 
+#include "dd_def.h"
 #include "dd_main.h"
 #include "dd_loop.h"
 #include "map/p_players.h"

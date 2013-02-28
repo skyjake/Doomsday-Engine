@@ -36,6 +36,7 @@
 #include "de_filesys.h"
 
 #ifdef __CLIENT__
+#  include "gl/gl_main.h"
 #  include "gl/gl_texmanager.h"
 #endif
 #include "resource/font.h"

@@ -30,6 +30,7 @@
 #include "de_resource.h"
 #include "de_infine.h"
 #include "de_misc.h"
+#include "dd_def.h"
 #include "dd_main.h"
 
 #include "ui/finaleinterpreter.h"
