@@ -18,75 +18,118 @@
  * 02110-1301 USA</small>
  */
 
-#include <QList>
-#include <QRect>
+#include "de_platform.h"
+#include "de_filesys.h"
+#include "resource/patch.h"
+#include "resource/patchname.h"
 #include <de/ByteRefArray>
 #include <de/String>
 #include <de/Reader>
+#include <QList>
+#include <QRect>
 
-#include "de_platform.h"
-#include "de_filesys.h"
-
-#include "resource/patch.h"
-#include "resource/patchname.h"
 #include "resource/compositetexture.h"
 
-namespace de {
+using namespace de;
 
 CompositeTexture::Component::Component(int xOrigin, int yOrigin)
     : origin_(xOrigin, yOrigin), lumpNum_(-1)
 {}
 
-Vector2i const &CompositeTexture::Component::origin() const {
+Vector2i const &CompositeTexture::Component::origin() const
+{
     return origin_;
 }
 
-lumpnum_t CompositeTexture::Component::lumpNum() const {
+lumpnum_t CompositeTexture::Component::lumpNum() const
+{
     return lumpNum_;
 }
 
+DENG2_PIMPL(CompositeTexture)
+{
+    /// Symbolic name of the texture (percent encoded).
+    String name;
+
+    /// Flags denoting usage traits.
+    CompositeTexture::Flags flags;
+
+    /// Logical dimensions of the texture in map coordinate space units.
+    Vector2i logicalDimensions;
+
+    /// Dimensions of the texture in pixels.
+    Vector2i dimensions;
+
+    /// Index of this resource determined by the logic of the indexing algorithm
+    /// used by the original game.
+    int origIndex;
+
+    /// Set of component images to be composited.
+    Components components;
+
+    Instance(Public *i, String percentEncodedName, int width, int height,
+             CompositeTexture::Flags _flags)
+      : Base(i),
+        name(percentEncodedName),
+        flags(_flags),
+        logicalDimensions(width, height),
+        dimensions(0, 0),
+        origIndex(-1)
+    {}
+};
+
 CompositeTexture::CompositeTexture(String percentEncodedName,
-    int width, int height, Flags _flags)
-    : name(percentEncodedName),
-      flags_(_flags),
-      logicalDimensions_(width, height),
-      dimensions_(0, 0),
-      origIndex_(-1)
+    int width, int height, Flags flags)
+    : d(new Instance(this, percentEncodedName, width, height, flags))
 {}
 
-String CompositeTexture::percentEncodedName() const {
-    return name;
+CompositeTexture::~CompositeTexture()
+{
+    delete d;
 }
 
-String const &CompositeTexture::percentEncodedNameRef() const {
-    return name;
+String CompositeTexture::percentEncodedName() const
+{
+    return d->name;
 }
 
-Vector2i const &CompositeTexture::logicalDimensions() const {
-    return logicalDimensions_;
+String const &CompositeTexture::percentEncodedNameRef() const
+{
+    return d->name;
 }
 
-Vector2i const &CompositeTexture::dimensions() const {
-    return dimensions_;
+Vector2i const &CompositeTexture::logicalDimensions() const
+{
+    return d->logicalDimensions;
 }
 
-CompositeTexture::Components const &CompositeTexture::components() const {
-    return components_;
+Vector2i const &CompositeTexture::dimensions() const
+{
+    return d->dimensions;
 }
 
-CompositeTexture::Flags &CompositeTexture::flags() {
-    return flags_;
+CompositeTexture::Components const &CompositeTexture::components() const
+{
+    return d->components;
 }
 
-int CompositeTexture::origIndex() const {
-    return origIndex_;
+CompositeTexture::Flags CompositeTexture::flags() const
+{
+    return d->flags;
 }
 
-void CompositeTexture::setOrigIndex(int newIndex) {
-    origIndex_ = newIndex;
+
+int CompositeTexture::origIndex() const
+{
+    return d->origIndex;
 }
 
-static String readAndPercentEncodeRawName(Reader &from)
+void CompositeTexture::setOrigIndex(int newIndex)
+{
+    d->origIndex = newIndex;
+}
+
+static String readAndPercentEncodeRawName(de::Reader &from)
 {
     /// @attention The raw ASCII name is not necessarily terminated.
     char asciiName[9];
@@ -98,13 +141,13 @@ static String readAndPercentEncodeRawName(Reader &from)
     return QString(QByteArray(asciiName).toPercentEncoding());
 }
 
-CompositeTexture *CompositeTexture::constructFrom(Reader &reader,
+CompositeTexture *CompositeTexture::constructFrom(de::Reader &reader,
     QList<PatchName> patchNames, ArchiveFormat format)
 {
     CompositeTexture *pctex = new CompositeTexture;
 
     // First is the raw name.
-    pctex->name = readAndPercentEncodeRawName(reader);
+    pctex->d->name = readAndPercentEncodeRawName(reader);
 
     // Next is some unused junk from a previous format version.
     dint16 unused16;
@@ -119,10 +162,10 @@ CompositeTexture *CompositeTexture::constructFrom(Reader &reader,
 
     // We'll initially accept these values as logical dimensions. However
     // we may need to adjust once we've checked the patch dimensions.
-    pctex->logicalDimensions_.x = dimensions[0];
-    pctex->logicalDimensions_.y = dimensions[1];
+    pctex->d->logicalDimensions.x = dimensions[0];
+    pctex->d->logicalDimensions.y = dimensions[1];
 
-    pctex->dimensions_ = pctex->logicalDimensions_;
+    pctex->d->dimensions = pctex->d->logicalDimensions;
 
     if(format == DoomFormat)
     {
@@ -139,8 +182,8 @@ CompositeTexture *CompositeTexture::constructFrom(Reader &reader,
     dint16 componentCount;
     reader >> componentCount;
 
-    QRect geom(QPoint(0, 0), QSize(pctex->logicalDimensions_.x,
-                                   pctex->logicalDimensions_.y));
+    QRect geom(QPoint(0, 0), QSize(pctex->d->logicalDimensions.x,
+                                   pctex->d->logicalDimensions.y));
 
     int foundComponentCount = 0;
     for(dint16 i = 0; i < componentCount; ++i)
@@ -158,7 +201,7 @@ CompositeTexture *CompositeTexture::constructFrom(Reader &reader,
         if(pnamesIndex < 0 || pnamesIndex >= patchNames.count())
         {
             LOG_WARNING("Invalid PNAMES index %i in composite texture \"%s\", ignoring.")
-                << pnamesIndex << pctex->name;
+                << pnamesIndex << pctex->d->name;
         }
         else
         {
@@ -174,7 +217,7 @@ CompositeTexture *CompositeTexture::constructFrom(Reader &reader,
                 // If this a "custom" component - the whole texture is.
                 if(file.container().hasCustom())
                 {
-                    pctex->flags_ |= Custom;
+                    pctex->d->flags |= Custom;
                 }
 
                 // If this is a Patch - unite the geometry of the component.
@@ -192,7 +235,7 @@ CompositeTexture *CompositeTexture::constructFrom(Reader &reader,
                         LOG_WARNING("Component image \"%s\" (#%i) does not appear to be a valid Patch. "
                                     "It may be missing from composite texture \"%s\".")
                             << patchNames[pnamesIndex].percentEncodedNameRef() << i
-                            << pctex->name;
+                            << pctex->d->name;
                     }
                 }
                 file.unlock();
@@ -201,7 +244,7 @@ CompositeTexture *CompositeTexture::constructFrom(Reader &reader,
             {
                 LOG_WARNING("Missing component image \"%s\" (#%i) in composite texture \"%s\", ignoring.")
                     << patchNames[pnamesIndex].percentEncodedNameRef() << i
-                    << pctex->name;
+                    << pctex->d->name;
             }
         }
 
@@ -209,21 +252,19 @@ CompositeTexture *CompositeTexture::constructFrom(Reader &reader,
         reader >> unused16 >> unused16;
 
         // Add this component.
-        pctex->components_.push_back(patch);
+        pctex->d->components.push_back(patch);
     }
 
     // Clip and apply the final height.
     if(geom.top()  < 0) geom.setTop(0);
-    if(geom.height() > pctex->logicalDimensions_.y)
-        pctex->dimensions_.y = geom.height();
+    if(geom.height() > pctex->d->logicalDimensions.y)
+        pctex->d->dimensions.y = geom.height();
 
     if(!foundComponentCount)
     {
         LOG_WARNING("Zero valid component images in composite texture %s, ignoring.")
-            << pctex->name;
+            << pctex->d->name;
     }
 
     return pctex;
 }
-
-} // namespace de

@@ -103,6 +103,7 @@ public:
      */
     explicit CompositeTexture(String percentEncodedName = "", int logicalWidth = 0,
         int logicalHeight = 0, Flags _flags = 0);
+    ~CompositeTexture();
 
     /**
      * Construct a composite texture by deserializing an archived id-tech 1
@@ -162,25 +163,10 @@ public:
      */
     Flags &flags();
 
+
+
 private:
-    /// Symbolic name of the texture (percent encoded).
-    String name;
-
-    /// Flags denoting usage traits.
-    Flags flags_;
-
-    /// Logical dimensions of the texture in map coordinate space units.
-    Vector2i logicalDimensions_;
-
-    /// Dimensions of the texture in pixels.
-    Vector2i dimensions_;
-
-    /// Index of this resource determined by the logic of the indexing algorithm
-    /// used by the original game.
-    int origIndex_;
-
-    /// Set of component images to be composited.
-    Components components_;
+    DENG2_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(CompositeTexture::Flags)
