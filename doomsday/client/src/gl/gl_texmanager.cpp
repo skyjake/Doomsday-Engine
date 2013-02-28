@@ -3097,54 +3097,16 @@ DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height,
     return c.name;
 }
 
-/**
- * @param tex  Texture instance to compose the cache name of.
- * @return The chosen cache name for this texture.
- */
-Path GL_ComposeCachePathForTexture(de::Texture &tex)
-{
-    de::Uri uri = tex.manifest().composeUri();
-    return String("texcache") / uri.scheme() / uri.path() + ".png";
-}
-
-boolean GL_DumpImage(image_t const *origImg, char const *filePath)
-{
-    DENG_ASSERT(origImg);
-
-    // Do we need to convert to ABGR32 first?
-    image_t imgABGR32;
-    image_t const *img = origImg;
-    if(img->pixelSize != 4 || img->paletteId)
-    {
-        Image_Init(&imgABGR32);
-        imgABGR32.pixels = GL_ConvertBuffer(img->pixels, img->size.width, img->size.height,
-                                            ((img->flags & IMGF_IS_MASKED)? 2 : 1),
-                                            R_ToColorPalette(img->paletteId), 4);
-        imgABGR32.pixelSize = 4;
-        imgABGR32.size.width  = img->size.width;
-        imgABGR32.size.height = img->size.height;
-        img = &imgABGR32;
-    }
-
-    bool savedOK = Image_Save(img, filePath);
-
-    if(img == &imgABGR32)
-    {
-        Image_Destroy(&imgABGR32);
-    }
-    return savedOK;
-}
-
 D_CMD(LowRes)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argv); DENG_UNUSED(argc);
+    DENG2_UNUSED3(src, argv, argc);
     GL_LowRes();
     return true;
 }
 
 D_CMD(TexReset)
 {
-    DENG_UNUSED(src);
+    DENG2_UNUSED(src);
 
     if(argc == 2 && !stricmp(argv[1], "raw"))
     {
@@ -3161,7 +3123,7 @@ D_CMD(TexReset)
 
 D_CMD(MipMap)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc);
+    DENG2_UNUSED2(src, argc);
 
     int newMipMode = String(argv[1]).toInt();
     if(newMipMode < 0 || newMipMode > 5)

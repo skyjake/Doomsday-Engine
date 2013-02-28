@@ -90,8 +90,6 @@ boolean GL_OptimalTextureSize(int width, int height, boolean noStretch, boolean 
  */
 void GL_SetAllTexturesMinFilter(int minFilter);
 
-void GL_UpdateTexParams(int mipMode);
-
 /**
  * Updates the textures, flats and sprites (gameTex) or the user
  * interface textures (patches and raw screens).
@@ -139,7 +137,7 @@ void GL_ReleaseTexturesByColorPalette(colorpaletteid_t paletteId);
 /// Release all textures used with 'Raw Images'.
 void GL_ReleaseTexturesForRawImages();
 
-DENG_EXTERN_C void GL_PruneTextureVariantSpecifications();
+void GL_PruneTextureVariantSpecifications();
 
 /**
  * Prepares all the system textures (dlight, ptcgens).
@@ -219,19 +217,6 @@ texturevariantspecification_t &GL_DetailTextureVariantSpecificationForContext(
  * @param spec  Specification to echo.
  */
 void GL_PrintTextureVariantSpecification(texturevariantspecification_t const &spec);
-
-/**
- * Dump the pixel data of @a img to an ARGB32 at @a filePath.
- *
- * @param image         The image to be dumped. A temporary copy will be made if
- *                      the pixel data is not already in either ARGB32 or ABGR32
- *                      formats.
- * @param filePath      Location to write the new file. If an extension is not
- *                      specified the file will be in PNG format.
- *
- * @return @c true= Dump was successful.
- */
-boolean GL_DumpImage(image_t const &image, char const *filePath);
 
 /// Result of a request to prepare a Texture::Variant
 typedef enum {
