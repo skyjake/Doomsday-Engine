@@ -1,4 +1,4 @@
-/** @file ui_main.cpp
+/** @file ui_main.cpp Graphical User Interface
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -17,15 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Graphical User Interface
- *
- * Has ties to the console routines.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
-#include <math.h>
+#include <cmath>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -40,38 +32,28 @@
 #include "render/rend_main.h"
 #include "render/rend_font.h"
 #include "render/rend_console.h" // move Rend_ConsoleUpdateTitle somewhere more suitable
+#include "MaterialSnapshot"
+#include "Material"
 
-// MACROS ------------------------------------------------------------------
+#include "ui/ui_main.h"
+
+using namespace de;
 
 #define SCROLL_TIME     3
 #define UICURSORWIDTH   32
 #define UICURSORHEIGHT  64
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
 D_CMD(UIColor);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static int listItemHeight(uidata_list_t* listdata);
 static int listButtonHeight(ui_object_t* ob);
 static int listThumbPos(ui_object_t* ob);
 static void strCpyLen(char* dest, const char* src, int maxWidth);
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
 extern int glMaxTexSize;
 extern boolean stopTime;
 extern boolean tickUI;
 extern boolean drawGame;
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean uiActive = false; /// The user interface is active.
 static boolean uiShowMouse = true;
@@ -108,8 +90,6 @@ static ui_color_t ui_colors[NUM_UI_COLORS] = {
 
 static boolean allowEscape; /// Allow the user to exit a ui page using the escape key.
 
-// CODE --------------------------------------------------------------------
-
 void UI_Register(void)
 {
     // Cvars
@@ -121,6 +101,13 @@ void UI_Register(void)
 
     CP_Register();
     Fonts_Register();
+}
+
+de::MaterialVariantSpec const &Ui_MaterialSpec(int texSpecFlags)
+{
+    return App_Materials().variantSpecForContext(MC_UI, texSpecFlags | TSF_NO_COMPRESSION,
+                                                 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                                 1, 1, 0, false, false, false, false);
 }
 
 void UI_PageInit(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame, boolean noescape)
@@ -1938,8 +1925,12 @@ void UI_Shade(const Point2Raw* origin, const Size2Raw* size, int border, ui_colo
     if(bottomAlpha < 0)
         bottomAlpha = alpha;
 
+    MaterialSnapshot const &ms = App_Materials().find(de::Uri("System", Path("ui/boxshade")))
+            .material().prepare(Ui_MaterialSpec());
+
+    GL_BindTexture(&ms.texture(MTU_PRIMARY));
     GL_BlendMode(BM_ADD);
-    GL_BindTextureUnmanaged(GL_PrepareUITexture(UITEX_SHADE), GL_LINEAR);
+
     glBegin(GL_QUADS);
     for(i = 0; i < 2; ++i)
     {
@@ -1986,7 +1977,10 @@ void UI_HorizGradient(const Point2Raw* origin, const Size2Raw* size, ui_color_t*
     leftAlpha  *= uiAlpha;
     rightAlpha *= uiAlpha;
 
-    GL_BindTextureUnmanaged(GL_PrepareUITexture(UITEX_HINT), GL_LINEAR);
+    MaterialSnapshot const &ms = App_Materials().find(de::Uri("System", Path("ui/hint")))
+            .material().prepare(Ui_MaterialSpec());
+    GL_BindTexture(&ms.texture(MTU_PRIMARY));
+
     glBegin(GL_QUADS);
         UI_SetColorA(left, leftAlpha);
         glTexCoord2f(0, 1);
@@ -2128,7 +2122,10 @@ void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int border, bo
     // The fill comes first, if there's one.
     if(filled)
     {
-        GL_BindTextureUnmanaged(GL_PrepareUITexture(UITEX_FILL), GL_LINEAR);
+        MaterialSnapshot const &ms = App_Materials().find(de::Uri("System", Path("ui/boxfill")))
+                .material().prepare(Ui_MaterialSpec());
+        GL_BindTexture(&ms.texture(MTU_PRIMARY));
+
         glBegin(GL_QUADS);
         glTexCoord2f(0.5f, 0.5f);
         UI_SetColorA(topColor, alpha);
@@ -2140,9 +2137,13 @@ void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int border, bo
     }
     else
     {
-        GL_BindTextureUnmanaged(GL_PrepareUITexture(UITEX_CORNER), GL_LINEAR);
+        MaterialSnapshot const &ms = App_Materials().find(de::Uri("System", Path("ui/boxcorner")))
+                .material().prepare(Ui_MaterialSpec());
+        GL_BindTexture(&ms.texture(MTU_PRIMARY));
+
         glBegin(GL_QUADS);
     }
+
     if(!filled || border > 0)
     {
         // Top Left.
@@ -2394,10 +2395,13 @@ void UI_DrawHelpBox(const Point2Raw* origin, const Size2Raw* size, float alpha, 
 
 void UI_DrawMouse(const Point2Raw* origin, const Size2Raw* size)
 {
-    assert(origin && size);
+    DENG2_ASSERT(origin && size);
+
+    MaterialSnapshot const &ms = App_Materials().find(de::Uri("System", Path("ui/mouse")))
+            .material().prepare(Ui_MaterialSpec());
+    GL_BindTexture(&ms.texture(MTU_PRIMARY));
 
     glColor3f(1, 1, 1);
-    GL_BindTextureUnmanaged(GL_PrepareUITexture(UITEX_MOUSE), GL_LINEAR);
     glEnable(GL_TEXTURE_2D);
     glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
@@ -2412,18 +2416,17 @@ void UI_DrawMouse(const Point2Raw* origin, const Size2Raw* size)
     glDisable(GL_TEXTURE_2D);
 }
 
-void UI_DrawLogo(const Point2Raw* origin, const Size2Raw* size)
+void UI_DrawLogo(Point2Raw const *origin, Size2Raw const *size)
 {
-    RectRaw rect;
-    assert(origin && size);
-    rect.origin.x = origin->x;
-    rect.origin.y = origin->y;
-    rect.size.width  = size->width;
-    rect.size.height = size->height;
+    DENG2_ASSERT(origin && size);
 
-    GL_BindTextureUnmanaged(GL_PrepareUITexture(UITEX_LOGO), GL_LINEAR);
-    glEnable(GL_TEXTURE_2D);
+    MaterialSnapshot const &ms = App_Materials().find(de::Uri("System", Path("ui/logo")))
+            .material().prepare(Ui_MaterialSpec());
+    GL_BindTexture(&ms.texture(MTU_PRIMARY));
+
     glColor4f(1, 1, 1, uiAlpha);
+    glEnable(GL_TEXTURE_2D);
+    RectRaw rect(origin->x, origin->y, size->width, size->height);
     GL_DrawRect(&rect);
     glDisable(GL_TEXTURE_2D);
 }
@@ -2432,15 +2435,16 @@ void UI_DrawDDBackground(Point2Raw const *origin, Size2Raw const *size, float al
 {
     DENG2_ASSERT(origin && size);
 
-    DGLuint bgTex = GL_PrepareUITexture(UITEX_BACKGROUND);
-    float mul = (bgTex? 1.5f : 1.0f);
     ui_color_t const *dark  = UI_Color(UIC_BG_DARK);
     ui_color_t const *light = UI_Color(UIC_BG_LIGHT);
+    float const mul = 1.5f;
 
     // Background gradient picture.
-    GL_BindTextureUnmanaged(bgTex, GL_LINEAR);
-    glEnable(GL_TEXTURE_2D);
+    MaterialSnapshot const &ms = App_Materials().find(de::Uri("System", Path("ui/background")))
+            .material().prepare(Ui_MaterialSpec(TSF_MONOCHROME));
+    GL_BindTexture(&ms.texture(MTU_PRIMARY));
 
+    glEnable(GL_TEXTURE_2D);
     if(alpha < 1.0)
     {
         GL_BlendMode(BM_NORMAL);

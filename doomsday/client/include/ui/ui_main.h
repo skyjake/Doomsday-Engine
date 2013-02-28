@@ -1,4 +1,6 @@
-/** @file ui_main.h
+/** @file ui_main.h Graphical User Interface.
+ *
+ * Has ties to the console routines.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -15,10 +17,6 @@
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small>
- */
-
-/**
- * Graphical User Interface.
  */
 
 #ifndef LIBDENG_UI_MAIN_H
@@ -400,6 +398,11 @@ void UI_DrawHelpBox(const Point2Raw* origin, const Size2Raw* size, float alpha, 
 
 #ifdef __cplusplus
 } // extern "C"
-#endif
+
+# ifdef __CLIENT__
+de::MaterialVariantSpec const &Ui_MaterialSpec(int texSpecFlags = 0);
+# endif
+
+#endif // __cplusplus
 
 #endif /* LIBDENG_UI_MAIN_H */

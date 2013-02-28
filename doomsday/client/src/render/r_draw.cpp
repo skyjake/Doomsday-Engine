@@ -175,10 +175,10 @@ void R_DrawPatchTiled(Texture &tex, int x, int y, int w, int h, int wrapS, int w
     GL_DrawRectf2Tiled(x, y, w, h, tex.width(), tex.height());
 }
 
-MaterialVariantSpec const &Ui_MaterialSpec()
+static MaterialVariantSpec const &bgMaterialSpec()
 {
     return App_Materials().variantSpecForContext(MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
-                                                  0, -3, 0, false, false, false, false);
+                                                 0, -3, 0, false, false, false, false);
 }
 
 /// @todo Optimize: Do not search for resources (materials, textures) each frame.
@@ -220,7 +220,7 @@ void R_DrawViewBorder()
     try
     {
         MaterialSnapshot const &ms = App_Materials().find(*reinterpret_cast<de::Uri *>(borderGraphicsNames[BG_BACKGROUND]))
-            .material().prepare(Ui_MaterialSpec());
+            .material().prepare(bgMaterialSpec());
 
         GL_BindTexture(&ms.texture(MTU_PRIMARY));
         GL_DrawCutRectf2Tiled(0, 0, port->geometry.size.width, port->geometry.size.height, ms.width(), ms.height(), 0, 0,
