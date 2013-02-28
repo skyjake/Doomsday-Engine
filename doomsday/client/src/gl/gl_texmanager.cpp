@@ -1057,14 +1057,6 @@ static uploadcontentmethod_t prepareDetailVariantFromImage(TextureVariant &tex, 
     return uploadContentForVariant(chooseContentUploadMethod(c), c, tex);
 }
 
-void GL_EarlyInitTextureManager()
-{
-    GL_InitSmartFilterHQ2x();
-
-    variantSpecs = NULL;
-    memset(detailVariantSpecs, 0, sizeof(detailVariantSpecs));
-}
-
 void GL_InitTextureManager()
 {
     if(initedOk)
@@ -1083,6 +1075,11 @@ void GL_InitTextureManager()
     // System textures loaded in GL_LoadSystemTextures.
     std::memset(sysFlareTextures, 0, sizeof(sysFlareTextures));
     std::memset(lightingTextures, 0, sizeof(lightingTextures));
+
+    variantSpecs = NULL;
+    memset(detailVariantSpecs, 0, sizeof(detailVariantSpecs));
+
+    GL_InitSmartFilterHQ2x();
 
     // Initialization done.
     initedOk = true;

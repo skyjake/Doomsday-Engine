@@ -2128,9 +2128,6 @@ static int DD_StartupWorker(void* /*parm*/)
     Con_SetProgress(90);
 
     R_BuildTexGammaLut();
-#ifdef __CLIENT__
-    GL_EarlyInitTextureManager();
-#endif
 
     Con_Message("Initializing Texture subsystem...");
     DENG_ASSERT(!textures);

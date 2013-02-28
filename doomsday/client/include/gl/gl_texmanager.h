@@ -63,12 +63,6 @@ DENG_EXTERN_C byte loadExtAlways;
 
 void GL_TexRegister();
 
-/**
- * Called before real texture management is up and running, during engine
- * early init.
- */
-void GL_EarlyInitTextureManager();
-
 void GL_InitTextureManager();
 
 void GL_ShutdownTextureManager();
