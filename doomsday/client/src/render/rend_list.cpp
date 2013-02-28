@@ -322,38 +322,26 @@ static inline void copyUnit(rendlist_texmapunit_t *ltu, rtexmapunit_t const *rtu
     ltu->opacity = MINMAX_OF(0, rtu->opacity, 1);
 }
 
-static void rlBindUnmanaged(DGLuint glName, int magMode)
-{
-    GL_BindTextureUnmanaged(!renderTextures? 0 : glName, magMode);
-
-#ifdef DENG_DEBUG
-    GLenum error = glGetError();
-    if(error != GL_NO_ERROR)
-        Con_Error("OpenGL error: %i\n", error);
-#endif
-}
-
 static void rlBind(rendlist_texmapunit_t const *tmu)
 {
     if(!unitHasTexture(&tmu->texture)) return;
+
     if(!renderTextures)
     {
         GL_SetNoTexture();
         return;
     }
-    if(!(tmu->texture.flags & TUF_TEXTURE_IS_MANAGED))
+
+    if(tmu->texture.flags & TUF_TEXTURE_IS_MANAGED)
     {
-        rlBindUnmanaged(tmu->texture.gl.name, tmu->texture.gl.magMode);
-        return;
+        GL_BindTexture(tmu->texture.variant);
     }
-
-    GL_BindTexture(tmu->texture.variant);
-
-#ifdef DENG_DEBUG
-    GLenum error = glGetError();
-    if(error != GL_NO_ERROR)
-        Con_Error("OpenGL error: %i\n", error);
-#endif
+    else
+    {
+        /// @todo fixme: Do not assume texture wrap modes.
+        GL_BindTextureUnmanaged(tmu->texture.gl.name,
+                                GL_REPEAT, GL_REPEAT, tmu->texture.gl.magMode);
+    }
 }
 
 static void rlBindTo(int unit, rendlist_texmapunit_t const *tmu)
@@ -1272,7 +1260,8 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
             {
                 // Use the correct texture and color for the light.
                 glActiveTexture((conditions & DCF_SET_LIGHT_ENV0)? GL_TEXTURE0 : GL_TEXTURE1);
-                rlBindUnmanaged(hdr->modTex, GL_LINEAR);
+                GL_BindTextureUnmanaged(!renderTextures? 0 : hdr->modTex);
+
                 glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, hdr->modColor);
             }
 
@@ -1614,7 +1603,7 @@ static int setupListState(listmode_t mode, rendlist_t *list)
         if(unitHasTexture(&TU(list, TU_PRIMARY)->texture))
             rlBind(TU(list, TU_PRIMARY));
         else
-            rlBindUnmanaged(0, GL_LINEAR);
+            GL_BindTextureUnmanaged(0);
 
         if(!unitHasTexture(&TU(list, TU_PRIMARY)->texture))
         {
