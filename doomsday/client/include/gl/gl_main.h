@@ -19,12 +19,19 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_GRAPHICS_H
-#define LIBDENG_GRAPHICS_H
+#ifndef LIBDENG_GL_MAIN_H
+#define LIBDENG_GL_MAIN_H
 
-#ifdef __SERVER__
-#  error "gl" not available in SERVER build
+#ifndef __CLIENT__
+#  error "gl only exists in the Client"
 #endif
+
+#ifndef __cplusplus
+#  error "gl/gl_main.h requires C++"
+#endif
+
+#include "api_gl.h"
+#include "sys_opengl.h"
 
 #include "render/r_main.h"
 #include "Texture"
@@ -187,7 +194,7 @@ void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT);
  */
 void GL_BindTexture(de::Texture::Variant *tex);
 
-void GL_BindTextureUnmanaged(DGLuint texname, int magMode);
+void GL_BindTextureUnmanaged(DGLuint texname, int magMode = GL_LINEAR);
 
 void GL_SetNoTexture(void);
 
@@ -250,4 +257,4 @@ void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int comps,
 // Console commands.
 D_CMD(UpdateGammaRamp);
 
-#endif /* LIBDENG_GRAPHICS_H */
+#endif /* LIBDENG_GL_MAIN_H */

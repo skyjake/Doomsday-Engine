@@ -801,7 +801,7 @@ static void drawFlash(const Point2Raw* origin, const Size2Raw* size, int bright)
     w = (int) fw;
     h = (int) fh;
 
-    GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC), GL_LINEAR);
+    GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC));
 
     if(bright)
         GL_BlendMode(BM_ADD);

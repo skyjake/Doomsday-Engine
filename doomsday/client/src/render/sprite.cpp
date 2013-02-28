@@ -570,7 +570,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t const *p)
         // The dynamic light.
         glActiveTexture(IS_MUL ? GL_TEXTURE0 : GL_TEXTURE1);
         /// @todo modTex may be the name of a "managed" texture.
-        GL_BindTextureUnmanaged(renderTextures ? p->modTex : 0, GL_LINEAR);
+        GL_BindTextureUnmanaged(renderTextures ? p->modTex : 0);
 
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, p->modColor);
 

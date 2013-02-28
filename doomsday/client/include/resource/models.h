@@ -26,6 +26,7 @@
 #ifndef LIBDENG_RESOURCE_MODELS_H
 #define LIBDENG_RESOURCE_MODELS_H
 
+#include "def_data.h"
 #include "gl/gl_model.h"
 
 /// Unique identifier associated with each model in the collection.

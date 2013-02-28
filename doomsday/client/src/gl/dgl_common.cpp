@@ -851,7 +851,7 @@ void DGL_DeleteTextures(int num, DGLuint const *names)
 #undef DGL_Bind
 int DGL_Bind(DGLuint texture)
 {
-    GL_BindTextureUnmanaged(texture, GL_LINEAR);
+    GL_BindTextureUnmanaged(texture);
     DENG_ASSERT(!Sys_GLCheckError());
     return 0;
 }

@@ -97,7 +97,7 @@ static int rendBspLeaf(BspLeaf* bspLeaf, void* /*parameters*/)
                     normal[VX] = -unit[VY];
                     normal[VY] = unit[VX];
 
-                    GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC), GL_LINEAR);
+                    GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC));
                     glEnable(GL_TEXTURE_2D);
 
                     GL_BlendOp(GL_FUNC_ADD);
