@@ -413,11 +413,11 @@ static void printTextureInfo(Texture &tex)
 #ifdef __CLIENT__
     Con_Printf("Texture \"%s\" [%p] x%u origin:%s\n",
                path.constData(), (void *)&tex, tex.variantCount(),
-               tex.flags().testFlag(Texture::Custom)? "addon" : "game");
+               tex.isFlagged(Texture::Custom)? "addon" : "game");
 #else
     Con_Printf("Texture \"%s\" [%p] origin:%s\n",
                path.constData(), (void *)&tex,
-               tex.flags().testFlag(Texture::Custom)? "addon" : "game");
+               tex.isFlagged(Texture::Custom)? "addon" : "game");
 #endif
 
     if(tex.width() == 0 && tex.height() == 0)
@@ -441,7 +441,7 @@ static void printManifestInfo(TextureManifest &manifest,
     de::Uri::ComposeAsTextFlags uriCompositionFlags = de::Uri::DefaultComposeAsTextFlags)
 {
     String sourceDescription = !manifest.hasTexture()? "unknown"
-        : manifest.texture().flags().testFlag(Texture::Custom)? "addon" : "game";
+        : manifest.texture().isFlagged(Texture::Custom)? "addon" : "game";
 
     String info = String("%1 %2")
                     .arg(manifest.composeUri().compose(uriCompositionFlags | de::Uri::DecodePath),

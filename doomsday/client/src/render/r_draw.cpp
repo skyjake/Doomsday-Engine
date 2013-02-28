@@ -146,8 +146,8 @@ void R_DrawPatch(Texture &tex, int x, int y, int w, int h, bool useOffsets)
     }
 
     texturevariantspecification_t *texSpec =
-        Rend_PatchTextureSpec(0 | (tex.flags().testFlag(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
-                                | (tex.flags().testFlag(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
+        Rend_PatchTextureSpec(0 | (tex.isFlagged(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
+                                | (tex.isFlagged(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
     GL_BindTexture(GL_PrepareTexture(tex, *texSpec));
 
     if(useOffsets)
@@ -167,8 +167,8 @@ void R_DrawPatch(Texture &tex, int x, int y)
 void R_DrawPatchTiled(Texture &tex, int x, int y, int w, int h, int wrapS, int wrapT)
 {
     texturevariantspecification_t *texSpec =
-        Rend_PatchTextureSpec(0 | (tex.flags().testFlag(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
-                                | (tex.flags().testFlag(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0),
+        Rend_PatchTextureSpec(0 | (tex.isFlagged(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
+                                | (tex.isFlagged(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0),
                               wrapS, wrapT);
 
     GL_BindTexture(GL_PrepareTexture(tex, *texSpec));

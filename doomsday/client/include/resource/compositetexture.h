@@ -159,11 +159,22 @@ public:
     Components const &components() const;
 
     /**
-     * Provides access to the usage flags for the texture for efficent manipulation.
+     * Returns @c true if the texture has flagged @a flagsToTest.
      */
-    Flags &flags();
+    inline bool isFlagged(Flags flagsToTest) const { return flags() & flagsToTest; }
 
+    /**
+     * Returns the flags for the composite texture.
+     */
+    Flags flags() const;
 
+    /**
+     * Change the composite texture's flags.
+     *
+     * @param flagsToChange  Flags to change the value of.
+     * @param set  @c true to set, @c false to clear.
+     */
+    void setFlags(Flags flagsToChange, bool set = true);
 
 private:
     DENG2_PRIVATE(d)

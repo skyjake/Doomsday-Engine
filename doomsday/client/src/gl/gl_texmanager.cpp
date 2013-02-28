@@ -622,7 +622,7 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
     if(!tex.manifest().schemeName().compareWithoutCase("Textures"))
     {
         // Attempt to load an external replacement for this composite texture?
-        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.flags().testFlag(de::Texture::Custom)))
+        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.isFlagged(de::Texture::Custom)))
         {
             // First try the textures scheme.
             de::Uri uri = tex.manifest().composeUri();
@@ -646,7 +646,7 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
     else if(!tex.manifest().schemeName().compareWithoutCase("Flats"))
     {
         // Attempt to load an external replacement for this flat?
-        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.flags().testFlag(de::Texture::Custom)))
+        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.isFlagged(de::Texture::Custom)))
         {
             // First try the flats scheme.
             de::Uri uri = tex.manifest().composeUri();
@@ -694,7 +694,7 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
         }
 
         // Attempt to load an external replacement for this patch?
-        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.flags().testFlag(de::Texture::Custom)))
+        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.isFlagged(de::Texture::Custom)))
         {
             de::Uri uri = tex.manifest().composeUri();
             source = loadExternalTexture(image, uri.compose(), "-ck");

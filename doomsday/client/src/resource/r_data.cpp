@@ -243,11 +243,10 @@ DENG_EXTERN_C patchid_t R_DeclarePatch(char const *name)
 #undef R_GetPatchInfo
 DENG_EXTERN_C boolean R_GetPatchInfo(patchid_t id, patchinfo_t *info)
 {
+    DENG2_ASSERT(info);
     LOG_AS("R_GetPatchInfo");
-    if(!info) LegacyCore_FatalError("R_GetPatchInfo: Argument 'info' cannot be NULL.");
 
     std::memset(info, 0, sizeof(patchinfo_t));
-
     if(!id) return false;
 
     try
@@ -257,13 +256,13 @@ DENG_EXTERN_C boolean R_GetPatchInfo(patchid_t id, patchinfo_t *info)
 #ifdef __CLIENT__
         // Ensure we have up to date information about this patch.
         texturevariantspecification_t &texSpec =
-            *Rend_PatchTextureSpec(0 | (tex.flags().testFlag(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
-                                     | (tex.flags().testFlag(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
+            *Rend_PatchTextureSpec(0 | (tex.isFlagged(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
+                                     | (tex.isFlagged(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
         GL_PrepareTexture(tex, texSpec);
 #endif
 
         info->id = id;
-        info->flags.isCustom = tex.flags().testFlag(Texture::Custom);
+        info->flags.isCustom = tex.isFlagged(Texture::Custom);
 
         averagealpha_analysis_t *aa = reinterpret_cast<averagealpha_analysis_t *>(tex.analysisDataPointer(Texture::AverageAlphaAnalysis));
         info->flags.isEmpty = aa && FEQUAL(aa->alpha, 0);
@@ -275,7 +274,7 @@ DENG_EXTERN_C boolean R_GetPatchInfo(patchid_t id, patchinfo_t *info)
         info->geometry.origin.y = tex.origin().y;
 
         /// @todo fixme: kludge:
-        info->extraOffset[0] = info->extraOffset[1] = (tex.flags().testFlag(Texture::UpscaleAndSharpen)? -1 : 0);
+        info->extraOffset[0] = info->extraOffset[1] = (tex.isFlagged(Texture::UpscaleAndSharpen)? -1 : 0);
         // Kludge end.
         return true;
     }
@@ -284,7 +283,7 @@ DENG_EXTERN_C boolean R_GetPatchInfo(patchid_t id, patchinfo_t *info)
         // Log but otherwise ignore this error.
         LOG_WARNING(er.asText() + ", ignoring.");
     }
-    catch(Textures::Scheme::NotFoundError const &er)
+    catch(TextureScheme::NotFoundError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_WARNING(er.asText() + ", ignoring.");
@@ -557,7 +556,7 @@ static CompositeTextures loadCompositeTextureDefs()
                 if(!orig->percentEncodedName().compareWithoutCase(custom->percentEncodedName()))
                 {
                     // Definition 'custom' is destined to replace 'orig'.
-                    if(custom->flags().testFlag(CompositeTexture::Custom))
+                    if(custom->isFlagged(CompositeTexture::Custom))
                     {
                         hasReplacement = true; // Uses a custom patch.
                     }
@@ -573,7 +572,7 @@ static CompositeTextures loadCompositeTextureDefs()
                     {
                         // Check the patches.
                         short k = 0;
-                        while(k < orig->componentCount() && !custom->flags().testFlag(CompositeTexture::Custom))
+                        while(k < orig->componentCount() && !custom->isFlagged(CompositeTexture::Custom))
                         {
                             CompositeTexture::Component const &origP   = orig->components()[k];
                             CompositeTexture::Component const &customP = custom->components()[k];
@@ -630,7 +629,7 @@ static void processCompositeTextureDefs(CompositeTextures &defs)
         de::Uri uri("Textures", Path(def.percentEncodedName()));
 
         Texture::Flags flags;
-        if(def.flags().testFlag(CompositeTexture::Custom)) flags |= Texture::Custom;
+        if(def.isFlagged(CompositeTexture::Custom)) flags |= Texture::Custom;
 
         /*
          * The id Tech 1 implementation of the texture collection has a flaw

@@ -965,7 +965,7 @@ static void generateMaterialDefForTexture(TextureManifest &manifest)
         Texture &tex = manifest.texture();
         mat->width  = tex.width();
         mat->height = tex.height();
-        mat->flags = (tex.flags().testFlag(Texture::NoDraw)? Material::NoDraw : 0);
+        mat->flags = (tex.isFlagged(Texture::NoDraw)? Material::NoDraw : 0);
     }
 #if _DEBUG
     else
@@ -1163,7 +1163,7 @@ static void interpretMaterialDef(ded_material_t const &def)
                 try
                 {
                     Texture &texture = App_Textures().find(*reinterpret_cast<de::Uri *>(firstLayer.stages[0].texture)).texture();
-                    if(texture.flags().testFlag(Texture::Custom))
+                    if(texture.isFlagged(Texture::Custom))
                         manifest->setFlags(MaterialManifest::Custom);
                 }
                 catch(Textures::NotFoundError const &er)

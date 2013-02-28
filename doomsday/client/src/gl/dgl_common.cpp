@@ -751,8 +751,8 @@ void DGL_SetPatch(patchid_t id, DGLint wrapS, DGLint wrapT)
 
         Texture &tex = manifest.texture();
         texturevariantspecification_t &texSpec =
-            *Rend_PatchTextureSpec(0 | (tex.flags().testFlag(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
-                                     | (tex.flags().testFlag(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0),
+            *Rend_PatchTextureSpec(0 | (tex.isFlagged(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
+                                     | (tex.isFlagged(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0),
                                    DGL_ToGLWrapCap(wrapS), DGL_ToGLWrapCap(wrapT));
         GL_BindTexture(GL_PrepareTexture(tex, texSpec));
     }

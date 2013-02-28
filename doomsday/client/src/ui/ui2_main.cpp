@@ -1063,8 +1063,8 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
             {
                 Texture &tex = manifest.texture();
                 texturevariantspecification_t &texSpec =
-                    *Rend_PatchTextureSpec(0 | (tex.flags().testFlag(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
-                                             | (tex.flags().testFlag(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
+                    *Rend_PatchTextureSpec(0 | (tex.isFlagged(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
+                                             | (tex.isFlagged(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
                 GL_BindTexture(GL_PrepareTexture(tex, texSpec));
                 glEnable(GL_TEXTURE_2D);
                 textureEnabled = true;

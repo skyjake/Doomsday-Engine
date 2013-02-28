@@ -162,13 +162,18 @@ public:
         void setCoords(float s, float t);
 
         /// Returns @c true if the variant is flagged as "masked".
-        inline bool isMasked() const { return flags().testFlag(Masked); }
+        inline bool isMasked() const { return isFlagged(Masked); }
 
         /// Returns @c true if the variant is flagged as "uploaded".
-        inline bool isUploaded() const { return flags().testFlag(Uploaded); }
+        inline bool isUploaded() const { return isFlagged(Uploaded); }
 
         /// Returns @c true if the variant is "prepared".
         inline bool isPrepared() const { return isUploaded() && glName() != 0; }
+
+        /**
+         * Returns @c true if the variant is flagged @a flagsToTest.
+         */
+        inline bool isFlagged(Flags flagsToTest) const { return !!(flags() & flagsToTest); }
 
         /**
          * Returns the flags for the variant.
@@ -280,6 +285,11 @@ public:
      * @param newOrigin  New origin in map coordinate space units.
      */
     void setOrigin(Vector2i const &newOrigin);
+
+    /**
+     * Returns @c true if the texture is flagged @a flagsToTest.
+     */
+    inline bool isFlagged(Flags flagsToTest) const { return !!(flags() & flagsToTest); }
 
     /**
      * Returns the flags for the texture.

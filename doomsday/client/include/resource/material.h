@@ -655,13 +655,13 @@ public:
     bool isDetailed() const;
 
     /// Returns @c true if the material is considered drawable.
-    bool isDrawable() const { return !flags().testFlag(NoDraw); }
+    bool isDrawable() const { return !isFlagged(NoDraw); }
 
     /// Returns @c true if the material has a shine texturing layer.
     bool isShiny() const;
 
     /// Returns @c true if the material is considered @em skymasked.
-    inline bool isSkyMasked() const { return flags().testFlag(SkyMask); }
+    inline bool isSkyMasked() const { return isFlagged(SkyMask); }
 
     /// Returns @c true if one or more of the material's layers are glowing.
     bool hasGlow() const;
@@ -694,6 +694,11 @@ public:
      * @param newHeight  New height in map coordinate space units.
      */
     void setHeight(int newHeight);
+
+    /**
+     * Returns @c true if the material is flagged @a flagsToTest.
+     */
+    inline bool isFlagged(Flags flagsToTest) const { return !!(flags() & flagsToTest); }
 
     /**
      * Returns the flags for the material.
