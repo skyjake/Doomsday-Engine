@@ -54,3 +54,87 @@ Material {
     Stage { Texture = "system:gray"; }
   }
 }
+
+#
+# UI Mouse cursor material.
+#
+Material {
+  Id = "system:ui/mouse";
+  Width = 32;
+  Height = 64;
+  Layer {
+    Stage { Texture = "system:ui/mouse"; }
+  }
+}
+
+#
+# UI Box-corner material.
+#
+Material {
+  Id = "system:ui/boxcorner";
+  Width = 64;
+  Height = 64;
+  Layer {
+    Stage { Texture = "system:ui/boxcorner"; }
+  }
+}
+
+#
+# UI Box-fill material.
+#
+Material {
+  Id = "system:ui/boxfill";
+  Width = 64;
+  Height = 64;
+  Layer {
+    Stage { Texture = "system:ui/boxfill"; }
+  }
+}
+
+#
+# UI Box-shade material.
+#
+Material {
+  Id = "system:ui/boxshade";
+  Width = 128;
+  Height = 128;
+  Layer {
+    Stage { Texture = "system:ui/boxshade"; }
+  }
+}
+
+#
+# UI Hint material.
+#
+Material {
+  Id = "system:ui/hint";
+  Width = 64;
+  Height = 64;
+  Layer {
+    Stage { Texture = "system:ui/hint"; }
+  }
+}
+
+#
+# UI Logo material.
+#
+Material {
+  Id = "system:ui/logo";
+  Width = 256;
+  Height = 256;
+  Layer {
+    Stage { Texture = "system:ui/logo"; }
+  }
+}
+
+#
+# UI Background material.
+#
+Material {
+  Id = "system:ui/background";
+  Width = 512;
+  Height = 512;
+  Layer {
+    Stage { Texture = "system:ui/background"; }
+  }
+}
