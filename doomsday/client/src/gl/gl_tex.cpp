@@ -27,6 +27,7 @@
 #include "color.h"
 #include "resource/colorpalettes.h"
 #include "resource/r_data.h"
+#include "render/r_main.h"
 
 #include "gl/gl_tex.h"
 
@@ -750,22 +751,21 @@ void GL_DownMipmap8(uint8_t* in, uint8_t* fadedOut, int width, int height, float
     }
 }
 
-boolean GL_PalettizeImage(uint8_t* out, int outformat, const colorpalette_t* palette,
-    boolean applyTexGamma, const uint8_t* in, int informat, int width, int height)
+boolean GL_PalettizeImage(uint8_t *out, int outformat, colorpalette_t const *palette,
+    boolean applyTexGamma, uint8_t const *in, int informat, int width, int height)
 {
-    assert(in && out && palette);
+    DENG2_ASSERT(in && out && palette);
 
-    if(0 >= width || 0 >= height)
+    if(width <= 0 || height <= 0)
         return false;
 
     if(informat <= 2 && outformat >= 3)
     {
-        long numPels = width * height;
-        int inSize = (informat == 2 ? 1 : informat);
-        int outSize = (outformat == 2 ? 1 : outformat);
+        long const numPels = width * height;
+        int const inSize   = (informat == 2 ? 1 : informat);
+        int const outSize  = (outformat == 2 ? 1 : outformat);
 
-        { long i;
-        for(i = 0; i < numPels; ++i)
+        for(long i = 0; i < numPels; ++i)
         {
             ColorPalette_Color(palette, *in, out);
             if(applyTexGamma)
@@ -785,7 +785,7 @@ boolean GL_PalettizeImage(uint8_t* out, int outformat, const colorpalette_t* pal
 
             in  += inSize;
             out += outSize;
-        }}
+        }
         return true;
     }
     return false;

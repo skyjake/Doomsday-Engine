@@ -419,6 +419,7 @@ DENG_EXTERN_C int M_ScreenShot(const char* name, int bits)
     Str_Free(&fullName);
     return result;
 #else
+    DENG2_UNUSED2(name, bits);
     return false;
 #endif
 }
