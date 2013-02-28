@@ -103,21 +103,35 @@ void R_InitSystemTextures()
 {
     LOG_AS("R_InitSystemTextures");
 
-    static String const names[] =
-    {   "unknown", "missing", "bbox", "gray", "" };
+    static const struct TexDef {
+        String const graphicName;
+        String const path;
+    } texDefs[] = {
+        { "unknown",    "unknown" },
+        { "missing",    "missing" },
+        { "bbox",       "bbox" },
+        { "gray",       "gray" },
+        { "mouse",      "ui/mouse" },
+        { "boxcorner",  "ui/boxcorner" },
+        { "boxfill",    "ui/boxfill" },
+        { "boxshade",   "ui/boxshade" },
+        { "hint",       "ui/hint" },
+        { "logo",       "ui/logo" },
+        { "background", "ui/background" },
+        { "", "" }
+    };
 
     LOG_VERBOSE("Initializing System textures...");
 
-    for(uint i = 0; !names[i].isEmpty(); ++i)
+    for(uint i = 0; !texDefs[i].graphicName.isEmpty(); ++i)
     {
-        de::Uri uri("System", Path(names[i]));
-        Texture::Flags flags = Texture::Custom;
-        Vector2i dimensions;
-        Vector2i origin;
-        int uniqueId = i + 1/*1-based index*/;
-        de::Uri resourceUri("Graphics", Path(names[i]));
+        struct TexDef const &def = texDefs[i];
 
-        App_Textures().declare(uri, flags, dimensions, origin, uniqueId, &resourceUri);
+        int uniqueId = i + 1/*1-based index*/;
+        de::Uri resourceUri("Graphics", Path(def.graphicName));
+
+        App_Textures().declare(de::Uri("System", Path(def.path)), Texture::Custom,
+                               Vector2i(), Vector2i(), uniqueId, &resourceUri);
     }
 
     // Define any as yet undefined system textures.
