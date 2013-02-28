@@ -997,12 +997,11 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
                 V3f_Set(dimensions, 320 /*rawTex->width*/, 200 /*rawTex->height*/, 0);
                 // Rotation occurs around the center of the screen.
                 V2f_Set(rotateCenter, 160, 100);
-                GL_BindTextureUnmanaged(glName, (filterUI ? GL_LINEAR : GL_NEAREST));
+                GL_BindTextureUnmanaged(glName, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                        (filterUI ? GL_LINEAR : GL_NEAREST));
                 if(glName)
                 {
                     glEnable(GL_TEXTURE_2D);
-                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
                     textureEnabled = true;
                 }
             }
@@ -1012,12 +1011,11 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
             V3f_Set(offset, 0, 0, 0);
             V3f_Set(dimensions, 1, 1, 0);
             V2f_Set(rotateCenter, .5f, .5f);
-            GL_BindTextureUnmanaged(f->texRef.tex, (filterUI ? GL_LINEAR : GL_NEAREST));
+            GL_BindTextureUnmanaged(f->texRef.tex, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                    (filterUI ? GL_LINEAR : GL_NEAREST));
             if(f->texRef.tex)
             {
                 glEnable(GL_TEXTURE_2D);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
                 textureEnabled = true;
             }
             break;

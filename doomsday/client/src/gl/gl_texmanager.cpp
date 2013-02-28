@@ -2057,15 +2057,14 @@ DGLuint GL_PrepareLSTexture(lightingtexid_t which)
     static const struct TexDef {
         char const *name;
         gfxmode_t mode;
-        int wrapS, wrapT;
     } texDefs[NUM_LIGHTING_TEXTURES] = {
-        /* LST_DYNAMIC */         { "dlight",     LGM_WHITE_ALPHA,    GL_CLAMP_TO_EDGE,   GL_CLAMP_TO_EDGE },
-        /* LST_GRADIENT */        { "wallglow",   LGM_WHITE_ALPHA,    GL_REPEAT,          GL_CLAMP_TO_EDGE },
-        /* LST_RADIO_CO */        { "radioco",    LGM_WHITE_ALPHA,    GL_CLAMP_TO_EDGE,   GL_CLAMP_TO_EDGE },
-        /* LST_RADIO_CC */        { "radiocc",    LGM_WHITE_ALPHA,    GL_CLAMP_TO_EDGE,   GL_CLAMP_TO_EDGE },
-        /* LST_RADIO_OO */        { "radiooo",    LGM_WHITE_ALPHA,    GL_CLAMP_TO_EDGE,   GL_CLAMP_TO_EDGE },
-        /* LST_RADIO_OE */        { "radiooe",    LGM_WHITE_ALPHA,    GL_CLAMP_TO_EDGE,   GL_CLAMP_TO_EDGE },
-        /* LST_CAMERA_VIGNETTE */ { "vignette",   LGM_NORMAL,         GL_REPEAT,          GL_CLAMP_TO_EDGE }
+        /* LST_DYNAMIC */         { "dlight",     LGM_WHITE_ALPHA },
+        /* LST_GRADIENT */        { "wallglow",   LGM_WHITE_ALPHA },
+        /* LST_RADIO_CO */        { "radioco",    LGM_WHITE_ALPHA },
+        /* LST_RADIO_CC */        { "radiocc",    LGM_WHITE_ALPHA },
+        /* LST_RADIO_OO */        { "radiooo",    LGM_WHITE_ALPHA },
+        /* LST_RADIO_OE */        { "radiooe",    LGM_WHITE_ALPHA },
+        /* LST_CAMERA_VIGNETTE */ { "vignette",   LGM_NORMAL }
     };
     struct TexDef const &def = texDefs[which];
 
@@ -2083,7 +2082,7 @@ DGLuint GL_PrepareLSTexture(lightingtexid_t which)
                   image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE ),
                 image.size.width, image.size.height, image.pixels,
                 TXCF_NO_COMPRESSION, 0, GL_LINEAR, GL_LINEAR, -1 /*best anisotropy*/,
-                def.wrapS, def.wrapT);
+                ( which == LST_GRADIENT? GL_REPEAT : GL_CLAMP_TO_EDGE ), GL_CLAMP_TO_EDGE);
 
             lightingTextures[which] = glName;
         }

@@ -73,7 +73,7 @@ void Vignette_Render(const RectRaw* viewRect, float fov)
         alpha *= fov/100.f;
     }
 
-    GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_CAMERA_VIGNETTE));
+    GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_CAMERA_VIGNETTE), GL_REPEAT, GL_CLAMP_TO_EDGE);
     glEnable(GL_TEXTURE_2D);
 
     glBegin(GL_TRIANGLE_STRIP);

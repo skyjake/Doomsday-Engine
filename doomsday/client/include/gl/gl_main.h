@@ -69,10 +69,10 @@ DENG_EXTERN_C int r_detail;
 #  define LIBDENG_ASSERT_GL_TEXTURE_ISBOUND(tex)
 #endif
 
-void GL_AssertContextActive(void);
+void GL_AssertContextActive();
 
 /// Register the console commands, variables, etc..., of this module.
-void GL_Register(void);
+void GL_Register();
 
 /**
  * One-time initialization of GL and the renderer. This is done very early
@@ -80,51 +80,51 @@ void GL_Register(void);
  * cannot yet be initialized, such as the texture management, so any rendering
  * occuring before GL_Init() must be done with manually prepared textures.
  */
-boolean GL_EarlyInit(void);
+boolean GL_EarlyInit();
 
 /**
  * Finishes GL initialization. This can be called once the virtual file
  * system has been fully loaded up, and the console variables have been
  * read from the config file.
  */
-void GL_Init(void);
+void GL_Init();
 
 /**
  * Kills the graphics library for good.
  */
-void GL_Shutdown(void);
+void GL_Shutdown();
 
 /**
  * Returns @c true iff the graphics library is currently initialized.
  */
-boolean GL_IsInited(void);
+boolean GL_IsInited();
 
 /**
  * GL is reset back to the state it was right after initialization.
  * Use GL_TotalRestore to bring back online.
  */
-void GL_TotalReset(void);
+void GL_TotalReset();
 
 /**
  * To be called after a GL_TotalReset to bring GL back online.
  */
-void GL_TotalRestore(void);
+void GL_TotalRestore();
 
 /**
  * Initializes the renderer to 2D state.
  */
-void GL_Init2DState(void);
+void GL_Init2DState();
 
 void GL_SwitchTo3DState(boolean push_state, viewport_t const *port, viewdata_t const *viewData);
 
 void GL_Restore2DState(int step, viewport_t const *port, viewdata_t const *viewData);
 
-void GL_ProjectionMatrix(void);
+void GL_ProjectionMatrix();
 
 /**
  * Swaps buffers / blits the back buffer to the front.
  */
-void GL_DoUpdate(void);
+void GL_DoUpdate();
 
 /**
  * Set the current GL blending mode.
@@ -134,14 +134,14 @@ void GL_BlendMode(blendmode_t mode);
 /**
  * Initializes the graphics library for refresh. Also called at update.
  */
-void GL_InitRefresh(void);
+void GL_InitRefresh();
 
 /**
  * To be called once at final shutdown.
  */
-void GL_ShutdownRefresh(void);
+void GL_ShutdownRefresh();
 
-void GL_LowRes(void);
+void GL_LowRes();
 
 /**
  * Configure the GL state for the specified texture modulation mode.
@@ -172,7 +172,7 @@ void GL_BlendOp(int op);
 
 boolean GL_NewList(DGLuint list, int mode);
 
-DGLuint GL_EndList(void);
+DGLuint GL_EndList();
 
 void GL_CallList(DGLuint list);
 
@@ -194,9 +194,10 @@ void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT);
  */
 void GL_BindTexture(de::Texture::Variant *tex);
 
-void GL_BindTextureUnmanaged(DGLuint texname, int magMode = GL_LINEAR);
+void GL_BindTextureUnmanaged(DGLuint texname, int wrapS = GL_REPEAT, int wrapT = GL_REPEAT,
+                             int magMode = GL_LINEAR);
 
-void GL_SetNoTexture(void);
+void GL_SetNoTexture();
 
 /**
  * Given a logical anisotropic filtering level return an appropriate multiplier

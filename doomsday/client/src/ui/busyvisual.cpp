@@ -241,7 +241,7 @@ static void drawPositionIndicator(float x, float y, float radius, float pos,
     // Draw the frame.
     glEnable(GL_TEXTURE_2D);
 
-    GL_BindTextureUnmanaged(texLoading[0]);
+    GL_BindTextureUnmanaged(texLoading[0], GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
     LIBDENG_ASSERT_GL_TEXTURE_ISBOUND(texLoading[0]);
     glColor4fv(col);
     GL_DrawRectf2(x - radius, y - radius, radius*2, radius*2);
@@ -257,7 +257,7 @@ static void drawPositionIndicator(float x, float y, float radius, float pos,
     // Draw a fan.
     glColor4f(col[0], col[1], col[2], .5f);
     LIBDENG_ASSERT_GL_TEXTURE_ISBOUND(texLoading[0]);
-    GL_BindTextureUnmanaged(texLoading[1]);
+    GL_BindTextureUnmanaged(texLoading[1], GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
     LIBDENG_ASSERT_GL_TEXTURE_ISBOUND(texLoading[1]);
     glBegin(GL_TRIANGLE_FAN);
     // Center.
@@ -586,7 +586,7 @@ void Con_DrawTransition(void)
     glLoadIdentity();
     glOrtho(0, SCREENWIDTH, SCREENHEIGHT, 0, -1, 1);
 
-    GL_BindTextureUnmanaged(texScreenshot);
+    GL_BindTextureUnmanaged(texScreenshot, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
     glEnable(GL_TEXTURE_2D);
 
     switch(transition.style)

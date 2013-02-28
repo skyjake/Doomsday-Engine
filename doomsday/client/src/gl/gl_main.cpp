@@ -775,15 +775,9 @@ void GL_SetPSprite(Material *mat, int tClass, int tMap)
 
 void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
 {
-    rawtex_t* rawTex = R_GetRawTex(lumpNum);
-    if(rawTex)
+    if(rawtex_t *rawTex = R_GetRawTex(lumpNum))
     {
-        LIBDENG_ASSERT_IN_MAIN_THREAD();
-        LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-        GL_BindTextureUnmanaged(GL_PrepareRawTexture(*rawTex), (filterUI ? GL_LINEAR : GL_NEAREST));
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
+        GL_BindTextureUnmanaged(GL_PrepareRawTexture(*rawTex), wrapS, wrapT, (filterUI ? GL_LINEAR : GL_NEAREST));
     }
 }
 
@@ -820,7 +814,7 @@ void GL_BindTexture(Texture::Variant *tex)
     }
 }
 
-void GL_BindTextureUnmanaged(DGLuint glName, int magMode)
+void GL_BindTextureUnmanaged(DGLuint glName, int wrapS, int wrapT, int magMode)
 {
     if(BusyMode_InWorkerThread()) return;
 
@@ -836,6 +830,8 @@ void GL_BindTextureUnmanaged(DGLuint glName, int magMode)
     glBindTexture(GL_TEXTURE_2D, glName);
     Sys_GLCheckError();
 
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magMode);
     if(GL_state.features.texFilterAniso)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));

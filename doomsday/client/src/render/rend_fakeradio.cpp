@@ -1590,7 +1590,8 @@ void Rend_DrawShadowOffsetVerts()
     glDepthMask(GL_FALSE);
     glDisable(GL_DEPTH_TEST);
 
-    GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC));
+    GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC),
+                            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
     glEnable(GL_TEXTURE_2D);
 
     for(uint i = 0; i < NUM_LINEDEFS; ++i)

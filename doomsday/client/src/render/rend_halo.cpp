@@ -345,14 +345,8 @@ boolean H_RenderHalo(coord_t x, coord_t y, coord_t z, float size, DGLuint tex,
                 haloPos[k] += mirror[k] * fl->offset;
         }
 
-        GL_BindTextureUnmanaged(renderTextures? tex : 0);
+        GL_BindTextureUnmanaged(renderTextures? tex : 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
         glEnable(GL_TEXTURE_2D);
-
-        // Don't wrap the texture. Evidently some drivers can't just
-        // take a hint... (or then something's changing the wrapping
-        // mode inadvertently)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
         glColor4fv(rgba);
 

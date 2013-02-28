@@ -505,14 +505,12 @@ static void renderParticles(int rtype, boolean withBlend)
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    {
-    const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
+    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
     // viewSideVec points to the left.
     for(c = 0; c < 3; ++c)
     {
         leftoff[c]  = viewData->upVec[c] + viewData->sideVec[c];
         rightoff[c] = viewData->upVec[c] - viewData->sideVec[c];
-    }
     }
 
     // Should we use a texture?
@@ -538,7 +536,7 @@ static void renderParticles(int rtype, boolean withBlend)
         glDepthMask(GL_FALSE);
         glDisable(GL_CULL_FACE);
 
-        GL_BindTextureUnmanaged(tex);
+        GL_BindTextureUnmanaged(tex, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
         glEnable(GL_TEXTURE_2D);
 
         glDepthFunc(GL_LEQUAL);

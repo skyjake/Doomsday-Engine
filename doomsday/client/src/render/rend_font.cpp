@@ -548,7 +548,8 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
     }
     if(Font_Type(font) == FT_BITMAP && 0 != BitmapFont_GLTextureName(font))
     {
-        GL_BindTextureUnmanaged(BitmapFont_GLTextureName(font), filterUI? GL_LINEAR : GL_NEAREST);
+        GL_BindTextureUnmanaged(BitmapFont_GLTextureName(font), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                filterUI? GL_LINEAR : GL_NEAREST);
 
         glMatrixMode(GL_TEXTURE);
         glPushMatrix();
@@ -737,7 +738,8 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
     case FT_BITMAP:
         /// @todo Filtering should be determined at a higher level.
         /// @todo We should not need to re-bind this texture here.
-        GL_BindTextureUnmanaged(BitmapFont_GLTextureName(font), filterUI? GL_LINEAR : GL_NEAREST);
+        GL_BindTextureUnmanaged(BitmapFont_GLTextureName(font), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                filterUI? GL_LINEAR : GL_NEAREST);
 
         std::memcpy(&geometry, BitmapFont_CharGeometry(font, ch), sizeof(geometry));
         BitmapFont_CharCoords(font, ch, coords);
@@ -801,7 +803,8 @@ static void drawFlash(const Point2Raw* origin, const Size2Raw* size, int bright)
     w = (int) fw;
     h = (int) fh;
 
-    GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC));
+    GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC),
+                            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
     if(bright)
         GL_BlendMode(BM_ADD);
