@@ -21,9 +21,9 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_filesys.h"
-#include "de_graphics.h"
-
 #include "m_misc.h"
+
+#include "resource/pcx.h"
 
 #pragma pack(1)
 typedef struct {

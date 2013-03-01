@@ -26,6 +26,8 @@
 #include "de_filesys.h"
 #include "de_graphics.h"
 
+#include "resource/tga.h"
+
 enum {
     TGA_FALSE,
     TGA_TRUE,
