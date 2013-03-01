@@ -601,20 +601,17 @@ static QList<MaterialManifest *> collectManifests(MaterialScheme *scheme,
 {
     int count = 0;
 
-    if(!path.isEmpty())
+    if(scheme)
     {
-        if(scheme)
+        // Consider materials in the specified scheme only.
+        count += collectManifestsInScheme(*scheme, pathBeginsWithComparator, (void *)&path, storage);
+    }
+    else
+    {
+        // Consider materials in any scheme.
+        foreach(MaterialScheme *scheme, App_Materials().allSchemes())
         {
-            // Consider materials in the specified scheme only.
-            count += collectManifestsInScheme(*scheme, pathBeginsWithComparator, (void*)&path, storage);
-        }
-        else
-        {
-            // Consider materials in any scheme.
-            foreach(MaterialScheme *scheme, App_Materials().allSchemes())
-            {
-                count += collectManifestsInScheme(*scheme, pathBeginsWithComparator, (void*)&path, storage);
-            }
+            count += collectManifestsInScheme(*scheme, pathBeginsWithComparator, (void *)&path, storage);
         }
     }
 

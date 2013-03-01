@@ -492,20 +492,17 @@ static QList<TextureManifest *> collectManifests(TextureScheme *scheme,
 {
     int count = 0;
 
-    if(!path.isEmpty())
+    if(scheme)
     {
-        if(scheme)
+        // Consider materials in the specified scheme only.
+        count += collectManifestsInScheme(*scheme, pathBeginsWithComparator, (void *)&path, storage);
+    }
+    else
+    {
+        // Consider materials in any scheme.
+        foreach(TextureScheme *scheme, App_Textures().allSchemes())
         {
-            // Consider materials in the specified scheme only.
-            count += collectManifestsInScheme(*scheme, pathBeginsWithComparator, (void*)&path, storage);
-        }
-        else
-        {
-            // Consider materials in any scheme.
-            foreach(TextureScheme *scheme, App_Textures().allSchemes())
-            {
-                count += collectManifestsInScheme(*scheme, pathBeginsWithComparator, (void*)&path, storage);
-            }
+            count += collectManifestsInScheme(*scheme, pathBeginsWithComparator, (void *)&path, storage);
         }
     }
 
