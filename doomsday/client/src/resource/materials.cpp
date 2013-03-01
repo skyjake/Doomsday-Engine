@@ -41,20 +41,10 @@ D_CMD(ListMaterials);
 D_CMD(PrintMaterialStats);
 #endif
 
-namespace de {
-
 #ifdef __CLIENT__
 
-static void applyVariantSpec(MaterialVariantSpec &spec, materialcontext_t mc,
-    texturevariantspecification_t &primarySpec)
-{
-    DENG2_ASSERT(mc == MC_UNKNOWN || VALID_MATERIALCONTEXT(mc));
-    spec.context     = mc;
-    spec.primarySpec = &primarySpec;
-}
-
 /// A list of specifications for material variants.
-typedef QList<MaterialVariantSpec *> VariantSpecs;
+typedef QList<de::MaterialVariantSpec *> VariantSpecs;
 
 /**
  * Stores the arguments for a material variant cache work item.
@@ -65,9 +55,9 @@ struct VariantCacheTask
     Material *material;
 
     /// Specification of the variant to be cached.
-    MaterialVariantSpec const *spec;
+    de::MaterialVariantSpec const *spec;
 
-    VariantCacheTask(Material &_material, MaterialVariantSpec const &_spec)
+    VariantCacheTask(Material &_material, de::MaterialVariantSpec const &_spec)
         : material(&_material), spec(&_spec)
     {}
 };
@@ -79,11 +69,13 @@ typedef QList<VariantCacheTask *> VariantCacheQueue;
 
 #endif // __CLIENT__
 
+namespace de {
+
 DENG2_PIMPL(Materials)
 {
     /// System subspace schemes containing the manifests.
     Materials::Schemes schemes;
-    QList<Materials::Scheme *> schemeCreationOrder;
+    QList<MaterialScheme *> schemeCreationOrder;
 
 #ifdef __CLIENT__
     /// Material variant specifications.
@@ -105,7 +97,7 @@ DENG2_PIMPL(Materials)
     /// LUT which translates materialid_t => MaterialManifest*.
     /// Index with materialid_t-1
     uint manifestIdMapSize;
-    Materials::Manifest **manifestIdMap;
+    MaterialManifest **manifestIdMap;
 
     Instance(Public *i) : Base(i),
         manifestCount(0),
@@ -158,26 +150,26 @@ DENG2_PIMPL(Materials)
     }
 
 #ifdef __CLIENT__
-    Materials::VariantSpec *findVariantSpec(Materials::VariantSpec const &tpl,
-                                            bool canCreate)
+    MaterialVariantSpec *findVariantSpec(MaterialVariantSpec const &tpl,
+                                         bool canCreate)
     {
-        foreach(Materials::VariantSpec *spec, variantSpecs)
+        foreach(MaterialVariantSpec *spec, variantSpecs)
         {
             if(spec->compare(tpl)) return spec;
         }
 
         if(!canCreate) return 0;
 
-        variantSpecs.push_back(new Materials::VariantSpec(tpl));
+        variantSpecs.push_back(new MaterialVariantSpec(tpl));
         return variantSpecs.back();
     }
 
-    Materials::VariantSpec &getVariantSpecForContext(materialcontext_t mc,
+    MaterialVariantSpec &getVariantSpecForContext(materialcontext_t mc,
         int flags, byte border, int tClass, int tMap, int wrapS, int wrapT,
         int minFilter, int magFilter, int anisoFilter,
         bool mipmapped, bool gammaCorrection, bool noStretch, bool toAlpha)
     {
-        static Materials::VariantSpec tpl;
+        static MaterialVariantSpec tpl;
 
         DENG2_ASSERT(mc == MC_UNKNOWN || VALID_MATERIALCONTEXT(mc));
 
@@ -200,7 +192,11 @@ DENG2_PIMPL(Materials)
                                                      mipmapped, gammaCorrection, noStretch,
                                                      toAlpha);
 
-        applyVariantSpec(tpl, mc, primarySpec);
+        // Apply the normalized spec to the template.
+        DENG2_ASSERT(mc == MC_UNKNOWN || VALID_MATERIALCONTEXT(mc));
+        tpl.context     = mc;
+        tpl.primarySpec = &primarySpec;
+
         return *findVariantSpec(tpl, true);
     }
 #endif
@@ -227,7 +223,7 @@ Materials::~Materials()
     delete d;
 }
 
-Materials::Scheme &Materials::scheme(String name) const
+MaterialScheme &Materials::scheme(String name) const
 {
     LOG_AS("Materials::scheme");
     if(!name.isEmpty())
@@ -239,7 +235,7 @@ Materials::Scheme &Materials::scheme(String name) const
     throw Materials::UnknownSchemeError("Materials::scheme", "No scheme found matching '" + name + "'");
 }
 
-Materials::Scheme& Materials::createScheme(String name)
+MaterialScheme &Materials::createScheme(String name)
 {
     DENG_ASSERT(name.length() >= Scheme::min_name_length);
 
@@ -268,7 +264,7 @@ Materials::Schemes const& Materials::allSchemes() const
     return d->schemes;
 }
 
-Materials::Manifest &Materials::toManifest(materialid_t id) const
+MaterialManifest &Materials::toManifest(materialid_t id) const
 {
     if(id > 0 && id <= d->manifestCount)
     {
@@ -306,7 +302,7 @@ void Materials::validateUri(Uri const &uri, UriValidationFlags flags) const
     }
 }
 
-Materials::Manifest &Materials::find(Uri const &uri) const
+MaterialManifest &Materials::find(Uri const &uri) const
 {
     LOG_AS("Materials::find");
 
@@ -360,7 +356,7 @@ bool Materials::has(Uri const &path) const
     return false;
 }
 
-Materials::Manifest &Materials::newManifest(de::Uri const &uri)
+MaterialManifest &Materials::newManifest(de::Uri const &uri)
 {
     LOG_AS("Materials::newManifest");
 
@@ -400,6 +396,36 @@ void Materials::addMaterial(Material &material)
 Materials::All const &Materials::all() const
 {
     return d->materials;
+}
+
+Materials::ManifestGroup &Materials::createGroup()
+{
+    // Allocating one by one is inefficient, but it doesn't really matter.
+    d->groups.push_back(new ManifestGroup());
+    return *d->groups.back();
+}
+
+Materials::ManifestGroup &Materials::group(int number) const
+{
+    number -= 1; // 1-based index.
+    if(number >= 0 && number < d->groups.count())
+    {
+        return *d->groups[number];
+    }
+    /// @throw UnknownGroupError An unknown scheme was referenced.
+    throw UnknownGroupError("Materials::group", QString("Invalid group number #%1, valid range [0..%2)")
+                                                    .arg(number).arg(d->groups.count()));
+}
+
+Materials::ManifestGroups const &Materials::allGroups() const
+{
+    return d->groups;
+}
+
+void Materials::destroyAllGroups()
+{
+    qDeleteAll(d->groups);
+    d->groups.clear();
 }
 
 #ifdef __CLIENT__
@@ -463,39 +489,6 @@ MaterialVariantSpec const &Materials::variantSpecForContext(
                                        mipmapped, gammaCorrection, noStretch, toAlpha);
 }
 
-#endif // __CLIENT__
-
-Materials::ManifestGroup &Materials::createGroup()
-{
-    // Allocating one by one is inefficient, but it doesn't really matter.
-    d->groups.push_back(new ManifestGroup());
-    return *d->groups.back();
-}
-
-Materials::ManifestGroup &Materials::group(int number) const
-{
-    number -= 1; // 1-based index.
-    if(number >= 0 && number < d->groups.count())
-    {
-        return *d->groups[number];
-    }
-    /// @throw UnknownGroupError An unknown scheme was referenced.
-    throw UnknownGroupError("Materials::group", QString("Invalid group number #%1, valid range [0..%2)")
-                                                    .arg(number).arg(d->groups.count()));
-}
-
-Materials::ManifestGroups const &Materials::allGroups() const
-{
-    return d->groups;
-}
-
-void Materials::destroyAllGroups()
-{
-    qDeleteAll(d->groups);
-    d->groups.clear();
-}
-
-#ifdef __CLIENT__
 static void printVariantInfo(MaterialVariant &variant, int variantIdx)
 {
     Con_Message("Variant #%i: Spec:%p", variantIdx, de::dintptr(&variant.spec()));
@@ -530,7 +523,8 @@ static void printVariantInfo(MaterialVariant &variant, int variantIdx)
         Con_Message("  Decoration #%i: Stage:%i Tics:%i", i, l.stage, int(l.tics));
     }
 }
-#endif
+
+#endif // __CLIENT__
 
 static void printMaterialInfo(Material &material)
 {
