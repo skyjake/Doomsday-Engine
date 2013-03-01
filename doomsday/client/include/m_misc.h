@@ -120,4 +120,4 @@ boolean M_CheckTrigger(const trigger_t* trigger, timespan_t advanceTime);
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_M_MISC_H
+#endif // LIBDENG_M_MISC_H

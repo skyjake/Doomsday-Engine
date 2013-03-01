@@ -165,4 +165,4 @@ int SideDef_GetProperty(const SideDef* sideDef, setargs_t* args);
  */
 int SideDef_SetProperty(SideDef* sideDef, const setargs_t* args);
 
-#endif /// LIBDENG_MAP_SIDEDEF
+#endif // LIBDENG_MAP_SIDEDEF

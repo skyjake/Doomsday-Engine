@@ -173,4 +173,4 @@ int Sector_GetProperty(const Sector* sector, setargs_t* args);
  */
 int Sector_SetProperty(Sector* sector, const setargs_t* args);
 
-#endif /// LIBDENG_MAP_SECTOR
+#endif // LIBDENG_MAP_SECTOR

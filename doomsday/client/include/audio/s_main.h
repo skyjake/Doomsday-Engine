@@ -95,4 +95,4 @@ void S_Drawer(void);
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_SOUND_MAIN_H
+#endif // LIBDENG_SOUND_MAIN_H

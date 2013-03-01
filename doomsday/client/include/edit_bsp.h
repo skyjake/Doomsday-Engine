@@ -64,4 +64,4 @@ void MPE_SaveBsp(BspBuilder_c* builder, GameMap* map, uint numEditableVertexes, 
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_MAP_EDIT_BSP_H
+#endif // LIBDENG_MAP_EDIT_BSP_H

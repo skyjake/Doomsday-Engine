@@ -227,7 +227,7 @@ void R_DrawViewBorder()
                             vd->window.origin.x - border, vd->window.origin.y - border,
                             vd->window.size.width + 2 * border, vd->window.size.height + 2 * border);
     }
-    catch(Materials::Manifest::MissingMaterialError const &)
+    catch(MaterialManifest::MissingMaterialError const &)
     {} // Ignore this error.
 
     if(border != 0)

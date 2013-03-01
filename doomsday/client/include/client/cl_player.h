@@ -81,4 +81,4 @@ boolean         ClPlayer_IsFreeToMove(int plrnum);
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_CLIENT_PLAYER_H
+#endif // LIBDENG_CLIENT_PLAYER_H

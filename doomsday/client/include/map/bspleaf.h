@@ -120,4 +120,4 @@ int BspLeaf_GetProperty(const BspLeaf* bspLeaf, setargs_t* args);
  */
 int BspLeaf_SetProperty(BspLeaf* bspLeaf, const setargs_t* args);
 
-#endif /// LIBDENG_MAP_BSPLEAF
+#endif // LIBDENG_MAP_BSPLEAF

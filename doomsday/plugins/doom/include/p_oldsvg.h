@@ -37,4 +37,4 @@ boolean SV_RecogniseState_Dm_v19(const char* path, SaveInfo* info);
  */
 int SV_LoadState_Dm_v19(const char* path, SaveInfo* saveInfo);
 
-#endif /// LIBDOOM_OLD_SAVESTATE
+#endif // LIBDOOM_OLD_SAVESTATE

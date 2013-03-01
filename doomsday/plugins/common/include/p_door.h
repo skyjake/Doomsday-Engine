@@ -97,4 +97,4 @@ void  P_SpawnDoorRaiseIn5Mins(Sector* sec);
 int EV_AnimateDoor(LineDef* li, mobj_t* mo);
 #endif
 
-#endif /// LIBCOMMON_THINKER_DOOR_H
+#endif // LIBCOMMON_THINKER_DOOR_H

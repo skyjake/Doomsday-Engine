@@ -176,4 +176,4 @@ bool F_MatchFileName(de::String const &filePath, de::String const &pattern);
 
 #endif
 
-#endif /// LIBDENG_FILESYS_UTIL_H
+#endif // LIBDENG_FILESYS_UTIL_H

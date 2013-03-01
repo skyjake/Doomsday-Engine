@@ -824,4 +824,4 @@ void GameMap_InitPolyobjBlockmap(GameMap* map, const_pvec2d_t min, const_pvec2d_
 // The current map.
 DENG_EXTERN_C GameMap* theMap;
 
-#endif /// LIBDENG_GAMEMAP_H
+#endif // LIBDENG_GAMEMAP_H

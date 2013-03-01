@@ -123,4 +123,4 @@ int Plane_GetProperty(const Plane* plane, setargs_t* args);
  */
 int Plane_SetProperty(Plane* plane, const setargs_t* args);
 
-#endif /// LIBDENG_MAP_PLANE
+#endif // LIBDENG_MAP_PLANE

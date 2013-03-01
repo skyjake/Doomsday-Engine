@@ -206,4 +206,4 @@ void P_RebornPlayer(int plrNum);
  */
 boolean P_CheckSpot(coord_t x, coord_t y);
 
-#endif /// LIBCOMMON_PLAYSTART_H
+#endif // LIBCOMMON_PLAYSTART_H

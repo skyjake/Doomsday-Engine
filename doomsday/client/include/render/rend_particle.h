@@ -72,4 +72,4 @@ void Rend_RenderGenerators(void);
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_RENDER_PARTICLE_H
+#endif // LIBDENG_RENDER_PARTICLE_H

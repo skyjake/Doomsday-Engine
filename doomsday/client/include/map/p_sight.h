@@ -38,4 +38,4 @@
 boolean GameMap_CheckLineSight(GameMap* map, const coord_t from[3], const coord_t to[3],
     coord_t bottomSlope, coord_t topSlope, int flags);
 
-#endif /// LIBDENG_MAP_GAMEMAP_SIGHT_H
+#endif // LIBDENG_MAP_GAMEMAP_SIGHT_H

@@ -359,4 +359,4 @@ void P_SetDoomsdayFlags(mobj_t* mo);
 
 void P_HitFloor(mobj_t* mo);
 
-#endif /// LIBDOOM64_P_MOBJ_H
+#endif // LIBDOOM64_P_MOBJ_H

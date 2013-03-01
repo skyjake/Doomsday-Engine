@@ -32,4 +32,4 @@
  */
 void G_RegisterCheats(void);
 
-#endif /// LIBHEXEN_M_CHEAT_H
+#endif // LIBHEXEN_M_CHEAT_H

@@ -130,4 +130,4 @@ private:
 
 } // namespace de
 
-#endif /// LIBDENG_RESOURCE_TEXTURESCHEME_H
+#endif // LIBDENG_RESOURCE_TEXTURESCHEME_H

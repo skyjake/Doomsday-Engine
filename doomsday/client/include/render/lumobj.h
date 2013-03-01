@@ -241,4 +241,4 @@ void LO_DrawLumobjs(void);
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_RENDER_LUMINOUS_H
+#endif // LIBDENG_RENDER_LUMINOUS_H

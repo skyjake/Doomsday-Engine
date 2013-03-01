@@ -105,4 +105,4 @@ int PIT_AddMobjIntercepts(mobj_t* mobj, void* parameters);
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_MAP_UTILITIES_H
+#endif // LIBDENG_MAP_UTILITIES_H

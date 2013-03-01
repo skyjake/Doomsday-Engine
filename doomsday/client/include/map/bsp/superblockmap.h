@@ -290,4 +290,4 @@ private:
 } // namespace bsp
 } // namespace de
 
-#endif /// LIBDENG_BSP_SUPERBLOCKMAP
+#endif // LIBDENG_BSP_SUPERBLOCKMAP

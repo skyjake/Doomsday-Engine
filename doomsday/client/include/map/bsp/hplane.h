@@ -175,4 +175,4 @@ private:
 } // namespace bsp
 } // namespace de
 
-#endif /// LIBDENG_BSP_HPLANE
+#endif // LIBDENG_BSP_HPLANE

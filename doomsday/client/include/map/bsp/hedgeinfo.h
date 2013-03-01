@@ -99,4 +99,4 @@ struct HEdgeInfo
 } // namespace bsp
 } // namespace de
 
-#endif /// LIBDENG_BSP_HEDGEINFO
+#endif // LIBDENG_BSP_HEDGEINFO

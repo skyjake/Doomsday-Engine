@@ -35,6 +35,8 @@
 
 namespace de {
 
+class MaterialManifest;
+
 /**
  * Specialized resource collection for a set of materials.
  *

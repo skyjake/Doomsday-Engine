@@ -1356,7 +1356,7 @@ DEFFC(BGMaterial)
             material = &App_Materials().find(*reinterpret_cast<de::Uri const *>(OP_URI(0))).material();
         }
     }
-    catch(de::Materials::Manifest::MissingMaterialError const &)
+    catch(de::MaterialManifest::MissingMaterialError const &)
     {} // Ignore this error.
     catch(de::Materials::NotFoundError const &)
     {} // Ignore this error.

@@ -197,4 +197,4 @@ float P_GetParticleZ(particle_t const *pt);
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_MAP_GENERATORS_H
+#endif // LIBDENG_MAP_GENERATORS_H

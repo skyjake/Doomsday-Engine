@@ -62,4 +62,4 @@ int S_GetSoundID(const char* name);
 void S_ParseSndInfoLump(void);
 #endif
 
-#endif /// LIBCOMMON_PLAY_SOUND_H
+#endif // LIBCOMMON_PLAY_SOUND_H

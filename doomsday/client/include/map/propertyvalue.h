@@ -179,4 +179,4 @@ private:
  */
 PropertyValue* BuildPropertyValue(valuetype_t type, void* valueAdr);
 
-#endif /// LIBDENG_DATA_PROPERTYVALUE_H
+#endif // LIBDENG_DATA_PROPERTYVALUE_H

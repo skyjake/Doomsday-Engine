@@ -96,4 +96,4 @@ void C_Ranger(void);
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_RENDER_CLIP_H
+#endif // LIBDENG_RENDER_CLIP_H

@@ -95,4 +95,4 @@ boolean Polyobj_SetProperty(Polyobj* po, const setargs_t* args);
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_MAP_POLYOB_H
+#endif // LIBDENG_MAP_POLYOB_H

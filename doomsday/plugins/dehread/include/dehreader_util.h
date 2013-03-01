@@ -62,4 +62,4 @@ int valueDefForPath(const QString& id, ded_value_t** def = NULL);
  */
 QStringList splitMax(const QString& string, QChar sep, int max = -1);
 
-#endif /// LIBDEHREAD_DEHREADER_UTIL_H
+#endif // LIBDEHREAD_DEHREADER_UTIL_H

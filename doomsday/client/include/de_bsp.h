@@ -25,4 +25,4 @@
 
 #include "edit_bsp.h"
 
-#endif /// LIBDENG_BSP
+#endif // LIBDENG_BSP

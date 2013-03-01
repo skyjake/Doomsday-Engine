@@ -32,4 +32,4 @@
  */
 void G_RegisterCheats(void);
 
-#endif /// LIBDOOM_M_CHEAT_H
+#endif // LIBDOOM_M_CHEAT_H

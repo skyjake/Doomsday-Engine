@@ -39,4 +39,4 @@ scroll_t* P_SpawnSideMaterialOriginScroller(SideDef* side, short special);
 
 scroll_t* P_SpawnSectorMaterialOriginScroller(Sector* sector, uint planeId, short special);
 
-#endif /// LIBCOMMON_THINKER_SCROLL_H
+#endif // LIBCOMMON_THINKER_SCROLL_H

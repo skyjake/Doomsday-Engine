@@ -71,4 +71,4 @@ int B_KeyForShortName(const char* key);
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_BIND_MAIN_H
+#endif // LIBDENG_BIND_MAIN_H

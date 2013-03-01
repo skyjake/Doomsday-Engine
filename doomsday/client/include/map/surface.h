@@ -210,7 +210,7 @@ public:
      * Clear all the projected (light) decoration sources for the surface.
      */
     void clearDecorations();
-#endif __CLIENT__
+#endif // __CLIENT__
 };
 
 struct surfacedecorsource_s;
@@ -218,4 +218,4 @@ struct surfacedecorsource_s;
 /// Set of surfaces.
 typedef QSet<Surface *> SurfaceSet;
 
-#endif /// LIBDENG_MAP_SURFACE
+#endif // LIBDENG_MAP_SURFACE

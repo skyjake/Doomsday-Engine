@@ -49,4 +49,4 @@ boolean SBE_UsingHueCircle(void);
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_BIAS_EDITOR
+#endif // LIBDENG_BIAS_EDITOR

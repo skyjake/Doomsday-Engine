@@ -258,4 +258,4 @@ void GL_DeSaturatePalettedImage(uint8_t* buffer, struct colorpalette_s* palette,
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_IMAGE_MANIPULATION_H
+#endif // LIBDENG_IMAGE_MANIPULATION_H

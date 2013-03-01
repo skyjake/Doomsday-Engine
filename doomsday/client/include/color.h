@@ -62,4 +62,4 @@ float ColorRawf_AverageColorMulAlpha(ColorRawf* color);
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_DATA_COLOR_H
+#endif // LIBDENG_DATA_COLOR_H

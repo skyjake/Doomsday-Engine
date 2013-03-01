@@ -33,4 +33,4 @@ void X_Drawer(int player);
  */
 void X_Register(void);
 
-#endif /// LIBCOMMON_HUD_CROSSHAIR_H
+#endif // LIBCOMMON_HUD_CROSSHAIR_H

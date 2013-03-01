@@ -121,4 +121,4 @@ void Rend_DrawShadowOffsetVerts(void);
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_RENDER_FAKERADIO_H
+#endif // LIBDENG_RENDER_FAKERADIO_H

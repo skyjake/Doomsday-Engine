@@ -200,4 +200,4 @@ const Gridmap* Blockmap_Gridmap(Blockmap* blockmap);
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_MAP_BLOCKMAP_H
+#endif // LIBDENG_MAP_BLOCKMAP_H

@@ -184,4 +184,4 @@ void P_ShutdownMapEntityDefs(void);
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_PLAY_MAPDATA_H
+#endif // LIBDENG_PLAY_MAPDATA_H

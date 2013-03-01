@@ -194,4 +194,4 @@ private:
 
 } // namespace de
 
-#endif /// LIBDENG_RESOURCE_TEXTUREMANIFEST_H
+#endif // LIBDENG_RESOURCE_TEXTUREMANIFEST_H

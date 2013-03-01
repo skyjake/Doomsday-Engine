@@ -72,4 +72,4 @@ struct HEdgeIntercept
 } // namespace bsp
 } // namespace de
 
-#endif /// LIBDENG_BSP_HEDGEINTERCEPT
+#endif // LIBDENG_BSP_HEDGEINTERCEPT

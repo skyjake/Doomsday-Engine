@@ -295,7 +295,7 @@ void Rend_ConsoleUpdateBackground()
     {
         consoleBackgroundMaterial = &App_Materials().find(*reinterpret_cast<de::Uri *>(consoleBackgroundMaterialUri)).material();
     }
-    catch(Materials::Manifest::MissingMaterialError const &)
+    catch(MaterialManifest::MissingMaterialError const &)
     {} // Ignore this error.
     catch(Materials::NotFoundError const &)
     {} // Ignore this error.

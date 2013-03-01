@@ -206,4 +206,4 @@ void Gridmap_DebugDrawer(const Gridmap* gridmap);
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_DATA_GRIDMAP_H
+#endif // LIBDENG_DATA_GRIDMAP_H

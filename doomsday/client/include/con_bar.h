@@ -56,4 +56,4 @@ boolean Con_IsProgressAnimationCompleted(void);
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_CONSOLE_PROGRESSBAR_H
+#endif // LIBDENG_CONSOLE_PROGRESSBAR_H
