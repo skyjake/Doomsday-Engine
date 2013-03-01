@@ -506,11 +506,10 @@ static QList<TextureManifest *> collectManifests(TextureScheme *scheme,
         }
     }
 
-    if(storage)
-    {
-        return *storage;
-    }
+    // Are we done?
+    if(storage) return *storage;
 
+    // Collect and populate.
     QList<TextureManifest *> result;
     if(count == 0) return result;
 
@@ -521,14 +520,13 @@ static QList<TextureManifest *> collectManifests(TextureScheme *scheme,
 }
 
 /**
- * Decode and then lexicographically compare the two manifest
- * paths, returning @c true if @a is less than @a b.
+ * Decode and then lexicographically compare the two manifest paths,
+ * returning @c true if @a is less than @a b.
  */
-static bool compareTextureManifestPathsAssending(TextureManifest const *a,
-                                                 TextureManifest const *b)
+static bool compareManifestPathsAssending(TextureManifest const *a, TextureManifest const *b)
 {
-    String pathA = QString(QByteArray::fromPercentEncoding(a->path().toUtf8()));
-    String pathB = QString(QByteArray::fromPercentEncoding(b->path().toUtf8()));
+    String pathA(QString(QByteArray::fromPercentEncoding(a->path().toUtf8())));
+    String pathB(QString(QByteArray::fromPercentEncoding(b->path().toUtf8())));
     return pathA.compareWithoutCase(pathB) < 0;
 }
 
@@ -568,7 +566,7 @@ static int printTextures2(TextureScheme *scheme, Path const &like,
     Con_PrintRuler();
 
     // Sort and print the index.
-    qSort(found.begin(), found.end(), compareTextureManifestPathsAssending);
+    qSort(found.begin(), found.end(), compareManifestPathsAssending);
     int idx = 0;
     foreach(TextureManifest *manifest, found)
     {

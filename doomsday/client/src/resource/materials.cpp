@@ -615,11 +615,10 @@ static QList<MaterialManifest *> collectManifests(MaterialScheme *scheme,
         }
     }
 
-    if(storage)
-    {
-        return *storage;
-    }
+    // Are we done?
+    if(storage) return *storage;
 
+    // Collect and populate.
     QList<MaterialManifest *> result;
     if(count == 0) return result;
 
@@ -630,13 +629,13 @@ static QList<MaterialManifest *> collectManifests(MaterialScheme *scheme,
 }
 
 /**
- * Decode and then lexicographically compare the two manifest
- * paths, returning @c true if @a is less than @a b.
+ * Decode and then lexicographically compare the two manifest paths,
+ * returning @c true if @a is less than @a b.
  */
-static bool compareMaterialManifestPathsAssending(MaterialManifest const *a, MaterialManifest const *b)
+static bool compareManifestPathsAssending(MaterialManifest const *a, MaterialManifest const *b)
 {
-    String pathA = QString(QByteArray::fromPercentEncoding(a->path().toUtf8()));
-    String pathB = QString(QByteArray::fromPercentEncoding(b->path().toUtf8()));
+    String pathA(QString(QByteArray::fromPercentEncoding(a->path().toUtf8())));
+    String pathB(QString(QByteArray::fromPercentEncoding(b->path().toUtf8())));
     return pathA.compareWithoutCase(pathB) < 0;
 }
 
@@ -675,7 +674,7 @@ static int printMaterials2(MaterialScheme *scheme, Path const &like,
     Con_PrintRuler();
 
     // Sort and print the index.
-    qSort(found.begin(), found.end(), compareMaterialManifestPathsAssending);
+    qSort(found.begin(), found.end(), compareManifestPathsAssending);
     int idx = 0;
     foreach(MaterialManifest *manifest, found)
     {
