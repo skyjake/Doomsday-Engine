@@ -101,8 +101,6 @@ void R_Register()
 
     C_CMD("viewgrid", "ii", ViewGrid);
 #endif
-
-    Materials::consoleRegister();
 }
 
 void R_BuildTexGammaLut()

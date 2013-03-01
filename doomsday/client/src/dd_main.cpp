@@ -638,6 +638,8 @@ void DD_Register(void)
     P_ControlRegister();
     I_Register();
 #endif
+    Materials::consoleRegister();
+    Textures::consoleRegister();
     Net_Register();
     DAM_Register();
     BspBuilder_Register();
