@@ -256,6 +256,49 @@ Uri::Uri(char const *nullTerminatedCStr) : d(new Instance)
     setUri(nullTerminatedCStr);
 }
 
+Uri Uri::fromUserInput(char **argv, int argc, bool (*knownScheme) (String name))
+{
+    Uri output;
+    if(argv)
+    {
+        // [0: <scheme>:<path>] or [0: <scheme>] or [0: <path>].
+        switch(argc)
+        {
+        case 1: {
+            // Try to extract the scheme and encode the rest of the path.
+            String rawUri(argv[0]);
+            int pos = rawUri.indexOf(':');
+            if(pos >= 0)
+            {
+                output.setScheme(rawUri.left(pos));
+                rawUri.remove(0, pos + 1);
+                output.setPath(Path(QString(QByteArray(rawUri.toUtf8()).toPercentEncoding())));
+            }
+            // Just a scheme name?
+            else if(knownScheme && knownScheme(rawUri))
+            {
+                output.setScheme(rawUri);
+            }
+            else
+            {
+                // Just a path.
+                output.setPath(Path(QString(QByteArray(rawUri.toUtf8()).toPercentEncoding())));
+            }
+            break; }
+
+        // [0: <scheme>, 1: <path>]
+        case 2:
+            // Assign the scheme and encode the path.
+            output.setScheme(argv[0]);
+            output.setPath(Path(QString(QByteArray(argv[1]).toPercentEncoding())));
+            break;
+
+        default: break;
+        }
+    }
+    return output;
+}
+
 Uri::Uri(Uri const &other) : LogEntry::Arg::Base(), d(new Instance(*other.d))
 {}
 

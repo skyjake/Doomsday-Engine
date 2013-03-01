@@ -107,7 +107,7 @@ public:
      * never contain a scheme as a prefix, so @a resClass is mandatory.
      *
      * @param resClass  Scheme for the URI. @c RC_UNKNOWN: resource locator
-     *                  guesses an appropriate scheme for this type of file.
+     *                  guesses an appropriate scheme for this.
      *
      * @param path      Path of the URI.
      */
@@ -127,7 +127,7 @@ public:
      * @param nullTerminatedCStr  String to be parsed. Assumed to be in
      *                            percent-encoded representation.
      */
-    Uri(char const* nullTerminatedCStr);
+    Uri(char const *nullTerminatedCStr);
 
     /**
      * Construct a Uri instance by duplicating @a other.
@@ -179,6 +179,27 @@ public:
      */
     static Uri fromNativeDirPath(NativePath const &nativeDirPath,
                                  resourceclassid_t defaultResourceClass = RC_NULL);
+
+    /**
+     * Construct a Uri instance from a user supplied, variable-length list of UTF-8
+     * C-style text string arguments.
+     *
+     * @param argv         The arguments to be interpreted. All of which are assumed to
+     *                     be in a @em non-percent-encoded representation.
+     *
+     *                     Supported forms (where <> denote keyword component names):
+     *                      - [0: "<scheme>:<path>"]
+     *                      - [0: "<scheme>"]              (if @a knownScheme set)
+     *                      - [0: "<path>"]
+     *                      - [0: "<scheme>", 1: "<path>"]
+     *
+     * @param argc         The number of elements in @a argv.
+     *
+     * @param knownScheme  Callback function used to identify known scheme names when
+     *                     attempting to resolve ambiguous cases (only the one argument
+     *                     is provided.
+     */
+    static Uri fromUserInput(char **argv, int argc, bool (*knownScheme) (String name) = 0);
 
     /**
      * Convert this URI to a text string.
