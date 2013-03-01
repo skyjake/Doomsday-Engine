@@ -88,4 +88,4 @@ void            Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback,
 } // extern "C"
 #endif
 
-#endif /// LIBCOMMON_HUD_MESSAGE_H
+#endif // LIBCOMMON_HUD_MESSAGE_H

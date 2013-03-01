@@ -76,4 +76,4 @@ coord_t Mobj_ApproxPointDistance(mobj_t* start, coord_t const* point);
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_MAP_MOBJ
+#endif // LIBDENG_MAP_MOBJ

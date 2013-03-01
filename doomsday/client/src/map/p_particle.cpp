@@ -1422,7 +1422,7 @@ static int findDefForGenerator(ptcgen_t *gen, void *parameters)
                 }
 #endif
             }
-            catch(Materials::Manifest::MissingMaterialError const &)
+            catch(MaterialManifest::MissingMaterialError const &)
             {} // Ignore this error.
             catch(Materials::NotFoundError const &)
             {} // Ignore this error.

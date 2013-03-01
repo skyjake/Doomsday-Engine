@@ -239,4 +239,4 @@ mobj_t* P_SpawnKoraxMissile(mobjtype_t type, coord_t x, coord_t y, coord_t z, mo
 
 void P_ExplodeMissile(mobj_t* mo);
 
-#endif /// LIBHEXEN_P_MOBJ_H
+#endif // LIBHEXEN_P_MOBJ_H

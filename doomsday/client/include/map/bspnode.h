@@ -76,4 +76,4 @@ BspNode* BspNode_SetChildBounds(BspNode* node, int left, AABoxd* bounds);
 #define BspNode_SetRightBounds(node, bounds) BspNode_SetChildBounds((node), false, (bounds))
 #define BspNode_SetLeftBounds(node,  bounds) BspNode_SetChildBounds((node), true,  (bounds))
 
-#endif /// LIBDENG_MAP_BSPNODE
+#endif // LIBDENG_MAP_BSPNODE

@@ -135,4 +135,4 @@ private:
 
 } // namespace de
 
-#endif /// LIBDENG_BSPBUILDER
+#endif // LIBDENG_BSPBUILDER

@@ -269,4 +269,4 @@ int LineDef_GetProperty(const LineDef* lineDef, setargs_t* args);
  */
 int LineDef_SetProperty(LineDef* lineDef, const setargs_t* args);
 
-#endif /// LIBDENG_MAP_LINEDEF
+#endif // LIBDENG_MAP_LINEDEF

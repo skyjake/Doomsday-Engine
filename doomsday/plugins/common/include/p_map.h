@@ -96,4 +96,4 @@ void PIT_ThrustSpike(mobj_t* actor);
 boolean P_UsePuzzleItem(player_t* player, int itemType);
 #endif
 
-#endif /// LIBCOMMON_P_MAP_H
+#endif // LIBCOMMON_P_MAP_H

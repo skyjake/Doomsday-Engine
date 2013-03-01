@@ -52,4 +52,4 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(DehReaderFlags)
  */
 void readDehPatch(const de::Block& patch, DehReaderFlags flags = 0);
 
-#endif /// LIBDEHREAD_DEHREADER_H
+#endif // LIBDEHREAD_DEHREADER_H

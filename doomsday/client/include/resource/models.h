@@ -181,4 +181,4 @@ int Models_CacheForMobj(thinker_t* th, void* context);
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_RESOURCE_MODELS_H
+#endif // LIBDENG_RESOURCE_MODELS_H

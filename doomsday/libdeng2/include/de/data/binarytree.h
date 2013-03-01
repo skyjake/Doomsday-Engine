@@ -294,4 +294,4 @@ private:
 
 } // namespace de
 
-#endif /// LIBDENG2_BINARYTREE_H
+#endif // LIBDENG2_BINARYTREE_H

@@ -61,4 +61,4 @@ void IterList_RewindIterator(iterlist_t* list);
 
 void IterList_SetIteratorDirection(iterlist_t* list, iterlist_iterator_direction_t direction);
 
-#endif /// LIBCOMMON_ITERLIST_H
+#endif // LIBCOMMON_ITERLIST_H

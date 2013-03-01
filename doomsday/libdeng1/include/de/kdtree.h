@@ -86,4 +86,4 @@ DENG_PUBLIC int KdTreeNode_Traverse(KdTreeNode *kdTreeNode, int (*callback)(KdTr
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_KDTREE_H
+#endif // LIBDENG_KDTREE_H

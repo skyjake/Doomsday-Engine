@@ -32,4 +32,4 @@
  */
 void G_RegisterCheats(void);
 
-#endif /// LIBHERETIC_M_CHEAT_H
+#endif // LIBHERETIC_M_CHEAT_H

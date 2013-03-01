@@ -170,7 +170,7 @@ static void configureDefaultSky()
         {
             layer->material = &App_Materials().find(de::Uri(DEFAULT_SKY_SPHERE_MATERIAL, RC_NULL)).material();
         }
-        catch(Materials::Manifest::MissingMaterialError const &)
+        catch(MaterialManifest::MissingMaterialError const &)
         {} // Ignore this error.
         catch(Materials::NotFoundError const &)
         {} // Ignore this error.

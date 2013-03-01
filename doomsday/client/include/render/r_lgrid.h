@@ -64,4 +64,4 @@ void LG_Debug(void);
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_REFRESH_LIGHT_GRID_H
+#endif // LIBDENG_REFRESH_LIGHT_GRID_H

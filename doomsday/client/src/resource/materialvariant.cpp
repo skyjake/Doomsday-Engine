@@ -113,7 +113,7 @@ DENG2_PIMPL(Material::Variant)
             }
             ls.inter = 0;
 
-            LayerType::Stage const *lsCur = layer.stages()[ls.stage];
+            typename LayerType::Stage const *lsCur = layer.stages()[ls.stage];
             if(lsCur->variance != 0)
                 ls.tics = lsCur->tics * (1 - lsCur->variance * RNG_RandFloat());
             else
@@ -121,7 +121,7 @@ DENG2_PIMPL(Material::Variant)
         }
         else
         {
-            LayerType::Stage const *lsCur = layer.stages()[ls.stage];
+            typename LayerType::Stage const *lsCur = layer.stages()[ls.stage];
             ls.inter = 1 - (ls.tics - frameTimePos) / float( lsCur->tics );
         }
     }

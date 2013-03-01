@@ -95,4 +95,4 @@ private:
 } // namespace bsp
 } // namespace de
 
-#endif /// LIBDENG_BSP_HEDGETIP
+#endif // LIBDENG_BSP_HEDGETIP

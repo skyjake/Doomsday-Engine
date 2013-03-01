@@ -111,4 +111,4 @@ struct PartitionCost
 } // namespace bsp
 } // namespace de
 
-#endif /// LIBDENG_BSP_PARTITIONCOST
+#endif // LIBDENG_BSP_PARTITIONCOST

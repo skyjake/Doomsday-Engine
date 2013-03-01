@@ -138,4 +138,4 @@ int HEdge_GetProperty(const HEdge* hedge, setargs_t* args);
  */
 int HEdge_SetProperty(HEdge* hedge, const setargs_t* args);
 
-#endif /// LIBDENG_MAP_HEDGE
+#endif // LIBDENG_MAP_HEDGE

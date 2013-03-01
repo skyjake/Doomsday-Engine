@@ -67,4 +67,4 @@ boolean EntityDatabase_SetProperty(EntityDatabase* db, struct mapentitypropertyd
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_MAP_ENTITYDATABASE_H
+#endif // LIBDENG_MAP_ENTITYDATABASE_H

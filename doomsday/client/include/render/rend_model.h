@@ -141,4 +141,4 @@ void Rend_RenderModel(const rendmodelparams_t* params);
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_RENDER_MODEL_H
+#endif // LIBDENG_RENDER_MODEL_H

@@ -127,4 +127,4 @@ void            SB_SetColor(float* dest, float* src);
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_RENDER_SHADOWBIAS_H
+#endif // LIBDENG_RENDER_SHADOWBIAS_H

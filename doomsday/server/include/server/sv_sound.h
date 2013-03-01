@@ -58,4 +58,4 @@ void Sv_StopSound(int soundId, struct mobj_s* origin);
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_SERVER_SOUND_H
+#endif // LIBDENG_SERVER_SOUND_H

@@ -89,4 +89,4 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(LineDefInfo::Flags)
 } // namespace bsp
 } // namespace de
 
-#endif /// LIBDENG_BSPBUILDER_LINEDEFINFO
+#endif // LIBDENG_BSPBUILDER_LINEDEFINFO

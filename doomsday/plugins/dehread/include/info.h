@@ -200,4 +200,4 @@ int stateIndexForActionOffset(int offset);
 
 int originalHeightForMobjType(int type);
 
-#endif /// LIBDEHREAD_INFO_H
+#endif // LIBDEHREAD_INFO_H

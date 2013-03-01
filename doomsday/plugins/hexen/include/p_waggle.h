@@ -52,4 +52,4 @@ typedef struct {
 void T_FloorWaggle(waggle_t* waggle);
 boolean EV_StartFloorWaggle(int tag, int height, int speed, int offset, int timer);
 
-#endif /// LIBHEXEN_P_WAGGLE_H
+#endif // LIBHEXEN_P_WAGGLE_H

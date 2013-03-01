@@ -43,4 +43,4 @@ void P_PolyobjChanged(Polyobj* po);
  */
 //boolean P_PolyobjMove(Polyobj* polyobj, coord_t xy[]);
 
-#endif /// LIBDENG_P_POLYOBJS_H
+#endif // LIBDENG_P_POLYOBJS_H

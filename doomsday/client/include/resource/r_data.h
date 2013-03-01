@@ -77,4 +77,4 @@ de::Texture *R_FindTextureByResourceUri(de::String schemeName, de::Uri const *re
 de::Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri, de::Vector2i const &dimensions);
 de::Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri);
 
-#endif /// LIBDENG_REFRESH_DATA_H
+#endif // LIBDENG_REFRESH_DATA_H

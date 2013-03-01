@@ -162,4 +162,4 @@ int Generators_IterateList(Generators* generators, uint listIndex,
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_MAP_GENERATORS
+#endif // LIBDENG_MAP_GENERATORS

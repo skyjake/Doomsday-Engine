@@ -140,4 +140,4 @@ private:
 } // namespace bsp
 } // namespace de
 
-#endif /// LIBDENG_BSP_PARTITIONER
+#endif // LIBDENG_BSP_PARTITIONER

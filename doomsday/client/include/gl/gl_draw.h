@@ -65,4 +65,4 @@ void GL_DrawFilter(void);
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_GRAPHICS_DRAW_H
+#endif // LIBDENG_GRAPHICS_DRAW_H

@@ -28,4 +28,4 @@
 /// Nodes in BspBuilder's internal tree are modelled with this type.
 typedef de::BinaryTree<de::MapElement *> BspTreeNode;
 
-#endif /// LIBDENG_BSPBUILDER_BSPTREENODE
+#endif // LIBDENG_BSPBUILDER_BSPTREENODE

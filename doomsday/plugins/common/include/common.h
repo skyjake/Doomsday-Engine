@@ -42,4 +42,4 @@
 
 int Common_GetInteger(int id);
 
-#endif /// LIBCOMMON_GAME_INCLUDES
+#endif // LIBCOMMON_GAME_INCLUDES

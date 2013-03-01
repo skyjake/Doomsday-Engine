@@ -110,4 +110,4 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(Patch::Flags)
 
 } // namespace de
 
-#endif /// LIBDENG_RESOURCE_PATCH_H
+#endif // LIBDENG_RESOURCE_PATCH_H

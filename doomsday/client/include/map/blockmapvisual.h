@@ -33,4 +33,4 @@ DENG_EXTERN_C float bmapDebugSize; ///< cvar
  */
 DENG_EXTERN_C void Rend_BlockmapDebug(void);
 
-#endif /// LIBDENG_MAP_BLOCKMAP_VISUAL_H
+#endif // LIBDENG_MAP_BLOCKMAP_VISUAL_H

@@ -74,4 +74,4 @@ Svg* Svg_FromDef(svgid_t uniqueId, const def_svgline_t* lines, uint numLines);
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_REFRESH_SVG_H
+#endif // LIBDENG_REFRESH_SVG_H

@@ -87,4 +87,4 @@ int P_CeilingActivate(short tag);
 #endif
 int P_CeilingDeactivate(short tag);
 
-#endif /// LIBCOMMON_THINKER_CEILING_H
+#endif // LIBCOMMON_THINKER_CEILING_H

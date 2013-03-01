@@ -37,4 +37,4 @@ boolean SV_RecogniseState_Hr_v13(const char* path, SaveInfo* info);
  */
 int SV_LoadState_Hr_v13(const char* path, SaveInfo* saveInfo);
 
-#endif /// LIBHERETIC_OLD_SAVESTATE
+#endif // LIBHERETIC_OLD_SAVESTATE

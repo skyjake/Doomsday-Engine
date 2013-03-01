@@ -54,4 +54,4 @@ BusyTask* BusyMode_CurrentTask(void);
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_CORE_BUSYMODE_H
+#endif // LIBDENG_CORE_BUSYMODE_H
