@@ -242,7 +242,6 @@ DENG_HEADERS += \
     $$SRC/include/resource/colorpalettes.h \
     $$SRC/include/resource/compositetexture.h \
     $$SRC/include/resource/font.h \
-    $$SRC/include/resource/hq2x.h \
     $$SRC/include/resource/image.h \
     $$SRC/include/resource/lumpcache.h \
     $$SRC/include/resource/material.h \
@@ -252,14 +251,12 @@ DENG_HEADERS += \
     $$SRC/include/resource/materialscheme.h \
     $$SRC/include/resource/patch.h \
     $$SRC/include/resource/patchname.h \
-    $$SRC/include/resource/pcx.h \
     $$SRC/include/resource/r_data.h \
     $$SRC/include/resource/rawtexture.h \
     $$SRC/include/resource/texture.h \
     $$SRC/include/resource/texturemanifest.h \
     $$SRC/include/resource/textures.h \
     $$SRC/include/resource/texturescheme.h \
-    $$SRC/include/resource/tga.h \
     $$SRC/include/resource/wad.h \
     $$SRC/include/resource/zip.h \
     $$SRC/include/resourceclass.h \
