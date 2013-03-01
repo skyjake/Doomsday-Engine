@@ -23,8 +23,7 @@
 
 #include "MapElement"
 #include "def_data.h"
-#include "map/p_mapdata.h"
-#include "map/p_dmu.h"
+#include "map/p_dmu.h" // setargs_t
 #include "uri.hh"
 #include <de/Error>
 #include <de/Vector>
@@ -614,40 +613,20 @@ public:
      */
     void ticker(timespan_t time);
 
-#ifdef __CLIENT__
-
-    /**
-     * Choose/create a variant of the material which fulfills @a spec and then
-     * immediately prepare it for render (e.g., upload textures if necessary).
-     *
-     * Intended as a convenient shorthand of the call tree:
-     * @code
-     *    chooseVariant(@a spec, true)->prepare(@a forceSnapshotUpdate)
-     * @endcode
-     *
-     * @param spec  Specification with which to derive the variant.
-     * @param forceSnapshotUpdate  @c true= Force an update of the variant's
-     *      state snapshot. The snapshot is automatically updated when first
-     *      prepared for a new render frame. Typically the only time force is
-     *      needed is when the material variant has changed since.
-     *
-     * @return  Snapshot for the chosen and prepared variant of Material.
-     *
-     * @see Materials::variantSpecForContext(), chooseVariant(), Variant::prepare()
-     */
-    inline Snapshot const &prepare(VariantSpec const &spec, bool forceSnapshotUpdate = false)
-    {
-        return chooseVariant(spec, true /*can-create*/)->prepare(forceSnapshotUpdate);
-    }
-
-#endif // __CLIENT__
-
     /// Returns @c true if the material has at least one animated layer.
     bool isAnimated() const;
 
 #ifdef __CLIENT__
-    /// Returns @c true if the material has one or more (light) decorations.
-    /// Equivalent to @code decorationCount() != 0; @endcode, for convenience.
+    /**
+     * Returns @c true if the material has one or more (light) decorations.
+     *
+     * Equivalent to:
+     * @code
+     *    decorationCount() != 0;
+     * @endcode
+     *
+     * @see decorationCount()
+     */
     inline bool isDecorated() const { return decorationCount() != 0; }
 #endif
 
@@ -850,6 +829,30 @@ public:
      * @return  The chosen variant; otherwise @c 0 (if none suitable, when not creating).
      */
     Variant *chooseVariant(VariantSpec const &spec, bool canCreate = false);
+
+    /**
+     * Choose/create a variant of the material which fulfills @a spec and then
+     * immediately prepare it for render (e.g., upload textures if necessary).
+     *
+     * Intended as a convenient shorthand of the call tree:
+     * @code
+     *    chooseVariant(@a spec, true)->prepare(@a forceSnapshotUpdate)
+     * @endcode
+     *
+     * @param spec  Specification with which to derive the variant.
+     * @param forceSnapshotUpdate  @c true= Force an update of the variant's
+     *      state snapshot. The snapshot is automatically updated when first
+     *      prepared for a new render frame. Typically the only time force is
+     *      needed is when the material variant has changed since.
+     *
+     * @return  Snapshot for the chosen and prepared variant of Material.
+     *
+     * @see Materials::variantSpecForContext(), chooseVariant(), Variant::prepare()
+     */
+    inline Snapshot const &prepare(VariantSpec const &spec, bool forceSnapshotUpdate = false)
+    {
+        return chooseVariant(spec, true /*can-create*/)->prepare(forceSnapshotUpdate);
+    }
 
 #endif // __CLIENT__
 
