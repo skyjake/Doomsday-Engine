@@ -72,7 +72,11 @@ public:
      */
     void stop();
 
-protected slots:
+    void pause();
+
+    void resume();
+
+public slots:
     void nextLoopIteration();
 
 private:

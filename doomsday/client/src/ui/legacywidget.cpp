@@ -61,7 +61,7 @@ LegacyWidget::~LegacyWidget()
 
 void LegacyWidget::viewResized()
 {
-    if(isDisabled()) return;
+    if(isDisabled() || Sys_IsShuttingDown()) return;
 
     LOG_AS("LegacyWidget");
     LOG_DEBUG("View resized to ") << root().viewSize().asText();
@@ -83,6 +83,8 @@ void LegacyWidget::viewResized()
 void LegacyWidget::update()
 {    
     if(isDisabled()) return;
+
+    //LOG_DEBUG("Legacy update");
 
     DENG2_ASSERT(!BusyMode_Active());
 
@@ -116,6 +118,8 @@ void LegacyWidget::draw()
     }
 
     if(isDisabled()) return;
+
+    //LOG_DEBUG("Legacy draw");
 
     if(drawGame)
     {

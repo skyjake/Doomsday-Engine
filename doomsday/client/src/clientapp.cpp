@@ -197,6 +197,7 @@ void ClientApp::postFrame()
     S_EndFrame();
 
     Garbage_Recycle();
+    loop().resume();
 }
 
 ClientApp &ClientApp::app()

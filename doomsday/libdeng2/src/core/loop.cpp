@@ -29,13 +29,12 @@ DENG2_PIMPL(Loop)
 {
     TimeDelta interval;
     bool running;
+    QTimer *timer;
 
-    Instance(Public *i) : Base(i), interval(0), running(false) {}
-
-    void schedule()
+    Instance(Public *i) : Base(i), interval(0), running(false)
     {
-        QTimer::singleShot(de::max(duint64(1), interval.asMilliSeconds()),
-                           thisPublic, SLOT(nextLoopIteration()));
+        timer = new QTimer(thisPublic);
+        QObject::connect(timer, SIGNAL(timeout()), thisPublic, SLOT(nextLoopIteration()));
     }
 };
 
@@ -50,24 +49,35 @@ Loop::~Loop()
 void Loop::setRate(int freqHz)
 {
     d->interval = 1.0 / freqHz;
+    d->timer->setInterval(de::max(duint64(1), d->interval.asMilliSeconds()));
 }
 
 void Loop::start()
 {
     d->running = true;
-    d->schedule();
+    d->timer->start();
 }
 
 void Loop::stop()
 {
     d->running = false;
+    d->timer->stop();
+}
+
+void Loop::pause()
+{
+    d->timer->stop();
+}
+
+void Loop::resume()
+{
+    d->timer->start();
 }
 
 void Loop::nextLoopIteration()
 {
     if(d->running)
     {
-        d->schedule();        
         DENG2_FOR_AUDIENCE(Iteration, i) i->loopIteration();
     }
 }

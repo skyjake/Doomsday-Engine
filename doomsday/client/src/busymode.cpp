@@ -426,6 +426,8 @@ static void BusyMode_Exit(void)
  */
 void BusyMode_Loop(void)
 {
+    if(!busyTask) return;
+
     boolean canUpload = !(busyTask->mode & BUSYF_NO_UPLOADS);
     timespan_t oldTime;
 

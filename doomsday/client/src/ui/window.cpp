@@ -58,6 +58,7 @@
 #include <QWidget>
 #include <QDesktopWidget>
 #include "ui/canvaswindow.h"
+#include "clientapp.h"
 #include <de/Config>
 #include <de/Record>
 #include <de/NumberValue>
@@ -1294,6 +1295,8 @@ void Window_Draw(Window* win)
     assert(win);
     assert(win->widget);
 
+    ClientApp::app().loop().pause();
+
     // The canvas needs to be recreated when the GL format has changed
     // (e.g., multisampling).
     if(win->needRecreateCanvas)
@@ -1498,6 +1501,8 @@ boolean Window_IsMouseTrapped(const Window* wnd)
 
 boolean Window_ShouldRepaintManually(const Window* wnd)
 {
+    //return false;
+
     // When the pointer is not grabbed, allow the system to regulate window
     // updates (e.g., for window manipulation).
     if(Window_IsFullscreen(wnd)) return true;

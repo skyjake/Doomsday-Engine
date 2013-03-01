@@ -40,11 +40,13 @@ BusyWidget::~BusyWidget()
 
 void BusyWidget::update()
 {
+    DENG_ASSERT(BusyMode_Active());
     BusyMode_Loop();
 }
 
 void BusyWidget::draw()
 {
+    DENG_ASSERT(BusyMode_Active());
     BusyVisual_Render();
 }
 
