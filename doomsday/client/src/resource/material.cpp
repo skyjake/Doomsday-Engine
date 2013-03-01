@@ -640,7 +640,7 @@ void Material::markValid(bool yes)
     d->valid = yes;
 }
 
-String Material::composeDescription() const
+String Material::description() const
 {
     String str = String("Material \"%1\"").arg(manifest().composeUri().asText());
 #ifdef DENG_DEBUG
@@ -656,7 +656,7 @@ String Material::composeDescription() const
     return str;
 }
 
-String Material::composeSynopsis() const
+String Material::synopsis() const
 {
     String str = String("Drawable:%1 EnvClass:\"%2\"")
                    .arg(isDrawable()? "yes" : "no")
@@ -686,7 +686,7 @@ String Material::composeSynopsis() const
                                       : QString("(prev)");
 
             str += String("\n  #%1: Texture:\"%2\" Tics:%3 (~%4)"
-                          "\n       Offset:%5 Glow:%6 (~%7)")
+                          "\n      Offset:%5 Glow:%6 (~%7)")
                        .arg(k)
                        .arg(path)
                        .arg(sDef.tics)

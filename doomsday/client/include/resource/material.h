@@ -570,14 +570,14 @@ public:
      *
      * @return Human-friendly description/overview of the material.
      */
-    de::String composeDescription() const;
+    de::String description() const;
 
     /**
-     * Returns a textual synopsis of the material's configuration.
+     * Returns a textual synopsis of the full material configuration.
      *
      * @return Human-friendly synopsis of the material's configuration.
      */
-    de::String composeSynopsis() const;
+    de::String synopsis() const;
 
     /**
      * Returns @c true if the material is considered @em valid. A material is

@@ -91,6 +91,18 @@ MaterialScheme &MaterialManifest::scheme() const
     throw Error("MaterialManifest::scheme", String("Failed to determine scheme for manifest [%1]").arg(de::dintptr(this)));
 }
 
+String MaterialManifest::description(de::Uri::ComposeAsTextFlags uriCompositionFlags) const
+{
+    String info = String("%1 %2")
+                      .arg(composeUri().compose(uriCompositionFlags | de::Uri::DecodePath),
+                           ( uriCompositionFlags.testFlag(de::Uri::OmitScheme)? -14 : -22 ) )
+                      .arg(sourceDescription(), -7);
+#ifdef __CLIENT__
+    info += String("x%1").arg(!hasMaterial()? 0 : material().variantCount());
+#endif
+    return info;
+}
+
 String MaterialManifest::sourceDescription() const
 {
     if(!isCustom()) return "game";

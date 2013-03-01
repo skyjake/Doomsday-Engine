@@ -489,81 +489,7 @@ MaterialVariantSpec const &Materials::variantSpecForContext(
                                        mipmapped, gammaCorrection, noStretch, toAlpha);
 }
 
-static void printVariantInfo(MaterialVariant &variant, int variantIdx)
-{
-    Con_Message("Variant #%i: Spec:%p", variantIdx, de::dintptr(&variant.spec()));
-
-    // Print layer state info:
-    int const layerCount = variant.generalCase().layerCount();
-    for(int i = 0; i < layerCount; ++i)
-    {
-        MaterialVariant::LayerState const &l = variant.layer(i);
-        Con_Message("  Layer #%i: Stage:%i Tics:%i", i, l.stage, int(l.tics));
-    }
-
-    // Print detail layer state info:
-    if(variant.generalCase().isDetailed())
-    {
-        MaterialVariant::LayerState const &l = variant.detailLayer();
-        Con_Message("  DetailLayer #0: Stage:%i Tics:%i", l.stage, int(l.tics));
-    }
-
-    // Print shine layer state info:
-    if(variant.generalCase().isShiny())
-    {
-        MaterialVariant::LayerState const &l = variant.shineLayer();
-        Con_Message("  ShineLayer #0: Stage:%i Tics:%i", l.stage, int(l.tics));
-    }
-
-    // Print decoration state info:
-    int const decorationCount = variant.generalCase().decorationCount();
-    for(int i = 0; i < decorationCount; ++i)
-    {
-        MaterialVariant::DecorationState const &l = variant.decoration(i);
-        Con_Message("  Decoration #%i: Stage:%i Tics:%i", i, l.stage, int(l.tics));
-    }
-}
-
 #endif // __CLIENT__
-
-static void printMaterialInfo(Material &material)
-{
-    // Print description:
-    Con_Message(material.composeDescription().toUtf8().constData());
-
-    // Print synopsis:
-    Con_Message(material.composeSynopsis().toUtf8().constData());
-
-#ifdef __CLIENT__
-    if(!material.variantCount()) return;
-
-    // Print variant specs and current animation states:
-    Con_PrintRuler();
-
-    int variantIdx = 0;
-    foreach(MaterialVariant *variant, material.variants())
-    {
-        printVariantInfo(*variant, variantIdx);
-        ++variantIdx;
-    }
-
-#endif // __CLIENT__
-}
-
-static void printManifestInfo(MaterialManifest &manifest,
-    de::Uri::ComposeAsTextFlags uriCompositionFlags = de::Uri::DefaultComposeAsTextFlags)
-{
-    String info = String("%1 %2")
-                      .arg(manifest.composeUri().compose(uriCompositionFlags | de::Uri::DecodePath),
-                           ( uriCompositionFlags.testFlag(de::Uri::OmitScheme)? -14 : -22 ) )
-                      .arg(manifest.sourceDescription(), -7);
-#ifdef __CLIENT__
-    info += String("x%1").arg(!manifest.hasMaterial()? 0 : manifest.material().variantCount());
-#endif
-
-    info += "\n";
-    Con_FPrintf(!manifest.hasMaterial()? CPF_LIGHT : CPF_WHITE, info.toUtf8().constData());
-}
 
 static bool pathBeginsWithComparator(MaterialManifest const &manifest, void *parameters)
 {
@@ -645,13 +571,13 @@ static bool compareManifestPathsAssending(MaterialManifest const *a, MaterialMan
  * @param like      Material path search term.
  * @param composeUriFlags  Flags governing how URIs should be composed.
  */
-static int printMaterials2(MaterialScheme *scheme, Path const &like,
-                           Uri::ComposeAsTextFlags composeUriflags)
+static int printIndex2(MaterialScheme *scheme, Path const &like,
+                       Uri::ComposeAsTextFlags composeUriFlags)
 {
     QList<MaterialManifest *> found = collectManifests(scheme, like);
     if(found.isEmpty()) return 0;
 
-    bool const printSchemeName = !(composeUriflags & Uri::OmitScheme);
+    bool const printSchemeName = !(composeUriFlags & Uri::OmitScheme);
 
     // Print a heading.
     String heading = "Known materials";
@@ -678,14 +604,17 @@ static int printMaterials2(MaterialScheme *scheme, Path const &like,
     int idx = 0;
     foreach(MaterialManifest *manifest, found)
     {
-        Con_Printf(" %*i: ", numFoundDigits, idx++);
-        printManifestInfo(*manifest, composeUriflags);
+        String info = String("%1: ").arg(idx, -numFoundDigits, 10)
+                    + manifest->description(composeUriFlags);
+
+        Con_FPrintf(!manifest->hasMaterial()? CPF_LIGHT : CPF_WHITE, "%s\n", info.toUtf8().constData());
+        idx++;
     }
 
     return found.count();
 }
 
-static void printMaterials(de::Uri const &search,
+static void printIndex(de::Uri const &search,
     de::Uri::ComposeAsTextFlags flags = de::Uri::DefaultComposeAsTextFlags)
 {
     Materials &materials = App_Materials();
@@ -695,13 +624,13 @@ static void printMaterials(de::Uri const &search,
     // Collate and print results from all schemes?
     if(search.scheme().isEmpty() && !search.path().isEmpty())
     {
-        printTotal = printMaterials2(0/*any scheme*/, search.path(), flags & ~de::Uri::OmitScheme);
+        printTotal = printIndex2(0/*any scheme*/, search.path(), flags & ~de::Uri::OmitScheme);
         Con_PrintRuler();
     }
     // Print results within only the one scheme?
     else if(materials.knownScheme(search.scheme()))
     {
-        printTotal = printMaterials2(&materials.scheme(search.scheme()), search.path(), flags | de::Uri::OmitScheme);
+        printTotal = printIndex2(&materials.scheme(search.scheme()), search.path(), flags | de::Uri::OmitScheme);
         Con_PrintRuler();
     }
     else
@@ -709,7 +638,7 @@ static void printMaterials(de::Uri const &search,
         // Collect and sort results in each scheme separately.
         foreach(MaterialScheme *scheme, materials.allSchemes())
         {
-            int numPrinted = printMaterials2(scheme, search.path(), flags | de::Uri::OmitScheme);
+            int numPrinted = printIndex2(scheme, search.path(), flags | de::Uri::OmitScheme);
             if(numPrinted)
             {
                 Con_PrintRuler();
@@ -717,7 +646,7 @@ static void printMaterials(de::Uri const &search,
             }
         }
     }
-    Con_Printf("Found %i %s.\n", printTotal, printTotal == 1? "Material" : "Materials");
+    Con_Message("Found %i %s.", printTotal, printTotal == 1? "Material" : "Materials");
 }
 
 } // namespace de
@@ -739,7 +668,7 @@ D_CMD(ListMaterials)
         return false;
     }
 
-    de::printMaterials(search);
+    de::printIndex(search);
     return true;
 }
 
@@ -760,11 +689,64 @@ D_CMD(InspectMaterial)
         de::MaterialManifest &manifest = materials.find(search);
         if(manifest.hasMaterial())
         {
-            de::printMaterialInfo(manifest.material());
+            Material &material = manifest.material();
+
+            // Print material description:
+            Con_Message(material.description().toUtf8().constData());
+
+            // Print material synopsis:
+            Con_Message(material.synopsis().toUtf8().constData());
+
+#ifdef __CLIENT__
+            if(material.variantCount())
+            {
+                // Print variant specs and current animation states:
+                Con_PrintRuler();
+
+                int variantIdx = 0;
+                foreach(MaterialVariant *variant, material.variants())
+                {
+                    Con_Message("Variant #%i: Spec:%p", variantIdx, de::dintptr(&variant->spec()));
+
+                    // Print layer state info:
+                    int const layerCount = material.layerCount();
+                    for(int i = 0; i < layerCount; ++i)
+                    {
+                        MaterialVariant::LayerState const &l = variant->layer(i);
+                        Con_Message("  Layer #%i: Stage:%i Tics:%i", i, l.stage, int(l.tics));
+                    }
+
+                    // Print detail layer state info:
+                    if(material.isDetailed())
+                    {
+                        MaterialVariant::LayerState const &l = variant->detailLayer();
+                        Con_Message("  DetailLayer #0: Stage:%i Tics:%i", l.stage, int(l.tics));
+                    }
+
+                    // Print shine layer state info:
+                    if(material.isShiny())
+                    {
+                        MaterialVariant::LayerState const &l = variant->shineLayer();
+                        Con_Message("  ShineLayer #0: Stage:%i Tics:%i", l.stage, int(l.tics));
+                    }
+
+                    // Print decoration state info:
+                    int const decorationCount = material.decorationCount();
+                    for(int i = 0; i < decorationCount; ++i)
+                    {
+                        MaterialVariant::DecorationState const &l = variant->decoration(i);
+                        Con_Message("  Decoration #%i: Stage:%i Tics:%i", i, l.stage, int(l.tics));
+                    }
+
+                    ++variantIdx;
+                }
+            }
+#endif // __CLIENT__
         }
         else
         {
-            de::printManifestInfo(manifest);
+            de::String description = manifest.description();
+            Con_FPrintf(CPF_LIGHT, "%s\n", description.toUtf8().constData());
         }
         return true;
     }
