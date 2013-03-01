@@ -25,6 +25,7 @@
 #define LIBDENG_REFRESH_UTIL_H
 
 #include <de/vector1.h>
+#include "map/bspnode.h"
 #include "map/p_mapdata.h"
 
 #ifdef __cplusplus

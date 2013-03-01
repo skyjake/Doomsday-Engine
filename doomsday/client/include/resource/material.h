@@ -23,6 +23,7 @@
 
 #include "MapElement"
 #include "def_data.h"
+#include "audio/s_environ.h"
 #include "map/p_dmu.h" // setargs_t
 #include "uri.hh"
 #include <de/Error>
@@ -31,7 +32,6 @@
 #include <QList>
 
 // Forward declarations:
-enum audioenvironmentclass_e;
 
 namespace de {
 

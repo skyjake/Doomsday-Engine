@@ -23,7 +23,10 @@
 #ifndef LIBDENG_SOUND_ENVIRON_H
 #define LIBDENG_SOUND_ENVIRON_H
 
-#include "map/gamemap.h"
+#include "api_uri.h"
+
+class GameMap;
+class Sector;
 
 typedef enum audioenvironmentclass_e {
     AEC_UNKNOWN = -1,
