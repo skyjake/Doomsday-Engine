@@ -159,7 +159,7 @@ public:
     /**
      * Returns the texture flags property of the manifest.
      */
-    Texture::Flags &flags();
+    Texture::Flags flags() const;
 
     /**
      * Returns @c true if a Texture is presently associated with the manifest.

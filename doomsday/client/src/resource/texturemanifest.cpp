@@ -138,7 +138,7 @@ bool TextureManifest::setUniqueId(int newUniqueId)
     return true;
 }
 
-Texture::Flags &TextureManifest::flags()
+Texture::Flags TextureManifest::flags() const
 {
     return d->flags;
 }
