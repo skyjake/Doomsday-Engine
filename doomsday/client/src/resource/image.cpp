@@ -19,18 +19,25 @@
  * 02110-1301 USA</small>
  */
 
+#include <cstring>
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_filesys.h"
 #include "m_misc.h"
-#include "resource/image.h"
-
-#include <de/Log>
-#include <de/NativePath>
-#include <QByteArray>
 #ifdef __CLIENT__
+#  include "resource/pcx.h"
+#  include "resource/tga.h"
+#  include "gl/gl_tex.h"
+#endif
+#include <de/Log>
+#ifdef __CLIENT__
+#  include <de/NativePath>
+#  include <QByteArray>
 #  include <QImage>
 #endif
+
+#include "resource/image.h"
 
 #ifndef DENG2_QT_4_7_OR_NEWER // older than 4.7?
 #  define constBits bits
@@ -38,9 +45,118 @@
 
 using namespace de;
 
+#ifdef __CLIENT__
+
+struct GraphicFileType
+{
+    /// Symbolic name of the resource type.
+    String name;
+
+    /// Known file extension.
+    String ext;
+
+    bool (*interpretFunc)(de::FileHandle &hndl, String filePath, image_t &img);
+
+    char const *(*getLastErrorFunc)(); ///< Can be NULL.
+};
+
+static bool interpretPcx(de::FileHandle &hndl, String /*filePath*/, image_t &img)
+{
+    Image_Init(&img);
+    img.pixels = PCX_Load(reinterpret_cast<filehandle_s *>(&hndl),
+                          &img.size.width, &img.size.height, &img.pixelSize);
+    return (0 != img.pixels);
+}
+
+static bool interpretJpg(de::FileHandle &hndl, String /*filePath*/, image_t &img)
+{
+    return Image_LoadFromFileWithFormat(&img, "JPG", reinterpret_cast<filehandle_s *>(&hndl));
+}
+
+static bool interpretPng(de::FileHandle &hndl, String /*filePath*/, image_t &img)
+{
+    /*
+    Image_Init(&img);
+    img.pixels = PNG_Load(reinterpret_cast<filehandle_s *>(&hndl),
+                          &img.size.width, &img.size.height, &img.pixelSize);
+    return (0 != img.pixels);
+    */
+    return Image_LoadFromFileWithFormat(&img, "PNG", reinterpret_cast<filehandle_s *>(&hndl));
+}
+
+static bool interpretTga(de::FileHandle &hndl, String /*filePath*/, image_t &img)
+{
+    Image_Init(&img);
+    img.pixels = TGA_Load(reinterpret_cast<filehandle_s *>(&hndl),
+                          &img.size.width, &img.size.height, &img.pixelSize);
+    return (0 != img.pixels);
+}
+
+// Graphic resource types.
+static GraphicFileType const graphicTypes[] = {
+    { "PNG",    "png",      interpretPng, 0 },
+    { "JPG",    "jpg",      interpretJpg, 0 }, // TODO: add alternate "jpeg" extension
+    { "TGA",    "tga",      interpretTga, TGA_LastError },
+    { "PCX",    "pcx",      interpretPcx, PCX_LastError },
+    { "",       "",         0,            0 } // Terminate.
+};
+
+static GraphicFileType const *guessGraphicFileTypeFromFileName(String fileName)
+{
+    // The path must have an extension for this.
+    String ext = fileName.fileNameExtension();
+    if(!ext.isEmpty())
+    {
+        for(int i = 0; !graphicTypes[i].ext.isEmpty(); ++i)
+        {
+            GraphicFileType const &type = graphicTypes[i];
+            if(!ext.compareWithoutCase(type.ext))
+            {
+                return &type;
+            }
+        }
+    }
+    return 0; // Unknown.
+}
+
+static void interpretGraphic(de::FileHandle &hndl, String filePath, image_t &img)
+{
+    // Firstly try the interpreter for the guessed resource types.
+    GraphicFileType const *rtypeGuess = guessGraphicFileTypeFromFileName(filePath);
+    if(rtypeGuess)
+    {
+        rtypeGuess->interpretFunc(hndl, filePath, img);
+    }
+
+    // If not yet interpreted - try each recognisable format in order.
+    if(!img.pixels)
+    {
+        // Try each recognisable format instead.
+        /// @todo Order here should be determined by the resource locator.
+        for(int i = 0; !graphicTypes[i].name.isEmpty(); ++i)
+        {
+            GraphicFileType const *graphicType = &graphicTypes[i];
+
+            // Already tried this?
+            if(graphicType == rtypeGuess) continue;
+
+            graphicTypes[i].interpretFunc(hndl, filePath, img);
+            if(img.pixels) break;
+        }
+    }
+}
+
+/// @return  @c true if the file name in @a path ends with the "color key" suffix.
+static inline bool isColorKeyed(String path)
+{
+    return path.fileNameWithoutExtension().endsWith("-ck", Qt::CaseInsensitive);
+}
+
+#endif // __CLIENT__
+
 void Image_Init(image_t *img)
 {
-    DENG_ASSERT(img);
+    DENG2_ASSERT(img);
     img->size.width = 0;
     img->size.height = 0;
     img->pixelSize = 0;
@@ -51,31 +167,30 @@ void Image_Init(image_t *img)
 
 void Image_Destroy(image_t *img)
 {
-    DENG_ASSERT(img);
+    DENG2_ASSERT(img);
     if(!img->pixels) return;
 
     M_Free(img->pixels);
     img->pixels = 0;
 }
 
-void Image_PrintMetadata(image_t const *image)
+void Image_PrintMetadata(image_t const *img)
 {
-    DENG_ASSERT(image);
-    Con_Printf("dimensions:[%ix%i] flags:%i %s:%i\n", image->size.width, image->size.height,
-               image->flags, 0 != image->paletteId? "colorpalette" : "pixelsize",
-               0 != image->paletteId? image->paletteId : image->pixelSize);
+    DENG2_ASSERT(img);
+    Con_Message("dimensions:[%ix%i] flags:%i %s:%i", img->size.width, img->size.height,
+                img->flags, 0 != img->paletteId? "colorpalette" : "pixelsize",
+                0 != img->paletteId? img->paletteId : img->pixelSize);
 }
 
-void Image_ConvertToLuminance(image_t *image, boolean retainAlpha)
+void Image_ConvertToLuminance(image_t *img, boolean retainAlpha)
 {
-    DENG_ASSERT(image);
+    DENG_ASSERT(img);
     LOG_AS("GL_ConvertToLuminance");
 
-    uint8_t* alphaChannel = 0, *ptr = 0;
-    long p, numPels;
+    uint8_t *alphaChannel = 0, *ptr = 0;
 
     // Is this suitable?
-    if(0 != image->paletteId || (image->pixelSize < 3 && (image->flags & IMGF_IS_MASKED)))
+    if(0 != img->paletteId || (img->pixelSize < 3 && (img->flags & IMGF_IS_MASKED)))
     {
 #if _DEBUG
         LOG_WARNING("Attempt to convert paletted/masked image. I don't know this format!");
@@ -83,64 +198,63 @@ void Image_ConvertToLuminance(image_t *image, boolean retainAlpha)
         return;
     }
 
-    numPels = image->size.width * image->size.height;
+    long numPels = img->size.width * img->size.height;
 
     // Do we need to relocate the alpha data?
-    if(retainAlpha && image->pixelSize == 4)
+    if(retainAlpha && img->pixelSize == 4)
     {
         // Yes. Take a copy.
-        alphaChannel = reinterpret_cast<uint8_t*>(malloc(numPels));
-        if(!alphaChannel) Con_Error("GL_ConvertToLuminance: Failed on allocation of %lu bytes for pixel alpha relocation buffer.", (unsigned long) numPels);
+        alphaChannel = reinterpret_cast<uint8_t *>(M_Malloc(numPels));
 
-        ptr = image->pixels;
-        for(p = 0; p < numPels; ++p, ptr += image->pixelSize)
+        ptr = img->pixels;
+        for(long p = 0; p < numPels; ++p, ptr += img->pixelSize)
         {
             alphaChannel[p] = ptr[3];
         }
     }
 
     // Average the RGB colors.
-    ptr = image->pixels;
-    for(p = 0; p < numPels; ++p, ptr += image->pixelSize)
+    ptr = img->pixels;
+    for(long p = 0; p < numPels; ++p, ptr += img->pixelSize)
     {
         int min = MIN_OF(ptr[0], MIN_OF(ptr[1], ptr[2]));
         int max = MAX_OF(ptr[0], MAX_OF(ptr[1], ptr[2]));
-        image->pixels[p] = (min == max? min : (min + max) / 2);
+        img->pixels[p] = (min == max? min : (min + max) / 2);
     }
 
     // Do we need to relocate the alpha data?
     if(alphaChannel)
     {
-        memcpy(image->pixels + numPels, alphaChannel, numPels);
-        image->pixelSize = 2;
+        std::memcpy(img->pixels + numPels, alphaChannel, numPels);
+        img->pixelSize = 2;
         M_Free(alphaChannel);
         return;
     }
 
-    image->pixelSize = 1;
+    img->pixelSize = 1;
 }
 
-void Image_ConvertToAlpha(image_t *image, boolean makeWhite)
+void Image_ConvertToAlpha(image_t *img, boolean makeWhite)
 {
-    DENG_ASSERT(image);
+    DENG2_ASSERT(img);
 
-    Image_ConvertToLuminance(image, true);
+    Image_ConvertToLuminance(img, true);
 
-    long total = image->size.width * image->size.height;
+    long total = img->size.width * img->size.height;
     for(long p = 0; p < total; ++p)
     {
-        image->pixels[total + p] = image->pixels[p];
-        if(makeWhite) image->pixels[p] = 255;
+        img->pixels[total + p] = img->pixels[p];
+        if(makeWhite) img->pixels[p] = 255;
     }
-    image->pixelSize = 2;
+    img->pixelSize = 2;
 }
 
-boolean Image_HasAlpha(image_t const *image)
+boolean Image_HasAlpha(image_t const *img)
 {
-    DENG_ASSERT(image);
+    DENG2_ASSERT(img);
     LOG_AS("Image_HasAlpha");
 
-    if(0 != image->paletteId || (image->flags & IMGF_IS_MASKED))
+    if(0 != img->paletteId || (img->flags & IMGF_IS_MASKED))
     {
 #if _DEBUG
         LOG_WARNING("Attempt to determine alpha for paletted/masked image. I don't know this format!");
@@ -148,15 +262,15 @@ boolean Image_HasAlpha(image_t const *image)
         return false;
     }
 
-    if(image->pixelSize == 3)
+    if(img->pixelSize == 3)
     {
         return false;
     }
 
-    if(image->pixelSize == 4)
+    if(img->pixelSize == 4)
     {
-        long const numpels = image->size.width * image->size.height;
-        uint8_t const *in = image->pixels;
+        long const numpels = img->size.width * img->size.height;
+        uint8_t const *in = img->pixels;
         for(long i = 0; i < numpels; ++i, in += 4)
         {
             if(in[3] < 255)
@@ -168,14 +282,66 @@ boolean Image_HasAlpha(image_t const *image)
     return false;
 }
 
+uint8_t *Image_LoadFromFile(image_t *img, filehandle_s *_file)
+{
+#ifdef __CLIENT__
+    DENG2_ASSERT(img && _file);
+    de::FileHandle &file = reinterpret_cast<de::FileHandle &>(*_file);
+    LOG_AS("Image_LoadFromFile");
+
+    String filePath = file.file().composePath();
+
+    Image_Init(img);
+    interpretGraphic(file, filePath, *img);
+
+    // Still not interpreted?
+    if(!img->pixels)
+    {
+        LOG_VERBOSE("\"%s\" unrecognized, trying fallback loader...")
+            << NativePath(filePath).pretty();
+        return NULL; // Not a recognised format. It may still be loadable, however.
+    }
+
+    // How about some color-keying?
+    if(isColorKeyed(filePath))
+    {
+        uint8_t *out = ApplyColorKeying(img->pixels, img->size.width, img->size.height, img->pixelSize);
+        if(out != img->pixels)
+        {
+            // Had to allocate a larger buffer, free the old and attach the new.
+            M_Free(img->pixels);
+            img->pixels = out;
+        }
+
+        // Color keying is done; now we have 4 bytes per pixel.
+        img->pixelSize = 4;
+    }
+
+    // Any alpha pixels?
+    if(Image_HasAlpha(img))
+    {
+        img->flags |= IMGF_IS_MASKED;
+    }
+
+    LOG_VERBOSE("\"%s\" (%ix%i)")
+        << NativePath(filePath).pretty() << img->size.width << img->size.height;
+
+    return img->pixels;
+#else
+    // Server does not load image files.
+    DENG2_UNUSED2(img, _file);
+    return false;
+#endif
+}
+
 boolean Image_LoadFromFileWithFormat(image_t *img, char const *format, filehandle_s *_hndl)
 {
 #ifdef __CLIENT__
     /// @todo There are too many copies made here. It would be best if image_t
     /// contained an instance of QImage. -jk
 
-    DENG_ASSERT(img);
-    DENG_ASSERT(_hndl);
+    DENG2_ASSERT(img);
+    DENG2_ASSERT(_hndl);
     de::FileHandle &hndl = *reinterpret_cast<de::FileHandle *>(_hndl);
 
     // It is assumed that file's position stays the same (could be trying multiple interpreters).
@@ -224,6 +390,7 @@ boolean Image_LoadFromFileWithFormat(image_t *img, char const *format, filehandl
     return true;
 #else
     // Server does not load image files.
+    DENG2_UNUSED3(img, format, _hndl);
     return false;
 #endif
 }
@@ -231,7 +398,7 @@ boolean Image_LoadFromFileWithFormat(image_t *img, char const *format, filehandl
 boolean Image_Save(image_t const *img, char const *filePath)
 {
 #ifdef __CLIENT__
-    DENG_ASSERT(img);
+    DENG2_ASSERT(img);
 
     // Compose the full path.
     String fullPath = String(filePath);
@@ -252,6 +419,8 @@ boolean Image_Save(image_t const *img, char const *filePath)
 
     return CPP_BOOL(image.save(NativePath(fullPath)));
 #else
+    // Server does not save images.
+    DENG2_UNUSED2(img, filePath);
     return false;
 #endif
 }

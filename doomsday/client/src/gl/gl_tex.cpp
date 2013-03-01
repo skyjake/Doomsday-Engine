@@ -1505,9 +1505,9 @@ void SharpenPixels(uint8_t* pixels, int width, int height, int comps)
 /**
  * @return  @c true, if the given color is either (0,255,255) or (255,0,255).
  */
-static __inline boolean ColorKey(uint8_t* color)
+static inline bool isKeyedColor(uint8_t *color)
 {
-    assert(color);
+    DENG2_ASSERT(color);
     return color[CB] == 0xff && ((color[CR] == 0xff && color[CG] == 0) ||
                                  (color[CR] == 0 && color[CG] == 0xff));
 }
@@ -1515,21 +1515,21 @@ static __inline boolean ColorKey(uint8_t* color)
 /**
  * Buffer must be RGBA. Doesn't touch the non-keyed pixels.
  */
-static void DoColorKeying(uint8_t* rgbaBuf, int width)
+static void doColorKeying(uint8_t *rgbaBuf, int width)
 {
-    assert(rgbaBuf);
-    { int i;
-    for(i = 0; i < width; ++i, rgbaBuf += 4)
+    DENG2_ASSERT(rgbaBuf);
+
+    for(int i = 0; i < width; ++i, rgbaBuf += 4)
     {
-        if(!ColorKey(rgbaBuf))
-            continue;
+        if(!isKeyedColor(rgbaBuf)) continue;
+
         rgbaBuf[3] = rgbaBuf[2] = rgbaBuf[1] = rgbaBuf[0] = 0;
-    }}
+    }
 }
 
-uint8_t* ApplyColorKeying(uint8_t* buf, int width, int height, int pixelSize)
+uint8_t *ApplyColorKeying(uint8_t *buf, int width, int height, int pixelSize)
 {
-    assert(buf);
+    DENG2_ASSERT(buf);
 
     if(width <= 0 || height <= 0)
         return buf;
@@ -1538,19 +1538,20 @@ uint8_t* ApplyColorKeying(uint8_t* buf, int width, int height, int pixelSize)
     // required number of color components.
     if(pixelSize < 4)
     {
-        const long numpels = width * height;
-        uint8_t* ckdest = (uint8_t *) M_Malloc(4 * numpels);
-        uint8_t* in, *out;
+        long const numpels = width * height;
+        uint8_t *ckdest = (uint8_t *) M_Malloc(4 * numpels);
+        uint8_t *in, *out;
         long i;
+
         for(in = buf, out = ckdest, i = 0; i < numpels; ++i, in += pixelSize, out += 4)
         {
-            if(ColorKey(in))
+            if(isKeyedColor(in))
             {
-                memset(out, 0, 4); // Totally black.
+                std::memset(out, 0, 4); // Totally black.
                 continue;
             }
 
-            memcpy(out, in, 3); // The color itself.
+            std::memcpy(out, in, 3); // The color itself.
             out[CA] = 255; // Opaque.
         }
         return ckdest;
@@ -1558,9 +1559,9 @@ uint8_t* ApplyColorKeying(uint8_t* buf, int width, int height, int pixelSize)
 
     // We can do the keying in-buffer.
     // This preserves the alpha values of non-keyed pixels.
-    { int i;
-    for(i = 0; i < height; ++i)
-        DoColorKeying(buf + 4 * i * width, height);
+    for(int i = 0; i < height; ++i)
+    {
+        doColorKeying(buf + 4 * i * width, height);
     }
     return buf;
 }

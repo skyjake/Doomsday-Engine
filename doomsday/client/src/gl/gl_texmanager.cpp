@@ -41,6 +41,7 @@
 #include "de_ui.h"
 
 #include "def_main.h"
+#include "resource/hq2x.h"
 
 #include <QSize>
 #include <de/ByteRefArray>
@@ -62,19 +63,6 @@ enum uploadcontentmethod_t
     METHOD_DEFERRED
 };
 
-struct GraphicFileType
-{
-    /// Symbolic name of the resource type.
-    String name;
-
-    /// Known file extension.
-    String ext;
-
-    bool (*interpretFunc)(de::FileHandle &hndl, String filePath, image_t &img);
-
-    char const *(*getLastErrorFunc)(); ///< Can be NULL.
-};
-
 struct texturevariantspecificationlist_node_t
 {
     texturevariantspecificationlist_node_t *next;
@@ -93,11 +81,6 @@ void GL_DoUpdateTexGamma();
 void GL_DoUpdateTexParams();
 
 static int hashDetailVariantSpecification(detailvariantspecification_t const &spec);
-
-static bool interpretPcx(de::FileHandle &hndl, String filePath, image_t &img);
-static bool interpretPng(de::FileHandle &hndl, String filePath, image_t &img);
-static bool interpretJpg(de::FileHandle &hndl, String filePath, image_t &img);
-static bool interpretTga(de::FileHandle &hndl, String filePath, image_t &img);
 
 static TexSource loadExternalTexture(image_t &image, String searchPath, String optionalSuffix = "");
 
@@ -140,15 +123,6 @@ DGLuint lightingTextures[NUM_LIGHTING_TEXTURES];
 DGLuint sysFlareTextures[NUM_SYSFLARE_TEXTURES];
 
 static boolean initedOk = false; // Init done.
-
-// Graphic resource types.
-static GraphicFileType const graphicTypes[] = {
-    { "PNG",    "png",      interpretPng, 0 },
-    { "JPG",    "jpg",      interpretJpg, 0 }, // TODO: add alternate "jpeg" extension
-    { "TGA",    "tga",      interpretTga, TGA_LastError },
-    { "PCX",    "pcx",      interpretPcx, PCX_LastError },
-    { "",       "",         0,            0 } // Terminate.
-};
 
 static variantspecificationlist_t *variantSpecs;
 
@@ -1310,135 +1284,6 @@ void GL_PruneTextureVariantSpecifications()
     LOG_VERBOSE("Pruned %i unused texture variant %s.")
         << numPruned << (numPruned == 1? "specification" : "specifications");
 #endif
-}
-
-static bool interpretPcx(de::FileHandle &hndl, String /*filePath*/, image_t &img)
-{
-    Image_Init(&img);
-    img.pixels = PCX_Load(reinterpret_cast<filehandle_s *>(&hndl),
-                          &img.size.width, &img.size.height, &img.pixelSize);
-    return (0 != img.pixels);
-}
-
-static bool interpretJpg(de::FileHandle &hndl, String /*filePath*/, image_t &img)
-{
-    return Image_LoadFromFileWithFormat(&img, "JPG", reinterpret_cast<filehandle_s *>(&hndl));
-}
-
-static bool interpretPng(de::FileHandle &hndl, String /*filePath*/, image_t &img)
-{
-    /*
-    Image_Init(&img);
-    img.pixels = PNG_Load(reinterpret_cast<filehandle_s *>(&hndl),
-                          &img.size.width, &img.size.height, &img.pixelSize);
-    return (0 != img.pixels);
-    */
-    return Image_LoadFromFileWithFormat(&img, "PNG", reinterpret_cast<filehandle_s *>(&hndl));
-}
-
-static bool interpretTga(de::FileHandle &hndl, String /*filePath*/, image_t &img)
-{
-    Image_Init(&img);
-    img.pixels = TGA_Load(reinterpret_cast<filehandle_s *>(&hndl),
-                          &img.size.width, &img.size.height, &img.pixelSize);
-    return (0 != img.pixels);
-}
-
-GraphicFileType const *guessGraphicFileTypeFromFileName(String fileName)
-{
-    // The path must have an extension for this.
-    String ext = fileName.fileNameExtension();
-    if(!ext.isEmpty())
-    {
-        for(int i = 0; !graphicTypes[i].ext.isEmpty(); ++i)
-        {
-            GraphicFileType const &type = graphicTypes[i];
-            if(!ext.compareWithoutCase(type.ext))
-            {
-                return &type;
-            }
-        }
-    }
-    return 0; // Unknown.
-}
-
-static void interpretGraphic(de::FileHandle &hndl, String filePath, image_t &img)
-{
-    // Firstly try the interpreter for the guessed resource types.
-    GraphicFileType const *rtypeGuess = guessGraphicFileTypeFromFileName(filePath);
-    if(rtypeGuess)
-    {
-        rtypeGuess->interpretFunc(hndl, filePath, img);
-    }
-
-    // If not yet interpreted - try each recognisable format in order.
-    if(!img.pixels)
-    {
-        // Try each recognisable format instead.
-        /// @todo Order here should be determined by the resource locator.
-        for(int i = 0; !graphicTypes[i].name.isEmpty(); ++i)
-        {
-            GraphicFileType const *graphicType = &graphicTypes[i];
-
-            // Already tried this?
-            if(graphicType == rtypeGuess) continue;
-
-            graphicTypes[i].interpretFunc(hndl, filePath, img);
-            if(img.pixels) break;
-        }
-    }
-}
-
-/// @return  @c true if the file name in @a path ends with the "color key" suffix.
-static inline bool isColorKeyed(String path)
-{
-    return path.fileNameWithoutExtension().endsWith("-ck", Qt::CaseInsensitive);
-}
-
-uint8_t *Image_LoadFromFile(image_t *img, filehandle_s *_file)
-{
-    DENG_ASSERT(img && _file);
-    de::FileHandle &file = reinterpret_cast<de::FileHandle &>(*_file);
-    LOG_AS("Image_LoadFromFile");
-
-    String filePath = file.file().composePath();
-
-    Image_Init(img);
-    interpretGraphic(file, filePath, *img);
-
-    // Still not interpreted?
-    if(!img->pixels)
-    {
-        LOG_VERBOSE("\"%s\" unrecognized, trying fallback loader...")
-            << NativePath(filePath).pretty();
-        return NULL; // Not a recognised format. It may still be loadable, however.
-    }
-
-    // How about some color-keying?
-    if(isColorKeyed(filePath))
-    {
-        uint8_t *out = ApplyColorKeying(img->pixels, img->size.width, img->size.height, img->pixelSize);
-        if(out != img->pixels)
-        {
-            // Had to allocate a larger buffer, free the old and attach the new.
-            M_Free(img->pixels);
-            img->pixels = out;
-        }
-
-        // Color keying is done; now we have 4 bytes per pixel.
-        img->pixelSize = 4;
-    }
-
-    // Any alpha pixels?
-    if(Image_HasAlpha(img))
-    {
-        img->flags |= IMGF_IS_MASKED;
-    }
-
-    LOG_VERBOSE("\"%s\" (%ix%i)")
-        << NativePath(filePath).pretty() << img->size.width << img->size.height;
-
-    return img->pixels;
 }
 
 uint8_t *GL_LoadImage(image_t &image, String nativePath)

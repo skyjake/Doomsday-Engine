@@ -34,8 +34,4 @@
 #  include "gl/gl_texmanager.h"
 #endif
 
-#include "resource/pcx.h"
-#include "resource/tga.h"
-#include "resource/hq2x.h"
-
 #endif /* LIBDENG_GRAPHICS */
