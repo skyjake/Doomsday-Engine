@@ -38,6 +38,7 @@
 #include "map/gamemap.h"
 #include "gl/texturecontent.h"
 #include "resource/colorpalettes.h"
+#include "resource/hq2x.h"
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "Texture"
