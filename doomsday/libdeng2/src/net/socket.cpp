@@ -429,8 +429,8 @@ void Socket::connectToDomain(String const &domainNameWithOptionalPort,
     if(str.contains(':'))
     {
         int pos = str.indexOf(':');
-        port = str.mid(pos + 1).toInt();
-        if(port <= 0 || port > 0xffff) port = defaultPort;
+        port = duint16(str.mid(pos + 1).toInt());
+        if(!port) port = defaultPort;
         str = str.left(pos);
     }
     if(str == "localhost")
