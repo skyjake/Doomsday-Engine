@@ -619,52 +619,9 @@ static void printTextures(de::Uri const &search,
 
 } // namespace de
 
-/**
- * @param argv  The arguments to be composed. All are assumed to be in non-encoded
- *              representation.
- *
- *              Supported forms (where <> denote keyword component names):
- *               - [0: "<scheme>:<path>"]
- *               - [0: "<scheme>"]              (if @a matchSchemeOnly)
- *               - [0: "<path>"]
- *               - [0: "<scheme>", 1: "<path>"]
- * @param argc  The number of elements in @a argv.
- * @param matchSchemeOnly  @c true= check if the sole argument matches a known scheme.
- */
-static de::Uri composeSearchUri(char **argv, int argc, bool matchSchemeOnly = true)
+static bool isKnownSchemeCallback(de::String name)
 {
-    if(argv)
-    {
-        // [0: <scheme>:<path>] or [0: <scheme>] or [0: <path>].
-        if(argc == 1)
-        {
-            // Try to extract the scheme and encode the rest of the path.
-            de::String rawUri = de::String(argv[0]);
-            int pos = rawUri.indexOf(':');
-            if(pos >= 0)
-            {
-                de::String scheme = rawUri.left(pos);
-                rawUri.remove(0, pos + 1);
-                return de::Uri(scheme, QString(QByteArray(rawUri.toUtf8()).toPercentEncoding()));
-            }
-
-            // Just a scheme name?
-            if(matchSchemeOnly && App_Textures().knownScheme(rawUri))
-            {
-                return de::Uri().setScheme(rawUri);
-            }
-
-            // Just a path.
-            return de::Uri(de::Path(QString(QByteArray(rawUri.toUtf8()).toPercentEncoding())));
-        }
-        // [0: <scheme>, 1: <path>]
-        if(argc == 2)
-        {
-            // Assign the scheme and encode the path.
-            return de::Uri(argv[0], QString(QByteArray(argv[1]).toPercentEncoding()));
-        }
-    }
-    return de::Uri();
+    return App_Textures().knownScheme(name);
 }
 
 D_CMD(ListTextures)
@@ -672,7 +629,7 @@ D_CMD(ListTextures)
     DENG2_UNUSED(src);
 
     de::Textures &textures = App_Textures();
-    de::Uri search = composeSearchUri(&argv[1], argc - 1);
+    de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1, &isKnownSchemeCallback);
     if(!search.scheme().isEmpty() && !textures.knownScheme(search.scheme()))
     {
         Con_Printf("Unknown scheme '%s'.\n", search.schemeCStr());
@@ -688,7 +645,7 @@ D_CMD(InspectTexture)
     DENG2_UNUSED(src);
 
     de::Textures &textures = App_Textures();
-    de::Uri search = composeSearchUri(&argv[1], argc - 1, false /*don't match schemes*/);
+    de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1);
     if(!search.scheme().isEmpty() && !textures.knownScheme(search.scheme()))
     {
         Con_Printf("Unknown scheme '%s'.\n", search.schemeCStr());
