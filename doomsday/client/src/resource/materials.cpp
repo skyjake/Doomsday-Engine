@@ -725,7 +725,7 @@ static void printMaterials(de::Uri const &search,
 
 static bool isKnownSchemeCallback(de::String name)
 {
-    return App_Textures().knownScheme(name);
+    return App_Materials().knownScheme(name);
 }
 
 D_CMD(ListMaterials)
