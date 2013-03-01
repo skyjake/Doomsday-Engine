@@ -356,7 +356,7 @@ bool Materials::has(Uri const &path) const
     return false;
 }
 
-MaterialManifest &Materials::newManifest(de::Uri const &uri)
+MaterialManifest &Materials::declare(de::Uri const &uri)
 {
     LOG_AS("Materials::newManifest");
 

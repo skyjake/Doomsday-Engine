@@ -512,7 +512,7 @@ public:
          * Reset the staged animation point for the material. The animation
          * states of all layers and decorations will be rewound to the beginning.
          */
-        void resetAnim();
+        void restartAnimation();
 
         /**
          * Returns the current state of the layer animation @a layerNum for

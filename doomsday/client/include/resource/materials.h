@@ -27,13 +27,11 @@
 #ifdef __CLIENT__
 #  include "MaterialVariantSpec"
 #endif
-#include "def_data.h"
 #include "uri.hh"
 #include <de/Error>
-#include <de/Path>
-#include <de/String>
 #include <QList>
 #include <QMap>
+#include <QSet>
 
 namespace de {
 
@@ -118,10 +116,11 @@ public:
      * Construct a new material collection.
      */
     Materials();
-
     virtual ~Materials();
 
-    /// Register the console commands, variables, etc..., of this module.
+    /**
+     * Register the console commands, variables, etc..., of this module.
+     */
     static void consoleRegister();
 
     /**
@@ -245,11 +244,16 @@ public:
      */
     inline int groupCount() const { return allGroups().count(); }
 
-    ///
-    Manifest &newManifest(Uri const &uri);
-
-    ///
-    void addMaterial(Material &material);
+    /**
+     * Declare a material in the collection, producing a manifest for a logical
+     * Material which will be defined later. If a manifest with the specified
+     * @a uri already exists the existing manifest will be returned.
+     *
+     * @param uri  Uri representing a path to the material in the virtual hierarchy.
+     *
+     * @return  Manifest for this URI.
+     */
+    Manifest &declare(Uri const &uri);
 
     /**
      * Returns a list of all the unique material instances in the collection,
@@ -258,18 +262,17 @@ public:
     All const &all() const;
 
 #ifdef __CLIENT__
-
     /**
-     * Reset all material instance animations back to their initial state.
+     * Rewind all material animations back to their initial/starting state.
      *
-     * @see all(), MaterialVariant::resetAnim()
+     * @see all(), MaterialVariant::restartAnimation()
      */
-    inline void resetAllAnims() const
+    inline void restartAllAnimations() const
     {
         foreach(Material *material, all())
         foreach(MaterialVariant *variant, material->variants())
         {
-            variant->resetAnim();
+            variant->restartAnimation();
         }
     }
 
@@ -310,13 +313,20 @@ public:
      */
     void cache(Material &material, VariantSpec const &spec, bool cacheGroups = true);
 
-    /// Process all outstanding tasks in the cache queue.
+    /**
+     * Process all queued material cache tasks.
+     */
     void processCacheQueue();
 
-    /// Empty the Material cache queue, cancelling all outstanding tasks.
+    /**
+     * Cancel all queued material cache tasks.
+     */
     void purgeCacheQueue();
 
 #endif // __CLIENT__
+
+    /// @todo Refactor away:
+    void addMaterial(Material &material);
 
 private:
     DENG2_PRIVATE(d)

@@ -170,7 +170,7 @@ Material::Variant::Variant(Material &generalCase, Material::VariantSpec const &s
     : d(new Instance(this, generalCase, spec))
 {
     // Initialize animation states.
-    resetAnim();
+    restartAnimation();
 }
 
 Material::Variant::~Variant()
@@ -263,7 +263,7 @@ void Material::Variant::ticker(timespan_t /*ticLength*/)
     }
 }
 
-void Material::Variant::resetAnim()
+void Material::Variant::restartAnimation()
 {
     // Animation ceases once the material is no longer valid.
     if(!d->material->isValid()) return;

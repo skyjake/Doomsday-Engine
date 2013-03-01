@@ -182,7 +182,7 @@ DENG_EXTERN_C boolean P_LoadMap(char const *uriCString)
 
 #ifdef __CLIENT__
         // Material animations should begin from their first step.
-        App_Materials().resetAllAnims();
+        App_Materials().restartAllAnimations();
 
         R_InitObjlinkBlockmapForMap();
 

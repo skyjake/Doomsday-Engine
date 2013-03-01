@@ -2308,8 +2308,7 @@ void DD_UpdateEngineState(void)
         gx.UpdateState(DD_POST);
 
 #ifdef __CLIENT__
-    // Reset material animations.
-    App_Materials().resetAllAnims();
+    App_Materials().restartAllAnimations();
 #endif
 }
 
