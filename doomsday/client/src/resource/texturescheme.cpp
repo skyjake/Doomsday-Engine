@@ -74,12 +74,7 @@ DENG2_PIMPL(TextureScheme)
     void deindex(TextureManifest &manifest)
     {
         /// @todo Only destroy the texture if this is the last remaining reference.
-        if(manifest.hasTexture())
-        {
-            Texture *texture = &manifest.texture();
-            manifest.setTexture(0);
-            delete texture;
-        }
+        manifest.clearTexture();
 
         unlinkInUniqueIdLut(manifest);
     }

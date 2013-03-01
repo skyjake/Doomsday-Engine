@@ -17,7 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
+#include "de_base.h" // App_Textures()
 #include "Textures"
 
 #include "resource/texturemanifest.h"
@@ -29,7 +29,7 @@ DENG2_PIMPL(TextureManifest)
     /// Scheme-unique identifier determined by the owner of the subspace.
     int uniqueId;
 
-    /// Path to the resource containing the loadable data.
+    /// Path to the resource containing the image data to be loaded.
     Uri resourceUri;
 
     /// World dimensions in map coordinate space units.
@@ -42,18 +42,10 @@ DENG2_PIMPL(TextureManifest)
     Texture::Flags flags;
 
     /// The associated logical Texture instance (if any).
-    Texture *texture;
+    std::auto_ptr<Texture> texture;
 
-    Instance(Public *i) : Base(i),
-        uniqueId(0),
-        resourceUri(),
-        texture(0)
+    Instance(Public *i) : Base(i), uniqueId(0)
     {}
-
-    ~Instance()
-    {
-        if(texture) delete texture;
-    }
 };
 
 TextureManifest::TextureManifest(PathTree::NodeArgs const &args)
@@ -62,7 +54,6 @@ TextureManifest::TextureManifest(PathTree::NodeArgs const &args)
 
 TextureManifest::~TextureManifest()
 {
-    LOG_AS("~TextureManifest");
     delete d;
 }
 
@@ -79,7 +70,7 @@ Texture *TextureManifest::derive()
 #if _DEBUG
         LOG_INFO("\"%s\" already has an existing texture, reconfiguring.") << composeUri();
 #endif
-        Texture *tex = d->texture;
+        Texture *tex = &texture();
 
         tex->setFlags(d->flags);
         tex->setDimensions(d->logicalDimensions);
@@ -179,15 +170,20 @@ void TextureManifest::setOrigin(Vector2i const &newOrigin)
 
 bool TextureManifest::hasTexture() const
 {
-    return !!d->texture;
+    return !!d->texture.get();
 }
 
 Texture &TextureManifest::texture() const
 {
-    return *d->texture;
+    if(hasTexture())
+    {
+        return *d->texture.get();
+    }
+    /// @throw MissingTextureError There is no texture associated with the manifest.
+    throw MissingTextureError("TextureManifest::texture", "No texture is associated");
 }
 
 void TextureManifest::setTexture(Texture *newTexture)
 {
-    d->texture = newTexture;
+    d->texture.reset(newTexture);
 }

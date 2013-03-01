@@ -178,6 +178,13 @@ public:
      */
     void setTexture(Texture *newTexture);
 
+    /**
+     * Clear the logical Texture associated with the manifest.
+     *
+     * Same as @c setTexture(0)
+     */
+    inline void clearTexture() { setTexture(0); }
+
     /// Returns a reference to the application's texture collection.
     static Textures &textures();
 

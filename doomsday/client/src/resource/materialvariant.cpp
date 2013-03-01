@@ -44,10 +44,10 @@ DENG2_PIMPL(Material::Variant)
     Material *material;
 
     /// Specification used to derive this variant.
-    Material::VariantSpec const &spec;
+    MaterialVariantSpec const &spec;
 
     /// Cached animation state snapshot (if any).
-    Material::Snapshot *snapshot;
+    std::auto_ptr<MaterialSnapshot> snapshot;
 
     /// Frame count when the snapshot was last prepared/updated.
     int snapshotPrepareFrame;
@@ -63,14 +63,8 @@ DENG2_PIMPL(Material::Variant)
     Instance(Public *i, Material &generalCase, Material::VariantSpec const &_spec)
         : Base(i), material(&generalCase),
           spec(_spec),
-          snapshot(0),
           snapshotPrepareFrame(-1)
     {}
-
-    ~Instance()
-    {
-        if(snapshot) delete snapshot;
-    }
 
     /**
      * Attach new snapshot data to the variant. If an existing snapshot is already
@@ -80,15 +74,14 @@ DENG2_PIMPL(Material::Variant)
     void attachSnapshot(Material::Snapshot *newSnapshot)
     {
         DENG2_ASSERT(newSnapshot);
-        if(snapshot)
+        if(snapshot.get())
         {
 #ifdef DENG_DEBUG
             LOG_AS("Material::Variant::AttachSnapshot");
             LOG_WARNING("A snapshot is already attached to %p, it will be replaced.") << de::dintptr(this);
 #endif
-            delete snapshot;
         }
-        snapshot = newSnapshot;
+        snapshot.reset(newSnapshot);
     }
 
     template <typename Type>
@@ -202,14 +195,14 @@ bool Material::Variant::isPaused() const
 Material::Snapshot &Material::Variant::snapshot() const
 {
     // Time to attach a snapshot?
-    if(!d->snapshot)
+    if(!d->snapshot.get())
     {
         d->attachSnapshot(new Material::Snapshot(*const_cast<Material::Variant *>(this)));
 
         // Mark the snapshot as dirty.
         d->snapshotPrepareFrame = frameCount - 1;
     }
-    return *d->snapshot;
+    return *d->snapshot.get();
 }
 
 Material::Snapshot const &Material::Variant::prepare(bool forceSnapshotUpdate)
