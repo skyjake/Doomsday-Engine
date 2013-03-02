@@ -38,7 +38,7 @@ typedef struct rtexcoord_s {
 } rtexcoord_t;
 
 /**
- * Logical texture unit indices.
+ * Symbolic identifiers for (virtual) texture units.
  */
 typedef enum {
     RTU_PRIMARY = 0,
@@ -63,15 +63,26 @@ typedef struct rtexmapunit_texture_s {
         struct {
             DGLuint name; ///< Texture used on this layer (if any).
             int magMode; ///< GL texture magnification filter.
+            int wrapS; ///< GL texture S axis wrap mode.
+            int wrapT; ///< GL texture T axis wrap mode.
         } gl;
-        struct texturevariant_s *variant;
+        de::TextureVariant *variant;
     };
     /// @ref textureUnitFlags
     int flags;
+
+#ifdef __cplusplus
+    inline bool hasTexture() const
+    {
+        if(flags & TUF_TEXTURE_IS_MANAGED)
+            return variant && variant->glName() != 0;
+        return gl.name != 0;
+    }
+#endif
 } rtexmapunit_texture_t;
 
 /**
- * Texture unit state. POD.
+ * Texture unit state (POD).
  *
  * A simple Record data structure for storing properties used for
  * configuring a GL texture unit during render.
@@ -91,6 +102,10 @@ typedef struct rtexmapuint_s {
 
     /// Texture-space origin translation (unscaled).
     vec2f_t offset;
+
+#ifdef __cplusplus
+    bool hasTexture() const { return texture.hasTexture(); }
+#endif
 } rtexmapunit_t;
 
 #ifdef __CLIENT__
