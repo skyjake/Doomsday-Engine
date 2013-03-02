@@ -59,14 +59,14 @@ extern "C" {
  * DOOMSDAY_RELEASE_TYPE determines the classification of the release.
  * Possible values are "Unstable", "Candidate" and "Stable".
  */
-#define DOOMSDAY_RELEASE_TYPE   "Unstable"
-//#define DOOMSDAY_RELEASE_TYPE   "Candidate"
+//#define DOOMSDAY_RELEASE_TYPE   "Unstable"
+#define DOOMSDAY_RELEASE_TYPE   "Candidate"
 //#define DOOMSDAY_RELEASE_TYPE   "Stable"
 
 /**
  * Copyright string is used in WIN32 binary metadata markup.
  */
-#define DOOMSDAY_COPYRIGHT      "2003-2012, " DENGPROJECT_NICEAUTHOR
+#define DOOMSDAY_COPYRIGHT      "2003-2013, " DENGPROJECT_NICEAUTHOR
 
 /**
  * Version constants.  The Game module can use DOOMSDAY_VERSION to
