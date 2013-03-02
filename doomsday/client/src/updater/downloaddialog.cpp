@@ -19,6 +19,8 @@
  * 02110-1301 USA</small>
  */
 
+#include <QFile>
+#include "de_platform.h"
 #include "downloaddialog.h"
 #include "updatersettings.h"
 #include "dd_version.h"
@@ -32,9 +34,12 @@
 #include <QProgressBar>
 #include <QDir>
 #include <QUrl>
-#include <QFile>
 #include <de/Log>
 #include <QDebug>
+
+#ifdef WIN32
+#  undef open
+#endif
 
 static DownloadDialog* downloadInProgress;
 

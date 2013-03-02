@@ -22,6 +22,7 @@
 #define LIBDENG_GAMES_H
 
 #include "game.h"
+#include "dd_share.h"
 #include <de/types.h>
 #include <de/str.h>
 #include <QList>

@@ -19,6 +19,7 @@
  * 02110-1301 USA</small>
  */
 
+#include "de_platform.h"
 #include "updateavailabledialog.h"
 #include "updatersettings.h"
 #include "updatersettingsdialog.h"

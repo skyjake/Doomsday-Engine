@@ -31,7 +31,16 @@
 #include "de_ui.h"
 #include "de_misc.h"
 
-#include "ui/busyvisual.h"
+#include <de/App>
+
+#ifdef __SERVER__
+#  include <de/TextApp>
+#endif
+
+#ifdef __CLIENT__
+#  include "ui/busyvisual.h"
+#  include "ui/window.h"
+#endif
 
 /// Development utility: on sharp tics, print player 0 movement state.
 //#define LIBDENG_PLAYER0_MOVEMENT_ANALYSIS
@@ -47,13 +56,6 @@
  */
 #define MAX_FRAME_TIME (1.0/MIN_TIC_RATE)
 
-/**
- * Maximum number of milliseconds spent uploading textures at the beginning
- * of a frame. Note that non-uploaded textures will appear as pure white
- * until their content gets uploaded (you should precache them).
- */
-#define FRAME_DEFERRED_UPLOAD_TIMEOUT 20
-
 int maxFrameRate = 120; // Zero means 'unlimited'.
 // Refresh frame count (independant of the viewport-specific frameCount).
 int rFrameCount = 0;
@@ -67,23 +69,17 @@ boolean stopTime = false; // If true the time counters won't be incremented
 boolean tickUI = false; // If true the UI will be tick'd
 boolean tickFrame = true; // If false frame tickers won't be tick'd (unless netGame)
 
-boolean drawGame = true; // If false the game viewport won't be rendered
-
 static int gameLoopExitCode = 0;
 
 static double lastRunTicsTime;
-static float fps;
 static boolean firstTic = true;
 static boolean tickIsSharp = false;
-static boolean noninteractive = false;
 
 #define NUM_FRAMETIME_DELTAS    200
 static int timeDeltas[NUM_FRAMETIME_DELTAS];
 static int timeDeltasIndex = 0;
 
 static float realFrameTimePos = 0;
-
-static void runTics(void);
 
 void DD_RegisterLoop(void)
 {
@@ -103,212 +99,13 @@ int DD_GameLoopExitCode(void)
     return gameLoopExitCode;
 }
 
-int DD_GameLoop(void)
-{
-#ifdef __CLIENT__
-    noninteractive = false;
-#endif
-#ifdef __SERVER__
-    noninteractive = true;
-#endif
-
-    // Start the deng2 event loop.
-    return LegacyCore_RunEventLoop();
-}
-
-void DD_GameLoopCallback(void)
-{
-    if(Sys_IsShuttingDown())
-        return; // Shouldn't run this while shutting down.
-
-    Garbage_Recycle();
-
-#ifdef __SERVER__
-    {
-        // Adjust loop rate depending on whether players are in game.
-        int i, count = 0;
-        for(i = 1; i < DDMAXPLAYERS; ++i)
-            if(ddPlayers[i].shared.inGame) count++;
-
-        LegacyCore_SetLoopRate(count || !noninteractive? 35 : 3);
-
-        runTics();
-
-        // Update clients at regular intervals.
-        Sv_TransmitFrame();
-    }
-#endif
-
-#ifdef __CLIENT__
-    {
-        // Normal client-side/singleplayer mode.
-        //assert(!novideo);
-
-        // We may be performing GL operations.
-        Window_GLActivate(Window_Main());
-
-        // Run at least one (fractional) tic.
-        runTics();
-
-        // We may have received a Quit message from the windowing system
-        // during events/tics processing.
-        if(Sys_IsShuttingDown())
-            return;
-
-        GL_ProcessDeferredTasks(FRAME_DEFERRED_UPLOAD_TIMEOUT);
-
-        // Request update of window contents.
-        Window_Draw(Window_Main());
-
-        // After the first frame, start timedemo.
-        DD_CheckTimeDemo();
-    }
-#endif
-}
-
-#ifdef __CLIENT__
-
-//static uint frameStartAt;
-
-static void startFrame(void)
-{
-    //frameStartAt = Timer_RealMilliseconds();
-
-    S_StartFrame();
-    if(gx.BeginFrame)
-    {
-        gx.BeginFrame();
-    }
-}
-
-//static uint lastShowAt;
-
-static void endFrame(void)
-{
-    static uint lastFpsTime = 0;
-
-    uint nowTime = Timer_RealMilliseconds();
-
-    /*
-    Con_Message("endFrame with %i ms (%i render)", nowTime - lastShowAt, nowTime - frameStartAt);
-    lastShowAt = nowTime;
-    */
-
-    // Increment the (local) frame counter.
-    rFrameCount++;
-
-    // Count the frames every other second.
-    if(nowTime - 2500 >= lastFpsTime)
-    {
-        static int lastFrameCount = 0;
-        fps = (rFrameCount - lastFrameCount) / ((nowTime - lastFpsTime)/1000.0f);
-        lastFpsTime = nowTime;
-        lastFrameCount = rFrameCount;
-    }
-
-    if(gx.EndFrame)
-    {
-        gx.EndFrame();
-    }
-
-    S_EndFrame();
-}
-
-#endif // __CLIENT__
-
-void DD_GameLoopDrawer(void)
-{
-    if(novideo || Sys_IsShuttingDown()) return;
-
-#ifdef __CLIENT__
-
-    assert(!BusyMode_Active()); // Busy mode has its own drawer.
-
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    // Frame syncronous I/O operations.
-    startFrame();
-
-    if(renderWireframe)
-    {
-        // When rendering is wireframe mode, we must clear the screen
-        // before rendering a frame.
-        glClear(GL_COLOR_BUFFER_BIT);
-    }
-
-    if(drawGame)
-    {
-        if(App_GameLoaded())
-        {
-            // Interpolate the world ready for drawing view(s) of it.
-            if(theMap)
-            {
-                R_BeginWorldFrame();
-            }
-            R_RenderViewPorts();
-        }
-        else if(titleFinale == 0)
-        {
-            // Title finale is not playing. Lets do it manually.
-            glMatrixMode(GL_PROJECTION);
-            glPushMatrix();
-            glLoadIdentity();
-            glOrtho(0, SCREENWIDTH, SCREENHEIGHT, 0, -1, 1);
-
-            R_RenderBlankView();
-
-            glMatrixMode(GL_PROJECTION);
-            glPopMatrix();
-        }
-
-        if(!(UI_IsActive() && UI_Alpha() >= 1.0))
-        {
-            UI2_Drawer();
-
-            // Draw any full window game graphics.
-            if(App_GameLoaded() && gx.DrawWindow)
-                gx.DrawWindow(Window_Size(theWindow));
-        }
-    }
-
-    if(Con_TransitionInProgress())
-        Con_DrawTransition();
-
-    if(drawGame)
-    {
-        // Debug information.
-        Net_Drawer();
-        S_Drawer();
-
-        // Finish up any tasks that must be completed after view(s) have been drawn.
-        R_EndWorldFrame();
-    }
-
-    if(UI_IsActive())
-    {
-        // Draw user interface.
-        UI_Drawer();
-    }
-
-    // Draw console.
-    Rend_Console();
-
-    // End any open DGL sequence.
-    DGL_End();
-
-    // Finish GL drawing and swap it on to the screen.
-    GL_DoUpdate();
-
-    // Finish the refresh frame.
-    endFrame();
-
-#endif // __CLIENT__
-}
-
 float DD_GetFrameRate(void)
 {
-    return fps;
+#ifdef __CLIENT__
+    return Window_CanvasWindow(Window_Main())->frameRate();
+#else
+    return 0;
+#endif
 }
 
 #undef DD_IsSharpTick
@@ -573,12 +370,7 @@ timespan_t DD_LatestRunTicsStartTime(void)
     return lastRunTicsTime;
 }
 
-/**
- * Runs one or more tics depending on how much time has passed since the
- * previous call to this function. This gets called once per each main loop
- * iteration. Finishes as quickly as possible.
- */
-static void runTics(void)
+void Loop_RunTics(void)
 {
     double elapsedTime, ticLength, nowTime;
 

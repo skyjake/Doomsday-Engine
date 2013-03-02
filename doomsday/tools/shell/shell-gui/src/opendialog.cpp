@@ -50,6 +50,7 @@ DENG2_PIMPL(OpenDialog)
         // Restore the historical entries.
         QSettings st;
         history = st.value("OpenDialog/history", QStringList() << "localhost").toStringList();
+        tidyUpHistory();
 
         self.setWindowTitle(tr("Open Connection"));
         self.setWindowFlags(self.windowFlags() & ~Qt::WindowContextHelpButtonHint);
@@ -89,6 +90,21 @@ DENG2_PIMPL(OpenDialog)
         QObject::connect(yes, SIGNAL(clicked()), &self, SLOT(accept()));
         QObject::connect(no, SIGNAL(clicked()), &self, SLOT(reject()));
         yes->setDefault(true);
+    }
+
+    void tidyUpHistory()
+    {
+        QStringList tidied;
+        foreach(QString host, history)
+        {
+            int pos = host.indexOf('(');
+            if(pos > 0)
+            {
+                host = host.left(pos - 1);
+            }
+            tidied << host;
+        }
+        history = tidied;
     }
 
     /**

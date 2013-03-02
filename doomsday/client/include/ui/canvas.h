@@ -26,10 +26,13 @@
 #  error "canvas.h requires __CLIENT__"
 #endif
 
-struct image_s; // see image.h
+#include <de/Observers>
+#include <de/libdeng2.h>
 
 #include <QGLWidget>
-#include <de/libdeng2.h>
+
+struct image_s; // see image.h
+class CanvasWindow;
 
 #ifdef Q_WS_X11
 //#  define LIBDENG_CANVAS_TRACK_WITH_MOUSE_MOVE_EVENTS
@@ -52,7 +55,7 @@ class Canvas : public QGLWidget
     Q_OBJECT
 
 public:
-    explicit Canvas(QWidget *parent = 0, QGLWidget* shared = 0);
+    explicit Canvas(CanvasWindow *parent, QGLWidget* shared = 0);
     ~Canvas();
     
     /**
@@ -72,14 +75,7 @@ public:
      *
      * @param canvasDrawFunc  Callback.
      */
-    void setDrawFunc(void (*canvasDrawFunc)(Canvas&));
-
-    /**
-     * Sets the callback function that is called after the size of the canvas changes.
-     *
-     * @param canvasResizedFunc  Callback.
-     */
-    void setResizedFunc(void (*canvasResizedFunc)(Canvas&));
+    //void setDrawFunc(void (*canvasDrawFunc)(Canvas&));
 
     /**
      * Sets the callback function that is called when the window's focus state changes.

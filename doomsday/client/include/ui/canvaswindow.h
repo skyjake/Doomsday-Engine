@@ -28,6 +28,7 @@
 #endif
 
 #include <QMainWindow>
+#include <de/RootWidget>
 #include "canvas.h"
 
 /**
@@ -39,8 +40,27 @@ class CanvasWindow : public QMainWindow
     Q_OBJECT
 
 public:
+    enum Mode
+    {
+        Normal,
+        Busy
+    };
+
+public:
     explicit CanvasWindow(QWidget *parent = 0);
     ~CanvasWindow();
+
+    de::RootWidget &root();
+
+    /**
+     * Sets the operating mode of the window. In Busy mode, the normal
+     * widgets of the window will be replaced with a single BusyWidget.
+     *
+     * @param mode  Mode.
+     */
+    void setMode(Mode const &mode);
+
+    float frameRate() const;
 
     /**
      * Recreates the contained Canvas with an update GL format.
@@ -49,25 +69,41 @@ public:
     void recreateCanvas();
 
     Canvas& canvas();
-    bool ownsCanvas(Canvas* c) const;
+    bool ownsCanvas(Canvas *c) const;
 
     /**
      * Sets a callback function for notifying about window movement.
      */
-    void setMoveFunc(void (*func)(CanvasWindow&));
+    void setMoveFunc(void (*func)(CanvasWindow &));
 
     /**
      * Sets a callback function for notifying about window closing.
      * The window closing is cancelled if the callback is defined
      * and returned false.
      */
-    void setCloseFunc(bool (*func)(CanvasWindow&));
+    void setCloseFunc(bool (*func)(CanvasWindow &));
 
     // Events.
-    bool event(QEvent* ev);
-    void closeEvent(QCloseEvent* ev);
-    void moveEvent(QMoveEvent* ev);
-    void hideEvent(QHideEvent* ev);
+    bool event(QEvent *);
+    void closeEvent(QCloseEvent *);
+    void moveEvent(QMoveEvent *);
+    void resizeEvent(QResizeEvent *);
+    void hideEvent(QHideEvent *);
+
+    /**
+     * Called from Canvas when it is ready for OpenGL drawing (visible).
+     *
+     * @param canvas  Canvas.
+     */
+    void canvasReady(Canvas &canvas);
+
+    /**
+     * Called from Canvas when a GL draw is requested. The UI widgets will be
+     * rendered onto the canvas.
+     *
+     * @param canvas  Canvas to paint.
+     */
+    void paintCanvas(Canvas &canvas);
 
     /**
      * Must be called before any canvas windows are created. Defines the
@@ -83,7 +119,7 @@ signals:
 public slots:
 
 protected:
-    static void initCanvasAfterRecreation(Canvas& canvas);
+    static void initCanvasAfterRecreation(Canvas &canvas);
 
 private:
     DENG2_PRIVATE(d)

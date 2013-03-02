@@ -39,7 +39,7 @@ public:
     typedef duint32 Type;
 
     /// The special "no identifier".
-    enum { NONE = 0 };
+    enum { None = 0 };
 
 public:
     /**
@@ -65,7 +65,7 @@ public:
 
     bool operator != (Id const &other) const { return _id != other._id; }
 
-    operator bool () const { return _id != NONE; }
+    operator bool () const { return _id != None; }
 
     operator Type () const { return _id; }
 
@@ -77,7 +77,9 @@ public:
     /// Converts the Id to a text string, using the format "{id}".
     String asText() const;
 
-    ddouble asNumber() const;
+    ddouble asDouble() const;
+
+    dint64 asInt64() const;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;

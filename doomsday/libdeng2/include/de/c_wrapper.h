@@ -69,14 +69,6 @@ typedef enum legacycore_loglevel_e {
 DENG2_PUBLIC LegacyCore *LegacyCore_New();
 DENG2_PUBLIC void LegacyCore_Delete(LegacyCore *lc);
 DENG2_PUBLIC LegacyCore *LegacyCore_Instance();
-DENG2_PUBLIC void LegacyCore_SetLoopRate(int freqHz);
-DENG2_PUBLIC void LegacyCore_SetLoopFunc(void (*callback)(void));
-DENG2_PUBLIC void LegacyCore_PushLoop();
-DENG2_PUBLIC void LegacyCore_PopLoop();
-DENG2_PUBLIC void LegacyCore_PauseLoop();
-DENG2_PUBLIC void LegacyCore_ResumeLoop();
-DENG2_PUBLIC int LegacyCore_RunEventLoop();
-DENG2_PUBLIC void LegacyCore_Stop(int exitCode);
 DENG2_PUBLIC void LegacyCore_Timer(unsigned int milliseconds, void (*callback)(void));
 DENG2_PUBLIC int LegacyCore_SetLogFile(char const *filePath);
 DENG2_PUBLIC char const *LegacyCore_LogFile();

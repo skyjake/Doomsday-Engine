@@ -1,5 +1,7 @@
-/** @file sys_network.cpp Low-level network socket routines.
+/** @file sys_network.cpp Low-level network socket routines (deprecated).
  * @ingroup network
+ *
+ * @todo Remove this source file entirely once dependent code is revised.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -20,41 +22,13 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef __CLIENT__
-#  error "sys_network.cpp is only for __CLIENT__"
-#endif
-
-#include <errno.h>
-
-#ifndef WIN32
-#include <signal.h>
-#endif
-
-#include "de_platform.h"
 #include "de_console.h"
-#include "de_system.h"
-#include "de_misc.h"
-
-#include "dd_main.h"
-#include "dd_def.h"
-#include "network/net_main.h"
-#include "network/net_event.h"
-#include "network/net_demo.h"
-#include "network/protocol.h"
-#include "network/serverlink.h"
-#include "client/cl_def.h"
-#include "map/p_players.h"
-
-#include <de/Address>
-#include <de/Socket>
-#include <de/shell/ServerFinder>
+#include "clientapp.h"
 
 using namespace de;
 
 char *nptIPAddress = (char *) ""; ///< Address to connect to by default (cvar).
 int   nptIPPort = 0;              ///< Port to connect to by default (cvar).
-
-static ServerLink *svLink;
 
 void N_Register(void)
 {
@@ -68,51 +42,17 @@ void N_Register(void)
 
 ServerLink &Net_ServerLink(void)
 {
-    return *svLink;
-}
-
-void N_SystemInit(void)
-{
-    svLink = new ServerLink;
-}
-
-/**
- * Shut down the low-level network interface. Called during engine
- * shutdown (not before).
- */
-void N_SystemShutdown(void)
-{
-    //svLink.disconnect();
-
-    /*
-    if(netGame)
-    {
-        // We seem to be shutting down while a netGame is running.
-        Con_Execute(CMDS_DDAY, "net disconnect", true, false);
-    }*/
-
-    // Any queued messages will be destroyed.
-    N_ClearMessages();
-
-    // Let's forget about servers found earlier.
-    //located.clear();
-
-    delete svLink;
-    svLink = 0;
+    return ClientApp::app().serverLink();
 }
 
 boolean N_GetHostInfo(int index, struct serverinfo_s *info)
 {
-    QList<Address> const listed = svLink->foundServers();
-    if(index < 0 || index >= listed.size())
-        return false;
-    svLink->foundServerInfo(listed[index], info);
-    return true;
+    return Net_ServerLink().foundServerInfo(index, info);
 }
 
 int N_GetHostCount(void)
 {
-    return svLink->foundServerCount();
+    return Net_ServerLink().foundServerCount();
 }
 
 /**
@@ -123,7 +63,7 @@ void N_PrintNetworkStatus(void)
     if(isClient)
     {
         Con_Message("CLIENT: Connected to server at %s.",
-                    svLink->address().asText().toAscii().constData());
+                    Net_ServerLink().address().asText().toAscii().constData());
     }
     else
     {

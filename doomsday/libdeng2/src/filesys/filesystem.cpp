@@ -1,5 +1,4 @@
-/**
- * @file fs.cpp File System
+/** @file filesystem.cpp File System.
  *
  * @author Copyright &copy; 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2013 Daniel Swanson <danij@dengine.net>

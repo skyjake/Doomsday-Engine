@@ -58,6 +58,7 @@
 #include <QWidget>
 #include <QDesktopWidget>
 #include "ui/canvaswindow.h"
+#include "clientapp.h"
 #include <de/Config>
 #include <de/Record>
 #include <de/NumberValue>
@@ -253,7 +254,7 @@ struct ddwindow_s
             {
                 geometry.size.width = DisplayMode_Current()->width;
                 geometry.size.height = DisplayMode_Current()->height;
-#if defined MACOSX && defined __CLIENT__
+#if defined MACOSX
                 // Pull the window again over the shield after the mode change.
                 DisplayMode_Native_Raise(Window_NativeHandle(this));
 #endif
@@ -472,7 +473,6 @@ struct ddwindow_s
 
     bool applyAttributes(int* attribs)
     {
-#ifdef __CLIENT__
         LOG_AS("applyAttributes");
 
         bool changed = false;
@@ -572,14 +572,11 @@ struct ddwindow_s
 
         // Seems ok, apply them.
         applyWindowGeometry();
-#endif // __CLIENT__
         return true;
     }
 
     void updateLayout()
     {
-        //qDebug() << "Window::updateLayout:" << widget->geometry() << widget->canvas().geometry();
-
         setFlag(DDWF_MAXIMIZE, widget->isMaximized());
 
         geometry.size.width = widget->width();
@@ -587,37 +584,24 @@ struct ddwindow_s
 
         if(!(flags & DDWF_FULLSCREEN))
         {
-            DEBUG_Message(("Updating current view geometry for window, fetched %i x %i.\n", width(), height()));
+            LOG_DEBUG("Updating current view geometry for window, fetched %i x %i")
+                    << width() << height();
 
             if(!(flags & DDWF_MAXIMIZE) && !isBeingAdjusted())
             {
                 // Update the normal-mode geometry (not fullscreen, not maximized).
                 normalGeometry.size.width = geometry.size.width;
-                DEBUG_Message(("ngw=%i [C]\n", normalGeometry.size.width));
                 normalGeometry.size.height = geometry.size.height;
 
-                DEBUG_Message(("Updating normal view geometry for window, fetched %i x %i.\n", width(), height()));
+                LOG_DEBUG("Updating normal view geometry for window, fetched %i x %i")
+                        << width() << height();
             }
         }
         else
         {
-            DEBUG_Message(("Updating view geometry for fullscreen (%i x %i).\n", width(), height()));
+            LOG_DEBUG("Updating view geometry for fullscreen (%i x %i)")
+                    << width() << height();
         }
-
-#ifdef __CLIENT__
-        // Update viewports.
-        R_SetViewGrid(0, 0);
-        if(BusyMode_Active() || UI_IsActive() || !App_GameLoaded())
-        {
-            // Update for busy mode.
-            R_UseViewPort(0);
-        }
-        R_LoadSystemFonts();
-        if(UI_IsActive())
-        {
-            UI_UpdatePageLayout();
-        }
-#endif
     }
 };
 
@@ -650,7 +634,7 @@ static void updateMainWindowLayout(void)
 
     if(win->flags & DDWF_FULLSCREEN)
     {
-#if defined MACOSX && defined __CLIENT__
+#if defined MACOSX
         // For some interesting reason, we have to scale the window twice in fullscreen mode
         // or the resulting layout won't be correct.
         win->widget->setGeometry(QRect(0, 0, 320, 240));
@@ -1004,6 +988,7 @@ static Window* canvasToWindow(Canvas& DENG_DEBUG_ONLY(canvas))
     return &mainWindow;
 }
 
+/*
 static void drawCanvasWithCallback(Canvas& canvas)
 {
     Window* win = canvasToWindow(canvas);
@@ -1014,6 +999,7 @@ static void drawCanvasWithCallback(Canvas& canvas)
     // Now we can continue with the main loop (if it was paused).
     LegacyCore_ResumeLoop();
 }
+*/
 
 static void windowFocusChanged(Canvas& canvas, bool focus)
 {
@@ -1063,7 +1049,7 @@ static void finishMainWindowInit(Canvas& canvas)
     Window* win = canvasToWindow(canvas);
     assert(win == &mainWindow);
 
-#if defined MACOSX && defined __CLIENT__
+#if defined MACOSX
     if(Window_IsFullscreen(win))
     {
         // The window must be manually raised above the shielding window put up by
@@ -1139,9 +1125,8 @@ static void windowWasMoved(CanvasWindow& cw)
     }
 }
 
-static void windowWasResized(Canvas& canvas)
+void Window_UpdateAfterResize(Window *win)
 {
-    Window* win = canvasToWindow(canvas);
     win->assertWindow();
     win->updateLayout();
 }
@@ -1168,7 +1153,6 @@ static Window* createWindow(const char* title)
 
     mainWindow.widget->setCloseFunc(windowIsClosing);
     mainWindow.widget->setMoveFunc(windowWasMoved);
-    mainWindow.widget->canvas().setResizedFunc(windowWasResized);
 
     // Let's see if there are command line options overriding the previous state.
     mainWindow.modifyAccordingToOptions();
@@ -1203,7 +1187,6 @@ void Window_Delete(Window* wnd)
 
     wnd->assertWindow();
     wnd->widget->canvas().setFocusFunc(0);
-    wnd->widget->canvas().setResizedFunc(0);
 
     // Make sure we'll remember the config.
     Window_SaveState(wnd);
@@ -1307,22 +1290,12 @@ void* Window_NativeHandle(const Window* wnd)
     return reinterpret_cast<void*>(wnd->widget->winId());
 }
 
-void Window_SetDrawFunc(Window* win, void (*drawFunc)(void))
-{
-    assert(win);
-    assert(win->widget);
-
-    win->drawFunc = drawFunc;
-    win->widget->canvas().setDrawFunc(drawFunc? drawCanvasWithCallback : 0);
-    win->widget->update();
-}
-
 void Window_Draw(Window* win)
 {
-#ifdef __CLIENT__
-
     assert(win);
     assert(win->widget);
+
+    ClientApp::app().loop().pause();
 
     // The canvas needs to be recreated when the GL format has changed
     // (e.g., multisampling).
@@ -1343,13 +1316,11 @@ void Window_Draw(Window* win)
     else
     {
         // Don't run the main loop until after the paint event has been dealt with.
-        LegacyCore_PauseLoop();
+        //LegacyCore_PauseLoop();
 
         // Request update at the earliest convenience.
         win->widget->canvas().update();
     }
-
-#endif // __CLIENT__
 }
 
 void Window_Show(Window *wnd, boolean show)
@@ -1530,6 +1501,8 @@ boolean Window_IsMouseTrapped(const Window* wnd)
 
 boolean Window_ShouldRepaintManually(const Window* wnd)
 {
+    //return false;
+
     // When the pointer is not grabbed, allow the system to regulate window
     // updates (e.g., for window manipulation).
     if(Window_IsFullscreen(wnd)) return true;
@@ -1555,31 +1528,25 @@ void GL_AssertContextActive(void)
 
 void Window_GLActivate(Window* wnd)
 {
-#ifdef __CLIENT__
-
     wnd->assertWindow();
     wnd->widget->canvas().makeCurrent();
 
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-#else
-    DENG_UNUSED(wnd);
-#endif
 }
 
 void Window_GLDone(Window* wnd)
 {
-#ifdef __CLIENT__
-
     wnd->assertWindow();
     wnd->widget->canvas().doneCurrent();
-
-#else
-    DENG_UNUSED(wnd);
-#endif
 }
 
 QWidget* Window_Widget(Window* wnd)
+{
+    if(!wnd) return 0;
+    return wnd->widget;
+}
+
+CanvasWindow *Window_CanvasWindow(Window *wnd)
 {
     if(!wnd) return 0;
     return wnd->widget;

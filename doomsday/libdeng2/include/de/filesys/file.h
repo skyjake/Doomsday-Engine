@@ -286,7 +286,7 @@ public:
      * Forms the complete path of this file object.
      *
      * @return Path of the object. This is not a native path, but instead
-     *         intended for de::FS.
+     *         intended for de::FileSystem.
      */
     String const path() const;
 
