@@ -1151,10 +1151,10 @@ void Net_FinishConnection(int nodeId, const byte* data, int size)
 
 int Net_StartConnection(const char* address, int port)
 {
-    Con_Message("Net_StartConnection: Connecting to %s...", address);
+    Con_Message("Net_StartConnection: Connecting to %s (port %i)...", address, port);
 
     // Start searching at the specified location.
-    Net_ServerLink().connectDomain(de::String(address) + ":" + port, 7 /*timeout*/);
+    Net_ServerLink().connectDomain(de::String("%1:%2").arg(address).arg(port), 7 /*timeout*/);
     return true;
 }
 
