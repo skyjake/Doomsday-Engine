@@ -975,8 +975,9 @@ static void generateMaterialDefForTexture(TextureManifest &manifest)
 #endif
 
     // The first stage is implicit.
-    ded_material_layer_stage_t *st =
-        &mat->layers[0].stages[DED_AddMaterialLayerStage(&mat->layers[0])];
+    int layerIdx = DED_AddMaterialLayerStage(&mat->layers[0]);
+    ded_material_layer_stage_t *st = &mat->layers[0].stages[layerIdx];
+    DENG_ASSERT(st != 0);
     st->texture = reinterpret_cast<uri_s *>(new de::Uri(texUri));
 
     // Is there an animation for this?
