@@ -279,6 +279,9 @@ public:
 
 #ifdef __CLIENT__
 
+#undef min
+#undef max
+
     /**
      * (Light) decoration.
      */
