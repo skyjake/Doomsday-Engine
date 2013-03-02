@@ -23,6 +23,7 @@
 #define LIBDENG_UI_MAIN_H
 
 #include <de/rect.h>
+#include "MaterialVariantSpec"
 
 #ifdef __cplusplus
 extern "C" {
