@@ -25,25 +25,8 @@
 #endif
 
 #include "def_data.h"
+#include "MaterialContext"
 #include "Texture" // TextureVariantSpec
-
-/// Identifiers for material usage contexts.
-typedef enum {
-    MC_UNKNOWN = -1,
-    MATERIALCONTEXT_FIRST = 0,
-    MC_UI = MATERIALCONTEXT_FIRST,
-    MC_MAPSURFACE,
-    MC_SPRITE,
-    MC_MODELSKIN,
-    MC_PSPRITE,
-    MC_SKYSPHERE,
-    MATERIALCONTEXT_LAST = MC_SKYSPHERE
-} materialcontext_t;
-
-#define MATERIALCONTEXT_COUNT (MATERIALCONTEXT_LAST + 1 - MATERIALCONTEXT_FIRST )
-
-/// @c true= val can be interpreted as a valid material context identifier.
-#define VALID_MATERIALCONTEXT(val) ((val) >= MATERIALCONTEXT_FIRST && (val) <= MATERIALCONTEXT_LAST)
 
 namespace de {
 
@@ -59,7 +42,7 @@ struct MaterialVariantSpec
 {
 public:
     /// Usage context identifier.
-    materialcontext_t context;
+    MaterialContextId context;
 
     /// Specification for the primary texture.
     texturevariantspecification_t *primarySpec;
@@ -68,7 +51,7 @@ public:
     /**
      * Construct a zeroed MaterialVariantSpec instance.
      */
-    MaterialVariantSpec() : context(MC_UNKNOWN), primarySpec(0)
+    MaterialVariantSpec() : context(MaterialContextId(0)), primarySpec(0)
     {}
 
     /**

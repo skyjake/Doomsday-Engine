@@ -303,8 +303,8 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     flip = sprFrame->flip[0];
 
     MaterialVariantSpec const &spec =
-        App_Materials().variantSpecForContext(MC_PSPRITE, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                               0, -2, 0, false, true, true, false);
+        App_Materials().variantSpec(PSpriteContext, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                    0, -2, 0, false, true, true, false);
     MaterialSnapshot const &ms = sprFrame->mats[0]->prepare(spec);
 
     Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
@@ -373,9 +373,9 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
 
 MaterialVariantSpec const &PSprite_MaterialSpec()
 {
-    return App_Materials().variantSpecForContext(MC_SPRITE, 0, 0, 0, 0,
-                                                  GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, 0,
-                                                  false, true, true, false);
+    return App_Materials().variantSpec(SpriteContext, 0, 0, 0, 0,
+                                       GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                       1, -2, 0, false, true, true, false);
 }
 
 void Rend_DrawPSprite(rendpspriteparams_t const *params)
@@ -860,9 +860,9 @@ void Rend_DrawMasked(void)
 
 MaterialVariantSpec const &Rend_SpriteMaterialSpec(int tclass, int tmap)
 {
-    return App_Materials().variantSpecForContext(MC_SPRITE, 0, 1, tclass, tmap,
-                                                  GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1,
-                                                  true, true, true, false);
+    return App_Materials().variantSpec(SpriteContext, 0, 1, tclass, tmap,
+                                       GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                       1, -2, -1, true, true, true, false);
 }
 
 static MaterialVariant *chooseSpriteMaterial(rendspriteparams_t const &p)

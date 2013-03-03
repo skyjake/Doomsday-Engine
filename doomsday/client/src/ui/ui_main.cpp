@@ -105,9 +105,9 @@ void UI_Register(void)
 
 de::MaterialVariantSpec const &Ui_MaterialSpec(int texSpecFlags)
 {
-    return App_Materials().variantSpecForContext(MC_UI, texSpecFlags | TSF_NO_COMPRESSION,
-                                                 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                                 1, 1, 0, false, false, false, false);
+    return App_Materials().variantSpec(UiContext, texSpecFlags | TSF_NO_COMPRESSION,
+                                       0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                       1, 1, 0, false, false, false, false);
 }
 
 void UI_PageInit(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame, boolean noescape)

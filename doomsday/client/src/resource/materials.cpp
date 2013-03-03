@@ -21,7 +21,7 @@
 #include "de_base.h"
 #include "de_console.h"
 #ifdef __CLIENT__
-#  include "gl/gl_texmanager.h" // GL_TextureVariantSpecificationForContext
+#  include "gl/gl_texmanager.h" // GL_TextureVariantSpec
 #  include "MaterialSnapshot"
 #endif
 #include <de/Log>
@@ -164,37 +164,33 @@ DENG2_PIMPL(Materials)
         return variantSpecs.back();
     }
 
-    MaterialVariantSpec &getVariantSpecForContext(materialcontext_t mc,
+    MaterialVariantSpec &getVariantSpecForContext(MaterialContextId contextId,
         int flags, byte border, int tClass, int tMap, int wrapS, int wrapT,
         int minFilter, int magFilter, int anisoFilter,
         bool mipmapped, bool gammaCorrection, bool noStretch, bool toAlpha)
     {
         static MaterialVariantSpec tpl;
 
-        DENG2_ASSERT(mc == MC_UNKNOWN || VALID_MATERIALCONTEXT(mc));
-
         texturevariantusagecontext_t primaryContext;
-        switch(mc)
+        switch(contextId)
         {
-        case MC_UI:             primaryContext = TC_UI;                 break;
-        case MC_MAPSURFACE:     primaryContext = TC_MAPSURFACE_DIFFUSE; break;
-        case MC_SPRITE:         primaryContext = TC_SPRITE_DIFFUSE;     break;
-        case MC_MODELSKIN:      primaryContext = TC_MODELSKIN_DIFFUSE;  break;
-        case MC_PSPRITE:        primaryContext = TC_PSPRITE_DIFFUSE;    break;
-        case MC_SKYSPHERE:      primaryContext = TC_SKYSPHERE_DIFFUSE;  break;
-        default:                primaryContext = TC_UNKNOWN;            break;
+        case UiContext:         primaryContext = TC_UI;                 break;
+        case MapSurfaceContext: primaryContext = TC_MAPSURFACE_DIFFUSE; break;
+        case SpriteContext:     primaryContext = TC_SPRITE_DIFFUSE;     break;
+        case ModelSkinContext:  primaryContext = TC_MODELSKIN_DIFFUSE;  break;
+        case PSpriteContext:    primaryContext = TC_PSPRITE_DIFFUSE;    break;
+        case SkySphereContext:  primaryContext = TC_SKYSPHERE_DIFFUSE;  break;
+
+        default: DENG2_ASSERT(0);
         }
 
         texturevariantspecification_t &primarySpec =
-            GL_TextureVariantSpecificationForContext(primaryContext, flags, border,
-                                                     tClass, tMap, wrapS, wrapT,
-                                                     minFilter, magFilter, anisoFilter,
-                                                     mipmapped, gammaCorrection, noStretch,
-                                                     toAlpha);
+            GL_TextureVariantSpec(primaryContext, flags, border, tClass, tMap,
+                                  wrapS, wrapT, minFilter, magFilter, anisoFilter,
+                                  mipmapped, gammaCorrection, noStretch, toAlpha);
 
         // Apply the normalized spec to the template.
-        DENG2_ASSERT(mc == MC_UNKNOWN || VALID_MATERIALCONTEXT(mc));
-        tpl.context     = mc;
+        tpl.context     = contextId;
         tpl.primarySpec = &primarySpec;
 
         return *findVariantSpec(tpl, true);
@@ -479,12 +475,12 @@ void Materials::cache(Material &material, MaterialVariantSpec const &spec,
     }
 }
 
-MaterialVariantSpec const &Materials::variantSpecForContext(
-    materialcontext_t mc, int flags, byte border, int tClass, int tMap,
-    int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
+MaterialVariantSpec const &Materials::variantSpec(MaterialContextId contextId,
+    int flags, byte border, int tClass, int tMap, int wrapS, int wrapT,
+    int minFilter, int magFilter, int anisoFilter,
     bool mipmapped, bool gammaCorrection, bool noStretch, bool toAlpha)
 {
-    return d->getVariantSpecForContext(mc, flags, border, tClass, tMap, wrapS, wrapT,
+    return d->getVariantSpecForContext(contextId, flags, border, tClass, tMap, wrapS, wrapT,
                                        minFilter, magFilter, anisoFilter,
                                        mipmapped, gammaCorrection, noStretch, toAlpha);
 }
@@ -604,7 +600,7 @@ static int printIndex2(MaterialScheme *scheme, Path const &like,
     int idx = 0;
     foreach(MaterialManifest *manifest, found)
     {
-        String info = String("%1: ").arg(idx, -numFoundDigits, 10)
+        String info = String(" %1: ").arg(idx, numFoundDigits)
                     + manifest->description(composeUriFlags);
 
         Con_FPrintf(!manifest->hasMaterial()? CPF_LIGHT : CPF_WHITE, "%s\n", info.toUtf8().constData());
@@ -697,51 +693,93 @@ D_CMD(InspectMaterial)
             // Print material synopsis:
             Con_Message(material.synopsis().toUtf8().constData());
 
-#ifdef __CLIENT__
+#if defined(__CLIENT__) && defined(DENG_DEBUG)
+            // Print current animation states?
+            if(material.hasAnimatedLayers() || material.hasAnimatedDecorations())
+            {
+                Con_PrintRuler();
+
+                foreach(MaterialAnimation *animation, material.animations())
+                {
+                    Con_Message("Animation Context #%i:"
+                                "\n  Layer  Stage Tics", int(animation->context()));
+
+                    QString indexKey = QString();
+                    Con_Message(indexKey.toUtf8().constData());
+
+                    // Print layer state info:
+                    int const layerCount = material.layerCount();
+                    for(int i = 0; i < layerCount; ++i)
+                    {
+                        Material::Layer *layer = material.layers()[i];
+                        if(!layer->isAnimated()) continue;
+
+                        MaterialAnimation::LayerState const &l = animation->layer(i);
+                        QString info = QString("  %1 %2 %3")
+                                           .arg(QString("#%1:").arg(i), 6)
+                                           .arg(l.stage, -5)
+                                           .arg(int(l.tics), -3);
+                        Con_Message(info.toUtf8().constData());
+                    }
+
+                    // Print detail layer state info:
+                    if(material.isDetailed() && material.detailLayer().isAnimated())
+                    {
+                        MaterialAnimation::LayerState const &l = animation->detailLayer();
+                        QString info = QString("  %1 %2 %3")
+                                           .arg("Detail:")
+                                           .arg(l.stage, -5)
+                                           .arg(int(l.tics), -3);
+                        Con_Message(info.toUtf8().constData());
+                    }
+
+                    // Print shine layer state info:
+                    if(material.isShiny() && material.shineLayer().isAnimated())
+                    {
+                        MaterialAnimation::LayerState const &l = animation->shineLayer();
+                        QString info = QString("  %1 %2 %3")
+                                           .arg("Shine:")
+                                           .arg(l.stage, -5)
+                                           .arg(int(l.tics), -3);
+                        Con_Message(info.toUtf8().constData());
+                    }
+
+                    // Print decoration state info:
+                    if(material.isDecorated())
+                    {
+                        Con_Message("  Decor  Stage Tics");
+
+                        int const decorationCount = material.decorationCount();
+                        for(int i = 0; i < decorationCount; ++i)
+                        {
+                            Material::Decoration *decor = material.decorations()[i];
+                            if(!decor->isAnimated()) continue;
+
+                            MaterialAnimation::DecorationState const &l = animation->decoration(i);
+                            QString info = QString("  %1 %2 %3")
+                                               .arg(QString("#%1:").arg(i), 6)
+                                               .arg(l.stage, -5)
+                                               .arg(int(l.tics), -3);
+                            Con_Message(info.toUtf8().constData());
+                        }
+                    }
+                }
+            }
+
             if(material.variantCount())
             {
-                // Print variant specs and current animation states:
+                // Print variant specs.
                 Con_PrintRuler();
 
                 int variantIdx = 0;
                 foreach(MaterialVariant *variant, material.variants())
                 {
                     Con_Message("Variant #%i: Spec:%p", variantIdx, de::dintptr(&variant->spec()));
-
-                    // Print layer state info:
-                    int const layerCount = material.layerCount();
-                    for(int i = 0; i < layerCount; ++i)
-                    {
-                        MaterialVariant::LayerState const &l = variant->layer(i);
-                        Con_Message("  Layer #%i: Stage:%i Tics:%i", i, l.stage, int(l.tics));
-                    }
-
-                    // Print detail layer state info:
-                    if(material.isDetailed())
-                    {
-                        MaterialVariant::LayerState const &l = variant->detailLayer();
-                        Con_Message("  DetailLayer #0: Stage:%i Tics:%i", l.stage, int(l.tics));
-                    }
-
-                    // Print shine layer state info:
-                    if(material.isShiny())
-                    {
-                        MaterialVariant::LayerState const &l = variant->shineLayer();
-                        Con_Message("  ShineLayer #0: Stage:%i Tics:%i", l.stage, int(l.tics));
-                    }
-
-                    // Print decoration state info:
-                    int const decorationCount = material.decorationCount();
-                    for(int i = 0; i < decorationCount; ++i)
-                    {
-                        MaterialVariant::DecorationState const &l = variant->decoration(i);
-                        Con_Message("  Decoration #%i: Stage:%i Tics:%i", i, l.stage, int(l.tics));
-                    }
-
                     ++variantIdx;
                 }
             }
-#endif // __CLIENT__
+
+#endif // __CLIENT__ && DENG_DEBUG
         }
         else
         {

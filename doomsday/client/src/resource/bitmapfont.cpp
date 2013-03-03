@@ -507,9 +507,9 @@ int BitmapCompositeFont_CharHeight(font_t *font, unsigned char ch)
 
 static inline texturevariantspecification_t &BitmapCompositeFont_CharSpec()
 {
-    return GL_TextureVariantSpecificationForContext(
-                TC_UI, TSF_MONOCHROME | TSF_UPSCALE_AND_SHARPEN, 0, 0, 0,
-                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, -3, 0, false, false, false, false);
+    return GL_TextureVariantSpec(TC_UI, TSF_MONOCHROME | TSF_UPSCALE_AND_SHARPEN,
+                                 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                 0, -3, 0, false, false, false, false);
 }
 
 void BitmapCompositeFont_Prepare(font_t *font)

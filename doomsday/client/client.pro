@@ -137,6 +137,7 @@ DENG_HEADERS += \
     include/MapElement \
     include/Material \
     include/MaterialArchive \
+    include/MaterialContext \
     include/MaterialManifest \
     include/Materials \
     include/MaterialScheme \
@@ -287,6 +288,7 @@ DENG_HEADERS += \
     include/network/ui_mpi.h \
     include/r_util.h \
     include/render/lumobj.h \
+    include/render/materialcontext.h \
     include/render/r_draw.h \
     include/render/r_main.h \
     include/render/r_lgrid.h \
@@ -604,6 +606,7 @@ SOURCES += \
     src/resource/hq2x.cpp \
     src/resource/image.cpp \
     src/resource/material.cpp \
+    src/resource/materialanimation.cpp \
     src/resource/materialarchive.cpp \
     src/resource/materialmanifest.cpp \
     src/resource/materials.cpp \

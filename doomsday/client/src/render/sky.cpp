@@ -184,10 +184,8 @@ static void configureDefaultSky()
 
 MaterialVariantSpec const &Sky_SphereMaterialSpec(bool masked)
 {
-    return App_Materials().variantSpecForContext(MC_SKYSPHERE,
-                                                  TSF_NO_COMPRESSION | (masked? TSF_ZEROMASK : 0),
-                                                  0, 0, 0, GL_REPEAT, GL_CLAMP_TO_EDGE, 0, -1, -1,
-                                                  false, true, false, false);
+    return App_Materials().variantSpec(SkySphereContext, TSF_NO_COMPRESSION | (masked? TSF_ZEROMASK : 0),
+                                       0, 0, 0, GL_REPEAT, GL_CLAMP_TO_EDGE, 0, -1, -1, false, true, false, false);
 }
 
 static void calculateSkyAmbientColor()

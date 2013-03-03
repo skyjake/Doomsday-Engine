@@ -130,8 +130,9 @@ void R_ShutdownViewWindow(void)
 
 texturevariantspecification_t *Rend_PatchTextureSpec(int flags, int wrapS, int wrapT)
 {
-    return &GL_TextureVariantSpecificationForContext(TC_UI, flags, 0, 0, 0, wrapS, wrapT,
-                                                     0, -3, 0, false, false, false, false);
+    return &GL_TextureVariantSpec(TC_UI, flags, 0, 0, 0,
+                                  wrapS, wrapT, 0, -3, 0,
+                                  false, false, false, false);
 }
 
 void R_DrawPatch(Texture &tex, int x, int y, int w, int h, bool useOffsets)
@@ -177,8 +178,8 @@ void R_DrawPatchTiled(Texture &tex, int x, int y, int w, int h, int wrapS, int w
 
 static MaterialVariantSpec const &bgMaterialSpec()
 {
-    return App_Materials().variantSpecForContext(MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
-                                                 0, -3, 0, false, false, false, false);
+    return App_Materials().variantSpec(UiContext, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
+                                       0, -3, 0, false, false, false, false);
 }
 
 /// @todo Optimize: Do not search for resources (materials, textures) each frame.

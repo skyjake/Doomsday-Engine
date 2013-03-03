@@ -701,8 +701,9 @@ float LO_AttenuationFactor(uint idx, coord_t distance)
 
 texturevariantspecification_t *Rend_LightmapTextureSpec()
 {
-    return &GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_LIGHTMAP,
-             0, 0, 0, 0, GL_CLAMP, GL_CLAMP, 1, -1, -1, false, false, false, true);
+    return &GL_TextureVariantSpec(TC_MAPSURFACE_LIGHTMAP, 0, 0, 0, 0,
+                                  GL_CLAMP, GL_CLAMP, 1, -1, -1,
+                                  false, false, false, true);
 
 }
 

@@ -466,9 +466,8 @@ int RIT_FirstDynlightIterator(dynlight_t const *dyn, void *paramaters)
 
 static inline MaterialVariantSpec const &mapSurfaceMaterialSpec(int wrapS, int wrapT)
 {
-    return App_Materials().variantSpecForContext(MC_MAPSURFACE, 0, 0, 0, 0,
-                                                  wrapS, wrapT, -1, -1, -1,
-                                                  true, true, false, false);
+    return App_Materials().variantSpec(MapSurfaceContext, 0, 0, 0, 0, wrapS, wrapT,
+                                       -1, -1, -1, true, true, false, false);
 }
 
 #ifdef __CLIENT__
@@ -3963,8 +3962,8 @@ static void Rend_RenderBoundingBoxes()
 
 MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec()
 {
-    return App_Materials().variantSpecForContext(MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
-                                                  -1, -1, -1, true, true, false, false);
+    return App_Materials().variantSpec(MapSurfaceContext, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
+                                       -1, -1, -1, true, true, false, false);
 }
 
 #endif // __CLIENT__
