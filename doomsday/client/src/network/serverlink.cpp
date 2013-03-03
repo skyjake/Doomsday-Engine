@@ -293,7 +293,7 @@ bool ServerLink::foundServerInfo(int index, serverinfo_t *info) const
     return true;
 }
 
-bool ServerLink::foundServerInfo(Address const &host, serverinfo_t *info) const
+bool ServerLink::foundServerInfo(de::Address const &host, serverinfo_t *info) const
 {
     Instance::Servers all = d->allFound();
     if(!all.contains(host)) return false;

@@ -113,12 +113,11 @@ boolean Sys_GetDesktopBPP(int* bpp);
  * Command line options (e.g., -xpos) can be used to modify the window
  * configuration.
  *
- * @note  Presently it is not possible to create more than one window.
- *
- * @param type   Type of the window to create.
  * @param title  Text for the window title.
  *
  * @return  Window instance. Caller does not get ownership.
+ *
+ * @deprecated  Windows will be represented by CanvasWindow instances.
  */
 Window* Window_New(const char* title);
 

@@ -669,7 +669,9 @@ SOURCES += \
 OTHER_FILES += \
     data/cphelp.txt \
     include/template.h.template \
-    src/template.c.template
+    src/template.c.template \
+    client-mac.doxy \
+    client-win32.doxy
 
 # Resources ------------------------------------------------------------------
 

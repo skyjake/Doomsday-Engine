@@ -82,6 +82,8 @@ public:
      * The callback is given @c true or @c false as argument, with
      *  - @c true   Focus was gained.
      *  - @c false  Focus was lost.
+     *
+     * @param canvasFocusChanged  Callback function.
      */
     void setFocusFunc(void (*canvasFocusChanged)(Canvas&, bool));
 

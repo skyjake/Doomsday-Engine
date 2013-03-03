@@ -212,7 +212,6 @@ public:
      *
      * @param uri           Uri representing a path to the texture in the
      *                      virtual hierarchy.
-     *
      * @param flags         Texture flags property.
      * @param dimensions    Logical dimensions property.
      * @param origin        World origin offset property.

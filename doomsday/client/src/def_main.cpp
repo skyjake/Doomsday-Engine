@@ -656,11 +656,11 @@ int Def_GetTextNumForName(const char* name)
 /**
  * The following escape sequences are un-escaped:
  * <pre>
- *     \n   Newline
- *     \r   Carriage return
- *     \t   Tab
- *     \_   Space
- *     \s   Space
+ *     \\n   Newline
+ *     \\r   Carriage return
+ *     \\t   Tab
+ *     \\\_   Space
+ *     \\s   Space
  * </pre>
  */
 static void Def_InitTextDef(ddtext_t* txt, char const* str)
