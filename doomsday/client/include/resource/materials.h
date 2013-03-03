@@ -60,34 +60,18 @@ class Materials
     typedef struct MaterialVariantSpec VariantSpec;
 
 public:
-    /**
-     * Defines a set of one or more material manifests.
-     */
-    typedef QSet<Manifest *> ManifestSet;
-    typedef ManifestSet ManifestGroup; // Alias
+    /// The referenced material/manifest was not found. @ingroup errors
+    DENG2_ERROR(NotFoundError);
 
-    /**
-     * Flags determining URI validation logic.
-     *
-     * @see validateUri()
-     */
-    enum UriValidationFlag
-    {
-        /// The scheme component may be empty; signifying "any scheme".
-        AnyScheme = 0x1
-    };
-    Q_DECLARE_FLAGS(UriValidationFlags, UriValidationFlag)
+    /// The specified material id was invalid (out of range). @ingroup errors
+    DENG2_ERROR(UnknownIdError);
 
-    /// System subspace schemes.
-    typedef QMap<String, Scheme *> Schemes;
+    /// An unknown group was referenced. @ingroup errors
+    DENG2_ERROR(UnknownGroupError);
 
-    /// Manifest groups.
-    typedef QList<ManifestGroup *> ManifestGroups;
+    /// An unknown scheme was referenced. @ingroup errors
+    DENG2_ERROR(UnknownSchemeError);
 
-    /// Material instances.
-    typedef QList<Material *> All;
-
-public:
     /// Base class for all URI validation errors. @ingroup errors
     DENG2_ERROR(UriValidationError);
 
@@ -100,18 +84,11 @@ public:
     /// The validation URI specifies an unknown scheme. @ingroup errors
     DENG2_SUB_ERROR(UriValidationError, UriUnknownSchemeError);
 
-
-    /// The referenced material/manifest was not found. @ingroup errors
-    DENG2_ERROR(NotFoundError);
-
-    /// The specified material id was invalid (out of range). @ingroup errors
-    DENG2_ERROR(InvalidMaterialIdError);
-
-    /// An unknown group was referenced. @ingroup errors
-    DENG2_ERROR(UnknownGroupError);
-
-    /// An unknown scheme was referenced. @ingroup errors
-    DENG2_ERROR(UnknownSchemeError);
+    typedef QSet<Manifest *> ManifestSet;
+    typedef ManifestSet ManifestGroup; // Alias
+    typedef QMap<String, Scheme *> Schemes;
+    typedef QList<ManifestGroup *> ManifestGroups;
+    typedef QList<Material *> All;
 
 public:
     /**
@@ -136,17 +113,6 @@ public:
      * Same as size()
      */
     inline uint size() const { return count(); }
-
-    /**
-     * Validate @a uri to determine if it is well-formed and is usable as a
-     * search argument.
-     *
-     * @param uri       Uri to be validated.
-     * @param flags     Validation flags.
-     *
-     * @throws UriValidationError if not valid.
-     */
-    void validateUri(Uri const &uri, UriValidationFlags flags = 0) const;
 
     /**
      * Determines if a manifest exists for a material on @a path.
@@ -333,8 +299,6 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(Materials::UriValidationFlags)
 
 } // namespace de
 

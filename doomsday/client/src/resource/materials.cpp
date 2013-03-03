@@ -272,72 +272,7 @@ MaterialManifest &Materials::toManifest(materialid_t id) const
         DENG_ASSERT(0);
     }
     /// @throw InvalidMaterialIdError The specified material id is invalid.
-    throw InvalidMaterialIdError("Materials::toManifest", QString("Invalid material ID %1, valid range [1..%2)").arg(id).arg(d->manifestCount + 1));
-}
-
-void Materials::validateUri(Uri const &uri, UriValidationFlags flags) const
-{
-    if(uri.isEmpty())
-    {
-        /// @throw UriMissingPathError The URI is missing the required path component.
-        throw UriMissingPathError("Materials::validateUri", "Missing path in URI \"" + uri.asText() + "\"");
-    }
-
-    if(uri.scheme().isEmpty())
-    {
-        if(!flags.testFlag(AnyScheme))
-        {
-            /// @throw UriMissingSchemeError The URI is missing the required scheme component.
-            throw UriMissingSchemeError("Materials::validateUri", "Missing scheme in URI \"" + uri.asText() + "\"");
-        }
-    }
-    else if(!knownScheme(uri.scheme()))
-    {
-        /// @throw UriUnknownSchemeError The URI specifies an unknown scheme.
-        throw UriUnknownSchemeError("Materials::validateUri", "Unknown scheme in URI \"" + uri.asText() + "\"");
-    }
-}
-
-MaterialManifest &Materials::find(Uri const &uri) const
-{
-    LOG_AS("Materials::find");
-
-    try
-    {
-        validateUri(uri, AnyScheme);
-
-        // Does the user want a manifest in a specific scheme?
-        if(!uri.scheme().isEmpty())
-        {
-            try
-            {
-                return scheme(uri.scheme()).find(uri.path());
-            }
-            catch(Scheme::NotFoundError const &)
-            {} // Ignore, we'll throw our own...
-        }
-        else
-        {
-            // No, check each scheme in priority order.
-            foreach(Scheme *scheme, d->schemeCreationOrder)
-            {
-                try
-                {
-                    return scheme->find(uri.path());
-                }
-                catch(Scheme::NotFoundError const &)
-                {} // Ignore, we'll throw our own...
-            }
-        }
-    }
-    catch(UriValidationError const &er)
-    {
-        /// @throw NotFoundError Failed to locate a matching manifest.
-        throw NotFoundError("Materials::find", er.asText());
-    }
-
-    /// @throw NotFoundError Failed to locate a matching manifest.
-    throw NotFoundError("Materials::find", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
+    throw UnknownIdError("Materials::toManifest", QString("Invalid material ID %1, valid range [1..%2)").arg(id).arg(d->manifestCount + 1));
 }
 
 bool Materials::has(Uri const &path) const
@@ -352,36 +287,80 @@ bool Materials::has(Uri const &path) const
     return false;
 }
 
-MaterialManifest &Materials::declare(de::Uri const &uri)
+MaterialManifest &Materials::find(Uri const &uri) const
+{
+    LOG_AS("Materials::find");
+
+    // Does the user want a manifest in a specific scheme?
+    if(!uri.scheme().isEmpty())
+    {
+        try
+        {
+            return scheme(uri.scheme()).find(uri.path());
+        }
+        catch(Scheme::NotFoundError const &)
+        {} // Ignore, we'll throw our own...
+    }
+    else
+    {
+        // No, check each scheme in priority order.
+        foreach(Scheme *scheme, d->schemeCreationOrder)
+        {
+            try
+            {
+                return scheme->find(uri.path());
+            }
+            catch(Scheme::NotFoundError const &)
+            {} // Ignore, we'll throw our own...
+        }
+    }
+
+    /// @throw NotFoundError Failed to locate a matching manifest.
+    throw NotFoundError("Materials::find", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
+}
+
+MaterialManifest &Materials::declare(Uri const &uri)
 {
     LOG_AS("Materials::newManifest");
 
-    // Have we already created a manifest for this?
-    try
+    // Ensure we have a properly formed URI (but not a URN - this is a resource path).
+    if(uri.isEmpty())
     {
-        // We require a properly formed URI (but not a URN - this is a resource path).
-        validateUri(uri, 0);
+        /// @throw UriMissingPathError The URI is missing the required path component.
+        throw UriMissingPathError("Materials::declare", "Missing path in URI \"" + uri.asText() + "\"");
+    }
+    if(uri.scheme().isEmpty())
+    {
+        /// @throw UriMissingSchemeError The URI is missing the required scheme component.
+        throw UriMissingSchemeError("Materials::declare", "Missing scheme in URI \"" + uri.asText() + "\"");
+    }
+    else if(!knownScheme(uri.scheme()))
+    {
+        /// @throw UriUnknownSchemeError The URI specifies an unknown scheme.
+        throw UriUnknownSchemeError("Materials::declare", "Unknown scheme in URI \"" + uri.asText() + "\"");
+    }
 
+    // Do we already have a manifest for this URI?
+    if(has(uri))
+    {
         return find(uri);
     }
-    catch(NotFoundError const &)
+
+    // Acquire a new unique identifier for the manifest.
+    materialid_t const id = ++d->manifestCount;
+
+    Manifest *manifest = &scheme(uri.scheme()).insertManifest(uri.path(), id);
+
+    // Add the new manifest to the id index/map.
+    if(d->manifestCount > d->manifestIdMapSize)
     {
-        // Acquire a new unique identifier for the manifest.
-        materialid_t const id = ++d->manifestCount;
-
-        Manifest *manifest = &scheme(uri.scheme()).insertManifest(uri.path(), id);
-
-        // Add the new manifest to the id index/map.
-        if(d->manifestCount > d->manifestIdMapSize)
-        {
-            // Allocate more memory.
-            d->manifestIdMapSize += MANIFESTIDMAP_BLOCK_ALLOC;
-            d->manifestIdMap = (Manifest **) M_Realloc(d->manifestIdMap, sizeof *d->manifestIdMap * d->manifestIdMapSize);
-        }
-        d->manifestIdMap[d->manifestCount - 1] = manifest; /* 1-based index */
-
-        return *manifest;
+        // Allocate more memory.
+        d->manifestIdMapSize += MANIFESTIDMAP_BLOCK_ALLOC;
+        d->manifestIdMap = (Manifest **) M_Realloc(d->manifestIdMap, sizeof *d->manifestIdMap * d->manifestIdMapSize);
     }
+    d->manifestIdMap[d->manifestCount - 1] = manifest; /* 1-based index */
+
+    return *manifest;
 }
 
 void Materials::addMaterial(Material &material)
