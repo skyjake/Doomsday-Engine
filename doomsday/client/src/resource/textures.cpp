@@ -57,6 +57,7 @@ DENG2_PIMPL(Textures)
 
     ~Instance()
     {
+        self.clearAllSchemes();
         clearManifests();
     }
 
@@ -86,7 +87,6 @@ Textures::Textures() : d(new Instance(this))
 
 Textures::~Textures()
 {
-    clearAllSchemes();
     delete d;
 }
 
@@ -552,8 +552,8 @@ D_CMD(InspectTexture)
                     de::Vector2f coords;
                     variant->coords(&coords.x, &coords.y);
 
-                    QString info = QString("Variant #%i:"
-                                           "\n  Source:%1 Masked:%2 GLName:%3 Coords:%4")
+                    QString info = QString("Variant #%1:"
+                                           "\n  Source:%2 Masked:%3 GLName:%4 Coords:%5")
                                        .arg(variantIdx)
                                        .arg(variant->sourceDescription())
                                        .arg(variant->isMasked()? "yes":"no")
