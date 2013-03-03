@@ -298,24 +298,21 @@ MaterialManifest &Materials::find(Uri const &uri) const
     // Does the user want a manifest in a specific scheme?
     if(!uri.scheme().isEmpty())
     {
-        try
+        Scheme &specifiedScheme = scheme(uri.scheme());
+        if(specifiedScheme.has(uri.path()))
         {
-            return scheme(uri.scheme()).find(uri.path());
+            return specifiedScheme.find(uri.path());
         }
-        catch(Scheme::NotFoundError const &)
-        {} // Ignore, we'll throw our own...
     }
     else
     {
         // No, check each scheme in priority order.
         foreach(Scheme *scheme, d->schemeCreationOrder)
         {
-            try
+            if(scheme->has(uri.path()))
             {
                 return scheme->find(uri.path());
             }
-            catch(Scheme::NotFoundError const &)
-            {} // Ignore, we'll throw our own...
         }
     }
 

@@ -89,6 +89,12 @@ public:
     Manifest &declare(Path const &path);
 
     /**
+     * Determines if a manifest exists on the given @a path.
+     * @return @c true if a manifest exists; otherwise @a false.
+     */
+    bool has(Path const &path) const;
+
+    /**
      * Search the scheme for a manifest matching @a path.
      *
      * @return  Found manifest.

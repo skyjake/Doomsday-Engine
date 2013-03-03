@@ -35,7 +35,11 @@ DENG2_PIMPL(MaterialScheme)
         name(symbolicName)
     {}
 
-    ~Instance() { DENG_ASSERT(index.isEmpty()); }
+    ~Instance()
+    {
+        self.clear();
+        DENG2_ASSERT(index.isEmpty());
+    }
 };
 
 MaterialScheme::MaterialScheme(String symbolicName)
@@ -44,7 +48,6 @@ MaterialScheme::MaterialScheme(String symbolicName)
 
 MaterialScheme::~MaterialScheme()
 {
-    clear();
     delete d;
 }
 
@@ -81,16 +84,19 @@ MaterialManifest &MaterialScheme::declare(Path const &path)
     return *newManifest;
 }
 
+bool MaterialScheme::has(Path const &path) const
+{
+    return d->index.has(path, Index::NoBranch | Index::MatchFull);
+}
+
 MaterialManifest const &MaterialScheme::find(Path const &path) const
 {
-    try
+    if(has(path))
     {
         return d->index.find(path, Index::NoBranch | Index::MatchFull);
     }
-    catch(Index::NotFoundError const &er)
-    {
-        throw NotFoundError("MaterialScheme::find", er.asText());
-    }
+    /// @throw NotFoundError Failed to locate a matching manifest.
+    throw NotFoundError("MaterialScheme::find", "Failed to locate a manifest matching \"" + path.asText() + "\"");
 }
 
 MaterialManifest &MaterialScheme::find(Path const &path)
