@@ -100,6 +100,20 @@ public:
     }
 
     /**
+     * Returns a textual description of the manifest.
+     *
+     * @return Human-friendly description the manifest.
+     */
+    String description(Uri::ComposeAsTextFlags uriCompositionFlags = Uri::DefaultComposeAsTextFlags) const;
+
+    /**
+     * Returns a textual description of the source of the manifest.
+     *
+     * @return Human-friendly description of the source of the manifest.
+     */
+    String sourceDescription() const;
+
+    /**
      * Returns @c true if a URI to an associated resource is defined.
      */
     bool hasResourceUri() const;

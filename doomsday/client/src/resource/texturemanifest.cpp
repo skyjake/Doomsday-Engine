@@ -85,16 +85,36 @@ Texture *TextureManifest::derive()
     return tex;
 }
 
-Textures::Scheme &TextureManifest::scheme() const
+TextureScheme &TextureManifest::scheme() const
 {
     LOG_AS("TextureManifest::scheme");
     /// @todo Optimize: TextureManifest should contain a link to the owning Textures::Scheme.
-    foreach(Textures::Scheme *scheme, textures().allSchemes())
+    foreach(TextureScheme *scheme, textures().allSchemes())
     {
         if(&scheme->index() == &tree()) return *scheme;
     }
     /// @throw Error Failed to determine the scheme of the manifest (should never happen...).
     throw Error("TextureManifest::scheme", String("Failed to determine scheme for manifest [%1]").arg(de::dintptr(this)));
+}
+
+String TextureManifest::description(de::Uri::ComposeAsTextFlags uriCompositionFlags) const
+{
+    String info = String("%1 %2")
+                      .arg(composeUri().compose(uriCompositionFlags | Uri::DecodePath),
+                           ( uriCompositionFlags.testFlag(Uri::OmitScheme)? -14 : -22 ) )
+                      .arg(sourceDescription(), -7);
+#ifdef __CLIENT__
+    info += String("x%1").arg(!hasTexture()? 0 : texture().variantCount());
+#endif
+    info += " " + (!hasResourceUri()? "N/A" : resourceUri().asText());
+    return info;
+}
+
+String TextureManifest::sourceDescription() const
+{
+    if(!hasTexture()) return "unknown";
+    if(texture().isFlagged(Texture::Custom)) return "add-on";
+    return "game";
 }
 
 bool TextureManifest::hasResourceUri() const

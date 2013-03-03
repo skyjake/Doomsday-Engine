@@ -43,9 +43,6 @@ Texture *Textures::ResourceClass::interpret(TextureManifest &manifest, void *use
 {
     LOG_AS("Textures::ResourceClass::interpret");
     Texture *tex = new Texture(manifest);
-    tex->setFlags(manifest.flags());
-    tex->setDimensions(manifest.logicalDimensions());
-    tex->setOrigin(manifest.origin());
     tex->setUserDataPointer(userData);
     return tex;
 }
@@ -341,74 +338,6 @@ int Textures::iterateDeclared(String nameOfScheme,
     return 0;
 }
 
-#ifdef __CLIENT__
-static void printVariantInfo(TextureVariant &variant)
-{
-    float s, t;
-    variant.coords(&s, &t);
-    Con_Printf("  Source:%s GLName:%u Masked:%s Prepared:%s Uploaded:%s\n  Coords:(s:%g t:%g)\n",
-               TexSource_Name(variant.source()),
-               variant.glName(),
-               variant.isMasked()  ? "yes":"no",
-               variant.isPrepared()? "yes":"no",
-               variant.isUploaded()? "yes":"no", s, t);
-
-    Con_Printf("  Specification: ");
-    GL_PrintTextureVariantSpecification(variant.spec());
-}
-#endif
-
-static void printTextureInfo(Texture &tex)
-{
-    Uri uri = tex.manifest().composeUri();
-    QByteArray path = uri.asText().toUtf8();
-
-#ifdef __CLIENT__
-    Con_Printf("Texture \"%s\" [%p] x%u origin:%s\n",
-               path.constData(), (void *)&tex, tex.variantCount(),
-               tex.isFlagged(Texture::Custom)? "addon" : "game");
-#else
-    Con_Printf("Texture \"%s\" [%p] origin:%s\n",
-               path.constData(), (void *)&tex,
-               tex.isFlagged(Texture::Custom)? "addon" : "game");
-#endif
-
-    if(tex.width() == 0 && tex.height() == 0)
-        Con_Printf("Dimensions: unknown (not yet loaded)\n");
-    else
-        Con_Printf("Dimensions: %d x %d\n", tex.width(), tex.height());
-
-#ifdef __CLIENT__
-    uint variantIdx = 0;
-    foreach(TextureVariant *variant, tex.variants())
-    {
-        Con_Printf("Variant #%i:\n", variantIdx);
-        printVariantInfo(*variant);
-
-        ++variantIdx;
-    }
-#endif
-}
-
-static void printManifestInfo(TextureManifest &manifest,
-    de::Uri::ComposeAsTextFlags uriCompositionFlags = de::Uri::DefaultComposeAsTextFlags)
-{
-    String sourceDescription = !manifest.hasTexture()? "unknown"
-        : manifest.texture().isFlagged(Texture::Custom)? "addon" : "game";
-
-    String info = String("%1 %2")
-                    .arg(manifest.composeUri().compose(uriCompositionFlags | de::Uri::DecodePath),
-                         ( uriCompositionFlags.testFlag(de::Uri::OmitScheme)? -14 : -22 ) )
-                    .arg(sourceDescription, -7);
-#ifdef __CLIENT__
-    info += String("x%1").arg(!manifest.hasTexture()? 0 : manifest.texture().variantCount());
-#endif
-    info += " " + (!manifest.hasResourceUri()? "N/A" : manifest.resourceUri().asText());
-
-    info += "\n";
-    Con_FPrintf(!manifest.hasTexture()? CPF_LIGHT : CPF_WHITE, info.toUtf8().constData());
-}
-
 static bool pathBeginsWithComparator(TextureManifest const &manifest, void *parameters)
 {
     Path const *path = reinterpret_cast<Path*>(parameters);
@@ -489,8 +418,8 @@ static bool compareManifestPathsAssending(TextureManifest const *a, TextureManif
  * @param like      Texture path search term.
  * @param composeUriFlags  Flags governing how URIs should be composed.
  */
-static int printTextures2(TextureScheme *scheme, Path const &like,
-                          Uri::ComposeAsTextFlags composeUriFlags)
+static int printIndex2(TextureScheme *scheme, Path const &like,
+                       Uri::ComposeAsTextFlags composeUriFlags)
 {
     QList<TextureManifest *> found = collectManifests(scheme, like);
     if(found.isEmpty()) return 0;
@@ -523,14 +452,17 @@ static int printTextures2(TextureScheme *scheme, Path const &like,
     int idx = 0;
     foreach(TextureManifest *manifest, found)
     {
-        Con_Printf(" %*i: ", numFoundDigits, idx++);
-        printManifestInfo(*manifest, composeUriFlags);
+        String info = String(" %1: ").arg(idx, numFoundDigits)
+                    + manifest->description(composeUriFlags);
+
+        Con_FPrintf(!manifest->hasTexture()? CPF_LIGHT : CPF_WHITE, "%s\n", info.toUtf8().constData());
+        idx++;
     }
 
     return found.count();
 }
 
-static void printTextures(de::Uri const &search,
+static void printIndex(de::Uri const &search,
     de::Uri::ComposeAsTextFlags flags = de::Uri::DefaultComposeAsTextFlags)
 {
     Textures &textures = App_Textures();
@@ -540,13 +472,13 @@ static void printTextures(de::Uri const &search,
     // Collate and print results from all schemes?
     if(search.scheme().isEmpty() && !search.path().isEmpty())
     {
-        printTotal = printTextures2(0/*any scheme*/, search.path(), flags & ~de::Uri::OmitScheme);
+        printTotal = printIndex2(0/*any scheme*/, search.path(), flags & ~de::Uri::OmitScheme);
         Con_PrintRuler();
     }
     // Print results within only the one scheme?
     else if(textures.knownScheme(search.scheme()))
     {
-        printTotal = printTextures2(&textures.scheme(search.scheme()), search.path(), flags | de::Uri::OmitScheme);
+        printTotal = printIndex2(&textures.scheme(search.scheme()), search.path(), flags | de::Uri::OmitScheme);
         Con_PrintRuler();
     }
     else
@@ -554,7 +486,7 @@ static void printTextures(de::Uri const &search,
         // Collect and sort results in each scheme separately.
         foreach(TextureScheme *scheme, textures.allSchemes())
         {
-            int numPrinted = printTextures2(scheme, search.path(), flags | de::Uri::OmitScheme);
+            int numPrinted = printIndex2(scheme, search.path(), flags | de::Uri::OmitScheme);
             if(numPrinted)
             {
                 Con_PrintRuler();
@@ -562,7 +494,7 @@ static void printTextures(de::Uri const &search,
             }
         }
     }
-    Con_Printf("Found %i %s.\n", printTotal, printTotal == 1? "Texture" : "Textures");
+    Con_Message("Found %i %s.", printTotal, printTotal == 1? "Texture" : "Textures");
 }
 
 } // namespace de
@@ -580,11 +512,11 @@ D_CMD(ListTextures)
     de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1, &isKnownSchemeCallback);
     if(!search.scheme().isEmpty() && !textures.knownScheme(search.scheme()))
     {
-        Con_Printf("Unknown scheme '%s'.\n", search.schemeCStr());
+        Con_Message("Unknown scheme '%s'.", search.schemeCStr());
         return false;
     }
 
-    de::printTextures(search);
+    de::printIndex(search);
     return true;
 }
 
@@ -596,7 +528,7 @@ D_CMD(InspectTexture)
     de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1);
     if(!search.scheme().isEmpty() && !textures.knownScheme(search.scheme()))
     {
-        Con_Printf("Unknown scheme '%s'.\n", search.schemeCStr());
+        Con_Message("Unknown scheme '%s'.", search.schemeCStr());
         return false;
     }
 
@@ -605,18 +537,50 @@ D_CMD(InspectTexture)
         de::TextureManifest &manifest = textures.find(search);
         if(manifest.hasTexture())
         {
-            de::printTextureInfo(manifest.texture());
+            de::Texture &texture = manifest.texture();
+            Con_Message(texture.description().toUtf8().constData());
+
+#if defined(__CLIENT__) && defined(DENG_DEBUG)
+
+            if(texture.variantCount())
+            {
+                // Print variant specs.
+                Con_PrintRuler();
+
+                int variantIdx = 0;
+                foreach(de::TextureVariant *variant, texture.variants())
+                {
+                    de::Vector2f coords;
+                    variant->coords(&coords.x, &coords.y);
+
+                    QString info = QString("Variant #%i:"
+                                           "\n  Source:%1 Masked:%2 GLName:%3 Coords:%4")
+                                       .arg(variantIdx)
+                                       .arg(variant->sourceDescription())
+                                       .arg(variant->isMasked()? "yes":"no")
+                                       .arg(variant->glName())
+                                       .arg(coords.asText());
+                    Con_Message(info.toUtf8().constData());
+
+                    Con_Printf("  Specification:");
+                    GL_PrintTextureVariantSpecification(variant->spec());
+                    ++variantIdx;
+                }
+            }
+
+#endif // __CLIENT__ && DENG_DEBUG
         }
         else
         {
-            de::printManifestInfo(manifest);
+            de::String description = manifest.description();
+            Con_FPrintf(CPF_LIGHT, "%s\n", description.toUtf8().constData());
         }
         return true;
     }
     catch(de::Textures::NotFoundError const &er)
     {
         QString msg = er.asText() + ".";
-        Con_Printf("%s\n", msg.toUtf8().constData());
+        Con_Message(msg.toUtf8().constData());
     }
     return false;
 }
@@ -634,7 +598,7 @@ D_CMD(PrintTextureStats)
         de::TextureScheme::Index const &index = scheme->index();
 
         uint const count = index.count();
-        Con_Printf("Scheme: %s (%u %s)\n", scheme->name().toUtf8().constData(), count, count == 1? "texture" : "textures");
+        Con_Message("Scheme: %s (%u %s)", scheme->name().toUtf8().constData(), count, count == 1? "texture" : "textures");
         index.debugPrintHashDistribution();
         index.debugPrint();
     }

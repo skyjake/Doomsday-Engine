@@ -639,7 +639,7 @@ D_CMD(ListMaterials)
     de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1, &isKnownSchemeCallback);
     if(!search.scheme().isEmpty() && !materials.knownScheme(search.scheme()))
     {
-        Con_Printf("Unknown scheme '%s'.\n", search.schemeCStr());
+        Con_Message("Unknown scheme '%s'.", search.schemeCStr());
         return false;
     }
 
@@ -655,7 +655,7 @@ D_CMD(InspectMaterial)
     de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1);
     if(!search.scheme().isEmpty() && !materials.knownScheme(search.scheme()))
     {
-        Con_Printf("Unknown scheme '%s'.\n", search.schemeCStr());
+        Con_Message("Unknown scheme '%s'.", search.schemeCStr());
         return false;
     }
 
@@ -770,7 +770,7 @@ D_CMD(InspectMaterial)
     catch(de::Materials::NotFoundError const &er)
     {
         QString msg = er.asText() + ".";
-        Con_Printf("%s\n", msg.toUtf8().constData());
+        Con_Message(msg.toUtf8().constData());
     }
     return false;
 }
@@ -788,7 +788,7 @@ D_CMD(PrintMaterialStats)
         de::MaterialScheme::Index const &index = scheme->index();
 
         uint count = index.count();
-        Con_Printf("Scheme: %s (%u %s)\n", scheme->name().toUtf8().constData(), count, count == 1? "material":"materials");
+        Con_Message("Scheme: %s (%u %s)", scheme->name().toUtf8().constData(), count, count == 1? "material":"materials");
         index.debugPrintHashDistribution();
         index.debugPrint();
     }

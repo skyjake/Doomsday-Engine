@@ -38,8 +38,6 @@ typedef enum {
     TEXS_EXTERNAL                 /// An "external" replacement.
 } TexSource;
 
-char const *TexSource_Name(TexSource source);
-
 namespace de {
 
 class TextureManifest;
@@ -132,6 +130,13 @@ public:
         ~Variant();
 
     public:
+        /**
+         * Returns a textual description of the source of the variant.
+         *
+         * @return Human-friendly description of the source of the variant.
+         */
+        String sourceDescription() const;
+
         /**
          * Retrieve the general case for this variant. Allows for a variant
          * reference to be used in place of a texture (implicit indirection).
@@ -236,6 +241,13 @@ public:
      */
     Texture(TextureManifest &manifest);
     ~Texture();
+
+    /**
+     * Returns a brief textual description/overview of the texture.
+     *
+     * @return Human-friendly description/overview of the texture.
+     */
+    String description() const;
 
     /**
      * Returns the TextureManifest derived to yield the texture.

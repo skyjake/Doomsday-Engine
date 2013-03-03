@@ -171,3 +171,10 @@ void Texture::Variant::setGLName(uint newGLName)
 {
     d->glTexName = newGLName;
 }
+
+String Texture::Variant::sourceDescription() const
+{
+    if(d->texSource == TEXS_ORIGINAL) return "original";
+    if(d->texSource == TEXS_EXTERNAL) return "external";
+    return "none";
+}

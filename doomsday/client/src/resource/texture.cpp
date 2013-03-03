@@ -36,13 +36,6 @@ using namespace de;
 
 typedef QMap<Texture::AnalysisId, void *> Analyses;
 
-char const *TexSource_Name(TexSource source)
-{
-    if(source == TEXS_ORIGINAL) return "original";
-    if(source == TEXS_EXTERNAL) return "external";
-    return "none";
-}
-
 DENG2_PIMPL(Texture)
 {
     /// Manifest derived to yield the texture.
@@ -82,7 +75,11 @@ DENG2_PIMPL(Texture)
 };
 
 Texture::Texture(TextureManifest &manifest) : d(new Instance(this, manifest))
-{}
+{
+    setFlags(manifest.flags());
+    setDimensions(manifest.logicalDimensions());
+    setOrigin(manifest.origin());
+}
 
 Texture::~Texture()
 {
@@ -287,4 +284,20 @@ void Texture::setFlags(Texture::Flags flagsToChange, bool set)
     {
         d->flags &= ~flagsToChange;
     }
+}
+
+String Texture::description() const
+{
+    String str = String("Texture \"%1\"").arg(manifest().composeUri().asText());
+#ifdef DENG_DEBUG
+    str += String(" [%2]").arg(de::dintptr(this));
+#endif
+    str += " Dimensions:"
+        +  (width() == 0 && height() == 0? String("unknown (not yet prepared)")
+                                         : dimensions().asText())
+        +  " Source:" + manifest().sourceDescription();
+#ifdef __CLIENT__
+    str += String(" x%1").arg(variantCount());
+#endif
+    return str;
 }
