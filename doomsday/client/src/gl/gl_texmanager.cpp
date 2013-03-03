@@ -1152,12 +1152,12 @@ void GL_PrintTextureVariantSpecification(texturevariantspecification_t const &ba
     }
 }
 
-texturevariantspecification_t &GL_TextureVariantSpecificationForContext(
+texturevariantspecification_t &GL_TextureVariantSpec(
     texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap,
     int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha)
 {
-    if(!initedOk) Con_Error("GL_TextureVariantSpecificationForContext: GL texture manager not yet initialized.");
+    if(!initedOk) Con_Error("GL_TextureVariantSpec: GL texture manager not yet initialized.");
 
     texturevariantspecification_t *tvs
         = getVariantSpecificationForContext(tc, flags, border, tClass, tMap, wrapS, wrapT,

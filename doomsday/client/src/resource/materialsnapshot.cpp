@@ -256,7 +256,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
      */
     for(int i = 0; i < layers.count(); ++i)
     {
-        MaterialVariant::LayerState const &l = variant->layer(i);
+        MaterialAnimation::LayerState const &l = material->animation(variant->context())->layer(i);
 
         Material::Layer::Stage const *lsCur = layers[i]->stages()[l.stage];
         if(Texture *tex = lsCur->texture)
@@ -292,7 +292,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     // Do we need to prepare detail texture(s)?
     if(!material->isSkyMasked() && material->isDetailed())
     {
-        MaterialVariant::LayerState const &l = variant->detailLayer();
+        MaterialAnimation::LayerState const &l = material->animation(variant->context())->detailLayer();
         Material::DetailLayer::Stage const *lsCur = detailLayer->stages()[l.stage];
 
         float const contrast = de::clamp(0.f, lsCur->strength, 1.f) * detailFactor /*Global strength multiplier*/;
@@ -318,15 +318,15 @@ void MaterialSnapshot::Instance::takeSnapshot()
     // Do we need to prepare a shiny texture (and possibly a mask)?
     if(!material->isSkyMasked() && material->isShiny())
     {
-        MaterialVariant::LayerState const &l = variant->shineLayer();
+        MaterialAnimation::LayerState const &l = material->animation(variant->context())->shineLayer();
         Material::ShineLayer::Stage const *lsCur = shineLayer->stages()[l.stage];
 
         if(Texture *tex = lsCur->texture)
         {
             texturevariantspecification_t &texSpec =
-                GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_REFLECTION,
-                     TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, -1,
-                     false, false, false, false);
+                GL_TextureVariantSpec(TC_MAPSURFACE_REFLECTION, TSF_NO_COMPRESSION,
+                                      0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, -1,
+                                      false, false, false, false);
 
             // Pick the instance matching the specified context.
             prepTextures[MTU_REFLECTION][0] = GL_PrepareTexture(*tex, texSpec);
@@ -337,9 +337,9 @@ void MaterialSnapshot::Instance::takeSnapshot()
         if(Texture *tex = lsCur->maskTexture)
         {
             texturevariantspecification_t &texSpec =
-                GL_TextureVariantSpecificationForContext(
-                     TC_MAPSURFACE_REFLECTIONMASK, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
-                     -1, -1, -1, true, false, false, false);
+                GL_TextureVariantSpec(TC_MAPSURFACE_REFLECTIONMASK, 0,
+                                      0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1,
+                                      true, false, false, false);
 
             // Pick the instance matching the specified context.
             prepTextures[MTU_REFLECTION_MASK][0] = GL_PrepareTexture(*tex, texSpec);
@@ -355,7 +355,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
 
     if(stored.dimensions.x == 0 && stored.dimensions.y == 0) return;
 
-    MaterialVariant::LayerState const &l = variant->layer(0);
+    MaterialAnimation::LayerState const &l = material->animation(variant->context())->layer(0);
     Material::Layer::Stage const *lsCur  = layers[0]->stages()[l.stage];
     Material::Layer::Stage const *lsNext = layers[0]->stages()[(l.stage + 1) % layers[0]->stageCount()];
 
@@ -370,7 +370,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     }
 
     // Setup the primary texture unit.
-    if(Texture::Variant *tex = prepTextures[MTU_PRIMARY][0])
+    if(TextureVariant *tex = prepTextures[MTU_PRIMARY][0])
     {
         stored.textures[MTU_PRIMARY] = tex;
 #ifdef __CLIENT__
@@ -394,7 +394,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
 
 #ifdef __CLIENT__
     // Setup the inter primary texture unit.
-    if(Texture::Variant *tex = prepTextures[MTU_PRIMARY][1])
+    if(TextureVariant *tex = prepTextures[MTU_PRIMARY][1])
     {
         // If fog is active, inter=0 is accepted as well. Otherwise
         // flickering may occur if the rendering passes don't match for
@@ -414,13 +414,13 @@ void MaterialSnapshot::Instance::takeSnapshot()
     if(!material->isSkyMasked() && material->isDetailed())
     {
 #ifdef __CLIENT__
-        MaterialVariant::LayerState const &l = variant->detailLayer();
+        MaterialAnimation::LayerState const &l = material->animation(variant->context())->detailLayer();
         Material::DetailLayer::Stage const *lsCur  = detailLayer->stages()[l.stage];
         Material::DetailLayer::Stage const *lsNext = detailLayer->stages()[(l.stage + 1) % detailLayer->stageCount()];
 #endif
 
         // Setup the detail texture unit.
-        if(Texture::Variant *tex = prepTextures[MTU_DETAIL][0])
+        if(TextureVariant *tex = prepTextures[MTU_DETAIL][0])
         {
             stored.textures[MTU_DETAIL] = tex;
 #ifdef __CLIENT__
@@ -447,7 +447,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
 
 #ifdef __CLIENT__
         // Setup the inter detail texture unit.
-        if(Texture::Variant *tex = prepTextures[MTU_DETAIL][1])
+        if(TextureVariant *tex = prepTextures[MTU_DETAIL][1])
         {
             // If fog is active, inter=0 is accepted as well. Otherwise
             // flickering may occur if the rendering passes don't match for
@@ -468,13 +468,13 @@ void MaterialSnapshot::Instance::takeSnapshot()
     if(!material->isSkyMasked() && material->isShiny())
     {
 #ifdef __CLIENT__
-        MaterialVariant::LayerState const &l = variant->shineLayer();
+        MaterialAnimation::LayerState const &l = material->animation(variant->context())->shineLayer();
         Material::ShineLayer::Stage const *lsCur  = shineLayer->stages()[l.stage];
         Material::ShineLayer::Stage const *lsNext = shineLayer->stages()[(l.stage + 1) % shineLayer->stageCount()];
 #endif
 
         // Setup the shine texture unit.
-        if(Texture::Variant *tex = prepTextures[MTU_REFLECTION][0])
+        if(TextureVariant *tex = prepTextures[MTU_REFLECTION][0])
         {
             stored.textures[MTU_REFLECTION] = tex;
 
@@ -512,7 +512,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
 
         // Setup the shine mask texture unit.
         if(prepTextures[MTU_REFLECTION][0])
-        if(Texture::Variant *tex = prepTextures[MTU_REFLECTION_MASK][0])
+        if(TextureVariant *tex = prepTextures[MTU_REFLECTION_MASK][0])
         {
             stored.textures[MTU_REFLECTION_MASK] = tex;
 #ifdef __CLIENT__
@@ -531,7 +531,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     for(Material::Decorations::const_iterator it = decorations.begin();
         it != decorations.end(); ++it, ++idx)
     {
-        MaterialVariant::DecorationState const &l = variant->decoration(idx);
+        MaterialAnimation::DecorationState const &l = material->animation(variant->context())->decoration(idx);
         MaterialDecoration const *lDef = *it;
         MaterialDecoration::Stage const *lsCur  = lDef->stages()[l.stage];
         MaterialDecoration::Stage const *lsNext = lDef->stages()[(l.stage + 1) % lDef->stageCount()];

@@ -298,6 +298,10 @@ DENG2_PIMPL(Material)
     MaterialManifest &manifest;
 
 #ifdef __CLIENT__
+    /// Set of context animation states.
+    Material::Animations animations;
+    bool animationsAreDirty;
+
     /// Set of use-case/context variant instances.
     Material::Variants variants;
 #endif
@@ -326,6 +330,9 @@ DENG2_PIMPL(Material)
 
     Instance(Public *i, MaterialManifest &_manifest) : Base(i),
         manifest(_manifest),
+#ifdef __CLIENT__
+        animationsAreDirty(true),
+#endif
         envClass(AEC_UNKNOWN),
         flags(0),
         detailLayer(0),
@@ -340,7 +347,46 @@ DENG2_PIMPL(Material)
         self.clearDecorations();
 #endif
         self.clearLayers();
+
+#ifdef __CLIENT__
+        clearAnimations();
+#endif
     }
+
+#ifdef __CLIENT__
+
+    void clearAnimations()
+    {
+        // Context variants will be invalid after this, so clear them.
+        self.clearVariants();
+
+        QMutableMapIterator<MaterialContextId, Animation *> iter(animations);
+        while(iter.hasNext())
+        {
+            Animation *animation = iter.next().value();
+            delete animation;
+            iter.remove();
+        }
+        animationsAreDirty = true;
+    }
+
+    void rebuildAnimations()
+    {
+        if(!animationsAreDirty) return;
+
+        clearAnimations();
+
+        // Create a new animation state for each render (usage) context.
+        /// @todo If the material is not animated; don't create Animations.
+        for(int rc = int(FirstMaterialContextId); rc <= int(LastMaterialContextId); ++rc)
+        {
+            MaterialContextId context = MaterialContextId(rc);
+            animations.insert(context, new Animation(*thisPublic, context));
+        }
+        animationsAreDirty = false;
+    }
+
+#endif // __CLIENT__
 };
 
 Material::Material(MaterialManifest &_manifest)
@@ -357,15 +403,16 @@ MaterialManifest &Material::manifest() const
     return d->manifest;
 }
 
-void Material::ticker(timespan_t time)
+void Material::ticker(timespan_t ticLength)
 {
 #ifdef __CLIENT__
-    foreach(Variant *variant, d->variants)
+    d->rebuildAnimations();
+    foreach(Animation *animation, d->animations)
     {
-        variant->ticker(time);
+        animation->animate(ticLength);
     }
 #else
-    DENG2_UNUSED(time);
+    DENG2_UNUSED(ticLength);
 #endif
 }
 
@@ -462,8 +509,7 @@ void Material::setAudioEnvironment(AudioEnvironmentClass envClass)
 void Material::clearLayers()
 {
 #ifdef __CLIENT__
-    // Context variants will be invalid after this, so clear them.
-    clearVariants();
+    d->animationsAreDirty = true;
 #endif
 
     qDeleteAll(d->layers);
@@ -482,8 +528,7 @@ void Material::clearLayers()
 Material::Layer *Material::newLayer(ded_material_layer_t const *def)
 {
 #ifdef __CLIENT__
-    // Context variants will be invalid after this, so clear them.
-    clearVariants();
+    d->animationsAreDirty = true;
 #endif
 
     Layer *newLayer = def? Layer::fromDef(*def) : new Layer();
@@ -494,8 +539,7 @@ Material::Layer *Material::newLayer(ded_material_layer_t const *def)
 Material::DetailLayer *Material::newDetailLayer(ded_detailtexture_t const *def)
 {
 #ifdef __CLIENT__
-    // Context variants will be invalid after this, so clear them.
-    clearVariants();
+    d->animationsAreDirty = true;
 #endif
 
     DetailLayer *newLayer = def? DetailLayer::fromDef(*def) : new DetailLayer();
@@ -507,8 +551,7 @@ Material::DetailLayer *Material::newDetailLayer(ded_detailtexture_t const *def)
 Material::ShineLayer *Material::newShineLayer(ded_reflection_t const *def)
 {
 #ifdef __CLIENT__
-    // Context variants will be invalid after this, so clear them.
-    clearVariants();
+    d->animationsAreDirty = true;
 #endif
 
     ShineLayer *newLayer = def? ShineLayer::fromDef(*def) : new ShineLayer();
@@ -549,7 +592,9 @@ Material::ShineLayer const &Material::shineLayer() const
 void Material::addDecoration(Material::Decoration &decor)
 {
     if(d->decorations.contains(&decor)) return;
+
     d->decorations.push_back(&decor);
+    d->animationsAreDirty = true;
 }
 
 Material::Decorations const &Material::decorations() const
@@ -559,18 +604,30 @@ Material::Decorations const &Material::decorations() const
 
 void Material::clearDecorations()
 {
+    if(!isDecorated()) return;
+
     qDeleteAll(d->decorations);
     d->decorations.clear();
+    d->animationsAreDirty = true;
+}
+
+Material::Animations const &Material::animations() const
+{
+    d->rebuildAnimations();
+    return d->animations;
 }
 
 Material::Variants const &Material::variants() const
 {
+    // If an animation state rebuild is necessary, the context variants will need
+    // to be rebuilt also.
+    d->rebuildAnimations();
     return d->variants;
 }
 
 Material::Variant *Material::chooseVariant(Material::VariantSpec const &spec, bool canCreate)
 {
-    foreach(Variant *variant, d->variants)
+    foreach(Variant *variant, variants())
     {
         VariantSpec const &cand = variant->spec();
         if(cand.compare(spec))
@@ -772,9 +829,9 @@ String Material::synopsis() const
             {
                 MaterialDecoration::Stage const &sDef = *lDef->stages()[k];
 
-                str += String("\n  #%1: Tics:%i (~%2) Offset:%3 Elevation:%4"
-                              "\n       Color:%5 Radius:%6f HaloRadius:%7"
-                              "\n       LightLevels:%8")
+                str += String("\n  #%1: Tics:%2 (~%3) Offset:%4 Elevation:%5"
+                              "\n      Color:%6 Radius:%7 HaloRadius:%8"
+                              "\n      LightLevels:%9")
                            .arg(k)
                            .arg(sDef.tics)
                            .arg(sDef.variance, 0, 'g', 2)

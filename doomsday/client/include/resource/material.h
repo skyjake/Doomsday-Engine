@@ -25,6 +25,9 @@
 #include "def_data.h"
 #include "audio/s_environ.h"
 #include "map/p_dmu.h" // setargs_t
+#ifdef __CLIENT__
+#  include "MaterialContext"
+#endif
 #include "uri.hh"
 #include <de/Error>
 #include <de/Vector>
@@ -406,20 +409,16 @@ public:
     typedef QList<Decoration *> Decorations;
 
     /**
-     * Context-specialized variant. Encapsulates all context variant values
-     * and logics pertaining to a specialized version of the @em superior
-     * material instance.
-     *
-     * Variant instances are only created by the superior material when asked
-     * to @ref Material::prepare() for render using a context specialization
-     * specification which it cannot fulfill/match.
-     *
-     * @see MaterialVariantSpec
+     * Animation (state).
      */
-    class Variant
+    class Animation
     {
+    private:
+        Animation(Material &material, MaterialContextId context);
+        ~Animation();
+
     public:
-        /// Current state of a material layer animation.
+        /// Current state of a layer animation.
         struct LayerState
         {
             /// Animation stage else @c -1 => layer not in use.
@@ -432,7 +431,7 @@ public:
             float inter;
         };
 
-        /// Current state of a material (light) decoration animation.
+        /// Current state of a (light) decoration animation.
         struct DecorationState
         {
             /// Animation stage else @c -1 => decoration not in use.
@@ -445,6 +444,82 @@ public:
             float inter;
         };
 
+        /**
+         * Returns the logical usage context identifier for the animation.
+         */
+        MaterialContextId context() const;
+
+        /**
+         * Process a system tick event. If not currently paused and still valid;
+         * the material's layers and decorations are animated.
+         *
+         * @param ticLength  Length of the tick in seconds.
+         *
+         * @see isPaused()
+         */
+        void animate(timespan_t ticLength);
+
+        /**
+         * Returns @c true if animation is currently paused (e.g., this state
+         * is for use with a context driven by the game timer (and the client
+         * has paused the game)).
+         */
+        bool isPaused() const;
+
+        /**
+         * Restart the animation, resetting the staged animation point. The
+         * state of all layers and decorations will be rewound to the beginning.
+         */
+        void restart();
+
+        /**
+         * Returns the current state of layer @a layerNum for the animation.
+         */
+        LayerState const &layer(int layerNum) const;
+
+        /**
+         * Returns the current state of the detail layer for the animation.
+         *
+         * @see Material::isDetailed()
+         */
+        LayerState const &detailLayer() const;
+
+        /**
+         * Returns the current state of the shine layer for the animation.
+         *
+         * @see Material::isShiny()
+         */
+        LayerState const &shineLayer() const;
+
+        /**
+         * Returns the current state of (light) decoration @a decorNum for
+         * the animation.
+         */
+        DecorationState const &decoration(int decorNum) const;
+
+        friend class Material;
+        friend struct Material::Instance;
+
+    private:
+        DENG2_PRIVATE(d)
+    };
+
+    /// An animation state for each usage context.
+    typedef QMap<MaterialContextId, Animation *> Animations;
+
+    /**
+     * Context-specialized variant. Encapsulates all context variant values
+     * and logics pertaining to a specialized version of the @em superior
+     * material instance.
+     *
+     * Variant instances are only created by the superior material when asked
+     * to @ref Material::prepare() for render using a context specialization
+     * specification which it cannot fulfill/match.
+     *
+     * @see MaterialVariantSpec
+     */
+    class Variant
+    {
     private:
         /**
          * @param generalCase  Material from which the variant is to be derived.
@@ -452,16 +527,6 @@ public:
          */
         Variant(Material &generalCase, VariantSpec const &spec);
         ~Variant();
-
-        /**
-         * Process a system tick event. If not currently paused and still valid;
-         * the variant material's layers and decorations are animated.
-         *
-         * @param ticLength  Length of the tick in seconds.
-         *
-         * @see isPaused()
-         */
-        void ticker(timespan_t ticLength);
 
     public:
         /**
@@ -481,11 +546,13 @@ public:
         VariantSpec const &spec() const;
 
         /**
-         * Returns @c true if animation of the variant is currently paused
-         * (e.g., the variant is for use with an in-game render context and
-         * the client has paused the game).
+         * Returns the usage context for this variant (from the spec).
+         *
+         * Same as @c spec().context
+         *
+         * @see spec()
          */
-        bool isPaused() const;
+        MaterialContextId context() const;
 
         /**
          * Prepare the context variant for render (if necessary, uploading
@@ -501,45 +568,6 @@ public:
          * @see Material::chooseVariant(), Material::prepare()
          */
         Snapshot const &prepare(bool forceSnapshotUpdate = false);
-
-        /**
-         * Returns the MaterialSnapshot data for the variant.
-         */
-        Snapshot &snapshot() const;
-
-        /**
-         * Reset the staged animation point for the material. The animation
-         * states of all layers and decorations will be rewound to the beginning.
-         */
-        void restartAnimation();
-
-        /**
-         * Returns the current state of the layer animation @a layerNum for
-         * the variant.
-         */
-        LayerState const &layer(int layerNum) const;
-
-        /**
-         * Returns the current state of the detail layer animation for the
-         * variant.
-         *
-         * @see Material::isDetailed()
-         */
-        LayerState const &detailLayer() const;
-
-        /**
-         * Returns the current state of the shine layer animation for the
-         * variant.
-         *
-         * @see Material::isShiny()
-         */
-        LayerState const &shineLayer() const;
-
-        /**
-         * Returns the current state of the (light) decoration animation
-         * @a decorNum for the variant.
-         */
-        DecorationState const &decoration(int decorNum) const;
 
         friend class Material;
         friend struct Material::Instance;
@@ -611,7 +639,7 @@ public:
      *
      * @see isValid()
      */
-    void ticker(timespan_t time);
+    void ticker(timespan_t ticLength);
 
     /// Returns @c true if the material has at least one animated layer.
     bool isAnimated() const;
@@ -644,6 +672,30 @@ public:
 
     /// Returns @c true if one or more of the material's layers are glowing.
     bool hasGlow() const;
+
+#ifdef __CLIENT__
+
+    inline bool Material::hasAnimatedLayers() const
+    {
+        foreach(Layer *layer, layers())
+        {
+            if(layer->isAnimated()) return true;
+        }
+        if(isDetailed() && detailLayer().isAnimated()) return true;
+        if(isShiny() && shineLayer().isAnimated()) return true;
+        return false;
+    }
+
+    inline bool Material::hasAnimatedDecorations() const
+    {
+        foreach(Decoration *decor, decorations())
+        {
+            if(decor->isAnimated()) return true;
+        }
+        return false;
+    }
+
+#endif // __CLIENT__
 
     /**
      * Returns the dimensions of the material in map coordinate space units.
@@ -806,6 +858,20 @@ public:
     Decorations const &decorations() const;
 
     /**
+     * Retrieve the animation state for the specified render @a context.
+     */
+    inline Animation *animation(MaterialContextId context) const
+    {
+        return animations()[context];
+    }
+
+    /**
+     * Provides access to the set of usage context animation states,
+     * for efficient traversal.
+     */
+    Animations const &animations() const;
+
+    /**
      * Returns the number of context variants for the material.
      */
     inline int variantCount() const { return variants().count(); }
@@ -847,7 +913,7 @@ public:
      *
      * @return  Snapshot for the chosen and prepared variant of Material.
      *
-     * @see Materials::variantSpecForContext(), chooseVariant(), Variant::prepare()
+     * @see Materials::variantSpec(), chooseVariant(), Variant::prepare()
      */
     inline Snapshot const &prepare(VariantSpec const &spec, bool forceSnapshotUpdate = false)
     {
@@ -880,6 +946,7 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(Material::Flags)
 
 // Aliases.
 #ifdef __CLIENT__
+typedef Material::Animation MaterialAnimation;
 typedef Material::Decoration MaterialDecoration;
 typedef Material::Variant MaterialVariant;
 #endif

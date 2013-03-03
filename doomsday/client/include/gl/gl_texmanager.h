@@ -197,7 +197,7 @@ int GL_LogicalAnisoLevelForVariantSpec(variantspecification_t const &spec);
  *
  * @return  A rationalized and valid TextureVariantSpecification.
  */
-texturevariantspecification_t &GL_TextureVariantSpecificationForContext(
+texturevariantspecification_t &GL_TextureVariantSpec(
     texturevariantusagecontext_t tc, int flags, byte border, int tClass,
     int tMap, int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha);

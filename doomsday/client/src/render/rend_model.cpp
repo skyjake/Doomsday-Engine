@@ -833,18 +833,16 @@ static int chooseSkin(modeldef_t *mf, int submodel, int id, int selector, int tm
 
 texturevariantspecification_t *Rend_ModelDiffuseTextureSpec(boolean noCompression)
 {
-    return &GL_TextureVariantSpecificationForContext(TC_MODELSKIN_DIFFUSE,
-                                                     (noCompression? TSF_NO_COMPRESSION : 0),
-                                                     0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1,
-                                                     true, true, false, false);
+    return &GL_TextureVariantSpec(TC_MODELSKIN_DIFFUSE, (noCompression? TSF_NO_COMPRESSION : 0),
+                                  0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1,
+                                  true, true, false, false);
 }
 
 texturevariantspecification_t *Rend_ModelShinyTextureSpec()
 {
-    return &GL_TextureVariantSpecificationForContext(TC_MODELSKIN_REFLECTION,
-                                                     TSF_NO_COMPRESSION, 0, 0, 0,
-                                                     GL_REPEAT, GL_REPEAT, 1, -2, -1,
-                                                     false, false, false, false);
+    return &GL_TextureVariantSpec(TC_MODELSKIN_REFLECTION, TSF_NO_COMPRESSION,
+                                  0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1,
+                                  false, false, false, false);
 }
 
 /**
@@ -1137,8 +1135,8 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     {
         // For lighting debug, render all surfaces using the gray texture.
         MaterialVariantSpec const &spec =
-            App_Materials().variantSpecForContext(MC_MODELSKIN, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
-                                                   1, -2, -1, true, true, false, false);
+            App_Materials().variantSpec(ModelSkinContext, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
+                                        1, -2, -1, true, true, false, false);
         MaterialSnapshot const &ms =
             App_Materials().find(de::Uri("System", Path("gray"))).material().prepare(spec);
 

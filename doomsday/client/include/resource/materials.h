@@ -272,9 +272,9 @@ public:
     inline void restartAllAnimations() const
     {
         foreach(Material *material, all())
-        foreach(MaterialVariant *variant, material->variants())
+        foreach(MaterialAnimation *animation, material->animations())
         {
-            variant->restartAnimation();
+            animation->restart();
         }
     }
 
@@ -283,7 +283,7 @@ public:
      * usage context. If incomplete context information is supplied, suitable
      * default values will be chosen in their place.
      *
-     * @param materialContext   Material (usage) context identifier.
+     * @param contextId         Usage context identifier.
      * @param flags             @ref textureVariantSpecificationFlags
      * @param border            Border size in pixels (all edges).
      * @param tClass            Color palette translation class.
@@ -300,8 +300,8 @@ public:
      *
      * @return  Rationalized (and interned) copy of the final specification.
      */
-    VariantSpec const &variantSpecForContext(materialcontext_t materialContext,
-        int flags, byte border, int tClass, int tMap, int wrapS, int wrapT,
+    VariantSpec const &variantSpec(MaterialContextId contextId, int flags,
+        byte border, int tClass, int tMap, int wrapS, int wrapT,
         int minFilter, int magFilter, int anisoFilter,
         bool mipmapped, bool gammaCorrection, bool noStretch, bool toAlpha);
 
