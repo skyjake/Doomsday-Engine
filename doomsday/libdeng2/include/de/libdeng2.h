@@ -284,7 +284,8 @@ namespace de {
  */
 enum ProtocolVersion {
     DENG2_PROTOCOL_1_9_10 = 0,
-    DENG2_PROTOCOL_LATEST = DENG2_PROTOCOL_1_9_10
+    DENG2_PROTOCOL_1_10_0 = 0,
+    DENG2_PROTOCOL_LATEST = DENG2_PROTOCOL_1_10_0
 };
 
 //@{
