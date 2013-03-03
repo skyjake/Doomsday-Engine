@@ -22,7 +22,6 @@
 #ifdef __CLIENT__
 #  include "gl/gl_texmanager.h"
 #endif
-#include "resource/compositetexture.h"
 #include <de/Log>
 #include <de/math.h>
 #include <de/mathutil.h> // for M_NumDigits
