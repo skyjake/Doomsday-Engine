@@ -69,15 +69,6 @@ public:
     void setInitFunc(void (*canvasInitializeFunc)(Canvas&));
 
     /**
-     * Sets a callback function that is responsible for drawing the canvas
-     * contents when it gets painted. Setting a @c NULL callback will cause the
-     * canvas to be filled with black.
-     *
-     * @param canvasDrawFunc  Callback.
-     */
-    //void setDrawFunc(void (*canvasDrawFunc)(Canvas&));
-
-    /**
      * Sets the callback function that is called when the window's focus state changes.
      * The callback is given @c true or @c false as argument, with
      *  - @c true   Focus was gained.
