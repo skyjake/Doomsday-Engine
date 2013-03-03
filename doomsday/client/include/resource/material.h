@@ -30,6 +30,7 @@
 #endif
 #include "uri.hh"
 #include <de/Error>
+#include <de/Observers>
 #include <de/Vector>
 #include <QFlag>
 #include <QList>
@@ -85,6 +86,8 @@ public:
 
     /// The referenced property is not writeable. @ingroup errors
     DENG2_ERROR(WritePropertyError);
+
+    DENG2_DEFINE_AUDIENCE(Deletion, void materialBeingDeleted(Material const &material))
 
     /// @todo Define these values here instead of at API level
     enum Flag

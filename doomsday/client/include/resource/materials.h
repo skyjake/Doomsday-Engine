@@ -52,7 +52,8 @@ namespace de {
  * @ingroup resource
  */
 class Materials : DENG2_OBSERVES(MaterialScheme, ManifestDefined),
-                  DENG2_OBSERVES(MaterialManifest, MaterialDerived)
+                  DENG2_OBSERVES(MaterialManifest, MaterialDerived),
+                  DENG2_OBSERVES(Material, Deletion)
 {
     /// Internal typedefs for brevity/cleanliness.
     typedef class MaterialScheme Scheme;
@@ -290,6 +291,9 @@ protected:
 
     // Observes Manifest MaterialDerived.
     void manifestMaterialDerived(MaterialManifest &manifest, Material &material);
+
+    // Observes Material Deletion.
+    void materialBeingDeleted(Material const &material);
 
 private:
     DENG2_PRIVATE(d)

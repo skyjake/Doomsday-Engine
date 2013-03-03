@@ -344,8 +344,17 @@ void Materials::schemeManifestDefined(MaterialScheme &scheme, MaterialManifest &
 void Materials::manifestMaterialDerived(MaterialManifest &manifest, Material &material)
 {
     DENG2_UNUSED(manifest);
+
     // Include this new material in the scheme-agnostic list of instances.
     d->materials.push_back(&material);
+
+    // We want notification when the material is about to be deleted.
+    material.audienceForDeletion += this;
+}
+
+void Materials::materialBeingDeleted(Material const &material)
+{
+    d->materials.removeOne(const_cast<Material *>(&material));
 }
 
 Materials::All const &Materials::all() const

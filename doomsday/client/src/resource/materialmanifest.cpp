@@ -143,6 +143,26 @@ Material &MaterialManifest::material() const
 
 void MaterialManifest::setMaterial(Material *newMaterial)
 {
-    if(d->material == newMaterial) return;
-    d->material = newMaterial;
+    if(d->material != newMaterial)
+    {
+        if(d->material)
+        {
+            // Cancel notifications about the existing material.
+            d->material->audienceForDeletion -= this;
+        }
+
+        d->material = newMaterial;
+
+        if(d->material)
+        {
+            // We want notification when the new material is about to be deleted.
+            d->material->audienceForDeletion += this;
+        }
+    }
+}
+
+void MaterialManifest::materialBeingDeleted(Material const &material)
+{
+    DENG2_UNUSED(material);
+    d->material = 0;
 }

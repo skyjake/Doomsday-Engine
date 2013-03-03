@@ -40,7 +40,8 @@ class Materials;
  * @see MaterialScheme, Material
  * @ingroup resource
  */
-class MaterialManifest : public PathTree::Node
+class MaterialManifest : public PathTree::Node,
+                         DENG2_OBSERVES(Material, Deletion)
 {
 public:
     /// Required material instance is missing. @ingroup errors
@@ -153,6 +154,10 @@ public:
 
     /// Returns a reference to the application's material collection.
     static Materials &materials();
+
+protected:
+    // Observes Material Deletion.
+    void materialBeingDeleted(Material const &material);
 
 private:
     DENG2_PRIVATE(d)

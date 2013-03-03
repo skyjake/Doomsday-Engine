@@ -395,6 +395,8 @@ Material::Material(MaterialManifest &_manifest)
 
 Material::~Material()
 {
+    DENG2_FOR_AUDIENCE(Deletion, i) i->materialBeingDeleted(*this);
+
     delete d;
 }
 
