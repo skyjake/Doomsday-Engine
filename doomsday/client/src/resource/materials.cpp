@@ -327,6 +327,9 @@ void Materials::schemeManifestDefined(MaterialScheme &scheme, MaterialManifest &
     // We want notification when the manifest is derived to produce a material.
     manifest.audienceForMaterialDerived += this;
 
+    // We want notification when the manifest is about to be deleted.
+    manifest.audienceForDeletion += this;
+
     // Acquire a new unique identifier for the manifest.
     materialid_t const id = ++d->manifestCount; // 1-based.
     manifest.setId(id);
@@ -350,6 +353,14 @@ void Materials::manifestMaterialDerived(MaterialManifest &manifest, Material &ma
 
     // We want notification when the material is about to be deleted.
     material.audienceForDeletion += this;
+}
+
+void Materials::manifestBeingDeleted(MaterialManifest const &manifest)
+{
+    foreach(ManifestGroup *group, d->groups)
+    {
+        group->remove(const_cast<Manifest *>(&manifest));
+    }
 }
 
 void Materials::materialBeingDeleted(Material const &material)

@@ -47,6 +47,8 @@ MaterialManifest::MaterialManifest(PathTree::NodeArgs const &args)
 
 MaterialManifest::~MaterialManifest()
 {
+    DENG2_FOR_AUDIENCE(Deletion, i) i->manifestBeingDeleted(*this);
+
     delete d;
 }
 

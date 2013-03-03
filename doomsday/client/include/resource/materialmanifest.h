@@ -47,6 +47,8 @@ public:
     /// Required material instance is missing. @ingroup errors
     DENG2_ERROR(MissingMaterialError);
 
+    DENG2_DEFINE_AUDIENCE(Deletion, void manifestBeingDeleted(MaterialManifest const &manifest))
+
     DENG2_DEFINE_AUDIENCE(MaterialDerived, void manifestMaterialDerived(MaterialManifest &manifest, Material &material))
 
     enum Flag

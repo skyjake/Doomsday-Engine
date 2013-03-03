@@ -53,6 +53,7 @@ namespace de {
  */
 class Materials : DENG2_OBSERVES(MaterialScheme, ManifestDefined),
                   DENG2_OBSERVES(MaterialManifest, MaterialDerived),
+                  DENG2_OBSERVES(MaterialManifest, Deletion),
                   DENG2_OBSERVES(Material, Deletion)
 {
     /// Internal typedefs for brevity/cleanliness.
@@ -165,7 +166,8 @@ public:
     inline int schemeCount() const { return allSchemes().count(); }
 
     /**
-     * Clear all materials in all schemes.
+     * Clear all manifests and materials in all schemes.
+     *
      * @see allSchemes(), Scheme::clear().
      */
     inline void clearAllSchemes()
@@ -287,10 +289,13 @@ public:
 
 protected:
     // Observes Scheme ManifestDefined.
-    void schemeManifestDefined(MaterialScheme &scheme, MaterialManifest &manifest);
+    void schemeManifestDefined(Scheme &scheme, Manifest &manifest);
+
+    // Observes Manifest Deletion.
+    void manifestBeingDeleted(Manifest const &manifest);
 
     // Observes Manifest MaterialDerived.
-    void manifestMaterialDerived(MaterialManifest &manifest, Material &material);
+    void manifestMaterialDerived(Manifest &manifest, Material &material);
 
     // Observes Material Deletion.
     void materialBeingDeleted(Material const &material);
