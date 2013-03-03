@@ -253,7 +253,7 @@ image formats:
 @caption{* = the palette does not have to match the palette of the game @br
 ** = TGAs must be type 2 (uncompressed, unmapped RGB)}
 
-@note{32-bit images are just 24-bit images with an additional 8 bits per pixel
+@notice{32-bit images are just 24-bit images with an additional 8 bits per pixel
 for the alpha channel.}
 
 The recommended format for high-resolution textures is paletted PNG. It is the

@@ -14,10 +14,17 @@ early 2000. Several people have been involved in the project (see
 @ifdef{MACOSX}{
 @section{How to install}
 
-Drag the @strong{Doomsday Engine} application to your @file{/Applications}
-folder.
+The @strong{Doomsday.pkg} installer package contains the @strong{Doomsday
+Engine} and @strong{Doomsday Shell} applications.
 
-When you open the @strong{Doomsday Engine} application, a launcher frontend
+When you open @strong{Doomsday Engine}, a launcher frontend
 will appear. The first time you start the application, a setup wizard will
-guide you through setting up some game profiles. 
+guide you through setting up some game profiles.
+
+@strong{Doomsday Shell} is a tool for running and monitoring your own
+multiplayer servers.
+
+To uninstall Doomsday, just move @strong{Doomsday Engine} and @strong{Doomsday
+Shell} to the Trash.
+
 }
