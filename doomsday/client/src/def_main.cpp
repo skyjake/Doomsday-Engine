@@ -1195,6 +1195,11 @@ static void interpretMaterialDef(ded_material_t const &def)
 
         material.markValid(true);
     }
+    catch(Materials::UnknownSchemeError const &er)
+    {
+        LOG_WARNING(er.asText() + ". Failed declaring material \"%s\", ignoring.")
+            << *reinterpret_cast<de::Uri *>(def.uri);
+    }
     catch(MaterialScheme::InvalidPathError const &er)
     {
         LOG_WARNING(er.asText() + ". Failed declaring material \"%s\", ignoring.")
