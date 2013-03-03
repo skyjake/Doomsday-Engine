@@ -29,6 +29,7 @@
 #endif
 #include "uri.hh"
 #include <de/Error>
+#include <de/Observers>
 #include <QList>
 #include <QMap>
 #include <QSet>
@@ -52,7 +53,7 @@ class MaterialManifest;
  *
  * @ingroup resource
  */
-class Materials
+class Materials : DENG2_OBSERVES(MaterialManifest, MaterialDerived)
 {
     /// Internal typedefs for brevity/cleanliness.
     typedef class MaterialScheme Scheme;
@@ -293,8 +294,8 @@ public:
 
 #endif // __CLIENT__
 
-    /// @todo Refactor away:
-    void addMaterial(Material &material);
+    // Observes Manifest MaterialDerived.
+    void manifestMaterialDerived(MaterialManifest &manifest, Material &material);
 
 private:
     DENG2_PRIVATE(d)

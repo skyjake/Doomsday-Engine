@@ -351,6 +351,9 @@ MaterialManifest &Materials::declare(Uri const &uri)
 
     Manifest *manifest = &scheme(uri.scheme()).insertManifest(uri.path(), id);
 
+    // We want notification when the manifest is derived to produce a material.
+    manifest->audienceForMaterialDerived += this;
+
     // Add the new manifest to the id index/map.
     if(d->manifestCount > d->manifestIdMapSize)
     {
@@ -363,8 +366,10 @@ MaterialManifest &Materials::declare(Uri const &uri)
     return *manifest;
 }
 
-void Materials::addMaterial(Material &material)
+void Materials::manifestMaterialDerived(MaterialManifest &manifest, Material &material)
 {
+    DENG2_UNUSED(manifest);
+    // Include this new material in the scheme-agnostic list of instances.
     d->materials.push_back(&material);
 }
 

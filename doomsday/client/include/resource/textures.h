@@ -164,12 +164,15 @@ public:
 
     /**
      * Clear all textures in all schemes.
+     *
      * @see Scheme::clear().
      */
     inline void clearAllSchemes()
     {
-        Schemes schemes = allSchemes();
-        DENG2_FOR_EACH(Schemes, i, schemes){ (*i)->clear(); }
+        foreach(Scheme *scheme, allSchemes())
+        {
+            scheme->clear();
+        }
     }
 
     /**

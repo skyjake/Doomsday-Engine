@@ -24,6 +24,7 @@
 #include "MaterialScheme"
 #include "uri.hh"
 #include <de/Error>
+#include <de/Observers>
 #include <de/PathTree>
 
 namespace de {
@@ -44,6 +45,8 @@ class MaterialManifest : public PathTree::Node
 public:
     /// Required material instance is missing. @ingroup errors
     DENG2_ERROR(MissingMaterialError);
+
+    DENG2_DEFINE_AUDIENCE(MaterialDerived, void manifestMaterialDerived(MaterialManifest &manifest, Material &material))
 
     enum Flag
     {

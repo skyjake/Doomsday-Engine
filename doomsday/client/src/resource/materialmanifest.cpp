@@ -62,9 +62,8 @@ Material *MaterialManifest::derive()
         // Instantiate and associate the new material with this.
         setMaterial(new Material(*this));
 
-        // Include the material in the app's scheme-agnostic list of instances.
-        /// @todo de::Materials should observe instead.
-        materials().addMaterial(*d->material);
+        // Notify interested parties that a new material was derived from the manifest.
+        DENG2_FOR_AUDIENCE(MaterialDerived, i) i->manifestMaterialDerived(*this, material());
     }
     return &material();
 }
