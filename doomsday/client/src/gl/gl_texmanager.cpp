@@ -2796,7 +2796,7 @@ void GL_ReleaseGLTexturesByTexture(Texture &texture)
 void GL_ReleaseTexturesByScheme(char const *schemeName)
 {
     if(!schemeName) return;
-    PathTreeIterator<Textures::Scheme::Index> iter(App_Textures().scheme(schemeName).index().leafNodes());
+    PathTreeIterator<TextureScheme::Index> iter(App_Textures().scheme(schemeName).index().leafNodes());
     while(iter.hasNext())
     {
         TextureManifest &manifest = iter.next();

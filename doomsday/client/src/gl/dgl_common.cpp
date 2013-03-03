@@ -756,7 +756,7 @@ void DGL_SetPatch(patchid_t id, DGLint wrapS, DGLint wrapT)
                                    DGL_ToGLWrapCap(wrapS), DGL_ToGLWrapCap(wrapT));
         GL_BindTexture(GL_PrepareTexture(tex, texSpec));
     }
-    catch(Textures::Scheme::NotFoundError const &er)
+    catch(TextureScheme::NotFoundError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_WARNING(er.asText() + ", ignoring.");

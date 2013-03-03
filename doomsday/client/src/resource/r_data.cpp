@@ -147,7 +147,7 @@ DENG_EXTERN_C AutoStr *R_ComposePatchPath(patchid_t id)
         TextureManifest &manifest = App_Textures().scheme("Patches").findByUniqueId(id);
         return AutoStr_FromTextStd(manifest.path().toUtf8().constData());
     }
-    catch(Textures::Scheme::NotFoundError const &er)
+    catch(TextureScheme::NotFoundError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_WARNING(er.asText() + ", ignoring.");
@@ -163,7 +163,7 @@ DENG_EXTERN_C uri_s *R_ComposePatchUri(patchid_t id)
         TextureManifest &manifest = App_Textures().scheme("Patches").findByUniqueId(id);
         return reinterpret_cast<uri_s *>(new de::Uri(manifest.composeUri()));
     }
-    catch(Textures::Scheme::NotFoundError const &er)
+    catch(TextureScheme::NotFoundError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_WARNING(er.asText() + ", ignoring.");
@@ -889,10 +889,10 @@ void R_InitSpriteTextures()
     /// @todo Defer until necessary (manifest texture is first referenced).
     App_Textures().iterateDeclared("Sprites", defineTextureWorker);
 
-    LOG_INFO(String("R_InitSpriteTextures: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_INFO(String("R_InitSpriteTextures: Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
-Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri,
+Texture *R_DefineTexture(String schemeName, de::Uri const &resourceUri,
                          Vector2i const &dimensions)
 {
     LOG_AS("R_DefineTexture");
@@ -900,14 +900,14 @@ Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri,
     if(resourceUri.isEmpty()) return 0;
 
     // Have we already created one for this?
-    Textures::Scheme &scheme = App_Textures().scheme(schemeName);
+    TextureScheme &scheme = App_Textures().scheme(schemeName);
     try
     {
         return &scheme.findByResourceUri(resourceUri).texture();
     }
     catch(TextureManifest::MissingTextureError const &)
     {} // Ignore this error.
-    catch(Textures::Scheme::NotFoundError const &)
+    catch(TextureScheme::NotFoundError const &)
     {} // Ignore this error.
 
     int uniqueId = scheme.count() + 1; // 1-based index.
@@ -927,7 +927,7 @@ Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri,
     return deriveTexture(*manifest);
 }
 
-Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri)
+Texture *R_DefineTexture(String schemeName, de::Uri const &resourceUri)
 {
     return R_DefineTexture(schemeName, resourceUri, Vector2i());
 }
