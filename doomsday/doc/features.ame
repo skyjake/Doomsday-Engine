@@ -43,7 +43,6 @@ Networking:
 @item TCP-based client/server @wikilink{networking}{Multiplayer_(Readme)}
 @item Up to @wikiterm{15 player games}
 @item Clients can join games in progress
-@item @wikiterm{Dedicated server} mode for hosting your own game
 }
 
 Other:
