@@ -1,7 +1,7 @@
 /** @file materials.cpp Material Resource Collection.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -112,8 +112,8 @@ DENG2_PIMPL(Materials)
 #endif
 
         self.destroyAllGroups();
-        clearManifests();
         clearMaterials();
+        clearManifests();
 
 #ifdef __CLIENT__
         clearVariantSpecs();
@@ -361,6 +361,10 @@ void Materials::manifestBeingDeleted(MaterialManifest const &manifest)
     {
         group->remove(const_cast<Manifest *>(&manifest));
     }
+    d->manifestIdMap[manifest.id() - 1 /*1-based*/] = 0;
+
+    // There will soon be one fewer manifest in the system.
+    d->manifestCount -= 1;
 }
 
 void Materials::materialBeingDeleted(Material const &material)
