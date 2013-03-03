@@ -56,9 +56,30 @@ namespace de {
  */
 class Textures
 {
-public:
     typedef class TextureManifest Manifest;
     typedef class TextureScheme Scheme;
+
+public:
+    /// The referenced texture was not found. @ingroup errors
+    DENG2_ERROR(NotFoundError);
+
+    /// An unknown scheme was referenced. @ingroup errors
+    DENG2_ERROR(UnknownSchemeError);
+
+    /// Base class for all URI validation errors. @ingroup errors
+    DENG2_ERROR(UriValidationError);
+
+    /// The validation URI is missing the scheme component. @ingroup errors
+    DENG2_SUB_ERROR(UriValidationError, UriMissingSchemeError);
+
+    /// The validation URI is missing the path component. @ingroup errors
+    DENG2_SUB_ERROR(UriValidationError, UriMissingPathError);
+
+    /// The validation URI specifies an unknown scheme. @ingroup errors
+    DENG2_SUB_ERROR(UriValidationError, UriUnknownSchemeError);
+
+    /// The validation URI is a URN. @ingroup errors
+    DENG2_SUB_ERROR(UriValidationError, UriIsUrnError);
 
     /**
      * ResourceClass encapsulates the properties and logics belonging to a logical
@@ -77,45 +98,7 @@ public:
         static Texture *interpret(Manifest &manifest, void *userData = 0);
     };
 
-    /**
-     * Flags determining URI validation logic.
-     *
-     * @see validateUri()
-     */
-    enum UriValidationFlag
-    {
-        /// The scheme of the URI may be of zero-length; signifying "any scheme".
-        AnyScheme  = 0x1,
-
-        /// Do not accept a URN.
-        NotUrn     = 0x2
-    };
-    Q_DECLARE_FLAGS(UriValidationFlags, UriValidationFlag)
-
-    /// Texture-system subspace schemes.
     typedef QMap<String, Scheme *> Schemes;
-
-public:
-    /// Base class for all URI validation errors. @ingroup errors
-    DENG2_ERROR(UriValidationError);
-
-    /// The validation URI is missing the scheme component. @ingroup errors
-    DENG2_SUB_ERROR(UriValidationError, UriMissingSchemeError);
-
-    /// The validation URI is missing the path component. @ingroup errors
-    DENG2_SUB_ERROR(UriValidationError, UriMissingPathError);
-
-    /// The validation URI specifies an unknown scheme. @ingroup errors
-    DENG2_SUB_ERROR(UriValidationError, UriUnknownSchemeError);
-
-    /// The validation URI is a URN. @ingroup errors
-    DENG2_SUB_ERROR(UriValidationError, UriIsUrnError);
-
-    /// The referenced texture was not found. @ingroup errors
-    DENG2_ERROR(NotFoundError);
-
-    /// An unknown scheme was referenced. @ingroup errors
-    DENG2_ERROR(UnknownSchemeError);
 
 public:
     /**
@@ -127,17 +110,6 @@ public:
 
     /// Register the console commands, variables, etc..., of this module.
     static void consoleRegister();
-
-    /**
-     * Validate @a uri to determine if it is well-formed and is usable as a
-     * search argument.
-     *
-     * @param uri       Uri to be validated.
-     * @param flags     Validation flags.
-     *
-     * @throws UriValidationError if not valid.
-     */
-    void validateUri(Uri const &uri, UriValidationFlags flags = 0) const;
 
     /**
      * Determines if a manifest exists for a declared texture on @a path.
@@ -275,8 +247,6 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(Textures::UriValidationFlags)
 
 } // namespace de
 

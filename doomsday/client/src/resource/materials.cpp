@@ -321,7 +321,7 @@ MaterialManifest &Materials::find(Uri const &uri) const
 
 MaterialManifest &Materials::declare(Uri const &uri)
 {
-    LOG_AS("Materials::newManifest");
+    LOG_AS("Materials::declare");
 
     // Ensure we have a properly formed URI (but not a URN - this is a resource path).
     if(uri.isEmpty())
