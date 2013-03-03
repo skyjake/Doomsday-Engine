@@ -36,8 +36,6 @@
 
 namespace de {
 
-class MaterialManifest;
-
 /**
  * Specialized resource collection for a set of materials.
  *
@@ -53,7 +51,8 @@ class MaterialManifest;
  *
  * @ingroup resource
  */
-class Materials : DENG2_OBSERVES(MaterialManifest, MaterialDerived)
+class Materials : DENG2_OBSERVES(MaterialScheme, ManifestDefined),
+                  DENG2_OBSERVES(MaterialManifest, MaterialDerived)
 {
     /// Internal typedefs for brevity/cleanliness.
     typedef class MaterialScheme Scheme;
@@ -72,18 +71,6 @@ public:
 
     /// An unknown scheme was referenced. @ingroup errors
     DENG2_ERROR(UnknownSchemeError);
-
-    /// Base class for all URI validation errors. @ingroup errors
-    DENG2_ERROR(UriValidationError);
-
-    /// The validation URI is missing the scheme component. @ingroup errors
-    DENG2_SUB_ERROR(UriValidationError, UriMissingSchemeError);
-
-    /// The validation URI is missing the path component. @ingroup errors
-    DENG2_SUB_ERROR(UriValidationError, UriMissingPathError);
-
-    /// The validation URI specifies an unknown scheme. @ingroup errors
-    DENG2_SUB_ERROR(UriValidationError, UriUnknownSchemeError);
 
     typedef QSet<Manifest *> ManifestSet;
     typedef ManifestSet ManifestGroup; // Alias
@@ -222,7 +209,10 @@ public:
      *
      * @return  Manifest for this URI.
      */
-    Manifest &declare(Uri const &uri);
+    inline Manifest &declare(Uri const &uri)
+    {
+        return scheme(uri.scheme()).declare(uri.path());
+    }
 
     /**
      * Returns a list of all the unique material instances in the collection,
@@ -293,6 +283,10 @@ public:
     void purgeCacheQueue();
 
 #endif // __CLIENT__
+
+protected:
+    // Observes Scheme ManifestDefined.
+    void schemeManifestDefined(MaterialScheme &scheme, MaterialManifest &manifest);
 
     // Observes Manifest MaterialDerived.
     void manifestMaterialDerived(MaterialManifest &manifest, Material &material);

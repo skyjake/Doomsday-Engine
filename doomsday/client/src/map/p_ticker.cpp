@@ -111,6 +111,8 @@ int P_MobjTicker(thinker_t* th, void* context)
     return false; // Continue iteration.
 }
 
+#ifdef __CLIENT__
+
 /**
  * Process a tic of @a elapsed length, animating all materials.
  * @param elapsed  Length of tic to be processed.
@@ -118,10 +120,13 @@ int P_MobjTicker(thinker_t* th, void* context)
 static void materialsTicker(timespan_t elapsed)
 {
     foreach(Material *material, App_Materials().all())
+    foreach(MaterialAnimation *animation, material->animations())
     {
-        material->ticker(elapsed);
+        animation->animate(elapsed);
     }
 }
+
+#endif // __CLIENT__
 
 /**
  * Doomsday's own play-ticker.
@@ -129,7 +134,10 @@ static void materialsTicker(timespan_t elapsed)
 void P_Ticker(timespan_t elapsed)
 {
     P_ControlTicker(elapsed);
+
+#ifdef __CLIENT__
     materialsTicker(elapsed);
+#endif
 
     if(!theMap || !GameMap_ThinkerListInited(theMap)) return; // Not initialized yet.
 

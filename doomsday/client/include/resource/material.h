@@ -630,20 +630,6 @@ public:
      */
     void markValid(bool yes);
 
-    /**
-     * Process a system tick event for all context variants of the material.
-     * Each if not currently paused is animated independently; layer stages
-     * and (light) decorations are animated and state property values are
-     * updated accordingly.
-     *
-     * @note If the material is not valid no animation will be done.
-     *
-     * @param ticLength  Length of the tick in seconds.
-     *
-     * @see isValid()
-     */
-    void ticker(timespan_t ticLength);
-
     /// Returns @c true if the material has at least one animated layer.
     bool isAnimated() const;
 

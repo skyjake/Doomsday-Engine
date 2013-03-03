@@ -58,11 +58,27 @@ String const &MaterialScheme::name() const
     return d->name;
 }
 
-MaterialManifest &MaterialScheme::insertManifest(Path const &path, materialid_t id)
+MaterialManifest &MaterialScheme::declare(Path const &path)
 {
-    Manifest &manifest = d->index.insert(path);
-    manifest.setId(id);
-    return manifest;
+    LOG_AS("MaterialScheme::declare");
+
+    if(path.isEmpty())
+    {
+        /// @throw InvalidPathError An empty path was specified.
+        throw InvalidPathError("MaterialScheme::declare", "Missing/zero-length path was supplied");
+    }
+
+    int const sizeBefore = d->index.size();
+    Manifest *newManifest = &d->index.insert(path);
+    DENG2_ASSERT(newManifest);
+
+    if(d->index.size() != sizeBefore)
+    {
+        // Notify interested parties that a new manifest was defined in the scheme.
+        DENG2_FOR_AUDIENCE(ManifestDefined, i) i->schemeManifestDefined(*this, *newManifest);
+    }
+
+    return *newManifest;
 }
 
 MaterialManifest const &MaterialScheme::find(Path const &path) const

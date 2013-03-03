@@ -21,6 +21,7 @@
 #define LIBDENG_RESOURCE_MATERIALSCHEME_H
 
 #include "uri.hh"
+#include <de/Observers>
 #include <de/PathTree>
 #include <de/Error>
 
@@ -36,18 +37,22 @@ class MaterialManifest;
  */
 class MaterialScheme
 {
-public:
     typedef MaterialManifest Manifest;
+
+public:
+    /// The requested manifest could not be found in the index. @ingroup errors
+    DENG2_ERROR(NotFoundError);
+
+    /// The specified path was not valid. @ingroup errors
+    DENG2_ERROR(InvalidPathError);
+
+    DENG2_DEFINE_AUDIENCE(ManifestDefined, void schemeManifestDefined(MaterialScheme &scheme, Manifest &manifest))
 
     /// Minimum length of a symbolic name.
     static int const min_name_length = DENG2_URI_MIN_SCHEME_LENGTH;
 
     /// Manifests in the scheme are placed into a tree.
     typedef PathTreeT<Manifest> Index;
-
-public:
-    /// The requested manifest could not be found in the index.
-    DENG2_ERROR(NotFoundError);
 
 public:
     /**
@@ -81,7 +86,7 @@ public:
      * @param path  Virtual path for the resultant manifest.
      * @return  The (possibly newly created) manifest at @a path.
      */
-    Manifest &insertManifest(Path const &path, materialid_t id);
+    Manifest &declare(Path const &path);
 
     /**
      * Search the scheme for a manifest matching @a path.

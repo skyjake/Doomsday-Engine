@@ -242,6 +242,10 @@ MaterialScheme &Materials::createScheme(String name)
     Scheme *newScheme = new Scheme(name);
     d->schemes.insert(name.toLower(), newScheme);
     d->schemeCreationOrder.push_back(newScheme);
+
+    // We want notification when a new manifest is defined in this scheme.
+    newScheme->audienceForManifestDefined += this;
+
     return *newScheme;
 }
 
@@ -319,40 +323,16 @@ MaterialManifest &Materials::find(Uri const &uri) const
     throw NotFoundError("Materials::find", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
 }
 
-MaterialManifest &Materials::declare(Uri const &uri)
+void Materials::schemeManifestDefined(MaterialScheme &scheme, MaterialManifest &manifest)
 {
-    LOG_AS("Materials::declare");
-
-    // Ensure we have a properly formed URI (but not a URN - this is a resource path).
-    if(uri.isEmpty())
-    {
-        /// @throw UriMissingPathError The URI is missing the required path component.
-        throw UriMissingPathError("Materials::declare", "Missing path in URI \"" + uri.asText() + "\"");
-    }
-    if(uri.scheme().isEmpty())
-    {
-        /// @throw UriMissingSchemeError The URI is missing the required scheme component.
-        throw UriMissingSchemeError("Materials::declare", "Missing scheme in URI \"" + uri.asText() + "\"");
-    }
-    else if(!knownScheme(uri.scheme()))
-    {
-        /// @throw UriUnknownSchemeError The URI specifies an unknown scheme.
-        throw UriUnknownSchemeError("Materials::declare", "Unknown scheme in URI \"" + uri.asText() + "\"");
-    }
-
-    // Do we already have a manifest for this URI?
-    if(has(uri))
-    {
-        return find(uri);
-    }
-
-    // Acquire a new unique identifier for the manifest.
-    materialid_t const id = ++d->manifestCount;
-
-    Manifest *manifest = &scheme(uri.scheme()).insertManifest(uri.path(), id);
+    DENG2_UNUSED(scheme);
 
     // We want notification when the manifest is derived to produce a material.
-    manifest->audienceForMaterialDerived += this;
+    manifest.audienceForMaterialDerived += this;
+
+    // Acquire a new unique identifier for the manifest.
+    materialid_t const id = ++d->manifestCount; // 1-based.
+    manifest.setId(id);
 
     // Add the new manifest to the id index/map.
     if(d->manifestCount > d->manifestIdMapSize)
@@ -361,9 +341,7 @@ MaterialManifest &Materials::declare(Uri const &uri)
         d->manifestIdMapSize += MANIFESTIDMAP_BLOCK_ALLOC;
         d->manifestIdMap = (Manifest **) M_Realloc(d->manifestIdMap, sizeof *d->manifestIdMap * d->manifestIdMapSize);
     }
-    d->manifestIdMap[d->manifestCount - 1] = manifest; /* 1-based index */
-
-    return *manifest;
+    d->manifestIdMap[d->manifestCount - 1] = &manifest;
 }
 
 void Materials::manifestMaterialDerived(MaterialManifest &manifest, Material &material)

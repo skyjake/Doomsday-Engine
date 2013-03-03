@@ -403,19 +403,6 @@ MaterialManifest &Material::manifest() const
     return d->manifest;
 }
 
-void Material::ticker(timespan_t ticLength)
-{
-#ifdef __CLIENT__
-    d->rebuildAnimations();
-    foreach(Animation *animation, d->animations)
-    {
-        animation->animate(ticLength);
-    }
-#else
-    DENG2_UNUSED(ticLength);
-#endif
-}
-
 Vector2i const &Material::dimensions() const
 {
     return d->dimensions;
