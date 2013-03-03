@@ -20,20 +20,23 @@
 #include "shellusers.h"
 #include "remoteuser.h"
 #include "server/sv_def.h"
+#include "server/sv_frame.h"
 #include "network/net_main.h"
 #include "network/net_buf.h"
 #include "network/net_event.h"
 #include "network/monitor.h"
 #include "con_main.h"
+#include "dd_loop.h"
 #include "map/gamemap.h"
 #include "map/p_players.h"
 
 #include <de/Address>
 #include <de/Beacon>
-#include <de/ListenSocket>
 #include <de/ByteRefArray>
+#include <de/ListenSocket>
+#include <de/TextApp>
+#include <de/garbage.h>
 #include <de/c_wrapper.h>
-#include <de/LegacyCore>
 
 using namespace de;
 
@@ -272,6 +275,23 @@ void ServerSystem::convertToShellUser(RemoteUser *user)
 
 void ServerSystem::timeChanged(Clock const &clock)
 {
+    if(Sys_IsShuttingDown())
+        return; // Shouldn't run this while shutting down.
+
+    Garbage_Recycle();
+
+    // Adjust loop rate depending on whether players are in game.
+    int i, count = 0;
+    for(i = 1; i < DDMAXPLAYERS; ++i)
+        if(ddPlayers[i].shared.inGame) count++;
+
+    DENG2_TEXT_APP->loop().setRate(count? 35 : 3);
+
+    Loop_RunTics();
+
+    // Update clients at regular intervals.
+    Sv_TransmitFrame();
+
     d->updateBeacon(clock);
 
     /// @todo There's no need to queue packets via net_buf, just handle

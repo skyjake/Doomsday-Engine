@@ -26,14 +26,15 @@ namespace de {
 
 DENG2_PIMPL(TextApp)
 {
-    TimeDelta refreshInterval;
-    bool loopRunning;
+    Loop loop;
 
-    Instance(Public *i)
-        : Base(i),
-          refreshInterval(0),
-          loopRunning(false)
-    {}
+    Instance(Public *i) : Base(i)
+    {
+        loop.audienceForIteration += self;
+
+        // In text-based apps, we can limit the loop frequency.
+        loop.setRate(35);
+    }
 };
 
 TextApp::TextApp(int &argc, char **argv)
@@ -66,16 +67,24 @@ bool TextApp::notify(QObject *receiver, QEvent *event)
 
 int TextApp::execLoop()
 {
-    d->loopRunning = true;
-    /// @todo LegacyCore currently updates clock time for us.
-    //refresh();
-    return QCoreApplication::exec();
+    LOG_MSG("Starting TextApp event loop...");
+
+    d->loop.start();
+    int code = QCoreApplication::exec();
+
+    LOG_MSG("TextApp event loop exited with code %i") << code;
+    return code;
 }
 
 void TextApp::stopLoop(int code)
 {
-    d->loopRunning = false;
+    d->loop.stop();
     return QCoreApplication::exit(code);
+}
+
+Loop &TextApp::loop()
+{
+    return d->loop;
 }
 
 NativePath TextApp::appDataPath() const
@@ -83,16 +92,11 @@ NativePath TextApp::appDataPath() const
     return NativePath(QDir::homePath()) / ".doomsday";
 }
 
-void TextApp::refresh()
+void TextApp::loopIteration()
 {
-    if(!d->loopRunning) return;
-
     // Update the clock time. App listens to this clock and will inform
     // subsystems in the order they've been added in.
     Clock::appClock().setTime(Time());
-
-    // Schedule the next refresh.
-    QTimer::singleShot(de::max(duint64(1), d->refreshInterval.asMilliSeconds()), this, SLOT(refresh()));
 }
 
 } // namespace de

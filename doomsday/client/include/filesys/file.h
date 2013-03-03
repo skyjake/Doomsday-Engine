@@ -100,7 +100,7 @@ public:
      *
      * @return String containing the absolute path.
      *
-     * @deprecated Prefer to use @ref composeUri() instead.
+     * @deprecated Prefer to use composeUri() instead.
      */
     String composePath(QChar delimiter = '/') const {
         return composeUri(delimiter).compose();

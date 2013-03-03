@@ -34,6 +34,17 @@ namespace de {
     de::Guard _guarding_##varName(varName); \
     DENG2_UNUSED(_guarding_##varName);
 
+/**
+ * Locks the target @a targetName until the end of the current scope.
+ *
+ * @param targetName  Target to be guarded.
+ * @param varName     Name of the variable to guard. Must be just a single
+ *                    identifier with no operators or anything else.
+ */
+#define DENG2_GUARD_FOR(targetName, varName) \
+    de::Guard varName(targetName); \
+    DENG2_UNUSED(varName);
+
 class Lockable;
 
 /**

@@ -465,7 +465,7 @@ void BusyVisual_Render(void)
     glPopMatrix();
 
     // The frame is ready to be shown.
-    Window_SwapBuffers(Window_Main());
+    //Window_SwapBuffers(Window_Main());
 }
 
 /**

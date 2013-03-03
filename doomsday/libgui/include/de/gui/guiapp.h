@@ -22,6 +22,7 @@
 #include "libgui.h"
 #include <QApplication>
 #include <de/App>
+#include <de/Loop>
 
 /**
  * Macro for conveniently accessing the de::GuiApp singleton instance.
@@ -38,13 +39,13 @@ namespace de {
  *
  * @ingroup core
  */
-class LIBGUI_PUBLIC GuiApp : public QApplication, public App
+class LIBGUI_PUBLIC GuiApp : public QApplication, public App,
+                             DENG2_OBSERVES(Loop, Iteration)
 {
     Q_OBJECT
 
 public:
     GuiApp(int &argc, char **argv);
-
     ~GuiApp();
 
     bool notify(QObject *receiver, QEvent *event);
@@ -61,15 +62,17 @@ public:
     int execLoop();
     void stopLoop(int code);
 
+    Loop &loop();
+
 protected:
     NativePath appDataPath() const;
+
+    // Observes Loop iteration.
+    void loopIteration();
 
 signals:
     /// Emitted when the display mode has changed.
     void displayModeChanged();
-
-protected slots:
-    void refresh();
 
 private:
     DENG2_PRIVATE(d)

@@ -79,6 +79,10 @@ const char* strcasestr(const char* text, const char* sub);
 #include <strings.h>
 #include <errno.h>
 
+#ifdef __cplusplus
+#  include <cstring>
+#endif
+
 #ifdef __GNUC__
 #  define GCC_VERSION (__GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__)
 #endif

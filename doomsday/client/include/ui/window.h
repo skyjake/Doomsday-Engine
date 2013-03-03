@@ -29,10 +29,7 @@
 
 #include "dd_types.h"
 #include "resource/image.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "canvaswindow.h"
 
 #define WINDOW_MIN_WIDTH        320
 #define WINDOW_MIN_HEIGHT       240
@@ -116,12 +113,11 @@ boolean Sys_GetDesktopBPP(int* bpp);
  * Command line options (e.g., -xpos) can be used to modify the window
  * configuration.
  *
- * @note  Presently it is not possible to create more than one window.
- *
- * @param type   Type of the window to create.
  * @param title  Text for the window title.
  *
  * @return  Window instance. Caller does not get ownership.
+ *
+ * @deprecated  Windows will be represented by CanvasWindow instances.
  */
 Window* Window_New(const char* title);
 
@@ -220,14 +216,6 @@ void Window_Show(Window* wnd, boolean show);
  * the window's attributes remain unchanged.
  */
 boolean Window_ChangeAttributes(Window* wnd, int* attribs);
-
-/**
- * Sets the function who will draw the contents of the window when needed.
- *
- * @param win       Window instance.
- * @param drawFunc  Callback function.
- */
-void Window_SetDrawFunc(Window* win, void (*drawFunc)(void));
 
 /**
  * Request drawing the contents of the window as soon as possible.
@@ -340,17 +328,22 @@ void Window_GLDone(Window* wnd);
 
 void* Window_NativeHandle(const Window* wnd);
 
-#ifdef __cplusplus
-} // extern "C"
-
-// C++ API
-class QWidget;
-
 /**
  * Returns the window's native widget, if one exists.
  */
 QWidget* Window_Widget(Window* wnd);
 
-#endif // __cplusplus
+CanvasWindow *Window_CanvasWindow(Window *wnd);
+
+/**
+ * Utility to call after changing the size of a CanvasWindow. This will update
+ * the Window state.
+ *
+ * @param win  Window instance.
+ *
+ * @deprecated In the future, size management will be done internally in
+ * CanvasWindow/WindowSystem.
+ */
+void Window_UpdateAfterResize(Window *win);
 
 #endif /* LIBDENG_SYS_WINDOW_H */

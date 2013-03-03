@@ -37,10 +37,6 @@
 
 #include "dd_share.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /// @return  @c true if specified thread is the current busy task worker.
 boolean BusyMode_IsWorkerThread(uint threadId);
 
@@ -50,8 +46,6 @@ boolean BusyMode_InWorkerThread(void);
 /// @return  Current busy task, else @c NULL.
 BusyTask* BusyMode_CurrentTask(void);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+void BusyMode_Loop(void);
 
 #endif // LIBDENG_CORE_BUSYMODE_H

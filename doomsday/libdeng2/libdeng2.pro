@@ -77,6 +77,7 @@ HEADERS += \
     include/de/Log \
     include/de/LogBuffer \
     include/de/LogSink \
+    include/de/Loop \
     include/de/MonospaceLogSinkFormatter \
     include/de/Rectangle \
     include/de/System \
@@ -106,6 +107,7 @@ HEADERS += \
     include/de/core/log.h \
     include/de/core/logbuffer.h \
     include/de/core/logsink.h \
+    include/de/core/loop.h \
     include/de/core/monospacelogsinkformatter.h \
     include/de/core/system.h \
     include/de/core/textapp.h \
@@ -133,6 +135,7 @@ SOURCES += \
     src/core/log.cpp \
     src/core/logbuffer.cpp \
     src/core/logsink.cpp \
+    src/core/loop.cpp \
     src/core/monospacelogsinkformatter.cpp \
     src/core/system.cpp \
     src/core/textapp.cpp \

@@ -52,7 +52,7 @@
 /**
  * @defgroup resourceLocationFlags  Resource Location Flags
  *
- * Flags used with @ref FS1::find().
+ * Flags used with de::FS1::find().
  * @ingroup flags
  */
 ///@{
@@ -122,7 +122,7 @@ public:
      * Scheme defines a file system subspace.
      *
      * @todo The symbolic name of the schme and the path mapping template
-     *       (@ref mapPath()) should be defined externally. -ds
+     *       (mapPath()) should be defined externally. -ds
      */
     class Scheme
     {
@@ -526,7 +526,7 @@ public:
      *
      * @throws NotFoundError If the requested file could not be found.
      *
-     * @todo Fold into @ref find() -ds
+     * @todo Fold into find() -ds
      */
     String findPath(Uri const &search, int flags, ResourceClass &rclass);
     String findPath(Uri const &search, int flags);

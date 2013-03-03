@@ -66,14 +66,17 @@ int         DS_Dummy_SFX_Getv(int prop, void* values);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-DENG_EXTERN_C audiodriver_t audiod_dummy = {
+DENG_EXTERN_C audiodriver_t        audiod_dummy;
+DENG_EXTERN_C audiointerface_sfx_t audiod_dummy_sfx;
+
+audiodriver_t audiod_dummy = {
     DS_DummyInit,
     DS_DummyShutdown,
     DS_DummyEvent,
     0
 };
 
-DENG_EXTERN_C audiointerface_sfx_t audiod_dummy_sfx = { {
+audiointerface_sfx_t audiod_dummy_sfx = { {
     DS_Dummy_SFX_Init,
     DS_Dummy_SFX_CreateBuffer,
     DS_Dummy_SFX_DestroyBuffer,

@@ -169,6 +169,7 @@ DENG_HEADERS += \
     include/client/cl_player.h \
     include/client/cl_sound.h \
     include/client/cl_world.h \
+    include/clientapp.h \
     include/color.h \
     include/con_bar.h \
     include/con_bind.h \
@@ -352,6 +353,7 @@ DENG_HEADERS += \
     include/ui/b_main.h \
     include/ui/b_util.h \
     include/ui/busyvisual.h \
+    include/ui/busywidget.h \
     include/ui/canvas.h \
     include/ui/canvaswindow.h \
     include/ui/dd_input.h \
@@ -360,8 +362,10 @@ DENG_HEADERS += \
     include/ui/displaymode_native.h \
     include/ui/fi_main.h \
     include/ui/finaleinterpreter.h \
+    include/ui/guiwidget.h \
     include/ui/joystick.h \
     include/ui/keycode.h \
+    include/ui/legacywidget.h \
     include/ui/mouse_qt.h \
     include/ui/nativeui.h \
     include/ui/p_control.h \
@@ -370,6 +374,7 @@ DENG_HEADERS += \
     include/ui/ui_main.h \
     include/ui/ui_panel.h \
     include/ui/window.h \
+    include/ui/windowsystem.h \
     include/ui/zonedebug.h \
     include/updater.h \
     include/uri.hh \
@@ -468,6 +473,7 @@ SOURCES += \
     src/client/cl_player.cpp \
     src/client/cl_sound.cpp \
     src/client/cl_world.cpp \
+    src/clientapp.cpp \
     src/color.cpp \
     src/con_bar.cpp \
     src/con_config.cpp \
@@ -629,13 +635,16 @@ SOURCES += \
     src/ui/b_main.cpp \
     src/ui/b_util.cpp \
     src/ui/busyvisual.cpp \
+    src/ui/busywidget.cpp \
     src/ui/canvas.cpp \
     src/ui/canvaswindow.cpp \
     src/ui/dd_input.cpp \
     src/ui/displaymode.cpp \
     src/ui/fi_main.cpp \
     src/ui/finaleinterpreter.cpp \
+    src/ui/guiwidget.cpp \
     src/ui/keycode.cpp \
+    src/ui/legacywidget.cpp \
     src/ui/mouse_qt.cpp \
     src/ui/nativeui.cpp \
     src/ui/p_control.cpp \
@@ -644,6 +653,7 @@ SOURCES += \
     src/ui/ui_main.cpp \
     src/ui/ui_panel.cpp \
     src/ui/window.cpp \
+    src/ui/windowsystem.cpp \
     src/ui/zonedebug.cpp \
     src/updater/downloaddialog.cpp \
     src/updater/processcheckdialog.cpp \
@@ -662,7 +672,9 @@ SOURCES += \
 OTHER_FILES += \
     data/cphelp.txt \
     include/template.h.template \
-    src/template.c.template
+    src/template.c.template \
+    client-mac.doxy \
+    client-win32.doxy
 
 # Resources ------------------------------------------------------------------
 

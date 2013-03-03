@@ -656,11 +656,11 @@ int Def_GetTextNumForName(const char* name)
 /**
  * The following escape sequences are un-escaped:
  * <pre>
- *     \n   Newline
- *     \r   Carriage return
- *     \t   Tab
- *     \_   Space
- *     \s   Space
+ *     \\n   Newline
+ *     \\r   Carriage return
+ *     \\t   Tab
+ *     \\\_   Space
+ *     \\s   Space
  * </pre>
  */
 static void Def_InitTextDef(ddtext_t* txt, char const* str)
@@ -975,8 +975,9 @@ static void generateMaterialDefForTexture(TextureManifest &manifest)
 #endif
 
     // The first stage is implicit.
-    ded_material_layer_stage_t *st =
-        &mat->layers[0].stages[DED_AddMaterialLayerStage(&mat->layers[0])];
+    int layerIdx = DED_AddMaterialLayerStage(&mat->layers[0]);
+    ded_material_layer_stage_t *st = &mat->layers[0].stages[layerIdx];
+    DENG_ASSERT(st != 0);
     st->texture = reinterpret_cast<uri_s *>(new de::Uri(texUri));
 
     // Is there an animation for this?
@@ -1016,8 +1017,8 @@ static void generateMaterialDefForTexture(TextureManifest &manifest)
             if(!animFrame->textureManifest) continue;
             TextureManifest &frameManifest = *reinterpret_cast<TextureManifest *>(animFrame->textureManifest);
 
-            ded_material_layer_stage_t *st =
-                &mat->layers[0].stages[DED_AddMaterialLayerStage(&mat->layers[0])];
+            int layerIdx = DED_AddMaterialLayerStage(&mat->layers[0]);
+            ded_material_layer_stage_t *st = &mat->layers[0].stages[layerIdx];
             st->texture = reinterpret_cast<uri_s *>(new de::Uri(frameManifest.composeUrn()));
             st->tics = animFrame->tics + animFrame->randomTics;
             if(animFrame->randomTics)

@@ -29,13 +29,13 @@ Id::Type Id::_generator = 1;
 
 Id::Id() : _id(_generator++)
 {
-    if(_id == NONE) 
+    if(_id == None) 
     {
         ++_id;
     }
 }
 
-Id::Id(String const &text) : _id(NONE)
+Id::Id(String const &text) : _id(None)
 {
     if(text.beginsWith("{") && text.endsWith("}"))
     {
@@ -61,7 +61,12 @@ String Id::asText() const
     return QString("{%1}").arg(_id);
 }
 
-ddouble Id::asNumber() const
+ddouble Id::asDouble() const
+{
+    return _id;
+}
+
+dint64 Id::asInt64() const
 {
     return _id;
 }

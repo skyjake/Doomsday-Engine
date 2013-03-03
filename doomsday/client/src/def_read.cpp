@@ -699,7 +699,7 @@ static boolean DED_CheckCondition(const char* cond, boolean expected)
 
 /**
  * Reads definitions from the given buffer.
- * The definition is being loaded from @sourcefile (DED or WAD).
+ * The definition is being loaded from @a _sourcefile (DED or WAD).
  *
  * @param buffer        The data to be read, must be null-terminated.
  * @param _sourceFile   Just FYI.

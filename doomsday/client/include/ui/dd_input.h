@@ -28,6 +28,7 @@
 
 #include <de/smoother.h>
 #include <de/ddstring.h>
+#include "api_event.h"
 
 #if _DEBUG
 #  include <de/point.h> // For the debug visual.

@@ -6,7 +6,9 @@ PROJECT_NUMBER      = 1.10
 PROJECT_BRIEF       = "Internal documentation (Windows)"
 OUTPUT_DIRECTORY    = ../apidoc/win32/
 
-INPUT               = api include src
+INPUT               = ../api include src
 EXCLUDE             = include/unix include/macx src/unix src/macx
 
-PREDEFINED          = __DOOMSDAY__ __CLIENT__ WIN32 __cplusplus
+PREDEFINED          = __DOOMSDAY__ __CLIENT__ WIN32 __cplusplus \
+                      "DENG2_PIMPL(ClassName)=typedef ClassName Public; struct ClassName::Instance : public de::Private<ClassName>" \
+                      "DENG2_PRIVATE(Var)=struct Instance; Instance *Var;"

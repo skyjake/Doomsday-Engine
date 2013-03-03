@@ -408,10 +408,7 @@ void GL_ProcessDeferredTasks(uint timeOutMilliSeconds)
     deferredtask_t* d;
     uint startTime;
 
-    if(novideo) return;
-
-    if(!inited)
-        Con_Error("GL_ProcessDeferredTasks: Deferred GL task system not initialized.");
+    if(novideo || !inited) return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
