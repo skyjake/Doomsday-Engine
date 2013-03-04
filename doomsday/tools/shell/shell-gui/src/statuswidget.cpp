@@ -104,6 +104,8 @@ void StatusWidget::setMapOutline(shell::MapOutlinePacket const &outline)
 
         d->mapBounds = d->mapBounds.united(QRect(b, QSize(1, 1)));
     }
+
+    update();
 }
 
 void StatusWidget::paintEvent(QPaintEvent *)
