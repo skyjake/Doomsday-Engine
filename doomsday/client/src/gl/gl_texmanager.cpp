@@ -51,11 +51,9 @@
 
 using namespace de;
 
-int monochrome = 0; // desaturate a patch (average colours)
 int mipmapping = 5;
 int filterUI   = 1;
 int texQuality = TEXQ_BEST;
-int upscaleAndSharpenPatches = 0;
 
 enum uploadcontentmethod_t
 {

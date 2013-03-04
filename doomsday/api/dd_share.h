@@ -155,10 +155,8 @@ enum {
     DD_NUMLUMPS,
     DD_CLIENT_PAUSED,
     DD_WEAPON_OFFSET_SCALE_Y, ///< 1000x
-    DD_MONOCHROME_PATCHES, ///< Convert patch image data to monochrome. 1= linear 2= weighted.
     DD_GAME_DATA_FORMAT,
     DD_GAME_DRAW_HUD_HINT, ///< Doomsday advises not to draw the HUD.
-    DD_UPSCALE_AND_SHARPEN_PATCHES,
     DD_SYMBOLIC_ECHO,
     DD_MAX_TEXTURE_UNITS,
     DD_CURRENT_CLIENT_FINALE_ID,

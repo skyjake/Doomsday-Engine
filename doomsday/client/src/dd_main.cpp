@@ -67,7 +67,6 @@
 #include "api_map.h"
 
 extern int renderTextures;
-extern int monochrome;
 
 using namespace de;
 
@@ -2345,11 +2344,6 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {0, 0},
 #endif
     {&weaponOffsetScaleY, &weaponOffsetScaleY},
-#ifdef __CLIENT__
-    {&monochrome, &monochrome},
-#else
-    {0, 0},
-#endif
     {&gameDataFormat, &gameDataFormat},
 #ifdef __CLIENT__
     {&gameDrawHUD, 0},
@@ -2357,11 +2351,9 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {0, 0},
 #endif
 #ifdef __CLIENT__
-    {&upscaleAndSharpenPatches, &upscaleAndSharpenPatches},
     {&symbolicEchoMode, &symbolicEchoMode},
     {&numTexUnits, 0}
 #else
-    {0, 0},
     {0, 0},
     {0, 0},
 #endif
