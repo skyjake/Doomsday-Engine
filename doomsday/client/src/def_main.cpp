@@ -739,26 +739,31 @@ void Def_CountMsg(int count, const char* label)
 /**
  * Read all DD_DEFNS lumps in the primary lump index.
  */
-void Def_ReadLumpDefs(void)
+static void Def_ReadLumpDefs()
 {
+    LOG_AS("Def_ReadLumpDefs");
+
     int numProcessedLumps = 0;
-    DENG2_FOR_EACH_CONST(LumpIndex::Lumps, i, App_FileSystem().nameIndex().lumps())
+
+    LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
+    for(lumpnum_t i = 0; i < lumpIndex.size(); ++i)
     {
-        de::File1 const& lump = **i;
+        de::File1 const& lump = lumpIndex.lump(i);
         if(!lump.name().beginsWith("DD_DEFNS", Qt::CaseInsensitive)) continue;
 
         numProcessedLumps += 1;
 
-        if(!DED_ReadLump(&defs, lump.info().lumpIdx))
+        if(!DED_ReadLump(&defs, i))
         {
             QByteArray path = NativePath(lump.container().composePath()).pretty().toUtf8();
-            Con_Error("DD_ReadLumpDefs: Parse error reading \"%s:DD_DEFNS\".\n", path.constData());
+            Con_Error("Def_ReadLumpDefs: Parse error reading \"%s:DD_DEFNS\".\n", path.constData());
         }
     }
 
     if(verbose && numProcessedLumps > 0)
     {
-        Con_Message("ReadLumpDefs: %i definition lump%s read.", numProcessedLumps, numProcessedLumps != 1 ? "s" : "");
+        LOG_INFO("Processed %i %s.")
+            << numProcessedLumps << (numProcessedLumps != 1 ? "lumps" : "lump");
     }
 }
 
