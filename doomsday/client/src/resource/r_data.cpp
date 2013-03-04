@@ -93,7 +93,7 @@ Texture *R_FindTextureByResourceUri(String schemeName, de::Uri const *resourceUr
         }
         catch(TextureManifest::MissingTextureError const &)
         {} // Ignore this error.
-        catch(Textures::Scheme::NotFoundError const &)
+        catch(TextureScheme::NotFoundError const &)
         {} // Ignore this error.
     }
     return 0;

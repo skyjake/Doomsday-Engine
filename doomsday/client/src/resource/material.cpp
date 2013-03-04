@@ -102,7 +102,7 @@ static Texture *findTextureForDetailLayerStage(ded_detail_stage_t const &def)
     }
     catch(TextureManifest::MissingTextureError const &)
     {} // Ignore this error.
-    catch(Textures::Scheme::NotFoundError const &)
+    catch(TextureScheme::NotFoundError const &)
     {} // Ignore this error.
     return 0;
 }
@@ -164,7 +164,7 @@ static Texture *findTextureForShineLayerStage(ded_shine_stage_t const &def, bool
     }
     catch(TextureManifest::MissingTextureError const &)
     {} // Ignore this error.
-    catch(Textures::Scheme::NotFoundError const &)
+    catch(TextureScheme::NotFoundError const &)
     {} // Ignore this error.
     return 0;
 }

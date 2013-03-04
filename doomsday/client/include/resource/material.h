@@ -667,7 +667,7 @@ public:
 
 #ifdef __CLIENT__
 
-    inline bool Material::hasAnimatedLayers() const
+    inline bool hasAnimatedLayers() const
     {
         foreach(Layer *layer, layers())
         {
@@ -678,7 +678,7 @@ public:
         return false;
     }
 
-    inline bool Material::hasAnimatedDecorations() const
+    inline bool hasAnimatedDecorations() const
     {
         foreach(Decoration *decor, decorations())
         {
