@@ -141,8 +141,6 @@ void GL_InitRefresh();
  */
 void GL_ShutdownRefresh();
 
-void GL_LowRes();
-
 /**
  * Configure the GL state for the specified texture modulation mode.
  *

@@ -690,18 +690,6 @@ void GL_BlendMode(blendmode_t mode)
     }
 }
 
-void GL_LowRes()
-{
-    // Set everything as low as they go.
-    filterSprites = 0;
-    filterUI = 0;
-    texMagMode = 0;
-
-    // And do a texreset so everything is updated.
-    GL_SetTextureParams(GL_NEAREST, true, true);
-    GL_TexReset();
-}
-
 int GL_NumMipmapLevels(int width, int height)
 {
     int numLevels = 0;

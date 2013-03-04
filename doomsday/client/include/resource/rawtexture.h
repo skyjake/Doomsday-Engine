@@ -1,8 +1,7 @@
-/**
- * @file rawtexture.h Raw Texture.
+/** @file rawtexture.h Raw Texture.
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,34 +18,30 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_RAWTEXTURE_H
-#define LIBDENG_RESOURCE_RAWTEXTURE_H
+#ifndef LIBDENG_RESOURCE_RAWTEXTURE
+#define LIBDENG_RESOURCE_RAWTEXTURE
 
 #include "dd_share.h" // For lumpnum_t
-
 #include <de/str.h>
 
 /**
  * A rawtex is a lump raw graphic that has been prepared for render.
  */
-typedef struct rawtex_s {
+struct rawtex_t
+{
     ddstring_t name; ///< Percent-encoded.
     lumpnum_t lumpNum;
     DGLuint tex; /// Name of the associated DGL texture.
     short width, height;
     byte masked;
-    struct rawtex_s *next;
-} rawtex_t;
+    rawtex_t *next;
+};
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void R_InitRawTexs(void);
-void R_UpdateRawTexs(void);
+void R_InitRawTexs();
+void R_UpdateRawTexs();
 
 /**
- * Returns a rawtex_t* for the given lump if one already exists else @c NULL.
+ * Returns a rawtex_t for the given lump if one already exists; otherwise @c 0.
  */
 rawtex_t *R_FindRawTex(lumpnum_t lumpNum);
 
@@ -60,10 +55,6 @@ rawtex_t *R_GetRawTex(lumpnum_t lumpNum);
  * Returns a NULL-terminated array of pointers to all the rawtexs.
  * The array must be freed with Z_Free.
  */
-rawtex_t **R_CollectRawTexs(int* count);
+rawtex_t **R_CollectRawTexs(int *count = 0);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif /* LIBDENG_RESOURCE_RAWTEXTURE_H */
+#endif // LIBDENG_RESOURCE_RAWTEXTURE

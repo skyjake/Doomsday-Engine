@@ -2405,49 +2405,37 @@ boolean GL_OptimalTextureSize(int width, int height, boolean noStretch, boolean 
     return noStretch;
 }
 
-void GL_SetRawTextureParams(int minMode)
+void GL_SetRawTexturesMinFilter(int newMinFilter)
 {
-    rawtex_t** rawTexs, **ptr;
-
-    rawTexs = R_CollectRawTexs(NULL);
-    for(ptr = rawTexs; *ptr; ptr++)
+    rawtex_t **rawTexs = R_CollectRawTexs();
+    for(rawtex_t **ptr = rawTexs; *ptr; ptr++)
     {
-        rawtex_t* r = (*ptr);
+        rawtex_t *r = *ptr;
         if(r->tex) // Is the texture loaded?
         {
             LIBDENG_ASSERT_IN_MAIN_THREAD();
             LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
             glBindTexture(GL_TEXTURE_2D, r->tex);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minMode);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, newMinFilter);
         }
     }
     Z_Free(rawTexs);
 }
 
-void GL_SetTextureParams(int minMode, int gameTex, int uiTex)
-{
-    if(gameTex)
-    {
-        GL_SetAllTexturesMinFilter(minMode);
-    }
-
-    if(uiTex)
-    {
-        GL_SetRawTextureParams(minMode);
-    }
-}
-
 void GL_DoUpdateTexParams()
 {
-    GL_SetTextureParams(glmode[mipmapping], true, true);
+    int newMinFilter = glmode[mipmapping];
+
+    GL_SetAllTexturesMinFilter(newMinFilter);
+    GL_SetRawTexturesMinFilter(newMinFilter);
 }
 
-static int reloadTextures(void* parameters)
+static int reloadTextures(void *parameters)
 {
-    boolean usingBusyMode = *((boolean*) parameters);
+    boolean usingBusyMode = *((boolean *) parameters);
 
-    /// \todo re-upload ALL textures currently in use.
+    /// @todo re-upload ALL textures currently in use.
     GL_LoadSystemTextures();
     Rend_ParticleLoadExtraTextures();
 
@@ -2464,7 +2452,7 @@ void GL_TexReset()
     boolean useBusyMode = !BusyMode_Active();
 
     GL_ReleaseTextures();
-    Con_Printf("All DGL textures deleted.\n");
+    Con_Message("All DGL textures deleted.");
 
     if(useBusyMode)
     {
@@ -2486,7 +2474,7 @@ void GL_DoUpdateTexGamma()
         GL_TexReset();
     }
 
-    Con_Printf("Gamma correction set to %f.\n", texGamma);
+    Con_Message("Gamma correction set to %f.", texGamma);
 }
 
 void GL_DoTexReset()
@@ -2501,15 +2489,13 @@ void GL_DoResetDetailTextures()
 
 void GL_ReleaseTexturesForRawImages()
 {
-    rawtex_t** rawTexs, **ptr;
-
-    rawTexs = R_CollectRawTexs(NULL);
-    for(ptr = rawTexs; *ptr; ptr++)
+    rawtex_t **rawTexs = R_CollectRawTexs();
+    for(rawtex_t **ptr = rawTexs; *ptr; ptr++)
     {
-        rawtex_t* r = (*ptr);
+        rawtex_t *r = (*ptr);
         if(r->tex)
         {
-            glDeleteTextures(1, (const GLuint*) &r->tex);
+            glDeleteTextures(1, (GLuint const *) &r->tex);
             r->tex = 0;
         }
     }
@@ -2923,7 +2909,17 @@ DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height,
 D_CMD(LowRes)
 {
     DENG2_UNUSED3(src, argv, argc);
-    GL_LowRes();
+
+    // Set everything as low as they go.
+    filterSprites = 0;
+    filterUI      = 0;
+    texMagMode    = 0;
+
+    GL_SetAllTexturesMinFilter(GL_NEAREST);
+    GL_SetRawTexturesMinFilter(GL_NEAREST);
+
+    // And do a texreset so everything is updated.
+    GL_TexReset();
     return true;
 }
 
@@ -2956,6 +2952,6 @@ D_CMD(MipMap)
     }
 
     mipmapping = newMipMode;
-    GL_SetTextureParams(glmode[mipmapping], true, false);
+    GL_SetAllTexturesMinFilter(glmode[mipmapping]);
     return true;
 }

@@ -24,8 +24,6 @@
 #include "Textures"
 #include <de/Vector>
 
-//struct font_s;
-
 /**
  * Textures used in the lighting system.
  */
@@ -47,17 +45,6 @@ typedef enum flaretexid_e {
     FXT_BIGFLARE,
     NUM_SYSFLARE_TEXTURES
 } flaretexid_t;
-
-typedef enum uitexid_e {
-    UITEX_MOUSE,
-    UITEX_CORNER,
-    UITEX_FILL,
-    UITEX_SHADE,
-    UITEX_HINT,
-    UITEX_LOGO,
-    UITEX_BACKGROUND,
-    NUM_UITEXTURES
-} uitexid_t;
 
 void R_InitSystemTextures();
 void R_InitCompositeTextures();

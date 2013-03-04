@@ -90,10 +90,9 @@ boolean GL_OptimalTextureSize(int width, int height, boolean noStretch, boolean 
 void GL_SetAllTexturesMinFilter(int minFilter);
 
 /**
- * Updates the textures, flats and sprites (gameTex) or the user
- * interface textures (patches and raw screens).
+ * Change the GL minification filter for all prepared "raw" textures.
  */
-void GL_SetTextureParams(int minMode, int gameTex, int uiTex);
+void GL_SetRawTexturesMinFilter(int minFilter);
 
 /// Release all textures in all schemes.
 void GL_ReleaseTextures();

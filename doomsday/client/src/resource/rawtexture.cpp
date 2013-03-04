@@ -29,35 +29,33 @@
 
 struct RawTexHash
 {
-    rawtex_t* first;
+    rawtex_t *first;
 };
 
 static RawTexHash rawtexhash[RAWTEX_HASH_SIZE];
 
-rawtex_t** R_CollectRawTexs(int* count)
+rawtex_t **R_CollectRawTexs(int *count)
 {
-    rawtex_t** list;
-
     // First count the number of patchtexs.
     int num = 0;
     for(int i = 0; i < RAWTEX_HASH_SIZE; ++i)
+    for(rawtex_t *r = rawtexhash[i].first; r; r = r->next)
     {
-        for(rawtex_t* r = rawtexhash[i].first; r; r = r->next)
-            num++;
+        num++;
     }
 
     // Tell this to the caller.
     if(count) *count = num;
 
     // Allocate the array, plus one for the terminator.
-    list = (rawtex_t**) Z_Malloc(sizeof(**list) * (num + 1), PU_APPSTATIC, NULL);
+    rawtex_t **list = (rawtex_t **) Z_Malloc(sizeof(**list) * (num + 1), PU_APPSTATIC, NULL);
 
     // Collect the pointers.
     num = 0;
     for(int i = 0; i < RAWTEX_HASH_SIZE; ++i)
+    for(rawtex_t *r = rawtexhash[i].first; r; r = r->next)
     {
-        for(rawtex_t* r = rawtexhash[i].first; r; r = r->next)
-            list[num++] = r;
+        list[num++] = r;
     }
 
     // Terminate.
@@ -66,7 +64,7 @@ rawtex_t** R_CollectRawTexs(int* count)
     return list;
 }
 
-rawtex_t* R_FindRawTex(lumpnum_t lumpNum)
+rawtex_t *R_FindRawTex(lumpnum_t lumpNum)
 {
     LOG_AS("R_FindRawTex");
     if(-1 == lumpNum || lumpNum >= F_LumpCount())
@@ -75,7 +73,7 @@ rawtex_t* R_FindRawTex(lumpnum_t lumpNum)
         return 0;
     }
 
-    for(rawtex_t* i = RAWTEX_HASH(lumpNum)->first; i; i = i->next)
+    for(rawtex_t *i = RAWTEX_HASH(lumpNum)->first; i; i = i->next)
     {
         if(i->lumpNum == lumpNum)
             return i;
@@ -111,17 +109,15 @@ rawtex_t *R_GetRawTex(lumpnum_t lumpNum)
 
 void R_InitRawTexs()
 {
-    memset(rawtexhash, 0, sizeof(rawtexhash));
+    std::memset(rawtexhash, 0, sizeof(rawtexhash));
 }
 
 void R_UpdateRawTexs()
 {
     for(int i = 0; i < RAWTEX_HASH_SIZE; ++i)
+    for(rawtex_t *rawTex = rawtexhash[i].first; rawTex; rawTex = rawTex->next)
     {
-        for(rawtex_t *rawTex = rawtexhash[i].first; rawTex; rawTex = rawTex->next)
-        {
-            Str_Free(&rawTex->name);
-        }
+        Str_Free(&rawTex->name);
     }
 
     Z_FreeTags(PU_REFRESHRAW, PU_REFRESHRAW);
