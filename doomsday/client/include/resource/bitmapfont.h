@@ -103,7 +103,7 @@ struct ded_compositefont_s *BitmapCompositeFont_Definition(font_t const *font);
 void BitmapCompositeFont_SetDefinition(font_t *font, struct ded_compositefont_s *def);
 
 patchid_t BitmapCompositeFont_CharPatch(font_t *font, unsigned char ch);
-void BitmapCompositeFont_CharSetPatch(font_t *font, unsigned char ch, char const *patchName);
+void BitmapCompositeFont_CharSetPatch(font_t *font, unsigned char ch, char const *encodedPatchName);
 
 de::Texture::Variant *BitmapCompositeFont_CharTexture(font_t *font, unsigned char ch);
 void BitmapCompositeFont_ReleaseTextures(font_t *font);

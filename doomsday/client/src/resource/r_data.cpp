@@ -172,11 +172,11 @@ DENG_EXTERN_C uri_s *R_ComposePatchUri(patchid_t id)
 }
 
 #undef R_DeclarePatch
-DENG_EXTERN_C patchid_t R_DeclarePatch(char const *name)
+DENG_EXTERN_C patchid_t R_DeclarePatch(char const *encodedName)
 {
     LOG_AS("R_DeclarePatch");
 
-    if(!name || !name[0])
+    if(!encodedName || !encodedName[0])
     {
         LOG_DEBUG("Invalid 'name' argument, ignoring.");
         return 0;
@@ -184,9 +184,7 @@ DENG_EXTERN_C patchid_t R_DeclarePatch(char const *name)
 
     Textures &textures = App_Textures();
 
-    // WAD format allows characters not normally permitted in native paths.
-    // To achieve uniformity we apply a percent encoding to the "raw" names.
-    de::Uri uri("Patches", Path(QString(QByteArray(name, qstrlen(name)).toPercentEncoding())));
+    de::Uri uri("Patches", Path(encodedName));
 
     // Already defined as a patch?
     try

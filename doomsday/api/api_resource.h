@@ -29,7 +29,10 @@ DENG_API_TYPEDEF(R)
 {
     de_api_t api;
 
-    patchid_t (*DeclarePatch)(const char* name);
+    /**
+     * @param encodedName  Percent-encoded name for the patch.
+     */
+    patchid_t (*DeclarePatch)(char const *encodedName);
 
     /**
      * Retrieve extended info for the patch associated with @a id.

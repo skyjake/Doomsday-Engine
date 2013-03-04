@@ -621,12 +621,12 @@ patchid_t BitmapCompositeFont_CharPatch(font_t *font, unsigned char ch)
     return cf->_chars[ch].patch;
 }
 
-void BitmapCompositeFont_CharSetPatch(font_t *font, unsigned char chr, char const *patchName)
+void BitmapCompositeFont_CharSetPatch(font_t *font, unsigned char chr, char const *encodedPatchName)
 {
     DENG_ASSERT(font && font->_type == FT_BITMAPCOMPOSITE);
     bitmapcompositefont_t *cf = (bitmapcompositefont_t *)font;
     bitmapcompositefont_char_t *ch = &cf->_chars[chr];
-    ch->patch = R_DeclarePatch(patchName);
+    ch->patch = R_DeclarePatch(encodedPatchName);
     font->_isDirty = true;
 }
 

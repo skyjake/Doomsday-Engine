@@ -1631,46 +1631,46 @@ DEFFC(XImage)
 
 DEFFC(Patch)
 {
-    fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
-    const char* name = OP_CSTRING(3);
+    fi_object_t *obj = getObject(fi, FI_PIC, OP_CSTRING(0));
+    char const *encodedName = OP_CSTRING(3);
     patchid_t patchId;
 
     AnimatorVector3_Init(obj->pos, OP_FLOAT(1), OP_FLOAT(2), 0);
     FIData_PicClearAnimation(obj);
 
-    patchId = R_DeclarePatch(name);
+    patchId = R_DeclarePatch(encodedName);
     if(patchId != 0)
     {
-        FIData_PicAppendFrame(obj, PFT_PATCH, -1, (void*)&patchId, 0, 0);
+        FIData_PicAppendFrame(obj, PFT_PATCH, -1, (void *)&patchId, 0, 0);
     }
     else
     {
-        Con_Message("FIC_Patch: Warning, missing Patch '%s'.", name);
+        Con_Message("FIC_Patch: Warning, missing Patch '%s'.", encodedName);
     }
 }
 
 DEFFC(SetPatch)
 {
-    fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
-    const char* name = OP_CSTRING(1);
-    fidata_pic_frame_t* f;
+    fi_object_t *obj = getObject(fi, FI_PIC, OP_CSTRING(0));
+    char const *encodedName = OP_CSTRING(1);
+    fidata_pic_frame_t *f;
     patchid_t patchId;
 
-    patchId = R_DeclarePatch(name);
+    patchId = R_DeclarePatch(encodedName);
     if(patchId == 0)
     {
-        Con_Message("FIC_SetPatch: Warning, missing Patch '%s'.", name);
+        Con_Message("FIC_SetPatch: Warning, missing Patch '%s'.", encodedName);
         return;
     }
 
-    if(!((fidata_pic_t*)obj)->numFrames)
+    if(!((fidata_pic_t *)obj)->numFrames)
     {
-        FIData_PicAppendFrame(obj, PFT_PATCH, -1, (void*)&patchId, 0, false);
+        FIData_PicAppendFrame(obj, PFT_PATCH, -1, (void *)&patchId, 0, false);
         return;
     }
 
     // Convert the first frame.
-    f = ((fidata_pic_t*)obj)->frames[0];
+    f = ((fidata_pic_t *)obj)->frames[0];
     f->type = PFT_PATCH;
     f->texRef.patch = patchId;
     f->tics = -1;
@@ -1687,36 +1687,36 @@ DEFFC(ClearAnim)
 
 DEFFC(Anim)
 {
-    fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
-    const char* name = OP_CSTRING(1);
+    fi_object_t *obj = getObject(fi, FI_PIC, OP_CSTRING(0));
+    char const *encodedName = OP_CSTRING(1);
     int tics = FRACSECS_TO_TICKS(OP_FLOAT(2));
     patchid_t patchId;
 
-    patchId = R_DeclarePatch(name);
+    patchId = R_DeclarePatch(encodedName);
     if(patchId == 0)
     {
-        Con_Message("FIC_Anim: Warning, Patch '%s' not found.", name);
+        Con_Message("FIC_Anim: Warning, Patch '%s' not found.", encodedName);
         return;
     }
 
-    FIData_PicAppendFrame(obj, PFT_PATCH, tics, (void*)&patchId, 0, false);
-    ((fidata_pic_t*)obj)->animComplete = false;
+    FIData_PicAppendFrame(obj, PFT_PATCH, tics, (void *)&patchId, 0, false);
+    ((fidata_pic_t *)obj)->animComplete = false;
 }
 
 DEFFC(AnimImage)
 {
-    fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
-    const char* name = OP_CSTRING(1);
+    fi_object_t *obj = getObject(fi, FI_PIC, OP_CSTRING(0));
+    char const *encodedName = OP_CSTRING(1);
     int tics = FRACSECS_TO_TICKS(OP_FLOAT(2));
-    lumpnum_t lumpNum = F_LumpNumForName(name);
-    rawtex_t* rawTex = R_GetRawTex(lumpNum);
-    if(NULL != rawTex)
+    lumpnum_t lumpNum = F_LumpNumForName(encodedName);
+    rawtex_t *rawTex = R_GetRawTex(lumpNum);
+    if(rawTex)
     {
         FIData_PicAppendFrame(obj, PFT_RAW, tics, &rawTex->lumpNum, 0, false);
-        ((fidata_pic_t*)obj)->animComplete = false;
+        ((fidata_pic_t *)obj)->animComplete = false;
         return;
     }
-    Con_Message("FIC_AnimImage: Warning, lump '%s' not found.", name);
+    Con_Message("FIC_AnimImage: Warning, lump '%s' not found.", encodedName);
 }
 
 DEFFC(Repeat)

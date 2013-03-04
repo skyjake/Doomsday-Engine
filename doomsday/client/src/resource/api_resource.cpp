@@ -61,7 +61,7 @@ DENG_EXTERN_C void R_GetColorPaletteRGBf(colorpaletteid_t id, int colorIdx, floa
  * r_data.cpp:
  */
 #undef R_DeclarePatch
-DENG_EXTERN_C patchid_t R_DeclarePatch(char const *name);
+DENG_EXTERN_C patchid_t R_DeclarePatch(char const *encodedName);
 
 #undef R_GetPatchInfo
 DENG_EXTERN_C boolean R_GetPatchInfo(patchid_t id, patchinfo_t *info);
