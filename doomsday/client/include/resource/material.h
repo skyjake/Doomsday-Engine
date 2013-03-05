@@ -854,7 +854,10 @@ public:
      */
     inline Animation *animation(MaterialContextId context) const
     {
-        return animations()[context];
+        Animations const &anims = animations();
+        Animations::const_iterator found = anims.constFind(context);
+        if(found == anims.constEnd()) return 0;
+        return found.value();
     }
 
     /**
