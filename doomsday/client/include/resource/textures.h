@@ -181,7 +181,7 @@ public:
      * @param uniqueId      Unique identifier property.
      * @param resourceUri   Resource URI property.
      *
-     * @return  Manifest for this URI; otherwise @c 0 if @a uri is invalid.
+     * @return  Manifest for this URI.
      */
     inline Manifest &declare(Uri const &uri, de::Texture::Flags flags,
         Vector2i const &dimensions, Vector2i const &origin, int uniqueId,
