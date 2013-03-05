@@ -22,6 +22,8 @@
 #ifndef LIBDENG_TEXTURECONTENT_H
 #define LIBDENG_TEXTURECONTENT_H
 
+#include "api_gl.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -18,7 +18,9 @@
  */
 
 #include "TextureManifest"
-
+#ifdef __CLIENT__
+#  include "gl/gl_texmanager.h"
+#endif
 #include "resource/texturescheme.h"
 
 using namespace de;
@@ -172,8 +174,18 @@ String const &TextureScheme::name() const
     return d->name;
 }
 
-TextureManifest &TextureScheme::declare(Path const &path)
+TextureManifest &TextureScheme::declare(Path const &path,
+    Texture::Flags flags, Vector2i const &dimensions, Vector2i const &origin,
+    int uniqueId, de::Uri const *resourceUri)
 {
+    LOG_AS("TextureScheme::declare");
+
+    if(path.isEmpty())
+    {
+        /// @throw InvalidPathError An empty path was specified.
+        throw InvalidPathError("TextureScheme::declare", "Missing/zero-length path was supplied");
+    }
+
     int const sizeBefore = d->index.size();
     Manifest *newManifest = &d->index.insert(path);
     DENG2_ASSERT(newManifest);
@@ -191,6 +203,41 @@ TextureManifest &TextureScheme::declare(Path const &path)
 
         // Notify interested parties that a new manifest was defined in the scheme.
         DENG2_FOR_AUDIENCE(ManifestDefined, i) i->schemeManifestDefined(*this, *newManifest);
+    }
+
+    /*
+     * (Re)configure the manifest.
+     */
+    bool mustRelease = false;
+
+    newManifest->flags() = flags;
+    newManifest->setOrigin(origin);
+
+    if(newManifest->setLogicalDimensions(dimensions))
+    {
+        mustRelease = true;
+    }
+
+    // We don't care whether these identfiers are truely unique. Our only
+    // responsibility is to release textures when they change.
+    if(newManifest->setUniqueId(uniqueId))
+    {
+        mustRelease = true;
+    }
+
+    if(resourceUri && newManifest->setResourceUri(*resourceUri))
+    {
+        // The mapped resource is being replaced, so release any existing Texture.
+        /// @todo Only release if this Texture is bound to only this binding.
+        mustRelease = true;
+    }
+
+    if(mustRelease && newManifest->hasTexture())
+    {
+#ifdef __CLIENT__
+        /// @todo Update any Materials (and thus Surfaces) which reference this.
+        GL_ReleaseGLTexturesByTexture(newManifest->texture());
+#endif
     }
 
     return *newManifest;

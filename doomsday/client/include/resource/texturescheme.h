@@ -82,12 +82,25 @@ public:
     /**
      * Insert a new manifest at the given @a path into the scheme.
      * If a manifest already exists at this path, the existing manifest is
-     * returned and this is a no-op.
+     * returned.
      *
-     * @param path  Virtual path for the resultant manifest.
+     * If any of the property values (flags, dimensions, etc...) differ from
+     * that which is already defined in the pre-existing manifest, any texture
+     * which is currently associated is released (any GL-textures acquired for
+     * it are deleted).
+     *
+     * @param path          Virtual path for the resultant manifest.
+     * @param flags         Texture flags property.
+     * @param dimensions    Logical dimensions property.
+     * @param origin        World origin offset property.
+     * @param uniqueId      Unique identifier property.
+     * @param resourceUri   Resource URI property.
+     *
      * @return  The (possibly newly created) manifest at @a path.
      */
-    Manifest &declare(Path const &path);
+    Manifest &declare(Path const &path, Texture::Flags flags,
+                      Vector2i const &dimensions, Vector2i const &origin,
+                      int uniqueId, de::Uri const *resourceUri);
 
     /**
      * Determines if a manifest exists on the given @a path.

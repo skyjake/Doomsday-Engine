@@ -237,13 +237,20 @@ DENG_EXTERN_C patchid_t R_DeclarePatch(char const *encodedName)
     int uniqueId        = textures.scheme("Patches").count() + 1; // 1-based index.
     de::Uri resourceUri = composeLumpIndexResourceUrn(lumpNum);
 
-    TextureManifest *manifest = textures.declare(uri, flags, dimensions, origin, uniqueId, &resourceUri);
-    if(!manifest) return 0; // Invalid uri?
+    try
+    {
+        TextureManifest &manifest = textures.declare(uri, flags, dimensions, origin, uniqueId, &resourceUri);
 
-    /// @todo Defer until necessary (manifest texture is first referenced).
-    deriveTexture(*manifest);
+        /// @todo Defer until necessary (manifest texture is first referenced).
+        deriveTexture(manifest);
 
-    return uniqueId;
+        return uniqueId;
+    }
+    catch(TextureScheme::InvalidPathError const &er)
+    {
+        LOG_WARNING(er.asText() + ". Failed declaring texture \"%s\", ignoring.") << uri;
+    }
+    return 0;
 }
 
 #undef R_GetPatchInfo
@@ -644,15 +651,15 @@ static void processCompositeTextureDefs(CompositeTextures &defs)
          */
         if(def.origIndex() == 0) flags |= Texture::NoDraw;
 
-
-        TextureManifest *manifest = App_Textures().declare(uri, flags, def.logicalDimensions(), Vector2i(), def.origIndex());
-        if(manifest)
+        try
         {
+            TextureManifest &manifest = App_Textures().declare(uri, flags, def.logicalDimensions(), Vector2i(), def.origIndex());
+
             // Are we redefining an existing texture?
-            if(manifest->hasTexture())
+            if(manifest.hasTexture())
             {
                 // Yes. Destroy the existing definition (*should* exist).
-                Texture &tex = manifest->texture();
+                Texture &tex = manifest.texture();
                 CompositeTexture *oldDef = reinterpret_cast<CompositeTexture *>(tex.userDataPointer());
                 if(oldDef)
                 {
@@ -666,15 +673,16 @@ static void processCompositeTextureDefs(CompositeTextures &defs)
                 continue;
             }
             // A new texture.
-            else if(Texture *tex = manifest->derive())
+            else if(Texture *tex = manifest.derive())
             {
                 tex->setUserDataPointer((void *)&def);
                 continue;
             }
         }
-
-        /// @todo Defer until necessary (manifest texture is first referenced).
-        LOG_WARNING("Failed defining Texture for patch composite \"%s\", ignoring.") << uri;
+        catch(TextureScheme::InvalidPathError const &er)
+        {
+            LOG_WARNING(er.asText() + ". Failed declaring texture \"%s\", ignoring.") << uri;
+        }
 
         delete &def;
     }
@@ -831,7 +839,7 @@ void R_InitSpriteTextures()
             continue;
         }
 
-        de::Uri uri = de::Uri("Sprites", Path(fileName));
+        de::Uri uri("Sprites", Path(fileName));
 
         Texture::Flags flags = 0;
         // If this is from an add-on flag it as "custom".
@@ -866,10 +874,15 @@ void R_InitSpriteTextures()
         file.unlock();
 
         de::Uri resourceUri = composeLumpIndexResourceUrn(i);
-        TextureManifest *manifest = App_Textures().declare(uri, flags, dimensions, origin, uniqueId, &resourceUri);
-        if(!manifest) continue; // Invalid uri?
-
-        uniqueId++;
+        try
+        {
+            App_Textures().declare(uri, flags, dimensions, origin, uniqueId, &resourceUri);
+            uniqueId++;
+        }
+        catch(TextureScheme::InvalidPathError const &er)
+        {
+            LOG_WARNING(er.asText() + ". Failed declaring texture \"%s\", ignoring.") << uri;
+        }
     }
 
     while(Stack_Height(stack))
@@ -911,12 +924,19 @@ Texture *R_DefineTexture(String schemeName, de::Uri const &resourceUri,
     }
 
     de::Uri uri(scheme.name(), Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
-    TextureManifest *manifest = App_Textures().declare(uri, Texture::Custom, dimensions,
-                                                       Vector2i(), uniqueId, &resourceUri);
-    if(!manifest) return 0; // Invalid URI?
+    try
+    {
+        TextureManifest &manifest = App_Textures().declare(uri, Texture::Custom, dimensions,
+                                                           Vector2i(), uniqueId, &resourceUri);
 
-    /// @todo Defer until necessary (manifest texture is first referenced).
-    return deriveTexture(*manifest);
+        /// @todo Defer until necessary (manifest texture is first referenced).
+        return deriveTexture(manifest);
+    }
+    catch(TextureScheme::InvalidPathError const &er)
+    {
+        LOG_WARNING(er.asText() + ". Failed declaring texture \"%s\", ignoring.") << uri;
+    }
+    return 0;
 }
 
 Texture *R_DefineTexture(String schemeName, de::Uri const &resourceUri)

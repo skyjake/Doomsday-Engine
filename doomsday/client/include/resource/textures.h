@@ -69,21 +69,6 @@ public:
     /// An unknown scheme was referenced. @ingroup errors
     DENG2_ERROR(UnknownSchemeError);
 
-    /// Base class for all URI validation errors. @ingroup errors
-    DENG2_ERROR(UriValidationError);
-
-    /// The validation URI is missing the scheme component. @ingroup errors
-    DENG2_SUB_ERROR(UriValidationError, UriMissingSchemeError);
-
-    /// The validation URI is missing the path component. @ingroup errors
-    DENG2_SUB_ERROR(UriValidationError, UriMissingPathError);
-
-    /// The validation URI specifies an unknown scheme. @ingroup errors
-    DENG2_SUB_ERROR(UriValidationError, UriUnknownSchemeError);
-
-    /// The validation URI is a URN. @ingroup errors
-    DENG2_SUB_ERROR(UriValidationError, UriIsUrnError);
-
     /**
      * ResourceClass encapsulates the properties and logics belonging to a logical
      * class of resource.
@@ -198,9 +183,13 @@ public:
      *
      * @return  Manifest for this URI; otherwise @c 0 if @a uri is invalid.
      */
-    Manifest *declare(Uri const &uri, de::Texture::Flags flags,
-                      Vector2i const &dimensions, Vector2i const &origin, int uniqueId,
-                      de::Uri const *resourceUri = 0);
+    inline Manifest &declare(Uri const &uri, de::Texture::Flags flags,
+        Vector2i const &dimensions, Vector2i const &origin, int uniqueId,
+        de::Uri const *resourceUri = 0)
+    {
+        return scheme(uri.scheme()).declare(uri.path(), flags, dimensions,
+                                            origin, uniqueId, resourceUri);
+    }
 
     /**
      * Returns a list of all the unique texture instances in the collection,
