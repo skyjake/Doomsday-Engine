@@ -82,8 +82,14 @@ void MaterialManifest::setId(materialid_t id)
 
 MaterialScheme &MaterialManifest::scheme() const
 {
-    DENG2_ASSERT(dynamic_cast<MaterialScheme *>(&tree()) != 0);
-    return static_cast<MaterialScheme &>(tree());
+    LOG_AS("MaterialManifest::scheme");
+    /// @todo Optimize: MaterialManifest should contain a link to the owning MaterialScheme.
+    foreach(MaterialScheme *scheme, materials().allSchemes())
+    {
+        if(&scheme->index() == &tree()) return *scheme;
+    }
+    /// @throw Error Failed to determine the scheme of the manifest (should never happen...).
+    throw Error("MaterialManifest::scheme", String("Failed to determine scheme for manifest [%1]").arg(de::dintptr(this)));
 }
 
 String MaterialManifest::description(de::Uri::ComposeAsTextFlags uriCompositionFlags) const

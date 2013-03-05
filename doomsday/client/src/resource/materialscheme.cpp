@@ -23,42 +23,42 @@
 
 using namespace de;
 
-typedef PathTreeT<MaterialManifest> Index;
-
 DENG2_PIMPL(MaterialScheme)
 {
     /// Symbolic name of the scheme.
     String name;
 
-    Instance(Public *i, String symbolicName) : Base(i), name(symbolicName)
+    /// Mappings from paths to manifests.
+    MaterialScheme::Index index;
+
+    Instance(Public *i, String symbolicName) : Base(i),
+        name(symbolicName)
     {}
+
+    ~Instance()
+    {
+        self.clear();
+        DENG2_ASSERT(index.isEmpty());
+    }
 };
 
 MaterialScheme::MaterialScheme(String symbolicName)
-    : Index(), d(new Instance(this, symbolicName))
+    : d(new Instance(this, symbolicName))
 {}
 
 MaterialScheme::~MaterialScheme()
 {
-    clear();
-    DENG2_ASSERT(Index::isEmpty());
-
     delete d;
+}
+
+void MaterialScheme::clear()
+{
+    d->index.clear();
 }
 
 String const &MaterialScheme::name() const
 {
     return d->name;
-}
-
-void MaterialScheme::clear()
-{
-    Index::clear();
-}
-
-int MaterialScheme::size() const
-{
-    return Index::size();
 }
 
 MaterialManifest &MaterialScheme::declare(Path const &path)
@@ -71,11 +71,11 @@ MaterialManifest &MaterialScheme::declare(Path const &path)
         throw InvalidPathError("MaterialScheme::declare", "Missing/zero-length path was supplied");
     }
 
-    int const sizeBefore = size();
-    Manifest *newManifest = &Index::insert(path);
+    int const sizeBefore = d->index.size();
+    Manifest *newManifest = &d->index.insert(path);
     DENG2_ASSERT(newManifest);
 
-    if(size() != sizeBefore)
+    if(d->index.size() != sizeBefore)
     {
         // Notify interested parties that a new manifest was defined in the scheme.
         DENG2_FOR_AUDIENCE(ManifestDefined, i) i->schemeManifestDefined(*this, *newManifest);
@@ -86,12 +86,17 @@ MaterialManifest &MaterialScheme::declare(Path const &path)
 
 bool MaterialScheme::has(Path const &path) const
 {
-    return Index::has(path, Index::NoBranch | Index::MatchFull);
+    return d->index.has(path, Index::NoBranch | Index::MatchFull);
 }
 
 MaterialManifest const &MaterialScheme::find(Path const &path) const
 {
-    return Index::find(path, Index::NoBranch | Index::MatchFull);
+    if(has(path))
+    {
+        return d->index.find(path, Index::NoBranch | Index::MatchFull);
+    }
+    /// @throw NotFoundError Failed to locate a matching manifest.
+    throw NotFoundError("MaterialScheme::find", "Failed to locate a manifest matching \"" + path.asText() + "\"");
 }
 
 MaterialManifest &MaterialScheme::find(Path const &path)
@@ -100,15 +105,7 @@ MaterialManifest &MaterialScheme::find(Path const &path)
     return const_cast<Index::Node &>(found);
 }
 
-MaterialScheme::Manifests const &MaterialScheme::manifests() const
+MaterialScheme::Index const &MaterialScheme::index() const
 {
-    return Index::leafNodes();
+    return d->index;
 }
-
-#ifdef DENG2_DEBUG
-void MaterialScheme::debugPrint() const
-{
-    Index::debugPrintHashDistribution();
-    Index::debugPrint();
-}
-#endif
