@@ -39,15 +39,24 @@ namespace de {
 /**
  * Specialized resource collection for a set of materials.
  *
- * - Pointers to Material are @em eternal, they are always valid and continue
- *   to reference the same logical material data even after engine reset.
+ * There are two general states for each material in the collection:
  *
- * - Public material identifiers (materialid_t) are similarly eternal.
+ * - @em Declared materials exist only as a manifest for a would-be material
+ *   which may be defined at a later time. In this state a material may be
+ *   referenced however it cannot be utilized.
  *
- * - Material name bindings are semi-independant from the materials. There
- *   may be multiple name bindings for a given material (aliases). The only
- *   requirement is that their symbolic names must be unique among those in
- *   the same scheme.
+ * - @em Defined materials are those which have been derived from a manifest,
+ *   producing a (logical) Material instance. In this state a material may be
+ *   utilized (e.g., bound to a map Surface).
+ *
+ *   Pointers to Material are considered @em eternal in the sense that they
+ *   will continue to reference the same logical material data, even after the
+ *   engine is reset. Public material identifiers (materialid_t) are similarly
+ *   eternal.
+ *
+ * Material names (paths) are semi-independant from the materials. There may
+ * be multiple names for a given material (aliases). The only requirement is
+ * that their symbolic name must be unique among materials in the same scheme.
  *
  * @ingroup resource
  */
@@ -65,20 +74,21 @@ public:
     /// The referenced material/manifest was not found. @ingroup errors
     DENG2_ERROR(NotFoundError);
 
+    /// An unknown scheme was referenced. @ingroup errors
+    DENG2_ERROR(UnknownSchemeError);
+
     /// The specified material id was invalid (out of range). @ingroup errors
     DENG2_ERROR(UnknownIdError);
 
     /// An unknown group was referenced. @ingroup errors
     DENG2_ERROR(UnknownGroupError);
 
-    /// An unknown scheme was referenced. @ingroup errors
-    DENG2_ERROR(UnknownSchemeError);
+    typedef QMap<String, Scheme *> Schemes;
+    typedef QList<Material *> All;
 
     typedef QSet<Manifest *> ManifestSet;
     typedef ManifestSet ManifestGroup; // Alias
-    typedef QMap<String, Scheme *> Schemes;
     typedef QList<ManifestGroup *> ManifestGroups;
-    typedef QList<Material *> All;
 
 public:
     /**

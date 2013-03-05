@@ -38,14 +38,6 @@ D_CMD(PrintTextureStats);
 
 namespace de {
 
-Texture *Textures::ResourceClass::interpret(TextureManifest &manifest, void *userData)
-{
-    LOG_AS("Textures::ResourceClass::interpret");
-    Texture *tex = new Texture(manifest);
-    tex->setUserDataPointer(userData);
-    return tex;
-}
-
 DENG2_PIMPL(Textures)
 {
     /// System subspace schemes containing the textures.

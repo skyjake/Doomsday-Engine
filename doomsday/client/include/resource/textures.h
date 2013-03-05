@@ -21,16 +21,12 @@
 #ifndef LIBDENG_RESOURCE_TEXTURES_H
 #define LIBDENG_RESOURCE_TEXTURES_H
 
-#include "api_uri.h"
-
 #include "Texture"
 #include "TextureManifest"
 #include "TextureScheme"
+#include "uri.hh"
 #include <de/Error>
 #include <de/Observers>
-#include <de/Path>
-#include <de/String>
-#include <de/PathTree>
 #include <de/Vector>
 #include <QList>
 #include <QMap>
@@ -59,32 +55,16 @@ class Textures : DENG2_OBSERVES(TextureScheme, ManifestDefined),
                  DENG2_OBSERVES(TextureManifest, TextureDerived),
                  DENG2_OBSERVES(Texture, Deletion)
 {
+    /// Internal typedefs for brevity/cleanliness.
     typedef class TextureManifest Manifest;
     typedef class TextureScheme Scheme;
 
 public:
-    /// The referenced texture was not found. @ingroup errors
+    /// The referenced texture/manifest was not found. @ingroup errors
     DENG2_ERROR(NotFoundError);
 
     /// An unknown scheme was referenced. @ingroup errors
     DENG2_ERROR(UnknownSchemeError);
-
-    /**
-     * ResourceClass encapsulates the properties and logics belonging to a logical
-     * class of resource.
-     *
-     * @todo Derive from de::ResourceClass -ds
-     */
-    struct ResourceClass
-    {
-        /**
-         * Interpret a manifest producing a new logical Texture instance..
-         *
-         * @param manifest  The manifest to be interpreted.
-         * @param userData  User data to associate with the resultant texture.
-         */
-        static Texture *interpret(Manifest &manifest, void *userData = 0);
-    };
 
     typedef QMap<String, Scheme *> Schemes;
     typedef QList<Texture *> All;

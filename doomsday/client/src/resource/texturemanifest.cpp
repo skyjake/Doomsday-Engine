@@ -70,7 +70,7 @@ Texture *TextureManifest::derive()
     if(!hasTexture())
     {
         // Instantiate and associate the new texture with this.
-        setTexture(Textures::ResourceClass::interpret(*this));
+        setTexture(new Texture(*this));
 
         // Notify interested parties that a new texture was derived from the manifest.
         DENG2_FOR_AUDIENCE(TextureDerived, i) i->manifestTextureDerived(*this, texture());
