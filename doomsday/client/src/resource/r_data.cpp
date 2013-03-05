@@ -63,10 +63,16 @@ static Texture *deriveTexture(TextureManifest &manifest)
     return tex;
 }
 
-static int defineTextureWorker(TextureManifest &manifest, void * /*parameters*/)
+static void deriveAllTexturesInScheme(String schemeName)
 {
-    deriveTexture(manifest);
-    return 0; // Continue iteration.
+    TextureScheme &scheme = App_Textures().scheme(schemeName);
+
+    PathTreeIterator<TextureScheme::Index> iter(scheme.index().leafNodes());
+    while(iter.hasNext())
+    {
+        TextureManifest &manifest = iter.next();
+        deriveTexture(manifest);
+    }
 }
 
 /**
@@ -136,7 +142,7 @@ void R_InitSystemTextures()
 
     // Define any as yet undefined system textures.
     /// @todo Defer until necessary (manifest texture is first referenced).
-    App_Textures().iterateDeclared("System", defineTextureWorker);
+    deriveAllTexturesInScheme("System");
 }
 
 #undef R_ComposePatchPath
@@ -772,7 +778,7 @@ void R_InitFlatTextures()
 
     // Define any as yet undefined flat textures.
     /// @todo Defer until necessary (manifest texture is first referenced).
-    App_Textures().iterateDeclared("Flats", defineTextureWorker);
+    deriveAllTexturesInScheme("Flats");
 
     LOG_INFO(String("R_InitFlatTetxures: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
@@ -892,7 +898,7 @@ void R_InitSpriteTextures()
 
     // Define any as yet undefined sprite textures.
     /// @todo Defer until necessary (manifest texture is first referenced).
-    App_Textures().iterateDeclared("Sprites", defineTextureWorker);
+    deriveAllTexturesInScheme("Sprites");
 
     LOG_INFO(String("R_InitSpriteTextures: Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }

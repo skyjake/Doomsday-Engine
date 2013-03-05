@@ -197,35 +197,11 @@ public:
      */
     All const &all() const;
 
-    /**
-     * Iterate over declared textures in the collection making a callback for
-     * each visited. Iteration ends when all textures have been visited or a
-     * callback returns non-zero.
-     *
-     * @param callback      Callback function ptr.
-     * @param parameters    Passed to the callback.
-     *
-     * @return  @c 0 iff iteration completed wholly.
-     */
-    inline int iterateDeclared(int (*callback)(Manifest &manifest, void *parameters),
-                               void* parameters = 0) const {
-        return iterateDeclared("", callback, parameters);
-    }
-
-    /**
-     * @copydoc iterate()
-     * @param nameOfScheme  If a known symbolic scheme name, only consider
-     *                      textures within this scheme. Can be @ zero-length
-     *                      string, in which case visit all textures.
-     */
-    int iterateDeclared(String nameOfScheme, int (*callback)(Manifest &manifest, void *parameters),
-                        void* parameters = 0) const;
-
 protected:
     // Observes Scheme ManifestDefined.
     void schemeManifestDefined(Scheme &scheme, Manifest &manifest);
 
-    // Observes Manifest MaterialDerived.
+    // Observes Manifest TextureDerived.
     void manifestTextureDerived(Manifest &manifest, Texture &texture);
 
     // Observes Texture Deletion.

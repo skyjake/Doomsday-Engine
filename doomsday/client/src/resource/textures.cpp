@@ -236,38 +236,6 @@ Textures::All const &Textures::all() const
     return d->textures;
 }
 
-static int iterateManifests(TextureScheme const &scheme,
-    int (*callback)(TextureManifest &manifest, void *parameters), void *parameters)
-{
-    PathTreeIterator<TextureScheme::Index> iter(scheme.index().leafNodes());
-    while(iter.hasNext())
-    {
-        if(int result = callback(iter.next(), parameters))
-            return result;
-    }
-    return 0; // Continue iteration.
-}
-
-int Textures::iterateDeclared(String nameOfScheme,
-    int (*callback)(TextureManifest &manifest, void *parameters), void *parameters) const
-{
-    if(!callback) return 0;
-
-    // Limit iteration to a specific scheme?
-    if(!nameOfScheme.isEmpty())
-    {
-        return iterateManifests(scheme(nameOfScheme), callback, parameters);
-    }
-
-    foreach(Scheme *scheme, d->schemes)
-    {
-        if(int result = iterateManifests(*scheme, callback, parameters))
-            return result;
-    }
-
-    return 0;
-}
-
 static bool pathBeginsWithComparator(TextureManifest const &manifest, void *parameters)
 {
     Path const *path = reinterpret_cast<Path*>(parameters);
