@@ -1821,19 +1821,25 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
     l->deactLineType = def->deactLineType;
     l->wallSection = def->wallSection;
 
-    try
+    if(def->actMaterial)
     {
-        l->actMaterial = App_Materials().find(*reinterpret_cast<de::Uri *>(def->actMaterial)).id();
+        try
+        {
+            l->actMaterial = App_Materials().find(*reinterpret_cast<de::Uri *>(def->actMaterial)).id();
+        }
+        catch(Materials::NotFoundError const &)
+        {} // Ignore this error.
     }
-    catch(Materials::NotFoundError const &)
-    {} // Ignore this error.
 
-    try
+    if(def->deactMaterial)
     {
-        l->deactMaterial = App_Materials().find(*reinterpret_cast<de::Uri *>(def->deactMaterial)).id();
+        try
+        {
+            l->deactMaterial = App_Materials().find(*reinterpret_cast<de::Uri *>(def->deactMaterial)).id();
+        }
+        catch(Materials::NotFoundError const &)
+        {} // Ignore this error.
     }
-    catch(Materials::NotFoundError const &)
-    {} // Ignore this error.
 
     l->actMsg = def->actMsg;
     l->deactMsg = def->deactMsg;
