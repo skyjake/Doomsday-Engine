@@ -485,7 +485,7 @@ static int collectManifestsInScheme(MaterialScheme const &scheme,
     QList<MaterialManifest *> *storage = 0)
 {
     int count = 0;
-    PathTreeIterator<MaterialScheme::Index> iter(scheme.index().leafNodes());
+    MaterialScheme::Iterator iter(scheme.manifests());
     while(iter.hasNext())
     {
         MaterialManifest &manifest = iter.next();
@@ -789,12 +789,9 @@ D_CMD(PrintMaterialStats)
     Con_FPrintf(CPF_YELLOW, "Material Statistics:\n");
     foreach(de::MaterialScheme *scheme, materials.allSchemes())
     {
-        de::MaterialScheme::Index const &index = scheme->index();
-
-        uint count = index.count();
+        uint count = scheme->count();
         Con_Message("Scheme: %s (%u %s)", scheme->name().toUtf8().constData(), count, count == 1? "material":"materials");
-        index.debugPrintHashDistribution();
-        index.debugPrint();
+        scheme->debugPrint();
     }
     return true;
 }

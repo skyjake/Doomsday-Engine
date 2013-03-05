@@ -35,14 +35,11 @@ class MaterialManifest;
  * @see Materials
  * @ingroup resource
  */
-class MaterialScheme
+class MaterialScheme : private PathTreeT<MaterialManifest>
 {
     typedef MaterialManifest Manifest;
 
 public:
-    /// The requested manifest could not be found in the index. @ingroup errors
-    DENG2_ERROR(NotFoundError);
-
     /// The specified path was not valid. @ingroup errors
     DENG2_ERROR(InvalidPathError);
 
@@ -51,8 +48,9 @@ public:
     /// Minimum length of a symbolic name.
     static int const min_name_length = DENG2_URI_MIN_SCHEME_LENGTH;
 
-    /// Manifests in the scheme are placed into a tree.
-    typedef PathTreeT<Manifest> Index;
+    typedef PathTreeIterator<PathTreeT<Manifest> > Iterator;
+    typedef PathTree::Nodes Manifests;
+    typedef PathTree::NotFoundError NotFoundError;
 
 public:
     /**
@@ -68,7 +66,7 @@ public:
     String const &name() const;
 
     /// @return  Total number of manifests in the scheme.
-    inline int size() const { return index().size(); }
+    int size() const;
 
     /// @return  Total number of manifests in the scheme. Same as @ref size().
     inline int count() const { return size(); }
@@ -107,7 +105,11 @@ public:
     /**
      * Provides access to the manifest index for efficient traversal.
      */
-    Index const &index() const;
+    Manifests const &manifests() const;
+
+#ifdef DENG2_DEBUG
+    void debugPrint() const;
+#endif
 
 private:
     DENG2_PRIVATE(d)
