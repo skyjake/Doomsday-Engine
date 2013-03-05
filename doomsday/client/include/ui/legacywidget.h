@@ -30,7 +30,6 @@ class LegacyWidget : public GuiWidget
 {
 public:
     LegacyWidget(de::String const &name = "");
-    ~LegacyWidget();
 
     void viewResized();
     void update();

@@ -66,11 +66,6 @@ ChoiceWidget::ChoiceWidget(const String &name)
     connect(d->menu, SIGNAL(closed()), this, SLOT(menuClosed()));
 }
 
-ChoiceWidget::~ChoiceWidget()
-{
-    delete d;
-}
-
 void ChoiceWidget::setItems(ChoiceWidget::Items const &items)
 {
     d->items = items;

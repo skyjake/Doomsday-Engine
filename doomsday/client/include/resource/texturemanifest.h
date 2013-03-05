@@ -51,7 +51,6 @@ public:
 
 public:
     TextureManifest(PathTree::NodeArgs const &args);
-    virtual ~TextureManifest();
 
     /**
      * Derive a new logical Texture instance by interpreting the manifest.

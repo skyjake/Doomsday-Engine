@@ -30,8 +30,6 @@ class ClientApp : public de::GuiApp
 public:
     ClientApp(int &argc, char **argv);
 
-    ~ClientApp();
-
     /**
      * Sets up all the subsystems of the application. Must be called before the
      * event loop is started.

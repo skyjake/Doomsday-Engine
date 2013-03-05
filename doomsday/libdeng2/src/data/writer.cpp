@@ -100,11 +100,6 @@ Writer::Writer(Writer const &other, ByteOrder const &byteOrder)
     : d(new Instance(*other.d, byteOrder))
 {}
 
-Writer::~Writer()
-{
-    delete d;
-}
-
 Writer &Writer::withHeader()
 {
     // Currently the header is very simple.

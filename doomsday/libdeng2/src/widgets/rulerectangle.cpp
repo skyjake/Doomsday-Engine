@@ -315,11 +315,6 @@ struct RuleRectangle::Instance : public DelegateRule::ISource
 RuleRectangle::RuleRectangle() : d(new Instance)
 {}
 
-RuleRectangle::~RuleRectangle()
-{
-    delete d;
-}
-
 Rule const &RuleRectangle::left() const
 {
     return *d->outputRules[Instance::OutLeft];

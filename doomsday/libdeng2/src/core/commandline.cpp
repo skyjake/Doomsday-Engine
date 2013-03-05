@@ -149,11 +149,6 @@ CommandLine::CommandLine(CommandLine const &other) : d(new Instance(*this))
     }
 }
 
-CommandLine::~CommandLine()
-{
-    delete d;
-}
-
 NativePath CommandLine::startupPath()
 {
     return d->initialDir.path();

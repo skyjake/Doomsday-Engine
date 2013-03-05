@@ -46,8 +46,6 @@ public:
      */
     ShellUser(de::Socket *socket);
 
-    virtual ~ShellUser();
-
     /**
      * Send an initial data set to the shell user. This is only called once,
      * right after a shell user has connected.

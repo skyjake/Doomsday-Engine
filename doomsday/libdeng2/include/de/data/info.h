@@ -201,8 +201,6 @@ public:
      */
     Info(String const &source);
 
-    ~Info();
-
     /**
      * Parses the Info contents from a text string.
      *

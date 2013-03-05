@@ -28,7 +28,6 @@ class QtGuiApp : public QApplication
 
 public:
     QtGuiApp(int &argc, char **argv);
-    ~QtGuiApp();
 
     bool notify(QObject *receiver, QEvent *event);
 

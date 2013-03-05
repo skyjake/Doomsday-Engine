@@ -107,11 +107,6 @@ CommandLineWidget::CommandLineWidget(de::String const &name)
     setPrompt("> ");
 }
 
-CommandLineWidget::~CommandLineWidget()
-{
-    delete d;
-}
-
 bool CommandLineWidget::handleEvent(Event const &event)
 {
     // There are only key press events.

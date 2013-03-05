@@ -211,11 +211,6 @@ Reader::Reader(IIStream const &stream, ByteOrder const &byteOrder)
     : d(new Instance(byteOrder, &stream))
 {}
 
-Reader::~Reader()
-{
-    delete d;
-}
-
 Reader &Reader::withHeader()
 {
     duint32 header = 0;

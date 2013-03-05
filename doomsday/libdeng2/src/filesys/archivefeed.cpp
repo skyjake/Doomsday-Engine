@@ -181,8 +181,7 @@ ArchiveFeed::ArchiveFeed(ArchiveFeed &parentFeed, String const &basePath)
 ArchiveFeed::~ArchiveFeed()
 {
     LOG_AS("~ArchiveFeed");
-
-    delete d;
+    d.reset();
 }
 
 String ArchiveFeed::description() const

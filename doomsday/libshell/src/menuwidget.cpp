@@ -130,11 +130,6 @@ MenuWidget::MenuWidget(Preset preset, String const &name)
     rule().setSize(*d->width, *d->height);
 }
 
-MenuWidget::~MenuWidget()
-{
-    delete d;
-}
-
 int MenuWidget::itemCount() const
 {
     return d->items.size();

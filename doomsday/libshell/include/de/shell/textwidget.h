@@ -50,7 +50,6 @@ class LIBSHELL_PUBLIC TextWidget : public QObject, public Widget
 
 public:
     TextWidget(String const &name = "");
-    virtual ~TextWidget();
 
     TextRootWidget &root() const;
 

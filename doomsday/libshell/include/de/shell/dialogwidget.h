@@ -33,7 +33,6 @@ class LIBSHELL_PUBLIC DialogWidget : public TextWidget
 
 public:
     DialogWidget(String const &name = "");
-    ~DialogWidget();
 
     /**
      * Shows the dialog and gives it focus. Execution is blocked until the

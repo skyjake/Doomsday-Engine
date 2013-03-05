@@ -41,7 +41,7 @@ public:
 
 public:
     ServerFinder();
-    virtual ~ServerFinder();
+    ~ServerFinder();
 
     /**
      * Forgets all servers found so far.

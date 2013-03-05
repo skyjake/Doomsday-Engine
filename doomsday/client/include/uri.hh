@@ -134,8 +134,6 @@ public:
      */
     Uri(Uri const &other);
 
-    ~Uri();
-
     inline Uri &operator = (Uri other) {
         std::swap(d, other.d);
         return *this;

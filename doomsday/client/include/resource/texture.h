@@ -127,7 +127,6 @@ public:
          *                      Ownership is NOT given to the Variant.
          */
         Variant(Texture &generalCase, texturevariantspecification_t const &spec);
-        ~Variant();
 
     public:
         /**

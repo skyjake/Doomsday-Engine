@@ -62,8 +62,6 @@ Config::~Config()
     {
         LOG_ERROR("") << err.asText();
     }
-
-    delete d;
 }
 
 void Config::read()

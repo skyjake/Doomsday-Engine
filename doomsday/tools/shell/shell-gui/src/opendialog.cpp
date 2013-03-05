@@ -131,11 +131,6 @@ OpenDialog::OpenDialog(QWidget *parent)
     connect(this, SIGNAL(accepted()), this, SLOT(saveState()));
 }
 
-OpenDialog::~OpenDialog()
-{
-    delete d;
-}
-
 QString OpenDialog::address() const
 {
     int sel = d->address->currentIndex();

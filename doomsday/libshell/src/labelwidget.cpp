@@ -54,11 +54,6 @@ LabelWidget::LabelWidget(String const &name)
     : TextWidget(name), d(new Instance)
 {}
 
-LabelWidget::~LabelWidget()
-{
-    delete d;
-}
-
 void LabelWidget::setBackground(TextCanvas::Char const &background)
 {
     d->background = background;

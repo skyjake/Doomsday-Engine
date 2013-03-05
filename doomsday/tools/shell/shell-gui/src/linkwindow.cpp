@@ -269,11 +269,6 @@ LinkWindow::LinkWindow(QWidget *parent)
     d->stopAction->setDisabled(true);
 }
 
-LinkWindow::~LinkWindow()
-{
-    delete d;
-}
-
 void LinkWindow::setTitle(const QString &title)
 {
     setWindowTitle(title + " - " + tr("Doomsday Shell"));

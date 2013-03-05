@@ -153,7 +153,6 @@ TextureScheme::TextureScheme(String symbolicName) : d(new Instance(this, symboli
 TextureScheme::~TextureScheme()
 {
     clear();
-    delete d;
 }
 
 void TextureScheme::clear()

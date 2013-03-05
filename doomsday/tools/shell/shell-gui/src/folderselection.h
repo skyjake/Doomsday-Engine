@@ -33,7 +33,6 @@ class FolderSelection : public QWidget
 public:
     explicit FolderSelection(QString const &prompt, QWidget *parent = 0);
     explicit FolderSelection(QString const &prompt, QString const &extraLabel, QWidget *parent = 0);
-    virtual ~FolderSelection();
 
     void setPath(de::NativePath const &path);
 

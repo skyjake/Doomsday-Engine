@@ -89,7 +89,7 @@ ServerFinder::ServerFinder() : d(new Instance)
 
 ServerFinder::~ServerFinder()
 {
-    delete d;
+    d.reset();
 }
 
 void ServerFinder::clear()

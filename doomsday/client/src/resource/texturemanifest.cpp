@@ -52,11 +52,6 @@ TextureManifest::TextureManifest(PathTree::NodeArgs const &args)
     : Node(args), d(new Instance(this))
 {}
 
-TextureManifest::~TextureManifest()
-{
-    delete d;
-}
-
 Textures &TextureManifest::textures()
 {
     return App_Textures();

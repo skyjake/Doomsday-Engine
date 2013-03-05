@@ -108,11 +108,6 @@ Texture::Variant::Variant(Texture &generalCase, texturevariantspecification_t co
     : d(new Instance(this, generalCase, spec))
 {}
 
-Texture::Variant::~Variant()
-{
-    delete d;
-}
-
 Texture &Texture::Variant::generalCase() const
 {
     return d->texture;

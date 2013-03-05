@@ -48,7 +48,6 @@ public:
 
 public:
     explicit CanvasWindow(QWidget *parent = 0);
-    ~CanvasWindow();
 
     de::RootWidget &root();
 
