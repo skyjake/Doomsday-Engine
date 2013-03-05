@@ -25,33 +25,10 @@
 #include <QTcpServer>
 #include <QThread>
 
-using namespace de;
-
-/*
-void internal::Doorman::run()
-{
-    _socket = new internal::TcpServer;
-    _socket->listen(QHostAddress::Any, _port);
-    DENG2_ASSERT(_socket->isListening());
-
-    connect(_socket, SIGNAL(takeIncomingSocketDesc(int)), this, SIGNAL(incomingSocketDesc(int)));
-
-    while(!_shouldStop)
-    {
-        _socket->waitForNewConnection(100);
-    }
-
-    delete _socket;
-}
-*/
+namespace de {
 
 struct ListenSocket::Instance
 {
-#if 0
-    /// Pointer to the internal socket data.
-    internal::Doorman *doorman;
-#endif
-
     QTcpServer *socket;
     duint16 port;
 
@@ -64,11 +41,10 @@ struct ListenSocket::Instance
     }
 };
 
-ListenSocket::ListenSocket(duint16 port)
+ListenSocket::ListenSocket(duint16 port) : d(new Instance)
 {
     LOG_AS("ListenSocket");
 
-    d = new Instance;
     d->socket = new QTcpServer(this);
     d->port = port;
 
@@ -80,11 +56,6 @@ ListenSocket::ListenSocket(duint16 port)
     }
 
     connect(d->socket, SIGNAL(newConnection()), this, SLOT(acceptNewConnection()));
-}
-
-ListenSocket::~ListenSocket()
-{
-    delete d;
 }
 
 void ListenSocket::acceptNewConnection()
@@ -102,10 +73,6 @@ Socket *ListenSocket::accept()
     {
         return 0;
     }
-    /*
-    QTcpSocket *s = new QTcpSocket;
-    s->setSocketDescriptor(d->incoming.takeFirst());
-    */
 
     QTcpSocket *s = d->incoming.takeFirst();
     LOG_MSG("Accepted new connection from %s.") << s->peerAddress().toString();
@@ -118,3 +85,5 @@ duint16 ListenSocket::port() const
 {
     return d->port;
 }
+
+} // namespace de

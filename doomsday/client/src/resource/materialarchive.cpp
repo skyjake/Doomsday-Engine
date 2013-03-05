@@ -209,11 +209,6 @@ MaterialArchive::MaterialArchive(int useSegments, bool recordSymbolicMaterials)
     }
 }
 
-MaterialArchive::~MaterialArchive()
-{
-    delete d;
-}
-
 struct findUniqueSerialIdWorker_params {
     Records *records;
     Material *material;

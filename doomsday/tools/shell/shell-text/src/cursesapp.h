@@ -28,7 +28,6 @@ class CursesApp : public QCoreApplication
 
 public:
     CursesApp(int &argc, char **argv);
-    ~CursesApp();
 
     bool notify(QObject *receiver, QEvent *event);
 

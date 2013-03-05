@@ -32,7 +32,6 @@ class LinkWindow : public QMainWindow
     
 public:
     LinkWindow(QWidget *parent = 0);
-    ~LinkWindow();
 
     void setTitle(QString const &title);
 

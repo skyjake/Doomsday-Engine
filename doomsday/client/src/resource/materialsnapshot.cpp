@@ -120,11 +120,6 @@ MaterialSnapshot::MaterialSnapshot(MaterialVariant &materialVariant)
     : d(new Instance(this, materialVariant))
 {}
 
-MaterialSnapshot::~MaterialSnapshot()
-{
-    delete d;
-}
-
 MaterialVariant &MaterialSnapshot::materialVariant() const
 {
     return *d->variant;

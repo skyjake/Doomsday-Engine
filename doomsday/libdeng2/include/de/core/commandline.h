@@ -61,8 +61,6 @@ public:
 
     CommandLine(CommandLine const &other);
 
-    virtual ~CommandLine();
-
     /**
      * Returns the native path where the command line was started in.
      * @return Native startup location.

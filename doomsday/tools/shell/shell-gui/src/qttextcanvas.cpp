@@ -112,11 +112,6 @@ QtTextCanvas::QtTextCanvas(TextCanvas::Size const &size)
     d->backBuffer = QImage(d->pixelSize(), QImage::Format_ARGB32);
 }
 
-QtTextCanvas::~QtTextCanvas()
-{
-    delete d;
-}
-
 QImage const &QtTextCanvas::image() const
 {
     return d->backBuffer;

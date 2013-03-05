@@ -130,11 +130,6 @@ ClientApp::ClientApp(int &argc, char **argv)
     addSystem(d->winSys);
 }
 
-ClientApp::~ClientApp()
-{
-    delete d;
-}
-
 void ClientApp::initialize()
 {
     d->legacyCore = LegacyCore_New();

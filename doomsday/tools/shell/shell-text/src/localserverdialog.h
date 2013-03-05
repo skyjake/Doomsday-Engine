@@ -26,7 +26,6 @@ class LocalServerDialog : public de::shell::InputDialog
 {
 public:
     LocalServerDialog();
-    ~LocalServerDialog();
 
     de::duint16 port() const;
 

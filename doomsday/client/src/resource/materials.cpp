@@ -214,11 +214,6 @@ void Materials::consoleRegister()
 Materials::Materials() : d(new Instance(this))
 {}
 
-Materials::~Materials()
-{
-    delete d;
-}
-
 MaterialScheme &Materials::scheme(String name) const
 {
     LOG_AS("Materials::scheme");

@@ -34,11 +34,6 @@ WindowSystem::WindowSystem()
     : System(ObservesTime | ReceivesInputEvents), d(new Instance(this))
 {}
 
-WindowSystem::~WindowSystem()
-{
-    delete d;
-}
-
 bool WindowSystem::processEvent(Event const &event)
 {
     CanvasWindow *win = Window_CanvasWindow(Window_Main());

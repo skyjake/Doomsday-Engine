@@ -101,8 +101,6 @@ public:
      */
     Reader(IIStream const &stream, ByteOrder const &byteOrder = littleEndianByteOrder);
 
-    virtual ~Reader();
-
     /**
      * Reads the serialization protocol header from the source. The header is
      * read at the current read offset. The version can be then queried with

@@ -75,8 +75,6 @@ public:
      */
     Textures();
 
-    virtual ~Textures();
-
     /// Register the console commands, variables, etc..., of this module.
     static void consoleRegister();
 

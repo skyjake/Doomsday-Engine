@@ -119,11 +119,6 @@ MapOutlinePacket::MapOutlinePacket()
     : Packet(MAP_OUTLINE_PACKET_TYPE), d(new Instance)
 {}
 
-MapOutlinePacket::~MapOutlinePacket()
-{
-    delete d;
-}
-
 void MapOutlinePacket::clear()
 {
     d->lines.clear();

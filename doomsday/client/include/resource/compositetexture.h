@@ -103,7 +103,6 @@ public:
      */
     explicit CompositeTexture(String percentEncodedName = "", int logicalWidth = 0,
         int logicalHeight = 0, Flags _flags = 0);
-    ~CompositeTexture();
 
     /**
      * Construct a composite texture by deserializing an archived id-tech 1

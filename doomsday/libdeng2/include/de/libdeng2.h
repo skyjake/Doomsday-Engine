@@ -234,7 +234,7 @@
  */
 #define DENG2_PRIVATE(Var) \
     struct Instance; \
-    Instance *Var;
+    std::auto_ptr<Instance> Var;
 
 #if defined(__cplusplus)
 namespace de {
@@ -248,6 +248,7 @@ struct Private {
     Type &self;
     Type *thisPublic;
     typedef Private<Type> Base;
+
     Private(Type &i) : self(i), thisPublic(&i) {}
     Private(Type *i) : self(*i), thisPublic(i) {}
 };

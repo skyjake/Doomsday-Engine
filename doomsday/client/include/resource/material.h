@@ -439,7 +439,6 @@ public:
     {
     private:
         Animation(Material &material, MaterialContextId context);
-        ~Animation();
 
     public:
         /// Current state of a layer animation.
@@ -550,7 +549,6 @@ public:
          * @param spec         Specification used to derive the variant.
          */
         Variant(Material &generalCase, VariantSpec const &spec);
-        ~Variant();
 
     public:
         /**

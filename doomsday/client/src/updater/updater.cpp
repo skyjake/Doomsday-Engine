@@ -430,9 +430,8 @@ DENG2_PIMPL(Updater)
     }
 };
 
-Updater::Updater(QObject *parent) : QObject(parent)
+Updater::Updater(QObject *parent) : QObject(parent), d(new Instance(this))
 {
-    d = new Instance(this);
     connect(d->network, SIGNAL(finished(QNetworkReply*)), this, SLOT(gotReply(QNetworkReply*)));
 
     // Do a silent auto-update check when starting.
@@ -440,11 +439,6 @@ Updater::Updater(QObject *parent) : QObject(parent)
     {
         d->queryLatestVersion(false);
     }
-}
-
-Updater::~Updater()
-{
-    delete d;
 }
 
 void Updater::setBackToFullscreen(bool yes)

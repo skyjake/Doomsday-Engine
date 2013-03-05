@@ -104,8 +104,6 @@ public:
      */
     Writer(Writer const &other, ByteOrder const &byteOrder);
 
-    virtual ~Writer();
-
     /**
      * Writes the serialization protocol header to the destination. This should
      * be used when the Writer is responsible for the containment stream

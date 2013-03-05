@@ -56,7 +56,6 @@ class Canvas : public QGLWidget
 
 public:
     explicit Canvas(CanvasWindow *parent, QGLWidget* shared = 0);
-    ~Canvas();
     
     /**
      * Sets a callback function that will be called when the canvas is ready

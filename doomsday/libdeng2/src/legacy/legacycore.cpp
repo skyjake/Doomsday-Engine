@@ -59,14 +59,13 @@ LegacyCore::~LegacyCore()
 {
     stop();
 
-    delete d;   
     _appCore = 0;
 }
 
 LegacyCore &LegacyCore::instance()
 {
     DENG2_ASSERT(_appCore != 0);
-    DENG2_ASSERT(_appCore->d != 0);
+    DENG2_ASSERT(_appCore->d.get() != 0);
     return *_appCore;
 }
 

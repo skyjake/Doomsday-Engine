@@ -119,8 +119,6 @@ LogBuffer::~LogBuffer()
 
     setOutputFile("");
     clear();
-
-    delete d;
 }
 
 void LogBuffer::clear()

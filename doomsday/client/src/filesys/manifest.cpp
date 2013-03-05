@@ -68,11 +68,6 @@ ResourceManifest::ResourceManifest(resourceclassid_t fClass, int fFlags, String 
     if(name) addName(*name);
 }
 
-ResourceManifest::~ResourceManifest()
-{
-    delete d;
-}
-
 ResourceManifest &ResourceManifest::addName(String newName, bool *didAdd)
 {
     // Is this name unique? We don't want duplicates.

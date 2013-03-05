@@ -56,11 +56,6 @@ LegacyWidget::LegacyWidget(String const &name)
     : GuiWidget(name), d(new Instance(this))
 {}
 
-LegacyWidget::~LegacyWidget()
-{
-    delete d;
-}
-
 void LegacyWidget::viewResized()
 {
     if(BusyMode_Active() || isDisabled() || Sys_IsShuttingDown()) return;

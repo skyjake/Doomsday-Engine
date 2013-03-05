@@ -62,10 +62,8 @@ struct Library::Instance
 #endif
 };
 
-Library::Library(NativePath const &nativePath) : d(0)
+Library::Library(NativePath const &nativePath) : d(new Instance)
 {
-    d = new Instance;
-
     LOG_AS("Library");
     LOG_TRACE("Loading \"%s\"") << nativePath.pretty();
 
@@ -129,8 +127,6 @@ Library::~Library()
         dlclose(d->library);
 #endif
     }
-
-    delete d;
 }
 
 String const &Library::type() const
