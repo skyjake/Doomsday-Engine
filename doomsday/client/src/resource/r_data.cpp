@@ -764,7 +764,7 @@ void R_InitFlatTextures()
 
     // Define any as yet undefined flat textures.
     /// @todo Defer until necessary (manifest texture is first referenced).
-    textures.iterateDeclared("Flats", defineTextureWorker);
+    App_Textures().iterateDeclared("Flats", defineTextureWorker);
 
     LOG_INFO(String("R_InitFlatTetxures: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }

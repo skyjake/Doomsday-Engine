@@ -50,7 +50,10 @@ DENG2_PIMPL(Textures)
 {
     /// System subspace schemes containing the textures.
     Textures::Schemes schemes;
-    QList<Textures::Scheme *> schemeCreationOrder;
+    QList<TextureScheme *> schemeCreationOrder;
+
+    /// All texture instances in the system (from all schemes).
+    Textures::All textures;
 
     Instance(Public *i) : Base(i)
     {}
@@ -90,7 +93,7 @@ Textures::~Textures()
     delete d;
 }
 
-Textures::Scheme &Textures::scheme(String name) const
+TextureScheme &Textures::scheme(String name) const
 {
     LOG_AS("Textures::scheme");
     if(!name.isEmpty())
@@ -102,7 +105,7 @@ Textures::Scheme &Textures::scheme(String name) const
     throw Textures::UnknownSchemeError("Textures::scheme", "No scheme found matching '" + name + "'");
 }
 
-Textures::Scheme& Textures::createScheme(String name)
+TextureScheme &Textures::createScheme(String name)
 {
     DENG_ASSERT(name.length() >= Scheme::min_name_length);
 
@@ -113,6 +116,10 @@ Textures::Scheme& Textures::createScheme(String name)
     Scheme *newScheme = new Scheme(name);
     d->schemes.insert(name.toLower(), newScheme);
     d->schemeCreationOrder.push_back(newScheme);
+
+    // We want notification when a new manifest is defined in this scheme.
+    newScheme->audienceForManifestDefined += this;
+
     return *newScheme;
 }
 
@@ -131,7 +138,19 @@ Textures::Schemes const& Textures::allSchemes() const
     return d->schemes;
 }
 
-Textures::Manifest &Textures::find(Uri const &uri) const
+bool Textures::has(Uri const &path) const
+{
+    try
+    {
+        find(path);
+        return true;
+    }
+    catch(NotFoundError const &)
+    {} // Ignore this error.
+    return false;
+}
+
+TextureManifest &Textures::find(Uri const &uri) const
 {
     LOG_AS("Textures::find");
 
@@ -188,16 +207,33 @@ Textures::Manifest &Textures::find(Uri const &uri) const
     throw NotFoundError("Textures::find", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
 }
 
-bool Textures::has(Uri const &path) const
+void Textures::schemeManifestDefined(TextureScheme &scheme, TextureManifest &manifest)
 {
-    try
-    {
-        find(path);
-        return true;
-    }
-    catch(NotFoundError const &)
-    {} // Ignore this error.
-    return false;
+    DENG2_UNUSED(scheme);
+
+    // We want notification when the manifest is derived to produce a texture.
+    manifest.audienceForTextureDerived += this;
+}
+
+void Textures::manifestTextureDerived(TextureManifest &manifest, Texture &texture)
+{
+    DENG2_UNUSED(manifest);
+
+    // Include this new texture in the scheme-agnostic list of instances.
+    d->textures.push_back(&texture);
+
+    // We want notification when the texture is about to be deleted.
+    texture.audienceForDeletion += this;
+}
+
+void Textures::textureBeingDeleted(Texture const &texture)
+{
+    d->textures.removeOne(const_cast<Texture *>(&texture));
+}
+
+Textures::All const &Textures::all() const
+{
+    return d->textures;
 }
 
 TextureManifest *Textures::declare(Uri const &uri, de::Texture::Flags flags,
@@ -230,7 +266,7 @@ TextureManifest *Textures::declare(Uri const &uri, de::Texture::Flags flags,
     }
     catch(NotFoundError const &)
     {
-        manifest = &scheme(uri.scheme()).insertManifest(uri.path());
+        manifest = &scheme(uri.scheme()).declare(uri.path());
     }
 
     /*
@@ -269,40 +305,6 @@ TextureManifest *Textures::declare(Uri const &uri, de::Texture::Flags flags,
     }
 
     return manifest;
-}
-
-static int iterateTextures(TextureScheme const &scheme,
-    int (*callback)(Texture &tex, void *parameters), void *parameters)
-{
-    PathTreeIterator<TextureScheme::Index> iter(scheme.index().leafNodes());
-    while(iter.hasNext())
-    {
-        TextureManifest &manifest = iter.next();
-        if(!manifest.hasTexture()) continue;
-
-        if(int result = callback(manifest.texture(), parameters))
-            return result;
-    }
-    return 0; // Continue iteration.
-}
-
-int Textures::iterate(String nameOfScheme,
-    int (*callback)(Texture &tex, void *parameters), void *parameters) const
-{
-    if(!callback) return 0;
-
-    // Limit iteration to a specific scheme?
-    if(!nameOfScheme.isEmpty())
-    {
-        return iterateTextures(scheme(nameOfScheme), callback, parameters);
-    }
-
-    foreach(Scheme *scheme, d->schemes)
-    {
-        if(int result = iterateTextures(*scheme, callback, parameters))
-            return result;
-    }
-    return 0;
 }
 
 static int iterateManifests(TextureScheme const &scheme,

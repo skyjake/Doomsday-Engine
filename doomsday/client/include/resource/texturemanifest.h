@@ -21,15 +21,16 @@
 #define LIBDENG_RESOURCE_TEXTUREMANIFEST_H
 
 #include "Texture"
-#include "TextureScheme"
 #include "uri.hh"
 #include <de/Error>
+#include <de/Observers>
 #include <de/PathTree>
 #include <de/Vector>
 
 namespace de {
 
 class Textures;
+class TextureScheme;
 
 /**
  * Description for a would-be logical Texture resource.
@@ -40,7 +41,8 @@ class Textures;
  * @see TextureScheme, Texture
  * @ingroup resource
  */
-class TextureManifest : public PathTree::Node
+class TextureManifest : public PathTree::Node,
+                        DENG2_OBSERVES(Texture, Deletion)
 {
 public:
     /// Required texture instance is missing. @ingroup errors
@@ -48,6 +50,12 @@ public:
 
     /// Required resource URI is not defined. @ingroup errors
     DENG2_ERROR(MissingResourceUriError);
+
+    DENG2_DEFINE_AUDIENCE(Deletion, void manifestBeingDeleted(TextureManifest const &manifest))
+
+    DENG2_DEFINE_AUDIENCE(UniqueIdChanged, void manifestUniqueIdChanged(TextureManifest &manifest))
+
+    DENG2_DEFINE_AUDIENCE(TextureDerived, void manifestTextureDerived(TextureManifest &manifest, Texture &texture))
 
 public:
     TextureManifest(PathTree::NodeArgs const &args);
@@ -66,7 +74,7 @@ public:
     TextureScheme &scheme() const;
 
     /// Convenience method for returning the name of the owning scheme.
-    inline String const &schemeName() const { return scheme().name(); }
+    String const &schemeName() const;
 
     /**
      * Compose a URI of the form "scheme:path" for the TextureManifest.
@@ -201,6 +209,10 @@ public:
 
     /// Returns a reference to the application's texture collection.
     static Textures &textures();
+
+protected:
+    // Observes Texture Deletion.
+    void textureBeingDeleted(Texture const &texture);
 
 private:
     DENG2_PRIVATE(d)

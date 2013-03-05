@@ -2227,12 +2227,11 @@ static int DD_UpdateEngineStateWorker(void *parameters)
 
 void DD_UpdateEngineState(void)
 {
-    boolean hadFog;
-
     Con_Message("Updating engine state...");
 
     // Stop playing sounds and music.
     S_Reset();
+
 #ifdef __CLIENT__
     GL_SetFilter(false);
     Demo_StopPlayback();
@@ -2254,9 +2253,9 @@ void DD_UpdateEngineState(void)
     if(App_GameLoaded() && gx.UpdateState)
         gx.UpdateState(DD_PRE);
 
-    hadFog = usingFog;
-
 #ifdef __CLIENT__
+    boolean hadFog = usingFog;
+
     GL_TotalReset();
     GL_TotalRestore(); // Bring GL back online.
 

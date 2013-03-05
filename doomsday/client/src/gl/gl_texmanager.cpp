@@ -448,17 +448,17 @@ static void emptyVariantSpecificationList(variantspecificationlist_t *list)
     }
 }
 
-static int findTextureUsingVariantSpecificationWorker(Texture &texture, void *parameters)
+static bool variantSpecInUse(texturevariantspecification_t const &spec)
 {
-    texturevariantspecification_t *spec = (texturevariantspecification_t *)parameters;
-    foreach(TextureVariant *variant, texture.variants())
+    foreach(Texture *texture, App_Textures().all())
+    foreach(TextureVariant *variant, texture->variants())
     {
-        if(&variant->spec() == spec)
+        if(&variant->spec() == &spec)
         {
-            return 1; // Found one; stop.
+            return true; // Found one; stop.
         }
     }
-    return 0; // Continue iteration.
+    return false;
 }
 
 static int pruneUnusedVariantSpecificationsInList(variantspecificationlist_t *list)
@@ -468,11 +468,13 @@ static int pruneUnusedVariantSpecificationsInList(variantspecificationlist_t *li
     while(node)
     {
         texturevariantspecificationlist_node_t *next = node->next;
-        if(!App_Textures().iterate(findTextureUsingVariantSpecificationWorker, (void *)node->spec))
+
+        if(!variantSpecInUse(*node->spec))
         {
             destroyVariantSpecification(*node->spec);
             ++numPruned;
         }
+
         node = next;
     }
     return numPruned;
@@ -524,13 +526,12 @@ static int releaseVariantGLTexture(TextureVariant &variant, texturevariantspecif
 {
     if(!spec || spec == &variant.spec())
     {
-        if(variant.isUploaded())
+        if(variant.isPrepared())
         {
             // Delete and mark it not-loaded.
             DGLuint glName = variant.glName();
             glDeleteTextures(1, (GLuint const *) &glName);
             variant.setGLName(0);
-            variant.setFlags(TextureVariant::Uploaded, false);
         }
 
         if(spec) return true; // We're done.
@@ -550,13 +551,12 @@ static void uploadContent(uploadcontentmethod_t uploadMethod, texturecontent_t c
 }
 
 static uploadcontentmethod_t uploadContentForVariant(uploadcontentmethod_t uploadMethod,
-    texturecontent_t const &content, TextureVariant &variant)
+    texturecontent_t const &content)
 {
     if(!novideo)
     {
         uploadContent(uploadMethod, content);
     }
-    variant.setFlags(TextureVariant::Uploaded, true);
     return uploadMethod;
 }
 
@@ -959,7 +959,7 @@ static uploadcontentmethod_t prepareVariantFromImage(TextureVariant &tex, image_
     c.wrap[0] = wrapS;
     c.wrap[1] = wrapT;
 
-    return uploadContentForVariant(chooseContentUploadMethod(c), c, tex);
+    return uploadContentForVariant(chooseContentUploadMethod(c), c);
 }
 
 static uploadcontentmethod_t prepareDetailVariantFromImage(TextureVariant &tex, image_t &image)
@@ -1018,7 +1018,7 @@ static uploadcontentmethod_t prepareDetailVariantFromImage(TextureVariant &tex, 
     c.wrap[0] = GL_REPEAT;
     c.wrap[1] = GL_REPEAT;
 
-    return uploadContentForVariant(chooseContentUploadMethod(c), c, tex);
+    return uploadContentForVariant(chooseContentUploadMethod(c), c);
 }
 
 void GL_InitTextureManager()
@@ -1266,6 +1266,7 @@ void GL_ReleaseRuntimeTextures()
 void GL_ReleaseTextures()
 {
     if(!initedOk) return;
+
     GL_ReleaseRuntimeTextures();
     GL_ReleaseSystemTextures();
 }
@@ -2804,22 +2805,16 @@ void GL_ReleaseVariantTexture(TextureVariant &tex)
     releaseVariantGLTexture(tex);
 }
 
-static int releaseGLTexturesByColorPaletteWorker(Texture &tex, void *parameters)
-{
-    DENG_ASSERT(parameters);
-    colorpalette_analysis_t *cp = reinterpret_cast<colorpalette_analysis_t *>(tex.analysisDataPointer(Texture::ColorPaletteAnalysis));
-    colorpaletteid_t paletteId = *(colorpaletteid_t *)parameters;
-
-    if(cp && cp->paletteId == paletteId)
-    {
-        GL_ReleaseGLTexturesByTexture(tex);
-    }
-    return 0; // Continue iteration.
-}
-
 void GL_ReleaseTexturesByColorPalette(colorpaletteid_t paletteId)
 {
-    App_Textures().iterate(releaseGLTexturesByColorPaletteWorker, (void *)&paletteId);
+    foreach(Texture *texture, App_Textures().all())
+    {
+        colorpalette_analysis_t *cp = reinterpret_cast<colorpalette_analysis_t *>(texture->analysisDataPointer(Texture::ColorPaletteAnalysis));
+        if(cp && cp->paletteId == paletteId)
+        {
+            GL_ReleaseGLTexturesByTexture(*texture);
+        }
+    }
 }
 
 void GL_InitTextureContent(texturecontent_t *content)
@@ -2847,7 +2842,7 @@ texturecontent_t *GL_ConstructTextureContentCopy(texturecontent_t const *other)
     texturecontent_t *c = (texturecontent_t*) M_Malloc(sizeof(*c));
     if(!c) Con_Error("GL_ConstructTextureContentCopy: Failed on allocation of %lu bytes for new TextureContent.", (unsigned long) sizeof(*c));
 
-    memcpy(c, other, sizeof(*c));
+    std::memcpy(c, other, sizeof(*c));
 
     // Duplicate the image buffer.
     int bytesPerPixel = BytesPerPixelFmt(other->format);

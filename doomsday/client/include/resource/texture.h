@@ -25,6 +25,7 @@
 #  include "TextureVariantSpec"
 #endif
 #include <de/Error>
+#include <de/Observers>
 #include <de/Vector>
 #include <QFlag>
 #include <QList>
@@ -52,6 +53,8 @@ class Texture
     struct Instance; // Needs to be friended by Variant.
 
 public:
+    DENG2_DEFINE_AUDIENCE(Deletion, void textureBeingDeleted(Texture const &texture))
+
     /**
      * Classification/processing flags.
      */
@@ -113,10 +116,8 @@ public:
         enum Flag
         {
             /// Texture contains alpha.
-            Masked = 0x1,
-
-            /// Texture has been uploaded to GL.
-            Uploaded = 0x2
+            /// @todo Does not belong here (is actually a source image analysis).
+            Masked = 0x1
         };
         Q_DECLARE_FLAGS(Flags, Flag)
 
@@ -169,11 +170,8 @@ public:
         /// Returns @c true if the variant is flagged as "masked".
         inline bool isMasked() const { return isFlagged(Masked); }
 
-        /// Returns @c true if the variant is flagged as "uploaded".
-        inline bool isUploaded() const { return isFlagged(Uploaded); }
-
         /// Returns @c true if the variant is "prepared".
-        inline bool isPrepared() const { return isUploaded() && glName() != 0; }
+        inline bool isPrepared() const { return glName() != 0; }
 
         /**
          * Returns @c true if the variant is flagged @a flagsToTest.

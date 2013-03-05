@@ -83,7 +83,10 @@ Texture::Texture(TextureManifest &manifest) : d(new Instance(this, manifest))
 
 Texture::~Texture()
 {
+    DENG2_FOR_AUDIENCE(Deletion, i) i->textureBeingDeleted(*this);
+
 #ifdef __CLIENT__
+    /// @todo GL Texture manager should observe Deletion.
     GL_ReleaseGLTexturesByTexture(*this);
 #endif
 

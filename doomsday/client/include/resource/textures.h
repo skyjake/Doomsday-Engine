@@ -27,6 +27,7 @@
 #include "TextureManifest"
 #include "TextureScheme"
 #include <de/Error>
+#include <de/Observers>
 #include <de/Path>
 #include <de/String>
 #include <de/PathTree>
@@ -54,7 +55,9 @@ namespace de {
  *
  * @ingroup resource
  */
-class Textures
+class Textures : DENG2_OBSERVES(TextureScheme, ManifestDefined),
+                 DENG2_OBSERVES(TextureManifest, TextureDerived),
+                 DENG2_OBSERVES(Texture, Deletion)
 {
     typedef class TextureManifest Manifest;
     typedef class TextureScheme Scheme;
@@ -99,13 +102,13 @@ public:
     };
 
     typedef QMap<String, Scheme *> Schemes;
+    typedef QList<Texture *> All;
 
 public:
     /**
      * Constructs a new texture resource collection.
      */
     Textures();
-
     virtual ~Textures();
 
     /// Register the console commands, variables, etc..., of this module.
@@ -200,28 +203,10 @@ public:
                       de::Uri const *resourceUri = 0);
 
     /**
-     * Iterate over defined Textures in the collection making a callback for
-     * each visited. Iteration ends when all textures have been visited or a
-     * callback returns non-zero.
-     *
-     * @param callback      Callback function ptr.
-     * @param parameters    Passed to the callback.
-     *
-     * @return  @c 0 iff iteration completed wholly.
+     * Returns a list of all the unique texture instances in the collection,
+     * from all schemes.
      */
-    inline int iterate(int (*callback)(Texture &texture, void *parameters),
-                       void *parameters = 0) const {
-        return iterate("", callback, parameters);
-    }
-
-    /**
-     * @copydoc iterate()
-     * @param nameOfScheme  If a known symbolic scheme name, only consider
-     *                      textures within this scheme. Can be @ zero-length
-     *                      string, in which case visit all textures.
-     */
-    int iterate(String nameOfScheme, int (*callback)(Texture &texture, void *parameters),
-                void *parameters = 0) const;
+    All const &all() const;
 
     /**
      * Iterate over declared textures in the collection making a callback for
@@ -246,6 +231,16 @@ public:
      */
     int iterateDeclared(String nameOfScheme, int (*callback)(Manifest &manifest, void *parameters),
                         void* parameters = 0) const;
+
+protected:
+    // Observes Scheme ManifestDefined.
+    void schemeManifestDefined(Scheme &scheme, Manifest &manifest);
+
+    // Observes Manifest MaterialDerived.
+    void manifestTextureDerived(Manifest &manifest, Texture &texture);
+
+    // Observes Texture Deletion.
+    void textureBeingDeleted(Texture const &texture);
 
 private:
     DENG2_PRIVATE(d)
