@@ -34,6 +34,7 @@
 #include <de/Vector>
 #include <QFlag>
 #include <QList>
+#include <QMap>
 
 // Forward declarations:
 
