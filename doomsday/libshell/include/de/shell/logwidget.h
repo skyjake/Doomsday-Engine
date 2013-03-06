@@ -31,6 +31,7 @@ class LIBSHELL_PUBLIC LogWidget : public TextWidget
 
 public:
     LogWidget(String const &name = "");
+    virtual ~LogWidget();
 
     /**
      * Returns the log sink that can be connected to a log buffer for receiving

@@ -181,6 +181,11 @@ Canvas::Canvas(CanvasWindow* parent, QGLWidget* shared)
 #endif
 }
 
+Canvas::~Canvas()
+{
+    delete d;
+}
+
 void Canvas::setInitFunc(void (*canvasInitializeFunc)(Canvas&))
 {
     d->initCallback = canvasInitializeFunc;

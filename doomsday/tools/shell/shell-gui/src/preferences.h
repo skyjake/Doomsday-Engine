@@ -28,6 +28,7 @@ class Preferences : public QDialog
 
 public:
     explicit Preferences(QWidget *parent = 0);
+    ~Preferences();
     
     static de::NativePath iwadFolder();
     static QFont consoleFont();

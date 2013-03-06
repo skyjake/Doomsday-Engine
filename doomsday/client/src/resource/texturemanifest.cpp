@@ -55,6 +55,7 @@ TextureManifest::TextureManifest(PathTree::NodeArgs const &args)
 TextureManifest::~TextureManifest()
 {
     DENG2_FOR_AUDIENCE(Deletion, i) i->manifestBeingDeleted(*this);
+    delete d;
 }
 
 Textures &TextureManifest::textures()

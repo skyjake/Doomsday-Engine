@@ -36,6 +36,7 @@ class QtRootWidget : public QWidget
 
 public:
     explicit QtRootWidget(QWidget *parent = 0);
+    ~QtRootWidget();
 
     de::shell::TextRootWidget &rootWidget();
 

@@ -36,6 +36,11 @@ DialogWidget::DialogWidget(String const &name)
     hide();
 }
 
+DialogWidget::~DialogWidget()
+{
+    delete d;
+}
+
 void DialogWidget::prepare()
 {
     show();

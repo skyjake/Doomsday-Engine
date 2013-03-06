@@ -73,6 +73,8 @@ Archive::Archive(IByteArray const &archive) : d(new Instance(*this, &archive))
 Archive::~Archive()
 {
     clear();
+
+    delete d;
 }
 
 IByteArray const *Archive::source() const

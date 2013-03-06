@@ -370,18 +370,20 @@ struct Socket::Instance
     }
 };
 
-Socket::Socket() : d(new Instance)
+Socket::Socket()
 {
+    d = new Instance;
     d->socket = new QTcpSocket;
     initialize();
 
     QObject::connect(d->socket, SIGNAL(connected()), this, SIGNAL(connected()));
 }
 
-Socket::Socket(Address const &address, TimeDelta const &timeOut) : d(new Instance) // blocking
+Socket::Socket(Address const &address, TimeDelta const &timeOut) // blocking
 {
     LOG_AS("Socket");
 
+    d = new Instance;
     d->socket = new QTcpSocket;
     initialize();
 
@@ -391,7 +393,8 @@ Socket::Socket(Address const &address, TimeDelta const &timeOut) : d(new Instanc
     {
         QString msg = d->socket->errorString();
         delete d->socket;
-        d.reset();
+        delete d;
+        d = 0;
 
         // Timed out!
         /// @throw ConnectionError Connection did not open in time.
@@ -457,8 +460,9 @@ void Socket::reconnect()
     connect(d->target);
 }
 
-Socket::Socket(QTcpSocket *existingSocket) : d(new Instance)
+Socket::Socket(QTcpSocket *existingSocket)
 {
+    d = new Instance;
     d->socket = existingSocket;
     initialize();
 
@@ -470,6 +474,7 @@ Socket::~Socket()
 {
     close();
     delete d->socket;
+    delete d;
 }
 
 void Socket::socketDestroyed()

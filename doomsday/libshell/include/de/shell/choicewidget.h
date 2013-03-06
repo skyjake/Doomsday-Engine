@@ -38,6 +38,8 @@ public:
 public:
     ChoiceWidget(String const &name = "");
 
+    ~ChoiceWidget();
+
     void setItems(Items const &items);
 
     void setPrompt(String const &prompt);

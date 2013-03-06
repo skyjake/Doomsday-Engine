@@ -46,6 +46,7 @@ class LIBGUI_PUBLIC GuiApp : public QApplication, public App,
 
 public:
     GuiApp(int &argc, char **argv);
+    ~GuiApp();
 
     bool notify(QObject *receiver, QEvent *event);
 

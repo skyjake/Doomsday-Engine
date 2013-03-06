@@ -51,6 +51,8 @@ public:
      */
     MaterialArchive(int useSegments, bool recordSymbolicMaterials = true);
 
+    ~MaterialArchive();
+
     /**
      * Returns the number of materials in the archive.
      */

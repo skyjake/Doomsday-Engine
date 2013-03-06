@@ -90,8 +90,10 @@ struct UnixInfo::Instance
     }
 };
 
-UnixInfo::UnixInfo() : d(new Instance)
+UnixInfo::UnixInfo()
 {
+    d = new Instance;
+
 #ifdef UNIX
     /**
      * @note There is only the "paths" and "plugins" config files for now; more
@@ -101,6 +103,11 @@ UnixInfo::UnixInfo() : d(new Instance)
     d->paths    = new Infos("paths");
     d->defaults = new Infos("defaults");
 #endif
+}
+
+UnixInfo::~UnixInfo()
+{
+    delete d;
 }
 
 bool UnixInfo::path(String const &key, NativePath &value) const

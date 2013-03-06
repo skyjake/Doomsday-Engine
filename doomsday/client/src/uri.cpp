@@ -318,6 +318,11 @@ bool Uri::isEmpty() const
     return d->path.isEmpty();
 }
 
+Uri::~Uri()
+{
+    delete d;
+}
+
 bool Uri::operator == (Uri const &other) const
 {
     if(this == &other) return true;

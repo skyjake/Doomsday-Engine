@@ -53,14 +53,16 @@ struct PathTree::Node::Instance
 
 PathTree::Node::Node(PathTree::NodeArgs const &args)
 {
-    d.reset(new Instance(args.tree, args.type == PathTree::Leaf, args.segmentId, args.parent));
+    d = new Instance(args.tree, args.type == PathTree::Leaf, args.segmentId, args.parent);
 
     // Let the parent know of the new child node.
     if(d->parent) d->parent->addChild(*this);
 }
 
 PathTree::Node::~Node()
-{}
+{
+    delete d;
+}
 
 bool PathTree::Node::isLeaf() const
 {

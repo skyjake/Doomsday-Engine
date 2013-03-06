@@ -189,7 +189,7 @@ App::~App()
 {
     LOG_AS("~App");
 
-    d.reset();
+    delete d;
 
     singletonApp = 0;
 }

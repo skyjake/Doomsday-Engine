@@ -110,6 +110,11 @@ Preferences::Preferences(QWidget *parent) :
     validate();
 }
 
+Preferences::~Preferences()
+{
+    delete d;
+}
+
 de::NativePath Preferences::iwadFolder()
 {
     QSettings st;

@@ -61,7 +61,9 @@ Beacon::Beacon(duint16 port) : d(new Instance)
 }
 
 Beacon::~Beacon()
-{}
+{
+    delete d;
+}
 
 duint16 Beacon::port() const
 {

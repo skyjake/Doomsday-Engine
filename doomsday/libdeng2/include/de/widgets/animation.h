@@ -53,6 +53,8 @@ public:
 public:
     Animation(float value = 0, Style style = EaseIn);
 
+    virtual ~Animation();
+
     void setStyle(Style s);
 
     void setStyle(Style style, float bounce);

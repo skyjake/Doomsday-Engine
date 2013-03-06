@@ -49,6 +49,8 @@ public:
 public:
     AbstractLink();
 
+    virtual ~AbstractLink();
+
     /**
      * Opens a connection to a server over the network.
      *

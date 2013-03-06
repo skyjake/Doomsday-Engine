@@ -32,6 +32,11 @@ DENG2_PIMPL(GuiWidget)
 GuiWidget::GuiWidget(String const &name) : Widget(name), d(new Instance(this))
 {}
 
+GuiWidget::~GuiWidget()
+{
+    delete d;
+}
+
 RuleRectangle &GuiWidget::rule()
 {
     return d->rule;

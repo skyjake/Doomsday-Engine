@@ -41,6 +41,11 @@ DENG2_PIMPL(Loop)
 Loop::Loop() : d(new Instance(this))
 {}
 
+Loop::~Loop()
+{
+    delete d;
+}
+
 void Loop::setRate(int freqHz)
 {
     d->interval = 1.0 / freqHz;

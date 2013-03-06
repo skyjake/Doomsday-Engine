@@ -61,6 +61,11 @@ Address::Address(Address const &other) : LogEntry::Arg::Base(), d(new Instance)
     d->port = other.d->port;
 }
 
+Address::~Address()
+{
+    delete d;
+}
+
 Address &Address::operator = (Address const &other)
 {
     d->host = other.d->host;

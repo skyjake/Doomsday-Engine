@@ -54,7 +54,9 @@ Rule::Rule(float initialValue) : d(new Instance(initialValue))
 {}
 
 Rule::~Rule()
-{}
+{
+    delete d;
+}
 
 float Rule::value() const
 {

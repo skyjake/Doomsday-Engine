@@ -125,8 +125,10 @@ DENG2_PIMPL(DownloadDialog)
 };
 
 DownloadDialog::DownloadDialog(de::String downloadUri, de::String fallbackUri, QWidget *parent)
-    : UpdaterDialog(parent), d(new Instance(this, downloadUri, fallbackUri))
+    : UpdaterDialog(parent)
 {
+    d = new Instance(this, downloadUri, fallbackUri);
+
 #ifndef MACOSX
     setWindowTitle(DOOMSDAY_NICENAME" Update");
     setWindowIcon(Window_Widget(Window_Main())->windowIcon());
@@ -136,6 +138,7 @@ DownloadDialog::DownloadDialog(de::String downloadUri, de::String fallbackUri, Q
 DownloadDialog::~DownloadDialog()
 {
     downloadInProgress = 0;
+    delete d;
 }
 
 de::String DownloadDialog::downloadedFilePath() const

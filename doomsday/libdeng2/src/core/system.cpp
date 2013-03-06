@@ -33,6 +33,11 @@ System::System(Flags const &behavior) : d(new Instance(this))
     d->behavior = behavior;
 }
 
+System::~System()
+{
+    delete d;
+}
+
 void System::setBehavior(Flags const &behavior)
 {
     d->behavior = behavior;

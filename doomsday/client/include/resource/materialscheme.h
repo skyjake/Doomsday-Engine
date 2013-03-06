@@ -62,6 +62,7 @@ public:
      *                      have at least @ref min_name_length characters.
      */
     explicit MaterialScheme(String symbolicName);
+    ~MaterialScheme();
 
     /// @return  Symbolic name of this scheme (e.g., "Flats").
     String const &name() const;

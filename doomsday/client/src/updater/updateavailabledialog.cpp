@@ -225,17 +225,24 @@ DENG2_PIMPL(UpdateAvailableDialog)
     }
 };
 
-UpdateAvailableDialog::UpdateAvailableDialog(QWidget *parent)
-    : UpdaterDialog(parent), d(new Instance(this))
-{}
-
-UpdateAvailableDialog::UpdateAvailableDialog(VersionInfo const &latestVersion, de::String changeLogUri,
-                                             QWidget *parent)
-    : UpdaterDialog(parent), d(new Instance(this, latestVersion))
+UpdateAvailableDialog::UpdateAvailableDialog(QWidget *parent) : UpdaterDialog(parent)
 {
+    d = new Instance(this);
+}
+
+UpdateAvailableDialog::UpdateAvailableDialog(const VersionInfo& latestVersion, de::String changeLogUri,
+                                             QWidget *parent)
+    : UpdaterDialog(parent)
+{
+    d = new Instance(this, latestVersion);
     d->changeLog = changeLogUri;
 
     connect(DENG2_GUI_APP, SIGNAL(displayModeChanged()), this, SLOT(recenterDialog()));
+}
+
+UpdateAvailableDialog::~UpdateAvailableDialog()
+{
+    delete d;
 }
 
 void UpdateAvailableDialog::showResult(const VersionInfo& latestVersion, de::String changeLogUri)

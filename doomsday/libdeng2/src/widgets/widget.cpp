@@ -72,6 +72,8 @@ Widget::~Widget()
     {
         d->parent->remove(*this);
     }
+
+    delete d;
 }
 
 Id Widget::id() const

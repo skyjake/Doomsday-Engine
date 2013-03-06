@@ -28,6 +28,7 @@ class BusyWidget : public GuiWidget
 {
 public:
     BusyWidget(de::String const &name = "");
+    ~BusyWidget();
 
     void update();
     void draw();

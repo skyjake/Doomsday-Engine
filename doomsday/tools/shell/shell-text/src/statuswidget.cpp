@@ -43,6 +43,11 @@ StatusWidget::StatusWidget(String const &name)
     connect(d->updateTimer, SIGNAL(timeout()), this, SLOT(refresh()));
 }
 
+StatusWidget::~StatusWidget()
+{
+    delete d;
+}
+
 void StatusWidget::setShellLink(Link *link)
 {
     d->link = link;

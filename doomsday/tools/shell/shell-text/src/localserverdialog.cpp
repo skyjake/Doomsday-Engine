@@ -88,6 +88,11 @@ LocalServerDialog::LocalServerDialog() : d(new Instance)
     lineEdit().setText(PersistentData::get ("LocalServer/options"));
 }
 
+LocalServerDialog::~LocalServerDialog()
+{
+    delete d;
+}
+
 duint16 LocalServerDialog::port() const
 {
     return d->port->text().toInt();

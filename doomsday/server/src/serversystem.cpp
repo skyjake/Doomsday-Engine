@@ -219,7 +219,7 @@ ServerSystem::ServerSystem() : d(new Instance(this))
 
 ServerSystem::~ServerSystem()
 {
-    d.reset();
+    delete d;
     serverSys = 0;
 }
 

@@ -77,6 +77,8 @@ public:
      */
     MaterialSnapshot(MaterialVariant &materialVariant);
 
+    ~MaterialSnapshot();
+
     /**
      * Returns the material variant for the snapshot.
      */

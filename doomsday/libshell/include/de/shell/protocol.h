@@ -100,6 +100,7 @@ public:
     };
 
     MapOutlinePacket();
+    ~MapOutlinePacket();
 
     void clear();
 

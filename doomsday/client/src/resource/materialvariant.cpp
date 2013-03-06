@@ -71,6 +71,11 @@ Material::Variant::Variant(Material &generalCase, MaterialVariantSpec const &spe
     : d(new Instance(this, generalCase, spec))
 {}
 
+Material::Variant::~Variant()
+{
+    delete d;
+}
+
 Material &Material::Variant::generalCase() const
 {
     return *d->material;

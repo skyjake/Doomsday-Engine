@@ -49,6 +49,9 @@ public:
     /// Open a listen socket on the specified port.
     ListenSocket(duint16 port);
 
+    /// Close the listen socket.
+    virtual ~ListenSocket();
+
     /// Returns the port the socket is listening on.
     duint16 port() const;
 

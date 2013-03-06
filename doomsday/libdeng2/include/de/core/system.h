@@ -54,6 +54,8 @@ public:
 public:
     System(Flags const &behavior = DefaultBehavior);
 
+    virtual ~System();
+
     void setBehavior(Flags const &behavior);
 
     Flags behavior() const;

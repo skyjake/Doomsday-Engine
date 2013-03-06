@@ -193,12 +193,12 @@ public:
      * @param sourceData  File with the source data. While interpreting,
      *                    ownership of the file is given to de::FileSystem.
      *
-     * @return If the format of the source data was recognized, returns a new
-     * File (or Folder) that can be used for accessing the data. Caller gets
-     * ownership of the returned instance. Ownership of the @a sourceData will
-     * be transferred to the returned instance. If the format was not
-     * recognized, @a sourceData is returned as-is and ownership is returned to
-     * the caller.
+     * @return If the format of the source data was recognized, returns a
+     * new File (or Folder) that can be used for accessing the data.
+     * Ownership of the @a sourceData will be transferred to the new
+     * interpreter File instance. If the format was not recognized, @a
+     * sourceData is returned as-is and ownership is returned to the
+     * caller.
      */
     File *interpret(File *sourceData);
 

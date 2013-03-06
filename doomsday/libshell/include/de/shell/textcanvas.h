@@ -127,6 +127,7 @@ public:
 
 public:
     TextCanvas(Size const &size = Size(1, 1));
+
     virtual ~TextCanvas();
 
     Size size() const;    

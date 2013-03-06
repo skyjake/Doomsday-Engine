@@ -80,7 +80,12 @@ void Textures::consoleRegister()
 Textures::Textures() : d(new Instance(this))
 {}
 
-TextureScheme &Textures::scheme(String name) const
+Textures::~Textures()
+{
+    delete d;
+}
+
+Textures::Scheme &Textures::scheme(String name) const
 {
     LOG_AS("Textures::scheme");
     if(!name.isEmpty())

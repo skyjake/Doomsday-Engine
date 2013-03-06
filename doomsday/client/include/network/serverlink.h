@@ -39,6 +39,7 @@ public:
 
 public:
     ServerLink();
+    ~ServerLink();
 
     void clear();
 

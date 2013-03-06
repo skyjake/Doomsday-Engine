@@ -219,6 +219,7 @@ RemoteUser::~RemoteUser()
     emit destroyed();
 
     d->disconnect();   
+    delete d;
 }
 
 Id RemoteUser::id() const

@@ -37,6 +37,7 @@ public:
     /// The dialog is initialized with the result page visible.
     explicit UpdateAvailableDialog(const VersionInfo& latestVersion,
                                    de::String changeLogUri, QWidget *parent = 0);
+    ~UpdateAvailableDialog();
 
 public slots:
     void showResult(const VersionInfo& latestVersion, de::String changeLogUri);

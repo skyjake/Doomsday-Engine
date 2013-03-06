@@ -33,6 +33,7 @@ class LIBSHELL_PUBLIC CommandLineWidget : public LineEditWidget
 
 public:
     CommandLineWidget(String const &name = "");
+    virtual ~CommandLineWidget();
 
     bool handleEvent(Event const &event);
 

@@ -42,6 +42,7 @@ Lockable::~Lockable()
     {
         unlock();
     }
+    delete d;
 }
 
 void Lockable::lock() const

@@ -479,14 +479,21 @@ Info::Element *Info::BlockElement::findByPath(String const &path) const
     return e;
 }
 
-Info::Info() : d(new Instance)
-{}
+Info::Info()
+{
+    d = new Instance;
+}
 
 Info::Info(String const &source)
 {
     QScopedPointer<Instance> inst(new Instance); // parsing may throw exception
     inst->parse(source);
-    d.reset(inst.take());
+    d = inst.take();
+}
+
+Info::~Info()
+{
+    delete d;
 }
 
 void Info::parse(String const &infoSource)

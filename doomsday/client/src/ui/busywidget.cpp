@@ -30,7 +30,13 @@ DENG2_PIMPL(BusyWidget)
 
 BusyWidget::BusyWidget(String const &name)
     : GuiWidget(name), d(new Instance(this))
-{}
+{
+}
+
+BusyWidget::~BusyWidget()
+{
+    delete d;
+}
 
 void BusyWidget::update()
 {

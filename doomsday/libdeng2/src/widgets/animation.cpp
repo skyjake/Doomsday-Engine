@@ -148,6 +148,11 @@ struct Animation::Instance
 Animation::Animation(float val, Style s) : d(new Instance(val, s))
 {}
 
+Animation::~Animation()
+{
+    delete d;
+}
+
 void Animation::setStyle(Animation::Style s)
 {
     d->style = s;

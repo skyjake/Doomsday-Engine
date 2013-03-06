@@ -167,6 +167,11 @@ UpdaterSettingsDialog::UpdaterSettingsDialog(QWidget *parent)
     : UpdaterDialog(parent), d(new Instance(*this))
 {}
 
+UpdaterSettingsDialog::~UpdaterSettingsDialog()
+{
+    delete d;
+}
+
 void UpdaterSettingsDialog::fetch()
 {
     d->fetch();

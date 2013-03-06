@@ -98,6 +98,8 @@ Function::~Function()
         // Stop observing the namespace.
         d->globals->audienceForDeletion.remove(this);
     }
+
+    delete d;
 }
 
 String Function::asText() const

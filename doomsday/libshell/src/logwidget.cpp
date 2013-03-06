@@ -146,7 +146,13 @@ struct LogWidget::Instance
 };
 
 LogWidget::LogWidget(String const &name) : TextWidget(name), d(new Instance(*this))
-{}
+{
+}
+
+LogWidget::~LogWidget()
+{
+    delete d;
+}
 
 LogSink &LogWidget::logSink()
 {

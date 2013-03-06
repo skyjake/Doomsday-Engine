@@ -38,6 +38,11 @@ struct LocalServer::Instance
 LocalServer::LocalServer() : d(new Instance)
 {}
 
+LocalServer::~LocalServer()
+{
+    delete d;
+}
+
 void LocalServer::start(duint16 port, String const &gameMode, QStringList additionalOptions,
                         NativePath const &runtimePath)
 {

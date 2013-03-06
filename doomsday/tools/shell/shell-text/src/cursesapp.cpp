@@ -399,7 +399,13 @@ DENG2_PIMPL(CursesApp)
 
 CursesApp::CursesApp(int &argc, char **argv)
     : QCoreApplication(argc, argv), d(new Instance(*this))
-{}
+{
+}
+
+CursesApp::~CursesApp()
+{
+    delete d;
+}
 
 bool CursesApp::notify(QObject *receiver, QEvent *event)
 {

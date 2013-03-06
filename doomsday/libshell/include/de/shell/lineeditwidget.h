@@ -45,6 +45,8 @@ public:
      */
     LineEditWidget(String const &name = "");
 
+    virtual ~LineEditWidget();
+
     /**
      * Sets the prompt that is displayed in front of the edited text.
      *

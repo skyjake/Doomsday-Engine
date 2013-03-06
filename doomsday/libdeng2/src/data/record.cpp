@@ -151,6 +151,8 @@ Record::~Record()
 {
     DENG2_FOR_AUDIENCE(Deletion, i) i->recordBeingDeleted(*this);
     clear();
+
+    delete d;
 }
 
 void Record::clear()

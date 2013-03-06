@@ -189,6 +189,11 @@ ServerLink::ServerLink() : d(new Instance(this))
     connect(this, SIGNAL(disconnected()), this, SLOT(linkDisconnected()));
 }
 
+ServerLink::~ServerLink()
+{
+    delete d;
+}
+
 void ServerLink::clear()
 {
     d->finder.clear();

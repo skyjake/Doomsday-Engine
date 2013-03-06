@@ -49,7 +49,9 @@ FileSystem::FileSystem() : d(new Instance)
 {}
 
 FileSystem::~FileSystem()
-{}
+{
+    delete d;
+}
 
 void FileSystem::refresh()
 {

@@ -95,6 +95,7 @@ public:
      * Construct a new material collection.
      */
     Materials();
+    virtual ~Materials();
 
     /**
      * Register the console commands, variables, etc..., of this module.

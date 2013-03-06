@@ -130,6 +130,11 @@ Material::Animation::Animation(Material &material, MaterialContextId context)
     restart();
 }
 
+Material::Animation::~Animation()
+{
+    delete d;
+}
+
 MaterialContextId Material::Animation::context() const
 {
     return d->context;

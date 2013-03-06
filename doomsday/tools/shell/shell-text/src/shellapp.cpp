@@ -158,6 +158,8 @@ ShellApp::ShellApp(int &argc, char **argv)
 ShellApp::~ShellApp()
 {
     LogBuffer::appBuffer().removeSink(d->log->logSink());
+
+    delete d;
 }
 
 void ShellApp::openConnection(String const &address)

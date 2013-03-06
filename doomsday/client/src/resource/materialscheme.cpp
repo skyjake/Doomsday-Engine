@@ -46,6 +46,11 @@ MaterialScheme::MaterialScheme(String symbolicName)
     : d(new Instance(this, symbolicName))
 {}
 
+MaterialScheme::~MaterialScheme()
+{
+    delete d;
+}
+
 void MaterialScheme::clear()
 {
     d->index.clear();

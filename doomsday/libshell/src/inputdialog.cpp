@@ -92,6 +92,11 @@ InputDialog::InputDialog(String const &name)
                   d->label->rule().height() + 2);
 }
 
+InputDialog::~InputDialog()
+{
+    delete d;
+}
+
 LabelWidget &InputDialog::label()
 {
     return *d->label;

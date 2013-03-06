@@ -45,6 +45,7 @@ class Updater : public QObject
 
 public:
     explicit Updater(QObject* parent = 0);
+    ~Updater();
 
     void setBackToFullscreen(bool yes);
 

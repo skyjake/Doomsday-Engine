@@ -29,6 +29,8 @@ class QtTextCanvas : public de::shell::TextCanvas
 public:
     QtTextCanvas(Size const &size);
 
+    ~QtTextCanvas();
+
     QImage const &image() const;
 
     void resize(Size const &newSize);

@@ -278,12 +278,14 @@ struct StringPool::Instance
     }
 };
 
-StringPool::StringPool() : d(new Instance)
+StringPool::StringPool()
 {
+    d = new Instance();
 }
 
-StringPool::StringPool(String *strings, uint count) : d(new Instance)
+StringPool::StringPool(String *strings, uint count)
 {
+    d = new Instance();
     for(uint i = 0; strings && i < count; ++i)
     {
         intern(strings[i]);
@@ -291,7 +293,9 @@ StringPool::StringPool(String *strings, uint count) : d(new Instance)
 }
 
 StringPool::~StringPool()
-{}
+{
+    delete d;
+}
 
 void StringPool::clear()
 {

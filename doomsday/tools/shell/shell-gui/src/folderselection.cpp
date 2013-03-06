@@ -78,6 +78,11 @@ FolderSelection::FolderSelection(QString const &prompt, QString const &extraLabe
     connect(d->button, SIGNAL(clicked()), this, SLOT(selectFolder()));
 }
 
+FolderSelection::~FolderSelection()
+{
+    delete d;
+}
+
 void FolderSelection::setPath(de::NativePath const &path)
 {
     d->edit->setText(path.toString());

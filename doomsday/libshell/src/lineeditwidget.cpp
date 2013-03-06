@@ -292,6 +292,11 @@ LineEditWidget::LineEditWidget(de::String const &name)
     rule().setInput(Rule::Height, *d->height);
 }
 
+LineEditWidget::~LineEditWidget()
+{
+    delete d;
+}
+
 void LineEditWidget::setPrompt(String const &promptText)
 {
     d->prompt = promptText;

@@ -61,6 +61,8 @@ public:
      */
     Link(Socket *openSocket);
 
+    virtual ~Link();
+
     /**
      * Shell protocol for constructing and interpreting packets.
      */
