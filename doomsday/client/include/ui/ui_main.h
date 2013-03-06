@@ -23,6 +23,7 @@
 #define LIBDENG_UI_MAIN_H
 
 #include <de/rect.h>
+#include "dd_input.h" // ddevent_t
 #include "MaterialVariantSpec"
 
 #ifdef __cplusplus

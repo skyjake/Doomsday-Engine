@@ -19,6 +19,12 @@
 #include "ui/busywidget.h"
 #include "ui/busyvisual.h"
 #include "busymode.h"
+#include "sys_system.h"
+#include "render/r_main.h"
+#include "ui/ui_main.h"
+#include "ui/window.h"
+
+#include <de/RootWidget>
 
 using namespace de;
 
@@ -36,6 +42,28 @@ BusyWidget::BusyWidget(String const &name)
 BusyWidget::~BusyWidget()
 {
     delete d;
+}
+
+void BusyWidget::viewResized()
+{
+    if(!BusyMode_Active() || isDisabled() || Sys_IsShuttingDown()) return;
+
+    Window_GLActivate(Window_Main()); // needed for legacy stuff
+
+    //DENG_ASSERT(BusyMode_Active());
+
+    LOG_AS("BusyWidget");
+    LOG_DEBUG("View resized to ") << root().viewSize().asText();
+
+    // Update viewports.
+    R_SetViewGrid(0, 0);
+    R_UseViewPort(0);
+    R_LoadSystemFonts();
+
+    if(UI_IsActive())
+    {
+        UI_UpdatePageLayout();
+    }
 }
 
 void BusyWidget::update()
