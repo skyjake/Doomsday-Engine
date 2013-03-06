@@ -1416,6 +1416,8 @@ int C_DECL XSTrav_MovePlane(Sector *sector, boolean ceiling, void *context,
     // f6: wait increment for each plane that gets moved
 
     mover = XS_GetPlaneMover(sector, ceiling);
+    if(P_IsDummy(line))
+        Con_Error("XSTrav_MovePlane: Attempted to use dummy Linedef as XGPlaneMover origin.");
     mover->origin = line;
 
     // Setup the thinker and add it to the list.
@@ -1543,6 +1545,8 @@ boolean XS_DoBuild(Sector* sector, boolean ceiling, LineDef* origin,
 
     // Create a new mover for the plane.
     mover = XS_GetPlaneMover(sector, ceiling);
+    if(P_IsDummy(line))
+        Con_Error("XS_DoBuild: Attempted to use dummy Linedef as XGPlaneMover origin.");
     mover->origin = origin;
 
     // Setup the mover.

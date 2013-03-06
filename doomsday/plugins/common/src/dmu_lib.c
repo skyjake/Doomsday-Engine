@@ -128,6 +128,7 @@ void P_CopyLine(LineDef* dest, LineDef* src)
     // Copy the extended properties too
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     xdest->special = xsrc->special;
+    xdest->tag     = xsrc->tag;
     if(xsrc->xg && xdest->xg)
         memcpy(xdest->xg, xsrc->xg, sizeof(*xdest->xg));
     else
