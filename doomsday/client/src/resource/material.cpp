@@ -77,6 +77,12 @@ int Material::Layer::stageCount() const
     return stages_.count();
 }
 
+int Material::Layer::addStage(Material::Layer::Stage const &stageToCopy)
+{
+    stages_.push_back(new Stage(stageToCopy));
+    return stages_.count() - 1;
+}
+
 Material::Layer::Stages const &Material::Layer::stages() const
 {
     return stages_;
