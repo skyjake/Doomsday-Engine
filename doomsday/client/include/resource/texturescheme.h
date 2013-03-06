@@ -20,13 +20,13 @@
 #ifndef LIBDENG_RESOURCE_TEXTURESCHEME_H
 #define LIBDENG_RESOURCE_TEXTURESCHEME_H
 
+#include "TextureManifest"
 #include "uri.hh"
+#include <de/Observers>
 #include <de/PathTree>
 #include <de/Error>
 
 namespace de {
-
-class TextureManifest;
 
 /**
  * Texture collection subspace.
@@ -34,20 +34,25 @@ class TextureManifest;
  * @see Textures
  * @ingroup resource
  */
-class TextureScheme
+class TextureScheme : DENG2_OBSERVES(TextureManifest, UniqueIdChanged),
+                      DENG2_OBSERVES(TextureManifest, Deletion)
 {
-public:
     typedef class TextureManifest Manifest;
-
-    /// Minimum length of a symbolic name.
-    static int const min_name_length = DENG2_URI_MIN_SCHEME_LENGTH;
-
-    /// Manifests within the scheme are placed into a tree.
-    typedef PathTreeT<Manifest> Index;
 
 public:
     /// The requested manifest could not be found in the index.
     DENG2_ERROR(NotFoundError);
+
+    /// The specified path was not valid. @ingroup errors
+    DENG2_ERROR(InvalidPathError);
+
+    DENG2_DEFINE_AUDIENCE(ManifestDefined, void schemeManifestDefined(TextureScheme &scheme, Manifest &manifest))
+
+    /// Minimum length of a symbolic name.
+    static int const min_name_length = DENG2_URI_MIN_SCHEME_LENGTH;
+
+    /// Manifests in the scheme are placed into a tree.
+    typedef PathTreeT<Manifest> Index;
 
 public:
     /**
@@ -77,12 +82,31 @@ public:
     /**
      * Insert a new manifest at the given @a path into the scheme.
      * If a manifest already exists at this path, the existing manifest is
-     * returned and this is a no-op.
+     * returned.
      *
-     * @param path  Virtual path for the resultant manifest.
+     * If any of the property values (flags, dimensions, etc...) differ from
+     * that which is already defined in the pre-existing manifest, any texture
+     * which is currently associated is released (any GL-textures acquired for
+     * it are deleted).
+     *
+     * @param path          Virtual path for the resultant manifest.
+     * @param flags         Texture flags property.
+     * @param dimensions    Logical dimensions property.
+     * @param origin        World origin offset property.
+     * @param uniqueId      Unique identifier property.
+     * @param resourceUri   Resource URI property.
+     *
      * @return  The (possibly newly created) manifest at @a path.
      */
-    Manifest &insertManifest(Path const &path);
+    Manifest &declare(Path const &path, Texture::Flags flags,
+                      Vector2i const &dimensions, Vector2i const &origin,
+                      int uniqueId, de::Uri const *resourceUri);
+
+    /**
+     * Determines if a manifest exists on the given @a path.
+     * @return @c true if a manifest exists; otherwise @a false.
+     */
+    bool has(Path const &path) const;
 
     /**
      * Search the scheme for a manifest matching @a path.
@@ -121,8 +145,12 @@ public:
      */
     Index const &index() const;
 
-    /// @todo Refactor away -ds
-    void markUniqueIdLutDirty();
+protected:
+    // Observes Manifest UniqueIdChanged
+    void manifestUniqueIdChanged(Manifest &manifest);
+
+    // Observes Manifest Deletion.
+    void manifestBeingDeleted(Manifest const &manifest);
 
 private:
     DENG2_PRIVATE(d)

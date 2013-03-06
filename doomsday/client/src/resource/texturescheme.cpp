@@ -18,7 +18,9 @@
  */
 
 #include "TextureManifest"
-
+#ifdef __CLIENT__
+#  include "gl/gl_texmanager.h"
+#endif
 #include "resource/texturescheme.h"
 
 using namespace de;
@@ -46,6 +48,7 @@ DENG2_PIMPL(TextureScheme)
 
     ~Instance()
     {
+        self.clear();
         DENG_ASSERT(index.isEmpty());
     }
 
@@ -157,11 +160,11 @@ TextureScheme::~TextureScheme()
 
 void TextureScheme::clear()
 {
-    PathTreeIterator<Index> iter(d->index.leafNodes());
+    /*PathTreeIterator<Index> iter(d->index.leafNodes());
     while(iter.hasNext())
     {
         d->deindex(iter.next());
-    }
+    }*/
     d->index.clear();
     d->uniqueIdLutDirty = true;
 }
@@ -171,28 +174,88 @@ String const &TextureScheme::name() const
     return d->name;
 }
 
-TextureManifest &TextureScheme::insertManifest(Path const &path)
+TextureManifest &TextureScheme::declare(Path const &path,
+    Texture::Flags flags, Vector2i const &dimensions, Vector2i const &origin,
+    int uniqueId, de::Uri const *resourceUri)
 {
-    int sizeBefore = d->index.size();
-    TextureManifest &manifest = d->index.insert(path);
+    LOG_AS("TextureScheme::declare");
+
+    if(path.isEmpty())
+    {
+        /// @throw InvalidPathError An empty path was specified.
+        throw InvalidPathError("TextureScheme::declare", "Missing/zero-length path was supplied");
+    }
+
+    int const sizeBefore = d->index.size();
+    Manifest *newManifest = &d->index.insert(path);
+    DENG2_ASSERT(newManifest);
+
     if(d->index.size() != sizeBefore)
     {
-        // We'll need to rebuild the unique id LUT after this.
+        // We'll need to rebuild the unique id LUT after this (deferred for perf).
         d->uniqueIdLutDirty = true;
+
+        // We want notification if/when the manifest's uniqueId changes.
+        newManifest->audienceForUniqueIdChanged += this;
+
+        // We want notification when the manifest is about to be deleted.
+        newManifest->audienceForDeletion += this;
+
+        // Notify interested parties that a new manifest was defined in the scheme.
+        DENG2_FOR_AUDIENCE(ManifestDefined, i) i->schemeManifestDefined(*this, *newManifest);
     }
-    return manifest;
+
+    /*
+     * (Re)configure the manifest.
+     */
+    bool mustRelease = false;
+
+    newManifest->flags() = flags;
+    newManifest->setOrigin(origin);
+
+    if(newManifest->setLogicalDimensions(dimensions))
+    {
+        mustRelease = true;
+    }
+
+    // We don't care whether these identfiers are truely unique. Our only
+    // responsibility is to release textures when they change.
+    if(newManifest->setUniqueId(uniqueId))
+    {
+        mustRelease = true;
+    }
+
+    if(resourceUri && newManifest->setResourceUri(*resourceUri))
+    {
+        // The mapped resource is being replaced, so release any existing Texture.
+        /// @todo Only release if this Texture is bound to only this binding.
+        mustRelease = true;
+    }
+
+    if(mustRelease && newManifest->hasTexture())
+    {
+#ifdef __CLIENT__
+        /// @todo Update any Materials (and thus Surfaces) which reference this.
+        GL_ReleaseGLTexturesByTexture(newManifest->texture());
+#endif
+    }
+
+    return *newManifest;
+}
+
+bool TextureScheme::has(Path const &path) const
+{
+    return d->index.has(path, Index::NoBranch | Index::MatchFull);
 }
 
 TextureManifest const &TextureScheme::find(Path const &path) const
 {
-    try
+    if(has(path))
     {
         return d->index.find(path, Index::NoBranch | Index::MatchFull);
     }
-    catch(Index::NotFoundError const &er)
-    {
-        throw NotFoundError("TextureScheme::find", er.asText());
-    }
+    /// @throw NotFoundError Failed to locate a matching manifest.
+    throw NotFoundError("TextureScheme::find", "Failed to locate a manifest matching \"" + path.asText() + "\"");
 }
 
 TextureManifest &TextureScheme::find(Path const &path)
@@ -252,7 +315,14 @@ TextureScheme::Index const &TextureScheme::index() const
     return d->index;
 }
 
-void TextureScheme::markUniqueIdLutDirty()
+void TextureScheme::manifestUniqueIdChanged(TextureManifest &manifest)
 {
+    DENG2_UNUSED(manifest);
+    // We'll need to rebuild the id map.
     d->uniqueIdLutDirty = true;
+}
+
+void TextureScheme::manifestBeingDeleted(TextureManifest const &manifest)
+{
+    d->deindex(const_cast<TextureManifest &>(manifest));
 }

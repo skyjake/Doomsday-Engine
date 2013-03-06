@@ -52,6 +52,11 @@ TextureManifest::TextureManifest(PathTree::NodeArgs const &args)
     : Node(args), d(new Instance(this))
 {}
 
+TextureManifest::~TextureManifest()
+{
+    DENG2_FOR_AUDIENCE(Deletion, i) i->manifestBeingDeleted(*this);
+}
+
 Textures &TextureManifest::textures()
 {
     return App_Textures();
@@ -60,36 +65,44 @@ Textures &TextureManifest::textures()
 Texture *TextureManifest::derive()
 {
     LOG_AS("TextureManifest::derive");
-    if(hasTexture())
+    if(!hasTexture())
     {
-#if _DEBUG
+        // Instantiate and associate the new texture with this.
+        setTexture(new Texture(*this));
+
+        // Notify interested parties that a new texture was derived from the manifest.
+        DENG2_FOR_AUDIENCE(TextureDerived, i) i->manifestTextureDerived(*this, texture());
+    }
+    else
+    {
+/*#ifdef DENG_DEBUG
         LOG_INFO("\"%s\" already has an existing texture, reconfiguring.") << composeUri();
-#endif
+#endif*/
         Texture *tex = &texture();
 
+        /// @todo Materials and Surfaces should be notified of this!
         tex->setFlags(d->flags);
         tex->setDimensions(d->logicalDimensions);
         tex->setOrigin(d->origin);
-
-        /// @todo Materials and Surfaces should be notified of this!
-        return tex;
     }
-
-    Texture *tex = Textures::ResourceClass::interpret(*this);
-    if(!hasTexture()) setTexture(tex);
-    return tex;
+    return &texture();
 }
 
 TextureScheme &TextureManifest::scheme() const
 {
     LOG_AS("TextureManifest::scheme");
-    /// @todo Optimize: TextureManifest should contain a link to the owning Textures::Scheme.
+    /// @todo Optimize: TextureManifest should contain a link to the owning TextureScheme.
     foreach(TextureScheme *scheme, textures().allSchemes())
     {
         if(&scheme->index() == &tree()) return *scheme;
     }
     /// @throw Error Failed to determine the scheme of the manifest (should never happen...).
     throw Error("TextureManifest::scheme", String("Failed to determine scheme for manifest [%1]").arg(de::dintptr(this)));
+}
+
+String const &TextureManifest::schemeName() const
+{
+    return scheme().name();
 }
 
 String TextureManifest::description(de::Uri::ComposeAsTextFlags uriCompositionFlags) const
@@ -148,8 +161,10 @@ bool TextureManifest::setUniqueId(int newUniqueId)
     if(d->uniqueId == newUniqueId) return false;
 
     d->uniqueId = newUniqueId;
-    // We'll need to rebuild the id map too.
-    scheme().markUniqueIdLutDirty();
+
+    // Notify interested parties that the uniqueId has changed.
+    DENG2_FOR_AUDIENCE(UniqueIdChanged, i) i->manifestUniqueIdChanged(*this);
+
     return true;
 }
 
@@ -200,5 +215,26 @@ Texture &TextureManifest::texture() const
 
 void TextureManifest::setTexture(Texture *newTexture)
 {
-    d->texture.reset(newTexture);
+    if(d->texture.get() != newTexture)
+    {
+        if(Texture *curTexture = d->texture.get())
+        {
+            // Cancel notifications about the existing texture.
+            curTexture->audienceForDeletion -= this;
+        }
+
+        d->texture.reset(newTexture);
+
+        if(Texture *curTexture = d->texture.get())
+        {
+            // We want notification when the new texture is about to be deleted.
+            curTexture->audienceForDeletion += this;
+        }
+    }
+}
+
+void TextureManifest::textureBeingDeleted(Texture const &texture)
+{
+    DENG2_UNUSED(texture);
+    d->texture.release();
 }

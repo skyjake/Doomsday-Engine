@@ -150,9 +150,9 @@ public:
     /**
      * Change the material associated with the manifest.
      *
-     * @param  material  New material to associate with.
+     * @param  newMaterial  New material to associate with.
      */
-    void setMaterial(Material *material);
+    void setMaterial(Material *newMaterial);
 
     /// Returns a reference to the application's material collection.
     static Materials &materials();

@@ -21,15 +21,12 @@
 #ifndef LIBDENG_RESOURCE_TEXTURES_H
 #define LIBDENG_RESOURCE_TEXTURES_H
 
-#include "api_uri.h"
-
 #include "Texture"
 #include "TextureManifest"
 #include "TextureScheme"
+#include "uri.hh"
 #include <de/Error>
-#include <de/Path>
-#include <de/String>
-#include <de/PathTree>
+#include <de/Observers>
 #include <de/Vector>
 #include <QList>
 #include <QMap>
@@ -54,51 +51,23 @@ namespace de {
  *
  * @ingroup resource
  */
-class Textures
+class Textures : DENG2_OBSERVES(TextureScheme, ManifestDefined),
+                 DENG2_OBSERVES(TextureManifest, TextureDerived),
+                 DENG2_OBSERVES(Texture, Deletion)
 {
+    /// Internal typedefs for brevity/cleanliness.
     typedef class TextureManifest Manifest;
     typedef class TextureScheme Scheme;
 
 public:
-    /// The referenced texture was not found. @ingroup errors
+    /// The referenced texture/manifest was not found. @ingroup errors
     DENG2_ERROR(NotFoundError);
 
     /// An unknown scheme was referenced. @ingroup errors
     DENG2_ERROR(UnknownSchemeError);
 
-    /// Base class for all URI validation errors. @ingroup errors
-    DENG2_ERROR(UriValidationError);
-
-    /// The validation URI is missing the scheme component. @ingroup errors
-    DENG2_SUB_ERROR(UriValidationError, UriMissingSchemeError);
-
-    /// The validation URI is missing the path component. @ingroup errors
-    DENG2_SUB_ERROR(UriValidationError, UriMissingPathError);
-
-    /// The validation URI specifies an unknown scheme. @ingroup errors
-    DENG2_SUB_ERROR(UriValidationError, UriUnknownSchemeError);
-
-    /// The validation URI is a URN. @ingroup errors
-    DENG2_SUB_ERROR(UriValidationError, UriIsUrnError);
-
-    /**
-     * ResourceClass encapsulates the properties and logics belonging to a logical
-     * class of resource.
-     *
-     * @todo Derive from de::ResourceClass -ds
-     */
-    struct ResourceClass
-    {
-        /**
-         * Interpret a manifest producing a new logical Texture instance..
-         *
-         * @param manifest  The manifest to be interpreted.
-         * @param userData  User data to associate with the resultant texture.
-         */
-        static Texture *interpret(Manifest &manifest, void *userData = 0);
-    };
-
     typedef QMap<String, Scheme *> Schemes;
+    typedef QList<Texture *> All;
 
 public:
     /**
@@ -191,59 +160,31 @@ public:
      * @param uniqueId      Unique identifier property.
      * @param resourceUri   Resource URI property.
      *
-     * @return  Manifest for this URI; otherwise @c 0 if @a uri is invalid.
+     * @return  Manifest for this URI.
      */
-    Manifest *declare(Uri const &uri, de::Texture::Flags flags,
-                      Vector2i const &dimensions, Vector2i const &origin, int uniqueId,
-                      de::Uri const *resourceUri = 0);
-
-    /**
-     * Iterate over defined Textures in the collection making a callback for
-     * each visited. Iteration ends when all textures have been visited or a
-     * callback returns non-zero.
-     *
-     * @param callback      Callback function ptr.
-     * @param parameters    Passed to the callback.
-     *
-     * @return  @c 0 iff iteration completed wholly.
-     */
-    inline int iterate(int (*callback)(Texture &texture, void *parameters),
-                       void *parameters = 0) const {
-        return iterate("", callback, parameters);
+    inline Manifest &declare(Uri const &uri, de::Texture::Flags flags,
+        Vector2i const &dimensions, Vector2i const &origin, int uniqueId,
+        de::Uri const *resourceUri = 0)
+    {
+        return scheme(uri.scheme()).declare(uri.path(), flags, dimensions,
+                                            origin, uniqueId, resourceUri);
     }
 
     /**
-     * @copydoc iterate()
-     * @param nameOfScheme  If a known symbolic scheme name, only consider
-     *                      textures within this scheme. Can be @ zero-length
-     *                      string, in which case visit all textures.
+     * Returns a list of all the unique texture instances in the collection,
+     * from all schemes.
      */
-    int iterate(String nameOfScheme, int (*callback)(Texture &texture, void *parameters),
-                void *parameters = 0) const;
+    All const &all() const;
 
-    /**
-     * Iterate over declared textures in the collection making a callback for
-     * each visited. Iteration ends when all textures have been visited or a
-     * callback returns non-zero.
-     *
-     * @param callback      Callback function ptr.
-     * @param parameters    Passed to the callback.
-     *
-     * @return  @c 0 iff iteration completed wholly.
-     */
-    inline int iterateDeclared(int (*callback)(Manifest &manifest, void *parameters),
-                               void* parameters = 0) const {
-        return iterateDeclared("", callback, parameters);
-    }
+protected:
+    // Observes Scheme ManifestDefined.
+    void schemeManifestDefined(Scheme &scheme, Manifest &manifest);
 
-    /**
-     * @copydoc iterate()
-     * @param nameOfScheme  If a known symbolic scheme name, only consider
-     *                      textures within this scheme. Can be @ zero-length
-     *                      string, in which case visit all textures.
-     */
-    int iterateDeclared(String nameOfScheme, int (*callback)(Manifest &manifest, void *parameters),
-                        void* parameters = 0) const;
+    // Observes Manifest TextureDerived.
+    void manifestTextureDerived(Manifest &manifest, Texture &texture);
+
+    // Observes Texture Deletion.
+    void textureBeingDeleted(Texture const &texture);
 
 private:
     DENG2_PRIVATE(d)

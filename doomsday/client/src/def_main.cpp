@@ -1034,18 +1034,22 @@ static void generateMaterialDefForTexture(TextureManifest &manifest)
     }
 }
 
-static int generateMaterialDefForTextureWorker(TextureManifest &manifest, void * /*params*/)
+static void generateMaterialDefsForAllTexturesInScheme(String schemeName)
 {
-    generateMaterialDefForTexture(manifest);
-    return 0; // Continue iteration.
+    TextureScheme &scheme = App_Textures().scheme(schemeName);
+
+    PathTreeIterator<TextureScheme::Index> iter(scheme.index().leafNodes());
+    while(iter.hasNext())
+    {
+        generateMaterialDefForTexture(iter.next());
+    }
 }
 
 static void generateMaterialDefs()
 {
-    Textures &textures = App_Textures();
-    textures.iterateDeclared("Textures", generateMaterialDefForTextureWorker);
-    textures.iterateDeclared("Flats",    generateMaterialDefForTextureWorker);
-    textures.iterateDeclared("Sprites",  generateMaterialDefForTextureWorker);
+    generateMaterialDefsForAllTexturesInScheme("Textures");
+    generateMaterialDefsForAllTexturesInScheme("Flats");
+    generateMaterialDefsForAllTexturesInScheme("Sprites");
 }
 
 static void rebuildMaterialLayers(Material &material, ded_material_t const &def)

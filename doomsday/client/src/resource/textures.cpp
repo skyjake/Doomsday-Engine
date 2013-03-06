@@ -38,19 +38,14 @@ D_CMD(PrintTextureStats);
 
 namespace de {
 
-Texture *Textures::ResourceClass::interpret(TextureManifest &manifest, void *userData)
-{
-    LOG_AS("Textures::ResourceClass::interpret");
-    Texture *tex = new Texture(manifest);
-    tex->setUserDataPointer(userData);
-    return tex;
-}
-
 DENG2_PIMPL(Textures)
 {
     /// System subspace schemes containing the textures.
     Textures::Schemes schemes;
-    QList<Textures::Scheme *> schemeCreationOrder;
+    QList<TextureScheme *> schemeCreationOrder;
+
+    /// All texture instances in the system (from all schemes).
+    Textures::All textures;
 
     Instance(Public *i) : Base(i)
     {}
@@ -85,7 +80,7 @@ void Textures::consoleRegister()
 Textures::Textures() : d(new Instance(this))
 {}
 
-Textures::Scheme &Textures::scheme(String name) const
+TextureScheme &Textures::scheme(String name) const
 {
     LOG_AS("Textures::scheme");
     if(!name.isEmpty())
@@ -97,7 +92,7 @@ Textures::Scheme &Textures::scheme(String name) const
     throw Textures::UnknownSchemeError("Textures::scheme", "No scheme found matching '" + name + "'");
 }
 
-Textures::Scheme& Textures::createScheme(String name)
+TextureScheme &Textures::createScheme(String name)
 {
     DENG_ASSERT(name.length() >= Scheme::min_name_length);
 
@@ -108,6 +103,10 @@ Textures::Scheme& Textures::createScheme(String name)
     Scheme *newScheme = new Scheme(name);
     d->schemes.insert(name.toLower(), newScheme);
     d->schemeCreationOrder.push_back(newScheme);
+
+    // We want notification when a new manifest is defined in this scheme.
+    newScheme->audienceForManifestDefined += this;
+
     return *newScheme;
 }
 
@@ -126,7 +125,19 @@ Textures::Schemes const& Textures::allSchemes() const
     return d->schemes;
 }
 
-Textures::Manifest &Textures::find(Uri const &uri) const
+bool Textures::has(Uri const &path) const
+{
+    try
+    {
+        find(path);
+        return true;
+    }
+    catch(NotFoundError const &)
+    {} // Ignore this error.
+    return false;
+}
+
+TextureManifest &Textures::find(Uri const &uri) const
 {
     LOG_AS("Textures::find");
 
@@ -183,153 +194,33 @@ Textures::Manifest &Textures::find(Uri const &uri) const
     throw NotFoundError("Textures::find", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
 }
 
-bool Textures::has(Uri const &path) const
+void Textures::schemeManifestDefined(TextureScheme &scheme, TextureManifest &manifest)
 {
-    try
-    {
-        find(path);
-        return true;
-    }
-    catch(NotFoundError const &)
-    {} // Ignore this error.
-    return false;
+    DENG2_UNUSED(scheme);
+
+    // We want notification when the manifest is derived to produce a texture.
+    manifest.audienceForTextureDerived += this;
 }
 
-TextureManifest *Textures::declare(Uri const &uri, de::Texture::Flags flags,
-    Vector2i const &dimensions, Vector2i const &origin, int uniqueId, de::Uri const *resourceUri)
+void Textures::manifestTextureDerived(TextureManifest &manifest, Texture &texture)
 {
-    LOG_AS("Textures::declare");
+    DENG2_UNUSED(manifest);
 
-    // Ensure we have a properly formed URI (but not a URN - this is a resource path).
-    if(uri.isEmpty())
-    {
-        /// @throw UriMissingPathError The URI is missing the required path component.
-        throw UriMissingPathError("Textures::declare", "Missing path in URI \"" + uri.asText() + "\"");
-    }
-    if(uri.scheme().isEmpty())
-    {
-        /// @throw UriMissingSchemeError The URI is missing the required scheme component.
-        throw UriMissingSchemeError("Textures::declare", "Missing scheme in URI \"" + uri.asText() + "\"");
-    }
-    else if(!knownScheme(uri.scheme()))
-    {
-        /// @throw UriUnknownSchemeError The URI specifies an unknown scheme.
-        throw UriUnknownSchemeError("Textures::declare", "Unknown scheme in URI \"" + uri.asText() + "\"");
-    }
+    // Include this new texture in the scheme-agnostic list of instances.
+    d->textures.push_back(&texture);
 
-    // Have we already created a manifest for this?
-    TextureManifest *manifest = 0;
-    try
-    {
-        manifest = &find(uri);
-    }
-    catch(NotFoundError const &)
-    {
-        manifest = &scheme(uri.scheme()).insertManifest(uri.path());
-    }
-
-    /*
-     * (Re)configure the manifest.
-     */
-    bool mustRelease = false;
-
-    manifest->flags() = flags;
-    manifest->setOrigin(origin);
-
-    if(manifest->setLogicalDimensions(dimensions))
-    {
-        mustRelease = true;
-    }
-
-    // We don't care whether these identfiers are truely unique. Our only
-    // responsibility is to release textures when they change.
-    if(manifest->setUniqueId(uniqueId))
-    {
-        mustRelease = true;
-    }
-
-    if(resourceUri && manifest->setResourceUri(*resourceUri))
-    {
-        // The mapped resource is being replaced, so release any existing Texture.
-        /// @todo Only release if this Texture is bound to only this binding.
-        mustRelease = true;
-    }
-
-    if(mustRelease && manifest->hasTexture())
-    {
-#ifdef __CLIENT__
-        /// @todo Update any Materials (and thus Surfaces) which reference this.
-        GL_ReleaseGLTexturesByTexture(manifest->texture());
-#endif
-    }
-
-    return manifest;
+    // We want notification when the texture is about to be deleted.
+    texture.audienceForDeletion += this;
 }
 
-static int iterateTextures(TextureScheme const &scheme,
-    int (*callback)(Texture &tex, void *parameters), void *parameters)
+void Textures::textureBeingDeleted(Texture const &texture)
 {
-    PathTreeIterator<TextureScheme::Index> iter(scheme.index().leafNodes());
-    while(iter.hasNext())
-    {
-        TextureManifest &manifest = iter.next();
-        if(!manifest.hasTexture()) continue;
-
-        if(int result = callback(manifest.texture(), parameters))
-            return result;
-    }
-    return 0; // Continue iteration.
+    d->textures.removeOne(const_cast<Texture *>(&texture));
 }
 
-int Textures::iterate(String nameOfScheme,
-    int (*callback)(Texture &tex, void *parameters), void *parameters) const
+Textures::All const &Textures::all() const
 {
-    if(!callback) return 0;
-
-    // Limit iteration to a specific scheme?
-    if(!nameOfScheme.isEmpty())
-    {
-        return iterateTextures(scheme(nameOfScheme), callback, parameters);
-    }
-
-    foreach(Scheme *scheme, d->schemes)
-    {
-        if(int result = iterateTextures(*scheme, callback, parameters))
-            return result;
-    }
-    return 0;
-}
-
-static int iterateManifests(TextureScheme const &scheme,
-    int (*callback)(TextureManifest &manifest, void *parameters), void *parameters)
-{
-    PathTreeIterator<TextureScheme::Index> iter(scheme.index().leafNodes());
-    while(iter.hasNext())
-    {
-        if(int result = callback(iter.next(), parameters))
-            return result;
-    }
-    return 0; // Continue iteration.
-}
-
-int Textures::iterateDeclared(String nameOfScheme,
-    int (*callback)(TextureManifest &manifest, void *parameters), void *parameters) const
-{
-    if(!callback) return 0;
-
-    // Limit iteration to a specific scheme?
-    if(!nameOfScheme.isEmpty())
-    {
-        return iterateManifests(scheme(nameOfScheme), callback, parameters);
-    }
-
-    foreach(Scheme *scheme, d->schemes)
-    {
-        if(int result = iterateManifests(*scheme, callback, parameters))
-            return result;
-    }
-
-    return 0;
+    return d->textures;
 }
 
 static bool pathBeginsWithComparator(TextureManifest const &manifest, void *parameters)
