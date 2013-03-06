@@ -1545,7 +1545,7 @@ boolean XS_DoBuild(Sector* sector, boolean ceiling, LineDef* origin,
 
     // Create a new mover for the plane.
     mover = XS_GetPlaneMover(sector, ceiling);
-    if(P_IsDummy(line))
+    if(P_IsDummy(origin))
         Con_Error("XS_DoBuild: Attempted to use dummy Linedef as XGPlaneMover origin.");
     mover->origin = origin;
 
