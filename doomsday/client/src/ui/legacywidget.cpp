@@ -63,14 +63,14 @@ LegacyWidget::~LegacyWidget()
 
 void LegacyWidget::viewResized()
 {
-    if(isDisabled() || Sys_IsShuttingDown()) return;
+    if(BusyMode_Active() || isDisabled() || Sys_IsShuttingDown()) return;
 
     LOG_AS("LegacyWidget");
     LOG_DEBUG("View resized to ") << root().viewSize().asText();
 
     // Update viewports.
     R_SetViewGrid(0, 0);
-    if(BusyMode_Active() || UI_IsActive() || !App_GameLoaded())
+    if(/*BusyMode_Active() ||*/ UI_IsActive() || !App_GameLoaded())
     {
         // Update for busy mode.
         R_UseViewPort(0);
