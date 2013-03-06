@@ -611,7 +611,7 @@ void XL_SetLineType(LineDef* line, int id)
 
         // Allocate memory for the line type data.
         if(!xline->xg)
-            xline->xg = Z_Malloc(sizeof(xgline_t), PU_MAP, 0);
+            xline->xg = Z_Calloc(sizeof(xgline_t), PU_MAP, 0);
 
         // Init the extended line state.
         xline->xg->disabled = false;
@@ -2530,7 +2530,7 @@ void XL_DoChain(LineDef* lineDef, int chain, boolean activating, mobj_t* actThin
     // We'll use dummies for the chain.
     dummyLineDef = P_AllocDummyLine();
     xdummyLineDef = P_ToXLine(dummyLineDef);
-    xdummyLineDef->xg = Z_Malloc(sizeof(xgline_t), PU_MAP, 0);
+    xdummyLineDef->xg = Z_Calloc(sizeof(xgline_t), PU_MAP, 0);
     dummyFrontSideDef = P_AllocDummySideDef();
     P_SetPtrp(dummyLineDef, DMU_SIDEDEF0, dummyFrontSideDef);
     P_SetPtrp(dummyFrontSideDef, DMU_LINEDEF, dummyLineDef);
