@@ -120,13 +120,22 @@ public:
             float glowStrengthVariance;
             de::Vector2f texOrigin;
 
-            Stage(de::Texture *_texture, int _tics, float _variance,
-                  float _glowStrength, float _glowStrengthVariance,
-                  de::Vector2f const _texOrigin)
+            Stage(de::Texture *_texture, int _tics, float _variance = 0,
+                  float _glowStrength = 0, float _glowStrengthVariance = 0,
+                  de::Vector2f const _texOrigin = de::Vector2f())
                 : texture(_texture), tics(_tics), variance(_variance),
                   glowStrength(_glowStrength),
                   glowStrengthVariance(_glowStrengthVariance),
                   texOrigin(_texOrigin)
+            {}
+
+            Stage(Stage const &other)
+                : texture(other.texture),
+                  tics(other.tics),
+                  variance(other.variance),
+                  glowStrength(other.glowStrength),
+                  glowStrengthVariance(other.glowStrengthVariance),
+                  texOrigin(other.texOrigin)
             {}
 
             static Stage *fromDef(ded_material_layer_stage_t const &def);
@@ -154,6 +163,14 @@ public:
          * Returns the total number of animation stages for the layer.
          */
         int stageCount() const;
+
+        /**
+         * Add a new animation stage to the layer.
+         *
+         * @param stage New stage to add (a copy is made).
+         * @return  Index of the newly added stage (0-based).
+         */
+        int addStage(Stage const &stage);
 
         /**
          * Provides access to the animation stages for efficient traversal.
