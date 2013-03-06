@@ -213,6 +213,12 @@
 #define DENG2_FOR_EACH_CONST_REVERSE(IterClass, Var, ContainerRef) \
     for(IterClass::const_reverse_iterator Var = (ContainerRef).rbegin(); Var != (ContainerRef).rend(); ++Var)
 
+#define DENG2_NO_ASSIGN(ClassName) \
+    private: ClassName &operator = (ClassName const &);
+
+#define DENG2_NO_COPY(ClassName) \
+    private: ClassName(ClassName const &);
+
 /**
  * Macro for starting the definition of a private implementation struct. Example:
  * <pre>
@@ -242,6 +248,11 @@
 #if defined(__cplusplus)
 namespace de {
 
+/**
+ * Interface for all private instance implementation structs.
+ * In a debug build, also contains a verification code that can be used
+ * to assert whether the pointed object really is derived from IPrivate.
+ */
 struct IPrivate {
     virtual ~IPrivate() {}
 #ifdef DENG2_DEBUG
@@ -251,9 +262,17 @@ struct IPrivate {
 #endif
 };
 
+/**
+ * Pointer to the private implementation. Behaves like std::auto_ptr, but with
+ * the additional requirement that the pointed/owned instance must be derived
+ * from de::IPrivate.
+ */
 template <typename InstType>
 class PrivateAutoPtr
 {
+    DENG2_NO_COPY  (PrivateAutoPtr)
+    DENG2_NO_ASSIGN(PrivateAutoPtr)
+
 public:
     PrivateAutoPtr(InstType *p = 0) : ptr(p) {}
     ~PrivateAutoPtr() { reset(); }
@@ -283,9 +302,6 @@ public:
 
 private:
     InstType *ptr;
-
-    PrivateAutoPtr &operator = (PrivateAutoPtr const &other); // no assign
-    PrivateAutoPtr(PrivateAutoPtr const &other); // no copy
 };
 
 /**
