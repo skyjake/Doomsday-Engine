@@ -20,10 +20,8 @@
 
 namespace de {
 
-struct Archive::Instance
+DENG2_PIMPL(Archive)
 {
-    Archive &self;
-
     /// Source data provided at construction.
     IByteArray const *source;
 
@@ -34,7 +32,7 @@ struct Archive::Instance
     /// Contents of the archive have been modified.
     bool modified;
 
-    Instance(Archive &a, IByteArray const *src) : self(a), source(src), index(0), modified(false)
+    Instance(Public &a, IByteArray const *src) : Base(a), source(src), index(0), modified(false)
     {}
 
     ~Instance()

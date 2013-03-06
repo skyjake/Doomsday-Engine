@@ -24,7 +24,7 @@
 
 namespace de {
 
-struct RuleRectangle::Instance : public DelegateRule::ISource
+DENG2_PIMPL_NOREF(RuleRectangle), public DelegateRule::ISource
 {
     // Internal identifiers for the output rules.
     enum OutputIds

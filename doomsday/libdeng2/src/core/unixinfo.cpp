@@ -75,7 +75,7 @@ public:
 
 using namespace internal;
 
-struct UnixInfo::Instance
+DENG2_PIMPL_NOREF(UnixInfo)
 {
     Infos *paths;
     Infos *defaults;

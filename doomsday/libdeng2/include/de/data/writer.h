@@ -209,7 +209,7 @@ public:
     void seek(dint count);
 
     inline void swap(Writer &other) {
-        std::swap(d, other.d);
+        d.swap(other.d);
     }
 
 private:

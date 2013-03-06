@@ -39,7 +39,7 @@ namespace de {
 
 TimeDelta const FLUSH_INTERVAL = .2; // seconds
 
-struct LogBuffer::Instance
+DENG2_PIMPL_NOREF(LogBuffer)
 {
     typedef QList<LogEntry *> EntryList;
     typedef QSet<LogSink *> Sinks;

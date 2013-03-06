@@ -117,8 +117,6 @@ public:
      */
     FileSystem();
 
-    virtual ~FileSystem();
-
     void printIndex();
 
     Folder &root();

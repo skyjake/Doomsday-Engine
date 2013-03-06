@@ -24,7 +24,7 @@
 
 namespace de {
 
-struct Address::Instance
+DENG2_PIMPL_NOREF(Address)
 {
     QHostAddress host;
     duint16 port;

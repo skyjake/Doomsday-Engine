@@ -83,11 +83,6 @@ public:
     StringPool(String *strings, uint count);
 
     /**
-     * Destroys the stringpool.
-     */
-    ~StringPool();
-
-    /**
      * Clear the string pool. All strings in the pool will be destroyed.
      */
     void clear();

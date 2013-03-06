@@ -22,7 +22,7 @@
 
 namespace de {
 
-struct Lockable::Instance
+DENG2_PIMPL_NOREF(Lockable)
 {
     mutable QMutex mutex;
 

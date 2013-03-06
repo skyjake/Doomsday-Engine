@@ -229,6 +229,9 @@
     typedef ClassName Public; \
     struct ClassName::Instance : public de::Private<ClassName>
 
+#define DENG2_PIMPL_NOREF(ClassName) \
+    struct ClassName::Instance : public de::IPrivate
+
 /**
  * Macro for publicly declaring a pointer to the private implementation.
  */
@@ -241,6 +244,11 @@ namespace de {
 
 struct IPrivate {
     virtual ~IPrivate() {}
+#ifdef DENG2_DEBUG
+    unsigned int _privateInstVerification;
+    IPrivate() : _privateInstVerification(0xdeadbeef) {}
+    unsigned int specialVerification() const { return _privateInstVerification; }
+#endif
 };
 
 template <typename InstType>
@@ -253,7 +261,12 @@ public:
     InstType &operator * () const { return *ptr; }
     InstType *operator -> () const { return ptr; }
     void reset(InstType *p = 0) {
-        delete reinterpret_cast<IPrivate *>(ptr);
+        IPrivate *ip = reinterpret_cast<IPrivate *>(ptr);
+        if(ip)
+        {
+            DENG2_ASSERT(ip->specialVerification() == 0xdeadbeef);
+            delete ip;
+        }
         ptr = p;
     }
     InstType *get() const {
@@ -264,8 +277,15 @@ public:
         ptr = 0;
         return p;
     }
+    void swap(PrivateAutoPtr &other) {
+        std::swap(ptr, other.ptr);
+    }
+
 private:
     InstType *ptr;
+
+    PrivateAutoPtr &operator = (PrivateAutoPtr const &other); // no assign
+    PrivateAutoPtr(PrivateAutoPtr const &other); // no copy
 };
 
 /**

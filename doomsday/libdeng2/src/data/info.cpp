@@ -26,7 +26,7 @@ const static QString WHITESPACE = " \t\r\n";
 const static QString WHITESPACE_OR_COMMENT = " \t\r\n#";
 const static QString TOKEN_BREAKING_CHARS = "#:=(){}<>,\"" + WHITESPACE;
 
-struct Info::Instance
+DENG2_PIMPL_NOREF(Info)
 {
     DENG2_ERROR(OutOfElements);
     DENG2_ERROR(EndOfFile);

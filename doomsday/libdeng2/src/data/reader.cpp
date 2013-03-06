@@ -31,7 +31,7 @@
 
 namespace de {
 
-struct Reader::Instance
+DENG2_PIMPL_NOREF(Reader)
 {
     ByteOrder const &convert;
     duint version;

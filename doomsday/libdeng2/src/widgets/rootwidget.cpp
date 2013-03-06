@@ -24,7 +24,7 @@
 
 namespace de {
 
-struct RootWidget::Instance
+DENG2_PIMPL_NOREF(RootWidget)
 {
     RuleRectangle *viewRect;
     Widget *focus;
@@ -49,9 +49,6 @@ struct RootWidget::Instance
 };
 
 RootWidget::RootWidget() : Widget(), d(new Instance)
-{}
-
-RootWidget::~RootWidget()
 {}
 
 Vector2i RootWidget::viewSize() const

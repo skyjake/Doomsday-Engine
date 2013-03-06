@@ -23,7 +23,7 @@
 
 namespace de {
 
-struct PathTree::Node::Instance
+DENG2_PIMPL_NOREF(PathTree::Node)
 {
     /// PathTree which owns this node.
     PathTree &tree;

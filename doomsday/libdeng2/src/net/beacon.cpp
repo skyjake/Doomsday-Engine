@@ -35,7 +35,7 @@ static duint16 const MAX_LISTEN_RANGE = 16;
 
 static char const *discoveryMessage = "Doomsday Beacon 1.0";
 
-struct Beacon::Instance
+DENG2_PIMPL_NOREF(Beacon)
 {
     duint16 port;
     duint16 servicePort;
@@ -59,9 +59,6 @@ Beacon::Beacon(duint16 port) : d(new Instance)
 {
     d->port = port;
 }
-
-Beacon::~Beacon()
-{}
 
 duint16 Beacon::port() const
 {

@@ -42,7 +42,6 @@ class DENG2_PUBLIC RootWidget : public Widget
 {
 public:
     RootWidget();
-    ~RootWidget();
 
     Vector2i viewSize() const;
 

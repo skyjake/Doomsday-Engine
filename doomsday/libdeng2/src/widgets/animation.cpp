@@ -52,7 +52,7 @@ static inline float easeBoth(TimeDelta t)
 /// Global animation time source.
 Clock const *Animation::_clock = 0;
 
-struct Animation::Instance
+DENG2_PIMPL_NOREF(Animation)
 {
     float value;
     float target;

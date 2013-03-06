@@ -149,7 +149,7 @@ typedef std::set<CaselessStringRef> Interns;
 typedef std::vector<CaselessString *> IdMap;
 typedef std::list<InternalId> AvailableIds;
 
-struct StringPool::Instance
+DENG2_PIMPL_NOREF(StringPool)
 {
     /// Interned strings (owns the CaselessString instances).
     Interns interns;
@@ -289,9 +289,6 @@ StringPool::StringPool(String *strings, uint count) : d(new Instance)
         intern(strings[i]);
     }
 }
-
-StringPool::~StringPool()
-{}
 
 void StringPool::clear()
 {

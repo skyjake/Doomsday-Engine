@@ -33,7 +33,7 @@ namespace de {
 
 LegacyCore *LegacyCore::_appCore;
 
-struct LegacyCore::Instance
+DENG2_PIMPL_NOREF(LegacyCore)
 {
     App *app;
 

@@ -325,7 +325,8 @@ public:
     void operator << (Reader &from);
 
 private:
-    DENG2_PRIVATE(d)
+    struct Instance;
+    Instance *d;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Uri::ComposeAsTextFlags)

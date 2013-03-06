@@ -279,7 +279,7 @@ public:
     ByteOrder const &byteOrder() const;
 
     inline void swap(Reader &other) {
-        std::swap(d, other.d);
+        d.swap(other.d);
     }
 
 private:

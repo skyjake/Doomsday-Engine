@@ -70,18 +70,20 @@ int DD_CheckArg(char const *tag, const char** value)
     return 1;
 }
 
+#ifdef __CLIENT__
 void DD_ComposeMainWindowTitle(char* title)
 {
     if(App_GameLoaded() && gx.GetVariable)
     {
-        sprintf(title, DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "%s - %s",
-            (isDedicated? " (Dedicated)" : ""), Str_Text(App_CurrentGame().title()));
+        sprintf(title, "%s - "DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT,
+                Str_Text(App_CurrentGame().title()));
     }
     else
     {
-        sprintf(title, DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "%s", (isDedicated? " (Dedicated)" : ""));
+        strcpy(title, DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT);
     }
 }
+#endif
 
 void DD_InitAPI(void)
 {

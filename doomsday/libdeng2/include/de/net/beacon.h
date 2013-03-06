@@ -41,8 +41,6 @@ public:
 public:
     Beacon(duint16 port);
 
-    virtual ~Beacon();
-
     /**
      * Port the beacon uses for listening.
      * @return  Port.

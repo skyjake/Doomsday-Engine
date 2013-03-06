@@ -43,11 +43,13 @@ void DD_ShutdownAll(void);
 
 int DD_CheckArg(char const *tag, const char** value);
 
+#ifdef __CLIENT__
 /**
  * Compose the title for the main window.
  * @param title  Title text for the window.
  */
 void DD_ComposeMainWindowTitle(char* title);
+#endif
 
 /**
  * Called early on during the startup process so that we can get the console
