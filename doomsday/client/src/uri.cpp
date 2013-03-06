@@ -55,7 +55,7 @@ static String extractScheme(String &stringWithScheme)
     return scheme;
 }
 
-struct Uri::Instance
+DENG2_PIMPL_NOREF(Uri)
 {
     Path path; ///< Path of the Uri.
 

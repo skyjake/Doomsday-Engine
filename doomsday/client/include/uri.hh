@@ -135,7 +135,7 @@ public:
     Uri(Uri const &other);
 
     inline Uri &operator = (Uri other) {
-        std::swap(d, other.d);
+        d.swap(other.d);
         return *this;
     }
 
@@ -144,7 +144,7 @@ public:
      * @param other  Uri.
      */
     inline void swap(Uri &other) {
-        std::swap(d, other.d);
+        d.swap(other.d);
     }
 
     bool operator == (Uri const &other) const;
@@ -325,8 +325,7 @@ public:
     void operator << (Reader &from);
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Uri::ComposeAsTextFlags)
