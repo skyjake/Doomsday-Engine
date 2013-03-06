@@ -234,52 +234,23 @@
  */
 #define DENG2_PRIVATE(Var) \
     struct Instance; \
-    de::PrivateAutoPtr<Instance> Var;
+    std::auto_ptr<Instance> Var;
 
 #if defined(__cplusplus)
 namespace de {
-
-struct IPrivate {
-    virtual ~IPrivate() {}
-};
-
-template <typename InstType>
-class PrivateAutoPtr
-{
-public:
-    PrivateAutoPtr(InstType *p = 0) : ptr(p) {}
-    ~PrivateAutoPtr() { reset(); }
-
-    InstType &operator * () const { return *ptr; }
-    InstType *operator -> () const { return ptr; }
-    void reset(InstType *p = 0) {
-        delete reinterpret_cast<IPrivate *>(ptr);
-        ptr = p;
-    }
-    InstType *get() const {
-        return ptr;
-    }
-    InstType *release() {
-        InstType *p = ptr;
-        ptr = 0;
-        return p;
-    }
-private:
-    InstType *ptr;
-};
 
 /**
  * Utility template for defining private implementation data (pimpl idiom). Use
  * this in source files, not in headers.
  */
-template <typename PublicType>
-struct Private : public IPrivate {
-    PublicType &self;
-    PublicType *thisPublic;
-    typedef Private<PublicType> Base;
+template <typename Type>
+struct Private {
+    Type &self;
+    Type *thisPublic;
+    typedef Private<Type> Base;
 
-    Private(PublicType &i) : self(i), thisPublic(&i) {}
-    Private(PublicType *i) : self(*i), thisPublic(i) {}
+    Private(Type &i) : self(i), thisPublic(&i) {}
+    Private(Type *i) : self(*i), thisPublic(i) {}
 };
 
 template <typename FromType, typename ToType>
