@@ -220,7 +220,11 @@
     private: ClassName(ClassName const &);
 
 /**
- * Macro for starting the definition of a private implementation struct. Example:
+ * Macro for starting the definition of a private implementation struct. The
+ * struct holds a reference to the public instance, which must be specified in
+ * the call to the base class constructor. @see de::Private
+ *
+ * Example:
  * <pre>
  *    DENG2_PIMPL(MyClass)
  *    {
@@ -235,11 +239,18 @@
     typedef ClassName Public; \
     struct ClassName::Instance : public de::Private<ClassName>
 
+/**
+ * Macro for starting the definition of a private implementation struct without
+ * a reference to the public instance. This is useful for simpler classes where
+ * the private implementation mostly holds member variables.
+ */
 #define DENG2_PIMPL_NOREF(ClassName) \
     struct ClassName::Instance : public de::IPrivate
 
 /**
  * Macro for publicly declaring a pointer to the private implementation.
+ * de::PrivateAutoPtr owns the private instance and will automatically delete
+ * it when the PrivateAutoPtr is destroyed.
  */
 #define DENG2_PRIVATE(Var) \
     struct Instance; \
@@ -258,7 +269,7 @@ struct IPrivate {
 #ifdef DENG2_DEBUG
     unsigned int _privateInstVerification;
     IPrivate() : _privateInstVerification(0xdeadbeef) {}
-    unsigned int specialVerification() const { return _privateInstVerification; }
+    unsigned int privateInstVerification() const { return _privateInstVerification; }
 #endif
 };
 
@@ -283,7 +294,7 @@ public:
         IPrivate *ip = reinterpret_cast<IPrivate *>(ptr);
         if(ip)
         {
-            DENG2_ASSERT(ip->specialVerification() == 0xdeadbeef);
+            DENG2_ASSERT(ip->privateInstVerification() == 0xdeadbeef);
             delete ip;
         }
         ptr = p;
