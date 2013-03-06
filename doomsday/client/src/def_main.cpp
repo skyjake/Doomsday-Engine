@@ -1067,7 +1067,7 @@ static ded_group_t *findGroupDefByFrameTextureUri(de::Uri const &uri)
         // Or empty/single-frame groups.
         if(grp.count.num < 2) continue;
 
-        for(int k = grp.count.num; k--> 0; )
+        for(int k = 0; k < grp.count.num; ++k)
         {
             ded_group_member_t &gm = grp.members[k];
 
@@ -1078,6 +1078,9 @@ static ded_group_t *findGroupDefByFrameTextureUri(de::Uri const &uri)
                 // Found one.
                 return &grp;
             }
+
+            // Only animate if the first frame in the group?
+            if(grp.flags & AGF_FIRST_ONLY) break;
         }
     }
 
