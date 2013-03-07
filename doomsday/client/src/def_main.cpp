@@ -1182,7 +1182,7 @@ static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
                         else
                             detailTextureUri = reinterpret_cast<de::Uri const *>(detailDef->material2);
 
-                        Texture &texture = App_Textures().find(*detailTextureUri).texture();
+                        Texture &texture = App_Textures().scheme("Details").findByResourceUri(*detailTextureUri).texture();
                         dlayer->addStage(Material::DetailLayer::Stage(&texture, stage->tics, stage->variance,
                                                                       detailDef->stage.scale, detailDef->stage.strength,
                                                                       detailDef->stage.maxDistance));
