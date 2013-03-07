@@ -48,8 +48,8 @@ DENG2_PIMPL(Material::Animation)
         : Base(i), material(_material), context(_context)
     {}
 
-    template <typename Type>
-    void resetLayer(Material::Animation::LayerState &ls, Type const &stage)
+    template <typename StageType>
+    void resetLayer(Material::Animation::LayerState &ls, StageType const &stage)
     {
         ls.stage = 0;
         ls.tics  = stage.tics;
@@ -86,7 +86,7 @@ DENG2_PIMPL(Material::Animation)
         else
         {
             typename LayerType::Stage const *lsCur = layer.stages()[ls.stage];
-            ls.inter = 1 - (ls.tics - frameTimePos) / float( lsCur->tics );
+            ls.inter = 1.f - ls.tics / float( lsCur->tics );
         }
     }
 
@@ -118,7 +118,7 @@ DENG2_PIMPL(Material::Animation)
         else
         {
             Material::Decoration::Stage const *lsCur = decor.stages()[ds.stage];
-            ds.inter = 1 - (ds.tics - frameTimePos) / float( lsCur->tics );
+            ds.inter = 1.f - ds.tics / float( lsCur->tics );
         }
     }
 };
