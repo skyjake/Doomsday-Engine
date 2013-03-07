@@ -1151,21 +1151,116 @@ static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
                     }
                 }
             }
+        }
 
-            // Is there a Detail definition we need to produce a layer for?
-            ded_detailtexture_t *detailDef = Def_GetDetailTex(reinterpret_cast<uri_s *>(&textureUri)/*, UNKNOWN VALUE, manifest.isCustom()*/);
-            if(detailDef)
+        if(!material.isDetailed())
+        {
+            // Are there Detail definitions we need to produce a layer for?
+            Material::DetailLayer *dlayer = 0;
+
+            for(int i = 0; i < layer0->stageCount(); ++i)
             {
-                material.newDetailLayer(detailDef);
-                // Add stages.
+                Material::Layer::Stage *stage = layer0->stages()[i];
+                de::Uri textureUri(stage->texture->manifest().composeUri());
+
+                ded_detailtexture_t const *detailDef = Def_GetDetailTex(reinterpret_cast<uri_s *>(&textureUri)/*, UNKNOWN VALUE, manifest.isCustom()*/);
+                if(!detailDef) continue;
+
+                if(!dlayer)
+                {
+                    // Add a new detail layer.
+                    dlayer = material.newDetailLayer(detailDef);
+                }
+                else
+                {
+                    // Add a new stage.
+                    try
+                    {
+                        de::Uri const *detailTextureUri;
+                        if(detailDef->material1 && reinterpret_cast<de::Uri const &>(*detailDef->material1) == textureUri)
+                            detailTextureUri = reinterpret_cast<de::Uri const *>(detailDef->material1);
+                        else
+                            detailTextureUri = reinterpret_cast<de::Uri const *>(detailDef->material2);
+
+                        Texture &texture = App_Textures().find(*detailTextureUri).texture();
+                        dlayer->addStage(Material::DetailLayer::Stage(&texture, stage->tics, stage->variance,
+                                                                      detailDef->stage.scale, detailDef->stage.strength,
+                                                                      detailDef->stage.maxDistance));
+
+                        if(dlayer->stageCount() == 2)
+                        {
+                            // Update the first stage with timing info.
+                            Material::Layer::Stage const *stage0  = layer0->stages()[0];
+                            Material::DetailLayer::Stage *dstage0 = dlayer->stages()[0];
+
+                            dstage0->tics     = stage0->tics;
+                            dstage0->variance = stage0->variance;
+                        }
+                    }
+                    catch(TextureManifest::MissingTextureError const &)
+                    {} // Ignore this error.
+                    catch(Textures::NotFoundError const &)
+                    {} // Ignore this error.
+                }
             }
+        }
 
-            // Is there a Reflection definition we need to produce a layer for?
-            ded_reflection_t *shineDef = Def_GetReflection(reinterpret_cast<uri_s *>(&textureUri)/*, UNKNOWN VALUE, manifest.isCustom()*/);
-            if(shineDef)
+        if(!material.isShiny())
+        {
+            // Are there Reflection definition we need to produce a layer for?
+            Material::ShineLayer *slayer = 0;
+
+            for(int i = 0; i < layer0->stageCount(); ++i)
             {
-                material.newShineLayer(shineDef);
-                // Add stages.
+                Material::Layer::Stage *stage = layer0->stages()[i];
+                de::Uri textureUri(stage->texture->manifest().composeUri());
+
+                ded_reflection_t const *shineDef = Def_GetReflection(reinterpret_cast<uri_s *>(&textureUri)/*, UNKNOWN VALUE, manifest.isCustom()*/);
+                if(!shineDef) continue;
+
+                if(!slayer)
+                {
+                    // Add a new shine layer.
+                    slayer = material.newShineLayer(shineDef);
+                }
+                else
+                {
+                    // Add a new stage.
+                    try
+                    {
+                        Texture &texture = App_Textures().scheme("Reflections").findByResourceUri(reinterpret_cast<de::Uri const &>(*shineDef->stage.texture)).texture();
+
+                        Texture *maskTexture = 0;
+                        try
+                        {
+                            maskTexture = &App_Textures().scheme("Masks").findByResourceUri(reinterpret_cast<de::Uri const &>(*shineDef->stage.maskTexture)).texture();
+                        }
+                        catch(TextureManifest::MissingTextureError const &)
+                        {} // Ignore this error.
+                        catch(Textures::NotFoundError const &)
+                        {} // Ignore this error.
+
+                        slayer->addStage(Material::ShineLayer::Stage(&texture, stage->tics, stage->variance,
+                                                                     maskTexture, shineDef->stage.blendMode,
+                                                                     shineDef->stage.shininess,
+                                                                     Vector3f(shineDef->stage.minColor),
+                                                                     Vector2f(shineDef->stage.maskWidth, shineDef->stage.maskHeight)));
+
+                        if(slayer->stageCount() == 2)
+                        {
+                            // Update the first stage with timing info.
+                            Material::Layer::Stage const *stage0 = layer0->stages()[0];
+                            Material::ShineLayer::Stage *sstage0 = slayer->stages()[0];
+
+                            sstage0->tics     = stage0->tics;
+                            sstage0->variance = stage0->variance;
+                        }
+                    }
+                    catch(TextureManifest::MissingTextureError const &)
+                    {} // Ignore this error.
+                    catch(Textures::NotFoundError const &)
+                    {} // Ignore this error.
+                }
             }
         }
     }
@@ -1461,7 +1556,7 @@ void Def_Read()
         }
     }
 
-    // Detail textures.
+    // Detail textures (Define textures).
     App_Textures().scheme("Details").clear();
     for(int i = 0; i < defs.count.details.num; ++i)
     {
@@ -1476,7 +1571,7 @@ void Def_Read()
         R_DefineTexture("Details", reinterpret_cast<de::Uri &>(*dtl->stage.texture));
     }
 
-    // Surface reflections.
+    // Surface reflections (Define textures).
     App_Textures().scheme("Reflections").clear();
     App_Textures().scheme("Masks").clear();
     for(int i = 0; i < defs.count.reflections.num; ++i)

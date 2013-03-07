@@ -191,17 +191,26 @@ public:
     public:
         struct Stage
         {
+            de::Texture *texture; // The file/lump with the detail texture.
             int tics;
             float variance;
-            de::Texture *texture; // The file/lump with the detail texture.
             float scale;
             float strength;
             float maxDistance;
 
-            Stage(int _tics, float _variance, de::Texture *_texture,
-                  float _scale, float _strength, float _maxDistance)
+            Stage(de::Texture *_texture, int _tics, float _variance = 0,
+                  float _scale = 1, float _strength = 1, float _maxDistance = 0)
                 : tics(_tics), variance(_variance), texture(_texture),
                   scale(_scale), strength(_strength), maxDistance(_maxDistance)
+            {}
+
+            Stage(Stage const &other)
+                : texture(other.texture),
+                  tics(other.tics),
+                  variance(other.variance),
+                  scale(other.scale),
+                  strength(other.strength),
+                  maxDistance(other.maxDistance)
             {}
 
             static Stage *fromDef(ded_detail_stage_t const &def);
@@ -231,6 +240,14 @@ public:
         int stageCount() const;
 
         /**
+         * Add a new animation stage to the layer.
+         *
+         * @param stage New stage to add (a copy is made).
+         * @return  Index of the newly added stage (0-based).
+         */
+        int addStage(Stage const &stage);
+
+        /**
          * Provides access to the animation stages for efficient traversal.
          */
         Stages const &stages() const;
@@ -246,23 +263,34 @@ public:
     public:
         struct Stage
         {
+            de::Texture *texture;
             int tics;
             float variance;
-            de::Texture *texture;
             de::Texture *maskTexture;
             blendmode_t blendMode; // Blend mode flags (bm_*).
             float shininess;
             de::Vector3f minColor;
             de::Vector2f maskDimensions;
 
-            Stage(int _tics, float _variance, de::Texture *_texture,
-                  de::Texture *_maskTexture, blendmode_t _blendMode,
-                  float _shininess, de::Vector3f const &_minColor,
-                  de::Vector2f const &_maskDimensions)
+            Stage(de::Texture *_texture, int _tics, float _variance,
+                  de::Texture *_maskTexture = 0, blendmode_t _blendMode = BM_ADD,
+                  float _shininess = 1, de::Vector3f const &_minColor = de::Vector3f(0, 0, 0),
+                  de::Vector2f const &_maskDimensions = de::Vector2f(1, 1))
                 : tics(_tics), variance(_variance), texture(_texture),
                   maskTexture(_maskTexture), blendMode(_blendMode),
                   shininess(_shininess), minColor(_minColor),
                   maskDimensions(_maskDimensions)
+            {}
+
+            Stage(Stage const &other)
+                : texture(other.texture),
+                  tics(other.tics),
+                  variance(other.variance),
+                  maskTexture(other.maskTexture),
+                  blendMode(other.blendMode),
+                  shininess(other.shininess),
+                  minColor(other.minColor),
+                  maskDimensions(other.maskDimensions)
             {}
 
             static Stage *fromDef(ded_shine_stage_t const &def);
@@ -290,6 +318,14 @@ public:
          * Returns the total number of animation stages for the layer.
          */
         int stageCount() const;
+
+        /**
+         * Add a new animation stage to the layer.
+         *
+         * @param stage New stage to add (a copy is made).
+         * @return  Index of the newly added stage (0-based).
+         */
+        int addStage(Stage const &stage);
 
         /**
          * Provides access to the animation stages for efficient traversal.
