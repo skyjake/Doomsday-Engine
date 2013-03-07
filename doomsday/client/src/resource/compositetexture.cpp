@@ -83,11 +83,6 @@ CompositeTexture::CompositeTexture(String percentEncodedName,
     : d(new Instance(this, percentEncodedName, width, height, flags))
 {}
 
-CompositeTexture::~CompositeTexture()
-{
-    delete d;
-}
-
 String CompositeTexture::percentEncodedName() const
 {
     return d->name;

@@ -80,11 +80,6 @@ void Textures::consoleRegister()
 Textures::Textures() : d(new Instance(this))
 {}
 
-Textures::~Textures()
-{
-    delete d;
-}
-
 Textures::Scheme &Textures::scheme(String name) const
 {
     LOG_AS("Textures::scheme");

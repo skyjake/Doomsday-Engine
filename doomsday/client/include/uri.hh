@@ -134,10 +134,8 @@ public:
      */
     Uri(Uri const &other);
 
-    ~Uri();
-
     inline Uri &operator = (Uri other) {
-        std::swap(d, other.d);
+        d.swap(other.d);
         return *this;
     }
 
@@ -146,7 +144,7 @@ public:
      * @param other  Uri.
      */
     inline void swap(Uri &other) {
-        std::swap(d, other.d);
+        d.swap(other.d);
     }
 
     bool operator == (Uri const &other) const;

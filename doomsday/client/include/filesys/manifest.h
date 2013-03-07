@@ -42,7 +42,6 @@ public:
      * @param name      An expected name for the associated file.
      */
     ResourceManifest(resourceclassid_t rClass, int fFlags, String *name = 0);
-    ~ResourceManifest();
 
     /// @return Class of the associated resource.
     resourceclassid_t resourceClass() const;

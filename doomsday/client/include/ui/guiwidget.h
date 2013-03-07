@@ -30,7 +30,6 @@ class GuiWidget : public de::Widget
 {
 public:
     GuiWidget(de::String const &name = "");
-    ~GuiWidget();
 
     /**
      * Returns the rule rectangle that defines the placement of the widget on

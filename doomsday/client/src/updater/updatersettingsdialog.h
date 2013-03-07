@@ -32,7 +32,6 @@ class UpdaterSettingsDialog : public UpdaterDialog
 
 public:
     explicit UpdaterSettingsDialog(QWidget *parent = 0);
-    ~UpdaterSettingsDialog();
 
     void fetch();
 

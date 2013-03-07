@@ -30,7 +30,7 @@
 
 namespace de {
 
-struct Writer::Instance
+DENG2_PIMPL_NOREF(Writer)
 {
     ByteOrder const &convert;
     IByteArray *destination;
@@ -99,11 +99,6 @@ Writer::Writer(Writer const &other)
 Writer::Writer(Writer const &other, ByteOrder const &byteOrder)
     : d(new Instance(*other.d, byteOrder))
 {}
-
-Writer::~Writer()
-{
-    delete d;
-}
 
 Writer &Writer::withHeader()
 {

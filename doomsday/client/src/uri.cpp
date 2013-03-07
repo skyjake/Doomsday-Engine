@@ -55,7 +55,7 @@ static String extractScheme(String &stringWithScheme)
     return scheme;
 }
 
-struct Uri::Instance
+DENG2_PIMPL_NOREF(Uri)
 {
     Path path; ///< Path of the Uri.
 
@@ -316,11 +316,6 @@ Uri Uri::fromNativeDirPath(NativePath const &nativeDirPath, resourceclassid_t de
 bool Uri::isEmpty() const
 {
     return d->path.isEmpty();
-}
-
-Uri::~Uri()
-{
-    delete d;
 }
 
 bool Uri::operator == (Uri const &other) const

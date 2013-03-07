@@ -24,7 +24,7 @@
 
 namespace de {
 
-struct Address::Instance
+DENG2_PIMPL_NOREF(Address)
 {
     QHostAddress host;
     duint16 port;
@@ -59,11 +59,6 @@ Address::Address(Address const &other) : LogEntry::Arg::Base(), d(new Instance)
 {
     d->host = other.d->host;
     d->port = other.d->port;
-}
-
-Address::~Address()
-{
-    delete d;
 }
 
 Address &Address::operator = (Address const &other)

@@ -122,9 +122,7 @@ TextCanvas::TextCanvas(Size const &size) : d(new Instance(size))
 }
 
 TextCanvas::~TextCanvas()
-{
-    delete d;
-}
+{}
 
 TextCanvas::Size TextCanvas::size() const
 {

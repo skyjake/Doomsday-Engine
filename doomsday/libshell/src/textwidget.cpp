@@ -64,11 +64,6 @@ struct TextWidget::Instance
 TextWidget::TextWidget(String const &name) : Widget(name), d(new Instance)
 {}
 
-TextWidget::~TextWidget()
-{
-    delete d;
-}
-
 TextRootWidget &TextWidget::root() const
 {
     TextRootWidget *r = dynamic_cast<TextRootWidget *>(&Widget::root());

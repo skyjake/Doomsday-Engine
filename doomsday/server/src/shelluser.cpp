@@ -164,11 +164,6 @@ void ShellUser::sendMapOutline()
     *this << *packet;
 }
 
-ShellUser::~ShellUser()
-{
-    delete d;
-}
-
 void ShellUser::handleIncomingPackets()
 {
     forever

@@ -26,7 +26,7 @@ const static QString WHITESPACE = " \t\r\n";
 const static QString WHITESPACE_OR_COMMENT = " \t\r\n#";
 const static QString TOKEN_BREAKING_CHARS = "#:=(){}<>,\"" + WHITESPACE;
 
-struct Info::Instance
+DENG2_PIMPL_NOREF(Info)
 {
     DENG2_ERROR(OutOfElements);
     DENG2_ERROR(EndOfFile);
@@ -479,21 +479,14 @@ Info::Element *Info::BlockElement::findByPath(String const &path) const
     return e;
 }
 
-Info::Info()
-{
-    d = new Instance;
-}
+Info::Info() : d(new Instance)
+{}
 
 Info::Info(String const &source)
 {
     QScopedPointer<Instance> inst(new Instance); // parsing may throw exception
     inst->parse(source);
-    d = inst.take();
-}
-
-Info::~Info()
-{
-    delete d;
+    d.reset(inst.take());
 }
 
 void Info::parse(String const &infoSource)

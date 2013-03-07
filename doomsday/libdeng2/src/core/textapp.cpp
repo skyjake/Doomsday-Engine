@@ -43,11 +43,6 @@ TextApp::TextApp(int &argc, char **argv)
       d(new Instance(this))
 {}
 
-TextApp::~TextApp()
-{
-    delete d;
-}
-
 bool TextApp::notify(QObject *receiver, QEvent *event)
 {
     try

@@ -31,7 +31,7 @@ namespace de {
 
 static FileSystem::Index const emptyIndex;
 
-struct FileSystem::Instance
+DENG2_PIMPL_NOREF(FileSystem)
 {
     /// The main index to all files in the file system.
     FileSystem::Index index;
@@ -47,11 +47,6 @@ struct FileSystem::Instance
 
 FileSystem::FileSystem() : d(new Instance)
 {}
-
-FileSystem::~FileSystem()
-{
-    delete d;
-}
 
 void FileSystem::refresh()
 {

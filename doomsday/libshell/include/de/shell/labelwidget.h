@@ -32,7 +32,6 @@ class LIBSHELL_PUBLIC LabelWidget : public TextWidget
 {   
 public:
     LabelWidget(String const &name = "");
-    ~LabelWidget();
 
     /**
      * Sets the background for the label.

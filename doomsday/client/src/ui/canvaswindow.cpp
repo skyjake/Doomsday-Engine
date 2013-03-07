@@ -124,20 +124,13 @@ DENG2_PIMPL(CanvasWindow)
 };
 
 CanvasWindow::CanvasWindow(QWidget *parent)
-    : QMainWindow(parent)
+    : QMainWindow(parent), d(new Instance(this))
 {
-    d = new Instance(this);
-
     // Create the drawing canvas for this window.
     setCentralWidget(d->canvas = new Canvas(this)); // window takes ownership
 
     // All input goes to the canvas.
     d->canvas->setFocus();
-}
-
-CanvasWindow::~CanvasWindow()
-{
-    delete d;
 }
 
 de::RootWidget &CanvasWindow::root()

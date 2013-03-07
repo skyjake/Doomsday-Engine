@@ -31,7 +31,7 @@
 
 namespace de {
 
-struct Config::Instance
+DENG2_PIMPL_NOREF(Config)
 {
     /// Configuration file name.
     Path configPath;
@@ -62,8 +62,6 @@ Config::~Config()
     {
         LOG_ERROR("") << err.asText();
     }
-
-    delete d;
 }
 
 void Config::read()

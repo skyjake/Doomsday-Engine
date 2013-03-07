@@ -51,11 +51,6 @@ Link::Link(Socket *openSocket) : d(new Instance(this))
     takeOver(openSocket);
 }
 
-Link::~Link()
-{
-    delete d;
-}
-
 Protocol &Link::protocol()
 {
     return d->protocol;

@@ -31,7 +31,6 @@ class GuiShellApp : public QtGuiApp
 
 public:
     GuiShellApp(int &argc, char **argv);
-    ~GuiShellApp();
 
     LinkWindow *newOrReusedConnectionWindow();
     de::shell::ServerFinder &serverFinder();

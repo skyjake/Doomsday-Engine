@@ -24,7 +24,7 @@ namespace de {
 
 bool Rule::_invalidRulesExist = false;
 
-struct Rule::Instance
+DENG2_PIMPL_NOREF(Rule)
 {
     typedef std::set<Rule const *> Dependencies;
     Dependencies dependencies; // ref'd
@@ -54,9 +54,7 @@ Rule::Rule(float initialValue) : d(new Instance(initialValue))
 {}
 
 Rule::~Rule()
-{
-    delete d;
-}
+{}
 
 float Rule::value() const
 {

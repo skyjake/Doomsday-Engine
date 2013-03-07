@@ -33,7 +33,6 @@ class StatusWidget : public QWidget
 
 public:
     explicit StatusWidget(QWidget *parent = 0);
-    ~StatusWidget();
 
     void setGameState(QString mode, QString rules, QString mapId, QString mapTitle);
     void setMapOutline(de::shell::MapOutlinePacket const &outline);

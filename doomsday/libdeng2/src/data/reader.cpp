@@ -31,7 +31,7 @@
 
 namespace de {
 
-struct Reader::Instance
+DENG2_PIMPL_NOREF(Reader)
 {
     ByteOrder const &convert;
     duint version;
@@ -210,11 +210,6 @@ Reader::Reader(IIStream &stream, ByteOrder const &byteOrder)
 Reader::Reader(IIStream const &stream, ByteOrder const &byteOrder)
     : d(new Instance(byteOrder, &stream))
 {}
-
-Reader::~Reader()
-{
-    delete d;
-}
 
 Reader &Reader::withHeader()
 {

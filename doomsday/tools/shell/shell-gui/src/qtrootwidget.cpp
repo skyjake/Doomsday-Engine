@@ -106,11 +106,6 @@ QtRootWidget::QtRootWidget(QWidget *parent)
     d->cursorTimer->start(BLINK_INTERVAL);
 }
 
-QtRootWidget::~QtRootWidget()
-{
-    delete d;
-}
-
 TextRootWidget &QtRootWidget::rootWidget()
 {
     return d->root;

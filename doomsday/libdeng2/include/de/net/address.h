@@ -53,8 +53,6 @@ public:
 
     Address(Address const &other);
 
-    ~Address();
-
     Address &operator = (Address const &other);
 
     bool operator < (Address const &other) const;

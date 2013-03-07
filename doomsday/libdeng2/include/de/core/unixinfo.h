@@ -51,8 +51,6 @@ public:
      */
     UnixInfo();
 
-    ~UnixInfo();
-
     /**
      * Returns a path preference.
      *

@@ -34,7 +34,7 @@ namespace de {
 typedef QMap<String, Function::NativeEntryPoint> RegisteredEntryPoints;
 static RegisteredEntryPoints entryPoints;
 
-struct Function::Instance
+DENG2_PIMPL_NOREF(Function)
 {
     /// Argument names.
     Function::Arguments arguments;
@@ -98,8 +98,6 @@ Function::~Function()
         // Stop observing the namespace.
         d->globals->audienceForDeletion.remove(this);
     }
-
-    delete d;
 }
 
 String Function::asText() const

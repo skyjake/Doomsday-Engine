@@ -30,10 +30,8 @@
 
 namespace de {
 
-struct ArchiveFeed::Instance
+DENG2_PIMPL(ArchiveFeed)
 {
-    ArchiveFeed &self;
-
     /// File where the archive is stored (in a serialized format).
     File &file;
 
@@ -49,7 +47,7 @@ struct ArchiveFeed::Instance
     /// The feed whose archive this feed is using.
     ArchiveFeed *parentFeed;
 
-    Instance(ArchiveFeed *feed, File &f) : self(*feed), file(f), arch(0), parentFeed(0)
+    Instance(Public *feed, File &f) : Base(feed), file(f), arch(0), parentFeed(0)
     {
         /// @todo Observe the file for deletion.
 
@@ -75,8 +73,8 @@ struct ArchiveFeed::Instance
         }
     }
 
-    Instance(ArchiveFeed *feed, ArchiveFeed &parentFeed, String const &path)
-        : self(*feed), file(parentFeed.d->file), arch(0), basePath(path), parentFeed(&parentFeed)
+    Instance(Public *feed, ArchiveFeed &parentFeed, String const &path)
+        : Base(feed), file(parentFeed.d->file), arch(0), basePath(path), parentFeed(&parentFeed)
     {}
 
     ~Instance()
@@ -181,8 +179,7 @@ ArchiveFeed::ArchiveFeed(ArchiveFeed &parentFeed, String const &basePath)
 ArchiveFeed::~ArchiveFeed()
 {
     LOG_AS("~ArchiveFeed");
-
-    delete d;
+    d.reset();
 }
 
 String ArchiveFeed::description() const

@@ -130,11 +130,6 @@ LocalServerDialog::LocalServerDialog(QWidget *parent)
     validate();
 }
 
-LocalServerDialog::~LocalServerDialog()
-{
-    delete d;
-}
-
 quint16 LocalServerDialog::port() const
 {
     return d->port->text().toInt();

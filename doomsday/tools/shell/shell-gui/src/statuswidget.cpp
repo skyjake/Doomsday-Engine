@@ -58,13 +58,6 @@ StatusWidget::StatusWidget(QWidget *parent)
     d->smallFont.setPointSize(font().pointSize() * 3 / 4);
     d->largeFont.setPointSize(font().pointSize() * 3 / 2);
     d->largeFont.setBold(true);
-
-
-}
-
-StatusWidget::~StatusWidget()
-{
-    delete d;
 }
 
 void StatusWidget::setGameState(QString mode, QString rules, QString mapId, QString mapTitle)

@@ -46,11 +46,6 @@ DENG2_PIMPL(AbstractLink)
 AbstractLink::AbstractLink() : d(new Instance(this))
 {}
 
-AbstractLink::~AbstractLink()
-{
-    delete d;
-}
-
 void AbstractLink::connectDomain(String const &domain, TimeDelta const &timeout)
 {
     disconnect();

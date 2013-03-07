@@ -34,8 +34,6 @@ class WindowSystem : public de::System
 public:
     WindowSystem();
 
-    ~WindowSystem();
-
     bool processEvent(de::Event const &);
 
     void timeChanged(de::Clock const &);

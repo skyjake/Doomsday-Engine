@@ -44,16 +44,15 @@ namespace de {
  */
 static duint32 recordIdCounter = 0;
 
-struct Record::Instance
+DENG2_PIMPL(Record)
 {
-    Record &self;
     Record::Members members;
     duint32 uniqueId; ///< Identifier to track serialized references.
     duint32 oldUniqueId;
 
     typedef QMap<duint32, Record *> RefMap;
 
-    Instance(Record &r) : self(r), uniqueId(++recordIdCounter), oldUniqueId(0)
+    Instance(Public &r) : Base(r), uniqueId(++recordIdCounter), oldUniqueId(0)
     {}
 
     bool isSubrecord(Variable const &var) const
@@ -151,8 +150,6 @@ Record::~Record()
 {
     DENG2_FOR_AUDIENCE(Deletion, i) i->recordBeingDeleted(*this);
     clear();
-
-    delete d;
 }
 
 void Record::clear()

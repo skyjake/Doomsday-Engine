@@ -13,7 +13,6 @@ class OpenDialog : public QDialog
 
 public:
     explicit OpenDialog(QWidget *parent = 0);
-    ~OpenDialog();
 
     QString address() const;
 

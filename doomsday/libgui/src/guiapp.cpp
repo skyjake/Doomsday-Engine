@@ -40,11 +40,6 @@ GuiApp::GuiApp(int &argc, char **argv)
       d(new Instance(this))
 {}
 
-GuiApp::~GuiApp()
-{
-    delete d;
-}
-
 bool GuiApp::notify(QObject *receiver, QEvent *event)
 {
     try

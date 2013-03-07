@@ -104,8 +104,6 @@ public:
      */
     Writer(Writer const &other, ByteOrder const &byteOrder);
 
-    virtual ~Writer();
-
     /**
      * Writes the serialization protocol header to the destination. This should
      * be used when the Writer is responsible for the containment stream
@@ -211,7 +209,7 @@ public:
     void seek(dint count);
 
     inline void swap(Writer &other) {
-        std::swap(d, other.d);
+        d.swap(other.d);
     }
 
 private:

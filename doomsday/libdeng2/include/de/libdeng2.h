@@ -213,8 +213,18 @@
 #define DENG2_FOR_EACH_CONST_REVERSE(IterClass, Var, ContainerRef) \
     for(IterClass::const_reverse_iterator Var = (ContainerRef).rbegin(); Var != (ContainerRef).rend(); ++Var)
 
+#define DENG2_NO_ASSIGN(ClassName) \
+    private: ClassName &operator = (ClassName const &);
+
+#define DENG2_NO_COPY(ClassName) \
+    private: ClassName(ClassName const &);
+
 /**
- * Macro for starting the definition of a private implementation struct. Example:
+ * Macro for starting the definition of a private implementation struct. The
+ * struct holds a reference to the public instance, which must be specified in
+ * the call to the base class constructor. @see de::Private
+ *
+ * Example:
  * <pre>
  *    DENG2_PIMPL(MyClass)
  *    {
@@ -230,26 +240,93 @@
     struct ClassName::Instance : public de::Private<ClassName>
 
 /**
+ * Macro for starting the definition of a private implementation struct without
+ * a reference to the public instance. This is useful for simpler classes where
+ * the private implementation mostly holds member variables.
+ */
+#define DENG2_PIMPL_NOREF(ClassName) \
+    struct ClassName::Instance : public de::IPrivate
+
+/**
  * Macro for publicly declaring a pointer to the private implementation.
+ * de::PrivateAutoPtr owns the private instance and will automatically delete
+ * it when the PrivateAutoPtr is destroyed.
  */
 #define DENG2_PRIVATE(Var) \
     struct Instance; \
-    Instance *Var;
+    de::PrivateAutoPtr<Instance> Var;
 
 #if defined(__cplusplus)
 namespace de {
 
 /**
+ * Interface for all private instance implementation structs.
+ * In a debug build, also contains a verification code that can be used
+ * to assert whether the pointed object really is derived from IPrivate.
+ */
+struct IPrivate {
+    virtual ~IPrivate() {}
+#ifdef DENG2_DEBUG
+    unsigned int _privateInstVerification;
+    IPrivate() : _privateInstVerification(0xdeadbeef) {}
+    unsigned int privateInstVerification() const { return _privateInstVerification; }
+#endif
+};
+
+/**
+ * Pointer to the private implementation. Behaves like std::auto_ptr, but with
+ * the additional requirement that the pointed/owned instance must be derived
+ * from de::IPrivate.
+ */
+template <typename InstType>
+class PrivateAutoPtr
+{
+    DENG2_NO_COPY  (PrivateAutoPtr)
+    DENG2_NO_ASSIGN(PrivateAutoPtr)
+
+public:
+    PrivateAutoPtr(InstType *p = 0) : ptr(p) {}
+    ~PrivateAutoPtr() { reset(); }
+
+    InstType &operator * () const { return *ptr; }
+    InstType *operator -> () const { return ptr; }
+    void reset(InstType *p = 0) {
+        IPrivate *ip = reinterpret_cast<IPrivate *>(ptr);
+        if(ip)
+        {
+            DENG2_ASSERT(ip->privateInstVerification() == 0xdeadbeef);
+            delete ip;
+        }
+        ptr = p;
+    }
+    InstType *get() const {
+        return ptr;
+    }
+    InstType *release() {
+        InstType *p = ptr;
+        ptr = 0;
+        return p;
+    }
+    void swap(PrivateAutoPtr &other) {
+        std::swap(ptr, other.ptr);
+    }
+
+private:
+    InstType *ptr;
+};
+
+/**
  * Utility template for defining private implementation data (pimpl idiom). Use
  * this in source files, not in headers.
  */
-template <typename Type>
-struct Private {
-    Type &self;
-    Type *thisPublic;
-    typedef Private<Type> Base;
-    Private(Type &i) : self(i), thisPublic(&i) {}
-    Private(Type *i) : self(*i), thisPublic(i) {}
+template <typename PublicType>
+struct Private : public IPrivate {
+    PublicType &self;
+    PublicType *thisPublic;
+    typedef Private<PublicType> Base;
+
+    Private(PublicType &i) : self(i), thisPublic(&i) {}
+    Private(PublicType *i) : self(*i), thisPublic(i) {}
 };
 
 template <typename FromType, typename ToType>

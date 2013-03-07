@@ -44,8 +44,6 @@ class DENG2_PUBLIC RuleRectangle : DENG2_OBSERVES(Clock, TimeChange)
 public:
     RuleRectangle();
 
-    ~RuleRectangle();
-
     // Output rules.
     Rule const &left() const;
     Rule const &top() const;

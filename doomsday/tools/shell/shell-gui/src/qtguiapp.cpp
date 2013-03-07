@@ -48,11 +48,6 @@ QtGuiApp::QtGuiApp(int &argc, char **argv)
     : QApplication(argc, argv), d(new Instance(this))
 {}
 
-QtGuiApp::~QtGuiApp()
-{
-    delete d;
-}
-
 bool QtGuiApp::notify(QObject *receiver, QEvent *event)
 {
     try

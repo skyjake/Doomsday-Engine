@@ -34,7 +34,7 @@ using namespace de;
 
 char const *Library::DEFAULT_TYPE = "library/generic";
 
-struct Library::Instance
+DENG2_PIMPL(Library)
 {
     /// Handle to the shared library.
     Handle library;
@@ -46,7 +46,7 @@ struct Library::Instance
     /// Queried by calling deng_LibraryType(), if one is exported in the library.
     String type;
 
-    Instance() : library(0), type(DEFAULT_TYPE)
+    Instance(Public *i) : Base(i), library(0), type(DEFAULT_TYPE)
     {}
 
 #ifdef DENG2_USE_DLOPEN
@@ -62,10 +62,8 @@ struct Library::Instance
 #endif
 };
 
-Library::Library(NativePath const &nativePath) : d(0)
+Library::Library(NativePath const &nativePath) : d(new Instance(this))
 {
-    d = new Instance;
-
     LOG_AS("Library");
     LOG_TRACE("Loading \"%s\"") << nativePath.pretty();
 
@@ -129,8 +127,6 @@ Library::~Library()
         dlclose(d->library);
 #endif
     }
-
-    delete d;
 }
 
 String const &Library::type() const

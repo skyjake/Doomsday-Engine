@@ -29,7 +29,7 @@ namespace shell {
 
 static TimeDelta MSG_EXPIRATION_SECS = 4;
 
-struct ServerFinder::Instance
+DENG2_PIMPL_NOREF(ServerFinder)
 {
     Beacon beacon;
     struct Found
@@ -89,7 +89,7 @@ ServerFinder::ServerFinder() : d(new Instance)
 
 ServerFinder::~ServerFinder()
 {
-    delete d;
+    d.reset();
 }
 
 void ServerFinder::clear()

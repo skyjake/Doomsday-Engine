@@ -91,9 +91,7 @@ ScriptSystem::ScriptSystem() : d(new Instance(this))
 {}
 
 ScriptSystem::~ScriptSystem()
-{
-    delete d;
-}
+{}
 
 void ScriptSystem::addNativeModule(String const &name, Record &module)
 {
