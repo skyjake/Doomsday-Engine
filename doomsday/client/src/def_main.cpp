@@ -1164,7 +1164,7 @@ static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
                 de::Uri textureUri(stage->texture->manifest().composeUri());
 
                 ded_detailtexture_t const *detailDef = Def_GetDetailTex(reinterpret_cast<uri_s *>(&textureUri)/*, UNKNOWN VALUE, manifest.isCustom()*/);
-                if(!detailDef) continue;
+                if(!detailDef || !detailDef->stage.texture) continue;
 
                 if(!dlayer)
                 {
@@ -1176,13 +1176,7 @@ static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
                     // Add a new stage.
                     try
                     {
-                        de::Uri const *detailTextureUri;
-                        if(detailDef->material1 && reinterpret_cast<de::Uri const &>(*detailDef->material1) == textureUri)
-                            detailTextureUri = reinterpret_cast<de::Uri const *>(detailDef->material1);
-                        else
-                            detailTextureUri = reinterpret_cast<de::Uri const *>(detailDef->material2);
-
-                        Texture &texture = App_Textures().scheme("Details").findByResourceUri(*detailTextureUri).texture();
+                        Texture &texture = App_Textures().scheme("Details").findByResourceUri(*reinterpret_cast<de::Uri const *>(detailDef->stage.texture)).texture();
                         dlayer->addStage(Material::DetailLayer::Stage(&texture, stage->tics, stage->variance,
                                                                       detailDef->stage.scale, detailDef->stage.strength,
                                                                       detailDef->stage.maxDistance));
@@ -1216,7 +1210,7 @@ static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
                 de::Uri textureUri(stage->texture->manifest().composeUri());
 
                 ded_reflection_t const *shineDef = Def_GetReflection(reinterpret_cast<uri_s *>(&textureUri)/*, UNKNOWN VALUE, manifest.isCustom()*/);
-                if(!shineDef) continue;
+                if(!shineDef || !shineDef->stage.texture) continue;
 
                 if(!slayer)
                 {
@@ -1231,14 +1225,17 @@ static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
                         Texture &texture = App_Textures().scheme("Reflections").findByResourceUri(reinterpret_cast<de::Uri const &>(*shineDef->stage.texture)).texture();
 
                         Texture *maskTexture = 0;
-                        try
+                        if(shineDef->stage.maskTexture)
                         {
-                            maskTexture = &App_Textures().scheme("Masks").findByResourceUri(reinterpret_cast<de::Uri const &>(*shineDef->stage.maskTexture)).texture();
+                            try
+                            {
+                                maskTexture = &App_Textures().scheme("Masks").findByResourceUri(reinterpret_cast<de::Uri const &>(*shineDef->stage.maskTexture)).texture();
+                            }
+                            catch(TextureManifest::MissingTextureError const &)
+                            {} // Ignore this error.
+                            catch(Textures::NotFoundError const &)
+                            {} // Ignore this error.
                         }
-                        catch(TextureManifest::MissingTextureError const &)
-                        {} // Ignore this error.
-                        catch(Textures::NotFoundError const &)
-                        {} // Ignore this error.
 
                         slayer->addStage(Material::ShineLayer::Stage(&texture, stage->tics, stage->variance,
                                                                      maskTexture, shineDef->stage.blendMode,
