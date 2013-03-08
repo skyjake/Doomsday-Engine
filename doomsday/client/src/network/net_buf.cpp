@@ -278,13 +278,20 @@ void N_SendPacket(int flags)
     // This is what will be sent.
     numOutBytes += netBuffer.headerLength + netBuffer.length;
 
+    try
+    {
 #ifdef __CLIENT__
-    de::Transmitter &out = Net_ServerLink();
+        de::Transmitter &out = Net_ServerLink();
 #else
-    de::Transmitter &out = App_ServerSystem().user(dest);
+        de::Transmitter &out = App_ServerSystem().user(dest);
 #endif
 
-    out << de::ByteRefArray(&netBuffer.msg, netBuffer.headerLength + netBuffer.length);
+        out << de::ByteRefArray(&netBuffer.msg, netBuffer.headerLength + netBuffer.length);
+    }
+    catch(de::Error const &er)
+    {
+        LOG_WARNING("N_SendPacket failed: ") << er.asText();
+    }
 }
 
 void N_AddSentBytes(size_t bytes)
