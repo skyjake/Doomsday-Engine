@@ -1244,7 +1244,7 @@ void DD_ReadKeyboard(void)
 {
     uint            i, k;
     ddevent_t       ev;
-    size_t          n, numkeyevs;
+    size_t          n, numkeyevs = 0;
     keyevent_t      keyevs[KBDQUESIZE];
 
     // Check the repeaters.

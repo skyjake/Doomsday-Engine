@@ -53,6 +53,8 @@ int P_MobjTicker(thinker_t* th, void* context)
 {
     DENG_UNUSED(context);
 
+#ifdef __CLIENT__
+
     uint                i;
     mobj_t*             mo = (mobj_t*) th;
 
@@ -61,7 +63,6 @@ int P_MobjTicker(thinker_t* th, void* context)
         int                 f;
         byte*               haloFactor = &mo->haloFactors[i];
 
-#ifdef __CLIENT__
         // Set the high bit of halofactor if the light is clipped. This will
         // make P_Ticker diminish the factor to zero. Take the first step here
         // and now, though.
@@ -105,8 +106,11 @@ int P_MobjTicker(thinker_t* th, void* context)
 
         *haloFactor &= ~0x7f;
         *haloFactor |= f;
-#endif
     }
+
+#else
+    DENG_UNUSED(th);
+#endif
 
     return false; // Continue iteration.
 }

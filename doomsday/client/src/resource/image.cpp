@@ -330,7 +330,7 @@ uint8_t *Image_LoadFromFile(image_t *img, filehandle_s *_file)
 #else
     // Server does not load image files.
     DENG2_UNUSED2(img, _file);
-    return false;
+    return NULL;
 #endif
 }
 

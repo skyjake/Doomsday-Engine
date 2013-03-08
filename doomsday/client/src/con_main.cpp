@@ -1149,7 +1149,7 @@ static int completeWord(int mode)
     char unambiguous[256];
     const knownword_t* completeWord = NULL;
     const knownword_t** matches = NULL;
-    uint numMatches;
+    uint numMatches = 0;
 
     if(mode == 1)
         cp = (int)complPos - 1;

@@ -470,8 +470,8 @@ static void iterateBindings(const mndata_bindings_t* binds, const char* bindings
 
         if(*k == '@')
         {
-            for(begin = k - 1; begin > bindings && isdigit(*(begin - 1)); --begin);
-                bid = strtol(begin, NULL, 10);
+            for(begin = k - 1; begin > bindings && isdigit(*(begin - 1)); --begin) {}
+            bid = strtol(begin, NULL, 10);
         }
         else
         {

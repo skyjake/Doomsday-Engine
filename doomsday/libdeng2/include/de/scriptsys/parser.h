@@ -153,8 +153,6 @@ private:
     // Range of the current statement. Can be a subrange of the full
     // set of tokens.
     TokenRange _statementRange;
-
-    duint _currentIndent;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(de::Parser::CompoundFlags)
