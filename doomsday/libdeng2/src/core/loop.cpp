@@ -17,6 +17,7 @@
  */
 
 #include "de/Loop"
+#include "de/App"
 #include "de/Time"
 #include "de/Log"
 #include "de/math.h"
@@ -71,9 +72,20 @@ void Loop::resume()
 
 void Loop::nextLoopIteration()
 {
-    if(d->running)
+    try
     {
-        DENG2_FOR_AUDIENCE(Iteration, i) i->loopIteration();
+        if(d->running)
+        {
+            DENG2_FOR_AUDIENCE(Iteration, i) i->loopIteration();
+        }
+    }
+    catch(Error const &er)
+    {
+        LOG_AS("Loop");
+
+        // This is called from Qt's event loop, we mustn't let exceptions
+        // out of here uncaught.
+        App::app().handleUncaughtException("Uncaught exception during loop iteration:\n" + er.asText());
     }
 }
 
