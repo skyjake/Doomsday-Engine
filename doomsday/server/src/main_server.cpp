@@ -46,9 +46,9 @@
  */
 static LegacyCore* de2LegacyCore;
 
-static void handleLegacyCoreTerminate(const char* msg)
+static void handleAppTerminate(char const *msg)
 {
-    Con_Error("Application terminated due to exception:\n%s\n", msg);
+    qFatal("Application terminated due to exception:\n%s\n", msg);
 }
 
 /**
@@ -73,7 +73,7 @@ int main(int argc, char** argv)
     QCoreApplication::setApplicationName    ("Doomsday Server");
     QCoreApplication::setApplicationVersion (DOOMSDAY_VERSION_BASE);
 
-    dengApp->setTerminateFunc(handleLegacyCoreTerminate);
+    dengApp->setTerminateFunc(handleAppTerminate);
 
     ServerSystem serverSystem;
     dengApp->addSystem(serverSystem);
