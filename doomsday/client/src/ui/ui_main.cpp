@@ -55,8 +55,8 @@ extern boolean stopTime;
 extern boolean tickUI;
 extern boolean drawGame;
 
-static boolean uiActive = false; /// The user interface is active.
-static boolean uiShowMouse = true;
+static boolean uiActive; /// The user interface is active.
+static boolean uiNoMouse;
 static ui_page_t* uiCurrentPage = 0; /// Currently active page.
 static int uiFontHgt; /// Height of the UI font.
 static int uiCX, uiCY; /// Cursor position.
@@ -136,7 +136,7 @@ void UI_PageInit(boolean halttime, boolean tckui, boolean tckframe, boolean drwg
     uiFontHgt = FR_SingleLineHeight("UI");
 
     // Should the mouse cursor be visible?
-    uiShowMouse = !CommandLine_Exists("-nomouse");
+    uiNoMouse = ( CommandLine_Exists("-nomouse") || !Mouse_IsPresent() );
 
     // Allow use of the escape key to exit the ui?
     allowEscape = !noescape;
@@ -493,7 +493,7 @@ void UI_Drawer(void)
     uiCurrentPage->drawer(uiCurrentPage);
 
     // Draw mouse cursor?
-    if(uiShowMouse)
+    if(!uiNoMouse && Window_IsMouseTrapped(theWindow))
     {
         Point2Raw origin;
         Size2Raw size;

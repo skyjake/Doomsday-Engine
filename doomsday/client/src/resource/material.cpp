@@ -117,7 +117,7 @@ Material::DetailLayer::Stage *Material::DetailLayer::Stage::fromDef(ded_detail_s
 {
     Texture *texture = findTextureForDetailLayerStage(def);
 
-    return new Stage(def.tics, def.variance, texture,
+    return new Stage(texture, def.tics, def.variance,
                      def.scale, def.strength, def.maxDistance);
 }
 
@@ -132,6 +132,12 @@ Material::DetailLayer *Material::DetailLayer::fromDef(ded_detailtexture_t const 
 int Material::DetailLayer::stageCount() const
 {
     return stages_.count();
+}
+
+int Material::DetailLayer::addStage(Material::DetailLayer::Stage const &stageToCopy)
+{
+    stages_.push_back(new Stage(stageToCopy));
+    return stages_.count() - 1;
 }
 
 Material::DetailLayer::Stages const &Material::DetailLayer::stages() const
@@ -180,7 +186,7 @@ Material::ShineLayer::Stage *Material::ShineLayer::Stage::fromDef(ded_shine_stag
     Texture *texture     = findTextureForShineLayerStage(def, false/*not mask*/);
     Texture *maskTexture = findTextureForShineLayerStage(def, true/*mask*/);
 
-    return new Stage(def.tics, def.variance, texture, maskTexture,
+    return new Stage(texture, def.tics, def.variance, maskTexture,
                      def.blendMode, def.shininess, Vector3f(def.minColor),
                      Vector2f(def.maskWidth, def.maskHeight));
 }
@@ -196,6 +202,12 @@ Material::ShineLayer *Material::ShineLayer::fromDef(ded_reflection_t const &laye
 int Material::ShineLayer::stageCount() const
 {
     return stages_.count();
+}
+
+int Material::ShineLayer::addStage(Material::ShineLayer::Stage const &stageToCopy)
+{
+    stages_.push_back(new Stage(stageToCopy));
+    return stages_.count() - 1;
 }
 
 Material::ShineLayer::Stages const &Material::ShineLayer::stages() const

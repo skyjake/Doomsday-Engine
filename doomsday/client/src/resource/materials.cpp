@@ -680,7 +680,7 @@ D_CMD(InspectMaterial)
                 foreach(MaterialAnimation *animation, material.animations())
                 {
                     Con_Message("Animation Context #%i:"
-                                "\n  Layer  Stage Tics", int(animation->context()));
+                                "\n  Layer  Stage Tics Inter", int(animation->context()));
 
                     QString indexKey = QString();
                     Con_Message(indexKey.toUtf8().constData());
@@ -693,10 +693,11 @@ D_CMD(InspectMaterial)
                         if(!layer->isAnimated()) continue;
 
                         MaterialAnimation::LayerState const &l = animation->layer(i);
-                        QString info = QString("  %1 %2 %3")
+                        QString info = QString("  %1 %2 %3 %4")
                                            .arg(QString("#%1:").arg(i), 6)
                                            .arg(l.stage, -5)
-                                           .arg(int(l.tics), -3);
+                                           .arg(int(l.tics), -4)
+                                           .arg(l.inter, -5);
                         Con_Message(info.toUtf8().constData());
                     }
 
@@ -704,10 +705,11 @@ D_CMD(InspectMaterial)
                     if(material.isDetailed() && material.detailLayer().isAnimated())
                     {
                         MaterialAnimation::LayerState const &l = animation->detailLayer();
-                        QString info = QString("  %1 %2 %3")
+                        QString info = QString("  %1 %2 %3 %4")
                                            .arg("Detail:")
                                            .arg(l.stage, -5)
-                                           .arg(int(l.tics), -3);
+                                           .arg(int(l.tics), -4)
+                                           .arg(l.inter, -5);
                         Con_Message(info.toUtf8().constData());
                     }
 
@@ -715,17 +717,18 @@ D_CMD(InspectMaterial)
                     if(material.isShiny() && material.shineLayer().isAnimated())
                     {
                         MaterialAnimation::LayerState const &l = animation->shineLayer();
-                        QString info = QString("  %1 %2 %3")
+                        QString info = QString("  %1 %2 %3 %4")
                                            .arg("Shine:")
                                            .arg(l.stage, -5)
-                                           .arg(int(l.tics), -3);
+                                           .arg(int(l.tics), -4)
+                                           .arg(l.inter, -5);
                         Con_Message(info.toUtf8().constData());
                     }
 
                     // Print decoration state info:
                     if(material.isDecorated())
                     {
-                        Con_Message("  Decor  Stage Tics");
+                        Con_Message("  Decor  Stage Tics Inter");
 
                         int const decorationCount = material.decorationCount();
                         for(int i = 0; i < decorationCount; ++i)
@@ -734,10 +737,11 @@ D_CMD(InspectMaterial)
                             if(!decor->isAnimated()) continue;
 
                             MaterialAnimation::DecorationState const &l = animation->decoration(i);
-                            QString info = QString("  %1 %2 %3")
+                            QString info = QString("  %1 %2 %3 %4")
                                                .arg(QString("#%1:").arg(i), 6)
                                                .arg(l.stage, -5)
-                                               .arg(int(l.tics), -3);
+                                               .arg(int(l.tics), -4)
+                                               .arg(l.inter, -5);
                             Con_Message(info.toUtf8().constData());
                         }
                     }

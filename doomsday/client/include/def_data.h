@@ -449,8 +449,8 @@ typedef struct ded_reflection_s {
 
 typedef struct ded_group_member_s {
     Uri*            material;
-    float           tics;
-    float           randomTics;
+    int             tics;
+    int             randomTics;
 } ded_group_member_t;
 
 typedef struct ded_group_s {

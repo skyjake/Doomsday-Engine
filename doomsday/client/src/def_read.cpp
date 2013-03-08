@@ -2384,8 +2384,8 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     {
                         READLABEL;
                         RV_URI("ID", &memb->material, Str_Text(&schemeName))
-                        RV_FLT("Tics", memb->tics)
-                        RV_FLT("Random", memb->randomTics)
+                        RV_INT("Tics", memb->tics)
+                        RV_INT("Random", memb->randomTics)
                         RV_END
                         CHECKSC;
                     }
