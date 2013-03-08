@@ -200,7 +200,7 @@ public:
 
             Stage(de::Texture *_texture, int _tics, float _variance = 0,
                   float _scale = 1, float _strength = 1, float _maxDistance = 0)
-                : tics(_tics), variance(_variance), texture(_texture),
+                : texture(_texture), tics(_tics), variance(_variance),
                   scale(_scale), strength(_strength), maxDistance(_maxDistance)
             {}
 
@@ -276,7 +276,7 @@ public:
                   de::Texture *_maskTexture = 0, blendmode_t _blendMode = BM_ADD,
                   float _shininess = 1, de::Vector3f const &_minColor = de::Vector3f(0, 0, 0),
                   de::Vector2f const &_maskDimensions = de::Vector2f(1, 1))
-                : tics(_tics), variance(_variance), texture(_texture),
+                : texture(_texture), tics(_tics), variance(_variance),
                   maskTexture(_maskTexture), blendMode(_blendMode),
                   shininess(_shininess), minColor(_minColor),
                   maskDimensions(_maskDimensions)
