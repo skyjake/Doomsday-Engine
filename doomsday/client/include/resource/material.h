@@ -120,8 +120,10 @@ public:
             float glowStrengthVariance;
             de::Vector2f texOrigin;
 
-            Stage(de::Texture *_texture, int _tics, float _variance = 0,
-                  float _glowStrength = 0, float _glowStrengthVariance = 0,
+            Stage(de::Texture *_texture, int _tics,
+                  float _variance               = 0,
+                  float _glowStrength           = 0,
+                  float _glowStrengthVariance   = 0,
                   de::Vector2f const _texOrigin = de::Vector2f())
                 : texture(_texture), tics(_tics), variance(_variance),
                   glowStrength(_glowStrength),
@@ -198,8 +200,11 @@ public:
             float strength;
             float maxDistance;
 
-            Stage(de::Texture *_texture, int _tics, float _variance = 0,
-                  float _scale = 1, float _strength = 1, float _maxDistance = 0)
+            Stage(de::Texture *_texture, int _tics,
+                  float _variance    = 0,
+                  float _scale       = 1,
+                  float _strength    = 1,
+                  float _maxDistance = 0)
                 : texture(_texture), tics(_tics), variance(_variance),
                   scale(_scale), strength(_strength), maxDistance(_maxDistance)
             {}
@@ -273,8 +278,10 @@ public:
             de::Vector2f maskDimensions;
 
             Stage(de::Texture *_texture, int _tics, float _variance,
-                  de::Texture *_maskTexture = 0, blendmode_t _blendMode = BM_ADD,
-                  float _shininess = 1, de::Vector3f const &_minColor = de::Vector3f(0, 0, 0),
+                  de::Texture *_maskTexture           = 0,
+                  blendmode_t _blendMode              = BM_ADD,
+                  float _shininess                    = 1,
+                  de::Vector3f const &_minColor       = de::Vector3f(0, 0, 0),
                   de::Vector2f const &_maskDimensions = de::Vector2f(1, 1))
                 : texture(_texture), tics(_tics), variance(_variance),
                   maskTexture(_maskTexture), blendMode(_blendMode),
