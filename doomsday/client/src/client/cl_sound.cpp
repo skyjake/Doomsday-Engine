@@ -55,23 +55,29 @@
  */
 void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 {
-    int                 sound = 0, soundFlags = 0;
-    byte                flags = 0;
+    uint16_t deltaId = 0;
+    int sound = 0, soundFlags = 0;
+    byte flags = 0;
     mobj_t             *cmo = NULL;
     thid_t              mobjId = 0;
     Sector             *sector = NULL;
     Polyobj            *poly = NULL;
+    SideDef            *side = NULL;
     mobj_t             *emitter = NULL;
     float               volume = 1;
+
+    deltaId = Reader_ReadUInt16(msgReader);
+    flags   = Reader_ReadByte(msgReader);
 
     if(type == DT_SOUND)
     {
         // Delta ID is the sound ID.
-        sound = Reader_ReadUInt16(msgReader);
+        sound = deltaId;
     }
-    else if(type == DT_MOBJ_SOUND)
+    else if(type == DT_MOBJ_SOUND) // Mobj as emitter
     {
-        if((cmo = ClMobj_Find(mobjId = Reader_ReadUInt16(msgReader))) != NULL)
+        mobjId = deltaId;
+        if((cmo = ClMobj_Find(mobjId)) != NULL)
         {
             clmoinfo_t* info = ClMobj_GetInfo(cmo);
             if(info->flags & CLMF_HIDDEN)
@@ -86,9 +92,9 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
             }
         }
     }
-    else if(type == DT_SECTOR_SOUND)
-    {
-        uint index = Reader_ReadUInt16(msgReader);
+    else if(type == DT_SECTOR_SOUND) // Plane as emitter
+    {        
+        uint index = deltaId;
 
         if(index < NUM_SECTORS)
         {
@@ -96,14 +102,27 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
         }
         else
         {
-            Con_Message("Cl_ReadSoundDelta2: DT_SECTOR_SOUND contains "
-                        "invalid sector num %u. Skipping.", index);
+            LOG_WARNING("Cl_ReadSoundDelta2: DT_SECTOR_SOUND contains invalid sector index %u, skipping") << index;
             skip = true;
         }
     }
-    else                        /* DT_POLY_SOUND */
+    else if(type == DT_SIDE_SOUND) // SideDef section as emitter
     {
-        uint index = Reader_ReadUInt16(msgReader);
+        uint index = deltaId;
+
+        if(index < NUM_SIDEDEFS)
+        {
+            side = SIDE_PTR(index);
+        }
+        else
+        {
+            LOG_WARNING("Cl_ReadSoundDelta2: DT_SIDE_SOUND contains invalid side index %u, skipping") << index;
+            skip = true;
+        }
+    }
+    else // DT_POLY_SOUND
+    {
+        uint index = deltaId;
 
         if(index < NUM_POLYOBJS)
         {
@@ -119,8 +138,6 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
         }
     }
 
-    flags = Reader_ReadByte(msgReader);
-
     if(type != DT_SOUND)
     {
         // The sound ID.
@@ -129,13 +146,21 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 
     if(type == DT_SECTOR_SOUND)
     {
-        // Should we use a specific origin?
+        // Select the origin for the sound.
         if(flags & SNDDF_PLANE_FLOOR)
             emitter = (mobj_t*) &sector->SP_floorsurface.base;
         else if(flags & SNDDF_PLANE_CEILING)
             emitter = (mobj_t*) &sector->SP_ceilsurface.base;
-        else
-            emitter = (mobj_t*) &sector->base;
+    }
+
+    if(type == DT_SIDE_SOUND)
+    {
+        if(flags & SNDDF_SIDE_MIDDLE)
+            emitter = (mobj_t*) &side->SW_middlesurface.base;
+        else if(flags & SNDDF_SIDE_TOP)
+            emitter = (mobj_t*) &side->SW_topsurface.base;
+        else if(flags & SNDDF_SIDE_BOTTOM)
+            emitter = (mobj_t*) &side->SW_bottomsurface.base;
     }
 
     if(flags & SNDDF_VOLUME)

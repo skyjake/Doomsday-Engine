@@ -146,6 +146,7 @@ void Sv_InitPools(void)
     deltaBaseScores[DT_SOUND] = 2000;
     deltaBaseScores[DT_MOBJ_SOUND] = 3000;
     deltaBaseScores[DT_SECTOR_SOUND] = 5000;
+    deltaBaseScores[DT_SIDE_SOUND] = 5500;
     deltaBaseScores[DT_POLY_SOUND] = 5000;
 
     // Since the map has changed, PU_MAP memory has been freed.
@@ -1041,8 +1042,11 @@ boolean Sv_IsSoundDelta(const void* delta)
 {
     const delta_t *d = (delta_t const *) delta;
 
-    return (d->type == DT_SOUND || d->type == DT_MOBJ_SOUND ||
-            d->type == DT_SECTOR_SOUND || d->type == DT_POLY_SOUND);
+    return (d->type == DT_SOUND ||
+            d->type == DT_MOBJ_SOUND ||
+            d->type == DT_SECTOR_SOUND ||
+            d->type == DT_SIDE_SOUND ||
+            d->type == DT_POLY_SOUND);
 }
 
 /**
@@ -1103,17 +1107,18 @@ void* Sv_CopyDelta(void* deltaPtr)
     void*               newDelta;
     delta_t*            delta = (delta_t *) deltaPtr;
     size_t              size =
-        (delta->type == DT_MOBJ ? sizeof(mobjdelta_t) : delta->type ==
-         DT_PLAYER ? sizeof(playerdelta_t) : delta->type ==
-         DT_SECTOR ? sizeof(sectordelta_t) : delta->type ==
-         DT_SIDE ? sizeof(sidedelta_t) : delta->type ==
-         DT_POLY ? sizeof(polydelta_t) : delta->type ==
-         DT_SOUND ? sizeof(sounddelta_t) : delta->type ==
-         DT_MOBJ_SOUND ? sizeof(sounddelta_t) : delta->type ==
-         DT_SECTOR_SOUND ? sizeof(sounddelta_t) : delta->type ==
-         DT_POLY_SOUND ? sizeof(sounddelta_t)
+        ( delta->type == DT_MOBJ ?         sizeof(mobjdelta_t)
+        : delta->type == DT_PLAYER ?       sizeof(playerdelta_t)
+        : delta->type == DT_SECTOR ?       sizeof(sectordelta_t)
+        : delta->type == DT_SIDE ?         sizeof(sidedelta_t)
+        : delta->type == DT_POLY ?         sizeof(polydelta_t)
+        : delta->type == DT_SOUND ?        sizeof(sounddelta_t)
+        : delta->type == DT_MOBJ_SOUND ?   sizeof(sounddelta_t)
+        : delta->type == DT_SECTOR_SOUND ? sizeof(sounddelta_t)
+        : delta->type == DT_SIDE_SOUND ?   sizeof(sounddelta_t)
+        : delta->type == DT_POLY_SOUND ?   sizeof(sounddelta_t)
          /* : delta->type == DT_LUMP?   sizeof(lumpdelta_t) */
-         : 0);
+        : 0);
 
     if(size == 0)
     {
@@ -1522,6 +1527,19 @@ coord_t Sv_SectorDistance(int index, const ownerinfo_t* info)
                              (info->origin[VZ] - sector->base.origin[VZ]) * 1.2);
 }
 
+coord_t Sv_SideDistance(int index, int deltaFlags, ownerinfo_t const *info)
+{
+    SideDef* side = SIDE_PTR(index);
+
+    ddmobj_base_t *base = (deltaFlags & SNDDF_SIDE_MIDDLE? &side->SW_middlesurface.base
+                         : deltaFlags & SNDDF_SIDE_TOP?    &side->SW_topsurface.base
+                                                         : &side->SW_bottomsurface.base);
+
+    return M_ApproxDistance3(info->origin[VX]  - base->origin[VX],
+                             info->origin[VY]  - base->origin[VY],
+                             (info->origin[VZ] - base->origin[VZ]) * 1.2);
+}
+
 /**
  * @return              The distance to the origin of the delta's entity.
  */
@@ -1579,6 +1597,11 @@ coord_t Sv_DeltaDistance(const void* deltaPtr, const ownerinfo_t* info)
     if(delta->type == DT_SECTOR_SOUND)
     {
         return Sv_SectorDistance(delta->id, info);
+    }
+
+    if(delta->type == DT_SIDE_SOUND)
+    {
+        return Sv_SideDistance(delta->id, delta->flags, info);
     }
 
     if(delta->type == DT_POLY_SOUND)
@@ -2307,10 +2330,11 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
     }
     else if(sourceSurface)
     {
-        type = DT_SECTOR_SOUND;
         switch(sourceSurface->owner->type())
         {
         case DMU_PLANE: {
+            type = DT_SECTOR_SOUND;
+
             Plane* pln = sourceSurface->owner->castTo<Plane>();
 
             // Clients need to know which emitter to use.
@@ -2332,31 +2356,34 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
             id = GameMap_SectorIndex(theMap, pln->sector);
             break; }
 
-        /*case DMU_SIDEDEF: {
-            SideDef* side = (SideDef*)sourceSurface->owner;
+        case DMU_SIDEDEF: {
+            type = DT_SIDE_SOUND;
+
+            DENG2_ASSERT(emitter == 0); // surface sound source rather than a real mobj
+
+            SideDef* side = sourceSurface->owner->castTo<SideDef>();
 
             // Clients need to know which emitter to use.
-            if(emitter)
+            if(&side->SW_middlesurface == sourceSurface)
             {
-                if(side->SW_middlesurface == sourceSurface)
-                {
-                    if(emitter == (mobj_t*) &sourceSurface->base)
-                        df |= SNDDF_WALL_MIDDLE;
-                }
-                else if(side->SW_bottomsurface == sourceSurface)
-                {
-                    if(emitter == (mobj_t*) &sourceSurface->base)
-                        df |= SNDDF_WALL_BOTTOM;
-                }
-                else if(side->SW_topsurface == sourceSurface)
-                {
-                    if(emitter == (mobj_t*) &sourceSurface->base)
-                        df |= SNDDF_WALL_TOP;
-                }
+                df |= SNDDF_SIDE_MIDDLE;
+            }
+            else if(&side->SW_bottomsurface == sourceSurface)
+            {
+                df |= SNDDF_SIDE_BOTTOM;
+            }
+            else if(&side->SW_topsurface == sourceSurface)
+            {
+                df |= SNDDF_SIDE_TOP;
+            }
+            else
+            {
+                // Surface not owned by its owner?!
+                DENG2_ASSERT(false);
             }
 
             id = GameMap_SideDefIndex(theMap, side);
-            break; } */
+            break; }
 
         default:
             DENG2_ASSERT(false); // Invalid map element type.

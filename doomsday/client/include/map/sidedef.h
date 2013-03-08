@@ -116,7 +116,7 @@ class SideDef : public de::MapElement
 {
 public:
     Surface             sections[3];
-    LineDef*   line;
+    LineDef *           line;
     short               flags;
     msidedef_t          buildData;
     int                 fakeRadioUpdateCount; // frame number of last update

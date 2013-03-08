@@ -25,14 +25,14 @@
  * Server protocol version number.
  * @deprecated Will be replaced with the libdeng2 serialization protocol version.
  */
-#define SV_VERSION          21
+#define SV_VERSION          22
 
 // Prefer adding new flags inside the deltas instead of adding new delta types.
 typedef enum {
     DT_MOBJ = 0,
     DT_PLAYER = 1,
     //DT_SECTOR_R6 = 2, // 2 bytes for flags.
-    //DT_SIDE_R6 = 3, // 1 byte for flags.
+    DT_SIDE_SOUND = 3,
     DT_POLY = 4,
     DT_LUMP = 5,
     DT_SOUND = 6, // No emitter
@@ -153,8 +153,11 @@ typedef enum {
 // Sound delta flags.
 #define SNDDF_VOLUME            0x01 // 0=stop, 1=full, >1=no att.
 #define SNDDF_REPEAT            0x02 // Start repeating sound.
-#define SNDDF_PLANE_FLOOR       0x04 // Play sound from floor.
-#define SNDDF_PLANE_CEILING     0x08 // Play sound from ceiling.
+#define SNDDF_PLANE_FLOOR       0x04 // Play sound from a sector's floor.
+#define SNDDF_PLANE_CEILING     0x08 // Play sound from a sector's ceiling.
+#define SNDDF_SIDE_TOP          0x10 // Play sound from a sidedef's top part.
+#define SNDDF_SIDE_MIDDLE       0x20 // Play sound from a sidedef's middle part.
+#define SNDDF_SIDE_BOTTOM       0x40 // Play sound from a sidedef's bottom part.
 
 /**
  * @defgroup soundPacketFlags  Sound Packet Flags

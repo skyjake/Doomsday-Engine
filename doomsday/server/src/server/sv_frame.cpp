@@ -659,6 +659,7 @@ void Sv_WriteSoundDelta(const void* deltaPtr)
     {
     case DT_MOBJ_SOUND:
     case DT_SECTOR_SOUND:
+    case DT_SIDE_SOUND:
     case DT_POLY_SOUND:
         // The sound ID.
         Writer_WriteUInt16(msgWriter, delta->sound);
@@ -791,6 +792,7 @@ void Sv_WriteDelta(const delta_t* delta)
     case DT_SOUND:
     case DT_MOBJ_SOUND:
     case DT_SECTOR_SOUND:
+    case DT_SIDE_SOUND:
     case DT_POLY_SOUND:
         Sv_WriteSoundDelta(delta);
         break;
