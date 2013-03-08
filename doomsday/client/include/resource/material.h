@@ -181,7 +181,7 @@ public:
 
     private:
         /// Animation stages.
-        Stages stages_;
+        Stages _stages;
     };
 
     /// A list of layers.
@@ -259,7 +259,7 @@ public:
 
     private:
         /// Animation stages.
-        Stages stages_;
+        Stages _stages;
     };
 
     /// @todo $revise-texture-animation Merge with Material::Layer
@@ -341,7 +341,7 @@ public:
 
     private:
         /// Animation stages.
-        Stages stages_;
+        Stages _stages;
     };
 
 #ifdef __CLIENT__
@@ -463,13 +463,13 @@ public:
 
     private:
         /// Pattern skip intervals.
-        de::Vector2i patternSkip_;
+        de::Vector2i _patternSkip;
 
         /// Pattern skip interval offsets.
-        de::Vector2i patternOffset_;
+        de::Vector2i _patternOffset;
 
         /// Animation stages.
-        Stages stages_;
+        Stages _stages;
     };
 
     /// A list of decorations.

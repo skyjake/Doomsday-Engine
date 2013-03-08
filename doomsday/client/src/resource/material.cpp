@@ -36,7 +36,7 @@ Material::Layer::Layer()
 
 Material::Layer::~Layer()
 {
-    qDeleteAll(stages_);
+    qDeleteAll(_stages);
 }
 
 static Texture *findTextureForLayerStage(ded_material_layer_stage_t const &def)
@@ -67,25 +67,25 @@ Material::Layer *Material::Layer::fromDef(ded_material_layer_t const &layerDef)
     Layer *layer = new Layer();
     for(int i = 0; i < layerDef.stageCount.num; ++i)
     {
-        layer->stages_.push_back(Stage::fromDef(layerDef.stages[i]));
+        layer->_stages.push_back(Stage::fromDef(layerDef.stages[i]));
     }
     return layer;
 }
 
 int Material::Layer::stageCount() const
 {
-    return stages_.count();
+    return _stages.count();
 }
 
 int Material::Layer::addStage(Material::Layer::Stage const &stageToCopy)
 {
-    stages_.push_back(new Stage(stageToCopy));
-    return stages_.count() - 1;
+    _stages.push_back(new Stage(stageToCopy));
+    return _stages.count() - 1;
 }
 
 Material::Layer::Stages const &Material::Layer::stages() const
 {
-    return stages_;
+    return _stages;
 }
 
 Material::DetailLayer::DetailLayer()
@@ -93,7 +93,7 @@ Material::DetailLayer::DetailLayer()
 
 Material::DetailLayer::~DetailLayer()
 {
-    qDeleteAll(stages_);
+    qDeleteAll(_stages);
 }
 
 static Texture *findTextureForDetailLayerStage(ded_detail_stage_t const &def)
@@ -125,24 +125,24 @@ Material::DetailLayer *Material::DetailLayer::fromDef(ded_detailtexture_t const 
 {
     DetailLayer *layer = new DetailLayer();
     // Only the one stage.
-    layer->stages_.push_back(Stage::fromDef(layerDef.stage));
+    layer->_stages.push_back(Stage::fromDef(layerDef.stage));
     return layer;
 }
 
 int Material::DetailLayer::stageCount() const
 {
-    return stages_.count();
+    return _stages.count();
 }
 
 int Material::DetailLayer::addStage(Material::DetailLayer::Stage const &stageToCopy)
 {
-    stages_.push_back(new Stage(stageToCopy));
-    return stages_.count() - 1;
+    _stages.push_back(new Stage(stageToCopy));
+    return _stages.count() - 1;
 }
 
 Material::DetailLayer::Stages const &Material::DetailLayer::stages() const
 {
-    return stages_;
+    return _stages;
 }
 
 Material::ShineLayer::ShineLayer()
@@ -150,7 +150,7 @@ Material::ShineLayer::ShineLayer()
 
 Material::ShineLayer::~ShineLayer()
 {
-    qDeleteAll(stages_);
+    qDeleteAll(_stages);
 }
 
 static Texture *findTextureForShineLayerStage(ded_shine_stage_t const &def, bool findMask)
@@ -195,24 +195,24 @@ Material::ShineLayer *Material::ShineLayer::fromDef(ded_reflection_t const &laye
 {
     ShineLayer *layer = new ShineLayer();
     // Only the one stage.
-    layer->stages_.push_back(Stage::fromDef(layerDef.stage));
+    layer->_stages.push_back(Stage::fromDef(layerDef.stage));
     return layer;
 }
 
 int Material::ShineLayer::stageCount() const
 {
-    return stages_.count();
+    return _stages.count();
 }
 
 int Material::ShineLayer::addStage(Material::ShineLayer::Stage const &stageToCopy)
 {
-    stages_.push_back(new Stage(stageToCopy));
-    return stages_.count() - 1;
+    _stages.push_back(new Stage(stageToCopy));
+    return _stages.count() - 1;
 }
 
 Material::ShineLayer::Stages const &Material::ShineLayer::stages() const
 {
-    return stages_;
+    return _stages;
 }
 
 #ifdef __CLIENT__
@@ -256,16 +256,16 @@ String Material::Decoration::Stage::LightLevels::asText() const
 }
 
 Material::Decoration::Decoration()
-    : patternSkip_(0, 0), patternOffset_(0, 0)
+    : _patternSkip(0, 0), _patternOffset(0, 0)
 {}
 
 Material::Decoration::Decoration(Vector2i const &_patternSkip, Vector2i const &_patternOffset)
-    : patternSkip_(_patternSkip), patternOffset_(_patternOffset)
+    : _patternSkip(_patternSkip), _patternOffset(_patternOffset)
 {}
 
 Material::Decoration::~Decoration()
 {
-    qDeleteAll(stages_);
+    qDeleteAll(_stages);
 }
 
 Material::Decoration *Material::Decoration::fromDef(ded_material_decoration_t const &def)
@@ -274,7 +274,7 @@ Material::Decoration *Material::Decoration::fromDef(ded_material_decoration_t co
                                      Vector2i(def.patternOffset));
     for(int i = 0; i < def.stageCount.num; ++i)
     {
-        dec->stages_.push_back(Stage::fromDef(def.stages[i]));
+        dec->_stages.push_back(Stage::fromDef(def.stages[i]));
     }
     return dec;
 }
@@ -284,28 +284,28 @@ Material::Decoration *Material::Decoration::fromDef(ded_decoration_t const &def)
     Decoration *dec = new Decoration(Vector2i(def.patternSkip),
                                      Vector2i(def.patternOffset));
     // Only the one stage.
-    dec->stages_.push_back(Stage::fromDef(def.stage));
+    dec->_stages.push_back(Stage::fromDef(def.stage));
     return dec;
 }
 
 Vector2i const &Material::Decoration::patternSkip() const
 {
-    return patternSkip_;
+    return _patternSkip;
 }
 
 Vector2i const &Material::Decoration::patternOffset() const
 {
-    return patternOffset_;
+    return _patternOffset;
 }
 
 int Material::Decoration::stageCount() const
 {
-    return stages_.count();
+    return _stages.count();
 }
 
 Material::Decoration::Stages const &Material::Decoration::stages() const
 {
-    return stages_;
+    return _stages;
 }
 
 #endif // __CLIENT__
