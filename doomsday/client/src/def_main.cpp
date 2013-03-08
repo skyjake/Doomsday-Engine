@@ -1161,6 +1161,7 @@ static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
             for(int i = 0; i < layer0->stageCount(); ++i)
             {
                 Material::Layer::Stage *stage = layer0->stages()[i];
+                DENG_ASSERT(stage->texture != 0);
                 de::Uri textureUri(stage->texture->manifest().composeUri());
 
                 ded_detailtexture_t const *detailDef = Def_GetDetailTex(reinterpret_cast<uri_s *>(&textureUri)/*, UNKNOWN VALUE, manifest.isCustom()*/);
