@@ -82,7 +82,7 @@ private:
     QList<LogEntry *> _entries;
 };
 
-struct LogWidget::Instance
+DENG2_PIMPL(LogWidget)
 {
     Sink sink;
     MonospaceLogSinkFormatter formatter;
@@ -91,8 +91,9 @@ struct LogWidget::Instance
     int maxEntries;
     int visibleOffset;
 
-    Instance(LogWidget &inst)
-        : sink(inst),
+    Instance(Public *inst)
+        : Base(inst),
+          sink(*inst),
           cacheWidth(0),
           maxEntries(1000),
           visibleOffset(0)
@@ -145,7 +146,7 @@ struct LogWidget::Instance
     }
 };
 
-LogWidget::LogWidget(String const &name) : TextWidget(name), d(new Instance(*this))
+LogWidget::LogWidget(String const &name) : TextWidget(name), d(new Instance(this))
 {}
 
 LogSink &LogWidget::logSink()

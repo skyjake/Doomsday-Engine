@@ -24,7 +24,7 @@
 using namespace de;
 using namespace de::shell;
 
-struct QtTextCanvas::Instance
+DENG2_PIMPL_NOREF(QtTextCanvas)
 {
     Size dims;
     QImage backBuffer;
@@ -103,8 +103,7 @@ struct QtTextCanvas::Instance
     }
 };
 
-QtTextCanvas::QtTextCanvas(TextCanvas::Size const &size)
-    : d(new Instance)
+QtTextCanvas::QtTextCanvas(TextCanvas::Size const &size) : d(new Instance)
 {
     d->dims = size;
 

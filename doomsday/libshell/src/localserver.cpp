@@ -26,7 +26,7 @@
 namespace de {
 namespace shell {
 
-struct LocalServer::Instance
+DENG2_PIMPL_NOREF(LocalServer)
 {
     Link *link;
     duint16 port;

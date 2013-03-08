@@ -182,7 +182,7 @@ struct MessageHeader : public ISerializable
 
 using namespace internal;
 
-struct Socket::Instance
+DENG2_PIMPL_NOREF(Socket)
 {
     Address target;
     bool quiet;

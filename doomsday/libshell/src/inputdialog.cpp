@@ -25,7 +25,7 @@
 namespace de {
 namespace shell {
 
-struct InputDialog::Instance
+DENG2_PIMPL_NOREF(InputDialog)
 {
     LabelWidget *label;
     LineEditWidget *edit;

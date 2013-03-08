@@ -110,7 +110,7 @@ Packet *LogEntryPacket::fromBlock(Block const &block)
 
 static char const *MAP_OUTLINE_PACKET_TYPE = "MpOL";
 
-struct MapOutlinePacket::Instance
+DENG2_PIMPL_NOREF(MapOutlinePacket)
 {
     QList<Line> lines;
 };

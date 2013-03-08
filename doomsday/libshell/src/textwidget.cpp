@@ -24,7 +24,7 @@
 namespace de {
 namespace shell {
 
-struct TextWidget::Instance
+DENG2_PIMPL_NOREF(TextWidget)
 {
     TextCanvas *canvas;
     RuleRectangle *rule;

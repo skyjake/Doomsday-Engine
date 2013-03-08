@@ -23,7 +23,7 @@
 namespace de {
 namespace shell {
 
-struct LabelWidget::Instance
+DENG2_PIMPL_NOREF(LabelWidget)
 {
     TextCanvas::Char background;
     String label;

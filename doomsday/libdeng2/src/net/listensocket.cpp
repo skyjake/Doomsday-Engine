@@ -27,7 +27,7 @@
 
 namespace de {
 
-struct ListenSocket::Instance
+DENG2_PIMPL_NOREF(ListenSocket)
 {
     QTcpServer *socket;
     duint16 port;

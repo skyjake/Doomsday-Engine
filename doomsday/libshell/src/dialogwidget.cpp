@@ -24,7 +24,7 @@
 namespace de {
 namespace shell {
 
-struct DialogWidget::Instance
+DENG2_PIMPL_NOREF(DialogWidget)
 {
     QEventLoop subloop;
 };
