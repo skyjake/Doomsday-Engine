@@ -613,6 +613,9 @@ void Cl_ReadSectorDelta2(int deltaType, boolean /*skip*/)
     /// @todo Do not assume the CURRENT map.
     GameMap *map = theMap;
 
+#define PLN_FLOOR   0
+#define PLN_CEILING 1
+
     float height[2] = { 0, 0 };
     float target[2] = { 0, 0 };
     float speed[2]  = { 0, 0 };
@@ -701,6 +704,9 @@ void Cl_ReadSectorDelta2(int deltaType, boolean /*skip*/)
     {
         GameMap_NewClPlane(map, num, CPT_CEILING, target[PLN_CEILING], speed[PLN_CEILING]);
     }
+
+#undef PLN_CEILING
+#undef PLN_FLOOR
 }
 
 /**

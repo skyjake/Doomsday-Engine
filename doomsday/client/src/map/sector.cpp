@@ -164,11 +164,11 @@ int Sector_GetProperty(const Sector* sec, setargs_t* args)
         DMU_GetValue(DMT_SECTOR_VALIDCOUNT, &sec->validCount, args, 0);
         break;
     case DMU_FLOOR_PLANE: {
-        Plane* pln = sec->planes[PLN_FLOOR];
+        Plane* pln = sec->planes[Plane::Floor];
         DMU_GetValue(DMT_SECTOR_FLOORPLANE, &pln, args, 0);
         break; }
     case DMU_CEILING_PLANE: {
-        Plane* pln = sec->planes[PLN_CEILING];
+        Plane* pln = sec->planes[Plane::Ceiling];
         DMU_GetValue(DMT_SECTOR_CEILINGPLANE, &pln, args, 0);
         break; }
     default:

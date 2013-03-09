@@ -377,10 +377,10 @@ static byte pvisibleLineSections(LineDef *line, int backSide)
         SideDef const *sideDef = line->L_sidedef(backSide);
         Sector const *fsec  = line->L_sector(backSide);
         Sector const *bsec  = line->L_sector(backSide^1);
-        Plane const *fceil  = fsec->SP_plane(PLN_CEILING);
-        Plane const *ffloor = fsec->SP_plane(PLN_FLOOR);
-        Plane const *bceil  = bsec->SP_plane(PLN_CEILING);
-        Plane const *bfloor = bsec->SP_plane(PLN_FLOOR);
+        Plane const *fceil  = &fsec->ceiling();
+        Plane const *ffloor = &fsec->floor();
+        Plane const *bceil  = &bsec->ceiling();
+        Plane const *bfloor = &bsec->floor();
 
         sections |= SSF_MIDDLE | SSF_BOTTOM | SSF_TOP;
 
@@ -389,15 +389,15 @@ static byte pvisibleLineSections(LineDef *line, int backSide)
             sections &= ~SSF_MIDDLE;
 
         // Top?
-        if((!devRendSkyMode && fceil->surface.isSkyMasked() && bceil->surface.isSkyMasked()) ||
-           //(!devRendSkyMode && bceil->surface.isSkyMasked() && (sideDef->SW_topsurface.inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
-           (fceil->visHeight <= bceil->visHeight))
+        if((!devRendSkyMode && fceil->surface().isSkyMasked() && bceil->surface().isSkyMasked()) ||
+           //(!devRendSkyMode && bceil->surface().isSkyMasked() && (sideDef->SW_topsurface.inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
+           (fceil->visHeight() <= bceil->visHeight()))
             sections &= ~SSF_TOP;
 
         // Bottom?
-        if((!devRendSkyMode && ffloor->surface.isSkyMasked() && bfloor->surface.isSkyMasked()) ||
-           //(!devRendSkyMode && bfloor->surface.isSkyMasked() && (sideDef->SW_bottomsurface.inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
-           (ffloor->visHeight >= bfloor->visHeight))
+        if((!devRendSkyMode && ffloor->surface().isSkyMasked() && bfloor->surface().isSkyMasked()) ||
+           //(!devRendSkyMode && bfloor->surface().isSkyMasked() && (sideDef->SW_bottomsurface.inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
+           (ffloor->visHeight() >= bfloor->visHeight()))
             sections &= ~SSF_BOTTOM;
     }
 
@@ -1360,7 +1360,7 @@ static boolean doRenderHEdge(HEdge* hedge, const pvec3f_t normal,
     return false; // Do not clip with this.
 }
 
-static void renderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
+static void renderPlane(BspLeaf* bspLeaf, Plane::Type type, coord_t height,
     vec3f_t tangent, vec3f_t bitangent, vec3f_t normal,
     Material* inMat, const float sufColor[4], blendmode_t blendMode,
     vec3d_t texTL, vec3d_t texBR,
@@ -1413,7 +1413,7 @@ static void renderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
     {
         mat = inMat;
 
-        if(type != PLN_MID)
+        if(type != Plane::Middle)
         {
             params.blendMode = BM_NORMAL;
             params.alpha = 1;
@@ -1429,7 +1429,7 @@ static void renderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
         }
     }
 
-    Rend_BuildBspLeafPlaneGeometry(bspLeaf, (type == PLN_CEILING), height,
+    Rend_BuildBspLeafPlaneGeometry(bspLeaf, (type == Plane::Ceiling), height,
                                    &rvertices, &numVertices);
 
     MaterialSnapshot const &ms = mat->prepare(mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT));
@@ -1442,8 +1442,8 @@ static void renderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
         }
         else
         {
-            Surface *suf = &bspLeaf->sector->planes[elmIdx]->surface;
-            Material *mat = suf->material? suf->material : &App_Materials().find(de::Uri("System", Path("missing"))).material();
+            Surface const &suf = bspLeaf->sector->planes[elmIdx]->surface();
+            Material *mat = suf.material? suf.material : &App_Materials().find(de::Uri("System", Path("missing"))).material();
 
             MaterialSnapshot const &ms = mat->prepare(Rend_MapSurfaceMaterialSpec());
             params.glowing = ms.glowStrength();
@@ -1455,7 +1455,7 @@ static void renderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
         // Dynamic lights?
         if(addDLights && params.glowing < 1 && !(!useDynLights && !useWallGlow))
         {
-            params.lightListIdx = LO_ProjectToSurface((PLF_NO_PLANE | (type == PLN_FLOOR? PLF_TEX_FLOOR : PLF_TEX_CEILING)), bspLeaf, 1,
+            params.lightListIdx = LO_ProjectToSurface((PLF_NO_PLANE | (type == Plane::Floor? PLF_TEX_FLOOR : PLF_TEX_CEILING)), bspLeaf, 1,
                 params.texTL, params.texBR, tangent, bitangent, normal);
         }
 
@@ -1473,7 +1473,7 @@ static void renderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
     R_FreeRendVertices(rvertices);
 }
 
-static void Rend_RenderPlane(planetype_t type, coord_t height,
+static void Rend_RenderPlane(Plane::Type type, coord_t height,
     const_pvec3f_t _tangent, const_pvec3f_t _bitangent, const_pvec3f_t _normal,
     Material* inMat, float const sufColor[4], blendmode_t blendMode,
     float const texOffset[2], float const texScale[2],
@@ -1504,9 +1504,9 @@ static void Rend_RenderPlane(planetype_t type, coord_t height,
 
         // Set the texture origin, Y is flipped for the ceiling.
         V3d_Set(texTL, bspLeaf->aaBox.minX,
-                       bspLeaf->aaBox.arvec2[type == PLN_FLOOR? 1 : 0][VY], height);
+                       bspLeaf->aaBox.arvec2[type == Plane::Floor? 1 : 0][VY], height);
         V3d_Set(texBR, bspLeaf->aaBox.maxX,
-                       bspLeaf->aaBox.arvec2[type == PLN_FLOOR? 0 : 1][VY], height);
+                       bspLeaf->aaBox.arvec2[type == Plane::Floor? 0 : 1][VY], height);
 
         renderPlane(bspLeaf, type, height, tangent, bitangent, normal, inMat,
                     sufColor, blendMode, texTL, texBR, texOffset, texScale,
@@ -1611,7 +1611,7 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
                                      HEDGE_BACK_SECTOR(hedge)->SP_ceilsurface.isSkyMasked())))
         {
             // Geometry not normally rendered however we do so in dev sky mode.
-            mat = hedge->sector->SP_planematerial(section == SS_TOP? PLN_CEILING : PLN_FLOOR);
+            mat = hedge->sector->SP_planematerial(section == SS_TOP? Plane::Ceiling : Plane::Floor);
         }
         else
         {
@@ -1813,10 +1813,10 @@ static boolean Rend_RenderHEdgeTwosided(HEdge* hedge, byte sections)
        !front->sideDef->SW_middlematerial)
        return false; // Ugh... an obvious wall hedge hack. Best take no chances...
 
-    ffloor = leaf->sector->SP_plane(PLN_FLOOR);
-    fceil  = leaf->sector->SP_plane(PLN_CEILING);
-    bfloor = back->sector->SP_plane(PLN_FLOOR);
-    bceil  = back->sector->SP_plane(PLN_CEILING);
+    ffloor = &leaf->sector->floor();
+    fceil  = &leaf->sector->ceiling();
+    bfloor = &back->sector->floor();
+    bceil  = &back->sector->ceiling();
 
     /**
      * Create the wall sections.
@@ -1851,13 +1851,13 @@ static boolean Rend_RenderHEdgeTwosided(HEdge* hedge, byte sections)
 
                 if(LINE_SELFREF(line))
                 {
-                    xbottom = MIN_OF(bfloor->visHeight, ffloor->visHeight);
-                    xtop    = MAX_OF(bceil->visHeight,  fceil->visHeight);
+                    xbottom = MIN_OF(bfloor->visHeight(), ffloor->visHeight());
+                    xtop    = MAX_OF(bceil->visHeight(),  fceil->visHeight());
                 }
                 else
                 {
-                    xbottom = MAX_OF(bfloor->visHeight, ffloor->visHeight);
-                    xtop    = MIN_OF(bceil->visHeight,  fceil->visHeight);
+                    xbottom = MAX_OF(bfloor->visHeight(), ffloor->visHeight());
+                    xtop    = MIN_OF(bceil->visHeight(),  fceil->visHeight());
                 }
 
                 xbottom += suf->visOffset[VY];
@@ -1916,23 +1916,23 @@ static boolean Rend_RenderHEdgeTwosided(HEdge* hedge, byte sections)
         {
             // An obvious hack, what to do though??
         }
-        else if(   (bceil->visHeight <= ffloor->visHeight &&
+        else if(   (bceil->visHeight() <= ffloor->visHeight() &&
                         (front->sideDef->SW_topmaterial    || front->sideDef->SW_middlematerial))
-                || (bfloor->visHeight >= fceil->visHeight &&
+                || (bfloor->visHeight() >= fceil->visHeight() &&
                         (front->sideDef->SW_bottommaterial || front->sideDef->SW_middlematerial)))
         {
             // A closed gap?
-            if(FEQUAL(fceil->visHeight, bfloor->visHeight))
+            if(FEQUAL(fceil->visHeight(), bfloor->visHeight()))
             {
-                solidSeg = (bceil->visHeight <= bfloor->visHeight) ||
-                           !(fceil->surface.isSkyMasked() &&
-                             bceil->surface.isSkyMasked());
+                solidSeg = (bceil->visHeight() <= bfloor->visHeight()) ||
+                           !(fceil->surface().isSkyMasked() &&
+                             bceil->surface().isSkyMasked());
             }
-            else if(FEQUAL(ffloor->visHeight, bceil->visHeight))
+            else if(FEQUAL(ffloor->visHeight(), bceil->visHeight()))
             {
-                solidSeg = (bfloor->visHeight >= bceil->visHeight) ||
-                           !(ffloor->surface.isSkyMasked() &&
-                             bfloor->surface.isSkyMasked());
+                solidSeg = (bfloor->visHeight() >= bceil->visHeight()) ||
+                           !(ffloor->surface().isSkyMasked() &&
+                             bfloor->surface().isSkyMasked());
             }
             else
             {
@@ -1940,8 +1940,8 @@ static boolean Rend_RenderHEdgeTwosided(HEdge* hedge, byte sections)
             }
         }
         /// @todo Is this still necessary?
-        else if(bceil->visHeight <= bfloor->visHeight ||
-                (!(bceil->visHeight - bfloor->visHeight > 0) && bfloor->visHeight > ffloor->visHeight && bceil->visHeight < fceil->visHeight &&
+        else if(bceil->visHeight() <= bfloor->visHeight() ||
+                (!(bceil->visHeight() - bfloor->visHeight() > 0) && bfloor->visHeight() > ffloor->visHeight() && bceil->visHeight() < fceil->visHeight() &&
                 front->sideDef->SW_topmaterial && front->sideDef->SW_bottommaterial))
         {
             // A zero height back segment
@@ -2037,7 +2037,7 @@ static coord_t skyFixFloorZ(const Plane* frontFloor, const Plane* backFloor)
 {
     DENG_UNUSED(backFloor);
     if(devRendSkyMode || P_IsInVoid(viewPlayer))
-        return frontFloor->visHeight;
+        return frontFloor->visHeight();
     return GameMap_SkyFixFloor(theMap);
 }
 
@@ -2045,7 +2045,7 @@ static coord_t skyFixCeilZ(const Plane* frontCeil, const Plane* backCeil)
 {
     DENG_UNUSED(backCeil);
     if(devRendSkyMode || P_IsInVoid(viewPlayer))
-        return frontCeil->visHeight;
+        return frontCeil->visHeight();
     return GameMap_SkyFixCeiling(theMap);
 }
 
@@ -2057,12 +2057,12 @@ static coord_t skyFixCeilZ(const Plane* frontCeil, const Plane* backCeil)
  */
 static void skyFixZCoords(HEdge* hedge, int skyCap, coord_t* bottom, coord_t* top)
 {
-    const Sector* frontSec = hedge->sector;
-    const Sector* backSec  = HEDGE_BACK_SECTOR(hedge);
-    const Plane* ffloor = frontSec->SP_plane(PLN_FLOOR);
-    const Plane* fceil  = frontSec->SP_plane(PLN_CEILING);
-    const Plane* bceil  = backSec? backSec->SP_plane(PLN_CEILING) : NULL;
-    const Plane* bfloor = backSec? backSec->SP_plane(PLN_FLOOR)   : NULL;
+    Sector const *frontSec = hedge->sector;
+    Sector const *backSec  = HEDGE_BACK_SECTOR(hedge);
+    Plane const *ffloor = &frontSec->floor();
+    Plane const *fceil  = &frontSec->ceiling();
+    Plane const *bceil  = backSec? &backSec->ceiling() : NULL;
+    Plane const *bfloor = backSec? &backSec->floor()   : NULL;
 
     if(!bottom && !top) return;
     if(bottom) *bottom = 0;
@@ -2071,11 +2071,11 @@ static void skyFixZCoords(HEdge* hedge, int skyCap, coord_t* bottom, coord_t* to
     if(skyCap & SKYCAP_UPPER)
     {
         if(top)    *top    = skyFixCeilZ(fceil, bceil);
-        if(bottom) *bottom = MAX_OF((backSec && bceil->surface.isSkyMasked() )? bceil->visHeight  : fceil->visHeight,  ffloor->visHeight);
+        if(bottom) *bottom = MAX_OF((backSec && bceil->surface().isSkyMasked() )? bceil->visHeight()  : fceil->visHeight(),  ffloor->visHeight());
     }
     else
     {
-        if(top)    *top    = MIN_OF((backSec && bfloor->surface.isSkyMasked())? bfloor->visHeight : ffloor->visHeight, fceil->visHeight);
+        if(top)    *top    = MIN_OF((backSec && bfloor->surface().isSkyMasked())? bfloor->visHeight() : ffloor->visHeight(), fceil->visHeight());
         if(bottom) *bottom = skyFixFloorZ(ffloor, bfloor);
     }
 }
@@ -2139,14 +2139,14 @@ static int chooseHEdgeSkyFixes(HEdge *hedge, int skyCap)
                 // Lower fix?
                 if(hasSkyFloor && (skyCap & SKYCAP_LOWER))
                 {
-                    Plane const *ffloor = frontSec->SP_plane(PLN_FLOOR);
-                    Plane const *bfloor = backSec? backSec->SP_plane(PLN_FLOOR) : NULL;
+                    Plane const *ffloor = &frontSec->floor();
+                    Plane const *bfloor = backSec? &backSec->floor() : NULL;
                     coord_t const skyZ = skyFixFloorZ(ffloor, bfloor);
 
-                    if(hasClosedBack || (!bfloor->surface.isSkyMasked() || devRendSkyMode || P_IsInVoid(viewPlayer)))
+                    if(hasClosedBack || (!bfloor->surface().isSkyMasked() || devRendSkyMode || P_IsInVoid(viewPlayer)))
                     {
-                        Plane const *floor = (bfloor && bfloor->surface.isSkyMasked() && ffloor->visHeight < bfloor->visHeight? bfloor : ffloor);
-                        if(floor->visHeight > skyZ)
+                        Plane const *floor = (bfloor && bfloor->surface().isSkyMasked() && ffloor->visHeight() < bfloor->visHeight()? bfloor : ffloor);
+                        if(floor->visHeight() > skyZ)
                             fixes |= SKYCAP_LOWER;
                     }
                 }
@@ -2154,14 +2154,14 @@ static int chooseHEdgeSkyFixes(HEdge *hedge, int skyCap)
                 // Upper fix?
                 if(hasSkyCeiling && (skyCap & SKYCAP_UPPER))
                 {
-                    Plane const *fceil = frontSec->SP_plane(PLN_CEILING);
-                    Plane const *bceil = backSec? backSec->SP_plane(PLN_CEILING) : NULL;
+                    Plane const *fceil = &frontSec->ceiling();
+                    Plane const *bceil = backSec? &backSec->ceiling() : NULL;
                     coord_t const skyZ = skyFixCeilZ(fceil, bceil);
 
-                    if(hasClosedBack || (!bceil->surface.isSkyMasked() || devRendSkyMode || P_IsInVoid(viewPlayer)))
+                    if(hasClosedBack || (!bceil->surface().isSkyMasked() || devRendSkyMode || P_IsInVoid(viewPlayer)))
                     {
-                        Plane const *ceil = (bceil && bceil->surface.isSkyMasked() && fceil->visHeight > bceil->visHeight? bceil : fceil);
-                        if(ceil->visHeight < skyZ)
+                        Plane const *ceil = (bceil && bceil->surface().isSkyMasked() && fceil->visHeight() > bceil->visHeight()? bceil : fceil);
+                        if(ceil->visHeight() < skyZ)
                             fixes |= SKYCAP_UPPER;
                     }
                 }
@@ -2358,7 +2358,7 @@ static void Rend_WriteBspLeafSkyFixGeometry(BspLeaf* leaf, int skyFix)
 
             if(devRendSkyMode)
             {
-                skyMaterial = hedge->sector->SP_planematerial(skyFix == SKYCAP_UPPER? PLN_CEILING : PLN_FLOOR);
+                skyMaterial = hedge->sector->SP_planematerial(skyFix == SKYCAP_UPPER? Plane::Ceiling : Plane::Floor);
             }
 
             if(zBottom >= zTop)
@@ -2711,7 +2711,7 @@ static void Rend_RenderPlanes()
     for(uint i = 0; i < sect->planeCount(); ++i)
     {
         Plane const *plane = sect->planes[i];
-        Surface const *suf = &plane->surface;
+        Surface const *suf = &plane->surface();
         bool isSkyMasked = false;
         bool addDynLights = !devRendSkyMode;
         bool clipBackFacing = false;
@@ -2721,7 +2721,7 @@ static void Rend_RenderPlanes()
         int texMode;
 
         isSkyMasked = suf->isSkyMasked();
-        if(isSkyMasked && plane->type != PLN_MID)
+        if(isSkyMasked && plane->type() != Plane::Middle)
         {
             if(!devRendSkyMode) continue; // Not handled here.
             isSkyMasked = false;
@@ -2746,7 +2746,7 @@ static void Rend_RenderPlanes()
 
         V2f_Copy(texOffset, suf->visOffset);
         // Add the Y offset to orient the Y flipped texture.
-        if(plane->type == PLN_CEILING)
+        if(plane->type() == Plane::Ceiling)
             texOffset[VY] -= leaf->aaBox.maxY - leaf->aaBox.minY;
         // Add the additional offset to align with the worldwide grid.
         texOffset[VX] += (float)leaf->worldGridOffset[VX];
@@ -2757,10 +2757,10 @@ static void Rend_RenderPlanes()
         texScale[VX] = ((suf->flags & DDSUF_MATERIAL_FLIPH)? -1 : 1);
         texScale[VY] = ((suf->flags & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
-        Rend_RenderPlane(plane->type, plane->visHeight, suf->tangent, suf->bitangent, suf->normal,
+        Rend_RenderPlane(plane->type(), plane->visHeight(), suf->tangent, suf->bitangent, suf->normal,
             mat, suf->rgba, suf->blendMode, texOffset, texScale,
-            isSkyMasked, addDynLights, (!devRendSkyMode && i == PLN_FLOOR),
-            BspLeaf_BiasSurfaceForGeometryGroup(leaf, (uint)plane->planeID), plane->planeID,
+            isSkyMasked, addDynLights, (!devRendSkyMode && i == Plane::Floor),
+            BspLeaf_BiasSurfaceForGeometryGroup(leaf, (uint)plane->inSectorIndex()), plane->inSectorIndex(),
             texMode, clipBackFacing);
     }
 }
@@ -3066,11 +3066,11 @@ void Rend_RenderSurfaceVectors()
             Plane *pln = bspLeaf->sector->SP_plane(j);
             vec3f_t origin;
 
-            V3f_Set(origin, bspLeaf->midPoint[VX], bspLeaf->midPoint[VY], pln->visHeight);
-            if(pln->type != PLN_MID && pln->surface.isSkyMasked())
-                origin[VZ] = GameMap_SkyFix(theMap, pln->type == PLN_CEILING);
+            V3f_Set(origin, bspLeaf->midPoint[VX], bspLeaf->midPoint[VY], pln->visHeight());
+            if(pln->type() != Plane::Middle && pln->surface().isSkyMasked())
+                origin[VZ] = GameMap_SkyFix(theMap, pln->type() == Plane::Ceiling);
 
-            drawSurfaceTangentSpaceVectors(&pln->surface, origin);
+            drawSurfaceTangentSpaceVectors(&pln->surface(), origin);
         }
     }
 

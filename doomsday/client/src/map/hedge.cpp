@@ -231,11 +231,11 @@ static void addWallDivNodesForPlaneIntercepts(HEdge* hedge, walldivs_t* wallDivs
                         {
                             Plane* pln = scanSec->SP_plane(j);
 
-                            if(pln->visHeight > bottomZ && pln->visHeight < topZ)
+                            if(pln->visHeight() > bottomZ && pln->visHeight() < topZ)
                             {
-                                if(!findWallDivNodeByZOrigin(wallDivs, pln->visHeight))
+                                if(!findWallDivNodeByZOrigin(wallDivs, pln->visHeight()))
                                 {
-                                    WallDivs_Append(wallDivs, pln->visHeight);
+                                    WallDivs_Append(wallDivs, pln->visHeight());
 
                                     // Have we reached the div limit?
                                     if(wallDivs->num == WALLDIVS_MAX_NODES)
@@ -246,10 +246,10 @@ static void addWallDivNodesForPlaneIntercepts(HEdge* hedge, walldivs_t* wallDivs
                             if(!stopScan)
                             {
                                 // Clip a range bound to this height?
-                                if(pln->type == PLN_FLOOR && pln->visHeight > bottomZ)
-                                    bottomZ = pln->visHeight;
-                                else if(pln->type == PLN_CEILING && pln->visHeight < topZ)
-                                    topZ = pln->visHeight;
+                                if(pln->type() == Plane::Floor && pln->visHeight() > bottomZ)
+                                    bottomZ = pln->visHeight();
+                                else if(pln->type() == Plane::Ceiling && pln->visHeight() < topZ)
+                                    topZ = pln->visHeight();
 
                                 // All clipped away?
                                 if(bottomZ >= topZ)

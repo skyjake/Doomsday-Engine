@@ -977,7 +977,7 @@ static void createGlowLightForSurface(Surface &suf)
     {
     case DMU_PLANE: {
         Plane *pln = suf.owner->castTo<Plane>();
-        Sector *sec = pln->sector;
+        Sector *sec = &pln->sector();
 
         // Only produce a light for sectors with open space.
         /// @todo Do not add surfaces from sectors with zero BSP leafs to the glowing list.
@@ -994,7 +994,7 @@ static void createGlowLightForSurface(Surface &suf)
         // @note Plane lights do not spread so simply link to all BspLeafs of this sector.
         lumobj_t *lum = createLuminous(LT_PLANE, sec->bspLeafs[0]);
         V3d_Copy(lum->origin, pln->PS_base.origin);
-        lum->origin[VZ] = pln->visHeight; // base.origin[VZ] is not smoothed
+        lum->origin[VZ] = pln->visHeight(); // base.origin[VZ] is not smoothed
 
         V3f_Copy(LUM_PLANE(lum)->normal, pln->PS_normal);
         V3f_Copy(LUM_PLANE(lum)->color, avgColorAmplified->color.rgb);

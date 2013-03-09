@@ -28,6 +28,7 @@
 #endif
 
 #include "MapElement"
+#include "map/plane.h"
 #include "p_mapdata.h"
 #include "p_dmu.h"
 #include <QList>
@@ -35,48 +36,45 @@
 // Helper macros for accessing sector floor/ceiling plane data elements.
 #define SP_plane(n)             planes[(n)]
 
-#define SP_planesurface(n)      SP_plane(n)->surface
-#define SP_planeheight(n)       SP_plane(n)->height
-#define SP_planetangent(n)      SP_plane(n)->surface.tangent
-#define SP_planebitangent(n)    SP_plane(n)->surface.bitangent
-#define SP_planenormal(n)       SP_plane(n)->surface.normal
-#define SP_planematerial(n)     SP_plane(n)->surface.material
-#define SP_planeoffset(n)       SP_plane(n)->surface.offset
-#define SP_planergb(n)          SP_plane(n)->surface.rgba
-#define SP_planetarget(n)       SP_plane(n)->target
-#define SP_planespeed(n)        SP_plane(n)->speed
-#define SP_planeorigin(n)       SP_plane(n)->origin
-#define SP_planevisheight(n)    SP_plane(n)->visHeight
+#define SP_planesurface(n)      SP_plane(n)->surface()
+#define SP_planeheight(n)       SP_plane(n)->height()
+#define SP_planetangent(n)      SP_plane(n)->surface().tangent
+#define SP_planebitangent(n)    SP_plane(n)->surface().bitangent
+#define SP_planenormal(n)       SP_plane(n)->surface().normal
+#define SP_planematerial(n)     SP_plane(n)->surface().material
+#define SP_planeoffset(n)       SP_plane(n)->surface().offset
+#define SP_planergb(n)          SP_plane(n)->surface().rgba
+#define SP_planetarget(n)       SP_plane(n)->targetHeight()
+#define SP_planespeed(n)        SP_plane(n)->speed()
+#define SP_planevisheight(n)    SP_plane(n)->visHeight()
 
-#define SP_ceilsurface          SP_planesurface(PLN_CEILING)
-#define SP_ceilheight           SP_planeheight(PLN_CEILING)
-#define SP_ceiltangent          SP_planetangent(PLN_CEILING)
-#define SP_ceilbitangent        SP_planebitangent(PLN_CEILING)
-#define SP_ceilnormal           SP_planenormal(PLN_CEILING)
-#define SP_ceilmaterial         SP_planematerial(PLN_CEILING)
-#define SP_ceiloffset           SP_planeoffset(PLN_CEILING)
-#define SP_ceilrgb              SP_planergb(PLN_CEILING)
-#define SP_ceiltarget           SP_planetarget(PLN_CEILING)
-#define SP_ceilspeed            SP_planespeed(PLN_CEILING)
-#define SP_ceilorigin           SP_planeorigin(PLN_CEILING)
-#define SP_ceilvisheight        SP_planevisheight(PLN_CEILING)
+#define SP_ceilsurface          SP_planesurface(Plane::Ceiling)
+#define SP_ceilheight           SP_planeheight(Plane::Ceiling)
+#define SP_ceiltangent          SP_planetangent(Plane::Ceiling)
+#define SP_ceilbitangent        SP_planebitangent(Plane::Ceiling)
+#define SP_ceilnormal           SP_planenormal(Plane::Ceiling)
+#define SP_ceilmaterial         SP_planematerial(Plane::Ceiling)
+#define SP_ceiloffset           SP_planeoffset(Plane::Ceiling)
+#define SP_ceilrgb              SP_planergb(Plane::Ceiling)
+#define SP_ceiltarget           SP_planetarget(Plane::Ceiling)
+#define SP_ceilspeed            SP_planespeed(Plane::Ceiling)
+#define SP_ceilvisheight        SP_planevisheight(Plane::Ceiling)
 
-#define SP_floorsurface         SP_planesurface(PLN_FLOOR)
-#define SP_floorheight          SP_planeheight(PLN_FLOOR)
-#define SP_floortangent         SP_planetangent(PLN_FLOOR)
-#define SP_floorbitangent       SP_planebitangent(PLN_FLOOR)
-#define SP_floornormal          SP_planenormal(PLN_FLOOR)
-#define SP_floormaterial        SP_planematerial(PLN_FLOOR)
-#define SP_flooroffset          SP_planeoffset(PLN_FLOOR)
-#define SP_floorrgb             SP_planergb(PLN_FLOOR)
-#define SP_floortarget          SP_planetarget(PLN_FLOOR)
-#define SP_floorspeed           SP_planespeed(PLN_FLOOR)
-#define SP_floororigin          SP_planeorigin(PLN_FLOOR)
-#define SP_floorvisheight       SP_planevisheight(PLN_FLOOR)
+#define SP_floorsurface         SP_planesurface(Plane::Floor)
+#define SP_floorheight          SP_planeheight(Plane::Floor)
+#define SP_floortangent         SP_planetangent(Plane::Floor)
+#define SP_floorbitangent       SP_planebitangent(Plane::Floor)
+#define SP_floornormal          SP_planenormal(Plane::Floor)
+#define SP_floormaterial        SP_planematerial(Plane::Floor)
+#define SP_flooroffset          SP_planeoffset(Plane::Floor)
+#define SP_floorrgb             SP_planergb(Plane::Floor)
+#define SP_floortarget          SP_planetarget(Plane::Floor)
+#define SP_floorspeed           SP_planespeed(Plane::Floor)
+#define SP_floorvisheight       SP_planevisheight(Plane::Floor)
 
 #define S_skyfix(n)             skyFix[(n)]
-#define S_floorskyfix           S_skyfix(PLN_FLOOR)
-#define S_ceilskyfix            S_skyfix(PLN_CEILING)
+#define S_floorskyfix           S_skyfix(Plane::Floor)
+#define S_ceilskyfix            S_skyfix(Plane::Ceiling)
 
 // Sector frame flags
 #define SIF_VISIBLE         0x1     // Sector is visible on this frame.
@@ -123,9 +121,26 @@ public:
     Sector();    
     ~Sector();
 
-    uint planeCount() const {
-        return planes.size();
-    }
+    /**
+     * Returns the total number of planes in the sector.
+     */
+    inline uint planeCount() const { return planes.size(); }
+
+    /**
+     * Returns the floor plane of the sector.
+     */
+    inline Plane &floor() { return *planes[Plane::Floor]; }
+
+    /// @copydoc floor()
+    inline Plane const &floor() const { return *planes[Plane::Floor]; }
+
+    /**
+     * Returns the ceiling plane of the sector.
+     */
+    inline Plane &ceiling() { return *planes[Plane::Ceiling]; }
+
+    /// @copydoc ceiling()
+    inline Plane const &ceiling() const { return *planes[Plane::Ceiling]; }
 };
 
 /**

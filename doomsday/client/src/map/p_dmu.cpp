@@ -315,7 +315,7 @@ uint P_ToIndex(void const *ptr)
         return GET_BSPNODE_IDX(elem->castTo<BspNode>());
 
     case DMU_PLANE:
-        return GET_PLANE_IDX(elem->castTo<Plane>());
+        return elem->castTo<Plane>()->inSectorIndex();
 
     case DMU_MATERIAL:
         return elem->castTo<Material>()->manifest().id();
@@ -897,14 +897,12 @@ static int setProperty(void *ptr, void *context)
 
         if(args->modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            Sector* sec = elem->castTo<Sector>();
-            elem = sec->SP_plane(PLN_FLOOR);
+            elem = &elem->castTo<Sector>()->floor();
             args->type = DMU_PLANE;
         }
         else if(args->modifiers & DMU_CEILING_OF_SECTOR)
         {
-            Sector* sec = elem->castTo<Sector>();
-            elem = sec->SP_plane(PLN_CEILING);
+            elem = &elem->castTo<Sector>()->ceiling();
             args->type = DMU_PLANE;
         }
     }
@@ -983,7 +981,7 @@ static int setProperty(void *ptr, void *context)
         case DMU_ALPHA:
         case DMU_BLENDMODE:
         case DMU_FLAGS:
-            elem = &elem->castTo<Plane>()->surface;
+            elem = &elem->castTo<Plane>()->surface();
             args->type = DMU_SURFACE;
             break;
 
@@ -1016,7 +1014,7 @@ static int setProperty(void *ptr, void *context)
         break;
 
     case DMU_PLANE:
-        Plane_SetProperty(elem->castTo<Plane>(), args);
+        elem->castTo<Plane>()->setProperty(*args);
         break;
 
     case DMU_VERTEX:
@@ -1098,7 +1096,7 @@ static int setProperty(void *ptr, void *context)
     if(updatePlane)
     {
         if(R_UpdatePlane(updatePlane, false))
-            updateSector1 = updatePlane->sector;
+            updateSector1 = &updatePlane->sector();
     }
 
     if(updateSector1)
@@ -1397,14 +1395,12 @@ static int getProperty(void *ptr, void *context)
     {
         if(args->modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            Sector const *sec = elem->castTo<Sector>();
-            elem = sec->SP_plane(PLN_FLOOR);
+            elem = &elem->castTo<Sector>()->floor();
             args->type = DMU_PLANE;
         }
         else if(args->modifiers & DMU_CEILING_OF_SECTOR)
         {
-            Sector const *sec = elem->castTo<Sector>();
-            elem = sec->SP_plane(PLN_CEILING);
+            elem = &elem->castTo<Sector>()->ceiling();
             args->type = DMU_PLANE;
         }
     }
@@ -1491,7 +1487,7 @@ static int getProperty(void *ptr, void *context)
         case DMU_BLENDMODE:
         case DMU_FLAGS:
         case DMU_BASE:
-            elem = &elem->castTo<Plane>()->surface;
+            elem = &elem->castTo<Plane>()->surface();
             args->type = DMU_SURFACE;
             DENG2_ASSERT(elem->type() == args->type);
             break;
@@ -1520,7 +1516,7 @@ static int getProperty(void *ptr, void *context)
         break;
 
     case DMU_PLANE:
-        Plane_GetProperty(elem->castTo<Plane>(), args);
+        elem->castTo<Plane>()->property(*args);
         break;
 
     case DMU_SECTOR:

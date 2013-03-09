@@ -161,15 +161,15 @@ int GameMap_AmbientLightLevel(GameMap* map)
 
 coord_t GameMap_SkyFix(GameMap* map, boolean ceiling)
 {
-    planetype_t plane = ceiling? PLN_CEILING : PLN_FLOOR;
     DENG2_ASSERT(map);
+    Plane::Type plane = ceiling? Plane::Ceiling : Plane::Floor;
     return map->skyFix[plane].height;
 }
 
 GameMap* GameMap_SetSkyFix(GameMap* map, boolean ceiling, coord_t height)
 {
-    planetype_t plane = ceiling? PLN_CEILING : PLN_FLOOR;
     DENG2_ASSERT(map);
+    Plane::Type plane = ceiling? Plane::Ceiling : Plane::Floor;
     map->skyFix[plane].height = height;
     return map;
 }
@@ -244,29 +244,28 @@ Sector* GameMap_SectorByBase(GameMap* map, const void* ddMobjBase)
     return NULL;
 }
 
-Surface* GameMap_SurfaceByBase(GameMap* map, const void* ddMobjBase)
+Surface *GameMap_SurfaceByBase(GameMap *map, void const *ddMobjBase)
 {
-    uint i, k;
     DENG2_ASSERT(map);
 
     // First try plane surfaces.
-    for(i = 0; i < map->sectorCount(); ++i)
+    for(uint i = 0; i < map->sectorCount(); ++i)
     {
-        Sector* sec = &map->sectors[i];
-        for(k = 0; k < sec->planeCount(); ++k)
+        Sector *sec = &map->sectors[i];
+        for(uint k = 0; k < sec->planeCount(); ++k)
         {
-            Plane* pln = sec->SP_plane(k);
-            if(ddMobjBase == &pln->surface.base)
+            Plane *pln = sec->SP_plane(k);
+            if(ddMobjBase == &pln->surface().base)
             {
-                return &pln->surface;
+                return &pln->surface();
             }
         }
     }
 
     // Perhaps a sidedef surface?
-    for(i = 0; i < map->sideDefCount(); ++i)
+    for(uint i = 0; i < map->sideDefCount(); ++i)
     {
-        SideDef* side = &map->sideDefs[i];
+        SideDef *side = &map->sideDefs[i];
         if(ddMobjBase == &side->SW_middlesurface.base)
         {
             return &side->SW_middlesurface;

@@ -175,8 +175,6 @@ boolean R_UpdateSidedef(SideDef *side, boolean forceUpdate);
 boolean R_UpdatePlane(Plane *pln, boolean forceUpdate);
 boolean R_UpdateSurface(Surface *suf, boolean forceUpdate);
 
-void R_MarkDependantSurfacesForDecorationUpdate(Plane* pln);
-
 /**
  * To be called in response to a Material property changing which may
  * require updating any map surfaces which are presently using it.

@@ -451,13 +451,12 @@ static void updateSurfaceDecorations(Surface &suf, Vector2f const &offset,
 
 static void plotSourcesForPlane(Plane &pln)
 {
-    Sector &sec  = *pln.sector;
-    Surface &suf = pln.surface;
-
+    Surface &suf = pln.surface();
     if(!suf.material) return;
 
-    Vector3d v1(sec.aaBox.minX, pln.type == PLN_FLOOR? sec.aaBox.maxY : sec.aaBox.minY, pln.visHeight);
-    Vector3d v2(sec.aaBox.maxX, pln.type == PLN_FLOOR? sec.aaBox.minY : sec.aaBox.maxY, pln.visHeight);
+    Sector &sec = pln.sector();
+    Vector3d v1(sec.aaBox.minX, pln.type() == Plane::Floor? sec.aaBox.maxY : sec.aaBox.minY, pln.visHeight());
+    Vector3d v2(sec.aaBox.maxX, pln.type() == Plane::Floor? sec.aaBox.minY : sec.aaBox.maxY, pln.visHeight());
 
     Vector2f offset(-fmod(sec.aaBox.minX, 64) - suf.visOffset[0],
                     -fmod(sec.aaBox.minY, 64) - suf.visOffset[1]);

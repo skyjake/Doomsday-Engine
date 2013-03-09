@@ -134,6 +134,11 @@ typedef struct {
     coord_t         speed; // Move speed.
 } dt_plane_t;
 
+typedef enum {
+    PLN_FLOOR,
+    PLN_CEILING
+} dt_planetype_t;
+
 typedef struct {
     float           lightLevel;
     float           rgb[3];

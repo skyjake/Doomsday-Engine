@@ -429,23 +429,23 @@ void Sv_RegisterPlayer(dt_player_t* reg, uint number)
  * @param reg           The sector register to be initialized.
  * @param number        The world sector number to be registered.
  */
-void Sv_RegisterSector(dt_sector_t* reg, uint number)
+void Sv_RegisterSector(dt_sector_t *reg, uint number)
 {
-    uint                i;
-    Sector*             sec = SECTOR_PTR(number);
+    Sector *sec = SECTOR_PTR(number);
 
     reg->lightLevel = sec->lightLevel;
-    memcpy(reg->rgb, sec->rgb, sizeof(reg->rgb));
+    std::memcpy(reg->rgb, sec->rgb, sizeof(reg->rgb));
+
     // @todo $nplanes
-    for(i = 0; i < 2; ++i) // number of planes in sector.
+    for(uint i = 0; i < 2; ++i) // number of planes in sector.
     {
         // Plane properties
-        reg->planes[i].height = sec->planes[i]->height;
-        reg->planes[i].target = sec->planes[i]->target;
-        reg->planes[i].speed = sec->planes[i]->speed;
+        reg->planes[i].height = sec->planes[i]->height();
+        reg->planes[i].target = sec->planes[i]->targetHeight();
+        reg->planes[i].speed  = sec->planes[i]->speed();
 
         // Surface properties.
-        memcpy(reg->planes[i].surface.rgba, sec->planes[i]->surface.rgba,
+        memcpy(reg->planes[i].surface.rgba, sec->planes[i]->surface().rgba,
                sizeof(reg->planes[i].surface.rgba));
 
         // Surface material.
@@ -660,46 +660,46 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
     //    The clientside height should be fixed.
 
     // Should we make an immediate change in floor height?
-    if(FEQUAL(r->planes[PLN_FLOOR].speed, 0) && FEQUAL(s->planes[PLN_FLOOR]->speed, 0))
+    if(FEQUAL(r->planes[PLN_FLOOR].speed, 0) && FEQUAL(s->SP_floorspeed, 0))
     {
-        if(!FEQUAL(r->planes[PLN_FLOOR].height, s->planes[PLN_FLOOR]->height))
+        if(!FEQUAL(r->planes[PLN_FLOOR].height, s->SP_floorheight))
             df |= SDF_FLOOR_HEIGHT;
     }
     else
     {
-        if(fabs(r->planes[PLN_FLOOR].height - s->planes[PLN_FLOOR]->height) > PLANE_SKIP_LIMIT)
+        if(fabs(r->planes[PLN_FLOOR].height - s->SP_floorheight) > PLANE_SKIP_LIMIT)
             df |= SDF_FLOOR_HEIGHT;
     }
 
     // How about the ceiling?
-    if(FEQUAL(r->planes[PLN_CEILING].speed, 0) && FEQUAL(s->planes[PLN_CEILING]->speed, 0))
+    if(FEQUAL(r->planes[PLN_CEILING].speed, 0) && FEQUAL(s->SP_ceilspeed, 0))
     {
-        if(!FEQUAL(r->planes[PLN_CEILING].height, s->planes[PLN_CEILING]->height))
+        if(!FEQUAL(r->planes[PLN_CEILING].height, s->SP_ceilheight))
             df |= SDF_CEILING_HEIGHT;
     }
     else
     {
-        if(fabs(r->planes[PLN_CEILING].height - s->planes[PLN_CEILING]->height) > PLANE_SKIP_LIMIT)
+        if(fabs(r->planes[PLN_CEILING].height - s->SP_ceilheight) > PLANE_SKIP_LIMIT)
             df |= SDF_CEILING_HEIGHT;
     }
 
     // Check planes, too.
-    if(!FEQUAL(r->planes[PLN_FLOOR].target, s->planes[PLN_FLOOR]->target))
+    if(!FEQUAL(r->planes[PLN_FLOOR].target, s->SP_floortarget))
     {
         // Target and speed are always sent together.
         df |= SDF_FLOOR_TARGET | SDF_FLOOR_SPEED;
     }
-    if(!FEQUAL(r->planes[PLN_FLOOR].speed, s->planes[PLN_FLOOR]->speed))
+    if(!FEQUAL(r->planes[PLN_FLOOR].speed, s->SP_floorspeed))
     {
         // Target and speed are always sent together.
         df |= SDF_FLOOR_SPEED | SDF_FLOOR_TARGET;
     }
-    if(!FEQUAL(r->planes[PLN_CEILING].target, s->planes[PLN_CEILING]->target))
+    if(!FEQUAL(r->planes[PLN_CEILING].target, s->SP_ceiltarget))
     {
         // Target and speed are always sent together.
         df |= SDF_CEILING_TARGET | SDF_CEILING_SPEED;
     }
-    if(!FEQUAL(r->planes[PLN_CEILING].speed, s->planes[PLN_CEILING]->speed))
+    if(!FEQUAL(r->planes[PLN_CEILING].speed, s->SP_ceilspeed))
     {
         // Target and speed are always sent together.
         df |= SDF_CEILING_SPEED | SDF_CEILING_TARGET;
@@ -708,7 +708,7 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
 #ifdef _DEBUG
     if(df & (SDF_CEILING_HEIGHT | SDF_CEILING_SPEED | SDF_CEILING_TARGET))
     {
-        Con_Message("Sector %i: ceiling state change noted (target = %f)", number, s->planes[PLN_CEILING]->target);
+        Con_Message("Sector %i: ceiling state change noted (target = %f)", number, s->SP_ceiltarget);
     }
 #endif
 
@@ -729,8 +729,8 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
     {
         // The plane heights should be tracked regardless of the
         // change flags.
-        r->planes[PLN_FLOOR].height = s->planes[PLN_FLOOR]->height;
-        r->planes[PLN_CEILING].height = s->planes[PLN_CEILING]->height;
+        r->planes[PLN_FLOOR].height = s->SP_floorheight;
+        r->planes[PLN_CEILING].height = s->SP_ceilheight;
     }
 
     d->delta.flags = df;
@@ -2335,25 +2335,25 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
         case DMU_PLANE: {
             type = DT_SECTOR_SOUND;
 
-            Plane* pln = sourceSurface->owner->castTo<Plane>();
+            Plane *pln = sourceSurface->owner->castTo<Plane>();
 
             // Clients need to know which emitter to use.
             if(emitter)
             {
-                if(pln == pln->sector->SP_plane(PLN_FLOOR))
+                if(pln == &pln->sector().floor())
                 {
-                    if(emitter == (mobj_t*) &sourceSurface->base)
+                    if(emitter == (mobj_t *) &sourceSurface->base)
                         df |= SNDDF_PLANE_FLOOR;
                 }
-                else if(pln == pln->sector->SP_plane(PLN_CEILING))
+                else if(pln == &pln->sector().ceiling())
                 {
-                    if(emitter == (mobj_t*) &sourceSurface->base)
+                    if(emitter == (mobj_t *) &sourceSurface->base)
                         df |= SNDDF_PLANE_CEILING;
                 }
             }
             // else client assumes the sector's sound origin.
 
-            id = GameMap_SectorIndex(theMap, pln->sector);
+            id = GameMap_SectorIndex(theMap, &pln->sector());
             break; }
 
         case DMU_SIDEDEF: {

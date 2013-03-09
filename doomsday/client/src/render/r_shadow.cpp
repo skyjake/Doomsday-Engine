@@ -346,23 +346,23 @@ int R_IterateShadowProjections(uint listIdx, int (*callback) (const shadowprojec
     return R_IterateShadowProjections2(listIdx, callback, NULL);
 }
 
-int RIT_FindShadowPlaneIterator(Sector* sector, void* paramaters)
+int RIT_FindShadowPlaneIterator(Sector *sector, void *parameters)
 {
-    Plane** highest = (Plane**)paramaters;
-    Plane* compare = sector->SP_plane(PLN_FLOOR);
-    if(compare->visHeight > (*highest)->visHeight)
+    DENG_ASSERT(sector);
+    Plane **highest = (Plane **)parameters;
+    Plane *compare = &sector->floor();
+    if(compare->visHeight() > (*highest)->visHeight())
         *highest = compare;
     return false; // Continue iteration.
 }
 
-Plane* R_FindShadowPlane(mobj_t* mo)
+Plane *R_FindShadowPlane(mobj_t *mo)
 {
-    Plane* plane = NULL;
-    assert(mo);
+    DENG_ASSERT(mo);
     if(mo->bspLeaf)
     {
-        plane = mo->bspLeaf->sector->SP_plane(PLN_FLOOR);
-        P_MobjSectorsIterator(mo, RIT_FindShadowPlaneIterator, (void*)&plane);
+        Plane *plane = &mo->bspLeaf->sector->floor();
+        P_MobjSectorsIterator(mo, RIT_FindShadowPlaneIterator, (void *)&plane);
     }
-    return plane;
+    return 0;
 }

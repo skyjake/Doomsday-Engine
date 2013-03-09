@@ -521,14 +521,14 @@ typedef struct {
 } rendershadowseg_params_t;
 
 static void setTopShadowParams(rendershadowseg_params_t *p, float size, coord_t top,
-    coord_t const *xOffset, coord_t const *segLength, coord_t const *fFloor, coord_t const *fCeil,
+    coord_t const *xOffset, coord_t const *segLength, coord_t fFloor, coord_t fCeil,
     shadowcorner_t const *botCn, shadowcorner_t const *topCn, shadowcorner_t const *sideCn,
     edgespan_t const *spans)
 {
     p->shadowMul = 1;
     p->horizontal = false;
     p->texHeight = size;
-    p->texOffset[VY] = calcTexCoordY(top, *fFloor, *fCeil, p->texHeight);
+    p->texOffset[VY] = calcTexCoordY(top, fFloor, fCeil, p->texHeight);
     p->wallLength = *segLength;
 
     p->texture = LST_RADIO_OO;
@@ -550,7 +550,7 @@ static void setTopShadowParams(rendershadowseg_params_t *p, float size, coord_t 
         else if(sideCn[1].corner == -1)
         {
             // right corner faces outwards
-            if(-topCn[0].pOffset < 0 && botCn[0].pHeight < *fCeil)
+            if(-topCn[0].pOffset < 0 && botCn[0].pHeight < fCeil)
             {
                 // Must flip horizontally!
                 p->texWidth = -spans[TOP].length;
@@ -561,7 +561,7 @@ static void setTopShadowParams(rendershadowseg_params_t *p, float size, coord_t 
         }
         else  // left corner faces outwards
         {
-            if(-topCn[1].pOffset < 0 && botCn[1].pHeight < *fCeil)
+            if(-topCn[1].pOffset < 0 && botCn[1].pHeight < fCeil)
             {
                 p->texture = LST_RADIO_OE;
             }
@@ -608,7 +608,7 @@ static void setTopShadowParams(rendershadowseg_params_t *p, float size, coord_t 
                         else
                         {
                             p->texHeight = -topCn[0].pOffset;
-                            p->texOffset[VY] = calcTexCoordY(top, *fFloor, *fCeil, p->texHeight);
+                            p->texOffset[VY] = calcTexCoordY(top, fFloor, fCeil, p->texHeight);
                         }
                     }
                 }
@@ -629,7 +629,7 @@ static void setTopShadowParams(rendershadowseg_params_t *p, float size, coord_t 
                         else
                         {
                             p->texHeight = -topCn[1].pOffset;
-                            p->texOffset[VY] = calcTexCoordY(top, *fFloor, *fCeil, p->texHeight);
+                            p->texOffset[VY] = calcTexCoordY(top, fFloor, fCeil, p->texHeight);
                         }
                     }
                 }
@@ -675,14 +675,14 @@ static void setTopShadowParams(rendershadowseg_params_t *p, float size, coord_t 
 }
 
 static void setBottomShadowParams(rendershadowseg_params_t *p, float size, coord_t top,
-    coord_t const *xOffset, coord_t const *segLength, coord_t const *fFloor, coord_t const *fCeil,
+    coord_t const *xOffset, coord_t const *segLength, coord_t fFloor, coord_t fCeil,
     shadowcorner_t const *botCn, shadowcorner_t const *topCn, shadowcorner_t const *sideCn,
     edgespan_t const *spans)
 {
     p->shadowMul = 1;
     p->horizontal = false;
     p->texHeight = -size;
-    p->texOffset[VY] = calcTexCoordY(top, *fFloor, *fCeil, p->texHeight);
+    p->texOffset[VY] = calcTexCoordY(top, fFloor, fCeil, p->texHeight);
     p->wallLength = *segLength;
 
     p->texture = LST_RADIO_OO;
@@ -702,7 +702,7 @@ static void setBottomShadowParams(rendershadowseg_params_t *p, float size, coord
         }
         else if(sideCn[1].corner == -1) // right corner faces outwards
         {
-            if(botCn[0].pOffset < 0 && topCn[0].pHeight > *fFloor)
+            if(botCn[0].pOffset < 0 && topCn[0].pHeight > fFloor)
             {
                 // Must flip horizontally!
                 p->texWidth = -spans[BOTTOM].length;
@@ -713,7 +713,7 @@ static void setBottomShadowParams(rendershadowseg_params_t *p, float size, coord
         else
         {
             // left corner faces outwards
-            if(botCn[1].pOffset < 0 && topCn[1].pHeight > *fFloor)
+            if(botCn[1].pOffset < 0 && topCn[1].pHeight > fFloor)
             {
                 p->texture = LST_RADIO_OE;
             }
@@ -759,7 +759,7 @@ static void setBottomShadowParams(rendershadowseg_params_t *p, float size, coord
                         else
                         {
                             p->texHeight = -botCn[0].pOffset;
-                            p->texOffset[VY] = calcTexCoordY(top, *fFloor, *fCeil, p->texHeight);
+                            p->texOffset[VY] = calcTexCoordY(top, fFloor, fCeil, p->texHeight);
                         }
                     }
                 }
@@ -779,7 +779,7 @@ static void setBottomShadowParams(rendershadowseg_params_t *p, float size, coord
                         else
                         {
                             p->texHeight = -botCn[1].pOffset;
-                            p->texOffset[VY] = calcTexCoordY(top, *fFloor, *fCeil, p->texHeight);
+                            p->texOffset[VY] = calcTexCoordY(top, fFloor, fCeil, p->texHeight);
                         }
                     }
                 }
@@ -826,15 +826,15 @@ static void setBottomShadowParams(rendershadowseg_params_t *p, float size, coord
 
 static void setSideShadowParams(rendershadowseg_params_t *p, float size, coord_t bottom,
     coord_t top, boolean rightSide, boolean bottomGlow, boolean topGlow,
-    coord_t const *xOffset, coord_t const *segLength, coord_t const *fFloor,
-    coord_t const *fCeil, coord_t const *bFloor, coord_t const *bCeil, coord_t const *lineLength,
+    coord_t const *xOffset, coord_t const *segLength, coord_t fFloor,
+    coord_t fCeil, bool hasBackSector, coord_t bFloor, coord_t bCeil, coord_t const *lineLength,
     shadowcorner_t const *sideCn)
 {
     p->shadowMul = sideCn[rightSide? 1 : 0].corner * .8f;
     p->shadowMul *= p->shadowMul * p->shadowMul;
     p->horizontal = true;
-    p->texOffset[VY] = bottom - *fFloor;
-    p->texHeight = *fCeil - *fFloor;
+    p->texOffset[VY] = bottom - fFloor;
+    p->texHeight = fCeil - fFloor;
     p->wallLength = *segLength;
 
     if(rightSide)
@@ -872,10 +872,10 @@ static void setSideShadowParams(rendershadowseg_params_t *p, float size, coord_t
         }
     }
 
-    if(bFloor)
+    if(hasBackSector)
     {
         // There is a backside.
-        if(*bFloor > *fFloor && *bCeil < *fCeil)
+        if(bFloor > fFloor && bCeil < fCeil)
         {
             if(!bottomGlow && !topGlow)
             {
@@ -883,8 +883,8 @@ static void setSideShadowParams(rendershadowseg_params_t *p, float size, coord_t
             }
             else if(bottomGlow)
             {
-                p->texOffset[VY] = bottom - *fCeil;
-                p->texHeight = -(*fCeil - *fFloor);
+                p->texOffset[VY] = bottom - fCeil;
+                p->texHeight = -(fCeil - fFloor);
                 p->texture = LST_RADIO_CO;
             }
             else
@@ -892,7 +892,7 @@ static void setSideShadowParams(rendershadowseg_params_t *p, float size, coord_t
                 p->texture = LST_RADIO_CO;
             }
         }
-        else if(*bFloor > *fFloor)
+        else if(bFloor > fFloor)
         {
             if(!bottomGlow && !topGlow)
             {
@@ -900,8 +900,8 @@ static void setSideShadowParams(rendershadowseg_params_t *p, float size, coord_t
             }
             else if(bottomGlow)
             {
-                p->texOffset[VY] = bottom - *fCeil;
-                p->texHeight = -(*fCeil - *fFloor);
+                p->texOffset[VY] = bottom - fCeil;
+                p->texHeight = -(fCeil - fFloor);
                 p->texture = LST_RADIO_CO;
             }
             else
@@ -909,7 +909,7 @@ static void setSideShadowParams(rendershadowseg_params_t *p, float size, coord_t
                 p->texture = LST_RADIO_CO;
             }
         }
-        else if(*bCeil < *fCeil)
+        else if(bCeil < fCeil)
         {
             if(!bottomGlow && !topGlow)
             {
@@ -917,8 +917,8 @@ static void setSideShadowParams(rendershadowseg_params_t *p, float size, coord_t
             }
             else if(bottomGlow)
             {
-                p->texOffset[VY] = bottom - *fCeil;
-                p->texHeight = -(*fCeil - *fFloor);
+                p->texOffset[VY] = bottom - fCeil;
+                p->texHeight = -(fCeil - fFloor);
                 p->texture = LST_RADIO_CO;
             }
             else
@@ -931,8 +931,8 @@ static void setSideShadowParams(rendershadowseg_params_t *p, float size, coord_t
     {
         if(bottomGlow)
         {
-            p->texHeight = -(*fCeil - *fFloor);
-            p->texOffset[VY] = calcTexCoordY(top, *fFloor, *fCeil, p->texHeight);
+            p->texHeight = -(fCeil - fFloor);
+            p->texOffset[VY] = calcTexCoordY(top, fFloor, fCeil, p->texHeight);
             p->texture = LST_RADIO_CO;
         }
         else if(topGlow)
@@ -1060,21 +1060,21 @@ static void renderShadowSeg(rvertex_t const *origVertices, rendershadowseg_param
  */
 static void rendRadioSegSection(rvertex_t const *rvertices, rendsegradio_params_t const *p)
 {
-    coord_t const *fFloor = &p->frontSec->SP_floorvisheight;
-    coord_t const *fCeil  = &p->frontSec->SP_ceilvisheight;
-    coord_t const *bFloor = (p->backSec? &p->backSec->SP_floorvisheight : 0);
-    coord_t const *bCeil  = (p->backSec? &p->backSec->SP_ceilvisheight  : 0);
+    coord_t const fFloor = p->frontSec->SP_floorvisheight;
+    coord_t const fCeil  = p->frontSec->SP_ceilvisheight;
+    coord_t const bFloor = (p->backSec? p->backSec->SP_floorvisheight : 0);
+    coord_t const bCeil  = (p->backSec? p->backSec->SP_ceilvisheight  : 0);
 
-    boolean const bottomGlow = R_IsGlowingPlane(p->frontSec->SP_plane(PLN_FLOOR));
-    boolean const topGlow    = R_IsGlowingPlane(p->frontSec->SP_plane(PLN_CEILING));
+    boolean const bottomGlow = R_IsGlowingPlane(&p->frontSec->floor());
+    boolean const topGlow    = R_IsGlowingPlane(&p->frontSec->ceiling());
 
     /*
      * Top Shadow.
      */
     if(!topGlow)
     {
-        if(rvertices[3].pos[VZ] > *fCeil - p->shadowSize &&
-           rvertices[0].pos[VZ] < *fCeil)
+        if(rvertices[3].pos[VZ] > fCeil - p->shadowSize &&
+           rvertices[0].pos[VZ] < fCeil)
         {
             rendershadowseg_params_t params;
 
@@ -1090,8 +1090,8 @@ static void rendRadioSegSection(rvertex_t const *rvertices, rendsegradio_params_
      */
     if(!bottomGlow)
     {
-        if(rvertices[0].pos[VZ] < *fFloor + p->shadowSize &&
-           rvertices[3].pos[VZ] > *fFloor)
+        if(rvertices[0].pos[VZ] < fFloor + p->shadowSize &&
+           rvertices[3].pos[VZ] > fFloor)
         {
             rendershadowseg_params_t params;
 
@@ -1117,7 +1117,7 @@ static void rendRadioSegSection(rvertex_t const *rvertices, rendsegradio_params_
         setSideShadowParams(&params, p->shadowSize, rvertices[0].pos[VZ],
                             rvertices[1].pos[VZ], false,
                             bottomGlow, topGlow, p->segOffset, p->segLength,
-                            fFloor, fCeil, bFloor, bCeil, p->linedefLength,
+                            fFloor, fCeil, !!p->backSec, bFloor, bCeil, p->linedefLength,
                             p->sideCn);
         renderShadowSeg(rvertices, &params, p);
     }
@@ -1133,7 +1133,7 @@ static void rendRadioSegSection(rvertex_t const *rvertices, rendsegradio_params_
         setSideShadowParams(&params, p->shadowSize, rvertices[0].pos[VZ],
                             rvertices[1].pos[VZ], true,
                             bottomGlow, topGlow, p->segOffset, p->segLength,
-                            fFloor, fCeil, bFloor, bCeil, p->linedefLength,
+                            fFloor, fCeil, !!p->backSec, bFloor, bCeil, p->linedefLength,
                             p->sideCn);
         renderShadowSeg(rvertices, &params, p);
     }
@@ -1179,19 +1179,19 @@ static void setRelativeHeights(Sector const *front, Sector const *back, boolean 
 {
     if(fz)
     {
-        *fz = front->planes[isCeiling? PLN_CEILING:PLN_FLOOR]->visHeight;
+        *fz = front->planes[isCeiling? Plane::Ceiling:Plane::Floor]->visHeight();
         if(isCeiling)
             *fz = -(*fz);
     }
     if(bz)
     {
-        *bz = back->planes[isCeiling? PLN_CEILING:PLN_FLOOR]->visHeight;
+        *bz = back->planes[isCeiling? Plane::Ceiling:Plane::Floor]->visHeight();
         if(isCeiling)
             *bz = -(*bz);
     }
     if(bhz)
     {
-        *bhz = back->planes[isCeiling? PLN_FLOOR:PLN_CEILING]->visHeight;
+        *bhz = back->planes[isCeiling? Plane::Floor:Plane::Ceiling]->visHeight();
         if(isCeiling)
             *bhz = -(*bhz);
     }
@@ -1209,9 +1209,9 @@ static uint radioEdgeHackType(LineDef const *line, Sector const *front, Sector c
     // Is the back sector closed?
     if(front->SP_floorvisheight >= back->SP_ceilvisheight)
     {
-        if(front->planes[isCeiling? PLN_FLOOR:PLN_CEILING]->surface.isSkyMasked())
+        if(front->planes[isCeiling? Plane::Floor:Plane::Ceiling]->surface().isSkyMasked())
         {
-            if(back->planes[isCeiling? PLN_FLOOR:PLN_CEILING]->surface.isSkyMasked())
+            if(back->planes[isCeiling? Plane::Floor:Plane::Ceiling]->surface().isSkyMasked())
                 return 3; // Consider it fully open.
         }
         else
@@ -1312,8 +1312,8 @@ static void processEdgeShadow(BspLeaf const *bspLeaf, LineDef const *lineDef,
     if(!(shadowDark > .0001)) return;
 
     Plane const *pln   = lineDef->L_sector(side)->SP_plane(planeId);
-    Surface const *suf = &pln->surface;
-    coord_t plnHeight  = pln->visHeight;
+    Surface const *suf = &pln->surface();
+    coord_t plnHeight  = pln->visHeight();
 
     // Glowing surfaces or missing textures shouldn't have shadows.
     if((suf->inFlags & SUIF_NO_RADIO) || !suf->material || suf->isSkyMasked()) return;
@@ -1330,9 +1330,9 @@ static void processEdgeShadow(BspLeaf const *bspLeaf, LineDef const *lineDef,
     {
         front = lineDef->L_sector(side);
         back  = lineDef->L_sector(side ^ 1);
-        setRelativeHeights(front, back, planeId == PLN_CEILING, &fz, &bz, &bhz);
+        setRelativeHeights(front, back, planeId == Plane::Ceiling, &fz, &bz, &bhz);
 
-        uint hackType = radioEdgeHackType(lineDef, front, back, side, planeId == PLN_CEILING, fz, bz);
+        uint hackType = radioEdgeHackType(lineDef, front, back, side, planeId == Plane::Ceiling, fz, bz);
         if(hackType)
         {
             V2f_Set(edgeOpen, hackType - 1, hackType - 1);
@@ -1384,13 +1384,13 @@ static void processEdgeShadow(BspLeaf const *bspLeaf, LineDef const *lineDef,
             {
                 // Its a normal neighbor.
                 if(neighbor->L_sector(otherSide) != lineDef->L_sector(side) &&
-                   !((pln->type == PLN_FLOOR && othersec->SP_ceilvisheight <= pln->visHeight) ||
-                     (pln->type == PLN_CEILING && othersec->SP_floorheight >= pln->visHeight)))
+                   !((pln->type() == Plane::Floor && othersec->SP_ceilvisheight <= pln->visHeight()) ||
+                     (pln->type() == Plane::Ceiling && othersec->SP_floorheight >= pln->visHeight())))
                 {
                     front = lineDef->L_sector(side);
                     back  = neighbor->L_sector(otherSide);
 
-                    setRelativeHeights(front, back, planeId == PLN_CEILING, &fz, &bz, &bhz);
+                    setRelativeHeights(front, back, planeId == Plane::Ceiling, &fz, &bz, &bhz);
                     sideOpen[i] = radioEdgeOpenness(fz, bz, bhz);
                 }
             }
@@ -1426,17 +1426,17 @@ static void drawLinkedEdgeShadows(BspLeaf const *bspLeaf, shadowlink_t *link,
 
     if(!(shadowDark > .0001f)) return;
 
-    if(doPlanes[PLN_FLOOR])
+    if(doPlanes[Plane::Floor])
     {
-        processEdgeShadow(bspLeaf, link->lineDef, link->side, PLN_FLOOR, shadowDark);
+        processEdgeShadow(bspLeaf, link->lineDef, link->side, Plane::Floor, shadowDark);
     }
 
-    if(doPlanes[PLN_CEILING])
+    if(doPlanes[Plane::Ceiling])
     {
-        processEdgeShadow(bspLeaf, link->lineDef, link->side, PLN_CEILING, shadowDark);
+        processEdgeShadow(bspLeaf, link->lineDef, link->side, Plane::Ceiling, shadowDark);
     }
 
-    for(uint pln = PLN_MID; pln < bspLeaf->sector->planeCount(); ++pln)
+    for(uint pln = Plane::Middle; pln < bspLeaf->sector->planeCount(); ++pln)
     {
         processEdgeShadow(bspLeaf, link->lineDef, link->side, pln, shadowDark);
     }
@@ -1496,7 +1496,7 @@ static void radioBspLeafEdges(BspLeaf const *bspLeaf)
     {
         Plane const *plane = bspLeaf->sector->planes[pln];
 
-        vec[VZ] = vOrigin[VY] - plane->visHeight;
+        vec[VZ] = vOrigin[VY] - plane->visHeight();
 
         // Don't bother with planes facing away from the camera.
         if(V3f_DotProduct(vec, plane->PS_normal) < 0) continue;

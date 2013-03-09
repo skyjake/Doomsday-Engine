@@ -443,24 +443,25 @@ static void writeSector(GameMap* map, uint idx)
     {
         Plane *p = s->planes[i];
 
-        writeFloat(p->height);
-        writeFloat(p->target);
-        writeFloat(p->speed);
-        writeFloat(p->visHeight);
-        writeFloat(p->visHeightDelta);
+        writeFloat(p->_height);
+        writeFloat(p->_targetHeight);
+        writeFloat(p->_speed);
+        writeFloat(p->_visHeight);
+        writeFloat(p->_visHeightDelta);
 
-        writeLong((long) p->surface.flags);
-        //writeLong(getMaterialDictID(materialDict, p->surface.material));
-        writeLong((long) p->surface.blendMode);
-        writeFloat(p->surface.normal[VX]);
-        writeFloat(p->surface.normal[VY]);
-        writeFloat(p->surface.normal[VZ]);
-        writeFloat(p->surface.offset[VX]);
-        writeFloat(p->surface.offset[VY]);
-        writeFloat(p->surface.rgba[CR]);
-        writeFloat(p->surface.rgba[CG]);
-        writeFloat(p->surface.rgba[CB]);
-        writeFloat(p->surface.rgba[CA]);
+        Surface &surface = p->surface();
+        writeLong((long) surface.flags);
+        //writeLong(getMaterialDictID(materialDict, p->surface().material));
+        writeLong((long) surface.blendMode);
+        writeFloat(surface.normal[VX]);
+        writeFloat(surface.normal[VY]);
+        writeFloat(surface.normal[VZ]);
+        writeFloat(surface.offset[VX]);
+        writeFloat(surface.offset[VY]);
+        writeFloat(surface.rgba[CR]);
+        writeFloat(surface.rgba[CG]);
+        writeFloat(surface.rgba[CB]);
+        writeFloat(surface.rgba[CA]);
     }
 
     writeFloat(s->aaBox.minX);
@@ -508,29 +509,29 @@ static void readSector(GameMap *map, uint idx)
     {
         Plane *p = R_NewPlaneForSector(s);
 
-        p->height = readFloat();
-        p->target = readFloat();
-        p->speed = readFloat();
-        p->visHeight = readFloat();
-        p->visHeightDelta = readFloat();
+        p->_height = readFloat();
+        p->_targetHeight = readFloat();
+        p->_speed = readFloat();
+        p->_visHeight = readFloat();
+        p->_visHeightDelta = readFloat();
 
-        p->surface.flags = (int) readLong();
-        //p->surface.setMaterial(lookupMaterialFromDict(materialDict, readLong()));
-        p->surface.setBlendMode(blendmode_t(readLong()));
-        p->surface.normal[VX] = readFloat();
-        p->surface.normal[VY] = readFloat();
-        p->surface.normal[VZ] = readFloat();
+        p->_surface.flags = (int) readLong();
+        //p->_surface.setMaterial(lookupMaterialFromDict(materialDict, readLong()));
+        p->_surface.setBlendMode(blendmode_t(readLong()));
+        p->_surface.normal[VX] = readFloat();
+        p->_surface.normal[VY] = readFloat();
+        p->_surface.normal[VZ] = readFloat();
         offset[VX] = readFloat();
         offset[VY] = readFloat();
-        p->surface.setMaterialOrigin(offset[VX], offset[VY]);
+        p->_surface.setMaterialOrigin(offset[VX], offset[VY]);
         rgba[CR] = readFloat();
         rgba[CG] = readFloat();
         rgba[CB] = readFloat();
         rgba[CA] = readFloat();
-        p->surface.setColorAndAlpha(rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
+        p->_surface.setColorAndAlpha(rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
 
-        p->surface.decorations = NULL;
-        p->surface.numDecorations = 0;
+        p->_surface.decorations = NULL;
+        p->_surface.numDecorations = 0;
     }
 
     s->aaBox.minX = readFloat();
@@ -542,7 +543,7 @@ static void readSector(GameMap *map, uint idx)
     for(i = 0; i < numPlanes; ++i)
     {
         Plane *pln = s->planes[i];
-        pln->surface.updateBaseOrigin();
+        pln->_surface.updateBaseOrigin();
     }
 
     for(i = 0; i < NUM_REVERB_DATA; ++i)

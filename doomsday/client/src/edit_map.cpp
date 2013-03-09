@@ -631,10 +631,10 @@ static void finishSectors(GameMap* map)
         // Set target heights for all planes.
         for(uint k = 0; k < sec->planeCount(); ++k)
         {
-            Plane* pln = sec->planes[k];
+            Plane *pln = sec->planes[k];
 
-            pln->surface.updateBaseOrigin();
-            pln->target = pln->height;
+            pln->surface().updateBaseOrigin();
+            pln->_targetHeight = pln->_height;
         }
     }
 }
@@ -1107,25 +1107,27 @@ static void hardenSectors(GameMap* dest, EditMap* src)
     }
 }
 
-static void hardenPlanes(GameMap* dest, EditMap* src)
+static void hardenPlanes(GameMap *dest, EditMap *src)
 {
     for(uint i = 0; i < dest->sectorCount(); ++i)
     {
-        Sector* destS = &dest->sectors[i];
-        Sector* srcS = src->sectors[i];
+        Sector *destS = &dest->sectors[i];
+        Sector *srcS = src->sectors[i];
 
         for(uint j = 0; j < srcS->planeCount(); ++j)
         {
-            Plane* destP = R_NewPlaneForSector(destS);
-            Plane* srcP = srcS->planes[j];
+            Plane *destP = R_NewPlaneForSector(destS);
+            Plane *srcP = srcS->planes[j];
 
-            destP->height = destP->oldHeight[0] = destP->oldHeight[1] =
-                destP->visHeight = srcP->height;
-            destP->visHeightDelta = 0;
-            destP->surface = srcP->surface;
-            destP->type = srcP->type;
-            destP->sector = destS;
-            destP->surface.owner = destP;
+            destP->_height =
+                destP->_oldHeight[0] =
+                    destP->_oldHeight[1] =
+                        destP->_visHeight = srcP->_height;
+            destP->_visHeightDelta = 0;
+            destP->_surface        = srcP->_surface;
+            destP->_type           = srcP->_type;
+            destP->_sector         = destS;
+            destP->_surface.owner  = destP;
         }
     }
 }
@@ -1957,9 +1959,9 @@ uint MPE_PlaneCreate(uint sector, coord_t height, const ddstring_t* materialUri,
 
     Plane *pln = new Plane(*s, normal, height);
 
-    assignSurfaceMaterial(&pln->surface, materialUri);
-    pln->surface.setColorAndAlpha(r, g, b, a);
-    pln->surface.setMaterialOrigin(matOffsetX, matOffsetY);
+    assignSurfaceMaterial(&pln->surface(), materialUri);
+    pln->surface().setColorAndAlpha(r, g, b, a);
+    pln->surface().setMaterialOrigin(matOffsetX, matOffsetY);
 
     s->planes.append(pln);
 

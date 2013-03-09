@@ -365,16 +365,16 @@ void P_SpawnPlaneParticleGen(ded_ptcgen_t const *def, Plane *plane)
     if(isDedicated || !useParticles) return;
     if(!def || !plane) return;
     // Only planes in sectors with volume on the world X/Y axis can support generators.
-    if(0 == plane->sector->lineDefCount) return;
+    if(0 == plane->sector().lineDefCount) return;
 
     // Plane we spawn relative to may not be this one.
-    planetype_t relPlane = plane->type;
+    Plane::Type relPlane = plane->type();
     if(def->flags & PGF_CEILING_SPAWN)
-        relPlane = PLN_CEILING;
+        relPlane = Plane::Ceiling;
     if(def->flags & PGF_FLOOR_SPAWN)
-        relPlane = PLN_FLOOR;
+        relPlane = Plane::Floor;
 
-    plane = plane->sector->SP_plane(relPlane);
+    plane = plane->sector().SP_plane(relPlane);
 
     // Only one generator per plane.
     if(generatorByPlane(plane)) return;
@@ -387,7 +387,7 @@ void P_SpawnPlaneParticleGen(ded_ptcgen_t const *def, Plane *plane)
     // Size of source sector might determine count.
     if(def->flags & PGF_PARTS_PER_128)
     {
-        gen->spawnRateMultiplier = plane->sector->roughArea;
+        gen->spawnRateMultiplier = plane->sector().roughArea;
     }
     else
     {
@@ -615,7 +615,7 @@ static void P_NewParticle(ptcgen_t *gen)
     {
         fixed_t radius = gen->stages[pt->stage].radius;
         Plane const *plane = gen->plane;
-        Sector const *sector = gen->plane->sector;
+        Sector const *sector = &gen->plane->sector();
 
         // Choose a random spot inside the sector, on the spawn plane.
         if(gen->flags & PGF_SPACE_SPAWN)
@@ -628,15 +628,15 @@ static void P_NewParticle(ptcgen_t *gen)
         }
         else if(gen->flags & PGF_FLOOR_SPAWN ||
                 (!(gen->flags & (PGF_FLOOR_SPAWN | PGF_CEILING_SPAWN)) &&
-                plane->type == PLN_FLOOR))
+                 plane->type() == Plane::Floor))
         {
             // Spawn on the floor.
-            pt->origin[VZ] = FLT2FIX(plane->height) + radius;
+            pt->origin[VZ] = FLT2FIX(plane->height()) + radius;
         }
         else
         {
             // Spawn on the ceiling.
-            pt->origin[VZ] = FLT2FIX(plane->height) - radius;
+            pt->origin[VZ] = FLT2FIX(plane->height()) - radius;
         }
 
         /**
@@ -699,7 +699,7 @@ static void P_NewParticle(ptcgen_t *gen)
     // The other place where this gets updated is after moving over
     // a two-sided line.
     if(gen->plane)
-        pt->sector = gen->plane->sector;
+        pt->sector = &gen->plane->sector();
     else
         pt->sector = P_BspLeafAtPointXY(FIX2FLT(pt->origin[VX]),
                                         FIX2FLT(pt->origin[VY]))->sector;
@@ -1399,9 +1399,9 @@ static int findDefForGenerator(ptcgen_t *gen, void *parameters)
 
                 Material *mat = gen->plane->PS_material;
                 if(def->flags & PGF_FLOOR_SPAWN)
-                    mat = gen->plane->sector->SP_plane(PLN_FLOOR)->PS_material;
+                    mat = gen->plane->sector().SP_floormaterial;
                 if(def->flags & PGF_CEILING_SPAWN)
-                    mat = gen->plane->sector->SP_plane(PLN_CEILING)->PS_material;
+                    mat = gen->plane->sector().SP_ceilmaterial;
 
                 // Is this suitable?
                 if(mat == defMat)

@@ -68,8 +68,8 @@ bool Surface::isAttachedToMap() const
     if(!owner) return false;
     if(owner->type() == DMU_PLANE)
     {
-        Sector *sec = owner->castTo<Plane>()->sector;
-        if(0 == sec->bspLeafCount)
+        Sector const &sec = owner->castTo<Plane>()->sector();
+        if(0 == sec.bspLeafCount)
             return false;
     }
     return true;
@@ -283,12 +283,11 @@ void Surface::updateBaseOrigin()
     {
     case DMU_PLANE: {
         Plane *pln = owner->castTo<Plane>();
-        Sector *sec = pln->sector;
-        DENG_ASSERT(sec);
+        Sector &sec = pln->sector();
 
-        base.origin[VX] = sec->base.origin[VX];
-        base.origin[VY] = sec->base.origin[VY];
-        base.origin[VZ] = pln->height;
+        base.origin[VX] = sec.base.origin[VX];
+        base.origin[VY] = sec.base.origin[VY];
+        base.origin[VZ] = pln->height();
         break; }
 
     case DMU_SIDEDEF: {
