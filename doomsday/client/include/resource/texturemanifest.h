@@ -182,6 +182,14 @@ public:
     Texture::Flags flags() const;
 
     /**
+     * Change the texture flags property of the manifest.
+     *
+     * @param flagsToChange  Flags to change the value of.
+     * @param set  @c true to set, @c false to clear.
+     */
+    void setFlags(Texture::Flags flagsToChange, bool set = true);
+
+    /**
      * Returns @c true if a Texture is presently associated with the manifest.
      */
     bool hasTexture() const;

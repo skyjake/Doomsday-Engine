@@ -173,6 +173,18 @@ Texture::Flags TextureManifest::flags() const
     return d->flags;
 }
 
+void TextureManifest::setFlags(Texture::Flags flagsToChange, bool set)
+{
+    if(set)
+    {
+        d->flags |= flagsToChange;
+    }
+    else
+    {
+        d->flags &= ~flagsToChange;
+    }
+}
+
 Vector2i const &TextureManifest::logicalDimensions() const
 {
     return d->logicalDimensions;
