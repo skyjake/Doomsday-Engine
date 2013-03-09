@@ -1106,13 +1106,15 @@ void G_ChangeGameState(gamestate_t state)
         break;
     }
 
+    if(!IS_DEDICATED)
+    {
     if(gameUIActive)
     {
         DD_Execute(true, "activatebcontext gameui");
         B_SetContextFallback("gameui", G_UIResponder);
     }
-
     DD_Executef(true, "%sactivatebcontext game", gameActive? "" : "de");
+}
 }
 
 boolean G_StartFinale(const char* script, int flags, finale_mode_t mode, const char* defId)
@@ -2468,7 +2470,10 @@ void G_DoMapCompleted(void)
         }
     }
 
+    if(!IS_DEDICATED)
+    {
     GL_SetFilter(false);
+    }
 
 #if __JHEXEN__
     SN_StopAllSequences();
