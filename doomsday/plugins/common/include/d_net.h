@@ -195,6 +195,7 @@ int             D_NetServerClose(int before);
 int             D_NetServerStarted(int before);
 int             D_NetConnect(int before);
 int             D_NetDisconnect(int before);
+void            NetSv_ApplyGameRulesFromConfig(void);
 long int        D_NetPlayerEvent(int plrNumber, int peType, void *data);
 boolean         D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
                                 int damage);

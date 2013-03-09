@@ -143,6 +143,26 @@ void D_NetClearBuffer(void)
     netWriter = 0;
 }
 
+void NetSv_ApplyGameRulesFromConfig(void)
+{
+    if(IS_CLIENT)
+        return;
+
+    deathmatch      = cfg.netDeathmatch;
+    noMonstersParm  = cfg.netNoMonsters;
+    cfg.jumpEnabled = cfg.netJumping;
+
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+    respawnMonsters = cfg.netRespawn;
+#endif
+
+#if __JHEXEN__
+    randomClassParm = cfg.netRandomClass;
+#endif
+
+    NetSv_UpdateGameConfigDescription();
+}
+
 /**
  * Called when the network server starts.
  *
@@ -166,18 +186,7 @@ int D_NetServerStarted(int before)
     P_ResetPlayerRespawnClasses();
 
     // Set the game parameters.
-    deathmatch = cfg.netDeathmatch;
-    noMonstersParm = cfg.netNoMonsters;
-
-    cfg.jumpEnabled = cfg.netJumping;
-
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    respawnMonsters = cfg.netRespawn;
-#endif
-
-#if __JHEXEN__
-    randomClassParm = cfg.netRandomClass;
-#endif
+    NetSv_ApplyGameRulesFromConfig();
 
     // Hexen has translated map numbers.
 #if __JHEXEN__

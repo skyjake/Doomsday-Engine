@@ -126,7 +126,7 @@ static int oldClasses[MAXPLAYERS];
  * The string is sent out in netgames (also to the master).
  * Keywords: dm, coop, jump, nomonst, respawn, skillN
  */
-void NetSv_UpdateGameConfig(void)
+void NetSv_UpdateGameConfigDescription(void)
 {
     if(IS_CLIENT)
         return;

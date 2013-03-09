@@ -1108,13 +1108,13 @@ void G_ChangeGameState(gamestate_t state)
 
     if(!IS_DEDICATED)
     {
-    if(gameUIActive)
-    {
-        DD_Execute(true, "activatebcontext gameui");
-        B_SetContextFallback("gameui", G_UIResponder);
+        if(gameUIActive)
+        {
+            DD_Execute(true, "activatebcontext gameui");
+            B_SetContextFallback("gameui", G_UIResponder);
+        }
+        DD_Executef(true, "%sactivatebcontext game", gameActive? "" : "de");
     }
-    DD_Executef(true, "%sactivatebcontext game", gameActive? "" : "de");
-}
 }
 
 boolean G_StartFinale(const char* script, int flags, finale_mode_t mode, const char* defId)
@@ -2348,6 +2348,11 @@ static void G_ApplyGameRules(skillmode_t skill)
         G_ApplyGameRuleFastMissiles(fastMissiles);
     }
 #endif
+
+    if(IS_DEDICATED)
+    {
+        NetSv_ApplyGameRulesFromConfig();
+    }
 }
 
 void G_LeaveMap(uint newMap, uint _entryPoint, boolean _secretExit)
@@ -2472,7 +2477,7 @@ void G_DoMapCompleted(void)
 
     if(!IS_DEDICATED)
     {
-    GL_SetFilter(false);
+        GL_SetFilter(false);
     }
 
 #if __JHEXEN__
@@ -2729,17 +2734,12 @@ void G_DoLeaveMap(void)
 
     gameMap = p.map;
 
-#if __JHEXEN__
-    /// @todo It should not be necessary for the server to re-transmit the game
-    ///       config at this time (needed because of G_ApplyGameRules() ?).
-    NetSv_UpdateGameConfig();
-#endif
-
     // If we're the server, let clients know the map will change.
+    NetSv_UpdateGameConfigDescription();
     NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
 
     /// @todo Use progress bar mode and update progress during the setup.
-    BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+    BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
                                 G_DoLoadMapAndMaybeStartBriefingWorker, &p, "Loading map...");
     Uri_Delete(p.mapUri);
 
@@ -3101,7 +3101,7 @@ void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
     G_ApplyGameRules(skill);
     M_ResetRandom();
 
-    NetSv_UpdateGameConfig();
+    NetSv_UpdateGameConfigDescription();
 
     { loadmap_params_t p;
     boolean hasBrief;
