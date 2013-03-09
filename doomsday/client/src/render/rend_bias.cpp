@@ -589,7 +589,7 @@ static void updateAffected(biassurface_t* bsuf, coord_t const from[2],
                 distance = len;
         }
 
-        if(V3f_DotProduct(delta, normal) >= 0)
+        if(V2f_DotProduct(delta, normal) >= 0)
             continue;
 
         if(distance < 1)

@@ -63,7 +63,7 @@ void            NetSv_LoadGame(unsigned int game_id);
 void            NetSv_LoadReply(int plnum, int console);
 void            NetSv_FragsForAll(player_t* player);
 void            NetSv_KillMessage(player_t* killer, player_t* fragged, boolean stomping);
-void            NetSv_UpdateGameConfig(void);
+void            NetSv_UpdateGameConfigDescription(void);
 void            NetSv_Paused(boolean isPaused);
 void            NetSv_DoCheat(int player, Reader *reader);
 void            NetSv_ExecuteCheat(int player, const char* command);

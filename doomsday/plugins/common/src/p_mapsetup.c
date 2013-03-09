@@ -41,6 +41,7 @@
 #include "p_tick.h"
 #include "hu_pspr.h"
 #include "hu_stuff.h"
+#include "d_net.h"
 
 #if __JDOOM64__
 # define TOLIGHTIDX(c) (!((c) >> 8)? 0 : ((c) - 0x100) + 1)
@@ -659,6 +660,12 @@ void P_SetupMap(Uri* mapUri, uint episode, uint map)
     AutoStr* mapUriStr = mapUri? Uri_Compose(mapUri) : 0;
 
     if(!mapUriStr) return;
+
+    if(IS_DEDICATED)
+    {
+        // Whenever the game changes, update the game config from
+        NetSv_ApplyGameRulesFromConfig();
+    }
 
     // It begins...
     mapSetup = true;

@@ -210,7 +210,7 @@ TextureManifest &TextureScheme::declare(Path const &path,
      */
     bool mustRelease = false;
 
-    newManifest->flags() = flags;
+    newManifest->setFlags(flags);
     newManifest->setOrigin(origin);
 
     if(newManifest->setLogicalDimensions(dimensions))
