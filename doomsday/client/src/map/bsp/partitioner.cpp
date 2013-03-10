@@ -243,7 +243,7 @@ struct Partitioner::Instance
      */
     VertexInfo& vertexInfo(Vertex const &vertex)
     {
-        return vertexInfos[vertex.buildData.index - 1];
+        return vertexInfos[vertex._buildData.index - 1];
     }
 
     inline bool lineMightHaveWindowEffect(LineDef const* line)
@@ -1992,7 +1992,7 @@ struct Partitioner::Instance
     Vertex* newVertex(const_pvec2d_t origin)
     {
         Vertex* vtx = new Vertex;
-        vtx->buildData.index = numEditableVertexes + uint(vertexes.size() + 1); // 1-based index, 0 = NIL.
+        vtx->_buildData.index = numEditableVertexes + uint(vertexes.size() + 1); // 1-based index, 0 = NIL.
         vertexes.push_back(vtx);
 
         // There is now one more Vertex.
@@ -2131,7 +2131,7 @@ struct Partitioner::Instance
         if(hedgeTips.empty())
         {
             throw de::Error("Partitioner::openSectorAtAngle",
-                            QString("Vertex #%1 has no hedge tips!").arg(vtx->buildData.index - 1));
+                            QString("Vertex #%1 has no hedge tips!").arg(vtx->_buildData.index - 1));
         }
 
         // First check whether there's a wall_tip that lies in the exact direction of
@@ -2187,11 +2187,11 @@ struct Partitioner::Instance
         switch(dmuOb->type())
         {
         case DMU_VERTEX: {
-            Vertex* vtx = dmuOb->castTo<Vertex>();
-            if(vtx->buildData.index > 0 && uint(vtx->buildData.index) > numEditableVertexes)
+            Vertex *vtx = dmuOb->castTo<Vertex>();
+            if(vtx->_buildData.index > 0 && uint(vtx->_buildData.index) > numEditableVertexes)
             {
                 // Is this object owned?
-                uint idx = uint(vtx->buildData.index) - 1 - numEditableVertexes;
+                uint idx = uint(vtx->_buildData.index) - 1 - numEditableVertexes;
                 if(idx < vertexes.size() && vertexes[idx])
                 {
                     vertexes[idx] = 0;

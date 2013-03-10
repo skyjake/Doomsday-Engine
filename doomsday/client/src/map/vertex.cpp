@@ -36,9 +36,9 @@ Vertex::Vertex(coord_t x, coord_t y) : MapElement(DMU_VERTEX)
 {
     _origin[VX] = x;
     _origin[VY] = y;
-    lineOwners = 0;
-    numLineOwners = 0;
-    std::memset(&buildData, 0, sizeof(buildData));
+    _lineOwners = 0;
+    _numLineOwners = 0;
+    std::memset(&_buildData, 0, sizeof(_buildData));
 }
 
 vec2d_t const &Vertex::origin() const
@@ -46,29 +46,38 @@ vec2d_t const &Vertex::origin() const
     return _origin;
 }
 
+uint Vertex::lineOwnerCount() const
+{
+    return _numLineOwners;
+}
+
 void Vertex::countLineOwners(uint *oneSided, uint *twoSided) const
 {
     if(!oneSided && !twoSided) return;
 
     uint ones = 0, twos = 0;
-    if(lineOwners)
+
+    LineOwner const *firstOwn = firstLineOwner();
+    LineOwner const *own = firstOwn;
+    do
     {
-        LineOwner *vo = lineOwners;
-        do
+        if(!own->lineDef().L_frontsidedef || !own->lineDef().L_backsidedef)
         {
-            if(!vo->lineDef().L_frontsidedef || !vo->lineDef().L_backsidedef)
-            {
-                ++ones;
-            }
-            else
-            {
-                ++twos;
-            }
-        } while((vo = &vo->next()) != lineOwners);
-    }
+            ++ones;
+        }
+        else
+        {
+            ++twos;
+        }
+    } while((own = &own->next()) != firstOwn);
 
     if(oneSided) *oneSided += ones;
     if(twoSided) *twoSided += twos;
+}
+
+LineOwner *Vertex::firstLineOwner() const
+{
+    return _lineOwners;
 }
 
 int Vertex::property(setargs_t &args) const

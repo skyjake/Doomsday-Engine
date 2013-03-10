@@ -158,23 +158,23 @@ static void endSegment(void)
     writeLong(DAMSEG_END);
 }
 
-static void writeVertex(const GameMap* map, uint idx)
+static void writeVertex(GameMap const *map, uint idx)
 {
     Vertex const *v = &map->vertexes[idx];
 
     writeFloat(v->_origin[VX]);
     writeFloat(v->_origin[VY]);
-    writeLong((long) v->numLineOwners);
+    writeLong((long) v->_numLineOwners);
 
-    if(v->numLineOwners > 0)
+    if(v->_numLineOwners > 0)
     {
-        LineOwner *own, *base;
-
-        own = base = &(v->lineOwners)->prev();
+        LineOwner *base = &(v->_lineOwners)->prev();
+        LineOwner *own = base;
         do
         {
-            writeLong((long) (map->lineDefs.indexOf(own->_lineDef) + 1));
-            writeLong((long) own->_angle);
+            writeLong((long) (map->lineDefs.indexOf(&own->lineDef()) + 1));
+            writeLong((long) own->angle());
+
             own = &own->prev();
         } while(own != base);
     }
@@ -186,29 +186,29 @@ static void readVertex(GameMap *map, uint idx)
 
     v->_origin[VX] = readFloat();
     v->_origin[VY] = readFloat();
-    v->numLineOwners = (uint) readLong();
+    v->_numLineOwners = (uint) readLong();
 
-    if(v->numLineOwners > 0)
+    if(v->_numLineOwners > 0)
     {
-        v->lineOwners = NULL;
-        for(uint i = 0; i < v->numLineOwners; ++i)
+        v->_lineOwners = NULL;
+        for(uint i = 0; i < v->_numLineOwners; ++i)
         {
             LineOwner *own = (LineOwner *) Z_Malloc(sizeof(LineOwner), PU_MAP, 0);
             own->_lineDef = &map->lineDefs[(unsigned) (readLong() - 1)];
             own->_angle = (binangle_t) readLong();
 
-            own->_link[LineOwner::Next] = v->lineOwners;
-            v->lineOwners = own;
+            own->_link[LineOwner::Next] = v->_lineOwners;
+            v->_lineOwners = own;
         }
 
-        LineOwner *own = v->lineOwners;
+        LineOwner *own = v->_lineOwners;
         do
         {
             LineOwner *next = &own->next();
             next->_link[LineOwner::Previous] = own;
             own = next;
         } while(own);
-        own->_link[LineOwner::Previous] = v->lineOwners;
+        own->_link[LineOwner::Previous] = v->_lineOwners;
     }
 }
 

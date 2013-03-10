@@ -72,24 +72,24 @@ public:
     }*/
 
     /**
-     * Returns @c true iff the previous line owner in the ring (anticlockwise) is not
-     * the same as this LineOwner.
+     * Returns @c true iff the previous line owner in the ring (anticlockwise)
+     * is not the same as this LineOwner.
      *
      * @see prev()
      */
     inline bool hasPrev() const { return &prev() != this; }
 
     /**
-     * Returns @c true iff the next line owner in the ring (clockwise) is not the same
-     * as this LineOwner.
+     * Returns @c true iff the next line owner in the ring (clockwise) is not
+     * the same as this LineOwner.
      *
      * @see next()
      */
     inline bool hasNext() const { return &next() != this; }
 
     /**
-     * Navigate to the adjacent line owner in the ring (if any). Note this may be the
-     * same LineOwner.
+     * Navigate to the adjacent line owner in the ring (if any). Note this may
+     * be the same LineOwner.
      */
     LineOwner &navigate(Direction dir = Previous) { return *_link[dir]; }
 
@@ -97,8 +97,8 @@ public:
     LineOwner const &navigate(Direction dir = Previous) const { return *_link[dir]; }
 
     /**
-     * Returns the previous line owner in the ring (anticlockwise). Note that this may
-     * be the same LineOwner.
+     * Returns the previous line owner in the ring (anticlockwise). Note that
+     * this may be the same LineOwner.
      *
      * @see hasPrev()
      */
@@ -108,8 +108,8 @@ public:
     inline LineOwner const &prev() const { return navigate(Previous); }
 
     /**
-     * Returns the next line owner in the ring (clockwise). Note that this may be the
-     * same LineOwner.
+     * Returns the next line owner in the ring (clockwise). Note that this may
+     * be the same LineOwner.
      *
      * @see hasNext()
      */
@@ -142,6 +142,9 @@ public:
 /**
  * Map geometry vertex.
  *
+ * An @em owner in this context is any linedef whose start or end points are
+ * defined as the vertex.
+ *
  * @ingroup map
  */
 class Vertex : public de::MapElement
@@ -156,12 +159,13 @@ public:
 public: /// @todo Make private:
     coord_t _origin[2];
 
-    /// Head of the LineOwner rings (an array of [numLineOwners] size). The owner ring
-    /// is a doubly, circularly linked list. The head is the owner with the lowest angle
-    /// and the next-most being that with greater angle.
-    LineOwner *lineOwners;
-    uint numLineOwners; ///< Total number of line owners.
+    /// Head of the LineOwner rings (an array of [numLineOwners] size). The
+    /// owner ring is a doubly, circularly linked list. The head is the owner
+    /// with the lowest angle and the next-most being that with greater angle.
+    LineOwner *_lineOwners;
+    uint _numLineOwners; ///< Total number of line owners.
 
+    /// @todo This temporary load-time data does not belong here. -ds
     struct {
         /// Vertex index. Always valid after loading and pruning of unused
         /// vertices has occurred.
@@ -174,7 +178,7 @@ public: /// @todo Make private:
         /// Usually NULL, unless this vertex occupies the same location as a
         /// previous vertex. Only used during the pruning phase.
         Vertex *equiv;
-    } buildData;
+    } _buildData;
 
 public:
     Vertex(coord_t x = 0, coord_t y = 0);
@@ -195,18 +199,35 @@ public:
     inline coord_t y() const { return origin()[VY]; }
 
     /**
-     * Count the total number of linedef "owners" of the vertex. An owner in
-     * this context is any linedef whose start or end vertex is this.
+     * Returns the total number of LineDef owners for the vertex.
      *
-     * @pre Vertex linedef owner rings must have already been calculated.
+     * @see countLineOwners()
+     */
+    uint lineOwnerCount() const;
+
+    /**
+     * Utility function for determining the number of one and two-sided LineDef
+     * owners for the vertex.
+     *
+     * @note That if only the combined total is desired, it is more efficent to
+     * call lineOwnerCount() instead.
+     *
+     * @pre Line owner rings must have already been calculated.
      * @pre @a oneSided and/or @a twoSided must have already been initialized.
      *
-     * @param oneSided  Total number of one-sided lines is written here. Can be @a NULL.
-     * @param twoSided  Total number of two-sided lines is written here. Can be @a NULL.
+     * @param oneSided  The number of one-sided LineDef owners will be added to
+     *                  the pointed value if not @a NULL.
+     * @param twoSided  The number of two-sided LineDef owners will be added to
+     *                  the pointed value if not @c NULL.
      *
      * @todo Optimize: Cache this result.
      */
     void countLineOwners(uint *oneSided, uint *twoSided) const;
+
+    /**
+     * Returns the first LineDef owner for the vertex; otherwise @c 0 if unowned.
+     */
+    LineOwner *firstLineOwner() const;
 
     /**
      * Get a property value, selected by DMU_* name.

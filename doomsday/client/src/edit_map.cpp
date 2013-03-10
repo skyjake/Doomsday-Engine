@@ -75,8 +75,8 @@ static Vertex *createVertex(coord_t x, coord_t y)
     Vertex *vtx = new Vertex(x, y);
 
     e_map->vertexes.push_back(vtx);
+    vtx->_buildData.index = e_map->vertexes.size(); // 1-based index, 0 = NIL.
 
-    vtx->buildData.index = e_map->vertexes.size(); // 1-based index, 0 = NIL.
     return vtx;
 }
 
@@ -228,10 +228,10 @@ static int vertexCompare(void const *p1, void const *p2)
     return int(a->origin()[VY]) - int(b->origin()[VY]);
 }
 
-void MPE_DetectDuplicateVertices(EditMap* map)
+void MPE_DetectDuplicateVertices(EditMap *map)
 {
     DENG_ASSERT(map);
-    Vertex** hits = (Vertex**) M_Malloc(map->vertexCount() * sizeof(Vertex*));
+    Vertex **hits = (Vertex**) M_Malloc(map->vertexCount() * sizeof(Vertex*));
 
     // Sort array of ptrs.
     for(uint i = 0; i < map->vertexCount(); ++i)
@@ -247,10 +247,10 @@ void MPE_DetectDuplicateVertices(EditMap* map)
         if(vertexCompare(hits + i, hits + i + 1) == 0)
         {
             // Yes.
-            Vertex* a = hits[i];
-            Vertex* b = hits[i + 1];
+            Vertex *a = hits[i];
+            Vertex *b = hits[i + 1];
 
-            b->buildData.equiv = (a->buildData.equiv ? a->buildData.equiv : a);
+            b->_buildData.equiv = (a->_buildData.equiv ? a->_buildData.equiv : a);
         }
     }
 
@@ -906,21 +906,17 @@ static void setVertexLineOwner(Vertex *vtx, LineDef *lineptr, LineOwner **storag
     if(!lineptr) return;
 
     // Has this line already been registered with this vertex?
-    if(vtx->numLineOwners != 0)
+    LineOwner const *own = vtx->firstLineOwner();
+    while(own)
     {
-        LineOwner *p = vtx->lineOwners;
-        while(p)
-        {
-            if(&p->lineDef() == lineptr)
-                return; // Yes, we can exit.
+        if(&own->lineDef() == lineptr)
+            return; // Yes, we can exit.
 
-            p = &p->next();
-        }
+        own = &own->next();
     }
 
     // Add a new owner.
-    vtx->numLineOwners++;
-
+    vtx->_numLineOwners++;
     LineOwner *newOwner = (*storage)++;
 
     newOwner->_lineDef = lineptr;
@@ -931,8 +927,8 @@ static void setVertexLineOwner(Vertex *vtx, LineDef *lineptr, LineOwner **storag
     // be sorting the lists anyway. After which we'll finish the job by
     // setting the prev and circular links.
     // So, for now this is only linked singlely, forward.
-    newOwner->_link[LineOwner::Next] = vtx->lineOwners;
-    vtx->lineOwners = newOwner;
+    newOwner->_link[LineOwner::Next] = vtx->_lineOwners;
+    vtx->_lineOwners = newOwner;
 
     // Link the line to its respective owner node.
     if(vtx == lineptr->L_v1)
@@ -975,10 +971,10 @@ static void hardenVertexOwnerRings(GameMap *dest, EditMap *src)
     {
         Vertex *v = src->vertexes[i];
 
-        if(!v->numLineOwners) continue;
+        if(!v->_numLineOwners) continue;
 
         // Redirect the linedef links to the hardened map.
-        LineOwner *p = v->lineOwners;
+        LineOwner *p = v->_lineOwners;
         while(p)
         {
             p->_lineDef = &dest->lineDefs[p->_lineDef->origIndex - 1];
@@ -987,13 +983,13 @@ static void hardenVertexOwnerRings(GameMap *dest, EditMap *src)
 
         // Sort them; ordered clockwise by angle.
         rootVtx = v;
-        v->lineOwners = sortLineOwners(v->lineOwners, lineAngleSorter);
+        v->_lineOwners = sortLineOwners(v->_lineOwners, lineAngleSorter);
 
         // Finish the linking job and convert to relative angles.
         // They are only singly linked atm, we need them to be doubly
         // and circularly linked.
-        binangle_t firstAngle = v->lineOwners->angle();
-        LineOwner *last = v->lineOwners;
+        binangle_t firstAngle = v->_lineOwners->angle();
+        LineOwner *last = v->_lineOwners;
         p = &last->next();
         while(p)
         {
@@ -1005,8 +1001,8 @@ static void hardenVertexOwnerRings(GameMap *dest, EditMap *src)
             last = p;
             p = &p->next();
         }
-        last->_link[LineOwner::Next] = v->lineOwners;
-        v->lineOwners->_link[LineOwner::Previous] = last;
+        last->_link[LineOwner::Next] = v->_lineOwners;
+        v->_lineOwners->_link[LineOwner::Previous] = last;
 
         // Set the angle of the last owner.
         last->_angle = last->angle() - firstAngle;
@@ -1019,20 +1015,20 @@ static void hardenVertexOwnerRings(GameMap *dest, EditMap *src)
         if(verbose >= 2)
             Con_Message("Vertex #%i: line owners #%i", i, v->numLineOwners);
 
-        p = base = v->lineOwners;
+        p = base = v->firstLineOwner();
         idx = 0;
         do
         {
             if(verbose >= 2)
                 Con_Message("  %i: p= #%05i this= #%05i n= #%05i, dANG= %-3.f",
-                            idx, p->prev()->line - map->lineDefs,
-                            p->line - map->lineDefs,
-                            p->next()->line - map->lineDefs, BANG2DEG(p->angle));
+                            idx, &p->prev().lineDef() - map->lineDefs,
+                            &p->lineDef() - map->lineDefs,
+                            &p->next().lineDef() - map->lineDefs, BANG2DEG(p->angle()));
 
-            if(p->prev()->next() != p || p->next()->prev() != p)
+            if(&p->prev().next() != p || &p->next().prev() != p)
                Con_Error("Invalid line owner link ring!");
 
-            p = p->next();
+            p = &p->next();
             idx++;
         } while(p != base);
 #endif*/
@@ -1688,7 +1684,7 @@ uint MPE_VertexCreate(coord_t x, coord_t y)
 
     Vertex *v = createVertex(x, y);
 
-    return v->buildData.index;
+    return v->_buildData.index;
 }
 
 #undef MPE_VertexCreatev
@@ -1703,7 +1699,7 @@ boolean MPE_VertexCreatev(size_t num, coord_t *values, uint *indices)
         Vertex *v = createVertex(values[n * 2], values[n * 2 + 1]);
 
         if(indices)
-            indices[n] = v->buildData.index;
+            indices[n] = v->_buildData.index;
     }
 
     return true;
@@ -1900,8 +1896,8 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector,
     l->L_v1 = vtx1;
     l->L_v2 = vtx2;
 
-    l->L_v1->buildData.refCount++;
-    l->L_v2->buildData.refCount++;
+    l->L_v1->_buildData.refCount++;
+    l->L_v2->_buildData.refCount++;
 
     l->L_frontsector = (frontSector == 0? NULL: e_map->sectors[frontSector-1]);
     l->L_backsector  = (backSector  == 0? NULL: e_map->sectors[backSector-1]);

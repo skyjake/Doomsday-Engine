@@ -95,53 +95,52 @@ double R_ShadowEdgeWidth(const pvec2d_t edge)
     return normalWidth;
 }
 
-void Rend_RadioUpdateVertexShadowOffsets(Vertex* vtx)
+void Rend_RadioUpdateVertexShadowOffsets(Vertex *vtx)
 {
+    if(!vtx) return;
+    if(!vtx->lineOwnerCount()) return;
+
     vec2d_t left, right;
 
-    if(vtx->numLineOwners > 0)
+    LineOwner *base = vtx->firstLineOwner();
+    LineOwner *own = base;
+    do
     {
-        LineOwner* own, *base;
+        LineDef *lineB = &own->lineDef();
+        LineDef *lineA = &own->next().lineDef();
 
-        own = base = vtx->lineOwners;
-        do
+        if(lineB->L_v1 == vtx)
         {
-            LineDef *lineB = &own->lineDef();
-            LineDef *lineA = &own->next().lineDef();
+            right[VX] = lineB->direction[VX];
+            right[VY] = lineB->direction[VY];
+        }
+        else
+        {
+            right[VX] = -lineB->direction[VX];
+            right[VY] = -lineB->direction[VY];
+        }
 
-            if(lineB->L_v1 == vtx)
-            {
-                right[VX] = lineB->direction[VX];
-                right[VY] = lineB->direction[VY];
-            }
-            else
-            {
-                right[VX] = -lineB->direction[VX];
-                right[VY] = -lineB->direction[VY];
-            }
+        if(lineA->L_v1 == vtx)
+        {
+            left[VX] = -lineA->direction[VX];
+            left[VY] = -lineA->direction[VY];
+        }
+        else
+        {
+            left[VX] = lineA->direction[VX];
+            left[VY] = lineA->direction[VY];
+        }
 
-            if(lineA->L_v1 == vtx)
-            {
-                left[VX] = -lineA->direction[VX];
-                left[VY] = -lineA->direction[VY];
-            }
-            else
-            {
-                left[VX] = lineA->direction[VX];
-                left[VY] = lineA->direction[VY];
-            }
+        // The left side is always flipped.
+        V2d_Scale(left, -1);
 
-            // The left side is always flipped.
-            V2d_Scale(left, -1);
+        R_CornerNormalPoint(left, R_ShadowEdgeWidth(left), right,
+                            R_ShadowEdgeWidth(right),
+                            own->_shadowOffsets.inner,
+                            own->_shadowOffsets.extended);
 
-            R_CornerNormalPoint(left, R_ShadowEdgeWidth(left), right,
-                                R_ShadowEdgeWidth(right),
-                                own->_shadowOffsets.inner,
-                                own->_shadowOffsets.extended);
-
-            own = &own->next();
-        } while(own != base);
-    }
+        own = &own->next();
+    } while(own != base);
 }
 
 /**

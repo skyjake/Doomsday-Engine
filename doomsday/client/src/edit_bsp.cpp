@@ -246,12 +246,12 @@ static void copyVertex(Vertex &dest, Vertex const &src)
     DENG2_ASSERT(dest.type() == DMU_VERTEX);
 
     V2d_Copy(dest._origin, src._origin);
-    dest.numLineOwners      = src.numLineOwners;
-    dest.lineOwners         = src.lineOwners;
+    dest._numLineOwners      = src._numLineOwners;
+    dest._lineOwners         = src._lineOwners;
 
-    dest.buildData.index    = src.buildData.index;
-    dest.buildData.refCount = src.buildData.refCount;
-    dest.buildData.equiv    = src.buildData.equiv;
+    dest._buildData.index    = src._buildData.index;
+    dest._buildData.refCount = src._buildData.refCount;
+    dest._buildData.equiv    = src._buildData.equiv;
 }
 
 static void hardenVertexes(BspBuilder& builder, GameMap* map,
@@ -286,16 +286,16 @@ static void updateVertexLinks(GameMap* map)
     {
         LineDef* line = &map->lineDefs[i];
 
-        line->L_v1 = &map->vertexes[line->L_v1->buildData.index - 1];
-        line->L_v2 = &map->vertexes[line->L_v2->buildData.index - 1];
+        line->L_v1 = &map->vertexes[line->L_v1->_buildData.index - 1];
+        line->L_v2 = &map->vertexes[line->L_v2->_buildData.index - 1];
     }
 
     for(uint i = 0; i < map->numHEdges; ++i)
     {
         HEdge* hedge = map->hedges[i];
 
-        hedge->HE_v1 = &map->vertexes[hedge->v[0]->buildData.index - 1];
-        hedge->HE_v2 = &map->vertexes[hedge->v[1]->buildData.index - 1];
+        hedge->HE_v1 = &map->vertexes[hedge->v[0]->_buildData.index - 1];
+        hedge->HE_v2 = &map->vertexes[hedge->v[1]->_buildData.index - 1];
     }
 }
 

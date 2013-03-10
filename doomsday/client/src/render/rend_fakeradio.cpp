@@ -1602,21 +1602,21 @@ void Rend_DrawShadowOffsetVerts()
         for(uint k = 0; k < 2; ++k)
         {
             Vertex *vtx = line->L_v(k);
-            LineOwner *vo = vtx->lineOwners;
-
-            for(uint j = 0; j < vtx->numLineOwners; ++j)
+            LineOwner const *base = vtx->firstLineOwner();
+            LineOwner const *own = base;
+            do
             {
                 coord_t pos[3];
-                pos[VZ] = vo->lineDef().L_frontsector->SP_floorvisheight;
+                pos[VZ] = own->lineDef().L_frontsector->SP_floorvisheight;
 
-                V2d_Sum(pos, vtx->origin(), vo->extendedShadowOffset());
+                V2d_Sum(pos, vtx->origin(), own->extendedShadowOffset());
                 drawPoint(pos, 1, yellow);
 
-                V2d_Sum(pos, vtx->origin(), vo->innerShadowOffset());
+                V2d_Sum(pos, vtx->origin(), own->innerShadowOffset());
                 drawPoint(pos, 1, red);
 
-                vo = &vo->next();
-            }
+                own = &own->next();
+            } while(own != base);
         }
     }
 
