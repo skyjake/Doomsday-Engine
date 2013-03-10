@@ -33,16 +33,17 @@
 #include "p_mapdata.h"
 #include "p_dmu.h"
 #include "MapElement"
+#include "map/vertex.h"
 
 // Helper macros for accessing linedef data elements.
 #define L_v(n)                  v[(n)? 1:0]
-#define L_vorigin(n)            v[(n)? 1:0]->origin
+#define L_vorigin(n)            v[(n)? 1:0]->origin()
 
 #define L_v1                    L_v(0)
-#define L_v1origin              L_v(0)->origin
+#define L_v1origin              L_v(0)->origin()
 
 #define L_v2                    L_v(1)
-#define L_v2origin              L_v(1)->origin
+#define L_v2origin              L_v(1)->origin()
 
 #define L_vo(n)                 vo[(n)? 1:0]
 #define L_vo1                   L_vo(0)
@@ -96,7 +97,7 @@ class LineDef : public de::MapElement
 {
 public:
     Vertex *v[2];
-    struct lineowner_s* vo[2]; /// Links to vertex line owner nodes [left, right].
+    LineOwner *vo[2]; /// Links to vertex line owner nodes [left, right].
     lineside_t          sides[2];
     int                 flags; /// Public DDLF_* flags.
     byte                inFlags; /// Internal LF_* flags.

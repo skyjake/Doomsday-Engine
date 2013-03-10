@@ -80,8 +80,8 @@ struct HEdgeInfo
 
     HEdgeInfo& initFromHEdge(HEdge const& hedge)
     {
-        V2d_Copy(start, hedge.v[0]->origin);
-        V2d_Copy(end,   hedge.v[1]->origin);
+        V2d_Copy(start, hedge.v[0]->origin());
+        V2d_Copy(end,   hedge.v[1]->origin());
         V2d_Subtract(direction, end, start);
 
         pLength    = V2d_Length(direction);

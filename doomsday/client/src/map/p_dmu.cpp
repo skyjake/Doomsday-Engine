@@ -1018,7 +1018,7 @@ static int setProperty(void *ptr, void *context)
         break;
 
     case DMU_VERTEX:
-        Vertex_SetProperty(elem->castTo<Vertex>(), args);
+        elem->castTo<Vertex>()->setProperty(*args);
         break;
 
     case DMU_HEDGE:
@@ -1500,7 +1500,7 @@ static int getProperty(void *ptr, void *context)
     switch(args->type)
     {
     case DMU_VERTEX:
-        Vertex_GetProperty(elem->castTo<Vertex>(), args);
+        elem->castTo<Vertex>()->property(*args);
         break;
 
     case DMU_HEDGE:

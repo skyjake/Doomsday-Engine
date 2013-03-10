@@ -225,16 +225,16 @@ SuperBlock& SuperBlock::push(HEdge& hedge)
         {
             // Wider than tall.
             int midPoint = (sb->bounds().minX + sb->bounds().maxX) / 2;
-            p1 = hedge.v[0]->origin[VX] >= midPoint? LEFT : RIGHT;
-            p2 = hedge.v[1]->origin[VX] >= midPoint? LEFT : RIGHT;
+            p1 = hedge.v[0]->origin()[VX] >= midPoint? LEFT : RIGHT;
+            p2 = hedge.v[1]->origin()[VX] >= midPoint? LEFT : RIGHT;
             splitVertical = false;
         }
         else
         {
             // Taller than wide.
             int midPoint = (sb->bounds().minY + sb->bounds().maxY) / 2;
-            p1 = hedge.v[0]->origin[VY] >= midPoint? LEFT : RIGHT;
-            p2 = hedge.v[1]->origin[VY] >= midPoint? LEFT : RIGHT;
+            p1 = hedge.v[0]->origin()[VY] >= midPoint? LEFT : RIGHT;
+            p2 = hedge.v[1]->origin()[VY] >= midPoint? LEFT : RIGHT;
             splitVertical = true;
         }
 

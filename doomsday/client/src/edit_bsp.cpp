@@ -112,7 +112,7 @@ static void buildHEdgeLut(BspBuilder& builder, GameMap* map)
     if(!map->numHEdges) return; // Should never happen.
 
     // Allocate the LUT and acquire ownership of the half-edges.
-    map->hedges = static_cast<HEdge**>(Z_Calloc(map->numHEdges * sizeof(HEdge*), PU_MAPSTATIC, 0));
+    map->hedges = static_cast<HEdge **>(Z_Calloc(map->numHEdges * sizeof(HEdge *), PU_MAPSTATIC, 0));
 
     hedgecollectorparams_t parm;
     parm.builder = &builder;
@@ -121,24 +121,24 @@ static void buildHEdgeLut(BspBuilder& builder, GameMap* map)
     builder.root()->traverseInOrder(hedgeCollector, &parm);
 }
 
-static void finishHEdges(GameMap* map)
+static void finishHEdges(GameMap *map)
 {
     DENG2_ASSERT(map);
 
     for(uint i = 0; i < map->numHEdges; ++i)
     {
-        HEdge* hedge = map->hedges[i];
+        HEdge *hedge = map->hedges[i];
 
         if(hedge->lineDef)
         {
             Vertex *vtx = hedge->lineDef->L_v(hedge->side);
 
             hedge->sector = hedge->lineDef->L_sector(hedge->side);
-            hedge->offset = V2d_Distance(hedge->HE_v1origin, vtx->origin);
+            hedge->offset = V2d_Distance(hedge->HE_v1origin, vtx->origin());
         }
 
-        hedge->angle = bamsAtan2((int) (hedge->HE_v2origin[VY] - hedge->HE_v1origin[VY]),
-                                 (int) (hedge->HE_v2origin[VX] - hedge->HE_v1origin[VX])) << FRACBITS;
+        hedge->angle = bamsAtan2(int( hedge->HE_v2origin[VY] - hedge->HE_v1origin[VY] ),
+                                 int( hedge->HE_v2origin[VX] - hedge->HE_v1origin[VX] )) << FRACBITS;
 
         // Calculate the length of the segment.
         hedge->length = V2d_Distance(hedge->HE_v2origin, hedge->HE_v1origin);
@@ -241,17 +241,17 @@ static void hardenBSP(BspBuilder& builder, GameMap* dest)
     rootNode->traversePostOrder(populateBspObjectLuts, &p);
 }
 
-static void copyVertex(Vertex& dest, Vertex const& src)
+static void copyVertex(Vertex &dest, Vertex const &src)
 {
     DENG2_ASSERT(dest.type() == DMU_VERTEX);
 
-    V2d_Copy(dest.origin, src.origin);
-    dest.numLineOwners = src.numLineOwners;
-    dest.lineOwners = src.lineOwners;
+    V2d_Copy(dest._origin, src._origin);
+    dest.numLineOwners      = src.numLineOwners;
+    dest.lineOwners         = src.lineOwners;
 
-    dest.buildData.index = src.buildData.index;
+    dest.buildData.index    = src.buildData.index;
     dest.buildData.refCount = src.buildData.refCount;
-    dest.buildData.equiv = src.buildData.equiv;
+    dest.buildData.equiv    = src.buildData.equiv;
 }
 
 static void hardenVertexes(BspBuilder& builder, GameMap* map,

@@ -78,7 +78,7 @@ static boolean backClosedForBlendNeighbor(LineDef* lineDef, int side, boolean ig
 static LineDef *findBlendNeighbor(LineDef *l, byte side, byte right,
     binangle_t *diff)
 {
-    lineowner_t const *farVertOwner = l->L_vo(right^side);
+    LineOwner const *farVertOwner = l->L_vo(right^side);
     if(backClosedForBlendNeighbor(l, side, true/*ignore opacity*/))
     {
         return R_FindSolidLineNeighbor(l->L_sector(side), l, farVertOwner, right, diff);

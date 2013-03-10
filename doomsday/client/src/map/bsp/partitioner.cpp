@@ -394,8 +394,8 @@ struct Partitioner::Instance
         for(uint i = 0; i < numEditableVertexes; ++i)
         {
             Vertex const *vtx = editableVertexes[i];
-            VertexInfo& vtxInfo = vertexInfo(*vtx);
-            Vertex_CountLineOwners(vtx, &vtxInfo.oneSidedOwnerCount, &vtxInfo.twoSidedOwnerCount);
+            VertexInfo &vtxInfo = vertexInfo(*vtx);
+            vtx->countLineOwners(&vtxInfo.oneSidedOwnerCount, &vtxInfo.twoSidedOwnerCount);
         }
 
         // Initialize linedef info.
@@ -403,9 +403,9 @@ struct Partitioner::Instance
         lineDefInfos.reserve(numLineDefs);
         for(uint i = 0; i < numLineDefs; ++i)
         {
-            LineDef* line = GameMap_LineDef(map, i);
+            LineDef *line = GameMap_LineDef(map, i);
             lineDefInfos.push_back(LineDefInfo(line, DIST_EPSILON));
-            LineDefInfo& lineInfo = lineDefInfos.back();
+            LineDefInfo &lineInfo = lineDefInfos.back();
 
             testForWindowEffect(lineInfo);
         }
@@ -620,8 +620,8 @@ struct Partitioner::Instance
                     {
                         coord_t pos[2];
 
-                        pos[VX] = cur->vertex->origin[VX] + next->vertex->origin[VX];
-                        pos[VY] = cur->vertex->origin[VY] + next->vertex->origin[VY];
+                        pos[VX] = cur->vertex->origin()[VX] + next->vertex->origin()[VX];
+                        pos[VY] = cur->vertex->origin()[VY] + next->vertex->origin()[VY];
                         pos[VX] /= 2;
                         pos[VY] /= 2;
 
@@ -634,8 +634,8 @@ struct Partitioner::Instance
                     {
                         coord_t pos[2];
 
-                        pos[VX] = cur->vertex->origin[VX] + next->vertex->origin[VX];
-                        pos[VY] = cur->vertex->origin[VY] + next->vertex->origin[VY];
+                        pos[VX] = cur->vertex->origin()[VX] + next->vertex->origin()[VX];
+                        pos[VY] = cur->vertex->origin()[VY] + next->vertex->origin()[VY];
                         pos[VX] /= 2;
                         pos[VY] /= 2;
 
@@ -652,8 +652,8 @@ struct Partitioner::Instance
                         if(!cur->selfRef && !next->selfRef)
                         {
                             LOG_DEBUG("Sector mismatch (#%d [%1.1f, %1.1f] != #%d [%1.1f, %1.1f]).")
-                                <<   cur->after->buildData.index-1 <<  cur->vertex->origin[VX] <<  cur->vertex->origin[VY]
-                                << next->before->buildData.index-1 << next->vertex->origin[VX] << next->vertex->origin[VY];
+                                <<   cur->after->buildData.index-1 <<  cur->vertex->origin()[VX] <<  cur->vertex->origin()[VY]
+                                << next->before->buildData.index-1 << next->vertex->origin()[VX] << next->vertex->origin()[VY];
                         }
 
                         if(cur->selfRef && !next->selfRef)
@@ -1554,7 +1554,7 @@ struct Partitioner::Instance
     {
         DENG2_ASSERT(vertex);
         HEdgeInfo const& info = partitionInfo;
-        return V2d_PointLineParaDistance(vertex->origin, info.direction, info.pPara, info.pLength);
+        return V2d_PointLineParaDistance(vertex->origin(), info.direction, info.pPara, info.pLength);
     }
 
     /**
@@ -1622,15 +1622,15 @@ struct Partitioner::Instance
         // We can now reconfire the half-plane itself.
         setPartitionInfo(hedgeInfo(*hedge), lineDef);
 
-        const Vertex* from = lineDef->L_v(hedge->side);
-        const Vertex* to   = lineDef->L_v(hedge->side^1);
-        partition.setOrigin(from->origin);
+        Vertex const *from = lineDef->L_v(hedge->side);
+        Vertex const *to   = lineDef->L_v(hedge->side^1);
+        partition.setOrigin(from->origin());
 
-        vec2d_t angle; V2d_Subtract(angle, to->origin, from->origin);
+        vec2d_t angle; V2d_Subtract(angle, to->origin(), from->origin());
         partition.setDirection(angle);
 
         //LOG_DEBUG("hedge %p [%1.1f, %1.1f] -> [%1.1f, %1.1f].")
-        //    << de::dintptr(best) << from->origin[VX] << from->origin[VY]
+        //    << de::dintptr(best) << from->origin()[VX] << from->origin()[VY]
         //    << angle[VX] << angle[VY];
 
         return true;
@@ -1658,10 +1658,10 @@ struct Partitioner::Instance
             {
                 HEdge* a = *it;
                 HEdge* b = *next;
-                coord_t angle1 = M_DirectionToAngleXY(a->v[0]->origin[VX] - point[VX],
-                                                      a->v[0]->origin[VY] - point[VY]);
-                coord_t angle2 = M_DirectionToAngleXY(b->v[0]->origin[VX] - point[VX],
-                                                      b->v[0]->origin[VY] - point[VY]);
+                coord_t angle1 = M_DirectionToAngleXY(a->v[0]->origin()[VX] - point[VX],
+                                                      a->v[0]->origin()[VY] - point[VY]);
+                coord_t angle2 = M_DirectionToAngleXY(b->v[0]->origin()[VX] - point[VX],
+                                                      b->v[0]->origin()[VY] - point[VY]);
 
                 if(angle1 + ANG_EPSILON < angle2)
                 {
@@ -2001,7 +2001,7 @@ struct Partitioner::Instance
 
         if(origin)
         {
-            V2d_Copy(vtx->origin, origin);
+            V2d_Copy(vtx->_origin, origin);
         }
         return vtx;
     }

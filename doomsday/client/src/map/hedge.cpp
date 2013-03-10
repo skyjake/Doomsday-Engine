@@ -196,12 +196,12 @@ static void addWallDivNodesForPlaneIntercepts(HEdge* hedge, walldivs_t* wallDivs
     if(bottomZ >= topZ) return; // Obviously no division.
 
     // Retrieve the start owner node.
-    lineowner_t* base = R_GetVtxLineOwner(line->L_v(hedge->side^doRight), line);
-    lineowner_t* own = base;
+    LineOwner* base = R_GetVtxLineOwner(line->L_v(hedge->side^doRight), line);
+    LineOwner* own = base;
     boolean stopScan = false;
     do
     {
-        own = own->link[clockwise];
+        own = own->_link[clockwise];
 
         if(own == base)
         {
@@ -209,7 +209,7 @@ static void addWallDivNodesForPlaneIntercepts(HEdge* hedge, walldivs_t* wallDivs
         }
         else
         {
-            LineDef* iter = own->lineDef;
+            LineDef *iter = &own->lineDef();
 
             if(LINE_SELFREF(iter))
                 continue;

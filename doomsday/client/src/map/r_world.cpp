@@ -471,7 +471,7 @@ void GameMap_InitSkyFix(GameMap *map)
 /**
  * @return  Lineowner for this line for this vertex; otherwise @c 0.
  */
-lineowner_t *R_GetVtxLineOwner(Vertex const *v, LineDef const *line)
+LineOwner *R_GetVtxLineOwner(Vertex const *v, LineDef const *line)
 {
     if(v == line->L_v1)
         return line->L_vo1;
@@ -773,15 +773,15 @@ boolean R_MiddleMaterialCoversLineOpening(LineDef *line, int side, boolean ignor
 }
 
 LineDef *R_FindLineNeighbor(Sector const *sector, LineDef const *line,
-    lineowner_t const *own, boolean antiClockwise, binangle_t *diff)
+    LineOwner const *own, boolean antiClockwise, binangle_t *diff)
 {
-    lineowner_t *cown = own->link[!antiClockwise];
-    LineDef *other = cown->lineDef;
+    LineOwner const *cown = antiClockwise? &own->prev() : &own->next();
+    LineDef *other = &cown->lineDef();
 
     if(other == line)
         return NULL;
 
-    if(diff) *diff += (antiClockwise? cown->angle : own->angle);
+    if(diff) *diff += (antiClockwise? cown->angle() : own->angle());
 
     if(!other->L_backsidedef || other->L_frontsector != other->L_backsector)
     {
@@ -802,15 +802,15 @@ LineDef *R_FindLineNeighbor(Sector const *sector, LineDef const *line,
 }
 
 LineDef *R_FindSolidLineNeighbor(Sector const *sector, LineDef const *line,
-    lineowner_t const *own, boolean antiClockwise, binangle_t *diff)
+    LineOwner const *own, boolean antiClockwise, binangle_t *diff)
 {
-    lineowner_t *cown = own->link[!antiClockwise];
-    LineDef *other = cown->lineDef;
+    LineOwner const *cown = antiClockwise? &own->prev() : &own->next();
+    LineDef *other = &cown->lineDef();
     int side;
 
     if(other == line) return NULL;
 
-    if(diff) *diff += (antiClockwise? cown->angle : own->angle);
+    if(diff) *diff += (antiClockwise? cown->angle() : own->angle());
 
     if(!((other->inFlags & LF_BSPWINDOW) && other->L_frontsector != sector))
     {
@@ -864,14 +864,14 @@ LineDef *R_FindSolidLineNeighbor(Sector const *sector, LineDef const *line,
 }
 
 LineDef *R_FindLineBackNeighbor(Sector const *sector, LineDef const *line,
-    lineowner_t const *own, boolean antiClockwise, binangle_t *diff)
+    LineOwner const *own, boolean antiClockwise, binangle_t *diff)
 {
-    lineowner_t *cown = own->link[!antiClockwise];
-    LineDef *other = cown->lineDef;
+    LineOwner const *cown = antiClockwise? &own->prev() : &own->next();
+    LineDef *other = &cown->lineDef();
 
     if(other == line) return 0;
 
-    if(diff) *diff += (antiClockwise? cown->angle : own->angle);
+    if(diff) *diff += (antiClockwise? cown->angle() : own->angle());
 
     if(!other->L_backsidedef || other->L_frontsector != other->L_backsector ||
        (other->inFlags & LF_BSPWINDOW))
@@ -886,12 +886,12 @@ LineDef *R_FindLineBackNeighbor(Sector const *sector, LineDef const *line,
 }
 
 LineDef *R_FindLineAlignNeighbor(Sector const *sec, LineDef const *line,
-    lineowner_t const *own, boolean antiClockwise, int alignment)
+    LineOwner const *own, boolean antiClockwise, int alignment)
 {
     int const SEP = 10;
 
-    lineowner_t* cown = own->link[!antiClockwise];
-    LineDef* other = cown->lineDef;
+    LineOwner const *cown = antiClockwise? &own->prev() : &own->next();
+    LineDef *other = &cown->lineDef();
     binangle_t diff;
 
     if(other == line)

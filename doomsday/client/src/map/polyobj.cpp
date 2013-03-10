@@ -110,8 +110,8 @@ boolean Polyobj_Move(Polyobj* po, coord_t delta[2])
 
         if(veryTempLine == lineIter)
         {
-            line->L_v1origin[VX] += delta[VX];
-            line->L_v1origin[VY] += delta[VY];
+            line->L_v1->_origin[VX] += delta[VX];
+            line->L_v1->_origin[VY] += delta[VY];
         }
 
         (*prevPts).origin[VX] += delta[VX]; // Previous points are unique for each hedge.
@@ -153,8 +153,8 @@ boolean Polyobj_Move(Polyobj* po, coord_t delta[2])
 
             if(veryTempLine == lineIter)
             {
-                line->L_v1origin[VX] -= delta[VX];
-                line->L_v1origin[VY] -= delta[VY];
+                line->L_v1->_origin[VX] -= delta[VX];
+                line->L_v1->_origin[VY] -= delta[VY];
             }
 
             (*prevPts).origin[VX] -= delta[VX];
@@ -224,10 +224,10 @@ boolean Polyobj_Rotate(Polyobj* po, angle_t angle)
         LineDef* line = *lineIter;
         Vertex* vtx = line->L_v1;
 
-        V2d_Copy(prevPts->origin, vtx->origin);
-        V2d_Copy(vtx->origin, originalPts->origin);
+        V2d_Copy(prevPts->origin, vtx->origin());
+        V2d_Copy(vtx->_origin, originalPts->origin);
 
-        rotatePoint2d(vtx->origin, po->origin, fineAngle);
+        rotatePoint2d(vtx->_origin, po->origin, fineAngle);
     }
 
     lineIter = po->lines;
@@ -256,9 +256,8 @@ boolean Polyobj_Rotate(Polyobj* po, angle_t angle)
         prevPts = po->prevPts;
         for(i = 0; i < po->lineCount; ++i, lineIter++, prevPts++)
         {
-            LineDef* line = *lineIter;
-            Vertex* vtx = line->L_v1;
-            V2d_Copy(vtx->origin, prevPts->origin);
+            Vertex *vtx = (*lineIter)->L_v1;
+            V2d_Copy(vtx->_origin, prevPts->origin);
         }
 
         lineIter = po->lines;

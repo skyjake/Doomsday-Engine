@@ -39,13 +39,13 @@
 #define BACK  1
 
 #define HE_v(n)                   v[(n)? 1:0]
-#define HE_vorigin(n)             HE_v(n)->origin
+#define HE_vorigin(n)             HE_v(n)->origin()
 
 #define HE_v1                     HE_v(0)
-#define HE_v1origin               HE_v(0)->origin
+#define HE_v1origin               HE_v(0)->origin()
 
 #define HE_v2                     HE_v(1)
-#define HE_v2origin               HE_v(1)->origin
+#define HE_v2origin               HE_v(1)->origin()
 
 #define HEDGE_BACK_SECTOR(h)      ((h)->twin ? (h)->twin->sector : NULL)
 

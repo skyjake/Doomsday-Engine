@@ -150,7 +150,7 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
     int const SEP = 10;
 
     LineDef *iter;
-    lineowner_t *own;
+    LineOwner *own;
     binangle_t diff = 0;
     coord_t lengthDelta = 0, gap = 0;
     coord_t iFFloor, iFCeil;
@@ -172,8 +172,8 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
     do
     {
         // Select the next line.
-        diff = (clockwise? own->angle : own->LO_prev->angle);
-        iter = own->link[clockwise]->lineDef;
+        diff = (clockwise? own->angle() : own->prev().angle());
+        iter = &own->_link[clockwise]->lineDef();
 
         scanSecSide = (iter->L_frontsector && iter->L_frontsector == startSector);
 
@@ -181,9 +181,9 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
         while((!iter->L_frontsector && !iter->L_backsector) || // $degenleaf
               LINE_SELFREF(iter))
         {
-            own = own->link[clockwise];
-            diff += (clockwise? own->angle : own->LO_prev->angle);
-            iter = own->link[clockwise]->lineDef;
+            own = own->_link[clockwise];
+            diff += (clockwise? own->angle() : own->prev().angle());
+            iter = &own->_link[clockwise]->lineDef();
 
             scanSecSide = (iter->L_frontsector == startSector);
         }
@@ -317,9 +317,9 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
         if(!stopScan)
         {
             // Around the corner.
-            if(own->link[clockwise] == iter->L_vo2)
+            if(own->_link[clockwise] == iter->L_vo2)
                 own = iter->L_vo1;
-            else if(own->link[clockwise] == iter->L_vo1)
+            else if(own->_link[clockwise] == iter->L_vo1)
                 own = iter->L_vo2;
 
             // Skip into the back neighbor sector of the iter line if
@@ -341,7 +341,7 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
                 if(backNeighbor && backNeighbor != iter)
                 {
                     // Into the back neighbor sector.
-                    own = own->link[clockwise];
+                    own = own->_link[clockwise];
                     startSector = scanSector;
                 }
             }
@@ -472,7 +472,7 @@ static void scanEdges(shadowcorner_t topCorners[2], shadowcorner_t bottomCorners
     for(uint i = 0; i < 2; ++i)
     {
         binangle_t diff = 0;
-        lineowner_t* vo = line->L_vo(i ^ sid);
+        LineOwner* vo = line->L_vo(i ^ sid);
 
         LineDef* other = R_FindSolidLineNeighbor(line->L_sector(sid), line, vo, i, &diff);
         if(other && other != line)
@@ -1354,8 +1354,8 @@ static void processEdgeShadow(BspLeaf const *bspLeaf, LineDef const *lineDef,
     sideOpen[0] = sideOpen[1] = 0;
     for(int i = 0; i < 2; ++i)
     {
-        lineowner_t* vo = lineDef->L_vo(side^i)->link[i^1];
-        LineDef* neighbor = vo->lineDef;
+        LineOwner *vo = lineDef->L_vo(side^i)->_link[i^1];
+        LineDef *neighbor = &vo->lineDef();
 
         if(neighbor != lineDef && !neighbor->L_backsidedef &&
            (neighbor->inFlags & LF_BSPWINDOW) &&
@@ -1399,13 +1399,13 @@ static void processEdgeShadow(BspLeaf const *bspLeaf, LineDef const *lineDef,
         if(sideOpen[i] < 1)
         {
             vo = lineDef->L_vo(i^side);
-            if(i) vo = vo->LO_prev;
+            if(i) vo = &vo->prev();
 
-            V2d_Sum(inner[i], lineDef->L_vorigin(i^side), vo->shadowOffsets.inner);
+            V2d_Sum(inner[i], lineDef->L_vorigin(i^side), vo->innerShadowOffset());
         }
         else
         {
-            V2d_Sum(inner[i], lineDef->L_vorigin(i^side), vo->shadowOffsets.extended);
+            V2d_Sum(inner[i], lineDef->L_vorigin(i^side), vo->extendedShadowOffset());
         }
     }
 
@@ -1602,20 +1602,20 @@ void Rend_DrawShadowOffsetVerts()
         for(uint k = 0; k < 2; ++k)
         {
             Vertex *vtx = line->L_v(k);
-            lineowner_t *vo = vtx->lineOwners;
+            LineOwner *vo = vtx->lineOwners;
 
             for(uint j = 0; j < vtx->numLineOwners; ++j)
             {
                 coord_t pos[3];
-                pos[VZ] = vo->lineDef->L_frontsector->SP_floorvisheight;
+                pos[VZ] = vo->lineDef().L_frontsector->SP_floorvisheight;
 
-                V2d_Sum(pos, vtx->origin, vo->shadowOffsets.extended);
+                V2d_Sum(pos, vtx->origin(), vo->extendedShadowOffset());
                 drawPoint(pos, 1, yellow);
 
-                V2d_Sum(pos, vtx->origin, vo->shadowOffsets.inner);
+                V2d_Sum(pos, vtx->origin(), vo->innerShadowOffset());
                 drawPoint(pos, 1, red);
 
-                vo = vo->LO_next;
+                vo = &vo->next();
             }
         }
     }

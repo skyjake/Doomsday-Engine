@@ -70,8 +70,8 @@ struct LineDefInfo
         const Vertex* end   = lineDef->L_v2;
 
         // Check for zero-length line.
-        if((fabs(start->origin[VX] - end->origin[VX]) < distEpsilon) &&
-           (fabs(start->origin[VY] - end->origin[VY]) < distEpsilon))
+        if((fabs(start->origin()[VX] - end->origin()[VX]) < distEpsilon) &&
+           (fabs(start->origin()[VY] - end->origin()[VY]) < distEpsilon))
             flags |= ZeroLength;
 
         if(lineDef->L_backsidedef && lineDef->L_frontsidedef)

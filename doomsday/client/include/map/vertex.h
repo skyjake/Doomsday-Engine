@@ -1,9 +1,7 @@
-/**
- * @file vertex.h
- * Logical map vertex. @ingroup map
+/** @file vertex.h Map Geometry Vertex
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,97 +21,211 @@
 #ifndef LIBDENG_MAP_VERTEX
 #define LIBDENG_MAP_VERTEX
 
-#ifndef __cplusplus
-#  error "map/vertex.h requires C++"
-#endif
-
+#include <de/Error>
+#include <de/vector1.h>
 #include <de/binangle.h>
 #include "resource/r_data.h"
 #include "map/p_dmu.h"
 #include "MapElement"
 
-#define LO_prev     link[0]
-#define LO_next     link[1]
-
-class Vertex;
 class LineDef;
 
-typedef struct lineowner_shadowvert_s {
-    coord_t inner[2];
-    coord_t extended[2];
-} lineowner_shadowvert_t;
+/**
+ * @todo Replace ring navigation with a circular iterator at Vertex level -ds.
+ * @ingroup map
+ */
+class LineOwner
+{
+public:
+    /// Ring navigation direction identifiers:
+    enum Direction
+    {
+        /// Previous (anticlockwise).
+        Previous,
 
-typedef struct lineowner_s {
-    LineDef *lineDef;
-    struct lineowner_s *link[2];    ///< {prev, next} (i.e. {anticlk, clk}).
-    binangle_t angle;               ///< between this and next clockwise.
-    lineowner_shadowvert_t shadowOffsets;
-} lineowner_t;
+        /// Next (clockwise).
+        Next
+    };
 
-typedef struct mvertex_s {
-    /// Vertex index. Always valid after loading and pruning of unused
-    /// vertices has occurred.
-    int index;
+public: /// @todo Make private:
+    LineDef *_lineDef;
 
-    /// Reference count. When building normal node info, unused vertices
-    /// will be pruned.
-    int refCount;
+    /// {Previous, Next} (i.e. {anticlk, clk}).
+    LineOwner *_link[2];
 
-    /// Usually NULL, unless this vertex occupies the same location as a
-    /// previous vertex. Only used during the pruning phase.
-    Vertex *equiv;
-} mvertex_t;
+    /// Angle between this and the next line owner, clockwise.
+    binangle_t _angle;
+
+    struct ShadowVert {
+        vec2d_t inner;
+        vec2d_t extended;
+    } _shadowOffsets;
+
+public:
+    /*LineOwner() : _lineDef(0), _angle(0)
+    {
+        _link[Previous] = 0;
+        _link[Next] = 0;
+
+        V2d_Set(_shadowOffsets.inner, 0, 0);
+        V2d_Set(_shadowOffsets.extended, 0, 0);
+    }*/
+
+    /**
+     * Returns @c true iff the previous line owner in the ring (anticlockwise) is not
+     * the same as this LineOwner.
+     *
+     * @see prev()
+     */
+    inline bool hasPrev() const { return &prev() != this; }
+
+    /**
+     * Returns @c true iff the next line owner in the ring (clockwise) is not the same
+     * as this LineOwner.
+     *
+     * @see next()
+     */
+    inline bool hasNext() const { return &next() != this; }
+
+    /**
+     * Navigate to the adjacent line owner in the ring (if any). Note this may be the
+     * same LineOwner.
+     */
+    LineOwner &navigate(Direction dir = Previous) { return *_link[dir]; }
+
+    /// @copydoc navigate()
+    LineOwner const &navigate(Direction dir = Previous) const { return *_link[dir]; }
+
+    /**
+     * Returns the previous line owner in the ring (anticlockwise). Note that this may
+     * be the same LineOwner.
+     *
+     * @see hasPrev()
+     */
+    inline LineOwner &prev() { return navigate(Previous); }
+
+    /// @copydoc prev()
+    inline LineOwner const &prev() const { return navigate(Previous); }
+
+    /**
+     * Returns the next line owner in the ring (clockwise). Note that this may be the
+     * same LineOwner.
+     *
+     * @see hasNext()
+     */
+    inline LineOwner &next() { return navigate(Next); }
+
+    /// @copydoc next()
+    inline LineOwner const &next() const { return navigate(Next); }
+
+    /**
+     * Returns the LineDef "owner".
+     */
+    LineDef &lineDef() const { return *_lineDef; }
+
+    /**
+     * Returns the angle between the line owner and the next in the ring (clockwise).
+     */
+    binangle_t angle() const { return _angle; }
+
+    /**
+     * Returns the inner shadow offset of the line owner.
+     */
+    vec2d_t const &innerShadowOffset() const { return _shadowOffsets.inner; }
+
+    /**
+     * Returns the extended shadow offset of the line owner.
+     */
+    vec2d_t const &extendedShadowOffset() const { return _shadowOffsets.extended; }
+};
 
 /**
- * Vertex in the map geometry.
+ * Map geometry vertex.
+ *
+ * @ingroup map
  */
 class Vertex : public de::MapElement
 {
 public:
-    coord_t origin[2];
-    unsigned int numLineOwners; ///< Number of line owners.
-    lineowner_t *lineOwners;    ///< Lineowner base ptr [numlineowners] size. A doubly, circularly linked list. The base is the line with the lowest angle and the next-most with the largest angle.
-    mvertex_t buildData;
+    /// The referenced property does not exist. @ingroup errors
+    DENG2_ERROR(UnknownPropertyError);
+
+    /// The referenced property is not writeable. @ingroup errors
+    DENG2_ERROR(WritePropertyError);
+
+public: /// @todo Make private:
+    coord_t _origin[2];
+
+    /// Head of the LineOwner rings (an array of [numLineOwners] size). The owner ring
+    /// is a doubly, circularly linked list. The head is the owner with the lowest angle
+    /// and the next-most being that with greater angle.
+    LineOwner *lineOwners;
+    uint numLineOwners; ///< Total number of line owners.
+
+    struct {
+        /// Vertex index. Always valid after loading and pruning of unused
+        /// vertices has occurred.
+        int index;
+
+        /// Reference count. When building normal node info, unused vertices
+        /// will be pruned.
+        int refCount;
+
+        /// Usually NULL, unless this vertex occupies the same location as a
+        /// previous vertex. Only used during the pruning phase.
+        Vertex *equiv;
+    } buildData;
 
 public:
-    Vertex() : de::MapElement(DMU_VERTEX)
-    {
-        memset(origin, 0, sizeof(origin));
-        numLineOwners = 0;
-        lineOwners = 0;
-        memset(&buildData, 0, sizeof(buildData));
-    }
+    Vertex(coord_t x = 0, coord_t y = 0);
+
+    /**
+     * Returns the origin (i.e., location) of the vertex in the map coordinate space.
+     */
+    vec2d_t const &origin() const;
+
+    /**
+     * Returns the X axis origin (i.e., location) of the vertex in the map coordinate space.
+     */
+    inline coord_t x() const { return origin()[VX]; }
+
+    /**
+     * Returns the Y axis origin (i.e., location) of the vertex in the map coordinate space.
+     */
+    inline coord_t y() const { return origin()[VY]; }
+
+    /**
+     * Count the total number of linedef "owners" of the vertex. An owner in
+     * this context is any linedef whose start or end vertex is this.
+     *
+     * @pre Vertex linedef owner rings must have already been calculated.
+     * @pre @a oneSided and/or @a twoSided must have already been initialized.
+     *
+     * @param oneSided  Total number of one-sided lines is written here. Can be @a NULL.
+     * @param twoSided  Total number of two-sided lines is written here. Can be @a NULL.
+     *
+     * @todo Optimize: Cache this result.
+     */
+    void countLineOwners(uint *oneSided, uint *twoSided) const;
+
+    /**
+     * Get a property value, selected by DMU_* name.
+     *
+     * @param args  Property arguments.
+     * @return  Always @c 0 (can be used as an iterator).
+     */
+    int property(setargs_t &args) const;
+
+    /**
+     * Update a property value, selected by DMU_* name.
+     *
+     * @param args  Property arguments.
+     * @return  Always @c 0 (can be used as an iterator).
+     */
+    int setProperty(setargs_t const &args);
+
+private:
+    DENG2_PRIVATE(d)
 };
-
-/**
- * Count the total number of linedef "owners" of this vertex. An owner in
- * this context is any linedef whose start or end vertex is this.
- *
- * @pre Vertex linedef owner rings must have already been calculated.
- * @pre @a oneSided and/or @a twoSided must have already been initialized.
- *
- * @param vtx       Vertex instance.
- * @param oneSided  Total number of one-sided lines is written here. Can be @a NULL.
- * @param twoSided  Total number of two-sided lines is written here. Can be @a NULL.
- */
-void Vertex_CountLineOwners(Vertex const *vtx, uint* oneSided, uint* twoSided);
-
-/**
- * Get a property value, selected by DMU_* name.
- *
- * @param vertex    Vertex instance.
- * @param args      Property arguments.
- * @return  Always @c 0 (can be used as an iterator).
- */
-int Vertex_GetProperty(const Vertex* vertex, setargs_t* args);
-
-/**
- * Update a property value, selected by DMU_* name.
- *
- * @param vertex    Vertex instance.
- * @param args      Property arguments.
- * @return  Always @c 0 (can be used as an iterator).
- */
-int Vertex_SetProperty(Vertex* vertex, const setargs_t* args);
 
 #endif // LIBDENG_MAP_VERTEX

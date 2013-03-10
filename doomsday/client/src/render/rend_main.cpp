@@ -265,7 +265,7 @@ void Rend_ModelViewMatrix(boolean useAngles)
     glTranslatef(-vOrigin[VX], -vOrigin[VY], -vOrigin[VZ]);
 }
 
-static inline double viewFacingDot(coord_t v1[2], coord_t v2[2])
+static inline double viewFacingDot(const_pvec2d_t v1, const_pvec2d_t v2)
 {
     // The dot product.
     return (v1[VY] - v2[VY]) * (v1[VX] - vOrigin[VX]) + (v2[VX] - v1[VX]) * (v1[VY] - vOrigin[VZ]);
@@ -1955,11 +1955,11 @@ static boolean Rend_RenderHEdgeTwosided(HEdge* hedge, byte sections)
     return false;
 }
 
-static void Rend_MarkSegsFacingFront(BspLeaf* leaf)
+static void Rend_MarkSegsFacingFront(BspLeaf *leaf)
 {
     if(leaf->hedge)
     {
-        HEdge* hedge = leaf->hedge;
+        HEdge *hedge = leaf->hedge;
         do
         {
             // Occlusions can only happen where two sectors contact.
@@ -1976,13 +1976,10 @@ static void Rend_MarkSegsFacingFront(BspLeaf* leaf)
 
     if(leaf->polyObj)
     {
-        LineDef* line;
-        HEdge* hedge;
-        uint i;
-        for(i = 0; i < leaf->polyObj->lineCount; ++i)
+        for(uint i = 0; i < leaf->polyObj->lineCount; ++i)
         {
-            line  = leaf->polyObj->lines[i];
-            hedge = line->L_frontside.hedgeLeft;
+            LineDef *line = leaf->polyObj->lines[i];
+            HEdge *hedge  = line->L_frontside.hedgeLeft;
 
             // Which way should it be facing?
             if(!(viewFacingDot(hedge->HE_v1origin, hedge->HE_v2origin) < 0))
@@ -1993,11 +1990,11 @@ static void Rend_MarkSegsFacingFront(BspLeaf* leaf)
     }
 }
 
-static void occludeFrontFacingSegsInBspLeaf(const BspLeaf* bspLeaf)
+static void occludeFrontFacingSegsInBspLeaf(BspLeaf const *bspLeaf)
 {
     if(bspLeaf->hedge)
     {
-        HEdge* hedge = bspLeaf->hedge;
+        HEdge *hedge = bspLeaf->hedge;
         do
         {
             if(!hedge->lineDef || !(hedge->frameFlags & HEDGEINF_FACINGFRONT)) continue;
@@ -2011,15 +2008,12 @@ static void occludeFrontFacingSegsInBspLeaf(const BspLeaf* bspLeaf)
 
     if(bspLeaf->polyObj)
     {
-        Polyobj* po = bspLeaf->polyObj;
-        LineDef* line;
-        HEdge* hedge;
-        uint i;
+        Polyobj *po = bspLeaf->polyObj;
 
-        for(i = 0; i < po->lineCount; ++i)
+        for(uint i = 0; i < po->lineCount; ++i)
         {
-            line = po->lines[i];
-            hedge = line->L_frontside.hedgeLeft;
+            LineDef *line = po->lines[i];
+            HEdge *hedge  = line->L_frontside.hedgeLeft;
 
             if(!(hedge->frameFlags & HEDGEINF_FACINGFRONT)) continue;
 
@@ -3192,17 +3186,15 @@ void Rend_RenderSoundOrigins()
     glEnable(GL_DEPTH_TEST);
 }
 
-static void getVertexPlaneMinMax(const Vertex* vtx, coord_t* min, coord_t* max)
+static void getVertexPlaneMinMax(Vertex const *vtx, coord_t *min, coord_t *max)
 {
-    lineowner_t* vo, *base;
+    if(!vtx || (!min && !max)) return;
 
-    if(!vtx || (!min && !max))
-        return; // Wha?
-
-    vo = base = vtx->lineOwners;
+    LineOwner *base = vtx->lineOwners;
+    LineOwner *vo = base;
     do
     {
-        LineDef* li = vo->lineDef;
+        LineDef *li = &vo->lineDef();
 
         if(li->L_frontsidedef)
         {
@@ -3222,7 +3214,7 @@ static void getVertexPlaneMinMax(const Vertex* vtx, coord_t* min, coord_t* max)
                 *max = li->L_backsector->SP_ceilvisheight;
         }
 
-        vo = vo->LO_next;
+        vo = &vo->next();
     } while(vo != base);
 }
 
@@ -3230,7 +3222,7 @@ static void drawVertexPoint(const Vertex* vtx, coord_t z, float alpha)
 {
     glBegin(GL_POINTS);
         glColor4f(.7f, .7f, .2f, alpha * 2);
-        glVertex3f(vtx->origin[VX], z, vtx->origin[VY]);
+        glVertex3f(vtx->origin()[VX], z, vtx->origin()[VY]);
     glEnd();
 }
 
@@ -3242,14 +3234,14 @@ static void drawVertexBar(Vertex const *vtx, coord_t bottom, coord_t top, float 
 
     glBegin(GL_LINES);
         glColor4fv(black);
-        glVertex3f(vtx->origin[VX], bottom - EXTEND_DIST, vtx->origin[VY]);
+        glVertex3f(vtx->origin()[VX], bottom - EXTEND_DIST, vtx->origin()[VY]);
         glColor4f(1, 1, 1, alpha);
-        glVertex3f(vtx->origin[VX], bottom, vtx->origin[VY]);
-        glVertex3f(vtx->origin[VX], bottom, vtx->origin[VY]);
-        glVertex3f(vtx->origin[VX], top, vtx->origin[VY]);
-        glVertex3f(vtx->origin[VX], top, vtx->origin[VY]);
+        glVertex3f(vtx->origin()[VX], bottom, vtx->origin()[VY]);
+        glVertex3f(vtx->origin()[VX], bottom, vtx->origin()[VY]);
+        glVertex3f(vtx->origin()[VX], top, vtx->origin()[VY]);
+        glVertex3f(vtx->origin()[VX], top, vtx->origin()[VY]);
         glColor4fv(black);
-        glVertex3f(vtx->origin[VX], top + EXTEND_DIST, vtx->origin[VY]);
+        glVertex3f(vtx->origin()[VX], top + EXTEND_DIST, vtx->origin()[VY]);
     glEnd();
 }
 
@@ -3267,7 +3259,7 @@ static void drawVertexIndex(Vertex const *vtx, coord_t z, float scale, float alp
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glTranslatef(vtx->origin[VX], z, vtx->origin[VY]);
+    glTranslatef(vtx->origin()[VX], z, vtx->origin()[VY]);
     glRotatef(-vang + 180, 0, 1, 0);
     glRotatef(vpitch, 1, 0, 0);
     glScalef(-scale, -scale, 1);
@@ -3288,7 +3280,7 @@ static int drawVertex1(LineDef *li, void *context)
 {
     Vertex *vtx = li->L_v1;
     Polyobj *po = (Polyobj *) context;
-    coord_t dist2D = M_ApproxDistance(vOrigin[VX] - vtx->origin[VX], vOrigin[VZ] - vtx->origin[VY]);
+    coord_t dist2D = M_ApproxDistance(vOrigin[VX] - vtx->origin()[VX], vOrigin[VZ] - vtx->origin()[VY]);
 
     if(dist2D < MAX_VERTEX_POINT_DIST)
     {
@@ -3314,8 +3306,8 @@ static int drawVertex1(LineDef *li, void *context)
         eye[VY] = vOrigin[VZ];
         eye[VZ] = vOrigin[VY];
 
-        pos[VX] = vtx->origin[VX];
-        pos[VY] = vtx->origin[VY];
+        pos[VX] = vtx->origin()[VX];
+        pos[VY] = vtx->origin()[VY];
         pos[VZ] = po->bspLeaf->sector->SP_floorvisheight;
 
         dist3D = V3d_Distance(pos, eye);
@@ -3363,10 +3355,10 @@ void Rend_Vertexes()
 
             if(!vtx->lineOwners)
                 continue; // Not a linedef vertex.
-            if(vtx->lineOwners[0].lineDef->inFlags & LF_POLYOBJ)
+            if(vtx->lineOwners[0]._lineDef->inFlags & LF_POLYOBJ)
                 continue; // A polyobj linedef vertex.
 
-            alpha = 1 - M_ApproxDistance(vOrigin[VX] - vtx->origin[VX], vOrigin[VZ] - vtx->origin[VY]) / MAX_VERTEX_POINT_DIST;
+            alpha = 1 - M_ApproxDistance(vOrigin[VX] - vtx->origin()[VX], vOrigin[VZ] - vtx->origin()[VY]) / MAX_VERTEX_POINT_DIST;
             alpha = MIN_OF(alpha, .15f);
 
             if(alpha > 0)
@@ -3394,10 +3386,10 @@ void Rend_Vertexes()
 
         if(!vtx->lineOwners)
             continue; // Not a linedef vertex.
-        if(vtx->lineOwners[0].lineDef->inFlags & LF_POLYOBJ)
+        if(vtx->lineOwners[0]._lineDef->inFlags & LF_POLYOBJ)
             continue; // A polyobj linedef vertex.
 
-        dist = M_ApproxDistance(vOrigin[VX] - vtx->origin[VX], vOrigin[VZ] - vtx->origin[VY]);
+        dist = M_ApproxDistance(vOrigin[VX] - vtx->origin()[VX], vOrigin[VZ] - vtx->origin()[VY]);
 
         if(dist < MAX_VERTEX_POINT_DIST)
         {
@@ -3425,10 +3417,10 @@ void Rend_Vertexes()
             coord_t pos[3], dist;
 
             if(!vtx->lineOwners) continue; // Not a linedef vertex.
-            if(vtx->lineOwners[0].lineDef->inFlags & LF_POLYOBJ) continue; // A polyobj linedef vertex.
+            if(vtx->lineOwners[0]._lineDef->inFlags & LF_POLYOBJ) continue; // A polyobj linedef vertex.
 
-            pos[VX] = vtx->origin[VX];
-            pos[VY] = vtx->origin[VY];
+            pos[VX] = vtx->origin()[VX];
+            pos[VY] = vtx->origin()[VY];
             pos[VZ] = DDMAXFLOAT;
             getVertexPlaneMinMax(vtx, &pos[VZ], NULL);
 

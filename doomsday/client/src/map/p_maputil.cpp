@@ -96,23 +96,20 @@ DENG_EXTERN_C BspLeaf* P_BspLeafAtPointXY(coord_t x, coord_t y)
     return GameMap_BspLeafAtPointXY(theMap, x, y);
 }
 
-boolean P_IsPointXYInBspLeaf(coord_t x, coord_t y, const BspLeaf* bspLeaf)
+boolean P_IsPointXYInBspLeaf(coord_t x, coord_t y, BspLeaf const *bspLeaf)
 {
-    Vertex* vi, *vj;
-    HEdge* hedge;
-
     if(!bspLeaf || !bspLeaf->hedge) return false; // I guess?
 
-    hedge = bspLeaf->hedge;
+    HEdge *hedge = bspLeaf->hedge;
     do
     {
-        HEdge* next = hedge->next;
+        HEdge *next = hedge->next;
 
-        vi = hedge->HE_v1;
-        vj = next->HE_v1;
+        Vertex *vi = hedge->HE_v1;
+        Vertex *vj = next->HE_v1;
 
-        if(((vi->origin[VY] - y) * (vj->origin[VX] - vi->origin[VX]) -
-            (vi->origin[VX] - x) * (vj->origin[VY] - vi->origin[VY])) < 0)
+        if(((vi->origin()[VY] - y) * (vj->origin()[VX] - vi->origin()[VX]) -
+            (vi->origin()[VX] - x) * (vj->origin()[VY] - vi->origin()[VY])) < 0)
         {
             // Outside the BSP leaf's edges.
             return false;

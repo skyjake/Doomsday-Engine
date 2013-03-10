@@ -162,55 +162,53 @@ static void writeVertex(const GameMap* map, uint idx)
 {
     Vertex const *v = &map->vertexes[idx];
 
-    writeFloat(v->origin[VX]);
-    writeFloat(v->origin[VY]);
+    writeFloat(v->_origin[VX]);
+    writeFloat(v->_origin[VY]);
     writeLong((long) v->numLineOwners);
 
     if(v->numLineOwners > 0)
     {
-        lineowner_t* own, *base;
+        LineOwner *own, *base;
 
-        own = base = (v->lineOwners)->LO_prev;
+        own = base = &(v->lineOwners)->prev();
         do
         {
-            writeLong((long) (map->lineDefs.indexOf(own->lineDef) + 1));
-            writeLong((long) own->angle);
-            own = own->LO_prev;
+            writeLong((long) (map->lineDefs.indexOf(own->_lineDef) + 1));
+            writeLong((long) own->_angle);
+            own = &own->prev();
         } while(own != base);
     }
 }
 
 static void readVertex(GameMap *map, uint idx)
 {
-    uint i;
     Vertex *v = &map->vertexes[idx];
 
-    v->origin[VX] = readFloat();
-    v->origin[VY] = readFloat();
+    v->_origin[VX] = readFloat();
+    v->_origin[VY] = readFloat();
     v->numLineOwners = (uint) readLong();
 
     if(v->numLineOwners > 0)
     {
-        lineowner_t* own;
-
         v->lineOwners = NULL;
-        for(i = 0; i < v->numLineOwners; ++i)
+        for(uint i = 0; i < v->numLineOwners; ++i)
         {
-            own = (lineowner_t *) Z_Malloc(sizeof(lineowner_t), PU_MAP, 0);
-            own->lineDef = &map->lineDefs[(unsigned) (readLong() - 1)];
-            own->angle = (binangle_t) readLong();
+            LineOwner *own = (LineOwner *) Z_Malloc(sizeof(LineOwner), PU_MAP, 0);
+            own->_lineDef = &map->lineDefs[(unsigned) (readLong() - 1)];
+            own->_angle = (binangle_t) readLong();
 
-            own->LO_next = v->lineOwners;
+            own->_link[LineOwner::Next] = v->lineOwners;
             v->lineOwners = own;
         }
 
-        own = v->lineOwners;
+        LineOwner *own = v->lineOwners;
         do
         {
-            own->LO_next->LO_prev = own;
-            own = own->LO_next;
+            LineOwner *next = &own->next();
+            next->_link[LineOwner::Previous] = own;
+            own = next;
         } while(own);
-        own->LO_prev = v->lineOwners;
+        own->_link[LineOwner::Previous] = v->lineOwners;
     }
 }
 

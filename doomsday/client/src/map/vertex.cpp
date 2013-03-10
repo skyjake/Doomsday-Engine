@@ -1,8 +1,7 @@
-/** @file vertex.cpp Logical map vertex. 
- * @ingroup map
+/** @file vertex.cpp Map Geometry Vertex
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,19 +22,41 @@
 #include "de_console.h"
 #include "de_play.h"
 
-void Vertex_CountLineOwners(Vertex const *vtx, uint* oneSided, uint* twoSided)
-{
-    DENG_ASSERT(vtx);
+#include "map/vertex.h"
 
+using namespace de;
+
+DENG2_PIMPL(Vertex)
+{
+    Instance(Public *i) : Base(i)
+    {}
+};
+
+Vertex::Vertex(coord_t x, coord_t y) : MapElement(DMU_VERTEX)
+{
+    _origin[VX] = x;
+    _origin[VY] = y;
+    lineOwners = 0;
+    numLineOwners = 0;
+    std::memset(&buildData, 0, sizeof(buildData));
+}
+
+vec2d_t const &Vertex::origin() const
+{
+    return _origin;
+}
+
+void Vertex::countLineOwners(uint *oneSided, uint *twoSided) const
+{
     if(!oneSided && !twoSided) return;
 
     uint ones = 0, twos = 0;
-    if(vtx->lineOwners)
+    if(lineOwners)
     {
-        lineowner_t* vo = vtx->lineOwners;
+        LineOwner *vo = lineOwners;
         do
         {
-            if(!vo->lineDef->L_frontsidedef || !vo->lineDef->L_backsidedef)
+            if(!vo->lineDef().L_frontsidedef || !vo->lineDef().L_backsidedef)
             {
                 ++ones;
             }
@@ -43,37 +64,36 @@ void Vertex_CountLineOwners(Vertex const *vtx, uint* oneSided, uint* twoSided)
             {
                 ++twos;
             }
-        } while((vo = vo->LO_next) != vtx->lineOwners);
+        } while((vo = &vo->next()) != lineOwners);
     }
 
     if(oneSided) *oneSided += ones;
     if(twoSided) *twoSided += twos;
 }
 
-int Vertex_SetProperty(Vertex* /*vtx*/, const setargs_t* /*args*/)
+int Vertex::property(setargs_t &args) const
 {
-    // Vertices are not writable through DMU.
-    Con_Error("Vertex_SetProperty: Is not writable.\n");
+    switch(args.prop)
+    {
+    case DMU_X:
+        DMU_GetValue(DMT_VERTEX_ORIGIN, &_origin[VX], &args, 0);
+        break;
+    case DMU_Y:
+        DMU_GetValue(DMT_VERTEX_ORIGIN, &_origin[VY], &args, 0);
+        break;
+    case DMU_XY:
+        DMU_GetValue(DMT_VERTEX_ORIGIN, &_origin[VX], &args, 0);
+        DMU_GetValue(DMT_VERTEX_ORIGIN, &_origin[VY], &args, 1);
+        break;
+    default:
+        /// @throw UnknownPropertyError  The requested property does not exist.
+        throw UnknownPropertyError("Vertex::property", QString("Property '%1' is unknown").arg(DMU_Str(args.prop)));
+    }
     return false; // Continue iteration.
 }
 
-int Vertex_GetProperty(const Vertex* vtx, setargs_t* args)
+int Vertex::setProperty(setargs_t const & args)
 {
-    DENG_ASSERT(vtx);
-    switch(args->prop)
-    {
-    case DMU_X:
-        DMU_GetValue(DMT_VERTEX_ORIGIN, &vtx->origin[VX], args, 0);
-        break;
-    case DMU_Y:
-        DMU_GetValue(DMT_VERTEX_ORIGIN, &vtx->origin[VY], args, 0);
-        break;
-    case DMU_XY:
-        DMU_GetValue(DMT_VERTEX_ORIGIN, &vtx->origin[VX], args, 0);
-        DMU_GetValue(DMT_VERTEX_ORIGIN, &vtx->origin[VY], args, 1);
-        break;
-    default:
-        Con_Error("Vertex_GetProperty: Has no property %s.\n", DMU_Str(args->prop));
-    }
-    return false; // Continue iteration.
+    /// @throw WritePropertyError  The requested property is not writable.
+    throw WritePropertyError("Vertex::setProperty", QString("Property '%1' is not writable").arg(DMU_Str(args.prop)));
 }

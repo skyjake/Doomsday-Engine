@@ -187,7 +187,7 @@ boolean R_IsGlowingPlane(const Plane* plane);
 /// @return  Current glow strength for the plane.
 float R_GlowStrength(const Plane* pln);
 
-lineowner_t* R_GetVtxLineOwner(const Vertex* vtx, const LineDef* line);
+LineOwner* R_GetVtxLineOwner(const Vertex* vtx, const LineDef* line);
 
 #ifdef __CLIENT__
 /**
@@ -195,10 +195,10 @@ lineowner_t* R_GetVtxLineOwner(const Vertex* vtx, const LineDef* line);
  * specified sector.
  */
 LineDef* R_FindLineNeighbor(const Sector* sector, const LineDef* line,
-    const lineowner_t* own, boolean antiClockwise, binangle_t* diff);
+    const LineOwner* own, boolean antiClockwise, binangle_t* diff);
 
 LineDef* R_FindSolidLineNeighbor(const Sector *sector, const LineDef* line,
-    const lineowner_t* own, boolean antiClockwise, binangle_t* diff);
+    const LineOwner* own, boolean antiClockwise, binangle_t* diff);
 
 /**
  * A line's align neighbor is a line that shares a vertex with 'line' and
@@ -207,14 +207,14 @@ LineDef* R_FindSolidLineNeighbor(const Sector *sector, const LineDef* line,
  * long sidedef by the shadow generator).
  */
 LineDef* R_FindLineAlignNeighbor(const Sector* sec, const LineDef* line,
-    const lineowner_t* own, boolean antiClockwise, int alignment);
+    const LineOwner* own, boolean antiClockwise, int alignment);
 
 /**
  * Find a backneighbour for the given line. They are the neighbouring line
  * in the backsector of the imediate line neighbor.
  */
 LineDef* R_FindLineBackNeighbor(const Sector* sector, const LineDef* line,
-    const lineowner_t* own, boolean antiClockwise, binangle_t* diff);
+    const LineOwner* own, boolean antiClockwise, binangle_t* diff);
 #endif // __CLIENT__
 
 /**

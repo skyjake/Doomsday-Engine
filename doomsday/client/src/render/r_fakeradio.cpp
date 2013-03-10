@@ -33,8 +33,8 @@ static zblockset_t *shadowLinksBlockSet;
  * from line2, while also being the nearest point to the origin (in
  * case the lines are parallel).
  */
-void R_CornerNormalPoint(const pvec2d_t line1, double dist1,
-                         const pvec2d_t line2, double dist2, pvec2d_t point,
+void R_CornerNormalPoint(const_pvec2d_t line1, double dist1,
+                         const_pvec2d_t line2, double dist2, pvec2d_t point,
                          pvec2d_t lp)
 {
     double len1, len2;
@@ -101,13 +101,13 @@ void Rend_RadioUpdateVertexShadowOffsets(Vertex* vtx)
 
     if(vtx->numLineOwners > 0)
     {
-        lineowner_t* own, *base;
+        LineOwner* own, *base;
 
         own = base = vtx->lineOwners;
         do
         {
-            LineDef* lineB = own->lineDef;
-            LineDef* lineA = own->LO_next->lineDef;
+            LineDef *lineB = &own->lineDef();
+            LineDef *lineA = &own->next().lineDef();
 
             if(lineB->L_v1 == vtx)
             {
@@ -136,10 +136,10 @@ void Rend_RadioUpdateVertexShadowOffsets(Vertex* vtx)
 
             R_CornerNormalPoint(left, R_ShadowEdgeWidth(left), right,
                                 R_ShadowEdgeWidth(right),
-                                own->shadowOffsets.inner,
-                                own->shadowOffsets.extended);
+                                own->_shadowOffsets.inner,
+                                own->_shadowOffsets.extended);
 
-            own = own->LO_next;
+            own = &own->next();
         } while(own != base);
     }
 }
@@ -149,20 +149,17 @@ void Rend_RadioUpdateVertexShadowOffsets(Vertex* vtx)
  */
 static void linkShadowLineDefToSSec(LineDef *line, byte side, BspLeaf* bspLeaf)
 {
-    shadowlink_t* link;
-
-#ifdef _DEBUG
+#ifdef DENG_DEBUG
     // Check the links for dupes!
-    { shadowlink_t* i;
-    for(i = bspLeaf->shadows; i; i = i->next)
+    for(shadowlink_t *i = bspLeaf->shadows; i; i = i->next)
     {
         if(i->lineDef == line && i->side == side)
             Con_Error("R_LinkShadow: Already here!!\n");
-    }}
+    }
 #endif
 
     // We'll need to allocate a new link.
-    link = (shadowlink_t *) ZBlockSet_Allocate(shadowLinksBlockSet);
+    shadowlink_t *link = (shadowlink_t *) ZBlockSet_Allocate(shadowLinksBlockSet);
 
     // The links are stored into a linked list.
     link->next = bspLeaf->shadows;
@@ -172,7 +169,7 @@ static void linkShadowLineDefToSSec(LineDef *line, byte side, BspLeaf* bspLeaf)
 }
 
 typedef struct shadowlinkerparms_s {
-    LineDef* lineDef;
+    LineDef *lineDef;
     byte side;
 } shadowlinkerparms_t;
 
@@ -180,20 +177,20 @@ typedef struct shadowlinkerparms_s {
  * If the shadow polygon (parm) contacts the BspLeaf, link the poly
  * to the BspLeaf's shadow list.
  */
-int RIT_ShadowBspLeafLinker(BspLeaf* bspLeaf, void* parm)
+int RIT_ShadowBspLeafLinker(BspLeaf *bspLeaf, void *parm)
 {
-    shadowlinkerparms_t* data = (shadowlinkerparms_t*) parm;
+    shadowlinkerparms_t *data = (shadowlinkerparms_t *) parm;
     linkShadowLineDefToSSec(data->lineDef, data->side, bspLeaf);
     return false; // Continue iteration.
 }
 
-boolean Rend_RadioIsShadowingLineDef(LineDef* line)
+boolean Rend_RadioIsShadowingLineDef(LineDef *line)
 {
     if(line)
     {
         if(!LINE_SELFREF(line) && !(line->inFlags & LF_POLYOBJ) &&
-           !(line->vo[0]->LO_next->lineDef == line ||
-             line->vo[1]->LO_next->lineDef == line))
+           !(&line->vo[0]->next().lineDef() == line ||
+             &line->vo[1]->next().lineDef() == line))
         {
             return true;
         }
@@ -202,13 +199,13 @@ boolean Rend_RadioIsShadowingLineDef(LineDef* line)
     return false;
 }
 
-void Rend_RadioInitForMap(void)
+void Rend_RadioInitForMap()
 {
     uint startTime = Timer_RealMilliseconds();
 
     shadowlinkerparms_t data;
-    Vertex* vtx0, *vtx1;
-    lineowner_t* vo0, *vo1;
+    Vertex *vtx0, *vtx1;
+    LineOwner *vo0, *vo1;
     AABoxd bounds;
     vec2d_t point;
     uint i, j;
@@ -234,7 +231,7 @@ void Rend_RadioInitForMap(void)
 
     for(i = 0; i < NUM_LINEDEFS; ++i)
     {
-        LineDef* line = LINE_PTR(i);
+        LineDef *line = LINE_PTR(i);
         if(!Rend_RadioIsShadowingLineDef(line)) continue;
 
         for(j = 0; j < 2; ++j)
@@ -243,20 +240,20 @@ void Rend_RadioInitForMap(void)
 
             vtx0 = line->L_v(j);
             vtx1 = line->L_v(j^1);
-            vo0 = line->L_vo(j)->LO_next;
-            vo1 = line->L_vo(j^1)->LO_prev;
+            vo0 = &line->L_vo(j)->next();
+            vo1 = &line->L_vo(j^1)->prev();
 
             // Use the extended points, they are wider than inoffsets.
-            V2d_Copy(point, vtx0->origin);
+            V2d_Copy(point, vtx0->origin());
             V2d_InitBox(bounds.arvec2, point);
 
-            V2d_Sum(point, point, vo0->shadowOffsets.extended);
+            V2d_Sum(point, point, vo0->extendedShadowOffset());
             V2d_AddToBox(bounds.arvec2, point);
 
-            V2d_Copy(point, vtx1->origin);
+            V2d_Copy(point, vtx1->origin());
             V2d_AddToBox(bounds.arvec2, point);
 
-            V2d_Sum(point, point, vo1->shadowOffsets.extended);
+            V2d_Sum(point, point, vo1->extendedShadowOffset());
             V2d_AddToBox(bounds.arvec2, point);
 
             data.lineDef = line;
