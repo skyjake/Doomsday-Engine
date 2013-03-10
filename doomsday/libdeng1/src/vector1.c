@@ -85,13 +85,13 @@ void V2f_SetFixed(pvec2f_t vec, fixed_t x, fixed_t y)
     vec[VY] = FIX2FLT(y);
 }
 
-float V2f_Length(float const vec[])
+float V2f_Length(const_pvec2f_t vec)
 {
     if(vec[VX] == 0 && vec[VY] == 0) return 0;
     return (float) sqrt(vec[VX] * vec[VX] + vec[VY] * vec[VY]);
 }
 
-float V2f_Distance(pvec2f_t const a, pvec2f_t const b)
+float V2f_Distance(const_pvec2f_t a, const_pvec2f_t b)
 {
     vec2f_t vec;
     V2f_Subtract(vec, b, a);
@@ -151,12 +151,12 @@ void V2f_Subtract(pvec2f_t dest, const_pvec2f_t src1, const_pvec2f_t src2)
     dest[VY] = src1[VY] - src2[VY];
 }
 
-float V2f_DotProduct(pvec2f_t const a, pvec2f_t const b)
+float V2f_DotProduct(const_pvec2f_t a, const_pvec2f_t b)
 {
     return a[VX] * b[VX] + a[VY] * b[VY];
 }
 
-float V2f_ScalarProject(pvec2f_t const a, pvec2f_t const b)
+float V2f_ScalarProject(const_pvec2f_t a, const_pvec2f_t b)
 {
     float dot, len = V2f_Length(b);
     if(len == 0) return 0;
@@ -165,7 +165,7 @@ float V2f_ScalarProject(pvec2f_t const a, pvec2f_t const b)
     return dot / len;
 }
 
-float V2f_Project(pvec2f_t dest, pvec2f_t const a, pvec2f_t const b)
+float V2f_Project(pvec2f_t dest, const_pvec2f_t a, const_pvec2f_t b)
 {
     float div = V2f_DotProduct(b, b);
     if(div == 0)
@@ -179,7 +179,7 @@ float V2f_Project(pvec2f_t dest, pvec2f_t const a, pvec2f_t const b)
     return div;
 }
 
-boolean V2f_IsParallel(pvec2f_t const a, pvec2f_t const b)
+boolean V2f_IsParallel(const_pvec2f_t a, const_pvec2f_t b)
 {
 #define EPSILON .9999f
 
@@ -198,12 +198,12 @@ boolean V2f_IsParallel(pvec2f_t const a, pvec2f_t const b)
 #undef EPSILON
 }
 
-boolean V2f_IsZero(pvec2f_t const vec)
+boolean V2f_IsZero(const_pvec2f_t vec)
 {
     return vec[VX] == 0 && vec[VY] == 0;
 }
 
-float V2f_PointUnitLineDistance(float const point[], float const linePoint[], float const lineDirection[])
+float V2f_PointUnitLineDistance(const_pvec2f_t point, const_pvec2f_t linePoint, const_pvec2f_t lineDirection)
 {
     return (float) fabs(((linePoint[VY] - point[VY]) * (lineDirection[VX] - linePoint[VX]) -
                          (linePoint[VX] - point[VX]) * (lineDirection[VY] - linePoint[VY])));
@@ -250,8 +250,8 @@ float V2f_Intersection(const_pvec2f_t p1, const_pvec2f_t delta1, const_pvec2f_t 
     return r;
 }
 
-float V2f_Intercept(pvec2f_t const a, pvec2f_t const b, pvec2f_t const c,
-    pvec2f_t const d, pvec2f_t point)
+float V2f_Intercept(const_pvec2f_t a, const_pvec2f_t b, const_pvec2f_t c,
+    const_pvec2f_t d, pvec2f_t point)
 {
     vec2f_t ab, cd;
 
@@ -263,8 +263,8 @@ float V2f_Intercept(pvec2f_t const a, pvec2f_t const b, pvec2f_t const c,
     return V2f_Intersection(a, ab, c, cd, point);
 }
 
-boolean V2f_Intercept2(pvec2f_t const a, pvec2f_t const b, pvec2f_t const c,
-    pvec2f_t const d, pvec2f_t point, float* abFrac, float* cdFrac)
+boolean V2f_Intercept2(const_pvec2f_t a, const_pvec2f_t b, const_pvec2f_t c,
+    const_pvec2f_t d, pvec2f_t point, float* abFrac, float* cdFrac)
 {
     float ab, cd;
 
@@ -277,7 +277,7 @@ boolean V2f_Intercept2(pvec2f_t const a, pvec2f_t const b, pvec2f_t const c,
     return (ab >= 0 && ab <= 1 && cd >= 0 && cd <= 1);
 }
 
-void V2f_Lerp(pvec2f_t dest, pvec2f_t const a, pvec2f_t const b, float c)
+void V2f_Lerp(pvec2f_t dest, const_pvec2f_t a, const_pvec2f_t b, float c)
 {
     uint i;
     for(i = 0; i < 2; ++i)
@@ -286,13 +286,13 @@ void V2f_Lerp(pvec2f_t dest, pvec2f_t const a, pvec2f_t const b, float c)
     }
 }
 
-void V2f_InitBox(arvec2f_t box, pvec2f_t const point)
+void V2f_InitBox(arvec2f_t box, const_pvec2f_t point)
 {
     V2f_Copy(box[0], point);
     V2f_Copy(box[1], point);
 }
 
-void V2f_AddToBox(arvec2f_t box, pvec2f_t const point)
+void V2f_AddToBox(arvec2f_t box, const_pvec2f_t point)
 {
     if(point[VX] < box[0][VX])
         box[0][VX] = point[VX];
@@ -346,13 +346,13 @@ void V2d_SetFixed(pvec2d_t vec, fixed_t x, fixed_t y)
     vec[VY] = FIX2FLT(y);
 }
 
-double V2d_Length(pvec2d_t const vec)
+double V2d_Length(const_pvec2d_t vec)
 {
     if(vec[VX] == 0 && vec[VY] == 0) return 0;
     return sqrt(vec[VX] * vec[VX] + vec[VY] * vec[VY]);
 }
 
-double V2d_Distance(pvec2d_t const a, pvec2d_t const b)
+double V2d_Distance(const_pvec2d_t a, const_pvec2d_t b)
 {
     vec2d_t vec;
     V2d_Subtract(vec, b, a);
@@ -410,8 +410,8 @@ void V2d_Subtract(pvec2d_t dest, const_pvec2d_t src1, const_pvec2d_t src2)
     dest[VY] = src1[VY] - src2[VY];
 }
 
-double V2d_PointLineDistance(double const point[], double const linePoint[],
-    double const lineDirection[], double* offset)
+double V2d_PointLineDistance(const_pvec2d_t point, const_pvec2d_t linePoint,
+    const_pvec2d_t lineDirection, double *offset)
 {
     vec2d_t delta;
     double len;
@@ -434,24 +434,24 @@ double V2d_PointLineDistance(double const point[], double const linePoint[],
             (linePoint[VX] - point[VX]) * (lineDirection[VY] - linePoint[VY])) / len;
 }
 
-double V2d_PointLineParaDistance(double const point[], double const lineDirection[],
+double V2d_PointLineParaDistance(const_pvec2d_t point, const_pvec2d_t lineDirection,
     double linePara, double lineLength)
 {
     return (point[VX] * lineDirection[VX] + point[VY] * lineDirection[VY] + linePara) / lineLength;
 }
 
-double V2d_PointLinePerpDistance(double const point[], double const lineDirection[],
+double V2d_PointLinePerpDistance(const_pvec2d_t point, const_pvec2d_t lineDirection,
     double linePerp, double lineLength)
 {
     return (point[VX] * lineDirection[VY] - point[VY] * lineDirection[VX] + linePerp) / lineLength;
 }
 
-double V2d_PointOnLineSide(double const point[], double const lineOrigin[], double const lineDirection[])
+double V2d_PointOnLineSide(const_pvec2d_t point, const_pvec2d_t lineOrigin, const_pvec2d_t lineDirection)
 {
     return (lineOrigin[VY] - point[VY]) * lineDirection[VX] - (lineOrigin[VX] - point[VX]) * lineDirection[VY];
 }
 
-double V2d_PointOnLineSide2(double const point[], double const lineDirection[],
+double V2d_PointOnLineSide2(const_pvec2d_t point, const_pvec2d_t lineDirection,
     double linePerp, double lineLength, double epsilon)
 {
     double perp = V2d_PointLinePerpDistance(point, lineDirection, linePerp, lineLength);
@@ -459,12 +459,12 @@ double V2d_PointOnLineSide2(double const point[], double const lineDirection[],
     return perp;
 }
 
-double V2d_DotProduct(double const a[], double const b[2])
+double V2d_DotProduct(const_pvec2d_t a, const_pvec2d_t b)
 {
     return a[VX] * b[VX] + a[VY] * b[VY];
 }
 
-double V2d_ScalarProject(pvec2d_t const a, pvec2d_t const b)
+double V2d_ScalarProject(const_pvec2d_t a, const_pvec2d_t b)
 {
     double dot, len = V2d_Length(b);
     if(len == 0) return 0;
@@ -473,7 +473,7 @@ double V2d_ScalarProject(pvec2d_t const a, pvec2d_t const b)
     return dot / len;
 }
 
-double V2d_Project(double dest[], double const a[], double const b[])
+double V2d_Project(pvec2d_t dest, const_pvec2d_t a, const_pvec2d_t b)
 {
     double div = V2d_DotProduct(b, b);
     if(div == 0)
@@ -494,8 +494,8 @@ double V2d_Project(double dest[], double const a[], double const b[])
     return div;
 }
 
-double V2d_ProjectOnLine(double dest[], double const point[],
-    double const lineOrigin[], double const lineDirection[])
+double V2d_ProjectOnLine(pvec2d_t dest, const_pvec2d_t point,
+    const_pvec2d_t lineOrigin, const_pvec2d_t lineDirection)
 {
     double div = V2d_DotProduct(lineDirection, lineDirection);
     double pointVec[2];
@@ -521,7 +521,7 @@ double V2d_ProjectOnLine(double dest[], double const point[],
     return div;
 }
 
-boolean V2d_IsParallel(pvec2d_t const a, pvec2d_t const b)
+boolean V2d_IsParallel(const_pvec2d_t a, const_pvec2d_t b)
 {
 #define EPSILON .99999999
 
@@ -540,13 +540,13 @@ boolean V2d_IsParallel(pvec2d_t const a, pvec2d_t const b)
 #undef EPSILON
 }
 
-boolean V2d_IsZero(pvec2d_t const vec)
+boolean V2d_IsZero(const_pvec2d_t vec)
 {
     return vec[VX] == 0 && vec[VY] == 0;
 }
 
-double V2d_Intersection(double const linePointA[], double const lineDirectionA[],
-    double const linePointB[], double const lineDirectionB[], double point[])
+double V2d_Intersection(const_pvec2d_t linePointA, const_pvec2d_t lineDirectionA,
+    const_pvec2d_t linePointB, const_pvec2d_t lineDirectionB, pvec2d_t point)
 {
     /*
      *     (YA-YC)(XD-XC)-(XA-XC)(YD-YC)
@@ -585,8 +585,8 @@ double V2d_Intersection(double const linePointA[], double const lineDirectionA[]
     return r;
 }
 
-double V2d_Intercept(pvec2d_t const a, pvec2d_t const b, pvec2d_t const c,
-    pvec2d_t const d, pvec2d_t point)
+double V2d_Intercept(const_pvec2d_t a, const_pvec2d_t b, const_pvec2d_t c,
+    const_pvec2d_t d, pvec2d_t point)
 {
     vec2d_t ab, cd;
 
@@ -598,8 +598,8 @@ double V2d_Intercept(pvec2d_t const a, pvec2d_t const b, pvec2d_t const c,
     return V2d_Intersection(a, ab, c, cd, point);
 }
 
-boolean V2d_Intercept2(pvec2d_t const a, pvec2d_t const b, pvec2d_t const c,
-    pvec2d_t const d, pvec2d_t point, double* abFrac, double* cdFrac)
+boolean V2d_Intercept2(const_pvec2d_t a, const_pvec2d_t b, const_pvec2d_t c,
+    const_pvec2d_t d, pvec2d_t point, double* abFrac, double* cdFrac)
 {
     double ab, cd;
 
@@ -612,7 +612,7 @@ boolean V2d_Intercept2(pvec2d_t const a, pvec2d_t const b, pvec2d_t const c,
     return (ab >= 0 && ab <= 1 && cd >= 0 && cd <= 1);
 }
 
-void V2d_Lerp(pvec2d_t dest, pvec2d_t const a, pvec2d_t const b, double c)
+void V2d_Lerp(pvec2d_t dest, const_pvec2d_t a, const_pvec2d_t b, double c)
 {
     uint i;
     for(i = 0; i < 2; ++i)
@@ -621,13 +621,13 @@ void V2d_Lerp(pvec2d_t dest, pvec2d_t const a, pvec2d_t const b, double c)
     }
 }
 
-void V2d_InitBox(arvec2d_t box, pvec2d_t const point)
+void V2d_InitBox(arvec2d_t box, const_pvec2d_t point)
 {
     V2d_Copy(box[0], point);
     V2d_Copy(box[1], point);
 }
 
-void V2d_AddToBox(arvec2d_t box, pvec2d_t const point)
+void V2d_AddToBox(arvec2d_t box, const_pvec2d_t point)
 {
     if(point[VX] < box[0][VX])
         box[0][VX] = point[VX];
@@ -675,13 +675,13 @@ void V3f_SetFixed(pvec3f_t vec, fixed_t x, fixed_t y, fixed_t z)
     vec[VZ] = FIX2FLT(z);
 }
 
-float V3f_Length(pvec3f_t const vec)
+float V3f_Length(const_pvec3f_t vec)
 {
     if(vec[VX] == 0 && vec[VY] == 0 && vec[VZ] == 0) return 0;
     return (float) sqrt(vec[VX] * vec[VX] + vec[VY] * vec[VY] + vec[VZ] * vec[VZ]);
 }
 
-float V3f_Distance(pvec3f_t const a, pvec3f_t const b)
+float V3f_Distance(const_pvec3f_t a, const_pvec3f_t b)
 {
     vec3f_t vec;
     V3f_Subtract(vec, b, a);
@@ -753,8 +753,8 @@ void V3f_CrossProductd(pvec3f_t dest, const_pvec3d_t src1d, const_pvec3d_t src2d
     V3f_CrossProduct(dest, src1, src2);
 }
 
-void V3f_PointCrossProduct(pvec3f_t dest, pvec3f_t const v1, pvec3f_t const v2,
-    pvec3f_t const v3)
+void V3f_PointCrossProduct(pvec3f_t dest, const_pvec3f_t v1, const_pvec3f_t v2,
+    const_pvec3f_t v3)
 {
     vec3f_t a, b;
     V3f_Subtract(a, v2, v1);
@@ -778,7 +778,7 @@ float V3f_ClosestPointOnPlane(pvec3f_t dest, const_pvec3f_t planeNormal,
     return distance;
 }
 
-int V3f_MajorAxis(pvec3f_t const vec)
+int V3f_MajorAxis(const_pvec3f_t vec)
 {
     vec3f_t fn;
     int axis;
@@ -794,12 +794,12 @@ int V3f_MajorAxis(pvec3f_t const vec)
     return axis;
 }
 
-boolean V3f_IsZero(float const vec[3])
+boolean V3f_IsZero(const_pvec3f_t vec)
 {
     return vec[VX] == 0 && vec[VY] == 0 && vec[VZ] == 0;
 }
 
-void V3f_Lerp(pvec3f_t dest, pvec3f_t const a, pvec3f_t const b, float c)
+void V3f_Lerp(pvec3f_t dest, const_pvec3f_t a, const_pvec3f_t b, float c)
 {
     uint i;
     for(i = 0; i < 3; ++i)
@@ -878,13 +878,13 @@ void V3d_SetFixed(pvec3d_t vec, fixed_t x, fixed_t y, fixed_t z)
     vec[VZ] = FIX2FLT(z);
 }
 
-double V3d_Length(pvec3d_t const vec)
+double V3d_Length(const_pvec3d_t vec)
 {
     if(vec[VX] == 0 && vec[VY] == 0 && vec[VZ] == 0) return 0;
     return sqrt(vec[VX] * vec[VX] + vec[VY] * vec[VY] + vec[VZ] * vec[VZ]);
 }
 
-double V3d_Distance(double const a[], double const b[])
+double V3d_Distance(const_pvec3d_t a, const_pvec3d_t b)
 {
     vec3d_t vec;
     V3d_Subtract(vec, b, a);
@@ -955,8 +955,8 @@ void V3d_CrossProduct(pvec3d_t dest, const_pvec3d_t src1, const_pvec3d_t src2)
     dest[VZ] = src1[VX] * src2[VY] - src1[VY] * src2[VX];
 }
 
-void V3d_PointCrossProduct(pvec3d_t dest, pvec3d_t const v1, pvec3d_t const v2,
-    pvec3d_t const v3)
+void V3d_PointCrossProduct(pvec3d_t dest, const_pvec3d_t v1, const_pvec3d_t v2,
+    const_pvec3d_t v3)
 {
     vec3d_t a, b;
     V3d_Subtract(a, v2, v1);
@@ -988,7 +988,7 @@ double V3d_ClosestPointOnPlanef(pvec3d_t dest, const_pvec3f_t planeNormalf,
     return V3d_ClosestPointOnPlane(dest, planeNormal, planePoint, arbPoint);
 }
 
-int V3d_MajorAxis(pvec3d_t const vec)
+int V3d_MajorAxis(const_pvec3d_t vec)
 {
     vec3d_t fn;
     int axis;
@@ -1004,12 +1004,12 @@ int V3d_MajorAxis(pvec3d_t const vec)
     return axis;
 }
 
-boolean V3d_IsZero(pvec3d_t const vec)
+boolean V3d_IsZero(const_pvec3d_t vec)
 {
     return vec[VX] == 0 && vec[VY] == 0 && vec[VZ] == 0;
 }
 
-void V3d_Lerp(pvec3d_t dest, pvec3d_t const a, pvec3d_t const b, double c)
+void V3d_Lerp(pvec3d_t dest, const_pvec3d_t a, const_pvec3d_t b, double c)
 {
     uint i;
     for(i = 0; i < 3; ++i)
@@ -1090,14 +1090,14 @@ void V4f_SetFixed(pvec4f_t vec, fixed_t x, fixed_t y, fixed_t z, fixed_t w)
     vec[3] = FIX2FLT(w);
 }
 
-float V4f_Length(pvec4f_t const vec)
+float V4f_Length(const_pvec4f_t vec)
 {
     if(vec[0] == 0 && vec[1] == 0 && vec[2] == 0 && vec[3] == 0) return 0;
     return (float) sqrt(vec[0] * vec[0] + vec[1] * vec[1] +
                         vec[2] * vec[2] + vec[3] * vec[3]);
 }
 
-float V4f_Distance(pvec4f_t const a, pvec4f_t const b)
+float V4f_Distance(const_pvec4f_t a, const_pvec4f_t b)
 {
     vec4f_t vec;
     V4f_Subtract(vec, b, a);
@@ -1149,12 +1149,12 @@ void V4f_Subtract(pvec4f_t dest, const_pvec4f_t src1, const_pvec4f_t src2)
     dest[3] = src1[3] - src2[3];
 }
 
-boolean V4f_IsZero(pvec4f_t const vec)
+boolean V4f_IsZero(const_pvec4f_t vec)
 {
     return vec[0] == 0 && vec[1] == 0 && vec[2] == 0 && vec[3] == 0;
 }
 
-void V4f_Lerp(pvec4f_t dest, pvec4f_t const a, pvec4f_t const b, float c)
+void V4f_Lerp(pvec4f_t dest, const_pvec4f_t a, const_pvec4f_t b, float c)
 {
     uint i;
     for(i = 0; i < 4; ++i)
@@ -1179,14 +1179,14 @@ void V4d_SetFixed(pvec4d_t vec, fixed_t x, fixed_t y, fixed_t z, fixed_t w)
     vec[3] = FIX2FLT(w);
 }
 
-double V4d_Length(pvec4d_t const vec)
+double V4d_Length(const_pvec4d_t vec)
 {
     if(vec[0] == 0 && vec[1] == 0 && vec[2] == 0 && vec[3] == 0) return 0;
     return sqrt(vec[0] * vec[0] + vec[1] * vec[1] +
                 vec[2] * vec[2] + vec[3] * vec[3]);
 }
 
-double V4d_Distance(pvec4d_t const a, pvec4d_t const b)
+double V4d_Distance(const_pvec4d_t a, const_pvec4d_t b)
 {
     vec4d_t vec;
     V4d_Subtract(vec, b, a);
@@ -1238,12 +1238,12 @@ void V4d_Subtract(pvec4d_t dest, const_pvec4d_t src1, const_pvec4d_t src2)
     dest[3] = src1[3] - src2[3];
 }
 
-boolean V4d_IsZero(pvec4d_t const vec)
+boolean V4d_IsZero(const_pvec4d_t vec)
 {
     return vec[0] == 0 && vec[1] == 0 && vec[2] == 0 && vec[3] == 0;
 }
 
-void V4d_Lerp(pvec4d_t dest, pvec4d_t const a, pvec4d_t const b, double c)
+void V4d_Lerp(pvec4d_t dest, const_pvec4d_t a, const_pvec4d_t b, double c)
 {
     uint i;
     for(i = 0; i < 4; ++i)
