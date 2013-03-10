@@ -49,6 +49,21 @@ typedef struct walldivs_s {
 uint WallDivs_Size(const walldivs_t* wallDivs);
 walldivnode_t* WallDivs_First(walldivs_t* wallDivs);
 walldivnode_t* WallDivs_Last(walldivs_t* wallDivs);
+walldivs_t *WallDivs_Append(walldivs_t *wallDivs, coord_t height);
+
+/**
+ * Ensure the divisions are sorted (in ascending Z order).
+ */
+void WallDivs_AssertSorted(walldivs_t *wallDivs);
+
+/**
+ * Ensure the divisions do not exceed the specified range.
+ */
+void WallDivs_AssertInRange(walldivs_t *wallDivs, coord_t low, coord_t hi);
+
+#ifdef DENG_DEBUG
+void WallDivs_DebugPrint(walldivs_t *wallDivs);
+#endif
 
 #ifdef __cplusplus
 } // extern "C"

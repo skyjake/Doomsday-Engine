@@ -2029,12 +2029,12 @@ struct Partitioner::Instance
     /**
      * Create a new half-edge.
      */
-    HEdge* newHEdge(Vertex* start, Vertex* end, Sector* sec, LineDef* lineDef = 0,
-                    LineDef* sourceLineDef = 0)
+    HEdge *newHEdge(Vertex *start, Vertex *end, Sector *sec, LineDef *lineDef = 0,
+                    LineDef *sourceLineDef = 0)
     {
         DENG2_ASSERT(start && end && sec);
 
-        HEdge* hedge = HEdge_New();
+        HEdge *hedge = new HEdge();
         hedge->HE_v1 = start;
         hedge->HE_v2 = end;
         hedge->sector = sec;
@@ -2042,9 +2042,9 @@ struct Partitioner::Instance
 
         // There is now one more HEdge.
         numHEdges += 1;
-        hedgeInfos.insert(std::pair<HEdge*, HEdgeInfo>(hedge, HEdgeInfo()));
+        hedgeInfos.insert(std::pair<HEdge *, HEdgeInfo>(hedge, HEdgeInfo()));
 
-        HEdgeInfo& info = hedgeInfo(*hedge);
+        HEdgeInfo &info = hedgeInfo(*hedge);
         info.lineDef = lineDef;
         info.sourceLineDef = sourceLineDef;
         info.initFromHEdge(*hedge);
@@ -2055,31 +2055,31 @@ struct Partitioner::Instance
     /**
      * Create a clone of an existing half-edge.
      */
-    HEdge* cloneHEdge(const HEdge& other)
+    HEdge *cloneHEdge(HEdge const &other)
     {
-        HEdge* hedge = HEdge_NewCopy(&other);
+        HEdge *hedge = new HEdge(other);
 
         // There is now one more HEdge.
         numHEdges += 1;
-        hedgeInfos.insert(std::pair<HEdge*, HEdgeInfo>(hedge, HEdgeInfo()));
+        hedgeInfos.insert(std::pair<HEdge *, HEdgeInfo>(hedge, HEdgeInfo()));
 
         memcpy(&hedgeInfo(*hedge), &hedgeInfo(other), sizeof(HEdgeInfo));
 
         return hedge;
     }
 
-    HEdgeList collectHEdges(SuperBlock& partList)
+    HEdgeList collectHEdges(SuperBlock &partList)
     {
         HEdgeList hedges;
 
         // Iterative pre-order traversal of SuperBlock.
-        SuperBlock* cur = &partList;
-        SuperBlock* prev = 0;
+        SuperBlock *cur = &partList;
+        SuperBlock *prev = 0;
         while(cur)
         {
             while(cur)
             {
-                HEdge* hedge;
+                HEdge *hedge;
                 while((hedge = cur->pop()))
                 {
                     // Disassociate the half-edge from the blockmap.
@@ -2123,10 +2123,10 @@ struct Partitioner::Instance
      * vertex is open. Returns a sector reference if it's open, or NULL if closed
      * (void space or directly along a linedef).
      */
-    Sector* openSectorAtAngle(Vertex* vtx, coord_t angle)
+    Sector *openSectorAtAngle(Vertex *vtx, coord_t angle)
     {
         DENG2_ASSERT(vtx);
-        const VertexInfo::HEdgeTips& hedgeTips = vertexInfo(*vtx).hedgeTips();
+        VertexInfo::HEdgeTips const &hedgeTips = vertexInfo(*vtx).hedgeTips();
 
         if(hedgeTips.empty())
         {
@@ -2138,7 +2138,7 @@ struct Partitioner::Instance
         // the given direction (which is relative to the vtxex).
         DENG2_FOR_EACH_CONST(VertexInfo::HEdgeTips, it, hedgeTips)
         {
-            const HEdgeTip& tip = *it;
+            HEdgeTip const &tip = *it;
             coord_t diff = fabs(tip.angle() - angle);
             if(diff < ANG_EPSILON || diff > (360.0 - ANG_EPSILON))
             {
@@ -2150,7 +2150,7 @@ struct Partitioner::Instance
         // we're interested in. Therefore we'll be on the FRONT side of that tip edge.
         DENG2_FOR_EACH_CONST(VertexInfo::HEdgeTips, it, hedgeTips)
         {
-            const HEdgeTip& tip = *it;
+            HEdgeTip const &tip = *it;
             if(angle + ANG_EPSILON < tip.angle())
             {
                 // Found it.
@@ -2160,7 +2160,7 @@ struct Partitioner::Instance
 
         // Not found. The open sector will therefore be on the BACK of the tip at the
         // greatest angle.
-        const HEdgeTip& tip = hedgeTips.back();
+        HEdgeTip const &tip = hedgeTips.back();
         return (tip.hasBack()? tip.back().sector : NULL);
     }
 

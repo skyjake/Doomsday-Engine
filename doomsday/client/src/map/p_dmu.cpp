@@ -1022,7 +1022,7 @@ static int setProperty(void *ptr, void *context)
         break;
 
     case DMU_HEDGE:
-        HEdge_SetProperty(elem->castTo<HEdge>(), args);
+        elem->castTo<HEdge>()->setProperty(*args);
         break;
 
     case DMU_LINEDEF:
@@ -1504,7 +1504,7 @@ static int getProperty(void *ptr, void *context)
         break;
 
     case DMU_HEDGE:
-        HEdge_GetProperty(elem->castTo<HEdge>(), args);
+        elem->castTo<HEdge>()->property(*args);
         break;
 
     case DMU_LINEDEF:

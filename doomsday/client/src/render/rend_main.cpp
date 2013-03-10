@@ -1758,12 +1758,12 @@ static void reportLineDefDrawn(LineDef* line)
  * @param hedge  HEdge to draw wall surfaces for.
  * @param sections  @ref sideSectionFlags
  */
-static boolean Rend_RenderHEdge(HEdge* hedge, byte sections)
+static boolean Rend_RenderHEdge(HEdge *hedge, byte sections)
 {
-    BspLeaf* leaf = currentBspLeaf;
-    Sector* frontSec = leaf->sector;
-    Sector* backSec  = HEDGE_BACK_SECTOR(hedge);
-    lineside_t* front = HEDGE_SIDE(hedge);
+    BspLeaf *leaf = currentBspLeaf;
+    Sector *frontSec = leaf->sector;
+    Sector *backSec  = HEDGE_BACK_SECTOR(hedge);
+    lineside_t *front = HEDGE_SIDE(hedge);
 
     if(!front->sideDef) return false;
 
@@ -1774,8 +1774,8 @@ static boolean Rend_RenderHEdge(HEdge* hedge, byte sections)
         float matOffset[2];
         boolean opaque = false;
 
-        if(HEdge_PrepareWallDivs(hedge, SS_MIDDLE, frontSec, backSec,
-                                 &leftWallDivs, &rightWallDivs, matOffset))
+        if(hedge->prepareWallDivs(SS_MIDDLE, frontSec, backSec,
+                                  &leftWallDivs, &rightWallDivs, matOffset))
         {
             Rend_RadioUpdateLinedef(hedge->lineDef, hedge->side);
             opaque = rendHEdgeSection(hedge, SS_MIDDLE, RHF_ADD_DYNLIGHTS|RHF_ADD_DYNSHADOWS|RHF_ADD_RADIO,
@@ -1793,12 +1793,12 @@ static boolean Rend_RenderHEdge(HEdge* hedge, byte sections)
 /**
  * Render wall sections for a HEdge belonging to a two-sided LineDef.
  */
-static boolean Rend_RenderHEdgeTwosided(HEdge* hedge, byte sections)
+static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
 {
-    BspLeaf* leaf = currentBspLeaf;
-    LineDef* line = hedge->lineDef;
-    Plane* ffloor, *fceil, *bfloor, *bceil;
-    lineside_t* front, *back;
+    BspLeaf *leaf = currentBspLeaf;
+    LineDef *line = hedge->lineDef;
+    Plane *ffloor, *fceil, *bfloor, *bceil;
+    lineside_t *front, *back;
     int solidSeg = false;
 
     if(!line) return false;
@@ -1831,8 +1831,8 @@ static boolean Rend_RenderHEdgeTwosided(HEdge* hedge, byte sections)
         walldivs_t leftWallDivs, rightWallDivs;
         float matOffset[2];
 
-        if(HEdge_PrepareWallDivs(hedge, SS_MIDDLE, leaf->sector, HEDGE_BACK_SECTOR(hedge),
-                                 &leftWallDivs, &rightWallDivs, matOffset))
+        if(hedge->prepareWallDivs(SS_MIDDLE, leaf->sector, HEDGE_BACK_SECTOR(hedge),
+                                  &leftWallDivs, &rightWallDivs, matOffset))
         {
             int rhFlags = RHF_ADD_DYNLIGHTS|RHF_ADD_DYNSHADOWS|RHF_ADD_RADIO;
 
@@ -1846,7 +1846,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge* hedge, byte sections)
                                         &leftWallDivs, &rightWallDivs, matOffset);
             if(solidSeg)
             {
-                Surface* suf = &front->sideDef->SW_middlesurface;
+                Surface *suf = &front->sideDef->SW_middlesurface;
                 coord_t xbottom, xtop;
 
                 if(LINE_SELFREF(line))
@@ -1877,8 +1877,8 @@ static boolean Rend_RenderHEdgeTwosided(HEdge* hedge, byte sections)
         walldivs_t leftWallDivs, rightWallDivs;
         float matOffset[2];
 
-        if(HEdge_PrepareWallDivs(hedge, SS_TOP, leaf->sector, HEDGE_BACK_SECTOR(hedge),
-                                 &leftWallDivs, &rightWallDivs, matOffset))
+        if(hedge->prepareWallDivs(SS_TOP, leaf->sector, HEDGE_BACK_SECTOR(hedge),
+                                  &leftWallDivs, &rightWallDivs, matOffset))
         {
             Rend_RadioUpdateLinedef(hedge->lineDef, hedge->side);
             rendHEdgeSection(hedge, SS_TOP, RHF_ADD_DYNLIGHTS|RHF_ADD_DYNSHADOWS|RHF_ADD_RADIO,
@@ -1893,8 +1893,8 @@ static boolean Rend_RenderHEdgeTwosided(HEdge* hedge, byte sections)
         walldivs_t leftWallDivs, rightWallDivs;
         float matOffset[2];
 
-        if(HEdge_PrepareWallDivs(hedge, SS_BOTTOM, leaf->sector, HEDGE_BACK_SECTOR(hedge),
-                                 &leftWallDivs, &rightWallDivs, matOffset))
+        if(hedge->prepareWallDivs(SS_BOTTOM, leaf->sector, HEDGE_BACK_SECTOR(hedge),
+                                  &leftWallDivs, &rightWallDivs, matOffset))
         {
             Rend_RadioUpdateLinedef(hedge->lineDef, hedge->side);
             rendHEdgeSection(hedge, SS_BOTTOM, RHF_ADD_DYNLIGHTS|RHF_ADD_DYNSHADOWS|RHF_ADD_RADIO,

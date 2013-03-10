@@ -338,13 +338,13 @@ static void spreadInBspLeaf(BspLeaf* bspLeaf, void* paramaters)
     } while((hedge = hedge->next) != bspLeaf->hedge);
 }
 
-static void processSeg(HEdge* hedge, void* parameters)
+static void processSeg(HEdge *hedge, void *parameters)
 {
-    contactfinderparams_t* parms = (contactfinderparams_t*) parameters;
+    contactfinderparams_t *parms = (contactfinderparams_t *) parameters;
     DENG2_ASSERT(hedge && parms);
-{
-    BspLeaf* leaf = hedge->bspLeaf;
-    BspLeaf* backLeaf = hedge->twin? hedge->twin->bspLeaf : 0;
+
+    BspLeaf *leaf = hedge->bspLeaf;
+    BspLeaf *backLeaf = hedge->twin? hedge->twin->bspLeaf : 0;
     linkobjtobspleafparams_t loParams;
     coord_t distance;
 
@@ -370,7 +370,7 @@ static void processSeg(HEdge* hedge, void* parameters)
         backLeaf->sector->SP_floorheight >= leaf->sector->SP_ceilheight)) return;
 
     // Too far from the object?
-    distance = HEdge_PointOnSide(hedge, parms->objOrigin) / hedge->length;
+    distance = hedge->pointOnSide(parms->objOrigin) / hedge->length;
     if(fabs(distance) >= parms->objRadius) return;
 
     // Don't spread if the middle material covers the opening.
@@ -378,11 +378,11 @@ static void processSeg(HEdge* hedge, void* parameters)
     {
         // On which side of the line are we? (distance is from hedge to origin).
         byte lineSide = hedge->side ^ (distance < 0);
-        LineDef* line = hedge->lineDef;
-        Sector* frontSec  = lineSide == FRONT? leaf->sector : backLeaf->sector;
-        Sector* backSec   = lineSide == FRONT? backLeaf->sector : leaf->sector;
-        SideDef* frontDef = line->L_sidedef(lineSide);
-        SideDef* backDef  = line->L_sidedef(lineSide^1);
+        LineDef *line = hedge->lineDef;
+        Sector *frontSec  = lineSide == FRONT? leaf->sector : backLeaf->sector;
+        Sector *backSec   = lineSide == FRONT? backLeaf->sector : leaf->sector;
+        SideDef *frontDef = line->L_sidedef(lineSide);
+        SideDef *backDef  = line->L_sidedef(lineSide^1);
 
         if(backSec && !backDef) return; // One-sided window.
 
@@ -399,7 +399,7 @@ static void processSeg(HEdge* hedge, void* parameters)
     RIT_LinkObjToBspLeaf(backLeaf, &loParams);
 
     spreadInBspLeaf(backLeaf, parms);
-}}
+}
 
 /**
  * Create a contact for the objlink in all the BspLeafs the linked obj is

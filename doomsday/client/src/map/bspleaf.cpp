@@ -64,7 +64,7 @@ BspLeaf::~BspLeaf()
         HEdge *he = hedge;
         if(he->next == he)
         {
-            HEdge_Delete(he);
+            delete he;
         }
         else
         {
@@ -77,7 +77,7 @@ BspLeaf::~BspLeaf()
             while(he)
             {
                 HEdge *next = he->next;
-                HEdge_Delete(he);
+                delete he;
                 he = next;
             }
         }

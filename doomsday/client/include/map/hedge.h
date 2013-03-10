@@ -1,9 +1,7 @@
-/**
- * @file hedge.h
- * Map Half-edge. @ingroup map
+/** @file hedge.h Map Geometry Half-Edge.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,16 +21,13 @@
 #ifndef LIBDENG_MAP_HEDGE
 #define LIBDENG_MAP_HEDGE
 
-#ifndef __cplusplus
-#  error "map/hedge.h requires C++"
-#endif
-
 #include "MapElement"
 #include "resource/r_data.h"
 #include "p_dmu.h"
 #include "sector.h"
 #include "render/walldiv.h"
 #include "render/rend_bias.h"
+#include <de/Error>
 
 // Helper macros for accessing hedge data elements.
 #define FRONT 0
@@ -58,84 +53,138 @@
 class Vertex;
 
 /**
- * Half-edge.
+ * Half-Edge.
+ *
+ * @ingroup map
  */
 class HEdge : public de::MapElement
 {
 public:
-    Vertex *v[2]; /// [Start, End] of the segment.
+    /// The referenced property does not exist. @ingroup errors
+    DENG2_ERROR(UnknownPropertyError);
+
+    /// The referenced property is not writeable. @ingroup errors
+    DENG2_ERROR(WritePropertyError);
+
+public: /// @todo Make private:
+    /// [Start, End] of the segment.
+    Vertex *v[2];
+
     HEdge *next;
+
     HEdge *prev;
 
-    // Half-edge on the other side, or NULL if one-sided. This relationship
-    // is always one-to-one -- if one of the half-edges is split, the twin
-    // must also be split.
+    /// Half-edge on the other side, or NULL if one-sided. This relationship
+    /// is always one-to-one -- if one of the half-edges is split, the twin
+    /// must also be split.
     HEdge *twin;
+
     BspLeaf *bspLeaf;
 
     LineDef *lineDef;
+
     Sector *sector;
-    angle_t             angle;
-    byte                side; /// On which side of the LineDef (0=front, 1=back)?
-    coord_t             length; /// Accurate length of the segment (v1 -> v2).
-    coord_t             offset;
-    biassurface_t*      bsuf[3]; /// For each @ref SideDefSection.
-    short               frameFlags;
-    uint                index; /// Unique. Set when saving the BSP.
+
+    angle_t angle;
+
+    /// On which side of the LineDef (0=front, 1=back)?
+    byte side;
+
+    /// Accurate length of the segment (v1 -> v2).
+    coord_t length;
+
+    coord_t offset;
+
+    /// For each @ref SideDefSection.
+    biassurface_t *bsuf[3];
+
+    short frameFlags;
+
+    /// Unique. Set when saving the BSP.
+    uint index;
 
 public:
     HEdge();
     HEdge(HEdge const &other);
     ~HEdge();
+
+    /**
+     * Returns the distance from @a point to the nearest point along the HEdge [0..1].
+     *
+     * @param point  Point to measure the distance to in the map coordinate space.
+     */
+    coord_t pointDistance(coord_t const point[2], coord_t *offset) const;
+
+    /**
+     * Returns the distance from @a point to the nearest point along the HEdge [0..1].
+     *
+     * @param x  X axis point to measure the distance to in the map coordinate space.
+     * @param y  Y axis point to measure the distance to in the map coordinate space.
+     */
+    inline coord_t pointDistance(coord_t x, coord_t y, coord_t *offset) const
+    {
+        coord_t point[2] = { x, y };
+        return pointDistance(point, offset);
+    }
+
+    /**
+     * On which side of the HEdge does the specified @a point lie?
+     *
+     * @param point  Point to test in the map coordinate space.
+     *
+     * @return @c <0 Point is to the left/back of the hedge.
+     *         @c =0 Point lies directly on the hedge.
+     *         @c >0 Point is to the right/front of the hedge.
+     */
+    coord_t pointOnSide(coord_t const point[2]) const;
+
+    /**
+     * On which side of the HEdge does the specified @a point lie?
+     *
+     * @param x  X axis point to test in the map coordinate space.
+     * @param y  Y axis point to test in the map coordinate space.
+     *
+     * @return @c <0 Point is to the left/back of the hedge.
+     *         @c =0 Point lies directly on the hedge.
+     *         @c >0 Point is to the right/front of the hedge.
+     */
+    inline coord_t pointOnSide(coord_t x, coord_t y) const
+    {
+        coord_t point[2] = { x, y };
+        return pointOnSide(point);
+    }
+
+    /**
+     * Prepare wall division data for a section of the HEdge.
+     *
+     * @param section        Section to prepare divisions for.
+     * @param frontSector    Sector to use for the front side.
+     * @param backSector     Sector to use for the back side.
+     * @param leftWallDivs   Division data for the left edge is written here.
+     * @param rightWallDivs  Division data for the right edge is written here.
+     * @param matOffset      Material offset data is written here.
+     *
+     * @return  @c true if divisions were prepared (the specified @a section has a
+     *          non-zero Z axis height).
+     */
+    bool prepareWallDivs(SideDefSection section, Sector *frontSector, Sector *backSector,
+        walldivs_t *leftWallDivs, walldivs_t *rightWallDivs, float matOffset[2]) const;
+
+    /**
+     * Get a property value, selected by DMU_* name.
+     *
+     * @param args  Property arguments.
+     * @return  Always @c 0 (can be used as an iterator).
+     */
+    int property(setargs_t &args) const;
+
+    /**
+     * Update a property value, selected by DMU_* name.
+     *
+     * @param args  Property arguments.
+     * @return  Always @c 0 (can be used as an iterator).
+     */
+    int setProperty(setargs_t const &args);
 };
-
-struct bsphedgeinfo_s;
-
-HEdge* HEdge_New(void);
-
-HEdge* HEdge_NewCopy(const HEdge* other);
-
-void HEdge_Delete(HEdge* hedge);
-
-/**
- * @param offset  Returns the position of the nearest point along the line [0..1].
- */
-coord_t HEdge_PointDistance(HEdge* hedge, coord_t const point[2], coord_t* offset);
-coord_t HEdge_PointXYDistance(HEdge* hedge, coord_t x, coord_t y, coord_t* offset);
-
-/**
- * On which side of this HEdge does the specified point lie?
- *
- * @param hedge     HEdge instance.
- * @param point     Map space point to test.
- *
- * @return @c <0 Point is to the left/back of the hedge.
- *         @c =0 Point lies directly on the hedge.
- *         @c >0 Point is to the right/front of the hedge.
- */
-coord_t HEdge_PointOnSide(const HEdge* hedge, coord_t const point[2]);
-coord_t HEdge_PointXYOnSide(const HEdge* hedge, coord_t x, coord_t y);
-
-boolean HEdge_PrepareWallDivs(HEdge* hedge, SideDefSection section,
-    Sector* frontSector, Sector* backSector,
-    walldivs_t* leftWallDivs, walldivs_t* rightWallDivs, float matOffset[2]);
-
-/**
- * Get a property value, selected by DMU_* name.
- *
- * @param hedge  HEdge instance.
- * @param args  Property arguments.
- * @return  Always @c 0 (can be used as an iterator).
- */
-int HEdge_GetProperty(const HEdge* hedge, setargs_t* args);
-
-/**
- * Update a property value, selected by DMU_* name.
- *
- * @param hedge  HEdge instance.
- * @param args  Property arguments.
- * @return  Always @c 0 (can be used as an iterator).
- */
-int HEdge_SetProperty(HEdge* hedge, const setargs_t* args);
 
 #endif // LIBDENG_MAP_HEDGE
