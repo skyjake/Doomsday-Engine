@@ -1,0 +1,453 @@
+$ License: http://www.gnu.org/licenses/fdl-1.3.txt
+$ Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+
+@macro{TITLE}{Quick Guide to Amethyst}
+@macro{AUTHOR}{Jaakko Keränen}
+@macro{EMAIL}{jaakko.keranen@@iki.fi}
+@require{amestd}
+@begin
+
+@macro{stdlib}{@em{amestd}}
+@macro{ameword}{@cmd{@@}@glue{@cmd{@arg}}}
+@macro{amearg}{@glue{@{}@glue{@arg}@glue{@}}}
+
+@toc
+
+@chapter{Introduction}
+
+@def{Amethyst} is a macro-based text document processor that allows you to
+write documents using a simple, generic syntax and convert them to plain text,
+HTML, rich text, Unix manual page, or Mediawiki source format. It has been
+implemented as a Unix-style command line tool.
+
+This short guide describes the use of Amethyst and the Amethyst Standard
+Library (@stdlib{}). It is for people who wish to write documentation but are
+not interested in the internal workings of the text processor.
+
+@notice{Amethyst is actually a macro-based text filter language and as such
+its behavior can be extended or modified extensively. The output formats
+defined in @stdlib contain no hard-coded functionality: everything has been
+defined using @file{.ame} macros.}
+
+@chapter{Getting started}
+
+@section{Acquiring Amethyst}
+
+Before you grab a copy of the sources you should make sure you have the
+following software installed on your system:
+
+@list/thin{
+    @item Mercurial client.
+    @item Qt libraries.
+    @item qmake and/or Qt Creator.
+}
+
+The Amethyst source code is in a Mercurial repository hosted at SourceForge:
+
+@ind{@url{http://deng.hg.sourceforge.net:8000/hgroot/deng/amethyst}}
+
+@section{Installation}
+
+If you are using Qt Creator:
+
+@list/enum{ 
+    @item Open @file{amethyst.pro} in Qt Creator. 
+    
+    @item Build the project.
+
+    @item Run the @dquote{install} rule defined in the project file. You can
+    do this as a Deploy step in Qt Creator. On a Unix this will install
+    @file{amethyst} and @stdlib into the appropriate directories. On Windows
+    the installation is done to a subdirectory called @file{inst} under the
+    Amethyst source directory. 
+}
+
+@section{Generating documents}
+
+To generate an HTML version of this guide on Unix, run this command in the
+Amethyst @file{doc} directory:
+
+@samp{@pre{# amethyst -dHTML guide.ame > guide.html}}
+
+To generate a plain text version of this guide on Windows, run this command in
+the @file{inst} directory:
+
+@samp{@pre{# amethyst -dTXT -i../lib -oguide.txt ../doc/guide.ame}}
+
+To view a list of the available command line options:
+
+@samp{@pre{# amethyst --help}}
+
+@stdlib defines the following output filters, chosen with a command line
+option.
+
+@table{50 50}{
+    @header{Output filter} @tab @header{Option} @row{single}
+    Plain text @tab @opt{-dTXT} @row
+    HTML @tab @opt{-dHTML} @row
+    Rich text @tab @opt{-dRTF} @row
+    Unix manual page @tab @opt{-dMAN} @row
+    Mediawiki source @tab @opt{-dWIKI}
+}
+
+@chapter{Writing a document}
+
+@section{Basic syntax}
+
+When you write a document with Amethyst, you are giving the text processor two
+types of information: document content and processing instructions. Document
+content is most often written as plain text. The processing instructions are
+defined using Amethyst keywords (e.g., @ameword{section}) and @stdlib macros.
+
+The characters @@, @{ and @} have a special meaning in Amethyst. Every word
+that begins with @@ is treated as an Amethyst keyword or macro call.
+Parameters for keywords and macros are specified in one or more blocks of @{
+@} delimited content. For instance, a document might begin with an
+introduction:
+
+@samp{@pre{@@chapter@{Introduction@}}}
+
+In this case, @dquote{Introduction} is the parameter given to the
+@ameword{chapter} keyword.
+
+If you wish to use the characters @@, @{ or @} for normal document content,
+they need to be escaped by putting another @@ in front.
+
+@samp{@pre{Escaping the @@@@ character.}}
+
+Lines that begin with @cmd{@$} are comments. To begin a longer commented
+section, use @cmd{@$}@glue{@cmd{*}}. The comment section ends at
+@cmd{*}@glue{@cmd{@$}}.
+
+@samp{@pre{$ This is a line of comment.
+$* Begin a longer comment...
+...inside the comment...
+and end here. *$}}
+
+@section{Preamble}
+
+When using @stdlib{} the document needs to have the following preamble:
+
+@list/enum/thin{ 
+    @item Set the title of the document by defining a macro called
+@dquote{TITLE}. 
+    @item Include the @stdlib @file{.ame} definitions.
+    @item Place @ameword{begin} before the document content.
+}
+
+For instance, the source of this document could begin like this:
+
+@samp{@pre{@@macro@{TITLE@}@{Quick Guide to Amethyst@}
+@@require@{amestd@}
+@@begin}}
+
+See the @ref{std_begin}{begin macro} for more information about what
+information is added to the beginning of the document.
+
+@section{Styles}
+
+When writing a document with Amethyst, you should not concern yourself with
+the visual appearance of the final output. Instead, you should focus on the
+structure of the text. While there is a number of text styles defined in
+Amethyst, you should only use them for marking the meaning of selected words
+and sections. For instance, you might @em{emphasize} a word with @ameword{em}
+but you cannot rely on it always appearing as, e.g., an italic typeface in the
+final output.
+
+The following table lists all the available styles.
+
+@table{25 75}{
+    @header{Style}      @tab @header{Meaning} @row{single}
+    @ameword{acro}      @tab Acronym @row
+    @ameword{caption}   @tab Table caption @row
+    @ameword{cmd}       @tab Command @row
+    @ameword{def}       @tab Definition; first use of a term @row
+    @ameword{email}     @tab Email address @row
+    @ameword{em}        @tab Emphasized text @row
+    @ameword{file}      @tab File name or path @row
+    @ameword{header}    @tab Table header @row
+    @ameword{kbd}       @tab Keyboard; @kbd{Ctrl-A} @row
+    @ameword{opt}       @tab Command line option @row
+    @ameword{strong}    @tab Strong typeface @row
+    @ameword{tag}       @tab Verbatim HTML tag; @tag{<i>}italic@tag{</i>} @row
+    @ameword{url}       @tab URL or web link @row
+    @ameword{var}       @tab Variable or identifier
+}
+
+If you would like to mark certain words with a meaning not included in the
+predefined styles, you should define your own macro for it. For instance, in
+this document the @ameword{ameword} macro is used for all keywords and macro
+names. See @ref{writing_macros}{Writing macros} for more information.
+
+@section{Paragraphs}
+
+Whitespace is mostly ignored in Amethyst source files. The exception is that
+one or more empty lines separate paragraphs.
+
+@samp{@pre{First paragraph.
+Still part of the first paragraph.
+    
+Second paragraph.}}
+
+You can use the @ameword{br} keyword to force a line break and @ameword{break}
+to force a paragraph break.
+
+@subsec{Alignment}
+
+By default, text is left-aligned inside a paragraph. You may also use right
+alignment or centered text.
+
+@samp{@pre{@@right@{This paragraph is aligned to the right.@}
+@@center@{This paragraph is centered.@}}}
+ 
+@subsec{Styles}
+
+The @ameword{ind} keyword is used to indent a paragraph:
+
+@samp{@pre{@@ind@{Indented.@}}}
+
+There are three other indented paragraph styles, useful for different kinds of
+content:
+
+@table{25 75}{
+    @header{Style}  @tab @header{Meaning} @row{single}
+    @ameword{cite}  @tab Citation or quote @row
+    @ameword{code}  @tab Block of source code (see @ameword{pre}) @row
+    @ameword{samp}  @tab Example of something
+}
+
+@subsec{Preformatted text}
+
+The @ameword{pre} keyword is used for preformatted text. The special
+characters @@, @{ and @} still need to be escaped inside @ameword{pre}, but
+any whitespace is used verbatim in the output document and no macro expansion
+occurs. A line break is automatically added before and after the preformatted
+paragraph.
+
+@samp{@pre{@@pre@{This is an 
+    example of
+   preformatted
+  text.@}}}
+
+The above would produce:
+
+@samp{@pre{This is an 
+    example of
+   preformatted
+  text.}}
+
+@section{Chapters and sections}
+
+The structure of the document is marked with the following keywords.
+
+@table{20 80}{
+    @header{Keyword} @tab @header{Meaning} @row{single}
+    @ameword{part} @tab Highest-level division: chapters are divided into parts @row
+    @ameword{chapter} @tab Chapter; e.g., @dquote{Introduction} in this document @row
+    @ameword{section} @tab Section @row
+    @ameword{subsec} @tab Subsection @row
+    @ameword{sub2sec} @tab 2nd-level subsection @row
+    @ameword{sub3sec} @tab 3rd-level subsection @row
+    @ameword{sub4sec} @tab 4th-level subsection 
+}
+
+A table of contents is generated by @ameword{toc} based on the titles defined
+with the keywords above. @ameword{toc} is defined in @stdlib and its output
+varies depending on the chosen filter.
+
+@section{Lists}
+
+A bulleted list can be created as follows:
+
+@samp{@pre{@@list@{
+    @@item First item.
+    @@item Second item.
+@}}}
+
+To create an enumerated list, apply a @def{style modifier}.
+
+@samp{@pre{@@list/enum@{
+    @@item First enumerated item.
+    @@item Second enumerated item.
+@}}}
+
+Some output filters support using a @cmd{thin} modifier to remove whitespace
+between items. This is useful for a list of short items.
+
+@samp{@pre{@@list/enum/thin@{
+    @@item First enumerated item, tightly packed.
+    @@item Second enumerated item, tightly packed.
+@}}}
+
+A definition list is useful when you have a set of terms that need to be
+explained. It can be created as follows:
+
+@samp{@pre{@@deflist@{
+    @@item@{Term one@} Description of the first term.
+    @@item@{Another term@} Explanation of the second one.
+@}}}
+
+That would produce the following:
+
+@samp{@deflist{
+    @item{Term one} Description of the first term.
+    @item{Another term} Explanation of the second one.
+}}
+
+@section{Tables}
+
+A table can be created with the @ameword{table} keyword. It takes two arguments. 
+
+@list/thin{
+    @item Widths of the table columns as percentages.
+    @item Table content, with columns separated by @ameword{tab} and rows separated by @ameword{row}.
+}
+
+For instance, to create a table with three columns:
+
+@samp{@pre{@@table@{30 40 30@}@{
+    @@header@{A@} @@tab @@header@{B@} @@tab @@header@{C@} @@row
+    Cell 1 @@tab Cell 2 @@tab Cell 3 @@row
+    Cell 4 @@tab Cell 5 @@tab Cell 6
+@}}}
+
+The output of this looks like:
+
+@table{30 40 30}{
+    @header{A} @tab @header{B} @tab @header{C} @row
+    Cell 1 @tab Cell 2 @tab Cell 3 @row
+    Cell 4 @tab Cell 5 @tab Cell 6
+}
+
+@notice{Some output filters have restrictions on what the table looks like and
+what content can be placed in table cells. For instance, Unix manual pages
+have no support for line wrapping for text in cells.}
+
+@section{Images}
+
+Because Amethyst supports text document formats including plain text, it does
+not support images at the moment. However, you may define filter-specific
+content that generates the necessary output for a particular filter (e.g.,
+HTML).
+
+@section{Multiple source files}
+
+It may be a good idea to split very long documents or ones that contain
+optional parts into multiple source files. For instance, if a document has a
+section that is specific to one operating system, that section could be
+omitted when preparing the document for any other operating system.
+
+The keywords @ameword{include} and @ameword{require} instruct Amethyst to load
+additional content from another file. When using the latter, processing of the
+document will be aborted if the file is not found. When Amythyst encounters
+one of these keywords, it loads the included file and parses it fully before
+continuing with the original source file.
+
+The command line option @opt{-i} adds a directory to the search path for
+included files.
+
+Optional sections should be marked with @ameword{ifdef} or @ameword{ifndef}.
+For instance, to only include a source file when @dquote{WIN32} is defined,
+you could use the following:
+
+@samp{@pre{@@ifdef@{WIN32@}@{@@require@{win32_specific_section.ame@}@}}}
+
+@notice{Amethyst does not define macros such as @dquote{WIN32}. You will have
+to specify them with the option @opt{-d}.}
+
+The @ameword{else} keyword is used together with @ameword{ifdef} and
+@ameword{ifndef} to handle the case where the original condition fails. For
+instance:
+
+@samp{@pre{@@ifdef@{WIN32@}@{
+    @@require@{win32_specific_section.ame@}
+@}
+@@else @{
+    @@require@{generic_section.ame@}
+@}}}
+
+@chapter{Macros}
+
+@section{Standard Library macros}
+
+@subsec{begin}
+@a{std_begin} 
+The @ameword{begin} macro generates the title of the document.
+It must be placed before the document content. The following macros provide
+additional information to be placed in the beginning of the document.
+
+@table{20 80}{
+    @header{Macro} @tab @header{Meaning} @row{single}
+    AUTHOR @tab Name of the author @row
+    EMAIL @tab Email address of the author @row
+    LINK @tab Contact web address @row
+    ONELINER @tab (Man pages only) One sentence to describe the document @row
+    TITLE @tab Title of the document @row
+    VERSION @tab Version number
+}
+
+For instance, the following would specify the author name for the document:
+
+@samp{@pre{@@macro@{AUTHOR@}@{John Doe@}}}
+
+@notice{The macros above must to be defined before @file{amestd} is included
+or they have no effect.}
+
+@subsec{Utilities}
+
+@table{32 38 30}{
+    @header{Purpose} @tab @header{Usage} @tab @header{Result} @row{single}
+    No space before @tab a @ameword{glue}@amearg{b c} @tab a @glue{b c} @row
+    Remove all spaces @tab @ameword{nsp}@amearg{a b c d} @tab @nsp{a b c d} @row
+    Force a space @tab a@glue{@ameword{sp}}@nsp{@{@}}, @tab a@sp{}, @row
+    Current date @tab @ameword{date} @tab @date @row
+    Anchor @tab @ameword{a}@amearg{id} @tab @a{example_id} @row
+    Reference @tab @ameword{ref}@amearg{id}@amearg{See here} @tab @ref{example_id}{See here} @row
+    Underline @tab @ameword{underline}@amearg{Text} @tab @underline{Text} @row
+    Double quotes @tab @ameword{dquote}@amearg{Hello} @tab @dquote{Hello} @row
+    Web link @tab @ameword{link}@amearg{A}@amearg{http://a.com} @tab @link{A}{http://a.com} @row
+    Email link @tab @ameword{mailto}@amearg{@nsp{b@@a.com}} @tab @mailto{b@@a.com} @row
+    Notice @tab @ameword{notice}@amearg{Remark.} @tab @row
+    Table of Contents @tab @ameword{toc} @tab 
+}
+
+@section{Writing macros}
+@a{writing_macros} 
+A macro is defined with the @ameword{macro} keyword. It has two arguments:
+
+@list{
+    @item Name of the macro.
+
+    @item Content of the macro. In the content you can use @ameword{arg} to
+    refer to parameters given to the macro.
+}
+
+The following defines a simple macro that has a single parameter:
+
+@samp{@pre{@@macro@{square@}@{@@arg * @@arg@}}}
+@macro{square}{@arg * @arg}
+
+When this macro is invoked as @ameword{square}@amearg{x}, the output is
+@square{x}.
+
+The following is an example of a macro with two parameters:
+
+@samp{@pre{@@macro@{sum@}@{@@arg@{1@}+@@arg@{2@}@}}}
+@macro{sum}{@arg{1}+@arg{2}}
+
+The output of @ameword{sum}@amearg{x}@amearg{y} would be @sum{x}{y}.
+
+@notice{When using @ameword{ifdef} or @ameword{ifndef} inside a macro, the
+identifiers in the conditions must be defined before the macro definition is
+parsed. Defining the identifier afterwards does not affect the macro contents.
+In other words, @ameword{ifdef} acts like a preprocessor @cmd{#ifdef} in C.}
+
+@notice{See the @file{.ame} files in @stdlib for examples of more complex
+macros.}
+
+@chapter{Bugs}
+
+Amethyst is a work in progress and contains a number of bugs. The filters in
+the Standard Library may not cover all the scenarios you apply them to, or
+some unexpected circumstances may lead to unwanted output being generated.
+Contact @mailto{@EMAIL} if you are experiencing any problems or have questions.

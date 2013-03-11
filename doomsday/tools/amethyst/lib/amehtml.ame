@@ -1,0 +1,87 @@
+$ Amethyst HTML formatting.
+
+$ HTML header/footer.
+@format{top}{@< <!DOCTYPE@_HTML@_PUBLIC@_"-//W3C//DTD@_HTML@_4.0@_
+	Transitional//EN"@n"http://www.w3.org/TR/REC-html40/loose.dtd">@n
+	<html>@n
+	@> @N</body>@n</html>}
+
+$*** FORMATTING RULES ***$
+@format{!tag !pre}{@g}
+@format{tag}{@=}
+@format{break}{<p>@n}
+@format{br}{<br>@n}
+
+$ Styles.
+@format{order 1 center}{<center>@=}
+@format{order -1 center}{@=</center>}
+@format{order 1 parent em parent !em}{<i>@=}
+@format{order -1 parent em parent !em}{@=</i>}
+@format{order 1 parent def}{<dfn>@=}
+@format{order -1 parent def}{@=</dfn>}
+@format{order 1 parent try strong cmd header pass}{<b>@=}
+@format{order -1 parent try strong cmd header pass}{@=</b>}
+@format{order 1 parent header}{<u>@=}
+@format{order -1 parent header}{@=</u>}
+@format{order 1 parent try file opt cmd code pass}{<tt>@=}
+@format{order -1 parent try file opt cmd code pass}{@=</tt>}
+@format{order 1 parent var}{<var>@=}
+@format{order -1 parent var}{@=</var>}
+@format{order 1 parent kbd}{<kbd>@=}
+@format{order -1 parent kbd}{@=</kbd>}
+@format{order 1 parent caption}{<center><small>@=}
+@format{order -1 parent caption}{@=</small></center>}
+@format{order 1 parent large}{<span@_style="font-size:120%">@=}
+@format{order -1 parent large}{@=</span>}
+@format{pre !control}{@g @< @B<pre> @> </pre>@b}
+@format{order 1 parent cite}{<blockquote>@=}
+@format{order -1 parent cite}{@=</blockquote>}
+@format{parent url}{<a@_href="@=">@=</a>}
+
+$ Table of contents.
+@format{parent3 contents @ order 1 parent child 1 parent chapter}{
+	<div@_style="padding-left:2ex"><a@_href="#@=">@_@=}
+@format{parent3 contents @ order 1 parent child 1 parent section}{
+    <div@_style="padding-left:6ex"><a@_href="#@=">@_@=}
+@format{parent3 contents @ order 1 parent child 1 parent subsec}{
+    <div@_style="padding-left:10ex"><a@_href="#@=">@_@=}
+@format{parent3 contents @ order 1 parent child 2}{@_@=}
+@format{parent3 contents @ order -1 parent child 2}{@=</a></div>}
+
+$ Titles.
+@format{parent child 1 parent chapter}{@=.}
+@format{!^contents parent2 try chapter section subsec pass 
+	@ order 1 parent child 1}{<a@_name="@=">@=</a>@_}
+@format{!^contents parent2 chapter @ order 1 parent child 1}{<h2>@=}
+@format{!^contents parent2 chapter @ order -1 parent child 2}{@=</h2>}
+@format{!^contents parent2 section @ order 1 parent child 1}{<h3>@=}
+@format{!^contents parent2 section @ order -1 parent child 2}{@=</h3>}
+@format{!^contents parent2 subsec @ order 1 parent child 1}{<h4>@=}
+@format{!^contents parent2 subsec @ order -1 parent child 2}{@=</h4>}
+
+$ Lists.
+@format{list}{@< <ul> @> </ul>}
+@format{enum list}{@< <ol> @> </ol>}
+@format{parent list}{<li> @> </li>}
+@format{deflist}{@< <dl> @> </dl>}
+@format{child 1 parent2 deflist}{@< <dt>}
+@format{child 2 parent2 deflist}{@< <dd>}
+
+$ Tables.
+$ Agh: bgcolor should be a parameter.
+@format{table}{@< <table@_align="center"@_class="ametable"> @> </table>}
+@format{parent table}{@< <tr> @> </tr>}
+@format{parent2 table}{@< <td@_valign="top"@_width="@w%"> @> </td>}
+
+$ Indented styles.
+@format{indent !cite}{@< <div@_style="margin-left:4ex"> @> </div> }
+
+$*** LENGTH RULES ***$
+
+$ Word spacing.
+@length{!text . !text , !text : !text ; !begins ) !begins ] !email !url}{
+    try email url pass order 1}{
+    opt !order 1}{spacing 1}
+@length{try pre text ) text ] pass}{prev text (}{order 1 parent single}{
+    order 1 parent prev try text ( text [ pass}{spacing 0}
+@length{list}{deflist}{spacing 0}

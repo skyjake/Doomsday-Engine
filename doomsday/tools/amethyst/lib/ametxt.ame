@@ -1,0 +1,53 @@
+$ Amethyst Plain Text formatting.
+@output{fill}
+
+$*** FORMATTING RULES ***$
+@format{@=}
+@format{break}{@N}
+@format{br}{@n}
+
+$ Styles.
+@format{order 1 parent em parent !em}{*@=}
+@format{order -1 parent em parent !em}{@=*}
+@format{order 1 parent opt parent !samp}{"@=}
+@format{order -1 parent opt parent !samp}{@="}
+@format{order 1 parent email}{<@=}
+@format{order -1 parent email}{@=>}
+
+$ Titles.
+@format{parent child 1 parent chapter}{@=.}
+@format{parent3 !contents @ parent child 1 parent subsec}{@_@=}
+@format{parent child 1 parent2 contents}{@=@_@f}
+@format{parent child 2 parent chapter parent !contents}{@u}
+@format{!^contents chapter}{@< @r=}
+@format{!^contents section}{@< @r.}
+
+$ Lists.
+@format{parent list}{*}
+@format{parent enum list}{@c.}
+@format{parent note list}{NOTE!}
+
+$ Tables.
+@format{single parent table}{@< @r-}
+
+$*** LENGTH RULES ***$
+$ Word spacing.
+@length{!text . !text , !text : !text ; !begins ) !begins ] !email !url}{
+    try email url pass order 1}{opt !order 1}{spacing 1}
+@length{order 1 single}{try text ) text ] pass}{prev try text ( text [ pass}{
+    order 1 parent prev try text ( text [ pass}{spacing 0}
+
+$ Table of contents.
+@length{contents}{spacing 6 indent 6}
+
+$ Lists.
+@length{thin list}{spacing 0}
+@length{thin deflist}{spacing 0 indent 2}
+@length{deflist}{indent 4}
+
+$ Tables.
+@length{table}{spacing 0 leftmargin 1 rightmargin 1}
+@length{large table}{spacing 1}
+
+$ Styles.
+@length{indent}{leftmargin 4}

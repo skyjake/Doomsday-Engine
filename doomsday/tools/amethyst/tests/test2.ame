@@ -1,0 +1,7 @@
+$ Macros
+@format{@=} $ output everything as-is
+
+@macro{mac2}{ [ @arg ] }
+@macro{mac1}{ (@mac2{@arg}) }
+
+@mac2{ @mac1{ C } }

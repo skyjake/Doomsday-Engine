@@ -1,0 +1,55 @@
+$ Simple amestd document.
+@macro{TITLE}{Test Document}
+@require{amestd}
+@begin
+
+@toc
+
+@pre{There is
+some  preformatted
+ text here.
+
+
+Skipped two lines.}
+
+Start with one. @center{On the same line: line-broken.} More text.
+
+Start @dquote{with two}. 
+
+@center{In a different paragraph: paragraph-broken.} 
+
+More text.
+@list{@item This is list. @item Yes. @item Last one, I promise.}
+
+@list/thin { @item Recursive. @item List. }
+
+What about a numbered list?
+@list/enum{@item First. @item The @em{second} item is the best! @item To sleep no more...}
+
+Another paragraph with @em{some text @strong{an emphasis} hello}.
+
+@chapter{Chapter & One}
+
+More @tiny{text} @small{text} text @large{text} @huge{text}! Remember @opt{-wtf} is important. Press @kbd{Ctrl} on the keyboard.
+
+@section{Subby what say you?}
+
+@table{40 60}
+{
+	@header{First cell}
+	@list/thin { @item Recursive. @item List. }
+@tab
+	The second cell.
+
+@row{single}
+	This is da 2 row, and a row it is.
+@tab
+	Last cell.
+	
+	With another paragraph.
+}
+
+This is the End. @mailto{nobody@@nowhere.com}?
+
+@chapter{Authors}
+@man_author{Jaakko Keränen}{skyjake@@me.com}
