@@ -57,19 +57,21 @@ void Vertex::countLineOwners(uint *oneSided, uint *twoSided) const
 
     uint ones = 0, twos = 0;
 
-    LineOwner const *firstOwn = firstLineOwner();
-    LineOwner const *own = firstOwn;
-    do
+    if(LineOwner const *firstOwn = firstLineOwner())
     {
-        if(!own->lineDef().L_frontsidedef || !own->lineDef().L_backsidedef)
+        LineOwner const *own = firstOwn;
+        do
         {
-            ++ones;
-        }
-        else
-        {
-            ++twos;
-        }
-    } while((own = &own->next()) != firstOwn);
+            if(!own->lineDef().L_frontsidedef || !own->lineDef().L_backsidedef)
+            {
+                ++ones;
+            }
+            else
+            {
+                ++twos;
+            }
+        } while((own = &own->next()) != firstOwn);
+    }
 
     if(oneSided) *oneSided += ones;
     if(twoSided) *twoSided += twos;
