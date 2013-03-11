@@ -28,25 +28,25 @@ Group
 Group
 {
   Flags = precache;
-  Texture { ID = "SPAWN1"; Tics = 0; };
-  Texture { ID = "SPAWN2"; Tics = 0; };
-  Texture { ID = "SPAWN3"; Tics = 0; };
-  Texture { ID = "SPAWN4"; Tics = 0; };
+  Texture { ID = "SPAWN01"; Tics = 0; };
+  Texture { ID = "SPAWN02"; Tics = 0; };
+  Texture { ID = "SPAWN03"; Tics = 0; };
+  Texture { ID = "SPAWN04"; Tics = 0; };
 }
 
 Group
 {
   Flags = precache;
-  Texture { ID = "SPAWN5"; Tics = 0; };
-  Texture { ID = "SPAWN6"; Tics = 0; };
-  Texture { ID = "SPAWN7"; Tics = 0; };
+  Texture { ID = "SPAWN05"; Tics = 0; };
+  Texture { ID = "SPAWN06"; Tics = 0; };
+  Texture { ID = "SPAWN07"; Tics = 0; };
 }
 
 Group
 {
   Flags = precache;
-  Texture { ID = "SPAWN8"; Tics = 0; };
-  Texture { ID = "SPAWN9"; Tics = 0; };
+  Texture { ID = "SPAWN08"; Tics = 0; };
+  Texture { ID = "SPAWN09"; Tics = 0; };
   Texture { ID = "SPAWN10"; Tics = 0; };
 }
 
