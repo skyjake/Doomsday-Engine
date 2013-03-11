@@ -42,11 +42,7 @@ struct font_s;
 #include <de/libdeng2.h>
 #include <de/types.h>
 
-extern "C" {
-
-void    DP_Initialize(void);
-
-}
+DENG_EXTERN_C void DP_Initialize(void);
 
 // Internal:
 extern ded_t* ded; // @todo Remove me.
