@@ -1,0 +1,140 @@
+$ This is an Amethyst Sample.
+@output{fill}
+@length{!text . !text , !email !url}{email order 1}{url order 1}{spacing 1}
+@length{table}{spacing 0}
+
+@format{@=}
+@format{em order 1}{/@=}
+@format{em order -1}{@=/}
+
+@format{break}{@N}
+@format{br}{@n}
+
+@format{single parent table}{@< @r- $*@> @r-*$}
+
+@format{part}{@< @r= @> @r=}
+@format{parent child 1 parent part}{PART@_@=: @\ @Y}
+
+@format{chapter}{@< @r-}
+@format{parent child 1 parent chapter parent !contents}{@=.}
+@format{parent child 2 parent chapter parent !contents}{@u}
+
+@format{section}{@< @r.}
+
+@format{samp order 1}{@r.@=}
+
+@length{indent}{leftmargin 4}
+@length{cite}{rightmargin 4}
+@length{parent table}{spacing 0}
+@length{parent2 table}{leftmargin 1 rightmargin 1}
+
+@format{parent list}{*}
+@format{parent enum list}{@c.}
+@format{parent roman list}{@Y}
+@length{list}{leftmargin 1}
+@length{thin list}{spacing 0}
+@length{roman list}{indent 6}
+$@format{order 1 parent2 list}{<li>@=}
+$@format{order -1 parent2 list}{@=</li>}
+
+@format{email order 1}{<@=}
+@format{email order -1}{@=>}
+
+@format{parent child 1 parent2 contents}{@=.@f@_}
+@format{contents}{@<@r.}
+@length{contents}{indent 2 spacing 10}
+@length{deflist}{indent 4}
+
+@format{pre}{ @< <pre> @|@= @> </pre> }
+
+$@format{!text . !text , !text : !text ; !email !url}{email order 1}
+${url order 1}{@s@=}
+
+@macro{mini}{ @set{spacing 0}{ @arg } }
+@macro{jake}{Jaken osoite on @email{@arg}.}
+@macro{underline}{ @arg@apply{@R+}{.} }
+
+@ifdef{HTML}{ @underline{This is @HTML HTML.} }
+@ifndef{HTML}{ This is @HTML not HTML. }
+
+@ifdef{mini}{
+@set{spacing 0}{Some text in} @email{skyjake@@doomsdayhq.com} the beginning.
+There is more text here than fits on one line.}
+
+@pre{This is
+   some PRE-FORMATTED @{ @}
+
+text.}
+
+CONTENTS:@contents{1 2}
+
+@jake @jake{Hello world}
+
+This is the @em{goddamned @def{first} paragraph}.
+
+@part{Tumble on down, I say this is a rather
+longish part title wouldn't you agree I SAY, but there's nothing
+to it my man, just type this text and let's see if it's properly
+aligned and printed in the, you know, the output file. lasd lakjs d
+aksjd laksjd laksjdlakjs dlkajsdlkja sldkjasldkj kjdksj dks d  skd
+sd kjsdk sjkd ksd sd ksjdskd  d skdj skdj ksjd k d skdjk sdjksd.}
+
+@chapter{ The Beginning Of Time And @underline{Everything}}
+@section{Amethyst}
+
+This would @email{jk@@jaakkok.pp.fi}.
+Go to @url{http://www.doomsdayhq.com/ tad}.
+
+@subsec{The Black Rolling Clouds}
+@cite{ 	@center{"To be or not to be, that is the question."}
+		@right{-William	Shakespeare}}
+
+@cite{ "Some say it doesn't hurt to be alone. Others speak the truth." }
+
+@samp{ This is an example.@br I think you should learn something by looking
+at this.@br But do not hesitate. @br Something is not easy to learn. }
+
+@list { @item One. @item Two. }
+
+@list/enum/roman/thin
+{
+	@item{ First term } First bullet is this.
+	@list/thin { @item Sublist #1 @item Sublist #2 }
+	@list/thin/enum { @item Evensubber1 @item Evensubber2 }
+	There is some more text.
+	@samp{ An embedded sample. }
+
+	@item{ Arbitrary } 2nd one.
+
+	@item{ vid-gamma } Rockety rock.
+}
+
+@subsec{Thunder Booms Ahead, Costs @$s}
+
+The date is @apply{@D}{M/d/yyyy}.
+
+This is just before the table:
+@format{order -1 parent3 table}{order -1 parent4 table}{@=@r:} $@n@r*@n@r.}
+@table{50 50}
+{
+	First cell. Well, the First Among Equls, or so they would've liked
+	you to think.
+
+	@list { @item Recursive. @item List. }
+
+	@tab
+	$@tab
+	The third cell was nothing to sneeze at, although it appeared that
+	quite a few people had flu.
+	The third cell was nothing to sneeze at, although it appeared that
+	quite a few people had flu.
+
+	@row{single}
+	This is da 2 row, and a row it is.
+	@header{Contains a lot o drab squabble,
+	and hopefully a lot of lines.}
+	@tab
+	3rd cell was banned from the general public right after the nasty incident
+	with the blue scabaraus and something green, too.
+}
+@em{ I don't recommend. }

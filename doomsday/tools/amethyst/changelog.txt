@@ -1,0 +1,39 @@
+AMETHYST CHANGELOG
+==================
+
+1.1.1 (Jan 2012)
+----------------
++ If macro "CR_NL" defined, \n is output as \r\n.
++ Left-to-right mathematic expressions in rules: @v(3+5*2) => 16.
++ Global variable "x" can be used to store values: @v(12=x).
+- Gem class filter only applies for the 'normal' part, not pre/post.
+- Rule markers (@<, @>, @[, etc.) always end at the next marker.
+
+1.1.0 (Apr 2011)
+----------------
++ Unicode (UTF-8) support for input and output files.
++ @else after @ifdef/@ifndef.
++ Added the ^ modifier (escalation) for gem tests.
++ Anchors (@&), inserting text at the anchor with @[, @] filters.
++ Added format selectors for flush modes (left, right, center).
++ Unix: installing with "make install" under PREFIX (default: /usr/local).
++ Added a post-line-breaking flag for commands.
+- Context flow in unfilled output did not advance correctly.
+- @center{} now breaks the line before and after.
+- @apply{@D}{spec} uses the format 'spec' to produce a timestamp.
+  See QDateTime::toString(QString format) in the Qt reference.
+- Flush modes are inherited correctly in the gem tree.
+* Ported to Qt.
+* Refactored according to better coding conventions.
+* Changed license to GPL v3.
+* Apply pre and post filters in the Contents.
+
+1.0.1 (Sep 4, 2002)
+-------------------
+- Corrected macro calls. Previously it was impossible to use @arg in 
+  a nested macro call, because the original caller wasn't properly kept
+  track of. Now a call stack keeps track of the call hierarchy.
+
+1.0.0 (July 30, 2002)
+---------------------
++ Initial version.

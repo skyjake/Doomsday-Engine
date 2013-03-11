@@ -57,7 +57,7 @@ uint Sfx_GetSoundLength(int id);
 void Sfx_GetCacheInfo(uint *cacheBytes, uint *sampleCount);
 
 #ifdef __cplusplus
-} // __cplusplus
+} // extern "C"
 #endif
 
 #endif /* LIBDENG_SOUND_CACHE_H */

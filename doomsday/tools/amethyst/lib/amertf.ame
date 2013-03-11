@@ -1,0 +1,125 @@
+$ Amethyst Rich Text formatting.
+
+$ Header/footer.
+@format{top}{@< @{\rtf1\ansi\ansicpg1252@n
+    @{\fonttbl\f0\fswiss\fcharset0@_Helvetica;
+        \f1\fmodern\fcharset0@_Courier@_New;@}@n
+        \paperw11900\vieww10840\viewh13000
+        \sb240\li600\fi0\tx600\tx1200\tx1800\tx2400\tx3000@n @> @}}
+
+$*** FORMATTING RULES ***$
+
+$ Escape any RTF control characters in the input text.
+@format{tag}{@=}
+@format{!tag}{@s(\|\\) @s(@{|\@{) @s(@}|\@}) @s(ä|\'e4) @s(ö|\'f6) @s(Ä|\'c4) @s(Ö|\'d6) @=}
+@format{break prev try center part chapter section subsec sub2sec pre list deflist table !pass 
+    @ preceding !^indent !^pre}{\@n}
+@format{br}{\line@n}
+
+$ Styles.
+@format{control center parent !center}{@< \qc}
+@format{order -1 parent control center parent !center}
+    {order -1 parent child -1 center parent control center parent !center}
+    {@= @> \par\ql@n}
+@format{order 1 parent try em def var caption pass}{@{\i@_@=}
+@format{order -1 parent try em def var caption pass}{@=@}}
+@format{order 1 parent try strong cmd header pass}{@{\b@_@=}
+@format{order -1 parent try strong cmd header pass}{@=@}}
+@format{order 1 parent try file opt cmd code pass}{@{\f1@_@=}
+@format{order -1 parent try file opt cmd code pass}{@=@}}
+@format{order 1 parent kbd}{@{\b\f1@_@=}
+@format{order -1 parent kbd}{@=@}}
+@format{order 1 parent tiny}{@{\fs14@_@=}
+@format{order -1 parent tiny}{@=@}}
+@format{order 1 parent small}{@{\fs18@_@=}
+@format{order -1 parent small}{@=@}}
+@format{order 1 parent large}{@{\fs36@_@=}
+@format{order -1 parent large}{@=@}}
+@format{order 1 parent huge}{@{\fs48@_@=}
+@format{order -1 parent huge}{@=@}}
+@format{pre !control}{@s(@_|\~)@s(@n|\line@n)@= @< @{\f1@n@B @> @}@b}
+$*
+@format{order 1 parent cite}{<blockquote>@=}
+@format{order -1 parent cite}{@=</blockquote>}
+*$
+
+$ Lists.
+@format{prev try chapter section subsec sub2sec !pass 
+    @ try br break pass following list}{ \@n@{\li1200 }
+@format{prev try chapter section subsec sub2sec pass 
+    @ try br break pass following list}{ @{\li1200 }
+@format{thin list}{@< \sb40 }
+@format{list}{ @> @} }
+@format{parent list}{@< \'95\tab\fi-300@_}
+@format{parent enum list}{@< @n@c.\tab\fi-400@_}
+@format{parent note list}{@< @n@{\fs18\b@_NOTE@}\tab\fi-600@_}
+@format{parent list @ last !indent}{@> \@n}
+
+@format{deflist}{@< \fi-600\li1200 @> \fi0\li600}
+@format{child 1 parent2 deflist}{@< @{\b @> @}\line@n}
+@format{child -1 parent2 deflist}{@> \@n}
+
+$ Titles.
+@format{!^contents try part chapter section subsec sub2sec sub3sec sub4sec pass}{
+    @< @{\li0\b@_ }
+@format{!^contents try part chapter section subsec sub2sec sub3sec sub4sec pass next next !list}{
+    @> \@n@}@n}
+@format{!^contents try part chapter section subsec sub2sec sub3sec sub4sec pass next next list}{
+    @> \@n@}}
+@format{!^contents try part chapter pass}{@< @=\fs36@_}
+@format{!^contents section}{@< @=\fs30@_}
+@format{parent child 1 parent chapter}{@=.}
+@format{!^contents parent child 1 parent 
+    try part chapter section subsec sub2sec sub3sec sub4sec pass}{@=\tab@_}
+
+$ Table of contents.
+@format{try part chapter section subsec sub2sec sub3sec sub4sec pass ^contents}{@> \line@n}
+@format{child 1 parent2 contents}{@< \~\~\~ @> \tab@_}
+@format{child 1 parent section parent contents}{@< \tab\~ }
+@format{child 1 parent subsec parent contents}{@< \tab\tab\~ }
+
+$ Indented styles.
+@format{indent !cite !^list}{@< \li1200@n @> \par\li600@n }
+@format{indent !cite ^list}{@< \fi0\li1600@n @> \par\li1200@n }
+
+$ Tables.
+@format{parent table}{
+    @< @N\itap1\trowd@v(7=x @.)
+       $ Left-side padding cell.
+       \clwWidth600\clftsWidth3 
+       \trbrdrt\brdrnil \trbrdrl\brdrnil \trbrdrr\brdrnil
+       \clbrdrt\brdrnil \clbrdrl\brdrnil \clbrdrb\brdrnil \clbrdrr\brdrnil
+       \gaph\cellx600 @n
+       $ Anchor for the real cell defs.
+       @& 
+    @> \row}
+@format{child 1 parent child 1 parent2 table}{@< \cell @| @=} $ Padding cell.
+@format{parent2 table}{
+    @< \pard\intbl\itap1 
+    @] \clwWidth@v(81*@w)\clftsWidth3 
+       \trbrdrt\brdrnil \trbrdrl\brdrnil \trbrdrr\brdrnil
+       \clbrdrt\brdrnil \clbrdrl\brdrnil \clbrdrb\brdrnil \clbrdrr\brdrnil
+       \clvertalt\clpadl100\clpadr100\gaph\cellx@v(x+@w=x * 81)@n
+    @> \cell}
+@format{parent child 1 parent table}{
+    @< \pard\sb240\intbl\itap1 
+}
+@format{count 0 parent2 table}{@< \pard\intbl\itap1 \cell}
+@format{child -1 parent table}{@> \lastrow\row@n\sb240\li600\fi0\tx600\tx1200\tx1800\tx2400\tx3000@n}
+
+$*** LENGTH RULES ***$
+
+$ Word spacing.
+@length{!text ? !text ! !text . !text , !text : !text ; !begins ) !begins ] !email !url}{
+    try email url pass order 1}{opt !order 1}{spacing 1}
+@length{single order 1}{try text ) text ] pass}{prev try text ( text [ pass}{
+    order 1 parent prev try text ( text [ pass}{
+    order 1 parent2 try part chapter section subsec sub2sec sub3sec pass}{spacing 0}
+
+$ No extra spacing.
+@length{list}{spacing 0}
+@length{following list}{spacing 0}
+@length{prev break}{spacing 0}
+@length{parent table}{spacing 0}
+@length{deflist}{spacing 0}
+@length{pre}{spacing 0}

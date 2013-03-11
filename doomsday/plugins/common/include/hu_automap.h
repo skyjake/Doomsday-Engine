@@ -224,6 +224,7 @@ boolean UIAutomap_SetZoomMax(uiwidget_t* obj, boolean on);
 void UIAutomap_ParallaxLayerOrigin(uiwidget_t* obj, coord_t* x, coord_t* y);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
+
 #endif /* LIBCOMMON_GUI_LIBRARY_UIAUTOMAP_H */

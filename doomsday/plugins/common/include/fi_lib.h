@@ -109,7 +109,7 @@ int FI_PrivilegedResponder(const void* ev);
 void NetCl_UpdateFinaleState(Reader* msg);
 
 #ifdef __cplusplus
-} extern "C"
+} // extern "C"
 #endif
 
 #endif /* LIBCOMMON_INFINE_LIB */

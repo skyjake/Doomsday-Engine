@@ -21,119 +21,119 @@ Header { Version = 6; }
 Group
 {
   Flags = precache;
-  Texture { ID = "BOSSK1"; Tics = 0; };
-  Texture { ID = "BOSSK2"; Tics = 0; };
+  Texture { ID = "BOSSK1"; };
+  Texture { ID = "BOSSK2"; };
 }
 
 Group
 {
   Flags = precache;
-  Texture { ID = "SPAWN1"; Tics = 0; };
-  Texture { ID = "SPAWN2"; Tics = 0; };
-  Texture { ID = "SPAWN3"; Tics = 0; };
-  Texture { ID = "SPAWN4"; Tics = 0; };
+  Texture { ID = "SPAWN01"; };
+  Texture { ID = "SPAWN02"; };
+  Texture { ID = "SPAWN03"; };
+  Texture { ID = "SPAWN04"; };
 }
 
 Group
 {
   Flags = precache;
-  Texture { ID = "SPAWN5"; Tics = 0; };
-  Texture { ID = "SPAWN6"; Tics = 0; };
-  Texture { ID = "SPAWN7"; Tics = 0; };
+  Texture { ID = "SPAWN05"; };
+  Texture { ID = "SPAWN06"; };
+  Texture { ID = "SPAWN07"; };
 }
 
 Group
 {
   Flags = precache;
-  Texture { ID = "SPAWN8"; Tics = 0; };
-  Texture { ID = "SPAWN9"; Tics = 0; };
-  Texture { ID = "SPAWN10"; Tics = 0; };
+  Texture { ID = "SPAWN08"; };
+  Texture { ID = "SPAWN09"; };
+  Texture { ID = "SPAWN10"; };
 }
 
 Group
 {
   Flags = precache;
-  Texture { ID = "SPAWN11"; Tics = 0; };
-  Texture { ID = "SPAWN12"; Tics = 0; };
+  Texture { ID = "SPAWN11"; };
+  Texture { ID = "SPAWN12"; };
 }
 
 Group
 {
   Flags = precache;
-  Texture { ID = "SW51_OFF"; Tics = 0; };
-  Texture { ID = "SW51_ON"; Tics = 0; };
+  Texture { ID = "SW51_OFF"; };
+  Texture { ID = "SW51_ON"; };
 }
 
 Group
 {
   Flags = precache;
-  Texture { ID = "SW52_OFF"; Tics = 0; };
-  Texture { ID = "SW52_ON"; Tics = 0; };
+  Texture { ID = "SW52_OFF"; };
+  Texture { ID = "SW52_ON"; };
 }
 
 Group
 {
   Flags = precache;
-  Texture { ID = "SW53_DN"; Tics = 0; };
-  Texture { ID = "SW53_MD"; Tics = 0; };
-  Texture { ID = "SW53_UP"; Tics = 0; };
+  Texture { ID = "SW53_DN"; };
+  Texture { ID = "SW53_MD"; };
+  Texture { ID = "SW53_UP"; };
 }
 
 Group
 {
   Flags = precache;
-  Texture { ID = "SW_1_DN"; Tics = 0; };
-  Texture { ID = "SW_1_MD"; Tics = 0; };
-  Texture { ID = "SW_1_UP"; Tics = 0; };
+  Texture { ID = "SW_1_DN"; };
+  Texture { ID = "SW_1_MD"; };
+  Texture { ID = "SW_1_UP"; };
 }
 
 Group
 {
   Flags = precache;
-  Texture { ID = "SW_2_DN"; Tics = 0; };
-  Texture { ID = "SW_2_MD"; Tics = 0; };
-  Texture { ID = "SW_2_UP"; Tics = 0; };
+  Texture { ID = "SW_2_DN"; };
+  Texture { ID = "SW_2_MD"; };
+  Texture { ID = "SW_2_UP"; };
 }
 
 Group
 {
   Flags = precache;
-  Texture { ID = "SW_EL1"; Tics = 0; };
-  Texture { ID = "SW_EL2"; Tics = 0; };
-  Texture { ID = "SW_EL3"; Tics = 0; };
-  Texture { ID = "SW_EL4"; Tics = 0; };
-  Texture { ID = "SW_EL5"; Tics = 0; };
+  Texture { ID = "SW_EL1"; };
+  Texture { ID = "SW_EL2"; };
+  Texture { ID = "SW_EL3"; };
+  Texture { ID = "SW_EL4"; };
+  Texture { ID = "SW_EL5"; };
 }
 
 Group
 {
   Flags = precache;
-  Texture { ID = "SW_OL1"; Tics = 0; };
-  Texture { ID = "SW_OL2"; Tics = 0; };
-  Texture { ID = "SW_OL3"; Tics = 0; };
-  Texture { ID = "SW_OL4"; Tics = 0; };
-  Texture { ID = "SW_OL5"; Tics = 0; };
+  Texture { ID = "SW_OL1"; };
+  Texture { ID = "SW_OL2"; };
+  Texture { ID = "SW_OL3"; };
+  Texture { ID = "SW_OL4"; };
+  Texture { ID = "SW_OL5"; };
 }
 
 Group
 {
   Flags = precache;
-  Texture { ID = "VALVE01"; Tics = 0; };
-  Texture { ID = "VALVE02"; Tics = 0; };
+  Texture { ID = "VALVE01"; };
+  Texture { ID = "VALVE02"; };
 }
 
 Group
 {
   Flags = precache;
-  Texture { ID = "VALVE1"; Tics = 0; };
-  Texture { ID = "VALVE2"; Tics = 0; };
+  Texture { ID = "VALVE1"; };
+  Texture { ID = "VALVE2"; };
 }
 
 Group
 {
   Flags = precache;
-  Texture { ID = "GLASS01"; Tics = 0; };
-  Texture { ID = "GLASS03"; Tics = 0; };
-  Texture { ID = "GLASS05"; Tics = 0; };
-  Texture { ID = "GLASS07"; Tics = 0; };
+  Texture { ID = "GLASS01"; };
+  Texture { ID = "GLASS03"; };
+  Texture { ID = "GLASS05"; };
+  Texture { ID = "GLASS07"; };
 }

@@ -1,0 +1,92 @@
+$ Amethyst Mediawiki Source formatting.
+
+$*** FORMATTING RULES ***$
+@format{!tag !text .\"}{@s(\|\e)@s(ä|\[:a])@s(Ä|\[:A])@s(ö|\[:o])@s(Ö|\[:O])@=}
+@format{text .\"}{@=}
+@format{tag}{@=}
+@format{@s(e.g.|e.g.\&)@s(i.e.|i.e.\&)@=}
+@format{break prev !chapter}{@n.Pp@n}
+@format{break prev chapter}{@n}
+@format{br}{@n}
+
+$ Styles.
+@format{order 1 center}{.Bd@_-centered@n@=}
+@format{order -1 center}{@=@n.Ed}
+@format{order 1 parent email}{<@=}
+@format{order -1 parent email}{@=>}
+@format{try em file pass !opt !strong !^section !^chapter !^deflist
+    @ following !text . !text , !text ; !begins ) !begins ]}{@n.Em@_@=@n}
+@format{try em file pass !opt !strong !^section !^chapter !^deflist
+    @ following try text . text , text ; begins ) begins ] pass}{@n.Em@_@=@_Ns@n\&}
+@format{try opt strong cmd pass !em !file !^section !^chapter !^deflist
+    @ following !text . !text , !text ; !begins ) !begins ]}{@n.Sy@_@=@n}
+@format{try opt strong cmd pass !em !file !^section !^chapter !^deflist
+    @ following try text . text , text ; begins ) begins ] pass}{@n.Sy@_@=@_Ns@n\&}
+@format{try opt strong cmd pass !em !file parent2 child 2 parent2 deflist
+    @ following !text . !text , !text ; !begins ) !begins ]}{@n.Sy@_@=@n}
+@format{try em file pass try opt strong cmd pass !^section !^chapter !^deflist
+     @ following !text . !text , !text ; !begins ) !begins )}{@n.Em@_Sy@_@=@n}
+@format{try em file pass try opt strong cmd pass !^section !^chapter !^deflist
+     @ following try text . text , text ; begins ) begins ] pass}{@n.Em@_Sy@_@=@_Ns@n\&}
+
+$ Indented styles.
+@format{indent}{@= @< .Bd@_-ragged@_-offset@_indent@n @> @n.Ed@n}
+
+$*
+@format{parent count 1 opt parent !samp}{[[@=]]}
+@format{order 1 parent try opt cmd code pass}{<tt>@=}
+@format{order -1 parent try opt cmd code pass}{@=</tt>}
+@format{order 1 parent email}{<@=}
+@format{order -1 parent email}{@=>}
+*$
+@format{pre !control}{@n@= @< @B.Bd@_-literal @> @n.Ed@b}
+
+$ Remove all section numbers, Unix manual sections are unnumbered.
+@format{parent child 1 parent try chapter section subsec sub2sec pass}{}
+
+$ Titles.
+@format{!^contents child 2 parent chapter}{@<.Sh@_"@>"}
+@format{!^contents child 2 parent try section subsec sub2sec sub3sec pass}{@<.Ss@_"@>"}
+@format{parent child 2 parent chapter}{@u}
+@format{order 1 parent child 2 parent try section subsec sub2sec sub3sec pass}{@U}
+@format{!order 1 !text the !text an !text and !text of !text a !text on !text as !text in !text with parent child 2 parent try section subsec sub2sec sub3sec pass}{@U}
+
+$ Table of contents.
+@format{contents}{@< .Bl@_-enum@_-width@_3n@_-offset@_indent@n @> @n.El@n}
+@format{^contents child 2 parent chapter}{@<.It@n.Tn@_"@>"@n.br@n}
+@format{^contents try section subsec sub2sec sub3sec pass}{@< .Tn@_ @> @n.br@n}
+
+$ Lists.
+@format{!thin !enum !note list}{@< .Bl@_-bullet@_-offset@_indent @> @n.El@n}
+@format{!thin enum !note list}{@< .Bl@_-enum@_-offset@_indent @> @n.El@n}
+@format{thin !enum !note list}{@< .Bl@_-dash@_-compact@_-offset@_indent @> @n.El@n}
+@format{thin enum !note list}{@< .Bl@_-enum@_-compact@_-offset@_indent @> @n.El@n}
+@format{note list}{@< .Bl@_-tag@_-width@_"NOTE!@_" @> @n.El@n}
+@format{parent !note list}{@n.It@n}
+@format{parent note list}{@n.It@_Sy@_NOTE!@n}
+@format{!thin deflist}{@< .Bl@_-tag@_-width@_14n@_-offset@_indent @> @n.El@n}
+@format{thin deflist}{@< .Bl@_-tag@_-width@_8n @> @n.El@n}
+@format{first try strong opt !pass @ child 1 parent2 deflist}{@< @n.It @> @n}
+@format{first try strong opt pass @ child 1 parent2 deflist}{@< @n.It@_Sy @> @n}
+
+$ Tables.
+@format{table}{@< .TS@ncenter@_nospaces;@n@&.@n @> @n.TE@n}
+@format{first header @ parent2 table}{@] @_lb}
+@format{first !header @ parent2 table}{count 0 parent2 table}{@] @_l}
+@format{child 1 parent !child 1 parent table}{@] @N@=}
+@format{!child -1 parent2 table}{@= @> @T}
+
+$*** LENGTH RULES ***$
+
+$ Word spacing.
+@length{!text . !text , !text : !text ; !begins ) !begins ] !email !url}{
+    try email url pass order 1}{opt !order 1}{spacing 1}
+@length{single order 1}{try text ) text ] pass}{prev try text ( text [ pass}{
+    order 1 parent prev try text ( text [ pass}{
+    order 1 parent2 try part chapter section subsec sub2sec sub3sec pass}{spacing 0}
+
+$ No extra spacing.
+@length{list}{spacing 0}
+@length{parent table}{spacing 0}
+@length{deflist}{spacing 0}
+@length{pre}{spacing 0}
