@@ -1034,7 +1034,7 @@ static int setProperty(void *ptr, void *context)
         break;
 
     case DMU_BSPLEAF:
-        BspLeaf_SetProperty(elem->castTo<BspLeaf>(), args);
+        elem->castTo<BspLeaf>()->setProperty(*args);
         break;
 
     case DMU_SECTOR:
@@ -1528,7 +1528,7 @@ static int getProperty(void *ptr, void *context)
         break;
 
     case DMU_BSPLEAF:
-        BspLeaf_GetProperty(elem->castTo<BspLeaf>(), args);
+        elem->castTo<BspLeaf>()->property(*args);
         break;
 
     case DMU_MATERIAL:
@@ -1545,6 +1545,7 @@ static int getProperty(void *ptr, void *context)
     return false;
 }
 
+#undef P_SetBool
 void P_SetBool(int type, uint index, uint prop, boolean param)
 {
     setargs_t args;

@@ -767,15 +767,16 @@ static void updateMapBounds(GameMap* map)
     }
 }
 
-static void prepareBspLeafs(GameMap* map)
+static void prepareBspLeafs(GameMap *map)
 {
+    DENG_ASSERT(map);
     for(uint i = 0; i < map->numBspLeafs; ++i)
     {
-        BspLeaf* bspLeaf = map->bspLeafs[i];
+        BspLeaf &bspLeaf = *map->bspLeafs[i];
 
-        BspLeaf_UpdateAABox(bspLeaf);
-        BspLeaf_UpdateMidPoint(bspLeaf);
-        BspLeaf_UpdateWorldGridOffset(bspLeaf);
+        bspLeaf.updateAABox();
+        bspLeaf.updateMidPoint();
+        bspLeaf.updateWorldGridOffset();
     }
 }
 

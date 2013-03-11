@@ -1,8 +1,7 @@
-/** @file bspleaf.cpp BspLeaf implementation. 
- * @ingroup map
+/** @file bspleaf.cpp Map BSP Leaf
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,17 +18,24 @@
  * 02110-1301 USA</small>
  */
 
-#include <math.h>
+#include <cmath> // fmod
 
 #include "de_base.h"
-#include "de_console.h"
-#include "de_play.h"
 #include "m_misc.h"
+#include "map/hedge.h"
+#include "map/sector.h"
+#include "map/vertex.h"
+#include <de/Log>
+#include <de/vector1.h>
 
-BspLeaf::BspLeaf() : de::MapElement(DMU_BSPLEAF)
+#include "map/bspleaf.h"
+
+using namespace de;
+
+BspLeaf::BspLeaf() : MapElement(DMU_BSPLEAF)
 {
     hedge = 0;
-    flags = 0;
+    flags = BLF_UPDATE_FANBASE;
     index = 0;
     addSpriteCount = 0;
     validCount = 0;
@@ -38,11 +44,11 @@ BspLeaf::BspLeaf() : de::MapElement(DMU_BSPLEAF)
     polyObj = 0;
     fanBase = 0;
     shadows = 0;
-    memset(&aaBox, 0, sizeof(aaBox));
-    memset(midPoint, 0, sizeof(midPoint));
-    memset(worldGridOffset, 0, sizeof(worldGridOffset));
+    std::memset(&aaBox, 0, sizeof(aaBox));
+    std::memset(midPoint, 0, sizeof(midPoint));
+    std::memset(worldGridOffset, 0, sizeof(worldGridOffset));
     bsuf = 0;
-    memset(reverb, 0, sizeof(reverb));
+    std::memset(reverb, 0, sizeof(reverb));
 }
 
 BspLeaf::~BspLeaf()
@@ -84,87 +90,66 @@ BspLeaf::~BspLeaf()
     }
 }
 
-BspLeaf* BspLeaf_New(void)
+biassurface_t &BspLeaf::biasSurfaceForGeometryGroup(uint groupId)
 {
-    BspLeaf* leaf = new BspLeaf;
-    //leaf->header.type = DMU_BSPLEAF;
-    leaf->flags |= BLF_UPDATE_FANBASE;
-    return leaf;
+    DENG2_ASSERT(sector);
+    if(groupId > sector->planeCount())
+        /// @throw InvalidGeometryGroupError Attempted with an invalid geometry group id.
+        throw UnknownGeometryGroupError("BspLeaf::biasSurfaceForGeometryGroup", QString("Invalid group id %1").arg(groupId));
+
+    DENG2_ASSERT(bsuf && bsuf[groupId]);
+    return *bsuf[groupId];
 }
 
-void BspLeaf_Delete(BspLeaf* leaf)
+void BspLeaf::updateAABox()
 {
-    delete leaf;
-}
+    V2d_Set(aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
+    V2d_Set(aaBox.max, DDMINFLOAT, DDMINFLOAT);
 
-biassurface_t* BspLeaf_BiasSurfaceForGeometryGroup(BspLeaf* leaf, uint groupId)
-{
-    DENG2_ASSERT(leaf);
-    if(!leaf->sector || groupId > leaf->sector->planeCount()) return NULL;
-    DENG2_ASSERT(leaf->bsuf != 0);
-    return leaf->bsuf[groupId];
-}
+    if(!hedge) return; // Very odd...
 
-BspLeaf* BspLeaf_UpdateAABox(BspLeaf* leaf)
-{
-    DENG2_ASSERT(leaf);
+    HEdge *hedgeIt = hedge;
+    V2d_InitBox(aaBox.arvec2, hedgeIt->HE_v1origin);
 
-    V2d_Set(leaf->aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
-    V2d_Set(leaf->aaBox.max, DDMINFLOAT, DDMINFLOAT);
-
-    if(!leaf->hedge) return leaf; // Very odd...
-
-    HEdge* hedge = leaf->hedge;
-    V2d_InitBox(leaf->aaBox.arvec2, hedge->HE_v1origin);
-
-    while((hedge = hedge->next) != leaf->hedge)
+    while((hedgeIt = hedgeIt->next) != hedge)
     {
-        V2d_AddToBox(leaf->aaBox.arvec2, hedge->HE_v1origin);
+        V2d_AddToBox(aaBox.arvec2, hedgeIt->HE_v1origin);
     }
-
-    return leaf;
 }
 
-BspLeaf* BspLeaf_UpdateMidPoint(BspLeaf* leaf)
+void BspLeaf::updateMidPoint()
 {
-    DENG2_ASSERT(leaf);
     // The middle is the center of our AABox.
-    leaf->midPoint[VX] = leaf->aaBox.minX + (leaf->aaBox.maxX - leaf->aaBox.minX) / 2;
-    leaf->midPoint[VY] = leaf->aaBox.minY + (leaf->aaBox.maxY - leaf->aaBox.minY) / 2;
-    return leaf;
+    midPoint[VX] = aaBox.minX + (aaBox.maxX - aaBox.minX) / 2;
+    midPoint[VY] = aaBox.minY + (aaBox.maxY - aaBox.minY) / 2;
 }
 
-BspLeaf* BspLeaf_UpdateWorldGridOffset(BspLeaf* leaf)
+void BspLeaf::updateWorldGridOffset()
 {
-    DENG2_ASSERT(leaf);
-    leaf->worldGridOffset[VX] = fmod(leaf->aaBox.minX, 64);
-    leaf->worldGridOffset[VY] = fmod(leaf->aaBox.maxY, 64);
-    return leaf;
+    worldGridOffset[VX] = fmod(aaBox.minX, 64);
+    worldGridOffset[VY] = fmod(aaBox.maxY, 64);
 }
 
-int BspLeaf_SetProperty(BspLeaf* leaf, const setargs_t* args)
+int BspLeaf::property(setargs_t &args) const
 {
-    DENG2_ASSERT(leaf);
-    DENG_UNUSED(leaf);
-    Con_Error("BspLeaf::SetProperty: Property %s is not writable.\n", DMU_Str(args->prop));
-    exit(1); // Unreachable.
-}
-
-int BspLeaf_GetProperty(const BspLeaf* leaf, setargs_t* args)
-{
-    DENG2_ASSERT(leaf);
-    switch(args->prop)
+    switch(args.prop)
     {
     case DMU_SECTOR:
-        DMU_GetValue(DMT_BSPLEAF_SECTOR, &leaf->sector, args, 0);
+        DMU_GetValue(DMT_BSPLEAF_SECTOR, &sector, &args, 0);
         break;
     case DMU_HEDGE_COUNT: {
-        int val = (int) leaf->hedgeCount;
-        DMU_GetValue(DDVT_INT, &val, args, 0);
+        int val = hedgeCount;
+        DMU_GetValue(DDVT_INT, &val, &args, 0);
         break; }
     default:
-        Con_Error("BspLeaf::GetProperty: No property %s.\n", DMU_Str(args->prop));
-        exit(1); // Unreachable.
+        /// @throw UnknownPropertyError  The requested property does not exist.
+        throw UnknownPropertyError("BspLeaf::property", QString("Property '%1' is unknown").arg(DMU_Str(args.prop)));
     }
     return false; // Continue iteration.
+}
+
+int BspLeaf::setProperty(setargs_t const &args)
+{
+    /// @throw WritePropertyError  The requested property is not writable.
+    throw WritePropertyError("Vertex::setProperty", QString("Property '%1' is not writable").arg(DMU_Str(args.prop)));
 }

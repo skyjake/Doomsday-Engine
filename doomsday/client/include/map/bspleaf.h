@@ -1,9 +1,7 @@
-/**
- * @file bspleaf.h
- * Map BSP leaf. @ingroup map
+/** @file bspleaf.h Map BSP Leaf.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,15 +21,12 @@
 #ifndef LIBDENG_MAP_BSPLEAF
 #define LIBDENG_MAP_BSPLEAF
 
-#ifndef __cplusplus
-#  error "map/bspleaf.h requires C++"
-#endif
-
 #include "MapElement"
 #include "resource/r_data.h"
 #include "render/rend_bias.h"
 #include "p_mapdata.h"
 #include "p_dmu.h"
+#include <de/Error>
 
 /**
  * @defgroup bspLeafFlags  Bsp Leaf Flags
@@ -44,80 +39,111 @@
 class Sector;
 class HEdge;
 
+/**
+ * Map BSP leaf.
+ *
+ * @ingroup map
+ */
 class BspLeaf : public de::MapElement
 {
 public:
-    HEdge *hedge; /// First HEdge in this leaf.
-    int                 flags; /// @ref bspLeafFlags.
-    uint                index; /// Unique. Set when saving the BSP.
-    int                 addSpriteCount; /// Frame number of last R_AddSprites.
-    int                 validCount;
-    uint                hedgeCount; /// Number of HEdge's in this leaf.
+    /// The referenced geometry group does not exist. @ingroup errors
+    DENG2_ERROR(UnknownGeometryGroupError);
+
+    /// The referenced property does not exist. @ingroup errors
+    DENG2_ERROR(UnknownPropertyError);
+
+    /// The referenced property is not writeable. @ingroup errors
+    DENG2_ERROR(WritePropertyError);
+
+public: /// @todo Make private:
+    /// First HEdge in this leaf.
+    HEdge *hedge;
+
+    /// @ref bspLeafFlags.
+    int flags;
+
+    /// Unique. Set when saving the BSP.
+    uint index;
+
+    /// Frame number of last R_AddSprites.
+    int addSpriteCount;
+
+    int validCount;
+
+    /// Number of HEdge's in this leaf.
+    uint hedgeCount;
+
     Sector *sector;
-    struct polyobj_s*   polyObj; /// First polyobj in this leaf. Can be @c NULL.
-    HEdge *fanBase; /// HEdge whose vertex to use as the base for a trifan. If @c NULL then midPoint is used instead.
-    struct shadowlink_s* shadows;
-    AABoxd              aaBox; /// HEdge Vertex bounding box in the map coordinate space.
-    coord_t             midPoint[2]; /// Center of vertices.
-    coord_t             worldGridOffset[2]; /// Offset to align the top left of materials in the built geometry to the map coordinate space grid.
-    struct biassurface_s** bsuf; /// [sector->planeCount] size.
-    unsigned int        reverb[NUM_REVERB_DATA];
+
+    /// First polyobj in this leaf. Can be @c NULL.
+    struct polyobj_s *polyObj;
+
+    /// HEdge whose vertex to use as the base for a trifan. If @c NULL then midPoint is used instead.
+    HEdge *fanBase;
+
+    struct shadowlink_s *shadows;
+
+    /// Vertex bounding box in the map coordinate space.
+    AABoxd aaBox;
+
+    /// Center of vertices.
+    coord_t midPoint[2];
+
+    /// Offset to align the top left of materials in the built geometry to the map coordinate space grid.
+    coord_t worldGridOffset[2];
+
+    /// [sector->planeCount] size.
+    struct biassurface_s **bsuf;
+
+    uint reverb[NUM_REVERB_DATA];
 
 public:
     BspLeaf();
     ~BspLeaf();
+
+    /**
+     * Retrieve the bias surface for specified geometry @a groupId
+     *
+     * @param groupId  Geometry group identifier for the bias surface.
+     */
+    biassurface_t &biasSurfaceForGeometryGroup(uint groupId);
+
+    /**
+     * Update the BspLeaf's map space axis-aligned bounding box to encompass
+     * the points defined by it's vertices.
+     */
+    void updateAABox();
+
+    /**
+     * Update the mid point in the map coordinate space.
+     *
+     * @pre Axis-aligned bounding box must have been initialized.
+     */
+    void updateMidPoint();
+
+    /**
+     * Update the world grid offset.
+     *
+     * @pre Axis-aligned bounding box must have been initialized.
+     */
+    void updateWorldGridOffset();
+
+    /**
+     * Get a property value, selected by DMU_* name.
+     *
+     * @param args  Property arguments.
+     * @return  Always @c 0 (can be used as an iterator).
+     */
+    int property(setargs_t &args) const;
+
+    /**
+     * Update a property value, selected by DMU_* name.
+     *
+     * @param args  Property arguments.
+     * @return  Always @c 0 (can be used as an iterator).
+     */
+    int setProperty(setargs_t const &args);
 };
-
-BspLeaf* BspLeaf_New(void);
-
-void BspLeaf_Delete(BspLeaf* bspLeaf);
-
-biassurface_t* BspLeaf_BiasSurfaceForGeometryGroup(BspLeaf* bspLeaf, uint groupId);
-
-/**
- * Update the BspLeaf's map space axis-aligned bounding box to encompass
- * the points defined by it's vertices.
- *
- * @param bspLeaf  BspLeaf instance.
- * @return  This BspLeaf instance, for convenience.
- */
-BspLeaf* BspLeaf_UpdateAABox(BspLeaf* bspLeaf);
-
-/**
- * Update the mid point in the map coordinate space.
- *
- * @pre Axis-aligned bounding box must have been initialized.
- *
- * @param bspLeaf  BspLeaf instance.
- * @return  This BspLeaf instance, for convenience.
- */
-BspLeaf* BspLeaf_UpdateMidPoint(BspLeaf* bspLeaf);
-
-/**
- * Update the world grid offset.
- *
- * @pre Axis-aligned bounding box must have been initialized.
- *
- * @param bspLeaf  BspLeaf instance.
- */
-BspLeaf* BspLeaf_UpdateWorldGridOffset(BspLeaf* bspLeaf);
-
-/**
- * Get a property value, selected by DMU_* name.
- *
- * @param bspLeaf  BspLeaf instance.
- * @param args  Property arguments.
- * @return  Always @c 0 (can be used as an iterator).
- */
-int BspLeaf_GetProperty(const BspLeaf* bspLeaf, setargs_t* args);
-
-/**
- * Update a property value, selected by DMU_* name.
- *
- * @param bspLeaf  BspLeaf instance.
- * @param args  Property arguments.
- * @return  Always @c 0 (can be used as an iterator).
- */
-int BspLeaf_SetProperty(BspLeaf* bspLeaf, const setargs_t* args);
 
 #endif // LIBDENG_MAP_BSPLEAF

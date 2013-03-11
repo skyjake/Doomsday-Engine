@@ -2754,7 +2754,7 @@ static void Rend_RenderPlanes()
         Rend_RenderPlane(plane->type(), plane->visHeight(), suf->tangent, suf->bitangent, suf->normal,
             mat, suf->rgba, suf->blendMode, texOffset, texScale,
             isSkyMasked, addDynLights, (!devRendSkyMode && i == Plane::Floor),
-            BspLeaf_BiasSurfaceForGeometryGroup(leaf, (uint)plane->inSectorIndex()), plane->inSectorIndex(),
+            &leaf->biasSurfaceForGeometryGroup(plane->inSectorIndex()), plane->inSectorIndex(),
             texMode, clipBackFacing);
     }
 }

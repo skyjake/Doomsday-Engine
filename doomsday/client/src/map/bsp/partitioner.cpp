@@ -1387,7 +1387,7 @@ struct Partitioner::Instance
             }
 #endif
 
-            if(!leaf) leaf = BspLeaf_New();
+            if(!leaf) leaf = new BspLeaf();
 
             // Link it into head of the leaf's list.
             hedge->next = leaf->hedge;

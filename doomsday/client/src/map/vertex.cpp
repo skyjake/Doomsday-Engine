@@ -103,7 +103,7 @@ int Vertex::property(setargs_t &args) const
     return false; // Continue iteration.
 }
 
-int Vertex::setProperty(setargs_t const & args)
+int Vertex::setProperty(setargs_t const &args)
 {
     /// @throw WritePropertyError  The requested property is not writable.
     throw WritePropertyError("Vertex::setProperty", QString("Property '%1' is not writable").arg(DMU_Str(args.prop)));
