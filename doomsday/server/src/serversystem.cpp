@@ -199,7 +199,7 @@ DENG2_PIMPL(ServerSystem)
 
         if(shellUsers.count())
         {
-            Con_Message("%i connected shell user%s.",
+            Con_Message("%i shell user%s.",
                         shellUsers.count(),
                         shellUsers.count() == 1? "" : "s");
         }
@@ -327,7 +327,8 @@ void ServerSystem::userDestroyed()
 
     d->users.remove(u->id());
 
-    LOG_DEBUG("%i remote users remain") << d->users.size();
+    LOG_DEBUG("%i remote users and %i shell users remain")
+            << d->users.size() << d->shellUsers.count();
 }
 
 void ServerSystem::printStatus()
