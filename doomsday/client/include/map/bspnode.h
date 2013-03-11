@@ -1,9 +1,7 @@
-/**
- * @file bspnode.h
- * Map BSP node. @ingroup map
+/** @file bspnode.h Map BSP Node.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,57 +21,67 @@
 #ifndef LIBDENG_MAP_BSPNODE
 #define LIBDENG_MAP_BSPNODE
 
-#ifndef __cplusplus
-#  error "map/bspnode.h requires C++"
-#endif
-
-#include "MapElement"
+#include <de/Error>
+#include <de/aabox.h>
 #include "resource/r_data.h"
 #include "p_dmu.h"
+#include "MapElement"
 
+/**
+ * An infinite line of the form point + direction vectors.
+ *
+ * @ingroup map
+ */
+struct partition_t
+{
+    coord_t origin[2];
+    coord_t direction[2];
+};
+
+/// Child node identifiers:
 #define RIGHT                   0
 #define LEFT                    1
 
 /**
- * An infinite line of the form point + direction vectors.
- */
-typedef struct partition_s {
-    coord_t origin[2];
-    coord_t direction[2];
-} partition_t;
-
-/**
  * Node in the BSP tree. Children of a node can be either instances of BspNode
  * or BspLeaf.
+ *
+ * @ingroup map
  */
 class BspNode : public de::MapElement
 {
-public:
-    partition_t     partition;
-    AABoxd          aaBox[2];   ///< Bounding box for each child.
+public: /// @todo make private:
+    partition_t partition;
+
+    /// Bounding box for each child.
+    AABoxd aaBox[2];
+
     de::MapElement *children[2];
-    uint            index;      ///< Unique. Set when saving the BSP.
+
+    /// Unique. Set when saving the BSP.
+    uint index;
 
 public:
-    BspNode();
+    /**
+     * @param origin  2D point in the map coordinate space which describes the
+     *                origin of the half-plane.
+     * @param angle   2D vector in the map coordinate space which describes the
+     *                angle of the half-plane.
+     */
+    BspNode(coord_t const partitionOrigin[2], coord_t const partitionDirection[2]);
     ~BspNode();
+
+    void setChild(int left, de::MapElement *newChild);
+
+    inline void setRight(de::MapElement *newChild) { setChild(RIGHT, newChild); }
+
+    inline void setLeft(de::MapElement *newChild) { setChild(LEFT, newChild); }
+
+    void setChildBounds(int left, AABoxd *newBounds);
+
+    inline void setRightBounds(AABoxd *newBounds) { setChildBounds(RIGHT, newBounds); }
+
+    inline void setLeftBounds(AABoxd *newBounds) { setChildBounds(LEFT, newBounds); }
 };
-
-BspNode* BspNode_New(coord_t const partitionOrigin[2], coord_t const partitionDirection[2]);
-
-/**
- * @note Does nothing about child nodes!
- */
-void BspNode_Delete(BspNode* node);
-
-BspNode* BspNode_SetChild(BspNode* node, int left, de::MapElement* child);
-
-#define BspNode_SetRight(node, child) BspNode_SetChild((node), false, (child))
-#define BspNode_SetLeft(node,  child) BspNode_SetChild((node), true,  (child))
-
-BspNode* BspNode_SetChildBounds(BspNode* node, int left, AABoxd* bounds);
-
-#define BspNode_SetRightBounds(node, bounds) BspNode_SetChildBounds((node), false, (bounds))
-#define BspNode_SetLeftBounds(node,  bounds) BspNode_SetChildBounds((node), true,  (bounds))
 
 #endif // LIBDENG_MAP_BSPNODE

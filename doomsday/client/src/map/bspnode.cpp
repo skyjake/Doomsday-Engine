@@ -1,8 +1,7 @@
-/** @file bspnode.cpp BspNode implementation.
- * @ingroup map
+/** @file bspnode.cpp Map BSP Node.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,64 +19,52 @@
  */
 
 #include "de_base.h"
-#include "de_console.h"
-#include "de_play.h"
-#include "de_misc.h"
+#include <de/Log>
+#include <de/vector1.h>
 
-BspNode::BspNode() : de::MapElement(DMU_BSPNODE)
+#include "map/bspnode.h"
+
+using namespace de;
+
+BspNode::BspNode(coord_t const partitionOrigin[], coord_t const partitionDirection[])
+    : MapElement(DMU_BSPNODE)
 {
-    memset(&partition, 0, sizeof(partition));
-    memset(aaBox, 0, sizeof(aaBox));
-    memset(children, 0, sizeof(children));
+    std::memset(&partition, 0, sizeof(partition));
+    std::memset(aaBox,      0, sizeof(aaBox));
+    std::memset(children,   0, sizeof(children));
     index = 0;
+
+    V2d_Copy(partition.origin, partitionOrigin);
+    V2d_Copy(partition.direction, partitionDirection);
+
+    children[RIGHT] = NULL;
+    children[LEFT] = NULL;
+
+    setRightBounds(0);
+    setLeftBounds(0);
 }
 
 BspNode::~BspNode()
+{}
+
+void BspNode::setChild(int left, de::MapElement *newChild)
 {
+    DENG2_ASSERT(newChild != this);
+    children[left? LEFT:RIGHT] = newChild;
 }
 
-BspNode* BspNode_New(coord_t const partitionOrigin[], coord_t const partitionDirection[])
+void BspNode::setChildBounds(int left, AABoxd *newBounds)
 {
-    BspNode* node = new BspNode;
-
-    V2d_Copy(node->partition.origin, partitionOrigin);
-    V2d_Copy(node->partition.direction, partitionDirection);
-
-    node->children[RIGHT] = NULL;
-    node->children[LEFT] = NULL;
-
-    BspNode_SetRightBounds(node, NULL);
-    BspNode_SetLeftBounds(node, NULL);
-
-    return node;
-}
-
-void BspNode_Delete(BspNode* node)
-{
-    delete node;
-}
-
-BspNode* BspNode_SetChild(BspNode* node, int left, de::MapElement* child)
-{
-    DENG2_ASSERT(node && child != node);
-    node->children[left? LEFT:RIGHT] = child;
-    return node;
-}
-
-BspNode* BspNode_SetChildBounds(BspNode* node, int left, AABoxd* bounds)
-{
-    DENG2_ASSERT(node);
-    if(bounds)
+    if(newBounds)
     {
-        AABoxd* dst = &node->aaBox[left? LEFT:RIGHT];
-        V2d_CopyBox(dst->arvec2, bounds->arvec2);
+        AABoxd *dst = &aaBox[left? LEFT:RIGHT];
+        V2d_CopyBox(dst->arvec2, newBounds->arvec2);
     }
     else
     {
         // Clear.
-        AABoxd* dst = &node->aaBox[left? LEFT:RIGHT];
+        AABoxd *dst = &aaBox[left? LEFT:RIGHT];
         V2d_Set(dst->min, DDMAXFLOAT, DDMAXFLOAT);
         V2d_Set(dst->max, DDMINFLOAT, DDMINFLOAT);
     }
-    return node;
 }

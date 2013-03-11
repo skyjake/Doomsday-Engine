@@ -1420,23 +1420,23 @@ struct Partitioner::Instance
      *
      * @return  Newly created BspNode.
      */
-    BspNode* newBspNode(coord_t const origin[2], coord_t const angle[2],
-        AABoxd& rightBounds, AABoxd& leftBounds,
-        de::MapElement* rightChild = 0,
-        de::MapElement* leftChild = 0)
+    BspNode *newBspNode(coord_t const origin[2], coord_t const angle[2],
+        AABoxd &rightBounds, AABoxd &leftBounds,
+        de::MapElement *rightChild = 0,
+        de::MapElement *leftChild = 0)
     {
-        BspNode* node = BspNode_New(origin, angle);
+        BspNode *node = new BspNode(origin, angle);
         if(rightChild)
         {
-            BspNode_SetRight(node, rightChild);
+            node->setRight(rightChild);
         }
         if(leftChild)
         {
-            BspNode_SetLeft(node, leftChild);
+            node->setLeft(leftChild);
         }
 
-        BspNode_SetRightBounds(node, &rightBounds);
-        BspNode_SetLeftBounds(node,  &leftBounds);
+        node->setRightBounds(&rightBounds);
+        node->setLeftBounds(&leftBounds);
 
         // There is now one more BspNode.
         numNodes += 1;
