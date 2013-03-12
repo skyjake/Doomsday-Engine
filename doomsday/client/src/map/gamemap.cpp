@@ -1466,16 +1466,16 @@ BspLeaf *GameMap_BspLeafAtPoint(GameMap *map, coord_t const point_[])
     vec2d_t point; V2d_Set(point, point_? point_[VX] : 0,
                                   point_? point_[VY] : 0);
 
-    MapElement *node = map->bsp;
-    while(node->type() != DMU_BSPLEAF)
+    MapElement *bspElement = map->bsp;
+    while(bspElement->type() != DMU_BSPLEAF)
     {
-        BspNode const &bspNode = *node->castTo<BspNode>();
-        int side = bspNode.partition().pointOnSide(point);
+        BspNode const &node = *bspElement->castTo<BspNode>();
+        int side = node.partition().pointOnSide(point);
 
         // Decend to the next child subspace.
-        node = bspNode.childPtr(side);
+        bspElement = node.childPtr(side);
     }
-    return node->castTo<BspLeaf>();
+    return bspElement->castTo<BspLeaf>();
 }
 
 BspLeaf *GameMap_BspLeafAtPointXY(GameMap *map, coord_t x, coord_t y)
