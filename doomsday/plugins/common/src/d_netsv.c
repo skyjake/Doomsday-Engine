@@ -916,7 +916,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags, boolean rel
     int         i, k;
     Writer*     writer;
 
-    if(IS_CLIENT || !pl->plr->inGame ||
+    if(!IS_NETWORK_SERVER || !pl->plr->inGame ||
        (destPlrNum >= 0 && destPlrNum < MAXPLAYERS && !players[destPlrNum].plr->inGame))
         return;
 
