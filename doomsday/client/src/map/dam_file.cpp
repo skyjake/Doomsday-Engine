@@ -394,7 +394,7 @@ static void readSide(GameMap *map, uint idx)
     }
     s->flags = readShort();
 
-    SideDef_UpdateBaseOrigins(s);
+    s->updateBaseOrigins();
 }
 
 static void archiveSides(GameMap *map, boolean write)

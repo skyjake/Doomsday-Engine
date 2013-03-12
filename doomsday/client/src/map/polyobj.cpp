@@ -50,19 +50,18 @@ void Polyobj_UpdateAABox(Polyobj* po)
     }
 }
 
-void Polyobj_UpdateSurfaceTangents(Polyobj* po)
+void Polyobj_UpdateSurfaceTangents(Polyobj *po)
 {
-    LineDef** lineIter;
-    assert(po);
+    DENG2_ASSERT(po);
 
-    for(lineIter = po->lines; *lineIter; lineIter++)
+    for(LineDef **lineIter = po->lines; *lineIter; lineIter++)
     {
-        LineDef* line = *lineIter;
+        LineDef *line = *lineIter;
 
-        SideDef_UpdateSurfaceTangents(line->L_frontsidedef);
+        line->L_frontsidedef->updateSurfaceTangents();
         if(line->L_backsidedef)
         {
-            SideDef_UpdateSurfaceTangents(line->L_backsidedef);
+            line->L_backsidedef->updateSurfaceTangents();
         }
     }
 }

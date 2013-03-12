@@ -1,9 +1,7 @@
-/**
- * @file sidedef.h
- * Map SideDef. @ingroup map
+/** @file sidedef.h Map SideDef.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,16 +21,19 @@
 #ifndef LIBDENG_MAP_SIDEDEF
 #define LIBDENG_MAP_SIDEDEF
 
-#ifndef __cplusplus
-#  error "map/sidedef.h requires C++"
-#endif
-
-#include "MapElement"
+#include <de/Error>
 #include "resource/r_data.h"
 #include "map/p_dmu.h"
 #include "map/surface.h"
+#include "MapElement"
 
-// Helper macros for accessing sidedef top/middle/bottom section data elements.
+class LineDef;
+
+/*
+ * Helper macros for accessing sidedef top/middle/bottom section data elements:
+ */
+/// @addtogroup map
+///@{
 #define SW_surface(n)           sections[(n)]
 #define SW_surfaceflags(n)      SW_surface(n).flags
 #define SW_surfaceinflags(n)    SW_surface(n).inFlags
@@ -81,88 +82,110 @@
 #define SW_bottomoffset         SW_surfaceoffset(SS_BOTTOM)
 #define SW_bottomvisoffset      SW_surfacevisoffset(SS_BOTTOM)
 #define SW_bottomrgba           SW_surfacergba(SS_BOTTOM)
+///@}
 
-#define FRONT                   0
-#define BACK                    1
+/**
+ * FakeRadio shadow data.
+ * @ingroup map
+ */
+struct shadowcorner_t
+{
+    float corner;
+    Sector *proximity;
+    float pOffset;
+    float pHeight;
+};
 
-class LineDef;
+/**
+ * @ingroup map
+ */
+struct edgespan_t
+{
+    float length;
+    float shift;
+};
 
-typedef struct msidedef_s {
+/**
+ * @ingroup map
+ */
+struct msidedef_t
+{
     // Sidedef index. Always valid after loading & pruning.
     int index;
     int refCount;
-} msidedef_t;
-
-// FakeRadio shadow data.
-typedef struct shadowcorner_s {
-    float           corner;
-    Sector *proximity;
-    float           pOffset;
-    float           pHeight;
-} shadowcorner_t;
-
-typedef struct edgespan_s {
-    float           length;
-    float           shift;
-} edgespan_t;
+};
 
 /**
  * @attention SideDef is in the process of being replaced by lineside_t. All
  * data/values which concern the geometry of surfaces should be relocated to
  * lineside_t. There is no need to model the side of map's line as an object
  * in Doomsday when a flag would suffice. -ds
+ *
+ * @ingroup map
  */
 class SideDef : public de::MapElement
 {
 public:
-    Surface             sections[3];
-    LineDef *           line;
-    short               flags;
-    msidedef_t          buildData;
-    int                 fakeRadioUpdateCount; // frame number of last update
-    shadowcorner_t      topCorners[2];
-    shadowcorner_t      bottomCorners[2];
-    shadowcorner_t      sideCorners[2];
-    edgespan_t          spans[2];      // [left, right]
+    /// The referenced property does not exist. @ingroup errors
+    DENG2_ERROR(UnknownPropertyError);
+
+    /// The referenced property is not writeable. @ingroup errors
+    DENG2_ERROR(WritePropertyError);
+
+public:
+    Surface sections[3];
+
+    LineDef *line;
+
+    short flags;
+
+    msidedef_t buildData;
+
+    /// Frame number of last update
+    int fakeRadioUpdateCount;
+
+    shadowcorner_t topCorners[2];
+
+    shadowcorner_t bottomCorners[2];
+
+    shadowcorner_t sideCorners[2];
+
+    /// [left, right]
+    edgespan_t spans[2];
 
 public:
     SideDef();
+    ~SideDef();
+
+    /**
+     * Update the side's map space surface base origins according to the points
+     * defined by the associated LineDef's vertices and the plane heights of the
+     * Sector on this side. If no LineDef is presently associated this is a no-op.
+     */
+    void updateBaseOrigins();
+
+    /**
+     * Update the side's map space surface tangents according to the points
+     * defined by the associated LineDef's vertices. If no LineDef is presently
+     * associated this is a no-op.
+     */
+    void updateSurfaceTangents();
+
+    /**
+     * Get a property value, selected by DMU_* name.
+     *
+     * @param args  Property arguments.
+     * @return  Always @c 0 (can be used as an iterator).
+     */
+    int property(setargs_t &args) const;
+
+    /**
+     * Update a property value, selected by DMU_* name.
+     *
+     * @param args  Property arguments.
+     * @return  Always @c 0 (can be used as an iterator).
+     */
+    int setProperty(setargs_t const &args);
 };
-
-/**
- * Update the SideDef's map space surface base origins according to the points
- * defined by the associated LineDef's vertices and the plane heights of the
- * Sector on this side. If no LineDef is presently associated this is a no-op.
- *
- * @param side  SideDef instance.
- */
-void SideDef_UpdateBaseOrigins(SideDef* side);
-
-/**
- * Update the SideDef's map space surface tangents according to the points
- * defined by the associated LineDef's vertices. If no LineDef is presently
- * associated this is a no-op.
- *
- * @param sideDef  SideDef instance.
- */
-void SideDef_UpdateSurfaceTangents(SideDef* sideDef);
-
-/**
- * Get a property value, selected by DMU_* name.
- *
- * @param sideDef  SideDef instance.
- * @param args  Property arguments.
- * @return  Always @c 0 (can be used as an iterator).
- */
-int SideDef_GetProperty(const SideDef* sideDef, setargs_t* args);
-
-/**
- * Update a property value, selected by DMU_* name.
- *
- * @param sideDef  SideDef instance.
- * @param args  Property arguments.
- * @return  Always @c 0 (can be used as an iterator).
- */
-int SideDef_SetProperty(SideDef* sideDef, const setargs_t* args);
 
 #endif // LIBDENG_MAP_SIDEDEF

@@ -73,6 +73,10 @@ class HEdge;
 #define LF_POLYOBJ              0x1 ///< Line is part of a polyobject.
 #define LF_BSPWINDOW            0x2 ///< Line produced a BSP window. @todo Refactor away.
 
+// Logical sides:
+#define FRONT                   0
+#define BACK                    1
+
 /**
  * @defgroup sideSectionFlags  Side Section Flags
  * @ingroup map

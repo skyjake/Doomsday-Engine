@@ -702,16 +702,16 @@ static void chainSectorBases(GameMap* map)
     }
 }
 
-static void finishSideDefs(GameMap* map)
+static void finishSideDefs(GameMap *map)
 {
     DENG_ASSERT(map);
 
     // Calculate the tangent space surface vectors.
     for(uint i = 0; i < map->sideDefCount(); ++i)
     {
-        SideDef* side = &map->sideDefs[i];
-        SideDef_UpdateSurfaceTangents(side);
-        SideDef_UpdateBaseOrigins(side);
+        SideDef &side = map->sideDefs[i];
+        side.updateSurfaceTangents();
+        side.updateBaseOrigins();
     }
 }
 

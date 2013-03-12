@@ -1030,7 +1030,7 @@ static int setProperty(void *ptr, void *context)
         break;
 
     case DMU_SIDEDEF:
-        SideDef_SetProperty(elem->castTo<SideDef>(), args);
+        elem->castTo<SideDef>()->setProperty(*args);
         break;
 
     case DMU_BSPLEAF:
@@ -1524,7 +1524,7 @@ static int getProperty(void *ptr, void *context)
         break;
 
     case DMU_SIDEDEF:
-        SideDef_GetProperty(elem->castTo<SideDef>(), args);
+        elem->castTo<SideDef>()->property(*args);
         break;
 
     case DMU_BSPLEAF:
