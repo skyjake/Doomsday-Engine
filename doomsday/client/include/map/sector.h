@@ -1,9 +1,7 @@
-/**
- * @file sector.h
- * Map Sector. @ingroup map
+/** @file sector.h Map Sector.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,17 +21,22 @@
 #ifndef LIBDENG_MAP_SECTOR
 #define LIBDENG_MAP_SECTOR
 
-#ifndef __cplusplus
-#  error "map/sector.h requires C++"
-#endif
-
-#include "MapElement"
+#include <QList>
+#include <de/aabox.h>
+#include <de/Error>
 #include "map/plane.h"
 #include "p_mapdata.h"
 #include "p_dmu.h"
-#include <QList>
+#include "MapElement"
 
-// Helper macros for accessing sector floor/ceiling plane data elements.
+class BspLeaf;
+class LineDef;
+
+/*
+ * Helper macros for accessing the Planes of a Sector:
+ */
+/// @addtogroup map
+///@{
 #define SP_plane(n)             planes[(n)]
 
 #define SP_planesurface(n)      SP_plane(n)->surface()
@@ -71,10 +74,7 @@
 #define SP_floortarget          SP_planetarget(Plane::Floor)
 #define SP_floorspeed           SP_planespeed(Plane::Floor)
 #define SP_floorvisheight       SP_planevisheight(Plane::Floor)
-
-#define S_skyfix(n)             skyFix[(n)]
-#define S_floorskyfix           S_skyfix(Plane::Floor)
-#define S_ceilskyfix            S_skyfix(Plane::Ceiling)
+///@}
 
 // Sector frame flags
 #define SIF_VISIBLE         0x1     // Sector is visible on this frame.
@@ -82,40 +82,78 @@
 #define SIF_LIGHT_CHANGED   0x2
 
 typedef struct msector_s {
-    // Sector index. Always valid after loading & pruning.
+    /// Sector index. Always valid after loading & pruning.
     int index;
     int	refCount;
 } msector_t;
 
-class Plane;
-
+/**
+ * Map sector.
+ *
+ * @ingroup map
+ */
 class Sector : public de::MapElement
 {
 public:
+    /// The referenced property does not exist. @ingroup errors
+    DENG2_ERROR(UnknownPropertyError);
+
+    /// The referenced property is not writeable. @ingroup errors
+    DENG2_ERROR(WritePropertyError);
+
+public: /// @todo Make private:
     typedef QList<Plane *> Planes;
 
-    int                 frameFlags;
-    int                 validCount;    // if == validCount, already checked.
-    AABoxd              aaBox;         // Bounding box for the sector.
-    coord_t             roughArea;    // Rough approximation of sector area.
-    float               lightLevel;
-    float               oldLightLevel;
-    float               rgb[3];
-    float               oldRGB[3];
-    struct mobj_s*      mobjList;      // List of mobjs in the sector.
-    unsigned int        lineDefCount;
-    LineDef**  lineDefs;      // [lineDefCount+1] size.
-    unsigned int        bspLeafCount;
-    BspLeaf**  bspLeafs;     // [bspLeafCount+1] size.
-    unsigned int        numReverbBspLeafAttributors;
-    BspLeaf**  reverbBspLeafs;  // [numReverbBspLeafAttributors] size.
-    ddmobj_base_t       base;
-    Planes              planes;
-    unsigned int        blockCount;    // Number of gridblocks in the sector.
-    unsigned int        changedBlockCount; // Number of blocks to mark changed.
-    unsigned short*     blocks;        // Light grid block indices.
-    float               reverb[NUM_REVERB_DATA];
-    msector_t           buildData;
+    int frameFlags;
+
+    /// if == validCount, already checked.
+    int validCount;
+
+    /// Bounding box for the sector.
+    AABoxd aaBox;
+
+    /// Rough approximation of sector area.
+    coord_t roughArea;
+
+    float lightLevel;
+
+    float oldLightLevel;
+
+    float rgb[3];
+
+    float oldRGB[3];
+
+    /// List of mobjs in the sector.
+    struct mobj_s *mobjList;
+
+    /// [lineDefCount+1] size.
+    LineDef **lineDefs;
+    uint lineDefCount;
+
+    /// [bspLeafCount+1] size.
+    BspLeaf **bspLeafs;
+    uint bspLeafCount;
+
+    /// [numReverbBspLeafAttributors] size.
+    BspLeaf **reverbBspLeafs;
+    uint numReverbBspLeafAttributors;
+
+    ddmobj_base_t base;
+
+    Planes planes;
+
+    /// Number of gridblocks in the sector.
+    uint blockCount;
+
+    /// Number of blocks to mark changed.
+    uint changedBlockCount;
+
+    /// Light grid block indices.
+    ushort *blocks;
+
+    float reverb[NUM_REVERB_DATA];
+
+    msector_t buildData;
 
 public:
     Sector();    
@@ -141,51 +179,44 @@ public:
 
     /// @copydoc ceiling()
     inline Plane const &ceiling() const { return *planes[Plane::Ceiling]; }
+
+    /**
+     * Update the sector's map space axis-aligned bounding box to encompass
+     * the points defined by it's LineDefs' vertexes.
+     *
+     * @pre LineDef list must have been initialized.
+     */
+    void updateAABox();
+
+    /**
+     * Update the sector's rough area approximation.
+     *
+     * @pre Axis-aligned bounding box must have been initialized.
+     */
+    void updateArea();
+
+    /**
+     * Update the origin of the sector according to the point defined by the
+     * center of the sector's axis-aligned bounding box (which must be
+     * initialized before calling).
+     */
+    void updateBaseOrigin();
+
+    /**
+     * Get a property value, selected by DMU_* name.
+     *
+     * @param args  Property arguments.
+     * @return  Always @c 0 (can be used as an iterator).
+     */
+    int property(setargs_t &args) const;
+
+    /**
+     * Update a property value, selected by DMU_* name.
+     *
+     * @param args  Property arguments.
+     * @return  Always @c 0 (can be used as an iterator).
+     */
+    int setProperty(setargs_t const &args);
 };
-
-/**
- * Update the Sector's map space axis-aligned bounding box to encompass the points
- * defined by it's LineDefs' vertices.
- *
- * @pre LineDef list must have been initialized.
- *
- * @param sector  Sector instance.
- */
-void Sector_UpdateAABox(Sector* sector);
-
-/**
- * Update the Sector's rough area approximation.
- *
- * @pre Axis-aligned bounding box must have been initialized.
- *
- * @param sector  Sector instance.
- */
-void Sector_UpdateArea(Sector* sector);
-
-/**
- * Update the origin of the sector according to the point defined by the center of
- * the sector's axis-aligned bounding box (which must be initialized before calling).
- *
- * @param sector  Sector instance.
- */
-void Sector_UpdateBaseOrigin(Sector *sector);
-
-/**
- * Get a property value, selected by DMU_* name.
- *
- * @param sector  Sector instance.
- * @param args  Property arguments.
- * @return  Always @c 0 (can be used as an iterator).
- */
-int Sector_GetProperty(const Sector* sector, setargs_t* args);
-
-/**
- * Update a property value, selected by DMU_* name.
- *
- * @param sector  Sector instance.
- * @param args  Property arguments.
- * @return  Always @c 0 (can be used as an iterator).
- */
-int Sector_SetProperty(Sector* sector, const setargs_t* args);
 
 #endif // LIBDENG_MAP_SECTOR

@@ -537,7 +537,7 @@ static void readSector(GameMap *map, uint idx)
     s->aaBox.maxX = readFloat();
     s->aaBox.maxY = readFloat();
 
-    Sector_UpdateBaseOrigin(s);
+    s->updateBaseOrigin();
     for(i = 0; i < numPlanes; ++i)
     {
         Plane *pln = s->planes[i];

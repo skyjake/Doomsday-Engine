@@ -300,7 +300,7 @@ static boolean calcBspLeafReverb(BspLeaf* bspLeaf)
     return true;
 }
 
-static void Sector_CalculateReverb(Sector* sec)
+static void calculateSectorReverb(Sector *sec)
 {
     if(!sec || !sec->lineDefCount) return;
 
@@ -392,7 +392,7 @@ void S_UpdateReverbForSector(Sector* sec)
     // If update has been requested for this sector, calculate it now.
     if(reverbUpdateRequested.find(sec) != reverbUpdateRequested.end())
     {
-        Sector_CalculateReverb(sec);
+        calculateSectorReverb(sec);
         reverbUpdateRequested.erase(sec);
     }
 }

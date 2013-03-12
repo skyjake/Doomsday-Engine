@@ -1491,7 +1491,7 @@ boolean R_UpdateSector(Sector *sec, boolean forceUpdate)
 
     if(forceUpdate || planeChanged)
     {
-        Sector_UpdateBaseOrigin(sec);
+        sec->updateBaseOrigin();
         R_UpdateLinedefsOfSector(sec);
         S_MarkSectorReverbDirty(sec);
         changed = true;

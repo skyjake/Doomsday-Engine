@@ -1038,7 +1038,7 @@ static int setProperty(void *ptr, void *context)
         break;
 
     case DMU_SECTOR:
-        Sector_SetProperty(elem->castTo<Sector>(), args);
+        elem->castTo<Sector>()->setProperty(*args);
         break;
 
     case DMU_MATERIAL:
@@ -1520,7 +1520,7 @@ static int getProperty(void *ptr, void *context)
         break;
 
     case DMU_SECTOR:
-        Sector_GetProperty(elem->castTo<Sector>(), args);
+        elem->castTo<Sector>()->property(*args);
         break;
 
     case DMU_SIDEDEF:

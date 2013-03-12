@@ -615,26 +615,26 @@ static void buildSectorLineLists(GameMap* map)
     M_Free(sectorLineLinks);
 }
 
-static void finishSectors(GameMap* map)
+static void finishSectors(GameMap *map)
 {
     DENG_ASSERT(map);
 
     for(uint i = 0; i < map->sectorCount(); ++i)
     {
-        Sector* sec = &map->sectors[i];
+        Sector &sec = map->sectors[i];
 
-        Sector_UpdateAABox(sec);
-        Sector_UpdateArea(sec);
-        Sector_UpdateBaseOrigin(sec);
+        sec.updateAABox();
+        sec.updateArea();
+        sec.updateBaseOrigin();
 
         // Set the position of the sound origin for all plane sound origins.
         // Set target heights for all planes.
-        for(uint k = 0; k < sec->planeCount(); ++k)
+        for(uint k = 0; k < sec.planeCount(); ++k)
         {
-            Plane *pln = sec->planes[k];
+            Plane &pln = *sec.planes[k];
 
-            pln->surface().updateBaseOrigin();
-            pln->_targetHeight = pln->_height;
+            pln.surface().updateBaseOrigin();
+            pln._targetHeight = pln._height;
         }
     }
 }
