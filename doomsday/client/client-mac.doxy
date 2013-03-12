@@ -12,4 +12,5 @@ EXCLUDE             = include/windows src/windows
 MACRO_EXPANSION     = YES
 PREDEFINED          = __DOOMSDAY__ __CLIENT__ UNIX MACOSX __cplusplus "C_DECL=" "GL_CALL=" \
                       "DENG2_PIMPL(ClassName)=typedef ClassName Public; struct ClassName::Instance : public de::Private<ClassName>" \
+                      "DENG2_PIMPL_NOREF(C)=struct C::Instance : public de::IPrivate" \
                       "DENG2_PRIVATE(Var)=struct Instance; Instance *Var;"
