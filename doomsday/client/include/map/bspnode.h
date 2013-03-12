@@ -87,6 +87,10 @@ public:
  * Node in the BSP tree. Children of a node can be either instances of BspNode
  * or BspLeaf.
  *
+ * @todo There is a missing abstraction here. BSP tree elements should be derived
+ *       from a common base class, thereby enforcing which objects can be linked
+ *       into the tree. -ds
+ *
  * @ingroup map
  */
 class BspNode : public de::MapElement
@@ -98,9 +102,10 @@ public:
 public: /// @todo make private:
     Partition _partition;
 
-    /// Bounding box for each child.
+    /// Bounding box for each child subspace [Right, Left].
     AABoxd _aaBox[2];
 
+    /// Child map elements [Right, Left].
     de::MapElement *_children[2];
 
     /// Unique. Set when saving the BSP.
@@ -117,7 +122,7 @@ public:
     ~BspNode();
 
     /**
-     * Returns the partition_t for the BSP node.
+     * Returns the Partition for the BSP node.
      */
     Partition const &partition() const;
 
@@ -148,7 +153,7 @@ public:
     inline bool hasRight() const { return hasChild(RIGHT); }
 
     /**
-     * Returns @c true iff a Light child element is configured for the BSP node.
+     * Returns @c true iff a Left child element is configured for the BSP node.
      */
     inline bool hasLeft() const { return hasChild(LEFT); }
 
