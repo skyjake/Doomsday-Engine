@@ -155,8 +155,8 @@ macx {
         doPostLink("install_name_tool -change $$(QTDIR)/lib/$$1 @executable_path/../Frameworks/$$1 libdeng2.2.dylib")
     }
     doPostLink("install_name_tool -id @executable_path/../Frameworks/libdeng2.2.dylib libdeng2.2.dylib")
-    fixInstallName("QtCore.framework/Versions/4/QtCore")
-    fixInstallName("QtNetwork.framework/Versions/4/QtNetwork")
+    fixInstallName("QtCore.framework/Versions/$$QT_MAJOR_VERSION/QtCore")
+    fixInstallName("QtNetwork.framework/Versions/$$QT_MAJOR_VERSION/QtNetwork")
 
     # Update the library included in the main app bundle.
     doPostLink("mkdir -p ../client/Doomsday.app/Contents/Frameworks")

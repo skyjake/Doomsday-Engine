@@ -373,8 +373,13 @@ DENG2_PIMPL(Updater)
 
         de::String volName = "Doomsday Engine " + latestVersion.base();
 
+#ifdef DENG2_QT_5_0_OR_NEWER
+        QString scriptPath = QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation))
+                .filePath(INSTALL_SCRIPT_NAME);
+#else
         QString scriptPath = QDir(QDesktopServices::storageLocation(QDesktopServices::TempLocation))
-                             .filePath(INSTALL_SCRIPT_NAME);
+                .filePath(INSTALL_SCRIPT_NAME);
+#endif
         QFile file(scriptPath);
         if(file.open(QFile::WriteOnly | QFile::Truncate))
         {
@@ -581,5 +586,5 @@ void Updater_ShowSettings(void)
 void Updater_PrintLastUpdated(void)
 {
     Con_Message("Latest update check was made %s.",
-                UpdaterSettings().lastCheckAgo().toAscii().constData());
+                UpdaterSettings().lastCheckAgo().toLatin1().constData());
 }

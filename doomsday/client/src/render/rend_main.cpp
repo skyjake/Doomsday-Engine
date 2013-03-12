@@ -826,9 +826,9 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
             rvertex_t const &vtx = rvertices[i];
 
             float const xyz[3] = {
-                vtx.pos[VX] - p.texTL[VX],
-                vtx.pos[VY] - p.texTL[VY],
-                vtx.pos[VZ] - p.texTL[VZ]
+                vtx.pos[VX] - float(p.texTL[VX]),
+                vtx.pos[VY] - float(p.texTL[VY]),
+                vtx.pos[VZ] - float(p.texTL[VZ])
             };
 
             // Primary texture coordinates.

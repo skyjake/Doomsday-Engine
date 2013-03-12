@@ -148,7 +148,7 @@ Library* Library_New(const char* filePath)
     }
     catch(const de::Error& er)
     {
-        Str_Set(lastError, er.asText().toAscii().constData());
+        Str_Set(lastError, er.asText().toLatin1().constData());
         LOG_WARNING("Library_New: Error opening \"%s\": ") << filePath << er.asText();
         return 0;
     }
@@ -235,7 +235,7 @@ void* Library_Symbol(Library* lib, const char* symbolName)
     }
     catch(const de::Library::SymbolMissingError& er)
     {
-        Str_Set(lastError, er.asText().toAscii().constData());
+        Str_Set(lastError, er.asText().toLatin1().constData());
         return 0;
     }
 }

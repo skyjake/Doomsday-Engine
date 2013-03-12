@@ -104,7 +104,7 @@ DENG2_PIMPL(ServerLink)
             LOG_DEBUG("Discovered server at ") << svAddress;
 
             // Update with the correct address.
-            strncpy(svInfo.address, svAddress.host().toString().toAscii(),
+            strncpy(svInfo.address, svAddress.host().toString().toLatin1(),
                     sizeof(svInfo.address) - 1);
 
             discovered.insert(svAddress, svInfo);
@@ -173,7 +173,7 @@ DENG2_PIMPL(ServerLink)
 
             // Update the address in the info, which is missing because this
             // information didn't come from the master.
-            strncpy(info.address, sv.host().toString().toAscii(), sizeof(info.address) - 1);
+            strncpy(info.address, sv.host().toString().toLatin1(), sizeof(info.address) - 1);
 
             all.insert(sv, info);
         }

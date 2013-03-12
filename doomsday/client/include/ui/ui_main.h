@@ -105,7 +105,7 @@ typedef struct {
 typedef struct ui_object_s {
     ui_obtype_e type; /// Type of the object.
     int group;
-    int flags;
+    unsigned int flags;
     int relx, rely, relw, relh; /// Relative placement.
     char text[256]; /// Used in various ways.
     void (*drawer) (struct ui_object_s*);

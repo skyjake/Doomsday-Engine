@@ -328,7 +328,7 @@ struct ddwindow_s
             {
                 needShowFullscreen = !widget->isFullScreen();
 
-#if defined(WIN32) || defined(Q_WS_X11)
+#if defined(WIN32) || defined(Q_OS_LINUX)
                 if(widget->isFullScreen())
                 {
                     needShowFullscreen = false;

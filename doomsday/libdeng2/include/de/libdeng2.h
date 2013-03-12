@@ -329,7 +329,7 @@ struct Private : public IPrivate {
     Private(PublicType *i) : self(*i), thisPublic(i) {}
 };
 
-template <typename FromType, typename ToType>
+template <typename ToType, typename FromType>
 inline ToType function_cast(FromType ptr)
 {
     /**

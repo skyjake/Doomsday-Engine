@@ -166,7 +166,7 @@ int ReadToken()
 //===========================================================================
 void PrintBanner(void)
 {
-	printf("## Doomsday Texture Compiler "VERSION_STR" by Jaakko Keranen <jaakko.keranen@iki.fi>\n\n");
+    printf("## Doomsday Texture Compiler " VERSION_STR " by Jaakko Keranen <jaakko.keranen@iki.fi>\n\n");
 }
 
 //===========================================================================

@@ -9,7 +9,11 @@ win32 {
 }
 else:macx {
     # Mac OS X.
-    INCLUDEPATH += /Library/Frameworks/OpenGL.framework/Headers
+    deng_macx8_64bit {
+        INCLUDEPATH += /System/Library/Frameworks/OpenGL.framework/Headers
+    }
+    else: INCLUDEPATH += /Library/Frameworks/OpenGL.framework/Headers
+
     LIBS += -framework OpenGL
 }
 else {

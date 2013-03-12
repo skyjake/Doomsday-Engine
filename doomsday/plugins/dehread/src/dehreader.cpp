@@ -153,7 +153,7 @@ public:
         if(atEnd()) return;
 
         // Handle special characters in the input.
-        char ch = currentChar().toAscii();
+        char ch = currentChar().toLatin1();
         switch(ch)
         {
         case '\0':
@@ -174,7 +174,7 @@ public:
     QChar currentChar()
     {
         if(atEnd()) return 0;
-        return QChar::fromAscii(patch.at(pos));
+        return QChar::fromLatin1(patch.at(pos));
     }
 
     void skipToEOL()
@@ -202,7 +202,7 @@ public:
             }
 
             // Perform encoding conversion for this line and move on.
-            line = String::fromAscii(rawLine);
+            line = QString::fromLatin1(rawLine);
             if(currentChar() == '\n') advance();
             return;
         }

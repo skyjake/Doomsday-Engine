@@ -37,7 +37,11 @@ using namespace de;
 
 static QString defaultLocationName()
 {
+#ifdef DENG2_QT_5_0_OR_NEWER
+    QString name = QStandardPaths::displayName(QStandardPaths::TempLocation);
+#else
     QString name = QDesktopServices::displayName(QDesktopServices::TempLocation);
+#endif
     if(name.isEmpty())
     {
         name = "Temporary Files";

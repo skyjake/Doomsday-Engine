@@ -53,12 +53,14 @@ include(versions.pri)
 # Macros ---------------------------------------------------------------------
 
 defineTest(echo) {
-    !win32 {
-        message($$1)
-    } else {
-        # We don't want to get the printed messages after everything else,
-        # so print to stdout.
-        system(echo $$1)
+    deng_verbosebuildconfig {
+        !win32 {
+            message($$1)
+        } else {
+            # We don't want to get the printed messages after everything else,
+            # so print to stdout.
+            system(echo $$1)
+        }
     }
 }
 
@@ -91,6 +93,9 @@ macx {
         # 2: library name
         # 3: path to Frameworks/
         doPostLink("install_name_tool -change $$2 @executable_path/$$3/Frameworks/$$2 $$1")
+
+        # Also try the Qt frameworks directory.
+        doPostLink("install_name_tool -change $$[QT_INSTALL_LIBS]/$$2 @executable_path/$$3/Frameworks/$$2 $$1")
     }
     defineTest(fixPluginInstallId) {
         # 1: target name
@@ -110,6 +115,9 @@ CONFIG(debug, debug|release) {
     !win32: echo(Release build.)
     DEFINES += NDEBUG
 }
+
+# Check for Qt 5.
+greaterThan(QT_MAJOR_VERSION, 4): CONFIG += deng_qt5
 
 # Check for a 64-bit compiler.
 contains(QMAKE_HOST.arch, x86_64) {

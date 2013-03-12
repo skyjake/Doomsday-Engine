@@ -87,7 +87,7 @@ void P_SetCurrentMap(GameMap* map)
 DENG_EXTERN_C boolean P_MapExists(char const *uriCString)
 {
     de::Uri uri = de::Uri(uriCString, RC_NULL);
-    lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toAscii().constData(), true/*quiet please*/);
+    lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toLatin1(), true/*quiet please*/);
     return (lumpNum >= 0);
 }
 
@@ -95,7 +95,7 @@ DENG_EXTERN_C boolean P_MapExists(char const *uriCString)
 DENG_EXTERN_C boolean P_MapIsCustom(char const *uriCString)
 {
     de::Uri uri = de::Uri(uriCString, RC_NULL);
-    lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toAscii().constData(), true/*quiet please*/);
+    lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toLatin1(), true/*quiet please*/);
     return (lumpNum >= 0 && W_LumpIsCustom(lumpNum));
 }
 
@@ -103,7 +103,7 @@ DENG_EXTERN_C boolean P_MapIsCustom(char const *uriCString)
 DENG_EXTERN_C AutoStr *P_MapSourceFile(char const *uriCString)
 {
     de::Uri uri = de::Uri(uriCString, RC_NULL);
-    lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toAscii().constData(), true/*quiet please*/);
+    lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toLatin1(), true/*quiet please*/);
     if(lumpNum < 0) return AutoStr_NewStd();
     return W_LumpSourceFile(lumpNum);
 }

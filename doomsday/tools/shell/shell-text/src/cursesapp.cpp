@@ -337,7 +337,7 @@ DENG2_PIMPL(CursesApp)
                 default:
 #ifdef _DEBUG
                     if(key & KEY_CODE_YES)
-                        qDebug() << "CURSES" << QString("0%1").arg(key, 0, 8).toAscii().constData();
+                        qDebug() << "CURSES" << QString("0%1").arg(key, 0, 8).toLatin1().constData();
                     else
                         // This key code is ignored.
                         qDebug() << QString("%1").arg(key, 0, 16);
@@ -409,7 +409,7 @@ bool CursesApp::notify(QObject *receiver, QEvent *event)
     }
     catch(de::Error const &er)
     {
-        qDebug() << "Caught exception:" << er.asText().toAscii().constData();
+        qDebug() << "Caught exception:" << er.asText().toLatin1().constData();
     }
     return false;
 }

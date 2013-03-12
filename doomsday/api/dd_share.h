@@ -1102,7 +1102,7 @@ typedef struct ccmdtemplate_s {
     int (*execFunc) (byte src, int argc, char** argv);
 
     /// @ref consoleCommandFlags
-    int flags;
+    unsigned int flags;
 } ccmdtemplate_t;
 
 /// Helper macro for declaring console command functions. @ingroup console

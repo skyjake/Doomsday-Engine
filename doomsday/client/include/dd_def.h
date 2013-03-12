@@ -77,17 +77,17 @@ extern "C" {
 
 #define DOOMSDAY_VER_ID     DOOMSDAY_RELEASE_TYPE DOOMSDAY_VER_ID_64BIT DOOMSDAY_VER_ID_DEBUG DOOMSDAY_VER_ID_RANGECHECK DOOMSDAY_VER_ID_BUILD
 
-#define DOOMSDAY_VERSION_FULLTEXT     DOOMSDAY_VERSION_TEXT" ("DOOMSDAY_VER_ID") "__DATE__" "__TIME__
+#define DOOMSDAY_VERSION_FULLTEXT     DOOMSDAY_VERSION_TEXT " (" DOOMSDAY_VER_ID ") " __DATE__ " " __TIME__
 
 #define SAFEDIV(x,y)    (!(y) || !((x)/(y))? 1 : (x)/(y))
 #define ORDER(x,y,a,b)  ( (x)<(y)? ((a)=(x),(b)=(y)) : ((b)=(x),(a)=(y)) )
 #define LAST_CHAR(str)  (str[strlen(str) - 1])
 
 #ifdef _DEBUG
-#  define ASSERT_64BIT(p) {if(sizeof(p) != 8) Con_Error(#p" is not 64-bit in "__FILE__" at line %i.\n", __LINE__);}
-#  define ASSERT_NOT_64BIT(p) {if(sizeof(p) == 8) Con_Error(#p" is 64-bit in "__FILE__" at line %i.\n", __LINE__);}
-#  define ASSERT_32BIT(p) {if(sizeof(p) != 4) Con_Error(#p" is not 32-bit in "__FILE__" at line %i.\n", __LINE__);}
-#  define ASSERT_16BIT(p) {if(sizeof(p) != 2) Con_Error(#p" is not 16-bit in "__FILE__" at line %i.\n", __LINE__);}
+#  define ASSERT_64BIT(p) {if(sizeof(p) != 8) Con_Error(#p " is not 64-bit in " __FILE__ " at line %i.\n", __LINE__);}
+#  define ASSERT_NOT_64BIT(p) {if(sizeof(p) == 8) Con_Error(#p " is 64-bit in " __FILE__ " at line %i.\n", __LINE__);}
+#  define ASSERT_32BIT(p) {if(sizeof(p) != 4) Con_Error(#p " is not 32-bit in " __FILE__ " at line %i.\n", __LINE__);}
+#  define ASSERT_16BIT(p) {if(sizeof(p) != 2) Con_Error(#p " is not 16-bit in " __FILE__ " at line %i.\n", __LINE__);}
 #else
 #  define ASSERT_64BIT(p)
 #  define ASSERT_NOT_64BIT(p)
