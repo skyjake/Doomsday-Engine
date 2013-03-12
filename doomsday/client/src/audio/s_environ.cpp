@@ -218,7 +218,7 @@ static boolean calcBspLeafReverb(BspLeaf *bspLeaf)
 {
     DENG2_ASSERT(bspLeaf);
 
-    if(bspLeaf->hasSector() || isDedicated)
+    if(!bspLeaf->hasSector() || isDedicated)
     {
         bspLeaf->_reverb[SRD_SPACE] = bspLeaf->_reverb[SRD_VOLUME] =
             bspLeaf->_reverb[SRD_DECAY] = bspLeaf->_reverb[SRD_DAMPING] = 0;
