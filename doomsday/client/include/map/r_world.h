@@ -154,7 +154,7 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector* frontSec, Sector* b
  * @note Anything calling this is likely working at the wrong level (should work with
  *       hedges instead).
  */
-boolean R_MiddleMaterialCoversLineOpening(LineDef* line, int side, boolean ignoreOpacity);
+boolean R_MiddleMaterialCoversLineOpening(LineDef const *line, int side, boolean ignoreOpacity);
 #endif // __CLIENT__
 
 Plane*          R_NewPlaneForSector(Sector* sec);

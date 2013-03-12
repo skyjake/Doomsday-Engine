@@ -1026,7 +1026,7 @@ static int setProperty(void *ptr, void *context)
         break;
 
     case DMU_LINEDEF:
-        LineDef_SetProperty(elem->castTo<LineDef>(), args);
+        elem->castTo<LineDef>()->setProperty(*args);
         break;
 
     case DMU_SIDEDEF:
@@ -1508,7 +1508,7 @@ static int getProperty(void *ptr, void *context)
         break;
 
     case DMU_LINEDEF:
-        LineDef_GetProperty(elem->castTo<LineDef>(), args);
+        elem->castTo<LineDef>()->property(*args);
         break;
 
     case DMU_SURFACE:
@@ -2346,13 +2346,53 @@ DENG_EXTERN_C Polyobj* P_PolyobjByID(uint id);
 DENG_EXTERN_C Polyobj* P_PolyobjByTag(int tag);
 DENG_EXTERN_C void P_SetPolyobjCallback(void (*func) (struct mobj_s*, void*, void*));
 
-// linedef.cpp
-DENG_EXTERN_C int LineDef_BoxOnSide(LineDef* lineDef, const AABoxd* box);
-DENG_EXTERN_C int LineDef_BoxOnSide_FixedPrecision(LineDef* line, const AABoxd* box);
-DENG_EXTERN_C coord_t LineDef_PointDistance(LineDef* lineDef, coord_t const point[2], coord_t* offset);
-DENG_EXTERN_C coord_t LineDef_PointXYDistance(LineDef* lineDef, coord_t x, coord_t y, coord_t* offset);
-DENG_EXTERN_C coord_t LineDef_PointOnSide(const LineDef* lineDef, coord_t const point[2]);
-DENG_EXTERN_C coord_t LineDef_PointXYOnSide(const LineDef* lineDef, coord_t x, coord_t y);
+#undef LineDef_PointDistance
+DENG_EXTERN_C coord_t LineDef_PointDistance(LineDef *line, coord_t const point[2], coord_t *offset)
+{
+    DENG_ASSERT(line);
+    return line->pointDistance(point, offset);
+}
+
+#undef LineDef_PointXYDistance
+DENG_EXTERN_C coord_t LineDef_PointXYDistance(LineDef* line, coord_t x, coord_t y, coord_t* offset)
+{
+    DENG_ASSERT(line);
+    return line->pointDistance(x, y, offset);
+}
+
+#undef LineDef_PointOnSide
+DENG_EXTERN_C coord_t LineDef_PointOnSide(LineDef const *line, coord_t const point[2])
+{
+    DENG_ASSERT(line);
+    if(!point)
+    {
+        LOG_AS("LineDef_PointOnSide");
+        LOG_DEBUG("Invalid arguments, returning >0.");
+        return 1;
+    }
+    return line->pointOnSide(point);
+}
+
+#undef LineDef_PointXYOnSide
+DENG_EXTERN_C coord_t LineDef_PointXYOnSide(LineDef const *line, coord_t x, coord_t y)
+{
+    DENG_ASSERT(line);
+    return line->pointOnSide(x, y);
+}
+
+#undef LineDef_BoxOnSide
+DENG_EXTERN_C int LineDef_BoxOnSide(LineDef *line, AABoxd const *box)
+{
+    DENG_ASSERT(line);
+    return line->boxOnSide(box);
+}
+
+#undef LineDef_BoxOnSide_FixedPrecision
+DENG_EXTERN_C int LineDef_BoxOnSide_FixedPrecision(LineDef *line, AABoxd const *box)
+{
+    DENG_ASSERT(line);
+    return line->boxOnSide_FixedPrecision(box);
+}
 
 DENG_DECLARE_API(Map) =
 {

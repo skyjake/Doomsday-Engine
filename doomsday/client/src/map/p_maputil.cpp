@@ -257,9 +257,9 @@ typedef struct {
  * The given line might cross the mobj. If necessary, link the mobj into
  * the line's mobj link ring.
  */
-int PIT_LinkToLines(LineDef* ld, void* parameters)
+int PIT_LinkToLines(LineDef *ld, void *parameters)
 {
-    linelinker_data_t* p = reinterpret_cast<linelinker_data_t*>(parameters);
+    linelinker_data_t *p = reinterpret_cast<linelinker_data_t *>(parameters);
     DENG_ASSERT(p);
 
     // Do the bounding boxes intercept?
@@ -269,7 +269,7 @@ int PIT_LinkToLines(LineDef* ld, void* parameters)
        p->box.maxY <= ld->aaBox.minY) return false;
 
     // Line does not cross the mobj's bounding box?
-    if(LineDef_BoxOnSide(ld, &p->box)) return false;
+    if(ld->boxOnSide(&p->box)) return false;
 
     // One sided lines will not be linked to because a mobj can't legally cross one.
     if(!ld->L_frontsidedef || !ld->L_backsidedef) return false;
@@ -549,14 +549,14 @@ int PIT_AddLineDefIntercepts(LineDef* lineDef, void* /*parameters*/)
     }
     else
     {
-        s1 = LineDef_PointXYOnSide(lineDef, FIX2FLT(traceLOS->origin[VX]), FIX2FLT(traceLOS->origin[VY])) < 0;
-        s2 = LineDef_PointXYOnSide(lineDef, FIX2FLT(traceLOS->origin[VX] + traceLOS->direction[VX]),
-                                            FIX2FLT(traceLOS->origin[VY] + traceLOS->direction[VY])) < 0;
+        s1 = lineDef->pointOnSide(FIX2FLT(traceLOS->origin[VX]), FIX2FLT(traceLOS->origin[VY])) < 0;
+        s2 = lineDef->pointOnSide(FIX2FLT(traceLOS->origin[VX] + traceLOS->direction[VX]),
+                                  FIX2FLT(traceLOS->origin[VY] + traceLOS->direction[VY])) < 0;
     }
     if(s1 == s2) return false;
 
     // Calculate interception point.
-    LineDef_SetDivline(lineDef, &dl);
+    lineDef->setDivline(&dl);
     distance = FIX2FLT(Divline_Intersection(&dl, traceLOS));
     // On the correct side of the trace origin?
     if(!(distance < 0))

@@ -43,10 +43,8 @@ typedef struct losdata_s {
     coord_t to[3];
 } losdata_t;
 
-static boolean interceptLineDef(const LineDef* li, losdata_t* los, divline_t* dl)
+static boolean interceptLineDef(LineDef const *li, losdata_t *los, divline_t *dl)
 {
-    divline_t localDL, *dlPtr;
-
     // Try a quick, bounding-box rejection.
     if(li->aaBox.minX > los->aaBox.maxX ||
        li->aaBox.maxX < los->aaBox.minX ||
@@ -58,12 +56,13 @@ static boolean interceptLineDef(const LineDef* li, losdata_t* los, divline_t* dl
        Divline_PointOnSide(&los->trace, li->L_v2origin))
         return false; // Not crossed.
 
+    divline_t *dlPtr, localDL;
     if(dl)
         dlPtr = dl;
     else
         dlPtr = &localDL;
 
-    LineDef_SetDivline(li, dlPtr);
+    li->setDivline(dlPtr);
 
     if(Divline_PointXYOnSide(dlPtr, FIX2FLT(los->trace.origin[VX]), FIX2FLT(los->trace.origin[VY])) ==
        Divline_PointOnSide(dlPtr, los->to))
@@ -104,8 +103,8 @@ static boolean crossLineDef(const LineDef* li, byte side, losdata_t* los)
     if(noBack)
     {
         if((los->flags & LS_PASSLEFT) &&
-           LineDef_PointXYOnSide(li, FIX2FLT(los->trace.origin[VX]),
-                                     FIX2FLT(los->trace.origin[VY])) < 0)
+           li->pointOnSide(FIX2FLT(los->trace.origin[VX]),
+                           FIX2FLT(los->trace.origin[VY])) < 0)
             return true; // Ray does not intercept hedge from left to right.
 
         if(!(los->flags & (LS_PASSOVER | LS_PASSUNDER)))

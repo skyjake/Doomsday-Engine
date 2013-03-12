@@ -121,8 +121,8 @@ boolean Polyobj_Move(Polyobj* po, coord_t delta[2])
     lineIter = po->lines;
     for(i = 0; i < po->lineCount; ++i, lineIter++)
     {
-        LineDef* line = *lineIter;
-        LineDef_UpdateAABox(line);
+        LineDef *line = *lineIter;
+        line->updateAABox();
     }
     po->origin[VX] += delta[VX];
     po->origin[VY] += delta[VY];
@@ -164,8 +164,8 @@ boolean Polyobj_Move(Polyobj* po, coord_t delta[2])
         lineIter = po->lines;
         for(i = 0; i < po->lineCount; ++i, lineIter++)
         {
-            LineDef* line = *lineIter;
-            LineDef_UpdateAABox(line);
+            LineDef *line = *lineIter;
+            line->updateAABox();
         }
         po->origin[VX] -= delta[VX];
         po->origin[VY] -= delta[VY];
@@ -233,10 +233,10 @@ boolean Polyobj_Rotate(Polyobj* po, angle_t angle)
     lineIter = po->lines;
     for(i = 0; i < po->lineCount; ++i, lineIter++)
     {
-        LineDef* line = *lineIter;
+        LineDef *line = *lineIter;
 
-        LineDef_UpdateAABox(line);
-        LineDef_UpdateSlope(line);
+        line->updateAABox();
+        line->updateSlope();
         line->angle += ANGLE_TO_BANG(angle);
 
         // HEdge angle must be kept in sync.
@@ -263,10 +263,10 @@ boolean Polyobj_Rotate(Polyobj* po, angle_t angle)
         lineIter = po->lines;
         for(i = 0; i < po->lineCount; ++i, lineIter++)
         {
-            LineDef* line = *lineIter;
+            LineDef *line = *lineIter;
 
-            LineDef_UpdateAABox(line);
-            LineDef_UpdateSlope(line);
+            line->updateAABox();
+            line->updateSlope();
             line->angle -= ANGLE_TO_BANG(angle);
 
             // HEdge angle must be kept in sync.
@@ -292,12 +292,12 @@ typedef struct ptrmobjblockingparams_s {
     Polyobj* polyobj;
 } ptrmobjblockingparams_t;
 
-int PTR_checkMobjBlocking(mobj_t* mo, void* data)
+int PTR_checkMobjBlocking(mobj_t *mo, void *data)
 {
     if((mo->ddFlags & DDMF_SOLID) ||
        (mo->dPlayer && !(mo->dPlayer->flags & DDPF_CAMERA)))
     {
-        ptrmobjblockingparams_t* params = (ptrmobjblockingparams_t *) data;
+        ptrmobjblockingparams_t *params = (ptrmobjblockingparams_t *) data;
         AABoxd moBox;
 
         moBox.minX = mo->origin[VX] - mo->radius;
@@ -310,7 +310,7 @@ int PTR_checkMobjBlocking(mobj_t* mo, void* data)
              moBox.maxY <= params->line->aaBox.minY ||
              moBox.minY >= params->line->aaBox.maxY))
         {
-            if(!LineDef_BoxOnSide(params->line, &moBox))
+            if(!params->line->boxOnSide(&moBox))
             {
                 P_PolyobjCallback(mo, params->line, params->polyobj);
 

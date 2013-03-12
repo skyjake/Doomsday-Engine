@@ -769,8 +769,8 @@ int PIT_CheckLinePtc(LineDef *ld, void *parameters)
         return false;
 
     // Movement must cross the line.
-    if(LineDef_PointXYOnSide(ld, FIX2FLT(tmpx1), FIX2FLT(tmpy1)) < 0 ==
-       LineDef_PointXYOnSide(ld, FIX2FLT(tmpx2), FIX2FLT(tmpy2)) < 0)
+    if(ld->pointOnSide(FIX2FLT(tmpx1), FIX2FLT(tmpy1)) < 0 ==
+       ld->pointOnSide(FIX2FLT(tmpx2), FIX2FLT(tmpy2)) < 0)
         return false;
 
     /*
@@ -785,7 +785,7 @@ int PIT_CheckLinePtc(LineDef *ld, void *parameters)
     Sector *back  = ld->L_backsector;
 
     // Determine the opening we have here.
-    /// @todo Use LineDef_OpenRange()
+    /// @todo Use LineDef::openRange()
     fixed_t ceil;
     if(front->SP_ceilheight < back->SP_ceilheight)
         ceil = FLT2FIX(front->SP_ceilheight);

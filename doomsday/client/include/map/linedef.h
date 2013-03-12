@@ -1,9 +1,7 @@
-/**
- * @file linedef.h
- * Map LineDef. @ingroup map
+/** @file linedef.h Map LineDef.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,19 +21,24 @@
 #ifndef LIBDENG_MAP_LINEDEF
 #define LIBDENG_MAP_LINEDEF
 
-#ifndef __cplusplus
-#  error "map/linedef.h requires C++"
-#endif
-
 #include <de/binangle.h>
 #include <de/mathutil.h> // Divline
+#include <de/Error>
 #include "resource/r_data.h"
+#include "map/vertex.h"
 #include "p_mapdata.h"
 #include "p_dmu.h"
 #include "MapElement"
-#include "map/vertex.h"
 
-// Helper macros for accessing linedef data elements.
+class Sector;
+class SideDef;
+class HEdge;
+
+/*
+ * Helper macros for accessing linedef data elements:
+ */
+/// @addtogroup map
+///@{
 #define L_v(n)                  v[(n)? 1:0]
 #define L_vorigin(n)            v[(n)? 1:0]->origin()
 
@@ -60,6 +63,7 @@
 #define L_sector(n)             L_side(n).sector
 #define L_frontsector           L_sector(FRONT)
 #define L_backsector            L_sector(BACK)
+///@}
 
 // Is this line self-referencing (front sec == back sec)?
 #define LINE_SELFREF(l)         ((l)->L_frontsidedef && (l)->L_backsidedef && \
@@ -79,195 +83,212 @@
 #define SSF_TOP             0x4
 ///@}
 
-class Sector;
-class SideDef;
-class HEdge;
-
 typedef struct lineside_s {
-    Sector* sector; /// Sector on this side.
-    SideDef* sideDef; /// SideDef on this side.
-    HEdge* hedgeLeft;  /// Left-most HEdge on this side.
-    HEdge* hedgeRight; /// Right-most HEdge on this side.
-    unsigned short shadowVisFrame; /// Framecount of last time shadows were drawn on this side.
+    /// Sector on this side.
+    Sector *sector;
+
+    /// SideDef on this side.
+    SideDef *sideDef;
+
+    /// Left-most HEdge on this side.
+    HEdge *hedgeLeft;
+
+    /// Right-most HEdge on this side.
+    HEdge *hedgeRight;
+
+    /// Framecount of last time shadows were drawn on this side.
+    ushort shadowVisFrame;
 } lineside_t;
 
-class Vertex;
-
+/**
+ * Map line.
+ *
+ * @ingroup map
+ */
 class LineDef : public de::MapElement
 {
 public:
+    /// The referenced property does not exist. @ingroup errors
+    DENG2_ERROR(UnknownPropertyError);
+
+    /// The referenced property is not writeable. @ingroup errors
+    DENG2_ERROR(WritePropertyError);
+
+public: /// @todo make private:
     Vertex *v[2];
-    LineOwner *vo[2]; /// Links to vertex line owner nodes [left, right].
-    lineside_t          sides[2];
-    int                 flags; /// Public DDLF_* flags.
-    byte                inFlags; /// Internal LF_* flags.
-    slopetype_t         slopeType;
-    int                 validCount;
-    binangle_t          angle; /// Calculated from front side's normal.
-    coord_t             direction[2];
-    coord_t             length; /// Accurate length.
-    AABoxd              aaBox;
-    boolean             mapped[DDMAXPLAYERS]; /// Whether the line has been mapped by each player yet.
-    int                 origIndex; /// Original index in the archived map.
+
+    /// Links to vertex line owner nodes [left, right].
+    LineOwner *vo[2];
+
+    lineside_t sides[2];
+
+    /// Public DDLF_* flags.
+    int flags;
+
+    /// Internal LF_* flags.
+    byte inFlags;
+
+    slopetype_t slopeType;
+
+    int validCount;
+
+    /// Calculated from front side's normal.
+    binangle_t angle;
+
+    coord_t direction[2];
+
+    /// Accurate length.
+    coord_t length;
+
+    AABoxd aaBox;
+
+    /// Whether the line has been mapped by each player yet.
+    boolean mapped[DDMAXPLAYERS];
+
+    /// Original index in the archived map.
+    int origIndex;
 
 public:
-    LineDef() : de::MapElement(DMU_LINEDEF)
+    LineDef();
+    ~LineDef();
+
+    /**
+     * On which side of the line does the specified box lie?
+     *
+     * @param box   Bounding box.
+     *
+     * @return  @c <0= bbox is wholly on the left side.
+     *          @c  0= line intersects bbox.
+     *          @c >0= bbox wholly on the right side.
+     */
+    int boxOnSide(AABoxd const *box) const;
+
+    /**
+     * On which side of the line does the specified box lie? The test is
+     * carried out using fixed-point math for behavior compatible with
+     * vanilla DOOM. Note that this means there is a maximum size for both
+     * the bounding box and the line: neither can exceed the fixed-point
+     * 16.16 range (about 65k units).
+     *
+     * @param box  Bounding box.
+     *
+     * @return One of the following:
+     * - Negative: bbox is entirely on the left side.
+     * - Zero: line intersects bbox.
+     * - Positive: bbox isentirely on the right side.
+     */
+    int boxOnSide_FixedPrecision(AABoxd const *box) const;
+
+    /**
+     * @param offset  Returns the position of the nearest point along the line [0..1].
+     */
+    coord_t pointDistance(coord_t const point[2], coord_t *offset) const;
+
+    inline coord_t LineDef::pointDistance(coord_t x, coord_t y, coord_t *offset) const
     {
-        memset(v, 0, sizeof(v));
-        memset(vo, 0, sizeof(vo));
-        memset(sides, 0, sizeof(sides));
-        flags = 0;
-        inFlags = 0;
-        slopeType = (slopetype_t) 0;
-        validCount = 0;
-        angle = 0;
-        memset(direction, 0, sizeof(direction));
-        length = 0;
-        memset(&aaBox, 0, sizeof(aaBox));
-        memset(mapped, 0, sizeof(mapped));
-        origIndex = 0;
+        coord_t point[2] = { x, y };
+        return pointDistance(point, offset);
     }
+
+    /**
+     * On which side of the line does the specified point lie?
+     *
+     * @param xy  Map space point to test.
+     *
+     * @return @c <0 Point is to the left/back of the line.
+     *         @c =0 Point lies directly on the line.
+     *         @c >0 Point is to the right/front of the line.
+     */
+    coord_t pointOnSide(coord_t const point[2]) const;
+
+    inline coord_t LineDef::pointOnSide(coord_t x, coord_t y) const
+    {
+        coord_t point[2] = { x, y };
+        return pointOnSide(point);
+    }
+
+    /**
+     * Configure the specified divline_t by setting the origin point to the
+     * line's left (i.e., first) vertex and the direction vector parallel to
+     * the line's direction vector.
+     *
+     * @param divline  divline_t instance to be configured.
+     */
+    void setDivline(divline_t *divline) const;
+
+    /**
+     * Find the "sharp" Z coordinate range of the opening on @a side. The
+     * open range is defined as the gap between foor and ceiling on @a side
+     * clipped by the floor and ceiling planes on the back side (if present).
+     *
+     * @param bottom    Bottom Z height is written here. Can be @c NULL.
+     * @param top       Top Z height is written here. Can be @c NULL.
+     *
+     * @return Height of the open range.
+     */
+    coord_t openRange(int side, coord_t *bottom, coord_t *top) const;
+
+    /// Same as openRange() but works with the "visual" (i.e., smoothed)
+    /// plane height coordinates rather than the "sharp" coordinates.
+    coord_t visOpenRange(int side, coord_t *bottom, coord_t *top) const;
+
+    /**
+     * Configure the specified TraceOpening according to the opening defined
+     * by the inner-minimal plane heights which intercept the line.
+     *
+     * @param opening  TraceOpening instance to be configured.
+     */
+    void setTraceOpening(TraceOpening *opening) const;
+
+    /**
+     * Calculate a unit vector parallel to the line.
+     *
+     * @todo No longer needed (SideDef stores tangent space normals).
+     *
+     * @param unitVector  Unit vector is written here.
+     */
+    void unitVector(float *unitVec) const;
+
+    /**
+     * Update the line's slopetype and map space angle delta according to
+     * the points defined by it's vertices.
+     */
+    void updateSlope();
+
+    /**
+     * Update the line's map space axis-aligned bounding box to encompass
+     * the points defined by it's vertices.
+     */
+    void updateAABox();
+
+    /**
+     * The DOOM lighting model applies a sector light level delta when drawing
+     * line segments based on their 2D world angle.
+     *
+     * @param side  Side of the line we are interested in.
+     * @param deltaL  Light delta for the left edge written here.
+     * @param deltaR  Light delta for the right edge written here.
+     *
+     * @deprecated Now that we store surface tangent space normals use those
+     *             rather than angles. @todo Remove me.
+     */
+    void lightLevelDelta(int side, float *deltaL, float *deltaR) const;
+
+    /**
+     * Get a property value, selected by DMU_* name.
+     *
+     * @param args  Property arguments.
+     * @return  Always @c 0 (can be used as an iterator).
+     */
+    int property(setargs_t &args) const;
+
+    /**
+     * Update a property value, selected by DMU_* name.
+     *
+     * @param args  Property arguments.
+     * @return  Always @c 0 (can be used as an iterator).
+     */
+    int setProperty(setargs_t const &args);
 };
-
-/**
- * On which side of this LineDef does the specified box lie?
- *
- * @param line  Linedef.
- * @param box   Bounding box.
- *
- * @return  @c <0= bbox is wholly on the left side.
- *          @c  0= line intersects bbox.
- *          @c >0= bbox wholly on the right side.
- */
-//int LineDef_BoxOnSide(LineDef* lineDef, const AABoxd* box);
-
-/**
- * On which side of this LineDef does the specified box lie? The test is
- * carried out using fixed-point math for behavior compatible with vanilla
- * DOOM. Note that this means there is a maximum size for both the bounding box
- * and the line: neither can exceed the fixed-point 16.16 range (about 65k
- * units).
- *
- * @param line  Linedef.
- * @param box   Bounding box.
- *
- * @return One of the following:
- * - Negative: bbox is entirely on the left side.
- * - Zero: line intersects bbox.
- * - Positive: bbox isentirely on the right side.
- */
-//int LineDef_BoxOnSide_FixedPrecision(LineDef* line, const AABoxd* box);
-
-/**
- * @param offset  Returns the position of the nearest point along the line [0..1].
- */
-//coord_t LineDef_PointDistance(LineDef* lineDef, coord_t const point[2], coord_t* offset);
-//coord_t LineDef_PointXYDistance(LineDef* lineDef, coord_t x, coord_t y, coord_t* offset);
-
-/**
- * On which side of this LineDef does the specified point lie?
- *
- * @param lineDef  LineDef instance.
- * @param xy  Map space point to test.
- *
- * @return @c <0 Point is to the left/back of the line.
- *         @c =0 Point lies directly on the line.
- *         @c >0 Point is to the right/front of the line.
- */
-//coord_t LineDef_PointOnSide(const LineDef* lineDef, coord_t const point[2]);
-//coord_t LineDef_PointXYOnSide(const LineDef* lineDef, coord_t x, coord_t y);
-
-/**
- * Configure the specified divline_t by setting the origin point to this LineDef's
- * left (i.e., first) vertex and the vector to this lineDef's parallel vector.
- *
- * @param lineDef  LineDef instance.
- * @param divline  divline_t instance to be configured.
- */
-void LineDef_SetDivline(const LineDef* lineDef, divline_t* divline);
-
-/**
- * Find the "sharp" Z coordinate range of the opening on @a side. The open range is
- * defined as the gap between foor and ceiling on @a side clipped by the floor and
- * ceiling planes on the back side (if present).
- *
- * @param line      LineDef instance.
- * @param bottom    Bottom Z height is written here. Can be @c NULL.
- * @param top       Top Z height is written here. Can be @c NULL.
- *
- * @return Height of the open range.
- */
-coord_t LineDef_OpenRange(const LineDef* line, int side, coord_t* bottom, coord_t* top);
-
-/// Same as @ref LineDef_OpenRange() but works with the "visual" (i.e., smoothed)
-/// plane height coordinates rather than the "sharp" coordinates.
-coord_t LineDef_VisOpenRange(const LineDef* line, int side, coord_t* bottom, coord_t* top);
-
-/**
- * Configure the specified TraceOpening according to the opening defined by the
- * inner-minimal plane heights which intercept this LineDef
- *
- * @param lineDef  LineDef instance.
- * @param opening  TraceOpening instance to be configured.
- */
-void LineDef_SetTraceOpening(const LineDef* lineDef, TraceOpening* opening);
-
-/**
- * Calculate a unit vector parallel to this LineDef.
- *
- * @todo This is no longer needed (SideDef stores tangent space normals).
- *
- * @param lineDef  LineDef instance.
- * @param unitVector  Unit vector is written here.
- */
-void LineDef_UnitVector(LineDef* lineDef, float* unitVec);
-
-/**
- * Update the LineDef's slopetype and map space angle delta according to
- * the points defined by it's vertices.
- *
- * @param lineDef  LineDef instance.
- */
-void LineDef_UpdateSlope(LineDef* lineDef);
-
-/**
- * Update the LineDef's map space axis-aligned bounding box to encompass
- * the points defined by it's vertices.
- *
- * @param lineDef  LineDef instance.
- */
-void LineDef_UpdateAABox(LineDef* lineDef);
-
-/**
- * The DOOM lighting model applies a sector light level delta when drawing
- * line segments based on their 2D world angle.
- *
- * @param lineDef  LineDef instance.
- * @param side  Side of the LineDef we are interested in.
- * @param deltaL  Light delta for the left edge written here.
- * @param deltaR  Light delta for the right edge written here.
- *
- * @deprecated Now that we store surface tangent space normals use those
- *             rather than angles. @todo Remove me.
- */
-void LineDef_LightLevelDelta(LineDef *lineDef, int side, float *deltaL, float *deltaR);
-
-/**
- * Get a property value, selected by DMU_* name.
- *
- * @param lineDef  LineDef instance.
- * @param args  Property arguments.
- * @return  Always @c 0 (can be used as an iterator).
- */
-int LineDef_GetProperty(const LineDef* lineDef, setargs_t* args);
-
-/**
- * Update a property value, selected by DMU_* name.
- *
- * @param lineDef  LineDef instance.
- * @param args  Property arguments.
- * @return  Always @c 0 (can be used as an iterator).
- */
-int LineDef_SetProperty(LineDef* lineDef, const setargs_t* args);
 
 #endif // LIBDENG_MAP_LINEDEF

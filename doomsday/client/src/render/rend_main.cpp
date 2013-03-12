@@ -1711,11 +1711,12 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
         }
         else
         {
-            LineDef_LightLevelDelta(hedge->lineDef, hedge->side, &deltaL, &deltaR);
+            LineDef const &line = *hedge->lineDef;
+            line.lightLevelDelta(hedge->side, &deltaL, &deltaR);
 
             // Linear interpolation of the linedef light deltas to the edges of the hedge.
             float diff = deltaR - deltaL;
-            deltaR = deltaL + ((hedge->offset + hedge->length) / hedge->lineDef->length) * diff;
+            deltaR = deltaL + ((hedge->offset + hedge->length) / line.length) * diff;
             deltaL += (hedge->offset / hedge->lineDef->length) * diff;
         }
 

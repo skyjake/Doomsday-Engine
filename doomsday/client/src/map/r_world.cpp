@@ -762,7 +762,7 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector *frontSec, Sector *b
     return false;
 }
 
-boolean R_MiddleMaterialCoversLineOpening(LineDef *line, int side, boolean ignoreOpacity)
+boolean R_MiddleMaterialCoversLineOpening(LineDef const *line, int side, boolean ignoreOpacity)
 {
     DENG_ASSERT(line);
     Sector *frontSec  = line->L_sector(side);

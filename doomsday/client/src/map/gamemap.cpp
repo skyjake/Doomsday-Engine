@@ -144,13 +144,13 @@ const TraceOpening* GameMap_TraceOpening(GameMap* map)
     return &map->traceOpening;
 }
 
-void GameMap_SetTraceOpening(GameMap* map, LineDef* lineDef)
+void GameMap_SetTraceOpening(GameMap *map, LineDef *line)
 {
     DENG2_ASSERT(map);
     // Is the linedef part of this map?
-    if(!lineDef || GameMap_LineDefIndex(map, lineDef) < 0) return; // Odd...
+    if(!line || GameMap_LineDefIndex(map, line) < 0) return; // Odd...
 
-    LineDef_SetTraceOpening(lineDef, &map->traceOpening);
+    line->setTraceOpening(&map->traceOpening);
 }
 
 int GameMap_AmbientLightLevel(GameMap* map)
@@ -746,7 +746,7 @@ void GameMap_LinkLineDef(GameMap* map, LineDef* lineDef)
         }
 
         // Would LineDef intersect this?
-        if(LineDef_PointOnSide(lineDef, from) < 0 != LineDef_PointOnSide(lineDef, to) < 0)
+        if(lineDef->pointOnSide(from) < 0 != lineDef->pointOnSide(to) < 0)
         {
             Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y, lineDef);
         }

@@ -715,7 +715,7 @@ static void finishSideDefs(GameMap* map)
     }
 }
 
-static void finishLineDefs(GameMap* map)
+static void finishLineDefs(GameMap *map)
 {
     DENG_ASSERT(map);
 
@@ -723,20 +723,21 @@ static void finishLineDefs(GameMap* map)
 
     for(uint i = 0; i < map->lineDefCount(); ++i)
     {
-        LineDef* ld = &map->lineDefs[i];
-        if(!ld->L_frontside.hedgeLeft) continue;
+        LineDef &line = map->lineDefs[i];
+        if(!line.L_frontside.hedgeLeft) continue;
 
-        HEdge const* leftHEdge  = ld->L_frontside.hedgeLeft;
-        HEdge const* rightHEdge = ld->L_frontside.hedgeRight;
+        HEdge const *leftHEdge  = line.L_frontside.hedgeLeft;
+        HEdge const *rightHEdge = line.L_frontside.hedgeRight;
 
-        ld->v[0] = leftHEdge->HE_v1;
-        ld->v[1] = rightHEdge->HE_v2;
+        line.v[0] = leftHEdge->HE_v1;
+        line.v[1] = rightHEdge->HE_v2;
 
-        LineDef_UpdateSlope(ld);
-        LineDef_UpdateAABox(ld);
+        line.updateSlope();
+        line.updateAABox();
 
-        ld->length = V2d_Length(ld->direction);
-        ld->angle = bamsAtan2((int) ld->direction[VY], (int) ld->direction[VX]);
+        line.length = V2d_Length(line.direction);
+        line.angle = bamsAtan2(int( line.direction[VY] ),
+                               int( line.direction[VX] ));
     }
 }
 
@@ -1908,10 +1909,11 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector,
 
     l->length = length;
 
-    LineDef_UpdateSlope(l);
-    LineDef_UpdateAABox(l);
+    l->updateSlope();
+    l->updateAABox();
 
-    l->angle = bamsAtan2((int) l->direction[VY], (int) l->direction[VX]);
+    l->angle = bamsAtan2(int( l->direction[VY] ),
+                         int( l->direction[VX] ));
 
     // Remember the number of unique references.
     if(l->L_frontsidedef)

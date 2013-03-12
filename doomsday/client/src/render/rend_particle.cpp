@@ -731,8 +731,7 @@ static void renderParticles(int rtype, boolean withBlend)
                 V2d_ProjectOnLine(projected, origin, pt->contact->L_v1origin, pt->contact->direction);
 
                 // Move away from the wall to avoid the worst Z-fighting.
-                {
-                const double gap = -1; // 1 map unit.
+                double const gap = -1; // 1 map unit.
                 double diff[2], dist;
                 V2d_Subtract(diff, projected, origin);
                 if((dist = V2d_Length(diff)) != 0)
@@ -740,9 +739,8 @@ static void renderParticles(int rtype, boolean withBlend)
                     projected[VX] += diff[VX] / dist * gap;
                     projected[VY] += diff[VY] / dist * gap;
                 }
-                }
 
-                LineDef_UnitVector(pt->contact, line);
+                pt->contact->unitVector(line);
 
                 glTexCoord2f(0, 0);
                 glVertex3d(projected[VX] - size * line[VX], center[VY] - size,
