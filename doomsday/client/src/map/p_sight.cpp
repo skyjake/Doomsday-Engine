@@ -25,13 +25,15 @@
  *       in the data structure.
  */
 
-#include <math.h>
+#include <cmath>
 
 #include "de_base.h"
 #include "de_console.h"
 #include "de_play.h"
 
 #include "render/r_main.h" // validCount
+
+using namespace de;
 
 typedef struct losdata_s {
     int flags; // LS_* flags @ref lineSightFlags
@@ -217,39 +219,39 @@ static boolean crossBspLeaf(GameMap *map, BspLeaf const *bspLeaf, losdata_t *los
 /**
  * @return  @c true iff trace crosses the node.
  */
-static boolean crossBspNode(GameMap* map, de::MapElement const *bspPtr, losdata_t* los)
+static boolean crossBspNode(GameMap *map, MapElement const *bspPtr, losdata_t *los)
 {
     while(bspPtr->type() != DMU_BSPLEAF)
     {
-        BspNode const *node = bspPtr->castTo<BspNode>();
-        int side = Partition_PointXYOnSide(&node->partition,
-                                           FIX2FLT(los->trace.origin[VX]), FIX2FLT(los->trace.origin[VY]));
+        BspNode const &node = *bspPtr->castTo<BspNode>();
+        int side = node.partition().pointOnSide(FIX2FLT(los->trace.origin[VX]),
+                                                FIX2FLT(los->trace.origin[VY]));
 
         // Would the trace completely cross this partition?
-        if(side == Partition_PointOnSide(&node->partition, los->to))
+        if(side == node.partition().pointOnSide(los->to))
         {
             // Yes, descend!
-            bspPtr = node->children[side];
+            bspPtr = node.childPtr(side);
         }
         else
         {
             // No.
-            if(!crossBspNode(map, node->children[side], los))
+            if(!crossBspNode(map, node.childPtr(side), los))
                 return 0; // Cross the starting side.
 
-            bspPtr = node->children[side^1]; // Cross the ending side.
+            bspPtr = node.childPtr(side^1); // Cross the ending side.
         }
     }
 
     return crossBspLeaf(map, bspPtr->castTo<BspLeaf>(), los);
 }
 
-boolean GameMap_CheckLineSight(GameMap* map, const coord_t from[3], const coord_t to[3],
+boolean GameMap_CheckLineSight(GameMap *map, const coord_t from[3], const coord_t to[3],
     coord_t bottomSlope, coord_t topSlope, int flags)
 {
-    losdata_t los;
-    assert(map);
+    DENG_ASSERT(map);
 
+    losdata_t los;
     los.flags = flags;
     los.startZ = from[VZ];
     los.topSlope = to[VZ] + topSlope - los.startZ;

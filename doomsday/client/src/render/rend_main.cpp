@@ -2901,7 +2901,7 @@ static void Rend_RenderBspLeaf(BspLeaf *bspLeaf)
     Rend_RenderPlanes();
 }
 
-static void Rend_RenderNode(de::MapElement* bspPtr)
+static void Rend_RenderNode(MapElement *bspPtr)
 {
     // If the clipper is full we're pretty much done. This means no geometry
     // will be visible in the distance because every direction has already been
@@ -2916,15 +2916,14 @@ static void Rend_RenderNode(de::MapElement* bspPtr)
     else
     {
         // Descend deeper into the nodes.
-        const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
-        BspNode* node = bspPtr->castTo<BspNode>();
-        byte side;
+        viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+        BspNode const &node = *bspPtr->castTo<BspNode>();
 
         // Decide which side the view point is on.
-        side = Partition_PointOnSide(&node->partition, viewData->current.origin);
+        byte side = node.partition().pointOnSide(viewData->current.origin);
 
-        Rend_RenderNode(node->children[side]); // Recursively divide front space.
-        Rend_RenderNode(node->children[side ^ 1]); // ...and back space.
+        Rend_RenderNode(node.childPtr(side)); // Recursively divide front space.
+        Rend_RenderNode(node.childPtr(side ^ 1)); // ...and back space.
     }
 }
 

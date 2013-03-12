@@ -1435,8 +1435,8 @@ struct Partitioner::Instance
             node->setLeft(leftChild);
         }
 
-        node->setRightBounds(&rightBounds);
-        node->setLeftBounds(&leftBounds);
+        node->setRightAABox(&rightBounds);
+        node->setLeftAABox(&leftBounds);
 
         // There is now one more BspNode.
         numNodes += 1;

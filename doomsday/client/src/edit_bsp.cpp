@@ -170,8 +170,8 @@ static int populateBspObjectLuts(BspTreeNode &tree, void *parameters)
     p->builder->take(node);
 
     // Add this BspNode to the LUT.
-    node->index = p->nodeCurIndex++;
-    p->dest->bspNodes[node->index] = node;
+    node->_index = p->nodeCurIndex++;
+    p->dest->bspNodes[node->_index] = node;
 
     if(BspTreeNode *right = tree.right())
     {

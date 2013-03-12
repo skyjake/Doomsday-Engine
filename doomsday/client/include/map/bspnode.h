@@ -23,6 +23,7 @@
 
 #include <de/Error>
 #include <de/aabox.h>
+#include <de/vector1.h>
 #include "resource/r_data.h"
 #include "p_dmu.h"
 #include "MapElement"
@@ -32,15 +33,55 @@
  *
  * @ingroup map
  */
-struct partition_t
+class Partition
 {
-    coord_t origin[2];
-    coord_t direction[2];
+public: /// @todo make private:
+    coord_t _origin[2];
+    coord_t _direction[2];
+
+public:
+    Partition(coord_t xOrigin, coord_t yOrigin, coord_t xDirection, coord_t yDirection);
+    Partition(const_pvec2d_t origin, const_pvec2d_t direction);
+
+    /**
+     * Returns the origin of the partition in the map coordinate space.
+     */
+    const_pvec2d_t &origin() const;
+
+    /**
+     * Returns the direction of the partition in the map coordinate space.
+     */
+    const_pvec2d_t &direction() const;
+
+    /**
+     * Which side of the partition does the point lie?
+     *
+     * @param point  Point coordinates to test.
+     * @return  @c 0 = front, else @c 1 = back.
+     */
+    int pointOnSide(const_pvec2d_t point) const;
+
+    /**
+     * @copydoc pointOnSide()
+     *
+     * @param x  X coordinate to test.
+     * @param y  Y coordinate to test.
+     */
+    inline int pointOnSide(coord_t x, coord_t y) const
+    {
+        coord_t point[2] = { x, y };
+        return pointOnSide(point);
+    }
 };
 
-/// Child node identifiers:
+/*
+ * Child node identifiers:
+ */
+/// @addtogroup map
+///@{
 #define RIGHT                   0
 #define LEFT                    1
+///@}
 
 /**
  * Node in the BSP tree. Children of a node can be either instances of BspNode
@@ -50,16 +91,20 @@ struct partition_t
  */
 class BspNode : public de::MapElement
 {
+public:
+    /// Required child element is missing. @ingroup errors
+    DENG2_ERROR(MissingChildError);
+
 public: /// @todo make private:
-    partition_t partition;
+    Partition _partition;
 
     /// Bounding box for each child.
-    AABoxd aaBox[2];
+    AABoxd _aaBox[2];
 
-    de::MapElement *children[2];
+    de::MapElement *_children[2];
 
     /// Unique. Set when saving the BSP.
-    uint index;
+    uint _index;
 
 public:
     /**
@@ -68,8 +113,66 @@ public:
      * @param angle   2D vector in the map coordinate space which describes the
      *                angle of the half-plane.
      */
-    BspNode(coord_t const partitionOrigin[2], coord_t const partitionDirection[2]);
+    BspNode(const_pvec2d_t partitionOrigin, const_pvec2d_t partitionDirection);
     ~BspNode();
+
+    /**
+     * Returns the partition_t for the BSP node.
+     */
+    Partition const &partition() const;
+
+    /**
+     * Convenient accessor method for returning the origin of the partition for
+     * the BSP node.
+     *
+     * @see partition()
+     */
+    inline const_pvec2d_t &partitionOrigin() const { return partition().origin(); }
+
+    /**
+     * Convenient accessor method for returning the direction of the partition
+     * for the BSP node.
+     *
+     * @see partition()
+     */
+    inline const_pvec2d_t &partitionDirection() const { return partition().direction(); }
+
+    /**
+     * Returns @c true iff the specified child is configured for the BSP node.
+     */
+    bool hasChild(int left) const;
+
+    /**
+     * Returns @c true iff a Right child element is configured for the BSP node.
+     */
+    inline bool hasRight() const { return hasChild(RIGHT); }
+
+    /**
+     * Returns @c true iff a Light child element is configured for the BSP node.
+     */
+    inline bool hasLeft() const { return hasChild(LEFT); }
+
+    /**
+     * Returns the specified child of the BSP node.
+     *
+     * @param left  If not @c 0 return the Left child; otherwise the Right child.
+     *
+     * @see hasChild()
+     */
+    de::MapElement &child(int left) const;
+
+    /**
+     * Returns a pointer to the specified child of the BSP node, which may be @c 0
+     * if no child is configured.
+     *
+     * @param left  If not @c 0 return the Left child; otherwise the Right child.
+     *
+     * @see hasChild()
+     */
+    inline de::MapElement *childPtr(int left) const
+    {
+        return hasChild(left)? &child(left) : 0;
+    }
 
     void setChild(int left, de::MapElement *newChild);
 
@@ -77,11 +180,37 @@ public:
 
     inline void setLeft(de::MapElement *newChild) { setChild(LEFT, newChild); }
 
-    void setChildBounds(int left, AABoxd *newBounds);
+    /**
+     * Returns the axis-aligned bounding box for the specified child which encompases
+     * all the vertexes which define the geometry of that subspace of the BSP, in map
+     * coordinate space units.
+     */
+    AABoxd const &childAABox(int left) const;
 
-    inline void setRightBounds(AABoxd *newBounds) { setChildBounds(RIGHT, newBounds); }
+    /**
+     * Returns the axis-aligned bounding box for the Right child which encompases all
+     * the vertexes which define the geometry of that subspace of the BSP, in map
+     * coordinate space units.
+     */
+    inline AABoxd const &rightAABox() const { return childAABox(RIGHT); }
 
-    inline void setLeftBounds(AABoxd *newBounds) { setChildBounds(LEFT, newBounds); }
+    /**
+     * Returns the axis-aligned bounding box for the Left child which encompases all
+     * the vertexes which define the geometry of that subspace of the BSP, in map
+     * coordinate space units.
+     */
+    inline AABoxd const &leftAABox() const { return childAABox(LEFT); }
+
+    void setChildAABox(int left, AABoxd *newAABox);
+
+    inline void setRightAABox(AABoxd *newAABox) { setChildAABox(RIGHT, newAABox); }
+
+    inline void setLeftAABox(AABoxd *newAABox) { setChildAABox(LEFT, newAABox); }
+
+    /**
+     * Returns the original index of the BSP node.
+     */
+    uint origIndex() const;
 };
 
 #endif // LIBDENG_MAP_BSPNODE

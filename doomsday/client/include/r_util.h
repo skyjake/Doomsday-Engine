@@ -33,16 +33,6 @@ extern "C" {
 #endif
 
 /**
- * Which side of the partition does the point lie?
- *
- * @param x  X coordinate to test.
- * @param y  Y coordinate to test.
- * @return int  @c 0 = front, else @c 1 = back.
- */
-int Partition_PointOnSide(const partition_t* par, coord_t const point[2]);
-int Partition_PointXYOnSide(const partition_t* par, coord_t x, coord_t y);
-
-/**
  * Get a global angle from Cartesian coordinates relative to the viewer.
  *
  * @param x   X coordinate to test.

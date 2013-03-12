@@ -1,5 +1,4 @@
 /** @file gamemap.cpp Gamemap.
- * @ingroup map
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -19,7 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#include <math.h>
+#include <cmath>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -34,6 +33,8 @@
 
 /// Size of Blockmap blocks in map units. Must be an integer power of two.
 #define MAPBLOCKUNITS               (128)
+
+using namespace de;
 
 GameMap::GameMap()
 {
@@ -71,8 +72,7 @@ GameMap::GameMap()
 }
 
 GameMap::~GameMap()
-{
-}
+{}
 
 SurfaceSet &GameMap::scrollingSurfaces()
 {
@@ -92,19 +92,19 @@ SurfaceSet &GameMap::glowingSurfaces()
 
 #endif // __CLIENT__
 
-Uri const *GameMap_Uri(GameMap *map)
+uri_s const *GameMap_Uri(GameMap *map)
 {
     DENG2_ASSERT(map);
     return map->uri;
 }
 
-const char* GameMap_OldUniqueId(GameMap* map)
+char const *GameMap_OldUniqueId(GameMap *map)
 {
     DENG2_ASSERT(map);
     return map->uniqueId;
 }
 
-void GameMap_Bounds(GameMap* map, coord_t* min, coord_t* max)
+void GameMap_Bounds(GameMap *map, coord_t *min, coord_t *max)
 {
     DENG2_ASSERT(map);
 
@@ -112,33 +112,33 @@ void GameMap_Bounds(GameMap* map, coord_t* min, coord_t* max)
     V2d_Copy(max, map->aaBox.max);
 }
 
-coord_t GameMap_Gravity(GameMap* map)
+coord_t GameMap_Gravity(GameMap *map)
 {
     DENG2_ASSERT(map);
     return map->effectiveGravity;
 }
 
-GameMap* GameMap_SetGravity(GameMap* map, coord_t gravity)
+GameMap *GameMap_SetGravity(GameMap *map, coord_t gravity)
 {
     DENG2_ASSERT(map);
     map->effectiveGravity = gravity;
     return map;
 }
 
-GameMap* GameMap_RestoreGravity(GameMap* map)
+GameMap *GameMap_RestoreGravity(GameMap *map)
 {
     DENG2_ASSERT(map);
     map->effectiveGravity = map->globalGravity;
     return map;
 }
 
-const divline_t* GameMap_TraceLOS(GameMap* map)
+divline_t const *GameMap_TraceLOS(GameMap *map)
 {
     DENG2_ASSERT(map);
     return &map->traceLOS;
 }
 
-const TraceOpening* GameMap_TraceOpening(GameMap* map)
+TraceOpening const *GameMap_TraceOpening(GameMap *map)
 {
     DENG2_ASSERT(map);
     return &map->traceOpening;
@@ -153,13 +153,13 @@ void GameMap_SetTraceOpening(GameMap *map, LineDef *line)
     line->setTraceOpening(&map->traceOpening);
 }
 
-int GameMap_AmbientLightLevel(GameMap* map)
+int GameMap_AmbientLightLevel(GameMap *map)
 {
     DENG2_ASSERT(map);
     return map->ambientLightLevel;
 }
 
-coord_t GameMap_SkyFix(GameMap* map, boolean ceiling)
+coord_t GameMap_SkyFix(GameMap *map, boolean ceiling)
 {
     DENG2_ASSERT(map);
     Plane::Type plane = ceiling? Plane::Ceiling : Plane::Floor;
@@ -315,7 +315,7 @@ int GameMap_BspNodeIndex(GameMap* map, BspNode const *node)
 {
     DENG_UNUSED(map);
     if(!node) return -1;
-    return node->index;
+    return node->origIndex();
 }
 
 BspNode* GameMap_BspNode(GameMap* map, uint idx)
@@ -1447,41 +1447,39 @@ int GameMap_PathTraverse(GameMap* map, const coord_t from[], const coord_t to[],
     return GameMap_PathTraverse2(map, from, to, flags, callback, NULL/*no parameters*/);
 }
 
-int GameMap_PathXYTraverse2(GameMap* map, coord_t fromX, coord_t fromY, coord_t toX, coord_t toY,
-    int flags, traverser_t callback, void* parameters)
+int GameMap_PathXYTraverse2(GameMap *map, coord_t fromX, coord_t fromY, coord_t toX, coord_t toY,
+    int flags, traverser_t callback, void *parameters)
 {
-    vec2d_t from, to;
-    V2d_Set(from, fromX, fromY);
-    V2d_Set(to, toX, toY);
+    vec2d_t from; V2d_Set(from, fromX, fromY);
+    vec2d_t to;   V2d_Set(to, toX, toY);
     return GameMap_PathTraverse2(map, from, to, flags, callback, parameters);
 }
 
-int GameMap_PathXYTraverse(GameMap* map, coord_t fromX, coord_t fromY, coord_t toX, coord_t toY,
+int GameMap_PathXYTraverse(GameMap *map, coord_t fromX, coord_t fromY, coord_t toX, coord_t toY,
     int flags, traverser_t callback)
 {
     return GameMap_PathXYTraverse2(map, fromX, fromY, toX, toY, flags, callback, NULL/*no parameters*/);
 }
 
-BspLeaf* GameMap_BspLeafAtPoint(GameMap* map, coord_t const point_[])
+BspLeaf *GameMap_BspLeafAtPoint(GameMap *map, coord_t const point_[])
 {
-    de::MapElement* node;
-    vec2d_t point;
+    vec2d_t point; V2d_Set(point, point_? point_[VX] : 0,
+                                  point_? point_[VY] : 0);
 
-    V2d_Set(point, point_? point_[VX] : 0,
-                   point_? point_[VY] : 0);
-
-    node = map->bsp;
+    MapElement *node = map->bsp;
     while(node->type() != DMU_BSPLEAF)
     {
-        BspNode* bspNode = node->castTo<BspNode>();
-        node = bspNode->children[Partition_PointOnSide(&bspNode->partition, point)];
+        BspNode const &bspNode = *node->castTo<BspNode>();
+        int side = bspNode.partition().pointOnSide(point);
+
+        // Decend to the next child subspace.
+        node = bspNode.childPtr(side);
     }
     return node->castTo<BspLeaf>();
 }
 
-BspLeaf* GameMap_BspLeafAtPointXY(GameMap* map, coord_t x, coord_t y)
+BspLeaf *GameMap_BspLeafAtPointXY(GameMap *map, coord_t x, coord_t y)
 {
-    vec2d_t point;
-    V2d_Set(point, x, y);
+    vec2d_t point; V2d_Set(point, x, y);
     return GameMap_BspLeafAtPoint(map, point);
 }

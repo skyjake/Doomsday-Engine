@@ -809,42 +809,44 @@ static de::MapElement* readBspReference(GameMap* map)
 
 #undef NF_LEAF
 
-static void writeNode(GameMap* map, BspNode* n)
+static void writeNode(GameMap *map, BspNode *n)
 {
-    assert(n);
-    writeFloat(n->partition.origin[VX]);
-    writeFloat(n->partition.origin[VY]);
-    writeFloat(n->partition.direction[VX]);
-    writeFloat(n->partition.direction[VY]);
-    writeFloat(n->aaBox[RIGHT].minX);
-    writeFloat(n->aaBox[RIGHT].minY);
-    writeFloat(n->aaBox[RIGHT].maxX);
-    writeFloat(n->aaBox[RIGHT].maxY);
-    writeFloat(n->aaBox[LEFT ].minX);
-    writeFloat(n->aaBox[LEFT ].minY);
-    writeFloat(n->aaBox[LEFT ].maxX);
-    writeFloat(n->aaBox[LEFT ].maxY);
-    writeBspReference(map, n->children[RIGHT]);
-    writeBspReference(map, n->children[LEFT]);
+    DENG_ASSERT(map && n);
+
+    writeFloat(n->_partition._origin[VX]);
+    writeFloat(n->_partition._origin[VY]);
+    writeFloat(n->_partition._direction[VX]);
+    writeFloat(n->_partition._direction[VY]);
+    writeFloat(n->_aaBox[RIGHT].minX);
+    writeFloat(n->_aaBox[RIGHT].minY);
+    writeFloat(n->_aaBox[RIGHT].maxX);
+    writeFloat(n->_aaBox[RIGHT].maxY);
+    writeFloat(n->_aaBox[LEFT ].minX);
+    writeFloat(n->_aaBox[LEFT ].minY);
+    writeFloat(n->_aaBox[LEFT ].maxX);
+    writeFloat(n->_aaBox[LEFT ].maxY);
+    writeBspReference(map, n->_children[RIGHT]);
+    writeBspReference(map, n->_children[LEFT]);
 }
 
-static void readNode(GameMap* map, BspNode* n)
+static void readNode(GameMap *map, BspNode *n)
 {
-    assert(n);
-    n->partition.origin[VX] = readFloat();
-    n->partition.origin[VY] = readFloat();
-    n->partition.direction[VX] = readFloat();
-    n->partition.direction[VY] = readFloat();
-    n->aaBox[RIGHT].minX = readFloat();
-    n->aaBox[RIGHT].minY = readFloat();
-    n->aaBox[RIGHT].maxX = readFloat();
-    n->aaBox[RIGHT].maxY = readFloat();
-    n->aaBox[LEFT ].minX = readFloat();
-    n->aaBox[LEFT ].minY = readFloat();
-    n->aaBox[LEFT ].maxX = readFloat();
-    n->aaBox[LEFT ].maxY = readFloat();
-    n->children[RIGHT] = readBspReference(map);
-    n->children[LEFT]  = readBspReference(map);
+    DENG_ASSERT(map && n);
+
+    n->_partition._origin[VX] = readFloat();
+    n->_partition._origin[VY] = readFloat();
+    n->_partition._direction[VX] = readFloat();
+    n->_partition._direction[VY] = readFloat();
+    n->_aaBox[RIGHT].minX = readFloat();
+    n->_aaBox[RIGHT].minY = readFloat();
+    n->_aaBox[RIGHT].maxX = readFloat();
+    n->_aaBox[RIGHT].maxY = readFloat();
+    n->_aaBox[LEFT ].minX = readFloat();
+    n->_aaBox[LEFT ].minY = readFloat();
+    n->_aaBox[LEFT ].maxX = readFloat();
+    n->_aaBox[LEFT ].maxY = readFloat();
+    n->_children[RIGHT] = readBspReference(map);
+    n->_children[LEFT]  = readBspReference(map);
 }
 
 static void archiveNodes(GameMap* map, boolean write)
