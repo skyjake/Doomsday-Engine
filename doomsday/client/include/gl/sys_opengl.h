@@ -45,7 +45,7 @@
 
 #ifdef UNIX
 #  define GL_GLEXT_PROTOTYPES
-#  ifdef MACOSX_NATIVESDK
+#  if defined(MACOSX_NATIVESDK) || defined(MACOS_10_7)
 #    define GL_EXT_compiled_vertex_array 1
 #    include <OpenGL/gl.h>
 #    include <OpenGL/glu.h>

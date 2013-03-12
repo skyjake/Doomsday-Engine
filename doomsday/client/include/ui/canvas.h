@@ -34,7 +34,7 @@
 struct image_s; // see image.h
 class CanvasWindow;
 
-#ifdef Q_WS_X11
+#ifdef Q_OS_LINUX
 //#  define LIBDENG_CANVAS_TRACK_WITH_MOUSE_MOVE_EVENTS
 //#  define LIBDENG_CANVAS_XWARPPOINTER
 #endif

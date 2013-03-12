@@ -72,7 +72,7 @@ DualString& DualString::operator = (const String& str)
 
 const ::Str* DualString::toStrAscii() const
 {
-    Str_Set(_str, toAscii().constData());
+    Str_Set(_str, toLatin1().constData());
     return _str;
 }
 

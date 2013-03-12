@@ -22,25 +22,28 @@ CONFIG += deng_nofixedasm deng_embedfluidsynth
         # 4.8+, assume Lion and 64-bit Intel.
         CONFIG += deng_macx7_64bit
     }
+    else:contains(QT_VERSION, ^5\\.[0-1]\\..*) {
+        # 5.0+, assume Mountain Lion and 64-bit Intel.
+        CONFIG += deng_macx8_64bit
+    }
     else:error(Unsupported Qt version: $$QT_VERSION)
 }
 
 # Apply deng_* Configuration -------------------------------------------------
 
-# Three options:
-# - deng_nativesdk
-# - deng_macx4u_32bit
-# - deng_macx6_64bit
-
 deng_nativesdk {
     echo(Using native SDK.)
-    #QMAKE_MAC_SDK = $$(SDKROOT)
-    #isEmpty(QMAKE_MAC_SDK) {
-    #    error(Set the SDKROOT environment variable to specify which Mac OS X SDK to use.)
-    #}
     DEFINES += MACOSX_NATIVESDK
-    #QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.8
-    #QMAKE_CFLAGS += -mmacosx-version-min=10.8
+}
+else:deng_macx8_64bit {
+    echo(Using Mac OS 10.8 SDK.)
+    CONFIG -= x86
+    CONFIG += x86_64
+    QMAKE_MAC_SDK = $$system(xcode-select --print-path)/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk
+    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
+    QMAKE_CFLAGS += -mmacosx-version-min=10.7
+    QMAKE_CXXFLAGS += -mmacosx-version-min=10.7
+    DEFINES += MACOS_10_7
 }
 else:deng_macx7_64bit {
     echo(Using Mac OS 10.7 SDK.)
@@ -82,15 +85,6 @@ isEmpty(qtbase):!isEmpty(QMAKE_MAC_SDK) {
     QMAKE_INCDIR_QT = $${QMAKE_MAC_SDK}$$QMAKE_INCDIR_QT
     QMAKE_LIBDIR_QT = $${QMAKE_MAC_SDK}$$QMAKE_LIBDIR_QT
 }
-
-#deng_32bitonly {
-#    CONFIG += x86
-#    CONFIG -= x86_64
-#    QMAKE_CFLAGS_X86_64 = ""
-#    QMAKE_CXXFLAGS_X86_64 = ""
-#    QMAKE_OBJECTIVE_CFLAGS_X86_64 = ""
-#    QMAKE_LFLAGS_X86_64 = ""
-#}
 
 # What's our arch?
 archs = "Architectures:"

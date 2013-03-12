@@ -20,7 +20,11 @@
 #include <de/Log>
 
 #include <QTimer>
-#include <QDesktopServices>
+#ifdef DENG2_QT_5_0_OR_NEWER
+#  include <QStandardPaths>
+#else
+#  include <QDesktopServices>
+#endif
 
 namespace de {
 
@@ -97,7 +101,11 @@ void GuiApp::loopIteration()
 
 NativePath GuiApp::appDataPath() const
 {
+#ifdef DENG2_QT_5_0_OR_NEWER
+    return QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+#else
     return QDesktopServices::storageLocation(QDesktopServices::DataLocation);
+#endif
 }
 
 } // namespace de

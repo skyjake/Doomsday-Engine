@@ -126,7 +126,8 @@ static FlagMapping mobjtypeFlagMappings[] = {
     { 29, 1, "ICEDAMAGE"    },
     { 30, 1, "SEEKERMISSILE" },
     { 31, 1, "REFLECTIVE"   },
-    { -1, -1, "" }
+
+    { 0, -1, "" } // terminator
 };
 
 int findMobjTypeFlagMappingByDehLabel(const QString& name, const FlagMapping** mapping)

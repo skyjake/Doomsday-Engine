@@ -98,7 +98,7 @@ static archivedmap_t* createArchivedMap(de::Uri const& uri, ddstring_t const* ca
     Str_Set(&dam->cachedMapPath, Str_Text(cachedMapPath));
 
     if(DAM_MapIsValid(Str_Text(&dam->cachedMapPath),
-                      F_LumpNumForName(uri.path().toString().toAscii().constData())))
+                      F_LumpNumForName(uri.path().toString().toLatin1().constData())))
     {
         dam->cachedMapFound = true;
     }
@@ -240,7 +240,7 @@ boolean DAM_AttemptMapLoad(Uri const* _uri)
     if(!dam)
     {
         // We've not yet attempted to load this map.
-        lumpnum_t markerLumpNum = F_LumpNumForName(uri.path().toString().toAscii().constData());
+        lumpnum_t markerLumpNum = F_LumpNumForName(uri.path().toString().toLatin1().constData());
         if(0 > markerLumpNum) return false;
 
         // Compose the cache directory path and ensure it exists.

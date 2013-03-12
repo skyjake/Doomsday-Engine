@@ -98,7 +98,7 @@ static int loadPlugin(void* libraryFile, const char* fileName, const char* plugi
         return 0;
     }
 
-    initializer = de::function_cast<void *, void (*)()>(Library_Symbol(plugin, "DP_Initialize"));
+    initializer = de::function_cast<void (*)()>(Library_Symbol(plugin, "DP_Initialize"));
     if(!initializer)
     {
         DEBUG_Message(("  loadPlugin: \"%s\" does not export entrypoint DP_Initialize, ignoring.\n", pluginPath));

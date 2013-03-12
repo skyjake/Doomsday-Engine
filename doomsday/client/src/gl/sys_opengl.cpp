@@ -30,7 +30,7 @@
 #include <QStringList>
 
 #ifdef WIN32
-#   define GETPROC(Type, x)   x = de::function_cast<void *, Type>(wglGetProcAddress(#x))
+#   define GETPROC(Type, x)   x = de::function_cast<Type>(wglGetProcAddress(#x))
 #elif defined(UNIX)
 #   define GETPROC(Type, x)   x = SDL_GL_GetProcAddress(#x)
 #endif

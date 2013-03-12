@@ -1930,7 +1930,7 @@ boolean DD_Init(void)
         }
         else
         {
-            Con_Message("Warning: Cannot dump unknown lump \"%s\", ignoring.", name.toAscii().constData());
+            Con_Message("Warning: Cannot dump unknown lump \"%s\", ignoring.", name.toLatin1().constData());
         }
     }
 

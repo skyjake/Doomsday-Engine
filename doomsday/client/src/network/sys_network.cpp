@@ -63,7 +63,7 @@ void N_PrintNetworkStatus(void)
     if(isClient)
     {
         Con_Message("CLIENT: Connected to server at %s.",
-                    Net_ServerLink().address().asText().toAscii().constData());
+                    Net_ServerLink().address().asText().toLatin1().constData());
     }
     else
     {

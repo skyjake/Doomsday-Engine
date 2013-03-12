@@ -853,7 +853,7 @@ void B_PrintAllBindings(void)
         for(e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next)
         {
             B_EventBindingToString(e, str);
-            Con_Printf("  "BIDFORMAT" %s : %s\n", e->bid, Str_Text(str),
+            Con_Printf("  " BIDFORMAT " %s : %s\n", e->bid, Str_Text(str),
                        e->command);
         }
 
@@ -867,7 +867,7 @@ void B_PrintAllBindings(void)
         {
             const char* controlName = P_PlayerControlById(c->control)->name;
 
-            Con_Printf("  Control \"%s\" "BIDFORMAT":\n", controlName,
+            Con_Printf("  Control \"%s\" " BIDFORMAT ":\n", controlName,
                        c->bid);
 
             for(k = 0; k < DDMAXPLAYERS; ++k)
@@ -883,7 +883,7 @@ void B_PrintAllBindings(void)
                 for(d = c->deviceBinds[k].next; d != &c->deviceBinds[k]; d = d->next)
                 {
                     B_DeviceBindingToString(d, str);
-                    Con_Printf("    "BIDFORMAT" %s\n", d->bid, Str_Text(str));
+                    Con_Printf("    " BIDFORMAT " %s\n", d->bid, Str_Text(str));
                 }
             }
         }

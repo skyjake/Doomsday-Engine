@@ -10,5 +10,6 @@ INPUT               = ../api include src
 EXCLUDE             = include/unix include/macx src/unix src/macx
 
 PREDEFINED          = __DOOMSDAY__ __CLIENT__ WIN32 __cplusplus \
-                      "DENG2_PIMPL(ClassName)=typedef ClassName Public; struct ClassName::Instance : public de::Private<ClassName>" \
+                      "DENG2_PIMPL(C)=typedef C Public; struct C::Instance : public de::Private<C>" \
+                      "DENG2_PIMPL_NOREF(C)=struct C::Instance : public de::IPrivate" \
                       "DENG2_PRIVATE(Var)=struct Instance; Instance *Var;"

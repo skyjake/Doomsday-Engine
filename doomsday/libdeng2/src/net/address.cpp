@@ -138,7 +138,7 @@ Address Address::parse(String const &addressWithOptionalPort, duint16 defaultPor
         port = str.mid(pos + 1).toInt();
         str = str.left(pos);
     }
-    return Address(str.toAscii(), port);
+    return Address(str.toLatin1(), port);
 }
 
 QTextStream &operator << (QTextStream &os, Address const &address)

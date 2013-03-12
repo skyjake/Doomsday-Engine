@@ -181,7 +181,11 @@ void UpdaterSettings::setPathToDeleteAtStartup(de::NativePath deletePath)
 
 de::NativePath UpdaterSettings::defaultDownloadPath()
 {
+#ifdef DENG2_QT_5_0_OR_NEWER
+    return QStandardPaths::writableLocation(QStandardPaths::TempLocation);
+#else
     return QDesktopServices::storageLocation(QDesktopServices::TempLocation);
+#endif
 }
 
 de::String UpdaterSettings::lastCheckAgo() const

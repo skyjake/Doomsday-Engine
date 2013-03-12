@@ -182,7 +182,7 @@ public:
      */
     template <typename Type>
     Type symbol(String const &name, SymbolLookupMode lookup = RequiredSymbol) {
-        return function_cast<void *, Type>(address(name, lookup));
+        return function_cast<Type>(address(name, lookup));
     }
 
     /**

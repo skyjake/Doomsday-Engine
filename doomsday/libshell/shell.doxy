@@ -11,7 +11,10 @@ FILE_PATTERNS           = *
 EXCLUDE_PATTERNS        = .DS_Store
 PREDEFINED              = __cplusplus __LIBSHELL__ \ 
                           "DENG2_ERROR(N)=class N : public de::Error {};" \
-                          "DENG2_SUB_ERROR(B,N)=class N : public B {};" 
+                          "DENG2_SUB_ERROR(B,N)=class N : public B {};" \
+                          "DENG2_PIMPL(C)=typedef C Public; struct C::Instance : public de::Private<C>" \
+                          "DENG2_PIMPL_NOREF(C)=struct C::Instance : public de::IPrivate" \
+                          "DENG2_PRIVATE(Var)=struct Instance; Instance *Var;"
 
 INCLUDED_BY_GRAPH       = NO
 COLLABORATION_GRAPH     = NO

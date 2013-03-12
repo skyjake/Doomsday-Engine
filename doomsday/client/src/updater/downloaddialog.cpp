@@ -210,7 +210,7 @@ void DownloadDialog::finished(QNetworkReply* reply)
         equivRefresh.replace("&amp;", "&");
 
         // This is what we should actually be downloading.
-        d->uri = QUrl::fromEncoded(equivRefresh.toAscii());
+        d->uri = QUrl::fromEncoded(equivRefresh.toLatin1());
 
         LOG_INFO("Redirected to: %s") << d->uri.toString();
 

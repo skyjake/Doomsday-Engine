@@ -150,9 +150,9 @@ void *Library::address(String const &name, SymbolLookupMode lookup)
     }
     
 #ifndef DENG2_USE_DLOPEN
-    void *ptr = d->library->resolve(name.toAscii().constData());
+    void *ptr = de::function_cast<void *>(d->library->resolve(name.toLatin1().constData()));
 #else
-    void *ptr = dlsym(d->library, name.toAscii().constData());
+    void *ptr = dlsym(d->library, name.toLatin1().constData());
 #endif
 
     if(!ptr)
@@ -175,7 +175,7 @@ bool Library::hasSymbol(String const &name) const
     if(d->symbols.find(name) != d->symbols.end()) return true;
 
 #ifndef DENG2_USE_DLOPEN
-    return d->library->resolve(name.toAscii().constData()) != 0;
+    return d->library->resolve(name.toLatin1().constData()) != 0;
 #else
     return dlsym(d->library, name.toAscii().constData()) != 0;
 #endif

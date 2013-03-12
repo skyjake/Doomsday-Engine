@@ -161,7 +161,7 @@ App::App(NativePath const &appFilePath, QStringList args)
     }
     catch(Error const &er)
     {
-        qWarning("%s", er.asText().toAscii().constData());
+        qWarning("%s", er.asText().toLatin1().constData());
     }
     // Aliases have not been defined at this point.
     level = de::max(LogEntry::TRACE,

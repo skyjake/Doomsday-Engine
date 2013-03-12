@@ -6,6 +6,9 @@
 
 TEMPLATE = subdirs
 
+# Let's print the build configuration during this qmake invocation.
+CONFIG += deng_verbosebuildconfig
+
 include(../config.pri)
 
 # We are not building any binaries here; disable stripping.

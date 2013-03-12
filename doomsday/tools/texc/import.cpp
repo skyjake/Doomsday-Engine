@@ -112,7 +112,7 @@ void Import(char *wadFile, char *outFile)
 		perror(outFile);
 		return;
 	}
-	fprintf(out, "# Textures from %s (TexC "VERSION_STR").\n\n", wadFile);	
+    fprintf(out, "# Textures from %s (TexC " VERSION_STR ").\n\n", wadFile);
 	
 	// Read in PNAMES.
 	i = FindLump("PNAMES", lumps, info.numlumps);
