@@ -693,52 +693,48 @@ static void SBE_InfoBox(source_t* s, int rightX, char const *title, float alpha)
  * Editor HUD
  */
 
-static void SBE_DrawLevelGauge(const Point2Raw* origin, int height)
+static void SBE_DrawLevelGauge(Point2Raw const *origin, int height)
 {
-    Sector* lastSector = NULL;
+    DENG_ASSERT(origin);
+
     static float minLevel = 0, maxLevel = 0;
+    static Sector *lastSector = 0;
 
-    int off, secY, p, minY = 0, maxY = 0;
-    Point2Raw labelOrigin;
-    BspLeaf* bspLeaf;
-    Sector* sector;
-    source_t* src;
-    char buf[80];
-    assert(origin);
-
+    source_t *src;
     if(SBE_GetGrabbed())
         src = SBE_GetGrabbed();
     else
         src = SBE_GetNearest();
 
-    bspLeaf = P_BspLeafAtPoint(src->origin);
+    BspLeaf *bspLeaf = P_BspLeafAtPoint(src->origin);
     if(!bspLeaf) return;
 
-    sector = bspLeaf->sector;
-
-    if(lastSector != sector)
+    Sector &sector = bspLeaf->sector();
+    if(lastSector != &sector)
     {
-        minLevel = maxLevel = sector->lightLevel;
-        lastSector = sector;
+        minLevel = maxLevel = sector.lightLevel;
+        lastSector = &sector;
     }
 
-    if(sector->lightLevel < minLevel)
-        minLevel = sector->lightLevel;
-    if(sector->lightLevel > maxLevel)
-        maxLevel = sector->lightLevel;
+    if(sector.lightLevel < minLevel)
+        minLevel = sector.lightLevel;
+    if(sector.lightLevel > maxLevel)
+        maxLevel = sector.lightLevel;
 
     FR_SetFont(fontFixed);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-    off = FR_TextWidth("000");
+    int off = FR_TextWidth("000");
+
+    int minY = 0, maxY = 0;
 
     glBegin(GL_LINES);
     glColor4f(1, 1, 1, .5f);
     glVertex2f(origin->x + off, origin->y);
     glVertex2f(origin->x + off, origin->y + height);
     // Normal lightlevel.
-    secY = origin->y + height * (1.0f - sector->lightLevel);
+    int secY = origin->y + height * (1.0f - sector.lightLevel);
     glVertex2f(origin->x + off - 4, secY);
     glVertex2f(origin->x + off, secY);
     if(maxLevel != minLevel)
@@ -757,7 +753,7 @@ static void SBE_DrawLevelGauge(const Point2Raw* origin, int height)
     if(src->sectorLevel[0] > 0 || src->sectorLevel[1] > 0)
     {
         glColor3f(1, 0, 0);
-        p = origin->y + height * (1.0f - src->sectorLevel[0]);
+        int p = origin->y + height * (1.0f - src->sectorLevel[0]);
         glVertex2f(origin->x + off + 2, p);
         glVertex2f(origin->x + off - 2, p);
 
@@ -771,9 +767,9 @@ static void SBE_DrawLevelGauge(const Point2Raw* origin, int height)
     glEnable(GL_TEXTURE_2D);
 
     // The number values.
-    labelOrigin.x = origin->x;
-    labelOrigin.y = secY;
-    sprintf(buf, "%03i", (short) (255.0f * sector->lightLevel));
+    Point2Raw labelOrigin(origin->x, secY);
+    char buf[80];
+    sprintf(buf, "%03i", (short) (255.0f * sector.lightLevel));
     UI_TextOutEx2(buf, &labelOrigin, UI_Color(UIC_TITLE), .7f, 0, DTF_ONLY_SHADOW);
     if(maxLevel != minLevel)
     {

@@ -744,7 +744,7 @@ struct Partitioner::Instance
                 oldHEdge->twin->next = newHEdge->twin;
 
                 // There is now one more half-edge in this leaf.
-                oldHEdge->twin->bspLeaf->hedgeCount += 1;
+                oldHEdge->twin->bspLeaf->_hedgeCount += 1;
             }
         }
 
@@ -1390,14 +1390,14 @@ struct Partitioner::Instance
             if(!leaf) leaf = new BspLeaf();
 
             // Link it into head of the leaf's list.
-            hedge->next = leaf->hedge;
-            leaf->hedge = hedge;
+            hedge->next = leaf->_hedge;
+            leaf->_hedge = hedge;
 
             // Link hedge to this leaf.
             hedge->bspLeaf = leaf;
 
             // There is now one more half-edge in this leaf.
-            leaf->hedgeCount += 1;
+            leaf->_hedgeCount += 1;
         }
 
         if(leaf)
@@ -1688,37 +1688,41 @@ struct Partitioner::Instance
      * @param leaf  BSP leaf containing the list of hedges to be sorted.
      * @param point  Map space point around which to order.
      * @param sortBuffer  Buffer to use for sorting of the hedges.
+     *
+     * @attention Do NOT move this into BspLeaf. Although this clearly envies
+     * the access rights of the BspLeaf class this algorithm belongs here in
+     * the BSP partitioner. -ds
      */
-    static void clockwiseOrder(BspLeaf& leaf, pvec2d_t point, HEdgeSortBuffer& sortBuffer)
+    static void clockwiseOrder(BspLeaf &leaf, pvec2d_t point, HEdgeSortBuffer &sortBuffer)
     {
-        if(!leaf.hedge) return;
+        if(!leaf._hedge) return;
 
         // Ensure the sort buffer is large enough.
-        if(leaf.hedgeCount > sortBuffer.size())
+        if(leaf._hedgeCount > sortBuffer.size())
         {
-            sortBuffer.resize(leaf.hedgeCount);
+            sortBuffer.resize(leaf._hedgeCount);
         }
 
         // Insert the hedges into the sort buffer.
         uint i = 0;
-        for(HEdge* hedge = leaf.hedge; hedge; hedge = hedge->next, ++i)
+        for(HEdge *hedge = leaf._hedge; hedge; hedge = hedge->next, ++i)
         {
             sortBuffer[i] = hedge;
         }
 
         HEdgeSortBuffer::iterator begin = sortBuffer.begin();
-        HEdgeSortBuffer::iterator end = begin + leaf.hedgeCount;
+        HEdgeSortBuffer::iterator end = begin + leaf._hedgeCount;
         sortHEdgesByAngleAroundPoint(begin, end, point);
 
         // Re-link the half-edge list in the order of the sort buffer.
-        leaf.hedge = 0;
-        for(uint i = 0; i < leaf.hedgeCount; ++i)
+        leaf._hedge = 0;
+        for(uint i = 0; i < leaf._hedgeCount; ++i)
         {
-            uint idx = (leaf.hedgeCount - 1) - i;
-            uint j = idx % leaf.hedgeCount;
+            uint idx = (leaf._hedgeCount - 1) - i;
+            uint j = idx % leaf._hedgeCount;
 
-            sortBuffer[j]->next = leaf.hedge;
-            leaf.hedge = sortBuffer[j];
+            sortBuffer[j]->next = leaf._hedge;
+            leaf._hedge = sortBuffer[j];
         }
 
         // LOG_DEBUG("Sorted half-edges around [%1.1f, %1.1f]" << point[VX] << point[VY];
@@ -1728,16 +1732,17 @@ struct Partitioner::Instance
     /**
      * Determine which sector this BSP leaf belongs to.
      */
-    Sector* chooseSectorForBspLeaf(BspLeaf* leaf)
+    Sector *chooseSectorForBspLeaf(BspLeaf const *leaf)
     {
-        if(!leaf || !leaf->hedge) return 0;
+        if(!leaf || !leaf->firstHEdge()) return 0;
 
-        Sector* selfRefChoice = 0;
-        HEdge* hedge = leaf->hedge;
+        Sector *selfRefChoice = 0;
+        HEdge *base = leaf->firstHEdge();
+        HEdge *hedge = base;
         do
         {
-            LineDef* line = hedge->lineDef;
-            Sector* sector = line? line->L_sector(hedge->side) : 0;
+            LineDef *line = hedge->lineDef;
+            Sector *sector = line? line->L_sector(hedge->side) : 0;
             if(sector)
             {
                 // The first sector from a non self-referencing line is our best choice.
@@ -1747,7 +1752,7 @@ struct Partitioner::Instance
                 if(!selfRefChoice)
                     selfRefChoice = sector;
             }
-        } while((hedge = hedge->next) != leaf->hedge);
+        } while((hedge = hedge->next) != base);
 
         if(selfRefChoice) return selfRefChoice;
 
@@ -1756,23 +1761,23 @@ struct Partitioner::Instance
         ///       partitioning algorithm and to avoid producing a potentially
         ///       dangerous BSP - not assigning a sector to each leaf may result
         ///       in obscure fatal errors when in-game.
-        hedge = leaf->hedge;
+        hedge = base;
         do
         {
             if(hedge->sector)
             {
                 return hedge->sector;
             }
-        } while((hedge = hedge->next) != leaf->hedge);
+        } while((hedge = hedge->next) != base);
 
         return 0; // Not reachable.
     }
 
-    void clockwiseLeaf(BspTreeNode& tree, HEdgeSortBuffer& sortBuffer)
+    void clockwiseLeaf(BspTreeNode &tree, HEdgeSortBuffer &sortBuffer)
     {
         DENG2_ASSERT(tree.isLeaf());
 
-        BspLeaf* leaf = tree.userData()->castTo<BspLeaf>();
+        BspLeaf *leaf = tree.userData()->castTo<BspLeaf>();
         vec2d_t center;
 
         V2d_Set(center, 0, 0);
@@ -1780,15 +1785,15 @@ struct Partitioner::Instance
         clockwiseOrder(*leaf, center, sortBuffer);
 
         // Construct the leaf's hedge ring.
-        if(leaf->hedge)
+        if(leaf->_hedge)
         {
-            HEdge* hedge = leaf->hedge;
+            HEdge *hedge = leaf->_hedge;
             forever
             {
                 /// @todo Kludge: This should not be done here!
                 if(hedge->lineDef)
                 {
-                    lineside_t* side = HEDGE_SIDE(hedge);
+                    lineside_t *side = HEDGE_SIDE(hedge);
                     // Already processed?
                     if(!side->hedgeLeft)
                     {
@@ -1814,19 +1819,19 @@ struct Partitioner::Instance
                 else
                 {
                     // Circular link.
-                    hedge->next = leaf->hedge;
+                    hedge->next = leaf->_hedge;
                     hedge->next->prev = hedge;
                     break;
                 }
             }
         }
 
-        leaf->sector = chooseSectorForBspLeaf(leaf);
-        if(!leaf->sector)
+        leaf->_sector = chooseSectorForBspLeaf(leaf);
+        if(!leaf->_sector)
         {
-            leaf->sector = 0;
+            leaf->_sector = 0;
             LOG_WARNING("BspLeaf %p is degenerate/orphan (%d HEdges).")
-                << de::dintptr(leaf) << leaf->hedgeCount;
+                << de::dintptr(leaf) << leaf->hedgeCount();
         }
 
         logMigrantHEdges(leaf);
@@ -2264,7 +2269,7 @@ struct Partitioner::Instance
         return true;
     }
 
-    bool registerUnclosedBspLeaf(BspLeaf* leaf, uint gapTotal)
+    bool registerUnclosedBspLeaf(BspLeaf *leaf, uint gapTotal)
     {
         if(!leaf) return false;
 
@@ -2272,15 +2277,16 @@ struct Partitioner::Instance
         if(unclosedBspLeafs.count(leaf)) return false;
 
         // Add a new record.
-        unclosedBspLeafs.insert(std::pair<BspLeaf*, UnclosedBspLeafRecord>(leaf, UnclosedBspLeafRecord(leaf, gapTotal)));
+        unclosedBspLeafs.insert(std::pair<BspLeaf *, UnclosedBspLeafRecord>(leaf, UnclosedBspLeafRecord(leaf, gapTotal)));
 
         // In the absence of a better mechanism, simply log this right away.
         /// @todo Implement something better!
         LOG_WARNING("HEdge list for BspLeaf %p is not closed (%u gaps, %u hedges).")
-            << de::dintptr(leaf) << gapTotal << leaf->hedgeCount;
+            << de::dintptr(leaf) << gapTotal << leaf->hedgeCount();
 
         /*
-        HEdge* hedge = leaf->hedge;
+        HEdge const *base = leaf->firstHEdge();
+        HEdge const *hedge = base;
         do
         {
             LOG_DEBUG("  half-edge %p [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
@@ -2288,26 +2294,27 @@ struct Partitioner::Instance
                 << hedge->HE_v1origin[VX] << hedge->HE_v1origin[VY],
                 << hedge->HE_v2origin[VX] << hedge->HE_v2origin[VY];
 
-        } while((hedge = hedge->next) != leaf->hedge);
+        } while((hedge = hedge->next) != base);
         */
         return true;
     }
 
-    void logUnclosedBspLeaf(BspLeaf* leaf)
+    void logUnclosedBspLeaf(BspLeaf *leaf)
     {
         if(!leaf) return;
 
         uint gaps = 0;
-        const HEdge* hedge = leaf->hedge;
+        HEdge const *base = leaf->firstHEdge();
+        HEdge const *hedge = base;
         do
         {
-            HEdge* next = hedge->next;
+            HEdge *next = hedge->next;
             if(!FEQUAL(hedge->HE_v2origin[VX], next->HE_v1origin[VX]) ||
                !FEQUAL(hedge->HE_v2origin[VY], next->HE_v1origin[VY]))
             {
                 gaps++;
             }
-        } while((hedge = hedge->next) != leaf->hedge);
+        } while((hedge = hedge->next) != base);
 
         if(gaps > 0)
         {
@@ -2352,33 +2359,35 @@ struct Partitioner::Instance
      *
      * @param leaf  BSP leaf to be searched.
      */
-    void logMigrantHEdges(const BspLeaf* leaf)
+    void logMigrantHEdges(BspLeaf const *leaf)
     {
         if(!leaf) return;
 
         // Find a suitable half-edge for comparison.
-        Sector* sector = findFirstSectorInHEdgeList(leaf);
+        Sector *sector = findFirstSectorInHEdgeList(leaf);
         if(!sector) return;
 
         // Log migrants.
-        HEdge* hedge = leaf->hedge;
+        HEdge *base = leaf->firstHEdge();
+        HEdge *hedge = base;
         do
         {
             if(hedge->sector && hedge->sector != sector)
             {
                 registerMigrantHEdge(hedge, sector);
             }
-        } while((hedge = hedge->next) != leaf->hedge);
+        } while((hedge = hedge->next) != base);
     }
 
-    bool sanityCheckHasRealHEdge(const BspLeaf* leaf) const
+    bool sanityCheckHasRealHEdge(BspLeaf const *leaf) const
     {
         DENG_ASSERT(leaf);
-        HEdge* hedge = leaf->hedge;
+        HEdge const *base = leaf->firstHEdge();
+        HEdge const *hedge = base;
         do
         {
             if(hedge->lineDef) return true;
-        } while((hedge = hedge->next) != leaf->hedge);
+        } while((hedge = hedge->next) != base);
         return false;
     }
 };
@@ -2476,7 +2485,7 @@ static LineRelationship lineRelationship(coord_t a, coord_t b, coord_t distEpsil
     return Intersects;
 }
 
-static bool findBspLeafCenter(BspLeaf const& leaf, pvec2d_t center)
+static bool findBspLeafCenter(BspLeaf const &leaf, pvec2d_t center)
 {
     DENG2_ASSERT(center);
 
@@ -2484,7 +2493,7 @@ static bool findBspLeafCenter(BspLeaf const& leaf, pvec2d_t center)
     V2d_Set(avg, 0, 0);
     size_t numPoints = 0;
 
-    for(HEdge* hedge = leaf.hedge; hedge; hedge = hedge->next)
+    for(HEdge const *hedge = leaf.firstHEdge(); hedge; hedge = hedge->next)
     {
         V2d_Sum(avg, avg, hedge->HE_v1origin);
         V2d_Sum(avg, avg, hedge->HE_v2origin);
@@ -2621,16 +2630,17 @@ static AABox blockmapBounds(AABoxd const& mapBounds)
     return blockBounds;
 }
 
-static Sector* findFirstSectorInHEdgeList(const BspLeaf* leaf)
+static Sector *findFirstSectorInHEdgeList(BspLeaf const *leaf)
 {
     DENG2_ASSERT(leaf);
-    HEdge* hedge = leaf->hedge;
+    HEdge const *base = leaf->firstHEdge();
+    HEdge const *hedge = base;
     do
     {
         if(hedge->sector)
         {
             return hedge->sector;
         }
-    } while((hedge = hedge->next) != leaf->hedge);
+    } while((hedge = hedge->next) != base);
     return NULL; // Nothing??
 }

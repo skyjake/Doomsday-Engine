@@ -150,7 +150,7 @@ static void linkShadowLineDefToSSec(LineDef *line, byte side, BspLeaf* bspLeaf)
 {
 #ifdef DENG_DEBUG
     // Check the links for dupes!
-    for(shadowlink_t *i = bspLeaf->shadows; i; i = i->next)
+    for(shadowlink_t *i = bspLeaf->firstShadowLink(); i; i = i->next)
     {
         if(i->lineDef == line && i->side == side)
             Con_Error("R_LinkShadow: Already here!!\n");
@@ -161,8 +161,8 @@ static void linkShadowLineDefToSSec(LineDef *line, byte side, BspLeaf* bspLeaf)
     shadowlink_t *link = (shadowlink_t *) ZBlockSet_Allocate(shadowLinksBlockSet);
 
     // The links are stored into a linked list.
-    link->next = bspLeaf->shadows;
-    bspLeaf->shadows = link;
+    link->next = bspLeaf->_shadows;
+    bspLeaf->_shadows = link;
     link->lineDef = line;
     link->side = side;
 }

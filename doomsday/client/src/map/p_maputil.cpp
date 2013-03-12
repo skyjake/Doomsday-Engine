@@ -98,9 +98,10 @@ DENG_EXTERN_C BspLeaf* P_BspLeafAtPointXY(coord_t x, coord_t y)
 
 boolean P_IsPointXYInBspLeaf(coord_t x, coord_t y, BspLeaf const *bspLeaf)
 {
-    if(!bspLeaf || !bspLeaf->hedge) return false; // I guess?
+    if(!bspLeaf || !bspLeaf->firstHEdge()) return false; // I guess?
 
-    HEdge *hedge = bspLeaf->hedge;
+    HEdge const *base = bspLeaf->firstHEdge();
+    HEdge const *hedge = base;
     do
     {
         HEdge *next = hedge->next;
@@ -114,29 +115,28 @@ boolean P_IsPointXYInBspLeaf(coord_t x, coord_t y, BspLeaf const *bspLeaf)
             // Outside the BSP leaf's edges.
             return false;
         }
-    } while((hedge = hedge->next) != bspLeaf->hedge);
+    } while((hedge = hedge->next) != base);
 
     return true;
 }
 
-boolean P_IsPointInBspLeaf(coord_t const point[], const BspLeaf* bspLeaf)
+boolean P_IsPointInBspLeaf(coord_t const point[], BspLeaf const *bspLeaf)
 {
     return P_IsPointXYInBspLeaf(point[VX], point[VY], bspLeaf);
 }
 
-boolean P_IsPointXYInSector(coord_t x, coord_t y, const Sector* sector)
+boolean P_IsPointXYInSector(coord_t x, coord_t y, Sector const *sector)
 {
-    BspLeaf* bspLeaf;
     if(!sector) return false; // I guess?
 
     /// @todo Do not assume @a sector is from the current map.
-    bspLeaf = GameMap_BspLeafAtPointXY(theMap, x, y);
-    if(bspLeaf->sector != sector) return false;
+    BspLeaf *bspLeaf = GameMap_BspLeafAtPointXY(theMap, x, y);
+    if(bspLeaf->sectorPtr() != sector) return false;
 
     return P_IsPointXYInBspLeaf(x, y, bspLeaf);
 }
 
-boolean P_IsPointInSector(coord_t const point[], const Sector* sector)
+boolean P_IsPointInSector(coord_t const point[], Sector const *sector)
 {
     return P_IsPointXYInSector(point[VX], point[VY], sector);
 }
@@ -308,17 +308,16 @@ void GameMap_LinkMobjToLineDefs(GameMap* map, mobj_t* mo)
  * the BspLeaf pointer. Can be called without unlinking first.
  */
 #undef P_MobjLink
-DENG_EXTERN_C void P_MobjLink(mobj_t* mo, byte flags)
+DENG_EXTERN_C void P_MobjLink(mobj_t *mo, byte flags)
 {
-    Sector* sec;
-
     // Link into the sector.
     mo->bspLeaf = P_BspLeafAtPoint(mo->origin);
-    sec = mo->bspLeaf->sector;
 
     if(flags & DDLINK_SECTOR)
     {
         // Unlink from the current sector, if any.
+        Sector &sec = mo->bspLeaf->sector();
+
         if(mo->sPrev)
             P_UnlinkMobjFromSector(mo);
 
@@ -326,10 +325,10 @@ DENG_EXTERN_C void P_MobjLink(mobj_t* mo, byte flags)
         // Prev pointers point to the pointer that points back to us.
         // (Which practically disallows traversing the list backwards.)
 
-        if((mo->sNext = sec->mobjList))
+        if((mo->sNext = sec.mobjList))
             mo->sNext->sPrev = &mo->sNext;
 
-        *(mo->sPrev = &sec->mobjList) = mo;
+        *(mo->sPrev = &sec.mobjList) = mo;
     }
 
     // Link into blockmap?
@@ -354,14 +353,13 @@ DENG_EXTERN_C void P_MobjLink(mobj_t* mo, byte flags)
     // entered or exited the void.
     if(mo->dPlayer && mo->dPlayer->mo)
     {
-        ddplayer_t* player = mo->dPlayer;
+        ddplayer_t *player = mo->dPlayer;
+        Sector &sec = player->mo->bspLeaf->sector();
 
         player->inVoid = true;
-        if(P_IsPointXYInSector(player->mo->origin[VX],
-                               player->mo->origin[VY],
-                               player->mo->bspLeaf->sector) &&
-           (player->mo->origin[VZ] < player->mo->bspLeaf->sector->SP_ceilvisheight + 4 &&
-            player->mo->origin[VZ] >= player->mo->bspLeaf->sector->SP_floorvisheight))
+        if(P_IsPointXYInSector(player->mo->origin[VX], player->mo->origin[VY], &sec) &&
+           (player->mo->origin[VZ] <  sec.SP_ceilvisheight + 4 &&
+            player->mo->origin[VZ] >= sec.SP_floorvisheight))
             player->inVoid = false;
     }
 }
@@ -370,19 +368,19 @@ DENG_EXTERN_C void P_MobjLink(mobj_t* mo, byte flags)
  * The callback function will be called once for each line that crosses
  * trough the object. This means all the lines will be two-sided.
  */
-int GameMap_MobjLinesIterator(GameMap* map, mobj_t* mo,
-    int (*callback) (LineDef*, void*), void* parameters)
+int GameMap_MobjLinesIterator(GameMap *map, mobj_t *mo,
+    int (*callback) (LineDef *, void *), void* parameters)
 {
-    void* linkstore[MAXLINKED];
-    void** end = linkstore, **it;
-    nodeindex_t nix;
-    linknode_t* tn;
-    int result = false;
-    assert(map);
+    DENG_ASSERT(map);
 
-    tn = map->mobjNodes.nodes;
+    void *linkstore[MAXLINKED];
+    void **end = linkstore, **it;
+    int result = false;
+
+    linknode_t *tn = map->mobjNodes.nodes;
     if(mo->lineRoot)
     {
+        nodeindex_t nix;
         for(nix = tn[mo->lineRoot].next; nix != mo->lineRoot;
             nix = tn[nix].next)
             *end++ = tn[nix].ptr;
@@ -398,23 +396,22 @@ int GameMap_MobjLinesIterator(GameMap* map, mobj_t* mo,
  * partly inside). This is not a 3D check; the mobj may actually reside
  * above or under the sector.
  */
-int GameMap_MobjSectorsIterator(GameMap* map, mobj_t* mo,
-    int (*callback) (Sector*, void*), void* parameters)
+int GameMap_MobjSectorsIterator(GameMap *map, mobj_t *mo,
+    int (*callback) (Sector *, void *), void *parameters)
 {
-    void* linkstore[MAXLINKED];
-    void** end = linkstore, **it;
-    nodeindex_t nix;
-    linknode_t* tn;
-    LineDef* ld;
-    Sector* sec;
-    int result = false;
-    assert(map);
+    DENG_ASSERT(map);
 
-    tn = map->mobjNodes.nodes;
+    int result = false;
+    void *linkstore[MAXLINKED];
+    void **end = linkstore, **it;
+
+    nodeindex_t nix;
+    linknode_t *tn = map->mobjNodes.nodes;
 
     // Always process the mobj's own sector first.
-    *end++ = sec = mo->bspLeaf->sector;
-    sec->validCount = validCount;
+    Sector &ownSec = mo->bspLeaf->sector();
+    *end++ = &ownSec;
+    ownSec.validCount = validCount;
 
     // Any good lines around here?
     if(mo->lineRoot)
@@ -422,24 +419,24 @@ int GameMap_MobjSectorsIterator(GameMap* map, mobj_t* mo,
         for(nix = tn[mo->lineRoot].next; nix != mo->lineRoot;
             nix = tn[nix].next)
         {
-            ld = (LineDef*) tn[nix].ptr;
+            LineDef *ld = (LineDef *) tn[nix].ptr;
 
             // All these lines are two-sided. Try front side.
-            sec = ld->L_frontsector;
-            if(sec->validCount != validCount)
+            Sector &frontSec = *ld->L_frontsector;
+            if(frontSec.validCount != validCount)
             {
-                *end++ = sec;
-                sec->validCount = validCount;
+                *end++ = &frontSec;
+                frontSec.validCount = validCount;
             }
 
             // And then the back side.
             if(ld->L_backsidedef)
             {
-                sec = ld->L_backsector;
-                if(sec->validCount != validCount)
+                Sector &backSec = *ld->L_backsector;
+                if(backSec.validCount != validCount)
                 {
-                    *end++ = sec;
-                    sec->validCount = validCount;
+                    *end++ = &backSec;
+                    backSec.validCount = validCount;
                 }
             }
         }

@@ -326,16 +326,16 @@ int RIT_LinkObjToBspLeaf(BspLeaf* bspLeaf, void* paramaters)
  *
  * @return  Always @c true. (This function is also used as an iterator.)
  */
-static void spreadInBspLeaf(BspLeaf* bspLeaf, void* paramaters)
+static void spreadInBspLeaf(BspLeaf *bspLeaf, void *parameters)
 {
-    HEdge* hedge;
-    if(!bspLeaf || !bspLeaf->hedge) return;
+    if(!bspLeaf || !bspLeaf->firstHEdge()) return;
 
-    hedge = bspLeaf->hedge;
+    HEdge *base = bspLeaf->firstHEdge();
+    HEdge *hedge = base;
     do
     {
-        processSeg(hedge, paramaters);
-    } while((hedge = hedge->next) != bspLeaf->hedge);
+        processSeg(hedge, parameters);
+    } while((hedge = hedge->next) != base);
 }
 
 static void processSeg(HEdge *hedge, void *parameters)
@@ -352,22 +352,22 @@ static void processSeg(HEdge *hedge, void *parameters)
     if(!backLeaf) return;
 
     // Which way does the spread go?
-    if(!(leaf->validCount == validCount && backLeaf->validCount != validCount))
+    if(!(leaf->validCount() == validCount && backLeaf->validCount() != validCount))
     {
         return; // Not eligible for spreading.
     }
 
     // Is the leaf on the back side outside the origin's AABB?
-    if(backLeaf->aaBox.maxX <= parms->box[BOXLEFT]   ||
-       backLeaf->aaBox.minX >= parms->box[BOXRIGHT]  ||
-       backLeaf->aaBox.maxY <= parms->box[BOXBOTTOM] ||
-       backLeaf->aaBox.minY >= parms->box[BOXTOP]) return;
+    if(backLeaf->aaBox().maxX <= parms->box[BOXLEFT]   ||
+       backLeaf->aaBox().minX >= parms->box[BOXRIGHT]  ||
+       backLeaf->aaBox().maxY <= parms->box[BOXBOTTOM] ||
+       backLeaf->aaBox().minY >= parms->box[BOXTOP]) return;
 
     // Do not spread if the sector on the back side is closed with no height.
-    if(backLeaf->sector && backLeaf->sector->SP_ceilheight <= backLeaf->sector->SP_floorheight) return;
-    if(backLeaf->sector && leaf->sector &&
-       (backLeaf->sector->SP_ceilheight  <= leaf->sector->SP_floorheight ||
-        backLeaf->sector->SP_floorheight >= leaf->sector->SP_ceilheight)) return;
+    if(backLeaf->hasSector() && backLeaf->sector().SP_ceilheight <= backLeaf->sector().SP_floorheight) return;
+    if(backLeaf->hasSector() && leaf->hasSector() &&
+       (backLeaf->sector().SP_ceilheight  <= leaf->sector().SP_floorheight ||
+        backLeaf->sector().SP_floorheight >= leaf->sector().SP_ceilheight)) return;
 
     // Too far from the object?
     distance = hedge->pointOnSide(parms->objOrigin) / hedge->length;
@@ -379,8 +379,8 @@ static void processSeg(HEdge *hedge, void *parameters)
         // On which side of the line are we? (distance is from hedge to origin).
         byte lineSide = hedge->side ^ (distance < 0);
         LineDef *line = hedge->lineDef;
-        Sector *frontSec  = lineSide == FRONT? leaf->sector : backLeaf->sector;
-        Sector *backSec   = lineSide == FRONT? backLeaf->sector : leaf->sector;
+        Sector *frontSec  = lineSide == FRONT? leaf->sectorPtr() : backLeaf->sectorPtr();
+        Sector *backSec   = lineSide == FRONT? backLeaf->sectorPtr() : leaf->sectorPtr();
         SideDef *frontDef = line->L_sidedef(lineSide);
         SideDef *backDef  = line->L_sidedef(lineSide^1);
 
@@ -391,7 +391,7 @@ static void processSeg(HEdge *hedge, void *parameters)
     }
 
     // During next step, obj will continue spreading from there.
-    backLeaf->validCount = validCount;
+    backLeaf->_validCount = validCount;
 
     // Link up a new contact with the back BSP leaf.
     loParams.obj  = parms->obj;
@@ -443,7 +443,7 @@ static void findContacts(objlink_t* link)
     }
 
     // Do the BSP leaf spread. Begin from the obj's own BspLeaf.
-    (*ssecAdr)->validCount = ++validCount;
+    (*ssecAdr)->_validCount = ++validCount;
 
     cfParams.obj = link->obj;
     cfParams.objType = link->type;
@@ -472,34 +472,34 @@ static void findContacts(objlink_t* link)
  * @param bspLeaf    BspLeaf to spread the contacts of.
  * @param maxRadius  Maximum radius for the spread.
  */
-void R_ObjlinkBlockmapSpreadInBspLeaf(objlinkblockmap_t* obm, const BspLeaf* bspLeaf, float maxRadius)
+void R_ObjlinkBlockmapSpreadInBspLeaf(objlinkblockmap_t *obm, BspLeaf const *bspLeaf,
+    float maxRadius)
 {
-    uint minBlock[2], maxBlock[2], x, y;
-    objlink_t* iter;
-    assert(obm);
-
+    DENG_ASSERT(obm);
     if(!bspLeaf) return; // Wha?
 
-    toObjlinkBlockmapCell(obm, minBlock, bspLeaf->aaBox.minX - maxRadius,
-                                         bspLeaf->aaBox.minY - maxRadius);
+    uint minBlock[2];
+    toObjlinkBlockmapCell(obm, minBlock, bspLeaf->aaBox().minX - maxRadius,
+                                         bspLeaf->aaBox().minY - maxRadius);
 
-    toObjlinkBlockmapCell(obm, maxBlock, bspLeaf->aaBox.maxX + maxRadius,
-                                         bspLeaf->aaBox.maxY + maxRadius);
+    uint maxBlock[2];
+    toObjlinkBlockmapCell(obm, maxBlock, bspLeaf->aaBox().maxX + maxRadius,
+                                         bspLeaf->aaBox().maxY + maxRadius);
 
-    for(y = minBlock[1]; y <= maxBlock[1]; ++y)
-        for(x = minBlock[0]; x <= maxBlock[0]; ++x)
+    for(uint y = minBlock[1]; y <= maxBlock[1]; ++y)
+    for(uint x = minBlock[0]; x <= maxBlock[0]; ++x)
+    {
+        objlinkblock_t *block = (objlinkblock_t *) Gridmap_CellXY(obm->gridmap, x, y, true/*can allocate a block*/);
+        if(block->doneSpread) continue;
+
+        objlink_t *iter = block->head;
+        while(iter)
         {
-            objlinkblock_t* block = (objlinkblock_t *) Gridmap_CellXY(obm->gridmap, x, y, true/*can allocate a block*/);
-            if(block->doneSpread) continue;
-
-            iter = block->head;
-            while(iter)
-            {
-                findContacts(iter);
-                iter = iter->nextInBlock;
-            }
-            block->doneSpread = true;
+            findContacts(iter);
+            iter = iter->nextInBlock;
         }
+        block->doneSpread = true;
+    }
 }
 
 static __inline float maxRadius(objtype_t type)

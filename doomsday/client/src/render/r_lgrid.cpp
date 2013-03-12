@@ -302,7 +302,7 @@ void LG_InitForMap(void)
                 sample.origin[VX] = lgOrigin[VX] + off[VX] + samplePoints[0].origin[VX];
                 sample.origin[VY] = lgOrigin[VY] + off[VY] + samplePoints[0].origin[VY];
 
-                ssamples[idx] = P_BspLeafAtPoint(sample.origin)->sector;
+                ssamples[idx] = P_BspLeafAtPoint(sample.origin)->sectorPtr();
                 if(!P_IsPointInSector(sample.origin, ssamples[idx]))
                    ssamples[idx] = NULL;
 
@@ -352,7 +352,7 @@ void LG_InitForMap(void)
                         sample.origin[VX] = lgOrigin[VX] + off[VX] + samplePoints[n].origin[VX];
                         sample.origin[VY] = lgOrigin[VY] + off[VY] + samplePoints[n].origin[VY];
 
-                        ssamples[idx] = P_BspLeafAtPoint(sample.origin)->sector;
+                        ssamples[idx] = P_BspLeafAtPoint(sample.origin)->sectorPtr();
                         if(!P_IsPointInSector(sample.origin, ssamples[idx]))
                            ssamples[idx] = NULL;
                     }

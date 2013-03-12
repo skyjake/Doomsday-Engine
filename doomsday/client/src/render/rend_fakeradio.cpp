@@ -1359,7 +1359,7 @@ static void processEdgeShadow(BspLeaf const *bspLeaf, LineDef const *lineDef,
 
         if(neighbor != lineDef && !neighbor->L_backsidedef &&
            (neighbor->inFlags & LF_BSPWINDOW) &&
-           neighbor->L_frontsector != bspLeaf->sector)
+           neighbor->L_frontsector != bspLeaf->sectorPtr())
         {
             // A one-way window, edgeOpen side.
             sideOpen[i] = 1;
@@ -1436,7 +1436,7 @@ static void drawLinkedEdgeShadows(BspLeaf const *bspLeaf, shadowlink_t *link,
         processEdgeShadow(bspLeaf, link->lineDef, link->side, Plane::Ceiling, shadowDark);
     }
 
-    for(uint pln = Plane::Middle; pln < bspLeaf->sector->planeCount(); ++pln)
+    for(uint pln = Plane::Middle; pln < bspLeaf->sector().planeCount(); ++pln)
     {
         processEdgeShadow(bspLeaf, link->lineDef, link->side, pln, shadowDark);
     }
@@ -1457,7 +1457,8 @@ static void radioBspLeafEdges(BspLeaf const *bspLeaf)
     static size_t doPlaneSize = 0;
     static byte *doPlanes = 0;
 
-    float sectorlight = bspLeaf->sector->lightLevel;
+    Sector &sector = bspLeaf->sector();
+    float sectorlight = sector.lightLevel;
     boolean workToDo = false;
 
     Rend_ApplyLightAdaptation(&sectorlight);
@@ -1474,12 +1475,12 @@ static void radioBspLeafEdges(BspLeaf const *bspLeaf)
     if(!(shadowDark > .0001f)) return;
 
     float vec[3];
-    vec[VX] = vOrigin[VX] - bspLeaf->midPoint[VX];
-    vec[VY] = vOrigin[VZ] - bspLeaf->midPoint[VY];
+    vec[VX] = vOrigin[VX] - bspLeaf->center()[VX];
+    vec[VY] = vOrigin[VZ] - bspLeaf->center()[VY];
     vec[VZ] = 0;
 
     // Do we need to enlarge the size of the doPlanes array?
-    if(bspLeaf->sector->planeCount() > doPlaneSize)
+    if(sector.planeCount() > doPlaneSize)
     {
         if(!doPlaneSize)
             doPlaneSize = 2;
@@ -1492,9 +1493,9 @@ static void radioBspLeafEdges(BspLeaf const *bspLeaf)
     std::memset(doPlanes, 0, doPlaneSize);
 
     // See if any of this BspLeaf's planes will get shadows.
-    for(uint pln = 0; pln < bspLeaf->sector->planeCount(); ++pln)
+    for(uint pln = 0; pln < sector.planeCount(); ++pln)
     {
-        Plane const *plane = bspLeaf->sector->planes[pln];
+        Plane const *plane = sector.planes[pln];
 
         vec[VZ] = vOrigin[VY] - plane->visHeight();
 
@@ -1509,7 +1510,7 @@ static void radioBspLeafEdges(BspLeaf const *bspLeaf)
 
     // We need to check all the shadow lines linked to this BspLeaf for
     // the purpose of fakeradio shadowing.
-    for(shadowlink_t *link = bspLeaf->shadows; link != NULL; link = link->next)
+    for(shadowlink_t *link = bspLeaf->firstShadowLink(); link != NULL; link = link->next)
     {
         // Already rendered during the current frame? We only want to
         // render each shadow once per frame.

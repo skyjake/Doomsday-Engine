@@ -132,13 +132,13 @@ static void setBspLeafSectorOwner(ownerlist_t* ownerList, BspLeaf* bspLeaf)
     ownerList->head = node;
 }
 
-static void findBspLeafsAffectingSector(GameMap* map, uint secIDX)
+static void findBspLeafsAffectingSector(GameMap *map, uint secIDX)
 {
-    Sector* sec = GameMap_Sector(map, secIDX);
+    Sector *sec = GameMap_Sector(map, secIDX);
     if(!sec || !sec->lineDefCount) return;
 
     ownerlist_t bspLeafOwnerList;
-    memset(&bspLeafOwnerList, 0, sizeof(bspLeafOwnerList));
+    std::memset(&bspLeafOwnerList, 0, sizeof(bspLeafOwnerList));
 
     AABoxd aaBox = sec->aaBox;
     aaBox.minX -= 128;
@@ -151,14 +151,14 @@ static void findBspLeafsAffectingSector(GameMap* map, uint secIDX)
 
     for(uint i = 0; i < map->numBspLeafs; ++i)
     {
-        BspLeaf* bspLeaf = GameMap_BspLeaf(map, i);
+        BspLeaf *bspLeaf = GameMap_BspLeaf(map, i);
 
         // Is this BSP leaf close enough?
-        if(bspLeaf->sector == sec || // leaf is IN this sector
-           (bspLeaf->midPoint[VX] > aaBox.minX &&
-            bspLeaf->midPoint[VY] > aaBox.minY &&
-            bspLeaf->midPoint[VX] < aaBox.maxX &&
-            bspLeaf->midPoint[VY] < aaBox.maxY))
+        if(bspLeaf->sectorPtr() == sec || // leaf is IN this sector
+           (bspLeaf->center()[VX] > aaBox.minX &&
+            bspLeaf->center()[VY] > aaBox.minY &&
+            bspLeaf->center()[VX] < aaBox.maxX &&
+            bspLeaf->center()[VY] < aaBox.maxY))
         {
             // It will contribute to the reverb settings of this sector.
             setBspLeafSectorOwner(&bspLeafOwnerList, bspLeaf);
@@ -169,15 +169,15 @@ static void findBspLeafsAffectingSector(GameMap* map, uint secIDX)
     sec->numReverbBspLeafAttributors = bspLeafOwnerList.count;
     if(sec->numReverbBspLeafAttributors)
     {
-        sec->reverbBspLeafs = (BspLeaf**)
-            Z_Malloc((sec->numReverbBspLeafAttributors + 1) * sizeof(BspLeaf*), PU_MAPSTATIC, 0);
+        sec->reverbBspLeafs = (BspLeaf **)
+            Z_Malloc((sec->numReverbBspLeafAttributors + 1) * sizeof(BspLeaf *), PU_MAPSTATIC, 0);
 
-        BspLeaf** ptr = sec->reverbBspLeafs;
-        ownernode_t* node = bspLeafOwnerList.head;
+        BspLeaf **ptr = sec->reverbBspLeafs;
+        ownernode_t *node = bspLeafOwnerList.head;
         for(uint i = 0; i < sec->numReverbBspLeafAttributors; ++i, ptr++)
         {
-            ownernode_t* next = node->next;
-            *ptr = (BspLeaf*) node->data;
+            ownernode_t *next = node->next;
+            *ptr = (BspLeaf *) node->data;
 
             if(i < map->sectorCount() - 1)
             {
@@ -214,14 +214,14 @@ void S_DetermineBspLeafsAffectingSectorReverb(GameMap* map)
         << (Timer_RealMilliseconds() - startTime) / 1000.0f;
 }
 
-static boolean calcBspLeafReverb(BspLeaf* bspLeaf)
+static boolean calcBspLeafReverb(BspLeaf *bspLeaf)
 {
     DENG2_ASSERT(bspLeaf);
 
-    if(!bspLeaf->sector || isDedicated)
+    if(bspLeaf->hasSector() || isDedicated)
     {
-        bspLeaf->reverb[SRD_SPACE] = bspLeaf->reverb[SRD_VOLUME] =
-            bspLeaf->reverb[SRD_DECAY] = bspLeaf->reverb[SRD_DAMPING] = 0;
+        bspLeaf->_reverb[SRD_SPACE] = bspLeaf->_reverb[SRD_VOLUME] =
+            bspLeaf->_reverb[SRD_DECAY] = bspLeaf->_reverb[SRD_DAMPING] = 0;
         return false;
     }
 
@@ -229,15 +229,16 @@ static boolean calcBspLeafReverb(BspLeaf* bspLeaf)
     std::memset(&envSpaceAccum, 0, sizeof(envSpaceAccum));
 
     // Space is the rough volume of the BSP leaf (bounding box).
-    bspLeaf->reverb[SRD_SPACE] =
-        (int) (bspLeaf->sector->SP_ceilheight - bspLeaf->sector->SP_floorheight) *
-        (bspLeaf->aaBox.maxX - bspLeaf->aaBox.minX) *
-        (bspLeaf->aaBox.maxY - bspLeaf->aaBox.minY);
+    bspLeaf->_reverb[SRD_SPACE] =
+        (int) (bspLeaf->sector().SP_ceilheight - bspLeaf->sector().SP_floorheight) *
+        (bspLeaf->aaBox().maxX - bspLeaf->aaBox().minX) *
+        (bspLeaf->aaBox().maxY - bspLeaf->aaBox().minY);
 
     float total = 0;
     // The other reverb properties can be found out by taking a look at the
     // materials of all surfaces in the BSP leaf.
-    HEdge* hedge = bspLeaf->hedge;
+    HEdge *base = bspLeaf->firstHEdge();
+    HEdge *hedge = base;
     do
     {
         if(hedge->lineDef && HEDGE_SIDEDEF(hedge) && HEDGE_SIDEDEF(hedge)->SW_middlematerial)
@@ -251,13 +252,13 @@ static boolean calcBspLeafReverb(BspLeaf* bspLeaf)
 
             envSpaceAccum[env] += hedge->length;
         }
-    } while((hedge = hedge->next) != bspLeaf->hedge);
+    } while((hedge = hedge->next) != base);
 
     if(!total)
     {
         // Huh?
-        bspLeaf->reverb[SRD_VOLUME] = bspLeaf->reverb[SRD_DECAY] =
-            bspLeaf->reverb[SRD_DAMPING] = 0;
+        bspLeaf->_reverb[SRD_VOLUME] = bspLeaf->_reverb[SRD_DECAY] =
+            bspLeaf->_reverb[SRD_DAMPING] = 0;
         return false;
     }
 
@@ -274,7 +275,7 @@ static boolean calcBspLeafReverb(BspLeaf* bspLeaf)
         v += envSpaceAccum[i] * envInfo[i].volumeMul;
     }
     if(v > 255) v = 255;
-    bspLeaf->reverb[SRD_VOLUME] = v;
+    bspLeaf->_reverb[SRD_VOLUME] = v;
 
     // Decay time.
     for(i = 0, v = 0; i < NUM_AUDIO_ENVIRONMENT_CLASSES; ++i)
@@ -282,7 +283,7 @@ static boolean calcBspLeafReverb(BspLeaf* bspLeaf)
         v += envSpaceAccum[i] * envInfo[i].decayMul;
     }
     if(v > 255) v = 255;
-    bspLeaf->reverb[SRD_DECAY] = v;
+    bspLeaf->_reverb[SRD_DECAY] = v;
 
     // High frequency damping.
     for(i = 0, v = 0; i < NUM_AUDIO_ENVIRONMENT_CLASSES; ++i)
@@ -290,7 +291,7 @@ static boolean calcBspLeafReverb(BspLeaf* bspLeaf)
         v += envSpaceAccum[i] * envInfo[i].dampingMul;
     }
     if(v > 255) v = 255;
-    bspLeaf->reverb[SRD_DAMPING] = v;
+    bspLeaf->_reverb[SRD_DAMPING] = v;
 
     /* DEBUG_Message(("bspLeaf %04i: vol:%3i sp:%3i dec:%3i dam:%3i\n",
                       GET_BSPLEAF_IDX(bspLeaf), bspLeaf->reverb[SRD_VOLUME],
@@ -322,11 +323,11 @@ static void calculateSectorReverb(Sector *sec)
 
         if(calcBspLeafReverb(bspLeaf))
         {
-            sec->reverb[SRD_SPACE]   += bspLeaf->reverb[SRD_SPACE];
+            sec->reverb[SRD_SPACE]   += bspLeaf->_reverb[SRD_SPACE];
 
-            sec->reverb[SRD_VOLUME]  += bspLeaf->reverb[SRD_VOLUME]  / 255.0f * bspLeaf->reverb[SRD_SPACE];
-            sec->reverb[SRD_DECAY]   += bspLeaf->reverb[SRD_DECAY]   / 255.0f * bspLeaf->reverb[SRD_SPACE];
-            sec->reverb[SRD_DAMPING] += bspLeaf->reverb[SRD_DAMPING] / 255.0f * bspLeaf->reverb[SRD_SPACE];
+            sec->reverb[SRD_VOLUME]  += bspLeaf->_reverb[SRD_VOLUME]  / 255.0f * bspLeaf->_reverb[SRD_SPACE];
+            sec->reverb[SRD_DECAY]   += bspLeaf->_reverb[SRD_DECAY]   / 255.0f * bspLeaf->_reverb[SRD_SPACE];
+            sec->reverb[SRD_DAMPING] += bspLeaf->_reverb[SRD_DAMPING] / 255.0f * bspLeaf->_reverb[SRD_SPACE];
         }
     }
 

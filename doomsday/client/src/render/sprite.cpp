@@ -340,11 +340,11 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
         }
         else
         {
-            float lightLevel;
-            float const *secColor = R_GetSectorLightColor(spr->data.sprite.bspLeaf->sector);
+            Sector &sector = spr->data.sprite.bspLeaf->sector();
+            float const *secColor = R_GetSectorLightColor(&sector);
 
             // No need for distance attentuation.
-            lightLevel = spr->data.sprite.bspLeaf->sector->lightLevel;
+            float lightLevel = sector.lightLevel;
 
             // Add extra light plus bonus.
             lightLevel += R_ExtraLightDelta();
@@ -727,11 +727,11 @@ static void setupModelParamsForVisPSprite(rendmodelparams_t *params, vispsprite_
         }
         else
         {
-            float lightLevel;
-            float const *secColor = R_GetSectorLightColor(spr->data.model.bspLeaf->sector);
+            Sector &sector = spr->data.model.bspLeaf->sector();
+            float const *secColor = R_GetSectorLightColor(&sector);
 
             // Diminished light (with compression).
-            lightLevel = spr->data.model.bspLeaf->sector->lightLevel;
+            float lightLevel = sector.lightLevel;
 
             // No need for distance attentuation.
 

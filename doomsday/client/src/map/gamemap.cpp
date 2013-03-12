@@ -283,11 +283,11 @@ Surface *GameMap_SurfaceByBase(GameMap *map, void const *ddMobjBase)
     return NULL;
 }
 
-int GameMap_BspLeafIndex(GameMap* map, BspLeaf const *leaf)
+int GameMap_BspLeafIndex(GameMap *map, BspLeaf const *leaf)
 {
     DENG_UNUSED(map);
     if(!leaf) return -1;
-    return leaf->index;
+    return leaf->origIndex();
 }
 
 BspLeaf* GameMap_BspLeaf(GameMap* map, uint idx)
@@ -411,19 +411,17 @@ Polyobj* GameMap_PolyobjByBase(GameMap* map, void* ddMobjBase)
     return NULL;
 }
 
-static void initPolyobj(Polyobj* po)
+static void initPolyobj(Polyobj *po)
 {
-    LineDef** lineIter;
-    BspLeaf* bspLeaf;
-    vec2d_t avg; /// < Used to find a polyobj's center, and hence BSP leaf.
-
     if(!po) return;
 
+    vec2d_t avg; /// < Used to find a polyobj's center, and hence BSP leaf.
     V2d_Set(avg, 0, 0);
-    for(lineIter = po->lines; *lineIter; lineIter++)
+
+    for(LineDef **lineIter = po->lines; *lineIter; lineIter++)
     {
-        LineDef* line = *lineIter;
-        SideDef* front = line->L_frontsidedef;
+        LineDef *line = *lineIter;
+        SideDef *front = line->L_frontsidedef;
 
         front->SW_topinflags |= SUIF_NO_RADIO;
         front->SW_middleinflags |= SUIF_NO_RADIO;
@@ -431,7 +429,7 @@ static void initPolyobj(Polyobj* po)
 
         if(line->L_backsidedef)
         {
-            SideDef* back = line->L_backsidedef;
+            SideDef *back = line->L_backsidedef;
 
             back->SW_topinflags |= SUIF_NO_RADIO;
             back->SW_middleinflags |= SUIF_NO_RADIO;
@@ -442,16 +440,15 @@ static void initPolyobj(Polyobj* po)
     }
     V2d_Scale(avg, 1.f / po->lineCount);
 
-    bspLeaf = P_BspLeafAtPoint(avg);
-    if(bspLeaf)
+    if(BspLeaf *bspLeaf = P_BspLeafAtPoint(avg))
     {
-        if(bspLeaf->polyObj)
+        if(bspLeaf->hasPolyobj())
         {
             Con_Message("Warning: GameMap::initPolyobj: Multiple polyobjs in a single BSP leaf\n"
                         "  (BSP leaf %lu, sector %lu). Previous polyobj overridden.",
-                        (unsigned long)GET_BSPLEAF_IDX(bspLeaf), (unsigned long)GET_SECTOR_IDX(bspLeaf->sector));
+                        (unsigned long) GET_BSPLEAF_IDX(bspLeaf), (unsigned long) GET_SECTOR_IDX(bspLeaf->sectorPtr()));
         }
-        bspLeaf->polyObj = po;
+        bspLeaf->_polyObj = po;
         po->bspLeaf = bspLeaf;
     }
 
@@ -817,12 +814,8 @@ int GameMap_LineDefIterator(GameMap* map, int (*callback) (LineDef*, void*), voi
     return false; // Continue iteration.
 }
 
-void GameMap_LinkBspLeaf(GameMap* map, BspLeaf* bspLeaf)
+void GameMap_LinkBspLeaf(GameMap *map, BspLeaf *bspLeaf)
 {
-    Blockmap* blockmap;
-    BlockmapCellBlock cellBlock;
-    AABoxd aaBox;
-    uint x, y;
     DENG2_ASSERT(map);
 
     // Do not link NULL BSP leafs.
@@ -833,51 +826,52 @@ void GameMap_LinkBspLeaf(GameMap* map, BspLeaf* bspLeaf)
     }
 
     // BspLeafs without sectors don't get in.
-    if(!bspLeaf->sector) return;
+    if(!bspLeaf->hasSector()) return;
 
-    blockmap = map->bspLeafBlockmap;
-    aaBox.minX = bspLeaf->aaBox.minX;
-    aaBox.minY = bspLeaf->aaBox.minY;
-    aaBox.maxX = bspLeaf->aaBox.maxX;
-    aaBox.maxY = bspLeaf->aaBox.maxY;
+    Blockmap *blockmap = map->bspLeafBlockmap;
+
+    AABoxd aaBox(bspLeaf->aaBox().minX, bspLeaf->aaBox().minY,
+                 bspLeaf->aaBox().maxX, bspLeaf->aaBox().maxY);
+
+    BlockmapCellBlock cellBlock;
     Blockmap_CellBlock(blockmap, &cellBlock, &aaBox);
 
-    for(y = cellBlock.minY; y <= cellBlock.maxY; ++y)
-    for(x = cellBlock.minX; x <= cellBlock.maxX; ++x)
+    for(uint y = cellBlock.minY; y <= cellBlock.maxY; ++y)
+    for(uint x = cellBlock.minX; x <= cellBlock.maxX; ++x)
     {
         Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y, bspLeaf);
     }
 }
 
 typedef struct subseciterparams_s {
-    const AABoxd* box;
-    Sector* sector;
+    AABoxd const *box;
+    Sector *sector;
     int localValidCount;
-    int (*func) (BspLeaf*, void*);
-    void* param;
+    int (*func) (BspLeaf *, void *);
+    void *param;
 } bmapbspleafiterateparams_t;
 
-static int blockmapCellBspLeafsIterator(void* object, void* context)
+static int blockmapCellBspLeafsIterator(void *object, void *context)
 {
-    BspLeaf* bspLeaf = (BspLeaf*)object;
-    bmapbspleafiterateparams_t* args = (bmapbspleafiterateparams_t*) context;
-    if(bspLeaf->validCount != args->localValidCount)
+    BspLeaf *bspLeaf = (BspLeaf *)object;
+    bmapbspleafiterateparams_t *args = (bmapbspleafiterateparams_t *) context;
+    if(bspLeaf->validCount() != args->localValidCount)
     {
         boolean ok = true;
 
         // This BspLeaf has now been processed for the current iteration.
-        bspLeaf->validCount = args->localValidCount;
+        bspLeaf->_validCount = args->localValidCount;
 
         // Check the sector restriction.
-        if(args->sector && bspLeaf->sector != args->sector)
+        if(args->sector && bspLeaf->sectorPtr() != args->sector)
             ok = false;
 
         // Check the bounds.
         if(args->box &&
-           (bspLeaf->aaBox.maxX < args->box->minX ||
-            bspLeaf->aaBox.minX > args->box->maxX ||
-            bspLeaf->aaBox.minY > args->box->maxY ||
-            bspLeaf->aaBox.maxY < args->box->minY))
+           (bspLeaf->aaBox().maxX < args->box->minX ||
+            bspLeaf->aaBox().minX > args->box->maxX ||
+            bspLeaf->aaBox().minY > args->box->maxY ||
+            bspLeaf->aaBox().maxY < args->box->minY))
             ok = false;
 
         if(ok)

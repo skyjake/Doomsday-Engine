@@ -1192,14 +1192,14 @@ static ClipNode* C_AngleClippedBy(binangle_t bang)
 }
 #endif
 
-int C_CheckBspLeaf(BspLeaf* leaf)
+int C_CheckBspLeaf(BspLeaf *leaf)
 {
-    if(!leaf || leaf->hedgeCount < 3) return false;
+    if(!leaf || leaf->hedgeCount() < 3) return false;
 
     if(devNoCulling) return true;
 
     // Do we need to resize the angle list buffer?
-    if(leaf->hedgeCount > anglistSize)
+    if(leaf->hedgeCount() > anglistSize)
     {
         anglistSize *= 2;
         if(!anglistSize)
@@ -1209,18 +1209,19 @@ int C_CheckBspLeaf(BspLeaf* leaf)
 
     // Find angles to all corners.
     uint n = 0;
-    HEdge* hedge = leaf->hedge;
+    HEdge *base = leaf->firstHEdge();
+    HEdge *hedge = base;
     do
     {
-        Vertex* vtx = hedge->HE_v1;
+        Vertex *vtx = hedge->HE_v1;
         // Shift for more accuracy.
         anglist[n++] = bamsAtan2(int( (vtx->origin()[VY] - vOrigin[VZ]) * 100 ),
                                  int( (vtx->origin()[VX] - vOrigin[VX]) * 100 ));
 
-    } while((hedge = hedge->next) != leaf->hedge);
+    } while((hedge = hedge->next) != base);
 
     // Check each of the ranges defined by the edges.
-    for(uint i = 0; i < leaf->hedgeCount - 1; ++i)
+    for(uint i = 0; i < leaf->hedgeCount() - 1; ++i)
     {
         uint end = i + 1;
         binangle_t angLen;

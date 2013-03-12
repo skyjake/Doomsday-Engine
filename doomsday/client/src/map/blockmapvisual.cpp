@@ -64,19 +64,18 @@ static int rendLineDef(LineDef* line, void* /*parameters*/)
     return false; // Continue iteration.
 }
 
-static int rendBspLeaf(BspLeaf* bspLeaf, void* /*parameters*/)
+static int rendBspLeaf(BspLeaf *bspLeaf, void * /*parameters*/)
 {
-    if(bspLeaf->validCount != validCount)
+    if(bspLeaf->validCount() != validCount)
     {
-        const float scale = MAX_OF(bmapDebugSize, 1);
-        const float width = (Window_Width(theWindow) / 16) / scale;
+        float const scale = MAX_OF(bmapDebugSize, 1);
+        float const width = (Window_Width(theWindow) / 16) / scale;
         float length, dx, dy, normal[2], unit[2];
-        HEdge* hedge;
         vec2f_t start, end;
 
-        if(bspLeaf->hedge)
+        if(HEdge *base = bspLeaf->firstHEdge())
         {
-            hedge = bspLeaf->hedge;
+            HEdge *hedge = base;
             do
             {
                 V2f_Set(start, hedge->HE_v1origin[VX], hedge->HE_v1origin[VY]);
@@ -121,8 +120,8 @@ static int rendBspLeaf(BspLeaf* bspLeaf, void* /*parameters*/)
                 }
 
                 // Draw the bounding box.
-                V2f_Set(start, bspLeaf->aaBox.minX, bspLeaf->aaBox.minY);
-                V2f_Set(end,   bspLeaf->aaBox.maxX, bspLeaf->aaBox.maxY);
+                V2f_Set(start, bspLeaf->aaBox().minX, bspLeaf->aaBox().minY);
+                V2f_Set(end,   bspLeaf->aaBox().maxX, bspLeaf->aaBox().maxY);
 
                 glBegin(GL_LINES);
                     glVertex2f(start[VX], start[VY]);
@@ -134,10 +133,10 @@ static int rendBspLeaf(BspLeaf* bspLeaf, void* /*parameters*/)
                     glVertex2f(start[VX],   end[VY]);
                     glVertex2f(start[VX], start[VY]);
                 glEnd();
-            } while((hedge = hedge->next) != bspLeaf->hedge);
+            } while((hedge = hedge->next) != base);
         }
 
-        bspLeaf->validCount = validCount;
+        bspLeaf->_validCount = validCount;
     }
     return false; // Continue iteration.
 }

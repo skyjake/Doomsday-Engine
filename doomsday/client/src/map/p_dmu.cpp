@@ -433,14 +433,14 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
         case DMU_HEDGE: {
             BspLeaf *bspLeaf = elem->castTo<BspLeaf>();
             int result = false; // Continue iteration.
-            if(bspLeaf->hedge)
+            if(HEdge *base = bspLeaf->firstHEdge())
             {
-                HEdge *hedge = bspLeaf->hedge;
+                HEdge *hedge = base;
                 do
                 {
                     result = callback(hedge, context);
                     if(result) break;
-                } while((hedge = hedge->next) != bspLeaf->hedge);
+                } while((hedge = hedge->next) != base);
             }
             return result; }
 
@@ -881,12 +881,12 @@ static int setProperty(void *ptr, void *context)
     {
         if(args->modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            elem = elem->castTo<BspLeaf>()->sector;
+            elem = elem->castTo<BspLeaf>()->sectorPtr();
             args->type = DMU_SECTOR;
         }
         else if(args->modifiers & DMU_CEILING_OF_SECTOR)
         {
-            elem = elem->castTo<BspLeaf>()->sector;
+            elem = elem->castTo<BspLeaf>()->sectorPtr();
             args->type = DMU_SECTOR;
         }
     }
@@ -1369,12 +1369,12 @@ static int getProperty(void *ptr, void *context)
     {
         if(args->modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            elem = elem->castTo<BspLeaf>()->sector;
+            elem = elem->castTo<BspLeaf>()->sectorPtr();
             args->type = DMU_SECTOR;
         }
         else if(args->modifiers & DMU_CEILING_OF_SECTOR)
         {
-            elem = elem->castTo<BspLeaf>()->sector;
+            elem = elem->castTo<BspLeaf>()->sectorPtr();
             args->type = DMU_SECTOR;
         }
         else
@@ -1383,7 +1383,7 @@ static int getProperty(void *ptr, void *context)
             {
             case DMU_LIGHT_LEVEL:
             case DMT_MOBJS:
-                elem = elem->castTo<BspLeaf>()->sector;
+                elem = elem->castTo<BspLeaf>()->sectorPtr();
                 args->type = DMU_SECTOR;
                 break;
             default: break;

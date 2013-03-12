@@ -40,13 +40,19 @@ class Sector;
 class HEdge;
 
 /**
- * Map BSP leaf.
+ * Two dimensional convex polygon describing a @em leaf in a binary space
+ * partition tree (BSP).
+ *
+ * @see http://en.wikipedia.org/wiki/Binary_space_partitioning
  *
  * @ingroup map
  */
 class BspLeaf : public de::MapElement
 {
 public:
+    /// Required sector attribution is missing. @ingroup errors
+    DENG2_ERROR(MissingSectorError);
+
     /// The referenced geometry group does not exist. @ingroup errors
     DENG2_ERROR(UnknownGeometryGroupError);
 
@@ -58,49 +64,129 @@ public:
 
 public: /// @todo Make private:
     /// First HEdge in this leaf.
-    HEdge *hedge;
+    HEdge *_hedge;
 
     /// @ref bspLeafFlags.
-    int flags;
+    int _flags;
 
     /// Unique. Set when saving the BSP.
-    uint index;
+    uint _index;
 
     /// Frame number of last R_AddSprites.
-    int addSpriteCount;
+    int _addSpriteCount;
 
-    int validCount;
+    int _validCount;
 
     /// Number of HEdge's in this leaf.
-    uint hedgeCount;
+    uint _hedgeCount;
 
-    Sector *sector;
+    Sector *_sector;
 
-    /// First polyobj in this leaf. Can be @c NULL.
-    struct polyobj_s *polyObj;
+    /// First Polyobj in this leaf. Can be @c NULL.
+    struct polyobj_s *_polyObj;
 
-    /// HEdge whose vertex to use as the base for a trifan. If @c NULL then midPoint is used instead.
-    HEdge *fanBase;
+    /// HEdge whose vertex to use as the base for a trifan.
+    /// If @c NULL then midPoint will be used instead.
+    HEdge *_fanBase;
 
-    struct shadowlink_s *shadows;
+    struct shadowlink_s *_shadows;
 
     /// Vertex bounding box in the map coordinate space.
-    AABoxd aaBox;
+    AABoxd _aaBox;
 
     /// Center of vertices.
-    coord_t midPoint[2];
+    coord_t _center[2];
 
-    /// Offset to align the top left of materials in the built geometry to the map coordinate space grid.
-    coord_t worldGridOffset[2];
+    /// Offset to align the top left of materials in the built geometry to the
+    /// map coordinate space grid.
+    coord_t _worldGridOffset[2];
 
     /// [sector->planeCount] size.
-    struct biassurface_s **bsuf;
+    struct biassurface_s **_bsuf;
 
-    uint reverb[NUM_REVERB_DATA];
+    uint _reverb[NUM_REVERB_DATA];
 
 public:
     BspLeaf();
     ~BspLeaf();
+
+    /**
+     * Returns the axis-aligned bounding box which encompases all the vertexes
+     * which define the geometry of the BSP leaf in map coordinate space units.
+     */
+    AABoxd const &aaBox() const;
+
+    /**
+     * Returns the point described by the average origin coordinates of all the
+     * vertexes which define the geometry of the BSP leaf in map coordinate space
+     * units.
+     */
+    vec2d_t const &center() const;
+
+    /**
+     * Returns a pointer to the first HEdge of the BSP leaf; otherwise @c 0.
+     */
+    HEdge *firstHEdge() const;
+
+    /**
+     * Returns the total number of half-edges in the BSP leaf.
+     */
+    uint hedgeCount() const;
+
+    /**
+     * Returns @c true iff a sector is attributed to the BSP leaf. The only time
+     * a leaf might not be attributed to a sector is if the leaf was @em orphaned
+     * by the partitioning algorithm (a bug).
+     */
+    bool hasSector() const;
+
+    /**
+     * Returns the sector attributed to the BSP leaf.
+     *
+     * @see hasSector()
+     */
+    Sector &sector() const;
+
+    /**
+     * Returns a pointer to the sector attributed to the BSP leaf; otherwise @c 0.
+     *
+     * @see hasSector()
+     */
+    inline Sector *sectorPtr() const { return hasSector()? &sector() : 0; }
+
+    /**
+     * Returns @c true iff there is at least one polyobj linked with the BSP leaf.
+     */
+    inline bool hasPolyobj() { return !!firstPolyobj(); }
+
+    /**
+     * Returns a pointer to the first polyobj linked to the BSP leaf; otherwise @c 0.
+     */
+    struct polyobj_s *firstPolyobj() const;
+
+    /**
+     * Returns the @ref bspLeafFlags of the BSP leaf.
+     */
+    int flags() const;
+
+    /**
+     * Returns the original index of the BSP leaf.
+     */
+    uint origIndex() const;
+
+    /**
+     * Returns the frame number of the last time sprites were projected for the
+     * BSP leaf.
+     */
+    int addSpriteCount() const;
+
+    /**
+     * Returns the @em validCount of the BSP leaf. Used by some legacy iteration
+     * algorithms for marking leafs as processed/visited.
+     *
+     * @todo Refactor me away.
+     */
+    int validCount() const;
 
     /**
      * Retrieve the bias surface for specified geometry @a groupId
@@ -110,17 +196,17 @@ public:
     biassurface_t &biasSurfaceForGeometryGroup(uint groupId);
 
     /**
-     * Update the BspLeaf's map space axis-aligned bounding box to encompass
+     * Update the BSP leaf's map space axis-aligned bounding box to encompass
      * the points defined by it's vertices.
      */
     void updateAABox();
 
     /**
-     * Update the mid point in the map coordinate space.
+     * Update the center point in the map coordinate space.
      *
      * @pre Axis-aligned bounding box must have been initialized.
      */
-    void updateMidPoint();
+    void updateCenter();
 
     /**
      * Update the world grid offset.
@@ -128,6 +214,26 @@ public:
      * @pre Axis-aligned bounding box must have been initialized.
      */
     void updateWorldGridOffset();
+
+    /**
+     * Returns a pointer to the HEdge of the BSP lead which has been chosen for
+     * use as the base for a triangle fan geometry. May return @c 0 if no suitable
+     * base is configured.
+     */
+    HEdge *fanBase() const;
+
+    /**
+     * Returns the first shadowlink_t associated with the BSP leaf; otherwise @c 0.
+     */
+    struct shadowlink_s *firstShadowLink() const;
+
+    /**
+     * Returns the vector described by the offset from the map coordinate space
+     * origin to the top most, left most point of the geometry of the BSP leaf.
+     *
+     * @see aaBox()
+     */
+    vec2d_t const &worldGridOffset() const;
 
     /**
      * Get a property value, selected by DMU_* name.

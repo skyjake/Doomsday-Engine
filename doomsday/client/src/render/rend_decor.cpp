@@ -96,7 +96,7 @@ static void projectSource(decorsource_t const &src)
     float min = decor->lightLevels[0];
     float max = decor->lightLevels[1];
 
-    float brightness = R_CheckSectorLight(src.bspLeaf->sector->lightLevel, min, max);
+    float brightness = R_CheckSectorLight(src.bspLeaf->sector().lightLevel, min, max);
     if(!(brightness > 0)) return;
 
     if(src.fadeMul <= 0) return;
@@ -187,7 +187,7 @@ static void addLuminousDecoration(decorsource_t &src)
     float min = decor->lightLevels[0];
     float max = decor->lightLevels[1];
 
-    float brightness = R_CheckSectorLight(src.bspLeaf->sector->lightLevel, min, max);
+    float brightness = R_CheckSectorLight(src.bspLeaf->sector().lightLevel, min, max);
     if(!(brightness > 0)) return;
 
     // Apply the brightness factor (was calculated using sector lightlevel).

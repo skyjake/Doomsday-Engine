@@ -317,7 +317,7 @@ void P_SpawnMobjParticleGen(ded_ptcgen_t const *def, mobj_t *source)
     // Size of source sector might determine count.
     if(def->flags & PGF_SCALED_RATE)
     {
-        gen->spawnRateMultiplier = source->bspLeaf->sector->roughArea;
+        gen->spawnRateMultiplier = source->bspLeaf->sector().roughArea;
     }
     else
     {
@@ -654,7 +654,7 @@ static void P_NewParticle(ptcgen_t *gen)
                 RNG_RandFloat() * (sector->aaBox.maxY - sector->aaBox.minY);
 
             subsec = P_BspLeafAtPointXY(x, y);
-            if(subsec->sector == sector) break;
+            if(subsec->sectorPtr() == sector) break;
 
             subsec = NULL;
         }
@@ -664,10 +664,10 @@ static void P_NewParticle(ptcgen_t *gen)
         // Try a couple of times to get a good random spot.
         for(i = 0; i < 10; ++i) // Max this many tries before giving up.
         {
-            float x = subsec->aaBox.minX +
-                RNG_RandFloat() * (subsec->aaBox.maxX - subsec->aaBox.minX);
-            float y = subsec->aaBox.minY +
-                RNG_RandFloat() * (subsec->aaBox.maxY - subsec->aaBox.minY);
+            float x = subsec->aaBox().minX +
+                RNG_RandFloat() * (subsec->aaBox().maxX - subsec->aaBox().minX);
+            float y = subsec->aaBox().minY +
+                RNG_RandFloat() * (subsec->aaBox().maxY - subsec->aaBox().minY);
 
             pt->origin[VX] = FLT2FIX(x);
             pt->origin[VY] = FLT2FIX(y);
@@ -702,7 +702,7 @@ static void P_NewParticle(ptcgen_t *gen)
         pt->sector = &gen->plane->sector();
     else
         pt->sector = P_BspLeafAtPointXY(FIX2FLT(pt->origin[VX]),
-                                        FIX2FLT(pt->origin[VY]))->sector;
+                                        FIX2FLT(pt->origin[VY]))->sectorPtr();
 
     // Play a stage sound?
     P_ParticleSound(pt->origin, &def->stages[pt->stage].sound);
@@ -1169,7 +1169,7 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
 
     // Should we update the sector pointer?
     if(tmcross)
-        pt->sector = P_BspLeafAtPointXY(FIX2FLT(x), FIX2FLT(y))->sector;
+        pt->sector = P_BspLeafAtPointXY(FIX2FLT(x), FIX2FLT(y))->sectorPtr();
 }
 
 /**

@@ -492,7 +492,7 @@ void S_StopSound(int soundID, mobj_t* emitter)
 }
 
 #undef S_StopSound2
-void S_StopSound2(int soundID, mobj_t* emitter, int flags)
+void S_StopSound2(int soundID, mobj_t *emitter, int flags)
 {
     // Are we performing any special stop behaviors?
     if(emitter && flags)
@@ -500,17 +500,17 @@ void S_StopSound2(int soundID, mobj_t* emitter, int flags)
         if(emitter->thinker.id)
         {
             // Emitter is a real Mobj.
-            Sector* sector = emitter->bspLeaf->sector;
-            stopSectorSounds((ddmobj_base_t*)&sector->base, soundID, flags);
+            Sector &sector = emitter->bspLeaf->sector();
+            stopSectorSounds((ddmobj_base_t *)&sector.base, soundID, flags);
             return;
         }
 
         // The head of the chain is the sector. Find it.
         while(emitter->thinker.prev)
         {
-            emitter = (mobj_t*)emitter->thinker.prev;
+            emitter = (mobj_t *)emitter->thinker.prev;
         }
-        stopSectorSounds((ddmobj_base_t*)emitter, soundID, flags);
+        stopSectorSounds((ddmobj_base_t *)emitter, soundID, flags);
         return;
     }
 

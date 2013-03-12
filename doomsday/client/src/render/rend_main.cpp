@@ -1360,23 +1360,20 @@ static boolean doRenderHEdge(HEdge* hedge, const pvec3f_t normal,
     return false; // Do not clip with this.
 }
 
-static void renderPlane(BspLeaf* bspLeaf, Plane::Type type, coord_t height,
+static void renderPlane(BspLeaf *bspLeaf, Plane::Type type, coord_t height,
     vec3f_t tangent, vec3f_t bitangent, vec3f_t normal,
-    Material* inMat, const float sufColor[4], blendmode_t blendMode,
+    Material *inMat, float const sufColor[4], blendmode_t blendMode,
     vec3d_t texTL, vec3d_t texBR,
     float const texOffset[2], float const texScale[2],
     boolean skyMasked,
     boolean addDLights, boolean addMobjShadows,
-    biassurface_t* bsuf, uint elmIdx /*tmp*/,
+    biassurface_t *bsuf, uint elmIdx /*tmp*/,
     int texMode /*tmp*/)
 {
-    rendworldpoly_params_t params;
-    uint                numVertices;
-    rvertex_t*          rvertices;
-    Sector*             sec = bspLeaf->sector;
-    Material*         mat = NULL;
+    Sector *sec = bspLeaf->sectorPtr();
 
-    memset(&params, 0, sizeof(params));
+    rendworldpoly_params_t params;
+    std::memset(&params, 0, sizeof(params));
 
     params.flags = RPF_DEFAULT;
     params.isWall = false;
@@ -1393,6 +1390,7 @@ static void renderPlane(BspLeaf* bspLeaf, Plane::Type type, coord_t height,
     params.texOffset = texOffset;
     params.texScale = texScale;
 
+    Material *mat = 0;
     if(skyMasked)
     {
         // In devRendSkyMode mode we render all polys destined for the
@@ -1429,6 +1427,8 @@ static void renderPlane(BspLeaf* bspLeaf, Plane::Type type, coord_t height,
         }
     }
 
+    uint numVertices;
+    rvertex_t *rvertices;
     Rend_BuildBspLeafPlaneGeometry(bspLeaf, (type == Plane::Ceiling), height,
                                    &rvertices, &numVertices);
 
@@ -1442,7 +1442,7 @@ static void renderPlane(BspLeaf* bspLeaf, Plane::Type type, coord_t height,
         }
         else
         {
-            Surface const &suf = bspLeaf->sector->planes[elmIdx]->surface();
+            Surface const &suf = sec->planes[elmIdx]->surface();
             Material *mat = suf.material? suf.material : &App_Materials().find(de::Uri("System", Path("missing"))).material();
 
             MaterialSnapshot const &ms = mat->prepare(Rend_MapSurfaceMaterialSpec());
@@ -1487,7 +1487,9 @@ static void Rend_RenderPlane(Plane::Type type, coord_t height,
     // Must have a visible surface.
     if(!inMat || !inMat->isDrawable()) return;
 
-    V3f_Set(vec, vOrigin[VX] - bspLeaf->midPoint[VX], vOrigin[VZ] - bspLeaf->midPoint[VY], vOrigin[VY] - height);
+    V3f_Set(vec, vOrigin[VX] - bspLeaf->center()[VX],
+                 vOrigin[VZ] - bspLeaf->center()[VY],
+                 vOrigin[VY] - height);
 
     /**
      * Flip surface tangent space vectors according to the z positon of the viewer relative
@@ -1503,10 +1505,10 @@ static void Rend_RenderPlane(Plane::Type type, coord_t height,
         coord_t texTL[3], texBR[3];
 
         // Set the texture origin, Y is flipped for the ceiling.
-        V3d_Set(texTL, bspLeaf->aaBox.minX,
-                       bspLeaf->aaBox.arvec2[type == Plane::Floor? 1 : 0][VY], height);
-        V3d_Set(texBR, bspLeaf->aaBox.maxX,
-                       bspLeaf->aaBox.arvec2[type == Plane::Floor? 0 : 1][VY], height);
+        V3d_Set(texTL, bspLeaf->aaBox().minX,
+                       bspLeaf->aaBox().arvec2[type == Plane::Floor? 1 : 0][VY], height);
+        V3d_Set(texBR, bspLeaf->aaBox().maxX,
+                       bspLeaf->aaBox().arvec2[type == Plane::Floor? 0 : 1][VY], height);
 
         renderPlane(bspLeaf, type, height, tangent, bitangent, normal, inMat,
                     sufColor, blendMode, texTL, texBR, texOffset, texScale,
@@ -1762,7 +1764,7 @@ static void reportLineDefDrawn(LineDef* line)
 static boolean Rend_RenderHEdge(HEdge *hedge, byte sections)
 {
     BspLeaf *leaf = currentBspLeaf;
-    Sector *frontSec = leaf->sector;
+    Sector *frontSec = leaf->sectorPtr();
     Sector *backSec  = HEDGE_BACK_SECTOR(hedge);
     lineside_t *front = HEDGE_SIDE(hedge);
 
@@ -1796,16 +1798,15 @@ static boolean Rend_RenderHEdge(HEdge *hedge, byte sections)
  */
 static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
 {
+    DENG_ASSERT(hedge);
+
+    int solidSeg = false;
     BspLeaf *leaf = currentBspLeaf;
     LineDef *line = hedge->lineDef;
-    Plane *ffloor, *fceil, *bfloor, *bceil;
-    lineside_t *front, *back;
-    int solidSeg = false;
-
     if(!line) return false;
 
-    front = HEDGE_SIDE(hedge);
-    back  = HEDGE_SIDE(hedge->twin);
+    lineside_t *front = HEDGE_SIDE(hedge);
+    lineside_t *back  = HEDGE_SIDE(hedge->twin);
 
     reportLineDefDrawn(line);
 
@@ -1814,10 +1815,10 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
        !front->sideDef->SW_middlematerial)
        return false; // Ugh... an obvious wall hedge hack. Best take no chances...
 
-    ffloor = &leaf->sector->floor();
-    fceil  = &leaf->sector->ceiling();
-    bfloor = &back->sector->floor();
-    bceil  = &back->sector->ceiling();
+    Plane *ffloor = &leaf->sector().floor();
+    Plane *fceil  = &leaf->sector().ceiling();
+    Plane *bfloor = &back->sector->floor();
+    Plane *bceil  = &back->sector->ceiling();
 
     /**
      * Create the wall sections.
@@ -1832,7 +1833,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
         walldivs_t leftWallDivs, rightWallDivs;
         float matOffset[2];
 
-        if(hedge->prepareWallDivs(SS_MIDDLE, leaf->sector, HEDGE_BACK_SECTOR(hedge),
+        if(hedge->prepareWallDivs(SS_MIDDLE, leaf->sectorPtr(), HEDGE_BACK_SECTOR(hedge),
                                   &leftWallDivs, &rightWallDivs, matOffset))
         {
             int rhFlags = RHF_ADD_DYNLIGHTS|RHF_ADD_DYNSHADOWS|RHF_ADD_RADIO;
@@ -1847,22 +1848,22 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
                                         &leftWallDivs, &rightWallDivs, matOffset);
             if(solidSeg)
             {
-                Surface *suf = &front->sideDef->SW_middlesurface;
+                Surface &surface = front->sideDef->SW_middlesurface;
                 coord_t xbottom, xtop;
 
                 if(LINE_SELFREF(line))
                 {
-                    xbottom = MIN_OF(bfloor->visHeight(), ffloor->visHeight());
-                    xtop    = MAX_OF(bceil->visHeight(),  fceil->visHeight());
+                    xbottom = de::min(bfloor->visHeight(), ffloor->visHeight());
+                    xtop    = de::max(bceil->visHeight(),  fceil->visHeight());
                 }
                 else
                 {
-                    xbottom = MAX_OF(bfloor->visHeight(), ffloor->visHeight());
-                    xtop    = MIN_OF(bceil->visHeight(),  fceil->visHeight());
+                    xbottom = de::max(bfloor->visHeight(), ffloor->visHeight());
+                    xtop    = de::min(bceil->visHeight(),  fceil->visHeight());
                 }
 
-                xbottom += suf->visOffset[VY];
-                xtop    += suf->visOffset[VY];
+                xbottom += surface.visOffset[VY];
+                xtop    += surface.visOffset[VY];
 
                 // Can we make this a solid segment?
                 if(!(WallDivNode_Height(WallDivs_Last(&rightWallDivs)) >= xtop &&
@@ -1878,7 +1879,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
         walldivs_t leftWallDivs, rightWallDivs;
         float matOffset[2];
 
-        if(hedge->prepareWallDivs(SS_TOP, leaf->sector, HEDGE_BACK_SECTOR(hedge),
+        if(hedge->prepareWallDivs(SS_TOP, leaf->sectorPtr(), HEDGE_BACK_SECTOR(hedge),
                                   &leftWallDivs, &rightWallDivs, matOffset))
         {
             Rend_RadioUpdateLinedef(hedge->lineDef, hedge->side);
@@ -1894,7 +1895,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
         walldivs_t leftWallDivs, rightWallDivs;
         float matOffset[2];
 
-        if(hedge->prepareWallDivs(SS_BOTTOM, leaf->sector, HEDGE_BACK_SECTOR(hedge),
+        if(hedge->prepareWallDivs(SS_BOTTOM, leaf->sectorPtr(), HEDGE_BACK_SECTOR(hedge),
                                   &leftWallDivs, &rightWallDivs, matOffset))
         {
             Rend_RadioUpdateLinedef(hedge->lineDef, hedge->side);
@@ -1958,9 +1959,9 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
 
 static void Rend_MarkSegsFacingFront(BspLeaf *leaf)
 {
-    if(leaf->hedge)
+    if(HEdge *base = leaf->firstHEdge())
     {
-        HEdge *hedge = leaf->hedge;
+        HEdge *hedge = base;
         do
         {
             // Occlusions can only happen where two sectors contact.
@@ -1972,14 +1973,14 @@ static void Rend_MarkSegsFacingFront(BspLeaf *leaf)
                 else
                     hedge->frameFlags &= ~HEDGEINF_FACINGFRONT;
             }
-        } while((hedge = hedge->next) != leaf->hedge);
+        } while((hedge = hedge->next) != base);
     }
 
-    if(leaf->polyObj)
+    if(Polyobj *po = leaf->firstPolyobj())
     {
-        for(uint i = 0; i < leaf->polyObj->lineCount; ++i)
+        for(uint i = 0; i < po->lineCount; ++i)
         {
-            LineDef *line = leaf->polyObj->lines[i];
+            LineDef *line = po->lines[i];
             HEdge *hedge  = line->L_frontside.hedgeLeft;
 
             // Which way should it be facing?
@@ -1993,9 +1994,9 @@ static void Rend_MarkSegsFacingFront(BspLeaf *leaf)
 
 static void occludeFrontFacingSegsInBspLeaf(BspLeaf const *bspLeaf)
 {
-    if(bspLeaf->hedge)
+    if(HEdge *base = bspLeaf->firstHEdge())
     {
-        HEdge *hedge = bspLeaf->hedge;
+        HEdge *hedge = base;
         do
         {
             if(!hedge->lineDef || !(hedge->frameFlags & HEDGEINF_FACINGFRONT)) continue;
@@ -2004,13 +2005,11 @@ static void occludeFrontFacingSegsInBspLeaf(BspLeaf const *bspLeaf)
             {
                 hedge->frameFlags &= ~HEDGEINF_FACINGFRONT;
             }
-        } while((hedge = hedge->next) != bspLeaf->hedge);
+        } while((hedge = hedge->next) != base);
     }
 
-    if(bspLeaf->polyObj)
+    if(Polyobj *po = bspLeaf->firstPolyobj())
     {
-        Polyobj *po = bspLeaf->polyObj;
-
         for(uint i = 0; i < po->lineCount; ++i)
         {
             LineDef *line = po->lines[i];
@@ -2200,14 +2199,10 @@ static inline void Rend_BuildBspLeafSkyFixStripEdge(coord_t const vXY[2],
  *   |  | or |  | if antiClockwise
  *   0--2    3--1
  */
-static void Rend_BuildBspLeafSkyFixStripGeometry(BspLeaf* leaf, HEdge* startNode,
-    HEdge* endNode, boolean antiClockwise, int skyCap,
-    rvertex_t** verts, uint* vertsSize, rtexcoord_t** coords)
+static void Rend_BuildBspLeafSkyFixStripGeometry(BspLeaf *leaf, HEdge *startNode,
+    HEdge *endNode, boolean antiClockwise, int skyCap,
+    rvertex_t **verts, uint *vertsSize, rtexcoord_t **coords)
 {
-    HEdge* node;
-    float texS;
-    uint n;
-
     *vertsSize = 0;
     *verts = 0;
 
@@ -2217,12 +2212,12 @@ static void Rend_BuildBspLeafSkyFixStripGeometry(BspLeaf* leaf, HEdge* startNode
     if(startNode == endNode)
     {
         // Special case: the whole edge loop.
-        *vertsSize += 2 * (leaf->hedgeCount + 1);
+        *vertsSize += 2 * (leaf->hedgeCount() + 1);
     }
     else
     {
-        HEdge* afterEndNode = antiClockwise? endNode->prev : endNode->next;
-        HEdge* node = startNode;
+        HEdge *afterEndNode = antiClockwise? endNode->prev : endNode->next;
+        HEdge *node = startNode;
         do
         {
             *vertsSize += 2;
@@ -2236,12 +2231,12 @@ static void Rend_BuildBspLeafSkyFixStripGeometry(BspLeaf* leaf, HEdge* startNode
         *coords = R_AllocRendTexCoords(*vertsSize);
     }
 
-    node = startNode;
-    texS = (float)(node->offset);
-    n = 0;
+    HEdge *node = startNode;
+    float texS = float( node->offset );
+    uint n = 0;
     do
     {
-        HEdge* hedge = (antiClockwise? node->prev : node);
+        HEdge *hedge = (antiClockwise? node->prev : node);
         coord_t zBottom, zTop;
 
         skyFixZCoords(hedge, skyCap, &zBottom, &zTop);
@@ -2250,10 +2245,10 @@ static void Rend_BuildBspLeafSkyFixStripGeometry(BspLeaf* leaf, HEdge* startNode
         if(n == 0)
         {
             // Add the first edge.
-            rvertex_t* v1 = &(*verts)[n + antiClockwise^0];
-            rvertex_t* v2 = &(*verts)[n + antiClockwise^1];
-            rtexcoord_t* t1 = coords? &(*coords)[n + antiClockwise^0] : NULL;
-            rtexcoord_t* t2 = coords? &(*coords)[n + antiClockwise^1] : NULL;
+            rvertex_t *v1 = &(*verts)[n + antiClockwise^0];
+            rvertex_t *v2 = &(*verts)[n + antiClockwise^1];
+            rtexcoord_t *t1 = coords? &(*coords)[n + antiClockwise^0] : NULL;
+            rtexcoord_t *t2 = coords? &(*coords)[n + antiClockwise^1] : NULL;
 
             Rend_BuildBspLeafSkyFixStripEdge(node->HE_v1origin, zBottom, zTop, texS,
                                              v1, v2, t1, t2);
@@ -2268,10 +2263,10 @@ static void Rend_BuildBspLeafSkyFixStripGeometry(BspLeaf* leaf, HEdge* startNode
 
         // Add the next edge.
         {
-            rvertex_t* v1 = &(*verts)[n + antiClockwise^0];
-            rvertex_t* v2 = &(*verts)[n + antiClockwise^1];
-            rtexcoord_t* t1 = coords? &(*coords)[n + antiClockwise^0] : NULL;
-            rtexcoord_t* t2 = coords? &(*coords)[n + antiClockwise^1] : NULL;
+            rvertex_t *v1 = &(*verts)[n + antiClockwise^0];
+            rvertex_t *v2 = &(*verts)[n + antiClockwise^1];
+            rtexcoord_t *t1 = coords? &(*coords)[n + antiClockwise^0] : NULL;
+            rtexcoord_t *t2 = coords? &(*coords)[n + antiClockwise^1] : NULL;
 
             Rend_BuildBspLeafSkyFixStripEdge((antiClockwise? node->prev : node->next)->HE_v1origin,
                                              zBottom, zTop, texS,
@@ -2320,26 +2315,24 @@ static void Rend_WriteBspLeafSkyFixStripGeometry(BspLeaf *leaf, HEdge *startNode
  * @param leaf      BspLeaf to write geometry for.
  * @param skyFix    @ref skyCapFlags
  */
-static void Rend_WriteBspLeafSkyFixGeometry(BspLeaf* leaf, int skyFix)
+static void Rend_WriteBspLeafSkyFixGeometry(BspLeaf *leaf, int skyFix)
 {
-    const boolean antiClockwise = false;
-    HEdge* baseNode, *startNode, *node;
-    coord_t startZBottom, startZTop;
-    Material* startMaterial;
+    boolean const antiClockwise = false;
 
-    if(!leaf || !leaf->hedgeCount || !leaf->sector) return;
+    if(!leaf || !leaf->hedgeCount() || !leaf->hasSector()) return;
     if(!(skyFix & (SKYCAP_LOWER|SKYCAP_UPPER))) return;
 
-    baseNode = leaf->hedge;
-
     // We may need to break the loop into multiple strips.
-    startNode = 0;
-    startZBottom = startZTop = 0;
-    startMaterial = 0;
+    HEdge *startNode = 0;
+    coord_t startZBottom = 0;
+    coord_t startZTop    = 0;
+    Material *startMaterial = 0;
 
-    for(node = baseNode;;)
+    HEdge *base = leaf->firstHEdge();
+    HEdge *node = base;
+    forever
     {
-        HEdge* hedge = (antiClockwise? node->prev : node);
+        HEdge *hedge = (antiClockwise? node->prev : node);
         boolean endStrip = false;
         boolean beginNewStrip = false;
 
@@ -2347,7 +2340,7 @@ static void Rend_WriteBspLeafSkyFixGeometry(BspLeaf* leaf, int skyFix)
         if(chooseHEdgeSkyFixes(hedge, skyFix))
         {
             coord_t zBottom, zTop;
-            Material* skyMaterial = 0;
+            Material *skyMaterial = 0;
 
             skyFixZCoords(hedge, skyFix, &zBottom, &zTop);
 
@@ -2400,13 +2393,13 @@ static void Rend_WriteBspLeafSkyFixGeometry(BspLeaf* leaf, int skyFix)
         node = antiClockwise? node->prev : node->next;
 
         // Are we done?
-        if(node == baseNode) break;
+        if(node == base) break;
     }
 
     // Have we an unwritten strip? - build it.
     if(startNode)
     {
-        Rend_WriteBspLeafSkyFixStripGeometry(leaf, startNode, baseNode, antiClockwise,
+        Rend_WriteBspLeafSkyFixStripGeometry(leaf, startNode, base, antiClockwise,
                                              skyFix, startMaterial);
     }
 }
@@ -2433,26 +2426,26 @@ static void Rend_WriteBspLeafSkyFixGeometry(BspLeaf* leaf, int skyFix)
  *
  * @return  The chosen node. Can be @a NULL in which case there was no suitable node.
  */
-static HEdge* Rend_ChooseBspLeafFanBase(BspLeaf* leaf)
+static HEdge *Rend_ChooseBspLeafFanBase(BspLeaf *leaf)
 {
 #define MIN_TRIANGLE_EPSILON  (0.1) ///< Area
 
     if(!leaf) return NULL;
 
-    if(leaf->flags & BLF_UPDATE_FANBASE)
+    if(leaf->flags() & BLF_UPDATE_FANBASE)
     {
-        HEdge* firstNode = leaf->hedge;
-        HEdge* fanBase = firstNode;
+        HEdge *firstNode = leaf->firstHEdge();
+        HEdge *fanBase = firstNode;
 
-        if(leaf->hedgeCount > 3)
+        if(leaf->hedgeCount() > 3)
         {
             // Splines with higher vertex counts demand checking.
-            coord_t const* base, *a, *b;
+            coord_t const *base, *a, *b;
 
             // Search for a good base.
             do
             {
-                HEdge* other = firstNode;
+                HEdge *other = firstNode;
 
                 base = fanBase->HE_v1origin;
                 do
@@ -2488,21 +2481,21 @@ static HEdge* Rend_ChooseBspLeafFanBase(BspLeaf* leaf)
         }
         //else Implicitly suitable (or completely degenerate...).
 
-        leaf->fanBase = fanBase;
-        leaf->flags &= ~BLF_UPDATE_FANBASE;
+        leaf->_fanBase = fanBase;
+        leaf->_flags &= ~BLF_UPDATE_FANBASE;
     }
 
-    return leaf->fanBase;
+    return leaf->fanBase();
 
 #undef MIN_TRIANGLE_EPSILON
 }
 
-uint Rend_NumFanVerticesForBspLeaf(BspLeaf* leaf)
+uint Rend_NumFanVerticesForBspLeaf(BspLeaf *leaf)
 {
     if(!leaf) return 0;
     // Are we using a hedge vertex as the fan base?
     Rend_ChooseBspLeafFanBase(leaf);
-    return leaf->hedgeCount + (leaf->fanBase? 0 : 2);
+    return leaf->hedgeCount() + (leaf->fanBase()? 0 : 2);
 }
 
 /**
@@ -2518,41 +2511,38 @@ uint Rend_NumFanVerticesForBspLeaf(BspLeaf* leaf)
  *
  * @return  Number of built vertices (same as written to @a vertsSize).
  */
-static uint Rend_BuildBspLeafPlaneGeometry(BspLeaf* leaf, boolean antiClockwise,
-    coord_t height, rvertex_t** verts, uint* vertsSize)
+static uint Rend_BuildBspLeafPlaneGeometry(BspLeaf *leaf, boolean antiClockwise,
+    coord_t height, rvertex_t **verts, uint *vertsSize)
 {
-    HEdge* baseNode, *fanBase;
-    uint n, totalVerts;
-
     if(!leaf || !verts) return 0;
 
-    fanBase = Rend_ChooseBspLeafFanBase(leaf);
-    baseNode = fanBase? fanBase : leaf->hedge;
+    HEdge *fanBase = Rend_ChooseBspLeafFanBase(leaf);
+    HEdge *baseNode = fanBase? fanBase : leaf->firstHEdge();
 
-    totalVerts = leaf->hedgeCount + (!fanBase? 2 : 0);
+    uint totalVerts = leaf->hedgeCount() + (!fanBase? 2 : 0);
     *verts = R_AllocRendVertices(totalVerts);
 
-    n = 0;
+    uint n = 0;
     if(!fanBase)
     {
-        V2f_Copyd((*verts)[n].pos, leaf->midPoint);
-        (*verts)[n].pos[VZ] = (float)height;
+        V2f_Copyd((*verts)[n].pos, leaf->center());
+        (*verts)[n].pos[VZ] = float( height );
         n++;
     }
 
     // Add the vertices for each hedge.
-    { HEdge* node = baseNode;
+    HEdge *node = baseNode;
     do
     {
         V2f_Copyd((*verts)[n].pos, node->HE_v1origin);
         (*verts)[n].pos[VZ] = (float)height;
         n++;
-    } while((node = antiClockwise? node->prev : node->next) != baseNode); }
+    } while((node = antiClockwise? node->prev : node->next) != baseNode);
 
     // The last vertex is always equal to the first.
     if(!fanBase)
     {
-        V2f_Copyd((*verts)[n].pos, leaf->hedge->HE_v1origin);
+        V2f_Copyd((*verts)[n].pos, leaf->firstHEdge()->HE_v1origin);
         (*verts)[n].pos[VZ] = (float)height;
     }
 
@@ -2598,12 +2588,13 @@ static void Rend_RenderSkySurfaces(int skyCap)
     BspLeaf *leaf = currentBspLeaf;
 
     // Any work to do?
-    if(!leaf || !leaf->hedgeCount || !leaf->sector || !R_SectorContainsSkySurfaces(leaf->sector)) return;
+    if(!leaf || !leaf->hedgeCount()) return;
+    if(!leaf->hasSector() || !R_SectorContainsSkySurfaces(leaf->sectorPtr())) return;
 
     // Sky caps are only necessary in sectors with sky-masked planes.
-    if((skyCap & SKYCAP_LOWER) && !leaf->sector->SP_floorsurface.isSkyMasked())
+    if((skyCap & SKYCAP_LOWER) && !leaf->sector().SP_floorsurface.isSkyMasked())
         skyCap &= ~SKYCAP_LOWER;
-    if((skyCap & SKYCAP_UPPER) && !leaf->sector->SP_ceilsurface.isSkyMasked())
+    if((skyCap & SKYCAP_UPPER) && !leaf->sector().SP_ceilsurface.isSkyMasked())
         skyCap &= ~SKYCAP_UPPER;
 
     if(!skyCap) return;
@@ -2631,19 +2622,19 @@ static void Rend_RenderSkySurfaces(int skyCap)
 
 static void Rend_RenderWalls()
 {
-    BspLeaf* leaf = currentBspLeaf;
-    HEdge* hedge;
-    if(!leaf || !leaf->hedge) return;
+    BspLeaf *leaf = currentBspLeaf;
+    if(!leaf || !leaf->firstHEdge()) return;
 
-    hedge = leaf->hedge;
+    HEdge *base = leaf->firstHEdge();
+    HEdge *hedge = base;
     do
     {
         if((hedge->frameFlags & HEDGEINF_FACINGFRONT) &&
            hedge->lineDef && /* "mini-hedges" have no linedefs */
            HEDGE_SIDEDEF(hedge) /* "windows" have no sidedef */)
         {
-            Sector* frontSec = hedge->sector;
-            Sector* backSec  = HEDGE_BACK_SECTOR(hedge);
+            Sector *frontSec = hedge->sector;
+            Sector *backSec  = HEDGE_BACK_SECTOR(hedge);
             byte sections = pvisibleLineSections(hedge->lineDef, hedge->side);
             boolean opaque;
 
@@ -2663,22 +2654,21 @@ static void Rend_RenderWalls()
                 C_AddRangeFromViewRelPoints(hedge->HE_v1origin, hedge->HE_v2origin);
             }
         }
-    } while((hedge = hedge->next) != leaf->hedge);
+    } while((hedge = hedge->next) != base);
 }
 
 static void Rend_RenderPolyobjs()
 {
-    BspLeaf* leaf = currentBspLeaf;
-    LineDef* line;
-    HEdge* hedge;
-    uint i;
+    BspLeaf *leaf = currentBspLeaf;
+    if(!leaf) return;
 
-    if(!leaf || !leaf->polyObj) return;
+    Polyobj *po = leaf->firstPolyobj();
+    if(!po) return;
 
-    for(i = 0; i < leaf->polyObj->lineCount; ++i)
+    for(uint i = 0; i < po->lineCount; ++i)
     {
-        line = leaf->polyObj->lines[i];
-        hedge = line->L_frontside.hedgeLeft;
+        LineDef *line = po->lines[i];
+        HEdge *hedge = line->L_frontside.hedgeLeft;
 
         // Let's first check which way this hedge is facing.
         if(hedge->frameFlags & HEDGEINF_FACINGFRONT)
@@ -2699,13 +2689,13 @@ static void Rend_RenderPlanes()
 {
     BspLeaf *leaf = currentBspLeaf;
 
-    if(!leaf || !leaf->sector) return; // An orphan BSP leaf?
-    Sector *sect = leaf->sector;
+    if(!leaf || !leaf->hasSector()) return; // An orphan BSP leaf?
+    Sector &sect = leaf->sector();
 
     // Render all planes of this sector.
-    for(uint i = 0; i < sect->planeCount(); ++i)
+    for(uint i = 0; i < sect.planeCount(); ++i)
     {
-        Plane const *plane = sect->planes[i];
+        Plane const *plane = sect.planes[i];
         Surface const *suf = &plane->surface();
         bool isSkyMasked = false;
         bool addDynLights = !devRendSkyMode;
@@ -2742,10 +2732,10 @@ static void Rend_RenderPlanes()
         V2f_Copy(texOffset, suf->visOffset);
         // Add the Y offset to orient the Y flipped texture.
         if(plane->type() == Plane::Ceiling)
-            texOffset[VY] -= leaf->aaBox.maxY - leaf->aaBox.minY;
+            texOffset[VY] -= leaf->aaBox().maxY - leaf->aaBox().minY;
         // Add the additional offset to align with the worldwide grid.
-        texOffset[VX] += (float)leaf->worldGridOffset[VX];
-        texOffset[VY] += (float)leaf->worldGridOffset[VY];
+        texOffset[VX] += float( leaf->worldGridOffset()[VX] );
+        texOffset[VY] += float( leaf->worldGridOffset()[VY] );
         // Inverted.
         texOffset[VY] = -texOffset[VY];
 
@@ -2768,13 +2758,16 @@ static void Rend_RenderPlanes()
  */
 static void occludeBspLeaf(BspLeaf const *bspLeaf, bool forwardFacing)
 {
-    if(devNoCulling || !bspLeaf || !bspLeaf->hedge || P_IsInVoid(viewPlayer)) return;
+    if(devNoCulling) return;
 
-    Sector *front        = bspLeaf->sector;
+    if(!bspLeaf || !bspLeaf->firstHEdge() || P_IsInVoid(viewPlayer)) return;
+
+    Sector *front        = bspLeaf->sectorPtr();
     coord_t const fFloor = front->SP_floorheight;
     coord_t const fCeil  = front->SP_ceilheight;
 
-    HEdge *hedge = bspLeaf->hedge;
+    HEdge *base = bspLeaf->firstHEdge();
+    HEdge *hedge = base;
     do
     {
         // Occlusions can only happen where two sectors contact.
@@ -2824,23 +2817,21 @@ static void occludeBspLeaf(BspLeaf const *bspLeaf, bool forwardFacing)
                 }
             }
         }
-    } while((hedge = hedge->next) != bspLeaf->hedge);
+    } while((hedge = hedge->next) != base);
 }
 
-static inline boolean isNullLeaf(BspLeaf* leaf)
+static inline boolean isNullLeaf(BspLeaf *leaf)
 {
-    Sector* sec = leaf? leaf->sector : NULL;
-    if(!sec) return true; // An orphan leaf?
-    if(sec->SP_ceilvisheight - sec->SP_floorvisheight <= 0) return true;
-    if(leaf->hedgeCount < 3) return true;
+    if(!leaf || !leaf->hasSector()) return true;
+
+    Sector &sec = leaf->sector();
+    if(sec.SP_ceilvisheight - sec.SP_floorvisheight <= 0) return true;
+    if(leaf->hedgeCount() < 3) return true;
     return false;
 }
 
-static void Rend_RenderBspLeaf(BspLeaf* bspLeaf)
+static void Rend_RenderBspLeaf(BspLeaf *bspLeaf)
 {
-    uint bspLeafIdx;
-    Sector* sec;
-
     if(isNullLeaf(bspLeaf))
     {
         // Skip this, it has no volume.
@@ -2862,29 +2853,29 @@ static void Rend_RenderBspLeaf(BspLeaf* bspLeaf)
     }
 
     // Mark the sector visible for this frame.
-    sec = bspLeaf->sector;
-    sec->frameFlags |= SIF_VISIBLE;
+    Sector &sector = bspLeaf->sector();
+    sector.frameFlags |= SIF_VISIBLE;
 
     Rend_MarkSegsFacingFront(bspLeaf);
 
     R_InitForBspLeaf(bspLeaf);
     Rend_RadioBspLeafEdges(bspLeaf);
 
-    bspLeafIdx = GET_BSPLEAF_IDX(bspLeaf);
+    uint bspLeafIdx = GET_BSPLEAF_IDX(bspLeaf);
     occludeBspLeaf(bspLeaf, false);
     LO_ClipInBspLeaf(bspLeafIdx);
     occludeBspLeaf(bspLeaf, true);
 
     occludeFrontFacingSegsInBspLeaf(bspLeaf);
 
-    if(bspLeaf->polyObj)
+    if(bspLeaf->hasPolyobj())
     {
         // Polyobjs don't obstruct, do clip lights with another algorithm.
         LO_ClipInBspLeafBySight(bspLeafIdx);
     }
 
     // Mark the particle generators in the sector visible.
-    Rend_ParticleMarkInSectorVisible(sec);
+    Rend_ParticleMarkInSectorVisible(&sector);
 
     /**
      * Sprites for this BSP leaf have to be drawn.
@@ -3054,14 +3045,18 @@ void Rend_RenderSurfaceVectors()
     {
         BspLeaf *bspLeaf = GameMap_BspLeaf(theMap, i);
 
-        if(!bspLeaf->sector) continue;
+        if(!bspLeaf->hasSector()) continue;
+        Sector &sector = bspLeaf->sector();
 
-        for(uint j = 0; j < bspLeaf->sector->planeCount(); ++j)
+        for(uint j = 0; j < sector.planeCount(); ++j)
         {
-            Plane *pln = bspLeaf->sector->SP_plane(j);
+            Plane *pln = sector.SP_plane(j);
             vec3f_t origin;
 
-            V3f_Set(origin, bspLeaf->midPoint[VX], bspLeaf->midPoint[VY], pln->visHeight());
+            V3f_Set(origin, bspLeaf->center()[VX],
+                            bspLeaf->center()[VY],
+                            pln->visHeight());
+
             if(pln->type() != Plane::Middle && pln->surface().isSkyMasked())
                 origin[VZ] = GameMap_SkyFix(theMap, pln->type() == Plane::Ceiling);
 
@@ -3072,8 +3067,8 @@ void Rend_RenderSurfaceVectors()
     for(i = 0; i < NUM_POLYOBJS; ++i)
     {
         Polyobj const *po = GameMap_PolyobjByID(theMap, i);
-        Sector const *sec = po->bspLeaf->sector;
-        float zPos = sec->SP_floorheight + (sec->SP_ceilheight - sec->SP_floorheight)/2;
+        Sector const &sector = po->bspLeaf->sector();
+        float zPos = sector.SP_floorheight + (sector.SP_ceilheight - sector.SP_floorheight)/2;
         vec3f_t origin;
 
         for(uint j = 0; j < po->lineCount; ++j)
@@ -3289,8 +3284,8 @@ static int drawVertex1(LineDef *li, void *context)
 
         if(alpha > 0)
         {
-            coord_t bottom = po->bspLeaf->sector->SP_floorvisheight;
-            coord_t top    = po->bspLeaf->sector->SP_ceilvisheight;
+            coord_t bottom = po->bspLeaf->sector().SP_floorvisheight;
+            coord_t top    = po->bspLeaf->sector().SP_ceilvisheight;
 
             if(devVertexBars)
                 drawVertexBar(vtx, bottom, top, MIN_OF(alpha, .15f));
@@ -3309,7 +3304,7 @@ static int drawVertex1(LineDef *li, void *context)
 
         pos[VX] = vtx->origin()[VX];
         pos[VY] = vtx->origin()[VY];
-        pos[VZ] = po->bspLeaf->sector->SP_floorvisheight;
+        pos[VZ] = po->bspLeaf->sector().SP_floorvisheight;
 
         dist3D = V3d_Distance(pos, eye);
 
@@ -3837,7 +3832,7 @@ static int drawMobjBBox(thinker_t *th, void * /*context*/)
     if(mo == ddPlayers[consolePlayer].shared.mo)
         return false; // Continue iteration.
     // Is it vissible?
-    if(!(mo->bspLeaf && mo->bspLeaf->sector->frameFlags & SIF_VISIBLE))
+    if(!(mo->bspLeaf && mo->bspLeaf->sector().frameFlags & SIF_VISIBLE))
         return false; // Continue iteration.
 
     V3d_Set(eye, vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
@@ -3908,15 +3903,15 @@ static void Rend_RenderBoundingBoxes()
         for(uint i = 0; i < NUM_POLYOBJS; ++i)
         {
             Polyobj const *po = GameMap_PolyobjByID(theMap, i);
-            Sector const *sec = po->bspLeaf->sector;
+            Sector const &sec = po->bspLeaf->sector();
             coord_t width  = (po->aaBox.maxX - po->aaBox.minX)/2;
             coord_t length = (po->aaBox.maxY - po->aaBox.minY)/2;
-            coord_t height = (sec->SP_ceilheight - sec->SP_floorheight)/2;
+            coord_t height = (sec.SP_ceilheight - sec.SP_floorheight)/2;
 
             coord_t pos[3];
             pos[VX] = po->aaBox.minX + width;
             pos[VY] = po->aaBox.minY + length;
-            pos[VZ] = sec->SP_floorheight;
+            pos[VZ] = sec.SP_floorheight;
 
             float alpha = 1 - ((V3d_Distance(pos, eye) / (Window_Width(theWindow)/2)) / 4);
             if(alpha < .25f)
@@ -3934,17 +3929,19 @@ static void Rend_RenderBoundingBoxes()
                 /** Draw a bounding box for the lineDef.
                 pos[VX] = line->aaBox.minX + width;
                 pos[VY] = line->aaBox.minY + length;
-                pos[VZ] = sec->SP_floorheight;
+                pos[VZ] = sec.SP_floorheight;
                 Rend_DrawBBox(pos, width, length, height, 0, red, alpha, .08f, true);
                 */
 
                 pos[VX] = (line->L_v2origin[VX] + line->L_v1origin[VX])/2;
                 pos[VY] = (line->L_v2origin[VY] + line->L_v1origin[VY])/2;
-                pos[VZ] = sec->SP_floorheight;
+                pos[VZ] = sec.SP_floorheight;
                 width = 0;
                 length = line->length / 2;
 
-                Rend_DrawBBox(pos, width, length, height, BANG2DEG(BANG_90 - line->angle), green, alpha, 0, true);
+                Rend_DrawBBox(pos, width, length, height,
+                              BANG2DEG(BANG_90 - line->angle),
+                              green, alpha, 0, true);
             }
         }
     }

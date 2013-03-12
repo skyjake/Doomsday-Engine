@@ -23,6 +23,7 @@
 #include "de_base.h"
 #include "m_misc.h"
 #include "map/hedge.h"
+#include "map/polyobj.h"
 #include "map/sector.h"
 #include "map/vertex.h"
 #include <de/Log>
@@ -34,40 +35,40 @@ using namespace de;
 
 BspLeaf::BspLeaf() : MapElement(DMU_BSPLEAF)
 {
-    hedge = 0;
-    flags = BLF_UPDATE_FANBASE;
-    index = 0;
-    addSpriteCount = 0;
-    validCount = 0;
-    hedgeCount = 0;
-    sector = 0;
-    polyObj = 0;
-    fanBase = 0;
-    shadows = 0;
-    std::memset(&aaBox, 0, sizeof(aaBox));
-    std::memset(midPoint, 0, sizeof(midPoint));
-    std::memset(worldGridOffset, 0, sizeof(worldGridOffset));
-    bsuf = 0;
-    std::memset(reverb, 0, sizeof(reverb));
+    _hedge = 0;
+    _flags = BLF_UPDATE_FANBASE;
+    _index = 0;
+    _addSpriteCount = 0;
+    _validCount = 0;
+    _hedgeCount = 0;
+    _sector = 0;
+    _polyObj = 0;
+    _fanBase = 0;
+    _shadows = 0;
+    std::memset(&_aaBox, 0, sizeof(_aaBox));
+    std::memset(_center, 0, sizeof(_center));
+    std::memset(_worldGridOffset, 0, sizeof(_worldGridOffset));
+    _bsuf = 0;
+    std::memset(_reverb, 0, sizeof(_reverb));
 }
 
 BspLeaf::~BspLeaf()
 {
-    if(bsuf)
+    if(_bsuf)
     {
 #ifdef __CLIENT__
-        for(uint i = 0; i < sector->planeCount(); ++i)
+        for(uint i = 0; i < _sector->planeCount(); ++i)
         {
-            SB_DestroySurface(bsuf[i]);
+            SB_DestroySurface(_bsuf[i]);
         }
 #endif
-        Z_Free(bsuf);
+        Z_Free(_bsuf);
     }
 
     // Clear the HEdges.
-    if(hedge)
+    if(_hedge)
     {
-        HEdge *he = hedge;
+        HEdge *he = _hedge;
         if(he->next == he)
         {
             delete he;
@@ -90,44 +91,119 @@ BspLeaf::~BspLeaf()
     }
 }
 
-biassurface_t &BspLeaf::biasSurfaceForGeometryGroup(uint groupId)
+AABoxd const &BspLeaf::aaBox() const
 {
-    DENG2_ASSERT(sector);
-    if(groupId > sector->planeCount())
-        /// @throw InvalidGeometryGroupError Attempted with an invalid geometry group id.
-        throw UnknownGeometryGroupError("BspLeaf::biasSurfaceForGeometryGroup", QString("Invalid group id %1").arg(groupId));
-
-    DENG2_ASSERT(bsuf && bsuf[groupId]);
-    return *bsuf[groupId];
+    return _aaBox;
 }
 
 void BspLeaf::updateAABox()
 {
-    V2d_Set(aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
-    V2d_Set(aaBox.max, DDMINFLOAT, DDMINFLOAT);
+    V2d_Set(_aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
+    V2d_Set(_aaBox.max, DDMINFLOAT, DDMINFLOAT);
 
-    if(!hedge) return; // Very odd...
+    if(!_hedge) return; // Very odd...
 
-    HEdge *hedgeIt = hedge;
-    V2d_InitBox(aaBox.arvec2, hedgeIt->HE_v1origin);
+    HEdge *hedgeIt = _hedge;
+    V2d_InitBox(_aaBox.arvec2, hedgeIt->HE_v1origin);
 
-    while((hedgeIt = hedgeIt->next) != hedge)
+    while((hedgeIt = hedgeIt->next) != _hedge)
     {
-        V2d_AddToBox(aaBox.arvec2, hedgeIt->HE_v1origin);
+        V2d_AddToBox(_aaBox.arvec2, hedgeIt->HE_v1origin);
     }
 }
 
-void BspLeaf::updateMidPoint()
+vec2d_t const &BspLeaf::center() const
+{
+    return _center;
+}
+
+void BspLeaf::updateCenter()
 {
     // The middle is the center of our AABox.
-    midPoint[VX] = aaBox.minX + (aaBox.maxX - aaBox.minX) / 2;
-    midPoint[VY] = aaBox.minY + (aaBox.maxY - aaBox.minY) / 2;
+    _center[VX] = _aaBox.minX + (_aaBox.maxX - _aaBox.minX) / 2;
+    _center[VY] = _aaBox.minY + (_aaBox.maxY - _aaBox.minY) / 2;
+}
+
+HEdge *BspLeaf::firstHEdge() const
+{
+    return _hedge;
+}
+
+uint BspLeaf::hedgeCount() const
+{
+    return _hedgeCount;
+}
+
+bool BspLeaf::hasSector() const
+{
+    return !!_sector;
+}
+
+Sector &BspLeaf::sector() const
+{
+    if(_sector)
+    {
+        return *_sector;
+    }
+    /// @throw MissingSectorError Attempted with no sector attributed.
+    throw MissingSectorError("BspLeaf::sector", "No sector is attributed");
+}
+
+struct polyobj_s *BspLeaf::firstPolyobj() const
+{
+    return _polyObj;
+}
+
+int BspLeaf::flags() const
+{
+    return _flags;
+}
+
+uint BspLeaf::origIndex() const
+{
+    return _index;
+}
+
+int BspLeaf::addSpriteCount() const
+{
+    return _addSpriteCount;
+}
+
+int BspLeaf::validCount() const
+{
+    return _validCount;
+}
+
+biassurface_t &BspLeaf::biasSurfaceForGeometryGroup(uint groupId)
+{
+    DENG2_ASSERT(_sector);
+    if(groupId > _sector->planeCount())
+        /// @throw InvalidGeometryGroupError Attempted with an invalid geometry group id.
+        throw UnknownGeometryGroupError("BspLeaf::biasSurfaceForGeometryGroup", QString("Invalid group id %1").arg(groupId));
+
+    DENG2_ASSERT(_bsuf && _bsuf[groupId]);
+    return *_bsuf[groupId];
+}
+
+HEdge *BspLeaf::fanBase() const
+{
+    return _fanBase;
+}
+
+struct shadowlink_s *BspLeaf::firstShadowLink() const
+{
+    return _shadows;
+}
+
+vec2d_t const &BspLeaf::worldGridOffset() const
+{
+    return _worldGridOffset;
 }
 
 void BspLeaf::updateWorldGridOffset()
 {
-    worldGridOffset[VX] = fmod(aaBox.minX, 64);
-    worldGridOffset[VY] = fmod(aaBox.maxY, 64);
+    _worldGridOffset[VX] = fmod(_aaBox.minX, 64);
+    _worldGridOffset[VY] = fmod(_aaBox.maxY, 64);
 }
 
 int BspLeaf::property(setargs_t &args) const
@@ -135,10 +211,10 @@ int BspLeaf::property(setargs_t &args) const
     switch(args.prop)
     {
     case DMU_SECTOR:
-        DMU_GetValue(DMT_BSPLEAF_SECTOR, &sector, &args, 0);
+        DMU_GetValue(DMT_BSPLEAF_SECTOR, &_sector, &args, 0);
         break;
     case DMU_HEDGE_COUNT: {
-        int val = hedgeCount;
+        int val = int( _hedgeCount );
         DMU_GetValue(DDVT_INT, &val, &args, 0);
         break; }
     default:

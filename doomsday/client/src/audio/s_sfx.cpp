@@ -523,16 +523,13 @@ void Sfx_ChannelUpdate(sfxchannel_t* ch)
     }
 }
 
-void Sfx_SetListener(mobj_t* mobj)
+void Sfx_SetListener(mobj_t *mobj)
 {
     listener = mobj;
 }
 
-void Sfx_ListenerUpdate(void)
+void Sfx_ListenerUpdate()
 {
-    int                 i;
-    float               vec[4];
-
     // No volume means no sound.
     if(!sfxAvail || !sfx3D || !sfxVolume)
         return;
@@ -543,7 +540,7 @@ void Sfx_ListenerUpdate(void)
     if(listener)
     {
         // Position. At eye-level.
-        Sfx_GetListenerXYZ(vec);
+        float vec[4]; Sfx_GetListenerXYZ(vec);
         AudioDriver_SFX()->Listenerv(SFXLP_POSITION, vec);
 
         // Orientation. (0,0) will produce front=(1,0,0) and up=(0,0,1).
@@ -559,14 +556,14 @@ void Sfx_ListenerUpdate(void)
         AudioDriver_SFX()->Listenerv(SFXLP_VELOCITY, vec);
 
         // Reverb effects. Has the current sector changed?
-        if(listenerSector != listener->bspLeaf->sector)
+        if(listenerSector != listener->bspLeaf->sectorPtr())
         {
-            listenerSector = static_cast<Sector *>(listener->bspLeaf->sector);
+            listenerSector = listener->bspLeaf->sectorPtr();
 
             // It may be necessary to recalculate the reverb properties.
             S_UpdateReverbForSector(listenerSector);
 
-            for(i = 0; i < NUM_REVERB_DATA; ++i)
+            for(int i = 0; i < NUM_REVERB_DATA; ++i)
             {
                 vec[i] = listenerSector->reverb[i];
                 if(i == SRD_VOLUME)

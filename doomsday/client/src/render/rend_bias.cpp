@@ -424,8 +424,8 @@ void SB_InitForMap(const char* uniqueID)
                     bsuf->illum = illums;
                     illums += bsuf->size;
 
-                    DENG2_ASSERT(leaf->bsuf != 0);
-                    leaf->bsuf[j] = bsuf;
+                    DENG2_ASSERT(leaf->_bsuf != 0);
+                    leaf->_bsuf[j] = bsuf;
                 }
             }
         }
@@ -761,28 +761,27 @@ BEGIN_PROF( PROF_BIAS_UPDATE );
     currentTimeSB = Timer_RealMilliseconds();
 
     // Check which sources have changed.
-    memset(&allChanges, 0, sizeof(allChanges));
+    std::memset(&allChanges, 0, sizeof(allChanges));
     for(l = 0, s = sources; l < numSources; ++l, ++s)
     {
         if(s->sectorLevel[1] > 0 || s->sectorLevel[0] > 0)
         {
-            float minLevel = s->sectorLevel[0];
-            float maxLevel = s->sectorLevel[1];
-            Sector* sector;
-            float oldIntensity = s->intensity;
+            float const minLevel = s->sectorLevel[0];
+            float const maxLevel = s->sectorLevel[1];
+            float const oldIntensity = s->intensity;
 
-            sector = P_BspLeafAtPoint(s->origin)->sector;
+            Sector &sector = P_BspLeafAtPoint(s->origin)->sector();
 
             // The lower intensities are useless for light emission.
-            if(sector->lightLevel >= maxLevel)
+            if(sector.lightLevel >= maxLevel)
             {
                 s->intensity = s->primaryIntensity;
             }
 
-            if(sector->lightLevel >= minLevel && minLevel != maxLevel)
+            if(sector.lightLevel >= minLevel && minLevel != maxLevel)
             {
                 s->intensity = s->primaryIntensity *
-                    (sector->lightLevel - minLevel) / (maxLevel - minLevel);
+                    (sector.lightLevel - minLevel) / (maxLevel - minLevel);
             }
             else
             {
@@ -962,9 +961,9 @@ void SB_RendPoly(struct ColorRawf_s* rcolors, biassurface_t* bsuf,
             BspLeaf const *bspLeaf = mapElement->castTo<BspLeaf>();
             vec3d_t point;
 
-            V3d_Set(point, bspLeaf->midPoint[VX],
-                           bspLeaf->midPoint[VY],
-                           bspLeaf->sector->planes[elmIdx]->height());
+            V3d_Set(point, bspLeaf->center()[VX],
+                           bspLeaf->center()[VY],
+                           bspLeaf->sector().planes[elmIdx]->height());
 
             updateAffected2(bsuf, rvertices, numVertices, point, normal);
         }

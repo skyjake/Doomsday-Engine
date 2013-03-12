@@ -790,7 +790,7 @@ static void addLuminous(mobj_t *mo)
     center = -tex.origin().y - mo->floorClip - R_GetBobOffset(mo) - yOffset;
 
     // Will the sprite be allowed to go inside the floor?
-    mul = mo->origin[VZ] + -tex.origin().y - (float) ms.height() - mo->bspLeaf->sector->SP_floorheight;
+    mul = mo->origin[VZ] + -tex.origin().y - (float) ms.height() - mo->bspLeaf->sector().SP_floorheight;
     if(!(mo->ddFlags & DDMF_NOFITBOTTOM) && mul < 0)
     {
         // Must adjust.
@@ -1163,9 +1163,10 @@ boolean LOIT_ClipLumObjBySight(void *data, void *context)
         // We need to figure out if any of the polyobj's segments lies
         // between the viewpoint and the lumobj.
         BspLeaf *bspLeaf = (BspLeaf *) context;
-        for(uint i = 0; i < bspLeaf->polyObj->lineCount; ++i)
+        Polyobj *po = bspLeaf->firstPolyobj();
+        for(uint i = 0; i < po->lineCount; ++i)
         {
-            LineDef *line = bspLeaf->polyObj->lines[i];
+            LineDef *line = po->lines[i];
             HEdge *hedge = line->L_frontside.hedgeLeft;
 
             // Ignore hedges facing the wrong way.

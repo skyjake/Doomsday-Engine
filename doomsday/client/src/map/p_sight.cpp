@@ -173,19 +173,18 @@ static boolean crossLineDef(const LineDef* li, byte side, losdata_t* los)
 /**
  * @return  @c true iff trace crosses the given BSP leaf.
  */
-static boolean crossBspLeaf(GameMap* map, const BspLeaf* bspLeaf, losdata_t* los)
+static boolean crossBspLeaf(GameMap *map, BspLeaf const *bspLeaf, losdata_t *los)
 {
+    DENG_ASSERT(bspLeaf);
     DENG_UNUSED(map);
 
-    assert(bspLeaf);
-    if(bspLeaf->polyObj)
+    if(Polyobj *po = bspLeaf->firstPolyobj())
     {
         // Check polyobj lines.
-        Polyobj* po = bspLeaf->polyObj;
-        LineDef** lineIter = po->lines;
+        LineDef **lineIter = po->lines;
         while(*lineIter)
         {
-            LineDef* line = *lineIter;
+            LineDef *line = *lineIter;
             if(line->validCount != validCount)
             {
                 line->validCount = validCount;
@@ -197,19 +196,19 @@ static boolean crossBspLeaf(GameMap* map, const BspLeaf* bspLeaf, losdata_t* los
     }
 
     // Check edges.
-    if(bspLeaf->hedge)
+    if(HEdge const *base = bspLeaf->firstHEdge())
     {
-        const HEdge* hedge = bspLeaf->hedge;
+        HEdge const *hedge = base;
         do
         {
             if(hedge->lineDef && hedge->lineDef->validCount != validCount)
             {
-                LineDef* li = hedge->lineDef;
+                LineDef *li = hedge->lineDef;
                 li->validCount = validCount;
                 if(!crossLineDef(li, hedge->side, los))
                     return false;
             }
-        } while((hedge = hedge->next) != bspLeaf->hedge);
+        } while((hedge = hedge->next) != base);
     }
 
     return true; // Continue iteration.

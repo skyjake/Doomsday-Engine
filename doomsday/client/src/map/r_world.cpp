@@ -282,14 +282,14 @@ Plane *R_NewPlaneForSector(Sector *sec)
 
             biassurface_t **newList = (biassurface_t **) Z_Calloc(sec->planeCount() * sizeof(biassurface_t *), PU_MAP, 0);
             // Copy the existing list?
-            if(bspLeaf->bsuf)
+            if(bspLeaf->_bsuf)
             {
                 for(; n < sec->planeCount() - 1 /* exclude newly added */; ++n)
                 {
-                    newList[n] = bspLeaf->bsuf[n];
+                    newList[n] = bspLeaf->_bsuf[n];
                 }
-                Z_Free(bspLeaf->bsuf);
-                bspLeaf->bsuf = 0;
+                Z_Free(bspLeaf->_bsuf);
+                bspLeaf->_bsuf = 0;
             }
 
             if(!ddMapSetup)
@@ -307,7 +307,7 @@ Plane *R_NewPlaneForSector(Sector *sec)
                 newList[n] = bsuf;
             }
 
-            bspLeaf->bsuf = newList;
+            bspLeaf->_bsuf = newList;
 
             ssecIter++;
         } while(*ssecIter);
@@ -351,11 +351,11 @@ void R_DestroyPlaneOfSector(uint id, Sector *sec)
     for(BspLeaf **bspLeafIter = sec->bspLeafs; *bspLeafIter; bspLeafIter++)
     {
         BspLeaf *bspLeaf = *bspLeafIter;
-        DENG2_ASSERT(bspLeaf->bsuf != 0);
-        SB_DestroySurface(bspLeaf->bsuf[id]);
+        DENG2_ASSERT(bspLeaf->_bsuf != 0);
+        SB_DestroySurface(bspLeaf->_bsuf[id]);
         if(id < sec->planeCount())
         {
-            std::memmove(bspLeaf->bsuf + id, bspLeaf->bsuf + id + 1, sizeof(biassurface_t *));
+            std::memmove(bspLeaf->_bsuf + id, bspLeaf->_bsuf + id + 1, sizeof(biassurface_t *));
         }
     }
 
@@ -1113,8 +1113,8 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
                 if(bspLeaf)
                 {
                     /// @todo $nplanes
-                    if(ddpl->mo->origin[VZ] >= bspLeaf->sector->SP_floorvisheight &&
-                       ddpl->mo->origin[VZ] < bspLeaf->sector->SP_ceilvisheight - 4)
+                    if(ddpl->mo->origin[VZ] >= bspLeaf->sector().SP_floorvisheight &&
+                       ddpl->mo->origin[VZ] < bspLeaf->sector().SP_ceilvisheight - 4)
                     {
                         ddpl->inVoid = false;
                     }
@@ -1398,7 +1398,7 @@ boolean R_UpdatePlane(Plane *pln, boolean forceUpdate)
                 continue;
 
             /// @todo $nplanes
-            if((ddpl->flags & DDPF_CAMERA) && ddpl->mo->bspLeaf->sector == sec &&
+            if((ddpl->flags & DDPF_CAMERA) && ddpl->mo->bspLeaf->sectorPtr() == sec &&
                (ddpl->mo->origin[VZ] > sec->SP_ceilheight - 4 || ddpl->mo->origin[VZ] < sec->SP_floorheight))
             {
                 ddpl->inVoid = true;
@@ -1428,9 +1428,9 @@ boolean R_UpdatePlane(Plane *pln, boolean forceUpdate)
             for(; *bspLeafIter; bspLeafIter++)
             {
                 BspLeaf *bspLeaf = *bspLeafIter;
-                if(bspLeaf->hedge)
+                if(HEdge *base = bspLeaf->firstHEdge())
                 {
-                    HEdge *hedge = bspLeaf->hedge;
+                    HEdge *hedge = base;
                     do
                     {
                         if(hedge->lineDef)
@@ -1440,10 +1440,10 @@ boolean R_UpdatePlane(Plane *pln, boolean forceUpdate)
                                 SB_SurfaceMoved(hedge->bsuf[i]);
                             }
                         }
-                    } while((hedge = hedge->next) != bspLeaf->hedge);
+                    } while((hedge = hedge->next) != base);
                 }
 
-                SB_SurfaceMoved(bspLeaf->bsuf[pln->inSectorIndex()]);
+                SB_SurfaceMoved(&bspLeaf->biasSurfaceForGeometryGroup(pln->inSectorIndex()));
             }
         }
 #endif // __CLIENT__
@@ -1607,6 +1607,6 @@ coord_t R_SkyCapZ(BspLeaf *bspLeaf, int skyCap)
 {
     Plane::Type const plane = (skyCap & SKYCAP_UPPER)? Plane::Ceiling : Plane::Floor;
     if(!bspLeaf) Con_Error("R_SkyCapZ: Invalid bspLeaf argument (=NULL).");
-    if(!bspLeaf->sector || !P_IsInVoid(viewPlayer)) return GameMap_SkyFix(theMap, plane == Plane::Ceiling);
-    return bspLeaf->sector->SP_planevisheight(plane);
+    if(!bspLeaf->hasSector() || !P_IsInVoid(viewPlayer)) return GameMap_SkyFix(theMap, plane == Plane::Ceiling);
+    return bspLeaf->sector().SP_planevisheight(plane);
 }

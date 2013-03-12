@@ -82,8 +82,9 @@ static int hedgeCollector(BspTreeNode& tree, void* parameters)
     if(tree.isLeaf())
     {
         hedgecollectorparams_t* p = static_cast<hedgecollectorparams_t*>(parameters);
-        BspLeaf* leaf = tree.userData()->castTo<BspLeaf>();
-        HEdge* hedge = leaf->hedge;
+        BspLeaf *leaf = tree.userData()->castTo<BspLeaf>();
+        HEdge *base = leaf->firstHEdge();
+        HEdge *hedge = base;
         do
         {
             // Take ownership of this HEdge.
@@ -93,7 +94,7 @@ static int hedgeCollector(BspTreeNode& tree, void* parameters)
             hedge->index = p->curIdx++;
             (*p->hedgeLUT)[hedge->index] = hedge;
 
-        } while((hedge = hedge->next) != leaf->hedge);
+        } while((hedge = hedge->next) != base);
     }
     return false; // Continue traversal.
 }
@@ -149,15 +150,15 @@ static void finishHEdges(GameMap *map)
 }
 
 typedef struct {
-    BspBuilder* builder;
-    GameMap* dest;
+    BspBuilder *builder;
+    GameMap *dest;
     uint leafCurIndex;
     uint nodeCurIndex;
 } populatebspobjectluts_params_t;
 
-static int populateBspObjectLuts(BspTreeNode& tree, void* parameters)
+static int populateBspObjectLuts(BspTreeNode &tree, void *parameters)
 {
-    populatebspobjectluts_params_t* p = static_cast<populatebspobjectluts_params_t*>(parameters);
+    populatebspobjectluts_params_t *p = static_cast<populatebspobjectluts_params_t*>(parameters);
     DENG2_ASSERT(p);
 
     // We are only interested in BspNodes at this level.
@@ -165,69 +166,69 @@ static int populateBspObjectLuts(BspTreeNode& tree, void* parameters)
 
     // Take ownership of this BspNode.
     DENG2_ASSERT(tree.userData());
-    BspNode* node = tree.userData()->castTo<BspNode>();
+    BspNode *node = tree.userData()->castTo<BspNode>();
     p->builder->take(node);
 
     // Add this BspNode to the LUT.
     node->index = p->nodeCurIndex++;
     p->dest->bspNodes[node->index] = node;
 
-    if(BspTreeNode* right = tree.right())
+    if(BspTreeNode *right = tree.right())
     {
         if(right->isLeaf())
         {
             // Take ownership of this BspLeaf.
             DENG2_ASSERT(right->userData());
-            BspLeaf* leaf = right->userData()->castTo<BspLeaf>();
+            BspLeaf *leaf = right->userData()->castTo<BspLeaf>();
             p->builder->take(leaf);
 
             // Add this BspLeaf to the LUT.
-            leaf->index = p->leafCurIndex++;
-            p->dest->bspLeafs[leaf->index] = leaf;
+            leaf->_index = p->leafCurIndex++;
+            p->dest->bspLeafs[leaf->_index] = leaf;
         }
     }
 
-    if(BspTreeNode* left = tree.left())
+    if(BspTreeNode *left = tree.left())
     {
         if(left->isLeaf())
         {
             // Take ownership of this BspLeaf.
             DENG2_ASSERT(left->userData());
-            BspLeaf* leaf = left->userData()->castTo<BspLeaf>();
+            BspLeaf *leaf = left->userData()->castTo<BspLeaf>();
             p->builder->take(leaf);
 
             // Add this BspLeaf to the LUT.
-            leaf->index = p->leafCurIndex++;
-            p->dest->bspLeafs[leaf->index] = leaf;
+            leaf->_index = p->leafCurIndex++;
+            p->dest->bspLeafs[leaf->_index] = leaf;
         }
     }
 
     return false; // Continue iteration.
 }
 
-static void hardenBSP(BspBuilder& builder, GameMap* dest)
+static void hardenBSP(BspBuilder &builder, GameMap *dest)
 {
     dest->numBspNodes = builder.numNodes();
     if(dest->numBspNodes != 0)
-        dest->bspNodes = static_cast<BspNode**>(Z_Malloc(dest->numBspNodes * sizeof(BspNode*), PU_MAPSTATIC, 0));
+        dest->bspNodes = static_cast<BspNode **>(Z_Malloc(dest->numBspNodes * sizeof(BspNode *), PU_MAPSTATIC, 0));
     else
         dest->bspNodes = 0;
 
     dest->numBspLeafs = builder.numLeafs();
-    dest->bspLeafs = static_cast<BspLeaf**>(Z_Calloc(dest->numBspLeafs * sizeof(BspLeaf*), PU_MAPSTATIC, 0));
+    dest->bspLeafs = static_cast<BspLeaf **>(Z_Calloc(dest->numBspLeafs * sizeof(BspLeaf *), PU_MAPSTATIC, 0));
 
-    BspTreeNode* rootNode = builder.root();
+    BspTreeNode *rootNode = builder.root();
     dest->bsp = rootNode->userData();
 
     if(rootNode->isLeaf())
     {
         // Take ownership of this leaf.
         DENG2_ASSERT(rootNode->userData());
-        BspLeaf* leaf = rootNode->userData()->castTo<BspLeaf>();
+        BspLeaf *leaf = rootNode->userData()->castTo<BspLeaf>();
         builder.take(leaf);
 
         // Add this BspLeaf to the LUT.
-        leaf->index = 0;
+        leaf->_index = 0;
         dest->bspLeafs[0] = leaf;
 
         return;

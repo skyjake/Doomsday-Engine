@@ -605,83 +605,82 @@ static void archiveSectors(GameMap *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writeBspLeaf(GameMap* map, BspLeaf* s)
+static void writeBspLeaf(GameMap *map, BspLeaf *s)
 {
-    HEdge* hedge;
-    uint i;
-    assert(s);
+    DENG_ASSERT(map && s);
 
-    writeFloat(s->aaBox.minX);
-    writeFloat(s->aaBox.minY);
-    writeFloat(s->aaBox.maxX);
-    writeFloat(s->aaBox.maxY);
-    writeFloat(s->midPoint[VX]);
-    writeFloat(s->midPoint[VY]);
-    writeLong(s->sector? ((map->sectors.indexOf(static_cast<Sector *>(s->sector))) + 1) : 0);
-    writeLong(s->polyObj? (s->polyObj->idx + 1) : 0);
+    writeFloat(s->_aaBox.minX);
+    writeFloat(s->_aaBox.minY);
+    writeFloat(s->_aaBox.maxX);
+    writeFloat(s->_aaBox.maxY);
+    writeFloat(s->_center[VX]);
+    writeFloat(s->_center[VY]);
+    writeLong(s->_sector? ((map->sectors.indexOf(static_cast<Sector *>(s->_sector))) + 1) : 0);
+    writeLong(s->_polyObj? (s->_polyObj->idx + 1) : 0);
 
     // BspLeaf reverb.
-    for(i = 0; i < NUM_REVERB_DATA; ++i)
-        writeLong((long) s->reverb[i]);
+    for(uint i = 0; i < NUM_REVERB_DATA; ++i)
+        writeLong((long) s->_reverb[i]);
 
     // BspLeaf hedges list.
-    writeLong((long) s->hedgeCount);
-    if(!s->hedge) return;
+    writeLong((long) s->_hedgeCount);
+    if(!s->_hedge) return;
 
-    hedge = s->hedge;
+    HEdge const *base = s->_hedge;
+    HEdge const *hedge = base;
     do
     {
         writeLong(GameMap_HEdgeIndex(map, hedge) + 1);
-    } while((hedge = hedge->next) != s->hedge);
+    } while((hedge = hedge->next) != base);
 }
 
-static void readBspLeaf(GameMap* map, BspLeaf* s)
+static void readBspLeaf(GameMap *map, BspLeaf *s)
 {
-    uint i;
-    HEdge* hedge;
-    long obIdx;
-    assert(s);
+    DENG_ASSERT(map && s);
 
-    s->aaBox.minX = readFloat();
-    s->aaBox.minY = readFloat();
-    s->aaBox.maxX = readFloat();
-    s->aaBox.maxY = readFloat();
-    s->midPoint[VX] = readFloat();
-    s->midPoint[VY] = readFloat();
+    long obIdx;
+
+    s->_aaBox.minX = readFloat();
+    s->_aaBox.minY = readFloat();
+    s->_aaBox.maxX = readFloat();
+    s->_aaBox.maxY = readFloat();
+    s->_center[VX] = readFloat();
+    s->_center[VY] = readFloat();
     obIdx = readLong();
-    s->sector = (obIdx == 0? NULL : &map->sectors[(unsigned) obIdx - 1]);
+    s->_sector = (obIdx == 0? NULL : &map->sectors[(unsigned) obIdx - 1]);
     obIdx = readLong();
-    s->polyObj = (obIdx == 0? NULL : map->polyObjs[(unsigned) obIdx - 1]);
+    s->_polyObj = (obIdx == 0? NULL : map->polyObjs[(unsigned) obIdx - 1]);
 
     // BspLeaf reverb.
-    for(i = 0; i < NUM_REVERB_DATA; ++i)
-        s->reverb[i] = (uint) readLong();
+    for(uint i = 0; i < NUM_REVERB_DATA; ++i)
+        s->_reverb[i] = (uint) readLong();
 
     // BspLeaf hedges list.
-    s->hedgeCount = (uint) readLong();
-    if(!s->hedgeCount)
+    s->_hedgeCount = (uint) readLong();
+    if(!s->_hedgeCount)
     {
-        s->hedge = 0;
+        s->_hedge = 0;
         return;
     }
 
-    for(i = 0; i < s->hedgeCount; ++i)
+    HEdge *prevHEdge = 0;
+    for(uint i = 0; i < s->_hedgeCount; ++i)
     {
-        HEdge* next = GameMap_HEdge(map, (unsigned) readLong() - 1);
-        if(i == 0)
+        HEdge *hedge = GameMap_HEdge(map, (unsigned) readLong() - 1);
+        if(!prevHEdge)
         {
-            s->hedge = next;
-            hedge = next;
+            s->_hedge  = hedge;
+            prevHEdge = hedge;
         }
         else
         {
-            hedge->next = next;
-            next->prev = hedge;
-            hedge = next;
+            prevHEdge->next = hedge;
+            hedge->prev = prevHEdge;
+            prevHEdge = hedge;
         }
     }
 
-    s->hedge->prev = hedge;
+    s->_hedge->prev = prevHEdge;
 }
 
 static void archiveBspLeafs(GameMap* map, boolean write)

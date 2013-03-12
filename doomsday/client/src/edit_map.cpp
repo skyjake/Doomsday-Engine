@@ -473,31 +473,31 @@ boolean MPE_Begin(const char* mapUri)
     return true;
 }
 
-static void hardenSectorBspLeafList(GameMap* map, uint secIDX)
+static void hardenSectorBspLeafList(GameMap *map, uint secIDX)
 {
-    Sector* sec = &map->sectors[secIDX];
-    uint i, n, count;
-    assert(secIDX < map->sectorCount());
+    DENG_ASSERT(map && secIDX < map->sectorCount());
 
-    count = 0;
-    for(i = 0; i < map->numBspLeafs; ++i)
+    Sector *sec = &map->sectors[secIDX];
+
+    uint count = 0;
+    for(uint i = 0; i < map->numBspLeafs; ++i)
     {
-        BspLeaf *bspLeaf = map->bspLeafs[i];
-        if(bspLeaf->sector == sec)
+        BspLeaf &bspLeaf = *map->bspLeafs[i];
+        if(bspLeaf.sectorPtr() == sec)
             ++count;
     }
 
     if(0 == count) return;
 
-    sec->bspLeafs = (BspLeaf**) Z_Malloc((count + 1) * sizeof(BspLeaf*), PU_MAPSTATIC, NULL);
+    sec->bspLeafs = (BspLeaf **) Z_Malloc((count + 1) * sizeof(BspLeaf *), PU_MAPSTATIC, NULL);
 
-    n = 0;
-    for(i = 0; i < map->numBspLeafs; ++i)
+    uint n = 0;
+    for(uint i = 0; i < map->numBspLeafs; ++i)
     {
-        BspLeaf* bspLeaf = map->bspLeafs[i];
-        if(bspLeaf->sector == sec)
+        BspLeaf &bspLeaf = *map->bspLeafs[i];
+        if(bspLeaf.sectorPtr() == sec)
         {
-            sec->bspLeafs[n++] = bspLeaf;
+            sec->bspLeafs[n++] = &bspLeaf;
         }
     }
     sec->bspLeafs[n] = NULL; // Terminate.
@@ -776,7 +776,7 @@ static void prepareBspLeafs(GameMap *map)
         BspLeaf &bspLeaf = *map->bspLeafs[i];
 
         bspLeaf.updateAABox();
-        bspLeaf.updateMidPoint();
+        bspLeaf.updateCenter();
         bspLeaf.updateWorldGridOffset();
     }
 }
