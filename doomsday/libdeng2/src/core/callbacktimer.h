@@ -25,7 +25,6 @@
 #include <QTimer>
 
 namespace de {
-
 namespace internal {
 
 /**
