@@ -172,7 +172,7 @@ static void writeVertex(GameMap const *map, uint idx)
         LineOwner *own = base;
         do
         {
-            writeLong((long) (map->lineDefs.indexOf(&own->lineDef()) + 1));
+            writeLong((long) (map->lineDefs.indexOf(&own->line()) + 1));
             writeLong((long) own->angle());
 
             own = &own->prev();
@@ -194,7 +194,7 @@ static void readVertex(GameMap *map, uint idx)
         for(uint i = 0; i < v->_numLineOwners; ++i)
         {
             LineOwner *own = (LineOwner *) Z_Malloc(sizeof(LineOwner), PU_MAP, 0);
-            own->_lineDef = &map->lineDefs[(unsigned) (readLong() - 1)];
+            own->_line = &map->lineDefs[(unsigned) (readLong() - 1)];
             own->_angle = (binangle_t) readLong();
 
             own->_link[LineOwner::Next] = v->_lineOwners;
@@ -267,10 +267,10 @@ static void writeLine(GameMap *map, uint idx)
         LineDef::Side &side = l->side(i);
 
         writeLong(side._sector? (GameMap_SectorIndex(map, static_cast<Sector *>(side._sector)) + 1) : 0);
-        writeLong(side.sideDef? (GameMap_SideDefIndex(map, side.sideDef) + 1) : 0);
+        writeLong(side._sideDef? (GameMap_SideDefIndex(map, side._sideDef) + 1) : 0);
 
-        writeLong(side.hedgeLeft? (GameMap_HEdgeIndex(map, side.hedgeLeft)  + 1) : 0);
-        writeLong(side.hedgeRight? (GameMap_HEdgeIndex(map, side.hedgeRight) + 1) : 0);
+        writeLong(side._leftHEdge? (GameMap_HEdgeIndex(map, side._leftHEdge)  + 1) : 0);
+        writeLong(side._rightHEdge? (GameMap_HEdgeIndex(map, side._rightHEdge) + 1) : 0);
     }
 }
 
@@ -306,13 +306,13 @@ static void readLine(GameMap* map, uint idx)
         side._sector = (index? GameMap_Sector(map, index-1) : NULL);
 
         index = readLong();
-        side.sideDef = (index? GameMap_SideDef(map, index-1) : NULL);
+        side._sideDef = (index? GameMap_SideDef(map, index-1) : NULL);
 
         index = readLong();
-        side.hedgeLeft  = (index? GameMap_HEdge(map, index-1) : NULL);
+        side._leftHEdge  = (index? GameMap_HEdge(map, index-1) : NULL);
 
         index = readLong();
-        side.hedgeRight = (index? GameMap_HEdge(map, index-1) : NULL);
+        side._rightHEdge = (index? GameMap_HEdge(map, index-1) : NULL);
     }
 }
 
@@ -911,10 +911,11 @@ static void archiveReject(GameMap *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writePolyobj(GameMap* map, uint idx)
+static void writePolyobj(GameMap *map, uint idx)
 {
-    Polyobj* p = map->polyObjs[idx];
-    uint i;
+    DENG_ASSERT(map);
+
+    Polyobj *p = map->polyObjs[idx];
 
     writeLong((long) p->idx);
     writeFloat(p->origin[VX]);
@@ -935,10 +936,10 @@ static void writePolyobj(GameMap* map, uint idx)
     writeLong((long) p->seqType);
 
     writeLong((long) p->lineCount);
-    for(i = 0; i < p->lineCount; ++i)
+    for(uint i = 0; i < p->lineCount; ++i)
     {
-        LineDef* line = p->lines[i];
-        HEdge* he = line->front().hedgeLeft;
+        LineDef *line = p->lines[i];
+        HEdge *he = line->front()._leftHEdge;
 
         writeLong(map->vertexes.indexOf(static_cast<Vertex const *>(he->v[0])) + 1);
         writeLong(map->vertexes.indexOf(static_cast<Vertex const *>(he->v[1])) + 1);
@@ -951,12 +952,11 @@ static void writePolyobj(GameMap* map, uint idx)
     }
 }
 
-static void readPolyobj(GameMap* map, uint idx)
+static void readPolyobj(GameMap *map, uint idx)
 {
-    Polyobj* p = map->polyObjs[idx];
-    long obIdx;
-    HEdge* hedges;
-    uint i;
+    DENG_ASSERT(map);
+
+    Polyobj *p = map->polyObjs[idx];
 
     p->idx = (uint) readLong();
     p->origin[VX] = readFloat();
@@ -979,30 +979,32 @@ static void readPolyobj(GameMap* map, uint idx)
     // Polyobj line list.
     p->lineCount = (uint) readLong();
 
-    hedges = (HEdge *) Z_Calloc(sizeof(HEdge) * p->lineCount, PU_MAP, 0);
-    p->lines = (LineDef **) Z_Malloc(sizeof(LineDef*) * (p->lineCount + 1), PU_MAP, 0);
-    for(i = 0; i < p->lineCount; ++i)
+    HEdge *hedges = (HEdge *) Z_Calloc(sizeof(HEdge) * p->lineCount, PU_MAP, 0);
+    p->lines = (LineDef **) Z_Malloc(sizeof(LineDef *) * (p->lineCount + 1), PU_MAP, 0);
+    for(uint i = 0; i < p->lineCount; ++i)
     {
-        HEdge* he = hedges + i;
-        LineDef* line;
+        HEdge *he = hedges + i;
 
         he->v[0] = &map->vertexes[(unsigned) readLong() - 1];
         he->v[1] = &map->vertexes[(unsigned) readLong() - 1];
         he->length = readFloat();
         he->offset = readFloat();
-        obIdx = readLong();
+
+        long obIdx = readLong();
         he->lineDef = (obIdx == 0? NULL : &map->lineDefs[(unsigned) obIdx - 1]);
+
         obIdx = readLong();
         he->sector = (obIdx == 0? NULL : &map->sectors[(unsigned) obIdx - 1]);
+
         he->angle = (angle_t) readLong();
         he->side = (readByte()? 1 : 0);
 
-        line = he->lineDef;
-        line->front().hedgeLeft = line->front().hedgeRight = he;
+        LineDef *line = he->lineDef;
+        line->front()._leftHEdge = line->front()._rightHEdge = he;
 
         p->lines[i] = line;
     }
-    p->lines[i] = NULL; // Terminate.
+    p->lines[p->lineCount] = NULL; // Terminate.
 }
 
 static void archivePolyobjs(GameMap* map, boolean write)

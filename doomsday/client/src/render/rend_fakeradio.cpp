@@ -85,18 +85,18 @@ void Rend_RadioUpdateLinedef(LineDef *line, boolean backSide)
     if(!line || !line->hasSector(backSide)) return;
 
     // Have already determined the shadow properties on this side?
-    SideDef *s = line->L_sidedef(backSide);
-    if(s->fakeRadioUpdateCount == frameCount) return;
+    SideDef &sideDef = line->sideDef(backSide);
+    if(sideDef.fakeRadioUpdateCount == frameCount) return;
 
     // Not yet - Calculate now.
     for(uint i = 0; i < 2; ++i)
     {
-        s->spans[i].length = line->length;
-        s->spans[i].shift = 0;
+        sideDef.spans[i].length = line->length;
+        sideDef.spans[i].shift = 0;
     }
 
-    scanEdges(s->topCorners, s->bottomCorners, s->sideCorners, s->spans, line, backSide);
-    s->fakeRadioUpdateCount = frameCount; // Mark as done.
+    scanEdges(sideDef.topCorners, sideDef.bottomCorners, sideDef.sideCorners, sideDef.spans, line, backSide);
+    sideDef.fakeRadioUpdateCount = frameCount; // Mark as done.
 }
 
 /**
@@ -173,7 +173,7 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
     {
         // Select the next line.
         diff = (clockwise? own->angle() : own->prev().angle());
-        iter = &own->_link[clockwise]->lineDef();
+        iter = &own->_link[clockwise]->line();
 
         scanSecSide = (iter->hasFrontSector() && iter->frontSectorPtr() == startSector);
 
@@ -183,13 +183,13 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
         {
             own = own->_link[clockwise];
             diff += (clockwise? own->angle() : own->prev().angle());
-            iter = &own->_link[clockwise]->lineDef();
+            iter = &own->_link[clockwise]->line();
 
             scanSecSide = (iter->frontSectorPtr() == startSector);
         }
 
         // Determine the relative backsector.
-        if(iter->L_sidedef(scanSecSide))
+        if(iter->hasSideDef(scanSecSide))
             scanSector = iter->sectorPtr(scanSecSide);
         else
             scanSector = NULL;
@@ -200,7 +200,7 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
             iFFloor = iter->frontSector().SP_floorvisheight;
             iFCeil  = iter->frontSector().SP_ceilvisheight;
 
-            if(iter->L_backsidedef)
+            if(iter->hasBackSideDef())
             {
                 iBFloor = iter->backSector().SP_floorvisheight;
                 iBCeil  = iter->backSector().SP_ceilvisheight;
@@ -219,7 +219,7 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
             edge->sector = const_cast<Sector *>(scanSector);
 
             closed = false;
-            if(side == 0 && iter->L_backsidedef)
+            if(side == 0 && iter->hasBackSideDef())
             {
                 if(scanTop)
                 {
@@ -237,7 +237,7 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
             // texture on the hedge shadow edge being rendered?
             if(scanTop)
             {
-                if(iter->L_backsidedef &&
+                if(iter->hasBackSideDef() &&
                    ((side == 0 && iter->backSectorPtr() == line->frontSectorPtr() &&
                     iFCeil >= fCeil) ||
                    (side == 1 && iter->backSectorPtr() == line->backSectorPtr() &&
@@ -256,7 +256,7 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
             }
             else
             {
-                if(iter->L_backsidedef &&
+                if(iter->hasBackSideDef() &&
                    ((side == 0 && iter->backSectorPtr() == line->frontSectorPtr() &&
                     iFFloor <= fFloor) ||
                    (side == 1 && iter->backSectorPtr() == line->backSectorPtr() &&
@@ -317,14 +317,14 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
         if(!stopScan)
         {
             // Around the corner.
-            if(own->_link[clockwise] == iter->L_vo2)
-                own = iter->L_vo1;
-            else if(own->_link[clockwise] == iter->L_vo1)
-                own = iter->L_vo2;
+            if(own->_link[clockwise] == iter->v2Owner())
+                own = iter->v1Owner();
+            else if(own->_link[clockwise] == iter->v1Owner())
+                own = iter->v2Owner();
 
             // Skip into the back neighbor sector of the iter line if
             // heights are within accepted range.
-            if(scanSector && line->L_sidedef(side^1) &&
+            if(scanSector && line->hasSideDef(side^1) &&
                scanSector != line->sectorPtr(side^1) &&
                 ((scanTop && scanSector->SP_ceilvisheight ==
                                 startSector->SP_ceilvisheight) ||
@@ -359,7 +359,7 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
         // get the next neighbor (it IS the backneighbor).
         edge->line =
             R_FindLineNeighbor(edge->sector, edge->line,
-                               edge->line->vo[(edge->line->L_backsidedef && edge->line->backSectorPtr() == edge->sector)^!toLeft],
+                               edge->line->vertexOwner((edge->line->hasBackSideDef() && edge->line->backSectorPtr() == edge->sector)^!toLeft),
                                !toLeft, &edge->diff);
     }
 }
@@ -472,9 +472,9 @@ static void scanEdges(shadowcorner_t topCorners[2], shadowcorner_t bottomCorners
     for(uint i = 0; i < 2; ++i)
     {
         binangle_t diff = 0;
-        LineOwner* vo = line->L_vo(i ^ sid);
+        LineOwner *vo = line->vertexOwner(i ^ sid);
 
-        LineDef* other = R_FindSolidLineNeighbor(line->sectorPtr(sid), line, vo, i, &diff);
+        LineDef *other = R_FindSolidLineNeighbor(line->sectorPtr(sid), line, vo, i, &diff);
         if(other && other != line)
         {
             if(diff > BANG_180)
@@ -1200,10 +1200,10 @@ static void setRelativeHeights(Sector const *front, Sector const *back, boolean 
 static uint radioEdgeHackType(LineDef const *line, Sector const *front, Sector const *back,
     int backside, boolean isCeiling, float fz, float bz)
 {
-    Surface *surface = &line->L_sidedef(backside)->sections[isCeiling? SS_TOP:SS_BOTTOM];
+    Surface const surface = line->sideDef(backside).sections[isCeiling? SS_TOP:SS_BOTTOM];
 
-    if(fz < bz && !surface->material &&
-       !(surface->inFlags & SUIF_FIX_MISSING_MATERIAL))
+    if(fz < bz && !surface.material &&
+       !(surface.inFlags & SUIF_FIX_MISSING_MATERIAL))
         return 3; // Consider it fully open.
 
     // Is the back sector closed?
@@ -1306,7 +1306,7 @@ static void processEdgeShadow(BspLeaf const *bspLeaf, LineDef const *lineDef,
     uint side, uint planeId, float shadowDark)
 {
     DENG_ASSERT(bspLeaf);
-    DENG_ASSERT(lineDef && (side == FRONT || side == BACK) && lineDef->L_sidedef(side));
+    DENG_ASSERT(lineDef && (side == FRONT || side == BACK) && lineDef->hasSideDef(side));
     DENG_ASSERT(planeId < lineDef->sector(side).planeCount());
 
     if(!(shadowDark > .0001)) return;
@@ -1327,7 +1327,7 @@ static void processEdgeShadow(BspLeaf const *bspLeaf, LineDef const *lineDef,
     Sector const *front = 0;
     Sector const *back = 0;
     coord_t fz = 0, bz = 0, bhz = 0;
-    if(lineDef->L_backsidedef)
+    if(lineDef->hasBackSideDef())
     {
         front = lineDef->sectorPtr(side);
         back  = lineDef->sectorPtr(side ^ 1);
@@ -1355,17 +1355,17 @@ static void processEdgeShadow(BspLeaf const *bspLeaf, LineDef const *lineDef,
     sideOpen[0] = sideOpen[1] = 0;
     for(int i = 0; i < 2; ++i)
     {
-        LineOwner *vo = lineDef->L_vo(side^i)->_link[i^1];
-        LineDef *neighbor = &vo->lineDef();
+        LineOwner *vo = lineDef->vertexOwner(side^i)->_link[i^1];
+        LineDef *neighbor = &vo->line();
 
-        if(neighbor != lineDef && !neighbor->L_backsidedef &&
+        if(neighbor != lineDef && !neighbor->hasBackSideDef() &&
            (neighbor->inFlags & LF_BSPWINDOW) &&
            neighbor->frontSectorPtr() != bspLeaf->sectorPtr())
         {
             // A one-way window, edgeOpen side.
             sideOpen[i] = 1;
         }
-        else if(!(neighbor == lineDef || !neighbor->L_backsidedef))
+        else if(!(neighbor == lineDef || !neighbor->hasBackSideDef()))
         {
             byte otherSide = (&lineDef->vertex(i^side) == &neighbor->v1()? i : i^1);
             Sector *othersec = neighbor->sectorPtr(otherSide);
@@ -1396,7 +1396,7 @@ static void processEdgeShadow(BspLeaf const *bspLeaf, LineDef const *lineDef,
 
         if(sideOpen[i] < 1)
         {
-            vo = lineDef->L_vo(i^side);
+            vo = lineDef->vertexOwner(i^side);
             if(i) vo = &vo->prev();
 
             V2d_Sum(inner[i], lineDef->vertexOrigin(i^side), vo->innerShadowOffset());
@@ -1440,7 +1440,7 @@ static void drawLinkedEdgeShadows(BspLeaf const *bspLeaf, shadowlink_t *link,
     }
 
     // Mark it rendered for this frame.
-    link->lineDef->side(link->side).shadowVisFrame = ushort(frameCount);
+    link->lineDef->side(link->side)._shadowVisCount = frameCount;
 }
 
 /**
@@ -1512,7 +1512,7 @@ static void radioBspLeafEdges(BspLeaf const *bspLeaf)
     {
         // Already rendered during the current frame? We only want to
         // render each shadow once per frame.
-        if(link->lineDef->side(link->side).shadowVisFrame == (ushort) frameCount) continue;
+        if(link->lineDef->side(link->side).shadowVisCount() == frameCount) continue;
 
         drawLinkedEdgeShadows(bspLeaf, link, doPlanes, shadowDark);
     }
@@ -1606,7 +1606,7 @@ void Rend_DrawShadowOffsetVerts()
             do
             {
                 coord_t pos[3];
-                pos[VZ] = own->lineDef().frontSector().SP_floorvisheight;
+                pos[VZ] = own->line().frontSector().SP_floorvisheight;
 
                 V2d_Sum(pos, vtx.origin(), own->extendedShadowOffset());
                 drawPoint(pos, 1, yellow);

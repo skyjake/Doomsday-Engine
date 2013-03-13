@@ -381,8 +381,8 @@ static void processSeg(HEdge *hedge, void *parameters)
         LineDef *line = hedge->lineDef;
         Sector *frontSec  = lineSide == FRONT? leaf->sectorPtr() : backLeaf->sectorPtr();
         Sector *backSec   = lineSide == FRONT? backLeaf->sectorPtr() : leaf->sectorPtr();
-        SideDef *frontDef = line->L_sidedef(lineSide);
-        SideDef *backDef  = line->L_sidedef(lineSide^1);
+        SideDef *frontDef = line->sideDefPtr(lineSide);
+        SideDef *backDef  = line->sideDefPtr(lineSide^1);
 
         if(backSec && !backDef) return; // One-sided window.
 

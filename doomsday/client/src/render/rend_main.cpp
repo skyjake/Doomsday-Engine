@@ -365,16 +365,16 @@ static byte pvisibleLineSections(LineDef *line, int backSide)
 {
     byte sections = 0;
 
-    if(!line || !line->L_sidedef(backSide)) return 0;
+    if(!line || !line->hasSideDef(backSide)) return 0;
 
-    if(!line->hasSector(backSide^1) /*$degenleaf*/ || !line->L_backsidedef)
+    if(!line->hasSector(backSide^1) /*$degenleaf*/ || !line->hasBackSideDef())
     {
         // Only a middle.
         sections |= SSF_MIDDLE;
     }
     else
     {
-        SideDef const *sideDef = line->L_sidedef(backSide);
+        SideDef const &sideDef = line->sideDef(backSide);
         Sector const *fsec  = line->sectorPtr(backSide);
         Sector const *bsec  = line->sectorPtr(backSide^1);
         Plane const *fceil  = &fsec->ceiling();
@@ -385,18 +385,18 @@ static byte pvisibleLineSections(LineDef *line, int backSide)
         sections |= SSF_MIDDLE | SSF_BOTTOM | SSF_TOP;
 
         // Middle?
-        if(!sideDef->SW_middlematerial || !sideDef->SW_middlematerial->isDrawable() || sideDef->SW_middlergba[3] <= 0)
+        if(!sideDef.SW_middlematerial || !sideDef.SW_middlematerial->isDrawable() || sideDef.SW_middlergba[3] <= 0)
             sections &= ~SSF_MIDDLE;
 
         // Top?
         if((!devRendSkyMode && fceil->surface().isSkyMasked() && bceil->surface().isSkyMasked()) ||
-           //(!devRendSkyMode && bceil->surface().isSkyMasked() && (sideDef->SW_topsurface.inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
+           //(!devRendSkyMode && bceil->surface().isSkyMasked() && (sideDef.SW_topsurface.inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
            (fceil->visHeight() <= bceil->visHeight()))
             sections &= ~SSF_TOP;
 
         // Bottom?
         if((!devRendSkyMode && ffloor->surface().isSkyMasked() && bfloor->surface().isSkyMasked()) ||
-           //(!devRendSkyMode && bfloor->surface().isSkyMasked() && (sideDef->SW_bottomsurface.inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
+           //(!devRendSkyMode && bfloor->surface().isSkyMasked() && (sideDef.SW_bottomsurface.inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
            (ffloor->visHeight() >= bfloor->visHeight()))
             sections &= ~SSF_BOTTOM;
     }
@@ -1591,7 +1591,7 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
         float texScale[2];
         Material *mat = NULL;
         int rpFlags = RPF_DEFAULT;
-        boolean isTwoSided = (hedge->lineDef && hedge->lineDef->L_frontsidedef && hedge->lineDef->L_backsidedef)? true:false;
+        boolean isTwoSided = (hedge->lineDef && hedge->lineDef->hasFrontSideDef() && hedge->lineDef->hasBackSideDef())? true:false;
         blendmode_t blendMode = BM_NORMAL;
         float const *color = NULL, *color2 = NULL;
 
@@ -1761,16 +1761,17 @@ static void reportLineDefDrawn(LineDef *line)
  */
 static boolean Rend_RenderHEdge(HEdge *hedge, byte sections)
 {
-    BspLeaf *leaf = currentBspLeaf;
-    Sector *frontSec = leaf->sectorPtr();
-    Sector *backSec  = HEDGE_BACK_SECTOR(hedge);
     LineDef::Side *front = HEDGE_SIDE(hedge);
 
-    if(!front->sideDef) return false;
+    if(!front->hasSideDef()) return false;
 
     // Only a "middle" section.
     if(sections & SSF_MIDDLE)
     {
+        BspLeaf *leaf    = currentBspLeaf;
+        Sector *frontSec = leaf->sectorPtr();
+        Sector *backSec  = HEDGE_BACK_SECTOR(hedge);
+
         walldivs_t leftWallDivs, rightWallDivs;
         float matOffset[2];
         boolean opaque = false;
@@ -1809,8 +1810,8 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
     reportLineDefDrawn(line);
 
     if(back->sectorPtr() == front->sectorPtr() &&
-       !front->sideDef->SW_topmaterial && !front->sideDef->SW_bottommaterial &&
-       !front->sideDef->SW_middlematerial)
+       !front->sideDef().SW_topmaterial && !front->sideDef().SW_bottommaterial &&
+       !front->sideDef().SW_middlematerial)
        return false; // Ugh... an obvious wall hedge hack. Best take no chances...
 
     Plane *ffloor = &leaf->sector().floor();
@@ -1846,7 +1847,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
                                         &leftWallDivs, &rightWallDivs, matOffset);
             if(solidSeg)
             {
-                Surface &surface = front->sideDef->SW_middlesurface;
+                Surface &surface = front->sideDef().SW_middlesurface;
                 coord_t xbottom, xtop;
 
                 if(line->isSelfReferencing())
@@ -1918,9 +1919,9 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
         }
         else*/
              if(   (bceil->visHeight() <= ffloor->visHeight() &&
-                        (front->sideDef->SW_topmaterial    || front->sideDef->SW_middlematerial))
+                        (front->sideDef().SW_topmaterial    || front->sideDef().SW_middlematerial))
                 || (bfloor->visHeight() >= fceil->visHeight() &&
-                        (front->sideDef->SW_bottommaterial || front->sideDef->SW_middlematerial)))
+                        (front->sideDef().SW_bottommaterial || front->sideDef().SW_middlematerial)))
         {
             // A closed gap?
             if(FEQUAL(fceil->visHeight(), bfloor->visHeight()))
@@ -1943,7 +1944,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
         /// @todo Is this still necessary?
         else if(bceil->visHeight() <= bfloor->visHeight() ||
                 (!(bceil->visHeight() - bfloor->visHeight() > 0) && bfloor->visHeight() > ffloor->visHeight() && bceil->visHeight() < fceil->visHeight() &&
-                front->sideDef->SW_topmaterial && front->sideDef->SW_bottommaterial))
+                front->sideDef().SW_topmaterial && front->sideDef().SW_bottommaterial))
         {
             // A zero height back segment
             solidSeg = true;
@@ -1980,13 +1981,13 @@ static void Rend_MarkSegsFacingFront(BspLeaf *leaf)
         for(uint i = 0; i < po->lineCount; ++i)
         {
             LineDef *line = po->lines[i];
-            HEdge *hedge  = line->front().hedgeLeft;
+            HEdge &hedge  = line->front().leftHEdge();
 
             // Which way should it be facing?
-            if(!(viewFacingDot(hedge->HE_v1origin, hedge->HE_v2origin) < 0))
-                hedge->frameFlags |= HEDGEINF_FACINGFRONT;
+            if(!(viewFacingDot(hedge.HE_v1origin, hedge.HE_v2origin) < 0))
+                hedge.frameFlags |= HEDGEINF_FACINGFRONT;
             else
-                hedge->frameFlags &= ~HEDGEINF_FACINGFRONT;
+                hedge.frameFlags &= ~HEDGEINF_FACINGFRONT;
         }
     }
 }
@@ -2012,13 +2013,13 @@ static void occludeFrontFacingSegsInBspLeaf(BspLeaf const *bspLeaf)
         for(uint i = 0; i < po->lineCount; ++i)
         {
             LineDef *line = po->lines[i];
-            HEdge *hedge  = line->front().hedgeLeft;
+            HEdge &hedge  = line->front().leftHEdge();
 
-            if(!(hedge->frameFlags & HEDGEINF_FACINGFRONT)) continue;
+            if(!(hedge.frameFlags & HEDGEINF_FACINGFRONT)) continue;
 
-            if(!C_CheckRangeFromViewRelPoints(hedge->HE_v1origin, hedge->HE_v2origin))
+            if(!C_CheckRangeFromViewRelPoints(hedge.HE_v1origin, hedge.HE_v2origin))
             {
-                hedge->frameFlags &= ~HEDGEINF_FACINGFRONT;
+                hedge.frameFlags &= ~HEDGEINF_FACINGFRONT;
             }
         }
     }
@@ -2026,7 +2027,7 @@ static void occludeFrontFacingSegsInBspLeaf(BspLeaf const *bspLeaf)
 
 #endif // __CLIENT__
 
-static coord_t skyFixFloorZ(const Plane* frontFloor, const Plane* backFloor)
+static coord_t skyFixFloorZ(Plane const *frontFloor, Plane const *backFloor)
 {
     DENG_UNUSED(backFloor);
     if(devRendSkyMode || P_IsInVoid(viewPlayer))
@@ -2034,7 +2035,7 @@ static coord_t skyFixFloorZ(const Plane* frontFloor, const Plane* backFloor)
     return GameMap_SkyFixFloor(theMap);
 }
 
-static coord_t skyFixCeilZ(const Plane* frontCeil, const Plane* backCeil)
+static coord_t skyFixCeilZ(Plane const *frontCeil, Plane const *backCeil)
 {
     DENG_UNUSED(backCeil);
     if(devRendSkyMode || P_IsInVoid(viewPlayer))
@@ -2048,7 +2049,7 @@ static coord_t skyFixCeilZ(const Plane* frontCeil, const Plane* backCeil)
  * @param bottom  Z map space coordinate for the bottom of the skyfix written here.
  * @param top  Z map space coordinate for the top of the skyfix written here.
  */
-static void skyFixZCoords(HEdge* hedge, int skyCap, coord_t* bottom, coord_t* top)
+static void skyFixZCoords(HEdge *hedge, int skyCap, coord_t *bottom, coord_t *top)
 {
     Sector const *frontSec = hedge->sector;
     Sector const *backSec  = HEDGE_BACK_SECTOR(hedge);
@@ -2087,11 +2088,12 @@ static boolean hedgeBackClosedForSkyFix(HEdge const *hedge)
     LineDef *line = hedge->lineDef;
     Sector *frontSec  = line->sectorPtr(side);
     Sector *backSec   = line->sectorPtr(side^1);
-    SideDef *frontDef = line->L_sidedef(side);
-    SideDef *backDef  = line->L_sidedef(side^1);
+    SideDef *frontDef = line->sideDefPtr(side);
+    SideDef *backDef  = line->sideDefPtr(side^1);
 
     if(!frontDef) return false;
     if(!backDef) return true;
+
     if(frontSec == backSec) return false; // Never.
 
     if(frontSec && backSec)
@@ -2667,18 +2669,18 @@ static void Rend_RenderPolyobjs()
     for(uint i = 0; i < po->lineCount; ++i)
     {
         LineDef *line = po->lines[i];
-        HEdge *hedge = line->front().hedgeLeft;
+        HEdge &hedge = line->front().leftHEdge();
 
         // Let's first check which way this hedge is facing.
-        if(hedge->frameFlags & HEDGEINF_FACINGFRONT)
+        if(hedge.frameFlags & HEDGEINF_FACINGFRONT)
         {
-            byte sections  = pvisibleLineSections(hedge->lineDef, hedge->side);
-            boolean opaque = Rend_RenderHEdge(hedge, sections);
+            byte sections  = pvisibleLineSections(hedge.lineDef, hedge.side);
+            boolean opaque = Rend_RenderHEdge(&hedge, sections);
 
             // When the viewer is in the void do not range-occlude.
             if(opaque && !P_IsInVoid(viewPlayer))
             {
-                C_AddRangeFromViewRelPoints(hedge->HE_v1origin, hedge->HE_v2origin);
+                C_AddRangeFromViewRelPoints(hedge.HE_v1origin, hedge.HE_v2origin);
             }
         }
     }
@@ -3075,7 +3077,7 @@ void Rend_RenderSurfaceVectors()
 
             V3f_Set(origin, (line->v2Origin()[VX] + line->v1Origin()[VX])/2,
                             (line->v2Origin()[VY] + line->v1Origin()[VY])/2, zPos);
-            drawSurfaceTangentSpaceVectors(&line->L_frontsidedef->SW_middlesurface, origin);
+            drawSurfaceTangentSpaceVectors(&line->frontSideDef().SW_middlesurface, origin);
         }
     }
 
@@ -3188,9 +3190,9 @@ static void getVertexPlaneMinMax(Vertex const *vtx, coord_t *min, coord_t *max)
     LineOwner const *own  = base;
     do
     {
-        LineDef *li = &own->lineDef();
+        LineDef *li = &own->line();
 
-        if(li->L_frontsidedef)
+        if(li->hasFrontSideDef())
         {
             if(min && li->frontSector().SP_floorvisheight < *min)
                 *min = li->frontSector().SP_floorvisheight;
@@ -3199,7 +3201,7 @@ static void getVertexPlaneMinMax(Vertex const *vtx, coord_t *min, coord_t *max)
                 *max = li->frontSector().SP_ceilvisheight;
         }
 
-        if(li->L_backsidedef)
+        if(li->hasBackSideDef())
         {
             if(min && li->backSector().SP_floorvisheight < *min)
                 *min = li->backSector().SP_floorvisheight;
@@ -3349,7 +3351,7 @@ void Rend_Vertexes()
             if(!own) continue;
 
             // Ignore polyobj vertexes.
-            if(own->lineDef().inFlags & LF_POLYOBJ) continue;
+            if(own->line().inFlags & LF_POLYOBJ) continue;
 
             float alpha = 1 - M_ApproxDistance(vOrigin[VX] - vtx->origin()[VX],
                                                vOrigin[VZ] - vtx->origin()[VY]) / MAX_VERTEX_POINT_DIST;
@@ -3382,7 +3384,7 @@ void Rend_Vertexes()
         if(!own) continue;
 
         // Ignore polyobj vertexes.
-        if(own->lineDef().inFlags & LF_POLYOBJ) continue;
+        if(own->line().inFlags & LF_POLYOBJ) continue;
 
         dist = M_ApproxDistance(vOrigin[VX] - vtx->origin()[VX],
                                 vOrigin[VZ] - vtx->origin()[VY]);
@@ -3415,7 +3417,7 @@ void Rend_Vertexes()
             if(!own) continue;
 
             // Ignore polyobj vertexes.
-            if(own->lineDef().inFlags & LF_POLYOBJ) continue;
+            if(own->line().inFlags & LF_POLYOBJ) continue;
 
             pos[VX] = vtx->origin()[VX];
             pos[VY] = vtx->origin()[VY];

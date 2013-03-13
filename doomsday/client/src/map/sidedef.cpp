@@ -53,7 +53,7 @@ void SideDef::updateSurfaceTangents()
 {
     if(!line) return;
 
-    byte sid = line->L_frontsidedef == this? FRONT : BACK;
+    byte sid = line->frontSideDefPtr() == this? FRONT : BACK;
     Surface *surface = &SW_topsurface;
     surface->normal[VY] = (line->vertexOrigin(sid  )[VX] - line->vertexOrigin(sid^1)[VX]) / line->length;
     surface->normal[VX] = (line->vertexOrigin(sid^1)[VY] - line->vertexOrigin(sid  )[VY]) / line->length;
@@ -75,7 +75,7 @@ int SideDef::property(setargs_t &args) const
     switch(args.prop)
     {
     case DMU_SECTOR: {
-        Sector *sector = line->sectorPtr(this == line->L_frontsidedef? FRONT : BACK);
+        Sector *sector = line->sectorPtr(this == line->frontSideDefPtr()? FRONT : BACK);
         DMU_GetValue(DMT_SIDEDEF_SECTOR, &sector, &args, 0);
         break; }
     case DMU_LINEDEF:

@@ -419,9 +419,9 @@ void GameMap_UpdateSkyFixForSector(GameMap *map, Sector *sec)
             LineDef *li = *linePtr;
 
             // Must be twosided.
-            if(li->L_frontsidedef && li->L_backsidedef)
+            if(li->hasFrontSideDef() && li->hasBackSideDef())
             {
-                SideDef *si = li->frontSectorPtr() == sec? li->L_frontsidedef : li->L_backsidedef;
+                SideDef *si = li->frontSectorPtr() == sec? li->frontSideDefPtr() : li->backSideDefPtr();
 
                 if(si->SW_middlematerial)
                 {
@@ -474,10 +474,10 @@ void GameMap_InitSkyFix(GameMap *map)
 LineOwner *R_GetVtxLineOwner(Vertex const *v, LineDef const *line)
 {
     if(v == &line->v1())
-        return line->L_vo1;
+        return line->v1Owner();
 
     if(v == &line->v2())
-        return line->L_vo2;
+        return line->v2Owner();
 
     return 0;
 }
@@ -768,8 +768,8 @@ boolean R_MiddleMaterialCoversLineOpening(LineDef const *line, int side, boolean
     DENG_ASSERT(line);
     Sector const *frontSec  = line->sectorPtr(side);
     Sector const *backSec   = line->sectorPtr(side ^ 1);
-    SideDef const *frontDef = line->L_sidedef(side);
-    SideDef const *backDef  = line->L_sidedef(side ^ 1);
+    SideDef const *frontDef = line->sideDefPtr(side);
+    SideDef const *backDef  = line->sideDefPtr(side ^ 1);
     return R_MiddleMaterialCoversOpening(line->flags, frontSec, backSec, frontDef, backDef, ignoreOpacity);
 }
 
@@ -777,19 +777,19 @@ LineDef *R_FindLineNeighbor(Sector const *sector, LineDef const *line,
     LineOwner const *own, boolean antiClockwise, binangle_t *diff)
 {
     LineOwner const *cown = antiClockwise? &own->prev() : &own->next();
-    LineDef *other = &cown->lineDef();
+    LineDef *other = &cown->line();
 
     if(other == line)
         return NULL;
 
     if(diff) *diff += (antiClockwise? cown->angle() : own->angle());
 
-    if(!other->L_backsidedef || other->frontSectorPtr() != other->backSectorPtr())
+    if(!other->hasBackSideDef() || other->frontSectorPtr() != other->backSectorPtr())
     {
         if(sector) // Must one of the sectors match?
         {
             if(other->frontSectorPtr() == sector ||
-               (other->L_backsidedef && other->backSectorPtr() == sector))
+               (other->hasBackSideDef() && other->backSectorPtr() == sector))
                 return other;
         }
         else
@@ -806,7 +806,7 @@ LineDef *R_FindSolidLineNeighbor(Sector const *sector, LineDef const *line,
     LineOwner const *own, boolean antiClockwise, binangle_t *diff)
 {
     LineOwner const *cown = antiClockwise? &own->prev() : &own->next();
-    LineDef *other = &cown->lineDef();
+    LineDef *other = &cown->line();
     int side;
 
     if(other == line) return NULL;
@@ -815,7 +815,7 @@ LineDef *R_FindSolidLineNeighbor(Sector const *sector, LineDef const *line,
 
     if(!((other->inFlags & LF_BSPWINDOW) && other->frontSectorPtr() != sector))
     {
-        if(!other->L_frontsidedef || !other->L_backsidedef)
+        if(!other->hasFrontSideDef() || !other->hasBackSideDef())
             return other;
 
         if(!other->isSelfReferencing() &&
@@ -831,7 +831,7 @@ LineDef *R_FindSolidLineNeighbor(Sector const *sector, LineDef const *line,
         // Check for mid texture which fills the gap between floor and ceiling.
         // We should not give away the location of false walls (secrets).
         side = (other->frontSectorPtr() == sector? 0 : 1);
-        if(other->L_sidedef(side)->SW_middlematerial)
+        if(other->sideDef(side).SW_middlematerial)
         {
             float oFCeil  = other->frontSector().SP_ceilvisheight;
             float oFFloor = other->frontSector().SP_floorvisheight;
@@ -868,17 +868,17 @@ LineDef *R_FindLineBackNeighbor(Sector const *sector, LineDef const *line,
     LineOwner const *own, boolean antiClockwise, binangle_t *diff)
 {
     LineOwner const *cown = antiClockwise? &own->prev() : &own->next();
-    LineDef *other = &cown->lineDef();
+    LineDef *other = &cown->line();
 
     if(other == line) return 0;
 
     if(diff) *diff += (antiClockwise? cown->angle() : own->angle());
 
-    if(!other->L_backsidedef || other->frontSectorPtr() != other->backSectorPtr() ||
+    if(!other->hasBackSideDef() || other->frontSectorPtr() != other->backSectorPtr() ||
        (other->inFlags & LF_BSPWINDOW))
     {
         if(!(other->frontSectorPtr() == sector ||
-             (other->L_backsidedef && other->backSectorPtr() == sector)))
+             (other->hasBackSideDef() && other->backSectorPtr() == sector)))
             return other;
     }
 
@@ -892,7 +892,7 @@ LineDef *R_FindLineAlignNeighbor(Sector const *sec, LineDef const *line,
     int const SEP = 10;
 
     LineOwner const *cown = antiClockwise? &own->prev() : &own->next();
-    LineDef *other = &cown->lineDef();
+    LineDef *other = &cown->line();
     binangle_t diff;
 
     if(other == line)
@@ -911,7 +911,7 @@ LineDef *R_FindLineAlignNeighbor(Sector const *sec, LineDef const *line,
     }
 
     // Can't step over non-twosided lines.
-    if((!other->L_backsidedef || !other->L_frontsidedef))
+    if(!other->hasFrontSideDef() || !other->hasBackSideDef())
         return NULL;
 
     // Not suitable, try the next.
@@ -1220,9 +1220,9 @@ static Material *chooseFixMaterial(SideDef *s, SideDefSection section)
 {
     Material *choice1 = 0, *choice2 = 0;
     LineDef *line = s->line;
-    byte side = (line->L_frontsidedef == s? FRONT : BACK);
+    byte side = (line->frontSideDefPtr() == s? FRONT : BACK);
     Sector *frontSec = line->sectorPtr(side);
-    Sector *backSec  = line->L_sidedef(side ^ 1)? line->sectorPtr(side ^ 1) : 0;
+    Sector *backSec  = line->sideDefPtr(side ^ 1)? line->sectorPtr(side ^ 1) : 0;
 
     if(backSec)
     {
@@ -1253,24 +1253,24 @@ static Material *chooseFixMaterial(SideDef *s, SideDefSection section)
     {
         // Our first choice is a material on an adjacent wall section.
         // Try the left neighbor first.
-        LineDef *other = R_FindLineNeighbor(frontSec, line, line->L_vo(side),
+        LineDef *other = R_FindLineNeighbor(frontSec, line, line->vertexOwner(side),
                                             false /*next clockwise*/, NULL/*angle delta is irrelevant*/);
         if(!other)
             // Try the right neighbor.
-            other = R_FindLineNeighbor(frontSec, line, line->L_vo(side^1),
+            other = R_FindLineNeighbor(frontSec, line, line->vertexOwner(side^1),
                                        true /*next anti-clockwise*/, NULL/*angle delta is irrelevant*/);
 
         if(other)
         {
-            if(!other->L_backsidedef)
+            if(!other->hasBackSideDef())
             {
                 // Our choice is clear - the middle material.
-                choice1 = other->L_frontsidedef->SW_middlematerial;
+                choice1 = other->frontSideDef().SW_middlematerial;
             }
             else
             {
                 // Compare the relative heights to decide.
-                SideDef &otherSide = *other->L_sidedef(&other->frontSector() == frontSec? FRONT : BACK);
+                SideDef &otherSide = other->sideDef(&other->frontSector() == frontSec? FRONT : BACK);
                 Sector &otherSec   = other->sector(&other->frontSector() == frontSec? BACK  : FRONT);
 
                 if(otherSec.SP_ceilheight <= frontSec->SP_floorheight)
@@ -1342,8 +1342,8 @@ static void R_UpdateLinedefsOfSector(Sector *sec)
         LineDef *li = sec->lineDefs[i];
         if(li->isSelfReferencing()) continue;
 
-        SideDef *front    = li->L_frontsidedef;
-        SideDef *back     = li->L_backsidedef;
+        SideDef *front    = li->frontSideDefPtr();
+        SideDef *back     = li->backSideDefPtr();
         Sector *frontSec  = li->frontSectorPtr();
         Sector *backSec   = li->backSectorPtr();
 
@@ -1412,13 +1412,13 @@ boolean R_UpdatePlane(Plane *pln, boolean forceUpdate)
         for(uint i = 0; i < sec->lineDefCount; ++i)
         {
             LineDef *line = sec->lineDefs[i];
-            if(line->L_frontsidedef) // $degenleaf
+            if(line->hasFrontSideDef()) // $degenleaf
             {
-                line->L_frontsidedef->updateBaseOrigins();
+                line->frontSideDef().updateBaseOrigins();
             }
-            if(line->L_backsidedef)
+            if(line->hasBackSideDef())
             {
-                line->L_backsidedef->updateBaseOrigins();
+                line->backSideDef().updateBaseOrigins();
             }
         }
 

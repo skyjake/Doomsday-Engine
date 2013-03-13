@@ -82,15 +82,15 @@ static boolean crossLineDef(LineDef const *li, byte side, losdata_t *los)
     if(!interceptLineDef(li, los, &dl))
         return true; // Ray does not intercept hedge on the X/Y plane.
 
-    if(!li->L_sidedef(side))
+    if(!li->hasSideDef(side))
         return true; // HEdge is on the back side of a one-sided window.
 
     if(!li->hasSector(side)) /*$degenleaf*/
         return false;
 
     Sector const *fsec = li->sectorPtr(side);
-    Sector const *bsec = (li->L_backsidedef? li->sectorPtr(side^1) : NULL);
-    boolean noBack = (li->L_backsidedef? false : true);
+    Sector const *bsec = (li->hasBackSideDef()? li->sectorPtr(side^1) : NULL);
+    boolean noBack = (li->hasBackSideDef()? false : true);
 
     if(!noBack && !(los->flags & LS_PASSLEFT) &&
        (!(bsec->SP_floorheight < fsec->SP_ceilheight) ||

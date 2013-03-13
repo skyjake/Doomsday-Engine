@@ -913,20 +913,12 @@ static int setProperty(void *ptr, void *context)
 
         if(args->modifiers & DMU_SIDEDEF0_OF_LINE)
         {
-            elem = elem->castTo<LineDef>()->L_frontsidedef;
+            elem = &elem->castTo<LineDef>()->frontSideDef();
             args->type = DMU_SIDEDEF;
         }
         else if(args->modifiers & DMU_SIDEDEF1_OF_LINE)
         {
-            LineDef *li = elem->castTo<LineDef>();
-            if(!li->L_backsidedef)
-            {
-                /// @todo Throw exception.
-                QByteArray msg = String("DMU_setProperty: Linedef %1 has no back side.").arg(P_ToIndex(li)).toUtf8();
-                LegacyCore_FatalError(msg.constData());
-            }
-
-            elem = li->L_backsidedef;
+            elem = &elem->castTo<LineDef>()->backSideDef();
             args->type = DMU_SIDEDEF;
         }
     }
@@ -1409,29 +1401,13 @@ static int getProperty(void *ptr, void *context)
     {
         if(args->modifiers & DMU_SIDEDEF0_OF_LINE)
         {
-            LineDef const *li = elem->castTo<LineDef>();
-            if(!li->L_frontsidedef) // $degenleaf
-            {
-                /// @todo Throw exception.
-                QByteArray msg = String("DMU_setProperty: Linedef %1 has no front side.").arg(P_ToIndex(li)).toUtf8();
-                LegacyCore_FatalError(msg.constData());
-            }
-
-            elem = li->L_frontsidedef;
+            elem = &elem->castTo<LineDef>()->frontSideDef();
             args->type = DMU_SIDEDEF;
             DENG2_ASSERT(args->type == elem->type());
         }
         else if(args->modifiers & DMU_SIDEDEF1_OF_LINE)
         {
-            LineDef const *li = elem->castTo<LineDef>();
-            if(!li->L_backsidedef)
-            {
-                /// @todo Throw exception.
-                QByteArray msg = String("DMU_setProperty: Linedef %1 has no back side.").arg(P_ToIndex(li)).toUtf8();
-                LegacyCore_FatalError(msg.constData());
-            }
-
-            elem = li->L_backsidedef;
+            elem = &elem->castTo<LineDef>()->backSideDef();
             args->type = DMU_SIDEDEF;
             DENG2_ASSERT(args->type == elem->type());
         }

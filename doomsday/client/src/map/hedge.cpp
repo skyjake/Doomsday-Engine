@@ -98,7 +98,7 @@ static walldivnode_t *findWallDivNodeByZOrigin(walldivs_t *wallDivs, coord_t hei
 static void addWallDivNodesForPlaneIntercepts(HEdge const *hedge, walldivs_t *wallDivs,
     SideDefSection section, coord_t bottomZ, coord_t topZ, boolean doRight)
 {
-    bool const isTwoSided = (hedge->lineDef && hedge->lineDef->L_frontsidedef && hedge->lineDef->L_backsidedef)? true:false;
+    bool const isTwoSided = (hedge->lineDef && hedge->lineDef->hasFrontSideDef() && hedge->lineDef->hasBackSideDef())? true:false;
     bool const clockwise = !doRight;
     LineDef const *line = hedge->lineDef;
     Sector const *frontSec = line->sectorPtr(hedge->side);
@@ -112,8 +112,8 @@ static void addWallDivNodesForPlaneIntercepts(HEdge const *hedge, walldivs_t *wa
     if(hedge->lineDef && (hedge->lineDef->inFlags & LF_POLYOBJ)) return;
 
     // Only edges at sidedef ends can/should be split.
-    if(!((hedge == HEDGE_SIDE(hedge)->hedgeLeft  && !doRight) ||
-         (hedge == HEDGE_SIDE(hedge)->hedgeRight &&  doRight)))
+    if(!((hedge == &HEDGE_SIDE(hedge)->leftHEdge()  && !doRight) ||
+         (hedge == &HEDGE_SIDE(hedge)->rightHEdge() &&  doRight)))
         return;
 
     if(bottomZ >= topZ) return; // Obviously no division.
@@ -132,7 +132,7 @@ static void addWallDivNodesForPlaneIntercepts(HEdge const *hedge, walldivs_t *wa
         }
         else
         {
-            LineDef *iter = &own->lineDef();
+            LineDef *iter = &own->line();
 
             if(iter->isSelfReferencing())
                 continue;
@@ -141,9 +141,9 @@ static void addWallDivNodesForPlaneIntercepts(HEdge const *hedge, walldivs_t *wa
             do
             {   // First front, then back.
                 Sector *scanSec = NULL;
-                if(!i && iter->L_frontsidedef && iter->frontSectorPtr() != frontSec)
+                if(!i && iter->hasFrontSideDef() && iter->frontSectorPtr() != frontSec)
                     scanSec = iter->frontSectorPtr();
-                else if(i && iter->L_backsidedef && iter->backSectorPtr() != frontSec)
+                else if(i && iter->hasBackSideDef() && iter->backSectorPtr() != frontSec)
                     scanSec = iter->backSectorPtr();
 
                 if(scanSec)
@@ -206,7 +206,7 @@ static void addWallDivNodesForPlaneIntercepts(HEdge const *hedge, walldivs_t *wa
             } while(!stopScan && ++i < 2);
 
             // Stop the scan when a single sided line is reached.
-            if(!iter->L_frontsidedef || !iter->L_backsidedef)
+            if(!iter->hasFrontSideDef() || !iter->hasBackSideDef())
                 stopScan = true;
         }
     } while(!stopScan);

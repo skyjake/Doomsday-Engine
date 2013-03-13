@@ -250,7 +250,7 @@ struct Partitioner::Instance
     {
         if(!line) return false;
         if(line->inFlags & LF_POLYOBJ) return false;
-        if((line->L_frontsidedef && line->L_backsidedef) || !line->L_frontsidedef) return false;
+        if((line->hasFrontSideDef() && line->hasBackSideDef()) || !line->hasFrontSideDef()) return false;
         //if(line->length <= 0 || line->buildData.overlap) return false;
 
         // Look for window effects by checking for an odd number of one-sided
@@ -462,7 +462,7 @@ struct Partitioner::Instance
             {
                 Sector *frontSec = line->frontSectorPtr();
                 Sector *backSec  = 0;
-                if(line->L_backsidedef)
+                if(line->hasBackSideDef())
                 {
                     backSec = line->backSectorPtr();
                 }
@@ -1795,18 +1795,19 @@ struct Partitioner::Instance
                 if(hedge->lineDef)
                 {
                     LineDef::Side *side = HEDGE_SIDE(hedge);
+
                     // Already processed?
-                    if(!side->hedgeLeft)
+                    if(!side->_leftHEdge)
                     {
-                        side->hedgeLeft = hedge;
+                        side->_leftHEdge = hedge;
                         // Find the left-most hedge.
-                        while(hedgeInfo(*side->hedgeLeft).prevOnSide)
-                            side->hedgeLeft = hedgeInfo(*side->hedgeLeft).prevOnSide;
+                        while(hedgeInfo(*side->_leftHEdge).prevOnSide)
+                            side->_leftHEdge = hedgeInfo(*side->_leftHEdge).prevOnSide;
 
                         // Find the right-most hedge.
-                        side->hedgeRight = hedge;
-                        while(hedgeInfo(*side->hedgeRight).nextOnSide)
-                            side->hedgeRight = hedgeInfo(*side->hedgeRight).nextOnSide;
+                        side->_rightHEdge = hedge;
+                        while(hedgeInfo(*side->_rightHEdge).nextOnSide)
+                            side->_rightHEdge = hedgeInfo(*side->_rightHEdge).nextOnSide;
                     }
                 }
                 /// kludge end

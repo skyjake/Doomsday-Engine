@@ -23,16 +23,16 @@
 #include "de_play.h"
 
 // Called when the polyobj hits a mobj.
-static void (*po_callback) (mobj_t* mobj, void* line, void* polyobj);
+static void (*po_callback) (mobj_t *mobj, void *line, void *polyobj);
 
-void P_PolyobjCallback(mobj_t* mobj, LineDef* lineDef, Polyobj* polyobj)
+void P_PolyobjCallback(mobj_t *mobj, LineDef *lineDef, Polyobj *polyobj)
 {
     if(!po_callback) return;
     po_callback(mobj, lineDef, polyobj);
 }
 
 #undef P_SetPolyobjCallback
-DENG_EXTERN_C void P_SetPolyobjCallback(void (*func) (struct mobj_s*, void*, void*))
+DENG_EXTERN_C void P_SetPolyobjCallback(void (*func) (struct mobj_s *, void *, void *))
 {
     po_callback = func;
 }
@@ -40,15 +40,17 @@ DENG_EXTERN_C void P_SetPolyobjCallback(void (*func) (struct mobj_s*, void*, voi
 void P_PolyobjChanged(Polyobj *po)
 {
 #ifdef __CLIENT__
+    DENG_ASSERT(po);
+
     for(LineDef **lineIter = po->lines; *lineIter; lineIter++)
     {
         LineDef *line = *lineIter;
-        HEdge *hedge = line->front().hedgeLeft;
+        HEdge &hedge = line->front().leftHEdge();
 
         // Shadow bias must be told.
         for(int i = 0; i < 3; ++i)
         {
-            SB_SurfaceMoved(hedge->bsuf[i]);
+            SB_SurfaceMoved(hedge.bsuf[i]);
         }
     }
 #else // !__CLIENT__
@@ -57,56 +59,56 @@ void P_PolyobjChanged(Polyobj *po)
 }
 
 #undef P_PolyobjUnlink
-DENG_EXTERN_C void P_PolyobjUnlink(Polyobj* po)
+DENG_EXTERN_C void P_PolyobjUnlink(Polyobj *po)
 {
-    GameMap* map = theMap; /// @todo Do not assume polyobj is from the CURRENT map.
+    GameMap *map = theMap; /// @todo Do not assume polyobj is from the CURRENT map.
     GameMap_UnlinkPolyobj(map, po);
 }
 
 #undef P_PolyobjLink
-DENG_EXTERN_C void P_PolyobjLink(Polyobj* po)
+DENG_EXTERN_C void P_PolyobjLink(Polyobj *po)
 {
-    GameMap* map = theMap; /// @todo Do not assume polyobj is from the CURRENT map.
+    GameMap *map = theMap; /// @todo Do not assume polyobj is from the CURRENT map.
     GameMap_LinkPolyobj(map, po);
 }
 
 #undef P_PolyobjByID
-DENG_EXTERN_C Polyobj* P_PolyobjByID(uint id)
+DENG_EXTERN_C Polyobj *P_PolyobjByID(uint id)
 {
     if(!theMap) return NULL;
     return GameMap_PolyobjByID(theMap, id);
 }
 
 #undef P_PolyobjByTag
-DENG_EXTERN_C Polyobj* P_PolyobjByTag(int tag)
+DENG_EXTERN_C Polyobj *P_PolyobjByTag(int tag)
 {
     if(!theMap) return NULL;
     return GameMap_PolyobjByTag(theMap, tag);
 }
 
 #undef P_PolyobjByBase
-DENG_EXTERN_C Polyobj* P_PolyobjByBase(void* ddMobjBase)
+DENG_EXTERN_C Polyobj *P_PolyobjByBase(void *ddMobjBase)
 {
     if(!theMap) return NULL;
     return GameMap_PolyobjByBase(theMap, ddMobjBase);
 }
 
 #undef P_PolyobjMove
-DENG_EXTERN_C boolean P_PolyobjMove(Polyobj* po, coord_t xy[2])
+DENG_EXTERN_C boolean P_PolyobjMove(Polyobj *po, coord_t xy[2])
 {
     if(!po) return false;
     return Polyobj_Move(po, xy);
 }
 
 #undef P_PolyobjMoveXY
-DENG_EXTERN_C boolean P_PolyobjMoveXY(Polyobj* po, coord_t x, coord_t y)
+DENG_EXTERN_C boolean P_PolyobjMoveXY(Polyobj *po, coord_t x, coord_t y)
 {
     if(!po) return false;
     return Polyobj_MoveXY(po, x, y);
 }
 
 #undef P_PolyobjRotate
-DENG_EXTERN_C boolean P_PolyobjRotate(Polyobj* po, angle_t angle)
+DENG_EXTERN_C boolean P_PolyobjRotate(Polyobj *po, angle_t angle)
 {
     if(!po) return false;
     return Polyobj_Rotate(po, angle);

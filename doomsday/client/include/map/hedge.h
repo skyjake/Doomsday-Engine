@@ -45,7 +45,7 @@
 #define HEDGE_BACK_SECTOR(h)      ((h)->twin ? (h)->twin->sector : NULL)
 
 #define HEDGE_SIDE(h)             ((h)->lineDef ? &(h)->lineDef->side((h)->side) : NULL)
-#define HEDGE_SIDEDEF(h)          ((h)->lineDef ? (h)->lineDef->L_sidedef((h)->side) : NULL)
+#define HEDGE_SIDEDEF(h)          ((h)->lineDef ? (h)->lineDef->sideDefPtr((h)->side) : NULL)
 
 // HEdge frame flags
 #define HEDGEINF_FACINGFRONT      0x0001

@@ -295,7 +295,7 @@ static void pruneLinedefs(EditMap* map)
     {
         LineDef* l = map->lineDefs[i];
 
-        if(!l->L_frontsidedef && !l->L_backsidedef)
+        if(!l->hasFrontSideDef() && !l->hasBackSideDef())
         {
             unused++;
 
@@ -686,17 +686,17 @@ static void chainSectorBases(GameMap *map)
             LineDef *line = sec->lineDefs[j];
             if(line->frontSectorPtr() == sec)
             {
-                SideDef *side = line->L_frontsidedef;
-                linkBaseToSectorChain(sec, &side->SW_middlesurface.base);
-                linkBaseToSectorChain(sec, &side->SW_bottomsurface.base);
-                linkBaseToSectorChain(sec, &side->SW_topsurface.base);
+                SideDef &side = line->frontSideDef();
+                linkBaseToSectorChain(sec, &side.SW_middlesurface.base);
+                linkBaseToSectorChain(sec, &side.SW_bottomsurface.base);
+                linkBaseToSectorChain(sec, &side.SW_topsurface.base);
             }
-            if(line->L_backsidedef && line->backSectorPtr() == sec)
+            if(line->hasBackSideDef() && line->backSectorPtr() == sec)
             {
-                SideDef *side = line->L_backsidedef;
-                linkBaseToSectorChain(sec, &side->SW_middlesurface.base);
-                linkBaseToSectorChain(sec, &side->SW_bottomsurface.base);
-                linkBaseToSectorChain(sec, &side->SW_topsurface.base);
+                SideDef &side = line->backSideDef();
+                linkBaseToSectorChain(sec, &side.SW_middlesurface.base);
+                linkBaseToSectorChain(sec, &side.SW_bottomsurface.base);
+                linkBaseToSectorChain(sec, &side.SW_topsurface.base);
             }
         }
     }
@@ -724,13 +724,12 @@ static void finishLineDefs(GameMap *map)
     for(uint i = 0; i < map->lineDefCount(); ++i)
     {
         LineDef &line = map->lineDefs[i];
-        if(!line.front().hedgeLeft) continue;
+        LineDef::Side &front = line.front();
 
-        HEdge const *leftHEdge  = line.front().hedgeLeft;
-        HEdge const *rightHEdge = line.front().hedgeRight;
+        if(!front._leftHEdge) continue;
 
-        line._v[0] = leftHEdge->HE_v1;
-        line._v[1] = rightHEdge->HE_v2;
+        line._v[0] = front.leftHEdge().HE_v1;
+        line._v[1] = front.rightHEdge().HE_v2;
 
         line.updateSlope();
         line.updateAABox();
@@ -800,7 +799,7 @@ static int lineAngleSorter(void const *a, void const *b)
         }
         else
         {
-            LineDef *line = &own[i]->lineDef();
+            LineDef *line = &own[i]->line();
             Vertex const &otherVtx = line->vertex(&line->v1() == rootVtx? 1:0);
 
             fixed_t dx = otherVtx.origin()[VX] - rootVtx->origin()[VX];
@@ -911,7 +910,7 @@ static void setVertexLineOwner(Vertex *vtx, LineDef *lineptr, LineOwner **storag
     LineOwner const *own = vtx->firstLineOwner();
     while(own)
     {
-        if(&own->lineDef() == lineptr)
+        if(&own->line() == lineptr)
             return; // Yes, we can exit.
 
         own = &own->next();
@@ -921,7 +920,7 @@ static void setVertexLineOwner(Vertex *vtx, LineDef *lineptr, LineOwner **storag
     vtx->_numLineOwners++;
     LineOwner *newOwner = (*storage)++;
 
-    newOwner->_lineDef = lineptr;
+    newOwner->_line = lineptr;
     newOwner->_link[LineOwner::Previous] = NULL;
 
     // Link it in.
@@ -934,9 +933,9 @@ static void setVertexLineOwner(Vertex *vtx, LineDef *lineptr, LineOwner **storag
 
     // Link the line to its respective owner node.
     if(vtx == &lineptr->v1())
-        lineptr->L_vo1 = newOwner;
+        lineptr->_vo[FROM] = newOwner;
     else
-        lineptr->L_vo2 = newOwner;
+        lineptr->_vo[TO] = newOwner;
 }
 
 /**
@@ -978,7 +977,7 @@ static void hardenVertexOwnerRings(GameMap *dest, EditMap *src)
         LineOwner *p = v->_lineOwners;
         while(p)
         {
-            p->_lineDef = &dest->lineDefs[p->_lineDef->origIndex - 1];
+            p->_line = &dest->lineDefs[p->_line->origIndex - 1];
             p = &p->next();
         }
 
@@ -1048,15 +1047,15 @@ static void hardenLinedefs(GameMap *dest, EditMap *src)
         *destL = *srcL;
 
         /// @todo We shouldn't still have lines with missing fronts but...
-        destL->L_frontsidedef = (srcL->L_frontsidedef?
-            &dest->sideDefs[srcL->L_frontsidedef->buildData.index - 1] : NULL);
-        destL->L_backsidedef = (srcL->L_backsidedef?
-            &dest->sideDefs[srcL->L_backsidedef->buildData.index - 1] : NULL);
+        destL->front()._sideDef = (srcL->front()._sideDef?
+            &dest->sideDefs[srcL->front()._sideDef->buildData.index - 1] : NULL);
+        destL->back()._sideDef = (srcL->back()._sideDef?
+            &dest->sideDefs[srcL->back()._sideDef->buildData.index - 1] : NULL);
 
-        if(destL->L_frontsidedef)
-            destL->L_frontsidedef->line = destL;
-        if(destL->L_backsidedef)
-            destL->L_backsidedef->line = destL;
+        if(destL->hasFrontSideDef())
+            destL->frontSideDef().line = destL;
+        if(destL->hasBackSideDef())
+            destL->backSideDef().line = destL;
 
         destL->front()._sector = (srcL->front()._sector?
             &dest->sectors[srcL->front()._sector->buildData.index - 1] : NULL);
@@ -1180,7 +1179,7 @@ static void hardenPolyobjs(GameMap* dest, EditMap* src)
             hedge->bspLeaf = NULL;
             hedge->sector = line->frontSectorPtr();
 
-            line->front().hedgeLeft = line->front().hedgeRight = hedge;
+            line->front()._leftHEdge = line->front()._rightHEdge = hedge;
 
             destP->lines[j] = line;
         }
@@ -1572,16 +1571,15 @@ boolean MPE_End(void)
     for(i = 0; i < gamemap->numPolyObjs; ++i)
     {
         Polyobj *po = gamemap->polyObjs[i];
-        LineDef **lineIter;
-        uint n = 0;
 
-        for(lineIter = po->lines; *lineIter; lineIter++, n++)
+        uint n = 0;
+        for(LineDef **lineIter = po->lines; *lineIter; lineIter++, n++)
         {
             LineDef *line = *lineIter;
-            HEdge *hedge = line->front().hedgeLeft;
+            HEdge &hedge = line->front().leftHEdge();
 
-            hedge->HE_v1 = &line->v1();
-            hedge->HE_v2 = &line->v2();
+            hedge.HE_v1 = &line->v1();
+            hedge.HE_v2 = &line->v2();
 
             // The original Pts are based off the anchor Pt, and are unique
             // to each hedge, not each linedef.
@@ -1901,8 +1899,8 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector,
     l->_sides[FRONT]._sector = (frontSector == 0? NULL: e_map->sectors[frontSector-1]);
     l->_sides[BACK]._sector  = (backSector  == 0? NULL: e_map->sectors[backSector-1]);
 
-    l->L_frontsidedef = front;
-    l->L_backsidedef = back;
+    l->_sides[FRONT]._sideDef = front;
+    l->_sides[BACK]._sideDef = back;
 
     l->length = length;
 
@@ -1913,16 +1911,16 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector,
                          int( l->direction[VX] ));
 
     // Remember the number of unique references.
-    if(l->L_frontsidedef)
+    if(l->hasFrontSideDef())
     {
-        l->L_frontsidedef->line = l;
-        l->L_frontsidedef->buildData.refCount++;
+        l->frontSideDef().line = l;
+        l->frontSideDef().buildData.refCount++;
     }
 
-    if(l->L_backsidedef)
+    if(l->hasBackSideDef())
     {
-        l->L_backsidedef->line = l;
-        l->L_backsidedef->buildData.refCount++;
+        l->backSideDef().line = l;
+        l->backSideDef().buildData.refCount++;
     }
 
     l->inFlags = 0;

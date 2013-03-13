@@ -45,10 +45,42 @@ Sector &LineDef::Side::sector() const
     throw LineDef::MissingSectorError("LineDef::Side::sector", "No sector is attributed");
 }
 
+bool LineDef::Side::hasSideDef() const
+{
+    return !!_sideDef;
+}
+
+SideDef &LineDef::Side::sideDef() const
+{
+    if(_sideDef)
+    {
+        return *_sideDef;
+    }
+    /// @throw LineDef::MissingSideDefError Attempted with no sidedef configured.
+    throw LineDef::MissingSideDefError("LineDef::Side::sideDef", "No sidedef is configured");
+}
+
+HEdge &LineDef::Side::leftHEdge() const
+{
+    DENG_ASSERT(_leftHEdge);
+    return *_leftHEdge;
+}
+
+HEdge &LineDef::Side::rightHEdge() const
+{
+    DENG_ASSERT(_rightHEdge);
+    return *_rightHEdge;
+}
+
+int LineDef::Side::shadowVisCount() const
+{
+    return _shadowVisCount;
+}
+
 LineDef::LineDef() : MapElement(DMU_LINEDEF)
 {
     std::memset(_v,     0, sizeof(_v));
-    std::memset(vo,    0, sizeof(vo));
+    std::memset(_vo,    0, sizeof(_vo));
     std::memset(_sides, 0, sizeof(_sides));
     flags = 0;
     inFlags = 0;
@@ -85,6 +117,11 @@ Vertex const &LineDef::vertex(int to) const
     return *_v[to? TO:FROM];
 }
 
+LineOwner *LineDef::vertexOwner(int to) const
+{
+    return _vo[to? TO:FROM];
+}
+
 #ifdef __CLIENT__
 static void calcNormal(LineDef const *l, byte side, pvec2f_t normal)
 {
@@ -110,8 +147,8 @@ static bool backClosedForBlendNeighbor(LineDef const *lineDef, int side,
 {
     DENG_ASSERT(lineDef);
 
-    if(!lineDef->L_frontsidedef) return false;
-    if(!lineDef->L_backsidedef) return true;
+    if(!lineDef->hasFrontSideDef()) return false;
+    if(!lineDef->hasBackSideDef()) return true;
 
     Sector const *frontSec = lineDef->sectorPtr(side);
     Sector const *backSec  = lineDef->sectorPtr(side^1);
@@ -130,7 +167,7 @@ static bool backClosedForBlendNeighbor(LineDef const *lineDef, int side,
 static LineDef *findBlendNeighbor(LineDef const *l, byte side, byte right,
     binangle_t *diff)
 {
-    LineOwner const *farVertOwner = l->L_vo(right^side);
+    LineOwner const *farVertOwner = l->vertexOwner(right^side);
     if(backClosedForBlendNeighbor(l, side, true/*ignore opacity*/))
     {
         return R_FindSolidLineNeighbor(l->sectorPtr(side), l, farVertOwner, right, diff);
@@ -206,7 +243,7 @@ coord_t LineDef::visOpenRange(int side_, coord_t *retBottom, coord_t *retTop) co
 
 void LineDef::configureTraceOpening(TraceOpening &opening) const
 {
-    if(!L_backsidedef)
+    if(!hasBackSideDef())
     {
         opening.range = 0;
         return;
@@ -370,21 +407,21 @@ int LineDef::property(setargs_t &args) const
         DMU_GetValue(DMT_LINEDEF_SLOPETYPE, &slopeType, &args, 0);
         break;
     case DMU_FRONT_SECTOR: {
-        Sector *sec = (_sides[FRONT].sideDef? _sides[FRONT]._sector : NULL);
+        Sector *sec = (_sides[FRONT]._sideDef? _sides[FRONT]._sector : NULL);
         DMU_GetValue(DMT_LINEDEF_SECTOR, &sec, &args, 0);
         break; }
     case DMU_BACK_SECTOR: {
-        Sector *sec = (_sides[BACK].sideDef? _sides[BACK]._sector : NULL);
+        Sector *sec = (_sides[BACK]._sideDef? _sides[BACK]._sector : NULL);
         DMU_GetValue(DMT_LINEDEF_SECTOR, &sec, &args, 0);
         break; }
     case DMU_FLAGS:
         DMU_GetValue(DMT_LINEDEF_FLAGS, &flags, &args, 0);
         break;
     case DMU_SIDEDEF0:
-        DMU_GetValue(DDVT_PTR, &L_frontsidedef, &args, 0);
+        DMU_GetValue(DDVT_PTR, &_sides[FRONT]._sideDef, &args, 0);
         break;
     case DMU_SIDEDEF1:
-        DMU_GetValue(DDVT_PTR, &L_backsidedef, &args, 0);
+        DMU_GetValue(DDVT_PTR, &_sides[BACK]._sideDef, &args, 0);
         break;
     case DMU_BOUNDING_BOX:
         if(args.valueType == DDVT_PTR)
@@ -422,10 +459,10 @@ int LineDef::setProperty(setargs_t const &args)
         DMU_SetValue(DMT_LINEDEF_SECTOR, &_sides[BACK]._sector, &args, 0);
         break;
     case DMU_SIDEDEF0:
-        DMU_SetValue(DMT_LINEDEF_SIDEDEF, &L_frontsidedef, &args, 0);
+        DMU_SetValue(DMT_LINEDEF_SIDEDEF, &_sides[FRONT]._sideDef, &args, 0);
         break;
     case DMU_SIDEDEF1:
-        DMU_SetValue(DMT_LINEDEF_SIDEDEF, &L_backsidedef, &args, 0);
+        DMU_SetValue(DMT_LINEDEF_SIDEDEF, &_sides[BACK]._sideDef, &args, 0);
         break;
     case DMU_VALID_COUNT:
         DMU_SetValue(DMT_LINEDEF_VALIDCOUNT, &validCount, &args, 0);
@@ -433,16 +470,20 @@ int LineDef::setProperty(setargs_t const &args)
     case DMU_FLAGS: {
         DMU_SetValue(DMT_LINEDEF_FLAGS, &flags, &args, 0);
 
-        SideDef *s = L_frontsidedef;
-        s->SW_topsurface.update();
-        s->SW_bottomsurface.update();
-        s->SW_middlesurface.update();
-        if(L_backsidedef)
+        if(hasFrontSideDef())
         {
-            s = L_backsidedef;
-            s->SW_topsurface.update();
-            s->SW_bottomsurface.update();
-            s->SW_middlesurface.update();
+            SideDef &frontDef = frontSideDef();
+            frontDef.SW_topsurface.update();
+            frontDef.SW_bottomsurface.update();
+            frontDef.SW_middlesurface.update();
+        }
+
+        if(hasBackSideDef())
+        {
+            SideDef &backDef = backSideDef();
+            backDef.SW_topsurface.update();
+            backDef.SW_bottomsurface.update();
+            backDef.SW_middlesurface.update();
         }
         break; }
     default:

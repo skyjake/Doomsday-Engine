@@ -54,15 +54,15 @@ DENG2_PIMPL(Plane)
         {
             LineDef *li = *linep;
 
-            li->L_frontsidedef->SW_surface(SS_MIDDLE).update();
-            li->L_frontsidedef->SW_surface(SS_BOTTOM).update();
-            li->L_frontsidedef->SW_surface(SS_TOP).update();
+            li->frontSideDef().SW_surface(SS_MIDDLE).update();
+            li->frontSideDef().SW_surface(SS_BOTTOM).update();
+            li->frontSideDef().SW_surface(SS_TOP).update();
 
-            if(li->L_backsidedef)
+            if(li->hasBackSideDef())
             {
-                li->L_backsidedef->SW_surface(SS_MIDDLE).update();
-                li->L_backsidedef->SW_surface(SS_BOTTOM).update();
-                li->L_backsidedef->SW_surface(SS_TOP).update();
+                li->backSideDef().SW_surface(SS_MIDDLE).update();
+                li->backSideDef().SW_surface(SS_BOTTOM).update();
+                li->backSideDef().SW_surface(SS_TOP).update();
             }
 
             linep++;

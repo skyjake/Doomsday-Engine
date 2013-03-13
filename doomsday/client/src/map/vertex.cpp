@@ -62,7 +62,7 @@ void Vertex::countLineOwners(uint *oneSided, uint *twoSided) const
         LineOwner const *own = firstOwn;
         do
         {
-            if(!own->lineDef().L_frontsidedef || !own->lineDef().L_backsidedef)
+            if(!own->line().hasFrontSideDef() || !own->line().hasBackSideDef())
             {
                 ++ones;
             }

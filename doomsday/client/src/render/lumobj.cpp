@@ -1157,8 +1157,7 @@ boolean LOIT_ClipLumObjBySight(void *data, void *context)
     uint lumIdx = lumToIndex(lum);
     if(!luminousClipped[lumIdx])
     {
-        vec2d_t eye;
-        V2d_Set(eye, vOrigin[VX], vOrigin[VZ]);
+        vec2d_t eye; V2d_Set(eye, vOrigin[VX], vOrigin[VZ]);
 
         // We need to figure out if any of the polyobj's segments lies
         // between the viewpoint and the lumobj.
@@ -1167,14 +1166,14 @@ boolean LOIT_ClipLumObjBySight(void *data, void *context)
         for(uint i = 0; i < po->lineCount; ++i)
         {
             LineDef *line = po->lines[i];
-            HEdge *hedge = line->front().hedgeLeft;
+            HEdge &hedge = line->front().leftHEdge();
 
             // Ignore hedges facing the wrong way.
-            if(hedge->frameFlags & HEDGEINF_FACINGFRONT)
+            if(hedge.frameFlags & HEDGEINF_FACINGFRONT)
             {
-                vec2d_t origin;
-                V2d_Set(origin, lum->origin[VX], lum->origin[VY]);
-                if(V2d_Intercept2(origin, eye, hedge->HE_v1origin, hedge->HE_v2origin, NULL, NULL, NULL))
+                vec2d_t origin; V2d_Set(origin, lum->origin[VX], lum->origin[VY]);
+
+                if(V2d_Intercept2(origin, eye, hedge.HE_v1origin, hedge.HE_v2origin, NULL, NULL, NULL))
                 {
                     luminousClipped[lumIdx] = 1;
                     break;
@@ -1188,11 +1187,12 @@ boolean LOIT_ClipLumObjBySight(void *data, void *context)
 
 void LO_ClipInBspLeafBySight(uint bspLeafIdx)
 {
-    BspLeaf* leaf = GameMap_BspLeaf(theMap, bspLeafIdx);
+    BspLeaf *leaf = GameMap_BspLeaf(theMap, bspLeafIdx);
     iterateBspLeafLumObjs(leaf, LOIT_ClipLumObjBySight, leaf);
 }
 
-static boolean iterateBspLeafLumObjs(BspLeaf *bspLeaf, boolean (*func) (void *, void *), void *data)
+static boolean iterateBspLeafLumObjs(BspLeaf *bspLeaf,
+    boolean (*func) (void *, void *), void *data)
 {
     lumlistnode_t *ln = bspLeafLumObjList[GET_BSPLEAF_IDX(bspLeaf)];
     while(ln)

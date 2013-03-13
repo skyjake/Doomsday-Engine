@@ -48,7 +48,7 @@ public:
     };
 
 public: /// @todo Make private:
-    LineDef *_lineDef;
+    LineDef *_line;
 
     /// {Previous, Next} (i.e. {anticlk, clk}).
     LineOwner *_link[2];
@@ -62,7 +62,7 @@ public: /// @todo Make private:
     } _shadowOffsets;
 
 public:
-    /*LineOwner() : _lineDef(0), _angle(0)
+    /*LineOwner() : _line(0), _angle(0)
     {
         _link[Previous] = 0;
         _link[Next] = 0;
@@ -119,9 +119,9 @@ public:
     inline LineOwner const &next() const { return navigate(Next); }
 
     /**
-     * Returns the LineDef "owner".
+     * Returns the line "owner".
      */
-    LineDef &lineDef() const { return *_lineDef; }
+    LineDef &line() const { return *_line; }
 
     /**
      * Returns the angle between the line owner and the next in the ring (clockwise).

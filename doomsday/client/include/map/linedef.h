@@ -34,20 +34,6 @@ class Sector;
 class SideDef;
 class HEdge;
 
-/*
- * Helper macros for accessing linedef data elements:
- */
-/// @addtogroup map
-///@{
-#define L_vo(n)                 vo[(n)? 1:0]
-#define L_vo1                   L_vo(0)
-#define L_vo2                   L_vo(1)
-
-#define L_sidedef(n)            side(n).sideDef
-#define L_frontsidedef          L_sidedef(FRONT)
-#define L_backsidedef           L_sidedef(BACK)
-///@}
-
 // Internal flags:
 #define LF_POLYOBJ              0x1 ///< Line is part of a polyobject.
 #define LF_BSPWINDOW            0x2 ///< Line produced a BSP window. @todo Refactor away.
@@ -107,6 +93,9 @@ public:
     /// Required sector attribution is missing. @ingroup errors
     DENG2_ERROR(MissingSectorError);
 
+    /// Required sidedef attribution is missing. @ingroup errors
+    DENG2_ERROR(MissingSideDefError);
+
     /// The referenced property does not exist. @ingroup errors
     DENG2_ERROR(UnknownPropertyError);
 
@@ -123,16 +112,16 @@ public:
         Sector *_sector;
 
         /// SideDef on this side.
-        SideDef *sideDef;
+        SideDef *_sideDef;
 
         /// Left-most HEdge on this side.
-        HEdge *hedgeLeft;
+        HEdge *_leftHEdge;
 
         /// Right-most HEdge on this side.
-        HEdge *hedgeRight;
+        HEdge *_rightHEdge;
 
         /// Framecount of last time shadows were drawn on this side.
-        ushort shadowVisFrame;
+        int _shadowVisCount;
 
     public:
         /**
@@ -148,11 +137,46 @@ public:
         Sector &sector() const;
 
         /**
-         * Returns a pointer to the sector attributed to the side; otherwise @c 0.
+         * Returns a pointer to the Sector attributed to the side; otherwise @c 0.
          *
          * @see hasSector()
          */
         inline Sector *sectorPtr() const { return hasSector()? &sector() : 0; }
+
+        /**
+         * Returns @c true iff a Sector is attributed to the side.
+         */
+        bool hasSideDef() const;
+
+        /**
+         * Returns the SideDef attributed to the side.
+         *
+         * @see hasSideDef()
+         */
+        SideDef &sideDef() const;
+
+        /**
+         * Returns a pointer to the SideDef attributed to the side; otherwise @c 0.
+         *
+         * @see hasSideDef()
+         */
+        inline SideDef *sideDefPtr() const { return hasSideDef()? &sideDef() : 0; }
+
+        /**
+         * Returns the left-moset HEdge for the side.
+         */
+        HEdge &leftHEdge() const;
+
+        /**
+         * Returns the right-most HEdge for the side.
+         */
+        HEdge &rightHEdge() const;
+
+        /**
+         * Returns the frame number of the last time shadows linked to the side
+         * were drawn.
+         */
+        int shadowVisCount() const;
     };
 
 public: /// @todo make private:
@@ -160,7 +184,7 @@ public: /// @todo make private:
     Vertex *_v[2];
 
     /// Links to vertex line owner nodes [From, To].
-    LineOwner *vo[2];
+    LineOwner *_vo[2];
 
     /// Logical sides [Front, Back]
     Side _sides[2];
@@ -240,6 +264,23 @@ public:
     inline bool hasBackSector() const { return hasSector(BACK); }
 
     /**
+     * Returns @c true iff a sidedef is attributed to the specified side of the line.
+     *
+     * @param back  If not @c 0 test the Back side; otherwise the Front side.
+     */
+    inline bool hasSideDef(int back) const { return side(back).hasSideDef(); }
+
+    /**
+     * Returns @c true iff a sidedef is attributed to the Front side of the line.
+     */
+    inline bool hasFrontSideDef() const { return hasSideDef(FRONT); }
+
+    /**
+     * Returns @c true iff a sidedef is attributed to the Back side of the line.
+     */
+    inline bool hasBackSideDef() const { return hasSideDef(BACK); }
+
+    /**
      * Convenient accessor method for returning the sector attributed to the
      * specified side of the line.
      *
@@ -298,6 +339,64 @@ public:
     inline Sector const *backSectorPtr() const { return sectorPtr(BACK); }
 
     /**
+     * Convenient accessor method for returning the sidedef attributed to the
+     * specified side of the line.
+     *
+     * @param back  If not @c 0 return the sidedef for the Back side; otherwise
+     *              the sidedef of the Front side.
+     */
+    inline SideDef &sideDef(int back) { return side(back).sideDef(); }
+
+    /// @copydoc sideDef()
+    inline SideDef const &sideDef(int back) const { return side(back).sideDef(); }
+
+    /**
+     * Convenient accessor method for returning a pointer to the sidedef attributed
+     * to the specified side of the line.
+     *
+     * @param back  If not @c 0 return the sidedef for the Back side; otherwise
+     *              the sidedef of the Front side.
+     */
+    inline SideDef *sideDefPtr(int back) { return side(back).sideDefPtr(); }
+
+    /// @copydoc sideDef()
+    inline SideDef const *sideDefPtr(int back) const { return side(back).sideDefPtr(); }
+
+    /**
+     * Returns the sidedef attributed to the Front side of the line.
+     */
+    inline SideDef &frontSideDef() { return sideDef(FRONT); }
+
+    /// @copydoc backSideDef()
+    inline SideDef const &frontSideDef() const { return sideDef(FRONT); }
+
+    /**
+     * Returns the sidedef attributed to the Back side of the line.
+     */
+    inline SideDef &backSideDef() { return sideDef(BACK); }
+
+    /// @copydoc backSideDef()
+    inline SideDef const &backSideDef() const { return sideDef(BACK); }
+
+    /**
+     * Convenient accessor method for returning a pointer to the sidedef attributed
+     * to the front side of the line.
+     */
+    inline SideDef *frontSideDefPtr() { return sideDefPtr(FRONT); }
+
+    /// @copydoc frontSideDefPtr()
+    inline SideDef const *frontSideDefPtr() const { return sideDefPtr(FRONT); }
+
+    /**
+     * Convenient accessor method for returning a pointer to the sidedef attributed
+     * to the back side of the line.
+     */
+    inline SideDef *backSideDefPtr() { return sideDefPtr(BACK); }
+
+    /// @copydoc frontSideDefPtr()
+    inline SideDef const *backSideDefPtr() const { return sideDefPtr(BACK); }
+
+    /**
      * Returns @c true iff the line is considered @em self-referencing.
      * In this context, self-referencing (a term whose origins stem from the
      * DOOM modding community) means a two-sided line (which is to say that
@@ -306,7 +405,7 @@ public:
      */
     inline bool isSelfReferencing() const
     {
-        return L_frontsidedef && L_backsidedef && frontSectorPtr() == backSectorPtr();
+        return hasFrontSideDef() && hasBackSideDef() && frontSectorPtr() == backSectorPtr();
     }
 
     /**
@@ -329,6 +428,15 @@ public:
     {
         return vertex(to).origin();
     }
+
+    /**
+     * Returns a pointer to the line owner node for the specified edge vertex
+     * of the line.
+     *
+     * @param to  If not @c 0 return the owner for the To vertex; otherwise the
+     *            From vertex.
+     */
+    LineOwner *vertexOwner(int to) const;
 
     /**
      * Returns the From/Start vertex for the line.
@@ -359,6 +467,11 @@ public:
     inline const_pvec2d_t &fromOrigin() const { return v1Origin(); }
 
     /**
+     * Returns a pointer to the line owner node for the From/Start vertex of the line.
+     */
+    inline LineOwner *v1Owner() const { return vertexOwner(FROM); }
+
+    /**
      * Returns the To/End vertex for the line.
      */
     inline Vertex &v2() { return vertex(TO); }
@@ -385,6 +498,11 @@ public:
     /// @copydoc v2Origin()
     /// An alias of v2Origin()
     inline const_pvec2d_t &toOrigin() const { return v2Origin(); }
+
+    /**
+     * Returns a pointer to the line owner node for the To/End vertex of the line.
+     */
+    inline LineOwner *v2Owner() const { return vertexOwner(FROM); }
 
     /**
      * On which side of the line does the specified box lie?

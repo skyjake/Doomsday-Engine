@@ -364,7 +364,7 @@ void SB_InitForMap(char const *uniqueID)
         for(uint j = 0; j < po->lineCount; ++j)
         {
             LineDef *line = po->lines[j];
-            HEdge *hedge = line->front().hedgeLeft;
+            HEdge &hedge = line->front().leftHEdge();
 
             for(int k = 0; k < 3; ++k)
             {
@@ -374,7 +374,7 @@ void SB_InitForMap(char const *uniqueID)
                 bsuf->illum = illums;
                 illums += 4;
 
-                hedge->bsuf[k] = bsuf;
+                hedge.bsuf[k] = bsuf;
             }
         }
     }

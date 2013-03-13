@@ -531,8 +531,7 @@ static void R_UpdateMap()
         for(LineDef **lineIter = po->lines; *lineIter; lineIter++)
         {
             LineDef *line = *lineIter;
-            SideDef *side = line->L_frontsidedef;
-            side->SW_middlesurface.update();
+            line->frontSideDef().SW_middlesurface.update();
         }
     }
 #endif

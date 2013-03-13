@@ -106,8 +106,8 @@ void Rend_RadioUpdateVertexShadowOffsets(Vertex *vtx)
     LineOwner *own = base;
     do
     {
-        LineDef *lineB = &own->lineDef();
-        LineDef *lineA = &own->next().lineDef();
+        LineDef *lineB = &own->line();
+        LineDef *lineA = &own->next().line();
 
         if(&lineB->v1() == vtx)
         {
@@ -188,8 +188,8 @@ boolean Rend_RadioIsShadowingLineDef(LineDef *line)
     if(line)
     {
         if(!line->isSelfReferencing() && !(line->inFlags & LF_POLYOBJ) &&
-           !(&line->vo[0]->next().lineDef() == line ||
-             &line->vo[1]->next().lineDef() == line))
+           !(&line->v1Owner()->next().line() == line ||
+             &line->v2Owner()->next().line() == line))
         {
             return true;
         }
@@ -232,12 +232,12 @@ void Rend_RadioInitForMap()
 
         for(uint j = 0; j < 2; ++j)
         {
-            if(!line->hasSector(j) || !line->L_sidedef(j)) continue;
+            if(!line->hasSector(j) || !line->hasSideDef(j)) continue;
 
             Vertex &vtx0 = line->vertex(j);
             Vertex &vtx1 = line->vertex(j^1);
-            LineOwner *vo0 = &line->L_vo(j)->next();
-            LineOwner *vo1 = &line->L_vo(j^1)->prev();
+            LineOwner *vo0 = &line->vertexOwner(j)->next();
+            LineOwner *vo1 = &line->vertexOwner(j^1)->prev();
 
             // Use the extended points, they are wider than inoffsets.
             V2d_Copy(point, vtx0.origin());

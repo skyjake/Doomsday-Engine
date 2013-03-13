@@ -74,7 +74,7 @@ struct LineDefInfo
            (fabs(from.origin()[VY] - to.origin()[VY]) < distEpsilon))
             flags |= ZeroLength;
 
-        if(lineDef->L_backsidedef && lineDef->L_frontsidedef)
+        if(lineDef->hasBackSideDef() && lineDef->hasFrontSideDef())
         {
             flags |= Twosided;
 

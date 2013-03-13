@@ -421,19 +421,19 @@ static void initPolyobj(Polyobj *po)
     for(LineDef **lineIter = po->lines; *lineIter; lineIter++)
     {
         LineDef *line = *lineIter;
-        SideDef *front = line->L_frontsidedef;
+        SideDef &frontDef = line->frontSideDef();
 
-        front->SW_topinflags |= SUIF_NO_RADIO;
-        front->SW_middleinflags |= SUIF_NO_RADIO;
-        front->SW_bottominflags |= SUIF_NO_RADIO;
+        frontDef.SW_topinflags |= SUIF_NO_RADIO;
+        frontDef.SW_middleinflags |= SUIF_NO_RADIO;
+        frontDef.SW_bottominflags |= SUIF_NO_RADIO;
 
-        if(line->L_backsidedef)
+        if(line->hasBackSideDef())
         {
-            SideDef *back = line->L_backsidedef;
+            SideDef &backDef = line->backSideDef();
 
-            back->SW_topinflags |= SUIF_NO_RADIO;
-            back->SW_middleinflags |= SUIF_NO_RADIO;
-            back->SW_bottominflags |= SUIF_NO_RADIO;
+            backDef.SW_topinflags |= SUIF_NO_RADIO;
+            backDef.SW_middleinflags |= SUIF_NO_RADIO;
+            backDef.SW_bottominflags |= SUIF_NO_RADIO;
         }
 
         V2d_Sum(avg, avg, line->v1Origin());
