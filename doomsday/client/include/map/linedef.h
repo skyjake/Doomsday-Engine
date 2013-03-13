@@ -502,7 +502,7 @@ public:
     /**
      * Returns a pointer to the line owner node for the To/End vertex of the line.
      */
-    inline LineOwner *v2Owner() const { return vertexOwner(FROM); }
+    inline LineOwner *v2Owner() const { return vertexOwner(TO); }
 
     /**
      * On which side of the line does the specified box lie?
