@@ -30,13 +30,19 @@ DENG2_PIMPL_NOREF(LocalServer)
 {
     Link *link;
     duint16 port;
+    String name;
 
-    Instance() : link(0), port(0)
-    {}
+    Instance() : link(0), port(0) {}
 };
 
 LocalServer::LocalServer() : d(new Instance)
 {}
+
+void LocalServer::setName(String const &name)
+{
+    d->name = name;
+    d->name.replace("\"", "\\\""); // for use on command line
+}
 
 void LocalServer::start(duint16 port, String const &gameMode, QStringList additionalOptions,
                         NativePath const &runtimePath)
@@ -124,6 +130,12 @@ void LocalServer::start(duint16 port, String const &gameMode, QStringList additi
     cmd.append("-cmd");
     cmd.append("net-ip-port " + String::number(port));
 
+    if(!d->name.isEmpty())
+    {
+        cmd.append("-cmd");
+        cmd.append("server-name \"" + d->name + "\"");
+    }
+
     foreach(String opt, additionalOptions) cmd.append(opt);
 
     LOG_INFO("Starting local server with port %i using game mode '%s'")
@@ -141,13 +153,6 @@ Link *LocalServer::openLink()
 {
     return new Link(String("localhost:%1").arg(d->port), 30);
 }
-
-/*Link &LocalServer::link()
-{
-    DENG2_ASSERT(d->link != 0);
-
-    return *d->link;
-}*/
 
 } // namespace shell
 } // namespace de

@@ -701,7 +701,7 @@ typedef struct {
     flash->maxTime = Reader_ReadInt32(svReader);
     flash->minTime = Reader_ReadInt32(svReader);
 
-    flash->thinker.function = T_LightFlash;
+    flash->thinker.function = (thinkfunc_t) T_LightFlash;
     return true; // Add this thinker.
 }
 
@@ -733,7 +733,7 @@ typedef struct {
     strobe->darkTime = Reader_ReadInt32(svReader);
     strobe->brightTime = Reader_ReadInt32(svReader);
 
-    strobe->thinker.function = T_StrobeFlash;
+    strobe->thinker.function = (thinkfunc_t) T_StrobeFlash;
     return true; // Add this thinker.
 }
 
@@ -761,7 +761,7 @@ typedef struct {
     glow->maxLight = (float) Reader_ReadInt32(svReader) / 255.0f;
     glow->direction = Reader_ReadInt32(svReader);
 
-    glow->thinker.function = T_Glow;
+    glow->thinker.function = (thinkfunc_t) T_Glow;
     return true; // Add this thinker.
 }
 

@@ -252,7 +252,7 @@ int SV_ReadXGPlaneMover(xgplanemover_t* mov)
     mov->maxInterval = SV_ReadLong();
     mov->timer = SV_ReadLong();
 
-    mov->thinker.function = XS_PlaneMover;
+    mov->thinker.function = (thinkfunc_t) XS_PlaneMover;
     return true; // Add this thinker.
 }
 

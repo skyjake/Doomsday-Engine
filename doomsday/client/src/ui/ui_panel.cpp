@@ -271,18 +271,18 @@ uidata_slider_t sld_music_volume = { 0, 255, 0, 1, false, (void*) "music-volume"
 uidata_slider_t sld_reverb_volume =
     { 0, 1, 0, .01f, true, (void*) "sound-reverb-volume" };
 uidata_slider_t sld_particle_max =
-    { 0, 10000, 0, 10, false, (void*) "rend-particle-max", "Unlimited" };
+    { 0, 10000, 0, 10, false, (void*) "rend-particle-max", (char*) "Unlimited" };
 uidata_slider_t sld_particle_rate =
     { .1f, 10, 0, .01f, true, (void*) "rend-particle-rate" };
 uidata_slider_t sld_particle_diffuse =
     { 0, 20, 0, .01f, true, (void*) "rend-particle-diffuse" };
 uidata_slider_t sld_particle_visnear =
-    { 0, 1000, 0, 1, false, (void*) "rend-particle-visible-near", "Disabled" };
+    { 0, 1000, 0, 1, false, (void*) "rend-particle-visible-near", (char*)"Disabled" };
 uidata_slider_t sld_model_far =
-    { 0, 3000, 0, 1, false, (void*) "rend-model-distance", "Unlimited" };
+    { 0, 3000, 0, 1, false, (void*) "rend-model-distance", (char*)"Unlimited" };
 uidata_slider_t sld_model_lights = { 0, 10, 0, 1, false, (void*) "rend-model-lights" };
 uidata_slider_t sld_model_lod =
-    { 0, 1000, 0, 1, true, (void*) "rend-model-lod", "No LOD" };
+    { 0, 1000, 0, 1, true, (void*) "rend-model-lod", (char*)"No LOD" };
 uidata_slider_t sld_detail_scale =
     { .1f, 32, 0, .01f, true, (void*) "rend-tex-detail-scale" };
 uidata_slider_t sld_detail_strength =
@@ -290,7 +290,7 @@ uidata_slider_t sld_detail_strength =
 uidata_slider_t sld_detail_far =
     { 1, 1000, 0, 1, true, (void*) "rend-tex-detail-far" };
 uidata_slider_t sld_tex_quality = { 0, 8, 0, 1, false, (void*) "rend-tex-quality" };
-uidata_slider_t sld_tex_aniso = { -1, 4, 0, 1, false, (void*) "rend-tex-filter-anisotropic", "Best Available"};
+uidata_slider_t sld_tex_aniso = { -1, 4, 0, 1, false, (void*) "rend-tex-filter-anisotropic", (char*)"Best Available"};
 uidata_slider_t sld_light_bright =
     { 0, 1, 0, .01f, true, (void*) "rend-light-bright" };
 uidata_slider_t sld_light_scale =
@@ -298,7 +298,7 @@ uidata_slider_t sld_light_scale =
 uidata_slider_t sld_light_radmax =
     { 64, 512, 0, 1, false, (void*) "rend-light-radius-max" };
 uidata_slider_t sld_light_max =
-    { 0, 2000, 0, 1, false, (void*) "rend-light-num", "Unlimited" };
+    { 0, 2000, 0, 1, false, (void*) "rend-light-num", (char*)"Unlimited" };
 uidata_slider_t sld_light_glow_strength =
     { 0, 2, 0, .01f, true, (void*) "rend-glow" };
 uidata_slider_t sld_light_fog_bright =
@@ -322,7 +322,7 @@ uidata_slider_t sld_fakeradio_dark =
 uidata_slider_t sld_vid_gamma = { .1f, 3, 0, .01f, true, (void*) "vid-gamma" };
 uidata_slider_t sld_vid_contrast = { .1f, 3, 0, .01f, true, (void*) "vid-contrast" };
 uidata_slider_t sld_vid_bright = { -.5f, .5f, 0, .01f, true, (void*) "vid-bright" };
-uidata_slider_t sld_halo = { 0, 5, 0, 1, false, (void*) "rend-halo", "None" };
+uidata_slider_t sld_halo = { 0, 5, 0, 1, false, (void*) "rend-halo", (char*) "None" };
 uidata_slider_t sld_halo_bright = { 0, 100, 0, 1, false, (void*) "rend-halo-bright" };
 uidata_slider_t sld_halo_occlusion =
     { 1, 256, 0, 1, false, (void*) "rend-halo-occlusion" };

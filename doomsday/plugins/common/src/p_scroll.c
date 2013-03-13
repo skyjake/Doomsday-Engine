@@ -76,7 +76,7 @@ static scroll_t* spawnMaterialOriginScroller(void* dmuObject, int elementBits, f
     if(FEQUAL(offsetXY[0], 0) && FEQUAL(offsetXY[1], 0)) return NULL;
 
     scroll = Z_Calloc(sizeof(*scroll), PU_MAP, 0);
-    scroll->thinker.function = T_Scroll;
+    scroll->thinker.function = (thinkfunc_t) T_Scroll;
     Thinker_Add(&scroll->thinker);
 
     scroll->dmuObject = dmuObject;

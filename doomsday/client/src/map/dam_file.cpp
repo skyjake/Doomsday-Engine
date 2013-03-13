@@ -608,6 +608,7 @@ static void archiveSectors(GameMap *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
+#if 0
 static void writeBspLeaf(GameMap *map, BspLeaf *s)
 {
     DENG_ASSERT(map && s);
@@ -685,6 +686,7 @@ static void readBspLeaf(GameMap *map, BspLeaf *s)
 
     s->_hedge->prev = prevHEdge;
 }
+#endif
 
 static void archiveBspLeafs(GameMap* map, boolean write)
 {
@@ -715,6 +717,7 @@ static void archiveBspLeafs(GameMap* map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
+#if 0
 static void writeSeg(GameMap* map, HEdge* s)
 {
     assert(map && s);
@@ -757,6 +760,7 @@ static void readSeg(GameMap* map, HEdge* s)
     obIdx = readLong();
     s->prev = (obIdx == 0? NULL : GameMap_HEdge(map, (unsigned) obIdx - 1));
 }
+#endif
 
 static void archiveSegs(GameMap *map, boolean write)
 {
@@ -786,6 +790,8 @@ static void archiveSegs(GameMap *map, boolean write)
     else
         assertSegment(DAMSEG_END);
 }
+
+#if 0
 
 #define NF_LEAF            0x80000000
 
@@ -851,6 +857,7 @@ static void readNode(GameMap *map, BspNode *n)
     n->_children[RIGHT] = readBspReference(map);
     n->_children[LEFT]  = readBspReference(map);
 }
+#endif
 
 static void archiveNodes(GameMap* map, boolean write)
 {

@@ -241,7 +241,7 @@ int UI_CountObjects(ui_object_t* list);
 void UI_FlagGroup(ui_object_t* list, int group, int flags, int set);
 
 /// All the specified flags must be set.
-ui_object_t* UI_FindObject(ui_object_t* list, int group, int flags);
+ui_object_t* UI_FindObject(ui_object_t* list, int group, uint flags);
 
 /// @param ob Must be on the current page! It can't be NULL.
 void UI_Focus(ui_object_t* ob);

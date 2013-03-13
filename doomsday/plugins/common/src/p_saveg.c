@@ -203,7 +203,7 @@ static thinkerinfo_t thinkerInfo[] = {
 #if !__JHEXEN__
     {
       TC_XGMOVER,
-      XS_PlaneMover,
+      (thinkfunc_t) XS_PlaneMover,
       0,
       SV_WriteXGPlaneMover,
       SV_ReadXGPlaneMover,
@@ -245,7 +245,7 @@ static thinkerinfo_t thinkerInfo[] = {
 #if __JHEXEN__
     {
      TC_INTERPRET_ACS,
-     T_InterpretACS,
+     (thinkfunc_t) T_InterpretACS,
      0,
      SV_WriteScript,
      SV_ReadScript,
@@ -253,7 +253,7 @@ static thinkerinfo_t thinkerInfo[] = {
     },
     {
      TC_FLOOR_WAGGLE,
-     T_FloorWaggle,
+     (thinkfunc_t) T_FloorWaggle,
      0,
      SV_WriteFloorWaggle,
      SV_ReadFloorWaggle,
@@ -261,7 +261,7 @@ static thinkerinfo_t thinkerInfo[] = {
     },
     {
      TC_LIGHT,
-     T_Light,
+     (thinkfunc_t) T_Light,
      0,
      SV_WriteLight,
      SV_ReadLight,
@@ -269,7 +269,7 @@ static thinkerinfo_t thinkerInfo[] = {
     },
     {
      TC_PHASE,
-     T_Phase,
+     (thinkfunc_t) T_Phase,
      0,
      SV_WritePhase,
      SV_ReadPhase,
@@ -277,7 +277,7 @@ static thinkerinfo_t thinkerInfo[] = {
     },
     {
      TC_BUILD_PILLAR,
-     T_BuildPillar,
+     (thinkfunc_t) T_BuildPillar,
      0,
      SV_WritePillar,
      SV_ReadPillar,
@@ -310,7 +310,7 @@ static thinkerinfo_t thinkerInfo[] = {
 #else
     {
       TC_FLASH,
-      T_LightFlash,
+      (thinkfunc_t) T_LightFlash,
       0,
       SV_WriteFlash,
       SV_ReadFlash,
@@ -318,7 +318,7 @@ static thinkerinfo_t thinkerInfo[] = {
     },
     {
       TC_STROBE,
-      T_StrobeFlash,
+      (thinkfunc_t) T_StrobeFlash,
       0,
       SV_WriteStrobe,
       SV_ReadStrobe,
@@ -326,7 +326,7 @@ static thinkerinfo_t thinkerInfo[] = {
     },
     {
       TC_GLOW,
-      T_Glow,
+      (thinkfunc_t) T_Glow,
       0,
       SV_WriteGlow,
       SV_ReadGlow,
@@ -335,7 +335,7 @@ static thinkerinfo_t thinkerInfo[] = {
 # if __JDOOM__ || __JDOOM64__
     {
       TC_FLICKER,
-      T_FireFlicker,
+      (thinkfunc_t) T_FireFlicker,
       0,
       SV_WriteFlicker,
       SV_ReadFlicker,
@@ -345,7 +345,7 @@ static thinkerinfo_t thinkerInfo[] = {
 # if __JDOOM64__
     {
       TC_BLINK,
-      T_LightBlink,
+      (thinkfunc_t) T_LightBlink,
       0,
       SV_WriteBlink,
       SV_ReadBlink,
@@ -363,7 +363,7 @@ static thinkerinfo_t thinkerInfo[] = {
     },
     {
         TC_SCROLL,
-        T_Scroll,
+        (thinkfunc_t) T_Scroll,
         0,
         SV_WriteScroll,
         SV_ReadScroll,
@@ -3485,7 +3485,7 @@ static int SV_ReadLight(light_t* th)
         th->count = SV_ReadLong();
     }
 
-    th->thinker.function = T_Light;
+    th->thinker.function = (thinkfunc_t) T_Light;
 
     return true; // Add this thinker.
 }
@@ -3538,7 +3538,7 @@ static int SV_ReadPhase(phase_t* th)
         th->baseValue = (float) SV_ReadLong() / 255.0f;
     }
 
-    th->thinker.function = T_Phase;
+    th->thinker.function = (thinkfunc_t) T_Phase;
 
     return true; // Add this thinker.
 }
@@ -3618,7 +3618,7 @@ static int SV_ReadScript(acs_t* th)
         th->ip = (int *) (ActionCodeBase + SV_ReadLong());
     }
 
-    th->thinker.function = T_InterpretACS;
+    th->thinker.function = (thinkfunc_t) T_InterpretACS;
 
     return true; // Add this thinker.
 }
@@ -3853,7 +3853,7 @@ static int SV_ReadPillar(pillar_t* th)
         th->crush = SV_ReadLong();
     }
 
-    th->thinker.function = T_BuildPillar;
+    th->thinker.function = (thinkfunc_t) T_BuildPillar;
 
     P_ToXSector(th->sector)->specialData = th;
     return true; // Add this thinker.
@@ -3925,7 +3925,7 @@ static int SV_ReadFloorWaggle(waggle_t* th)
         th->state = SV_ReadLong();
     }
 
-    th->thinker.function = T_FloorWaggle;
+    th->thinker.function = (thinkfunc_t) T_FloorWaggle;
 
     P_ToXSector(th->sector)->specialData = th;
     return true; // Add this thinker.
@@ -3989,7 +3989,7 @@ static int SV_ReadFlash(lightflash_t* flash)
         flash->minTime = SV_ReadLong();
     }
 
-    flash->thinker.function = T_LightFlash;
+    flash->thinker.function = (thinkfunc_t) T_LightFlash;
     return true; // Add this thinker.
 }
 
@@ -4048,7 +4048,7 @@ static int SV_ReadStrobe(strobe_t* strobe)
         strobe->brightTime = SV_ReadLong();
     }
 
-    strobe->thinker.function = T_StrobeFlash;
+    strobe->thinker.function = (thinkfunc_t) T_StrobeFlash;
     return true; // Add this thinker.
 }
 
@@ -4102,7 +4102,7 @@ static int SV_ReadGlow(glow_t* glow)
         glow->direction = SV_ReadLong();
     }
 
-    glow->thinker.function = T_Glow;
+    glow->thinker.function = (thinkfunc_t) T_Glow;
     return true; // Add this thinker.
 }
 
@@ -4138,7 +4138,7 @@ static int SV_ReadFlicker(fireflicker_t* flicker)
     flicker->maxLight = (float) SV_ReadLong() / 255.0f;
     flicker->minLight = (float) SV_ReadLong() / 255.0f;
 
-    flicker->thinker.function = T_FireFlicker;
+    flicker->thinker.function = (thinkfunc_t) T_FireFlicker;
     return true; // Add this thinker.
 }
 # endif
@@ -4181,7 +4181,7 @@ static int SV_ReadBlink(lightblink_t* blink)
     blink->maxTime = SV_ReadLong();
     blink->minTime = SV_ReadLong();
 
-    blink->thinker.function = T_LightBlink;
+    blink->thinker.function = (thinkfunc_t) T_LightBlink;
     return true; // Add this thinker.
 }
 # endif
@@ -4267,7 +4267,7 @@ static int SV_ReadScroll(scroll_t* scroll)
     scroll->offset[0] = FIX2FLT((fixed_t) SV_ReadLong());
     scroll->offset[1] = FIX2FLT((fixed_t) SV_ReadLong());
 
-    scroll->thinker.function = T_Scroll;
+    scroll->thinker.function = (thinkfunc_t) T_Scroll;
 
     return true; // Add this thinker.
 }

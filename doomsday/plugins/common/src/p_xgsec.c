@@ -370,11 +370,11 @@ void XS_SetSectorType(Sector* sec, int special)
         }
 
         // If there is not already an xsthinker for this sector, create one.
-        if(!Thinker_Iterate(XS_Thinker, findXSThinker, sec))
+        if(!Thinker_Iterate((thinkfunc_t) XS_Thinker, findXSThinker, sec))
         {   // Not created one yet.
             xsthinker_t*    xs = Z_Calloc(sizeof(*xs), PU_MAP, 0);
 
-            xs->thinker.function = XS_Thinker;
+            xs->thinker.function = (thinkfunc_t) XS_Thinker;
             Thinker_Add(&xs->thinker);
 
             xs->sector = sec;
@@ -386,7 +386,7 @@ void XS_SetSectorType(Sector* sec, int special)
                special);
 
         // If there is an xsthinker for this, destroy it.
-        Thinker_Iterate(XS_Thinker, destroyXSThinker, sec);
+        Thinker_Iterate((thinkfunc_t) XS_Thinker, destroyXSThinker, sec);
 
         // Free previously allocated XG data.
         if(xsec->xg)
@@ -641,11 +641,11 @@ xgplanemover_t *XS_GetPlaneMover(Sector *sec, boolean ceiling)
 
     params.sec = sec;
     params.ceiling = ceiling;
-    Thinker_Iterate(XS_PlaneMover, stopPlaneMover, &params);
+    Thinker_Iterate((thinkfunc_t) XS_PlaneMover, stopPlaneMover, &params);
 
     // Allocate a new thinker.
     mover = Z_Calloc(sizeof(*mover), PU_MAP, 0);
-    mover->thinker.function = XS_PlaneMover;
+    mover->thinker.function = (thinkfunc_t) XS_PlaneMover;
     Thinker_Add(&mover->thinker);
 
     mover->sector = sec;

@@ -122,7 +122,7 @@ boolean EV_StartFloorWaggle(int tag, int height, int speed, int offset, int time
         retCode = true;
 
         waggle = Z_Calloc(sizeof(*waggle), PU_MAP, 0);
-        waggle->thinker.function = T_FloorWaggle;
+        waggle->thinker.function = (thinkfunc_t) T_FloorWaggle;
         Thinker_Add(&waggle->thinker);
 
         P_ToXSector(sec)->specialData = waggle;

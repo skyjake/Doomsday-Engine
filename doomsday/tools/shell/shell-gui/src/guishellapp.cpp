@@ -46,8 +46,7 @@ DENG2_PIMPL_NOREF(GuiShellApp)
 
     Preferences *prefs;
 
-    Instance() : prefs(0)
-    {}
+    Instance() : prefs(0) {}
 
     ~Instance()
     {
@@ -208,6 +207,10 @@ void GuiShellApp::startLocalServer()
             }
 
             LocalServer sv;
+            if(!dlg.name().isEmpty())
+            {
+                sv.setName(dlg.name());
+            }
             sv.start(dlg.port(), dlg.gameMode(), opts, dlg.runtimeFolder());
 
             newOrReusedConnectionWindow()->openConnection(sv.openLink());

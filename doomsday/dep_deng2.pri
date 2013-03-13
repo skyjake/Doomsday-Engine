@@ -7,8 +7,10 @@ QT += core network
 deng_qtopengl: QT += opengl
 deng_qtgui {
     QT += gui
-    greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
-    CONFIG += deng_qtwidgets
+    greaterThan(QT_MAJOR_VERSION, 4) {
+        QT += widgets
+        CONFIG += deng_qtwidgets
+    }
 }
 
 deng_debug: qtver = d$$QT_MAJOR_VERSION

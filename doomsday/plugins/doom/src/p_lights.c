@@ -139,7 +139,7 @@ void P_SpawnLightFlash(Sector *sector)
     P_ToXSector(sector)->special = 0;
 
     flash = Z_Calloc(sizeof(*flash), PU_MAP, 0);
-    flash->thinker.function = T_LightFlash;
+    flash->thinker.function = (thinkfunc_t) T_LightFlash;
     Thinker_Add(&flash->thinker);
 
     flash->sector = sector;
@@ -189,7 +189,7 @@ void P_SpawnStrobeFlash(Sector* sector, int fastOrSlow, int inSync)
     float otherLevel = DDMAXFLOAT;
 
     flash = Z_Calloc(sizeof(*flash), PU_MAP, 0);
-    flash->thinker.function = T_StrobeFlash;
+    flash->thinker.function = (thinkfunc_t) T_StrobeFlash;
     Thinker_Add(&flash->thinker);
 
     flash->sector = sector;
@@ -339,7 +339,7 @@ void P_SpawnGlowingLight(Sector *sector)
     glow_t             *g;
 
     g = Z_Calloc(sizeof(*g), PU_MAP, 0);
-    g->thinker.function = T_Glow;
+    g->thinker.function = (thinkfunc_t) T_Glow;
     Thinker_Add(&g->thinker);
 
     g->sector = sector;
