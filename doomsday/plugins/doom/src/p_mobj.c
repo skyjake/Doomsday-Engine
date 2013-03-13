@@ -613,7 +613,7 @@ void P_MobjThinker(void *thinkerPtr)
         P_MobjMoveXY(mo);
 
         /// @todo decent NOP/NULL/Nil function pointer please.
-        if(mo->thinker.function == NOPFUNC)
+        if(mo->thinker.function == (thinkfunc_t) NOPFUNC)
             return; // Mobj was removed.
     }
 
@@ -642,7 +642,7 @@ void P_MobjThinker(void *thinkerPtr)
         P_MobjMoveZ(mo);
 
         //// @todo decent NOP/NULL/Nil function pointer please.
-        if(mo->thinker.function == NOPFUNC)
+        if(mo->thinker.function == (thinkfunc_t) NOPFUNC)
             return; // Mobj was removed.
     }
     // Non-sentient objects at rest.

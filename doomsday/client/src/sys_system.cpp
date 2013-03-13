@@ -47,11 +47,15 @@
 
 #include <de/App>
 
+#if defined(WIN32) && !defined(_DEBUG)
+#  define DENG_CATCH_SIGNALS
+#endif
+
 int novideo;                // if true, stay in text mode for debugging
 
 static boolean appShutdown = false; ///< Set to true when we should exit (normally).
 
-#ifdef WIN32
+#ifdef DENG_CATCH_SIGNALS
 /**
  * Borrowed from Lee Killough.
  */
@@ -93,7 +97,7 @@ void Sys_Init(void)
     VERBOSE( Con_Message("Initializing Audio subsystem...") )
     S_Init();
 
-#if defined(WIN32) && !defined(_DEBUG)
+#ifdef DENG_CATCH_SIGNALS
     // Register handler for abnormal situations (in release build).
     signal(SIGSEGV, handler);
     signal(SIGTERM, handler);

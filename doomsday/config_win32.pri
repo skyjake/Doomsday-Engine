@@ -10,8 +10,9 @@ win32-g++* {
 
 DEFINES += WIN32 _CRT_SECURE_NO_WARNINGS _USE_MATH_DEFINES
 
-QMAKE_CFLAGS += -w14505
-QMAKE_CXXFLAGS += -w14505
+# Disable warnings about unreferenced formal parameters (C4100).
+QMAKE_CFLAGS += -w14505 -wd4100
+QMAKE_CXXFLAGS += -w14505 -wd4100
 
 DENG_WIN_PRODUCTS_DIR = $$PWD/../distrib/products
 

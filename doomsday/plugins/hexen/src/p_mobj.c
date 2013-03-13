@@ -116,7 +116,7 @@ boolean P_MobjChangeState(mobj_t *mobj, statenum_t state)
     }
 
     // Return false if the action function removed the mobj.
-    return mobj->thinker.function != NOPFUNC;
+    return mobj->thinker.function != (thinkfunc_t) NOPFUNC;
 }
 
 /**
@@ -1101,7 +1101,7 @@ void P_MobjThinker(void *thinkerPtr)
        (mobj->flags & MF_SKULLFLY))
     {
         P_MobjMoveXY(mobj);
-        if(mobj->thinker.function == NOPFUNC)
+        if(mobj->thinker.function == (thinkfunc_t) NOPFUNC)
         {   // Mobj was removed.
             return;
         }
@@ -1168,7 +1168,7 @@ void P_MobjThinker(void *thinkerPtr)
             P_MobjMoveZ(mobj);
         }
 
-        if(mobj->thinker.function == NOPFUNC)
+        if(mobj->thinker.function == (thinkfunc_t) NOPFUNC)
         {   // mobj was removed
             return;
         }
