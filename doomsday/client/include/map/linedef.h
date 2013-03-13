@@ -96,7 +96,8 @@ class HEdge;
  *
  * @note Lines are @em not considered to define the geometry of a map. Instead
  * a line should be thought of as a finite line segment in the plane, according
- * to the standard definition of an arangement of lines in computational geometry.
+ * to the standard definition of a line as used with an arangement of lines in
+ * computational geometry.
  *
  * @see http://en.wikipedia.org/wiki/Arrangement_of_lines
  *
