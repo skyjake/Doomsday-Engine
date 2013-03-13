@@ -301,7 +301,7 @@ int PTR_checkMobjBlocking(mobj_t *mo, void *data)
              moBox.maxY <= params->line->aaBox.minY ||
              moBox.minY >= params->line->aaBox.maxY))
         {
-            if(!params->line->boxOnSide(&moBox))
+            if(!params->line->boxOnSide(moBox))
             {
                 P_PolyobjCallback(mo, params->line, params->polyobj);
 

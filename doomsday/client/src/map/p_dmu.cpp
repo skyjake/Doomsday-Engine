@@ -2383,15 +2383,15 @@ DENG_EXTERN_C coord_t LineDef_PointXYOnSide(LineDef const *line, coord_t x, coor
 #undef LineDef_BoxOnSide
 DENG_EXTERN_C int LineDef_BoxOnSide(LineDef *line, AABoxd const *box)
 {
-    DENG_ASSERT(line);
-    return line->boxOnSide(box);
+    DENG_ASSERT(line && box);
+    return line->boxOnSide(*box);
 }
 
 #undef LineDef_BoxOnSide_FixedPrecision
 DENG_EXTERN_C int LineDef_BoxOnSide_FixedPrecision(LineDef *line, AABoxd const *box)
 {
-    DENG_ASSERT(line);
-    return line->boxOnSide_FixedPrecision(box);
+    DENG_ASSERT(line && box);
+    return line->boxOnSide_FixedPrecision(*box);
 }
 
 DENG_DECLARE_API(Map) =

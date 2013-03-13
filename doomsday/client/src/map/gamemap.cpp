@@ -150,7 +150,7 @@ void GameMap_SetTraceOpening(GameMap *map, LineDef *line)
     // Is the linedef part of this map?
     if(!line || GameMap_LineDefIndex(map, line) < 0) return; // Odd...
 
-    line->configureTraceOpening(&map->traceOpening);
+    line->configureTraceOpening(map->traceOpening);
 }
 
 int GameMap_AmbientLightLevel(GameMap *map)

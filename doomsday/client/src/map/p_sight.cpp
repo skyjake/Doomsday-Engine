@@ -64,7 +64,7 @@ static boolean interceptLineDef(LineDef const *li, losdata_t *los, divline_t *dl
     else
         dlPtr = &localDL;
 
-    li->configureDivline(dlPtr);
+    li->configureDivline(*dlPtr);
 
     if(Divline_PointXYOnSide(dlPtr, FIX2FLT(los->trace.origin[VX]), FIX2FLT(los->trace.origin[VY])) ==
        Divline_PointOnSide(dlPtr, los->to))

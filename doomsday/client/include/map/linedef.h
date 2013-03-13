@@ -96,12 +96,14 @@ class HEdge;
  *
  * @note Lines are @em not considered to define the geometry of a map. Instead
  * a line should be thought of as a finite line segment in the plane, according
- * to the standard definition of a line as used with an arangement of lines in
+ * to the standard definition of a line as used with an arrangement of lines in
  * computational geometry.
  *
  * @see http://en.wikipedia.org/wiki/Arrangement_of_lines
  *
  * @ingroup map
+ *
+ * @todo Should be renamed "Line" (this is not a definition, it @em is a line).
  */
 class LineDef : public de::MapElement
 {
@@ -300,13 +302,14 @@ public:
     /**
      * On which side of the line does the specified box lie?
      *
-     * @param box   Bounding box.
+     * @param box  Bounding box to test.
      *
-     * @return  @c <0= bbox is wholly on the left side.
-     *          @c  0= line intersects bbox.
-     *          @c >0= bbox wholly on the right side.
+     * @return One of the following:
+     * - Negative: @a box is entirely on the left side.
+     * - Zero: @a box intersects the line.
+     * - Positive: @a box is entirely on the right side.
      */
-    int boxOnSide(AABoxd const *box) const;
+    int boxOnSide(AABoxd const &box) const;
 
     /**
      * On which side of the line does the specified box lie? The test is
@@ -315,19 +318,19 @@ public:
      * the bounding box and the line: neither can exceed the fixed-point
      * 16.16 range (about 65k units).
      *
-     * @param box  Bounding box.
+     * @param box  Bounding box to test.
      *
      * @return One of the following:
-     * - Negative: bbox is entirely on the left side.
-     * - Zero: line intersects bbox.
-     * - Positive: bbox isentirely on the right side.
+     * - Negative: @a box is entirely on the left side.
+     * - Zero: @a box intersects the line.
+     * - Positive: @a box is entirely on the right side.
      */
-    int boxOnSide_FixedPrecision(AABoxd const *box) const;
+    int boxOnSide_FixedPrecision(AABoxd const &box) const;
 
     /**
      * @param offset  Returns the position of the nearest point along the line [0..1].
      */
-    coord_t pointDistance(coord_t const point[2], coord_t *offset) const;
+    coord_t pointDistance(const_pvec2d_t point, coord_t *offset) const;
 
     inline coord_t pointDistance(coord_t x, coord_t y, coord_t *offset) const
     {
@@ -338,13 +341,14 @@ public:
     /**
      * On which side of the line does the specified point lie?
      *
-     * @param xy  Map space point to test.
+     * @param point  Point in the map coordinate space to test.
      *
-     * @return @c <0 Point is to the left/back of the line.
-     *         @c =0 Point lies directly on the line.
-     *         @c >0 Point is to the right/front of the line.
+     * @return One of the following:
+     * - Negative: @a point is to the left/back side.
+     * - Zero: @a point lies directly on the line.
+     * - Positive: @a point is to the right/front side.
      */
-    coord_t pointOnSide(coord_t const point[2]) const;
+    coord_t pointOnSide(const_pvec2d_t point) const;
 
     inline coord_t pointOnSide(coord_t x, coord_t y) const
     {
@@ -359,7 +363,7 @@ public:
      *
      * @param divline  divline_t instance to be configured.
      */
-    void configureDivline(divline_t *divline) const;
+    void configureDivline(divline_t &divline) const;
 
     /**
      * Find the "sharp" Z coordinate range of the opening on @a side. The
@@ -383,7 +387,7 @@ public:
      *
      * @param opening  TraceOpening instance to be configured.
      */
-    void configureTraceOpening(TraceOpening *opening) const;
+    void configureTraceOpening(TraceOpening &opening) const;
 
     /**
      * Calculate a unit vector parallel to the line.
@@ -392,7 +396,7 @@ public:
      *
      * @param unitVector  Unit vector is written here.
      */
-    void unitVector(float *unitVec) const;
+    void unitVector(pvec2f_t unitVec) const;
 
     /**
      * Update the line's slopetype and map space angle delta according to
@@ -411,8 +415,8 @@ public:
      * line segments based on their 2D world angle.
      *
      * @param side  Side of the line we are interested in.
-     * @param deltaL  Light delta for the left edge written here.
-     * @param deltaR  Light delta for the right edge written here.
+     * @param deltaL  Light delta for the left edge written here. Can be @c NULL.
+     * @param deltaR  Light delta for the right edge written here. Can be @c NULL.
      *
      * @deprecated Now that we store surface tangent space normals use those
      *             rather than angles. @todo Remove me.

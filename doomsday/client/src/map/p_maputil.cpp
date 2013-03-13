@@ -248,8 +248,8 @@ void GameMap_LinkMobjToLineDef(GameMap* map, mobj_t* mo, LineDef* lineDef)
 }
 
 typedef struct {
-    GameMap* map;
-    mobj_t* mo;
+    GameMap *map;
+    mobj_t *mo;
     AABoxd box;
 } linelinker_data_t;
 
@@ -269,7 +269,7 @@ int PIT_LinkToLines(LineDef *ld, void *parameters)
        p->box.maxY <= ld->aaBox.minY) return false;
 
     // Line does not cross the mobj's bounding box?
-    if(ld->boxOnSide(&p->box)) return false;
+    if(ld->boxOnSide(p->box)) return false;
 
     // One sided lines will not be linked to because a mobj can't legally cross one.
     if(!ld->L_frontsidedef || !ld->L_backsidedef) return false;
@@ -553,7 +553,7 @@ int PIT_AddLineDefIntercepts(LineDef* lineDef, void* /*parameters*/)
     if(s1 == s2) return false;
 
     // Calculate interception point.
-    lineDef->configureDivline(&dl);
+    lineDef->configureDivline(dl);
     distance = FIX2FLT(Divline_Intersection(&dl, traceLOS));
     // On the correct side of the trace origin?
     if(!(distance < 0))

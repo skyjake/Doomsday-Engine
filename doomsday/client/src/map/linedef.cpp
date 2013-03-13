@@ -124,23 +124,23 @@ static LineDef *findBlendNeighbor(LineDef const *l, byte side, byte right,
 }
 #endif // __CLIENT__
 
-coord_t LineDef::pointDistance(coord_t const point[2], coord_t *offset) const
+coord_t LineDef::pointDistance(const_pvec2d_t point, coord_t *offset) const
 {
     return V2d_PointLineDistance(point, _v[0]->origin(), direction, offset);
 }
 
-coord_t LineDef::pointOnSide(coord_t const point[2]) const
+coord_t LineDef::pointOnSide(const_pvec2d_t point) const
 {
     DENG2_ASSERT(point);
     return V2d_PointOnLineSide(point, _v[0]->origin(), direction);
 }
 
-int LineDef::boxOnSide(AABoxd const *box) const
+int LineDef::boxOnSide(AABoxd const &box) const
 {
-    return M_BoxOnLineSide(box, _v[0]->origin(), direction);
+    return M_BoxOnLineSide(&box, _v[0]->origin(), direction);
 }
 
-int LineDef::boxOnSide_FixedPrecision(AABoxd const *box) const
+int LineDef::boxOnSide_FixedPrecision(AABoxd const &box) const
 {
     /*
      * Apply an offset to both the box and the line to bring everything into
@@ -154,11 +154,11 @@ int LineDef::boxOnSide_FixedPrecision(AABoxd const *box) const
     offset[VX] = de::floor(_v[0]->origin()[VX] + direction[VX]/2);
     offset[VY] = de::floor(_v[0]->origin()[VY] + direction[VY]/2);
 
-    fixed_t xbox[4];
-    xbox[BOXLEFT]   = FLT2FIX(box->minX - offset[VX]);
-    xbox[BOXRIGHT]  = FLT2FIX(box->maxX - offset[VX]);
-    xbox[BOXBOTTOM] = FLT2FIX(box->minY - offset[VY]);
-    xbox[BOXTOP]    = FLT2FIX(box->maxY - offset[VY]);
+    fixed_t boxx[4];
+    boxx[BOXLEFT]   = FLT2FIX(box.minX - offset[VX]);
+    boxx[BOXRIGHT]  = FLT2FIX(box.maxX - offset[VX]);
+    boxx[BOXBOTTOM] = FLT2FIX(box.minY - offset[VY]);
+    boxx[BOXTOP]    = FLT2FIX(box.maxY - offset[VY]);
 
     fixed_t pos[2];
     pos[VX]         = FLT2FIX(_v[0]->origin()[VX] - offset[VX]);
@@ -168,17 +168,15 @@ int LineDef::boxOnSide_FixedPrecision(AABoxd const *box) const
     delta[VX]       = FLT2FIX(direction[VX]);
     delta[VY]       = FLT2FIX(direction[VY]);
 
-    return M_BoxOnLineSide_FixedPrecision(xbox, pos, delta);
+    return M_BoxOnLineSide_FixedPrecision(boxx, pos, delta);
 }
 
-void LineDef::configureDivline(divline_t *dl) const
+void LineDef::configureDivline(divline_t &dl) const
 {
-    if(!dl) return;
-
-    dl->origin[VX]    = FLT2FIX(_v[0]->origin()[VX]);
-    dl->origin[VY]    = FLT2FIX(_v[0]->origin()[VY]);
-    dl->direction[VX] = FLT2FIX(direction[VX]);
-    dl->direction[VY] = FLT2FIX(direction[VY]);
+    dl.origin[VX]    = FLT2FIX(_v[0]->origin()[VX]);
+    dl.origin[VY]    = FLT2FIX(_v[0]->origin()[VY]);
+    dl.direction[VX] = FLT2FIX(direction[VX]);
+    dl.direction[VY] = FLT2FIX(direction[VY]);
 }
 
 coord_t LineDef::openRange(int side_, coord_t *retBottom, coord_t *retTop) const
@@ -191,20 +189,18 @@ coord_t LineDef::visOpenRange(int side_, coord_t *retBottom, coord_t *retTop) co
     return R_VisOpenRange(side(side_).sector, side(side_^1).sector, retBottom, retTop);
 }
 
-void LineDef::configureTraceOpening(TraceOpening *opening) const
+void LineDef::configureTraceOpening(TraceOpening &opening) const
 {
-    if(!opening) return;
-
     if(!L_backsidedef)
     {
-        opening->range = 0;
+        opening.range = 0;
         return;
     }
 
     coord_t bottom, top;
-    opening->range  = float( openRange(FRONT, &bottom, &top) );
-    opening->bottom = float( bottom );
-    opening->top    = float( top );
+    opening.range  = float( openRange(FRONT, &bottom, &top) );
+    opening.bottom = float( bottom );
+    opening.top    = float( top );
 
     // Determine the "low floor".
     Sector *front = L_frontsector;
@@ -212,11 +208,11 @@ void LineDef::configureTraceOpening(TraceOpening *opening) const
 
     if(front->SP_floorheight > back->SP_floorheight)
     {
-        opening->lowFloor = float( back->SP_floorheight );
+        opening.lowFloor = float( back->SP_floorheight );
     }
     else
     {
-        opening->lowFloor = float( front->SP_floorheight );
+        opening.lowFloor = float( front->SP_floorheight );
     }
 }
 
@@ -226,7 +222,7 @@ void LineDef::updateSlope()
     slopeType = M_SlopeType(direction);
 }
 
-void LineDef::unitVector(float *unitvec) const
+void LineDef::unitVector(pvec2f_t unitvec) const
 {
     coord_t len = M_ApproxDistance(direction[VX], direction[VY]);
     if(len)
@@ -255,7 +251,8 @@ void LineDef::lightLevelDelta(int side, float *deltaL, float *deltaR) const
     // Disabled?
     if(!(rendLightWallAngle > 0))
     {
-        *deltaL = *deltaR = 0;
+        if(deltaL) *deltaL = 0;
+        if(deltaR) *deltaR = 0;
         return;
     }
 
@@ -268,7 +265,8 @@ void LineDef::lightLevelDelta(int side, float *deltaL, float *deltaR) const
     // no owner rings.
     if(!rendLightWallAngleSmooth || (inFlags & LF_POLYOBJ))
     {
-        *deltaL = *deltaR = delta;
+        if(deltaL) *deltaL = delta;
+        if(deltaR) *deltaR = delta;
         return;
     }
 
@@ -276,41 +274,47 @@ void LineDef::lightLevelDelta(int side, float *deltaL, float *deltaR) const
     // lightlevel delta and then blend with this to produce the value for
     // the left edge. Blend iff the angle between the two linedefs is less
     // than 45 degrees.
-    binangle_t diff = 0;
-    LineDef *other = findBlendNeighbor(this, side, 0, &diff);
-    if(other && INRANGE_OF(diff, BANG_180, BANG_45))
+    if(deltaL)
     {
-        vec2f_t otherNormal;
-        calcNormal(other, &other->v2() != &vertex(side), otherNormal);
+        binangle_t diff = 0;
+        LineDef *other = findBlendNeighbor(this, side, 0, &diff);
+        if(other && INRANGE_OF(diff, BANG_180, BANG_45))
+        {
+            vec2f_t otherNormal;
+            calcNormal(other, &other->v2() != &vertex(side), otherNormal);
 
-        // Average normals.
-        V2f_Sum(otherNormal, otherNormal, normal);
-        otherNormal[VX] /= 2; otherNormal[VY] /= 2;
+            // Average normals.
+            V2f_Sum(otherNormal, otherNormal, normal);
+            otherNormal[VX] /= 2; otherNormal[VY] /= 2;
 
-        *deltaL = calcLightLevelDelta(otherNormal);
+            *deltaL = calcLightLevelDelta(otherNormal);
+        }
+        else
+        {
+            *deltaL = delta;
+        }
     }
-    else
-    {
-        *deltaL = delta;
-    }
 
-    // Do the same for the right edge but with the right neighbour linedef.
-    diff = 0;
-    other = findBlendNeighbor(this, side, 1, &diff);
-    if(other && INRANGE_OF(diff, BANG_180, BANG_45))
+    // Do the same for the right edge but with the right neighbor linedef.
+    if(deltaR)
     {
-        vec2f_t otherNormal;
-        calcNormal(other, &other->v1() != &vertex(side^1), otherNormal);
+        binangle_t diff = 0;
+        LineDef *other = findBlendNeighbor(this, side, 1, &diff);
+        if(other && INRANGE_OF(diff, BANG_180, BANG_45))
+        {
+            vec2f_t otherNormal;
+            calcNormal(other, &other->v1() != &vertex(side^1), otherNormal);
 
-        // Average normals.
-        V2f_Sum(otherNormal, otherNormal, normal);
-        otherNormal[VX] /= 2; otherNormal[VY] /= 2;
+            // Average normals.
+            V2f_Sum(otherNormal, otherNormal, normal);
+            otherNormal[VX] /= 2; otherNormal[VY] /= 2;
 
-        *deltaR = calcLightLevelDelta(otherNormal);
-    }
-    else
-    {
-        *deltaR = delta;
+            *deltaR = calcLightLevelDelta(otherNormal);
+        }
+        else
+        {
+            *deltaR = delta;
+        }
     }
 #else // !__CLIENT__
     DENG2_UNUSED(side);
