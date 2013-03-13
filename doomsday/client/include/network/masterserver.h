@@ -26,6 +26,7 @@
 
 #include "dd_share.h"
 
+#include <de/libdeng2.h>
 #include <QObject>
 #include <QNetworkReply>
 #include <QByteArray>
@@ -48,7 +49,6 @@ public:
 
 public:
     MasterWorker();
-    ~MasterWorker();
 
     void newJob(Action action, void* data);
 
@@ -65,8 +65,7 @@ public slots:
     void requestFinished(QNetworkReply* reply);
 
 private:
-    struct Instance;
-    Instance* d;
+    DENG2_PRIVATE(d)
 };
 
 /**

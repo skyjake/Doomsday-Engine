@@ -60,7 +60,7 @@ static QString masterUrl(const char* suffix = 0)
     return u;
 }
 
-struct MasterWorker::Instance
+DENG2_PIMPL_NOREF(MasterWorker)
 {
     QNetworkAccessManager* network;
 
@@ -72,18 +72,17 @@ struct MasterWorker::Instance
     Servers servers;
 
     Instance() : network(0), currentAction(NONE) {}
+
+    ~Instance()
+    {
+        delete network;
+    }
 };
 
-MasterWorker::MasterWorker()
+MasterWorker::MasterWorker() : d(new Instance)
 {
-    d = new Instance;
     d->network = new QNetworkAccessManager(this);
     connect(d->network, SIGNAL(finished(QNetworkReply*)), this, SLOT(requestFinished(QNetworkReply*)));
-}
-
-MasterWorker::~MasterWorker()
-{
-    delete d->network;
 }
 
 void MasterWorker::newJob(Action action, void* data)
