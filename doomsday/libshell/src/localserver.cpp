@@ -41,6 +41,7 @@ LocalServer::LocalServer() : d(new Instance)
 void LocalServer::setName(String const &name)
 {
     d->name = name;
+    d->name.replace("\"", "\\\""); // for use on command line
 }
 
 void LocalServer::start(duint16 port, String const &gameMode, QStringList additionalOptions,
