@@ -75,7 +75,7 @@ int SideDef::property(setargs_t &args) const
     switch(args.prop)
     {
     case DMU_SECTOR: {
-        Sector *sector = line->L_sector(this == line->L_frontsidedef? FRONT : BACK);
+        Sector *sector = line->sectorPtr(this == line->L_frontsidedef? FRONT : BACK);
         DMU_GetValue(DMT_SIDEDEF_SECTOR, &sector, &args, 0);
         break; }
     case DMU_LINEDEF:

@@ -78,7 +78,7 @@ struct LineDefInfo
         {
             flags |= Twosided;
 
-            if(lineDef->L_backsector == lineDef->L_frontsector)
+            if(lineDef->isSelfReferencing())
                 flags |= SelfRef;
         }
     }

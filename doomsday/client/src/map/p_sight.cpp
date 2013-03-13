@@ -73,29 +73,24 @@ static boolean interceptLineDef(LineDef const *li, losdata_t *los, divline_t *dl
     return true; // Crossed.
 }
 
-static boolean crossLineDef(const LineDef* li, byte side, losdata_t* los)
+static boolean crossLineDef(LineDef const *li, byte side, losdata_t *los)
 {
 #define RTOP            0x1
 #define RBOTTOM         0x2
 
-    float frac;
-    byte ranges = 0;
     divline_t dl;
-    const Sector* fsec, *bsec;
-    boolean noBack;
-
     if(!interceptLineDef(li, los, &dl))
         return true; // Ray does not intercept hedge on the X/Y plane.
 
     if(!li->L_sidedef(side))
         return true; // HEdge is on the back side of a one-sided window.
 
-    if(!li->L_sector(side)) /*$degenleaf*/
+    if(!li->hasSector(side)) /*$degenleaf*/
         return false;
 
-    fsec = li->L_sector(side);
-    bsec  = (li->L_backsidedef? li->L_sector(side^1) : NULL);
-    noBack = (li->L_backsidedef? false : true);
+    Sector const *fsec = li->sectorPtr(side);
+    Sector const *bsec = (li->L_backsidedef? li->sectorPtr(side^1) : NULL);
+    boolean noBack = (li->L_backsidedef? false : true);
 
     if(!noBack && !(los->flags & LS_PASSLEFT) &&
        (!(bsec->SP_floorheight < fsec->SP_ceilheight) ||
@@ -114,6 +109,7 @@ static boolean crossLineDef(const LineDef* li, byte side, losdata_t* los)
     }
 
     // Handle the case of a zero height backside in the top range.
+    byte ranges = 0;
     if(noBack)
     {
         ranges |= RTOP;
@@ -129,7 +125,7 @@ static boolean crossLineDef(const LineDef* li, byte side, losdata_t* los)
     if(!ranges)
         return true;
 
-    frac = FIX2FLT(Divline_Intersection(&dl, &los->trace));
+    float frac = FIX2FLT(Divline_Intersection(&dl, &los->trace));
 
     if((los->flags & LS_PASSOVER) &&
        los->bottomSlope > (fsec->SP_ceilheight - los->startZ) / frac)

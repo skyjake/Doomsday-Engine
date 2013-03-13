@@ -422,7 +422,7 @@ int GameMap_MobjSectorsIterator(GameMap *map, mobj_t *mo,
             LineDef *ld = (LineDef *) tn[nix].ptr;
 
             // All these lines are two-sided. Try front side.
-            Sector &frontSec = *ld->L_frontsector;
+            Sector &frontSec = ld->frontSector();
             if(frontSec.validCount != validCount)
             {
                 *end++ = &frontSec;
@@ -432,7 +432,7 @@ int GameMap_MobjSectorsIterator(GameMap *map, mobj_t *mo,
             // And then the back side.
             if(ld->L_backsidedef)
             {
-                Sector &backSec = *ld->L_backsector;
+                Sector &backSec = ld->backSector();
                 if(backSec.validCount != validCount)
                 {
                     *end++ = &backSec;

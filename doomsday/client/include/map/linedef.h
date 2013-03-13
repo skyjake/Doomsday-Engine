@@ -46,10 +46,6 @@ class HEdge;
 #define L_sidedef(n)            side(n).sideDef
 #define L_frontsidedef          L_sidedef(FRONT)
 #define L_backsidedef           L_sidedef(BACK)
-
-#define L_sector(n)             side(n).sector
-#define L_frontsector           L_sector(FRONT)
-#define L_backsector            L_sector(BACK)
 ///@}
 
 // Internal flags:
@@ -108,6 +104,9 @@ class HEdge;
 class LineDef : public de::MapElement
 {
 public:
+    /// Required sector attribution is missing. @ingroup errors
+    DENG2_ERROR(MissingSectorError);
+
     /// The referenced property does not exist. @ingroup errors
     DENG2_ERROR(UnknownPropertyError);
 
@@ -121,7 +120,7 @@ public:
     {
     public: /// @todo make private:
         /// Sector on this side.
-        Sector *sector;
+        Sector *_sector;
 
         /// SideDef on this side.
         SideDef *sideDef;
@@ -134,14 +133,36 @@ public:
 
         /// Framecount of last time shadows were drawn on this side.
         ushort shadowVisFrame;
+
+    public:
+        /**
+         * Returns @c true iff a Sector is attributed to the side.
+         */
+        bool hasSector() const;
+
+        /**
+         * Returns the Sector attributed to the side.
+         *
+         * @see hasSector()
+         */
+        Sector &sector() const;
+
+        /**
+         * Returns a pointer to the sector attributed to the side; otherwise @c 0.
+         *
+         * @see hasSector()
+         */
+        inline Sector *sectorPtr() const { return hasSector()? &sector() : 0; }
     };
 
 public: /// @todo make private:
+    /// Vertexes [From, To]
     Vertex *_v[2];
 
-    /// Links to vertex line owner nodes [left, right].
+    /// Links to vertex line owner nodes [From, To].
     LineOwner *vo[2];
 
+    /// Logical sides [Front, Back]
     Side _sides[2];
 
     /// Public DDLF_* flags.
@@ -150,6 +171,7 @@ public: /// @todo make private:
     /// Internal LF_* flags.
     byte inFlags;
 
+    /// Logical slope type.
     slopetype_t slopeType;
 
     int validCount;
@@ -201,14 +223,79 @@ public:
     inline Side const &back() const { return side(BACK); }
 
     /**
+     * Returns @c true iff a sector is attributed to the specified side of the line.
+     *
+     * @param back  If not @c 0 test the Back side; otherwise the Front side.
+     */
+    inline bool hasSector(int back) const { return side(back).hasSector(); }
+
+    /**
      * Returns @c true iff a sector is attributed to the Front side of the line.
      */
-    inline bool hasFrontSector() const { return !!front().sector; }
+    inline bool hasFrontSector() const { return hasSector(FRONT); }
 
     /**
      * Returns @c true iff a sector is attributed to the Back side of the line.
      */
-    inline bool hasBackSector() const { return !!back().sector; }
+    inline bool hasBackSector() const { return hasSector(BACK); }
+
+    /**
+     * Convenient accessor method for returning the sector attributed to the
+     * specified side of the line.
+     *
+     * @param back  If not @c 0 return the sector for the Back side; otherwise
+     *              the sector of the Front side.
+     */
+    inline Sector &sector(int back) { return side(back).sector(); }
+
+    /// @copydoc sector()
+    inline Sector const &sector(int back) const { return side(back).sector(); }
+
+    /**
+     * Convenient accessor method for returning a pointer to the sector attributed
+     * to the specified side of the line.
+     *
+     * @param back  If not @c 0 return the sector for the Back side; otherwise
+     *              the sector of the Front side.
+     */
+    inline Sector *sectorPtr(int back) { return side(back).sectorPtr(); }
+
+    /// @copydoc sector()
+    inline Sector const *sectorPtr(int back) const { return side(back).sectorPtr(); }
+
+    /**
+     * Returns the sector attributed to the Front side of the line.
+     */
+    inline Sector &frontSector() { return sector(FRONT); }
+
+    /// @copydoc backSector()
+    inline Sector const &frontSector() const { return sector(FRONT); }
+
+    /**
+     * Returns the sector attributed to the Back side of the line.
+     */
+    inline Sector &backSector() { return sector(BACK); }
+
+    /// @copydoc backSector()
+    inline Sector const &backSector() const { return sector(BACK); }
+
+    /**
+     * Convenient accessor method for returning a pointer to the sector attributed
+     * to the front side of the line.
+     */
+    inline Sector *frontSectorPtr() { return sectorPtr(FRONT); }
+
+    /// @copydoc frontSectorPtr()
+    inline Sector const *frontSectorPtr() const { return sectorPtr(FRONT); }
+
+    /**
+     * Convenient accessor method for returning a pointer to the sector attributed
+     * to the back side of the line.
+     */
+    inline Sector *backSectorPtr() { return sectorPtr(BACK); }
+
+    /// @copydoc frontSectorPtr()
+    inline Sector const *backSectorPtr() const { return sectorPtr(BACK); }
 
     /**
      * Returns @c true iff the line is considered @em self-referencing.
@@ -219,7 +306,7 @@ public:
      */
     inline bool isSelfReferencing() const
     {
-        return L_frontsidedef && L_backsidedef && L_frontsector == L_backsector;
+        return L_frontsidedef && L_backsidedef && frontSectorPtr() == backSectorPtr();
     }
 
     /**

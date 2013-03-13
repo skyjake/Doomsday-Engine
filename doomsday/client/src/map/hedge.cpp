@@ -101,7 +101,7 @@ static void addWallDivNodesForPlaneIntercepts(HEdge const *hedge, walldivs_t *wa
     bool const isTwoSided = (hedge->lineDef && hedge->lineDef->L_frontsidedef && hedge->lineDef->L_backsidedef)? true:false;
     bool const clockwise = !doRight;
     LineDef const *line = hedge->lineDef;
-    Sector *frontSec = line->L_sector(hedge->side);
+    Sector const *frontSec = line->sectorPtr(hedge->side);
 
     // Check for neighborhood division?
     if(section == SS_MIDDLE && isTwoSided) return;
@@ -141,10 +141,10 @@ static void addWallDivNodesForPlaneIntercepts(HEdge const *hedge, walldivs_t *wa
             do
             {   // First front, then back.
                 Sector *scanSec = NULL;
-                if(!i && iter->L_frontsidedef && iter->L_frontsector != frontSec)
-                    scanSec = iter->L_frontsector;
-                else if(i && iter->L_backsidedef && iter->L_backsector != frontSec)
-                    scanSec = iter->L_backsector;
+                if(!i && iter->L_frontsidedef && iter->frontSectorPtr() != frontSec)
+                    scanSec = iter->frontSectorPtr();
+                else if(i && iter->L_backsidedef && iter->backSectorPtr() != frontSec)
+                    scanSec = iter->backSectorPtr();
 
                 if(scanSec)
                 {

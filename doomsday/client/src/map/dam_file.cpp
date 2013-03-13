@@ -240,10 +240,10 @@ static void archiveVertexes(GameMap *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writeLine(GameMap* map, uint idx)
+static void writeLine(GameMap *map, uint idx)
 {
     int i;
-    LineDef* l = &map->lineDefs[idx];
+    LineDef *l = &map->lineDefs[idx];
 
     writeLong((long) (map->vertexes.indexOf(static_cast<Vertex const *>(l->_v[0])) + 1));
     writeLong((long) (map->vertexes.indexOf(static_cast<Vertex const *>(l->_v[1])) + 1));
@@ -264,11 +264,13 @@ static void writeLine(GameMap* map, uint idx)
 
     for(i = 0; i < 2; ++i)
     {
-        writeLong(l->L_sector(i)? (GameMap_SectorIndex(map, static_cast<Sector *>(l->L_sector(i))) + 1) : 0);
-        writeLong(l->L_sidedef(i)? (GameMap_SideDefIndex(map, l->L_sidedef(i)) + 1) : 0);
+        LineDef::Side &side = l->side(i);
 
-        writeLong(l->side(i).hedgeLeft? (GameMap_HEdgeIndex(map, l->side(i).hedgeLeft)  + 1) : 0);
-        writeLong(l->side(i).hedgeRight? (GameMap_HEdgeIndex(map, l->side(i).hedgeRight) + 1) : 0);
+        writeLong(side._sector? (GameMap_SectorIndex(map, static_cast<Sector *>(side._sector)) + 1) : 0);
+        writeLong(side.sideDef? (GameMap_SideDefIndex(map, side.sideDef) + 1) : 0);
+
+        writeLong(side.hedgeLeft? (GameMap_HEdgeIndex(map, side.hedgeLeft)  + 1) : 0);
+        writeLong(side.hedgeRight? (GameMap_HEdgeIndex(map, side.hedgeRight) + 1) : 0);
     }
 }
 
@@ -297,19 +299,20 @@ static void readLine(GameMap* map, uint idx)
 
     for(i = 0; i < 2; ++i)
     {
+        LineDef::Side &side = l->side(i);
         long index;
 
-        index= readLong();
-        l->L_sector(i) = (index? GameMap_Sector(map, index-1) : NULL);
+        index = readLong();
+        side._sector = (index? GameMap_Sector(map, index-1) : NULL);
 
         index = readLong();
-        l->L_sidedef(i) = (index? GameMap_SideDef(map, index-1) : NULL);
+        side.sideDef = (index? GameMap_SideDef(map, index-1) : NULL);
 
         index = readLong();
-        l->side(i).hedgeLeft  = (index? GameMap_HEdge(map, index-1) : NULL);
+        side.hedgeLeft  = (index? GameMap_HEdge(map, index-1) : NULL);
 
         index = readLong();
-        l->side(i).hedgeRight = (index? GameMap_HEdge(map, index-1) : NULL);
+        side.hedgeRight = (index? GameMap_HEdge(map, index-1) : NULL);
     }
 }
 

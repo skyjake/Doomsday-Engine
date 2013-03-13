@@ -298,7 +298,7 @@ void Surface::updateBaseOrigin()
         base.origin[VX] = (line->v1Origin()[VX] + line->v2Origin()[VX]) / 2;
         base.origin[VY] = (line->v1Origin()[VY] + line->v2Origin()[VY]) / 2;
 
-        Sector *sec = line->L_sector(side == line->L_frontsidedef? FRONT:BACK);
+        Sector *sec = line->sectorPtr(side == line->L_frontsidedef? FRONT:BACK);
         if(sec)
         {
             coord_t const ffloor = sec->SP_floorheight;
@@ -309,26 +309,26 @@ void Surface::updateBaseOrigin()
                 if(!line->L_backsidedef || line->isSelfReferencing())
                     base.origin[VZ] = (ffloor + fceil) / 2;
                 else
-                    base.origin[VZ] = (MAX_OF(ffloor, line->L_backsector->SP_floorheight) +
-                                       MIN_OF(fceil,  line->L_backsector->SP_ceilheight)) / 2;
+                    base.origin[VZ] = (MAX_OF(ffloor, line->backSector().SP_floorheight) +
+                                       MIN_OF(fceil,  line->backSector().SP_ceilheight)) / 2;
                 break;
             }
             else if(this == &side->SW_bottomsurface)
             {
                 if(!line->L_backsidedef || line->isSelfReferencing() ||
-                   line->L_backsector->SP_floorheight <= ffloor)
+                   line->backSector().SP_floorheight <= ffloor)
                     base.origin[VZ] = ffloor;
                 else
-                    base.origin[VZ] = (MIN_OF(line->L_backsector->SP_floorheight, fceil) + ffloor) / 2;
+                    base.origin[VZ] = (MIN_OF(line->backSector().SP_floorheight, fceil) + ffloor) / 2;
                 break;
             }
             else if(this == &side->SW_topsurface)
             {
                 if(!line->L_backsidedef || line->isSelfReferencing() ||
-                   line->L_backsector->SP_ceilheight >= fceil)
+                   line->backSector().SP_ceilheight >= fceil)
                     base.origin[VZ] = fceil;
                 else
-                    base.origin[VZ] = (MAX_OF(line->L_backsector->SP_ceilheight, ffloor) + fceil) / 2;
+                    base.origin[VZ] = (MAX_OF(line->backSector().SP_ceilheight, ffloor) + fceil) / 2;
                 break;
             }
         }

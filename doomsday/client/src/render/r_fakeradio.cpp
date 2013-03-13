@@ -232,7 +232,7 @@ void Rend_RadioInitForMap()
 
         for(uint j = 0; j < 2; ++j)
         {
-            if(!line->L_sector(j) || !line->L_sidedef(j)) continue;
+            if(!line->hasSector(j) || !line->L_sidedef(j)) continue;
 
             Vertex &vtx0 = line->vertex(j);
             Vertex &vtx1 = line->vertex(j^1);
@@ -255,7 +255,7 @@ void Rend_RadioInitForMap()
             data.lineDef = line;
             data.side = j;
 
-            P_BspLeafsBoxIterator(&bounds, static_cast<Sector *>(line->L_sector(j)),
+            P_BspLeafsBoxIterator(&bounds, line->sectorPtr(j),
                                   RIT_ShadowBspLeafLinker, &data);
         }
     }

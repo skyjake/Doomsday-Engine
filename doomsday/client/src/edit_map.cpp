@@ -537,29 +537,29 @@ static void buildSectorLineLists(GameMap* map)
         uint secIDX;
         linelink_t* link;
 
-        if(li->L_frontsector)
+        if(li->hasFrontSector())
         {
             link = (linelink_t*) ZBlockSet_Allocate(lineLinksBlockSet);
 
-            secIDX = map->sectors.indexOf(static_cast<Sector *>(li->L_frontsector));
+            secIDX = map->sectors.indexOf(&li->frontSector());
             link->line = li;
 
             link->next = sectorLineLinks[secIDX];
             sectorLineLinks[secIDX] = link;
-            li->L_frontsector->lineDefCount++;
+            li->frontSector().lineDefCount++;
             totallinks++;
         }
 
-        if(li->L_backsector && !li->isSelfReferencing())
+        if(li->hasBackSector() && !li->isSelfReferencing())
         {
             link = (linelink_t*) ZBlockSet_Allocate(lineLinksBlockSet);
 
-            secIDX = map->sectors.indexOf(static_cast<Sector *>(li->L_backsector));
+            secIDX = map->sectors.indexOf(&li->backSector());
             link->line = li;
 
             link->next = sectorLineLinks[secIDX];
             sectorLineLinks[secIDX] = link;
-            li->L_backsector->lineDefCount++;
+            li->backSector().lineDefCount++;
             totallinks++;
         }
     }
@@ -661,14 +661,14 @@ static void linkBaseToSectorChain(Sector* sector, ddmobj_base_t* base)
  * These chains are used for efficiently traversing all of the base objects in a
  * sector, for example; stopping sounds emitted from all origins within a sector.
  */
-static void chainSectorBases(GameMap* map)
+static void chainSectorBases(GameMap *map)
 {
     DENG_ASSERT(map);
 
     for(uint i = 0; i < map->sectorCount(); ++i)
     {
-        Sector* sec = GameMap_Sector(map, i);
-        ddmobj_base_t* base = &sec->base;
+        Sector *sec = GameMap_Sector(map, i);
+        ddmobj_base_t *base = &sec->base;
 
         // Clear the chain head.
         base->thinker.next = base->thinker.prev = 0;
@@ -676,24 +676,24 @@ static void chainSectorBases(GameMap* map)
         // Add all plane base mobjs.
         for(uint j = 0; j < sec->planeCount(); ++j)
         {
-            Plane* pln = sec->SP_plane(j);
+            Plane *pln = sec->SP_plane(j);
             linkBaseToSectorChain(sec, &pln->PS_base);
         }
 
         // Add all sidedef base mobjs.
         for(uint j = 0; j < sec->lineDefCount; ++j)
         {
-            LineDef* line = sec->lineDefs[j];
-            if(line->L_frontsector == sec)
+            LineDef *line = sec->lineDefs[j];
+            if(line->frontSectorPtr() == sec)
             {
-                SideDef* side = line->L_frontsidedef;
+                SideDef *side = line->L_frontsidedef;
                 linkBaseToSectorChain(sec, &side->SW_middlesurface.base);
                 linkBaseToSectorChain(sec, &side->SW_bottomsurface.base);
                 linkBaseToSectorChain(sec, &side->SW_topsurface.base);
             }
-            if(line->L_backsidedef && line->L_backsector == sec)
+            if(line->L_backsidedef && line->backSectorPtr() == sec)
             {
-                SideDef* side = line->L_backsidedef;
+                SideDef *side = line->L_backsidedef;
                 linkBaseToSectorChain(sec, &side->SW_middlesurface.base);
                 linkBaseToSectorChain(sec, &side->SW_bottomsurface.base);
                 linkBaseToSectorChain(sec, &side->SW_topsurface.base);
@@ -1036,14 +1036,14 @@ static void hardenVertexOwnerRings(GameMap *dest, EditMap *src)
     }
 }
 
-static void hardenLinedefs(GameMap* dest, EditMap* src)
+static void hardenLinedefs(GameMap *dest, EditMap *src)
 {
     dest->lineDefs.clearAndResize(src->lineDefs.size());
 
     for(uint i = 0; i < dest->lineDefCount(); ++i)
     {
-        LineDef* destL = &dest->lineDefs[i];
-        LineDef* srcL = src->lineDefs[i];
+        LineDef *destL = &dest->lineDefs[i];
+        LineDef *srcL = src->lineDefs[i];
 
         *destL = *srcL;
 
@@ -1058,11 +1058,11 @@ static void hardenLinedefs(GameMap* dest, EditMap* src)
         if(destL->L_backsidedef)
             destL->L_backsidedef->line = destL;
 
-        destL->L_frontsector = (srcL->L_frontsector?
-            &dest->sectors[srcL->L_frontsector->buildData.index - 1] : NULL);
+        destL->front()._sector = (srcL->front()._sector?
+            &dest->sectors[srcL->front()._sector->buildData.index - 1] : NULL);
 
-        destL->L_backsector  = (srcL->L_backsector?
-            &dest->sectors[srcL->L_backsector->buildData.index - 1] : NULL);
+        destL->back()._sector  = (srcL->back()._sector?
+            &dest->sectors[srcL->back()._sector->buildData.index - 1] : NULL);
     }
 }
 
@@ -1145,11 +1145,9 @@ static void hardenPolyobjs(GameMap* dest, EditMap* src)
     uint i;
     for(i = 0; i < dest->numPolyObjs; ++i)
     {
-        Polyobj* destP, *srcP = src->polyObjs[i];
-        HEdge* hedges;
-        uint j;
+        Polyobj *srcP  = src->polyObjs[i];
+        Polyobj *destP = (Polyobj *) Z_Calloc(POLYOBJ_SIZE, PU_MAP, 0);
 
-        destP = (Polyobj*) Z_Calloc(POLYOBJ_SIZE, PU_MAP, 0);
         destP->idx = i;
         destP->crush = srcP->crush;
         destP->tag = srcP->tag;
@@ -1159,18 +1157,18 @@ static void hardenPolyobjs(GameMap* dest, EditMap* src)
 
         destP->lineCount = srcP->lineCount;
 
-        destP->originalPts = (povertex_t*) Z_Malloc(destP->lineCount * sizeof(povertex_t), PU_MAP, 0);
-        destP->prevPts     = (povertex_t*) Z_Malloc(destP->lineCount * sizeof(povertex_t), PU_MAP, 0);
+        destP->originalPts = (povertex_t *) Z_Malloc(destP->lineCount * sizeof(povertex_t), PU_MAP, 0);
+        destP->prevPts     = (povertex_t *) Z_Malloc(destP->lineCount * sizeof(povertex_t), PU_MAP, 0);
 
         // Create a hedge for each line of this polyobj.
         // TODO: Polyobj has ownership, must free it.
-        hedges = new HEdge[destP->lineCount];
+        HEdge *hedges = new HEdge[destP->lineCount];
 
-        destP->lines = (LineDef**) Z_Malloc(sizeof(*destP->lines) * (destP->lineCount+1), PU_MAP, 0);
-        for(j = 0; j < destP->lineCount; ++j)
+        destP->lines = (LineDef **) Z_Malloc(sizeof(*destP->lines) * (destP->lineCount+1), PU_MAP, 0);
+        for(uint j = 0; j < destP->lineCount; ++j)
         {
-            LineDef* line = &dest->lineDefs[srcP->lines[j]->origIndex - 1];
-            HEdge* hedge = &hedges[j];
+            LineDef *line = &dest->lineDefs[srcP->lines[j]->origIndex - 1];
+            HEdge *hedge = &hedges[j];
 
             // This line belongs to a polyobj.
             line->inFlags |= LF_POLYOBJ;
@@ -1180,13 +1178,13 @@ static void hardenPolyobjs(GameMap* dest, EditMap* src)
             hedge->length = V2d_Distance(line->v2Origin(), line->v1Origin());
             hedge->twin = NULL;
             hedge->bspLeaf = NULL;
-            hedge->sector = line->L_frontsector;
+            hedge->sector = line->frontSectorPtr();
 
             line->front().hedgeLeft = line->front().hedgeRight = hedge;
 
             destP->lines[j] = line;
         }
-        destP->lines[j] = NULL; // Terminate.
+        destP->lines[destP->lineCount] = NULL; // Terminate.
 
         // Add this polyobj to the global list.
         dest->polyObjs[i] = destP;
@@ -1894,14 +1892,14 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector,
     }
 
     l = createLine();
-    l->_v[0] = vtx1;
-    l->_v[1] = vtx2;
+    l->_v[FROM] = vtx1;
+    l->_v[TO] = vtx2;
 
-    l->_v[0]->_buildData.refCount++;
-    l->_v[1]->_buildData.refCount++;
+    l->_v[FROM]->_buildData.refCount++;
+    l->_v[TO]->_buildData.refCount++;
 
-    l->L_frontsector = (frontSector == 0? NULL: e_map->sectors[frontSector-1]);
-    l->L_backsector  = (backSector  == 0? NULL: e_map->sectors[backSector-1]);
+    l->_sides[FRONT]._sector = (frontSector == 0? NULL: e_map->sectors[frontSector-1]);
+    l->_sides[BACK]._sector  = (backSector  == 0? NULL: e_map->sectors[backSector-1]);
 
     l->L_frontsidedef = front;
     l->L_backsidedef = back;

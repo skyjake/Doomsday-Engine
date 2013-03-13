@@ -30,6 +30,21 @@
 
 using namespace de;
 
+bool LineDef::Side::hasSector() const
+{
+    return !!_sector;
+}
+
+Sector &LineDef::Side::sector() const
+{
+    if(_sector)
+    {
+        return *_sector;
+    }
+    /// @throw LineDef::MissingSectorError Attempted with no sector attributed.
+    throw LineDef::MissingSectorError("LineDef::Side::sector", "No sector is attributed");
+}
+
 LineDef::LineDef() : MapElement(DMU_LINEDEF)
 {
     std::memset(_v,     0, sizeof(_v));
@@ -95,11 +110,11 @@ static bool backClosedForBlendNeighbor(LineDef const *lineDef, int side,
 {
     DENG_ASSERT(lineDef);
 
-    if(!lineDef->L_frontsidedef)   return false;
+    if(!lineDef->L_frontsidedef) return false;
     if(!lineDef->L_backsidedef) return true;
 
-    Sector *frontSec = lineDef->L_sector(side);
-    Sector *backSec  = lineDef->L_sector(side^1);
+    Sector const *frontSec = lineDef->sectorPtr(side);
+    Sector const *backSec  = lineDef->sectorPtr(side^1);
     if(frontSec == backSec) return false; // Never.
 
     if(frontSec && backSec)
@@ -118,9 +133,9 @@ static LineDef *findBlendNeighbor(LineDef const *l, byte side, byte right,
     LineOwner const *farVertOwner = l->L_vo(right^side);
     if(backClosedForBlendNeighbor(l, side, true/*ignore opacity*/))
     {
-        return R_FindSolidLineNeighbor(l->L_sector(side), l, farVertOwner, right, diff);
+        return R_FindSolidLineNeighbor(l->sectorPtr(side), l, farVertOwner, right, diff);
     }
-    return R_FindLineNeighbor(l->L_sector(side), l, farVertOwner, right, diff);
+    return R_FindLineNeighbor(l->sectorPtr(side), l, farVertOwner, right, diff);
 }
 #endif // __CLIENT__
 
@@ -181,12 +196,12 @@ void LineDef::configureDivline(divline_t &dl) const
 
 coord_t LineDef::openRange(int side_, coord_t *retBottom, coord_t *retTop) const
 {
-    return R_OpenRange(side(side_).sector, side(side_^1).sector, retBottom, retTop);
+    return R_OpenRange(side(side_).sectorPtr(), side(side_^1).sectorPtr(), retBottom, retTop);
 }
 
 coord_t LineDef::visOpenRange(int side_, coord_t *retBottom, coord_t *retTop) const
 {
-    return R_VisOpenRange(side(side_).sector, side(side_^1).sector, retBottom, retTop);
+    return R_VisOpenRange(side(side_).sectorPtr(), side(side_^1).sectorPtr(), retBottom, retTop);
 }
 
 void LineDef::configureTraceOpening(TraceOpening &opening) const
@@ -203,16 +218,16 @@ void LineDef::configureTraceOpening(TraceOpening &opening) const
     opening.top    = float( top );
 
     // Determine the "low floor".
-    Sector *front = L_frontsector;
-    Sector *back  = L_backsector;
+    Sector const &fsec = frontSector();
+    Sector const &bsec = backSector();
 
-    if(front->SP_floorheight > back->SP_floorheight)
+    if(fsec.SP_floorheight > bsec.SP_floorheight)
     {
-        opening.lowFloor = float( back->SP_floorheight );
+        opening.lowFloor = float( bsec.SP_floorheight );
     }
     else
     {
-        opening.lowFloor = float( front->SP_floorheight );
+        opening.lowFloor = float( fsec.SP_floorheight );
     }
 }
 
@@ -355,11 +370,11 @@ int LineDef::property(setargs_t &args) const
         DMU_GetValue(DMT_LINEDEF_SLOPETYPE, &slopeType, &args, 0);
         break;
     case DMU_FRONT_SECTOR: {
-        Sector *sec = (L_frontsidedef? L_frontsector : NULL);
+        Sector *sec = (_sides[FRONT].sideDef? _sides[FRONT]._sector : NULL);
         DMU_GetValue(DMT_LINEDEF_SECTOR, &sec, &args, 0);
         break; }
     case DMU_BACK_SECTOR: {
-        Sector *sec = (L_backsidedef? L_backsector : NULL);
+        Sector *sec = (_sides[BACK].sideDef? _sides[BACK]._sector : NULL);
         DMU_GetValue(DMT_LINEDEF_SECTOR, &sec, &args, 0);
         break; }
     case DMU_FLAGS:
@@ -401,10 +416,10 @@ int LineDef::setProperty(setargs_t const &args)
     switch(args.prop)
     {
     case DMU_FRONT_SECTOR:
-        DMU_SetValue(DMT_LINEDEF_SECTOR, &L_frontsector, &args, 0);
+        DMU_SetValue(DMT_LINEDEF_SECTOR, &_sides[FRONT]._sector, &args, 0);
         break;
     case DMU_BACK_SECTOR:
-        DMU_SetValue(DMT_LINEDEF_SECTOR, &L_backsector, &args, 0);
+        DMU_SetValue(DMT_LINEDEF_SECTOR, &_sides[BACK]._sector, &args, 0);
         break;
     case DMU_SIDEDEF0:
         DMU_SetValue(DMT_LINEDEF_SIDEDEF, &L_frontsidedef, &args, 0);

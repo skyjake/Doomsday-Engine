@@ -1088,8 +1088,8 @@ static int setProperty(void *ptr, void *context)
     {
         if(R_UpdateLinedef(updateLinedef, false))
         {
-            updateSector1 = updateLinedef->L_frontsector;
-            updateSector2 = updateLinedef->L_backsector;
+            updateSector1 = updateLinedef->frontSectorPtr();
+            updateSector2 = updateLinedef->backSectorPtr();
         }
     }
 

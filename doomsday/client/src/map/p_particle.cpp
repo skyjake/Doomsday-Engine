@@ -781,8 +781,8 @@ int PIT_CheckLinePtc(LineDef *ld, void *parameters)
     ptcHitLine = ld;
     if(!ld->L_backsidedef) return true; // Boing!
 
-    Sector *front = ld->L_frontsector;
-    Sector *back  = ld->L_backsector;
+    Sector *front = ld->frontSectorPtr();
+    Sector *back  = ld->backSectorPtr();
 
     // Determine the opening we have here.
     /// @todo Use LineDef::openRange()
@@ -1070,8 +1070,8 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
         // particle should be killed (if it's moving slowly at max).
         if(pt->contact)
         {
-            Sector *front = (pt->contact->L_frontsidedef? pt->contact->L_frontsector : NULL);
-            Sector *back  = (pt->contact->L_backsidedef?  pt->contact->L_backsector  : NULL);
+            Sector *front = (pt->contact->L_frontsidedef? pt->contact->frontSectorPtr() : NULL);
+            Sector *back  = (pt->contact->L_backsidedef?  pt->contact->backSectorPtr()  : NULL);
 
             if(front && back && abs(pt->mov[VZ]) < FRACUNIT / 2)
             {

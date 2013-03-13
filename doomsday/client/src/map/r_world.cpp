@@ -421,7 +421,7 @@ void GameMap_UpdateSkyFixForSector(GameMap *map, Sector *sec)
             // Must be twosided.
             if(li->L_frontsidedef && li->L_backsidedef)
             {
-                SideDef *si = li->L_frontsector == sec? li->L_frontsidedef : li->L_backsidedef;
+                SideDef *si = li->frontSectorPtr() == sec? li->L_frontsidedef : li->L_backsidedef;
 
                 if(si->SW_middlematerial)
                 {
@@ -502,13 +502,13 @@ DENG_EXTERN_C void R_SetupFogDefaults()
 
 void R_OrderVertices(LineDef *line, Sector const *sector, Vertex *verts[2])
 {
-    byte edge = (sector == line->L_frontsector? 0:1);
+    byte edge = (sector == line->frontSectorPtr()? 0:1);
     verts[0] = &line->vertex(edge);
     verts[1] = &line->vertex(edge^1);
 }
 
 boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
-    Sector *frontSec, Sector *backSec, SideDef *frontDef, SideDef *backDef,
+    const Sector *frontSec, const Sector *backSec, const SideDef *frontDef, const SideDef *backDef,
     coord_t *low, coord_t *hi, float matOffset[2])
 {
     bool const unpegBottom = !!(lineFlags & DDLF_DONTPEGBOTTOM);
@@ -522,9 +522,9 @@ boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
 
         if(matOffset)
         {
-            Surface *suf = &frontDef->SW_middlesurface;
-            matOffset[0] = suf->visOffset[0];
-            matOffset[1] = suf->visOffset[1];
+            Surface const &suf = frontDef->SW_middlesurface;
+            matOffset[0] = suf.visOffset[0];
+            matOffset[1] = suf.visOffset[1];
             if(unpegBottom)
             {
                 matOffset[1] -= *hi - *low;
@@ -534,11 +534,11 @@ boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
     else
     {
         boolean const stretchMiddle = !!(frontDef->flags & SDF_MIDDLE_STRETCH);
-        Plane *ffloor = &frontSec->floor();
-        Plane *fceil  = &frontSec->ceiling();
-        Plane *bfloor = &backSec->floor();
-        Plane *bceil  = &backSec->ceiling();
-        Surface *suf = &frontDef->SW_surface(section);
+        Plane const *ffloor = &frontSec->floor();
+        Plane const *fceil  = &frontSec->ceiling();
+        Plane const *bfloor = &backSec->floor();
+        Plane const *bceil  = &backSec->ceiling();
+        Surface const *suf = &frontDef->SW_surface(section);
 
         switch(section)
         {
@@ -659,7 +659,7 @@ boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
 }
 
 boolean R_FindBottomTop(SideDefSection section, int lineFlags,
-    Sector *frontSec, Sector *backSec, SideDef *frontDef, SideDef *backDef,
+    const Sector *frontSec, const Sector *backSec, const SideDef *frontDef, const SideDef *backDef,
     coord_t *low, coord_t *hi)
 {
     return R_FindBottomTop2(section, lineFlags, frontSec, backSec, frontDef, backDef,
@@ -727,8 +727,9 @@ coord_t R_VisOpenRange(Sector const *frontSec, Sector const *backSec, coord_t *r
 }
 
 #ifdef __CLIENT__
-boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector *frontSec, Sector *backSec,
-    SideDef *frontDef, SideDef *backDef, boolean ignoreOpacity)
+boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector const *frontSec,
+    Sector const *backSec, SideDef const *frontDef, SideDef const *backDef,
+    boolean ignoreOpacity)
 {
     if(!frontSec || !frontDef) return false; // Never.
 
@@ -765,10 +766,10 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector *frontSec, Sector *b
 boolean R_MiddleMaterialCoversLineOpening(LineDef const *line, int side, boolean ignoreOpacity)
 {
     DENG_ASSERT(line);
-    Sector *frontSec  = line->L_sector(side);
-    Sector *backSec   = line->L_sector(side ^ 1);
-    SideDef *frontDef = line->L_sidedef(side);
-    SideDef *backDef  = line->L_sidedef(side ^ 1);
+    Sector const *frontSec  = line->sectorPtr(side);
+    Sector const *backSec   = line->sectorPtr(side ^ 1);
+    SideDef const *frontDef = line->L_sidedef(side);
+    SideDef const *backDef  = line->L_sidedef(side ^ 1);
     return R_MiddleMaterialCoversOpening(line->flags, frontSec, backSec, frontDef, backDef, ignoreOpacity);
 }
 
@@ -783,12 +784,12 @@ LineDef *R_FindLineNeighbor(Sector const *sector, LineDef const *line,
 
     if(diff) *diff += (antiClockwise? cown->angle() : own->angle());
 
-    if(!other->L_backsidedef || other->L_frontsector != other->L_backsector)
+    if(!other->L_backsidedef || other->frontSectorPtr() != other->backSectorPtr())
     {
         if(sector) // Must one of the sectors match?
         {
-            if(other->L_frontsector == sector ||
-               (other->L_backsidedef && other->L_backsector == sector))
+            if(other->frontSectorPtr() == sector ||
+               (other->L_backsidedef && other->backSectorPtr() == sector))
                 return other;
         }
         else
@@ -812,30 +813,30 @@ LineDef *R_FindSolidLineNeighbor(Sector const *sector, LineDef const *line,
 
     if(diff) *diff += (antiClockwise? cown->angle() : own->angle());
 
-    if(!((other->inFlags & LF_BSPWINDOW) && other->L_frontsector != sector))
+    if(!((other->inFlags & LF_BSPWINDOW) && other->frontSectorPtr() != sector))
     {
         if(!other->L_frontsidedef || !other->L_backsidedef)
             return other;
 
         if(!other->isSelfReferencing() &&
-           (other->L_frontsector->SP_floorvisheight >= sector->SP_ceilvisheight ||
-            other->L_frontsector->SP_ceilvisheight <= sector->SP_floorvisheight ||
-            other->L_backsector->SP_floorvisheight >= sector->SP_ceilvisheight ||
-            other->L_backsector->SP_ceilvisheight <= sector->SP_floorvisheight ||
-            other->L_backsector->SP_ceilvisheight <= other->L_backsector->SP_floorvisheight))
+           (other->frontSector().SP_floorvisheight >= sector->SP_ceilvisheight ||
+            other->frontSector().SP_ceilvisheight <= sector->SP_floorvisheight ||
+            other->backSector().SP_floorvisheight >= sector->SP_ceilvisheight ||
+            other->backSector().SP_ceilvisheight <= sector->SP_floorvisheight ||
+            other->backSector().SP_ceilvisheight <= other->backSector().SP_floorvisheight))
             return other;
 
         // Both front and back MUST be open by this point.
 
         // Check for mid texture which fills the gap between floor and ceiling.
         // We should not give away the location of false walls (secrets).
-        side = (other->L_frontsector == sector? 0 : 1);
+        side = (other->frontSectorPtr() == sector? 0 : 1);
         if(other->L_sidedef(side)->SW_middlematerial)
         {
-            float oFCeil  = other->L_frontsector->SP_ceilvisheight;
-            float oFFloor = other->L_frontsector->SP_floorvisheight;
-            float oBCeil  = other->L_backsector->SP_ceilvisheight;
-            float oBFloor = other->L_backsector->SP_floorvisheight;
+            float oFCeil  = other->frontSector().SP_ceilvisheight;
+            float oFFloor = other->frontSector().SP_floorvisheight;
+            float oBCeil  = other->backSector().SP_ceilvisheight;
+            float oBFloor = other->backSector().SP_floorvisheight;
 
             if((side == 0 &&
                 ((oBCeil > sector->SP_floorvisheight &&
@@ -873,11 +874,11 @@ LineDef *R_FindLineBackNeighbor(Sector const *sector, LineDef const *line,
 
     if(diff) *diff += (antiClockwise? cown->angle() : own->angle());
 
-    if(!other->L_backsidedef || other->L_frontsector != other->L_backsector ||
+    if(!other->L_backsidedef || other->frontSectorPtr() != other->backSectorPtr() ||
        (other->inFlags & LF_BSPWINDOW))
     {
-        if(!(other->L_frontsector == sector ||
-             (other->L_backsidedef && other->L_backsector == sector)))
+        if(!(other->frontSectorPtr() == sector ||
+             (other->L_backsidedef && other->backSectorPtr() == sector)))
             return other;
     }
 
@@ -903,7 +904,7 @@ LineDef *R_FindLineAlignNeighbor(Sector const *sec, LineDef const *line,
 
         if(alignment < 0)
             diff -= BANG_180;
-        if(other->L_frontsector != sec)
+        if(other->frontSectorPtr() != sec)
             diff -= BANG_180;
         if(diff < SEP || diff > BANG_360 - SEP)
             return other;
@@ -1220,8 +1221,8 @@ static Material *chooseFixMaterial(SideDef *s, SideDefSection section)
     Material *choice1 = 0, *choice2 = 0;
     LineDef *line = s->line;
     byte side = (line->L_frontsidedef == s? FRONT : BACK);
-    Sector *frontSec = line->L_sector(side);
-    Sector *backSec  = line->L_sidedef(side ^ 1)? line->L_sector(side ^ 1) : 0;
+    Sector *frontSec = line->sectorPtr(side);
+    Sector *backSec  = line->L_sidedef(side ^ 1)? line->sectorPtr(side ^ 1) : 0;
 
     if(backSec)
     {
@@ -1269,16 +1270,17 @@ static Material *chooseFixMaterial(SideDef *s, SideDefSection section)
             else
             {
                 // Compare the relative heights to decide.
-                SideDef *otherSide = other->L_sidedef(other->L_frontsector == frontSec? FRONT : BACK);
-                Sector *otherSec = other->L_sector(other->L_frontsector == frontSec? BACK  : FRONT);
-                if(otherSec->SP_ceilheight <= frontSec->SP_floorheight)
-                    choice1 = otherSide->SW_topmaterial;
-                else if(otherSec->SP_floorheight >= frontSec->SP_ceilheight)
-                    choice1 = otherSide->SW_bottommaterial;
-                else if(otherSec->SP_ceilheight < frontSec->SP_ceilheight)
-                    choice1 = otherSide->SW_topmaterial;
-                else if(otherSec->SP_floorheight > frontSec->SP_floorheight)
-                    choice1 = otherSide->SW_bottommaterial;
+                SideDef &otherSide = *other->L_sidedef(&other->frontSector() == frontSec? FRONT : BACK);
+                Sector &otherSec   = other->sector(&other->frontSector() == frontSec? BACK  : FRONT);
+
+                if(otherSec.SP_ceilheight <= frontSec->SP_floorheight)
+                    choice1 = otherSide.SW_topmaterial;
+                else if(otherSec.SP_floorheight >= frontSec->SP_ceilheight)
+                    choice1 = otherSide.SW_bottommaterial;
+                else if(otherSec.SP_ceilheight < frontSec->SP_ceilheight)
+                    choice1 = otherSide.SW_topmaterial;
+                else if(otherSec.SP_floorheight > frontSec->SP_floorheight)
+                    choice1 = otherSide.SW_bottommaterial;
                 // else we'll settle for a plane material.
             }
         }
@@ -1342,8 +1344,8 @@ static void R_UpdateLinedefsOfSector(Sector *sec)
 
         SideDef *front    = li->L_frontsidedef;
         SideDef *back     = li->L_backsidedef;
-        Sector *frontSec  = li->L_frontsector;
-        Sector *backSec   = li->L_backsector;
+        Sector *frontSec  = li->frontSectorPtr();
+        Sector *backSec   = li->backSectorPtr();
 
         // Do not fix "windows".
         if(!front || (!back && backSec)) continue;

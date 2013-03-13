@@ -305,7 +305,7 @@ struct Partitioner::Instance
             dist = fabs(dist);
             if(dist < DIST_EPSILON) return false; // Too close (overlapping lines ?)
 
-            hitSector = line->L_sector((p.testLine->direction[VY] > 0) ^ (line->direction[VY] > 0) ^ !isFront);
+            hitSector = line->sectorPtr((p.testLine->direction[VY] > 0) ^ (line->direction[VY] > 0) ^ !isFront);
         }
         else // Cast vertically.
         {
@@ -320,7 +320,7 @@ struct Partitioner::Instance
 
             dist = fabs(dist);
 
-            hitSector = line->L_sector((p.testLine->direction[VX] > 0) ^ (line->direction[VX] > 0) ^ !isFront);
+            hitSector = line->sectorPtr((p.testLine->direction[VX] > 0) ^ (line->direction[VX] > 0) ^ !isFront);
         }
 
         if(dist < DIST_EPSILON) return false; // Too close (overlapping lines ?)
@@ -373,7 +373,7 @@ struct Partitioner::Instance
         validCount++;
         GameMap_LineDefsBoxIterator(map, &scanRegion, testForWindowEffectWorker, &p);
 
-        if(p.backOpen && p.frontOpen && line->L_frontsector == p.backOpen)
+        if(p.backOpen && p.frontOpen && line->frontSectorPtr() == p.backOpen)
         {
             LOG_VERBOSE("LineDef #%d seems to be a One-Sided Window (back faces sector #%d).")
                 << line->origIndex - 1 << p.backOpen->buildData.index - 1;
@@ -435,7 +435,7 @@ struct Partitioner::Instance
         return right;
     }
 
-    inline HEdge* linkHEdgeInSuperBlockmap(SuperBlock& block, HEdge* hedge)
+    inline HEdge *linkHEdgeInSuperBlockmap(SuperBlock &block, HEdge *hedge)
     {
         DENG2_ASSERT(hedge);
         // Associate this half-edge with the final subblock.
@@ -446,30 +446,30 @@ struct Partitioner::Instance
     /**
      * Initially create all half-edges and add them to specified SuperBlock.
      */
-    void createInitialHEdges(SuperBlock& hedgeList)
+    void createInitialHEdges(SuperBlock &hedgeList)
     {
         DENG2_FOR_EACH(LineDefInfos, i, lineDefInfos)
         {
             LineDefInfo const& lineInfo = *i;
-            LineDef* line = lineInfo.lineDef;
+            LineDef *line = lineInfo.lineDef;
             // Polyobj lines are completely ignored.
             if(line->inFlags & LF_POLYOBJ) continue;
 
-            HEdge* front  = 0;
+            HEdge *front  = 0;
             coord_t angle = 0;
 
             if(!lineInfo.flags.testFlag(LineDefInfo::ZeroLength))
             {
-                Sector* frontSec = line->L_frontsector;
-                Sector* backSec  = 0;
+                Sector *frontSec = line->frontSectorPtr();
+                Sector *backSec  = 0;
                 if(line->L_backsidedef)
                 {
-                    backSec = line->L_backsector;
+                    backSec = line->backSectorPtr();
                 }
                 else
                 {
                     // Handle the 'One-Sided Window' trick.
-                    Sector* windowSec = lineInfo.windowEffect;
+                    Sector *windowSec = lineInfo.windowEffect;
                     if(windowSec) backSec = windowSec;
                 }
 
@@ -490,7 +490,7 @@ struct Partitioner::Instance
         }
     }
 
-    bool buildBsp(SuperBlock& rootBlock)
+    bool buildBsp(SuperBlock &rootBlock)
     {
         try
         {
@@ -502,7 +502,7 @@ struct Partitioner::Instance
 
             windLeafs();
         }
-        catch(de::Error& /*er*/)
+        catch(de::Error & /*er*/)
         {
             // Don't handle the error here, simply record failure.
             builtOK = false;
@@ -1323,18 +1323,18 @@ struct Partitioner::Instance
      *
      * @return  Newly created BspLeaf else @c NULL if degenerate.
      */
-    BspLeaf* buildBspLeaf(HEdgeList const& hedges)
+    BspLeaf *buildBspLeaf(HEdgeList const &hedges)
     {
         if(!hedges.size()) return 0;
 
         // Collapse all degenerate and orphaned leafs.
 #if 0
-        const bool isDegenerate = hedges.size() < 3;
+        bool const isDegenerate = hedges.size() < 3;
         bool isOrphan = true;
         DENG2_FOR_EACH_CONST(HEdgeList, it, hedges)
         {
-            const HEdge* hedge = *it;
-            if(hedge->lineDef && hedge->lineDef->L_sector(hedge->side))
+            HEdge const *hedge = *it;
+            if(hedge->lineDef && hedge->lineDef->hasSector(hedge->side))
             {
                 isOrphan = false;
                 break;
@@ -1342,13 +1342,13 @@ struct Partitioner::Instance
         }
 #endif
 
-        BspLeaf* leaf = 0;
+        BspLeaf *leaf = 0;
         DENG2_FOR_EACH_CONST(HEdgeList, it, hedges)
         {
-            HEdge* hedge = *it;
+            HEdge *hedge = *it;
 #if 0
             HEdgeInfos::iterator hInfoIt = hedgeInfos.find(hedge);
-            HEdgeInfo& hInfo = hInfoIt->second;
+            HEdgeInfo &hInfo = hInfoIt->second;
 
             if(isDegenerate || isOrphan)
             {
@@ -1743,7 +1743,7 @@ struct Partitioner::Instance
         do
         {
             LineDef *line = hedge->lineDef;
-            Sector *sector = line? line->L_sector(hedge->side) : 0;
+            Sector *sector = line? line->sectorPtr(hedge->side) : 0;
             if(sector)
             {
                 // The first sector from a non self-referencing line is our best choice.

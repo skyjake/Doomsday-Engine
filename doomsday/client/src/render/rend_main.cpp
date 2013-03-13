@@ -367,7 +367,7 @@ static byte pvisibleLineSections(LineDef *line, int backSide)
 
     if(!line || !line->L_sidedef(backSide)) return 0;
 
-    if(!line->L_sector(backSide^1) /*$degenleaf*/ || !line->L_backsidedef)
+    if(!line->hasSector(backSide^1) /*$degenleaf*/ || !line->L_backsidedef)
     {
         // Only a middle.
         sections |= SSF_MIDDLE;
@@ -375,8 +375,8 @@ static byte pvisibleLineSections(LineDef *line, int backSide)
     else
     {
         SideDef const *sideDef = line->L_sidedef(backSide);
-        Sector const *fsec  = line->L_sector(backSide);
-        Sector const *bsec  = line->L_sector(backSide^1);
+        Sector const *fsec  = line->sectorPtr(backSide);
+        Sector const *bsec  = line->sectorPtr(backSide^1);
         Plane const *fceil  = &fsec->ceiling();
         Plane const *ffloor = &fsec->floor();
         Plane const *bceil  = &bsec->ceiling();
@@ -1808,15 +1808,15 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
 
     reportLineDefDrawn(line);
 
-    if(back->sector == front->sector &&
+    if(back->sectorPtr() == front->sectorPtr() &&
        !front->sideDef->SW_topmaterial && !front->sideDef->SW_bottommaterial &&
        !front->sideDef->SW_middlematerial)
        return false; // Ugh... an obvious wall hedge hack. Best take no chances...
 
     Plane *ffloor = &leaf->sector().floor();
     Plane *fceil  = &leaf->sector().ceiling();
-    Plane *bfloor = &back->sector->floor();
-    Plane *bceil  = &back->sector->ceiling();
+    Plane *bfloor = &back->sector().floor();
+    Plane *bceil  = &back->sector().ceiling();
 
     /**
      * Create the wall sections.
@@ -1842,7 +1842,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
 
             Rend_RadioUpdateLinedef(hedge->lineDef, hedge->side);
             solidSeg = rendHEdgeSection(hedge, SS_MIDDLE, rhFlags,
-                                        front->sector->lightLevel, R_GetSectorLightColor(front->sector),
+                                        front->sector().lightLevel, R_GetSectorLightColor(front->sectorPtr()),
                                         &leftWallDivs, &rightWallDivs, matOffset);
             if(solidSeg)
             {
@@ -1882,7 +1882,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
         {
             Rend_RadioUpdateLinedef(hedge->lineDef, hedge->side);
             rendHEdgeSection(hedge, SS_TOP, RHF_ADD_DYNLIGHTS|RHF_ADD_DYNSHADOWS|RHF_ADD_RADIO,
-                             front->sector->lightLevel, R_GetSectorLightColor(front->sector),
+                             front->sector().lightLevel, R_GetSectorLightColor(front->sectorPtr()),
                              &leftWallDivs, &rightWallDivs, matOffset);
         }
     }
@@ -1898,7 +1898,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
         {
             Rend_RadioUpdateLinedef(hedge->lineDef, hedge->side);
             rendHEdgeSection(hedge, SS_BOTTOM, RHF_ADD_DYNLIGHTS|RHF_ADD_DYNSHADOWS|RHF_ADD_RADIO,
-                             front->sector->lightLevel, R_GetSectorLightColor(front->sector),
+                             front->sector().lightLevel, R_GetSectorLightColor(front->sectorPtr()),
                              &leftWallDivs, &rightWallDivs, matOffset);
         }
     }
@@ -1907,16 +1907,17 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
     if(solidSeg == -1)
         return false; // NEVER (we have a hole we couldn't fix).
 
-    if(front->sideDef && back->sideDef && front->sector == back->sector)
+    if(line->isSelfReferencing())
        return false;
 
     if(!solidSeg) // We'll have to determine whether we can...
     {
-        if(back->sector == front->sector)
+        /*if(back->sector == front->sector)
         {
             // An obvious hack, what to do though??
         }
-        else if(   (bceil->visHeight() <= ffloor->visHeight() &&
+        else*/
+             if(   (bceil->visHeight() <= ffloor->visHeight() &&
                         (front->sideDef->SW_topmaterial    || front->sideDef->SW_middlematerial))
                 || (bfloor->visHeight() >= fceil->visHeight() &&
                         (front->sideDef->SW_bottommaterial || front->sideDef->SW_middlematerial)))
@@ -2078,16 +2079,16 @@ static void skyFixZCoords(HEdge* hedge, int skyCap, coord_t* bottom, coord_t* to
  *     Tests consider all Planes which interface with this and the "middle"
  *     Material used on the relative front side (if any).
  */
-static boolean hedgeBackClosedForSkyFix(const HEdge* hedge)
+static boolean hedgeBackClosedForSkyFix(HEdge const *hedge)
 {
     DENG_ASSERT(hedge && hedge->lineDef);
-{
+
     byte side = hedge->side;
-    LineDef* line = hedge->lineDef;
-    Sector* frontSec  = line->L_sector(side);
-    Sector* backSec   = line->L_sector(side^1);
-    SideDef* frontDef = line->L_sidedef(side);
-    SideDef* backDef  = line->L_sidedef(side^1);
+    LineDef *line = hedge->lineDef;
+    Sector *frontSec  = line->sectorPtr(side);
+    Sector *backSec   = line->sectorPtr(side^1);
+    SideDef *frontDef = line->L_sidedef(side);
+    SideDef *backDef  = line->L_sidedef(side^1);
 
     if(!frontDef) return false;
     if(!backDef) return true;
@@ -2102,7 +2103,7 @@ static boolean hedgeBackClosedForSkyFix(const HEdge* hedge)
 
     return R_MiddleMaterialCoversOpening(line->flags, frontSec, backSec, frontDef, backDef,
                                          false/*don't ignore opacity*/);
-}}
+}
 
 /**
  * Determine which sky fixes are necessary for the specified @a hedge.
@@ -3191,20 +3192,20 @@ static void getVertexPlaneMinMax(Vertex const *vtx, coord_t *min, coord_t *max)
 
         if(li->L_frontsidedef)
         {
-            if(min && li->L_frontsector->SP_floorvisheight < *min)
-                *min = li->L_frontsector->SP_floorvisheight;
+            if(min && li->frontSector().SP_floorvisheight < *min)
+                *min = li->frontSector().SP_floorvisheight;
 
-            if(max && li->L_frontsector->SP_ceilvisheight > *max)
-                *max = li->L_frontsector->SP_ceilvisheight;
+            if(max && li->frontSector().SP_ceilvisheight > *max)
+                *max = li->frontSector().SP_ceilvisheight;
         }
 
         if(li->L_backsidedef)
         {
-            if(min && li->L_backsector->SP_floorvisheight < *min)
-                *min = li->L_backsector->SP_floorvisheight;
+            if(min && li->backSector().SP_floorvisheight < *min)
+                *min = li->backSector().SP_floorvisheight;
 
-            if(max && li->L_backsector->SP_ceilvisheight > *max)
-                *max = li->L_backsector->SP_ceilvisheight;
+            if(max && li->backSector().SP_ceilvisheight > *max)
+                *max = li->backSector().SP_ceilvisheight;
         }
 
         own = &own->next();

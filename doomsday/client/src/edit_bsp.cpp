@@ -134,7 +134,7 @@ static void finishHEdges(GameMap *map)
         {
             Vertex const &vtx = hedge->lineDef->vertex(hedge->side);
 
-            hedge->sector = hedge->lineDef->L_sector(hedge->side);
+            hedge->sector = hedge->lineDef->sectorPtr(hedge->side);
             hedge->offset = V2d_Distance(hedge->HE_v1origin, vtx.origin());
         }
 

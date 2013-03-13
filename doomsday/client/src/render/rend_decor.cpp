@@ -468,8 +468,8 @@ static void plotSourcesForLineDef(LineDef &line, byte side, SideDefSection secti
 {
     if(!line.L_sidedef(side)) return;
 
-    Sector *frontSec  = line.L_sector(side);
-    Sector *backSec   = line.L_sector(side ^ 1);
+    Sector *frontSec  = line.sectorPtr(side);
+    Sector *backSec   = line.sectorPtr(side ^ 1);
     SideDef *frontDef = line.L_sidedef(side);
     SideDef *backDef  = line.L_sidedef(side ^ 1);
     Surface &suf      = line.L_sidedef(side)->SW_surface(section);

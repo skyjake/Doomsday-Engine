@@ -108,11 +108,11 @@ void R_OrderVertices(LineDef *line, Sector const *sector, Vertex *verts[2]);
  * @return  @c true iff the determined wall section height is @c >0
  */
 boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
-    Sector* frontSec, Sector* backSec, SideDef* frontDef, SideDef* backDef,
-    coord_t* low, coord_t* hi, float matOffset[2]);
+    Sector const *frontSec, Sector const *backSec, SideDef const *frontDef, SideDef const *backDef,
+    coord_t *low, coord_t *hi, float matOffset[2]);
 boolean R_FindBottomTop(SideDefSection section, int lineFlags,
-    Sector* frontSec, Sector* backSec, SideDef* frontDef, SideDef* backDef,
-    coord_t* low, coord_t* hi) /* matOffset = 0 */;
+    Sector const *frontSec, Sector const *backSec, SideDef const *frontDef, SideDef const *backDef,
+    coord_t *low, coord_t *hi) /* matOffset = 0 */;
 
 /**
  * Find the "sharp" Z coordinate range of the opening between sectors @a frontSec
@@ -144,8 +144,9 @@ coord_t R_VisOpenRange(Sector const* frontSec, Sector const* backSec, coord_t* r
  * @return  @c true iff SideDef @a frontDef has a "middle" Material which completely
  *     covers the open range defined by sectors @a frontSec and @a backSec.
  */
-boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector* frontSec, Sector* backSec,
-    SideDef* frontDef, SideDef* backDef, boolean ignoreOpacity);
+boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector const *frontSec,
+    Sector const *backSec, SideDef const *frontDef, SideDef const *backDef,
+    boolean ignoreOpacity);
 
 /**
  * Same as @ref R_MiddleMaterialCoversOpening except all arguments are derived from
