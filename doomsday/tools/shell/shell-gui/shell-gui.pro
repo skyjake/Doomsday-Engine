@@ -58,6 +58,10 @@ SOURCES += \
 RESOURCES += \
     res/shell.qrc
 
+win32 {
+    RC_FILE = res/windows/shell.rc
+}
+
 # Deployment ----------------------------------------------------------------
 
 macx {
