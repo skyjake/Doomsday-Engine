@@ -28,6 +28,7 @@
 #include <QPushButton>
 #include <QComboBox>
 #include <QLineEdit>
+#include <QTextEdit>
 #include <QLabel>
 #include <QTabWidget>
 #include <QFileDialog>
@@ -40,10 +41,11 @@ using namespace de::shell;
 DENG2_PIMPL(LocalServerDialog)
 {
     QPushButton *yes;
+    QLineEdit *name;
     QComboBox *games;
     QLineEdit *port;
     QLabel *portMsg;
-    QLineEdit *options;
+    QTextEdit *options;
     FolderSelection *runtime;
 
     Instance(Public &i) : Base(i)
@@ -62,6 +64,11 @@ DENG2_PIMPL(LocalServerDialog)
         QFormLayout *form = new QFormLayout;
         gameTab->setLayout(form);
         tabs->addTab(gameTab, tr("&Settings"));
+
+        name = new QLineEdit;
+        name->setMinimumWidth(240);
+        name->setText(st.value("LocalServer/name", "Doomsday").toString());
+        form->addRow(tr("Name:"), name);
 
         games = new QComboBox;
         games->setEditable(false);
@@ -105,8 +112,11 @@ DENG2_PIMPL(LocalServerDialog)
         form->addRow(tr("Runtime folder:"), runtime);
         QObject::connect(runtime, SIGNAL(selected()), &self, SLOT(validate()));
 
-        options = new QLineEdit;
+        options = new QTextEdit;
+        options->setTabChangesFocus(true);
+        options->setAcceptRichText(false);
         options->setMinimumWidth(300);
+        options->setMaximumHeight(QFontMetrics(options->font()).lineSpacing() * 5);
         options->setText(st.value("LocalServer/options").toString());
         form->addRow(tr("Options:"), options);
 
@@ -135,6 +145,11 @@ quint16 LocalServerDialog::port() const
     return d->port->text().toInt();
 }
 
+String LocalServerDialog::name() const
+{
+    return d->name->text();
+}
+
 QString LocalServerDialog::gameMode() const
 {
     return d->games->itemData(d->games->currentIndex()).toString();
@@ -142,7 +157,7 @@ QString LocalServerDialog::gameMode() const
 
 QStringList LocalServerDialog::additionalOptions() const
 {
-    QStringList opts = d->options->text().split(' ', QString::SkipEmptyParts);
+    QStringList opts = d->options->toPlainText().split(' ', QString::SkipEmptyParts);
     return opts;
 }
 
@@ -158,10 +173,11 @@ void LocalServerDialog::configureGameOptions()
 void LocalServerDialog::saveState()
 {
     QSettings st;
+    st.setValue("LocalServer/name", d->name->text());
     st.setValue("LocalServer/gameMode", d->games->itemData(d->games->currentIndex()).toString());
     st.setValue("LocalServer/port", d->port->text().toInt());
     st.setValue("LocalServer/runtime", d->runtime->path().toString());
-    st.setValue("LocalServer/options", d->options->text());
+    st.setValue("LocalServer/options", d->options->toPlainText());
 }
 
 void LocalServerDialog::validate()

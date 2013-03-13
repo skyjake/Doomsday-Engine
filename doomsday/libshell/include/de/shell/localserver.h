@@ -39,6 +39,13 @@ public:
 public:
     LocalServer();
 
+    /**
+     * Sets the name of the server.
+     *
+     * @param name  Name.
+     */
+    void setName(String const &name);
+
     void start(duint16 port,
                String const &gameMode,
                QStringList additionalOptions = QStringList(),

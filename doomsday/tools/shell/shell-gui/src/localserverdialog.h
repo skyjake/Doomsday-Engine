@@ -30,6 +30,7 @@ public:
     explicit LocalServerDialog(QWidget *parent = 0);
 
     quint16 port() const;
+    de::String name() const;
     QString gameMode() const;
     QStringList additionalOptions() const;
     de::NativePath runtimeFolder() const;
