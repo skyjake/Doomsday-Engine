@@ -293,13 +293,12 @@ void Surface::updateBaseOrigin()
     case DMU_SIDEDEF: {
         SideDef *side = owner->castTo<SideDef>();
         LineDef *line = side->line;
-        Sector *sec;
         DENG_ASSERT(line);
 
-        base.origin[VX] = (line->L_v1origin[VX] + line->L_v2origin[VX]) / 2;
-        base.origin[VY] = (line->L_v1origin[VY] + line->L_v2origin[VY]) / 2;
+        base.origin[VX] = (line->v1Origin()[VX] + line->v2Origin()[VX]) / 2;
+        base.origin[VY] = (line->v1Origin()[VY] + line->v2Origin()[VY]) / 2;
 
-        sec = line->L_sector(side == line->L_frontsidedef? FRONT:BACK);
+        Sector *sec = line->L_sector(side == line->L_frontsidedef? FRONT:BACK);
         if(sec)
         {
             coord_t const ffloor = sec->SP_floorheight;
@@ -307,7 +306,7 @@ void Surface::updateBaseOrigin()
 
             if(this == &side->SW_middlesurface)
             {
-                if(!line->L_backsidedef || LINE_SELFREF(line))
+                if(!line->L_backsidedef || line->isSelfReferencing())
                     base.origin[VZ] = (ffloor + fceil) / 2;
                 else
                     base.origin[VZ] = (MAX_OF(ffloor, line->L_backsector->SP_floorheight) +
@@ -316,7 +315,7 @@ void Surface::updateBaseOrigin()
             }
             else if(this == &side->SW_bottomsurface)
             {
-                if(!line->L_backsidedef || LINE_SELFREF(line) ||
+                if(!line->L_backsidedef || line->isSelfReferencing() ||
                    line->L_backsector->SP_floorheight <= ffloor)
                     base.origin[VZ] = ffloor;
                 else
@@ -325,7 +324,7 @@ void Surface::updateBaseOrigin()
             }
             else if(this == &side->SW_topsurface)
             {
-                if(!line->L_backsidedef || LINE_SELFREF(line) ||
+                if(!line->L_backsidedef || line->isSelfReferencing() ||
                    line->L_backsector->SP_ceilheight >= fceil)
                     base.origin[VZ] = fceil;
                 else

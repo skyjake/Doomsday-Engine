@@ -86,6 +86,14 @@ inline dint64 floor(ddouble const &value) {
     return dint64(std::floor(value));
 }
 
+inline dint32 ceil(dfloat const &value) {
+    return dint32(std::ceil(value));
+}
+
+inline dint64 ceil(ddouble const &value) {
+    return dint64(std::ceil(value));
+}
+
 /// Compare two floating-point values for equality, with the precision of EPSILON.
 inline ddouble fequal(ddouble a, ddouble b) {
     return abs(a - b) < EPSILON;

@@ -35,13 +35,13 @@
 byte bmapShowDebug = 0; // 1 = mobjs, 2 = linedefs, 3 = BSP leafs, 4 = polyobjs.
 float bmapDebugSize = 1.5f;
 
-static int rendMobj(mobj_t* mo, void* /*parameters*/)
+static int rendMobj(mobj_t *mo, void * /*parameters*/)
 {
     if(mo->validCount != validCount)
     {
-        vec2f_t start, end;
-        V2f_Set(start, mo->origin[VX] - mo->radius, mo->origin[VY] - mo->radius);
-        V2f_Set(end,   mo->origin[VX] + mo->radius, mo->origin[VY] + mo->radius);
+        vec2f_t start; V2f_Set(start, mo->origin[VX] - mo->radius, mo->origin[VY] - mo->radius);
+        vec2f_t end;   V2f_Set(end,   mo->origin[VX] + mo->radius, mo->origin[VY] + mo->radius);
+
         glVertex2f(start[VX], start[VY]);
         glVertex2f(  end[VX], start[VY]);
         glVertex2f(  end[VX],   end[VY]);
@@ -52,12 +52,12 @@ static int rendMobj(mobj_t* mo, void* /*parameters*/)
     return false; // Continue iteration.
 }
 
-static int rendLineDef(LineDef* line, void* /*parameters*/)
+static int rendLineDef(LineDef *line, void * /*parameters*/)
 {
     if(line->validCount != validCount)
     {
-        glVertex2f(line->L_v1origin[VX], line->L_v1origin[VY]);
-        glVertex2f(line->L_v2origin[VX], line->L_v2origin[VY]);
+        glVertex2f(line->v1Origin()[VX], line->v1Origin()[VY]);
+        glVertex2f(line->v2Origin()[VX], line->v2Origin()[VY]);
 
         line->validCount = validCount;
     }

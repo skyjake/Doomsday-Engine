@@ -167,7 +167,7 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
     fCeil  = line->L_sector(side)->SP_ceilvisheight;
 
     // Retrieve the start owner node.
-    own = R_GetVtxLineOwner(line->L_v(side^!toLeft), line);
+    own = R_GetVtxLineOwner(&line->vertex(side^!toLeft), line);
 
     do
     {
@@ -179,7 +179,7 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
 
         // Step over selfreferencing lines.
         while((!iter->L_frontsector && !iter->L_backsector) || // $degenleaf
-              LINE_SELFREF(iter))
+              iter->isSelfReferencing())
         {
             own = own->_link[clockwise];
             diff += (clockwise? own->angle() : own->prev().angle());
@@ -367,7 +367,7 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
 static void scanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
     LineDef const *line, uint side, edgespan_t spans[2], boolean toLeft)
 {
-    if(LINE_SELFREF(line)) return;
+    if(line->isSelfReferencing()) return;
 
     coord_t fFloor = line->L_sector(side)->SP_floorvisheight;
     coord_t fCeil  = line->L_sector(side)->SP_ceilvisheight;
@@ -1366,17 +1366,14 @@ static void processEdgeShadow(BspLeaf const *bspLeaf, LineDef const *lineDef,
         }
         else if(!(neighbor == lineDef || !neighbor->L_backsidedef))
         {
-            Sector *othersec;
-            byte otherSide;
-
-            otherSide = (lineDef->L_v(i^side) == neighbor->L_v1? i : i^1);
-            othersec = neighbor->L_sector(otherSide);
+            byte otherSide = (&lineDef->vertex(i^side) == &neighbor->v1()? i : i^1);
+            Sector *othersec = neighbor->L_sector(otherSide);
 
             if(R_MiddleMaterialCoversLineOpening(neighbor, otherSide^1, false))
             {
                 sideOpen[i] = 0;
             }
-            else if(LINE_SELFREF(neighbor))
+            else if(neighbor->isSelfReferencing())
             {
                 sideOpen[i] = 1;
             }
@@ -1401,16 +1398,16 @@ static void processEdgeShadow(BspLeaf const *bspLeaf, LineDef const *lineDef,
             vo = lineDef->L_vo(i^side);
             if(i) vo = &vo->prev();
 
-            V2d_Sum(inner[i], lineDef->L_vorigin(i^side), vo->innerShadowOffset());
+            V2d_Sum(inner[i], lineDef->vertexOrigin(i^side), vo->innerShadowOffset());
         }
         else
         {
-            V2d_Sum(inner[i], lineDef->L_vorigin(i^side), vo->extendedShadowOffset());
+            V2d_Sum(inner[i], lineDef->vertexOrigin(i^side), vo->extendedShadowOffset());
         }
     }
 
-    V2d_Copy(outer[0], lineDef->L_vorigin(side));
-    V2d_Copy(outer[1], lineDef->L_vorigin(side^1));
+    V2d_Copy(outer[0], lineDef->vertexOrigin(side));
+    V2d_Copy(outer[1], lineDef->vertexOrigin(side^1));
     // Shadows are black
     vec3f_t shadowRGB;
     V3f_Set(shadowRGB, 0, 0, 0);
@@ -1442,7 +1439,7 @@ static void drawLinkedEdgeShadows(BspLeaf const *bspLeaf, shadowlink_t *link,
     }
 
     // Mark it rendered for this frame.
-    link->lineDef->L_side(link->side).shadowVisFrame = ushort(frameCount);
+    link->lineDef->side(link->side).shadowVisFrame = ushort(frameCount);
 }
 
 /**
@@ -1514,7 +1511,7 @@ static void radioBspLeafEdges(BspLeaf const *bspLeaf)
     {
         // Already rendered during the current frame? We only want to
         // render each shadow once per frame.
-        if(link->lineDef->L_side(link->side).shadowVisFrame == (ushort) frameCount) continue;
+        if(link->lineDef->side(link->side).shadowVisFrame == (ushort) frameCount) continue;
 
         drawLinkedEdgeShadows(bspLeaf, link, doPlanes, shadowDark);
     }
@@ -1602,18 +1599,18 @@ void Rend_DrawShadowOffsetVerts()
 
         for(uint k = 0; k < 2; ++k)
         {
-            Vertex *vtx = line->L_v(k);
-            LineOwner const *base = vtx->firstLineOwner();
+            Vertex &vtx = line->vertex(k);
+            LineOwner const *base = vtx.firstLineOwner();
             LineOwner const *own = base;
             do
             {
                 coord_t pos[3];
                 pos[VZ] = own->lineDef().L_frontsector->SP_floorvisheight;
 
-                V2d_Sum(pos, vtx->origin(), own->extendedShadowOffset());
+                V2d_Sum(pos, vtx.origin(), own->extendedShadowOffset());
                 drawPoint(pos, 1, yellow);
 
-                V2d_Sum(pos, vtx->origin(), own->innerShadowOffset());
+                V2d_Sum(pos, vtx.origin(), own->innerShadowOffset());
                 drawPoint(pos, 1, red);
 
                 own = &own->next();

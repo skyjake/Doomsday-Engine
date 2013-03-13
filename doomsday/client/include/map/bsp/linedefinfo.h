@@ -52,7 +52,7 @@ struct LineDefInfo
     Q_DECLARE_FLAGS(Flags, Flag)
 
     /// The map's definition of this line segment.
-    LineDef* lineDef;
+    LineDef *lineDef;
 
     Flags flags;
 
@@ -60,18 +60,18 @@ struct LineDefInfo
     int validCount;
 
     /// If the line is used for a window effect, this is the sector on the back side.
-    Sector* windowEffect;
+    Sector *windowEffect;
 
-    explicit LineDefInfo(LineDef* _lineDef, coord_t distEpsilon = 0.0001)
+    explicit LineDefInfo(LineDef *_lineDef, coord_t distEpsilon = 0.0001)
         : lineDef(_lineDef), flags(0), validCount(0), windowEffect(0)
     {
         DENG2_ASSERT(_lineDef);
-        const Vertex* start = lineDef->L_v1;
-        const Vertex* end   = lineDef->L_v2;
+        Vertex const &from = lineDef->from();
+        Vertex const &to   = lineDef->to();
 
         // Check for zero-length line.
-        if((fabs(start->origin()[VX] - end->origin()[VX]) < distEpsilon) &&
-           (fabs(start->origin()[VY] - end->origin()[VY]) < distEpsilon))
+        if((fabs(from.origin()[VX] - to.origin()[VX]) < distEpsilon) &&
+           (fabs(from.origin()[VY] - to.origin()[VY]) < distEpsilon))
             flags |= ZeroLength;
 
         if(lineDef->L_backsidedef && lineDef->L_frontsidedef)

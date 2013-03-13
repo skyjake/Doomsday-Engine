@@ -245,8 +245,8 @@ static void writeLine(GameMap* map, uint idx)
     int i;
     LineDef* l = &map->lineDefs[idx];
 
-    writeLong((long) (map->vertexes.indexOf(static_cast<Vertex const *>(l->v[0])) + 1));
-    writeLong((long) (map->vertexes.indexOf(static_cast<Vertex const *>(l->v[1])) + 1));
+    writeLong((long) (map->vertexes.indexOf(static_cast<Vertex const *>(l->_v[0])) + 1));
+    writeLong((long) (map->vertexes.indexOf(static_cast<Vertex const *>(l->_v[1])) + 1));
     writeLong(l->flags);
     writeByte(l->inFlags);
     writeFloat(l->direction[VX]);
@@ -267,8 +267,8 @@ static void writeLine(GameMap* map, uint idx)
         writeLong(l->L_sector(i)? (GameMap_SectorIndex(map, static_cast<Sector *>(l->L_sector(i))) + 1) : 0);
         writeLong(l->L_sidedef(i)? (GameMap_SideDefIndex(map, l->L_sidedef(i)) + 1) : 0);
 
-        writeLong(l->L_side(i).hedgeLeft? (GameMap_HEdgeIndex(map, l->L_side(i).hedgeLeft)  + 1) : 0);
-        writeLong(l->L_side(i).hedgeRight? (GameMap_HEdgeIndex(map, l->L_side(i).hedgeRight) + 1) : 0);
+        writeLong(l->side(i).hedgeLeft? (GameMap_HEdgeIndex(map, l->side(i).hedgeLeft)  + 1) : 0);
+        writeLong(l->side(i).hedgeRight? (GameMap_HEdgeIndex(map, l->side(i).hedgeRight) + 1) : 0);
     }
 }
 
@@ -277,8 +277,8 @@ static void readLine(GameMap* map, uint idx)
     int i;
     LineDef* l = &map->lineDefs[idx];
 
-    l->v[0] = &map->vertexes[(unsigned) (readLong() - 1)];
-    l->v[1] = &map->vertexes[(unsigned) (readLong() - 1)];
+    l->_v[0] = &map->vertexes[(unsigned) (readLong() - 1)];
+    l->_v[1] = &map->vertexes[(unsigned) (readLong() - 1)];
     l->flags = (int) readLong();
     l->inFlags = readByte();
     l->direction[VX] = readFloat();
@@ -306,10 +306,10 @@ static void readLine(GameMap* map, uint idx)
         l->L_sidedef(i) = (index? GameMap_SideDef(map, index-1) : NULL);
 
         index = readLong();
-        l->L_side(i).hedgeLeft  = (index? GameMap_HEdge(map, index-1) : NULL);
+        l->side(i).hedgeLeft  = (index? GameMap_HEdge(map, index-1) : NULL);
 
         index = readLong();
-        l->L_side(i).hedgeRight = (index? GameMap_HEdge(map, index-1) : NULL);
+        l->side(i).hedgeRight = (index? GameMap_HEdge(map, index-1) : NULL);
     }
 }
 
@@ -935,7 +935,7 @@ static void writePolyobj(GameMap* map, uint idx)
     for(i = 0; i < p->lineCount; ++i)
     {
         LineDef* line = p->lines[i];
-        HEdge* he = line->L_frontside.hedgeLeft;
+        HEdge* he = line->front().hedgeLeft;
 
         writeLong(map->vertexes.indexOf(static_cast<Vertex const *>(he->v[0])) + 1);
         writeLong(map->vertexes.indexOf(static_cast<Vertex const *>(he->v[1])) + 1);
@@ -995,7 +995,7 @@ static void readPolyobj(GameMap* map, uint idx)
         he->side = (readByte()? 1 : 0);
 
         line = he->lineDef;
-        line->L_frontside.hedgeLeft = line->L_frontside.hedgeRight = he;
+        line->front().hedgeLeft = line->front().hedgeRight = he;
 
         p->lines[i] = line;
     }

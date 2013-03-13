@@ -255,10 +255,10 @@ struct Partitioner::Instance
 
         // Look for window effects by checking for an odd number of one-sided
         // linedefs owners for a single vertex. Idea courtesy of Graham Jackson.
-        VertexInfo const& v1Info = vertexInfo(*line->L_v1);
+        VertexInfo const& v1Info = vertexInfo(line->v1());
         if((v1Info.oneSidedOwnerCount % 2) == 1 && (v1Info.oneSidedOwnerCount + v1Info.twoSidedOwnerCount) > 1) return true;
 
-        VertexInfo const& v2Info = vertexInfo(*line->L_v2);
+        VertexInfo const& v2Info = vertexInfo(line->v2());
         if((v2Info.oneSidedOwnerCount % 2) == 1 && (v2Info.oneSidedOwnerCount + v2Info.twoSidedOwnerCount) > 1) return true;
 
         return false;
@@ -280,24 +280,25 @@ struct Partitioner::Instance
     };
 
     /// @return  Always @c 0 (used as a traverser callback).
-    static int testForWindowEffectWorker(LineDef* line, void* parameters = 0)
+    static int testForWindowEffectWorker(LineDef *line, void *parameters = 0)
     {
-        testForWindowEffectParams& p = *reinterpret_cast<testForWindowEffectParams*>(parameters);
+        testForWindowEffectParams &p = *reinterpret_cast<testForWindowEffectParams *>(parameters);
 
         if(line == p.testLine) return false;
-        if(LINE_SELFREF(line) /*|| line->buildData.overlap || line->length <= 0*/) return false;
+        if(line->isSelfReferencing()) return false;
+        //if(line->buildData.overlap || line->length <= 0) return false;
 
         double dist = 0;
-        Sector* hitSector = 0;
+        Sector *hitSector = 0;
         bool isFront = false;
         if(p.castHoriz)
         {
             if(fabs(line->direction[VY]) < DIST_EPSILON) return false;
 
-            if((MAX_OF(line->L_v1origin[VY], line->L_v2origin[VY]) < p.mY - DIST_EPSILON) ||
-               (MIN_OF(line->L_v1origin[VY], line->L_v2origin[VY]) > p.mY + DIST_EPSILON)) return false;
+            if((de::max(line->v1Origin()[VY], line->v2Origin()[VY]) < p.mY - DIST_EPSILON) ||
+               (de::min(line->v1Origin()[VY], line->v2Origin()[VY]) > p.mY + DIST_EPSILON)) return false;
 
-            dist = (line->L_v1origin[VX] + (p.mY - line->L_v1origin[VY]) * line->direction[VX] / line->direction[VY]) - p.mX;
+            dist = (line->v1Origin()[VX] + (p.mY - line->v1Origin()[VY]) * line->direction[VX] / line->direction[VY]) - p.mX;
 
             isFront = ((p.testLine->direction[VY] > 0) != (dist > 0));
 
@@ -310,10 +311,10 @@ struct Partitioner::Instance
         {
             if(fabs(line->direction[VX]) < DIST_EPSILON) return false;
 
-            if((MAX_OF(line->L_v1origin[VX], line->L_v2origin[VX]) < p.mX - DIST_EPSILON) ||
-               (MIN_OF(line->L_v1origin[VX], line->L_v2origin[VX]) > p.mX + DIST_EPSILON)) return false;
+            if((de::max(line->v1Origin()[VX], line->v2Origin()[VX]) < p.mX - DIST_EPSILON) ||
+               (de::min(line->v1Origin()[VX], line->v2Origin()[VX]) > p.mX + DIST_EPSILON)) return false;
 
-            dist = (line->L_v1origin[VY] + (p.mX - line->L_v1origin[VX]) * line->direction[VY] / line->direction[VX]) - p.mY;
+            dist = (line->v1Origin()[VY] + (p.mX - line->v1Origin()[VX]) * line->direction[VY] / line->direction[VX]) - p.mY;
 
             isFront = ((p.testLine->direction[VX] > 0) == (dist > 0));
 
@@ -346,28 +347,28 @@ struct Partitioner::Instance
         return false;
     }
 
-    void testForWindowEffect(LineDefInfo& lineInfo)
+    void testForWindowEffect(LineDefInfo &lineInfo)
     {
-        LineDef* line = lineInfo.lineDef;
+        LineDef *line = lineInfo.lineDef;
         if(!lineMightHaveWindowEffect(line)) return;
 
         testForWindowEffectParams p;
         p.frontDist = p.backDist = DDMAXFLOAT;
         p.testLine = line;
-        p.mX = (line->L_v1origin[VX] + line->L_v2origin[VX]) / 2.0;
-        p.mY = (line->L_v1origin[VY] + line->L_v2origin[VY]) / 2.0;
+        p.mX = (line->v1Origin()[VX] + line->v2Origin()[VX]) / 2.0;
+        p.mY = (line->v1Origin()[VY] + line->v2Origin()[VY]) / 2.0;
         p.castHoriz = (fabs(line->direction[VX]) < fabs(line->direction[VY])? true : false);
 
         AABoxd scanRegion = mapBounds;
         if(p.castHoriz)
         {
-            scanRegion.minY = MIN_OF(line->L_v1origin[VY], line->L_v2origin[VY]) - DIST_EPSILON;
-            scanRegion.maxY = MAX_OF(line->L_v1origin[VY], line->L_v2origin[VY]) + DIST_EPSILON;
+            scanRegion.minY = de::min(line->v1Origin()[VY], line->v2Origin()[VY]) - DIST_EPSILON;
+            scanRegion.maxY = de::max(line->v1Origin()[VY], line->v2Origin()[VY]) + DIST_EPSILON;
         }
         else
         {
-            scanRegion.minX = MIN_OF(line->L_v1origin[VX], line->L_v2origin[VX]) - DIST_EPSILON;
-            scanRegion.maxX = MAX_OF(line->L_v1origin[VX], line->L_v2origin[VX]) + DIST_EPSILON;
+            scanRegion.minX = de::min(line->v1Origin()[VX], line->v2Origin()[VX]) - DIST_EPSILON;
+            scanRegion.maxX = de::max(line->v1Origin()[VX], line->v2Origin()[VX]) + DIST_EPSILON;
         }
         validCount++;
         GameMap_LineDefsBoxIterator(map, &scanRegion, testForWindowEffectWorker, &p);
@@ -472,7 +473,7 @@ struct Partitioner::Instance
                     if(windowSec) backSec = windowSec;
                 }
 
-                front = buildHEdgesBetweenVertexes(line->L_v1, line->L_v2,
+                front = buildHEdgesBetweenVertexes(&line->v1(), &line->v2(),
                                                    frontSec, backSec, line, line);
                 angle = hedgeInfo(*front).pAngle;
 
@@ -484,8 +485,8 @@ struct Partitioner::Instance
             }
 
             // @todo edge tips should be created when half-edges are created.
-            addHEdgeTip(line->L_v1, angle,                 front, front? front->twin : 0);
-            addHEdgeTip(line->L_v2, M_InverseAngle(angle), front? front->twin : 0, front);
+            addHEdgeTip(&line->v1(), angle,                 front, front? front->twin : 0);
+            addHEdgeTip(&line->v2(), M_InverseAngle(angle), front? front->twin : 0, front);
         }
     }
 
@@ -1607,13 +1608,13 @@ struct Partitioner::Instance
         partition.clear();
     }
 
-    bool configurePartition(HEdge const* hedge)
+    bool configurePartition(HEdge const *hedge)
     {
         LOG_AS("Partitioner::configurePartition");
 
         if(!hedge) return false;
 
-        LineDef* lineDef = hedge->lineDef;
+        LineDef *lineDef = hedge->lineDef;
         if(!lineDef) return false; // A "mini hedge" is not suitable.
 
         // Clear the HEdge intercept data associated with points in the half-plane.
@@ -1622,15 +1623,15 @@ struct Partitioner::Instance
         // We can now reconfire the half-plane itself.
         setPartitionInfo(hedgeInfo(*hedge), lineDef);
 
-        Vertex const *from = lineDef->L_v(hedge->side);
-        Vertex const *to   = lineDef->L_v(hedge->side^1);
-        partition.setOrigin(from->origin());
+        Vertex const &from = lineDef->vertex(hedge->side);
+        Vertex const &to   = lineDef->vertex(hedge->side^1);
+        partition.setOrigin(from.origin());
 
-        vec2d_t angle; V2d_Subtract(angle, to->origin(), from->origin());
+        vec2d_t angle; V2d_Subtract(angle, to.origin(), from.origin());
         partition.setDirection(angle);
 
         //LOG_DEBUG("hedge %p [%1.1f, %1.1f] -> [%1.1f, %1.1f].")
-        //    << de::dintptr(best) << from->origin()[VX] << from->origin()[VY]
+        //    << de::dintptr(best) << from.origin()[VX] << from.origin()[VY]
         //    << angle[VX] << angle[VY];
 
         return true;
@@ -1746,7 +1747,7 @@ struct Partitioner::Instance
             if(sector)
             {
                 // The first sector from a non self-referencing line is our best choice.
-                if(!LINE_SELFREF(line)) return sector;
+                if(!line->isSelfReferencing()) return sector;
 
                 // Remember the self-referencing choice in case we've no better option.
                 if(!selfRefChoice)
@@ -1793,7 +1794,7 @@ struct Partitioner::Instance
                 /// @todo Kludge: This should not be done here!
                 if(hedge->lineDef)
                 {
-                    lineside_t *side = HEDGE_SIDE(hedge);
+                    LineDef::Side *side = HEDGE_SIDE(hedge);
                     // Already processed?
                     if(!side->hedgeLeft)
                     {
@@ -2554,17 +2555,17 @@ static void printPartitionIntercepts(HPlane const& partition)
 })
 #endif
 
-static void initAABoxFromEditableLineDefVertexes(AABoxd* aaBox, const LineDef* line)
+static void initAABoxFromEditableLineDefVertexes(AABoxd *aaBox, LineDef const *line)
 {
-    const coord_t* from = line->L_v1origin;
-    const coord_t* to   = line->L_v2origin;
-    aaBox->minX = MIN_OF(from[VX], to[VX]);
-    aaBox->minY = MIN_OF(from[VY], to[VY]);
-    aaBox->maxX = MAX_OF(from[VX], to[VX]);
-    aaBox->maxY = MAX_OF(from[VY], to[VY]);
+    const_pvec2d_t &from = line->fromOrigin();
+    const_pvec2d_t &to   = line->toOrigin();
+    aaBox->minX = de::min(from[VX], to[VX]);
+    aaBox->minY = de::min(from[VY], to[VY]);
+    aaBox->maxX = de::max(from[VX], to[VX]);
+    aaBox->maxY = de::max(from[VY], to[VY]);
 }
 
-static AABoxd findMapBounds2(GameMap* map)
+static AABoxd findMapBounds2(GameMap *map)
 {
     DENG2_ASSERT(map);
     AABoxd bounds;
@@ -2572,7 +2573,7 @@ static AABoxd findMapBounds2(GameMap* map)
 
     for(uint i = 0; i < GameMap_LineDefCount(map); ++i)
     {
-        LineDef* line = GameMap_LineDef(map, i);
+        LineDef *line = GameMap_LineDef(map, i);
 
         // Do not consider zero-length LineDefs (already screened at a higher level).
         //if(lineDefInfo(*line).flags.testFlag(LineDefInfo::ZEROLENGTH)) continue;
@@ -2602,7 +2603,7 @@ static AABoxd findMapBounds2(GameMap* map)
     return bounds;
 }
 
-static AABoxd findMapBounds(GameMap* map)
+static AABoxd findMapBounds(GameMap *map)
 {
     AABoxd mapBounds = findMapBounds2(map);
     LOG_VERBOSE("Map bounds:")
@@ -2611,13 +2612,13 @@ static AABoxd findMapBounds(GameMap* map)
     return mapBounds;
 }
 
-static AABox blockmapBounds(AABoxd const& mapBounds)
+static AABox blockmapBounds(AABoxd const &mapBounds)
 {
     AABox mapBoundsi;
-    mapBoundsi.minX = (int) floor(mapBounds.minX);
-    mapBoundsi.minY = (int) floor(mapBounds.minY);
-    mapBoundsi.maxX = (int)  ceil(mapBounds.maxX);
-    mapBoundsi.maxY = (int)  ceil(mapBounds.maxY);
+    mapBoundsi.minX = int( de::floor(mapBounds.minX) );
+    mapBoundsi.minY = int( de::floor(mapBounds.minY) );
+    mapBoundsi.maxX = int(  de::ceil(mapBounds.maxX) );
+    mapBoundsi.maxY = int(  de::ceil(mapBounds.maxY) );
 
     AABox blockBounds;
     blockBounds.minX = mapBoundsi.minX - (mapBoundsi.minX & 0x7);

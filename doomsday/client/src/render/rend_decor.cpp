@@ -482,8 +482,8 @@ static void plotSourcesForLineDef(LineDef &line, byte side, SideDefSection secti
     if(!R_FindBottomTop2(section, line.flags, frontSec, backSec, frontDef, backDef,
                          &low, &hi, matOffset)) return;
 
-    Vector3d v1(line.L_vorigin(side  )[VX], line.L_vorigin(side  )[VY], hi);
-    Vector3d v2(line.L_vorigin(side^1)[VX], line.L_vorigin(side^1)[VY], low);
+    Vector3d v1(line.vertexOrigin(side  )[VX], line.vertexOrigin(side  )[VY], hi);
+    Vector3d v2(line.vertexOrigin(side^1)[VX], line.vertexOrigin(side^1)[VY], low);
 
     updateSurfaceDecorations(suf, Vector2f(-matOffset[0], -matOffset[1]), v1, v2);
 }

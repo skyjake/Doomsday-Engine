@@ -728,7 +728,7 @@ static void renderParticles(int rtype, boolean withBlend)
 
                 // Calculate a new center point (project onto the wall).
                 V2d_Set(origin, FIX2FLT(pt->origin[VX]), FIX2FLT(pt->origin[VY]));
-                V2d_ProjectOnLine(projected, origin, pt->contact->L_v1origin, pt->contact->direction);
+                V2d_ProjectOnLine(projected, origin, pt->contact->v1Origin(), pt->contact->direction);
 
                 // Move away from the wall to avoid the worst Z-fighting.
                 double const gap = -1; // 1 map unit.

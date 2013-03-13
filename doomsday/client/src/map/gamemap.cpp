@@ -150,7 +150,7 @@ void GameMap_SetTraceOpening(GameMap *map, LineDef *line)
     // Is the linedef part of this map?
     if(!line || GameMap_LineDefIndex(map, line) < 0) return; // Odd...
 
-    line->setTraceOpening(&map->traceOpening);
+    line->configureTraceOpening(&map->traceOpening);
 }
 
 int GameMap_AmbientLightLevel(GameMap *map)
@@ -436,7 +436,7 @@ static void initPolyobj(Polyobj *po)
             back->SW_bottominflags |= SUIF_NO_RADIO;
         }
 
-        V2d_Sum(avg, avg, line->L_v1origin);
+        V2d_Sum(avg, avg, line->v1Origin());
     }
     V2d_Scale(avg, 1.f / po->lineCount);
 

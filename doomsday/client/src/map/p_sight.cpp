@@ -54,8 +54,8 @@ static boolean interceptLineDef(LineDef const *li, losdata_t *los, divline_t *dl
        li->aaBox.maxY < los->aaBox.minY)
         return false;
 
-    if(Divline_PointOnSide(&los->trace, li->L_v1origin) ==
-       Divline_PointOnSide(&los->trace, li->L_v2origin))
+    if(Divline_PointOnSide(&los->trace, li->v1Origin()) ==
+       Divline_PointOnSide(&los->trace, li->v2Origin()))
         return false; // Not crossed.
 
     divline_t *dlPtr, localDL;
@@ -64,7 +64,7 @@ static boolean interceptLineDef(LineDef const *li, losdata_t *los, divline_t *dl
     else
         dlPtr = &localDL;
 
-    li->setDivline(dlPtr);
+    li->configureDivline(dlPtr);
 
     if(Divline_PointXYOnSide(dlPtr, FIX2FLT(los->trace.origin[VX]), FIX2FLT(los->trace.origin[VY])) ==
        Divline_PointOnSide(dlPtr, los->to))

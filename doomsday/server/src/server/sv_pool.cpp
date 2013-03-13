@@ -1541,11 +1541,11 @@ coord_t Sv_SideDistance(int index, int deltaFlags, ownerinfo_t const *info)
 }
 
 /**
- * @return              The distance to the origin of the delta's entity.
+ * @return  The distance to the origin of the delta's entity.
  */
-coord_t Sv_DeltaDistance(const void* deltaPtr, const ownerinfo_t* info)
+coord_t Sv_DeltaDistance(void const *deltaPtr, ownerinfo_t const *info)
 {
-    const delta_t* delta = (delta_t const *) deltaPtr;
+    delta_t const *delta = (delta_t const *) deltaPtr;
 
     if(delta->type == DT_MOBJ)
     {
@@ -1557,8 +1557,7 @@ coord_t Sv_DeltaDistance(const void* deltaPtr, const ownerinfo_t* info)
     if(delta->type == DT_PLAYER)
     {
         // Use the player's actual position.
-        const mobj_t* mo = ddPlayers[delta->id].shared.mo;
-
+        mobj_t const *mo = ddPlayers[delta->id].shared.mo;
         if(mo)
         {
             return Sv_MobjDistance(mo, info, true);
@@ -1572,25 +1571,24 @@ coord_t Sv_DeltaDistance(const void* deltaPtr, const ownerinfo_t* info)
 
     if(delta->type == DT_SIDE)
     {
-        SideDef* sideDef = GameMap_SideDef(theMap, delta->id);
-        LineDef* line = sideDef->line;
-        vec2d_t origin;
-        V2d_Set(origin, line->L_v1origin[VX] + line->direction[VX] / 2,
-                        line->L_v1origin[VY] + line->direction[VY] / 2);
+        SideDef *sideDef = GameMap_SideDef(theMap, delta->id);
+        LineDef *line = sideDef->line;
+        vec2d_t origin; V2d_Set(origin, line->v1Origin()[VX] + line->direction[VX] / 2,
+                                        line->v1Origin()[VY] + line->direction[VY] / 2);
         return M_ApproxDistance(info->origin[VX] - origin[VX],
                                 info->origin[VY] - origin[VY]);
     }
 
     if(delta->type == DT_POLY)
     {
-        Polyobj* po = GameMap_PolyobjByID(theMap, delta->id);
+        Polyobj *po = GameMap_PolyobjByID(theMap, delta->id);
         return M_ApproxDistance(info->origin[VX] - po->origin[VX],
                                 info->origin[VY] - po->origin[VY]);
     }
 
     if(delta->type == DT_MOBJ_SOUND)
     {
-        const sounddelta_t* sound = (sounddelta_t const *) deltaPtr;
+        sounddelta_t const *sound = (sounddelta_t const *) deltaPtr;
         return Sv_MobjDistance(sound->mobj, info, true);
     }
 
@@ -1606,7 +1604,7 @@ coord_t Sv_DeltaDistance(const void* deltaPtr, const ownerinfo_t* info)
 
     if(delta->type == DT_POLY_SOUND)
     {
-        Polyobj* po = GameMap_PolyobjByID(theMap, delta->id);
+        Polyobj *po = GameMap_PolyobjByID(theMap, delta->id);
         return M_ApproxDistance(info->origin[VX] - po->origin[VX],
                                 info->origin[VY] - po->origin[VY]);
     }

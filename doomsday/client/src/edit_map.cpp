@@ -550,7 +550,7 @@ static void buildSectorLineLists(GameMap* map)
             totallinks++;
         }
 
-        if(li->L_backsector && !LINE_SELFREF(li))
+        if(li->L_backsector && !li->isSelfReferencing())
         {
             link = (linelink_t*) ZBlockSet_Allocate(lineLinksBlockSet);
 
@@ -724,13 +724,13 @@ static void finishLineDefs(GameMap *map)
     for(uint i = 0; i < map->lineDefCount(); ++i)
     {
         LineDef &line = map->lineDefs[i];
-        if(!line.L_frontside.hedgeLeft) continue;
+        if(!line.front().hedgeLeft) continue;
 
-        HEdge const *leftHEdge  = line.L_frontside.hedgeLeft;
-        HEdge const *rightHEdge = line.L_frontside.hedgeRight;
+        HEdge const *leftHEdge  = line.front().hedgeLeft;
+        HEdge const *rightHEdge = line.front().hedgeRight;
 
-        line.v[0] = leftHEdge->HE_v1;
-        line.v[1] = rightHEdge->HE_v2;
+        line._v[0] = leftHEdge->HE_v1;
+        line._v[1] = rightHEdge->HE_v2;
 
         line.updateSlope();
         line.updateAABox();
@@ -801,10 +801,10 @@ static int lineAngleSorter(void const *a, void const *b)
         else
         {
             LineDef *line = &own[i]->lineDef();
-            Vertex *otherVtx = line->L_v(line->L_v1 == rootVtx? 1:0);
+            Vertex const &otherVtx = line->vertex(&line->v1() == rootVtx? 1:0);
 
-            fixed_t dx = otherVtx->origin()[VX] - rootVtx->origin()[VX];
-            fixed_t dy = otherVtx->origin()[VY] - rootVtx->origin()[VY];
+            fixed_t dx = otherVtx.origin()[VX] - rootVtx->origin()[VX];
+            fixed_t dy = otherVtx.origin()[VY] - rootVtx->origin()[VY];
 
             own[i]->_angle = angles[i] = bamsAtan2(-100 *dx, 100 * dy);
 
@@ -933,7 +933,7 @@ static void setVertexLineOwner(Vertex *vtx, LineDef *lineptr, LineOwner **storag
     vtx->_lineOwners = newOwner;
 
     // Link the line to its respective owner node.
-    if(vtx == lineptr->L_v1)
+    if(vtx == &lineptr->v1())
         lineptr->L_vo1 = newOwner;
     else
         lineptr->L_vo2 = newOwner;
@@ -958,8 +958,7 @@ static void buildVertexOwnerRings(EditMap *map)
 
         for(uint p = 0; p < 2; ++p)
         {
-            Vertex *vtx = line->L_v(p);
-            setVertexLineOwner(vtx, line, &allocator);
+            setVertexLineOwner(&line->vertex(p), line, &allocator);
         }
     }
 }
@@ -1178,12 +1177,12 @@ static void hardenPolyobjs(GameMap* dest, EditMap* src)
 
             //hedge->header.type = DMU_HEDGE;
             hedge->lineDef = line;
-            hedge->length = V2d_Distance(line->L_v2origin, line->L_v1origin);
+            hedge->length = V2d_Distance(line->v2Origin(), line->v1Origin());
             hedge->twin = NULL;
             hedge->bspLeaf = NULL;
             hedge->sector = line->L_frontsector;
 
-            line->L_frontside.hedgeLeft = line->L_frontside.hedgeRight = hedge;
+            line->front().hedgeLeft = line->front().hedgeRight = hedge;
 
             destP->lines[j] = line;
         }
@@ -1574,22 +1573,22 @@ boolean MPE_End(void)
     // Finish the polyobjs (after the vertexes are hardened).
     for(i = 0; i < gamemap->numPolyObjs; ++i)
     {
-        Polyobj* po = gamemap->polyObjs[i];
-        LineDef** lineIter;
+        Polyobj *po = gamemap->polyObjs[i];
+        LineDef **lineIter;
         uint n = 0;
 
         for(lineIter = po->lines; *lineIter; lineIter++, n++)
         {
-            LineDef* line = *lineIter;
-            HEdge* hedge = line->L_frontside.hedgeLeft;
+            LineDef *line = *lineIter;
+            HEdge *hedge = line->front().hedgeLeft;
 
-            hedge->HE_v1 = line->L_v1;
-            hedge->HE_v2 = line->L_v2;
+            hedge->HE_v1 = &line->v1();
+            hedge->HE_v2 = &line->v2();
 
             // The original Pts are based off the anchor Pt, and are unique
             // to each hedge, not each linedef.
-            po->originalPts[n].origin[VX] = line->L_v1origin[VX] - po->origin[VX];
-            po->originalPts[n].origin[VY] = line->L_v1origin[VY] - po->origin[VY];
+            po->originalPts[n].origin[VX] = line->v1Origin()[VX] - po->origin[VX];
+            po->originalPts[n].origin[VY] = line->v1Origin()[VY] - po->origin[VY];
         }
     }
 
@@ -1895,11 +1894,11 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector,
     }
 
     l = createLine();
-    l->L_v1 = vtx1;
-    l->L_v2 = vtx2;
+    l->_v[0] = vtx1;
+    l->_v[1] = vtx2;
 
-    l->L_v1->_buildData.refCount++;
-    l->L_v2->_buildData.refCount++;
+    l->_v[0]->_buildData.refCount++;
+    l->_v[1]->_buildData.refCount++;
 
     l->L_frontsector = (frontSector == 0? NULL: e_map->sectors[frontSector-1]);
     l->L_backsector  = (backSector  == 0? NULL: e_map->sectors[backSector-1]);

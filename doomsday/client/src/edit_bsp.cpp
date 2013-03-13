@@ -132,10 +132,10 @@ static void finishHEdges(GameMap *map)
 
         if(hedge->lineDef)
         {
-            Vertex *vtx = hedge->lineDef->L_v(hedge->side);
+            Vertex const &vtx = hedge->lineDef->vertex(hedge->side);
 
             hedge->sector = hedge->lineDef->L_sector(hedge->side);
-            hedge->offset = V2d_Distance(hedge->HE_v1origin, vtx->origin());
+            hedge->offset = V2d_Distance(hedge->HE_v1origin, vtx.origin());
         }
 
         hedge->angle = bamsAtan2(int( hedge->HE_v2origin[VY] - hedge->HE_v1origin[VY] ),
@@ -281,19 +281,19 @@ static void hardenVertexes(BspBuilder& builder, GameMap* map,
     }
 }
 
-static void updateVertexLinks(GameMap* map)
+static void updateVertexLinks(GameMap *map)
 {
     for(uint i = 0; i < map->lineDefCount(); ++i)
     {
-        LineDef* line = &map->lineDefs[i];
+        LineDef *line = &map->lineDefs[i];
 
-        line->L_v1 = &map->vertexes[line->L_v1->_buildData.index - 1];
-        line->L_v2 = &map->vertexes[line->L_v2->_buildData.index - 1];
+        line->_v[0] = &map->vertexes[line->_v[0]->_buildData.index - 1];
+        line->_v[1] = &map->vertexes[line->_v[1]->_buildData.index - 1];
     }
 
     for(uint i = 0; i < map->numHEdges; ++i)
     {
-        HEdge* hedge = map->hedges[i];
+        HEdge *hedge = map->hedges[i];
 
         hedge->HE_v1 = &map->vertexes[hedge->v[0]->_buildData.index - 1];
         hedge->HE_v2 = &map->vertexes[hedge->v[1]->_buildData.index - 1];

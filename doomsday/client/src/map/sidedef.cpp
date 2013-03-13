@@ -55,8 +55,8 @@ void SideDef::updateSurfaceTangents()
 
     byte sid = line->L_frontsidedef == this? FRONT : BACK;
     Surface *surface = &SW_topsurface;
-    surface->normal[VY] = (line->L_vorigin(sid  )[VX] - line->L_vorigin(sid^1)[VX]) / line->length;
-    surface->normal[VX] = (line->L_vorigin(sid^1)[VY] - line->L_vorigin(sid  )[VY]) / line->length;
+    surface->normal[VY] = (line->vertexOrigin(sid  )[VX] - line->vertexOrigin(sid^1)[VX]) / line->length;
+    surface->normal[VX] = (line->vertexOrigin(sid^1)[VY] - line->vertexOrigin(sid  )[VY]) / line->length;
     surface->normal[VZ] = 0;
     V3f_BuildTangents(surface->tangent, surface->bitangent, surface->normal);
 

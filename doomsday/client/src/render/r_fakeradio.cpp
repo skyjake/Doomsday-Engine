@@ -109,7 +109,7 @@ void Rend_RadioUpdateVertexShadowOffsets(Vertex *vtx)
         LineDef *lineB = &own->lineDef();
         LineDef *lineA = &own->next().lineDef();
 
-        if(lineB->L_v1 == vtx)
+        if(&lineB->v1() == vtx)
         {
             right[VX] = lineB->direction[VX];
             right[VY] = lineB->direction[VY];
@@ -120,7 +120,7 @@ void Rend_RadioUpdateVertexShadowOffsets(Vertex *vtx)
             right[VY] = -lineB->direction[VY];
         }
 
-        if(lineA->L_v1 == vtx)
+        if(&lineA->v1() == vtx)
         {
             left[VX] = -lineA->direction[VX];
             left[VY] = -lineA->direction[VY];
@@ -187,7 +187,7 @@ boolean Rend_RadioIsShadowingLineDef(LineDef *line)
 {
     if(line)
     {
-        if(!LINE_SELFREF(line) && !(line->inFlags & LF_POLYOBJ) &&
+        if(!line->isSelfReferencing() && !(line->inFlags & LF_POLYOBJ) &&
            !(&line->vo[0]->next().lineDef() == line ||
              &line->vo[1]->next().lineDef() == line))
         {
@@ -202,14 +202,7 @@ void Rend_RadioInitForMap()
 {
     uint startTime = Timer_RealMilliseconds();
 
-    shadowlinkerparms_t data;
-    Vertex *vtx0, *vtx1;
-    LineOwner *vo0, *vo1;
-    AABoxd bounds;
-    vec2d_t point;
-    uint i, j;
-
-    for(i = 0; i < NUM_VERTEXES; ++i)
+    for(uint i = 0; i < NUM_VERTEXES; ++i)
     {
         Rend_RadioUpdateVertexShadowOffsets(VERTEX_PTR(i));
     }
@@ -228,28 +221,32 @@ void Rend_RadioInitForMap()
      */
     shadowLinksBlockSet = ZBlockSet_New(sizeof(shadowlink_t), 1024, PU_MAP);
 
-    for(i = 0; i < NUM_LINEDEFS; ++i)
+    shadowlinkerparms_t data;
+    AABoxd bounds;
+    vec2d_t point;
+
+    for(uint i = 0; i < NUM_LINEDEFS; ++i)
     {
         LineDef *line = LINE_PTR(i);
         if(!Rend_RadioIsShadowingLineDef(line)) continue;
 
-        for(j = 0; j < 2; ++j)
+        for(uint j = 0; j < 2; ++j)
         {
             if(!line->L_sector(j) || !line->L_sidedef(j)) continue;
 
-            vtx0 = line->L_v(j);
-            vtx1 = line->L_v(j^1);
-            vo0 = &line->L_vo(j)->next();
-            vo1 = &line->L_vo(j^1)->prev();
+            Vertex &vtx0 = line->vertex(j);
+            Vertex &vtx1 = line->vertex(j^1);
+            LineOwner *vo0 = &line->L_vo(j)->next();
+            LineOwner *vo1 = &line->L_vo(j^1)->prev();
 
             // Use the extended points, they are wider than inoffsets.
-            V2d_Copy(point, vtx0->origin());
+            V2d_Copy(point, vtx0.origin());
             V2d_InitBox(bounds.arvec2, point);
 
             V2d_Sum(point, point, vo0->extendedShadowOffset());
             V2d_AddToBox(bounds.arvec2, point);
 
-            V2d_Copy(point, vtx1->origin());
+            V2d_Copy(point, vtx1.origin());
             V2d_AddToBox(bounds.arvec2, point);
 
             V2d_Sum(point, point, vo1->extendedShadowOffset());

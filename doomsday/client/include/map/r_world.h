@@ -88,7 +88,7 @@ void R_MapInitSurfaceLists(void);
  * is the leftmost vertex and @c verts[1] is the rightmost vertex, when the
  * @a line lies at the edge of @a sector.
  */
-void R_OrderVertices(LineDef const *line, Sector const *sector, Vertex *verts[2]);
+void R_OrderVertices(LineDef *line, Sector const *sector, Vertex *verts[2]);
 
 /**
  * Determine the map space Z coordinates of a wall section.

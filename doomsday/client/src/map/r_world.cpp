@@ -473,10 +473,10 @@ void GameMap_InitSkyFix(GameMap *map)
  */
 LineOwner *R_GetVtxLineOwner(Vertex const *v, LineDef const *line)
 {
-    if(v == line->L_v1)
+    if(v == &line->v1())
         return line->L_vo1;
 
-    if(v == line->L_v2)
+    if(v == &line->v2())
         return line->L_vo2;
 
     return 0;
@@ -500,11 +500,11 @@ DENG_EXTERN_C void R_SetupFogDefaults()
     Con_Execute(CMDS_DDAY,"fog off", true, false);
 }
 
-void R_OrderVertices(LineDef const *line, Sector const *sector, Vertex *verts[2])
+void R_OrderVertices(LineDef *line, Sector const *sector, Vertex *verts[2])
 {
     byte edge = (sector == line->L_frontsector? 0:1);
-    verts[0] = line->L_v(edge);
-    verts[1] = line->L_v(edge^1);
+    verts[0] = &line->vertex(edge);
+    verts[1] = &line->vertex(edge^1);
 }
 
 boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
@@ -817,7 +817,7 @@ LineDef *R_FindSolidLineNeighbor(Sector const *sector, LineDef const *line,
         if(!other->L_frontsidedef || !other->L_backsidedef)
             return other;
 
-        if(!LINE_SELFREF(other) &&
+        if(!other->isSelfReferencing() &&
            (other->L_frontsector->SP_floorvisheight >= sector->SP_ceilvisheight ||
             other->L_frontsector->SP_ceilvisheight <= sector->SP_floorvisheight ||
             other->L_backsector->SP_floorvisheight >= sector->SP_ceilvisheight ||
@@ -897,7 +897,7 @@ LineDef *R_FindLineAlignNeighbor(Sector const *sec, LineDef const *line,
     if(other == line)
         return NULL;
 
-    if(!LINE_SELFREF(other))
+    if(!other->isSelfReferencing())
     {
         diff = line->angle - other->angle;
 
@@ -1338,7 +1338,7 @@ static void R_UpdateLinedefsOfSector(Sector *sec)
     for(uint i = 0; i < sec->lineDefCount; ++i)
     {
         LineDef *li = sec->lineDefs[i];
-        if(LINE_SELFREF(li)) continue;
+        if(li->isSelfReferencing()) continue;
 
         SideDef *front    = li->L_frontsidedef;
         SideDef *back     = li->L_backsidedef;

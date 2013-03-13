@@ -541,8 +541,8 @@ int PIT_AddLineDefIntercepts(LineDef* lineDef, void* /*parameters*/)
     if(traceLOS->direction[VX] >  FRACUNIT * 16 || traceLOS->direction[VY] >  FRACUNIT * 16 ||
        traceLOS->direction[VX] < -FRACUNIT * 16 || traceLOS->direction[VY] < -FRACUNIT * 16)
     {
-        s1 = Divline_PointOnSide(traceLOS, lineDef->L_v1origin);
-        s2 = Divline_PointOnSide(traceLOS, lineDef->L_v2origin);
+        s1 = Divline_PointOnSide(traceLOS, lineDef->v1Origin());
+        s2 = Divline_PointOnSide(traceLOS, lineDef->v2Origin());
     }
     else
     {
@@ -553,7 +553,7 @@ int PIT_AddLineDefIntercepts(LineDef* lineDef, void* /*parameters*/)
     if(s1 == s2) return false;
 
     // Calculate interception point.
-    lineDef->setDivline(&dl);
+    lineDef->configureDivline(&dl);
     distance = FIX2FLT(Divline_Intersection(&dl, traceLOS));
     // On the correct side of the trace origin?
     if(!(distance < 0))

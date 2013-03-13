@@ -1167,7 +1167,7 @@ boolean LOIT_ClipLumObjBySight(void *data, void *context)
         for(uint i = 0; i < po->lineCount; ++i)
         {
             LineDef *line = po->lines[i];
-            HEdge *hedge = line->L_frontside.hedgeLeft;
+            HEdge *hedge = line->front().hedgeLeft;
 
             // Ignore hedges facing the wrong way.
             if(hedge->frameFlags & HEDGEINF_FACINGFRONT)

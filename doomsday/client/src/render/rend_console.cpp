@@ -742,7 +742,7 @@ static void drawConsole(float consoleAlpha)
     // The console history log is drawn from bottom to top.
     y = ConsoleY * gtosMulY - (lineHeight * scale[1] + fontScaledY) - textOffsetY;
 
-    reqLines = MAX_OF(0, ceil(y / fontScaledY)+1);
+    reqLines = de::max(0, de::ceil(y / fontScaledY) + 1);
     if(reqLines != 0)
     {
         uint count, totalLines = CBuffer_NumLines(buffer);

@@ -39,73 +39,66 @@ class HEdge;
  */
 /// @addtogroup map
 ///@{
-#define L_v(n)                  v[(n)? 1:0]
-#define L_vorigin(n)            v[(n)? 1:0]->origin()
-
-#define L_v1                    L_v(0)
-#define L_v1origin              L_v(0)->origin()
-
-#define L_v2                    L_v(1)
-#define L_v2origin              L_v(1)->origin()
-
 #define L_vo(n)                 vo[(n)? 1:0]
 #define L_vo1                   L_vo(0)
 #define L_vo2                   L_vo(1)
 
-#define L_frontside             sides[0]
-#define L_backside              sides[1]
-#define L_side(n)               sides[(n)? 1:0]
-
-#define L_sidedef(n)            L_side(n).sideDef
+#define L_sidedef(n)            side(n).sideDef
 #define L_frontsidedef          L_sidedef(FRONT)
 #define L_backsidedef           L_sidedef(BACK)
 
-#define L_sector(n)             L_side(n).sector
+#define L_sector(n)             side(n).sector
 #define L_frontsector           L_sector(FRONT)
 #define L_backsector            L_sector(BACK)
 ///@}
-
-// Is this line self-referencing (front sec == back sec)?
-#define LINE_SELFREF(l)         ((l)->L_frontsidedef && (l)->L_backsidedef && \
-                                 (l)->L_frontsector == (l)->L_backsector)
 
 // Internal flags:
 #define LF_POLYOBJ              0x1 ///< Line is part of a polyobject.
 #define LF_BSPWINDOW            0x2 ///< Line produced a BSP window. @todo Refactor away.
 
-// Logical sides:
+// Logical face identifiers:
+/// @addtogroup map
+///@{
 #define FRONT                   0
 #define BACK                    1
+///@}
+
+// Logical edge identifiers:
+/// @addtogroup map
+///@{
+#define FROM                    0
+#define TO                      1
+
+/// Aliases:
+#define START                   FROM
+#define END                     TO
+///@}
 
 /**
  * @defgroup sideSectionFlags  Side Section Flags
  * @ingroup map
  */
 ///@{
-#define SSF_MIDDLE          0x1
-#define SSF_BOTTOM          0x2
-#define SSF_TOP             0x4
+#define SSF_MIDDLE              0x1
+#define SSF_BOTTOM              0x2
+#define SSF_TOP                 0x4
 ///@}
-
-typedef struct lineside_s {
-    /// Sector on this side.
-    Sector *sector;
-
-    /// SideDef on this side.
-    SideDef *sideDef;
-
-    /// Left-most HEdge on this side.
-    HEdge *hedgeLeft;
-
-    /// Right-most HEdge on this side.
-    HEdge *hedgeRight;
-
-    /// Framecount of last time shadows were drawn on this side.
-    ushort shadowVisFrame;
-} lineside_t;
 
 /**
  * Map line.
+ *
+ * Despite sharing it's name with a map element present in the id Tech 1 map
+ * format, this component has a notably different design and slightly different
+ * purpose in the Doomsday Engine.
+ *
+ * Lines always have two logical sides, however they may not have a sector
+ * attributed to either or both sides.
+ *
+ * @note Lines are @em not considered to define the geometry of a map. Instead
+ * a line should be thought of as a finite line segment in the plane, according
+ * to the standard definition of an arangement of lines in computational geometry.
+ *
+ * @see http://en.wikipedia.org/wiki/Arrangement_of_lines
  *
  * @ingroup map
  */
@@ -118,13 +111,35 @@ public:
     /// The referenced property is not writeable. @ingroup errors
     DENG2_ERROR(WritePropertyError);
 
+    /**
+     * Logical side of which there are always two (a front and a back).
+     */
+    struct Side
+    {
+    public: /// @todo make private:
+        /// Sector on this side.
+        Sector *sector;
+
+        /// SideDef on this side.
+        SideDef *sideDef;
+
+        /// Left-most HEdge on this side.
+        HEdge *hedgeLeft;
+
+        /// Right-most HEdge on this side.
+        HEdge *hedgeRight;
+
+        /// Framecount of last time shadows were drawn on this side.
+        ushort shadowVisFrame;
+    };
+
 public: /// @todo make private:
-    Vertex *v[2];
+    Vertex *_v[2];
 
     /// Links to vertex line owner nodes [left, right].
     LineOwner *vo[2];
 
-    lineside_t sides[2];
+    Side _sides[2];
 
     /// Public DDLF_* flags.
     int flags;
@@ -155,6 +170,131 @@ public: /// @todo make private:
 public:
     LineDef();
     ~LineDef();
+
+    /**
+     * Returns the specified logical side of the line.
+     *
+     * @param back  If not @c 0 return the Back side; otherwise the Front side.
+     */
+    Side &side(int back);
+
+    /// @copydoc side()
+    Side const &side(int back) const;
+
+    /**
+     * Returns the logical Front side of the line.
+     */
+    inline Side &front() { return side(FRONT); }
+
+    /// @copydoc front()
+    inline Side const &front() const { return side(FRONT); }
+
+    /**
+     * Returns the logical Back side of the line.
+     */
+    inline Side &back() { return side(BACK); }
+
+    /// @copydoc back()
+    inline Side const &back() const { return side(BACK); }
+
+    /**
+     * Returns @c true iff a sector is attributed to the Front side of the line.
+     */
+    inline bool hasFrontSector() const { return !!front().sector; }
+
+    /**
+     * Returns @c true iff a sector is attributed to the Back side of the line.
+     */
+    inline bool hasBackSector() const { return !!back().sector; }
+
+    /**
+     * Returns @c true iff the line is considered @em self-referencing.
+     * In this context, self-referencing (a term whose origins stem from the
+     * DOOM modding community) means a two-sided line (which is to say that
+     * a Sector is attributed to both logical sides of the line) where the
+     * attributed sectors for each logical side are the same.
+     */
+    inline bool isSelfReferencing() const
+    {
+        return L_frontsidedef && L_backsidedef && L_frontsector == L_backsector;
+    }
+
+    /**
+     * Returns the specified edge vertex for the line.
+     *
+     * @param to  If not @c 0 return the To vertex; otherwise the From vertex.
+     */
+    Vertex &vertex(int to);
+
+    /// @copydoc vertex()
+    Vertex const &vertex(int to) const;
+
+    /**
+     * Convenient accessor method for returning the origin of the specified
+     * edge vertex for the line.
+     *
+     * @see vertex()
+     */
+    inline const_pvec2d_t &vertexOrigin(int to) const
+    {
+        return vertex(to).origin();
+    }
+
+    /**
+     * Returns the From/Start vertex for the line.
+     */
+    inline Vertex &v1() { return vertex(FROM); }
+
+    /// @copydoc v1()
+    inline Vertex const &v1() const { return vertex(FROM); }
+
+    /// @copydoc v1()
+    /// An alias of v1().
+    inline Vertex &from() { return v1(); }
+
+    /// @copydoc from()
+    /// An alias of v1().
+    inline Vertex const &from() const { return v1(); }
+
+    /**
+     * Convenient accessor method for returning the origin of the From/Start
+     * vertex for the line.
+     *
+     * @see v1()
+     */
+    inline const_pvec2d_t &v1Origin() const { return v1().origin(); }
+
+    /// @copydoc v1Origin()
+    /// An alias of v1Origin()
+    inline const_pvec2d_t &fromOrigin() const { return v1Origin(); }
+
+    /**
+     * Returns the To/End vertex for the line.
+     */
+    inline Vertex &v2() { return vertex(TO); }
+
+    /// @copydoc v2()
+    inline Vertex const &v2() const { return vertex(TO); }
+
+    /// @copydoc v2()
+    /// An alias of v2().
+    inline Vertex &to() { return v2(); }
+
+    /// @copydoc to()
+    /// An alias of v2().
+    inline Vertex const &to() const { return v2(); }
+
+    /**
+     * Convenient accessor method for returning the origin of the To/End
+     * vertex for the line.
+     *
+     * @see v2()
+     */
+    inline const_pvec2d_t &v2Origin() const { return v2().origin(); }
+
+    /// @copydoc v2Origin()
+    /// An alias of v2Origin()
+    inline const_pvec2d_t &toOrigin() const { return v2Origin(); }
 
     /**
      * On which side of the line does the specified box lie?
@@ -188,7 +328,7 @@ public:
      */
     coord_t pointDistance(coord_t const point[2], coord_t *offset) const;
 
-    inline coord_t LineDef::pointDistance(coord_t x, coord_t y, coord_t *offset) const
+    inline coord_t pointDistance(coord_t x, coord_t y, coord_t *offset) const
     {
         coord_t point[2] = { x, y };
         return pointDistance(point, offset);
@@ -205,7 +345,7 @@ public:
      */
     coord_t pointOnSide(coord_t const point[2]) const;
 
-    inline coord_t LineDef::pointOnSide(coord_t x, coord_t y) const
+    inline coord_t pointOnSide(coord_t x, coord_t y) const
     {
         coord_t point[2] = { x, y };
         return pointOnSide(point);
@@ -218,7 +358,7 @@ public:
      *
      * @param divline  divline_t instance to be configured.
      */
-    void setDivline(divline_t *divline) const;
+    void configureDivline(divline_t *divline) const;
 
     /**
      * Find the "sharp" Z coordinate range of the opening on @a side. The
@@ -242,7 +382,7 @@ public:
      *
      * @param opening  TraceOpening instance to be configured.
      */
-    void setTraceOpening(TraceOpening *opening) const;
+    void configureTraceOpening(TraceOpening *opening) const;
 
     /**
      * Calculate a unit vector parallel to the line.

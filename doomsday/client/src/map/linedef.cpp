@@ -32,9 +32,9 @@ using namespace de;
 
 LineDef::LineDef() : MapElement(DMU_LINEDEF)
 {
-    std::memset(v, 0, sizeof(v));
-    std::memset(vo, 0, sizeof(vo));
-    std::memset(sides, 0, sizeof(sides));
+    std::memset(_v,     0, sizeof(_v));
+    std::memset(vo,    0, sizeof(vo));
+    std::memset(_sides, 0, sizeof(_sides));
     flags = 0;
     inFlags = 0;
     slopeType = (slopetype_t) 0;
@@ -50,11 +50,31 @@ LineDef::LineDef() : MapElement(DMU_LINEDEF)
 LineDef::~LineDef()
 {}
 
+LineDef::Side &LineDef::side(int back)
+{
+    return _sides[back? BACK:FRONT];
+}
+
+LineDef::Side const &LineDef::side(int back) const
+{
+    return _sides[back? BACK:FRONT];
+}
+
+Vertex &LineDef::vertex(int to)
+{
+    return *_v[to? TO:FROM];
+}
+
+Vertex const &LineDef::vertex(int to) const
+{
+    return *_v[to? TO:FROM];
+}
+
 #ifdef __CLIENT__
 static void calcNormal(LineDef const *l, byte side, pvec2f_t normal)
 {
-    V2f_Set(normal, (l->L_vorigin(side^1)[VY] - l->L_vorigin(side)  [VY]) / l->length,
-                    (l->L_vorigin(side)  [VX] - l->L_vorigin(side^1)[VX]) / l->length);
+    V2f_Set(normal, (l->vertexOrigin(side^1)[VY] - l->vertexOrigin(side)  [VY]) / l->length,
+                    (l->vertexOrigin(side)  [VX] - l->vertexOrigin(side^1)[VX]) / l->length);
 }
 
 static float calcLightLevelDelta(pvec2f_t const normal)
@@ -106,18 +126,18 @@ static LineDef *findBlendNeighbor(LineDef const *l, byte side, byte right,
 
 coord_t LineDef::pointDistance(coord_t const point[2], coord_t *offset) const
 {
-    return V2d_PointLineDistance(point, L_v1origin, direction, offset);
+    return V2d_PointLineDistance(point, _v[0]->origin(), direction, offset);
 }
 
 coord_t LineDef::pointOnSide(coord_t const point[2]) const
 {
     DENG2_ASSERT(point);
-    return V2d_PointOnLineSide(point, L_v1origin, direction);
+    return V2d_PointOnLineSide(point, _v[0]->origin(), direction);
 }
 
 int LineDef::boxOnSide(AABoxd const *box) const
 {
-    return M_BoxOnLineSide(box, L_v1origin, direction);
+    return M_BoxOnLineSide(box, _v[0]->origin(), direction);
 }
 
 int LineDef::boxOnSide_FixedPrecision(AABoxd const *box) const
@@ -131,8 +151,8 @@ int LineDef::boxOnSide_FixedPrecision(AABoxd const *box) const
      * precision.
      */
     coord_t offset[2];
-    offset[VX] = de::floor(L_v1origin[VX] + direction[VX]/2);
-    offset[VY] = de::floor(L_v1origin[VY] + direction[VY]/2);
+    offset[VX] = de::floor(_v[0]->origin()[VX] + direction[VX]/2);
+    offset[VY] = de::floor(_v[0]->origin()[VY] + direction[VY]/2);
 
     fixed_t xbox[4];
     xbox[BOXLEFT]   = FLT2FIX(box->minX - offset[VX]);
@@ -141,8 +161,8 @@ int LineDef::boxOnSide_FixedPrecision(AABoxd const *box) const
     xbox[BOXTOP]    = FLT2FIX(box->maxY - offset[VY]);
 
     fixed_t pos[2];
-    pos[VX]         = FLT2FIX(L_v1origin[VX] - offset[VX]);
-    pos[VY]         = FLT2FIX(L_v1origin[VY] - offset[VY]);
+    pos[VX]         = FLT2FIX(_v[0]->origin()[VX] - offset[VX]);
+    pos[VY]         = FLT2FIX(_v[0]->origin()[VY] - offset[VY]);
 
     fixed_t delta[2];
     delta[VX]       = FLT2FIX(direction[VX]);
@@ -151,27 +171,27 @@ int LineDef::boxOnSide_FixedPrecision(AABoxd const *box) const
     return M_BoxOnLineSide_FixedPrecision(xbox, pos, delta);
 }
 
-void LineDef::setDivline(divline_t *dl) const
+void LineDef::configureDivline(divline_t *dl) const
 {
     if(!dl) return;
 
-    dl->origin[VX]    = FLT2FIX(L_v1origin[VX]);
-    dl->origin[VY]    = FLT2FIX(L_v1origin[VY]);
+    dl->origin[VX]    = FLT2FIX(_v[0]->origin()[VX]);
+    dl->origin[VY]    = FLT2FIX(_v[0]->origin()[VY]);
     dl->direction[VX] = FLT2FIX(direction[VX]);
     dl->direction[VY] = FLT2FIX(direction[VY]);
 }
 
-coord_t LineDef::openRange(int side, coord_t *retBottom, coord_t *retTop) const
+coord_t LineDef::openRange(int side_, coord_t *retBottom, coord_t *retTop) const
 {
-    return R_OpenRange(L_sector(side), L_sector(side^1), retBottom, retTop);
+    return R_OpenRange(side(side_).sector, side(side_^1).sector, retBottom, retTop);
 }
 
-coord_t LineDef::visOpenRange(int side, coord_t *retBottom, coord_t *retTop) const
+coord_t LineDef::visOpenRange(int side_, coord_t *retBottom, coord_t *retTop) const
 {
-    return R_VisOpenRange(L_sector(side), L_sector(side^1), retBottom, retTop);
+    return R_VisOpenRange(side(side_).sector, side(side_^1).sector, retBottom, retTop);
 }
 
-void LineDef::setTraceOpening(TraceOpening *opening) const
+void LineDef::configureTraceOpening(TraceOpening *opening) const
 {
     if(!opening) return;
 
@@ -202,7 +222,7 @@ void LineDef::setTraceOpening(TraceOpening *opening) const
 
 void LineDef::updateSlope()
 {
-    V2d_Subtract(direction, L_v2origin, L_v1origin);
+    V2d_Subtract(direction, _v[1]->origin(), _v[0]->origin());
     slopeType = M_SlopeType(direction);
 }
 
@@ -222,11 +242,11 @@ void LineDef::unitVector(float *unitvec) const
 
 void LineDef::updateAABox()
 {
-    aaBox.minX = de::min(L_v2origin[VX], L_v1origin[VX]);
-    aaBox.minY = de::min(L_v2origin[VY], L_v1origin[VY]);
+    aaBox.minX = de::min(_v[1]->origin()[VX], _v[0]->origin()[VX]);
+    aaBox.minY = de::min(_v[1]->origin()[VY], _v[0]->origin()[VY]);
 
-    aaBox.maxX = de::max(L_v2origin[VX], L_v1origin[VX]);
-    aaBox.maxY = de::max(L_v2origin[VY], L_v1origin[VY]);
+    aaBox.maxX = de::max(_v[1]->origin()[VX], _v[0]->origin()[VX]);
+    aaBox.maxY = de::max(_v[1]->origin()[VY], _v[0]->origin()[VY]);
 }
 
 void LineDef::lightLevelDelta(int side, float *deltaL, float *deltaR) const
@@ -261,7 +281,7 @@ void LineDef::lightLevelDelta(int side, float *deltaL, float *deltaR) const
     if(other && INRANGE_OF(diff, BANG_180, BANG_45))
     {
         vec2f_t otherNormal;
-        calcNormal(other, other->L_v2 != L_v(side), otherNormal);
+        calcNormal(other, &other->v2() != &vertex(side), otherNormal);
 
         // Average normals.
         V2f_Sum(otherNormal, otherNormal, normal);
@@ -280,7 +300,7 @@ void LineDef::lightLevelDelta(int side, float *deltaL, float *deltaR) const
     if(other && INRANGE_OF(diff, BANG_180, BANG_45))
     {
         vec2f_t otherNormal;
-        calcNormal(other, other->L_v1 != L_v(side^1), otherNormal);
+        calcNormal(other, &other->v1() != &vertex(side^1), otherNormal);
 
         // Average normals.
         V2f_Sum(otherNormal, otherNormal, normal);
@@ -305,10 +325,10 @@ int LineDef::property(setargs_t &args) const
     switch(args.prop)
     {
     case DMU_VERTEX0:
-        DMU_GetValue(DMT_LINEDEF_V, &L_v1, &args, 0);
+        DMU_GetValue(DMT_LINEDEF_V, &_v[0], &args, 0);
         break;
     case DMU_VERTEX1:
-        DMU_GetValue(DMT_LINEDEF_V, &L_v2, &args, 0);
+        DMU_GetValue(DMT_LINEDEF_V, &_v[1], &args, 0);
         break;
     case DMU_DX:
         DMU_GetValue(DMT_LINEDEF_DX, &direction[VX], &args, 0);

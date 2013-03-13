@@ -119,7 +119,7 @@ static void addWallDivNodesForPlaneIntercepts(HEdge const *hedge, walldivs_t *wa
     if(bottomZ >= topZ) return; // Obviously no division.
 
     // Retrieve the start owner node.
-    LineOwner *base = R_GetVtxLineOwner(line->L_v(hedge->side^doRight), line);
+    LineOwner *base = R_GetVtxLineOwner(&line->vertex(hedge->side^doRight), line);
     LineOwner *own = base;
     bool stopScan = false;
     do
@@ -134,7 +134,7 @@ static void addWallDivNodesForPlaneIntercepts(HEdge const *hedge, walldivs_t *wa
         {
             LineDef *iter = &own->lineDef();
 
-            if(LINE_SELFREF(iter))
+            if(iter->isSelfReferencing())
                 continue;
 
             uint i = 0;

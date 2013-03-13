@@ -1529,13 +1529,13 @@ static void Rend_RenderPlane(Plane::Type type, coord_t height,
 #define RHF_FORCE_OPAQUE        0x10 ///< Force the geometry to be opaque.
 ///@}
 
-static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
-    int flags, float lightLevel, const float* lightColor,
-    walldivs_t* leftWallDivs, walldivs_t* rightWallDivs,
+static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
+    int flags, float lightLevel, float const *lightColor,
+    walldivs_t *leftWallDivs, walldivs_t *rightWallDivs,
     float const matOffset[2])
 {
-    SideDef* frontSide = HEDGE_SIDEDEF(hedge);
-    Surface* surface = &frontSide->SW_surface(section);
+    SideDef *frontSide = HEDGE_SIDEDEF(hedge);
+    Surface *surface = &frontSide->SW_surface(section);
     boolean opaque = true;
     float alpha;
 
@@ -1547,8 +1547,8 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
 
     if(section == SS_MIDDLE && (flags & RHF_VIEWER_NEAR_BLEND))
     {
-        mobj_t* mo = viewPlayer->shared.mo;
-        const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
+        mobj_t *mo = viewPlayer->shared.mo;
+        viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
 
         /**
          * Can the player walk through this surface?
@@ -1560,23 +1560,22 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
         if(viewData->current.origin[VZ] >  WallDivNode_Height(WallDivs_First(leftWallDivs)) &&
            viewData->current.origin[VZ] < WallDivNode_Height(WallDivs_Last(rightWallDivs)))
         {
-            LineDef* lineDef = hedge->lineDef;
+            LineDef *lineDef = hedge->lineDef;
             vec2d_t result;
-            double pos = V2d_ProjectOnLine(result, mo->origin, lineDef->L_v1origin, lineDef->direction);
+            double pos = V2d_ProjectOnLine(result, mo->origin, lineDef->v1Origin(), lineDef->direction);
 
             if(pos > 0 && pos < 1)
             {
-                coord_t distance, minDistance = mo->radius * .8f;
-                coord_t delta[2];
+                coord_t const minDistance = mo->radius * .8f;
 
-                V2d_Subtract(delta, mo->origin, result);
-                distance = M_ApproxDistance(delta[VX], delta[VY]);
+                coord_t delta[2]; V2d_Subtract(delta, mo->origin, result);
+                coord_t distance = M_ApproxDistance(delta[VX], delta[VY]);
 
                 if(distance < minDistance)
                 {
                     // Fade it out the closer the viewPlayer gets and clamp.
                     alpha = (alpha / minDistance) * distance;
-                    alpha = MINMAX_OF(0, alpha, 1);
+                    alpha = de::clamp(0.f, alpha, 1.f);
                 }
 
                 if(alpha < 1)
@@ -1590,11 +1589,11 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
         uint lightListIdx = 0, shadowListIdx = 0;
         vec3d_t texTL, texBR;
         float texScale[2];
-        Material* mat = NULL;
+        Material *mat = NULL;
         int rpFlags = RPF_DEFAULT;
         boolean isTwoSided = (hedge->lineDef && hedge->lineDef->L_frontsidedef && hedge->lineDef->L_backsidedef)? true:false;
         blendmode_t blendMode = BM_NORMAL;
-        const float* color = NULL, *color2 = NULL;
+        float const *color = NULL, *color2 = NULL;
 
         texScale[0] = ((surface->flags & DDSUF_MATERIAL_FLIPH)? -1 : 1);
         texScale[1] = ((surface->flags & DDSUF_MATERIAL_FLIPV)? -1 : 1);
@@ -1738,13 +1737,12 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
     return opaque;
 }
 
-static void reportLineDefDrawn(LineDef* line)
+static void reportLineDefDrawn(LineDef *line)
 {
-    int pid;
     if(!line) return;
 
     // Already been here?
-    pid = viewPlayer - ddPlayers;
+    int pid = viewPlayer - ddPlayers;
     if(line->mapped[pid]) return;
 
     // Mark as drawn.
@@ -1766,7 +1764,7 @@ static boolean Rend_RenderHEdge(HEdge *hedge, byte sections)
     BspLeaf *leaf = currentBspLeaf;
     Sector *frontSec = leaf->sectorPtr();
     Sector *backSec  = HEDGE_BACK_SECTOR(hedge);
-    lineside_t *front = HEDGE_SIDE(hedge);
+    LineDef::Side *front = HEDGE_SIDE(hedge);
 
     if(!front->sideDef) return false;
 
@@ -1805,8 +1803,8 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
     LineDef *line = hedge->lineDef;
     if(!line) return false;
 
-    lineside_t *front = HEDGE_SIDE(hedge);
-    lineside_t *back  = HEDGE_SIDE(hedge->twin);
+    LineDef::Side *front = HEDGE_SIDE(hedge);
+    LineDef::Side *back  = HEDGE_SIDE(hedge->twin);
 
     reportLineDefDrawn(line);
 
@@ -1851,7 +1849,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
                 Surface &surface = front->sideDef->SW_middlesurface;
                 coord_t xbottom, xtop;
 
-                if(LINE_SELFREF(line))
+                if(line->isSelfReferencing())
                 {
                     xbottom = de::min(bfloor->visHeight(), ffloor->visHeight());
                     xtop    = de::max(bceil->visHeight(),  fceil->visHeight());
@@ -1981,7 +1979,7 @@ static void Rend_MarkSegsFacingFront(BspLeaf *leaf)
         for(uint i = 0; i < po->lineCount; ++i)
         {
             LineDef *line = po->lines[i];
-            HEdge *hedge  = line->L_frontside.hedgeLeft;
+            HEdge *hedge  = line->front().hedgeLeft;
 
             // Which way should it be facing?
             if(!(viewFacingDot(hedge->HE_v1origin, hedge->HE_v2origin) < 0))
@@ -2013,7 +2011,7 @@ static void occludeFrontFacingSegsInBspLeaf(BspLeaf const *bspLeaf)
         for(uint i = 0; i < po->lineCount; ++i)
         {
             LineDef *line = po->lines[i];
-            HEdge *hedge  = line->L_frontside.hedgeLeft;
+            HEdge *hedge  = line->front().hedgeLeft;
 
             if(!(hedge->frameFlags & HEDGEINF_FACINGFRONT)) continue;
 
@@ -2668,7 +2666,7 @@ static void Rend_RenderPolyobjs()
     for(uint i = 0; i < po->lineCount; ++i)
     {
         LineDef *line = po->lines[i];
-        HEdge *hedge = line->L_frontside.hedgeLeft;
+        HEdge *hedge = line->front().hedgeLeft;
 
         // Let's first check which way this hedge is facing.
         if(hedge->frameFlags & HEDGEINF_FACINGFRONT)
@@ -3072,10 +3070,10 @@ void Rend_RenderSurfaceVectors()
 
         for(uint j = 0; j < po->lineCount; ++j)
         {
-            LineDef* line = po->lines[j];
+            LineDef *line = po->lines[j];
 
-            V3f_Set(origin, (line->L_v2origin[VX] + line->L_v1origin[VX])/2,
-                            (line->L_v2origin[VY] + line->L_v1origin[VY])/2, zPos);
+            V3f_Set(origin, (line->v2Origin()[VX] + line->v1Origin()[VX])/2,
+                            (line->v2Origin()[VY] + line->v1Origin()[VY])/2, zPos);
             drawSurfaceTangentSpaceVectors(&line->L_frontsidedef->SW_middlesurface, origin);
         }
     }
@@ -3273,7 +3271,7 @@ static void drawVertexIndex(Vertex const *vtx, coord_t z, float scale, float alp
 
 static int drawVertex1(LineDef *li, void *context)
 {
-    Vertex *vtx = li->L_v1;
+    Vertex *vtx = &li->v1();
     Polyobj *po = (Polyobj *) context;
     coord_t dist2D = M_ApproxDistance(vOrigin[VX] - vtx->origin()[VX], vOrigin[VZ] - vtx->origin()[VY]);
 
@@ -3907,10 +3905,9 @@ static void Rend_RenderBoundingBoxes()
             coord_t length = (po->aaBox.maxY - po->aaBox.minY)/2;
             coord_t height = (sec.SP_ceilheight - sec.SP_floorheight)/2;
 
-            coord_t pos[3];
-            pos[VX] = po->aaBox.minX + width;
-            pos[VY] = po->aaBox.minY + length;
-            pos[VZ] = sec.SP_floorheight;
+            coord_t pos[3] = { po->aaBox.minX + width,
+                               po->aaBox.minY + length,
+                               sec.SP_floorheight };
 
             float alpha = 1 - ((V3d_Distance(pos, eye) / (Window_Width(theWindow)/2)) / 4);
             if(alpha < .25f)
@@ -3920,25 +3917,13 @@ static void Rend_RenderBoundingBoxes()
 
             for(uint j = 0; j < po->lineCount; ++j)
             {
-                LineDef* line = po->lines[j];
-                coord_t width  = (line->aaBox.maxX - line->aaBox.minX)/2;
-                coord_t length = (line->aaBox.maxY - line->aaBox.minY)/2;
-                coord_t pos[3];
+                LineDef *line = po->lines[j];
 
-                /** Draw a bounding box for the lineDef.
-                pos[VX] = line->aaBox.minX + width;
-                pos[VY] = line->aaBox.minY + length;
-                pos[VZ] = sec.SP_floorheight;
-                Rend_DrawBBox(pos, width, length, height, 0, red, alpha, .08f, true);
-                */
+                coord_t pos[3] = { (line->v2Origin()[VX] + line->v1Origin()[VX])/2,
+                                   (line->v2Origin()[VY] + line->v1Origin()[VY])/2,
+                                   sec.SP_floorheight };
 
-                pos[VX] = (line->L_v2origin[VX] + line->L_v1origin[VX])/2;
-                pos[VY] = (line->L_v2origin[VY] + line->L_v1origin[VY])/2;
-                pos[VZ] = sec.SP_floorheight;
-                width = 0;
-                length = line->length / 2;
-
-                Rend_DrawBBox(pos, width, length, height,
+                Rend_DrawBBox(pos, 0, line->length / 2, height,
                               BANG2DEG(BANG_90 - line->angle),
                               green, alpha, 0, true);
             }
