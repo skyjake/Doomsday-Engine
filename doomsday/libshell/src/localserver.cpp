@@ -154,12 +154,5 @@ Link *LocalServer::openLink()
     return new Link(String("localhost:%1").arg(d->port), 30);
 }
 
-/*Link &LocalServer::link()
-{
-    DENG2_ASSERT(d->link != 0);
-
-    return *d->link;
-}*/
-
 } // namespace shell
 } // namespace de
