@@ -77,8 +77,9 @@ DENG2_PIMPL_NOREF(Uri)
     Instance() : resolvedForGame(0)
     {}
 
-    Instance(const Instance &other)
-        : path           (other.path),
+    Instance(Instance const &other)
+        : de::IPrivate(),
+          path           (other.path),
           strPath        (other.strPath),
           scheme         (other.scheme),
           resolvedPath   (other.resolvedPath),

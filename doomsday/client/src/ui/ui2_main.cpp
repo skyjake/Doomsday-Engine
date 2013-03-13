@@ -1279,11 +1279,11 @@ void FIData_TextThink(fi_object_t *obj)
     t->animComplete = (!t->wait || t->cursorPos >= FIData_TextLength((fi_object_t *)t));
 }
 
+#ifdef __CLIENT__
 static int textLineWidth(char const *text)
 {
     int width = 0;
 
-#ifdef __CLIENT__
     for(; *text; text++)
     {
         if(*text == '\\')
@@ -1299,10 +1299,10 @@ static int textLineWidth(char const *text)
         }
         width += FR_CharWidth(*text);
     }
-#endif
 
     return width;
 }
+#endif
 
 void FIData_TextDraw(fi_object_t *obj, const float offset[3])
 {

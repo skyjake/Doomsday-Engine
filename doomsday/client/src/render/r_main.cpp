@@ -73,8 +73,6 @@ byte texGammaLut[256];
 
 fontid_t fontFixed, fontVariable[FONTSTYLE_COUNT];
 
-static int rendCameraSmooth = true; // Smoothed by default.
-
 static boolean resetNextViewer = true;
 
 static viewdata_t viewDataOfConsole[DDMAXPLAYERS]; // Indexed by console number.
@@ -84,7 +82,12 @@ static byte showViewAngleDeltas = false;
 static byte showViewPosDeltas = false;
 
 static int gridCols, gridRows;
-static viewport_t viewportOfLocalPlayer[DDMAXPLAYERS], *currentViewport;
+static viewport_t viewportOfLocalPlayer[DDMAXPLAYERS];
+
+#ifdef __CLIENT__
+static int rendCameraSmooth = true; // Smoothed by default.
+static viewport_t *currentViewport;
+#endif
 
 void R_Register()
 {

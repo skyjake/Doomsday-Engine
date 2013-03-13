@@ -87,7 +87,7 @@ void P_SpawnFireFlicker(Sector *sector)
     //P_ToXSector(sector)->special = 0; // jd64
 
     flick = Z_Calloc(sizeof(*flick), PU_MAP, 0);
-    flick->thinker.function = T_FireFlicker;
+    flick->thinker.function = (thinkfunc_t) T_FireFlicker;
     Thinker_Add(&flick->thinker);
 
     flick->sector = sector;
@@ -140,7 +140,7 @@ void P_SpawnLightFlash(Sector *sector)
     //P_ToXSector(sector)->special = 0; // jd64
 
     flash = Z_Calloc(sizeof(*flash), PU_MAP, 0);
-    flash->thinker.function = T_LightFlash;
+    flash->thinker.function = (thinkfunc_t) T_LightFlash;
     Thinker_Add(&flash->thinker);
 
     flash->sector = sector;
@@ -186,7 +186,7 @@ void P_SpawnLightBlink(Sector *sector)
     lightblink_t       *blink;
 
     blink = Z_Calloc(sizeof(*blink), PU_MAP, 0);
-    blink->thinker.function = T_LightBlink;
+    blink->thinker.function = (thinkfunc_t) T_LightBlink;
     Thinker_Add(&blink->thinker);
 
     blink->sector = sector;
@@ -230,7 +230,7 @@ void P_SpawnStrobeFlash(Sector *sector, int fastOrSlow, int inSync)
     float               otherLevel = DDMAXFLOAT;
 
     flash = Z_Calloc(sizeof(*flash), PU_MAP, 0);
-    flash->thinker.function = T_StrobeFlash;
+    flash->thinker.function = (thinkfunc_t) T_StrobeFlash;
     Thinker_Add(&flash->thinker);
 
     flash->sector = sector;
@@ -371,7 +371,7 @@ void P_SpawnGlowingLight(Sector* sector)
     glow_t*             g;
 
     g = Z_Calloc(sizeof(*g), PU_MAP, 0);
-    g->thinker.function = T_Glow;
+    g->thinker.function = (thinkfunc_t) T_Glow;
     Thinker_Add(&g->thinker);
 
     g->sector = sector;

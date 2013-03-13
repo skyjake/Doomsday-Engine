@@ -112,7 +112,7 @@ static uidata_edit_t ed_ipsearch = { str_ipaddr, 127 };
 static uidata_edit_t ed_portsearch = { str_ipport, 127 };
 //static uidata_edit_t ed_myudp = { str_myudp, 50 };
 
-static ui_page_t page_server, page_client;
+static ui_page_t page_client;
 
 #if 0
 static ui_object_t ob_server[] = {  // Server setup

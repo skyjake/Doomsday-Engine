@@ -522,7 +522,7 @@ void UI_Drawer(void)
 int UI_CountObjects(ui_object_t* list)
 {
     int count;
-    for(count = 0; list->type != UI_NONE; list++, count++);
+    for(count = 0; list->type != UI_NONE; list++, count++) {}
     return count;
 }
 
@@ -553,7 +553,7 @@ void UI_FlagGroup(ui_object_t* list, int group, int flags, int set)
     }
 }
 
-ui_object_t* UI_FindObject(ui_object_t* list, int group, int flags)
+ui_object_t* UI_FindObject(ui_object_t* list, int group, uint flags)
 {
     for(; list->type; list++)
         if(list->group == group && (list->flags & flags) == flags)

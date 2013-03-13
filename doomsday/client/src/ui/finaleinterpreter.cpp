@@ -873,6 +873,7 @@ static fi_handler_t* findEventHandler(finaleinterpreter_t* fi, const ddevent_t* 
     return 0;
 }
 
+#ifdef __CLIENT__
 static fi_handler_t* createEventHandler(finaleinterpreter_t* fi, const ddevent_t* ev, const char* marker)
 {
     fi_handler_t* h;
@@ -912,7 +913,9 @@ static void destroyEventHandler(finaleinterpreter_t* fi, fi_handler_t* h)
         return;
     }}
 }
+#endif // __CLIENT__
 
+#if 0
 /**
  * Find a @c fi_handler_t for the specified ddkey code.
  * @param ev  Input event to find a handler for.
@@ -929,6 +932,7 @@ static boolean getEventHandler(finaleinterpreter_t* fi, const ddevent_t* ev, con
     createEventHandler(fi, ev, marker);
     return true;
 }
+#endif
 
 static void stopScript(finaleinterpreter_t* fi)
 {
@@ -2049,11 +2053,16 @@ DEFFC(Text)
 DEFFC(TextFromDef)
 {
     fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    char* str;
     AnimatorVector3_Init(obj->pos, OP_FLOAT(1), OP_FLOAT(2), 0);
-    if(!Def_Get(DD_DEF_TEXT, (char*)OP_CSTRING(3), &str))
-        str = "(undefined)"; // Not found!
-    FIData_TextCopy(obj, str);
+    char *str;
+    if(Def_Get(DD_DEF_TEXT, (char*)OP_CSTRING(3), &str))
+    {
+        FIData_TextCopy(obj, str);
+    }
+    else
+    {
+        FIData_TextCopy(obj, "(undefined)"); // Not found!
+    }
     ((fidata_text_t*)obj)->cursorPos = 0; // Restart the text.
 }
 
@@ -2114,9 +2123,14 @@ DEFFC(SetTextDef)
 {
     fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
     char* str;
-    if(!Def_Get(DD_DEF_TEXT, OP_CSTRING(1), &str))
-        str = "(undefined)"; // Not found!
-    FIData_TextCopy(obj, str);
+    if(Def_Get(DD_DEF_TEXT, OP_CSTRING(1), &str))
+    {
+        FIData_TextCopy(obj, str);
+    }
+    else
+    {
+        FIData_TextCopy(obj, "(undefined)"); // Not found!
+    }
 }
 
 DEFFC(DeleteText)

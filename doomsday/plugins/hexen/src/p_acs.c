@@ -323,7 +323,7 @@ static void StartOpenACS(int number, int infoIndex, const int* address)
 
     script->infoIndex = infoIndex;
     script->ip = address;
-    script->thinker.function = T_InterpretACS;
+    script->thinker.function = (thinkfunc_t) T_InterpretACS;
     Thinker_Add(&script->thinker);
 }
 
@@ -423,7 +423,7 @@ boolean P_StartACS(int number, uint map, byte* args, mobj_t* activator,
     script->line = line;
     script->side = side;
     script->ip = ACSInfo[infoIndex].address;
-    script->thinker.function = T_InterpretACS;
+    script->thinker.function = (thinkfunc_t) T_InterpretACS;
     for(i = 0; i < ACSInfo[infoIndex].argCount; ++i)
     {
         script->vars[i] = args[i];

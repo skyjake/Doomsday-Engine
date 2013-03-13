@@ -243,7 +243,7 @@ boolean EV_SpawnLight(LineDef *line, byte *arg, lighttype_t type)
 
         if(think)
         {
-            light->thinker.function = T_Light;
+            light->thinker.function = (thinkfunc_t) T_Light;
             Thinker_Add(&light->thinker);
         }
         else
@@ -267,7 +267,7 @@ void P_SpawnPhasedLight(Sector* sector, float base, int index)
     phase_t*            phase;
 
     phase = Z_Calloc(sizeof(*phase), PU_MAP, 0);
-    phase->thinker.function = T_Phase;
+    phase->thinker.function = (thinkfunc_t) T_Phase;
     Thinker_Add(&phase->thinker);
 
     phase->sector = sector;
