@@ -190,7 +190,7 @@ HEdge *BspLeaf::fanBase() const
     return _fanBase;
 }
 
-struct shadowlink_s *BspLeaf::firstShadowLink() const
+ShadowLink *BspLeaf::firstShadowLink() const
 {
     return _shadows;
 }

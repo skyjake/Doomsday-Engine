@@ -1288,7 +1288,7 @@ static boolean doRenderHEdge(HEdge* hedge, const pvec3f_t normal,
         // Render Fakeradio polys for this hedge?
         if(!(params.flags & RPF_SKYMASK) && addFakeRadio)
         {
-            rendsegradio_params_t radioParams;
+            RendRadioWallSectionParms radioParams;
 
             radioParams.linedefLength = &hedge->lineDef->length;
             radioParams.botCn = side->bottomCorners;
@@ -1345,8 +1345,11 @@ static boolean doRenderHEdge(HEdge* hedge, const pvec3f_t normal,
                 if(radioParams.shadowSize > 0)
                 {
                     // Shadows are black.
-                    radioParams.shadowRGB[CR] = radioParams.shadowRGB[CG] = radioParams.shadowRGB[CB] = 0;
-                    Rend_RadioSegSection(rvertices, &radioParams);
+                    radioParams.shadowRGB[CR] =
+                            radioParams.shadowRGB[CG] =
+                                radioParams.shadowRGB[CB] = 0;
+
+                    Rend_RadioWallSection(rvertices, radioParams);
                 }
             }
         }
@@ -1779,7 +1782,7 @@ static boolean Rend_RenderHEdge(HEdge *hedge, byte sections)
         if(hedge->prepareWallDivs(SS_MIDDLE, frontSec, backSec,
                                   &leftWallDivs, &rightWallDivs, matOffset))
         {
-            Rend_RadioUpdateLinedef(hedge->lineDef, hedge->side);
+            Rend_RadioUpdateLine(*hedge->lineDef, hedge->side);
             opaque = rendHEdgeSection(hedge, SS_MIDDLE, RHF_ADD_DYNLIGHTS|RHF_ADD_DYNSHADOWS|RHF_ADD_RADIO,
                                       frontSec->lightLevel, R_GetSectorLightColor(frontSec),
                                       &leftWallDivs, &rightWallDivs, matOffset);
@@ -1841,7 +1844,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
                !(line->flags & DDLF_BLOCKING))
                 rhFlags |= RHF_VIEWER_NEAR_BLEND;
 
-            Rend_RadioUpdateLinedef(hedge->lineDef, hedge->side);
+            Rend_RadioUpdateLine(*hedge->lineDef, hedge->side);
             solidSeg = rendHEdgeSection(hedge, SS_MIDDLE, rhFlags,
                                         front->sector().lightLevel, R_GetSectorLightColor(front->sectorPtr()),
                                         &leftWallDivs, &rightWallDivs, matOffset);
@@ -1881,7 +1884,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
         if(hedge->prepareWallDivs(SS_TOP, leaf->sectorPtr(), HEDGE_BACK_SECTOR(hedge),
                                   &leftWallDivs, &rightWallDivs, matOffset))
         {
-            Rend_RadioUpdateLinedef(hedge->lineDef, hedge->side);
+            Rend_RadioUpdateLine(*hedge->lineDef, hedge->side);
             rendHEdgeSection(hedge, SS_TOP, RHF_ADD_DYNLIGHTS|RHF_ADD_DYNSHADOWS|RHF_ADD_RADIO,
                              front->sector().lightLevel, R_GetSectorLightColor(front->sectorPtr()),
                              &leftWallDivs, &rightWallDivs, matOffset);
@@ -1897,7 +1900,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
         if(hedge->prepareWallDivs(SS_BOTTOM, leaf->sectorPtr(), HEDGE_BACK_SECTOR(hedge),
                                   &leftWallDivs, &rightWallDivs, matOffset))
         {
-            Rend_RadioUpdateLinedef(hedge->lineDef, hedge->side);
+            Rend_RadioUpdateLine(*hedge->lineDef, hedge->side);
             rendHEdgeSection(hedge, SS_BOTTOM, RHF_ADD_DYNLIGHTS|RHF_ADD_DYNSHADOWS|RHF_ADD_RADIO,
                              front->sector().lightLevel, R_GetSectorLightColor(front->sectorPtr()),
                              &leftWallDivs, &rightWallDivs, matOffset);
@@ -2833,6 +2836,8 @@ static inline boolean isNullLeaf(BspLeaf *leaf)
 
 static void Rend_RenderBspLeaf(BspLeaf *bspLeaf)
 {
+    DENG_ASSERT(bspLeaf);
+
     if(isNullLeaf(bspLeaf))
     {
         // Skip this, it has no volume.
@@ -2860,7 +2865,7 @@ static void Rend_RenderBspLeaf(BspLeaf *bspLeaf)
     Rend_MarkSegsFacingFront(bspLeaf);
 
     R_InitForBspLeaf(bspLeaf);
-    Rend_RadioBspLeafEdges(bspLeaf);
+    Rend_RadioBspLeafEdges(*bspLeaf);
 
     uint bspLeafIdx = GET_BSPLEAF_IDX(bspLeaf);
     occludeBspLeaf(bspLeaf, false);

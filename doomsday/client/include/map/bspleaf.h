@@ -38,6 +38,7 @@
 
 class Sector;
 class HEdge;
+struct ShadowLink;
 
 /**
  * Two dimensional convex polygon describing a @em leaf in a binary space
@@ -89,7 +90,7 @@ public: /// @todo Make private:
     /// If @c NULL then midPoint will be used instead.
     HEdge *_fanBase;
 
-    struct shadowlink_s *_shadows;
+    ShadowLink *_shadows;
 
     /// Vertex bounding box in the map coordinate space.
     AABoxd _aaBox;
@@ -223,9 +224,9 @@ public:
     HEdge *fanBase() const;
 
     /**
-     * Returns the first shadowlink_t associated with the BSP leaf; otherwise @c 0.
+     * Returns the first ShadowLink associated with the BSP leaf; otherwise @c 0.
      */
-    struct shadowlink_s *firstShadowLink() const;
+    ShadowLink *firstShadowLink() const;
 
     /**
      * Returns the vector described by the offset from the map coordinate space
