@@ -764,8 +764,8 @@ int PIT_CheckLinePtc(LineDef *ld, void *parameters)
     DENG_UNUSED(parameters);
 
     // Does the bounding box miss the line completely?
-    if(mbox.maxX <= ld->aaBox.minX || mbox.minX >= ld->aaBox.maxX ||
-       mbox.maxY <= ld->aaBox.minY || mbox.minY >= ld->aaBox.maxY)
+    if(mbox.maxX <= ld->aaBox().minX || mbox.minX >= ld->aaBox().maxX ||
+       mbox.maxY <= ld->aaBox().minY || mbox.minY >= ld->aaBox().maxY)
         return false;
 
     // Movement must cross the line.
@@ -1139,8 +1139,8 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
         // - Multiply with bounce.
 
         // Calculate the normal.
-        normal[VX] = -FLT2FIX(ptcHitLine->direction[VX]);
-        normal[VY] = -FLT2FIX(ptcHitLine->direction[VY]);
+        normal[VX] = -FLT2FIX(ptcHitLine->direction()[VX]);
+        normal[VY] = -FLT2FIX(ptcHitLine->direction()[VY]);
 
         if(!normal[VX] && !normal[VY])
             goto quit_iteration;

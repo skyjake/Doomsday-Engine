@@ -263,10 +263,10 @@ int PIT_LinkToLines(LineDef *ld, void *parameters)
     DENG_ASSERT(p);
 
     // Do the bounding boxes intercept?
-    if(p->box.minX >= ld->aaBox.maxX ||
-       p->box.minY >= ld->aaBox.maxY ||
-       p->box.maxX <= ld->aaBox.minX ||
-       p->box.maxY <= ld->aaBox.minY) return false;
+    if(p->box.minX >= ld->aaBox().maxX ||
+       p->box.minY >= ld->aaBox().maxY ||
+       p->box.maxX <= ld->aaBox().minX ||
+       p->box.maxY <= ld->aaBox().minY) return false;
 
     // Line does not cross the mobj's bounding box?
     if(ld->boxOnSide(p->box)) return false;

@@ -69,15 +69,15 @@ void Sector::updateAABox()
     if(!lineIter) return;
 
     LineDef *line = *lineIter;
-    V2d_InitBox(aaBox.arvec2, line->aaBox.min);
-    V2d_AddToBox(aaBox.arvec2, line->aaBox.max);
+    V2d_InitBox(aaBox.arvec2, line->aaBox().min);
+    V2d_AddToBox(aaBox.arvec2, line->aaBox().max);
     lineIter++;
 
     for(; *lineIter; lineIter++)
     {
         line = *lineIter;
-        V2d_AddToBox(aaBox.arvec2, line->aaBox.min);
-        V2d_AddToBox(aaBox.arvec2, line->aaBox.max);
+        V2d_AddToBox(aaBox.arvec2, line->aaBox().min);
+        V2d_AddToBox(aaBox.arvec2, line->aaBox().max);
     }
 }
 

@@ -457,21 +457,24 @@ void Sv_RegisterSector(dt_sector_t *reg, uint number)
  * Store the state of the side into the register-side.
  * Called at register init and after each delta generation.
  */
-void Sv_RegisterSide(dt_side_t* reg, uint number)
+void Sv_RegisterSide(dt_side_t *reg, uint number)
 {
-    SideDef* side = SIDE_PTR(number);
-    LineDef* line = side->line;
+    DENG_ASSERT(reg);
 
-    reg->top.material = side->SW_topmaterial;
+    SideDef *side = SIDE_PTR(number);
+    LineDef *line = side->line;
+
+    reg->top.material    = side->SW_topmaterial;
     reg->middle.material = side->SW_middlematerial;
     reg->bottom.material = side->SW_bottommaterial;
-    reg->lineFlags = (line ? line->flags & 0xff : 0);
+    reg->lineFlags       = (line ? line->flags() & 0xff : 0);
 
-    memcpy(reg->top.rgba, side->SW_toprgba, sizeof(reg->top.rgba));
-    memcpy(reg->middle.rgba, side->SW_middlergba, sizeof(reg->middle.rgba));
-    memcpy(reg->bottom.rgba, side->SW_bottomrgba, sizeof(reg->bottom.rgba));
+    std::memcpy(reg->top.rgba,    side->SW_toprgba,    sizeof(reg->top.rgba));
+    std::memcpy(reg->middle.rgba, side->SW_middlergba, sizeof(reg->middle.rgba));
+    std::memcpy(reg->bottom.rgba, side->SW_bottomrgba, sizeof(reg->bottom.rgba));
+
     reg->middle.blendMode = side->SW_middleblendmode; // only middle supports blendmode.
-    reg->flags = side->flags & 0xff;
+    reg->flags           = side->flags & 0xff;
 }
 
 /**
@@ -740,13 +743,13 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
 /**
  * @return @c true= the result is not void.
  */
-boolean Sv_RegisterCompareSide(cregister_t* reg, uint number, sidedelta_t* d,
-                               byte doUpdate)
+boolean Sv_RegisterCompareSide(cregister_t *reg, uint number,
+    sidedelta_t *d, byte doUpdate)
 {
-    const SideDef* s = SIDE_PTR(number);
-    const LineDef* line = s->line;
-    dt_side_t* r = &reg->sideDefs[number];
-    byte lineFlags = (line ? line->flags & 0xff : 0);
+    SideDef const *s = SIDE_PTR(number);
+    LineDef const *line = s->line;
+    dt_side_t *r = &reg->sideDefs[number];
+    byte lineFlags = (line ? line->flags() & 0xff : 0);
     byte sideFlags = s->flags & 0xff;
     int df = 0;
 
@@ -1573,8 +1576,8 @@ coord_t Sv_DeltaDistance(void const *deltaPtr, ownerinfo_t const *info)
     {
         SideDef *sideDef = GameMap_SideDef(theMap, delta->id);
         LineDef *line = sideDef->line;
-        vec2d_t origin; V2d_Set(origin, line->v1Origin()[VX] + line->direction[VX] / 2,
-                                        line->v1Origin()[VY] + line->direction[VY] / 2);
+        vec2d_t origin; V2d_Set(origin, line->v1Origin()[VX] + line->direction()[VX] / 2,
+                                        line->v1Origin()[VY] + line->direction()[VY] / 2);
         return M_ApproxDistance(info->origin[VX] - origin[VX],
                                 info->origin[VY] - origin[VY]);
     }

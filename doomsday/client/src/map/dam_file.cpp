@@ -242,27 +242,28 @@ static void archiveVertexes(GameMap *map, boolean write)
 
 static void writeLine(GameMap *map, uint idx)
 {
-    int i;
+    DENG_ASSERT(map);
+
     LineDef *l = &map->lineDefs[idx];
 
     writeLong((long) (map->vertexes.indexOf(static_cast<Vertex const *>(l->_v[0])) + 1));
     writeLong((long) (map->vertexes.indexOf(static_cast<Vertex const *>(l->_v[1])) + 1));
-    writeLong(l->flags);
-    writeByte(l->inFlags);
-    writeFloat(l->direction[VX]);
-    writeFloat(l->direction[VY]);
-    writeFloat(l->aaBox.minX);
-    writeFloat(l->aaBox.minY);
-    writeFloat(l->aaBox.maxX);
-    writeFloat(l->aaBox.maxY);
-    writeFloat(l->length);
-    writeLong((long) l->angle);
-    for(i = 0; i < DDMAXPLAYERS; ++i)
+    writeLong(l->_flags);
+    writeByte(l->_inFlags);
+    writeFloat(l->_direction[VX]);
+    writeFloat(l->_direction[VY]);
+    writeFloat(l->_aaBox.minX);
+    writeFloat(l->_aaBox.minY);
+    writeFloat(l->_aaBox.maxX);
+    writeFloat(l->_aaBox.maxY);
+    writeFloat(l->_length);
+    writeLong((long) l->_angle);
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        writeByte(l->mapped[i]? 1 : 0);
+        writeByte(l->_mapped[i]? 1 : 0);
     }
 
-    for(i = 0; i < 2; ++i)
+    for(int i = 0; i < 2; ++i)
     {
         LineDef::Side &side = l->side(i);
 
@@ -274,30 +275,31 @@ static void writeLine(GameMap *map, uint idx)
     }
 }
 
-static void readLine(GameMap* map, uint idx)
+static void readLine(GameMap *map, uint idx)
 {
-    int i;
-    LineDef* l = &map->lineDefs[idx];
+    DENG_ASSERT(map);
+
+    LineDef *l = &map->lineDefs[idx];
 
     l->_v[0] = &map->vertexes[(unsigned) (readLong() - 1)];
     l->_v[1] = &map->vertexes[(unsigned) (readLong() - 1)];
-    l->flags = (int) readLong();
-    l->inFlags = readByte();
-    l->direction[VX] = readFloat();
-    l->direction[VY] = readFloat();
-    l->slopeType = M_SlopeType(l->direction);
-    l->aaBox.minX = readFloat();
-    l->aaBox.minY = readFloat();
-    l->aaBox.maxX = readFloat();
-    l->aaBox.maxY = readFloat();
-    l->length = readFloat();
-    l->angle = (binangle_t) readLong();
-    for(i = 0; i < DDMAXPLAYERS; ++i)
+    l->_flags = (int) readLong();
+    l->_inFlags = readByte();
+    l->_direction[VX] = readFloat();
+    l->_direction[VY] = readFloat();
+    l->_slopeType = M_SlopeType(l->_direction);
+    l->_aaBox.minX = readFloat();
+    l->_aaBox.minY = readFloat();
+    l->_aaBox.maxX = readFloat();
+    l->_aaBox.maxY = readFloat();
+    l->_length = readFloat();
+    l->_angle = (binangle_t) readLong();
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        l->mapped[i] = (readByte()? true : false);
+        l->_mapped[i] = (readByte()? true : false);
     }
 
-    for(i = 0; i < 2; ++i)
+    for(int i = 0; i < 2; ++i)
     {
         LineDef::Side &side = l->side(i);
         long index;

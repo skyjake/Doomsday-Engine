@@ -106,10 +106,10 @@ static void addWallDivNodesForPlaneIntercepts(HEdge const *hedge, walldivs_t *wa
     // Check for neighborhood division?
     if(section == SS_MIDDLE && isTwoSided) return;
     if(!hedge->lineDef) return;
-    if(hedge->lineDef->inFlags & LF_POLYOBJ) return;
+    if(hedge->lineDef->isFromPolyobj()) return;
 
     // Polyobj edges are never split.
-    if(hedge->lineDef && (hedge->lineDef->inFlags & LF_POLYOBJ)) return;
+    if(hedge->lineDef && (hedge->lineDef->isFromPolyobj())) return;
 
     // Only edges at sidedef ends can/should be split.
     if(!((hedge == &HEDGE_SIDE(hedge)->leftHEdge()  && !doRight) ||
@@ -249,7 +249,7 @@ static void buildWallDiv(walldivs_t *wallDivs, HEdge const *hedge,
 bool HEdge::prepareWallDivs(SideDefSection section, Sector *frontSec, Sector *backSec,
     walldivs_t *leftWallDivs, walldivs_t *rightWallDivs, float matOffset[2]) const
 {
-    int lineFlags = lineDef? lineDef->flags : 0;
+    int lineFlags = lineDef? lineDef->flags() : 0;
     SideDef *frontDef = HEDGE_SIDEDEF(this);
     SideDef *backDef  = twin? HEDGE_SIDEDEF(twin) : 0;
     coord_t low, hi;

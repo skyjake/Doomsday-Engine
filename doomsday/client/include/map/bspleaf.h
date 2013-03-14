@@ -185,7 +185,7 @@ public:
      * Returns the @em validCount of the BSP leaf. Used by some legacy iteration
      * algorithms for marking leafs as processed/visited.
      *
-     * @todo Refactor me away.
+     * @todo Refactor away.
      */
     int validCount() const;
 

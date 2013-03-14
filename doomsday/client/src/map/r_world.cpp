@@ -770,7 +770,7 @@ boolean R_MiddleMaterialCoversLineOpening(LineDef const *line, int side, boolean
     Sector const *backSec   = line->sectorPtr(side ^ 1);
     SideDef const *frontDef = line->sideDefPtr(side);
     SideDef const *backDef  = line->sideDefPtr(side ^ 1);
-    return R_MiddleMaterialCoversOpening(line->flags, frontSec, backSec, frontDef, backDef, ignoreOpacity);
+    return R_MiddleMaterialCoversOpening(line->flags(), frontSec, backSec, frontDef, backDef, ignoreOpacity);
 }
 
 LineDef *R_FindLineNeighbor(Sector const *sector, LineDef const *line,
@@ -813,7 +813,7 @@ LineDef *R_FindSolidLineNeighbor(Sector const *sector, LineDef const *line,
 
     if(diff) *diff += (antiClockwise? cown->angle() : own->angle());
 
-    if(!((other->inFlags & LF_BSPWINDOW) && other->frontSectorPtr() != sector))
+    if(!((other->isBspWindow()) && other->frontSectorPtr() != sector))
     {
         if(!other->hasFrontSideDef() || !other->hasBackSideDef())
             return other;
@@ -875,7 +875,7 @@ LineDef *R_FindLineBackNeighbor(Sector const *sector, LineDef const *line,
     if(diff) *diff += (antiClockwise? cown->angle() : own->angle());
 
     if(!other->hasBackSideDef() || other->frontSectorPtr() != other->backSectorPtr() ||
-       (other->inFlags & LF_BSPWINDOW))
+       (other->isBspWindow()))
     {
         if(!(other->frontSectorPtr() == sector ||
              (other->hasBackSideDef() && other->backSectorPtr() == sector)))
@@ -900,7 +900,7 @@ LineDef *R_FindLineAlignNeighbor(Sector const *sec, LineDef const *line,
 
     if(!other->isSelfReferencing())
     {
-        diff = line->angle - other->angle;
+        diff = line->angle() - other->angle();
 
         if(alignment < 0)
             diff -= BANG_180;

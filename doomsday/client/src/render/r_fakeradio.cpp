@@ -33,7 +33,7 @@ static zblockset_t *shadowLinksBlockSet;
 
 boolean Rend_RadioIsShadowingLine(LineDef const &line)
 {
-    if(line.inFlags & LF_POLYOBJ) return false;
+    if(line.isFromPolyobj()) return false;
     if(line.isSelfReferencing()) return false;
 
     // Lines with no other neighbor do not qualify for shadowing.
@@ -132,24 +132,24 @@ void Rend_RadioUpdateVertexShadowOffsets(Vertex &vtx)
 
         if(&lineB.v1() == &vtx)
         {
-            rightDir[VX] = lineB.direction[VX];
-            rightDir[VY] = lineB.direction[VY];
+            rightDir[VX] = lineB.direction()[VX];
+            rightDir[VY] = lineB.direction()[VY];
         }
         else
         {
-            rightDir[VX] = -lineB.direction[VX];
-            rightDir[VY] = -lineB.direction[VY];
+            rightDir[VX] = -lineB.direction()[VX];
+            rightDir[VY] = -lineB.direction()[VY];
         }
 
         if(&lineA.v1() == &vtx)
         {
-            leftDir[VX] = -lineA.direction[VX];
-            leftDir[VY] = -lineA.direction[VY];
+            leftDir[VX] = -lineA.direction()[VX];
+            leftDir[VY] = -lineA.direction()[VY];
         }
         else
         {
-            leftDir[VX] = lineA.direction[VX];
-            leftDir[VY] = lineA.direction[VY];
+            leftDir[VX] = lineA.direction()[VX];
+            leftDir[VY] = lineA.direction()[VY];
         }
 
         // The left side is always flipped.

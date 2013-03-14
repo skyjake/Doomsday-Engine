@@ -48,10 +48,10 @@ typedef struct losdata_s {
 static boolean interceptLineDef(LineDef const *li, losdata_t *los, divline_t *dl)
 {
     // Try a quick, bounding-box rejection.
-    if(li->aaBox.minX > los->aaBox.maxX ||
-       li->aaBox.maxX < los->aaBox.minX ||
-       li->aaBox.minY > los->aaBox.maxY ||
-       li->aaBox.maxY < los->aaBox.minY)
+    if(li->aaBox().minX > los->aaBox.maxX ||
+       li->aaBox().maxX < los->aaBox.minX ||
+       li->aaBox().minY > los->aaBox.maxY ||
+       li->aaBox().maxY < los->aaBox.minY)
         return false;
 
     if(Divline_PointOnSide(&los->trace, li->v1Origin()) ==
@@ -183,9 +183,9 @@ static boolean crossBspLeaf(GameMap *map, BspLeaf const *bspLeaf, losdata_t *los
         while(*lineIter)
         {
             LineDef *line = *lineIter;
-            if(line->validCount != validCount)
+            if(line->validCount() != validCount)
             {
-                line->validCount = validCount;
+                line->_validCount = validCount;
                 if(!crossLineDef(line, FRONT, los))
                     return false; // Stop iteration.
             }
@@ -199,10 +199,10 @@ static boolean crossBspLeaf(GameMap *map, BspLeaf const *bspLeaf, losdata_t *los
         HEdge const *hedge = base;
         do
         {
-            if(hedge->lineDef && hedge->lineDef->validCount != validCount)
+            if(hedge->lineDef && hedge->lineDef->validCount() != validCount)
             {
                 LineDef *li = hedge->lineDef;
-                li->validCount = validCount;
+                li->_validCount = validCount;
                 if(!crossLineDef(li, hedge->side, los))
                     return false;
             }

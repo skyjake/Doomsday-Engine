@@ -91,7 +91,7 @@ void Rend_RadioUpdateLine(LineDef &line, int backSide)
     // Not yet - Calculate now.
     for(uint i = 0; i < 2; ++i)
     {
-        sideDef.spans[i].length = line.length;
+        sideDef.spans[i].length = line.length();
         sideDef.spans[i].shift = 0;
     }
 
@@ -246,11 +246,11 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
                     iBCeil >= fCeil &&
                      isSectorOpen(iter->backSectorPtr()))))
                 {
-                    gap += iter->length; // Should we just mark it done instead?
+                    gap += iter->length(); // Should we just mark it done instead?
                 }
                 else
                 {
-                    edge->length += iter->length + gap;
+                    edge->length += iter->length() + gap;
                     gap = 0;
                 }
             }
@@ -265,11 +265,11 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
                     iBFloor <= fFloor &&
                     isSectorOpen(iter->backSectorPtr()))))
                 {
-                    gap += iter->length; // Should we just mark it done instead?
+                    gap += iter->length(); // Should we just mark it done instead?
                 }
                 else
                 {
-                    lengthDelta = iter->length + gap;
+                    lengthDelta = iter->length() + gap;
                     gap = 0;
                 }
             }
@@ -1064,13 +1064,14 @@ void Rend_RadioWallSection(rvertex_t const *rvertices, RendRadioWallSectionParms
     // Disabled?
     if(!rendFakeRadio || levelFullBright) return;
 
-    coord_t const fFloor = parms.frontSec->SP_floorvisheight;
-    coord_t const fCeil  = parms.frontSec->SP_ceilvisheight;
-    coord_t const bFloor = (parms.backSec? parms.backSec->SP_floorvisheight : 0);
-    coord_t const bCeil  = (parms.backSec? parms.backSec->SP_ceilvisheight  : 0);
+    coord_t const lineLength = parms.line->length();
+    coord_t const fFloor     = parms.frontSec->SP_floorvisheight;
+    coord_t const fCeil      = parms.frontSec->SP_ceilvisheight;
+    coord_t const bFloor     = (parms.backSec? parms.backSec->SP_floorvisheight : 0);
+    coord_t const bCeil      = (parms.backSec? parms.backSec->SP_ceilvisheight  : 0);
 
-    bool const bottomGlow = R_IsGlowingPlane(&parms.frontSec->floor());
-    bool const topGlow    = R_IsGlowingPlane(&parms.frontSec->ceiling());
+    bool const bottomGlow    = R_IsGlowingPlane(&parms.frontSec->floor());
+    bool const topGlow       = R_IsGlowingPlane(&parms.frontSec->ceiling());
 
     /*
      * Top Shadow.
@@ -1121,7 +1122,7 @@ void Rend_RadioWallSection(rvertex_t const *rvertices, RendRadioWallSectionParms
         setSideShadowParams(&wsParms, parms.shadowSize, rvertices[0].pos[VZ],
                             rvertices[1].pos[VZ], false,
                             bottomGlow, topGlow, parms.segOffset, parms.segLength,
-                            fFloor, fCeil, !!parms.backSec, bFloor, bCeil, parms.linedefLength,
+                            fFloor, fCeil, !!parms.backSec, bFloor, bCeil, &lineLength,
                             parms.sideCn);
         drawWallSectionShadow(rvertices, wsParms, parms);
     }
@@ -1130,14 +1131,14 @@ void Rend_RadioWallSection(rvertex_t const *rvertices, RendRadioWallSectionParms
      * Right Shadow.
      */
     if(parms.sideCn[1].corner > 0 &&
-       *parms.segOffset + *parms.segLength > *parms.linedefLength - parms.shadowSize)
+       *parms.segOffset + *parms.segLength > lineLength - parms.shadowSize)
     {
         rendershadowseg_params_t wsParms;
 
         setSideShadowParams(&wsParms, parms.shadowSize, rvertices[0].pos[VZ],
                             rvertices[1].pos[VZ], true,
                             bottomGlow, topGlow, parms.segOffset, parms.segLength,
-                            fFloor, fCeil, !!parms.backSec, bFloor, bCeil, parms.linedefLength,
+                            fFloor, fCeil, !!parms.backSec, bFloor, bCeil, &lineLength,
                             parms.sideCn);
         drawWallSectionShadow(rvertices, wsParms, parms);
     }
@@ -1353,7 +1354,7 @@ static void processEdgeShadow(BspLeaf const &bspLeaf, LineDef const *lineDef,
         LineDef *neighbor = &vo->line();
 
         if(neighbor != lineDef && !neighbor->hasBackSideDef() &&
-           (neighbor->inFlags & LF_BSPWINDOW) &&
+           (neighbor->isBspWindow()) &&
            neighbor->frontSectorPtr() != bspLeaf.sectorPtr())
         {
             // A one-way window, edgeOpen side.

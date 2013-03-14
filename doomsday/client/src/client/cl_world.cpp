@@ -835,8 +835,8 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
         if(line)
         {
             // The delta includes the entire lowest byte.
-            line->flags &= ~0xff;
-            line->flags |= lineFlags;
+            line->_flags &= ~0xff;
+            line->_flags |= lineFlags;
         }
     }
 }

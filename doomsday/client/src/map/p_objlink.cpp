@@ -386,7 +386,7 @@ static void processSeg(HEdge *hedge, void *parameters)
 
         if(backSec && !backDef) return; // One-sided window.
 
-        if(R_MiddleMaterialCoversOpening(line->flags, frontSec, backSec, frontDef, backDef,
+        if(R_MiddleMaterialCoversOpening(line->flags(), frontSec, backSec, frontDef, backDef,
                                          false /*do not ignore material opacity*/)) return;
     }
 

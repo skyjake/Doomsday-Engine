@@ -705,19 +705,20 @@ void GameMap_LinkLineDef(GameMap* map, LineDef* lineDef)
     }
 
     // LineDefs of Polyobjs don't get into the blockmap (presently...).
-    if(lineDef->inFlags & LF_POLYOBJ) return;
+    if(lineDef->isFromPolyobj()) return;
 
     blockmap = map->lineDefBlockmap;
     V2d_Copy(origin, Blockmap_Origin(blockmap));
     V2d_Copy(cellSize, Blockmap_CellSize(blockmap));
 
     // Determine the block of cells we'll be working within.
-    Blockmap_CellBlock(blockmap, &cellBlock, &lineDef->aaBox);
+    Blockmap_CellBlock(blockmap, &cellBlock, &lineDef->aaBox());
 
     for(y = cellBlock.minY; y <= cellBlock.maxY; ++y)
     for(x = cellBlock.minX; x <= cellBlock.maxX; ++x)
     {
-        if(lineDef->slopeType == ST_VERTICAL || lineDef->slopeType == ST_HORIZONTAL)
+        if(lineDef->slopeType() == ST_VERTICAL ||
+           lineDef->slopeType() == ST_HORIZONTAL)
         {
             Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y, lineDef);
             continue;
@@ -729,7 +730,7 @@ void GameMap_LinkLineDef(GameMap* map, LineDef* lineDef)
         V2d_Sum(cell, cell, Blockmap_Origin(blockmap));
 
         // Choose a cell diagonal to test.
-        if(lineDef->slopeType == ST_POSITIVE)
+        if(lineDef->slopeType() == ST_POSITIVE)
         {
             // LineDef slope / vs \ cell diagonal.
             V2d_Set(from, cell[VX], cell[VY] + cellSize[VY]);
@@ -752,63 +753,64 @@ void GameMap_LinkLineDef(GameMap* map, LineDef* lineDef)
 
 typedef struct bmapiterparams_s {
     int localValidCount;
-    int (*func) (LineDef*, void *);
-    void* param;
+    int (*callback) (LineDef *, void *);
+    void *context;
 } bmapiterparams_t;
 
-static int blockmapCellLinesIterator(void* object, void* context)
+static int blockmapCellLinesIterator(void *mapElement, void *context)
 {
-    LineDef* lineDef = (LineDef*)object;
-    bmapiterparams_t* args = (bmapiterparams_t*) context;
-    if(lineDef->validCount != args->localValidCount)
+    LineDef *line = static_cast<LineDef *>(mapElement);
+    bmapiterparams_t *parms = static_cast<bmapiterparams_t *>(context);
+
+    if(line->validCount() != parms->localValidCount)
     {
         int result;
 
         // This linedef has now been processed for the current iteration.
-        lineDef->validCount = args->localValidCount;
+        line->_validCount = parms->localValidCount;
 
         // Action the callback.
-        result = args->func(lineDef, args->param);
+        result = parms->callback(line, parms->context);
         if(result) return result; // Stop iteration.
     }
+
     return false; // Continue iteration.
 }
 
-static int GameMap_IterateCellLineDefs(GameMap* map, const_BlockmapCell cell,
-    int (*callback) (LineDef*, void*), void* context)
+static int GameMap_IterateCellLineDefs(GameMap *map, const_BlockmapCell cell,
+    int (*callback) (LineDef *, void *), void *context)
 {
-    bmapiterparams_t args;
     DENG2_ASSERT(map);
 
-    args.localValidCount = validCount;
-    args.func = callback;
-    args.param = context;
+    bmapiterparams_t parms;
+    parms.localValidCount = validCount;
+    parms.callback        = callback;
+    parms.context         = context;
 
     return Blockmap_IterateCellObjects(map->lineDefBlockmap, cell,
-                                       blockmapCellLinesIterator, (void*)&args);
+                                       blockmapCellLinesIterator, (void *)&parms);
 }
 
-static int GameMap_IterateCellBlockLineDefs(GameMap* map, const BlockmapCellBlock* cellBlock,
-    int (*callback) (LineDef*, void*), void* context)
+static int GameMap_IterateCellBlockLineDefs(GameMap *map, BlockmapCellBlock const *cellBlock,
+    int (*callback) (LineDef *, void *), void *context)
 {
-    bmapiterparams_t args;
     DENG2_ASSERT(map);
 
-    args.localValidCount = validCount;
-    args.func = callback;
-    args.param = context;
+    bmapiterparams_t parms;
+    parms.localValidCount = validCount;
+    parms.callback        = callback;
+    parms.context          = context;
 
     return Blockmap_IterateCellBlockObjects(map->lineDefBlockmap, cellBlock,
-                                            blockmapCellLinesIterator, (void*) &args);
+                                            blockmapCellLinesIterator, (void *) &parms);
 }
 
-int GameMap_LineDefIterator(GameMap* map, int (*callback) (LineDef*, void*), void* parameters)
+int GameMap_LineDefIterator(GameMap *map, int (*callback) (LineDef *, void *), void *context)
 {
-    uint i;
     DENG2_ASSERT(map);
-    for(i = 0; i < map->lineDefCount(); ++i)
+    for(uint i = 0; i < map->lineDefCount(); ++i)
     {
-        int result = callback(&map->lineDefs[i], parameters);
+        int result = callback(&map->lineDefs[i], context);
         if(result) return result;
     }
     return false; // Continue iteration.

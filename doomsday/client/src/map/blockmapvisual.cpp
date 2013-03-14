@@ -54,12 +54,12 @@ static int rendMobj(mobj_t *mo, void * /*parameters*/)
 
 static int rendLineDef(LineDef *line, void * /*parameters*/)
 {
-    if(line->validCount != validCount)
+    if(line->validCount() != validCount)
     {
         glVertex2f(line->v1Origin()[VX], line->v1Origin()[VY]);
         glVertex2f(line->v2Origin()[VX], line->v2Origin()[VY]);
 
-        line->validCount = validCount;
+        line->_validCount = validCount;
     }
     return false; // Continue iteration.
 }

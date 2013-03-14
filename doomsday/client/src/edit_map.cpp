@@ -86,7 +86,7 @@ static LineDef* createLine(void)
 
     e_map->lineDefs.push_back(line);
 
-    line->origIndex = e_map->lineDefs.size(); // 1-based index, 0 = NIL.
+    line->_origIndex = e_map->lineDefs.size(); // 1-based index, 0 = NIL.
     return line;
 }
 
@@ -731,12 +731,12 @@ static void finishLineDefs(GameMap *map)
         line._v[0] = front.leftHEdge().HE_v1;
         line._v[1] = front.rightHEdge().HE_v2;
 
-        line.updateSlope();
+        line.updateSlopeType();
         line.updateAABox();
 
-        line.length = V2d_Length(line.direction);
-        line.angle = bamsAtan2(int( line.direction[VY] ),
-                               int( line.direction[VX] ));
+        line._length = V2d_Length(line._direction);
+        line._angle = bamsAtan2(int( line._direction[VY] ),
+                                int( line._direction[VX] ));
     }
 }
 
@@ -977,7 +977,7 @@ static void hardenVertexOwnerRings(GameMap *dest, EditMap *src)
         LineOwner *p = v->_lineOwners;
         while(p)
         {
-            p->_line = &dest->lineDefs[p->_line->origIndex - 1];
+            p->_line = &dest->lineDefs[p->_line->_origIndex - 1];
             p = &p->next();
         }
 
@@ -1166,11 +1166,11 @@ static void hardenPolyobjs(GameMap* dest, EditMap* src)
         destP->lines = (LineDef **) Z_Malloc(sizeof(*destP->lines) * (destP->lineCount+1), PU_MAP, 0);
         for(uint j = 0; j < destP->lineCount; ++j)
         {
-            LineDef *line = &dest->lineDefs[srcP->lines[j]->origIndex - 1];
+            LineDef *line = &dest->lineDefs[srcP->lines[j]->_origIndex - 1];
             HEdge *hedge = &hedges[j];
 
             // This line belongs to a polyobj.
-            line->inFlags |= LF_POLYOBJ;
+            line->_inFlags |= LF_POLYOBJ;
 
             //hedge->header.type = DMU_HEDGE;
             hedge->lineDef = line;
@@ -1902,13 +1902,13 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector,
     l->_sides[FRONT]._sideDef = front;
     l->_sides[BACK]._sideDef = back;
 
-    l->length = length;
+    l->_length = length;
 
-    l->updateSlope();
+    l->updateSlopeType();
     l->updateAABox();
 
-    l->angle = bamsAtan2(int( l->direction[VY] ),
-                         int( l->direction[VX] ));
+    l->_angle = bamsAtan2(int( l->_direction[VY] ),
+                          int( l->_direction[VX] ));
 
     // Remember the number of unique references.
     if(l->hasFrontSideDef())
@@ -1923,14 +1923,14 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector,
         l->backSideDef().buildData.refCount++;
     }
 
-    l->inFlags = 0;
+    l->_inFlags = 0;
 
     // Determine the default linedef flags.
-    l->flags = flags;
+    l->_flags = flags;
     if(!front || !back)
-        l->flags |= DDLF_BLOCKING;
+        l->_flags |= DDLF_BLOCKING;
 
-    return l->origIndex;
+    return l->_origIndex;
 }
 
 uint MPE_PlaneCreate(uint sector, coord_t height, const ddstring_t* materialUri, float matOffsetX,
@@ -1969,23 +1969,22 @@ uint MPE_SectorCreate(float lightlevel, float red, float green, float blue)
     return s->buildData.index;
 }
 
-uint MPE_PolyobjCreate(uint* lines, uint lineCount, int tag, int sequenceType,
+uint MPE_PolyobjCreate(uint *lines, uint lineCount, int tag, int sequenceType,
     coord_t originX, coord_t originY)
 {
     if(!editMapInited || !lineCount || !lines) return 0;
 
     // First check that all the line indices are valid and that they arn't
     // already part of another polyobj.
-    uint i;
-    for(i = 0; i < lineCount; ++i)
+    for(uint i = 0; i < lineCount; ++i)
     {
         if(lines[i] == 0 || lines[i] > e_map->lineDefs.size()) return 0;
 
-        LineDef* line = e_map->lineDefs[lines[i] - 1];
-        if(line->inFlags & LF_POLYOBJ) return 0;
+        LineDef *line = e_map->lineDefs[lines[i] - 1];
+        if(line->isFromPolyobj()) return 0;
     }
 
-    Polyobj* po = createPolyobj();
+    Polyobj *po = createPolyobj();
     po->tag = tag;
     po->seqType = sequenceType;
     po->origin[VX] = originX;
@@ -1993,15 +1992,15 @@ uint MPE_PolyobjCreate(uint* lines, uint lineCount, int tag, int sequenceType,
 
     po->lineCount = lineCount;
     po->lines = (LineDef**) M_Calloc(sizeof(LineDef*) * (po->lineCount+1));
-    for(i = 0; i < lineCount; ++i)
+    for(uint i = 0; i < lineCount; ++i)
     {
-        LineDef* line = e_map->lineDefs[lines[i] - 1];
+        LineDef *line = e_map->lineDefs[lines[i] - 1];
 
         // This line belongs to a polyobj.
-        line->inFlags |= LF_POLYOBJ;
+        line->_inFlags |= LF_POLYOBJ;
         po->lines[i] = line;
     }
-    po->lines[i] = NULL;
+    po->lines[lineCount] = NULL;
 
     return po->buildData.index;
 }

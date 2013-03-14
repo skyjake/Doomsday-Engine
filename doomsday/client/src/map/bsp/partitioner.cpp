@@ -249,7 +249,7 @@ struct Partitioner::Instance
     inline bool lineMightHaveWindowEffect(LineDef const* line)
     {
         if(!line) return false;
-        if(line->inFlags & LF_POLYOBJ) return false;
+        if(line->isFromPolyobj()) return false;
         if((line->hasFrontSideDef() && line->hasBackSideDef()) || !line->hasFrontSideDef()) return false;
         //if(line->length <= 0 || line->buildData.overlap) return false;
 
@@ -293,34 +293,34 @@ struct Partitioner::Instance
         bool isFront = false;
         if(p.castHoriz)
         {
-            if(fabs(line->direction[VY]) < DIST_EPSILON) return false;
+            if(de::abs(line->direction()[VY]) < DIST_EPSILON) return false;
 
             if((de::max(line->v1Origin()[VY], line->v2Origin()[VY]) < p.mY - DIST_EPSILON) ||
                (de::min(line->v1Origin()[VY], line->v2Origin()[VY]) > p.mY + DIST_EPSILON)) return false;
 
-            dist = (line->v1Origin()[VX] + (p.mY - line->v1Origin()[VY]) * line->direction[VX] / line->direction[VY]) - p.mX;
+            dist = (line->v1Origin()[VX] + (p.mY - line->v1Origin()[VY]) * line->direction()[VX] / line->direction()[VY]) - p.mX;
 
-            isFront = ((p.testLine->direction[VY] > 0) != (dist > 0));
+            isFront = ((p.testLine->direction()[VY] > 0) != (dist > 0));
 
             dist = fabs(dist);
             if(dist < DIST_EPSILON) return false; // Too close (overlapping lines ?)
 
-            hitSector = line->sectorPtr((p.testLine->direction[VY] > 0) ^ (line->direction[VY] > 0) ^ !isFront);
+            hitSector = line->sectorPtr((p.testLine->direction()[VY] > 0) ^ (line->direction()[VY] > 0) ^ !isFront);
         }
         else // Cast vertically.
         {
-            if(fabs(line->direction[VX]) < DIST_EPSILON) return false;
+            if(de::abs(line->direction()[VX]) < DIST_EPSILON) return false;
 
             if((de::max(line->v1Origin()[VX], line->v2Origin()[VX]) < p.mX - DIST_EPSILON) ||
                (de::min(line->v1Origin()[VX], line->v2Origin()[VX]) > p.mX + DIST_EPSILON)) return false;
 
-            dist = (line->v1Origin()[VY] + (p.mX - line->v1Origin()[VX]) * line->direction[VY] / line->direction[VX]) - p.mY;
+            dist = (line->v1Origin()[VY] + (p.mX - line->v1Origin()[VX]) * line->direction()[VY] / line->direction()[VX]) - p.mY;
 
-            isFront = ((p.testLine->direction[VX] > 0) == (dist > 0));
+            isFront = ((p.testLine->direction()[VX] > 0) == (dist > 0));
 
             dist = fabs(dist);
 
-            hitSector = line->sectorPtr((p.testLine->direction[VX] > 0) ^ (line->direction[VX] > 0) ^ !isFront);
+            hitSector = line->sectorPtr((p.testLine->direction()[VX] > 0) ^ (line->direction()[VX] > 0) ^ !isFront);
         }
 
         if(dist < DIST_EPSILON) return false; // Too close (overlapping lines ?)
@@ -357,7 +357,7 @@ struct Partitioner::Instance
         p.testLine = line;
         p.mX = (line->v1Origin()[VX] + line->v2Origin()[VX]) / 2.0;
         p.mY = (line->v1Origin()[VY] + line->v2Origin()[VY]) / 2.0;
-        p.castHoriz = (fabs(line->direction[VX]) < fabs(line->direction[VY])? true : false);
+        p.castHoriz = (de::abs(line->direction()[VX]) < de::abs(line->direction()[VY])? true : false);
 
         AABoxd scanRegion = mapBounds;
         if(p.castHoriz)
@@ -376,10 +376,10 @@ struct Partitioner::Instance
         if(p.backOpen && p.frontOpen && line->frontSectorPtr() == p.backOpen)
         {
             LOG_VERBOSE("LineDef #%d seems to be a One-Sided Window (back faces sector #%d).")
-                << line->origIndex - 1 << p.backOpen->buildData.index - 1;
+                << line->origIndex() - 1 << p.backOpen->buildData.index - 1;
 
             lineInfo.windowEffect = p.frontOpen;
-            line->inFlags |= LF_BSPWINDOW; /// @todo Refactor away.
+            line->_inFlags |= LF_BSPWINDOW; /// @todo Refactor away.
         }
     }
 
@@ -453,7 +453,7 @@ struct Partitioner::Instance
             LineDefInfo const& lineInfo = *i;
             LineDef *line = lineInfo.lineDef;
             // Polyobj lines are completely ignored.
-            if(line->inFlags & LF_POLYOBJ) continue;
+            if(line->isFromPolyobj()) continue;
 
             HEdge *front  = 0;
             coord_t angle = 0;
@@ -522,7 +522,7 @@ struct Partitioner::Instance
         if(inter) return inter;
 
         HEdgeInfo& hInfo = hedgeInfo(*hedge);
-        bool isSelfRefLine = (hInfo.lineDef && lineDefInfos[hInfo.lineDef->origIndex-1].flags.testFlag(LineDefInfo::SelfRef));
+        bool isSelfRefLine = (hInfo.lineDef && lineDefInfos[hInfo.lineDef->origIndex()-1].flags.testFlag(LineDefInfo::SelfRef));
         HEdgeIntercept* intercept = newHEdgeIntercept(vertex, isSelfRefLine);
 
         return &partition.newIntercept(vertexDistanceFromPartition(vertex), intercept);
@@ -1228,7 +1228,7 @@ struct Partitioner::Instance
             if(hInfo.lineDef)
             {
                 // Can we skip this half-edge?
-                LineDefInfo& lInfo = lineDefInfos[hInfo.lineDef->origIndex-1];
+                LineDefInfo& lInfo = lineDefInfos[hInfo.lineDef->origIndex()-1];
                 if(lInfo.validCount == validCount) continue; // Yes.
 
                 lInfo.validCount = validCount;
@@ -2347,7 +2347,7 @@ struct Partitioner::Instance
         if(migrant->lineDef)
             LOG_WARNING("Sector #%d has migrant HEdge facing #%d (line #%d).")
                 << sector->buildData.index - 1 << migrant->sector->buildData.index - 1
-                << migrant->lineDef->origIndex - 1;
+                << migrant->lineDef->origIndex() - 1;
         else
             LOG_WARNING("Sector #%d has migrant HEdge facing #%d.")
                 << sector->buildData.index - 1 << migrant->sector->buildData.index - 1;

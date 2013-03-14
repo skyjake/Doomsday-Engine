@@ -226,11 +226,11 @@ boolean Polyobj_Rotate(Polyobj *po, angle_t angle)
         LineDef *line = *lineIter;
 
         line->updateAABox();
-        line->updateSlope();
-        line->angle += ANGLE_TO_BANG(angle);
+        line->updateSlopeType();
+        line->_angle += ANGLE_TO_BANG(angle);
 
         // HEdge angle must be kept in sync.
-        line->front().leftHEdge().angle = BANG_TO_ANGLE(line->angle);
+        line->front().leftHEdge().angle = BANG_TO_ANGLE(line->_angle);
     }
     Polyobj_UpdateAABox(po);
     po->angle += angle;
@@ -256,11 +256,11 @@ boolean Polyobj_Rotate(Polyobj *po, angle_t angle)
             LineDef *line = *lineIter;
 
             line->updateAABox();
-            line->updateSlope();
-            line->angle -= ANGLE_TO_BANG(angle);
+            line->updateSlopeType();
+            line->_angle -= ANGLE_TO_BANG(angle);
 
             // HEdge angle must be kept in sync.
-            line->front().leftHEdge().angle = BANG_TO_ANGLE(line->angle);
+            line->front().leftHEdge().angle = BANG_TO_ANGLE(line->_angle);
         }
         Polyobj_UpdateAABox(po);
         po->angle -= angle;
@@ -295,10 +295,10 @@ int PTR_checkMobjBlocking(mobj_t *mo, void *data)
         moBox.maxX = mo->origin[VX] + mo->radius;
         moBox.maxY = mo->origin[VY] + mo->radius;
 
-        if(!(moBox.maxX <= params->line->aaBox.minX ||
-             moBox.minX >= params->line->aaBox.maxX ||
-             moBox.maxY <= params->line->aaBox.minY ||
-             moBox.minY >= params->line->aaBox.maxY))
+        if(!(moBox.maxX <= params->line->aaBox().minX ||
+             moBox.minX >= params->line->aaBox().maxX ||
+             moBox.maxY <= params->line->aaBox().minY ||
+             moBox.minY >= params->line->aaBox().maxY))
         {
             if(!params->line->boxOnSide(moBox))
             {
@@ -319,10 +319,10 @@ static boolean checkMobjBlocking(LineDef *line, Polyobj *po)
     params.line      = line;
     params.polyobj   = po;
 
-    AABoxd aaBox(line->aaBox.minX - DDMOBJ_RADIUS_MAX,
-                 line->aaBox.minY - DDMOBJ_RADIUS_MAX,
-                 line->aaBox.maxX + DDMOBJ_RADIUS_MAX,
-                 line->aaBox.maxY + DDMOBJ_RADIUS_MAX);
+    AABoxd aaBox(line->aaBox().minX - DDMOBJ_RADIUS_MAX,
+                 line->aaBox().minY - DDMOBJ_RADIUS_MAX,
+                 line->aaBox().maxX + DDMOBJ_RADIUS_MAX,
+                 line->aaBox().maxY + DDMOBJ_RADIUS_MAX);
 
     validCount++;
     P_MobjsBoxIterator(&aaBox, PTR_checkMobjBlocking, &params);
@@ -340,8 +340,8 @@ int Polyobj_LineIterator(Polyobj *po, int (*callback) (LineDef *, void *),
         {
             LineDef *line = *lineIter;
 
-            if(line->validCount == validCount) continue;
-            line->validCount = validCount;
+            if(line->validCount() == validCount) continue;
+            line->_validCount = validCount;
 
             result = callback(line, parameters);
             if(result) break;

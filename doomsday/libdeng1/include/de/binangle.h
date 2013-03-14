@@ -1,4 +1,4 @@
-/** @file de/binangle.h Binary angle nathematics.
+/** @file de/binangle.h Binary angle mathematics.
  * @ingroup math
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>

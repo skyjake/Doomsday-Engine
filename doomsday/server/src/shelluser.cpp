@@ -153,8 +153,8 @@ void ShellUser::sendMapOutline()
     for(uint i = 0; i < theMap->lineDefCount(); ++i)
     {
         LineDef const &line = theMap->lineDefs[i];
-        packet->addLine(Vector2i(line.v1().origin()[VX], line.v1().origin()[VY]),
-                        Vector2i(line.v2().origin()[VX], line.v2().origin()[VY]),
+        packet->addLine(Vector2i(line.v1Origin()[VX], line.v1Origin()[VY]),
+                        Vector2i(line.v2Origin()[VX], line.v2Origin()[VY]),
                         (line.hasFrontSector() && line.hasBackSector())?
                                  shell::MapOutlinePacket::TwoSidedLine : shell::MapOutlinePacket::OneSidedLine);
     }

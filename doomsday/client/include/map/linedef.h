@@ -190,35 +190,78 @@ public: /// @todo make private:
     Side _sides[2];
 
     /// Public DDLF_* flags.
-    int flags;
+    int _flags;
 
     /// Internal LF_* flags.
-    byte inFlags;
+    byte _inFlags;
 
     /// Logical slope type.
-    slopetype_t slopeType;
+    slopetype_t _slopeType;
 
-    int validCount;
+    int _validCount;
 
-    /// Calculated from front side's normal.
-    binangle_t angle;
+    /// Calculated from the direction vector.
+    binangle_t _angle;
 
-    coord_t direction[2];
+    /// Direction vector from Start to End vertex.
+    vec2d_t _direction;
 
     /// Accurate length.
-    coord_t length;
+    coord_t _length;
 
-    AABoxd aaBox;
+    AABoxd _aaBox;
 
     /// Whether the line has been mapped by each player yet.
-    boolean mapped[DDMAXPLAYERS];
+    boolean _mapped[DDMAXPLAYERS];
 
     /// Original index in the archived map.
-    int origIndex;
+    uint _origIndex;
 
 public:
     LineDef();
     ~LineDef();
+
+    /**
+     * Returns @c true iff the line is part of some Polyobj.
+     */
+    bool isFromPolyobj() const;
+
+    /**
+     * Returns @c true iff the line resulted in the creation of a BSP window
+     * effect when partitioning the map.
+     *
+     * @todo Refactor away. The prescence of a BSP window effect can now be
+     *       trivially determined through inspection of the tree elements.
+     */
+    bool isBspWindow() const;
+
+    /**
+     * Returns the public DDLF_* flags for the line.
+     */
+    int flags() const;
+
+    /**
+     * Returns @c true if the line is flagged @a flagsToTest.
+     */
+    inline bool isFlagged(int flagsToTest) const { return !!(flags() & flagsToTest); }
+
+    /**
+     * Returns @c true if the line is marked as @em mapped for @a playerNum.
+     */
+    bool mappedByPlayer(int playerNum) const;
+
+    /**
+     * Returns the original index of the line.
+     */
+    uint origIndex() const;
+
+    /**
+     * Returns the @em validCount of the line. Used by some legacy iteration
+     * algorithms for marking lines as processed/visited.
+     *
+     * @todo Refactor away.
+     */
+    int validCount() const;
 
     /**
      * Returns the specified logical side of the line.
@@ -505,6 +548,51 @@ public:
     inline LineOwner *v2Owner() const { return vertexOwner(TO); }
 
     /**
+     * Returns the binary angle of the line (which, is derived from the
+     * direction vector).
+     *
+     * @see direction()
+     */
+    binangle_t angle() const;
+
+    /**
+     * Returns a direction vector for the line from Start to End vertex.
+     */
+    const_pvec2d_t &direction() const;
+
+    /**
+     * Returns the logical @em slopetype for the line (which, is determined
+     * according to the global direction of the line).
+     *
+     * @see direction()
+     * @see M_SlopeType()
+     */
+    slopetype_t slopeType() const;
+
+    /**
+     * Update the line's logical slopetype and direction according to the
+     * points defined by the origins of it's vertexes.
+     */
+    void updateSlopeType();
+
+    /**
+     * Returns the accurate length of the line from Start to End vertex.
+     */
+    coord_t length() const;
+
+    /**
+     * Returns the axis-aligned bounding box which encompases both vertex
+     * origin points, in map coordinate space units.
+     */
+    AABoxd const &aaBox() const;
+
+    /**
+     * Update the line's map space axis-aligned bounding box to encompass
+     * the points defined by it's vertexes.
+     */
+    void updateAABox();
+
+    /**
      * On which side of the line does the specified box lie?
      *
      * @param box  Bounding box to test.
@@ -602,18 +690,6 @@ public:
      * @param unitVector  Unit vector is written here.
      */
     void unitVector(pvec2f_t unitVec) const;
-
-    /**
-     * Update the line's slopetype and map space angle delta according to
-     * the points defined by it's vertices.
-     */
-    void updateSlope();
-
-    /**
-     * Update the line's map space axis-aligned bounding box to encompass
-     * the points defined by it's vertices.
-     */
-    void updateAABox();
 
     /**
      * The DOOM lighting model applies a sector light level delta when drawing

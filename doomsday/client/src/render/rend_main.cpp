@@ -1290,16 +1290,16 @@ static boolean doRenderHEdge(HEdge* hedge, const pvec3f_t normal,
         {
             RendRadioWallSectionParms radioParams;
 
-            radioParams.linedefLength = &hedge->lineDef->length;
-            radioParams.botCn = side->bottomCorners;
-            radioParams.topCn = side->topCorners;
-            radioParams.sideCn = side->sideCorners;
-            radioParams.spans = side->spans;
+            radioParams.line      = hedge->lineDef;
+            radioParams.botCn     = side->bottomCorners;
+            radioParams.topCn     = side->topCorners;
+            radioParams.sideCn    = side->sideCorners;
+            radioParams.spans     = side->spans;
             radioParams.segOffset = &hedge->offset;
             radioParams.segLength = &hedge->length;
-            radioParams.frontSec = hedge->sector;
-            radioParams.wall.left.firstDiv = params.wall.left.firstDiv;
-            radioParams.wall.left.divCount = params.wall.left.divCount;
+            radioParams.frontSec  = hedge->sector;
+            radioParams.wall.left.firstDiv  = params.wall.left.firstDiv;
+            radioParams.wall.left.divCount  = params.wall.left.divCount;
             radioParams.wall.right.firstDiv = params.wall.right.firstDiv;
             radioParams.wall.right.divCount = params.wall.right.divCount;
 
@@ -1565,7 +1565,8 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
         {
             LineDef *lineDef = hedge->lineDef;
             vec2d_t result;
-            double pos = V2d_ProjectOnLine(result, mo->origin, lineDef->v1Origin(), lineDef->direction);
+            double pos = V2d_ProjectOnLine(result, mo->origin, lineDef->v1Origin(),
+                                                   lineDef->direction());
 
             if(pos > 0 && pos < 1)
             {
@@ -1720,8 +1721,8 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
 
             // Linear interpolation of the linedef light deltas to the edges of the hedge.
             float diff = deltaR - deltaL;
-            deltaR = deltaL + ((hedge->offset + hedge->length) / line.length) * diff;
-            deltaL += (hedge->offset / hedge->lineDef->length) * diff;
+            deltaR = deltaL + ((hedge->offset + hedge->length) / line.length()) * diff;
+            deltaL += (hedge->offset / hedge->lineDef->length()) * diff;
         }
 
         opaque = doRenderHEdge(hedge,
@@ -1740,21 +1741,19 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
     return opaque;
 }
 
-static void reportLineDefDrawn(LineDef *line)
+static void reportLineDrawn(LineDef &line)
 {
-    if(!line) return;
-
     // Already been here?
-    int pid = viewPlayer - ddPlayers;
-    if(line->mapped[pid]) return;
+    int playerNum = viewPlayer - ddPlayers;
+    if(line.mappedByPlayer(playerNum)) return;
 
     // Mark as drawn.
-    line->mapped[pid] = true;
+    line._mapped[playerNum] = true;
 
     // Send a status report.
     if(gx.HandleMapObjectStatusReport)
     {
-        gx.HandleMapObjectStatusReport(DMUSC_LINE_FIRSTRENDERED, GET_LINE_IDX(line), DMU_LINEDEF, &pid);
+        gx.HandleMapObjectStatusReport(DMUSC_LINE_FIRSTRENDERED, GET_LINE_IDX(&line), DMU_LINEDEF, &playerNum);
     }
 }
 
@@ -1788,7 +1787,7 @@ static boolean Rend_RenderHEdge(HEdge *hedge, byte sections)
                                       &leftWallDivs, &rightWallDivs, matOffset);
         }
 
-        reportLineDefDrawn(hedge->lineDef);
+        reportLineDrawn(*hedge->lineDef);
         return opaque;
     }
 
@@ -1810,7 +1809,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
     LineDef::Side *front = HEDGE_SIDE(hedge);
     LineDef::Side *back  = HEDGE_SIDE(hedge->twin);
 
-    reportLineDefDrawn(line);
+    reportLineDrawn(*line);
 
     if(back->sectorPtr() == front->sectorPtr() &&
        !front->sideDef().SW_topmaterial && !front->sideDef().SW_bottommaterial &&
@@ -1841,7 +1840,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
             int rhFlags = RHF_ADD_DYNLIGHTS|RHF_ADD_DYNSHADOWS|RHF_ADD_RADIO;
 
             if((viewPlayer->shared.flags & (DDPF_NOCLIP|DDPF_CAMERA)) ||
-               !(line->flags & DDLF_BLOCKING))
+               !(line->isFlagged(DDLF_BLOCKING)))
                 rhFlags |= RHF_VIEWER_NEAR_BLEND;
 
             Rend_RadioUpdateLine(*hedge->lineDef, hedge->side);
@@ -2106,7 +2105,7 @@ static boolean hedgeBackClosedForSkyFix(HEdge const *hedge)
         if(backSec->SP_floorvisheight >= frontSec->SP_ceilvisheight)  return true;
     }
 
-    return R_MiddleMaterialCoversOpening(line->flags, frontSec, backSec, frontDef, backDef,
+    return R_MiddleMaterialCoversOpening(line->flags(), frontSec, backSec, frontDef, backDef,
                                          false/*don't ignore opacity*/);
 }
 
@@ -2988,7 +2987,7 @@ void Rend_RenderSurfaceVectors()
         vec3f_t origin;
 
         if(!hedge->lineDef || !hedge->sector ||
-           (hedge->lineDef->inFlags & LF_POLYOBJ))
+           (hedge->lineDef->isFromPolyobj()))
             continue;
 
         line = hedge->lineDef;
@@ -3356,7 +3355,7 @@ void Rend_Vertexes()
             if(!own) continue;
 
             // Ignore polyobj vertexes.
-            if(own->line().inFlags & LF_POLYOBJ) continue;
+            if(own->line().isFromPolyobj()) continue;
 
             float alpha = 1 - M_ApproxDistance(vOrigin[VX] - vtx->origin()[VX],
                                                vOrigin[VZ] - vtx->origin()[VY]) / MAX_VERTEX_POINT_DIST;
@@ -3389,7 +3388,7 @@ void Rend_Vertexes()
         if(!own) continue;
 
         // Ignore polyobj vertexes.
-        if(own->line().inFlags & LF_POLYOBJ) continue;
+        if(own->line().isFromPolyobj()) continue;
 
         dist = M_ApproxDistance(vOrigin[VX] - vtx->origin()[VX],
                                 vOrigin[VZ] - vtx->origin()[VY]);
@@ -3422,7 +3421,7 @@ void Rend_Vertexes()
             if(!own) continue;
 
             // Ignore polyobj vertexes.
-            if(own->line().inFlags & LF_POLYOBJ) continue;
+            if(own->line().isFromPolyobj()) continue;
 
             pos[VX] = vtx->origin()[VX];
             pos[VY] = vtx->origin()[VY];
@@ -3931,8 +3930,8 @@ static void Rend_RenderBoundingBoxes()
                                    (line->v2Origin()[VY] + line->v1Origin()[VY])/2,
                                    sec.SP_floorheight };
 
-                Rend_DrawBBox(pos, 0, line->length / 2, height,
-                              BANG2DEG(BANG_90 - line->angle),
+                Rend_DrawBBox(pos, 0, line->length() / 2, height,
+                              BANG2DEG(BANG_90 - line->angle()),
                               green, alpha, 0, true);
             }
         }

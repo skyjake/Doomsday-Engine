@@ -82,20 +82,50 @@ LineDef::LineDef() : MapElement(DMU_LINEDEF)
     std::memset(_v,     0, sizeof(_v));
     std::memset(_vo,    0, sizeof(_vo));
     std::memset(_sides, 0, sizeof(_sides));
-    flags = 0;
-    inFlags = 0;
-    slopeType = (slopetype_t) 0;
-    validCount = 0;
-    angle = 0;
-    std::memset(direction, 0, sizeof(direction));
-    length = 0;
-    std::memset(&aaBox, 0, sizeof(aaBox));
-    std::memset(mapped, 0, sizeof(mapped));
-    origIndex = 0;
+    _flags = 0;
+    _inFlags = 0;
+    _slopeType = slopetype_t(0);
+    _validCount = 0;
+    _angle = 0;
+    V2d_Set(_direction, 0, 0);
+    _length = 0;
+    std::memset(_mapped, 0, sizeof(_mapped));
+    _origIndex = 0;
 }
 
 LineDef::~LineDef()
 {}
+
+int LineDef::flags() const
+{
+    return _flags;
+}
+
+uint LineDef::origIndex() const
+{
+    return _origIndex;
+}
+
+int LineDef::validCount() const
+{
+    return _validCount;
+}
+
+bool LineDef::mappedByPlayer(int playerNum) const
+{
+    DENG2_ASSERT(playerNum >= 0 && playerNum < DDMAXPLAYERS);
+    return _mapped[playerNum];
+}
+
+bool LineDef::isBspWindow() const
+{
+    return !!(_inFlags & LF_BSPWINDOW);
+}
+
+bool LineDef::isFromPolyobj() const
+{
+    return !!(_inFlags & LF_POLYOBJ);
+}
 
 LineDef::Side &LineDef::side(int back)
 {
@@ -122,11 +152,36 @@ LineOwner *LineDef::vertexOwner(int to) const
     return _vo[to? TO:FROM];
 }
 
+binangle_t LineDef::angle() const
+{
+    return _angle;
+}
+
+const_pvec2d_t &LineDef::direction() const
+{
+    return _direction;
+}
+
+slopetype_t LineDef::slopeType() const
+{
+    return _slopeType;
+}
+
+coord_t LineDef::length() const
+{
+    return _length;
+}
+
+AABoxd const &LineDef::aaBox() const
+{
+    return _aaBox;
+}
+
 #ifdef __CLIENT__
 static void calcNormal(LineDef const *l, byte side, pvec2f_t normal)
 {
-    V2f_Set(normal, (l->vertexOrigin(side^1)[VY] - l->vertexOrigin(side)  [VY]) / l->length,
-                    (l->vertexOrigin(side)  [VX] - l->vertexOrigin(side^1)[VX]) / l->length);
+    V2f_Set(normal, (l->vertexOrigin(side^1)[VY] - l->vertexOrigin(side)  [VY]) / l->length(),
+                    (l->vertexOrigin(side)  [VX] - l->vertexOrigin(side^1)[VX]) / l->length());
 }
 
 static float calcLightLevelDelta(pvec2f_t const normal)
@@ -178,18 +233,18 @@ static LineDef *findBlendNeighbor(LineDef const *l, byte side, byte right,
 
 coord_t LineDef::pointDistance(const_pvec2d_t point, coord_t *offset) const
 {
-    return V2d_PointLineDistance(point, _v[0]->origin(), direction, offset);
+    return V2d_PointLineDistance(point, _v[0]->origin(), _direction, offset);
 }
 
 coord_t LineDef::pointOnSide(const_pvec2d_t point) const
 {
     DENG2_ASSERT(point);
-    return V2d_PointOnLineSide(point, _v[0]->origin(), direction);
+    return V2d_PointOnLineSide(point, _v[0]->origin(), _direction);
 }
 
 int LineDef::boxOnSide(AABoxd const &box) const
 {
-    return M_BoxOnLineSide(&box, _v[0]->origin(), direction);
+    return M_BoxOnLineSide(&box, _v[0]->origin(), _direction);
 }
 
 int LineDef::boxOnSide_FixedPrecision(AABoxd const &box) const
@@ -203,8 +258,8 @@ int LineDef::boxOnSide_FixedPrecision(AABoxd const &box) const
      * precision.
      */
     coord_t offset[2];
-    offset[VX] = de::floor(_v[0]->origin()[VX] + direction[VX]/2);
-    offset[VY] = de::floor(_v[0]->origin()[VY] + direction[VY]/2);
+    offset[VX] = de::floor(_v[0]->origin()[VX] + _direction[VX]/2);
+    offset[VY] = de::floor(_v[0]->origin()[VY] + _direction[VY]/2);
 
     fixed_t boxx[4];
     boxx[BOXLEFT]   = FLT2FIX(box.minX - offset[VX]);
@@ -217,8 +272,8 @@ int LineDef::boxOnSide_FixedPrecision(AABoxd const &box) const
     pos[VY]         = FLT2FIX(_v[0]->origin()[VY] - offset[VY]);
 
     fixed_t delta[2];
-    delta[VX]       = FLT2FIX(direction[VX]);
-    delta[VY]       = FLT2FIX(direction[VY]);
+    delta[VX]       = FLT2FIX(_direction[VX]);
+    delta[VY]       = FLT2FIX(_direction[VY]);
 
     return M_BoxOnLineSide_FixedPrecision(boxx, pos, delta);
 }
@@ -227,8 +282,8 @@ void LineDef::configureDivline(divline_t &dl) const
 {
     dl.origin[VX]    = FLT2FIX(_v[0]->origin()[VX]);
     dl.origin[VY]    = FLT2FIX(_v[0]->origin()[VY]);
-    dl.direction[VX] = FLT2FIX(direction[VX]);
-    dl.direction[VY] = FLT2FIX(direction[VY]);
+    dl.direction[VX] = FLT2FIX(_direction[VX]);
+    dl.direction[VY] = FLT2FIX(_direction[VY]);
 }
 
 coord_t LineDef::openRange(int side_, coord_t *retBottom, coord_t *retTop) const
@@ -268,19 +323,19 @@ void LineDef::configureTraceOpening(TraceOpening &opening) const
     }
 }
 
-void LineDef::updateSlope()
+void LineDef::updateSlopeType()
 {
-    V2d_Subtract(direction, _v[1]->origin(), _v[0]->origin());
-    slopeType = M_SlopeType(direction);
+    V2d_Subtract(_direction, _v[1]->origin(), _v[0]->origin());
+    _slopeType = M_SlopeType(_direction);
 }
 
 void LineDef::unitVector(pvec2f_t unitvec) const
 {
-    coord_t len = M_ApproxDistance(direction[VX], direction[VY]);
+    coord_t len = M_ApproxDistance(_direction[VX], _direction[VY]);
     if(len)
     {
-        unitvec[VX] = direction[VX] / len;
-        unitvec[VY] = direction[VY] / len;
+        unitvec[VX] = _direction[VX] / len;
+        unitvec[VY] = _direction[VY] / len;
     }
     else
     {
@@ -290,11 +345,11 @@ void LineDef::unitVector(pvec2f_t unitvec) const
 
 void LineDef::updateAABox()
 {
-    aaBox.minX = de::min(_v[1]->origin()[VX], _v[0]->origin()[VX]);
-    aaBox.minY = de::min(_v[1]->origin()[VY], _v[0]->origin()[VY]);
+    _aaBox.minX = de::min(_v[1]->origin()[VX], _v[0]->origin()[VX]);
+    _aaBox.minY = de::min(_v[1]->origin()[VY], _v[0]->origin()[VY]);
 
-    aaBox.maxX = de::max(_v[1]->origin()[VX], _v[0]->origin()[VX]);
-    aaBox.maxY = de::max(_v[1]->origin()[VY], _v[0]->origin()[VY]);
+    _aaBox.maxX = de::max(_v[1]->origin()[VX], _v[0]->origin()[VX]);
+    _aaBox.maxY = de::max(_v[1]->origin()[VY], _v[0]->origin()[VY]);
 }
 
 void LineDef::lightLevelDelta(int side, float *deltaL, float *deltaR) const
@@ -315,7 +370,7 @@ void LineDef::lightLevelDelta(int side, float *deltaL, float *deltaR) const
     // If smoothing is disabled use this delta for left and right edges.
     // Must forcibly disable smoothing for polyobj linedefs as they have
     // no owner rings.
-    if(!rendLightWallAngleSmooth || (inFlags & LF_POLYOBJ))
+    if(!rendLightWallAngleSmooth || (_inFlags & LF_POLYOBJ))
     {
         if(deltaL) *deltaL = delta;
         if(deltaR) *deltaR = delta;
@@ -387,24 +442,24 @@ int LineDef::property(setargs_t &args) const
         DMU_GetValue(DMT_LINEDEF_V, &_v[1], &args, 0);
         break;
     case DMU_DX:
-        DMU_GetValue(DMT_LINEDEF_DX, &direction[VX], &args, 0);
+        DMU_GetValue(DMT_LINEDEF_DX, &_direction[VX], &args, 0);
         break;
     case DMU_DY:
-        DMU_GetValue(DMT_LINEDEF_DY, &direction[VY], &args, 0);
+        DMU_GetValue(DMT_LINEDEF_DY, &_direction[VY], &args, 0);
         break;
     case DMU_DXY:
-        DMU_GetValue(DMT_LINEDEF_DX, &direction[VX], &args, 0);
-        DMU_GetValue(DMT_LINEDEF_DY, &direction[VY], &args, 1);
+        DMU_GetValue(DMT_LINEDEF_DX, &_direction[VX], &args, 0);
+        DMU_GetValue(DMT_LINEDEF_DY, &_direction[VY], &args, 1);
         break;
     case DMU_LENGTH:
-        DMU_GetValue(DMT_LINEDEF_LENGTH, &length, &args, 0);
+        DMU_GetValue(DMT_LINEDEF_LENGTH, &_length, &args, 0);
         break;
     case DMU_ANGLE: {
-        angle_t lineAngle = BANG_TO_ANGLE(angle);
+        angle_t lineAngle = BANG_TO_ANGLE(_angle);
         DMU_GetValue(DDVT_ANGLE, &lineAngle, &args, 0);
         break; }
     case DMU_SLOPETYPE:
-        DMU_GetValue(DMT_LINEDEF_SLOPETYPE, &slopeType, &args, 0);
+        DMU_GetValue(DMT_LINEDEF_SLOPETYPE, &_slopeType, &args, 0);
         break;
     case DMU_FRONT_SECTOR: {
         Sector *sec = (_sides[FRONT]._sideDef? _sides[FRONT]._sector : NULL);
@@ -415,7 +470,7 @@ int LineDef::property(setargs_t &args) const
         DMU_GetValue(DMT_LINEDEF_SECTOR, &sec, &args, 0);
         break; }
     case DMU_FLAGS:
-        DMU_GetValue(DMT_LINEDEF_FLAGS, &flags, &args, 0);
+        DMU_GetValue(DMT_LINEDEF_FLAGS, &_flags, &args, 0);
         break;
     case DMU_SIDEDEF0:
         DMU_GetValue(DDVT_PTR, &_sides[FRONT]._sideDef, &args, 0);
@@ -426,19 +481,19 @@ int LineDef::property(setargs_t &args) const
     case DMU_BOUNDING_BOX:
         if(args.valueType == DDVT_PTR)
         {
-            AABoxd const *aaBoxAdr = &aaBox;
+            AABoxd const *aaBoxAdr = &_aaBox;
             DMU_GetValue(DDVT_PTR, &aaBoxAdr, &args, 0);
         }
         else
         {
-            DMU_GetValue(DMT_LINEDEF_AABOX, &aaBox.minX, &args, 0);
-            DMU_GetValue(DMT_LINEDEF_AABOX, &aaBox.maxX, &args, 1);
-            DMU_GetValue(DMT_LINEDEF_AABOX, &aaBox.minY, &args, 2);
-            DMU_GetValue(DMT_LINEDEF_AABOX, &aaBox.maxY, &args, 3);
+            DMU_GetValue(DMT_LINEDEF_AABOX, &_aaBox.minX, &args, 0);
+            DMU_GetValue(DMT_LINEDEF_AABOX, &_aaBox.maxX, &args, 1);
+            DMU_GetValue(DMT_LINEDEF_AABOX, &_aaBox.minY, &args, 2);
+            DMU_GetValue(DMT_LINEDEF_AABOX, &_aaBox.maxY, &args, 3);
         }
         break;
     case DMU_VALID_COUNT:
-        DMU_GetValue(DMT_LINEDEF_VALIDCOUNT, &validCount, &args, 0);
+        DMU_GetValue(DMT_LINEDEF_VALIDCOUNT, &_validCount, &args, 0);
         break;
     default:
         /// @throw UnknownPropertyError  The requested property does not exist.
@@ -465,10 +520,10 @@ int LineDef::setProperty(setargs_t const &args)
         DMU_SetValue(DMT_LINEDEF_SIDEDEF, &_sides[BACK]._sideDef, &args, 0);
         break;
     case DMU_VALID_COUNT:
-        DMU_SetValue(DMT_LINEDEF_VALIDCOUNT, &validCount, &args, 0);
+        DMU_SetValue(DMT_LINEDEF_VALIDCOUNT, &_validCount, &args, 0);
         break;
     case DMU_FLAGS: {
-        DMU_SetValue(DMT_LINEDEF_FLAGS, &flags, &args, 0);
+        DMU_SetValue(DMT_LINEDEF_FLAGS, &_flags, &args, 0);
 
         if(hasFrontSideDef())
         {
