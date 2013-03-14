@@ -308,6 +308,9 @@ void LinkWindow::openConnection(Link *link, String name)
 {
     closeConnection();
 
+    d->logBuffer.flush();
+    d->log->clear();
+
     d->link = link;
 
     connect(d->link, SIGNAL(addressResolved()), this, SLOT(addressResolved()));
@@ -405,6 +408,9 @@ void LinkWindow::handleIncomingPackets()
             {
                 d->logBuffer.add(new LogEntry(*e, LogEntry::Remote));
             }
+            // Flush immediately so we don't have to wait for the autoflush
+            // to occur a bit later.
+            d->logBuffer.flush();
             break; }
 
         case shell::Protocol::ConsoleLexicon:

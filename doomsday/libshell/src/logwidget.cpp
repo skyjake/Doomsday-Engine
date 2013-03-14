@@ -39,7 +39,15 @@ public:
 
     ~Sink()
     {
-        foreach(LogEntry *e, _entries) delete e;
+        qDeleteAll(_entries);
+    }
+
+    void clear()
+    {
+        DENG2_GUARD(this);
+
+        qDeleteAll(_entries);
+        _entries.clear();
     }
 
     LogSink &operator << (LogEntry const &entry)
@@ -104,9 +112,15 @@ DENG2_PIMPL(LogWidget)
         clearCache();
     }
 
+    void clear()
+    {
+        sink.clear();
+        clearCache();
+    }
+
     void clearCache()
     {
-        foreach(TextCanvas *cv, cache) delete cv;
+        qDeleteAll(cache);
         cache.clear();
     }
 
@@ -152,6 +166,12 @@ LogWidget::LogWidget(String const &name) : TextWidget(name), d(new Instance(this
 LogSink &LogWidget::logSink()
 {
     return d->sink;
+}
+
+void LogWidget::clear()
+{
+    d->clear();
+    redraw();
 }
 
 void LogWidget::draw()
