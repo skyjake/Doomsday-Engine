@@ -805,10 +805,10 @@ BEGIN_PROF( PROF_GRID_UPDATE );
             // Determine the color of the ambient light in this sector.
             sector = block->sector;
             color = R_GetSectorLightColor(sector);
-            height = (int) (sector->SP_ceilheight - sector->SP_floorheight);
+            height = (int) (sector->ceiling().height() - sector->floor().height());
 
-            bool isSkyFloor = sector->SP_ceilsurface.isSkyMasked();
-            bool isSkyCeil  = sector->SP_floorsurface.isSkyMasked();
+            bool isSkyFloor = sector->ceilingSurface().isSkyMasked();
+            bool isSkyCeil  = sector->floorSurface().isSkyMasked();
 
             if(isSkyFloor && !isSkyCeil)
             {
@@ -893,12 +893,12 @@ void LG_Evaluate(coord_t const point[3], float color[3])
         /*if(block->bias < 0)
         {
             // Calculate Z difference to the ceiling.
-            dz = block->sector->SP_ceilheight - point[VZ];
+            dz = block->sector->ceiling().height() - point[VZ];
         }
         else if(block->bias > 0)
         {
             // Calculate Z difference to the floor.
-            dz = point[VZ] - block->sector->SP_floorheight;
+            dz = point[VZ] - block->sector->floor().height();
         }
 
         dz -= 50;

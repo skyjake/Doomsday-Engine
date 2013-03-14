@@ -439,17 +439,20 @@ void Sv_RegisterSector(dt_sector_t *reg, uint number)
     // @todo $nplanes
     for(uint i = 0; i < 2; ++i) // number of planes in sector.
     {
+        Plane const &plane = sec->plane(i);
+
         // Plane properties
-        reg->planes[i].height = sec->planes[i]->height();
-        reg->planes[i].target = sec->planes[i]->targetHeight();
-        reg->planes[i].speed  = sec->planes[i]->speed();
+        reg->planes[i].height = plane.height();
+        reg->planes[i].target = plane.targetHeight();
+        reg->planes[i].speed  = plane.speed();
 
         // Surface properties.
-        memcpy(reg->planes[i].surface.rgba, sec->planes[i]->surface().rgba,
-               sizeof(reg->planes[i].surface.rgba));
+        Surface const &surface = plane.surface();
 
-        // Surface material.
-        reg->planes[i].surface.material = sec->SP_planematerial(i);
+        std::memcpy(reg->planes[i].surface.rgba, surface.rgba,
+                    sizeof(reg->planes[i].surface.rgba));
+
+        reg->planes[i].surface.material = surface.material;
     }
 }
 
@@ -629,9 +632,9 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
     int                 df = 0;
 
     // Determine which data is different.
-    if(s->SP_floormaterial != r->planes[PLN_FLOOR].surface.material)
+    if(s->floorSurface().material != r->planes[PLN_FLOOR].surface.material)
         df |= SDF_FLOOR_MATERIAL;
-    if(s->SP_ceilmaterial != r->planes[PLN_CEILING].surface.material)
+    if(s->ceilingSurface().material != r->planes[PLN_CEILING].surface.material)
        df |= SDF_CEILING_MATERIAL;
     if(r->lightLevel != s->lightLevel)
         df |= SDF_LIGHT;
@@ -642,18 +645,18 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
     if(r->rgb[2] != s->rgb[2])
         df |= SDF_COLOR_BLUE;
 
-    if(r->planes[PLN_FLOOR].surface.rgba[0] != s->SP_floorrgb[0])
+    if(r->planes[PLN_FLOOR].surface.rgba[0] != s->floorSurface().rgba[0])
         df |= SDF_FLOOR_COLOR_RED;
-    if(r->planes[PLN_FLOOR].surface.rgba[1] != s->SP_floorrgb[1])
+    if(r->planes[PLN_FLOOR].surface.rgba[1] != s->floorSurface().rgba[1])
         df |= SDF_FLOOR_COLOR_GREEN;
-    if(r->planes[PLN_FLOOR].surface.rgba[2] != s->SP_floorrgb[2])
+    if(r->planes[PLN_FLOOR].surface.rgba[2] != s->floorSurface().rgba[2])
         df |= SDF_FLOOR_COLOR_BLUE;
 
-    if(r->planes[PLN_CEILING].surface.rgba[0] != s->SP_ceilrgb[0])
+    if(r->planes[PLN_CEILING].surface.rgba[0] != s->ceilingSurface().rgba[0])
         df |= SDF_CEIL_COLOR_RED;
-    if(r->planes[PLN_CEILING].surface.rgba[1] != s->SP_ceilrgb[1])
+    if(r->planes[PLN_CEILING].surface.rgba[1] != s->ceilingSurface().rgba[1])
         df |= SDF_CEIL_COLOR_GREEN;
-    if(r->planes[PLN_CEILING].surface.rgba[2] != s->SP_ceilrgb[2])
+    if(r->planes[PLN_CEILING].surface.rgba[2] != s->ceilingSurface().rgba[2])
         df |= SDF_CEIL_COLOR_BLUE;
 
     // The cases where an immediate change to a plane's height is needed:
@@ -663,46 +666,46 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
     //    The clientside height should be fixed.
 
     // Should we make an immediate change in floor height?
-    if(FEQUAL(r->planes[PLN_FLOOR].speed, 0) && FEQUAL(s->SP_floorspeed, 0))
+    if(FEQUAL(r->planes[PLN_FLOOR].speed, 0) && FEQUAL(s->floor().speed(), 0))
     {
-        if(!FEQUAL(r->planes[PLN_FLOOR].height, s->SP_floorheight))
+        if(!FEQUAL(r->planes[PLN_FLOOR].height, s->floor().height()))
             df |= SDF_FLOOR_HEIGHT;
     }
     else
     {
-        if(fabs(r->planes[PLN_FLOOR].height - s->SP_floorheight) > PLANE_SKIP_LIMIT)
+        if(fabs(r->planes[PLN_FLOOR].height - s->floor().height()) > PLANE_SKIP_LIMIT)
             df |= SDF_FLOOR_HEIGHT;
     }
 
     // How about the ceiling?
-    if(FEQUAL(r->planes[PLN_CEILING].speed, 0) && FEQUAL(s->SP_ceilspeed, 0))
+    if(FEQUAL(r->planes[PLN_CEILING].speed, 0) && FEQUAL(s->ceiling().speed(), 0))
     {
-        if(!FEQUAL(r->planes[PLN_CEILING].height, s->SP_ceilheight))
+        if(!FEQUAL(r->planes[PLN_CEILING].height, s->ceiling().height()))
             df |= SDF_CEILING_HEIGHT;
     }
     else
     {
-        if(fabs(r->planes[PLN_CEILING].height - s->SP_ceilheight) > PLANE_SKIP_LIMIT)
+        if(fabs(r->planes[PLN_CEILING].height - s->ceiling().height()) > PLANE_SKIP_LIMIT)
             df |= SDF_CEILING_HEIGHT;
     }
 
     // Check planes, too.
-    if(!FEQUAL(r->planes[PLN_FLOOR].target, s->SP_floortarget))
+    if(!FEQUAL(r->planes[PLN_FLOOR].target, s->floor().targetHeight()))
     {
         // Target and speed are always sent together.
         df |= SDF_FLOOR_TARGET | SDF_FLOOR_SPEED;
     }
-    if(!FEQUAL(r->planes[PLN_FLOOR].speed, s->SP_floorspeed))
+    if(!FEQUAL(r->planes[PLN_FLOOR].speed, s->floor().speed()))
     {
         // Target and speed are always sent together.
         df |= SDF_FLOOR_SPEED | SDF_FLOOR_TARGET;
     }
-    if(!FEQUAL(r->planes[PLN_CEILING].target, s->SP_ceiltarget))
+    if(!FEQUAL(r->planes[PLN_CEILING].target, s->ceiling().targetHeight()))
     {
         // Target and speed are always sent together.
         df |= SDF_CEILING_TARGET | SDF_CEILING_SPEED;
     }
-    if(!FEQUAL(r->planes[PLN_CEILING].speed, s->SP_ceilspeed))
+    if(!FEQUAL(r->planes[PLN_CEILING].speed, s->ceiling().speed()))
     {
         // Target and speed are always sent together.
         df |= SDF_CEILING_SPEED | SDF_CEILING_TARGET;
@@ -711,7 +714,7 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
 #ifdef _DEBUG
     if(df & (SDF_CEILING_HEIGHT | SDF_CEILING_SPEED | SDF_CEILING_TARGET))
     {
-        Con_Message("Sector %i: ceiling state change noted (target = %f)", number, s->SP_ceiltarget);
+        Con_Message("Sector %i: ceiling state change noted (target = %f)", number, s->ceiling().targetHeight());
     }
 #endif
 
@@ -732,8 +735,8 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
     {
         // The plane heights should be tracked regardless of the
         // change flags.
-        r->planes[PLN_FLOOR].height = s->SP_floorheight;
-        r->planes[PLN_CEILING].height = s->SP_ceilheight;
+        r->planes[PLN_FLOOR].height = s->floor().height();
+        r->planes[PLN_CEILING].height = s->ceiling().height();
     }
 
     d->delta.flags = df;

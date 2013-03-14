@@ -230,7 +230,7 @@ static boolean calcBspLeafReverb(BspLeaf *bspLeaf)
 
     // Space is the rough volume of the BSP leaf (bounding box).
     bspLeaf->_reverb[SRD_SPACE] =
-        (int) (bspLeaf->sector().SP_ceilheight - bspLeaf->sector().SP_floorheight) *
+        (int) (bspLeaf->sector().ceiling().height() - bspLeaf->sector().floor().height()) *
         (bspLeaf->aaBox().maxX - bspLeaf->aaBox().minX) *
         (bspLeaf->aaBox().maxY - bspLeaf->aaBox().minY);
 
@@ -310,7 +310,7 @@ static void calculateSectorReverb(Sector *sec)
     ///       with multiple disjoint groups of small geometries.
     ///       In general a sector should never be considered as playing any
     ///       part in the definition of a map's geometry. -ds
-    uint spaceVolume = (int) (sec->SP_ceilheight - sec->SP_floorheight) *
+    uint spaceVolume = (int) (sec->ceiling().height() - sec->floor().height()) *
         (sec->aaBox.maxX - sec->aaBox.minX) *
         (sec->aaBox.maxY - sec->aaBox.minY);
 
@@ -359,7 +359,7 @@ static void calculateSectorReverb(Sector *sec)
     if(sec->reverb[SRD_SPACE] > .99)
         sec->reverb[SRD_SPACE] = .99f;
 
-    if(sec->SP_ceilsurface.isSkyMasked() || sec->SP_floorsurface.isSkyMasked())
+    if(sec->ceilingSurface().isSkyMasked() || sec->floorSurface().isSkyMasked())
     {
         // An "open" sector.
         // It can still be small, in which case; reverb is diminished a bit.

@@ -211,9 +211,9 @@ static bool backClosedForBlendNeighbor(LineDef const *lineDef, int side,
 
     if(frontSec && backSec)
     {
-        if(backSec->SP_floorvisheight >= backSec->SP_ceilvisheight)   return true;
-        if(backSec->SP_ceilvisheight  <= frontSec->SP_floorvisheight) return true;
-        if(backSec->SP_floorvisheight >= frontSec->SP_ceilvisheight)  return true;
+        if(backSec->floor().visHeight() >= backSec->ceiling().visHeight())   return true;
+        if(backSec->ceiling().visHeight()  <= frontSec->floor().visHeight()) return true;
+        if(backSec->floor().visHeight() >= frontSec->ceiling().visHeight())  return true;
     }
 
     return R_MiddleMaterialCoversLineOpening(lineDef, side, ignoreOpacity);
@@ -313,13 +313,13 @@ void LineDef::configureTraceOpening(TraceOpening &opening) const
     Sector const &fsec = frontSector();
     Sector const &bsec = backSector();
 
-    if(fsec.SP_floorheight > bsec.SP_floorheight)
+    if(fsec.floor().height() > bsec.floor().height())
     {
-        opening.lowFloor = float( bsec.SP_floorheight );
+        opening.lowFloor = float( bsec.floor().height() );
     }
     else
     {
-        opening.lowFloor = float( fsec.SP_floorheight );
+        opening.lowFloor = float( fsec.floor().height() );
     }
 }
 

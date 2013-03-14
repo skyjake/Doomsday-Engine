@@ -661,8 +661,8 @@ static void renderParticles(int rtype, boolean withBlend)
         glColor4fv(color);
 
         nearPlane = (pt->sector &&
-                     (FLT2FIX(pt->sector->SP_floorheight) + 2 * FRACUNIT >= pt->origin[VZ] ||
-                      FLT2FIX(pt->sector->SP_ceilheight)  - 2 * FRACUNIT <= pt->origin[VZ]));
+                     (FLT2FIX(pt->sector->floor().height()) + 2 * FRACUNIT >= pt->origin[VZ] ||
+                      FLT2FIX(pt->sector->ceiling().height())  - 2 * FRACUNIT <= pt->origin[VZ]));
         nearWall = (pt->contact && !pt->mov[VX] && !pt->mov[VY]);
 
         if(stageType == PTC_POINT || (stageType >= PTC_TEXTURE && stageType < PTC_TEXTURE + MAX_PTC_TEXTURES))

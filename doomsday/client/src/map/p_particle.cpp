@@ -187,12 +187,12 @@ void P_MapSpawnPlaneParticleGens()
 
         for(uint j = 0; j < 2; ++j)
         {
-            Plane *plane = sector->SP_plane(j);
-            if(!plane->PS_material) continue;
+            Plane &plane = sector->plane(j);
+            if(!plane.surface().material) continue;
 
-            de::Uri uri = plane->PS_material->manifest().composeUri();
+            de::Uri uri = plane.surface().material->manifest().composeUri();
             ded_ptcgen_t const *def = Def_GetGenerator(reinterpret_cast<uri_s *>(&uri));
-            P_SpawnPlaneParticleGen(def, plane);
+            P_SpawnPlaneParticleGen(def, &plane);
         }
     }
 }
@@ -374,7 +374,7 @@ void P_SpawnPlaneParticleGen(ded_ptcgen_t const *def, Plane *plane)
     if(def->flags & PGF_FLOOR_SPAWN)
         relPlane = Plane::Floor;
 
-    plane = plane->sector().SP_plane(relPlane);
+    plane = &plane->sector().plane(relPlane);
 
     // Only one generator per plane.
     if(generatorByPlane(plane)) return;
@@ -621,10 +621,10 @@ static void P_NewParticle(ptcgen_t *gen)
         if(gen->flags & PGF_SPACE_SPAWN)
         {
             pt->origin[VZ] =
-                FLT2FIX(sector->SP_floorheight) + radius +
+                FLT2FIX(sector->floor().height()) + radius +
                 FixedMul(RNG_RandByte() << 8,
-                         FLT2FIX(sector->SP_ceilheight -
-                                 sector->SP_floorheight) - 2 * radius);
+                         FLT2FIX(sector->ceiling().height() -
+                                 sector->floor().height()) - 2 * radius);
         }
         else if(gen->flags & PGF_FLOOR_SPAWN ||
                 (!(gen->flags & (PGF_FLOOR_SPAWN | PGF_CEILING_SPAWN)) &&
@@ -787,16 +787,16 @@ int PIT_CheckLinePtc(LineDef *ld, void *parameters)
     // Determine the opening we have here.
     /// @todo Use LineDef::openRange()
     fixed_t ceil;
-    if(front->SP_ceilheight < back->SP_ceilheight)
-        ceil = FLT2FIX(front->SP_ceilheight);
+    if(front->ceiling().height() < back->ceiling().height())
+        ceil = FLT2FIX(front->ceiling().height());
     else
-        ceil = FLT2FIX(back->SP_ceilheight);
+        ceil = FLT2FIX(back->ceiling().height());
 
     fixed_t floor;
-    if(front->SP_floorheight > back->SP_floorheight)
-        floor = FLT2FIX(front->SP_floorheight);
+    if(front->floor().height() > back->floor().height())
+        floor = FLT2FIX(front->floor().height());
     else
-        floor = FLT2FIX(back->SP_floorheight);
+        floor = FLT2FIX(back->floor().height());
 
     // There is a backsector. We possibly might hit something.
     if(tmpz - tmprad < floor || tmpz + tmprad > ceil)
@@ -854,9 +854,9 @@ float P_GetParticleRadius(ded_ptcstage_t const *def, int ptcIDX)
 float P_GetParticleZ(particle_t const *pt)
 {
     if(pt->origin[VZ] == DDMAXINT)
-        return pt->sector->SP_ceilvisheight - 2;
+        return pt->sector->ceiling().visHeight() - 2;
     else if(pt->origin[VZ] == DDMININT)
-        return (pt->sector->SP_floorvisheight + 2);
+        return (pt->sector->floor().visHeight() + 2);
 
     return FIX2FLT(pt->origin[VZ]);
 }
@@ -1000,10 +1000,10 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
     z = pt->origin[VZ] + pt->mov[VZ];
     if(pt->origin[VZ] != DDMININT && pt->origin[VZ] != DDMAXINT && pt->sector)
     {
-        if(z > FLT2FIX(pt->sector->SP_ceilheight) - hardRadius)
+        if(z > FLT2FIX(pt->sector->ceiling().height()) - hardRadius)
         {
             // The Z is through the roof!
-            if(pt->sector->SP_ceilsurface.isSkyMasked())
+            if(pt->sector->ceilingSurface().isSkyMasked())
             {
                 // Special case: particle gets lost in the sky.
                 pt->stage = -1;
@@ -1012,15 +1012,15 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
 
             if(!P_TouchParticle(pt, st, stDef, false)) return;
 
-            z = FLT2FIX(pt->sector->SP_ceilheight) - hardRadius;
+            z = FLT2FIX(pt->sector->ceiling().height()) - hardRadius;
             zBounce = true;
             hitFloor = false;
         }
 
         // Also check the floor.
-        if(z < FLT2FIX(pt->sector->SP_floorheight) + hardRadius)
+        if(z < FLT2FIX(pt->sector->floor().height()) + hardRadius)
         {
-            if(pt->sector->SP_floorsurface.isSkyMasked())
+            if(pt->sector->floorSurface().isSkyMasked())
             {
                 pt->stage = -1;
                 return;
@@ -1028,7 +1028,7 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
 
             if(!P_TouchParticle(pt, st, stDef, false)) return;
 
-            z = FLT2FIX(pt->sector->SP_floorheight) + hardRadius;
+            z = FLT2FIX(pt->sector->floor().height()) + hardRadius;
             zBounce = true;
             hitFloor = true;
         }
@@ -1079,15 +1079,15 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
                 coord_t fz, cz;
 
                 /// @todo $nplanes
-                if(front->SP_floorheight > back->SP_floorheight)
-                    fz = front->SP_floorheight;
+                if(front->floor().height() > back->floor().height())
+                    fz = front->floor().height();
                 else
-                    fz = back->SP_floorheight;
+                    fz = back->floor().height();
 
-                if(front->SP_ceilheight < back->SP_ceilheight)
-                    cz = front->SP_ceilheight;
+                if(front->ceiling().height() < back->ceiling().height())
+                    cz = front->ceiling().height();
                 else
-                    cz = back->SP_ceilheight;
+                    cz = back->ceiling().height();
 
                 // If the particle is in the opening of a 2-sided line, it's
                 // quite likely that it shouldn't be here...
@@ -1399,9 +1399,9 @@ static int findDefForGenerator(ptcgen_t *gen, void *parameters)
 
                 Material *mat = gen->plane->PS_material;
                 if(def->flags & PGF_FLOOR_SPAWN)
-                    mat = gen->plane->sector().SP_floormaterial;
+                    mat = gen->plane->sector().floorSurface().material;
                 if(def->flags & PGF_CEILING_SPAWN)
-                    mat = gen->plane->sector().SP_ceilmaterial;
+                    mat = gen->plane->sector().ceilingSurface().material;
 
                 // Is this suitable?
                 if(mat == defMat)

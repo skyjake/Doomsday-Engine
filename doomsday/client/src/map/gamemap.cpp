@@ -252,12 +252,12 @@ Surface *GameMap_SurfaceByBase(GameMap *map, void const *ddMobjBase)
     for(uint i = 0; i < map->sectorCount(); ++i)
     {
         Sector *sec = &map->sectors[i];
-        for(uint k = 0; k < sec->planeCount(); ++k)
+
+        foreach(Plane *plane, sec->planes())
         {
-            Plane *pln = sec->SP_plane(k);
-            if(ddMobjBase == &pln->surface().base)
+            if(ddMobjBase == &plane->surface().base)
             {
-                return &pln->surface();
+                return &plane->surface();
             }
         }
     }
@@ -266,6 +266,7 @@ Surface *GameMap_SurfaceByBase(GameMap *map, void const *ddMobjBase)
     for(uint i = 0; i < map->sideDefCount(); ++i)
     {
         SideDef *side = &map->sideDefs[i];
+
         if(ddMobjBase == &side->SW_middlesurface.base)
         {
             return &side->SW_middlesurface;

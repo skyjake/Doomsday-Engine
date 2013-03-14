@@ -118,7 +118,7 @@ static void setRendpolyColor(ColorRawf *rcolors, uint num, float const shadowRGB
 /// @return  @c true, if there is open space in the sector.
 static inline boolean isSectorOpen(Sector const *sector)
 {
-    return (sector && sector->SP_ceilheight > sector->SP_floorheight);
+    return (sector && sector->ceiling().height() > sector->floor().height());
 }
 
 /**
@@ -163,8 +163,8 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
     boolean closed;
     coord_t fCeil, fFloor;
 
-    fFloor = startSector->SP_floorvisheight;
-    fCeil  = startSector->SP_ceilvisheight;
+    fFloor = startSector->floor().visHeight();
+    fCeil  = startSector->ceiling().visHeight();
 
     // Retrieve the start owner node.
     own = R_GetVtxLineOwner(&line->vertex(side^!toLeft), line);
@@ -197,13 +197,13 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
         // Pick plane heights for relative offset comparison.
         if(!stopScan)
         {
-            iFFloor = iter->frontSector().SP_floorvisheight;
-            iFCeil  = iter->frontSector().SP_ceilvisheight;
+            iFFloor = iter->frontSector().floor().visHeight();
+            iFCeil  = iter->frontSector().ceiling().visHeight();
 
             if(iter->hasBackSideDef())
             {
-                iBFloor = iter->backSector().SP_floorvisheight;
-                iBCeil  = iter->backSector().SP_ceilvisheight;
+                iBFloor = iter->backSector().floor().visHeight();
+                iBCeil  = iter->backSector().ceiling().visHeight();
             }
             else
                 iBFloor = iBCeil = 0;
@@ -297,16 +297,16 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
                     // A height difference from the start sector?
                     if(scanTop)
                     {
-                        if(scanSector->SP_ceilvisheight != fCeil &&
-                           scanSector->SP_floorvisheight <
-                                startSector->SP_ceilvisheight)
+                        if(scanSector->ceiling().visHeight() != fCeil &&
+                           scanSector->floor().visHeight() <
+                                startSector->ceiling().visHeight())
                             stopScan = true;
                     }
                     else
                     {
-                        if(scanSector->SP_floorvisheight != fFloor &&
-                           scanSector->SP_ceilvisheight >
-                                startSector->SP_floorvisheight)
+                        if(scanSector->floor().visHeight() != fFloor &&
+                           scanSector->ceiling().visHeight() >
+                                startSector->floor().visHeight())
                             stopScan = true;
                     }
                 }
@@ -326,10 +326,10 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
             // heights are within accepted range.
             if(scanSector && line->hasSideDef(side^1) &&
                scanSector != line->sectorPtr(side^1) &&
-                ((scanTop && scanSector->SP_ceilvisheight ==
-                                startSector->SP_ceilvisheight) ||
-                 (!scanTop && scanSector->SP_floorvisheight ==
-                                startSector->SP_floorvisheight)))
+                ((scanTop && scanSector->ceiling().visHeight() ==
+                                startSector->ceiling().visHeight()) ||
+                 (!scanTop && scanSector->floor().visHeight() ==
+                                startSector->floor().visHeight())))
             {
                 // If the map is formed correctly, we should find a back
                 // neighbor attached to this line. However, if this is not
@@ -369,8 +369,8 @@ static void scanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
 {
     if(line.isSelfReferencing()) return;
 
-    coord_t fFloor = line.sector(side).SP_floorvisheight;
-    coord_t fCeil  = line.sector(side).SP_ceilvisheight;
+    coord_t fFloor = line.sector(side).floor().visHeight();
+    coord_t fCeil  = line.sector(side).ceiling().visHeight();
 
     edge_t edges[2]; // {bottom, top}
     std::memset(edges, 0, sizeof(edges));
@@ -430,13 +430,13 @@ static void scanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
             corner->proximity = edge->sector;
             if(i == 0) // Floor.
             {
-                corner->pOffset = corner->proximity->SP_floorvisheight - fFloor;
-                corner->pHeight = corner->proximity->SP_floorvisheight;
+                corner->pOffset = corner->proximity->floor().visHeight() - fFloor;
+                corner->pHeight = corner->proximity->floor().visHeight();
             }
             else // Ceiling.
             {
-                corner->pOffset = corner->proximity->SP_ceilvisheight - fCeil;
-                corner->pHeight = corner->proximity->SP_ceilvisheight;
+                corner->pOffset = corner->proximity->ceiling().visHeight() - fCeil;
+                corner->pHeight = corner->proximity->ceiling().visHeight();
             }
         }
         else
@@ -1065,10 +1065,10 @@ void Rend_RadioWallSection(rvertex_t const *rvertices, RendRadioWallSectionParms
     if(!rendFakeRadio || levelFullBright) return;
 
     coord_t const lineLength = parms.line->length();
-    coord_t const fFloor     = parms.frontSec->SP_floorvisheight;
-    coord_t const fCeil      = parms.frontSec->SP_ceilvisheight;
-    coord_t const bFloor     = (parms.backSec? parms.backSec->SP_floorvisheight : 0);
-    coord_t const bCeil      = (parms.backSec? parms.backSec->SP_ceilvisheight  : 0);
+    coord_t const fFloor     = parms.frontSec->floor().visHeight();
+    coord_t const fCeil      = parms.frontSec->ceiling().visHeight();
+    coord_t const bFloor     = (parms.backSec? parms.backSec->floor().visHeight() : 0);
+    coord_t const bCeil      = (parms.backSec? parms.backSec->ceiling().visHeight()  : 0);
 
     bool const bottomGlow    = R_IsGlowingPlane(&parms.frontSec->floor());
     bool const topGlow       = R_IsGlowingPlane(&parms.frontSec->ceiling());
@@ -1175,19 +1175,19 @@ static void setRelativeHeights(Sector const *front, Sector const *back, boolean 
 {
     if(fz)
     {
-        *fz = front->planes[isCeiling? Plane::Ceiling:Plane::Floor]->visHeight();
+        *fz = front->plane(isCeiling? Plane::Ceiling:Plane::Floor).visHeight();
         if(isCeiling)
             *fz = -(*fz);
     }
     if(bz)
     {
-        *bz = back->planes[isCeiling? Plane::Ceiling:Plane::Floor]->visHeight();
+        *bz = back->plane(isCeiling? Plane::Ceiling:Plane::Floor).visHeight();
         if(isCeiling)
             *bz = -(*bz);
     }
     if(bhz)
     {
-        *bhz = back->planes[isCeiling? Plane::Floor:Plane::Ceiling]->visHeight();
+        *bhz = back->plane(isCeiling? Plane::Floor:Plane::Ceiling).visHeight();
         if(isCeiling)
             *bhz = -(*bhz);
     }
@@ -1203,11 +1203,11 @@ static uint radioEdgeHackType(LineDef const *line, Sector const *front, Sector c
         return 3; // Consider it fully open.
 
     // Is the back sector closed?
-    if(front->SP_floorvisheight >= back->SP_ceilvisheight)
+    if(front->floor().visHeight() >= back->ceiling().visHeight())
     {
-        if(front->planes[isCeiling? Plane::Floor:Plane::Ceiling]->surface().isSkyMasked())
+        if(front->planeSurface(isCeiling? Plane::Floor:Plane::Ceiling).isSkyMasked())
         {
-            if(back->planes[isCeiling? Plane::Floor:Plane::Ceiling]->surface().isSkyMasked())
+            if(back->planeSurface(isCeiling? Plane::Floor:Plane::Ceiling).isSkyMasked())
                 return 3; // Consider it fully open.
         }
         else
@@ -1299,20 +1299,19 @@ static void addShadowEdge(vec2d_t inner[2], vec2d_t outer[2], coord_t innerLeftZ
 }
 
 static void processEdgeShadow(BspLeaf const &bspLeaf, LineDef const *lineDef,
-    uint side, uint planeId, float shadowDark)
+    uint side, uint planeIndex, float shadowDark)
 {
     DENG_ASSERT(lineDef && (side == FRONT || side == BACK) && lineDef->hasSideDef(side));
-    DENG_ASSERT(planeId < lineDef->sector(side).planeCount());
 
     if(!(shadowDark > .0001)) return;
 
-    Plane const *pln   = lineDef->sector(side).SP_plane(planeId);
-    Surface const *suf = &pln->surface();
-    coord_t plnHeight  = pln->visHeight();
+    Plane const &plane = lineDef->sector(side).plane(planeIndex);
+    Surface const *suf = &plane.surface();
+    coord_t plnHeight  = plane.visHeight();
 
     // Glowing surfaces or missing textures shouldn't have shadows.
     if((suf->inFlags & SUIF_NO_RADIO) || !suf->material || suf->isSkyMasked()) return;
-    if(pln->PS_material->hasGlow()) return;
+    if(suf->material->hasGlow()) return;
 
     // Determine the openness of the lineDef. If this edge is edgeOpen,
     // there won't be a shadow at all. Open neighbours cause some
@@ -1326,9 +1325,9 @@ static void processEdgeShadow(BspLeaf const &bspLeaf, LineDef const *lineDef,
     {
         front = lineDef->sectorPtr(side);
         back  = lineDef->sectorPtr(side ^ 1);
-        setRelativeHeights(front, back, planeId == Plane::Ceiling, &fz, &bz, &bhz);
+        setRelativeHeights(front, back, planeIndex == Plane::Ceiling, &fz, &bz, &bhz);
 
-        uint hackType = radioEdgeHackType(lineDef, front, back, side, planeId == Plane::Ceiling, fz, bz);
+        uint hackType = radioEdgeHackType(lineDef, front, back, side, planeIndex == Plane::Ceiling, fz, bz);
         if(hackType)
         {
             V2f_Set(edgeOpen, hackType - 1, hackType - 1);
@@ -1377,13 +1376,13 @@ static void processEdgeShadow(BspLeaf const &bspLeaf, LineDef const *lineDef,
             {
                 // Its a normal neighbor.
                 if(neighbor->sectorPtr(otherSide) != lineDef->sectorPtr(side) &&
-                   !((pln->type() == Plane::Floor && othersec->SP_ceilvisheight <= pln->visHeight()) ||
-                     (pln->type() == Plane::Ceiling && othersec->SP_floorheight >= pln->visHeight())))
+                   !((plane.type() == Plane::Floor && othersec->ceiling().visHeight() <= plane.visHeight()) ||
+                     (plane.type() == Plane::Ceiling && othersec->floor().height() >= plane.visHeight())))
                 {
                     front = lineDef->sectorPtr(side);
                     back  = neighbor->sectorPtr(otherSide);
 
-                    setRelativeHeights(front, back, planeId == Plane::Ceiling, &fz, &bz, &bhz);
+                    setRelativeHeights(front, back, planeIndex == Plane::Ceiling, &fz, &bz, &bhz);
                     sideOpen[i] = radioEdgeOpenness(fz, bz, bhz);
                 }
             }
@@ -1487,12 +1486,12 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
     // See if any of this BspLeaf's planes will get shadows.
     for(uint pln = 0; pln < sector.planeCount(); ++pln)
     {
-        Plane const *plane = sector.planes[pln];
+        Plane const &plane = sector.plane(pln);
 
-        vec[VZ] = vOrigin[VY] - plane->visHeight();
+        vec[VZ] = vOrigin[VY] - plane.visHeight();
 
         // Don't bother with planes facing away from the camera.
-        if(V3f_DotProduct(vec, plane->PS_normal) < 0) continue;
+        if(V3f_DotProduct(vec, plane.PS_normal) < 0) continue;
 
         doPlanes[pln] = true;
         workToDo = true;
@@ -1593,7 +1592,7 @@ void Rend_DrawShadowOffsetVerts()
             do
             {
                 coord_t pos[3];
-                pos[VZ] = own->line().frontSector().SP_floorvisheight;
+                pos[VZ] = own->line().frontSector().floor().visHeight();
 
                 V2d_Sum(pos, vtx.origin(), own->extendedShadowOffset());
                 drawPoint(pos, 1, yellow);

@@ -862,7 +862,7 @@ void SB_RendPoly(struct ColorRawf_s *rcolors, biassurface_t *bsuf,
 
             V3d_Set(point, bspLeaf->center()[VX],
                            bspLeaf->center()[VY],
-                           bspLeaf->sector().planes[elmIdx]->height());
+                           bspLeaf->sector().plane(elmIdx).height());
 
             updateAffected2(bsuf, rvertices, numVertices, point, normal);
         }

@@ -358,8 +358,8 @@ DENG_EXTERN_C void P_MobjLink(mobj_t *mo, byte flags)
 
         player->inVoid = true;
         if(P_IsPointXYInSector(player->mo->origin[VX], player->mo->origin[VY], &sec) &&
-           (player->mo->origin[VZ] <  sec.SP_ceilvisheight + 4 &&
-            player->mo->origin[VZ] >= sec.SP_floorvisheight))
+           (player->mo->origin[VZ] <  sec.ceiling().visHeight() + 4 &&
+            player->mo->origin[VZ] >= sec.floor().visHeight()))
             player->inVoid = false;
     }
 }

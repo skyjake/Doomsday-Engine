@@ -703,8 +703,8 @@ void R_ProjectPlayerSprites()
             spr->data.model.flags = 0;
             // 32 is the raised weapon height.
             spr->data.model.gzt = viewData->current.origin[VZ];
-            spr->data.model.secFloor = ddpl->mo->bspLeaf->sector().SP_floorvisheight;
-            spr->data.model.secCeil  = ddpl->mo->bspLeaf->sector().SP_ceilvisheight;
+            spr->data.model.secFloor = ddpl->mo->bspLeaf->sector().floor().visHeight();
+            spr->data.model.secCeil  = ddpl->mo->bspLeaf->sector().ceiling().visHeight();
             spr->data.model.pClass = 0;
             spr->data.model.floorClip = 0;
 
@@ -791,14 +791,14 @@ int RIT_VisMobjZ(Sector *sector, void *parameters)
     DENG_ASSERT(parameters);
     vismobjzparams_t *p = (vismobjzparams_t *) parameters;
 
-    if(p->floorAdjust && p->mo->origin[VZ] == sector->SP_floorheight)
+    if(p->floorAdjust && p->mo->origin[VZ] == sector->floor().height())
     {
-        p->vis->origin[VZ] = sector->SP_floorvisheight;
+        p->vis->origin[VZ] = sector->floor().visHeight();
     }
 
-    if(p->mo->origin[VZ] + p->mo->height == sector->SP_ceilheight)
+    if(p->mo->origin[VZ] + p->mo->height == sector->ceiling().height())
     {
-        p->vis->origin[VZ] = sector->SP_ceilvisheight - p->mo->height;
+        p->vis->origin[VZ] = sector->ceiling().visHeight() - p->mo->height;
     }
 
     return false; // Continue iteration.
@@ -1009,9 +1009,9 @@ void R_ProjectSprite(mobj_t *mo)
     if((mo->ddFlags & DDMF_DONTDRAW) || !mo->state || mo->state == states) return;
 
     Sector &moSec       = mo->bspLeaf->sector();
-    coord_t secFloor    = moSec.SP_floorvisheight;
-    coord_t secCeil     = moSec.SP_ceilvisheight;
-    boolean floorAdjust = (fabs(moSec.SP_floorvisheight - moSec.SP_floorheight) < 8);
+    coord_t secFloor    = moSec.floor().visHeight();
+    coord_t secCeil     = moSec.ceiling().visHeight();
+    boolean floorAdjust = (fabs(moSec.floor().visHeight() - moSec.floor().height()) < 8);
 
     // Never make a vissprite when the mobj's origin sector is of zero height.
     if(secFloor >= secCeil) return;
@@ -1404,11 +1404,11 @@ int RIT_AddSprite(void *ptr, void *parameters)
         // that no sprites get clipped by the sky.
         // Only check
         Material *material = R_GetMaterialForSprite(mo->sprite, mo->frame);
-        if(material && sec.SP_ceilsurface.isSkyMasked())
+        if(material && sec.ceilingSurface().isSkyMasked())
         {
             if(!(mo->dPlayer && mo->dPlayer->flags & DDPF_CAMERA) && // Cameramen don't exist!
-               mo->origin[VZ] <= sec.SP_ceilheight &&
-               mo->origin[VZ] >= sec.SP_floorheight)
+               mo->origin[VZ] <= sec.ceiling().height() &&
+               mo->origin[VZ] >= sec.floor().height())
             {
                 coord_t visibleTop = mo->origin[VZ] + material->height();
                 if(visibleTop > GameMap_SkyFixCeiling(map))

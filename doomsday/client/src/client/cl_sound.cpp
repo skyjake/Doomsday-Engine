@@ -148,9 +148,9 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     {
         // Select the origin for the sound.
         if(flags & SNDDF_PLANE_FLOOR)
-            emitter = (mobj_t*) &sector->SP_floorsurface.base;
+            emitter = (mobj_t*) &sector->floorSurface().base;
         else if(flags & SNDDF_PLANE_CEILING)
-            emitter = (mobj_t*) &sector->SP_ceilsurface.base;
+            emitter = (mobj_t*) &sector->ceilingSurface().base;
     }
 
     if(type == DT_SIDE_SOUND)

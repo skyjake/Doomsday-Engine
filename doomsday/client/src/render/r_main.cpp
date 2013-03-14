@@ -513,15 +513,17 @@ static void R_UpdateMap()
     for(uint i = 0; i < NUM_SECTORS; ++i)
     {
         Sector *sec = GameMap_Sector(theMap, i);
-        for(uint j = 0; j < sec->planeCount(); ++j)
+
+        foreach(Plane *plane, sec->planes())
         {
-            sec->SP_planesurface(j).update();
+            plane->surface().update();
         }
     }
 
     for(uint i = 0; i < NUM_SIDEDEFS; ++i)
     {
         SideDef *side = GameMap_SideDef(theMap, i);
+
         side->SW_topsurface.update();
         side->SW_middlesurface.update();
         side->SW_bottomsurface.update();
@@ -531,6 +533,7 @@ static void R_UpdateMap()
     for(uint i = 0; i < NUM_POLYOBJS; ++i)
     {
         Polyobj *po = GameMap_PolyobjByID(theMap, i);
+
         for(LineDef **lineIter = po->lines; *lineIter; lineIter++)
         {
             LineDef *line = *lineIter;
@@ -1391,10 +1394,10 @@ void Rend_CacheForMap()
             Sector *sec = SECTOR_PTR(i);
             if(!sec->lineDefCount) continue;
 
-            for(uint k = 0; k < sec->planeCount(); ++k)
+            foreach(Plane *plane, sec->planes())
             {
-                if(sec->SP_planematerial(k))
-                    App_Materials().cache(*sec->SP_planematerial(k), spec);
+                if(plane->surface().material)
+                    App_Materials().cache(*plane->surface().material, spec);
             }
         }
     }

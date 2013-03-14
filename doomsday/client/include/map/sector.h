@@ -32,50 +32,6 @@
 class BspLeaf;
 class LineDef;
 
-/*
- * Helper macros for accessing the Planes of a Sector:
- */
-/// @addtogroup map
-///@{
-#define SP_plane(n)             planes[(n)]
-
-#define SP_planesurface(n)      SP_plane(n)->surface()
-#define SP_planeheight(n)       SP_plane(n)->height()
-#define SP_planetangent(n)      SP_plane(n)->surface().tangent
-#define SP_planebitangent(n)    SP_plane(n)->surface().bitangent
-#define SP_planenormal(n)       SP_plane(n)->surface().normal
-#define SP_planematerial(n)     SP_plane(n)->surface().material
-#define SP_planeoffset(n)       SP_plane(n)->surface().offset
-#define SP_planergb(n)          SP_plane(n)->surface().rgba
-#define SP_planetarget(n)       SP_plane(n)->targetHeight()
-#define SP_planespeed(n)        SP_plane(n)->speed()
-#define SP_planevisheight(n)    SP_plane(n)->visHeight()
-
-#define SP_ceilsurface          SP_planesurface(Plane::Ceiling)
-#define SP_ceilheight           SP_planeheight(Plane::Ceiling)
-#define SP_ceiltangent          SP_planetangent(Plane::Ceiling)
-#define SP_ceilbitangent        SP_planebitangent(Plane::Ceiling)
-#define SP_ceilnormal           SP_planenormal(Plane::Ceiling)
-#define SP_ceilmaterial         SP_planematerial(Plane::Ceiling)
-#define SP_ceiloffset           SP_planeoffset(Plane::Ceiling)
-#define SP_ceilrgb              SP_planergb(Plane::Ceiling)
-#define SP_ceiltarget           SP_planetarget(Plane::Ceiling)
-#define SP_ceilspeed            SP_planespeed(Plane::Ceiling)
-#define SP_ceilvisheight        SP_planevisheight(Plane::Ceiling)
-
-#define SP_floorsurface         SP_planesurface(Plane::Floor)
-#define SP_floorheight          SP_planeheight(Plane::Floor)
-#define SP_floortangent         SP_planetangent(Plane::Floor)
-#define SP_floorbitangent       SP_planebitangent(Plane::Floor)
-#define SP_floornormal          SP_planenormal(Plane::Floor)
-#define SP_floormaterial        SP_planematerial(Plane::Floor)
-#define SP_flooroffset          SP_planeoffset(Plane::Floor)
-#define SP_floorrgb             SP_planergb(Plane::Floor)
-#define SP_floortarget          SP_planetarget(Plane::Floor)
-#define SP_floorspeed           SP_planespeed(Plane::Floor)
-#define SP_floorvisheight       SP_planevisheight(Plane::Floor)
-///@}
-
 // Sector frame flags
 #define SIF_VISIBLE         0x1     // Sector is visible on this frame.
 #define SIF_FRAME_CLEAR     0x1     // Flags to clear before each frame.
@@ -140,7 +96,8 @@ public: /// @todo Make private:
 
     ddmobj_base_t base;
 
-    Planes planes;
+    /// List of planes in the sector.
+    Planes _planes;
 
     /// Number of gridblocks in the sector.
     uint blockCount;
@@ -160,25 +117,65 @@ public:
     ~Sector();
 
     /**
-     * Returns the total number of planes in the sector.
+     * Returns the sector plane with the specified @a planeIndex.
      */
-    inline uint planeCount() const { return planes.size(); }
+    Plane &plane(int planeIndex);
+
+    /// @copydoc plane()
+    Plane const &plane(int planeIndex) const;
 
     /**
      * Returns the floor plane of the sector.
      */
-    inline Plane &floor() { return *planes[Plane::Floor]; }
+    inline Plane &floor() { return plane(Plane::Floor); }
 
     /// @copydoc floor()
-    inline Plane const &floor() const { return *planes[Plane::Floor]; }
+    inline Plane const &floor() const { return plane(Plane::Floor); }
 
     /**
      * Returns the ceiling plane of the sector.
      */
-    inline Plane &ceiling() { return *planes[Plane::Ceiling]; }
+    inline Plane &ceiling() { return plane(Plane::Ceiling); }
 
     /// @copydoc ceiling()
-    inline Plane const &ceiling() const { return *planes[Plane::Ceiling]; }
+    inline Plane const &ceiling() const { return plane(Plane::Ceiling); }
+
+    /**
+     * Convenient accessor method for returning the surface of the specified
+     * plane of the sector.
+     */
+    inline Surface &planeSurface(int planeIndex) { return plane(planeIndex).surface(); }
+
+    /// @copydoc planeSurface()
+    inline Surface const &planeSurface(int planeIndex) const { return plane(planeIndex).surface(); }
+
+    /**
+     * Convenient accessor method for returning the surface of the floor plane
+     * of the sector.
+     */
+    inline Surface &floorSurface() { return floor().surface(); }
+
+    /// @copydoc floorSurface()
+    inline Surface const &floorSurface() const { return floor().surface(); }
+
+    /**
+     * Convenient accessor method for returning the surface of the ceiling plane
+     * of the sector.
+     */
+    inline Surface &ceilingSurface() { return ceiling().surface(); }
+
+    /// @copydoc ceilingSurface()
+    inline Surface const &ceilingSurface() const { return ceiling().surface(); }
+
+    /**
+     * Provides access to the list of planes for efficient traversal.
+     */
+    Planes const &planes() const;
+
+    /**
+     * Returns the total number of planes in the sector.
+     */
+    inline uint planeCount() const { return uint(planes().count()); }
 
     /**
      * Update the sector's map space axis-aligned bounding box to encompass

@@ -148,17 +148,17 @@ static void addWallDivNodesForPlaneIntercepts(HEdge const *hedge, walldivs_t *wa
 
                 if(scanSec)
                 {
-                    if(scanSec->SP_ceilvisheight - scanSec->SP_floorvisheight > 0)
+                    if(scanSec->ceiling().visHeight() - scanSec->floor().visHeight() > 0)
                     {
                         for(uint j = 0; j < scanSec->planeCount() && !stopScan; ++j)
                         {
-                            Plane *pln = scanSec->SP_plane(j);
+                            Plane const &plane = scanSec->plane(j);
 
-                            if(pln->visHeight() > bottomZ && pln->visHeight() < topZ)
+                            if(plane.visHeight() > bottomZ && plane.visHeight() < topZ)
                             {
-                                if(!findWallDivNodeByZOrigin(wallDivs, pln->visHeight()))
+                                if(!findWallDivNodeByZOrigin(wallDivs, plane.visHeight()))
                                 {
-                                    WallDivs_Append(wallDivs, pln->visHeight());
+                                    WallDivs_Append(wallDivs, plane.visHeight());
 
                                     // Have we reached the div limit?
                                     if(wallDivs->num == WALLDIVS_MAX_NODES)
@@ -169,10 +169,10 @@ static void addWallDivNodesForPlaneIntercepts(HEdge const *hedge, walldivs_t *wa
                             if(!stopScan)
                             {
                                 // Clip a range bound to this height?
-                                if(pln->type() == Plane::Floor && pln->visHeight() > bottomZ)
-                                    bottomZ = pln->visHeight();
-                                else if(pln->type() == Plane::Ceiling && pln->visHeight() < topZ)
-                                    topZ = pln->visHeight();
+                                if(plane.type() == Plane::Floor && plane.visHeight() > bottomZ)
+                                    bottomZ = plane.visHeight();
+                                else if(plane.type() == Plane::Ceiling && plane.visHeight() < topZ)
+                                    topZ = plane.visHeight();
 
                                 // All clipped away?
                                 if(bottomZ >= topZ)
@@ -189,7 +189,7 @@ static void addWallDivNodesForPlaneIntercepts(HEdge const *hedge, walldivs_t *wa
                          * we automatically fix the case of a floor above a
                          * ceiling by lowering the floor.
                          */
-                        coord_t z = scanSec->SP_ceilvisheight;
+                        coord_t z = scanSec->ceiling().visHeight();
 
                         if(z > bottomZ && z < topZ)
                         {

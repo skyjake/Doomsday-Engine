@@ -1445,7 +1445,7 @@ static void renderPlane(BspLeaf *bspLeaf, Plane::Type type, coord_t height,
         }
         else
         {
-            Surface const &suf = sec->planes[elmIdx]->surface();
+            Surface const &suf = sec->planeSurface(elmIdx);
             Material *mat = suf.material? suf.material : &App_Materials().find(de::Uri("System", Path("missing"))).material();
 
             MaterialSnapshot const &ms = mat->prepare(Rend_MapSurfaceMaterialSpec());
@@ -1610,13 +1610,13 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
 
         // Determine which Material to use.
         if(devRendSkyMode && HEDGE_BACK_SECTOR(hedge) &&
-           ((section == SS_BOTTOM && hedge->sector->SP_floorsurface.isSkyMasked() &&
-                                     HEDGE_BACK_SECTOR(hedge)->SP_floorsurface.isSkyMasked()) ||
-            (section == SS_TOP    && hedge->sector->SP_ceilsurface.isSkyMasked() &&
-                                     HEDGE_BACK_SECTOR(hedge)->SP_ceilsurface.isSkyMasked())))
+           ((section == SS_BOTTOM && hedge->sector->floorSurface().isSkyMasked() &&
+                                     HEDGE_BACK_SECTOR(hedge)->floorSurface().isSkyMasked()) ||
+            (section == SS_TOP    && hedge->sector->ceilingSurface().isSkyMasked() &&
+                                     HEDGE_BACK_SECTOR(hedge)->ceilingSurface().isSkyMasked())))
         {
             // Geometry not normally rendered however we do so in dev sky mode.
-            mat = hedge->sector->SP_planematerial(section == SS_TOP? Plane::Ceiling : Plane::Floor);
+            mat = hedge->sector->planeSurface(section == SS_TOP? Plane::Ceiling : Plane::Floor).material;
         }
         else
         {
@@ -2100,9 +2100,9 @@ static boolean hedgeBackClosedForSkyFix(HEdge const *hedge)
 
     if(frontSec && backSec)
     {
-        if(backSec->SP_floorvisheight >= backSec->SP_ceilvisheight)   return true;
-        if(backSec->SP_ceilvisheight  <= frontSec->SP_floorvisheight) return true;
-        if(backSec->SP_floorvisheight >= frontSec->SP_ceilvisheight)  return true;
+        if(backSec->floor().visHeight() >= backSec->ceiling().visHeight())   return true;
+        if(backSec->ceiling().visHeight()  <= frontSec->floor().visHeight()) return true;
+        if(backSec->floor().visHeight() >= frontSec->ceiling().visHeight())  return true;
     }
 
     return R_MiddleMaterialCoversOpening(line->flags(), frontSec, backSec, frontDef, backDef,
@@ -2126,8 +2126,8 @@ static int chooseHEdgeSkyFixes(HEdge *hedge, int skyCap)
 
         if(!backSec || backSec != hedge->sector)
         {
-            bool const hasSkyFloor   = frontSec->SP_floorsurface.isSkyMasked();
-            bool const hasSkyCeiling = frontSec->SP_ceilsurface.isSkyMasked();
+            bool const hasSkyFloor   = frontSec->floorSurface().isSkyMasked();
+            bool const hasSkyCeiling = frontSec->ceilingSurface().isSkyMasked();
 
             if(hasSkyFloor || hasSkyCeiling)
             {
@@ -2336,8 +2336,8 @@ static void Rend_WriteBspLeafSkyFixGeometry(BspLeaf *leaf, int skyFix)
     forever
     {
         HEdge *hedge = (antiClockwise? node->prev : node);
-        boolean endStrip = false;
-        boolean beginNewStrip = false;
+        bool endStrip = false;
+        bool beginNewStrip = false;
 
         // Is a fix or two necessary for this hedge?
         if(chooseHEdgeSkyFixes(hedge, skyFix))
@@ -2349,7 +2349,7 @@ static void Rend_WriteBspLeafSkyFixGeometry(BspLeaf *leaf, int skyFix)
 
             if(devRendSkyMode)
             {
-                skyMaterial = hedge->sector->SP_planematerial(skyFix == SKYCAP_UPPER? Plane::Ceiling : Plane::Floor);
+                skyMaterial = hedge->sector->planeSurface(skyFix == SKYCAP_UPPER? Plane::Ceiling : Plane::Floor).material;
             }
 
             if(zBottom >= zTop)
@@ -2595,9 +2595,9 @@ static void Rend_RenderSkySurfaces(int skyCap)
     if(!leaf->hasSector() || !R_SectorContainsSkySurfaces(leaf->sectorPtr())) return;
 
     // Sky caps are only necessary in sectors with sky-masked planes.
-    if((skyCap & SKYCAP_LOWER) && !leaf->sector().SP_floorsurface.isSkyMasked())
+    if((skyCap & SKYCAP_LOWER) && !leaf->sector().floorSurface().isSkyMasked())
         skyCap &= ~SKYCAP_LOWER;
-    if((skyCap & SKYCAP_UPPER) && !leaf->sector().SP_ceilsurface.isSkyMasked())
+    if((skyCap & SKYCAP_UPPER) && !leaf->sector().ceilingSurface().isSkyMasked())
         skyCap &= ~SKYCAP_UPPER;
 
     if(!skyCap) return;
@@ -2696,9 +2696,8 @@ static void Rend_RenderPlanes()
     Sector &sect = leaf->sector();
 
     // Render all planes of this sector.
-    for(uint i = 0; i < sect.planeCount(); ++i)
+    foreach(Plane *plane, sect.planes())
     {
-        Plane const *plane = sect.planes[i];
         Surface const *suf = &plane->surface();
         bool isSkyMasked = false;
         bool addDynLights = !devRendSkyMode;
@@ -2747,7 +2746,7 @@ static void Rend_RenderPlanes()
 
         Rend_RenderPlane(plane->type(), plane->visHeight(), suf->tangent, suf->bitangent, suf->normal,
             mat, suf->rgba, suf->blendMode, texOffset, texScale,
-            isSkyMasked, addDynLights, (!devRendSkyMode && i == Plane::Floor),
+            isSkyMasked, addDynLights, (!devRendSkyMode && plane->type() == Plane::Floor),
             &leaf->biasSurfaceForGeometryGroup(plane->inSectorIndex()), plane->inSectorIndex(),
             texMode, clipBackFacing);
     }
@@ -2766,8 +2765,8 @@ static void occludeBspLeaf(BspLeaf const *bspLeaf, bool forwardFacing)
     if(!bspLeaf || !bspLeaf->firstHEdge() || P_IsInVoid(viewPlayer)) return;
 
     Sector *front        = bspLeaf->sectorPtr();
-    coord_t const fFloor = front->SP_floorheight;
-    coord_t const fCeil  = front->SP_ceilheight;
+    coord_t const fFloor = front->floor().height();
+    coord_t const fCeil  = front->ceiling().height();
 
     HEdge *base = bspLeaf->firstHEdge();
     HEdge *hedge = base;
@@ -2778,8 +2777,8 @@ static void occludeBspLeaf(BspLeaf const *bspLeaf, bool forwardFacing)
            (forwardFacing == ((hedge->frameFlags & HEDGEINF_FACINGFRONT)? true : false)))
         {
             Sector *back         = HEDGE_BACK_SECTOR(hedge);
-            coord_t const bFloor = back->SP_floorheight;
-            coord_t const bCeil  = back->SP_ceilheight;
+            coord_t const bFloor = back->floor().height();
+            coord_t const bCeil  = back->ceiling().height();
 
             // Choose start and end vertices so that it's facing forward.
             coord_t const *startv, *endv;
@@ -2795,8 +2794,8 @@ static void occludeBspLeaf(BspLeaf const *bspLeaf, bool forwardFacing)
             }
 
             // Do not create an occlusion for sky floors.
-            if(!back->SP_floorsurface.isSkyMasked() ||
-               !front->SP_floorsurface.isSkyMasked())
+            if(!back->floorSurface().isSkyMasked() ||
+               !front->floorSurface().isSkyMasked())
             {
                 // Do the floors create an occlusion?
                 if((bFloor > fFloor && vOrigin[VY] <= bFloor) ||
@@ -2808,8 +2807,8 @@ static void occludeBspLeaf(BspLeaf const *bspLeaf, bool forwardFacing)
             }
 
             // Do not create an occlusion for sky ceilings.
-            if(!back->SP_ceilsurface.isSkyMasked() ||
-               !front->SP_ceilsurface.isSkyMasked())
+            if(!back->ceilingSurface().isSkyMasked() ||
+               !front->ceilingSurface().isSkyMasked())
             {
                 // Do the ceilings create an occlusion?
                 if((bCeil < fCeil && vOrigin[VY] >= bCeil) ||
@@ -2828,7 +2827,7 @@ static inline boolean isNullLeaf(BspLeaf *leaf)
     if(!leaf || !leaf->hasSector()) return true;
 
     Sector &sec = leaf->sector();
-    if(sec.SP_ceilvisheight - sec.SP_floorvisheight <= 0) return true;
+    if(sec.ceiling().visHeight() - sec.floor().visHeight() <= 0) return true;
     if(leaf->hedgeCount() < 3) return true;
     return false;
 }
@@ -2997,8 +2996,8 @@ void Rend_RenderSurfaceVectors()
         backSec = HEDGE_BACK_SECTOR(hedge);
         if(!backSec)
         {
-            bottom = hedge->sector->SP_floorvisheight;
-            top = hedge->sector->SP_ceilvisheight;
+            bottom = hedge->sector->floor().visHeight();
+            top = hedge->sector->ceiling().visHeight();
             suf = &HEDGE_SIDEDEF(hedge)->SW_middlesurface;
 
             V3f_Set(origin, x, y, bottom + (top - bottom) / 2);
@@ -3009,34 +3008,34 @@ void Rend_RenderSurfaceVectors()
             SideDef* side = HEDGE_SIDEDEF(hedge);
             if(side->SW_middlesurface.material)
             {
-                top = hedge->sector->SP_ceilvisheight;
-                bottom = hedge->sector->SP_floorvisheight;
+                top = hedge->sector->ceiling().visHeight();
+                bottom = hedge->sector->floor().visHeight();
                 suf = &side->SW_middlesurface;
 
                 V3f_Set(origin, x, y, bottom + (top - bottom) / 2);
                 drawSurfaceTangentSpaceVectors(suf, origin);
             }
 
-            if(backSec->SP_ceilvisheight <
-               hedge->sector->SP_ceilvisheight &&
-               !(hedge->sector->SP_ceilsurface.isSkyMasked() &&
-                 backSec->SP_ceilsurface.isSkyMasked()))
+            if(backSec->ceiling().visHeight() <
+               hedge->sector->ceiling().visHeight() &&
+               !(hedge->sector->ceilingSurface().isSkyMasked() &&
+                 backSec->ceilingSurface().isSkyMasked()))
             {
-                bottom = backSec->SP_ceilvisheight;
-                top = hedge->sector->SP_ceilvisheight;
+                bottom = backSec->ceiling().visHeight();
+                top = hedge->sector->ceiling().visHeight();
                 suf = &side->SW_topsurface;
 
                 V3f_Set(origin, x, y, bottom + (top - bottom) / 2);
                 drawSurfaceTangentSpaceVectors(suf, origin);
             }
 
-            if(backSec->SP_floorvisheight >
-               hedge->sector->SP_floorvisheight &&
-               !(hedge->sector->SP_floorsurface.isSkyMasked() &&
-                 backSec->SP_floorsurface.isSkyMasked()))
+            if(backSec->floor().visHeight() >
+               hedge->sector->floor().visHeight() &&
+               !(hedge->sector->floorSurface().isSkyMasked() &&
+                 backSec->floorSurface().isSkyMasked()))
             {
-                bottom = hedge->sector->SP_floorvisheight;
-                top = backSec->SP_floorvisheight;
+                bottom = hedge->sector->floor().visHeight();
+                top = backSec->floor().visHeight();
                 suf = &side->SW_bottomsurface;
 
                 V3f_Set(origin, x, y, bottom + (top - bottom) / 2);
@@ -3052,19 +3051,18 @@ void Rend_RenderSurfaceVectors()
         if(!bspLeaf->hasSector()) continue;
         Sector &sector = bspLeaf->sector();
 
-        for(uint j = 0; j < sector.planeCount(); ++j)
+        foreach(Plane *plane, sector.planes())
         {
-            Plane *pln = sector.SP_plane(j);
             vec3f_t origin;
 
             V3f_Set(origin, bspLeaf->center()[VX],
                             bspLeaf->center()[VY],
-                            pln->visHeight());
+                            plane->visHeight());
 
-            if(pln->type() != Plane::Middle && pln->surface().isSkyMasked())
-                origin[VZ] = GameMap_SkyFix(theMap, pln->type() == Plane::Ceiling);
+            if(plane->type() != Plane::Middle && plane->surface().isSkyMasked())
+                origin[VZ] = GameMap_SkyFix(theMap, plane->type() == Plane::Ceiling);
 
-            drawSurfaceTangentSpaceVectors(&pln->surface(), origin);
+            drawSurfaceTangentSpaceVectors(&plane->surface(), origin);
         }
     }
 
@@ -3072,7 +3070,7 @@ void Rend_RenderSurfaceVectors()
     {
         Polyobj const *po = GameMap_PolyobjByID(theMap, i);
         Sector const &sector = po->bspLeaf->sector();
-        float zPos = sector.SP_floorheight + (sector.SP_ceilheight - sector.SP_floorheight)/2;
+        float zPos = sector.floor().height() + (sector.ceiling().height() - sector.floor().height())/2;
         vec3f_t origin;
 
         for(uint j = 0; j < po->lineCount; ++j)
@@ -3135,23 +3133,22 @@ static int drawSideDefSoundOrigins(SideDef* side, void* parameters)
 
 static int drawSectorSoundOrigins(Sector *sec, void *parameters)
 {
-    uint idx = GameMap_SectorIndex(theMap, sec); /// @todo Do not assume current map.
+    uint sectorIndex = GameMap_SectorIndex(theMap, sec); /// @todo Do not assume current map.
     char buf[80];
 
     if(devSoundOrigins & SOF_PLANE)
     {
-        uint i;
-        for(i = 0; i < sec->planeCount(); ++i)
+        for(uint i = 0; i < sec->planeCount(); ++i)
         {
-            Plane* pln = sec->SP_plane(i);
-            dd_snprintf(buf, 80, "Sector #%i (pln:%i)", idx, i);
-            drawSoundOrigin(pln->PS_base.origin, buf, (coord_t const*) parameters);
+            Plane &plane = sec->plane(i);
+            dd_snprintf(buf, 80, "Sector #%i (pln:%i)", sectorIndex, i);
+            drawSoundOrigin(plane.surface().base.origin, buf, (coord_t const *) parameters);
         }
     }
 
     if(devSoundOrigins & SOF_SECTOR)
     {
-        dd_snprintf(buf, 80, "Sector #%i", idx);
+        dd_snprintf(buf, 80, "Sector #%i", sectorIndex);
         drawSoundOrigin(sec->base.origin, buf, (coord_t const*) parameters);
     }
 
@@ -3198,20 +3195,20 @@ static void getVertexPlaneMinMax(Vertex const *vtx, coord_t *min, coord_t *max)
 
         if(li->hasFrontSideDef())
         {
-            if(min && li->frontSector().SP_floorvisheight < *min)
-                *min = li->frontSector().SP_floorvisheight;
+            if(min && li->frontSector().floor().visHeight() < *min)
+                *min = li->frontSector().floor().visHeight();
 
-            if(max && li->frontSector().SP_ceilvisheight > *max)
-                *max = li->frontSector().SP_ceilvisheight;
+            if(max && li->frontSector().ceiling().visHeight() > *max)
+                *max = li->frontSector().ceiling().visHeight();
         }
 
         if(li->hasBackSideDef())
         {
-            if(min && li->backSector().SP_floorvisheight < *min)
-                *min = li->backSector().SP_floorvisheight;
+            if(min && li->backSector().floor().visHeight() < *min)
+                *min = li->backSector().floor().visHeight();
 
-            if(max && li->backSector().SP_ceilvisheight > *max)
-                *max = li->backSector().SP_ceilvisheight;
+            if(max && li->backSector().ceiling().visHeight() > *max)
+                *max = li->backSector().ceiling().visHeight();
         }
 
         own = &own->next();
@@ -3288,8 +3285,8 @@ static int drawVertex1(LineDef *li, void *context)
 
         if(alpha > 0)
         {
-            coord_t bottom = po->bspLeaf->sector().SP_floorvisheight;
-            coord_t top    = po->bspLeaf->sector().SP_ceilvisheight;
+            coord_t bottom = po->bspLeaf->sector().floor().visHeight();
+            coord_t top    = po->bspLeaf->sector().ceiling().visHeight();
 
             if(devVertexBars)
                 drawVertexBar(vtx, bottom, top, MIN_OF(alpha, .15f));
@@ -3308,7 +3305,7 @@ static int drawVertex1(LineDef *li, void *context)
 
         pos[VX] = vtx->origin()[VX];
         pos[VY] = vtx->origin()[VY];
-        pos[VZ] = po->bspLeaf->sector().SP_floorvisheight;
+        pos[VZ] = po->bspLeaf->sector().floor().visHeight();
 
         dist3D = V3d_Distance(pos, eye);
 
@@ -3910,11 +3907,11 @@ static void Rend_RenderBoundingBoxes()
             Sector const &sec = po->bspLeaf->sector();
             coord_t width  = (po->aaBox.maxX - po->aaBox.minX)/2;
             coord_t length = (po->aaBox.maxY - po->aaBox.minY)/2;
-            coord_t height = (sec.SP_ceilheight - sec.SP_floorheight)/2;
+            coord_t height = (sec.ceiling().height() - sec.floor().height())/2;
 
             coord_t pos[3] = { po->aaBox.minX + width,
                                po->aaBox.minY + length,
-                               sec.SP_floorheight };
+                               sec.floor().height() };
 
             float alpha = 1 - ((V3d_Distance(pos, eye) / (Window_Width(theWindow)/2)) / 4);
             if(alpha < .25f)
@@ -3928,7 +3925,7 @@ static void Rend_RenderBoundingBoxes()
 
                 coord_t pos[3] = { (line->v2Origin()[VX] + line->v1Origin()[VX])/2,
                                    (line->v2Origin()[VY] + line->v1Origin()[VY])/2,
-                                   sec.SP_floorheight };
+                                   sec.floor().height() };
 
                 Rend_DrawBBox(pos, 0, line->length() / 2, height,
                               BANG2DEG(BANG_90 - line->angle()),

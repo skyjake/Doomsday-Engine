@@ -432,19 +432,20 @@ static void archiveSides(GameMap *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writeSector(GameMap* map, uint idx)
+static void writeSector(GameMap *map, uint idx)
 {
-    uint                i;
-    Sector             *s = &map->sectors[idx];
+    DENG_ASSERT(map);
+
+    Sector *s = &map->sectors[idx];
 
     writeFloat(s->lightLevel);
     writeFloat(s->rgb[CR]);
     writeFloat(s->rgb[CG]);
     writeFloat(s->rgb[CB]);
     writeLong(s->planeCount());
-    for(i = 0; i < s->planeCount(); ++i)
+    for(uint i = 0; i < s->planeCount(); ++i)
     {
-        Plane *p = s->planes[i];
+        Plane *p = s->_planes[i];
 
         writeFloat(p->_height);
         writeFloat(p->_targetHeight);
@@ -472,43 +473,45 @@ static void writeSector(GameMap* map, uint idx)
     writeFloat(s->aaBox.maxX);
     writeFloat(s->aaBox.maxY);
 
-    for(i = 0; i < NUM_REVERB_DATA; ++i)
+    for(uint i = 0; i < NUM_REVERB_DATA; ++i)
         writeFloat(s->reverb[i]);
 
     // Lightgrid block indices.
     writeLong((long) s->changedBlockCount);
     writeLong((long) s->blockCount);
-    for(i = 0; i < s->blockCount; ++i)
+    for(uint i = 0; i < s->blockCount; ++i)
         writeShort(s->blocks[i]);
 
     // Line list.
     writeLong((long) s->lineDefCount);
-    for(i = 0; i < s->lineDefCount; ++i)
+    for(uint i = 0; i < s->lineDefCount; ++i)
         writeLong(map->lineDefs.indexOf(s->lineDefs[i]) + 1);
 
     // BspLeaf list.
     writeLong((long) s->bspLeafCount);
-    for(i = 0; i < s->bspLeafCount; ++i)
+    for(uint i = 0; i < s->bspLeafCount; ++i)
         writeLong(GameMap_BspLeafIndex(map, s->bspLeafs[i]) + 1);
 
     // Reverb BSP leaf attributors.
     writeLong((long) s->numReverbBspLeafAttributors);
-    for(i = 0; i < s->numReverbBspLeafAttributors; ++i)
+    for(uint i = 0; i < s->numReverbBspLeafAttributors; ++i)
         writeLong(GameMap_BspLeafIndex(map, s->reverbBspLeafs[i]) + 1);
 }
 
 static void readSector(GameMap *map, uint idx)
 {
-    uint i, numPlanes;
-    float offset[2], rgba[4];
+    DENG_ASSERT(map);
+
     Sector *s = &map->sectors[idx];
 
     s->lightLevel = readFloat();
     s->rgb[CR] = readFloat();
     s->rgb[CG] = readFloat();
     s->rgb[CB] = readFloat();
-    numPlanes = (uint) readLong();
-    for(i = 0; i < numPlanes; ++i)
+
+    uint numPlanes = (uint) readLong();
+    float offset[2], rgba[4];
+    for(uint i = 0; i < numPlanes; ++i)
     {
         Plane *p = R_NewPlaneForSector(s);
 
@@ -524,9 +527,11 @@ static void readSector(GameMap *map, uint idx)
         p->_surface.normal[VX] = readFloat();
         p->_surface.normal[VY] = readFloat();
         p->_surface.normal[VZ] = readFloat();
+
         offset[VX] = readFloat();
         offset[VY] = readFloat();
         p->_surface.setMaterialOrigin(offset[VX], offset[VY]);
+
         rgba[CR] = readFloat();
         rgba[CG] = readFloat();
         rgba[CB] = readFloat();
@@ -543,48 +548,48 @@ static void readSector(GameMap *map, uint idx)
     s->aaBox.maxY = readFloat();
 
     s->updateBaseOrigin();
-    for(i = 0; i < numPlanes; ++i)
+    for(uint i = 0; i < numPlanes; ++i)
     {
-        Plane *pln = s->planes[i];
+        Plane *pln = s->_planes[i];
         pln->_surface.updateBaseOrigin();
     }
 
-    for(i = 0; i < NUM_REVERB_DATA; ++i)
+    for(uint i = 0; i < NUM_REVERB_DATA; ++i)
         s->reverb[i] = readFloat();
 
     // Lightgrid block indices.
     s->changedBlockCount = (uint) readLong();
     s->blockCount = (uint) readLong();
-    s->blocks = (unsigned short *) Z_Malloc(sizeof(short) * s->blockCount, PU_MAP, 0);
-    for(i = 0; i < s->blockCount; ++i)
+    s->blocks = (ushort *) Z_Malloc(sizeof(ushort) * s->blockCount, PU_MAP, 0);
+    for(uint i = 0; i < s->blockCount; ++i)
         s->blocks[i] = readShort();
 
     // Line list.
     s->lineDefCount = (uint) readLong();
-    s->lineDefs = (LineDef **) Z_Malloc(sizeof(LineDef*) * (s->lineDefCount + 1), PU_MAP, 0);
-    for(i = 0; i < s->lineDefCount; ++i)
+    s->lineDefs = (LineDef **) Z_Malloc(sizeof(LineDef *) * (s->lineDefCount + 1), PU_MAP, 0);
+    for(uint i = 0; i < s->lineDefCount; ++i)
         s->lineDefs[i] = &map->lineDefs[(unsigned) readLong() - 1];
-    s->lineDefs[i] = NULL; // Terminate.
+    s->lineDefs[s->lineDefCount] = NULL; // Terminate.
 
     // BspLeaf list.
     s->bspLeafCount = (uint) readLong();
-    s->bspLeafs = (BspLeaf**) Z_Malloc(sizeof(BspLeaf*) * (s->bspLeafCount + 1), PU_MAP, 0);
-    for(i = 0; i < s->bspLeafCount; ++i)
+    s->bspLeafs = (BspLeaf**) Z_Malloc(sizeof(BspLeaf *) * (s->bspLeafCount + 1), PU_MAP, 0);
+    for(uint i = 0; i < s->bspLeafCount; ++i)
         s->bspLeafs[i] = GameMap_BspLeaf(map, (unsigned) readLong() - 1);
-    s->bspLeafs[i] = NULL; // Terminate.
+    s->bspLeafs[s->bspLeafCount] = NULL; // Terminate.
 
     // Reverb BSP leaf attributors.
     s->numReverbBspLeafAttributors = (uint) readLong();
-    s->reverbBspLeafs = (BspLeaf**)
-        Z_Malloc(sizeof(BspLeaf*) * (s->numReverbBspLeafAttributors + 1), PU_MAP, 0);
-    for(i = 0; i < s->numReverbBspLeafAttributors; ++i)
+    s->reverbBspLeafs = (BspLeaf **)
+        Z_Malloc(sizeof(BspLeaf *) * (s->numReverbBspLeafAttributors + 1), PU_MAP, 0);
+    for(uint i = 0; i < s->numReverbBspLeafAttributors; ++i)
         s->reverbBspLeafs[i] = GameMap_BspLeaf(map, (unsigned) readLong() - 1);
-    s->reverbBspLeafs[i] = NULL; // Terminate.
+    s->reverbBspLeafs[s->numReverbBspLeafAttributors] = NULL; // Terminate.
 }
 
 static void archiveSectors(GameMap *map, boolean write)
 {
-    uint                i;
+    DENG_ASSERT(map);
 
     if(write)
         beginSegment(DAMSEG_SECTORS);
@@ -594,13 +599,13 @@ static void archiveSectors(GameMap *map, boolean write)
     if(write)
     {
         writeLong(map->sectorCount());
-        for(i = 0; i < map->sectorCount(); ++i)
+        for(uint i = 0; i < map->sectorCount(); ++i)
             writeSector(map, i);
     }
     else
     {
         map->sectors.clearAndResize(readLong());
-        for(i = 0; i < map->sectorCount(); ++i)
+        for(uint i = 0; i < map->sectorCount(); ++i)
             readSector(map, i);
     }
 

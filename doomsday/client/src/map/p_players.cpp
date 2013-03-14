@@ -147,24 +147,24 @@ boolean P_IsInVoid(player_t *player)
         {
             Sector &sec = ddpl->mo->bspLeaf->sector();
 
-            if(sec.SP_ceilsurface.isSkyMasked())
+            if(sec.ceilingSurface().isSkyMasked())
             {
                 coord_t const skyCeil = GameMap_SkyFixCeiling(theMap);
                 if(skyCeil < DDMAXFLOAT && ddpl->mo->origin[VZ] > skyCeil - 4)
                     return true;
             }
-            else if(ddpl->mo->origin[VZ] > sec.SP_ceilvisheight - 4)
+            else if(ddpl->mo->origin[VZ] > sec.ceiling().visHeight() - 4)
             {
                 return true;
             }
 
-            if(sec.SP_floorsurface.isSkyMasked())
+            if(sec.floorSurface().isSkyMasked())
             {
                 coord_t const skyFloor = GameMap_SkyFixFloor(theMap);
                 if(skyFloor > DDMINFLOAT && ddpl->mo->origin[VZ] < skyFloor + 4)
                     return true;
             }
-            else if(ddpl->mo->origin[VZ] < sec.SP_floorvisheight + 4)
+            else if(ddpl->mo->origin[VZ] < sec.floor().visHeight() + 4)
             {
                 return true;
             }

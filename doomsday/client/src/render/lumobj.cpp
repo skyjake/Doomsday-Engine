@@ -790,7 +790,7 @@ static void addLuminous(mobj_t *mo)
     center = -tex.origin().y - mo->floorClip - R_GetBobOffset(mo) - yOffset;
 
     // Will the sprite be allowed to go inside the floor?
-    mul = mo->origin[VZ] + -tex.origin().y - (float) ms.height() - mo->bspLeaf->sector().SP_floorheight;
+    mul = mo->origin[VZ] + -tex.origin().y - (float) ms.height() - mo->bspLeaf->sector().floor().height();
     if(!(mo->ddFlags & DDMF_NOFITBOTTOM) && mul < 0)
     {
         // Must adjust.
@@ -981,7 +981,7 @@ static void createGlowLightForSurface(Surface &suf)
 
         // Only produce a light for sectors with open space.
         /// @todo Do not add surfaces from sectors with zero BSP leafs to the glowing list.
-        if(!sec->bspLeafCount || sec->SP_floorvisheight >= sec->SP_ceilvisheight)
+        if(!sec->bspLeafCount || sec->floor().visHeight() >= sec->ceiling().visHeight())
             break;
 
         // Are we glowing at this moment in time?

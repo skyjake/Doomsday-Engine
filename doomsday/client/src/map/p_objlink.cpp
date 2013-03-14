@@ -364,10 +364,10 @@ static void processSeg(HEdge *hedge, void *parameters)
        backLeaf->aaBox().minY >= parms->box[BOXTOP]) return;
 
     // Do not spread if the sector on the back side is closed with no height.
-    if(backLeaf->hasSector() && backLeaf->sector().SP_ceilheight <= backLeaf->sector().SP_floorheight) return;
+    if(backLeaf->hasSector() && backLeaf->sector().ceiling().height() <= backLeaf->sector().floor().height()) return;
     if(backLeaf->hasSector() && leaf->hasSector() &&
-       (backLeaf->sector().SP_ceilheight  <= leaf->sector().SP_floorheight ||
-        backLeaf->sector().SP_floorheight >= leaf->sector().SP_ceilheight)) return;
+       (backLeaf->sector().ceiling().height()  <= leaf->sector().floor().height() ||
+        backLeaf->sector().floor().height() >= leaf->sector().ceiling().height())) return;
 
     // Too far from the object?
     distance = hedge->pointOnSide(parms->objOrigin) / hedge->length;

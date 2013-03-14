@@ -631,7 +631,7 @@ static void finishSectors(GameMap *map)
         // Set target heights for all planes.
         for(uint k = 0; k < sec.planeCount(); ++k)
         {
-            Plane &pln = *sec.planes[k];
+            Plane &pln = sec.plane(k);
 
             pln.surface().updateBaseOrigin();
             pln._targetHeight = pln._height;
@@ -674,10 +674,9 @@ static void chainSectorBases(GameMap *map)
         base->thinker.next = base->thinker.prev = 0;
 
         // Add all plane base mobjs.
-        for(uint j = 0; j < sec->planeCount(); ++j)
+        foreach(Plane *plane, sec->planes())
         {
-            Plane *pln = sec->SP_plane(j);
-            linkBaseToSectorChain(sec, &pln->PS_base);
+            linkBaseToSectorChain(sec, &plane->surface().base);
         }
 
         // Add all sidedef base mobjs.
@@ -1087,20 +1086,17 @@ static void hardenSidedefs(GameMap* dest, EditMap* src)
     }
 }
 
-static void hardenSectors(GameMap* dest, EditMap* src)
+static void hardenSectors(GameMap *dest, EditMap *src)
 {
-    //dest->numSectors = src->numSectors;
-    //dest->sectors = (Sector*) Z_Malloc(dest->numSectors * sizeof(Sector), PU_MAPSTATIC, 0);
-
     dest->sectors.clearAndResize(src->sectorCount());
 
     for(uint i = 0; i < src->sectorCount(); ++i)
     {
-        Sector* destS = &dest->sectors[i];
-        Sector* srcS = src->sectors[i];
+        Sector *destS = &dest->sectors[i];
+        Sector *srcS = src->sectors[i];
 
         *destS = *srcS;
-        destS->planes.clear(); // ownership of planes not transferred
+        destS->_planes.clear(); // ownership of planes not transferred
     }
 }
 
@@ -1114,15 +1110,16 @@ static void hardenPlanes(GameMap *dest, EditMap *src)
         for(uint j = 0; j < srcS->planeCount(); ++j)
         {
             Plane *destP = R_NewPlaneForSector(destS);
-            Plane *srcP = srcS->planes[j];
+            Plane const &srcP  = srcS->plane(j);
 
             destP->_height =
                 destP->_oldHeight[0] =
                     destP->_oldHeight[1] =
-                        destP->_visHeight = srcP->_height;
+                        destP->_visHeight = srcP._height;
+
             destP->_visHeightDelta = 0;
-            destP->_surface        = srcP->_surface;
-            destP->_type           = srcP->_type;
+            destP->_surface        = srcP._surface;
+            destP->_type           = srcP._type;
             destP->_sector         = destS;
             destP->_surface.owner  = destP;
         }
@@ -1950,9 +1947,9 @@ uint MPE_PlaneCreate(uint sector, coord_t height, const ddstring_t* materialUri,
     pln->surface().setColorAndAlpha(r, g, b, a);
     pln->surface().setMaterialOrigin(matOffsetX, matOffsetY);
 
-    s->planes.append(pln);
+    s->_planes.append(pln);
 
-    return s->planes.size(); // 1-based index.
+    return s->planeCount(); // 1-based index.
 }
 
 uint MPE_SectorCreate(float lightlevel, float red, float green, float blue)

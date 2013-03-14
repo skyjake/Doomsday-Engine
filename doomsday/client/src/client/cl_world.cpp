@@ -671,18 +671,18 @@ void Cl_ReadSectorDelta2(int deltaType, boolean /*skip*/)
         sec->rgb[2] = Reader_ReadByte(msgReader) / 255.f;
 
     if(df & SDF_FLOOR_COLOR_RED)
-        sec->SP_floorsurface.setColorRed(Reader_ReadByte(msgReader) / 255.f);
+        sec->floorSurface().setColorRed(Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_FLOOR_COLOR_GREEN)
-        sec->SP_floorsurface.setColorGreen(Reader_ReadByte(msgReader) / 255.f);
+        sec->floorSurface().setColorGreen(Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_FLOOR_COLOR_BLUE)
-        sec->SP_floorsurface.setColorBlue(Reader_ReadByte(msgReader) / 255.f);
+        sec->floorSurface().setColorBlue(Reader_ReadByte(msgReader) / 255.f);
 
     if(df & SDF_CEIL_COLOR_RED)
-        sec->SP_ceilsurface.setColorRed(Reader_ReadByte(msgReader) / 255.f);
+        sec->ceilingSurface().setColorRed(Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_CEIL_COLOR_GREEN)
-        sec->SP_ceilsurface.setColorGreen(Reader_ReadByte(msgReader) / 255.f);
+        sec->ceilingSurface().setColorGreen(Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_CEIL_COLOR_BLUE)
-        sec->SP_ceilsurface.setColorBlue(Reader_ReadByte(msgReader) / 255.f);
+        sec->ceilingSurface().setColorBlue(Reader_ReadByte(msgReader) / 255.f);
 
     // The whole delta has now been read.
 

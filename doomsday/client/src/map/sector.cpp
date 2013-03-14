@@ -54,10 +54,25 @@ Sector::Sector() : MapElement(DMU_SECTOR)
 
 Sector::~Sector()
 {
-    foreach(Plane *p, planes)
+    foreach(Plane *p, _planes)
     {
         delete p;
     }
+}
+
+Plane &Sector::plane(int planeIndex)
+{
+    return *_planes[planeIndex];
+}
+
+Plane const &Sector::plane(int planeIndex) const
+{
+    return *_planes[planeIndex];
+}
+
+Sector::Planes const &Sector::planes() const
+{
+    return _planes;
 }
 
 void Sector::updateAABox()
@@ -92,7 +107,7 @@ void Sector::updateBaseOrigin()
 {
     base.origin[VX] = (aaBox.minX + aaBox.maxX) / 2;
     base.origin[VY] = (aaBox.minY + aaBox.maxY) / 2;
-    base.origin[VZ] = (SP_floorheight + SP_ceilheight) / 2;
+    base.origin[VZ] = (floor().height() + ceiling().height()) / 2;
 }
 
 int Sector::property(setargs_t &args) const
@@ -131,11 +146,11 @@ int Sector::property(setargs_t &args) const
         DMU_GetValue(DMT_SECTOR_VALIDCOUNT, &validCount, &args, 0);
         break;
     case DMU_FLOOR_PLANE: {
-        Plane *pln = planes[Plane::Floor];
+        Plane *pln = _planes[Plane::Floor];
         DMU_GetValue(DMT_SECTOR_FLOORPLANE, &pln, &args, 0);
         break; }
     case DMU_CEILING_PLANE: {
-        Plane* pln = planes[Plane::Ceiling];
+        Plane* pln = _planes[Plane::Ceiling];
         DMU_GetValue(DMT_SECTOR_CEILINGPLANE, &pln, &args, 0);
         break; }
     default:
