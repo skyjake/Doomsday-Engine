@@ -126,7 +126,7 @@ struct RendRadioWallSectionParms
  * Render FakeRadio for the specified wall section. Generates and then draws all
  * shadow geometry for the wall section.
  *
- * Note that unlike @a Rend_RadioBspLeafEdges() there is no guard to ensure shadow
+ * Note that unlike Rend_RadioBspLeafEdges() there is no guard to ensure shadow
  * geometry is rendered only once per frame.
  */
 void Rend_RadioWallSection(rvertex_t const *rvertices, RendRadioWallSectionParms const &parms);
