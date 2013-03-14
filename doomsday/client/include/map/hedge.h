@@ -88,7 +88,7 @@ public: /// @todo Make private:
     angle_t angle;
 
     /// On which side of the LineDef (0=front, 1=back)?
-    byte side;
+    int side;
 
     /// Accurate length of the segment (v1 -> v2).
     coord_t length;
@@ -113,7 +113,7 @@ public:
      *
      * @param point  Point to measure the distance to in the map coordinate space.
      */
-    coord_t pointDistance(coord_t const point[2], coord_t *offset) const;
+    coord_t pointDistance(const_pvec2d_t point, coord_t *offset) const;
 
     /**
      * Returns the distance from @a point to the nearest point along the HEdge [0..1].
@@ -136,7 +136,7 @@ public:
      *         @c =0 Point lies directly on the hedge.
      *         @c >0 Point is to the right/front of the hedge.
      */
-    coord_t pointOnSide(coord_t const point[2]) const;
+    coord_t pointOnSide(const_pvec2d_t point) const;
 
     /**
      * On which side of the HEdge does the specified @a point lie?
@@ -168,7 +168,7 @@ public:
      *          non-zero Z axis height).
      */
     bool prepareWallDivs(SideDefSection section, Sector *frontSector, Sector *backSector,
-        walldivs_t *leftWallDivs, walldivs_t *rightWallDivs, float matOffset[2]) const;
+        walldivs_t *leftWallDivs, walldivs_t *rightWallDivs, pvec2f_t matOffset) const;
 
     /**
      * Get a property value, selected by DMU_* name.

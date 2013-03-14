@@ -247,7 +247,7 @@ static void buildWallDiv(walldivs_t *wallDivs, HEdge const *hedge,
 }
 
 bool HEdge::prepareWallDivs(SideDefSection section, Sector *frontSec, Sector *backSec,
-    walldivs_t *leftWallDivs, walldivs_t *rightWallDivs, float matOffset[2]) const
+    walldivs_t *leftWallDivs, walldivs_t *rightWallDivs, pvec2f_t matOffset) const
 {
     int lineFlags = lineDef? lineDef->flags() : 0;
     SideDef *frontDef = HEDGE_SIDEDEF(this);
@@ -264,18 +264,16 @@ bool HEdge::prepareWallDivs(SideDefSection section, Sector *frontSec, Sector *ba
     return true;
 }
 
-coord_t HEdge::pointDistance(coord_t const point[], coord_t *offset) const
+coord_t HEdge::pointDistance(const_pvec2d_t point, coord_t *offset) const
 {
-    coord_t direction[2];
-    V2d_Subtract(direction, v[1]->origin(), v[0]->origin());
+    coord_t direction[2]; V2d_Subtract(direction, v[1]->origin(), v[0]->origin());
     return V2d_PointLineDistance(point, v[0]->origin(), direction, offset);
 }
 
-coord_t HEdge::pointOnSide(coord_t const point[2]) const
+coord_t HEdge::pointOnSide(const_pvec2d_t point) const
 {
     DENG2_ASSERT(point);
-    coord_t direction[2];
-    V2d_Subtract(direction, v[1]->origin(), v[0]->origin());
+    coord_t direction[2]; V2d_Subtract(direction, v[1]->origin(), v[0]->origin());
     return V2d_PointOnLineSide(point, v[0]->origin(), direction);
 }
 
