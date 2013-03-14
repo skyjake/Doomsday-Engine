@@ -222,7 +222,7 @@ private:
         // Does the ray pass under the bottom range?
         if(_flags & LS_PASSUNDER) // Allowed.
         {
-            if(_topSlope < (frontSec->floor().height() - _from[VZ]) / frac)
+            if(_topSlope    < (  frontSec->floor().height() - _from[VZ]) / frac)
                 return true;
         }
 
@@ -235,12 +235,12 @@ private:
 
             float const slope = (top - _from[VZ]) / frac;
 
-            if((slope < _topSlope) ^ (noBack && !(_flags & LS_PASSOVER)) ||
-               (noBack && _topSlope > (frontSec->SP_floorheight - _from[VZ]) / frac))
+            if((slope < _topSlope)     ^ (noBack && !(_flags & LS_PASSOVER)) ||
+               (noBack && _topSlope    > (frontSec->floor().height() - _from[VZ]) / frac))
                 _topSlope = slope;
 
-            if((slope < _bottomSlope) ^ (noBack && !(_flags & LS_PASSUNDER)) ||
-               (noBack && _bottomSlope > (frontSec->SP_floorheight - _from[VZ]) / frac))
+            if((slope < _bottomSlope)  ^ (noBack && !(_flags & LS_PASSUNDER)) ||
+               (noBack && _bottomSlope > (frontSec->floor().height() - _from[VZ]) / frac))
                 _bottomSlope = slope;
         }
 
