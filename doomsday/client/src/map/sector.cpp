@@ -96,7 +96,7 @@ void Sector::updateAABox()
 
     QListIterator<LineDef *> lineIt(_lines);
 
-    LineDef *line = lineIt.peekNext();
+    LineDef *line = lineIt.next();
     V2d_InitBox(aaBox.arvec2, line->aaBox().min);
     V2d_AddToBox(aaBox.arvec2, line->aaBox().max);
 

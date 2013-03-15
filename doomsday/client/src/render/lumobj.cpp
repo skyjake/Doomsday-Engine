@@ -1011,7 +1011,7 @@ static void createGlowLightForSurface(Surface &suf)
         parm.type = OT_LUMOBJ;
 
         QListIterator<BspLeaf *> bspLeafIt(sec->bspLeafs());
-        RIT_LinkObjToBspLeaf(bspLeafIt.peekNext(), (void *)&parm);
+        RIT_LinkObjToBspLeaf(bspLeafIt.next(), (void *)&parm);
         while(bspLeafIt.hasNext())
         {
             BspLeaf *bspLeaf = bspLeafIt.next();
