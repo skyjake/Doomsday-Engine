@@ -35,6 +35,7 @@
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "Texture"
+#include <QListIterator>
 
 using namespace de;
 

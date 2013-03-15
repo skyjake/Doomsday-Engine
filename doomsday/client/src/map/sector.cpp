@@ -22,6 +22,7 @@
 #include "map/bspleaf.h"
 #include "map/linedef.h"
 #include <de/Log>
+#include <QListIterator>
 #include <QtAlgorithms>
 
 #include "map/sector.h"
