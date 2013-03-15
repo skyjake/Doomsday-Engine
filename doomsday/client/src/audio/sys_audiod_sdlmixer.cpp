@@ -40,6 +40,8 @@
 #include "api_audiod_sfx.h"
 #include "api_audiod_mus.h"
 
+#include "audio/sys_audiod_sdlmixer.h"
+
 // MACROS ------------------------------------------------------------------
 
 #define DEFAULT_MIDI_COMMAND    "" //"timidity"
