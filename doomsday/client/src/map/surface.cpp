@@ -33,8 +33,8 @@ Surface::Surface(MapElement &owner)
       _owner(owner)
 {
     std::memset(&_soundEmitter, 0, sizeof(_soundEmitter));
-    flags = 0;
-    material = 0;
+    _flags = 0;
+    _material = 0;
     blendMode = BM_NORMAL;
     V3f_Set(tangent, 0, 0, 0);
     V3f_Set(bitangent, 0, 0, 0);
@@ -46,7 +46,7 @@ Surface::Surface(MapElement &owner)
     V2f_Set(visOffsetDelta, 0, 0);
     std::memset(rgba, 1, sizeof(rgba));
     inFlags = 0;
-    oldInFlags = 0;
+    _oldInFlags = 0;
     numDecorations = 0;
     decorations = 0;
 }
@@ -57,8 +57,8 @@ Surface::~Surface()
 Surface &Surface::operator = (Surface const &other)
 {
     std::memcpy(&_soundEmitter, &other._soundEmitter, sizeof(_soundEmitter));
-    flags = other.flags;
-    material = other.material;
+    _flags = other._flags;
+    _material = other._material;
     blendMode = other.blendMode;
     V3f_Copy(tangent, other.tangent);
     V3f_Copy(bitangent, other.bitangent);
@@ -68,7 +68,7 @@ Surface &Surface::operator = (Surface const &other)
     V2f_Copy(_oldOffset[1], other._oldOffset[1]);
     std::memcpy(rgba, other.rgba, sizeof(rgba));
     inFlags = other.inFlags;
-    oldInFlags = other.oldInFlags;
+    _oldInFlags = other._oldInFlags;
 
     // Reset the visual offset to the actual offset.
     V2f_Copy(visOffset, offset);
@@ -82,6 +82,26 @@ de::MapElement &Surface::owner() const
     return _owner;
 }
 
+bool Surface::hasMaterial() const
+{
+    return !!_material;
+}
+
+Material &Surface::material() const
+{
+    if(_material)
+    {
+        return *_material;
+    }
+    /// @throw MissingMaterialError Attempted with no material bound.
+    throw MissingMaterialError("Surface::material", "No material is bound");
+}
+
+int Surface::flags() const
+{
+    return _flags;
+}
+
 ddmobj_base_t &Surface::soundEmitter()
 {
     return _soundEmitter;
@@ -90,16 +110,6 @@ ddmobj_base_t &Surface::soundEmitter()
 ddmobj_base_t const &Surface::soundEmitter() const
 {
     return const_cast<ddmobj_base_t const &>(const_cast<Surface &>(*this).soundEmitter());
-}
-
-bool Surface::isDrawable() const
-{
-    return material && material->isDrawable();
-}
-
-bool Surface::isSkyMasked() const
-{
-    return material && material->isSkyMasked();
 }
 
 bool Surface::isAttachedToMap() const
@@ -115,12 +125,12 @@ bool Surface::isAttachedToMap() const
 
 bool Surface::setMaterial(Material *newMaterial)
 {
-    if(material != newMaterial)
+    if(_material != newMaterial)
     {
         if(isAttachedToMap())
         {
             // No longer a missing texture fix?
-            if(newMaterial && (oldInFlags & SUIF_FIX_MISSING_MATERIAL))
+            if(newMaterial && (_oldInFlags & SUIF_FIX_MISSING_MATERIAL))
                 inFlags &= ~SUIF_FIX_MISSING_MATERIAL;
 
             if(!ddMapSetup)
@@ -159,8 +169,8 @@ bool Surface::setMaterial(Material *newMaterial)
             }
         }
 
-        material = newMaterial;
-        oldInFlags = inFlags;
+        _material = newMaterial;
+        _oldInFlags = inFlags;
         if(isAttachedToMap())
         {
             inFlags |= SUIF_UPDATE_DECORATIONS;
@@ -423,6 +433,12 @@ void Surface::clearDecorations()
     }
     numDecorations = 0;
 }
+
+uint Surface::decorationCount() const
+{
+    return numDecorations;
+}
+
 #endif // __CLIENT__
 
 int Surface::setProperty(setargs_t const &args)
@@ -436,7 +452,7 @@ int Surface::setProperty(setargs_t const &args)
         break; }
 
     case DMU_FLAGS:
-        DMU_SetValue(DMT_SURFACE_FLAGS, &flags, &args, 0);
+        DMU_SetValue(DMT_SURFACE_FLAGS, &_flags, &args, 0);
         break;
 
     case DMU_COLOR: {
@@ -515,7 +531,7 @@ int Surface::property(setargs_t &args) const
         break; }
 
     case DMU_MATERIAL: {
-        Material *mat = material;
+        Material *mat = _material;
         if(inFlags & SUIF_FIX_MISSING_MATERIAL)
             mat = NULL;
         DMU_GetValue(DMT_SURFACE_MATERIAL, &mat, &args, 0);
@@ -616,7 +632,7 @@ int Surface::property(setargs_t &args) const
         break;
 
     case DMU_FLAGS:
-        DMU_GetValue(DMT_SURFACE_FLAGS, &flags, &args, 0);
+        DMU_GetValue(DMT_SURFACE_FLAGS, &_flags, &args, 0);
         break;
 
     default:

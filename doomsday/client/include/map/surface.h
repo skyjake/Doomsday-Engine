@@ -50,6 +50,9 @@
 class Surface : public de::MapElement
 {
 public:
+    /// Required material is missing. @ingroup errors
+    DENG2_ERROR(MissingMaterialError);
+
 #ifdef __CLIENT__
     struct DecorSource
     {
@@ -68,10 +71,10 @@ public:
     ddmobj_base_t _soundEmitter;
 
     /// @ref sufFlags
-    int flags;
+    int _flags;
 
     // Bound material.
-    Material *material;
+    Material *_material;
 
     // Blending mode, for rendering.
     blendmode_t blendMode;
@@ -100,7 +103,7 @@ public:
     short inFlags;
 
     /// Old @ref surfaceInternalFlags, for tracking changes.
-    short oldInFlags;
+    short _oldInFlags;
 
     uint numDecorations;
 
@@ -114,10 +117,16 @@ public:
     Surface &operator = (Surface const &other);
 
     /// @return @c true= is drawable (i.e., a drawable Material is bound).
-    bool isDrawable() const;
+    inline bool isDrawable() const
+    {
+        return hasMaterial() && material().isDrawable();
+    }
 
     /// @return @c true= is sky-masked (i.e., a sky-masked Material is bound).
-    bool isSkyMasked() const;
+    inline bool isSkyMasked() const
+    {
+        return hasMaterial() && material().isSkyMasked();
+    }
 
     /// @return @c true= is owned by some element of the Map geometry.
     bool isAttachedToMap() const;
@@ -126,6 +135,30 @@ public:
      * Returns the owning map element. Either @c DMU_SIDEDEF, or @c DMU_PLANE.
      */
     de::MapElement &owner() const;
+
+    /**
+     * Returns @c true iff a material is bound to the surface.
+     */
+    bool hasMaterial() const;
+
+    /**
+     * Returns the material bound to the surface.
+     *
+     * @see hasMaterial()
+     */
+    Material &material() const;
+
+    /**
+     * Returns a pointer to the material bound to the surface; otherwise @c 0.
+     *
+     * @see hasMaterial()
+     */
+    inline Material *materialPtr() const { return hasMaterial()? &material() : 0; }
+
+    /**
+     * Returns the @ref surfaceFlags of the surface.
+     */
+    int flags() const;
 
     /**
      * Returns the sound emitter for the surface.
@@ -259,6 +292,11 @@ public:
      * Clear all the projected (light) decoration sources for the surface.
      */
     void clearDecorations();
+
+    /**
+     * Returns the total number of decoration sources for the surface.
+     */
+    uint decorationCount() const;
 #endif // __CLIENT__
 };
 

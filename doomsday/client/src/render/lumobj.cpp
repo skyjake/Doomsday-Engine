@@ -986,7 +986,7 @@ static void createGlowLightForSurface(Surface &suf)
             break;
 
         // Are we glowing at this moment in time?
-        MaterialSnapshot const &ms = suf.material->prepare(Rend_MapSurfaceMaterialSpec());
+        MaterialSnapshot const &ms = suf.material().prepare(Rend_MapSurfaceMaterialSpec());
         if(!(ms.glowStrength() > .001f)) break;
 
         averagecolor_analysis_t const *avgColorAmplified = reinterpret_cast<averagecolor_analysis_t const *>(ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::AverageColorAmplifiedAnalysis));

@@ -1379,14 +1379,14 @@ void Rend_CacheForMap()
         {
             SideDef *sideDef = SIDE_PTR(i);
 
-            if(sideDef->middle().material)
-                App_Materials().cache(*sideDef->middle().material, spec);
+            if(sideDef->middle().hasMaterial())
+                App_Materials().cache(sideDef->middle().material(), spec);
 
-            if(sideDef->top().material)
-                App_Materials().cache(*sideDef->top().material, spec);
+            if(sideDef->top().hasMaterial())
+                App_Materials().cache(sideDef->top().material(), spec);
 
-            if(sideDef->bottom().material)
-                App_Materials().cache(*sideDef->bottom().material, spec);
+            if(sideDef->bottom().hasMaterial())
+                App_Materials().cache(sideDef->bottom().material(), spec);
         }
 
         for(uint i = 0; i < NUM_SECTORS; ++i)
@@ -1398,8 +1398,8 @@ void Rend_CacheForMap()
 
             foreach(Plane *plane, sec->planes())
             {
-                if(plane->surface().material)
-                    App_Materials().cache(*plane->surface().material, spec);
+                if(plane->surface().hasMaterial())
+                    App_Materials().cache(plane->surface().material(), spec);
             }
         }
     }

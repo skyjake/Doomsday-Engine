@@ -335,7 +335,7 @@ static void plotSourcesForSurface(Surface &suf)
     if(useLightDecorations)
     {
         Surface::DecorSource const *decorations = (Surface::DecorSource const *)suf.decorations;
-        for(uint i = 0; i < suf.numDecorations; ++i)
+        for(uint i = 0; i < suf.decorationCount(); ++i)
         {
             newSource(suf, decorations[i]);
         }
@@ -435,24 +435,24 @@ static void updateSurfaceDecorations(Surface &suf, Vector2f const &offset,
     if(sufDimensions.y < 0) sufDimensions.y = -sufDimensions.y;
 
     // Generate a number of lights.
-    MaterialSnapshot const &ms = suf.material->prepare(Rend_MapSurfaceMaterialSpec());
+    MaterialSnapshot const &ms = suf.material().prepare(Rend_MapSurfaceMaterialSpec());
 
-    Material::Decorations const &decorations = suf.material->decorations();
+    Material::Decorations const &decorations = suf.material().decorations();
     for(int i = 0; i < decorations.count(); ++i)
     {
         MaterialSnapshot::Decoration const &decor = ms.decoration(i);
         MaterialDecoration const *def = decorations[i];
 
         generateDecorLights(decor, def->patternOffset(), def->patternSkip(),
-                            suf, *suf.material, v1, v2, sufDimensions,
+                            suf, suf.material(), v1, v2, sufDimensions,
                             delta, axis, offset, sec);
     }
 }
 
 static void plotSourcesForPlane(Plane &pln)
 {
-    Surface &suf = pln.surface();
-    if(!suf.material) return;
+    Surface &surface = pln.surface();
+    if(!surface.hasMaterial()) return;
 
     Sector &sector = pln.sector();
     AABoxd const &sectorAABox = sector.aaBox();
@@ -460,10 +460,10 @@ static void plotSourcesForPlane(Plane &pln)
     Vector3d v1(sectorAABox.minX, pln.type() == Plane::Floor? sectorAABox.maxY : sectorAABox.minY, pln.visHeight());
     Vector3d v2(sectorAABox.maxX, pln.type() == Plane::Floor? sectorAABox.minY : sectorAABox.maxY, pln.visHeight());
 
-    Vector2f offset(-fmod(sectorAABox.minX, 64) - suf.visOffset[0],
-                    -fmod(sectorAABox.minY, 64) - suf.visOffset[1]);
+    Vector2f offset(-fmod(sectorAABox.minX, 64) - surface.visOffset[0],
+                    -fmod(sectorAABox.minY, 64) - surface.visOffset[1]);
 
-    updateSurfaceDecorations(suf, offset, v1, v2, &sector);
+    updateSurfaceDecorations(surface, offset, v1, v2, &sector);
 }
 
 static void plotSourcesForLine(LineDef &line, byte side, SideDefSection section)
@@ -474,9 +474,9 @@ static void plotSourcesForLine(LineDef &line, byte side, SideDefSection section)
     Sector *backSec   = line.sectorPtr(side ^ 1);
     SideDef *frontDef = line.sideDefPtr(side);
     SideDef *backDef  = line.sideDefPtr(side ^ 1);
-    Surface &suf      = line.sideDef(side).surface(section);
+    Surface &surface  = line.sideDef(side).surface(section);
 
-    if(!suf.material) return;
+    if(!surface.hasMaterial()) return;
 
     // Is the line section potentially visible?
     coord_t low, hi;
@@ -487,7 +487,7 @@ static void plotSourcesForLine(LineDef &line, byte side, SideDefSection section)
     Vector3d v1(line.vertexOrigin(side  )[VX], line.vertexOrigin(side  )[VY], hi);
     Vector3d v2(line.vertexOrigin(side^1)[VX], line.vertexOrigin(side^1)[VY], low);
 
-    updateSurfaceDecorations(suf, Vector2f(-matOffset[0], -matOffset[1]), v1, v2);
+    updateSurfaceDecorations(surface, Vector2f(-matOffset[0], -matOffset[1]), v1, v2);
 }
 
 void Rend_DecorBeginFrame()

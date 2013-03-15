@@ -452,7 +452,7 @@ void Sv_RegisterSector(dt_sector_t *reg, uint number)
         std::memcpy(reg->planes[i].surface.rgba, surface.rgba,
                     sizeof(reg->planes[i].surface.rgba));
 
-        reg->planes[i].surface.material = surface.material;
+        reg->planes[i].surface.material = surface.materialPtr();
     }
 }
 
@@ -467,9 +467,9 @@ void Sv_RegisterSide(dt_side_t *reg, uint number)
     SideDef *sideDef = SIDE_PTR(number);
     LineDef *line = sideDef->line;
 
-    reg->top.material    = sideDef->top().material;
-    reg->middle.material = sideDef->middle().material;
-    reg->bottom.material = sideDef->bottom().material;
+    reg->top.material    = sideDef->top().materialPtr();
+    reg->middle.material = sideDef->middle().materialPtr();
+    reg->bottom.material = sideDef->bottom().materialPtr();
     reg->lineFlags       = (line ? line->flags() & 0xff : 0);
 
     std::memcpy(reg->top.rgba,    sideDef->top().rgba,    sizeof(reg->top.rgba));
@@ -632,9 +632,9 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
     int df = 0;
 
     // Determine which data is different.
-    if(s->floorSurface().material != r->planes[PLN_FLOOR].surface.material)
+    if(s->floorSurface().materialPtr() != r->planes[PLN_FLOOR].surface.material)
         df |= SDF_FLOOR_MATERIAL;
-    if(s->ceilingSurface().material != r->planes[PLN_CEILING].surface.material)
+    if(s->ceilingSurface().materialPtr() != r->planes[PLN_CEILING].surface.material)
        df |= SDF_CEILING_MATERIAL;
     if(r->lightLevel != s->lightLevel())
         df |= SDF_LIGHT;
@@ -756,28 +756,28 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number,
     byte sideFlags = s->flags & 0xff;
     int df = 0;
 
-    if(r->top.material != s->top().material &&
+    if(r->top.material != s->top().materialPtr() &&
        !(s->top().inFlags & SUIF_FIX_MISSING_MATERIAL))
     {
         df |= SIDF_TOP_MATERIAL;
         if(doUpdate)
-            r->top.material = s->top().material;
+            r->top.material = s->top().materialPtr();
     }
 
-    if(r->middle.material != s->middle().material &&
+    if(r->middle.material != s->middle().materialPtr() &&
        !(s->middle().inFlags & SUIF_FIX_MISSING_MATERIAL))
     {
         df |= SIDF_MID_MATERIAL;
         if(doUpdate)
-            r->middle.material = s->middle().material;
+            r->middle.material = s->middle().materialPtr();
     }
 
-    if(r->bottom.material != s->bottom().material &&
+    if(r->bottom.material != s->bottom().materialPtr() &&
        !(s->bottom().inFlags & SUIF_FIX_MISSING_MATERIAL))
     {
         df |= SIDF_BOTTOM_MATERIAL;
         if(doUpdate)
-            r->bottom.material = s->bottom().material;
+            r->bottom.material = s->bottom().materialPtr();
     }
 
     if(r->lineFlags != lineFlags)

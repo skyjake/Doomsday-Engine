@@ -235,7 +235,7 @@ void R_UpdateMapSurfacesOnMaterialChange(Material *material)
 #ifdef __CLIENT__
     foreach(Surface *surface, theMap->decoratedSurfaces())
     {
-        if(material == surface->material)
+        if(material == surface->materialPtr())
         {
             surface->update();
         }
@@ -418,7 +418,7 @@ void GameMap_UpdateSkyFixForSector(GameMap *map, Sector *sec)
         int side = line->frontSectorPtr() == sec? FRONT : BACK;
         SideDef const &sideDef = line->sideDef(side);
 
-        if(!sideDef.middle().material)
+        if(!sideDef.middle().hasMaterial())
             continue;
 
         if(skyCeil)
@@ -435,7 +435,7 @@ void GameMap_UpdateSkyFixForSector(GameMap *map, Sector *sec)
         if(skyFloor)
         {
             float const bottom = sec->floor().visHeight() +
-                sideDef.middle().visOffset[VY] - sideDef.middle().material->height();
+                sideDef.middle().visOffset[VY] - sideDef.middle().material().height();
 
             if(bottom < map->skyFix[Plane::Floor].height)
             {
@@ -599,14 +599,14 @@ boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
                 matOffset[1] = 0;
             }
 
-            if(suf->material && !stretchMiddle)
+            if(suf->hasMaterial() && !stretchMiddle)
             {
                 bool const clipBottom = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && ffloor->surface().isSkyMasked() && bfloor->surface().isSkyMasked());
                 bool const clipTop    = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && fceil->surface().isSkyMasked()  && bceil->surface().isSkyMasked());
 
                 coord_t const openBottom = *low;
                 coord_t const openTop    = *hi;
-                int const matHeight      = suf->material->height();
+                int const matHeight      = suf->material().height();
                 coord_t const matYOffset = suf->visOffset[VY];
 
                 if(openTop > openBottom)
@@ -725,11 +725,10 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector const *frontSec,
 {
     if(!frontSec || !frontDef) return false; // Never.
 
-    Material *material = frontDef->middle().material;
-    if(!material) return false;
+    if(!frontDef->middle().hasMaterial()) return false;
 
     // Ensure we have up to date info about the material.
-    MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
+    MaterialSnapshot const &ms = frontDef->middle().material().prepare(Rend_MapSurfaceMaterialSpec());
 
     if(ignoreOpacity || (ms.isOpaque() && !frontDef->middle().blendMode && frontDef->middle().rgba[3] >= 1))
     {
@@ -823,7 +822,7 @@ LineDef *R_FindSolidLineNeighbor(Sector const *sector, LineDef const *line,
         // Check for mid texture which fills the gap between floor and ceiling.
         // We should not give away the location of false walls (secrets).
         side = (other->frontSectorPtr() == sector? 0 : 1);
-        if(other->sideDef(side).middle().material)
+        if(other->sideDef(side).middle().hasMaterial())
         {
             float oFCeil  = other->frontSector().ceiling().visHeight();
             float oFFloor = other->frontSector().floor().visHeight();
@@ -977,9 +976,9 @@ void R_MapInitSurfaceLists()
     {
         SideDef *sideDef = SIDE_PTR(i);
 
-        addToSurfaceSets(&sideDef->middle(), sideDef->middle().material);
-        addToSurfaceSets(&sideDef->top(),    sideDef->top().material);
-        addToSurfaceSets(&sideDef->bottom(), sideDef->bottom().material);
+        addToSurfaceSets(&sideDef->middle(), sideDef->middle().materialPtr());
+        addToSurfaceSets(&sideDef->top(),    sideDef->top().materialPtr());
+        addToSurfaceSets(&sideDef->bottom(), sideDef->bottom().materialPtr());
     }
 
     for(uint i = 0; i < NUM_SECTORS; ++i)
@@ -991,7 +990,7 @@ void R_MapInitSurfaceLists()
 
         foreach(Plane *plane, sec->planes())
         {
-            addToSurfaceSets(&plane->surface(), plane->surface().material);
+            addToSurfaceSets(&plane->surface(), plane->surface().materialPtr());
         }
     }
 
@@ -1145,25 +1144,26 @@ void R_ClearSectorFlags()
     }
 }
 
-boolean R_IsGlowingPlane(Plane const *pln)
+boolean R_IsGlowingPlane(Plane const *plane)
 {
-    Material *material = pln->surface().material;
-    if(material)
+    DENG_ASSERT(plane);
+    Surface const &surface = plane->surface();
+    if(surface.hasMaterial())
     {
-        if(!material->isDrawable() || material->hasGlow()) return true;
+        if(!surface.material().isDrawable() || surface.material().hasGlow()) return true;
     }
-    return pln->surface().isSkyMasked();
+    return plane->surface().isSkyMasked();
 }
 
-float R_GlowStrength(Plane const *pln)
+float R_GlowStrength(Plane const *plane)
 {
 #ifdef __CLIENT__
-    Material *material = pln->surface().material;
-    if(material)
+    Surface const &surface = plane->surface();
+    if(surface.hasMaterial())
     {
-        if(material->isDrawable() && !pln->surface().isSkyMasked())
+        if(surface.material().isDrawable() && !surface.isSkyMasked())
         {
-            MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
+            MaterialSnapshot const &ms = surface.material().prepare(Rend_MapSurfaceMaterialSpec());
 
             float glowStrength = ms.glowStrength();
             if(glowFactor > .0001f)
@@ -1172,7 +1172,7 @@ float R_GlowStrength(Plane const *pln)
         }
     }
 #else
-    DENG_UNUSED(pln);
+    DENG_UNUSED(plane);
 #endif
     return 0;
 }
@@ -1226,14 +1226,14 @@ static Material *chooseFixMaterial(SideDef *s, SideDefSection section)
         {
             if(frontSec->floor().height() < backSec->floor().height())
             {
-                choice1 = backSec->floorSurface().material;
+                choice1 = backSec->floorSurface().materialPtr();
             }
         }
         else if(section == SS_TOP)
         {
             if(frontSec->ceiling().height()  > backSec->ceiling().height())
             {
-                choice1 = backSec->ceilingSurface().material;
+                choice1 = backSec->ceilingSurface().materialPtr();
             }
         }
 
@@ -1260,7 +1260,7 @@ static Material *chooseFixMaterial(SideDef *s, SideDefSection section)
             if(!other->hasBackSideDef())
             {
                 // Our choice is clear - the middle material.
-                choice1 = other->frontSideDef().middle().material;
+                choice1 = other->frontSideDef().middle().materialPtr();
             }
             else
             {
@@ -1269,20 +1269,20 @@ static Material *chooseFixMaterial(SideDef *s, SideDefSection section)
                 Sector &otherSec   = other->sector(&other->frontSector() == frontSec? BACK  : FRONT);
 
                 if(otherSec.ceiling().height() <= frontSec->floor().height())
-                    choice1 = otherSide.top().material;
+                    choice1 = otherSide.top().materialPtr();
                 else if(otherSec.floor().height() >= frontSec->ceiling().height())
-                    choice1 = otherSide.bottom().material;
+                    choice1 = otherSide.bottom().materialPtr();
                 else if(otherSec.ceiling().height() < frontSec->ceiling().height())
-                    choice1 = otherSide.top().material;
+                    choice1 = otherSide.top().materialPtr();
                 else if(otherSec.floor().height() > frontSec->floor().height())
-                    choice1 = otherSide.bottom().material;
+                    choice1 = otherSide.bottom().materialPtr();
                 // else we'll settle for a plane material.
             }
         }
     }
 
     // Our second choice is a material from this sector.
-    choice2 = frontSec->planeSurface(section == SS_BOTTOM? Plane::Floor : Plane::Ceiling).material;
+    choice2 = frontSec->planeSurface(section == SS_BOTTOM? Plane::Floor : Plane::Ceiling).materialPtr();
 
     // Prefer a non-animated, non-masked material.
     if(choice1 && !choice1->isAnimated() && !choice1->isSkyMasked())
@@ -1306,18 +1306,21 @@ static Material *chooseFixMaterial(SideDef *s, SideDefSection section)
 
 static void addMissingMaterial(SideDef *s, SideDefSection section)
 {
+    DENG_ASSERT(s);
+
     // A material must be missing for this test to apply.
-    Surface &suf = s->surface(section);
-    if(suf.material) return;
+    Surface &surface = s->surface(section);
+    if(surface.hasMaterial()) return;
 
     // Look for a suitable replacement.
-    suf.setMaterial(chooseFixMaterial(s, section));
-    suf.inFlags |= SUIF_FIX_MISSING_MATERIAL;
+    surface.setMaterial(chooseFixMaterial(s, section));
+    surface.inFlags |= SUIF_FIX_MISSING_MATERIAL;
 
     // During map load we log missing materials.
     if(ddMapSetup && verbose)
     {
-        String path = suf.material? suf.material->manifest().composeUri().asText() : "<null>";
+        String path = surface.hasMaterial()? surface.material().manifest().composeUri().asText() : "<null>";
+
         LOG_WARNING("SideDef #%u is missing a material for the %s section.\n"
                     "  %s was chosen to complete the definition.")
             << s->buildData.index - 1

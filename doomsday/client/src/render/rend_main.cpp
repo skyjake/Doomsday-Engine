@@ -385,7 +385,7 @@ static byte pvisibleLineSections(LineDef *line, int backSide)
         sections |= SSF_MIDDLE | SSF_BOTTOM | SSF_TOP;
 
         // Middle?
-        if(!sideDef.middle().material || !sideDef.middle().material->isDrawable() || sideDef.middle().rgba[3] <= 0)
+        if(!sideDef.middle().hasMaterial() || !sideDef.middle().material().isDrawable() || sideDef.middle().rgba[3] <= 0)
             sections &= ~SSF_MIDDLE;
 
         // Top?
@@ -1446,9 +1446,10 @@ static void renderPlane(BspLeaf *bspLeaf, Plane::Type type, coord_t height,
         else
         {
             Surface const &suf = sec->planeSurface(elmIdx);
-            Material *mat = suf.material? suf.material : &App_Materials().find(de::Uri("System", Path("missing"))).material();
+            Material &material = suf.hasMaterial()? suf.material()
+                                                  : App_Materials().find(de::Uri("System", Path("missing"))).material();
 
-            MaterialSnapshot const &ms = mat->prepare(Rend_MapSurfaceMaterialSpec());
+            MaterialSnapshot const &ms = material.prepare(Rend_MapSurfaceMaterialSpec());
             params.glowing = ms.glowStrength();
         }
 
@@ -1599,8 +1600,8 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
         blendmode_t blendMode = BM_NORMAL;
         float const *color = NULL, *color2 = NULL;
 
-        texScale[0] = ((surface->flags & DDSUF_MATERIAL_FLIPH)? -1 : 1);
-        texScale[1] = ((surface->flags & DDSUF_MATERIAL_FLIPV)? -1 : 1);
+        texScale[0] = ((surface->flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1);
+        texScale[1] = ((surface->flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
         V2d_Copy(texTL,  hedge->HE_v1origin);
         texTL[VZ] =  WallDivNode_Height(WallDivs_Last(leftWallDivs));
@@ -1616,7 +1617,7 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
                                      HEDGE_BACK_SECTOR(hedge)->ceilingSurface().isSkyMasked())))
         {
             // Geometry not normally rendered however we do so in dev sky mode.
-            mat = hedge->sector->planeSurface(section == SS_TOP? Plane::Ceiling : Plane::Floor).material;
+            mat = hedge->sector->planeSurface(section == SS_TOP? Plane::Ceiling : Plane::Floor).materialPtr();
         }
         else
         {
@@ -1625,7 +1626,7 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
                 // Lighting debug mode; render using System:gray.
                 mat = &App_Materials().find(de::Uri("System", Path("gray"))).material();
             }
-            else if(!surface->material ||
+            else if(!surface->hasMaterial() ||
                     ((surface->inFlags & SUIF_FIX_MISSING_MATERIAL) && devNoTexFix))
             {
                 // Missing material debug mode; render using System:missing.
@@ -1634,7 +1635,7 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
             else
             {
                 // Normal mode.
-                mat = surface->material;
+                mat = surface->materialPtr();
             }
 
             if(mat->isSkyMasked())
@@ -1812,8 +1813,8 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
     reportLineDrawn(*line);
 
     if(back->sectorPtr() == front->sectorPtr() &&
-       !front->sideDef().top().material && !front->sideDef().bottom().material &&
-       !front->sideDef().middle().material)
+       !front->sideDef().top().hasMaterial() && !front->sideDef().bottom().hasMaterial() &&
+       !front->sideDef().middle().hasMaterial())
        return false; // Ugh... an obvious wall hedge hack. Best take no chances...
 
     Plane *ffloor = &leaf->sector().floor();
@@ -1921,9 +1922,9 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
         }
         else*/
              if(   (bceil->visHeight() <= ffloor->visHeight() &&
-                        (front->sideDef().top().material    || front->sideDef().middle().material))
+                        (front->sideDef().top().hasMaterial()    || front->sideDef().middle().hasMaterial()))
                 || (bfloor->visHeight() >= fceil->visHeight() &&
-                        (front->sideDef().bottom().material || front->sideDef().middle().material)))
+                        (front->sideDef().bottom().hasMaterial() || front->sideDef().middle().hasMaterial())))
         {
             // A closed gap?
             if(FEQUAL(fceil->visHeight(), bfloor->visHeight()))
@@ -1946,7 +1947,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
         /// @todo Is this still necessary?
         else if(bceil->visHeight() <= bfloor->visHeight() ||
                 (!(bceil->visHeight() - bfloor->visHeight() > 0) && bfloor->visHeight() > ffloor->visHeight() && bceil->visHeight() < fceil->visHeight() &&
-                front->sideDef().top().material && front->sideDef().bottom().material))
+                front->sideDef().top().hasMaterial() && front->sideDef().bottom().hasMaterial()))
         {
             // A zero height back segment
             solidSeg = true;
@@ -2349,7 +2350,7 @@ static void Rend_WriteBspLeafSkyFixGeometry(BspLeaf *leaf, int skyFix)
 
             if(devRendSkyMode)
             {
-                skyMaterial = hedge->sector->planeSurface(skyFix == SKYCAP_UPPER? Plane::Ceiling : Plane::Floor).material;
+                skyMaterial = hedge->sector->planeSurface(skyFix == SKYCAP_UPPER? Plane::Ceiling : Plane::Floor).materialPtr();
             }
 
             if(zBottom >= zTop)
@@ -2716,13 +2717,13 @@ static void Rend_RenderPlanes()
 
         if(renderTextures == 2)
             texMode = 2;
-        else if(!suf->material || (devNoTexFix && (suf->inFlags & SUIF_FIX_MISSING_MATERIAL)))
+        else if(!suf->hasMaterial() || (devNoTexFix && (suf->inFlags & SUIF_FIX_MISSING_MATERIAL)))
             texMode = 1;
         else
             texMode = 0;
 
         if(texMode == 0)
-            mat = suf->material;
+            mat = suf->materialPtr();
         else if(texMode == 1)
             // For debug, render the "missing" texture instead of the texture
             // chosen for surfaces to fix the HOMs.
@@ -2741,8 +2742,8 @@ static void Rend_RenderPlanes()
         // Inverted.
         texOffset[VY] = -texOffset[VY];
 
-        texScale[VX] = ((suf->flags & DDSUF_MATERIAL_FLIPH)? -1 : 1);
-        texScale[VY] = ((suf->flags & DDSUF_MATERIAL_FLIPV)? -1 : 1);
+        texScale[VX] = ((suf->flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1);
+        texScale[VY] = ((suf->flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
         Rend_RenderPlane(plane->type(), plane->visHeight(), suf->tangent, suf->bitangent, suf->normal,
             mat, suf->rgba, suf->blendMode, texOffset, texScale,
@@ -3006,7 +3007,7 @@ void Rend_RenderSurfaceVectors()
         else
         {
             SideDef *sideDef = HEDGE_SIDEDEF(hedge);
-            if(sideDef->middle().material)
+            if(sideDef->middle().hasMaterial())
             {
                 top = hedge->sector->ceiling().visHeight();
                 bottom = hedge->sector->floor().visHeight();

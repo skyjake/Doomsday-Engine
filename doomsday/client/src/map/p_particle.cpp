@@ -188,9 +188,9 @@ void P_MapSpawnPlaneParticleGens()
         for(uint j = 0; j < 2; ++j)
         {
             Plane &plane = sector->plane(j);
-            if(!plane.surface().material) continue;
+            if(!plane.surface().hasMaterial()) continue;
 
-            de::Uri uri = plane.surface().material->manifest().composeUri();
+            de::Uri uri = plane.surface().material().manifest().composeUri();
             ded_ptcgen_t const *def = Def_GetGenerator(reinterpret_cast<uri_s *>(&uri));
             P_SpawnPlaneParticleGen(def, &plane);
         }
@@ -1397,11 +1397,11 @@ static int findDefForGenerator(ptcgen_t *gen, void *parameters)
             {
                 Material *defMat = &App_Materials().find(*reinterpret_cast<de::Uri const *>(def->material)).material();
 
-                Material *mat = gen->plane->PS_material;
+                Material *mat = gen->plane->surface().materialPtr();
                 if(def->flags & PGF_FLOOR_SPAWN)
-                    mat = gen->plane->sector().floorSurface().material;
+                    mat = gen->plane->sector().floorSurface().materialPtr();
                 if(def->flags & PGF_CEILING_SPAWN)
-                    mat = gen->plane->sector().ceilingSurface().material;
+                    mat = gen->plane->sector().ceilingSurface().materialPtr();
 
                 // Is this suitable?
                 if(mat == defMat)

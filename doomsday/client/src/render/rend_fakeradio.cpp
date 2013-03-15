@@ -1198,7 +1198,7 @@ static uint radioEdgeHackType(LineDef const *line, Sector const *front, Sector c
 {
     Surface const &surface = line->sideDef(backside).surface(isCeiling? SS_TOP:SS_BOTTOM);
 
-    if(fz < bz && !surface.material &&
+    if(fz < bz && !surface.hasMaterial() &&
        !(surface.inFlags & SUIF_FIX_MISSING_MATERIAL))
         return 3; // Consider it fully open.
 
@@ -1310,8 +1310,8 @@ static void processEdgeShadow(BspLeaf const &bspLeaf, LineDef const *line,
     coord_t plnHeight  = plane.visHeight();
 
     // Glowing surfaces or missing textures shouldn't have shadows.
-    if((suf->inFlags & SUIF_NO_RADIO) || !suf->material || suf->isSkyMasked()) return;
-    if(suf->material->hasGlow()) return;
+    if((suf->inFlags & SUIF_NO_RADIO) || !suf->hasMaterial() || suf->isSkyMasked()) return;
+    if(suf->material().hasGlow()) return;
 
     // Determine the openness of the line. If this edge is edgeOpen,
     // there won't be a shadow at all. Open neighbours cause some

@@ -354,7 +354,7 @@ static void writeSide(GameMap *map, uint idx)
     {
         Surface *suf = &s->surface(i);
 
-        writeLong(suf->flags);
+        writeLong(suf->_flags);
         //writeLong(getMaterialDictID(materialDict, suf->material));
         writeLong((long) suf->blendMode);
         writeFloat(suf->normal[VX]);
@@ -379,7 +379,7 @@ static void readSide(GameMap *map, uint idx)
     {
         Surface *suf = &s->surface(i);
 
-        suf->flags = (int) readLong();
+        suf->_flags = (int) readLong();
         //suf->setMaterial(lookupMaterialFromDict(materialDict, readLong()));
         suf->setBlendMode(blendmode_t(readLong()));
         suf->normal[VX] = readFloat();
@@ -451,7 +451,7 @@ static void writeSector(GameMap *map, uint idx)
         writeFloat(plane->_visHeightDelta);
 
         Surface &surface = plane->surface();
-        writeLong((long) surface.flags);
+        writeLong((long) surface._flags);
         //writeLong(getMaterialDictID(materialDict, p->surface().material));
         writeLong((long) surface.blendMode);
         writeFloat(surface.normal[VX]);
@@ -524,7 +524,7 @@ static void readSector(GameMap *map, uint idx)
         p->_visHeight = readFloat();
         p->_visHeightDelta = readFloat();
 
-        p->_surface.flags = (int) readLong();
+        p->_surface._flags = (int) readLong();
         //p->_surface.setMaterial(lookupMaterialFromDict(materialDict, readLong()));
         p->_surface.setBlendMode(blendmode_t(readLong()));
         p->_surface.normal[VX] = readFloat();
