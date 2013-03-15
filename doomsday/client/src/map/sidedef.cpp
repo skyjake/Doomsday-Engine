@@ -41,12 +41,12 @@ SideDef::SideDef() : de::MapElement(DMU_SIDEDEF)
 SideDef::~SideDef()
 {}
 
-void SideDef::updateBaseOrigins()
+void SideDef::updateSoundEmitterOrigins()
 {
     if(!line) return;
-    SW_middlesurface.updateBaseOrigin();
-    SW_bottomsurface.updateBaseOrigin();
-    SW_topsurface.updateBaseOrigin();
+    SW_middlesurface.updateSoundEmitterOrigin();
+    SW_bottomsurface.updateSoundEmitterOrigin();
+    SW_topsurface.updateSoundEmitterOrigin();
 }
 
 void SideDef::updateSurfaceTangents()

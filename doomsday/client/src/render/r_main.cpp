@@ -806,7 +806,7 @@ BEGIN_PROF( PROF_MOBJ_INIT_ADD );
     for(uint i = 0; i < NUM_SECTORS; ++i)
     {
         Sector *sec = GameMap_Sector(theMap, i);
-        for(mobj_t *iter = sec->mobjList; iter; iter = iter->sNext)
+        for(mobj_t *iter = sec->firstMobj(); iter; iter = iter->sNext)
         {
             R_ObjlinkCreate(iter, OT_MOBJ); // For spreading purposes.
         }

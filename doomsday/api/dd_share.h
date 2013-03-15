@@ -576,6 +576,9 @@ enum {
     NUM_REVERB_DATA
 };
 
+/// Environmental audio characteristics. @ingroup map
+typedef float AudioEnvironmentFactors[NUM_REVERB_DATA];
+
 /// SideDef section indices. @ingroup map
 typedef enum sidedefsection_e {
     SS_MIDDLE,

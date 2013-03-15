@@ -446,27 +446,27 @@ int S_ConsoleSound(int soundID, mobj_t* origin, int targetConsole)
  * @param soundID  Unique identifier of the sound to be stopped. If @c 0, ID not checked.
  * @param flags  @ref soundStopFlags
  */
-static void stopSectorSounds(ddmobj_base_t* sectorEmitter, int soundID, int flags)
+static void stopSectorSounds(ddmobj_base_t *sectorEmitter, int soundID, int flags)
 {
-    ddmobj_base_t* base;
+    ddmobj_base_t *base;
 
     if(!sectorEmitter || !flags) return;
 
     // Are we stopping with this sector's emitter?
     if(flags & SSF_SECTOR)
     {
-        _api_S.StopSound(soundID, (mobj_t*)sectorEmitter);
+        _api_S.StopSound(soundID, (mobj_t *)sectorEmitter);
     }
 
     // Are we stopping with linked emitters?
     if(!(flags & SSF_SECTOR_LINKED_SURFACES)) return;
 
     // Process the rest of the emitter chain.
-    base = (ddmobj_base_t*)sectorEmitter;
-    while((base = (ddmobj_base_t*)base->thinker.next))
+    base = sectorEmitter;
+    while((base = (ddmobj_base_t *)base->thinker.next))
     {
         // Stop sounds from this emitter.
-        _api_S.StopSound(soundID, (mobj_t*)base);
+        _api_S.StopSound(soundID, (mobj_t *)base);
     }
 }
 
@@ -501,7 +501,7 @@ void S_StopSound2(int soundID, mobj_t *emitter, int flags)
         {
             // Emitter is a real Mobj.
             Sector &sector = emitter->bspLeaf->sector();
-            stopSectorSounds((ddmobj_base_t *)&sector.base, soundID, flags);
+            stopSectorSounds(&sector.soundEmitter(), soundID, flags);
             return;
         }
 

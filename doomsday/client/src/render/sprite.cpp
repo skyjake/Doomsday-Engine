@@ -344,7 +344,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
             float const *secColor = R_GetSectorLightColor(&sector);
 
             // No need for distance attentuation.
-            float lightLevel = sector.lightLevel;
+            float lightLevel = sector.lightLevel();
 
             // Add extra light plus bonus.
             lightLevel += R_ExtraLightDelta();
@@ -731,7 +731,7 @@ static void setupModelParamsForVisPSprite(rendmodelparams_t *params, vispsprite_
             float const *secColor = R_GetSectorLightColor(&sector);
 
             // Diminished light (with compression).
-            float lightLevel = sector.lightLevel;
+            float lightLevel = sector.lightLevel();
 
             // No need for distance attentuation.
 

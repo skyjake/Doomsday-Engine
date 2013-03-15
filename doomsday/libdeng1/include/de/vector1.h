@@ -39,16 +39,21 @@ extern "C" {
 typedef float vectorcompf_t;
 typedef vectorcompf_t vec2f_t[2];
 typedef float const const_pvec2f_t[2];
-typedef vectorcompf_t* pvec2f_t;
-typedef vec2f_t* arvec2f_t;
+typedef vectorcompf_t *pvec2f_t;
+
+typedef vec2f_t *arvec2f_t;
+typedef vec2f_t const *const_arvec2f_t;
 
 // Double floating-point.
 typedef double vectorcompd_t;
 typedef vectorcompd_t vec2d_t[2];
 typedef double const const_pvec2d_t[2];
-typedef vectorcompd_t* pvec2d_t;
-typedef vectorcompd_t const * pcvec2d_t;
-typedef vec2d_t* arvec2d_t;
+typedef vectorcompd_t *pvec2d_t;
+
+typedef vec2d_t *arvec2d_t;
+typedef vec2d_t const *const_arvec2d_t;
+
+typedef vectorcompd_t const *pcvec2d_t; /// @todo Remove me
 
 DENG_PUBLIC fixed_t V2x_Intersection(fixed_t const v1[2], fixed_t const v1Delta[2], fixed_t const v2[2], fixed_t const v2Delta[2]);
 
@@ -329,9 +334,9 @@ DENG_PUBLIC void V2d_InitBox(arvec2d_t box, const_pvec2d_t point);
 
 DENG_PUBLIC void V2d_AddToBox(arvec2d_t box, const_pvec2d_t point);
 
-DENG_PUBLIC void V2d_UniteBox(arvec2d_t box, arvec2d_t const other);
+DENG_PUBLIC void V2d_UniteBox(arvec2d_t box, const_arvec2d_t other);
 
-DENG_PUBLIC void V2d_CopyBox(arvec2d_t dest, arvec2d_t const src);
+DENG_PUBLIC void V2d_CopyBox(arvec2d_t dest, const_arvec2d_t src);
 
 /// @}
 
@@ -638,8 +643,8 @@ DENG_PUBLIC void V4f_Lerp(pvec4f_t dest, const_pvec4f_t a, const_pvec4f_t b, flo
 
 typedef vectorcompd_t vec4d_t[4];
 typedef double const const_pvec4d_t[4];
-typedef vectorcompd_t* pvec4d_t;
-typedef vec4d_t* arvec4d_t;
+typedef vectorcompd_t *pvec4d_t;
+typedef vec4d_t *arvec4d_t;
 
 /**
  * Set the vector's x, y, z and w components.

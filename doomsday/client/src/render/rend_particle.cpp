@@ -313,7 +313,7 @@ static int populateSortBuffer(ptcgen_t* gen, void* parameters)
             continue;
 
         // Is the particle's sector visible?
-        if(!(pt->sector->frameFlags & SIF_VISIBLE))
+        if(!(pt->sector->frameFlags() & SIF_VISIBLE))
             continue; // No; this particle can't be seen.
 
         // Don't allow zero distance.
@@ -463,8 +463,8 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
         }
         else
         {
-            float lightLevel = pt->sector->lightLevel;
-            const float* secColor = R_GetSectorLightColor(pt->sector);
+            float lightLevel = pt->sector->lightLevel();
+            float const *secColor = R_GetSectorLightColor(pt->sector);
 
             // Apply distance attenuation.
             lightLevel = R_DistAttenuateLightLevel(params->distance, lightLevel);
@@ -633,7 +633,7 @@ static void renderParticles(int rtype, boolean withBlend)
                 // This is a simplified version of sectorlight (no distance
                 // attenuation or range compression).
                 if(pt->sector)
-                    color[c] *= pt->sector->lightLevel;
+                    color[c] *= pt->sector->lightLevel();
             }
         }
 

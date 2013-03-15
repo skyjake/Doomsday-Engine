@@ -376,7 +376,7 @@ struct Partitioner::Instance
         if(p.backOpen && p.frontOpen && line->frontSectorPtr() == p.backOpen)
         {
             LOG_VERBOSE("LineDef #%d seems to be a One-Sided Window (back faces sector #%d).")
-                << line->origIndex() - 1 << p.backOpen->buildData.index - 1;
+                << line->origIndex() - 1 << p.backOpen->origIndex() - 1;
 
             lineInfo.windowEffect = p.frontOpen;
             line->_inFlags |= LF_BSPWINDOW; /// @todo Refactor away.
@@ -653,8 +653,8 @@ struct Partitioner::Instance
                         if(!cur->selfRef && !next->selfRef)
                         {
                             LOG_DEBUG("Sector mismatch (#%d [%1.1f, %1.1f] != #%d [%1.1f, %1.1f]).")
-                                <<   cur->after->buildData.index-1 <<  cur->vertex->origin()[VX] <<  cur->vertex->origin()[VY]
-                                << next->before->buildData.index-1 << next->vertex->origin()[VX] << next->vertex->origin()[VY];
+                                <<   cur->after->origIndex() - 1 <<  cur->vertex->origin()[VX] <<  cur->vertex->origin()[VY]
+                                << next->before->origIndex() - 1 << next->vertex->origin()[VX] << next->vertex->origin()[VY];
                         }
 
                         if(cur->selfRef && !next->selfRef)
@@ -2266,7 +2266,7 @@ struct Partitioner::Instance
         // In the absence of a better mechanism, simply log this right away.
         /// @todo Implement something better!
         LOG_WARNING("Sector %p (#%d) is unclosed near [%1.1f, %1.1f].")
-            << de::dintptr(sector) << sector->buildData.index - 1 << x << y;
+            << de::dintptr(sector) << sector->origIndex() - 1 << x << y;
 
         return true;
     }
@@ -2346,11 +2346,11 @@ struct Partitioner::Instance
         /// @todo Implement something better!
         if(migrant->lineDef)
             LOG_WARNING("Sector #%d has migrant HEdge facing #%d (line #%d).")
-                << sector->buildData.index - 1 << migrant->sector->buildData.index - 1
+                << sector->origIndex() - 1 << migrant->sector->origIndex() - 1
                 << migrant->lineDef->origIndex() - 1;
         else
             LOG_WARNING("Sector #%d has migrant HEdge facing #%d.")
-                << sector->buildData.index - 1 << migrant->sector->buildData.index - 1;
+                << sector->origIndex() - 1 << migrant->sector->origIndex() - 1;
 
         return true;
     }

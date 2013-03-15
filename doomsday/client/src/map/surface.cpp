@@ -274,9 +274,9 @@ void Surface::update()
     inFlags |= SUIF_UPDATE_DECORATIONS;
 }
 
-void Surface::updateBaseOrigin()
+void Surface::updateSoundEmitterOrigin()
 {
-    LOG_AS("Surface::updateBaseOrigin");
+    LOG_AS("Surface::updateSoundEmitterOrigin");
 
     if(!owner) return;
     switch(owner->type())
@@ -285,8 +285,8 @@ void Surface::updateBaseOrigin()
         Plane *pln = owner->castTo<Plane>();
         Sector &sec = pln->sector();
 
-        base.origin[VX] = sec.base.origin[VX];
-        base.origin[VY] = sec.base.origin[VY];
+        base.origin[VX] = sec.soundEmitter().origin[VX];
+        base.origin[VY] = sec.soundEmitter().origin[VY];
         base.origin[VZ] = pln->height();
         break; }
 

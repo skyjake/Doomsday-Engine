@@ -1029,7 +1029,7 @@ static void createGlowLightForSurface(Surface &suf)
     }
 }
 
-void LO_AddLuminousMobjs(void)
+void LO_AddLuminousMobjs()
 {
     if(!useDynLights && !useWallGlow) return;
     if(!theMap) return;
@@ -1040,9 +1040,9 @@ BEGIN_PROF( PROF_LUMOBJ_INIT_ADD );
     {
         for(uint i = 0; i < NUM_SECTORS; ++i)
         {
-            Sector* sec = GameMap_Sector(theMap, i);
+            Sector *sec = GameMap_Sector(theMap, i);
 
-            for(mobj_t* iter = sec->mobjList; iter; iter = iter->sNext)
+            for(mobj_t *iter = sec->firstMobj(); iter; iter = iter->sNext)
             {
                 iter->lumIdx = 0;
                 addLuminous(iter);

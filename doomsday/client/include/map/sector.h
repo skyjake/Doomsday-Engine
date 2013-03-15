@@ -23,6 +23,7 @@
 
 #include <QList>
 #include <de/aabox.h>
+#include <de/vector1.h>
 #include <de/Error>
 #include "map/plane.h"
 #include "p_mapdata.h"
@@ -32,16 +33,17 @@
 class BspLeaf;
 class LineDef;
 
-// Sector frame flags
-#define SIF_VISIBLE         0x1     // Sector is visible on this frame.
-#define SIF_FRAME_CLEAR     0x1     // Flags to clear before each frame.
-#define SIF_LIGHT_CHANGED   0x2
+/**
+ * @defgroup sectorFrameFlags Sector frame flags
+ * @ingroup map
+ */
+///@{
+#define SIF_VISIBLE             0x1 ///< Sector is visible on this frame.
+#define SIF_LIGHT_CHANGED       0x2
 
-typedef struct msector_s {
-    /// Sector index. Always valid after loading & pruning.
-    int index;
-    int	refCount;
-} msector_t;
+// Flags to clear before each frame.
+#define SIF_FRAME_CLEAR         SIF_VISIBLE
+///@}
 
 /**
  * Map sector.
@@ -64,28 +66,48 @@ public:
     typedef QList<Plane *> Planes;
     typedef QList<BspLeaf *> BspLeafs;
 
+    /**
+     * LightGrid data values for "smoothed sector lighting".
+     */
+    struct LightGridData
+    {
+        /// Number of blocks attributed to the sector.
+        uint blockCount;
+
+        /// Number of attributed blocks to mark changed.
+        uint changedBlockCount;
+
+        /// Block indices.
+        ushort *blocks;
+    };
+
 public: /// @todo Make private:
-    int frameFlags;
+    /// @ref sectorFrameFlags
+    int _frameFlags;
 
     /// if == validCount, already checked.
-    int validCount;
+    int _validCount;
 
     /// Bounding box for the sector.
-    AABoxd aaBox;
+    AABoxd _aaBox;
 
     /// Rough approximation of sector area.
-    coord_t roughArea;
+    coord_t _roughArea;
 
-    float lightLevel;
+    /// Ambient light level in the sector.
+    float _lightLevel;
 
-    float oldLightLevel;
+    /// Old ambient light level in the sector. For smoothing.
+    float _oldLightLevel;
 
-    float rgb[3];
+    /// Ambient light color in the sector.
+    vec3f_t _lightColor;
 
-    float oldRGB[3];
+    /// Old ambient light color in the sector. For smoothing.
+    vec3f_t _oldLightColor;
 
-    /// List of mobjs "in" the sector (not owned).
-    struct mobj_s *mobjList;
+    /// Head of the linked list of mobjs "in" the sector (not owned).
+    struct mobj_s *_mobjList;
 
     /// List of lines which reference the sector (not owned).
     Lines _lines;
@@ -97,27 +119,72 @@ public: /// @todo Make private:
     /// characteristics of the sector (not owned).
     BspLeafs _reverbBspLeafs;
 
-    ddmobj_base_t base;
+    /// Primary sound emitter. Others are linked to this, forming a chain.
+    ddmobj_base_t _soundEmitter;
 
     /// List of sector planes (owned).
     Planes _planes;
 
-    /// Number of gridblocks attributed to the sector.
-    uint blockCount;
+    /// LightGrid data values.
+    LightGridData _lightGridData;
 
-    /// Number of attributed blocks to mark changed.
-    uint changedBlockCount;
+    /// Final environmental audio characteristics.
+    AudioEnvironmentFactors _reverb;
 
-    /// Light grid block indices.
-    ushort *blocks;
-
-    float reverb[NUM_REVERB_DATA];
-
-    msector_t buildData;
+    /// Original index in the archived map.
+    int _origIndex;
 
 public:
     Sector();    
     ~Sector();
+
+    /**
+     * Returns the ambient light level in the sector.
+     */
+    float lightLevel() const;
+
+    /**
+     * Returns the ambient light color in the sector.
+     */
+    const_pvec3f_t &lightColor() const;
+
+    /**
+     * Returns the first mobj in the linked list of mobjs "in" the sector.
+     */
+    struct mobj_s *firstMobj() const;
+
+    /**
+     * Returns the primary sound emitter for the sector. Other emitters in the
+     * sector are linked to this, forming a chain which can be traversed using
+     * the 'next' pointer of the emitter's thinker_t.
+     */
+    ddmobj_base_t &soundEmitter();
+
+    /// @copydoc soundEmitter()
+    ddmobj_base_t const &soundEmitter() const;
+
+    /**
+     * Returns the final environmental audio characteristics of the sector.
+     */
+    AudioEnvironmentFactors const &audioEnvironmentFactors() const;
+
+    /**
+     * Returns the original index of the sector.
+     */
+    uint origIndex() const;
+
+    /**
+     * Returns the @ref sectorFrameFlags for the sector.
+     */
+    int frameFlags() const;
+
+    /**
+     * Returns the @em validCount of the sector. Used by some legacy iteration
+     * algorithms for marking sectors as processed/visited.
+     *
+     * @todo Refactor away.
+     */
+    int validCount() const;
 
     /**
      * Returns the sector plane with the specified @a planeIndex.
@@ -215,26 +282,45 @@ public:
     inline uint reverbBspLeafCount() const { return uint(reverbBspLeafs().count()); }
 
     /**
+     * Returns the axis-aligned bounding box which encompases all vertex
+     * origin points for lines which reference the sector, in map coordinate
+     * space units. Note that if no lines reference the sector the bounding
+     * box will be invalid (has negative dimensions).
+     *
+     * @deprecated Algorithms which are dependent on this are likely making
+     * invalid assumptions about the geometry of the map.
+     */
+    AABoxd const &aaBox() const;
+
+    /**
      * Update the sector's map space axis-aligned bounding box to encompass
      * the points defined by it's LineDefs' vertexes.
-     *
-     * @pre LineDef list must have been initialized.
+     * @pre Line list must have been initialized.
      */
     void updateAABox();
+
+    /**
+     * Returns a rough approximation of the area of the sector in the map
+     * coordinate space (units squared).
+     *
+     * @deprecated Algorithms which are dependent on this are likely making
+     * invalid assumptions about the geometry of the map.
+     */
+    coord_t roughArea() const;
 
     /**
      * Update the sector's rough area approximation.
      *
      * @pre Axis-aligned bounding box must have been initialized.
      */
-    void updateArea();
+    void updateRoughArea();
 
     /**
      * Update the origin of the sector according to the point defined by the
      * center of the sector's axis-aligned bounding box (which must be
      * initialized before calling).
      */
-    void updateBaseOrigin();
+    void updateSoundEmitterOrigin();
 
     /**
      * Get a property value, selected by DMU_* name.

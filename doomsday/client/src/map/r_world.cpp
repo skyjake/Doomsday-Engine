@@ -264,7 +264,7 @@ Plane *R_NewPlaneForSector(Sector *sec)
 
     // Initialize the surface.
     /// @todo The initial material should be the "unknown" material.
-    plane->surface().updateBaseOrigin();
+    plane->surface().updateSoundEmitterOrigin();
 
 #ifdef __CLIENT__
     /**
@@ -380,7 +380,7 @@ void GameMap_UpdateSkyFixForSector(GameMap *map, Sector *sec)
         }
 
         // Check that all the mobjs in the sector fit in.
-        for(mobj_t *mo = sec->mobjList; mo; mo = mo->sNext)
+        for(mobj_t *mo = sec->firstMobj(); mo; mo = mo->sNext)
         {
             float extent = mo->origin[VZ] + mo->height;
 
@@ -1137,7 +1137,7 @@ void R_ClearSectorFlags()
     {
         Sector *sec = SECTOR_PTR(i);
         // Clear all flags that can be cleared before each frame.
-        sec->frameFlags &= ~SIF_FRAME_CLEAR;
+        sec->_frameFlags &= ~SIF_FRAME_CLEAR;
     }
 }
 
@@ -1402,17 +1402,17 @@ boolean R_UpdatePlane(Plane *pln, boolean forceUpdate)
         }
 
         // Update the base origins for this plane and all affected wall surfaces.
-        pln->surface().updateBaseOrigin();
+        pln->surface().updateSoundEmitterOrigin();
         foreach(LineDef *line, sec->lines())
         {
             if(line->hasFrontSideDef()) // $degenleaf
             {
-                line->frontSideDef().updateBaseOrigins();
+                line->frontSideDef().updateSoundEmitterOrigins();
             }
 
             if(line->hasBackSideDef())
             {
-                line->backSideDef().updateBaseOrigins();
+                line->backSideDef().updateSoundEmitterOrigins();
             }
         }
 
@@ -1456,21 +1456,21 @@ boolean R_UpdateSector(Sector *sec, boolean forceUpdate)
 
     // Check if there are any lightlevel or color changes.
     if(forceUpdate ||
-       (sec->lightLevel != sec->oldLightLevel ||
-        sec->rgb[0] != sec->oldRGB[0] ||
-        sec->rgb[1] != sec->oldRGB[1] ||
-        sec->rgb[2] != sec->oldRGB[2]))
+       (sec->_lightLevel != sec->_oldLightLevel ||
+        sec->_lightColor[0] != sec->_oldLightColor[0] ||
+        sec->_lightColor[1] != sec->_oldLightColor[1] ||
+        sec->_lightColor[2] != sec->_oldLightColor[2]))
     {
-        sec->frameFlags |= SIF_LIGHT_CHANGED;
-        sec->oldLightLevel = sec->lightLevel;
-        std::memcpy(sec->oldRGB, sec->rgb, sizeof(sec->oldRGB));
+        sec->_frameFlags |= SIF_LIGHT_CHANGED;
+        sec->_oldLightLevel = sec->_lightLevel;
+        std::memcpy(sec->_oldLightColor, sec->_lightColor, sizeof(sec->_oldLightColor));
 
         LG_SectorChanged(static_cast<Sector *>(sec));
         changed = true;
     }
     else
     {
-        sec->frameFlags &= ~SIF_LIGHT_CHANGED;
+        sec->_frameFlags &= ~SIF_LIGHT_CHANGED;
     }
 
     foreach(Plane *plane, sec->planes())
@@ -1483,7 +1483,7 @@ boolean R_UpdateSector(Sector *sec, boolean forceUpdate)
 
     if(forceUpdate || planeChanged)
     {
-        sec->updateBaseOrigin();
+        sec->updateSoundEmitterOrigin();
 #ifdef __CLIENT__
         updateMissingMaterialsForLinesOfSector(*sec);
 #endif
@@ -1565,10 +1565,11 @@ float R_CheckSectorLight(float lightlevel, float min, float max)
 
 #ifdef __CLIENT__
 
-float const *R_GetSectorLightColor(Sector const *sector)
+const_pvec3f_t &R_GetSectorLightColor(Sector const *sector)
 {
     static vec3f_t skyLightColor, oldSkyAmbientColor = { -1, -1, -1 };
     static float oldRendSkyLight = -1;
+
     if(rendSkyLight > .001f && R_SectorContainsSkySurfaces(sector))
     {
         ColorRawf const *ambientColor = Sky_AmbientColor();
@@ -1588,11 +1589,14 @@ float const *R_GetSectorLightColor(Sector const *sector)
             LG_MarkAllForUpdate();
             V3f_Copy(oldSkyAmbientColor, ambientColor->rgb);
         }
+
         oldRendSkyLight = rendSkyLight;
         return skyLightColor;
     }
+
     // A non-skylight sector (i.e., everything else!)
-    return sector->rgb; // The sector's ambient light color.
+    // Return the sector's ambient light color.
+    return sector->lightColor();
 }
 
 #endif // __CLIENT__

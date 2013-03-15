@@ -97,7 +97,7 @@ public:
      *
      * If no owner is presently associated this is a no-op.
      */
-    void updateBaseOrigin();
+    void updateSoundEmitterOrigin();
 
     /// @return @c true= is drawable (i.e., a drawable Material is bound).
     bool isDrawable() const;

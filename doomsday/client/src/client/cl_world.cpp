@@ -664,11 +664,11 @@ void Cl_ReadSectorDelta2(int deltaType, boolean /*skip*/)
         speed[PLN_CEILING] = FIX2FLT(Reader_ReadByte(msgReader) << (df & SDF_CEILING_SPEED_44 ? 12 : 15));
 
     if(df & SDF_COLOR_RED)
-        sec->rgb[0] = Reader_ReadByte(msgReader) / 255.f;
+        sec->_lightColor[0] = Reader_ReadByte(msgReader) / 255.f;
     if(df & SDF_COLOR_GREEN)
-        sec->rgb[1] = Reader_ReadByte(msgReader) / 255.f;
+        sec->_lightColor[1] = Reader_ReadByte(msgReader) / 255.f;
     if(df & SDF_COLOR_BLUE)
-        sec->rgb[2] = Reader_ReadByte(msgReader) / 255.f;
+        sec->_lightColor[2] = Reader_ReadByte(msgReader) / 255.f;
 
     if(df & SDF_FLOOR_COLOR_RED)
         sec->floorSurface().setColorRed(Reader_ReadByte(msgReader) / 255.f);

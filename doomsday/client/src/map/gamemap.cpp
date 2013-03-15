@@ -223,20 +223,20 @@ int GameMap_SectorIndex(GameMap *map, Sector const *sec)
     return map->sectors.indexOf(sec); // Note: Bad performance!
 }
 
-Sector* GameMap_Sector(GameMap* map, uint idx)
+Sector *GameMap_Sector(GameMap* map, uint idx)
 {
     DENG2_ASSERT(map);
     if(idx >= map->sectorCount()) return NULL;
     return &map->sectors[idx];
 }
 
-Sector* GameMap_SectorByBase(GameMap* map, const void* ddMobjBase)
+Sector *GameMap_SectorByBase(GameMap *map, void const *ddMobjBase)
 {
     DENG2_ASSERT(map);
     for(int i = 0; i < map->sectors.size(); ++i)
     {
-        Sector* sec = &map->sectors[i];
-        if(ddMobjBase == &sec->base)
+        Sector *sec = &map->sectors[i];
+        if(ddMobjBase == &sec->soundEmitter())
         {
             return sec;
         }

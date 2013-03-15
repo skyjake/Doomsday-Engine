@@ -103,13 +103,17 @@ static SideDef* createSide(void)
     return side;
 }
 
-static Sector* createSector(void)
+static Sector *createSector(Vector3f const &ambientLightColor, float lightLevel)
 {
-    Sector* sec = new Sector;
-
+    Sector *sec = new Sector;
+    sec->_lightColor[CR] = de::clamp(0.f, ambientLightColor.x, 1.f);
+    sec->_lightColor[CG] = de::clamp(0.f, ambientLightColor.y, 1.f);
+    sec->_lightColor[CB] = de::clamp(0.f, ambientLightColor.z, 1.f);
+    sec->_lightLevel = de::clamp(0.f, lightLevel, 1.f);
+    
     e_map->sectors.push_back(sec);
+    sec->_origIndex = e_map->sectors.size(); // 1-based index, 0 = NIL.
 
-    sec->buildData.index = e_map->sectors.size(); // 1-based index, 0 = NIL.
     return sec;
 }
 
@@ -604,8 +608,8 @@ static void finishSectors(GameMap *map)
         Sector &sec = map->sectors[i];
 
         sec.updateAABox();
-        sec.updateArea();
-        sec.updateBaseOrigin();
+        sec.updateRoughArea();
+        sec.updateSoundEmitterOrigin();
 
         // Set the position of the sound origin for all plane sound origins.
         // Set target heights for all planes.
@@ -613,7 +617,7 @@ static void finishSectors(GameMap *map)
         {
             Plane &pln = sec.plane(k);
 
-            pln.surface().updateBaseOrigin();
+            pln.surface().updateSoundEmitterOrigin();
             pln._targetHeight = pln._height;
         }
     }
@@ -624,39 +628,39 @@ static void finishSectors(GameMap *map)
  * @param base  Mobj base to link in @a sector. Caller should ensure that the
  *              same object is not linked multiple times into the chain.
  */
-static void linkBaseToSectorChain(Sector* sector, ddmobj_base_t* base)
+static void linkToSectorEmitterChain(Sector *sector, ddmobj_base_t *otherEmitter)
 {
-    if(!sector || !base) return;
+    if(!sector || !otherEmitter) return;
 
     // The sector's base is always head of the chain, so link the other after it.
-    base->thinker.prev = &sector->base.thinker;
-    base->thinker.next = sector->base.thinker.next;
-    if(base->thinker.next)
-        base->thinker.next->prev = &base->thinker;
-    sector->base.thinker.next = &base->thinker;
+    otherEmitter->thinker.prev = &sector->_soundEmitter.thinker;
+    otherEmitter->thinker.next = sector->_soundEmitter.thinker.next;
+    if(otherEmitter->thinker.next)
+        otherEmitter->thinker.next->prev = &otherEmitter->thinker;
+    sector->_soundEmitter.thinker.next = &otherEmitter->thinker;
 }
 
 /**
  * Chain together the ddmobj_base_t objects owned by all Surfaces in all sectors.
- * These chains are used for efficiently traversing all of the base objects in a
- * sector, for example; stopping sounds emitted from all origins within a sector.
+ * These chains are used for efficiently traversing all of the sound emitters in
+ * a sector (e.g., when stopping all sounds emitted in the sector).
  */
-static void chainSectorBases(GameMap *map)
+static void chainSectorSoundEmitters(GameMap *map)
 {
     DENG_ASSERT(map);
 
     for(uint i = 0; i < map->sectorCount(); ++i)
     {
         Sector *sec = GameMap_Sector(map, i);
-        ddmobj_base_t *base = &sec->base;
+        ddmobj_base_t &emitter = sec->soundEmitter();
 
-        // Clear the chain head.
-        base->thinker.next = base->thinker.prev = 0;
+        // Clear the head of the sound emitter chain.
+        emitter.thinker.next = emitter.thinker.prev = 0;
 
         // Add all plane base mobjs.
         foreach(Plane *plane, sec->planes())
         {
-            linkBaseToSectorChain(sec, &plane->surface().base);
+            linkToSectorEmitterChain(sec, &plane->surface().base);
         }
 
         // Add all sidedef base mobjs.
@@ -665,16 +669,16 @@ static void chainSectorBases(GameMap *map)
             if(line->frontSectorPtr() == sec)
             {
                 SideDef &side = line->frontSideDef();
-                linkBaseToSectorChain(sec, &side.SW_middlesurface.base);
-                linkBaseToSectorChain(sec, &side.SW_bottomsurface.base);
-                linkBaseToSectorChain(sec, &side.SW_topsurface.base);
+                linkToSectorEmitterChain(sec, &side.SW_middlesurface.base);
+                linkToSectorEmitterChain(sec, &side.SW_bottomsurface.base);
+                linkToSectorEmitterChain(sec, &side.SW_topsurface.base);
             }
             if(line->hasBackSideDef() && line->backSectorPtr() == sec)
             {
                 SideDef &side = line->backSideDef();
-                linkBaseToSectorChain(sec, &side.SW_middlesurface.base);
-                linkBaseToSectorChain(sec, &side.SW_bottomsurface.base);
-                linkBaseToSectorChain(sec, &side.SW_topsurface.base);
+                linkToSectorEmitterChain(sec, &side.SW_middlesurface.base);
+                linkToSectorEmitterChain(sec, &side.SW_bottomsurface.base);
+                linkToSectorEmitterChain(sec, &side.SW_topsurface.base);
             }
         }
     }
@@ -689,7 +693,7 @@ static void finishSideDefs(GameMap *map)
     {
         SideDef &side = map->sideDefs[i];
         side.updateSurfaceTangents();
-        side.updateBaseOrigins();
+        side.updateSoundEmitterOrigins();
     }
 }
 
@@ -736,13 +740,13 @@ static void updateMapBounds(GameMap *map)
         if(isFirst)
         {
             // The first sector is used as is.
-            V2d_CopyBox(map->aaBox.arvec2, sec->aaBox.arvec2);
+            V2d_CopyBox(map->aaBox.arvec2, sec->aaBox().arvec2);
             isFirst = false;
         }
         else
         {
             // Expand the bounding box.
-            V2d_UniteBox(map->aaBox.arvec2, sec->aaBox.arvec2);
+            V2d_UniteBox(map->aaBox.arvec2, sec->aaBox().arvec2);
         }
     }
 }
@@ -1038,10 +1042,10 @@ static void hardenLinedefs(GameMap *dest, EditMap *src)
             destL->backSideDef().line = destL;
 
         destL->front()._sector = (srcL->front()._sector?
-            &dest->sectors[srcL->front()._sector->buildData.index - 1] : NULL);
+            &dest->sectors[srcL->front()._sector->_origIndex - 1] : NULL);
 
         destL->back()._sector  = (srcL->back()._sector?
-            &dest->sectors[srcL->back()._sector->buildData.index - 1] : NULL);
+            &dest->sectors[srcL->back()._sector->_origIndex - 1] : NULL);
     }
 }
 
@@ -1591,7 +1595,7 @@ boolean MPE_End(void)
     finishSideDefs(gamemap);
     finishLineDefs(gamemap);
     finishSectors(gamemap);
-    chainSectorBases(gamemap);
+    chainSectorSoundEmitters(gamemap);
 
     updateMapBounds(gamemap);
     S_DetermineBspLeafsAffectingSectorReverb(gamemap);
@@ -1937,14 +1941,8 @@ uint MPE_SectorCreate(float lightlevel, float red, float green, float blue)
 {
     if(!editMapInited) return 0;
 
-    Sector* s = createSector();
-
-    s->rgb[CR] = MINMAX_OF(0, red, 1);
-    s->rgb[CG] = MINMAX_OF(0, green, 1);
-    s->rgb[CB] = MINMAX_OF(0, blue, 1);
-    s->lightLevel = MINMAX_OF(0, lightlevel, 1);
-
-    return s->buildData.index;
+    Sector *s = createSector(Vector3f(red, green, blue), lightlevel);
+    return s->origIndex();
 }
 
 uint MPE_PolyobjCreate(uint *lines, uint lineCount, int tag, int sequenceType,

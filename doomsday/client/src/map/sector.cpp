@@ -31,26 +31,69 @@ using namespace de;
 
 Sector::Sector() : MapElement(DMU_SECTOR)
 {
-    frameFlags = 0;
-    validCount = 0;
-    std::memset(&aaBox, 0, sizeof(aaBox));
-    roughArea = 0;
-    lightLevel = 0;
-    oldLightLevel = 0;
-    std::memset(rgb, 0, sizeof(rgb));
-    std::memset(oldRGB, 0, sizeof(oldRGB));
-    mobjList = 0;
-    std::memset(&base, 0, sizeof(base));
-    blockCount = 0;
-    changedBlockCount = 0;
-    blocks = 0;
-    std::memset(reverb, 0, sizeof(reverb));
-    std::memset(&buildData, 0, sizeof(buildData));
+    _frameFlags = 0;
+    _validCount = 0;
+    std::memset(&_aaBox, 0, sizeof(_aaBox));
+    _roughArea = 0;
+    _lightLevel = 0;
+    _oldLightLevel = 0;
+    V3f_Set(_lightColor, 0, 0, 0);
+    V3f_Set(_oldLightColor, 0, 0, 0);
+    _mobjList = 0;
+    std::memset(&_soundEmitter, 0, sizeof(_soundEmitter));
+    std::memset(&_lightGridData, 0, sizeof(_lightGridData));
+    std::memset(_reverb, 0, sizeof(_reverb));
+    _origIndex = 0;
 }
 
 Sector::~Sector()
 {
     qDeleteAll(_planes);
+}
+
+float Sector::lightLevel() const
+{
+    return _lightLevel;
+}
+
+const_pvec3f_t &Sector::lightColor() const
+{
+    return _lightColor;
+}
+
+struct mobj_s *Sector::firstMobj() const
+{
+    return _mobjList;
+}
+
+ddmobj_base_t &Sector::soundEmitter()
+{
+    return _soundEmitter;
+}
+
+ddmobj_base_t const &Sector::soundEmitter() const
+{
+    return const_cast<ddmobj_base_t const &>(const_cast<Sector &>(*this).soundEmitter());
+}
+
+AudioEnvironmentFactors const &Sector::audioEnvironmentFactors() const
+{
+    return _reverb;
+}
+
+uint Sector::origIndex() const
+{
+    return _origIndex;
+}
+
+int Sector::frameFlags() const
+{
+    return _frameFlags;
+}
+
+int Sector::validCount() const
+{
+    return _validCount;
 }
 
 Plane &Sector::plane(int planeIndex)
@@ -88,39 +131,49 @@ Sector::BspLeafs const &Sector::reverbBspLeafs() const
     return _reverbBspLeafs;
 }
 
+AABoxd const &Sector::aaBox() const
+{
+    return _aaBox;
+}
+
+coord_t Sector::roughArea() const
+{
+    return _roughArea;
+}
+
 void Sector::updateAABox()
 {
-    V2d_Set(aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
-    V2d_Set(aaBox.max, DDMINFLOAT, DDMINFLOAT);
+    V2d_Set(_aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
+    V2d_Set(_aaBox.max, DDMINFLOAT, DDMINFLOAT);
 
     if(!_lines.count()) return;
 
     QListIterator<LineDef *> lineIt(_lines);
 
     LineDef *line = lineIt.next();
-    V2d_InitBox(aaBox.arvec2, line->aaBox().min);
-    V2d_AddToBox(aaBox.arvec2, line->aaBox().max);
+    V2d_InitBox(_aaBox.arvec2, line->aaBox().min);
+    V2d_AddToBox(_aaBox.arvec2, line->aaBox().max);
 
     while(lineIt.hasNext())
     {
         line = lineIt.next();
-        V2d_AddToBox(aaBox.arvec2, line->aaBox().min);
-        V2d_AddToBox(aaBox.arvec2, line->aaBox().max);
+        V2d_AddToBox(_aaBox.arvec2, line->aaBox().min);
+        V2d_AddToBox(_aaBox.arvec2, line->aaBox().max);
     }
 }
 
-void Sector::updateArea()
+void Sector::updateRoughArea()
 {
     // Only a very rough estimate is required.
-    roughArea = ((aaBox.maxX - aaBox.minX) / 128) *
-                ((aaBox.maxY - aaBox.minY) / 128);
+    _roughArea = ((_aaBox.maxX - _aaBox.minX) / 128) *
+                 ((_aaBox.maxY - _aaBox.minY) / 128);
 }
 
-void Sector::updateBaseOrigin()
+void Sector::updateSoundEmitterOrigin()
 {
-    base.origin[VX] = (aaBox.minX + aaBox.maxX) / 2;
-    base.origin[VY] = (aaBox.minY + aaBox.maxY) / 2;
-    base.origin[VZ] = (floor().height() + ceiling().height()) / 2;
+    _soundEmitter.origin[VX] = (_aaBox.minX + _aaBox.maxX) / 2;
+    _soundEmitter.origin[VY] = (_aaBox.minY + _aaBox.maxY) / 2;
+    _soundEmitter.origin[VZ] = (floor().height() + ceiling().height()) / 2;
 }
 
 int Sector::property(setargs_t &args) const
@@ -128,35 +181,35 @@ int Sector::property(setargs_t &args) const
     switch(args.prop)
     {
     case DMU_LIGHT_LEVEL:
-        DMU_GetValue(DMT_SECTOR_LIGHTLEVEL, &lightLevel, &args, 0);
+        DMU_GetValue(DMT_SECTOR_LIGHTLEVEL, &_lightLevel, &args, 0);
         break;
     case DMU_COLOR:
-        DMU_GetValue(DMT_SECTOR_RGB, &rgb[0], &args, 0);
-        DMU_GetValue(DMT_SECTOR_RGB, &rgb[1], &args, 1);
-        DMU_GetValue(DMT_SECTOR_RGB, &rgb[2], &args, 2);
+        DMU_GetValue(DMT_SECTOR_RGB, &_lightColor[0], &args, 0);
+        DMU_GetValue(DMT_SECTOR_RGB, &_lightColor[1], &args, 1);
+        DMU_GetValue(DMT_SECTOR_RGB, &_lightColor[2], &args, 2);
         break;
     case DMU_COLOR_RED:
-        DMU_GetValue(DMT_SECTOR_RGB, &rgb[0], &args, 0);
+        DMU_GetValue(DMT_SECTOR_RGB, &_lightColor[0], &args, 0);
         break;
     case DMU_COLOR_GREEN:
-        DMU_GetValue(DMT_SECTOR_RGB, &rgb[1], &args, 0);
+        DMU_GetValue(DMT_SECTOR_RGB, &_lightColor[1], &args, 0);
         break;
     case DMU_COLOR_BLUE:
-        DMU_GetValue(DMT_SECTOR_RGB, &rgb[2], &args, 0);
+        DMU_GetValue(DMT_SECTOR_RGB, &_lightColor[2], &args, 0);
         break;
     case DMU_BASE: {
-        ddmobj_base_t const *baseAdr = &base;
-        DMU_GetValue(DMT_SECTOR_BASE, &baseAdr, &args, 0);
+        ddmobj_base_t const *soundEmitterAdr = &_soundEmitter;
+        DMU_GetValue(DMT_SECTOR_BASE, &soundEmitterAdr, &args, 0);
         break; }
     case DMU_LINEDEF_COUNT: {
         int val = _lines.count();
         DMU_GetValue(DDVT_INT, &val, &args, 0);
         break; }
     case DMT_MOBJS:
-        DMU_GetValue(DMT_SECTOR_MOBJLIST, &mobjList, &args, 0);
+        DMU_GetValue(DMT_SECTOR_MOBJLIST, &_mobjList, &args, 0);
         break;
     case DMU_VALID_COUNT:
-        DMU_GetValue(DMT_SECTOR_VALIDCOUNT, &validCount, &args, 0);
+        DMU_GetValue(DMT_SECTOR_VALIDCOUNT, &_validCount, &args, 0);
         break;
     case DMU_FLOOR_PLANE: {
         Plane *pln = _planes[Plane::Floor];
@@ -179,24 +232,24 @@ int Sector::setProperty(setargs_t const &args)
     switch(args.prop)
     {
     case DMU_COLOR:
-        DMU_SetValue(DMT_SECTOR_RGB, &rgb[0], &args, 0);
-        DMU_SetValue(DMT_SECTOR_RGB, &rgb[1], &args, 1);
-        DMU_SetValue(DMT_SECTOR_RGB, &rgb[2], &args, 2);
+        DMU_SetValue(DMT_SECTOR_RGB, &_lightColor[0], &args, 0);
+        DMU_SetValue(DMT_SECTOR_RGB, &_lightColor[1], &args, 1);
+        DMU_SetValue(DMT_SECTOR_RGB, &_lightColor[2], &args, 2);
         break;
     case DMU_COLOR_RED:
-        DMU_SetValue(DMT_SECTOR_RGB, &rgb[0], &args, 0);
+        DMU_SetValue(DMT_SECTOR_RGB, &_lightColor[0], &args, 0);
         break;
     case DMU_COLOR_GREEN:
-        DMU_SetValue(DMT_SECTOR_RGB, &rgb[1], &args, 0);
+        DMU_SetValue(DMT_SECTOR_RGB, &_lightColor[1], &args, 0);
         break;
     case DMU_COLOR_BLUE:
-        DMU_SetValue(DMT_SECTOR_RGB, &rgb[2], &args, 0);
+        DMU_SetValue(DMT_SECTOR_RGB, &_lightColor[2], &args, 0);
         break;
     case DMU_LIGHT_LEVEL:
-        DMU_SetValue(DMT_SECTOR_LIGHTLEVEL, &lightLevel, &args, 0);
+        DMU_SetValue(DMT_SECTOR_LIGHTLEVEL, &_lightLevel, &args, 0);
         break;
     case DMU_VALID_COUNT:
-        DMU_SetValue(DMT_SECTOR_VALIDCOUNT, &validCount, &args, 0);
+        DMU_SetValue(DMT_SECTOR_VALIDCOUNT, &_validCount, &args, 0);
         break;
     default:
         /// @throw WritePropertyError  The requested property is not writable.

@@ -563,9 +563,11 @@ void Sfx_ListenerUpdate()
             // It may be necessary to recalculate the reverb properties.
             S_UpdateReverbForSector(listenerSector);
 
+            AudioEnvironmentFactors const &envFactors = listenerSector->audioEnvironmentFactors();
+
             for(int i = 0; i < NUM_REVERB_DATA; ++i)
             {
-                vec[i] = listenerSector->reverb[i];
+                vec[i] = envFactors[i];
                 if(i == SRD_VOLUME)
                 {
                     vec[i] *= sfxReverbStrength;

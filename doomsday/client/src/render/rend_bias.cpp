@@ -688,15 +688,15 @@ BEGIN_PROF( PROF_BIAS_UPDATE );
             Sector &sector = P_BspLeafAtPoint(s->origin)->sector();
 
             // The lower intensities are useless for light emission.
-            if(sector.lightLevel >= maxLevel)
+            if(sector.lightLevel() >= maxLevel)
             {
                 s->intensity = s->primaryIntensity;
             }
 
-            if(sector.lightLevel >= minLevel && minLevel != maxLevel)
+            if(sector.lightLevel() >= minLevel && minLevel != maxLevel)
             {
                 s->intensity = s->primaryIntensity *
-                    (sector.lightLevel - minLevel) / (maxLevel - minLevel);
+                    (sector.lightLevel() - minLevel) / (maxLevel - minLevel);
             }
             else
             {

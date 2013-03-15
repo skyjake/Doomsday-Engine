@@ -543,7 +543,7 @@ float R_ShadowStrength(mobj_t *mo)
     }
     else
     {
-        ambientLightLevel = mo->bspLeaf->sector().lightLevel;
+        ambientLightLevel = mo->bspLeaf->sector().lightLevel();
         Rend_ApplyLightAdaptation(&ambientLightLevel);
     }
 
@@ -923,7 +923,7 @@ void getLightingParams(coord_t x, coord_t y, coord_t z, BspLeaf *bspLeaf,
         else
         {
             Sector &sec = bspLeaf->sector();
-            float lightLevel = sec.lightLevel;
+            float lightLevel = sec.lightLevel();
             float const *secColor = R_GetSectorLightColor(&sec);
 
             /* if(spr->type == VSPR_DECORATION)

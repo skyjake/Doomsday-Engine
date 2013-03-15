@@ -60,7 +60,7 @@ extern boolean firstFrameAfterLoad;
 /**
  * Sector light color may be affected by the sky light color.
  */
-const float* R_GetSectorLightColor(const Sector *sector);
+const_pvec3f_t &R_GetSectorLightColor(Sector const *sector);
 
 float           R_DistAttenuateLightLevel(float distToViewer, float lightLevel);
 

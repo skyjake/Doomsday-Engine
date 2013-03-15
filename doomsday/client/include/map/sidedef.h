@@ -162,7 +162,7 @@ public:
      * defined by the associated LineDef's vertices and the plane heights of the
      * Sector on this side. If no LineDef is presently associated this is a no-op.
      */
-    void updateBaseOrigins();
+    void updateSoundEmitterOrigins();
 
     /**
      * Update the side's map space surface tangents according to the points

@@ -399,7 +399,7 @@ static void readSide(GameMap *map, uint idx)
     }
     s->flags = readShort();
 
-    s->updateBaseOrigins();
+    s->updateSoundEmitterOrigins();
 }
 
 static void archiveSides(GameMap *map, boolean write)
@@ -438,10 +438,10 @@ static void writeSector(GameMap *map, uint idx)
 
     Sector *s = &map->sectors[idx];
 
-    writeFloat(s->lightLevel);
-    writeFloat(s->rgb[CR]);
-    writeFloat(s->rgb[CG]);
-    writeFloat(s->rgb[CB]);
+    writeFloat(s->_lightLevel);
+    writeFloat(s->_lightColor[CR]);
+    writeFloat(s->_lightColor[CG]);
+    writeFloat(s->_lightColor[CB]);
     writeLong((long) s->_planes.count());
     foreach(Plane *plane, s->_planes)
     {
@@ -466,19 +466,19 @@ static void writeSector(GameMap *map, uint idx)
         writeFloat(surface.rgba[CA]);
     }
 
-    writeFloat(s->aaBox.minX);
-    writeFloat(s->aaBox.minY);
-    writeFloat(s->aaBox.maxX);
-    writeFloat(s->aaBox.maxY);
+    writeFloat(s->_aaBox.minX);
+    writeFloat(s->_aaBox.minY);
+    writeFloat(s->_aaBox.maxX);
+    writeFloat(s->_aaBox.maxY);
 
     for(uint i = 0; i < NUM_REVERB_DATA; ++i)
-        writeFloat(s->reverb[i]);
+        writeFloat(s->_reverb[i]);
 
     // Lightgrid block indices.
-    writeLong((long) s->changedBlockCount);
-    writeLong((long) s->blockCount);
-    for(uint i = 0; i < s->blockCount; ++i)
-        writeShort(s->blocks[i]);
+    writeLong((long) s->_lightGridData.changedBlockCount);
+    writeLong((long) s->_lightGridData.blockCount);
+    for(uint i = 0; i < s->_lightGridData.blockCount; ++i)
+        writeShort(s->_lightGridData.blocks[i]);
 
     // Line list.
     writeLong((long) s->_lines.count());
@@ -508,10 +508,10 @@ static void readSector(GameMap *map, uint idx)
 
     Sector *s = &map->sectors[idx];
 
-    s->lightLevel = readFloat();
-    s->rgb[CR] = readFloat();
-    s->rgb[CG] = readFloat();
-    s->rgb[CB] = readFloat();
+    s->_lightLevel = readFloat();
+    s->_lightColor[CR] = readFloat();
+    s->_lightColor[CG] = readFloat();
+    s->_lightColor[CB] = readFloat();
 
     uint numPlanes = (uint) readLong();
     float offset[2], rgba[4];
@@ -546,30 +546,30 @@ static void readSector(GameMap *map, uint idx)
         p->_surface.numDecorations = 0;
     }
 
-    s->aaBox.minX = readFloat();
-    s->aaBox.minY = readFloat();
-    s->aaBox.maxX = readFloat();
-    s->aaBox.maxY = readFloat();
+    s->_aaBox.minX = readFloat();
+    s->_aaBox.minY = readFloat();
+    s->_aaBox.maxX = readFloat();
+    s->_aaBox.maxY = readFloat();
 
-    s->updateBaseOrigin();
+    s->updateSoundEmitterOrigin();
     for(uint i = 0; i < numPlanes; ++i)
     {
         Plane *pln = s->_planes[i];
-        pln->_surface.updateBaseOrigin();
+        pln->_surface.updateSoundEmitterOrigin();
     }
 
     for(uint i = 0; i < NUM_REVERB_DATA; ++i)
     {
-        s->reverb[i] = readFloat();
+        s->_reverb[i] = readFloat();
     }
 
     // Lightgrid block indices.
-    s->changedBlockCount = (uint) readLong();
-    s->blockCount = (uint) readLong();
-    s->blocks = (ushort *) Z_Malloc(sizeof(ushort) * s->blockCount, PU_MAP, 0);
-    for(uint i = 0; i < s->blockCount; ++i)
+    s->_lightGridData.changedBlockCount = (uint) readLong();
+    s->_lightGridData.blockCount = (uint) readLong();
+    s->_lightGridData.blocks = (ushort *) Z_Malloc(sizeof(ushort) * s->_lightGridData.blockCount, PU_MAP, 0);
+    for(uint i = 0; i < s->_lightGridData.blockCount; ++i)
     {
-        s->blocks[i] = readShort();
+        s->_lightGridData.blocks[i] = readShort();
     }
 
     // Line list.

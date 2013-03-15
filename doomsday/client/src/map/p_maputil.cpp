@@ -325,10 +325,10 @@ DENG_EXTERN_C void P_MobjLink(mobj_t *mo, byte flags)
         // Prev pointers point to the pointer that points back to us.
         // (Which practically disallows traversing the list backwards.)
 
-        if((mo->sNext = sec.mobjList))
+        if((mo->sNext = sec.firstMobj()))
             mo->sNext->sPrev = &mo->sNext;
 
-        *(mo->sPrev = &sec.mobjList) = mo;
+        *(mo->sPrev = &sec._mobjList) = mo;
     }
 
     // Link into blockmap?
@@ -411,7 +411,7 @@ int GameMap_MobjSectorsIterator(GameMap *map, mobj_t *mo,
     // Always process the mobj's own sector first.
     Sector &ownSec = mo->bspLeaf->sector();
     *end++ = &ownSec;
-    ownSec.validCount = validCount;
+    ownSec._validCount = validCount;
 
     // Any good lines around here?
     if(mo->lineRoot)
@@ -423,20 +423,20 @@ int GameMap_MobjSectorsIterator(GameMap *map, mobj_t *mo,
 
             // All these lines are two-sided. Try front side.
             Sector &frontSec = ld->frontSector();
-            if(frontSec.validCount != validCount)
+            if(frontSec.validCount() != validCount)
             {
                 *end++ = &frontSec;
-                frontSec.validCount = validCount;
+                frontSec._validCount = validCount;
             }
 
             // And then the back side.
             if(ld->hasBackSideDef())
             {
                 Sector &backSec = ld->backSector();
-                if(backSec.validCount != validCount)
+                if(backSec.validCount() != validCount)
                 {
                     *end++ = &backSec;
-                    backSec.validCount = validCount;
+                    backSec._validCount = validCount;
                 }
             }
         }
@@ -484,7 +484,7 @@ int GameMap_SectorTouchingMobjsIterator(GameMap *map, Sector *sector,
     void **end = linkStore;
 
     // Collate mobjs that obviously are in the sector.
-    for(mobj_t *mo = sector->mobjList; mo; mo = mo->sNext)
+    for(mobj_t *mo = sector->firstMobj(); mo; mo = mo->sNext)
     {
         if(mo->validCount == validCount) continue;
         mo->validCount = validCount;

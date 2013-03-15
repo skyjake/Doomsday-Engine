@@ -96,7 +96,7 @@ static void projectSource(decorsource_t const &src)
     float min = decor->lightLevels[0];
     float max = decor->lightLevels[1];
 
-    float brightness = R_CheckSectorLight(src.bspLeaf->sector().lightLevel, min, max);
+    float brightness = R_CheckSectorLight(src.bspLeaf->sector().lightLevel(), min, max);
     if(!(brightness > 0)) return;
 
     if(src.fadeMul <= 0) return;
@@ -187,7 +187,7 @@ static void addLuminousDecoration(decorsource_t &src)
     float min = decor->lightLevels[0];
     float max = decor->lightLevels[1];
 
-    float brightness = R_CheckSectorLight(src.bspLeaf->sector().lightLevel, min, max);
+    float brightness = R_CheckSectorLight(src.bspLeaf->sector().lightLevel(), min, max);
     if(!(brightness > 0)) return;
 
     // Apply the brightness factor (was calculated using sector lightlevel).
@@ -454,14 +454,16 @@ static void plotSourcesForPlane(Plane &pln)
     Surface &suf = pln.surface();
     if(!suf.material) return;
 
-    Sector &sec = pln.sector();
-    Vector3d v1(sec.aaBox.minX, pln.type() == Plane::Floor? sec.aaBox.maxY : sec.aaBox.minY, pln.visHeight());
-    Vector3d v2(sec.aaBox.maxX, pln.type() == Plane::Floor? sec.aaBox.minY : sec.aaBox.maxY, pln.visHeight());
+    Sector &sector = pln.sector();
+    AABoxd const &sectorAABox = sector.aaBox();
 
-    Vector2f offset(-fmod(sec.aaBox.minX, 64) - suf.visOffset[0],
-                    -fmod(sec.aaBox.minY, 64) - suf.visOffset[1]);
+    Vector3d v1(sectorAABox.minX, pln.type() == Plane::Floor? sectorAABox.maxY : sectorAABox.minY, pln.visHeight());
+    Vector3d v2(sectorAABox.maxX, pln.type() == Plane::Floor? sectorAABox.minY : sectorAABox.maxY, pln.visHeight());
 
-    updateSurfaceDecorations(suf, offset, v1, v2, &sec);
+    Vector2f offset(-fmod(sectorAABox.minX, 64) - suf.visOffset[0],
+                    -fmod(sectorAABox.minY, 64) - suf.visOffset[1]);
+
+    updateSurfaceDecorations(suf, offset, v1, v2, &sector);
 }
 
 static void plotSourcesForLineDef(LineDef &line, byte side, SideDefSection section)

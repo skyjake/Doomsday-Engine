@@ -330,7 +330,7 @@ void Cl_Sound(void)
             Con_Message("Cl_Sound: Invalid sector number %i.", num);
             return;
         }
-        mo = (mobj_t*) &SECTOR_PTR(num)->base;
+        mo = (mobj_t *) &SECTOR_PTR(num)->soundEmitter();
         //S_StopSound(0, mo);
         S_LocalSoundAtVolume(sound, mo, volume / 127.0f);
     }

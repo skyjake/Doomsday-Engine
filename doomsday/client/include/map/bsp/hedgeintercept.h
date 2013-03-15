@@ -63,8 +63,8 @@ struct HEdgeIntercept
             << inst.vertex->_buildData.index
             << inst.vertex->origin()[VX]
             << inst.vertex->origin()[VY]
-            << (inst.before? inst.before->buildData.index : -1)
-            << (inst.after? inst.after->buildData.index : -1)
+            << (inst.before? inst.before->origIndex() : -1)
+            << (inst.after? inst.after->origIndex() : -1)
             << (inst.selfRef? "SELFREF" : "");
     })
 };

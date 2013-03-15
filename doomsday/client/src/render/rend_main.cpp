@@ -1386,7 +1386,7 @@ static void renderPlane(BspLeaf *bspLeaf, Plane::Type type, coord_t height,
     params.normal = normal;
     params.texTL = texTL;
     params.texBR = texBR;
-    params.sectorLightLevel = sec->lightLevel;
+    params.sectorLightLevel = sec->lightLevel();
     params.sectorLightColor = R_GetSectorLightColor(sec);
     params.surfaceLightLevelDL = params.surfaceLightLevelDR = 0;
     params.surfaceColor = sufColor;
@@ -1783,7 +1783,7 @@ static boolean Rend_RenderHEdge(HEdge *hedge, byte sections)
         {
             Rend_RadioUpdateLine(*hedge->lineDef, hedge->side);
             opaque = rendHEdgeSection(hedge, SS_MIDDLE, RHF_ADD_DYNLIGHTS|RHF_ADD_DYNSHADOWS|RHF_ADD_RADIO,
-                                      frontSec->lightLevel, R_GetSectorLightColor(frontSec),
+                                      frontSec->lightLevel(), R_GetSectorLightColor(frontSec),
                                       &leftWallDivs, &rightWallDivs, matOffset);
         }
 
@@ -1845,7 +1845,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
 
             Rend_RadioUpdateLine(*hedge->lineDef, hedge->side);
             solidSeg = rendHEdgeSection(hedge, SS_MIDDLE, rhFlags,
-                                        front->sector().lightLevel, R_GetSectorLightColor(front->sectorPtr()),
+                                        front->sector().lightLevel(), R_GetSectorLightColor(front->sectorPtr()),
                                         &leftWallDivs, &rightWallDivs, matOffset);
             if(solidSeg)
             {
@@ -1885,7 +1885,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
         {
             Rend_RadioUpdateLine(*hedge->lineDef, hedge->side);
             rendHEdgeSection(hedge, SS_TOP, RHF_ADD_DYNLIGHTS|RHF_ADD_DYNSHADOWS|RHF_ADD_RADIO,
-                             front->sector().lightLevel, R_GetSectorLightColor(front->sectorPtr()),
+                             front->sector().lightLevel(), R_GetSectorLightColor(front->sectorPtr()),
                              &leftWallDivs, &rightWallDivs, matOffset);
         }
     }
@@ -1901,7 +1901,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
         {
             Rend_RadioUpdateLine(*hedge->lineDef, hedge->side);
             rendHEdgeSection(hedge, SS_BOTTOM, RHF_ADD_DYNLIGHTS|RHF_ADD_DYNSHADOWS|RHF_ADD_RADIO,
-                             front->sector().lightLevel, R_GetSectorLightColor(front->sectorPtr()),
+                             front->sector().lightLevel(), R_GetSectorLightColor(front->sectorPtr()),
                              &leftWallDivs, &rightWallDivs, matOffset);
         }
     }
@@ -2858,7 +2858,7 @@ static void Rend_RenderBspLeaf(BspLeaf *bspLeaf)
 
     // Mark the sector visible for this frame.
     Sector &sector = bspLeaf->sector();
-    sector.frameFlags |= SIF_VISIBLE;
+    sector._frameFlags |= SIF_VISIBLE;
 
     Rend_MarkSegsFacingFront(bspLeaf);
 
@@ -3149,7 +3149,7 @@ static int drawSectorSoundOrigins(Sector *sec, void *parameters)
     if(devSoundOrigins & SOF_SECTOR)
     {
         dd_snprintf(buf, 80, "Sector #%i", sectorIndex);
-        drawSoundOrigin(sec->base.origin, buf, (coord_t const*) parameters);
+        drawSoundOrigin(sec->soundEmitter().origin, buf, (coord_t const*) parameters);
     }
 
     return false; // Continue iteration.
@@ -3833,7 +3833,7 @@ static int drawMobjBBox(thinker_t *th, void * /*context*/)
     if(mo == ddPlayers[consolePlayer].shared.mo)
         return false; // Continue iteration.
     // Is it vissible?
-    if(!(mo->bspLeaf && mo->bspLeaf->sector().frameFlags & SIF_VISIBLE))
+    if(!(mo->bspLeaf && mo->bspLeaf->sector().frameFlags() & SIF_VISIBLE))
         return false; // Continue iteration.
 
     V3d_Set(eye, vOrigin[VX], vOrigin[VZ], vOrigin[VY]);

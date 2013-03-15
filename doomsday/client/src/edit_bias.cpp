@@ -712,14 +712,14 @@ static void SBE_DrawLevelGauge(Point2Raw const *origin, int height)
     Sector &sector = bspLeaf->sector();
     if(lastSector != &sector)
     {
-        minLevel = maxLevel = sector.lightLevel;
+        minLevel = maxLevel = sector.lightLevel();
         lastSector = &sector;
     }
 
-    if(sector.lightLevel < minLevel)
-        minLevel = sector.lightLevel;
-    if(sector.lightLevel > maxLevel)
-        maxLevel = sector.lightLevel;
+    if(sector.lightLevel() < minLevel)
+        minLevel = sector.lightLevel();
+    if(sector.lightLevel() > maxLevel)
+        maxLevel = sector.lightLevel();
 
     FR_SetFont(fontFixed);
     FR_LoadDefaultAttrib();
@@ -734,7 +734,7 @@ static void SBE_DrawLevelGauge(Point2Raw const *origin, int height)
     glVertex2f(origin->x + off, origin->y);
     glVertex2f(origin->x + off, origin->y + height);
     // Normal lightlevel.
-    int secY = origin->y + height * (1.0f - sector.lightLevel);
+    int secY = origin->y + height * (1.0f - sector.lightLevel());
     glVertex2f(origin->x + off - 4, secY);
     glVertex2f(origin->x + off, secY);
     if(maxLevel != minLevel)
@@ -769,7 +769,7 @@ static void SBE_DrawLevelGauge(Point2Raw const *origin, int height)
     // The number values.
     Point2Raw labelOrigin(origin->x, secY);
     char buf[80];
-    sprintf(buf, "%03i", (short) (255.0f * sector.lightLevel));
+    sprintf(buf, "%03i", (short) (255.0f * sector.lightLevel()));
     UI_TextOutEx2(buf, &labelOrigin, UI_Color(UIC_TITLE), .7f, 0, DTF_ONLY_SHADOW);
     if(maxLevel != minLevel)
     {

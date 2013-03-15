@@ -140,7 +140,7 @@ static void findBspLeafsAffectingSector(GameMap *map, uint secIDX)
     ownerlist_t bspLeafOwnerList;
     std::memset(&bspLeafOwnerList, 0, sizeof(bspLeafOwnerList));
 
-    AABoxd aaBox = sec->aaBox;
+    AABoxd aaBox = sec->aaBox();
     aaBox.minX -= 128;
     aaBox.minY -= 128;
     aaBox.maxX += 128;
@@ -312,80 +312,80 @@ static void calculateSectorReverb(Sector *sec)
     ///       In general a sector should never be considered as playing any
     ///       part in the definition of a map's geometry. -ds
     uint spaceVolume = (int) (sec->ceiling().height() - sec->floor().height()) *
-        (sec->aaBox.maxX - sec->aaBox.minX) *
-        (sec->aaBox.maxY - sec->aaBox.minY);
+        (sec->aaBox().maxX - sec->aaBox().minX) *
+        (sec->aaBox().maxY - sec->aaBox().minY);
 
-    sec->reverb[SRD_SPACE] = sec->reverb[SRD_VOLUME] =
-        sec->reverb[SRD_DECAY] = sec->reverb[SRD_DAMPING] = 0;
+    sec->_reverb[SRD_SPACE] = sec->_reverb[SRD_VOLUME] =
+        sec->_reverb[SRD_DECAY] = sec->_reverb[SRD_DAMPING] = 0;
 
     foreach(BspLeaf *bspLeaf, sec->reverbBspLeafs())
     {
         if(calcBspLeafReverb(bspLeaf))
         {
-            sec->reverb[SRD_SPACE]   += bspLeaf->_reverb[SRD_SPACE];
+            sec->_reverb[SRD_SPACE]   += bspLeaf->_reverb[SRD_SPACE];
 
-            sec->reverb[SRD_VOLUME]  += bspLeaf->_reverb[SRD_VOLUME]  / 255.0f * bspLeaf->_reverb[SRD_SPACE];
-            sec->reverb[SRD_DECAY]   += bspLeaf->_reverb[SRD_DECAY]   / 255.0f * bspLeaf->_reverb[SRD_SPACE];
-            sec->reverb[SRD_DAMPING] += bspLeaf->_reverb[SRD_DAMPING] / 255.0f * bspLeaf->_reverb[SRD_SPACE];
+            sec->_reverb[SRD_VOLUME]  += bspLeaf->_reverb[SRD_VOLUME]  / 255.0f * bspLeaf->_reverb[SRD_SPACE];
+            sec->_reverb[SRD_DECAY]   += bspLeaf->_reverb[SRD_DECAY]   / 255.0f * bspLeaf->_reverb[SRD_SPACE];
+            sec->_reverb[SRD_DAMPING] += bspLeaf->_reverb[SRD_DAMPING] / 255.0f * bspLeaf->_reverb[SRD_SPACE];
         }
     }
 
     float spaceScatter;
-    if(sec->reverb[SRD_SPACE])
+    if(sec->_reverb[SRD_SPACE])
     {
-        spaceScatter = spaceVolume / sec->reverb[SRD_SPACE];
+        spaceScatter = spaceVolume / sec->_reverb[SRD_SPACE];
         // These three are weighted by the space.
-        sec->reverb[SRD_VOLUME]  /= sec->reverb[SRD_SPACE];
-        sec->reverb[SRD_DECAY]   /= sec->reverb[SRD_SPACE];
-        sec->reverb[SRD_DAMPING] /= sec->reverb[SRD_SPACE];
+        sec->_reverb[SRD_VOLUME]  /= sec->_reverb[SRD_SPACE];
+        sec->_reverb[SRD_DECAY]   /= sec->_reverb[SRD_SPACE];
+        sec->_reverb[SRD_DAMPING] /= sec->_reverb[SRD_SPACE];
     }
     else
     {
         spaceScatter = 0;
-        sec->reverb[SRD_VOLUME]  = .2f;
-        sec->reverb[SRD_DECAY]   = .4f;
-        sec->reverb[SRD_DAMPING] = 1;
+        sec->_reverb[SRD_VOLUME]  = .2f;
+        sec->_reverb[SRD_DECAY]   = .4f;
+        sec->_reverb[SRD_DAMPING] = 1;
     }
 
     // If the space is scattered, the reverb effect lessens.
-    sec->reverb[SRD_SPACE] /= (spaceScatter > .8 ? 10 : spaceScatter > .6 ? 4 : 1);
+    sec->_reverb[SRD_SPACE] /= (spaceScatter > .8 ? 10 : spaceScatter > .6 ? 4 : 1);
 
     // Normalize the reverb space [0..1]
     //   0= very small
     // .99= very large
     // 1.0= only for open areas (special case).
-    sec->reverb[SRD_SPACE] /= 120e6;
-    if(sec->reverb[SRD_SPACE] > .99)
-        sec->reverb[SRD_SPACE] = .99f;
+    sec->_reverb[SRD_SPACE] /= 120e6;
+    if(sec->_reverb[SRD_SPACE] > .99)
+        sec->_reverb[SRD_SPACE] = .99f;
 
     if(sec->ceilingSurface().isSkyMasked() || sec->floorSurface().isSkyMasked())
     {
         // An "open" sector.
         // It can still be small, in which case; reverb is diminished a bit.
-        if(sec->reverb[SRD_SPACE] > .5)
-            sec->reverb[SRD_VOLUME] = 1; // Full volume.
+        if(sec->_reverb[SRD_SPACE] > .5)
+            sec->_reverb[SRD_VOLUME] = 1; // Full volume.
         else
-            sec->reverb[SRD_VOLUME] = .5f; // Small, but still open.
+            sec->_reverb[SRD_VOLUME] = .5f; // Small, but still open.
 
-        sec->reverb[SRD_SPACE] = 1;
+        sec->_reverb[SRD_SPACE] = 1;
     }
     else
     {
         // A "closed" sector.
         // Large spaces have automatically a bit more audible reverb.
-        sec->reverb[SRD_VOLUME] += sec->reverb[SRD_SPACE] / 4;
+        sec->_reverb[SRD_VOLUME] += sec->_reverb[SRD_SPACE] / 4;
     }
 
-    if(sec->reverb[SRD_VOLUME] > 1)
-        sec->reverb[SRD_VOLUME] = 1;
+    if(sec->_reverb[SRD_VOLUME] > 1)
+        sec->_reverb[SRD_VOLUME] = 1;
 }
 
-void S_ResetReverb(void)
+void S_ResetReverb()
 {
     reverbUpdateRequested.clear();
 }
 
-void S_UpdateReverbForSector(Sector* sec)
+void S_UpdateReverbForSector(Sector *sec)
 {
     if(reverbUpdateRequested.empty()) return;
 

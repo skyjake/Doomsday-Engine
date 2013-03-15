@@ -1449,7 +1449,7 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
     static byte *doPlanes = 0;
 
     Sector &sector = bspLeaf.sector();
-    float sectorlight = sector.lightLevel;
+    float sectorlight = sector.lightLevel();
     boolean workToDo = false;
 
     Rend_ApplyLightAdaptation(&sectorlight);

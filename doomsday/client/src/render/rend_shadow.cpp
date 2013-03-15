@@ -181,10 +181,10 @@ void Rend_RenderMobjShadows()
 
         // We are only interested in those mobjs within sectors marked as
         // 'visible' for the current render frame (viewer dependent).
-        if(!(sec->frameFlags & SIF_VISIBLE)) continue;
+        if(!(sec->frameFlags() & SIF_VISIBLE)) continue;
 
         // Process all mobjs linked to this sector:
-        for(mobj_t *mo = sec->mobjList; mo; mo = mo->sNext)
+        for(mobj_t *mo = sec->firstMobj(); mo; mo = mo->sNext)
         {
             processMobjShadow(mo);
         }
@@ -192,13 +192,13 @@ void Rend_RenderMobjShadows()
 }
 
 /// Generates a new primitive for each shadow projection.
-int RIT_RenderShadowProjectionIterator(const shadowprojection_t* sp, void* paramaters)
+int RIT_RenderShadowProjectionIterator(shadowprojection_t const *sp, void *parameters)
 {
-    static const float black[3] = { 0, 0, 0 };
-    rendershadowprojectionparams_t* p = (rendershadowprojectionparams_t*)paramaters;
-    rvertex_t* rvertices;
-    rtexcoord_t* rtexcoords;
-    ColorRawf* rcolors;
+    static float const black[3] = { 0, 0, 0 };
+    rendershadowprojectionparams_t *p = (rendershadowprojectionparams_t *)parameters;
+    rvertex_t *rvertices;
+    rtexcoord_t *rtexcoords;
+    ColorRawf *rcolors;
     uint i, c;
 
     // Allocate enough for the divisions too.

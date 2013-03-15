@@ -517,24 +517,25 @@ void LG_InitForMap(void)
 Con_Message("  Sector %i: %i / %i", s, changedCount, count);
 #endif*/
 
-        sector->changedBlockCount = changedCount;
-        sector->blockCount = changedCount + count;
+        Sector::LightGridData &lgData = sector->_lightGridData;
+        lgData.changedBlockCount = changedCount;
+        lgData.blockCount = changedCount + count;
 
-        if(sector->blockCount > 0)
+        if(lgData.blockCount > 0)
         {
-            sector->blocks = (unsigned short *) Z_Malloc(sizeof(unsigned short) * sector->blockCount,
-                                                         PU_MAPSTATIC, 0);
+            lgData.blocks = (ushort *) Z_Malloc(sizeof(*lgData.blocks) * lgData.blockCount, PU_MAPSTATIC, 0);
+
             for(x = 0, a = 0, b = changedCount; x < lgBlockWidth * lgBlockHeight;
                 ++x)
             {
                 if(HasIndexBit(x, 0, indexBitfield))
-                    sector->blocks[a++] = x;
+                    lgData.blocks[a++] = x;
                 else if(HasIndexBit(x, 0, contributorBitfield))
-                    sector->blocks[b++] = x;
+                    lgData.blocks[b++] = x;
             }
 
-            assert(a == changedCount);
-            //assert(b == info->blockCount);
+            DENG_ASSERT(a == changedCount);
+            //DENG_ASSERT(b == info->blockCount);
         }
     }
 
@@ -590,33 +591,37 @@ static void LG_ApplySector(gridblock_t *block, const float *color, float level,
 /**
  * Called when a sector has changed its light level.
  */
-void LG_SectorChanged(Sector* sector)
+void LG_SectorChanged(Sector *sector)
 {
     if(!lgInited) return;
-    if(!sector || (!sector->changedBlockCount && !sector->blockCount)) return;
+    if(!sector) return;
+
+    Sector::LightGridData &lgData = sector->_lightGridData;
+    if(!lgData.changedBlockCount && !lgData.blockCount) return;
 
     // Mark changed blocks and contributors.
-    { uint i;
-    for(i = 0; i < sector->changedBlockCount; ++i)
+    for(uint i = 0; i < lgData.changedBlockCount; ++i)
     {
-        ushort n = sector->blocks[i];
+        ushort n = lgData.blocks[i];
+
         // The color will be recalculated.
         if(!(grid[n].flags & GBF_CHANGED))
-            memcpy(grid[n].oldRGB, grid[n].rgb, sizeof(grid[n].oldRGB));
+        {
+            std::memcpy(grid[n].oldRGB, grid[n].rgb, sizeof(grid[n].oldRGB));
+        }
 
-        { int j;
-        for(j = 0; j < 3; ++j)
+        for(int j = 0; j < 3; ++j)
+        {
             grid[n].rgb[j] = 0;
         }
 
         grid[n].flags |= GBF_CHANGED | GBF_CONTRIBUTOR;
-    }}
+    }
 
-    { uint i;
-    for(i = 0; i < sector->blockCount; ++i)
+    for(uint i = 0; i < lgData.blockCount; ++i)
     {
-        grid[sector->blocks[i]].flags |= GBF_CONTRIBUTOR;
-    }}
+        grid[lgData.blocks[i]].flags |= GBF_CONTRIBUTOR;
+    }
 
     needsUpdate = true;
 }
@@ -839,7 +844,7 @@ BEGIN_PROF( PROF_GRID_UPDATE );
 
                     if(other->flags & GBF_CHANGED)
                     {
-                        LG_ApplySector(other, color, sector->lightLevel,
+                        LG_ApplySector(other, color, sector->lightLevel(),
                                        factors[(b + 2)*5 + a + 2]/8, bias);
                     }
                 }

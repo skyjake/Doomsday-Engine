@@ -433,8 +433,8 @@ void Sv_RegisterSector(dt_sector_t *reg, uint number)
 {
     Sector *sec = SECTOR_PTR(number);
 
-    reg->lightLevel = sec->lightLevel;
-    std::memcpy(reg->rgb, sec->rgb, sizeof(reg->rgb));
+    reg->lightLevel = sec->lightLevel();
+    std::memcpy(reg->rgb, sec->lightColor(), sizeof(reg->rgb));
 
     // @todo $nplanes
     for(uint i = 0; i < 2; ++i) // number of planes in sector.
@@ -622,27 +622,27 @@ boolean Sv_RegisterComparePlayer(cregister_t* reg, uint number,
 }
 
 /**
- * @return              @c true, if the result is not void.
+ * @return  @c true, if the result is not void.
  */
-boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
-                                 sectordelta_t* d, byte doUpdate)
+boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
+                                 sectordelta_t *d, byte doUpdate)
 {
-    dt_sector_t*        r = &reg->sectors[number];
-    const Sector*       s = SECTOR_PTR(number);
-    int                 df = 0;
+    dt_sector_t *r = &reg->sectors[number];
+    Sector const *s = SECTOR_PTR(number);
+    int df = 0;
 
     // Determine which data is different.
     if(s->floorSurface().material != r->planes[PLN_FLOOR].surface.material)
         df |= SDF_FLOOR_MATERIAL;
     if(s->ceilingSurface().material != r->planes[PLN_CEILING].surface.material)
        df |= SDF_CEILING_MATERIAL;
-    if(r->lightLevel != s->lightLevel)
+    if(r->lightLevel != s->lightLevel())
         df |= SDF_LIGHT;
-    if(r->rgb[0] != s->rgb[0])
+    if(r->rgb[0] != s->lightColor()[0])
         df |= SDF_COLOR_RED;
-    if(r->rgb[1] != s->rgb[1])
+    if(r->rgb[1] != s->lightColor()[1])
         df |= SDF_COLOR_GREEN;
-    if(r->rgb[2] != s->rgb[2])
+    if(r->rgb[2] != s->lightColor()[2])
         df |= SDF_COLOR_BLUE;
 
     if(r->planes[PLN_FLOOR].surface.rgba[0] != s->floorSurface().rgba[0])
@@ -1524,18 +1524,18 @@ coord_t Sv_MobjDistance(const mobj_t* mo, const ownerinfo_t* info, boolean isRea
 /**
  * Approximate the distance to the given sector.
  */
-coord_t Sv_SectorDistance(int index, const ownerinfo_t* info)
+coord_t Sv_SectorDistance(int index, ownerinfo_t const *info)
 {
-    Sector* sector = SECTOR_PTR(index);
+    Sector *sector = SECTOR_PTR(index);
 
-    return M_ApproxDistance3(info->origin[VX] - sector->base.origin[VX],
-                             info->origin[VY] - sector->base.origin[VY],
-                             (info->origin[VZ] - sector->base.origin[VZ]) * 1.2);
+    return M_ApproxDistance3(info->origin[VX] - sector->soundEmitter().origin[VX],
+                             info->origin[VY] - sector->soundEmitter().origin[VY],
+                             (info->origin[VZ] - sector->soundEmitter().origin[VZ]) * 1.2);
 }
 
 coord_t Sv_SideDistance(int index, int deltaFlags, ownerinfo_t const *info)
 {
-    SideDef* side = SIDE_PTR(index);
+    SideDef *side = SIDE_PTR(index);
 
     ddmobj_base_t *base = (deltaFlags & SNDDF_SIDE_MIDDLE? &side->SW_middlesurface.base
                          : deltaFlags & SNDDF_SIDE_TOP?    &side->SW_topsurface.base
