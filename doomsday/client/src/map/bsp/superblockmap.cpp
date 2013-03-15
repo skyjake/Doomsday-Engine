@@ -59,13 +59,13 @@ struct SuperBlock::Instance
 
     inline void incrementHEdgeCount(HEdge const& hedge)
     {
-        if(hedge.lineDef) realNum++;
+        if(hedge.line) realNum++;
         else              miniNum++;
     }
 
     inline void decrementHEdgeCount(HEdge const& hedge)
     {
-        if(hedge.lineDef) realNum--;
+        if(hedge.line) realNum--;
         else              miniNum--;
     }
 };

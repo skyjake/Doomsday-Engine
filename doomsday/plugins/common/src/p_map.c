@@ -1684,7 +1684,7 @@ boolean P_TryMoveXYZ(mobj_t* thing, coord_t x, coord_t y, coord_t z)
  * @todo This routine has gotten way too big, split if(in->isaline)
  *        to a seperate routine?
  */
-int PTR_ShootTraverse(const intercept_t* in, void* parameters)
+int PTR_ShootTraverse(intercept_t const *in, void *parameters)
 {
 #if __JHEXEN__
     extern mobj_t lavaInflictor;
@@ -1708,7 +1708,7 @@ int PTR_ShootTraverse(const intercept_t* in, void* parameters)
 
     if(in->type == ICPT_LINE)
     {
-        li = in->d.lineDef;
+        li = in->d.line;
         xline = P_ToXLine(li);
 
         frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
@@ -1991,7 +1991,7 @@ if(lineWasHit)
 /**
  * Sets linetarget and aimSlope when a target is aimed at.
  */
-int PTR_AimTraverse(const intercept_t* in, void* parameters)
+int PTR_AimTraverse(intercept_t const *in, void *parameters)
 {
     coord_t slope, thingTopSlope, thingBottomSlope, dist;
     mobj_t* th;
@@ -2004,7 +2004,7 @@ int PTR_AimTraverse(const intercept_t* in, void* parameters)
         coord_t fCeil, bCeil;
         const TraceOpening* opening;
 
-        li = in->d.lineDef;
+        li = in->d.line;
 
         if(!(frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR)) ||
            !(backSec  = P_GetPtrp(li, DMU_BACK_SECTOR)))
@@ -2336,7 +2336,7 @@ void P_RadiusAttack(mobj_t* spot, mobj_t* source, int damage, int distance)
     P_MobjsBoxIterator(&box, PIT_RadiusAttack, 0);
 }
 
-int PTR_UseTraverse(const intercept_t* in, void* paramaters)
+int PTR_UseTraverse(intercept_t const *in, void *parameters)
 {
     int side;
     xline_t* xline;
@@ -2344,13 +2344,13 @@ int PTR_UseTraverse(const intercept_t* in, void* paramaters)
     if(in->type != ICPT_LINE)
         return false; // Continue iteration.
 
-    xline = P_ToXLine(in->d.lineDef);
+    xline = P_ToXLine(in->d.line);
 
     if(!xline->special)
     {
         const TraceOpening* opening;
 
-        P_SetTraceOpening(in->d.lineDef);
+        P_SetTraceOpening(in->d.line);
         opening = P_TraceOpening();
 
         if(opening->range <= 0)
@@ -2374,13 +2374,13 @@ int PTR_UseTraverse(const intercept_t* in, void* paramaters)
         return false;
     }
 
-    side = LineDef_PointOnSide(in->d.lineDef, useThing->origin) < 0;
+    side = LineDef_PointOnSide(in->d.line, useThing->origin) < 0;
 
 #if __JHERETIC__ || __JHEXEN__
     if(side == 1) return true; // Don't use back side.
 #endif
 
-    P_ActivateLine(in->d.lineDef, useThing, side, SPAC_USE);
+    P_ActivateLine(in->d.line, useThing, side, SPAC_USE);
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     // Can use multiple line specials in a row with the PassThru flag.
@@ -2540,7 +2540,7 @@ int PTR_SlideTraverse(const intercept_t* in, void* paramaters)
     if(in->type != ICPT_LINE)
         Con_Error("PTR_SlideTraverse: Not a line?");
 
-    li = in->d.lineDef;
+    li = in->d.line;
 
     if(!P_GetPtrp(li, DMU_FRONT_SECTOR) || !P_GetPtrp(li, DMU_BACK_SECTOR))
     {
@@ -3152,7 +3152,7 @@ int PTR_BounceTraverse(const intercept_t* in, void* paramaters)
     if(in->type != ICPT_LINE)
         Con_Error("PTR_BounceTraverse: Not a line?");
 
-    li = in->d.lineDef;
+    li = in->d.line;
 
     if(!P_GetPtrp(li, DMU_FRONT_SECTOR) || !P_GetPtrp(li, DMU_BACK_SECTOR))
     {
@@ -3239,13 +3239,13 @@ void P_BounceWall(mobj_t* mo)
     mo->mom[MY] = moveLen * FIX2FLT(finesine[an]);
 }
 
-int PTR_PuzzleItemTraverse(const intercept_t* in, void* paramaters)
+int PTR_PuzzleItemTraverse(intercept_t const *in, void *parameters)
 {
     switch(in->type)
     {
     case ICPT_LINE: // Linedef.
         {
-        LineDef*            line = in->d.lineDef;
+        LineDef*            line = in->d.line;
         xline_t*            xline = P_ToXLine(line);
 
         if(xline->special != USE_PUZZLE_ITEM_SPECIAL)

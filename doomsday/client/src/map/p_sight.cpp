@@ -295,9 +295,9 @@ private:
             HEdge const *hedge = base;
             do
             {
-                if(hedge->lineDef && hedge->lineDef->validCount() != validCount)
+                if(hedge->line && hedge->line->validCount() != validCount)
                 {
-                    LineDef &line = *hedge->lineDef;
+                    LineDef &line = *hedge->line;
                     line._validCount = validCount;
 
                     if(!crossLine(line, hedge->side))

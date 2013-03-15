@@ -39,7 +39,7 @@ HEdge::HEdge() : MapElement(DMU_HEDGE)
     prev = 0;
     twin = 0;
     bspLeaf = 0;
-    lineDef = 0;
+    line = 0;
     sector = 0;
     angle = 0;
     side = 0;
@@ -59,7 +59,7 @@ HEdge::HEdge(HEdge const &other)
     prev = other.prev;
     twin = other.twin;
     bspLeaf = other.bspLeaf;
-    lineDef = other.lineDef;
+    line = other.line;
     sector = other.sector;
     angle = other.angle;
     side = other.side;
@@ -98,18 +98,18 @@ static walldivnode_t *findWallDivNodeByZOrigin(walldivs_t *wallDivs, coord_t hei
 static void addWallDivNodesForPlaneIntercepts(HEdge const *hedge, walldivs_t *wallDivs,
     SideDefSection section, coord_t bottomZ, coord_t topZ, boolean doRight)
 {
-    bool const isTwoSided = (hedge->lineDef && hedge->lineDef->hasFrontSideDef() && hedge->lineDef->hasBackSideDef())? true:false;
+    bool const isTwoSided = (hedge->line && hedge->line->hasFrontSideDef() && hedge->line->hasBackSideDef())? true:false;
     bool const clockwise = !doRight;
-    LineDef const *line = hedge->lineDef;
+    LineDef const *line = hedge->line;
     Sector const *frontSec = line->sectorPtr(hedge->side);
 
     // Check for neighborhood division?
     if(section == SS_MIDDLE && isTwoSided) return;
-    if(!hedge->lineDef) return;
-    if(hedge->lineDef->isFromPolyobj()) return;
+    if(!hedge->line) return;
+    if(hedge->line->isFromPolyobj()) return;
 
     // Polyobj edges are never split.
-    if(hedge->lineDef && (hedge->lineDef->isFromPolyobj())) return;
+    if(hedge->line && (hedge->line->isFromPolyobj())) return;
 
     // Only edges at sidedef ends can/should be split.
     if(!((hedge == &HEDGE_SIDE(hedge)->leftHEdge()  && !doRight) ||
@@ -249,7 +249,7 @@ static void buildWallDiv(walldivs_t *wallDivs, HEdge const *hedge,
 bool HEdge::prepareWallDivs(SideDefSection section, Sector *frontSec, Sector *backSec,
     walldivs_t *leftWallDivs, walldivs_t *rightWallDivs, pvec2f_t matOffset) const
 {
-    int lineFlags = lineDef? lineDef->flags() : 0;
+    int lineFlags = line? line->flags() : 0;
     SideDef *frontDef = HEDGE_SIDEDEF(this);
     SideDef *backDef  = twin? HEDGE_SIDEDEF(twin) : 0;
     coord_t low, hi;
@@ -294,11 +294,11 @@ int HEdge::property(setargs_t &args) const
         DMU_GetValue(DMT_HEDGE_OFFSET, &offset, &args, 0);
         break;
     case DMU_SIDEDEF: {
-        SideDef *side = HEDGE_SIDEDEF(this);
-        DMU_GetValue(DMT_HEDGE_SIDEDEF, &side, &args, 0);
+        SideDef *sideDef = HEDGE_SIDEDEF(this);
+        DMU_GetValue(DMT_HEDGE_SIDEDEF, &sideDef, &args, 0);
         break; }
     case DMU_LINEDEF:
-        DMU_GetValue(DMT_HEDGE_LINEDEF, &lineDef, &args, 0);
+        DMU_GetValue(DMT_HEDGE_LINEDEF, &line, &args, 0);
         break;
     case DMU_FRONT_SECTOR: {
         DMU_GetValue(DMT_HEDGE_SECTOR, &sector, &args, 0);

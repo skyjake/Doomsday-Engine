@@ -130,11 +130,11 @@ static void finishHEdges(GameMap *map)
     {
         HEdge *hedge = map->hedges[i];
 
-        if(hedge->lineDef)
+        if(hedge->line)
         {
-            Vertex const &vtx = hedge->lineDef->vertex(hedge->side);
+            Vertex const &vtx = hedge->line->vertex(hedge->side);
 
-            hedge->sector = hedge->lineDef->sectorPtr(hedge->side);
+            hedge->sector = hedge->line->sectorPtr(hedge->side);
             hedge->offset = V2d_Distance(hedge->HE_v1origin, vtx.origin());
         }
 
@@ -283,9 +283,9 @@ static void hardenVertexes(BspBuilder& builder, GameMap* map,
 
 static void updateVertexLinks(GameMap *map)
 {
-    for(uint i = 0; i < map->lineDefCount(); ++i)
+    for(uint i = 0; i < map->lineCount(); ++i)
     {
-        LineDef *line = &map->lineDefs[i];
+        LineDef *line = &map->lines[i];
 
         line->_v[0] = &map->vertexes[line->_v[0]->_buildData.index - 1];
         line->_v[1] = &map->vertexes[line->_v[1]->_buildData.index - 1];

@@ -328,20 +328,20 @@ void Surface::updateSoundEmitterOrigin()
         break; }
 
     case DMU_SIDEDEF: {
-        SideDef *side = _owner.castTo<SideDef>();
-        LineDef *line = side->line;
+        SideDef *sideDef = _owner.castTo<SideDef>();
+        LineDef *line = sideDef->line;
         DENG_ASSERT(line);
 
         _soundEmitter.origin[VX] = (line->v1Origin()[VX] + line->v2Origin()[VX]) / 2;
         _soundEmitter.origin[VY] = (line->v1Origin()[VY] + line->v2Origin()[VY]) / 2;
 
-        Sector *sec = line->sectorPtr(side == line->frontSideDefPtr()? FRONT:BACK);
+        Sector *sec = line->sectorPtr(sideDef == line->frontSideDefPtr()? FRONT:BACK);
         if(sec)
         {
             coord_t const ffloor = sec->floor().height();
             coord_t const fceil  = sec->ceiling().height();
 
-            if(this == &side->middle())
+            if(this == &sideDef->middle())
             {
                 if(!line->hasBackSideDef() || line->isSelfReferencing())
                     _soundEmitter.origin[VZ] = (ffloor + fceil) / 2;
@@ -350,7 +350,7 @@ void Surface::updateSoundEmitterOrigin()
                                                 de::min(fceil,  line->backSector().ceiling().height())) / 2;
                 break;
             }
-            else if(this == &side->bottom())
+            else if(this == &sideDef->bottom())
             {
                 if(!line->hasBackSideDef() || line->isSelfReferencing() ||
                    line->backSector().floor().height() <= ffloor)
@@ -363,7 +363,7 @@ void Surface::updateSoundEmitterOrigin()
                 }
                 break;
             }
-            else if(this == &side->top())
+            else if(this == &sideDef->top())
             {
                 if(!line->hasBackSideDef() || line->isSelfReferencing() ||
                    line->backSector().ceiling().height() >= fceil)

@@ -716,14 +716,13 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
 {
     DENG_UNUSED(deltaType);
 
-    unsigned short num;
+    ushort num;
 
     int df, topMat = 0, midMat = 0, botMat = 0;
     int blendmode = 0;
     byte lineFlags = 0, sideFlags = 0;
     float toprgb[3] = {0,0,0}, midrgba[4] = {0,0,0,0};
     float bottomrgb[3] = {0,0,0};
-    SideDef* side;
 
     // First read all the data.
     num = Reader_ReadUInt16(msgReader);
@@ -781,57 +780,57 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
     }
 #endif
 
-    side = SIDE_PTR(num);
+    SideDef *sideDef = SIDE_PTR(num);
 
     if(df & SIDF_TOP_MATERIAL)
     {
-        side->top().setMaterial(Cl_FindLocalMaterial(topMat));
+        sideDef->top().setMaterial(Cl_FindLocalMaterial(topMat));
     }
     if(df & SIDF_MID_MATERIAL)
     {
-        side->middle().setMaterial(Cl_FindLocalMaterial(midMat));
+        sideDef->middle().setMaterial(Cl_FindLocalMaterial(midMat));
     }
     if(df & SIDF_BOTTOM_MATERIAL)
     {
-        side->bottom().setMaterial(Cl_FindLocalMaterial(botMat));
+        sideDef->bottom().setMaterial(Cl_FindLocalMaterial(botMat));
     }
 
     if(df & SIDF_TOP_COLOR_RED)
-        side->top().setColorRed(toprgb[CR]);
+        sideDef->top().setColorRed(toprgb[CR]);
     if(df & SIDF_TOP_COLOR_GREEN)
-        side->top().setColorGreen(toprgb[CG]);
+        sideDef->top().setColorGreen(toprgb[CG]);
     if(df & SIDF_TOP_COLOR_BLUE)
-        side->top().setColorBlue(toprgb[CB]);
+        sideDef->top().setColorBlue(toprgb[CB]);
 
     if(df & SIDF_MID_COLOR_RED)
-        side->middle().setColorRed(midrgba[CR]);
+        sideDef->middle().setColorRed(midrgba[CR]);
     if(df & SIDF_MID_COLOR_GREEN)
-        side->middle().setColorGreen(midrgba[CG]);
+        sideDef->middle().setColorGreen(midrgba[CG]);
     if(df & SIDF_MID_COLOR_BLUE)
-        side->middle().setColorBlue(midrgba[CB]);
+        sideDef->middle().setColorBlue(midrgba[CB]);
     if(df & SIDF_MID_COLOR_ALPHA)
-        side->middle().setAlpha(midrgba[CA]);
+        sideDef->middle().setAlpha(midrgba[CA]);
 
     if(df & SIDF_BOTTOM_COLOR_RED)
-        side->bottom().setColorRed(bottomrgb[CR]);
+        sideDef->bottom().setColorRed(bottomrgb[CR]);
     if(df & SIDF_BOTTOM_COLOR_GREEN)
-        side->bottom().setColorGreen(bottomrgb[CG]);
+        sideDef->bottom().setColorGreen(bottomrgb[CG]);
     if(df & SIDF_BOTTOM_COLOR_BLUE)
-        side->bottom().setColorBlue(bottomrgb[CB]);
+        sideDef->bottom().setColorBlue(bottomrgb[CB]);
 
     if(df & SIDF_MID_BLENDMODE)
-        side->middle().setBlendMode(blendmode_t(blendmode));
+        sideDef->middle().setBlendMode(blendmode_t(blendmode));
 
     if(df & SIDF_FLAGS)
     {
         // The delta includes the entire lowest byte.
-        side->flags &= ~0xff;
-        side->flags |= sideFlags;
+        sideDef->flags &= ~0xff;
+        sideDef->flags |= sideFlags;
     }
 
     if(df & SIDF_LINE_FLAGS)
     {
-        LineDef* line = side->line;
+        LineDef *line = sideDef->line;
         if(line)
         {
             // The delta includes the entire lowest byte.

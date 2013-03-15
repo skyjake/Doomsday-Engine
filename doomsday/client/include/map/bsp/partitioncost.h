@@ -55,28 +55,28 @@ struct PartitionCost
         realLeft(0), miniRight(0), miniLeft(0)
     {}
 
-    inline PartitionCost& addHEdgeRight(const HEdge* hedge)
+    inline PartitionCost &addHEdgeRight(HEdge const *hedge)
     {
         DENG2_ASSERT(hedge);
-        if(hedge->lineDef) realRight += 1;
-        else               miniRight += 1;
+        if(hedge->line) realRight += 1;
+        else            miniRight += 1;
         return *this;
     }
 
-    inline PartitionCost& addHEdgeLeft(const HEdge* hedge)
+    inline PartitionCost &addHEdgeLeft(HEdge const *hedge)
     {
         DENG2_ASSERT(hedge);
-        if(hedge->lineDef)  realLeft += 1;
-        else                miniLeft += 1;
+        if(hedge->line) realLeft += 1;
+        else            miniLeft += 1;
         return *this;
     }
 
-    inline PartitionCost& addHEdgeSide(const HEdge* hedge, Side side)
+    inline PartitionCost &addHEdgeSide(HEdge const *hedge, Side side)
     {
         return side == Right? addHEdgeRight(hedge) : addHEdgeLeft(hedge);
     }
 
-    PartitionCost& operator += (const PartitionCost& other)
+    PartitionCost &operator += (PartitionCost const &other)
     {
         total     += other.total;
         splits    += other.splits;
@@ -89,7 +89,7 @@ struct PartitionCost
         return *this;
     }
 
-    PartitionCost& operator = (const PartitionCost& other)
+    PartitionCost &operator = (PartitionCost const &other)
     {
         total     = other.total;
         splits    = other.splits;
@@ -102,7 +102,7 @@ struct PartitionCost
         return *this;
     }
 
-    bool operator < (const PartitionCost& rhs) const
+    bool operator < (PartitionCost const &rhs) const
     {
         return total < rhs.total;
     }

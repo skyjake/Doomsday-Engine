@@ -51,8 +51,8 @@ struct LineDefInfo
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
-    /// The map's definition of this line segment.
-    LineDef *lineDef;
+    /// The map line.
+    LineDef *line;
 
     Flags flags;
 
@@ -62,23 +62,23 @@ struct LineDefInfo
     /// If the line is used for a window effect, this is the sector on the back side.
     Sector *windowEffect;
 
-    explicit LineDefInfo(LineDef *_lineDef, coord_t distEpsilon = 0.0001)
-        : lineDef(_lineDef), flags(0), validCount(0), windowEffect(0)
+    explicit LineDefInfo(LineDef *line_, coord_t distEpsilon = 0.0001)
+        : line(line_), flags(0), validCount(0), windowEffect(0)
     {
-        DENG2_ASSERT(_lineDef);
-        Vertex const &from = lineDef->from();
-        Vertex const &to   = lineDef->to();
+        DENG2_ASSERT(line_);
+        Vertex const &from = line->from();
+        Vertex const &to   = line->to();
 
         // Check for zero-length line.
         if((fabs(from.origin()[VX] - to.origin()[VX]) < distEpsilon) &&
            (fabs(from.origin()[VY] - to.origin()[VY]) < distEpsilon))
             flags |= ZeroLength;
 
-        if(lineDef->hasBackSideDef() && lineDef->hasFrontSideDef())
+        if(line->hasBackSideDef() && line->hasFrontSideDef())
         {
             flags |= Twosided;
 
-            if(lineDef->isSelfReferencing())
+            if(line->isSelfReferencing())
                 flags |= SelfRef;
         }
     }

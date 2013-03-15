@@ -150,9 +150,9 @@ void ShellUser::sendMapOutline()
 
     QScopedPointer<shell::MapOutlinePacket> packet(new shell::MapOutlinePacket);
 
-    for(uint i = 0; i < theMap->lineDefCount(); ++i)
+    for(uint i = 0; i < theMap->lineCount(); ++i)
     {
-        LineDef const &line = theMap->lineDefs[i];
+        LineDef const &line = theMap->lines[i];
         packet->addLine(Vector2i(line.v1Origin()[VX], line.v1Origin()[VY]),
                         Vector2i(line.v2Origin()[VX], line.v2Origin()[VY]),
                         (line.hasFrontSector() && line.hasBackSector())?

@@ -522,11 +522,11 @@ static void R_UpdateMap()
 
     for(uint i = 0; i < NUM_SIDEDEFS; ++i)
     {
-        SideDef *side = GameMap_SideDef(theMap, i);
+        SideDef *sideDef = GameMap_SideDef(theMap, i);
 
-        side->top().update();
-        side->middle().update();
-        side->bottom().update();
+        sideDef->top().update();
+        sideDef->middle().update();
+        sideDef->bottom().update();
     }
 
     /// @todo Is this even necessary?
@@ -1377,16 +1377,16 @@ void Rend_CacheForMap()
 
         for(uint i = 0; i < NUM_SIDEDEFS; ++i)
         {
-            SideDef *side = SIDE_PTR(i);
+            SideDef *sideDef = SIDE_PTR(i);
 
-            if(side->middle().material)
-                App_Materials().cache(*side->middle().material, spec);
+            if(sideDef->middle().material)
+                App_Materials().cache(*sideDef->middle().material, spec);
 
-            if(side->top().material)
-                App_Materials().cache(*side->top().material, spec);
+            if(sideDef->top().material)
+                App_Materials().cache(*sideDef->top().material, spec);
 
-            if(side->bottom().material)
-                App_Materials().cache(*side->bottom().material, spec);
+            if(sideDef->bottom().material)
+                App_Materials().cache(*sideDef->bottom().material, spec);
         }
 
         for(uint i = 0; i < NUM_SECTORS; ++i)

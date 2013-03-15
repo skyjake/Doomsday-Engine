@@ -374,11 +374,11 @@ static void processSeg(HEdge *hedge, void *parameters)
     if(fabs(distance) >= parms->objRadius) return;
 
     // Don't spread if the middle material covers the opening.
-    if(hedge->lineDef)
+    if(hedge->line)
     {
         // On which side of the line are we? (distance is from hedge to origin).
         int lineSide = hedge->side ^ (distance < 0);
-        LineDef *line = hedge->lineDef;
+        LineDef *line = hedge->line;
         Sector *frontSec  = lineSide == FRONT? leaf->sectorPtr() : backLeaf->sectorPtr();
         Sector *backSec   = lineSide == FRONT? backLeaf->sectorPtr() : leaf->sectorPtr();
         SideDef *frontDef = line->sideDefPtr(lineSide);

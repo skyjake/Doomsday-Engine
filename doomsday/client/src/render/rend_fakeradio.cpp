@@ -1298,14 +1298,14 @@ static void addShadowEdge(vec2d_t inner[2], vec2d_t outer[2], coord_t innerLeftZ
     RL_AddPoly(PT_FAN, RPF_DEFAULT | (!renderWireframe? RPF_SHADOW : 0), 4, rvertices, rcolors);
 }
 
-static void processEdgeShadow(BspLeaf const &bspLeaf, LineDef const *lineDef,
+static void processEdgeShadow(BspLeaf const &bspLeaf, LineDef const *line,
     uint side, uint planeIndex, float shadowDark)
 {
-    DENG_ASSERT(lineDef && (side == FRONT || side == BACK) && lineDef->hasSideDef(side));
+    DENG_ASSERT(line && (side == FRONT || side == BACK) && line->hasSideDef(side));
 
     if(!(shadowDark > .0001)) return;
 
-    Plane const &plane = lineDef->sector(side).plane(planeIndex);
+    Plane const &plane = line->sector(side).plane(planeIndex);
     Surface const *suf = &plane.surface();
     coord_t plnHeight  = plane.visHeight();
 
@@ -1313,7 +1313,7 @@ static void processEdgeShadow(BspLeaf const &bspLeaf, LineDef const *lineDef,
     if((suf->inFlags & SUIF_NO_RADIO) || !suf->material || suf->isSkyMasked()) return;
     if(suf->material->hasGlow()) return;
 
-    // Determine the openness of the lineDef. If this edge is edgeOpen,
+    // Determine the openness of the line. If this edge is edgeOpen,
     // there won't be a shadow at all. Open neighbours cause some
     // changes in the polygon corner vertices (placement, colour).
     vec2d_t inner[2], outer[2];
@@ -1321,13 +1321,13 @@ static void processEdgeShadow(BspLeaf const &bspLeaf, LineDef const *lineDef,
     Sector const *front = 0;
     Sector const *back = 0;
     coord_t fz = 0, bz = 0, bhz = 0;
-    if(lineDef->hasBackSideDef())
+    if(line->hasBackSideDef())
     {
-        front = lineDef->sectorPtr(side);
-        back  = lineDef->sectorPtr(side ^ 1);
+        front = line->sectorPtr(side);
+        back  = line->sectorPtr(side ^ 1);
         setRelativeHeights(front, back, planeIndex == Plane::Ceiling, &fz, &bz, &bhz);
 
-        uint hackType = radioEdgeHackType(lineDef, front, back, side, planeIndex == Plane::Ceiling, fz, bz);
+        uint hackType = radioEdgeHackType(line, front, back, side, planeIndex == Plane::Ceiling, fz, bz);
         if(hackType)
         {
             V2f_Set(edgeOpen, hackType - 1, hackType - 1);
@@ -1349,19 +1349,19 @@ static void processEdgeShadow(BspLeaf const &bspLeaf, LineDef const *lineDef,
     sideOpen[0] = sideOpen[1] = 0;
     for(int i = 0; i < 2; ++i)
     {
-        LineOwner *vo = lineDef->vertexOwner(side^i)->_link[i^1];
+        LineOwner *vo = line->vertexOwner(side^i)->_link[i^1];
         LineDef *neighbor = &vo->line();
 
-        if(neighbor != lineDef && !neighbor->hasBackSideDef() &&
+        if(neighbor != line && !neighbor->hasBackSideDef() &&
            (neighbor->isBspWindow()) &&
            neighbor->frontSectorPtr() != bspLeaf.sectorPtr())
         {
             // A one-way window, edgeOpen side.
             sideOpen[i] = 1;
         }
-        else if(!(neighbor == lineDef || !neighbor->hasBackSideDef()))
+        else if(!(neighbor == line || !neighbor->hasBackSideDef()))
         {
-            byte otherSide = (&lineDef->vertex(i^side) == &neighbor->v1()? i : i^1);
+            byte otherSide = (&line->vertex(i^side) == &neighbor->v1()? i : i^1);
             Sector *othersec = neighbor->sectorPtr(otherSide);
 
             if(R_MiddleMaterialCoversLineOpening(neighbor, otherSide^1, false))
@@ -1375,11 +1375,11 @@ static void processEdgeShadow(BspLeaf const &bspLeaf, LineDef const *lineDef,
             else
             {
                 // Its a normal neighbor.
-                if(neighbor->sectorPtr(otherSide) != lineDef->sectorPtr(side) &&
+                if(neighbor->sectorPtr(otherSide) != line->sectorPtr(side) &&
                    !((plane.type() == Plane::Floor && othersec->ceiling().visHeight() <= plane.visHeight()) ||
                      (plane.type() == Plane::Ceiling && othersec->floor().height() >= plane.visHeight())))
                 {
-                    front = lineDef->sectorPtr(side);
+                    front = line->sectorPtr(side);
                     back  = neighbor->sectorPtr(otherSide);
 
                     setRelativeHeights(front, back, planeIndex == Plane::Ceiling, &fz, &bz, &bhz);
@@ -1390,19 +1390,19 @@ static void processEdgeShadow(BspLeaf const &bspLeaf, LineDef const *lineDef,
 
         if(sideOpen[i] < 1)
         {
-            vo = lineDef->vertexOwner(i^side);
+            vo = line->vertexOwner(i^side);
             if(i) vo = &vo->prev();
 
-            V2d_Sum(inner[i], lineDef->vertexOrigin(i^side), vo->innerShadowOffset());
+            V2d_Sum(inner[i], line->vertexOrigin(i^side), vo->innerShadowOffset());
         }
         else
         {
-            V2d_Sum(inner[i], lineDef->vertexOrigin(i^side), vo->extendedShadowOffset());
+            V2d_Sum(inner[i], line->vertexOrigin(i^side), vo->extendedShadowOffset());
         }
     }
 
-    V2d_Copy(outer[0], lineDef->vertexOrigin(side));
-    V2d_Copy(outer[1], lineDef->vertexOrigin(side^1));
+    V2d_Copy(outer[0], line->vertexOrigin(side));
+    V2d_Copy(outer[1], line->vertexOrigin(side^1));
     // Shadows are black
     vec3f_t shadowRGB;
     V3f_Set(shadowRGB, 0, 0, 0);

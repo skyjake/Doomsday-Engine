@@ -2505,7 +2505,7 @@ int XL_UseLine(LineDef* line, int sidenum, mobj_t* thing)
 /**
  * @return              @c true, if the event was processed.
  */
-int XL_ShootLine(LineDef* line, int sidenum, mobj_t* thing)
+int XL_ShootLine(LineDef *line, int sidenum, mobj_t *thing)
 {
     if(!line || !P_ToXLine(line)->xg)
         return false;
@@ -2521,11 +2521,11 @@ int XL_HitLine(LineDef *line, int sidenum, mobj_t *thing)
     return XL_LineEvent(XLE_HIT, 0, line, sidenum, thing);
 }
 
-void XL_DoChain(LineDef* lineDef, int chain, boolean activating, mobj_t* actThing)
+void XL_DoChain(LineDef *line, int chain, boolean activating, mobj_t *actThing)
 {
-    SideDef* dummyFrontSideDef, *dummyBackSideDef = NULL;
-    LineDef* dummyLineDef;
-    xline_t* xdummyLineDef;
+    SideDef *dummyFrontSideDef, *dummyBackSideDef = NULL;
+    LineDef *dummyLineDef;
+    xline_t *xdummyLineDef;
 
     // We'll use dummies for the chain.
     dummyLineDef = P_AllocDummyLine();
@@ -2534,20 +2534,20 @@ void XL_DoChain(LineDef* lineDef, int chain, boolean activating, mobj_t* actThin
     dummyFrontSideDef = P_AllocDummySideDef();
     P_SetPtrp(dummyLineDef, DMU_SIDEDEF0, dummyFrontSideDef);
     P_SetPtrp(dummyFrontSideDef, DMU_LINEDEF, dummyLineDef);
-    P_SetPtrp(dummyLineDef, DMU_FRONT_SECTOR, P_GetPtrp(lineDef, DMU_FRONT_SECTOR));
-    if(0 != P_GetPtrp(lineDef, DMU_SIDEDEF1))
+    P_SetPtrp(dummyLineDef, DMU_FRONT_SECTOR, P_GetPtrp(line, DMU_FRONT_SECTOR));
+    if(0 != P_GetPtrp(line, DMU_SIDEDEF1))
     {
         dummyBackSideDef = P_AllocDummySideDef();
         P_SetPtrp(dummyLineDef, DMU_SIDEDEF1, dummyBackSideDef);
         P_SetPtrp(dummyBackSideDef, DMU_LINEDEF, dummyLineDef);
-        P_SetPtrp(dummyLineDef, DMU_BACK_SECTOR, P_GetPtrp(lineDef, DMU_BACK_SECTOR));
+        P_SetPtrp(dummyLineDef, DMU_BACK_SECTOR, P_GetPtrp(line, DMU_BACK_SECTOR));
     }
 
-    XG_Dev("XL_DoChain: LineDef %i, chained type %i", P_ToIndex(lineDef), chain);
+    XG_Dev("XL_DoChain: LineDef %i, chained type %i", P_ToIndex(line), chain);
     XG_Dev("  (dummy linedef will show up as %i)", P_ToIndex(dummyLineDef));
 
     // Copy all properties to the dummies.
-    P_CopyLine(dummyLineDef, lineDef);
+    P_CopyLine(dummyLineDef, line);
 
     xdummyLineDef->xg->active = !activating;
 

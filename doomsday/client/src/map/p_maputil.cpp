@@ -49,7 +49,7 @@
 }
 
 #undef P_TraceLOS
-DENG_EXTERN_C const divline_t* P_TraceLOS(void)
+DENG_EXTERN_C const divline_t* P_TraceLOS()
 {
     static divline_t emptyLOS;
     if(theMap)
@@ -60,7 +60,7 @@ DENG_EXTERN_C const divline_t* P_TraceLOS(void)
 }
 
 #undef P_TraceOpening
-DENG_EXTERN_C TraceOpening const *P_TraceOpening(void)
+DENG_EXTERN_C TraceOpening const *P_TraceOpening()
 {
     static TraceOpening zeroOpening;
     if(theMap)
@@ -71,26 +71,26 @@ DENG_EXTERN_C TraceOpening const *P_TraceOpening(void)
 }
 
 #undef P_SetTraceOpening
-DENG_EXTERN_C void P_SetTraceOpening(LineDef* lineDef)
+DENG_EXTERN_C void P_SetTraceOpening(LineDef *line)
 {
     if(!theMap)
     {
         DEBUG_Message(("Warning: P_SetTraceOpening() attempted with no current map, ignoring."));
         return;
     }
-    /// @todo Do not assume linedef is from the CURRENT map.
-    GameMap_SetTraceOpening(theMap, lineDef);
+    /// @todo Do not assume line is from the CURRENT map.
+    GameMap_SetTraceOpening(theMap, line);
 }
 
 #undef P_BspLeafAtPoint
-DENG_EXTERN_C BspLeaf* P_BspLeafAtPoint(coord_t const point[])
+DENG_EXTERN_C BspLeaf *P_BspLeafAtPoint(coord_t const point[])
 {
     if(!theMap) return NULL;
     return GameMap_BspLeafAtPoint(theMap, point);
 }
 
 #undef P_BspLeafAtPointXY
-DENG_EXTERN_C BspLeaf* P_BspLeafAtPointXY(coord_t x, coord_t y)
+DENG_EXTERN_C BspLeaf *P_BspLeafAtPointXY(coord_t x, coord_t y)
 {
     if(!theMap) return NULL;
     return GameMap_BspLeafAtPointXY(theMap, x, y);
@@ -220,31 +220,29 @@ boolean GameMap_UnlinkMobjFromLineDefs(GameMap* map, mobj_t* mo)
 }
 
 /**
- * @note Caller must ensure a mobj is linked only once to any given linedef.
+ * @note Caller must ensure a mobj is linked only once to any given line.
  *
  * @param map  GameMap instance.
  * @param mo  Mobj to be linked.
- * @param lineDef  LineDef to link the mobj to.
+ * @param line  LineDef to link the mobj to.
  */
-void GameMap_LinkMobjToLineDef(GameMap* map, mobj_t* mo, LineDef* lineDef)
+void GameMap_LinkMobjToLineDef(GameMap *map, mobj_t *mo, LineDef *line)
 {
-    nodeindex_t nodeIndex;
-    int lineDefIndex;
-    assert(map);
+    DENG_ASSERT(map);
 
     if(!mo) return;
 
-    lineDefIndex = GameMap_LineDefIndex(map, lineDef);
-    if(lineDefIndex < 0) return;
+    int lineIndex = GameMap_LineDefIndex(map, line);
+    if(lineIndex < 0) return;
 
     // Add a node to the mobj's ring.
-    nodeIndex = NP_New(&map->mobjNodes, lineDef);
+    nodeindex_t nodeIndex = NP_New(&map->mobjNodes, line);
     NP_Link(&map->mobjNodes, nodeIndex, mo->lineRoot);
 
     // Add a node to the line's ring. Also store the linenode's index
     // into the mobjring's node, so unlinking is easy.
     nodeIndex = map->mobjNodes.nodes[nodeIndex].data = NP_New(&map->lineNodes, mo);
-    NP_Link(&map->lineNodes, nodeIndex, map->lineLinks[lineDefIndex]);
+    NP_Link(&map->lineNodes, nodeIndex, map->lineLinks[lineIndex]);
 }
 
 typedef struct {
@@ -446,23 +444,27 @@ int GameMap_MobjSectorsIterator(GameMap *map, mobj_t *mo,
     return result;
 }
 
-int GameMap_LineMobjsIterator(GameMap* map, LineDef* lineDef,
-    int (*callback) (mobj_t*, void*), void* parameters)
+int GameMap_LineMobjsIterator(GameMap *map, LineDef *line,
+    int (*callback) (mobj_t *, void *), void *parameters)
 {
-    void* linkStore[MAXLINKED];
-    void** end = linkStore, **it;
-    nodeindex_t root, nix;
-    linknode_t* ln;
-    int result = false;
-    assert(map);
+    DENG_ASSERT(map);
 
-    root = map->lineLinks[GameMap_LineDefIndex(map, lineDef)];
-    ln = map->lineNodes.nodes;
+    void *linkStore[MAXLINKED];
+    void **end = linkStore;
 
-    for(nix = ln[root].next; nix != root; nix = ln[nix].next)
+    nodeindex_t root = map->lineLinks[GameMap_LineDefIndex(map, line)];
+    linknode_t *ln = map->lineNodes.nodes;
+
+    for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
+    {
+        DENG_ASSERT(end < &linkStore[MAXLINKED]);
         *end++ = ln[nix].ptr;
+    }
 
+    int result = false;
+    void **it;
     DO_LINKS(it, end, mobj_t *);
+
     return result;
 }
 
@@ -527,12 +529,10 @@ int GameMap_SectorTouchingMobjsIterator(GameMap *map, Sector *sector,
  *
  * @return  Non-zero if current iteration should stop.
  */
-int PIT_AddLineDefIntercepts(LineDef* lineDef, void* /*parameters*/)
+int PIT_AddLineDefIntercepts(LineDef *line, void * /*parameters*/)
 {
-    /// @todo Do not assume lineDef is from the current map.
-    const divline_t* traceLOS = GameMap_TraceLOS(theMap);
-    float distance;
-    divline_t dl;
+    /// @todo Do not assume line is from the current map.
+    divline_t const *traceLOS = GameMap_TraceLOS(theMap);
     int s1, s2;
 
     // Is this line crossed?
@@ -540,25 +540,28 @@ int PIT_AddLineDefIntercepts(LineDef* lineDef, void* /*parameters*/)
     if(traceLOS->direction[VX] >  FRACUNIT * 16 || traceLOS->direction[VY] >  FRACUNIT * 16 ||
        traceLOS->direction[VX] < -FRACUNIT * 16 || traceLOS->direction[VY] < -FRACUNIT * 16)
     {
-        s1 = Divline_PointOnSide(traceLOS, lineDef->v1Origin());
-        s2 = Divline_PointOnSide(traceLOS, lineDef->v2Origin());
+        s1 = Divline_PointOnSide(traceLOS, line->v1Origin());
+        s2 = Divline_PointOnSide(traceLOS, line->v2Origin());
     }
     else
     {
-        s1 = lineDef->pointOnSide(FIX2FLT(traceLOS->origin[VX]), FIX2FLT(traceLOS->origin[VY])) < 0;
-        s2 = lineDef->pointOnSide(FIX2FLT(traceLOS->origin[VX] + traceLOS->direction[VX]),
-                                  FIX2FLT(traceLOS->origin[VY] + traceLOS->direction[VY])) < 0;
+        s1 = line->pointOnSide(FIX2FLT(traceLOS->origin[VX]), FIX2FLT(traceLOS->origin[VY])) < 0;
+        s2 = line->pointOnSide(FIX2FLT(traceLOS->origin[VX] + traceLOS->direction[VX]),
+                               FIX2FLT(traceLOS->origin[VY] + traceLOS->direction[VY])) < 0;
     }
     if(s1 == s2) return false;
 
     // Calculate interception point.
-    lineDef->configureDivline(dl);
-    distance = FIX2FLT(Divline_Intersection(&dl, traceLOS));
+    divline_t dl;
+    line->configureDivline(dl);
+    float distance = FIX2FLT(Divline_Intersection(&dl, traceLOS));
+
     // On the correct side of the trace origin?
     if(!(distance < 0))
     {
-        P_AddIntercept(ICPT_LINE, distance, lineDef);
+        P_AddIntercept(ICPT_LINE, distance, line);
     }
+
     // Continue iteration.
     return false;
 }
@@ -635,7 +638,7 @@ void P_LinkMobjToLineDefs(mobj_t* mo)
     GameMap_LinkMobjToLineDefs(theMap, mo);
 }
 
-boolean P_UnlinkMobjFromLineDefs(mobj_t* mo)
+boolean P_UnlinkMobjFromLineDefs(mobj_t *mo)
 {
     /// @todo Do not assume mobj is from the current map.
     if(!theMap) return false;
@@ -643,7 +646,7 @@ boolean P_UnlinkMobjFromLineDefs(mobj_t* mo)
 }
 
 #undef P_MobjLinesIterator
-DENG_EXTERN_C int P_MobjLinesIterator(mobj_t* mo, int (*callback) (LineDef*, void*), void* parameters)
+DENG_EXTERN_C int P_MobjLinesIterator(mobj_t *mo, int (*callback) (LineDef *, void *), void *parameters)
 {
     /// @todo Do not assume mobj is in the current map.
     if(!theMap) return false; // Continue iteration.
@@ -651,7 +654,7 @@ DENG_EXTERN_C int P_MobjLinesIterator(mobj_t* mo, int (*callback) (LineDef*, voi
 }
 
 #undef P_MobjSectorsIterator
-DENG_EXTERN_C int P_MobjSectorsIterator(mobj_t* mo, int (*callback) (Sector*, void*), void* parameters)
+DENG_EXTERN_C int P_MobjSectorsIterator(mobj_t *mo, int (*callback) (Sector *, void *), void *parameters)
 {
     /// @todo Do not assume mobj is in the current map.
     if(!theMap) return false; // Continue iteration.
@@ -659,11 +662,11 @@ DENG_EXTERN_C int P_MobjSectorsIterator(mobj_t* mo, int (*callback) (Sector*, vo
 }
 
 #undef P_LineMobjsIterator
-DENG_EXTERN_C int P_LineMobjsIterator(LineDef* lineDef, int (*callback) (mobj_t*, void*), void* parameters)
+DENG_EXTERN_C int P_LineMobjsIterator(LineDef *line, int (*callback) (mobj_t *, void *), void *parameters)
 {
-    /// @todo Do not assume lineDef is in the current map.
+    /// @todo Do not assume line is in the current map.
     if(!theMap) return false; // Continue iteration.
-    return GameMap_LineMobjsIterator(theMap, lineDef, callback, parameters);
+    return GameMap_LineMobjsIterator(theMap, line, callback, parameters);
 }
 
 /**
@@ -675,7 +678,7 @@ DENG_EXTERN_C int P_LineMobjsIterator(LineDef* lineDef, int (*callback) (mobj_t*
  * a bunch of LineMobjs iterations.)
  */
 #undef P_SectorTouchingMobjsIterator
-DENG_EXTERN_C int P_SectorTouchingMobjsIterator(Sector* sector, int (*callback) (mobj_t*, void*), void* parameters)
+DENG_EXTERN_C int P_SectorTouchingMobjsIterator(Sector *sector, int (*callback) (mobj_t *, void *), void *parameters)
 {
     /// @todo Do not assume sector is in the current map.
     if(!theMap) return false; // Continue iteration.

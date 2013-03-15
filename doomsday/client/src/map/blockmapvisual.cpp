@@ -524,9 +524,9 @@ void Rend_BlockmapDebug(void)
         break;
 
     case 2: // LineDefs.
-        if(!map->lineDefBlockmap) return;
+        if(!map->lineBlockmap) return;
 
-        blockmap = map->lineDefBlockmap;
+        blockmap = map->lineBlockmap;
         cellDrawer = rendCellLineDefs;
         objectTypeName = "LineDef";
         break;

@@ -58,7 +58,7 @@ GameMap::GameMap()
     entityDatabase = 0;
     mobjBlockmap = 0;
     polyobjBlockmap = 0;
-    lineDefBlockmap = 0;
+    lineBlockmap = 0;
     bspLeafBlockmap = 0;
     memset(&mobjNodes, 0, sizeof(mobjNodes));
     memset(&lineNodes, 0, sizeof(lineNodes));
@@ -192,14 +192,14 @@ int GameMap_LineDefIndex(GameMap *map, LineDef const *line)
 {
     DENG2_ASSERT(map);
     if(!line) return -1;
-    return map->lineDefs.indexOf(line); // Note: Bad performance!
+    return map->lines.indexOf(line); // Note: Bad performance!
 }
 
 LineDef *GameMap_LineDef(GameMap *map, uint idx)
 {
     DENG2_ASSERT(map);
-    if(idx >= (uint)map->lineDefs.size()) return NULL;
-    return &map->lineDefs[idx];
+    if(idx >= (uint)map->lines.size()) return NULL;
+    return &map->lines[idx];
 }
 
 int GameMap_SideDefIndex(GameMap *map, SideDef const *side)
@@ -269,19 +269,19 @@ Surface *GameMap_SurfaceBySoundEmitter(GameMap *map, void const *soundEmitter)
     // Perhaps a wall surface?
     for(uint i = 0; i < map->sideDefCount(); ++i)
     {
-        SideDef *side = &map->sideDefs[i];
+        SideDef *sideDef = &map->sideDefs[i];
 
-        if(soundEmitter == &side->middle().soundEmitter())
+        if(soundEmitter == &sideDef->middle().soundEmitter())
         {
-            return &side->middle();
+            return &sideDef->middle();
         }
-        if(soundEmitter == &side->bottom().soundEmitter())
+        if(soundEmitter == &sideDef->bottom().soundEmitter())
         {
-            return &side->bottom();
+            return &sideDef->bottom();
         }
-        if(soundEmitter == &side->top().soundEmitter())
+        if(soundEmitter == &sideDef->top().soundEmitter())
         {
-            return &side->top();
+            return &sideDef->top();
         }
     }
 
@@ -339,7 +339,7 @@ uint GameMap_VertexCount(GameMap* map)
 uint GameMap_LineDefCount(GameMap* map)
 {
     DENG2_ASSERT(map);
-    return map->lineDefCount();
+    return map->lineCount();
 }
 
 uint GameMap_SideDefCount(GameMap* map)
@@ -502,12 +502,12 @@ void GameMap_InitNodePiles(GameMap* map)
 
     // Initialize node piles and line rings.
     NP_Init(&map->mobjNodes, 256);  // Allocate a small pile.
-    NP_Init(&map->lineNodes, map->lineDefCount() + 1000);
+    NP_Init(&map->lineNodes, map->lineCount() + 1000);
 
     // Allocate the rings.
-    map->lineLinks = (nodeindex_t *) Z_Malloc(sizeof(*map->lineLinks) * map->lineDefCount(), PU_MAPSTATIC, 0);
+    map->lineLinks = (nodeindex_t *) Z_Malloc(sizeof(*map->lineLinks) * map->lineCount(), PU_MAPSTATIC, 0);
 
-    for(i = 0; i < map->lineDefCount(); ++i)
+    for(i = 0; i < map->lineCount(); ++i)
     {
         map->lineLinks[i] = NP_New(&map->lineNodes, NP_ROOT_NODE);
     }
@@ -531,7 +531,7 @@ void GameMap_InitLineDefBlockmap(GameMap* map, const_pvec2d_t min_, const_pvec2d
     V2d_Set(max, max_[VX] + BLOCKMAP_MARGIN,
                  max_[VY] + BLOCKMAP_MARGIN);
 
-    map->lineDefBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE);
+    map->lineBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE);
 
 #undef CELL_SIZE
 #undef BLOCKMAP_MARGIN
@@ -671,12 +671,12 @@ static int GameMap_IterateCellMobjs(GameMap* map, const_BlockmapCell cell,
                                        blockmapCellMobjsIterator, (void*)&args);
 }
 
-static int GameMap_IterateCellBlockMobjs(GameMap* map, const BlockmapCellBlock* cellBlock,
-    int (*callback) (mobj_t*, void*), void* context)
+static int GameMap_IterateCellBlockMobjs(GameMap *map, BlockmapCellBlock const *cellBlock,
+    int (*callback) (mobj_t *, void *), void *context)
 {
-    bmapmoiterparams_t args;
     DENG2_ASSERT(map);
 
+    bmapmoiterparams_t args;
     args.localValidCount = validCount;
     args.func = callback;
     args.param = context;
@@ -685,47 +685,46 @@ static int GameMap_IterateCellBlockMobjs(GameMap* map, const BlockmapCellBlock* 
                                             blockmapCellMobjsIterator, (void*) &args);
 }
 
-int GameMap_MobjsBoxIterator(GameMap* map, const AABoxd* box,
-    int (*callback) (mobj_t*, void*), void* parameters)
+int GameMap_MobjsBoxIterator(GameMap *map, AABoxd const *box,
+    int (*callback) (mobj_t *, void *), void *parameters)
 {
-    BlockmapCellBlock cellBlock;
     DENG2_ASSERT(map);
+    BlockmapCellBlock cellBlock;
     Blockmap_CellBlock(map->mobjBlockmap, &cellBlock, box);
     return GameMap_IterateCellBlockMobjs(map, &cellBlock, callback, parameters);
 }
 
-void GameMap_LinkLineDef(GameMap* map, LineDef* lineDef)
+void GameMap_LinkLineDef(GameMap *map, LineDef *line)
 {
-    vec2d_t origin, cellSize, cell, from, to;
-    BlockmapCellBlock cellBlock;
-    Blockmap* blockmap;
-    uint x, y;
     DENG2_ASSERT(map);
 
     // Do not link NULL linedefs.
-    if(!lineDef)
+    if(!line)
     {
-        DEBUG_Message(("Warning: GameMap::LinkLineDefInBlockmap: Attempted with NULL linedef argument.\n"));
+        DEBUG_Message(("Warning: GameMap::LinkLineDefInBlockmap: Attempted with NULL linedef argument."));
         return;
     }
 
     // LineDefs of Polyobjs don't get into the blockmap (presently...).
-    if(lineDef->isFromPolyobj()) return;
+    if(line->isFromPolyobj()) return;
 
-    blockmap = map->lineDefBlockmap;
-    V2d_Copy(origin, Blockmap_Origin(blockmap));
-    V2d_Copy(cellSize, Blockmap_CellSize(blockmap));
+    Blockmap *blockmap = map->lineBlockmap;
+    vec2d_t origin; V2d_Copy(origin, Blockmap_Origin(blockmap));
+    vec2d_t cellSize; V2d_Copy(cellSize, Blockmap_CellSize(blockmap));
 
     // Determine the block of cells we'll be working within.
-    Blockmap_CellBlock(blockmap, &cellBlock, &lineDef->aaBox());
+    BlockmapCellBlock cellBlock;
+    Blockmap_CellBlock(blockmap, &cellBlock, &line->aaBox());
 
-    for(y = cellBlock.minY; y <= cellBlock.maxY; ++y)
-    for(x = cellBlock.minX; x <= cellBlock.maxX; ++x)
+    vec2d_t cell, from, to;
+
+    for(uint y = cellBlock.minY; y <= cellBlock.maxY; ++y)
+    for(uint x = cellBlock.minX; x <= cellBlock.maxX; ++x)
     {
-        if(lineDef->slopeType() == ST_VERTICAL ||
-           lineDef->slopeType() == ST_HORIZONTAL)
+        if(line->slopeType() == ST_VERTICAL ||
+           line->slopeType() == ST_HORIZONTAL)
         {
-            Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y, lineDef);
+            Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y, line);
             continue;
         }
 
@@ -735,7 +734,7 @@ void GameMap_LinkLineDef(GameMap* map, LineDef* lineDef)
         V2d_Sum(cell, cell, Blockmap_Origin(blockmap));
 
         // Choose a cell diagonal to test.
-        if(lineDef->slopeType() == ST_POSITIVE)
+        if(line->slopeType() == ST_POSITIVE)
         {
             // LineDef slope / vs \ cell diagonal.
             V2d_Set(from, cell[VX], cell[VY] + cellSize[VY]);
@@ -749,9 +748,9 @@ void GameMap_LinkLineDef(GameMap* map, LineDef* lineDef)
         }
 
         // Would LineDef intersect this?
-        if(lineDef->pointOnSide(from) < 0 != lineDef->pointOnSide(to) < 0)
+        if(line->pointOnSide(from) < 0 != line->pointOnSide(to) < 0)
         {
-            Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y, lineDef);
+            Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y, line);
         }
     }
 }
@@ -792,7 +791,7 @@ static int GameMap_IterateCellLineDefs(GameMap *map, const_BlockmapCell cell,
     parms.callback        = callback;
     parms.context         = context;
 
-    return Blockmap_IterateCellObjects(map->lineDefBlockmap, cell,
+    return Blockmap_IterateCellObjects(map->lineBlockmap, cell,
                                        blockmapCellLinesIterator, (void *)&parms);
 }
 
@@ -806,16 +805,16 @@ static int GameMap_IterateCellBlockLineDefs(GameMap *map, BlockmapCellBlock cons
     parms.callback        = callback;
     parms.context          = context;
 
-    return Blockmap_IterateCellBlockObjects(map->lineDefBlockmap, cellBlock,
+    return Blockmap_IterateCellBlockObjects(map->lineBlockmap, cellBlock,
                                             blockmapCellLinesIterator, (void *) &parms);
 }
 
 int GameMap_LineDefIterator(GameMap *map, int (*callback) (LineDef *, void *), void *context)
 {
     DENG2_ASSERT(map);
-    for(uint i = 0; i < map->lineDefCount(); ++i)
+    for(uint i = 0; i < map->lineCount(); ++i)
     {
-        int result = callback(&map->lineDefs[i], context);
+        int result = callback(&map->lines[i], context);
         if(result) return result;
     }
     return false; // Continue iteration.
@@ -1119,7 +1118,7 @@ int GameMap_LineDefsBoxIterator(GameMap* map, const AABoxd* box,
 {
     BlockmapCellBlock cellBlock;
     DENG2_ASSERT(map);
-    Blockmap_CellBlock(map->lineDefBlockmap, &cellBlock, box);
+    Blockmap_CellBlock(map->lineBlockmap, &cellBlock, box);
     return GameMap_IterateCellBlockLineDefs(map, &cellBlock, callback, parameters);
 }
 
@@ -1421,8 +1420,8 @@ static int collectMobjIntercepts(uint const block[2], void* parameters)
     return GameMap_IterateCellMobjs(map, block, PIT_AddMobjIntercepts, NULL);
 }
 
-int GameMap_PathTraverse2(GameMap* map, const coord_t from[], const coord_t to[],
-    int flags, traverser_t callback, void* parameters)
+int GameMap_PathTraverse2(GameMap *map, const_pvec2d_t from, const_pvec2d_t to,
+    int flags, traverser_t callback, void *parameters)
 {
     DENG2_ASSERT(map);
 
@@ -1435,20 +1434,20 @@ int GameMap_PathTraverse2(GameMap* map, const coord_t from[], const coord_t to[]
     {
         if(NUM_POLYOBJS != 0)
         {
-            traverseCellPath(map, map->polyobjBlockmap, from, to, collectPolyobjLineDefIntercepts, (void*)map);
+            traverseCellPath(map, map->polyobjBlockmap, from, to, collectPolyobjLineDefIntercepts, (void *)map);
         }
-        traverseCellPath(map, map->lineDefBlockmap, from, to, collectLineDefIntercepts, (void*)map);
+        traverseCellPath(map, map->lineBlockmap, from, to, collectLineDefIntercepts, (void *)map);
     }
     if(flags & PT_ADDMOBJS)
     {
-        traverseCellPath(map, map->mobjBlockmap, from, to, collectMobjIntercepts, (void*)map);
+        traverseCellPath(map, map->mobjBlockmap, from, to, collectMobjIntercepts, (void *)map);
     }
 
     // Step #2: Process sorted intercepts.
     return P_TraverseIntercepts(callback, parameters);
 }
 
-int GameMap_PathTraverse(GameMap* map, const coord_t from[], const coord_t to[],
+int GameMap_PathTraverse(GameMap *map, const_pvec2d_t from, const_pvec2d_t to,
     int flags, traverser_t callback)
 {
     return GameMap_PathTraverse2(map, from, to, flags, callback, NULL/*no parameters*/);

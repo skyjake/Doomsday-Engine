@@ -284,7 +284,7 @@ void SB_InitForMap(char const *uniqueID)
     for(uint i = 0; i < NUM_HEDGES; ++i)
     {
         HEdge *hedge = GameMap_HEdge(theMap, i);
-        if(hedge->lineDef)
+        if(hedge->line)
             numVertIllums++;
     }
 
@@ -318,7 +318,7 @@ void SB_InitForMap(char const *uniqueID)
     {
         HEdge *hedge = GameMap_HEdge(theMap, i);
 
-        if(!hedge->lineDef) continue;
+        if(!hedge->line) continue;
 
         for(int j = 0; j < 3; ++j)
         {

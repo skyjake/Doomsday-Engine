@@ -80,9 +80,9 @@
 #define DMT_SECTOR_RGB DDVT_FLOAT
 #define DMT_SECTOR_MOBJLIST DDVT_PTR   // List of mobjs in the sector.
 #define DMT_SECTOR_LINEDEFCOUNT DDVT_UINT
-#define DMT_SECTOR_LINEDEFS DDVT_PTR   // [lineDefCount+1] size.
+#define DMT_SECTOR_LINEDEFS DDVT_PTR
 #define DMT_SECTOR_BSPLEAFCOUNT DDVT_UINT
-#define DMT_SECTOR_BSPLEAFS DDVT_PTR   // [bspLeafCount+1] size.
+#define DMT_SECTOR_BSPLEAFS DDVT_PTR
 #define DMT_SECTOR_BASE DDVT_PTR
 #define DMT_SECTOR_PLANECOUNT DDVT_UINT
 #define DMT_SECTOR_REVERB DDVT_FLOAT
@@ -196,13 +196,13 @@ DENG_API_TYPEDEF(Map)
 
     // Lines
 
-    int             (*LD_BoxOnSide)(LineDef* line, const AABoxd* box);
-    int             (*LD_BoxOnSide_FixedPrecision)(LineDef* line, const AABoxd* box);
-    coord_t         (*LD_PointDistance)(LineDef* lineDef, coord_t const point[2], coord_t* offset);
-    coord_t         (*LD_PointXYDistance)(LineDef* lineDef, coord_t x, coord_t y, coord_t* offset);
-    coord_t         (*LD_PointOnSide)(LineDef const *lineDef, coord_t const point[2]);
-    coord_t         (*LD_PointXYOnSide)(LineDef const *lineDef, coord_t x, coord_t y);
-    int             (*LD_MobjsIterator)(LineDef* line, int (*callback) (struct mobj_s*, void *), void* parameters);
+    int             (*LD_BoxOnSide)(LineDef *line, AABoxd const *box);
+    int             (*LD_BoxOnSide_FixedPrecision)(LineDef *line, AABoxd const *box);
+    coord_t         (*LD_PointDistance)(LineDef* line, coord_t const point[2], coord_t *offset);
+    coord_t         (*LD_PointXYDistance)(LineDef* line, coord_t x, coord_t y, coord_t *offset);
+    coord_t         (*LD_PointOnSide)(LineDef const *line, coord_t const point[2]);
+    coord_t         (*LD_PointXYOnSide)(LineDef const *line, coord_t x, coord_t y);
+    int             (*LD_MobjsIterator)(LineDef *line, int (*callback) (struct mobj_s *, void *), void *parameters);
 
     // Sectors
 

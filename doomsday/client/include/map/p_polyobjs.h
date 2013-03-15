@@ -25,9 +25,9 @@
 /**
  * Action the callback if set, otherwise this is no-op.
  */
-void P_PolyobjCallback(struct mobj_s* mobj, LineDef* lineDef, Polyobj* polyobj);
+void P_PolyobjCallback(struct mobj_s *mobj, LineDef *line, Polyobj *polyobj);
 
-void P_PolyobjChanged(Polyobj* po);
+void P_PolyobjChanged(Polyobj *po);
 
 /**
  * Lookup a Polyobj on the current map by the base mobj.
@@ -36,11 +36,11 @@ void P_PolyobjChanged(Polyobj* po);
  *
  * @return  Found Polyobj instance, or @c NULL.
  */
-//Polyobj* P_PolyobjByBase(void* ddMobjBase);
+//Polyobj *P_PolyobjByBase(void *ddMobjBase);
 
 /**
  * Translate the origin of @a polyobj in the map coordinate space.
  */
-//boolean P_PolyobjMove(Polyobj* polyobj, coord_t xy[]);
+//boolean P_PolyobjMove(Polyobj *polyobj, coord_t xy[]);
 
 #endif // LIBDENG_P_POLYOBJS_H

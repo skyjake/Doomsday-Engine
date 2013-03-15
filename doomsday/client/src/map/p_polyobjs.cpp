@@ -25,10 +25,10 @@
 // Called when the polyobj hits a mobj.
 static void (*po_callback) (mobj_t *mobj, void *line, void *polyobj);
 
-void P_PolyobjCallback(mobj_t *mobj, LineDef *lineDef, Polyobj *polyobj)
+void P_PolyobjCallback(mobj_t *mobj, LineDef *line, Polyobj *polyobj)
 {
     if(!po_callback) return;
-    po_callback(mobj, lineDef, polyobj);
+    po_callback(mobj, line, polyobj);
 }
 
 #undef P_SetPolyobjCallback

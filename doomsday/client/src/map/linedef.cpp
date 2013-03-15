@@ -190,23 +190,23 @@ static float calcLightLevelDelta(pvec2f_t const normal)
 }
 
 /**
- * @param lineDef  LineDef instance.
+ * @param line  LineDef instance.
  * @param ignoreOpacity  @c true= do not consider Material opacity.
  * @return  @c true if this LineDef's side is considered "closed" (i.e.,
  *     there is no opening through which the back Sector can be seen).
  *     Tests consider all Planes which interface with this and the "middle"
  *     Material used on the relative front side (if any).
  */
-static bool backClosedForBlendNeighbor(LineDef const *lineDef, int side,
+static bool backClosedForBlendNeighbor(LineDef const *line, int side,
     bool ignoreOpacity)
 {
-    DENG_ASSERT(lineDef);
+    DENG_ASSERT(line);
 
-    if(!lineDef->hasFrontSideDef()) return false;
-    if(!lineDef->hasBackSideDef()) return true;
+    if(!line->hasFrontSideDef()) return false;
+    if(!line->hasBackSideDef()) return true;
 
-    Sector const *frontSec = lineDef->sectorPtr(side);
-    Sector const *backSec  = lineDef->sectorPtr(side^1);
+    Sector const *frontSec = line->sectorPtr(side);
+    Sector const *backSec  = line->sectorPtr(side^1);
     if(frontSec == backSec) return false; // Never.
 
     if(frontSec && backSec)
@@ -216,7 +216,7 @@ static bool backClosedForBlendNeighbor(LineDef const *lineDef, int side,
         if(backSec->floor().visHeight() >= frontSec->ceiling().visHeight())  return true;
     }
 
-    return R_MiddleMaterialCoversLineOpening(lineDef, side, ignoreOpacity);
+    return R_MiddleMaterialCoversLineOpening(line, side, ignoreOpacity);
 }
 
 static LineDef *findBlendNeighbor(LineDef const *l, byte side, byte right,

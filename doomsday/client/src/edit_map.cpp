@@ -46,10 +46,10 @@ typedef struct {
     uint count; ///< Number of times this has been found missing.
 } missingmaterialrecord_t;
 
-static void printMissingMaterials(void);
-static void clearMaterialDict(void);
+static void printMissingMaterials();
+static void clearMaterialDict();
 
-static void assignSurfaceMaterial(Surface* suf, const ddstring_t* materialUri);
+static void assignSurfaceMaterial(Surface *suf, ddstring_t const *materialUri);
 
 /**
  * Material name references specified during map conversion are recorded in this
@@ -59,16 +59,16 @@ static void assignSurfaceMaterial(Surface* suf, const ddstring_t* materialUri);
  * The pointer user value holds a pointer to the resolved Material (if found).
  * The integer user value tracks the number of times a reference occurs.
  */
-static StringPool* materialDict;
+static StringPool *materialDict;
 
 EditMap editMap;
-static boolean editMapInited = false;
+static boolean editMapInited;
 
-static EditMap* e_map = &editMap;
+static EditMap *e_map = &editMap;
 static boolean lastBuiltMapResult;
-static GameMap* lastBuiltMap;
+static GameMap *lastBuiltMap;
 
-static Vertex* rootVtx; // Used when sorting vertex line owners.
+static Vertex *rootVtx; // Used when sorting vertex line owners.
 
 static Vertex *createVertex(coord_t x, coord_t y)
 {
@@ -80,24 +80,24 @@ static Vertex *createVertex(coord_t x, coord_t y)
     return vtx;
 }
 
-static LineDef* createLine(void)
+static LineDef *createLine()
 {
-    LineDef* line = new LineDef;
+    LineDef *line = new LineDef;
 
-    e_map->lineDefs.push_back(line);
+    e_map->lines.push_back(line);
 
-    line->_origIndex = e_map->lineDefs.size(); // 1-based index, 0 = NIL.
+    line->_origIndex = e_map->lines.size(); // 1-based index, 0 = NIL.
     return line;
 }
 
-static SideDef *createSide()
+static SideDef *createSideDef()
 {
-    SideDef *side = new SideDef;
+    SideDef *sideDef = new SideDef;
 
-    e_map->sideDefs.push_back(side);
-    side->buildData.index = e_map->sideDefs.size(); // 1-based index, 0 = NIL.
+    e_map->sideDefs.push_back(sideDef);
+    sideDef->buildData.index = e_map->sideDefs.size(); // 1-based index, 0 = NIL.
 
-    return side;
+    return sideDef;
 }
 
 static Sector *createSector(Vector3f const &ambientLightColor, float lightLevel)
@@ -114,11 +114,11 @@ static Sector *createSector(Vector3f const &ambientLightColor, float lightLevel)
     return sec;
 }
 
-static Polyobj* createPolyobj(void)
+static Polyobj *createPolyobj()
 {
-    Polyobj* po = (Polyobj*) M_Calloc(sizeof(*po));
+    Polyobj *po = (Polyobj *) M_Calloc(sizeof(*po));
 
-    e_map->polyObjs = (Polyobj**) M_Realloc(e_map->polyObjs, sizeof(po) * (++e_map->numPolyObjs + 1));
+    e_map->polyObjs = (Polyobj **) M_Realloc(e_map->polyObjs, sizeof(po) * (++e_map->numPolyObjs + 1));
     e_map->polyObjs[e_map->numPolyObjs-1] = po;
     e_map->polyObjs[e_map->numPolyObjs] = NULL;
 
@@ -126,30 +126,29 @@ static Polyobj* createPolyobj(void)
     return po;
 }
 
-static void destroyEditablePolyObjs(EditMap* map)
+static void destroyEditablePolyObjs(EditMap *map)
 {
     if(map->polyObjs)
     {
-        uint i;
-        for(i = 0; i < map->numPolyObjs; ++i)
+        for(uint i = 0; i < map->numPolyObjs; ++i)
         {
-            Polyobj* po = map->polyObjs[i];
+            Polyobj *po = map->polyObjs[i];
             M_Free(po->lines);
             M_Free(po);
         }
         M_Free(map->polyObjs);
     }
-    map->polyObjs = NULL;
+    map->polyObjs = 0;
     map->numPolyObjs = 0;
 }
 
-static void destroyEditableLineDefs(EditMap* map)
+static void destroyEditableLineDefs(EditMap *map)
 {
-    DENG2_FOR_EACH(EditMap::LineDefs, s, map->lineDefs)
+    DENG2_FOR_EACH(EditMap::Lines, s, map->lines)
     {
         delete *s;
     }
-    map->lineDefs.clear();
+    map->lines.clear();
 }
 
 static void destroyEditableSideDefs(EditMap* map)
@@ -532,9 +531,9 @@ static void buildSectorLineLists(GameMap *map)
     zblockset_t *lineLinksBlockSet = ZBlockSet_New(sizeof(LineLink), 512, PU_APPSTATIC);
     LineLink **sectorLineLinks = (LineLink **) Z_Calloc(sizeof(*sectorLineLinks) * map->sectorCount(), PU_APPSTATIC, 0);
 
-    for(uint i = 0; i < map->lineDefCount(); ++i)
+    for(uint i = 0; i < map->lineCount(); ++i)
     {
-        LineDef *line = &map->lineDefs[i];
+        LineDef *line = &map->lines[i];
 
         if(line->hasFrontSector())
         {
@@ -698,9 +697,9 @@ static void finishLines(GameMap *map)
 {
     DENG_ASSERT(map);
 
-    for(uint i = 0; i < map->lineDefCount(); ++i)
+    for(uint i = 0; i < map->lineCount(); ++i)
     {
-        LineDef &line = map->lineDefs[i];
+        LineDef &line = map->lines[i];
         LineDef::Side &front = line.front();
 
         if(!front._leftHEdge) continue;
@@ -927,12 +926,12 @@ static void buildVertexOwnerRings(EditMap *map)
     DENG_ASSERT(map);
 
     // We know how many vertex line owners we need (numLineDefs * 2).
-    LineOwner *lineOwners = (LineOwner *) Z_Malloc(sizeof(LineOwner) * map->lineDefs.size() * 2, PU_MAPSTATIC, 0);
+    LineOwner *lineOwners = (LineOwner *) Z_Malloc(sizeof(LineOwner) * map->lines.size() * 2, PU_MAPSTATIC, 0);
     LineOwner *allocator = lineOwners;
 
-    for(uint i = 0; i < map->lineDefs.size(); ++i)
+    for(uint i = 0; i < map->lines.size(); ++i)
     {
-        LineDef *line = map->lineDefs[i];
+        LineDef *line = map->lines[i];
 
         for(uint p = 0; p < 2; ++p)
         {
@@ -956,7 +955,7 @@ static void hardenVertexOwnerRings(GameMap *dest, EditMap *src)
         LineOwner *p = v->_lineOwners;
         while(p)
         {
-            p->_line = &dest->lineDefs[p->_line->_origIndex - 1];
+            p->_line = &dest->lines[p->_line->_origIndex - 1];
             p = &p->next();
         }
 
@@ -1000,9 +999,9 @@ static void hardenVertexOwnerRings(GameMap *dest, EditMap *src)
         {
             if(verbose >= 2)
                 Con_Message("  %i: p= #%05i this= #%05i n= #%05i, dANG= %-3.f",
-                            idx, &p->prev().lineDef() - map->lineDefs,
-                            &p->lineDef() - map->lineDefs,
-                            &p->next().lineDef() - map->lineDefs, BANG2DEG(p->angle()));
+                            idx, &p->prev().line() - map->lines,
+                            &p->line() - map->lineDefs,
+                            &p->next().line() - map->lines, BANG2DEG(p->angle()));
 
             if(&p->prev().next() != p || &p->next().prev() != p)
                Con_Error("Invalid line owner link ring!");
@@ -1018,12 +1017,12 @@ static void hardenLinedefs(GameMap *dest, EditMap *src)
 {
     DENG2_ASSERT(dest && src);
 
-    dest->lineDefs.clearAndResize(src->lineDefs.size());
+    dest->lines.clearAndResize(src->lines.size());
 
-    for(uint i = 0; i < dest->lineDefCount(); ++i)
+    for(uint i = 0; i < dest->lineCount(); ++i)
     {
-        LineDef &destL = dest->lineDefs[i];
-        LineDef const &srcL = *src->lineDefs[i];
+        LineDef &destL = dest->lines[i];
+        LineDef const &srcL = *src->lines[i];
 
         destL = srcL;
 
@@ -1136,14 +1135,14 @@ static void hardenPolyobjs(GameMap *dest, EditMap *src)
         destP->lines = (LineDef **) Z_Malloc(sizeof(*destP->lines) * (destP->lineCount + 1), PU_MAP, 0);
         for(uint j = 0; j < destP->lineCount; ++j)
         {
-            LineDef *line = &dest->lineDefs[srcP->lines[j]->_origIndex - 1];
+            LineDef *line = &dest->lines[srcP->lines[j]->_origIndex - 1];
             HEdge *hedge = &hedges[j];
 
             // This line belongs to a polyobj.
             line->_inFlags |= LF_POLYOBJ;
 
             //hedge->header.type = DMU_HEDGE;
-            hedge->lineDef = line;
+            hedge->line = line;
             hedge->length = V2d_Distance(line->v2Origin(), line->v1Origin());
             hedge->twin = NULL;
             hedge->bspLeaf = NULL;
@@ -1520,9 +1519,9 @@ boolean MPE_End(void)
     findBounds(e_map->verticesAsArray(), e_map->vertexCount(), min, max);
 
     GameMap_InitLineDefBlockmap(gamemap, min, max);
-    for(i = 0; i < gamemap->lineDefCount(); ++i)
+    for(i = 0; i < gamemap->lineCount(); ++i)
     {
-        GameMap_LinkLineDef(gamemap, &gamemap->lineDefs[i]);
+        GameMap_LinkLineDef(gamemap, &gamemap->lines[i]);
     }
 
     // Mobj and Polyobj blockmaps are maintained dynamically.
@@ -1597,7 +1596,7 @@ boolean MPE_End(void)
     if(gx.SetupForMapData)
     {
         gx.SetupForMapData(DMU_VERTEX, gamemap->vertexCount());
-        gx.SetupForMapData(DMU_LINEDEF, gamemap->lineDefCount());
+        gx.SetupForMapData(DMU_LINEDEF, gamemap->lineCount());
         gx.SetupForMapData(DMU_SIDEDEF, gamemap->sideDefCount());
         gx.SetupForMapData(DMU_SECTOR, gamemap->sectorCount());
     }
@@ -1802,7 +1801,7 @@ uint MPE_SidedefCreate(short flags, ddstring_t const *topMaterial,
 {
     if(!editMapInited) return 0;
 
-    SideDef *s = createSide();
+    SideDef *s = createSideDef();
     s->flags = flags;
 
     assignSurfaceMaterial(&s->top(), topMaterial);
@@ -1942,9 +1941,9 @@ uint MPE_PolyobjCreate(uint *lines, uint lineCount, int tag, int sequenceType,
     // already part of another polyobj.
     for(uint i = 0; i < lineCount; ++i)
     {
-        if(lines[i] == 0 || lines[i] > e_map->lineDefs.size()) return 0;
+        if(lines[i] == 0 || lines[i] > e_map->lines.size()) return 0;
 
-        LineDef *line = e_map->lineDefs[lines[i] - 1];
+        LineDef *line = e_map->lines[lines[i] - 1];
         if(line->isFromPolyobj()) return 0;
     }
 
@@ -1958,7 +1957,7 @@ uint MPE_PolyobjCreate(uint *lines, uint lineCount, int tag, int sequenceType,
     po->lines = (LineDef**) M_Calloc(sizeof(LineDef*) * (po->lineCount+1));
     for(uint i = 0; i < lineCount; ++i)
     {
-        LineDef *line = e_map->lineDefs[lines[i] - 1];
+        LineDef *line = e_map->lines[lines[i] - 1];
 
         // This line belongs to a polyobj.
         line->_inFlags |= LF_POLYOBJ;

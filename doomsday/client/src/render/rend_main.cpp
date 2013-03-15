@@ -405,50 +405,50 @@ static byte pvisibleLineSections(LineDef *line, int backSide)
 }
 
 static void selectSurfaceColors(float const **topColor,
-    float const **bottomColor, SideDef *side, SideDefSection section)
+    float const **bottomColor, SideDef *sideDef, SideDefSection section)
 {
     switch(section)
     {
     case SS_MIDDLE:
-        if(side->flags & SDF_BLENDMIDTOTOP)
+        if(sideDef->flags & SDF_BLENDMIDTOTOP)
         {
-            *topColor    = side->top().rgba;
-            *bottomColor = side->middle().rgba;
+            *topColor    = sideDef->top().rgba;
+            *bottomColor = sideDef->middle().rgba;
         }
-        else if(side->flags & SDF_BLENDMIDTOBOTTOM)
+        else if(sideDef->flags & SDF_BLENDMIDTOBOTTOM)
         {
-            *topColor    = side->middle().rgba;
-            *bottomColor = side->bottom().rgba;
+            *topColor    = sideDef->middle().rgba;
+            *bottomColor = sideDef->bottom().rgba;
         }
         else
         {
-            *topColor    = side->middle().rgba;
+            *topColor    = sideDef->middle().rgba;
             *bottomColor = 0;
         }
         break;
 
     case SS_TOP:
-        if(side->flags & SDF_BLENDTOPTOMID)
+        if(sideDef->flags & SDF_BLENDTOPTOMID)
         {
-            *topColor    = side->top().rgba;
-            *bottomColor = side->middle().rgba;
+            *topColor    = sideDef->top().rgba;
+            *bottomColor = sideDef->middle().rgba;
         }
         else
         {
-            *topColor    = side->top().rgba;
+            *topColor    = sideDef->top().rgba;
             *bottomColor = 0;
         }
         break;
 
     case SS_BOTTOM:
-        if(side->flags & SDF_BLENDBOTTOMTOMID)
+        if(sideDef->flags & SDF_BLENDBOTTOMTOMID)
         {
-            *topColor    = side->middle().rgba;
-            *bottomColor = side->bottom().rgba;
+            *topColor    = sideDef->middle().rgba;
+            *bottomColor = sideDef->bottom().rgba;
         }
         else
         {
-            *topColor    = side->bottom().rgba;
+            *topColor    = sideDef->bottom().rgba;
             *bottomColor = 0;
         }
         break;
@@ -1215,7 +1215,7 @@ static boolean doRenderHEdge(HEdge *hedge, const_pvec3f_t normal,
     MaterialSnapshot const &ms,
     boolean isTwosidedMiddle)
 {
-    SideDef *sideDef = (hedge->lineDef? HEDGE_SIDEDEF(hedge) : NULL);
+    SideDef *sideDef = (hedge->line? HEDGE_SIDEDEF(hedge) : NULL);
     rvertex_t *rvertices;
 
     // Init the params.
@@ -1290,7 +1290,7 @@ static boolean doRenderHEdge(HEdge *hedge, const_pvec3f_t normal,
         {
             RendRadioWallSectionParms radioParams;
 
-            radioParams.line      = hedge->lineDef;
+            radioParams.line      = hedge->line;
             radioParams.botCn     = sideDef->bottomCorners;
             radioParams.topCn     = sideDef->topCorners;
             radioParams.sideCn    = sideDef->sideCorners;
@@ -1563,10 +1563,10 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
         if(viewData->current.origin[VZ] >  WallDivNode_Height(WallDivs_First(leftWallDivs)) &&
            viewData->current.origin[VZ] < WallDivNode_Height(WallDivs_Last(rightWallDivs)))
         {
-            LineDef *lineDef = hedge->lineDef;
+            LineDef *line = hedge->line;
             vec2d_t result;
-            double pos = V2d_ProjectOnLine(result, mo->origin, lineDef->v1Origin(),
-                                                   lineDef->direction());
+            double pos = V2d_ProjectOnLine(result, mo->origin, line->v1Origin(),
+                                                   line->direction());
 
             if(pos > 0 && pos < 1)
             {
@@ -1595,7 +1595,7 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
         float texScale[2];
         Material *mat = NULL;
         int rpFlags = RPF_DEFAULT;
-        boolean isTwoSided = (hedge->lineDef && hedge->lineDef->hasFrontSideDef() && hedge->lineDef->hasBackSideDef())? true:false;
+        boolean isTwoSided = (hedge->line && hedge->line->hasFrontSideDef() && hedge->line->hasBackSideDef())? true:false;
         blendmode_t blendMode = BM_NORMAL;
         float const *color = NULL, *color2 = NULL;
 
@@ -1716,13 +1716,13 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
         }
         else
         {
-            LineDef const &line = *hedge->lineDef;
+            LineDef const &line = *hedge->line;
             line.lightLevelDelta(hedge->side, &deltaL, &deltaR);
 
             // Linear interpolation of the linedef light deltas to the edges of the hedge.
             float diff = deltaR - deltaL;
             deltaR = deltaL + ((hedge->offset + hedge->length) / line.length()) * diff;
-            deltaL += (hedge->offset / hedge->lineDef->length()) * diff;
+            deltaL += (hedge->offset / hedge->line->length()) * diff;
         }
 
         opaque = doRenderHEdge(hedge,
@@ -1781,13 +1781,13 @@ static boolean Rend_RenderHEdge(HEdge *hedge, byte sections)
         if(hedge->prepareWallDivs(SS_MIDDLE, frontSec, backSec,
                                   &leftWallDivs, &rightWallDivs, matOffset))
         {
-            Rend_RadioUpdateLine(*hedge->lineDef, hedge->side);
+            Rend_RadioUpdateLine(*hedge->line, hedge->side);
             opaque = rendHEdgeSection(hedge, SS_MIDDLE, RHF_ADD_DYNLIGHTS|RHF_ADD_DYNSHADOWS|RHF_ADD_RADIO,
                                       frontSec->lightLevel(), R_GetSectorLightColor(frontSec),
                                       &leftWallDivs, &rightWallDivs, matOffset);
         }
 
-        reportLineDrawn(*hedge->lineDef);
+        reportLineDrawn(*hedge->line);
         return opaque;
     }
 
@@ -1803,7 +1803,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
 
     int solidSeg = false;
     BspLeaf *leaf = currentBspLeaf;
-    LineDef *line = hedge->lineDef;
+    LineDef *line = hedge->line;
     if(!line) return false;
 
     LineDef::Side *front = HEDGE_SIDE(hedge);
@@ -1843,7 +1843,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
                !(line->isFlagged(DDLF_BLOCKING)))
                 rhFlags |= RHF_VIEWER_NEAR_BLEND;
 
-            Rend_RadioUpdateLine(*hedge->lineDef, hedge->side);
+            Rend_RadioUpdateLine(*hedge->line, hedge->side);
             solidSeg = rendHEdgeSection(hedge, SS_MIDDLE, rhFlags,
                                         front->sector().lightLevel(), R_GetSectorLightColor(front->sectorPtr()),
                                         &leftWallDivs, &rightWallDivs, matOffset);
@@ -1883,7 +1883,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
         if(hedge->prepareWallDivs(SS_TOP, leaf->sectorPtr(), HEDGE_BACK_SECTOR(hedge),
                                   &leftWallDivs, &rightWallDivs, matOffset))
         {
-            Rend_RadioUpdateLine(*hedge->lineDef, hedge->side);
+            Rend_RadioUpdateLine(*hedge->line, hedge->side);
             rendHEdgeSection(hedge, SS_TOP, RHF_ADD_DYNLIGHTS|RHF_ADD_DYNSHADOWS|RHF_ADD_RADIO,
                              front->sector().lightLevel(), R_GetSectorLightColor(front->sectorPtr()),
                              &leftWallDivs, &rightWallDivs, matOffset);
@@ -1899,7 +1899,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
         if(hedge->prepareWallDivs(SS_BOTTOM, leaf->sectorPtr(), HEDGE_BACK_SECTOR(hedge),
                                   &leftWallDivs, &rightWallDivs, matOffset))
         {
-            Rend_RadioUpdateLine(*hedge->lineDef, hedge->side);
+            Rend_RadioUpdateLine(*hedge->line, hedge->side);
             rendHEdgeSection(hedge, SS_BOTTOM, RHF_ADD_DYNLIGHTS|RHF_ADD_DYNSHADOWS|RHF_ADD_RADIO,
                              front->sector().lightLevel(), R_GetSectorLightColor(front->sectorPtr()),
                              &leftWallDivs, &rightWallDivs, matOffset);
@@ -1967,7 +1967,7 @@ static void Rend_MarkSegsFacingFront(BspLeaf *leaf)
         do
         {
             // Occlusions can only happen where two sectors contact.
-            if(hedge->lineDef)
+            if(hedge->line)
             {
                 // Which way should it be facing?
                 if(!(viewFacingDot(hedge->HE_v1origin, hedge->HE_v2origin) < 0))
@@ -2001,7 +2001,7 @@ static void occludeFrontFacingSegsInBspLeaf(BspLeaf const *bspLeaf)
         HEdge *hedge = base;
         do
         {
-            if(!hedge->lineDef || !(hedge->frameFlags & HEDGEINF_FACINGFRONT)) continue;
+            if(!hedge->line || !(hedge->frameFlags & HEDGEINF_FACINGFRONT)) continue;
 
             if(!C_CheckRangeFromViewRelPoints(hedge->HE_v1origin, hedge->HE_v2origin))
             {
@@ -2084,10 +2084,10 @@ static void skyFixZCoords(HEdge *hedge, int skyCap, coord_t *bottom, coord_t *to
  */
 static boolean hedgeBackClosedForSkyFix(HEdge const *hedge)
 {
-    DENG_ASSERT(hedge && hedge->lineDef);
+    DENG_ASSERT(hedge && hedge->line);
 
     byte side = hedge->side;
-    LineDef *line = hedge->lineDef;
+    LineDef *line = hedge->line;
     Sector *frontSec  = line->sectorPtr(side);
     Sector *backSec   = line->sectorPtr(side^1);
     SideDef *frontDef = line->sideDefPtr(side);
@@ -2118,7 +2118,7 @@ static boolean hedgeBackClosedForSkyFix(HEdge const *hedge)
 static int chooseHEdgeSkyFixes(HEdge *hedge, int skyCap)
 {
     int fixes = 0;
-    if(hedge && hedge->lineDef && // "minisegs" have no linedefs.
+    if(hedge && hedge->line && // "minisegs" have no linedefs.
        hedge->sector) // $degenleaf
     {
         Sector const *frontSec = hedge->sector;
@@ -2633,12 +2633,12 @@ static void Rend_RenderWalls()
     do
     {
         if((hedge->frameFlags & HEDGEINF_FACINGFRONT) &&
-           hedge->lineDef && /* "mini-hedges" have no linedefs */
+           hedge->line && /* "mini-hedges" have no linedefs */
            HEDGE_SIDEDEF(hedge) /* "windows" have no sidedef */)
         {
             Sector *frontSec = hedge->sector;
             Sector *backSec  = HEDGE_BACK_SECTOR(hedge);
-            byte sections = pvisibleLineSections(hedge->lineDef, hedge->side);
+            byte sections = pvisibleLineSections(hedge->line, hedge->side);
             boolean opaque;
 
             if(!frontSec || !backSec ||
@@ -2676,7 +2676,7 @@ static void Rend_RenderPolyobjs()
         // Let's first check which way this hedge is facing.
         if(hedge.frameFlags & HEDGEINF_FACINGFRONT)
         {
-            byte sections  = pvisibleLineSections(hedge.lineDef, hedge.side);
+            byte sections  = pvisibleLineSections(hedge.line, hedge.side);
             boolean opaque = Rend_RenderHEdge(&hedge, sections);
 
             // When the viewer is in the void do not range-occlude.
@@ -2773,7 +2773,7 @@ static void occludeBspLeaf(BspLeaf const *bspLeaf, bool forwardFacing)
     do
     {
         // Occlusions can only happen where two sectors contact.
-        if(hedge->lineDef && HEDGE_BACK_SECTOR(hedge) &&
+        if(hedge->line && HEDGE_BACK_SECTOR(hedge) &&
            (forwardFacing == ((hedge->frameFlags & HEDGEINF_FACINGFRONT)? true : false)))
         {
             Sector *back         = HEDGE_BACK_SECTOR(hedge);
@@ -2985,11 +2985,11 @@ void Rend_RenderSurfaceVectors()
         Surface* suf;
         vec3f_t origin;
 
-        if(!hedge->lineDef || !hedge->sector ||
-           (hedge->lineDef->isFromPolyobj()))
+        if(!hedge->line || !hedge->sector ||
+           (hedge->line->isFromPolyobj()))
             continue;
 
-        line = hedge->lineDef;
+        line = hedge->line;
         x = hedge->HE_v1origin[VX] + (hedge->HE_v2origin[VX] - hedge->HE_v1origin[VX]) / 2;
         y = hedge->HE_v1origin[VY] + (hedge->HE_v2origin[VY] - hedge->HE_v1origin[VY]) / 2;
 
@@ -3005,12 +3005,12 @@ void Rend_RenderSurfaceVectors()
         }
         else
         {
-            SideDef* side = HEDGE_SIDEDEF(hedge);
-            if(side->middle().material)
+            SideDef *sideDef = HEDGE_SIDEDEF(hedge);
+            if(sideDef->middle().material)
             {
                 top = hedge->sector->ceiling().visHeight();
                 bottom = hedge->sector->floor().visHeight();
-                suf = &side->middle();
+                suf = &sideDef->middle();
 
                 V3f_Set(origin, x, y, bottom + (top - bottom) / 2);
                 drawSurfaceTangentSpaceVectors(suf, origin);
@@ -3023,7 +3023,7 @@ void Rend_RenderSurfaceVectors()
             {
                 bottom = backSec->ceiling().visHeight();
                 top = hedge->sector->ceiling().visHeight();
-                suf = &side->top();
+                suf = &sideDef->top();
 
                 V3f_Set(origin, x, y, bottom + (top - bottom) / 2);
                 drawSurfaceTangentSpaceVectors(suf, origin);
@@ -3036,7 +3036,7 @@ void Rend_RenderSurfaceVectors()
             {
                 bottom = hedge->sector->floor().visHeight();
                 top = backSec->floor().visHeight();
-                suf = &side->bottom();
+                suf = &sideDef->bottom();
 
                 V3f_Set(origin, x, y, bottom + (top - bottom) / 2);
                 drawSurfaceTangentSpaceVectors(suf, origin);

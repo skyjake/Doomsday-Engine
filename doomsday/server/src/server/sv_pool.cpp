@@ -464,20 +464,20 @@ void Sv_RegisterSide(dt_side_t *reg, uint number)
 {
     DENG_ASSERT(reg);
 
-    SideDef *side = SIDE_PTR(number);
-    LineDef *line = side->line;
+    SideDef *sideDef = SIDE_PTR(number);
+    LineDef *line = sideDef->line;
 
-    reg->top.material    = side->top().material;
-    reg->middle.material = side->middle().material;
-    reg->bottom.material = side->bottom().material;
+    reg->top.material    = sideDef->top().material;
+    reg->middle.material = sideDef->middle().material;
+    reg->bottom.material = sideDef->bottom().material;
     reg->lineFlags       = (line ? line->flags() & 0xff : 0);
 
-    std::memcpy(reg->top.rgba,    side->top().rgba,    sizeof(reg->top.rgba));
-    std::memcpy(reg->middle.rgba, side->middle().rgba, sizeof(reg->middle.rgba));
-    std::memcpy(reg->bottom.rgba, side->bottom().rgba, sizeof(reg->bottom.rgba));
+    std::memcpy(reg->top.rgba,    sideDef->top().rgba,    sizeof(reg->top.rgba));
+    std::memcpy(reg->middle.rgba, sideDef->middle().rgba, sizeof(reg->middle.rgba));
+    std::memcpy(reg->bottom.rgba, sideDef->bottom().rgba, sizeof(reg->bottom.rgba));
 
-    reg->middle.blendMode = side->middle().blendMode; // only middle supports blendmode.
-    reg->flags           = side->flags & 0xff;
+    reg->middle.blendMode = sideDef->middle().blendMode; // only middle supports blendmode.
+    reg->flags           = sideDef->flags & 0xff;
 }
 
 /**
@@ -1526,7 +1526,7 @@ coord_t Sv_MobjDistance(const mobj_t* mo, const ownerinfo_t* info, boolean isRea
  */
 coord_t Sv_SectorDistance(int index, ownerinfo_t const *info)
 {
-    Sector *sector = SECTOR_PTR(index);
+    Sector const *sector = SECTOR_PTR(index);
 
     return M_ApproxDistance3(info->origin[VX] - sector->soundEmitter().origin[VX],
                              info->origin[VY] - sector->soundEmitter().origin[VY],
@@ -1535,15 +1535,15 @@ coord_t Sv_SectorDistance(int index, ownerinfo_t const *info)
 
 coord_t Sv_SideDistance(int index, int deltaFlags, ownerinfo_t const *info)
 {
-    SideDef *side = SIDE_PTR(index);
+    SideDef const *sideDef = SIDE_PTR(index);
 
-    ddmobj_base_t *base = (deltaFlags & SNDDF_SIDE_MIDDLE? &side->middle().soundEmitter()
-                         : deltaFlags & SNDDF_SIDE_TOP?    &side->top().soundEmitter()
-                                                         : &side->bottom().soundEmitter());
+    ddmobj_base_t const &emitter = (deltaFlags & SNDDF_SIDE_MIDDLE? sideDef->middle().soundEmitter()
+                                     : deltaFlags & SNDDF_SIDE_TOP? sideDef->top().soundEmitter()
+                                                                  : sideDef->bottom().soundEmitter());
 
-    return M_ApproxDistance3(info->origin[VX]  - base->origin[VX],
-                             info->origin[VY]  - base->origin[VY],
-                             (info->origin[VZ] - base->origin[VZ]) * 1.2);
+    return M_ApproxDistance3(info->origin[VX]  - emitter.origin[VX],
+                             info->origin[VY]  - emitter.origin[VY],
+                             (info->origin[VZ] - emitter.origin[VZ]) * 1.2);
 }
 
 /**
@@ -2365,18 +2365,18 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
 
             DENG2_ASSERT(emitter == 0); // surface sound emitter rather than a real mobj
 
-            SideDef *side = sourceSurface->owner().castTo<SideDef>();
+            SideDef *sideDef = sourceSurface->owner().castTo<SideDef>();
 
             // Clients need to know which emitter to use.
-            if(&side->middle() == sourceSurface)
+            if(&sideDef->middle() == sourceSurface)
             {
                 df |= SNDDF_SIDE_MIDDLE;
             }
-            else if(&side->bottom() == sourceSurface)
+            else if(&sideDef->bottom() == sourceSurface)
             {
                 df |= SNDDF_SIDE_BOTTOM;
             }
-            else if(&side->top() == sourceSurface)
+            else if(&sideDef->top() == sourceSurface)
             {
                 df |= SNDDF_SIDE_TOP;
             }
@@ -2386,7 +2386,7 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
                 DENG2_ASSERT(false);
             }
 
-            id = GameMap_SideDefIndex(theMap, side);
+            id = GameMap_SideDefIndex(theMap, sideDef);
             break; }
 
         default:

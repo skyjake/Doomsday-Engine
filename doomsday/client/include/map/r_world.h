@@ -172,7 +172,7 @@ void            R_InterpolateSurfaceScroll(boolean resetNextViewer);
 
 boolean R_UpdateSector(Sector *sec, boolean forceUpdate);
 boolean R_UpdateLinedef(LineDef *line, boolean forceUpdate);
-boolean R_UpdateSidedef(SideDef *side, boolean forceUpdate);
+boolean R_UpdateSidedef(SideDef *sideDef, boolean forceUpdate);
 boolean R_UpdatePlane(Plane *pln, boolean forceUpdate);
 boolean R_UpdateSurface(Surface *suf, boolean forceUpdate);
 

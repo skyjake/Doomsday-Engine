@@ -54,31 +54,31 @@ struct HEdgeInfo
     coord_t pPerp;
     slopetype_t pSlopeType;
 
-    HEdge* nextOnSide;
-    HEdge* prevOnSide;
+    HEdge *nextOnSide;
+    HEdge *prevOnSide;
 
     // The superblock that contains this half-edge, or NULL if the half-edge
     // is no longer in any superblock (e.g. now in a leaf).
-    class SuperBlock* bmapBlock;
+    class SuperBlock *bmapBlock;
 
-    /// Linedef this half-edge initially comes from else @c NULL if a "mini-edge".
-    LineDef* lineDef;
+    /// Line this half-edge initially comes from else @c NULL if a "mini-edge".
+    LineDef *line;
 
-    // Linedef that this half-edge initially comes from.
+    // Line that this half-edge initially comes from.
     // For "real" half-edges, this is just the same as the 'linedef' field
-    // above. For "miniedges", this is the linedef of the partition line.
-    LineDef* sourceLineDef;
+    // above. For "miniedges", this is the line of the partition.
+    LineDef *sourceLine;
 
     HEdgeInfo()
         : pLength(0), pAngle(0), pPara(0), pPerp(0), pSlopeType(ST_VERTICAL),
-          nextOnSide(0), prevOnSide(0), bmapBlock(0), sourceLineDef(0)
+          nextOnSide(0), prevOnSide(0), bmapBlock(0), sourceLine(0)
     {
         V2d_Set(start, 0, 0);
         V2d_Set(end, 0, 0);
         V2d_Set(direction, 0, 0);
     }
 
-    HEdgeInfo& initFromHEdge(HEdge const& hedge)
+    HEdgeInfo &initFromHEdge(HEdge const &hedge)
     {
         V2d_Copy(start, hedge.v[0]->origin());
         V2d_Copy(end,   hedge.v[1]->origin());

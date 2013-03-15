@@ -629,15 +629,15 @@ typedef enum intercepttype_e {
 } intercepttype_t;
 
 typedef struct intercept_s {
-    float           distance; // Along trace vector as a fraction.
+    float distance; ///< Along trace vector as a fraction.
     intercepttype_t type;
     union {
-        struct mobj_s* mobj;
-        LineDef* lineDef;
+        struct mobj_s *mobj;
+        LineDef *line;
     } d;
 } intercept_t;
 
-typedef int (*traverser_t) (const intercept_t* intercept, void* paramaters);
+typedef int (*traverser_t) (intercept_t const *intercept, void *parameters);
 
 /**
  * A simple POD data structure for representing line trace openings.

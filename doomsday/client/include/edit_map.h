@@ -1,4 +1,4 @@
-/** @file
+/** @file edit_map.h: Runtime map editing.
  *
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -16,12 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * edit_map.h: Runtime map building.
- */
-
-#ifndef __DOOMSDAY_MAP_EDITOR_H__
-#define __DOOMSDAY_MAP_EDITOR_H__
+#ifndef LIBDENG_MAP_EDITOR_H
+#define LIBDENG_MAP_EDITOR_H
 
 #ifndef __cplusplus
 #  error "edit_map.h requires C++"
@@ -39,8 +35,8 @@ public:
     typedef std::vector<Vertex *> Vertices;
     Vertices vertexes; // really needs to be std::vector? (not a MapElementList?)
 
-    typedef std::vector<LineDef *> LineDefs;
-    LineDefs lineDefs;
+    typedef std::vector<LineDef *> Lines;
+    Lines lines;
 
     typedef std::vector<SideDef *> SideDefs;
     SideDefs sideDefs;
@@ -49,7 +45,7 @@ public:
     Sectors sectors;
 
     uint numPolyObjs;
-    Polyobj** polyObjs;
+    Polyobj **polyObjs;
 
     // Game-specific map entity property values.
     EntityDatabase* entityDatabase;
@@ -73,9 +69,9 @@ public:
 #define PRUNE_SECTORS       0x8
 #define PRUNE_ALL           (PRUNE_LINEDEFS|PRUNE_VERTEXES|PRUNE_SIDEDEFS|PRUNE_SECTORS)
 
-void            MPE_PruneRedundantMapData(EditMap* map, int flags);
+void MPE_PruneRedundantMapData(EditMap *map, int flags);
 
-GameMap*        MPE_GetLastBuiltMap(void);
-boolean         MPE_GetLastBuiltMapResult(void);
+GameMap *MPE_GetLastBuiltMap();
+boolean MPE_GetLastBuiltMapResult();
 
-#endif
+#endif // LIBDENG_MAP_EDITOR_H

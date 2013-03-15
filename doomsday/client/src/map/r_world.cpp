@@ -975,11 +975,11 @@ void R_MapInitSurfaceLists()
 
     for(uint i = 0; i < NUM_SIDEDEFS; ++i)
     {
-        SideDef *side = SIDE_PTR(i);
+        SideDef *sideDef = SIDE_PTR(i);
 
-        addToSurfaceSets(&side->middle(), side->middle().material);
-        addToSurfaceSets(&side->top(),    side->top().material);
-        addToSurfaceSets(&side->bottom(), side->bottom().material);
+        addToSurfaceSets(&sideDef->middle(), sideDef->middle().material);
+        addToSurfaceSets(&sideDef->top(),    sideDef->top().material);
+        addToSurfaceSets(&sideDef->bottom(), sideDef->bottom().material);
     }
 
     for(uint i = 0; i < NUM_SECTORS; ++i)
@@ -1429,7 +1429,7 @@ boolean R_UpdatePlane(Plane *pln, boolean forceUpdate)
                 HEdge *hedge = base;
                 do
                 {
-                    if(hedge->lineDef)
+                    if(hedge->line)
                     {
                         for(uint i = 0; i < 3; ++i)
                         {
@@ -1505,14 +1505,14 @@ boolean R_UpdateLinedef(LineDef *line, boolean forceUpdate)
     return false; // Not changed.
 }
 
-boolean R_UpdateSidedef(SideDef *side, boolean forceUpdate)
+boolean R_UpdateSidedef(SideDef *sideDef, boolean forceUpdate)
 {
     // Stub.
-    DENG_UNUSED(side); DENG_UNUSED(forceUpdate);
+    DENG_UNUSED(sideDef); DENG_UNUSED(forceUpdate);
     return false; // Not changed.
 }
 
-boolean R_UpdateSurface(Surface* suf, boolean forceUpdate)
+boolean R_UpdateSurface(Surface *suf, boolean forceUpdate)
 {
     // Stub.
     DENG_UNUSED(suf); DENG_UNUSED(forceUpdate);

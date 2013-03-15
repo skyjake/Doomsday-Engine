@@ -2255,7 +2255,7 @@ DENG_EXTERN_C void P_MobjLink(mobj_t* mo, byte flags);
 DENG_EXTERN_C int P_MobjUnlink(mobj_t* mo);
 DENG_EXTERN_C int P_MobjLinesIterator(mobj_t* mo, int (*callback) (LineDef*, void*), void* parameters);
 DENG_EXTERN_C int P_MobjSectorsIterator(mobj_t* mo, int (*callback) (Sector*, void*), void* parameters);
-DENG_EXTERN_C int P_LineMobjsIterator(LineDef* lineDef, int (*callback) (mobj_t*, void*), void* parameters);
+DENG_EXTERN_C int P_LineMobjsIterator(LineDef *line, int (*callback) (mobj_t *, void *), void *parameters);
 DENG_EXTERN_C int P_SectorTouchingMobjsIterator(Sector* sector, int (*callback) (mobj_t*, void*), void *parameters);
 DENG_EXTERN_C BspLeaf* P_BspLeafAtPointXY(coord_t x, coord_t y);
 DENG_EXTERN_C BspLeaf* P_BspLeafAtPoint(coord_t const point[2]);
