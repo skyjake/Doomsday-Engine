@@ -90,6 +90,7 @@ DENG2_PIMPL_NOREF(LogBuffer)
 
     ~Instance()
     {
+        if(autoFlushTimer) autoFlushTimer->stop();
         delete fileLogSink;
     }
 
