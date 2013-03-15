@@ -72,7 +72,7 @@ Surface &SideDef::surface(int surface)
     case SS_BOTTOM: return _bottomSurface;
     case SS_TOP:    return _topSurface;
     }
-    /// @throw InvalidSectionError The given surface section reference is not valid.
+    /// @throw InvalidSectionError The given surface section identifier is not valid.
     throw InvalidSectionError("SideDef::surface", QString("Invalid section %1").arg(surface));
 }
 

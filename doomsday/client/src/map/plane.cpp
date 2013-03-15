@@ -50,16 +50,16 @@ DENG2_PIMPL(Plane)
         foreach(LineDef *line, self._sector->lines())
         {
             SideDef &frontSideDef = line->frontSideDef();
-            frontSideDef.SW_surface(SS_MIDDLE).update();
-            frontSideDef.SW_surface(SS_BOTTOM).update();
-            frontSideDef.SW_surface(SS_TOP).update();
+            frontSideDef.surface(SS_MIDDLE).update();
+            frontSideDef.surface(SS_BOTTOM).update();
+            frontSideDef.surface(SS_TOP).update();
 
             if(line->hasBackSideDef())
             {
                 SideDef &backSideDef = line->backSideDef();
-                backSideDef.SW_surface(SS_MIDDLE).update();
-                backSideDef.SW_surface(SS_BOTTOM).update();
-                backSideDef.SW_surface(SS_TOP).update();
+                backSideDef.surface(SS_MIDDLE).update();
+                backSideDef.surface(SS_BOTTOM).update();
+                backSideDef.surface(SS_TOP).update();
             }
         }
     }

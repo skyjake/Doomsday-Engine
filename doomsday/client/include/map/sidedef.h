@@ -29,61 +29,6 @@
 
 class LineDef;
 
-/*
- * Helper macros for accessing sidedef surface data elements:
- */
-/// @addtogroup map
-///@{
-#define SW_surface(n)           surface(n)
-#define SW_surfaceflags(n)      SW_surface(n).flags
-#define SW_surfaceinflags(n)    SW_surface(n).inFlags
-#define SW_surfacematerial(n)   SW_surface(n).material
-#define SW_surfacetangent(n)    SW_surface(n).tangent
-#define SW_surfacebitangent(n)  SW_surface(n).bitangent
-#define SW_surfacenormal(n)     SW_surface(n).normal
-#define SW_surfaceoffset(n)     SW_surface(n).offset
-#define SW_surfacevisoffset(n)  SW_surface(n).visOffset
-#define SW_surfacergba(n)       SW_surface(n).rgba
-#define SW_surfaceblendmode(n)  SW_surface(n).blendMode
-
-#define SW_middlesurface        SW_surface(SS_MIDDLE)
-#define SW_middleflags          SW_surfaceflags(SS_MIDDLE)
-#define SW_middleinflags        SW_surfaceinflags(SS_MIDDLE)
-#define SW_middlematerial       SW_surfacematerial(SS_MIDDLE)
-#define SW_middletangent        SW_surfacetangent(SS_MIDDLE)
-#define SW_middlebitangent      SW_surfacebitangent(SS_MIDDLE)
-#define SW_middlenormal         SW_surfacenormal(SS_MIDDLE)
-#define SW_middletexmove        SW_surfacetexmove(SS_MIDDLE)
-#define SW_middleoffset         SW_surfaceoffset(SS_MIDDLE)
-#define SW_middlevisoffset      SW_surfacevisoffset(SS_MIDDLE)
-#define SW_middlergba           SW_surfacergba(SS_MIDDLE)
-#define SW_middleblendmode      SW_surfaceblendmode(SS_MIDDLE)
-
-#define SW_topsurface           SW_surface(SS_TOP)
-#define SW_topflags             SW_surfaceflags(SS_TOP)
-#define SW_topinflags           SW_surfaceinflags(SS_TOP)
-#define SW_topmaterial          SW_surfacematerial(SS_TOP)
-#define SW_toptangent           SW_surfacetangent(SS_TOP)
-#define SW_topbitangent         SW_surfacebitangent(SS_TOP)
-#define SW_topnormal            SW_surfacenormal(SS_TOP)
-#define SW_toptexmove           SW_surfacetexmove(SS_TOP)
-#define SW_topoffset            SW_surfaceoffset(SS_TOP)
-#define SW_topvisoffset         SW_surfacevisoffset(SS_TOP)
-#define SW_toprgba              SW_surfacergba(SS_TOP)
-
-#define SW_bottomsurface        SW_surface(SS_BOTTOM)
-#define SW_bottomflags          SW_surfaceflags(SS_BOTTOM)
-#define SW_bottominflags        SW_surfaceinflags(SS_BOTTOM)
-#define SW_bottommaterial       SW_surfacematerial(SS_BOTTOM)
-#define SW_bottomtangent        SW_surfacetangent(SS_BOTTOM)
-#define SW_bottombitangent      SW_surfacebitangent(SS_BOTTOM)
-#define SW_bottomnormal         SW_surfacenormal(SS_BOTTOM)
-#define SW_bottomtexmove        SW_surfacetexmove(SS_BOTTOM)
-#define SW_bottomoffset         SW_surfaceoffset(SS_BOTTOM)
-#define SW_bottomvisoffset      SW_surfacevisoffset(SS_BOTTOM)
-#define SW_bottomrgba           SW_surfacergba(SS_BOTTOM)
-///@}
-
 /**
  * FakeRadio shadow data.
  * @ingroup map
@@ -126,7 +71,7 @@ struct msidedef_t
 class SideDef : public de::MapElement
 {
 public:
-    /// The given surface section reference is invalid. @ingroup errors
+    /// The given surface section identifier is invalid. @ingroup errors
     DENG2_ERROR(InvalidSectionError);
 
     /// The referenced property does not exist. @ingroup errors

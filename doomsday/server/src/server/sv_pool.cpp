@@ -467,16 +467,16 @@ void Sv_RegisterSide(dt_side_t *reg, uint number)
     SideDef *side = SIDE_PTR(number);
     LineDef *line = side->line;
 
-    reg->top.material    = side->SW_topmaterial;
-    reg->middle.material = side->SW_middlematerial;
-    reg->bottom.material = side->SW_bottommaterial;
+    reg->top.material    = side->top().material;
+    reg->middle.material = side->middle().material;
+    reg->bottom.material = side->bottom().material;
     reg->lineFlags       = (line ? line->flags() & 0xff : 0);
 
-    std::memcpy(reg->top.rgba,    side->SW_toprgba,    sizeof(reg->top.rgba));
-    std::memcpy(reg->middle.rgba, side->SW_middlergba, sizeof(reg->middle.rgba));
-    std::memcpy(reg->bottom.rgba, side->SW_bottomrgba, sizeof(reg->bottom.rgba));
+    std::memcpy(reg->top.rgba,    side->top().rgba,    sizeof(reg->top.rgba));
+    std::memcpy(reg->middle.rgba, side->middle().rgba, sizeof(reg->middle.rgba));
+    std::memcpy(reg->bottom.rgba, side->bottom().rgba, sizeof(reg->bottom.rgba));
 
-    reg->middle.blendMode = side->SW_middleblendmode; // only middle supports blendmode.
+    reg->middle.blendMode = side->middle().blendMode; // only middle supports blendmode.
     reg->flags           = side->flags & 0xff;
 }
 
@@ -756,28 +756,28 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number,
     byte sideFlags = s->flags & 0xff;
     int df = 0;
 
-    if(r->top.material != s->SW_topmaterial &&
-       !(s->SW_topinflags & SUIF_FIX_MISSING_MATERIAL))
+    if(r->top.material != s->top().material &&
+       !(s->top().inFlags & SUIF_FIX_MISSING_MATERIAL))
     {
         df |= SIDF_TOP_MATERIAL;
         if(doUpdate)
-            r->top.material = s->SW_topmaterial;
+            r->top.material = s->top().material;
     }
 
-    if(r->middle.material != s->SW_middlematerial &&
-       !(s->SW_middleinflags & SUIF_FIX_MISSING_MATERIAL))
+    if(r->middle.material != s->middle().material &&
+       !(s->middle().inFlags & SUIF_FIX_MISSING_MATERIAL))
     {
         df |= SIDF_MID_MATERIAL;
         if(doUpdate)
-            r->middle.material = s->SW_middlematerial;
+            r->middle.material = s->middle().material;
     }
 
-    if(r->bottom.material != s->SW_bottommaterial &&
-       !(s->SW_bottominflags & SUIF_FIX_MISSING_MATERIAL))
+    if(r->bottom.material != s->bottom().material &&
+       !(s->bottom().inFlags & SUIF_FIX_MISSING_MATERIAL))
     {
         df |= SIDF_BOTTOM_MATERIAL;
         if(doUpdate)
-            r->bottom.material = s->SW_bottommaterial;
+            r->bottom.material = s->bottom().material;
     }
 
     if(r->lineFlags != lineFlags)
@@ -787,81 +787,81 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number,
             r->lineFlags = lineFlags;
     }
 
-    if(r->top.rgba[0] != s->SW_toprgba[0])
+    if(r->top.rgba[0] != s->top().rgba[0])
     {
         df |= SIDF_TOP_COLOR_RED;
         if(doUpdate)
-            r->top.rgba[0] = s->SW_toprgba[0];
+            r->top.rgba[0] = s->top().rgba[0];
     }
 
-    if(r->top.rgba[1] != s->SW_toprgba[1])
+    if(r->top.rgba[1] != s->top().rgba[1])
     {
         df |= SIDF_TOP_COLOR_GREEN;
         if(doUpdate)
-            r->top.rgba[1] = s->SW_toprgba[1];
+            r->top.rgba[1] = s->top().rgba[1];
     }
 
-    if(r->top.rgba[2] != s->SW_toprgba[2])
+    if(r->top.rgba[2] != s->top().rgba[2])
     {
         df |= SIDF_TOP_COLOR_BLUE;
         if(doUpdate)
-            r->top.rgba[3] = s->SW_toprgba[3];
+            r->top.rgba[3] = s->top().rgba[3];
     }
 
-    if(r->middle.rgba[0] != s->SW_middlergba[0])
+    if(r->middle.rgba[0] != s->middle().rgba[0])
     {
         df |= SIDF_MID_COLOR_RED;
         if(doUpdate)
-            r->middle.rgba[0] = s->SW_middlergba[0];
+            r->middle.rgba[0] = s->middle().rgba[0];
     }
 
-    if(r->middle.rgba[1] != s->SW_middlergba[1])
+    if(r->middle.rgba[1] != s->middle().rgba[1])
     {
         df |= SIDF_MID_COLOR_GREEN;
         if(doUpdate)
-            r->middle.rgba[1] = s->SW_middlergba[1];
+            r->middle.rgba[1] = s->middle().rgba[1];
     }
 
-    if(r->middle.rgba[2] != s->SW_middlergba[2])
+    if(r->middle.rgba[2] != s->middle().rgba[2])
     {
         df |= SIDF_MID_COLOR_BLUE;
         if(doUpdate)
-            r->middle.rgba[3] = s->SW_middlergba[3];
+            r->middle.rgba[3] = s->middle().rgba[3];
     }
 
-    if(r->middle.rgba[3] != s->SW_middlergba[3])
+    if(r->middle.rgba[3] != s->middle().rgba[3])
     {
         df |= SIDF_MID_COLOR_ALPHA;
         if(doUpdate)
-            r->middle.rgba[3] = s->SW_middlergba[3];
+            r->middle.rgba[3] = s->middle().rgba[3];
     }
 
-    if(r->bottom.rgba[0] != s->SW_bottomrgba[0])
+    if(r->bottom.rgba[0] != s->bottom().rgba[0])
     {
         df |= SIDF_BOTTOM_COLOR_RED;
         if(doUpdate)
-            r->bottom.rgba[0] = s->SW_bottomrgba[0];
+            r->bottom.rgba[0] = s->bottom().rgba[0];
     }
 
-    if(r->bottom.rgba[1] != s->SW_bottomrgba[1])
+    if(r->bottom.rgba[1] != s->bottom().rgba[1])
     {
         df |= SIDF_BOTTOM_COLOR_GREEN;
         if(doUpdate)
-            r->bottom.rgba[1] = s->SW_bottomrgba[1];
+            r->bottom.rgba[1] = s->bottom().rgba[1];
     }
 
-    if(r->bottom.rgba[2] != s->SW_bottomrgba[2])
+    if(r->bottom.rgba[2] != s->bottom().rgba[2])
     {
         df |= SIDF_BOTTOM_COLOR_BLUE;
         if(doUpdate)
-            r->bottom.rgba[3] = s->SW_bottomrgba[3];
+            r->bottom.rgba[3] = s->bottom().rgba[3];
     }
 
-    if(r->middle.blendMode != s->SW_middleblendmode)
+    if(r->middle.blendMode != s->middle().blendMode)
     {
         df |= SIDF_MID_BLENDMODE;
         if(doUpdate)
-            r->middle.blendMode = s->SW_middleblendmode;
+            r->middle.blendMode = s->middle().blendMode;
     }
 
     if(r->flags != sideFlags)
@@ -1537,9 +1537,9 @@ coord_t Sv_SideDistance(int index, int deltaFlags, ownerinfo_t const *info)
 {
     SideDef *side = SIDE_PTR(index);
 
-    ddmobj_base_t *base = (deltaFlags & SNDDF_SIDE_MIDDLE? &side->SW_middlesurface.soundEmitter()
-                         : deltaFlags & SNDDF_SIDE_TOP?    &side->SW_topsurface.soundEmitter()
-                                                         : &side->SW_bottomsurface.soundEmitter());
+    ddmobj_base_t *base = (deltaFlags & SNDDF_SIDE_MIDDLE? &side->middle().soundEmitter()
+                         : deltaFlags & SNDDF_SIDE_TOP?    &side->top().soundEmitter()
+                                                         : &side->bottom().soundEmitter());
 
     return M_ApproxDistance3(info->origin[VX]  - base->origin[VX],
                              info->origin[VY]  - base->origin[VY],
@@ -2368,15 +2368,15 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
             SideDef *side = sourceSurface->owner().castTo<SideDef>();
 
             // Clients need to know which emitter to use.
-            if(&side->SW_middlesurface == sourceSurface)
+            if(&side->middle() == sourceSurface)
             {
                 df |= SNDDF_SIDE_MIDDLE;
             }
-            else if(&side->SW_bottomsurface == sourceSurface)
+            else if(&side->bottom() == sourceSurface)
             {
                 df |= SNDDF_SIDE_BOTTOM;
             }
-            else if(&side->SW_topsurface == sourceSurface)
+            else if(&side->top() == sourceSurface)
             {
                 df |= SNDDF_SIDE_TOP;
             }

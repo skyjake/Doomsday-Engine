@@ -785,42 +785,42 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
 
     if(df & SIDF_TOP_MATERIAL)
     {
-        side->SW_topsurface.setMaterial(Cl_FindLocalMaterial(topMat));
+        side->top().setMaterial(Cl_FindLocalMaterial(topMat));
     }
     if(df & SIDF_MID_MATERIAL)
     {
-        side->SW_middlesurface.setMaterial(Cl_FindLocalMaterial(midMat));
+        side->middle().setMaterial(Cl_FindLocalMaterial(midMat));
     }
     if(df & SIDF_BOTTOM_MATERIAL)
     {
-        side->SW_bottomsurface.setMaterial(Cl_FindLocalMaterial(botMat));
+        side->bottom().setMaterial(Cl_FindLocalMaterial(botMat));
     }
 
     if(df & SIDF_TOP_COLOR_RED)
-        side->SW_topsurface.setColorRed(toprgb[CR]);
+        side->top().setColorRed(toprgb[CR]);
     if(df & SIDF_TOP_COLOR_GREEN)
-        side->SW_topsurface.setColorGreen(toprgb[CG]);
+        side->top().setColorGreen(toprgb[CG]);
     if(df & SIDF_TOP_COLOR_BLUE)
-        side->SW_topsurface.setColorBlue(toprgb[CB]);
+        side->top().setColorBlue(toprgb[CB]);
 
     if(df & SIDF_MID_COLOR_RED)
-        side->SW_middlesurface.setColorRed(midrgba[CR]);
+        side->middle().setColorRed(midrgba[CR]);
     if(df & SIDF_MID_COLOR_GREEN)
-        side->SW_middlesurface.setColorGreen(midrgba[CG]);
+        side->middle().setColorGreen(midrgba[CG]);
     if(df & SIDF_MID_COLOR_BLUE)
-        side->SW_middlesurface.setColorBlue(midrgba[CB]);
+        side->middle().setColorBlue(midrgba[CB]);
     if(df & SIDF_MID_COLOR_ALPHA)
-        side->SW_middlesurface.setAlpha(midrgba[CA]);
+        side->middle().setAlpha(midrgba[CA]);
 
     if(df & SIDF_BOTTOM_COLOR_RED)
-        side->SW_bottomsurface.setColorRed(bottomrgb[CR]);
+        side->bottom().setColorRed(bottomrgb[CR]);
     if(df & SIDF_BOTTOM_COLOR_GREEN)
-        side->SW_bottomsurface.setColorGreen(bottomrgb[CG]);
+        side->bottom().setColorGreen(bottomrgb[CG]);
     if(df & SIDF_BOTTOM_COLOR_BLUE)
-        side->SW_bottomsurface.setColorBlue(bottomrgb[CB]);
+        side->bottom().setColorBlue(bottomrgb[CB]);
 
     if(df & SIDF_MID_BLENDMODE)
-        side->SW_middlesurface.setBlendMode(blendmode_t(blendmode));
+        side->middle().setBlendMode(blendmode_t(blendmode));
 
     if(df & SIDF_FLAGS)
     {

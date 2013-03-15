@@ -271,17 +271,17 @@ Surface *GameMap_SurfaceBySoundEmitter(GameMap *map, void const *soundEmitter)
     {
         SideDef *side = &map->sideDefs[i];
 
-        if(soundEmitter == &side->SW_middlesurface.soundEmitter())
+        if(soundEmitter == &side->middle().soundEmitter())
         {
-            return &side->SW_middlesurface;
+            return &side->middle();
         }
-        if(soundEmitter == &side->SW_bottomsurface.soundEmitter())
+        if(soundEmitter == &side->bottom().soundEmitter())
         {
-            return &side->SW_bottomsurface;
+            return &side->bottom();
         }
-        if(soundEmitter == &side->SW_topsurface.soundEmitter())
+        if(soundEmitter == &side->top().soundEmitter())
         {
-            return &side->SW_topsurface;
+            return &side->top();
         }
     }
 
@@ -428,17 +428,17 @@ static void initPolyobj(Polyobj *po)
         LineDef *line = *lineIter;
         SideDef &frontDef = line->frontSideDef();
 
-        frontDef.SW_topinflags |= SUIF_NO_RADIO;
-        frontDef.SW_middleinflags |= SUIF_NO_RADIO;
-        frontDef.SW_bottominflags |= SUIF_NO_RADIO;
+        frontDef.top().inFlags |= SUIF_NO_RADIO;
+        frontDef.middle().inFlags |= SUIF_NO_RADIO;
+        frontDef.bottom().inFlags |= SUIF_NO_RADIO;
 
         if(line->hasBackSideDef())
         {
             SideDef &backDef = line->backSideDef();
 
-            backDef.SW_topinflags |= SUIF_NO_RADIO;
-            backDef.SW_middleinflags |= SUIF_NO_RADIO;
-            backDef.SW_bottominflags |= SUIF_NO_RADIO;
+            backDef.top().inFlags |= SUIF_NO_RADIO;
+            backDef.middle().inFlags |= SUIF_NO_RADIO;
+            backDef.bottom().inFlags |= SUIF_NO_RADIO;
         }
 
         V2d_Sum(avg, avg, line->v1Origin());

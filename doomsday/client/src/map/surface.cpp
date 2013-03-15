@@ -341,7 +341,7 @@ void Surface::updateSoundEmitterOrigin()
             coord_t const ffloor = sec->floor().height();
             coord_t const fceil  = sec->ceiling().height();
 
-            if(this == &side->SW_middlesurface)
+            if(this == &side->middle())
             {
                 if(!line->hasBackSideDef() || line->isSelfReferencing())
                     _soundEmitter.origin[VZ] = (ffloor + fceil) / 2;
@@ -350,7 +350,7 @@ void Surface::updateSoundEmitterOrigin()
                                                 de::min(fceil,  line->backSector().ceiling().height())) / 2;
                 break;
             }
-            else if(this == &side->SW_bottomsurface)
+            else if(this == &side->bottom())
             {
                 if(!line->hasBackSideDef() || line->isSelfReferencing() ||
                    line->backSector().floor().height() <= ffloor)
@@ -363,7 +363,7 @@ void Surface::updateSoundEmitterOrigin()
                 }
                 break;
             }
-            else if(this == &side->SW_topsurface)
+            else if(this == &side->top())
             {
                 if(!line->hasBackSideDef() || line->isSelfReferencing() ||
                    line->backSector().ceiling().height() >= fceil)

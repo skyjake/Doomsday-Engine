@@ -156,11 +156,11 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     if(type == DT_SIDE_SOUND)
     {
         if(flags & SNDDF_SIDE_MIDDLE)
-            emitter = (mobj_t *) &side->SW_middlesurface.soundEmitter();
+            emitter = (mobj_t *) &side->middle().soundEmitter();
         else if(flags & SNDDF_SIDE_TOP)
-            emitter = (mobj_t *) &side->SW_topsurface.soundEmitter();
+            emitter = (mobj_t *) &side->top().soundEmitter();
         else if(flags & SNDDF_SIDE_BOTTOM)
-            emitter = (mobj_t *) &side->SW_bottomsurface.soundEmitter();
+            emitter = (mobj_t *) &side->bottom().soundEmitter();
     }
 
     if(flags & SNDDF_VOLUME)

@@ -666,16 +666,16 @@ static void chainSectorSoundEmitters(GameMap *map)
             if(line->frontSectorPtr() == sec)
             {
                 SideDef &side = line->frontSideDef();
-                linkToSectorEmitterChain(sec, &side.SW_middlesurface.soundEmitter());
-                linkToSectorEmitterChain(sec, &side.SW_bottomsurface.soundEmitter());
-                linkToSectorEmitterChain(sec, &side.SW_topsurface.soundEmitter());
+                linkToSectorEmitterChain(sec, &side.middle().soundEmitter());
+                linkToSectorEmitterChain(sec, &side.bottom().soundEmitter());
+                linkToSectorEmitterChain(sec, &side.top().soundEmitter());
             }
             if(line->hasBackSideDef() && line->backSectorPtr() == sec)
             {
                 SideDef &side = line->backSideDef();
-                linkToSectorEmitterChain(sec, &side.SW_middlesurface.soundEmitter());
-                linkToSectorEmitterChain(sec, &side.SW_bottomsurface.soundEmitter());
-                linkToSectorEmitterChain(sec, &side.SW_topsurface.soundEmitter());
+                linkToSectorEmitterChain(sec, &side.middle().soundEmitter());
+                linkToSectorEmitterChain(sec, &side.bottom().soundEmitter());
+                linkToSectorEmitterChain(sec, &side.top().soundEmitter());
             }
         }
     }
@@ -1792,35 +1792,35 @@ static void assignSurfaceMaterial(Surface *suf, ddstring_t const *materialUriStr
     suf->setMaterial(material);
 }
 
-uint MPE_SidedefCreate(short flags, const ddstring_t* topMaterial,
+#undef MPE_SidedefCreate
+uint MPE_SidedefCreate(short flags, ddstring_t const *topMaterial,
     float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue,
-    const ddstring_t* middleMaterial, float middleOffsetX, float middleOffsetY, float middleRed,
-    float middleGreen, float middleBlue, float middleAlpha, const ddstring_t* bottomMaterial,
+    ddstring_t const *middleMaterial, float middleOffsetX, float middleOffsetY, float middleRed,
+    float middleGreen, float middleBlue, float middleAlpha, ddstring_t const *bottomMaterial,
     float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen,
     float bottomBlue)
 {
-    SideDef* s;
-
     if(!editMapInited) return 0;
 
-    s = createSide();
+    SideDef *s = createSide();
     s->flags = flags;
 
-    assignSurfaceMaterial(&s->SW_topsurface, topMaterial);
-    s->SW_topsurface.setMaterialOrigin(topOffsetX, topOffsetY);
-    s->SW_topsurface.setColorAndAlpha(topRed, topGreen, topBlue, 1);
+    assignSurfaceMaterial(&s->top(), topMaterial);
+    s->top().setMaterialOrigin(topOffsetX, topOffsetY);
+    s->top().setColorAndAlpha(topRed, topGreen, topBlue, 1);
 
-    assignSurfaceMaterial(&s->SW_middlesurface, middleMaterial);
-    s->SW_middlesurface.setMaterialOrigin(middleOffsetX, middleOffsetY);
-    s->SW_middlesurface.setColorAndAlpha(middleRed, middleGreen, middleBlue, middleAlpha);
+    assignSurfaceMaterial(&s->middle(), middleMaterial);
+    s->middle().setMaterialOrigin(middleOffsetX, middleOffsetY);
+    s->middle().setColorAndAlpha(middleRed, middleGreen, middleBlue, middleAlpha);
 
-    assignSurfaceMaterial(&s->SW_bottomsurface, bottomMaterial);
-    s->SW_bottomsurface.setMaterialOrigin(bottomOffsetX, bottomOffsetY);
-    s->SW_bottomsurface.setColorAndAlpha(bottomRed, bottomGreen, bottomBlue, 1);
+    assignSurfaceMaterial(&s->bottom(), bottomMaterial);
+    s->bottom().setMaterialOrigin(bottomOffsetX, bottomOffsetY);
+    s->bottom().setColorAndAlpha(bottomRed, bottomGreen, bottomBlue, 1);
 
     return s->buildData.index;
 }
 
+#undef MPE_LinedefCreate
 uint MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector,
     uint frontSide, uint backSide, int flags)
 {

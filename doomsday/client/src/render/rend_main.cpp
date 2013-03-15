@@ -385,18 +385,18 @@ static byte pvisibleLineSections(LineDef *line, int backSide)
         sections |= SSF_MIDDLE | SSF_BOTTOM | SSF_TOP;
 
         // Middle?
-        if(!sideDef.SW_middlematerial || !sideDef.SW_middlematerial->isDrawable() || sideDef.SW_middlergba[3] <= 0)
+        if(!sideDef.middle().material || !sideDef.middle().material->isDrawable() || sideDef.middle().rgba[3] <= 0)
             sections &= ~SSF_MIDDLE;
 
         // Top?
         if((!devRendSkyMode && fceil->surface().isSkyMasked() && bceil->surface().isSkyMasked()) ||
-           //(!devRendSkyMode && bceil->surface().isSkyMasked() && (sideDef.SW_topsurface.inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
+           //(!devRendSkyMode && bceil->surface().isSkyMasked() && (sideDef.top().inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
            (fceil->visHeight() <= bceil->visHeight()))
             sections &= ~SSF_TOP;
 
         // Bottom?
         if((!devRendSkyMode && ffloor->surface().isSkyMasked() && bfloor->surface().isSkyMasked()) ||
-           //(!devRendSkyMode && bfloor->surface().isSkyMasked() && (sideDef.SW_bottomsurface.inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
+           //(!devRendSkyMode && bfloor->surface().isSkyMasked() && (sideDef.bottom().inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
            (ffloor->visHeight() >= bfloor->visHeight()))
             sections &= ~SSF_BOTTOM;
     }
@@ -412,17 +412,17 @@ static void selectSurfaceColors(float const **topColor,
     case SS_MIDDLE:
         if(side->flags & SDF_BLENDMIDTOTOP)
         {
-            *topColor    = side->SW_toprgba;
-            *bottomColor = side->SW_middlergba;
+            *topColor    = side->top().rgba;
+            *bottomColor = side->middle().rgba;
         }
         else if(side->flags & SDF_BLENDMIDTOBOTTOM)
         {
-            *topColor    = side->SW_middlergba;
-            *bottomColor = side->SW_bottomrgba;
+            *topColor    = side->middle().rgba;
+            *bottomColor = side->bottom().rgba;
         }
         else
         {
-            *topColor    = side->SW_middlergba;
+            *topColor    = side->middle().rgba;
             *bottomColor = 0;
         }
         break;
@@ -430,12 +430,12 @@ static void selectSurfaceColors(float const **topColor,
     case SS_TOP:
         if(side->flags & SDF_BLENDTOPTOMID)
         {
-            *topColor    = side->SW_toprgba;
-            *bottomColor = side->SW_middlergba;
+            *topColor    = side->top().rgba;
+            *bottomColor = side->middle().rgba;
         }
         else
         {
-            *topColor    = side->SW_toprgba;
+            *topColor    = side->top().rgba;
             *bottomColor = 0;
         }
         break;
@@ -443,12 +443,12 @@ static void selectSurfaceColors(float const **topColor,
     case SS_BOTTOM:
         if(side->flags & SDF_BLENDBOTTOMTOMID)
         {
-            *topColor    = side->SW_middlergba;
-            *bottomColor = side->SW_bottomrgba;
+            *topColor    = side->middle().rgba;
+            *bottomColor = side->bottom().rgba;
         }
         else
         {
-            *topColor    = side->SW_bottomrgba;
+            *topColor    = side->bottom().rgba;
             *bottomColor = 0;
         }
         break;
@@ -457,9 +457,9 @@ static void selectSurfaceColors(float const **topColor,
     }
 }
 
-int RIT_FirstDynlightIterator(dynlight_t const *dyn, void *paramaters)
+int RIT_FirstDynlightIterator(dynlight_t const *dyn, void *parameters)
 {
-    dynlight_t const **ptr = (dynlight_t const **)paramaters;
+    dynlight_t const **ptr = (dynlight_t const **)parameters;
     *ptr = dyn;
     return 1; // Stop iteration.
 }
@@ -1538,7 +1538,7 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
     float const matOffset[2])
 {
     SideDef *frontSide = HEDGE_SIDEDEF(hedge);
-    Surface *surface = &frontSide->SW_surface(section);
+    Surface *surface = &frontSide->surface(section);
     boolean opaque = true;
     float alpha;
 
@@ -1685,7 +1685,7 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
                glowStrength < 1 && !(!useDynLights && !useWallGlow))
             {
                 lightListIdx = LO_ProjectToSurface(((section == SS_MIDDLE && isTwoSided)? PLF_SORT_LUMINOSITY_DESC : 0), currentBspLeaf, 1,
-                    texTL, texBR, HEDGE_SIDEDEF(hedge)->SW_middletangent, HEDGE_SIDEDEF(hedge)->SW_middlebitangent, HEDGE_SIDEDEF(hedge)->SW_middlenormal);
+                    texTL, texBR, HEDGE_SIDEDEF(hedge)->middle().tangent, HEDGE_SIDEDEF(hedge)->middle().bitangent, HEDGE_SIDEDEF(hedge)->middle().normal);
             }
 
             // Dynamic shadows?
@@ -1694,7 +1694,7 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
             {
                 // Glowing planes inversely diminish shadow strength.
                 shadowListIdx = R_ProjectShadowsToSurface(currentBspLeaf, 1 - glowStrength, texTL, texBR,
-                    HEDGE_SIDEDEF(hedge)->SW_middletangent, HEDGE_SIDEDEF(hedge)->SW_middlebitangent, HEDGE_SIDEDEF(hedge)->SW_middlenormal);
+                    HEDGE_SIDEDEF(hedge)->middle().tangent, HEDGE_SIDEDEF(hedge)->middle().bitangent, HEDGE_SIDEDEF(hedge)->middle().normal);
             }
 
             if(glowStrength > 0)
@@ -1812,8 +1812,8 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
     reportLineDrawn(*line);
 
     if(back->sectorPtr() == front->sectorPtr() &&
-       !front->sideDef().SW_topmaterial && !front->sideDef().SW_bottommaterial &&
-       !front->sideDef().SW_middlematerial)
+       !front->sideDef().top().material && !front->sideDef().bottom().material &&
+       !front->sideDef().middle().material)
        return false; // Ugh... an obvious wall hedge hack. Best take no chances...
 
     Plane *ffloor = &leaf->sector().floor();
@@ -1849,7 +1849,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
                                         &leftWallDivs, &rightWallDivs, matOffset);
             if(solidSeg)
             {
-                Surface &surface = front->sideDef().SW_middlesurface;
+                Surface &surface = front->sideDef().middle();
                 coord_t xbottom, xtop;
 
                 if(line->isSelfReferencing())
@@ -1921,9 +1921,9 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
         }
         else*/
              if(   (bceil->visHeight() <= ffloor->visHeight() &&
-                        (front->sideDef().SW_topmaterial    || front->sideDef().SW_middlematerial))
+                        (front->sideDef().top().material    || front->sideDef().middle().material))
                 || (bfloor->visHeight() >= fceil->visHeight() &&
-                        (front->sideDef().SW_bottommaterial || front->sideDef().SW_middlematerial)))
+                        (front->sideDef().bottom().material || front->sideDef().middle().material)))
         {
             // A closed gap?
             if(FEQUAL(fceil->visHeight(), bfloor->visHeight()))
@@ -1946,7 +1946,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
         /// @todo Is this still necessary?
         else if(bceil->visHeight() <= bfloor->visHeight() ||
                 (!(bceil->visHeight() - bfloor->visHeight() > 0) && bfloor->visHeight() > ffloor->visHeight() && bceil->visHeight() < fceil->visHeight() &&
-                front->sideDef().SW_topmaterial && front->sideDef().SW_bottommaterial))
+                front->sideDef().top().material && front->sideDef().bottom().material))
         {
             // A zero height back segment
             solidSeg = true;
@@ -2998,7 +2998,7 @@ void Rend_RenderSurfaceVectors()
         {
             bottom = hedge->sector->floor().visHeight();
             top = hedge->sector->ceiling().visHeight();
-            suf = &HEDGE_SIDEDEF(hedge)->SW_middlesurface;
+            suf = &HEDGE_SIDEDEF(hedge)->middle();
 
             V3f_Set(origin, x, y, bottom + (top - bottom) / 2);
             drawSurfaceTangentSpaceVectors(suf, origin);
@@ -3006,11 +3006,11 @@ void Rend_RenderSurfaceVectors()
         else
         {
             SideDef* side = HEDGE_SIDEDEF(hedge);
-            if(side->SW_middlesurface.material)
+            if(side->middle().material)
             {
                 top = hedge->sector->ceiling().visHeight();
                 bottom = hedge->sector->floor().visHeight();
-                suf = &side->SW_middlesurface;
+                suf = &side->middle();
 
                 V3f_Set(origin, x, y, bottom + (top - bottom) / 2);
                 drawSurfaceTangentSpaceVectors(suf, origin);
@@ -3023,7 +3023,7 @@ void Rend_RenderSurfaceVectors()
             {
                 bottom = backSec->ceiling().visHeight();
                 top = hedge->sector->ceiling().visHeight();
-                suf = &side->SW_topsurface;
+                suf = &side->top();
 
                 V3f_Set(origin, x, y, bottom + (top - bottom) / 2);
                 drawSurfaceTangentSpaceVectors(suf, origin);
@@ -3036,7 +3036,7 @@ void Rend_RenderSurfaceVectors()
             {
                 bottom = hedge->sector->floor().visHeight();
                 top = backSec->floor().visHeight();
-                suf = &side->SW_bottomsurface;
+                suf = &side->bottom();
 
                 V3f_Set(origin, x, y, bottom + (top - bottom) / 2);
                 drawSurfaceTangentSpaceVectors(suf, origin);
@@ -3079,7 +3079,7 @@ void Rend_RenderSurfaceVectors()
 
             V3f_Set(origin, (line->v2Origin()[VX] + line->v1Origin()[VX])/2,
                             (line->v2Origin()[VY] + line->v1Origin()[VY])/2, zPos);
-            drawSurfaceTangentSpaceVectors(&line->frontSideDef().SW_middlesurface, origin);
+            drawSurfaceTangentSpaceVectors(&line->frontSideDef().middle(), origin);
         }
     }
 
@@ -3123,13 +3123,13 @@ static int drawSideDefSoundOrigins(SideDef *sideDef, void *parameters)
     char buf[80];
 
     dd_snprintf(buf, 80, "Side #%i (middle)", idx);
-    drawSoundOrigin(sideDef->SW_middlesurface.soundEmitter().origin, buf, (coord_t const *) parameters);
+    drawSoundOrigin(sideDef->middle().soundEmitter().origin, buf, (coord_t const *) parameters);
 
     dd_snprintf(buf, 80, "Side #%i (bottom)", idx);
-    drawSoundOrigin(sideDef->SW_bottomsurface.soundEmitter().origin, buf, (coord_t const *) parameters);
+    drawSoundOrigin(sideDef->bottom().soundEmitter().origin, buf, (coord_t const *) parameters);
 
     dd_snprintf(buf, 80, "Side #%i (top)", idx);
-    drawSoundOrigin(sideDef->SW_topsurface.soundEmitter().origin, buf, (coord_t const *) parameters);
+    drawSoundOrigin(sideDef->top().soundEmitter().origin, buf, (coord_t const *) parameters);
     return false; // Continue iteration.
 }
 

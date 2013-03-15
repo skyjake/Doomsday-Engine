@@ -524,9 +524,9 @@ static void R_UpdateMap()
     {
         SideDef *side = GameMap_SideDef(theMap, i);
 
-        side->SW_topsurface.update();
-        side->SW_middlesurface.update();
-        side->SW_bottomsurface.update();
+        side->top().update();
+        side->middle().update();
+        side->bottom().update();
     }
 
     /// @todo Is this even necessary?
@@ -537,7 +537,7 @@ static void R_UpdateMap()
         for(LineDef **lineIter = po->lines; *lineIter; lineIter++)
         {
             LineDef *line = *lineIter;
-            line->frontSideDef().SW_middlesurface.update();
+            line->frontSideDef().middle().update();
         }
     }
 #endif
@@ -1379,14 +1379,14 @@ void Rend_CacheForMap()
         {
             SideDef *side = SIDE_PTR(i);
 
-            if(side->SW_middlematerial)
-                App_Materials().cache(*side->SW_middlematerial, spec);
+            if(side->middle().material)
+                App_Materials().cache(*side->middle().material, spec);
 
-            if(side->SW_topmaterial)
-                App_Materials().cache(*side->SW_topmaterial, spec);
+            if(side->top().material)
+                App_Materials().cache(*side->top().material, spec);
 
-            if(side->SW_bottommaterial)
-                App_Materials().cache(*side->SW_bottommaterial, spec);
+            if(side->bottom().material)
+                App_Materials().cache(*side->bottom().material, spec);
         }
 
         for(uint i = 0; i < NUM_SECTORS; ++i)

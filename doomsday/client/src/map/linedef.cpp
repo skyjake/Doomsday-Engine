@@ -528,17 +528,17 @@ int LineDef::setProperty(setargs_t const &args)
         if(hasFrontSideDef())
         {
             SideDef &frontDef = frontSideDef();
-            frontDef.SW_topsurface.update();
-            frontDef.SW_bottomsurface.update();
-            frontDef.SW_middlesurface.update();
+            frontDef.top().update();
+            frontDef.bottom().update();
+            frontDef.middle().update();
         }
 
         if(hasBackSideDef())
         {
             SideDef &backDef = backSideDef();
-            backDef.SW_topsurface.update();
-            backDef.SW_bottomsurface.update();
-            backDef.SW_middlesurface.update();
+            backDef.top().update();
+            backDef.bottom().update();
+            backDef.middle().update();
         }
         break; }
     default:

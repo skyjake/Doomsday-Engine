@@ -418,12 +418,12 @@ void GameMap_UpdateSkyFixForSector(GameMap *map, Sector *sec)
         int side = line->frontSectorPtr() == sec? FRONT : BACK;
         SideDef const &sideDef = line->sideDef(side);
 
-        if(!sideDef.SW_middlematerial)
+        if(!sideDef.middle().material)
             continue;
 
         if(skyCeil)
         {
-            float const top = sec->ceiling().visHeight() + sideDef.SW_middlevisoffset[VY];
+            float const top = sec->ceiling().visHeight() + sideDef.middle().visOffset[VY];
 
             if(top > map->skyFix[Plane::Ceiling].height)
             {
@@ -435,7 +435,7 @@ void GameMap_UpdateSkyFixForSector(GameMap *map, Sector *sec)
         if(skyFloor)
         {
             float const bottom = sec->floor().visHeight() +
-                sideDef.SW_middlevisoffset[VY] - sideDef.SW_middlematerial->height();
+                sideDef.middle().visOffset[VY] - sideDef.middle().material->height();
 
             if(bottom < map->skyFix[Plane::Floor].height)
             {
@@ -514,7 +514,7 @@ boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
 
         if(matOffset)
         {
-            Surface const &suf = frontDef->SW_middlesurface;
+            Surface const &suf = frontDef->middle();
             matOffset[0] = suf.visOffset[0];
             matOffset[1] = suf.visOffset[1];
             if(unpegBottom)
@@ -530,7 +530,7 @@ boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
         Plane const *fceil  = &frontSec->ceiling();
         Plane const *bfloor = &backSec->floor();
         Plane const *bceil  = &backSec->ceiling();
-        Surface const *suf = &frontDef->SW_surface(section);
+        Surface const *suf = &frontDef->surface(section);
 
         switch(section)
         {
@@ -725,13 +725,13 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector const *frontSec,
 {
     if(!frontSec || !frontDef) return false; // Never.
 
-    Material *material = frontDef->SW_middlematerial;
+    Material *material = frontDef->middle().material;
     if(!material) return false;
 
     // Ensure we have up to date info about the material.
     MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
 
-    if(ignoreOpacity || (ms.isOpaque() && !frontDef->SW_middleblendmode && frontDef->SW_middlergba[3] >= 1))
+    if(ignoreOpacity || (ms.isOpaque() && !frontDef->middle().blendMode && frontDef->middle().rgba[3] >= 1))
     {
         coord_t openRange, openBottom, openTop;
 
@@ -823,7 +823,7 @@ LineDef *R_FindSolidLineNeighbor(Sector const *sector, LineDef const *line,
         // Check for mid texture which fills the gap between floor and ceiling.
         // We should not give away the location of false walls (secrets).
         side = (other->frontSectorPtr() == sector? 0 : 1);
-        if(other->sideDef(side).SW_middlematerial)
+        if(other->sideDef(side).middle().material)
         {
             float oFCeil  = other->frontSector().ceiling().visHeight();
             float oFFloor = other->frontSector().floor().visHeight();
@@ -943,9 +943,9 @@ void R_MapInitSurfaces(boolean forceUpdate)
     {
         SideDef *si = SIDE_PTR(i);
 
-        initSurfaceMaterialOffset(&si->SW_topsurface);
-        initSurfaceMaterialOffset(&si->SW_middlesurface);
-        initSurfaceMaterialOffset(&si->SW_bottomsurface);
+        initSurfaceMaterialOffset(&si->top());
+        initSurfaceMaterialOffset(&si->middle());
+        initSurfaceMaterialOffset(&si->bottom());
     }
 }
 
@@ -977,9 +977,9 @@ void R_MapInitSurfaceLists()
     {
         SideDef *side = SIDE_PTR(i);
 
-        addToSurfaceSets(&side->SW_middlesurface, side->SW_middlematerial);
-        addToSurfaceSets(&side->SW_topsurface,    side->SW_topmaterial);
-        addToSurfaceSets(&side->SW_bottomsurface, side->SW_bottommaterial);
+        addToSurfaceSets(&side->middle(), side->middle().material);
+        addToSurfaceSets(&side->top(),    side->top().material);
+        addToSurfaceSets(&side->bottom(), side->bottom().material);
     }
 
     for(uint i = 0; i < NUM_SECTORS; ++i)
@@ -991,8 +991,7 @@ void R_MapInitSurfaceLists()
 
         foreach(Plane *plane, sec->planes())
         {
-            Surface &surface = plane->surface();
-            addToSurfaceSets(&surface, surface.material);
+            addToSurfaceSets(&plane->surface(), plane->surface().material);
         }
     }
 
@@ -1261,7 +1260,7 @@ static Material *chooseFixMaterial(SideDef *s, SideDefSection section)
             if(!other->hasBackSideDef())
             {
                 // Our choice is clear - the middle material.
-                choice1 = other->frontSideDef().SW_middlematerial;
+                choice1 = other->frontSideDef().middle().material;
             }
             else
             {
@@ -1270,13 +1269,13 @@ static Material *chooseFixMaterial(SideDef *s, SideDefSection section)
                 Sector &otherSec   = other->sector(&other->frontSector() == frontSec? BACK  : FRONT);
 
                 if(otherSec.ceiling().height() <= frontSec->floor().height())
-                    choice1 = otherSide.SW_topmaterial;
+                    choice1 = otherSide.top().material;
                 else if(otherSec.floor().height() >= frontSec->ceiling().height())
-                    choice1 = otherSide.SW_bottommaterial;
+                    choice1 = otherSide.bottom().material;
                 else if(otherSec.ceiling().height() < frontSec->ceiling().height())
-                    choice1 = otherSide.SW_topmaterial;
+                    choice1 = otherSide.top().material;
                 else if(otherSec.floor().height() > frontSec->floor().height())
-                    choice1 = otherSide.SW_bottommaterial;
+                    choice1 = otherSide.bottom().material;
                 // else we'll settle for a plane material.
             }
         }

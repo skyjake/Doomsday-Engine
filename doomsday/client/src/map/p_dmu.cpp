@@ -904,17 +904,17 @@ static int setProperty(void *ptr, void *context)
 
         if(args->modifiers & DMU_TOP_OF_SIDEDEF)
         {
-            elem = &updateSidedef->SW_topsurface;
+            elem = &updateSidedef->top();
             args->type = DMU_SURFACE;
         }
         else if(args->modifiers & DMU_MIDDLE_OF_SIDEDEF)
         {
-            elem = &updateSidedef->SW_middlesurface;
+            elem = &updateSidedef->middle();
             args->type = DMU_SURFACE;
         }
         else if(args->modifiers & DMU_BOTTOM_OF_SIDEDEF)
         {
-            elem = &updateSidedef->SW_bottomsurface;
+            elem = &updateSidedef->bottom();
             args->type = DMU_SURFACE;
         }
     }
@@ -1392,19 +1392,19 @@ static int getProperty(void *ptr, void *context)
     {
         if(args->modifiers & DMU_TOP_OF_SIDEDEF)
         {
-            elem = &elem->castTo<SideDef>()->SW_topsurface;
+            elem = &elem->castTo<SideDef>()->top();
             args->type = DMU_SURFACE;
             DENG2_ASSERT(args->type == elem->type());
         }
         else if(args->modifiers & DMU_MIDDLE_OF_SIDEDEF)
         {
-            elem = &elem->castTo<SideDef>()->SW_middlesurface;
+            elem = &elem->castTo<SideDef>()->middle();
             args->type = DMU_SURFACE;
             DENG2_ASSERT(args->type == elem->type());
         }
         else if(args->modifiers & DMU_BOTTOM_OF_SIDEDEF)
         {
-            elem = &elem->castTo<SideDef>()->SW_bottomsurface;
+            elem = &elem->castTo<SideDef>()->bottom();
             args->type = DMU_SURFACE;
             DENG2_ASSERT(args->type == elem->type());
         }
