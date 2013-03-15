@@ -99,11 +99,11 @@ DENG2_PIMPL(Preferences)
     {
         QFont font;
 #ifdef MACOSX
+# ifdef MACOS_10_4
+        font = QFont("Monaco", 12);
+# else
         font = QFont("Menlo", 13);
-        if(!font.exactMatch())
-        {
-            font = QFont("Monaco", 12);
-        }
+# endif
 #elif WIN32
         font = QFont("Fixedsys", 9);
 #else
