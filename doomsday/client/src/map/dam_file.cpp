@@ -346,14 +346,13 @@ static void archiveLines(GameMap* map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writeSide(GameMap* map, uint idx)
+static void writeSide(GameMap *map, uint idx)
 {
-    uint i;
-    SideDef* s = &map->sideDefs[idx];
+    SideDef *s = &map->sideDefs[idx];
 
-    for(i = 0; i < 3; ++i)
+    for(uint i = 0; i < 3; ++i)
     {
-        Surface* suf = &s->sections[i];
+        Surface *suf = &s->surface(i);
 
         writeLong(suf->flags);
         //writeLong(getMaterialDictID(materialDict, suf->material));
@@ -378,7 +377,7 @@ static void readSide(GameMap *map, uint idx)
 
     for(uint i = 0; i < 3; ++i)
     {
-        Surface *suf = &s->sections[i];
+        Surface *suf = &s->surface(i);
 
         suf->flags = (int) readLong();
         //suf->setMaterial(lookupMaterialFromDict(materialDict, readLong()));

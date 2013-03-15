@@ -311,10 +311,10 @@ static void plotSourcesForSurface(Surface &suf)
     {
         suf.clearDecorations();
 
-        switch(suf.owner->type())
+        switch(suf.owner().type())
         {
         case DMU_SIDEDEF: {
-            SideDef *sideDef = suf.owner->castTo<SideDef>();
+            SideDef *sideDef = suf.owner().castTo<SideDef>();
             LineDef *line = sideDef->line;
             plotSourcesForLineDef(*line, sideDef == line->frontSideDefPtr()? FRONT : BACK,
                                   &sideDef->SW_middlesurface == &suf? SS_MIDDLE :
@@ -322,7 +322,7 @@ static void plotSourcesForSurface(Surface &suf)
             break; }
 
         case DMU_PLANE: {
-            Plane *plane = suf.owner->castTo<Plane>();
+            Plane *plane = suf.owner().castTo<Plane>();
             plotSourcesForPlane(*plane);
             break; }
 

@@ -71,8 +71,8 @@ public:
     };
 
 public: /// @todo Make private:
-    Sector     *_sector;       ///< Owner of the plane.
     Surface     _surface;
+    Sector     *_sector;       ///< Owner of the plane.
     coord_t     _height;       ///< Current height.
     coord_t     _oldHeight[2];
     coord_t     _targetHeight; ///< Target height.

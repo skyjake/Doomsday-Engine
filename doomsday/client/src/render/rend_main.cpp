@@ -1204,23 +1204,23 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
             !(p.alpha < 1 || !ms.isOpaque() || p.blendMode > 0));
 }
 
-static boolean doRenderHEdge(HEdge* hedge, const pvec3f_t normal,
+static boolean doRenderHEdge(HEdge *hedge, const_pvec3f_t normal,
     float alpha, float lightLevel, float lightLevelDL, float lightLevelDR,
-    const float* lightColor, uint lightListIdx, uint shadowListIdx,
-    walldivs_t* leftWallDivs, walldivs_t* rightWallDivs,
+    float const *lightColor, uint lightListIdx, uint shadowListIdx,
+    walldivs_t *leftWallDivs, walldivs_t *rightWallDivs,
     boolean skyMask, boolean addFakeRadio, vec3d_t texTL, vec3d_t texBR,
     float const texOffset[2], float const texScale[2],
-    blendmode_t blendMode, const float* color, const float* color2,
-    biassurface_t* bsuf, uint elmIdx /*tmp*/,
+    blendmode_t blendMode, float const *color, float const *color2,
+    biassurface_t *bsuf, uint elmIdx /*tmp*/,
     MaterialSnapshot const &ms,
     boolean isTwosidedMiddle)
 {
-    rendworldpoly_params_t params;
-    SideDef *side = (hedge->lineDef? HEDGE_SIDEDEF(hedge) : NULL);
+    SideDef *sideDef = (hedge->lineDef? HEDGE_SIDEDEF(hedge) : NULL);
     rvertex_t *rvertices;
 
     // Init the params.
-    memset(&params, 0, sizeof(params));
+    rendworldpoly_params_t params;
+    std::memset(&params, 0, sizeof(params));
 
     params.flags = RPF_DEFAULT | (skyMask? RPF_SKYMASK : 0);
     params.isWall = true;
@@ -1291,10 +1291,10 @@ static boolean doRenderHEdge(HEdge* hedge, const pvec3f_t normal,
             RendRadioWallSectionParms radioParams;
 
             radioParams.line      = hedge->lineDef;
-            radioParams.botCn     = side->bottomCorners;
-            radioParams.topCn     = side->topCorners;
-            radioParams.sideCn    = side->sideCorners;
-            radioParams.spans     = side->spans;
+            radioParams.botCn     = sideDef->bottomCorners;
+            radioParams.topCn     = sideDef->topCorners;
+            radioParams.sideCn    = sideDef->sideCorners;
+            radioParams.spans     = sideDef->spans;
             radioParams.segOffset = &hedge->offset;
             radioParams.segLength = &hedge->length;
             radioParams.frontSec  = hedge->sector;
@@ -3115,24 +3115,28 @@ static void drawSoundOrigin(coord_t const origin[3], const char* label, coord_t 
     }
 }
 
-static int drawSideDefSoundOrigins(SideDef* side, void* parameters)
+static int drawSideDefSoundOrigins(SideDef *sideDef, void *parameters)
 {
-    uint idx = GameMap_SideDefIndex(theMap, side); /// @todo Do not assume current map.
+    DENG_ASSERT(sideDef);
+
+    uint idx = GameMap_SideDefIndex(theMap, sideDef); /// @todo Do not assume current map.
     char buf[80];
 
     dd_snprintf(buf, 80, "Side #%i (middle)", idx);
-    drawSoundOrigin(side->SW_middlesurface.base.origin, buf, (coord_t const*) parameters);
+    drawSoundOrigin(sideDef->SW_middlesurface.soundEmitter().origin, buf, (coord_t const *) parameters);
 
     dd_snprintf(buf, 80, "Side #%i (bottom)", idx);
-    drawSoundOrigin(side->SW_bottomsurface.base.origin, buf, (coord_t const*) parameters);
+    drawSoundOrigin(sideDef->SW_bottomsurface.soundEmitter().origin, buf, (coord_t const *) parameters);
 
     dd_snprintf(buf, 80, "Side #%i (top)", idx);
-    drawSoundOrigin(side->SW_topsurface.base.origin, buf, (coord_t const*) parameters);
+    drawSoundOrigin(sideDef->SW_topsurface.soundEmitter().origin, buf, (coord_t const *) parameters);
     return false; // Continue iteration.
 }
 
 static int drawSectorSoundOrigins(Sector *sec, void *parameters)
 {
+    DENG_ASSERT(sec);
+
     uint sectorIndex = GameMap_SectorIndex(theMap, sec); /// @todo Do not assume current map.
     char buf[80];
 
@@ -3142,7 +3146,7 @@ static int drawSectorSoundOrigins(Sector *sec, void *parameters)
         {
             Plane &plane = sec->plane(i);
             dd_snprintf(buf, 80, "Sector #%i (pln:%i)", sectorIndex, i);
-            drawSoundOrigin(plane.surface().base.origin, buf, (coord_t const *) parameters);
+            drawSoundOrigin(plane.surface().soundEmitter().origin, buf, (coord_t const *) parameters);
         }
     }
 

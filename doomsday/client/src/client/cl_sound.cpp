@@ -148,19 +148,19 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     {
         // Select the origin for the sound.
         if(flags & SNDDF_PLANE_FLOOR)
-            emitter = (mobj_t*) &sector->floorSurface().base;
+            emitter = (mobj_t *) &sector->floorSurface().soundEmitter();
         else if(flags & SNDDF_PLANE_CEILING)
-            emitter = (mobj_t*) &sector->ceilingSurface().base;
+            emitter = (mobj_t *) &sector->ceilingSurface().soundEmitter();
     }
 
     if(type == DT_SIDE_SOUND)
     {
         if(flags & SNDDF_SIDE_MIDDLE)
-            emitter = (mobj_t*) &side->SW_middlesurface.base;
+            emitter = (mobj_t *) &side->SW_middlesurface.soundEmitter();
         else if(flags & SNDDF_SIDE_TOP)
-            emitter = (mobj_t*) &side->SW_topsurface.base;
+            emitter = (mobj_t *) &side->SW_topsurface.soundEmitter();
         else if(flags & SNDDF_SIDE_BOTTOM)
-            emitter = (mobj_t*) &side->SW_bottomsurface.base;
+            emitter = (mobj_t *) &side->SW_bottomsurface.soundEmitter();
     }
 
     if(flags & SNDDF_VOLUME)

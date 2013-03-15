@@ -67,25 +67,30 @@ void R_UpdateSurfaceScroll()
     foreach(Surface *surface, theMap->scrollingSurfaces())
     {
         // X Offset
-        surface->oldOffset[0][0] = surface->oldOffset[0][1];
-        surface->oldOffset[0][1] = surface->offset[0];
-        if(surface->oldOffset[0][0] != surface->oldOffset[0][1])
-        if(de::abs(surface->oldOffset[0][0] - surface->oldOffset[0][1]) >=
-           MAX_SMOOTH_MATERIAL_MOVE)
+        surface->_oldOffset[0][0] = surface->_oldOffset[0][1];
+        surface->_oldOffset[0][1] = surface->offset[0];
+
+        if(surface->_oldOffset[0][0] != surface->_oldOffset[0][1])
         {
-            // Too fast: make an instantaneous jump.
-            surface->oldOffset[0][0] = surface->oldOffset[0][1];
+            if(de::abs(surface->_oldOffset[0][0] - surface->_oldOffset[0][1]) >=
+               MAX_SMOOTH_MATERIAL_MOVE)
+            {
+                // Too fast: make an instantaneous jump.
+                surface->_oldOffset[0][0] = surface->_oldOffset[0][1];
+            }
         }
 
         // Y Offset
-        surface->oldOffset[1][0] = surface->oldOffset[1][1];
-        surface->oldOffset[1][1] = surface->offset[1];
-        if(surface->oldOffset[1][0] != surface->oldOffset[1][1])
-        if(de::abs(surface->oldOffset[1][0] - surface->oldOffset[1][1]) >=
-           MAX_SMOOTH_MATERIAL_MOVE)
+        surface->_oldOffset[1][0] = surface->_oldOffset[1][1];
+        surface->_oldOffset[1][1] = surface->offset[1];
+        if(surface->_oldOffset[1][0] != surface->_oldOffset[1][1])
         {
-            // Too fast: make an instantaneous jump.
-            surface->oldOffset[1][0] = surface->oldOffset[1][1];
+            if(de::abs(surface->_oldOffset[1][0] - surface->_oldOffset[1][1]) >=
+               MAX_SMOOTH_MATERIAL_MOVE)
+            {
+                // Too fast: make an instantaneous jump.
+                surface->_oldOffset[1][0] = surface->_oldOffset[1][1];
+            }
         }
     }
 }
@@ -107,11 +112,11 @@ void R_InterpolateSurfaceScroll(boolean resetNextViewer)
             // Reset the material offset trackers.
             // X Offset.
             suf.visOffsetDelta[0] = 0;
-            suf.oldOffset[0][0] = suf.oldOffset[0][1] = suf.offset[0];
+            suf._oldOffset[0][0] = suf._oldOffset[0][1] = suf.offset[0];
 
             // Y Offset.
             suf.visOffsetDelta[1] = 0;
-            suf.oldOffset[1][0] = suf.oldOffset[1][1] = suf.offset[1];
+            suf._oldOffset[1][0] = suf._oldOffset[1][1] = suf.offset[1];
 
             suf.update();
             it++;
@@ -123,12 +128,12 @@ void R_InterpolateSurfaceScroll(boolean resetNextViewer)
             // Set the visible material offsets.
             // X Offset.
             suf.visOffsetDelta[0] =
-                suf.oldOffset[0][0] * (1 - frameTimePos) +
+                suf._oldOffset[0][0] * (1 - frameTimePos) +
                         suf.offset[0] * frameTimePos - suf.offset[0];
 
             // Y Offset.
             suf.visOffsetDelta[1] =
-                suf.oldOffset[1][0] * (1 - frameTimePos) +
+                suf._oldOffset[1][0] * (1 - frameTimePos) +
                         suf.offset[1] * frameTimePos - suf.offset[1];
 
             // Visible material offset.
@@ -909,8 +914,8 @@ LineDef *R_FindLineAlignNeighbor(Sector const *sec, LineDef const *line,
 static inline void initSurfaceMaterialOffset(Surface *suf)
 {
     DENG_ASSERT(suf);
-    suf->visOffset[VX] = suf->oldOffset[0][VX] = suf->oldOffset[1][VX] = suf->offset[VX];
-    suf->visOffset[VY] = suf->oldOffset[0][VY] = suf->oldOffset[1][VY] = suf->offset[VY];
+    suf->visOffset[VX] = suf->_oldOffset[0][VX] = suf->_oldOffset[1][VX] = suf->offset[VX];
+    suf->visOffset[VY] = suf->_oldOffset[0][VY] = suf->_oldOffset[1][VY] = suf->offset[VY];
 }
 
 /**
@@ -1303,17 +1308,17 @@ static Material *chooseFixMaterial(SideDef *s, SideDefSection section)
 static void addMissingMaterial(SideDef *s, SideDefSection section)
 {
     // A material must be missing for this test to apply.
-    Surface *suf = &s->sections[section];
-    if(suf->material) return;
+    Surface &suf = s->surface(section);
+    if(suf.material) return;
 
     // Look for a suitable replacement.
-    suf->setMaterial(chooseFixMaterial(s, section));
-    suf->inFlags |= SUIF_FIX_MISSING_MATERIAL;
+    suf.setMaterial(chooseFixMaterial(s, section));
+    suf.inFlags |= SUIF_FIX_MISSING_MATERIAL;
 
     // During map load we log missing materials.
     if(ddMapSetup && verbose)
     {
-        String path = suf->material? suf->material->manifest().composeUri().asText() : "<null>";
+        String path = suf.material? suf.material->manifest().composeUri().asText() : "<null>";
         LOG_WARNING("SideDef #%u is missing a material for the %s section.\n"
                     "  %s was chosen to complete the definition.")
             << s->buildData.index - 1

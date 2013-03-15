@@ -28,15 +28,21 @@
 #ifdef __CLIENT__
 #  include "MaterialSnapshot"
 #endif
+#include <de/vector1.h>
 #include <QSet>
 
-// Internal surface flags:
+/**
+ * @defgroup surfaceInternalFlags Surface Internal Flags
+ * @ingroup map
+ */
+///@{
 #define SUIF_FIX_MISSING_MATERIAL   0x0001 ///< Current material is a fix replacement
                                            /// (not sent to clients, returned via DMU etc).
 #define SUIF_NO_RADIO               0x0002 ///< No fakeradio for this surface.
 
 #define SUIF_UPDATE_FLAG_MASK       0xff00
 #define SUIF_UPDATE_DECORATIONS     0x8000
+///@}
 
 /**
  * @ingroup map
@@ -55,33 +61,79 @@ public:
 #endif // __CLIENT__
 
 public:
-    ddmobj_base_t base;
-    de::MapElement *owner; ///< Either @c DMU_SIDEDEF, or @c DMU_PLANE
-    int flags; ///< SUF_ flags
-    int oldFlags;
+    /// Owning map element, either @c DMU_SIDEDEF, or @c DMU_PLANE.
+    de::MapElement &_owner;
+
+    /// Sound emitter.
+    ddmobj_base_t _soundEmitter;
+
+    /// @ref sufFlags
+    int flags;
+
+    // Bound material.
     Material *material;
+
+    // Blending mode, for rendering.
     blendmode_t blendMode;
-    float tangent[3];
-    float bitangent[3];
-    float normal[3];
-    float offset[2]; ///< [X, Y] Planar offset to surface material origin.
-    float oldOffset[2][2];
-    float visOffset[2];
-    float visOffsetDelta[2];
-    float rgba[4]; ///< Surface color tint
-    short inFlags; ///< SUIF_* flags
+
+    // Tangent space vectors:
+    vec3f_t tangent;
+    vec3f_t bitangent;
+    vec3f_t normal;
+
+    /// [X, Y] Planar offset to surface material origin.
+    vec2f_t offset;
+
+    /// Old [X, Y] Planar material origin offset. For smoothing.
+    vec2f_t _oldOffset[2];
+
+    /// Smoothed [X, Y] Planar material origin offset.
+    vec2f_t visOffset;
+
+    /// Smoother [X, Y] Planar material origin offset delta.
+    vec2f_t visOffsetDelta;
+
+    /// Surface color tint.
+    float rgba[4];
+
+    /// @ref surfaceInternalFlags
+    short inFlags;
+
+    /// Old @ref surfaceInternalFlags, for tracking changes.
+    short oldInFlags;
+
     uint numDecorations;
+
     struct surfacedecorsource_s *decorations;
 
 public:
-    Surface();
+    Surface(de::MapElement &owner);
     ~Surface();
 
+    /// @todo Refactor away.
+    Surface &operator = (Surface const &other);
+
+    /// @return @c true= is drawable (i.e., a drawable Material is bound).
+    bool isDrawable() const;
+
+    /// @return @c true= is sky-masked (i.e., a sky-masked Material is bound).
+    bool isSkyMasked() const;
+
+    /// @return @c true= is owned by some element of the Map geometry.
+    bool isAttachedToMap() const;
+
     /**
-     * Mark the surface as requiring a full update. To be called during an
-     * engine reset.
+     * Returns the owning map element. Either @c DMU_SIDEDEF, or @c DMU_PLANE.
      */
-    void update();
+    de::MapElement &owner() const;
+
+    /**
+     * Returns the sound emitter for the surface.
+     */
+    ddmobj_base_t &soundEmitter();
+
+    /// @copydoc soundEmitter()
+    ddmobj_base_t const &soundEmitter() const;
 
     /**
      * Update the Surface's map space base origin according to relevant points in
@@ -99,14 +151,11 @@ public:
      */
     void updateSoundEmitterOrigin();
 
-    /// @return @c true= is drawable (i.e., a drawable Material is bound).
-    bool isDrawable() const;
-
-    /// @return @c true= is sky-masked (i.e., a sky-masked Material is bound).
-    bool isSkyMasked() const;
-
-    /// @return @c true= is owned by some element of the Map geometry.
-    bool isAttachedToMap() const;
+    /**
+     * Mark the surface as requiring a full update. To be called during an
+     * engine reset.
+     */
+    void update();
 
     /**
      * Change Material bound to this surface.

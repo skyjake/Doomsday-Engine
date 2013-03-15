@@ -974,10 +974,10 @@ END_PROF( PROF_LUMOBJ_FRAME_SORT );
  */
 static void createGlowLightForSurface(Surface &suf)
 {
-    switch(suf.owner->type())
+    switch(suf.owner().type())
     {
     case DMU_PLANE: {
-        Plane *pln = suf.owner->castTo<Plane>();
+        Plane *pln = suf.owner().castTo<Plane>();
         Sector *sec = &pln->sector();
 
         // Only produce a light for sectors with open space.
@@ -994,10 +994,11 @@ static void createGlowLightForSurface(Surface &suf)
 
         // @note Plane lights do not spread so simply link to all BspLeafs of this sector.
         lumobj_t *lum = createLuminous(LT_PLANE, sec->bspLeafs().at(0));
-        V3d_Copy(lum->origin, pln->PS_base.origin);
-        lum->origin[VZ] = pln->visHeight(); // base.origin[VZ] is not smoothed
 
-        V3f_Copy(LUM_PLANE(lum)->normal, pln->PS_normal);
+        V3d_Copy(lum->origin, suf.soundEmitter().origin);
+        lum->origin[VZ] = pln->visHeight(); // Sound emitter origins are not smoothed.
+
+        V3f_Copy(LUM_PLANE(lum)->normal, suf.normal);
         V3f_Copy(LUM_PLANE(lum)->color, avgColorAmplified->color.rgb);
 
         float glowStrength = ms.glowStrength();

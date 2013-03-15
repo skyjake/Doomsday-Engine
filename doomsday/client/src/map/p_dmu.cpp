@@ -1029,14 +1029,14 @@ static int setProperty(void *ptr, void *context)
     {
         if(R_UpdateSurface(updateSurface, false))
         {
-            switch(updateSurface->owner->type())
+            switch(updateSurface->owner().type())
             {
             case DMU_SIDEDEF:
-                updateSidedef = updateSurface->owner->castTo<SideDef>();
+                updateSidedef = updateSurface->owner().castTo<SideDef>();
                 break;
 
             case DMU_PLANE:
-                updatePlane = updateSurface->owner->castTo<Plane>();
+                updatePlane = updateSurface->owner().castTo<Plane>();
                 break;
 
             default:

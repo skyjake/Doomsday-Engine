@@ -166,7 +166,7 @@ coord_t GameMap_SkyFix(GameMap *map, boolean ceiling)
     return map->skyFix[plane].height;
 }
 
-GameMap* GameMap_SetSkyFix(GameMap* map, boolean ceiling, coord_t height)
+GameMap *GameMap_SetSkyFix(GameMap *map, boolean ceiling, coord_t height)
 {
     DENG2_ASSERT(map);
     Plane::Type plane = ceiling? Plane::Ceiling : Plane::Floor;
@@ -174,42 +174,42 @@ GameMap* GameMap_SetSkyFix(GameMap* map, boolean ceiling, coord_t height)
     return map;
 }
 
-Vertex* GameMap_Vertex(GameMap* map, uint idx)
+Vertex *GameMap_Vertex(GameMap *map, uint idx)
 {
     DENG2_ASSERT(map);
     if(idx >= (uint)map->vertexes.size()) return NULL;
     return &map->vertexes[idx];
 }
 
-int GameMap_VertexIndex(GameMap* map, Vertex const *vtx)
+int GameMap_VertexIndex(GameMap *map, Vertex const *vtx)
 {
     DENG2_ASSERT(map);
     if(!vtx) return -1;
     return map->vertexes.indexOf(vtx); // Note: Bad performance!
 }
 
-int GameMap_LineDefIndex(GameMap* map, const LineDef *line)
+int GameMap_LineDefIndex(GameMap *map, LineDef const *line)
 {
     DENG2_ASSERT(map);
     if(!line) return -1;
-    return map->lineDefs.indexOf(line);
+    return map->lineDefs.indexOf(line); // Note: Bad performance!
 }
 
-LineDef* GameMap_LineDef(GameMap* map, uint idx)
+LineDef *GameMap_LineDef(GameMap *map, uint idx)
 {
     DENG2_ASSERT(map);
     if(idx >= (uint)map->lineDefs.size()) return NULL;
     return &map->lineDefs[idx];
 }
 
-int GameMap_SideDefIndex(GameMap* map, SideDef const *side)
+int GameMap_SideDefIndex(GameMap *map, SideDef const *side)
 {
     DENG2_ASSERT(map);
     if(!side) return -1;
     return map->sideDefs.indexOf(side); // Note: Bad performance!
 }
 
-SideDef* GameMap_SideDef(GameMap* map, uint idx)
+SideDef *GameMap_SideDef(GameMap *map, uint idx)
 {
     DENG2_ASSERT(map);
     if(idx >= (uint)map->sideDefs.size()) return NULL;
@@ -223,30 +223,34 @@ int GameMap_SectorIndex(GameMap *map, Sector const *sec)
     return map->sectors.indexOf(sec); // Note: Bad performance!
 }
 
-Sector *GameMap_Sector(GameMap* map, uint idx)
+Sector *GameMap_Sector(GameMap *map, uint idx)
 {
     DENG2_ASSERT(map);
     if(idx >= map->sectorCount()) return NULL;
     return &map->sectors[idx];
 }
 
-Sector *GameMap_SectorByBase(GameMap *map, void const *ddMobjBase)
+Sector *GameMap_SectorBySoundEmitter(GameMap *map, void const *soundEmitter)
 {
     DENG2_ASSERT(map);
     for(int i = 0; i < map->sectors.size(); ++i)
     {
         Sector *sec = &map->sectors[i];
-        if(ddMobjBase == &sec->soundEmitter())
+        if(soundEmitter == &sec->soundEmitter())
         {
             return sec;
         }
     }
-    return NULL;
+    return 0; // Not found.
 }
 
-Surface *GameMap_SurfaceByBase(GameMap *map, void const *ddMobjBase)
+/// @todo Optimize: All sound emitters in a sector are linked together forming
+/// a chain. Make use of the chains instead of iterating the sidedefs.
+Surface *GameMap_SurfaceBySoundEmitter(GameMap *map, void const *soundEmitter)
 {
     DENG2_ASSERT(map);
+
+    if(!soundEmitter) return 0;
 
     // First try plane surfaces.
     for(uint i = 0; i < map->sectorCount(); ++i)
@@ -255,33 +259,33 @@ Surface *GameMap_SurfaceByBase(GameMap *map, void const *ddMobjBase)
 
         foreach(Plane *plane, sec->planes())
         {
-            if(ddMobjBase == &plane->surface().base)
+            if(soundEmitter == &plane->surface().soundEmitter())
             {
                 return &plane->surface();
             }
         }
     }
 
-    // Perhaps a sidedef surface?
+    // Perhaps a wall surface?
     for(uint i = 0; i < map->sideDefCount(); ++i)
     {
         SideDef *side = &map->sideDefs[i];
 
-        if(ddMobjBase == &side->SW_middlesurface.base)
+        if(soundEmitter == &side->SW_middlesurface.soundEmitter())
         {
             return &side->SW_middlesurface;
         }
-        if(ddMobjBase == &side->SW_bottomsurface.base)
+        if(soundEmitter == &side->SW_bottomsurface.soundEmitter())
         {
             return &side->SW_bottomsurface;
         }
-        if(ddMobjBase == &side->SW_topsurface.base)
+        if(soundEmitter == &side->SW_topsurface.soundEmitter())
         {
             return &side->SW_topsurface;
         }
     }
 
-    return NULL;
+    return 0; // Not found.
 }
 
 int GameMap_BspLeafIndex(GameMap *map, BspLeaf const *leaf)

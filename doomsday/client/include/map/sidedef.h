@@ -30,11 +30,11 @@
 class LineDef;
 
 /*
- * Helper macros for accessing sidedef top/middle/bottom section data elements:
+ * Helper macros for accessing sidedef surface data elements:
  */
 /// @addtogroup map
 ///@{
-#define SW_surface(n)           sections[(n)]
+#define SW_surface(n)           surface(n)
 #define SW_surfaceflags(n)      SW_surface(n).flags
 #define SW_surfaceinflags(n)    SW_surface(n).inFlags
 #define SW_surfacematerial(n)   SW_surface(n).material
@@ -126,6 +126,9 @@ struct msidedef_t
 class SideDef : public de::MapElement
 {
 public:
+    /// The given surface section reference is invalid. @ingroup errors
+    DENG2_ERROR(InvalidSectionError);
+
     /// The referenced property does not exist. @ingroup errors
     DENG2_ERROR(UnknownPropertyError);
 
@@ -133,7 +136,9 @@ public:
     DENG2_ERROR(WritePropertyError);
 
 public:
-    Surface sections[3];
+    Surface _middleSurface;
+    Surface _bottomSurface;
+    Surface _topSurface;
 
     LineDef *line;
 
@@ -156,6 +161,43 @@ public:
 public:
     SideDef();
     ~SideDef();
+
+    /// @todo Refactor away.
+    SideDef &operator = (SideDef const &other);
+
+    /**
+     * Returns the specified surface of the sidedef.
+     *
+     * @param surface  Identifier of the surface to return.
+     */
+    Surface &surface(int surface);
+
+    /// @copydoc section()
+    Surface const &surface(int surface) const;
+
+    /**
+     * Returns the middle surface of the sidedef.
+     */
+    inline Surface &middle() { return surface(SS_MIDDLE); }
+
+    /// @copydoc middle()
+    inline Surface const &middle() const { return surface(SS_MIDDLE); }
+
+    /**
+     * Returns the bottom surface of the sidedef.
+     */
+    inline Surface &bottom() { return surface(SS_BOTTOM); }
+
+    /// @copydoc middle()
+    inline Surface const &bottom() const { return surface(SS_BOTTOM); }
+
+    /**
+     * Returns the middle surface of the sidedef.
+     */
+    inline Surface &top() { return surface(SS_TOP); }
+
+    /// @copydoc middle()
+    inline Surface const &top() const { return surface(SS_TOP); }
 
     /**
      * Update the side's map space surface base origins according to the points

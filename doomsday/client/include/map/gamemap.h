@@ -301,24 +301,24 @@ SideDef* GameMap_SideDef(GameMap* map, uint idx);
 Sector* GameMap_Sector(GameMap* map, uint idx);
 
 /**
- * Lookup a Sector in the map by origin.
+ * Lookup a Sector in the map by it's sound emitter.
  *
  * @param map  GameMap instance.
- * @param ddMobjBase  ddmobj_base_t to search for.
+ * @param soundEmitter  ddmobj_base_t to search for.
  *
  * @return  Found Sector instance else @c NULL.
  */
-Sector* GameMap_SectorByBase(GameMap* map, const void* ddMobjBase);
+Sector *GameMap_SectorBySoundEmitter(GameMap *map, void const *soundEmitter);
 
 /**
- * Lookup a Surface in the map by origin.
+ * Lookup a Surface in the map by it's sound emitter.
  *
  * @param map  GameMap instance.
- * @param ddMobjBase  ddmobj_base_t to search for.
+ * @param soundEmitter  ddmobj_base_t to search for.
  *
  * @return  Found Surface instance else @c NULL.
  */
-Surface* GameMap_SurfaceByBase(GameMap* map, const void* ddMobjBase);
+Surface *GameMap_SurfaceBySoundEmitter(GameMap* map, void const *soundEmitter);
 
 /**
  * Lookup a BspLeaf by its unique index.

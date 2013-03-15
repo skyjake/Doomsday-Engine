@@ -90,16 +90,13 @@ static LineDef* createLine(void)
     return line;
 }
 
-static SideDef* createSide(void)
+static SideDef *createSide()
 {
-    SideDef* side = new SideDef;
+    SideDef *side = new SideDef;
 
     e_map->sideDefs.push_back(side);
-
     side->buildData.index = e_map->sideDefs.size(); // 1-based index, 0 = NIL.
-    side->SW_bottomsurface.owner = side;
-    side->SW_middlesurface.owner = side;
-    side->SW_topsurface.owner = side;
+
     return side;
 }
 
@@ -660,7 +657,7 @@ static void chainSectorSoundEmitters(GameMap *map)
         // Add all plane base mobjs.
         foreach(Plane *plane, sec->planes())
         {
-            linkToSectorEmitterChain(sec, &plane->surface().base);
+            linkToSectorEmitterChain(sec, &plane->surface().soundEmitter());
         }
 
         // Add all sidedef base mobjs.
@@ -669,16 +666,16 @@ static void chainSectorSoundEmitters(GameMap *map)
             if(line->frontSectorPtr() == sec)
             {
                 SideDef &side = line->frontSideDef();
-                linkToSectorEmitterChain(sec, &side.SW_middlesurface.base);
-                linkToSectorEmitterChain(sec, &side.SW_bottomsurface.base);
-                linkToSectorEmitterChain(sec, &side.SW_topsurface.base);
+                linkToSectorEmitterChain(sec, &side.SW_middlesurface.soundEmitter());
+                linkToSectorEmitterChain(sec, &side.SW_bottomsurface.soundEmitter());
+                linkToSectorEmitterChain(sec, &side.SW_topsurface.soundEmitter());
             }
             if(line->hasBackSideDef() && line->backSectorPtr() == sec)
             {
                 SideDef &side = line->backSideDef();
-                linkToSectorEmitterChain(sec, &side.SW_middlesurface.base);
-                linkToSectorEmitterChain(sec, &side.SW_bottomsurface.base);
-                linkToSectorEmitterChain(sec, &side.SW_topsurface.base);
+                linkToSectorEmitterChain(sec, &side.SW_middlesurface.soundEmitter());
+                linkToSectorEmitterChain(sec, &side.SW_bottomsurface.soundEmitter());
+                linkToSectorEmitterChain(sec, &side.SW_topsurface.soundEmitter());
             }
         }
     }
@@ -697,11 +694,9 @@ static void finishSideDefs(GameMap *map)
     }
 }
 
-static void finishLineDefs(GameMap *map)
+static void finishLines(GameMap *map)
 {
     DENG_ASSERT(map);
-
-    LOG_VERBOSE("Finalizing LineDefs...");
 
     for(uint i = 0; i < map->lineDefCount(); ++i)
     {
@@ -1021,53 +1016,48 @@ static void hardenVertexOwnerRings(GameMap *dest, EditMap *src)
 
 static void hardenLinedefs(GameMap *dest, EditMap *src)
 {
+    DENG2_ASSERT(dest && src);
+
     dest->lineDefs.clearAndResize(src->lineDefs.size());
 
     for(uint i = 0; i < dest->lineDefCount(); ++i)
     {
-        LineDef *destL = &dest->lineDefs[i];
-        LineDef *srcL = src->lineDefs[i];
+        LineDef &destL = dest->lineDefs[i];
+        LineDef const &srcL = *src->lineDefs[i];
 
-        *destL = *srcL;
+        destL = srcL;
 
         /// @todo We shouldn't still have lines with missing fronts but...
-        destL->front()._sideDef = (srcL->front()._sideDef?
-            &dest->sideDefs[srcL->front()._sideDef->buildData.index - 1] : NULL);
-        destL->back()._sideDef = (srcL->back()._sideDef?
-            &dest->sideDefs[srcL->back()._sideDef->buildData.index - 1] : NULL);
+        destL.front()._sideDef = (srcL.front()._sideDef?
+            &dest->sideDefs[srcL.front()._sideDef->buildData.index - 1] : NULL);
+        destL.back()._sideDef = (srcL.back()._sideDef?
+            &dest->sideDefs[srcL.back()._sideDef->buildData.index - 1] : NULL);
 
-        if(destL->hasFrontSideDef())
-            destL->frontSideDef().line = destL;
-        if(destL->hasBackSideDef())
-            destL->backSideDef().line = destL;
+        if(destL.hasFrontSideDef())
+            destL.frontSideDef().line = &destL;
+        if(destL.hasBackSideDef())
+            destL.backSideDef().line = &destL;
 
-        destL->front()._sector = (srcL->front()._sector?
-            &dest->sectors[srcL->front()._sector->_origIndex - 1] : NULL);
+        destL.front()._sector = (srcL.front()._sector?
+            &dest->sectors[srcL.front()._sector->_origIndex - 1] : NULL);
 
-        destL->back()._sector  = (srcL->back()._sector?
-            &dest->sectors[srcL->back()._sector->_origIndex - 1] : NULL);
+        destL.back()._sector  = (srcL.back()._sector?
+            &dest->sectors[srcL.back()._sector->_origIndex - 1] : NULL);
     }
 }
 
-static void hardenSidedefs(GameMap* dest, EditMap* src)
+static void hardenSidedefs(GameMap *dest, EditMap *src)
 {
+    DENG2_ASSERT(dest && src);
+
     dest->sideDefs.clearAndResize(src->sideDefs.size());
 
     for(uint i = 0; i < dest->sideDefCount(); ++i)
     {
-        SideDef* destS = &dest->sideDefs[i];
-        SideDef* srcS = src->sideDefs[i];
+        SideDef &destS = dest->sideDefs[i];
+        SideDef const &srcS = *src->sideDefs[i];
 
-        *destS = *srcS;
-        destS->SW_bottomsurface.owner = destS;
-        destS->SW_middlesurface.owner = destS;
-        destS->SW_topsurface.owner = destS;
-        destS->SW_bottomsurface.visOffset[0] = destS->SW_bottomsurface.offset[0];
-        destS->SW_bottomsurface.visOffset[1] = destS->SW_bottomsurface.offset[1];
-        destS->SW_middlesurface.visOffset[0] = destS->SW_middlesurface.offset[0];
-        destS->SW_middlesurface.visOffset[1] = destS->SW_middlesurface.offset[1];
-        destS->SW_topsurface.visOffset[0] = destS->SW_topsurface.offset[0];
-        destS->SW_topsurface.visOffset[1] = destS->SW_topsurface.offset[1];
+        destS = srcS;
     }
 }
 
@@ -1077,11 +1067,11 @@ static void hardenSectors(GameMap *dest, EditMap *src)
 
     for(uint i = 0; i < src->sectorCount(); ++i)
     {
-        Sector *destS = &dest->sectors[i];
-        Sector *srcS = src->sectors[i];
+        Sector &destS = dest->sectors[i];
+        Sector const &srcS = *src->sectors[i];
 
-        *destS = *srcS;
-        destS->_planes.clear(); // ownership of planes not transferred
+        destS = srcS;
+        destS._planes.clear(); // ownership of planes not transferred
     }
 }
 
@@ -1089,13 +1079,13 @@ static void hardenPlanes(GameMap *dest, EditMap *src)
 {
     for(uint i = 0; i < dest->sectorCount(); ++i)
     {
-        Sector *destS = &dest->sectors[i];
-        Sector *srcS = src->sectors[i];
+        Sector &destS = dest->sectors[i];
+        Sector const &srcS = *src->sectors[i];
 
-        for(uint j = 0; j < srcS->planeCount(); ++j)
+        for(uint j = 0; j < srcS.planeCount(); ++j)
         {
-            Plane *destP = R_NewPlaneForSector(destS);
-            Plane const &srcP  = srcS->plane(j);
+            Plane *destP = R_NewPlaneForSector(&destS);
+            Plane const &srcP = srcS.plane(j);
 
             destP->_height =
                 destP->_oldHeight[0] =
@@ -1105,13 +1095,12 @@ static void hardenPlanes(GameMap *dest, EditMap *src)
             destP->_visHeightDelta = 0;
             destP->_surface        = srcP._surface;
             destP->_type           = srcP._type;
-            destP->_sector         = destS;
-            destP->_surface.owner  = destP;
+            destP->_sector         = &destS;
         }
     }
 }
 
-static void hardenPolyobjs(GameMap* dest, EditMap* src)
+static void hardenPolyobjs(GameMap *dest, EditMap *src)
 {
     if(src->numPolyObjs == 0)
     {
@@ -1121,10 +1110,9 @@ static void hardenPolyobjs(GameMap* dest, EditMap* src)
     }
 
     dest->numPolyObjs = src->numPolyObjs;
-    dest->polyObjs = (Polyobj**) Z_Malloc((dest->numPolyObjs+1) * sizeof(Polyobj*), PU_MAP, 0);
+    dest->polyObjs = (Polyobj **) Z_Malloc((dest->numPolyObjs + 1) * sizeof(Polyobj *), PU_MAP, 0);
 
-    uint i;
-    for(i = 0; i < dest->numPolyObjs; ++i)
+    for(uint i = 0; i < dest->numPolyObjs; ++i)
     {
         Polyobj *srcP  = src->polyObjs[i];
         Polyobj *destP = (Polyobj *) Z_Calloc(POLYOBJ_SIZE, PU_MAP, 0);
@@ -1145,7 +1133,7 @@ static void hardenPolyobjs(GameMap* dest, EditMap* src)
         // TODO: Polyobj has ownership, must free it.
         HEdge *hedges = new HEdge[destP->lineCount];
 
-        destP->lines = (LineDef **) Z_Malloc(sizeof(*destP->lines) * (destP->lineCount+1), PU_MAP, 0);
+        destP->lines = (LineDef **) Z_Malloc(sizeof(*destP->lines) * (destP->lineCount + 1), PU_MAP, 0);
         for(uint j = 0; j < destP->lineCount; ++j)
         {
             LineDef *line = &dest->lineDefs[srcP->lines[j]->_origIndex - 1];
@@ -1170,7 +1158,7 @@ static void hardenPolyobjs(GameMap* dest, EditMap* src)
         // Add this polyobj to the global list.
         dest->polyObjs[i] = destP;
     }
-    dest->polyObjs[i] = NULL; // Terminate.
+    dest->polyObjs[dest->numPolyObjs] = NULL; // Terminate.
 }
 
 #if 0 /* Currently unused. */
@@ -1593,7 +1581,7 @@ boolean MPE_End(void)
 
     buildSectorLineLists(gamemap);
     finishSideDefs(gamemap);
-    finishLineDefs(gamemap);
+    finishLines(gamemap);
     finishSectors(gamemap);
     chainSectorSoundEmitters(gamemap);
 

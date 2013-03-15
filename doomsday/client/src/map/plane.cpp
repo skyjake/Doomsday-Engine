@@ -67,10 +67,10 @@ DENG2_PIMPL(Plane)
 
 Plane::Plane(Sector &sector, Vector3f const &normal, coord_t height)
     : MapElement(DMU_PLANE),
+    _surface(dynamic_cast<MapElement &>(*this)),
     _sector(&sector), _height(height),
     d(new Instance(this))
 {
-    _surface.owner = this;
     std::memset(_oldHeight, 0, sizeof(_oldHeight));
     _targetHeight = 0;
     _speed = 0;

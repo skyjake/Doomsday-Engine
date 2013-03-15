@@ -1537,9 +1537,9 @@ coord_t Sv_SideDistance(int index, int deltaFlags, ownerinfo_t const *info)
 {
     SideDef *side = SIDE_PTR(index);
 
-    ddmobj_base_t *base = (deltaFlags & SNDDF_SIDE_MIDDLE? &side->SW_middlesurface.base
-                         : deltaFlags & SNDDF_SIDE_TOP?    &side->SW_topsurface.base
-                                                         : &side->SW_bottomsurface.base);
+    ddmobj_base_t *base = (deltaFlags & SNDDF_SIDE_MIDDLE? &side->SW_middlesurface.soundEmitter()
+                         : deltaFlags & SNDDF_SIDE_TOP?    &side->SW_topsurface.soundEmitter()
+                                                         : &side->SW_bottomsurface.soundEmitter());
 
     return M_ApproxDistance3(info->origin[VX]  - base->origin[VX],
                              info->origin[VY]  - base->origin[VY],
@@ -2334,28 +2334,28 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
     }
     else if(sourceSurface)
     {
-        switch(sourceSurface->owner->type())
+        switch(sourceSurface->owner().type())
         {
         case DMU_PLANE: {
             type = DT_SECTOR_SOUND;
 
-            Plane *pln = sourceSurface->owner->castTo<Plane>();
+            Plane *pln = sourceSurface->owner().castTo<Plane>();
 
             // Clients need to know which emitter to use.
             if(emitter)
             {
                 if(pln == &pln->sector().floor())
                 {
-                    if(emitter == (mobj_t *) &sourceSurface->base)
+                    if(emitter == (mobj_t *) &sourceSurface->soundEmitter())
                         df |= SNDDF_PLANE_FLOOR;
                 }
                 else if(pln == &pln->sector().ceiling())
                 {
-                    if(emitter == (mobj_t *) &sourceSurface->base)
+                    if(emitter == (mobj_t *) &sourceSurface->soundEmitter())
                         df |= SNDDF_PLANE_CEILING;
                 }
             }
-            // else client assumes the sector's sound origin.
+            // else client assumes the sector's sound emitter.
 
             id = GameMap_SectorIndex(theMap, &pln->sector());
             break; }
@@ -2363,9 +2363,9 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
         case DMU_SIDEDEF: {
             type = DT_SIDE_SOUND;
 
-            DENG2_ASSERT(emitter == 0); // surface sound source rather than a real mobj
+            DENG2_ASSERT(emitter == 0); // surface sound emitter rather than a real mobj
 
-            SideDef* side = sourceSurface->owner->castTo<SideDef>();
+            SideDef *side = sourceSurface->owner().castTo<SideDef>();
 
             // Clients need to know which emitter to use.
             if(&side->SW_middlesurface == sourceSurface)

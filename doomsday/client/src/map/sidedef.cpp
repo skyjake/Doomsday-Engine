@@ -26,7 +26,11 @@
 
 using namespace de;
 
-SideDef::SideDef() : de::MapElement(DMU_SIDEDEF)
+SideDef::SideDef()
+    : MapElement(DMU_SIDEDEF),
+      _middleSurface(dynamic_cast<MapElement &>(*this)),
+      _bottomSurface(dynamic_cast<MapElement &>(*this)),
+      _topSurface(dynamic_cast<MapElement &>(*this))
 {
     line = 0;
     flags = 0;
@@ -41,12 +45,48 @@ SideDef::SideDef() : de::MapElement(DMU_SIDEDEF)
 SideDef::~SideDef()
 {}
 
+SideDef &SideDef::operator = (SideDef const &other)
+{
+    _middleSurface = other._middleSurface;
+    _bottomSurface = other._bottomSurface;
+    _topSurface    = other._topSurface;
+
+    line = other.line;
+    flags = other.flags;
+    fakeRadioUpdateCount = other.fakeRadioUpdateCount;
+
+    std::memcpy(&buildData, &other.buildData, sizeof(buildData));
+    std::memcpy(&topCorners, &other.topCorners, sizeof(topCorners));
+    std::memcpy(&bottomCorners, &other.bottomCorners, sizeof(bottomCorners));
+    std::memcpy(&sideCorners, &other.sideCorners, sizeof(sideCorners));
+    std::memcpy(&spans, &other.spans, sizeof(spans));
+
+    return *this;
+}
+
+Surface &SideDef::surface(int surface)
+{
+    switch(SideDefSection(surface))
+    {
+    case SS_MIDDLE: return _middleSurface;
+    case SS_BOTTOM: return _bottomSurface;
+    case SS_TOP:    return _topSurface;
+    }
+    /// @throw InvalidSectionError The given surface section reference is not valid.
+    throw InvalidSectionError("SideDef::surface", QString("Invalid section %1").arg(surface));
+}
+
+Surface const &SideDef::surface(int surface) const
+{
+    return const_cast<Surface const &>(const_cast<SideDef &>(*this).surface(surface));
+}
+
 void SideDef::updateSoundEmitterOrigins()
 {
     if(!line) return;
-    SW_middlesurface.updateSoundEmitterOrigin();
-    SW_bottomsurface.updateSoundEmitterOrigin();
-    SW_topsurface.updateSoundEmitterOrigin();
+    _middleSurface.updateSoundEmitterOrigin();
+    _bottomSurface.updateSoundEmitterOrigin();
+    _topSurface.updateSoundEmitterOrigin();
 }
 
 void SideDef::updateSurfaceTangents()
@@ -54,20 +94,21 @@ void SideDef::updateSurfaceTangents()
     if(!line) return;
 
     byte sid = line->frontSideDefPtr() == this? FRONT : BACK;
-    Surface *surface = &SW_topsurface;
-    surface->normal[VY] = (line->vertexOrigin(sid  )[VX] - line->vertexOrigin(sid^1)[VX]) / line->length();
-    surface->normal[VX] = (line->vertexOrigin(sid^1)[VY] - line->vertexOrigin(sid  )[VY]) / line->length();
-    surface->normal[VZ] = 0;
-    V3f_BuildTangents(surface->tangent, surface->bitangent, surface->normal);
 
-    // All surfaces of a sidedef have the same vectors.
-    std::memcpy(SW_middletangent,   surface->tangent,   sizeof(surface->tangent));
-    std::memcpy(SW_middlebitangent, surface->bitangent, sizeof(surface->bitangent));
-    std::memcpy(SW_middlenormal,    surface->normal,    sizeof(surface->normal));
+    V3f_Set(_topSurface.normal, (line->vertexOrigin(sid^1)[VY] - line->vertexOrigin(sid  )[VY]) / line->length(),
+                                (line->vertexOrigin(sid  )[VX] - line->vertexOrigin(sid^1)[VX]) / line->length(),
+                                0);
 
-    std::memcpy(SW_bottomtangent,   surface->tangent,   sizeof(surface->tangent));
-    std::memcpy(SW_bottombitangent, surface->bitangent, sizeof(surface->bitangent));
-    std::memcpy(SW_bottomnormal,    surface->normal,    sizeof(surface->normal));
+    V3f_BuildTangents(_topSurface.tangent, _topSurface.bitangent, _topSurface.normal);
+
+    // All surfaces of a sidedef have the same tangent space vectors.
+    V3f_Copy(_middleSurface.tangent,   _topSurface.tangent);
+    V3f_Copy(_middleSurface.bitangent, _topSurface.bitangent);
+    V3f_Copy(_middleSurface.normal,    _topSurface.normal);
+
+    V3f_Copy(_bottomSurface.tangent,   _topSurface.tangent);
+    V3f_Copy(_bottomSurface.bitangent, _topSurface.bitangent);
+    V3f_Copy(_bottomSurface.normal,    _topSurface.normal);
 }
 
 int SideDef::property(setargs_t &args) const

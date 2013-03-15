@@ -51,11 +51,11 @@ static void Sv_IdentifySoundBase(mobj_t** base, Sector** sector, Polyobj** poly,
     if(!*poly)
     {
         // Not a polyobj. Try the sectors next.
-        *sector = GameMap_SectorByBase(theMap, *base);
+        *sector = GameMap_SectorBySoundEmitter(theMap, *base);
         if(!*sector)
         {
             // Not a sector. Try the surfaces.
-            *surface = GameMap_SurfaceByBase(theMap, *base);
+            *surface = GameMap_SurfaceBySoundEmitter(theMap, *base);
         }
     }
 
