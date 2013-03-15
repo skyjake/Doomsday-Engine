@@ -143,6 +143,8 @@ void QtTextCanvas::setFont(QFont const &font)
 
     d->boldFont = font;
     d->boldFont.setWeight(QFont::Bold);
+
+    markDirty();
 }
 
 void QtTextCanvas::setForegroundColor(QColor const &fg)

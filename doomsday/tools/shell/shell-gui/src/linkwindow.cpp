@@ -507,4 +507,5 @@ void LinkWindow::askForPassword()
 void LinkWindow::updateConsoleFontFromPreferences()
 {
     d->root->setFont(Preferences::consoleFont());
+    update();
 }
