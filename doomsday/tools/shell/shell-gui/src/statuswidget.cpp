@@ -50,6 +50,8 @@ DENG2_PIMPL(StatusWidget)
         map.clear();
         mapBounds = QRect();
         mapOutline = QPicture();
+        oldPlayerPositions.clear();
+        players.clear();
     }
 };
 
@@ -60,7 +62,7 @@ StatusWidget::StatusWidget(QWidget *parent)
     d->smallFont.setPointSize(font().pointSize() * 3 / 4);
     d->largeFont.setPointSize(font().pointSize() * 3 / 2);
     d->largeFont.setBold(true);
-    d->playerFont.setPointSizeF(font().pointSizeF() * .75f);
+    d->playerFont.setPointSizeF(font().pointSizeF() * .8f);
 }
 
 void StatusWidget::setGameState(QString mode, QString rules, QString mapId, QString mapTitle)
@@ -167,7 +169,9 @@ void StatusWidget::paintEvent(QPaintEvent *)
         QFontMetrics const metrics(d->playerFont);
         foreach(Instance::Player const &plr, d->players.values())
         {
-            QColor color(plr.color.x, plr.color.y, plr.color.z);
+            painter.save();
+
+            QColor const color(plr.color.x, plr.color.y, plr.color.z);
 
             QColor markColor = color;
             markColor.setAlpha(180);
@@ -177,12 +181,12 @@ void StatusWidget::paintEvent(QPaintEvent *)
             if(d->oldPlayerPositions.contains(plr.number))
             {
                 QPointF const start = d->oldPlayerPositions[plr.number];
-                QPointF const end = plrPos;
+                QPointF const end   = plrPos;
                 QPointF const delta = end - start;
 
                 /// @todo Qt has no gradient support for drawing lines?
 
-                int const STOPS = 100;
+                int const STOPS = 64;
                 for(int i = 0; i < STOPS; ++i)
                 {
                     QColor grad = color;
@@ -199,11 +203,11 @@ void StatusWidget::paintEvent(QPaintEvent *)
             painter.setTransform(QTransform::fromScale(factor, factor) *
                                  QTransform::fromTranslate(plrPos.x(), plrPos.y()));
 
-            painter.setPen(color);
+            painter.setPen(Qt::black);
             painter.setBrush(markColor);
             painter.drawEllipse(QPoint(0, 0), 4, 4);
             painter.drawLine(QPoint(0, 4), QPoint(0, 10));
-            markColor.setAlpha(100);
+            markColor.setAlpha(160);
             painter.setBrush(markColor);
 
             QString label = QString("%1: %2").arg(plr.number).arg(plr.name);
@@ -213,14 +217,19 @@ void StatusWidget::paintEvent(QPaintEvent *)
             int const gap = 3;
             textBounds.moveTopLeft(QPoint(-textBounds.width()/2, 10 + gap));
             QRect boxBounds = textBounds.adjusted(-gap, -gap, gap, metrics.descent() + gap);
+            painter.setPen(Qt::NoPen);
             painter.drawRoundedRect(boxBounds, 2, 2);
 
             painter.setFont(d->playerFont);
 
-            painter.setPen(Qt::black);
+            // Label text with a shadow.
+            bool const isDark = ((color.red() + color.green()*2 + color.blue())/3 < 140);
+            painter.setPen(isDark? Qt::black : Qt::white);
             painter.drawText(textBounds.topLeft() + QPoint(0, metrics.ascent()), label);
-            painter.setPen(Qt::white);
+            painter.setPen(isDark? Qt::white : Qt::black);
             painter.drawText(textBounds.topLeft() + QPoint(0, metrics.ascent() - 1), label);
+
+            painter.restore();
         }
     }
 }
