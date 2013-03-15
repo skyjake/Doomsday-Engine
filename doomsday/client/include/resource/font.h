@@ -56,7 +56,7 @@ typedef struct font_s {
     /// @c true= Font requires a full update.
     boolean _isDirty;
 
-    /// @see fontFlags.
+    /// @ref fontFlags.
     int _flags;
 
     /// Unique identifier of the primary binding in the owning collection.
@@ -82,7 +82,7 @@ fontid_t Font_PrimaryBind(const font_t* font);
 
 void Font_SetPrimaryBind(font_t* font, fontid_t bindId);
 
-/// @return  @see fontFlags
+/// @return  @ref fontFlags
 int Font_Flags(const font_t* font);
 
 int Font_Ascent(font_t* font);

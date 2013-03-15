@@ -41,7 +41,7 @@ typedef struct cbnode_s {
 
 struct cbuffer_s {
     mutex_t mutex;
-    int flags; /// @see consoleBufferFlags
+    int flags; /// @ref consoleBufferFlags
     uint numLines; /// Current number of lines.
     uint maxLines; /// Maximum number of lines.
     uint maxLineLen; /// Maximum length of a line.

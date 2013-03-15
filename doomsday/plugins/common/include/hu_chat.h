@@ -62,7 +62,7 @@ typedef struct {
 /**@}*/
 
 typedef struct {
-    int flags; /// @see uiChatFlags
+    int flags; /// @ref uiChatFlags
     int destination;
     guidata_chat_inputbuffer_t buffer;
 } guidata_chat_t;

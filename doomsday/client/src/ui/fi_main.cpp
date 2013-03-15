@@ -52,7 +52,7 @@
  * @ingroup InFine
  */
 typedef struct {
-    /// @see finaleFlags
+    /// @ref finaleFlags
     int flags;
     /// Unique identifier/reference (chosen automatically).
     finaleid_t id;

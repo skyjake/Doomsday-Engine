@@ -41,7 +41,7 @@ extern "C" {
  * @ingroup resource
  */
 typedef struct colorpalette_s {
-    /// @see colorPaletteFlags
+    /// @ref colorPaletteFlags
     uint8_t _flags;
 
     /// R8G8B88 color triplets [_num * 3].

@@ -82,7 +82,7 @@ typedef struct {
 
 typedef struct {
     texturevariantusagecontext_t context;
-    int flags; /// @see textureVariantSpecificationFlags
+    int flags; /// @ref textureVariantSpecificationFlags
     byte border; /// In pixels, added to all four edges of the texture.
     int wrapS, wrapT;
     boolean mipmapped, gammaCorrection, noStretch, toAlpha;

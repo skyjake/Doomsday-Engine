@@ -848,7 +848,7 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
     }
 }
 
-/// @param flags  @see skySphereRenderFlags
+/// @param flags  @ref skySphereRenderFlags
 static void renderHemisphere(int flags)
 {
     int firstSkyLayer = Sky_FirstActiveLayer();

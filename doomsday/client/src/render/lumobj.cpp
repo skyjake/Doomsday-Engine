@@ -63,13 +63,13 @@ typedef struct listnode_s {
 /**@}*/
 
 typedef struct {
-    int flags; /// @see lightProjectionListFlags
+    int flags; /// @ref lightProjectionListFlags
     listnode_t *head;
 } lightprojectionlist_t;
 
 /// Orientation is toward the projectee.
 typedef struct {
-    int flags; /// @see lightProjectFlags
+    int flags; /// @ref lightProjectFlags
     float blendFactor; /// Multiplied with projection alpha.
     pvec3d_t v1; /// Top left vertex of the surface being projected to.
     pvec3d_t v2; /// Bottom right vertex of the surface being projected to.
@@ -230,7 +230,7 @@ static uint newProjectionList(int flags)
  * @param listIdx   Address holding the list index to retrieve. If the referenced
  *                  list index is non-zero return the associated list. Otherwise
  *                  allocate a new list and write it's index back to this address.
- * @param flags     @ref ProjectionListFlags
+ * @param flags     @ref lightProjectionListFlags
  *
  * @return  ProjectionList associated with the (possibly newly attributed) index.
  */
@@ -334,7 +334,7 @@ static listnode_t *linkProjectionToList(listnode_t *node, lightprojectionlist_t 
  * @param listIdx   Address holding the list index to retrieve. If the referenced
  *                  list index is non-zero return the associated list. Otherwise
  *                  allocate a new list and write it's index back to this address.
- * @param flags     @ref ProjectionListFlags Used when constructing a new projection
+ * @param flags     @ref lightProjectionListFlags Used when constructing a new projection
  *                  list to configure it.
  * @param texture   GL identifier to texture attributed to the new projection.
  * @param s         GL texture coordinates on the S axis [left, right] in texture space.

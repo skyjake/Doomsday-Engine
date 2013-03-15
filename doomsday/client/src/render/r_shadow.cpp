@@ -56,7 +56,6 @@ static shadowprojectionlist_t* projectionLists;
 /**
  * Create a new projection list.
  *
- * @param flags  @ref surfaceProjectionListFlags
  * @return  Unique identifier attributed to the new list.
  */
 static uint newList(void)

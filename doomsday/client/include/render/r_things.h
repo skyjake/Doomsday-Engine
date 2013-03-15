@@ -110,7 +110,7 @@ typedef struct rendspriteparams_s {
 //@}
 
 typedef struct rendflareparams_s {
-    byte flags; // @see rendFlareFlags.
+    byte flags; // @ref rendFlareFlags.
     int size;
     float color[3];
     byte factor;
