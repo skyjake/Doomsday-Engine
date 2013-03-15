@@ -756,24 +756,21 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number,
     byte sideFlags = s->flags & 0xff;
     int df = 0;
 
-    if(r->top.material != s->top().materialPtr() &&
-       !(s->top().inFlags & SUIF_FIX_MISSING_MATERIAL))
+    if(!s->top().hasFixMaterial() && r->top.material != s->top().materialPtr())
     {
         df |= SIDF_TOP_MATERIAL;
         if(doUpdate)
             r->top.material = s->top().materialPtr();
     }
 
-    if(r->middle.material != s->middle().materialPtr() &&
-       !(s->middle().inFlags & SUIF_FIX_MISSING_MATERIAL))
+    if(!s->middle().hasFixMaterial() && r->middle.material != s->middle().materialPtr())
     {
         df |= SIDF_MID_MATERIAL;
         if(doUpdate)
             r->middle.material = s->middle().materialPtr();
     }
 
-    if(r->bottom.material != s->bottom().materialPtr() &&
-       !(s->bottom().inFlags & SUIF_FIX_MISSING_MATERIAL))
+    if(!s->bottom().hasFixMaterial() && r->bottom.material != s->bottom().materialPtr())
     {
         df |= SIDF_BOTTOM_MATERIAL;
         if(doUpdate)

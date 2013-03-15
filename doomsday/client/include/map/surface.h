@@ -102,9 +102,6 @@ public:
     /// @ref surfaceInternalFlags
     short inFlags;
 
-    /// Old @ref surfaceInternalFlags, for tracking changes.
-    short _oldInFlags;
-
     uint numDecorations;
 
     struct surfacedecorsource_s *decorations;
@@ -142,16 +139,26 @@ public:
     bool hasMaterial() const;
 
     /**
+     * Returns @c true iff a @em fix material is bound to the surface, which
+     * was chosen automatically where one was missing. Clients should not be
+     * notified when a fix material is bound to the surface (as they should
+     * perform their fixing, locally). However, if the fix material is later
+     * replaced with a "normally-bound" material, clients should be notified
+     * as per usual.
+     */
+    bool hasFixMaterial() const;
+
+    /**
      * Returns the material bound to the surface.
      *
-     * @see hasMaterial()
+     * @see hasMaterial(), hasFixMaterial()
      */
     Material &material() const;
 
     /**
      * Returns a pointer to the material bound to the surface; otherwise @c 0.
      *
-     * @see hasMaterial()
+     * @see hasMaterial(), hasFixMaterial()
      */
     inline Material *materialPtr() const { return hasMaterial()? &material() : 0; }
 
@@ -193,9 +200,10 @@ public:
     /**
      * Change Material bound to this surface.
      *
-     * @param mat  New Material.
+     * @param newMaterial   New material to be bound.
+     * @param isMissingFix  The new material is a fix for a "missing" material.
      */
-    bool setMaterial(Material *material);
+    bool setMaterial(Material *material, bool isMissingFix = false);
 
     /**
      * Change Material origin.

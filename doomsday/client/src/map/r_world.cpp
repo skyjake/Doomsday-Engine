@@ -1313,8 +1313,7 @@ static void addMissingMaterial(SideDef *s, SideDefSection section)
     if(surface.hasMaterial()) return;
 
     // Look for a suitable replacement.
-    surface.setMaterial(chooseFixMaterial(s, section));
-    surface.inFlags |= SUIF_FIX_MISSING_MATERIAL;
+    surface.setMaterial(chooseFixMaterial(s, section), true/* is missing fix */);
 
     // During map load we log missing materials.
     if(ddMapSetup && verbose)

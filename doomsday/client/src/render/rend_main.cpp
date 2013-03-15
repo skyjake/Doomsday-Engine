@@ -1626,8 +1626,7 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
                 // Lighting debug mode; render using System:gray.
                 mat = &App_Materials().find(de::Uri("System", Path("gray"))).material();
             }
-            else if(!surface->hasMaterial() ||
-                    ((surface->inFlags & SUIF_FIX_MISSING_MATERIAL) && devNoTexFix))
+            else if(!surface->hasMaterial() || (surface->hasFixMaterial() && devNoTexFix))
             {
                 // Missing material debug mode; render using System:missing.
                 mat = &App_Materials().find(de::Uri("System", Path("missing"))).material();
@@ -1710,8 +1709,7 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
         // Do not apply an angle based lighting delta if this surface's material
         // has been chosen as a HOM fix (we must remain consistent with the lighting
         // applied to the back plane (on this half-edge's back side)).
-        if(frontSide && isTwoSided && section != SS_MIDDLE &&
-           (surface->inFlags & SUIF_FIX_MISSING_MATERIAL))
+        if(frontSide && isTwoSided && section != SS_MIDDLE && surface->hasFixMaterial())
         {
             deltaL = deltaR = 0;
         }
@@ -2717,7 +2715,7 @@ static void Rend_RenderPlanes()
 
         if(renderTextures == 2)
             texMode = 2;
-        else if(!suf->hasMaterial() || (devNoTexFix && (suf->inFlags & SUIF_FIX_MISSING_MATERIAL)))
+        else if(!suf->hasMaterial() || (devNoTexFix && suf->hasFixMaterial()))
             texMode = 1;
         else
             texMode = 0;

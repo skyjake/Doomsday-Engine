@@ -1198,8 +1198,7 @@ static uint radioEdgeHackType(LineDef const *line, Sector const *front, Sector c
 {
     Surface const &surface = line->sideDef(backside).surface(isCeiling? SS_TOP:SS_BOTTOM);
 
-    if(fz < bz && !surface.hasMaterial() &&
-       !(surface.inFlags & SUIF_FIX_MISSING_MATERIAL))
+    if(fz < bz && !surface.hasMaterial())
         return 3; // Consider it fully open.
 
     // Is the back sector closed?

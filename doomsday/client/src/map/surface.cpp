@@ -46,7 +46,6 @@ Surface::Surface(MapElement &owner)
     V2f_Set(visOffsetDelta, 0, 0);
     std::memset(rgba, 1, sizeof(rgba));
     inFlags = 0;
-    _oldInFlags = 0;
     numDecorations = 0;
     decorations = 0;
 }
@@ -68,7 +67,6 @@ Surface &Surface::operator = (Surface const &other)
     V2f_Copy(_oldOffset[1], other._oldOffset[1]);
     std::memcpy(rgba, other.rgba, sizeof(rgba));
     inFlags = other.inFlags;
-    _oldInFlags = other._oldInFlags;
 
     // Reset the visual offset to the actual offset.
     V2f_Copy(visOffset, offset);
@@ -85,6 +83,11 @@ de::MapElement &Surface::owner() const
 bool Surface::hasMaterial() const
 {
     return !!_material;
+}
+
+bool Surface::hasFixMaterial() const
+{
+    return !!_material && !!(inFlags & SUIF_FIX_MISSING_MATERIAL);
 }
 
 Material &Surface::material() const
@@ -123,16 +126,23 @@ bool Surface::isAttachedToMap() const
     return true;
 }
 
-bool Surface::setMaterial(Material *newMaterial)
+bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
 {
     if(_material != newMaterial)
     {
+        // Update the missing-material-fix state.
+        if(!_material)
+        {
+            if(newMaterial && isMissingFix)
+                inFlags |= SUIF_FIX_MISSING_MATERIAL;
+        }
+        else if(newMaterial && (inFlags & SUIF_FIX_MISSING_MATERIAL))
+        {
+            inFlags &= ~SUIF_FIX_MISSING_MATERIAL;
+        }
+
         if(isAttachedToMap())
         {
-            // No longer a missing texture fix?
-            if(newMaterial && (_oldInFlags & SUIF_FIX_MISSING_MATERIAL))
-                inFlags &= ~SUIF_FIX_MISSING_MATERIAL;
-
             if(!ddMapSetup)
             {
 #ifdef __CLIENT__
@@ -170,7 +180,6 @@ bool Surface::setMaterial(Material *newMaterial)
         }
 
         _material = newMaterial;
-        _oldInFlags = inFlags;
         if(isAttachedToMap())
         {
             inFlags |= SUIF_UPDATE_DECORATIONS;
