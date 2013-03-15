@@ -68,7 +68,6 @@ void Cl_InitID(void)
 {
     int                 i;
     FILE*               file;
-    size_t              result;
 
     if((i = CommandLine_CheckWith("-id", 1)) != 0)
     {
@@ -81,7 +80,7 @@ void Cl_InitID(void)
     srand(time(NULL));
     if((file = fopen("client.id", "rb")) != NULL)
     {
-        result = fread(&clientID, sizeof(clientID), 1, file); // return value ignored
+        DENG_UNUSED(fread(&clientID, sizeof(clientID), 1, file)); // return value ignored
         clientID = ULONG(clientID);
         fclose(file);
         return;

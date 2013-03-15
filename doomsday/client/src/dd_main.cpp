@@ -2096,7 +2096,8 @@ static int DD_StartupWorker(void* /*parm*/)
                                                  RLF_DEFAULT, DD_ResourceClassById(RC_PACKAGE));
     foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
     de::File1 *loadedFile = tryLoadFile(de::Uri(foundPath, RC_NULL));
-    DENG2_ASSERT(loadedFile);
+    DENG2_ASSERT(loadedFile != 0);
+    DENG2_UNUSED(loadedFile);
 
     /*
      * No more lumps/packages will be loaded in startup mode after this point.

@@ -226,6 +226,7 @@ void N_NETicker(timespan_t time)
  */
 void N_Update(void)
 {
+#ifdef __SERVER__
     netevent_t  nevent;
 
     // Are there any events to process?
@@ -233,7 +234,6 @@ void N_Update(void)
     {
         switch(nevent.type)
         {
-#ifdef __SERVER__
         case NE_CLIENT_ENTRY: {
             // Assign a console to the new player.
             Sv_PlayerArrives(nevent.id, App_ServerSystem().user(nevent.id).name().toUtf8());
@@ -249,31 +249,12 @@ void N_Update(void)
             masterHeartbeat = MASTER_UPDATETIME;
             break;
 
-        /*case NE_TERMINATE_NODE:
-            // The server receives this event when a client's connection is broken.
-            App_ServerSystem().terminateNode(nevent.id);
-            break;*/
-#endif // __SERVER__
-
-#ifdef __CLIENT__
-        /*case NE_END_CONNECTION:
-            // A client receives this event when the connection is
-            // terminated.
-            if(netGame)
-            {
-                // We're still in a netGame, which means we didn't disconnect
-                // voluntarily.
-                Con_Message("N_Update: Connection was terminated.");
-                N_Disconnect();
-            }
-            break;*/
-#endif
-
         default:
             Con_Error("N_Update: Invalid value, nevent.type = %i.", (int) nevent.type);
             break;
         }
     }
+#endif // __SERVER__
 }
 
 /**
