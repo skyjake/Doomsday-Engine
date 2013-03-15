@@ -54,6 +54,7 @@ public:
 
     void sendGameState();
     void sendMapOutline();
+    void sendPlayerInfo();
 
 protected slots:
     void handleIncomingPackets();

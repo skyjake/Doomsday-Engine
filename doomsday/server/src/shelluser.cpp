@@ -29,7 +29,9 @@
 #include "games.h"
 #include "Game"
 #include "def_main.h"
+#include "network/net_main.h"
 #include "map/gamemap.h"
+#include "map/p_players.h"
 
 using namespace de;
 
@@ -96,6 +98,7 @@ void ShellUser::sendInitialUpdate()
 
     sendGameState();
     sendMapOutline();
+    sendPlayerInfo();
 }
 
 void ShellUser::sendGameState()
@@ -159,6 +162,37 @@ void ShellUser::sendMapOutline()
                 (line.sides[0].sector && line.sides[1].sector)?
                     shell::MapOutlinePacket::TwoSidedLine :
                     shell::MapOutlinePacket::OneSidedLine);
+    }
+
+    *this << *packet;
+}
+
+void ShellUser::sendPlayerInfo()
+{
+    if(!theMap) return;
+
+    QScopedPointer<shell::PlayerInfoPacket> packet(new shell::PlayerInfoPacket);
+
+    for(uint i = 1; i < DDMAXPLAYERS; ++i)
+    {
+        if(!ddPlayers[i].shared.inGame || !ddPlayers[i].shared.mo)
+            continue;
+
+        shell::PlayerInfoPacket::Player info;
+
+        info.number   = i;
+        info.name     = clients[i].name;
+        info.position = de::Vector2i(ddPlayers[i].shared.mo->origin[VX],
+                                     ddPlayers[i].shared.mo->origin[VY]);
+
+        /**
+         * @todo Player color is presently game-side data. Therefore, this
+         * packet should be constructed by libcommon (or player color should be
+         * moved to the engine).
+         */
+        // info.color = ?
+
+        packet->add(info);
     }
 
     *this << *packet;

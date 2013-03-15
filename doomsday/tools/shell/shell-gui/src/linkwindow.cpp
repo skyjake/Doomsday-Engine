@@ -431,6 +431,10 @@ void LinkWindow::handleIncomingPackets()
             d->status->setMapOutline(*static_cast<MapOutlinePacket *>(packet.data()));
             break;
 
+        case shell::Protocol::PlayerInfo:
+            d->status->setPlayerInfo(*static_cast<PlayerInfoPacket *>(packet.data()));
+            break;
+
         default:
             break;
         }

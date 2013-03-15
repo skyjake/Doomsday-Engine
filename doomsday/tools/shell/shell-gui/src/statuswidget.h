@@ -36,6 +36,7 @@ public:
 
     void setGameState(QString mode, QString rules, QString mapId, QString mapTitle);
     void setMapOutline(de::shell::MapOutlinePacket const &outline);
+    void setPlayerInfo(de::shell::PlayerInfoPacket const &plrInfo);
 
     void paintEvent(QPaintEvent *);
 

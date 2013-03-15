@@ -18,17 +18,43 @@
  */
 
 #include "shellusers.h"
+#include <QTimer>
 
-ShellUsers::ShellUsers()
+static int const PLAYER_INFO_INTERVAL = 2500; // ms
+
+DENG2_PIMPL_NOREF(ShellUsers)
+{
+    QSet<ShellUser *> users;
+    QTimer *infoTimer;
+
+    Instance()
+    {
+        infoTimer = new QTimer;
+        infoTimer->setInterval(PLAYER_INFO_INTERVAL);
+    }
+
+    ~Instance()
+    {
+        delete infoTimer;
+    }
+};
+
+ShellUsers::ShellUsers() : d(new Instance)
 {
     audienceForMapChange += this;
+
+    // Player information is sent periodically to all shell users.
+    connect(d->infoTimer, SIGNAL(timeout()), this, SLOT(sendPlayerInfoToAll()));
+    d->infoTimer->start();
 }
 
 ShellUsers::~ShellUsers()
 {
+    d->infoTimer->stop();
+
     audienceForMapChange -= this;
 
-    foreach(ShellUser *user, _users)
+    foreach(ShellUser *user, d->users)
     {
         delete user;
     }
@@ -38,7 +64,7 @@ void ShellUsers::add(ShellUser *user)
 {
     LOG_INFO("New shell user from %s") << user->address();
 
-    _users.insert(user);
+    d->users.insert(user);
     connect(user, SIGNAL(disconnected()), this, SLOT(userDisconnected()));
 
     user->sendInitialUpdate();
@@ -46,15 +72,24 @@ void ShellUsers::add(ShellUser *user)
 
 int ShellUsers::count() const
 {
-    return _users.size();
+    return d->users.size();
 }
 
 void ShellUsers::currentMapChanged()
 {
-    foreach(ShellUser *user, _users)
+    foreach(ShellUser *user, d->users)
     {
         user->sendGameState();
         user->sendMapOutline();
+        user->sendPlayerInfo();
+    }
+}
+
+void ShellUsers::sendPlayerInfoToAll()
+{
+    foreach(ShellUser *user, d->users)
+    {
+        user->sendPlayerInfo();
     }
 }
 
@@ -63,7 +98,7 @@ void ShellUsers::userDisconnected()
     DENG2_ASSERT(dynamic_cast<ShellUser *>(sender()) != 0);
 
     ShellUser *user = static_cast<ShellUser *>(sender());
-    _users.remove(user);
+    d->users.remove(user);
 
     LOG_INFO("Shell user from %s has disconnected") << user->address();
 
