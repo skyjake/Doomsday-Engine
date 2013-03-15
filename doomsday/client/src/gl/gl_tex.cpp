@@ -1225,11 +1225,10 @@ void BlackOutlines(uint8_t* pixels, int width, int height)
 }
 #endif
 
-/// \todo Not a very efficient algorithm...
 void ColorOutlinesIdx(uint8_t* buffer, int width, int height)
 {
-    assert(buffer);
-    {
+    DENG_ASSERT(buffer);
+
     const int numpels = width * height;
     uint8_t* w[5];
     int x, y;
@@ -1245,7 +1244,10 @@ void ColorOutlinesIdx(uint8_t* buffer, int width, int height)
     //      | w4 |
     //      +----+
 
+    /// @todo Not a very efficient algorithm...
+
     for(y = 0; y < height; ++y)
+    {
         for(x = 0; x < width; ++x)
         {
             // Only solid pixels spread.
