@@ -42,30 +42,25 @@ DENG2_PIMPL(Plane)
      */
     void markDependantSurfacesForDecorationUpdate()
     {
-        if(!self._sector->lineDefs) return;
-
         // "Middle" planes have no dependent surfaces.
         if(self._type == Plane::Middle) return;
 
         // Mark the decor lights on the sides of this plane as requiring
         // an update.
-        LineDef **linep = self._sector->lineDefs;
-        while(*linep)
+        foreach(LineDef *line, self._sector->lines())
         {
-            LineDef *li = *linep;
+            SideDef &frontSideDef = line->frontSideDef();
+            frontSideDef.SW_surface(SS_MIDDLE).update();
+            frontSideDef.SW_surface(SS_BOTTOM).update();
+            frontSideDef.SW_surface(SS_TOP).update();
 
-            li->frontSideDef().SW_surface(SS_MIDDLE).update();
-            li->frontSideDef().SW_surface(SS_BOTTOM).update();
-            li->frontSideDef().SW_surface(SS_TOP).update();
-
-            if(li->hasBackSideDef())
+            if(line->hasBackSideDef())
             {
-                li->backSideDef().SW_surface(SS_MIDDLE).update();
-                li->backSideDef().SW_surface(SS_BOTTOM).update();
-                li->backSideDef().SW_surface(SS_TOP).update();
+                SideDef &backSideDef = line->backSideDef();
+                backSideDef.SW_surface(SS_MIDDLE).update();
+                backSideDef.SW_surface(SS_BOTTOM).update();
+                backSideDef.SW_surface(SS_TOP).update();
             }
-
-            linep++;
         }
     }
 };

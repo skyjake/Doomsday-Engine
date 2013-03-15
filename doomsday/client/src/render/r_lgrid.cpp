@@ -447,15 +447,15 @@ void LG_InitForMap(void)
     // Find the blocks of all sectors.
     for(s = 0; s < NUM_SECTORS; ++s)
     {
-        Sector* sector = SECTOR_PTR(s);
+        Sector *sector = SECTOR_PTR(s);
 
         count = changedCount = 0;
 
-        if(0 != sector->lineDefCount)
+        if(sector->lineCount())
         {
             // Clear the bitfields.
-            memset(indexBitfield, 0, bitfieldSize);
-            memset(contributorBitfield, 0, bitfieldSize);
+            std::memset(indexBitfield, 0, bitfieldSize);
+            std::memset(contributorBitfield, 0, bitfieldSize);
 
             for(block = grid, y = 0; y < lgBlockHeight; ++y)
             {

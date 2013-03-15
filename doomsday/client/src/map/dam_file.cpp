@@ -442,18 +442,16 @@ static void writeSector(GameMap *map, uint idx)
     writeFloat(s->rgb[CR]);
     writeFloat(s->rgb[CG]);
     writeFloat(s->rgb[CB]);
-    writeLong(s->planeCount());
-    for(uint i = 0; i < s->planeCount(); ++i)
+    writeLong((long) s->_planes.count());
+    foreach(Plane *plane, s->_planes)
     {
-        Plane *p = s->_planes[i];
+        writeFloat(plane->_height);
+        writeFloat(plane->_targetHeight);
+        writeFloat(plane->_speed);
+        writeFloat(plane->_visHeight);
+        writeFloat(plane->_visHeightDelta);
 
-        writeFloat(p->_height);
-        writeFloat(p->_targetHeight);
-        writeFloat(p->_speed);
-        writeFloat(p->_visHeight);
-        writeFloat(p->_visHeightDelta);
-
-        Surface &surface = p->surface();
+        Surface &surface = plane->surface();
         writeLong((long) surface.flags);
         //writeLong(getMaterialDictID(materialDict, p->surface().material));
         writeLong((long) surface.blendMode);
@@ -483,19 +481,25 @@ static void writeSector(GameMap *map, uint idx)
         writeShort(s->blocks[i]);
 
     // Line list.
-    writeLong((long) s->lineDefCount);
-    for(uint i = 0; i < s->lineDefCount; ++i)
-        writeLong(map->lineDefs.indexOf(s->lineDefs[i]) + 1);
+    writeLong((long) s->_lines.count());
+    foreach(LineDef *line, s->_lines)
+    {
+        writeLong(GameMap_LineDefIndex(map, line) + 1);
+    }
 
     // BspLeaf list.
-    writeLong((long) s->bspLeafCount);
-    for(uint i = 0; i < s->bspLeafCount; ++i)
-        writeLong(GameMap_BspLeafIndex(map, s->bspLeafs[i]) + 1);
+    writeLong((long) s->_bspLeafs.count());
+    foreach(BspLeaf *bspLeaf, s->_bspLeafs)
+    {
+        writeLong(GameMap_BspLeafIndex(map, bspLeaf) + 1);
+    }
 
     // Reverb BSP leaf attributors.
-    writeLong((long) s->numReverbBspLeafAttributors);
-    for(uint i = 0; i < s->numReverbBspLeafAttributors; ++i)
-        writeLong(GameMap_BspLeafIndex(map, s->reverbBspLeafs[i]) + 1);
+    writeLong((long) s->_reverbBspLeafs.count());
+    foreach(BspLeaf *bspLeaf, s->_reverbBspLeafs)
+    {
+        writeLong(GameMap_BspLeafIndex(map, bspLeaf) + 1);
+    }
 }
 
 static void readSector(GameMap *map, uint idx)
@@ -555,36 +559,57 @@ static void readSector(GameMap *map, uint idx)
     }
 
     for(uint i = 0; i < NUM_REVERB_DATA; ++i)
+    {
         s->reverb[i] = readFloat();
+    }
 
     // Lightgrid block indices.
     s->changedBlockCount = (uint) readLong();
     s->blockCount = (uint) readLong();
     s->blocks = (ushort *) Z_Malloc(sizeof(ushort) * s->blockCount, PU_MAP, 0);
     for(uint i = 0; i < s->blockCount; ++i)
+    {
         s->blocks[i] = readShort();
+    }
 
     // Line list.
-    s->lineDefCount = (uint) readLong();
-    s->lineDefs = (LineDef **) Z_Malloc(sizeof(LineDef *) * (s->lineDefCount + 1), PU_MAP, 0);
-    for(uint i = 0; i < s->lineDefCount; ++i)
-        s->lineDefs[i] = &map->lineDefs[(unsigned) readLong() - 1];
-    s->lineDefs[s->lineDefCount] = NULL; // Terminate.
+    s->_lines.clear();
+    int lineCount = readLong();
+#ifdef DENG2_QT_4_7_OR_NEWER
+    s->_lines.reserve(lineCount);
+#endif
+    for(int i = 0; i < lineCount; ++i)
+    {
+        LineDef *line = GameMap_LineDef(map, readLong() - 1);
+        // Ownership of the line is not given to the sector.
+        s->_lines.append(line);
+    }
 
     // BspLeaf list.
-    s->bspLeafCount = (uint) readLong();
-    s->bspLeafs = (BspLeaf**) Z_Malloc(sizeof(BspLeaf *) * (s->bspLeafCount + 1), PU_MAP, 0);
-    for(uint i = 0; i < s->bspLeafCount; ++i)
-        s->bspLeafs[i] = GameMap_BspLeaf(map, (unsigned) readLong() - 1);
-    s->bspLeafs[s->bspLeafCount] = NULL; // Terminate.
+    s->_bspLeafs.clear();
+    int bspLeafCount = readLong();
+#ifdef DENG2_QT_4_7_OR_NEWER
+    s->_bspLeafs.reserve(bspLeafCount);
+#endif
+    for(int i = 0; i < bspLeafCount; ++i)
+    {
+        BspLeaf *bspLeaf = GameMap_BspLeaf(map, readLong() - 1);
+        // Ownership of the BSP leaf is not given to the sector.
+        s->_bspLeafs.append(bspLeaf);
+    }
 
     // Reverb BSP leaf attributors.
-    s->numReverbBspLeafAttributors = (uint) readLong();
-    s->reverbBspLeafs = (BspLeaf **)
-        Z_Malloc(sizeof(BspLeaf *) * (s->numReverbBspLeafAttributors + 1), PU_MAP, 0);
-    for(uint i = 0; i < s->numReverbBspLeafAttributors; ++i)
-        s->reverbBspLeafs[i] = GameMap_BspLeaf(map, (unsigned) readLong() - 1);
-    s->reverbBspLeafs[s->numReverbBspLeafAttributors] = NULL; // Terminate.
+    s->_reverbBspLeafs.clear();
+    int reverbBspLeafCount = readLong();
+#ifdef DENG2_QT_4_7_OR_NEWER
+    s->_reverbBspLeafs.reserve(reverbBspLeafCount);
+#endif
+    for(int i = 0; i < reverbBspLeafCount; ++i)
+    {
+        BspLeaf *bspLeaf = GameMap_BspLeaf(map, readLong() - 1);
+        // Ownership of the BSP leaf is not given to the sector.
+        s->_reverbBspLeafs.append(bspLeaf);
+    }
 }
 
 static void archiveSectors(GameMap *map, boolean write)

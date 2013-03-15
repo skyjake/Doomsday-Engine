@@ -272,45 +272,38 @@ Plane *R_NewPlaneForSector(Sector *sec)
      * If we are in map setup mode, don't create the biassurfaces now,
      * as planes are created before the bias system is available.
      */
-    if(sec->bspLeafs && *sec->bspLeafs)
+    foreach(BspLeaf *bspLeaf, sec->bspLeafs())
     {
-        BspLeaf **ssecIter = sec->bspLeafs;
-        do
+        uint n = 0;
+
+        biassurface_t **newList = (biassurface_t **) Z_Calloc(sec->planeCount() * sizeof(biassurface_t *), PU_MAP, 0);
+        // Copy the existing list?
+        if(bspLeaf->_bsuf)
         {
-            BspLeaf *bspLeaf = *ssecIter;
-            uint n = 0;
-
-            biassurface_t **newList = (biassurface_t **) Z_Calloc(sec->planeCount() * sizeof(biassurface_t *), PU_MAP, 0);
-            // Copy the existing list?
-            if(bspLeaf->_bsuf)
+            for(; n < sec->planeCount() - 1 /* exclude newly added */; ++n)
             {
-                for(; n < sec->planeCount() - 1 /* exclude newly added */; ++n)
-                {
-                    newList[n] = bspLeaf->_bsuf[n];
-                }
-                Z_Free(bspLeaf->_bsuf);
-                bspLeaf->_bsuf = 0;
+                newList[n] = bspLeaf->_bsuf[n];
+            }
+            Z_Free(bspLeaf->_bsuf);
+            bspLeaf->_bsuf = 0;
+        }
+
+        if(!ddMapSetup)
+        {
+            biassurface_t *bsuf = SB_CreateSurface();
+
+            bsuf->size = Rend_NumFanVerticesForBspLeaf(bspLeaf);
+            bsuf->illum = (vertexillum_t *) Z_Calloc(sizeof(vertexillum_t) * bsuf->size, PU_MAP, 0);
+
+            for(uint i = 0; i < bsuf->size; ++i)
+            {
+                SB_InitVertexIllum(&bsuf->illum[i]);
             }
 
-            if(!ddMapSetup)
-            {
-                biassurface_t *bsuf = SB_CreateSurface();
+            newList[n] = bsuf;
+        }
 
-                bsuf->size = Rend_NumFanVerticesForBspLeaf(bspLeaf);
-                bsuf->illum = (vertexillum_t *) Z_Calloc(sizeof(vertexillum_t) * bsuf->size, PU_MAP, 0);
-
-                for(uint i = 0; i < bsuf->size; ++i)
-                {
-                    SB_InitVertexIllum(&bsuf->illum[i]);
-                }
-
-                newList[n] = bsuf;
-            }
-
-            bspLeaf->_bsuf = newList;
-
-            ssecIter++;
-        } while(*ssecIter);
+        bspLeaf->_bsuf = newList;
     }
 #endif
 
@@ -349,9 +342,8 @@ void R_DestroyPlaneOfSector(uint planeIndex, Sector *sec)
     theMap->decoratedSurfaces().remove(&plane.surface());
 
     // Destroy the biassurfaces for this plane.
-    for(BspLeaf **bspLeafIter = sec->bspLeafs; *bspLeafIter; bspLeafIter++)
+    foreach(BspLeaf *bspLeaf, sec->bspLeafs())
     {
-        BspLeaf *bspLeaf = *bspLeafIter;
         DENG2_ASSERT(bspLeaf->_bsuf != 0);
         SB_DestroySurface(bspLeaf->_bsuf[planeIndex]);
         if(planeIndex < sec->planeCount())
@@ -371,7 +363,7 @@ void GameMap_UpdateSkyFixForSector(GameMap *map, Sector *sec)
 {
     DENG_ASSERT(map);
 
-    if(!sec || 0 == sec->lineDefCount) return;
+    if(!sec || !sec->lineCount()) return;
 
     bool skyFloor = sec->floorSurface().isSkyMasked();
     bool skyCeil  = sec->ceilingSurface().isSkyMasked();
@@ -410,48 +402,42 @@ void GameMap_UpdateSkyFixForSector(GameMap *map, Sector *sec)
         }
     }
 
-    // Update for middle textures on two sided linedefs which intersect the
+    // Update for middle textures on two sided lines which intersect the
     // floor and/or ceiling of their front and/or back sectors.
-    if(sec->lineDefs && *sec->lineDefs)
+    foreach(LineDef *line, sec->lines())
     {
-        LineDef **linePtr = sec->lineDefs;
-        do
+        // Must be twosided.
+        if(!line->hasFrontSideDef() || !line->hasBackSideDef())
+            continue;
+
+        int side = line->frontSectorPtr() == sec? FRONT : BACK;
+        SideDef const &sideDef = line->sideDef(side);
+
+        if(!sideDef.SW_middlematerial)
+            continue;
+
+        if(skyCeil)
         {
-            LineDef *li = *linePtr;
+            float const top = sec->ceiling().visHeight() + sideDef.SW_middlevisoffset[VY];
 
-            // Must be twosided.
-            if(li->hasFrontSideDef() && li->hasBackSideDef())
+            if(top > map->skyFix[Plane::Ceiling].height)
             {
-                SideDef *si = li->frontSectorPtr() == sec? li->frontSideDefPtr() : li->backSideDefPtr();
-
-                if(si->SW_middlematerial)
-                {
-                    if(skyCeil)
-                    {
-                        float top = sec->ceiling().visHeight() + si->SW_middlevisoffset[VY];
-
-                        if(top > map->skyFix[Plane::Ceiling].height)
-                        {
-                            // Must raise the skyfix ceiling.
-                            map->skyFix[Plane::Ceiling].height = top;
-                        }
-                    }
-
-                    if(skyFloor)
-                    {
-                        float bottom = sec->floor().visHeight() +
-                                si->SW_middlevisoffset[VY] - si->SW_middlematerial->height();
-
-                        if(bottom < map->skyFix[Plane::Floor].height)
-                        {
-                            // Must lower the skyfix floor.
-                            map->skyFix[Plane::Floor].height = bottom;
-                        }
-                    }
-                }
+                // Must raise the skyfix ceiling.
+                map->skyFix[Plane::Ceiling].height = top;
             }
-            linePtr++;
-        } while(*linePtr);
+        }
+
+        if(skyFloor)
+        {
+            float const bottom = sec->floor().visHeight() +
+                sideDef.SW_middlevisoffset[VY] - sideDef.SW_middlematerial->height();
+
+            if(bottom < map->skyFix[Plane::Floor].height)
+            {
+                // Must lower the skyfix floor.
+                map->skyFix[Plane::Floor].height = bottom;
+            }
+        }
     }
 }
 
@@ -994,7 +980,9 @@ void R_MapInitSurfaceLists()
     for(uint i = 0; i < NUM_SECTORS; ++i)
     {
         Sector *sec = SECTOR_PTR(i);
-        if(!sec->lineDefCount) continue;
+
+        // Skip sectors with no lines as their planes will never be drawn.
+        if(!sec->lineCount()) continue;
 
         foreach(Plane *plane, sec->planes())
         {
@@ -1335,53 +1323,56 @@ static void addMissingMaterial(SideDef *s, SideDefSection section)
 }
 #endif // __CLIENT__
 
-static void R_UpdateLinedefsOfSector(Sector *sec)
-{
 #ifdef __CLIENT__
-    if(!sec) return;
-
-    for(uint i = 0; i < sec->lineDefCount; ++i)
+static void updateMissingMaterialsForLinesOfSector(Sector const &sec)
+{
+    foreach(LineDef *line, sec.lines())
     {
-        LineDef *li = sec->lineDefs[i];
-        if(li->isSelfReferencing()) continue;
+        // Self-referencing lines don't need fixing.
+        if(line->isSelfReferencing()) continue;
 
-        SideDef *front    = li->frontSideDefPtr();
-        SideDef *back     = li->backSideDefPtr();
-        Sector *frontSec  = li->frontSectorPtr();
-        Sector *backSec   = li->backSectorPtr();
-
-        // Do not fix "windows".
-        if(!front || (!back && backSec)) continue;
+        // Do not fix BSP "window" lines.
+        if(!line->hasFrontSideDef() || (!line->hasBackSideDef() && line->hasBackSector()))
+            continue;
 
         /**
          * Do as in the original Doom if the texture has not been defined -
          * extend the floor/ceiling to fill the space (unless it is skymasked),
          * or if there is a midtexture use that instead.
          */
-        if(backSec)
+        if(line->hasBackSector())
         {
-            // Bottom section.
-            if(frontSec->floor().height() < backSec->floor().height())
-                addMissingMaterial(front, SS_BOTTOM);
-            else if(frontSec->floor().height() > backSec->floor().height())
-                addMissingMaterial(back, SS_BOTTOM);
+            Sector const &frontSec = line->frontSector();
+            Sector const &backSec  = line->backSector();
 
-            // Top section.
-            if(backSec->ceiling().height() < frontSec->ceiling().height())
-                addMissingMaterial(front, SS_TOP);
-            else if(backSec->ceiling().height() > frontSec->ceiling().height())
-                addMissingMaterial(back, SS_TOP);
+            // A potential bottom section fix?
+            if(frontSec.floor().height() < backSec.floor().height())
+            {
+                addMissingMaterial(line->frontSideDefPtr(), SS_BOTTOM);
+            }
+            else if(frontSec.floor().height() > backSec.floor().height())
+            {
+                addMissingMaterial(line->backSideDefPtr(), SS_BOTTOM);
+            }
+
+            // A potential top section fix?
+            if(backSec.ceiling().height() < frontSec.ceiling().height())
+            {
+                addMissingMaterial(line->frontSideDefPtr(), SS_TOP);
+            }
+            else if(backSec.ceiling().height() > frontSec.ceiling().height())
+            {
+                addMissingMaterial(line->backSideDefPtr(), SS_TOP);
+            }
         }
         else
         {
-            // Middle section.
-            addMissingMaterial(front, SS_MIDDLE);
+            // A potential middle section fix.
+            addMissingMaterial(line->frontSideDefPtr(), SS_MIDDLE);
         }
     }
-#else // !__CLIENT__
-    DENG2_UNUSED(sec);
-#endif
 }
+#endif // __CLIENT__
 
 boolean R_UpdatePlane(Plane *pln, boolean forceUpdate)
 {
@@ -1410,15 +1401,15 @@ boolean R_UpdatePlane(Plane *pln, boolean forceUpdate)
             }
         }
 
-        // Update the base origins for this plane and all relevant sidedef surfaces.
+        // Update the base origins for this plane and all affected wall surfaces.
         pln->surface().updateBaseOrigin();
-        for(uint i = 0; i < sec->lineDefCount; ++i)
+        foreach(LineDef *line, sec->lines())
         {
-            LineDef *line = sec->lineDefs[i];
             if(line->hasFrontSideDef()) // $degenleaf
             {
                 line->frontSideDef().updateBaseOrigins();
             }
+
             if(line->hasBackSideDef())
             {
                 line->backSideDef().updateBaseOrigins();
@@ -1427,29 +1418,24 @@ boolean R_UpdatePlane(Plane *pln, boolean forceUpdate)
 
 #ifdef __CLIENT__
         // Inform the shadow bias of changed geometry.
-        if(sec->bspLeafs && *sec->bspLeafs)
+        foreach(BspLeaf *bspLeaf, sec->bspLeafs())
         {
-            BspLeaf **bspLeafIter = sec->bspLeafs;
-            for(; *bspLeafIter; bspLeafIter++)
+            if(HEdge *base = bspLeaf->firstHEdge())
             {
-                BspLeaf *bspLeaf = *bspLeafIter;
-                if(HEdge *base = bspLeaf->firstHEdge())
+                HEdge *hedge = base;
+                do
                 {
-                    HEdge *hedge = base;
-                    do
+                    if(hedge->lineDef)
                     {
-                        if(hedge->lineDef)
+                        for(uint i = 0; i < 3; ++i)
                         {
-                            for(uint i = 0; i < 3; ++i)
-                            {
-                                SB_SurfaceMoved(hedge->bsuf[i]);
-                            }
+                            SB_SurfaceMoved(hedge->bsuf[i]);
                         }
-                    } while((hedge = hedge->next) != base);
-                }
-
-                SB_SurfaceMoved(&bspLeaf->biasSurfaceForGeometryGroup(pln->inSectorIndex()));
+                    }
+                } while((hedge = hedge->next) != base);
             }
+
+            SB_SurfaceMoved(&bspLeaf->biasSurfaceForGeometryGroup(pln->inSectorIndex()));
         }
 #endif // __CLIENT__
 
@@ -1498,7 +1484,9 @@ boolean R_UpdateSector(Sector *sec, boolean forceUpdate)
     if(forceUpdate || planeChanged)
     {
         sec->updateBaseOrigin();
-        R_UpdateLinedefsOfSector(sec);
+#ifdef __CLIENT__
+        updateMissingMaterialsForLinesOfSector(*sec);
+#endif
         S_MarkSectorReverbDirty(sec);
         changed = true;
     }

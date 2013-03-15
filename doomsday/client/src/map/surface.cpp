@@ -69,7 +69,7 @@ bool Surface::isAttachedToMap() const
     if(owner->type() == DMU_PLANE)
     {
         Sector const &sec = owner->castTo<Plane>()->sector();
-        if(0 == sec.bspLeafCount)
+        if(!sec.bspLeafCount())
             return false;
     }
     return true;

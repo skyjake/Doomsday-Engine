@@ -22,6 +22,7 @@
 #include "map/bspleaf.h"
 #include "map/linedef.h"
 #include <de/Log>
+#include <QtAlgorithms>
 
 #include "map/sector.h"
 
@@ -38,12 +39,6 @@ Sector::Sector() : MapElement(DMU_SECTOR)
     std::memset(rgb, 0, sizeof(rgb));
     std::memset(oldRGB, 0, sizeof(oldRGB));
     mobjList = 0;
-    lineDefs = 0;
-    lineDefCount = 0;
-    bspLeafs = 0;
-    bspLeafCount = 0;
-    reverbBspLeafs = 0;
-    numReverbBspLeafAttributors = 0;
     std::memset(&base, 0, sizeof(base));
     blockCount = 0;
     changedBlockCount = 0;
@@ -54,20 +49,27 @@ Sector::Sector() : MapElement(DMU_SECTOR)
 
 Sector::~Sector()
 {
-    foreach(Plane *p, _planes)
-    {
-        delete p;
-    }
+    qDeleteAll(_planes);
 }
 
 Plane &Sector::plane(int planeIndex)
 {
-    return *_planes[planeIndex];
+    if(planeIndex >= 0 && planeIndex < _planes.count())
+    {
+        return *_planes[planeIndex];
+    }
+    /// @throw MissingPlaneError The referenced plane does not exist.
+    throw MissingPlaneError("Sector::plane", QString("Missing plane %1").arg(planeIndex));
 }
 
 Plane const &Sector::plane(int planeIndex) const
 {
-    return *_planes[planeIndex];
+    return const_cast<Plane const &>(const_cast<Sector &>(*this).plane(planeIndex));
+}
+
+Sector::Lines const &Sector::lines() const
+{
+    return _lines;
 }
 
 Sector::Planes const &Sector::planes() const
@@ -75,22 +77,32 @@ Sector::Planes const &Sector::planes() const
     return _planes;
 }
 
+Sector::BspLeafs const &Sector::bspLeafs() const
+{
+    return _bspLeafs;
+}
+
+Sector::BspLeafs const &Sector::reverbBspLeafs() const
+{
+    return _reverbBspLeafs;
+}
+
 void Sector::updateAABox()
 {
     V2d_Set(aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
     V2d_Set(aaBox.max, DDMINFLOAT, DDMINFLOAT);
 
-    LineDef **lineIter = lineDefs;
-    if(!lineIter) return;
+    if(!_lines.count()) return;
 
-    LineDef *line = *lineIter;
+    QListIterator<LineDef *> lineIt(_lines);
+
+    LineDef *line = lineIt.peekNext();
     V2d_InitBox(aaBox.arvec2, line->aaBox().min);
     V2d_AddToBox(aaBox.arvec2, line->aaBox().max);
-    lineIter++;
 
-    for(; *lineIter; lineIter++)
+    while(lineIt.hasNext())
     {
-        line = *lineIter;
+        line = lineIt.next();
         V2d_AddToBox(aaBox.arvec2, line->aaBox().min);
         V2d_AddToBox(aaBox.arvec2, line->aaBox().max);
     }
@@ -136,7 +148,7 @@ int Sector::property(setargs_t &args) const
         DMU_GetValue(DMT_SECTOR_BASE, &baseAdr, &args, 0);
         break; }
     case DMU_LINEDEF_COUNT: {
-        int val = int( lineDefCount );
+        int val = _lines.count();
         DMU_GetValue(DDVT_INT, &val, &args, 0);
         break; }
     case DMT_MOBJS:

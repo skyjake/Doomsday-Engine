@@ -182,8 +182,8 @@ void P_MapSpawnPlaneParticleGens()
     {
         Sector *sector = SECTOR_PTR(i);
 
-        // Only planes in sectors with volume on the world X/Y axis can support generators.
-        if(!sector->lineDefCount) continue;
+        // Only planes of sectors with volume on the world X/Y axis support generators.
+        if(!sector->lineCount()) continue;
 
         for(uint j = 0; j < 2; ++j)
         {
@@ -365,7 +365,7 @@ void P_SpawnPlaneParticleGen(ded_ptcgen_t const *def, Plane *plane)
     if(isDedicated || !useParticles) return;
     if(!def || !plane) return;
     // Only planes in sectors with volume on the world X/Y axis can support generators.
-    if(0 == plane->sector().lineDefCount) return;
+    if(!plane->sector().lineCount()) return;
 
     // Plane we spawn relative to may not be this one.
     Plane::Type relPlane = plane->type();

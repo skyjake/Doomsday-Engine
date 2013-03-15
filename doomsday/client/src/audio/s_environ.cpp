@@ -135,7 +135,7 @@ static void setBspLeafSectorOwner(ownerlist_t* ownerList, BspLeaf* bspLeaf)
 static void findBspLeafsAffectingSector(GameMap *map, uint secIDX)
 {
     Sector *sec = GameMap_Sector(map, secIDX);
-    if(!sec || !sec->lineDefCount) return;
+    if(!sec || !sec->lineCount()) return;
 
     ownerlist_t bspLeafOwnerList;
     std::memset(&bspLeafOwnerList, 0, sizeof(bspLeafOwnerList));
@@ -165,34 +165,35 @@ static void findBspLeafsAffectingSector(GameMap *map, uint secIDX)
         }
     }
 
-    // Now harden the list.
-    sec->numReverbBspLeafAttributors = bspLeafOwnerList.count;
-    if(sec->numReverbBspLeafAttributors)
+    sec->_reverbBspLeafs.clear();
+
+    if(!bspLeafOwnerList.count) return;
+
+    // Build the final list.
+#ifdef DENG2_QT_4_7_OR_NEWER
+    sec->_reverbBspLeafs.reserve(bspLeafOwnerList.count);
+#endif
+
+    ownernode_t *node = bspLeafOwnerList.head;
+    for(uint i = 0; i < bspLeafOwnerList.count; ++i)
     {
-        sec->reverbBspLeafs = (BspLeaf **)
-            Z_Malloc((sec->numReverbBspLeafAttributors + 1) * sizeof(BspLeaf *), PU_MAPSTATIC, 0);
+        ownernode_t *next = node->next;
 
-        BspLeaf **ptr = sec->reverbBspLeafs;
-        ownernode_t *node = bspLeafOwnerList.head;
-        for(uint i = 0; i < sec->numReverbBspLeafAttributors; ++i, ptr++)
+        sec->_reverbBspLeafs.append(static_cast<BspLeaf *>(node->data));
+
+        if(i < map->sectorCount() - 1)
         {
-            ownernode_t *next = node->next;
-            *ptr = (BspLeaf *) node->data;
-
-            if(i < map->sectorCount() - 1)
-            {
-                // Move this node to the unused list for re-use.
-                node->next = unusedNodeList;
-                unusedNodeList = node;
-            }
-            else
-            {
-                // No further use for the node.
-                M_Free(node);
-            }
-            node = next;
+            // Move this node to the unused list for re-use.
+            node->next = unusedNodeList;
+            unusedNodeList = node;
         }
-        *ptr = 0; // terminate.
+        else
+        {
+            // No further use for the node.
+            M_Free(node);
+        }
+
+        node = next;
     }
 }
 
@@ -303,7 +304,7 @@ static boolean calcBspLeafReverb(BspLeaf *bspLeaf)
 
 static void calculateSectorReverb(Sector *sec)
 {
-    if(!sec || !sec->lineDefCount) return;
+    if(!sec || !sec->lineCount()) return;
 
     /// @todo fixme: This 3D volume rough estimate may be massively off.
     ///       Consider the case of a single sector used over an entire map
@@ -317,10 +318,8 @@ static void calculateSectorReverb(Sector *sec)
     sec->reverb[SRD_SPACE] = sec->reverb[SRD_VOLUME] =
         sec->reverb[SRD_DECAY] = sec->reverb[SRD_DAMPING] = 0;
 
-    for(uint i = 0; i < sec->numReverbBspLeafAttributors; ++i)
+    foreach(BspLeaf *bspLeaf, sec->reverbBspLeafs())
     {
-        BspLeaf* bspLeaf = sec->reverbBspLeafs[i];
-
         if(calcBspLeafReverb(bspLeaf))
         {
             sec->reverb[SRD_SPACE]   += bspLeaf->_reverb[SRD_SPACE];

@@ -1392,7 +1392,9 @@ void Rend_CacheForMap()
         for(uint i = 0; i < NUM_SECTORS; ++i)
         {
             Sector *sec = SECTOR_PTR(i);
-            if(!sec->lineDefCount) continue;
+
+            // Skip sectors with no lines as their planes will never be drawn.
+            if(!sec->lineCount()) continue;
 
             foreach(Plane *plane, sec->planes())
             {

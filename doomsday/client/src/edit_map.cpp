@@ -454,7 +454,8 @@ void MPE_PruneRedundantMapData(EditMap* /*map*/, int /*flags*/)
 #endif
 }
 
-boolean MPE_Begin(const char* mapUri)
+#undef MPE_Begin
+boolean MPE_Begin(char const *mapUri)
 {
     /// @todo Do not ignore; assign to the editable map.
     DENG_UNUSED(mapUri);
@@ -478,7 +479,9 @@ static void hardenSectorBspLeafList(GameMap *map, uint secIDX)
     DENG_ASSERT(map && secIDX < map->sectorCount());
 
     Sector *sec = &map->sectors[secIDX];
+    sec->_bspLeafs.clear();
 
+#ifdef DENG2_QT_4_7_OR_NEWER
     uint count = 0;
     for(uint i = 0; i < map->numBspLeafs; ++i)
     {
@@ -486,133 +489,110 @@ static void hardenSectorBspLeafList(GameMap *map, uint secIDX)
         if(bspLeaf.sectorPtr() == sec)
             ++count;
     }
-
     if(0 == count) return;
 
-    sec->bspLeafs = (BspLeaf **) Z_Malloc((count + 1) * sizeof(BspLeaf *), PU_MAPSTATIC, NULL);
+    sec->_bspLeafs.reserve(count);
+#endif
 
-    uint n = 0;
     for(uint i = 0; i < map->numBspLeafs; ++i)
     {
         BspLeaf &bspLeaf = *map->bspLeafs[i];
         if(bspLeaf.sectorPtr() == sec)
         {
-            sec->bspLeafs[n++] = &bspLeaf;
+            // Ownership of the BSP leaf is not given to the sector.
+            sec->_bspLeafs.append(&bspLeaf);
         }
     }
-    sec->bspLeafs[n] = NULL; // Terminate.
-    sec->bspLeafCount = count;
 }
 
-/**
- * Build BspLeaf tables for all sectors.
- */
-static void buildSectorBspLeafLists(GameMap* map)
+static void buildSectorBspLeafLists(GameMap *map)
 {
-    uint i;
-    VERBOSE( Con_Message(" Build BSP leaf tables...") )
+    DENG_ASSERT(map);
 
-    for(i = 0; i < map->sectorCount(); ++i)
+    for(uint i = 0; i < map->sectorCount(); ++i)
     {
         hardenSectorBspLeafList(map, i);
     }
 }
 
-static void buildSectorLineLists(GameMap* map)
+static void buildSectorLineLists(GameMap *map)
 {
-    typedef struct linelink_s {
-        LineDef* line;
-        struct linelink_s* next;
-    } linelink_t;
+    DENG_ASSERT(map);
 
-    LOG_VERBOSE("Building Sector LineDef lists...");
+    LOG_VERBOSE("Building Sector line lists...");
 
-    // build line tables for each sector.
-    zblockset_t* lineLinksBlockSet = ZBlockSet_New(sizeof(linelink_t), 512, PU_APPSTATIC);
-    linelink_t** sectorLineLinks = (linelink_t**) M_Calloc(sizeof(linelink_t*) * map->sectorCount());
-    uint totallinks = 0;
+    struct LineLink
+    {
+        LineDef *line;
+        LineLink *next;
+    };
+
+    // Collate a list of lines for each sector.
+    zblockset_t *lineLinksBlockSet = ZBlockSet_New(sizeof(LineLink), 512, PU_APPSTATIC);
+    LineLink **sectorLineLinks = (LineLink **) Z_Calloc(sizeof(*sectorLineLinks) * map->sectorCount(), PU_APPSTATIC, 0);
+
     for(uint i = 0; i < map->lineDefCount(); ++i)
     {
-        LineDef* li = &map->lineDefs[i];
-        uint secIDX;
-        linelink_t* link;
+        LineDef *line = &map->lineDefs[i];
 
-        if(li->hasFrontSector())
+        if(line->hasFrontSector())
         {
-            link = (linelink_t*) ZBlockSet_Allocate(lineLinksBlockSet);
+            int const sectorIndex = GameMap_SectorIndex(map, &line->frontSector());
 
-            secIDX = map->sectors.indexOf(&li->frontSector());
-            link->line = li;
-
-            link->next = sectorLineLinks[secIDX];
-            sectorLineLinks[secIDX] = link;
-            li->frontSector().lineDefCount++;
-            totallinks++;
+            LineLink *link = (LineLink *) ZBlockSet_Allocate(lineLinksBlockSet);
+            link->line = line;
+            link->next = sectorLineLinks[sectorIndex];
+            sectorLineLinks[sectorIndex] = link;
         }
 
-        if(li->hasBackSector() && !li->isSelfReferencing())
+        if(line->hasBackSector() && !line->isSelfReferencing())
         {
-            link = (linelink_t*) ZBlockSet_Allocate(lineLinksBlockSet);
+            int const sectorIndex = GameMap_SectorIndex(map, &line->backSector());
 
-            secIDX = map->sectors.indexOf(&li->backSector());
-            link->line = li;
-
-            link->next = sectorLineLinks[secIDX];
-            sectorLineLinks[secIDX] = link;
-            li->backSector().lineDefCount++;
-            totallinks++;
+            LineLink *link = (LineLink *) ZBlockSet_Allocate(lineLinksBlockSet);
+            link->line = line;
+            link->next = sectorLineLinks[sectorIndex];
+            sectorLineLinks[sectorIndex] = link;
         }
     }
 
-    // Harden the sector line links into arrays.
-    LineDef** linebuffer = (LineDef**) Z_Malloc((totallinks + map->sectorCount()) * sizeof(LineDef*), PU_MAPSTATIC, 0);
-    LineDef** linebptr = linebuffer;
-
+    // Build the actual sector line lists.
     for(uint i = 0; i < map->sectorCount(); ++i)
     {
-        Sector* sec = &map->sectors[i];
+        Sector *sec = &map->sectors[i];
 
-        if(sectorLineLinks[i])
+        sec->_lines.clear();
+
+        if(!sectorLineLinks[i]) continue;
+
+#ifdef DENG2_QT_4_7_OR_NEWER
+        // Count the total number of lines in this sector.
+        uint numLines = 0;
+        for(LineLink *link = sectorLineLinks[i]; link; link = link->next)
         {
-            linelink_t* link = sectorLineLinks[i];
-
-            /**
-             * The behaviour of some algorithms used in original DOOM are
-             * dependant upon the order of these lists (e.g., EV_DoFloor
-             * and EV_BuildStairs). Lets be helpful and use the same order.
-             *
-             * Sort: LineDef index ascending (zero based).
-             */
-            uint numLineDefs = 0;
-            while(link)
-            {
-                numLineDefs++;
-                link = link->next;
-            }
-
-            sec->lineDefs = linebptr;
-            uint j = numLineDefs - 1;
-            link = sectorLineLinks[i];
-            while(link)
-            {
-                sec->lineDefs[j--] = link->line;
-                link = link->next;
-            }
-
-            sec->lineDefs[numLineDefs] = NULL; // terminate.
-            sec->lineDefCount = numLineDefs;
-            linebptr += numLineDefs + 1;
+            numLines++;
         }
-        else
+        // Reserve this much storage.
+        sec->_lines.reserve(numLines);
+#endif
+
+        /**
+         * The behaviour of some algorithms used in original DOOM are
+         * dependant upon the order of these lists (e.g., EV_DoFloor
+         * and EV_BuildStairs). Lets be helpful and use the same order.
+         *
+         * Sort: Original line index, ascending.
+         */
+        for(LineLink *link = sectorLineLinks[i]; link; link = link->next)
         {
-            sec->lineDefs = NULL;
-            sec->lineDefCount = 0;
+            // Ownership of the line is not given to the sector.
+            sec->_lines.prepend(link->line);
         }
     }
 
     // Free temporary storage.
     ZBlockSet_Delete(lineLinksBlockSet);
-    M_Free(sectorLineLinks);
+    Z_Free(sectorLineLinks);
 }
 
 static void finishSectors(GameMap *map)
@@ -680,9 +660,8 @@ static void chainSectorBases(GameMap *map)
         }
 
         // Add all sidedef base mobjs.
-        for(uint j = 0; j < sec->lineDefCount; ++j)
+        foreach(LineDef *line, sec->lines())
         {
-            LineDef *line = sec->lineDefs[j];
             if(line->frontSectorPtr() == sec)
             {
                 SideDef &side = line->frontSideDef();
@@ -742,27 +721,29 @@ static void finishLineDefs(GameMap *map)
 /**
  * @pre Axis-aligned bounding boxes of all Sectors must be initialized.
  */
-static void updateMapBounds(GameMap* map)
+static void updateMapBounds(GameMap *map)
 {
     DENG_ASSERT(map);
 
     bool isFirst = true;
     for(uint i = 0; i < map->sectorCount(); ++i)
     {
-        Sector* sec = &map->sectors[i];
-        if(!sec->lineDefCount) continue;
+        Sector *sec = &map->sectors[i];
+
+        // Sectors with no lines have invalid bounds; skip them.
+        if(!sec->lineCount()) continue;
 
         if(isFirst)
         {
             // The first sector is used as is.
             V2d_CopyBox(map->aaBox.arvec2, sec->aaBox.arvec2);
+            isFirst = false;
         }
         else
         {
             // Expand the bounding box.
             V2d_UniteBox(map->aaBox.arvec2, sec->aaBox.arvec2);
         }
-        isFirst = false;
     }
 }
 

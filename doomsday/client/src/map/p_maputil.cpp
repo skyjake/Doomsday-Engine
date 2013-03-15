@@ -41,7 +41,7 @@
 
 #define MAXLINKED           2048
 #define DO_LINKS(it, end, _Type)   { \
-    for(it = linkstore; it < end; it++) \
+    for(it = linkStore; it < end; it++) \
     { \
         result = callback(reinterpret_cast<_Type>(*it), parameters); \
         if(result) break; \
@@ -373,8 +373,8 @@ int GameMap_MobjLinesIterator(GameMap *map, mobj_t *mo,
 {
     DENG_ASSERT(map);
 
-    void *linkstore[MAXLINKED];
-    void **end = linkstore, **it;
+    void *linkStore[MAXLINKED];
+    void **end = linkStore, **it;
     int result = false;
 
     linknode_t *tn = map->mobjNodes.nodes;
@@ -402,8 +402,8 @@ int GameMap_MobjSectorsIterator(GameMap *map, mobj_t *mo,
     DENG_ASSERT(map);
 
     int result = false;
-    void *linkstore[MAXLINKED];
-    void **end = linkstore, **it;
+    void *linkStore[MAXLINKED];
+    void **end = linkStore, **it;
 
     nodeindex_t nix;
     linknode_t *tn = map->mobjNodes.nodes;
@@ -449,8 +449,8 @@ int GameMap_MobjSectorsIterator(GameMap *map, mobj_t *mo,
 int GameMap_LineMobjsIterator(GameMap* map, LineDef* lineDef,
     int (*callback) (mobj_t*, void*), void* parameters)
 {
-    void* linkstore[MAXLINKED];
-    void** end = linkstore, **it;
+    void* linkStore[MAXLINKED];
+    void** end = linkStore, **it;
     nodeindex_t root, nix;
     linknode_t* ln;
     int result = false;
@@ -474,50 +474,49 @@ int GameMap_LineMobjsIterator(GameMap* map, LineDef* lineDef,
  * (Lovely name; actually this is a combination of SectorMobjs and
  * a bunch of LineMobjs iterations.)
  */
-int GameMap_SectorTouchingMobjsIterator(GameMap* map, Sector* sector,
-    int (*callback) (mobj_t*, void*), void* parameters)
+int GameMap_SectorTouchingMobjsIterator(GameMap *map, Sector *sector,
+    int (*callback) (mobj_t *, void *), void *parameters)
 {
-    uint i;
-    void* linkstore[MAXLINKED];
-    void** end = linkstore, **it;
-    mobj_t* mo;
-    LineDef* li;
-    nodeindex_t root, nix;
-    linknode_t* ln;
-    int result = false;
-    assert(map);
+    DENG_ASSERT(map);
 
-    ln = map->lineNodes.nodes;
+    /// @todo Fixme: Remove fixed limit (use QVarLengthArray if necessary).
+    void *linkStore[MAXLINKED];
+    void **end = linkStore;
 
-    // First process the mobjs that obviously are in the sector.
-    for(mo = sector->mobjList; mo; mo = mo->sNext)
+    // Collate mobjs that obviously are in the sector.
+    for(mobj_t *mo = sector->mobjList; mo; mo = mo->sNext)
     {
-        if(mo->validCount == validCount)
-            continue;
-
+        if(mo->validCount == validCount) continue;
         mo->validCount = validCount;
+
+        DENG_ASSERT(end < &linkStore[MAXLINKED]);
         *end++ = mo;
     }
 
-    // Then check the sector's lines.
-    for(i = 0; i < sector->lineDefCount; ++i)
+    // Collate mobjs linked to the sector's lines.
+    linknode_t const *ln = map->lineNodes.nodes;
+    foreach(LineDef *line, sector->lines())
     {
-        li = sector->lineDefs[i];
+        int lineIndex = GameMap_LineDefIndex(map, line);
+        nodeindex_t root = map->lineLinks[lineIndex];
 
-        // Iterate all mobjs on the line.
-        root = map->lineLinks[GameMap_LineDefIndex(map, li)];
-        for(nix = ln[root].next; nix != root; nix = ln[nix].next)
+        for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
         {
-            mo = (mobj_t *) ln[nix].ptr;
-            if(mo->validCount == validCount)
-                continue;
+            mobj_t *mo = (mobj_t *) ln[nix].ptr;
 
+            if(mo->validCount == validCount) continue;
             mo->validCount = validCount;
+
+            DENG_ASSERT(end < &linkStore[MAXLINKED]);
             *end++ = mo;
         }
     }
 
+    // Process all collected mobjs.
+    int result = false;
+    void **it;
     DO_LINKS(it, end, mobj_t *);
+
     return result;
 }
 

@@ -981,7 +981,7 @@ static void createGlowLightForSurface(Surface &suf)
 
         // Only produce a light for sectors with open space.
         /// @todo Do not add surfaces from sectors with zero BSP leafs to the glowing list.
-        if(!sec->bspLeafCount || sec->floor().visHeight() >= sec->ceiling().visHeight())
+        if(!sec->bspLeafCount() || sec->floor().visHeight() >= sec->ceiling().visHeight())
             break;
 
         // Are we glowing at this moment in time?
@@ -992,7 +992,7 @@ static void createGlowLightForSurface(Surface &suf)
         if(!avgColorAmplified) throw Error("createGlowLightForSurface", QString("Texture \"%1\" has no AverageColorAmplifiedAnalysis").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
 
         // @note Plane lights do not spread so simply link to all BspLeafs of this sector.
-        lumobj_t *lum = createLuminous(LT_PLANE, sec->bspLeafs[0]);
+        lumobj_t *lum = createLuminous(LT_PLANE, sec->bspLeafs().at(0));
         V3d_Copy(lum->origin, pln->PS_base.origin);
         lum->origin[VZ] = pln->visHeight(); // base.origin[VZ] is not smoothed
 
@@ -1009,11 +1009,14 @@ static void createGlowLightForSurface(Surface &suf)
         linkobjtobspleafparams_t parm;
         parm.obj = lum;
         parm.type = OT_LUMOBJ;
-        RIT_LinkObjToBspLeaf(sec->bspLeafs[0], (void*)&parm);
-        for(uint i = 1; i < sec->bspLeafCount; ++i)
+
+        QListIterator<BspLeaf *> bspLeafIt(sec->bspLeafs());
+        RIT_LinkObjToBspLeaf(bspLeafIt.peekNext(), (void *)&parm);
+        while(bspLeafIt.hasNext())
         {
-            linkLumObjToSSec(lum, sec->bspLeafs[i]);
-            RIT_LinkObjToBspLeaf(sec->bspLeafs[i], (void*)&parm);
+            BspLeaf *bspLeaf = bspLeafIt.next();
+            linkLumObjToSSec(lum, bspLeaf);
+            RIT_LinkObjToBspLeaf(bspLeaf, (void *)&parm);
         }
         break; }
 

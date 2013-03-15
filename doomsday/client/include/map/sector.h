@@ -51,15 +51,20 @@ typedef struct msector_s {
 class Sector : public de::MapElement
 {
 public:
+    /// Required/referenced plane is missing. @ingroup errors
+    DENG2_ERROR(MissingPlaneError);
+
     /// The referenced property does not exist. @ingroup errors
     DENG2_ERROR(UnknownPropertyError);
 
     /// The referenced property is not writeable. @ingroup errors
     DENG2_ERROR(WritePropertyError);
 
-public: /// @todo Make private:
+    typedef QList<LineDef *> Lines;
     typedef QList<Plane *> Planes;
+    typedef QList<BspLeaf *> BspLeafs;
 
+public: /// @todo Make private:
     int frameFlags;
 
     /// if == validCount, already checked.
@@ -79,30 +84,28 @@ public: /// @todo Make private:
 
     float oldRGB[3];
 
-    /// List of mobjs in the sector.
+    /// List of mobjs "in" the sector (not owned).
     struct mobj_s *mobjList;
 
-    /// [lineDefCount+1] size.
-    LineDef **lineDefs;
-    uint lineDefCount;
+    /// List of lines which reference the sector (not owned).
+    Lines _lines;
 
-    /// [bspLeafCount+1] size.
-    BspLeaf **bspLeafs;
-    uint bspLeafCount;
+    /// List of BSP leafs which reference the sector (not owned).
+    BspLeafs _bspLeafs;
 
-    /// [numReverbBspLeafAttributors] size.
-    BspLeaf **reverbBspLeafs;
-    uint numReverbBspLeafAttributors;
+    /// List of BSP leafs which contribute to the environmental audio
+    /// characteristics of the sector (not owned).
+    BspLeafs _reverbBspLeafs;
 
     ddmobj_base_t base;
 
-    /// List of planes in the sector.
+    /// List of sector planes (owned).
     Planes _planes;
 
-    /// Number of gridblocks in the sector.
+    /// Number of gridblocks attributed to the sector.
     uint blockCount;
 
-    /// Number of blocks to mark changed.
+    /// Number of attributed blocks to mark changed.
     uint changedBlockCount;
 
     /// Light grid block indices.
@@ -168,6 +171,17 @@ public:
     inline Surface const &ceilingSurface() const { return ceiling().surface(); }
 
     /**
+     * Provides access to the list of lines which reference the sector, for
+     * efficient traversal.
+     */
+    Lines const &lines() const;
+
+    /**
+     * Returns the total number of lines which reference the sector.
+     */
+    inline uint lineCount() const { return uint(lines().count()); }
+
+    /**
      * Provides access to the list of planes for efficient traversal.
      */
     Planes const &planes() const;
@@ -176,6 +190,29 @@ public:
      * Returns the total number of planes in the sector.
      */
     inline uint planeCount() const { return uint(planes().count()); }
+
+    /**
+     * Provides access to the list of BSP leafs which reference the sector, for
+     * efficient traversal.
+     */
+    BspLeafs const &bspLeafs() const;
+
+    /**
+     * Returns the total number of BSP leafs which reference the sector.
+     */
+    inline uint bspLeafCount() const { return uint(bspLeafs().count()); }
+
+    /**
+     * Provides access to the list of BSP leafs which contribute to the environmental
+     * audio characteristics of the sector, for efficient traversal.
+     */
+    BspLeafs const &reverbBspLeafs() const;
+
+    /**
+     * Returns the total number of BSP leafs which contribute to the environmental
+     * audio characteristics of the sector.
+     */
+    inline uint reverbBspLeafCount() const { return uint(reverbBspLeafs().count()); }
 
     /**
      * Update the sector's map space axis-aligned bounding box to encompass

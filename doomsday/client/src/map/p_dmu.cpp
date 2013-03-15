@@ -381,81 +381,56 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
     case DMU_SECTOR:
         switch(prop)
         {
-        case DMU_LINEDEF: {
-            Sector *sec = elem->castTo<Sector>();
-            int result = false; // Continue iteration.
-
-            if(sec->lineDefs)
+        case DMU_LINEDEF:
+            foreach(LineDef *line, elem->castTo<Sector>()->lines())
             {
-                LineDef **linePtr = sec->lineDefs;
-                while(*linePtr && !(result = callback(*linePtr, context)))
-                {
-                    linePtr++;
-                }
+                int result = callback(line, context);
+                if(result) return result;
             }
-            return result; }
+            return false; // Continue iteration
 
-        case DMU_PLANE: {
-            Sector *sec = elem->castTo<Sector>();
-            int result = false; // Continue iteration.
-
-            foreach(Plane *plane, sec->planes())
+        case DMU_PLANE:
+            foreach(Plane *plane, elem->castTo<Sector>()->planes())
             {
-                if((result = callback(plane, context)) != 0)
-                    break;
+                int result = callback(plane, context);
+                if(result) return result;
             }
-            return result; }
+            return false; // Continue iteration
 
-        case DMU_BSPLEAF: {
-            Sector *sec = elem->castTo<Sector>();
-            int result = false; // Continue iteration.
-
-            if(sec->bspLeafs)
+        case DMU_BSPLEAF:
+            foreach(BspLeaf *bspLeaf, elem->castTo<Sector>()->bspLeafs())
             {
-                BspLeaf **ssecIter = sec->bspLeafs;
-                while(*ssecIter && !(result = callback(*ssecIter, context)))
-                {
-                    ssecIter++;
-                }
+                int result = callback(bspLeaf, context);
+                if(result) return result;
             }
-            return result; }
+            return false; // Continue iteration.
 
-        default: {
-            /// @todo Throw exception.
-            QByteArray msg = String("P_Iteratep: Property %1 unknown/not vector.").arg(DMU_Str(prop)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
-            return 0; /* Unreachable */ }
+        default:
+            throw Error("P_Iteratep", QString("Property %1 unknown/not vector").arg(DMU_Str(prop)));
         }
 
     case DMU_BSPLEAF:
         switch(prop)
         {
-        case DMU_HEDGE: {
-            BspLeaf *bspLeaf = elem->castTo<BspLeaf>();
-            int result = false; // Continue iteration.
-            if(HEdge *base = bspLeaf->firstHEdge())
+        case DMU_HEDGE:
+            if(HEdge *base = elem->castTo<BspLeaf>()->firstHEdge())
             {
                 HEdge *hedge = base;
                 do
                 {
-                    result = callback(hedge, context);
-                    if(result) break;
+                    int result = callback(hedge, context);
+                    if(result) return result;
+
                 } while((hedge = hedge->next) != base);
             }
-            return result; }
+            return false; // Continue iteration.
 
-        default: {
-            /// @todo Throw exception.
-            QByteArray msg = String("P_Iteratep: Property %1 unknown/not vector.").arg(DMU_Str(prop)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
-            return 0; /* Unreachable */ }
+        default:
+            throw Error("P_Iteratep", QString("Property %1 unknown/not vector").arg(DMU_Str(prop)));
         }
 
-    default: {
-        /// @todo Throw exception.
-        QByteArray msg = String("P_Iteratep: Type %1 unknown.").arg(DMU_Str(elem->type())).toUtf8();
-        LegacyCore_FatalError(msg.constData());
-        return 0; /* Unreachable */ }
+    default:
+        throw Error("P_Iteratep", QString("Type %1 unknown").arg(DMU_Str(elem->type())));
     }
 
     return false;
