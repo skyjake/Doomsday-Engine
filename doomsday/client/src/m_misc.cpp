@@ -156,7 +156,7 @@ int M_BoxOnLineSide(const AABoxd* box, double const linePoint[], double const li
 
 int M_BoxOnLineSide_FixedPrecision(const fixed_t box[], const fixed_t linePoint[], const fixed_t lineDirection[])
 {
-    int a, b;
+    int a = 0, b = 0;
 
     switch(M_SlopeTypeXY_FixedPrecision(lineDirection[0], lineDirection[1]))
     {

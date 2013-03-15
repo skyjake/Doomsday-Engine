@@ -50,11 +50,14 @@ public:
 
     void currentMapChanged();
 
+public slots:
+    void sendPlayerInfoToAll();
+
 protected slots:
     void userDisconnected();
 
 private:
-    QSet<ShellUser *> _users;
+    DENG2_PRIVATE(d)
 };
 
 #endif // SERVER_SHELLUSERS_H

@@ -63,7 +63,7 @@ typedef struct {
     uint ticsRemain, tics;
     int textMaxLen;
     char* text;
-    byte flags;  /// @see logMessageFlags
+    byte flags;  /// @ref logMessageFlags
 } guidata_log_message_t;
 
 typedef struct {

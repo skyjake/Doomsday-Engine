@@ -34,7 +34,7 @@ DENG2_PIMPL(ResourceManifest)
     /// Class of resource.
     resourceclassid_t classId;
 
-    /// @see fileFlags.
+    /// @ref fileFlags.
     int flags;
 
     /// Potential names for this resource. In precedence order - high (newest) to lowest.

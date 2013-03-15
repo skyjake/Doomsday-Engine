@@ -691,7 +691,7 @@ static void flatShinyTexCoords(rtexcoord_t *tc, float const xyz[3])
 struct rendworldpoly_params_t
 {
     boolean         isWall;
-    int             flags; /// @see rendpolyFlags
+    int             flags; /// @ref rendpolyFlags
     blendmode_t     blendMode;
     pvec3d_t        texTL, texBR;
     float const    *texOffset;

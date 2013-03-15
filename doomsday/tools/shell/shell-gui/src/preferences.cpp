@@ -10,6 +10,10 @@
 #include <QLabel>
 #include <QFontDialog>
 
+#ifdef MACOSX
+#  define PREFS_APPLY_IMMEDIATELY
+#endif
+
 DENG2_PIMPL(Preferences)
 {
     QCheckBox *useCustomIwad;
@@ -38,6 +42,7 @@ DENG2_PIMPL(Preferences)
         fontDesc = new QLabel;
 
         QPushButton *selFont = new QPushButton(tr("Select..."));
+        selFont->setAutoDefault(false);
         QObject::connect(selFont, SIGNAL(clicked()), thisPublic, SLOT(selectFont()));
 
         QHBoxLayout *fl = new QHBoxLayout;
@@ -66,6 +71,11 @@ DENG2_PIMPL(Preferences)
 
         mainLayout->addStretch(1);
 
+#ifndef PREFS_APPLY_IMMEDIATELY
+
+        // On Mac, changes to the preferences are applied immediately.
+        // Other platforms use OK/Cancel buttons.
+
         // Buttons.
         QDialogButtonBox *bbox = new QDialogButtonBox;
         mainLayout->addWidget(bbox);
@@ -76,6 +86,7 @@ DENG2_PIMPL(Preferences)
         QObject::connect(no, SIGNAL(clicked()), &self, SLOT(reject()));
         QObject::connect(act, SIGNAL(clicked()), &self, SLOT(saveState()));
         yes->setDefault(true);
+#endif
     }
 
     void updateFontDesc()
@@ -88,11 +99,11 @@ DENG2_PIMPL(Preferences)
     {
         QFont font;
 #ifdef MACOSX
+# ifdef MACOS_10_4
+        font = QFont("Monaco", 12);
+# else
         font = QFont("Menlo", 13);
-        if(!font.exactMatch())
-        {
-            font = QFont("Monaco", 12);
-        }
+# endif
 #elif WIN32
         font = QFont("Fixedsys", 9);
 #else
@@ -107,6 +118,9 @@ Preferences::Preferences(QWidget *parent) :
 {
     connect(d->useCustomIwad, SIGNAL(toggled(bool)), this, SLOT(validate()));
     connect(this, SIGNAL(accepted()), this, SLOT(saveState()));
+#ifdef PREFS_APPLY_IMMEDIATELY
+    connect(d->iwadFolder, SIGNAL(selected()), this, SLOT(saveState()));
+#endif
     validate();
 }
 
@@ -151,5 +165,9 @@ void Preferences::selectFont()
     {
         d->consoleFont = font;
         d->updateFontDesc();
+
+#ifdef PREFS_APPLY_IMMEDIATELY
+        saveState();
+#endif
     }
 }

@@ -50,7 +50,7 @@
 #define LMF_JUSTADDED               (0x2)
 /**@}*/
 
-/// Mask for clearing non-public flags @see logMessageFlags
+/// Mask for clearing non-public flags @ref logMessageFlags
 #define LOG_INTERNAL_MESSAGEFLAGMASK    0xfe
 
 void UILog_Register(void)

@@ -47,7 +47,7 @@ extern "C" {
 typedef struct cbline_s {
     uint len; /// Length of the line in characters (no terminator).
     char* text; /// Text line.
-    int flags; /// @see consoleBufferLineFlags
+    int flags; /// @ref consoleBufferLineFlags
 } cbline_t;
 
 /**

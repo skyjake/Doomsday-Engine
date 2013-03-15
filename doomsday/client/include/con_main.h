@@ -67,7 +67,7 @@ typedef struct ccmd_s {
     /// Name of the command.
     const char* name;
 
-    /// @see consoleCommandFlags
+    /// @ref consoleCommandFlags
     int flags;
 
     /// Minimum and maximum number of arguments. Used with commands
@@ -79,7 +79,7 @@ typedef struct ccmd_s {
 } ccmd_t;
 
 typedef struct cvar_s {
-    /// @see consoleVariableFlags
+    /// @ref consoleVariableFlags
     int flags;
 
     /// Type of this variable.
@@ -100,7 +100,7 @@ typedef struct cvar_s {
 
 ddstring_t const* CVar_TypeName(cvartype_t type);
 
-/// @return  @see consoleVariableFlags
+/// @return  @ref consoleVariableFlags
 int CVar_Flags(cvar_t const* var);
 
 /// @return  Type of the variable.

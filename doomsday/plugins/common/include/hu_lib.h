@@ -935,7 +935,7 @@ typedef struct uiwidget_s {
     /// Unique identifier associated with this widget.
     uiwidgetid_t id;
 
-    /// @see alignmentFlags
+    /// @ref alignmentFlags
     int alignFlags;
 
     /// Maximum size of this widget in pixels.
@@ -964,7 +964,7 @@ typedef struct uiwidget_s {
 void GUI_DrawWidget(uiwidget_t* obj, const Point2Raw* origin);
 void GUI_DrawWidgetXY(uiwidget_t* obj, int x, int y);
 
-/// @return  @see alignmentFlags
+/// @return  @ref alignmentFlags
 int UIWidget_Alignment(uiwidget_t* obj);
 
 float UIWidget_Opacity(uiwidget_t* obj);

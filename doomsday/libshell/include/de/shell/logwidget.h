@@ -38,6 +38,11 @@ public:
      */
     LogSink &logSink();
 
+    /**
+     * Removes all entries from the log.
+     */
+    void clear();
+
     void draw();
     bool handleEvent(Event const &event);
 

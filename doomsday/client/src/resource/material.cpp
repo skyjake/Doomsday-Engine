@@ -330,7 +330,7 @@ DENG2_PIMPL(Material)
     /// World dimensions in map coordinate space units.
     Vector2i dimensions;
 
-    /// @see materialFlags
+    /// @ref materialFlags
     Material::Flags flags;
 
     /// Layers.

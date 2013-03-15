@@ -106,6 +106,72 @@ Packet *LogEntryPacket::fromBlock(Block const &block)
     return constructFromBlock<LogEntryPacket>(block, LOG_ENTRY_PACKET_TYPE);
 }
 
+// PlayerInfoPacket ----------------------------------------------------------
+
+static char const *PLAYER_INFO_PACKET_TYPE = "PlrI";
+
+DENG2_PIMPL_NOREF(PlayerInfoPacket)
+{
+    Players players;
+};
+
+PlayerInfoPacket::PlayerInfoPacket()
+    : Packet(PLAYER_INFO_PACKET_TYPE), d(new Instance)
+{}
+
+void PlayerInfoPacket::add(Player const &player)
+{
+    d->players.insert(player.number, player);
+}
+
+int PlayerInfoPacket::count() const
+{
+    return d->players.size();
+}
+
+PlayerInfoPacket::Player const &PlayerInfoPacket::player(int number) const
+{
+    DENG2_ASSERT(d->players.contains(number));
+    return d->players[number];
+}
+
+PlayerInfoPacket::Players PlayerInfoPacket::players() const
+{
+    return d->players;
+}
+
+void PlayerInfoPacket::operator >> (Writer &to) const
+{
+    Packet::operator >> (to);
+
+    to << duint32(d->players.size());
+    foreach(Player const &p, d->players)
+    {
+        to << dbyte(p.number) << p.position << p.name << p.color;
+    }
+}
+
+void PlayerInfoPacket::operator << (Reader &from)
+{
+    d->players.clear();
+
+    Packet::operator << (from);
+
+    duint32 count;
+    from >> count;
+    while(count-- > 0)
+    {
+        Player p;
+        from.readAs<dbyte>(p.number) >> p.position >> p.name >> p.color;
+        d->players.insert(p.number, p);
+    }
+}
+
+Packet *PlayerInfoPacket::fromBlock(Block const &block)
+{
+    return constructFromBlock<PlayerInfoPacket>(block, PLAYER_INFO_PACKET_TYPE);
+}
+
 // MapOutlinePacket ----------------------------------------------------------
 
 static char const *MAP_OUTLINE_PACKET_TYPE = "MpOL";
@@ -184,6 +250,7 @@ Protocol::Protocol()
     define(ChallengePacket::fromBlock);
     define(LogEntryPacket::fromBlock);
     define(MapOutlinePacket::fromBlock);
+    define(PlayerInfoPacket::fromBlock);
 }
 
 Protocol::PacketType Protocol::recognize(Packet const *packet)
@@ -204,6 +271,12 @@ Protocol::PacketType Protocol::recognize(Packet const *packet)
     {
         DENG2_ASSERT(dynamic_cast<MapOutlinePacket const *>(packet) != 0);
         return MapOutline;
+    }
+
+    if(packet->type() == PLAYER_INFO_PACKET_TYPE)
+    {
+        DENG2_ASSERT(dynamic_cast<PlayerInfoPacket const *>(packet) != 0);
+        return PlayerInfo;
     }
 
     // One of the generic-format packets?

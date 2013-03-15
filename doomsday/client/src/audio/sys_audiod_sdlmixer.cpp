@@ -84,13 +84,13 @@ int         DS_SDLMixer_Music_PlayFile(const char* fileName, int looped);
 
 boolean sdlInitOk = false;
 
-DENG_EXTERN_C audiodriver_t audiod_sdlmixer = {
+audiodriver_t audiod_sdlmixer = {
     DS_SDLMixerInit,
     DS_SDLMixerShutdown,
     DS_SDLMixerEvent
 };
 
-DENG_EXTERN_C audiointerface_sfx_t audiod_sdlmixer_sfx = { {
+audiointerface_sfx_t audiod_sdlmixer_sfx = { {
     DS_SDLMixer_SFX_Init,
     DS_SDLMixer_SFX_CreateBuffer,
     DS_SDLMixer_SFX_DestroyBuffer,
@@ -105,7 +105,7 @@ DENG_EXTERN_C audiointerface_sfx_t audiod_sdlmixer_sfx = { {
     DS_SDLMixer_SFX_Listenerv
 } };
 
-DENG_EXTERN_C audiointerface_music_t audiod_sdlmixer_music = { {
+audiointerface_music_t audiod_sdlmixer_music = { {
     DS_SDLMixer_Music_Init,
     NULL,
     DS_SDLMixer_Music_Update,

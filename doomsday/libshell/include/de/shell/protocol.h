@@ -78,6 +78,54 @@ private:
 };
 
 /**
+ * Packet containing information about the players' current positions, colors,
+ * and names.
+ */
+class LIBSHELL_PUBLIC PlayerInfoPacket : public Packet
+{
+public:
+    struct Player
+    {
+        int number;
+        Vector2i position;
+        String name;
+        Vector3ub color;
+
+        Player(int num                   = 0,
+               Vector2i const &pos       = Vector2i(),
+               String   const &plrName   = "",
+               Vector3ub const &plrColor = Vector3ub())
+            : number(num),
+              position(pos),
+              name(plrName),
+              color(plrColor)
+        {}
+    };
+
+    typedef QMap<int, Player> Players;
+
+public:
+    PlayerInfoPacket();
+
+    void add(Player const &player);
+
+    int count() const;
+
+    Player const &player(int number) const;
+
+    Players players() const;
+
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
+
+    static Packet *fromBlock(Block const &block);
+
+private:
+    DENG2_PRIVATE(d)
+};
+
+/**
  * Packet containing an outline of a map's lines.
  *
  * The contained information is not intended to be a 100% accurate or complete
@@ -146,7 +194,7 @@ public:
         GameState,      ///< Current state of the game (mode, map).
         Leaderboard,    ///< Frags leaderboard.
         MapOutline,     ///< Sectors of the map for visual overview.
-        PlayerPositions ///< Current player positions.
+        PlayerInfo      ///< Current player names, colors, positions.
     };
 
 public:

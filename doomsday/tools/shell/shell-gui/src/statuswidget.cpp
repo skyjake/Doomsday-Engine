@@ -30,17 +30,19 @@ DENG2_PIMPL(StatusWidget)
 {
     QFont smallFont;
     QFont largeFont;
+    QFont playerFont;
     String gameMode;
     String map;
     QPicture mapOutline;
     QRect mapBounds;
     shell::Link *link;
 
+    typedef shell::PlayerInfoPacket::Player Player;
+    shell::PlayerInfoPacket::Players players;
+    QMap<int, QPoint> oldPlayerPositions;
+
     Instance(Public &i) : Base(i), link(0)
-    {
-        //gameMode = "Ultimate DOOM";
-        //map = "E1M3";
-    }
+    {}
 
     void clear()
     {
@@ -48,16 +50,19 @@ DENG2_PIMPL(StatusWidget)
         map.clear();
         mapBounds = QRect();
         mapOutline = QPicture();
+        oldPlayerPositions.clear();
+        players.clear();
     }
 };
 
 StatusWidget::StatusWidget(QWidget *parent)
     : QWidget(parent), d(new Instance(*this))
 {
-    d->smallFont = d->largeFont = font();
+    d->playerFont = d->smallFont = d->largeFont = font();
     d->smallFont.setPointSize(font().pointSize() * 3 / 4);
     d->largeFont.setPointSize(font().pointSize() * 3 / 2);
     d->largeFont.setBold(true);
+    d->playerFont.setPointSizeF(font().pointSizeF() * .8f);
 }
 
 void StatusWidget::setGameState(QString mode, QString rules, QString mapId, QString mapTitle)
@@ -101,6 +106,17 @@ void StatusWidget::setMapOutline(shell::MapOutlinePacket const &outline)
     update();
 }
 
+void StatusWidget::setPlayerInfo(shell::PlayerInfoPacket const &plrInfo)
+{
+    foreach(Instance::Player const &plr, d->players)
+    {
+        d->oldPlayerPositions[plr.number] = QPoint(plr.position.x, -plr.position.y);
+    }
+
+    d->players = plrInfo.players();
+    update();
+}
+
 void StatusWidget::paintEvent(QPaintEvent *)
 {
     if(!d->link)
@@ -137,7 +153,7 @@ void StatusWidget::paintEvent(QPaintEvent *)
         viewSize.setHeight(outlineRect.width() / mapRatio);
         if(viewSize.height() > outlineRect.height())
         {
-            // Doesn't fit this way, fit to vertically instead.
+            // Doesn't fit this way, fit vertically instead.
             viewSize.setHeight(outlineRect.height());
             viewSize.setWidth(outlineRect.height() * mapRatio);
         }
@@ -147,6 +163,74 @@ void StatusWidget::paintEvent(QPaintEvent *)
 
         painter.setRenderHint(QPainter::Antialiasing, true);
         painter.drawPicture(0, 0, d->mapOutline);
+
+        // Draw player markers.
+        float const factor = float(d->mapBounds.width()) / float(viewSize.width());
+        QFontMetrics const metrics(d->playerFont);
+        foreach(Instance::Player const &plr, d->players.values())
+        {
+            painter.save();
+
+            QColor const color(plr.color.x, plr.color.y, plr.color.z);
+
+            QColor markColor = color;
+            markColor.setAlpha(180);
+
+            QPoint plrPos(plr.position.x, -plr.position.y);
+
+            if(d->oldPlayerPositions.contains(plr.number))
+            {
+                QPointF const start = d->oldPlayerPositions[plr.number];
+                QPointF const end   = plrPos;
+                QPointF const delta = end - start;
+
+                /// @todo Qt has no gradient support for drawing lines?
+
+                int const STOPS = 64;
+                for(int i = 0; i < STOPS; ++i)
+                {
+                    QColor grad = color;
+                    grad.setAlpha(i * 100 / STOPS);
+                    float a = float(i) / float(STOPS);
+                    float b = float(i + 1) / float(STOPS);
+                    QPen gradPen(grad);
+                    gradPen.setWidthF(2 * factor);
+                    painter.setPen(gradPen);
+                    painter.drawLine(start + a * delta, start + b * delta);
+                }
+            }
+
+            painter.setTransform(QTransform::fromScale(factor, factor) *
+                                 QTransform::fromTranslate(plrPos.x(), plrPos.y()));
+
+            painter.setPen(Qt::black);
+            painter.setBrush(markColor);
+            painter.drawEllipse(QPoint(0, 0), 4, 4);
+            painter.drawLine(QPoint(0, 4), QPoint(0, 10));
+            markColor.setAlpha(160);
+            painter.setBrush(markColor);
+
+            QString label = QString("%1: %2").arg(plr.number).arg(plr.name);
+            if(label.size() > 20) label = label.left(20);
+
+            QRect textBounds = metrics.boundingRect(label);
+            int const gap = 3;
+            textBounds.moveTopLeft(QPoint(-textBounds.width()/2, 10 + gap));
+            QRect boxBounds = textBounds.adjusted(-gap, -gap, gap, metrics.descent() + gap);
+            painter.setPen(Qt::NoPen);
+            painter.drawRoundedRect(boxBounds, 2, 2);
+
+            painter.setFont(d->playerFont);
+
+            // Label text with a shadow.
+            bool const isDark = ((color.red() + color.green()*2 + color.blue())/3 < 140);
+            painter.setPen(isDark? Qt::black : Qt::white);
+            painter.drawText(textBounds.topLeft() + QPoint(0, metrics.ascent()), label);
+            painter.setPen(isDark? Qt::white : Qt::black);
+            painter.drawText(textBounds.topLeft() + QPoint(0, metrics.ascent() - 1), label);
+
+            painter.restore();
+        }
     }
 }
 

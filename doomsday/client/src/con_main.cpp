@@ -1833,7 +1833,7 @@ void Con_PrintRuler(void)
     }
 }
 
-/// @param flags  @see consolePrintFlags
+/// @param flags  @ref consolePrintFlags
 static void conPrintf(int flags, const char* format, va_list args)
 {
     const char* text = 0;

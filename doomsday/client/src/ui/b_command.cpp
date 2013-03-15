@@ -383,7 +383,7 @@ void B_SubstituteInCommand(const char* command, ddevent_t* event, evbinding_t* e
 boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bcontext_s* eventClass)
 {
     int         i;
-    inputdev_t* dev;
+    inputdev_t* dev = 0;
     ddstring_t  command;
 
     if(eb->device != event->device || eb->type != event->type)

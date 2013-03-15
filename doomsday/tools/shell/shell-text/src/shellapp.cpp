@@ -164,6 +164,9 @@ void ShellApp::openConnection(String const &address)
 {
     closeConnection();
 
+    LogBuffer::appBuffer().flush();
+    d->log->clear();
+
     LOG_INFO("Opening connection to %s") << address;
 
     // Keep trying to connect to 30 seconds.
@@ -325,6 +328,8 @@ void ShellApp::handleIncomingPackets()
         default:
             break;
         }
+
+        LogBuffer::appBuffer().flush();
     }
 }
 

@@ -59,7 +59,7 @@ typedef struct texturecontent_s {
     int anisoFilter;
     int wrap[2];
     int grayMipmap;
-    int flags; /// @see textureContentFlags
+    int flags; /// @ref textureContentFlags
 } texturecontent_t;
 
 /**

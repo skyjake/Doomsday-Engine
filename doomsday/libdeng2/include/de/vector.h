@@ -501,6 +501,7 @@ typedef Vector2<dint>    Vector2i;  ///< 2-component vector of integer values.
 typedef Vector2<duint>   Vector2ui; ///< 2-component vector of unsigned integer values.
 typedef Vector2<dfloat>  Vector2f;  ///< 2-component vector of floating point values.
 typedef Vector2<ddouble> Vector2d;  ///< 2-component vector of high-precision floating point values.
+typedef Vector3<dbyte>   Vector3ub; ///< 3-component vector of unsigned byte values.
 typedef Vector3<dint>    Vector3i;  ///< 3-component vector of integer values.
 typedef Vector3<duint>   Vector3ui; ///< 3-component vector of unsigned integer values.
 typedef Vector3<dfloat>  Vector3f;  ///< 3-component vector of floating point values.

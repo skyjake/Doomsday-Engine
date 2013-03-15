@@ -61,7 +61,7 @@ struct LumpIndex::Instance
     typedef QVector<LumpIndexHashRecord> HashMap;
 
     LumpIndex* self;
-    int flags; /// @see lumpIndexFlags
+    int flags; /// @ref lumpIndexFlags
     LumpIndex::Lumps lumps;
     HashMap* hashMap;
 

@@ -49,10 +49,11 @@ extern "C" {
 #endif
 
 /**
- * @param pixels  Luminance image to be enhanced.
- * @param width  Width of the image in pixels.
- * @param height  Height of the image in pixels.
- * @param hasAlpha  @c true == @a pixels is luminance plus alpha data.
+ * @param pixels    Luminance image to be enhanced.
+ * @param width     Width of the image in pixels.
+ * @param height    Height of the image in pixels.
+ * @param hasAlpha  If @c true, @a pixels is assumed to contain luminance plus alpha data
+ *                  (totaling 2 * @a width * @a height bytes).
  */
 void AmplifyLuma(uint8_t* pixels, int width, int height, boolean hasAlpha);
 
@@ -67,6 +68,7 @@ void AmplifyLuma(uint8_t* pixels, int width, int height, boolean hasAlpha);
 uint8_t* ApplyColorKeying(uint8_t* pixels, int width, int height,
     int pixelSize);
 
+#if 0 // dj: Doesn't make sense, "darkness" applied to an alpha channel?
 /**
  * Sets the RGB color of transparent pixels along the image's non-transparent
  * areas to black. When the image is then drawn with magnification,
@@ -77,26 +79,32 @@ uint8_t* ApplyColorKeying(uint8_t* pixels, int width, int height,
  * used by jDoom on font characters and other such graphics to make them appear
  * less blurry.
  *
- * @param pixels  RGBA data. Input read here, and output written here.
- * @param width  Width of the image in pixels.
+ * @param pixels  RGBA data (in/out).
+ * @param width   Width of the image in pixels.
  * @param height  Height of the image in pixels.
  */
-#if 0 // dj: Doesn't make sense, "darkness" applied to an alpha channel?
 void BlackOutlines(uint8_t* pixels, int width, int height);
 #endif
 
 /**
- * Spread the color of none masked pixels outwards into the masked area.
+ * Spread the color of non-masked pixels outwards into the masked area.
  * This addresses the "black outlines" produced by texture filtering due to
  * sampling the default (black) color.
+ *
+ * @param pixels  Paletted pixel data (in/out). The size of this array
+ *                is expected to be 2 * @a width * @a height bytes
+ *                (the first layer is for the color indices and the second
+ *                layer for mask values).
+ * @param width   Width of the image in pixels.
+ * @param height  Height of the image in pixels.
  */
 void ColorOutlinesIdx(uint8_t* pixels, int width, int height);
 
 /**
- * @param pixels  RGB(a) image to be enhanced.
- * @param width  Width of the image in pixels.
- * @param height  Height of the image in pixels.
- * @param pixelsize  Size of each pixel. Handles 3 and 4.
+ * @param pixels     RGB(a) image to be desaturated (in/out).
+ * @param width      Width of the image in pixels.
+ * @param height     Height of the image in pixels.
+ * @param pixelSize  Size of each pixel. Handles 3 and 4.
  */
 void Desaturate(uint8_t* pixels, int width, int height, int pixelSize);
 
@@ -104,10 +112,10 @@ void Desaturate(uint8_t* pixels, int width, int height, int pixelSize);
  * @note Does not conform to any standard technique and adjustments
  * are applied symmetrically for all color components.
  *
- * @param pixels  RGB(a) image to be enhanced.
- * @param width  Width of the image in pixels.
- * @param height  Height of the image in pixels.
- * @param pixelsize  Size of each pixel. Handles 3 and 4.
+ * @param pixels     RGB(a) image to be enhanced (in/out).
+ * @param width      Width of the image in pixels.
+ * @param height     Height of the image in pixels.
+ * @param pixelSize  Size of each pixel. Handles 3 and 4.
  */
 void EnhanceContrast(uint8_t* pixels, int width, int height, int pixelSize);
 
@@ -120,68 +128,76 @@ void EnhanceContrast(uint8_t* pixels, int width, int height, int pixelSize);
  * averaging the luminosity of all pixels in the original image.
  *
  * @param pixels  Luminance image to equalize.
- * @param width  Width of the image in pixels.
+ * @param width   Width of the image in pixels.
  * @param height  Height of the image in pixels.
+ * @param rBaMul  Calculated balance multiplier is written here.
+ * @param rHiMul  Calculated multiplier is written here.
+ * @param rLoMul  Calculated multiplier is written here.
  */
-void EqualizeLuma(uint8_t* pixels, int width, int height, float* rBaMul,
-    float* rHiMul, float* rLoMul);
+void EqualizeLuma(uint8_t* pixels, int width, int height,
+                  float* rBaMul, float* rHiMul, float* rLoMul);
 
 /**
- * @param pixels  RGB(a) image to evaluate.
- * @param width  Width of the image in pixels.
- * @param height  Height of the image in pixels.
- * @param color  Determined average color written here.
+ * @param pixels     RGB(a) image to evaluate.
+ * @param width      Width of the image in pixels.
+ * @param height     Height of the image in pixels.
+ * @param pixelSize  Size of a pixel in bytes.
+ * @param color      Determined average color written here.
  */
 void FindAverageColor(const uint8_t* pixels, int width, int height,
     int pixelSize, ColorRawf* color);
 
 /**
- * @param pixels  Index-color image to evaluate.
- * @param width  Width of the image in pixels.
- * @param height  Height of the image in pixels.
- * @param palette  Color palette to use.
+ * @param pixels    Index-color image to evaluate.
+ * @param width     Width of the image in pixels.
+ * @param height    Height of the image in pixels.
+ * @param palette   Color palette to use.
  * @param hasAlpha  @c true == @a pixels includes alpha data.
- * @param color  Determined average color written here.
+ * @param color     Determined average color written here.
  */
 void FindAverageColorIdx(const uint8_t* pixels, int width, int height,
     const struct colorpalette_s* palette, boolean hasAlpha, ColorRawf* color);
 
 /**
- * @param pixels  RGB(a) image to evaluate.
- * @param width  Width of the image in pixels.
- * @param height  Height of the image in pixels.
- * @param color  Determined average color written here.
+ * @param pixels     RGB(a) image to evaluate.
+ * @param width      Width of the image in pixels.
+ * @param height     Height of the image in pixels.
+ * @param pixelSize  Size of a pixel in bytes.
+ * @param line       Line to evaluate.
+ * @param color      Determined average color written here.
  */
 void FindAverageLineColor(const uint8_t* pixels, int width, int height,
     int pixelSize, int line, ColorRawf* color);
 
 /**
- * @param pixels  Index-color image to evaluate.
- * @param width  Width of the image in pixels.
- * @param height  Height of the image in pixels.
- * @param palette  Color palette to use.
+ * @param pixels    Index-color image to evaluate.
+ * @param width     Width of the image in pixels.
+ * @param height    Height of the image in pixels.
+ * @param line      Line to evaluate.
+ * @param palette   Color palette to use.
  * @param hasAlpha  @c true == @a pixels includes alpha data.
- * @param color  Determined average color written here.
+ * @param color     Determined average color written here.
  */
 void FindAverageLineColorIdx(const uint8_t* pixels, int width, int height,
     int line, const struct colorpalette_s* palette, boolean hasAlpha, ColorRawf* color);
 
 /**
- * @param pixels  RGB(a) image to evaluate.
- * @param width  Width of the image in pixels.
- * @param height  Height of the image in pixels.
- * @param alpha  Determined average alpha written here.
- * @param coverage  Fraction representing the ratio of alpha to non-alpha pixels.
+ * @param pixels     RGB(a) image to evaluate.
+ * @param width      Width of the image in pixels.
+ * @param height     Height of the image in pixels.
+ * @param pixelSize  Size of a pixel in bytes.
+ * @param alpha      Determined average alpha written here.
+ * @param coverage   Fraction representing the ratio of alpha to non-alpha pixels.
  */
 void FindAverageAlpha(const uint8_t* pixels, int width, int height, int pixelSize,
     float* alpha, float* coverage);
 
 /**
- * @param pixels  Index-color image to evaluate.
- * @param width  Width of the image in pixels.
- * @param height  Height of the image in pixels.
- * @param palette  Color palette to use.
- * @param alpha  Determined average alpha written here.
+ * @param pixels    Index-color image to evaluate.
+ * @param width     Width of the image in pixels.
+ * @param height    Height of the image in pixels.
+ * @param palette   Color palette to use.
+ * @param alpha     Determined average alpha written here.
  * @param coverage  Fraction representing the ratio of alpha to non-alpha pixels.
  */
 void FindAverageAlphaIdx(const uint8_t* pixels, int width, int height,
@@ -193,20 +209,20 @@ void FindAverageAlphaIdx(const uint8_t* pixels, int width, int height,
  * @par Algorithm
  * Cross spread from bottom > top, right > left (inside out).
  *
- * @param pixels  Image data to be processed.
- * @param width  Width of the image in pixels.
- * @param height  Height of the image in pixels.
- * @param pixelsize  Size of each pixel. Handles 1 (==2), 3 and 4.
- * @param region  Determined region written here.
+ * @param pixels     Image data to be processed.
+ * @param width      Width of the image in pixels.
+ * @param height     Height of the image in pixels.
+ * @param pixelSize  Size of each pixel. Handles 1 (==2), 3 and 4.
+ * @param region     Determined region written here.
  */
 void FindClipRegionNonAlpha(const uint8_t* pixels, int width, int height,
     int pixelSize, int region[4]);
 
 /**
- * @param pixels  RGB(a) image to be enhanced.
- * @param width  Width of the image in pixels.
- * @param height  Height of the image in pixels.
- * @param pixelsize  Size of each pixel. Handles 3 and 4.
+ * @param pixels     RGB(a) image to be enhanced.
+ * @param width      Width of the image in pixels.
+ * @param height     Height of the image in pixels.
+ * @param pixelSize  Size of each pixel. Handles 3 and 4.
  */
 void SharpenPixels(uint8_t* pixels, int width, int height, int pixelSize);
 
@@ -225,8 +241,10 @@ uint8_t* GL_ScaleBufferNearest(const uint8_t* pixels, int width, int height,
  * Works within the given data, reducing the size of the picture to half
  * its original.
  *
- * @param width  Width of the final texture, must be power of two.
- * @param height  Height of the final texture, must be power of two.
+ * @param pixels     RGB(A) pixel data to process (in/out).
+ * @param width      Width of the final texture, must be power of two.
+ * @param height     Height of the final texture, must be power of two.
+ * @param pixelSize  Size of a pixel in bytes.
  */
 void GL_DownMipmap32(uint8_t* pixels, int width, int height, int pixelSize);
 
@@ -234,11 +252,13 @@ void GL_DownMipmap32(uint8_t* pixels, int width, int height, int pixelSize);
  * Works within the given data, reducing the size of the picture to half
  * its original.
  *
- * @param width  Width of the final texture, must be power of two.
- * @param height  Height of the final texture, must be power of two.
+ * @param in        Pixel data to process (paletted, in/out).
+ * @param fadedOut  Faded result image.
+ * @param width     Width of the final texture, must be power of two.
+ * @param height    Height of the final texture, must be power of two.
+ * @param fade      Fade factor (0..1).
  */
-void GL_DownMipmap8(uint8_t* in, uint8_t* fadedOut, int width, int height,
-    float fade);
+void GL_DownMipmap8(uint8_t* in, uint8_t* fadedOut, int width, int height, float fade);
 
 boolean GL_PalettizeImage(uint8_t* out, int outformat, const struct colorpalette_s* palette,
     boolean gammaCorrect, const uint8_t* in, int informat, int width, int height);
