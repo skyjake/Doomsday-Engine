@@ -58,6 +58,7 @@ DENG2_PIMPL(FolderSelection)
 #else
         button = new QPushButton(tr("..."));
 #endif
+        button->setAutoDefault(false);
 
         layout->addWidget(edit, 1);
         layout->addWidget(button, 0);

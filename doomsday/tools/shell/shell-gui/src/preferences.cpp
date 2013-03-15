@@ -10,6 +10,10 @@
 #include <QLabel>
 #include <QFontDialog>
 
+#ifdef MACOSX
+#  define PREFS_APPLY_IMMEDIATELY
+#endif
+
 DENG2_PIMPL(Preferences)
 {
     QCheckBox *useCustomIwad;
@@ -38,6 +42,7 @@ DENG2_PIMPL(Preferences)
         fontDesc = new QLabel;
 
         QPushButton *selFont = new QPushButton(tr("Select..."));
+        selFont->setAutoDefault(false);
         QObject::connect(selFont, SIGNAL(clicked()), thisPublic, SLOT(selectFont()));
 
         QHBoxLayout *fl = new QHBoxLayout;
@@ -66,6 +71,11 @@ DENG2_PIMPL(Preferences)
 
         mainLayout->addStretch(1);
 
+#ifndef PREFS_APPLY_IMMEDIATELY
+
+        // On Mac, changes to the preferences are applied immediately.
+        // Other platforms use OK/Cancel buttons.
+
         // Buttons.
         QDialogButtonBox *bbox = new QDialogButtonBox;
         mainLayout->addWidget(bbox);
@@ -76,6 +86,7 @@ DENG2_PIMPL(Preferences)
         QObject::connect(no, SIGNAL(clicked()), &self, SLOT(reject()));
         QObject::connect(act, SIGNAL(clicked()), &self, SLOT(saveState()));
         yes->setDefault(true);
+#endif
     }
 
     void updateFontDesc()
@@ -107,6 +118,9 @@ Preferences::Preferences(QWidget *parent) :
 {
     connect(d->useCustomIwad, SIGNAL(toggled(bool)), this, SLOT(validate()));
     connect(this, SIGNAL(accepted()), this, SLOT(saveState()));
+#ifdef PREFS_APPLY_IMMEDIATELY
+    connect(d->iwadFolder, SIGNAL(selected()), this, SLOT(saveState()));
+#endif
     validate();
 }
 
@@ -151,5 +165,9 @@ void Preferences::selectFont()
     {
         d->consoleFont = font;
         d->updateFontDesc();
+
+#ifdef PREFS_APPLY_IMMEDIATELY
+        saveState();
+#endif
     }
 }
