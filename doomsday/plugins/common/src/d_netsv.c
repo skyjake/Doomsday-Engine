@@ -647,6 +647,7 @@ void NetSv_NewPlayerEnters(int plrNum)
     P_Telefrag(plr->plr->mo);
 
     NetSv_TellCycleRulesToPlayerAfterTics(plrNum, 5 * TICSPERSEC);
+    NetSv_SendTotalCounts(plrNum);
 }
 
 void NetSv_Intermission(int flags, int state, int time)
@@ -675,7 +676,7 @@ void NetSv_Intermission(int flags, int state, int time)
     if(flags & IMF_BEGIN)
     {
         Writer_WriteByte(msg, state); // LeaveMap
-        Writer_WriteByte(msg, time); // LeavePosition
+        Writer_WriteByte(msg, time);  // LeavePosition
     }
 #endif
 
@@ -731,6 +732,27 @@ void NetSv_Finale(int flags, const char* script, const boolean* conds, byte numC
     Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_ORDERED, GPT_FINALE2, Writer_Data(writer), Writer_Size(writer));
 }
 #endif
+
+void NetSv_SendTotalCounts(int to)
+{
+    // Hexen does not have total counts.
+#ifndef __JHEXEN__
+    Writer *writer = 0;
+
+    if(IS_CLIENT)
+        return;
+
+    writer = D_NetWrite();
+    Writer_WriteInt32(writer, totalKills);
+    Writer_WriteInt32(writer, totalItems);
+    Writer_WriteInt32(writer, totalSecret);
+
+    // Send the packet.
+    Net_SendPacket(to, GPT_TOTAL_COUNTS, Writer_Data(writer), Writer_Size(writer));
+#else
+    DENG_UNUSED(to);
+#endif
+}
 
 void NetSv_SendGameState(int flags, int to)
 {

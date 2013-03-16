@@ -1065,3 +1065,17 @@ void NetCl_DamageRequest(mobj_t* target, mobj_t* inflictor, mobj_t* source, int 
 
     Net_SendPacket(0, GPT_DAMAGE_REQUEST, Writer_Data(msg), Writer_Size(msg));
 }
+
+void NetCl_UpdateTotalCounts(Reader *msg)
+{
+#ifndef __JHEXEN__
+    totalKills  = Reader_ReadInt32(msg);
+    totalItems  = Reader_ReadInt32(msg);
+    totalSecret = Reader_ReadInt32(msg);
+
+#ifdef _DEBUG
+    Con_Message("NetCl_UpdateTotalCounts: kills=%i, items=%i, secrets=%i",
+                totalKills, totalItems, totalSecret);
+#endif
+#endif
+}

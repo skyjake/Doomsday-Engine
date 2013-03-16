@@ -785,7 +785,10 @@ void P_SetupMap(Uri* mapUri, uint episode, uint map)
     }
 
     if(IS_SERVER)
+    {
         R_SetAllDoomsdayFlags();
+        NetSv_SendTotalCounts(DDSP_ALL_PLAYERS);
+    }
 
     P_FinalizeMap();
 
