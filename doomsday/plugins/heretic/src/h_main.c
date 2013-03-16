@@ -232,7 +232,7 @@ void H_PreInit(void)
     cfg.secretMsg = true;
     cfg.netJumping = true;
     cfg.netEpisode = 0;
-    cfg.netMap = 1;
+    cfg.netMap = 0;
     cfg.netSkill = SM_MEDIUM;
     cfg.netColor = 4; // Use the default color by default.
     cfg.netMobDamageModifier = 1;
