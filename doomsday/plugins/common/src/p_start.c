@@ -522,6 +522,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
     p->bonusCount = 0;
 #if __JHEXEN__
     p->poisonCount = 0;
+    p->overridePalette = 0;
 #endif
 #if __JHERETIC__ || __JHEXEN__
     p->morphTics = 0;
