@@ -185,6 +185,7 @@ void Cl_AnswerHandshake(void)
     ddPlayers[consolePlayer].shared.flags |= DDPF_LOCAL;
 
     Smoother_Clear(clients[consolePlayer].smoother);
+    ddPlayers[consolePlayer].shared.flags &= ~DDPF_USE_VIEW_FILTER;
 
     isClient = true;
     isServer = false;

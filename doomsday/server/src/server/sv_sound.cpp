@@ -36,7 +36,7 @@ static inline boolean isRealMobj(const mobj_t* base)
  * Find the map object to whom @a base belongs.
  */
 static void Sv_IdentifySoundBase(mobj_t** base, Sector** sector, Polyobj** poly,
-    Surface** surface)
+                                 Surface** surface)
 {
     *sector = 0;
     *poly = 0;
@@ -109,7 +109,7 @@ void Sv_SoundAtVolume(int soundIDAndFlags, mobj_t* origin, float volume, int toP
             << soundID << volume << targetPlayers;
 
     Sv_NewSoundDelta(soundID, origin, sector, poly, surface, volume,
-                     !!(soundIDAndFlags & DDSF_REPEAT), targetPlayers);
+                     (soundIDAndFlags & DDSF_REPEAT) != 0, targetPlayers);
 }
 
 void Sv_StopSound(int soundId, mobj_t* origin)

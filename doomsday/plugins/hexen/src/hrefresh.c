@@ -126,9 +126,14 @@ void R_UpdateViewFilter(int player)
 
     if(G_GameState() == GS_MAP)
     {
-        if(plr->poisonCount)
+        if(plr->overridePalette)
         {
-            palette = 0;
+            // Special palette that overrides the normal poison/pain/etc.
+            // Used by some weapon psprites.
+            palette = plr->overridePalette;
+        }
+        else if(plr->poisonCount)
+        {
             palette = (plr->poisonCount + 7) >> 3;
             if(palette >= NUMPOISONPALS)
             {
@@ -155,7 +160,8 @@ void R_UpdateViewFilter(int player)
             palette += STARTBONUSPALS;
         }
         else if(plr->plr->mo->flags2 & MF2_ICEDAMAGE)
-        {   // Frozen player
+        {
+            // Frozen player
             palette = STARTICEPAL;
         }
     }
@@ -208,6 +214,10 @@ static void rendPlayerView(int player)
     {
         const float* color = plr->plr->filterColor;
         GL_SetFilterColor(color[CR], color[CG], color[CB], color[CA]);
+
+#ifdef _DEBUG
+        Con_Message("FilterColor: %f, %f, %f, %f", color[CR], color[CG], color[CB], color[CA]);
+#endif
     }
 
     // Render the view with possible custom filters.

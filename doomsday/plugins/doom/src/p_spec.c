@@ -51,7 +51,7 @@
 #include "p_plat.h"
 #include "p_scroll.h"
 #include "p_switch.h"
-#include "d_netsv.h"
+#include "d_net.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -822,6 +822,7 @@ void P_PlayerInSpecialSector(player_t* player)
 
     case 9: ///< SECRET SECTOR
         player->secretCount++;
+        player->update |= PSF_COUNTERS;
         P_ToXSector(sector)->special = 0;
         if(cfg.secretMsg)
         {

@@ -214,14 +214,27 @@ DENG2_PIMPL(LineEditWidget)
         return word;
     }
 
-    QList<String> completionsForBase(String base) const
+    QList<String> completionsForBase(String base, String &commonPrefix) const
     {
+        bool first = true;
         QList<String> suggestions;
         foreach(String term, lexicon.terms())
         {
             if(term.startsWith(base, Qt::CaseInsensitive) && term.size() > base.size())
             {
                 suggestions.append(term);
+
+                // Determine if all the suggestions have a common prefix.
+                if(first)
+                {
+                    commonPrefix = term;
+                    first = false;
+                }
+                else if(!commonPrefix.isEmpty())
+                {
+                    int len = commonPrefix.commonPrefixLength(term, Qt::CaseInsensitive);
+                    commonPrefix = commonPrefix.left(len);
+                }
             }
         }
         qSort(suggestions);
@@ -236,7 +249,18 @@ DENG2_PIMPL(LineEditWidget)
             if(!base.isEmpty())
             {
                 // Find all the possible completions and apply the first one.
-                suggestions = completionsForBase(base);
+                String commonPrefix;
+                suggestions = completionsForBase(base, commonPrefix);
+                if(!commonPrefix.isEmpty() && commonPrefix != base)
+                {
+                    completion.ordinal = -1;
+                    commonPrefix.remove(0, base.size());
+                    completion.pos = cursor;
+                    completion.size = commonPrefix.size();
+                    text.insert(cursor, commonPrefix);
+                    cursor += completion.size;
+                    return true;
+                }
                 if(!suggestions.isEmpty())
                 {
                     completion.ordinal = (forwardCycle? 0 : suggestions.size() - 1);
@@ -256,9 +280,23 @@ DENG2_PIMPL(LineEditWidget)
             cursor = completion.pos;
             String const base = wordBehindCursor();
 
-            // Go to next suggestion.
-            completion.ordinal = de::wrap(completion.ordinal + (forwardCycle? 1 : -1),
-                                          0, suggestions.size());
+            if(completion.ordinal < 0)
+            {
+                // This occurs after a common prefix is inserted rather than
+                // a full suggestion.
+                completion.ordinal = (forwardCycle? 0 : suggestions.size() - 1);
+
+                if(base + text.mid(completion.pos, completion.size) == suggestions[completion.ordinal])
+                {
+                    // We already had this one, skip it.
+                    cycleCompletion(forwardCycle);
+                }
+            }
+            else
+            {
+                cycleCompletion(forwardCycle);
+            }
+
             String comp = suggestions[completion.ordinal];
             comp.remove(0, base.size());
 
@@ -269,6 +307,12 @@ DENG2_PIMPL(LineEditWidget)
             return true;
         }
         return false;
+    }
+
+    void cycleCompletion(bool forwardCycle)
+    {
+        completion.ordinal = de::wrap(completion.ordinal + (forwardCycle? 1 : -1),
+                                      0, suggestions.size());
     }
 
     void acceptCompletion()

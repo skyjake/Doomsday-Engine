@@ -785,7 +785,10 @@ void P_SetupMap(Uri* mapUri, uint episode, uint map)
     }
 
     if(IS_SERVER)
+    {
         R_SetAllDoomsdayFlags();
+        NetSv_SendTotalCounts(DDSP_ALL_PLAYERS);
+    }
 
     P_FinalizeMap();
 
@@ -851,6 +854,7 @@ static void P_ResetWorldState(void)
 
         ddplr->mo = NULL;
         plr->killCount = plr->secretCount = plr->itemCount = 0;
+        plr->update |= PSF_COUNTERS;
 
         if(ddplr->inGame && plr->playerState == PST_DEAD)
             plr->playerState = PST_REBORN;

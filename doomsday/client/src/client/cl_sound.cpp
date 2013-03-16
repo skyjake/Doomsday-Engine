@@ -85,6 +85,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
                 // We can't play sounds from hidden mobjs, because we
                 // aren't sure exactly where they are located.
                 cmo = NULL;
+                LOG_DEBUG("Can't find sound emitter ") << mobjId;
             }
             else
             {
@@ -124,6 +125,8 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     {
         uint index = deltaId;
 
+        LOG_DEBUG("DT_POLY_SOUND: poly=%i") << index;
+
         if(index < NUM_POLYOBJS)
         {
             DENG_ASSERT(theMap);
@@ -146,11 +149,20 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 
     if(type == DT_SECTOR_SOUND)
     {
-        // Select the origin for the sound.
+        // Select the emitter for the sound.
         if(flags & SNDDF_PLANE_FLOOR)
+        {
             emitter = (mobj_t *) &sector->floorSurface().soundEmitter();
+        }
         else if(flags & SNDDF_PLANE_CEILING)
+        {
             emitter = (mobj_t *) &sector->ceilingSurface().soundEmitter();
+        }
+        else
+        {
+            // Must be the sector's sound emitter, then.
+            emitter = (mobj_t *) &sector->soundEmitter();
+        }
     }
 
     if(type == DT_SIDE_SOUND)
@@ -214,9 +226,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
         if(type != DT_SOUND && !emitter)
         {
             // Not enough information.
-#ifdef _DEBUG
-            Con_Printf("Cl_ReadSoundDelta2(%i): Insufficient data, snd=%i\n", type, sound);
-#endif
+            LOG_WARNING("Cl_ReadSoundDelta2(%i): Insufficient data, snd=%i") << type << sound;
             return;
         }
 

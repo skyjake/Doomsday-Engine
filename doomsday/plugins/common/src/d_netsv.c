@@ -45,6 +45,10 @@
 #include "p_start.h"
 #include "p_inventory.h"
 
+#ifdef __JHEXEN__
+#  include "s_sequence.h"
+#endif
+
 // MACROS ------------------------------------------------------------------
 
 #if __JHEXEN__ || __JSTRIFE__
@@ -62,12 +66,6 @@
 // How long is the largest possible sector update?
 //#define MAX_SECTORUPD           20
 //#define MAX_SIDEUPD             9
-
-/*
-#define WRITE_SHORT(byteptr, val)   {(*(short*)(byteptr) = SHORT(val)); byteptr += 2;}
-#define WRITE_LONG(byteptr, val)    {(*(int*)(byteptr) = LONG(val)); byteptr += 4;}
-#define WRITE_FLOAT(byteptr, val)   {(*(int*)(byteptr) = LONG(*(int*)&val)); byteptr += 4;}
-*/
 
 // TYPES -------------------------------------------------------------------
 
@@ -173,6 +171,10 @@ void NetSv_Ticker(void)
         R_UpdateViewFilter(i);
     }
 
+#ifdef __JHEXEN__
+    SN_UpdateActiveSequences();
+#endif
+
     // Inform clients about jumping?
     power = (cfg.jumpEnabled ? cfg.jumpPower : 0);
     if(power != netJumpPower)
@@ -190,20 +192,12 @@ void NetSv_Ticker(void)
     {
         player_t* plr = &players[i];
 
-        /*
-        // Don't send on every tic. Also, don't send to all
-        // players at the same time.
-        if(((int) GAMETIC + i) % 10)
-            continue;
-        */
-
         if(!plr->plr->inGame)
             continue;
 
         if(plr->update)
         {
-            // Owned weapons and player state will be sent in a new kind of
-            // packet.
+            // Owned weapons and player state will be sent in the v2 packet.
             if(plr->update & (PSF_OWNED_WEAPONS | PSF_STATE))
             {
                 int flags =
@@ -218,7 +212,6 @@ void NetSv_Ticker(void)
                     continue;
             }
 
-            // The delivery of the state packet will be confirmed.
             NetSv_SendPlayerState(i, i, plr->update, true);
             plr->update = 0;
         }
@@ -656,6 +649,7 @@ void NetSv_NewPlayerEnters(int plrNum)
     P_Telefrag(plr->plr->mo);
 
     NetSv_TellCycleRulesToPlayerAfterTics(plrNum, 5 * TICSPERSEC);
+    NetSv_SendTotalCounts(plrNum);
 }
 
 void NetSv_Intermission(int flags, int state, int time)
@@ -684,7 +678,7 @@ void NetSv_Intermission(int flags, int state, int time)
     if(flags & IMF_BEGIN)
     {
         Writer_WriteByte(msg, state); // LeaveMap
-        Writer_WriteByte(msg, time); // LeavePosition
+        Writer_WriteByte(msg, time);  // LeavePosition
     }
 #endif
 
@@ -740,6 +734,27 @@ void NetSv_Finale(int flags, const char* script, const boolean* conds, byte numC
     Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_ORDERED, GPT_FINALE2, Writer_Data(writer), Writer_Size(writer));
 }
 #endif
+
+void NetSv_SendTotalCounts(int to)
+{
+    // Hexen does not have total counts.
+#ifndef __JHEXEN__
+    Writer *writer = 0;
+
+    if(IS_CLIENT)
+        return;
+
+    writer = D_NetWrite();
+    Writer_WriteInt32(writer, totalKills);
+    Writer_WriteInt32(writer, totalItems);
+    Writer_WriteInt32(writer, totalSecret);
+
+    // Send the packet.
+    Net_SendPacket(to, GPT_TOTAL_COUNTS, Writer_Data(writer), Writer_Size(writer));
+#else
+    DENG_UNUSED(to);
+#endif
+}
 
 void NetSv_SendGameState(int flags, int to)
 {

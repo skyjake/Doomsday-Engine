@@ -913,7 +913,6 @@ void IN_DrawCoopStats(void)
             DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
             GL_DrawPatchXY(dpFaceAlive[i], 25, ypos);
 
-
             if(interTime < 40)
             {
                 sounds = 0;

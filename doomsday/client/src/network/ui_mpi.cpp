@@ -299,10 +299,9 @@ void MPIUpdateServerInfo(ui_object_t *)
         return;
 
     success =
-        (searchMode ==
-         SEARCH_MASTER ? N_MasterGet(lstit_found[lst_found.selection].data2,
-                                     &info) :
-         N_GetHostInfo(lstit_found[lst_found.selection].data2, &info));
+        (searchMode == SEARCH_MASTER?
+              N_MasterGet  (lstit_found[lst_found.selection].data2, &info)
+            : N_GetHostInfo(lstit_found[lst_found.selection].data2, &info));
 
     if(!success)
     {
@@ -337,7 +336,13 @@ void MPIUpdateServerInfo(ui_object_t *)
             "Errors may occur during game play.", info.loadedFilesCRC, myCrc);
 
     // Show IWAD warning?
-    if(!(lst_found.count >= 1 && lst_found.selection >= 0 &&
+    if(strcmp(info.gameIdentityKey, Str_Text(App_CurrentGame().identityKey())))
+    {
+        UI_FlagGroup(ob_client, 5, UIF_DISABLED, false);
+        sprintf(str_sinfo.warning, "Different game in use (you have %s).",
+                Str_Text(App_CurrentGame().identityKey()));
+    }
+    else if(!(lst_found.count >= 1 && lst_found.selection >= 0 &&
         lstit_found[lst_found.selection].data != -1 &&
         lstit_found[lst_found.selection].data != (int) myCrc))
     {
@@ -445,6 +450,13 @@ struct ServerDiscoveryObserver : DENG2_OBSERVES(ServerLink, DiscoveryUpdate)
 
 static ServerDiscoveryObserver mpiDiscoveryObserver;
 
+static bool isServerSuitable(serverinfo_t const *info)
+{
+    return info->canJoin &&
+           info->version == DOOMSDAY_VERSION &&
+           !stricmp(info->gameIdentityKey, Str_Text(App_CurrentGame().identityKey()));
+}
+
 /*
  * Fill the server list with the list of currently known servers.
  */
@@ -497,9 +509,7 @@ void MPIUpdateServerList(void)
             N_MasterGet(i, &info);
 
             // Is this suitable?
-            if(info.version != DOOMSDAY_VERSION ||
-               stricmp(info.gameIdentityKey, Str_Text(App_CurrentGame().identityKey())) ||
-               !info.canJoin)
+            if(!isServerSuitable(&info))
             {
                 Con_Message("Server %s filtered out:", info.name);
                 Con_Message("  remote = %i, local = %i", info.version, DOOMSDAY_VERSION);

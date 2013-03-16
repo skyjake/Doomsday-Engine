@@ -55,7 +55,7 @@
 #include "p_plat.h"
 #include "p_scroll.h"
 #include "p_switch.h"
-#include "d_netsv.h"
+#include "d_net.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -491,6 +491,7 @@ static void P_CrossSpecialLine(LineDef* line, int side, mobj_t* thing)
         /// Also, export this text string to DED.
         P_SetMessage(thing->player, 0, "You've found a secret area!");
         thing->player->secretCount++;
+        thing->player->update |= PSF_COUNTERS;
         xline->special = 0;
         break;
 

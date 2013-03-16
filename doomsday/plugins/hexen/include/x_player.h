@@ -110,7 +110,9 @@ typedef struct player_s {
     int             rebornWait; // The player can be reborn if this counter is zero.
     boolean         centering;
     unsigned int    worldTimer; // Total time the player's been playing.
-    int             update, startSpot;
+    int             update;
+    int             startSpot;
+    int             overridePalette; // Palette that overrides the regular pain/etc. palette.
 
     float           viewOffset[3]; // Relative to position of the player mobj.
     float           viewZ; // Focal origin above r.z.

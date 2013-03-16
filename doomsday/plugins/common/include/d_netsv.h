@@ -38,6 +38,7 @@ void            P_Telefrag(mobj_t* thing);
 void            NetSv_NewPlayerEnters(int plrNum);
 void            NetSv_ResetPlayerFrags(int plrNum);
 void            NetSv_SendGameState(int flags, int to);
+void            NetSv_SendTotalCounts(int to);
 void            NetSv_SendPlayerSpawnPosition(int plrNum, float x, float y, float z, int angle);
 void            NetSv_SendMessage(int plrNum, const char *msg);
 void            NetSv_SendYellowMessage(int plrNum, const char *msg);

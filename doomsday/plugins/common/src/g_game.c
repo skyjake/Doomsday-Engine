@@ -1936,7 +1936,6 @@ void G_PlayerLeaveMap(int player)
 
     // Clear filter.
     p->plr->flags &= ~DDPF_VIEW_FILTER;
-    //p->plr->flags |= DDPF_FILTER; // Server: Send the change to the client.
     p->damageCount = 0; // No palette changes.
     p->bonusCount = 0;
 
@@ -2470,8 +2469,7 @@ void G_DoMapCompleted(void)
             G_PlayerLeaveMap(i); // take away cards and stuff
 
             // Update this client's stats.
-            NetSv_SendPlayerState(i, DDSP_ALL_PLAYERS,
-                                  PSF_FRAGS | PSF_COUNTERS, true);
+            NetSv_SendPlayerState(i, DDSP_ALL_PLAYERS, PSF_FRAGS | PSF_COUNTERS, true);
         }
     }
 

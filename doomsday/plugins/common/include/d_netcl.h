@@ -27,6 +27,7 @@
 
 void            NetCl_UpdateGameState(Reader* msg);
 void            NetCl_PlayerSpawnPosition(Reader* msg);
+void            NetCl_UpdateTotalCounts(Reader *msg);
 void            NetCl_UpdatePlayerState(Reader* msg, int plrNum);
 void            NetCl_UpdatePlayerState2(Reader* msg, int plrNum);
 void            NetCl_UpdatePSpriteState(Reader* msg);

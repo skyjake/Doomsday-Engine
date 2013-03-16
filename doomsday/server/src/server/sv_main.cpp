@@ -37,6 +37,7 @@
 
 #include <de/ArrayValue>
 #include <de/NumberValue>
+#include <de/Log>
 
 // This is absolute maximum bandwidth rating. Frame size is practically
 // unlimited with this score.
@@ -580,19 +581,18 @@ void Sv_GetPackets(void)
  */
 boolean Sv_PlayerArrives(unsigned int nodeID, char const *name)
 {
-    int                 i;
-
-    Con_Message("Sv_PlayerArrives: '%s' has arrived.", name);
+    LOG_AS("Sv_PlayerArrives");
+    LOG_INFO("'%s' has arrived.") << name;
 
     // We need to find the new player a client entry.
-    for(i = 1; i < DDMAXPLAYERS; ++i)
+    for(int i = 1; i < DDMAXPLAYERS; ++i)
     {
-        client_t           *cl = &clients[i];
+        client_t *cl = &clients[i];
 
         if(!cl->connected)
         {
-            player_t           *plr = &ddPlayers[i];
-            ddplayer_t         *ddpl = &plr->shared;
+            player_t   *plr  = &ddPlayers[i];
+            ddplayer_t *ddpl = &plr->shared;
 
             // This'll do.
             cl->connected = true;
@@ -606,18 +606,19 @@ boolean Sv_PlayerArrives(unsigned int nodeID, char const *name)
                 ddpl->fixAcked.origin =
                 ddpl->fixAcked.mom = -1;
 
+            // Clear the view filter.
+            memset(ddpl->filterColor, 0, sizeof(ddpl->filterColor));
+            ddpl->flags &= ~DDPF_VIEW_FILTER;
+
             Sv_InitPoolForClient(i);
             Smoother_Clear(cl->smoother);
 
-            VERBOSE(Con_Printf
-                    ("Sv_PlayerArrives: '%s' assigned to "
-                     "console %i (node: %x)\n", cl->name, i, nodeID));
+            LOG_VERBOSE("'%s' assigned to console %i (node:%u)") << cl->name << i << nodeID;
 
             // In order to get in the game, the client must first
             // shake hands. It'll request this by sending a Hello packet.
             // We'll be waiting...
             cl->handshake = false;
-            //cl->updateCount = UPDATECOUNT;
             return true;
         }
     }

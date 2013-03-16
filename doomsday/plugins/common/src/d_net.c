@@ -489,6 +489,10 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         NetCl_PlayerSpawnPosition(reader);
         break;
 
+    case GPT_TOTAL_COUNTS:
+        NetCl_UpdateTotalCounts(reader);
+        break;
+
     case GPT_MOBJ_IMPULSE:
         NetCl_MobjImpulse(reader);
         break;

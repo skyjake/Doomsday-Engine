@@ -35,6 +35,7 @@
 #include <math.h>
 
 #include "common.h"
+#include "r_common.h"
 
 #include "p_player.h"
 #include "p_map.h"
@@ -521,7 +522,7 @@ void C_DECL A_WeaponReady(player_t *plr, pspdef_t *psp)
 
         // A weaponready sound?
         if(psp->state == &STATES[wminfo->states[WSN_READY]] && wminfo->readySound)
-            S_StartSound(wminfo->readySound, plr->plr->mo);
+            S_StartSoundEx(wminfo->readySound, plr->plr->mo);
 
         // Check for change, if plr is dead, put the weapon away.
         if(plr->pendingWeapon != WT_NOCHANGE || !plr->health)
@@ -673,7 +674,7 @@ void C_DECL A_SnoutAttack(player_t* plr, pspdef_t* psp)
     puffSpawned = NULL;
 
     P_LineAttack(plr->plr->mo, angle, MELEERANGE, slope, damage);
-    S_StartSound(SFX_PIG_ACTIVE1 + (P_Random() & 1), plr->plr->mo);
+    S_StartSoundEx(SFX_PIG_ACTIVE1 + (P_Random() & 1), plr->plr->mo);
 
     if(lineTarget)
     {
@@ -681,7 +682,7 @@ void C_DECL A_SnoutAttack(player_t* plr, pspdef_t* psp)
 
         if(puffSpawned)
         {   // Bit something.
-            S_StartSound(SFX_PIG_ATTACK, plr->plr->mo);
+            S_StartSoundEx(SFX_PIG_ATTACK, plr->plr->mo);
         }
     }
 }
@@ -770,11 +771,15 @@ void C_DECL A_FHammerThrow(player_t *plr, pspdef_t *psp)
 
 void C_DECL A_FSwordAttack(player_t *plr, pspdef_t *psp)
 {
-    mobj_t             *mo;
+    mobj_t *mo;
 
     P_ShotAmmo(plr);
 
     mo = plr->plr->mo;
+    S_StartSoundEx(SFX_FIGHTER_SWORD_FIRE, mo);
+
+    if(IS_CLIENT) return;
+
     P_SPMAngleXYZ(MT_FSWORD_MISSILE, mo->origin[VX], mo->origin[VY], mo->origin[VZ] - 10,
                   mo, mo->angle + ANG45 / 4);
     P_SPMAngleXYZ(MT_FSWORD_MISSILE, mo->origin[VX], mo->origin[VY], mo->origin[VZ] - 5,
@@ -785,19 +790,21 @@ void C_DECL A_FSwordAttack(player_t *plr, pspdef_t *psp)
                   mo, mo->angle - ANG45 / 8);
     P_SPMAngleXYZ(MT_FSWORD_MISSILE, mo->origin[VX], mo->origin[VY], mo->origin[VZ] + 10,
                   mo, mo->angle - ANG45 / 4);
-    S_StartSound(SFX_FIGHTER_SWORD_FIRE, mo);
 }
 
 void C_DECL A_FSwordAttack2(mobj_t* mo)
 {
     angle_t angle = mo->angle;
 
+    S_StartSoundEx(SFX_FIGHTER_SWORD_FIRE, mo);
+
+    if(IS_CLIENT) return;
+
     P_SpawnMissileAngle(MT_FSWORD_MISSILE, mo, angle + ANG45 / 4, 0);
     P_SpawnMissileAngle(MT_FSWORD_MISSILE, mo, angle + ANG45 / 8, 0);
     P_SpawnMissileAngle(MT_FSWORD_MISSILE, mo, angle, 0);
     P_SpawnMissileAngle(MT_FSWORD_MISSILE, mo, angle - ANG45 / 8, 0);
     P_SpawnMissileAngle(MT_FSWORD_MISSILE, mo, angle - ANG45 / 4, 0);
-    S_StartSound(SFX_FIGHTER_SWORD_FIRE, mo);
 }
 
 void C_DECL A_FSwordFlames(mobj_t* mo)
@@ -830,7 +837,7 @@ void C_DECL A_LightningReady(player_t* plr, pspdef_t* psp)
     A_WeaponReady(plr, psp);
     if(P_Random() < 160)
     {
-        S_StartSound(SFX_MAGE_LIGHTNING_READY, plr->plr->mo);
+        S_StartSoundEx(SFX_MAGE_LIGHTNING_READY, plr->plr->mo);
     }
 }
 
@@ -961,6 +968,8 @@ void C_DECL A_MLightningAttack2(mobj_t *mo)
 
 void C_DECL A_MLightningAttack(player_t *plr, pspdef_t *psp)
 {
+    if(IS_CLIENT) return;
+
     A_MLightningAttack2(plr->plr->mo);
     P_ShotAmmo(plr);
 }
@@ -1028,49 +1037,30 @@ void C_DECL A_MStaffAttack(player_t* plr, pspdef_t* psp)
     mo = plr->plr->mo;
     angle = mo->angle;
 
-    MStaffSpawn(mo, angle);
-    MStaffSpawn(mo, angle - ANGLE_1 * 5);
-    MStaffSpawn(mo, angle + ANGLE_1 * 5);
-    S_StartSound(SFX_MAGE_STAFF_FIRE, plr->plr->mo);
+    if(!IS_CLIENT)
+    {
+        MStaffSpawn(mo, angle);
+        MStaffSpawn(mo, angle - ANGLE_1 * 5);
+        MStaffSpawn(mo, angle + ANGLE_1 * 5);
+    }
+    S_StartSoundEx(SFX_MAGE_STAFF_FIRE, plr->plr->mo);
     plr->damageCount = 0;
     plr->bonusCount = 0;
 
-    if(plr == &players[CONSOLEPLAYER])
-    {
-        int             pal = STARTSCOURGEPAL;
-        float           rgba[4];
-
-        // $democam
-        R_ViewFilterColor(rgba, pal);
-        GL_SetFilterColor(rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
-
-        GL_SetFilter(true);
-    }
+    plr->overridePalette = STARTSCOURGEPAL;
 }
 
 void C_DECL A_MStaffPalette(player_t* plr, pspdef_t* psp)
 {
-    if(plr == &players[CONSOLEPLAYER])
+    int pal = STARTSCOURGEPAL + psp->state - (&STATES[S_MSTAFFATK_2]);
+
+    if(pal == STARTSCOURGEPAL + 3)
     {
-        int             pal = STARTSCOURGEPAL +
-            psp->state - (&STATES[S_MSTAFFATK_2]);
-
-        if(pal == STARTSCOURGEPAL + 3)
-        {   // Reset back to original playpal.
-            pal = 0;
-        }
-
-        if(pal)
-        {
-            float           rgba[4];
-
-            // $democam
-            R_ViewFilterColor(rgba, pal);
-            GL_SetFilterColor(rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
-
-            GL_SetFilter(true);
-        }
+        // Reset back to original playpal.
+        pal = 0;
     }
+
+    plr->overridePalette = pal;
 }
 
 void C_DECL A_MStaffWeave(mobj_t* mo)
@@ -1151,6 +1141,8 @@ void C_DECL A_FPunchAttack(player_t *plr, pspdef_t *psp)
     float       slope;
     mobj_t     *mo = plr->plr->mo;
     float       power;
+
+    if(IS_CLIENT) return;
 
     damage = 40 + (P_Random() & 15);
     power = 2;
@@ -1301,6 +1293,8 @@ void C_DECL A_CMaceAttack(player_t *plr, pspdef_t *psp)
     int         damage;
     float       slope;
 
+    if(IS_CLIENT) return;
+
     damage = 25 + (P_Random() & 15);
     PuffType = MT_HAMMERPUFF;
     for(i = 0; i < 16; ++i)
@@ -1397,6 +1391,8 @@ void C_DECL A_CStaffAttack(player_t *plr, pspdef_t *psp)
 {
     mobj_t     *mo, *pmo;
 
+    if(IS_CLIENT) return;
+
     P_ShotAmmo(plr);
     pmo = plr->plr->mo;
     mo = P_SPMAngle(MT_CSTAFF_MISSILE, pmo, pmo->angle - (ANG45 / 15));
@@ -1453,6 +1449,8 @@ void C_DECL A_CStaffCheckBlink(player_t *plr, pspdef_t *psp)
 void C_DECL A_CFlameAttack(player_t *plr, pspdef_t *psp)
 {
     mobj_t         *pmo;
+
+    if(IS_CLIENT) return;
 
     pmo = P_SpawnPlayerMissile(MT_CFLAME_MISSILE, plr->plr->mo);
     if(pmo)
@@ -1626,50 +1624,31 @@ void C_DECL A_CHolyAttack2(mobj_t* mo)
 
 void C_DECL A_CHolyAttack(player_t* plr, pspdef_t* psp)
 {
-    mobj_t*             pmo;
+    mobj_t *pmo;
+
+    if(IS_CLIENT) return;
 
     P_ShotAmmo(plr);
     pmo = P_SpawnPlayerMissile(MT_HOLY_MISSILE, plr->plr->mo);
     plr->damageCount = 0;
     plr->bonusCount = 0;
 
-    if(plr == &players[CONSOLEPLAYER])
-    {
-        float               rgba[4];
-
-        // $democam
-        R_ViewFilterColor(rgba, STARTHOLYPAL);
-        GL_SetFilterColor(rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
-
-        GL_SetFilter(true);
-    }
+    plr->overridePalette = STARTHOLYPAL;
 
     S_StartSound(SFX_CHOLY_FIRE, plr->plr->mo);
 }
 
 void C_DECL A_CHolyPalette(player_t* plr, pspdef_t* psp)
 {
-    if(plr == &players[CONSOLEPLAYER])
+    int pal = STARTHOLYPAL + psp->state - (&STATES[S_CHOLYATK_6]);
+
+    if(pal == STARTHOLYPAL + 3)
     {
-        int                 pal = STARTHOLYPAL +
-            psp->state - (&STATES[S_CHOLYATK_6]);
-
-        if(pal == STARTHOLYPAL + 3)
-        {   // reset back to original playpal
-            pal = 0;
-        }
-
-        if(pal)
-        {
-            float               rgba[4];
-
-            // $democam
-            R_ViewFilterColor(rgba, pal);
-            GL_SetFilterColor(rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
-
-            GL_SetFilter(true);
-        }
+        // reset back to original playpal
+        pal = 0;
     }
+
+    plr->overridePalette = pal;
 }
 
 static void CHolyFindTarget(mobj_t* mo)
@@ -1920,6 +1899,8 @@ void C_DECL A_FireConePL1(player_t *plr, pspdef_t *psp)
     angle_t     angle;
     mobj_t     *pmo, *mo;
     boolean     conedone = false;
+
+    if(IS_CLIENT) return;
 
     mo = plr->plr->mo;
     P_ShotAmmo(plr);

@@ -203,14 +203,15 @@ public:
     dint compareWithoutCase(String const &str, int n) const;
 
     /**
-     * Compares two strings (case sensitive) to see how many characters they
-     * have in common starting from the left.
+     * Compares two strings to see how many characters they have in common
+     * starting from the left.
      *
-     * @param str  String.
+     * @param str          String.
+     * @param sensitivity  Case sensitivity.
      *
      * @return  Number of characters the two strings have in common from the left.
      */
-    int commonPrefixLength(String const &str) const;
+    int commonPrefixLength(String const &str, Qt::CaseSensitivity sensitivity = Qt::CaseSensitive) const;
 
     /**
      * Converts the string to UTF-8 and returns it as a byte block.

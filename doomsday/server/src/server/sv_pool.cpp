@@ -2328,6 +2328,11 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
         id = GameMap_SectorIndex(theMap, sourceSector);
         // Client assumes the sector's sound origin.
     }
+    else if(sourcePoly)
+    {
+        type = DT_POLY_SOUND;
+        id = sourcePoly->idx;
+    }
     else if(sourceSurface)
     {
         switch(sourceSurface->owner().type())
@@ -2390,11 +2395,6 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
             return;
         }
     }
-    else if(sourcePoly)
-    {
-        type = DT_POLY_SOUND;
-        id = sourcePoly->idx;
-    }
     else if(emitter)
     {
         type = DT_MOBJ_SOUND;
@@ -2411,6 +2411,8 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
 
     if(isRepeating)
         df |= SNDDF_REPEAT;
+
+    LOG_TRACE("New sound delta: type=%i id=%i flags=%x") << type << id << df;
 
     // This is used by mobj/sector sounds.
     soundDelta.sound = soundId;
