@@ -394,7 +394,7 @@ void P_DealPlayerStarts(uint entryPoint)
     }
 
     // First assign one start per player, only accepting perfect matches.
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(i = (IS_NETWORK_SERVER? 1 : 0); i < MAXPLAYERS; ++i)
     {
         int k, spotNumber;
         player_t* pl = &players[i];
@@ -404,6 +404,10 @@ void P_DealPlayerStarts(uint entryPoint)
 
         // The number of the start spot this player will use.
         spotNumber = i % MAX_START_SPOTS;
+
+        // Player #1 should be treated like #0 on the server.
+        if(IS_NETWORK_SERVER) spotNumber--;
+
         pl->startSpot = -1;
 
         for(k = 0; k < numPlayerStarts; ++k)
@@ -431,7 +435,7 @@ void P_DealPlayerStarts(uint entryPoint)
         Con_Printf("Player starting spots:\n");
         for(i = 0; i < MAXPLAYERS; ++i)
         {
-            player_t*           pl = &players[i];
+            player_t *pl = &players[i];
 
             if(!pl->plr->inGame)
                 continue;
