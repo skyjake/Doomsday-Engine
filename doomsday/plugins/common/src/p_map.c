@@ -2971,14 +2971,12 @@ int PIT_CheckOnmobjZ(mobj_t* thing, void* data)
     else if(tmThing->origin[VZ] + tmThing->height < thing->origin[VZ])
         return false; // Under thing.
 
-#ifdef __CLIENT__
     // Players cannot hit their clmobjs.
     if(tmThing->player)
     {
         if(thing == ClPlayer_ClMobj(tmThing->player - players))
             return false;
     }
-#endif
 
     if(thing->flags & MF_SOLID)
         onMobj = thing;
