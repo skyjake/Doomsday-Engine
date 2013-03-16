@@ -74,9 +74,9 @@ typedef struct {
     float blendFactor; /// Multiplied with projection alpha.
     pvec3d_t v1; /// Top left vertex of the surface being projected to.
     pvec3d_t v2; /// Bottom right vertex of the surface being projected to.
-    pvec3f_t tangent; /// Normalized tangent of the surface being projected to.
-    pvec3f_t bitangent; /// Normalized bitangent of the surface being projected to.
-    pvec3f_t normal; /// Normalized normal of the surface being projected to.
+    vec3f_t tangent; /// Normalized tangent of the surface being projected to.
+    vec3f_t bitangent; /// Normalized bitangent of the surface being projected to.
+    vec3f_t normal; /// Normalized normal of the surface being projected to.
 } lightprojectparams_t;
 
 static boolean iterateBspLeafLumObjs(BspLeaf *bspLeaf, boolean (*func) (void *, void *), void *data);
@@ -380,15 +380,15 @@ typedef struct {
  * contacted a new projection node will constructed and returned.
  *
  * @param lum  Lumobj representing the light being projected.
- * @param paramaters  ProjectLightToSurfaceIterator paramaters.
+ * @param parameters  ProjectLightToSurfaceIterator paramaters.
  *
  * @return  @c 0 = continue iteration.
  */
-static int projectPlaneLightToSurface(lumobj_t const *lum, void *paramaters)
+static int projectPlaneLightToSurface(lumobj_t const *lum, void *parameters)
 {
-    DENG_ASSERT(lum && paramaters);
+    DENG_ASSERT(lum && parameters);
 
-    projectlighttosurfaceiteratorparams_t *p = (projectlighttosurfaceiteratorparams_t *)paramaters;
+    projectlighttosurfaceiteratorparams_t *p = (projectlighttosurfaceiteratorparams_t *)parameters;
     lightprojectparams_t *spParams = &p->spParams;
     coord_t bottom = spParams->v2[VZ], top = spParams->v1[VZ];
     float glowHeight, s[2], t[2], color[3];
@@ -998,7 +998,7 @@ static void createGlowLightForSurface(Surface &suf)
         V3d_Copy(lum->origin, suf.soundEmitter().origin);
         lum->origin[VZ] = pln->visHeight(); // Sound emitter origins are not smoothed.
 
-        V3f_Copy(LUM_PLANE(lum)->normal, suf.normal);
+        V3f_Copy(LUM_PLANE(lum)->normal, suf.normal());
         V3f_Copy(LUM_PLANE(lum)->color, avgColorAmplified->color.rgb);
 
         float glowStrength = ms.glowStrength();
@@ -1253,25 +1253,26 @@ int RIT_ProjectLightToSurfaceIterator(void *obj, void *paramaters)
 }
 
 uint LO_ProjectToSurface(int flags, BspLeaf *bspLeaf, float blendFactor,
-    vec3d_t topLeft, vec3d_t bottomRight, vec3f_t tangent, vec3f_t bitangent, vec3f_t normal)
+    pvec3d_t topLeft, pvec3d_t bottomRight,
+    const_pvec3f_t tangent, const_pvec3f_t bitangent, const_pvec3f_t normal)
 {
     projectlighttosurfaceiteratorparams_t parm;
-
     parm.listIdx               = 0;
     parm.spParams.blendFactor  = blendFactor;
     parm.spParams.flags        = flags;
     parm.spParams.v1           = topLeft;
     parm.spParams.v2           = bottomRight;
-    parm.spParams.tangent      = tangent;
-    parm.spParams.bitangent    = bitangent;
-    parm.spParams.normal       = normal;
+    V3f_Copy(parm.spParams.tangent,   tangent);
+    V3f_Copy(parm.spParams.bitangent, bitangent);
+    V3f_Copy(parm.spParams.normal,    normal);
 
     R_IterateBspLeafContacts2(bspLeaf, OT_LUMOBJ, RIT_ProjectLightToSurfaceIterator, (void *)&parm);
+
     // Did we produce a projection list?
     return parm.listIdx;
 }
 
-int LO_IterateProjections2(uint listIdx, int (*callback) (dynlight_t const *, void *), void *paramaters)
+int LO_IterateProjections2(uint listIdx, int (*callback) (dynlight_t const *, void *), void *parameters)
 {
     int result = 0; // Continue iteration.
     if(callback && listIdx != 0 && listIdx <= projectionListCount)
@@ -1279,7 +1280,7 @@ int LO_IterateProjections2(uint listIdx, int (*callback) (dynlight_t const *, vo
         listnode_t *node = projectionLists[listIdx-1].head;
         while(node)
         {
-            result = callback(&node->projection, paramaters);
+            result = callback(&node->projection, parameters);
             node = (!result? node->next : NULL /* Early out */);
         }
     }

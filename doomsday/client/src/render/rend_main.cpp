@@ -385,18 +385,19 @@ static byte pvisibleLineSections(LineDef *line, int backSide)
         sections |= SSF_MIDDLE | SSF_BOTTOM | SSF_TOP;
 
         // Middle?
-        if(!sideDef.middle().hasMaterial() || !sideDef.middle().material().isDrawable() || sideDef.middle().rgba[3] <= 0)
+        if(!sideDef.middle().hasMaterial() || !sideDef.middle().material().isDrawable() ||
+            sideDef.middle().colorAndAlpha()[CA] <= 0)
             sections &= ~SSF_MIDDLE;
 
         // Top?
-        if((!devRendSkyMode && fceil->surface().isSkyMasked() && bceil->surface().isSkyMasked()) ||
-           //(!devRendSkyMode && bceil->surface().isSkyMasked() && (sideDef.top().inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
+        if((!devRendSkyMode && fceil->surface().hasSkyMaskedMaterial() && bceil->surface().hasSkyMaskedMaterial()) ||
+           //(!devRendSkyMode && bceil->surface().isSkyMasked() && (sideDef.top().hasFixMaterial())) ||
            (fceil->visHeight() <= bceil->visHeight()))
             sections &= ~SSF_TOP;
 
         // Bottom?
-        if((!devRendSkyMode && ffloor->surface().isSkyMasked() && bfloor->surface().isSkyMasked()) ||
-           //(!devRendSkyMode && bfloor->surface().isSkyMasked() && (sideDef.bottom().inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
+        if((!devRendSkyMode && ffloor->surface().hasSkyMaskedMaterial() && bfloor->surface().hasSkyMaskedMaterial()) ||
+           //(!devRendSkyMode && bfloor->surface().isSkyMasked() && (sideDef.bottom().hasFixMaterial())) ||
            (ffloor->visHeight() >= bfloor->visHeight()))
             sections &= ~SSF_BOTTOM;
     }
@@ -412,17 +413,17 @@ static void selectSurfaceColors(float const **topColor,
     case SS_MIDDLE:
         if(sideDef->flags & SDF_BLENDMIDTOTOP)
         {
-            *topColor    = sideDef->top().rgba;
-            *bottomColor = sideDef->middle().rgba;
+            *topColor    = sideDef->top().colorAndAlpha();
+            *bottomColor = sideDef->middle().colorAndAlpha();
         }
         else if(sideDef->flags & SDF_BLENDMIDTOBOTTOM)
         {
-            *topColor    = sideDef->middle().rgba;
-            *bottomColor = sideDef->bottom().rgba;
+            *topColor    = sideDef->middle().colorAndAlpha();
+            *bottomColor = sideDef->bottom().colorAndAlpha();
         }
         else
         {
-            *topColor    = sideDef->middle().rgba;
+            *topColor    = sideDef->middle().colorAndAlpha();
             *bottomColor = 0;
         }
         break;
@@ -430,12 +431,12 @@ static void selectSurfaceColors(float const **topColor,
     case SS_TOP:
         if(sideDef->flags & SDF_BLENDTOPTOMID)
         {
-            *topColor    = sideDef->top().rgba;
-            *bottomColor = sideDef->middle().rgba;
+            *topColor    = sideDef->top().colorAndAlpha();
+            *bottomColor = sideDef->middle().colorAndAlpha();
         }
         else
         {
-            *topColor    = sideDef->top().rgba;
+            *topColor    = sideDef->top().colorAndAlpha();
             *bottomColor = 0;
         }
         break;
@@ -443,12 +444,12 @@ static void selectSurfaceColors(float const **topColor,
     case SS_BOTTOM:
         if(sideDef->flags & SDF_BLENDBOTTOMTOMID)
         {
-            *topColor    = sideDef->middle().rgba;
-            *bottomColor = sideDef->bottom().rgba;
+            *topColor    = sideDef->middle().colorAndAlpha();
+            *bottomColor = sideDef->bottom().colorAndAlpha();
         }
         else
         {
-            *topColor    = sideDef->bottom().rgba;
+            *topColor    = sideDef->bottom().colorAndAlpha();
             *bottomColor = 0;
         }
         break;
@@ -1543,11 +1544,14 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
     boolean opaque = true;
     float alpha;
 
-    if(!surface->isDrawable()) return false;
+    // Surfaces without a drawable material are never rendered.
+    if(!(surface->hasMaterial() && surface->material().isDrawable()))
+        return false;
+
     if(WallDivNode_Height(WallDivs_First(leftWallDivs)) >=
        WallDivNode_Height(WallDivs_Last(rightWallDivs))) return true;
 
-    alpha = (section == SS_MIDDLE? surface->rgba[3] : 1.0f);
+    alpha = (section == SS_MIDDLE? surface->colorAndAlpha()[CA] : 1.0f);
 
     if(section == SS_MIDDLE && (flags & RHF_VIEWER_NEAR_BLEND))
     {
@@ -1611,10 +1615,10 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
 
         // Determine which Material to use.
         if(devRendSkyMode && HEDGE_BACK_SECTOR(hedge) &&
-           ((section == SS_BOTTOM && hedge->sector->floorSurface().isSkyMasked() &&
-                                     HEDGE_BACK_SECTOR(hedge)->floorSurface().isSkyMasked()) ||
-            (section == SS_TOP    && hedge->sector->ceilingSurface().isSkyMasked() &&
-                                     HEDGE_BACK_SECTOR(hedge)->ceilingSurface().isSkyMasked())))
+           ((section == SS_BOTTOM && hedge->sector->floorSurface().hasSkyMaskedMaterial() &&
+                                     HEDGE_BACK_SECTOR(hedge)->floorSurface().hasSkyMaskedMaterial()) ||
+            (section == SS_TOP    && hedge->sector->ceilingSurface().hasSkyMaskedMaterial() &&
+                                     HEDGE_BACK_SECTOR(hedge)->ceilingSurface().hasSkyMaskedMaterial())))
         {
             // Geometry not normally rendered however we do so in dev sky mode.
             mat = hedge->sector->planeSurface(section == SS_TOP? Plane::Ceiling : Plane::Floor).materialPtr();
@@ -1667,13 +1671,13 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
             }
             else
             {
-                if(surface->blendMode == BM_NORMAL && noSpriteTrans)
+                if(surface->blendMode() == BM_NORMAL && noSpriteTrans)
                     blendMode = BM_ZEROALPHA; // "no translucency" mode
                 else
-                    blendMode = surface->blendMode;
+                    blendMode = surface->blendMode();
             }
 
-            if(surface->inFlags & SUIF_NO_RADIO)
+            if(Surface::isFromPolyobj(*surface))
                 flags &= ~RHF_ADD_RADIO;
 
             float glowStrength = ms.glowStrength();
@@ -1684,17 +1688,28 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
             if((flags & RHF_ADD_DYNLIGHTS) &&
                glowStrength < 1 && !(!useDynLights && !useWallGlow))
             {
-                lightListIdx = LO_ProjectToSurface(((section == SS_MIDDLE && isTwoSided)? PLF_SORT_LUMINOSITY_DESC : 0), currentBspLeaf, 1,
-                    texTL, texBR, HEDGE_SIDEDEF(hedge)->middle().tangent, HEDGE_SIDEDEF(hedge)->middle().bitangent, HEDGE_SIDEDEF(hedge)->middle().normal);
+                Surface const &middleSurface = HEDGE_SIDEDEF(hedge)->middle();
+                int plFlags = ((section == SS_MIDDLE && isTwoSided)? PLF_SORT_LUMINOSITY_DESC : 0);
+
+                lightListIdx = LO_ProjectToSurface(plFlags, currentBspLeaf, 1, texTL, texBR,
+                                                   middleSurface.tangent(),
+                                                   middleSurface.bitangent(),
+                                                   middleSurface.normal());
             }
 
             // Dynamic shadows?
             if((flags & RHF_ADD_DYNSHADOWS) &&
                glowStrength < 1 && Rend_MobjShadowsEnabled())
             {
+                Surface const &middleSurface = HEDGE_SIDEDEF(hedge)->middle();
+
                 // Glowing planes inversely diminish shadow strength.
-                shadowListIdx = R_ProjectShadowsToSurface(currentBspLeaf, 1 - glowStrength, texTL, texBR,
-                    HEDGE_SIDEDEF(hedge)->middle().tangent, HEDGE_SIDEDEF(hedge)->middle().bitangent, HEDGE_SIDEDEF(hedge)->middle().normal);
+                float const shadowStrength = 1 - glowStrength;
+
+                shadowListIdx = R_ProjectShadowsToSurface(currentBspLeaf, shadowStrength, texTL, texBR,
+                                                          middleSurface.tangent(),
+                                                          middleSurface.bitangent(),
+                                                          middleSurface.normal());
             }
 
             if(glowStrength > 0)
@@ -1725,7 +1740,7 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
         }
 
         opaque = doRenderHEdge(hedge,
-                               surface->normal, ((flags & RHF_FORCE_OPAQUE)? -1 : alpha),
+                               surface->normal(), ((flags & RHF_FORCE_OPAQUE)? -1 : alpha),
                                lightLevel, deltaL, deltaR, lightColor,
                                lightListIdx, shadowListIdx,
                                leftWallDivs, rightWallDivs,
@@ -1862,8 +1877,8 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
                     xtop    = de::min(bceil->visHeight(),  fceil->visHeight());
                 }
 
-                xbottom += surface.visOffset[VY];
-                xtop    += surface.visOffset[VY];
+                xbottom += surface.visMaterialOrigin()[VY];
+                xtop    += surface.visMaterialOrigin()[VY];
 
                 // Can we make this a solid segment?
                 if(!(WallDivNode_Height(WallDivs_Last(&rightWallDivs)) >= xtop &&
@@ -1928,14 +1943,14 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
             if(FEQUAL(fceil->visHeight(), bfloor->visHeight()))
             {
                 solidSeg = (bceil->visHeight() <= bfloor->visHeight()) ||
-                           !(fceil->surface().isSkyMasked() &&
-                             bceil->surface().isSkyMasked());
+                           !(fceil->surface().hasSkyMaskedMaterial() &&
+                             bceil->surface().hasSkyMaskedMaterial());
             }
             else if(FEQUAL(ffloor->visHeight(), bceil->visHeight()))
             {
                 solidSeg = (bfloor->visHeight() >= bceil->visHeight()) ||
-                           !(ffloor->surface().isSkyMasked() &&
-                             bfloor->surface().isSkyMasked());
+                           !(ffloor->surface().hasSkyMaskedMaterial() &&
+                             bfloor->surface().hasSkyMaskedMaterial());
             }
             else
             {
@@ -2066,11 +2081,11 @@ static void skyFixZCoords(HEdge *hedge, int skyCap, coord_t *bottom, coord_t *to
     if(skyCap & SKYCAP_UPPER)
     {
         if(top)    *top    = skyFixCeilZ(fceil, bceil);
-        if(bottom) *bottom = MAX_OF((backSec && bceil->surface().isSkyMasked() )? bceil->visHeight()  : fceil->visHeight(),  ffloor->visHeight());
+        if(bottom) *bottom = MAX_OF((backSec && bceil->surface().hasSkyMaskedMaterial() )? bceil->visHeight()  : fceil->visHeight(),  ffloor->visHeight());
     }
     else
     {
-        if(top)    *top    = MIN_OF((backSec && bfloor->surface().isSkyMasked())? bfloor->visHeight() : ffloor->visHeight(), fceil->visHeight());
+        if(top)    *top    = MIN_OF((backSec && bfloor->surface().hasSkyMaskedMaterial())? bfloor->visHeight() : ffloor->visHeight(), fceil->visHeight());
         if(bottom) *bottom = skyFixFloorZ(ffloor, bfloor);
     }
 }
@@ -2125,8 +2140,8 @@ static int chooseHEdgeSkyFixes(HEdge *hedge, int skyCap)
 
         if(!backSec || backSec != hedge->sector)
         {
-            bool const hasSkyFloor   = frontSec->floorSurface().isSkyMasked();
-            bool const hasSkyCeiling = frontSec->ceilingSurface().isSkyMasked();
+            bool const hasSkyFloor   = frontSec->floorSurface().hasSkyMaskedMaterial();
+            bool const hasSkyCeiling = frontSec->ceilingSurface().hasSkyMaskedMaterial();
 
             if(hasSkyFloor || hasSkyCeiling)
             {
@@ -2139,9 +2154,9 @@ static int chooseHEdgeSkyFixes(HEdge *hedge, int skyCap)
                     Plane const *bfloor = backSec? &backSec->floor() : NULL;
                     coord_t const skyZ = skyFixFloorZ(ffloor, bfloor);
 
-                    if(hasClosedBack || (!bfloor->surface().isSkyMasked() || devRendSkyMode || P_IsInVoid(viewPlayer)))
+                    if(hasClosedBack || (!bfloor->surface().hasSkyMaskedMaterial() || devRendSkyMode || P_IsInVoid(viewPlayer)))
                     {
-                        Plane const *floor = (bfloor && bfloor->surface().isSkyMasked() && ffloor->visHeight() < bfloor->visHeight()? bfloor : ffloor);
+                        Plane const *floor = (bfloor && bfloor->surface().hasSkyMaskedMaterial() && ffloor->visHeight() < bfloor->visHeight()? bfloor : ffloor);
                         if(floor->visHeight() > skyZ)
                             fixes |= SKYCAP_LOWER;
                     }
@@ -2154,9 +2169,9 @@ static int chooseHEdgeSkyFixes(HEdge *hedge, int skyCap)
                     Plane const *bceil = backSec? &backSec->ceiling() : NULL;
                     coord_t const skyZ = skyFixCeilZ(fceil, bceil);
 
-                    if(hasClosedBack || (!bceil->surface().isSkyMasked() || devRendSkyMode || P_IsInVoid(viewPlayer)))
+                    if(hasClosedBack || (!bceil->surface().hasSkyMaskedMaterial() || devRendSkyMode || P_IsInVoid(viewPlayer)))
                     {
-                        Plane const *ceil = (bceil && bceil->surface().isSkyMasked() && fceil->visHeight() > bceil->visHeight()? bceil : fceil);
+                        Plane const *ceil = (bceil && bceil->surface().hasSkyMaskedMaterial() && fceil->visHeight() > bceil->visHeight()? bceil : fceil);
                         if(ceil->visHeight() < skyZ)
                             fixes |= SKYCAP_UPPER;
                     }
@@ -2594,9 +2609,9 @@ static void Rend_RenderSkySurfaces(int skyCap)
     if(!leaf->hasSector() || !R_SectorContainsSkySurfaces(leaf->sectorPtr())) return;
 
     // Sky caps are only necessary in sectors with sky-masked planes.
-    if((skyCap & SKYCAP_LOWER) && !leaf->sector().floorSurface().isSkyMasked())
+    if((skyCap & SKYCAP_LOWER) && !leaf->sector().floorSurface().hasSkyMaskedMaterial())
         skyCap &= ~SKYCAP_LOWER;
-    if((skyCap & SKYCAP_UPPER) && !leaf->sector().ceilingSurface().isSkyMasked())
+    if((skyCap & SKYCAP_UPPER) && !leaf->sector().ceilingSurface().hasSkyMaskedMaterial())
         skyCap &= ~SKYCAP_UPPER;
 
     if(!skyCap) return;
@@ -2701,12 +2716,12 @@ static void Rend_RenderPlanes()
         bool isSkyMasked = false;
         bool addDynLights = !devRendSkyMode;
         bool clipBackFacing = false;
-        float texOffset[2];
-        float texScale[2];
+        float matOrigin[2];
+        float matScale[2];
         Material *mat;
         int texMode;
 
-        isSkyMasked = suf->isSkyMasked();
+        isSkyMasked = suf->hasSkyMaskedMaterial();
         if(isSkyMasked && plane->type() != Plane::Middle)
         {
             if(!devRendSkyMode) continue; // Not handled here.
@@ -2730,24 +2745,25 @@ static void Rend_RenderPlanes()
             // For lighting debug, render all solid surfaces using the gray texture.
             mat = &App_Materials().find(de::Uri("System", Path("gray"))).material();
 
-        V2f_Copy(texOffset, suf->visOffset);
+        V2f_Copy(matOrigin, suf->visMaterialOrigin());
         // Add the Y offset to orient the Y flipped texture.
         if(plane->type() == Plane::Ceiling)
-            texOffset[VY] -= leaf->aaBox().maxY - leaf->aaBox().minY;
+            matOrigin[VY] -= leaf->aaBox().maxY - leaf->aaBox().minY;
         // Add the additional offset to align with the worldwide grid.
-        texOffset[VX] += float( leaf->worldGridOffset()[VX] );
-        texOffset[VY] += float( leaf->worldGridOffset()[VY] );
+        matOrigin[VX] += float( leaf->worldGridOffset()[VX] );
+        matOrigin[VY] += float( leaf->worldGridOffset()[VY] );
         // Inverted.
-        texOffset[VY] = -texOffset[VY];
+        matOrigin[VY] = -matOrigin[VY];
 
-        texScale[VX] = ((suf->flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1);
-        texScale[VY] = ((suf->flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
+        matScale[VX] = ((suf->flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1);
+        matScale[VY] = ((suf->flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
-        Rend_RenderPlane(plane->type(), plane->visHeight(), suf->tangent, suf->bitangent, suf->normal,
-            mat, suf->rgba, suf->blendMode, texOffset, texScale,
-            isSkyMasked, addDynLights, (!devRendSkyMode && plane->type() == Plane::Floor),
-            &leaf->biasSurfaceForGeometryGroup(plane->inSectorIndex()), plane->inSectorIndex(),
-            texMode, clipBackFacing);
+        Rend_RenderPlane(plane->type(), plane->visHeight(),
+                         suf->tangent(), suf->bitangent(), suf->normal(),
+                         mat, suf->colorAndAlpha(), suf->blendMode(), matOrigin, matScale, isSkyMasked,
+                         addDynLights, (!devRendSkyMode && plane->type() == Plane::Floor),
+                         &leaf->biasSurfaceForGeometryGroup(plane->inSectorIndex()),
+                         plane->inSectorIndex(), texMode, clipBackFacing);
     }
 }
 
@@ -2793,8 +2809,8 @@ static void occludeBspLeaf(BspLeaf const *bspLeaf, bool forwardFacing)
             }
 
             // Do not create an occlusion for sky floors.
-            if(!back->floorSurface().isSkyMasked() ||
-               !front->floorSurface().isSkyMasked())
+            if(!back->floorSurface().hasSkyMaskedMaterial() ||
+               !front->floorSurface().hasSkyMaskedMaterial())
             {
                 // Do the floors create an occlusion?
                 if((bFloor > fFloor && vOrigin[VY] <= bFloor) ||
@@ -2806,8 +2822,8 @@ static void occludeBspLeaf(BspLeaf const *bspLeaf, bool forwardFacing)
             }
 
             // Do not create an occlusion for sky ceilings.
-            if(!back->ceilingSurface().isSkyMasked() ||
-               !front->ceilingSurface().isSkyMasked())
+            if(!back->ceilingSurface().hasSkyMaskedMaterial() ||
+               !front->ceilingSurface().hasSkyMaskedMaterial())
             {
                 // Do the ceilings create an occlusion?
                 if((bCeil < fCeil && vOrigin[VY] >= bCeil) ||
@@ -2956,9 +2972,9 @@ static void drawSurfaceTangentSpaceVectors(Surface *suf, const_pvec3f_t origin)
     glPushMatrix();
     glTranslatef(origin[VX], origin[VZ], origin[VY]);
 
-    if(devSurfaceVectors & SVF_TANGENT)   drawVector(suf->tangent,   VISUAL_LENGTH, red);
-    if(devSurfaceVectors & SVF_BITANGENT) drawVector(suf->bitangent, VISUAL_LENGTH, green);
-    if(devSurfaceVectors & SVF_NORMAL)    drawVector(suf->normal,    VISUAL_LENGTH, blue);
+    if(devSurfaceVectors & SVF_TANGENT)   drawVector(suf->tangent(),   VISUAL_LENGTH, red);
+    if(devSurfaceVectors & SVF_BITANGENT) drawVector(suf->bitangent(), VISUAL_LENGTH, green);
+    if(devSurfaceVectors & SVF_NORMAL)    drawVector(suf->normal(),    VISUAL_LENGTH, blue);
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
@@ -3017,8 +3033,8 @@ void Rend_RenderSurfaceVectors()
 
             if(backSec->ceiling().visHeight() <
                hedge->sector->ceiling().visHeight() &&
-               !(hedge->sector->ceilingSurface().isSkyMasked() &&
-                 backSec->ceilingSurface().isSkyMasked()))
+               !(hedge->sector->ceilingSurface().hasSkyMaskedMaterial() &&
+                 backSec->ceilingSurface().hasSkyMaskedMaterial()))
             {
                 bottom = backSec->ceiling().visHeight();
                 top = hedge->sector->ceiling().visHeight();
@@ -3030,8 +3046,8 @@ void Rend_RenderSurfaceVectors()
 
             if(backSec->floor().visHeight() >
                hedge->sector->floor().visHeight() &&
-               !(hedge->sector->floorSurface().isSkyMasked() &&
-                 backSec->floorSurface().isSkyMasked()))
+               !(hedge->sector->floorSurface().hasSkyMaskedMaterial() &&
+                 backSec->floorSurface().hasSkyMaskedMaterial()))
             {
                 bottom = hedge->sector->floor().visHeight();
                 top = backSec->floor().visHeight();
@@ -3058,7 +3074,7 @@ void Rend_RenderSurfaceVectors()
                             bspLeaf->center()[VY],
                             plane->visHeight());
 
-            if(plane->type() != Plane::Middle && plane->surface().isSkyMasked())
+            if(plane->type() != Plane::Middle && plane->surface().hasSkyMaskedMaterial())
                 origin[VZ] = GameMap_SkyFix(theMap, plane->type() == Plane::Ceiling);
 
             drawSurfaceTangentSpaceVectors(&plane->surface(), origin);

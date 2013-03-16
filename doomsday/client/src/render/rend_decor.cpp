@@ -150,9 +150,9 @@ static void projectSource(decorsource_t const &src)
                         src.origin[VZ] - vOrigin[VY]);
         V3f_Normalize(vector);
 
-        float dot = -(src.surface->normal[VX] * vector[VX] +
-                      src.surface->normal[VY] * vector[VY] +
-                      src.surface->normal[VZ] * vector[VZ]);
+        float dot = -(src.surface->normal()[VX] * vector[VX] +
+                      src.surface->normal()[VY] * vector[VY] +
+                      src.surface->normal()[VZ] * vector[VZ]);
 
         if(dot < decorLightFadeAngle / 2)
             vis->data.flare.mul = 0;
@@ -307,7 +307,8 @@ static void newSource(Surface const &suf, Surface::DecorSource const &dec)
 
 static void plotSourcesForSurface(Surface &suf)
 {
-    if(suf.inFlags & SUIF_UPDATE_DECORATIONS)
+    /// @todo Replace with a de::Observer-based mechanism.
+    if(suf._decorationData.needsUpdate)
     {
         suf.clearDecorations();
 
@@ -329,15 +330,17 @@ static void plotSourcesForSurface(Surface &suf)
         default:
             DENG2_ASSERT(0); // Invalid type.
         }
-        suf.inFlags &= ~SUIF_UPDATE_DECORATIONS;
+
+        /// @todo Replace with a de::Observer-based mechanism.
+        suf._decorationData.needsUpdate = false;
     }
 
     if(useLightDecorations)
     {
-        Surface::DecorSource const *decorations = (Surface::DecorSource const *)suf.decorations;
+        Surface::DecorSource const *sources = (Surface::DecorSource const *)suf._decorationData.sources;
         for(uint i = 0; i < suf.decorationCount(); ++i)
         {
-            newSource(suf, decorations[i]);
+            newSource(suf, sources[i]);
         }
     }
 }
@@ -366,9 +369,9 @@ static uint generateDecorLights(MaterialSnapshot::Decoration const &decor,
 
     if(de::fequal(patternW, 0) && de::fequal(patternH, 0)) return 0;
 
-    Vector3d topLeft = v1 + Vector3d(decor.elevation * suf.normal[VX],
-                                     decor.elevation * suf.normal[VY],
-                                     decor.elevation * suf.normal[VZ]);
+    Vector3d topLeft = v1 + Vector3d(decor.elevation * suf.normal()[VX],
+                                     decor.elevation * suf.normal()[VY],
+                                     decor.elevation * suf.normal()[VZ]);
 
     // Determine the leftmost point.
     float s = de::wrap(decor.pos[0] - material.width() * patternOffset.x + offset.x,
@@ -418,7 +421,7 @@ static void updateSurfaceDecorations(Surface &suf, Vector2f const &offset,
     Vector3d delta = v2 - v1;
     if(de::fequal(delta.length(), 0)) return;
 
-    int const axis = V3f_MajorAxis(suf.normal);
+    int const axis = V3f_MajorAxis(suf.normal());
     Vector2d sufDimensions;
     if(axis == VX || axis == VY)
     {
@@ -460,8 +463,8 @@ static void plotSourcesForPlane(Plane &pln)
     Vector3d v1(sectorAABox.minX, pln.type() == Plane::Floor? sectorAABox.maxY : sectorAABox.minY, pln.visHeight());
     Vector3d v2(sectorAABox.maxX, pln.type() == Plane::Floor? sectorAABox.minY : sectorAABox.maxY, pln.visHeight());
 
-    Vector2f offset(-fmod(sectorAABox.minX, 64) - surface.visOffset[0],
-                    -fmod(sectorAABox.minY, 64) - surface.visOffset[1]);
+    Vector2f offset(-fmod(sectorAABox.minX, 64) - surface.visMaterialOrigin()[0],
+                    -fmod(sectorAABox.minY, 64) - surface.visMaterialOrigin()[1]);
 
     updateSurfaceDecorations(surface, offset, v1, v2, &sector);
 }

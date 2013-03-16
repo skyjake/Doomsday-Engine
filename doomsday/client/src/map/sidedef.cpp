@@ -95,20 +95,20 @@ void SideDef::updateSurfaceTangents()
 
     byte sid = line->frontSideDefPtr() == this? FRONT : BACK;
 
-    V3f_Set(_topSurface.normal, (line->vertexOrigin(sid^1)[VY] - line->vertexOrigin(sid  )[VY]) / line->length(),
-                                (line->vertexOrigin(sid  )[VX] - line->vertexOrigin(sid^1)[VX]) / line->length(),
-                                0);
+    V3f_Set(_topSurface._normal, (line->vertexOrigin(sid^1)[VY] - line->vertexOrigin(sid  )[VY]) / line->length(),
+                                 (line->vertexOrigin(sid  )[VX] - line->vertexOrigin(sid^1)[VX]) / line->length(),
+                                 0);
 
-    V3f_BuildTangents(_topSurface.tangent, _topSurface.bitangent, _topSurface.normal);
+    V3f_BuildTangents(_topSurface._tangent, _topSurface._bitangent, _topSurface._normal);
 
     // All surfaces of a sidedef have the same tangent space vectors.
-    V3f_Copy(_middleSurface.tangent,   _topSurface.tangent);
-    V3f_Copy(_middleSurface.bitangent, _topSurface.bitangent);
-    V3f_Copy(_middleSurface.normal,    _topSurface.normal);
+    V3f_Copy(_middleSurface._tangent,   _topSurface._tangent);
+    V3f_Copy(_middleSurface._bitangent, _topSurface._bitangent);
+    V3f_Copy(_middleSurface._normal,    _topSurface._normal);
 
-    V3f_Copy(_bottomSurface.tangent,   _topSurface.tangent);
-    V3f_Copy(_bottomSurface.bitangent, _topSurface.bitangent);
-    V3f_Copy(_bottomSurface.normal,    _topSurface.normal);
+    V3f_Copy(_bottomSurface._tangent,   _topSurface._tangent);
+    V3f_Copy(_bottomSurface._bitangent, _topSurface._bitangent);
+    V3f_Copy(_bottomSurface._normal,    _topSurface._normal);
 }
 
 int SideDef::property(setargs_t &args) const

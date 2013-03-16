@@ -17,50 +17,51 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cmath>
 
 #include "de_base.h"
 #include "de_console.h"
 #include "de_render.h"
 #include "de_play.h"
 #include "api_map.h"
+#include <de/vector1.h>
 
 typedef struct listnode_s {
-    struct listnode_s* next, *nextUsed;
+    struct listnode_s *next, *nextUsed;
     shadowprojection_t projection;
 } listnode_t;
 
 typedef struct {
-    listnode_t* head;
+    listnode_t *head;
 } shadowprojectionlist_t;
 
 /// Orientation is toward the projectee.
 typedef struct {
     float blendFactor; /// Multiplied with projection alpha.
-    coord_t* v1; /// Top left vertex of the surface being projected to.
-    coord_t* v2; /// Bottom right vertex of the surface being projected to.
-    float* tangent; /// Normalized tangent of the surface being projected to.
-    float* bitangent; /// Normalized bitangent of the surface being projected to.
-    float* normal; /// Normalized normal of the surface being projected to.
+    pvec3d_t v1; /// Top left vertex of the surface being projected to.
+    pvec3d_t v2; /// Bottom right vertex of the surface being projected to.
+    vec3f_t tangent; /// Normalized tangent of the surface being projected to.
+    vec3f_t bitangent; /// Normalized bitangent of the surface being projected to.
+    vec3f_t normal; /// Normalized normal of the surface being projected to.
 } shadowprojectparams_t;
 
 // List nodes.
-static listnode_t* firstNode, *cursorNode;
+static listnode_t *firstNode, *cursorNode;
 
 // Projection lists.
 static uint projectionListCount, cursorList;
-static shadowprojectionlist_t* projectionLists;
+static shadowprojectionlist_t *projectionLists;
 
 /**
  * Create a new projection list.
  *
  * @return  Unique identifier attributed to the new list.
  */
-static uint newList(void)
+static uint newList()
 {
-    shadowprojectionlist_t* list;
+    shadowprojectionlist_t *list;
 
     // Do we need to allocate more lists?
     if(++cursorList >= projectionListCount)
@@ -68,11 +69,11 @@ static uint newList(void)
         projectionListCount *= 2;
         if(!projectionListCount) projectionListCount = 2;
 
-        projectionLists = (shadowprojectionlist_t*)Z_Realloc(projectionLists, projectionListCount * sizeof *projectionLists, PU_MAP);
-        if(!projectionLists) Con_Error(__FILE__":newList failed on allocation of %lu bytes resizing the projection list.", (unsigned long) (projectionListCount * sizeof *projectionLists));
+        projectionLists = (shadowprojectionlist_t *)
+            Z_Realloc(projectionLists, projectionListCount * sizeof *projectionLists, PU_MAP);
     }
 
-    list = &projectionLists[cursorList-1];
+    list = &projectionLists[cursorList - 1];
     list->head = NULL;
 
     return cursorList;
@@ -84,7 +85,7 @@ static uint newList(void)
  *      Otherwise allocate a new list and write it's index back to this address.
  * @return  ProjectionList associated with the (possibly newly attributed) index.
  */
-static shadowprojectionlist_t* getList(uint* listIdx)
+static shadowprojectionlist_t *getList(uint *listIdx)
 {
     // Do we need to allocate a list?
     if(!(*listIdx))
@@ -94,9 +95,9 @@ static shadowprojectionlist_t* getList(uint* listIdx)
     return projectionLists + ((*listIdx)-1); // 1-based index.
 }
 
-static listnode_t* newListNode(void)
+static listnode_t *newListNode()
 {
-    listnode_t* node;
+    listnode_t *node;
 
     // Do we need to allocate mode nodes?
     if(cursorNode == NULL)
@@ -118,25 +119,26 @@ static listnode_t* newListNode(void)
     return node;
 }
 
-static listnode_t* newProjection(float const s[2], float const t[2], float alpha)
+static listnode_t *newProjection(const_pvec2f_t s, const_pvec2f_t t, float alpha)
 {
-    assert(s && t);
-    {
-    listnode_t* node = newListNode();
-    shadowprojection_t* sp = &node->projection;
+    DENG_ASSERT(s && t);
+
+    listnode_t *node = newListNode();
+    shadowprojection_t *sp = &node->projection;
     sp->s[0] = s[0];
     sp->s[1] = s[1];
     sp->t[0] = t[0];
     sp->t[1] = t[1];
-    sp->alpha = MINMAX_OF(0, alpha, 1);
+    sp->alpha = de::clamp(0.f, alpha, 1.f);
+
     return node;
-    }
 }
 
 /// @return  Same as @a node for convenience (chaining).
-static listnode_t* linkProjectionToList(listnode_t* node, shadowprojectionlist_t* list)
+static listnode_t *linkProjectionToList(listnode_t *node, shadowprojectionlist_t *list)
 {
-    assert(node && list);
+    DENG_ASSERT(node && list);
+
     node->next = list->head;
     list->head = node;
     return node;
@@ -153,13 +155,13 @@ static listnode_t* linkProjectionToList(listnode_t* node, shadowprojectionlist_t
  * @param t  GL texture coordinates on the T axis [bottom, top] in texture space.
  * @param alpha  Alpha attributed to the new projection.
  */
-static void newShadowProjection(uint* listIdx, float const s[2], float const t[2], float alpha)
+static void newShadowProjection(uint *listIdx, const_pvec2f_t s, const_pvec2f_t t, float alpha)
 {
     linkProjectionToList(newProjection(s, t, alpha), getList(listIdx));
 }
 
-static boolean genTexCoords(float s[2], float t[2], coord_t const point[3], float scale,
-    coord_t const v1[3], coord_t const v2[3], float const tangent[2], float const bitangent[2])
+static bool genTexCoords(pvec2f_t s, pvec2f_t t, const_pvec3d_t point, float scale,
+    const_pvec3d_t v1, const_pvec3d_t v2, const_pvec2f_t tangent, const_pvec2f_t bitangent)
 {
     // Counteract aspect correction slightly (not too round mind).
     return R_GenerateTexCoords(s, t, point, scale, scale * 1.08f, v1, v2, tangent, bitangent);
@@ -184,17 +186,17 @@ typedef struct {
  * contacted a new projection node will constructed and returned.
  *
  * @param mobj  Mobj for which a shadow may be projected.
- * @param paramaters  ProjectShadowToSurfaceIterator paramaters.
+ * @param parameters  ProjectShadowToSurfaceIterator paramaters.
  *
  * @return  @c 0 = continue iteration.
  */
-int RIT_ProjectShadowToSurfaceIterator(void* obj, void* paramaters)
+int RIT_ProjectShadowToSurfaceIterator(void *obj, void *parameters)
 {
-    assert(obj && paramaters);
-    {
-    mobj_t* mo = (mobj_t*)obj;
-    projectshadowonsurfaceiteratorparams_t* p = (projectshadowonsurfaceiteratorparams_t*)paramaters;
-    shadowprojectparams_t* spParams = &p->spParams;
+    DENG_ASSERT(obj && parameters);
+
+    mobj_t *mo = (mobj_t *)obj;
+    projectshadowonsurfaceiteratorparams_t *p = (projectshadowonsurfaceiteratorparams_t *)parameters;
+    shadowprojectparams_t *spParams = &p->spParams;
     coord_t distanceFromViewer = 0, mobjHeight, halfMobjHeight, distanceFromSurface;
     float scale, shadowRadius, shadowStrength;
     coord_t mobjOrigin[3], point[3];
@@ -262,22 +264,24 @@ int RIT_ProjectShadowToSurfaceIterator(void* obj, void* paramaters)
     shadowStrength *= spParams->blendFactor;
 
     // Would this shadow be seen?
-    if(shadowStrength < SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN) return false; // Continue iteration.
+    if(shadowStrength < SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)
+        return false; // Continue iteration.
 
     // Project this shadow.
     scale = 1.0f / ((2.f * shadowRadius) - distanceFromSurface);
-    if(!genTexCoords(s, t, point, scale, spParams->v1, spParams->v2, spParams->tangent, spParams->bitangent)) return false; // Continue iteration.
-
-    // Attach to the projection list.
-    newShadowProjection(&p->listIdx, s, t, shadowStrength);
+    if(genTexCoords(s, t, point, scale, spParams->v1, spParams->v2,
+                    spParams->tangent, spParams->bitangent))
+    {
+        // Attach to the projection list.
+        newShadowProjection(&p->listIdx, s, t, shadowStrength);
+    }
 
     return false; // Continue iteration.
-    }
 }
 
-void R_InitShadowProjectionListsForMap(void)
+void R_InitShadowProjectionListsForMap()
 {
-    static boolean firstTime = true;
+    static bool firstTime = true;
     if(firstTime)
     {
         firstNode = NULL;
@@ -290,7 +294,7 @@ void R_InitShadowProjectionListsForMap(void)
     cursorList = 0;
 }
 
-void R_InitShadowProjectionListsForNewFrame(void)
+void R_InitShadowProjectionListsForNewFrame()
 {
     // Start reusing nodes from the first one in the list.
     cursorNode = firstNode;
@@ -303,44 +307,46 @@ void R_InitShadowProjectionListsForNewFrame(void)
     }
 }
 
-uint R_ProjectShadowsToSurface(BspLeaf* bspLeaf, float blendFactor, coord_t topLeft[3],
-    coord_t bottomRight[3], float tangent[3], float bitangent[3], float normal[3])
+uint R_ProjectShadowsToSurface(BspLeaf *bspLeaf, float blendFactor, pvec3d_t topLeft,
+    pvec3d_t bottomRight, const_pvec3f_t tangent, const_pvec3f_t bitangent, const_pvec3f_t normal)
 {
-    projectshadowonsurfaceiteratorparams_t p;
+    DENG_ASSERT(bspLeaf);
 
     // Early test of the external blend factor for quick rejection.
     if(blendFactor < SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN) return 0;
 
+    projectshadowonsurfaceiteratorparams_t p;
     p.listIdx = 0;
     p.spParams.blendFactor = blendFactor;
-    p.spParams.v1 = topLeft;
-    p.spParams.v2 = bottomRight;
-    p.spParams.tangent = tangent;
-    p.spParams.bitangent = bitangent;
-    p.spParams.normal = normal;
+    p.spParams.v1          = topLeft;
+    p.spParams.v2          = bottomRight;
+    V3f_Copy(p.spParams.tangent,   tangent);
+    V3f_Copy(p.spParams.bitangent, bitangent);
+    V3f_Copy(p.spParams.normal,    normal);
 
-    R_IterateBspLeafContacts2(bspLeaf, OT_MOBJ, RIT_ProjectShadowToSurfaceIterator, (void*)&p);
+    R_IterateBspLeafContacts2(bspLeaf, OT_MOBJ, RIT_ProjectShadowToSurfaceIterator, (void *)&p);
+
     // Did we produce a projection list?
     return p.listIdx;
 }
 
-int R_IterateShadowProjections2(uint listIdx, int (*callback) (const shadowprojection_t*, void*),
-    void* paramaters)
+int R_IterateShadowProjections2(uint listIdx, int (*callback) (shadowprojection_t const *, void *),
+    void *parameters)
 {
     int result = false; // Continue iteration.
     if(callback && listIdx != 0 && listIdx <= projectionListCount)
     {
-        listnode_t* node = projectionLists[listIdx-1].head;
+        listnode_t *node = projectionLists[listIdx-1].head;
         while(node)
         {
-            result = callback(&node->projection, paramaters);
+            result = callback(&node->projection, parameters);
             node = (!result? node->next : NULL /* Early out */);
         }
     }
     return result;
 }
 
-int R_IterateShadowProjections(uint listIdx, int (*callback) (const shadowprojection_t*, void*))
+int R_IterateShadowProjections(uint listIdx, int (*callback) (shadowprojection_t const *, void *))
 {
     return R_IterateShadowProjections2(listIdx, callback, NULL);
 }

@@ -348,6 +348,8 @@ static void archiveLines(GameMap* map, boolean write)
 
 static void writeSide(GameMap *map, uint idx)
 {
+    DENG_ASSERT(map);
+
     SideDef *s = &map->sideDefs[idx];
 
     for(uint i = 0; i < 3; ++i)
@@ -356,23 +358,26 @@ static void writeSide(GameMap *map, uint idx)
 
         writeLong(suf->_flags);
         //writeLong(getMaterialDictID(materialDict, suf->material));
-        writeLong((long) suf->blendMode);
-        writeFloat(suf->normal[VX]);
-        writeFloat(suf->normal[VY]);
-        writeFloat(suf->normal[VZ]);
-        writeFloat(suf->offset[VX]);
-        writeFloat(suf->offset[VY]);
-        writeFloat(suf->rgba[CR]);
-        writeFloat(suf->rgba[CG]);
-        writeFloat(suf->rgba[CB]);
-        writeFloat(suf->rgba[CA]);
+        writeLong((long) suf->_blendMode);
+        writeFloat(suf->_normal[VX]);
+        writeFloat(suf->_normal[VY]);
+        writeFloat(suf->_normal[VZ]);
+        writeFloat(suf->_offset[VX]);
+        writeFloat(suf->_offset[VY]);
+        writeFloat(suf->_colorAndAlpha[CR]);
+        writeFloat(suf->_colorAndAlpha[CG]);
+        writeFloat(suf->_colorAndAlpha[CB]);
+        writeFloat(suf->_colorAndAlpha[CA]);
     }
     writeShort(s->flags);
 }
 
 static void readSide(GameMap *map, uint idx)
 {
-    float offset[2], rgba[4];
+    DENG_ASSERT(map);
+
+    vec2f_t newOrigin;
+    vec4f_t newColorAndAlpha;
     SideDef *s = &map->sideDefs[idx];
 
     for(uint i = 0; i < 3; ++i)
@@ -382,19 +387,17 @@ static void readSide(GameMap *map, uint idx)
         suf->_flags = (int) readLong();
         //suf->setMaterial(lookupMaterialFromDict(materialDict, readLong()));
         suf->setBlendMode(blendmode_t(readLong()));
-        suf->normal[VX] = readFloat();
-        suf->normal[VY] = readFloat();
-        suf->normal[VZ] = readFloat();
-        offset[VX] = readFloat();
-        offset[VY] = readFloat();
-        suf->setMaterialOrigin(offset[VX], offset[VY]);
-        rgba[CR] = readFloat();
-        rgba[CG] = readFloat();
-        rgba[CB] = readFloat();
-        rgba[CA] = readFloat();
-        suf->setColorAndAlpha(rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
-        suf->decorations = NULL;
-        suf->numDecorations = 0;
+        suf->_normal[VX] = readFloat();
+        suf->_normal[VY] = readFloat();
+        suf->_normal[VZ] = readFloat();
+        newOrigin[VX] = readFloat();
+        newOrigin[VY] = readFloat();
+        suf->setMaterialOrigin(newOrigin);
+        newColorAndAlpha[CR] = readFloat();
+        newColorAndAlpha[CG] = readFloat();
+        newColorAndAlpha[CB] = readFloat();
+        newColorAndAlpha[CA] = readFloat();
+        suf->setColorAndAlpha(newColorAndAlpha);
     }
     s->flags = readShort();
 
@@ -453,16 +456,16 @@ static void writeSector(GameMap *map, uint idx)
         Surface &surface = plane->surface();
         writeLong((long) surface._flags);
         //writeLong(getMaterialDictID(materialDict, p->surface().material));
-        writeLong((long) surface.blendMode);
-        writeFloat(surface.normal[VX]);
-        writeFloat(surface.normal[VY]);
-        writeFloat(surface.normal[VZ]);
-        writeFloat(surface.offset[VX]);
-        writeFloat(surface.offset[VY]);
-        writeFloat(surface.rgba[CR]);
-        writeFloat(surface.rgba[CG]);
-        writeFloat(surface.rgba[CB]);
-        writeFloat(surface.rgba[CA]);
+        writeLong((long) surface._blendMode);
+        writeFloat(surface._normal[VX]);
+        writeFloat(surface._normal[VY]);
+        writeFloat(surface._normal[VZ]);
+        writeFloat(surface._offset[VX]);
+        writeFloat(surface._offset[VY]);
+        writeFloat(surface._colorAndAlpha[CR]);
+        writeFloat(surface._colorAndAlpha[CG]);
+        writeFloat(surface._colorAndAlpha[CB]);
+        writeFloat(surface._colorAndAlpha[CA]);
     }
 
     writeFloat(s->_aaBox.minX);
@@ -513,7 +516,8 @@ static void readSector(GameMap *map, uint idx)
     s->_lightColor[CB] = readFloat();
 
     uint numPlanes = (uint) readLong();
-    float offset[2], rgba[4];
+    vec2f_t newOrigin;
+    vec4f_t newColorAndAlpha;
     for(uint i = 0; i < numPlanes; ++i)
     {
         Plane *p = R_NewPlaneForSector(s);
@@ -527,22 +531,19 @@ static void readSector(GameMap *map, uint idx)
         p->_surface._flags = (int) readLong();
         //p->_surface.setMaterial(lookupMaterialFromDict(materialDict, readLong()));
         p->_surface.setBlendMode(blendmode_t(readLong()));
-        p->_surface.normal[VX] = readFloat();
-        p->_surface.normal[VY] = readFloat();
-        p->_surface.normal[VZ] = readFloat();
+        p->_surface._normal[VX] = readFloat();
+        p->_surface._normal[VY] = readFloat();
+        p->_surface._normal[VZ] = readFloat();
 
-        offset[VX] = readFloat();
-        offset[VY] = readFloat();
-        p->_surface.setMaterialOrigin(offset[VX], offset[VY]);
+        newOrigin[VX] = readFloat();
+        newOrigin[VY] = readFloat();
+        p->_surface.setMaterialOrigin(newOrigin);
 
-        rgba[CR] = readFloat();
-        rgba[CG] = readFloat();
-        rgba[CB] = readFloat();
-        rgba[CA] = readFloat();
-        p->_surface.setColorAndAlpha(rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
-
-        p->_surface.decorations = NULL;
-        p->_surface.numDecorations = 0;
+        newColorAndAlpha[CR] = readFloat();
+        newColorAndAlpha[CG] = readFloat();
+        newColorAndAlpha[CB] = readFloat();
+        newColorAndAlpha[CA] = readFloat();
+        p->_surface.setColorAndAlpha(newColorAndAlpha);
     }
 
     s->_aaBox.minX = readFloat();

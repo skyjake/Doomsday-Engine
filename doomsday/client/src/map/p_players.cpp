@@ -147,7 +147,7 @@ boolean P_IsInVoid(player_t *player)
         {
             Sector &sec = ddpl->mo->bspLeaf->sector();
 
-            if(sec.ceilingSurface().isSkyMasked())
+            if(sec.ceilingSurface().hasSkyMaskedMaterial())
             {
                 coord_t const skyCeil = GameMap_SkyFixCeiling(theMap);
                 if(skyCeil < DDMAXFLOAT && ddpl->mo->origin[VZ] > skyCeil - 4)
@@ -158,7 +158,7 @@ boolean P_IsInVoid(player_t *player)
                 return true;
             }
 
-            if(sec.floorSurface().isSkyMasked())
+            if(sec.floorSurface().hasSkyMaskedMaterial())
             {
                 coord_t const skyFloor = GameMap_SkyFixFloor(theMap);
                 if(skyFloor > DDMINFLOAT && ddpl->mo->origin[VZ] < skyFloor + 4)

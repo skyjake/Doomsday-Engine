@@ -358,7 +358,7 @@ static void calculateSectorReverb(Sector *sec)
     if(sec->_reverb[SRD_SPACE] > .99)
         sec->_reverb[SRD_SPACE] = .99f;
 
-    if(sec->ceilingSurface().isSkyMasked() || sec->floorSurface().isSkyMasked())
+    if(sec->ceilingSurface().hasSkyMaskedMaterial() || sec->floorSurface().hasSkyMaskedMaterial())
     {
         // An "open" sector.
         // It can still be small, in which case; reverb is diminished a bit.

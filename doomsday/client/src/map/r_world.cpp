@@ -68,7 +68,7 @@ void R_UpdateSurfaceScroll()
     {
         // X Offset
         surface->_oldOffset[0][0] = surface->_oldOffset[0][1];
-        surface->_oldOffset[0][1] = surface->offset[0];
+        surface->_oldOffset[0][1] = surface->_offset[0];
 
         if(surface->_oldOffset[0][0] != surface->_oldOffset[0][1])
         {
@@ -82,7 +82,7 @@ void R_UpdateSurfaceScroll()
 
         // Y Offset
         surface->_oldOffset[1][0] = surface->_oldOffset[1][1];
-        surface->_oldOffset[1][1] = surface->offset[1];
+        surface->_oldOffset[1][1] = surface->_offset[1];
         if(surface->_oldOffset[1][0] != surface->_oldOffset[1][1])
         {
             if(de::abs(surface->_oldOffset[1][0] - surface->_oldOffset[1][1]) >=
@@ -111,14 +111,17 @@ void R_InterpolateSurfaceScroll(boolean resetNextViewer)
         {
             // Reset the material offset trackers.
             // X Offset.
-            suf.visOffsetDelta[0] = 0;
-            suf._oldOffset[0][0] = suf._oldOffset[0][1] = suf.offset[0];
+            suf._visOffsetDelta[0] = 0;
+            suf._oldOffset[0][0] = suf._oldOffset[0][1] = suf._offset[0];
 
             // Y Offset.
-            suf.visOffsetDelta[1] = 0;
-            suf._oldOffset[1][0] = suf._oldOffset[1][1] = suf.offset[1];
+            suf._visOffsetDelta[1] = 0;
+            suf._oldOffset[1][0] = suf._oldOffset[1][1] = suf._offset[1];
 
-            suf.update();
+#ifdef __CLIENT__
+            suf.markAsNeedingDecorationUpdate();
+#endif
+
             it++;
         }
         // While the game is paused there is no need to calculate any
@@ -127,23 +130,25 @@ void R_InterpolateSurfaceScroll(boolean resetNextViewer)
         {
             // Set the visible material offsets.
             // X Offset.
-            suf.visOffsetDelta[0] =
+            suf._visOffsetDelta[0] =
                 suf._oldOffset[0][0] * (1 - frameTimePos) +
-                        suf.offset[0] * frameTimePos - suf.offset[0];
+                        suf._offset[0] * frameTimePos - suf._offset[0];
 
             // Y Offset.
-            suf.visOffsetDelta[1] =
+            suf._visOffsetDelta[1] =
                 suf._oldOffset[1][0] * (1 - frameTimePos) +
-                        suf.offset[1] * frameTimePos - suf.offset[1];
+                        suf._offset[1] * frameTimePos - suf._offset[1];
 
             // Visible material offset.
-            suf.visOffset[0] = suf.offset[0] + suf.visOffsetDelta[0];
-            suf.visOffset[1] = suf.offset[1] + suf.visOffsetDelta[1];
+            suf._visOffset[0] = suf._offset[0] + suf._visOffsetDelta[0];
+            suf._visOffset[1] = suf._offset[1] + suf._visOffsetDelta[1];
 
-            suf.update();
+#ifdef __CLIENT__
+            suf.markAsNeedingDecorationUpdate();
+#endif
 
             // Has this material reached its destination?
-            if(suf.visOffset[0] == suf.offset[0] && suf.visOffset[1] == suf.offset[1])
+            if(suf._visOffset[0] == suf._offset[0] && suf._visOffset[1] == suf._offset[1])
             {
                 it = surfaces.erase(it);
             }
@@ -237,7 +242,7 @@ void R_UpdateMapSurfacesOnMaterialChange(Material *material)
     {
         if(material == surface->materialPtr())
         {
-            surface->update();
+            surface->markAsNeedingDecorationUpdate();
         }
     }
 #endif
@@ -370,8 +375,8 @@ void GameMap_UpdateSkyFixForSector(GameMap *map, Sector *sec)
 
     if(!sec || !sec->lineCount()) return;
 
-    bool skyFloor = sec->floorSurface().isSkyMasked();
-    bool skyCeil  = sec->ceilingSurface().isSkyMasked();
+    bool skyFloor = sec->floorSurface().hasSkyMaskedMaterial();
+    bool skyCeil  = sec->ceilingSurface().hasSkyMaskedMaterial();
 
     if(!skyFloor && !skyCeil) return;
 
@@ -423,7 +428,7 @@ void GameMap_UpdateSkyFixForSector(GameMap *map, Sector *sec)
 
         if(skyCeil)
         {
-            float const top = sec->ceiling().visHeight() + sideDef.middle().visOffset[VY];
+            float const top = sec->ceiling().visHeight() + sideDef.middle().visMaterialOrigin()[VY];
 
             if(top > map->skyFix[Plane::Ceiling].height)
             {
@@ -435,7 +440,7 @@ void GameMap_UpdateSkyFixForSector(GameMap *map, Sector *sec)
         if(skyFloor)
         {
             float const bottom = sec->floor().visHeight() +
-                sideDef.middle().visOffset[VY] - sideDef.middle().material().height();
+                sideDef.middle().visMaterialOrigin()[VY] - sideDef.middle().material().height();
 
             if(bottom < map->skyFix[Plane::Floor].height)
             {
@@ -500,8 +505,9 @@ void R_OrderVertices(LineDef *line, Sector const *sector, Vertex *verts[2])
 }
 
 boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
-    const Sector *frontSec, const Sector *backSec, const SideDef *frontDef, const SideDef *backDef,
-    coord_t *low, coord_t *hi, float matOffset[2])
+    Sector const *frontSec, Sector const *backSec, SideDef const *frontDef,
+    SideDef const *backDef,
+    coord_t *low, coord_t *hi, pvec2f_t matOffset)
 {
     bool const unpegBottom = !!(lineFlags & DDLF_DONTPEGBOTTOM);
     bool const unpegTop    = !!(lineFlags & DDLF_DONTPEGTOP);
@@ -515,8 +521,7 @@ boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
         if(matOffset)
         {
             Surface const &suf = frontDef->middle();
-            matOffset[0] = suf.visOffset[0];
-            matOffset[1] = suf.visOffset[1];
+            V2f_Copy(matOffset, suf.visMaterialOrigin());
             if(unpegBottom)
             {
                 matOffset[1] -= *hi - *low;
@@ -544,8 +549,7 @@ boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
 
             if(matOffset)
             {
-                matOffset[0] = suf->visOffset[0];
-                matOffset[1] = suf->visOffset[1];
+                V2f_Copy(matOffset, suf->visMaterialOrigin());
                 if(!unpegTop)
                 {
                     // Align with normal middle texture.
@@ -555,7 +559,7 @@ boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
             break;
 
         case SS_BOTTOM: {
-            bool const raiseToBackFloor = (fceil->surface().isSkyMasked() && bceil->surface().isSkyMasked() &&
+            bool const raiseToBackFloor = (fceil->surface().hasSkyMaskedMaterial() && bceil->surface().hasSkyMaskedMaterial() &&
                                            fceil->visHeight() < bceil->visHeight() &&
                                            bfloor->visHeight() > fceil->visHeight());
             coord_t t = bfloor->visHeight();
@@ -574,8 +578,7 @@ boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
 
             if(matOffset)
             {
-                matOffset[0] = suf->visOffset[0];
-                matOffset[1] = suf->visOffset[1];
+                V2f_Copy(matOffset, suf->visMaterialOrigin());
                 if(bfloor->visHeight() > fceil->visHeight())
                 {
                     matOffset[1] -= (raiseToBackFloor? t : fceil->visHeight()) - bfloor->visHeight();
@@ -590,24 +593,24 @@ boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
             break; }
 
         case SS_MIDDLE:
-            *low = MAX_OF(bfloor->visHeight(), ffloor->visHeight());
-            *hi  = MIN_OF(bceil->visHeight(),  fceil->visHeight());
+            *low = de::max(bfloor->visHeight(), ffloor->visHeight());
+            *hi  = de::min(bceil->visHeight(),  fceil->visHeight());
 
             if(matOffset)
             {
-                matOffset[0] = suf->visOffset[0];
+                matOffset[0] = suf->visMaterialOrigin()[0];
                 matOffset[1] = 0;
             }
 
             if(suf->hasMaterial() && !stretchMiddle)
             {
-                bool const clipBottom = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && ffloor->surface().isSkyMasked() && bfloor->surface().isSkyMasked());
-                bool const clipTop    = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && fceil->surface().isSkyMasked()  && bceil->surface().isSkyMasked());
+                bool const clipBottom = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && ffloor->surface().hasSkyMaskedMaterial() && bfloor->surface().hasSkyMaskedMaterial());
+                bool const clipTop    = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && fceil->surface().hasSkyMaskedMaterial()  && bceil->surface().hasSkyMaskedMaterial());
 
                 coord_t const openBottom = *low;
                 coord_t const openTop    = *hi;
                 int const matHeight      = suf->material().height();
-                coord_t const matYOffset = suf->visOffset[VY];
+                coord_t const matYOffset = suf->visMaterialOrigin()[VY];
 
                 if(openTop > openBottom)
                 {
@@ -650,8 +653,8 @@ boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
     return /*is_visible=*/ *hi > *low;
 }
 
-boolean R_FindBottomTop(SideDefSection section, int lineFlags,
-    const Sector *frontSec, const Sector *backSec, const SideDef *frontDef, const SideDef *backDef,
+boolean R_FindBottomTop(SideDefSection section, int lineFlags, Sector const *frontSec,
+    Sector const *backSec, SideDef const *frontDef, SideDef const *backDef,
     coord_t *low, coord_t *hi)
 {
     return R_FindBottomTop2(section, lineFlags, frontSec, backSec, frontDef, backDef,
@@ -730,7 +733,7 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector const *frontSec,
     // Ensure we have up to date info about the material.
     MaterialSnapshot const &ms = frontDef->middle().material().prepare(Rend_MapSurfaceMaterialSpec());
 
-    if(ignoreOpacity || (ms.isOpaque() && !frontDef->middle().blendMode && frontDef->middle().rgba[3] >= 1))
+    if(ignoreOpacity || (ms.isOpaque() && !frontDef->middle().blendMode() && frontDef->middle().colorAndAlpha()[CA] >= 1))
     {
         coord_t openRange, openBottom, openTop;
 
@@ -910,11 +913,10 @@ LineDef *R_FindLineAlignNeighbor(Sector const *sec, LineDef const *line,
 }
 #endif // __CLIENT__
 
-static inline void initSurfaceMaterialOffset(Surface *suf)
+static inline void initSurfaceMaterialOrigin(Surface &suf)
 {
-    DENG_ASSERT(suf);
-    suf->visOffset[VX] = suf->_oldOffset[0][VX] = suf->_oldOffset[1][VX] = suf->offset[VX];
-    suf->visOffset[VY] = suf->_oldOffset[0][VY] = suf->_oldOffset[1][VY] = suf->offset[VY];
+    suf._visOffset[VX] = suf._oldOffset[0][VX] = suf._oldOffset[1][VX] = suf._offset[VX];
+    suf._visOffset[VY] = suf._oldOffset[0][VY] = suf._oldOffset[1][VY] = suf._offset[VY];
 }
 
 /**
@@ -934,7 +936,7 @@ void R_MapInitSurfaces(boolean forceUpdate)
         foreach(Plane *plane, sec->planes())
         {
             plane->_visHeight = plane->_oldHeight[0] = plane->_oldHeight[1] = plane->_height;
-            initSurfaceMaterialOffset(&plane->surface());
+            initSurfaceMaterialOrigin(plane->surface());
         }
     }
 
@@ -942,9 +944,9 @@ void R_MapInitSurfaces(boolean forceUpdate)
     {
         SideDef *si = SIDE_PTR(i);
 
-        initSurfaceMaterialOffset(&si->top());
-        initSurfaceMaterialOffset(&si->middle());
-        initSurfaceMaterialOffset(&si->bottom());
+        initSurfaceMaterialOrigin(si->top());
+        initSurfaceMaterialOrigin(si->middle());
+        initSurfaceMaterialOrigin(si->bottom());
     }
 }
 
@@ -1152,7 +1154,7 @@ boolean R_IsGlowingPlane(Plane const *plane)
     {
         if(!surface.material().isDrawable() || surface.material().hasGlow()) return true;
     }
-    return plane->surface().isSkyMasked();
+    return plane->surface().hasSkyMaskedMaterial();
 }
 
 float R_GlowStrength(Plane const *plane)
@@ -1161,7 +1163,7 @@ float R_GlowStrength(Plane const *plane)
     Surface const &surface = plane->surface();
     if(surface.hasMaterial())
     {
-        if(surface.material().isDrawable() && !surface.isSkyMasked())
+        if(surface.material().isDrawable() && !surface.hasSkyMaskedMaterial())
         {
             MaterialSnapshot const &ms = surface.material().prepare(Rend_MapSurfaceMaterialSpec());
 
@@ -1191,7 +1193,7 @@ boolean R_SectorContainsSkySurfaces(Sector const *sec)
     uint n = 0;
     do
     {
-        if(sec->planeSurface(n).isSkyMasked())
+        if(sec->planeSurface(n).hasSkyMaskedMaterial())
             sectorContainsSkySurfaces = true;
         else
             n++;
@@ -1443,10 +1445,11 @@ boolean R_UpdatePlane(Plane *pln, boolean forceUpdate)
 
             SB_SurfaceMoved(&bspLeaf->biasSurfaceForGeometryGroup(pln->inSectorIndex()));
         }
-#endif // __CLIENT__
 
         // We need the decorations updated.
-        pln->surface().update();
+        pln->surface().markAsNeedingDecorationUpdate();
+
+#endif // __CLIENT__
 
         changed = true;
     }

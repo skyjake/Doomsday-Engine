@@ -522,25 +522,28 @@ int LineDef::setProperty(setargs_t const &args)
     case DMU_VALID_COUNT:
         DMU_SetValue(DMT_LINEDEF_VALIDCOUNT, &_validCount, &args, 0);
         break;
-    case DMU_FLAGS: {
+    case DMU_FLAGS:
         DMU_SetValue(DMT_LINEDEF_FLAGS, &_flags, &args, 0);
 
+#ifdef __CLIENT__
         if(hasFrontSideDef())
         {
             SideDef &frontDef = frontSideDef();
-            frontDef.top().update();
-            frontDef.bottom().update();
-            frontDef.middle().update();
+            frontDef.top().markAsNeedingDecorationUpdate();
+            frontDef.bottom().markAsNeedingDecorationUpdate();
+            frontDef.middle().markAsNeedingDecorationUpdate();
         }
 
         if(hasBackSideDef())
         {
             SideDef &backDef = backSideDef();
-            backDef.top().update();
-            backDef.bottom().update();
-            backDef.middle().update();
+            backDef.top().markAsNeedingDecorationUpdate();
+            backDef.bottom().markAsNeedingDecorationUpdate();
+            backDef.middle().markAsNeedingDecorationUpdate();
         }
-        break; }
+#endif // __CLIENT__
+        break;
+
     default:
         /// @throw WritePropertyError  The requested property is not writable.
         throw WritePropertyError("LineDef::setProperty", QString("Property '%1' is not writable").arg(DMU_Str(args.prop)));

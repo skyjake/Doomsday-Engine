@@ -812,8 +812,8 @@ BEGIN_PROF( PROF_GRID_UPDATE );
             color = R_GetSectorLightColor(sector);
             height = (int) (sector->ceiling().height() - sector->floor().height());
 
-            bool isSkyFloor = sector->ceilingSurface().isSkyMasked();
-            bool isSkyCeil  = sector->floorSurface().isSkyMasked();
+            bool isSkyFloor = sector->ceilingSurface().hasSkyMaskedMaterial();
+            bool isSkyCeil  = sector->floorSurface().hasSkyMaskedMaterial();
 
             if(isSkyFloor && !isSkyCeil)
             {

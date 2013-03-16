@@ -1902,16 +1902,17 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector,
     return l->_origIndex;
 }
 
-uint MPE_PlaneCreate(uint sector, coord_t height, const ddstring_t* materialUri, float matOffsetX,
-    float matOffsetY, float r, float g, float b, float a, float normalX, float normalY, float normalZ)
+#undef MPE_PlaneCreate
+uint MPE_PlaneCreate(uint sector, coord_t height, ddstring_t const *materialUri,
+    float matOffsetX, float matOffsetY, float r, float g, float b, float a,
+    float normalX, float normalY, float normalZ)
 {
     if(!editMapInited) return 0;
     if(sector == 0 || sector > e_map->sectorCount()) return 0;
 
     Sector *s = e_map->sectors[sector - 1];
 
-    vec3f_t normal;
-    V3f_Set(normal, normalX, normalY, normalZ);
+    vec3f_t normal; V3f_Set(normal, normalX, normalY, normalZ);
 
     Plane *pln = new Plane(*s, normal, height);
 
@@ -1924,6 +1925,7 @@ uint MPE_PlaneCreate(uint sector, coord_t height, const ddstring_t* materialUri,
     return s->planeCount(); // 1-based index.
 }
 
+#undef MPE_SectorCreate
 uint MPE_SectorCreate(float lightlevel, float red, float green, float blue)
 {
     if(!editMapInited) return 0;
@@ -1932,6 +1934,7 @@ uint MPE_SectorCreate(float lightlevel, float red, float green, float blue)
     return s->origIndex();
 }
 
+#undef MPE_PolyobjCreate
 uint MPE_PolyobjCreate(uint *lines, uint lineCount, int tag, int sequenceType,
     coord_t originX, coord_t originY)
 {
@@ -1954,7 +1957,7 @@ uint MPE_PolyobjCreate(uint *lines, uint lineCount, int tag, int sequenceType,
     po->origin[VY] = originY;
 
     po->lineCount = lineCount;
-    po->lines = (LineDef**) M_Calloc(sizeof(LineDef*) * (po->lineCount+1));
+    po->lines = (LineDef **) M_Calloc(sizeof(*po->lines) * (po->lineCount+1));
     for(uint i = 0; i < lineCount; ++i)
     {
         LineDef *line = e_map->lines[lines[i] - 1];
@@ -1968,29 +1971,30 @@ uint MPE_PolyobjCreate(uint *lines, uint lineCount, int tag, int sequenceType,
     return po->buildData.index;
 }
 
-boolean MPE_GameObjProperty(const char* entityName, uint elementIndex,
-                            const char* propertyName, valuetype_t type, void* valueAdr)
+#undef MPE_GameObjProperty
+boolean MPE_GameObjProperty(char const *entityName, uint elementIndex,
+                            char const *propertyName, valuetype_t type, void *valueAdr)
 {
-    MapEntityDef* entityDef;
-    MapEntityPropertyDef* propertyDef;
-
     if(!editMapInited) return false;
 
     if(!entityName || !propertyName || !valueAdr)
         return false; // Hmm...
 
     // Is this a known entity?
-    entityDef = P_MapEntityDefByName(entityName);
+    MapEntityDef *entityDef = P_MapEntityDefByName(entityName);
     if(!entityDef)
     {
-        Con_Message("Warning: MPE_GameObjProperty: Unknown entity name:\"%s\", ignoring.", entityName);
+        Con_Message("Warning: MPE_GameObjProperty: Unknown entity name:\"%s\", ignoring.",
+                    entityName);
         return false;
     }
 
     // Is this a known property?
+    MapEntityPropertyDef *propertyDef;
     if(MapEntityDef_PropertyByName2(entityDef, propertyName, &propertyDef) < 0)
     {
-        Con_Message("Warning: MPE_GameObjProperty: Entity \"%s\" has no \"%s\" property, ignoring.", entityName, propertyName);
+        Con_Message("Warning: MPE_GameObjProperty: Entity \"%s\" has no \"%s\" property, ignoring.",
+                    entityName, propertyName);
         return false;
     }
 
@@ -2009,8 +2013,8 @@ EditMap::~EditMap()
 {}
 
 // p_data.cpp
-DENG_EXTERN_C boolean P_RegisterMapObj(int identifier, const char* name);
-DENG_EXTERN_C boolean P_RegisterMapObjProperty(int entityId, int propertyId, const char* propertyName, valuetype_t type);
+DENG_EXTERN_C boolean P_RegisterMapObj(int identifier, char const *name);
+DENG_EXTERN_C boolean P_RegisterMapObjProperty(int entityId, int propertyId, char const *propertyName, valuetype_t type);
 
 DENG_DECLARE_API(MPE) =
 {

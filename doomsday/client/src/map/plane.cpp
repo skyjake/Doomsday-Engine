@@ -36,6 +36,7 @@ DENG2_PIMPL(Plane)
     Instance(Public *i) : Base(i)
     {}
 
+#ifdef __CLIENT__
     /**
      * To be called when the height changes to update the plotted decoration
      * origins for surfaces whose material offset is dependant upon this.
@@ -50,19 +51,20 @@ DENG2_PIMPL(Plane)
         foreach(LineDef *line, self._sector->lines())
         {
             SideDef &frontSideDef = line->frontSideDef();
-            frontSideDef.surface(SS_MIDDLE).update();
-            frontSideDef.surface(SS_BOTTOM).update();
-            frontSideDef.surface(SS_TOP).update();
+            frontSideDef.surface(SS_MIDDLE).markAsNeedingDecorationUpdate();
+            frontSideDef.surface(SS_BOTTOM).markAsNeedingDecorationUpdate();
+            frontSideDef.surface(SS_TOP).markAsNeedingDecorationUpdate();
 
             if(line->hasBackSideDef())
             {
                 SideDef &backSideDef = line->backSideDef();
-                backSideDef.surface(SS_MIDDLE).update();
-                backSideDef.surface(SS_BOTTOM).update();
-                backSideDef.surface(SS_TOP).update();
+                backSideDef.surface(SS_MIDDLE).markAsNeedingDecorationUpdate();
+                backSideDef.surface(SS_BOTTOM).markAsNeedingDecorationUpdate();
+                backSideDef.surface(SS_TOP).markAsNeedingDecorationUpdate();
             }
         }
     }
+#endif // __CLIENT__
 };
 
 Plane::Plane(Sector &sector, Vector3f const &normal, coord_t height)
@@ -142,10 +144,9 @@ void Plane::lerpVisHeight()
     // Visible plane height.
     _visHeight = _height + _visHeightDelta;
 
-    if(_type == Floor || _type == Ceiling)
-    {
-        d->markDependantSurfacesForDecorationUpdate();
-    }
+#ifdef __CLIENT__
+    d->markDependantSurfacesForDecorationUpdate();
+#endif
 }
 
 void Plane::resetVisHeight()
@@ -154,10 +155,9 @@ void Plane::resetVisHeight()
     _visHeightDelta = 0;
     _visHeight = _oldHeight[0] = _oldHeight[1] = _height;
 
-    if(_type == Floor || _type == Ceiling)
-    {
-        d->markDependantSurfacesForDecorationUpdate();
-    }
+#ifdef __CLIENT__
+    d->markDependantSurfacesForDecorationUpdate();
+#endif
 }
 
 void Plane::updateHeightTracking()
@@ -178,11 +178,11 @@ void Plane::updateHeightTracking()
 
 void Plane::setNormal(Vector3f const &newNormal)
 {
-    V3f_Set(_surface.normal, newNormal.x, newNormal.y, newNormal.z);
-    V3f_Normalize(_surface.normal);
-    V3f_BuildTangents(_surface.tangent, _surface.bitangent, _surface.normal);
+    V3f_Set(_surface._normal, newNormal.x, newNormal.y, newNormal.z);
+    V3f_Normalize(_surface._normal);
+    V3f_BuildTangents(_surface._tangent, _surface._bitangent, _surface._normal);
 
-    _type = (_surface.normal[VZ] < 0? Ceiling : Floor);
+    _type = (_surface._normal[VZ] < 0? Ceiling : Floor);
 }
 
 Plane::Type Plane::type() const
@@ -223,7 +223,9 @@ int Plane::setProperty(setargs_t const &args)
         if(!ddMapSetup)
         {
             R_AddTrackedPlane(GameMap_TrackedPlanes(theMap), this);
+#ifdef __CLIENT__
             d->markDependantSurfacesForDecorationUpdate();
+#endif
         }
         break;
     case DMU_TARGET_HEIGHT:

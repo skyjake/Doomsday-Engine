@@ -1,4 +1,4 @@
-/** @file surface.h Logical map surface.
+/** @file surface.h Map surface.
  *
  * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -32,19 +32,6 @@
 #include <QSet>
 
 /**
- * @defgroup surfaceInternalFlags Surface Internal Flags
- * @ingroup map
- */
-///@{
-#define SUIF_FIX_MISSING_MATERIAL   0x0001 ///< Current material is a fix replacement
-                                           /// (not sent to clients, returned via DMU etc).
-#define SUIF_NO_RADIO               0x0002 ///< No fakeradio for this surface.
-
-#define SUIF_UPDATE_FLAG_MASK       0xff00
-#define SUIF_UPDATE_DECORATIONS     0x8000
-///@}
-
-/**
  * @ingroup map
  */
 class Surface : public de::MapElement
@@ -52,6 +39,12 @@ class Surface : public de::MapElement
 public:
     /// Required material is missing. @ingroup errors
     DENG2_ERROR(MissingMaterialError);
+
+    /// The referenced property does not exist. @ingroup errors
+    DENG2_ERROR(UnknownPropertyError);
+
+    /// The referenced property is not writeable. @ingroup errors
+    DENG2_ERROR(WritePropertyError);
 
 #ifdef __CLIENT__
     struct DecorSource
@@ -73,38 +66,47 @@ public:
     /// @ref sufFlags
     int _flags;
 
-    // Bound material.
+    /// Bound material.
     Material *_material;
 
-    // Blending mode, for rendering.
-    blendmode_t blendMode;
+    /// @c true= Bound material is a "missing material fix".
+    bool _materialIsMissingFix;
 
-    // Tangent space vectors:
-    vec3f_t tangent;
-    vec3f_t bitangent;
-    vec3f_t normal;
+    /// Blending mode.
+    blendmode_t _blendMode;
+
+    /// Tangent space vectors:
+    vec3f_t _tangent;
+    vec3f_t _bitangent;
+    vec3f_t _normal;
 
     /// [X, Y] Planar offset to surface material origin.
-    vec2f_t offset;
+    vec2f_t _offset;
 
     /// Old [X, Y] Planar material origin offset. For smoothing.
     vec2f_t _oldOffset[2];
 
     /// Smoothed [X, Y] Planar material origin offset.
-    vec2f_t visOffset;
+    vec2f_t _visOffset;
 
     /// Smoother [X, Y] Planar material origin offset delta.
-    vec2f_t visOffsetDelta;
+    vec2f_t _visOffsetDelta;
 
-    /// Surface color tint.
-    float rgba[4];
+    /// Surface color tint and alpha.
+    vec4f_t _colorAndAlpha;
 
-    /// @ref surfaceInternalFlags
-    short inFlags;
+#ifdef __CLIENT__
+    /// @todo Does not belong here - move to the map renderer.
+    struct DecorationData
+    {
+        /// @c true= An update is needed.
+        bool needsUpdate;
 
-    uint numDecorations;
-
-    struct surfacedecorsource_s *decorations;
+        /// Plotted decoration sources [numSources size].
+        struct surfacedecorsource_s *sources;
+        uint numSources;
+    } _decorationData;
+#endif
 
 public:
     Surface(de::MapElement &owner);
@@ -113,25 +115,30 @@ public:
     /// @todo Refactor away.
     Surface &operator = (Surface const &other);
 
-    /// @return @c true= is drawable (i.e., a drawable Material is bound).
-    inline bool isDrawable() const
-    {
-        return hasMaterial() && material().isDrawable();
-    }
-
-    /// @return @c true= is sky-masked (i.e., a sky-masked Material is bound).
-    inline bool isSkyMasked() const
-    {
-        return hasMaterial() && material().isSkyMasked();
-    }
-
-    /// @return @c true= is owned by some element of the Map geometry.
-    bool isAttachedToMap() const;
-
     /**
      * Returns the owning map element. Either @c DMU_SIDEDEF, or @c DMU_PLANE.
      */
     de::MapElement &owner() const;
+
+    /**
+     * Returns the normalized tangent vector for the surface.
+     */
+    const_pvec3f_t &tangent() const;
+
+    /**
+     * Returns the normalized bitangent vector for the surface.
+     */
+    const_pvec3f_t &bitangent() const;
+
+    /**
+     * Returns the normalized normal vector for the surface.
+     */
+    const_pvec3f_t &normal() const;
+
+    /**
+     * Returns the @ref surfaceFlags of the surface.
+     */
+    int flags() const;
 
     /**
      * Returns @c true iff a material is bound to the surface.
@@ -149,6 +156,16 @@ public:
     bool hasFixMaterial() const;
 
     /**
+     * Convenient helper method for determining whether a sky-masked material
+     * is bound to the surface.
+     *
+     * @return  @c true iff a sky-masked material is bound; otherwise @c 0.
+     */
+    inline bool hasSkyMaskedMaterial() const {
+        return hasMaterial() && material().isSkyMasked();
+    }
+
+    /**
      * Returns the material bound to the surface.
      *
      * @see hasMaterial(), hasFixMaterial()
@@ -163,9 +180,66 @@ public:
     inline Material *materialPtr() const { return hasMaterial()? &material() : 0; }
 
     /**
-     * Returns the @ref surfaceFlags of the surface.
+     * Change Material bound to the surface.
+     *
+     * @param newMaterial   New material to be bound.
+     * @param isMissingFix  The new material is a fix for a "missing" material.
      */
-    int flags() const;
+    bool setMaterial(Material *material, bool isMissingFix = false);
+
+    /**
+     * Returns the material origin offset for the surface.
+     */
+    const_pvec2f_t &materialOrigin() const;
+
+    /**
+     * Change the material origin offset for the surface.
+     *
+     * @param newOrigin  New origin offset in map coordinate space units.
+     */
+    bool setMaterialOrigin(const_pvec2f_t newOrigin);
+
+    /**
+     * @copydoc setMaterialOrigin()
+     *
+     * @param x  New X origin offset in map coordinate space units.
+     * @param y  New Y origin offset in map coordinate space units.
+     */
+    inline bool setMaterialOrigin(float x, float y)
+    {
+        float newOrigin[2] = { x, y};
+        return setMaterialOrigin(newOrigin);
+    }
+
+    /**
+     * Change Material origin X coordinate.
+     *
+     * @param x  New X origin in map space.
+     */
+    bool setMaterialOriginX(float x);
+
+    /**
+     * Change Material origin Y coordinate.
+     *
+     * @param y  New Y origin in map space.
+     */
+    bool setMaterialOriginY(float y);
+
+    /**
+     * Returns the current interpolated visual material origin of the surface
+     * in the map coordinate space.
+     *
+     * @see setMaterialOrigin()
+     */
+    const_pvec2f_t &visMaterialOrigin() const;
+
+    /**
+     * Returns the delta between current material origin and the interpolated
+     * visual origin of the material in the map coordinate space.
+     *
+     * @see setMaterialOrigin(), visMaterialOrigin()
+     */
+    const_pvec2f_t &visMaterialOriginDelta() const;
 
     /**
      * Returns the sound emitter for the surface.
@@ -192,67 +266,47 @@ public:
     void updateSoundEmitterOrigin();
 
     /**
-     * Mark the surface as requiring a full update. To be called during an
-     * engine reset.
+     * Returns the surface color and alpha for the surface.
      */
-    void update();
-
-    /**
-     * Change Material bound to this surface.
-     *
-     * @param newMaterial   New material to be bound.
-     * @param isMissingFix  The new material is a fix for a "missing" material.
-     */
-    bool setMaterial(Material *material, bool isMissingFix = false);
-
-    /**
-     * Change Material origin.
-     *
-     * @param x  New X origin in map space.
-     * @param y  New Y origin in map space.
-     */
-    bool setMaterialOrigin(float x, float y);
-
-    /**
-     * Change Material origin X coordinate.
-     *
-     * @param x  New X origin in map space.
-     */
-    bool setMaterialOriginX(float x);
-
-    /**
-     * Change Material origin Y coordinate.
-     *
-     * @param y  New Y origin in map space.
-     */
-    bool setMaterialOriginY(float y);
+    const_pvec4f_t &colorAndAlpha() const;
 
     /**
      * Change surface color tint and alpha.
+     *
+     * @param newColorAndAlpha  [red, green, blue, alpha] All components [0..1].
+     */
+    bool setColorAndAlpha(const_pvec4f_t newColorAndAlpha);
+
+    /**
+     * @copydoc setColorAndAlpha()
      *
      * @param red      Red color component [0..1].
      * @param green    Green color component [0..1].
      * @param blue     Blue color component [0..1].
      * @param alpha    Alpha component [0..1].
      */
-    bool setColorAndAlpha(float red, float green, float blue, float alpha);
+    inline bool setColorAndAlpha(float red, float green, float blue, float alpha)
+    {
+        float newColorAndAlpha[4] = { red, green, blue, alpha };
+        return setColorAndAlpha(newColorAndAlpha);
+    }
 
     /**
-     * Change surfacecolor tint.
+     * Change surface color tint.
      *
      * @param red      Red color component [0..1].
      */
     bool setColorRed(float red);
 
     /**
-     * Change surfacecolor tint.
+     * Change surface color tint.
      *
      * @param green    Green color component [0..1].
      */
     bool setColorGreen(float green);
 
     /**
-     * Change surfacecolor tint.
+     * Change surface color tint.
      *
      * @param blue     Blue color component [0..1].
      */
@@ -266,27 +320,16 @@ public:
     bool setAlpha(float alpha);
 
     /**
+     * Returns the blendmode for the surface.
+     */
+    blendmode_t blendMode() const;
+
+    /**
      * Change blendmode.
      *
      * @param newBlendMode  New blendmode.
      */
     bool setBlendMode(blendmode_t newBlendMode);
-
-    /**
-     * Get a property value, selected by DMU_* name.
-     *
-     * @param args  Property arguments.
-     * @return  Always @c 0 (can be used as an iterator).
-     */
-    int property(setargs_t &args) const;
-
-    /**
-     * Update a property value, selected by DMU_* name.
-     *
-     * @param args  Property arguments.
-     * @return  Always @c 0 (can be used as an iterator).
-     */
-    int setProperty(setargs_t const &args);
 
 #ifdef __CLIENT__
     /**
@@ -305,7 +348,40 @@ public:
      * Returns the total number of decoration sources for the surface.
      */
     uint decorationCount() const;
+
+    /**
+     * Mark the surface as needing a decoration source update.
+     *
+     * @todo This data should not be owned by Surface.
+     */
+    void markAsNeedingDecorationUpdate();
 #endif // __CLIENT__
+
+    /**
+     * Get a property value, selected by DMU_* name.
+     *
+     * @param args  Property arguments.
+     * @return  Always @c 0 (can be used as an iterator).
+     */
+    int property(setargs_t &args) const;
+
+    /**
+     * Update a property value, selected by DMU_* name.
+     *
+     * @param args  Property arguments.
+     * @return  Always @c 0 (can be used as an iterator).
+     */
+    int setProperty(setargs_t const &args);
+
+    /// @return @c true= is owned by some element of the Map geometry.
+    /// @deprecated Unnecessary; refactor away.
+    bool isAttachedToMap() const;
+
+    /**
+     * Helper function for determining whether the surface is owned by a
+     * Line which is itself owned by a Polyobj.
+     */
+    static bool isFromPolyobj(Surface const &surface);
 };
 
 struct surfacedecorsource_s;

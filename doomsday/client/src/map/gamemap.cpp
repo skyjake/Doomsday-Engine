@@ -426,21 +426,6 @@ static void initPolyobj(Polyobj *po)
     for(LineDef **lineIter = po->lines; *lineIter; lineIter++)
     {
         LineDef *line = *lineIter;
-        SideDef &frontDef = line->frontSideDef();
-
-        frontDef.top().inFlags |= SUIF_NO_RADIO;
-        frontDef.middle().inFlags |= SUIF_NO_RADIO;
-        frontDef.bottom().inFlags |= SUIF_NO_RADIO;
-
-        if(line->hasBackSideDef())
-        {
-            SideDef &backDef = line->backSideDef();
-
-            backDef.top().inFlags |= SUIF_NO_RADIO;
-            backDef.middle().inFlags |= SUIF_NO_RADIO;
-            backDef.bottom().inFlags |= SUIF_NO_RADIO;
-        }
-
         V2d_Sum(avg, avg, line->v1Origin());
     }
     V2d_Scale(avg, 1.f / po->lineCount);

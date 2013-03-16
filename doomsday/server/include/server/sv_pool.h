@@ -123,7 +123,7 @@ typedef struct {
 
 typedef struct {
     Material*       material;
-    float           rgba[4]; // Surface color tint
+    float           rgba[4]; // Surface color tint and alpha
     int             blendMode;
 } dt_surface_t;
 

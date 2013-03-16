@@ -449,8 +449,7 @@ void Sv_RegisterSector(dt_sector_t *reg, uint number)
         // Surface properties.
         Surface const &surface = plane.surface();
 
-        std::memcpy(reg->planes[i].surface.rgba, surface.rgba,
-                    sizeof(reg->planes[i].surface.rgba));
+        V4f_Copy(reg->planes[i].surface.rgba, surface.colorAndAlpha());
 
         reg->planes[i].surface.material = surface.materialPtr();
     }
@@ -472,11 +471,11 @@ void Sv_RegisterSide(dt_side_t *reg, uint number)
     reg->bottom.material = sideDef->bottom().materialPtr();
     reg->lineFlags       = (line ? line->flags() & 0xff : 0);
 
-    std::memcpy(reg->top.rgba,    sideDef->top().rgba,    sizeof(reg->top.rgba));
-    std::memcpy(reg->middle.rgba, sideDef->middle().rgba, sizeof(reg->middle.rgba));
-    std::memcpy(reg->bottom.rgba, sideDef->bottom().rgba, sizeof(reg->bottom.rgba));
+    V4f_Copy(reg->middle.rgba, sideDef->middle().colorAndAlpha());
+    V4f_Copy(reg->bottom.rgba, sideDef->bottom().colorAndAlpha());
+    V4f_Copy(reg->top.rgba, sideDef->top().colorAndAlpha());
 
-    reg->middle.blendMode = sideDef->middle().blendMode; // only middle supports blendmode.
+    reg->middle.blendMode = sideDef->middle().blendMode(); // Only middle sections support blendmodes.
     reg->flags           = sideDef->flags & 0xff;
 }
 
@@ -645,18 +644,18 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
     if(r->rgb[2] != s->lightColor()[2])
         df |= SDF_COLOR_BLUE;
 
-    if(r->planes[PLN_FLOOR].surface.rgba[0] != s->floorSurface().rgba[0])
+    if(r->planes[PLN_FLOOR].surface.rgba[0] != s->floorSurface().colorAndAlpha()[0])
         df |= SDF_FLOOR_COLOR_RED;
-    if(r->planes[PLN_FLOOR].surface.rgba[1] != s->floorSurface().rgba[1])
+    if(r->planes[PLN_FLOOR].surface.rgba[1] != s->floorSurface().colorAndAlpha()[1])
         df |= SDF_FLOOR_COLOR_GREEN;
-    if(r->planes[PLN_FLOOR].surface.rgba[2] != s->floorSurface().rgba[2])
+    if(r->planes[PLN_FLOOR].surface.rgba[2] != s->floorSurface().colorAndAlpha()[2])
         df |= SDF_FLOOR_COLOR_BLUE;
 
-    if(r->planes[PLN_CEILING].surface.rgba[0] != s->ceilingSurface().rgba[0])
+    if(r->planes[PLN_CEILING].surface.rgba[0] != s->ceilingSurface().colorAndAlpha()[0])
         df |= SDF_CEIL_COLOR_RED;
-    if(r->planes[PLN_CEILING].surface.rgba[1] != s->ceilingSurface().rgba[1])
+    if(r->planes[PLN_CEILING].surface.rgba[1] != s->ceilingSurface().colorAndAlpha()[1])
         df |= SDF_CEIL_COLOR_GREEN;
-    if(r->planes[PLN_CEILING].surface.rgba[2] != s->ceilingSurface().rgba[2])
+    if(r->planes[PLN_CEILING].surface.rgba[2] != s->ceilingSurface().colorAndAlpha()[2])
         df |= SDF_CEIL_COLOR_BLUE;
 
     // The cases where an immediate change to a plane's height is needed:
@@ -784,81 +783,81 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number,
             r->lineFlags = lineFlags;
     }
 
-    if(r->top.rgba[0] != s->top().rgba[0])
+    if(r->top.rgba[0] != s->top().colorAndAlpha()[0])
     {
         df |= SIDF_TOP_COLOR_RED;
         if(doUpdate)
-            r->top.rgba[0] = s->top().rgba[0];
+            r->top.rgba[0] = s->top().colorAndAlpha()[0];
     }
 
-    if(r->top.rgba[1] != s->top().rgba[1])
+    if(r->top.rgba[1] != s->top().colorAndAlpha()[1])
     {
         df |= SIDF_TOP_COLOR_GREEN;
         if(doUpdate)
-            r->top.rgba[1] = s->top().rgba[1];
+            r->top.rgba[1] = s->top().colorAndAlpha()[1];
     }
 
-    if(r->top.rgba[2] != s->top().rgba[2])
+    if(r->top.rgba[2] != s->top().colorAndAlpha()[2])
     {
         df |= SIDF_TOP_COLOR_BLUE;
         if(doUpdate)
-            r->top.rgba[3] = s->top().rgba[3];
+            r->top.rgba[3] = s->top().colorAndAlpha()[3];
     }
 
-    if(r->middle.rgba[0] != s->middle().rgba[0])
+    if(r->middle.rgba[0] != s->middle().colorAndAlpha()[0])
     {
         df |= SIDF_MID_COLOR_RED;
         if(doUpdate)
-            r->middle.rgba[0] = s->middle().rgba[0];
+            r->middle.rgba[0] = s->middle().colorAndAlpha()[0];
     }
 
-    if(r->middle.rgba[1] != s->middle().rgba[1])
+    if(r->middle.rgba[1] != s->middle().colorAndAlpha()[1])
     {
         df |= SIDF_MID_COLOR_GREEN;
         if(doUpdate)
-            r->middle.rgba[1] = s->middle().rgba[1];
+            r->middle.rgba[1] = s->middle().colorAndAlpha()[1];
     }
 
-    if(r->middle.rgba[2] != s->middle().rgba[2])
+    if(r->middle.rgba[2] != s->middle().colorAndAlpha()[2])
     {
         df |= SIDF_MID_COLOR_BLUE;
         if(doUpdate)
-            r->middle.rgba[3] = s->middle().rgba[3];
+            r->middle.rgba[3] = s->middle().colorAndAlpha()[3];
     }
 
-    if(r->middle.rgba[3] != s->middle().rgba[3])
+    if(r->middle.rgba[3] != s->middle().colorAndAlpha()[3])
     {
         df |= SIDF_MID_COLOR_ALPHA;
         if(doUpdate)
-            r->middle.rgba[3] = s->middle().rgba[3];
+            r->middle.rgba[3] = s->middle().colorAndAlpha()[3];
     }
 
-    if(r->bottom.rgba[0] != s->bottom().rgba[0])
+    if(r->bottom.rgba[0] != s->bottom().colorAndAlpha()[0])
     {
         df |= SIDF_BOTTOM_COLOR_RED;
         if(doUpdate)
-            r->bottom.rgba[0] = s->bottom().rgba[0];
+            r->bottom.rgba[0] = s->bottom().colorAndAlpha()[0];
     }
 
-    if(r->bottom.rgba[1] != s->bottom().rgba[1])
+    if(r->bottom.rgba[1] != s->bottom().colorAndAlpha()[1])
     {
         df |= SIDF_BOTTOM_COLOR_GREEN;
         if(doUpdate)
-            r->bottom.rgba[1] = s->bottom().rgba[1];
+            r->bottom.rgba[1] = s->bottom().colorAndAlpha()[1];
     }
 
-    if(r->bottom.rgba[2] != s->bottom().rgba[2])
+    if(r->bottom.rgba[2] != s->bottom().colorAndAlpha()[2])
     {
         df |= SIDF_BOTTOM_COLOR_BLUE;
         if(doUpdate)
-            r->bottom.rgba[3] = s->bottom().rgba[3];
+            r->bottom.rgba[3] = s->bottom().colorAndAlpha()[3];
     }
 
-    if(r->middle.blendMode != s->middle().blendMode)
+    if(r->middle.blendMode != s->middle().blendMode())
     {
         df |= SIDF_MID_BLENDMODE;
         if(doUpdate)
-            r->middle.blendMode = s->middle().blendMode;
+            r->middle.blendMode = s->middle().blendMode();
     }
 
     if(r->flags != sideFlags)

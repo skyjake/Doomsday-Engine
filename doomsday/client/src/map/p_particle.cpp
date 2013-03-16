@@ -1003,7 +1003,7 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
         if(z > FLT2FIX(pt->sector->ceiling().height()) - hardRadius)
         {
             // The Z is through the roof!
-            if(pt->sector->ceilingSurface().isSkyMasked())
+            if(pt->sector->ceilingSurface().hasSkyMaskedMaterial())
             {
                 // Special case: particle gets lost in the sky.
                 pt->stage = -1;
@@ -1020,7 +1020,7 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
         // Also check the floor.
         if(z < FLT2FIX(pt->sector->floor().height()) + hardRadius)
         {
-            if(pt->sector->floorSurface().isSkyMasked())
+            if(pt->sector->floorSurface().hasSkyMaskedMaterial())
             {
                 pt->stage = -1;
                 return;

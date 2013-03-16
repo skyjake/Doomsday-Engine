@@ -1204,9 +1204,9 @@ static uint radioEdgeHackType(LineDef const *line, Sector const *front, Sector c
     // Is the back sector closed?
     if(front->floor().visHeight() >= back->ceiling().visHeight())
     {
-        if(front->planeSurface(isCeiling? Plane::Floor:Plane::Ceiling).isSkyMasked())
+        if(front->planeSurface(isCeiling? Plane::Floor:Plane::Ceiling).hasSkyMaskedMaterial())
         {
-            if(back->planeSurface(isCeiling? Plane::Floor:Plane::Ceiling).isSkyMasked())
+            if(back->planeSurface(isCeiling? Plane::Floor:Plane::Ceiling).hasSkyMaskedMaterial())
                 return 3; // Consider it fully open.
         }
         else
@@ -1308,9 +1308,15 @@ static void processEdgeShadow(BspLeaf const &bspLeaf, LineDef const *line,
     Surface const *suf = &plane.surface();
     coord_t plnHeight  = plane.visHeight();
 
-    // Glowing surfaces or missing textures shouldn't have shadows.
-    if((suf->inFlags & SUIF_NO_RADIO) || !suf->hasMaterial() || suf->isSkyMasked()) return;
-    if(suf->material().hasGlow()) return;
+    // Polyobj surfaces never shadow.
+    if(Surface::isFromPolyobj(*suf)) return;
+
+    // Surfaces with a missing material don't shadow.
+    if(!suf->hasMaterial()) return;
+
+    // Missing, glowing or sky-masked materials are exempted.
+    Material const &material = suf->material();
+    if(material.isSkyMasked() || material.hasGlow()) return;
 
     // Determine the openness of the line. If this edge is edgeOpen,
     // there won't be a shadow at all. Open neighbours cause some
@@ -1407,7 +1413,7 @@ static void processEdgeShadow(BspLeaf const &bspLeaf, LineDef const *line,
     V3f_Set(shadowRGB, 0, 0, 0);
 
     addShadowEdge(inner, outer, plnHeight, plnHeight, plnHeight, plnHeight, sideOpen, edgeOpen,
-                  suf->normal[VZ] > 0, shadowRGB, shadowDark);
+                  suf->normal()[VZ] > 0, shadowRGB, shadowDark);
 }
 
 static void drawLinkedEdgeShadows(BspLeaf const &bspLeaf, ShadowLink &link,

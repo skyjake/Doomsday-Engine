@@ -516,7 +516,7 @@ static void R_UpdateMap()
 
         foreach(Plane *plane, sec->planes())
         {
-            plane->surface().update();
+            plane->surface().markAsNeedingDecorationUpdate();
         }
     }
 
@@ -524,9 +524,9 @@ static void R_UpdateMap()
     {
         SideDef *sideDef = GameMap_SideDef(theMap, i);
 
-        sideDef->top().update();
-        sideDef->middle().update();
-        sideDef->bottom().update();
+        sideDef->top().markAsNeedingDecorationUpdate();
+        sideDef->middle().markAsNeedingDecorationUpdate();
+        sideDef->bottom().markAsNeedingDecorationUpdate();
     }
 
     /// @todo Is this even necessary?
@@ -537,7 +537,7 @@ static void R_UpdateMap()
         for(LineDef **lineIter = po->lines; *lineIter; lineIter++)
         {
             LineDef *line = *lineIter;
-            line->frontSideDef().middle().update();
+            line->frontSideDef().middle().markAsNeedingDecorationUpdate();
         }
     }
 #endif

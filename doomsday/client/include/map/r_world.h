@@ -109,7 +109,7 @@ void R_OrderVertices(LineDef *line, Sector const *sector, Vertex *verts[2]);
  */
 boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
     Sector const *frontSec, Sector const *backSec, SideDef const *frontDef, SideDef const *backDef,
-    coord_t *low, coord_t *hi, float matOffset[2]);
+    coord_t *low, coord_t *hi, pvec2f_t matOffset);
 boolean R_FindBottomTop(SideDefSection section, int lineFlags,
     Sector const *frontSec, Sector const *backSec, SideDef const *frontDef, SideDef const *backDef,
     coord_t *low, coord_t *hi) /* matOffset = 0 */;

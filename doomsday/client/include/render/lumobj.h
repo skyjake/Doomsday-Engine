@@ -219,7 +219,8 @@ int LO_LumobjsRadiusIterator(BspLeaf *bspLeaf, coord_t x, coord_t y, coord_t rad
  * @return  Projection list identifier if surface is lit else @c 0.
  */
 uint LO_ProjectToSurface(int flags, BspLeaf *bspLeaf, float blendFactor,
-    vec3d_t topLeft, vec3d_t bottomRight, vec3f_t tangent, vec3f_t bitangent, vec3f_t normal);
+    pvec3d_t topLeft, pvec3d_t bottomRight,
+    const_pvec3f_t tangent, const_pvec3f_t bitangent, const_pvec3f_t normal);
 
 /**
  * Iterate over projections in the identified surface-projection list, making
@@ -228,11 +229,11 @@ uint LO_ProjectToSurface(int flags, BspLeaf *bspLeaf, float blendFactor,
  *
  * @param listIdx       Unique identifier of the list to process.
  * @param callback      Callback to make for each visited projection.
- * @param paramaters    Passed to the callback.
+ * @param parameters    Passed to the callback.
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int LO_IterateProjections2(uint listIdx, int (*callback) (dynlight_t const *, void *), void *paramaters);
+int LO_IterateProjections2(uint listIdx, int (*callback) (dynlight_t const *, void *), void *parameters);
 int LO_IterateProjections(uint listIdx, int (*callback) (dynlight_t const *, void*)/*, paramaters = 0*/);
 
 void LO_DrawLumobjs(void);
