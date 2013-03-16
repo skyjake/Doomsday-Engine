@@ -2412,7 +2412,7 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
     if(isRepeating)
         df |= SNDDF_REPEAT;
 
-    LOG_DEBUG("New sound delta: type=%i id=%i flags=%x") << type << id << df;
+    LOG_TRACE("New sound delta: type=%i id=%i flags=%x") << type << id << df;
 
     // This is used by mobj/sector sounds.
     soundDelta.sound = soundId;
