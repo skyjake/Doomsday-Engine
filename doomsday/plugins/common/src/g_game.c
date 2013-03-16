@@ -2469,8 +2469,7 @@ void G_DoMapCompleted(void)
             G_PlayerLeaveMap(i); // take away cards and stuff
 
             // Update this client's stats.
-            NetSv_SendPlayerState(i, DDSP_ALL_PLAYERS,
-                                  PSF_FRAGS | PSF_COUNTERS, true);
+            NetSv_SendPlayerState(i, DDSP_ALL_PLAYERS, PSF_FRAGS | PSF_COUNTERS, true);
         }
     }
 

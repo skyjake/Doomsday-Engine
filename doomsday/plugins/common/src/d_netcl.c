@@ -561,9 +561,14 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
 
     if(flags & PSF_COUNTERS)
     {
-        pl->killCount = Reader_ReadInt16(msg);
-        pl->itemCount = Reader_ReadByte(msg);
+        pl->killCount   = Reader_ReadInt16(msg);
+        pl->itemCount   = Reader_ReadByte(msg);
         pl->secretCount = Reader_ReadByte(msg);
+
+#ifdef _DEBUG
+        Con_Message("NetCl_UpdatePlayerState: kills=%i, items=%i, secrets=%i",
+                    pl->killCount, pl->itemCount, pl->secretCount);
+#endif
     }
 
     if(flags & PSF_PENDING_WEAPON || flags & PSF_READY_WEAPON)

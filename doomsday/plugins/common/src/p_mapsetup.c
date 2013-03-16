@@ -851,6 +851,7 @@ static void P_ResetWorldState(void)
 
         ddplr->mo = NULL;
         plr->killCount = plr->secretCount = plr->itemCount = 0;
+        plr->update |= PSF_COUNTERS;
 
         if(ddplr->inGame && plr->playerState == PST_DEAD)
             plr->playerState = PST_REBORN;

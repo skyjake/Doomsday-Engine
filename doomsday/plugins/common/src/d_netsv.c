@@ -190,20 +190,12 @@ void NetSv_Ticker(void)
     {
         player_t* plr = &players[i];
 
-        /*
-        // Don't send on every tic. Also, don't send to all
-        // players at the same time.
-        if(((int) GAMETIC + i) % 10)
-            continue;
-        */
-
         if(!plr->plr->inGame)
             continue;
 
         if(plr->update)
         {
-            // Owned weapons and player state will be sent in a new kind of
-            // packet.
+            // Owned weapons and player state will be sent in the v2 packet.
             if(plr->update & (PSF_OWNED_WEAPONS | PSF_STATE))
             {
                 int flags =
@@ -218,7 +210,6 @@ void NetSv_Ticker(void)
                     continue;
             }
 
-            // The delivery of the state packet will be confirmed.
             NetSv_SendPlayerState(i, i, plr->update, true);
             plr->update = 0;
         }

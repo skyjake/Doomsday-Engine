@@ -676,6 +676,7 @@ void P_PlayerInSpecialSector(player_t* player)
         if(!IS_CLIENT)
         {
             player->secretCount++;
+            player->update |= PSF_COUNTERS;
             xsector->special = 0;
         }
         break;

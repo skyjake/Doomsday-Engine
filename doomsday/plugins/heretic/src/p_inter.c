@@ -860,7 +860,10 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
     }
 
     if(special->flags & MF_COUNTITEM)
+    {
         player->itemCount++;
+        player->update |= PSF_COUNTERS;
+    }
 
     switch(item)
     {
@@ -904,8 +907,10 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
     if(source && source->player)
     {
         if(target->flags & MF_COUNTKILL)
-        {   // Count for intermission.
+        {
+            // Count for intermission.
             source->player->killCount++;
+            source->player->update |= PSF_COUNTERS;
         }
 
         if(target->player)
