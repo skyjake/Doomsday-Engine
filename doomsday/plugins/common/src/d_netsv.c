@@ -45,6 +45,10 @@
 #include "p_start.h"
 #include "p_inventory.h"
 
+#ifdef __JHEXEN__
+#  include "s_sequence.h"
+#endif
+
 // MACROS ------------------------------------------------------------------
 
 #if __JHEXEN__ || __JSTRIFE__
@@ -62,12 +66,6 @@
 // How long is the largest possible sector update?
 //#define MAX_SECTORUPD           20
 //#define MAX_SIDEUPD             9
-
-/*
-#define WRITE_SHORT(byteptr, val)   {(*(short*)(byteptr) = SHORT(val)); byteptr += 2;}
-#define WRITE_LONG(byteptr, val)    {(*(int*)(byteptr) = LONG(val)); byteptr += 4;}
-#define WRITE_FLOAT(byteptr, val)   {(*(int*)(byteptr) = LONG(*(int*)&val)); byteptr += 4;}
-*/
 
 // TYPES -------------------------------------------------------------------
 
@@ -172,6 +170,10 @@ void NetSv_Ticker(void)
     {
         R_UpdateViewFilter(i);
     }
+
+#ifdef __JHEXEN__
+    SN_UpdateActiveSequences();
+#endif
 
     // Inform clients about jumping?
     power = (cfg.jumpEnabled ? cfg.jumpPower : 0);

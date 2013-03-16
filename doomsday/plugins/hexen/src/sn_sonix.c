@@ -385,23 +385,16 @@ void SN_UpdateActiveSequences(void)
         }
 
         // If ID is zero, S_IsPlaying returns true if any sound is playing.
-        sndPlaying =
-            node->currentSoundID ? S_IsPlaying(node->currentSoundID,
-                                               node->mobj) : false;
+        sndPlaying = (node->currentSoundID ? S_IsPlaying(node->currentSoundID, node->mobj) : false);
 
         switch(*node->sequencePtr)
         {
         case SS_CMD_PLAY:
-#if 0
-Con_Message("play: %s: %p", SequenceTranslate[node->sequence].name,
-            node->mobj);
-#endif
             if(!sndPlaying)
             {
                 node->currentSoundID = *(node->sequencePtr + 1);
-#if 0
-Con_Message("PLAY: %s: %p", SequenceTranslate[node->sequence].name,
-            node->mobj);
+#ifdef _DEBUG
+                Con_Message("SS_CMD_PLAY: StartSound %s: %p", SequenceTranslate[node->sequence].name, node->mobj);
 #endif
                 S_StartSoundAtVolume(node->currentSoundID, node->mobj,
                                      node->volume / 127.0f);
@@ -418,16 +411,11 @@ Con_Message("PLAY: %s: %p", SequenceTranslate[node->sequence].name,
             break;
 
         case SS_CMD_PLAYREPEAT:
-#if 0
-Con_Message("rept: %s: %p", SequenceTranslate[node->sequence].name,
-            node->mobj);
-#endif
-
             if(!sndPlaying)
             {
-#if 0
-Con_Message("REPT: id=%i, %s: %p", node->currentSoundID,
-            SequenceTranslate[node->sequence].name, node->mobj);
+#ifdef _DEBUG
+                Con_Message("SS_CMD_PLAYREPEAT: StartSound id=%i, %s: %p",
+                            node->currentSoundID, SequenceTranslate[node->sequence].name, node->mobj);
 #endif
                 node->currentSoundID = *(node->sequencePtr + 1);
 
