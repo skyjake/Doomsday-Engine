@@ -581,6 +581,8 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
 
     p->brain.changeWeapon = WT_NOCHANGE;
 
+    p->update |= PSF_READY_WEAPON | PSF_PENDING_WEAPON;
+
     // Setup gun psprite.
     P_SetupPsprites(p);
 
