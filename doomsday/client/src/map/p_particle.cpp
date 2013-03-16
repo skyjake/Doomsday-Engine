@@ -770,7 +770,7 @@ int PIT_CheckLinePtc(LineDef *ld, void *parameters)
 
     // Movement must cross the line.
     if((ld->pointOnSide(FIX2FLT(tmpx1), FIX2FLT(tmpy1)) < 0) ==
-        ld->pointOnSide(FIX2FLT(tmpx2), FIX2FLT(tmpy2)) < 0))
+       (ld->pointOnSide(FIX2FLT(tmpx2), FIX2FLT(tmpy2)) < 0))
         return false;
 
     /*
