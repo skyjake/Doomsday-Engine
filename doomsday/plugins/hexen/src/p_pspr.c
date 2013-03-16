@@ -968,6 +968,8 @@ void C_DECL A_MLightningAttack2(mobj_t *mo)
 
 void C_DECL A_MLightningAttack(player_t *plr, pspdef_t *psp)
 {
+    if(IS_CLIENT) return;
+
     A_MLightningAttack2(plr->plr->mo);
     P_ShotAmmo(plr);
 }
@@ -1622,7 +1624,9 @@ void C_DECL A_CHolyAttack2(mobj_t* mo)
 
 void C_DECL A_CHolyAttack(player_t* plr, pspdef_t* psp)
 {
-    mobj_t*             pmo;
+    mobj_t *pmo;
+
+    if(IS_CLIENT) return;
 
     P_ShotAmmo(plr);
     pmo = P_SpawnPlayerMissile(MT_HOLY_MISSILE, plr->plr->mo);
@@ -1895,6 +1899,8 @@ void C_DECL A_FireConePL1(player_t *plr, pspdef_t *psp)
     angle_t     angle;
     mobj_t     *pmo, *mo;
     boolean     conedone = false;
+
+    if(IS_CLIENT) return;
 
     mo = plr->plr->mo;
     P_ShotAmmo(plr);
