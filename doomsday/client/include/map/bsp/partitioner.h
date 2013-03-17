@@ -1,9 +1,4 @@
-/**
- * @file partitioner.h
- * BSP space partitioner. @ingroup bsp
- *
- * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
- * SourceForge: http://sourceforge.net/projects/glbsp/
+/** @file partitioner.h BSP space partitioner.
  *
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
@@ -43,19 +38,27 @@ static const coord_t DIST_EPSILON = (1.0 / 128.0);
 /// Smallest difference between two angles before being considered equal (in degrees).
 static const coord_t ANG_EPSILON = (1.0 / 1024.0);
 
+/**
+ * BSP space partitioner.
+ *
+ * Originally based on glBSP 2.24 (in turn, based on BSP 2.3).
+ * @see http://sourceforge.net/projects/glbsp/
+ *
+ * @ingroup bsp
+ */
 class Partitioner
 {
 public:
-    Partitioner(GameMap&  _map, uint numEditableVertexes,
-                Vertex const **editableVertexes, int _splitCostFactor=7);
+    Partitioner(GameMap &map, uint numEditableVertexes,
+                Vertex const **editableVertexes, int splitCostFactor = 7);
     ~Partitioner();
 
     /**
      * Set the cost factor associated with splitting an existing half-edge.
-     * @param factor  New factor value.
-     * @return  Reference to this Partitioner.
+     *
+     * @param newFactor  New split cost factor.
      */
-    Partitioner& setSplitCostFactor(int factor);
+    void setSplitCostFactor(int newFactor);
 
     /**
      * Build the BSP for the given map.
@@ -74,33 +77,13 @@ public:
     bool build();
 
     /**
-     * Retrieve the number of BspNodes owned by this Partitioner. When the
-     * build completes this number will be the total number of BspNodes that
-     * were produced during that process. Note that as BspNode ownership is
-     * claimed this number will decrease respectively.
-     *
-     * @return  Current number of BspNodes owned by this Partitioner.
-     */
-    uint numNodes();
-
-    /**
      * Retrieve a pointer to the root BinaryTree node for the constructed BSP.
      * Even if construction fails this will return a valid node.
      *
      * The only time upon which @c NULL is returned is if called prior to calling
      * BspBuilder::build()
      */
-    BspTreeNode* root() const;
-
-    /**
-     * Retrieve the number of BspLeafs owned by this Partitioner. When the
-     * build completes this number will be the total number of BspLeafs that
-     * were produced during that process. Note that as BspLeaf ownership is
-     * claimed this number will decrease respectively.
-     *
-     * @return  Current number of BspLeafs owned by this Partitioner.
-     */
-    uint numLeafs();
+    BspTreeNode *root() const;
 
     /**
      * Retrieve the number of HEdges owned by this Partitioner. When the build
@@ -113,6 +96,26 @@ public:
     uint numHEdges();
 
     /**
+     * Retrieve the number of BspLeafs owned by this Partitioner. When the
+     * build completes this number will be the total number of BspLeafs that
+     * were produced during that process. Note that as BspLeaf ownership is
+     * claimed this number will decrease respectively.
+     *
+     * @return  Current number of BspLeafs owned by this Partitioner.
+     */
+    uint numLeafs();
+
+    /**
+     * Retrieve the number of BspNodes owned by this Partitioner. When the
+     * build completes this number will be the total number of BspNodes that
+     * were produced during that process. Note that as BspNode ownership is
+     * claimed this number will decrease respectively.
+     *
+     * @return  Current number of BspNodes owned by this Partitioner.
+     */
+    uint numNodes();
+
+    /**
      * Retrieve the total number of Vertexes produced during the build process.
      */
     uint numVertexes();
@@ -122,15 +125,14 @@ public:
      * this will result in fatal error. The caller should ensure the index is
      * within valid range using Partitioner::numVertexes()
      */
-    Vertex& vertex(uint index);
+    Vertex &vertex(uint index);
 
     /**
-     * Release ownership of the specified object.
+     * Relinquish ownership of the specified map data element to the caller.
      *
-     * @param ob  Map data object to release ownership of.
-     * @return  Reference to this Partitioner.
+     * @param mapElement  Map data element to relinquish ownership of.
      */
-    Partitioner& release(de::MapElement* ob);
+    void release(MapElement *mapElement);
 
 private:
     struct Instance;

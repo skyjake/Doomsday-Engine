@@ -1,8 +1,4 @@
 /** @file partitioner.cpp BSP Partitioner. Recursive node creation and sorting. 
- * @ingroup map
- *
- * Originally based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted
- * on SourceForge: http://sourceforge.net/projects/glbsp/
  *
  * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright &copy; 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
@@ -57,6 +53,7 @@
 #include "render/r_main.h"  // validCount
 #include "m_misc.h"         // M_BoxOnLineSide2
 
+using namespace de;
 using namespace de::bsp;
 
 // Misc utility routines (most don't belong here...):
@@ -1450,10 +1447,10 @@ struct Partitioner::Instance
         return node;
     }
 
-    BspTreeNode* newTreeNode(de::MapElement* bspOb,
-        BspTreeNode* rightChild = 0, BspTreeNode* leftChild = 0)
+    BspTreeNode *newTreeNode(de::MapElement *bspOb,
+        BspTreeNode *rightChild = 0, BspTreeNode *leftChild = 0)
     {
-        BspTreeNode* subtree = new BspTreeNode(bspOb);
+        BspTreeNode *subtree = new BspTreeNode(bspOb);
         if(rightChild)
         {
             subtree->setRight(rightChild);
@@ -1465,7 +1462,7 @@ struct Partitioner::Instance
             leftChild->setParent(subtree);
         }
 
-        treeNodeMap.insert(std::pair<de::MapElement*, BspTreeNode*>(bspOb, subtree));
+        treeNodeMap.insert(std::pair<de::MapElement *, BspTreeNode *>(bspOb, subtree));
         return subtree;
     }
 
@@ -1487,15 +1484,15 @@ struct Partitioner::Instance
      * @param partList  The list of half-edges to be carved into convex subregions.
      * @return  Newly created subtree else @c NULL if degenerate.
      */
-    BspTreeNode* buildNodes(SuperBlock& partList)
+    BspTreeNode *buildNodes(SuperBlock &partList)
     {
         LOG_AS("Partitioner::buildNodes");
 
-        de::MapElement* bspObject = 0; ///< Built BSP object at this node.
-        BspTreeNode* rightTree = 0, *leftTree = 0;
+        de::MapElement *bspObject = 0; ///< Built BSP object at this node.
+        BspTreeNode *rightTree = 0, *leftTree = 0;
 
         // Pick a half-edge to use as the next partition plane.
-        HEdge* partHEdge = chooseNextPartition(partList);
+        HEdge *partHEdge = chooseNextPartition(partList);
         if(partHEdge)
         {
             //LOG_TRACE("Partition %p [%1.0f, %1.0f] -> [%1.0f, %1.0f].") << de::dintptr(hedge)
@@ -1540,7 +1537,7 @@ struct Partitioner::Instance
         else
         {
             // No partition required/possible - already convex (or degenerate).
-            BspLeaf* leaf = buildBspLeaf(collectHEdges(partList));
+            BspLeaf *leaf = buildBspLeaf(collectHEdges(partList));
             partList.clear();
 
             // Not a leaf? (collapse upward).
@@ -2400,10 +2397,10 @@ struct Partitioner::Instance
     }
 };
 
-Partitioner::Partitioner(GameMap& map, uint numEditableVertexes,
+Partitioner::Partitioner(GameMap &map, uint numEditableVertexes,
     Vertex const **editableVertexes, int splitCostFactor)
+    : d(new Instance(&map, numEditableVertexes, editableVertexes, splitCostFactor))
 {
-    d = new Instance(&map, numEditableVertexes, editableVertexes, splitCostFactor);
     d->initForMap();
 }
 
@@ -2412,10 +2409,12 @@ Partitioner::~Partitioner()
     delete d;
 }
 
-Partitioner& Partitioner::setSplitCostFactor(int factor)
+void Partitioner::setSplitCostFactor(int newFactor)
 {
-    d->splitCostFactor = factor;
-    return *this;
+    if(d->splitCostFactor != newFactor)
+    {
+        d->splitCostFactor = newFactor;
+    }
 }
 
 bool Partitioner::build()
@@ -2423,7 +2422,7 @@ bool Partitioner::build()
     return d->buildBsp(SuperBlockmap(blockmapBounds(d->mapBounds)));
 }
 
-BspTreeNode* Partitioner::root() const
+BspTreeNode *Partitioner::root() const
 {
     return d->rootNode;
 }
@@ -2448,22 +2447,21 @@ uint Partitioner::numVertexes()
     return d->numVertexes;
 }
 
-Vertex& Partitioner::vertex(uint idx)
+Vertex &Partitioner::vertex(uint idx)
 {
     DENG2_ASSERT(idx < d->vertexes.size());
     DENG2_ASSERT(d->vertexes[idx]);
     return *d->vertexes[idx];
 }
 
-Partitioner& Partitioner::release(de::MapElement* ob)
+void Partitioner::release(MapElement *mapElement)
 {
-    LOG_AS("Partitioner::release");
-
-    if(!d->release(ob))
+    if(!d->release(mapElement))
     {
-        LOG_DEBUG("Attempted to release an unknown/unowned object %p.") << de::dintptr(ob);
+        LOG_AS("Partitioner::release");
+        LOG_DEBUG("Attempted to release an unknown/unowned object %p.")
+            << de::dintptr(mapElement);
     }
-    return *this;
 }
 
 static LineRelationship lineRelationship(coord_t a, coord_t b, coord_t distEpsilon)
