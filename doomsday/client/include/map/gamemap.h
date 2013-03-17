@@ -107,12 +107,8 @@ public:
 
     /// BSP object LUTs:
     de::MapElementList<HEdge> hedges;
-
-    uint numBspLeafs;
-    BspLeaf **bspLeafs;
-
-    uint numBspNodes;
-    BspNode **bspNodes;
+    de::MapElementList<BspNode> bspNodes;
+    de::MapElementList<BspLeaf> bspLeafs;
 
     EntityDatabase *entityDatabase;
 
@@ -157,6 +153,10 @@ public:
     uint lineCount() const { return lines.size(); }
 
     uint hedgeCount() const { return hedges.size(); }
+
+    uint bspNodeCount() const { return bspNodes.size(); }
+
+    uint bspLeafCount() const { return bspLeafs.size(); }
 
 #ifdef __CLIENT__
 

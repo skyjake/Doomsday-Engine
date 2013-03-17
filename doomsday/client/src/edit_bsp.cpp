@@ -74,13 +74,13 @@ boolean BspBuilder_Build(BspBuilder_c* builder)
 typedef struct {
     GameMap *map;
     BspBuilder *builder;
-} hedgecollectorparams_t;
+} HEdgeCollectParms;
 
 static int hedgeCollector(BspTreeNode &tree, void *parameters)
 {
     if(tree.isLeaf())
     {
-        hedgecollectorparams_t* p = static_cast<hedgecollectorparams_t*>(parameters);
+        HEdgeCollectParms* p = static_cast<HEdgeCollectParms*>(parameters);
         BspLeaf *leaf = tree.userData()->castTo<BspLeaf>();
         HEdge *base = leaf->firstHEdge();
         HEdge *hedge = base;
@@ -118,110 +118,17 @@ static int hedgeCollector(BspTreeNode &tree, void *parameters)
 static void collateHEdges(BspBuilder &builder, GameMap *map)
 {
     DENG2_ASSERT(map);
-    DENG_ASSERT(map->hedges.isEmpty());
+    DENG2_ASSERT(map->hedges.isEmpty());
 
     if(!builder.numHEdges()) return; // Should never happen.
 #ifdef DENG2_QT_4_7_OR_NEWER
     map->hedges.reserve(builder.numHEdges());
 #endif
 
-    hedgecollectorparams_t parm;
-    parm.builder = &builder;
-    parm.map = map;
-    builder.root()->traverseInOrder(hedgeCollector, &parm);
-}
-
-typedef struct {
-    BspBuilder *builder;
-    GameMap *dest;
-    uint leafCurIndex;
-    uint nodeCurIndex;
-} populatebspobjectluts_params_t;
-
-static int populateBspObjectLuts(BspTreeNode &tree, void *parameters)
-{
-    populatebspobjectluts_params_t *p = static_cast<populatebspobjectluts_params_t*>(parameters);
-    DENG2_ASSERT(p);
-
-    // We are only interested in BspNodes at this level.
-    if(tree.isLeaf()) return false; // Continue iteration.
-
-    // Take ownership of this BspNode.
-    DENG2_ASSERT(tree.userData());
-    BspNode *node = tree.userData()->castTo<BspNode>();
-    p->builder->take(node);
-
-    // Add this BspNode to the LUT.
-    node->_index = p->nodeCurIndex++;
-    p->dest->bspNodes[node->_index] = node;
-
-    if(BspTreeNode *right = tree.right())
-    {
-        if(right->isLeaf())
-        {
-            // Take ownership of this BspLeaf.
-            DENG2_ASSERT(right->userData());
-            BspLeaf *leaf = right->userData()->castTo<BspLeaf>();
-            p->builder->take(leaf);
-
-            // Add this BspLeaf to the LUT.
-            leaf->_index = p->leafCurIndex++;
-            p->dest->bspLeafs[leaf->_index] = leaf;
-        }
-    }
-
-    if(BspTreeNode *left = tree.left())
-    {
-        if(left->isLeaf())
-        {
-            // Take ownership of this BspLeaf.
-            DENG2_ASSERT(left->userData());
-            BspLeaf *leaf = left->userData()->castTo<BspLeaf>();
-            p->builder->take(leaf);
-
-            // Add this BspLeaf to the LUT.
-            leaf->_index = p->leafCurIndex++;
-            p->dest->bspLeafs[leaf->_index] = leaf;
-        }
-    }
-
-    return false; // Continue iteration.
-}
-
-static void hardenBSP(BspBuilder &builder, GameMap *dest)
-{
-    dest->numBspNodes = builder.numNodes();
-    if(dest->numBspNodes != 0)
-        dest->bspNodes = static_cast<BspNode **>(Z_Malloc(dest->numBspNodes * sizeof(BspNode *), PU_MAPSTATIC, 0));
-    else
-        dest->bspNodes = 0;
-
-    dest->numBspLeafs = builder.numLeafs();
-    dest->bspLeafs = static_cast<BspLeaf **>(Z_Calloc(dest->numBspLeafs * sizeof(BspLeaf *), PU_MAPSTATIC, 0));
-
-    BspTreeNode *rootNode = builder.root();
-    dest->bsp = rootNode->userData();
-
-    if(rootNode->isLeaf())
-    {
-        // Take ownership of this leaf.
-        DENG2_ASSERT(rootNode->userData());
-        BspLeaf *leaf = rootNode->userData()->castTo<BspLeaf>();
-        builder.take(leaf);
-
-        // Add this BspLeaf to the LUT.
-        leaf->_index = 0;
-        dest->bspLeafs[0] = leaf;
-
-        return;
-    }
-
-    populatebspobjectluts_params_t p;
-    p.builder = &builder;
-    p.dest = dest;
-    p.leafCurIndex = 0;
-    p.nodeCurIndex = 0;
-    rootNode->traversePostOrder(populateBspObjectLuts, &p);
+    HEdgeCollectParms parms;
+    parms.builder = &builder;
+    parms.map     = map;
+    builder.root()->traverseInOrder(hedgeCollector, &parms);
 }
 
 static void collateVertexes(BspBuilder &builder, GameMap *map,
@@ -229,7 +136,7 @@ static void collateVertexes(BspBuilder &builder, GameMap *map,
 {
     uint bspVertexCount = builder.numVertexes();
 
-    DENG_ASSERT(map->vertexes.isEmpty());
+    DENG2_ASSERT(map->vertexes.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
     map->vertexes.reserve(*numEditableVertexes + bspVertexCount);
 #endif
@@ -248,6 +155,97 @@ static void collateVertexes(BspBuilder &builder, GameMap *map,
         builder.take(&vtx);
         map->vertexes.append(&vtx);
     }
+}
+
+struct CollateBspElementsParms
+{
+    BspBuilder *builder;
+    GameMap *map;
+};
+
+static void collateBspElements(BspTreeNode &tree, CollateBspElementsParms const &parms)
+{
+    // We are only interested in BspNodes at this level.
+    if(tree.isLeaf()) return; // Continue iteration.
+
+    // Take ownership of this BspNode.
+    DENG2_ASSERT(tree.userData());
+    BspNode *node = tree.userData()->castTo<BspNode>();
+    parms.builder->take(node);
+
+    // Add this BspNode to the LUT.
+    node->_index = parms.map->bspNodes.count();
+    parms.map->bspNodes.append(node);
+
+    if(BspTreeNode *right = tree.right())
+    {
+        if(right->isLeaf())
+        {
+            // Take ownership of this BspLeaf.
+            DENG2_ASSERT(right->userData());
+            BspLeaf *leaf = right->userData()->castTo<BspLeaf>();
+            parms.builder->take(leaf);
+
+            // Add this BspLeaf to the LUT.
+            leaf->_index = parms.map->bspLeafs.count();
+            parms.map->bspLeafs.append(leaf);
+        }
+    }
+
+    if(BspTreeNode *left = tree.left())
+    {
+        if(left->isLeaf())
+        {
+            // Take ownership of this BspLeaf.
+            DENG2_ASSERT(left->userData());
+            BspLeaf *leaf = left->userData()->castTo<BspLeaf>();
+            parms.builder->take(leaf);
+
+            // Add this BspLeaf to the LUT.
+            leaf->_index = parms.map->bspLeafs.count();
+            parms.map->bspLeafs.append(leaf);
+        }
+    }
+}
+
+static int collateBspElementsWorker(BspTreeNode &tree, void *parameters)
+{
+    collateBspElements(tree, *static_cast<CollateBspElementsParms *>(parameters));
+    return false; // Continue iteration.
+}
+
+static void collateBSP(BspBuilder &builder, GameMap *map)
+{
+    DENG2_ASSERT(map);
+    DENG2_ASSERT(map->bspLeafs.isEmpty());
+    DENG2_ASSERT(map->bspNodes.isEmpty());
+
+#ifdef DENG2_QT_4_7_OR_NEWER
+    map->bspNodes.reserve(builder.numNodes());
+    map->bspLeafs.reserve(builder.numLeafs());
+#endif
+
+    BspTreeNode *rootNode = builder.root();
+    map->bsp = rootNode->userData();
+
+    if(rootNode->isLeaf())
+    {
+        // Take ownership of this leaf.
+        DENG2_ASSERT(rootNode->userData());
+        BspLeaf *leaf = rootNode->userData()->castTo<BspLeaf>();
+        builder.take(leaf);
+
+        // Add this BspLeaf to the LUT.
+        leaf->_index = 0;
+        map->bspLeafs.append(leaf);
+
+        return;
+    }
+
+    CollateBspElementsParms parms;
+    parms.builder = &builder;
+    parms.map     = map;
+    rootNode->traversePostOrder(collateBspElementsWorker, &parms);
 }
 
 void MPE_SaveBsp(BspBuilder_c *builder_c, GameMap *map, uint numEditableVertexes,
@@ -274,6 +272,5 @@ void MPE_SaveBsp(BspBuilder_c *builder_c, GameMap *map, uint numEditableVertexes
 
     collateHEdges(builder, map);
     collateVertexes(builder, map, &numEditableVertexes, &editableVertexes);
-
-    hardenBSP(builder, map);
+    collateBSP(builder, map);
 }

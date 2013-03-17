@@ -474,9 +474,9 @@ static void hardenSectorBspLeafList(GameMap *map, uint secIDX)
 
 #ifdef DENG2_QT_4_7_OR_NEWER
     uint count = 0;
-    for(uint i = 0; i < map->numBspLeafs; ++i)
+    for(uint i = 0; i < map->bspLeafCount(); ++i)
     {
-        BspLeaf &bspLeaf = *map->bspLeafs[i];
+        BspLeaf &bspLeaf = map->bspLeafs[i];
         if(bspLeaf.sectorPtr() == sec)
             ++count;
     }
@@ -485,9 +485,9 @@ static void hardenSectorBspLeafList(GameMap *map, uint secIDX)
     sec->_bspLeafs.reserve(count);
 #endif
 
-    for(uint i = 0; i < map->numBspLeafs; ++i)
+    for(uint i = 0; i < map->bspLeafCount(); ++i)
     {
-        BspLeaf &bspLeaf = *map->bspLeafs[i];
+        BspLeaf &bspLeaf = map->bspLeafs[i];
         if(bspLeaf.sectorPtr() == sec)
         {
             // Ownership of the BSP leaf is not given to the sector.
@@ -739,9 +739,9 @@ static void updateMapBounds(GameMap *map)
 static void prepareBspLeafs(GameMap *map)
 {
     DENG_ASSERT(map);
-    for(uint i = 0; i < map->numBspLeafs; ++i)
+    for(uint i = 0; i < map->bspLeafCount(); ++i)
     {
-        BspLeaf &bspLeaf = *map->bspLeafs[i];
+        BspLeaf &bspLeaf = map->bspLeafs[i];
 
         bspLeaf.updateAABox();
         bspLeaf.updateCenter();

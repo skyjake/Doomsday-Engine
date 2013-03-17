@@ -455,6 +455,8 @@ void GameMap_InitSkyFix(GameMap *map)
 {
     DENG_ASSERT(map);
 
+    Time begunAt;
+
     map->skyFix[Plane::Floor].height = DDMAXFLOAT;
     map->skyFix[Plane::Ceiling].height = DDMINFLOAT;
 
@@ -463,6 +465,8 @@ void GameMap_InitSkyFix(GameMap *map)
     {
         GameMap_UpdateSkyFixForSector(map, &map->sectors[i]);
     }
+
+    LOG_INFO(String("GameMap_InitSkyFix: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 /**

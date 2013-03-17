@@ -149,7 +149,7 @@ static void findBspLeafsAffectingSector(GameMap *map, uint secIDX)
     // LOG_DEBUG("sector %u: min[x:%f, y:%f]  max[x:%f, y:%f]")
     //    << secIDX <<  aaBox.minX << aaBox.minY << aaBox.maxX << aaBox.maxY;
 
-    for(uint i = 0; i < map->numBspLeafs; ++i)
+    for(uint i = 0; i < map->bspLeafCount(); ++i)
     {
         BspLeaf *bspLeaf = GameMap_BspLeaf(map, i);
 

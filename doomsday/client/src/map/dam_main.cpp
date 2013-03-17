@@ -280,9 +280,6 @@ boolean DAM_AttemptMapLoad(Uri const* _uri)
 
         if(loadedOK)
         {
-            vec2d_t min, max;
-            uint i;
-
             // Do any initialization/error checking work we need to do.
             // Must be called before we go any further.
             P_InitUnusedMobjList();
@@ -300,10 +297,12 @@ boolean DAM_AttemptMapLoad(Uri const* _uri)
 
             Rend_DecorInit();
 
-            // Init blockmap for searching BSP leafs.
+            vec2d_t min, max;
             GameMap_Bounds(map, min, max);
+
+            // Init blockmap for searching BSP leafs.
             GameMap_InitBspLeafBlockmap(map, min, max);
-            for(i = 0; i < map->numBspLeafs; ++i)
+            for(uint i = 0; i < map->bspLeafCount(); ++i)
             {
                 GameMap_LinkBspLeaf(map, GameMap_BspLeaf(map, i));
             }
@@ -312,21 +311,21 @@ boolean DAM_AttemptMapLoad(Uri const* _uri)
 
             // Generate the unique map id.
             lumpnum_t markerLumpNum = App_FileSystem().lumpNumForName(Str_Text(Uri_Path(map->uri)));
-            de::File1& markerLump   = App_FileSystem().nameIndex().lump(markerLumpNum);
+            de::File1 &markerLump   = App_FileSystem().nameIndex().lump(markerLumpNum);
 
             de::String uniqueId     = DAM_ComposeUniqueId(markerLump);
             QByteArray uniqueIdUtf8 = uniqueId.toUtf8();
             qstrncpy(map->uniqueId, uniqueIdUtf8.constData(), sizeof(map->uniqueId));
 
             // See what mapinfo says about this map.
-            ded_mapinfo_t* mapInfo = Def_GetMapInfo(map->uri);
+            ded_mapinfo_t *mapInfo = Def_GetMapInfo(map->uri);
             if(!mapInfo)
             {
-                de::Uri mapUri = de::Uri("*", RC_NULL);
-                mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s*>(&mapUri));
+                de::Uri mapUri("*", RC_NULL);
+                mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
             }
 
-            ded_sky_t* skyDef = 0;
+            ded_sky_t *skyDef = 0;
             if(mapInfo)
             {
                 skyDef = Def_GetSky(mapInfo->skyID);
@@ -361,10 +360,7 @@ boolean DAM_AttemptMapLoad(Uri const* _uri)
             Rend_RadioInitForMap();
 #endif
 
-            { uint startTime = Timer_RealMilliseconds();
             GameMap_InitSkyFix(map);
-            VERBOSE2( Con_Message("Initial sky fix done in %.2f seconds.", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
-            }
         }
     }
 

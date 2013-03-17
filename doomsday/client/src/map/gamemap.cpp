@@ -49,10 +49,6 @@ GameMap::GameMap()
     numPolyObjs = 0;
     polyObjs = 0;
     bsp = 0;
-    numBspLeafs = 0;
-    bspLeafs = 0;
-    numBspNodes = 0;
-    bspNodes = 0;
     entityDatabase = 0;
     mobjBlockmap = 0;
     polyobjBlockmap = 0;
@@ -286,18 +282,18 @@ Surface *GameMap_SurfaceBySoundEmitter(GameMap *map, void const *soundEmitter)
     return 0; // Not found.
 }
 
-int GameMap_BspLeafIndex(GameMap *map, BspLeaf const *leaf)
+int GameMap_BspLeafIndex(GameMap *map, BspLeaf const *bspLeaf)
 {
     DENG_UNUSED(map);
-    if(!leaf) return -1;
-    return leaf->origIndex();
+    if(!bspLeaf) return -1;
+    return bspLeaf->origIndex();
 }
 
-BspLeaf* GameMap_BspLeaf(GameMap* map, uint idx)
+BspLeaf *GameMap_BspLeaf(GameMap *map, uint idx)
 {
     DENG2_ASSERT(map);
-    if(idx >= map->numBspLeafs) return NULL;
-    return map->bspLeafs[idx];
+    if(idx >= map->bspLeafCount()) return NULL;
+    return &map->bspLeafs[idx];
 }
 
 int GameMap_HEdgeIndex(GameMap *map, HEdge const *hedge)
@@ -314,18 +310,18 @@ HEdge *GameMap_HEdge(GameMap *map, uint idx)
     return &map->hedges[idx];
 }
 
-int GameMap_BspNodeIndex(GameMap *map, BspNode const *node)
+int GameMap_BspNodeIndex(GameMap *map, BspNode const *bspLeaf)
 {
     DENG_UNUSED(map);
-    if(!node) return -1;
-    return node->origIndex();
+    if(!bspLeaf) return -1;
+    return bspLeaf->origIndex();
 }
 
 BspNode *GameMap_BspNode(GameMap *map, uint idx)
 {
     DENG2_ASSERT(map);
-    if(idx >= map->numBspNodes) return NULL;
-    return map->bspNodes[idx];
+    if(idx >= map->bspNodeCount()) return NULL;
+    return &map->bspNodes[idx];
 }
 
 uint GameMap_VertexCount(GameMap *map)
@@ -355,7 +351,7 @@ uint GameMap_SectorCount(GameMap *map)
 uint GameMap_BspLeafCount(GameMap *map)
 {
     DENG2_ASSERT(map);
-    return map->numBspLeafs;
+    return map->bspLeafCount();
 }
 
 uint GameMap_HEdgeCount(GameMap *map)
@@ -367,7 +363,7 @@ uint GameMap_HEdgeCount(GameMap *map)
 uint GameMap_BspNodeCount(GameMap *map)
 {
     DENG2_ASSERT(map);
-    return map->numBspNodes;
+    return map->bspNodeCount();
 }
 
 uint GameMap_PolyobjCount(GameMap* map)
@@ -892,45 +888,46 @@ static int GameMap_IterateCellBspLeafs(GameMap* map, const_BlockmapCell cell,
 }
 */
 
-static int GameMap_IterateCellBlockBspLeafs(GameMap* map, const BlockmapCellBlock* cellBlock,
-    Sector* sector,  const AABoxd* box, int localValidCount,
-    int (*callback) (BspLeaf*, void*), void* context)
+static int GameMap_IterateCellBlockBspLeafs(GameMap *map, BlockmapCellBlock const *cellBlock,
+    Sector *sector,  AABoxd const *box, int localValidCount,
+    int (*callback) (BspLeaf *, void *), void *context)
 {
-    bmapbspleafiterateparams_t args;
     DENG2_ASSERT(map);
 
+    bmapbspleafiterateparams_t args;
     args.localValidCount = localValidCount;
-    args.func = callback;
-    args.param = context;
+    args.func   = callback;
+    args.param  = context;
     args.sector = sector;
-    args.box = box;
+    args.box    = box;
 
     return Blockmap_IterateCellBlockObjects(map->bspLeafBlockmap, cellBlock,
                                             blockmapCellBspLeafsIterator, (void*) &args);
 }
 
-int GameMap_BspLeafsBoxIterator(GameMap* map, const AABoxd* box, Sector* sector,
-    int (*callback) (BspLeaf*, void*), void* parameters)
+int GameMap_BspLeafsBoxIterator(GameMap *map, AABoxd const *box, Sector *sector,
+    int (*callback) (BspLeaf *, void *), void *parameters)
 {
-    static int localValidCount = 0;
-    BlockmapCellBlock cellBlock;
     DENG2_ASSERT(map);
+
+    static int localValidCount = 0;
 
     // This is only used here.
     localValidCount++;
 
+    BlockmapCellBlock cellBlock;
     Blockmap_CellBlock(map->bspLeafBlockmap, &cellBlock, box);
+
     return GameMap_IterateCellBlockBspLeafs(map, &cellBlock, sector, box,
                                               localValidCount, callback, parameters);
 }
 
-int GameMap_BspLeafIterator(GameMap* map, int (*callback) (BspLeaf*, void*), void* parameters)
+int GameMap_BspLeafIterator(GameMap *map, int (*callback) (BspLeaf *, void *), void *parameters)
 {
-    uint i;
     DENG2_ASSERT(map);
-    for(i = 0; i < map->numBspLeafs; ++i)
+    for(uint i = 0; i < map->bspLeafCount(); ++i)
     {
-        int result = callback(map->bspLeafs[i], parameters);
+        int result = callback(&map->bspLeafs[i], parameters);
         if(result) return result;
     }
     return false; // Continue iteration.
@@ -1170,7 +1167,7 @@ int GameMap_SectorIterator(GameMap *map, int (*callback) (Sector *, void *), voi
 int GameMap_HEdgeIterator(GameMap *map, int (*callback) (HEdge *, void *), void *parameters)
 {
     DENG2_ASSERT(map);
-    for(int i = 0; i < map->hedges.size(); ++i)
+    for(uint i = 0; i < map->hedgeCount(); ++i)
     {
         int result = callback(&map->hedges[i], parameters);
         if(result) return result;
@@ -1181,9 +1178,9 @@ int GameMap_HEdgeIterator(GameMap *map, int (*callback) (HEdge *, void *), void 
 int GameMap_BspNodeIterator(GameMap *map, int (*callback) (BspNode *, void *), void *parameters)
 {
     DENG2_ASSERT(map);
-    for(uint i = 0; i < map->numBspNodes; ++i)
+    for(uint i = 0; i < map->bspNodeCount(); ++i)
     {
-        int result = callback(map->bspNodes[i], parameters);
+        int result = callback(&map->bspNodes[i], parameters);
         if(result) return result;
     }
     return false; // Continue iteration.
