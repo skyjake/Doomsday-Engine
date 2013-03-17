@@ -190,7 +190,9 @@ LinkWindow::LinkWindow(QWidget *parent)
 
     connect(svMenu, SIGNAL(aboutToShow()), app, SLOT(updateLocalServerMenu()));
 
-    QMenu *helpMenu = menuBar()->addMenu(tr("&Help"));
+    QMenu *helpMenu = app->makeHelpMenu();
+    menuBar()->addMenu(helpMenu);
+    helpMenu->addSeparator();
     helpMenu->addAction(tr("About Doomsday Shell"), app, SLOT(aboutShell()));
 #endif
 

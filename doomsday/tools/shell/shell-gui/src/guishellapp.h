@@ -37,6 +37,7 @@ public:
 
     static GuiShellApp &app();
     QMenu *localServersMenu();
+    QMenu *makeHelpMenu();
 
 public slots:
     void connectToServer();
@@ -47,6 +48,7 @@ public slots:
     void stopServer();
     void updateLocalServerMenu();
     void aboutShell();
+    void showHelp();
     void showPreferences();
     void preferencesDone();
     void updateMenu();

@@ -26,6 +26,8 @@
 #include <de/shell/ServerFinder>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QUrl>
+#include <QDesktopServices>
 
 Q_DECLARE_METATYPE(de::Address)
 
@@ -98,10 +100,14 @@ GuiShellApp::GuiShellApp(int &argc, char **argv)
     // These will appear in the application menu:
     menu->addAction(tr("Preferences..."), this, SLOT(showPreferences()), QKeySequence(tr("Ctrl+,")));
     menu->addAction(tr("About"), this, SLOT(aboutShell()));
+
+    d->menuBar->addMenu(makeHelpMenu());
 #endif
 
     newOrReusedConnectionWindow();
 }
+
+
 
 LinkWindow *GuiShellApp::newOrReusedConnectionWindow()
 {
@@ -149,6 +155,13 @@ GuiShellApp &GuiShellApp::app()
 QMenu *GuiShellApp::localServersMenu()
 {
     return d->localMenu;
+}
+
+QMenu *GuiShellApp::makeHelpMenu()
+{
+    QMenu *helpMenu = new QMenu(tr("&Help"));
+    helpMenu->addAction(tr("Shell Help"), this, SLOT(showHelp()));
+    return helpMenu;
 }
 
 ServerFinder &GuiShellApp::serverFinder()
@@ -257,6 +270,11 @@ void GuiShellApp::updateLocalServerMenu()
 void GuiShellApp::aboutShell()
 {
     AboutDialog().exec();
+}
+
+void GuiShellApp::showHelp()
+{
+    QDesktopServices::openUrl(QUrl(tr("http://dengine.net/dew/index.php?title=Shell_Help")));
 }
 
 void GuiShellApp::showPreferences()
