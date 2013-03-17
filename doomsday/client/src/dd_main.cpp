@@ -51,7 +51,6 @@
 #include "de_render.h"
 #include "de_audio.h"
 #include "de_ui.h"
-#include "de_bsp.h"
 #include "de_edit.h"
 #include "de_filesys.h"
 #include "de_resource.h"
@@ -641,7 +640,7 @@ void DD_Register(void)
     Textures::consoleRegister();
     Net_Register();
     DAM_Register();
-    BspBuilder_Register();
+    MPE_Register();
     FI_Register();
 }
 

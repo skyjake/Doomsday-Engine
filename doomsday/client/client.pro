@@ -183,7 +183,6 @@ DENG_HEADERS += \
     include/dd_pinit.h \
     include/de_audio.h \
     include/de_base.h \
-    include/de_bsp.h \
     include/de_console.h \
     include/de_dam.h \
     include/de_defs.h \
@@ -203,7 +202,6 @@ DENG_HEADERS += \
     include/def_main.h \
     include/dualstring.h \
     include/edit_bias.h \
-    include/edit_bsp.h \
     include/edit_map.h \
     include/filehandle.h \
     include/filesys/file.h \
@@ -491,7 +489,6 @@ SOURCES += \
     src/def_read.cpp \
     src/dualstring.cpp \
     src/edit_bias.cpp \
-    src/edit_bsp.cpp \
     src/edit_map.cpp \
     src/filesys/file.cpp \
     src/filesys/filehandle.cpp \

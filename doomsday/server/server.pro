@@ -149,7 +149,6 @@ DENG_HEADERS += \
     $$SRC/include/dd_pinit.h \
     $$SRC/include/de_audio.h \
     $$SRC/include/de_base.h \
-    $$SRC/include/de_bsp.h \
     $$SRC/include/de_console.h \
     $$SRC/include/de_dam.h \
     $$SRC/include/de_defs.h \
@@ -168,7 +167,6 @@ DENG_HEADERS += \
     $$SRC/include/def_data.h \
     $$SRC/include/def_main.h \
     $$SRC/include/dualstring.h \
-    $$SRC/include/edit_bsp.h \
     $$SRC/include/edit_map.h \
     $$SRC/include/filehandle.h \
     $$SRC/include/filesys/file.h \
@@ -349,7 +347,6 @@ SOURCES += \
     $$SRC/src/def_main.cpp \
     $$SRC/src/def_read.cpp \
     $$SRC/src/dualstring.cpp \
-    $$SRC/src/edit_bsp.cpp \
     $$SRC/src/edit_map.cpp \
     $$SRC/src/filesys/file.cpp \
     $$SRC/src/filesys/filehandle.cpp \

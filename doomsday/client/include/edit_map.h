@@ -69,9 +69,12 @@ public:
 #define PRUNE_SECTORS       0x8
 #define PRUNE_ALL           (PRUNE_LINEDEFS|PRUNE_VERTEXES|PRUNE_SIDEDEFS|PRUNE_SECTORS)
 
+void MPE_Register();
+
 void MPE_PruneRedundantMapData(EditMap *map, int flags);
 
 GameMap *MPE_GetLastBuiltMap();
+
 boolean MPE_GetLastBuiltMapResult();
 
 #endif // LIBDENG_MAP_EDITOR_H

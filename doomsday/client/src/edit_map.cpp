@@ -1,6 +1,4 @@
-/** @file edit_map.cpp
-
- * Map Editor interface. @ingroup map
+/** @file edit_map.cpp Map Editor interface.
  *
  * @authors Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright &copy; 2000-2007 Andrew Apted <ajapted@gmail.com>
@@ -24,27 +22,22 @@
 
 #define DENG_NO_API_MACROS_MAP_EDIT
 
-#include <math.h>
+#include <cmath>
 
 #include "de_base.h"
 #include "de_console.h"
 #include "de_play.h"
-#include "de_bsp.h"
 #include "de_misc.h"
 #include "de_edit.h"
 #include "de_dam.h"
 #include "de_filesys.h"
 
 #include <de/StringPool>
+#include <BspBuilder>
 
 #include "audio/s_environ.h"
 
 using namespace de;
-
-typedef struct {
-    ddstring_t uri;
-    uint count; ///< Number of times this has been found missing.
-} missingmaterialrecord_t;
 
 static void printMissingMaterials();
 static void clearMaterialDict();
@@ -70,6 +63,13 @@ static GameMap *lastBuiltMap;
 
 static Vertex *rootVtx; // Used when sorting vertex line owners.
 
+static int bspFactor = 7;
+
+void MPE_Register()
+{
+    C_VAR_INT("bsp-factor", &bspFactor, CVF_NO_MAX, 0, 0);
+}
+
 static Vertex *createVertex(coord_t x, coord_t y)
 {
     Vertex *vtx = new Vertex(x, y);
@@ -85,8 +85,8 @@ static LineDef *createLine()
     LineDef *line = new LineDef;
 
     e_map->lines.push_back(line);
-
     line->_origIndex = e_map->lines.size(); // 1-based index, 0 = NIL.
+
     return line;
 }
 
@@ -103,6 +103,7 @@ static SideDef *createSideDef()
 static Sector *createSector(Vector3f const &ambientLightColor, float lightLevel)
 {
     Sector *sec = new Sector;
+
     sec->_lightColor[CR] = de::clamp(0.f, ambientLightColor.x, 1.f);
     sec->_lightColor[CG] = de::clamp(0.f, ambientLightColor.y, 1.f);
     sec->_lightColor[CB] = de::clamp(0.f, ambientLightColor.z, 1.f);
@@ -123,6 +124,7 @@ static Polyobj *createPolyobj()
     e_map->polyObjs[e_map->numPolyObjs] = NULL;
 
     po->buildData.index = e_map->numPolyObjs; // 1-based index, 0 = NIL.
+
     return po;
 }
 
@@ -151,7 +153,7 @@ static void destroyEditableLineDefs(EditMap *map)
     map->lines.clear();
 }
 
-static void destroyEditableSideDefs(EditMap* map)
+static void destroyEditableSideDefs(EditMap *map)
 {
     DENG2_FOR_EACH(EditMap::SideDefs, s, map->sideDefs)
     {
@@ -160,7 +162,7 @@ static void destroyEditableSideDefs(EditMap* map)
     map->sideDefs.clear();
 }
 
-static void destroyEditableSectors(EditMap* map)
+static void destroyEditableSectors(EditMap *map)
 {
     /*
     if(map->sectors)
@@ -222,14 +224,14 @@ static int vertexCompare(void const *p1, void const *p2)
 void MPE_DetectDuplicateVertices(EditMap *map)
 {
     DENG_ASSERT(map);
-    Vertex **hits = (Vertex**) M_Malloc(map->vertexCount() * sizeof(Vertex*));
+    Vertex **hits = (Vertex **) M_Malloc(map->vertexCount() * sizeof(Vertex *));
 
     // Sort array of ptrs.
     for(uint i = 0; i < map->vertexCount(); ++i)
     {
         hits[i] = map->vertexes[i];
     }
-    qsort(hits, map->vertexCount(), sizeof(Vertex*), vertexCompare);
+    qsort(hits, map->vertexCount(), sizeof(Vertex *), vertexCompare);
 
     // Now mark them off.
     for(uint i = 0; i < map->vertexCount() - 1; ++i)
@@ -249,14 +251,14 @@ void MPE_DetectDuplicateVertices(EditMap *map)
 }
 
 #if 0
-static void findEquivalentVertexes(EditMap* src)
+static void findEquivalentVertexes(EditMap *src)
 {
     uint i, newNum;
 
     // Scan all linedefs.
     for(i = 0, newNum = 0; i < src->numLineDefs; ++i)
     {
-        LineDef* l = src->lineDefs[i];
+        LineDef *l = src->lineDefs[i];
 
         // Handle duplicated vertices.
         while(l->v[0]->buildData.equiv)
@@ -278,13 +280,13 @@ static void findEquivalentVertexes(EditMap* src)
     }
 }
 
-static void pruneLinedefs(EditMap* map)
+static void pruneLinedefs(EditMap *map)
 {
     uint i, newNum, unused = 0;
 
     for(i = 0, newNum = 0; i < map->numLineDefs; ++i)
     {
-        LineDef* l = map->lineDefs[i];
+        LineDef *l = map->lineDefs[i];
 
         if(!l->hasFrontSideDef() && !l->hasBackSideDef())
         {
@@ -307,7 +309,7 @@ static void pruneLinedefs(EditMap* map)
     }
 }
 
-static void pruneVertices(EditMap* map)
+static void pruneVertices(EditMap *map)
 {
     uint i, newNum, unused = 0;
 
@@ -346,7 +348,7 @@ static void pruneVertices(EditMap* map)
     }
 }
 
-static void pruneUnusedSidedefs(EditMap* map)
+static void pruneUnusedSidedefs(EditMap *map)
 {
     uint i, newNum, unused = 0;
 
@@ -380,7 +382,7 @@ static void pruneUnusedSidedefs(EditMap* map)
     }
 }
 
-static void pruneUnusedSectors(EditMap* map)
+static void pruneUnusedSectors(EditMap *map)
 {
     uint i, newNum;
 
@@ -1298,34 +1300,229 @@ static void findBounds(Vertex const** vertexes, uint numVertexes, vec2d_t min, v
     }
 }
 
-static boolean buildBsp(GameMap* gamemap)
+struct HEdgeCollectorParms
 {
-    BspBuilder_c* bspBuilder = NULL;
-    uint startTime;
-    boolean builtOK;
+    GameMap *map;
+    BspBuilder *builder;
+};
 
-    if(!e_map) return false;
-
-    LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_INFO,
-        "Building BSP using tunable split factor of %d...\n", bspFactor);
-
-    // It begins...
-    startTime = Timer_RealMilliseconds();
-
-    bspBuilder = BspBuilder_New(gamemap, e_map->vertexCount(), e_map->verticesAsArray());
-    BspBuilder_SetSplitCostFactor(bspBuilder, bspFactor);
-
-    builtOK = BspBuilder_Build(bspBuilder);
-    if(builtOK)
+static int hedgeCollector(BspTreeNode &tree, void *parameters)
+{
+    if(tree.isLeaf())
     {
-        MPE_SaveBsp(bspBuilder, gamemap, e_map->vertexCount(), e_map->verticesAsArray());
+        HEdgeCollectorParms* p = static_cast<HEdgeCollectorParms*>(parameters);
+        BspLeaf *leaf = tree.userData()->castTo<BspLeaf>();
+        HEdge *base = leaf->firstHEdge();
+        HEdge *hedge = base;
+        do
+        {
+            // Take ownership of this HEdge.
+            p->builder->take(hedge);
+
+            // Add this HEdge to the LUT.
+            hedge->_origIndex = p->map->hedges.count();
+            p->map->hedges.append(hedge);
+
+            if(hedge->hasLine())
+            {
+                Vertex const &vtx = hedge->line().vertex(hedge->lineSideId());
+
+                hedge->_sector = hedge->line().sectorPtr(hedge->lineSideId());
+                hedge->_lineOffset = V2d_Distance(hedge->v1Origin(), vtx.origin());
+            }
+
+            hedge->_angle = bamsAtan2(int( hedge->v2Origin()[VY] - hedge->v1Origin()[VY] ),
+                                      int( hedge->v2Origin()[VX] - hedge->v1Origin()[VX] )) << FRACBITS;
+
+            // Calculate the length of the segment.
+            hedge->_length = V2d_Distance(hedge->v2Origin(), hedge->v1Origin());
+
+            if(hedge->_length == 0)
+                hedge->_length = 0.01f; // Hmm...
+
+        } while((hedge = &hedge->next()) != base);
+    }
+    return false; // Continue traversal.
+}
+
+static void collateHEdges(BspBuilder &builder, GameMap &map)
+{
+    DENG2_ASSERT(map.hedges.isEmpty());
+
+    if(!builder.numHEdges()) return; // Should never happen.
+#ifdef DENG2_QT_4_7_OR_NEWER
+    map.hedges.reserve(builder.numHEdges());
+#endif
+
+    HEdgeCollectorParms parms;
+    parms.builder = &builder;
+    parms.map     = &map;
+    builder.root()->traverseInOrder(hedgeCollector, &parms);
+}
+
+static void collateVertexes(BspBuilder &builder, GameMap &map,
+    uint *numEditableVertexes, Vertex const ***editableVertexes)
+{
+    uint bspVertexCount = builder.numVertexes();
+
+    DENG2_ASSERT(map.vertexes.isEmpty());
+#ifdef DENG2_QT_4_7_OR_NEWER
+    map.vertexes.reserve(*numEditableVertexes + bspVertexCount);
+#endif
+
+    uint n = 0;
+    for(; n < *numEditableVertexes; ++n)
+    {
+        Vertex *vtx = const_cast<Vertex *>((*editableVertexes)[n]);
+        map.vertexes.append(vtx);
     }
 
-    BspBuilder_Delete(bspBuilder);
+    for(uint i = 0; i < bspVertexCount; ++i, ++n)
+    {
+        Vertex &vtx  = builder.vertex(i);
+
+        builder.take(&vtx);
+        map.vertexes.append(&vtx);
+    }
+}
+
+struct CollateBspElementsParms
+{
+    BspBuilder *builder;
+    GameMap *map;
+};
+
+static void collateBspElements(BspTreeNode &tree, CollateBspElementsParms const &parms)
+{
+    // We are only interested in BspNodes at this level.
+    if(tree.isLeaf()) return; // Continue iteration.
+
+    // Take ownership of this BspNode.
+    DENG2_ASSERT(tree.userData());
+    BspNode *node = tree.userData()->castTo<BspNode>();
+    parms.builder->take(node);
+
+    // Add this BspNode to the LUT.
+    node->_index = parms.map->bspNodes.count();
+    parms.map->bspNodes.append(node);
+
+    if(BspTreeNode *right = tree.right())
+    {
+        if(right->isLeaf())
+        {
+            // Take ownership of this BspLeaf.
+            DENG2_ASSERT(right->userData());
+            BspLeaf *leaf = right->userData()->castTo<BspLeaf>();
+            parms.builder->take(leaf);
+
+            // Add this BspLeaf to the LUT.
+            leaf->_index = parms.map->bspLeafs.count();
+            parms.map->bspLeafs.append(leaf);
+        }
+    }
+
+    if(BspTreeNode *left = tree.left())
+    {
+        if(left->isLeaf())
+        {
+            // Take ownership of this BspLeaf.
+            DENG2_ASSERT(left->userData());
+            BspLeaf *leaf = left->userData()->castTo<BspLeaf>();
+            parms.builder->take(leaf);
+
+            // Add this BspLeaf to the LUT.
+            leaf->_index = parms.map->bspLeafs.count();
+            parms.map->bspLeafs.append(leaf);
+        }
+    }
+}
+
+static int collateBspElementsWorker(BspTreeNode &tree, void *parameters)
+{
+    collateBspElements(tree, *static_cast<CollateBspElementsParms *>(parameters));
+    return false; // Continue iteration.
+}
+
+static void collateBSP(BspBuilder &builder, GameMap &map)
+{
+    DENG2_ASSERT(map.bspLeafs.isEmpty());
+    DENG2_ASSERT(map.bspNodes.isEmpty());
+
+#ifdef DENG2_QT_4_7_OR_NEWER
+    map.bspNodes.reserve(builder.numNodes());
+    map.bspLeafs.reserve(builder.numLeafs());
+#endif
+
+    BspTreeNode *rootNode = builder.root();
+    map.bsp = rootNode->userData();
+
+    if(rootNode->isLeaf())
+    {
+        // Take ownership of this leaf.
+        DENG2_ASSERT(rootNode->userData());
+        BspLeaf *leaf = rootNode->userData()->castTo<BspLeaf>();
+        builder.take(leaf);
+
+        // Add this BspLeaf to the LUT.
+        leaf->_index = 0;
+        map.bspLeafs.append(leaf);
+
+        return;
+    }
+
+    CollateBspElementsParms parms;
+    parms.builder = &builder;
+    parms.map     = &map;
+    rootNode->traversePostOrder(collateBspElementsWorker, &parms);
+}
+
+static void saveBsp(BspBuilder &builder, GameMap &map, uint numEditableVertexes,
+                    Vertex const **editableVertexes)
+{
+    dint32 rHeight, lHeight;
+    BspTreeNode *rootNode = builder.root();
+    if(!rootNode->isLeaf())
+    {
+        rHeight = dint32(rootNode->right()->height());
+        lHeight = dint32(rootNode->left()->height());
+    }
+    else
+    {
+        rHeight = lHeight = 0;
+    }
+
+    LOG_INFO("BSP built: (%d:%d) %d Nodes, %d Leafs, %d HEdges, %d Vertexes.")
+            << rHeight << lHeight << builder.numNodes() << builder.numLeafs()
+            << builder.numHEdges() << builder.numVertexes();
+
+    collateHEdges(builder, map);
+    collateVertexes(builder, map, &numEditableVertexes, &editableVertexes);
+    collateBSP(builder, map);
+}
+
+static bool buildBsp(GameMap &gamemap)
+{
+    DENG2_ASSERT(e_map);
+
+    // It begins...
+    Time begunAt;
+
+    LOG_INFO("Building BSP using tunable split factor of %d...") << bspFactor;
+
+    // Instantiate and configure a new BSP builder.
+    BspBuilder nodeBuilder(gamemap, e_map->vertexCount(), e_map->verticesAsArray(), bspFactor);
+
+    // Build the BSP.
+    bool builtOK = nodeBuilder.build();
+    if(builtOK)
+    {
+        // Take ownership of the built map data elements.
+        saveBsp(nodeBuilder, gamemap, e_map->vertexCount(), e_map->verticesAsArray());
+    }
 
     // How much time did we spend?
-    LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_INFO,
-        "BSP built in %.2f seconds.\n", (Timer_RealMilliseconds() - startTime) / 1000.0f);
+    LOG_INFO(String("BSP built in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+
     return builtOK;
 }
 
@@ -1525,7 +1722,7 @@ boolean MPE_End(void)
     /**
      * Build a BSP for this map.
      */
-    builtOK = buildBsp(gamemap);
+    builtOK = buildBsp(*gamemap);
 
     // Finish the polyobjs (after the vertexes are hardened).
     for(i = 0; i < gamemap->numPolyObjs; ++i)
