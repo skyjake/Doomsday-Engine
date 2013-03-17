@@ -493,6 +493,10 @@ void LinkWindow::disconnected()
 void LinkWindow::askForPassword()
 {
     QInputDialog dlg(this);
+    dlg.setWindowTitle(tr("Password Required"));
+#ifdef WIN32
+    dlg.setWindowFlags(dlg.windowFlags() & ~Qt::WindowContextHelpButtonHint);
+#endif
     dlg.setWindowModality(Qt::WindowModal);
     dlg.setInputMode(QInputDialog::TextInput);
     dlg.setTextEchoMode(QLineEdit::Password);

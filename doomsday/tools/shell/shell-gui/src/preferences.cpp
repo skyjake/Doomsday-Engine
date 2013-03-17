@@ -23,6 +23,13 @@ DENG2_PIMPL(Preferences)
 
     Instance(Public &i) : Base(i), consoleFont(defaultConsoleFont())
     {
+#ifndef MACOSX
+        self.setWindowModality(Qt::ApplicationModal);
+#endif
+#ifdef WIN32
+        self.setWindowFlags(self.windowFlags() & ~Qt::WindowContextHelpButtonHint);
+#endif
+
         QSettings st;
         if(st.contains("Preferences/consoleFont"))
         {
@@ -81,10 +88,10 @@ DENG2_PIMPL(Preferences)
         mainLayout->addWidget(bbox);
         QPushButton *yes = bbox->addButton(tr("&OK"), QDialogButtonBox::YesRole);
         QPushButton *no = bbox->addButton(tr("&Cancel"), QDialogButtonBox::RejectRole);
-        QPushButton *act = bbox->addButton(tr("&Apply"), QDialogButtonBox::ActionRole);
+        //QPushButton *act = bbox->addButton(tr("&Apply"), QDialogButtonBox::ActionRole);
         QObject::connect(yes, SIGNAL(clicked()), &self, SLOT(accept()));
         QObject::connect(no, SIGNAL(clicked()), &self, SLOT(reject()));
-        QObject::connect(act, SIGNAL(clicked()), &self, SLOT(saveState()));
+        //QObject::connect(act, SIGNAL(clicked()), &self, SLOT(saveState()));
         yes->setDefault(true);
 #endif
     }
@@ -105,7 +112,7 @@ DENG2_PIMPL(Preferences)
         font = QFont("Menlo", 13);
 # endif
 #elif WIN32
-        font = QFont("Fixedsys", 9);
+        font = QFont("Courier New", 10);
 #else
         font = QFont("Monospace", 11);
 #endif

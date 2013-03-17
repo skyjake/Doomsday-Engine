@@ -50,6 +50,10 @@ DENG2_PIMPL(LocalServerDialog)
 
     Instance(Public &i) : Base(i)
     {
+#ifdef WIN32
+        self.setWindowFlags(self.windowFlags() & ~Qt::WindowContextHelpButtonHint);
+#endif
+
         QSettings st;
 
         self.setWindowTitle(tr("Start Local Server"));

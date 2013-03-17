@@ -287,11 +287,7 @@ void GuiShellApp::showPreferences()
         {
             connect(d->prefs, SIGNAL(consoleFontChanged()), win, SLOT(updateConsoleFontFromPreferences()));
         }
-#ifdef MACOSX
         d->prefs->show();
-#else
-        d->prefs->open();
-#endif
     }
     else
     {
