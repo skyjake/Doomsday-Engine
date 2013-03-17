@@ -1,5 +1,4 @@
-/** @file bspbuilder.cpp BspBuilder interface class. 
- * @ingroup map
+/** @file bspbuilder.cpp BSP Builder.
  *
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
@@ -25,30 +24,37 @@
 #include "map/bsp/partitioner.h"
 
 using namespace de;
+using namespace bsp;
 
-BspBuilder::BspBuilder(GameMap& map, uint numEditableVertexes, const Vertex **editableVertexes, int splitCostFactor)
+DENG2_PIMPL_NOREF(BspBuilder)
 {
-    partitioner = new bsp::Partitioner(map, numEditableVertexes, editableVertexes, splitCostFactor);
+    /// The space partitioner.
+    Partitioner partitioner;
+
+    Instance(GameMap &map, uint numEditableVertexes, Vertex const **editableVertexes)
+        : partitioner(map, numEditableVertexes, editableVertexes)
+    {}
+};
+
+BspBuilder::BspBuilder(GameMap &map, uint numEditableVertexes, Vertex const **editableVertexes,
+                       int splitCostFactor)
+    : d(new Instance(map, numEditableVertexes, editableVertexes))
+{
+    d->partitioner.setSplitCostFactor(splitCostFactor);
 }
 
-BspBuilder::~BspBuilder()
+void BspBuilder::setSplitCostFactor(int newFactor)
 {
-    delete partitioner;
+    d->partitioner.setSplitCostFactor(newFactor);
 }
 
-BspBuilder& BspBuilder::setSplitCostFactor(int factor)
-{
-    partitioner->setSplitCostFactor(factor);
-    return *this;
-}
-
-bool BspBuilder::build()
+bool BspBuilder::buildBsp()
 {
     try
     {
-        return partitioner->build();
+        return d->partitioner.build();
     }
-    catch(de::Error const& er)
+    catch(Error const &er)
     {
         LOG_AS("BspBuilder");
         LOG_WARNING("%s.") << er.asText();
@@ -56,39 +62,38 @@ bool BspBuilder::build()
     return false;
 }
 
-BspTreeNode* BspBuilder::root() const
+BspTreeNode *BspBuilder::root() const
 {
-    return partitioner->root();
+    return d->partitioner.root();
 }
 
 uint BspBuilder::numNodes()
 {
-    return partitioner->numNodes();
+    return d->partitioner.numNodes();
 }
 
 uint BspBuilder::numLeafs()
 {
-    return partitioner->numLeafs();
+    return d->partitioner.numLeafs();
 }
 
 uint BspBuilder::numHEdges()
 {
-    return partitioner->numHEdges();
+    return d->partitioner.numHEdges();
 }
 
 uint BspBuilder::numVertexes()
 {
-    return partitioner->numVertexes();
+    return d->partitioner.numVertexes();
 }
 
-Vertex& BspBuilder::vertex(uint idx)
+Vertex &BspBuilder::vertex(uint idx)
 {
-    DENG2_ASSERT(partitioner->vertex(idx).type() == DMU_VERTEX);
-    return partitioner->vertex(idx);
+    DENG2_ASSERT(d->partitioner.vertex(idx).type() == DMU_VERTEX);
+    return d->partitioner.vertex(idx);
 }
 
-BspBuilder& BspBuilder::take(de::MapElement* ob)
+void BspBuilder::take(MapElement *mapElement)
 {
-    partitioner->release(ob);
-    return *this;
+    d->partitioner.release(mapElement);
 }
