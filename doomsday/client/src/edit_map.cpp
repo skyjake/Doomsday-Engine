@@ -1367,45 +1367,30 @@ static void collateBspLeafHEdges(BspLeaf &leaf, CollateBspElementsParms const &p
 
 static void collateBspElements(BspTreeNode &tree, CollateBspElementsParms const &parms)
 {
-    // We are only interested in BspNodes at this level.
-    if(tree.isLeaf()) return; // Continue iteration.
+    if(tree.isLeaf())
+    {
+        // Take ownership of the built BspLeaf.
+        DENG2_ASSERT(tree.userData() != 0);
+        BspLeaf *leaf = tree.userData()->castTo<BspLeaf>();
+        parms.builder->take(leaf);
+
+        // Add this BspLeaf to the LUT.
+        leaf->_index = parms.map->bspLeafs.count();
+        parms.map->bspLeafs.append(leaf);
+
+        collateBspLeafHEdges(*leaf, parms);
+        return;
+    }
+    // Else; a node.
 
     // Take ownership of this BspNode.
-    DENG2_ASSERT(tree.userData());
+    DENG2_ASSERT(tree.userData() != 0);
     BspNode *node = tree.userData()->castTo<BspNode>();
     parms.builder->take(node);
 
     // Add this BspNode to the LUT.
     node->_index = parms.map->bspNodes.count();
     parms.map->bspNodes.append(node);
-
-    if(tree.hasRightLeaf())
-    {
-        // Take ownership of the built BspLeaf.
-        DENG2_ASSERT(tree.right().userData() != 0);
-        BspLeaf *leaf = tree.right().userData()->castTo<BspLeaf>();
-        parms.builder->take(leaf);
-
-        // Add this BspLeaf to the LUT.
-        leaf->_index = parms.map->bspLeafs.count();
-        parms.map->bspLeafs.append(leaf);
-
-        collateBspLeafHEdges(*leaf, parms);
-    }
-
-    if(tree.hasLeftLeaf())
-    {
-        // Take ownership of the built BspLeaf.
-        DENG2_ASSERT(tree.left().userData() != 0);
-        BspLeaf *leaf = tree.left().userData()->castTo<BspLeaf>();
-        parms.builder->take(leaf);
-
-        // Add this BspLeaf to the LUT.
-        leaf->_index = parms.map->bspLeafs.count();
-        parms.map->bspLeafs.append(leaf);
-
-        collateBspLeafHEdges(*leaf, parms);
-    }
 }
 
 static int collateBspElementsWorker(BspTreeNode &tree, void *parameters)
@@ -1414,45 +1399,7 @@ static int collateBspElementsWorker(BspTreeNode &tree, void *parameters)
     return false; // Continue iteration.
 }
 
-static void collateBSP(BspBuilder &builder, GameMap &map)
-{
-    DENG2_ASSERT(map.hedges.isEmpty());
-    DENG2_ASSERT(map.bspLeafs.isEmpty());
-    DENG2_ASSERT(map.bspNodes.isEmpty());
-
-#ifdef DENG2_QT_4_7_OR_NEWER
-    map.hedges.reserve(builder.numHEdges());
-    map.bspNodes.reserve(builder.numNodes());
-    map.bspLeafs.reserve(builder.numLeafs());
-#endif
-
-    BspTreeNode *rootNode = builder.root();
-    map.bsp = rootNode->userData();
-
-    CollateBspElementsParms parms;
-    parms.builder = &builder;
-    parms.map     = &map;
-
-    if(rootNode->isLeaf())
-    {
-        // Take ownership of this leaf.
-        DENG2_ASSERT(rootNode->userData());
-        BspLeaf *leaf = rootNode->userData()->castTo<BspLeaf>();
-        builder.take(leaf);
-
-        // Add this BspLeaf to the LUT.
-        leaf->_index = 0;
-        map.bspLeafs.append(leaf);
-
-        collateBspLeafHEdges(*leaf, parms);
-
-        return;
-    }
-
-    rootNode->traversePostOrder(collateBspElementsWorker, &parms);
-}
-
-static bool buildBsp(GameMap &gamemap)
+static bool buildBsp(GameMap &map)
 {
     DENG2_ASSERT(e_map);
 
@@ -1462,7 +1409,7 @@ static bool buildBsp(GameMap &gamemap)
     LOG_INFO("Building BSP using tunable split factor of %d...") << bspFactor;
 
     // Instantiate and configure a new BSP builder.
-    BspBuilder nodeBuilder(gamemap, e_map->vertexCount(), e_map->verticesAsArray(), bspFactor);
+    BspBuilder nodeBuilder(map, e_map->vertexCount(), e_map->verticesAsArray(), bspFactor);
 
     // Build the BSP.
     bool builtOK = nodeBuilder.buildBsp();
@@ -1473,29 +1420,49 @@ static bool buildBsp(GameMap &gamemap)
 
         BspTreeNode &treeRoot = *nodeBuilder.root();
 
-        // Determine the depth of the two main branches.
-        dint32 rHeight, lHeight;
+        // Determine the max depth of the two main branches.
+        dint32 rightBranchDpeth, leftBranchDepth;
         if(!treeRoot.isLeaf())
         {
-            rHeight = dint32( treeRoot.right().height() );
-            lHeight = dint32(  treeRoot.left().height() );
+            rightBranchDpeth = dint32( treeRoot.right().height() );
+            leftBranchDepth  = dint32(  treeRoot.left().height() );
         }
         else
         {
-            rHeight = lHeight = 0;
+            rightBranchDpeth = leftBranchDepth = 0;
         }
 
         LOG_INFO("BSP built: (%d:%d) %d Nodes, %d Leafs, %d HEdges, %d Vertexes.")
-                << rHeight << lHeight << nodeBuilder.numNodes() << nodeBuilder.numLeafs()
+                << rightBranchDpeth << leftBranchDepth
+                << nodeBuilder.numNodes()  << nodeBuilder.numLeafs()
                 << nodeBuilder.numHEdges() << nodeBuilder.numVertexes();
 
-        // Take ownership of the built map data elements.
-        collateVertexes(nodeBuilder, gamemap, e_mapNumVertexes, e_mapVertexesArray);
-        collateBSP(nodeBuilder, gamemap);
+        /*
+         * Take ownership of all the built map data elements.
+         */
+        DENG2_ASSERT(map.hedges.isEmpty());
+        DENG2_ASSERT(map.bspLeafs.isEmpty());
+        DENG2_ASSERT(map.bspNodes.isEmpty());
+
+#ifdef DENG2_QT_4_7_OR_NEWER
+        map.hedges.reserve(nodeBuilder.numHEdges());
+        map.bspNodes.reserve(nodeBuilder.numNodes());
+        map.bspLeafs.reserve(nodeBuilder.numLeafs());
+#endif
+
+        BspTreeNode *rootNode = nodeBuilder.root();
+        map.bsp = rootNode->userData(); // We'll formally take ownership shortly...
+
+        CollateBspElementsParms parms;
+        parms.builder = &nodeBuilder;
+        parms.map     = &map;
+
+        collateVertexes(nodeBuilder, map, e_mapNumVertexes, e_mapVertexesArray);
+        rootNode->traversePostOrder(collateBspElementsWorker, &parms);
     }
 
     // How much time did we spend?
-    LOG_INFO(String("BSP built in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_INFO(String("BSP build completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 
     return builtOK;
 }
