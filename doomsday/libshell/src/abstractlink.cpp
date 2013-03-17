@@ -45,7 +45,10 @@ DENG2_PIMPL(AbstractLink)
     ~Instance()
     {
         // Disconnection is implied since the link is being destroyed.
-        QObject::disconnect(socket.get(), SIGNAL(disconnected()), thisPublic, SLOT(socketDisconnected()));
+        if(socket.get())
+        {
+            QObject::disconnect(socket.get(), SIGNAL(disconnected()), thisPublic, SLOT(socketDisconnected()));
+        }
     }
 };
 
