@@ -295,15 +295,15 @@ private:
             HEdge const *hedge = base;
             do
             {
-                if(hedge->line && hedge->line->validCount() != validCount)
+                if(hedge->hasLine() && hedge->line().validCount() != validCount)
                 {
-                    LineDef &line = *hedge->line;
+                    LineDef &line = hedge->line();
                     line._validCount = validCount;
 
-                    if(!crossLine(line, hedge->side))
+                    if(!crossLine(line, hedge->lineSideId()))
                         return false;
                 }
-            } while((hedge = hedge->next) != base);
+            } while((hedge = &hedge->next()) != base);
         }
 
         return true; // Continue iteration.

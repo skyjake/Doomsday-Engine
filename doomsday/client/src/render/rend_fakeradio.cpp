@@ -521,7 +521,7 @@ typedef struct {
 } rendershadowseg_params_t;
 
 static void setTopShadowParams(rendershadowseg_params_t *p, float size, coord_t top,
-    coord_t const *xOffset, coord_t const *segLength, coord_t fFloor, coord_t fCeil,
+    coord_t xOffset, coord_t segLength, coord_t fFloor, coord_t fCeil,
     shadowcorner_t const *botCn, shadowcorner_t const *topCn, shadowcorner_t const *sideCn,
     edgespan_t const *spans)
 {
@@ -529,7 +529,7 @@ static void setTopShadowParams(rendershadowseg_params_t *p, float size, coord_t 
     p->horizontal = false;
     p->texHeight = size;
     p->texOffset[VY] = calcTexCoordY(top, fFloor, fCeil, p->texHeight);
-    p->wallLength = *segLength;
+    p->wallLength = segLength;
 
     p->texture = LST_RADIO_OO;
     // Corners without a neighbour backsector
@@ -539,7 +539,7 @@ static void setTopShadowParams(rendershadowseg_params_t *p, float size, coord_t 
         p->texture = LST_RADIO_OO;
         p->texWidth = spans[TOP].length;
         p->texOffset[VX] =
-            calcTexCoordX(spans[TOP].length, spans[TOP].shift + *xOffset);
+            calcTexCoordX(spans[TOP].length, spans[TOP].shift + xOffset);
 
         if((sideCn[0].corner == -1 && sideCn[1].corner == -1) ||
            (topCn[0].corner == -1 && topCn[1].corner == -1))
@@ -555,7 +555,7 @@ static void setTopShadowParams(rendershadowseg_params_t *p, float size, coord_t 
                 // Must flip horizontally!
                 p->texWidth = -spans[TOP].length;
                 p->texOffset[VX] =
-                    calcTexCoordX(-spans[TOP].length, spans[TOP].shift + *xOffset);
+                    calcTexCoordX(-spans[TOP].length, spans[TOP].shift + xOffset);
                 p->texture = LST_RADIO_OE;
             }
         }
@@ -571,7 +571,7 @@ static void setTopShadowParams(rendershadowseg_params_t *p, float size, coord_t 
     {
         // Corners WITH a neighbour backsector
         p->texWidth = spans[TOP].length;
-        p->texOffset[VX] = calcTexCoordX(spans[TOP].length, spans[TOP].shift + *xOffset);
+        p->texOffset[VX] = calcTexCoordX(spans[TOP].length, spans[TOP].shift + xOffset);
 
         if(topCn[0].corner == -1 && topCn[1].corner == -1)
         {
@@ -617,7 +617,7 @@ static void setTopShadowParams(rendershadowseg_params_t *p, float size, coord_t 
                     // Must flip horizontally!
                     p->texture = LST_RADIO_CO;
                     p->texWidth = -spans[TOP].length;
-                    p->texOffset[VX] = calcTexCoordX(-spans[TOP].length, spans[TOP].shift + *xOffset);
+                    p->texOffset[VX] = calcTexCoordX(-spans[TOP].length, spans[TOP].shift + xOffset);
 
                     // The shadow can't go over the higher edge.
                     if(size > -topCn[1].pOffset)
@@ -641,7 +641,7 @@ static void setTopShadowParams(rendershadowseg_params_t *p, float size, coord_t 
                     // Must flip horizontally!
                     p->texture = LST_RADIO_OE;
                     p->texWidth = -spans[BOTTOM].length;
-                    p->texOffset[VX] = calcTexCoordX(-spans[BOTTOM].length, spans[BOTTOM].shift + *xOffset);
+                    p->texOffset[VX] = calcTexCoordX(-spans[BOTTOM].length, spans[BOTTOM].shift + xOffset);
                 }
                 else if(-topCn[1].pOffset < -MINDIFF)
                 {
@@ -658,7 +658,7 @@ static void setTopShadowParams(rendershadowseg_params_t *p, float size, coord_t 
 
             // Must flip horizontally!
             p->texWidth = -spans[TOP].length;
-            p->texOffset[VX] = calcTexCoordX(-spans[TOP].length, spans[TOP].shift + *xOffset);
+            p->texOffset[VX] = calcTexCoordX(-spans[TOP].length, spans[TOP].shift + xOffset);
         }
         else if(topCn[1].corner <= MIN_OPEN)
         {
@@ -675,7 +675,7 @@ static void setTopShadowParams(rendershadowseg_params_t *p, float size, coord_t 
 }
 
 static void setBottomShadowParams(rendershadowseg_params_t *p, float size, coord_t top,
-    coord_t const *xOffset, coord_t const *segLength, coord_t fFloor, coord_t fCeil,
+    coord_t xOffset, coord_t segLength, coord_t fFloor, coord_t fCeil,
     shadowcorner_t const *botCn, shadowcorner_t const *topCn, shadowcorner_t const *sideCn,
     edgespan_t const *spans)
 {
@@ -683,7 +683,7 @@ static void setBottomShadowParams(rendershadowseg_params_t *p, float size, coord
     p->horizontal = false;
     p->texHeight = -size;
     p->texOffset[VY] = calcTexCoordY(top, fFloor, fCeil, p->texHeight);
-    p->wallLength = *segLength;
+    p->wallLength = segLength;
 
     p->texture = LST_RADIO_OO;
     // Corners without a neighbour backsector
@@ -692,7 +692,7 @@ static void setBottomShadowParams(rendershadowseg_params_t *p, float size, coord
         // At least one corner faces outwards
         p->texture = LST_RADIO_OO;
         p->texWidth = spans[BOTTOM].length;
-        p->texOffset[VX] = calcTexCoordX(spans[BOTTOM].length, spans[BOTTOM].shift + *xOffset);
+        p->texOffset[VX] = calcTexCoordX(spans[BOTTOM].length, spans[BOTTOM].shift + xOffset);
 
         if((sideCn[0].corner == -1 && sideCn[1].corner == -1) ||
            (botCn[0].corner == -1 && botCn[1].corner == -1) )
@@ -706,7 +706,7 @@ static void setBottomShadowParams(rendershadowseg_params_t *p, float size, coord
             {
                 // Must flip horizontally!
                 p->texWidth = -spans[BOTTOM].length;
-                p->texOffset[VX] = calcTexCoordX(-spans[BOTTOM].length, spans[BOTTOM].shift + *xOffset);
+                p->texOffset[VX] = calcTexCoordX(-spans[BOTTOM].length, spans[BOTTOM].shift + xOffset);
                 p->texture = LST_RADIO_OE;
             }
         }
@@ -722,7 +722,7 @@ static void setBottomShadowParams(rendershadowseg_params_t *p, float size, coord
     else
     {   // Corners WITH a neighbour backsector
         p->texWidth = spans[BOTTOM].length;
-        p->texOffset[VX] = calcTexCoordX(spans[BOTTOM].length, spans[BOTTOM].shift + *xOffset);
+        p->texOffset[VX] = calcTexCoordX(spans[BOTTOM].length, spans[BOTTOM].shift + xOffset);
         if(botCn[0].corner == -1 && botCn[1].corner == -1)
         {
             // Both corners face outwards
@@ -768,7 +768,7 @@ static void setBottomShadowParams(rendershadowseg_params_t *p, float size, coord
                     // Must flip horizontally!
                     p->texture = LST_RADIO_CO;
                     p->texWidth = -spans[BOTTOM].length;
-                    p->texOffset[VX] = calcTexCoordX(-spans[BOTTOM].length, spans[BOTTOM].shift + *xOffset);
+                    p->texOffset[VX] = calcTexCoordX(-spans[BOTTOM].length, spans[BOTTOM].shift + xOffset);
 
                     if(size > botCn[1].pOffset)
                     {
@@ -791,7 +791,7 @@ static void setBottomShadowParams(rendershadowseg_params_t *p, float size, coord
                     // Must flip horizontally!
                     p->texture = LST_RADIO_OE;
                     p->texWidth = -spans[BOTTOM].length;
-                    p->texOffset[VX] = calcTexCoordX(-spans[BOTTOM].length, spans[BOTTOM].shift + *xOffset);
+                    p->texOffset[VX] = calcTexCoordX(-spans[BOTTOM].length, spans[BOTTOM].shift + xOffset);
                 }
                 else if(botCn[1].pOffset < -MINDIFF)
                 {
@@ -808,7 +808,7 @@ static void setBottomShadowParams(rendershadowseg_params_t *p, float size, coord
 
             // Must flip horizontally!
             p->texWidth = -spans[BOTTOM].length;
-            p->texOffset[VX] = calcTexCoordX(-spans[BOTTOM].length, spans[BOTTOM].shift + *xOffset);
+            p->texOffset[VX] = calcTexCoordX(-spans[BOTTOM].length, spans[BOTTOM].shift + xOffset);
         }
         else if(botCn[1].corner <= MIN_OPEN)  // Left Corner is closed
         {
@@ -826,7 +826,7 @@ static void setBottomShadowParams(rendershadowseg_params_t *p, float size, coord
 
 static void setSideShadowParams(rendershadowseg_params_t *p, float size, coord_t bottom,
     coord_t top, boolean rightSide, boolean bottomGlow, boolean topGlow,
-    coord_t const *xOffset, coord_t const *segLength, coord_t fFloor,
+    coord_t xOffset, coord_t segLength, coord_t fFloor,
     coord_t fCeil, bool hasBackSector, coord_t bFloor, coord_t bCeil, coord_t const *lineLength,
     shadowcorner_t const *sideCn)
 {
@@ -835,12 +835,12 @@ static void setSideShadowParams(rendershadowseg_params_t *p, float size, coord_t
     p->horizontal = true;
     p->texOffset[VY] = bottom - fFloor;
     p->texHeight = fCeil - fFloor;
-    p->wallLength = *segLength;
+    p->wallLength = segLength;
 
     if(rightSide)
     {
         // Right shadow.
-        p->texOffset[VX] = -(*lineLength) + *xOffset;
+        p->texOffset[VX] = -(*lineLength) + xOffset;
         // Make sure the shadow isn't too big
         if(size > *lineLength)
         {
@@ -857,7 +857,7 @@ static void setSideShadowParams(rendershadowseg_params_t *p, float size, coord_t
     else
     {
         // Left shadow.
-        p->texOffset[VX] = *xOffset;
+        p->texOffset[VX] = xOffset;
         // Make sure the shadow isn't too big
         if(size > *lineLength)
         {
@@ -1115,7 +1115,7 @@ void Rend_RadioWallSection(rvertex_t const *rvertices, RendRadioWallSectionParms
     /*
      * Left Shadow.
      */
-    if(parms.sideCn[0].corner > 0 && *parms.segOffset < parms.shadowSize)
+    if(parms.sideCn[0].corner > 0 && parms.segOffset < parms.shadowSize)
     {
         rendershadowseg_params_t wsParms;
 
@@ -1131,7 +1131,7 @@ void Rend_RadioWallSection(rvertex_t const *rvertices, RendRadioWallSectionParms
      * Right Shadow.
      */
     if(parms.sideCn[1].corner > 0 &&
-       *parms.segOffset + *parms.segLength > lineLength - parms.shadowSize)
+       parms.segOffset + parms.segLength > lineLength - parms.shadowSize)
     {
         rendershadowseg_params_t wsParms;
 

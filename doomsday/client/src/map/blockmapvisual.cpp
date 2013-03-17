@@ -78,8 +78,8 @@ static int rendBspLeaf(BspLeaf *bspLeaf, void * /*parameters*/)
             HEdge *hedge = base;
             do
             {
-                V2f_Set(start, hedge->HE_v1origin[VX], hedge->HE_v1origin[VY]);
-                V2f_Set(end,   hedge->HE_v2origin[VX], hedge->HE_v2origin[VY]);
+                V2f_Set(start, hedge->v1Origin()[VX], hedge->v1Origin()[VY]);
+                V2f_Set(end,   hedge->v2Origin()[VX], hedge->v2Origin()[VY]);
 
                 glBegin(GL_LINES);
                     glVertex2fv(start);
@@ -133,7 +133,7 @@ static int rendBspLeaf(BspLeaf *bspLeaf, void * /*parameters*/)
                     glVertex2f(start[VX],   end[VY]);
                     glVertex2f(start[VX], start[VY]);
                 glEnd();
-            } while((hedge = hedge->next) != base);
+            } while((hedge = &hedge->next()) != base);
         }
 
         bspLeaf->_validCount = validCount;

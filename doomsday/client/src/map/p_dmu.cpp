@@ -421,7 +421,7 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
                     int result = callback(hedge, context);
                     if(result) return result;
 
-                } while((hedge = hedge->next) != base);
+                } while((hedge = &hedge->next()) != base);
             }
             return false; // Continue iteration.
 

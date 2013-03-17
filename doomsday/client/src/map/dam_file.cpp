@@ -980,14 +980,14 @@ static void writePolyobj(GameMap *map, uint idx)
         LineDef *line = p->lines[i];
         HEdge *he = line->front()._leftHEdge;
 
-        writeLong(map->vertexes.indexOf(static_cast<Vertex const *>(he->v[0])) + 1);
-        writeLong(map->vertexes.indexOf(static_cast<Vertex const *>(he->v[1])) + 1);
-        writeFloat(he->length);
-        writeFloat(he->offset);
-        writeLong(he->line? (map->lines.indexOf(he->line) + 1) : 0);
-        writeLong(he->sector? (GameMap_SectorIndex(map, he->sector) + 1) : 0);
-        writeLong((long) he->angle);
-        writeByte(he->side);
+        writeLong(map->vertexes.indexOf(he->_v[0]) + 1);
+        writeLong(map->vertexes.indexOf(he->_v[1]) + 1);
+        writeFloat(he->_length);
+        writeFloat(he->_lineOffset);
+        writeLong(he->_line? (map->lines.indexOf(he->_line) + 1) : 0);
+        writeByte(he->_lineSide);
+        writeLong(he->_sector? (GameMap_SectorIndex(map, he->_sector) + 1) : 0);
+        writeLong((long) he->_angle);
     }
 }
 
@@ -1024,24 +1024,25 @@ static void readPolyobj(GameMap *map, uint idx)
     {
         HEdge *he = hedges + i;
 
-        he->v[0] = &map->vertexes[(unsigned) readLong() - 1];
-        he->v[1] = &map->vertexes[(unsigned) readLong() - 1];
-        he->length = readFloat();
-        he->offset = readFloat();
+        he->_v[0] = &map->vertexes[(unsigned) readLong() - 1];
+        he->_v[1] = &map->vertexes[(unsigned) readLong() - 1];
+        he->_length = readFloat();
+        he->_lineOffset = readFloat();
 
         long obIdx = readLong();
-        he->line = (obIdx == 0? NULL : &map->lines[(unsigned) obIdx - 1]);
+        DENG_ASSERT(obIdx);
+        he->_line = &map->lines[(unsigned) obIdx - 1];
+        he->_lineSide = (readByte()? 1 : 0);
 
         obIdx = readLong();
-        he->sector = (obIdx == 0? NULL : &map->sectors[(unsigned) obIdx - 1]);
+        he->_sector = (obIdx == 0? NULL : &map->sectors[(unsigned) obIdx - 1]);
 
-        he->angle = (angle_t) readLong();
-        he->side = (readByte()? 1 : 0);
+        he->_angle = (angle_t) readLong();
 
-        LineDef *line = he->line;
-        line->front()._leftHEdge = line->front()._rightHEdge = he;
+        LineDef &line = *he->_line;
+        line.front()._leftHEdge = line.front()._rightHEdge = he;
 
-        p->lines[i] = line;
+        p->lines[i] = &line;
     }
     p->lines[p->lineCount] = NULL; // Terminate.
 }

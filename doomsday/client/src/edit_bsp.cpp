@@ -91,10 +91,10 @@ static int hedgeCollector(BspTreeNode& tree, void* parameters)
             p->builder->take(hedge);
 
             // Add this HEdge to the LUT.
-            hedge->index = p->curIdx++;
-            (*p->hedgeLUT)[hedge->index] = hedge;
+            hedge->_origIndex = p->curIdx++;
+            (*p->hedgeLUT)[hedge->_origIndex] = hedge;
 
-        } while((hedge = hedge->next) != base);
+        } while((hedge = &hedge->next()) != base);
     }
     return false; // Continue traversal.
 }
@@ -130,22 +130,22 @@ static void finishHEdges(GameMap *map)
     {
         HEdge *hedge = map->hedges[i];
 
-        if(hedge->line)
+        if(hedge->hasLine())
         {
-            Vertex const &vtx = hedge->line->vertex(hedge->side);
+            Vertex const &vtx = hedge->line().vertex(hedge->lineSideId());
 
-            hedge->sector = hedge->line->sectorPtr(hedge->side);
-            hedge->offset = V2d_Distance(hedge->HE_v1origin, vtx.origin());
+            hedge->_sector = hedge->line().sectorPtr(hedge->lineSideId());
+            hedge->_lineOffset = V2d_Distance(hedge->v1Origin(), vtx.origin());
         }
 
-        hedge->angle = bamsAtan2(int( hedge->HE_v2origin[VY] - hedge->HE_v1origin[VY] ),
-                                 int( hedge->HE_v2origin[VX] - hedge->HE_v1origin[VX] )) << FRACBITS;
+        hedge->_angle = bamsAtan2(int( hedge->v2Origin()[VY] - hedge->v1Origin()[VY] ),
+                                  int( hedge->v2Origin()[VX] - hedge->v1Origin()[VX] )) << FRACBITS;
 
         // Calculate the length of the segment.
-        hedge->length = V2d_Distance(hedge->HE_v2origin, hedge->HE_v1origin);
+        hedge->_length = V2d_Distance(hedge->v2Origin(), hedge->v1Origin());
 
-        if(hedge->length == 0)
-            hedge->length = 0.01f; // Hmm...
+        if(hedge->_length == 0)
+            hedge->_length = 0.01f; // Hmm...
     }
 }
 
@@ -295,8 +295,8 @@ static void updateVertexLinks(GameMap *map)
     {
         HEdge *hedge = map->hedges[i];
 
-        hedge->HE_v1 = &map->vertexes[hedge->v[0]->_buildData.index - 1];
-        hedge->HE_v2 = &map->vertexes[hedge->v[1]->_buildData.index - 1];
+        hedge->_v[0] = &map->vertexes[hedge->_v[0]->_buildData.index - 1];
+        hedge->_v[1] = &map->vertexes[hedge->_v[1]->_buildData.index - 1];
     }
 }
 

@@ -335,7 +335,7 @@ static void spreadInBspLeaf(BspLeaf *bspLeaf, void *parameters)
     do
     {
         processSeg(hedge, parameters);
-    } while((hedge = hedge->next) != base);
+    } while((hedge = &hedge->next()) != base);
 }
 
 static void processSeg(HEdge *hedge, void *parameters)
@@ -343,13 +343,11 @@ static void processSeg(HEdge *hedge, void *parameters)
     contactfinderparams_t *parms = (contactfinderparams_t *) parameters;
     DENG2_ASSERT(hedge && parms);
 
-    BspLeaf *leaf = hedge->bspLeaf;
-    BspLeaf *backLeaf = hedge->twin? hedge->twin->bspLeaf : 0;
-    linkobjtobspleafparams_t loParams;
-    coord_t distance;
-
     // There must be a back leaf to spread to.
-    if(!backLeaf) return;
+    if(!hedge->hasTwin()) return;
+
+    BspLeaf *leaf     = &hedge->bspLeaf();
+    BspLeaf *backLeaf = &hedge->twin().bspLeaf();
 
     // Which way does the spread go?
     if(!(leaf->validCount() == validCount && backLeaf->validCount() != validCount))
@@ -370,23 +368,23 @@ static void processSeg(HEdge *hedge, void *parameters)
         backLeaf->sector().floor().height() >= leaf->sector().ceiling().height())) return;
 
     // Too far from the object?
-    distance = hedge->pointOnSide(parms->objOrigin) / hedge->length;
+    coord_t distance = hedge->pointOnSide(parms->objOrigin) / hedge->length();
     if(fabs(distance) >= parms->objRadius) return;
 
     // Don't spread if the middle material covers the opening.
-    if(hedge->line)
+    if(hedge->hasLine())
     {
         // On which side of the line are we? (distance is from hedge to origin).
-        int lineSide = hedge->side ^ (distance < 0);
-        LineDef *line = hedge->line;
+        int lineSide = hedge->lineSideId() ^ (distance < 0);
+        LineDef &line = hedge->line();
         Sector *frontSec  = lineSide == FRONT? leaf->sectorPtr() : backLeaf->sectorPtr();
         Sector *backSec   = lineSide == FRONT? backLeaf->sectorPtr() : leaf->sectorPtr();
-        SideDef *frontDef = line->sideDefPtr(lineSide);
-        SideDef *backDef  = line->sideDefPtr(lineSide^1);
+        SideDef *frontDef = line.sideDefPtr(lineSide);
+        SideDef *backDef  = line.sideDefPtr(lineSide^1);
 
         if(backSec && !backDef) return; // One-sided window.
 
-        if(R_MiddleMaterialCoversOpening(line->flags(), frontSec, backSec, frontDef, backDef,
+        if(R_MiddleMaterialCoversOpening(line.flags(), frontSec, backSec, frontDef, backDef,
                                          false /*do not ignore material opacity*/)) return;
     }
 
@@ -394,6 +392,7 @@ static void processSeg(HEdge *hedge, void *parameters)
     backLeaf->_validCount = validCount;
 
     // Link up a new contact with the back BSP leaf.
+    linkobjtobspleafparams_t loParams;
     loParams.obj  = parms->obj;
     loParams.type = parms->objType;
     RIT_LinkObjToBspLeaf(backLeaf, &loParams);

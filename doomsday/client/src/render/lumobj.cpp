@@ -1174,11 +1174,11 @@ boolean LOIT_ClipLumObjBySight(void *data, void *context)
             HEdge &hedge = line->front().leftHEdge();
 
             // Ignore hedges facing the wrong way.
-            if(hedge.frameFlags & HEDGEINF_FACINGFRONT)
+            if(hedge._frameFlags & HEDGEINF_FACINGFRONT)
             {
                 vec2d_t origin; V2d_Set(origin, lum->origin[VX], lum->origin[VY]);
 
-                if(V2d_Intercept2(origin, eye, hedge.HE_v1origin, hedge.HE_v2origin, NULL, NULL, NULL))
+                if(V2d_Intercept2(origin, eye, hedge.v1Origin(), hedge.v2Origin(), 0, 0, 0))
                 {
                     luminousClipped[lumIdx] = 1;
                     break;

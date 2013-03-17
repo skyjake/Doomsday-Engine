@@ -633,16 +633,13 @@ static int inline C_OcclusionRelationship(binangle_t start, binangle_t startAngl
  */
 static void C_CutOcclusionRange(binangle_t startAngle, binangle_t endAngle)
 {
-    OccNode* orange, *next, *after, *part;
-    boolean isDone;
-
     DENG_DEBUG_ONLY(C_OrangeRanger(1));
 
     // Find the node after which it's OK to add oranges cut in half.
     // (Must preserve the ascending order of the start angles.)
-    after = NULL;
-    orange = occHead;
-    isDone = false;
+    OccNode *after = 0;
+    OccNode *orange = occHead;
+    boolean isDone = false;
     while(!isDone)
     {
         // We want the orange with the smallest start angle, but one that
@@ -660,6 +657,7 @@ static void C_CutOcclusionRange(binangle_t startAngle, binangle_t endAngle)
             orange = orange->next;
     }
 
+    OccNode *next = 0;
     orange = occHead;
     isDone = false;
     while(!isDone)
@@ -699,13 +697,13 @@ static void C_CutOcclusionRange(binangle_t startAngle, binangle_t endAngle)
                         orange->end = startAngle;
                         break;
 
-                    case 3: // The orange contains the whole cut range.
+                    case 3: { // The orange contains the whole cut range.
 
                         // The orange gets cut in two parts. Create a new orange that
                         // represents the end, and add it after the 'after' node, or to
                         // the head of the list.
-                        part = C_NewOcclusionRange(endAngle, orange->end, orange->normal,
-                                                   (orange->flags & OCNF_TOPHALF) != 0);
+                        OccNode *part = C_NewOcclusionRange(endAngle, orange->end, orange->normal,
+                                                            (orange->flags & OCNF_TOPHALF) != 0);
                         part->prev = after;
                         if(after)
                         {
@@ -724,7 +722,7 @@ static void C_CutOcclusionRange(binangle_t startAngle, binangle_t endAngle)
 
                         // Modify the start part.
                         orange->end = startAngle;
-                        break;
+                        break; }
 
                     default: // No meaningful relationship (in this context).
                         break;
@@ -752,13 +750,13 @@ static void C_CutOcclusionRange(binangle_t startAngle, binangle_t endAngle)
     DENG_DEBUG_ONLY(C_OrangeRanger(6));
 }
 
-void C_Init(void)
+void C_Init()
 {
     C_RoverInit(&clipNodes);
     C_RoverInit(&occNodes);
 }
 
-void C_ClearRanges(void)
+void C_ClearRanges()
 {
     clipHead = 0;
 
@@ -790,14 +788,12 @@ int C_SafeAddRange(binangle_t startAngle, binangle_t endAngle)
 
 void C_AddRangeFromViewRelPoints(coord_t const from[], coord_t const to[])
 {
-    vec2d_t eye, fromDir, toDir;
+    vec2d_t eye;     V2d_Set(eye, vOrigin[VX], vOrigin[VZ]);
+    vec2d_t fromDir; V2d_Subtract(fromDir, from, eye);
+    vec2d_t toDir;   V2d_Subtract(toDir, to, eye);
 
-    V2d_Set(eye, vOrigin[VX], vOrigin[VZ]);
-    V2d_Subtract(fromDir, from, eye);
-    V2d_Subtract(toDir, to, eye);
-
-    C_SafeAddRange(bamsAtan2((int) (  toDir[VY] * 100), (int) (  toDir[VX] * 100)),
-                   bamsAtan2((int) (fromDir[VY] * 100), (int) (fromDir[VX] * 100)));
+    C_SafeAddRange(bamsAtan2(int(   toDir[VY] * 100 ), int(   toDir[VX] * 100 )),
+                   bamsAtan2(int( fromDir[VY] * 100 ), int( fromDir[VX] * 100 )));
 }
 
 void C_AddRangeFromViewRelPointsXY(coord_t x1, coord_t y1, coord_t x2, coord_t y2)
@@ -811,7 +807,7 @@ void C_AddRangeFromViewRelPointsXY(coord_t x1, coord_t y1, coord_t x2, coord_t y
  * If necessary, cut the given range in two.
  */
 static void C_SafeAddOcclusionRange(binangle_t startAngle, binangle_t endAngle,
-    float* normal, boolean tophalf)
+    float *normal, boolean tophalf)
 {
     // Is this range already clipped?
     if(!C_SafeCheckRange(startAngle, endAngle)) return;
@@ -836,7 +832,7 @@ static void C_SafeAddOcclusionRange(binangle_t startAngle, binangle_t endAngle,
     }
 }
 
-void C_AddViewRelOcclusion(coord_t const* v1, coord_t const* v2, coord_t height, boolean topHalf)
+void C_AddViewRelOcclusion(coord_t const *v1, coord_t const *v2, coord_t height, boolean topHalf)
 {
     /// @todo Optimize:: Check if the given line is already occluded?
 
@@ -856,7 +852,7 @@ void C_AddViewRelOcclusion(coord_t const* v1, coord_t const* v2, coord_t height,
     V3f_CrossProductd(normal, topHalf ? viewToV2 : viewToV1,
                               topHalf ? viewToV1 : viewToV2);
 
-#if _DEBUG
+#ifdef DENG_DEBUG
     vec3f_t testPos;
     V3f_Set(testPos, 0, 0, (topHalf ? 1000 : -1000));
     if(bool Failed_C_AddViewRelOcclusion_SideTest = V3f_DotProduct(testPos, normal) < 0)
@@ -865,7 +861,7 @@ void C_AddViewRelOcclusion(coord_t const* v1, coord_t const* v2, coord_t height,
         LOG_WARNING("C_AddViewRelOcclusion: Wrong side v1[x:%f, y:%f] v2[x:%f, y:%f] view[x:%f, y:%f]!")
                 << v1[VX] << v1[VY] << v2[VX] << v2[VY]
                 << vOrigin[VX] << vOrigin[VZ];
-        assert(!Failed_C_AddViewRelOcclusion_SideTest);
+        DENG_ASSERT(!Failed_C_AddViewRelOcclusion_SideTest);
     }
 #endif
 
@@ -876,12 +872,11 @@ void C_AddViewRelOcclusion(coord_t const* v1, coord_t const* v2, coord_t height,
 /**
  * @return  Non-zero if the view relative point is occluded by an occlusion range.
  */
-static int C_IsPointOccluded(coord_t* viewRelPoint)
+static int C_IsPointOccluded(coord_t *viewRelPoint)
 {
     binangle_t angle = C_PointToAngle(viewRelPoint);
-    OccNode* orange;
 
-    for(orange = occHead; orange; orange = orange->next)
+    for(OccNode *orange = occHead; orange; orange = orange->next)
     {
         if(angle >= orange->start && angle <= orange->end)
         {
@@ -901,15 +896,14 @@ static int C_IsPointOccluded(coord_t* viewRelPoint)
 
 int C_IsPointVisible(coord_t x, coord_t y, coord_t height)
 {
-    coord_t point[3];
-    binangle_t angle;
-
     if(devNoCulling) return true;
 
+    coord_t point[3];
     point[0] = x - vOrigin[VX];
     point[1] = y - vOrigin[VZ];
     point[2] = height - vOrigin[VY];
-    angle = C_PointToAngle(point);
+
+    binangle_t angle = C_PointToAngle(point);
 
     if(!C_IsAngleVisible(angle))
         return false;
@@ -929,8 +923,8 @@ static boolean C_IsSegOccluded(coord_t relv1[3], coord_t relv2[3], coord_t relto
     // The segment is always fully occluded from startAngle to occAngle.
     float cross[3], testNormal[3];
     binangle_t occAngle, crossAngle, trueStart, trueEnd;
-    OccNode* orange;
-    ClipNode* ci;
+    OccNode *orange;
+    ClipNode *ci;
     boolean side1, side2, isSafe;
 
     // See if the given actual test range is safe. (startAngle and endAngle
@@ -1078,23 +1072,24 @@ static boolean C_IsSegOccluded(coord_t relv1[3], coord_t relv2[3], coord_t relto
  * @return  @c =true if the segment is visible according to the current clipnode
  *          and occlusion information.
  */
-static boolean C_CheckSeg(coord_t* v1, coord_t* v2, coord_t top, coord_t bottom)
+static boolean C_CheckSeg(coord_t *v1, coord_t *v2, coord_t top, coord_t bottom)
 {
-    coord_t relv1[3], relv2[3];
-    coord_t reltop = top - vOrigin[VY], relbottom = bottom - vOrigin[VY];
-    binangle_t start, end;
+    coord_t reltop    = top    - vOrigin[VY];
+    coord_t relbottom = bottom - vOrigin[VY];
 
+    coord_t relv1[3];
     relv1[VX] = v1[VX] - vOrigin[VX];
     relv1[VY] = v1[VY] - vOrigin[VZ];
     relv1[VZ] = 0;
 
+    coord_t relv2[3];
     relv2[VX] = v2[VX] - vOrigin[VX];
     relv2[VY] = v2[VY] - vOrigin[VZ];
     relv2[VZ] = 0;
 
     // Determine the range.
-    start = C_PointToAngle(relv2);
-    end   = C_PointToAngle(relv1);
+    binangle_t start = C_PointToAngle(relv2);
+    binangle_t end   = C_PointToAngle(relv1);
 
     if(start == end)
         return true; // Might as well be visible...
@@ -1122,7 +1117,7 @@ static boolean C_CheckSeg(coord_t* v1, coord_t* v2, coord_t top, coord_t bottom)
  */
 static int C_IsRangeVisible(binangle_t startAngle, binangle_t endAngle)
 {
-    for(ClipNode* ci = clipHead; ci; ci = ci->next)
+    for(ClipNode *ci = clipHead; ci; ci = ci->next)
     {
         if(startAngle >= ci->start && endAngle <= ci->end)
             return false;
@@ -1155,8 +1150,8 @@ int C_CheckRangeFromViewRelPoints(coord_t const from[], coord_t const to[])
     V2d_Subtract(fromDir, from, eye);
     V2d_Subtract(toDir, to, eye);
 
-    return C_SafeCheckRange(bamsAtan2((int) (  toDir[VY] * 1000), (int) (  toDir[VX] * 1000)) - BANG_45/90,
-                            bamsAtan2((int) (fromDir[VY] * 1000), (int) (fromDir[VX] * 1000)) + BANG_45/90);
+    return C_SafeCheckRange(bamsAtan2(int(   toDir[VY] * 1000 ), int(   toDir[VX] * 1000 )) - BANG_45/90,
+                            bamsAtan2(int( fromDir[VY] * 1000 ), int( fromDir[VX] * 1000 )) + BANG_45/90);
 }
 
 int C_CheckRangeFromViewRelPointsXY(coord_t x1, coord_t y1, coord_t x2, coord_t y2)
@@ -1170,7 +1165,7 @@ int C_IsAngleVisible(binangle_t bang)
 {
     if(devNoCulling) return true;
 
-    for(ClipNode* ci = clipHead; ci; ci = ci->next)
+    for(ClipNode *ci = clipHead; ci; ci = ci->next)
     {
         if(bang > ci->start && bang < ci->end)
             return false;
@@ -1180,9 +1175,9 @@ int C_IsAngleVisible(binangle_t bang)
 }
 
 #if 0
-static ClipNode* C_AngleClippedBy(binangle_t bang)
+static ClipNode *C_AngleClippedBy(binangle_t bang)
 {
-    for(ClipNode* ci = clipHead; ci; ci = ci->next)
+    for(ClipNode *ci = clipHead; ci; ci = ci->next)
     {
         if(bang > ci->start && bang < ci->end)
             return ci;
@@ -1204,35 +1199,32 @@ int C_CheckBspLeaf(BspLeaf *leaf)
         anglistSize *= 2;
         if(!anglistSize)
             anglistSize = 64;
-        anglist = static_cast<binangle_t*>(Z_Realloc(anglist, sizeof(*anglist) * anglistSize, PU_APPSTATIC));
+        anglist = static_cast<binangle_t *>(Z_Realloc(anglist, sizeof(*anglist) * anglistSize, PU_APPSTATIC));
     }
 
     // Find angles to all corners.
     uint n = 0;
-    HEdge *base = leaf->firstHEdge();
-    HEdge *hedge = base;
+    HEdge const *base = leaf->firstHEdge();
+    HEdge const *hedge = base;
     do
     {
-        Vertex *vtx = hedge->HE_v1;
         // Shift for more accuracy.
-        anglist[n++] = bamsAtan2(int( (vtx->origin()[VY] - vOrigin[VZ]) * 100 ),
-                                 int( (vtx->origin()[VX] - vOrigin[VX]) * 100 ));
+        anglist[n++] = bamsAtan2(int( (hedge->v1Origin()[VY] - vOrigin[VZ]) * 100 ),
+                                 int( (hedge->v1Origin()[VX] - vOrigin[VX]) * 100 ));
 
-    } while((hedge = hedge->next) != base);
+    } while((hedge = &hedge->next()) != base);
 
     // Check each of the ranges defined by the edges.
     for(uint i = 0; i < leaf->hedgeCount() - 1; ++i)
     {
-        uint end = i + 1;
-        binangle_t angLen;
-
         // The last edge won't be checked. This is because the edges
         // define a closed, convex polygon and the last edge's range is
         // always already covered by the previous edges. (Right?)
+        uint end = i + 1;
 
         // If even one of the edges is not contained by a clipnode,
         // the leaf is at least partially visible.
-        angLen = anglist[end] - anglist[i];
+        binangle_t angLen = anglist[end] - anglist[i];
 
         // The viewer is on an edge, the leaf should be visible.
         if(angLen == BANG_180) return true;
@@ -1254,17 +1246,17 @@ int C_CheckBspLeaf(BspLeaf *leaf)
     return false;
 }
 
-int C_IsFull(void)
+int C_IsFull()
 {
     if(devNoCulling) return false;
 
     return clipHead && clipHead->start == 0 && clipHead->end == BANG_MAX;
 }
 
-#if _DEBUG
+#ifdef DENG_DEBUG
 static void C_OrangeRanger(int mark)
 {
-    for(OccNode* orange = occHead; orange; orange = orange->next)
+    for(OccNode *orange = occHead; orange; orange = orange->next)
     {
         if(orange->prev && orange->prev->start > orange->start)
         {
@@ -1274,10 +1266,10 @@ static void C_OrangeRanger(int mark)
     }
 }
 
-static void C_OcclusionLister(void)
+static void C_OcclusionLister()
 {
     LOG_AS("Clipper");
-    for(OccNode* orange = occHead; orange; orange = orange->next)
+    for(OccNode *orange = occHead; orange; orange = orange->next)
     {
         LOG_INFO(QString("%1 => %2 (%i)")
                  .arg(orange->start, 0, 16)
@@ -1286,9 +1278,9 @@ static void C_OcclusionLister(void)
     }
 }
 
-void C_Ranger(void)
+void C_Ranger()
 {
-    for(ClipNode* ci = clipHead; ci; ci = ci->next)
+    for(ClipNode *ci = clipHead; ci; ci = ci->next)
     {
         if(ci == clipHead)
         {

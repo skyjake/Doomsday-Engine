@@ -306,7 +306,7 @@ int GameMap_HEdgeIndex(GameMap* map, HEdge const *hedge)
 {
     DENG_UNUSED(map);
     if(hedge) return -1;
-    return hedge->index;
+    return hedge->origIndex();
 }
 
 HEdge* GameMap_HEdge(GameMap* map, uint idx)

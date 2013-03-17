@@ -704,8 +704,8 @@ static void finishLines(GameMap *map)
 
         if(!front._leftHEdge) continue;
 
-        line._v[0] = front.leftHEdge().HE_v1;
-        line._v[1] = front.rightHEdge().HE_v2;
+        line._v[0] = &front.leftHEdge().v1();
+        line._v[1] = &front.rightHEdge().v2();
 
         line.updateSlopeType();
         line.updateAABox();
@@ -1142,11 +1142,11 @@ static void hardenPolyobjs(GameMap *dest, EditMap *src)
             line->_inFlags |= LF_POLYOBJ;
 
             //hedge->header.type = DMU_HEDGE;
-            hedge->line = line;
-            hedge->length = V2d_Distance(line->v2Origin(), line->v1Origin());
-            hedge->twin = NULL;
-            hedge->bspLeaf = NULL;
-            hedge->sector = line->frontSectorPtr();
+            hedge->_line = line;
+            hedge->_length = V2d_Distance(line->v2Origin(), line->v1Origin());
+            hedge->_twin = NULL;
+            hedge->_bspLeaf = 0;
+            hedge->_sector = line->frontSectorPtr();
 
             line->front()._leftHEdge = line->front()._rightHEdge = hedge;
 
@@ -1547,8 +1547,8 @@ boolean MPE_End(void)
             LineDef *line = *lineIter;
             HEdge &hedge = line->front().leftHEdge();
 
-            hedge.HE_v1 = &line->v1();
-            hedge.HE_v2 = &line->v2();
+            hedge._v[0] = &line->v1();
+            hedge._v[1] = &line->v2();
 
             // The original Pts are based off the anchor Pt, and are unique
             // to each hedge, not each linedef.

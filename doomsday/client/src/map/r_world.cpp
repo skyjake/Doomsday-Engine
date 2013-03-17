@@ -1433,14 +1433,14 @@ boolean R_UpdatePlane(Plane *pln, boolean forceUpdate)
                 HEdge *hedge = base;
                 do
                 {
-                    if(hedge->line)
+                    if(hedge->hasLine())
                     {
                         for(uint i = 0; i < 3; ++i)
                         {
-                            SB_SurfaceMoved(hedge->bsuf[i]);
+                            SB_SurfaceMoved(&hedge->biasSurfaceForGeometryGroup(i));
                         }
                     }
-                } while((hedge = hedge->next) != base);
+                } while((hedge = &hedge->next()) != base);
             }
 
             SB_SurfaceMoved(&bspLeaf->biasSurfaceForGeometryGroup(pln->inSectorIndex()));

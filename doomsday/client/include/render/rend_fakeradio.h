@@ -106,8 +106,8 @@ struct RendRadioWallSectionParms
     float shadowSize;
     shadowcorner_t const *botCn, *topCn, *sideCn;
     edgespan_t const *spans;
-    coord_t const *segOffset;
-    coord_t const *segLength;
+    coord_t segOffset;
+    coord_t segLength;
     LineDef const *line;
     Sector const *frontSec, *backSec;
     struct {

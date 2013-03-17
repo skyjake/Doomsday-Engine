@@ -242,18 +242,18 @@ static boolean calcBspLeafReverb(BspLeaf *bspLeaf)
     HEdge *hedge = base;
     do
     {
-        if(hedge->line && HEDGE_SIDEDEF(hedge) && HEDGE_SIDEDEF(hedge)->middle().hasMaterial())
+        if(hedge->hasLineSideDef() && hedge->lineSideDef().middle().hasMaterial())
         {
-            Material &material = HEDGE_SIDEDEF(hedge)->middle().material();
+            Material &material = hedge->lineSideDef().middle().material();
             AudioEnvironmentClass env = material.audioEnvironment();
             if(!(env >= 0 && env < NUM_AUDIO_ENVIRONMENT_CLASSES))
                 env = AEC_WOOD; // Assume it's wood if unknown.
 
-            total += hedge->length;
+            total += hedge->length();
 
-            envSpaceAccum[env] += hedge->length;
+            envSpaceAccum[env] += hedge->length();
         }
-    } while((hedge = hedge->next) != base);
+    } while((hedge = &hedge->next()) != base);
 
     if(!total)
     {

@@ -85,7 +85,7 @@ void C_AddViewRelOcclusion(coord_t const* v1, coord_t const* v2, coord_t height,
 int C_CheckRangeFromViewRelPoints(coord_t const from[2], coord_t const to[2]);
 int C_CheckRangeFromViewRelPointsXY(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY);
 
-#if _DEBUG
+#ifdef DENG_DEBUG
 /**
  * A debugging aid: checks if clipnode links are valid.
  */

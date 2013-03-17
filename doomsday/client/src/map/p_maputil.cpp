@@ -104,18 +104,18 @@ boolean P_IsPointXYInBspLeaf(coord_t x, coord_t y, BspLeaf const *bspLeaf)
     HEdge const *hedge = base;
     do
     {
-        HEdge *next = hedge->next;
+        HEdge const &next = hedge->next();
 
-        Vertex *vi = hedge->HE_v1;
-        Vertex *vj = next->HE_v1;
+        Vertex const &va = hedge->v1();
+        Vertex const &vb = next.v1();
 
-        if(((vi->origin()[VY] - y) * (vj->origin()[VX] - vi->origin()[VX]) -
-            (vi->origin()[VX] - x) * (vj->origin()[VY] - vi->origin()[VY])) < 0)
+        if(((va.origin()[VY] - y) * (vb.origin()[VX] - va.origin()[VX]) -
+            (va.origin()[VX] - x) * (vb.origin()[VY] - va.origin()[VY])) < 0)
         {
             // Outside the BSP leaf's edges.
             return false;
         }
-    } while((hedge = hedge->next) != base);
+    } while((hedge = &hedge->next()) != base);
 
     return true;
 }

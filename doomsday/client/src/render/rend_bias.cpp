@@ -284,7 +284,7 @@ void SB_InitForMap(char const *uniqueID)
     for(uint i = 0; i < NUM_HEDGES; ++i)
     {
         HEdge *hedge = GameMap_HEdge(theMap, i);
-        if(hedge->line)
+        if(hedge->hasLine())
             numVertIllums++;
     }
 
@@ -318,7 +318,7 @@ void SB_InitForMap(char const *uniqueID)
     {
         HEdge *hedge = GameMap_HEdge(theMap, i);
 
-        if(!hedge->line) continue;
+        if(!hedge->hasLine()) continue;
 
         for(int j = 0; j < 3; ++j)
         {
@@ -328,7 +328,7 @@ void SB_InitForMap(char const *uniqueID)
             bsuf->illum = illums;
             illums += 4;
 
-            hedge->bsuf[j] = bsuf;
+            hedge->_bsuf[j] = bsuf;
         }
     }
 
@@ -369,7 +369,7 @@ void SB_InitForMap(char const *uniqueID)
                 bsuf->illum = illums;
                 illums += 4;
 
-                hedge.bsuf[k] = bsuf;
+                hedge._bsuf[k] = bsuf;
             }
         }
     }
@@ -848,7 +848,7 @@ void SB_RendPoly(struct ColorRawf_s *rcolors, biassurface_t *bsuf,
         {
             HEdge const *hedge = mapElement->castTo<HEdge>();
 
-            updateAffected(bsuf, hedge->HE_v1origin, hedge->HE_v2origin, normal);
+            updateAffected(bsuf, hedge->v1Origin(), hedge->v2Origin(), normal);
         }
         else
         {

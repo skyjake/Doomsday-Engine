@@ -50,7 +50,7 @@ void P_PolyobjChanged(Polyobj *po)
         // Shadow bias must be told.
         for(int i = 0; i < 3; ++i)
         {
-            SB_SurfaceMoved(hedge.bsuf[i]);
+            SB_SurfaceMoved(&hedge.biasSurfaceForGeometryGroup(i));
         }
     }
 #else // !__CLIENT__

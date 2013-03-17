@@ -29,6 +29,7 @@
 #define LIBDENG_BSP_PARTITIONCOST
 
 #include "map/p_mapdata.h"
+#include "map/hedge.h"
 
 namespace de {
 namespace bsp {
@@ -55,25 +56,18 @@ struct PartitionCost
         realLeft(0), miniRight(0), miniLeft(0)
     {}
 
-    inline PartitionCost &addHEdgeRight(HEdge const *hedge)
+    inline PartitionCost &addHEdgeRight(HEdge const &hedge)
     {
-        DENG2_ASSERT(hedge);
-        if(hedge->line) realRight += 1;
-        else            miniRight += 1;
+        if(hedge.hasLine()) realRight += 1;
+        else                miniRight += 1;
         return *this;
     }
 
-    inline PartitionCost &addHEdgeLeft(HEdge const *hedge)
+    inline PartitionCost &addHEdgeLeft(HEdge const &hedge)
     {
-        DENG2_ASSERT(hedge);
-        if(hedge->line) realLeft += 1;
-        else            miniLeft += 1;
+        if(hedge.hasLine()) realLeft += 1;
+        else                miniLeft += 1;
         return *this;
-    }
-
-    inline PartitionCost &addHEdgeSide(HEdge const *hedge, Side side)
-    {
-        return side == Right? addHEdgeRight(hedge) : addHEdgeLeft(hedge);
     }
 
     PartitionCost &operator += (PartitionCost const &other)

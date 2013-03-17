@@ -230,7 +230,7 @@ boolean Polyobj_Rotate(Polyobj *po, angle_t angle)
         line->_angle += ANGLE_TO_BANG(angle);
 
         // HEdge angle must be kept in sync.
-        line->front().leftHEdge().angle = BANG_TO_ANGLE(line->_angle);
+        line->front().leftHEdge()._angle = BANG_TO_ANGLE(line->_angle);
     }
     Polyobj_UpdateAABox(po);
     po->angle += angle;
@@ -260,7 +260,7 @@ boolean Polyobj_Rotate(Polyobj *po, angle_t angle)
             line->_angle -= ANGLE_TO_BANG(angle);
 
             // HEdge angle must be kept in sync.
-            line->front().leftHEdge().angle = BANG_TO_ANGLE(line->_angle);
+            line->front().leftHEdge()._angle = BANG_TO_ANGLE(line->_angle);
         }
         Polyobj_UpdateAABox(po);
         po->angle -= angle;

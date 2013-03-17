@@ -69,21 +69,21 @@ BspLeaf::~BspLeaf()
     if(_hedge)
     {
         HEdge *he = _hedge;
-        if(he->next == he)
+        if(he->_next == he)
         {
             delete he;
         }
         else
         {
             // Break the ring, if linked.
-            if(he->prev)
+            if(he->_prev)
             {
-                he->prev->next = NULL;
+                he->_prev->_next = NULL;
             }
 
             while(he)
             {
-                HEdge *next = he->next;
+                HEdge *next = he->_next;
                 delete he;
                 he = next;
             }
@@ -104,11 +104,11 @@ void BspLeaf::updateAABox()
     if(!_hedge) return; // Very odd...
 
     HEdge *hedgeIt = _hedge;
-    V2d_InitBox(_aaBox.arvec2, hedgeIt->HE_v1origin);
+    V2d_InitBox(_aaBox.arvec2, hedgeIt->v1Origin());
 
-    while((hedgeIt = hedgeIt->next) != _hedge)
+    while((hedgeIt = &hedgeIt->next()) != _hedge)
     {
-        V2d_AddToBox(_aaBox.arvec2, hedgeIt->HE_v1origin);
+        V2d_AddToBox(_aaBox.arvec2, hedgeIt->v1Origin());
     }
 }
 

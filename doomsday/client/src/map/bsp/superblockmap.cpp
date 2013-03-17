@@ -59,14 +59,14 @@ struct SuperBlock::Instance
 
     inline void incrementHEdgeCount(HEdge const& hedge)
     {
-        if(hedge.line) realNum++;
-        else              miniNum++;
+        if(hedge.hasLine()) realNum++;
+        else                miniNum++;
     }
 
     inline void decrementHEdgeCount(HEdge const& hedge)
     {
-        if(hedge.line) realNum--;
-        else              miniNum--;
+        if(hedge.hasLine()) realNum--;
+        else                miniNum--;
     }
 };
 
@@ -167,15 +167,15 @@ uint SuperBlock::hedgeCount(bool addReal, bool addMini) const
     return total;
 }
 
-static void initAABoxFromHEdgeVertexes(AABoxd* aaBox, const HEdge* hedge)
+static void initAABoxFromHEdgeVertexes(AABoxd *aaBox, HEdge const *hedge)
 {
-    assert(aaBox && hedge);
-    const coord_t* from = hedge->HE_v1origin;
-    const coord_t* to   = hedge->HE_v2origin;
-    aaBox->minX = MIN_OF(from[VX], to[VX]);
-    aaBox->minY = MIN_OF(from[VY], to[VY]);
-    aaBox->maxX = MAX_OF(from[VX], to[VX]);
-    aaBox->maxY = MAX_OF(from[VY], to[VY]);
+    DENG_ASSERT(aaBox && hedge);
+    const_pvec2d_t &from = hedge->v1Origin();
+    const_pvec2d_t &to   = hedge->v2Origin();
+    aaBox->minX = de::min(from[VX], to[VX]);
+    aaBox->minY = de::min(from[VY], to[VY]);
+    aaBox->maxX = de::max(from[VX], to[VX]);
+    aaBox->maxY = de::max(from[VY], to[VY]);
 }
 
 /// @todo Optimize: Cache this result.
@@ -225,16 +225,16 @@ SuperBlock& SuperBlock::push(HEdge& hedge)
         {
             // Wider than tall.
             int midPoint = (sb->bounds().minX + sb->bounds().maxX) / 2;
-            p1 = hedge.v[0]->origin()[VX] >= midPoint? LEFT : RIGHT;
-            p2 = hedge.v[1]->origin()[VX] >= midPoint? LEFT : RIGHT;
+            p1 = hedge.v1Origin()[VX] >= midPoint? LEFT : RIGHT;
+            p2 = hedge.v2Origin()[VX] >= midPoint? LEFT : RIGHT;
             splitVertical = false;
         }
         else
         {
             // Taller than wide.
             int midPoint = (sb->bounds().minY + sb->bounds().maxY) / 2;
-            p1 = hedge.v[0]->origin()[VY] >= midPoint? LEFT : RIGHT;
-            p2 = hedge.v[1]->origin()[VY] >= midPoint? LEFT : RIGHT;
+            p1 = hedge.v1Origin()[VY] >= midPoint? LEFT : RIGHT;
+            p2 = hedge.v2Origin()[VY] >= midPoint? LEFT : RIGHT;
             splitVertical = true;
         }
 
