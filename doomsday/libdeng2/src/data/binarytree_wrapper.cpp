@@ -81,7 +81,7 @@ int BinaryTree_IsLeaf(BinaryTree *tree)
 BinaryTree *BinaryTree_Parent(BinaryTree *tree)
 {
     SELF(tree);
-    return PUBLIC(self->parent());
+    return PUBLIC(self->parentPtr());
 }
 
 int BinaryTree_HasParent(BinaryTree *tree)
@@ -99,7 +99,7 @@ BinaryTree *BinaryTree_SetParent(BinaryTree *tree, BinaryTree *parent)
 BinaryTree *BinaryTree_Child(BinaryTree *tree, int left)
 {
     SELF(tree);
-    return PUBLIC(self->child(CHILD_ID(left)));
+    return PUBLIC(self->childPtr(CHILD_ID(left)));
 }
 
 BinaryTree *BinaryTree_SetChild(BinaryTree *tree, int left, BinaryTree *child)
