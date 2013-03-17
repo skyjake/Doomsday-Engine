@@ -195,18 +195,9 @@ static void destroyEditableSectors(EditMap* map)
     map->sectors.clear();
 }
 
-static void destroyEditableVertexes(EditMap* map)
+static void destroyMap()
 {
-    DENG2_FOR_EACH(EditMap::Vertices, vtx, map->vertexes)
-    {
-        delete *vtx;
-    }
-    map->vertexes.clear();
-}
-
-static void destroyMap(void)
-{
-    destroyEditableVertexes(e_map);
+    e_map->vertexes.clear();
 
     // These should already be gone:
     destroyEditableLineDefs(e_map);

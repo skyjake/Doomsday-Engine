@@ -242,72 +242,40 @@ static void hardenBSP(BspBuilder &builder, GameMap *dest)
     rootNode->traversePostOrder(populateBspObjectLuts, &p);
 }
 
-static void copyVertex(Vertex &dest, Vertex const &src)
-{
-    DENG2_ASSERT(dest.type() == DMU_VERTEX);
-
-    V2d_Copy(dest._origin, src._origin);
-    dest._numLineOwners      = src._numLineOwners;
-    dest._lineOwners         = src._lineOwners;
-
-    dest._buildData.index    = src._buildData.index;
-    dest._buildData.refCount = src._buildData.refCount;
-    dest._buildData.equiv    = src._buildData.equiv;
-}
-
-static void hardenVertexes(BspBuilder& builder, GameMap* map,
-    uint* numEditableVertexes, Vertex const ***editableVertexes)
+static void collateVertexes(BspBuilder &builder, GameMap *map,
+    uint *numEditableVertexes, Vertex const ***editableVertexes)
 {
     uint bspVertexCount = builder.numVertexes();
 
-    map->vertexes.clearAndResize(*numEditableVertexes + bspVertexCount);
-
-    //map->vertexes = static_cast<Vertex*>(Z_Calloc(map->numVertexes * sizeof(Vertex), PU_MAPSTATIC, 0));
+    DENG_ASSERT(map->vertexes.isEmpty());
+#ifdef DENG2_QT_4_7_OR_NEWER
+    map->vertexes.reserve(*numEditableVertexes + bspVertexCount);
+#endif
 
     uint n = 0;
     for(; n < *numEditableVertexes; ++n)
     {
-        copyVertex(map->vertexes[n], *((*editableVertexes)[n]));
+        Vertex *vtx = const_cast<Vertex *>((*editableVertexes)[n]);
+        map->vertexes.append(vtx);
     }
 
     for(uint i = 0; i < bspVertexCount; ++i, ++n)
     {
-        Vertex& dest = map->vertexes[n];
-        Vertex& src  = builder.vertex(i);
+        Vertex &vtx  = builder.vertex(i);
 
-        builder.take(&src);
-
-        copyVertex(dest, src);
+        builder.take(&vtx);
+        map->vertexes.append(&vtx);
     }
 }
 
-static void updateVertexLinks(GameMap *map)
-{
-    for(uint i = 0; i < map->lineCount(); ++i)
-    {
-        LineDef *line = &map->lines[i];
-
-        line->_v[0] = &map->vertexes[line->_v[0]->_buildData.index - 1];
-        line->_v[1] = &map->vertexes[line->_v[1]->_buildData.index - 1];
-    }
-
-    for(uint i = 0; i < map->numHEdges; ++i)
-    {
-        HEdge *hedge = map->hedges[i];
-
-        hedge->_v[0] = &map->vertexes[hedge->_v[0]->_buildData.index - 1];
-        hedge->_v[1] = &map->vertexes[hedge->_v[1]->_buildData.index - 1];
-    }
-}
-
-void MPE_SaveBsp(BspBuilder_c* builder_c, GameMap* map, uint numEditableVertexes,
+void MPE_SaveBsp(BspBuilder_c *builder_c, GameMap *map, uint numEditableVertexes,
                  Vertex const **editableVertexes)
 {
     DENG2_ASSERT(builder_c);
-    BspBuilder& builder = *builder_c->inst;
+    BspBuilder &builder = *builder_c->inst;
 
     dint32 rHeight, lHeight;
-    BspTreeNode* rootNode = builder.root();
+    BspTreeNode *rootNode = builder.root();
     if(!rootNode->isLeaf())
     {
         rHeight = dint32(rootNode->right()->height());
@@ -323,8 +291,7 @@ void MPE_SaveBsp(BspBuilder_c* builder_c, GameMap* map, uint numEditableVertexes
             << builder.numHEdges() << builder.numVertexes();
 
     buildHEdgeLut(builder, map);
-    hardenVertexes(builder, map, &numEditableVertexes, &editableVertexes);
-    updateVertexLinks(map);
+    collateVertexes(builder, map, &numEditableVertexes, &editableVertexes);
 
     finishHEdges(map);
     hardenBSP(builder, map);
