@@ -29,6 +29,8 @@
 
 class LineDef;
 
+#ifdef __CLIENT__
+
 /**
  * FakeRadio shadow data.
  * @ingroup map
@@ -42,6 +44,7 @@ struct shadowcorner_t
 };
 
 /**
+ * FakeRadio connected edge data.
  * @ingroup map
  */
 struct edgespan_t
@@ -50,15 +53,7 @@ struct edgespan_t
     float shift;
 };
 
-/**
- * @ingroup map
- */
-struct msidedef_t
-{
-    // Sidedef index. Always valid after loading & pruning.
-    int index;
-    int refCount;
-};
+#endif // __CLIENT__
 
 /**
  * @attention SideDef is in the process of being replaced by lineside_t. All
@@ -81,27 +76,41 @@ public:
     DENG2_ERROR(WritePropertyError);
 
 public:
+    /// Component section surfaces:
     Surface _middleSurface;
     Surface _bottomSurface;
     Surface _topSurface;
 
-    LineDef *line;
+    /// Owning line of the sidedef.
+    LineDef *_line;
 
-    short flags;
+    /// @ref sdefFlags
+    short _flags;
 
-    msidedef_t buildData;
+    /// @todo This temporary load-time data does not belong here. -ds
+    struct {
+        // Sidedef index. Always valid after loading & pruning.
+        int index;
+        int refCount;
+    } _buildData;
 
-    /// Frame number of last update
-    int fakeRadioUpdateCount;
+#ifdef __CLIENT__
 
-    shadowcorner_t topCorners[2];
+    /// @todo Does not belong here - move to the map renderer. -ds
+    struct FakeRadioData
+    {
+        /// Frame number of last update
+        int updateCount;
 
-    shadowcorner_t bottomCorners[2];
+        shadowcorner_t topCorners[2];
+        shadowcorner_t bottomCorners[2];
+        shadowcorner_t sideCorners[2];
 
-    shadowcorner_t sideCorners[2];
+        /// [left, right]
+        edgespan_t spans[2];
+    } _fakeRadioData;
 
-    /// [left, right]
-    edgespan_t spans[2];
+#endif // __CLIENT__
 
 public:
     SideDef();
@@ -109,6 +118,11 @@ public:
 
     /// @todo Refactor away.
     SideDef &operator = (SideDef const &other);
+
+    /**
+     * Returns the line which owns the sidedef.
+     */
+    LineDef &line() const;
 
     /**
      * Returns the specified surface of the sidedef.
@@ -145,6 +159,11 @@ public:
     inline Surface const &top() const { return surface(SS_TOP); }
 
     /**
+     * Returns the @ref sdefFlags of the sidedef.
+     */
+    short flags() const;
+
+    /**
      * Update the side's map space surface base origins according to the points
      * defined by the associated LineDef's vertices and the plane heights of the
      * Sector on this side. If no LineDef is presently associated this is a no-op.
@@ -157,6 +176,18 @@ public:
      * associated this is a no-op.
      */
     void updateSurfaceTangents();
+
+#ifdef __CLIENT__
+
+    /**
+     * Returns the FakeRadio data for the sidedef.
+     */
+    FakeRadioData &fakeRadioData();
+
+    /// @copydoc fakeRadioData()
+    FakeRadioData const &fakeRadioData() const;
+
+#endif // __CLIENT__
 
     /**
      * Get a property value, selected by DMU_* name.

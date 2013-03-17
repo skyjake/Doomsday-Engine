@@ -316,8 +316,8 @@ static void plotSourcesForSurface(Surface &suf)
         {
         case DMU_SIDEDEF: {
             SideDef *sideDef = suf.owner().castTo<SideDef>();
-            LineDef *line = sideDef->line;
-            plotSourcesForLine(*line, sideDef == line->frontSideDefPtr()? FRONT : BACK,
+            LineDef &line = sideDef->line();
+            plotSourcesForLine(line, sideDef == line.frontSideDefPtr()? FRONT : BACK,
                                &sideDef->middle() == &suf? SS_MIDDLE :
                                &sideDef->bottom() == &suf? SS_BOTTOM : SS_TOP);
             break; }

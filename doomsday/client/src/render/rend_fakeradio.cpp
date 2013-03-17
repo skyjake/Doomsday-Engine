@@ -85,18 +85,18 @@ void Rend_RadioUpdateLine(LineDef &line, int backSide)
     if(!line.hasSector(backSide)) return;
 
     // Have already determined the shadow properties on this side?
-    SideDef &sideDef = line.sideDef(backSide);
-    if(sideDef.fakeRadioUpdateCount == frameCount) return;
+    SideDef::FakeRadioData &frData = line.sideDef(backSide).fakeRadioData();
+    if(frData.updateCount == frameCount) return;
 
     // Not yet - Calculate now.
     for(uint i = 0; i < 2; ++i)
     {
-        sideDef.spans[i].length = line.length();
-        sideDef.spans[i].shift = 0;
+        frData.spans[i].length = line.length();
+        frData.spans[i].shift = 0;
     }
 
-    scanEdges(sideDef.topCorners, sideDef.bottomCorners, sideDef.sideCorners, sideDef.spans, line, backSide);
-    sideDef.fakeRadioUpdateCount = frameCount; // Mark as done.
+    scanEdges(frData.topCorners, frData.bottomCorners, frData.sideCorners, frData.spans, line, backSide);
+    frData.updateCount = frameCount; // Mark as done.
 }
 
 /**

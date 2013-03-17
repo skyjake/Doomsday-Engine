@@ -369,7 +369,7 @@ static void writeSide(GameMap *map, uint idx)
         writeFloat(suf->_colorAndAlpha[CB]);
         writeFloat(suf->_colorAndAlpha[CA]);
     }
-    writeShort(s->flags);
+    writeShort(s->_flags);
 }
 
 static void readSide(GameMap *map, uint idx)
@@ -399,7 +399,7 @@ static void readSide(GameMap *map, uint idx)
         newColorAndAlpha[CA] = readFloat();
         suf->setColorAndAlpha(newColorAndAlpha);
     }
-    s->flags = readShort();
+    s->_flags = readShort();
 
     s->updateSoundEmitterOrigins();
 }

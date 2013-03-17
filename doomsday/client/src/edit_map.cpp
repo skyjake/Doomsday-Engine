@@ -95,7 +95,7 @@ static SideDef *createSideDef()
     SideDef *sideDef = new SideDef;
 
     e_map->sideDefs.push_back(sideDef);
-    sideDef->buildData.index = e_map->sideDefs.size(); // 1-based index, 0 = NIL.
+    sideDef->_buildData.index = e_map->sideDefs.size(); // 1-based index, 0 = NIL.
 
     return sideDef;
 }
@@ -1028,14 +1028,14 @@ static void hardenLinedefs(GameMap *dest, EditMap *src)
 
         /// @todo We shouldn't still have lines with missing fronts but...
         destL.front()._sideDef = (srcL.front()._sideDef?
-            &dest->sideDefs[srcL.front()._sideDef->buildData.index - 1] : NULL);
+            &dest->sideDefs[srcL.front()._sideDef->_buildData.index - 1] : NULL);
         destL.back()._sideDef = (srcL.back()._sideDef?
-            &dest->sideDefs[srcL.back()._sideDef->buildData.index - 1] : NULL);
+            &dest->sideDefs[srcL.back()._sideDef->_buildData.index - 1] : NULL);
 
         if(destL.hasFrontSideDef())
-            destL.frontSideDef().line = &destL;
+            destL.frontSideDef()._line = &destL;
         if(destL.hasBackSideDef())
-            destL.backSideDef().line = &destL;
+            destL.backSideDef()._line = &destL;
 
         destL.front()._sector = (srcL.front()._sector?
             &dest->sectors[srcL.front()._sector->_origIndex - 1] : NULL);
@@ -1802,7 +1802,7 @@ uint MPE_SidedefCreate(short flags, ddstring_t const *topMaterial,
     if(!editMapInited) return 0;
 
     SideDef *s = createSideDef();
-    s->flags = flags;
+    s->_flags = flags;
 
     assignSurfaceMaterial(&s->top(), topMaterial);
     s->top().setMaterialOrigin(topOffsetX, topOffsetY);
@@ -1816,19 +1816,15 @@ uint MPE_SidedefCreate(short flags, ddstring_t const *topMaterial,
     s->bottom().setMaterialOrigin(bottomOffsetX, bottomOffsetY);
     s->bottom().setColorAndAlpha(bottomRed, bottomGreen, bottomBlue, 1);
 
-    return s->buildData.index;
+    return s->_buildData.index;
 }
 
 #undef MPE_LinedefCreate
 uint MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector,
     uint frontSide, uint backSide, int flags)
 {
-    LineDef* l;
-    SideDef* front = NULL, *back = NULL;
-    Vertex* vtx1, *vtx2;
-    float length;
-
     if(!editMapInited) return 0;
+
     if(frontSector > e_map->sectorCount()) return 0;
     if(backSector > e_map->sectorCount()) return 0;
     if(frontSide > e_map->sideDefs.size()) return 0;
@@ -1838,27 +1834,21 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector,
     if(v1 == v2) return 0;
 
     // Ensure that the side indices are unique.
-    if(frontSide && e_map->sideDefs[frontSide - 1]->buildData.refCount)
+    if(frontSide && e_map->sideDefs[frontSide - 1]->_buildData.refCount)
         return 0;
-    if(backSide && e_map->sideDefs[backSide - 1]->buildData.refCount)
+    if(backSide && e_map->sideDefs[backSide - 1]->_buildData.refCount)
         return 0;
 
     // Next, check the length is not zero.
-    vtx1 = e_map->vertexes[v1 - 1];
-    vtx2 = e_map->vertexes[v2 - 1];
-    length = V2d_Distance(vtx2->origin(), vtx1->origin());
+    Vertex *vtx1 = e_map->vertexes[v1 - 1];
+    Vertex *vtx2 = e_map->vertexes[v2 - 1];
+    coord_t length = V2d_Distance(vtx2->origin(), vtx1->origin());
     if(!(length > 0)) return 0;
 
-    if(frontSide > 0)
-    {
-        front = e_map->sideDefs[frontSide - 1];
-    }
-    if(backSide > 0)
-    {
-        back = e_map->sideDefs[backSide - 1];
-    }
+    SideDef *front = frontSide? e_map->sideDefs[frontSide - 1] : 0;
+    SideDef *back  = backSide?  e_map->sideDefs[backSide  - 1] : 0;
 
-    l = createLine();
+    LineDef *l = createLine();
     l->_v[FROM] = vtx1;
     l->_v[TO] = vtx2;
 
@@ -1882,14 +1872,14 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector,
     // Remember the number of unique references.
     if(l->hasFrontSideDef())
     {
-        l->frontSideDef().line = l;
-        l->frontSideDef().buildData.refCount++;
+        l->frontSideDef()._line = l;
+        l->frontSideDef()._buildData.refCount++;
     }
 
     if(l->hasBackSideDef())
     {
-        l->backSideDef().line = l;
-        l->backSideDef().buildData.refCount++;
+        l->backSideDef()._line = l;
+        l->backSideDef()._buildData.refCount++;
     }
 
     l->_inFlags = 0;

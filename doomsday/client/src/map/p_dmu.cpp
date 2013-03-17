@@ -1048,7 +1048,7 @@ static int setProperty(void *ptr, void *context)
     if(updateSidedef)
     {
         if(R_UpdateSidedef(updateSidedef, false))
-            updateLinedef = updateSidedef->line;
+            updateLinedef = &updateSidedef->line();
     }
 
     if(updateLinedef)

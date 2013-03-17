@@ -32,14 +32,17 @@ SideDef::SideDef()
       _bottomSurface(dynamic_cast<MapElement &>(*this)),
       _topSurface(dynamic_cast<MapElement &>(*this))
 {
-    line = 0;
-    flags = 0;
-    std::memset(&buildData, 0, sizeof(buildData));
-    fakeRadioUpdateCount = 0;
-    std::memset(topCorners, 0, sizeof(topCorners));
-    std::memset(bottomCorners, 0, sizeof(bottomCorners));
-    std::memset(sideCorners, 0, sizeof(sideCorners));
-    std::memset(spans, 0, sizeof(spans));
+    _line = 0;
+    _flags = 0;
+    std::memset(&_buildData, 0, sizeof(_buildData));
+
+#ifdef __CLIENT__
+    _fakeRadioData.updateCount = 0;
+    std::memset(_fakeRadioData.topCorners,    0, sizeof(_fakeRadioData.topCorners));
+    std::memset(_fakeRadioData.bottomCorners, 0, sizeof(_fakeRadioData.bottomCorners));
+    std::memset(_fakeRadioData.sideCorners,   0, sizeof(_fakeRadioData.sideCorners));
+    std::memset(_fakeRadioData.spans,         0, sizeof(_fakeRadioData.spans));
+#endif
 }
 
 SideDef::~SideDef()
@@ -51,17 +54,25 @@ SideDef &SideDef::operator = (SideDef const &other)
     _bottomSurface = other._bottomSurface;
     _topSurface    = other._topSurface;
 
-    line = other.line;
-    flags = other.flags;
-    fakeRadioUpdateCount = other.fakeRadioUpdateCount;
+    _line = other._line;
+    _flags = other._flags;
+    std::memcpy(&_buildData, &other._buildData, sizeof(_buildData));
 
-    std::memcpy(&buildData, &other.buildData, sizeof(buildData));
-    std::memcpy(&topCorners, &other.topCorners, sizeof(topCorners));
-    std::memcpy(&bottomCorners, &other.bottomCorners, sizeof(bottomCorners));
-    std::memcpy(&sideCorners, &other.sideCorners, sizeof(sideCorners));
-    std::memcpy(&spans, &other.spans, sizeof(spans));
+#ifdef __CLIENT__
+    _fakeRadioData.updateCount = other._fakeRadioData.updateCount;
+    std::memcpy(&_fakeRadioData.topCorners,    &other._fakeRadioData.topCorners,    sizeof(_fakeRadioData.topCorners));
+    std::memcpy(&_fakeRadioData.bottomCorners, &other._fakeRadioData.bottomCorners, sizeof(_fakeRadioData.bottomCorners));
+    std::memcpy(&_fakeRadioData.sideCorners,   &other._fakeRadioData.sideCorners,   sizeof(_fakeRadioData.sideCorners));
+    std::memcpy(&_fakeRadioData.spans,         &other._fakeRadioData.spans,         sizeof(_fakeRadioData.spans));
+#endif
 
     return *this;
+}
+
+LineDef &SideDef::line() const
+{
+    DENG2_ASSERT(_line != 0);
+    return *_line;
 }
 
 Surface &SideDef::surface(int surface)
@@ -81,9 +92,13 @@ Surface const &SideDef::surface(int surface) const
     return const_cast<Surface const &>(const_cast<SideDef &>(*this).surface(surface));
 }
 
+short SideDef::flags() const
+{
+    return _flags;
+}
+
 void SideDef::updateSoundEmitterOrigins()
 {
-    if(!line) return;
     _middleSurface.updateSoundEmitterOrigin();
     _bottomSurface.updateSoundEmitterOrigin();
     _topSurface.updateSoundEmitterOrigin();
@@ -91,12 +106,12 @@ void SideDef::updateSoundEmitterOrigins()
 
 void SideDef::updateSurfaceTangents()
 {
-    if(!line) return;
+    DENG2_ASSERT(_line != 0);
 
-    byte sid = line->frontSideDefPtr() == this? FRONT : BACK;
+    byte sid = _line->frontSideDefPtr() == this? FRONT : BACK;
 
-    V3f_Set(_topSurface._normal, (line->vertexOrigin(sid^1)[VY] - line->vertexOrigin(sid  )[VY]) / line->length(),
-                                 (line->vertexOrigin(sid  )[VX] - line->vertexOrigin(sid^1)[VX]) / line->length(),
+    V3f_Set(_topSurface._normal, (_line->vertexOrigin(sid^1)[VY] - _line->vertexOrigin(sid  )[VY]) / _line->length(),
+                                 (_line->vertexOrigin(sid  )[VX] - _line->vertexOrigin(sid^1)[VX]) / _line->length(),
                                  0);
 
     V3f_BuildTangents(_topSurface._tangent, _topSurface._bitangent, _topSurface._normal);
@@ -111,19 +126,34 @@ void SideDef::updateSurfaceTangents()
     V3f_Copy(_bottomSurface._normal,    _topSurface._normal);
 }
 
+#ifdef __CLIENT__
+
+SideDef::FakeRadioData &SideDef::fakeRadioData()
+{
+    return _fakeRadioData;
+}
+
+SideDef::FakeRadioData const &SideDef::fakeRadioData() const
+{
+    return const_cast<FakeRadioData const &>(const_cast<SideDef *>(this)->fakeRadioData());
+}
+
+#endif // __CLIENT__
+
 int SideDef::property(setargs_t &args) const
 {
     switch(args.prop)
     {
     case DMU_SECTOR: {
-        Sector *sector = line->sectorPtr(this == line->frontSideDefPtr()? FRONT : BACK);
+        DENG2_ASSERT(_line != 0);
+        Sector *sector = _line->sectorPtr(this == _line->frontSideDefPtr()? FRONT : BACK);
         DMU_GetValue(DMT_SIDEDEF_SECTOR, &sector, &args, 0);
         break; }
     case DMU_LINEDEF:
-        DMU_GetValue(DMT_SIDEDEF_LINE, &line, &args, 0);
+        DMU_GetValue(DMT_SIDEDEF_LINE, &_line, &args, 0);
         break;
     case DMU_FLAGS:
-        DMU_GetValue(DMT_SIDEDEF_FLAGS, &flags, &args, 0);
+        DMU_GetValue(DMT_SIDEDEF_FLAGS, &_flags, &args, 0);
         break;
     default:
         /// @throw UnknownPropertyError  The requested property does not exist.
@@ -137,11 +167,11 @@ int SideDef::setProperty(setargs_t const &args)
     switch(args.prop)
     {
     case DMU_FLAGS:
-        DMU_SetValue(DMT_SIDEDEF_FLAGS, &flags, &args, 0);
+        DMU_SetValue(DMT_SIDEDEF_FLAGS, &_flags, &args, 0);
         break;
 
     case DMU_LINEDEF:
-        DMU_SetValue(DMT_SIDEDEF_LINE, &line, &args, 0);
+        DMU_SetValue(DMT_SIDEDEF_LINE, &_line, &args, 0);
         break;
 
     default:

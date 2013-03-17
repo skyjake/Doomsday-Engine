@@ -530,7 +530,7 @@ boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
     }
     else
     {
-        boolean const stretchMiddle = !!(frontDef->flags & SDF_MIDDLE_STRETCH);
+        bool const stretchMiddle = (frontDef->flags() & SDF_MIDDLE_STRETCH) != 0;
         Plane const *ffloor = &frontSec->floor();
         Plane const *fceil  = &frontSec->ceiling();
         Plane const *bfloor = &backSec->floor();
@@ -738,7 +738,7 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector const *frontSec,
         coord_t openRange, openBottom, openTop;
 
         // Stretched middles always cover the opening.
-        if(frontDef->flags & SDF_MIDDLE_STRETCH) return true;
+        if(frontDef->flags() & SDF_MIDDLE_STRETCH) return true;
 
         // Might the material cover the opening?
         openRange = R_VisOpenRange(frontSec, backSec, &openBottom, &openTop);
@@ -1216,10 +1216,10 @@ boolean R_SectorContainsSkySurfaces(Sector const *sec)
 static Material *chooseFixMaterial(SideDef *s, SideDefSection section)
 {
     Material *choice1 = 0, *choice2 = 0;
-    LineDef *line = s->line;
-    byte side = (line->frontSideDefPtr() == s? FRONT : BACK);
-    Sector *frontSec = line->sectorPtr(side);
-    Sector *backSec  = line->sideDefPtr(side ^ 1)? line->sectorPtr(side ^ 1) : 0;
+    LineDef &line = s->line();
+    byte side = (line.frontSideDefPtr() == s? FRONT : BACK);
+    Sector *frontSec = line.sectorPtr(side);
+    Sector *backSec  = line.sideDefPtr(side ^ 1)? line.sectorPtr(side ^ 1) : 0;
 
     if(backSec)
     {
@@ -1250,11 +1250,11 @@ static Material *chooseFixMaterial(SideDef *s, SideDefSection section)
     {
         // Our first choice is a material on an adjacent wall section.
         // Try the left neighbor first.
-        LineDef *other = R_FindLineNeighbor(frontSec, line, line->vertexOwner(side),
+        LineDef *other = R_FindLineNeighbor(frontSec, &line, line.vertexOwner(side),
                                             false /*next clockwise*/, NULL/*angle delta is irrelevant*/);
         if(!other)
             // Try the right neighbor.
-            other = R_FindLineNeighbor(frontSec, line, line->vertexOwner(side^1),
+            other = R_FindLineNeighbor(frontSec, &line, line.vertexOwner(side^1),
                                        true /*next anti-clockwise*/, NULL/*angle delta is irrelevant*/);
 
         if(other)
@@ -1324,7 +1324,7 @@ static void addMissingMaterial(SideDef *s, SideDefSection section)
 
         LOG_WARNING("SideDef #%u is missing a material for the %s section.\n"
                     "  %s was chosen to complete the definition.")
-            << s->buildData.index - 1
+            << s->_buildData.index - 1
             << (section == SS_MIDDLE? "middle" : section == SS_TOP? "top" : "bottom")
             << path;
     }

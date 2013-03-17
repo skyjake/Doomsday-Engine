@@ -464,19 +464,18 @@ void Sv_RegisterSide(dt_side_t *reg, uint number)
     DENG_ASSERT(reg);
 
     SideDef *sideDef = SIDE_PTR(number);
-    LineDef *line = sideDef->line;
 
     reg->top.material    = sideDef->top().materialPtr();
     reg->middle.material = sideDef->middle().materialPtr();
     reg->bottom.material = sideDef->bottom().materialPtr();
-    reg->lineFlags       = (line ? line->flags() & 0xff : 0);
+    reg->lineFlags       = sideDef->line().flags() & 0xff;
 
     V4f_Copy(reg->middle.rgba, sideDef->middle().colorAndAlpha());
     V4f_Copy(reg->bottom.rgba, sideDef->bottom().colorAndAlpha());
     V4f_Copy(reg->top.rgba, sideDef->top().colorAndAlpha());
 
     reg->middle.blendMode = sideDef->middle().blendMode(); // Only middle sections support blendmodes.
-    reg->flags           = sideDef->flags & 0xff;
+    reg->flags           = sideDef->flags() & 0xff;
 }
 
 /**
@@ -749,10 +748,9 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number,
     sidedelta_t *d, byte doUpdate)
 {
     SideDef const *s = SIDE_PTR(number);
-    LineDef const *line = s->line;
     dt_side_t *r = &reg->sideDefs[number];
-    byte lineFlags = (line ? line->flags() & 0xff : 0);
-    byte sideFlags = s->flags & 0xff;
+    byte lineFlags = s->line().flags() & 0xff;
+    byte sideFlags = s->flags() & 0xff;
     int df = 0;
 
     if(!s->top().hasFixMaterial() && r->top.material != s->top().materialPtr())
@@ -1574,9 +1572,9 @@ coord_t Sv_DeltaDistance(void const *deltaPtr, ownerinfo_t const *info)
     if(delta->type == DT_SIDE)
     {
         SideDef *sideDef = GameMap_SideDef(theMap, delta->id);
-        LineDef *line = sideDef->line;
-        vec2d_t origin; V2d_Set(origin, line->v1Origin()[VX] + line->direction()[VX] / 2,
-                                        line->v1Origin()[VY] + line->direction()[VY] / 2);
+        LineDef &line = sideDef->line();
+        vec2d_t origin; V2d_Set(origin, line.v1Origin()[VX] + line.direction()[VX] / 2,
+                                        line.v1Origin()[VY] + line.direction()[VY] / 2);
         return M_ApproxDistance(info->origin[VX] - origin[VX],
                                 info->origin[VY] - origin[VY]);
     }
@@ -2276,7 +2274,7 @@ void Sv_NewSideDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
     for(i = start; i < end; ++i)
     {
         // The side must be owned by a line.
-        if(GameMap_SideDef(theMap, i)->line == NULL) continue;
+        //if(GameMap_SideDef(theMap, i)->line == NULL) continue;
 
         if(Sv_RegisterCompareSide(reg, i, &delta, doUpdate))
         {

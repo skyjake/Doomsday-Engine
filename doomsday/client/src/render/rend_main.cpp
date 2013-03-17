@@ -411,12 +411,12 @@ static void selectSurfaceColors(float const **topColor,
     switch(section)
     {
     case SS_MIDDLE:
-        if(sideDef->flags & SDF_BLENDMIDTOTOP)
+        if(sideDef->flags() & SDF_BLENDMIDTOTOP)
         {
             *topColor    = sideDef->top().colorAndAlpha();
             *bottomColor = sideDef->middle().colorAndAlpha();
         }
-        else if(sideDef->flags & SDF_BLENDMIDTOBOTTOM)
+        else if(sideDef->flags() & SDF_BLENDMIDTOBOTTOM)
         {
             *topColor    = sideDef->middle().colorAndAlpha();
             *bottomColor = sideDef->bottom().colorAndAlpha();
@@ -429,7 +429,7 @@ static void selectSurfaceColors(float const **topColor,
         break;
 
     case SS_TOP:
-        if(sideDef->flags & SDF_BLENDTOPTOMID)
+        if(sideDef->flags() & SDF_BLENDTOPTOMID)
         {
             *topColor    = sideDef->top().colorAndAlpha();
             *bottomColor = sideDef->middle().colorAndAlpha();
@@ -442,7 +442,7 @@ static void selectSurfaceColors(float const **topColor,
         break;
 
     case SS_BOTTOM:
-        if(sideDef->flags & SDF_BLENDBOTTOMTOMID)
+        if(sideDef->flags() & SDF_BLENDBOTTOMTOMID)
         {
             *topColor    = sideDef->middle().colorAndAlpha();
             *bottomColor = sideDef->bottom().colorAndAlpha();
@@ -1292,10 +1292,13 @@ static boolean doRenderHEdge(HEdge *hedge, const_pvec3f_t normal,
             RendRadioWallSectionParms radioParams;
 
             radioParams.line      = hedge->linePtr();
-            radioParams.botCn     = sideDef->bottomCorners;
-            radioParams.topCn     = sideDef->topCorners;
-            radioParams.sideCn    = sideDef->sideCorners;
-            radioParams.spans     = sideDef->spans;
+
+            SideDef::FakeRadioData &frData = sideDef->fakeRadioData();
+            radioParams.botCn     = frData.bottomCorners;
+            radioParams.topCn     = frData.topCorners;
+            radioParams.sideCn    = frData.sideCorners;
+            radioParams.spans     = frData.spans;
+
             radioParams.segOffset = hedge->lineOffset();
             radioParams.segLength = hedge->length();
             radioParams.frontSec  = hedge->sectorPtr();
