@@ -31,22 +31,6 @@
 
 class Sector;
 
-/*
- * Helper macros for accessing the Surface of a Plane:
- */
-/// @addtogroup map
-///@{
-#define PS_base                 surface().soundEmitter()
-#define PS_tangent              surface().tangent()
-#define PS_bitangent            surface().bitangent()
-#define PS_normal               surface().normal()
-#define PS_material             surface().material()
-#define PS_offset               surface().materialOrigin()
-#define PS_visoffset            surface().visMaterialOrigin()
-#define PS_rgba                 surface().colorAndAlpha()
-#define PS_flags                surface().flags()
-///@}
-
 /**
  * Map sector plane.
  *

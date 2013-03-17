@@ -1496,7 +1496,7 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
         vec[VZ] = vOrigin[VY] - plane.visHeight();
 
         // Don't bother with planes facing away from the camera.
-        if(V3f_DotProduct(vec, plane.PS_normal) < 0) continue;
+        if(V3f_DotProduct(vec, plane.surface().normal()) < 0) continue;
 
         doPlanes[pln] = true;
         workToDo = true;
