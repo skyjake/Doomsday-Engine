@@ -94,12 +94,29 @@ static int hedgeCollector(BspTreeNode& tree, void* parameters)
             hedge->_origIndex = p->curIdx++;
             (*p->hedgeLUT)[hedge->_origIndex] = hedge;
 
+            if(hedge->hasLine())
+            {
+                Vertex const &vtx = hedge->line().vertex(hedge->lineSideId());
+
+                hedge->_sector = hedge->line().sectorPtr(hedge->lineSideId());
+                hedge->_lineOffset = V2d_Distance(hedge->v1Origin(), vtx.origin());
+            }
+
+            hedge->_angle = bamsAtan2(int( hedge->v2Origin()[VY] - hedge->v1Origin()[VY] ),
+                                      int( hedge->v2Origin()[VX] - hedge->v1Origin()[VX] )) << FRACBITS;
+
+            // Calculate the length of the segment.
+            hedge->_length = V2d_Distance(hedge->v2Origin(), hedge->v1Origin());
+
+            if(hedge->_length == 0)
+                hedge->_length = 0.01f; // Hmm...
+
         } while((hedge = &hedge->next()) != base);
     }
     return false; // Continue traversal.
 }
 
-static void buildHEdgeLut(BspBuilder& builder, GameMap* map)
+static void buildHEdgeLut(BspBuilder &builder, GameMap *map)
 {
     DENG2_ASSERT(map);
 
@@ -120,33 +137,6 @@ static void buildHEdgeLut(BspBuilder& builder, GameMap* map)
     parm.curIdx = 0;
     parm.hedgeLUT = &map->hedges;
     builder.root()->traverseInOrder(hedgeCollector, &parm);
-}
-
-static void finishHEdges(GameMap *map)
-{
-    DENG2_ASSERT(map);
-
-    for(uint i = 0; i < map->numHEdges; ++i)
-    {
-        HEdge *hedge = map->hedges[i];
-
-        if(hedge->hasLine())
-        {
-            Vertex const &vtx = hedge->line().vertex(hedge->lineSideId());
-
-            hedge->_sector = hedge->line().sectorPtr(hedge->lineSideId());
-            hedge->_lineOffset = V2d_Distance(hedge->v1Origin(), vtx.origin());
-        }
-
-        hedge->_angle = bamsAtan2(int( hedge->v2Origin()[VY] - hedge->v1Origin()[VY] ),
-                                  int( hedge->v2Origin()[VX] - hedge->v1Origin()[VX] )) << FRACBITS;
-
-        // Calculate the length of the segment.
-        hedge->_length = V2d_Distance(hedge->v2Origin(), hedge->v1Origin());
-
-        if(hedge->_length == 0)
-            hedge->_length = 0.01f; // Hmm...
-    }
 }
 
 typedef struct {
@@ -293,6 +283,5 @@ void MPE_SaveBsp(BspBuilder_c *builder_c, GameMap *map, uint numEditableVertexes
     buildHEdgeLut(builder, map);
     collateVertexes(builder, map, &numEditableVertexes, &editableVertexes);
 
-    finishHEdges(map);
     hardenBSP(builder, map);
 }
