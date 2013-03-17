@@ -106,8 +106,7 @@ public:
     de::MapElement *bsp;
 
     /// BSP object LUTs:
-    uint numHEdges;
-    HEdge **hedges;
+    de::MapElementList<HEdge> hedges;
 
     uint numBspLeafs;
     BspLeaf **bspLeafs;
@@ -156,6 +155,8 @@ public:
     uint sideDefCount() const { return sideDefs.size(); }
 
     uint lineCount() const { return lines.size(); }
+
+    uint hedgeCount() const { return hedges.size(); }
 
 #ifdef __CLIENT__
 

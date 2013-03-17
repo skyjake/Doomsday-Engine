@@ -72,12 +72,11 @@ boolean BspBuilder_Build(BspBuilder_c* builder)
 }
 
 typedef struct {
-    BspBuilder* builder;
-    size_t curIdx;
-    HEdge*** hedgeLUT;
+    GameMap *map;
+    BspBuilder *builder;
 } hedgecollectorparams_t;
 
-static int hedgeCollector(BspTreeNode& tree, void* parameters)
+static int hedgeCollector(BspTreeNode &tree, void *parameters)
 {
     if(tree.isLeaf())
     {
@@ -91,8 +90,8 @@ static int hedgeCollector(BspTreeNode& tree, void* parameters)
             p->builder->take(hedge);
 
             // Add this HEdge to the LUT.
-            hedge->_origIndex = p->curIdx++;
-            (*p->hedgeLUT)[hedge->_origIndex] = hedge;
+            hedge->_origIndex = p->map->hedges.count();
+            p->map->hedges.append(hedge);
 
             if(hedge->hasLine())
             {
@@ -116,26 +115,19 @@ static int hedgeCollector(BspTreeNode& tree, void* parameters)
     return false; // Continue traversal.
 }
 
-static void buildHEdgeLut(BspBuilder &builder, GameMap *map)
+static void collateHEdges(BspBuilder &builder, GameMap *map)
 {
     DENG2_ASSERT(map);
+    DENG_ASSERT(map->hedges.isEmpty());
 
-    if(map->hedges)
-    {
-        Z_Free(map->hedges);
-        map->hedges = 0;
-    }
-
-    map->numHEdges = builder.numHEdges();
-    if(!map->numHEdges) return; // Should never happen.
-
-    // Allocate the LUT and acquire ownership of the half-edges.
-    map->hedges = static_cast<HEdge **>(Z_Calloc(map->numHEdges * sizeof(HEdge *), PU_MAPSTATIC, 0));
+    if(!builder.numHEdges()) return; // Should never happen.
+#ifdef DENG2_QT_4_7_OR_NEWER
+    map->hedges.reserve(builder.numHEdges());
+#endif
 
     hedgecollectorparams_t parm;
     parm.builder = &builder;
-    parm.curIdx = 0;
-    parm.hedgeLUT = &map->hedges;
+    parm.map = map;
     builder.root()->traverseInOrder(hedgeCollector, &parm);
 }
 
@@ -280,7 +272,7 @@ void MPE_SaveBsp(BspBuilder_c *builder_c, GameMap *map, uint numEditableVertexes
             << rHeight << lHeight << builder.numNodes() << builder.numLeafs()
             << builder.numHEdges() << builder.numVertexes();
 
-    buildHEdgeLut(builder, map);
+    collateHEdges(builder, map);
     collateVertexes(builder, map, &numEditableVertexes, &editableVertexes);
 
     hardenBSP(builder, map);
