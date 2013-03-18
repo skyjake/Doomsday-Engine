@@ -63,7 +63,7 @@ public: /// @todo Make private:
     coord_t     _visHeight;    ///< Visual plane height (smoothed).
     coord_t     _visHeightDelta;
     Type        _type;
-    int         _inSectorIndex;
+    uint        _inSectorIndex;
 
 public:
     /**
@@ -87,7 +87,7 @@ public:
     /**
      * Returns the index of the plane within the owning Sector.
      */
-    int inSectorIndex() const;
+    uint inSectorIndex() const;
 
     /**
      * Returns the Surface of the plane.

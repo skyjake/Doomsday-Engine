@@ -193,59 +193,6 @@ static void destroyEditablePolyObjs(EditMap *map)
     map->numPolyObjs = 0;
 }
 
-static void destroyEditableLineDefs(EditMap *map)
-{
-    /*DENG2_FOR_EACH(EditMap::Lines, s, map->lines)
-    {
-        delete *s;
-    }
-    map->lines.clear();*/
-}
-
-static void destroyEditableSideDefs(EditMap *map)
-{
-    /*DENG2_FOR_EACH(EditMap::SideDefs, s, map->sideDefs)
-    {
-        delete *s;
-    }
-    map->sideDefs.clear();*/
-}
-
-static void destroyEditableSectors(EditMap *map)
-{
-    /*
-    if(map->sectors)
-    {
-        uint i;
-        for(i = 0; i < map->numSectors; ++i)
-        {
-            uint j;
-            sector_s* s = map->sectors[i];
-
-            if(s->planes)
-            {
-                for(j = 0; j < s->planeCount; ++j)
-                {
-                    M_Free(s->planes[j]);
-                }
-                M_Free(s->planes);
-            }
-
-            M_Free(s);
-        }
-
-        M_Free(map->sectors);
-    }
-    map->sectors = NULL;
-    map->numSectors = 0;
-
-    DENG2_FOR_EACH(EditMap::Sectors, sec, map->sectors)
-    {
-        delete *sec;
-    }
-    map->sectors.clear();*/
-}
-
 static void destroyMap()
 {
     e_map->vertexes.clear();
@@ -254,6 +201,7 @@ static void destroyMap()
     e_map->lines.clear();
     e_map->sideDefs.clear();
     e_map->sectors.clear();
+
     destroyEditablePolyObjs(e_map);
 }
 
@@ -627,6 +575,21 @@ static void buildSectorLineLists(GameMap &map)
     Z_Free(sectorLineLinks);
 }
 
+/**
+ * @param sector  Sector in which to link @a base.
+ * @param base  Mobj base to link in @a sector. Caller should ensure that the
+ *              same object is not linked multiple times into the chain.
+ */
+static void linkToSectorEmitterChain(Sector &sector, ddmobj_base_t &otherEmitter)
+{
+    // The sector's base is always head of the chain, so link the other after it.
+    otherEmitter.thinker.prev = &sector._soundEmitter.thinker;
+    otherEmitter.thinker.next = sector._soundEmitter.thinker.next;
+    if(otherEmitter.thinker.next)
+        otherEmitter.thinker.next->prev = &otherEmitter.thinker;
+    sector._soundEmitter.thinker.next = &otherEmitter.thinker;
+}
+
 static void finishSectors(GameMap &map)
 {
     for(uint i = 0; i < map.sectorCount(); ++i)
@@ -651,34 +614,13 @@ static void finishSectors(GameMap &map)
 
             plane._visHeightDelta = 0;
         }
-    }
-}
 
-/**
- * @param sector  Sector in which to link @a base.
- * @param base  Mobj base to link in @a sector. Caller should ensure that the
- *              same object is not linked multiple times into the chain.
- */
-static void linkToSectorEmitterChain(Sector &sector, ddmobj_base_t &otherEmitter)
-{
-    // The sector's base is always head of the chain, so link the other after it.
-    otherEmitter.thinker.prev = &sector._soundEmitter.thinker;
-    otherEmitter.thinker.next = sector._soundEmitter.thinker.next;
-    if(otherEmitter.thinker.next)
-        otherEmitter.thinker.next->prev = &otherEmitter.thinker;
-    sector._soundEmitter.thinker.next = &otherEmitter.thinker;
-}
-
-/**
- * Chain together the ddmobj_base_t objects owned by all Surfaces in all sectors.
- * These chains are used for efficiently traversing all of the sound emitters in
- * a sector (e.g., when stopping all sounds emitted in the sector).
- */
-static void chainSectorSoundEmitters(GameMap &map)
-{
-    for(uint i = 0; i < map.sectorCount(); ++i)
-    {
-        Sector &sector = map.sectors[i];
+        /*
+         * Chain sound emitters (ddmobj_base_t) owned by all Surfaces in the
+         * sector. These chains are used for efficiently traversing all of the
+         * sound emitters in a sector (e.g., when stopping all sounds emitted
+         * in the sector).
+         */
         ddmobj_base_t &emitter = sector.soundEmitter();
 
         // Clear the head of the sound emitter chain.
@@ -1035,66 +977,7 @@ static void hardenVertexOwnerRings(GameMap *dest, EditMap *src)
     }
 }
 
-static void hardenLines(GameMap &dest, EditMap &src)
-{
-    DENG2_ASSERT(dest.lines.isEmpty());
-#ifdef DENG2_QT_4_7_OR_NEWER
-    dest.lines.reserve(src.lines.size());
-#endif
-
-    for(uint i = 0; i < src.lines.size(); ++i)
-    {
-        LineDef *line = src.lines[i]; // Take ownership.
-
-        dest.lines.append(line);
-
-        // Update links:
-        /// @todo We shouldn't still have lines with missing fronts but...
-        line->front()._sideDef = (line->front()._sideDef? &dest.sideDefs[line->front()._sideDef->_buildData.index - 1] : NULL);
-        line->back()._sideDef  = ( line->back()._sideDef? &dest.sideDefs[ line->back()._sideDef->_buildData.index - 1] : NULL);
-
-        if(line->hasFrontSideDef())
-            line->frontSideDef()._line = line;
-
-        if(line->hasBackSideDef())
-            line->backSideDef()._line = line;
-
-        line->front()._sector = (line->front()._sector? &dest.sectors[line->front()._sector->_origIndex - 1] : NULL);
-        line->back()._sector  = ( line->back()._sector? &dest.sectors[ line->back()._sector->_origIndex - 1] : NULL);
-    }
-}
-
-static void hardenSidedefs(GameMap &dest, EditMap &src)
-{
-    DENG2_ASSERT(dest.sideDefs.isEmpty());
-#ifdef DENG2_QT_4_7_OR_NEWER
-    dest.sideDefs.reserve(src.sideDefs.size());
-#endif
-
-    for(uint i = 0; i < src.sideDefs.size(); ++i)
-    {
-        SideDef *side = src.sideDefs[i]; // Take ownership.
-
-        dest.sideDefs.append(side);
-    }
-}
-
-static void hardenSectors(GameMap &dest, EditMap &src)
-{
-    DENG2_ASSERT(dest.sectors.isEmpty());
-#ifdef DENG2_QT_4_7_OR_NEWER
-    dest.sectors.reserve(src.sectors.size());
-#endif
-
-    for(uint i = 0; i < src.sectors.size(); ++i)
-    {
-        Sector *sector = src.sectors[i]; // Take ownership.
-
-        dest.sectors.append(sector);
-    }
-}
-
-static void hardenPlanes(GameMap &dest)
+static void finishPlanes(GameMap &dest)
 {
     for(uint i = 0; i < dest.sectorCount(); ++i)
     {
@@ -1682,11 +1565,7 @@ boolean MPE_End()
 
     GameMap *gamemap = new GameMap;
 
-    // Pass on the game-specific map entity property database. The game will
-    // want to query it once we have finished constructing the map.
-    gamemap->entityDatabase = e_map->entityDatabase;
-
-    /**
+    /*
      * Perform cleanup on the loaded map data, removing duplicate vertexes,
      * pruning unused sectors etc, etc...
      */
@@ -1695,27 +1574,48 @@ boolean MPE_End()
 
     buildVertexOwnerRings(e_map);
 
-    /**
-     * Harden most of the map data so that we can construct some of the more
-     * intricate data structures early on (and thus make use of them during
-     * the BSP generation).
-     *
-     * @todo I'm sure this can be reworked further so that we destroy as we
-     *       go and reduce the current working memory surcharge.
+    /*
+     * Acquire ownership of the map elements from the editable map.
      */
-    hardenSectors(*gamemap, *e_map);
-    hardenSidedefs(*gamemap, *e_map);
-    hardenLines(*gamemap, *e_map);
-    hardenPolyobjs(*gamemap, *e_map);
 
+    gamemap->entityDatabase = e_map->entityDatabase;
+
+    // Collate sectors:
+    DENG2_ASSERT(gamemap->sectors.isEmpty());
+#ifdef DENG2_QT_4_7_OR_NEWER
+    gamemap->sectors.reserve(e_map->sectors.size());
+#endif
+    for(uint i = 0; i < e_map->sectors.size(); ++i)
+    {
+        gamemap->sectors.append(e_map->sectors[i]); // Take ownership.
+    }
+
+    // Collate sidedefs:
+    DENG2_ASSERT(gamemap->sideDefs.isEmpty());
+#ifdef DENG2_QT_4_7_OR_NEWER
+    gamemap->sideDefs.reserve(e_map->sideDefs.size());
+#endif
+    for(uint i = 0; i < e_map->sideDefs.size(); ++i)
+    {
+        gamemap->sideDefs.append(e_map->sideDefs[i]); // Take ownership.
+    }
+
+    // Collate lines:
+    DENG2_ASSERT(gamemap->lines.isEmpty());
+#ifdef DENG2_QT_4_7_OR_NEWER
+    gamemap->lines.reserve(e_map->lines.size());
+#endif
+    for(uint i = 0; i < e_map->lines.size(); ++i)
+    {
+        gamemap->lines.append(e_map->lines[i]); // Take ownership.
+    }
+
+    hardenPolyobjs(*gamemap, *e_map);
     hardenVertexOwnerRings(gamemap, e_map);
 
-    // Don't destroy the sectors (planes are linked to them).
-    destroyEditableSideDefs(e_map);
-    destroyEditableLineDefs(e_map);
     destroyEditablePolyObjs(e_map);
 
-    /**
+    /*
      * Build blockmaps.
      */
     vec2d_t min, max;
@@ -1734,10 +1634,10 @@ boolean MPE_End()
     // Announce any missing materials we encountered during the conversion.
     printMissingMaterials();
 
-    /**
+    /*
      * Build a BSP for this map.
      */
-    boolean builtOK = buildBsp(*gamemap);
+    bool builtOK = buildBsp(*gamemap);
 
     // Finish the polyobjs (after the vertexes are hardened).
     for(uint i = 0; i < gamemap->numPolyObjs; ++i)
@@ -1762,9 +1662,9 @@ boolean MPE_End()
 
     buildSectorBspLeafLists(*gamemap);
 
-    // Map must be polygonized and sector->bspLeafs must be built before
+    // Map must be polygonized and the sector BSP leaf lists must be built before
     // this is called!
-    hardenPlanes(*gamemap);
+    finishPlanes(*gamemap);
 
     // Destroy the rest of editable map, we are finished with it.
     /// @note Only the vertexes should be left anyway.
@@ -1785,7 +1685,6 @@ boolean MPE_End()
     finishSideDefs(*gamemap);
     finishLines(*gamemap);
     finishSectors(*gamemap);
-    chainSectorSoundEmitters(*gamemap);
 
     updateMapBounds(*gamemap);
 
@@ -2116,7 +2015,7 @@ uint MPE_PlaneCreate(uint sector, coord_t height, ddstring_t const *materialUri,
     s->_planes.append(pln);
     pln->_inSectorIndex = s->planeCount() - 1;
 
-    return pln->_inSectorIndex + 1; // 1-based index.
+    return pln->inSectorIndex() + 1; // 1-based index.
 }
 
 #undef MPE_SectorCreate

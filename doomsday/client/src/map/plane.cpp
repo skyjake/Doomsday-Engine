@@ -126,7 +126,7 @@ Sector const &Plane::sector() const
     return *_sector;
 }
 
-int Plane::inSectorIndex() const
+uint Plane::inSectorIndex() const
 {
     return _inSectorIndex;
 }
