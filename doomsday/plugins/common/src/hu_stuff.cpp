@@ -609,7 +609,14 @@ static void drawTable(float x, float ly, float width, float height,
 
     const int lineHeight  = .5f + height / (MAXPLAYERS + 1);
     const int fontHeight  = FR_CharHeight('A');
-    const float fontScale = float(lineHeight) / (fontHeight + CELL_PADDING * 2);
+    float fontScale = float(lineHeight) / (fontHeight + CELL_PADDING * 2);
+
+#ifdef __JHEXEN__
+    // Quick fix for Hexen's oversized scoreboard fonts.
+    // Something is broken here, though: the above should calculate a
+    // suitable font size for all games? -jk
+    fontScale *= .55f;
+#endif
 
     applyTableLayout(columns, numCols, x, width, CELL_PADDING);
 
