@@ -833,9 +833,12 @@ static void P_ResetWorldState(void)
 
     P_PurgeDeferredSpawns();
 
+    if(!IS_CLIENT)
+    {
 #if !__JHEXEN__
-    totalKills = totalItems = totalSecret = 0;
+        totalKills = totalItems = totalSecret = 0;
 #endif
+    }
 
     timerGame = 0;
     if(deathmatch)
