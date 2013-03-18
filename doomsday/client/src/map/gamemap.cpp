@@ -68,12 +68,37 @@ GameMap::GameMap()
 GameMap::~GameMap()
 {}
 
+void GameMap::updateBounds()
+{
+    bool isFirst = true;
+    for(uint i = 0; i < sectorCount(); ++i)
+    {
+        Sector &sector = sectors[i];
+
+        // Sectors with no lines have invalid bounds; skip them.
+        if(!sector.lineCount()) continue;
+
+        if(isFirst)
+        {
+            // The first sector is used as is.
+            V2d_CopyBox(aaBox.arvec2, sector.aaBox().arvec2);
+            isFirst = false;
+        }
+        else
+        {
+            // Expand the bounding box.
+            V2d_UniteBox(aaBox.arvec2, sector.aaBox().arvec2);
+        }
+    }
+}
+
 SurfaceSet &GameMap::scrollingSurfaces()
 {
     return scrollingSurfaces_;
 }
 
 #ifdef __CLIENT__
+
 SurfaceSet &GameMap::decoratedSurfaces()
 {
     return decoratedSurfaces_;

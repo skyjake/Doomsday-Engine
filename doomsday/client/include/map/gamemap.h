@@ -144,6 +144,12 @@ public:
 
     virtual ~GameMap();
 
+    /**
+     * @pre Axis-aligned bounding boxes of all Sectors must be initialized.
+     * @todo Should be private.
+     */
+    void updateBounds();
+
     uint vertexCount() const { return vertexes.size(); }
 
     uint sectorCount() const { return sectors.size(); }

@@ -39,6 +39,8 @@
 
 #include "audio/s_environ.h"
 
+using namespace de;
+
 // Editable map.
 /// @todo Now redundant; refactor away. -ds
 class EditMap
@@ -77,42 +79,47 @@ public:
     uint sectorCount() const { return sectors.size(); }
 };
 
-// Flags for MPE_PruneRedundantMapData()
+static EditMap editMap;
+static EditMap *e_map = &editMap;
+static bool editMapInited;
+static bool lastBuiltMapResult;
+
+static GameMap *lastBuiltMap;
+
+static int bspFactor = 7;
+
+/**
+ * @defgroup pruneMapElementFlags Prune Map Element Flags
+ * Flags for pruneMapElements()
+ */
+///@{
 #define PRUNE_LINEDEFS      0x1
 #define PRUNE_VERTEXES      0x2
 #define PRUNE_SIDEDEFS      0x4
 #define PRUNE_SECTORS       0x8
 #define PRUNE_ALL           (PRUNE_LINEDEFS|PRUNE_VERTEXES|PRUNE_SIDEDEFS|PRUNE_SECTORS)
-
-static void MPE_PruneRedundantMapData(EditMap *map, int flags);
-
-using namespace de;
-
-static void printMissingMaterials();
-static void clearMaterialDict();
-
-static void assignSurfaceMaterial(Surface *suf, ddstring_t const *materialUri);
+///@}
 
 /**
- * Material name references specified during map conversion are recorded in this
- * dictionary. A dictionary is used to avoid repeatedly resolving the same URIs
- * and to facilitate a log of missing materials encountered during the process.
+ * @param map       Editable map to prune elements from.
+ * @param flags     @ref pruneMapElementFlags
+ */
+static void pruneMapElements(EditMap *map, int flags);
+
+/**
+ * Material name references specified during map conversion are recorded in
+ * this dictionary. A dictionary is used to avoid repeatedly resolving the same
+ * URIs and to facilitate a log of missing materials encountered during the
+ * process.
  *
  * The pointer user value holds a pointer to the resolved Material (if found).
  * The integer user value tracks the number of times a reference occurs.
  */
 static StringPool *materialDict;
 
-EditMap editMap;
-static boolean editMapInited;
-
-static EditMap *e_map = &editMap;
-static boolean lastBuiltMapResult;
-static GameMap *lastBuiltMap;
-
-static Vertex *rootVtx; // Used when sorting vertex line owners.
-
-static int bspFactor = 7;
+static void clearMaterialDict();
+static Material *findMaterialInDict(ddstring_t const *materialUri);
+static void printMissingMaterialsInDict();
 
 void MPE_Register()
 {
@@ -218,7 +225,7 @@ static int vertexCompare(void const *p1, void const *p2)
     return int(a->origin()[VY]) - int(b->origin()[VY]);
 }
 
-void MPE_DetectDuplicateVertices(EditMap *map)
+void markDuplicateVertexes(EditMap *map)
 {
     DENG_ASSERT(map);
     Vertex **hits = (Vertex **) M_Malloc(map->vertexCount() * sizeof(Vertex *));
@@ -416,7 +423,7 @@ static void pruneUnusedSectors(EditMap *map)
 /**
  * @warning Order here is critical!
  */
-static void MPE_PruneRedundantMapData(EditMap * /*map*/, int /*flags*/)
+static void pruneMapElements(EditMap * /*map*/, int /*flags*/)
 {
 #if 0
     /**
@@ -686,32 +693,8 @@ static void finishLines(GameMap &map)
     }
 }
 
-/**
- * @pre Axis-aligned bounding boxes of all Sectors must be initialized.
- */
-static void updateMapBounds(GameMap &map)
-{
-    bool isFirst = true;
-    for(uint i = 0; i < map.sectorCount(); ++i)
-    {
-        Sector &sector = map.sectors[i];
-
-        // Sectors with no lines have invalid bounds; skip them.
-        if(!sector.lineCount()) continue;
-
-        if(isFirst)
-        {
-            // The first sector is used as is.
-            V2d_CopyBox(map.aaBox.arvec2, sector.aaBox().arvec2);
-            isFirst = false;
-        }
-        else
-        {
-            // Expand the bounding box.
-            V2d_UniteBox(map.aaBox.arvec2, sector.aaBox().arvec2);
-        }
-    }
-}
+/// Used when sorting vertex line owners.
+static Vertex *rootVtx;
 
 /**
  * Compares the angles of two lines that share a common vertex.
@@ -1564,8 +1547,8 @@ boolean MPE_End()
      * Perform cleanup on the loaded map data, removing duplicate vertexes,
      * pruning unused sectors etc, etc...
      */
-    MPE_DetectDuplicateVertices(e_map);
-    MPE_PruneRedundantMapData(e_map, PRUNE_ALL);
+    markDuplicateVertexes(e_map);
+    pruneMapElements(e_map, PRUNE_ALL);
 
     buildVertexOwnerRings(e_map);
 
@@ -1627,7 +1610,8 @@ boolean MPE_End()
     GameMap_InitPolyobjBlockmap(gamemap, min, max);
 
     // Announce any missing materials we encountered during the conversion.
-    printMissingMaterials();
+    printMissingMaterialsInDict();
+    clearMaterialDict();
 
     /*
      * Build a BSP for this map.
@@ -1667,26 +1651,23 @@ boolean MPE_End()
     if(!builtOK)
     {
         // Failed. Need to clean up.
-        clearMaterialDict();
         EntityDatabase_Delete(gamemap->entityDatabase);
         Z_Free(gamemap);
         lastBuiltMapResult = false; // Failed.
 
         return lastBuiltMapResult;
     }
+    editMapInited = false;
 
     buildSectorLineLists(*gamemap);
+
     finishSideDefs(*gamemap);
     finishLines(*gamemap);
     finishSectors(*gamemap);
 
-    updateMapBounds(*gamemap);
+    gamemap->updateBounds();
 
     S_DetermineBspLeafsAffectingSectorReverb(gamemap);
-
-    clearMaterialDict();
-
-    editMapInited = false;
 
     // Call the game's setup routines.
     if(gx.SetupForMapData)
@@ -1805,10 +1786,23 @@ static int printMissingMaterialWorker(StringPool::Id internId, void *parameters)
 }
 
 /**
- * Announce any missing materials we came across when loading the map.
+ * Destroy the missing material dictionary.
  */
-static void printMissingMaterials()
+static void clearMaterialDict()
 {
+    // Initialized?
+    if(!materialDict) return;
+
+    materialDict->clear();
+    delete materialDict; materialDict = 0;
+}
+
+/**
+ * Print any "missing" materials in the dictionary to the log.
+ */
+static void printMissingMaterialsInDict()
+{
+    // Initialized?
     if(!materialDict) return;
 
     // Count missing materials.
@@ -1821,76 +1815,74 @@ static void printMissingMaterials()
     materialDict->iterate(printMissingMaterialWorker, 0);
 }
 
-static void clearMaterialDict()
+/**
+ * Attempt to locate a material by its URI. A dictionary of previously
+ * searched-for URIs is maintained to avoid repeated searching and to record
+ * "missing" materials.
+ *
+ * @param materialUriStr  URI of the material to search for.
+ *
+ * @return  Pointer to the found material; otherwise @c 0.
+ */
+static Material *findMaterialInDict(ddstring_t const *materialUriStr)
 {
-    if(!materialDict) return;
-    materialDict->clear();
-    delete materialDict; materialDict = 0;
-}
+    if(!materialUriStr || Str_IsEmpty(materialUriStr)) return 0;
 
-static void assignSurfaceMaterial(Surface *suf, ddstring_t const *materialUriStr)
-{
-    DENG_ASSERT(suf);
-
-    Material *material = 0;
-    if(materialUriStr && !Str_IsEmpty(materialUriStr))
+    // Are we yet to instantiate the dictionary?
+    if(!materialDict)
     {
-        // Are we yet to instantiate the dictionary?
-        if(!materialDict)
+        materialDict = new StringPool;
+    }
+
+    de::Uri materialUri(Str_Text(materialUriStr), RC_NULL);
+
+    // Intern this reference.
+    StringPool::Id internId = materialDict->intern(materialUri.compose());
+    Material *material = 0;
+
+    // Have we previously encountered this?.
+    uint refCount = materialDict->userValue(internId);
+    if(refCount)
+    {
+        // Yes, if resolved the user pointer holds the found material.
+        material = (Material *) materialDict->userPointer(internId);
+    }
+    else
+    {
+        // No, attempt to resolve this URI and update the dictionary.
+        // First try the preferred scheme, then any.
+        try
         {
-            materialDict = new StringPool;
+            material = &App_Materials().find(materialUri).material();
         }
-
-        de::Uri materialUri(Str_Text(materialUriStr), RC_NULL);
-
-        // Intern this reference.
-        StringPool::Id internId = materialDict->intern(materialUri.compose());
-
-        // Have we previously encountered this?.
-        uint refCount = materialDict->userValue(internId);
-        if(refCount)
+        catch(Materials::NotFoundError const &)
         {
-            // Yes, if resolved the user pointer holds the found material.
-            material = (Material *) materialDict->userPointer(internId);
-        }
-        else
-        {
-            // No, attempt to resolve this URI and update the dictionary.
-            // First try the preferred scheme, then any.
+            // Try any scheme.
             try
             {
+                materialUri.setScheme("");
                 material = &App_Materials().find(materialUri).material();
             }
             catch(Materials::NotFoundError const &)
-            {
-                // Try any scheme.
-                try
-                {
-                    materialUri.setScheme("");
-                    material = &App_Materials().find(materialUri).material();
-                }
-                catch(Materials::NotFoundError const &)
-                {}
-            }
-
-            // Insert the possibly resolved material into the dictionary.
-            materialDict->setUserPointer(internId, material);
+            {}
         }
 
-        // There is now one more reference.
-        refCount++;
-        materialDict->setUserValue(internId, refCount);
+        // Insert the possibly resolved material into the dictionary.
+        materialDict->setUserPointer(internId, material);
     }
 
-    // Assign the resolved material if found.
-    suf->setMaterial(material);
+    // There is now one more reference.
+    refCount++;
+    materialDict->setUserValue(internId, refCount);
+
+    return material;
 }
 
 #undef MPE_SidedefCreate
-uint MPE_SidedefCreate(short flags, ddstring_t const *topMaterial,
+uint MPE_SidedefCreate(short flags, ddstring_t const *topMaterialUri,
     float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue,
-    ddstring_t const *middleMaterial, float middleOffsetX, float middleOffsetY, float middleRed,
-    float middleGreen, float middleBlue, float middleAlpha, ddstring_t const *bottomMaterial,
+    ddstring_t const *middleMaterialUri, float middleOffsetX, float middleOffsetY, float middleRed,
+    float middleGreen, float middleBlue, float middleAlpha, ddstring_t const *bottomMaterialUri,
     float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen,
     float bottomBlue)
 {
@@ -1899,15 +1891,16 @@ uint MPE_SidedefCreate(short flags, ddstring_t const *topMaterial,
     SideDef *s = createSideDef();
     s->_flags = flags;
 
-    assignSurfaceMaterial(&s->top(), topMaterial);
+    // Assign the resolved material if found.
+    s->top().setMaterial(findMaterialInDict(topMaterialUri));
     s->top().setMaterialOrigin(topOffsetX, topOffsetY);
     s->top().setColorAndAlpha(topRed, topGreen, topBlue, 1);
 
-    assignSurfaceMaterial(&s->middle(), middleMaterial);
+    s->middle().setMaterial(findMaterialInDict(middleMaterialUri));
     s->middle().setMaterialOrigin(middleOffsetX, middleOffsetY);
     s->middle().setColorAndAlpha(middleRed, middleGreen, middleBlue, middleAlpha);
 
-    assignSurfaceMaterial(&s->bottom(), bottomMaterial);
+    s->bottom().setMaterial(findMaterialInDict(bottomMaterialUri));
     s->bottom().setMaterialOrigin(bottomOffsetX, bottomOffsetY);
     s->bottom().setColorAndAlpha(bottomRed, bottomGreen, bottomBlue, 1);
 
@@ -2001,7 +1994,7 @@ uint MPE_PlaneCreate(uint sector, coord_t height, ddstring_t const *materialUri,
 
     Plane *pln = new Plane(*s, normal, height);
 
-    assignSurfaceMaterial(&pln->surface(), materialUri);
+    pln->surface().setMaterial(findMaterialInDict(materialUri));
     pln->surface().setColorAndAlpha(r, g, b, a);
     pln->surface().setMaterialOrigin(matOffsetX, matOffsetY);
 
