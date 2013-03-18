@@ -114,9 +114,11 @@ DENG2_PIMPL(OpenDialog)
     {
         for(int i = firstFoundIdx; i < address->count(); ++i)
         {
-            Q_ASSERT(address->itemData(i).canConvert<Address>());
-            if(host == address->itemData(i).value<Address>())
-                return true;
+            if(address->itemData(i).canConvert<Address>())
+            {
+                if(host == address->itemData(i).value<Address>())
+                    return true;
+            }
         }
         return false;
     }
