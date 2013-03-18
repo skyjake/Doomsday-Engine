@@ -593,6 +593,9 @@ static void linkToSectorEmitterChain(Sector &sector, ddmobj_base_t &otherEmitter
 
 static void finishSectors(GameMap &map)
 {
+    buildSectorBspLeafLists(map);
+    buildSectorLineLists(map);
+
     for(uint i = 0; i < map.sectorCount(); ++i)
     {
         Sector &sector = map.sectors[i];
@@ -600,22 +603,6 @@ static void finishSectors(GameMap &map)
         sector.updateAABox();
         sector.updateRoughArea();
         sector.updateSoundEmitterOrigin();
-
-        // Set target heights for each plane.
-        for(uint k = 0; k < sector.planeCount(); ++k)
-        {
-            Plane &plane = sector.plane(k);
-
-            plane._targetHeight =
-                plane._oldHeight[0] =
-                    plane._oldHeight[1] =
-                        plane._visHeight = plane._height;
-
-            plane._visHeightDelta = 0;
-
-            /// @todo Can't this be deferred? -ds
-            plane.surface().updateSoundEmitterOrigin();
-        }
 
         /*
          * Chain sound emitters (ddmobj_base_t) owned by all Surfaces in the
@@ -958,16 +945,18 @@ static void finishPlanes(GameMap &dest)
 
         foreach(Plane *plane, sector.planes())
         {
-            // Initialize the surface.
-            /// @todo The initial material should be the "unknown" material.
+            // Set target heights for each plane.
+            plane->_targetHeight =
+                plane->_oldHeight[0] =
+                    plane->_oldHeight[1] =
+                        plane->_visHeight = plane->_height;
+
+            plane->_visHeightDelta = 0;
+
             plane->surface().updateSoundEmitterOrigin();
 
 #ifdef __CLIENT__
-            /**
-             * Resize the biassurface lists for the BSP leaf planes.
-             * If we are in map setup mode, don't create the biassurfaces now,
-             * as planes are created before the bias system is available.
-             */
+            // Resize the biassurface lists for the BSP leaf planes.
             foreach(BspLeaf *bspLeaf, sector.bspLeafs())
             {
                 uint n = 0;
@@ -984,7 +973,12 @@ static void finishPlanes(GameMap &dest)
                     bspLeaf->_bsuf = 0;
                 }
 
-                if(!ddMapSetup)
+                /*
+                 * @todo So where is this data initialized now? -ds
+                 * If we are in map setup mode, don't create the biassurfaces now,
+                 * as planes are created before the bias system is available.
+                 */
+                /*if(!ddMapSetup)
                 {
                     biassurface_t *bsuf = SB_CreateSurface();
 
@@ -997,7 +991,7 @@ static void finishPlanes(GameMap &dest)
                     }
 
                     newList[n] = bsuf;
-                }
+                }*/
 
                 bspLeaf->_bsuf = newList;
             }
@@ -1639,12 +1633,6 @@ boolean MPE_End()
         }
     }
 
-    buildSectorBspLeafLists(*gamemap);
-
-    // Map must be polygonized and the sector BSP leaf lists must be built before
-    // this is called!
-    finishPlanes(*gamemap);
-
     // Destroy the rest of editable map, we are finished with it.
     editMap.clear();
 
@@ -1659,11 +1647,10 @@ boolean MPE_End()
     }
     editMapInited = false;
 
-    buildSectorLineLists(*gamemap);
-
     finishSideDefs(*gamemap);
     finishLines(*gamemap);
     finishSectors(*gamemap);
+    finishPlanes(*gamemap);
 
     gamemap->updateBounds();
 
