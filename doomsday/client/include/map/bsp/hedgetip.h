@@ -1,9 +1,7 @@
-/**
- * @file hedgetip.h
- * BSP builder half-edge tip. @ingroup bsp
+/** @file hedgetip.h BSP builder half-edge tip.
  *
- * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
- * SourceForge: http://sourceforge.net/projects/glbsp/
+ * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
+ * @see http://sourceforge.net/projects/glbsp/
  *
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
@@ -32,10 +30,15 @@
 #include "map/p_mapdata.h"
 
 namespace de {
+
+class HEdge;
+
 namespace bsp {
 
 /**
  * A "hedgetip" is where a half-edge meets a vertex.
+ *
+ * @ingroup bsp
  */
 class HEdgeTip
 {
@@ -47,49 +50,60 @@ public:
     };
 
 public:
-    explicit HEdgeTip(coord_t angle = 0, HEdge* front = 0, HEdge* back = 0)
-        : angle_(angle), front_(front), back_(back)
+    explicit HEdgeTip(coord_t angle = 0, HEdge *front = 0, HEdge *back = 0)
+        : _angle(angle), _front(front), _back(back)
     {}
 
-    inline coord_t angle() const { return angle_; }
-    inline HEdgeTip& setAngle(coord_t newAngle) {
-        angle_ = newAngle;
+    inline coord_t angle() const { return _angle; }
+
+    inline HEdgeTip &setAngle(coord_t newAngle)
+    {
+        _angle = newAngle;
         return *this;
     }
 
-    inline HEdge& front() const { return *front_; }
-    inline HEdge& back() const { return *back_; }
-    inline HEdge& side(Side sid) const {
+    inline HEdge &front() const { return *_front; }
+
+    inline HEdge &back() const { return *_back; }
+
+    inline HEdge &side(Side sid) const
+    {
         return sid == Front? front() : back();
     }
 
-    inline bool hasFront() const { return !!front_; }
-    inline bool hasBack() const { return !!back_; }
-    inline bool hasSide(Side sid) const {
+    inline bool hasFront() const { return _front != 0; }
+
+    inline bool hasBack() const { return _back != 0; }
+
+    inline bool hasSide(Side sid) const
+    {
         return sid == Front? hasFront() : hasBack();
     }
 
-    inline HEdgeTip& setFront(HEdge* hedge) {
-        front_ = hedge;
+    inline HEdgeTip &setFront(HEdge *hedge)
+    {
+        _front = hedge;
         return *this;
     }
 
-    inline HEdgeTip& setBack(HEdge* hedge) {
-        back_ = hedge;
+    inline HEdgeTip &setBack(HEdge *hedge)
+    {
+        _back = hedge;
         return *this;
     }
 
-    inline HEdgeTip& setSide(Side sid, HEdge* hedge) {
+    inline HEdgeTip &setSide(Side sid, HEdge *hedge)
+    {
         return sid == Front? setFront(hedge) : setBack(hedge);
     }
 
 private:
     /// Angle that line makes at vertex (degrees; 0 is E, 90 is N).
-    coord_t angle_;
+    coord_t _angle;
 
     /// Half-edge on each side of the tip. Front is the side of increasing
     /// angles, back is the side of decreasing angles. Either can be @c NULL
-    HEdge* front_, *back_;
+    HEdge *_front, *_back;
 };
 
 } // namespace bsp

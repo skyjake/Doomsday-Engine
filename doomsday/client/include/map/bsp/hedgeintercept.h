@@ -1,9 +1,7 @@
-/**
- * @file hedgeintercept.h
- * BSP Builder half-edge intercept info. @ingroup bsp
+/** @file hedgeintercept.h BSP Builder half-edge intercept info.
  *
- * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
- * SourceForge: http://sourceforge.net/projects/glbsp/
+ * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
+ * @see http://sourceforge.net/projects/glbsp/
  *
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
@@ -42,22 +40,24 @@ namespace bsp {
  * can be found here (or at there will be upon insertion.)).
  *
  * There is always a corresponding HPlaneIntercept in the owning HPlane.
+ *
+ * @ingroup bsp
  */
 struct HEdgeIntercept
 {
     // Vertex in question.
-    Vertex* vertex;
+    Vertex *vertex;
 
     // True if this intersection was on a self-referencing linedef.
     bool selfRef;
 
     // Sector on each side of the vertex (along the partition),
     // or NULL when that direction isn't OPEN.
-    Sector* before;
-    Sector* after;
+    Sector *before;
+    Sector *after;
 
     DENG_DEBUG_ONLY(
-    static void DebugPrint(const HEdgeIntercept& inst)
+    static void DebugPrint(HEdgeIntercept const &inst)
     {
         LOG_INFO("Vertex #%i [x:%f, y:%f] beforeSector: #%d afterSector: #%d %s")
             << inst.vertex->_buildData.index

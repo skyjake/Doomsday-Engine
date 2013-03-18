@@ -1,9 +1,7 @@
-/**
- * @file linedefinfo.h
- * BSP Builder LineDef info. @ingroup bsp
+/** @file linedefinfo.h BSP Builder Line info.
  *
- * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
- * SourceForge: http://sourceforge.net/projects/glbsp/
+ * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
+ * @see http://sourceforge.net/projects/glbsp/
  *
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
@@ -25,8 +23,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_BSP_LINEDEFINFO
-#define LIBDENG_BSP_LINEDEFINFO
+#ifndef LIBDENG_BSP_LINEINFO
+#define LIBDENG_BSP_LINEINFO
 
 #include "map/gamemap.h"
 #include "map/bsp/partitioner.h"
@@ -38,9 +36,11 @@ namespace bsp {
 
 /**
  * Plain old data (POD) structure used to record additional information and
- * precalculated values for a LineDef in the current map.
+ * precalculated values for a line in the current map.
+ *
+ * @ingroup bsp
  */
-struct LineDefInfo
+struct LineInfo
 {
     /// @todo Refactor me away.
     enum Flag
@@ -62,7 +62,7 @@ struct LineDefInfo
     /// If the line is used for a window effect, this is the sector on the back side.
     Sector *windowEffect;
 
-    explicit LineDefInfo(LineDef *line_, coord_t distEpsilon = 0.0001)
+    explicit LineInfo(LineDef *line_, coord_t distEpsilon = 0.0001)
         : line(line_), flags(0), validCount(0), windowEffect(0)
     {
         DENG2_ASSERT(line_);
@@ -70,8 +70,8 @@ struct LineDefInfo
         Vertex const &to   = line->to();
 
         // Check for zero-length line.
-        if((fabs(from.origin()[VX] - to.origin()[VX]) < distEpsilon) &&
-           (fabs(from.origin()[VY] - to.origin()[VY]) < distEpsilon))
+        if((de::abs(from.origin()[VX] - to.origin()[VX]) < distEpsilon) &&
+           (de::abs(from.origin()[VY] - to.origin()[VY]) < distEpsilon))
             flags |= ZeroLength;
 
         if(line->hasBackSideDef() && line->hasFrontSideDef())
@@ -84,9 +84,9 @@ struct LineDefInfo
     }
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(LineDefInfo::Flags)
+Q_DECLARE_OPERATORS_FOR_FLAGS(LineInfo::Flags)
 
 } // namespace bsp
 } // namespace de
 
-#endif // LIBDENG_BSPBUILDER_LINEDEFINFO
+#endif // LIBDENG_BSPBUILDER_LINEINFO

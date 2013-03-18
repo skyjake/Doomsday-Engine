@@ -136,7 +136,7 @@ public:
 
 private:
     struct Instance;
-    Instance* d;
+    Instance *d;
 };
 
 } // namespace bsp

@@ -1,9 +1,7 @@
-/**
- * @file hedgeinfo.h
- * BSP Builder half-edge info. @ingroup bsp
+/** @file hedgeinfo.h BSP Builder half-edge info.
  *
- * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
- * SourceForge: http://sourceforge.net/projects/glbsp/
+ * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
+ * @see http://sourceforge.net/projects/glbsp/
  *
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
@@ -40,6 +38,8 @@ class SuperBlock;
 /**
  * Plain old data (POD) structure storing additional information about a
  * half-edge produced by BspBuilder.
+ *
+ * @ingroup bsp
  */
 struct HEdgeInfo
 {

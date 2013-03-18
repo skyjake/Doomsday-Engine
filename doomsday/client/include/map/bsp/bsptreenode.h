@@ -1,6 +1,4 @@
-/**
- * @file bsptreenode.h
- * BSP Builder BspTreeNode. @ingroup bsp
+/** @file bsptreenode.h BSP Builder BspTreeNode.
  *
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
@@ -25,7 +23,11 @@
 #include <de/BinaryTree>
 #include "MapElement"
 
-/// Nodes in BspBuilder's internal tree are modelled with this type.
+/**
+ * Nodes in BspBuilder's internal tree are modelled with this type.
+ *
+ * @ingroup bsp
+ */
 typedef de::BinaryTree<de::MapElement *> BspTreeNode;
 
 #endif // LIBDENG_BSPBUILDER_BSPTREENODE

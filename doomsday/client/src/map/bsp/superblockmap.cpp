@@ -1,5 +1,4 @@
 /** @file superblockmap.cpp BSP Builder Superblock. 
- * @ingroup map
  *
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
@@ -25,15 +24,16 @@
 #include <de/kdtree.h>
 #include "map/bsp/superblockmap.h"
 
+using namespace de;
 using namespace de::bsp;
 
 struct SuperBlock::Instance
 {
     /// SuperBlockmap that owns this SuperBlock.
-    SuperBlockmap& bmap;
+    SuperBlockmap &bmap;
 
     /// KdTree node in the owning SuperBlockmap.
-    KdTreeNode* tree;
+    KdTreeNode *tree;
 
     /// Half-edges completely contained by this block.
     SuperBlock::HEdges hedges;
@@ -43,7 +43,7 @@ struct SuperBlock::Instance
     int realNum;
     int miniNum;
 
-    Instance(SuperBlockmap& blockmap)
+    Instance(SuperBlockmap &blockmap)
       : bmap(blockmap), tree(0), hedges(0), realNum(0), miniNum(0)
     {}
 
@@ -52,33 +52,33 @@ struct SuperBlock::Instance
         KdTreeNode_Delete(tree);
     }
 
-    inline void linkHEdge(HEdge& hedge)
+    inline void linkHEdge(HEdge &hedge)
     {
         hedges.push_front(&hedge);
     }
 
-    inline void incrementHEdgeCount(HEdge const& hedge)
+    inline void incrementHEdgeCount(HEdge const &hedge)
     {
         if(hedge.hasLine()) realNum++;
         else                miniNum++;
     }
 
-    inline void decrementHEdgeCount(HEdge const& hedge)
+    inline void decrementHEdgeCount(HEdge const &hedge)
     {
         if(hedge.hasLine()) realNum--;
         else                miniNum--;
     }
 };
 
-SuperBlock::SuperBlock(SuperBlockmap& blockmap)
-{
-    d = new Instance(blockmap);
-}
+SuperBlock::SuperBlock(SuperBlockmap &blockmap)
+    : d(new Instance(blockmap))
+{}
 
 SuperBlock::SuperBlock(SuperBlock& parent, ChildId childId, bool splitVertical)
+    : d(new Instance(parent.blockmap()))
 {
-    d = new Instance(parent.blockmap());
-    d->tree = KdTreeNode_AddChild(parent.d->tree, 0.5, int(splitVertical), childId==LEFT, this);
+    d->tree = KdTreeNode_AddChild(parent.d->tree, 0.5, int(splitVertical),
+                                  childId==LEFT, this);
 }
 
 SuperBlock::~SuperBlock()
@@ -87,45 +87,45 @@ SuperBlock::~SuperBlock()
     delete d;
 }
 
-SuperBlock& SuperBlock::clear()
+SuperBlock &SuperBlock::clear()
 {
     if(d->tree)
     {
         // Recursively handle sub-blocks.
-        KdTreeNode* child;
+        KdTreeNode *child;
         for(uint num = 0; num < 2; ++num)
         {
             child = KdTreeNode_Child(d->tree, num);
             if(!child) continue;
 
-            SuperBlock* blockPtr = static_cast<SuperBlock*>(KdTreeNode_UserData(child));
+            SuperBlock *blockPtr = static_cast<SuperBlock *>(KdTreeNode_UserData(child));
             if(blockPtr) delete blockPtr;
         }
     }
     return *this;
 }
 
-SuperBlockmap& SuperBlock::blockmap() const
+SuperBlockmap &SuperBlock::blockmap() const
 {
     return d->bmap;
 }
 
-const AABox& SuperBlock::bounds() const
+AABox const &SuperBlock::bounds() const
 {
     return *KdTreeNode_Bounds(d->tree);
 }
 
 bool SuperBlock::isLeaf() const
 {
-    const AABox& aaBox = bounds();
+    AABox const &aaBox = bounds();
     return (aaBox.maxX - aaBox.minX <= 256 && aaBox.maxY - aaBox.minY <= 256);
 }
 
-SuperBlock* SuperBlock::parent() const
+SuperBlock *SuperBlock::parent() const
 {
-    KdTreeNode* pNode = KdTreeNode_Parent(d->tree);
+    KdTreeNode *pNode = KdTreeNode_Parent(d->tree);
     if(!pNode) return 0;
-    return static_cast<SuperBlock*>(KdTreeNode_UserData(pNode));
+    return static_cast<SuperBlock *>(KdTreeNode_UserData(pNode));
 }
 
 bool SuperBlock::hasParent() const
@@ -133,12 +133,12 @@ bool SuperBlock::hasParent() const
     return 0 != parent();
 }
 
-SuperBlock* SuperBlock::child(ChildId childId) const
+SuperBlock *SuperBlock::child(ChildId childId) const
 {
     assertValidChildId(childId);
-    KdTreeNode* subtree = KdTreeNode_Child(d->tree, childId==LEFT);
+    KdTreeNode *subtree = KdTreeNode_Child(d->tree, childId==LEFT);
     if(!subtree) return 0;
-    return static_cast<SuperBlock*>(KdTreeNode_UserData(subtree));
+    return static_cast<SuperBlock *>(KdTreeNode_UserData(subtree));
 }
 
 bool SuperBlock::hasChild(ChildId childId) const
@@ -147,14 +147,13 @@ bool SuperBlock::hasChild(ChildId childId) const
     return 0 != child(childId);
 }
 
-SuperBlock* SuperBlock::addChild(ChildId childId, bool splitVertical)
+SuperBlock *SuperBlock::addChild(ChildId childId, bool splitVertical)
 {
     assertValidChildId(childId);
-    SuperBlock* child = new SuperBlock(*this, childId, splitVertical);
-    return child;
+    return new SuperBlock(*this, childId, splitVertical);
 }
 
-const SuperBlock::HEdges& SuperBlock::hedges() const
+SuperBlock::HEdges const &SuperBlock::hedges() const
 {
     return d->hedges;
 }
@@ -179,14 +178,14 @@ static void initAABoxFromHEdgeVertexes(AABoxd *aaBox, HEdge const *hedge)
 }
 
 /// @todo Optimize: Cache this result.
-void SuperBlock::findHEdgeBounds(AABoxd& bounds)
+void SuperBlock::findHEdgeBounds(AABoxd &bounds)
 {
     bool initialized = false;
     AABoxd hedgeAABox;
 
     DENG2_FOR_EACH(HEdges, it, d->hedges)
     {
-        HEdge* hedge = *it;
+        HEdge *hedge = *it;
         initAABoxFromHEdgeVertexes(&hedgeAABox, hedge);
         if(initialized)
         {
@@ -201,9 +200,9 @@ void SuperBlock::findHEdgeBounds(AABoxd& bounds)
     }
 }
 
-SuperBlock& SuperBlock::push(HEdge& hedge)
+SuperBlock &SuperBlock::push(HEdge &hedge)
 {
-    SuperBlock* sb = this;
+    SuperBlock *sb = this;
     forever
     {
         DENG2_ASSERT(sb);
@@ -257,11 +256,11 @@ SuperBlock& SuperBlock::push(HEdge& hedge)
     return *sb;
 }
 
-HEdge* SuperBlock::pop()
+HEdge *SuperBlock::pop()
 {
-    if(d->hedges.empty()) return NULL;
+    if(d->hedges.empty()) return 0;
 
-    HEdge* hedge = d->hedges.front();
+    HEdge *hedge = d->hedges.front();
     d->hedges.pop_front();
 
     // Update half-edge counts.
@@ -270,7 +269,7 @@ HEdge* SuperBlock::pop()
     return hedge;
 }
 
-int SuperBlock::traverse(int (C_DECL *callback)(SuperBlock*, void*), void* parameters)
+int SuperBlock::traverse(int (*callback)(SuperBlock *, void *), void *parameters)
 {
     if(!callback) return false; // Continue iteration.
 
@@ -282,10 +281,10 @@ int SuperBlock::traverse(int (C_DECL *callback)(SuperBlock*, void*), void* param
         // Recursively handle subtrees.
         for(uint num = 0; num < 2; ++num)
         {
-            KdTreeNode* node = KdTreeNode_Child(d->tree, num);
+            KdTreeNode *node = KdTreeNode_Child(d->tree, num);
             if(!node) continue;
 
-            SuperBlock* child = static_cast<SuperBlock*>(KdTreeNode_UserData(node));
+            SuperBlock *child = static_cast<SuperBlock *>(KdTreeNode_UserData(node));
             if(!child) continue;
 
             result = child->traverse(callback, parameters);
@@ -299,13 +298,13 @@ int SuperBlock::traverse(int (C_DECL *callback)(SuperBlock*, void*), void* param
 struct SuperBlockmap::Instance
 {
     /// The KdTree of SuperBlocks.
-    KdTree* kdTree;
+    KdTree *kdTree;
 
-    Instance(SuperBlockmap& bmap, const AABox& bounds)
+    Instance(SuperBlockmap &bmap, AABox const &bounds)
+        : kdTree(KdTree_New(&bounds))
     {
-        kdTree = KdTree_New(&bounds);
         // Attach the root node.
-        SuperBlock* block = new SuperBlock(bmap);
+        SuperBlock *block = new SuperBlock(bmap);
         block->d->tree = KdTreeNode_SetUserData(KdTree_Root(kdTree), block);
     }
 
@@ -315,10 +314,9 @@ struct SuperBlockmap::Instance
     }
 };
 
-SuperBlockmap::SuperBlockmap(const AABox& bounds)
-{
-    d = new Instance(*this, bounds);
-}
+SuperBlockmap::SuperBlockmap(AABox const &bounds)
+    : d(new Instance(*this, bounds))
+{}
 
 SuperBlockmap::~SuperBlockmap()
 {
@@ -326,9 +324,9 @@ SuperBlockmap::~SuperBlockmap()
     delete d;
 }
 
-SuperBlock& SuperBlockmap::root()
+SuperBlock &SuperBlockmap::root()
 {
-    return *static_cast<SuperBlock*>(KdTreeNode_UserData(KdTree_Root(d->kdTree)));
+    return *static_cast<SuperBlock *>(KdTreeNode_UserData(KdTree_Root(d->kdTree)));
 }
 
 void SuperBlockmap::clear()
@@ -336,7 +334,7 @@ void SuperBlockmap::clear()
     root().clear();
 }
 
-static void findHEdgeBoundsWorker(SuperBlock& block, AABoxd& bounds, bool* initialized)
+static void findHEdgeBoundsWorker(SuperBlock &block, AABoxd &bounds, bool *initialized)
 {
     DENG2_ASSERT(initialized);
     if(block.hedgeCount(true, true))
@@ -362,8 +360,8 @@ AABoxd SuperBlockmap::findHEdgeBounds()
     AABoxd bounds;
 
     // Iterative pre-order traversal of SuperBlock.
-    SuperBlock* cur = &root();
-    SuperBlock* prev = 0;
+    SuperBlock *cur = &root();
+    SuperBlock *prev = 0;
     while(cur)
     {
         while(cur)

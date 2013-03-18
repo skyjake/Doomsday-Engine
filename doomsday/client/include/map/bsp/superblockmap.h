@@ -1,11 +1,7 @@
-/**
- * @file superblockmap.h
- * BSP Builder SuperBlockmap. @ingroup map
+/** @file superblockmap.h BSP Builder SuperBlockmap.
  *
- * Design is effectively that of a 2-dimensional kd-tree.
- *
- * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
- * SourceForge: http://sourceforge.net/projects/glbsp/
+ * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
+ * @see http://sourceforge.net/projects/glbsp/
  *
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
@@ -50,20 +46,25 @@ class SuperBlock;
 #  undef LEFT
 #endif
 
+/**
+ * Design is effectively that of a 2-dimensional kd-tree.
+ *
+ * @ingroup bsp
+ */
 class SuperBlockmap
 {
 public:
     /**
      * @param bounds  Bounding box in map coordinates for the whole blockmap.
      */
-    SuperBlockmap(const AABox& bounds);
+    SuperBlockmap(AABox const &bounds);
     ~SuperBlockmap();
 
     /**
      * Retrieve the root SuperBlock.
      * @return  Root SuperBlock instance.
      */
-    SuperBlock& root();
+    SuperBlock &root();
 
     /**
      * Find the axis-aligned bounding box defined by the vertices of all
@@ -80,11 +81,11 @@ public:
      */
     void clear();
 
-    operator SuperBlock&() { return root(); }
+    operator SuperBlock &() { return root(); }
 
 private:
     struct Instance;
-    Instance* d;
+    Instance *d;
 
     friend class SuperBlock;
 };
@@ -99,7 +100,7 @@ private:
 class SuperBlock
 {
 public:
-    typedef std::list<HEdge*> HEdges;
+    typedef std::list<HEdge *> HEdges;
 
     /// A SuperBlock may be subdivided with two child subblocks which are
     /// uniquely identifiable by these associated ids.
@@ -112,17 +113,17 @@ public:
     /// Assert that the specified value is a valid @a childId.
     static void inline assertValidChildId(ChildId DENG_DEBUG_ONLY(childId))
     {
-        Q_ASSERT(childId == RIGHT || childId == LEFT);
+        DENG_ASSERT(childId == RIGHT || childId == LEFT);
     }
 
 public:
-    SuperBlock& clear();
+    SuperBlock &clear();
 
     /**
      * Retrieve the SuperBlockmap which owns this block.
      * @return  The owning SuperBlockmap instance.
      */
-    SuperBlockmap& blockmap() const;
+    SuperBlockmap &blockmap() const;
 
     /**
      * Retrieve the axis-aligned bounding box defined for this superblock
@@ -131,7 +132,7 @@ public:
      *
      * @return  Axis-aligned bounding box.
      */
-    const AABox& bounds() const;
+    AABox const &bounds() const;
 
     /**
      * Is this block small enough to be considered a "leaf"? A leaf in this
@@ -142,7 +143,7 @@ public:
 
     bool hasParent() const;
 
-    SuperBlock* parent() const;
+    SuperBlock *parent() const;
 
     /**
      * Does this block have a child subblock?
@@ -167,19 +168,19 @@ public:
      * @param childId  Subblock identifier.
      * @return  Selected subblock.
      */
-    SuperBlock* child(ChildId childId) const;
+    SuperBlock *child(ChildId childId) const;
 
     /**
      * Returns the right sub-block.
      * @see SuperBlock::child()
      */
-    inline SuperBlock* right() const { return child(RIGHT); }
+    inline SuperBlock *right() const { return child(RIGHT); }
 
     /**
      * Returns the left sub-block.
      * @see SuperBlock::child()
      */
-    inline SuperBlock* left()  const { return child(LEFT); }
+    inline SuperBlock *left()  const { return child(LEFT); }
 
     /**
      * Perform a depth-first traversal over all child superblocks and
@@ -188,11 +189,11 @@ public:
      * been visited or @a callback returns a non-zero value.
      *
      * @param callback       Callback function ptr.
-     * @param parameters     Passed to the callback. Default=NULL.
+     * @param parameters     Passed to the callback.
      *
      * @return  @c 0 iff iteration completed wholly.
      */
-    int traverse(int (C_DECL *callback)(SuperBlock*, void*), void* parameters=NULL);
+    int traverse(int (*callback)(SuperBlock *, void *), void *parameters = 0);
 
     /**
      * Find the axis-aligned bounding box defined by the vertices of all
@@ -202,7 +203,7 @@ public:
      *
      * @param bounds  Determined bounds are written here.
      */
-    void findHEdgeBounds(AABoxd& bounds);
+    void findHEdgeBounds(AABoxd &bounds);
 
     /**
      * Retrieve the total number of HEdges linked in this superblock
@@ -217,7 +218,7 @@ public:
 
     /// Convenience functions for retrieving HEdge totals:
     inline uint miniHEdgeCount() const {  return hedgeCount(false, true); }
-    inline uint realHEdgeCount() const { return hedgeCount(true, false); }
+    inline uint realHEdgeCount() const {  return hedgeCount(true, false); }
     inline uint totalHEdgeCount() const { return hedgeCount(true, true); }
 
     /**
@@ -227,7 +228,7 @@ public:
      * @param hedge  HEdge instance to add.
      * @return  SuperBlock instance the HEdge was actually linked to.
      */
-    SuperBlock& push(HEdge& hedge);
+    SuperBlock &push(HEdge &hedge);
 
     /**
      * Pop (unlink) the next HEdge from the FIFO list of half-edges linked
@@ -235,16 +236,16 @@ public:
      *
      * @return  Previous top-most HEdge instance or @c NULL if empty.
      */
-    HEdge* pop();
+    HEdge *pop();
 
-    const HEdges& hedges() const;
+    HEdges const &hedges() const;
 
 #ifdef DENG_DEBUG
-    static void DebugPrint(SuperBlock const& inst)
+    static void DebugPrint(SuperBlock const &inst)
     {
         DENG2_FOR_EACH_CONST(SuperBlock::HEdges, it, inst.hedges())
         {
-            HEdge* hedge = *it;
+            HEdge *hedge = *it;
             LOG_DEBUG("Build: %s %p sector: %d [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
                 << (hedge->hasLine()? "NORM" : "MINI")
                 << hedge << hedge->sector().origIndex()
@@ -260,8 +261,8 @@ private:
      * owning SuperBlockmap. Instantiation outside of this context is not
      * permitted. @ref SuperBlockmap
      */
-    SuperBlock(SuperBlockmap& blockmap);
-    SuperBlock(SuperBlock& parent, ChildId childId, bool splitVertical);
+    SuperBlock(SuperBlockmap &blockmap);
+    SuperBlock(SuperBlock &parent, ChildId childId, bool splitVertical);
     ~SuperBlock();
 
     /**
@@ -270,14 +271,14 @@ private:
      * @param splitVertical  @c true= Subdivide this block on the y axis
      *                       rather than the x axis.
      */
-    SuperBlock* addChild(ChildId childId, bool splitVertical);
+    SuperBlock *addChild(ChildId childId, bool splitVertical);
 
-    inline SuperBlock* addRight(bool splitVertical) { return addChild(RIGHT, splitVertical); }
-    inline SuperBlock* addLeft(bool splitVertical)  { return addChild(LEFT,  splitVertical); }
+    inline SuperBlock *addRight(bool splitVertical) { return addChild(RIGHT, splitVertical); }
+    inline SuperBlock *addLeft(bool splitVertical)  { return addChild(LEFT,  splitVertical); }
 
 private:
     struct Instance;
-    Instance* d;
+    Instance *d;
 
     /**
      * SuperBlockmap creates instances of SuperBlock so it needs to use
