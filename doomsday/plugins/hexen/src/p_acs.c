@@ -1672,16 +1672,10 @@ static int CmdSectorSound(void)
     mobj = NULL;
     if(ACScript->line)
     {
-        Sector*             front =
-            P_GetPtrp(ACScript->line, DMU_FRONT_SECTOR);
-
+        Sector *front = P_GetPtrp(ACScript->line, DMU_FRONT_SECTOR);
         mobj = P_GetPtrp(front, DMU_BASE);
     }
     volume = Pop();
-
-#if _DEBUG
-Con_Printf("CmdSectorSound: volume=%i\n", volume);
-#endif
 
     S_StartSoundAtVolume(S_GetSoundID(GetACString(Pop())), mobj,
                          volume / 127.0f);
@@ -1778,8 +1772,7 @@ static int CmdSetLineTexture(void)
         IterList_RewindIterator(list);
         while((line = IterList_MoveIterator(list)) != NULL)
         {
-            SideDef*            sdef =
-                P_GetPtrp(line, (side == 0? DMU_SIDEDEF0 : DMU_SIDEDEF1));
+            SideDef *sdef = P_GetPtrp(line, (side == 0? DMU_SIDEDEF0 : DMU_SIDEDEF1));
 
             if(position == TEXTURE_MIDDLE)
             {
@@ -1862,8 +1855,8 @@ static int CmdSetLineSpecial(void)
 // Console commands.
 D_CMD(ScriptInfo)
 {
-    int                 i, whichOne = -1;
-    char*               scriptStates[] = {
+    int i, whichOne = -1;
+    char const *scriptStates[] = {
         "Inactive", "Running", "Suspended", "Waiting for tag",
         "Waiting for poly", "Waiting for script", "Terminating"
     };
@@ -1873,13 +1866,13 @@ D_CMD(ScriptInfo)
 
     for(i = 0; i < ACScriptCount; ++i)
     {
-        acsinfo_t*          aptr = ACSInfo + i;
+        acsinfo_t *aptr = ACSInfo + i;
 
         if(whichOne != -1 && whichOne != aptr->number)
             continue;
 
-        Con_Printf("%d %s (a: %d, w: %d)\n", aptr->number,
-                   scriptStates[aptr->state], aptr->argCount, aptr->waitValue);
+        Con_Message("%d %s (a: %d, w: %d)", aptr->number,
+                    scriptStates[aptr->state], aptr->argCount, aptr->waitValue);
     }
 
     return true;
