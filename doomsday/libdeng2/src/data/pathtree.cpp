@@ -36,7 +36,7 @@ struct PathTree::Instance
     /// Path name segment intern pool.
     StringPool segments;
 
-    /// @ref pathTreeFlags
+    /// Flags that determine the properties of the path tree (see PathTree::Flag).
     PathTree::Flags flags;
 
     /// Total number of unique paths in the directory.

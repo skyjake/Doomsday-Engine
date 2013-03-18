@@ -181,16 +181,18 @@ LinkWindow::LinkWindow(QWidget *parent)
     menu->addAction(tr("&Disconnect"), this, SLOT(closeConnection()),
                     QKeySequence(tr("Ctrl+D", "Connection|Disconnect")));
 
-    QMenu *svMenu = menuBar()->addMenu(tr("&Local Server"));
-    svMenu->addAction(tr("&Start..."), app, SLOT(startLocalServer()),
-                      QKeySequence(tr("Ctrl+N", "Local Server|Start")));
+    QMenu *svMenu = menuBar()->addMenu(tr("&Server"));
+    svMenu->addAction(tr("&Start Local Server..."), app, SLOT(startLocalServer()),
+                      QKeySequence(tr("Ctrl+N", "Server|Start Local")));
     svMenu->addAction(d->stopAction);
     svMenu->addSeparator();
     svMenu->addMenu(app->localServersMenu());
 
     connect(svMenu, SIGNAL(aboutToShow()), app, SLOT(updateLocalServerMenu()));
 
-    QMenu *helpMenu = menuBar()->addMenu(tr("&Help"));
+    QMenu *helpMenu = app->makeHelpMenu();
+    menuBar()->addMenu(helpMenu);
+    helpMenu->addSeparator();
     helpMenu->addAction(tr("About Doomsday Shell"), app, SLOT(aboutShell()));
 #endif
 
@@ -491,6 +493,10 @@ void LinkWindow::disconnected()
 void LinkWindow::askForPassword()
 {
     QInputDialog dlg(this);
+    dlg.setWindowTitle(tr("Password Required"));
+#ifdef WIN32
+    dlg.setWindowFlags(dlg.windowFlags() & ~Qt::WindowContextHelpButtonHint);
+#endif
     dlg.setWindowModality(Qt::WindowModal);
     dlg.setInputMode(QInputDialog::TextInput);
     dlg.setTextEchoMode(QLineEdit::Password);

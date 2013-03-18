@@ -26,6 +26,8 @@
 #include <de/shell/ServerFinder>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QUrl>
+#include <QDesktopServices>
 
 Q_DECLARE_METATYPE(de::Address)
 
@@ -85,9 +87,9 @@ GuiShellApp::GuiShellApp(int &argc, char **argv)
     menu->addAction(tr("Close Window"), this, SLOT(closeActiveWindow()),
                     QKeySequence(tr("Ctrl+W", "Connection|Close Window")));
 
-    QMenu *svMenu = d->menuBar->addMenu(tr("Local Server"));
-    svMenu->addAction(tr("Start..."), this, SLOT(startLocalServer()),
-                      QKeySequence(tr("Ctrl+N", "Local Server|Start")));
+    QMenu *svMenu = d->menuBar->addMenu(tr("Server"));
+    svMenu->addAction(tr("Start Local Server..."), this, SLOT(startLocalServer()),
+                      QKeySequence(tr("Ctrl+N", "Server|Start Local")));
     d->stopAction = svMenu->addAction(tr("Stop"), this, SLOT(stopServer()));
     svMenu->addSeparator();
     svMenu->addMenu(d->localMenu);
@@ -98,10 +100,14 @@ GuiShellApp::GuiShellApp(int &argc, char **argv)
     // These will appear in the application menu:
     menu->addAction(tr("Preferences..."), this, SLOT(showPreferences()), QKeySequence(tr("Ctrl+,")));
     menu->addAction(tr("About"), this, SLOT(aboutShell()));
+
+    d->menuBar->addMenu(makeHelpMenu());
 #endif
 
     newOrReusedConnectionWindow();
 }
+
+
 
 LinkWindow *GuiShellApp::newOrReusedConnectionWindow()
 {
@@ -149,6 +155,13 @@ GuiShellApp &GuiShellApp::app()
 QMenu *GuiShellApp::localServersMenu()
 {
     return d->localMenu;
+}
+
+QMenu *GuiShellApp::makeHelpMenu()
+{
+    QMenu *helpMenu = new QMenu(tr("&Help"));
+    helpMenu->addAction(tr("Shell Help"), this, SLOT(showHelp()));
+    return helpMenu;
 }
 
 ServerFinder &GuiShellApp::serverFinder()
@@ -259,6 +272,11 @@ void GuiShellApp::aboutShell()
     AboutDialog().exec();
 }
 
+void GuiShellApp::showHelp()
+{
+    QDesktopServices::openUrl(QUrl(tr("http://dengine.net/dew/index.php?title=Shell_Help")));
+}
+
 void GuiShellApp::showPreferences()
 {
     if(!d->prefs)
@@ -269,11 +287,7 @@ void GuiShellApp::showPreferences()
         {
             connect(d->prefs, SIGNAL(consoleFontChanged()), win, SLOT(updateConsoleFontFromPreferences()));
         }
-#ifdef MACOSX
         d->prefs->show();
-#else
-        d->prefs->open();
-#endif
     }
     else
     {
