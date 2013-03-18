@@ -287,10 +287,10 @@ void SBarChain_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 #define ORIGINY (0)
 
     static int theirColors[] = {
-        144, // Green.
-        197, // Yellow.
+        220, // Green.
+        144, // Yellow.
         150, // Red.
-        220  // Blue.
+        197  // Blue.
     };
     guidata_chain_t* chain = (guidata_chain_t*)obj->typedata;
     int chainY;
@@ -2483,11 +2483,10 @@ void ST_loadGraphics(void)
     pStatBar = R_DeclarePatch("STATBAR");
     pLifeBar = R_DeclarePatch("LIFEBAR");
 
-    // Order of lifeGems changed to match player color index.
-    pLifeGems[0] = R_DeclarePatch("LIFEGEM1");
-    pLifeGems[1] = R_DeclarePatch("LIFEGEM3");
+    pLifeGems[0] = R_DeclarePatch("LIFEGEM0");
+    pLifeGems[1] = R_DeclarePatch("LIFEGEM1");
     pLifeGems[2] = R_DeclarePatch("LIFEGEM2");
-    pLifeGems[3] = R_DeclarePatch("LIFEGEM0");
+    pLifeGems[3] = R_DeclarePatch("LIFEGEM3");
 
     pGodLeft = R_DeclarePatch("GOD1");
     pGodRight = R_DeclarePatch("GOD2");
