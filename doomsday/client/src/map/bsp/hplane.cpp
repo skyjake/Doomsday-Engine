@@ -1,7 +1,7 @@
-/** @file hplane.cpp BSP Builder half-plane and plane intersection list. 
+/** @file hplane.cpp BSP Builder half-plane and plane intersection list.
  *
- * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
- * SourceForge: http://sourceforge.net/projects/glbsp/
+ * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
+ * @see http://sourceforge.net/projects/glbsp/
  *
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
@@ -23,9 +23,8 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
-#include "de_console.h"
-
+#include <de/Error>
+#include <de/Log>
 #include "map/bsp/hplane.h"
 
 using namespace de;
@@ -34,7 +33,7 @@ using namespace de::bsp;
 HPlane::HPlane() : _partition(), _intercepts(0)
 {}
 
-HPlane::HPlane(coord_t const origin[2], coord_t const direction[2])
+HPlane::HPlane(const_pvec2d_t origin, const_pvec2d_t direction)
     : _partition(origin, direction), _intercepts(0)
 {}
 
@@ -63,7 +62,7 @@ coord_t HPlane::yOrigin() const
     return _partition.yOrigin();
 }
 
-void HPlane::setOrigin(coord_t const newOrigin[2])
+void HPlane::setOrigin(const_pvec2d_t newOrigin)
 {
     if(newOrigin)
     {
@@ -182,10 +181,11 @@ HPlane::Intercepts const &HPlane::intercepts() const
 #if _DEBUG
 void HPlane::DebugPrint(HPlane const &inst)
 {
-    uint index = 0;
+    int index = 0;
     DENG2_FOR_EACH_CONST(HPlane::Intercepts, i, inst.intercepts())
     {
-        Con_Printf(" %u: >%1.2f ", index++, i->distance());
+        LOG_DEBUG(" %i: >%f ") << index << i->distance();
+        index++;
     }
 }
 #endif
