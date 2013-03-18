@@ -116,6 +116,11 @@ static GameMap *lastBuiltMap;
 
 static int bspFactor = 7;
 
+void MPE_Register()
+{
+    C_VAR_INT("bsp-factor", &bspFactor, CVF_NO_MAX, 0, 0);
+}
+
 /**
  * @defgroup pruneMapElementFlags Prune Map Element Flags
  * Flags for pruneMapElements()
@@ -138,15 +143,6 @@ static int bspFactor = 7;
  * The integer user value tracks the number of times a reference occurs.
  */
 static StringPool *materialDict;
-
-static void clearMaterialDict();
-static Material *findMaterialInDict(ddstring_t const *materialUri);
-static void printMissingMaterialsInDict();
-
-void MPE_Register()
-{
-    C_VAR_INT("bsp-factor", &bspFactor, CVF_NO_MAX, 0, 0);
-}
 
 /**
  * Either print or count-the-number-of unresolved references in the
