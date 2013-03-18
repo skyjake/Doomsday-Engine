@@ -1326,24 +1326,18 @@ static void collateVertexes(BspBuilder &builder, GameMap &map,
     }
 }
 
-struct CollateBspElementsParms
-{
-    BspBuilder *builder;
-    GameMap *map;
-};
-
-static void collateBspLeafHEdges(BspLeaf &leaf, CollateBspElementsParms const &parms)
+static void collateBspLeafHEdges(GameMap &map, BspBuilder &builder, BspLeaf &leaf)
 {
     HEdge *base = leaf.firstHEdge();
     HEdge *hedge = base;
     do
     {
         // Take ownership of this HEdge.
-        parms.builder->take(hedge);
+        builder.take(hedge);
 
         // Add this HEdge to the LUT.
-        hedge->_origIndex = parms.map->hedges.count();
-        parms.map->hedges.append(hedge);
+        hedge->_origIndex = map.hedges.count();
+        map.hedges.append(hedge);
 
         if(hedge->hasLine())
         {
@@ -1365,20 +1359,20 @@ static void collateBspLeafHEdges(BspLeaf &leaf, CollateBspElementsParms const &p
     } while((hedge = &hedge->next()) != base);
 }
 
-static void collateBspElements(BspTreeNode &tree, CollateBspElementsParms const &parms)
+static void collateBspElements(GameMap &map, BspBuilder &builder, BspTreeNode &tree)
 {
     if(tree.isLeaf())
     {
         // Take ownership of the built BspLeaf.
         DENG2_ASSERT(tree.userData() != 0);
         BspLeaf *leaf = tree.userData()->castTo<BspLeaf>();
-        parms.builder->take(leaf);
+        builder.take(leaf);
 
         // Add this BspLeaf to the LUT.
-        leaf->_index = parms.map->bspLeafs.count();
-        parms.map->bspLeafs.append(leaf);
+        leaf->_index = map.bspLeafs.count();
+        map.bspLeafs.append(leaf);
 
-        collateBspLeafHEdges(*leaf, parms);
+        collateBspLeafHEdges(map, builder, *leaf);
         return;
     }
     // Else; a node.
@@ -1386,17 +1380,11 @@ static void collateBspElements(BspTreeNode &tree, CollateBspElementsParms const 
     // Take ownership of this BspNode.
     DENG2_ASSERT(tree.userData() != 0);
     BspNode *node = tree.userData()->castTo<BspNode>();
-    parms.builder->take(node);
+    builder.take(node);
 
     // Add this BspNode to the LUT.
-    node->_index = parms.map->bspNodes.count();
-    parms.map->bspNodes.append(node);
-}
-
-static int collateBspElementsWorker(BspTreeNode &tree, void *parameters)
-{
-    collateBspElements(tree, *static_cast<CollateBspElementsParms *>(parameters));
-    return false; // Continue iteration.
+    node->_index = map.bspNodes.count();
+    map.bspNodes.append(node);
 }
 
 static bool buildBsp(GameMap &map)
@@ -1450,15 +1438,52 @@ static bool buildBsp(GameMap &map)
         map.bspLeafs.reserve(nodeBuilder.numLeafs());
 #endif
 
+        collateVertexes(nodeBuilder, map, e_mapNumVertexes, e_mapVertexesArray);
+
         BspTreeNode *rootNode = nodeBuilder.root();
         map.bsp = rootNode->userData(); // We'll formally take ownership shortly...
 
-        CollateBspElementsParms parms;
-        parms.builder = &nodeBuilder;
-        parms.map     = &map;
+        // Iterative pre-order traversal of the BspBuilder's map element tree.
+        BspTreeNode *cur = rootNode;
+        BspTreeNode *prev = 0;
+        while(cur)
+        {
+            while(cur)
+            {
+                if(cur->userData())
+                {
+                    // Acquire ownership of and collate all map data elements at
+                    // this node of the tree.
+                    collateBspElements(map, nodeBuilder, *cur);
+                }
 
-        collateVertexes(nodeBuilder, map, e_mapNumVertexes, e_mapVertexesArray);
-        rootNode->traversePostOrder(collateBspElementsWorker, &parms);
+                if(prev == cur->parentPtr())
+                {
+                    // Descending - right first, then left.
+                    prev = cur;
+                    if(cur->hasRight()) cur = cur->rightPtr();
+                    else                cur = cur->leftPtr();
+                }
+                else if(prev == cur->rightPtr())
+                {
+                    // Last moved up the right branch - descend the left.
+                    prev = cur;
+                    cur = cur->leftPtr();
+                }
+                else if(prev == cur->leftPtr())
+                {
+                    // Last moved up the left branch - continue upward.
+                    prev = cur;
+                    cur = cur->parentPtr();
+                }
+            }
+
+            if(prev)
+            {
+                // No left child - back up.
+                cur = prev->parentPtr();
+            }
+        }
     }
 
     // How much time did we spend?
