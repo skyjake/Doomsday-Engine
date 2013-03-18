@@ -148,6 +148,137 @@ void MPE_Register()
     C_VAR_INT("bsp-factor", &bspFactor, CVF_NO_MAX, 0, 0);
 }
 
+/**
+ * Either print or count-the-number-of unresolved references in the
+ * material dictionary.
+ *
+ * @param internId    Unique id associated with the reference.
+ * @param parameters  If a uint pointer operate in "count" mode (total written here).
+ *                    Else operate in "print" mode.
+ * @return Always @c 0 (for use as an iterator).
+ */
+static int printMissingMaterialWorker(StringPool::Id internId, void *parameters)
+{
+    uint *count = (uint *)parameters;
+
+    // A valid id?
+    if(materialDict->string(internId))
+    {
+        // Have we resolved this reference yet?
+        if(!materialDict->userPointer(internId))
+        {
+            // An unresolved reference.
+            if(count)
+            {
+                // Count mode.
+                *count += 1;
+            }
+            else
+            {
+                // Print mode.
+                int const refCount = materialDict->userValue(internId);
+                String const &materialUri = materialDict->string(internId);
+                QByteArray materialUriUtf8 = materialUri.toUtf8();
+                Con_Message(" %4u x \"%s\"", refCount, materialUriUtf8.constData());
+            }
+        }
+    }
+    return 0; // Continue iteration.
+}
+
+/**
+ * Destroy the missing material dictionary.
+ */
+static void clearMaterialDict()
+{
+    // Initialized?
+    if(!materialDict) return;
+
+    materialDict->clear();
+    delete materialDict; materialDict = 0;
+}
+
+/**
+ * Print any "missing" materials in the dictionary to the log.
+ */
+static void printMissingMaterialsInDict()
+{
+    // Initialized?
+    if(!materialDict) return;
+
+    // Count missing materials.
+    uint numMissing = 0;
+    materialDict->iterate(printMissingMaterialWorker, &numMissing);
+    if(!numMissing) return;
+
+    Con_Message("  [110] Warning: Found %u unknown %s:", numMissing, numMissing == 1? "material":"materials");
+    // List the missing materials.
+    materialDict->iterate(printMissingMaterialWorker, 0);
+}
+
+/**
+ * Attempt to locate a material by its URI. A dictionary of previously
+ * searched-for URIs is maintained to avoid repeated searching and to record
+ * "missing" materials.
+ *
+ * @param materialUriStr  URI of the material to search for.
+ *
+ * @return  Pointer to the found material; otherwise @c 0.
+ */
+static Material *findMaterialInDict(ddstring_t const *materialUriStr)
+{
+    if(!materialUriStr || Str_IsEmpty(materialUriStr)) return 0;
+
+    // Are we yet to instantiate the dictionary?
+    if(!materialDict)
+    {
+        materialDict = new StringPool;
+    }
+
+    de::Uri materialUri(Str_Text(materialUriStr), RC_NULL);
+
+    // Intern this reference.
+    StringPool::Id internId = materialDict->intern(materialUri.compose());
+    Material *material = 0;
+
+    // Have we previously encountered this?.
+    uint refCount = materialDict->userValue(internId);
+    if(refCount)
+    {
+        // Yes, if resolved the user pointer holds the found material.
+        material = (Material *) materialDict->userPointer(internId);
+    }
+    else
+    {
+        // No, attempt to resolve this URI and update the dictionary.
+        // First try the preferred scheme, then any.
+        try
+        {
+            material = &App_Materials().find(materialUri).material();
+        }
+        catch(Materials::NotFoundError const &)
+        {
+            // Try any scheme.
+            try
+            {
+                materialUri.setScheme("");
+                material = &App_Materials().find(materialUri).material();
+            }
+            catch(Materials::NotFoundError const &)
+            {}
+        }
+
+        // Insert the possibly resolved material into the dictionary.
+        materialDict->setUserPointer(internId, material);
+    }
+
+    // There is now one more reference.
+    refCount++;
+    materialDict->setUserValue(internId, refCount);
+
+    return material;
+}
+
 static Vertex *createVertex(coord_t x, coord_t y)
 {
     Vertex *vtx = new Vertex(x, y);
@@ -443,26 +574,6 @@ static void pruneMapElements(EditMap & /*e_map*/, int /*flags*/)
         pruneUnusedSectors(e_map);
 }
 #endif
-
-#undef MPE_Begin
-boolean MPE_Begin(char const *mapUri)
-{
-    /// @todo Do not ignore; assign to the editable map.
-    DENG_UNUSED(mapUri);
-
-    if(editMapInited) return true; // Already been here.
-
-    // Initialize the game-specific map entity property database.
-    editMap.entityDatabase = EntityDatabase_New();
-
-    editMap.clear();
-
-    lastBuiltMap = 0;
-    lastBuiltMapResult = false; // Assume failure.
-
-    editMapInited = true;
-    return true;
-}
 
 static void buildSectorBspLeafLists(GameMap &map)
 {
@@ -1528,6 +1639,36 @@ static void buildReject(GameMap *map)
 }
 #endif
 
+GameMap *MPE_GetLastBuiltMap()
+{
+    return lastBuiltMap;
+}
+
+bool MPE_GetLastBuiltMapResult()
+{
+    return lastBuiltMapResult;
+}
+
+#undef MPE_Begin
+boolean MPE_Begin(char const *mapUri)
+{
+    /// @todo Do not ignore; assign to the editable map.
+    DENG_UNUSED(mapUri);
+
+    // Already been here?
+    if(editMapInited) return true;
+
+    // Initialize the game-specific map entity property database.
+    editMap.entityDatabase = EntityDatabase_New();
+    editMap.clear();
+
+    lastBuiltMap = 0;
+    lastBuiltMapResult = false; // Failed (default).
+
+    editMapInited = true;
+    return true;
+}
+
 #undef MPE_End
 boolean MPE_End()
 {
@@ -1535,6 +1676,13 @@ boolean MPE_End()
         return false;
 
     GameMap *gamemap = new GameMap;
+
+    /*
+     * Log warnings about any issues we encountered during conversion of
+     * the basic map data elements.
+     */
+    printMissingMaterialsInDict();
+    clearMaterialDict();
 
     /*
      * Perform cleanup on the loaded map data, removing duplicate vertexes,
@@ -1548,8 +1696,7 @@ boolean MPE_End()
     /*
      * Acquire ownership of the map elements from the editable map.
      */
-
-    gamemap->entityDatabase = editMap.entityDatabase;
+    gamemap->entityDatabase = editMap.entityDatabase; // Take ownership.
 
     // Collate sectors:
     DENG2_ASSERT(gamemap->sectors.isEmpty());
@@ -1584,7 +1731,6 @@ boolean MPE_End()
     buildVertexLineOwnerRings();
 
     hardenPolyobjs(*gamemap, editMap);
-
     editMap.destroyPolyObjs();
 
     /*
@@ -1602,10 +1748,6 @@ boolean MPE_End()
     // Mobj and Polyobj blockmaps are maintained dynamically.
     GameMap_InitMobjBlockmap(gamemap, min, max);
     GameMap_InitPolyobjBlockmap(gamemap, min, max);
-
-    // Announce any missing materials we encountered during the conversion.
-    printMissingMaterialsInDict();
-    clearMaterialDict();
 
     /*
      * Build a BSP for this map.
@@ -1638,13 +1780,14 @@ boolean MPE_End()
 
     if(!builtOK)
     {
-        // Failed. Need to clean up.
+        // Darn, clean up...
         EntityDatabase_Delete(gamemap->entityDatabase);
-        Z_Free(gamemap);
-        lastBuiltMapResult = false; // Failed.
+        delete gamemap;
 
+        lastBuiltMapResult = false; // Failed :$
         return lastBuiltMapResult;
     }
+
     editMapInited = false;
 
     finishSideDefs(*gamemap);
@@ -1665,9 +1808,7 @@ boolean MPE_End()
         gx.SetupForMapData(DMU_SECTOR,  gamemap->sectorCount());
     }
 
-    /**
-     * Are we caching this map?
-     */
+    // Are we caching this map?
     if(gamemap->uri && !Str_IsEmpty(Uri_Path(gamemap->uri)))
     {
         // Yes, write the cached map data file.
@@ -1693,16 +1834,6 @@ boolean MPE_End()
     lastBuiltMap = gamemap;
     lastBuiltMapResult = true; // Success.
 
-    return lastBuiltMapResult;
-}
-
-GameMap *MPE_GetLastBuiltMap()
-{
-    return lastBuiltMap;
-}
-
-bool MPE_GetLastBuiltMapResult()
-{
     return lastBuiltMapResult;
 }
 
@@ -1732,137 +1863,6 @@ boolean MPE_VertexCreatev(size_t num, coord_t *values, uint *indices)
     }
 
     return true;
-}
-
-/**
- * Either print or count-the-number-of unresolved references in the
- * material dictionary.
- *
- * @param internId    Unique id associated with the reference.
- * @param parameters  If a uint pointer operate in "count" mode (total written here).
- *                    Else operate in "print" mode.
- * @return Always @c 0 (for use as an iterator).
- */
-static int printMissingMaterialWorker(StringPool::Id internId, void *parameters)
-{
-    uint *count = (uint *)parameters;
-
-    // A valid id?
-    if(materialDict->string(internId))
-    {
-        // Have we resolved this reference yet?
-        if(!materialDict->userPointer(internId))
-        {
-            // An unresolved reference.
-            if(count)
-            {
-                // Count mode.
-                *count += 1;
-            }
-            else
-            {
-                // Print mode.
-                int const refCount = materialDict->userValue(internId);
-                String const &materialUri = materialDict->string(internId);
-                QByteArray materialUriUtf8 = materialUri.toUtf8();
-                Con_Message(" %4u x \"%s\"", refCount, materialUriUtf8.constData());
-            }
-        }
-    }
-    return 0; // Continue iteration.
-}
-
-/**
- * Destroy the missing material dictionary.
- */
-static void clearMaterialDict()
-{
-    // Initialized?
-    if(!materialDict) return;
-
-    materialDict->clear();
-    delete materialDict; materialDict = 0;
-}
-
-/**
- * Print any "missing" materials in the dictionary to the log.
- */
-static void printMissingMaterialsInDict()
-{
-    // Initialized?
-    if(!materialDict) return;
-
-    // Count missing materials.
-    uint numMissing = 0;
-    materialDict->iterate(printMissingMaterialWorker, &numMissing);
-    if(!numMissing) return;
-
-    Con_Message("  [110] Warning: Found %u unknown %s:", numMissing, numMissing == 1? "material":"materials");
-    // List the missing materials.
-    materialDict->iterate(printMissingMaterialWorker, 0);
-}
-
-/**
- * Attempt to locate a material by its URI. A dictionary of previously
- * searched-for URIs is maintained to avoid repeated searching and to record
- * "missing" materials.
- *
- * @param materialUriStr  URI of the material to search for.
- *
- * @return  Pointer to the found material; otherwise @c 0.
- */
-static Material *findMaterialInDict(ddstring_t const *materialUriStr)
-{
-    if(!materialUriStr || Str_IsEmpty(materialUriStr)) return 0;
-
-    // Are we yet to instantiate the dictionary?
-    if(!materialDict)
-    {
-        materialDict = new StringPool;
-    }
-
-    de::Uri materialUri(Str_Text(materialUriStr), RC_NULL);
-
-    // Intern this reference.
-    StringPool::Id internId = materialDict->intern(materialUri.compose());
-    Material *material = 0;
-
-    // Have we previously encountered this?.
-    uint refCount = materialDict->userValue(internId);
-    if(refCount)
-    {
-        // Yes, if resolved the user pointer holds the found material.
-        material = (Material *) materialDict->userPointer(internId);
-    }
-    else
-    {
-        // No, attempt to resolve this URI and update the dictionary.
-        // First try the preferred scheme, then any.
-        try
-        {
-            material = &App_Materials().find(materialUri).material();
-        }
-        catch(Materials::NotFoundError const &)
-        {
-            // Try any scheme.
-            try
-            {
-                materialUri.setScheme("");
-                material = &App_Materials().find(materialUri).material();
-            }
-            catch(Materials::NotFoundError const &)
-            {}
-        }
-
-        // Insert the possibly resolved material into the dictionary.
-        materialDict->setUserPointer(internId, material);
-    }
-
-    // There is now one more reference.
-    refCount++;
-    materialDict->setUserValue(internId, refCount);
-
-    return material;
 }
 
 #undef MPE_SidedefCreate
