@@ -359,11 +359,15 @@ const playerstart_t* P_GetPlayerStart(uint entryPoint, int pnum,
         pnum = MINMAX_OF(0, pnum, MAXPLAYERS-1);
 
     if(deathmatch)
-    {   // In deathmatch, entry point is ignored.
+    {
+        // In deathmatch, entry point is ignored.
         return &deathmatchStarts[pnum];
     }
 
 #if __JHEXEN__
+    // Client 1 should be treated like player 0.
+    if(IS_NETWORK_SERVER) pnum--;
+
     for(i = 0; i < numPlayerStarts; ++i)
     {
         const playerstart_t* start = &playerStarts[i];
