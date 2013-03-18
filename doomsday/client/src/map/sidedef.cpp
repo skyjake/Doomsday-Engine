@@ -48,27 +48,6 @@ SideDef::SideDef()
 SideDef::~SideDef()
 {}
 
-SideDef &SideDef::operator = (SideDef const &other)
-{
-    _middleSurface = other._middleSurface;
-    _bottomSurface = other._bottomSurface;
-    _topSurface    = other._topSurface;
-
-    _line = other._line;
-    _flags = other._flags;
-    std::memcpy(&_buildData, &other._buildData, sizeof(_buildData));
-
-#ifdef __CLIENT__
-    _fakeRadioData.updateCount = other._fakeRadioData.updateCount;
-    std::memcpy(&_fakeRadioData.topCorners,    &other._fakeRadioData.topCorners,    sizeof(_fakeRadioData.topCorners));
-    std::memcpy(&_fakeRadioData.bottomCorners, &other._fakeRadioData.bottomCorners, sizeof(_fakeRadioData.bottomCorners));
-    std::memcpy(&_fakeRadioData.sideCorners,   &other._fakeRadioData.sideCorners,   sizeof(_fakeRadioData.sideCorners));
-    std::memcpy(&_fakeRadioData.spans,         &other._fakeRadioData.spans,         sizeof(_fakeRadioData.spans));
-#endif
-
-    return *this;
-}
-
 LineDef &SideDef::line() const
 {
     DENG2_ASSERT(_line != 0);

@@ -112,9 +112,6 @@ public:
     Surface(de::MapElement &owner);
     ~Surface();
 
-    /// @todo Refactor away.
-    Surface &operator = (Surface const &other);
-
     /**
      * Returns the owning map element. Either @c DMU_SIDEDEF, or @c DMU_PLANE.
      */

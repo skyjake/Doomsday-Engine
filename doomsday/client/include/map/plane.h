@@ -74,6 +74,7 @@ public:
      * @param height  Height of the plane in map space coordinates.
      */
     Plane(Sector &sector, de::Vector3f const &normal, coord_t height = 0);
+    ~Plane();
 
     /**
      * Returns the owning Sector of the plane.

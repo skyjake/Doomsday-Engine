@@ -158,6 +158,8 @@ static void endSegment(void)
     writeLong(DAMSEG_END);
 }
 
+#if 0
+
 static void writeVertex(GameMap const *map, uint idx)
 {
     Vertex const *v = &map->vertexes[idx];
@@ -640,7 +642,6 @@ static void archiveSectors(GameMap *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-#if 0
 static void writeBspLeaf(GameMap *map, BspLeaf *s)
 {
     DENG_ASSERT(map && s);
@@ -718,7 +719,6 @@ static void readBspLeaf(GameMap *map, BspLeaf *s)
 
     s->_hedge->prev = prevHEdge;
 }
-#endif
 
 static void archiveBspLeafs(GameMap* map, boolean write)
 {
@@ -749,7 +749,6 @@ static void archiveBspLeafs(GameMap* map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-#if 0
 static void writeSeg(GameMap *map, HEdge *s)
 {
     DENG_ASSERT(map && s);
@@ -792,7 +791,6 @@ static void readSeg(GameMap *map, HEdge *s)
     obIdx = readLong();
     s->prev = (obIdx == 0? NULL : GameMap_HEdge(map, (unsigned) obIdx - 1));
 }
-#endif
 
 static void archiveSegs(GameMap *map, boolean write)
 {
@@ -822,8 +820,6 @@ static void archiveSegs(GameMap *map, boolean write)
     else
         assertSegment(DAMSEG_END);
 }
-
-#if 0
 
 #define NF_LEAF            0x80000000
 
@@ -1075,18 +1071,6 @@ static void archivePolyobjs(GameMap* map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-/*
-static void writeThing(const GameMap *map, uint idx)
-{
-
-}
-
-static void readThing(const GameMap *map, uint idx)
-{
-
-}
-*/
-
 static void archiveMap(GameMap *map, boolean write)
 {
     if(write)
@@ -1104,7 +1088,7 @@ static void archiveMap(GameMap *map, boolean write)
             gx.SetupForMapData(DMU_SECTOR, map->sectorCount());
         }
     }
-
+/*
     archivePolyobjs(map, write);
     archiveVertexes(map, write);
     archiveLines(map, write); // Must follow vertexes (lineowner nodes).
@@ -1115,7 +1099,7 @@ static void archiveMap(GameMap *map, boolean write)
     archiveNodes(map, write);
     archiveBlockmap(map, write);
     archiveReject(map, write);
-
+*/
     if(write)
         endSegment();
     else

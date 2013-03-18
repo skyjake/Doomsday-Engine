@@ -158,9 +158,6 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector const *frontSec,
 boolean R_MiddleMaterialCoversLineOpening(LineDef const *line, int side, boolean ignoreOpacity);
 #endif // __CLIENT__
 
-Plane*          R_NewPlaneForSector(Sector* sec);
-void            R_DestroyPlaneOfSector(uint id, Sector* sec);
-
 void            R_UpdateTrackedPlanes(void);
 void            R_InterpolateTrackedPlanes(boolean resetNextViewer);
 

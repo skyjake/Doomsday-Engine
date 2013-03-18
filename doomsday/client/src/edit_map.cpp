@@ -31,7 +31,9 @@
 #include "de_edit.h"
 #include "de_dam.h"
 #include "de_filesys.h"
-
+#ifdef __CLIENT__
+#  include "render/rend_main.h"
+#endif
 #include <de/StringPool>
 #include <BspBuilder>
 
@@ -61,9 +63,13 @@ public:
     EntityDatabase *entityDatabase;
 
 public:
-    EditMap();
+    EditMap::EditMap()
+    {
+        numPolyObjs = 0;
+        polyObjs = 0;
 
-    virtual ~EditMap();
+        entityDatabase = 0;
+    }
 
     Vertex const **verticesAsArray() const { return const_cast<Vertex const **>(&(vertexes[0])); }
 
@@ -189,20 +195,20 @@ static void destroyEditablePolyObjs(EditMap *map)
 
 static void destroyEditableLineDefs(EditMap *map)
 {
-    DENG2_FOR_EACH(EditMap::Lines, s, map->lines)
+    /*DENG2_FOR_EACH(EditMap::Lines, s, map->lines)
     {
         delete *s;
     }
-    map->lines.clear();
+    map->lines.clear();*/
 }
 
 static void destroyEditableSideDefs(EditMap *map)
 {
-    DENG2_FOR_EACH(EditMap::SideDefs, s, map->sideDefs)
+    /*DENG2_FOR_EACH(EditMap::SideDefs, s, map->sideDefs)
     {
         delete *s;
     }
-    map->sideDefs.clear();
+    map->sideDefs.clear();*/
 }
 
 static void destroyEditableSectors(EditMap *map)
@@ -231,13 +237,13 @@ static void destroyEditableSectors(EditMap *map)
         M_Free(map->sectors);
     }
     map->sectors = NULL;
-    map->numSectors = 0;*/
+    map->numSectors = 0;
 
     DENG2_FOR_EACH(EditMap::Sectors, sec, map->sectors)
     {
         delete *sec;
     }
-    map->sectors.clear();
+    map->sectors.clear();*/
 }
 
 static void destroyMap()
@@ -245,9 +251,9 @@ static void destroyMap()
     e_map->vertexes.clear();
 
     // These should already be gone:
-    destroyEditableLineDefs(e_map);
-    destroyEditableSideDefs(e_map);
-    destroyEditableSectors(e_map);
+    e_map->lines.clear();
+    e_map->sideDefs.clear();
+    e_map->sectors.clear();
     destroyEditablePolyObjs(e_map);
 }
 
@@ -509,51 +515,42 @@ boolean MPE_Begin(char const *mapUri)
     return true;
 }
 
-static void hardenSectorBspLeafList(GameMap *map, uint secIDX)
+static void buildSectorBspLeafLists(GameMap &map)
 {
-    DENG_ASSERT(map && secIDX < map->sectorCount());
+    for(uint i = 0; i < map.sectorCount(); ++i)
+    {
+        Sector &sector = map.sectors[i];
 
-    Sector *sec = &map->sectors[secIDX];
-    sec->_bspLeafs.clear();
+        sector._bspLeafs.clear();
 
 #ifdef DENG2_QT_4_7_OR_NEWER
-    uint count = 0;
-    for(uint i = 0; i < map->bspLeafCount(); ++i)
-    {
-        BspLeaf &bspLeaf = map->bspLeafs[i];
-        if(bspLeaf.sectorPtr() == sec)
-            ++count;
-    }
-    if(0 == count) return;
+        uint count = 0;
+        for(uint k = 0; k < map.bspLeafCount(); ++k)
+        {
+            BspLeaf &bspLeaf = map.bspLeafs[k];
+            if(bspLeaf.sectorPtr() == &sector)
+                ++count;
+        }
 
-    sec->_bspLeafs.reserve(count);
+        if(0 == count) continue;
+
+        sector._bspLeafs.reserve(count);
 #endif
 
-    for(uint i = 0; i < map->bspLeafCount(); ++i)
-    {
-        BspLeaf &bspLeaf = map->bspLeafs[i];
-        if(bspLeaf.sectorPtr() == sec)
+        for(uint k = 0; k < map.bspLeafCount(); ++k)
         {
-            // Ownership of the BSP leaf is not given to the sector.
-            sec->_bspLeafs.append(&bspLeaf);
+            BspLeaf &bspLeaf = map.bspLeafs[k];
+            if(bspLeaf.sectorPtr() == &sector)
+            {
+                // Ownership of the BSP leaf is not given to the sector.
+                sector._bspLeafs.append(&bspLeaf);
+            }
         }
     }
 }
 
-static void buildSectorBspLeafLists(GameMap *map)
+static void buildSectorLineLists(GameMap &map)
 {
-    DENG_ASSERT(map);
-
-    for(uint i = 0; i < map->sectorCount(); ++i)
-    {
-        hardenSectorBspLeafList(map, i);
-    }
-}
-
-static void buildSectorLineLists(GameMap *map)
-{
-    DENG_ASSERT(map);
-
     LOG_VERBOSE("Building Sector line lists...");
 
     struct LineLink
@@ -564,15 +561,15 @@ static void buildSectorLineLists(GameMap *map)
 
     // Collate a list of lines for each sector.
     zblockset_t *lineLinksBlockSet = ZBlockSet_New(sizeof(LineLink), 512, PU_APPSTATIC);
-    LineLink **sectorLineLinks = (LineLink **) Z_Calloc(sizeof(*sectorLineLinks) * map->sectorCount(), PU_APPSTATIC, 0);
+    LineLink **sectorLineLinks = (LineLink **) Z_Calloc(sizeof(*sectorLineLinks) * map.sectorCount(), PU_APPSTATIC, 0);
 
-    for(uint i = 0; i < map->lineCount(); ++i)
+    for(uint i = 0; i < map.lineCount(); ++i)
     {
-        LineDef *line = &map->lines[i];
+        LineDef *line = &map.lines[i];
 
         if(line->hasFrontSector())
         {
-            int const sectorIndex = GameMap_SectorIndex(map, &line->frontSector());
+            int const sectorIndex = GameMap_SectorIndex(&map, &line->frontSector());
 
             LineLink *link = (LineLink *) ZBlockSet_Allocate(lineLinksBlockSet);
             link->line = line;
@@ -582,7 +579,7 @@ static void buildSectorLineLists(GameMap *map)
 
         if(line->hasBackSector() && !line->isSelfReferencing())
         {
-            int const sectorIndex = GameMap_SectorIndex(map, &line->backSector());
+            int const sectorIndex = GameMap_SectorIndex(&map, &line->backSector());
 
             LineLink *link = (LineLink *) ZBlockSet_Allocate(lineLinksBlockSet);
             link->line = line;
@@ -592,11 +589,11 @@ static void buildSectorLineLists(GameMap *map)
     }
 
     // Build the actual sector line lists.
-    for(uint i = 0; i < map->sectorCount(); ++i)
+    for(uint i = 0; i < map.sectorCount(); ++i)
     {
-        Sector *sec = &map->sectors[i];
+        Sector *sector = &map.sectors[i];
 
-        sec->_lines.clear();
+        sector->_lines.clear();
 
         if(!sectorLineLinks[i]) continue;
 
@@ -608,7 +605,7 @@ static void buildSectorLineLists(GameMap *map)
             numLines++;
         }
         // Reserve this much storage.
-        sec->_lines.reserve(numLines);
+        sector->_lines.reserve(numLines);
 #endif
 
         /**
@@ -621,7 +618,7 @@ static void buildSectorLineLists(GameMap *map)
         for(LineLink *link = sectorLineLinks[i]; link; link = link->next)
         {
             // Ownership of the line is not given to the sector.
-            sec->_lines.prepend(link->line);
+            sector->_lines.prepend(link->line);
         }
     }
 
@@ -630,26 +627,29 @@ static void buildSectorLineLists(GameMap *map)
     Z_Free(sectorLineLinks);
 }
 
-static void finishSectors(GameMap *map)
+static void finishSectors(GameMap &map)
 {
-    DENG_ASSERT(map);
-
-    for(uint i = 0; i < map->sectorCount(); ++i)
+    for(uint i = 0; i < map.sectorCount(); ++i)
     {
-        Sector &sec = map->sectors[i];
+        Sector &sector = map.sectors[i];
 
-        sec.updateAABox();
-        sec.updateRoughArea();
-        sec.updateSoundEmitterOrigin();
+        sector.updateAABox();
+        sector.updateRoughArea();
+        sector.updateSoundEmitterOrigin();
 
         // Set the position of the sound origin for all plane sound origins.
         // Set target heights for all planes.
-        for(uint k = 0; k < sec.planeCount(); ++k)
+        for(uint k = 0; k < sector.planeCount(); ++k)
         {
-            Plane &pln = sec.plane(k);
+            Plane &plane = sector.plane(k);
 
-            pln.surface().updateSoundEmitterOrigin();
-            pln._targetHeight = pln._height;
+            plane.surface().updateSoundEmitterOrigin();
+            plane._targetHeight =
+                plane._oldHeight[0] =
+                    plane._oldHeight[1] =
+                        plane._visHeight = plane._height;
+
+            plane._visHeightDelta = 0;
         }
     }
 }
@@ -659,16 +659,14 @@ static void finishSectors(GameMap *map)
  * @param base  Mobj base to link in @a sector. Caller should ensure that the
  *              same object is not linked multiple times into the chain.
  */
-static void linkToSectorEmitterChain(Sector *sector, ddmobj_base_t *otherEmitter)
+static void linkToSectorEmitterChain(Sector &sector, ddmobj_base_t &otherEmitter)
 {
-    if(!sector || !otherEmitter) return;
-
     // The sector's base is always head of the chain, so link the other after it.
-    otherEmitter->thinker.prev = &sector->_soundEmitter.thinker;
-    otherEmitter->thinker.next = sector->_soundEmitter.thinker.next;
-    if(otherEmitter->thinker.next)
-        otherEmitter->thinker.next->prev = &otherEmitter->thinker;
-    sector->_soundEmitter.thinker.next = &otherEmitter->thinker;
+    otherEmitter.thinker.prev = &sector._soundEmitter.thinker;
+    otherEmitter.thinker.next = sector._soundEmitter.thinker.next;
+    if(otherEmitter.thinker.next)
+        otherEmitter.thinker.next->prev = &otherEmitter.thinker;
+    sector._soundEmitter.thinker.next = &otherEmitter.thinker;
 }
 
 /**
@@ -676,65 +674,59 @@ static void linkToSectorEmitterChain(Sector *sector, ddmobj_base_t *otherEmitter
  * These chains are used for efficiently traversing all of the sound emitters in
  * a sector (e.g., when stopping all sounds emitted in the sector).
  */
-static void chainSectorSoundEmitters(GameMap *map)
+static void chainSectorSoundEmitters(GameMap &map)
 {
-    DENG_ASSERT(map);
-
-    for(uint i = 0; i < map->sectorCount(); ++i)
+    for(uint i = 0; i < map.sectorCount(); ++i)
     {
-        Sector *sec = GameMap_Sector(map, i);
-        ddmobj_base_t &emitter = sec->soundEmitter();
+        Sector &sector = map.sectors[i];
+        ddmobj_base_t &emitter = sector.soundEmitter();
 
         // Clear the head of the sound emitter chain.
         emitter.thinker.next = emitter.thinker.prev = 0;
 
         // Add all plane base mobjs.
-        foreach(Plane *plane, sec->planes())
+        foreach(Plane *plane, sector.planes())
         {
-            linkToSectorEmitterChain(sec, &plane->surface().soundEmitter());
+            linkToSectorEmitterChain(sector, plane->surface().soundEmitter());
         }
 
         // Add all sidedef base mobjs.
-        foreach(LineDef *line, sec->lines())
+        foreach(LineDef *line, sector.lines())
         {
-            if(line->frontSectorPtr() == sec)
+            if(line->frontSectorPtr() == &sector)
             {
                 SideDef &side = line->frontSideDef();
-                linkToSectorEmitterChain(sec, &side.middle().soundEmitter());
-                linkToSectorEmitterChain(sec, &side.bottom().soundEmitter());
-                linkToSectorEmitterChain(sec, &side.top().soundEmitter());
+                linkToSectorEmitterChain(sector, side.middle().soundEmitter());
+                linkToSectorEmitterChain(sector, side.bottom().soundEmitter());
+                linkToSectorEmitterChain(sector, side.top().soundEmitter());
             }
-            if(line->hasBackSideDef() && line->backSectorPtr() == sec)
+            if(line->hasBackSideDef() && line->backSectorPtr() == &sector)
             {
                 SideDef &side = line->backSideDef();
-                linkToSectorEmitterChain(sec, &side.middle().soundEmitter());
-                linkToSectorEmitterChain(sec, &side.bottom().soundEmitter());
-                linkToSectorEmitterChain(sec, &side.top().soundEmitter());
+                linkToSectorEmitterChain(sector, side.middle().soundEmitter());
+                linkToSectorEmitterChain(sector, side.bottom().soundEmitter());
+                linkToSectorEmitterChain(sector, side.top().soundEmitter());
             }
         }
     }
 }
 
-static void finishSideDefs(GameMap *map)
+static void finishSideDefs(GameMap &map)
 {
-    DENG_ASSERT(map);
-
     // Calculate the tangent space surface vectors.
-    for(uint i = 0; i < map->sideDefCount(); ++i)
+    for(uint i = 0; i < map.sideDefCount(); ++i)
     {
-        SideDef &side = map->sideDefs[i];
+        SideDef &side = map.sideDefs[i];
         side.updateSurfaceTangents();
         side.updateSoundEmitterOrigins();
     }
 }
 
-static void finishLines(GameMap *map)
+static void finishLines(GameMap &map)
 {
-    DENG_ASSERT(map);
-
-    for(uint i = 0; i < map->lineCount(); ++i)
+    for(uint i = 0; i < map.lineCount(); ++i)
     {
-        LineDef &line = map->lines[i];
+        LineDef &line = map.lines[i];
         LineDef::Side &front = line.front();
 
         if(!front._leftHEdge) continue;
@@ -754,38 +746,35 @@ static void finishLines(GameMap *map)
 /**
  * @pre Axis-aligned bounding boxes of all Sectors must be initialized.
  */
-static void updateMapBounds(GameMap *map)
+static void updateMapBounds(GameMap &map)
 {
-    DENG_ASSERT(map);
-
     bool isFirst = true;
-    for(uint i = 0; i < map->sectorCount(); ++i)
+    for(uint i = 0; i < map.sectorCount(); ++i)
     {
-        Sector *sec = &map->sectors[i];
+        Sector &sector = map.sectors[i];
 
         // Sectors with no lines have invalid bounds; skip them.
-        if(!sec->lineCount()) continue;
+        if(!sector.lineCount()) continue;
 
         if(isFirst)
         {
             // The first sector is used as is.
-            V2d_CopyBox(map->aaBox.arvec2, sec->aaBox().arvec2);
+            V2d_CopyBox(map.aaBox.arvec2, sector.aaBox().arvec2);
             isFirst = false;
         }
         else
         {
             // Expand the bounding box.
-            V2d_UniteBox(map->aaBox.arvec2, sec->aaBox().arvec2);
+            V2d_UniteBox(map.aaBox.arvec2, sector.aaBox().arvec2);
         }
     }
 }
 
-static void prepareBspLeafs(GameMap *map)
+static void prepareBspLeafs(GameMap &map)
 {
-    DENG_ASSERT(map);
-    for(uint i = 0; i < map->bspLeafCount(); ++i)
+    for(uint i = 0; i < map.bspLeafCount(); ++i)
     {
-        BspLeaf &bspLeaf = map->bspLeafs[i];
+        BspLeaf &bspLeaf = map.bspLeafs[i];
 
         bspLeaf.updateAABox();
         bspLeaf.updateCenter();
@@ -1046,107 +1035,136 @@ static void hardenVertexOwnerRings(GameMap *dest, EditMap *src)
     }
 }
 
-static void hardenLinedefs(GameMap *dest, EditMap *src)
+static void hardenLines(GameMap &dest, EditMap &src)
 {
-    DENG2_ASSERT(dest && src);
+    DENG2_ASSERT(dest.lines.isEmpty());
+#ifdef DENG2_QT_4_7_OR_NEWER
+    dest.lines.reserve(src.lines.size());
+#endif
 
-    dest->lines.clearAndResize(src->lines.size());
-
-    for(uint i = 0; i < dest->lineCount(); ++i)
+    for(uint i = 0; i < src.lines.size(); ++i)
     {
-        LineDef &destL = dest->lines[i];
-        LineDef const &srcL = *src->lines[i];
+        LineDef *line = src.lines[i]; // Take ownership.
 
-        destL = srcL;
+        dest.lines.append(line);
 
+        // Update links:
         /// @todo We shouldn't still have lines with missing fronts but...
-        destL.front()._sideDef = (srcL.front()._sideDef?
-            &dest->sideDefs[srcL.front()._sideDef->_buildData.index - 1] : NULL);
-        destL.back()._sideDef = (srcL.back()._sideDef?
-            &dest->sideDefs[srcL.back()._sideDef->_buildData.index - 1] : NULL);
+        line->front()._sideDef = (line->front()._sideDef? &dest.sideDefs[line->front()._sideDef->_buildData.index - 1] : NULL);
+        line->back()._sideDef  = ( line->back()._sideDef? &dest.sideDefs[ line->back()._sideDef->_buildData.index - 1] : NULL);
 
-        if(destL.hasFrontSideDef())
-            destL.frontSideDef()._line = &destL;
-        if(destL.hasBackSideDef())
-            destL.backSideDef()._line = &destL;
+        if(line->hasFrontSideDef())
+            line->frontSideDef()._line = line;
 
-        destL.front()._sector = (srcL.front()._sector?
-            &dest->sectors[srcL.front()._sector->_origIndex - 1] : NULL);
+        if(line->hasBackSideDef())
+            line->backSideDef()._line = line;
 
-        destL.back()._sector  = (srcL.back()._sector?
-            &dest->sectors[srcL.back()._sector->_origIndex - 1] : NULL);
+        line->front()._sector = (line->front()._sector? &dest.sectors[line->front()._sector->_origIndex - 1] : NULL);
+        line->back()._sector  = ( line->back()._sector? &dest.sectors[ line->back()._sector->_origIndex - 1] : NULL);
     }
 }
 
-static void hardenSidedefs(GameMap *dest, EditMap *src)
+static void hardenSidedefs(GameMap &dest, EditMap &src)
 {
-    DENG2_ASSERT(dest && src);
+    DENG2_ASSERT(dest.sideDefs.isEmpty());
+#ifdef DENG2_QT_4_7_OR_NEWER
+    dest.sideDefs.reserve(src.sideDefs.size());
+#endif
 
-    dest->sideDefs.clearAndResize(src->sideDefs.size());
-
-    for(uint i = 0; i < dest->sideDefCount(); ++i)
+    for(uint i = 0; i < src.sideDefs.size(); ++i)
     {
-        SideDef &destS = dest->sideDefs[i];
-        SideDef const &srcS = *src->sideDefs[i];
+        SideDef *side = src.sideDefs[i]; // Take ownership.
 
-        destS = srcS;
+        dest.sideDefs.append(side);
     }
 }
 
-static void hardenSectors(GameMap *dest, EditMap *src)
+static void hardenSectors(GameMap &dest, EditMap &src)
 {
-    dest->sectors.clearAndResize(src->sectorCount());
+    DENG2_ASSERT(dest.sectors.isEmpty());
+#ifdef DENG2_QT_4_7_OR_NEWER
+    dest.sectors.reserve(src.sectors.size());
+#endif
 
-    for(uint i = 0; i < src->sectorCount(); ++i)
+    for(uint i = 0; i < src.sectors.size(); ++i)
     {
-        Sector &destS = dest->sectors[i];
-        Sector const &srcS = *src->sectors[i];
+        Sector *sector = src.sectors[i]; // Take ownership.
 
-        destS = srcS;
-        destS._planes.clear(); // ownership of planes not transferred
+        dest.sectors.append(sector);
     }
 }
 
-static void hardenPlanes(GameMap *dest, EditMap *src)
+static void hardenPlanes(GameMap &dest)
 {
-    for(uint i = 0; i < dest->sectorCount(); ++i)
+    for(uint i = 0; i < dest.sectorCount(); ++i)
     {
-        Sector &destS = dest->sectors[i];
-        Sector const &srcS = *src->sectors[i];
+        Sector &sector = dest.sectors[i];
 
-        for(uint j = 0; j < srcS.planeCount(); ++j)
+        foreach(Plane *plane, sector.planes())
         {
-            Plane *destP = R_NewPlaneForSector(&destS);
-            Plane const &srcP = srcS.plane(j);
+            // Initialize the surface.
+            /// @todo The initial material should be the "unknown" material.
+            plane->surface().updateSoundEmitterOrigin();
 
-            destP->_height =
-                destP->_oldHeight[0] =
-                    destP->_oldHeight[1] =
-                        destP->_visHeight = srcP._height;
+#ifdef __CLIENT__
+            /**
+             * Resize the biassurface lists for the BSP leaf planes.
+             * If we are in map setup mode, don't create the biassurfaces now,
+             * as planes are created before the bias system is available.
+             */
+            foreach(BspLeaf *bspLeaf, sector.bspLeafs())
+            {
+                uint n = 0;
 
-            destP->_visHeightDelta = 0;
-            destP->_surface        = srcP._surface;
-            destP->_type           = srcP._type;
-            destP->_sector         = &destS;
+                biassurface_t **newList = (biassurface_t **) Z_Calloc(sector.planeCount() * sizeof(biassurface_t *), PU_MAP, 0);
+                // Copy the existing list?
+                if(bspLeaf->_bsuf)
+                {
+                    for(; n < sector.planeCount() - 1 /* exclude newly added */; ++n)
+                    {
+                        newList[n] = bspLeaf->_bsuf[n];
+                    }
+                    Z_Free(bspLeaf->_bsuf);
+                    bspLeaf->_bsuf = 0;
+                }
+
+                if(!ddMapSetup)
+                {
+                    biassurface_t *bsuf = SB_CreateSurface();
+
+                    bsuf->size = Rend_NumFanVerticesForBspLeaf(bspLeaf);
+                    bsuf->illum = (vertexillum_t *) Z_Calloc(sizeof(vertexillum_t) * bsuf->size, PU_MAP, 0);
+
+                    for(uint k = 0; k < bsuf->size; ++k)
+                    {
+                        SB_InitVertexIllum(&bsuf->illum[k]);
+                    }
+
+                    newList[n] = bsuf;
+                }
+
+                bspLeaf->_bsuf = newList;
+            }
+#endif
         }
     }
 }
 
-static void hardenPolyobjs(GameMap *dest, EditMap *src)
+static void hardenPolyobjs(GameMap &dest, EditMap &src)
 {
-    if(src->numPolyObjs == 0)
+    if(src.numPolyObjs == 0)
     {
-        dest->numPolyObjs = 0;
-        dest->polyObjs = NULL;
+        dest.numPolyObjs = 0;
+        dest.polyObjs = NULL;
         return;
     }
 
-    dest->numPolyObjs = src->numPolyObjs;
-    dest->polyObjs = (Polyobj **) Z_Malloc((dest->numPolyObjs + 1) * sizeof(Polyobj *), PU_MAP, 0);
+    dest.numPolyObjs = src.numPolyObjs;
+    dest.polyObjs = (Polyobj **) Z_Malloc((dest.numPolyObjs + 1) * sizeof(Polyobj *), PU_MAP, 0);
 
-    for(uint i = 0; i < dest->numPolyObjs; ++i)
+    for(uint i = 0; i < dest.numPolyObjs; ++i)
     {
-        Polyobj *srcP  = src->polyObjs[i];
+        Polyobj *srcP  = src.polyObjs[i];
         Polyobj *destP = (Polyobj *) Z_Calloc(POLYOBJ_SIZE, PU_MAP, 0);
 
         destP->idx = i;
@@ -1168,7 +1186,7 @@ static void hardenPolyobjs(GameMap *dest, EditMap *src)
         destP->lines = (LineDef **) Z_Malloc(sizeof(*destP->lines) * (destP->lineCount + 1), PU_MAP, 0);
         for(uint j = 0; j < destP->lineCount; ++j)
         {
-            LineDef *line = &dest->lines[srcP->lines[j]->_origIndex - 1];
+            LineDef *line = &dest.lines[srcP->lines[j]->_origIndex - 1];
             HEdge *hedge = &hedges[j];
 
             // This line belongs to a polyobj.
@@ -1188,9 +1206,9 @@ static void hardenPolyobjs(GameMap *dest, EditMap *src)
         destP->lines[destP->lineCount] = 0; // Terminate.
 
         // Add this polyobj to the global list.
-        dest->polyObjs[i] = destP;
+        dest.polyObjs[i] = destP;
     }
-    dest->polyObjs[dest->numPolyObjs] = 0; // Terminate.
+    dest.polyObjs[dest.numPolyObjs] = 0; // Terminate.
 }
 
 #if 0 /* Currently unused. */
@@ -1685,10 +1703,10 @@ boolean MPE_End()
      * @todo I'm sure this can be reworked further so that we destroy as we
      *       go and reduce the current working memory surcharge.
      */
-    hardenSectors(gamemap, e_map);
-    hardenSidedefs(gamemap, e_map);
-    hardenLinedefs(gamemap, e_map);
-    hardenPolyobjs(gamemap, e_map);
+    hardenSectors(*gamemap, *e_map);
+    hardenSidedefs(*gamemap, *e_map);
+    hardenLines(*gamemap, *e_map);
+    hardenPolyobjs(*gamemap, *e_map);
 
     hardenVertexOwnerRings(gamemap, e_map);
 
@@ -1742,11 +1760,11 @@ boolean MPE_End()
         }
     }
 
-    buildSectorBspLeafLists(gamemap);
+    buildSectorBspLeafLists(*gamemap);
 
     // Map must be polygonized and sector->bspLeafs must be built before
     // this is called!
-    hardenPlanes(gamemap, e_map);
+    hardenPlanes(*gamemap);
 
     // Destroy the rest of editable map, we are finished with it.
     /// @note Only the vertexes should be left anyway.
@@ -1763,15 +1781,16 @@ boolean MPE_End()
         return lastBuiltMapResult;
     }
 
-    buildSectorLineLists(gamemap);
-    finishSideDefs(gamemap);
-    finishLines(gamemap);
-    finishSectors(gamemap);
-    chainSectorSoundEmitters(gamemap);
+    buildSectorLineLists(*gamemap);
+    finishSideDefs(*gamemap);
+    finishLines(*gamemap);
+    finishSectors(*gamemap);
+    chainSectorSoundEmitters(*gamemap);
 
-    updateMapBounds(gamemap);
+    updateMapBounds(*gamemap);
+
     S_DetermineBspLeafsAffectingSectorReverb(gamemap);
-    prepareBspLeafs(gamemap);
+    prepareBspLeafs(*gamemap);
 
     clearMaterialDict();
 
@@ -1780,10 +1799,10 @@ boolean MPE_End()
     // Call the game's setup routines.
     if(gx.SetupForMapData)
     {
-        gx.SetupForMapData(DMU_VERTEX, gamemap->vertexCount());
+        gx.SetupForMapData(DMU_VERTEX,  gamemap->vertexCount());
         gx.SetupForMapData(DMU_LINEDEF, gamemap->lineCount());
         gx.SetupForMapData(DMU_SIDEDEF, gamemap->sideDefCount());
-        gx.SetupForMapData(DMU_SECTOR, gamemap->sectorCount());
+        gx.SetupForMapData(DMU_SECTOR,  gamemap->sectorCount());
     }
 
     /**
@@ -2095,8 +2114,9 @@ uint MPE_PlaneCreate(uint sector, coord_t height, ddstring_t const *materialUri,
     pln->surface().setMaterialOrigin(matOffsetX, matOffsetY);
 
     s->_planes.append(pln);
+    pln->_inSectorIndex = s->planeCount() - 1;
 
-    return s->planeCount(); // 1-based index.
+    return pln->_inSectorIndex + 1; // 1-based index.
 }
 
 #undef MPE_SectorCreate
@@ -2174,17 +2194,6 @@ boolean MPE_GameObjProperty(char const *entityName, uint elementIndex,
 
     return P_SetMapEntityProperty(e_map->entityDatabase, propertyDef, elementIndex, type, valueAdr);
 }
-
-EditMap::EditMap()
-{
-    numPolyObjs = 0;
-    polyObjs = 0;
-
-    entityDatabase = 0;
-}
-
-EditMap::~EditMap()
-{}
 
 // p_data.cpp
 #undef P_RegisterMapObj

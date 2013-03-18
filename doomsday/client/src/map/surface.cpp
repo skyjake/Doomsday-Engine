@@ -57,28 +57,6 @@ Surface::Surface(MapElement &owner)
 Surface::~Surface()
 {}
 
-Surface &Surface::operator = (Surface const &other)
-{
-    std::memcpy(&_soundEmitter, &other._soundEmitter, sizeof(_soundEmitter));
-    _flags = other._flags;
-    _material = other._material;
-    _materialIsMissingFix = other._materialIsMissingFix;
-    _blendMode = other._blendMode;
-    V3f_Copy(_tangent, other._tangent);
-    V3f_Copy(_bitangent, other._bitangent);
-    V3f_Copy(_normal, other._normal);
-    V2f_Copy(_offset, other._offset);
-    V2f_Copy(_oldOffset[0], other._oldOffset[0]);
-    V2f_Copy(_oldOffset[1], other._oldOffset[1]);
-    V4f_Copy(_colorAndAlpha, other._colorAndAlpha);
-
-    // Reset the visual offset to the actual offset.
-    V2f_Copy(_visOffset, _offset);
-    V2f_Set(_visOffsetDelta, 0, 0);
-
-    return *this;
-}
-
 de::MapElement &Surface::owner() const
 {
     return _owner;

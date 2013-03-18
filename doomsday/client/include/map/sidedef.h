@@ -116,9 +116,6 @@ public:
     SideDef();
     ~SideDef();
 
-    /// @todo Refactor away.
-    SideDef &operator = (SideDef const &other);
-
     /**
      * Returns the line which owns the sidedef.
      */
