@@ -129,12 +129,6 @@ static int bspFactor = 7;
 ///@}
 
 /**
- * @param e_map     Editable map to prune elements from.
- * @param flags     @ref pruneMapElementFlags
- */
-static void pruneMapElements(EditMap &e_map, int flags);
-
-/**
  * Material name references specified during map conversion are recorded in
  * this dictionary. A dictionary is used to avoid repeatedly resolving the same
  * URIs and to facilitate a log of missing materials encountered during the
@@ -212,6 +206,7 @@ static Polyobj *createPolyobj()
     return po;
 }
 
+#if 0
 static int vertexCompare(void const *p1, void const *p2)
 {
     Vertex const *a = (Vertex const *) *((void const **) p1);
@@ -253,7 +248,6 @@ static void markDuplicateVertexes(EditMap &e_map)
     M_Free(hits);
 }
 
-#if 0
 static void findEquivalentVertexes(EditMap *src)
 {
     uint i, newNum;
@@ -417,19 +411,20 @@ static void pruneUnusedSectors(EditMap *map)
         map->sectorCount() = newNum;
     }
 }
-#endif
 
 /**
- * @warning Order here is critical!
+ * @param e_map     Editable map to prune elements from.
+ * @param flags     @ref pruneMapElementFlags
  */
 static void pruneMapElements(EditMap & /*e_map*/, int /*flags*/)
 {
-#if 0
     /**
      * @todo Pruning cannot be done as game map data object properties
      * are currently indexed by their original indices as determined by the
      * position in the map data. The same problem occurs within ACS scripts
      * and XG line/sector references.
+     *
+     * @warning Order here is critical!
      */
     if(!editMapInited) return;
 
@@ -446,8 +441,8 @@ static void pruneMapElements(EditMap & /*e_map*/, int /*flags*/)
 
     if(flags & PRUNE_SECTORS)
         pruneUnusedSectors(e_map);
-#endif
 }
+#endif
 
 #undef MPE_Begin
 boolean MPE_Begin(char const *mapUri)
@@ -563,9 +558,9 @@ static void buildSectorLineLists(GameMap &map)
 #endif
 
         /**
-         * The behaviour of some algorithms used in original DOOM are
-         * dependant upon the order of these lists (e.g., EV_DoFloor
-         * and EV_BuildStairs). Lets be helpful and use the same order.
+         * The behavior of some algorithms used in the DOOM game logic are
+         * dependant upon the order of these lists (e.g., EV_DoFloor and
+         * EV_BuildStairs). Lets be helpful and use the same order.
          *
          * Sort: Original line index, ascending.
          */
@@ -853,44 +848,59 @@ static void setVertexLineOwner(Vertex *vtx, LineDef *lineptr, LineOwner **storag
         lineptr->_vo[TO] = newOwner;
 }
 
+#ifdef DENG2_DEBUG
+/**
+ * Determines whether the specified vertex @a v has a correctly formed line
+ * owner ring.
+ */
+static bool vertexHasValidLineOwnerRing(Vertex &v)
+{
+    LineOwner const *base = v.firstLineOwner();
+    LineOwner const *cur = base;
+    do
+    {
+        if(&cur->prev().next() != cur) return false;
+        if(&cur->next().prev() != cur) return false;
+
+    } while((cur = &cur->next()) != base);
+    return true;
+}
+#endif
+
 /**
  * Generates the line owner rings for each vertex. Each ring includes all
  * the lines which the vertex belongs to sorted by angle, (the rings are
  * arranged in clockwise order, east = 0).
  */
-static void buildVertexOwnerRings(EditMap &e_map)
+static void buildVertexLineOwnerRings()
 {
+    LOG_AS("buildVertexLineOwnerRings");
+
+    /*
+     * Step 1: Find and link up all line owners.
+     */
     // We know how many vertex line owners we need (numLineDefs * 2).
-    LineOwner *lineOwners = (LineOwner *) Z_Malloc(sizeof(LineOwner) * e_map.lines.size() * 2, PU_MAPSTATIC, 0);
+    LineOwner *lineOwners = (LineOwner *) Z_Malloc(sizeof(LineOwner) * editMap.lines.size() * 2, PU_MAPSTATIC, 0);
     LineOwner *allocator = lineOwners;
 
-    for(uint i = 0; i < e_map.lines.size(); ++i)
+    for(uint i = 0; i < editMap.lines.size(); ++i)
     {
-        LineDef *line = e_map.lines[i];
+        LineDef *line = editMap.lines[i];
 
         for(uint p = 0; p < 2; ++p)
         {
             setVertexLineOwner(&line->vertex(p), line, &allocator);
         }
     }
-}
 
-/// Sort line owners and then finish the rings.
-static void hardenVertexOwnerRings(GameMap &map, EditMap &e_map)
-{
-    for(uint i = 0; i < e_map.vertexCount(); ++i)
+    /*
+     * Step 2: Sort line owners of each vertex and finalize the rings.
+     */
+    for(uint i = 0; i < editMap.vertexCount(); ++i)
     {
-        Vertex *v = e_map.vertexes[i];
+        Vertex *v = editMap.vertexes[i];
 
         if(!v->_numLineOwners) continue;
-
-        // Redirect the linedef links to the hardened map.
-        LineOwner *p = v->_lineOwners;
-        while(p)
-        {
-            p->_line = &map.lines[p->_line->_origIndex - 1];
-            p = &p->next();
-        }
 
         // Sort them; ordered clockwise by angle.
         rootVtx = v;
@@ -901,7 +911,7 @@ static void hardenVertexOwnerRings(GameMap &map, EditMap &e_map)
         // and circularly linked.
         binangle_t firstAngle = v->_lineOwners->angle();
         LineOwner *last = v->_lineOwners;
-        p = &last->next();
+        LineOwner *p = &last->next();
         while(p)
         {
             p->_link[LineOwner::Previous] = last;
@@ -918,29 +928,25 @@ static void hardenVertexOwnerRings(GameMap &map, EditMap &e_map)
         // Set the angle of the last owner.
         last->_angle = last->angle() - firstAngle;
 
-/*#if _DEBUG
-        // Check the line owner link rings are formed correctly.
-        if(verbose >= 2)
-            Con_Message("Vertex #%i: line owners #%i", i, v->numLineOwners);
+/*#ifdef DENG2_DEBUG
+        LOG_VERBOSE("Vertex #%i: line owners #%i")
+            << i << v->lineOwnerCount();
 
-        LineOwner *base = v->firstLineOwner();
-        p = base;
+        LineOwner const *base = v->firstLineOwner();
+        LineOwner const *cur = base;
         uint idx = 0;
         do
         {
-            if(verbose >= 2)
-                Con_Message("  %i: p= #%05i this= #%05i n= #%05i, dANG= %-3.f",
-                            idx, &p->prev().line() - map->lines,
-                            &p->line() - map->lineDefs,
-                            &p->next().line() - map->lines, BANG2DEG(p->angle()));
+            LOG_VERBOSE("  %i: p= #%05i this= #%05i n= #%05i, dANG= %-3.f")
+                << idx << cur->prev().line().origIndex() << cur->line().origIndex()
+                << cur->next().line().origIndex() << BANG2DEG(cur->angle());
 
-            if(&p->prev().next() != p || &p->next().prev() != p)
-               Con_Error("Invalid line owner link ring!");
-
-            p = &p->next();
             idx++;
-        } while(p != base);
+        } while((cur = &cur->next()) != base);
 #endif*/
+
+        // Sanity check.
+        DENG2_ASSERT(vertexHasValidLineOwnerRing(*v));
     }
 }
 
@@ -1540,10 +1546,10 @@ boolean MPE_End()
      * Perform cleanup on the loaded map data, removing duplicate vertexes,
      * pruning unused sectors etc, etc...
      */
+#if 0
     markDuplicateVertexes(editMap);
     pruneMapElements(editMap, PRUNE_ALL);
-
-    buildVertexOwnerRings(editMap);
+#endif
 
     /*
      * Acquire ownership of the map elements from the editable map.
@@ -1581,8 +1587,9 @@ boolean MPE_End()
         gamemap->lines.append(editMap.lines[i]); // Take ownership.
     }
 
+    buildVertexLineOwnerRings();
+
     hardenPolyobjs(*gamemap, editMap);
-    hardenVertexOwnerRings(*gamemap, editMap);
 
     editMap.destroyPolyObjs();
 
