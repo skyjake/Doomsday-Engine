@@ -41,8 +41,11 @@
 
 using namespace de;
 
-// Editable map.
-/// @todo Now redundant; refactor away. -ds
+/**
+ * Editable map data.
+ *
+ * @todo Now redundant; refactor away. -ds
+ */
 class EditMap
 {
 public:
@@ -61,7 +64,7 @@ public:
     uint numPolyObjs;
     Polyobj **polyObjs;
 
-    // Game-specific map entity property values.
+    /// Map entity data (things, line specials, etc...).
     EntityDatabase *entityDatabase;
 
 public:
@@ -73,14 +76,39 @@ public:
         entityDatabase = 0;
     }
 
+    void destroyPolyObjs()
+    {
+        if(polyObjs)
+        {
+            for(uint i = 0; i < numPolyObjs; ++i)
+            {
+                Polyobj *po = polyObjs[i];
+                M_Free(po->lines);
+                M_Free(po);
+            }
+            M_Free(polyObjs);
+        }
+        polyObjs = 0;
+        numPolyObjs = 0;
+    }
+
+    void clear()
+    {
+        vertexes.clear();
+        lines.clear();
+        sideDefs.clear();
+        sectors.clear();
+
+        destroyPolyObjs();
+    }
+
     Vertex const **verticesAsArray() const { return const_cast<Vertex const **>(&(vertexes[0])); }
 
     uint vertexCount() const { return vertexes.size(); }
     uint sectorCount() const { return sectors.size(); }
 };
 
-static EditMap editMap;
-static EditMap *e_map = &editMap;
+static EditMap editMap; // singleton
 static bool editMapInited;
 static bool lastBuiltMapResult;
 
@@ -93,18 +121,18 @@ static int bspFactor = 7;
  * Flags for pruneMapElements()
  */
 ///@{
-#define PRUNE_LINEDEFS      0x1
+#define PRUNE_LINES         0x1
 #define PRUNE_VERTEXES      0x2
 #define PRUNE_SIDEDEFS      0x4
 #define PRUNE_SECTORS       0x8
-#define PRUNE_ALL           (PRUNE_LINEDEFS|PRUNE_VERTEXES|PRUNE_SIDEDEFS|PRUNE_SECTORS)
+#define PRUNE_ALL           (PRUNE_LINES|PRUNE_VERTEXES|PRUNE_SIDEDEFS|PRUNE_SECTORS)
 ///@}
 
 /**
- * @param map       Editable map to prune elements from.
+ * @param e_map     Editable map to prune elements from.
  * @param flags     @ref pruneMapElementFlags
  */
-static void pruneMapElements(EditMap *map, int flags);
+static void pruneMapElements(EditMap &e_map, int flags);
 
 /**
  * Material name references specified during map conversion are recorded in
@@ -130,8 +158,8 @@ static Vertex *createVertex(coord_t x, coord_t y)
 {
     Vertex *vtx = new Vertex(x, y);
 
-    e_map->vertexes.push_back(vtx);
-    vtx->_buildData.index = e_map->vertexes.size(); // 1-based index, 0 = NIL.
+    editMap.vertexes.push_back(vtx);
+    vtx->_buildData.index = editMap.vertexes.size(); // 1-based index, 0 = NIL.
 
     return vtx;
 }
@@ -140,8 +168,8 @@ static LineDef *createLine()
 {
     LineDef *line = new LineDef;
 
-    e_map->lines.push_back(line);
-    line->_origIndex = e_map->lines.size(); // 1-based index, 0 = NIL.
+    editMap.lines.push_back(line);
+    line->_origIndex = editMap.lines.size(); // 1-based index, 0 = NIL.
 
     return line;
 }
@@ -150,8 +178,8 @@ static SideDef *createSideDef()
 {
     SideDef *sideDef = new SideDef;
 
-    e_map->sideDefs.push_back(sideDef);
-    sideDef->_buildData.index = e_map->sideDefs.size(); // 1-based index, 0 = NIL.
+    editMap.sideDefs.push_back(sideDef);
+    sideDef->_buildData.index = editMap.sideDefs.size(); // 1-based index, 0 = NIL.
 
     return sideDef;
 }
@@ -165,8 +193,8 @@ static Sector *createSector(Vector3f const &ambientLightColor, float lightLevel)
     sec->_lightColor[CB] = de::clamp(0.f, ambientLightColor.z, 1.f);
     sec->_lightLevel = de::clamp(0.f, lightLevel, 1.f);
     
-    e_map->sectors.push_back(sec);
-    sec->_origIndex = e_map->sectors.size(); // 1-based index, 0 = NIL.
+    editMap.sectors.push_back(sec);
+    sec->_origIndex = editMap.sectors.size(); // 1-based index, 0 = NIL.
 
     return sec;
 }
@@ -175,41 +203,13 @@ static Polyobj *createPolyobj()
 {
     Polyobj *po = (Polyobj *) M_Calloc(sizeof(*po));
 
-    e_map->polyObjs = (Polyobj **) M_Realloc(e_map->polyObjs, sizeof(po) * (++e_map->numPolyObjs + 1));
-    e_map->polyObjs[e_map->numPolyObjs-1] = po;
-    e_map->polyObjs[e_map->numPolyObjs] = NULL;
+    editMap.polyObjs = (Polyobj **) M_Realloc(editMap.polyObjs, sizeof(po) * (++editMap.numPolyObjs + 1));
+    editMap.polyObjs[editMap.numPolyObjs-1] = po;
+    editMap.polyObjs[editMap.numPolyObjs] = NULL;
 
-    po->buildData.index = e_map->numPolyObjs; // 1-based index, 0 = NIL.
+    po->buildData.index = editMap.numPolyObjs; // 1-based index, 0 = NIL.
 
     return po;
-}
-
-static void destroyEditablePolyObjs(EditMap *map)
-{
-    if(map->polyObjs)
-    {
-        for(uint i = 0; i < map->numPolyObjs; ++i)
-        {
-            Polyobj *po = map->polyObjs[i];
-            M_Free(po->lines);
-            M_Free(po);
-        }
-        M_Free(map->polyObjs);
-    }
-    map->polyObjs = 0;
-    map->numPolyObjs = 0;
-}
-
-static void destroyMap()
-{
-    e_map->vertexes.clear();
-
-    // These should already be gone:
-    e_map->lines.clear();
-    e_map->sideDefs.clear();
-    e_map->sectors.clear();
-
-    destroyEditablePolyObjs(e_map);
 }
 
 static int vertexCompare(void const *p1, void const *p2)
@@ -225,20 +225,19 @@ static int vertexCompare(void const *p1, void const *p2)
     return int(a->origin()[VY]) - int(b->origin()[VY]);
 }
 
-void markDuplicateVertexes(EditMap *map)
+static void markDuplicateVertexes(EditMap &e_map)
 {
-    DENG_ASSERT(map);
-    Vertex **hits = (Vertex **) M_Malloc(map->vertexCount() * sizeof(Vertex *));
+    Vertex **hits = (Vertex **) M_Malloc(e_map.vertexCount() * sizeof(Vertex *));
 
     // Sort array of ptrs.
-    for(uint i = 0; i < map->vertexCount(); ++i)
+    for(uint i = 0; i < e_map.vertexCount(); ++i)
     {
-        hits[i] = map->vertexes[i];
+        hits[i] = e_map.vertexes[i];
     }
-    qsort(hits, map->vertexCount(), sizeof(Vertex *), vertexCompare);
+    qsort(hits, e_map.vertexCount(), sizeof(Vertex *), vertexCompare);
 
     // Now mark them off.
-    for(uint i = 0; i < map->vertexCount() - 1; ++i)
+    for(uint i = 0; i < e_map.vertexCount() - 1; ++i)
     {
         // A duplicate?
         if(vertexCompare(hits + i, hits + i + 1) == 0)
@@ -423,7 +422,7 @@ static void pruneUnusedSectors(EditMap *map)
 /**
  * @warning Order here is critical!
  */
-static void pruneMapElements(EditMap * /*map*/, int /*flags*/)
+static void pruneMapElements(EditMap & /*e_map*/, int /*flags*/)
 {
 #if 0
     /**
@@ -434,19 +433,19 @@ static void pruneMapElements(EditMap * /*map*/, int /*flags*/)
      */
     if(!editMapInited) return;
 
-    findEquivalentVertexes(map);
+    findEquivalentVertexes(e_map);
 
-    if(flags & PRUNE_LINEDEFS)
-        pruneLinedefs(map);
+    if(flags & PRUNE_LINES)
+        pruneLines(e_map);
 
     if(flags & PRUNE_VERTEXES)
-        pruneVertices(map);
+        pruneVertices(e_map);
 
     if(flags & PRUNE_SIDEDEFS)
-        pruneUnusedSidedefs(map);
+        pruneUnusedSidedefs(e_map);
 
     if(flags & PRUNE_SECTORS)
-        pruneUnusedSectors(map);
+        pruneUnusedSectors(e_map);
 #endif
 }
 
@@ -459,9 +458,9 @@ boolean MPE_Begin(char const *mapUri)
     if(editMapInited) return true; // Already been here.
 
     // Initialize the game-specific map entity property database.
-    e_map->entityDatabase = EntityDatabase_New();
+    editMap.entityDatabase = EntityDatabase_New();
 
-    destroyMap();
+    editMap.clear();
 
     lastBuiltMap = 0;
     lastBuiltMapResult = false; // Assume failure.
@@ -859,17 +858,15 @@ static void setVertexLineOwner(Vertex *vtx, LineDef *lineptr, LineOwner **storag
  * the lines which the vertex belongs to sorted by angle, (the rings are
  * arranged in clockwise order, east = 0).
  */
-static void buildVertexOwnerRings(EditMap *map)
+static void buildVertexOwnerRings(EditMap &e_map)
 {
-    DENG_ASSERT(map);
-
     // We know how many vertex line owners we need (numLineDefs * 2).
-    LineOwner *lineOwners = (LineOwner *) Z_Malloc(sizeof(LineOwner) * map->lines.size() * 2, PU_MAPSTATIC, 0);
+    LineOwner *lineOwners = (LineOwner *) Z_Malloc(sizeof(LineOwner) * e_map.lines.size() * 2, PU_MAPSTATIC, 0);
     LineOwner *allocator = lineOwners;
 
-    for(uint i = 0; i < map->lines.size(); ++i)
+    for(uint i = 0; i < e_map.lines.size(); ++i)
     {
-        LineDef *line = map->lines[i];
+        LineDef *line = e_map.lines[i];
 
         for(uint p = 0; p < 2; ++p)
         {
@@ -879,13 +876,11 @@ static void buildVertexOwnerRings(EditMap *map)
 }
 
 /// Sort line owners and then finish the rings.
-static void hardenVertexOwnerRings(GameMap *dest, EditMap *src)
+static void hardenVertexOwnerRings(GameMap &map, EditMap &e_map)
 {
-    DENG_ASSERT(dest && src);
-
-    for(uint i = 0; i < src->vertexCount(); ++i)
+    for(uint i = 0; i < e_map.vertexCount(); ++i)
     {
-        Vertex *v = src->vertexes[i];
+        Vertex *v = e_map.vertexes[i];
 
         if(!v->_numLineOwners) continue;
 
@@ -893,7 +888,7 @@ static void hardenVertexOwnerRings(GameMap *dest, EditMap *src)
         LineOwner *p = v->_lineOwners;
         while(p)
         {
-            p->_line = &dest->lines[p->_line->_origIndex - 1];
+            p->_line = &map.lines[p->_line->_origIndex - 1];
             p = &p->next();
         }
 
@@ -1005,21 +1000,21 @@ static void finishPlanes(GameMap &dest)
     }
 }
 
-static void hardenPolyobjs(GameMap &dest, EditMap &src)
+static void hardenPolyobjs(GameMap &dest, EditMap &e_map)
 {
-    if(src.numPolyObjs == 0)
+    if(e_map.numPolyObjs == 0)
     {
         dest.numPolyObjs = 0;
         dest.polyObjs = NULL;
         return;
     }
 
-    dest.numPolyObjs = src.numPolyObjs;
+    dest.numPolyObjs = e_map.numPolyObjs;
     dest.polyObjs = (Polyobj **) Z_Malloc((dest.numPolyObjs + 1) * sizeof(Polyobj *), PU_MAP, 0);
 
     for(uint i = 0; i < dest.numPolyObjs; ++i)
     {
-        Polyobj *srcP  = src.polyObjs[i];
+        Polyobj *srcP  = e_map.polyObjs[i];
         Polyobj *destP = (Polyobj *) Z_Calloc(POLYOBJ_SIZE, PU_MAP, 0);
 
         destP->idx = i;
@@ -1306,22 +1301,20 @@ static void collateBspElements(GameMap &map, BspBuilder &builder, BspTreeNode &t
 
 static bool buildBsp(GameMap &map)
 {
-    DENG2_ASSERT(e_map);
-
     // It begins...
     Time begunAt;
 
     LOG_INFO("Building BSP using tunable split factor of %d...") << bspFactor;
 
     // Instantiate and configure a new BSP builder.
-    BspBuilder nodeBuilder(map, e_map->vertexCount(), e_map->verticesAsArray(), bspFactor);
+    BspBuilder nodeBuilder(map, editMap.vertexCount(), editMap.verticesAsArray(), bspFactor);
 
     // Build the BSP.
     bool builtOK = nodeBuilder.buildBsp();
     if(builtOK)
     {
-        Vertex const **e_mapVertexesArray = e_map->verticesAsArray();
-        uint const e_mapNumVertexes = e_map->vertexCount();
+        Vertex const **e_mapVertexesArray = editMap.verticesAsArray();
+        uint const e_mapNumVertexes = editMap.vertexCount();
 
         BspTreeNode &treeRoot = *nodeBuilder.root();
 
@@ -1547,57 +1540,57 @@ boolean MPE_End()
      * Perform cleanup on the loaded map data, removing duplicate vertexes,
      * pruning unused sectors etc, etc...
      */
-    markDuplicateVertexes(e_map);
-    pruneMapElements(e_map, PRUNE_ALL);
+    markDuplicateVertexes(editMap);
+    pruneMapElements(editMap, PRUNE_ALL);
 
-    buildVertexOwnerRings(e_map);
+    buildVertexOwnerRings(editMap);
 
     /*
      * Acquire ownership of the map elements from the editable map.
      */
 
-    gamemap->entityDatabase = e_map->entityDatabase;
+    gamemap->entityDatabase = editMap.entityDatabase;
 
     // Collate sectors:
     DENG2_ASSERT(gamemap->sectors.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
-    gamemap->sectors.reserve(e_map->sectors.size());
+    gamemap->sectors.reserve(editMap.sectors.size());
 #endif
-    for(uint i = 0; i < e_map->sectors.size(); ++i)
+    for(uint i = 0; i < editMap.sectors.size(); ++i)
     {
-        gamemap->sectors.append(e_map->sectors[i]); // Take ownership.
+        gamemap->sectors.append(editMap.sectors[i]); // Take ownership.
     }
 
     // Collate sidedefs:
     DENG2_ASSERT(gamemap->sideDefs.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
-    gamemap->sideDefs.reserve(e_map->sideDefs.size());
+    gamemap->sideDefs.reserve(editMap.sideDefs.size());
 #endif
-    for(uint i = 0; i < e_map->sideDefs.size(); ++i)
+    for(uint i = 0; i < editMap.sideDefs.size(); ++i)
     {
-        gamemap->sideDefs.append(e_map->sideDefs[i]); // Take ownership.
+        gamemap->sideDefs.append(editMap.sideDefs[i]); // Take ownership.
     }
 
     // Collate lines:
     DENG2_ASSERT(gamemap->lines.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
-    gamemap->lines.reserve(e_map->lines.size());
+    gamemap->lines.reserve(editMap.lines.size());
 #endif
-    for(uint i = 0; i < e_map->lines.size(); ++i)
+    for(uint i = 0; i < editMap.lines.size(); ++i)
     {
-        gamemap->lines.append(e_map->lines[i]); // Take ownership.
+        gamemap->lines.append(editMap.lines[i]); // Take ownership.
     }
 
-    hardenPolyobjs(*gamemap, *e_map);
-    hardenVertexOwnerRings(gamemap, e_map);
+    hardenPolyobjs(*gamemap, editMap);
+    hardenVertexOwnerRings(*gamemap, editMap);
 
-    destroyEditablePolyObjs(e_map);
+    editMap.destroyPolyObjs();
 
     /*
      * Build blockmaps.
      */
     vec2d_t min, max;
-    findBounds(e_map->verticesAsArray(), e_map->vertexCount(), min, max);
+    findBounds(editMap.verticesAsArray(), editMap.vertexCount(), min, max);
 
     GameMap_InitLineDefBlockmap(gamemap, min, max);
     for(uint i = 0; i < gamemap->lineCount(); ++i)
@@ -1646,7 +1639,7 @@ boolean MPE_End()
     finishPlanes(*gamemap);
 
     // Destroy the rest of editable map, we are finished with it.
-    destroyMap();
+    editMap.clear();
 
     if(!builtOK)
     {
@@ -1913,28 +1906,28 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector,
 {
     if(!editMapInited) return 0;
 
-    if(frontSector > e_map->sectorCount()) return 0;
-    if(backSector > e_map->sectorCount()) return 0;
-    if(frontSide > e_map->sideDefs.size()) return 0;
-    if(backSide > e_map->sideDefs.size()) return 0;
-    if(v1 == 0 || v1 > e_map->vertexCount()) return 0;
-    if(v2 == 0 || v2 > e_map->vertexCount()) return 0;
+    if(frontSector > editMap.sectorCount()) return 0;
+    if(backSector > editMap.sectorCount()) return 0;
+    if(frontSide > editMap.sideDefs.size()) return 0;
+    if(backSide > editMap.sideDefs.size()) return 0;
+    if(v1 == 0 || v1 > editMap.vertexCount()) return 0;
+    if(v2 == 0 || v2 > editMap.vertexCount()) return 0;
     if(v1 == v2) return 0;
 
     // Ensure that the side indices are unique.
-    if(frontSide && e_map->sideDefs[frontSide - 1]->_buildData.refCount)
+    if(frontSide && editMap.sideDefs[frontSide - 1]->_buildData.refCount)
         return 0;
-    if(backSide && e_map->sideDefs[backSide - 1]->_buildData.refCount)
+    if(backSide && editMap.sideDefs[backSide - 1]->_buildData.refCount)
         return 0;
 
     // Next, check the length is not zero.
-    Vertex *vtx1 = e_map->vertexes[v1 - 1];
-    Vertex *vtx2 = e_map->vertexes[v2 - 1];
+    Vertex *vtx1 = editMap.vertexes[v1 - 1];
+    Vertex *vtx2 = editMap.vertexes[v2 - 1];
     coord_t length = V2d_Distance(vtx2->origin(), vtx1->origin());
     if(!(length > 0)) return 0;
 
-    SideDef *front = frontSide? e_map->sideDefs[frontSide - 1] : 0;
-    SideDef *back  = backSide?  e_map->sideDefs[backSide  - 1] : 0;
+    SideDef *front = frontSide? editMap.sideDefs[frontSide - 1] : 0;
+    SideDef *back  = backSide?  editMap.sideDefs[backSide  - 1] : 0;
 
     LineDef *l = createLine();
     l->_v[FROM] = vtx1;
@@ -1943,8 +1936,8 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector,
     l->_v[FROM]->_buildData.refCount++;
     l->_v[TO]->_buildData.refCount++;
 
-    l->_sides[FRONT]._sector = (frontSector == 0? NULL: e_map->sectors[frontSector-1]);
-    l->_sides[BACK]._sector  = (backSector  == 0? NULL: e_map->sectors[backSector-1]);
+    l->_sides[FRONT]._sector = (frontSector == 0? NULL: editMap.sectors[frontSector-1]);
+    l->_sides[BACK]._sector  = (backSector  == 0? NULL: editMap.sectors[backSector-1]);
 
     l->_sides[FRONT]._sideDef = front;
     l->_sides[BACK]._sideDef = back;
@@ -1986,9 +1979,9 @@ uint MPE_PlaneCreate(uint sector, coord_t height, ddstring_t const *materialUri,
     float normalX, float normalY, float normalZ)
 {
     if(!editMapInited) return 0;
-    if(sector == 0 || sector > e_map->sectorCount()) return 0;
+    if(sector == 0 || sector > editMap.sectorCount()) return 0;
 
-    Sector *s = e_map->sectors[sector - 1];
+    Sector *s = editMap.sectors[sector - 1];
 
     vec3f_t normal; V3f_Set(normal, normalX, normalY, normalZ);
 
@@ -2023,9 +2016,9 @@ uint MPE_PolyobjCreate(uint *lines, uint lineCount, int tag, int sequenceType,
     // already part of another polyobj.
     for(uint i = 0; i < lineCount; ++i)
     {
-        if(lines[i] == 0 || lines[i] > e_map->lines.size()) return 0;
+        if(lines[i] == 0 || lines[i] > editMap.lines.size()) return 0;
 
-        LineDef *line = e_map->lines[lines[i] - 1];
+        LineDef *line = editMap.lines[lines[i] - 1];
         if(line->isFromPolyobj()) return 0;
     }
 
@@ -2039,7 +2032,7 @@ uint MPE_PolyobjCreate(uint *lines, uint lineCount, int tag, int sequenceType,
     po->lines = (LineDef **) M_Calloc(sizeof(*po->lines) * (po->lineCount+1));
     for(uint i = 0; i < lineCount; ++i)
     {
-        LineDef *line = e_map->lines[lines[i] - 1];
+        LineDef *line = editMap.lines[lines[i] - 1];
 
         // This line belongs to a polyobj.
         line->_inFlags |= LF_POLYOBJ;
@@ -2077,7 +2070,7 @@ boolean MPE_GameObjProperty(char const *entityName, uint elementIndex,
         return false;
     }
 
-    return P_SetMapEntityProperty(e_map->entityDatabase, propertyDef, elementIndex, type, valueAdr);
+    return P_SetMapEntityProperty(editMap.entityDatabase, propertyDef, elementIndex, type, valueAdr);
 }
 
 // p_data.cpp
