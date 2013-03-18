@@ -600,19 +600,20 @@ static void finishSectors(GameMap &map)
         sector.updateRoughArea();
         sector.updateSoundEmitterOrigin();
 
-        // Set the position of the sound origin for all plane sound origins.
-        // Set target heights for all planes.
+        // Set target heights for each plane.
         for(uint k = 0; k < sector.planeCount(); ++k)
         {
             Plane &plane = sector.plane(k);
 
-            plane.surface().updateSoundEmitterOrigin();
             plane._targetHeight =
                 plane._oldHeight[0] =
                     plane._oldHeight[1] =
                         plane._visHeight = plane._height;
 
             plane._visHeightDelta = 0;
+
+            /// @todo Can't this be deferred? -ds
+            plane.surface().updateSoundEmitterOrigin();
         }
 
         /*
@@ -623,16 +624,16 @@ static void finishSectors(GameMap &map)
          */
         ddmobj_base_t &emitter = sector.soundEmitter();
 
-        // Clear the head of the sound emitter chain.
+        // Clear the head of the emitter chain.
         emitter.thinker.next = emitter.thinker.prev = 0;
 
-        // Add all plane base mobjs.
+        // Link plane surface emitters:
         foreach(Plane *plane, sector.planes())
         {
             linkToSectorEmitterChain(sector, plane->surface().soundEmitter());
         }
 
-        // Add all sidedef base mobjs.
+        // Link wall surface emitters:
         foreach(LineDef *line, sector.lines())
         {
             if(line->frontSectorPtr() == &sector)
@@ -709,18 +710,6 @@ static void updateMapBounds(GameMap &map)
             // Expand the bounding box.
             V2d_UniteBox(map.aaBox.arvec2, sector.aaBox().arvec2);
         }
-    }
-}
-
-static void prepareBspLeafs(GameMap &map)
-{
-    for(uint i = 0; i < map.bspLeafCount(); ++i)
-    {
-        BspLeaf &bspLeaf = map.bspLeafs[i];
-
-        bspLeaf.updateAABox();
-        bspLeaf.updateCenter();
-        bspLeaf.updateWorldGridOffset();
     }
 }
 
@@ -1312,6 +1301,12 @@ static void collateBspElements(GameMap &map, BspBuilder &builder, BspTreeNode &t
         map.bspLeafs.append(leaf);
 
         collateBspLeafHEdges(map, builder, *leaf);
+
+        // The geometry of the leaf is now finalized; update dependent metadata.
+        leaf->updateAABox();
+        leaf->updateCenter();
+        leaf->updateWorldGridOffset();
+
         return;
     }
     // Else; a node.
@@ -1667,7 +1662,6 @@ boolean MPE_End()
     finishPlanes(*gamemap);
 
     // Destroy the rest of editable map, we are finished with it.
-    /// @note Only the vertexes should be left anyway.
     destroyMap();
 
     if(!builtOK)
@@ -1689,7 +1683,6 @@ boolean MPE_End()
     updateMapBounds(*gamemap);
 
     S_DetermineBspLeafsAffectingSectorReverb(gamemap);
-    prepareBspLeafs(*gamemap);
 
     clearMaterialDict();
 
