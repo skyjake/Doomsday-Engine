@@ -1501,7 +1501,7 @@ struct Partitioner::Instance
 
             // Reconfigure the half-plane for the next round of partitioning.
             configurePartition(partHEdge);
-            HPlanePartition origPartition = HPlanePartition(partition.origin(), partition.direction());
+            Partition oldPartition(partition.origin(), partition.direction());
 
             // Create left and right super blockmaps.
             /// @todo There should be no need to construct entirely independent
@@ -1531,7 +1531,8 @@ struct Partitioner::Instance
                 return rightTree? rightTree : leftTree;
 
             // Construct the new node and link up the subtrees.
-            bspObject = newBspNode(origPartition.origin, origPartition.direction, rightBounds, leftBounds,
+            bspObject = newBspNode(oldPartition.origin(), oldPartition.direction(),
+                                   rightBounds, leftBounds,
                                    rightTree->userData(), leftTree->userData());
         }
         else

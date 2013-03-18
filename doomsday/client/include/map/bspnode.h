@@ -29,34 +29,121 @@
 #include "MapElement"
 
 /**
- * An infinite line of the form point + direction vectors.
+ * An infinite line of the form point + direction vector.
  *
  * @ingroup map
  */
 class Partition
 {
-public: /// @todo make private:
-    coord_t _origin[2];
-    coord_t _direction[2];
-
 public:
-    Partition(coord_t xOrigin, coord_t yOrigin, coord_t xDirection, coord_t yDirection);
+    Partition(double xOrigin = 0, double yOrigin = 0, double xDirection = 0, double yDirection = 0);
     Partition(const_pvec2d_t origin, const_pvec2d_t direction);
 
+    Partition(Partition const &other);
+
     /**
-     * Returns the origin of the partition in the map coordinate space.
+     * Returns the origin point of the partition.
      */
     const_pvec2d_t &origin() const;
 
     /**
-     * Returns the direction of the partition in the map coordinate space.
+     * Convenient accessor method for returning the X axis origin of the partition.
+     * @see origin()
+     */
+    inline double xOrigin() const { return origin()[VX]; }
+
+    /**
+     * Convenient accessor method for returning the Y axis origin of the partition.
+     * @see origin()
+     */
+    inline double yOrigin() const { return origin()[VY]; }
+
+    /**
+     * Change the origin point of the partition.
+     *
+     * @param newOrigin  New origin coordinates.
+     */
+    void setOrigin(const_pvec2d_t newOrigin);
+
+    /// @copydoc setOrigin()
+    inline void setOrigin(double x, double y)
+    {
+        double newOrigin[2] = { x, y };
+        setOrigin(newOrigin);
+    }
+
+    /**
+     * Change the X axis origin point of the partition.
+     *
+     * @param newX  New X axis origin coordinate.
+     *
+     * @see setOrigin()
+     */
+    void setXOrigin(double newX);
+
+    /**
+     * Change the Y axis origin point of the partition.
+     *
+     * @param newY  New Y axis origin coordinate.
+     *
+     * @see setOrigin()
+     */
+    void setYOrigin(double newY);
+
+    /**
+     * Returns the direction vector of the partition.
      */
     const_pvec2d_t &direction() const;
 
     /**
-     * Which side of the partition does the point lie?
+     * Convenient accessor method for returning the X axis direction of the partition.
+     * @see direction()
+     */
+    inline double xDirection() const { return direction()[VX]; }
+
+    /**
+     * Convenient accessor method for returning the Y axis direction of the partition.
+     * @see direction()
+     */
+    inline double yDirection() const { return direction()[VY]; }
+
+    /**
+     * Change the direction vector of the partition.
+     *
+     * @param newDirection  New direction vector.
+     */
+    void setDirection(const_pvec2d_t newDirection);
+
+    /// @copydoc setDirection()
+    inline void setDirection(double newX, double newY)
+    {
+        double newDirection[2] = { newX, newY };
+        setDirection(newDirection);
+    }
+
+    /**
+     * Change the X axis direction of the partition.
+     *
+     * @param newDX  New X axis direction.
+     *
+     * @see setDirection()
+     */
+    void setXDirection(double newDX);
+
+    /**
+     * Change the Y axis direction of the partition.
+     *
+     * @param newDY  New Y axis direction.
+     *
+     * @see setDirection()
+     */
+    void setYDirection(double newDY);
+
+    /**
+     * Which side of the partition does the specified @a point lie?
      *
      * @param point  Point coordinates to test.
+     *
      * @return  @c 0 = front, else @c 1 = back.
      */
     int pointOnSide(const_pvec2d_t point) const;
@@ -67,11 +154,15 @@ public:
      * @param x  X coordinate to test.
      * @param y  Y coordinate to test.
      */
-    inline int pointOnSide(coord_t x, coord_t y) const
+    inline int pointOnSide(double x, double y) const
     {
-        coord_t point[2] = { x, y };
+        double point[2] = { x, y };
         return pointOnSide(point);
     }
+
+private:
+    double _origin[2];
+    double _direction[2];
 };
 
 /*

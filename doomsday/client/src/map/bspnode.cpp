@@ -110,14 +110,50 @@ Partition::Partition(const_pvec2d_t origin, const_pvec2d_t direction)
     V2d_Copy(_direction, direction);
 }
 
+Partition::Partition(Partition const &other)
+{
+    V2d_Copy(_origin, other._origin);
+    V2d_Copy(_direction, other._direction);
+}
+
 vec2d_t const &Partition::origin() const
 {
     return _origin;
 }
 
+void Partition::setOrigin(const_pvec2d_t newOrigin)
+{
+    V2d_Copy(_origin, newOrigin);
+}
+
+void Partition::setXOrigin(double newX)
+{
+    _origin[VX] = newX;
+}
+
+void Partition::setYOrigin(double newY)
+{
+    _origin[VY] = newY;
+}
+
 vec2d_t const &Partition::direction() const
 {
     return _direction;
+}
+
+void Partition::setDirection(const_pvec2d_t newDirection)
+{
+    V2d_Copy(_direction, newDirection);
+}
+
+void Partition::setXDirection(double newDX)
+{
+    _direction[VX] = newDX;
+}
+
+void Partition::setYDirection(double newDY)
+{
+    _direction[VY] = newDY;
 }
 
 /// @todo This geometric math logic should be defined in <de/math.h>

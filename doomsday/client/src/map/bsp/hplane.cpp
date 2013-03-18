@@ -1,5 +1,4 @@
 /** @file hplane.cpp BSP Builder half-plane and plane intersection list. 
- * @ingroup bsp
  *
  * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
  * SourceForge: http://sourceforge.net/projects/glbsp/
@@ -29,107 +28,143 @@
 
 #include "map/bsp/hplane.h"
 
+using namespace de;
 using namespace de::bsp;
+
+HPlane::HPlane() : _partition(), _intercepts(0)
+{}
+
+HPlane::HPlane(coord_t const origin[2], coord_t const direction[2])
+    : _partition(origin, direction), _intercepts(0)
+{}
+
+HPlane::~HPlane()
+{
+    clear();
+}
 
 void HPlane::clear()
 {
-    intercepts_.clear();
+    _intercepts.clear();
 }
 
-HPlane* HPlane::setOrigin(coord_t const newOrigin[2])
+const_pvec2d_t &HPlane::origin() const
+{
+    return _partition.origin();
+}
+
+coord_t HPlane::xOrigin() const
+{
+    return _partition.xOrigin();
+}
+
+coord_t HPlane::yOrigin() const
+{
+    return _partition.yOrigin();
+}
+
+void HPlane::setOrigin(coord_t const newOrigin[2])
 {
     if(newOrigin)
     {
-        partition.setOrigin(newOrigin);
+        _partition.setOrigin(newOrigin);
         clear();
     }
-    return this;
 }
 
-HPlane* HPlane::setXY(coord_t newX, coord_t newY)
+void HPlane::setOrigin(coord_t newX, coord_t newY)
 {
     coord_t newOrigin[2] = { newX, newY };
-    return setOrigin(newOrigin);
+    setOrigin(newOrigin);
 }
 
-HPlane* HPlane::setX(coord_t newX)
+void HPlane::setXOrigin(coord_t newX)
 {
-    partition.origin[VX] = newX;
+    _partition.setXOrigin(newX);
     clear();
-    return this;
 }
 
-HPlane* HPlane::setY(coord_t newY)
+void HPlane::setYOrigin(coord_t newY)
 {
-    partition.origin[VY] = newY;
+    _partition.setYOrigin(newY);
     clear();
-    return this;
 }
 
-HPlane* HPlane::setDirection(coord_t const newDirection[2])
+const_pvec2d_t &HPlane::direction() const
+{
+    return _partition.direction();
+}
+
+coord_t HPlane::xDirection() const
+{
+    return _partition.xDirection();
+}
+
+coord_t HPlane::yDirection() const
+{
+    return _partition.yDirection();
+}
+
+void HPlane::setDirection(const_pvec2d_t newDirection)
 {
     if(newDirection)
     {
-        partition.setDirection(newDirection);
+        _partition.setDirection(newDirection);
         clear();
     }
-    return this;
 }
 
-HPlane* HPlane::setDXY(coord_t newDX, coord_t newDY)
+void HPlane::setDirection(coord_t newDX, coord_t newDY)
 {
     coord_t newDirection[2] = { newDX, newDY };
-    return setDirection(newDirection);
+    setDirection(newDirection);
 }
 
-HPlane* HPlane::setDX(coord_t newDX)
+void HPlane::setXDirection(coord_t newDX)
 {
-    partition.direction[VX] = newDX;
+    _partition.setXDirection(newDX);
     clear();
-    return this;
 }
 
-HPlane* HPlane::setDY(coord_t newDY)
+void HPlane::setYDirection(coord_t newDY)
 {
-    partition.direction[VY] = newDY;
+    _partition.setYDirection(newDY);
     clear();
-    return this;
 }
 
-HPlaneIntercept& HPlane::newIntercept(coord_t distance, void* userData)
+HPlaneIntercept &HPlane::newIntercept(coord_t distance, void *userData)
 {
     Intercepts::reverse_iterator after;
 
-    for(after = intercepts_.rbegin();
-        after != intercepts_.rend() && distance < (*after).distance(); after++)
+    for(after = _intercepts.rbegin();
+        after != _intercepts.rend() && distance < (*after).distance(); after++)
     {}
 
-    return *intercepts_.insert(after.base(), HPlaneIntercept(distance, userData));
+    return *_intercepts.insert(after.base(), HPlaneIntercept(distance, userData));
 }
 
-void HPlane::mergeIntercepts(mergepredicate_t predicate, void* userData)
+void HPlane::mergeIntercepts(mergepredicate_t predicate, void *userData)
 {
-    Intercepts::iterator node = intercepts_.begin();
-    while(node != intercepts_.end())
+    Intercepts::iterator node = _intercepts.begin();
+    while(node != _intercepts.end())
     {
         Intercepts::iterator np = node; np++;
-        if(np == intercepts_.end()) break;
+        if(np == _intercepts.end()) break;
 
         // Sanity check.
         coord_t distance = *np - *node;
         if(distance < -0.1)
         {
-            throw de::Error("HPlane::mergeIntercepts",
-                            QString("Invalid intercept order - %1 > %2")
-                                .arg(node->distance(), 0, 'f', 3)
-                                .arg(  np->distance(), 0, 'f', 3));
+            throw Error("HPlane::mergeIntercepts", QString("Invalid intercept order - %1 > %2")
+                                                       .arg(node->distance(), 0, 'f', 3)
+                                                       .arg(  np->distance(), 0, 'f', 3));
         }
 
         // Are we merging this pair?
         if(predicate(*node, *np, userData))
         {
             // Yes - Unlink this intercept.
-            intercepts_.erase(np);
+            _intercepts.erase(np);
         }
         else
         {
@@ -139,13 +174,13 @@ void HPlane::mergeIntercepts(mergepredicate_t predicate, void* userData)
     }
 }
 
-const HPlane::Intercepts& HPlane::intercepts() const
+HPlane::Intercepts const &HPlane::intercepts() const
 {
-    return intercepts_;
+    return _intercepts;
 }
 
 #if _DEBUG
-void HPlane::DebugPrint(const HPlane& inst)
+void HPlane::DebugPrint(HPlane const &inst)
 {
     uint index = 0;
     DENG2_FOR_EACH_CONST(HPlane::Intercepts, i, inst.intercepts())

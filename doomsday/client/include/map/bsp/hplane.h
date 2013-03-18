@@ -1,6 +1,4 @@
-/**
- * @file hplane.h
- * BSP Builder half-plane and plane intersection list. @ingroup bsp
+/** @file hplane.h BSP Builder half-plane and plane intersection list.
  *
  * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
  * SourceForge: http://sourceforge.net/projects/glbsp/
@@ -30,54 +28,34 @@
 
 #include "dd_types.h"
 #include <de/vector1.h>
+#include "map/bspnode.h" // Partition
 #include <list>
 
 namespace de {
 namespace bsp {
 
-struct HPlanePartition
-{
-    coord_t origin[2];
-    coord_t direction[2];
-
-    explicit HPlanePartition(coord_t x=0, coord_t y=0, coord_t dX=0, coord_t dY=0)
-    {
-        V2d_Set(origin, x, y);
-        V2d_Set(direction, dX, dY);
-    }
-
-    HPlanePartition(coord_t const _origin[2], coord_t const _direction[2])
-    {
-        V2d_Copy(origin, _origin);
-        V2d_Copy(direction, _direction);
-    }
-
-    HPlanePartition& setOrigin(coord_t x, coord_t y)
-    {
-        V2d_Set(origin, x, y);
-        return *this;
-    }
-
-    HPlanePartition& setOrigin(coord_t const newOrigin[2])
-    {
-        return setOrigin(newOrigin[0], newOrigin[1]);
-    }
-
-    HPlanePartition& setDirection(coord_t dx, coord_t dy)
-    {
-        V2d_Set(direction, dx, dy);
-        return *this;
-    }
-
-    HPlanePartition& setDirection(coord_t const newDirection[2])
-    {
-        return setDirection(newDirection[0], newDirection[1]);
-    }
-};
-
+/**
+ * @ingroup bsp
+ */
 class HPlaneIntercept
 {
 public:
+    HPlaneIntercept() : _distance(0), _userData(0)
+    {}
+
+    HPlaneIntercept(coord_t distance, void *userData)
+        : _distance(distance), _userData(userData)
+    {}
+
+    /**
+     * Determine the distance between two intercepts. It does not matter
+     * if the intercepts are from different half-planes.
+     */
+    coord_t operator - (HPlaneIntercept const &other) const
+    {
+        return _distance - other.distance();
+    }
+
     /**
      * Distance from the owning HPlane's origin point. Negative values
      * mean this intercept is positioned to the left of the origin.
@@ -87,20 +65,7 @@ public:
     /**
      * Retrieve the data pointer associated with this intercept.
      */
-    void* userData() const { return _userData; }
-
-    /**
-     * Determine the distance between two intercepts. It does not matter
-     * if the intercepts are from different half-planes.
-     */
-    coord_t operator - (const HPlaneIntercept& other) const
-    {
-        return _distance - other.distance();
-    }
-
-    HPlaneIntercept() : _distance(0), _userData(0) {}
-    HPlaneIntercept(coord_t distance, void* userData) :
-        _distance(distance), _userData(userData) {}
+    void *userData() const { return _userData; }
 
 private:
     /**
@@ -109,40 +74,50 @@ private:
     coord_t _distance;
 
     /// User data pointer associated with this intercept.
-    void* _userData;
+    void *_userData;
 };
 
+/**
+ * @ingroup bsp
+ */
 class HPlane
 {
 public:
     typedef std::list<HPlaneIntercept> Intercepts;
 
-    typedef bool (*mergepredicate_t)(HPlaneIntercept& a, HPlaneIntercept& b, void* userData);
+    typedef bool (*mergepredicate_t)(HPlaneIntercept &a, HPlaneIntercept &b, void *userData);
 
 public:
-    HPlane() : partition(), intercepts_(0){}
-    HPlane(coord_t const origin[2], coord_t const direction[2]) :
-        partition(origin, direction), intercepts_(0) {}
+    HPlane();
+    HPlane(const_pvec2d_t origin, const_pvec2d_t direction);
 
-    ~HPlane() { clear(); }
+    virtual ~HPlane();
 
-    const coord_t* origin() { return partition.origin; }
-    coord_t x() { return partition.origin[VX]; }
-    coord_t y() { return partition.origin[VY]; }
+    const_pvec2d_t &origin() const;
 
-    HPlane* setOrigin(coord_t const origin[2]);
-    HPlane* setXY(coord_t x, coord_t y);
-    HPlane* setX(coord_t x);
-    HPlane* setY(coord_t y);
+    coord_t xOrigin() const;
 
-    const coord_t* direction() { return partition.direction; }
-    coord_t dX() { return partition.direction[VX]; }
-    coord_t dY() { return partition.direction[VY]; }
+    coord_t yOrigin() const;
 
-    HPlane* setDirection(coord_t const direction[2]);
-    HPlane* setDXY(coord_t x, coord_t y);
-    HPlane* setDX(coord_t dx);
-    HPlane* setDY(coord_t dy);
+    void setOrigin(const_pvec2d_t newOrigin);
+    void setOrigin(coord_t newX, coord_t newY);
+
+    void setXOrigin(coord_t newX);
+
+    void setYOrigin(coord_t newY);
+
+    const_pvec2d_t &direction() const;
+
+    coord_t xDirection() const;
+
+    coord_t yDirection() const;
+
+    void setDirection(const_pvec2d_t newDirection);
+    void setDirection(coord_t newDX, coord_t newDY);
+
+    void setXDirection(coord_t newDX);
+
+    void setYDirection(coord_t newDY);
 
     /**
      * Empty all intersections from the specified HPlane.
@@ -157,19 +132,20 @@ public:
      * @param userData  User data object to link with the new intercept.
      *                  Ownership remains unchanged.
      */
-    HPlaneIntercept& newIntercept(coord_t distance, void* userData = NULL);
+    HPlaneIntercept &newIntercept(coord_t distance, void *userData = 0);
 
-    void mergeIntercepts(mergepredicate_t predicate, void* userData);
+    void mergeIntercepts(mergepredicate_t predicate, void *userData);
 
-    const Intercepts& intercepts() const;
+    Intercepts const &intercepts() const;
 
-    static void DebugPrint(const HPlane& inst);
+    static void DebugPrint(HPlane const &inst);
 
 private:
-    HPlanePartition partition;
+    /// The space partition.
+    Partition _partition;
 
     /// The intercept list. Kept sorted by distance, in ascending order.
-    Intercepts intercepts_;
+    Intercepts _intercepts;
 };
 
 } // namespace bsp
