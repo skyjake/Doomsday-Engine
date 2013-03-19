@@ -1234,17 +1234,17 @@ boolean R_IsGlowingPlane(Plane const *pln)
 float R_GlowStrength(Plane const *pln)
 {
 #ifdef __CLIENT__
-    Material *material = pln->surface.material;
-    if(material)
+    if(glowFactor > .0001f)
     {
-        if(material->isDrawable() && !pln->surface.isSkyMasked())
+        Material *material = pln->surface.material;
+        if(material)
         {
-            MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
-
-            float glowStrength = ms.glowStrength();
-            if(glowFactor > .0001f)
-                glowStrength *= glowFactor; // Global scale factor.
-            return glowStrength;
+            if(material->isDrawable() && !pln->surface.isSkyMasked())
+            {
+                MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
+                float glowStrength = ms.glowStrength() * glowFactor; // Global scale factor.
+                return glowStrength;
+            }
         }
     }
 #else

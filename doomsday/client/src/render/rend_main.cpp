@@ -1239,9 +1239,8 @@ static boolean doRenderHEdge(HEdge* hedge, const pvec3f_t normal,
     params.sectorLightColor = lightColor;
     params.surfaceColor = color;
     params.wall.surfaceColor2 = color2;
-    params.glowing = ms.glowStrength();
     if(glowFactor > .0001f)
-        params.glowing *= glowFactor; // Global scale factor.
+        params.glowing = ms.glowStrength() * glowFactor; // Global scale factor.
     params.blendMode = blendMode;
     params.texOffset = texOffset;
     params.texScale = texScale;
@@ -1436,21 +1435,23 @@ static void renderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
 
     if(!(params.flags & RPF_SKYMASK))
     {
-        if(texMode != 2)
-        {
-            params.glowing = ms.glowStrength();
-        }
-        else
-        {
-            Surface *suf = &bspLeaf->sector->planes[elmIdx]->surface;
-            Material *mat = suf->material? suf->material : &App_Materials().find(de::Uri("System", Path("missing"))).material();
-
-            MaterialSnapshot const &ms = mat->prepare(Rend_MapSurfaceMaterialSpec());
-            params.glowing = ms.glowStrength();
-        }
-
         if(glowFactor > .0001f)
+        {
+            if(texMode != 2)
+            {
+                params.glowing = ms.glowStrength();
+            }
+            else
+            {
+                Surface *suf = &bspLeaf->sector->planes[elmIdx]->surface;
+                Material *mat = suf->material? suf->material : &App_Materials().find(de::Uri("System", Path("missing"))).material();
+
+                MaterialSnapshot const &ms = mat->prepare(Rend_MapSurfaceMaterialSpec());
+                params.glowing = ms.glowStrength();
+            }
+
             params.glowing *= glowFactor; // Global scale factor.
+        }
 
         // Dynamic lights?
         if(addDLights && params.glowing < 1 && !(!useDynLights && !useWallGlow))
@@ -1671,9 +1672,9 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
             if(surface->inFlags & SUIF_NO_RADIO)
                 flags &= ~RHF_ADD_RADIO;
 
-            float glowStrength = ms.glowStrength();
+            float glowStrength = 0;
             if(glowFactor > .0001f)
-                glowStrength *= glowFactor; // Global scale factor.
+                glowStrength = ms.glowStrength() * glowFactor; // Global scale factor.
 
             // Dynamic Lights?
             if((flags & RHF_ADD_DYNLIGHTS) &&
