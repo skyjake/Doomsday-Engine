@@ -34,8 +34,10 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QToolButton>
+#include <QHBoxLayout>
 #include <QStackedWidget>
 #include <QStatusBar>
+#include <QScrollBar>
 #include <QLabel>
 #include <QCryptographicHash>
 
@@ -66,7 +68,9 @@ DENG2_PIMPL(LinkWindow)
     QToolButton *consoleButton;
     QStackedWidget *stack;
     StatusWidget *status;
+    QWidget *console;
     QtRootWidget *root;
+    QScrollBar *logScrollBar;
     QLabel *gameStatus;
     QLabel *timeCounter;
     QLabel *currentHost;
@@ -84,6 +88,7 @@ DENG2_PIMPL(LinkWindow)
           stack(0),
           status(0),
           root(0),
+          logScrollBar(0),
           gameStatus(0),
           timeCounter(0),
           currentHost(0)
@@ -97,6 +102,7 @@ DENG2_PIMPL(LinkWindow)
         // Shell widgets.
         cli = new CommandLineWidget;
         log = new LogWidget;
+        log->setScrollIndicatorVisible(false); // we have our own
 
         logBuffer.addSink(log->logSink());
 
@@ -229,9 +235,19 @@ LinkWindow::LinkWindow(QWidget *parent)
     d->status = new StatusWidget;
     d->stack->addWidget(d->status);
 
-    // Console page.
+    // Console page.    
+    d->console = new QWidget;
+    QHBoxLayout *hb = new QHBoxLayout;
+    hb->setContentsMargins(0, 0, 0, 0);
+    hb->setSpacing(0);
+    d->console->setLayout(hb);
     d->root = new QtRootWidget;
-    d->stack->addWidget(d->root);
+    hb->addWidget(d->root, 1);
+    d->logScrollBar = new QScrollBar(Qt::Vertical);
+    d->logScrollBar->setMaximum(0);
+    d->logScrollBar->setDisabled(true);
+    hb->addWidget(d->logScrollBar);
+    d->stack->addWidget(d->console);
 
     d->root->setFont(Preferences::consoleFont());
 
@@ -290,6 +306,10 @@ LinkWindow::LinkWindow(QWidget *parent)
             .setInput(Rule::Left,   root.viewLeft())
             .setInput(Rule::Right,  root.viewRight())
             .setInput(Rule::Bottom, d->cli->rule().top());
+
+    connect(d->log,          SIGNAL(scrollPositionChanged(int)), this, SLOT(updateScrollPosition(int)));
+    connect(d->log,          SIGNAL(scrollMaxChanged(int)),      this, SLOT(updateMaxScroll(int)));
+    connect(d->logScrollBar, SIGNAL(sliderMoved(int)),           this, SLOT(scrollLogHistory(int)));
 
     root.add(d->log);
     root.add(d->cli);
@@ -397,7 +417,7 @@ void LinkWindow::switchToStatus()
 void LinkWindow::switchToConsole()
 {
     d->statusButton->setChecked(false);
-    d->stack->setCurrentWidget(d->root);
+    d->stack->setCurrentWidget(d->console);
     d->root->setFocus();
 }
 
@@ -554,5 +574,24 @@ void LinkWindow::askForPassword()
 void LinkWindow::updateConsoleFontFromPreferences()
 {
     d->root->setFont(Preferences::consoleFont());
+    update();
+}
+
+void LinkWindow::updateScrollPosition(int pos)
+{
+    d->logScrollBar->setValue(d->log->maximumScroll() - pos);
+}
+
+void LinkWindow::updateMaxScroll(int maximum)
+{
+    d->logScrollBar->setMaximum(maximum);
+    d->logScrollBar->setEnabled(maximum > 0);
+
+    d->logScrollBar->setValue(d->log->maximumScroll() - d->log->scrollPosition());
+}
+
+void LinkWindow::scrollLogHistory(int pos)
+{
+    d->log->scroll(d->log->maximumScroll() - pos);
     update();
 }

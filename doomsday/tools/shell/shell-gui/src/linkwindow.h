@@ -52,6 +52,9 @@ public slots:
     void switchToConsole();
     void updateWhenConnected();
     void updateConsoleFontFromPreferences();
+    void updateScrollPosition(int pos);
+    void updateMaxScroll(int maximum);
+    void scrollLogHistory(int pos);
 
 protected slots:
     void handleIncomingPackets();

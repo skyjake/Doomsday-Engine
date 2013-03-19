@@ -223,7 +223,6 @@ void LocalServerDialog::saveState()
     st.setValue("LocalServer/gameMode", d->games->itemData(d->games->currentIndex()).toString());
     if(d->portChanged)
     {
-        qDebug() << "Port changed, saving" << d->port->text();
         st.setValue("LocalServer/port", d->port->text().toInt());
     }
     st.setValue("LocalServer/runtime", d->runtime->path().toString());
