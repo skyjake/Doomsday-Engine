@@ -88,8 +88,8 @@ GuiShellApp::GuiShellApp(int &argc, char **argv)
                     QKeySequence(tr("Ctrl+W", "Connection|Close Window")));
 
     QMenu *svMenu = d->menuBar->addMenu(tr("Server"));
-    svMenu->addAction(tr("Start Local Server..."), this, SLOT(startLocalServer()),
-                      QKeySequence(tr("Ctrl+N", "Server|Start Local")));
+    svMenu->addAction(tr("New Local Server..."), this, SLOT(startLocalServer()),
+                      QKeySequence(tr("Ctrl+N", "Server|New Local Server")));
     d->stopAction = svMenu->addAction(tr("Stop"), this, SLOT(stopServer()));
     svMenu->addSeparator();
     svMenu->addMenu(d->localMenu);

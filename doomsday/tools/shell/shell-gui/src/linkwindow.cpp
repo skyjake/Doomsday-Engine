@@ -201,13 +201,13 @@ LinkWindow::LinkWindow(QWidget *parent)
     QMenu *menu = menuBar()->addMenu(tr("&Connection"));
     menu->addAction(tr("C&onnect..."), app, SLOT(connectToServer()),
                     QKeySequence(tr("Ctrl+O", "Connection|Connect")));
-    disconnectAction = menu->addAction(tr("&Disconnect"), this, SLOT(closeConnection()),
-                                       QKeySequence(tr("Ctrl+D", "Connection|Disconnect")));
-    disconnectAction->setDisabled(true);
+    d->disconnectAction = menu->addAction(tr("&Disconnect"), this, SLOT(closeConnection()),
+                                          QKeySequence(tr("Ctrl+D", "Connection|Disconnect")));
+    d->disconnectAction->setDisabled(true);
 
     QMenu *svMenu = menuBar()->addMenu(tr("&Server"));
-    svMenu->addAction(tr("Start &New Local Server..."), app, SLOT(startLocalServer()),
-                      QKeySequence(tr("Ctrl+N", "Server|Start Local")));
+    svMenu->addAction(tr("&New Local Server..."), app, SLOT(startLocalServer()),
+                      QKeySequence(tr("Ctrl+N", "Server|New Local Server")));
     svMenu->addAction(d->stopAction);
     svMenu->addSeparator();
     svMenu->addMenu(app->localServersMenu());
