@@ -2009,6 +2009,10 @@ void G_PlayerReborn(int player)
     if(player < 0 || player >= MAXPLAYERS)
         return; // Wha?
 
+#ifdef _DEBUG
+    Con_Message("G_PlayerReborn: reseting player %i", player);
+#endif
+
     p = &players[player];
 
     assert(sizeof(p->frags) == sizeof(frags));
@@ -2168,7 +2172,7 @@ void G_DoReborn(int plrNum)
 
     if(IS_NETGAME)
     {
-        P_RebornPlayer(plrNum);
+        P_RebornPlayerInMultiplayer(plrNum);
         return;
     }
 

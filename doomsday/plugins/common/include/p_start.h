@@ -198,7 +198,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
     angle_t angle, int spawnFlags, boolean makeCamera, boolean pickupItems);
 
 void G_DeathMatchSpawnPlayer(int playernum);
-void P_RebornPlayer(int plrNum);
+void P_RebornPlayerInMultiplayer(int plrNum);
 
 /**
  * @return  @c false if the player cannot be respawned at the
