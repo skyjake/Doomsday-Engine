@@ -16,19 +16,43 @@ SkipIf -nodefaultfx;
 #
 
 Material Mods "flats:FLATHUH1" {
-  Layer { Stage { Glow = 1.8; } }
+  Layer
+  {
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+  }
 }
 
 Material Mods "flats:FLATHUH2" {
-  Layer { Stage { Glow = 1.8; } }
+  Layer
+  {
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+  }
 }
 
 Material Mods "flats:FLATHUH3" {
-  Layer { Stage { Glow = 1.8; } }
+  Layer
+  {
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+  }
 }
 
 Material Mods "flats:FLATHUH4" {
-  Layer { Stage { Glow = 1.8; } }
+  Layer
+  {
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+  }
 }
 
 #
@@ -36,13 +60,28 @@ Material Mods "flats:FLATHUH4" {
 #
 
 Material Mods "textures:LAVAFL1" {
-  Layer { Stage { Glow = 1.8; } }
+  Layer
+  {
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+  }
 }
 
 Material Mods "textures:LAVAFL2" {
-  Layer { Stage { Glow = 1.8; } }
+  Layer
+  {
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+  }
 }
 
 Material Mods "textures:LAVAFL3" {
-  Layer { Stage { Glow = 1.8; } }
+  Layer
+  {
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+  }
 }

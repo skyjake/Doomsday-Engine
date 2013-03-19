@@ -16,7 +16,13 @@ SkipIf -nodefaultfx;
 #
 
 Material Mods "flats:X_001" {
-  Layer { Stage { Glow = 1.8; } }
+  Layer
+  {
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+  }
 }
 
 Material Mods "flats:X_002" {
@@ -36,7 +42,13 @@ Material Mods "flats:X_004" {
 #
 
 Material Mods "textures:X_FIRE01" {
-  Layer { Stage { Glow = 1.8; } }
+  Layer
+  {
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+    Stage { Glow = 1.8; Glow Rnd = .8; }
+  }
 }
 
 Material Mods "textures:X_FIRE02" {
@@ -52,7 +64,21 @@ Material Mods "textures:X_FIRE04" {
 }
 
 Material Mods "textures:X_FAC01" {
-  Layer { Stage { Glow = 1.8; } }
+  Layer
+  {
+    Stage { Glow = 1.8; }
+    Stage { Glow = 1.8; }
+    Stage { Glow = 1.8; }
+    Stage { Glow = 1.8; }
+    Stage { Glow = 1.8; }
+    Stage { Glow = 1.8; }
+    Stage { Glow = 1.8; }
+    Stage { Glow = 1.8; }
+    Stage { Glow = 1.8; }
+    Stage { Glow = 1.8; }
+    Stage { Glow = 1.8; }
+    Stage { Glow = 1.8; }
+  }
 }
 
 Material Mods "textures:X_FAC02" {
@@ -100,7 +126,18 @@ Material Mods "textures:X_FAC12" {
 }
 
 Material Mods "textures:TPORT1" {
-  Layer { Stage { Glow = 1.8; } }
+  Layer
+  {
+    Stage { Glow = 1.8; }
+    Stage { Glow = 1.8; }
+    Stage { Glow = 1.8; }
+    Stage { Glow = 1.8; }
+    Stage { Glow = 1.8; }
+    Stage { Glow = 1.8; }
+    Stage { Glow = 1.8; }
+    Stage { Glow = 1.8; }
+    Stage { Glow = 1.8; }
+  }
 }
 
 Material Mods "textures:TPORT2" {
