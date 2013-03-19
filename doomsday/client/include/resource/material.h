@@ -74,6 +74,9 @@ public:
     static int const max_decorations = 16;
 #endif
 
+    /// Required animation is missing. @ingroup errors
+    DENG2_ERROR(MissingAnimationError);
+
     /// The referenced layer does not exist. @ingroup errors
     DENG2_ERROR(UnknownLayerError);
 
@@ -911,10 +914,7 @@ public:
     /**
      * Retrieve the animation state for the specified render @a context.
      */
-    inline Animation *animation(MaterialContextId context) const
-    {
-        return animations().value(context, NULL);
-    }
+    Animation &animation(MaterialContextId context) const;
 
     /**
      * Provides access to the set of usage context animation states,

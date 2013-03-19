@@ -618,6 +618,19 @@ void Material::clearDecorations()
     d->animationsAreDirty = true;
 }
 
+Material::Animation &Material::animation(MaterialContextId context) const
+{
+    d->rebuildAnimations();
+
+    Animations::const_iterator found = d->animations.find(context);
+    if(found != d->animations.end())
+    {
+        return *found.value();
+    }
+    /// @throw MissingAnimationError No animation exists for the specifed context.
+    throw MissingAnimationError("Material::animation", QString("No animation for context %1").arg(int(context)));
+}
+
 Material::Animations const &Material::animations() const
 {
     d->rebuildAnimations();
