@@ -251,7 +251,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
      */
     for(int i = 0; i < layers.count(); ++i)
     {
-        MaterialAnimation::LayerState const &l = material->animation(variant->context())->layer(i);
+        MaterialAnimation::LayerState const &l = material->animation(variant->context()).layer(i);
 
         Material::Layer::Stage const *lsCur = layers[i]->stages()[l.stage];
         if(Texture *tex = lsCur->texture)
@@ -287,7 +287,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     // Do we need to prepare detail texture(s)?
     if(!material->isSkyMasked() && material->isDetailed())
     {
-        MaterialAnimation::LayerState const &l = material->animation(variant->context())->detailLayer();
+        MaterialAnimation::LayerState const &l = material->animation(variant->context()).detailLayer();
         Material::DetailLayer::Stage const *lsCur = detailLayer->stages()[l.stage];
 
         float const contrast = de::clamp(0.f, lsCur->strength, 1.f) * detailFactor /*Global strength multiplier*/;
@@ -313,7 +313,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     // Do we need to prepare a shiny texture (and possibly a mask)?
     if(!material->isSkyMasked() && material->isShiny())
     {
-        MaterialAnimation::LayerState const &l = material->animation(variant->context())->shineLayer();
+        MaterialAnimation::LayerState const &l = material->animation(variant->context()).shineLayer();
         Material::ShineLayer::Stage const *lsCur = shineLayer->stages()[l.stage];
 
         if(Texture *tex = lsCur->texture)
@@ -350,7 +350,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
 
     if(stored.dimensions.x == 0 && stored.dimensions.y == 0) return;
 
-    MaterialAnimation::LayerState const &l = material->animation(variant->context())->layer(0);
+    MaterialAnimation::LayerState const &l = material->animation(variant->context()).layer(0);
     Material::Layer::Stage const *lsCur  = layers[0]->stages()[l.stage];
     Material::Layer::Stage const *lsNext = layers[0]->stages()[(l.stage + 1) % layers[0]->stageCount()];
 
@@ -409,7 +409,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     if(!material->isSkyMasked() && material->isDetailed())
     {
 #ifdef __CLIENT__
-        MaterialAnimation::LayerState const &l = material->animation(variant->context())->detailLayer();
+        MaterialAnimation::LayerState const &l = material->animation(variant->context()).detailLayer();
         Material::DetailLayer::Stage const *lsCur  = detailLayer->stages()[l.stage];
         Material::DetailLayer::Stage const *lsNext = detailLayer->stages()[(l.stage + 1) % detailLayer->stageCount()];
 #endif
@@ -463,7 +463,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     if(!material->isSkyMasked() && material->isShiny())
     {
 #ifdef __CLIENT__
-        MaterialAnimation::LayerState const &l = material->animation(variant->context())->shineLayer();
+        MaterialAnimation::LayerState const &l = material->animation(variant->context()).shineLayer();
         Material::ShineLayer::Stage const *lsCur  = shineLayer->stages()[l.stage];
         Material::ShineLayer::Stage const *lsNext = shineLayer->stages()[(l.stage + 1) % shineLayer->stageCount()];
 #endif
@@ -526,7 +526,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     for(Material::Decorations::const_iterator it = decorations.begin();
         it != decorations.end(); ++it, ++idx)
     {
-        MaterialAnimation::DecorationState const &l = material->animation(variant->context())->decoration(idx);
+        MaterialAnimation::DecorationState const &l = material->animation(variant->context()).decoration(idx);
         MaterialDecoration const *lDef = *it;
         MaterialDecoration::Stage const *lsCur  = lDef->stages()[l.stage];
         MaterialDecoration::Stage const *lsNext = lDef->stages()[(l.stage + 1) % lDef->stageCount()];
