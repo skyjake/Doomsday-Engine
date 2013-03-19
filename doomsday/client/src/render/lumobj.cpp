@@ -985,7 +985,7 @@ static void createGlowLightForSurface(Surface &suf)
         if(!sec->bspLeafCount() || sec->floor().visHeight() >= sec->ceiling().visHeight())
             break;
 
-        MaterialSnapshot const &ms = suf.material->prepare(Rend_MapSurfaceMaterialSpec());
+        MaterialSnapshot const &ms = suf.material().prepare(Rend_MapSurfaceMaterialSpec());
 
         // Are we glowing at this moment in time?
         float glowStrength = 0;

@@ -29,10 +29,9 @@
 #include "dd_types.h"
 #include "map/p_mapdata.h"
 
-namespace de {
-
 class HEdge;
 
+namespace de {
 namespace bsp {
 
 /**
