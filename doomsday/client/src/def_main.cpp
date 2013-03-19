@@ -1014,9 +1014,7 @@ static void generateMaterialDefForTexture(TextureManifest &manifest)
         startFrame++;
         for(int i = 0; i < anim->count - 1; ++i)
         {
-            int frame = startFrame + i;
-            // Wrap around?
-            if(frame >= anim->count) frame -= anim->count;
+            int frame = de::wrap(startFrame + i, 0, anim->count);
 
             animFrame = &anim->frames[frame];
             if(!animFrame->textureManifest) continue;
@@ -1132,9 +1130,7 @@ static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
                     startFrame++;
                     for(int i = 0; i < grp->count.num - 1; ++i)
                     {
-                        int frame = startFrame + i;
-                        // Wrap around?
-                        if(frame >= grp->count.num) frame -= grp->count.num;
+                        int frame = de::wrap(startFrame + i, 0, grp->count.num);
                         ded_group_member_t const &gm = grp->members[frame];
 
                         if(!gm.material) continue;
