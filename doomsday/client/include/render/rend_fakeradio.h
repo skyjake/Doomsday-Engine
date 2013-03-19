@@ -76,7 +76,12 @@ void Rend_RadioInitForMap();
 /**
  * Returns @c true iff @a line qualifies for (edge) shadow casting.
  */
-boolean Rend_RadioIsShadowingLine(LineDef const &line);
+bool Rend_RadioLineCastsShadow(LineDef const &line);
+
+/**
+ * Returns @c true iff @a plane qualifies for (wall) shadow casting.
+ */
+bool Rend_RadioPlaneCastsShadow(Plane const &plane);
 
 /**
  * Updates all the shadow offsets for the given vertex.

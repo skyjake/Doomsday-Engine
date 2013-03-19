@@ -757,40 +757,47 @@ LineDef *R_FindLineAlignNeighbor(Sector const *sec, LineDef const *line,
 }
 #endif // __CLIENT__
 
+/**
+ * Set intial values of various tracked and interpolated properties
+ * (lighting, smoothed planes etc).
+ */
+static void updateAllMapSectors(GameMap &map, bool forceUpdate = false)
+{
+    if(novideo) return;
+
+    for(uint i = 0; i < map.sectorCount(); ++i)
+    {
+        Sector *sec = &map.sectors[i];
+        R_UpdateSector(sec, forceUpdate);
+    }
+}
+
 static inline void initSurfaceMaterialOrigin(Surface &suf)
 {
     suf._visOffset[VX] = suf._oldOffset[0][VX] = suf._oldOffset[1][VX] = suf._offset[VX];
     suf._visOffset[VY] = suf._oldOffset[0][VY] = suf._oldOffset[1][VY] = suf._offset[VY];
 }
 
-/**
- * Set intial values of various tracked and interpolated properties
- * (lighting, smoothed planes etc).
- */
-void R_MapInitSurfaces(boolean forceUpdate)
+static void initAllMapSurfaceMaterialOrigins(GameMap &map)
 {
-    if(novideo) return;
-
-    for(uint i = 0; i < NUM_SECTORS; ++i)
+    for(uint i = 0; i < map.sectorCount(); ++i)
     {
-        Sector *sec = SECTOR_PTR(i);
+        Sector &sector = map.sectors[i];
 
-        R_UpdateSector(sec, forceUpdate);
-
-        foreach(Plane *plane, sec->planes())
+        foreach(Plane *plane, sector.planes())
         {
             plane->_visHeight = plane->_oldHeight[0] = plane->_oldHeight[1] = plane->_height;
             initSurfaceMaterialOrigin(plane->surface());
         }
     }
 
-    for(uint i = 0; i < NUM_SIDEDEFS; ++i)
+    for(uint i = 0; i < map.sideDefCount(); ++i)
     {
-        SideDef *si = SIDE_PTR(i);
+        SideDef &sideDef = map.sideDefs[i];
 
-        initSurfaceMaterialOrigin(si->top());
-        initSurfaceMaterialOrigin(si->middle());
-        initSurfaceMaterialOrigin(si->bottom());
+        initSurfaceMaterialOrigin(sideDef.top());
+        initSurfaceMaterialOrigin(sideDef.middle());
+        initSurfaceMaterialOrigin(sideDef.bottom());
     }
 }
 
@@ -845,7 +852,9 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
         // Update everything again. Its possible that after loading we
         // now have more HOMs to fix, etc..
         GameMap_InitSkyFix(theMap);
-        R_MapInitSurfaces(true);
+
+        updateAllMapSectors(*theMap, true /*force*/);
+        initAllMapSurfaceMaterialOrigins(*theMap);
         GameMap_InitPolyobjs(theMap);
         DD_ResetTimer();
         return;
@@ -875,7 +884,8 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
         GameMap_InitPolyobjs(theMap);
         P_MapSpawnPlaneParticleGens();
 
-        R_MapInitSurfaces(true);
+        updateAllMapSectors(*theMap, true /*force*/);
+        initAllMapSurfaceMaterialOrigins(*theMap);
 
 #ifdef __CLIENT__
         theMap->buildSurfaceLists();
@@ -969,17 +979,6 @@ void R_ClearSectorFlags()
         // Clear all flags that can be cleared before each frame.
         sec->_frameFlags &= ~SIF_FRAME_CLEAR;
     }
-}
-
-boolean R_IsGlowingPlane(Plane const *plane)
-{
-    DENG_ASSERT(plane);
-    Surface const &surface = plane->surface();
-    if(surface.hasMaterial())
-    {
-        if(!surface.material().isDrawable() || surface.material().hasGlow()) return true;
-    }
-    return plane->surface().hasSkyMaskedMaterial();
 }
 
 float R_GlowStrength(Plane const *plane)

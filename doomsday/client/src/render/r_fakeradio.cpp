@@ -31,7 +31,7 @@ using namespace de;
 
 static zblockset_t *shadowLinksBlockSet;
 
-boolean Rend_RadioIsShadowingLine(LineDef const &line)
+bool Rend_RadioLineCastsShadow(LineDef const &line)
 {
     if(line.isFromPolyobj()) return false;
     if(line.isSelfReferencing()) return false;
@@ -40,6 +40,18 @@ boolean Rend_RadioIsShadowingLine(LineDef const &line)
     if(&line.v1Owner()->next().line() == &line ||
        &line.v2Owner()->next().line() == &line) return false;
 
+    return true;
+}
+
+bool Rend_RadioPlaneCastsShadow(Plane const &plane)
+{
+    if(plane.surface().hasMaterial())
+    {
+        Material const &surfaceMaterial = plane.surface().material();
+        if(!surfaceMaterial.isDrawable()) return false;
+        if(surfaceMaterial.hasGlow())     return false;
+        if(surfaceMaterial.isSkyMasked()) return false;
+    }
     return true;
 }
 
@@ -236,7 +248,7 @@ void Rend_RadioInitForMap()
     {
         LineDef *line = LINE_PTR(i);
 
-        if(!Rend_RadioIsShadowingLine(*line)) continue;
+        if(!Rend_RadioLineCastsShadow(*line)) continue;
 
         // For each side of the line.
         for(uint j = 0; j < 2; ++j)

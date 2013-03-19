@@ -141,9 +141,6 @@ boolean R_MiddleMaterialCoversLineOpening(LineDef const *line, int side, boolean
 boolean R_UpdateSector(Sector *sec, boolean forceUpdate);
 boolean R_UpdatePlane(Plane *pln, boolean forceUpdate);
 
-/// @return  @c true= @a plane is non-glowing (i.e. not glowing or a sky).
-boolean R_IsGlowingPlane(Plane const *plane);
-
 /// @return  Current glow strength for the plane.
 float R_GlowStrength(Plane const *pln);
 

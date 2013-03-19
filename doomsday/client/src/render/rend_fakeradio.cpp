@@ -825,7 +825,7 @@ static void setBottomShadowParams(rendershadowseg_params_t *p, float size, coord
 }
 
 static void setSideShadowParams(rendershadowseg_params_t *p, float size, coord_t bottom,
-    coord_t top, boolean rightSide, boolean bottomGlow, boolean topGlow,
+    coord_t top, int rightSide, bool haveBottomShadower, bool haveTopShadower,
     coord_t xOffset, coord_t segLength, coord_t fFloor,
     coord_t fCeil, bool hasBackSector, coord_t bFloor, coord_t bCeil, coord_t const *lineLength,
     shadowcorner_t const *sideCn)
@@ -877,11 +877,11 @@ static void setSideShadowParams(rendershadowseg_params_t *p, float size, coord_t
         // There is a backside.
         if(bFloor > fFloor && bCeil < fCeil)
         {
-            if(!bottomGlow && !topGlow)
+            if(haveBottomShadower && haveTopShadower)
             {
                 p->texture = LST_RADIO_CC;
             }
-            else if(bottomGlow)
+            else if(!haveBottomShadower)
             {
                 p->texOffset[VY] = bottom - fCeil;
                 p->texHeight = -(fCeil - fFloor);
@@ -894,11 +894,11 @@ static void setSideShadowParams(rendershadowseg_params_t *p, float size, coord_t
         }
         else if(bFloor > fFloor)
         {
-            if(!bottomGlow && !topGlow)
+            if(haveBottomShadower && haveTopShadower)
             {
                 p->texture = LST_RADIO_CC;
             }
-            else if(bottomGlow)
+            else if(!haveBottomShadower)
             {
                 p->texOffset[VY] = bottom - fCeil;
                 p->texHeight = -(fCeil - fFloor);
@@ -911,11 +911,11 @@ static void setSideShadowParams(rendershadowseg_params_t *p, float size, coord_t
         }
         else if(bCeil < fCeil)
         {
-            if(!bottomGlow && !topGlow)
+            if(haveBottomShadower && haveTopShadower)
             {
                 p->texture = LST_RADIO_CC;
             }
-            else if(bottomGlow)
+            else if(!haveBottomShadower)
             {
                 p->texOffset[VY] = bottom - fCeil;
                 p->texHeight = -(fCeil - fFloor);
@@ -929,13 +929,13 @@ static void setSideShadowParams(rendershadowseg_params_t *p, float size, coord_t
     }
     else
     {
-        if(bottomGlow)
+        if(!haveBottomShadower)
         {
             p->texHeight = -(fCeil - fFloor);
             p->texOffset[VY] = calcTexCoordY(top, fFloor, fCeil, p->texHeight);
             p->texture = LST_RADIO_CO;
         }
-        else if(topGlow)
+        else if(!haveTopShadower)
         {
             p->texture = LST_RADIO_CO;
         }
@@ -1070,13 +1070,13 @@ void Rend_RadioWallSection(rvertex_t const *rvertices, RendRadioWallSectionParms
     coord_t const bFloor     = (parms.backSec? parms.backSec->floor().visHeight() : 0);
     coord_t const bCeil      = (parms.backSec? parms.backSec->ceiling().visHeight()  : 0);
 
-    bool const bottomGlow    = R_IsGlowingPlane(&parms.frontSec->floor());
-    bool const topGlow       = R_IsGlowingPlane(&parms.frontSec->ceiling());
+    bool const haveBottomShadower = Rend_RadioPlaneCastsShadow(parms.frontSec->floor());
+    bool const haveTopShadower    = Rend_RadioPlaneCastsShadow(parms.frontSec->ceiling());
 
     /*
      * Top Shadow.
      */
-    if(!topGlow)
+    if(haveTopShadower)
     {
         if(rvertices[3].pos[VZ] > fCeil - parms.shadowSize &&
            rvertices[0].pos[VZ] < fCeil)
@@ -1093,7 +1093,7 @@ void Rend_RadioWallSection(rvertex_t const *rvertices, RendRadioWallSectionParms
     /*
      * Bottom Shadow.
      */
-    if(!bottomGlow)
+    if(haveBottomShadower)
     {
         if(rvertices[0].pos[VZ] < fFloor + parms.shadowSize &&
            rvertices[3].pos[VZ] > fFloor)
@@ -1107,9 +1107,9 @@ void Rend_RadioWallSection(rvertex_t const *rvertices, RendRadioWallSectionParms
         }
     }
 
-    // Walls with glowing floor & ceiling get no side shadows.
-    // Is there anything better we can do?
-    if(bottomGlow && topGlow)
+    // Walls unaffected by floor and ceiling shadow casters receive no
+    // side shadows either. We could do better here...
+    if(!haveBottomShadower && !haveTopShadower)
         return;
 
     /*
@@ -1121,7 +1121,7 @@ void Rend_RadioWallSection(rvertex_t const *rvertices, RendRadioWallSectionParms
 
         setSideShadowParams(&wsParms, parms.shadowSize, rvertices[0].pos[VZ],
                             rvertices[1].pos[VZ], false,
-                            bottomGlow, topGlow, parms.segOffset, parms.segLength,
+                            haveBottomShadower, haveTopShadower, parms.segOffset, parms.segLength,
                             fFloor, fCeil, !!parms.backSec, bFloor, bCeil, &lineLength,
                             parms.sideCn);
         drawWallSectionShadow(rvertices, wsParms, parms);
@@ -1137,7 +1137,7 @@ void Rend_RadioWallSection(rvertex_t const *rvertices, RendRadioWallSectionParms
 
         setSideShadowParams(&wsParms, parms.shadowSize, rvertices[0].pos[VZ],
                             rvertices[1].pos[VZ], true,
-                            bottomGlow, topGlow, parms.segOffset, parms.segLength,
+                            haveBottomShadower, haveTopShadower, parms.segOffset, parms.segLength,
                             fFloor, fCeil, !!parms.backSec, bFloor, bCeil, &lineLength,
                             parms.sideCn);
         drawWallSectionShadow(rvertices, wsParms, parms);
