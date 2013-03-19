@@ -22,13 +22,13 @@ Header { Version = 6; }
 Group
 {
   Flags = precache;
-  Texture { ID = "SW1OFF"; Tics = 0; };
-  Texture { ID = "SW1ON"; Tics = 0; };
+  Texture { ID = "SW1OFF"; };
+  Texture { ID = "SW1ON"; };
 }
 
 Group
 {
   Flags = precache;
-  Texture { ID = "SW2OFF"; Tics = 0; };
-  Texture { ID = "SW2ON"; Tics = 0; };
+  Texture { ID = "SW2OFF"; };
+  Texture { ID = "SW2ON"; };
 }

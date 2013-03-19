@@ -22,6 +22,6 @@ Header { Version = 5; }
 Group
 {
   Flags = precache;
-  Texture { ID = "SW1GSTON"; Tics = 0; };
-  Texture { ID = "SW2GSTON"; Tics = 0; };
+  Texture { ID = "SW1GSTON"; };
+  Texture { ID = "SW2GSTON"; };
 }
