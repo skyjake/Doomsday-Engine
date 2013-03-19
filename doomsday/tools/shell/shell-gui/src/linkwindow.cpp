@@ -67,6 +67,7 @@ DENG2_PIMPL(LinkWindow)
     QStackedWidget *stack;
     StatusWidget *status;
     QtRootWidget *root;
+    QLabel *gameStatus;
     QLabel *timeCounter;
     QLabel *currentHost;
     QAction *stopAction;
@@ -83,6 +84,7 @@ DENG2_PIMPL(LinkWindow)
           stack(0),
           status(0),
           root(0),
+          gameStatus(0),
           timeCounter(0),
           currentHost(0)
     {
@@ -144,6 +146,7 @@ DENG2_PIMPL(LinkWindow)
         disconnectAction->setDisabled(true);
 #endif
 
+        gameStatus->clear();
         status->linkDisconnected();
         updateCurrentHost();
         updateStyle();
@@ -175,7 +178,7 @@ DENG2_PIMPL(LinkWindow)
         if(!mapId.isEmpty()) msg += " " + mapId;
         if(!rules.isEmpty()) msg += " (" + rules + ")";
 
-        self.statusBar()->showMessage(msg);
+        gameStatus->setText(statusText(msg));
     }
 };
 
@@ -244,8 +247,13 @@ LinkWindow::LinkWindow(QWidget *parent)
     statusFont.setPointSize(font().pointSize() * 4 / 5);
     statusBar()->setFont(statusFont);
 #endif
-    d->timeCounter = new QLabel(statusText("0:00:00"));
+    d->gameStatus = new QLabel;
+    d->gameStatus->setContentsMargins(6, 0, 6, 0);
     d->currentHost = new QLabel;
+    d->currentHost->setContentsMargins(6, 0, 6, 0);
+    d->timeCounter = new QLabel(statusText("0:00:00"));
+    d->timeCounter->setContentsMargins(6, 0, 0, 0);
+    statusBar()->addPermanentWidget(d->gameStatus);
     statusBar()->addPermanentWidget(d->currentHost);
     statusBar()->addPermanentWidget(d->timeCounter);
 
