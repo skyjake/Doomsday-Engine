@@ -70,9 +70,17 @@ Material Mods "textures:CYTRAKA" {
 }
 
 Material Mods "textures:SEXIT" {
-  Layer { Stage { Glow = 1.8; } }
+  Layer
+  {
+    Stage { Glow = 1.8; }
+    Stage { Glow = 1.8; }
+  }
 }
 
 Material Mods "textures:SEXITA" {
-  Layer { Stage { Glow = 1.8; } }
+  Layer
+  {
+    Stage { Glow = 1.8; }
+    Stage { Glow = 1.8; }
+  }
 }

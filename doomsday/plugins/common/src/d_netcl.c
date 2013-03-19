@@ -473,11 +473,30 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
             {
                 int val = ((b & (1 << i))? (Reader_ReadByte(msg) * 35) : 0);
 
+                /**
+                 * @todo This function duplicates logic in P_GivePower(). The
+                 * redundancy should be removed for instance by adding a new
+                 * game packet GPT_GIVE_POWER that calls the appropriate
+                 * P_GivePower() on clientside after it has been called on the
+                 * server. -jk
+                 */
+
                 // Maybe unhide the HUD?
                 if(val > pl->powers[i])
                     ST_HUDUnHide(plrNum, HUE_ON_PICKUP_POWER);
 
                 pl->powers[i] = val;
+
+                if(val && i == PT_FLIGHT && pl->plr->mo)
+                {
+                    pl->plr->mo->flags2 |= MF2_FLY;
+                    pl->plr->mo->flags |= MF_NOGRAVITY;
+                    pl->flyHeight = 10;
+                    pl->powers[i] = val;
+#ifdef _DEBUG
+                    Con_Message("NetCl_UpdatePlayerState: Local mobj flight enabled.");
+#endif
+                }
 
                 // Should we reveal the map?
                 if(val && i == PT_ALLMAP && plrNum == CONSOLEPLAYER)

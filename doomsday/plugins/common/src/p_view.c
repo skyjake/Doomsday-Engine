@@ -91,9 +91,9 @@ void P_CalcHeight(player_t* plr)
     // When flying, don't bob the view.
     if((pmo->flags2 & MF2_FLY) && pmo->origin[VZ] > pmo->floorZ)
     {
-#ifdef _DEBUG
+/*#ifdef _DEBUG
         Con_Message("Flying! z=%f flz=%f", pmo->origin[VZ], pmo->floorZ);
-#endif
+#endif*/
         plr->bob = 1.0f / 2;
     }
 

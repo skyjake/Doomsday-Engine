@@ -17,76 +17,76 @@ Header { Version = 6; }
 Group
 {
   Flags = precache;
-  Texture { ID = "SWXCA"; Tics = 0; };
-  Texture { ID = "SWXCB"; Tics = 0; };
+  Texture { ID = "SWXCA"; };
+  Texture { ID = "SWXCB"; };
 }
 
 Group
 {
   Flags = precache;
-  Texture { ID = "SWXCKA"; Tics = 0; };
-  Texture { ID = "SWXCKB"; Tics = 0; };
+  Texture { ID = "SWXCKA"; };
+  Texture { ID = "SWXCKB"; };
 }
 
 Group
 {
   Flags = precache;
-  Texture { ID = "SWXCKLA"; Tics = 0; };
-  Texture { ID = "SWXCKLB"; Tics = 0; };
+  Texture { ID = "SWXCKLA"; };
+  Texture { ID = "SWXCKLB"; };
 }
 
 Group
 {
   Flags = precache;
-  Texture { ID = "SWXCLA"; Tics = 0; };
-  Texture { ID = "SWXCLB"; Tics = 0; };
+  Texture { ID = "SWXCLA"; };
+  Texture { ID = "SWXCLB"; };
 }
 
 Group
 {
   Flags = precache;
-  Texture { ID = "SWXHCA"; Tics = 0; };
-  Texture { ID = "SWXHCB"; Tics = 0; };
+  Texture { ID = "SWXHCA"; };
+  Texture { ID = "SWXHCB"; };
 }
 
 Group
 {
   Flags = precache;
-  Texture { ID = "SWXSAA"; Tics = 0; };
-  Texture { ID = "SWXSAB"; Tics = 0; };
+  Texture { ID = "SWXSAA"; };
+  Texture { ID = "SWXSAB"; };
 }
 
 Group
 {
   Flags = precache;
-  Texture { ID = "SWXSCA"; Tics = 0; };
-  Texture { ID = "SWXSCB"; Tics = 0; };
+  Texture { ID = "SWXSCA"; };
+  Texture { ID = "SWXSCB"; };
 }
 
 Group
 {
   Flags = precache;
-  Texture { ID = "SWXSDA"; Tics = 0; };
-  Texture { ID = "SWXSDB"; Tics = 0; };
+  Texture { ID = "SWXSDA"; };
+  Texture { ID = "SWXSDB"; };
 }
 
 Group
 {
   Flags = precache;
-  Texture { ID = "SWXSEA"; Tics = 0; };
-  Texture { ID = "SWXSEB"; Tics = 0; };
+  Texture { ID = "SWXSEA"; };
+  Texture { ID = "SWXSEB"; };
 }
 
 Group
 {
   Flags = precache;
-  Texture { ID = "SWXSFA"; Tics = 0; };
-  Texture { ID = "SWXSFB"; Tics = 0; };
+  Texture { ID = "SWXSFA"; };
+  Texture { ID = "SWXSFB"; };
 }
 
 Group
 {
   Flags = precache;
-  Texture { ID = "SWXSGA"; Tics = 0; };
-  Texture { ID = "SWXSGB"; Tics = 0; };
+  Texture { ID = "SWXSGA"; };
+  Texture { ID = "SWXSGB"; };
 }

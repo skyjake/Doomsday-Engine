@@ -985,9 +985,21 @@ static void createGlowLightForSurface(Surface &suf)
         if(!sec->bspLeafCount() || sec->floor().visHeight() >= sec->ceiling().visHeight())
             break;
 
+<<<<<<< HEAD
         // Are we glowing at this moment in time?
         MaterialSnapshot const &ms = suf.material().prepare(Rend_MapSurfaceMaterialSpec());
         if(!(ms.glowStrength() > .001f)) break;
+=======
+        MaterialSnapshot const &ms = suf.material->prepare(Rend_MapSurfaceMaterialSpec());
+
+        // Are we glowing at this moment in time?
+        float glowStrength = 0;
+        if(glowFactor > .0001f)
+        {
+            glowStrength = ms.glowStrength() * glowFactor; // Global scale factor.
+        }
+        if(!(glowStrength > .0001f)) break;
+>>>>>>> master
 
         averagecolor_analysis_t const *avgColorAmplified = reinterpret_cast<averagecolor_analysis_t const *>(ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::AverageColorAmplifiedAnalysis));
         if(!avgColorAmplified) throw Error("createGlowLightForSurface", QString("Texture \"%1\" has no AverageColorAmplifiedAnalysis").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
@@ -1001,9 +1013,6 @@ static void createGlowLightForSurface(Surface &suf)
         V3f_Copy(LUM_PLANE(lum)->normal, suf.normal());
         V3f_Copy(LUM_PLANE(lum)->color, avgColorAmplified->color.rgb);
 
-        float glowStrength = ms.glowStrength();
-        if(glowFactor > .0001f)
-            glowStrength *= glowFactor; // Global scale factor.
         LUM_PLANE(lum)->intensity = glowStrength;
         lum->maxDistance = 0;
         lum->decorSource = 0;

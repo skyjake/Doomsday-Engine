@@ -1044,15 +1044,13 @@ float R_GlowStrength(Plane const *plane)
 {
 #ifdef __CLIENT__
     Surface const &surface = plane->surface();
-    if(surface.hasMaterial())
+    if(surface.hasMaterial() && glowFactor > .0001f)
     {
         if(surface.material().isDrawable() && !surface.hasSkyMaskedMaterial())
         {
             MaterialSnapshot const &ms = surface.material().prepare(Rend_MapSurfaceMaterialSpec());
 
-            float glowStrength = ms.glowStrength();
-            if(glowFactor > .0001f)
-                glowStrength *= glowFactor; // Global scale factor.
+            float glowStrength = ms.glowStrength() * glowFactor; // Global scale factor.
             return glowStrength;
         }
     }

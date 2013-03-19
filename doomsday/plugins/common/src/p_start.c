@@ -293,7 +293,7 @@ void P_Shutdown(void)
 }
 
 void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint, boolean deathmatch,
-    mapspotid_t spot)
+                         mapspotid_t spot)
 {
     playerstart_t* start;
 
@@ -302,17 +302,27 @@ void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint, boolean deathmatch,
         deathmatchStarts = Z_Realloc(deathmatchStarts,
             sizeof(playerstart_t) * ++numPlayerDMStarts, PU_MAP);
         start = &deathmatchStarts[numPlayerDMStarts - 1];
+
+#ifdef _DEBUG
+        Con_Message("P_CreatePlayerStart: DM #%i plrNum=%i entryPoint=%i spot=%i",
+                numPlayerDMStarts - 1, defaultPlrNum, entryPoint, spot);
+#endif
     }
     else
     {
         playerStarts = Z_Realloc(playerStarts,
             sizeof(playerstart_t) * ++numPlayerStarts, PU_MAP);
         start = &playerStarts[numPlayerStarts - 1];
+
+#ifdef _DEBUG
+        Con_Message("P_CreatePlayerStart: Normal #%i plrNum=%i entryPoint=%i spot=%i",
+                numPlayerStarts - 1, defaultPlrNum, entryPoint, spot);
+#endif
     }
 
-    start->plrNum = defaultPlrNum;
+    start->plrNum     = defaultPlrNum;
     start->entryPoint = entryPoint;
-    start->spot = spot;
+    start->spot       = spot;
 }
 
 void P_DestroyPlayerStarts(void)
@@ -329,8 +339,8 @@ void P_DestroyPlayerStarts(void)
 }
 
 /**
- * @return              The correct start for the player. The start is in
- *                      the given group for specified entry point.
+ * @return  The correct start for the player. The start is in the given
+ *          group for specified entry point.
  */
 const playerstart_t* P_GetPlayerStart(uint entryPoint, int pnum,
                                       boolean deathmatch)
@@ -349,11 +359,15 @@ const playerstart_t* P_GetPlayerStart(uint entryPoint, int pnum,
         pnum = MINMAX_OF(0, pnum, MAXPLAYERS-1);
 
     if(deathmatch)
-    {   // In deathmatch, entry point is ignored.
+    {
+        // In deathmatch, entry point is ignored.
         return &deathmatchStarts[pnum];
     }
 
 #if __JHEXEN__
+    // Client 1 should be treated like player 0.
+    if(IS_NETWORK_SERVER) pnum--;
+
     for(i = 0; i < numPlayerStarts; ++i)
     {
         const playerstart_t* start = &playerStarts[i];
@@ -387,6 +401,8 @@ void P_DealPlayerStarts(uint entryPoint)
 {
     int i;
 
+    if(IS_CLIENT) return;
+
     if(!numPlayerStarts)
     {
         Con_Message("Warning: Zero player starts found, players will spawn as cameras.");
@@ -419,6 +435,10 @@ void P_DealPlayerStarts(uint entryPoint)
             {   // A match!
                 pl->startSpot = k;
                 // Keep looking.
+#ifdef _DEBUG
+                Con_Message(" - playerStart %i matches: spot=%i entryPoint=%i",
+                            k, spotNumber, entryPoint);
+#endif
             }
         }
 
@@ -430,9 +450,9 @@ void P_DealPlayerStarts(uint entryPoint)
         }
     }
 
-    if(IS_NETGAME)
+    //if(IS_NETGAME)
     {
-        Con_Printf("Player starting spots:\n");
+        Con_Message("Player starting spots:");
         for(i = 0; i < MAXPLAYERS; ++i)
         {
             player_t *pl = &players[i];
@@ -440,7 +460,7 @@ void P_DealPlayerStarts(uint entryPoint)
             if(!pl->plr->inGame)
                 continue;
 
-            Con_Printf("- pl%i: color %i, spot %i\n", i, cfg.playerColor[i],
+            Con_Message("- pl%i: color %i, spot %i", i, cfg.playerColor[i],
                        pl->startSpot);
         }
     }
