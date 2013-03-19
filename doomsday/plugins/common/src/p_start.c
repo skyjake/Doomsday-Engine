@@ -924,9 +924,9 @@ void P_RebornPlayerInMultiplayer(int plrNum)
         GetDefInt("Multiplayer|Reborn|Green mana", &p->ammo[AT_GREENMANA].owned);
 
 #ifdef _DEBUG
-        Con_Message("P_RebornPlayer: Giving mana (b:%i g:%i) to player %i; also old weapons, "
-                    "with best weapon %i", p->ammo[AT_BLUEMANA].owned, p->ammo[AT_GREENMANA].owned,
-                    plrNum, bestWeapon);
+        Con_Message("P_RebornPlayerInMultiplayer: Giving mana (b:%i g:%i) to player %i; "
+                    "also old weapons, with best weapon %i", p->ammo[AT_BLUEMANA].owned,
+                    p->ammo[AT_GREENMANA].owned, plrNum, bestWeapon);
 #endif
 
         if(bestWeapon)
