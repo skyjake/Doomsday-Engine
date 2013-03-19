@@ -540,9 +540,10 @@ static void R_UpdateMap()
             line->frontSideDef().middle().markAsNeedingDecorationUpdate();
         }
     }
-#endif
 
-    R_MapInitSurfaceLists();
+    theMap->buildSurfaceLists();
+
+#endif
 
     // See what mapinfo says about this map.
     ded_mapinfo_t *mapInfo = Def_GetMapInfo(GameMap_Uri(theMap));
@@ -782,8 +783,11 @@ void R_NewSharpWorld()
         R_CheckViewerLimits(vd->lastSharp, &sharpView);
     }
 
-    R_UpdateTrackedPlanes();
-    R_UpdateSurfaceScroll();
+    if(theMap)
+    {
+        theMap->updateTrackedPlanes();
+        theMap->updateScrollingSurfaces();
+    }
 }
 
 void R_CreateMobjLinks()
@@ -823,8 +827,8 @@ void R_BeginWorldFrame()
 
     R_ClearSectorFlags();
 
-    R_InterpolateTrackedPlanes(resetNextViewer);
-    R_InterpolateSurfaceScroll(resetNextViewer);
+    theMap->lerpTrackedPlanes(resetNextViewer);
+    theMap->lerpScrollingSurfaces(resetNextViewer);
 
     if(!freezeRLs)
     {

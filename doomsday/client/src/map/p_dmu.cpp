@@ -1025,41 +1025,6 @@ static int setProperty(void *ptr, void *context)
         return 0; /* Unreachable */ }
     }
 
-    if(updateSurface)
-    {
-        if(R_UpdateSurface(updateSurface, false))
-        {
-            switch(updateSurface->owner().type())
-            {
-            case DMU_SIDEDEF:
-                updateSidedef = updateSurface->owner().castTo<SideDef>();
-                break;
-
-            case DMU_PLANE:
-                updatePlane = updateSurface->owner().castTo<Plane>();
-                break;
-
-            default:
-                DENG2_ASSERT(false); // Unsupported type.
-            }
-        }
-    }
-
-    if(updateSidedef)
-    {
-        if(R_UpdateSidedef(updateSidedef, false))
-            updateLinedef = &updateSidedef->line();
-    }
-
-    if(updateLinedef)
-    {
-        if(R_UpdateLinedef(updateLinedef, false))
-        {
-            updateSector1 = updateLinedef->frontSectorPtr();
-            updateSector2 = updateLinedef->backSectorPtr();
-        }
-    }
-
     if(updatePlane)
     {
         if(R_UpdatePlane(updatePlane, false))
@@ -1075,11 +1040,6 @@ static int setProperty(void *ptr, void *context)
     {
         R_UpdateSector(updateSector2, false);
     }
-
-/*  if(updateBspLeaf)
-    {
-        R_UpdateBspLeaf(updateBspLeaf, false);
-    } */
 
     return true; // Continue iteration.
 }

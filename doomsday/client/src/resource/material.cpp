@@ -23,6 +23,7 @@
 #include "api_map.h"
 #include "audio/s_environ.h"
 #include "map/r_world.h"
+#include "map/gamemap.h" // theMap - Remove me
 #include "r_util.h" // R_NameForBlendMode
 #include <de/math.h>
 #include <QtAlgorithms>
@@ -434,7 +435,11 @@ void Material::setDimensions(Vector2i const &_newDimensions)
     if(d->dimensions != newDimensions)
     {
         d->dimensions = newDimensions;
-        R_UpdateMapSurfacesOnMaterialChange(this);
+        if(theMap)
+        {
+            /// @todo Replace with a de::Observers-based mechanism.
+            theMap->updateSurfacesOnMaterialChange(*this);
+        }
     }
 }
 
@@ -443,7 +448,11 @@ void Material::setWidth(int newWidth)
     if(d->dimensions.x != newWidth)
     {
         d->dimensions.x = newWidth;
-        R_UpdateMapSurfacesOnMaterialChange(this);
+        if(theMap)
+        {
+            /// @todo Replace with a de::Observers-based mechanism.
+            theMap->updateSurfacesOnMaterialChange(*this);
+        }
     }
 }
 
@@ -452,7 +461,11 @@ void Material::setHeight(int newHeight)
     if(d->dimensions.y != newHeight)
     {
         d->dimensions.y = newHeight;
-        R_UpdateMapSurfacesOnMaterialChange(this);
+        if(theMap)
+        {
+            /// @todo Replace with a de::Observers-based mechanism.
+            theMap->updateSurfacesOnMaterialChange(*this);
+        }
     }
 }
 

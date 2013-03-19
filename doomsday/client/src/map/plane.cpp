@@ -87,7 +87,7 @@ Plane::Plane(Sector &sector, Vector3f const &normal, coord_t height)
 Plane::~Plane()
 {
     // If this plane is currently being watched, remove it.
-    R_RemoveTrackedPlane(GameMap_TrackedPlanes(theMap), this);
+    theMap->trackedPlanes().remove(this);
 
     // If this plane's surface is in the moving list, remove it.
     theMap->scrollingSurfaces().remove(&_surface);
@@ -254,7 +254,11 @@ int Plane::setProperty(setargs_t const &args)
         DMU_SetValue(DMT_PLANE_HEIGHT, &_height, &args, 0);
         if(!ddMapSetup)
         {
-            R_AddTrackedPlane(GameMap_TrackedPlanes(theMap), this);
+            if(theMap)
+            {
+                theMap->trackedPlanes().insert(this);
+            }
+
 #ifdef __CLIENT__
             d->markDependantSurfacesForDecorationUpdate();
 #endif

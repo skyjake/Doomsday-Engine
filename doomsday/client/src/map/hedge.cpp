@@ -363,7 +363,7 @@ bool HEdge::prepareWallDivs(SideDefSection section, Sector *frontSec, Sector *ba
     SideDef *frontDef = _line? _line->side(_lineSide).sideDefPtr() : 0;
     SideDef *backDef  = _twin && _twin->hasLine()? _twin->lineSide().sideDefPtr() : 0;
     coord_t low, hi;
-    bool visible = R_FindBottomTop2(section, lineFlags, frontSec, backSec, frontDef, backDef,
+    bool visible = R_FindBottomTop(section, lineFlags, frontSec, backSec, frontDef, backDef,
                                     &low, &hi, matOffset);
     matOffset[0] += float(_line? _lineOffset : 0);
     if(!visible) return false;

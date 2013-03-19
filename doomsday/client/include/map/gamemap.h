@@ -112,13 +112,15 @@ public:
 
     EntityDatabase *entityDatabase;
 
-    PlaneSet trackedPlanes;
-    SurfaceSet scrollingSurfaces_;
+private:
+    PlaneSet _trackedPlanes;
+    SurfaceSet _scrollingSurfaces;
 #ifdef __CLIENT__
-    SurfaceSet decoratedSurfaces_;
-    SurfaceSet glowingSurfaces_;
+    SurfaceSet _decoratedSurfaces;
+    SurfaceSet _glowingSurfaces;
 #endif
 
+public:
     struct blockmap_s *mobjBlockmap;
     struct blockmap_s *polyobjBlockmap;
     struct blockmap_s *lineBlockmap;
@@ -144,12 +146,6 @@ public:
 
     virtual ~GameMap();
 
-    /**
-     * @pre Axis-aligned bounding boxes of all Sectors must be initialized.
-     * @todo Should be private.
-     */
-    void updateBounds();
-
     uint vertexCount() const { return vertexes.size(); }
 
     uint sectorCount() const { return sectors.size(); }
@@ -169,19 +165,65 @@ public:
     /**
      * Returns the set of decorated surfaces for the map.
      */
-    SurfaceSet &decoratedSurfaces();
+    SurfaceSet /*const*/ &decoratedSurfaces();
 
     /**
      * Returns the set of glowing surfaces for the map.
      */
-    SurfaceSet &glowingSurfaces();
+    SurfaceSet /*const*/ &glowingSurfaces();
 
 #endif // __CLIENT__
 
     /**
+     * $smoothmatoffset: interpolate the visual offset.
+     */
+    void lerpScrollingSurfaces(bool resetNextViewer = false);
+
+    /**
+     * $smoothmatoffset: Roll the surface material offset tracker buffers.
+     */
+    void updateScrollingSurfaces();
+
+    /**
      * Returns the set of scrolling surfaces for the map.
      */
-    SurfaceSet &scrollingSurfaces();
+    SurfaceSet /*const*/ &scrollingSurfaces();
+
+    /**
+     * $smoothplane: interpolate the visual offset.
+     */
+    void lerpTrackedPlanes(bool resetNextViewer = false);
+
+    /**
+     * $smoothplane: Roll the height tracker buffers.
+     */
+    void updateTrackedPlanes();
+
+    /**
+     * Returns the set of tracked planes for the map.
+     */
+    PlaneSet /*const*/ &trackedPlanes();
+
+public: ///@ todo make private:
+
+    /**
+     * @pre Axis-aligned bounding boxes of all Sectors must be initialized.
+     */
+    void updateBounds();
+
+    void addSurfaceToLists(Surface &suf);
+
+#ifdef __CLIENT__
+    void buildSurfaceLists();
+#endif
+
+    /**
+     * To be called in response to a Material property changing which may
+     * require updating any map surfaces which are presently using it.
+     *
+     * @todo Replace with a de::Observers-based mechanism.
+     */
+    void updateSurfacesOnMaterialChange(Material &material);
 };
 
 /**
@@ -636,14 +678,6 @@ struct clplane_s *GameMap_NewClPlane(GameMap *map, uint sectornum, clplanetype_t
  * @return  Generators collection for this map.
  */
 struct generators_s *GameMap_Generators(GameMap *map);
-
-/**
- * Retrieve a pointer to the tracked plane list for this map.
- *
- * @param map  GameMap instance.
- * @return  List of tracked planes.
- */
-PlaneSet *GameMap_TrackedPlanes(GameMap *map);
 
 /**
  * Initialize all Polyobjs in the map. To be called after map load.

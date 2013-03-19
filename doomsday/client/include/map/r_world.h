@@ -1,4 +1,4 @@
-/** @file r_world.h
+/** @file r_world.h World Setup and Refresh.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,12 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * World Setup and Refresh.
- */
-
-#ifndef LIBDENG_REFRESH_WORLD_H
-#define LIBDENG_REFRESH_WORLD_H
+#ifndef LIBDENG_MAP_WORLD_H
+#define LIBDENG_MAP_WORLD_H
 
 #include "resource/r_data.h"
 #include "map/vertex.h"
@@ -36,17 +32,6 @@
 DENG2_DECLARE_AUDIENCE(MapChange, void currentMapChanged())
 DENG2_EXTERN_AUDIENCE(MapChange)
 
-// Used for vertex sector owners, side line owners and reverb BSP leafs.
-typedef struct ownernode_s {
-    void*           data;
-    struct ownernode_s* next;
-} ownernode_t;
-
-typedef struct {
-    ownernode_t*    head;
-    uint            count;
-} ownerlist_t;
-
 extern float rendSkyLight; // cvar
 extern byte rendSkyLightAuto; // cvar
 extern float rendLightWallAngle;
@@ -55,14 +40,14 @@ extern boolean ddMapSetup;
 extern boolean firstFrameAfterLoad;
 
 // Sky flags.
-#define SIF_DRAW_SPHERE     0x1 // Always draw the sky sphere.
+#define SIF_DRAW_SPHERE     0x1 ///< Always draw the sky sphere.
 
 /**
  * Sector light color may be affected by the sky light color.
  */
 const_pvec3f_t &R_GetSectorLightColor(Sector const *sector);
 
-float           R_DistAttenuateLightLevel(float distToViewer, float lightLevel);
+float R_DistAttenuateLightLevel(float distToViewer, float lightLevel);
 
 /**
  * The DOOM lighting model applies a light level delta to everything when
@@ -70,18 +55,16 @@ float           R_DistAttenuateLightLevel(float distToViewer, float lightLevel);
  *
  * @return  Calculated delta.
  */
-float R_ExtraLightDelta(void);
+float R_ExtraLightDelta();
 
 /**
  * @return  @c > 0 if @a lightlevel passes the min max limit condition.
  */
 float R_CheckSectorLight(float lightlevel, float min, float max);
 
-boolean R_SectorContainsSkySurfaces(const Sector* sec);
+boolean R_SectorContainsSkySurfaces(Sector const *sec);
 
-void R_UpdatePlanes(void);
-void R_ClearSectorFlags(void);
-void R_MapInitSurfaceLists(void);
+void R_ClearSectorFlags();
 
 /**
  * Returns pointers to the line's vertices in such a fashion that @c verts[0]
@@ -107,12 +90,9 @@ void R_OrderVertices(LineDef *line, Sector const *sector, Vertex *verts[2]);
  *
  * @return  @c true iff the determined wall section height is @c >0
  */
-boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
-    Sector const *frontSec, Sector const *backSec, SideDef const *frontDef, SideDef const *backDef,
-    coord_t *low, coord_t *hi, pvec2f_t matOffset);
 boolean R_FindBottomTop(SideDefSection section, int lineFlags,
     Sector const *frontSec, Sector const *backSec, SideDef const *frontDef, SideDef const *backDef,
-    coord_t *low, coord_t *hi) /* matOffset = 0 */;
+    coord_t *low, coord_t *hi, pvec2f_t matOffset = 0);
 
 /**
  * Find the "sharp" Z coordinate range of the opening between sectors @a frontSec
@@ -126,11 +106,11 @@ boolean R_FindBottomTop(SideDefSection section, int lineFlags,
  *
  * @return Height of the open range.
  */
-coord_t R_OpenRange(Sector const* frontSec, Sector const* backSec, coord_t* retBottom, coord_t* retTop);
+coord_t R_OpenRange(Sector const *frontSec, Sector const *backSec, coord_t *retBottom, coord_t *retTop);
 
 /// Same as @ref R_OpenRange() but works with the "visual" (i.e., smoothed) plane
 /// height coordinates rather than the "sharp" coordinates.
-coord_t R_VisOpenRange(Sector const* frontSec, Sector const* backSec, coord_t* retBottom, coord_t* retTop);
+coord_t R_VisOpenRange(Sector const *frontSec, Sector const *backSec, coord_t *retBottom, coord_t *retTop);
 
 #ifdef __CLIENT__
 /**
@@ -146,7 +126,7 @@ coord_t R_VisOpenRange(Sector const* frontSec, Sector const* backSec, coord_t* r
  */
 boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector const *frontSec,
     Sector const *backSec, SideDef const *frontDef, SideDef const *backDef,
-    boolean ignoreOpacity);
+    boolean ignoreOpacity = true);
 
 /**
  * Same as @ref R_MiddleMaterialCoversOpening except all arguments are derived from
@@ -158,45 +138,27 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector const *frontSec,
 boolean R_MiddleMaterialCoversLineOpening(LineDef const *line, int side, boolean ignoreOpacity);
 #endif // __CLIENT__
 
-void            R_UpdateTrackedPlanes(void);
-void            R_InterpolateTrackedPlanes(boolean resetNextViewer);
-
-void            R_AddTrackedPlane(PlaneSet* plist, Plane* pln);
-boolean         R_RemoveTrackedPlane(PlaneSet* plist, Plane* pln);
-
-void            R_UpdateSurfaceScroll(void);
-void            R_InterpolateSurfaceScroll(boolean resetNextViewer);
-
 boolean R_UpdateSector(Sector *sec, boolean forceUpdate);
-boolean R_UpdateLinedef(LineDef *line, boolean forceUpdate);
-boolean R_UpdateSidedef(SideDef *sideDef, boolean forceUpdate);
 boolean R_UpdatePlane(Plane *pln, boolean forceUpdate);
-boolean R_UpdateSurface(Surface *suf, boolean forceUpdate);
-
-/**
- * To be called in response to a Material property changing which may
- * require updating any map surfaces which are presently using it.
- */
-void R_UpdateMapSurfacesOnMaterialChange(Material* material);
 
 /// @return  @c true= @a plane is non-glowing (i.e. not glowing or a sky).
-boolean R_IsGlowingPlane(const Plane* plane);
+boolean R_IsGlowingPlane(Plane const *plane);
 
 /// @return  Current glow strength for the plane.
-float R_GlowStrength(const Plane* pln);
+float R_GlowStrength(Plane const *pln);
 
-LineOwner* R_GetVtxLineOwner(const Vertex* vtx, const LineDef* line);
+LineOwner *R_GetVtxLineOwner(Vertex const *vtx, LineDef const *line);
 
 #ifdef __CLIENT__
 /**
  * A neighbour is a line that shares a vertex with 'line', and faces the
  * specified sector.
  */
-LineDef* R_FindLineNeighbor(const Sector* sector, const LineDef* line,
-    const LineOwner* own, boolean antiClockwise, binangle_t* diff);
+LineDef *R_FindLineNeighbor(Sector const *sector, LineDef const *line,
+    LineOwner const *own, boolean antiClockwise, binangle_t *diff);
 
-LineDef* R_FindSolidLineNeighbor(const Sector *sector, const LineDef* line,
-    const LineOwner* own, boolean antiClockwise, binangle_t* diff);
+LineDef *R_FindSolidLineNeighbor(Sector const *sector, LineDef const *line,
+    LineOwner const *own, boolean antiClockwise, binangle_t *diff);
 
 /**
  * A line's align neighbor is a line that shares a vertex with 'line' and
@@ -204,15 +166,15 @@ LineDef* R_FindSolidLineNeighbor(const Sector *sector, const LineDef* line,
  * a shadow between them. In practice, they would be considered a single,
  * long sidedef by the shadow generator).
  */
-LineDef* R_FindLineAlignNeighbor(const Sector* sec, const LineDef* line,
-    const LineOwner* own, boolean antiClockwise, int alignment);
+LineDef *R_FindLineAlignNeighbor(Sector const *sec, LineDef const *line,
+    LineOwner const *own, boolean antiClockwise, int alignment);
 
 /**
  * Find a backneighbour for the given line. They are the neighbouring line
  * in the backsector of the imediate line neighbor.
  */
-LineDef* R_FindLineBackNeighbor(const Sector* sector, const LineDef* line,
-    const LineOwner* own, boolean antiClockwise, binangle_t* diff);
+LineDef *R_FindLineBackNeighbor(Sector const *sector, LineDef const *line,
+    LineOwner const *own, boolean antiClockwise, binangle_t *diff);
 #endif // __CLIENT__
 
 /**
@@ -224,6 +186,6 @@ LineDef* R_FindLineBackNeighbor(const Sector* sector, const LineDef* line,
 #define SKYCAP_UPPER                0x2
 ///@}
 
-coord_t R_SkyCapZ(BspLeaf* bspLeaf, int skyCap);
+coord_t R_SkyCapZ(BspLeaf *bspLeaf, int skyCap);
 
-#endif /* LIBDENG_REFRESH_WORLD_H */
+#endif /* LIBDENG_MAP_WORLD_H */

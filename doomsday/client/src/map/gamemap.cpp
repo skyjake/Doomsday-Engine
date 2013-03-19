@@ -92,21 +92,31 @@ void GameMap::updateBounds()
     }
 }
 
-SurfaceSet &GameMap::scrollingSurfaces()
-{
-    return scrollingSurfaces_;
-}
-
 #ifdef __CLIENT__
 
 SurfaceSet &GameMap::decoratedSurfaces()
 {
-    return decoratedSurfaces_;
+    return _decoratedSurfaces;
 }
 
 SurfaceSet &GameMap::glowingSurfaces()
 {
-    return glowingSurfaces_;
+    return _glowingSurfaces;
+}
+
+void GameMap::addSurfaceToLists(Surface &suf)
+{
+    if(!suf.hasMaterial()) return;
+
+    if(suf.material().hasGlow())
+    {
+        _glowingSurfaces.insert(&suf);
+    }
+
+    if(suf.material().isDecorated())
+    {
+        _decoratedSurfaces.insert(&suf);
+    }
 }
 
 #endif // __CLIENT__
@@ -477,12 +487,6 @@ Generators* GameMap_Generators(GameMap* map)
         map->generators = Generators_New(map->sectorCount());
     }
     return map->generators;
-}
-
-PlaneSet* GameMap_TrackedPlanes(GameMap* map)
-{
-    DENG2_ASSERT(map);
-    return &map->trackedPlanes;
 }
 
 void GameMap_InitPolyobjs(GameMap* map)

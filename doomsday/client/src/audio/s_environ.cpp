@@ -33,11 +33,22 @@
 
 #include <de/Log>
 
+// Used for vertex sector owners, side line owners and reverb BSP leafs.
+typedef struct ownernode_s {
+    void *data;
+    struct ownernode_s *next;
+} ownernode_t;
+
 typedef struct {
-    const char  name[9];    // Material type name.
-    int         volumeMul;
-    int         decayMul;
-    int         dampingMul;
+    ownernode_t *head;
+    uint count;
+} ownerlist_t;
+
+typedef struct {
+    char const name[9]; ///< Environment type name.
+    int volumeMul;
+    int decayMul;
+    int dampingMul;
 } audioenvinfo_t;
 
 static audioenvinfo_t envInfo[NUM_AUDIO_ENVIRONMENT_CLASSES] = {
@@ -117,7 +128,7 @@ static ownernode_t* newOwnerNode(void)
     return node;
 }
 
-static void setBspLeafSectorOwner(ownerlist_t* ownerList, BspLeaf* bspLeaf)
+static void setBspLeafSectorOwner(ownerlist_t *ownerList, BspLeaf *bspLeaf)
 {
     DENG2_ASSERT(ownerList);
     if(!bspLeaf) return;

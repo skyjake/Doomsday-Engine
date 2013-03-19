@@ -19,7 +19,7 @@
 
 #include "de_base.h"
 #include "de_network.h" // playback / clientPaused
-#include "map/r_world.h" // R_UpdateMapSurfacesOnMaterialChange
+#include "map/gamemap.h" // theMap - remove me
 #include "render/r_main.h" // frameCount, frameTimePos
 #include <de/Log>
 #include <de/mathutil.h>
@@ -112,7 +112,11 @@ DENG2_PIMPL(Material::Animation)
             if(context == MapSurfaceContext)
             {
                 // Surfaces using this material may need to be updated.
-                R_UpdateMapSurfacesOnMaterialChange(&material);
+                if(theMap)
+                {
+                    /// @todo Replace with a de::Observers-based mechanism.
+                    theMap->updateSurfacesOnMaterialChange(material);
+                }
             }
         }
         else

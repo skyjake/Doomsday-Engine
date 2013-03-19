@@ -1,7 +1,7 @@
 /** @file r_world.cpp World Setup/Refresh.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -57,53 +57,10 @@ boolean ddMapSetup;
 /// Notified when the current map changes.
 MapChangeAudience audienceForMapChange;
 
-/**
- * $smoothmatoffset: Roll the surface material offset tracker buffers.
- */
-void R_UpdateSurfaceScroll()
+void GameMap::lerpScrollingSurfaces(bool resetNextViewer)
 {
-    if(!theMap) return;
-
-    foreach(Surface *surface, theMap->scrollingSurfaces())
-    {
-        // X Offset
-        surface->_oldOffset[0][0] = surface->_oldOffset[0][1];
-        surface->_oldOffset[0][1] = surface->_offset[0];
-
-        if(surface->_oldOffset[0][0] != surface->_oldOffset[0][1])
-        {
-            if(de::abs(surface->_oldOffset[0][0] - surface->_oldOffset[0][1]) >=
-               MAX_SMOOTH_MATERIAL_MOVE)
-            {
-                // Too fast: make an instantaneous jump.
-                surface->_oldOffset[0][0] = surface->_oldOffset[0][1];
-            }
-        }
-
-        // Y Offset
-        surface->_oldOffset[1][0] = surface->_oldOffset[1][1];
-        surface->_oldOffset[1][1] = surface->_offset[1];
-        if(surface->_oldOffset[1][0] != surface->_oldOffset[1][1])
-        {
-            if(de::abs(surface->_oldOffset[1][0] - surface->_oldOffset[1][1]) >=
-               MAX_SMOOTH_MATERIAL_MOVE)
-            {
-                // Too fast: make an instantaneous jump.
-                surface->_oldOffset[1][0] = surface->_oldOffset[1][1];
-            }
-        }
-    }
-}
-
-/**
- * $smoothmatoffset: interpolate the visual offset.
- */
-void R_InterpolateSurfaceScroll(boolean resetNextViewer)
-{
-    if(!theMap) return;
-    SurfaceSet &surfaces = theMap->scrollingSurfaces();
-    SurfaceSet::iterator it = surfaces.begin();
-    while(it != surfaces.end())
+    SurfaceSet::iterator it = _scrollingSurfaces.begin();
+    while(it != _scrollingSurfaces.end())
     {
         Surface &suf = **it;
 
@@ -150,7 +107,7 @@ void R_InterpolateSurfaceScroll(boolean resetNextViewer)
             // Has this material reached its destination?
             if(suf._visOffset[0] == suf._offset[0] && suf._visOffset[1] == suf._offset[1])
             {
-                it = surfaces.erase(it);
+                it = _scrollingSurfaces.erase(it);
             }
             else
             {
@@ -160,63 +117,63 @@ void R_InterpolateSurfaceScroll(boolean resetNextViewer)
     }
 }
 
-void R_AddTrackedPlane(PlaneSet *plist, Plane *pln)
+void GameMap::updateScrollingSurfaces()
 {
-    if(!plist || !pln) return;
-
-    plist->insert(pln);
-}
-
-boolean R_RemoveTrackedPlane(PlaneSet *plist, Plane *pln)
-{
-    if(!plist || !pln) return false;
-
-    return plist->remove(pln);
-}
-
-/**
- * $smoothplane: Roll the height tracker buffers.
- */
-void R_UpdateTrackedPlanes()
-{
-    if(!theMap) return;
-
-    PlaneSet* plist = GameMap_TrackedPlanes(theMap);
-    if(!plist) return;
-
-    foreach(Plane *plane, *plist)
+    foreach(Surface *surface, _scrollingSurfaces)
     {
-        plane->updateHeightTracking();
+        // X Offset
+        surface->_oldOffset[0][0] = surface->_oldOffset[0][1];
+        surface->_oldOffset[0][1] = surface->_offset[0];
+
+        if(surface->_oldOffset[0][0] != surface->_oldOffset[0][1])
+        {
+            if(de::abs(surface->_oldOffset[0][0] - surface->_oldOffset[0][1]) >=
+               MAX_SMOOTH_MATERIAL_MOVE)
+            {
+                // Too fast: make an instantaneous jump.
+                surface->_oldOffset[0][0] = surface->_oldOffset[0][1];
+            }
+        }
+
+        // Y Offset
+        surface->_oldOffset[1][0] = surface->_oldOffset[1][1];
+        surface->_oldOffset[1][1] = surface->_offset[1];
+        if(surface->_oldOffset[1][0] != surface->_oldOffset[1][1])
+        {
+            if(de::abs(surface->_oldOffset[1][0] - surface->_oldOffset[1][1]) >=
+               MAX_SMOOTH_MATERIAL_MOVE)
+            {
+                // Too fast: make an instantaneous jump.
+                surface->_oldOffset[1][0] = surface->_oldOffset[1][1];
+            }
+        }
     }
 }
 
-/**
- * $smoothplane: interpolate the visual offset.
- */
-void R_InterpolateTrackedPlanes(boolean resetNextViewer)
+SurfaceSet &GameMap::scrollingSurfaces()
 {
-    if(!theMap) return;
+    return _scrollingSurfaces;
+}
 
-    PlaneSet* plist = GameMap_TrackedPlanes(theMap);
-    if(!plist) return;
-
+void GameMap::lerpTrackedPlanes(bool resetNextViewer)
+{
     if(resetNextViewer)
     {
         // Reset the plane height trackers.
-        foreach(Plane *plane, *plist)
+        foreach(Plane *plane, _trackedPlanes)
         {
             plane->resetVisHeight();
         }
 
         // Tracked movement is now all done.
-        plist->clear();
+        _trackedPlanes.clear();
     }
     // While the game is paused there is no need to calculate any
     // visual plane offsets $smoothplane.
     else //if(!clientPaused)
     {
         // Set the visible offsets.
-        QMutableSetIterator<Plane *> iter(*plist);
+        QMutableSetIterator<Plane *> iter(_trackedPlanes);
         while(iter.hasNext())
         {
             Plane *plane = iter.next();
@@ -232,15 +189,27 @@ void R_InterpolateTrackedPlanes(boolean resetNextViewer)
     }
 }
 
-void R_UpdateMapSurfacesOnMaterialChange(Material *material)
+void GameMap::updateTrackedPlanes()
 {
-    if(!material || ddMapSetup) return;
-    if(!theMap) return;
+    foreach(Plane *plane, _trackedPlanes)
+    {
+        plane->updateHeightTracking();
+    }
+}
+
+PlaneSet &GameMap::trackedPlanes()
+{
+    return _trackedPlanes;
+}
+
+void GameMap::updateSurfacesOnMaterialChange(Material &material)
+{
+    if(ddMapSetup) return;
 
 #ifdef __CLIENT__
-    foreach(Surface *surface, theMap->decoratedSurfaces())
+    foreach(Surface *surface, _decoratedSurfaces)
     {
-        if(material == surface->materialPtr())
+        if(&material == surface->materialPtr())
         {
             surface->markAsNeedingDecorationUpdate();
         }
@@ -387,7 +356,7 @@ void R_OrderVertices(LineDef *line, Sector const *sector, Vertex *verts[2])
     verts[1] = &line->vertex(edge^1);
 }
 
-boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
+boolean R_FindBottomTop(SideDefSection section, int lineFlags,
     Sector const *frontSec, Sector const *backSec, SideDef const *frontDef,
     SideDef const *backDef,
     coord_t *low, coord_t *hi, pvec2f_t matOffset)
@@ -534,14 +503,6 @@ boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
     }
 
     return /*is_visible=*/ *hi > *low;
-}
-
-boolean R_FindBottomTop(SideDefSection section, int lineFlags, Sector const *frontSec,
-    Sector const *backSec, SideDef const *frontDef, SideDef const *backDef,
-    coord_t *low, coord_t *hi)
-{
-    return R_FindBottomTop2(section, lineFlags, frontSec, backSec, frontDef, backDef,
-                            low, hi, 0/*offset not needed*/);
 }
 
 coord_t R_OpenRange(Sector const *frontSec, Sector const *backSec, coord_t *retBottom, coord_t *retTop)
@@ -834,53 +795,33 @@ void R_MapInitSurfaces(boolean forceUpdate)
 }
 
 #ifdef __CLIENT__
-static void addToSurfaceSets(Surface *suf, Material *material)
+void GameMap::buildSurfaceLists()
 {
-    if(!suf || !material) return;
+    _decoratedSurfaces.clear();
+    _glowingSurfaces.clear();
 
-    if(material->hasGlow())
+    for(int i = 0; i < sideDefs.count(); ++i)
     {
-        theMap->glowingSurfaces().insert(suf);
+        SideDef &sideDef = sideDefs[i];
+        addSurfaceToLists(sideDef.middle());
+        addSurfaceToLists(sideDef.top());
+        addSurfaceToLists(sideDef.bottom());
     }
 
-    if(material->isDecorated())
+    for(int i = 0; i < sectors.count(); ++i)
     {
-        theMap->decoratedSurfaces().insert(suf);
-    }
-}
-#endif // __CLIENT__
-
-void R_MapInitSurfaceLists()
-{
-#ifdef __CLIENT__
-
-    theMap->decoratedSurfaces().clear();
-    theMap->glowingSurfaces().clear();
-
-    for(uint i = 0; i < NUM_SIDEDEFS; ++i)
-    {
-        SideDef *sideDef = SIDE_PTR(i);
-
-        addToSurfaceSets(&sideDef->middle(), sideDef->middle().materialPtr());
-        addToSurfaceSets(&sideDef->top(),    sideDef->top().materialPtr());
-        addToSurfaceSets(&sideDef->bottom(), sideDef->bottom().materialPtr());
-    }
-
-    for(uint i = 0; i < NUM_SECTORS; ++i)
-    {
-        Sector *sec = SECTOR_PTR(i);
+        Sector &sector = sectors[i];
 
         // Skip sectors with no lines as their planes will never be drawn.
-        if(!sec->lineCount()) continue;
+        if(!sector.lineCount()) continue;
 
-        foreach(Plane *plane, sec->planes())
+        foreach(Plane *plane, sector.planes())
         {
-            addToSurfaceSets(&plane->surface(), plane->surface().materialPtr());
+            addSurfaceToLists(plane->surface());
         }
     }
-
-#endif // __CLIENT__
 }
+#endif // __CLIENT__
 
 #undef R_SetupMap
 DENG_EXTERN_C void R_SetupMap(int mode, int flags)
@@ -935,9 +876,10 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
         P_MapSpawnPlaneParticleGens();
 
         R_MapInitSurfaces(true);
-        R_MapInitSurfaceLists();
 
 #ifdef __CLIENT__
+        theMap->buildSurfaceLists();
+
         float startTime = Timer_Seconds();
         Rend_CacheForMap();
         App_Materials().processCacheQueue();
@@ -1382,36 +1324,6 @@ boolean R_UpdateSector(Sector *sec, boolean forceUpdate)
     }
 
     return planeChanged;
-}
-
-boolean R_UpdateLinedef(LineDef *line, boolean forceUpdate)
-{
-    // Stub.
-    DENG_UNUSED(line); DENG_UNUSED(forceUpdate);
-    return false; // Not changed.
-}
-
-boolean R_UpdateSidedef(SideDef *sideDef, boolean forceUpdate)
-{
-    // Stub.
-    DENG_UNUSED(sideDef); DENG_UNUSED(forceUpdate);
-    return false; // Not changed.
-}
-
-boolean R_UpdateSurface(Surface *suf, boolean forceUpdate)
-{
-    // Stub.
-    DENG_UNUSED(suf); DENG_UNUSED(forceUpdate);
-    return false; // Not changed.
-}
-
-/**
- * All links will be updated every frame (sectorheights may change at
- * any time without notice).
- */
-void R_UpdatePlanes()
-{
-    // Nothing to do.
 }
 
 /**
