@@ -39,6 +39,10 @@
 #include <QLabel>
 #include <QCryptographicHash>
 
+#ifndef MACOSX
+#  define MENU_IN_LINK_WINDOW
+#endif
+
 using namespace de;
 using namespace de::shell;
 
@@ -66,6 +70,9 @@ DENG2_PIMPL(LinkWindow)
     QLabel *timeCounter;
     QLabel *currentHost;
     QAction *stopAction;
+#ifdef MENU_IN_LINK_WINDOW
+    QAction *disconnectAction;
+#endif
 
     Instance(Public &i)
         : Base(i),
@@ -133,6 +140,9 @@ DENG2_PIMPL(LinkWindow)
         root->setOverlaidMessage(tr("Disconnected"));
         self.statusBar()->clearMessage();
         stopAction->setDisabled(true);
+#ifdef MENU_IN_LINK_WINDOW
+        disconnectAction->setDisabled(true);
+#endif
 
         status->linkDisconnected();
         updateCurrentHost();
@@ -154,6 +164,19 @@ DENG2_PIMPL(LinkWindow)
         tools->addWidget(tb);
         return tb;
     }
+
+    void updateStatusBarWithGameState(de::Record &rec)
+    {
+        String gameMode = rec["mode"].value().asText();
+        String mapId    = rec["mapId"].value().asText();
+        String rules    = rec["rules"].value().asText();
+
+        String msg = gameMode;
+        if(!mapId.isEmpty()) msg += " " + mapId;
+        if(!rules.isEmpty()) msg += " (" + rules + ")";
+
+        self.statusBar()->showMessage(msg);
+    }
 };
 
 LinkWindow::LinkWindow(QWidget *parent)
@@ -169,20 +192,21 @@ LinkWindow::LinkWindow(QWidget *parent)
     d->stopAction = new QAction(tr("S&top"), this);
     connect(d->stopAction, SIGNAL(triggered()), app, SLOT(stopServer()));
 
-#ifndef MACOSX
+#ifdef MENU_IN_LINK_WINDOW
     QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
     fileMenu->addAction(tr("&Settings..."), app, SLOT(showPreferences()));
-    fileMenu->addAction(tr("&Quit"), app, SLOT(quit()), QKeySequence(tr("Ctrl+Q")));
+    fileMenu->addAction(tr("E&xit"), app, SLOT(quit()), QKeySequence(tr("Ctrl+Q")));
 
     // Menus are window-specific on non-Mac platforms.
     QMenu *menu = menuBar()->addMenu(tr("&Connection"));
     menu->addAction(tr("C&onnect..."), app, SLOT(connectToServer()),
                     QKeySequence(tr("Ctrl+O", "Connection|Connect")));
-    menu->addAction(tr("&Disconnect"), this, SLOT(closeConnection()),
-                    QKeySequence(tr("Ctrl+D", "Connection|Disconnect")));
+    disconnectAction = menu->addAction(tr("&Disconnect"), this, SLOT(closeConnection()),
+                                       QKeySequence(tr("Ctrl+D", "Connection|Disconnect")));
+    disconnectAction->setDisabled(true);
 
     QMenu *svMenu = menuBar()->addMenu(tr("&Server"));
-    svMenu->addAction(tr("&Start Local Server..."), app, SLOT(startLocalServer()),
+    svMenu->addAction(tr("Start &New Local Server..."), app, SLOT(startLocalServer()),
                       QKeySequence(tr("Ctrl+N", "Server|Start Local")));
     svMenu->addAction(d->stopAction);
     svMenu->addSeparator();
@@ -427,6 +451,8 @@ void LinkWindow::handleIncomingPackets()
                     rec["rules"].value().asText(),
                     rec["mapId"].value().asText(),
                     rec["mapTitle"].value().asText());
+
+            d->updateStatusBarWithGameState(rec);
             break; }
 
         case shell::Protocol::MapOutline:
@@ -471,6 +497,9 @@ void LinkWindow::connected()
     statusBar()->clearMessage();
     updateWhenConnected();
     d->stopAction->setEnabled(true);
+#ifdef MENU_IN_LINK_WINDOW
+    d->disconnectAction->setEnabled(true);
+#endif
 
     emit linkOpened(this);
 }

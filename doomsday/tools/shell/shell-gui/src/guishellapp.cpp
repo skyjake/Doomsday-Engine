@@ -277,6 +277,11 @@ void GuiShellApp::showHelp()
     QDesktopServices::openUrl(QUrl(tr("http://dengine.net/dew/index.php?title=Shell_Help")));
 }
 
+void GuiShellApp::openWebAddress(QString url)
+{
+    QDesktopServices::openUrl(QUrl(url));
+}
+
 void GuiShellApp::showPreferences()
 {
     if(!d->prefs)
