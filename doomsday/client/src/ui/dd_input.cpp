@@ -711,12 +711,16 @@ void I_TrackInput(ddevent_t *ev)
             if(ev->toggle.state == ETOG_DOWN)
             {
                 altDown = true;
+#ifdef WIN32
                 DEBUG_Message(("I_TrackInput: Alt down\n"));
+#endif
             }
             else if(ev->toggle.state == ETOG_UP)
             {
                 altDown = false;
+#ifdef WIN32
                 DEBUG_Message(("I_TrackInput: Alt up\n"));
+#endif
             }
         }
     }
