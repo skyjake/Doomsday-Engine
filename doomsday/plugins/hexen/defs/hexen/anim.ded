@@ -137,3 +137,10 @@ Group
   Texture { ID = "GLASS05"; };
   Texture { ID = "GLASS07"; };
 }
+
+Group
+{
+  Flags = precache;
+  Texture { ID = "X_FAC01"; };
+  Texture { ID = "X_FAC09"; };
+}
