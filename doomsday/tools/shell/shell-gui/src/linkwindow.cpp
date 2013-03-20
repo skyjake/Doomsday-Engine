@@ -586,6 +586,7 @@ void LinkWindow::updateMaxScroll(int maximum)
 {
     d->logScrollBar->setMaximum(maximum);
     d->logScrollBar->setEnabled(maximum > 0);
+    d->logScrollBar->setPageStep(d->log->scrollPageSize());
 
     d->logScrollBar->setValue(d->log->maximumScroll() - d->log->scrollPosition());
 }

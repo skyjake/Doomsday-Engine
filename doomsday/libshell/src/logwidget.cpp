@@ -197,6 +197,11 @@ int LogWidget::scrollPosition() const
     return d->visibleOffset;
 }
 
+int LogWidget::scrollPageSize() const
+{
+    return de::max(1, de::floor(rule().height().value()) - 1);
+}
+
 int LogWidget::maximumScroll() const
 {
     return d->lastMaxScroll;
@@ -305,15 +310,17 @@ bool LogWidget::handleEvent(Event const &event)
 
     KeyEvent const &ev = static_cast<KeyEvent const &>(event);
 
+    int pageSize = scrollPageSize();
+
     switch(ev.key())
     {
     case Qt::Key_PageUp:
-        d->setVisibleOffset(d->visibleOffset + 10);
+        d->setVisibleOffset(d->visibleOffset + pageSize);
         redraw();
         return true;
 
     case Qt::Key_PageDown:
-        d->setVisibleOffset(de::max(0, d->visibleOffset - 10));
+        d->setVisibleOffset(de::max(0, d->visibleOffset - pageSize));
         redraw();
         return true;
 
