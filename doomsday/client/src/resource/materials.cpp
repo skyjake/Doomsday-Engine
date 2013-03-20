@@ -171,7 +171,7 @@ DENG2_PIMPL(Materials)
     {
         static MaterialVariantSpec tpl;
 
-        texturevariantusagecontext_t primaryContext;
+        texturevariantusagecontext_t primaryContext = TC_UNKNOWN;
         switch(contextId)
         {
         case UiContext:         primaryContext = TC_UI;                 break;
@@ -181,7 +181,7 @@ DENG2_PIMPL(Materials)
         case PSpriteContext:    primaryContext = TC_PSPRITE_DIFFUSE;    break;
         case SkySphereContext:  primaryContext = TC_SKYSPHERE_DIFFUSE;  break;
 
-        default: DENG2_ASSERT(0);
+        default: DENG2_ASSERT(false);
         }
 
         texturevariantspecification_t &primarySpec =

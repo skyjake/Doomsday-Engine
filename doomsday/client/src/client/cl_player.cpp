@@ -369,7 +369,6 @@ void ClPlayer_ReadDelta2(boolean skip)
     ddplayer_t         *ddpl;
     ddpsprite_t        *psp;
     unsigned short num, newId;
-    short               junk;
 
     // The first byte consists of a player number and some flags.
     num = Reader_ReadByte(msgReader);
@@ -401,14 +400,14 @@ void ClPlayer_ReadDelta2(boolean skip)
         {
             // We are now changing the player's mobj.
             mobj_t* clmo = 0;
-            clmoinfo_t* info = 0;
+            //clmoinfo_t* info = 0;
             boolean justCreated = false;
 
             s->clMobjId = newId;
 
             // Find the new mobj.
             clmo = ClMobj_Find(s->clMobjId);
-            info = ClMobj_GetInfo(clmo);
+            //info = ClMobj_GetInfo(clmo);
             if(!clmo)
             {
 #ifdef _DEBUG
@@ -418,7 +417,7 @@ void ClPlayer_ReadDelta2(boolean skip)
                 // This mobj hasn't yet been sent to us.
                 // We should be receiving the rest of the info very shortly.
                 clmo = ClMobj_Create(s->clMobjId);
-                info = ClMobj_GetInfo(clmo);
+                //info = ClMobj_GetInfo(clmo);
                 /*
                 if(num == consolePlayer)
                 {
@@ -485,8 +484,10 @@ void ClPlayer_ReadDelta2(boolean skip)
     if(df & PDF_SIDEMOVE)
         s->sideMove = (char) Reader_ReadByte(msgReader) * 2048;
     if(df & PDF_ANGLE)
+    {
         //s->angle = Reader_ReadByte(msgReader) << 24;
-        junk = Reader_ReadByte(msgReader);
+        DENG_UNUSED(Reader_ReadByte(msgReader));
+    }
     if(df & PDF_TURNDELTA)
     {
         s->turnDelta = ((char) Reader_ReadByte(msgReader) << 24) / 16;

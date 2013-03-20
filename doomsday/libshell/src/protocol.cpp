@@ -320,6 +320,7 @@ static RecordPacket const &asRecordPacket(Packet const &packet, Protocol::Packet
     RecordPacket const *rec = dynamic_cast<RecordPacket const *>(&packet);
     DENG2_ASSERT(rec != 0);
     DENG2_ASSERT(Protocol::recognize(&packet) == type);
+    DENG2_UNUSED(type);
     return *rec;
 }
 
