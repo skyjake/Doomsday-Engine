@@ -1084,9 +1084,6 @@ end_read:
 
     // Any hooks?
     DD_CallHooks(HOOK_FINALE_SCRIPT_BEGIN, fi->_id, 0);
-
-    // Run a single tic so that the script can be drawn.
-    FinaleInterpreter_RunTic(fi);
     }
 }
 
@@ -1506,7 +1503,14 @@ DEFFC(If)
         p.token = token;
         p.returnVal = 0;
         if(DD_CallHooks(HOOK_FINALE_EVAL_IF, fi->_id, (void*) &p))
+        {
             val = p.returnVal;
+            LOG_DEBUG("HOOK_FINALE_EVAL_IF: %s => %i") << token << val;
+        }
+        else
+        {
+            LOG_DEBUG("HOOK_FINALE_EVAL_IF: no hook (for %s)") << token;
+        }
     }
     else
     {

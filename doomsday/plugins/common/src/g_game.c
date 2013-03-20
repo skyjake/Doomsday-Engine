@@ -2364,7 +2364,8 @@ void G_LeaveMap(uint newMap, uint _entryPoint, boolean _secretExit)
 
 #if __JHEXEN__
     if((gameMode == hexen_betademo || gameMode == hexen_demo) && newMap != DDMAXINT && newMap > 3)
-    {   // Not possible in the 4-map demo.
+    {
+        // Not possible in the 4-map demo.
         P_SetMessage(&players[CONSOLEPLAYER], 0, "PORTAL INACTIVE -- DEMO");
         return;
     }
@@ -3593,12 +3594,16 @@ int G_DebriefingEnabled(uint episode, uint map, ddfinale_t* fin)
     // If we're already in the INFINE state, don't start a finale.
     if(briefDisabled)
         return false;
+
 #if __JHEXEN__
     if(cfg.overrideHubMsg && G_GameState() == GS_MAP &&
        !(nextMap == DDMAXINT && nextMapEntryPoint == DDMAXINT) &&
        P_GetMapCluster(map) != P_GetMapCluster(nextMap))
+    {
         return false;
+    }
 #endif
+
     if(G_GameState() == GS_INFINE || IS_CLIENT || Get(DD_PLAYBACK))
         return false;
 
