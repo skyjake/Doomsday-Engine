@@ -65,6 +65,9 @@ void Con_TransitionBegin(void);
 /// @return  @c true if a busy mode transition animation is currently in progress.
 boolean Con_TransitionInProgress(void);
 
+bool Con_TransitionTickRun(void);
+void Con_SetTransitionTickRun(bool ran);
+
 void Con_TransitionTicker(timespan_t ticLength);
 void Con_DrawTransition(void);
 

@@ -481,7 +481,9 @@ int rTransition = (int) TS_CROSSFADE; ///< cvar Default transition style.
 int rTransitionTics = 28; ///< cvar Default transition duration (in tics).
 
 typedef struct {
-    boolean inProgress; /// @c true= a transition is presently being animated.
+    bool inProgress; /// @c true= a transition is presently being animated.
+    bool ranTick; /** A single tic is run after the transition starts, but
+                      then time pauses until the transition is over. */
     transitionstyle_t style; /// Style of transition (cross-fade, wipe, etc...).
     uint startTime; /// Time at the moment the transition began (in 35hz tics).
     uint tics; /// Time duration of the animation.
@@ -508,6 +510,7 @@ void Con_TransitionConfigure(void)
         seedDoomWipeSine();
     }
     transition.inProgress = true;
+    transition.ranTick = false;
 }
 
 void Con_TransitionBegin(void)
@@ -519,6 +522,17 @@ void Con_TransitionBegin(void)
 boolean Con_TransitionInProgress(void)
 {
     return transition.inProgress;
+}
+
+bool Con_TransitionTickRun(void)
+{
+    return transition.ranTick;
+}
+
+void Con_SetTransitionTickRun(bool ran)
+{
+    if(ran != transition.ranTick) LOG_DEBUG("Transition tick run: %b") << ran;
+    transition.ranTick = ran;
 }
 
 static void Con_EndTransition(void)

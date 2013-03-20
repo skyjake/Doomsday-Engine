@@ -120,6 +120,12 @@ boolean DD_IsFrameTimeAdvancing(void)
 #ifdef __CLIENT__
     if(Con_TransitionInProgress())
     {
+        // One tick is allowed after the beginning of the transition
+        // so that everything can be rendered properly.
+        if(!Con_TransitionTickRun())
+        {
+            return true;
+        }
         return false;
     }
 #endif
@@ -128,6 +134,17 @@ boolean DD_IsFrameTimeAdvancing(void)
 
 void DD_CheckSharpTick(timespan_t time)
 {
+#ifdef __CLIENT__
+    if(Con_TransitionInProgress())
+    {
+        // During a transition time is frozen apart from the special single
+        // tick that occurs in the beginning of the transition. This special
+        // tick is considered sharp so that InFine and the game can use it.
+        tickIsSharp = true;
+        return;
+    }
+#endif
+
     // Sharp ticks are the ones that occur 35 per second. The rest are
     // interpolated (smoothed) somewhere in between.
     tickIsSharp = false;
@@ -159,6 +176,11 @@ static void baseTicker(timespan_t time)
     if(DD_IsFrameTimeAdvancing())
     {
 #ifdef __CLIENT__
+        if(Con_TransitionInProgress())
+        {
+            LOG_DEBUG("Special transition state start tick is being run now.");
+        }
+
         // Demo ticker. Does stuff like smoothing of view angles.
         Demo_Ticker(time);
 #endif
@@ -400,31 +422,47 @@ void Loop_RunTics(void)
         ticLength = MIN_OF(MAX_FRAME_TIME, elapsedTime);
         elapsedTime -= ticLength;
 
-        // Will this be a sharp tick?
-        DD_CheckSharpTick(ticLength);
-
-#ifdef __CLIENT__
-        // Process input events.
-        DD_ProcessEvents(ticLength);
-        if(!processSharpEventsAfterTickers)
-        {
-            // We are allowed to process sharp events before tickers.
-            DD_ProcessSharpEvents(ticLength);
-        }
-#endif
-
-        // Call all the tickers.
-        baseTicker(ticLength);
-
-#ifdef __CLIENT__
-        if(processSharpEventsAfterTickers)
-        {
-            // This is done after tickers for compatibility with ye olde game logic.
-            DD_ProcessSharpEvents(ticLength);
-        }
-#endif
-
-        // Various global variables are used for counting time.
-        advanceTime(ticLength);
+        Loop_RunFractionalTic(ticLength);
     }
+}
+
+void Loop_RunFractionalTic(timespan_t ticLength)
+{
+#ifdef __CLIENT__
+    bool busyTransitionInProgress = Con_TransitionInProgress();
+#endif
+
+    // Will this be a sharp tick?
+    DD_CheckSharpTick(ticLength);
+
+#ifdef __CLIENT__
+    // Process input events.
+    DD_ProcessEvents(ticLength);
+    if(!processSharpEventsAfterTickers)
+    {
+        // We are allowed to process sharp events before tickers.
+        DD_ProcessSharpEvents(ticLength);
+    }
+#endif
+
+    // Call all the tickers.
+    baseTicker(ticLength);
+
+#ifdef __CLIENT__
+    if(processSharpEventsAfterTickers)
+    {
+        // This is done after tickers for compatibility with ye olde game logic.
+        DD_ProcessSharpEvents(ticLength);
+    }
+#endif
+
+    // Various global variables are used for counting time.
+    advanceTime(ticLength);
+
+#ifdef __CLIENT__
+    if(busyTransitionInProgress)
+    {
+        Con_SetTransitionTickRun(true);
+    }
+#endif
 }

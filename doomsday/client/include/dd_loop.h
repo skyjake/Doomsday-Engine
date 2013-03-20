@@ -44,6 +44,8 @@ void DD_RegisterLoop(void);
  */
 void Loop_RunTics(void);
 
+void Loop_RunFractionalTic(timespan_t ticLength);
+
 /**
  * Waits until it's time to show the drawn frame on screen. The frame must be
  * ready before this is called. Ideally the updates would appear at a fixed
