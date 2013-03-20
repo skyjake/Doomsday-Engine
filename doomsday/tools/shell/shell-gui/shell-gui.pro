@@ -30,6 +30,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 HEADERS += \
     src/aboutdialog.h \
+    src/consolepage.h \
     src/folderselection.h \
     src/guishellapp.h \
     src/linkwindow.h \
@@ -43,6 +44,7 @@ HEADERS += \
 
 SOURCES += \
     src/aboutdialog.cpp \
+    src/consolepage.cpp \
     src/folderselection.cpp \
     src/guishellapp.cpp \
     src/linkwindow.cpp \

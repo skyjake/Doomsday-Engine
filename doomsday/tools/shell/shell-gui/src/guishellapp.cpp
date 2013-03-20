@@ -107,8 +107,6 @@ GuiShellApp::GuiShellApp(int &argc, char **argv)
     newOrReusedConnectionWindow();
 }
 
-
-
 LinkWindow *GuiShellApp::newOrReusedConnectionWindow()
 {
     LinkWindow *found = 0;
