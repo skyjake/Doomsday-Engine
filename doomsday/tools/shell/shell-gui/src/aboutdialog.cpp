@@ -1,4 +1,5 @@
 #include "aboutdialog.h"
+#include "guishellapp.h"
 #include <QLabel>
 #include <QDialogButtonBox>
 #include <QVBoxLayout>
@@ -29,7 +30,9 @@ AboutDialog::AboutDialog(QWidget *parent)
                     "The Shell is a utility for controlling and monitoring "
                     "Doomsday servers.")
                  .arg(SHELL_VERSION)
-                 .arg("2013 Deng Team"));
+                 .arg("2013 <a href=\"http://dengine.net/\">Deng Team</a>"));
+
+    connect(txt, SIGNAL(linkActivated(QString)), &GuiShellApp::app(), SLOT(openWebAddress(QString)));
 
     QDialogButtonBox *bbox = new QDialogButtonBox;
     box->addWidget(bbox);
