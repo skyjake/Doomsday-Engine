@@ -1514,50 +1514,53 @@ void P_PlayerThinkPowers(player_t* player)
 
     // Colormaps
 #if __JHERETIC__ || __JHEXEN__
-    if(player->powers[PT_INFRARED])
+    if(!IS_CLIENT)
     {
-        if(player->powers[PT_INFRARED] <= BLINKTHRESHOLD)
+        if(player->powers[PT_INFRARED])
         {
-            if(player->powers[PT_INFRARED] & 8)
+            if(player->powers[PT_INFRARED] <= BLINKTHRESHOLD)
             {
-                player->plr->fixedColorMap = 0;
-            }
-            else
-            {
-                player->plr->fixedColorMap = 1;
-            }
-        }
-        else if(!(mapTime & 16))  /* && player == &players[CONSOLEPLAYER]) */
-        {
-            ddplayer_t *dp = player->plr;
-            int     playerNumber = player - players;
-
-            if(newTorch[playerNumber])
-            {
-                if(dp->fixedColorMap + newTorchDelta[playerNumber] > 7 ||
-                   dp->fixedColorMap + newTorchDelta[playerNumber] < 1 ||
-                   newTorch[playerNumber] == dp->fixedColorMap)
+                if(player->powers[PT_INFRARED] & 8)
                 {
-                    newTorch[playerNumber] = 0;
+                    player->plr->fixedColorMap = 0;
                 }
                 else
                 {
-                    dp->fixedColorMap += newTorchDelta[playerNumber];
+                    player->plr->fixedColorMap = 1;
                 }
             }
-            else
+            else if(!(mapTime & 16))  /* && player == &players[CONSOLEPLAYER]) */
             {
-                newTorch[playerNumber] = (M_Random() & 7) + 1;
-                newTorchDelta[playerNumber] =
-                    (newTorch[playerNumber] ==
-                     dp->fixedColorMap) ? 0 : ((newTorch[playerNumber] >
-                                                dp->fixedColorMap) ? 1 : -1);
+                ddplayer_t *dp = player->plr;
+                int     playerNumber = player - players;
+
+                if(newTorch[playerNumber])
+                {
+                    if(dp->fixedColorMap + newTorchDelta[playerNumber] > 7 ||
+                       dp->fixedColorMap + newTorchDelta[playerNumber] < 1 ||
+                       newTorch[playerNumber] == dp->fixedColorMap)
+                    {
+                        newTorch[playerNumber] = 0;
+                    }
+                    else
+                    {
+                        dp->fixedColorMap += newTorchDelta[playerNumber];
+                    }
+                }
+                else
+                {
+                    newTorch[playerNumber] = (M_Random() & 7) + 1;
+                    newTorchDelta[playerNumber] =
+                        (newTorch[playerNumber] ==
+                         dp->fixedColorMap) ? 0 : ((newTorch[playerNumber] >
+                                                    dp->fixedColorMap) ? 1 : -1);
+                }
             }
         }
-    }
-    else
-    {
-        player->plr->fixedColorMap = 0;
+        else
+        {
+            player->plr->fixedColorMap = 0;
+        }
     }
 #endif
 
