@@ -1064,7 +1064,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     {
         if(Texture *tex = reinterpret_cast<Texture *>(mf->sub[number].shinySkin))
         {
-            shinyTexture = GL_PrepareTexture(*tex, *Rend_ModelShinyTextureSpec());
+            shinyTexture = tex->prepareVariant(*Rend_ModelShinyTextureSpec());
         }
         else
         {
@@ -1147,7 +1147,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
         skinTexture = 0;
         if(Texture *tex = reinterpret_cast<Texture *>(mdl->skins[useSkin].texture))
         {
-            skinTexture = GL_PrepareTexture(*tex, *Rend_ModelDiffuseTextureSpec(!mdl->allowTexComp));
+            skinTexture = tex->prepareVariant(*Rend_ModelDiffuseTextureSpec(!mdl->allowTexComp));
         }
     }
 

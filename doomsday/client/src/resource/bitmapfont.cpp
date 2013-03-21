@@ -546,8 +546,8 @@ void BitmapCompositeFont_Prepare(font_t *font)
         ch->geometry.size.height += font->_marginHeight * 2;
         ch->border = 0;
 
-        ch->tex = GL_PrepareTexture(App_Textures().scheme("Patches").findByUniqueId(patch).texture(),
-                                    BitmapCompositeFont_CharSpec());
+        ch->tex = App_Textures().scheme("Patches").findByUniqueId(patch)
+                      .texture().prepareVariant(BitmapCompositeFont_CharSpec());
         if(ch->tex && ch->tex->source() == TEXS_ORIGINAL)
         {
             // Upscale & Sharpen will have been applied.

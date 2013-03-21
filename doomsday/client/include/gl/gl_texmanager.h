@@ -170,14 +170,51 @@ boolean GL_UploadTextureGrayMipmap(int glFormat, int loadFormat, uint8_t const *
     int width, int height, float grayFactor);
 
 /**
+ * Methods of uploading GL data.
+ *
+ * @ingroup GL
+ */
+enum GLUploadMethod
+{
+    /// Upload the data immediately.
+    Immediate,
+
+    /// Defer the data upload until convenient.
+    Deferred
+};
+
+/**
+ * Returns the chosen method for uploading the given texture @a content.
+ */
+GLUploadMethod GL_ChooseUploadMethod(texturecontent_t const &content);
+
+/**
+ * Prepare the texture content @a c, using the given image in accordance with
+ * the supplied specification. The image data will be transformed in-place.
+ *
+ * @param c             Texture content to be completed.
+ * @param glTexName     GL name for the texture we intend to upload.
+ * @param image         Source image containing the pixel data to be prepared.
+ * @param spec          Specification describing any transformations which
+ *                      should be applied to the image.
+ *
+ * @param textureManifest  Manifest for the logical texture being prepared.
+ *                      (for informational purposes, i.e., logging)
+ */
+void GL_PrepareTextureContent(texturecontent_t &c, DGLuint glTexName,
+    image_t &image, texturevariantspecification_t const &spec,
+    de::TextureManifest const &textureManifest);
+
+/**
+ * @param method  GL upload method. By default the upload is deferred.
+ *
  * @note Can be rather time-consuming due to forced scaling operations and
  * the generation of mipmaps.
  */
-void GL_UploadTextureContent(texturecontent_t const &content);
+void GL_UploadTextureContent(texturecontent_t const &content,
+                             GLUploadMethod method = Deferred);
 
-uint8_t *GL_LoadImage(image_t &image, de::String nativePath);
 
-TexSource GL_LoadExtImage(image_t &image, char const *searchPath, gfxmode_t mode);
 
 GLint GL_MinFilterForVariantSpec(variantspecification_t const &spec);
 GLint GL_MagFilterForVariantSpec(variantspecification_t const &spec);
@@ -209,61 +246,6 @@ texturevariantspecification_t &GL_TextureVariantSpec(
 texturevariantspecification_t &GL_DetailTextureVariantSpecificationForContext(
     float contrast);
 
-/**
- * Output a human readable representation of TextureVariantSpecification to console.
- *
- * @param spec  Specification to echo.
- */
-void GL_PrintTextureVariantSpecification(texturevariantspecification_t const &spec);
-
-/// Result of a request to prepare a Texture::Variant
-typedef enum {
-    PTR_NOTFOUND = 0,       /// Failed. No suitable variant could be found/prepared.
-    PTR_FOUND,              /// Success. Reusing a cached resource.
-    PTR_UPLOADED_ORIGINAL,  /// Success. Prepared and cached using an original-game resource.
-    PTR_UPLOADED_EXTERNAL   /// Success. Prepared and cached using an external-replacement resource.
-} preparetextureresult_t;
-
-/**
- * Prepare variant @a texture for render.
- *
- * @note If a cache miss occurs texture content data may need to be uploaded
- * to GL to satisfy the variant specification. However the actual upload will
- * be deferred if possible. This has the side effect that although the variant
- * is considered "prepared", attempting to render using the associated texture
- * will result in "uninitialized" white texels being used instead.
- *
- * @param texture  Texture variant to be prepared.
- * @return  Logical result.
- */
-preparetextureresult_t GL_PrepareTexture(de::TextureVariant &texture);
-
-/**
- * Choose/create a variant of @a texture which fulfills @a spec and then
- * immediately prepare it for render.
- *
- * @note A convenient shorthand of the call tree:
- * <pre>
- *    GL_PrepareTexture( texture.chooseVariant( @a texture, @a spec, @c true ) )
- * </pre>
- *
- * @param texture   Base texture from which to derive a variant.
- * @param spec      Specification for the derivation of @a texture.
- * @param returnOutcome  If not @c NULL the logical result is written back here.
- *
- * @return  The prepared texture variant if successful; otherwise @c 0.
- *
- * @see de::Texture::chooseVariant()
- */
-inline de::TextureVariant *GL_PrepareTexture(de::Texture &texture,
-    texturevariantspecification_t &spec, preparetextureresult_t *returnOutcome = 0)
-{
-    de::TextureVariant *variant = texture.chooseVariant(de::Texture::MatchSpec, spec, true /*can create*/);
-    preparetextureresult_t result = GL_PrepareTexture(*variant);
-    if(returnOutcome) *returnOutcome = result;
-    return variant;
-}
-
 /*
  * Here follows miscellaneous routines currently awaiting refactoring into the
  * revised texture management APIs.
@@ -277,5 +259,15 @@ DGLuint GL_PrepareRawTexture(rawtex_t &rawTex);
 DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height, uint8_t const *pixels, int flags);
 DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height, uint8_t const *pixels, int flags,
                                 int grayMipmap, int minFilter, int magFilter, int anisoFilter, int wrapS, int wrapT);
+
+/// @todo Move into image_t
+uint8_t *GL_LoadImage(image_t &image, de::String nativePath);
+
+/// @todo Move into image_t
+TexSource GL_LoadExtImage(image_t &image, char const *searchPath, gfxmode_t mode);
+
+/// @todo Move into image_t
+TexSource GL_LoadSourceImage(image_t &image, de::Texture const &tex,
+    texturevariantspecification_t const &spec);
 
 #endif /* LIBDENG_GL_TEXMANAGER_H */

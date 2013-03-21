@@ -667,10 +667,10 @@ void Sys_GLPrintExtensions(void)
 #endif
 }
 
-boolean Sys_GLCheckError(void)
+boolean Sys_GLCheckError()
 {
-    if(novideo) return false;
-#ifdef _DEBUG
+#ifdef DENG_DEBUG
+    if(!novideo)
     {
         GLenum error = glGetError();
         if(error != GL_NO_ERROR)

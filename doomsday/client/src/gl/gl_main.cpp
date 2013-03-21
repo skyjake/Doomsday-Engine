@@ -771,12 +771,13 @@ void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
     }
 }
 
-void GL_BindTexture(Texture::Variant *tex)
+void GL_BindTexture(TextureVariant *vtexture)
 {
     if(BusyMode_InWorkerThread()) return;
 
-    // Ensure we've prepared this.
-    if(!tex || GL_PrepareTexture(*tex) == PTR_NOTFOUND)
+    // Ensure we have a prepared texture.
+    uint glTexName = vtexture? vtexture->prepare() : 0;
+    if(glTexName == 0)
     {
         GL_SetNoTexture();
         return;
@@ -785,11 +786,11 @@ void GL_BindTexture(Texture::Variant *tex)
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glBindTexture(GL_TEXTURE_2D, tex->glName());
+    glBindTexture(GL_TEXTURE_2D, glTexName);
     Sys_GLCheckError();
 
     // Apply dynamic adjustments to the GL texture state according to our spec.
-    texturevariantspecification_t const &spec = tex->spec();
+    texturevariantspecification_t const &spec = vtexture->spec();
     if(spec.type == TST_GENERAL)
     {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, TS_GENERAL(spec).wrapS);

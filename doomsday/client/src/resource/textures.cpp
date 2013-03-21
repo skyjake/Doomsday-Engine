@@ -436,19 +436,23 @@ D_CMD(InspectTexture)
                 foreach(de::TextureVariant *variant, texture.variants())
                 {
                     de::Vector2f coords;
-                    variant->coords(&coords.x, &coords.y);
+                    variant->glCoords(&coords.x, &coords.y);
 
-                    QString info = QString("Variant #%1:"
-                                           "\n  Source:%2 Masked:%3 GLName:%4 Coords:%5")
-                                       .arg(variantIdx)
-                                       .arg(variant->sourceDescription())
-                                       .arg(variant->isMasked()? "yes":"no")
-                                       .arg(variant->glName())
-                                       .arg(coords.asText());
+                    de::String textualVariantSpec = variant->spec().asText();
+
+                    de::String info =
+                        de::String("Variant #%1:"
+                                   "\n  Source:%2 Masked:%3 GLName:%4 Coords:%5"
+                                   "\n  Specification:")
+                            .arg(variantIdx)
+                            .arg(variant->sourceDescription())
+                            .arg(variant->isMasked()? "yes":"no")
+                            .arg(variant->glName())
+                            .arg(coords.asText())
+                            .arg(textualVariantSpec);
+
                     Con_Message(info.toUtf8().constData());
 
-                    Con_Printf("  Specification:");
-                    GL_PrintTextureVariantSpecification(variant->spec());
                     ++variantIdx;
                 }
             }

@@ -195,7 +195,8 @@ Texture::Variant *Texture::chooseVariant(ChooseVariantMethod method,
             break;
         }
     }
-# if _DEBUG
+
+#ifdef DENG_DEBUG
     // 07/04/2011 dj: The "fuzzy selection" features are yet to be implemented.
     // As such, the following should NOT return a valid variant iff the rest of
     // this subsystem has been implemented correctly.
@@ -205,12 +206,21 @@ Texture::Variant *Texture::chooseVariant(ChooseVariantMethod method,
     {
         DENG_ASSERT(!chooseVariant(FuzzyMatchSpec, spec));
     }
-# endif
+#endif
 
     if(!canCreate) return 0;
 
     d->variants.push_back(new Variant(*this, spec));
     return d->variants.back();
+}
+
+Texture::Variant *Texture::prepareVariant(texturevariantspecification_t const &spec,
+    Variant::PrepareResult *prepareResult)
+{
+    Variant *variant = chooseVariant(MatchSpec, spec, true /*can create*/);
+    DENG2_ASSERT(variant);
+    variant->prepare(prepareResult);
+    return variant;
 }
 
 Texture::Variants const &Texture::variants() const
@@ -223,16 +233,19 @@ void Texture::clearVariants()
     while(!d->variants.isEmpty())
     {
         Texture::Variant *variant = d->variants.takeFirst();
-# ifdef _DEBUG
+
+#ifdef DENG_DEBUG
         if(variant->glName())
         {
+            String textualVariantSpec = variant->spec().asText();
+
             LOG_AS("Texture::clearVariants")
             LOG_WARNING("GLName (%i) still set for a variant of \"%s\" [%p]. Perhaps it wasn't released?")
-                << variant->glName() << d->manifest.composeUri() << de::dintptr(this);
-
-            GL_PrintTextureVariantSpecification(variant->spec());
+                << variant->glName() << d->manifest.composeUri()
+                << de::dintptr(this) << textualVariantSpec;
         }
-# endif
+#endif
+
         delete variant;
     }
 }

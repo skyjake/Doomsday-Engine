@@ -23,12 +23,10 @@
 #ifndef LIBDENG_IMAGE_H
 #define LIBDENG_IMAGE_H
 
+#include <de/String>
+#include <de/Vector>
 #include "filehandle.h"
 #include <de/size.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * @defgroup imageConversionFlags Image Conversion Flags
@@ -53,7 +51,7 @@ typedef struct image_s {
     int flags;
 
     /// Indentifier of the color palette used/assumed or @c 0 if none (1-based).
-    unsigned int paletteId;
+    uint paletteId;
 
     /// Size of the image in pixels.
     Size2Raw size;
@@ -62,7 +60,7 @@ typedef struct image_s {
     int pixelSize;
 
     /// Pixel color/palette (+alpha) data buffer.
-    uint8_t* pixels;
+    uint8_t *pixels;
 } image_t;
 
 /**
@@ -77,7 +75,17 @@ void Image_Init(image_t* image);
  */
 void Image_Destroy(image_t* image);
 
-void Image_PrintMetadata(const image_t* image);
+/**
+ * Returns the dimensions of the image in pixels.
+ */
+de::Vector2i Image_Dimensions(image_t const *image);
+
+/**
+ * Returns a textual description of the image.
+ *
+ * @return Human-friendly description of the image.
+ */
+de::String Image_Description(image_t const *image);
 
 /**
  * Loads PCX, TGA and PNG images. The returned buffer must be freed
@@ -105,9 +113,5 @@ void Image_ConvertToAlpha(image_t* image, boolean makeWhite);
  * Converts the image data to grayscale luminance in-place.
  */
 void Image_ConvertToLuminance(image_t* image, boolean retainAlpha);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /* LIBDENG_IMAGE_H */

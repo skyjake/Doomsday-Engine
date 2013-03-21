@@ -176,7 +176,7 @@ static DGLuint prepareLightmap(Texture *texture)
 {
     if(texture)
     {
-        if(TextureVariant *variant = GL_PrepareTexture(*texture, *Rend_LightmapTextureSpec()))
+        if(TextureVariant *variant = texture->prepareVariant(*Rend_LightmapTextureSpec()))
         {
             return variant->glName();
         }
@@ -200,7 +200,7 @@ static DGLuint prepareFlaremap(Texture *texture, int oldIdx)
 {
     if(texture)
     {
-        if(TextureVariant const *variant = GL_PrepareTexture(*texture, *Rend_HaloTextureSpec()))
+        if(TextureVariant const *variant = texture->prepareVariant(*Rend_HaloTextureSpec()))
         {
             return variant->glName();
         }
@@ -243,12 +243,13 @@ void MaterialSnapshot::Instance::takeSnapshot()
         if(Texture *tex = lsCur->texture)
         {
             // Pick the instance matching the specified context.
-            preparetextureresult_t result;
-            prepTextures[i][0] = GL_PrepareTexture(*tex, *variant->spec().primarySpec, &result);
+            TextureVariant::PrepareResult result;
+            prepTextures[i][0] = tex->prepareVariant(*variant->spec().primarySpec, &result);
 
             // Primary texture was (re)prepared?
             if(i == 0 && l.stage == 0 &&
-               (PTR_UPLOADED_ORIGINAL == result || PTR_UPLOADED_EXTERNAL == result))
+               (TextureVariant::UploadedOriginal == result ||
+                TextureVariant::UploadedExternal == result))
             {
                 // Are we inheriting the logical dimensions from the texture?
                 if(material->width() == 0 && material->height() == 0)
@@ -265,8 +266,8 @@ void MaterialSnapshot::Instance::takeSnapshot()
         if(Texture *tex = lsNext->texture)
         {
             // Pick the instance matching the specified context.
-            preparetextureresult_t result;
-            prepTextures[i][1] = GL_PrepareTexture(*tex, *variant->spec().primarySpec, &result);
+            TextureVariant::PrepareResult result;
+            prepTextures[i][1] = tex->prepareVariant(*variant->spec().primarySpec, &result);
         }
     }
 
@@ -281,7 +282,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
         if(Texture *tex = lsCur->texture)
         {
             // Pick the instance matching the specified context.
-            prepTextures[MTU_DETAIL][0] = GL_PrepareTexture(*tex, texSpec);
+            prepTextures[MTU_DETAIL][0] = tex->prepareVariant(texSpec);
         }
 
         // Smooth Texture Animation?
@@ -291,7 +292,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
             if(Texture *tex = lsNext->texture)
             {
                 // Pick the instance matching the specified context.
-                prepTextures[MTU_DETAIL][1] = GL_PrepareTexture(*tex, texSpec);
+                prepTextures[MTU_DETAIL][1] = tex->prepareVariant(texSpec);
             }
         }
     }
@@ -310,7 +311,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
                                       false, false, false, false);
 
             // Pick the instance matching the specified context.
-            prepTextures[MTU_REFLECTION][0] = GL_PrepareTexture(*tex, texSpec);
+            prepTextures[MTU_REFLECTION][0] = tex->prepareVariant(texSpec);
         }
 
         // We are only interested in a mask if we have a shiny texture.
@@ -323,7 +324,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
                                       true, false, false, false);
 
             // Pick the instance matching the specified context.
-            prepTextures[MTU_REFLECTION_MASK][0] = GL_PrepareTexture(*tex, texSpec);
+            prepTextures[MTU_REFLECTION_MASK][0] = tex->prepareVariant(texSpec);
         }
     }
 

@@ -711,7 +711,7 @@ static DGLuint prepareLightmap(de::Uri const *resourceUri)
 {
     if(Texture *tex = R_FindTextureByResourceUri("Lightmaps", resourceUri))
     {
-        if(TextureVariant *variant = GL_PrepareTexture(*tex, *Rend_LightmapTextureSpec()))
+        if(TextureVariant *variant = tex->prepareVariant(*Rend_LightmapTextureSpec()))
         {
             return variant->glName();
         }

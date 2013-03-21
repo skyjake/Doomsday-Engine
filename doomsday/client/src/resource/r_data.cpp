@@ -277,7 +277,7 @@ DENG_EXTERN_C boolean R_GetPatchInfo(patchid_t id, patchinfo_t *info)
         texturevariantspecification_t &texSpec =
             *Rend_PatchTextureSpec(0 | (tex.isFlagged(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
                                      | (tex.isFlagged(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
-        GL_PrepareTexture(tex, texSpec);
+        tex.prepareVariant(texSpec);
 #endif
 
         info->id = id;

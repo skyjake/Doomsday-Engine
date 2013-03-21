@@ -174,12 +174,22 @@ void Image_Destroy(image_t *img)
     img->pixels = 0;
 }
 
-void Image_PrintMetadata(image_t const *img)
+de::Vector2i Image_Dimensions(image_t const *img)
 {
     DENG2_ASSERT(img);
-    Con_Message("dimensions:[%ix%i] flags:%i %s:%i", img->size.width, img->size.height,
-                img->flags, 0 != img->paletteId? "colorpalette" : "pixelsize",
-                0 != img->paletteId? img->paletteId : img->pixelSize);
+    return Vector2i(img->size.width, img->size.height);
+}
+
+String Image_Description(image_t const *img)
+{
+    DENG2_ASSERT(img);
+    Vector2i dimensions(img->size.width, img->size.height);
+
+    return String("Dimensions:%1 Flags:%2 %3:%4")
+               .arg(dimensions.asText())
+               .arg(img->flags)
+               .arg(0 != img->paletteId? "ColorPalette" : "PixelSize")
+               .arg(0 != img->paletteId? img->paletteId : img->pixelSize);
 }
 
 void Image_ConvertToLuminance(image_t *img, boolean retainAlpha)

@@ -1421,14 +1421,14 @@ void Models_Cache(modeldef_t* modef)
         {
             if(Texture *tex = reinterpret_cast<Texture *>(mdl->skins[k].texture))
             {
-                GL_PrepareTexture(*tex, *Rend_ModelDiffuseTextureSpec(!mdl->allowTexComp));
+                tex->prepareVariant(*Rend_ModelDiffuseTextureSpec(!mdl->allowTexComp));
             }
         }
 
         // Load the shiny skin too.
         if(Texture *tex = reinterpret_cast<Texture *>(subdef.shinySkin))
         {
-            GL_PrepareTexture(*tex, *Rend_ModelShinyTextureSpec());
+            tex->prepareVariant(*Rend_ModelShinyTextureSpec());
         }
     }
 }

@@ -315,7 +315,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     params->width  = ms.width() + texSpec.border*2;
     params->height = ms.height() + texSpec.border*2;
 
-    ms.texture(MTU_PRIMARY).coords(&params->texOffset[0], &params->texOffset[1]);
+    ms.texture(MTU_PRIMARY).glCoords(&params->texOffset[0], &params->texOffset[1]);
 
     params->texFlip[0] = flip;
     params->texFlip[1] = false;
@@ -905,7 +905,7 @@ void Rend_RenderSprite(rendspriteparams_t const *params)
         size.height = ms->height() + texSpec.border * 2;
         viewOffset.x = -size.width / 2;
 
-        ms->texture(MTU_PRIMARY).coords(&s, &t);
+        ms->texture(MTU_PRIMARY).glCoords(&s, &t);
 
         Texture &tex = ms->texture(MTU_PRIMARY).generalCase();
         viewOffset.x += float(-tex.origin().x);
