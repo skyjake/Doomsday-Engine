@@ -117,14 +117,6 @@ DENG_EXTERN_C boolean DD_IsSharpTick(void)
 boolean DD_IsFrameTimeAdvancing(void)
 {
     if(BusyMode_Active()) return false;
-    /*
-#ifdef __CLIENT__
-    if(Con_TransitionInProgress())
-    {
-        return false;
-    }
-#endif
-    */
     return tickFrame || netGame;
 }
 

@@ -525,10 +525,6 @@ static void Con_EndTransition(void)
 {
     if(!transition.inProgress) return;
 
-    // Clear any input events that might have accumulated during the transition.
-    DD_ClearEvents();
-    B_ActivateContext(B_ContextByName(UI_BINDING_CONTEXT_NAME), false);
-
     releaseScreenshotTexture();
     transition.inProgress = false;
 }
