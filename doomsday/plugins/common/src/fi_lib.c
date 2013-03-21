@@ -49,8 +49,8 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
-    char secret:1;
-    char leave_hub:1;
+    byte secret:1;
+    byte leave_hub:1;
 } fi_state_conditions_t;
 
 typedef struct {
@@ -128,6 +128,9 @@ static void initStateConditions(fi_state_t* s)
 
     // Current hub has been completed?
     s->conditions.leave_hub = (P_GetMapCluster(gameMap) != P_GetMapCluster(nextMap));
+# ifdef _DEBUG
+    Con_Message("Infine state condition: leave_hub=%i", s->conditions.leave_hub);
+# endif
 #else
     s->conditions.secret = secretExit;
     // Only Hexen has hubs.
