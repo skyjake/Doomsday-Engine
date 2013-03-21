@@ -87,7 +87,7 @@ static TexSource loadPatch(image_t &image, de::FileHandle &file, int tclass = 0,
 static TexSource loadDetail(image_t &image, de::FileHandle &file);
 
 static TexSource loadRaw(image_t &image, rawtex_t const &raw);
-static TexSource loadPatchComposite(image_t &image, Texture &tex,
+static TexSource loadPatchComposite(image_t &image, Texture const &tex,
     bool zeroMask = false, bool useZeroOriginIfOneComponent = false);
 
 int ratioLimit = 0; // Zero if none.
@@ -575,11 +575,11 @@ static void uploadContentUnmanaged(uploadcontentmethod_t uploadMethod,
     uploadContent(uploadMethod, content);
 }
 
-static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t const &baseSpec,
-    image_t &image)
+static TexSource loadSourceImage(Texture const &tex,
+    texturevariantspecification_t const &spec, image_t &image)
 {
     TexSource source = TEXS_NONE;
-    variantspecification_t const &spec = TS_GENERAL(baseSpec);
+    variantspecification_t const &vspec = TS_GENERAL(spec);
     if(!tex.manifest().schemeName().compareWithoutCase("Textures"))
     {
         // Attempt to load an external replacement for this composite texture?
@@ -592,13 +592,13 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
 
         if(source == TEXS_NONE)
         {
-            if(TC_SKYSPHERE_DIFFUSE != spec.context)
+            if(TC_SKYSPHERE_DIFFUSE != vspec.context)
             {
                 source = loadPatchComposite(image, tex);
             }
             else
             {
-                bool const zeroMask = !!(spec.flags & TSF_ZEROMASK);
+                bool const zeroMask = (vspec.flags & TSF_ZEROMASK) != 0;
                 bool const useZeroOriginIfOneComponent = true;
                 source = loadPatchComposite(image, tex, zeroMask, useZeroOriginIfOneComponent);
             }
@@ -647,15 +647,15 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
     else if(!tex.manifest().schemeName().compareWithoutCase("Patches"))
     {
         int tclass = 0, tmap = 0;
-        if(spec.flags & TSF_HAS_COLORPALETTE_XLAT)
+        if(vspec.flags & TSF_HAS_COLORPALETTE_XLAT)
         {
-            DENG_ASSERT(spec.translated);
-            tclass = spec.translated->tClass;
-            tmap   = spec.translated->tMap;
+            DENG_ASSERT(vspec.translated);
+            tclass = vspec.translated->tClass;
+            tmap   = vspec.translated->tMap;
         }
 
         // Attempt to load an external replacement for this patch?
-        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.isFlagged(de::Texture::Custom)))
+        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.isFlagged(Texture::Custom)))
         {
             de::Uri uri = tex.manifest().composeUri();
             source = loadExternalTexture(image, uri.compose(), "-ck");
@@ -674,7 +674,7 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
                         de::File1 &lump = App_FileSystem().nameIndex().lump(lumpNum);
                         de::FileHandle &hndl = App_FileSystem().openLump(lump);
 
-                        source = loadPatch(image, hndl, tclass, tmap, spec.border);
+                        source = loadPatch(image, hndl, tclass, tmap, vspec.border);
 
                         App_FileSystem().releaseFile(hndl.file());
                         delete &hndl;
@@ -688,11 +688,11 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
     else if(!tex.manifest().schemeName().compareWithoutCase("Sprites"))
     {
         int tclass = 0, tmap = 0;
-        if(spec.flags & TSF_HAS_COLORPALETTE_XLAT)
+        if(vspec.flags & TSF_HAS_COLORPALETTE_XLAT)
         {
-            DENG_ASSERT(spec.translated);
-            tclass = spec.translated->tClass;
-            tmap   = spec.translated->tMap;
+            DENG_ASSERT(vspec.translated);
+            tclass = vspec.translated->tClass;
+            tmap   = vspec.translated->tMap;
         }
 
         // Attempt to load an external replacement for this sprite?
@@ -701,7 +701,7 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
             de::Uri uri = tex.manifest().composeUri();
 
             // Prefer psprite or translated versions if available.
-            if(TC_PSPRITE_DIFFUSE == spec.context)
+            if(TC_PSPRITE_DIFFUSE == vspec.context)
             {
                 source = loadExternalTexture(image, "Patches:" + uri.path() + "-hud", "-ck");
             }
@@ -729,7 +729,7 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
                         de::File1 &lump = App_FileSystem().nameIndex().lump(lumpNum);
                         de::FileHandle &hndl = App_FileSystem().openLump(lump);
 
-                        source = loadPatch(image, hndl, tclass, tmap, spec.border);
+                        source = loadPatch(image, hndl, tclass, tmap, vspec.border);
 
                         App_FileSystem().releaseFile(hndl.file());
                         delete &hndl;
@@ -2110,8 +2110,8 @@ static TexSource loadPatch(image_t &image, de::FileHandle &hndl, int tclass, int
     return TEXS_NONE;
 }
 
-static TexSource loadPatchComposite(image_t &image, de::Texture &tex, bool maskZero,
-    bool useZeroOriginIfOneComponent)
+static TexSource loadPatchComposite(image_t &image, Texture const &tex,
+    bool maskZero, bool useZeroOriginIfOneComponent)
 {
     LOG_AS("GL_LoadPatchComposite");
 
@@ -2121,8 +2121,7 @@ static TexSource loadPatchComposite(image_t &image, de::Texture &tex, bool maskZ
     image.size.height = tex.height();
     image.paletteId = defaultColorPalette;
 
-    image.pixels = (uint8_t*) M_Calloc(2 * image.size.width * image.size.height);
-    if(!image.pixels) Con_Error("GL_LoadPatchComposite: Failed on allocation of %lu bytes for new Image pixel data.", (unsigned long) (2 * image.size.width * image.size.height));
+    image.pixels = (uint8_t *) M_Calloc(2 * image.size.width * image.size.height);
 
     CompositeTexture const &texDef = *reinterpret_cast<CompositeTexture *>(tex.userDataPointer());
     DENG2_FOR_EACH_CONST(CompositeTexture::Components, i, texDef.components())
@@ -2449,7 +2448,6 @@ static void performImageAnalyses(Texture &tex, image_t const *image,
         if(firstInit)
         {
             cp = (colorpalette_analysis_t*) M_Malloc(sizeof(*cp));
-            if(!cp) Con_Error("performImageAnalyses: Failed on allocation of %lu bytes for new ColorPaletteAnalysis.", (unsigned long) sizeof(*cp));
             tex.setAnalysisDataPointer(Texture::ColorPaletteAnalysis, cp);
         }
 
@@ -2466,7 +2464,6 @@ static void performImageAnalyses(Texture &tex, image_t const *image,
         if(firstInit)
         {
             pl = (pointlight_analysis_t *) M_Malloc(sizeof *pl);
-            if(!pl) Con_Error("performImageAnalyses: Failed on allocation of %lu bytes for new PointLightAnalysis.", (unsigned long) sizeof(*pl));
             tex.setAnalysisDataPointer(Texture::BrightPointAnalysis, pl);
         }
 
@@ -2487,7 +2484,6 @@ static void performImageAnalyses(Texture &tex, image_t const *image,
         if(firstInit)
         {
             aa = (averagealpha_analysis_t *) M_Malloc(sizeof(*aa));
-            if(!aa) Con_Error("performImageAnalyses: Failed on allocation of %lu bytes for new AverageAlphaAnalysis.", (unsigned long) sizeof(*aa));
             tex.setAnalysisDataPointer(Texture::AverageAlphaAnalysis, aa);
         }
 
@@ -2524,7 +2520,6 @@ static void performImageAnalyses(Texture &tex, image_t const *image,
         if(firstInit)
         {
             ac = (averagecolor_analysis_t *) M_Malloc(sizeof(*ac));
-            if(!ac) Con_Error("performImageAnalyses: Failed on allocation of %lu bytes for new AverageColorAnalysis.", (unsigned long) sizeof(*ac));
             tex.setAnalysisDataPointer(Texture::AverageColorAnalysis, ac);
         }
 
@@ -2552,7 +2547,6 @@ static void performImageAnalyses(Texture &tex, image_t const *image,
         if(firstInit)
         {
             ac = (averagecolor_analysis_t *) M_Malloc(sizeof(*ac));
-            if(!ac) Con_Error("performImageAnalyses: Failed on allocation of %lu bytes for new AverageColorAnalysis.", (unsigned long) sizeof(*ac));
             tex.setAnalysisDataPointer(Texture::AverageColorAmplifiedAnalysis, ac);
         }
 
@@ -2581,7 +2575,6 @@ static void performImageAnalyses(Texture &tex, image_t const *image,
         if(firstInit)
         {
             ac = (averagecolor_analysis_t *) M_Malloc(sizeof(*ac));
-            if(!ac) Con_Error("performImageAnalyses: Failed on allocation of %lu bytes for new AverageColorAnalysis.", (unsigned long) sizeof(*ac));
             tex.setAnalysisDataPointer(Texture::AverageTopColorAnalysis, ac);
         }
 
@@ -2609,7 +2602,6 @@ static void performImageAnalyses(Texture &tex, image_t const *image,
         if(firstInit)
         {
             ac = (averagecolor_analysis_t *) M_Malloc(sizeof(*ac));
-            if(!ac) Con_Error("performImageAnalyses: Failed on allocation of %lu bytes for new AverageColorAnalysis.", (unsigned long) sizeof(*ac));
             tex.setAnalysisDataPointer(Texture::AverageBottomColorAnalysis, ac);
         }
 
