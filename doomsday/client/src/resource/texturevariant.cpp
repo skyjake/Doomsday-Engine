@@ -123,30 +123,28 @@ Texture::Variant::Variant(Texture &generalCase, texturevariantspecification_t co
  * Perform analyses of the @a image pixel data and record this information
  * for reference later.
  *
- * @param tex           Logical texture which will hold the analysis data.
  * @param image         Image data to be analyzed.
  * @param context       Context in which the uploaded image will be used.
+ * @param tex           Logical texture which will hold the analysis data.
  * @param forceUpdate   Force an update of the recorded analysis data.
  */
-static void performImageAnalyses(Texture &tex, image_t const *image,
-    texturevariantusagecontext_t context, bool forceUpdate)
+static void performImageAnalyses(image_t const &image,
+    texturevariantusagecontext_t context, Texture &tex, bool forceUpdate)
 {
-    DENG_ASSERT(image);
-
     // Do we need color palette info?
-    if(image->paletteId != 0)
+    if(image.paletteId != 0)
     {
         colorpalette_analysis_t *cp = reinterpret_cast<colorpalette_analysis_t *>(tex.analysisDataPointer(Texture::ColorPaletteAnalysis));
         bool firstInit = (!cp);
 
         if(firstInit)
         {
-            cp = (colorpalette_analysis_t*) M_Malloc(sizeof(*cp));
+            cp = (colorpalette_analysis_t *) M_Malloc(sizeof(*cp));
             tex.setAnalysisDataPointer(Texture::ColorPaletteAnalysis, cp);
         }
 
         if(firstInit || forceUpdate)
-            cp->paletteId = image->paletteId;
+            cp->paletteId = image.paletteId;
     }
 
     // Calculate a point light source for Dynlight and/or Halo?
@@ -162,8 +160,8 @@ static void performImageAnalyses(Texture &tex, image_t const *image,
         }
 
         if(firstInit || forceUpdate)
-            GL_CalcLuminance(image->pixels, image->size.width, image->size.height, image->pixelSize,
-                             R_ToColorPalette(image->paletteId), &pl->originX, &pl->originY,
+            GL_CalcLuminance(image.pixels, image.size.width, image.size.height, image.pixelSize,
+                             R_ToColorPalette(image.paletteId), &pl->originX, &pl->originY,
                              &pl->color, &pl->brightMul);
     }
 
@@ -181,17 +179,17 @@ static void performImageAnalyses(Texture &tex, image_t const *image,
 
         if(firstInit || forceUpdate)
         {
-            if(!image->paletteId)
+            if(!image.paletteId)
             {
-                FindAverageAlpha(image->pixels, image->size.width, image->size.height,
-                                 image->pixelSize, &aa->alpha, &aa->coverage);
+                FindAverageAlpha(image.pixels, image.size.width, image.size.height,
+                                 image.pixelSize, &aa->alpha, &aa->coverage);
             }
             else
             {
-                if(image->flags & IMGF_IS_MASKED)
+                if(image.flags & IMGF_IS_MASKED)
                 {
-                    FindAverageAlphaIdx(image->pixels, image->size.width, image->size.height,
-                                        R_ToColorPalette(image->paletteId), &aa->alpha, &aa->coverage);
+                    FindAverageAlphaIdx(image.pixels, image.size.width, image.size.height,
+                                        R_ToColorPalette(image.paletteId), &aa->alpha, &aa->coverage);
                 }
                 else
                 {
@@ -217,15 +215,15 @@ static void performImageAnalyses(Texture &tex, image_t const *image,
 
         if(firstInit || forceUpdate)
         {
-            if(0 == image->paletteId)
+            if(0 == image.paletteId)
             {
-                FindAverageColor(image->pixels, image->size.width, image->size.height,
-                                 image->pixelSize, &ac->color);
+                FindAverageColor(image.pixels, image.size.width, image.size.height,
+                                 image.pixelSize, &ac->color);
             }
             else
             {
-                FindAverageColorIdx(image->pixels, image->size.width, image->size.height,
-                                    R_ToColorPalette(image->paletteId), false, &ac->color);
+                FindAverageColorIdx(image.pixels, image.size.width, image.size.height,
+                                    R_ToColorPalette(image.paletteId), false, &ac->color);
             }
         }
     }
@@ -244,15 +242,15 @@ static void performImageAnalyses(Texture &tex, image_t const *image,
 
         if(firstInit || forceUpdate)
         {
-            if(0 == image->paletteId)
+            if(0 == image.paletteId)
             {
-                FindAverageColor(image->pixels, image->size.width, image->size.height,
-                                 image->pixelSize, &ac->color);
+                FindAverageColor(image.pixels, image.size.width, image.size.height,
+                                 image.pixelSize, &ac->color);
             }
             else
             {
-                FindAverageColorIdx(image->pixels, image->size.width, image->size.height,
-                                    R_ToColorPalette(image->paletteId), false, &ac->color);
+                FindAverageColorIdx(image.pixels, image.size.width, image.size.height,
+                                    R_ToColorPalette(image.paletteId), false, &ac->color);
             }
             R_AmplifyColor(ac->color.rgb);
         }
@@ -272,15 +270,15 @@ static void performImageAnalyses(Texture &tex, image_t const *image,
 
         if(firstInit || forceUpdate)
         {
-            if(0 == image->paletteId)
+            if(0 == image.paletteId)
             {
-                FindAverageLineColor(image->pixels, image->size.width, image->size.height,
-                                     image->pixelSize, 0, &ac->color);
+                FindAverageLineColor(image.pixels, image.size.width, image.size.height,
+                                     image.pixelSize, 0, &ac->color);
             }
             else
             {
-                FindAverageLineColorIdx(image->pixels, image->size.width, image->size.height, 0,
-                                        R_ToColorPalette(image->paletteId), false, &ac->color);
+                FindAverageLineColorIdx(image.pixels, image.size.width, image.size.height, 0,
+                                        R_ToColorPalette(image.paletteId), false, &ac->color);
             }
         }
     }
@@ -299,15 +297,15 @@ static void performImageAnalyses(Texture &tex, image_t const *image,
 
         if(firstInit || forceUpdate)
         {
-            if(0 == image->paletteId)
+            if(0 == image.paletteId)
             {
-                FindAverageLineColor(image->pixels, image->size.width, image->size.height,
-                                     image->pixelSize, image->size.height - 1, &ac->color);
+                FindAverageLineColor(image.pixels, image.size.width, image.size.height,
+                                     image.pixelSize, image.size.height - 1, &ac->color);
             }
             else
             {
-                FindAverageLineColorIdx(image->pixels, image->size.width, image->size.height,
-                                        image->size.height - 1, R_ToColorPalette(image->paletteId),
+                FindAverageLineColorIdx(image.pixels, image.size.width, image.size.height,
+                                        image.size.height - 1, R_ToColorPalette(image.paletteId),
                                         false, &ac->color);
             }
         }
@@ -334,22 +332,11 @@ uint Texture::Variant::prepare(Variant::PrepareResult *result)
         return 0;
     }
 
-    // Are we setting the logical dimensions to the actual pixel dimensions?
-    if(d->texture.width() == 0 && d->texture.height() == 0)
-    {
-        Vector2i dimensions = Image_Dimensions(&image);
-#ifdef DENG_DEBUG
-        LOG_VERBOSE("World dimensions for \"%s\" taken from image pixels %s.")
-            << d->texture.manifest().composeUri() << dimensions.asText();
-#endif
-        d->texture.setDimensions(dimensions);
-    }
-
     // Do we need to perform any image pixel data analyses?
     if(d->spec.type == TST_GENERAL)
     {
-        performImageAnalyses(d->texture, &image, TS_GENERAL(d->spec).context,
-                             true /*force update*/);
+        performImageAnalyses(image, TS_GENERAL(d->spec).context,
+                             d->texture, true /*force update*/);
     }
 
     // Are we preparing a new GL texture?
@@ -407,10 +394,23 @@ uint Texture::Variant::prepare(Variant::PrepareResult *result)
     }
 #endif
 
+    // Are we setting the logical dimensions to the pixel dimensions
+    // of the source image?
+    if(d->texture.width() == 0 && d->texture.height() == 0)
+    {
+        Vector2i dimensions = Image_Dimensions(&image);
+#ifdef DENG_DEBUG
+        LOG_VERBOSE("World dimensions for \"%s\" taken from image pixels %s.")
+            << d->texture.manifest().composeUri() << dimensions.asText();
+#endif
+        d->texture.setDimensions(dimensions);
+    }
+
     // We're done with the image data.
     Image_Destroy(&image);
 
     if(result) *result = source == TEXS_ORIGINAL? UploadedOriginal : UploadedExternal;
+
     return d->glTexName;
 }
 
