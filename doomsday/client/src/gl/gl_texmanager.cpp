@@ -783,8 +783,8 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
  * specification.
  *
  * @param image     The image to prepare (in place).
- * @param spec      Specification describing any necessary transformations
- *                  which should be applied to the image.
+ * @param spec      Specification describing any transformations which should
+ *                  be applied to the image.
  *
  * @return  The DGL texture format determined for the image.
  */
@@ -920,8 +920,13 @@ static dgltexformat_t prepareImageAsTexture(image_t &image,
  * given specification.
  *
  * @param image     The image to prepare (in place).
- * @param spec      Specification describing any necessary transformations
- *                  which should be applied to the image.
+ * @param spec      Specification describing any transformations which should
+ *                  be applied to the image.
+ *
+ * Return values:
+ * @param baMul     Luminance equalization balance factor is written here.
+ * @param hiMul     Luminance equalization white-shift factor is written here.
+ * @param loMul     Luminance equalization black-shift factor is written here.
  *
  * @return  The DGL texture format determined for the image.
  */
@@ -2430,7 +2435,7 @@ void GL_SetAllTexturesMinFilter(int /*minFilter*/)
     ///       filter should not modify the uploaded texture content.
 }
 
-static void performImageAnalyses(de::Texture &tex, image_t const *image,
+static void performImageAnalyses(Texture &tex, image_t const *image,
     texturevariantspecification_t const &spec, bool forceUpdate)
 {
     DENG_ASSERT(image);
@@ -2625,48 +2630,30 @@ static void performImageAnalyses(de::Texture &tex, image_t const *image,
     }
 }
 
-preparetextureresult_t GL_PrepareTexture(TextureVariant &variant)
+/**
+ * Prepare the texture content @a c, using the given image in accordance with
+ * the supplied specification. The image data will be transformed in-place.
+ *
+ * @param c             Texture content to be completed.
+ * @param glTexName     GL name for the texture we intend to upload.
+ * @param image         Source image containing the pixel data to be prepared.
+ * @param spec          Specification describing any transformations which
+ *                      should be applied to the image.
+ *
+ * @param textureManifest  Manifest for the logical texture being prepared.
+ *                      (for informational purposes, i.e., logging)
+ */
+static void prepareTextureContent(texturecontent_t &c, DGLuint glTexName,
+    image_t &image, texturevariantspecification_t const &spec,
+    TextureManifest const &textureManifest)
 {
-    DENG_ASSERT(initedOk);
-    LOG_AS("GL_PrepareTexture");
+    DENG_ASSERT(glTexName != 0);
+    DENG_ASSERT(image.pixels != 0);
 
-    // Already been here?
-    if(variant.isPrepared()) return PTR_FOUND;
+    // Initialize and assign a GL name to the content.
+    GL_InitTextureContent(&c);
+    c.name = glTexName;
 
-    Texture &tex = variant.generalCase();
-    texturevariantspecification_t const &spec = variant.spec();
-
-    // Load the source image data.
-    image_t image;
-    TexSource source = loadSourceImage(tex, spec, image);
-    if(source == TEXS_NONE) return PTR_NOTFOUND;
-
-    // Are we setting the logical dimensions to the actual pixel dimensions?
-    if(tex.width() == 0 && tex.height() == 0)
-    {
-#if _DEBUG
-        LOG_VERBOSE("World dimensions for \"%s\" taken from image pixels (%ix%i).")
-            << tex.manifest().composeUri() << image.size.width << image.size.height;
-#endif
-        tex.setDimensions(Vector2i(image.size.width, image.size.height));
-    }
-
-    performImageAnalyses(tex, &image, spec, true /*Always update*/);
-
-    // Are we re-preparing a new GL texture?
-    DGLuint glTextureName = variant.glName();
-    if(glTextureName == 0)
-    {
-        // Acquire a new GL texture name.
-        glTextureName = GL_GetReservedTextureName();
-        variant.setGLName(glTextureName);
-
-        // Record the source of the image.
-        variant.setSource(source);
-    }
-
-    // Prepare texture content for uploading.
-    texturecontent_t c;
     switch(spec.type)
     {
     case TST_GENERAL: {
@@ -2678,8 +2665,6 @@ preparetextureresult_t GL_PrepareTexture(TextureVariant &variant)
         dgltexformat_t dglFormat = prepareImageAsTexture(image, vspec);
 
         // Configure the texture content.
-        GL_InitTextureContent(&c);
-        c.name        = glTextureName;
         c.format      = dglFormat;
         c.width       = image.size.width;
         c.height      = image.size.height;
@@ -2719,14 +2704,12 @@ preparetextureresult_t GL_PrepareTexture(TextureVariant &variant)
             grayMipmapFactor = int(255 * de::clamp(0.f, dspec.contrast / 255.f - shift, 1.f));
 
             // Announce the normalization.
-            de::Uri uri = tex.manifest().composeUri();
+            de::Uri uri = textureManifest.composeUri();
             LOG_VERBOSE("Normalized detail texture \"%s\" (balance: %g, high amp: %g, low amp: %g).")
                 << uri << baMul << hiMul << loMul;
         }
 
         // Configure the texture content.
-        GL_InitTextureContent(&c);
-        c.name        = glTextureName;
         c.format      = dglFormat;
         c.flags       = TXCF_GRAY_MIPMAP | TXCF_UPLOAD_ARG_NOSMARTFILTER;
 
@@ -2749,6 +2732,51 @@ preparetextureresult_t GL_PrepareTexture(TextureVariant &variant)
         // Invalid spec type.
         DENG_ASSERT(false);
     }
+}
+
+preparetextureresult_t GL_PrepareTexture(TextureVariant &variant)
+{
+    DENG_ASSERT(initedOk);
+    LOG_AS("GL_PrepareTexture");
+
+    // Already been here?
+    if(variant.isPrepared()) return PTR_FOUND;
+
+    Texture &tex = variant.generalCase();
+    texturevariantspecification_t const &spec = variant.spec();
+
+    // Load the source image data.
+    image_t image;
+    TexSource source = loadSourceImage(tex, spec, image);
+    if(source == TEXS_NONE) return PTR_NOTFOUND;
+
+    // Are we setting the logical dimensions to the actual pixel dimensions?
+    if(tex.width() == 0 && tex.height() == 0)
+    {
+#if _DEBUG
+        LOG_VERBOSE("World dimensions for \"%s\" taken from image pixels (%ix%i).")
+            << tex.manifest().composeUri() << image.size.width << image.size.height;
+#endif
+        tex.setDimensions(Vector2i(image.size.width, image.size.height));
+    }
+
+    performImageAnalyses(tex, &image, spec, true /*Always update*/);
+
+    // Are we re-preparing a new GL texture?
+    DGLuint glTexName = variant.glName();
+    if(glTexName == 0)
+    {
+        // Acquire a new GL texture name.
+        glTexName = GL_GetReservedTextureName();
+        variant.setGLName(glTexName);
+
+        // Record the source of the image.
+        variant.setSource(source);
+    }
+
+    // Prepare texture content for uploading.
+    texturecontent_t c;
+    prepareTextureContent(c, glTexName, image, spec, tex.manifest());
 
     /**
      * Calculate GL texture coordinates based on the image dimensions. The
