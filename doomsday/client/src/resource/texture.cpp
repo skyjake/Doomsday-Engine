@@ -72,6 +72,12 @@ DENG2_PIMPL(Texture)
         self.clearVariants();
 #endif
     }
+
+    /// Notify iterested parties of a change in world dimensions.
+    void notifyDimensionsChanged()
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE(DimensionsChange, i) i->textureDimensionsChanged(self);
+    }
 };
 
 Texture::Texture(TextureManifest &manifest) : d(new Instance(this, manifest))
@@ -131,6 +137,7 @@ void Texture::setDimensions(Vector2i const &_newDimensions)
     if(d->dimensions != newDimensions)
     {
         d->dimensions = newDimensions;
+        d->notifyDimensionsChanged();
     }
 }
 
@@ -139,6 +146,7 @@ void Texture::setWidth(int newWidth)
     if(d->dimensions.x != newWidth)
     {
         d->dimensions.x = newWidth;
+        d->notifyDimensionsChanged();
     }
 }
 
@@ -147,6 +155,7 @@ void Texture::setHeight(int newHeight)
     if(d->dimensions.y != newHeight)
     {
         d->dimensions.y = newHeight;
+        d->notifyDimensionsChanged();
     }
 }
 

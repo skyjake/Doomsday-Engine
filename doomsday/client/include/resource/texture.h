@@ -54,6 +54,7 @@ class Texture
 
 public:
     DENG2_DEFINE_AUDIENCE(Deletion, void textureBeingDeleted(Texture const &texture))
+    DENG2_DEFINE_AUDIENCE(DimensionsChange, void textureDimensionsChanged(Texture const &texture))
 
     /**
      * Classification/processing flags.
@@ -263,13 +264,27 @@ public:
      */
     String description() const;
 
-    /// Returns the dimensions of the texture in map coordinate space units.
+    /**
+     * Returns the world dimensions of the texture, in map coordinate space
+     * units. The DimensionsChange audience is notified whenever dimensions
+     * are changed.
+     */
     Vector2i const &dimensions() const;
 
-    /// Returns the world width of the texture in map coordinate space units.
+    /**
+     * Convenient accessor method for returning the X axis size (width) of
+     * the world dimensions for the texture, in map coordinate space units.
+     *
+     * @see dimensions()
+     */
     inline int width() const { return dimensions().x; }
 
-    /// Returns the world height of the texture in map coordinate space units.
+    /**
+     * Convenient accessor method for returning the X axis size (height) of
+     * the world dimensions for the texture, in map coordinate space units.
+     *
+     * @see dimensions()
+     */
     inline int height() const { return dimensions().y; }
 
     /**
