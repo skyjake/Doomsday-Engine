@@ -778,18 +778,24 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
     return source;
 }
 
-static uploadcontentmethod_t prepareVariantFromImage(TextureVariant &tex, image_t &image)
+/**
+ * Prepares the image for use as a GL texture in accordance with the given
+ * specification.
+ *
+ * @param image     The image to prepare (in place).
+ * @param spec      Specification describing any necessary transformations
+ *                  which should be applied to the image.
+ *
+ * @return  The DGL texture format determined for the image.
+ */
+static dgltexformat_t prepareImageAsTexture(image_t &image,
+    variantspecification_t const &spec)
 {
-    variantspecification_t const &spec = TS_GENERAL(tex.spec());
+    DENG_ASSERT(image.pixels);
+
     bool monochrome    = (spec.flags & TSF_MONOCHROME) != 0;
-    bool noCompression = (spec.flags & TSF_NO_COMPRESSION) != 0;
     bool scaleSharp    = (spec.flags & TSF_UPSCALE_AND_SHARPEN) != 0;
-    int wrapS = spec.wrapS, wrapT = spec.wrapT;
-    int magFilter, minFilter, anisoFilter, flags = 0;
-    boolean noSmartFilter = false;
-    dgltexformat_t dglFormat;
-    texturecontent_t c;
-    float s, t;
+    bool noSmartFilter = false;
 
     if(spec.toAlpha)
     {
@@ -830,7 +836,7 @@ static uploadcontentmethod_t prepareVariantFromImage(TextureVariant &tex, image_
             bool origMasked = (image.flags & IMGF_IS_MASKED) != 0;
             colorpaletteid_t origPaletteId = image.paletteId;
 
-            uint8_t* newPixels = GL_ConvertBuffer(image.pixels, image.size.width, image.size.height,
+            uint8_t *newPixels = GL_ConvertBuffer(image.pixels, image.size.width, image.size.height,
                                                   ((image.flags & IMGF_IS_MASKED)? 2 : 1),
                                                   R_ToColorPalette(image.paletteId), 4);
             if(newPixels != image.pixels)
@@ -893,132 +899,47 @@ static uploadcontentmethod_t prepareVariantFromImage(TextureVariant &tex, image_
         }
     }
 
-    if(noCompression || (image.size.width < 128 || image.size.height < 128))
-        flags |= TXCF_NO_COMPRESSION;
-
-    if(spec.gammaCorrection) flags |= TXCF_APPLY_GAMMACORRECTION;
-    if(spec.noStretch)       flags |= TXCF_UPLOAD_ARG_NOSTRETCH;
-    if(spec.mipmapped)       flags |= TXCF_MIPMAP;
-    if(noSmartFilter)         flags |= TXCF_UPLOAD_ARG_NOSMARTFILTER;
-
+    /*
+     * Choose the final GL texture format.
+     */
     if(monochrome)
     {
-        dglFormat = ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 : DGL_LUMINANCE );
+        return image.pixelSize == 2? DGL_LUMINANCE_PLUS_A8 : DGL_LUMINANCE;
     }
-    else
+    if(image.paletteId)
     {
-        if(0 != image.paletteId)
-        {   // Paletted.
-            dglFormat = (image.flags & IMGF_IS_MASKED)? DGL_COLOR_INDEX_8_PLUS_A8 : DGL_COLOR_INDEX_8;
-        }
-        else
-        {
-            dglFormat = ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
-                          image.pixelSize == 3 ? DGL_RGB :
-                          image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE );
-        }
+        return (image.flags & IMGF_IS_MASKED)? DGL_COLOR_INDEX_8_PLUS_A8 : DGL_COLOR_INDEX_8;
     }
-
-    minFilter   = GL_MinFilterForVariantSpec(spec);
-    magFilter   = GL_MagFilterForVariantSpec(spec);
-    anisoFilter = GL_LogicalAnisoLevelForVariantSpec(spec);
-
-    /**
-     * Calculate texture coordinates based on the image dimensions. The
-     * coordinates are calculated as width/CeilPow2(width), or 1 if larger
-     * than the maximum texture size.
-     *
-     * @todo Image dimensions may not be the same as the final uploaded texture!
-     */
-    if((flags & TXCF_UPLOAD_ARG_NOSTRETCH) &&
-       (!GL_state.features.texNonPowTwo || spec.mipmapped))
-    {
-        int pw = M_CeilPow2(image.size.width), ph = M_CeilPow2(image.size.height);
-        s =  image.size.width / (float) pw;
-        t = image.size.height / (float) ph;
-    }
-    else
-    {
-        s = t = 1;
-    }
-
-    tex.setCoords(s, t);
-    tex.setFlags(TextureVariant::Masked, !!(image.flags & IMGF_IS_MASKED));
-
-    GL_InitTextureContent(&c);
-    c.name = tex.glName();
-    c.format = dglFormat;
-    c.width = image.size.width;
-    c.height = image.size.height;
-    c.pixels = image.pixels;
-    c.paletteId = image.paletteId;
-    c.flags = flags;
-    c.magFilter = magFilter;
-    c.minFilter = minFilter;
-    c.anisoFilter = anisoFilter;
-    c.wrap[0] = wrapS;
-    c.wrap[1] = wrapT;
-
-    return uploadContentForVariant(chooseContentUploadMethod(c), c);
+    return   image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8
+           : image.pixelSize == 3 ? DGL_RGB
+           : image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE;
 }
 
-static uploadcontentmethod_t prepareDetailVariantFromImage(TextureVariant &tex, image_t &image)
+/**
+ * Prepares the image for use as a detail GL texture in accordance with the
+ * given specification.
+ *
+ * @param image     The image to prepare (in place).
+ * @param spec      Specification describing any necessary transformations
+ *                  which should be applied to the image.
+ *
+ * @return  The DGL texture format determined for the image.
+ */
+static dgltexformat_t prepareImageAsDetailTexture(image_t &image,
+    detailvariantspecification_t const &spec, float *baMul, float *hiMul, float *loMul)
 {
-    detailvariantspecification_t const &spec = TS_DETAIL(tex.spec());
-    float baMul, hiMul, loMul, s, t;
-    int grayMipmapFactor, pw, ph, flags = 0;
-    texturecontent_t c;
+    DENG_UNUSED(spec);
 
-    grayMipmapFactor = spec.contrast;
-
-    // We only want a luminance map.
+    // We want a luminance map.
     if(image.pixelSize > 2)
     {
         Image_ConvertToLuminance(&image, false);
     }
 
     // Try to normalize the luminance data so it works expectedly as a detail texture.
-    EqualizeLuma(image.pixels, image.size.width, image.size.height, &baMul, &hiMul, &loMul);
-    if(baMul != 1 || hiMul != 1 || loMul != 1)
-    {
-        // Integrate the normalization factor with contrast.
-        float const hiContrast = 1 - 1. / hiMul;
-        float const loContrast = 1 - loMul;
-        float const shift = ((hiContrast + loContrast) / 2);
-        grayMipmapFactor = (uint8_t)(255 * MINMAX_OF(0, spec.contrast / 255.f - shift, 1));
+    EqualizeLuma(image.pixels, image.size.width, image.size.height, baMul, hiMul, loMul);
 
-        // Announce the normalization.
-        de::Uri uri = tex.generalCase().manifest().composeUri();
-        LOG_VERBOSE("Normalized detail texture \"%s\" (balance: %g, high amp: %g, low amp: %g).")
-            << uri << baMul << hiMul << loMul;
-    }
-
-    // Disable compression?
-    if(image.size.width < 128 || image.size.height < 128)
-        flags |= TXCF_NO_COMPRESSION;
-
-    // Calculate prepared texture coordinates.
-    pw = M_CeilPow2(image.size.width);
-    ph = M_CeilPow2(image.size.height);
-    s =  image.size.width / (float) pw;
-    t = image.size.height / (float) ph;
-    tex.setCoords(s, t);
-
-    GL_InitTextureContent(&c);
-    c.name = tex.glName();
-    c.format = DGL_LUMINANCE;
-    c.flags = flags | TXCF_GRAY_MIPMAP | TXCF_UPLOAD_ARG_NOSMARTFILTER;
-    c.grayMipmap = grayMipmapFactor;
-    c.width = image.size.width;
-    c.height = image.size.height;
-    c.pixels = image.pixels;
-    c.anisoFilter = texAniso;
-    c.magFilter = glmode[texMagMode];
-    c.minFilter = GL_LINEAR_MIPMAP_LINEAR;
-    c.wrap[0] = GL_REPEAT;
-    c.wrap[1] = GL_REPEAT;
-
-    return uploadContentForVariant(chooseContentUploadMethod(c), c);
+    return DGL_LUMINANCE;
 }
 
 void GL_InitTextureManager()
@@ -2732,40 +2653,146 @@ preparetextureresult_t GL_PrepareTexture(TextureVariant &variant)
 
     performImageAnalyses(tex, &image, spec, true /*Always update*/);
 
-    // Are we re-preparing a released texture?
-    if(0 == variant.glName())
+    // Are we re-preparing a new GL texture?
+    DGLuint glTextureName = variant.glName();
+    if(glTextureName == 0)
     {
-        DGLuint newGLName = GL_GetReservedTextureName();
+        // Acquire a new GL texture name.
+        glTextureName = GL_GetReservedTextureName();
+        variant.setGLName(glTextureName);
+
+        // Record the source of the image.
         variant.setSource(source);
-        variant.setGLName(newGLName);
     }
 
-    // (Re)Prepare the variant according to specification.
-    uploadcontentmethod_t uploadMethod;
+    // Prepare texture content for uploading.
+    texturecontent_t c;
     switch(spec.type)
     {
-    case TST_GENERAL: uploadMethod = prepareVariantFromImage(variant, image); break;
-    case TST_DETAIL:  uploadMethod = prepareDetailVariantFromImage(variant, image); break;
+    case TST_GENERAL: {
+        variantspecification_t const &vspec = TS_GENERAL(spec);
+        bool const noCompression = (vspec.flags & TSF_NO_COMPRESSION) != 0;
+        bool const noSmartFilter = ((vspec.flags & TSF_UPSCALE_AND_SHARPEN) == 0 || (!vspec.toAlpha && image.paletteId));
+
+        // Prepare the image for upload.
+        dgltexformat_t dglFormat = prepareImageAsTexture(image, vspec);
+
+        // Configure the texture content.
+        GL_InitTextureContent(&c);
+        c.name        = glTextureName;
+        c.format      = dglFormat;
+        c.width       = image.size.width;
+        c.height      = image.size.height;
+        c.pixels      = image.pixels;
+        c.paletteId   = image.paletteId;
+
+        if(noCompression || (image.size.width < 128 || image.size.height < 128))
+            c.flags |= TXCF_NO_COMPRESSION;
+        if(vspec.gammaCorrection) c.flags |= TXCF_APPLY_GAMMACORRECTION;
+        if(vspec.noStretch)       c.flags |= TXCF_UPLOAD_ARG_NOSTRETCH;
+        if(vspec.mipmapped)       c.flags |= TXCF_MIPMAP;
+        if(noSmartFilter)         c.flags |= TXCF_UPLOAD_ARG_NOSMARTFILTER;
+
+        c.magFilter   = GL_MagFilterForVariantSpec(vspec);
+        c.minFilter   = GL_MinFilterForVariantSpec(vspec);
+        c.anisoFilter = GL_LogicalAnisoLevelForVariantSpec(vspec);
+        c.wrap[0]     = vspec.wrapS;
+        c.wrap[1]     = vspec.wrapT;
+        break; }
+
+    case TST_DETAIL: {
+        detailvariantspecification_t const &dspec = TS_DETAIL(spec);
+
+        // Prepare the image for upload.
+        float baMul, hiMul, loMul;
+        dgltexformat_t dglFormat = prepareImageAsDetailTexture(image, dspec, &baMul, &hiMul, &loMul);
+
+        // Determine the gray mipmap factor.
+        int grayMipmapFactor = dspec.contrast;
+        if(baMul != 1 || hiMul != 1 || loMul != 1)
+        {
+            // Integrate the normalization factor with contrast.
+            float const hiContrast = 1 - 1. / hiMul;
+            float const loContrast = 1 - loMul;
+            float const shift = ((hiContrast + loContrast) / 2);
+
+            grayMipmapFactor = int(255 * de::clamp(0.f, dspec.contrast / 255.f - shift, 1.f));
+
+            // Announce the normalization.
+            de::Uri uri = tex.manifest().composeUri();
+            LOG_VERBOSE("Normalized detail texture \"%s\" (balance: %g, high amp: %g, low amp: %g).")
+                << uri << baMul << hiMul << loMul;
+        }
+
+        // Configure the texture content.
+        GL_InitTextureContent(&c);
+        c.name        = glTextureName;
+        c.format      = dglFormat;
+        c.flags       = TXCF_GRAY_MIPMAP | TXCF_UPLOAD_ARG_NOSMARTFILTER;
+
+        // Disable compression?
+        if(image.size.width < 128 || image.size.height < 128)
+            c.flags |= TXCF_NO_COMPRESSION;
+
+        c.grayMipmap  = grayMipmapFactor;
+        c.width       = image.size.width;
+        c.height      = image.size.height;
+        c.pixels      = image.pixels;
+        c.anisoFilter = texAniso;
+        c.magFilter   = glmode[texMagMode];
+        c.minFilter   = GL_LINEAR_MIPMAP_LINEAR;
+        c.wrap[0]     = GL_REPEAT;
+        c.wrap[1]     = GL_REPEAT;
+        break; }
+
     default:
-        Con_Error("GL_PrepareTexture: Invalid spec type %i.", spec.type);
-        exit(1); // Unreachable.
+        // Invalid spec type.
+        DENG_ASSERT(false);
     }
+
+    /**
+     * Calculate GL texture coordinates based on the image dimensions. The
+     * coordinates are calculated as width / CeilPow2(width), or 1 if larger
+     * than the maximum texture size.
+     *
+     * @todo fixme: Image dimensions may not be the same as the uploaded
+     * texture - defer this logic until all processing has been completed.
+     */
+    float s, t;
+    if((c.flags & TXCF_UPLOAD_ARG_NOSTRETCH) &&
+       (!GL_state.features.texNonPowTwo || (c.flags & TXCF_MIPMAP)))
+    {
+        s =  image.size.width / float( M_CeilPow2(image.size.width) );
+        t = image.size.height / float( M_CeilPow2(image.size.height) );
+    }
+    else
+    {
+        s = t = 1;
+    }
+    variant.setCoords(s, t);
+    variant.setFlags(TextureVariant::Masked, (image.flags & IMGF_IS_MASKED) != 0);
+
+    // Submit the content for uploading (possibly deferred).
+    uploadcontentmethod_t chosenUploadMethod =
+        uploadContentForVariant(chooseContentUploadMethod(c), c);
+
+#ifdef DENG_DEBUG
+    LOG_VERBOSE("Prepared \"%s\" variant (glName:%u)%s")
+        << tex.manifest().composeUri() << uint(variant.glName())
+        << (METHOD_IMMEDIATE == chosenUploadMethod? " while not busy!" : "");
+
+    if(verbose >= 2)
+    {
+        Con_Printf("  Content: ");
+        Image_PrintMetadata(&image);
+
+        Con_Printf("  Specification [%p]: ", de::dintptr(&spec));
+        GL_PrintTextureVariantSpecification(spec);
+    }
+#endif
 
     // We're done with the image data.
     Image_Destroy(&image);
-
-#ifdef _DEBUG
-    LOG_VERBOSE("Prepared \"%s\" variant (glName:%u)%s")
-        << tex.manifest().composeUri() << uint(variant.glName())
-        << (METHOD_IMMEDIATE == uploadMethod? " while not busy!" : "");
-
-    VERBOSE2(
-        Con_Printf("  Content: ");
-        Image_PrintMetadata(&image);
-        Con_Printf("  Specification [%p]: ", de::dintptr(&spec));
-        GL_PrintTextureVariantSpecification(spec);
-        )
-#endif
 
     return source == TEXS_ORIGINAL? PTR_UPLOADED_ORIGINAL : PTR_UPLOADED_EXTERNAL;
 }
