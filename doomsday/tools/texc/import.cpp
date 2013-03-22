@@ -101,10 +101,18 @@ void Import(char *wadFile, char *outFile)
 	}
 	printf("Importing textures from %s.\n", wadFile);
 	
-	fread(&info, sizeof(info), 1, file);
+    if(!fread(&info, sizeof(info), 1, file))
+    {
+        perror(wadFile);
+        return;
+    }
 	lumps = new lumpinfo_t[info.numlumps];
 	fseek(file, info.infotableofs, SEEK_SET);
-	fread(lumps, sizeof(*lumps), info.numlumps, file);
+    if(fread(lumps, sizeof(*lumps), info.numlumps, file) < size_t(info.numlumps))
+    {
+        perror(wadFile);
+        return;
+    }
 
 	// Open the output file.
 	if((out = fopen(outFile, "wt")) == NULL)
@@ -119,7 +127,11 @@ void Import(char *wadFile, char *outFile)
 	if(i < 0) goto not_found;
 	fseek(file, lumps[i].filepos, SEEK_SET);
 	dir = (patchdir_t*) malloc(lumps[i].size);
-	fread(dir, lumps[i].size, 1, file);
+    if(!fread(dir, lumps[i].size, 1, file))
+    {
+        perror(wadFile);
+        return;
+    }
 
 	// Process the texture lumps.
 	for(group = 1; group <= 2; group++)
@@ -134,7 +146,11 @@ void Import(char *wadFile, char *outFile)
 
 		fseek(file, lumps[i].filepos, SEEK_SET);
 		data = new char[lumps[i].size];
-		fread(data, lumps[i].size, 1, file);
+        if(!fread(data, lumps[i].size, 1, file))
+        {
+            perror(wadFile);
+            return;
+        }
 		count = *(int*) data;
 		texCount += count;
 		dict = (int*) data + 1;

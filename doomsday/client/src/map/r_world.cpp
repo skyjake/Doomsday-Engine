@@ -1566,6 +1566,8 @@ boolean R_UpdateSector(Sector *sec, boolean forceUpdate)
         changed = true;
     }
 
+    DENG_UNUSED(changed); /// @todo Should it be used? -jk
+
     return planeChanged;
 }
 

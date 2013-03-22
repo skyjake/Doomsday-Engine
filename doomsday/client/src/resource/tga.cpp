@@ -413,6 +413,8 @@ uint8_t* TGA_Load(FileHandle* file, int* w, int* h, int* pixelSize)
         pixbytes = 4;
     }
 
+    DENG_UNUSED(format);
+
     *pixelSize = pixbytes;
 
     // Read the pixel data.

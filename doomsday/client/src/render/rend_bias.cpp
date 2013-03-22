@@ -922,8 +922,8 @@ void SB_RendPoly(struct ColorRawf_s* rcolors, biassurface_t* bsuf,
                  float sectorLightLevel,
                  de::MapElement const *mapElement, uint elmIdx)
 {
-    uint                i;
-    boolean             forced;
+    uint i;
+    //boolean             forced;
 
     // Apply sectorlight bias.  Note: Distance darkening is not used
     // with bias lights.
@@ -943,7 +943,7 @@ void SB_RendPoly(struct ColorRawf_s* rcolors, biassurface_t* bsuf,
     memset(&trackApplied, 0, sizeof(trackApplied));
 
     // Has any of the old affected lights changed?
-    forced = false;
+    //forced = false;
 
     if(doUpdateAffected)
     {
@@ -1258,13 +1258,12 @@ void SB_EvalPoint(float light[4], vertexillum_t* illum,
 
     if(illum)
     {
-        boolean             willOverride = false;
+        boolean willOverride = false;
 
         // Combine the casted light from each source.
         for(aff = affecting; aff->source; aff++)
         {
-            float              *casted =
-                SB_GetCasted(illum, aff->index, affectedSources);
+            float *casted = SB_GetCasted(illum, aff->index, affectedSources);
 
             if(aff->overrider &&
                (casted[CR] > 0 || casted[CG] > 0 || casted[CB] > 0))

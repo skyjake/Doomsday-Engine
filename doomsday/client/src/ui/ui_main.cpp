@@ -1789,6 +1789,9 @@ void UI_InitColumns(ui_object_t* ob)
         if(width[i])
             last = width[i];
     }
+
+    DENG_UNUSED(last); /// @todo Remove? -jk
+
     // Calculate the offset for each column.
     maxw = ob->geometry.size.width - 4 * UI_BORDER - (dat->count > dat->numvis ? UI_BAR_WDH : 0);
     sep = maxw - w;

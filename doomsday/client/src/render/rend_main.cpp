@@ -2993,7 +2993,7 @@ void Rend_RenderSurfaceVectors()
         HEdge* hedge = GameMap_HEdge(theMap, i);
         float x, y, bottom, top;
         Sector* backSec;
-        LineDef* line;
+        //LineDef* line;
         Surface* suf;
         vec3f_t origin;
 
@@ -3001,7 +3001,7 @@ void Rend_RenderSurfaceVectors()
            (hedge->lineDef->inFlags & LF_POLYOBJ))
             continue;
 
-        line = hedge->lineDef;
+        //line = hedge->lineDef;
         x = hedge->HE_v1origin[VX] + (hedge->HE_v2origin[VX] - hedge->HE_v1origin[VX]) / 2;
         y = hedge->HE_v1origin[VY] + (hedge->HE_v2origin[VY] - hedge->HE_v1origin[VY]) / 2;
 
@@ -3646,7 +3646,7 @@ void R_DrawLightRange()
 #define BLOCK_HEIGHT            (BLOCK_WIDTH * 255.0f)
 #define BORDER                  (20)
 
-    ui_color_t color;
+    //ui_color_t color;
     float c, off;
     int i;
 
@@ -3660,9 +3660,11 @@ void R_DrawLightRange()
 
     glTranslatef(BORDER, BORDER, 0);
 
+    /*
     color.red = 0.2f;
     color.green = 0;
     color.blue = 0.6f;
+    */
 
     // Draw an outside border.
     glColor4f(1, 1, 0, 1);

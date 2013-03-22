@@ -467,6 +467,7 @@ void Sv_ExecuteCommand(void)
         // New format includes flags and command source.
         // Flags are currently unused but added for future expansion.
         flags = Reader_ReadUInt16(msgReader);
+        DENG_UNUSED(flags);
         cmdSource = Reader_ReadByte(msgReader);
         break;
 
