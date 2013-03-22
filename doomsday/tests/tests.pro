@@ -10,6 +10,7 @@ deng_tests: SUBDIRS += \
     log \
     record \
     script \
+    string \
     stringpool \
     vectors
     #basiclink
