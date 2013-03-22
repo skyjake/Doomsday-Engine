@@ -481,6 +481,11 @@ public:
      */
     class Animation
     {
+#ifdef MACOS_10_4
+        // GCC 4.0 on Mac OS X 10.5 doesn't handle nested classes
+        // and friends that well.
+    public:
+#endif
         Animation(Material &material, MaterialContextId context);
 
     public:
