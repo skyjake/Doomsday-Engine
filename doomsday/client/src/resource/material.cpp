@@ -346,16 +346,17 @@ DENG2_PIMPL(Material)
     /// @c false= the material is no longer valid.
     bool valid;
 
-    Instance(Public *i, MaterialManifest &_manifest) : Base(i),
-        manifest(_manifest),
+    Instance(Public *i, MaterialManifest &_manifest)
+        : Base(i),
+          manifest(_manifest),
 #ifdef __CLIENT__
-        animationsAreDirty(true),
+         animationsAreDirty(true),
 #endif
-        envClass(AEC_UNKNOWN),
-        flags(0),
-        detailLayer(0),
-        shineLayer(0),
-        valid(true)
+         envClass(AEC_UNKNOWN),
+         flags(0),
+         detailLayer(0),
+         shineLayer(0),
+         valid(true)
     {}
 
     ~Instance()
@@ -407,15 +408,13 @@ DENG2_PIMPL(Material)
 #endif // __CLIENT__
 };
 
-Material::Material(MaterialManifest &_manifest)
-    : de::MapElement(DMU_MATERIAL), d(new Instance(this, _manifest))
+Material::Material(MaterialManifest &manifest)
+    : MapElement(DMU_MATERIAL), d(new Instance(this, manifest))
 {}
 
 Material::~Material()
 {
     DENG2_FOR_AUDIENCE(Deletion, i) i->materialBeingDeleted(*this);
-
-    delete d;
 }
 
 MaterialManifest &Material::manifest() const

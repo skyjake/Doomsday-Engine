@@ -56,8 +56,6 @@ class Texture;
  */
 class Material : public de::MapElement
 {
-    struct Instance; // Needs to be friended by Variant (etc...).
-
     /// Internal typedefs for brevity/cleanliness.
     typedef de::MaterialManifest Manifest;
 #ifdef __CLIENT__
@@ -483,7 +481,6 @@ public:
      */
     class Animation
     {
-    private:
         Animation(Material &material, MaterialContextId context);
 
     public:
@@ -567,7 +564,6 @@ public:
         DecorationState const &decoration(int decorNum) const;
 
         friend class Material;
-        friend struct Material::Instance;
 
     private:
         DENG2_PRIVATE(d)
@@ -589,7 +585,6 @@ public:
      */
     class Variant
     {
-    private:
         /**
          * @param generalCase  Material from which the variant is to be derived.
          * @param spec         Specification used to derive the variant.
@@ -638,7 +633,6 @@ public:
         Snapshot const &prepare(bool forceSnapshotUpdate = false);
 
         friend class Material;
-        friend struct Material::Instance;
 
     private:
         DENG2_PRIVATE(d)
@@ -990,7 +984,7 @@ public:
     int setProperty(setargs_t const &args);
 
 private:
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Material::Flags)
