@@ -54,4 +54,10 @@ macx {
 else {
     INSTALLS += target
     target.path = $$DENG_BIN_DIR
+
+    unix {
+        INSTALLS += readme
+        readme.files = ../../../doc/output/doomsday-shell-text.6
+        readme.path  = $$PREFIX/share/man/man6
+    }
 }

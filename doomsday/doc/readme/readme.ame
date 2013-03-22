@@ -28,6 +28,6 @@ $ Readme-specific formatting macros.
     $ See also
     @include{documentation}
     $ Man pages have an author section.
-    @include{author}    
+    @include{../author}
 }
 @include{credit}
