@@ -310,9 +310,6 @@ public:
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
-    /// The format string has incorrect syntax. @ingroup errors
-    DENG2_ERROR(IllegalFormatError);
-
     typedef QList<Arg *> Args;
 
 public:

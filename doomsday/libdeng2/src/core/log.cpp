@@ -372,32 +372,9 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
     }
     else
     {
-        Args::const_iterator arg = _args.begin();
-
-        DENG2_FOR_EACH_CONST(String, i, _format)
-        {
-            if(*i == '%')
-            {
-                if(arg == _args.end())
-                {
-                    // Out of args.
-                    throw IllegalFormatError("LogEntry::asText", "Ran out of arguments");
-                }
-                                
-                output << String::patternFormat(i, _format.end(), **arg);
-                ++arg;
-            }
-            else
-            {
-                output << *i;
-            }
-        }
-        
-        // Just append the rest of the arguments without special instructions.
-        for(; arg != _args.end(); ++arg)
-        {
-            output << **arg;
-        }        
+        String::PatternArgs patArgs;
+        DENG2_FOR_EACH_CONST(Args, i, _args) patArgs << *i;
+        output << _format % patArgs;
     }
     
     if(flags & Styled)
