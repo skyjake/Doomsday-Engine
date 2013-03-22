@@ -176,7 +176,7 @@ static DGLuint prepareLightmap(Texture *texture)
 {
     if(texture)
     {
-        if(TextureVariant *variant = texture->prepareVariant(*Rend_LightmapTextureSpec()))
+        if(TextureVariant *variant = texture->prepareVariant(Rend_LightmapTextureSpec()))
         {
             return variant->glName();
         }
@@ -200,7 +200,7 @@ static DGLuint prepareFlaremap(Texture *texture, int oldIdx)
 {
     if(texture)
     {
-        if(TextureVariant const *variant = texture->prepareVariant(*Rend_HaloTextureSpec()))
+        if(TextureVariant const *variant = texture->prepareVariant(Rend_HaloTextureSpec()))
         {
             return variant->glName();
         }
@@ -266,8 +266,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
         if(Texture *tex = lsNext->texture)
         {
             // Pick the instance matching the specified context.
-            TextureVariant::PrepareResult result;
-            prepTextures[i][1] = tex->prepareVariant(*variant->spec().primarySpec, &result);
+            prepTextures[i][1] = tex->prepareVariant(*variant->spec().primarySpec);
         }
     }
 

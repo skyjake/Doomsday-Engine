@@ -1,9 +1,8 @@
-/**
- * @file lumobj.h Luminous Object Management
+/** @file lumobj.h Luminous Object Management
  * @ingroup render
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -79,43 +78,39 @@ DENG_EXTERN_C float loRadiusFactor;
 DENG_EXTERN_C byte rendInfoLums;
 DENG_EXTERN_C int useMobjAutoLights;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /// Register the console commands, variables, etc..., of this module.
-void LO_Register(void);
+void LO_Register();
 
 // Setup.
-void LO_InitForMap(void);
+void LO_InitForMap();
 
 /// Release all system resources acquired by this module for managing.
-void LO_Clear(void);
+void LO_Clear();
 
 /**
  * To be called at the beginning of a world frame (prior to rendering views of the
  * world), to perform necessary initialization within this module.
  */
-void LO_BeginWorldFrame(void);
+void LO_BeginWorldFrame();
 
 /**
  * To be called at the beginning of a render frame to perform necessary initialization
  * within this module.
  */
-void LO_BeginFrame(void);
+void LO_BeginFrame();
 
 /**
  * Create lumobjs for all sector-linked mobjs who want them.
  */
-void LO_AddLuminousMobjs(void);
+void LO_AddLuminousMobjs();
 
 /**
  * To be called when lumobjs are disabled to perform necessary bookkeeping within this module.
  */
-void LO_UnlinkMobjLumobjs(void);
+void LO_UnlinkMobjLumobjs();
 
 /// @return  The number of active lumobjs for this frame.
-uint LO_GetNumLuminous(void);
+uint LO_GetNumLuminous();
 
 /**
  * Construct a new lumobj and link it into @a bspLeaf.
@@ -151,7 +146,7 @@ float LO_AttenuationFactor(uint idx, coord_t distance);
 /**
  * Returns the texture variant specification for lightmaps.
  */
-texturevariantspecification_t *Rend_LightmapTextureSpec();
+texturevariantspecification_t &Rend_LightmapTextureSpec();
 
 /**
  * Clip lumobj, omni lights in the given BspLeaf.
@@ -228,17 +223,13 @@ uint LO_ProjectToSurface(int flags, BspLeaf *bspLeaf, float blendFactor,
  *
  * @param listIdx       Unique identifier of the list to process.
  * @param callback      Callback to make for each visited projection.
- * @param paramaters    Passed to the callback.
+ * @param parameters    Passed to the callback.
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int LO_IterateProjections2(uint listIdx, int (*callback) (dynlight_t const *, void *), void *paramaters);
-int LO_IterateProjections(uint listIdx, int (*callback) (dynlight_t const *, void*)/*, paramaters = 0*/);
+int LO_IterateProjections2(uint listIdx, int (*callback) (dynlight_t const *, void *), void *parameters);
+int LO_IterateProjections(uint listIdx, int (*callback) (dynlight_t const *, void*)/*, parameters = 0*/);
 
-void LO_DrawLumobjs(void);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
+void LO_DrawLumobjs();
 
 #endif // LIBDENG_RENDER_LUMINOUS_H

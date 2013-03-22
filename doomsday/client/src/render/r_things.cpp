@@ -972,7 +972,7 @@ static DGLuint prepareFlaremap(de::Uri const &resourceUri)
     }
     if(Texture *tex = R_FindTextureByResourceUri("Flaremaps", &resourceUri))
     {
-        if(TextureVariant const *variant = tex->prepareVariant(*Rend_HaloTextureSpec()))
+        if(TextureVariant const *variant = tex->prepareVariant(Rend_HaloTextureSpec()))
         {
             return variant->glName();
         }

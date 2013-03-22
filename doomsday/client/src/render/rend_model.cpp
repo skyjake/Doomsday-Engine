@@ -831,18 +831,18 @@ static int chooseSkin(modeldef_t *mf, int submodel, int id, int selector, int tm
     return skin;
 }
 
-texturevariantspecification_t *Rend_ModelDiffuseTextureSpec(boolean noCompression)
+texturevariantspecification_t &Rend_ModelDiffuseTextureSpec(bool noCompression)
 {
-    return &GL_TextureVariantSpec(TC_MODELSKIN_DIFFUSE, (noCompression? TSF_NO_COMPRESSION : 0),
-                                  0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1,
-                                  true, true, false, false);
+    return GL_TextureVariantSpec(TC_MODELSKIN_DIFFUSE, (noCompression? TSF_NO_COMPRESSION : 0),
+                                 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1,
+                                 true, true, false, false);
 }
 
-texturevariantspecification_t *Rend_ModelShinyTextureSpec()
+texturevariantspecification_t &Rend_ModelShinyTextureSpec()
 {
-    return &GL_TextureVariantSpec(TC_MODELSKIN_REFLECTION, TSF_NO_COMPRESSION,
-                                  0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1,
-                                  false, false, false, false);
+    return GL_TextureVariantSpec(TC_MODELSKIN_REFLECTION, TSF_NO_COMPRESSION,
+                                 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1,
+                                 false, false, false, false);
 }
 
 /**
@@ -1064,7 +1064,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     {
         if(Texture *tex = reinterpret_cast<Texture *>(mf->sub[number].shinySkin))
         {
-            shinyTexture = tex->prepareVariant(*Rend_ModelShinyTextureSpec());
+            shinyTexture = tex->prepareVariant(Rend_ModelShinyTextureSpec());
         }
         else
         {
@@ -1147,7 +1147,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
         skinTexture = 0;
         if(Texture *tex = reinterpret_cast<Texture *>(mdl->skins[useSkin].texture))
         {
-            skinTexture = tex->prepareVariant(*Rend_ModelDiffuseTextureSpec(!mdl->allowTexComp));
+            skinTexture = tex->prepareVariant(Rend_ModelDiffuseTextureSpec(!mdl->allowTexComp));
         }
     }
 

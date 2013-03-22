@@ -36,6 +36,8 @@
 #include "MaterialVariantSpec"
 #include "Texture"
 
+#include "render/lumobj.h"
+
 using namespace de;
 
 BEGIN_PROF_TIMERS()
@@ -699,11 +701,11 @@ float LO_AttenuationFactor(uint idx, coord_t distance)
     return 1;
 }
 
-texturevariantspecification_t *Rend_LightmapTextureSpec()
+texturevariantspecification_t &Rend_LightmapTextureSpec()
 {
-    return &GL_TextureVariantSpec(TC_MAPSURFACE_LIGHTMAP, 0, 0, 0, 0,
-                                  GL_CLAMP, GL_CLAMP, 1, -1, -1,
-                                  false, false, false, true);
+    return GL_TextureVariantSpec(TC_MAPSURFACE_LIGHTMAP, 0, 0, 0, 0,
+                                 GL_CLAMP, GL_CLAMP, 1, -1, -1,
+                                 false, false, false, true);
 
 }
 
@@ -711,7 +713,7 @@ static DGLuint prepareLightmap(de::Uri const *resourceUri)
 {
     if(Texture *tex = R_FindTextureByResourceUri("Lightmaps", resourceUri))
     {
-        if(TextureVariant *variant = tex->prepareVariant(*Rend_LightmapTextureSpec()))
+        if(TextureVariant *variant = tex->prepareVariant(Rend_LightmapTextureSpec()))
         {
             return variant->glName();
         }

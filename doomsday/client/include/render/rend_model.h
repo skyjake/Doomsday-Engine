@@ -77,24 +77,20 @@ DENG_EXTERN_C int mirrorHudModels;
 DENG_EXTERN_C int modelShinyMultitex;
 DENG_EXTERN_C float rendModelLOD;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * Registers the console commands and variables used by this module.
  */
-void Rend_ModelRegister(void);
+void Rend_ModelRegister();
 
 /**
  * Initialize this module.
  */
-void Rend_ModelInit(void);
+void Rend_ModelInit();
 
 /**
  * Shuts down this module.
  */
-void Rend_ModelShutdown(void);
+void Rend_ModelShutdown();
 
 /**
  * Expand the render buffer to accommodate rendering models containing at most
@@ -115,7 +111,7 @@ void Rend_ModelShutdown(void);
  */
 boolean Rend_ModelExpandVertexBuffers(uint numVertices);
 
-void Rend_ModelSetFrame(modeldef_t* modef, int frame);
+void Rend_ModelSetFrame(modeldef_t *modef, int frame);
 
 /**
  * Lookup the texture specification for diffuse model skins.
@@ -123,22 +119,18 @@ void Rend_ModelSetFrame(modeldef_t* modef, int frame);
  * @param  noCompression  @c true= disable texture compression.
  * @return  Specification to be used when preparing such textures.
  */
-struct texturevariantspecification_s* Rend_ModelDiffuseTextureSpec(boolean noCompression);
+struct texturevariantspecification_s &Rend_ModelDiffuseTextureSpec(bool noCompression);
 
 /**
  * Lookup the texture specification for shiny model skins.
  *
  * @return  Specification to be used when preparing such textures.
  */
-struct texturevariantspecification_s* Rend_ModelShinyTextureSpec(void);
+struct texturevariantspecification_s &Rend_ModelShinyTextureSpec();
 
 /**
  * Render a submodel according to paramaters.
  */
-void Rend_RenderModel(const rendmodelparams_t* params);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
+void Rend_RenderModel(rendmodelparams_t const *params);
 
 #endif // LIBDENG_RENDER_MODEL_H

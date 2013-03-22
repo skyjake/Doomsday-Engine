@@ -1,4 +1,4 @@
-/** @file
+/** @file rend_halo.cpp Halos and Lens Flares.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,30 +17,18 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Halos and Lens Flares.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
-#include <math.h>
+#include <cmath>
 
 #include "de_base.h"
 #include "de_console.h"
-//#include "de_render.h"
-//#include "de_play.h"
 #include "de_graphics.h"
 #include "de_misc.h"
-
 #include "map/p_players.h"
 #include "render/rend_main.h"
+
 #include "render/rend_halo.h"
 
-// MACROS ------------------------------------------------------------------
-
 #define NUM_FLARES          5
-
-// TYPES -------------------------------------------------------------------
 
 typedef struct flare_s {
     float       offset;
@@ -49,17 +37,7 @@ typedef struct flare_s {
     int         texture; // 0=round, 1=flare, 2=brflare, 3=bigflare
 } flare_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
 D_CMD(FlareConfig);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int     haloMode = 5, haloBright = 35, haloSize = 80;
 int     haloRealistic = true;
@@ -76,10 +54,6 @@ flare_t flares[NUM_FLARES] = {
     {-.6f, .24f, .333f, 0},
     {.4f, .29f, .25f, 0}
 };
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 void H_Register(void)
 {
@@ -103,14 +77,14 @@ void H_Register(void)
     C_CMD_FLAGS("flareconfig", NULL, FlareConfig, CMDF_NO_DEDICATED);
 }
 
-texturevariantspecification_t *Rend_HaloTextureSpec()
+texturevariantspecification_t &Rend_HaloTextureSpec()
 {
-    return &GL_TextureVariantSpec(TC_HALO_LUMINANCE, TSF_NO_COMPRESSION, 0, 0, 0,
-                                  GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, 1, 0,
-                                  false, false, false, true);
+    return GL_TextureVariantSpec(TC_HALO_LUMINANCE, TSF_NO_COMPRESSION, 0, 0, 0,
+                                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, 1, 0,
+                                 false, false, false, true);
 }
 
-void H_SetupState(boolean dosetup)
+void H_SetupState(bool dosetup)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -129,11 +103,10 @@ void H_SetupState(boolean dosetup)
     }
 }
 
-boolean H_RenderHalo(coord_t x, coord_t y, coord_t z, float size, DGLuint tex,
-                     const float color[3], coord_t distanceToViewer,
-                     float occlusionFactor, float brightnessFactor,
-                     float viewXOffset, boolean primary,
-                     boolean viewRelativeRotate)
+bool H_RenderHalo(coord_t x, coord_t y, coord_t z, float size,
+    DGLuint tex, float const color[3], coord_t distanceToViewer,
+    float occlusionFactor, float brightnessFactor, float viewXOffset,
+    bool primary, bool viewRelativeRotate)
 {
     int i, k;
     float viewToCenter[3], mirror[3], normalViewToCenter[3];
@@ -142,8 +115,8 @@ boolean H_RenderHalo(coord_t x, coord_t y, coord_t z, float size, DGLuint tex,
     float rgba[4], radX, radY, scale, turnAngle = 0;
     float fadeFactor = 1, secBold, secDimFactor;
     float colorAverage, f, distanceDim;
-    flare_t* fl;
-    const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
+    flare_t *fl;
+    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
 
     // In realistic mode we don't render secondary halos.
     if(!primary && haloRealistic)

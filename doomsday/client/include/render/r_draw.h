@@ -1,5 +1,4 @@
-/**
- * @file r_draw.h Misc Drawing Routines
+/** @file r_draw.h Misc Drawing Routines
  * @ingroup render
  *
  * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -26,15 +25,15 @@
 #include "de_system.h"
 #include "Texture"
 
-void R_InitViewWindow(void);
-void R_ShutdownViewWindow(void);
+void R_InitViewWindow();
+void R_ShutdownViewWindow();
 
 /**
  * Draws the border around the view for different size windows.
  */
-void R_DrawViewBorder(void);
+void R_DrawViewBorder();
 
-texturevariantspecification_t *Rend_PatchTextureSpec(int flags = 0,
+texturevariantspecification_t &Rend_PatchTextureSpec(int flags = 0,
     int wrapS = GL_CLAMP_TO_EDGE, int wrapT = GL_CLAMP_TO_EDGE);
 
 void R_DrawPatch(de::Texture &texture, int x, int y);
@@ -42,4 +41,4 @@ void R_DrawPatch(de::Texture &texture, int x, int y, int w, int h, bool useOffse
 
 void R_DrawPatchTiled(de::Texture &texture, int x, int y, int w, int h, int wrapS, int wrapT);
 
-#endif /* LIBDENG_RENDER_MISC_H */
+#endif // LIBDENG_RENDER_MISC_H

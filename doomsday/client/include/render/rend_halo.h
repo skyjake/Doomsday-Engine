@@ -1,4 +1,4 @@
-/** @file
+/** @file rend_halo.h Halos and Lens Flares.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,31 +17,23 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Halos and Lens Flares.
- */
-
 #ifndef LIBDENG_RENDER_HALO_H
 #define LIBDENG_RENDER_HALO_H
 
 #include "TextureVariantSpec"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+DENG_EXTERN_C int      haloOccludeSpeed;
+DENG_EXTERN_C int      haloMode, haloRealistic, haloBright, haloSize;
+DENG_EXTERN_C float    haloFadeMax, haloFadeMin, minHaloSize;
 
-extern int      haloOccludeSpeed;
-extern int      haloMode, haloRealistic, haloBright, haloSize;
-extern float    haloFadeMax, haloFadeMin, minHaloSize;
-
-void            H_Register(void);
+void H_Register();
 
 /**
  * Returns the texture variant specification for halos.
  */
-texturevariantspecification_t *Rend_HaloTextureSpec();
+texturevariantspecification_t &Rend_HaloTextureSpec();
 
-void            H_SetupState(boolean dosetup);
+void H_SetupState(bool dosetup);
 
 /**
  * Render a halo.
@@ -67,17 +59,13 @@ void            H_SetupState(boolean dosetup);
  *
  * @return          @c true, iff a halo was rendered.
  */
-boolean         H_RenderHalo(coord_t x, coord_t y, coord_t z, float size,
-                             DGLuint tex, const float color[3],
-                             coord_t distanceToViewer, float occlusionFactor,
-                             float brightnessFactor, float viewXOffset,
-                             boolean primary, boolean viewRelativeRotate);
+bool H_RenderHalo(coord_t x, coord_t y, coord_t z, float size,
+                  DGLuint tex, float const color[3],
+                  coord_t distanceToViewer, float occlusionFactor,
+                  float brightnessFactor, float viewXOffset,
+                  bool primary, bool viewRelativeRotate);
 
 // Console commands.
 D_CMD(FlareConfig);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /* LIBDENG_RENDER_HALO_H */

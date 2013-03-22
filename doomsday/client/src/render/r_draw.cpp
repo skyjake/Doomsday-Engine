@@ -128,11 +128,11 @@ void R_ShutdownViewWindow(void)
     inited = false;
 }
 
-texturevariantspecification_t *Rend_PatchTextureSpec(int flags, int wrapS, int wrapT)
+texturevariantspecification_t &Rend_PatchTextureSpec(int flags, int wrapS, int wrapT)
 {
-    return &GL_TextureVariantSpec(TC_UI, flags, 0, 0, 0,
-                                  wrapS, wrapT, 0, -3, 0,
-                                  false, false, false, false);
+    return GL_TextureVariantSpec(TC_UI, flags, 0, 0, 0,
+                                 wrapS, wrapT, 0, -3, 0,
+                                 false, false, false, false);
 }
 
 void R_DrawPatch(Texture &texture, int x, int y, int w, int h, bool useOffsets)
@@ -146,10 +146,10 @@ void R_DrawPatch(Texture &texture, int x, int y, int w, int h, bool useOffsets)
         return;
     }
 
-    texturevariantspecification_t *texSpec =
+    texturevariantspecification_t &texSpec =
         Rend_PatchTextureSpec(0 | (texture.isFlagged(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
                                 | (texture.isFlagged(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
-    GL_BindTexture(texture.prepareVariant(*texSpec));
+    GL_BindTexture(texture.prepareVariant(texSpec));
 
     if(useOffsets)
     {
@@ -168,9 +168,9 @@ void R_DrawPatch(Texture &tex, int x, int y)
 void R_DrawPatchTiled(Texture &texture, int x, int y, int w, int h, int wrapS, int wrapT)
 {
     texturevariantspecification_t const &spec =
-        *Rend_PatchTextureSpec(0 | (texture.isFlagged(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
-                                 | (texture.isFlagged(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0),
-                               wrapS, wrapT);
+        Rend_PatchTextureSpec(0 | (texture.isFlagged(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
+                                | (texture.isFlagged(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0),
+                              wrapS, wrapT);
 
     GL_BindTexture(texture.prepareVariant(spec));
     GL_DrawRectf2Tiled(x, y, w, h, texture.width(), texture.height());
