@@ -58,24 +58,20 @@ void Id1Map::collectPolyobjLinesWorker(LineList& lineList, coord_t x, coord_t y)
  * @todo This terribly inefficent (naive) algorithm may need replacing
  *       (it is far outside an acceptable polynomial range!).
  */
-void Id1Map::collectPolyobjLines(LineList& lineList, Lines::iterator lineIt)
+void Id1Map::collectPolyobjLines(LineList &lineList, Lines::iterator lineIt)
 {
-    mline_t* line = &*lineIt;
-    line->xType = 0;
-    line->xArgs[0] = 0;
-
-    coord_t v1[2];
-    v1[VX] = vertexes[(line->v[0]-1) * 2];
-    v1[VY] = vertexes[(line->v[0]-1) * 2 + 1];
+    mline_t &line = *lineIt;
+    line.xType = 0;
+    line.xArgs[0] = 0;
 
     coord_t v2[2];
-    v2[VX] = vertexes[(line->v[1]-1) * 2];
-    v2[VY] = vertexes[(line->v[1]-1) * 2 + 1];
+    v2[VX] = vertexes[(line.v[1]-1) * 2];
+    v2[VY] = vertexes[(line.v[1]-1) * 2 + 1];
 
     validCount++;
     // Insert the first line.
     lineList.push_back(lineIt - lines.begin());
-    line->validCount = validCount;
+    line.validCount = validCount;
     collectPolyobjLinesWorker(lineList, v2[VX], v2[VY]);
 }
 

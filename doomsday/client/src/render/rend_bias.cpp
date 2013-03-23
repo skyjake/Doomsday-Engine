@@ -1258,17 +1258,17 @@ void SB_EvalPoint(float light[4], vertexillum_t* illum,
 
     if(illum)
     {
-        boolean willOverride = false;
+        //boolean willOverride = false;
 
         // Combine the casted light from each source.
         for(aff = affecting; aff->source; aff++)
         {
             float *casted = SB_GetCasted(illum, aff->index, affectedSources);
 
-            if(aff->overrider &&
+/*          if(aff->overrider &&
                (casted[CR] > 0 || casted[CG] > 0 || casted[CB] > 0))
                 willOverride = true;
-
+*/
 /*          if(!(casted[3] > 0))
             {
                 int n;

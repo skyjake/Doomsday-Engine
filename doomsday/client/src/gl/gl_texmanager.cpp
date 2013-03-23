@@ -763,7 +763,6 @@ static dgltexformat_t prepareImageAsTexture(image_t &image,
 
     bool monochrome    = (spec.flags & TSF_MONOCHROME) != 0;
     bool scaleSharp    = (spec.flags & TSF_UPSCALE_AND_SHARPEN) != 0;
-    bool noSmartFilter = false;
 
     if(spec.toAlpha)
     {
@@ -853,9 +852,6 @@ static dgltexformat_t prepareImageAsTexture(image_t &image,
                         image.flags |= IMGF_IS_MASKED;
                 }
             }
-
-            // Lets not do this again.
-            noSmartFilter = true;
         }
     }
     else if(image.pixelSize > 2)
