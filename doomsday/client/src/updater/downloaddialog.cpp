@@ -105,6 +105,7 @@ DENG2_PIMPL(DownloadDialog)
         redirected.clear();
 
         de::String path = uri.path();
+        QDir::current().mkpath(UpdaterSettings().downloadPath()); // may not exist
         savedFilePath = UpdaterSettings().downloadPath() / path.fileName();
 
         reply = network->get(QNetworkRequest(uri));

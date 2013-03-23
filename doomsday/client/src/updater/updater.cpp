@@ -356,6 +356,7 @@ DENG2_PIMPL(Updater)
         // 5. Close the distrib package.
         // 6. Open the new "Doomsday Engine.app".
 
+        /*
         // This assumes the Doomsday executable is inside the Snowberry bundle.
         de::String execPath = QDir::cleanPath(QDir(de::App::executablePath().fileNamePath())
                                               .filePath("../../../.."));
@@ -370,30 +371,50 @@ DENG2_PIMPL(Updater)
             return;
 #endif
         }
+        */
 
         de::String volName = "Doomsday Engine " + latestVersion.base();
 
 #ifdef DENG2_QT_5_0_OR_NEWER
-        QString scriptPath = QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation))
-                .filePath(INSTALL_SCRIPT_NAME);
+        QString scriptPath = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
 #else
-        QString scriptPath = QDir(QDesktopServices::storageLocation(QDesktopServices::TempLocation))
-                .filePath(INSTALL_SCRIPT_NAME);
+        QString scriptPath = QDesktopServices::storageLocation(QDesktopServices::CacheLocation);
 #endif
+        QDir::current().mkpath(scriptPath); // may not exist
+        scriptPath = QDir(scriptPath).filePath(INSTALL_SCRIPT_NAME);
         QFile file(scriptPath);
         if(file.open(QFile::WriteOnly | QFile::Truncate))
         {
             QTextStream out(&file);
-            out << "tell application \"Finder\"\n"
-                << "  open document POSIX file \"" << distribPackagePath << "\"\n"
-                << "  -- Wait for it to get mounted\n"
-                << "  repeat until name of every disk contains \"" << volName << "\"\n"
-                << "    delay 1\n"
-                << "  end repeat\n"
-                << "  -- Start the installer\n"
-                << "  open document file \"" << volName << ":Doomsday.pkg\"\n"
-                << "end tell\n";
+            out << "tell application \"System Events\" to set visible of process \"Finder\" to false\n"
+                   "tell application \"Finder\"\n"
+                   "  open POSIX file \"" << distribPackagePath << "\"\n"
+                   "  -- Wait for it to get mounted\n"
+                   "  repeat until name of every disk contains \"" << volName << "\"\n"
+                   "    delay 1\n"
+                   "  end repeat\n"
+                   "  -- Start the installer\n"
+                   "  open file \"" << volName << ":Doomsday.pkg\"\n"
+                   "  -- Activate the Installer\n"
+                   "  repeat until name of every process contains \"Installer\"\n"
+                   "    delay 2\n"
+                   "  end repeat\n"
+                   "end tell\n"
+                   "delay 1\n"
+                   "tell application \"Installer\" to activate\n"
+                   "tell application \"Finder\"\n"
+                   "  -- Wait for it to finish\n"
+                   "  repeat until name of every process does not contain \"Installer\"\n"
+                   "    delay 1\n"
+                   "  end repeat\n"
+                   "  -- Unmount\n"
+                   "  eject disk \"" << volName << "\"\n"
+                   "end tell\n";
             file.close();
+        }
+        else
+        {
+            qWarning() << "Could not write" << scriptPath;
         }
 
         // Register a shutdown action to execute the script and quit.
