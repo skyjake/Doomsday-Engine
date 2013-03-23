@@ -21,7 +21,7 @@ Graphics:
 @item @wikiterm{Particle effects}: point sprite and @wikiterm{3D model particles} 
 @item Game world @wikiterm{movement smoothing} (actors, monsters, missiles, surfaces)
 @item Smart texture filtering using a modified hq2x algorithm
-@item Runs glBSP internally when needed
+@item Internal enhanced BSP builder (originally based on glBSP)
 }
 
 Sound:

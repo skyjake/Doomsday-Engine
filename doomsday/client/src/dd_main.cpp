@@ -2291,7 +2291,6 @@ void DD_UpdateEngineState(void)
 #endif
 }
 
-/* *INDENT-OFF* */
 ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&netGame, 0},
     {&isServer, 0},                         // An *open* server?
@@ -2306,14 +2305,11 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
 #ifdef __CLIENT__
     {&mipmapping, 0},
     {&filterUI, 0},
-#else
-    {0, 0},
-    {0, 0},
-#endif
-#ifdef __CLIENT__
     {&defResX, &defResX},
     {&defResY, &defResY},
 #else
+    {0, 0},
+    {0, 0},
     {0, 0},
     {0, 0},
 #endif
@@ -2347,18 +2343,14 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&gameDataFormat, &gameDataFormat},
 #ifdef __CLIENT__
     {&gameDrawHUD, 0},
-#else
-    {0, 0},
-#endif
-#ifdef __CLIENT__
     {&symbolicEchoMode, &symbolicEchoMode},
     {&numTexUnits, 0}
 #else
     {0, 0},
     {0, 0},
+    {0, 0},
 #endif
 };
-/* *INDENT-ON* */
 
 /**
  * Get a 32-bit signed integer value.
