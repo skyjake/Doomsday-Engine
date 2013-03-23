@@ -242,12 +242,10 @@ Material::Decoration::Stage *Material::Decoration::Stage::fromDef(ded_decorlight
         }
     }
 
-    /// @todo Should use sysFlareIdx below instead of def.sysFlareIdx? -jk
-
     return new Stage(def.tics, def.variance, Vector2f(def.pos), def.elevation,
                      Vector3f(def.color), def.radius, def.haloRadius,
                      Stage::LightLevels(def.lightLevels),
-                     upTexture, downTexture, sidesTexture, flareTexture, def.sysFlareIdx);
+                     upTexture, downTexture, sidesTexture, flareTexture, sysFlareIdx);
 }
 
 String Material::Decoration::Stage::LightLevels::asText() const
