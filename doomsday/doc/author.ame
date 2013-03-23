@@ -2,5 +2,4 @@ $ Author chapter for the Unix man page.
 @chapter{ Author }
 
 This documentation has been written by Jaakko Keränen
-@mailto{skyjake@@users.sourceforge.net} and Daniel Swanson
-@mailto{danij@@dengine.net}.
+@mailto{jaakko.keranen@@iki.fi} and Daniel Swanson @mailto{danij@@dengine.net}.
