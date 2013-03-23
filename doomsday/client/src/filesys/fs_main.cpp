@@ -330,7 +330,6 @@ struct FS1::Instance
         LOG_AS("FS1::openFile");
 
         // We must have an absolute path.
-        path.replace(DIR_WRONG_SEP_CHAR, DIR_SEP_STR); /// @todo Shouldn't this be taken care of elsewhere? -jk
         path = App_BasePath() / path;
 
         LOG_TRACE("Trying \"%s\"...") << NativePath(path).pretty();
