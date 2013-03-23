@@ -163,6 +163,8 @@ public:
 
     static LogBuffer &appBuffer();
 
+    static bool isAppBufferAvailable();
+
 public slots:
     /**
      * Flushes all unflushed entries to the defined outputs.

@@ -551,7 +551,8 @@ void Log::disposeThreadLog()
 
 LogEntryStager::LogEntryStager(LogEntry::Level level, String const &format) : _level(level)
 {
-    _disabled = !LogBuffer::appBuffer().isEnabled(level);
+    _disabled = !LogBuffer::isAppBufferAvailable() ||
+                !LogBuffer::appBuffer().isEnabled(level);
     if(!_disabled)
     {
         _format = format;

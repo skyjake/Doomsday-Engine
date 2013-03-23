@@ -120,6 +120,8 @@ LogBuffer::~LogBuffer()
 
     setOutputFile("");
     clear();
+
+    if(_appBuffer == this) _appBuffer = 0;
 }
 
 void LogBuffer::clear()
@@ -314,6 +316,11 @@ LogBuffer &LogBuffer::appBuffer()
 {
     DENG2_ASSERT(_appBuffer != 0);
     return *_appBuffer;
+}
+
+bool LogBuffer::isAppBufferAvailable()
+{
+    return _appBuffer != 0;
 }
 
 } // namespace de
