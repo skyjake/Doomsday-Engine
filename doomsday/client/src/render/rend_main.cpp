@@ -2256,10 +2256,10 @@ static void Rend_BuildBspLeafSkyFixStripGeometry(BspLeaf* leaf, HEdge* startNode
         if(n == 0)
         {
             // Add the first edge.
-            rvertex_t* v1 = &(*verts)[n + antiClockwise^0];
-            rvertex_t* v2 = &(*verts)[n + antiClockwise^1];
-            rtexcoord_t* t1 = coords? &(*coords)[n + antiClockwise^0] : NULL;
-            rtexcoord_t* t2 = coords? &(*coords)[n + antiClockwise^1] : NULL;
+            rvertex_t* v1 = &(*verts)[n + antiClockwise];
+            rvertex_t* v2 = &(*verts)[n + (antiClockwise^1)];
+            rtexcoord_t* t1 = coords? &(*coords)[n + antiClockwise] : NULL;
+            rtexcoord_t* t2 = coords? &(*coords)[n + (antiClockwise^1)] : NULL;
 
             Rend_BuildBspLeafSkyFixStripEdge(node->HE_v1origin, zBottom, zTop, texS,
                                              v1, v2, t1, t2);
@@ -2274,10 +2274,10 @@ static void Rend_BuildBspLeafSkyFixStripGeometry(BspLeaf* leaf, HEdge* startNode
 
         // Add the next edge.
         {
-            rvertex_t* v1 = &(*verts)[n + antiClockwise^0];
-            rvertex_t* v2 = &(*verts)[n + antiClockwise^1];
-            rtexcoord_t* t1 = coords? &(*coords)[n + antiClockwise^0] : NULL;
-            rtexcoord_t* t2 = coords? &(*coords)[n + antiClockwise^1] : NULL;
+            rvertex_t* v1 = &(*verts)[n + antiClockwise];
+            rvertex_t* v2 = &(*verts)[n + (antiClockwise^1)];
+            rtexcoord_t* t1 = coords? &(*coords)[n + antiClockwise] : NULL;
+            rtexcoord_t* t2 = coords? &(*coords)[n + (antiClockwise^1)] : NULL;
 
             Rend_BuildBspLeafSkyFixStripEdge((antiClockwise? node->prev : node->next)->HE_v1origin,
                                              zBottom, zTop, texS,
