@@ -1183,7 +1183,7 @@ Window* Window_New(const char* title)
 
 void Window_Delete(Window* wnd)
 {
-    assert(wnd);
+    if(!wnd || !wnd->widget) return;
 
     wnd->assertWindow();
     wnd->widget->canvas().setFocusFunc(0);
@@ -1487,7 +1487,7 @@ void Window_RestoreState(Window* wnd)
 
 void Window_TrapMouse(const Window* wnd, boolean enable)
 {
-    if(!wnd || novideo) return;
+    if(!wnd || !wnd->widget || novideo) return;
 
     wnd->assertWindow();
     wnd->widget->canvas().trapMouse(enable);

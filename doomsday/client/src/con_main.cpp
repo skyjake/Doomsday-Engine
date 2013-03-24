@@ -61,6 +61,7 @@
 
 #ifdef __CLIENT__
 #  include "updater/downloaddialog.h"
+#  include <de/GuiApp>
 #endif
 
 using namespace de;
@@ -2075,8 +2076,9 @@ void Con_AbnormalShutdown(const char* message)
     DisplayMode_Shutdown();
 
 #ifdef __CLIENT__
-    // Be a bit more graphic.
     Window_TrapMouse(Window_Main(), false);
+    Window_Delete(Window_Main());
+    DENG2_GUI_APP->loop().pause();
 #endif
 
     if(message) // Only show if a message given.
@@ -2091,10 +2093,6 @@ void Con_AbnormalShutdown(const char* message)
     }
 
     DD_Shutdown();
-
-    // Open Doomsday.out in a text editor.
-    //fflush(outFile); // Make sure all the buffered stuff goes into the file.
-    //Sys_OpenTextEditor("doomsday.out");
 
     // Get outta here.
     exit(1);
