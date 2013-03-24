@@ -23,7 +23,6 @@
 #include <de/Time>
 #include <de/Log>
 #include <de/ByteRefArray>
-#include <QTimer>
 
 namespace de {
 namespace shell {

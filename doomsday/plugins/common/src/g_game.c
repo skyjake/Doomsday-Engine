@@ -211,8 +211,6 @@ boolean respawnMonsters;
 #endif
 boolean monsterInfight;
 
-boolean paused;
-boolean sendPause; // Send a pause event next tic.
 boolean userGame = false; // Ok to save / end game.
 boolean deathmatch; // Only if started as net death.
 player_t players[MAXPLAYERS];
@@ -262,9 +260,6 @@ int gsvAmmo[NUM_AMMO_TYPES];
 
 char *gsvMapName = NOTAMAPNAME;
 
-int gamePauseWhenFocusLost;
-int gameUnpauseWhenFocusGained;
-
 #if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
 int gsvInvItems[NUM_INVENTORYITEM_TYPES];
 #endif
@@ -278,11 +273,7 @@ static gamestate_t gameState = GS_STARTUP;
 cvartemplate_t gamestatusCVars[] = {
    {"game-state", READONLYCVAR, CVT_INT, &gameState, 0, 0},
    {"game-state-map", READONLYCVAR, CVT_INT, &gsvInMap, 0, 0},
-   {"game-paused", READONLYCVAR, CVT_INT, &paused, 0, 0},
    {"game-skill", READONLYCVAR, CVT_INT, &gameSkill, 0, 0},
-
-   {"game-pause-focuslost", 0, CVT_INT, &gamePauseWhenFocusLost, 0, 1},
-   {"game-unpause-focusgained", 0, CVT_INT, &gameUnpauseWhenFocusGained, 0, 1},
 
    {"map-id", READONLYCVAR, CVT_INT, &gameMap, 0, 0},
    {"map-name", READONLYCVAR, CVT_CHARPTR, &gsvMapName, 0, 0},
@@ -454,10 +445,6 @@ void G_Register(void)
 {
     int i;
 
-    // Default values (overridden by values from .cfg files).
-    gamePauseWhenFocusLost = true;
-    gameUnpauseWhenFocusGained = false;
-
     for(i = 0; gamestatusCVars[i].path; ++i)
         Con_AddVariable(gamestatusCVars + i);
 
@@ -538,6 +525,7 @@ void G_CommonPreInit(void)
     G_ConsoleRegistration();    // Main command list.
     D_NetConsoleRegistration(); // For network.
     G_Register();               // Read-only game status cvars (for playsim).
+    Pause_Register();
     G_ControlRegister();        // For controls/input.
     SV_Register();              // Game-save system.
     Hu_MenuRegister();          // For the menu.
@@ -1381,18 +1369,7 @@ int G_Responder(event_t* ev)
 
     if(G_GameState() == GS_MAP)
     {
-        if(ev->type == EV_FOCUS)
-        {
-            if(gamePauseWhenFocusLost && !ev->data1)
-            {
-                G_SetPause(true);
-            }
-            else if(gameUnpauseWhenFocusGained && ev->data1)
-            {
-                G_SetPause(false);
-            }
-            return false; // others might be interested
-        }
+        Pause_Responder(ev);
 
         // With the menu active, none of these should respond to input events.
         if(!Hu_MenuIsActive() && !Hu_IsMessageActive())
@@ -1759,7 +1736,7 @@ void G_Ticker(timespan_t ticLength)
 
             // Tell Doomsday when the game is paused (clients can't pause
             // the game.)
-            Set(DD_CLIENT_PAUSED, P_IsPaused());
+            Set(DD_CLIENT_PAUSED, Pause_IsPaused());
         }
 
         // Must be called on every tick.
@@ -2642,7 +2619,7 @@ void G_DoLeaveMap(void)
     boolean hasBrief;
 
     // Unpause the current game.
-    sendPause = paused = false;
+    Pause_End();
 
     // If there are any InFine scripts running, they must be stopped.
     FI_StackClear();
@@ -2724,10 +2701,10 @@ void G_DoLeaveMap(void)
     gameMapEntryPoint = 0;
 #endif
 
-    p.mapUri     = G_ComposeMapUri(gameEpisode, nextMap);
-    p.episode    = gameEpisode;
-    p.map        = nextMap;
-    p.revisit    = revisit;
+    p.mapUri  = G_ComposeMapUri(gameEpisode, nextMap);
+    p.episode = gameEpisode;
+    p.map     = nextMap;
+    p.revisit = revisit;
 
     hasBrief = G_BriefingEnabled(p.episode, p.map, 0);
     if(!hasBrief)
@@ -2802,7 +2779,7 @@ void G_DoRestartMap(void)
     G_StopDemo();
 
     // Unpause the current game.
-    sendPause = paused = false;
+    Pause_End();
 
     // Delete raw images to conserve texture memory.
     DD_Executef(true, "texreset raw");
@@ -3088,7 +3065,7 @@ void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
     userGame = true; // Will be set false if a demo.
 
     // Unpause the current game.
-    sendPause = paused = false;
+    Pause_End();
 
     // Delete raw images to conserve texture memory.
     DD_Executef(true, "texreset raw");

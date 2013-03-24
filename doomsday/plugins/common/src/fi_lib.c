@@ -478,6 +478,7 @@ int Hook_FinaleScriptStop(int hookType, int finaleId, void* parameters)
         S_MapMusic(gameEpisode, gameMap);
         HU_WakeWidgets(-1 /* all players */);
         G_BeginMap();
+        Pause_End(); // skip forced period
     }
     return true;
 }

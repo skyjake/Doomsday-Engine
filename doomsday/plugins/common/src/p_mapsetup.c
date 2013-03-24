@@ -792,6 +792,9 @@ void P_SetupMap(Uri* mapUri, uint episode, uint map)
 
     P_FinalizeMap();
 
+    // Make sure the game is paused for the requested period.
+    Pause_MapStarted();
+
     // It ends.
     mapSetup = false;
 }

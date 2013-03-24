@@ -896,14 +896,6 @@ void NetCl_LoadGame(Reader* msg)
 }
 
 /**
- * Pause or unpause the game.
- */
-void NetCl_Paused(Reader* msg)
-{
-    DD_SetInteger(DD_CLIENT_PAUSED, Reader_ReadByte(msg));
-}
-
-/**
  * Send a GPT_CHEAT_REQUEST packet to the server. If the server is allowing
  * netgame cheating, the cheat will be executed on the server.
  */

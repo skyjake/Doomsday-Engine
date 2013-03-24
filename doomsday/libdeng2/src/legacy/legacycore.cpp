@@ -25,7 +25,6 @@
 
 #include <QCoreApplication>
 #include <QList>
-#include <QTimer>
 #include <QDebug>
 #include <string>
 

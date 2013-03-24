@@ -38,7 +38,7 @@
 #include "doomsday.h"
 #include "g_common.h"
 #include "p_player.h"
-#include "p_tick.h" // for P_IsPaused()
+#include "p_tick.h" // for Pause_IsPaused()
 #include "p_view.h"
 #include "d_net.h"
 #include "p_player.h"
@@ -1929,7 +1929,7 @@ void P_PlayerThinkAssertions(player_t* player)
  */
 void P_PlayerThink(player_t *player, timespan_t ticLength)
 {
-    if(P_IsPaused())
+    if(Pause_IsPaused())
         return;
 
     if(G_GameState() != GS_MAP)
