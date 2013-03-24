@@ -433,7 +433,7 @@ DENG2_PIMPL(Material)
 
     /**
      * Determines whether the world dimensions are now defined and if so
-     * cancels further notifications about changes to texture dimensions.
+     * cancels future notifications about changes to texture dimensions.
      */
     void maybeCancelTextureDimensionsChangeNotification()
     {
