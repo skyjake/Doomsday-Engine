@@ -44,13 +44,13 @@ int main(int argc, char **argv)
         LOG_MSG(" Max width .8: '%.8s'") << "Hello";
         LOG_MSG(" Left align:   '%-8s'") << "Hello";
 
-        LOG_MSG("Integer (64-bit signed): %i") << 0x1000000000;
-        LOG_MSG("Integer (64-bit signed): %d") << 0x1000000000;
-        LOG_MSG("Integer (64-bit unsigned): %u") << 0x123456789abc;
+        LOG_MSG("Integer (64-bit signed): %i") << 0x1000000000LL;
+        LOG_MSG("Integer (64-bit signed): %d") << 0x1000000000LL;
+        LOG_MSG("Integer (64-bit unsigned): %u") << 0x123456789abcLL;
         LOG_MSG("Boolean: %b %b") << true << false;
         LOG_MSG("16-bit Unicode character: %c") << 0x44;
-        LOG_MSG("Hexadecimal (64-bit): %x") << 0x123456789abc;
-        LOG_MSG("Hexadecimal (64-bit): %X") << 0x123456789abc;
+        LOG_MSG("Hexadecimal (64-bit): %x") << 0x123456789abcLL;
+        LOG_MSG("Hexadecimal (64-bit): %X") << 0x123456789abcLL;
         LOG_MSG("Pointer: %p") << &app;
         LOG_MSG("Double precision floating point: %f") << PI;
         LOG_MSG("Decimal places .4: %.4f") << PI;
