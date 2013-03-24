@@ -243,20 +243,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
         if(Texture *tex = lsCur->texture)
         {
             // Pick the instance matching the specified context.
-            TextureVariant::PrepareResult result;
-            prepTextures[i][0] = tex->prepareVariant(*variant->spec().primarySpec, &result);
-
-            // Primary texture was (re)prepared?
-            if(i == 0 && l.stage == 0 &&
-               (TextureVariant::UploadedOriginal == result ||
-                TextureVariant::UploadedExternal == result))
-            {
-                // Are we inheriting the logical dimensions from the texture?
-                if(material->width() == 0 && material->height() == 0)
-                {
-                    material->setDimensions(tex->dimensions());
-                }
-            }
+            prepTextures[i][0] = tex->prepareVariant(*variant->spec().primarySpec);
         }
 
         // Smooth Texture Animation?

@@ -223,12 +223,11 @@ Texture::Variant *Texture::chooseVariant(ChooseVariantMethod method,
     return d->variants.back();
 }
 
-Texture::Variant *Texture::prepareVariant(texturevariantspecification_t const &spec,
-    Variant::PrepareResult *prepareResult)
+Texture::Variant *Texture::prepareVariant(texturevariantspecification_t const &spec)
 {
     Variant *variant = chooseVariant(MatchSpec, spec, true /*can create*/);
     DENG2_ASSERT(variant);
-    variant->prepare(prepareResult);
+    variant->prepare();
     return variant;
 }
 

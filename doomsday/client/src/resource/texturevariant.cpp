@@ -312,25 +312,19 @@ static void performImageAnalyses(image_t const &image,
     }
 }
 
-uint Texture::Variant::prepare(Variant::PrepareResult *result)
+uint Texture::Variant::prepare()
 {
     LOG_AS("TextureVariant::prepare");
 
     // Have we already prepared this?
     if(isPrepared())
-    {
-        if(result) *result = Found;
         return d->glTexName;
-    }
 
     // Load the source image data.
     image_t image;
     TexSource source = GL_LoadSourceImage(image, d->texture, d->spec);
     if(source == TEXS_NONE)
-    {
-        if(result) *result = NotFound;
         return 0;
-    }
 
     // Do we need to perform any image pixel data analyses?
     if(d->spec.type == TST_GENERAL)
@@ -408,8 +402,6 @@ uint Texture::Variant::prepare(Variant::PrepareResult *result)
 
     // We're done with the image data.
     Image_Destroy(&image);
-
-    if(result) *result = source == TEXS_ORIGINAL? UploadedOriginal : UploadedExternal;
 
     return d->glTexName;
 }

@@ -406,6 +406,47 @@ DENG2_PIMPL(Material)
     }
 
 #endif // __CLIENT__
+
+    /// Notify interested parties of a change in world dimensions.
+    void notifyDimensionsChanged()
+    {
+        /// @todo Replace with a de::Observers-based mechanism.
+        R_UpdateMapSurfacesOnMaterialChange(&self);
+    }
+
+    /// Returns @c true iff both world dimension axes are defined.
+    inline bool haveValidDimensions() const
+    {
+        return dimensions.x > 0 && dimensions.y > 0;
+    }
+
+    /**
+     * Determines which texture we would be interested in obtaining our
+     * world dimensions from if our own dimensions are undefined.
+     */
+    Texture *inheritDimensionsTexture()
+    {
+        // We're interested in the texture bound to the primary layer.
+        if(!layers.count() || !layers[0]->stageCount()) return 0;
+        return layers[0]->stages()[0]->texture;
+    }
+
+    /**
+     * Determines whether the world dimensions are now defined and if so
+     * cancels further notifications about changes to texture dimensions.
+     */
+    void maybeCancelTextureDimensionsChangeNotification()
+    {
+        // Both dimensions must still be undefined.
+        if(haveValidDimensions()) return;
+
+        Texture *inheritanceTexture = inheritDimensionsTexture();
+        if(!inheritanceTexture) return;
+
+        inheritanceTexture->audienceForDimensionsChange -= self;
+        // Thusly, we are no longer interested in deletion notification either.
+        inheritanceTexture->audienceForDeletion -= self;
+    }
 };
 
 Material::Material(MaterialManifest &manifest)
@@ -414,6 +455,8 @@ Material::Material(MaterialManifest &manifest)
 
 Material::~Material()
 {
+    d->maybeCancelTextureDimensionsChangeNotification();
+
     DENG2_FOR_AUDIENCE(Deletion, i) i->materialBeingDeleted(*this);
 }
 
@@ -433,7 +476,9 @@ void Material::setDimensions(Vector2i const &_newDimensions)
     if(d->dimensions != newDimensions)
     {
         d->dimensions = newDimensions;
-        R_UpdateMapSurfacesOnMaterialChange(this);
+        d->maybeCancelTextureDimensionsChangeNotification();
+
+        d->notifyDimensionsChanged();
     }
 }
 
@@ -442,7 +487,9 @@ void Material::setWidth(int newWidth)
     if(d->dimensions.x != newWidth)
     {
         d->dimensions.x = newWidth;
-        R_UpdateMapSurfacesOnMaterialChange(this);
+        d->maybeCancelTextureDimensionsChangeNotification();
+
+        d->notifyDimensionsChanged();
     }
 }
 
@@ -451,7 +498,9 @@ void Material::setHeight(int newHeight)
     if(d->dimensions.y != newHeight)
     {
         d->dimensions.y = newHeight;
-        R_UpdateMapSurfacesOnMaterialChange(this);
+        d->maybeCancelTextureDimensionsChangeNotification();
+
+        d->notifyDimensionsChanged();
     }
 }
 
@@ -483,12 +532,12 @@ bool Material::isAnimated() const
 
 bool Material::isDetailed() const
 {
-    return !!d->detailLayer;
+    return d->detailLayer != 0;
 }
 
 bool Material::isShiny() const
 {
-    return !!d->shineLayer;
+    return d->shineLayer != 0;
 }
 
 bool Material::hasGlow() const
@@ -514,6 +563,8 @@ void Material::setAudioEnvironment(AudioEnvironmentClass envClass)
 
 void Material::clearLayers()
 {
+    d->maybeCancelTextureDimensionsChangeNotification();
+
 #ifdef __CLIENT__
     d->animationsAreDirty = true;
 #endif
@@ -539,6 +590,18 @@ Material::Layer *Material::newLayer(ded_material_layer_t const *def)
 
     Layer *newLayer = def? Layer::fromDef(*def) : new Layer();
     d->layers.push_back(newLayer);
+
+    // Are we interested in inheriting dimensions from the layer's texture?
+    if(!d->haveValidDimensions() && d->layers.count() == 1)
+    {
+        Texture *inheritanceTexture = d->inheritDimensionsTexture();
+        if(inheritanceTexture)
+        {
+            inheritanceTexture->audienceForDimensionsChange += this;
+            // Thusly, we are also interested in deletion notification.
+            inheritanceTexture->audienceForDeletion += this;
+        }
+    }
     return newLayer;
 }
 
@@ -591,6 +654,28 @@ Material::ShineLayer const &Material::shineLayer() const
     }
     /// @throw Material::UnknownLayerError Invalid layer reference.
     throw UnknownLayerError("Material::shineLayer", "Material has no shine layer");
+}
+
+void Material::textureDimensionsChanged(Texture const &texture)
+{
+    DENG2_ASSERT(!d->haveValidDimensions()); // Sanity check.
+    setDimensions(texture.dimensions());
+}
+
+void Material::textureBeingDeleted(de::Texture const &texture)
+{
+    // If here it means the texture we were planning to inherit dimensions
+    // from is being deleted and therefore we won't be able to.
+
+    DENG2_ASSERT(!d->haveValidDimensions()); // Sanity check.
+    DENG2_ASSERT(d->inheritDimensionsTexture() == &texture); // Sanity check.
+
+    // Clear the association so we don't try to cancel notifications later.
+    d->layers[0]->stages()[0]->texture = 0;
+
+#if !defined(DENG2_DEBUG)
+    DENG2_UNUSED(texture);
+#endif
 }
 
 #ifdef __CLIENT__

@@ -28,6 +28,7 @@
 #ifdef __CLIENT__
 #  include "MaterialContext"
 #endif
+#include "Texture"
 #include "uri.hh"
 #include <de/Error>
 #include <de/Observers>
@@ -45,7 +46,6 @@ class MaterialManifest;
 class MaterialSnapshot;
 struct MaterialVariantSpec;
 #endif
-class Texture;
 
 }
 
@@ -54,7 +54,9 @@ class Texture;
  *
  * @ingroup resource
  */
-class Material : public de::MapElement
+class Material : public de::MapElement,
+                 DENG2_OBSERVES(de::Texture, DimensionsChange),
+                 DENG2_OBSERVES(de::Texture, Deletion)
 {
     /// Internal typedefs for brevity/cleanliness.
     typedef de::MaterialManifest Manifest;
@@ -987,6 +989,13 @@ public:
      * @return  Always @c 0 (can be used as an iterator).
      */
     int setProperty(setargs_t const &args);
+
+protected:
+    // Observes Texture DimensionsChange.
+    void textureDimensionsChanged(de::Texture const &texture);
+
+    // Observes Texture Deletion.
+    void textureBeingDeleted(de::Texture const &texture);
 
 private:
     DENG2_PRIVATE(d)

@@ -114,15 +114,6 @@ public:
     class Variant
     {
     public:
-        /// Logical prepare() result.
-        enum PrepareResult
-        {
-            NotFound,           ///< Failed. No suitable variant could be found/prepared.
-            Found,              ///< Success. Reusing a cached resource.
-            UploadedOriginal,   ///< Success. Prepared and cached using an original-game resource.
-            UploadedExternal    ///< Success. Prepared and cached using an external-replacement resource.
-        };
-
         enum Flag
         {
             /// Texture contains alpha.
@@ -159,12 +150,9 @@ public:
          * GL texture will result in "uninitialized" white texels being used
          * instead.
          *
-         * @param result  If not @c 0 the logical result of this operation
-         *                is written here.
-         *
          * @return  GL-name of the uploaded texture.
          */
-        uint prepare(PrepareResult *result = 0);
+        uint prepare();
 
         /**
          * Release any uploaded GL-texture and clear the associated GL-name
@@ -369,14 +357,12 @@ public:
      * </pre>
      *
      * @param spec      Specification for the derivation of the texture.
-     * @param returnOutcome  If not @c 0 the logical result is written back here.
      *
      * @return  The prepared texture variant if successful; otherwise @c 0.
      *
      * @see chooseVariant()
      */
-    Variant *prepareVariant(texturevariantspecification_t const &spec,
-        Variant::PrepareResult *returnOutcome = 0);
+    Variant *prepareVariant(texturevariantspecification_t const &spec);
 
     /**
      * Provides access to the list of variant instances for efficent traversal.
