@@ -19,7 +19,6 @@
 #include "de/GuiApp"
 #include <de/Log>
 
-#include <QTimer>
 #ifdef DENG2_QT_5_0_OR_NEWER
 #  include <QStandardPaths>
 #else
