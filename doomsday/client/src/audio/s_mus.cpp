@@ -236,6 +236,7 @@ int Mus_GetExt(ded_music_t *def, ddstring_t *retPath)
         // All external music files are specified relative to the base path.
         AutoStr *fullPath = AutoStr_NewStd();
         F_PrependBasePath(fullPath, Uri_Path(def->path));
+        F_FixSlashes(fullPath, fullPath);
 
         if(F_Access(Str_Text(fullPath)))
         {
