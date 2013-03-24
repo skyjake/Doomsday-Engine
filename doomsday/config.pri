@@ -88,14 +88,15 @@ defineTest(doPostLink) {
 }
 
 macx {
+    defineTest(removeQtLibPrefix) {
+        doPostLink("install_name_tool -change $$[QT_INSTALL_LIBS]/$$2 $$2 $$1")
+    }
     defineTest(fixInstallName) {
         # 1: binary file
         # 2: library name
         # 3: path to Frameworks/
+        removeQtLibPrefix($$1, $$2)
         doPostLink("install_name_tool -change $$2 @executable_path/$$3/Frameworks/$$2 $$1")
-
-        # Also try the Qt frameworks directory.
-        doPostLink("install_name_tool -change $$[QT_INSTALL_LIBS]/$$2 @executable_path/$$3/Frameworks/$$2 $$1")
     }
     defineTest(fixPluginInstallId) {
         # 1: target name
