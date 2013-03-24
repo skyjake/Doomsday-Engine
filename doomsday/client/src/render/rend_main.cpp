@@ -86,6 +86,9 @@ float shadowFactor = 1.2f;
 int shadowMaxRadius = 80;
 int shadowMaxDistance = 1000;
 
+float detailFactor = .5f;
+float detailScale = 4;
+
 coord_t vOrigin[3];
 float vang, vpitch;
 float viewsidex, viewsidey;
@@ -3967,6 +3970,20 @@ MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec()
 {
     return App_Materials().variantSpec(MapSurfaceContext, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
                                        -1, -1, -1, true, true, false, false);
+}
+
+texturevariantspecification_t &Rend_MapSurfaceShinyTextureSpec()
+{
+    return GL_TextureVariantSpec(TC_MAPSURFACE_REFLECTION, TSF_NO_COMPRESSION,
+                                 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, -1,
+                                 false, false, false, false);
+}
+
+texturevariantspecification_t &Rend_MapSurfaceShinyMaskTextureSpec()
+{
+    return GL_TextureVariantSpec(TC_MAPSURFACE_REFLECTIONMASK, 0,
+                                 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1,
+                                 true, false, false, false);
 }
 
 #endif // __CLIENT__

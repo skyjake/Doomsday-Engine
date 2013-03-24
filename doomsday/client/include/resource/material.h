@@ -941,12 +941,25 @@ public:
     /**
      * Choose/create a context variant of the material which fulfills @a spec.
      *
-     * @param spec      Specification for the derivation of @a material.
+     * @param spec      Material specialization specification.
      * @param canCreate @c true= Create a new variant if no suitable one exists.
      *
      * @return  The chosen variant; otherwise @c 0 (if none suitable, when not creating).
      */
     Variant *chooseVariant(VariantSpec const &spec, bool canCreate = false);
+
+    /**
+     * Shorthand alternative to @c chooseVariant(@a spec, true).
+     *
+     * @param spec      Material specialization specification.
+     * @return  The (perhaps newly created) variant.
+     *
+     * @see chooseVariant()
+     */
+    inline Variant &createVariant(VariantSpec const &spec)
+    {
+        return *chooseVariant(spec, true/*create*/);
+    }
 
     /**
      * Choose/create a variant of the material which fulfills @a spec and then
@@ -969,7 +982,7 @@ public:
      */
     inline Snapshot const &prepare(VariantSpec const &spec, bool forceSnapshotUpdate = false)
     {
-        return chooseVariant(spec, true /*can-create*/)->prepare(forceSnapshotUpdate);
+        return createVariant(spec).prepare(forceSnapshotUpdate);
     }
 
 #endif // __CLIENT__

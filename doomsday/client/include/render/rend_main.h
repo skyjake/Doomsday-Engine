@@ -62,6 +62,8 @@ DENG_EXTERN_C int shadowMaxDistance;
 
 DENG_EXTERN_C int useShinySurfaces;
 
+DENG_EXTERN_C float detailFactor, detailScale;
+
 DENG_EXTERN_C byte devRendSkyAlways;
 DENG_EXTERN_C byte freezeRLs;
 
@@ -106,6 +108,10 @@ void R_DrawLightRange(void);
 
 #ifdef __CLIENT__
 de::MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec();
+
+texturevariantspecification_t &Rend_MapSurfaceShinyTextureSpec();
+
+texturevariantspecification_t &Rend_MapSurfaceShinyMaskTextureSpec();
 #endif
 
 #endif // __cplusplus

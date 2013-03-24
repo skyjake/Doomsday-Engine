@@ -1065,7 +1065,7 @@ texturevariantspecification_t &GL_TextureVariantSpec(
     return *tvs;
 }
 
-texturevariantspecification_t &GL_DetailTextureVariantSpecificationForContext(
+texturevariantspecification_t &GL_DetailTextureSpec(
     float contrast)
 {
     if(!initedOk) Con_Error("GL_DetailTextureVariantSpecificationForContext: GL texture manager not yet initialized.");

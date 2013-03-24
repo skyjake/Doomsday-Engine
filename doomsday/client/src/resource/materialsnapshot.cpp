@@ -240,20 +240,18 @@ void MaterialSnapshot::Instance::takeSnapshot()
         MaterialAnimation::LayerState const &l = material->animation(variant->context()).layer(i);
 
         Material::Layer::Stage const *lsCur = layers[i]->stages()[l.stage];
-        if(Texture *tex = lsCur->texture)
-        {
-            // Pick the instance matching the specified context.
-            prepTextures[i][0] = tex->prepareVariant(*variant->spec().primarySpec);
-        }
+        if(lsCur->texture)
+            prepTextures[i][0] =
+                lsCur->texture->prepareVariant(*variant->spec().primarySpec);
 
         // Smooth Texture Animation?
-        if(!smoothTexAnim || layers[i]->stageCount() < 2) continue;
-
-        Material::Layer::Stage const *lsNext = layers[i]->stages()[(l.stage + 1) % layers[i]->stageCount()];
-        if(Texture *tex = lsNext->texture)
+        if(smoothTexAnim && layers[i]->stageCount() > 1)
         {
-            // Pick the instance matching the specified context.
-            prepTextures[i][1] = tex->prepareVariant(*variant->spec().primarySpec);
+            Material::Layer::Stage const *lsNext =
+                layers[i]->stages()[(l.stage + 1) % layers[i]->stageCount()];
+
+            if(lsNext->texture)
+                prepTextures[i][1] = lsNext->texture->prepareVariant(*variant->spec().primarySpec);
         }
     }
 
@@ -263,22 +261,28 @@ void MaterialSnapshot::Instance::takeSnapshot()
         MaterialAnimation::LayerState const &l = material->animation(variant->context()).detailLayer();
         Material::DetailLayer::Stage const *lsCur = detailLayer->stages()[l.stage];
 
-        float const contrast = de::clamp(0.f, lsCur->strength, 1.f) * detailFactor /*Global strength multiplier*/;
-        texturevariantspecification_t &texSpec = GL_DetailTextureVariantSpecificationForContext(contrast);
-        if(Texture *tex = lsCur->texture)
+        if(lsCur->texture)
         {
-            // Pick the instance matching the specified context.
-            prepTextures[MTU_DETAIL][0] = tex->prepareVariant(texSpec);
+            float const contrast = de::clamp(0.f, lsCur->strength, 1.f) * detailFactor /*Global strength multiplier*/;
+            texturevariantspecification_t &dTexSpec =
+                GL_DetailTextureSpec(contrast);
+
+            prepTextures[MTU_DETAIL][0] =
+                lsCur->texture->prepareVariant(dTexSpec);
         }
 
         // Smooth Texture Animation?
         if(smoothTexAnim && detailLayer->stageCount() > 1)
         {
             Material::DetailLayer::Stage const *lsNext = detailLayer->stages()[(l.stage + 1) % detailLayer->stageCount()];
-            if(Texture *tex = lsNext->texture)
+            if(lsNext->texture)
             {
-                // Pick the instance matching the specified context.
-                prepTextures[MTU_DETAIL][1] = tex->prepareVariant(texSpec);
+                float const contrast = de::clamp(0.f, lsNext->strength, 1.f) * detailFactor /*Global strength multiplier*/;
+                texturevariantspecification_t &dTexSpec =
+                    GL_DetailTextureSpec(contrast);
+
+                prepTextures[MTU_DETAIL][1] =
+                    lsNext->texture->prepareVariant(dTexSpec);
             }
         }
     }
@@ -289,28 +293,16 @@ void MaterialSnapshot::Instance::takeSnapshot()
         MaterialAnimation::LayerState const &l = material->animation(variant->context()).shineLayer();
         Material::ShineLayer::Stage const *lsCur = shineLayer->stages()[l.stage];
 
-        if(Texture *tex = lsCur->texture)
-        {
-            texturevariantspecification_t &texSpec =
-                GL_TextureVariantSpec(TC_MAPSURFACE_REFLECTION, TSF_NO_COMPRESSION,
-                                      0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, -1,
-                                      false, false, false, false);
-
-            // Pick the instance matching the specified context.
-            prepTextures[MTU_REFLECTION][0] = tex->prepareVariant(texSpec);
-        }
+        if(lsCur->texture)
+            prepTextures[MTU_REFLECTION][0] =
+                lsCur->texture->prepareVariant(Rend_MapSurfaceShinyTextureSpec());
 
         // We are only interested in a mask if we have a shiny texture.
         if(prepTextures[MTU_REFLECTION][0])
-        if(Texture *tex = lsCur->maskTexture)
         {
-            texturevariantspecification_t &texSpec =
-                GL_TextureVariantSpec(TC_MAPSURFACE_REFLECTIONMASK, 0,
-                                      0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1,
-                                      true, false, false, false);
-
-            // Pick the instance matching the specified context.
-            prepTextures[MTU_REFLECTION_MASK][0] = tex->prepareVariant(texSpec);
+            if(lsCur->maskTexture)
+                prepTextures[MTU_REFLECTION_MASK][0] =
+                    lsCur->maskTexture->prepareVariant(Rend_MapSurfaceShinyMaskTextureSpec());
         }
     }
 

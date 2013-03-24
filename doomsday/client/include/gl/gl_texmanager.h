@@ -243,7 +243,7 @@ texturevariantspecification_t &GL_TextureVariantSpec(
  *
  * @return  A rationalized and valid TextureVariantSpecification.
  */
-texturevariantspecification_t &GL_DetailTextureVariantSpecificationForContext(
+texturevariantspecification_t &GL_DetailTextureSpec(
     float contrast);
 
 /*
