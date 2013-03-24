@@ -28,9 +28,6 @@
 /// Non-zero when the game is paused: game time is not advancing.
 DENG_EXTERN_C int paused;
 
-DENG_EXTERN_C int gamePauseWhenFocusLost;
-DENG_EXTERN_C int gameUnpauseWhenFocusGained;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -43,6 +40,15 @@ void Pause_Register(void);
  * Update the pause state. Called 35 times per second.
  */
 void Pause_Ticker(void);
+
+/**
+ * Process events related to pausing.
+ *
+ * @param ev  Event.
+ *
+ * @return @c true, if the event was processed.
+ */
+boolean Pause_Responder(event_t *ev);
 
 /**
  * Determines if the game is currently paused.

@@ -1369,18 +1369,7 @@ int G_Responder(event_t* ev)
 
     if(G_GameState() == GS_MAP)
     {
-        if(ev->type == EV_FOCUS)
-        {
-            if(gamePauseWhenFocusLost && !ev->data1)
-            {
-                Pause_Set(true);
-            }
-            else if(gameUnpauseWhenFocusGained && ev->data1)
-            {
-                Pause_Set(false);
-            }
-            return false; // others might be interested
-        }
+        Pause_Responder(ev);
 
         // With the menu active, none of these should respond to input events.
         if(!Hu_MenuIsActive() && !Hu_IsMessageActive())

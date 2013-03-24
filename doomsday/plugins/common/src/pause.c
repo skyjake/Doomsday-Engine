@@ -34,16 +34,17 @@
 #define READONLYCVAR        (CVF_READ_ONLY|CVF_NO_MAX|CVF_NO_MIN|CVF_NO_ARCHIVE)
 
 int paused = 0;
-int gamePauseWhenFocusLost;
-int gameUnpauseWhenFocusGained;
+
+static int gamePauseWhenFocusLost; // cvar
+static int gameUnpauseWhenFocusGained; // cvar
 
 #ifdef __JDOOM__
 /// How long to pause the game after a map has been loaded (cvar).
 /// - -1: matches the engine's busy transition tics.
-static int gamePauseAfterMapStartTics = -1;
+static int gamePauseAfterMapStartTics = -1; // cvar
 #else
 // Crossfade doesn't require a very long pause.
-static int gamePauseAfterMapStartTics = 7;
+static int gamePauseAfterMapStartTics = 7; // cvar
 #endif
 
 static int forcedPeriodTicsRemaining;
@@ -158,6 +159,24 @@ void Pause_SetForcedPeriod(int tics)
 void Pause_Ticker(void)
 {
     checkForcedPeriod();
+}
+
+boolean Pause_Responder(event_t *ev)
+{
+    if(ev->type == EV_FOCUS)
+    {
+        if(gamePauseWhenFocusLost && !ev->data1)
+        {
+            Pause_Set(true);
+            return true;
+        }
+        else if(gameUnpauseWhenFocusGained && ev->data1)
+        {
+            Pause_Set(false);
+            return true;
+        }
+    }
+    return false;
 }
 
 void Pause_MapStarted(void)
