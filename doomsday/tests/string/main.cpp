@@ -34,6 +34,7 @@ int main(int argc, char **argv)
         LOG_MSG("Escaped %%: arg %%%i%%") << 1;
         //LOG_MSG("Error: %") << 1; // incomplete formatting
         //LOG_MSG("Error: %i %i") << 1; // ran out of arguments
+        LOG_MSG("More args than formats: %i appended:") << 1 << 2 << 3 << "hello";
 
         LOG_MSG("String: '%s'") << "Hello World";
         LOG_MSG(" Min width 8:  '%8s'") << "Hello World";
