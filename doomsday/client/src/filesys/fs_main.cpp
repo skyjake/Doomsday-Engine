@@ -329,6 +329,10 @@ struct FS1::Instance
 
         LOG_AS("FS1::openFile");
 
+#ifdef UNIX
+        /// @todo Remove this after the origin of the incorrect slashes is found.
+        path.replace(DIR_WRONG_SEP_CHAR, DIR_SEP_STR);
+#endif
         // We must have an absolute path.
         path = App_BasePath() / path;
 
