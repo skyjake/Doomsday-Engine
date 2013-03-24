@@ -727,7 +727,7 @@ void Hu_InventoryTicker(void)
         if(inv->flags & HIF_IS_DIRTY)
             rebuildInventory(inv);
 
-        if(!P_IsPaused())
+        if(!Pause_IsPaused())
         {
             if(Hu_InventoryIsOpen(i))
             {

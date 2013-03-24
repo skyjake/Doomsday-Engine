@@ -155,12 +155,8 @@ void        G_ControlRegister(void);
 void        G_DefineControls(void);
 void        G_DefaultBindings(void);
 void        G_RegisterBindClasses(void);
-
 void        G_LookAround(int pnum);
-void        G_SetPause(boolean yes);
-
 void        G_ControlReset(int pnum);
-
 float       G_GetLookOffset(int pnum);
 void        G_ResetLookOffset(int pnum);
 

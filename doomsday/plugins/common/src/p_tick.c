@@ -71,14 +71,6 @@ int timerGame;
 // CODE --------------------------------------------------------------------
 
 /**
- * @return              @c true, if the game is currently paused.
- */
-boolean P_IsPaused(void)
-{
-    return paused || (!IS_NETGAME && (Hu_MenuIsActive() || Hu_IsMessageActive()));
-}
-
-/**
  * This is called at all times, no matter gamestate.
  */
 void P_RunPlayers(timespan_t ticLength)

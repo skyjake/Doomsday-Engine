@@ -1569,21 +1569,6 @@ void NetSv_LoadGame(unsigned int game_id)
     Net_SendPacket(DDSP_ALL_PLAYERS, GPT_LOAD, Writer_Data(writer), Writer_Size(writer));
 }
 
-/**
- * Inform all clients about a change in the 'pausedness' of a game.
- */
-void NetSv_Paused(boolean isPaused)
-{
-    Writer* writer;
-
-    if(!IS_SERVER || !IS_NETGAME)
-        return;
-
-    writer = D_NetWrite();
-    Writer_WriteByte(writer, (isPaused != false));
-    Net_SendPacket(DDSP_ALL_PLAYERS, GPT_PAUSE, Writer_Data(writer), Writer_Size(writer));
-}
-
 void NetSv_SendMessageEx(int plrNum, const char *msg, boolean yellow)
 {
     Writer* writer;
