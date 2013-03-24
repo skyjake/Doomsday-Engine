@@ -30,7 +30,6 @@ DENG_EXTERN_C int paused;
 
 DENG_EXTERN_C int gamePauseWhenFocusLost;
 DENG_EXTERN_C int gameUnpauseWhenFocusGained;
-DENG_EXTERN_C int gamePauseAfterMapStartTics;
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,6 +38,11 @@ extern "C" {
 D_CMD(Pause);
 
 void Pause_Register(void);
+
+/**
+ * Update the pause state. Called 35 times per second.
+ */
+void Pause_Ticker(void);
 
 /**
  * Determines if the game is currently paused.
@@ -52,11 +56,31 @@ boolean Pause_IsPaused(void);
  */
 boolean Pause_IsUserPaused(void);
 
-void Pause_Begin(boolean yes);
+/**
+ * Sets the user-requested pause mode.
+ *
+ * @param yes  @c true, if the user has requested pause and game time
+ *             should be paused. @c false, to unpause.
+ */
+void Pause_Set(boolean yes);
 
+/**
+ * Starts a forced pause period. Game time will not progress during the pause,
+ * but the user interface does not indicate that the game is paused.
+ *
+ * @param tics  Number of tics to pause.
+ */
+void Pause_SetForcedPeriod(int tics);
+
+/**
+ * Unpauses the game if it is currently paused (even if forced).
+ */
 void Pause_End(void);
 
-void Pause_BeginForcedPeriod(int tics);
+/**
+ * If so configured, pauses the game for the map start pause period.
+ */
+void Pause_MapStarted(void);
 
 #ifdef __cplusplus
 }

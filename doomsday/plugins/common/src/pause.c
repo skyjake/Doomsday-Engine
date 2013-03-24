@@ -38,19 +38,21 @@ int gamePauseWhenFocusLost;
 int gameUnpauseWhenFocusGained;
 
 #ifdef __JDOOM__
-/// How long to pause the game after a map has been loaded.
-/// E.g., matches the engine's busy transition tics.
-int gamePauseAfterMapStartTics = 28;
+/// How long to pause the game after a map has been loaded (cvar).
+/// - -1: matches the engine's busy transition tics.
+static int gamePauseAfterMapStartTics = -1;
 #else
 // Crossfade doesn't require a very long pause.
-int gamePauseAfterMapStartTics = 7;
+static int gamePauseAfterMapStartTics = 7;
 #endif
 
-static void beginPause(void)
+static int forcedPeriodTicsRemaining;
+
+static void beginPause(int flags)
 {
     if(!paused)
     {
-        paused |= PAUSEF_PAUSED;
+        paused = PAUSEF_PAUSED | flags;
 
         // This will stop all sounds from all origins.
         /// @todo Would be nice if the engine supported actually pausing the sounds. -jk
@@ -66,6 +68,10 @@ static void endPause(void)
 {
     if(paused)
     {
+        VERBOSE( Con_Message("Pause ends (state:%x).", paused) );
+
+        forcedPeriodTicsRemaining = 0;
+
         // Any impulses or accumulated relative offsets that occured
         // during the pause should be ignored.
         DD_Execute(true, "resetctlaccum");
@@ -75,18 +81,31 @@ static void endPause(void)
     paused = 0;
 }
 
+static void checkForcedPeriod(void)
+{
+    if((paused != 0) && (paused & PAUSEF_FORCED_PERIOD))
+    {
+        if(forcedPeriodTicsRemaining-- <= 0)
+        {
+            endPause();
+        }
+    }
+}
+
 void Pause_Register(void)
 {
+    forcedPeriodTicsRemaining = 0;
+
     // Default values (overridden by values from .cfg files).
     gamePauseWhenFocusLost     = true;
     gameUnpauseWhenFocusGained = false;
 
     C_CMD("pause", "", Pause);
 
-    C_VAR_INT("game-paused",              &paused,                     READONLYCVAR, 0, 0);
-    C_VAR_INT("game-pause-focuslost",     &gamePauseWhenFocusLost,     0,            0, 1);
-    C_VAR_INT("game-unpause-focusgained", &gameUnpauseWhenFocusGained, 0,            0, 1);
-    C_VAR_INT("game-pause-mapstart-tics", &gamePauseAfterMapStartTics, 0,            0, 70);
+    C_VAR_INT("game-paused",              &paused,                     READONLYCVAR, 0,  0);
+    C_VAR_INT("game-pause-focuslost",     &gamePauseWhenFocusLost,     0,            0,  1);
+    C_VAR_INT("game-unpause-focusgained", &gameUnpauseWhenFocusGained, 0,            0,  1);
+    C_VAR_INT("game-pause-mapstart-tics", &gamePauseAfterMapStartTics, 0,            -1, 70);
 }
 
 boolean Pause_IsPaused(void)
@@ -105,18 +124,18 @@ D_CMD(Pause)
         return false;
 
     // Toggle pause.
-    Pause_Begin(!(paused & PAUSEF_PAUSED));
+    Pause_Set(!(paused & PAUSEF_PAUSED));
     return true;
 }
 
-void Pause_Begin(boolean yes)
+void Pause_Set(boolean yes)
 {
     // Can we start a pause?
     if(Hu_MenuIsActive() || Hu_IsMessageActive() || IS_CLIENT)
         return; // Nope.
 
     if(yes)
-        beginPause();
+        beginPause(0);
     else
         endPause();
 }
@@ -126,9 +145,36 @@ void Pause_End()
     endPause();
 }
 
-void Pause_BeginForcedPeriod(int tics)
+void Pause_SetForcedPeriod(int tics)
 {
+    if(tics <= 0) return;
 
+    VERBOSE( Con_Message("Forced pause for %i tics.", tics) );
+
+    forcedPeriodTicsRemaining = tics;
+    beginPause(PAUSEF_FORCED_PERIOD);
+}
+
+void Pause_Ticker(void)
+{
+    checkForcedPeriod();
+}
+
+void Pause_MapStarted(void)
+{
+    if(!IS_CLIENT)
+    {
+        if(gamePauseAfterMapStartTics < 0)
+        {
+            // Use the engine's transition visualization duration.
+            Pause_SetForcedPeriod(Con_GetInteger("con-transition-tics"));
+        }
+        else
+        {
+            // Use the configured time.
+            Pause_SetForcedPeriod(gamePauseAfterMapStartTics);
+        }
+    }
 }
 
 void NetSv_Paused(int pauseState)

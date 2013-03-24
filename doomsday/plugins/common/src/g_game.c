@@ -1373,11 +1373,11 @@ int G_Responder(event_t* ev)
         {
             if(gamePauseWhenFocusLost && !ev->data1)
             {
-                Pause_Begin(true);
+                Pause_Set(true);
             }
             else if(gameUnpauseWhenFocusGained && ev->data1)
             {
-                Pause_Begin(false);
+                Pause_Set(false);
             }
             return false; // others might be interested
         }

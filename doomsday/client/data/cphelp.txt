@@ -1214,3 +1214,6 @@ desc = 1=Allow floating monsters to attempt floating over blocking things (avoid
 
 [game-unpause-focusgained]
 desc = Unpause the game when game window regains focus.
+
+[game-pause-mapstart-tics]
+desc = Number of 35 Hz tics to pause the game after a map has been loaded.\n-1=Use the value of 'con-transition-tics'.

@@ -93,6 +93,8 @@ void P_DoTick(void)
 {
     int i;
 
+    Pause_Ticker();
+
     // If the game is paused, nothing will happen.
     if(paused) return;
 
