@@ -348,31 +348,6 @@ DENG2_PIMPL(Updater)
     void startInstall(de::String distribPackagePath)
     {
 #ifdef MACOSX
-        // Generate a script to:
-        // 1. Open the distrib package.
-        // 2. Check that there is a "Doomsday Engine.app" inside.
-        // 3. Move current app bundle to the Trash.
-        // 4. Copy the on-disk app bundle to the old app's place.
-        // 5. Close the distrib package.
-        // 6. Open the new "Doomsday Engine.app".
-
-        /*
-        // This assumes the Doomsday executable is inside the Snowberry bundle.
-        de::String execPath = QDir::cleanPath(QDir(de::App::executablePath().fileNamePath())
-                                              .filePath("../../../.."));
-        if(!execPath.fileName().endsWith(".app"))
-        {
-#ifdef _DEBUG
-            execPath = "/Applications/Doomsday Engine.app";
-#else
-            Sys_MessageBox2(MBT_ERROR, "Updating", "Automatic update failed.",
-                            ("Expected an application bundle, but found <b>" +
-                             execPath.fileName() + "</b> instead.").toUtf8(), 0);
-            return;
-#endif
-        }
-        */
-
         de::String volName = "Doomsday Engine " + latestVersion.base();
 
 #ifdef DENG2_QT_5_0_OR_NEWER
@@ -424,7 +399,19 @@ DENG2_PIMPL(Updater)
         atexit(runInstallerCommand);
 
 #elif defined(WIN32)
+        /**
+         * @todo It would be slightly neater to check all these processes at
+         * the same time.
+         */
         Updater_AskToStopProcess("snowberry.exe", "Please quit the Doomsday Engine Frontend "
+                                 "before starting the update. Windows cannot update "
+                                 "files that are currently in use.");
+
+        Updater_AskToStopProcess("doomsday-shell.exe", "Please quit all Doomsday Shell instances "
+                                 "before starting the update. Windows cannot update "
+                                 "files that are currently in use.");
+
+        Updater_AskToStopProcess("doomsday-server.exe", "Please stop all Doomsday servers "
                                  "before starting the update. Windows cannot update "
                                  "files that are currently in use.");
 
