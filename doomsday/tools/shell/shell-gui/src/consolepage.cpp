@@ -77,7 +77,11 @@ void ConsolePage::wheelEvent(QWheelEvent *ev)
         _wheelAccum += ev->delta();
 
         int linesToScroll = 0;
-        int const lineStep = 32;
+#ifdef MACOSX
+        int const lineStep = 40;
+#else
+        int const lineStep = 60;
+#endif
         while(_wheelAccum < -lineStep)
         {
             _wheelAccum += lineStep;
@@ -95,6 +99,9 @@ void ConsolePage::wheelEvent(QWheelEvent *ev)
             updateScrollPosition(newPos);
             update();
         }
+#ifndef MACOSX
+        _wheelAccum = 0;
+#endif
     }
     else
     {
