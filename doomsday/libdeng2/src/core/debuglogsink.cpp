@@ -33,7 +33,7 @@ DebugLogSink::~DebugLogSink()
 
 LogSink &DebugLogSink::operator << (String const &plainText)
 {
-    *_qs << plainText.toUtf8().constData();
+    *_qs << plainText.toUtf8().constData() << "\n";
     return *this;
 }
 
