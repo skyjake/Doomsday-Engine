@@ -761,8 +761,8 @@ static dgltexformat_t prepareImageAsTexture(image_t &image,
 {
     DENG_ASSERT(image.pixels);
 
-    bool monochrome    = (spec.flags & TSF_MONOCHROME) != 0;
-    bool scaleSharp    = (spec.flags & TSF_UPSCALE_AND_SHARPEN) != 0;
+    bool const monochrome = (spec.flags & TSF_MONOCHROME) != 0;
+    bool const scaleSharp = (spec.flags & TSF_UPSCALE_AND_SHARPEN) != 0;
 
     if(spec.toAlpha)
     {
@@ -1481,8 +1481,7 @@ boolean GL_UploadTexture(int glFormat, int loadFormat, const uint8_t* pixels,
 }
 
 /// @note Texture parameters will NOT be set here!
-void GL_UploadTextureContent(texturecontent_t const &content,
-                             GLUploadMethod method)
+void GL_UploadTextureContent(texturecontent_t const &content, GLUploadMethod method)
 {
     if(method == Deferred)
     {
@@ -1493,11 +1492,11 @@ void GL_UploadTextureContent(texturecontent_t const &content,
     if(novideo) return;
 
     // Do this right away. No need to take a copy.
-    bool generateMipmaps = !!(content.flags & (TXCF_MIPMAP|TXCF_GRAY_MIPMAP));
-    bool applyTexGamma   = !!(content.flags & TXCF_APPLY_GAMMACORRECTION);
-    bool noCompression   = !!(content.flags & TXCF_NO_COMPRESSION);
-    bool noSmartFilter   = !!(content.flags & TXCF_UPLOAD_ARG_NOSMARTFILTER);
-    bool noStretch       = !!(content.flags & TXCF_UPLOAD_ARG_NOSTRETCH);
+    bool generateMipmaps = (content.flags & (TXCF_MIPMAP|TXCF_GRAY_MIPMAP)) != 0;
+    bool applyTexGamma   = (content.flags & TXCF_APPLY_GAMMACORRECTION)     != 0;
+    bool noCompression   = (content.flags & TXCF_NO_COMPRESSION)            != 0;
+    bool noSmartFilter   = (content.flags & TXCF_UPLOAD_ARG_NOSMARTFILTER)  != 0;
+    bool noStretch       = (content.flags & TXCF_UPLOAD_ARG_NOSTRETCH)      != 0;
 
     int loadWidth = content.width, loadHeight = content.height;
     uint8_t const *loadPixels = content.pixels;
@@ -1507,8 +1506,9 @@ void GL_UploadTextureContent(texturecontent_t const &content,
     {
         // Convert a paletted source image to truecolor.
         uint8_t *newPixels = GL_ConvertBuffer(loadPixels, loadWidth, loadHeight,
-            DGL_COLOR_INDEX_8_PLUS_A8 == dglFormat ? 2 : 1, R_ToColorPalette(content.paletteId),
-            DGL_COLOR_INDEX_8_PLUS_A8 == dglFormat ? 4 : 3);
+                                              DGL_COLOR_INDEX_8_PLUS_A8 == dglFormat ? 2 : 1,
+                                              R_ToColorPalette(content.paletteId),
+                                              DGL_COLOR_INDEX_8_PLUS_A8 == dglFormat ? 4 : 3);
         if(loadPixels != content.pixels)
         {
             M_Free(const_cast<uint8_t *>(loadPixels));
@@ -1574,7 +1574,8 @@ void GL_UploadTextureContent(texturecontent_t const &content,
             }
 
             uint8_t *filtered = GL_SmartFilter(GL_ChooseSmartFilter(loadWidth, loadHeight, 0),
-                                               loadPixels, loadWidth, loadHeight, ICF_UPSCALE_SAMPLE_WRAP,
+                                               loadPixels, loadWidth, loadHeight,
+                                               ICF_UPSCALE_SAMPLE_WRAP,
                                                &loadWidth, &loadHeight);
             if(filtered != loadPixels)
             {
@@ -1664,7 +1665,8 @@ void GL_UploadTextureContent(texturecontent_t const &content,
         else
         {
             // Stretch into a new power-of-two texture.
-            uint8_t *newPixels = GL_ScaleBuffer(loadPixels, width, height, comps, loadWidth, loadHeight);
+            uint8_t *newPixels = GL_ScaleBuffer(loadPixels, width, height, comps,
+                                                loadWidth, loadHeight);
             if(loadPixels != content.pixels)
             {
                 M_Free(const_cast<uint8_t *>(loadPixels));
@@ -1679,8 +1681,8 @@ void GL_UploadTextureContent(texturecontent_t const &content,
     glBindTexture(GL_TEXTURE_2D, content.name);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, content.minFilter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, content.magFilter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, content.wrap[0]);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, content.wrap[1]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     content.wrap[0]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     content.wrap[1]);
     if(GL_state.features.texFilterAniso)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(content.anisoFilter));
 
@@ -1690,12 +1692,11 @@ void GL_UploadTextureContent(texturecontent_t const &content,
         switch(dglFormat)
         {
         case DGL_LUMINANCE_PLUS_A8: loadFormat = GL_LUMINANCE_ALPHA; break;
-        case DGL_LUMINANCE:         loadFormat = GL_LUMINANCE; break;
-        case DGL_RGB:               loadFormat = GL_RGB; break;
-        case DGL_RGBA:              loadFormat = GL_RGBA; break;
+        case DGL_LUMINANCE:         loadFormat = GL_LUMINANCE;       break;
+        case DGL_RGB:               loadFormat = GL_RGB;             break;
+        case DGL_RGBA:              loadFormat = GL_RGBA;            break;
         default:
-            Con_Error("GL_UploadTextureContent: Unknown format %i.", int(dglFormat));
-            exit(1);
+            throw Error("GL_UploadTextureContent", QString("Unknown format %1").arg(int(dglFormat)));
         }
 
         GLint glFormat = ChooseTextureFormat(dglFormat, !noCompression);
@@ -1703,8 +1704,10 @@ void GL_UploadTextureContent(texturecontent_t const &content,
         if(!GL_UploadTexture(glFormat, loadFormat, loadPixels, loadWidth, loadHeight,
                              generateMipmaps ? true : false))
         {
-            Con_Error("GL_UploadTextureContent: TexImage failed (%u:%ix%i fmt%i).",
-                      content.name, loadWidth, loadHeight, int(dglFormat));
+            throw Error("GL_UploadTextureContent", QString("TexImage failed (%1:%2 fmt%3)")
+                                                       .arg(content.name)
+                                                       .arg(Vector2i(loadWidth, loadHeight).asText())
+                                                       .arg(int(dglFormat)));
         }
     }
     else
@@ -1715,10 +1718,9 @@ void GL_UploadTextureContent(texturecontent_t const &content,
         switch(dglFormat)
         {
         case DGL_LUMINANCE:         loadFormat = GL_LUMINANCE; break;
-        case DGL_RGB:               loadFormat = GL_RGB; break;
+        case DGL_RGB:               loadFormat = GL_RGB;       break;
         default:
-            Con_Error("GL_UploadTextureContent: Unknown format %i.", int(dglFormat));
-            exit(1); // Unreachable.
+            throw Error("GL_UploadTextureContent", QString("Unknown format %1").arg(int(dglFormat)));
         }
 
         glFormat = ChooseTextureFormat(DGL_LUMINANCE, !noCompression);
@@ -1726,8 +1728,10 @@ void GL_UploadTextureContent(texturecontent_t const &content,
         if(!GL_UploadTextureGrayMipmap(glFormat, loadFormat, loadPixels, loadWidth, loadHeight,
                                        content.grayMipmap * reciprocal255))
         {
-            Con_Error("GL_UploadTextureContent: TexImageGrayMipmap failed (%u:%ix%i fmt%i).",
-                      content.name, loadWidth, loadHeight, int(dglFormat));
+            throw Error("GL_UploadTextureContent", QString("TexImageGrayMipmap failed (%u:%ix%i fmt%i)")
+                                                       .arg(content.name)
+                                                       .arg(Vector2i(loadWidth, loadHeight).asText())
+                                                       .arg(int(dglFormat)));
         }
     }
 
@@ -2424,7 +2428,9 @@ void GL_PrepareTextureContent(texturecontent_t &c, DGLuint glTexName,
     case TST_GENERAL: {
         variantspecification_t const &vspec = TS_GENERAL(spec);
         bool const noCompression = (vspec.flags & TSF_NO_COMPRESSION) != 0;
-        bool const noSmartFilter = ((vspec.flags & TSF_UPSCALE_AND_SHARPEN) == 0 || (!vspec.toAlpha && image.paletteId));
+        // If the Upscale And Sharpen filter is enabled, scaling is applied
+        // implicitly by prepareImageAsTexture(), so don't do it again.
+        bool const noSmartFilter = (vspec.flags & TSF_UPSCALE_AND_SHARPEN) != 0;
 
         // Prepare the image for upload.
         dgltexformat_t dglFormat = prepareImageAsTexture(image, vspec);
