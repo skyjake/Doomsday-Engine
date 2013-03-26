@@ -525,7 +525,7 @@ static int playerClassForName(const char* name)
         if(!stricmp(name, "mage"))
             return PCLASS_MAGE;
     }
-    return 0;
+    return PCLASS_NONE;
 }
 #endif
 
@@ -563,9 +563,17 @@ int Hook_FinaleScriptEvalIf(int hookType, int finaleId, void* paramaters)
 
 #if __JHEXEN__
     // Player class names.
-    if((pclass = playerClassForName(p->token)))
+    if((pclass = playerClassForName(p->token)) != PCLASS_NONE)
     {
-        p->returnVal = pclass;
+        if(IS_DEDICATED)
+        {
+            // Always false; no local players on the server.
+            p->returnVal = false;
+        }
+        else
+        {
+            p->returnVal = (cfg.playerClass[CONSOLEPLAYER] == pclass);
+        }
         return true;
     }
 #endif
