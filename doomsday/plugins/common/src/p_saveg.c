@@ -1763,8 +1763,9 @@ static void SV_WriteMobj(const mobj_t* original)
 
     default:
 # if _DEBUG
-if(mo->tracer != NULL)
-Con_Error("SV_WriteMobj: Mobj using tracer. Possibly saved incorrectly.");
+        /// @todo Fix this fatal error. -jk
+        if(mo->tracer != NULL)
+            Con_Error("SV_WriteMobj: Mobj using tracer. Possibly saved incorrectly.");
 # endif
         SV_WriteLong(PTR2INT(mo->tracer));
         break;
