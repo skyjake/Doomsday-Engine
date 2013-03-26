@@ -75,7 +75,9 @@ static Updater* updater = 0;
 #  define PLATFORM_ID       "win-x86"
 
 #elif defined(MACOSX)
-#  if defined(__64BIT__)
+#  if defined(MACOS_10_7)
+#    define PLATFORM_ID     "mac10_8-x86_64"
+#  elif defined(__64BIT__)
 #    define PLATFORM_ID     "mac10_6-x86-x86_64"
 #  else
 #    define PLATFORM_ID     "mac10_4-x86-ppc"
@@ -96,6 +98,8 @@ static de::CommandLine* installerCommand;
  */
 static void runInstallerCommand(void)
 {
+    DENG_ASSERT(installerCommand != 0);
+
     installerCommand->execute();
     delete installerCommand;
     installerCommand = 0;

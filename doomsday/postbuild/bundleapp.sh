@@ -56,7 +56,7 @@ if [ -e plugins/fluidsynth/audio_fluidsynth.bundle ]; then
     $CP plugins/fluidsynth/audio_fluidsynth.bundle $PLUGDIR/
 
 	GLIB_VER=`pkg-config --modversion glib-2.0`
-	GETTEXT_VER=`ls /usr/local/Cellar/gettext`
+    GETTEXT_VER=0.18.2
 
     echo "Installing deps for audio_fluidsynth..."
 	echo "- glib version: $GLIB_VER"
