@@ -129,10 +129,10 @@ typedef struct {
 } playerstart_t;
 
 extern uint numMapSpots;
-extern mapspot_t* mapSpots;
+extern mapspot_t *mapSpots;
 
 #if __JHERETIC__
-extern mapspotid_t* maceSpots;
+extern mapspotid_t *maceSpots;
 extern uint maceSpotCount;
 extern mapspotid_t* bossSpots;
 extern uint bossSpotCount;
@@ -183,7 +183,25 @@ void P_TurnGizmosAwayFromDoors(void);
 #endif
 
 #if __JHERETIC__
+/**
+ * Add a new map spot to the list of mace spawn spots.
+ *
+ * @param id  Unique identifier of the map spot to add.
+ */
 void P_AddMaceSpot(mapspotid_t id);
+
+/**
+ * Choose a random map spot from the list of mace spawn spots which passes
+ * validation according to the current game rules configuration.
+ *
+ * @note Randomization depends on the seeded playsim RNG. Ensure to call
+ * this at the correct time otherwise the RNG will "drift", resulting in
+ * behavior which differs from that of the original game logic.
+ *
+ * @return  The chosen map spot; otherwise @c 0.
+ */
+mapspot_t const *P_ChooseRandomMaceSpot(void);
+
 void P_AddBossSpot(mapspotid_t id);
 #endif
 
