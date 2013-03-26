@@ -702,6 +702,9 @@ void P_SpawnClient(int plrNum)
     // until we know it.
     p->plr->flags |= DDPF_UNDEFINED_WEAPON;
 
+    // Clear the view filter.
+    p->plr->flags &= ~DDPF_USE_VIEW_FILTER;
+
     // The weapon should be in the down state when spawning.
     p->pSprites[0].pos[VY] = WEAPONBOTTOM;
 }
