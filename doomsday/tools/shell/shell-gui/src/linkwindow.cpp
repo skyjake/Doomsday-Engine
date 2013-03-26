@@ -259,6 +259,7 @@ LinkWindow::LinkWindow(QWidget *parent)
     connect(d->statusButton, SIGNAL(pressed()), this, SLOT(switchToStatus()));
     d->statusButton->setChecked(true);
 
+#ifdef DENG2_DEBUG
     QToolButton *btn = d->addToolButton(tr("Frags"), icon);
     btn->setDisabled(true);
 
@@ -267,6 +268,7 @@ LinkWindow::LinkWindow(QWidget *parent)
 
     btn = d->addToolButton(tr("Options"), icon);
     btn->setDisabled(true);
+#endif
 
     d->consoleButton = d->addToolButton(tr("Console"), icon);
     connect(d->consoleButton, SIGNAL(pressed()), this, SLOT(switchToConsole()));

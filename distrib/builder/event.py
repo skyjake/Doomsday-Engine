@@ -35,7 +35,15 @@ class Event:
         self.packageName = {'doomsday': 'Doomsday',
                             'fmod':     'FMOD Ex Audio Plugin'}
         
-        if self.num >= 778: # Mac distribution naming was changed.
+        if self.num >= 816: # Added Mac OS X 10.8.
+            # Platforms:  Name                            File ext       sys_id()
+            self.oses = [('Windows (x86)',                '.exe',        'win32-32bit'),
+                         ('Mac OS X 10.8+ (x86_64)',      '.dmg',        'macx8-64bit'),
+                         ('Mac OS X 10.6+ (x86_64/i386)', 'mac10_6.dmg', 'darwin-64bit'),
+                         ('Mac OS X 10.4+ (ppc/i386)',    '32bit.dmg',   'darwin-32bit'),
+                         ('Ubuntu (x86_64)',              'amd64.deb',   'linux2-64bit'),
+                         ('Ubuntu (x86)',                 'i386.deb',    'linux2-32bit')]            
+        elif self.num >= 778: # Mac distribution naming was changed.
             # Platforms:  Name                            File ext     sys_id()
             self.oses = [('Windows (x86)',                '.exe',      'win32-32bit'),
                          ('Mac OS X 10.6+ (x86_64/i386)', '.dmg',      'darwin-64bit'),
@@ -53,6 +61,7 @@ class Event:
         self.platId = {'win32-32bit':  'win-x86',
                        'darwin-32bit': 'mac10_4-x86-ppc',
                        'darwin-64bit': 'mac10_6-x86-x86_64',
+                       'macx8-64bit':  'mac10_8-x86_64',
                        'linux2-32bit': 'linux-x86',
                        'linux2-64bit': 'linux-x86_64'}
 
