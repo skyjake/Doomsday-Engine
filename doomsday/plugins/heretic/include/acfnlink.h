@@ -131,7 +131,12 @@ void C_DECL     A_Raise();
 void C_DECL     A_ReFire();
 void C_DECL     A_RemovePod();
 void C_DECL     A_RestoreArtifact();
+
+/**
+ * Make a special 'thing' visible again.
+ */
 void C_DECL     A_RestoreSpecialThing1();
+
 void C_DECL     A_RestoreSpecialThing2();
 void C_DECL     A_Scream();
 void C_DECL     A_ShutdownPhoenixPL2();

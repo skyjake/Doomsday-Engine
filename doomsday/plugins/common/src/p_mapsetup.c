@@ -250,11 +250,11 @@ int applySurfaceColor(void* obj, void* context)
 }
 #endif
 
-static boolean checkMapSpotSpawnFlags(const mapspot_t* spot)
+static boolean checkMapSpotSpawnFlags(mapspot_t const *spot)
 {
 #if __JHEXEN__
     /// @todo Move to classinfo_t
-    static unsigned int classFlags[] = {
+    static uint classFlags[] = {
         MSF_FIGHTER,
         MSF_CLERIC,
         MSF_MAGE
@@ -334,7 +334,7 @@ static boolean P_IsClientAllowedToSpawn(int doomEdNum)
 /**
  * Should we auto-spawn one or more mobjs from the specified map spot?
  */
-static boolean checkMapSpotAutoSpawn(const mapspot_t* spot)
+static boolean checkMapSpotAutoSpawn(mapspot_t const *spot)
 {
 #if __JHERETIC__
     // Ambient sound sequence activator?
@@ -560,13 +560,69 @@ static void loadMapSpots(void)
     }
 }
 
+#if __JHERETIC__
+mapspot_t const *P_ChooseRandomMaceSpot(void)
+{
+    uint i, numQualifyingSpots;
+    uint chosenQualifyingSpotIdx, qualifyingSpotIdx;
+
+    if(!maceSpots || !maceSpotCount) return 0;
+
+    /*
+     * Pass 1: Determine how many spots qualify given the current game rules.
+     */
+    numQualifyingSpots = 0;
+    for(i = 0; i < maceSpotCount; ++i)
+    {
+        mapspotid_t mapSpotId = maceSpots[i];
+        DENG_ASSERT(mapSpots != 0 && mapSpotId < numMapSpots);
+        {
+            // Does this spot qualify given the current game configuration?
+            mapspot_t const *mapSpot = &mapSpots[mapSpotId];
+            if(checkMapSpotSpawnFlags(mapSpot))
+                numQualifyingSpots += 1;
+        }
+    }
+    if(!numQualifyingSpots) return 0;
+
+    /*
+     * Pass 2: Choose and locate the chosen spot.
+     */
+    chosenQualifyingSpotIdx = P_Random() % numQualifyingSpots;
+    qualifyingSpotIdx = 0;
+    for(i = 0; i < maceSpotCount; ++i)
+    {
+        mapspotid_t mapSpotId = maceSpots[i];
+        mapspot_t const *mapSpot = &mapSpots[mapSpotId];
+
+        if(!checkMapSpotSpawnFlags(mapSpot))
+            continue;
+
+        if(qualifyingSpotIdx != chosenQualifyingSpotIdx)
+        {
+            qualifyingSpotIdx++;
+            continue;
+        }
+
+#if _DEBUG
+        Con_Message("P_ChooseRandomMaceSpot: Chosen map spot id:%u.", mapSpotId);
+#endif
+        return mapSpot;
+    }
+
+    // Unreachable.
+    DENG_ASSERT(false);
+    return 0;
+}
+#endif // __JHERETIC__
+
 static void spawnMapObjects(void)
 {
     uint i;
 
     for(i = 0; i < numMapSpots; ++i)
     {
-        const mapspot_t* spot = &mapSpots[i];
+        mapspot_t const *spot = &mapSpots[i];
         mobjtype_t type;
 
         // Not all map spots spawn mobjs on map load.
@@ -579,7 +635,7 @@ static void spawnMapObjects(void)
         type = P_DoomEdNumToMobjType(spot->doomEdNum);
         if(type != MT_NONE)
         {
-            mobj_t* mo;
+            mobj_t *mo;
 
             // Check for things that clients don't spawn on their own.
             if(IS_CLIENT)
@@ -635,15 +691,23 @@ static void spawnMapObjects(void)
     }
 
 #if __JHERETIC__
-    if(maceSpotCount)
+    // Spawn a Firemace?
+    if(!IS_CLIENT && maceSpotCount)
     {
-        // Sometimes doesn't show up if not in deathmatch.
+        // Sometimes the Firemace doesn't show up if not in deathmatch.
         if(!(!deathmatch && P_Random() < 64))
         {
-            const mapspot_t* spot = &mapSpots[maceSpots[P_Random() % maceSpotCount]];
+            mapspot_t const *spot = P_ChooseRandomMaceSpot();
+            if(spot)
+            {
+# if _DEBUG
+                Con_Message("spawnMapObjects: Spawning Firemace at (%.2f, %.2f, %.2f).",
+                            spot->origin[VX], spot->origin[VY], spot->origin[VZ]);
+# endif
 
-            P_SpawnMobjXYZ(MT_WMACE, spot->origin[VX], spot->origin[VY], 0,
-                           spot->angle, MSF_Z_FLOOR);
+                P_SpawnMobjXYZ(MT_WMACE, spot->origin[VX], spot->origin[VY], 0,
+                               spot->angle, MSF_Z_FLOOR);
+            }
         }
     }
 #endif
@@ -829,9 +893,9 @@ static void P_ResetWorldState(void)
 
 #if __JHERETIC__
     maceSpotCount = 0;
-    maceSpots = NULL;
+    maceSpots     = 0;
     bossSpotCount = 0;
-    bossSpots = NULL;
+    bossSpots     = 0;
 #endif
 
     P_PurgeDeferredSpawns();

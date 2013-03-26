@@ -79,7 +79,7 @@ mapspot_t* mapSpots;
 
 #if __JHERETIC__
 uint maceSpotCount;
-mapspotid_t* maceSpots;
+mapspotid_t *maceSpots;
 uint bossSpotCount;
 mapspotid_t* bossSpots;
 #endif
@@ -973,6 +973,9 @@ boolean P_CheckSpot(coord_t x, coord_t y)
 #if __JHERETIC__
 void P_AddMaceSpot(mapspotid_t id)
 {
+#ifdef _DEBUG
+    Con_Message("P_AddMaceSpot: Added mace spot %u", id);
+#endif
     maceSpots = Z_Realloc(maceSpots, sizeof(mapspotid_t) * ++maceSpotCount, PU_MAP);
     maceSpots[maceSpotCount-1] = id;
 }

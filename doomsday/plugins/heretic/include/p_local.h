@@ -93,7 +93,11 @@
 #define USE_MACE_AMMO_1 1
 #define USE_MACE_AMMO_2 5
 
-void            P_RepositionMace(mobj_t* mo);
+/**
+ * Chooses the next spot to place the mace.
+ */
+void P_RepositionMace(mobj_t *mo);
+
 void            P_SetPsprite(player_t* player, int position,
                              statenum_t stnum);
 void            P_SetupPsprites(player_t* curplayer);
