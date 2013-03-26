@@ -100,7 +100,8 @@ def mac_os_version():
 
 
 def mac_target_ext():
-    if mac_os_version() == '10.6': return '.dmg'
+    if mac_os_version() == '10.8': return '.dmg'
+    if mac_os_version() == '10.6': return '_mac10_6.dmg'
     return '_32bit.dmg'
 
 
@@ -337,7 +338,7 @@ def main():
 
     try:
         if sys.platform == "darwin":
-            print "Mac OS X"
+            print "Mac OS X (%s)" % mac_os_version()
             mac_release()
         elif sys.platform == "win32":
             print "Windows"
