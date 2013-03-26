@@ -1728,7 +1728,7 @@ void GL_UploadTextureContent(texturecontent_t const &content, GLUploadMethod met
         if(!GL_UploadTextureGrayMipmap(glFormat, loadFormat, loadPixels, loadWidth, loadHeight,
                                        content.grayMipmap * reciprocal255))
         {
-            throw Error("GL_UploadTextureContent", QString("TexImageGrayMipmap failed (%u:%ix%i fmt%i)")
+            throw Error("GL_UploadTextureContent", QString("TexImageGrayMipmap failed (%1:%2 fmt%3)")
                                                        .arg(content.name)
                                                        .arg(Vector2i(loadWidth, loadHeight).asText())
                                                        .arg(int(dglFormat)));
