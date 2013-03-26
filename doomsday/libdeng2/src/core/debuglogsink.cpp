@@ -21,19 +21,19 @@
 
 namespace de {
 
-DebugLogSink::DebugLogSink(QtMsgType msgType) : LogSink(_format)
-{
-    _qs = new QDebug(msgType);
-}
+DebugLogSink::DebugLogSink(QtMsgType msgType) : LogSink(_format), _msgType(msgType)
+{}
 
 DebugLogSink::~DebugLogSink()
-{
-    delete _qs;
-}
+{}
 
 LogSink &DebugLogSink::operator << (String const &plainText)
 {
-    *_qs << plainText.toUtf8().constData() << "\n";
+    QByteArray utf8 = plainText.toUtf8();
+    if(_msgType == QtWarningMsg)
+        qWarning() << utf8.constData();
+    else
+        qDebug() << utf8.constData();
     return *this;
 }
 

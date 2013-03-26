@@ -38,7 +38,7 @@ public:
     void flush();
 
 private:
-    QDebug *_qs;
+    QtMsgType _msgType;
     MonospaceLogSinkFormatter _format;
 };
 
