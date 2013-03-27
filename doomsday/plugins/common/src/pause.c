@@ -73,9 +73,12 @@ static void endPause(void)
 
         forcedPeriodTicsRemaining = 0;
 
-        // Any impulses or accumulated relative offsets that occured
-        // during the pause should be ignored.
-        DD_Execute(true, "resetctlaccum");
+        if(!(paused & PAUSEF_FORCED_PERIOD))
+        {
+            // Any impulses or accumulated relative offsets that occured
+            // during the pause should be ignored.
+            DD_Execute(true, "resetctlaccum");
+        }
 
         NetSv_Paused(0);
     }
