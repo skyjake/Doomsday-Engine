@@ -31,38 +31,35 @@
 
 static boolean needBufFileSwitch = false;
 
-static AutoStr* composeBufferedMusicFilename(int id, const char* ext)
+static AutoStr *composeBufferedMusicFilename(int id, char const *ext)
 {
     if(ext && ext[0])
     {
         return Str_Appendf(AutoStr_NewStd(), "%s%i%s", BUFFERED_MUSIC_FILE, id, ext);
     }
-    else
-    {
-        return Str_Appendf(AutoStr_NewStd(), "%s%i", BUFFERED_MUSIC_FILE, id);
-    }
+    return Str_Appendf(AutoStr_NewStd(), "%s%i", BUFFERED_MUSIC_FILE, id);
 }
 
-static void musicSet(audiointerface_music_t* iMusic, int property, void* ptr)
+static void musicSet(audiointerface_music_t *iMusic, int property, void *ptr)
 {
-    audiodriver_t* d = AudioDriver_Interface(iMusic);
+    audiodriver_t *d = AudioDriver_Interface(iMusic);
     if(!d || !d->Set) return;
     d->Set(property, ptr);
 }
 
-static int musicPlayNativeFile(audiointerface_music_t* iMusic, const char* fileName, boolean looped)
+static int musicPlayNativeFile(audiointerface_music_t *iMusic, char const *fileName, boolean looped)
 {
     if(!iMusic->PlayFile) return 0;
     return iMusic->PlayFile(fileName, looped);
 }
 
-static int musicPlayLump(audiointerface_music_t* iMusic, lumpnum_t lump, boolean looped)
+static int musicPlayLump(audiointerface_music_t *iMusic, lumpnum_t lump, boolean looped)
 {
     if(!iMusic->Play || !iMusic->SongBuffer)
     {
         // Music interface does not offer buffer playback.
         // Write this lump to disk and play from there.
-        AutoStr* musicFile = AudioDriver_Music_ComposeTempBufferFilename(0);
+        AutoStr *musicFile = AudioDriver_Music_ComposeTempBufferFilename(0);
         if(!F_DumpLump2(lump, Str_Text(musicFile)))
         {
             // Failed to write the lump...
@@ -70,77 +67,66 @@ static int musicPlayLump(audiointerface_music_t* iMusic, lumpnum_t lump, boolean
         }
         return musicPlayNativeFile(iMusic, Str_Text(musicFile), looped);
     }
-    else
-    {
-        // Buffer the data using the driver's facilities.
-        FileHandle* hndl   = F_OpenLump(lump);
-        size_t length = FileHandle_Length(hndl);
 
-        if(!hndl) return 0;
+    // Buffer the data using the driver's facilities.
+    FileHandle *hndl = F_OpenLump(lump);
+    size_t length = FileHandle_Length(hndl);
 
-        FileHandle_Read(hndl, (uint8_t*) iMusic->SongBuffer(length), length);
-        F_Delete(hndl);
+    if(!hndl) return 0;
 
-        return iMusic->Play(looped);
-    }
+    FileHandle_Read(hndl, (uint8_t *) iMusic->SongBuffer(length), length);
+    F_Delete(hndl);
+
+    return iMusic->Play(looped);
 }
 
-static int musicPlayFile(audiointerface_music_t* iMusic, const char* virtualOrNativePath, boolean looped)
+static int musicPlayFile(audiointerface_music_t *iMusic, char const *virtualOrNativePath, boolean looped)
 {
-    size_t len;
-    FileHandle* file = F_Open(virtualOrNativePath, "rb");
-
+    FileHandle *file = F_Open(virtualOrNativePath, "rb");
     if(!file) return 0;
 
-    len = FileHandle_Length(file);
+    size_t len = FileHandle_Length(file);
 
     if(!iMusic->Play || !iMusic->SongBuffer)
     {
         // Music interface does not offer buffer playback.
         // Write to disk and play from there.
-        AutoStr* fileName = AudioDriver_Music_ComposeTempBufferFilename(NULL);
-        uint8_t* buf = (uint8_t*)malloc(len);
-        if(!buf)
-        {
-            F_Delete(file);
-            Con_Message("Warning: Failed on allocation of %lu bytes for temporary song write buffer.", (unsigned long) len);
-            return false;
-        }
+        AutoStr *fileName = AudioDriver_Music_ComposeTempBufferFilename(NULL);
+        uint8_t *buf = (uint8_t *)M_Malloc(len);
+
         FileHandle_Read(file, buf, len);
         F_Dump(buf, len, Str_Text(fileName));
-        free(buf);
+        M_Free(buf); buf = 0;
 
         F_Delete(file);
 
         // Music maestro, if you please!
         return musicPlayNativeFile(iMusic, Str_Text(fileName), looped);
     }
-    else
-    {
-        // Music interface offers buffered playback. Use it.
-        FileHandle_Read(file, (uint8_t*) iMusic->SongBuffer(len), len);
-        F_Delete(file);
 
-        return iMusic->Play(looped);
-    }
+    // Music interface offers buffered playback. Use it.
+    FileHandle_Read(file, (uint8_t *) iMusic->SongBuffer(len), len);
+    F_Delete(file);
+
+    return iMusic->Play(looped);
 }
 
-static int musicPlayCDTrack(audiointerface_cd_t* iCD, int track, boolean looped)
+static int musicPlayCDTrack(audiointerface_cd_t *iCD, int track, boolean looped)
 {
     return iCD->Play(track, looped);
 }
 
-static boolean musicIsPlaying(audiointerface_music_t* iMusic)
+static boolean musicIsPlaying(audiointerface_music_t *iMusic)
 {
     return iMusic->gen.Get(MUSIP_PLAYING, 0);
 }
 
-void AudioDriver_Music_SwitchBufferFilenames(void)
+void AudioDriver_Music_SwitchBufferFilenames()
 {
     needBufFileSwitch = true;
 }
 
-AutoStr* AudioDriver_Music_ComposeTempBufferFilename(const char* ext)
+AutoStr *AudioDriver_Music_ComposeTempBufferFilename(char const *ext)
 {
     static int currentBufFile = 0;
 
@@ -154,18 +140,18 @@ AutoStr* AudioDriver_Music_ComposeTempBufferFilename(const char* ext)
     return composeBufferedMusicFilename(currentBufFile, ext);
 }
 
-void AudioDriver_Music_Set(int property, void* ptr)
+void AudioDriver_Music_Set(int property, void *ptr)
 {
-    void* ifs[MAX_AUDIO_INTERFACES];
+    void *ifs[MAX_AUDIO_INTERFACES];
     int i, count = AudioDriver_FindInterfaces(AUDIO_IMUSIC, ifs);
     for(i = 0; i < count; ++i)
     {
-        musicSet((audiointerface_music_t*) ifs[i], property, ptr);
+        musicSet((audiointerface_music_t *) ifs[i], property, ptr);
     }
 
     if(property == AUDIOP_SOUNDFONT_FILENAME)
     {
-        const char* fn = (char const *) ptr;
+        char const *fn = (char const *) ptr;
         if(!fn || !fn[0]) return; // No path.
 
         if(F_FileExists(fn))
@@ -175,13 +161,13 @@ void AudioDriver_Music_Set(int property, void* ptr)
     }
 }
 
-int AudioDriver_Music_PlayNativeFile(const char* fileName, boolean looped)
+int AudioDriver_Music_PlayNativeFile(char const *fileName, boolean looped)
 {
-    void* ifs[MAX_AUDIO_INTERFACES];
+    void *ifs[MAX_AUDIO_INTERFACES];
     int i, count = AudioDriver_FindInterfaces(AUDIO_IMUSIC, ifs);
     for(i = 0; i < count; ++i)
     {
-        if(musicPlayNativeFile((audiointerface_music_t*) ifs[i], fileName, looped))
+        if(musicPlayNativeFile((audiointerface_music_t* ) ifs[i], fileName, looped))
             return true;
     }
     return false;
@@ -189,11 +175,11 @@ int AudioDriver_Music_PlayNativeFile(const char* fileName, boolean looped)
 
 int AudioDriver_Music_PlayLump(lumpnum_t lump, boolean looped)
 {
-    void* ifs[MAX_AUDIO_INTERFACES];
+    void *ifs[MAX_AUDIO_INTERFACES];
     int i, count = AudioDriver_FindInterfaces(AUDIO_IMUSIC, ifs);
     for(i = 0; i < count; ++i)
     {
-        if(musicPlayLump((audiointerface_music_t*) ifs[i], lump, looped))
+        if(musicPlayLump((audiointerface_music_t *) ifs[i], lump, looped))
             return true;
     }
     return false;
@@ -213,23 +199,23 @@ int AudioDriver_Music_PlayFile(const char* virtualOrNativePath, boolean looped)
 
 int AudioDriver_Music_PlayCDTrack(int track, boolean looped)
 {
-    void* ifs[MAX_AUDIO_INTERFACES];
+    void *ifs[MAX_AUDIO_INTERFACES];
     int i, count = AudioDriver_FindInterfaces(AUDIO_ICD, ifs);
     for(i = 0; i < count; ++i)
     {
-        if(musicPlayCDTrack((audiointerface_cd_t*) ifs[i], track, looped))
+        if(musicPlayCDTrack((audiointerface_cd_t *) ifs[i], track, looped))
             return true;
     }
     return false;
 }
 
-boolean AudioDriver_Music_IsPlaying(void)
+boolean AudioDriver_Music_IsPlaying()
 {
-    void* ifs[MAX_AUDIO_INTERFACES];
+    void *ifs[MAX_AUDIO_INTERFACES];
     int i, count = AudioDriver_FindInterfaces(AUDIO_IMUSIC_OR_ICD, ifs);
     for(i = 0; i < count; ++i)
     {
-        if(musicIsPlaying((audiointerface_music_t*) ifs[i]))
+        if(musicIsPlaying((audiointerface_music_t *) ifs[i]))
             return true;
     }
     return false;
