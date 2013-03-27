@@ -183,14 +183,14 @@ void CanvasWindow::initCanvasAfterRecreation(Canvas &canvas)
     LOG_DEBUG("Canvas replaced with %p") << de::dintptr(self->d->canvas);
 }
 
-void CanvasWindow::recreateCanvas()
+bool CanvasWindow::recreateCanvas()
 {
     // Update the GL format for subsequently created Canvases.
     if(!setDefaultGLFormat())
     {
         // No need to recreate.
         LOG_DEBUG("Canvas not recreated because the format was not changed.");
-        return;
+        return false;
     }
 
     // We'll re-trap the mouse after the new canvas is ready.
@@ -207,6 +207,8 @@ void CanvasWindow::recreateCanvas()
     d->recreated->show();
 
     LOG_DEBUG("Canvas recreated, old one still exists.");
+
+    return true;
 }
 
 Canvas& CanvasWindow::canvas()

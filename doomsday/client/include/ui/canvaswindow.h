@@ -62,10 +62,14 @@ public:
     float frameRate() const;
 
     /**
-     * Recreates the contained Canvas with an update GL format.
-     * The context is shared with the old Canvas.
+     * Recreates the contained Canvas with an updated GL format. The context is
+     * shared with the old Canvas. The Canvas will not be recreated if the
+     * GL format does not change.
+     *
+     * @return @c true, if a new Canvas was created. @c false, if recreating
+     * the canvas was not needed (format not changed).
      */
-    void recreateCanvas();
+    bool recreateCanvas();
 
     Canvas& canvas();
     bool ownsCanvas(Canvas *c) const;

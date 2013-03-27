@@ -1295,6 +1295,7 @@ void Window_Draw(Window* win)
     assert(win);
     assert(win->widget);
 
+    // Don't run the main loop until after the paint event has been dealt with.
     ClientApp::app().loop().pause();
 
     // The canvas needs to be recreated when the GL format has changed
@@ -1302,8 +1303,11 @@ void Window_Draw(Window* win)
     if(win->needRecreateCanvas)
     {
         win->needRecreateCanvas = false;
-        win->widget->recreateCanvas();
-        return;
+        if(win->widget->recreateCanvas())
+        {
+            // Wait until the new Canvas is ready.
+            return;
+        }
     }
 
     if(Window_ShouldRepaintManually(win))
@@ -1315,9 +1319,6 @@ void Window_Draw(Window* win)
     }
     else
     {
-        // Don't run the main loop until after the paint event has been dealt with.
-        //LegacyCore_PauseLoop();
-
         // Request update at the earliest convenience.
         win->widget->canvas().update();
     }
