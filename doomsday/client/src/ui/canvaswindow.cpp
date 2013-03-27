@@ -196,6 +196,7 @@ void CanvasWindow::recreateCanvas()
     // We'll re-trap the mouse after the new canvas is ready.
     d->mouseWasTrapped = canvas().isMouseTrapped();
     canvas().trapMouse(false);
+    canvas().setParent(0);
 
     // Create the replacement Canvas. Once it's created and visible, we'll
     // finish the switch-over.

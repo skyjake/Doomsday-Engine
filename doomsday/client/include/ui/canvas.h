@@ -67,6 +67,8 @@ public:
      */
     void setInitFunc(void (*canvasInitializeFunc)(Canvas&));
 
+    void setParent(CanvasWindow *parent);
+
     /**
      * Sets the callback function that is called when the window's focus state changes.
      * The callback is given @c true or @c false as argument, with
