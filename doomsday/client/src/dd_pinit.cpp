@@ -186,12 +186,7 @@ void DD_ShutdownAll(void)
     R_Shutdown();
 
     // Ensure the global material collection is destroyed.
-    try
-    {
-        delete &App_Materials();
-    }
-    catch(de::Error const &)
-    {} // Ignore this error.
+    App_DeleteMaterials();
 
     Def_Destroy();
     F_Shutdown();

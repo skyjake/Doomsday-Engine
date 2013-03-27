@@ -206,6 +206,12 @@ D_CMD(ShowUpdateSettings)
 
 #endif // __CLIENT__
 
+void App_DeleteMaterials()
+{
+    delete materials;
+    materials = 0;
+}
+
 void DD_CreateResourceClasses()
 {
     resourceClasses.push_back(new ResourceClass("RC_PACKAGE",       "Packages"));
@@ -592,7 +598,10 @@ void DD_ClearSystemTextureSchemes()
 
 Materials &App_Materials()
 {
-    if(!materials) throw Error("App_Materials", "Materials collection not yet initialized");
+    if(!materials)
+    {
+        throw Error("App_Materials", "Materials collection not yet initialized");
+    }
     return *materials;
 }
 
@@ -1528,8 +1537,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
     titleFinale = 0; // If the title finale was in progress it isn't now.
 
     /// @todo Material collection should not be destroyed during a reload.
-    DENG_ASSERT(materials);
-    delete materials; materials = 0;
+    App_DeleteMaterials();
 
     VERBOSE(
         if(!isNullGame(game))

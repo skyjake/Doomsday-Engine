@@ -190,6 +190,11 @@ de::Game &App_CurrentGame();
 /// @return  The application's global Material collection.
 de::Materials &App_Materials();
 
+/**
+ * Destroy the Materials collection.
+ */
+void App_DeleteMaterials();
+
 /// @return  The application's global Texture collection.
 de::Textures &App_Textures();
 
