@@ -361,7 +361,10 @@ int ModelOpen(model_t *mo, const char *filename)
             switch(chunk.type)
             {
             case DMC_INFO:
-                fread(inf, sizeof(*inf), 1, file);
+                if(!fread(inf, sizeof(*inf), 1, file))
+                {
+                    DoError(MTERR_READ_FAILED);
+                }
                 break;
 
             default:
