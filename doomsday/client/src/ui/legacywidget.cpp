@@ -32,6 +32,7 @@
 #include "render/rend_list.h"
 #include "render/rend_console.h"
 #include "audio/s_main.h"
+#include "gl/gl_main.h"
 #include "gl/sys_opengl.h"
 #include "gl/gl_defer.h"
 
@@ -107,16 +108,16 @@ void LegacyWidget::update()
 
 void LegacyWidget::draw()
 {
-    if(renderWireframe || isDisabled())
+    bool cannotDraw = (isDisabled() || !GL_IsFullyInited());
+
+    if(renderWireframe || cannotDraw)
     {
         // When rendering is wireframe mode, we must clear the screen
         // before rendering a frame.
         glClear(GL_COLOR_BUFFER_BIT);
     }
 
-    if(isDisabled()) return;
-
-    //LOG_DEBUG("Legacy draw");
+    if(cannotDraw) return;
 
     if(drawGame)
     {

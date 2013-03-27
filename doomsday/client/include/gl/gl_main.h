@@ -95,9 +95,16 @@ void GL_Init();
 void GL_Shutdown();
 
 /**
- * Returns @c true iff the graphics library is currently initialized.
+ * Returns @c true iff the graphics library is currently initialized
+ * for basic drawing (using the OpenGL API directly).
  */
 boolean GL_IsInited();
+
+/**
+ * Determines if the renderer is fully initialized (texture manager, deferring,
+ * etc).
+ */
+boolean GL_IsFullyInited();
 
 /**
  * GL is reset back to the state it was right after initialization.

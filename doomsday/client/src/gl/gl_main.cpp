@@ -73,6 +73,7 @@ float   vid_gamma = 1.0f, vid_bright = 0, vid_contrast = 1.0f;
 float   glNearClip, glFarClip;
 
 static boolean initGLOk = false;
+static boolean initFullGLOk = false;
 
 static boolean gamma_support = false;
 static float oldgamma, oldcontrast, oldbright;
@@ -148,6 +149,11 @@ void GL_Register()
 boolean GL_IsInited()
 {
     return initGLOk;
+}
+
+boolean GL_IsFullyInited()
+{
+    return initFullGLOk;
 }
 
 #if defined(WIN32) || defined(MACOSX)
@@ -366,10 +372,14 @@ void GL_InitRefresh()
 
     // Register/create Texture objects for the system textures.
     R_InitSystemTextures();
+
+    initFullGLOk = true;
 }
 
 void GL_ShutdownRefresh()
 {
+    initFullGLOk = false;
+
     R_DestroyColorPalettes();
 
     GL_ShutdownTextureManager();
