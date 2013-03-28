@@ -403,7 +403,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
          * @todo Read this information from a config file, we should not
          * expect to edit this file in order to change these...
          */
-        $pack = PackageFactory::newDistribution(PID_WIN_X86, 'Doomsday', '1.9.8',
+        $pack = PackageFactory::newDistribution(PID_WIN_X86, 'Doomsday', Version::fromString('1.9.8'),
                                                 'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.8/deng-inst-1.9.8-1.exe/download',
                                                 NULL/*no fallback download uri*/,
                                                 false/*not an autobuilder packaged*/);
@@ -411,7 +411,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $pack->setReleaseDate(strtotime('June 26, 2012'));
         $packages[] = $pack;
 
-        $pack = PackageFactory::newDistribution(PID_MAC10_4_X86_PPC, 'Doomsday', '1.9.8',
+        $pack = PackageFactory::newDistribution(PID_MAC10_4_X86_PPC, 'Doomsday', Version::fromString('1.9.8'),
                                                 'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.8/deng-inst-1.9.8-1.dmg/download',
                                                 NULL/*no fallback download uri*/,
                                                 false/*not an autobuilder packaged*/);
@@ -419,7 +419,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $pack->setReleaseDate(strtotime('June 26, 2012'));
         $packages[] = $pack;
 
-        $pack = PackageFactory::newDistribution(PID_MAC10_6_X86_X86_64, 'Doomsday', '1.9.8',
+        $pack = PackageFactory::newDistribution(PID_MAC10_6_X86_X86_64, 'Doomsday', Version::fromString('1.9.8'),
                                                 'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.8/deng-inst-1.9.8-1_64bit.dmg/download',
                                                 NULL/*no fallback download uri*/,
                                                 false/*not an autobuilder packaged*/);
@@ -427,7 +427,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $pack->setReleaseDate(strtotime('June 26, 2012'));
         $packages[] = $pack;
 
-        $pack = PackageFactory::newDistribution(PID_LINUX_X86, 'Doomsday', '1.9.8',
+        $pack = PackageFactory::newDistribution(PID_LINUX_X86, 'Doomsday', Version::fromString('1.9.8'),
                                                 'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.8/deng-inst-1.9.8-1_i386.deb/download',
                                                 NULL/*no fallback download uri*/,
                                                 false/*not an autobuilder packaged*/);
@@ -435,7 +435,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $pack->setReleaseDate(strtotime('June 26, 2012'));
         $packages[] = $pack;
 
-        $pack = PackageFactory::newDistribution(PID_LINUX_X86_64, 'Doomsday', '1.9.8',
+        $pack = PackageFactory::newDistribution(PID_LINUX_X86_64, 'Doomsday', Version::fromString('1.9.8'),
                                                 'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.8/deng-inst-1.9.8-1_amd64.deb/download',
                                                 NULL/*no fallback download uri*/,
                                                 false/*not an autobuilder packaged*/);
@@ -443,7 +443,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $pack->setReleaseDate(strtotime('June 26, 2012'));
         $packages[] = $pack;
 
-        $pack = PackageFactory::newDistribution(PID_WIN_X86, 'Doomsday', '1.9.7',
+        $pack = PackageFactory::newDistribution(PID_WIN_X86, 'Doomsday', Version::fromString('1.9.7'),
                                                 'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.7/deng-inst-1.9.7-1.exe/download',
                                                 NULL/*no fallback download uri*/,
                                                 false/*not an autobuilder packaged*/);
@@ -451,7 +451,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $pack->setReleaseDate(strtotime('March 14, 2012'));
         $packages[] = $pack;
 
-        $pack = PackageFactory::newDistribution(PID_MAC10_4_X86_PPC, 'Doomsday', '1.9.7',
+        $pack = PackageFactory::newDistribution(PID_MAC10_4_X86_PPC, 'Doomsday', Version::fromString('1.9.7'),
                                                 'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.7/deng-inst-1.9.7-1.dmg/download',
                                                 NULL/*no fallback download uri*/,
                                                 false/*not an autobuilder packaged*/);
@@ -459,7 +459,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $pack->setReleaseDate(strtotime('March 14, 2012'));
         $packages[] = $pack;
 
-        $pack = PackageFactory::newDistribution(PID_MAC10_6_X86_X86_64, 'Doomsday', '1.9.7',
+        $pack = PackageFactory::newDistribution(PID_MAC10_6_X86_X86_64, 'Doomsday', Version::fromString('1.9.7'),
                                                 'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.7/deng-inst-1.9.7-1.dmg/download',
                                                 NULL/*no fallback download uri*/,
                                                 false/*not an autobuilder packaged*/);
@@ -467,7 +467,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $pack->setReleaseDate(strtotime('March 14, 2012'));
         $packages[] = $pack;
 
-        $pack = PackageFactory::newDistribution(PID_LINUX_X86, 'Doomsday', '1.9.7',
+        $pack = PackageFactory::newDistribution(PID_LINUX_X86, 'Doomsday', Version::fromString('1.9.7'),
                                                 'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.7/deng-inst-1.9.7-1.deb/download',
                                                 NULL/*no fallback download uri*/,
                                                 false/*not an autobuilder packaged*/);
@@ -475,7 +475,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $pack->setReleaseDate(strtotime('March 14, 2012'));
         $packages[] = $pack;
 
-        $pack = PackageFactory::newDistribution(PID_LINUX_X86_64, 'Doomsday', '1.9.7',
+        $pack = PackageFactory::newDistribution(PID_LINUX_X86_64, 'Doomsday', Version::fromString('1.9.7'),
                                                 'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.7/deng-inst-1.9.7-1.deb/download',
                                                 NULL/*no fallback download uri*/,
                                                 false/*not an autobuilder packaged*/);
@@ -483,7 +483,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $pack->setReleaseDate(strtotime('March 14, 2012'));
         $packages[] = $pack;
 
-        $pack = PackageFactory::newDistribution(PID_WIN_X86, 'Doomsday', '1.8.6',
+        $pack = PackageFactory::newDistribution(PID_WIN_X86, 'Doomsday', Version::fromString('1.8.6'),
                                                 'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.8.6/deng-inst-1.8.6.exe/download',
                                                 NULL/*no fallback download uri*/,
                                                 false/*not an autobuilder packaged*/);
@@ -651,20 +651,20 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             if($pack->title() !== 'Doomsday') continue;
 
             // Have we encountered this version before?.
-            $version = $pack->version();
-            $key = array_casekey_exists($version, $releases);
+            $versionText = "{$pack->version()}";
+            $key = array_casekey_exists($versionText, $releases);
             if($key === false)
             {
                 // Not yet construct a new build list (array) and associate it
                 // in the release array using the version number as the key.
-                $key = ucwords($version);
+                $key = ucwords($versionText);
                 $releases[$key] = array();
 
                 $buildList = &$releases[$key];
             }
             else
             {
-                $buildList = &$releases[$version];
+                $buildList = &$releases[$versionText];
             }
 
             // Is this package a product of the autobuilder?
@@ -1379,20 +1379,20 @@ jQuery(document).ready(function() {
             if($pack->title() !== 'Doomsday') continue;
 
             // Have we encountered this version before?.
-            $version = $pack->version();
-            $key = array_casekey_exists($version, $releases);
+            $versionText = "{$pack->version()}";
+            $key = array_casekey_exists($versionText, $releases);
             if($key === false)
             {
                 // Not yet construct a new record and associate it
                 // in the release list using the version number as the key.
-                $key = ucwords($version);
+                $key = ucwords($versionText);
                 $releases[$key] = $this->newReleaseInfo($key);
 
                 $releaseInfo = &$releases[$key];
             }
             else
             {
-                $releaseInfo = &$releases[$version];
+                $releaseInfo = &$releases[$versionText];
             }
 
             $build = NULL;

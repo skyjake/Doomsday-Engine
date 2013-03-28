@@ -34,12 +34,12 @@ abstract class AbstractUnstableBuilderPackage extends AbstractUnstablePackage im
     // Override implementation in AbstractUnstablePackage.
     public function composeFullTitle($includeVersion=true, $includePlatformName=true, $includeBuildId=true)
     {
-        $includeVersion = (boolean) $includeVersion;
-        $includeBuildId = (boolean) $includeBuildId;
+        $includeVersion = (bool) $includeVersion;
+        $includeBuildId = (bool) $includeBuildId;
 
         $title = $this->title;
         if($includeVersion && isset($this->version))
-            $title .= ' '. $this->version;
+            $title .= " {$this->version}";
         if($includeBuildId && $this->buildId !== 0)
             $title .= ' Build'. $this->buildId;
         if($includePlatformName && $this->platformId !== PID_ANY)

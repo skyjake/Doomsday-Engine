@@ -25,19 +25,21 @@
 
 includeGuard('BasePackage');
 
+require_once(DIR_CLASSES.'/version.class.php');
+
 abstract class BasePackage
 {
     protected $platformId;
     protected $title = '(unnamed)';
     protected $version = NULL;
 
-    public function __construct($platformId=PID_ANY, $title=NULL, $version=NULL)
+    public function __construct($platformId=PID_ANY, $title=NULL, Version $version = NULL)
     {
         $this->platformId = $platformId;
         if(!is_null($title))
             $this->title = "$title";
         if(!is_null($version))
-            $this->version = "$version";
+            $this->version = $version;
     }
 
     public function &platformId()
@@ -57,11 +59,11 @@ abstract class BasePackage
 
     public function composeFullTitle($includeVersion=true, $includePlatformName=true)
     {
-        $includeVersion = (boolean) $includeVersion;
+        $includeVersion = (bool)$includeVersion;
 
         $title = $this->title;
         if($includeVersion && !is_null($this->version))
-            $title .= ' '. $this->version;
+            $title .= " {$this->version}";
         if($includePlatformName && $this->platformId !== PID_ANY)
         {
             $plat = &BuildRepositoryPlugin::platform($this->platformId);
@@ -90,8 +92,17 @@ abstract class BasePackage
 
         $tpl['platform_id']   = $this->platformId();
         $tpl['platform_name'] = $plat['name'];
-        $tpl['version'] = $this->version();
-        $tpl['title'] = $this->title();
-        $tpl['fulltitle'] = $this->composeFullTitle();
+
+        $tpl['title']         = $this->title();
+        $tpl['fulltitle']     = $this->composeFullTitle();
+
+        // Textual version representation.
+        $tpl['version']       = is_null($this->version)? '0' : "{$this->version}";
+
+        // Component version representation.
+        $tpl['version_major']    = is_null($this->version)? '0' : $this->version->major;
+        $tpl['version_minor']    = is_null($this->version)? '0' : $this->version->minor;
+        $tpl['version_patch']    = is_null($this->version)? '0' : $this->version->patch;
+        $tpl['version_revision'] = is_null($this->version)? '0' : $this->version->revision;
     }
 }
