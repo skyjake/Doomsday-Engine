@@ -73,7 +73,7 @@ server-game-nomonsters 1
 setmap 1 5}}
 
 Note that you can set up a @file{.cfg} file where you can define the server
-configuration and @wikilink{automatically open the server}{Dedicated_server}.
+configuration and @wikilink{automatically open the server}{Multiplayer_server}.
 
 If your server is not public (@opt{server-public}), a client can connect to it
 using a custom address search:
