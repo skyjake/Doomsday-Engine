@@ -55,9 +55,9 @@ games, please note the following:
 
 Use @ifdef{UNIX}{ @strong{doomsday-shell} or @strong{doomsday-shell-text} }
 @else{ @strong{Doomsday Shell}} to host a multiplayer game of your own. The
-Shell allows you to start, stop, and control Doomsday multiplayer servers.
-Using the Shell, you can connect both to local servers and remote servers over
-the internet.
+@wikiterm{Shell}{Shell} allows you to start, stop, and control Doomsday
+multiplayer servers. Using the Shell, you can connect both to local servers and
+remote servers over the internet.
 
 @notice{It is no longer possible to start a server via the Doomsday Frontend.}
 
