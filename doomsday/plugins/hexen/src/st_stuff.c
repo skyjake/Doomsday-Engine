@@ -612,6 +612,8 @@ void SBarChain_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     else
     {
         pColor = players[obj->player].colorMap; // cfg.playerColor[obj->player];
+        // Flip Red/Blue.
+        pColor = (pColor == 1? 0 : pColor == 0? 1 : pColor);
     }
 
     if(!R_GetPatchInfo(pChain[pClass], &pChainInfo)) return;
