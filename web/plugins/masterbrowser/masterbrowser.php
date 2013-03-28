@@ -80,7 +80,7 @@ class MasterBrowserPlugin extends Plugin implements Actioner, RequestInterpreter
 
         $playerMaxLabel = 'Maximum number of players';
 
-        $openStatusLabel = $info['open']? 'Server is open to all players' : 'Server requires a password to join';
+        $openStatusLabel = $info['locked']? 'Server requires a password to join' : 'Server is open to all players';
 
         $addressLabel = 'IP address and port number of the server';
 
@@ -97,7 +97,7 @@ class MasterBrowserPlugin extends Plugin implements Actioner, RequestInterpreter
                 '<span class="name">'. htmlspecialchars($info['name']) .'</span>'.
                 '<div class="server-metadata">'.
                      '<span class="address"><label title="'. htmlspecialchars($addressLabel) .'">'. htmlspecialchars($info['at']) .'<span class="port" '. (((integer)$info['port']) === 0? 'style="color:red;"' : '') .'>'. htmlspecialchars($info['port']) .'</span></label></span>'.
-                     '<div class="'. ($info['open']? 'lock-off' : 'lock-on') .'" title="'. htmlspecialchars($openStatusLabel) .'"></div>'.
+                     '<div class="'. ($info['locked']? 'lock-on' : 'lock-off') .'" title="'. htmlspecialchars($openStatusLabel) .'"></div>'.
                 '</div>'.
                 '<div class="game-metadata">'.
                     'Setup: <span class="game-setup">'. htmlspecialchars($setupStr) .'</span>'.
@@ -138,8 +138,8 @@ jQuery(document).ready(function() {
 
     public static function serverSorter($b, $a)
     {
-        // Open servers are grouped together.
-        $diff = (integer)($b['open'] - $a['open']);
+        // Group servers according to lock status.
+        $diff = (integer)($b['locked'] - $a['locked']);
         if($diff) return $diff;
 
         // Servers with active players get priority
