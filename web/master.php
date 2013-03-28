@@ -1,7 +1,6 @@
 <?php
 /**
- * @file master.php
- * Doomsday Master Server interface
+ * @file master.php Doomsday Master Server interface
  *
  * @section License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -53,9 +52,9 @@ function update_server($announcement, $addr)
         $value = substr($line, $colon + 1, strlen($line) - $colon - 1);
 
         // Let's make sure we know the label.
-        if(in_array($label, array("port", "ver", "map", "game", "name",
-            "info", "nump", "maxp", "open", "mode", "setup", "iwad", "pwads",
-            "wcrc", "plrn", "data0", "data1", "data2"))
+        if(in_array($label, array('port', 'locked', 'ver', 'map', 'game', 'name',
+            'info', 'nump', 'maxp', 'open', 'mode', 'setup', 'iwad', 'pwads',
+            'wcrc', 'plrn', 'data0', 'data1', 'data2'))
             && strlen($value) < 128)
         {
             // This will be included in the datafile.
