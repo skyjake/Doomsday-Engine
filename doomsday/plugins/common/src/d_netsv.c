@@ -1047,6 +1047,9 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags, boolean rel
             if(pl->keys[i])
                 keys |= 1 << i;
 #endif
+#if __JHEXEN__
+        keys = pl->keys;
+#endif
 
         Writer_WriteByte(writer, keys);
     }

@@ -526,6 +526,13 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
             pl->keys[i] = val;
         }
 #endif
+#if __JHEXEN__
+        if((pl->keys & b) != 0)
+        {
+            ST_HUDUnHide(plrNum, HUE_ON_PICKUP_KEY);
+        }
+        pl->keys = b;
+#endif
     }
 
     if(flags & PSF_FRAGS)
