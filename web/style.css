@@ -846,9 +846,22 @@ p.legal a {
     margin-bottom: 0;
 }
 
+#socialbookmarkbox div.hnav ul li {
+    padding-left: .2em;
+    padding-right: .2em;
+    margin-bottom: 0;
+}
+
 .sf-button {
     position:relative;
     top:-3px;
+}
+
+.ohloh-button {
+    margin-top: .4em;
+    /* The button is visually smaller than the defined dimensions of the iframe... */
+    margin-bottom: -14px;
+    margin-right: -14px;
 }
 
 .fb-like {
@@ -857,7 +870,7 @@ p.legal a {
 
 .google-plusone {
     margin-top: 1em;
-    padding-left: 1.4em;
+    padding-left: 1em;
 }
 
 /*-------------------- Addons ---------------------*/
