@@ -269,7 +269,14 @@ void N_MasterAnnounceServer(boolean isOpen)
 {
 #ifdef __SERVER__
     // Must be a server.
-   if(isClient) return;
+    if(isClient) return;
+
+    if(isOpen && !strlen(netPassword))
+    {
+        Con_Message("Cannot announce server as public: no shell password set!\n"
+                    "You must set one with the 'server-password' cvar.");
+        return;
+    }
 
     DEBUG_Message(("N_MasterAnnounceServer: Announcing as open=%i.\n", isOpen));
 
