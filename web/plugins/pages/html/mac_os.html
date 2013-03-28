@@ -70,13 +70,17 @@ function genPackageBadgeHTML(json, downloadUri)
         metaData += '<span title="Release Date">' + shortDate + '</span> &middot; ';
     }
 
-    if(json.platform_name == 'mac10_6-x86-x86_64')
+    if(json.platform_name == 'mac10_8-x86_64')
     {
-        metaData += 'Mac OS 10.6+';
+        metaData += 'OS X 10.8+';
+    }
+    else if(json.platform_name == 'mac10_6-x86-x86_64')
+    {
+        metaData += 'OS X 10.6+';
     }
     else
     {
-        metaData += 'Mac OS 10.4+';
+        metaData += 'OS X 10.4+';
     }
     metaData += '</span>';
 
@@ -113,10 +117,10 @@ function recordSorter(recordA, recordB)
         return a_is_unstable? 1 : -1;
     }
 
-    // Platform ids are arranged such that latest appears last.
+    // Platform ids are arranged such that latest appears first.
     if(a.platform_id != b.platform_id)
     {
-        return a.platform_id > b.platform_id? 1 : -1;
+        return a.platform_id > b.platform_id? -1 : 1;
     }
 
     // Use the lexicographical difference between titles.
@@ -182,15 +186,17 @@ function updateLatestPackages(requests)
 requests = new Array();
 
 // Latest stable packages.
+/* 
 task = new Array();
 task['request'] = 'latestbuild?';
 task['data'] = {
     graph: 'json',
-    platform: 'mac10_4-x86-ppc'
+    platform: 'mac10_8-x86_64'
 };
-task['downloadUri'] = 'latestbuild?' + 'platform=mac10_4-x86-ppc';
+task['downloadUri'] = 'latestbuild?' + 'platform=mac10_8-x86_64';
 task['packageListElementId'] = '#downloads_list1';
 requests.push(task);
+*/
 
 task = new Array();
 task['request'] = 'latestbuild?';
@@ -202,15 +208,25 @@ task['downloadUri'] = 'latestbuild?' + 'platform=mac10_6-x86-x86_64';
 task['packageListElementId'] = '#downloads_list1';
 requests.push(task);
 
+task = new Array();
+task['request'] = 'latestbuild?';
+task['data'] = {
+    graph: 'json',
+    platform: 'mac10_4-x86-ppc'
+};
+task['downloadUri'] = 'latestbuild?' + 'platform=mac10_4-x86-ppc';
+task['packageListElementId'] = '#downloads_list1';
+requests.push(task);
+
 // Latest unstable packages.
 task = new Array();
 task['request'] = 'latestbuild?';
 task['data'] = {
     graph: 'json',
-    platform: 'mac10_4-x86-ppc',
+    platform: 'mac10_8-x86_64',
     unstable: 'yes'
 };
-task['downloadUri'] = 'latestbuild?' + 'platform=mac10_4-x86-ppc' + '&unstable';
+task['downloadUri'] = 'latestbuild?' + 'platform=mac10_8-x86_64' + '&unstable';
 task['packageListElementId'] = '#downloads_list2';
 requests.push(task);
 
@@ -222,6 +238,17 @@ task['data'] = {
     unstable: 'yes'
 };
 task['downloadUri'] = 'latestbuild?' + 'platform=mac10_6-x86-x86_64' + '&unstable';
+task['packageListElementId'] = '#downloads_list2';
+requests.push(task);
+
+task = new Array();
+task['request'] = 'latestbuild?';
+task['data'] = {
+    graph: 'json',
+    platform: 'mac10_4-x86-ppc',
+    unstable: 'yes'
+};
+task['downloadUri'] = 'latestbuild?' + 'platform=mac10_4-x86-ppc' + '&unstable';
 task['packageListElementId'] = '#downloads_list2';
 requests.push(task);
 
