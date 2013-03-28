@@ -33,8 +33,9 @@ define('PID_ANY',                0); ///< (Enumeration). Ordinals are meaningles
 define('PID_WIN_X86',            1);
 define('PID_MAC10_4_X86_PPC',    2);
 define('PID_MAC10_6_X86_X86_64', 3);
-define('PID_LINUX_X86',          4);
-define('PID_LINUX_X86_64',       5);
+define('PID_MAC10_8_X86_64',     4);
+define('PID_LINUX_X86',          5);
+define('PID_LINUX_X86_64',       6);
 ///@}
 
 /**
@@ -71,8 +72,9 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
      */
     private static $platforms = array(
         PID_WIN_X86            => array('id'=>PID_WIN_X86,            'name'=>'win-x86',            'nicename'=>'Windows'),
-        PID_MAC10_4_X86_PPC    => array('id'=>PID_MAC10_4_X86_PPC,    'name'=>'mac10_4-x86-ppc',    'nicename'=>'Mac OS (10.4+)'),
-        PID_MAC10_6_X86_X86_64 => array('id'=>PID_MAC10_6_X86_X86_64, 'name'=>'mac10_6-x86-x86_64', 'nicename'=>'Mac OS (10.6+)'),
+        PID_MAC10_4_X86_PPC    => array('id'=>PID_MAC10_4_X86_PPC,    'name'=>'mac10_4-x86-ppc',    'nicename'=>'OS X 10.4+'),
+        PID_MAC10_6_X86_X86_64 => array('id'=>PID_MAC10_6_X86_X86_64, 'name'=>'mac10_6-x86-x86_64', 'nicename'=>'OS X 10.6+'),
+        PID_MAC10_8_X86_64     => array('id'=>PID_MAC10_8_X86_64,     'name'=>'mac10_8-x86_64',     'nicename'=>'OS X 10.8+'),
         PID_LINUX_X86          => array('id'=>PID_LINUX_X86,          'name'=>'linux-x86',          'nicename'=>'Ubuntu (32bit)'),
         PID_LINUX_X86_64       => array('id'=>PID_LINUX_X86_64,       'name'=>'linux-x86_64',       'nicename'=>'Ubuntu (64bit)')
     );
@@ -535,6 +537,16 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $packages[] = $pack;
 
         $plat = $this->platform(PID_MAC10_6_X86_X86_64);
+        $pack = PackageFactory::newDistributionUnstable($plat['id'], 'Latest Doomsday',
+            NULL/*no version*/, 'latestbuild?platform='. $plat['name']. '&unstable');
+        $packages[] = $pack;
+
+        $plat = $this->platform(PID_MAC10_8_X86_64);
+        $pack = PackageFactory::newDistribution($plat['id'], 'Latest Doomsday',
+            NULL/*no version*/, 'latestbuild?platform='. $plat['name']);
+        $packages[] = $pack;
+
+        $plat = $this->platform(PID_MAC10_8_X86_64);
         $pack = PackageFactory::newDistributionUnstable($plat['id'], 'Latest Doomsday',
             NULL/*no version*/, 'latestbuild?platform='. $plat['name']. '&unstable');
         $packages[] = $pack;
