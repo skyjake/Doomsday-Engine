@@ -49,16 +49,20 @@ struct VersionInfo
         QStringList parts = version.split('.');
         major = parts[0].toInt();
         minor = parts[1].toInt();
-        if(parts[2].contains('-'))
+        revision = 0;
+        patch = 0;
+        if(parts.size() > 2)
         {
-            QStringList rev = parts[2].split('-');
-            revision = rev[0].toInt();
-            patch = rev[1].toInt();
-        }
-        else
-        {
-            revision = parts[2].toInt();
-            patch = 0;
+            if(parts[2].contains('-'))
+            {
+                QStringList rev = parts[2].split('-');
+                revision = rev[0].toInt();
+                patch = rev[1].toInt();
+            }
+            else
+            {
+                revision = parts[2].toInt();
+            }
         }
     }
 
