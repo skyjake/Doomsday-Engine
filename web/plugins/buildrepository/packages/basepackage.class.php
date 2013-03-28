@@ -100,9 +100,9 @@ abstract class BasePackage
         $tpl['version']       = is_null($this->version)? '0' : "{$this->version}";
 
         // Component version representation.
-        $tpl['version_major']    = is_null($this->version)? '0' : $this->version->major;
-        $tpl['version_minor']    = is_null($this->version)? '0' : $this->version->minor;
-        $tpl['version_patch']    = is_null($this->version)? '0' : $this->version->patch;
-        $tpl['version_revision'] = is_null($this->version)? '0' : $this->version->revision;
+        $tpl['version_major']    = is_null($this->version)? 0 : $this->version->major;
+        $tpl['version_minor']    = is_null($this->version)? 0 : $this->version->minor;
+        $tpl['version_patch']    = is_null($this->version)? 0 : $this->version->patch;
+        $tpl['version_revision'] = is_null($this->version)? 0 : $this->version->revision;
     }
 }
