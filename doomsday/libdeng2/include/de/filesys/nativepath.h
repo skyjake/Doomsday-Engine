@@ -147,6 +147,15 @@ public:
      * Returns the current native working path.
      */
     static NativePath workPath();
+
+    /**
+     * Sets the current native working path.
+     *
+     * @param cwd  Working path.
+     *
+     * @return  @c true iff successfully changed the current working path.
+     */
+    static bool setWorkPath(NativePath const &cwd);
 };
 
 } // namespace de
