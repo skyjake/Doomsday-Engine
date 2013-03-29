@@ -36,13 +36,7 @@ def create_build_event():
     
     # Tag the source with the build identifier.
     git_tag(todaysBuild)
-    
-    #prevBuild = builder.find_newest_event()['tag']
-    #print 'The previous build is:', prevBuild
-    
-    #if prevBuild == todaysBuild:
-    #    prevBuild = ''
-    
+        
     # Prepare the build directory.
     ev = builder.Event(todaysBuild)
     ev.clean()
@@ -130,16 +124,6 @@ def update_changes(debChanges=False):
     # Let's find the previous event of this version.
     fromTag = find_previous_tag(toTag, build_version.DOOMSDAY_VERSION_FULL_PLAIN)
     
-    #if debChanges:
-    #    # Make sure we have the latest changes.
-    #    git_pull()
-    #    fromTag = aptrepo_find_latest_tag(build_version.DOOMSDAY_VERSION_FULL_PLAIN)
-    #    toTag = builder.config.BRANCH # Everything up to now.
-    #else:
-    #    # Use the two most recent builds by default.
-    #    if fromTag is None or toTag is None:
-    #        fromTag, toTag = find_latest_tags(build_version.DOOMSDAY_VERSION_FULL_PLAIN)
-
     if fromTag is None or toTag is None:
         # Range not defined.
         return
@@ -356,6 +340,20 @@ def generate_readme():
     os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/doc/output'))
     system_command('make clean all')
     
+    
+def generate_wiki():
+    """Automatically generate wiki pages."""
+    git_pull()
+    sys.path += '/Users/jaakko/Dropbox/Scripts'
+    import dew
+    dew.login()
+    # Today's event data.
+    ev = builder.Event()
+    if ev.release_type() == 'stable':
+        dew.submitPage('Latest Doomsday release',
+            '#REDIRECT [[Doomsday version %s]]' % ev.version())
+    dew.logout()
+    
 
 def web_path():
     return os.path.join(builder.config.DISTRIB_DIR, '..', 'web')
@@ -448,6 +446,7 @@ commands = {
     'cleanup': dir_cleanup,
     'apidoc': generate_apidoc,
     'readme': generate_readme,
+    'wiki': generate_wiki,
     'web_init': web_init,
     'web_update': web_update,
     'help': show_help

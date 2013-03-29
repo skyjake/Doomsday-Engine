@@ -382,9 +382,10 @@ def handleCompletedTasks():
         
         elif task == 'deb_changes':
             newTask('build', allClients=True)
+            newTask('generate_wiki', forClient='master')
         
         elif task == 'build':
-            newTask('sign', forClient='master')
+            newTask('sign', forClient='master')            
 
         elif task == 'sign':
             newTask('publish', forClient='master')
