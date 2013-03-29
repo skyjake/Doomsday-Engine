@@ -1,0 +1,15 @@
+@require{amestd}
+
+@macro{toc}{@apply{@.}{omit}}
+@macro{plugin}{[[@glue{@arg}]]}
+
+@ifdef{UNIX}{
+	@macro{man_opt}{ [ @apply{<tt>[[-@=]]</tt>}{@arg} ] }
+	@macro{man_opt2}{ [ @apply{<tt>[[-@=]]</tt>}{@arg{1}} @em{@arg{2}} ] }
+}
+
+@begin
+
+@toc{}
+
+@require{manpage}
