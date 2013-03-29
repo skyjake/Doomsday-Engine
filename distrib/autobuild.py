@@ -344,7 +344,7 @@ def generate_readme():
 def generate_wiki():
     """Automatically generate wiki pages."""
     git_pull()
-    sys.path += '/Users/jaakko/Dropbox/Scripts'
+    sys.path += ['/Users/jaakko/Dropbox/Scripts']
     import dew
     dew.login()
     # Today's event data.
