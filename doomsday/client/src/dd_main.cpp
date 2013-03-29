@@ -1417,8 +1417,17 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
     }
 
     // Quit netGame if one is in progress.
+#ifdef __SERVER__
+    if(netGame && isServer)
+    {
+        N_ServerClose();
+    }
+#else
     if(netGame)
-        Con_Execute(CMDS_DDAY, isServer ? "net server close" : "net disconnect", true, false);
+    {
+        Con_Execute(CMDS_DDAY, "net disconnect", true, false);
+    }
+#endif
 
     S_Reset();
 
@@ -2005,7 +2014,7 @@ boolean DD_Init(void)
 
 #ifdef __SERVER__
         // Automatically start the server.
-        Con_Executef(CMDS_CMDLINE, false, "net server start");
+        N_ServerOpen();
 #endif
     }
     else
