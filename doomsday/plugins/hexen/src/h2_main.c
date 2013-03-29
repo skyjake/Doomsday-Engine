@@ -332,6 +332,9 @@ void X_PreInit(void)
     // Use the crossfade transition by default.
     Con_SetInteger("con-transition", 0);
 
+    // Hexen's torch light attenuates with distance.
+    DD_SetInteger(DD_FIXEDCOLORMAP_ATTENUATE, 1);
+
     // Do the common pre init routine.
     G_CommonPreInit();
 }

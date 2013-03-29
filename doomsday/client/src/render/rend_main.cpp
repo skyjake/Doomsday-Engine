@@ -122,7 +122,8 @@ float lightRangeCompression = 0;
 float lightModRange[255];
 byte devLightModRange = 0;
 
-float rendLightDistanceAttentuation = 1024;
+float rendLightDistanceAttenuation = 1024;
+int rendLightAttenuateFixedColormap = 1;
 
 byte devMobjVLights = 0; // @c 1= Draw mobj vertex lighting vector.
 int devMobjBBox = 0; // 1 = Draw mobj bounding boxes (for debug)
@@ -158,7 +159,7 @@ void Rend_Register()
 
     C_VAR_INT2  ("rend-light",                      &useDynLights,                  0, 0, 1, LO_UnlinkMobjLumobjs);
     C_VAR_INT2  ("rend-light-ambient",              &ambientLight,                  0, 0, 255, Rend_CalcLightModRange);
-    C_VAR_FLOAT ("rend-light-attenuation",          &rendLightDistanceAttentuation, CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT ("rend-light-attenuation",          &rendLightDistanceAttenuation, CVF_NO_MAX, 0, 0);
     C_VAR_FLOAT ("rend-light-bright",               &dynlightFactor,                0, 0, 1);
     C_VAR_FLOAT2("rend-light-compression",          &lightRangeCompression,         0, -1, 1, Rend_CalcLightModRange);
     C_VAR_FLOAT ("rend-light-fog-bright",           &dynlightFogBright,             0, 0, 1);
@@ -299,12 +300,15 @@ void Rend_ApplyTorchLight(float color[3], float distance)
     if(!ddpl->fixedColorMap) return;
 
     // Check for torch.
-    if(distance < 1024)
+    if(!rendLightAttenuateFixedColormap || distance < 1024)
     {
         // Colormap 1 is the brightest. I'm guessing 16 would be
         // the darkest.
-        int ll = 16 - ddpl->fixedColorMap;
-        float d = (1024 - distance) / 1024.0f * ll / 15.0f;
+        float d = (16 - ddpl->fixedColorMap) / 15.0f;
+        if(rendLightAttenuateFixedColormap)
+        {
+            d *= (1024 - distance) / 1024.0f;
+        }
 
         if(torchAdditive)
         {

@@ -2361,11 +2361,13 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
 #ifdef __CLIENT__
     {&gameDrawHUD, 0},
     {&symbolicEchoMode, &symbolicEchoMode},
-    {&numTexUnits, 0}
+    {&numTexUnits, 0},
+    {&rendLightAttenuateFixedColormap, &rendLightAttenuateFixedColormap}
 #else
     {0, 0},
     {0, 0},
     {0, 0},
+    {0, 0}
 #endif
 };
 

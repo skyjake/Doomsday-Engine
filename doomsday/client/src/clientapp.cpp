@@ -172,9 +172,9 @@ void ClientApp::initialize()
 void ClientApp::preFrame()
 {
     // Frame syncronous I/O operations.
-    S_StartFrame(); /// @todo belongs in AudioSystem::timeChanged()
+    S_StartFrame(); /// @todo Move to AudioSystem::timeChanged().
 
-    if(gx.BeginFrame) /// @todo GameSystem::timeChanged()
+    if(gx.BeginFrame) /// @todo Move to GameSystem::timeChanged().
     {
         gx.BeginFrame();
     }
@@ -182,7 +182,8 @@ void ClientApp::preFrame()
 
 void ClientApp::postFrame()
 {
-    /// @todo should these be here?
+    /// @todo Should these be here? Consider multiple windows, each having a postFrame?
+    /// Or maybe the frames need to be synced? Or only one of them has a postFrame?
 
     if(gx.EndFrame)
     {

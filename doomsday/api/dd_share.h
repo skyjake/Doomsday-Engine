@@ -159,8 +159,10 @@ enum {
     DD_GAME_DRAW_HUD_HINT, ///< Doomsday advises not to draw the HUD.
     DD_SYMBOLIC_ECHO,
     DD_MAX_TEXTURE_UNITS,
-    DD_CURRENT_CLIENT_FINALE_ID,
-    DD_LAST_VALUE
+    DD_FIXEDCOLORMAP_ATTENUATE,
+    DD_LAST_VALUE,
+
+    DD_CURRENT_CLIENT_FINALE_ID
 };
 
 /// General constants (not to be used with Get/Set).

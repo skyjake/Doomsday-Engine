@@ -1456,7 +1456,8 @@ void P_PlayerThinkPowers(player_t* player)
     }
 #endif
 
-#if __JDOOM__ || __JDOOM64__ || __JHEXEN__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__ || __JHEXEN__
+    // Infrared/Torch times out eventually.
     if(player->powers[PT_INFRARED])
         player->powers[PT_INFRARED]--;
 #endif
