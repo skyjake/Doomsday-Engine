@@ -1,0 +1,6 @@
+@summary{
+    Set color of light at cursor.
+}
+@description{
+    Params: blc (red) (green) (blue)\nFor example, 'blc 1 0.5 0.2'.
+}

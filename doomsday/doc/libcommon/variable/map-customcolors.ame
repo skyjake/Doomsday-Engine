@@ -1,0 +1,3 @@
+@summary{
+    Custom automap coloring 0=Never, 1=Auto (enabled if unchanged), 2=Always.
+}

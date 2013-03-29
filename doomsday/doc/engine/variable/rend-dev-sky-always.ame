@@ -1,0 +1,3 @@
+@summary{
+    1=Always render the sky, even if there are no sky surfaces visible.
+}

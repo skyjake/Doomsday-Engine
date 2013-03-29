@@ -1,0 +1,6 @@
+@summary{
+    Change player class.
+}
+@description{
+    Params: class (classnumber).
+}

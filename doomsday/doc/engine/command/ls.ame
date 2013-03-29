@@ -1,0 +1,6 @@
+@summary{
+    Print contents of directories.
+}
+@description{
+    Params: ls (dirs) ...\nFor example, 'ls data/'.\nVirtual files are listed, too.\nPaths are relative to the base path.
+}

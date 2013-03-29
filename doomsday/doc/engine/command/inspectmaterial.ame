@@ -1,0 +1,6 @@
+@summary{
+    Print extended information about a Material to the console.
+}
+@description{
+    Params: inspectmaterial (uri)\nFor example, 'inspectmaterial flats:fwater1'.
+}

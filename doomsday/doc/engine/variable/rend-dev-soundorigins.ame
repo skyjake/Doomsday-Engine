@@ -1,0 +1,3 @@
+@summary{
+    3-bit bitfield. Show sound origins (for debug): 0x1= Sector, 0x2= Plane, 0x4= SideDef.
+}

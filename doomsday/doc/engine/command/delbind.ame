@@ -1,0 +1,3 @@
+@summary{
+    Deletes all bindings to the given console command.
+}

@@ -1,0 +1,3 @@
+@summary{
+    Enable drawing of the blockmap debug display: 1=Mobjs, 2=Linedefs, 3=BspLeafs, 4=Polyobjs.
+}

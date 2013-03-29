@@ -1,0 +1,3 @@
+@summary{
+    Sky light color blending factor for sky sectors (off: 0, default: .2).
+}

@@ -1,0 +1,6 @@
+@summary{
+    Connect a local player.
+}
+@description{
+    Params: conlocp (playernum)\nFor example, 'conlocp 1'.
+}

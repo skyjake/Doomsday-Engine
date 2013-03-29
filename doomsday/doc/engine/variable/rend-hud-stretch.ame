@@ -1,0 +1,3 @@
+@summary{
+    Fixed aspect ratio player weapon stretch-scaling strategy 0=Smart, 1=Never, 2=Always.
+}

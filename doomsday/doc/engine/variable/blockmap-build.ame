@@ -1,0 +1,3 @@
+@summary{
+    Automatically generate blockmap data when necessary, 0=Never, 1=When needed, 2=Always.
+}

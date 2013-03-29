@@ -1,0 +1,3 @@
+@summary{
+    Maximum radius of dynamic lights (default: 128).
+}

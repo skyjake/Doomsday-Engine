@@ -1,0 +1,6 @@
+@summary{
+    Load a game-save or open the load menu.
+}
+@description{
+    Params: loadgame (game-save-name|<keyword>|save-slot-num) (confirm)\nKeywords: last, quick\nExamples:\nOpen load menu: 'loadgame'\nLoading named game: 'loadgame "running low on ammo"'\nLoading current "quick" slot, confirmed: 'loadgame quick confirm'\nLoading slot #0: 'loadgame 0'
+}

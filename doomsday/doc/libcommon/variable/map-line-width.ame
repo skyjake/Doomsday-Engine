@@ -1,0 +1,3 @@
+@summary{
+    Scale factor for automap lines (default: 1.1).
+}

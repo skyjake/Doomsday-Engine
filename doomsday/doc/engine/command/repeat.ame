@@ -1,0 +1,6 @@
+@summary{
+    Repeat a command at given intervals.
+}
+@description{
+    Params: repeat (count) (interval) (cmd)\nFor example, 'repeat 10 35 "screenshot"'.
+}

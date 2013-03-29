@@ -1,0 +1,3 @@
+@summary{
+    Filename of the DLS/SF2 soundfont file to be used with MIDI playback (if supported by audio plugin).
+}

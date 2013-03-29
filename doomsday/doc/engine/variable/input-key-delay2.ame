@@ -1,0 +1,3 @@
+@summary{
+    The number of milliseconds to wait between key repeats.
+}

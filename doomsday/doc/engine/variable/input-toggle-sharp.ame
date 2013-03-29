@@ -1,0 +1,3 @@
+@summary{
+    1=Process toggle events only on sharp ticks for backwards compatible behavior.
+}

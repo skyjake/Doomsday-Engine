@@ -1,0 +1,3 @@
+@summary{
+    glBSP: changes the cost assigned to edge splits (default: 7).
+}

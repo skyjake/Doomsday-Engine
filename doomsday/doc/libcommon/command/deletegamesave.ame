@@ -1,0 +1,6 @@
+@summary{
+    Deletes a game-save state.
+}
+@description{
+    Params: deletegamesave (game-save-name|<keyword>|save-slot-num) (confirm)\nKeywords: last, quick\nExamples:\nA game save by name 'deletegamesave "running low on ammo"'\nLast game save in the "quick" slot, confirmed: 'deletegamesave quick confirm'
+}

@@ -1,0 +1,6 @@
+@summary{
+    Set player color.
+}
+@description{
+    Params: setcolor (playernum)\nFor example, 'setcolor 4'.
+}

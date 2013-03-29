@@ -1,0 +1,3 @@
+@summary{
+    HUD messages blink for this number of tics when printed.
+}

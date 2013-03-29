@@ -1,0 +1,6 @@
+@summary{
+    Write a reference lump file for a demo.
+}
+@description{
+    Params: demolump (demofile) (lumpfile)\nFor example, 'demolump demo1.dmo DEMO1'.
+}

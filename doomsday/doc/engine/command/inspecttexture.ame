@@ -1,0 +1,6 @@
+@summary{
+    Print extended information about a Texture to the console.
+}
+@description{
+    Params: inspecttexture (uri)\nFor example, 'inspecttexture flats:fwater1'.
+}

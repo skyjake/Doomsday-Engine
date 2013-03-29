@@ -1,0 +1,6 @@
+@summary{
+    Show a local game message.
+}
+@description{
+    Params: message (msg)\nFor example, 'message "this is a message"'.
+}

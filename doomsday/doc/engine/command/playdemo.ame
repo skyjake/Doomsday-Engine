@@ -1,0 +1,6 @@
+@summary{
+    Play a demo.
+}
+@description{
+    Params: playdemo (fileName)\nFor example, 'playdemo demo1.dmo'.
+}

@@ -1,0 +1,6 @@
+@summary{
+    Change color depth (bits per pixel), either 16 or 32.
+}
+@description{
+    Params: setbpp (bits)\nFor example, 'setbpp 32'.
+}

@@ -1,0 +1,3 @@
+@summary{
+    Custom level of detail factor. 0=LOD disabled, 1=normal.
+}

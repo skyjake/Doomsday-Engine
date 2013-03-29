@@ -1,0 +1,6 @@
+@summary{
+    Set console and viewplayer.
+}
+@description{
+    Params: setcon (playernum)\nFor example, 'setcon 1'.
+}

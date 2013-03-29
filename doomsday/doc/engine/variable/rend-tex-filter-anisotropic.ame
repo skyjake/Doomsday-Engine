@@ -1,0 +1,3 @@
+@summary{
+    Default level of anisotropic texture filtering -1=Best available, 0=Off, 1=2x, 2=4x, 3=8x, 4=16x.
+}

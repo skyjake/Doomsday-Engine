@@ -1,0 +1,3 @@
+@summary{
+    Rotation angle for the crosshair [0..1] (1=360 degrees).
+}
