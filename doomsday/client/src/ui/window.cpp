@@ -183,9 +183,6 @@ DENG2_PIMPL(Window)
         // Minimum possible size when resizing.
         widget->setMinimumSize(QSize(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT));
 
-        // After the main window is created, we can finish with the engine init.
-        widget->canvas().setInitFunc(finishMainWindowInit);
-
         widget->setCloseFunc(windowIsClosing);
         widget->setMoveFunc(windowWasMoved);
     }
@@ -892,6 +889,9 @@ Window *Window::create(char const *title)
     {
         mainWindow = wnd;
         mainWindowIdx = 1;
+
+        // After the main window is created, we can finish with the engine init.
+        wnd->d->widget->canvas().setInitFunc(Instance::finishMainWindowInit);
     }
 
     wnd->restoreState();
