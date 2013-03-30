@@ -37,7 +37,9 @@ static int Mouse_Win32_Init(void)
     if(CommandLine_Check("-nomouse") || novideo) return false;
 
     // We'll need a window handle for this.
-    HWND hWnd = (HWND) Window_NativeHandle(Window_Main());
+    Window *wnd = Window::main();
+    DENG_ASSERT(wnd != 0);
+    HWND hWnd = (HWND) wnd->nativeHandle();
     if(!hWnd)
     {
         Con_Error("Mouse_Init: Main window not available, cannot init mouse.");

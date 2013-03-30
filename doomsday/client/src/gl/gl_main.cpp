@@ -87,20 +87,22 @@ static viewport_t currentView;
 
 static void videoFSAAChanged()
 {
-    if(!novideo && Window_Main())
+    Window *mainWindow = Window::main();
+    if(!novideo && mainWindow)
     {
-        Window_UpdateCanvasFormat(Window_Main());
+        mainWindow->updateCanvasFormat();
     }
 }
 
 static void videoVsyncChanged()
 {
-    if(!novideo && Window_Main())
+    Window *mainWindow = Window::main();
+    if(!novideo && mainWindow)
     {
 #if defined(WIN32) || defined(MACOSX)
         GL_SetVSync(Con_GetByte("vid-vsync") != 0);
 #else
-        Window_UpdateCanvasFormat(Window_Main());
+        mainWindow->updateCanvasFormat();
 #endif
     }
 }
@@ -184,7 +186,8 @@ void GL_DoUpdate()
     DD_WaitForOptimalUpdateTime();
 
     // Blit screen to video.
-    Window_SwapBuffers(theWindow);
+    DENG_ASSERT(theWindow != 0);
+    theWindow->swapBuffers();
 
     // We will arrive here always at the same time in relation to the displayed
     // frame: it is a good time to update the mouse state.
@@ -447,7 +450,7 @@ void GL_Init2DState()
     glDisable(GL_TEXTURE_CUBE_MAP);
 
     // Default, full area viewport.
-    glViewport(0, 0, Window_Width(theWindow), Window_Height(theWindow));
+    glViewport(0, 0, theWindow->width(), theWindow->height());
 
     // The projection matrix.
     glMatrixMode(GL_PROJECTION);
@@ -1146,19 +1149,27 @@ void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSiz
 
 D_CMD(SetRes)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+    DENG2_UNUSED3(src, argc, argv);
+
+    Window *mainWindow = Window::main();
+    if(!mainWindow)
+        return false;
 
     int attribs[] = {
         DDWA_WIDTH, atoi(argv[1]),
         DDWA_HEIGHT, atoi(argv[2]),
         DDWA_END
     };
-    return Window_ChangeAttributes(Window_Main(), attribs);
+    return mainWindow->changeAttributes(attribs);
 }
 
 D_CMD(SetFullRes)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc);
+    DENG2_UNUSED2(src, argc);
+
+    Window *mainWindow = Window::main();
+    if(!mainWindow)
+        return false;
 
     int attribs[] = {
         DDWA_WIDTH, atoi(argv[1]),
@@ -1166,12 +1177,16 @@ D_CMD(SetFullRes)
         DDWA_FULLSCREEN, true,
         DDWA_END
     };
-    return Window_ChangeAttributes(Window_Main(), attribs);
+    return mainWindow->changeAttributes(attribs);
 }
 
 D_CMD(SetWinRes)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc);
+    DENG2_UNUSED2(src, argc);
+
+    Window *mainWindow = Window::main();
+    if(!mainWindow)
+        return false;
 
     int attribs[] = {
         DDWA_WIDTH, atoi(argv[1]),
@@ -1179,36 +1194,44 @@ D_CMD(SetWinRes)
         DDWA_FULLSCREEN, false,
         DDWA_END
     };
-    return Window_ChangeAttributes(Window_Main(), attribs);
+    return mainWindow->changeAttributes(attribs);
 }
 
 D_CMD(ToggleFullscreen)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+    DENG2_UNUSED3(src, argc, argv);
+
+    Window *mainWindow = Window::main();
+    if(!mainWindow)
+        return false;
 
     int attribs[] = {
-        DDWA_FULLSCREEN, !Window_IsFullscreen(Window_Main()),
+        DDWA_FULLSCREEN, !mainWindow->isFullscreen(),
         DDWA_END
     };
-    return Window_ChangeAttributes(Window_Main(), attribs);
+    return mainWindow->changeAttributes(attribs);
 }
 
 D_CMD(SetBPP)
 {
     DENG2_UNUSED2(src, argc);
 
+    Window *mainWindow = Window::main();
+    if(!mainWindow)
+        return false;
+
     int attribs[] = {
         DDWA_COLOR_DEPTH_BITS, atoi(argv[1]),
         DDWA_END
     };
-    return Window_ChangeAttributes(Window_Main(), attribs);
+    return mainWindow->changeAttributes(attribs);
 }
 
 D_CMD(DisplayModeInfo)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    Window const *wnd = Window_Main();
+    Window const *wnd = Window::main();
     DisplayMode const *mode = DisplayMode_Current();
 
     QString str = QString("Current display mode:%1 depth:%2 (%3:%4")
@@ -1221,14 +1244,14 @@ D_CMD(DisplayModeInfo)
         str += QString(", refresh: %1 Hz").arg(mode->refreshRate, 0, 'g', 1);
     }
     str += QString(")\nMain window origin:%1 dimensions:%2 fullscreen:%3 centered:%4 maximized:%5")
-                .arg(de::Vector2i(Window_X(wnd), Window_Y(wnd)).asText())
-                .arg(de::Vector2i(Window_Width(wnd), Window_Height(wnd)).asText())
-                .arg(Window_IsFullscreen(wnd)? "yes" : "no")
-                .arg(Window_IsCentered(wnd)  ? "yes" : "no")
-                .arg(Window_IsMaximized(wnd) ? "yes" : "no");
+                .arg(de::Vector2i(wnd->x(), wnd->y()).asText())
+                .arg(de::Vector2i(wnd->width(), wnd->height()).asText())
+                .arg(wnd->isFullscreen()     ? "yes" : "no")
+                .arg(wnd->isCentered()       ? "yes" : "no")
+                .arg(wnd->isMaximized()      ? "yes" : "no");
     str += QString("\nNormal geometry:%1 %2")
-                .arg(de::Vector2i(Window_NormalX(wnd), Window_NormalY(wnd)).asText())
-                .arg(de::Vector2i(Window_NormalWidth(wnd), Window_NormalHeight(wnd)).asText());
+                .arg(de::Vector2i(wnd->normalX(), wnd->normalY()).asText())
+                .arg(de::Vector2i(wnd->normalWidth(), wnd->normalHeight()).asText());
 
     Con_Message(str.toUtf8().constData());
     return true;

@@ -616,28 +616,26 @@ static void SBE_DrawBox(const Point2Raw* origin, const Size2Raw* size, ui_color_
                   NULL, .4f, -1);
 }
 
-static void SBE_InfoBox(source_t* s, int rightX, char const *title, float alpha)
+static void SBE_InfoBox(source_t *s, int rightX, char const *title, float alpha)
 {
-    ui_color_t color;
-    Point2Raw origin;
-    Size2Raw size;
-    char buf[80];
-    coord_t eye[3];
-    int th;
-
     FR_SetFont(fontFixed);
     FR_LoadDefaultAttrib();
+
+    Size2Raw size;
     size.width = 16 + FR_TextWidth("R:0.000 G:0.000 B:0.000");
-    th = FR_SingleLineHeight("Info");
+    int th = FR_SingleLineHeight("Info");
     size.height = 16 + th * 6;
 
-    origin.x = Window_Width(theWindow)  - 10 - size.width - rightX;
-    origin.y = Window_Height(theWindow) - 10 - size.height;
+    Point2Raw origin;
+    origin.x = theWindow->width()  - 10 - size.width - rightX;
+    origin.y = theWindow->height() - 10 - size.height;
 
+    coord_t eye[3];
     eye[VX] = vOrigin[VX];
     eye[VY] = vOrigin[VZ];
     eye[VZ] = vOrigin[VY];
 
+    ui_color_t color;
     color.red   = s->color[CR];
     color.green = s->color[CG];
     color.blue  = s->color[CB];
@@ -663,6 +661,7 @@ static void SBE_InfoBox(source_t* s, int rightX, char const *title, float alpha)
     UI_TextOutEx2(title, &origin, UI_Color(UIC_TITLE), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
     origin.y += th;
 
+    char buf[80];
     sprintf(buf, "# %03i %s", SB_ToIndex(s), (s->flags & BLF_LOCKED ? "(lock)" : ""));
     UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
     origin.y += th;
@@ -809,7 +808,7 @@ void SBE_DrawHUD(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, Window_Width(theWindow), Window_Height(theWindow), 0, -1, 1);
+    glOrtho(0, theWindow->width(), theWindow->height(), 0, -1, 1);
 
     glEnable(GL_TEXTURE_2D);
 
@@ -822,7 +821,7 @@ void SBE_DrawHUD(void)
 
     size.width  = FR_TextWidth(buf) + 16;
     size.height = FR_SingleLineHeight(buf) + 16;
-    top = Window_Height(theWindow) - 10 - size.height;
+    top = theWindow->height() - 10 - size.height;
 
     origin.x = 10;
     origin.y = top;
@@ -856,7 +855,7 @@ void SBE_DrawHUD(void)
     if(SBE_GetGrabbed() || SBE_GetNearest())
     {
         origin.x = 20;
-        origin.y = Window_Height(theWindow)/2 - 255/2;
+        origin.y = theWindow->height()/2 - 255/2;
         SBE_DrawLevelGauge(&origin, 255);
     }
 
@@ -902,7 +901,7 @@ static void SBE_DrawIndex(source_t* src)
     if(!editShowIndices) return;
 
     V3d_Set(eye, vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
-    scale = V3d_Distance(src->origin, eye) / (Window_Width(theWindow) / 2);
+    scale = V3d_Distance(src->origin, eye) / (theWindow->width() / 2);
 
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);

@@ -859,12 +859,11 @@ void CP_QuickFOV(ui_object_t* ob)
     Con_SetFloat2("rend-camera-fov", sld_fov.value = atoi(ob->text), SVF_WRITE_OVERRIDE);
 }
 
-void CP_VideoModeInfo(ui_object_t* ob)
+void CP_VideoModeInfo(ui_object_t *ob)
 {
-    Point2Raw textOrigin;
-    char buf[80];
-    assert(ob);
+    DENG_ASSERT(ob != 0);
 
+    char buf[80];
     if(!strcmp(ob->text, "default"))
     {
         sprintf(buf, "%i x %i x %i (%s)", defResX, defResY, defBPP,
@@ -872,11 +871,13 @@ void CP_VideoModeInfo(ui_object_t* ob)
     }
     else
     {
-        boolean fullscreen = Window_IsFullscreen(Window_Main());
+        Window *mainWindow = Window::main();
+        DENG_ASSERT(mainWindow != 0);
 
-        sprintf(buf, "%i x %i x %i (%s)", Window_Width(theWindow),
-            Window_Height(theWindow), Window_ColorDepthBits(theWindow),
-            (fullscreen? "fullscreen" : "windowed"));
+        sprintf(buf, "%i x %i x %i (%s)",
+                mainWindow->width(), mainWindow->height(),
+                mainWindow->colorDepthBits(),
+                (mainWindow->isFullscreen()? "fullscreen" : "windowed"));
     }
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
@@ -888,16 +889,17 @@ void CP_VideoModeInfo(ui_object_t* ob)
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
 
-    textOrigin.x = ob->geometry.origin.x;
-    textOrigin.y = ob->geometry.origin.y + ob->geometry.size.height / 2;
+    Point2Raw textOrigin( ob->geometry.origin.x, ob->geometry.origin.y + ob->geometry.size.height / 2);
 
     UI_TextOutEx2(buf, &textOrigin, UI_Color(UIC_TEXT), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
     glDisable(GL_TEXTURE_2D);
 }
 
-void CP_UpdateSetVidModeButton(int w, int h, int bpp, boolean fullscreen)
+void CP_UpdateSetVidModeButton(int w, int h, int bpp, bool fullscreen)
 {
-    boolean cFullscreen = Window_IsFullscreen(Window_Main());
+    Window *mainWindow = Window::main();
+    DENG_ASSERT(mainWindow != 0);
+    bool cFullscreen = mainWindow->isFullscreen();
     ui_object_t* ob;
 
     ob = UI_FindObject(ob_panel, CPG_VIDEO, CPID_SET_RES);
@@ -906,8 +908,8 @@ void CP_UpdateSetVidModeButton(int w, int h, int bpp, boolean fullscreen)
     sprintf(ob->text, "%i x %i x %i (%s)", w, h, bpp,
             fullscreen? "fullscreen" : "windowed");
 
-    if(w == Window_Width(theWindow) && h == Window_Height(theWindow) &&
-       bpp == Window_ColorDepthBits(theWindow) && fullscreen == cFullscreen)
+    if(w == mainWindow->width() && h == mainWindow->height() &&
+       bpp == mainWindow->colorDepthBits() && fullscreen == cFullscreen)
         ob->flags |= UIF_DISABLED;
     else
         ob->flags &= ~UIF_DISABLED;
@@ -948,6 +950,8 @@ void CP_SetVidMode(ui_object_t* ob)
 
     ob->flags |= UIF_DISABLED;
 
+    Window *mainWindow = Window::main();
+    if(mainWindow)
     {
         int attribs[] = {
             DDWA_WIDTH, x,
@@ -956,7 +960,7 @@ void CP_SetVidMode(ui_object_t* ob)
             DDWA_FULLSCREEN, panel_fullscreen != 0,
             DDWA_END
         };
-        Window_ChangeAttributes(Window_Main(), attribs);
+        mainWindow->changeAttributes(attribs);
     }
 }
 
@@ -1314,22 +1318,22 @@ D_CMD(OpenPanel)
     CP_InitCvarSliders(ob_panel);
 
     // Update width the current resolution.
-    {
-        boolean cFullscreen = Window_IsFullscreen(Window_Main());
+    Window *mainWindow = Window::main();
+    DENG_ASSERT(mainWindow != 0);
+    bool cFullscreen = mainWindow->isFullscreen();
 
-        ob = UI_FindObject(ob_panel, CPG_VIDEO, CPID_RES_LIST);
-        list = (uidata_list_t *) ob->data;
-        list->selection = UI_ListFindItem(ob,
-            RES(Window_Width(theWindow), Window_Height(theWindow)));
-        if(list->selection == -1)
-        {
-            // Then use a reasonable default.
-            list->selection = UI_ListFindItem(ob, RES(640, 480));
-        }
-        panel_fullscreen = cFullscreen;
-        panel_bpp = (Window_ColorDepthBits(theWindow) == 32? 1 : 0);
-        CP_ResolutionList(ob);
+    ob = UI_FindObject(ob_panel, CPG_VIDEO, CPID_RES_LIST);
+    list = (uidata_list_t *) ob->data;
+    list->selection = UI_ListFindItem(ob,
+        RES(mainWindow->width(), mainWindow->height()));
+    if(list->selection == -1)
+    {
+        // Then use a reasonable default.
+        list->selection = UI_ListFindItem(ob, RES(640, 480));
     }
+    panel_fullscreen = cFullscreen;
+    panel_bpp = (mainWindow->colorDepthBits() == 32? 1 : 0);
+    CP_ResolutionList(ob);
 
     UI_PageInit(true, true, false, false, false);
     UI_SetPage(&page_panel);

@@ -730,8 +730,8 @@ void DD_StartTitle(void)
     ddstring_t setupCmds; Str_Init(&setupCmds);
 
     // Configure the predefined fonts (all normal, variable width).
-    char const *fontName = R_ChooseVariableFont(FS_NORMAL, Window_Width(theWindow),
-                                                           Window_Height(theWindow));
+    char const *fontName = R_ChooseVariableFont(FS_NORMAL, theWindow->width(),
+                                                           theWindow->height());
 
     for(int i = 1; i <= FIPAGE_NUM_PREDEFINED_FONTS; ++i)
     {
@@ -1564,7 +1564,8 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
 #ifdef __CLIENT__
     char buf[256];
     DD_ComposeMainWindowTitle(buf);
-    Window_SetTitle(theWindow, buf);
+    DENG_ASSERT(theWindow != 0);
+    theWindow->setTitle(buf);
 #endif
 
     if(!DD_IsShuttingDown())
@@ -1588,7 +1589,8 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
 
 #ifdef __CLIENT__
     DD_ComposeMainWindowTitle(buf);
-    Window_SetTitle(theWindow, buf);
+    DENG_ASSERT(theWindow != 0);
+    theWindow->setTitle(buf);
 #endif
 
     /**
@@ -1758,7 +1760,7 @@ int DD_EarlyInit(void)
  * This gets called when the main window is ready for GL init. The application
  * event loop is already running.
  */
-void DD_FinishInitializationAfterWindowReady(void)
+void DD_FinishInitializationAfterWindowReady()
 {
     LOG_DEBUG("Window is ready, finishing initialization");
 
@@ -1775,7 +1777,8 @@ void DD_FinishInitializationAfterWindowReady(void)
     {
         char buf[256];
         DD_ComposeMainWindowTitle(buf);
-        Window_SetTitle(theWindow, buf);
+        DENG_ASSERT(theWindow != 0);
+        theWindow->setTitle(buf);
     }
 #endif
 
@@ -2384,10 +2387,10 @@ int DD_GetInteger(int ddvalue)
         return I_ShiftDown();
 
     case DD_WINDOW_WIDTH:
-        return Window_Width(theWindow);
+        return theWindow->width();
 
     case DD_WINDOW_HEIGHT:
-        return Window_Height(theWindow);
+        return theWindow->height();
 
     case DD_CURRENT_CLIENT_FINALE_ID:
         return Cl_CurrentFinale();
@@ -2570,8 +2573,10 @@ void* DD_GetVariable(int ddvalue)
         return &torchAdditive;
 
 # ifdef WIN32
-    case DD_WINDOW_HANDLE:
-        return Window_NativeHandle(Window_Main());
+    case DD_WINDOW_HANDLE: {
+        Window *wnd = Window::main();
+        DENG_ASSERT(wnd != 0);
+        return wnd->nativeHandle(); }
 # endif
 #endif
 

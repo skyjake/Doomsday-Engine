@@ -113,32 +113,32 @@ int DisplayMode_Native_Change(const DisplayMode* mode, boolean shouldCapture)
     return true;
 }
 
-void DisplayMode_Native_SetColorTransfer(const displaycolortransfer_t* colors)
+void DisplayMode_Native_SetColorTransfer(displaycolortransfer_t const *colors)
 {
-    HWND hWnd = (HWND) Window_NativeHandle(Window_Main());
-    assert(hWnd != 0);
-    if(hWnd)
+    Window *wnd = Window::main();
+    DENG_ASSERT(wnd != 0);
+    HWND hWnd = (HWND) wnd->nativeHandle();
+    DENG_ASSERT(hWnd != 0);
+
+    HDC hDC = GetDC(hWnd);
+    if(hDC)
     {
-        HDC hDC = GetDC(hWnd);
-        if(hDC)
-        {
-            SetDeviceGammaRamp(hDC, (void*) colors->table);
-            ReleaseDC(hWnd, hDC);
-        }
+        SetDeviceGammaRamp(hDC, (void*) colors->table);
+        ReleaseDC(hWnd, hDC);
     }
 }
 
-void DisplayMode_Native_GetColorTransfer(displaycolortransfer_t* colors)
+void DisplayMode_Native_GetColorTransfer(displaycolortransfer_t *colors)
 {
-    HWND hWnd = (HWND) Window_NativeHandle(Window_Main());
-    assert(hWnd != 0);
-    if(hWnd)
+    Window *wnd = Window::main();
+    DENG_ASSERT(wnd != 0);
+    HWND hWnd = (HWND) wnd->nativeHandle();
+    DENG_ASSERT(hWnd != 0);
+
+    HDC hDC = GetDC(hWnd);
+    if(hDC)
     {
-        HDC hDC = GetDC(hWnd);
-        if(hDC)
-        {
-            GetDeviceGammaRamp(hDC, (void*) colors->table);
-            ReleaseDC(hWnd, hDC);
-        }
+        GetDeviceGammaRamp(hDC, (void *) colors->table);
+        ReleaseDC(hWnd, hDC);
     }
 }

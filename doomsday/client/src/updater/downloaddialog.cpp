@@ -130,7 +130,9 @@ DownloadDialog::DownloadDialog(de::String downloadUri, de::String fallbackUri, Q
 {
 #ifndef MACOSX
     setWindowTitle(DOOMSDAY_NICENAME" Update");
-    setWindowIcon(Window_Widget(Window_Main())->windowIcon());
+    Window *wnd = Window::main();
+    DENG_ASSERT(wnd != 0);
+    setWindowIcon(wnd->widget()->windowIcon());
 #endif
 }
 

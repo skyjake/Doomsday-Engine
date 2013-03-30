@@ -250,7 +250,7 @@ void Con_ResizeHistoryBuffer(void)
         cw = (FR_TextWidth("AA") * consoleFontScale[0]) / 2;
         if(0 != cw)
         {
-            maxLength = MIN_OF(Window_Width(theWindow) / cw - 2, 250);
+            maxLength = MIN_OF(theWindow->width() / cw - 2, 250);
         }
     }
 #endif
@@ -1996,15 +1996,18 @@ void Con_Message(char const *message, ...)
     M_Free(buffer);
 }
 
-void Con_Error(const char* error, ...)
+void Con_Error(char const *error, ...)
 {
     static boolean errorInProgress = false;
-    int         i, numBufLines;
-    char        buff[2048], err[256];
-    va_list     argptr;
+
+    int i, numBufLines;
+    char buff[2048], err[256];
+    va_list argptr;
 
 #ifdef __CLIENT__
-    Window_TrapMouse(Window_Main(), false);
+    Window *mainWindow = Window::main();
+    DENG_ASSERT(mainWindow != 0);
+    mainWindow->trapMouse(false);
 #endif
 
     // Already in an error?
@@ -2070,14 +2073,16 @@ void Con_Error(const char* error, ...)
     }
 }
 
-void Con_AbnormalShutdown(const char* message)
+void Con_AbnormalShutdown(char const *message)
 {
     Sys_Shutdown();
     DisplayMode_Shutdown();
 
 #ifdef __CLIENT__
-    Window_TrapMouse(Window_Main(), false);
-    Window_Delete(Window_Main());
+    Window *mainWindow = Window::main();
+    DENG_ASSERT(mainWindow != 0);
+    mainWindow->trapMouse(false);
+    delete mainWindow; mainWindow = 0;
     DENG2_GUI_APP->loop().pause();
 #endif
 

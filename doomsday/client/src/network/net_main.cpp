@@ -695,7 +695,7 @@ static boolean recordingDemo(void)
 void Net_DrawDemoOverlay(void)
 {
     char buf[160], tmp[40];
-    int x = Window_Width(theWindow) - 10, y = 10;
+    int x = theWindow->width() - 10, y = 10;
 
     if(!recordingDemo() || !(SECONDS_TO_TICKS(gameTime) & 8))
         return;
@@ -723,7 +723,7 @@ void Net_DrawDemoOverlay(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, Window_Width(theWindow), Window_Height(theWindow), 0, -1, 1);
+    glOrtho(0, theWindow->width(), theWindow->height(), 0, -1, 1);
 
     glEnable(GL_TEXTURE_2D);
 

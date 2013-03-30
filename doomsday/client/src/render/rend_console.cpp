@@ -89,7 +89,7 @@ void Rend_ConsoleRegister()
 
 static float calcConsoleTitleBarHeight()
 {
-    int oldFont, border = Window_Width(theWindow) / 120, height;
+    int oldFont, border = theWindow->width() / 120, height;
     DENG_ASSERT(inited);
 
     oldFont = FR_Font();
@@ -102,7 +102,7 @@ static float calcConsoleTitleBarHeight()
 static inline int calcConsoleMinHeight()
 {
     DENG_ASSERT(inited);
-    return fontSy * 1.5f + calcConsoleTitleBarHeight() / Window_Height(theWindow) * SCREENHEIGHT;
+    return fontSy * 1.5f + calcConsoleTitleBarHeight() / theWindow->height() * SCREENHEIGHT;
 }
 
 void Rend_ConsoleInit()
@@ -157,7 +157,7 @@ boolean Rend_ConsoleResize(boolean force)
         FR_LoadDefaultAttrib();
         FR_SetTracking(Con_FontTracking());
 
-        gtosMulY = Window_Height(theWindow) / 200.0f;
+        gtosMulY = theWindow->height() / 200.0f;
         lineHeight = FR_SingleLineHeight("Con");
         Con_FontScale(&scale[0], &scale[1]);
 
@@ -490,7 +490,7 @@ static void drawConsoleTitleBar(float alpha)
 
     if(alpha < .0001f) return;
 
-    int border = Window_Width(theWindow) / 120;
+    int border = theWindow->width() / 120;
     int barHeight = calcConsoleTitleBarHeight();
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
@@ -501,18 +501,18 @@ static void drawConsoleTitleBar(float alpha)
     glEnable(GL_TEXTURE_2D);
 
     Point2Raw origin(0, 0);
-    Size2Raw size(Window_Width(theWindow), barHeight);
+    Size2Raw size(theWindow->width(), barHeight);
     UI_Gradient(&origin, &size, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .95f * alpha, alpha);
 
     origin.x = 0;
     origin.y = barHeight;
-    size.width  = Window_Width(theWindow);
+    size.width  = theWindow->width();
     size.height = border;
     UI_Gradient(&origin, &size, UI_Color(UIC_SHADOW), UI_Color(UIC_BG_DARK), .6f * alpha, 0);
 
     origin.x = 0;
     origin.y = barHeight;
-    size.width  = Window_Width(theWindow);
+    size.width  = theWindow->width();
     size.height = border*2;
     UI_Gradient(&origin, &size, UI_Color(UIC_BG_DARK), UI_Color(UIC_SHADOW), .2f * alpha, 0);
 
@@ -536,7 +536,7 @@ static void drawConsoleTitleBar(float alpha)
     if(statusText[0])
     {
         FR_SetFont(fontVariable[FS_LIGHT]);
-        origin.x = Window_Width(theWindow) - border;
+        origin.x = theWindow->width() - border;
         origin.y = barHeight / 2;
         UI_TextOutEx2(statusText, &origin, UI_Color(UIC_TEXT), .75f * alpha, ALIGN_RIGHT, DTF_ONLY_SHADOW);
     }
@@ -600,7 +600,7 @@ static void drawSideText(char const *text, int line, float alpha)
 {
     DENG_ASSERT(inited);
 
-    float const gtosMulY = Window_Height(theWindow) / 200.0f;
+    float const gtosMulY = theWindow->height() / 200.0f;
 
     FR_SetFont(Con_Font());
     FR_PushAttrib();
@@ -617,7 +617,7 @@ static void drawSideText(char const *text, int line, float alpha)
         con_textfilter_t printFilter = Con_PrintFilter();
 
         // Scaled screen width.
-        int ssw = int(Window_Width(theWindow) / scale[0]);
+        int ssw = int(theWindow->width() / scale[0]);
 
         char buf[300];
         if(printFilter)
@@ -684,7 +684,7 @@ static void drawConsole(float consoleAlpha)
     CBuffer *buffer = Con_HistoryBuffer();
     uint cmdCursor = Con_CommandLineCursorPosition();
     char *cmdLine = Con_CommandLine();
-    float scale[2], y, fontScaledY, gtosMulY = Window_Height(theWindow) / 200.0f;
+    float scale[2], y, fontScaledY, gtosMulY = theWindow->height() / 200.0f;
     char buff[LOCALBUFFSIZE];
     font_t *cfont;
     int lineHeight, textOffsetY;
@@ -709,28 +709,28 @@ static void drawConsole(float consoleAlpha)
 
     origin.x = XORIGIN;
     origin.y = YORIGIN + (int) (ConsoleY * gtosMulY);
-    size.width  = Window_Width(theWindow);
-    size.height = -Window_Height(theWindow);
+    size.width  = theWindow->width();
+    size.height = -theWindow->height();
     drawConsoleBackground(&origin, &size, consoleAlpha);
 
     // The border.
     origin.x = XORIGIN;
     origin.y = YORIGIN + (int) ((ConsoleY - 10) * gtosMulY);
-    size.width  = Window_Width(theWindow);
+    size.width  = theWindow->width();
     size.height = 10 * gtosMulY;
     UI_Gradient(&origin, &size, UI_Color(UIC_BG_DARK), UI_Color(UIC_BRD_HI), 0,
                 consoleAlpha * consoleBackgroundAlpha * .06f);
 
     origin.x = XORIGIN;
     origin.y = YORIGIN + (int) (ConsoleY * gtosMulY);
-    size.width  = Window_Width(theWindow);
+    size.width  = theWindow->width();
     size.height = 2;
     UI_Gradient(&origin, &size, UI_Color(UIC_BG_LIGHT), UI_Color(UIC_BG_LIGHT),
                 consoleAlpha * consoleBackgroundAlpha, -1);
 
     origin.x = XORIGIN;
     origin.y = YORIGIN + (int) (ConsoleY * gtosMulY);
-    size.width  = Window_Width(theWindow);
+    size.width  = theWindow->width();
     size.height = 2 * gtosMulY;
     UI_Gradient(&origin, &size, UI_Color(UIC_SHADOW), UI_Color(UIC_SHADOW),
                 consoleAlpha * consoleBackgroundAlpha * .75f, 0);
@@ -772,7 +772,7 @@ static void drawConsole(float consoleAlpha)
                 {
                     // Draw a ruler here, and nothing else.
                     drawRuler(XORIGIN + PADDING, (YORIGIN + y) / scale[1],
-                              Window_Width(theWindow) / scale[0] - PADDING*2, lineHeight,
+                              theWindow->width() / scale[0] - PADDING*2, lineHeight,
                               consoleAlpha);
                 }
                 else
@@ -787,7 +787,7 @@ static void drawConsole(float consoleAlpha)
                     if(line->flags & CBLF_CENTER)
                     {
                         alignFlags |= ALIGN_TOP;
-                        xOffset = (Window_Width(theWindow) / scale[0]) / 2;
+                        xOffset = (theWindow->width() / scale[0]) / 2;
                     }
                     else
                     {
@@ -929,7 +929,7 @@ void Rend_Console()
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, Window_Width(theWindow), Window_Height(theWindow), 0, -1, 1);
+    glOrtho(0, theWindow->width(), theWindow->height(), 0, -1, 1);
 
     if(consoleShow)
     {
@@ -939,7 +939,7 @@ void Rend_Console()
 
     if(consoleShowFPS && !UI_IsActive())
     {
-        Point2Raw origin(Window_Width(theWindow) - 10,
+        Point2Raw origin(theWindow->width() - 10,
                          10 + (ConsoleY > 0? ROUND(consoleAlpha * calcConsoleTitleBarHeight()) : 0));
         Rend_ConsoleFPS(&origin);
     }

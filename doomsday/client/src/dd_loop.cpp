@@ -102,7 +102,9 @@ int DD_GameLoopExitCode(void)
 float DD_GetFrameRate(void)
 {
 #ifdef __CLIENT__
-    return Window_CanvasWindow(Window_Main())->frameRate();
+    Window *wnd = Window::main();
+    DENG_ASSERT(wnd != 0);
+    return wnd->canvasWindow()->frameRate();
 #else
     return 0;
 #endif

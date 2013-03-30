@@ -72,7 +72,7 @@ static Updater* updater = 0;
 
 /// @todo The platform ID should come from the Builder.
 #if defined(WIN32)
-#  define PLATFORM_ID       "win-x86"
+#  define PLATFORM_ID       "wnd-x86"
 
 #elif defined(MACOSX)
 #  if defined(MACOS_10_7)
@@ -107,21 +107,26 @@ static void runInstallerCommand(void)
 
 static bool switchToWindowedMode()
 {
-    bool wasFull = Window_IsFullscreen(Window_Main());
+    Window *mainWindow = Window::main();
+    DENG_ASSERT(mainWindow != 0);
+
+    bool wasFull = mainWindow->isFullscreen();
     if(wasFull)
     {
         int attribs[] = { DDWA_FULLSCREEN, false, DDWA_END };
-        Window_ChangeAttributes(Window_Main(), attribs);
+        mainWindow->changeAttributes(attribs);
     }
     return wasFull;
 }
 
 static void switchBackToFullscreen(bool wasFull)
 {
+    Window *mainWindow = Window::main();
+    DENG_ASSERT(mainWindow != 0);
     if(wasFull)
     {
         int attribs[] = { DDWA_FULLSCREEN, true, DDWA_END };
-        Window_ChangeAttributes(Window_Main(), attribs);
+        mainWindow->changeAttributes(attribs);
     }
 }
 
@@ -241,7 +246,9 @@ DENG2_PIMPL(Updater)
     {
         if(!settingsDlg)
         {
-            settingsDlg = new UpdaterSettingsDialog(Window_Widget(Window_Main()));
+            Window *wnd = Window::main();
+            DENG_ASSERT(wnd != 0);
+            settingsDlg = new UpdaterSettingsDialog(wnd->widget());
             QObject::connect(settingsDlg, SIGNAL(finished(int)), thisPublic, SLOT(settingsDialogClosed(int)));
         }
         else
@@ -312,7 +319,9 @@ DENG2_PIMPL(Updater)
             // Automatically switch to windowed mode for convenience.
             bool wasFull = switchToWindowedMode();
 
-            UpdateAvailableDialog dlg(latestVersion, latestLogUri, Window_Widget(Window_Main()));
+            Window *wnd = Window::main();
+            DENG_ASSERT(wnd != 0);
+            UpdateAvailableDialog dlg(latestVersion, latestLogUri, wnd->widget());
             availableDlg = &dlg;
             execAvailableDialog(wasFull);
         }
@@ -535,7 +544,9 @@ void Updater::checkNowShowingProgress()
     // Not if there is an ongoing download.
     if(d->download) return;
 
-    d->availableDlg = new UpdateAvailableDialog(Window_Widget(Window_Main()));
+    Window *wnd = Window::main();
+    DENG_ASSERT(wnd != 0);
+    d->availableDlg = new UpdateAvailableDialog(wnd->widget());
     d->queryLatestVersion(true);
 
     d->execAvailableDialog(false);

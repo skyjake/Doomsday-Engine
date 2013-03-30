@@ -57,11 +57,13 @@ static void handleLegacyCoreTerminate(char const *msg)
     Con_Error("Application terminated due to exception:\n%s\n", msg);
 }
 
-static void continueInitWithEventLoopRunning(void)
+static void continueInitWithEventLoopRunning()
 {
     // Show the main window. This causes initialization to finish (in busy mode)
     // as the canvas is visible and ready for initialization.
-    Window_Show(Window_Main(), true);
+    Window *mainWindow = Window::main();
+    DENG_ASSERT(mainWindow != 0);
+    mainWindow->show();
 }
 
 DENG2_PIMPL(ClientApp)
@@ -164,7 +166,7 @@ void ClientApp::initialize()
     // Create the main window.
     char title[256];
     DD_ComposeMainWindowTitle(title);
-    Window_New(title);
+    new Window(title);
 
     LegacyCore_Timer(1, continueInitWithEventLoopRunning);
 }

@@ -142,8 +142,8 @@ void UI_PageInit(boolean halttime, boolean tckui, boolean tckframe, boolean drwg
     allowEscape = !noescape;
 
     // Init cursor to the center of the screen.
-    uiCX = Window_Width(theWindow) / 2;
-    uiCY = Window_Height(theWindow) / 2;
+    uiCX = theWindow->width() / 2;
+    uiCY = theWindow->height() / 2;
     uiMoved = false;
 }
 
@@ -306,12 +306,12 @@ void UI_InitPage(ui_page_t* page, ui_object_t* objects)
 
 int UI_AvailableWidth(void)
 {
-    return Window_Width(theWindow) - UI_BORDER * 4;
+    return theWindow->width() - UI_BORDER * 4;
 }
 
 int UI_AvailableHeight(void)
 {
-    return Window_Height(theWindow) - UI_BORDER * 4;
+    return theWindow->height() - UI_BORDER * 4;
 }
 
 int UI_ScreenX(int relx)
@@ -420,16 +420,16 @@ int UI_Responder(const ddevent_t* ev)
             uiCX += ev->axis.pos;
             if(uiCX < 0)
                 uiCX = 0;
-            if(uiCX >= Window_Width(theWindow))
-                uiCX = Window_Width(theWindow) - 1;
+            if(uiCX >= theWindow->width())
+                uiCX = theWindow->width() - 1;
         }
         else if(ev->axis.id == 1) // yaxis.
         {
             uiCY += ev->axis.pos;
             if(uiCY < 0)
                 uiCY = 0;
-            if(uiCY >= Window_Height(theWindow))
-                uiCY = Window_Height(theWindow) - 1;
+            if(uiCY >= theWindow->height())
+                uiCY = theWindow->height() - 1;
         }
     }
 
@@ -487,24 +487,24 @@ void UI_Drawer(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, Window_Width(theWindow), Window_Height(theWindow), 0, -1, 1);
+    glOrtho(0, theWindow->width(), theWindow->height(), 0, -1, 1);
 
     // Call the active page's drawer.
     uiCurrentPage->drawer(uiCurrentPage);
 
     // Draw mouse cursor?
-    if(!uiNoMouse && Window_IsMouseTrapped(theWindow))
+    if(!uiNoMouse && theWindow->isMouseTrapped())
     {
         Point2Raw origin;
         Size2Raw size;
         float scale;
 
-        if(Window_Width(theWindow) >= Window_Height(theWindow))
-            scale = (Window_Width(theWindow)  / UI_WIDTH)  *
-                    (Window_Height(theWindow) / (float) Window_Width(theWindow));
+        if(theWindow->width() >= theWindow->height())
+            scale = (theWindow->width()  / UI_WIDTH)  *
+                    (theWindow->height() / (float) theWindow->width());
         else
-            scale = (Window_Height(theWindow) / UI_HEIGHT) *
-                    (Window_Width(theWindow)  / (float) Window_Height(theWindow));
+            scale = (theWindow->height() / UI_HEIGHT) *
+                    (theWindow->width()  / (float) theWindow->height());
 
         origin.x = uiCX - 1;
         origin.y = uiCY - 1;
@@ -762,21 +762,19 @@ void UIPage_Ticker(ui_page_t* page)
     }
 }
 
-void UIPage_Drawer(ui_page_t* page)
+void UIPage_Drawer(ui_page_t *page)
 {
-    ui_object_t* ob;
-    ui_color_t focuscol;
-    float t;
-    uint i;
+    DENG_ASSERT(page != 0);
 
     // Draw background?
     if(page->flags.showBackground)
     {
-        Point2Raw origin(0, 0);
-        UI_DrawDDBackground(&origin, Window_Size(theWindow), uiAlpha);
+        UI_DrawDDBackground(Point2Raw(0, 0), theWindow->dimensions(), uiAlpha);
     }
 
     // Draw each object, unless they're hidden.
+    uint i;
+    ui_object_t *ob;
     for(i = 0, ob = page->_objects; i < page->count; ++i, ob++)
     {
         float currentUIAlpha = uiAlpha;
@@ -808,20 +806,21 @@ void UIPage_Drawer(ui_page_t* page)
         if((ob->flags & UIF_FOCUS) &&
             (ob->type != UI_EDIT || !(ob->flags & UIF_ACTIVE)))
         {
-            Point2Raw focusOrigin;
-            Size2Raw focusSize;
-
-            t = (1 + sin(page->_timer / (float) TICSPERSEC * 1.5f * float(de::PI))) / 2;
+            float t = (1 + sin(page->_timer / (float) TICSPERSEC * 1.5f * float(de::PI))) / 2;
+            ui_color_t focuscol;
             UI_MixColors(UI_Color(UIC_BRD_LOW), UI_Color(UIC_BRD_HI), &focuscol, t);
+
             glEnable(GL_TEXTURE_2D);
             UI_Shade(&ob->geometry.origin, &ob->geometry.size, UI_BORDER, UI_Color(UIC_BRD_LOW), UI_Color(UIC_BRD_LOW), .2f + t * .3f, -1);
 
-            GL_BlendMode(BM_ADD);
             // Draw a focus rectangle.
-            focusOrigin.x = ob->geometry.origin.x - 1;
-            focusOrigin.y = ob->geometry.origin.y - 1;
-            focusSize.width  = ob->geometry.size.width  + 2;
-            focusSize.height = ob->geometry.size.height + 2;
+            Point2Raw focusOrigin(ob->geometry.origin.x - 1,
+                                  ob->geometry.origin.y - 1);
+
+            Size2Raw focusSize(ob->geometry.size.width  + 2,
+                               ob->geometry.size.height + 2);
+
+            GL_BlendMode(BM_ADD);
             UI_DrawRect(&focusOrigin, &focusSize, UI_BORDER, &focuscol, 1);
             GL_BlendMode(BM_NORMAL);
             glDisable(GL_TEXTURE_2D);
@@ -2434,10 +2433,8 @@ void UI_DrawLogo(Point2Raw const *origin, Size2Raw const *size)
     glDisable(GL_TEXTURE_2D);
 }
 
-void UI_DrawDDBackground(Point2Raw const *origin, Size2Raw const *size, float alpha)
+void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &dimensions, float alpha)
 {
-    DENG2_ASSERT(origin && size);
-
     ui_color_t const *dark  = UI_Color(UIC_BG_DARK);
     ui_color_t const *light = UI_Color(UIC_BG_LIGHT);
     float const mul = 1.5f;
@@ -2461,16 +2458,16 @@ void UI_DrawDDBackground(Point2Raw const *origin, Size2Raw const *size, float al
         // Top color.
         glColor4f(dark->red * mul, dark->green * mul, dark->blue * mul, alpha);
         glTexCoord2f(0, 0);
-        glVertex2f(origin->x, origin->y);
+        glVertex2f(origin.x, origin.y);
         glTexCoord2f(1, 0);
-        glVertex2f(origin->x + size->width, origin->y);
+        glVertex2f(origin.x + dimensions.width, origin.y);
 
         // Bottom color.
         glColor4f(light->red * mul, light->green * mul, light->blue * mul, alpha);
         glTexCoord2f(1, 1);
-        glVertex2f(origin->x + size->width, origin->y + size->height);
+        glVertex2f(origin.x + dimensions.width, origin.y + dimensions.height);
         glTexCoord2f(0, 1);
-        glVertex2f(0, origin->y + size->height);
+        glVertex2f(0, origin.y + dimensions.height);
     glEnd();
 
     glEnable(GL_BLEND);

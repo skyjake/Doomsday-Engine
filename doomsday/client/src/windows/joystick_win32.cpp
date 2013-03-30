@@ -73,7 +73,9 @@ boolean Joystick_Init(void)
 
     if(isDedicated || CommandLine_Check("-nojoy")) return false;
 
-    HWND hWnd = (HWND) Window_NativeHandle(Window_Main());
+    Window *wnd = Window::main();
+    DENG_ASSERT(wnd != 0);
+    HWND hWnd = (HWND) wnd->nativeHandle();
     if(!hWnd)
     {
         Con_Error("Joystick_Init: Main window not available, cannot continue.");
