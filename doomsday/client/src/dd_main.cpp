@@ -1564,7 +1564,6 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
 #ifdef __CLIENT__
     char buf[256];
     DD_ComposeMainWindowTitle(buf);
-    DENG_ASSERT(DENG_WINDOW != 0);
     DENG_WINDOW->setTitle(buf);
 #endif
 
@@ -1589,7 +1588,6 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
 
 #ifdef __CLIENT__
     DD_ComposeMainWindowTitle(buf);
-    DENG_ASSERT(DENG_WINDOW != 0);
     DENG_WINDOW->setTitle(buf);
 #endif
 
@@ -1777,7 +1775,6 @@ void DD_FinishInitializationAfterWindowReady()
     {
         char buf[256];
         DD_ComposeMainWindowTitle(buf);
-        DENG_ASSERT(DENG_WINDOW != 0);
         DENG_WINDOW->setTitle(buf);
     }
 #endif

@@ -181,7 +181,6 @@ void GL_DoUpdate()
     DD_WaitForOptimalUpdateTime();
 
     // Blit screen to video.
-    DENG_ASSERT(DENG_WINDOW != 0);
     DENG_WINDOW->swapBuffers();
 
     // We will arrive here always at the same time in relation to the displayed
