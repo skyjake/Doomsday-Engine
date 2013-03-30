@@ -2,5 +2,5 @@
     Start an InFine script.
 }
 @description{
-    Params: startinf (script-id)\nFor example, 'startinf coolscript'.
+    Params: startinf (script-id) @cbr For example, 'startinf coolscript'.
 }

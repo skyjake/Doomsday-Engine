@@ -2,5 +2,5 @@
     Change Doomsday user interface colors.
 }
 @description{
-    Params: uicolor (object) (red) (green) (blue)\nFor example, 'uicolor text 1 1 1'.\nPossible objects are:\n text, shadow, bglight, bgmed, bgdark,\n borhigh, bormed, borlow, help
+    Params: uicolor (object) (red) (green) (blue) @cbr For example, 'uicolor text 1 1 1'. @cbr Possible objects are: @cbr  text, shadow, bglight, bgmed, bgdark, @cbr  borhigh, bormed, borlow, help
 }

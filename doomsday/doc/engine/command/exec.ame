@@ -2,5 +2,5 @@
     Loads and executes a file containing console commands.
 }
 @description{
-    Params: exec (file) ...\nFor example, 'exec "myconfig.cfg"'.
+    Params: exec (file) ... @cbr For example, 'exec "myconfig.cfg"'.
 }

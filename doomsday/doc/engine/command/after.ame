@@ -2,5 +2,5 @@
     Execute the specified command after a delay.
 }
 @description{
-    Params: after (tics) (cmd)\nFor example, 'after 35 "echo End"'.
+    Params: after (tics) (cmd) @cbr For example, 'after 35 "echo End"'.
 }

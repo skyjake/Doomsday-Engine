@@ -2,5 +2,5 @@
     Write the current keymap to a file.
 }
 @description{
-    Params: dumpkeymap (file)\nFor example, 'dumpkeymap finnish.dkm'.
+    Params: dumpkeymap (file) @cbr For example, 'dumpkeymap finnish.dkm'.
 }

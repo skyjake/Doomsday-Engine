@@ -2,5 +2,5 @@
     Change video mode resolution or window size.
 }
 @description{
-    Params: setres (width) (height)\nFor example, 'setres 1024 768'.
+    Params: setres (width) (height) @cbr For example, 'setres 1024 768'.
 }

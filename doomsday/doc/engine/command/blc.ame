@@ -2,5 +2,5 @@
     Set color of light at cursor.
 }
 @description{
-    Params: blc (red) (green) (blue)\nFor example, 'blc 1 0.5 0.2'.
+    Params: blc (red) (green) (blue) @cbr For example, 'blc 1 0.5 0.2'.
 }

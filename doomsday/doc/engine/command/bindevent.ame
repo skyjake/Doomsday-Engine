@@ -2,5 +2,5 @@
     Bind a console command to an event.
 }
 @description{
-    Params: bindevent (event-descriptor) (command)\nExamples:\n  bindevent "key-M-down" @{print "M was pressed"@}\n  bindevent "mouse-right-up + key-shift" @{print "RMB released while Shift down"@}
+    Params: bindevent (event-descriptor) (command) @cbr Examples: @cbr   bindevent "key-M-down" @{print "M was pressed"@} @cbr   bindevent "mouse-right-up + key-shift" @{print "RMB released while Shift down"@}
 }

@@ -2,5 +2,5 @@
     Kick client out of the game (server only).
 }
 @description{
-    Params: kick (playernum)\nFor example, 'kick 1'.
+    Params: kick (playernum) @cbr For example, 'kick 1'.
 }

@@ -2,5 +2,5 @@
     Issue a cheat code using the original Hexen cheats.
 }
 @description{
-    Params: cheat (cheat)\nFor example, 'cheat satan'.
+    Params: cheat (cheat) @cbr For example, 'cheat satan'.
 }

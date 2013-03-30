@@ -2,5 +2,5 @@
     Set map.
 }
 @description{
-    Params: setmap (episode) (map)\nFor example, 'setmap 1 7'.
+    Params: setmap (episode) (map) @cbr For example, 'setmap 1 7'.
 }

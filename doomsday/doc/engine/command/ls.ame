@@ -2,5 +2,5 @@
     Print contents of directories.
 }
 @description{
-    Params: ls (dirs) ...\nFor example, 'ls data/'.\nVirtual files are listed, too.\nPaths are relative to the base path.
+    Params: ls (dirs) ... @cbr For example, 'ls data/'. @cbr Virtual files are listed, too. @cbr Paths are relative to the base path.
 }

@@ -2,5 +2,5 @@
     Run an ACS script.
 }
 @description{
-    Params: runscript (1-99)\n.
+    Params: runscript (1-99).
 }

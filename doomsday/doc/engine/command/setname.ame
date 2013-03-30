@@ -2,5 +2,5 @@
     Set your name.
 }
 @description{
-    Params: setname (name)\nFor example, 'setname "my name"'.
+    Params: setname (name) @cbr For example, 'setname "my name"'.
 }

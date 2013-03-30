@@ -2,5 +2,5 @@
     Issue a cheat code using the original DOOM cheats.
 }
 @description{
-    Params: cheat (cheat)\nFor example, 'cheat idclev25'.
+    Params: cheat (cheat) @cbr For example, 'cheat idclev25'.
 }

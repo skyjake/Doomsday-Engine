@@ -2,5 +2,5 @@
     Toggle the value of a cvar between zero and nonzero.
 }
 @description{
-    Params: toggle (cvar)\nFor example, 'toggle rend-light'.
+    Params: toggle (cvar) @cbr For example, 'toggle rend-light'.
 }

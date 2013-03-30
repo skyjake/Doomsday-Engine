@@ -2,5 +2,5 @@
     Print extended information about a Texture to the console.
 }
 @description{
-    Params: inspecttexture (uri)\nFor example, 'inspecttexture flats:fwater1'.
+    Params: inspecttexture (uri) @cbr For example, 'inspecttexture flats:fwater1'.
 }
