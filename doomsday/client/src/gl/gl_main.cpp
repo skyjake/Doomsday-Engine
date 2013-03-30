@@ -87,24 +87,19 @@ static viewport_t currentView;
 
 static void videoFSAAChanged()
 {
-    Window *mainWindow = Window::main();
-    if(!novideo && mainWindow)
-    {
-        mainWindow->updateCanvasFormat();
-    }
+    if(novideo || !Window::haveMain()) return;
+    Window::main().updateCanvasFormat();
 }
 
 static void videoVsyncChanged()
 {
-    Window *mainWindow = Window::main();
-    if(!novideo && mainWindow)
-    {
+    if(novideo || !Window::haveMain()) return;
+
 #if defined(WIN32) || defined(MACOSX)
-        GL_SetVSync(Con_GetByte("vid-vsync") != 0);
+    GL_SetVSync(Con_GetByte("vid-vsync") != 0);
 #else
-        mainWindow->updateCanvasFormat();
+    Window::main().updateCanvasFormat();
 #endif
-    }
 }
 
 void GL_Register()
@@ -1151,8 +1146,7 @@ D_CMD(SetRes)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    Window *mainWindow = Window::main();
-    if(!mainWindow)
+    if(!Window::haveMain())
         return false;
 
     int attribs[] = {
@@ -1160,15 +1154,14 @@ D_CMD(SetRes)
         DDWA_HEIGHT, atoi(argv[2]),
         DDWA_END
     };
-    return mainWindow->changeAttributes(attribs);
+    return Window::main().changeAttributes(attribs);
 }
 
 D_CMD(SetFullRes)
 {
     DENG2_UNUSED2(src, argc);
 
-    Window *mainWindow = Window::main();
-    if(!mainWindow)
+    if(!Window::haveMain())
         return false;
 
     int attribs[] = {
@@ -1177,15 +1170,14 @@ D_CMD(SetFullRes)
         DDWA_FULLSCREEN, true,
         DDWA_END
     };
-    return mainWindow->changeAttributes(attribs);
+    return Window::main().changeAttributes(attribs);
 }
 
 D_CMD(SetWinRes)
 {
     DENG2_UNUSED2(src, argc);
 
-    Window *mainWindow = Window::main();
-    if(!mainWindow)
+    if(!Window::haveMain())
         return false;
 
     int attribs[] = {
@@ -1194,44 +1186,46 @@ D_CMD(SetWinRes)
         DDWA_FULLSCREEN, false,
         DDWA_END
     };
-    return mainWindow->changeAttributes(attribs);
+    return Window::main().changeAttributes(attribs);
 }
 
 D_CMD(ToggleFullscreen)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    Window *mainWindow = Window::main();
-    if(!mainWindow)
+    if(!Window::haveMain())
         return false;
 
+    Window &mainWindow = Window::main();
     int attribs[] = {
-        DDWA_FULLSCREEN, !mainWindow->isFullscreen(),
+        DDWA_FULLSCREEN, !mainWindow.isFullscreen(),
         DDWA_END
     };
-    return mainWindow->changeAttributes(attribs);
+    return mainWindow.changeAttributes(attribs);
 }
 
 D_CMD(SetBPP)
 {
     DENG2_UNUSED2(src, argc);
 
-    Window *mainWindow = Window::main();
-    if(!mainWindow)
+    if(!Window::haveMain())
         return false;
 
     int attribs[] = {
         DDWA_COLOR_DEPTH_BITS, atoi(argv[1]),
         DDWA_END
     };
-    return mainWindow->changeAttributes(attribs);
+    return Window::main().changeAttributes(attribs);
 }
 
 D_CMD(DisplayModeInfo)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    Window const *wnd = Window::main();
+    if(!Window::haveMain())
+        return false;
+
+    Window const &mainWindow = Window::main();
     DisplayMode const *mode = DisplayMode_Current();
 
     QString str = QString("Current display mode:%1 depth:%2 (%3:%4")
@@ -1244,14 +1238,14 @@ D_CMD(DisplayModeInfo)
         str += QString(", refresh: %1 Hz").arg(mode->refreshRate, 0, 'g', 1);
     }
     str += QString(")\nMain window origin:%1 dimensions:%2 fullscreen:%3 centered:%4 maximized:%5")
-                .arg(de::Vector2i(wnd->x(), wnd->y()).asText())
-                .arg(de::Vector2i(wnd->width(), wnd->height()).asText())
-                .arg(wnd->isFullscreen()     ? "yes" : "no")
-                .arg(wnd->isCentered()       ? "yes" : "no")
-                .arg(wnd->isMaximized()      ? "yes" : "no");
+                .arg(de::Vector2i(mainWindow.x(), mainWindow.y()).asText())
+                .arg(de::Vector2i(mainWindow.width(), mainWindow.height()).asText())
+                .arg(mainWindow.isFullscreen()     ? "yes" : "no")
+                .arg(mainWindow.isCentered()       ? "yes" : "no")
+                .arg(mainWindow.isMaximized()      ? "yes" : "no");
     str += QString("\nNormal geometry:%1 %2")
-                .arg(de::Vector2i(wnd->normalX(), wnd->normalY()).asText())
-                .arg(de::Vector2i(wnd->normalWidth(), wnd->normalHeight()).asText());
+                .arg(de::Vector2i(mainWindow.normalX(), mainWindow.normalY()).asText())
+                .arg(de::Vector2i(mainWindow.normalWidth(), mainWindow.normalHeight()).asText());
 
     Con_Message(str.toUtf8().constData());
     return true;

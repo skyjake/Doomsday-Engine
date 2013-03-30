@@ -42,13 +42,13 @@ static int busyFontHgt; // Height of the font.
 static DGLuint texLoading[2];
 static DGLuint texScreenshot; // Captured screenshot of the latest frame.
 
-static void releaseScreenshotTexture(void)
+static void releaseScreenshotTexture()
 {
-    glDeleteTextures(1, (const GLuint*) &texScreenshot);
+    glDeleteTextures(1, (GLuint const *) &texScreenshot);
     texScreenshot = 0;
 }
 
-static void acquireScreenshotTexture(void)
+static void acquireScreenshotTexture()
 {
 #ifdef _DEBUG
     timespan_t startTime;
@@ -63,19 +63,17 @@ static void acquireScreenshotTexture(void)
     startTime = Timer_RealSeconds();
 #endif
 
-    Window *wnd = Window::main();
-    DENG_ASSERT(wnd != 0);
-    texScreenshot = wnd->grabAsTexture(true /*halfsized*/);
+    texScreenshot = Window::main().grabAsTexture(true /*halfsized*/);
 
     DEBUG_Message(("Busy Mode: Took %.2f seconds acquiring screenshot texture #%i.\n",
                    Timer_RealSeconds() - startTime, texScreenshot));
 }
 
-void BusyVisual_ReleaseTextures(void)
+void BusyVisual_ReleaseTextures()
 {
     if(novideo) return;
 
-    glDeleteTextures(2, (const GLuint*) texLoading);
+    glDeleteTextures(2, (GLuint const *) texLoading);
     texLoading[0] = texLoading[1] = 0;
 
     // Don't release yet if doing a transition.

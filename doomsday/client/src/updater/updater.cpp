@@ -107,26 +107,22 @@ static void runInstallerCommand(void)
 
 static bool switchToWindowedMode()
 {
-    Window *mainWindow = Window::main();
-    DENG_ASSERT(mainWindow != 0);
-
-    bool wasFull = mainWindow->isFullscreen();
+    Window &mainWindow = Window::main();
+    bool wasFull = mainWindow.isFullscreen();
     if(wasFull)
     {
         int attribs[] = { DDWA_FULLSCREEN, false, DDWA_END };
-        mainWindow->changeAttributes(attribs);
+        mainWindow.changeAttributes(attribs);
     }
     return wasFull;
 }
 
 static void switchBackToFullscreen(bool wasFull)
 {
-    Window *mainWindow = Window::main();
-    DENG_ASSERT(mainWindow != 0);
     if(wasFull)
     {
         int attribs[] = { DDWA_FULLSCREEN, true, DDWA_END };
-        mainWindow->changeAttributes(attribs);
+        Window::main().changeAttributes(attribs);
     }
 }
 
@@ -246,9 +242,7 @@ DENG2_PIMPL(Updater)
     {
         if(!settingsDlg)
         {
-            Window *wnd = Window::main();
-            DENG_ASSERT(wnd != 0);
-            settingsDlg = new UpdaterSettingsDialog(wnd->widget());
+            settingsDlg = new UpdaterSettingsDialog(Window::main().widget());
             QObject::connect(settingsDlg, SIGNAL(finished(int)), thisPublic, SLOT(settingsDialogClosed(int)));
         }
         else
@@ -319,9 +313,7 @@ DENG2_PIMPL(Updater)
             // Automatically switch to windowed mode for convenience.
             bool wasFull = switchToWindowedMode();
 
-            Window *wnd = Window::main();
-            DENG_ASSERT(wnd != 0);
-            UpdateAvailableDialog dlg(latestVersion, latestLogUri, wnd->widget());
+            UpdateAvailableDialog dlg(latestVersion, latestLogUri, Window::main().widget());
             availableDlg = &dlg;
             execAvailableDialog(wasFull);
         }
@@ -544,9 +536,7 @@ void Updater::checkNowShowingProgress()
     // Not if there is an ongoing download.
     if(d->download) return;
 
-    Window *wnd = Window::main();
-    DENG_ASSERT(wnd != 0);
-    d->availableDlg = new UpdateAvailableDialog(wnd->widget());
+    d->availableDlg = new UpdateAvailableDialog(Window::main().widget());
     d->queryLatestVersion(true);
 
     d->execAvailableDialog(false);

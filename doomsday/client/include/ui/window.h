@@ -29,6 +29,7 @@
 #include "dd_types.h"
 #include "resource/image.h"
 #include "canvaswindow.h"
+#include <de/Error>
 
 /// Minimum width of a window (fullscreen too? -ds)
 #define WINDOW_MIN_WIDTH        320
@@ -75,6 +76,9 @@ enum windowattribute_e
 class Window
 {
 public:
+    /// Required/referenced Window instance is missing. @ingroup errors
+    DENG2_ERROR(MissingWindowError);
+
     /**
      * Initialize the window manager.
      * Tasks include; checking the system environment for feature enumeration.
@@ -101,9 +105,21 @@ public:
     static Window *create(char const *title);
 
     /**
-     * Returns a pointer to the @em main window.
+     * Returns @c true iff a main window is available.
      */
-    static Window *main();
+    static bool haveMain();
+
+    /**
+     * Returns the main window.
+     */
+    static Window &main();
+
+    /**
+     * Returns a pointer to the @em main window.
+     *
+     * @see haveMain()
+     */
+    inline static Window *mainPtr() { return haveMain()? &main() : 0; }
 
     /**
      * Returns a pointer to the window associated with unique index @a idx.

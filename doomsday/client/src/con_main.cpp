@@ -2005,9 +2005,7 @@ void Con_Error(char const *error, ...)
     va_list argptr;
 
 #ifdef __CLIENT__
-    Window *mainWindow = Window::main();
-    DENG_ASSERT(mainWindow != 0);
-    mainWindow->trapMouse(false);
+    Window::main().trapMouse(false);
 #endif
 
     // Already in an error?
@@ -2079,9 +2077,7 @@ void Con_AbnormalShutdown(char const *message)
     DisplayMode_Shutdown();
 
 #ifdef __CLIENT__
-    Window *mainWindow = Window::main();
-    DENG_ASSERT(mainWindow != 0);
-    mainWindow->trapMouse(false);
+    Window::main().trapMouse(false);
 
     DENG2_GUI_APP->loop().pause();
 #endif

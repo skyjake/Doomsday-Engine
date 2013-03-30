@@ -245,9 +245,7 @@ static void preBusySetup(int initialMode)
     ClientApp::app().loop().setRate(60);
 
     // Switch the window to busy mode UI.
-    Window *wnd = Window::main();
-    DENG_ASSERT(wnd != 0);
-    wnd->canvasWindow()->setMode(CanvasWindow::Busy);
+    Window::main().canvasWindow()->setMode(CanvasWindow::Busy);
 
 #else
     DENG_UNUSED(initialMode);
@@ -267,9 +265,7 @@ static void postBusyCleanup()
     ClientApp::app().loop().setRate(0);
 
     // Switch the window to normal UI.
-    Window *wnd = Window::main();
-    DENG_ASSERT(wnd != 0);
-    wnd->canvasWindow()->setMode(CanvasWindow::Normal);
+    Window::main().canvasWindow()->setMode(CanvasWindow::Normal);
 #endif
 }
 
@@ -441,9 +437,7 @@ void BusyMode_Loop(void)
 
     if(canUpload)
     {
-        Window *wnd = Window::main();
-        DENG_ASSERT(wnd != 0);
-        wnd->glActivate();
+        Window::main().glActivate();
 
         // Any deferred content needs to get uploaded.
         GL_ProcessDeferredTasks(15);
@@ -466,9 +460,7 @@ void BusyMode_Loop(void)
        !Con_IsProgressAnimationCompleted())
     {
         // Let's keep running the busy loop.
-        Window *mainWindow = Window::main();
-        DENG_ASSERT(mainWindow != 0);
-        mainWindow->draw();
+        Window::main().draw();
         return;
     }
 

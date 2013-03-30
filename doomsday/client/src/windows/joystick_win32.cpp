@@ -60,22 +60,20 @@ static BOOL CALLBACK enumJoysticks(LPCDIDEVICEINSTANCE lpddi, void* ref)
     return DIENUM_CONTINUE;
 }
 
-boolean Joystick_Init(void)
+boolean Joystick_Init()
 {
     int joyProp[] = {
         DIJOFS_X, DIJOFS_Y, DIJOFS_Z,
         DIJOFS_RX, DIJOFS_RY, DIJOFS_RZ,
         DIJOFS_SLIDER(0), DIJOFS_SLIDER(1)
     };
-    const char* axisName[] = {
+    char const *axisName[] = {
         "X", "Y", "Z", "RX", "RY", "RZ", "Slider 1", "Slider 2"
     };
 
     if(isDedicated || CommandLine_Check("-nojoy")) return false;
 
-    Window *wnd = Window::main();
-    DENG_ASSERT(wnd != 0);
-    HWND hWnd = (HWND) wnd->nativeHandle();
+    HWND hWnd = (HWND) Window::main().nativeHandle();
     if(!hWnd)
     {
         Con_Error("Joystick_Init: Main window not available, cannot continue.");

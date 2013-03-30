@@ -43,9 +43,7 @@ void BusyWidget::viewResized()
 {
     if(!BusyMode_Active() || isDisabled() || Sys_IsShuttingDown()) return;
 
-    Window *wnd = Window::main();
-    DENG_ASSERT(wnd != 0);
-    wnd->glActivate(); // needed for legacy stuff
+    Window::main().glActivate(); // needed for legacy stuff
 
     //DENG_ASSERT(BusyMode_Active());
 

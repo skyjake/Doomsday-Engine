@@ -61,9 +61,7 @@ static void continueInitWithEventLoopRunning()
 {
     // Show the main window. This causes initialization to finish (in busy mode)
     // as the canvas is visible and ready for initialization.
-    Window *mainWindow = Window::main();
-    DENG_ASSERT(mainWindow != 0);
-    mainWindow->show();
+    Window::main().show();
 }
 
 DENG2_PIMPL(ClientApp)

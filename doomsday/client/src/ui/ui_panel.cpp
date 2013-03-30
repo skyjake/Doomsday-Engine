@@ -871,13 +871,12 @@ void CP_VideoModeInfo(ui_object_t *ob)
     }
     else
     {
-        Window *mainWindow = Window::main();
-        DENG_ASSERT(mainWindow != 0);
+        Window const &mainWindow = Window::main();
 
         sprintf(buf, "%i x %i x %i (%s)",
-                mainWindow->width(), mainWindow->height(),
-                mainWindow->colorDepthBits(),
-                (mainWindow->isFullscreen()? "fullscreen" : "windowed"));
+                mainWindow.width(), mainWindow.height(),
+                mainWindow.colorDepthBits(),
+                (mainWindow.isFullscreen()? "fullscreen" : "windowed"));
     }
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
@@ -897,9 +896,8 @@ void CP_VideoModeInfo(ui_object_t *ob)
 
 void CP_UpdateSetVidModeButton(int w, int h, int bpp, bool fullscreen)
 {
-    Window *mainWindow = Window::main();
-    DENG_ASSERT(mainWindow != 0);
-    bool cFullscreen = mainWindow->isFullscreen();
+    Window &mainWindow = Window::main();
+    bool cFullscreen = mainWindow.isFullscreen();
     ui_object_t* ob;
 
     ob = UI_FindObject(ob_panel, CPG_VIDEO, CPID_SET_RES);
@@ -908,8 +906,8 @@ void CP_UpdateSetVidModeButton(int w, int h, int bpp, bool fullscreen)
     sprintf(ob->text, "%i x %i x %i (%s)", w, h, bpp,
             fullscreen? "fullscreen" : "windowed");
 
-    if(w == mainWindow->width() && h == mainWindow->height() &&
-       bpp == mainWindow->colorDepthBits() && fullscreen == cFullscreen)
+    if(w == mainWindow.width() && h == mainWindow.height() &&
+       bpp == mainWindow.colorDepthBits() && fullscreen == cFullscreen)
         ob->flags |= UIF_DISABLED;
     else
         ob->flags &= ~UIF_DISABLED;
@@ -950,8 +948,7 @@ void CP_SetVidMode(ui_object_t* ob)
 
     ob->flags |= UIF_DISABLED;
 
-    Window *mainWindow = Window::main();
-    if(mainWindow)
+    if(Window::haveMain())
     {
         int attribs[] = {
             DDWA_WIDTH, x,
@@ -960,7 +957,7 @@ void CP_SetVidMode(ui_object_t* ob)
             DDWA_FULLSCREEN, panel_fullscreen != 0,
             DDWA_END
         };
-        mainWindow->changeAttributes(attribs);
+        Window::main().changeAttributes(attribs);
     }
 }
 
@@ -1318,21 +1315,20 @@ D_CMD(OpenPanel)
     CP_InitCvarSliders(ob_panel);
 
     // Update width the current resolution.
-    Window *mainWindow = Window::main();
-    DENG_ASSERT(mainWindow != 0);
-    bool cFullscreen = mainWindow->isFullscreen();
+    Window &mainWindow = Window::main();
+    bool cFullscreen = mainWindow.isFullscreen();
 
     ob = UI_FindObject(ob_panel, CPG_VIDEO, CPID_RES_LIST);
     list = (uidata_list_t *) ob->data;
     list->selection = UI_ListFindItem(ob,
-        RES(mainWindow->width(), mainWindow->height()));
+        RES(mainWindow.width(), mainWindow.height()));
     if(list->selection == -1)
     {
         // Then use a reasonable default.
         list->selection = UI_ListFindItem(ob, RES(640, 480));
     }
     panel_fullscreen = cFullscreen;
-    panel_bpp = (mainWindow->colorDepthBits() == 32? 1 : 0);
+    panel_bpp = (mainWindow.colorDepthBits() == 32? 1 : 0);
     CP_ResolutionList(ob);
 
     UI_PageInit(true, true, false, false, false);

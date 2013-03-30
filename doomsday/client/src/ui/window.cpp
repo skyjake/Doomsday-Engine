@@ -660,7 +660,7 @@ DENG2_PIMPL(Window)
 
     static void updateMainWindowLayout()
     {
-        Window *wnd = Window::main();
+        Window *wnd = Window::mainPtr();
 
         if(wnd->d->needReshowFullscreen)
         {
@@ -700,7 +700,7 @@ DENG2_PIMPL(Window)
 
     static void useAppliedGeometryForWindows()
     {
-        Window *wnd = Window::main();
+        Window *wnd = Window::mainPtr();
         if(!wnd || !wnd->d->widget) return;
 
         if(wnd->d->flags & DDWF_CENTERED)
@@ -718,7 +718,7 @@ DENG2_PIMPL(Window)
 
     static void endWindowWait()
     {
-        Window *wnd = Window::main();
+        Window *wnd = Window::mainPtr();
         if(wnd)
         {
             DEBUG_Message(("Window is no longer waiting for geometry changes."));
@@ -817,7 +817,7 @@ DENG2_PIMPL(Window)
      */
     static void updateWindowStateAfterUserChange()
     {
-        Window *wnd = Window::main();
+        Window *wnd = Window::mainPtr();
         if(!wnd || !wnd->d->widget) return;
 
         wnd->d->fetchWindowGeometry();
@@ -917,9 +917,19 @@ Window *Window::create(char const *title)
     return wnd;
 }
 
-Window *Window::main()
+bool Window::haveMain()
 {
-    return mainWindow;
+    return mainWindow != 0;
+}
+
+Window &Window::main()
+{
+    if(mainWindow)
+    {
+        return *mainWindow;
+    }
+    /// @throw MissingWindowError Attempted to reference a non-existant window.
+    throw MissingWindowError("Window::main", "No main window is presently available");
 }
 
 Window *Window::byIndex(uint id)

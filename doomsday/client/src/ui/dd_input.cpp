@@ -2366,12 +2366,13 @@ D_CMD(ListInputDevices)
 
 D_CMD(ReleaseMouse)
 {
-#ifdef __CLIENT__
     DENG2_UNUSED3(src, argc, argv);
-
-    Window *mainWindow = Window::main();
-    DENG_ASSERT(mainWindow != 0);
-    mainWindow->trapMouse(false);
+#ifdef __CLIENT__
+    if(Window::haveMain())
+    {
+        Window::main().trapMouse(false);
+        return true;
+    }
 #endif
-    return true;
+    return false;
 }

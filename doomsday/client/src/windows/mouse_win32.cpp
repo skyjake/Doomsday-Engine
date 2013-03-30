@@ -32,14 +32,12 @@ static LPDIRECTINPUTDEVICE8 didMouse;
 static boolean mouseTrapped;
 static DIMOUSESTATE2 mstate; ///< Polled state.
 
-static int Mouse_Win32_Init(void)
+static int Mouse_Win32_Init()
 {
     if(CommandLine_Check("-nomouse") || novideo) return false;
 
     // We'll need a window handle for this.
-    Window *wnd = Window::main();
-    DENG_ASSERT(wnd != 0);
-    HWND hWnd = (HWND) wnd->nativeHandle();
+    HWND hWnd = (HWND) Window::main().nativeHandle();
     if(!hWnd)
     {
         Con_Error("Mouse_Init: Main window not available, cannot init mouse.");

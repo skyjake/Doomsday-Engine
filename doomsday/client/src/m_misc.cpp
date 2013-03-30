@@ -414,9 +414,7 @@ DENG_EXTERN_C int M_ScreenShot(char const *name, int bits)
     }
     F_ToNativeSlashes(&fullName, &fullName);
 
-    Window *wnd = Window::main();
-    DENG_ASSERT(wnd != 0);
-    bool result = wnd->grabToFile(Str_Text(&fullName));
+    bool result = Window::main().grabToFile(Str_Text(&fullName));
     Str_Free(&fullName);
 
     return result? 1 : 0;

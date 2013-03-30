@@ -2573,10 +2573,8 @@ void* DD_GetVariable(int ddvalue)
         return &torchAdditive;
 
 # ifdef WIN32
-    case DD_WINDOW_HANDLE: {
-        Window *wnd = Window::main();
-        DENG_ASSERT(wnd != 0);
-        return wnd->nativeHandle(); }
+    case DD_WINDOW_HANDLE:
+        return Window::main().nativeHandle();
 # endif
 #endif
 
