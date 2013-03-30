@@ -527,7 +527,7 @@ DENG2_PIMPL(Window)
         }
     }
 
-    bool applyAttributes(int const *attribs)
+    void applyAttributes(int const *attribs)
     {
         LOG_AS("applyAttributes");
 
@@ -556,7 +556,7 @@ DENG2_PIMPL(Window)
             case DDWA_WIDTH:
                 if(width() != attribs[i])
                 {
-                    if(attribs[i] < WINDOW_MIN_WIDTH) return false;
+                    DENG_ASSERT(attribs[i] >= WINDOW_MIN_WIDTH);
                     normalGeometry.size.width = geometry.size.width = attribs[i];
                     DEBUG_Message(("ngw=%i [B]\n", normalGeometry.size.width));
                     changed = true;
@@ -565,7 +565,7 @@ DENG2_PIMPL(Window)
             case DDWA_HEIGHT:
                 if(height() != attribs[i])
                 {
-                    if(attribs[i] < WINDOW_MIN_HEIGHT) return false;
+                    DENG_ASSERT(attribs[i] >= WINDOW_MIN_HEIGHT);
                     normalGeometry.size.height = geometry.size.height = attribs[i];
                     changed = true;
                 }
@@ -587,11 +587,7 @@ DENG2_PIMPL(Window)
             case DDWA_FULLSCREEN:
                 if(IS_NONZERO(attribs[i]) != IS_NONZERO(checkFlag(DDWF_FULLSCREEN)))
                 {
-                    if(attribs[i] && Updater_IsDownloadInProgress())
-                    {
-                        // Can't go to fullscreen when downloading.
-                        return false;
-                    }
+                    DENG_ASSERT(!(attribs[i] && Updater_IsDownloadInProgress()));
                     setFlag(DDWF_FULLSCREEN, attribs[i]);
                     changed = true;
                 }
@@ -608,25 +604,25 @@ DENG2_PIMPL(Window)
                 if(attribs[i] != colorDepthBits)
                 {
                     colorDepthBits = attribs[i];
-                    if(colorDepthBits < 8 || colorDepthBits > 32) return false; // Illegal value.
+                    DENG_ASSERT(colorDepthBits >= 8 && colorDepthBits <= 32);
                     changed = true;
                 }
                 break;
             default:
                 // Unknown attribute.
-                return false;
+                DENG_ASSERT(false);
             }
         }
 
+        // No change?
         if(!changed)
         {
             VERBOSE(Con_Message("New window attributes same as before."));
-            return true;
+            return;
         }
 
-        // Seems ok, apply them.
+        // Apply them.
         applyWindowGeometry();
-        return true;
     }
 
     void updateLayout()
@@ -967,21 +963,51 @@ void Window::updateAfterResize()
     d->updateLayout();
 }
 
-bool Window::changeAttributes(int const *attribs)
+static bool validateAttributes(int const *attribs)
 {
-    /// @todo fixme This naive mechanism for reverting attribute changes is no
-    /// good now we employ DENG2_PRIVATE/DENG2_PIMPL.
-    Instance oldState = *d;
-
-    if(!d->applyAttributes(attribs))
+    // Parse the attributes array and check the values.
+    DENG_ASSERT(attribs);
+    for(int i = 0; attribs[i]; ++i)
     {
-        // These weren't good!
-        *d = oldState;
-        return false;
+        switch(attribs[i++])
+        {
+        case DDWA_WIDTH:
+            if(attribs[i] < WINDOW_MIN_WIDTH)
+                return false;
+            break;
+        case DDWA_HEIGHT:
+            if(attribs[i] < WINDOW_MIN_HEIGHT)
+                return false;
+            break;
+        case DDWA_FULLSCREEN:
+            // Can't go to fullscreen when downloading.
+            if(attribs[i] && Updater_IsDownloadInProgress())
+                return false;
+            break;
+        case DDWA_COLOR_DEPTH_BITS:
+            if(attribs[i] < 8 || attribs[i] > 32)
+                return false; // Illegal value.
+            break;
+        default:
+            // Unknown attribute.
+            return false;
+        }
     }
 
-    // Everything ok!
+    // Seems ok.
     return true;
+}
+
+bool Window::changeAttributes(int const *attribs)
+{
+    if(validateAttributes(attribs))
+    {
+        d->applyAttributes(attribs);
+        return true;
+    }
+
+    // These weren't good!
+    return false;
 }
 
 void Window::swapBuffers() const
