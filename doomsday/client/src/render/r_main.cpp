@@ -123,8 +123,8 @@ void R_BuildTexGammaLut()
 #ifdef __CLIENT__
 char const *R_ChooseFixedFont()
 {
-    if(theWindow->width() < 300) return "console11";
-    if(theWindow->width() > 768) return "console18";
+    if(DENG_WINDOW->width() < 300) return "console11";
+    if(DENG_WINDOW->width() > 768) return "console18";
     return "console14";
 }
 #endif
@@ -204,9 +204,9 @@ void R_LoadSystemFonts()
     if(!Fonts_IsInitialized() || isDedicated) return;
 
     loadFontIfNeeded(R_ChooseFixedFont(), &fontFixed);
-    loadFontIfNeeded(R_ChooseVariableFont(FS_NORMAL, theWindow->width(), theWindow->height()), &fontVariable[FS_NORMAL]);
-    loadFontIfNeeded(R_ChooseVariableFont(FS_BOLD,   theWindow->width(), theWindow->height()), &fontVariable[FS_BOLD]);
-    loadFontIfNeeded(R_ChooseVariableFont(FS_LIGHT,  theWindow->width(), theWindow->height()), &fontVariable[FS_LIGHT]);
+    loadFontIfNeeded(R_ChooseVariableFont(FS_NORMAL, DENG_WINDOW->width(), DENG_WINDOW->height()), &fontVariable[FS_NORMAL]);
+    loadFontIfNeeded(R_ChooseVariableFont(FS_BOLD,   DENG_WINDOW->width(), DENG_WINDOW->height()), &fontVariable[FS_BOLD]);
+    loadFontIfNeeded(R_ChooseVariableFont(FS_LIGHT,  DENG_WINDOW->width(), DENG_WINDOW->height()), &fontVariable[FS_LIGHT]);
 
     Con_SetFont(fontFixed);
 
@@ -242,8 +242,8 @@ void R_SetupDefaultViewWindow(int consoleNum)
 
     vd->window.origin.x = vd->windowOld.origin.x = vd->windowTarget.origin.x = 0;
     vd->window.origin.y = vd->windowOld.origin.y = vd->windowTarget.origin.y = 0;
-    vd->window.size.width  = vd->windowOld.size.width  = vd->windowTarget.size.width  = theWindow->width();
-    vd->window.size.height = vd->windowOld.size.height = vd->windowTarget.size.height = theWindow->height();
+    vd->window.size.width  = vd->windowOld.size.width  = vd->windowTarget.size.width  = DENG_WINDOW->width();
+    vd->window.size.height = vd->windowOld.size.height = vd->windowTarget.size.height = DENG_WINDOW->height();
     vd->windowInter = 1;
 #endif
 }
@@ -416,10 +416,10 @@ void R_UpdateViewPortGeometry(viewport_t *port, int col, int row)
     DENG_ASSERT(port);
 
     RectRaw *rect = &port->geometry;
-    int const x = col * theWindow->width()  / gridCols;
-    int const y = row * theWindow->height() / gridRows;
-    int const width  = (col+1) * theWindow->width()  / gridCols - x;
-    int const height = (row+1) * theWindow->height() / gridRows - y;
+    int const x = col * DENG_WINDOW->width()  / gridCols;
+    int const y = row * DENG_WINDOW->height() / gridRows;
+    int const width  = (col+1) * DENG_WINDOW->width()  / gridCols - x;
+    int const height = (row+1) * DENG_WINDOW->height() / gridRows - y;
     ddhook_viewport_reshape_t p;
     bool doReshape = false;
 
@@ -1056,8 +1056,8 @@ void R_UseViewPort(viewport_t *vp)
     if(!vp)
     {
         currentViewport = NULL;
-        glViewport(0, FLIP(0 + theWindow->height() - 1),
-            theWindow->width(), theWindow->height());
+        glViewport(0, FLIP(0 + DENG_WINDOW->height() - 1),
+            DENG_WINDOW->width(), DENG_WINDOW->height());
     }
     else
     {

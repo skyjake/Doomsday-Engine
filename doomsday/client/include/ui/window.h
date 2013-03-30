@@ -52,9 +52,9 @@
  */
 enum windowattribute_e
 {
-    DDWA_END = 0, ///< Marks the end of an attribute list (not a valid attribute by itself)
+    DDWA_END, ///< Marks the end of an attribute list (not a valid attribute in itself)
 
-    DDWA_X = 1,
+    DDWA_X,
     DDWA_Y,
     DDWA_WIDTH,
     DDWA_HEIGHT,
@@ -65,8 +65,17 @@ enum windowattribute_e
     DDWA_COLOR_DEPTH_BITS
 };
 
-/// Determines whether @a x is a valid window attribute id.
-#define VALID_WINDOW_ATTRIBUTE(x)   ((x) >= DDWA_X && (x) <= DDWA_VISIBLE)
+/**
+ * Macro for conveniently accessing the current active window. There is always
+ * one active window, so no need to worry about NULLs. The easiest way to get
+ * information about the window where drawing is done.
+ */
+#define DENG_WINDOW         (&Window::main())
+
+/**
+ * A helpful macro that changes the origin of the window space coordinate system.
+ */
+#define FLIP(y)             (DENG_WINDOW->height() - (y+1))
 
 /**
  * Window and window management.
@@ -79,6 +88,7 @@ public:
     /// Required/referenced Window instance is missing. @ingroup errors
     DENG2_ERROR(MissingWindowError);
 
+public:
     /**
      * Initialize the window manager.
      * Tasks include; checking the system environment for feature enumeration.
@@ -165,7 +175,7 @@ public:
     /**
      * Sets the title of a window.
      *
-     * @param title         New title for the window.
+     * @param title  New title for the window.
      */
     void setTitle(char const *title) const; /// @todo semantically !const
 
@@ -176,12 +186,12 @@ public:
      *
      * @param attribs  Array of values:
      *      <pre>[ attribId, value, attribId, value, ..., 0 ]</pre>
-     *      The array must be zero-terminated, as that indicates where the array
-     *      ends (see windowattribute_e).
+     *      The array must be zero-terminated, as that indicates where the
+     *      array ends (see windowattribute_e).
      *
-     * @return @c true, if the attributes were set and the window was successfully
-     * updated. @c false, if there was an error with the values -- in this case all
-     * the window's attributes remain unchanged.
+     * @return @c true iff all attribute deltas were validated and the window
+     * was then successfully updated accordingly. If any attribute failed to
+     * validate, the window will remain unchanged and @a false is returned.
      */
     bool changeAttributes(int const *attribs);
 
@@ -237,8 +247,8 @@ public:
     void restoreState();
 
     /**
-     * Activates or deactivates the window mouse trap. When trapped, the mouse cursor is
-     * not visible and all mouse motions are interpreted as deltas.
+     * Activates or deactivates the window mouse trap. When trapped, the mouse
+     * cursor is not visible and all mouse motions are interpreted as deltas.
      *
      * @param enable  @c true, if the mouse is to be trapped in the window.
      *
@@ -284,8 +294,8 @@ public:
     CanvasWindow &canvasWindow();
 
     /**
-     * Utility to call after changing the size of a CanvasWindow. This will update
-     * the Window state.
+     * Utility to call after changing the size of a CanvasWindow. This will
+     * update the Window state.
      *
      * @deprecated In the future, size management will be done internally in
      * CanvasWindow/WindowSystem.
@@ -295,8 +305,8 @@ public:
 private:
     /**
      * Constructs a new window using the default configuration. Note that the
-     * default configuration is saved persistently when the engine shuts down and
-     * is restored when the engine is restarted.
+     * default configuration is saved persistently when the engine shuts down
+     * and is restored when the engine is restarted.
      *
      * Command line options (e.g., -xpos) can be used to modify the window
      * configuration.
@@ -306,24 +316,13 @@ private:
     Window(char const *title = "");
 
     /**
-     * Close and destroy the window. Its state is saved persistently and used as
-     * the default configuration the next time the same window is created.
+     * Close and destroy the window. Its state is saved persistently and used
+     * as the default configuration the next time the same window is created.
      */
     ~Window();
 
 private:
     DENG2_PRIVATE(d)
 };
-
-/**
- * Currently active window. There is always one active window, so no need
- * to worry about NULLs. The easiest way to get information about the
- * window where drawing is done.
- */
-extern Window const *theWindow;
-
-// A helpful macro that changes the origin of the screen
-// coordinate system.
-#define FLIP(y) (theWindow->height() - (y+1))
 
 #endif // LIBDENG_BASE_WINDOW_H

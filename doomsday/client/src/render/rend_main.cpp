@@ -3113,7 +3113,7 @@ static void drawSoundOrigin(coord_t const origin[3], const char* label, coord_t 
 
     if(alpha > 0)
     {
-        float scale = dist / (theWindow->width() / 2);
+        float scale = dist / (DENG_WINDOW->width() / 2);
 
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
@@ -3330,7 +3330,7 @@ static int drawVertex1(LineDef *li, void *context)
 
         if(dist3D < MAX_VERTEX_POINT_DIST)
         {
-            drawVertexIndex(vtx, pos[VZ], dist3D / (theWindow->width() / 2),
+            drawVertexIndex(vtx, pos[VZ], dist3D / (DENG_WINDOW->width() / 2),
                             1 - dist3D / MAX_VERTEX_POINT_DIST);
         }
     }
@@ -3447,7 +3447,7 @@ void Rend_Vertexes()
                 float alpha, scale;
 
                 alpha = 1 - dist / MAX_VERTEX_POINT_DIST;
-                scale = dist / (theWindow->width() / 2);
+                scale = dist / (DENG_WINDOW->width() / 2);
 
                 drawVertexIndex(vtx, pos[VZ], scale, alpha);
             }
@@ -3663,7 +3663,7 @@ void R_DrawLightRange()
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->width(), theWindow->height(), 0, -1, 1);
+    glOrtho(0, DENG_WINDOW->width(), DENG_WINDOW->height(), 0, -1, 1);
 
     glTranslatef(BORDER, BORDER, 0);
 
@@ -3856,7 +3856,7 @@ static int drawMobjBBox(thinker_t *th, void * /*context*/)
 
     V3d_Set(eye, vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
 
-    alpha = 1 - ((V3d_Distance(mo->origin, eye) / (theWindow->width()/2)) / 4);
+    alpha = 1 - ((V3d_Distance(mo->origin, eye) / (DENG_WINDOW->width()/2)) / 4);
     if(alpha < .25f)
         alpha = .25f; // Don't make them totally invisible.
 
@@ -3932,7 +3932,7 @@ static void Rend_RenderBoundingBoxes()
             pos[VY] = po->aaBox.minY + length;
             pos[VZ] = sec->SP_floorheight;
 
-            float alpha = 1 - ((V3d_Distance(pos, eye) / (theWindow->width()/2)) / 4);
+            float alpha = 1 - ((V3d_Distance(pos, eye) / (DENG_WINDOW->width()/2)) / 4);
             if(alpha < .25f)
                 alpha = .25f; // Don't make them totally invisible.
 

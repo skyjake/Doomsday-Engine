@@ -100,9 +100,6 @@ static const int WAIT_MILLISECS_AFTER_MODE_CHANGE = 10; // ms
 /// A window should never go fully (or nearly fully) outside the desktop.
 static const int DESKTOP_EDGE_GRACE = 30; // pixels
 
-/// Current active window where all drawing operations occur.
-Window const *theWindow;
-
 static bool winManagerInited = false;
 
 static Window *mainWindow;
@@ -855,7 +852,6 @@ void Window::initialize()
     CanvasWindow::setDefaultGLFormat();
 
     winManagerInited = true;
-    theWindow = 0;
 }
 
 void Window::shutdown()

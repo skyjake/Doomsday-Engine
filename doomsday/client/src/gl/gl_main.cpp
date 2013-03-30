@@ -181,8 +181,8 @@ void GL_DoUpdate()
     DD_WaitForOptimalUpdateTime();
 
     // Blit screen to video.
-    DENG_ASSERT(theWindow != 0);
-    theWindow->swapBuffers();
+    DENG_ASSERT(DENG_WINDOW != 0);
+    DENG_WINDOW->swapBuffers();
 
     // We will arrive here always at the same time in relation to the displayed
     // frame: it is a good time to update the mouse state.
@@ -445,7 +445,7 @@ void GL_Init2DState()
     glDisable(GL_TEXTURE_CUBE_MAP);
 
     // Default, full area viewport.
-    glViewport(0, 0, theWindow->width(), theWindow->height());
+    glViewport(0, 0, DENG_WINDOW->width(), DENG_WINDOW->height());
 
     // The projection matrix.
     glMatrixMode(GL_PROJECTION);

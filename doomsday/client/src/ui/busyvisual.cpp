@@ -123,7 +123,7 @@ void BusyVisual_PrepareFont(void)
             { "System:normal12", "}data/fonts/normal12.dfn" },
             { "System:normal18", "}data/fonts/normal18.dfn" }
         };
-        int fontIdx = !(theWindow->width() > 640)? 0 : 1;
+        int fontIdx = !(DENG_WINDOW->width() > 640)? 0 : 1;
         Uri* uri = Uri_NewWithPath2(fonts[fontIdx].name, RC_NULL);
         font_t* font = R_CreateFontFromFile(uri, fonts[fontIdx].path);
         Uri_Delete(uri);
@@ -375,18 +375,18 @@ static void drawConsoleOutput(void)
     // Dark gradient as background.
     glBegin(GL_QUADS);
     glColor4ub(0, 0, 0, 0);
-    y = theWindow->height() - (LINE_COUNT + 3) * busyFontHgt;
+    y = DENG_WINDOW->height() - (LINE_COUNT + 3) * busyFontHgt;
     glVertex2f(0, y);
-    glVertex2f(theWindow->width(), y);
+    glVertex2f(DENG_WINDOW->width(), y);
     glColor4ub(0, 0, 0, 128);
-    glVertex2f(theWindow->width(), theWindow->height());
-    glVertex2f(0, theWindow->height());
+    glVertex2f(DENG_WINDOW->width(), DENG_WINDOW->height());
+    glVertex2f(0, DENG_WINDOW->height());
     glEnd();
 
     glEnable(GL_TEXTURE_2D);
 
     // The text lines.
-    topY = y = theWindow->height() - busyFontHgt * (2 * LINE_COUNT + .5f);
+    topY = y = DENG_WINDOW->height() - busyFontHgt * (2 * LINE_COUNT + .5f);
     if(newCount > 0 ||
        (nowTime >= scrollStartTime && nowTime < scrollEndTime && scrollEndTime > scrollStartTime))
     {
@@ -413,7 +413,7 @@ static void drawConsoleOutput(void)
             alpha = 1 - (alpha - LINE_COUNT);
 
         FR_SetAlpha(alpha);
-        FR_DrawTextXY3(line->text, theWindow->width()/2, y, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(line->text, DENG_WINDOW->width()/2, y, ALIGN_TOP, DTF_ONLY_SHADOW);
     }
 
     glDisable(GL_TEXTURE_2D);
@@ -434,9 +434,9 @@ void BusyVisual_Render(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->width(), theWindow->height(), 0, -1, 1);
+    glOrtho(0, DENG_WINDOW->width(), DENG_WINDOW->height(), 0, -1, 1);
 
-    drawBackground(0, 0, theWindow->width(), theWindow->height());
+    drawBackground(0, 0, DENG_WINDOW->width(), DENG_WINDOW->height());
 
     // Indefinite activity?
     if((task->mode & BUSYF_ACTIVITY) || (task->mode & BUSYF_PROGRESS_BAR))
@@ -446,9 +446,9 @@ void BusyVisual_Render(void)
         else // The progress is animated elsewhere.
             pos = Con_GetProgress();
 
-        drawPositionIndicator(theWindow->width()/2,
-                              theWindow->height()/2,
-                              theWindow->height()/12, pos, task->name);
+        drawPositionIndicator(DENG_WINDOW->width()/2,
+                              DENG_WINDOW->height()/2,
+                              DENG_WINDOW->height()/12, pos, task->name);
     }
 
     // Output from the console?

@@ -579,7 +579,7 @@ void FIPage_Drawer(fi_page_t *p)
 
     // The 3D projection matrix.
     // We're assuming pixels are squares.
-    /*float aspect = theWindow->width / (float) theWindow->height;
+    /*float aspect = DENG_WINDOW->width / (float) DENG_WINDOW->height;
     yfov = 2 * RAD2DEG(atan(tan(DEG2RAD(90) / 2) / aspect));
     GL_InfinitePerspective(yfov, aspect, .05f);*/
 

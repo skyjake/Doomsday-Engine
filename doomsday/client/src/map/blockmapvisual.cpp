@@ -69,7 +69,7 @@ static int rendBspLeaf(BspLeaf* bspLeaf, void* /*parameters*/)
     if(bspLeaf->validCount != validCount)
     {
         const float scale = MAX_OF(bmapDebugSize, 1);
-        const float width = (theWindow->width() / 16) / scale;
+        const float width = (DENG_WINDOW->width() / 16) / scale;
         float length, dx, dy, normal[2], unit[2];
         HEdge* hedge;
         vec2f_t start, end;
@@ -558,12 +558,12 @@ void Rend_BlockmapDebug(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->width(), theWindow->height(), 0, -1, 1);
+    glOrtho(0, DENG_WINDOW->width(), DENG_WINDOW->height(), 0, -1, 1);
     // Orient on the center of the window.
-    glTranslatef((theWindow->width() / 2), (theWindow->height() / 2), 0);
+    glTranslatef((DENG_WINDOW->width() / 2), (DENG_WINDOW->height() / 2), 0);
 
     // Uniform scaling factor for this visual.
-    scale = bmapDebugSize / de::max(theWindow->height() / 100, 1);
+    scale = bmapDebugSize / de::max(DENG_WINDOW->height() / 100, 1);
     glScalef(scale, -scale, 1);
 
     // If possible we'll tailor what we draw relative to the viewPlayer.
@@ -582,7 +582,7 @@ void Rend_BlockmapDebug(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->width(), theWindow->height(), 0, -1, 1);
+    glOrtho(0, DENG_WINDOW->width(), DENG_WINDOW->height(), 0, -1, 1);
 
     if(followMobj)
     {
@@ -590,15 +590,15 @@ void Rend_BlockmapDebug(void)
         BlockmapCell cell;
         if(!Blockmap_Cell(blockmap, cell, followMobj->origin))
         {
-            origin.x = theWindow->width() / 2;
+            origin.x = DENG_WINDOW->width() / 2;
             origin.y = 30;
             drawCellInfoBox(blockmap, &origin, objectTypeName, cell);
         }
     }
 
     // About the Blockmap itself.
-    origin.x = theWindow->width()  - 10;
-    origin.y = theWindow->height() - 10;
+    origin.x = DENG_WINDOW->width()  - 10;
+    origin.y = DENG_WINDOW->height() - 10;
     drawBlockmapInfo(&origin, blockmap);
 
     glMatrixMode(GL_PROJECTION);

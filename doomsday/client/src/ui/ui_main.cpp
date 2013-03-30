@@ -142,8 +142,8 @@ void UI_PageInit(boolean halttime, boolean tckui, boolean tckframe, boolean drwg
     allowEscape = !noescape;
 
     // Init cursor to the center of the screen.
-    uiCX = theWindow->width() / 2;
-    uiCY = theWindow->height() / 2;
+    uiCX = DENG_WINDOW->width() / 2;
+    uiCY = DENG_WINDOW->height() / 2;
     uiMoved = false;
 }
 
@@ -306,12 +306,12 @@ void UI_InitPage(ui_page_t* page, ui_object_t* objects)
 
 int UI_AvailableWidth(void)
 {
-    return theWindow->width() - UI_BORDER * 4;
+    return DENG_WINDOW->width() - UI_BORDER * 4;
 }
 
 int UI_AvailableHeight(void)
 {
-    return theWindow->height() - UI_BORDER * 4;
+    return DENG_WINDOW->height() - UI_BORDER * 4;
 }
 
 int UI_ScreenX(int relx)
@@ -420,16 +420,16 @@ int UI_Responder(const ddevent_t* ev)
             uiCX += ev->axis.pos;
             if(uiCX < 0)
                 uiCX = 0;
-            if(uiCX >= theWindow->width())
-                uiCX = theWindow->width() - 1;
+            if(uiCX >= DENG_WINDOW->width())
+                uiCX = DENG_WINDOW->width() - 1;
         }
         else if(ev->axis.id == 1) // yaxis.
         {
             uiCY += ev->axis.pos;
             if(uiCY < 0)
                 uiCY = 0;
-            if(uiCY >= theWindow->height())
-                uiCY = theWindow->height() - 1;
+            if(uiCY >= DENG_WINDOW->height())
+                uiCY = DENG_WINDOW->height() - 1;
         }
     }
 
@@ -487,24 +487,24 @@ void UI_Drawer(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->width(), theWindow->height(), 0, -1, 1);
+    glOrtho(0, DENG_WINDOW->width(), DENG_WINDOW->height(), 0, -1, 1);
 
     // Call the active page's drawer.
     uiCurrentPage->drawer(uiCurrentPage);
 
     // Draw mouse cursor?
-    if(!uiNoMouse && theWindow->isMouseTrapped())
+    if(!uiNoMouse && DENG_WINDOW->isMouseTrapped())
     {
         Point2Raw origin;
         Size2Raw size;
         float scale;
 
-        if(theWindow->width() >= theWindow->height())
-            scale = (theWindow->width()  / UI_WIDTH)  *
-                    (theWindow->height() / (float) theWindow->width());
+        if(DENG_WINDOW->width() >= DENG_WINDOW->height())
+            scale = (DENG_WINDOW->width()  / UI_WIDTH)  *
+                    (DENG_WINDOW->height() / (float) DENG_WINDOW->width());
         else
-            scale = (theWindow->height() / UI_HEIGHT) *
-                    (theWindow->width()  / (float) theWindow->height());
+            scale = (DENG_WINDOW->height() / UI_HEIGHT) *
+                    (DENG_WINDOW->width()  / (float) DENG_WINDOW->height());
 
         origin.x = uiCX - 1;
         origin.y = uiCY - 1;
@@ -769,7 +769,7 @@ void UIPage_Drawer(ui_page_t *page)
     // Draw background?
     if(page->flags.showBackground)
     {
-        UI_DrawDDBackground(Point2Raw(0, 0), theWindow->dimensions(), uiAlpha);
+        UI_DrawDDBackground(Point2Raw(0, 0), DENG_WINDOW->dimensions(), uiAlpha);
     }
 
     // Draw each object, unless they're hidden.
