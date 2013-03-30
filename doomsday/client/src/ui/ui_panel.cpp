@@ -951,11 +951,11 @@ void CP_SetVidMode(ui_object_t* ob)
     if(Window::haveMain())
     {
         int attribs[] = {
-            DDWA_WIDTH, x,
-            DDWA_HEIGHT, y,
-            DDWA_COLOR_DEPTH_BITS, bpp,
-            DDWA_FULLSCREEN, panel_fullscreen != 0,
-            DDWA_END
+            Window::Width, x,
+            Window::Height, y,
+            Window::ColorDepthBits, bpp,
+            Window::Fullscreen, panel_fullscreen != 0,
+            Window::End
         };
         Window::main().changeAttributes(attribs);
     }

@@ -26,6 +26,8 @@
 #  error "window.h requires __CLIENT__"
 #endif
 
+#include <QRect>
+
 #include "dd_types.h"
 #include "resource/image.h"
 #include "canvaswindow.h"
@@ -36,34 +38,6 @@
 
 /// Minimum height of a window (fullscreen too? -ds)
 #define WINDOW_MIN_HEIGHT       240
-
-/**
- * @defgroup doomsdayWindowFlags Doomsday window flags.
- */
-///@{
-#define DDWF_VISIBLE            0x01
-#define DDWF_CENTERED           0x02
-#define DDWF_MAXIMIZED          0x04
-#define DDWF_FULLSCREEN         0x08
-///@}
-
-/**
- * Logical window attribute identifiers.
- */
-enum windowattribute_e
-{
-    DDWA_END, ///< Marks the end of an attribute list (not a valid attribute in itself)
-
-    DDWA_X,
-    DDWA_Y,
-    DDWA_WIDTH,
-    DDWA_HEIGHT,
-    DDWA_CENTERED,
-    DDWA_MAXIMIZED,
-    DDWA_FULLSCREEN,
-    DDWA_VISIBLE,
-    DDWA_COLOR_DEPTH_BITS
-};
 
 /**
  * Macro for conveniently accessing the current active window. There is always
@@ -87,6 +61,24 @@ class Window
 public:
     /// Required/referenced Window instance is missing. @ingroup errors
     DENG2_ERROR(MissingWindowError);
+
+    /**
+     * Logical window attribute identifiers.
+     */
+    enum
+    {
+        End, ///< Marks the end of an attribute list (not a valid attribute in itself)
+
+        X,
+        Y,
+        Width,
+        Height,
+        Centered,
+        Maximized,
+        Fullscreen,
+        Visible,
+        ColorDepthBits
+    };
 
 public:
     /**
@@ -137,38 +129,63 @@ public:
     static Window *byIndex(uint idx);
 
 public:
+    /**
+     * Returns @c true iff the window is currently fullscreen.
+     */
     bool isFullscreen() const;
 
+    /**
+     * Returns @c true iff the window is currently centered.
+     */
     bool isCentered() const;
 
+    /**
+     * Returns @c true iff the window is currently maximized.
+     */
     bool isMaximized() const;
 
-    int x() const;
-
-    int y() const;
+    /**
+     * Returns the current geometry of the window.
+     */
+    QRect rect() const;
 
     /**
-     * Returns the current width of the window in pixels.
+     * Convenient accessor method for retrieving the x axis origin (in pixels)
+     * for the current window geometry.
      */
-    int width() const;
+    inline int x() const { return rect().x(); }
 
     /**
-     * Returns the current height of the window in pixels.
+     * Convenient accessor method for retrieving the y axis origin (in pixels)
+     * for the current window geometry.
      */
-    int height() const;
-
-    int normalX() const;
-
-    int normalY() const;
-
-    int normalWidth() const;
-
-    int normalHeight() const;
+    inline int y() const { return rect().y(); }
 
     /**
-     * Returns the dimensions of the window in pixels.
+     * Convenient accessor method for retrieving the width dimension (in pixels)
+     * of the current window geometry.
      */
-    Size2Raw const &dimensions() const;
+    inline int width() const { return rect().width(); }
+
+    /**
+     * Convenient accessor method for retrieving the height dimension (in pixels)
+     * of the current window geometry.
+     */
+    inline int height() const { return rect().height(); }
+
+    /**
+     * Returns the windowed geometry of the window (used when not maximized or
+     * fullscreen).
+     */
+    QRect normalRect() const;
+
+    inline int normalX() const { return normalRect().x(); }
+
+    inline int normalY() const { return normalRect().y(); }
+
+    inline int normalWidth() const { return normalRect().width(); }
+
+    inline int normalHeight() const { return normalRect().height(); }
 
     int colorDepthBits() const;
 

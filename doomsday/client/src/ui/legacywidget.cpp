@@ -150,7 +150,10 @@ void LegacyWidget::draw()
 
             // Draw any full window game graphics.
             if(App_GameLoaded() && gx.DrawWindow)
-                gx.DrawWindow(&DENG_WINDOW->dimensions());
+            {
+                Size2Raw dimensions(DENG_WINDOW->width(), DENG_WINDOW->height());
+                gx.DrawWindow(&dimensions);
+            }
         }
     }
 

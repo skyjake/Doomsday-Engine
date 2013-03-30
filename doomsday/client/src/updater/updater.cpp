@@ -111,7 +111,7 @@ static bool switchToWindowedMode()
     bool wasFull = mainWindow.isFullscreen();
     if(wasFull)
     {
-        int attribs[] = { DDWA_FULLSCREEN, false, DDWA_END };
+        int attribs[] = { Window::Fullscreen, false, Window::End };
         mainWindow.changeAttributes(attribs);
     }
     return wasFull;
@@ -121,7 +121,7 @@ static void switchBackToFullscreen(bool wasFull)
 {
     if(wasFull)
     {
-        int attribs[] = { DDWA_FULLSCREEN, true, DDWA_END };
+        int attribs[] = { Window::Fullscreen, true, Window::End };
         Window::main().changeAttributes(attribs);
     }
 }

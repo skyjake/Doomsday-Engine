@@ -769,7 +769,8 @@ void UIPage_Drawer(ui_page_t *page)
     // Draw background?
     if(page->flags.showBackground)
     {
-        UI_DrawDDBackground(Point2Raw(0, 0), DENG_WINDOW->dimensions(), uiAlpha);
+        UI_DrawDDBackground(Point2Raw(0, 0), Size2Raw(DENG_WINDOW->width(), DENG_WINDOW->height()),
+                            uiAlpha);
     }
 
     // Draw each object, unless they're hidden.

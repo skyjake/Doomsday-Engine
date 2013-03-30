@@ -1149,9 +1149,9 @@ D_CMD(SetRes)
         return false;
 
     int attribs[] = {
-        DDWA_WIDTH, atoi(argv[1]),
-        DDWA_HEIGHT, atoi(argv[2]),
-        DDWA_END
+        Window::Width, atoi(argv[1]),
+        Window::Height, atoi(argv[2]),
+        Window::End
     };
     return Window::main().changeAttributes(attribs);
 }
@@ -1164,10 +1164,10 @@ D_CMD(SetFullRes)
         return false;
 
     int attribs[] = {
-        DDWA_WIDTH, atoi(argv[1]),
-        DDWA_HEIGHT, atoi(argv[2]),
-        DDWA_FULLSCREEN, true,
-        DDWA_END
+        Window::Width, atoi(argv[1]),
+        Window::Height, atoi(argv[2]),
+        Window::Fullscreen, true,
+        Window::End
     };
     return Window::main().changeAttributes(attribs);
 }
@@ -1180,10 +1180,10 @@ D_CMD(SetWinRes)
         return false;
 
     int attribs[] = {
-        DDWA_WIDTH, atoi(argv[1]),
-        DDWA_HEIGHT, atoi(argv[2]),
-        DDWA_FULLSCREEN, false,
-        DDWA_END
+        Window::Width, atoi(argv[1]),
+        Window::Height, atoi(argv[2]),
+        Window::Fullscreen, false,
+        Window::End
     };
     return Window::main().changeAttributes(attribs);
 }
@@ -1197,8 +1197,8 @@ D_CMD(ToggleFullscreen)
 
     Window &mainWindow = Window::main();
     int attribs[] = {
-        DDWA_FULLSCREEN, !mainWindow.isFullscreen(),
-        DDWA_END
+        Window::Fullscreen, !mainWindow.isFullscreen(),
+        Window::End
     };
     return mainWindow.changeAttributes(attribs);
 }
@@ -1211,8 +1211,8 @@ D_CMD(SetBPP)
         return false;
 
     int attribs[] = {
-        DDWA_COLOR_DEPTH_BITS, atoi(argv[1]),
-        DDWA_END
+        Window::ColorDepthBits, atoi(argv[1]),
+        Window::End
     };
     return Window::main().changeAttributes(attribs);
 }
