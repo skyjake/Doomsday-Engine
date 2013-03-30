@@ -2082,7 +2082,7 @@ void Con_AbnormalShutdown(char const *message)
     Window *mainWindow = Window::main();
     DENG_ASSERT(mainWindow != 0);
     mainWindow->trapMouse(false);
-    delete mainWindow; mainWindow = 0;
+
     DENG2_GUI_APP->loop().pause();
 #endif
 

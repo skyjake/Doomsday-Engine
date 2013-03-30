@@ -1747,7 +1747,7 @@ int DD_EarlyInit()
 
 #ifdef __CLIENT__
     // Bring the window manager online.
-    Window::intialize();
+    Window::initialize();
 #endif
 
     // Instantiate the Games collection.
