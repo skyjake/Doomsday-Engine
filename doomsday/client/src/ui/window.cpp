@@ -84,6 +84,10 @@
 #include <de/c_wrapper.h>
 #include <de/Log>
 
+#define IS_NONZERO(x) ((x) != 0)
+
+using namespace de;
+
 uint mainWindowIdx;
 
 #ifdef MACOSX
@@ -110,17 +114,23 @@ static QRect desktopValidRect()
 }
 */
 
-static void updateMainWindowLayout(void);
-static void updateWindowStateAfterUserChange(void);
-static void useAppliedGeometryForWindows(void);
-static void notifyAboutModeChange(void);
-static void endWindowWait(void);
+static void updateMainWindowLayout();
+static void updateWindowStateAfterUserChange();
+static void useAppliedGeometryForWindows();
+static void notifyAboutModeChange();
+static void endWindowWait();
 
 struct ddwindow_s
 {
-    CanvasWindow* widget;   ///< The widget this window represents.
-    void (*drawFunc)(void); ///< Draws the contents of the canvas.
-    QRect appliedGeometry;  ///< Saved for detecting when changes have occurred.
+    /// The widget this window represents.
+    CanvasWindow *widget;
+
+    /// Draw function for rendering the contents of the canvas.
+    void (*drawFunc)();
+
+    /// Saved geometry for detecting when changes have occurred.
+    QRect appliedGeometry;
+
     bool needShowFullscreen;
     bool needReshowFullscreen;
     bool needShowNormal;
@@ -128,26 +138,33 @@ struct ddwindow_s
     bool needWait;
     bool willUpdateWindowState;
 
-    boolean inited;
-    RectRaw geometry;       ///< Current actual geometry.
-    RectRaw normalGeometry; ///< Normal-mode geometry (when not maximized or fullscreen).
+    /// Current actual geometry.
+    RectRaw geometry;
+
+    /// Normal-mode geometry (when not maximized or fullscreen).
+    RectRaw normalGeometry;
+
     int colorDepthBits;
     int flags;
 
-    void __inline assertWindow() const
+    void inline assertWindow() const
     {
-        assert(this);
-        assert(widget);
+        DENG_ASSERT(this);
+        DENG_ASSERT(widget);
     }
 
-    bool isBeingAdjusted() const {
+    bool inline isBeingAdjusted() const {
         return needShowFullscreen || needReshowFullscreen || needShowNormal || needRecreateCanvas || needWait;
     }
 
     int x() const      { return geometry.origin.x; }
+
     int y() const      { return geometry.origin.y; }
+
     int width() const  { return geometry.size.width; }
+
     int height() const { return geometry.size.height; }
+
     QRect rect() const { return QRect(x(), y(), width(), height()); }
 
     QRect normalRect() const { return QRect(normalGeometry.origin.x,
@@ -175,7 +192,7 @@ struct ddwindow_s
 
         if(CommandLine_CheckWith("-width", 1))
         {
-            geometry.size.width = qMax(WINDOW_MIN_WIDTH, atoi(CommandLine_Next()));
+            geometry.size.width = de::max(WINDOW_MIN_WIDTH, atoi(CommandLine_Next()));
             if(!(flags & DDWF_FULLSCREEN))
             {
                 normalGeometry.size.width = geometry.size.width;
@@ -184,7 +201,7 @@ struct ddwindow_s
 
         if(CommandLine_CheckWith("-height", 1))
         {
-            geometry.size.height = qMax(WINDOW_MIN_HEIGHT, atoi(CommandLine_Next()));
+            geometry.size.height = de::max(WINDOW_MIN_HEIGHT, atoi(CommandLine_Next()));
             if(!(flags & DDWF_FULLSCREEN))
             {
                 normalGeometry.size.height = geometry.size.height;
@@ -193,8 +210,8 @@ struct ddwindow_s
 
         if(CommandLine_CheckWith("-winsize", 2))
         {
-            geometry.size.width  = qMax(WINDOW_MIN_WIDTH,  atoi(CommandLine_Next()));
-            geometry.size.height = qMax(WINDOW_MIN_HEIGHT, atoi(CommandLine_Next()));
+            geometry.size.width  = de::max(WINDOW_MIN_WIDTH,  atoi(CommandLine_Next()));
+            geometry.size.height = de::max(WINDOW_MIN_HEIGHT, atoi(CommandLine_Next()));
 
             if(!(flags & DDWF_FULLSCREEN))
             {
@@ -210,34 +227,34 @@ struct ddwindow_s
 
         if(CommandLine_Check("-nocenter"))
         {
-            setFlag(DDWF_CENTER, false);
+            setFlag(DDWF_CENTERED, false);
         }
 
         if(CommandLine_CheckWith("-xpos", 1))
         {
             normalGeometry.origin.x = atoi(CommandLine_Next());
-            setFlag(DDWF_CENTER | DDWF_MAXIMIZE, false);
+            setFlag(DDWF_CENTERED | DDWF_MAXIMIZED, false);
         }
 
         if(CommandLine_CheckWith("-ypos", 1))
         {
             normalGeometry.origin.y = atoi(CommandLine_Next());
-            setFlag(DDWF_CENTER | DDWF_MAXIMIZE, false);
+            setFlag(DDWF_CENTERED | DDWF_MAXIMIZED, false);
         }
 
         if(CommandLine_Check("-center"))
         {
-            setFlag(DDWF_CENTER);
+            setFlag(DDWF_CENTERED);
         }
 
         if(CommandLine_Check("-maximize"))
         {
-            setFlag(DDWF_MAXIMIZE);
+            setFlag(DDWF_MAXIMIZED);
         }
 
         if(CommandLine_Check("-nomaximize"))
         {
-            setFlag(DDWF_MAXIMIZE, false);
+            setFlag(DDWF_MAXIMIZED, false);
         }
     }
 
@@ -249,10 +266,10 @@ struct ddwindow_s
 
         if(flags & DDWF_FULLSCREEN)
         {
-            const DisplayMode* mode = DisplayMode_FindClosest(width(), height(), colorDepthBits, 0);
+            DisplayMode const *mode = DisplayMode_FindClosest(width(), height(), colorDepthBits, 0);
             if(mode && DisplayMode_Change(mode, true /* fullscreen: capture */))
             {
-                geometry.size.width = DisplayMode_Current()->width;
+                geometry.size.width  = DisplayMode_Current()->width;
                 geometry.size.height = DisplayMode_Current()->height;
 #if defined MACOSX
                 // Pull the window again over the shield after the mode change.
@@ -351,9 +368,9 @@ struct ddwindow_s
             }
             else
             {
-                LOG_DEBUG("widget is not visible, setting geometry to ")
-                        << DisplayMode_Current()->width << "x"
-                        << DisplayMode_Current()->height;
+                LOG_DEBUG("widget is not visible, setting geometry to %s")
+                        << Vector2i(DisplayMode_Current()->width, DisplayMode_Current()->height).asText();
+
                 widget->setGeometry(0, 0, DisplayMode_Current()->width, DisplayMode_Current()->height);
             }
         }
@@ -363,13 +380,13 @@ struct ddwindow_s
             // We will restore it to its previous position and size.
             QRect geom = normalRect(); // Previously stored normal geometry.
 
-            if(flags & DDWF_CENTER)
+            if(flags & DDWF_CENTERED)
             {
                 // Center the window.
                 geom = centeredGeometry();
             }
 
-            if(flags & DDWF_MAXIMIZE)
+            if(flags & DDWF_MAXIMIZED)
             {
                 // When a window is maximized, we'll let the native WM handle the sizing.
                 if(widget->isVisible())
@@ -430,7 +447,7 @@ struct ddwindow_s
     {
         assertWindow();
 
-        setFlag(DDWF_MAXIMIZE, widget->isMaximized());
+        setFlag(DDWF_MAXIMIZED, widget->isMaximized());
 
         QRect rect = widget->geometry();
         geometry.origin.x = rect.x();
@@ -449,13 +466,13 @@ struct ddwindow_s
             normalGeometry.size.height = rect.height();
         }
 
-        LOG_DEBUG("Current window geometry: %i,%i %ix%i (max:%b)")
+        LOG_DEBUG("Current window geometry: %i,%i %s (max:%b)")
                 << geometry.origin.x << geometry.origin.y
-                << geometry.size.width << geometry.size.height
-                << ((flags & DDWF_MAXIMIZE) != 0);
-        LOG_DEBUG("Normal window geometry:  %i,%i %ix%i")
+                << Vector2i(geometry.size.width, geometry.size.height).asText()
+                << ((flags & DDWF_MAXIMIZED) != 0);
+        LOG_DEBUG("Normal window geometry: %i,%i %s")
                 << normalGeometry.origin.x << normalGeometry.origin.y
-                << normalGeometry.size.width << normalGeometry.size.height;
+                << Vector2i(normalGeometry.size.width, normalGeometry.size.height).asText();
     }
 
     void setFlag(int flag, bool set = true)
@@ -467,18 +484,18 @@ struct ddwindow_s
         else
         {
             flags &= ~flag;
-            if(flag & DDWF_CENTER) LOG_DEBUG("Clearing DDWF_CENTER");
+            if(flag & DDWF_CENTERED) LOG_DEBUG("Clearing DDWF_CENTERED");
         }
     }
 
-    bool applyAttributes(int* attribs)
+    bool applyAttributes(int const *attribs)
     {
         LOG_AS("applyAttributes");
 
         bool changed = false;
 
         // Parse the attributes array and check the values.
-        assert(attribs);
+        DENG_ASSERT(attribs);
         for(int i = 0; attribs[i]; ++i)
         {
             switch(attribs[i++])
@@ -514,18 +531,17 @@ struct ddwindow_s
                     changed = true;
                 }
                 break;
-#define IS_NONZERO(x) ((x) != 0)
-            case DDWA_CENTER:
-                if(IS_NONZERO(attribs[i]) != IS_NONZERO(checkFlag(DDWF_CENTER)))
+            case DDWA_CENTERED:
+                if(IS_NONZERO(attribs[i]) != IS_NONZERO(checkFlag(DDWF_CENTERED)))
                 {
-                    setFlag(DDWF_CENTER, attribs[i]);
+                    setFlag(DDWF_CENTERED, attribs[i]);
                     changed = true;
                 }
                 break;
-            case DDWA_MAXIMIZE:
-                if(IS_NONZERO(attribs[i]) != IS_NONZERO(checkFlag(DDWF_MAXIMIZE)))
+            case DDWA_MAXIMIZED:
+                if(IS_NONZERO(attribs[i]) != IS_NONZERO(checkFlag(DDWF_MAXIMIZED)))
                 {
-                    setFlag(DDWF_MAXIMIZE, attribs[i]);
+                    setFlag(DDWF_MAXIMIZED, attribs[i]);
                     changed = true;
                 }
                 break;
@@ -548,7 +564,6 @@ struct ddwindow_s
                     changed = true;
                 }
                 break;
-#undef IS_NONZERO
             case DDWA_COLOR_DEPTH_BITS:
                 qDebug() << attribs[i] << colorDepthBits;
                 if(attribs[i] != colorDepthBits)
@@ -577,45 +592,45 @@ struct ddwindow_s
 
     void updateLayout()
     {
-        setFlag(DDWF_MAXIMIZE, widget->isMaximized());
+        setFlag(DDWF_MAXIMIZED, widget->isMaximized());
 
-        geometry.size.width = widget->width();
+        geometry.size.width  = widget->width();
         geometry.size.height = widget->height();
 
         if(!(flags & DDWF_FULLSCREEN))
         {
-            LOG_DEBUG("Updating current view geometry for window, fetched %i x %i")
-                    << width() << height();
+            LOG_DEBUG("Updating current view geometry for window, fetched %s")
+                    << Vector2i(width(), height()).asText();
 
-            if(!(flags & DDWF_MAXIMIZE) && !isBeingAdjusted())
+            if(!(flags & DDWF_MAXIMIZED) && !isBeingAdjusted())
             {
                 // Update the normal-mode geometry (not fullscreen, not maximized).
-                normalGeometry.size.width = geometry.size.width;
+                normalGeometry.size.width  = geometry.size.width;
                 normalGeometry.size.height = geometry.size.height;
 
-                LOG_DEBUG("Updating normal view geometry for window, fetched %i x %i")
-                        << width() << height();
+                LOG_DEBUG("Updating normal view geometry for window, fetched %s")
+                        << Vector2i(width(), height()).asText();
             }
         }
         else
         {
-            LOG_DEBUG("Updating view geometry for fullscreen (%i x %i)")
-                    << width() << height();
+            LOG_DEBUG("Updating view geometry for fullscreen %s")
+                    << Vector2i(width(), height()).asText();
         }
     }
 };
 
 /// Current active window where all drawing operations occur.
-const Window* theWindow;
+Window const *theWindow;
 
 static boolean winManagerInited = false;
 
 static Window mainWindow;
 static boolean mainWindowInited = false;
 
-static void updateMainWindowLayout(void)
+static void updateMainWindowLayout()
 {
-    Window* win = Window_Main();
+    Window *win = Window_Main();
 
     if(win->needReshowFullscreen)
     {
@@ -647,54 +662,53 @@ static void updateMainWindowLayout(void)
 
     if(win->needShowNormal)
     {
-        LOG_DEBUG("Main window to normal mode (center:%b).") << ((win->flags & DDWF_CENTER) != 0);
+        LOG_DEBUG("Main window to normal mode (center:%b).") << ((win->flags & DDWF_CENTERED) != 0);
         win->needShowNormal = false;
         win->widget->showNormal();
     }
 }
 
-static void useAppliedGeometryForWindows(void)
+static void useAppliedGeometryForWindows()
 {
-    Window* win = Window_Main();
+    Window *win = Window_Main();
     if(!win || !win->widget) return;
 
-    if(win->flags & DDWF_CENTER)
+    if(win->flags & DDWF_CENTERED)
     {
         win->appliedGeometry = win->centeredGeometry();
     }
 
-    DEBUG_Message(("Using applied geometry: (%i,%i) %ix%i\n",
+    DEBUG_Message(("Using applied geometry: (%i,%i) %s",
                    win->appliedGeometry.x(),
                    win->appliedGeometry.y(),
-                   win->appliedGeometry.width(),
-                   win->appliedGeometry.height()));
+                   Vector2i(win->appliedGeometry.width(), win->appliedGeometry.height()).asText()));
     win->widget->setGeometry(win->appliedGeometry);
 }
 
-Window* Window_Main(void)
+Window *Window_Main()
 {
     return &mainWindow;
 }
 
-static void notifyAboutModeChange(void)
+static void notifyAboutModeChange()
 {
     LOG_MSG("Display mode has changed.");
     DENG2_GUI_APP->notifyDisplayModeChanged();
 }
 
-static void endWindowWait(void)
+static void endWindowWait()
 {
-    Window* win = Window_Main();
+    Window *win = Window_Main();
     if(win)
     {
-        DEBUG_Message(("Window is no longer waiting for geometry changes.\n"));
+        DEBUG_Message(("Window is no longer waiting for geometry changes."));
 
         // This flag is used for protecting against mode change resizings.
         win->needWait = false;
     }
 }
 
-static int getWindowIdx(const Window* wnd)
+static int getWindowIdx(Window const *wnd)
 {
     /// @todo  Multiple windows.
     if(wnd == &mainWindow) return mainWindowIdx;
@@ -702,7 +716,7 @@ static int getWindowIdx(const Window* wnd)
     return 0;
 }
 
-static __inline Window *getWindow(uint idx)
+static inline Window *getWindow(uint idx)
 {
     if(!winManagerInited)
         return NULL; // Window manager is not initialized.
@@ -710,215 +724,37 @@ static __inline Window *getWindow(uint idx)
     if(idx == 1)
         return &mainWindow;
 
-    //assert(false); // We can only have window 1 (main window).
+    //DENG_ASSERT(false); // We can only have window 1 (main window).
     return NULL;
 }
 
-Window* Window_ByIndex(uint id)
+Window *Window_ByIndex(uint id)
 {
     return getWindow(id);
 }
 
-#if 0
-static boolean setDDWindow(Window *window, int newWidth, int newHeight,
-                           int newBPP, uint wFlags, uint uFlags)
-{
-    int             width, height, bpp, flags;
-    boolean         newGLContext = false;
-    boolean         changeWindowDimensions = false;
-    boolean         inControlPanel = false;
-
-    if(novideo)
-        return true;
-
-    if(uFlags & DDSW_NOCHANGES)
-        return true; // Nothing to do.
-
-    // Grab the current values.
-    width = window->geometry.size.width;
-    height = window->geometry.size.height;
-    bpp = window->bpp;
-    flags = window->flags;
-    // Force update on init?
-    if(!window->inited && window->type == WT_NORMAL)
-    {
-        newGLContext = true;
-    }
-
-    if(window->type == WT_NORMAL)
-        inControlPanel = UI_IsActive();
-
-    // Change to fullscreen?
-    if(!(uFlags & DDSW_NOFULLSCREEN) &&
-       (flags & DDWF_FULLSCREEN) != (wFlags & DDWF_FULLSCREEN))
-    {
-        flags ^= DDWF_FULLSCREEN;
-
-        if(window->type == WT_NORMAL)
-        {
-            newGLContext = true;
-            //changeVideoMode = true;
-        }
-    }
-
-    // Change window size?
-    if(!(uFlags & DDSW_NOSIZE) && (width != newWidth || height != newHeight))
-    {
-        width = newWidth;
-        height = newHeight;
-        changeWindowDimensions = true;
-
-        if(window->type == WT_NORMAL)
-            newGLContext = true;
-    }
-
-    // Change BPP (bits per pixel)?
-    if(window->type == WT_NORMAL)
-    {
-        if(!(uFlags & DDSW_NOBPP) && bpp != newBPP)
-        {
-            if(!(newBPP == 32 || newBPP == 16))
-                Con_Error("Sys_SetWindow: Unsupported BPP %i.", newBPP);
-
-            bpp = newBPP;
-
-            newGLContext = true;
-            //changeVideoMode = true;
-        }
-    }
-
-    if(changeWindowDimensions && window->type == WT_NORMAL)
-    {
-        // Can't change the resolution while the UI is active.
-        // (controls need to be repositioned).
-        if(inControlPanel)
-            UI_End();
-    }
-/*
-    if(changeVideoMode)
-    {
-        if(flags & DDWF_FULLSCREEN)
-        {
-            if(!Sys_ChangeVideoMode(width, height, bpp))
-            {
-                Sys_CriticalMessage("Sys_SetWindow: Resolution change failed.");
-                return false;
-            }
-        }
-        else
-        {
-            // Go back to normal display settings.
-            ChangeDisplaySettings(0, 0);
-        }
-    }
-*/
-    // Update the current values.
-    window->geometry.size.width = width;
-    window->geometry.size.height = height;
-    window->bpp = bpp;
-    window->flags = flags;
-    if(!window->inited)
-        window->inited = true;
-
-    // Do NOT modify Window properties after this point.
-
-    // Do we need a new GL context due to changes to the window?
-    if(newGLContext)
-    {
-#if 0
-        // Maybe requires a renderer restart.
-        extern boolean usingFog;
-
-        boolean         glIsInited = GL_IsInited();
-#if defined(WIN32)
-        void           *data = window->hWnd;
-#else
-        void           *data = NULL;
-#endif
-        boolean         hadFog = false;
-
-        if(glIsInited)
-        {
-            // Shut everything down, but remember our settings.
-            hadFog = usingFog;
-            GL_TotalReset();
-
-            if(App_GameLoaded() && gx.UpdateState)
-                gx.UpdateState(DD_RENDER_RESTART_PRE);
-
-            R_UnloadSvgs();
-            GL_ReleaseTextures();
-        }
-
-        if(createContext(window->geometry.size.width, window->geometry.size.height,
-               window->normal.bpp, (window->flags & DDWF_FULLSCREEN)? false : true, data))
-        {
-            // We can get on with initializing the OGL state.
-            Sys_GLConfigureDefaultState();
-        }
-
-        if(glIsInited)
-        {
-            // Re-initialize.
-            GL_TotalRestore();
-            GL_InitRefresh();
-
-            if(hadFog)
-                GL_UseFog(true);
-
-            if(App_GameLoaded() && gx.UpdateState)
-                gx.UpdateState(DD_RENDER_RESTART_POST);
-        }
-#endif
-    }
-
-    // If the window dimensions have changed, update any sub-systems
-    // which need to respond.
-    if(changeWindowDimensions && window->type == WT_NORMAL)
-    {
-        // Update viewport coordinates.
-        R_SetViewGrid(0, 0);
-
-        if(inControlPanel) // Reactivate the panel?
-            Con_Execute(CMDS_DDAY, "panel", true, false);
-    }
-
-    return true;
-}
-#endif
-
-/**
- * Initialize the window manager.
- * Tasks include; checking the system environment for feature enumeration.
- *
- * @return              @c true, if initialization was successful.
- */
-boolean Sys_InitWindowManager(void)
+void Sys_InitWindowManager()
 {
     LOG_AS("Sys_InitWindowManager");
 
+    // Already been here?
     if(winManagerInited)
-        return true; // Already been here.
+        return;
 
     LOG_MSG("Using Qt window management.");
 
     CanvasWindow::setDefaultGLFormat();
 
-    memset(&mainWindow, 0, sizeof(mainWindow));
+    std::memset(&mainWindow, 0, sizeof(mainWindow));
     winManagerInited = true;
     theWindow = &mainWindow;
-    return true;
 }
 
-/**
- * Shutdown the window manager.
- *
- * @return              @c true, if shutdown was successful.
- */
-boolean Sys_ShutdownWindowManager(void)
+void Sys_ShutdownWindowManager()
 {
+    // Presently initialized?
     if(!winManagerInited)
-        return false; // Window manager is not initialized.
+        return;
 
     /// @todo Delete all windows, not just the main one.
 
@@ -927,83 +763,18 @@ boolean Sys_ShutdownWindowManager(void)
 
     // Now off-line, no more window management will be possible.
     winManagerInited = false;
-
-    return true;
 }
 
-#if 0
-/**
- * Attempt to acquire a device context for OpenGL rendering and then init.
- *
- * @param width         Width of the OGL window.
- * @param height        Height of the OGL window.
- * @param bpp           0= the current display color depth is used.
- * @param windowed      @c true = windowed mode ELSE fullscreen.
- * @param data          Ptr to system-specific data, e.g a window handle
- *                      or similar.
- *
- * @return              @c true if successful.
- */
-static boolean createContext(void)
+static Window *canvasToWindow(Canvas &DENG_DEBUG_ONLY(canvas))
 {
-    Con_Message("createContext: OpenGL.");
-
-#if 0
-    // Set GL attributes.  We want at least 5 bits per color and a 16
-    // bit depth buffer.  Plus double buffering, of course.
-    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);
-    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 5);
-    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 5);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
-    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-#endif
-
-    /*
-    // Attempt to set the video mode.
-    if(!Sys_ChangeVideoMode(Window_Width(theWindow),
-                            Window_Height(theWindow),
-                            Window_ColorDepthBits(theWindow)))
-    {
-        Con_Error("createContext: Video mode change failed.\n");
-        return false;
-    }
-    */
-
-    Sys_GLConfigureDefaultState();
-
-#ifdef MACOSX
-    // Vertical sync is a GL context property.
-    GL_SetVSync(true);
-#endif
-
-    return true;
-}
-#endif
-
-static Window* canvasToWindow(Canvas& DENG_DEBUG_ONLY(canvas))
-{
-    assert(mainWindow.widget->ownsCanvas(&canvas)); /// @todo multiwindow
+    DENG_ASSERT(mainWindow.widget->ownsCanvas(&canvas)); /// @todo multiwindow
 
     return &mainWindow;
 }
 
-/*
-static void drawCanvasWithCallback(Canvas& canvas)
+static void windowFocusChanged(Canvas &canvas, bool focus)
 {
-    Window* win = canvasToWindow(canvas);
-    if(win->drawFunc)
-    {
-        win->drawFunc();
-    }
-    // Now we can continue with the main loop (if it was paused).
-    LegacyCore_ResumeLoop();
-}
-*/
-
-static void windowFocusChanged(Canvas& canvas, bool focus)
-{
-    Window* wnd = canvasToWindow(canvas);
+    Window *wnd = canvasToWindow(canvas);
     wnd->assertWindow();
 
     LOG_DEBUG("windowFocusChanged focus:%b fullscreen:%b hidden:%b minimized:%b")
@@ -1028,26 +799,12 @@ static void windowFocusChanged(Canvas& canvas, bool focus)
     ev.focus.gained = focus;
     ev.focus.inWindow = getWindowIdx(wnd);
     DD_PostEvent(&ev);
-
-#if 0
-    if(Window_IsFullscreen(wnd))
-    {
-        if(!focus)
-        {
-            DisplayMode_Change(DisplayMode_OriginalMode());
-        }
-        else
-        {
-            wnd->applyDisplayMode();
-        }
-    }
-#endif
 }
 
-static void finishMainWindowInit(Canvas& canvas)
+static void finishMainWindowInit(Canvas &canvas)
 {
-    Window* win = canvasToWindow(canvas);
-    assert(win == &mainWindow);
+    Window *win = canvasToWindow(canvas);
+    DENG_ASSERT(win == &mainWindow);
 
 #if defined MACOSX
     if(Window_IsFullscreen(win))
@@ -1080,7 +837,7 @@ static void finishMainWindowInit(Canvas& canvas)
     DD_FinishInitializationAfterWindowReady();
 }
 
-static bool windowIsClosing(CanvasWindow&)
+static bool windowIsClosing(CanvasWindow &)
 {
     LOG_DEBUG("Window is about to close, executing 'quit'.");
 
@@ -1097,25 +854,25 @@ static bool windowIsClosing(CanvasWindow&)
  */
 static void updateWindowStateAfterUserChange()
 {
-    Window* win = Window_Main();
+    Window *win = Window_Main();
     if(!win || !win->widget) return;
 
     win->fetchWindowGeometry();
     win->willUpdateWindowState = false;
 }
 
-static void windowWasMoved(CanvasWindow& cw)
+static void windowWasMoved(CanvasWindow &cw)
 {
     LOG_AS("windowWasMoved");
 
-    Window* win = canvasToWindow(cw.canvas());
+    Window *win = canvasToWindow(cw.canvas());
     DENG_ASSERT(win);
 
     if(!(win->flags & DDWF_FULLSCREEN) && !win->needWait)
     {
         // The window was moved from its initial position; it is therefore
         // not centered any more (most likely).
-        win->setFlag(DDWF_CENTER, false);
+        win->setFlag(DDWF_CENTERED, false);
     }
 
     if(!win->willUpdateWindowState)
@@ -1131,12 +888,12 @@ void Window_UpdateAfterResize(Window *win)
     win->updateLayout();
 }
 
-static Window* createWindow(const char* title)
+static Window *createWindow(char const *title)
 {
-    if(mainWindowInited) return NULL; /// @todo  Allow multiple.
+    if(mainWindowInited) return 0; /// @todo  Allow multiple.
 
-    Window* wnd = &mainWindow;
-    memset(wnd, 0, sizeof(*wnd));
+    Window *wnd = &mainWindow;
+    std::memset(wnd, 0, sizeof(*wnd));
     mainWindowIdx = 1;
 
     Window_RestoreState(&mainWindow);
@@ -1162,26 +919,24 @@ static Window* createWindow(const char* title)
 
 #ifdef WIN32
     // Set an icon for the window.
-    AutoStr* iconPath = AutoStr_FromText("data\\graphics\\doomsday.ico");
+    AutoStr *iconPath = AutoStr_FromText("data\\graphics\\doomsday.ico");
     F_PrependBasePath(iconPath, iconPath);
-    LOG_DEBUG("Window icon: ") << de::NativePath(Str_Text(iconPath)).pretty();
+    LOG_DEBUG("Window icon: ") << NativePath(Str_Text(iconPath)).pretty();
     mainWindow.widget->setWindowIcon(QIcon(Str_Text(iconPath)));
 #endif
-
-    mainWindow.inited = true;
 
     /// @todo Refactor for multiwindow support.
     mainWindowInited = true;
     return &mainWindow;
 }
 
-Window* Window_New(const char* title)
+Window *Window_New(char const *title)
 {
     if(!winManagerInited) return 0;
     return createWindow(title);
 }
 
-void Window_Delete(Window* wnd)
+void Window_Delete(Window *wnd)
 {
     if(!wnd || !wnd->widget) return;
 
@@ -1199,10 +954,10 @@ void Window_Delete(Window* wnd)
     // Delete the CanvasWindow.
     delete wnd->widget;
 
-    memset(wnd, 0, sizeof(*wnd));
+    std::memset(wnd, 0, sizeof(*wnd));
 }
 
-boolean Window_ChangeAttributes(Window* wnd, int* attribs)
+boolean Window_ChangeAttributes(Window *wnd, int *attribs)
 {
     Window oldState = *wnd;
 
@@ -1217,37 +972,37 @@ boolean Window_ChangeAttributes(Window* wnd, int* attribs)
     return true;
 }
 
-void Window_SwapBuffers(const Window* win)
+void Window_SwapBuffers(Window const *win)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
-    assert(win);
+    DENG_ASSERT(win);
     if(!win->widget) return;
 
     // Force a swapbuffers right now.
     win->widget->canvas().swapBuffers();
 }
 
-DGLuint Window_GrabAsTexture(const Window* win, boolean halfSized)
+DGLuint Window_GrabAsTexture(Window const *win, boolean halfSized)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     win->assertWindow();
     return win->widget->canvas().grabAsTexture(halfSized? QSize(win->width()/2, win->height()/2) : QSize());
 }
 
-boolean Window_GrabToFile(const Window* win, const char* fileName)
+boolean Window_GrabToFile(Window const *win, char const *fileName)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     win->assertWindow();
     return win->widget->canvas().grabImage().save(fileName);
 }
 
-void Window_Grab(const Window* win, image_t* image)
+void Window_Grab(Window const *win, image_t *image)
 {
     Window_Grab2(win, image, false /* fullsize */);
 }
 
-void Window_Grab2(const Window* win, image_t* image, boolean halfSized)
+void Window_Grab2(Window const *win, image_t *image, boolean halfSized)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     win->assertWindow();
@@ -1255,45 +1010,45 @@ void Window_Grab2(const Window* win, image_t* image, boolean halfSized)
     win->widget->canvas().grab(image, halfSized? QSize(win->width()/2, win->height()/2) : QSize());
 }
 
-void Window_SetTitle(const Window* win, const char *title)
+void Window_SetTitle(Window const *win, char const *title)
 {
-    assert(win);
+    DENG_ASSERT(win);
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
-    assert(win->widget);
+    DENG_ASSERT(win->widget);
     win->widget->setWindowTitle(QString::fromLatin1(title));
 }
 
-boolean Window_IsFullscreen(const Window* wnd)
+boolean Window_IsFullscreen(Window const *wnd)
 {
-    assert(wnd);
+    DENG_ASSERT(wnd);
     return (wnd->flags & DDWF_FULLSCREEN) != 0;
 }
 
-boolean Window_IsCentered(const Window* wnd)
+boolean Window_IsCentered(Window const *wnd)
 {
-    assert(wnd);
-    return (wnd->flags & DDWF_CENTER) != 0;
+    DENG_ASSERT(wnd);
+    return (wnd->flags & DDWF_CENTERED) != 0;
 }
 
-boolean Window_IsMaximized(const Window* wnd)
+boolean Window_IsMaximized(Window const *wnd)
 {
-    assert(wnd);
-    return (wnd->flags & DDWF_MAXIMIZE) != 0;
+    DENG_ASSERT(wnd);
+    return (wnd->flags & DDWF_MAXIMIZED) != 0;
 }
 
-void* Window_NativeHandle(const Window* wnd)
+void *Window_NativeHandle(Window const *wnd)
 {
     if(!wnd) return 0;
     if(!wnd->widget) return 0;
-    return reinterpret_cast<void*>(wnd->widget->winId());
+    return reinterpret_cast<void *>(wnd->widget->winId());
 }
 
-void Window_Draw(Window* win)
+void Window_Draw(Window *win)
 {
-    assert(win);
-    assert(win->widget);
+    DENG_ASSERT(win);
+    DENG_ASSERT(win->widget);
 
     // Don't run the main loop until after the paint event has been dealt with.
     ClientApp::app().loop().pause();
@@ -1326,14 +1081,14 @@ void Window_Draw(Window* win)
 
 void Window_Show(Window *wnd, boolean show)
 {
-    assert(wnd);
-    assert(wnd->widget);
+    DENG_ASSERT(wnd);
+    DENG_ASSERT(wnd->widget);
 
     if(show)
     {
         if(wnd->flags & DDWF_FULLSCREEN)
             wnd->widget->showFullScreen();
-        else if(wnd->flags & DDWF_MAXIMIZE)
+        else if(wnd->flags & DDWF_MAXIMIZED)
             wnd->widget->showMaximized();
         else
             wnd->widget->showNormal();
@@ -1346,119 +1101,112 @@ void Window_Show(Window *wnd, boolean show)
     }
 }
 
-int Window_X(const Window* wnd)
+int Window_X(Window const *wnd)
 {
-    assert(wnd);
+    DENG_ASSERT(wnd);
     return wnd->x();
 }
 
-int Window_Y(const Window* wnd)
+int Window_Y(Window const *wnd)
 {
-    assert(wnd);
+    DENG_ASSERT(wnd);
     return wnd->y();
 }
 
-int Window_Width(const Window* wnd)
+int Window_Width(Window const *wnd)
 {
-    assert(wnd);
+    DENG_ASSERT(wnd);
     return wnd->width();
 }
 
-int Window_Height(const Window *wnd)
+int Window_Height(Window const *wnd)
 {
-    assert(wnd);
+    DENG_ASSERT(wnd);
     return wnd->height();
 }
 
-int Window_NormalX(const Window* wnd)
+int Window_NormalX(Window const *wnd)
 {
     DENG_ASSERT(wnd);
     return wnd->normalRect().x();
 }
 
-int Window_NormalY(const Window* wnd)
+int Window_NormalY(Window const *wnd)
 {
     DENG_ASSERT(wnd);
     return wnd->normalRect().y();
 }
 
-int Window_NormalWidth(const Window* wnd)
+int Window_NormalWidth(Window const *wnd)
 {
     DENG_ASSERT(wnd);
     return wnd->normalRect().width();
 }
 
-int Window_NormalHeight(const Window* wnd)
+int Window_NormalHeight(Window const *wnd)
 {
     DENG_ASSERT(wnd);
     return wnd->normalRect().height();
 }
 
-int Window_ColorDepthBits(const Window* wnd)
+int Window_ColorDepthBits(Window const *wnd)
 {
-    assert(wnd);
+    DENG_ASSERT(wnd);
     return wnd->colorDepthBits;
 }
 
-const Size2Raw* Window_Size(const Window* wnd)
+Size2Raw const *Window_Size(Window const *wnd)
 {
-    assert(wnd);
+    DENG_ASSERT(wnd);
     return &wnd->geometry.size;
 }
 
-/*
-static QString settingsKey(uint idx, const char* name)
+void Window_SaveState(Window *wnd)
 {
-    return QString("window/%1/").arg(idx) + name;
-}
-*/
-
-void Window_SaveState(Window* wnd)
-{
-    assert(wnd);
+    DENG_ASSERT(wnd);
 
     //uint idx = mainWindowIdx;
     //DENG_ASSERT(idx == 1);
 
     DENG_ASSERT(wnd == &mainWindow); /// @todo  Figure out the window index if there are many.
 
-    de::Config &config = de::App::config();
+    Config &config = App::config();
 
     QRect rect = wnd->rect();
-    de::ArrayValue *array = new de::ArrayValue;
-    *array << de::NumberValue(rect.left())
-           << de::NumberValue(rect.top())
-           << de::NumberValue(rect.width())
-           << de::NumberValue(rect.height());
+    ArrayValue *array = new ArrayValue;
+    *array << NumberValue(rect.left())
+           << NumberValue(rect.top())
+           << NumberValue(rect.width())
+           << NumberValue(rect.height());
     config.names()["window.main.rect"] = array;
 
     QRect normRect = wnd->normalRect();
-    array = new de::ArrayValue;
-    *array << de::NumberValue(normRect.left())
-           << de::NumberValue(normRect.top())
-           << de::NumberValue(normRect.width())
-           << de::NumberValue(normRect.height());
+    array = new ArrayValue;
+    *array << NumberValue(normRect.left())
+           << NumberValue(normRect.top())
+           << NumberValue(normRect.width())
+           << NumberValue(normRect.height());
     config.names()["window.main.normalRect"] = array;
 
-    config.names()["window.main.center"] = new de::NumberValue((wnd->flags & DDWF_CENTER) != 0);
-    config.names()["window.main.maximize"] = new de::NumberValue((wnd->flags & DDWF_MAXIMIZE) != 0);
-    config.names()["window.main.fullscreen"] = new de::NumberValue((wnd->flags & DDWF_FULLSCREEN) != 0);
-    config.names()["window.main.colorDepth"] = new de::NumberValue(Window_ColorDepthBits(wnd));
+    config.names()["window.main.center"]     = new NumberValue((wnd->flags & DDWF_CENTERED) != 0);
+    config.names()["window.main.maximize"]   = new NumberValue((wnd->flags & DDWF_MAXIMIZED) != 0);
+    config.names()["window.main.fullscreen"] = new NumberValue((wnd->flags & DDWF_FULLSCREEN) != 0);
+    config.names()["window.main.colorDepth"] = new NumberValue(Window_ColorDepthBits(wnd));
 }
 
-void Window_RestoreState(Window* wnd)
+void Window_RestoreState(Window *wnd)
 {
     LOG_AS("Window_RestoreState");
     DENG_ASSERT(wnd);
 
-    assert(wnd == &mainWindow);  /// @todo  Figure out the window index if there are many.
+    DENG_ASSERT(wnd == &mainWindow);  /// @todo  Figure out the window index if there are many.
     //uint idx = mainWindowIdx;
-    //assert(idx == 1);
+    //DENG_ASSERT(idx == 1);
 
-    de::Config &config = de::App::config();
+    Config &config = App::config();
 
     // The default state of the window is determined by these values.
-    de::ArrayValue &rect = config.geta("window.main.rect");
+    ArrayValue &rect = config.geta("window.main.rect");
     if(rect.size() >= 4)
     {
         QRect geom(rect.at(0).asNumber(), rect.at(1).asNumber(),
@@ -1469,7 +1217,7 @@ void Window_RestoreState(Window* wnd)
         wnd->geometry.size.height = geom.height();
     }
 
-    de::ArrayValue &normalRect = config.geta("window.main.normalRect");
+    ArrayValue &normalRect = config.geta("window.main.normalRect");
     if(normalRect.size() >= 4)
     {
         QRect geom(normalRect.at(0).asNumber(), normalRect.at(1).asNumber(),
@@ -1481,12 +1229,12 @@ void Window_RestoreState(Window* wnd)
     }
 
     wnd->colorDepthBits = config.geti("window.main.colorDepth");
-    wnd->setFlag(DDWF_CENTER, config.getb("window.main.center"));
-    wnd->setFlag(DDWF_MAXIMIZE, config.getb("window.main.maximize"));
+    wnd->setFlag(DDWF_CENTERED,   config.getb("window.main.center"));
+    wnd->setFlag(DDWF_MAXIMIZED,  config.getb("window.main.maximize"));
     wnd->setFlag(DDWF_FULLSCREEN, config.getb("window.main.fullscreen"));
 }
 
-void Window_TrapMouse(const Window* wnd, boolean enable)
+void Window_TrapMouse(Window const *wnd, boolean enable)
 {
     if(!wnd || !wnd->widget || novideo) return;
 
@@ -1494,13 +1242,13 @@ void Window_TrapMouse(const Window* wnd, boolean enable)
     wnd->widget->canvas().trapMouse(enable);
 }
 
-boolean Window_IsMouseTrapped(const Window* wnd)
+boolean Window_IsMouseTrapped(Window const *wnd)
 {
     wnd->assertWindow();
     return wnd->widget->canvas().isMouseTrapped();
 }
 
-boolean Window_ShouldRepaintManually(const Window* wnd)
+boolean Window_ShouldRepaintManually(Window const *wnd)
 {
     //return false;
 
@@ -1510,24 +1258,24 @@ boolean Window_ShouldRepaintManually(const Window* wnd)
     return !Mouse_IsPresent() || Window_IsMouseTrapped(wnd);
 }
 
-void Window_UpdateCanvasFormat(Window* wnd)
+void Window_UpdateCanvasFormat(Window *wnd)
 {
-    assert(wnd != 0);
+    DENG_ASSERT(wnd != 0);
     wnd->needRecreateCanvas = true;
 
     // Save the relevant format settings.
-    de::App::config().names()["window.fsaa"] = new de::NumberValue(Con_GetByte("vid-fsaa") != 0);
+    App::config().names()["window.fsaa"] = new NumberValue(Con_GetByte("vid-fsaa") != 0);
 }
 
 #if defined(UNIX) && !defined(MACOSX)
-void GL_AssertContextActive(void)
+void GL_AssertContextActive()
 {
-    //Window* wnd = Window_Main();
-    assert(QGLContext::currentContext() != 0);
+    //Window *wnd = Window_Main();
+    DENG_ASSERT(QGLContext::currentContext() != 0);
 }
 #endif
 
-void Window_GLActivate(Window* wnd)
+void Window_GLActivate(Window *wnd)
 {
     wnd->assertWindow();
     wnd->widget->canvas().makeCurrent();
@@ -1535,13 +1283,13 @@ void Window_GLActivate(Window* wnd)
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 }
 
-void Window_GLDone(Window* wnd)
+void Window_GLDone(Window *wnd)
 {
     wnd->assertWindow();
     wnd->widget->canvas().doneCurrent();
 }
 
-QWidget* Window_Widget(Window* wnd)
+QWidget *Window_Widget(Window *wnd)
 {
     if(!wnd) return 0;
     return wnd->widget;

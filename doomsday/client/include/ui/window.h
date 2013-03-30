@@ -1,5 +1,4 @@
-/** @file window.h
- * Window management. @ingroup base
+/** @file window.h Window management. @ingroup base
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -20,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_SYS_WINDOW_H
-#define LIBDENG_SYS_WINDOW_H
+#ifndef LIBDENG_BASE_WINDOW_H
+#define LIBDENG_BASE_WINDOW_H
 
 #ifndef __CLIENT__
 #  error "window.h requires __CLIENT__"
@@ -31,38 +30,38 @@
 #include "resource/image.h"
 #include "canvaswindow.h"
 
+/// Minimum width of a window (fullscreen too? -ds)
 #define WINDOW_MIN_WIDTH        320
-#define WINDOW_MIN_HEIGHT       240
 
-/**
- * @defgroup consoleCommandlineFlags Console Command Line Flags
- * @ingroup flags
- * @{
- */
-#define CLF_CURSOR_LARGE        0x1 // Use the large command line cursor.
-/**@}*/
+/// Minimum height of a window (fullscreen too? -ds)
+#define WINDOW_MIN_HEIGHT       240
 
 struct ddwindow_s; // opaque
 typedef struct ddwindow_s Window;
 
-// Doomsday window flags.
+/**
+ * @defgroup doomsdayWindowFlags Doomsday window flags.
+ */
+///@{
 #define DDWF_VISIBLE            0x01
-#define DDWF_CENTER             0x02
-#define DDWF_MAXIMIZE           0x04
+#define DDWF_CENTERED           0x02
+#define DDWF_MAXIMIZED          0x04
 #define DDWF_FULLSCREEN         0x08
+///@}
 
 /**
- * Attributes for a window.
+ * Logical window attribute identifiers.
  */
-enum windowattribute_e {
-    DDWA_END = 0,           ///< Marks the end of an attribute list (not a valid attribute by itself)
+enum windowattribute_e
+{
+    DDWA_END = 0, ///< Marks the end of an attribute list (not a valid attribute by itself)
 
     DDWA_X = 1,
     DDWA_Y,
     DDWA_WIDTH,
     DDWA_HEIGHT,
-    DDWA_CENTER,
-    DDWA_MAXIMIZE,
+    DDWA_CENTERED,
+    DDWA_MAXIMIZED,
     DDWA_FULLSCREEN,
     DDWA_VISIBLE,
     DDWA_COLOR_DEPTH_BITS
@@ -71,37 +70,29 @@ enum windowattribute_e {
 /// Determines whether @a x is a valid window attribute id.
 #define VALID_WINDOW_ATTRIBUTE(x)   ((x) >= DDWA_X && (x) <= DDWA_VISIBLE)
 
-#if 0
-// Flags for Sys_SetWindow()
-#define DDSW_NOSIZE             0x01
-#define DDSW_NOMOVE             0x02
-#define DDSW_NOBPP              0x04
-#define DDSW_NOVISIBLE          0x08
-#define DDSW_NOFULLSCREEN       0x10
-#define DDSW_NOCENTER           0x20
-#define DDSW_NOCHANGES          (DDSW_NOSIZE & DDSW_NOMOVE & DDSW_NOBPP & \
-                                 DDSW_NOFULLSCREEN & DDSW_NOVISIBLE & \
-                                 DDSW_NOCENTER)
-#endif
-
 /**
  * Currently active window. There is always one active window, so no need
  * to worry about NULLs. The easiest way to get information about the
  * window where drawing is being is done.
  */
-extern const Window* theWindow;
+extern Window const *theWindow;
 
 // A helpful macro that changes the origin of the screen
 // coordinate system.
 #define FLIP(y) (Window_Height(theWindow) - (y+1))
 
-boolean Sys_InitWindowManager(void);
-boolean Sys_ShutdownWindowManager(void);
-
-boolean Sys_ChangeVideoMode(int width, int height, int bpp);
-boolean Sys_GetDesktopBPP(int* bpp);
+/**
+ * Initialize the window manager.
+ * Tasks include; checking the system environment for feature enumeration.
+ */
+void Sys_InitWindowManager();
 
 /**
+ * Shutdown the window manager.
+ */
+void Sys_ShutdownWindowManager();
+
+/*
  * Window management.
  */
 
@@ -119,30 +110,7 @@ boolean Sys_GetDesktopBPP(int* bpp);
  *
  * @deprecated  Windows will be represented by CanvasWindow instances.
  */
-Window* Window_New(const char* title);
-
-#if 0
-/**
- * Create a new window.
- *
- * @param app           Ptr to the application structure holding our globals.
- * @param origin        Origin of the window in desktop-space.
- * @param size          Size of the window (client area) in desktop-space.
- * @param bpp           BPP (bits-per-pixel)
- * @param flags         DDWF_* flags, control appearance/behavior.
- * @param type          Type of window to be created (WT_*)
- * @param title         Window title string, ELSE @c NULL,.
- * @param data          Platform specific data.
- *
- * @return              If @c 0, window creation was unsuccessful,
- *                      ELSE 1-based index identifier of the new window.
- *
- * @todo Refactor for New/Delete convention.
- */
-uint Window_Create(application_t* app, const Point2Raw* origin,
-                   const Size2Raw* size, int bpp, int flags, ddwindowtype_t type,
-                   const char* title, void* data);
-#endif
+Window *Window_New(char const *title);
 
 /**
  * Close and destroy the window. Its state is saved persistently and used as
@@ -150,47 +118,47 @@ uint Window_Create(application_t* app, const Point2Raw* origin,
  *
  * @param wnd  Window instance.
  */
-void Window_Delete(Window* wnd);
+void Window_Delete(Window *wnd);
 
-Window* Window_Main(void);
+Window *Window_Main();
 
-Window* Window_ByIndex(uint idx);
+Window *Window_ByIndex(uint idx);
 
-boolean Window_IsFullscreen(const Window* wnd);
+boolean Window_IsFullscreen(Window const *wnd);
 
-boolean Window_IsCentered(const Window* wnd);
+boolean Window_IsCentered(Window const *wnd);
 
-boolean Window_IsMaximized(const Window* wnd);
+boolean Window_IsMaximized(Window const *wnd);
 
-int Window_X(const Window* wnd);
+int Window_X(Window const *wnd);
 
-int Window_Y(const Window* wnd);
+int Window_Y(Window const *wnd);
 
 /**
  * Returns the current width of the window.
  * @param wnd  Window instance.
  */
-int Window_Width(const Window* wnd);
+int Window_Width(Window const *wnd);
 
 /**
  * Returns the current height of the window.
  * @param wnd  Window instance.
  */
-int Window_Height(const Window* wnd);
+int Window_Height(Window const *wnd);
 
-int Window_NormalX(const Window* wnd);
-int Window_NormalY(const Window* wnd);
-int Window_NormalWidth(const Window* wnd);
-int Window_NormalHeight(const Window* wnd);
+int Window_NormalX(Window const *wnd);
+int Window_NormalY(Window const *wnd);
+int Window_NormalWidth(Window const *wnd);
+int Window_NormalHeight(Window const *wnd);
 
 /**
  * Determines the size of the window.
  * @param wnd  Window instance.
  * @return Window size.
  */
-const Size2Raw* Window_Size(const Window* wnd);
+Size2Raw const *Window_Size(Window const *wnd);
 
-int Window_ColorDepthBits(const Window* wnd);
+int Window_ColorDepthBits(Window const *wnd);
 
 /**
  * Sets the title of a window.
@@ -198,9 +166,9 @@ int Window_ColorDepthBits(const Window* wnd);
  * @param win           Window instance.
  * @param title         New title for the window.
  */
-void Window_SetTitle(const Window *win, const char* title);
+void Window_SetTitle(Window const *win, char const *title);
 
-void Window_Show(Window* wnd, boolean show);
+void Window_Show(Window *wnd, boolean show);
 
 /**
  * Sets or changes one or more window attributes.
@@ -215,19 +183,19 @@ void Window_Show(Window* wnd, boolean show);
  * updated. @c false, if there was an error with the values -- in this case all
  * the window's attributes remain unchanged.
  */
-boolean Window_ChangeAttributes(Window* wnd, int* attribs);
+boolean Window_ChangeAttributes(Window *wnd, int *attribs);
 
 /**
  * Request drawing the contents of the window as soon as possible.
  *
  * @param win  Window instance.
  */
-void Window_Draw(Window* win);
+void Window_Draw(Window *win);
 
 /**
  * Make the content of the framebuffer visible.
  */
-void Window_SwapBuffers(const Window* win);
+void Window_SwapBuffers(Window const *win);
 
 /**
  * Grab the contents of the window into an OpenGL texture.
@@ -237,7 +205,7 @@ void Window_SwapBuffers(const Window* win);
  *
  * @return OpenGL texture name. Caller is reponsible for deleting the texture.
  */
-unsigned int Window_GrabAsTexture(const Window* win, boolean halfSized);
+uint Window_GrabAsTexture(Window const *win, boolean halfSized);
 
 /**
  * Grabs the contents of the window and saves it into an image file.
@@ -249,7 +217,7 @@ unsigned int Window_GrabAsTexture(const Window* win, boolean halfSized);
  *
  * @return @c true if successful, otherwise @c false.
  */
-boolean Window_GrabToFile(const Window* win, const char* fileName);
+boolean Window_GrabToFile(Window const *win, char const *fileName);
 
 /**
  * Grab the contents of the window into an image.
@@ -257,7 +225,7 @@ boolean Window_GrabToFile(const Window* win, const char* fileName);
  * @param win    Window instance.
  * @param image  Grabbed image contents. Caller gets ownership; call GL_DestroyImage().
  */
-void Window_Grab(const Window* win, image_t* image);
+void Window_Grab(Window const *win, image_t *image);
 
 /**
  * Grab the contents of the window into an image.
@@ -266,7 +234,7 @@ void Window_Grab(const Window* win, image_t* image);
  * @param image  Grabbed image contents. Caller gets ownership; call GL_DestroyImage().
  * @param halfSized  If @c true, scales the image to half the full size.
  */
-void Window_Grab2(const Window* win, image_t* image, boolean halfSized);
+void Window_Grab2(Window const *win, image_t *image, boolean halfSized);
 
 /**
  * Saves the window's state into a persistent storage so that it can be later
@@ -282,7 +250,7 @@ void Window_SaveState(Window *wnd);
  *
  * @param wnd  Window instance.
  */
-void Window_RestoreState(Window* wnd);
+void Window_RestoreState(Window *wnd);
 
 /**
  * Activates or deactivates the window mouse trap. When trapped, the mouse cursor is
@@ -293,9 +261,9 @@ void Window_RestoreState(Window* wnd);
  *
  * @note This is a C wrapper for Canvas::trapMouse().
  */
-void Window_TrapMouse(const Window* wnd, boolean enable);
+void Window_TrapMouse(Window const *wnd, boolean enable);
 
-boolean Window_IsMouseTrapped(const Window* wnd);
+boolean Window_IsMouseTrapped(Window const *wnd);
 
 /**
  * Determines whether the contents of a window should be drawn during the
@@ -304,9 +272,9 @@ boolean Window_IsMouseTrapped(const Window* wnd);
  *
  * @param wnd  Window instance.
  */
-boolean Window_ShouldRepaintManually(const Window* wnd);
+boolean Window_ShouldRepaintManually(Window const *wnd);
 
-void Window_UpdateCanvasFormat(Window* wnd);
+void Window_UpdateCanvasFormat(Window *wnd);
 
 /**
  * Activates the window's GL context so that OpenGL API calls can be made.
@@ -315,7 +283,7 @@ void Window_UpdateCanvasFormat(Window* wnd);
  *
  * @param wnd  Window instance.
  */
-void Window_GLActivate(Window* wnd);
+void Window_GLActivate(Window *wnd);
 
 /**
  * Dectivates the window's GL context after OpenGL API calls have been done.
@@ -324,14 +292,14 @@ void Window_GLActivate(Window* wnd);
  *
  * @param wnd  Window instance.
  */
-void Window_GLDone(Window* wnd);
+void Window_GLDone(Window *wnd);
 
-void* Window_NativeHandle(const Window* wnd);
+void *Window_NativeHandle(Window const *wnd);
 
 /**
  * Returns the window's native widget, if one exists.
  */
-QWidget* Window_Widget(Window* wnd);
+QWidget *Window_Widget(Window *wnd);
 
 CanvasWindow *Window_CanvasWindow(Window *wnd);
 
@@ -346,4 +314,4 @@ CanvasWindow *Window_CanvasWindow(Window *wnd);
  */
 void Window_UpdateAfterResize(Window *win);
 
-#endif /* LIBDENG_SYS_WINDOW_H */
+#endif // LIBDENG_BASE_WINDOW_H
