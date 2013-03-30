@@ -1726,7 +1726,7 @@ de::Game* DD_AutoselectGame(void)
     return NULL;
 }
 
-int DD_EarlyInit(void)
+int DD_EarlyInit()
 {
     // Determine the requested degree of verbosity.
     verbose = CommandLine_Exists("-verbose");
@@ -1747,11 +1747,11 @@ int DD_EarlyInit(void)
 
 #ifdef __CLIENT__
     // Bring the window manager online.
-    Sys_InitWindowManager();
+    Window::intialize();
 #endif
 
     // Instantiate the Games collection.
-    games = new de::Games();
+    games = new Games();
 
     return true;
 }

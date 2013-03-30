@@ -193,6 +193,6 @@ void DD_ShutdownAll(void)
     DD_ClearResourceClasses();
     Libdeng_Shutdown();
 #ifdef __CLIENT__
-    Sys_ShutdownWindowManager();
+    Window::shutdown();
 #endif
 }

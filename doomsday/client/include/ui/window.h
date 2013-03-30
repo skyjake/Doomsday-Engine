@@ -68,46 +68,24 @@ enum windowattribute_e
 #define VALID_WINDOW_ATTRIBUTE(x)   ((x) >= DDWA_X && (x) <= DDWA_VISIBLE)
 
 /**
- * Initialize the window manager.
- * Tasks include; checking the system environment for feature enumeration.
- */
-void Sys_InitWindowManager();
-
-/**
- * Shutdown the window manager.
- */
-void Sys_ShutdownWindowManager();
-
-/**
  * Window and window management.
  *
  * @deprecated  Windows will be represented by CanvasWindow instances.
  */
 class Window
 {
-private:
-    /**
-     * Constructs a new window using the default configuration. Note that the
-     * default configuration is saved persistently when the engine shuts down and
-     * is restored when the engine is restarted.
-     *
-     * Command line options (e.g., -xpos) can be used to modify the window
-     * configuration.
-     *
-     * @param title  Text for the window title.
-     */
-    Window(char const *title = "");
-
 public:
     /**
-     * Close and destroy the window. Its state is saved persistently and used as
-     * the default configuration the next time the same window is created.
-     *
-     * @todo Should be private
+     * Initialize the window manager.
+     * Tasks include; checking the system environment for feature enumeration.
      */
-    ~Window();
+    static void initialize();
 
-public:
+    /**
+     * Shutdown the window manager.
+     */
+    static void shutdown();
+
     /**
      * Constructs a new window using the default configuration. Note that the
      * default configuration is saved persistently when the engine shuts down
@@ -292,6 +270,25 @@ public:
      * CanvasWindow/WindowSystem.
      */
     void updateAfterResize();
+
+private:
+    /**
+     * Constructs a new window using the default configuration. Note that the
+     * default configuration is saved persistently when the engine shuts down and
+     * is restored when the engine is restarted.
+     *
+     * Command line options (e.g., -xpos) can be used to modify the window
+     * configuration.
+     *
+     * @param title  Text for the window title.
+     */
+    Window(char const *title = "");
+
+    /**
+     * Close and destroy the window. Its state is saved persistently and used as
+     * the default configuration the next time the same window is created.
+     */
+    ~Window();
 
 private:
     DENG2_PRIVATE(d)

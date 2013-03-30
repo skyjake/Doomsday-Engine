@@ -360,7 +360,6 @@ DENG2_PIMPL(Window)
         LegacyCore_Timer(WAIT_MILLISECS_AFTER_MODE_CHANGE * 20, endWindowWait);
 
         bool modeChanged = applyDisplayMode();
-
         if(modeChanged)
         {
             // Others might be interested to hear about the mode change.
@@ -850,9 +849,9 @@ DENG2_PIMPL(Window)
     }
 };
 
-void Sys_InitWindowManager()
+void Window::initialize()
 {
-    LOG_AS("Sys_InitWindowManager");
+    LOG_AS("Window::initialize");
 
     // Already been here?
     if(winManagerInited)
@@ -866,7 +865,7 @@ void Sys_InitWindowManager()
     theWindow = 0;
 }
 
-void Sys_ShutdownWindowManager()
+void Window::shutdown()
 {
     // Presently initialized?
     if(!winManagerInited)
