@@ -102,7 +102,7 @@ int DD_GameLoopExitCode(void)
 float DD_GetFrameRate()
 {
 #ifdef __CLIENT__
-    return Window::main().canvasWindow()->frameRate();
+    return Window::main().canvasWindow().frameRate();
 #else
     return 0;
 #endif

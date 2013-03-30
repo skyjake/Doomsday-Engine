@@ -967,7 +967,7 @@ void Window::updateAfterResize()
     d->updateLayout();
 }
 
-bool Window::changeAttributes(int *attribs)
+bool Window::changeAttributes(int const *attribs)
 {
     /// @todo fixme This naive mechanism for reverting attribute changes is no
     /// good now we employ DENG2_PRIVATE/DENG2_PIMPL.
@@ -994,6 +994,14 @@ void Window::swapBuffers() const
     d->widget->canvas().swapBuffers();
 }
 
+void Window::grab(image_t &image, bool halfSized) const
+{
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    d->assertWindow();
+
+    d->widget->canvas().grab(&image, halfSized? QSize(d->width()/2, d->height()/2) : QSize());
+}
+
 DGLuint Window::grabAsTexture(bool halfSized) const
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
@@ -1006,15 +1014,6 @@ bool Window::grabToFile(char const *fileName) const
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     d->assertWindow();
     return d->widget->canvas().grabImage().save(fileName);
-}
-
-void Window::grab(image_t *image, bool halfSized) const
-{
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT(image != 0);
-    d->assertWindow();
-
-    d->widget->canvas().grab(image, halfSized? QSize(d->width()/2, d->height()/2) : QSize());
 }
 
 void Window::setTitle(char const *title) const
@@ -1274,12 +1273,13 @@ void Window::glDone()
     d->widget->canvas().doneCurrent();
 }
 
-QWidget *Window::widget()
+QWidget *Window::widgetPtr()
 {
     return d->widget;
 }
 
-CanvasWindow *Window::canvasWindow()
+CanvasWindow &Window::canvasWindow()
 {
-    return d->widget;
+    DENG_ASSERT(d->widget);
+    return *d->widget;
 }

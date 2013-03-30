@@ -183,7 +183,7 @@ public:
      * updated. @c false, if there was an error with the values -- in this case all
      * the window's attributes remain unchanged.
      */
-    bool changeAttributes(int *attribs);
+    bool changeAttributes(int const *attribs);
 
     /**
      * Request drawing the contents of the window as soon as possible.
@@ -216,11 +216,13 @@ public:
     bool grabToFile(char const *fileName) const;
 
     /**
-     * Grab the contents of the window into an image.
+     * Grab the contents of the window into the supplied @a image. Ownership of
+     * the image passes to the window for the duration of this call.
      *
-     * @param image  Grabbed image contents. Caller gets ownership; call GL_DestroyImage().
+     * @param image      Image to fill with the grabbed frame contents.
+     * @param halfSized  If @c true, scales the image to half the full size.
      */
-    void grab(image_t *image, bool halfSized = false) const;
+    void grab(image_t &image, bool halfSized = false) const;
 
     /**
      * Saves the window's state into a persistent storage so that it can be later
@@ -272,11 +274,14 @@ public:
     void *nativeHandle() const;
 
     /**
-     * Returns the window's native widget, if one exists.
+     * Returns a pointer to the native widget for the window (may be @c NULL).
      */
-    QWidget *widget();
+    QWidget *widgetPtr();
 
-    CanvasWindow *canvasWindow();
+    /**
+     * Returns the CanvasWindow for the window.
+     */
+    CanvasWindow &canvasWindow();
 
     /**
      * Utility to call after changing the size of a CanvasWindow. This will update

@@ -64,7 +64,7 @@ static void Mouse_Qt_Poll()
 
 #ifndef LIBDENG_CANVAS_TRACK_WITH_MOUSE_MOVE_EVENTS
     Window &mainWindow = Window::main();
-    QWidget *widget = mainWindow.widget();
+    QWidget *widget = mainWindow.widgetPtr();
     if(!widget) return; // Hmm?
 
     QPoint curPos = widget->mapFromGlobal(QCursor::pos());

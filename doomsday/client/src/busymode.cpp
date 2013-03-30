@@ -245,7 +245,7 @@ static void preBusySetup(int initialMode)
     ClientApp::app().loop().setRate(60);
 
     // Switch the window to busy mode UI.
-    Window::main().canvasWindow()->setMode(CanvasWindow::Busy);
+    Window::main().canvasWindow().setMode(CanvasWindow::Busy);
 
 #else
     DENG_UNUSED(initialMode);
@@ -265,7 +265,7 @@ static void postBusyCleanup()
     ClientApp::app().loop().setRate(0);
 
     // Switch the window to normal UI.
-    Window::main().canvasWindow()->setMode(CanvasWindow::Normal);
+    Window::main().canvasWindow().setMode(CanvasWindow::Normal);
 #endif
 }
 

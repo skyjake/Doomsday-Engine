@@ -36,16 +36,10 @@ WindowSystem::WindowSystem()
 
 bool WindowSystem::processEvent(Event const &event)
 {
-    CanvasWindow *cwin = Window::main().canvasWindow();
-    DENG2_ASSERT(cwin);
-
-    return cwin->root().processEvent(event);
+    return Window::main().canvasWindow().root().processEvent(event);
 }
 
 void WindowSystem::timeChanged(Clock const &/*clock*/)
 {
-    CanvasWindow *canvasWindow = Window::main().canvasWindow();
-    DENG2_ASSERT(canvasWindow);
-
-    canvasWindow->root().update();
+    Window::main().canvasWindow().root().update();
 }
