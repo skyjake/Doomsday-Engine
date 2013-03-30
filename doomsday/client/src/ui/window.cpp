@@ -105,7 +105,7 @@ Window const *theWindow;
 
 static bool winManagerInited = false;
 
-static Window mainWindow;
+static Window *mainWindow;
 static bool mainWindowInited = false;
 
 static QRect desktopRect()
@@ -131,7 +131,7 @@ static void notifyAboutModeChange()
 static int getWindowIdx(Window const *wnd)
 {
     /// @todo  Multiple windows.
-    if(wnd == &mainWindow) return mainWindowIdx;
+    if(wnd == mainWindow) return mainWindowIdx;
 
     return 0;
 }
@@ -142,10 +142,10 @@ static inline Window *getWindow(uint idx)
         return NULL; // Window manager is not initialized.
 
     if(idx == 1)
-        return &mainWindow;
+        return mainWindow;
 
     //DENG_ASSERT(false); // We can only have window 1 (main window).
-    return NULL;
+    return 0;
 }
 
 DENG2_PIMPL(Window)
@@ -175,49 +175,19 @@ DENG2_PIMPL(Window)
     int colorDepthBits;
     int flags;
 
-    Instance(Public *i) : Base(i)
-    {}
-
-    static Window *createWindow(char const *title)
+    Instance(Public *i)
+        : Base(i),
+          widget(new CanvasWindow),
+          drawFunc(0)
     {
-        if(mainWindowInited) return 0; /// @todo  Allow multiple.
-
-        Window *wnd = &mainWindow;
-        std::memset(wnd, 0, sizeof(*wnd));
-        mainWindowIdx = 1;
-
-        wnd->restoreState();
-
-        // Create the main window (hidden).
-        mainWindow.d->widget = new CanvasWindow;
-        mainWindow.setTitle(title);
-
         // Minimum possible size when resizing.
-        mainWindow.d->widget->setMinimumSize(QSize(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT));
+        widget->setMinimumSize(QSize(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT));
 
         // After the main window is created, we can finish with the engine init.
-        mainWindow.d->widget->canvas().setInitFunc(finishMainWindowInit);
+        widget->canvas().setInitFunc(finishMainWindowInit);
 
-        mainWindow.d->widget->setCloseFunc(windowIsClosing);
-        mainWindow.d->widget->setMoveFunc(windowWasMoved);
-
-        // Let's see if there are command line options overriding the previous state.
-        mainWindow.d->modifyAccordingToOptions();
-
-        // Make it so. (Not shown yet.)
-        mainWindow.d->applyWindowGeometry();
-
-#ifdef WIN32
-        // Set an icon for the window.
-        AutoStr *iconPath = AutoStr_FromText("data\\graphics\\doomsday.ico");
-        F_PrependBasePath(iconPath, iconPath);
-        LOG_DEBUG("Window icon: ") << NativePath(Str_Text(iconPath)).pretty();
-        mainWindow.d->widget->setWindowIcon(QIcon(Str_Text(iconPath)));
-#endif
-
-        /// @todo Refactor for multiwindow support.
-        mainWindowInited = true;
-        return &mainWindow;
+        widget->setCloseFunc(windowIsClosing);
+        widget->setMoveFunc(windowWasMoved);
     }
 
     void inline assertWindow() const
@@ -713,14 +683,14 @@ DENG2_PIMPL(Window)
 
         if(wnd->d->flags & DDWF_FULLSCREEN)
         {
-    #if defined MACOSX
+#if defined MACOSX
             // For some interesting reason, we have to scale the window twice in fullscreen mode
             // or the resulting layout won't be correct.
             wnd->d->widget->setGeometry(QRect(0, 0, 320, 240));
             wnd->d->widget->setGeometry(wnd->d->appliedGeometry);
 
             DisplayMode_Native_Raise(wnd->nativeHandle());
-    #endif
+#endif
             wnd->trapMouse();
         }
 
@@ -764,9 +734,9 @@ DENG2_PIMPL(Window)
 
     static Window *canvasToWindow(Canvas &DENG_DEBUG_ONLY(canvas))
     {
-        DENG_ASSERT(mainWindow.d->widget->ownsCanvas(&canvas)); /// @todo multiwindow
+        DENG_ASSERT(mainWindow->d->widget->ownsCanvas(&canvas)); /// @todo multiwindow
 
-        return &mainWindow;
+        return mainWindow;
     }
 
     static void windowFocusChanged(Canvas &canvas, bool focus)
@@ -801,16 +771,16 @@ DENG2_PIMPL(Window)
     static void finishMainWindowInit(Canvas &canvas)
     {
         Window *wnd = canvasToWindow(canvas);
-        DENG_ASSERT(wnd == &mainWindow);
+        DENG_ASSERT(wnd == mainWindow);
 
-    #if defined MACOSX
+#if defined MACOSX
         if(wnd->isFullscreen())
         {
             // The window must be manually raised above the shielding window put up by
             // the display capture.
             DisplayMode_Native_Raise(wnd->nativeHandle());
         }
-    #endif
+#endif
 
         wnd->d->widget->raise();
         wnd->d->widget->activateWindow();
@@ -823,13 +793,13 @@ DENG2_PIMPL(Window)
 
         wnd->d->widget->canvas().setFocusFunc(windowFocusChanged);
 
-    #ifdef WIN32
+#ifdef WIN32
         if(wnd->isFullscreen())
         {
             // It would seem we must manually give our canvas focus. Bug in Qt?
             wnd->d->widget->canvas().setFocus();
         }
-    #endif
+#endif
 
         DD_FinishInitializationAfterWindowReady();
     }
@@ -880,16 +850,6 @@ DENG2_PIMPL(Window)
     }
 };
 
-Window *Window::main()
-{
-    return &mainWindow;
-}
-
-Window *Window::byIndex(uint id)
-{
-    return getWindow(id);
-}
-
 void Sys_InitWindowManager()
 {
     LOG_AS("Sys_InitWindowManager");
@@ -902,9 +862,8 @@ void Sys_InitWindowManager()
 
     CanvasWindow::setDefaultGLFormat();
 
-    std::memset(&mainWindow, 0, sizeof(mainWindow));
     winManagerInited = true;
-    theWindow = &mainWindow;
+    theWindow = 0;
 }
 
 void Sys_ShutdownWindowManager()
@@ -916,24 +875,62 @@ void Sys_ShutdownWindowManager()
     /// @todo Delete all windows, not just the main one.
 
     // Get rid of the windows.
-    Window *mainWindow = Window::main();
     DENG_ASSERT(mainWindow != 0);
-    delete mainWindow;
+    delete mainWindow; mainWindow = 0;
 
     // Now off-line, no more window management will be possible.
     winManagerInited = false;
 }
 
-void Window::updateAfterResize()
+Window *Window::create(char const *title)
 {
-    d->assertWindow();
-    d->updateLayout();
+    if(mainWindowInited) return 0; /// @todo  Allow multiple.
+
+    Window *wnd = new Window();
+
+    // Is this the main window?
+    if(!mainWindow)
+    {
+        mainWindow = wnd;
+        mainWindowIdx = 1;
+    }
+
+    wnd->restoreState();
+    wnd->setTitle(title);
+
+    // Let's see if there are command line options overriding the previous state.
+    wnd->d->modifyAccordingToOptions();
+
+    // Make it so. (Not shown yet.)
+    wnd->d->applyWindowGeometry();
+
+#ifdef WIN32
+    // Set an icon for the window.
+    AutoStr *iconPath = AutoStr_FromText("data\\graphics\\doomsday.ico");
+    F_PrependBasePath(iconPath, iconPath);
+    LOG_DEBUG("Window icon: ") << NativePath(Str_Text(iconPath)).pretty();
+    wnd->d->widget->setWindowIcon(QIcon(Str_Text(iconPath)));
+#endif
+
+    /// @todo Refactor for multiwindow support.
+    mainWindowInited = true;
+
+    return wnd;
+}
+
+Window *Window::main()
+{
+    return mainWindow;
+}
+
+Window *Window::byIndex(uint id)
+{
+    return getWindow(id);
 }
 
 Window::Window(char const *title) : d(new Instance(this))
 {
-    DENG_ASSERT(!winManagerInited);
-    d->createWindow(title);
+    setTitle(title);
 }
 
 Window::~Window()
@@ -946,13 +943,19 @@ Window::~Window()
     // Make sure we'll remember the config.
     saveState();
 
-    if(this == &mainWindow)
+    if(this == mainWindow)
     {
         DisplayMode_Shutdown();
     }
 
     // Delete the CanvasWindow.
     delete d->widget;
+}
+
+void Window::updateAfterResize()
+{
+    d->assertWindow();
+    d->updateLayout();
 }
 
 bool Window::changeAttributes(int *attribs)
@@ -1143,7 +1146,7 @@ void Window::saveState()
     //uint idx = mainWindowIdx;
     //DENG_ASSERT(idx == 1);
 
-    DENG_ASSERT(this == &mainWindow); /// @todo  Figure out the window index if there are many.
+    DENG_ASSERT(this == mainWindow); /// @todo  Figure out the window index if there are many.
 
     Config &config = App::config();
 
@@ -1173,7 +1176,7 @@ void Window::restoreState()
 {
     LOG_AS("Window::restoreState");
 
-    DENG_ASSERT(this == &mainWindow);  /// @todo  Figure out the window index if there are many.
+    DENG_ASSERT(this == mainWindow);  /// @todo  Figure out the window index if there are many.
     //uint idx = mainWindowIdx;
     //DENG_ASSERT(idx == 1);
 

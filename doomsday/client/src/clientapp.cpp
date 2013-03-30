@@ -166,7 +166,7 @@ void ClientApp::initialize()
     // Create the main window.
     char title[256];
     DD_ComposeMainWindowTitle(title);
-    new Window(title);
+    Window::create(title);
 
     LegacyCore_Timer(1, continueInitWithEventLoopRunning);
 }

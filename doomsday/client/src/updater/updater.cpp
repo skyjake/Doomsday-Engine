@@ -72,7 +72,7 @@ static Updater* updater = 0;
 
 /// @todo The platform ID should come from the Builder.
 #if defined(WIN32)
-#  define PLATFORM_ID       "wnd-x86"
+#  define PLATFORM_ID       "win-x86"
 
 #elif defined(MACOSX)
 #  if defined(MACOS_10_7)

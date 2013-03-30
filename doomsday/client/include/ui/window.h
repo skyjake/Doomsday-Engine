@@ -78,13 +78,14 @@ void Sys_InitWindowManager();
  */
 void Sys_ShutdownWindowManager();
 
-/*
- * Window management.
+/**
+ * Window and window management.
+ *
+ * @deprecated  Windows will be represented by CanvasWindow instances.
  */
-
 class Window
 {
-public:
+private:
     /**
      * Constructs a new window using the default configuration. Note that the
      * default configuration is saved persistently when the engine shuts down and
@@ -94,15 +95,10 @@ public:
      * configuration.
      *
      * @param title  Text for the window title.
-     *
-     * @attention Caller does @em not get ownership.
-     *
-     * @deprecated  Windows will be represented by CanvasWindow instances.
-     *
-     * @todo Should be private
      */
     Window(char const *title = "");
 
+public:
     /**
      * Close and destroy the window. Its state is saved persistently and used as
      * the default configuration the next time the same window is created.
@@ -112,8 +108,28 @@ public:
     ~Window();
 
 public:
+    /**
+     * Constructs a new window using the default configuration. Note that the
+     * default configuration is saved persistently when the engine shuts down
+     * and is restored when the engine is restarted.
+     *
+     * Command line options (e.g., -xpos) can be used to modify the window
+     * configuration.
+     *
+     * @param title  Text for the window title.
+     *
+     * @note Ownership of the Window is @em not given to the caller.
+     */
+    static Window *create(char const *title);
+
+    /**
+     * Returns a pointer to the @em main window.
+     */
     static Window *main();
 
+    /**
+     * Returns a pointer to the window associated with unique index @a idx.
+     */
     static Window *byIndex(uint idx);
 
 public:
