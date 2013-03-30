@@ -100,6 +100,14 @@ static const int WAIT_MILLISECS_AFTER_MODE_CHANGE = 10; // ms
 /// A window should never go fully (or nearly fully) outside the desktop.
 static const int DESKTOP_EDGE_GRACE = 30; // pixels
 
+/// Current active window where all drawing operations occur.
+Window const *theWindow;
+
+static bool winManagerInited = false;
+
+static Window mainWindow;
+static bool mainWindowInited = false;
+
 static QRect desktopRect()
 {
     /// @todo Multimonitor? This checks the default screen.
@@ -114,11 +122,31 @@ static QRect desktopValidRect()
 }
 */
 
-static void updateMainWindowLayout();
-static void updateWindowStateAfterUserChange();
-static void useAppliedGeometryForWindows();
-static void notifyAboutModeChange();
-static void endWindowWait();
+static void notifyAboutModeChange()
+{
+    LOG_MSG("Display mode has changed.");
+    DENG2_GUI_APP->notifyDisplayModeChanged();
+}
+
+static int getWindowIdx(Window const *wnd)
+{
+    /// @todo  Multiple windows.
+    if(wnd == &mainWindow) return mainWindowIdx;
+
+    return 0;
+}
+
+static inline Window *getWindow(uint idx)
+{
+    if(!winManagerInited)
+        return NULL; // Window manager is not initialized.
+
+    if(idx == 1)
+        return &mainWindow;
+
+    //DENG_ASSERT(false); // We can only have window 1 (main window).
+    return NULL;
+}
 
 DENG2_PIMPL(Window)
 {
@@ -149,6 +177,48 @@ DENG2_PIMPL(Window)
 
     Instance(Public *i) : Base(i)
     {}
+
+    static Window *createWindow(char const *title)
+    {
+        if(mainWindowInited) return 0; /// @todo  Allow multiple.
+
+        Window *wnd = &mainWindow;
+        std::memset(wnd, 0, sizeof(*wnd));
+        mainWindowIdx = 1;
+
+        wnd->restoreState();
+
+        // Create the main window (hidden).
+        mainWindow.d->widget = new CanvasWindow;
+        mainWindow.setTitle(title);
+
+        // Minimum possible size when resizing.
+        mainWindow.d->widget->setMinimumSize(QSize(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT));
+
+        // After the main window is created, we can finish with the engine init.
+        mainWindow.d->widget->canvas().setInitFunc(finishMainWindowInit);
+
+        mainWindow.d->widget->setCloseFunc(windowIsClosing);
+        mainWindow.d->widget->setMoveFunc(windowWasMoved);
+
+        // Let's see if there are command line options overriding the previous state.
+        mainWindow.d->modifyAccordingToOptions();
+
+        // Make it so. (Not shown yet.)
+        mainWindow.d->applyWindowGeometry();
+
+#ifdef WIN32
+        // Set an icon for the window.
+        AutoStr *iconPath = AutoStr_FromText("data\\graphics\\doomsday.ico");
+        F_PrependBasePath(iconPath, iconPath);
+        LOG_DEBUG("Window icon: ") << NativePath(Str_Text(iconPath)).pretty();
+        mainWindow.d->widget->setWindowIcon(QIcon(Str_Text(iconPath)));
+#endif
+
+        /// @todo Refactor for multiwindow support.
+        mainWindowInited = true;
+        return &mainWindow;
+    }
 
     void inline assertWindow() const
     {
@@ -621,115 +691,198 @@ DENG2_PIMPL(Window)
                     << Vector2i(width(), height()).asText();
         }
     }
-};
 
-/// Current active window where all drawing operations occur.
-Window const *theWindow;
-
-static bool winManagerInited = false;
-
-static Window mainWindow;
-static bool mainWindowInited = false;
-
-static void updateMainWindowLayout()
-{
-    Window *wnd = Window::main();
-
-    if(wnd->d->needReshowFullscreen)
+    static void updateMainWindowLayout()
     {
-        LOG_DEBUG("Main window re-set to fullscreen mode.");
-        wnd->d->needReshowFullscreen = false;
-        wnd->d->widget->showNormal();
-        wnd->d->widget->showFullScreen();
+        Window *wnd = Window::main();
+
+        if(wnd->d->needReshowFullscreen)
+        {
+            LOG_DEBUG("Main window re-set to fullscreen mode.");
+            wnd->d->needReshowFullscreen = false;
+            wnd->d->widget->showNormal();
+            wnd->d->widget->showFullScreen();
+        }
+
+        if(wnd->d->needShowFullscreen)
+        {
+            LOG_DEBUG("Main window to fullscreen mode.");
+            wnd->d->needShowFullscreen = false;
+            wnd->d->widget->showFullScreen();
+        }
+
+        if(wnd->d->flags & DDWF_FULLSCREEN)
+        {
+    #if defined MACOSX
+            // For some interesting reason, we have to scale the window twice in fullscreen mode
+            // or the resulting layout won't be correct.
+            wnd->d->widget->setGeometry(QRect(0, 0, 320, 240));
+            wnd->d->widget->setGeometry(wnd->d->appliedGeometry);
+
+            DisplayMode_Native_Raise(wnd->nativeHandle());
+    #endif
+            wnd->trapMouse();
+        }
+
+        if(wnd->d->needShowNormal)
+        {
+            LOG_DEBUG("Main window to normal mode (center:%b).") << ((wnd->d->flags & DDWF_CENTERED) != 0);
+            wnd->d->needShowNormal = false;
+            wnd->d->widget->showNormal();
+        }
     }
 
-    if(wnd->d->needShowFullscreen)
+    static void useAppliedGeometryForWindows()
     {
-        LOG_DEBUG("Main window to fullscreen mode.");
-        wnd->d->needShowFullscreen = false;
-        wnd->d->widget->showFullScreen();
-    }
+        Window *wnd = Window::main();
+        if(!wnd || !wnd->d->widget) return;
 
-    if(wnd->d->flags & DDWF_FULLSCREEN)
-    {
-#if defined MACOSX
-        // For some interesting reason, we have to scale the window twice in fullscreen mode
-        // or the resulting layout won't be correct.
-        wnd->d->widget->setGeometry(QRect(0, 0, 320, 240));
+        if(wnd->d->flags & DDWF_CENTERED)
+        {
+            wnd->d->appliedGeometry = wnd->d->centeredGeometry();
+        }
+
+        DEBUG_Message(("Using applied geometry: (%i,%i) %s",
+                       wnd->d->appliedGeometry.x(),
+                       wnd->d->appliedGeometry.y(),
+                       Vector2i(wnd->d->appliedGeometry.width(),
+                                wnd->d->appliedGeometry.height()).asText()));
         wnd->d->widget->setGeometry(wnd->d->appliedGeometry);
-
-        DisplayMode_Native_Raise(wnd->nativeHandle());
-#endif
-        wnd->trapMouse();
     }
 
-    if(wnd->d->needShowNormal)
+    static void endWindowWait()
     {
-        LOG_DEBUG("Main window to normal mode (center:%b).") << ((wnd->d->flags & DDWF_CENTERED) != 0);
-        wnd->d->needShowNormal = false;
-        wnd->d->widget->showNormal();
+        Window *wnd = Window::main();
+        if(wnd)
+        {
+            DEBUG_Message(("Window is no longer waiting for geometry changes."));
+
+            // This flag is used for protecting against mode change resizings.
+            wnd->d->needWait = false;
+        }
     }
-}
 
-static void useAppliedGeometryForWindows()
-{
-    Window *wnd = Window::main();
-    if(!wnd || !wnd->d->widget) return;
-
-    if(wnd->d->flags & DDWF_CENTERED)
+    static Window *canvasToWindow(Canvas &DENG_DEBUG_ONLY(canvas))
     {
-        wnd->d->appliedGeometry = wnd->d->centeredGeometry();
+        DENG_ASSERT(mainWindow.d->widget->ownsCanvas(&canvas)); /// @todo multiwindow
+
+        return &mainWindow;
     }
 
-    DEBUG_Message(("Using applied geometry: (%i,%i) %s",
-                   wnd->d->appliedGeometry.x(),
-                   wnd->d->appliedGeometry.y(),
-                   Vector2i(wnd->d->appliedGeometry.width(),
-                            wnd->d->appliedGeometry.height()).asText()));
-    wnd->d->widget->setGeometry(wnd->d->appliedGeometry);
-}
+    static void windowFocusChanged(Canvas &canvas, bool focus)
+    {
+        Window *wnd = canvasToWindow(canvas);
+        wnd->d->assertWindow();
+
+        LOG_DEBUG("windowFocusChanged focus:%b fullscreen:%b hidden:%b minimized:%b")
+                << focus << wnd->isFullscreen()
+                << wnd->d->widget->isHidden() << wnd->d->widget->isMinimized();
+
+        if(!focus)
+        {
+            DD_ClearEvents();
+            I_ResetAllDevices();
+            wnd->trapMouse(false);
+        }
+        else if(wnd->isFullscreen())
+        {
+            // Trap the mouse again in fullscreen mode.
+            wnd->trapMouse();
+        }
+
+        // Generate an event about this.
+        ddevent_t ev;
+        ev.type = E_FOCUS;
+        ev.focus.gained = focus;
+        ev.focus.inWindow = getWindowIdx(wnd);
+        DD_PostEvent(&ev);
+    }
+
+    static void finishMainWindowInit(Canvas &canvas)
+    {
+        Window *wnd = canvasToWindow(canvas);
+        DENG_ASSERT(wnd == &mainWindow);
+
+    #if defined MACOSX
+        if(wnd->isFullscreen())
+        {
+            // The window must be manually raised above the shielding window put up by
+            // the display capture.
+            DisplayMode_Native_Raise(wnd->nativeHandle());
+        }
+    #endif
+
+        wnd->d->widget->raise();
+        wnd->d->widget->activateWindow();
+
+        // Automatically grab the mouse from the get-go if in fullscreen mode.
+        if(Mouse_IsPresent() && wnd->isFullscreen())
+        {
+            wnd->trapMouse();
+        }
+
+        wnd->d->widget->canvas().setFocusFunc(windowFocusChanged);
+
+    #ifdef WIN32
+        if(wnd->isFullscreen())
+        {
+            // It would seem we must manually give our canvas focus. Bug in Qt?
+            wnd->d->widget->canvas().setFocus();
+        }
+    #endif
+
+        DD_FinishInitializationAfterWindowReady();
+    }
+
+    static bool windowIsClosing(CanvasWindow &)
+    {
+        LOG_DEBUG("Window is about to close, executing 'quit'.");
+
+        /// @todo autosave and quit?
+        Con_Execute(CMDS_DDAY, "quit", true, false);
+
+        // We are not authorizing immediate closing of the window;
+        // engine shutdown will take care of it later.
+        return false; // don't close
+    }
+
+    /**
+     * See the todo notes. Duplicating state is not a good idea.
+     */
+    static void updateWindowStateAfterUserChange()
+    {
+        Window *wnd = Window::main();
+        if(!wnd || !wnd->d->widget) return;
+
+        wnd->d->fetchWindowGeometry();
+        wnd->d->willUpdateWindowState = false;
+    }
+
+    static void windowWasMoved(CanvasWindow &cw)
+    {
+        LOG_AS("windowWasMoved");
+
+        Window *wnd = canvasToWindow(cw.canvas());
+        DENG_ASSERT(wnd != 0);
+
+        if(!(wnd->d->flags & DDWF_FULLSCREEN) && !wnd->d->needWait)
+        {
+            // The window was moved from its initial position; it is therefore
+            // not centered any more (most likely).
+            wnd->d->setFlag(DDWF_CENTERED, false);
+        }
+
+        if(!wnd->d->willUpdateWindowState)
+        {
+            wnd->d->willUpdateWindowState = true;
+            LegacyCore_Timer(500, updateWindowStateAfterUserChange);
+        }
+    }
+};
 
 Window *Window::main()
 {
     return &mainWindow;
-}
-
-static void notifyAboutModeChange()
-{
-    LOG_MSG("Display mode has changed.");
-    DENG2_GUI_APP->notifyDisplayModeChanged();
-}
-
-static void endWindowWait()
-{
-    Window *wnd = Window::main();
-    if(wnd)
-    {
-        DEBUG_Message(("Window is no longer waiting for geometry changes."));
-
-        // This flag is used for protecting against mode change resizings.
-        wnd->d->needWait = false;
-    }
-}
-
-static int getWindowIdx(Window const *wnd)
-{
-    /// @todo  Multiple windows.
-    if(wnd == &mainWindow) return mainWindowIdx;
-
-    return 0;
-}
-
-static inline Window *getWindow(uint idx)
-{
-    if(!winManagerInited)
-        return NULL; // Window manager is not initialized.
-
-    if(idx == 1)
-        return &mainWindow;
-
-    //DENG_ASSERT(false); // We can only have window 1 (main window).
-    return NULL;
 }
 
 Window *Window::byIndex(uint id)
@@ -771,175 +924,16 @@ void Sys_ShutdownWindowManager()
     winManagerInited = false;
 }
 
-static Window *canvasToWindow(Canvas &DENG_DEBUG_ONLY(canvas))
-{
-    DENG_ASSERT(mainWindow.d->widget->ownsCanvas(&canvas)); /// @todo multiwindow
-
-    return &mainWindow;
-}
-
-static void windowFocusChanged(Canvas &canvas, bool focus)
-{
-    Window *wnd = canvasToWindow(canvas);
-    wnd->d->assertWindow();
-
-    LOG_DEBUG("windowFocusChanged focus:%b fullscreen:%b hidden:%b minimized:%b")
-            << focus << wnd->isFullscreen()
-            << wnd->d->widget->isHidden() << wnd->d->widget->isMinimized();
-
-    if(!focus)
-    {
-        DD_ClearEvents();
-        I_ResetAllDevices();
-        wnd->trapMouse(false);
-    }
-    else if(wnd->isFullscreen())
-    {
-        // Trap the mouse again in fullscreen mode.
-        wnd->trapMouse();
-    }
-
-    // Generate an event about this.
-    ddevent_t ev;
-    ev.type = E_FOCUS;
-    ev.focus.gained = focus;
-    ev.focus.inWindow = getWindowIdx(wnd);
-    DD_PostEvent(&ev);
-}
-
-static void finishMainWindowInit(Canvas &canvas)
-{
-    Window *wnd = canvasToWindow(canvas);
-    DENG_ASSERT(wnd == &mainWindow);
-
-#if defined MACOSX
-    if(wnd->isFullscreen())
-    {
-        // The window must be manually raised above the shielding window put up by
-        // the display capture.
-        DisplayMode_Native_Raise(wnd->nativeHandle());
-    }
-#endif
-
-    wnd->d->widget->raise();
-    wnd->d->widget->activateWindow();
-
-    // Automatically grab the mouse from the get-go if in fullscreen mode.
-    if(Mouse_IsPresent() && wnd->isFullscreen())
-    {
-        wnd->trapMouse();
-    }
-
-    wnd->d->widget->canvas().setFocusFunc(windowFocusChanged);
-
-#ifdef WIN32
-    if(wnd->isFullscreen())
-    {
-        // It would seem we must manually give our canvas focus. Bug in Qt?
-        wnd->d->widget->canvas().setFocus();
-    }
-#endif
-
-    DD_FinishInitializationAfterWindowReady();
-}
-
-static bool windowIsClosing(CanvasWindow &)
-{
-    LOG_DEBUG("Window is about to close, executing 'quit'.");
-
-    /// @todo autosave and quit?
-    Con_Execute(CMDS_DDAY, "quit", true, false);
-
-    // We are not authorizing immediate closing of the window;
-    // engine shutdown will take care of it later.
-    return false; // don't close
-}
-
-/**
- * See the todo notes. Duplicating state is not a good idea.
- */
-static void updateWindowStateAfterUserChange()
-{
-    Window *wnd = Window::main();
-    if(!wnd || !wnd->d->widget) return;
-
-    wnd->d->fetchWindowGeometry();
-    wnd->d->willUpdateWindowState = false;
-}
-
-static void windowWasMoved(CanvasWindow &cw)
-{
-    LOG_AS("windowWasMoved");
-
-    Window *wnd = canvasToWindow(cw.canvas());
-    DENG_ASSERT(wnd != 0);
-
-    if(!(wnd->d->flags & DDWF_FULLSCREEN) && !wnd->d->needWait)
-    {
-        // The window was moved from its initial position; it is therefore
-        // not centered any more (most likely).
-        wnd->d->setFlag(DDWF_CENTERED, false);
-    }
-
-    if(!wnd->d->willUpdateWindowState)
-    {
-        wnd->d->willUpdateWindowState = true;
-        LegacyCore_Timer(500, updateWindowStateAfterUserChange);
-    }
-}
-
 void Window::updateAfterResize()
 {
     d->assertWindow();
     d->updateLayout();
 }
 
-static Window *createWindow(char const *title)
-{
-    if(mainWindowInited) return 0; /// @todo  Allow multiple.
-
-    Window *wnd = &mainWindow;
-    std::memset(wnd, 0, sizeof(*wnd));
-    mainWindowIdx = 1;
-
-    wnd->restoreState();
-
-    // Create the main window (hidden).
-    mainWindow.d->widget = new CanvasWindow;
-    mainWindow.setTitle(title);
-
-    // Minimum possible size when resizing.
-    mainWindow.d->widget->setMinimumSize(QSize(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT));
-
-    // After the main window is created, we can finish with the engine init.
-    mainWindow.d->widget->canvas().setInitFunc(finishMainWindowInit);
-
-    mainWindow.d->widget->setCloseFunc(windowIsClosing);
-    mainWindow.d->widget->setMoveFunc(windowWasMoved);
-
-    // Let's see if there are command line options overriding the previous state.
-    mainWindow.d->modifyAccordingToOptions();
-
-    // Make it so. (Not shown yet.)
-    mainWindow.d->applyWindowGeometry();
-
-#ifdef WIN32
-    // Set an icon for the window.
-    AutoStr *iconPath = AutoStr_FromText("data\\graphics\\doomsday.ico");
-    F_PrependBasePath(iconPath, iconPath);
-    LOG_DEBUG("Window icon: ") << NativePath(Str_Text(iconPath)).pretty();
-    mainWindow.d->widget->setWindowIcon(QIcon(Str_Text(iconPath)));
-#endif
-
-    /// @todo Refactor for multiwindow support.
-    mainWindowInited = true;
-    return &mainWindow;
-}
-
 Window::Window(char const *title) : d(new Instance(this))
 {
     DENG_ASSERT(!winManagerInited);
-    createWindow(title);
+    d->createWindow(title);
 }
 
 Window::~Window()
