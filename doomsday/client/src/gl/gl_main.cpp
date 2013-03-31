@@ -1234,17 +1234,17 @@ D_CMD(DisplayModeInfo)
                       .arg(mode->ratioY);
     if(mode->refreshRate > 0)
     {
-        str += QString(", refresh: %1 Hz").arg(mode->refreshRate, 0, 'g', 1);
+        str += QString(", refresh: %1 Hz").arg(mode->refreshRate, 0, 'f', 3);
     }
-    str += QString(")\nMain window origin:%1 dimensions:%2 fullscreen:%3 centered:%4 maximized:%5")
+    str += QString(")\nMain window:\n  origin:%1 dimensions:%2\n  windowed-origin:%1 windowed-dimensions:%2")
                 .arg(de::Vector2i(mainWindow.x(), mainWindow.y()).asText())
                 .arg(de::Vector2i(mainWindow.width(), mainWindow.height()).asText())
+                .arg(de::Vector2i(mainWindow.normalX(), mainWindow.normalY()).asText())
+                .arg(de::Vector2i(mainWindow.normalWidth(), mainWindow.normalHeight()).asText());
+    str += QString("\n  fullscreen:%3 centered:%4 maximized:%5")
                 .arg(mainWindow.isFullscreen()     ? "yes" : "no")
                 .arg(mainWindow.isCentered()       ? "yes" : "no")
                 .arg(mainWindow.isMaximized()      ? "yes" : "no");
-    str += QString("\nNormal geometry:%1 %2")
-                .arg(de::Vector2i(mainWindow.normalX(), mainWindow.normalY()).asText())
-                .arg(de::Vector2i(mainWindow.normalWidth(), mainWindow.normalHeight()).asText());
 
     Con_Message(str.toUtf8().constData());
     return true;
