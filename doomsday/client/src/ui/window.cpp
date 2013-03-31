@@ -127,19 +127,16 @@ static QRect desktopValidRect()
 }
 */
 
-static QRect centeredGeometry(Window const &wnd)
+static QRect centeredRect(QSize size)
 {
-    QSize winSize = wnd.normalRect().size();
-
-    // Center the window.
     QSize screenSize = desktopRect().size();
     LOG_DEBUG("centeredGeometry: Current desktop rect %s")
             << Vector2i(screenSize.width(), screenSize.height()).asText();
 
     return QRect(desktopRect().topLeft() +
-                 QPoint((screenSize.width()  - winSize.width())  / 2,
-                        (screenSize.height() - winSize.height()) / 2),
-                 winSize);
+                 QPoint((screenSize.width()  - size.width())  / 2,
+                        (screenSize.height() - size.height()) / 2),
+                 size);
 }
 
 static void notifyAboutModeChange()
@@ -376,8 +373,8 @@ DENG2_PIMPL(Window)
                                         DisplayMode_Current()->height);
 #endif
 
-                // The window is already visible, so let's allow a mode change to resolve itself
-                // before we go changing the window.
+                // The window is already visible, so let's allow a mode change to
+                // resolve itself before we go changing the window.
                 LegacyCore_Timer(WAIT_MILLISECS_AFTER_MODE_CHANGE, updateMainWindowLayout);
             }
             else
@@ -393,12 +390,12 @@ DENG2_PIMPL(Window)
         {
             // The window is in windowed mode (frames and window decoration visible).
             // We will restore it to its previous position and size.
-            QRect geom = self.normalRect(); // Previously stored normal geometry.
+            QRect geom = normalGeometry; // Previously stored normal geometry.
 
             if(flags & WF_CENTERED)
             {
                 // We'll center the window.
-                geom = centeredGeometry(self);
+                geom = centeredRect(normalGeometry.size());
             }
 
             if(flags & WF_MAXIMIZED)
@@ -417,8 +414,8 @@ DENG2_PIMPL(Window)
             {
                 // The window is in normal mode: not maximized or fullscreen.
 
-                // If the window is already visible, changes to it need to be deferred
-                // so that the native counterpart can be updated, too
+                // If the window is already visible, changes to it need to be
+                // deferred so that the native counterpart can be updated, too
                 if(widget->isVisible() && (modeChanged || widget->isMaximized()))
                 {
                     if(modeChanged)
@@ -439,15 +436,15 @@ DENG2_PIMPL(Window)
 
                 if(widget->isVisible())
                 {
-                    // The native window may not be ready to receive the updated geometry
-                    // (e.g., window decoration not made visible yet). We'll apply the
-                    // geometry after a delay.
+                    // The native window may not be ready to receive the updated
+                    // geometry (e.g., window decoration not made visible yet).
+                    // We'll apply the geometry after a delay.
                     LegacyCore_Timer(50 + WAIT_MILLISECS_AFTER_MODE_CHANGE, useAppliedGeometryForWindows);
                 }
                 else
                 {
-                    // The native window is not visible yet, so we can apply any number
-                    // of changes we like.
+                    // The native window is not visible yet, so we can apply any
+                    // number of changes we like.
                     widget->setGeometry(geom);
                 }
             }
@@ -646,8 +643,8 @@ DENG2_PIMPL(Window)
         if(wnd->d->flags & WF_FULLSCREEN)
         {
 #if defined MACOSX
-            // For some interesting reason, we have to scale the window twice in fullscreen mode
-            // or the resulting layout won't be correct.
+            // For some interesting reason, we have to scale the window twice
+            // in fullscreen mode or the resulting layout won't be correct.
             wnd->d->widget->setGeometry(QRect(0, 0, 320, 240));
             wnd->d->widget->setGeometry(wnd->d->appliedGeometry);
 
@@ -671,14 +668,12 @@ DENG2_PIMPL(Window)
 
         if(wnd->d->flags & WF_CENTERED)
         {
-            wnd->d->appliedGeometry = centeredGeometry(*wnd);
+            wnd->d->appliedGeometry = centeredRect(wnd->rect().size());
         }
 
-        DEBUG_Message(("Using applied geometry: (%i,%i) %s",
-                       wnd->d->appliedGeometry.x(),
-                       wnd->d->appliedGeometry.y(),
-                       Vector2i(wnd->d->appliedGeometry.width(),
-                                wnd->d->appliedGeometry.height()).asText()));
+        LOG_DEBUG("Using applied geometry: %i, %i %s")
+            << wnd->d->appliedGeometry.x() << wnd->d->appliedGeometry.y()
+            << Vector2i(wnd->d->appliedGeometry.width(), wnd->d->appliedGeometry.height()).asText();
         wnd->d->widget->setGeometry(wnd->d->appliedGeometry);
     }
 
@@ -844,7 +839,6 @@ void Window::shutdown()
     /// @todo Delete all windows, not just the main one.
 
     // Get rid of the windows.
-    DENG_ASSERT(mainWindow != 0);
     delete mainWindow; mainWindow = 0;
 
     // Now off-line, no more window management will be possible.
@@ -927,6 +921,8 @@ Window::~Window()
     // Make sure we'll remember the config.
     saveState();
 
+    // As the color transfer table is owned by the window on some platforms
+    // (e.g., Windows) we must shutdown DisplayMode first.
     if(this == mainWindow)
     {
         DisplayMode_Shutdown();
