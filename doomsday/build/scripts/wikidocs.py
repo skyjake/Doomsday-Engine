@@ -22,6 +22,10 @@ def heading(col, m):
     hd += ' for '  + col
     return hd
 
+def colWidth(m):
+    if m == 'variable': return 33
+    return 20
+
 def colHeading(m):
     hd = {'command': 'Command', 'variable': 'Variable'}[m]
     return hd
@@ -127,7 +131,8 @@ indexPage['command'] = ''
 for col in collections:
     for mode in modes:
         indexPage[mode] += '\n== %s ==\n\n' % heading(col, mode)
-        indexPage[mode] += '{| class="wikitable"\n! %s\n! Description\n' % colHeading(mode)
+        indexPage[mode] += '{| class="wikitable" width="100%%"\n! width="%i%%"| %s\n! Description\n' \
+            % (colWidth(mode), colHeading(mode))
         
         pages = sorted(pagesForCollection[col].values(), key=lambda p: p.name)
         for page in filter(lambda p: p.mode == mode, pages):
