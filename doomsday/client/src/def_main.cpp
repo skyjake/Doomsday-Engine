@@ -468,7 +468,7 @@ ded_compositefont_t* Def_GetCompositeFont(char const* uriCString)
 }
 
 /// @todo $revise-texture-animation
-ded_decor_t *Def_GetDecoration(uri_s const *uri /*, boolean hasExternal, boolean isCustom*/)
+ded_decor_t *Def_GetDecoration(uri_s const *uri, /*bool hasExternal,*/ bool isCustom)
 {
     DENG_ASSERT(uri);
 
@@ -479,7 +479,7 @@ ded_decor_t *Def_GetDecoration(uri_s const *uri /*, boolean hasExternal, boolean
         if(def->material && Uri_Equality(def->material, uri))
         {
             // Is this suitable?
-            //if(Def_IsAllowedDecoration(def, hasExternal, isCustom))
+            if(Def_IsAllowedDecoration(def, /*hasExternal,*/ isCustom))
                 return def;
         }
     }
@@ -487,7 +487,7 @@ ded_decor_t *Def_GetDecoration(uri_s const *uri /*, boolean hasExternal, boolean
 }
 
 /// @todo $revise-texture-animation
-ded_reflection_t *Def_GetReflection(uri_s const *uri /*, boolean hasExternal, boolean isCustom*/)
+ded_reflection_t *Def_GetReflection(uri_s const *uri, /* bool hasExternal,*/ bool isCustom)
 {
     DENG_ASSERT(uri);
 
@@ -498,7 +498,7 @@ ded_reflection_t *Def_GetReflection(uri_s const *uri /*, boolean hasExternal, bo
         if(def->material && Uri_Equality(def->material, uri))
         {
             // Is this suitable?
-            //if(Def_IsAllowedReflection(def, hasExternal, isCustom))
+            if(Def_IsAllowedReflection(def, /*hasExternal,*/ isCustom))
                 return def;
         }
     }
@@ -506,7 +506,7 @@ ded_reflection_t *Def_GetReflection(uri_s const *uri /*, boolean hasExternal, bo
 }
 
 /// @todo $revise-texture-animation
-ded_detailtexture_t *Def_GetDetailTex(uri_s const *uri /*, boolean hasExternal, boolean isCustom*/)
+ded_detailtexture_t *Def_GetDetailTex(uri_s const *uri, /*bool hasExternal,*/ bool isCustom)
 {
     DENG_ASSERT(uri);
 
@@ -517,14 +517,14 @@ ded_detailtexture_t *Def_GetDetailTex(uri_s const *uri /*, boolean hasExternal, 
         if(def->material1 && Uri_Equality(def->material1, uri))
         {
             // Is this suitable?
-            //if(Def_IsAllowedDetailTex(def, hasExternal, isCustom))
+            if(Def_IsAllowedDetailTex(def, /*hasExternal,*/ isCustom))
                 return def;
         }
 
         if(def->material2 && Uri_Equality(def->material2, uri))
         {
             // Is this suitable?
-            //if(Def_IsAllowedDetailTex(def, hasExternal, isCustom))
+            if(Def_IsAllowedDetailTex(def, /*hasExternal,*/ isCustom))
                 return def;
         }
     }
@@ -1158,7 +1158,10 @@ static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
                     Material::Layer::Stage *stage = layer0->stages()[i];
                     de::Uri textureUri(stage->texture->manifest().composeUri());
 
-                    ded_detailtexture_t const *detailDef = Def_GetDetailTex(reinterpret_cast<uri_s *>(&textureUri)/*, UNKNOWN VALUE, manifest.isCustom()*/);
+                    ded_detailtexture_t const *detailDef =
+                        Def_GetDetailTex(reinterpret_cast<uri_s *>(&textureUri),
+                                         /*UNKNOWN VALUE,*/ material.manifest().isCustom());
+
                     if(!detailDef || !detailDef->stage.texture) continue;
 
                     if(!dlayer)
@@ -1204,7 +1207,10 @@ static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
                     Material::Layer::Stage *stage = layer0->stages()[i];
                     de::Uri textureUri(stage->texture->manifest().composeUri());
 
-                    ded_reflection_t const *shineDef = Def_GetReflection(reinterpret_cast<uri_s *>(&textureUri)/*, UNKNOWN VALUE, manifest.isCustom()*/);
+                    ded_reflection_t const *shineDef =
+                        Def_GetReflection(reinterpret_cast<uri_s *>(&textureUri),
+                                          /*UNKNOWN VALUE,*/ material.manifest().isCustom());
+
                     if(!shineDef || !shineDef->stage.texture) continue;
 
                     if(!slayer)
@@ -1303,7 +1309,8 @@ static void rebuildMaterialDecorations(Material &material, ded_material_t const 
     {
         // Perhaps an oldschool linked decoration definition?
         de::Uri materialUri = material.manifest().composeUri();
-        ded_decor_t *decorDef = Def_GetDecoration(reinterpret_cast<uri_s *>(&materialUri));
+        ded_decor_t *decorDef = Def_GetDecoration(reinterpret_cast<uri_s *>(&materialUri),
+                                                  material.manifest().isCustom());
         if(decorDef)
         {
             for(int i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
@@ -2446,28 +2453,26 @@ StringArray* Def_ListStateIDs(void)
     return array;
 }
 
-#if 0 /// @todo $revise-texture-animation
-boolean Def_IsAllowedDecoration(ded_decor_t* def, boolean hasExternal, boolean isCustom)
+bool Def_IsAllowedDecoration(ded_decor_t *def, /*bool hasExternal,*/ bool isCustom)
 {
-    if(hasExternal) return (def->flags & DCRF_EXTERNAL) != 0;
-    if(!isCustom)   return (def->flags & DCRF_NO_IWAD ) == 0;
+    //if(hasExternal) return (def->flags & DCRF_EXTERNAL) != 0;
+    if(!isCustom)   return (def->flags & DCRF_NO_IWAD) == 0;
     return (def->flags & DCRF_PWAD) != 0;
 }
 
-boolean Def_IsAllowedReflection(ded_reflection_t* def, boolean hasExternal, boolean isCustom)
+bool Def_IsAllowedReflection(ded_reflection_t *def, /*bool hasExternal,*/ bool isCustom)
 {
-    if(hasExternal) return (def->flags & REFF_EXTERNAL) != 0;
-    if(!isCustom)   return (def->flags & REFF_NO_IWAD ) == 0;
+    //if(hasExternal) return (def->flags & REFF_EXTERNAL) != 0;
+    if(!isCustom)   return (def->flags & REFF_NO_IWAD) == 0;
     return (def->flags & REFF_PWAD) != 0;
 }
 
-boolean Def_IsAllowedDetailTex(ded_detailtexture_t* def, boolean hasExternal, boolean isCustom)
+bool Def_IsAllowedDetailTex(ded_detailtexture_t *def, /*bool hasExternal,*/ bool isCustom)
 {
-    if(hasExternal) return (def->flags & DTLF_EXTERNAL) != 0;
-    if(!isCustom)   return (def->flags & DTLF_NO_IWAD ) == 0;
+    //if(hasExternal) return (def->flags & DTLF_EXTERNAL) != 0;
+    if(!isCustom)   return (def->flags & DTLF_NO_IWAD) == 0;
     return (def->flags & DTLF_PWAD) != 0;
 }
-#endif
 
 /**
  * Prints a list of all the registered mobjs to the console.
