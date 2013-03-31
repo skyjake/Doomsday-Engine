@@ -160,6 +160,7 @@ dew.submitPage('Console command reference', indexPage['command'], comment)
 dew.submitPage('Console variable reference', indexPage['variable'], comment)
 
 print 'Submitting deambiguation pages...'
+
 for amb in ambigs:
     print '-', amb.title
     dew.submitPage(amb.title, amb.content, comment)
