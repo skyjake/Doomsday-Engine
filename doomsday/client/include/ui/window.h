@@ -57,10 +57,10 @@ public:
     DENG2_ERROR(MissingWindowError);
 
     /// Minimum width of a window (in fullscreen also).
-    static const int MIN_WIDTH = 320;
+    static int const MIN_WIDTH;
 
     /// Minimum height of a window (in fullscreen also).
-    static const int MIN_HEIGHT = 240;
+    static int const MIN_HEIGHT;
 
     /**
      * Logical window attribute identifiers.

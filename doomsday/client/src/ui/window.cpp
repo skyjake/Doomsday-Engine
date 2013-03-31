@@ -110,6 +110,9 @@ static const int WAIT_MILLISECS_AFTER_MODE_CHANGE = 10; // ms
 /// A window should never go fully (or nearly fully) outside the desktop.
 static const int DESKTOP_EDGE_GRACE = 30; // pixels
 
+int const Window::MIN_WIDTH  = 320;
+int const Window::MIN_HEIGHT = 240;
+
 static bool winManagerInited;
 static Window *mainWindow;
 
