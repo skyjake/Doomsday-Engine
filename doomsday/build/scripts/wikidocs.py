@@ -3,19 +3,23 @@ import sys, os, subprocess
 sys.path += ['/Users/jaakko/Dropbox/Scripts']
 import dew
 
-comment = 'Generated from Amethyst source by wikidocs.py'
+comment     = 'Generated from Amethyst source by wikidocs.py'
 collections = ['engine', 'libcommon', 'libdoom', 'libheretic', 'libhexen']
-modes = ['command', 'variable']
+modes       = ['command', 'variable']
+
 
 def categoryForMode(m):
+    """Wiki category for the mode."""
     return {'command':  'Console command', 
             'variable': 'Console variable'}[m]
 
 def categoryForCollection(col, m):
+    """Wiki category for a collection."""
     if col == 'engine': col = 'Engine'
     return categoryForMode(m) + ' (%s)' % col
     
 def heading(col, m):
+    """Heading on the index page for a particular collection."""
     hd = {'command': 'Commands', 'variable': 'Variables'}[m]
     if col == 'engine': col = 'Doomsday'
     elif col == 'libcommon': col = 'all games'
@@ -23,22 +27,35 @@ def heading(col, m):
     return hd
 
 def colWidth(m):
+    """Width of an index table column."""
     if m == 'variable': return 33
     return 20
 
 def colHeading(m):
+    """Index table heading."""
     hd = {'command': 'Command', 'variable': 'Variable'}[m]
     return hd
     
 def amethyst(input):
-    p = subprocess.Popen(['amethyst', '-dWIKI'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    """Runs amethyst with the given input and returns the output."""
+    p = subprocess.Popen(['amethyst', '-dWIKI'], 
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (output, errs) = p.communicate(input)
     return output    
 
-dew.login()
-
-
+def inOtherCollection(title, excludeCol):
+    """Check if a @a title exists in any other collection other
+    than @a excludeCol."""
+    for col in collections:
+        if col == excludeCol: continue
+        if title in pagesForCollection[col]:
+            return True
+    return False
+    
+    
 class Page:
+    """Wiki article about a console variable or command."""
+    
     def __init__(self, title, content):
         self.title = title
         self.content = content
@@ -97,13 +114,6 @@ for col in collections:
             page.name = name
             page.summary = amethyst(templ).strip()
                                         
-def inOtherCollection(title, excludeCol):
-    for col in collections:
-        if col == excludeCol: continue
-        if title in pagesForCollection[col]:
-            return True
-    return False
-    
 # Check for ambiguous pages.
 ambigs = []
 for col in collections:
@@ -142,6 +152,9 @@ for col in collections:
         
 for m in modes:
     indexPage[m] += '\n[[Category:Console]]\n[[Category:References]]\n'
+
+        
+dew.login()
         
 dew.submitPage('Console command reference', indexPage['command'], comment)
 dew.submitPage('Console variable reference', indexPage['variable'], comment)
