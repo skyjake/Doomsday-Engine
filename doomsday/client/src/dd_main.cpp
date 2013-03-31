@@ -730,8 +730,8 @@ void DD_StartTitle(void)
     ddstring_t setupCmds; Str_Init(&setupCmds);
 
     // Configure the predefined fonts (all normal, variable width).
-    char const *fontName = R_ChooseVariableFont(FS_NORMAL, Window_Width(theWindow),
-                                                           Window_Height(theWindow));
+    char const *fontName = R_ChooseVariableFont(FS_NORMAL, DENG_WINDOW->width(),
+                                                           DENG_WINDOW->height());
 
     for(int i = 1; i <= FIPAGE_NUM_PREDEFINED_FONTS; ++i)
     {
@@ -1564,7 +1564,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
 #ifdef __CLIENT__
     char buf[256];
     DD_ComposeMainWindowTitle(buf);
-    Window_SetTitle(theWindow, buf);
+    DENG_WINDOW->setTitle(buf);
 #endif
 
     if(!DD_IsShuttingDown())
@@ -1588,7 +1588,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
 
 #ifdef __CLIENT__
     DD_ComposeMainWindowTitle(buf);
-    Window_SetTitle(theWindow, buf);
+    DENG_WINDOW->setTitle(buf);
 #endif
 
     /**
@@ -1724,7 +1724,7 @@ de::Game* DD_AutoselectGame(void)
     return NULL;
 }
 
-int DD_EarlyInit(void)
+int DD_EarlyInit()
 {
     // Determine the requested degree of verbosity.
     verbose = CommandLine_Exists("-verbose");
@@ -1745,11 +1745,11 @@ int DD_EarlyInit(void)
 
 #ifdef __CLIENT__
     // Bring the window manager online.
-    Sys_InitWindowManager();
+    Window::initialize();
 #endif
 
     // Instantiate the Games collection.
-    games = new de::Games();
+    games = new Games();
 
     return true;
 }
@@ -1758,7 +1758,7 @@ int DD_EarlyInit(void)
  * This gets called when the main window is ready for GL init. The application
  * event loop is already running.
  */
-void DD_FinishInitializationAfterWindowReady(void)
+void DD_FinishInitializationAfterWindowReady()
 {
     LOG_DEBUG("Window is ready, finishing initialization");
 
@@ -1775,7 +1775,7 @@ void DD_FinishInitializationAfterWindowReady(void)
     {
         char buf[256];
         DD_ComposeMainWindowTitle(buf);
-        Window_SetTitle(theWindow, buf);
+        DENG_WINDOW->setTitle(buf);
     }
 #endif
 
@@ -2384,10 +2384,10 @@ int DD_GetInteger(int ddvalue)
         return I_ShiftDown();
 
     case DD_WINDOW_WIDTH:
-        return Window_Width(theWindow);
+        return DENG_WINDOW->width();
 
     case DD_WINDOW_HEIGHT:
-        return Window_Height(theWindow);
+        return DENG_WINDOW->height();
 
     case DD_CURRENT_CLIENT_FINALE_ID:
         return Cl_CurrentFinale();
@@ -2571,7 +2571,7 @@ void* DD_GetVariable(int ddvalue)
 
 # ifdef WIN32
     case DD_WINDOW_HANDLE:
-        return Window_NativeHandle(Window_Main());
+        return Window::main().nativeHandle();
 # endif
 #endif
 

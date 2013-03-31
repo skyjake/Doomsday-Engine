@@ -26,292 +26,320 @@
 #  error "window.h requires __CLIENT__"
 #endif
 
+#include <QRect>
+
 #include "dd_types.h"
 #include "resource/image.h"
 #include "canvaswindow.h"
-
-/// Minimum width of a window (fullscreen too? -ds)
-#define WINDOW_MIN_WIDTH        320
-
-/// Minimum height of a window (fullscreen too? -ds)
-#define WINDOW_MIN_HEIGHT       240
-
-struct ddwindow_s; // opaque
-typedef struct ddwindow_s Window;
+#include <de/Error>
 
 /**
- * @defgroup doomsdayWindowFlags Doomsday window flags.
+ * Macro for conveniently accessing the current active window. There is always
+ * one active window, so no need to worry about NULLs. The easiest way to get
+ * information about the window where drawing is done.
  */
-///@{
-#define DDWF_VISIBLE            0x01
-#define DDWF_CENTERED           0x02
-#define DDWF_MAXIMIZED          0x04
-#define DDWF_FULLSCREEN         0x08
-///@}
+#define DENG_WINDOW         (&Window::main())
 
 /**
- * Logical window attribute identifiers.
+ * A helpful macro that changes the origin of the window space coordinate system.
  */
-enum windowattribute_e
-{
-    DDWA_END = 0, ///< Marks the end of an attribute list (not a valid attribute by itself)
-
-    DDWA_X = 1,
-    DDWA_Y,
-    DDWA_WIDTH,
-    DDWA_HEIGHT,
-    DDWA_CENTERED,
-    DDWA_MAXIMIZED,
-    DDWA_FULLSCREEN,
-    DDWA_VISIBLE,
-    DDWA_COLOR_DEPTH_BITS
-};
-
-/// Determines whether @a x is a valid window attribute id.
-#define VALID_WINDOW_ATTRIBUTE(x)   ((x) >= DDWA_X && (x) <= DDWA_VISIBLE)
+#define FLIP(y)             (DENG_WINDOW->height() - (y+1))
 
 /**
- * Currently active window. There is always one active window, so no need
- * to worry about NULLs. The easiest way to get information about the
- * window where drawing is being is done.
- */
-extern Window const *theWindow;
-
-// A helpful macro that changes the origin of the screen
-// coordinate system.
-#define FLIP(y) (Window_Height(theWindow) - (y+1))
-
-/**
- * Initialize the window manager.
- * Tasks include; checking the system environment for feature enumeration.
- */
-void Sys_InitWindowManager();
-
-/**
- * Shutdown the window manager.
- */
-void Sys_ShutdownWindowManager();
-
-/*
- * Window management.
- */
-
-/**
- * Constructs a new window using the default configuration. Note that the
- * default configuration is saved persistently when the engine shuts down and
- * is restored when the engine is restarted.
- *
- * Command line options (e.g., -xpos) can be used to modify the window
- * configuration.
- *
- * @param title  Text for the window title.
- *
- * @return  Window instance. Caller does not get ownership.
+ * Window and window management.
  *
  * @deprecated  Windows will be represented by CanvasWindow instances.
  */
-Window *Window_New(char const *title);
+class Window
+{
+public:
+    /// Required/referenced Window instance is missing. @ingroup errors
+    DENG2_ERROR(MissingWindowError);
 
-/**
- * Close and destroy the window. Its state is saved persistently and used as
- * the default configuration the next time the same window is created.
- *
- * @param wnd  Window instance.
- */
-void Window_Delete(Window *wnd);
+    /// Minimum width of a window (in fullscreen also).
+    static int const MIN_WIDTH;
 
-Window *Window_Main();
+    /// Minimum height of a window (in fullscreen also).
+    static int const MIN_HEIGHT;
 
-Window *Window_ByIndex(uint idx);
+    /**
+     * Logical window attribute identifiers.
+     */
+    enum
+    {
+        End, ///< Marks the end of an attribute list (not a valid attribute in itself)
 
-boolean Window_IsFullscreen(Window const *wnd);
+        X,
+        Y,
+        Width,
+        Height,
+        Centered,
+        Maximized,
+        Fullscreen,
+        Visible,
+        ColorDepthBits
+    };
 
-boolean Window_IsCentered(Window const *wnd);
+public:
+    /**
+     * Initialize the window manager.
+     * Tasks include; checking the system environment for feature enumeration.
+     */
+    static void initialize();
 
-boolean Window_IsMaximized(Window const *wnd);
+    /**
+     * Shutdown the window manager.
+     */
+    static void shutdown();
 
-int Window_X(Window const *wnd);
+    /**
+     * Constructs a new window using the default configuration. Note that the
+     * default configuration is saved persistently when the engine shuts down
+     * and is restored when the engine is restarted.
+     *
+     * Command line options (e.g., -xpos) can be used to modify the window
+     * configuration.
+     *
+     * @param title  Text for the window title.
+     *
+     * @note Ownership of the Window is @em not given to the caller.
+     */
+    static Window *create(char const *title);
 
-int Window_Y(Window const *wnd);
+    /**
+     * Returns @c true iff a main window is available.
+     */
+    static bool haveMain();
 
-/**
- * Returns the current width of the window.
- * @param wnd  Window instance.
- */
-int Window_Width(Window const *wnd);
+    /**
+     * Returns the main window.
+     */
+    static Window &main();
 
-/**
- * Returns the current height of the window.
- * @param wnd  Window instance.
- */
-int Window_Height(Window const *wnd);
+    /**
+     * Returns a pointer to the @em main window.
+     *
+     * @see haveMain()
+     */
+    inline static Window *mainPtr() { return haveMain()? &main() : 0; }
 
-int Window_NormalX(Window const *wnd);
-int Window_NormalY(Window const *wnd);
-int Window_NormalWidth(Window const *wnd);
-int Window_NormalHeight(Window const *wnd);
+    /**
+     * Returns a pointer to the window associated with unique index @a idx.
+     */
+    static Window *byIndex(uint idx);
 
-/**
- * Determines the size of the window.
- * @param wnd  Window instance.
- * @return Window size.
- */
-Size2Raw const *Window_Size(Window const *wnd);
+public:
+    /**
+     * Returns @c true iff the window is currently fullscreen.
+     */
+    bool isFullscreen() const;
 
-int Window_ColorDepthBits(Window const *wnd);
+    /**
+     * Returns @c true iff the window is currently centered.
+     */
+    bool isCentered() const;
 
-/**
- * Sets the title of a window.
- *
- * @param win           Window instance.
- * @param title         New title for the window.
- */
-void Window_SetTitle(Window const *win, char const *title);
+    /**
+     * Returns @c true iff the window is currently maximized.
+     */
+    bool isMaximized() const;
 
-void Window_Show(Window *wnd, boolean show);
+    /**
+     * Returns the current geometry of the window.
+     */
+    QRect rect() const;
 
-/**
- * Sets or changes one or more window attributes.
- *
- * @param wnd      Window instance.
- * @param attribs  Array of values:
- *      <pre>[ attribId, value, attribId, value, ..., 0 ]</pre>
- *      The array must be zero-terminated, as that indicates where the array
- *      ends (see windowattribute_e).
- *
- * @return @c true, if the attributes were set and the window was successfully
- * updated. @c false, if there was an error with the values -- in this case all
- * the window's attributes remain unchanged.
- */
-boolean Window_ChangeAttributes(Window *wnd, int *attribs);
+    /**
+     * Convenient accessor method for retrieving the x axis origin (in pixels)
+     * for the current window geometry.
+     */
+    inline int x() const { return rect().x(); }
 
-/**
- * Request drawing the contents of the window as soon as possible.
- *
- * @param win  Window instance.
- */
-void Window_Draw(Window *win);
+    /**
+     * Convenient accessor method for retrieving the y axis origin (in pixels)
+     * for the current window geometry.
+     */
+    inline int y() const { return rect().y(); }
 
-/**
- * Make the content of the framebuffer visible.
- */
-void Window_SwapBuffers(Window const *win);
+    /**
+     * Convenient accessor method for retrieving the width dimension (in pixels)
+     * of the current window geometry.
+     */
+    inline int width() const { return rect().width(); }
 
-/**
- * Grab the contents of the window into an OpenGL texture.
- *
- * @param win    Window instance.
- * @param halfSized  If @c true, scales the image to half the full size.
- *
- * @return OpenGL texture name. Caller is reponsible for deleting the texture.
- */
-uint Window_GrabAsTexture(Window const *win, boolean halfSized);
+    /**
+     * Convenient accessor method for retrieving the height dimension (in pixels)
+     * of the current window geometry.
+     */
+    inline int height() const { return rect().height(); }
 
-/**
- * Grabs the contents of the window and saves it into an image file.
- *
- * @param win       Window instance.
- * @param fileName  Name of the file to save. May include a file extension
- *                  that indicates which format to use (e.g, "screenshot.jpg").
- *                  If omitted, defaults to PNG.
- *
- * @return @c true if successful, otherwise @c false.
- */
-boolean Window_GrabToFile(Window const *win, char const *fileName);
+    /**
+     * Returns the windowed geometry of the window (used when not maximized or
+     * fullscreen).
+     */
+    QRect normalRect() const;
 
-/**
- * Grab the contents of the window into an image.
- *
- * @param win    Window instance.
- * @param image  Grabbed image contents. Caller gets ownership; call GL_DestroyImage().
- */
-void Window_Grab(Window const *win, image_t *image);
+    inline int normalX() const { return normalRect().x(); }
 
-/**
- * Grab the contents of the window into an image.
- *
- * @param win    Window instance.
- * @param image  Grabbed image contents. Caller gets ownership; call GL_DestroyImage().
- * @param halfSized  If @c true, scales the image to half the full size.
- */
-void Window_Grab2(Window const *win, image_t *image, boolean halfSized);
+    inline int normalY() const { return normalRect().y(); }
 
-/**
- * Saves the window's state into a persistent storage so that it can be later
- * on restored. Used at shutdown time to save window geometry.
- *
- * @param wnd  Window instance.
- */
-void Window_SaveState(Window *wnd);
+    inline int normalWidth() const { return normalRect().width(); }
 
-/**
- * Restores the window's state from persistent storage. Used at engine startup
- * to determine the default window geometry.
- *
- * @param wnd  Window instance.
- */
-void Window_RestoreState(Window *wnd);
+    inline int normalHeight() const { return normalRect().height(); }
 
-/**
- * Activates or deactivates the window mouse trap. When trapped, the mouse cursor is
- * not visible and all mouse motions are interpreted as deltas.
- *
- * @param wnd     Window instance.
- * @param enable  @c true, if the mouse is to be trapped in the window.
- *
- * @note This is a C wrapper for Canvas::trapMouse().
- */
-void Window_TrapMouse(Window const *wnd, boolean enable);
+    int colorDepthBits() const;
 
-boolean Window_IsMouseTrapped(Window const *wnd);
+    /**
+     * Sets the title of a window.
+     *
+     * @param title  New title for the window.
+     */
+    void setTitle(char const *title) const; /// @todo semantically !const
 
-/**
- * Determines whether the contents of a window should be drawn during the
- * execution of the main loop callback, or should we wait for an update event
- * from the windowing system.
- *
- * @param wnd  Window instance.
- */
-boolean Window_ShouldRepaintManually(Window const *wnd);
+    void show(bool show = true);
 
-void Window_UpdateCanvasFormat(Window *wnd);
+    /**
+     * Sets or changes one or more window attributes.
+     *
+     * @param attribs  Array of values:
+     *      <pre>[ attribId, value, attribId, value, ..., 0 ]</pre>
+     *      The array must be zero-terminated, as that indicates where the
+     *      array ends (see windowattribute_e).
+     *
+     * @return @c true iff all attribute deltas were validated and the window
+     * was then successfully updated accordingly. If any attribute failed to
+     * validate, the window will remain unchanged and @a false is returned.
+     */
+    bool changeAttributes(int const *attribs);
 
-/**
- * Activates the window's GL context so that OpenGL API calls can be made.
- * The GL context is automatically active during the drawing of the window's
- * contents; at other times it needs to be manually activated.
- *
- * @param wnd  Window instance.
- */
-void Window_GLActivate(Window *wnd);
+    /**
+     * Request drawing the contents of the window as soon as possible.
+     */
+    void draw();
 
-/**
- * Dectivates the window's GL context after OpenGL API calls have been done.
- * The GL context is automatically deactived after the drawing of the window's
- * contents; at other times it needs to be manually deactivated.
- *
- * @param wnd  Window instance.
- */
-void Window_GLDone(Window *wnd);
+    /**
+     * Make the content of the framebuffer visible.
+     */
+    void swapBuffers() const;
 
-void *Window_NativeHandle(Window const *wnd);
+    /**
+     * Grab the contents of the window into an OpenGL texture.
+     *
+     * @param halfSized  If @c true, scales the image to half the full size.
+     *
+     * @return OpenGL texture name. Caller is reponsible for deleting the texture.
+     */
+    uint grabAsTexture(bool halfSized = false) const;
 
-/**
- * Returns the window's native widget, if one exists.
- */
-QWidget *Window_Widget(Window *wnd);
+    /**
+     * Grabs the contents of the window and saves it into an image file.
+     *
+     * @param fileName  Name of the file to save. May include a file extension
+     *                  that indicates which format to use (e.g, "screenshot.jpg").
+     *                  If omitted, defaults to PNG.
+     *
+     * @return @c true if successful, otherwise @c false.
+     */
+    bool grabToFile(char const *fileName) const;
 
-CanvasWindow *Window_CanvasWindow(Window *wnd);
+    /**
+     * Grab the contents of the window into the supplied @a image. Ownership of
+     * the image passes to the window for the duration of this call.
+     *
+     * @param image      Image to fill with the grabbed frame contents.
+     * @param halfSized  If @c true, scales the image to half the full size.
+     */
+    void grab(image_t &image, bool halfSized = false) const;
 
-/**
- * Utility to call after changing the size of a CanvasWindow. This will update
- * the Window state.
- *
- * @param win  Window instance.
- *
- * @deprecated In the future, size management will be done internally in
- * CanvasWindow/WindowSystem.
- */
-void Window_UpdateAfterResize(Window *win);
+    /**
+     * Saves the window's state into a persistent storage so that it can be later
+     * on restored. Used at shutdown time to save window geometry.
+     */
+    void saveState();
+
+    /**
+     * Restores the window's state from persistent storage. Used at engine startup
+     * to determine the default window geometry.
+     */
+    void restoreState();
+
+    /**
+     * Activates or deactivates the window mouse trap. When trapped, the mouse
+     * cursor is not visible and all mouse motions are interpreted as deltas.
+     *
+     * @param enable  @c true, if the mouse is to be trapped in the window.
+     *
+     * @note Effectively a wrapper for Canvas::trapMouse().
+     */
+    void trapMouse(bool enable = true) const; /// @todo semantically !const
+
+    bool isMouseTrapped() const;
+
+    /**
+     * Determines whether the contents of a window should be drawn during the
+     * execution of the main loop callback, or should we wait for an update event
+     * from the windowing system.
+     */
+    bool shouldRepaintManually() const;
+
+    void updateCanvasFormat();
+
+    /**
+     * Activates the window's GL context so that OpenGL API calls can be made.
+     * The GL context is automatically active during the drawing of the window's
+     * contents; at other times it needs to be manually activated.
+     */
+    void glActivate();
+
+    /**
+     * Dectivates the window's GL context after OpenGL API calls have been done.
+     * The GL context is automatically deactived after the drawing of the window's
+     * contents; at other times it needs to be manually deactivated.
+     */
+    void glDone();
+
+    void *nativeHandle() const;
+
+    /**
+     * Returns a pointer to the native widget for the window (may be @c NULL).
+     */
+    QWidget *widgetPtr();
+
+    /**
+     * Returns the CanvasWindow for the window.
+     */
+    CanvasWindow &canvasWindow();
+
+    /**
+     * Utility to call after changing the size of a CanvasWindow. This will
+     * update the Window state.
+     *
+     * @deprecated In the future, size management will be done internally in
+     * CanvasWindow/WindowSystem.
+     */
+    void updateAfterResize();
+
+private:
+    /**
+     * Constructs a new window using the default configuration. Note that the
+     * default configuration is saved persistently when the engine shuts down
+     * and is restored when the engine is restarted.
+     *
+     * Command line options (e.g., -xpos) can be used to modify the window
+     * configuration.
+     *
+     * @param title  Text for the window title.
+     */
+    Window(char const *title = "");
+
+    /**
+     * Close and destroy the window. Its state is saved persistently and used
+     * as the default configuration the next time the same window is created.
+     */
+    ~Window();
+
+private:
+    DENG2_PRIVATE(d)
+};
 
 #endif // LIBDENG_BASE_WINDOW_H

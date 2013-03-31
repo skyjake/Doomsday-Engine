@@ -164,7 +164,9 @@ static int showCriticalMessage(const char* msg)
     char buf[256];
 #endif
     int ret;
-    HWND hWnd = (HWND) Window_NativeHandle(Window_Main());
+    Window *wnd = Window::main();
+    DENG_ASSERT(wnd != 0);
+    HWND hWnd = (HWND) wnd->nativeHandle();
 
     if(!hWnd)
     {

@@ -355,7 +355,7 @@ void UI_DrawLogo(const Point2Raw* origin, const Size2Raw* size);
  * @param size  Screen-space dimensions of the cursor in pixels.
  * @param alpha  Alpha level to use when drawing the background.
  */
-void UI_DrawDDBackground(const Point2Raw* origin, const Size2Raw* size, float alpha);
+void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &size, float alpha);
 
 /**
  * Draw the mouse cursor at the given co-ordinates.

@@ -87,7 +87,7 @@ void LegacyWidget::update()
     DENG2_ASSERT(!BusyMode_Active());
 
     // We may be performing GL operations.
-    Window_GLActivate(Window_Main());
+    Window::main().glActivate();
 
     // Run at least one (fractional) tic.
     Loop_RunTics();
@@ -100,7 +100,7 @@ void LegacyWidget::update()
     GL_ProcessDeferredTasks(FRAME_DEFERRED_UPLOAD_TIMEOUT);
 
     // Request update of window contents.
-    Window_Draw(Window_Main());
+    Window::main().draw();
 
     // After the first frame, start timedemo.
     //DD_CheckTimeDemo();
@@ -150,7 +150,10 @@ void LegacyWidget::draw()
 
             // Draw any full window game graphics.
             if(App_GameLoaded() && gx.DrawWindow)
-                gx.DrawWindow(Window_Size(theWindow));
+            {
+                Size2Raw dimensions(DENG_WINDOW->width(), DENG_WINDOW->height());
+                gx.DrawWindow(&dimensions);
+            }
         }
     }
 

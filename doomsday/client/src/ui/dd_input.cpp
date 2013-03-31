@@ -2203,7 +2203,7 @@ void Rend_AllInputDeviceStateVisuals(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, Window_Width(theWindow), Window_Height(theWindow), 0, -1, 1);
+    glOrtho(0, DENG_WINDOW->width(), DENG_WINDOW->height(), 0, -1, 1);
 
     if(devRendKeyState)
     {
@@ -2366,10 +2366,13 @@ D_CMD(ListInputDevices)
 
 D_CMD(ReleaseMouse)
 {
-#ifdef __CLIENT__
     DENG2_UNUSED3(src, argc, argv);
-
-    Window_TrapMouse(Window_Main(), false);
+#ifdef __CLIENT__
+    if(Window::haveMain())
+    {
+        Window::main().trapMouse(false);
+        return true;
+    }
 #endif
-    return true;
+    return false;
 }

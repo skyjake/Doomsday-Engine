@@ -107,11 +107,12 @@ static void runInstallerCommand(void)
 
 static bool switchToWindowedMode()
 {
-    bool wasFull = Window_IsFullscreen(Window_Main());
+    Window &mainWindow = Window::main();
+    bool wasFull = mainWindow.isFullscreen();
     if(wasFull)
     {
-        int attribs[] = { DDWA_FULLSCREEN, false, DDWA_END };
-        Window_ChangeAttributes(Window_Main(), attribs);
+        int attribs[] = { Window::Fullscreen, false, Window::End };
+        mainWindow.changeAttributes(attribs);
     }
     return wasFull;
 }
@@ -120,8 +121,8 @@ static void switchBackToFullscreen(bool wasFull)
 {
     if(wasFull)
     {
-        int attribs[] = { DDWA_FULLSCREEN, true, DDWA_END };
-        Window_ChangeAttributes(Window_Main(), attribs);
+        int attribs[] = { Window::Fullscreen, true, Window::End };
+        Window::main().changeAttributes(attribs);
     }
 }
 
@@ -241,7 +242,7 @@ DENG2_PIMPL(Updater)
     {
         if(!settingsDlg)
         {
-            settingsDlg = new UpdaterSettingsDialog(Window_Widget(Window_Main()));
+            settingsDlg = new UpdaterSettingsDialog(Window::main().widgetPtr());
             QObject::connect(settingsDlg, SIGNAL(finished(int)), thisPublic, SLOT(settingsDialogClosed(int)));
         }
         else
@@ -312,7 +313,7 @@ DENG2_PIMPL(Updater)
             // Automatically switch to windowed mode for convenience.
             bool wasFull = switchToWindowedMode();
 
-            UpdateAvailableDialog dlg(latestVersion, latestLogUri, Window_Widget(Window_Main()));
+            UpdateAvailableDialog dlg(latestVersion, latestLogUri, Window::main().widgetPtr());
             availableDlg = &dlg;
             execAvailableDialog(wasFull);
         }
@@ -535,7 +536,7 @@ void Updater::checkNowShowingProgress()
     // Not if there is an ongoing download.
     if(d->download) return;
 
-    d->availableDlg = new UpdateAvailableDialog(Window_Widget(Window_Main()));
+    d->availableDlg = new UpdateAvailableDialog(Window::main().widgetPtr());
     d->queryLatestVersion(true);
 
     d->execAvailableDialog(false);

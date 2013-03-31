@@ -58,12 +58,13 @@ static void Mouse_Qt_Shutdown(void)
     // nothing to do
 }
 
-static void Mouse_Qt_Poll(void)
+static void Mouse_Qt_Poll()
 {
     if(!mouseTrapped) return;
 
 #ifndef LIBDENG_CANVAS_TRACK_WITH_MOUSE_MOVE_EVENTS
-    QWidget* widget = Window_Widget(Window_Main());
+    Window &mainWindow = Window::main();
+    QWidget *widget = mainWindow.widgetPtr();
     if(!widget) return; // Hmm?
 
     QPoint curPos = widget->mapFromGlobal(QCursor::pos());
@@ -75,8 +76,7 @@ static void Mouse_Qt_Poll(void)
             Mouse_Qt_SubmitMotion(IMA_POINTER, delta.x(), delta.y());
 
             // Keep the cursor centered.
-            const Size2Raw* size = Window_Size(Window_Main());
-            QPoint mid = QPoint(size->width/2, size->height/2);
+            QPoint mid(mainWindow.width() / 2, mainWindow.height() / 2);
             QCursor::setPos(widget->mapToGlobal(mid));
             prevMousePos = mid;
         }

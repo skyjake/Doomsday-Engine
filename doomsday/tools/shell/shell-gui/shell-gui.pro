@@ -90,7 +90,7 @@ else {
         
         # Generate a .desktop file for the applications menu.
         desktopFile = doomsday-shell.desktop
-        !system(sed \"s:BIN_DIR:$$DENG_BIN_DIR:; s:BASE_DIR:$$DENG_BASE_DIR:\" \
+        !system(mkdir -p \"$$OUT_PWD/\"; sed \"s:BIN_DIR:$$DENG_BIN_DIR:; s:BASE_DIR:$$DENG_BASE_DIR:\" \
             <\"../../../../distrib/linux/$$desktopFile\" \
             >\"$$OUT_PWD/$$desktopFile\"): error(Can\'t build $$desktopFile)
         desktop.files = $$OUT_PWD/$$desktopFile

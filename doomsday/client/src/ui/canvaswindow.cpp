@@ -274,10 +274,10 @@ void CanvasWindow::resizeEvent(QResizeEvent *ev)
 
     LOG_AS("CanvasWindow");
 
-    de::Vector2i size(width(), height());
+    Vector2i size(width(), height());
     LOG_DEBUG("Resized ") << size.asText();
 
-    Window_UpdateAfterResize(Window_Main()); /// @todo remove this
+    Window::main().updateAfterResize(); /// @todo remove this
 
     d->root.setViewSize(size);
     d->busyRoot.setViewSize(size);
