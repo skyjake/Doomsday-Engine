@@ -480,10 +480,12 @@ struct ddwindow_s
         if(set)
         {
             flags |= flag;
+            if(flag & DDWF_MAXIMIZED) LOG_DEBUG("Setting DDWF_MAXIMIZED");
         }
         else
         {
             flags &= ~flag;
+            if(flag & DDWF_MAXIMIZED) LOG_DEBUG("Clearing DDWF_MAXIMIZED");
             if(flag & DDWF_CENTERED) LOG_DEBUG("Clearing DDWF_CENTERED");
         }
     }
@@ -504,6 +506,7 @@ struct ddwindow_s
                 if(x() != attribs[i])
                 {
                     normalGeometry.origin.x = attribs[i];
+                    setFlag(DDWF_MAXIMIZED, false);
                     changed = true;
                 }
                 break;
@@ -511,6 +514,7 @@ struct ddwindow_s
                 if(y() != attribs[i])
                 {
                     normalGeometry.origin.y = attribs[i];
+                    setFlag(DDWF_MAXIMIZED, false);
                     changed = true;
                 }
                 break;
@@ -520,6 +524,7 @@ struct ddwindow_s
                     if(attribs[i] < WINDOW_MIN_WIDTH) return false;
                     normalGeometry.size.width = geometry.size.width = attribs[i];
                     DEBUG_Message(("ngw=%i [B]\n", normalGeometry.size.width));
+                    setFlag(DDWF_MAXIMIZED, false);
                     changed = true;
                 }
                 break;
@@ -528,6 +533,7 @@ struct ddwindow_s
                 {
                     if(attribs[i] < WINDOW_MIN_HEIGHT) return false;
                     normalGeometry.size.height = geometry.size.height = attribs[i];
+                    setFlag(DDWF_MAXIMIZED, false);
                     changed = true;
                 }
                 break;
@@ -554,6 +560,7 @@ struct ddwindow_s
                         return false;
                     }
                     setFlag(DDWF_FULLSCREEN, attribs[i]);
+                    setFlag(DDWF_MAXIMIZED, false);
                     changed = true;
                 }
                 break;
