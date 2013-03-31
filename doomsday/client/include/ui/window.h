@@ -33,12 +33,6 @@
 #include "canvaswindow.h"
 #include <de/Error>
 
-/// Minimum width of a window (fullscreen too? -ds)
-#define WINDOW_MIN_WIDTH        320
-
-/// Minimum height of a window (fullscreen too? -ds)
-#define WINDOW_MIN_HEIGHT       240
-
 /**
  * Macro for conveniently accessing the current active window. There is always
  * one active window, so no need to worry about NULLs. The easiest way to get
@@ -61,6 +55,12 @@ class Window
 public:
     /// Required/referenced Window instance is missing. @ingroup errors
     DENG2_ERROR(MissingWindowError);
+
+    /// Minimum width of a window (in fullscreen also).
+    static const int MIN_WIDTH = 320;
+
+    /// Minimum height of a window (in fullscreen also).
+    static const int MIN_HEIGHT = 240;
 
     /**
      * Logical window attribute identifiers.
