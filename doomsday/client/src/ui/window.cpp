@@ -681,7 +681,8 @@ static void useAppliedGeometryForWindows()
     DEBUG_Message(("Using applied geometry: (%i,%i) %s",
                    win->appliedGeometry.x(),
                    win->appliedGeometry.y(),
-                   Vector2i(win->appliedGeometry.width(), win->appliedGeometry.height()).asText()));
+                   Vector2i(win->appliedGeometry.width(),
+                            win->appliedGeometry.height()).asText().toLatin1().constData()));
     win->widget->setGeometry(win->appliedGeometry);
 }
 
