@@ -167,10 +167,10 @@ DENG2_PIMPL(Window)
     bool willUpdateWindowState;
 
     /// Current actual geometry.
-    RectRaw geometry;
+    QRect geometry;
 
     /// Normal-mode geometry (when not maximized or fullscreen).
-    RectRaw normalGeometry;
+    QRect normalGeometry;
 
     int colorDepthBits;
     int flags;
@@ -215,31 +215,30 @@ DENG2_PIMPL(Window)
 
         if(int arg = cmdLine.check("-width", 1))
         {
-            geometry.size.width = de::max(Window::MIN_WIDTH, cmdLine.at(arg+1).toInt());
+            geometry.setWidth(de::max(Window::MIN_WIDTH, cmdLine.at(arg+1).toInt()));
             if(!(flags & WF_FULLSCREEN))
             {
-                normalGeometry.size.width = geometry.size.width;
+                normalGeometry.setWidth(geometry.width());
             }
         }
 
         if(int arg = cmdLine.check("-height", 1))
         {
-            geometry.size.height = de::max(Window::MIN_HEIGHT, cmdLine.at(arg+1).toInt());
+            geometry.setHeight(de::max(Window::MIN_HEIGHT, cmdLine.at(arg+1).toInt()));
             if(!(flags & WF_FULLSCREEN))
             {
-                normalGeometry.size.height = geometry.size.height;
+                normalGeometry.setHeight(geometry.height());
             }
         }
 
         if(int arg = cmdLine.check("-winsize", 2))
         {
-            geometry.size.width  = de::max(Window::MIN_WIDTH,  cmdLine.at(arg+1).toInt());
-            geometry.size.height = de::max(Window::MIN_HEIGHT, cmdLine.at(arg+2).toInt());
+            geometry.setSize(QSize(de::max(Window::MIN_WIDTH,  cmdLine.at(arg+1).toInt()),
+                                   de::max(Window::MIN_HEIGHT, cmdLine.at(arg+2).toInt())));
 
             if(!(flags & WF_FULLSCREEN))
             {
-                normalGeometry.size.width  = geometry.size.width;
-                normalGeometry.size.height = geometry.size.height;
+                normalGeometry.setSize(geometry.size());
             }
         }
 
@@ -259,13 +258,13 @@ DENG2_PIMPL(Window)
 
         if(int arg = cmdLine.check("-xpos", 1))
         {
-            normalGeometry.origin.x = cmdLine.at(arg+1).toInt();
+            normalGeometry.setX(cmdLine.at(arg+1).toInt());
             setFlag(WF_CENTERED | WF_MAXIMIZED, false);
         }
 
         if(int arg = cmdLine.check("-ypos", 1))
         {
-            normalGeometry.origin.y = cmdLine.at(arg+1).toInt();
+            normalGeometry.setY(cmdLine.at(arg+1).toInt());
             setFlag(WF_CENTERED | WF_MAXIMIZED, false);
         }
 
@@ -293,13 +292,13 @@ DENG2_PIMPL(Window)
 
         if(flags & WF_FULLSCREEN)
         {
-            DisplayMode const *mode = DisplayMode_FindClosest(geometry.size.width, geometry.size.height,
-                                                              colorDepthBits, 0);
+            DisplayMode const *mode =
+                DisplayMode_FindClosest(geometry.width(), geometry.height(), colorDepthBits, 0);
 
             if(mode && DisplayMode_Change(mode, true /* fullscreen: capture */))
             {
-                geometry.size.width  = DisplayMode_Current()->width;
-                geometry.size.height = DisplayMode_Current()->height;
+                geometry.setSize(QSize(DisplayMode_Current()->width,
+                                       DisplayMode_Current()->height));
 #if defined MACOSX
                 // Pull the window again over the shield after the mode change.
                 DisplayMode_Native_Raise(self.nativeHandle());
@@ -465,30 +464,23 @@ DENG2_PIMPL(Window)
 
         setFlag(WF_MAXIMIZED, widget->isMaximized());
 
-        QRect rect = widget->geometry();
-        geometry.origin.x = rect.x();
-        geometry.origin.y = rect.y();
-        geometry.size.width = rect.width();
-        geometry.size.height = rect.height();
+        geometry = widget->geometry();
 
         // If the window is presently maximized or fullscreen, we will not
         // store the actual coordinates.
         if(!widget->isMaximized() && !(flags & WF_FULLSCREEN) && !isBeingAdjusted())
         {
-            normalGeometry.origin.x = rect.x();
-            normalGeometry.origin.y = rect.y();
-            normalGeometry.size.width = rect.width();
-            DEBUG_Message(("ngw=%i [A]\n", normalGeometry.size.width));
-            normalGeometry.size.height = rect.height();
+            normalGeometry = widget->geometry();
+            DEBUG_Message(("ngw=%i [A]\n", normalGeometry.width()));
         }
 
         LOG_DEBUG("Current window geometry: %i,%i %s (max:%b)")
-                << geometry.origin.x << geometry.origin.y
-                << Vector2i(geometry.size.width, geometry.size.height).asText()
+                << geometry.x() << geometry.y()
+                << Vector2i(geometry.width(), geometry.height()).asText()
                 << ((flags & WF_MAXIMIZED) != 0);
         LOG_DEBUG("Normal window geometry: %i,%i %s")
-                << normalGeometry.origin.x << normalGeometry.origin.y
-                << Vector2i(normalGeometry.size.width, normalGeometry.size.height).asText();
+                << normalGeometry.x() << normalGeometry.y()
+                << Vector2i(normalGeometry.width(), normalGeometry.height()).asText();
     }
 
     void setFlag(int flag, bool set = true)
@@ -518,33 +510,35 @@ DENG2_PIMPL(Window)
             switch(attribs[i++])
             {
             case Window::X:
-                if(geometry.origin.x != attribs[i])
+                if(geometry.x() != attribs[i])
                 {
-                    normalGeometry.origin.x = attribs[i];
+                    normalGeometry.setX(attribs[i]);
                     changed = true;
                 }
                 break;
             case Window::Y:
-                if(geometry.origin.y != attribs[i])
+                if(geometry.y() != attribs[i])
                 {
-                    normalGeometry.origin.y = attribs[i];
+                    normalGeometry.setY(attribs[i]);
                     changed = true;
                 }
                 break;
             case Window::Width:
-                if(geometry.size.width != attribs[i])
+                if(geometry.width() != attribs[i])
                 {
                     DENG_ASSERT(attribs[i] >= Window::MIN_WIDTH);
-                    normalGeometry.size.width = geometry.size.width = attribs[i];
-                    DEBUG_Message(("ngw=%i [B]\n", normalGeometry.size.width));
+                    geometry.setWidth(attribs[i]);
+                    normalGeometry.setWidth(attribs[i]);
+                    DEBUG_Message(("ngw=%i [B]\n", normalGeometry.width()));
                     changed = true;
                 }
                 break;
             case Window::Height:
-                if(geometry.size.height != attribs[i])
+                if(geometry.height() != attribs[i])
                 {
                     DENG_ASSERT(attribs[i] >= Window::MIN_HEIGHT);
-                    normalGeometry.size.height = geometry.size.height = attribs[i];
+                    geometry.setHeight(attribs[i]);
+                    normalGeometry.setHeight(attribs[i]);
                     changed = true;
                 }
                 break;
@@ -607,28 +601,26 @@ DENG2_PIMPL(Window)
     {
         setFlag(WF_MAXIMIZED, widget->isMaximized());
 
-        geometry.size.width  = widget->width();
-        geometry.size.height = widget->height();
+        geometry.setSize(widget->size());
 
         if(!(flags & WF_FULLSCREEN))
         {
             LOG_DEBUG("Updating current view geometry for window, fetched %s")
-                    << Vector2i(geometry.size.width, geometry.size.height).asText();
+                    << Vector2i(geometry.width(), geometry.height()).asText();
 
             if(!(flags & WF_MAXIMIZED) && !isBeingAdjusted())
             {
                 // Update the normal-mode geometry (not fullscreen, not maximized).
-                normalGeometry.size.width  = geometry.size.width;
-                normalGeometry.size.height = geometry.size.height;
+                normalGeometry.setSize(geometry.size());
 
                 LOG_DEBUG("Updating normal view geometry for window, fetched %s")
-                        << Vector2i(normalGeometry.size.width, normalGeometry.size.height).asText();
+                        << Vector2i(normalGeometry.width(), normalGeometry.height()).asText();
             }
         }
         else
         {
             LOG_DEBUG("Updating view geometry for fullscreen %s")
-                    << Vector2i(geometry.size.width, geometry.size.height).asText();
+                    << Vector2i(geometry.width(), geometry.height()).asText();
         }
     }
 
@@ -1015,16 +1007,16 @@ void Window::grab(image_t &image, bool halfSized) const
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT(d->widget);
 
-    d->widget->canvas().grab(&image, halfSized? QSize(d->geometry.size.width/2,
-                                                      d->geometry.size.height/2) : QSize());
+    d->widget->canvas().grab(&image, halfSized? QSize(d->geometry.width()/2,
+                                                      d->geometry.height()/2) : QSize());
 }
 
 DGLuint Window::grabAsTexture(bool halfSized) const
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT(d->widget);
-    return d->widget->canvas().grabAsTexture(halfSized? QSize(d->geometry.size.width/2,
-                                                              d->geometry.size.height/2) : QSize());
+    return d->widget->canvas().grabAsTexture(halfSized? QSize(d->geometry.width()/2,
+                                                              d->geometry.height()/2) : QSize());
 }
 
 bool Window::grabToFile(char const *fileName) const
@@ -1118,14 +1110,12 @@ void Window::show(bool show)
 
 QRect Window::rect() const
 {
-    return QRect(d->geometry.origin.x, d->geometry.origin.y,
-                 d->geometry.size.width, d->geometry.size.height);
+    return d->geometry;
 }
 
 QRect Window::normalRect() const
 {
-    return QRect(d->normalGeometry.origin.x, d->normalGeometry.origin.y,
-                 d->normalGeometry.size.width, d->normalGeometry.size.height);
+    return d->normalGeometry;
 }
 
 int Window::colorDepthBits() const
@@ -1142,20 +1132,18 @@ void Window::saveState()
 
     Config &config = App::config();
 
-    QRect geom = rect();
     ArrayValue *array = new ArrayValue;
-    *array << NumberValue(geom.left())
-           << NumberValue(geom.top())
-           << NumberValue(geom.width())
-           << NumberValue(geom.height());
+    *array << NumberValue(d->geometry.left())
+           << NumberValue(d->geometry.top())
+           << NumberValue(d->geometry.width())
+           << NumberValue(d->geometry.height());
     config.names()["window.main.rect"] = array;
 
-    QRect normGeom = normalRect();
     array = new ArrayValue;
-    *array << NumberValue(normGeom.left())
-           << NumberValue(normGeom.top())
-           << NumberValue(normGeom.width())
-           << NumberValue(normGeom.height());
+    *array << NumberValue(d->normalGeometry.left())
+           << NumberValue(d->normalGeometry.top())
+           << NumberValue(d->normalGeometry.width())
+           << NumberValue(d->normalGeometry.height());
     config.names()["window.main.normalRect"] = array;
 
     config.names()["window.main.center"]     = new NumberValue((d->flags & WF_CENTERED) != 0);
@@ -1178,23 +1166,15 @@ void Window::restoreState()
     ArrayValue &rect = config.geta("window.main.rect");
     if(rect.size() >= 4)
     {
-        QRect geom(rect.at(0).asNumber(), rect.at(1).asNumber(),
-                   rect.at(2).asNumber(), rect.at(3).asNumber());
-        d->geometry.origin.x = geom.x();
-        d->geometry.origin.y = geom.y();
-        d->geometry.size.width = geom.width();
-        d->geometry.size.height = geom.height();
+        d->geometry.setRect(rect.at(0).asNumber(), rect.at(1).asNumber(),
+                            rect.at(2).asNumber(), rect.at(3).asNumber());
     }
 
     ArrayValue &normalRect = config.geta("window.main.normalRect");
     if(normalRect.size() >= 4)
     {
-        QRect geom(normalRect.at(0).asNumber(), normalRect.at(1).asNumber(),
-                   normalRect.at(2).asNumber(), normalRect.at(3).asNumber());
-        d->normalGeometry.origin.x = geom.x();
-        d->normalGeometry.origin.y = geom.y();
-        d->normalGeometry.size.width = geom.width();
-        d->normalGeometry.size.height = geom.height();
+        d->normalGeometry.setRect(normalRect.at(0).asNumber(), normalRect.at(1).asNumber(),
+                                  normalRect.at(2).asNumber(), normalRect.at(3).asNumber());
     }
 
     d->colorDepthBits = config.geti("window.main.colorDepth");
