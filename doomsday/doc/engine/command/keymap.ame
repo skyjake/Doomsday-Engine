@@ -2,5 +2,5 @@
     Load a DKM keymap file.
 }
 @description{
-    Params: keymap (dkm-file)\nFor example, 'keymap finnish'.
+    Params: keymap (dkm-file) @cbr For example, 'keymap finnish'.
 }

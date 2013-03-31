@@ -488,12 +488,18 @@ DENG2_PIMPL(Window)
         if(set)
         {
             flags |= flag;
+
+            if(flag & WF_MAXIMIZED)
+                LOG_DEBUG("Setting DDWF_MAXIMIZED");
         }
         else
         {
             flags &= ~flag;
+
             if(flag & WF_CENTERED)
                 LOG_DEBUG("Clearing WF_CENTERED");
+            if(flag & WF_MAXIMIZED)
+                LOG_DEBUG("Clearing DDWF_MAXIMIZED");
         }
     }
 
@@ -513,6 +519,7 @@ DENG2_PIMPL(Window)
                 if(geometry.x() != attribs[i])
                 {
                     normalGeometry.setX(attribs[i]);
+                    setFlag(WF_MAXIMIZED, false);
                     changed = true;
                 }
                 break;
@@ -520,6 +527,7 @@ DENG2_PIMPL(Window)
                 if(geometry.y() != attribs[i])
                 {
                     normalGeometry.setY(attribs[i]);
+                    setFlag(WF_MAXIMIZED, false);
                     changed = true;
                 }
                 break;
@@ -530,6 +538,7 @@ DENG2_PIMPL(Window)
                     geometry.setWidth(attribs[i]);
                     normalGeometry.setWidth(attribs[i]);
                     DEBUG_Message(("ngw=%i [B]\n", normalGeometry.width()));
+                    setFlag(WF_MAXIMIZED, false);
                     changed = true;
                 }
                 break;
@@ -539,6 +548,7 @@ DENG2_PIMPL(Window)
                     DENG_ASSERT(attribs[i] >= Window::MIN_HEIGHT);
                     geometry.setHeight(attribs[i]);
                     normalGeometry.setHeight(attribs[i]);
+                    setFlag(WF_MAXIMIZED, false);
                     changed = true;
                 }
                 break;
@@ -561,6 +571,7 @@ DENG2_PIMPL(Window)
                 {
                     DENG_ASSERT(!(attribs[i] && Updater_IsDownloadInProgress()));
                     setFlag(WF_FULLSCREEN, attribs[i]);
+                    setFlag(WF_MAXIMIZED, false);
                     changed = true;
                 }
                 break;
@@ -745,7 +756,7 @@ DENG2_PIMPL(Window)
         if(wnd->isFullscreen())
         {
             // The window must be manually raised above the shielding window put up by
-            // the display capture.
+            // the fullscreen display capture.
             DisplayMode_Native_Raise(wnd->nativeHandle());
         }
 #endif

@@ -2,5 +2,5 @@
     Issue a cheat code using the original Heretic cheats.
 }
 @description{
-    Params: cheat (cheat)\nFor example, 'cheat rambo'.
+    Params: cheat (cheat) @cbr For example, 'cheat rambo'.
 }

@@ -2,5 +2,5 @@
     Set number of game tics per second (default: 35).
 }
 @description{
-    Params: settics (tics)\nFor example, 'settics 15'.
+    Params: settics (tics) @cbr For example, 'settics 15'.
 }

@@ -2,5 +2,5 @@
     Print extended information about a Material to the console.
 }
 @description{
-    Params: inspectmaterial (uri)\nFor example, 'inspectmaterial flats:fwater1'.
+    Params: inspectmaterial (uri) @cbr For example, 'inspectmaterial flats:fwater1'.
 }

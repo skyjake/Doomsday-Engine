@@ -2,5 +2,5 @@
     Dump a data lump currently loaded in memory.
 }
 @description{
-    Params: dump (name)\nFor example, 'dump PLAYPAL'.
+    Params: dump (name) @cbr For example, 'dump PLAYPAL'.
 }

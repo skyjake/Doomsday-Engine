@@ -1,0 +1,5 @@
+[ source.amethyst ]
+wrapColumn = 80
+softWrap = true
+tabSize = 4
+softTabs = true

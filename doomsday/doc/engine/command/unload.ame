@@ -2,5 +2,5 @@
     Unload the current game or one or more data files.
 }
 @description{
-    Params: unload (name) ...\nFor example, 'unload mylevel.wad'.
+    Params: unload (name) ... @cbr For example, 'unload mylevel.wad'.
 }

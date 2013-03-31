@@ -2,5 +2,5 @@
     Load a complete game or one or more data files (e.g., a WAD or a lump).
 }
 @description{
-    Params: load (name) ...\nFor example, 'load (gamename)' or 'load mylevel.wad'.
+    Params: load (name) ... @cbr For example, 'load (gamename)' or 'load mylevel.wad'.
 }

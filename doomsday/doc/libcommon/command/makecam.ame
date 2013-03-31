@@ -2,5 +2,5 @@
     Toggle camera mode.
 }
 @description{
-    Params: makecam (playernum)\nFor example, 'makecam 1'.
+    Params: makecam (playernum) @cbr For example, 'makecam 1'.
 }
