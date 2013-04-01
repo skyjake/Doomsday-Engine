@@ -7,8 +7,11 @@
                  (new game-save-name) (confirm) @cbr 
         Keywords: last, quick } @cbr
     @example{
-        Open save menu: @code{savegame} @cbr 
-        Saving to current "quick" slot: @code{savegame quick "running low on ammo"} @cbr 
-        Saving to slot #0: @code{savegame 0 "running low on ammo"}
+        @code{savegame}
+        opens the Save Menu @cbr        
+        @code{savegame quick "running low on ammo"}
+        saves to current "quick" slot @cbr         
+        @code{savegame 0 "running low on ammo"}
+        saves to slot #0
     }
 }
