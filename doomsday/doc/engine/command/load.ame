@@ -3,5 +3,5 @@
 }
 @description{
     @params{load (name) ...} @cbr
-    @example{@cmd{load (gamename)} or @cmd{load mylevel.wad}}
+    @example{@code{load (gamename)} or @code{load mylevel.wad}}
 }

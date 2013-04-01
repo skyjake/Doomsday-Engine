@@ -3,5 +3,5 @@
 }
 @description{
     @params{echo (text) ...} @cbr 
-    @example{@cmd{echo "hello world"}}
+    @example{@code{echo "hello world"}}
 }

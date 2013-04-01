@@ -3,5 +3,5 @@
 }
 @description{
     @params{message (text)} @cbr 
-    @example{@cmd{message "this is a message"}}
+    @example{@code{message "this is a message"}}
 }

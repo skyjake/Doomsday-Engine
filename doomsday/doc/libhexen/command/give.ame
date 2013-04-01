@@ -18,7 +18,7 @@
     }
     @cbr
     @example{
-        @cmd{give ikw} gives items, keys and weapons. @cbr
-        @cmd{give w2k1} gives weapon two and key one.
+        @code{give ikw} gives items, keys and weapons. @cbr
+        @code{give w2k1} gives weapon two and key one.
     }
 }

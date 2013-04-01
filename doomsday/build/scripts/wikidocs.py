@@ -1,5 +1,7 @@
 import sys, os, subprocess
 
+isDryRun = '--dry-run' in sys.argv
+
 sys.path += ['/Users/jaakko/Dropbox/Scripts']
 import dew
 
@@ -105,6 +107,10 @@ for col in collections:
             page.mode = mode
             pagesForCollection[col][title] = page
             
+            if isDryRun:
+                print page.title
+                print page.content
+            
             # Just the summary for the index.
             templ = '@require{amestd}\n'
             templ += '@macro{summary}{@arg}\n'
@@ -155,6 +161,14 @@ for col in collections:
 for m in modes:
     indexPage[m] += '\n[[Category:Console]]\n[[Category:References]]\n'
 
+if isDryRun:
+    print indexPage['command']
+    print indexPage['variable']
+    for amb in ambigs:
+        print amb.title
+        print amb.content
+    sys.exit()   
+    
         
 dew.login()
         

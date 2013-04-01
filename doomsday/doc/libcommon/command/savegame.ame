@@ -2,5 +2,13 @@
     Create a new game-save or open the save menu.
 }
 @description{
-    Params: savegame (game-save-name|<keyword>|save-slot-num) (new game-save-name) (confirm) @cbr Keywords: last, quick @cbr Examples: @cbr Open save menu: 'savegame' @cbr Saving to current "quick" slot: 'savegame quick "running low on ammo"' @cbr Saving to slot #0: 'savegame 0 "running low on ammo"'
+    @params{
+        savegame (game-save-name|<keyword>|save-slot-num) 
+                 (new game-save-name) (confirm) @cbr 
+        Keywords: last, quick } @cbr
+    @example{
+        Open save menu: @code{savegame} @cbr 
+        Saving to current "quick" slot: @code{savegame quick "running low on ammo"} @cbr 
+        Saving to slot #0: @code{savegame 0 "running low on ammo"}
+    }
 }
