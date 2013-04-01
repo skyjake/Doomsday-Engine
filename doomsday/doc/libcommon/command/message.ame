@@ -2,5 +2,6 @@
     Show a local game message.
 }
 @description{
-    Params: message (msg) @cbr For example, 'message "this is a message"'.
+    @params{message (text)} @cbr 
+    @example{@cmd{message "this is a message"}}
 }

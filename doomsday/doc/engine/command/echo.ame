@@ -2,5 +2,6 @@
     Echo the parameters on separate lines.
 }
 @description{
-    Params: echo (cmd) ... @cbr For example, 'echo "hello world"'.
+    @params{echo (text) ...} @cbr 
+    @example{@cmd{echo "hello world"}}
 }
