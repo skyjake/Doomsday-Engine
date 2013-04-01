@@ -1,6 +1,4 @@
-"""Generates a console help file out of Amethyst sources.
-1 - output filename
-2, ... - subdirs to include"""
+"""Generates a console help file out of Amethyst sources."""
 
 import os
 import sys
@@ -17,6 +15,11 @@ def amethyst(input):
        
 
 def makeHelp(outName, components):
+    """Generates the output file 'outName' out of the Amethyst
+    sources in the subdirectories listed in 'components'.
+    - outName: File path of the output file.
+    - components: List of subdirectories to include in the output."""
+    
     modes = ['command', 'variable']
 
     outFile = file(outName, 'w')
@@ -39,4 +42,7 @@ def makeHelp(outName, components):
 
                 
 if __name__ == '__main__':
+    if len(sys.argv) < 3:
+        print "Usage: (outname) (inputdirs) ..."
+        sys.exit(0)
     makeHelp(sys.argv[1], sys.argv[2:])
