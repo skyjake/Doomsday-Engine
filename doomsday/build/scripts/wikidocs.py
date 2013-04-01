@@ -98,8 +98,8 @@ for col in collections:
             templ += '@begin\n' + \
                  file(os.path.join(dirName, fn)).read()
                     
-            templ += '\n[[Category:%s]]\n' % categoryForMode(mode)
-            templ += '\n[[Category:%s]]\n' % categoryForCollection(col, mode)
+            templ += '\n[[Category:%s]] @br\n' % categoryForMode(mode)
+            templ += '[[Category:%s]]\n' % categoryForCollection(col, mode)
                       
             page = Page(title, amethyst(templ))
             page.mode = mode
