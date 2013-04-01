@@ -21,3 +21,4 @@ Makefile.Release
 tools/*/debug
 tools/*/release
 vc100.pdb
+*.pyc
