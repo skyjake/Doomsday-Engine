@@ -33,6 +33,7 @@ def makeHelp(outName, components):
             for fn in os.listdir(path):
                 if not fn.endswith('.ame'): continue
                 name = fn[:-4]
+                print '- %s %s: %s' % (com, mode, name)
                 print >> outFile, "[%s]" % name
             
                 templ = '@require{amestd} @begin\n' + \
