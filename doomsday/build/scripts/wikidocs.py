@@ -93,6 +93,8 @@ for col in collections:
             templ += '@macro{summary}{== Summary == @break @arg}\n'
             templ += '@macro{description}{@break == Description == @break @arg}\n'
             templ += '@macro{cbr}{<br/>}\n'
+            templ += '@macro{params}{@break === Usage === @break @arg}\n'
+            templ += '@macro{example}{@break === Example === @break @arg}\n'
             templ += '@begin\n' + \
                  file(os.path.join(dirName, fn)).read()
                     

@@ -243,7 +243,7 @@
     When textures are drawn onto surfaces at high angles compared to the
     camera, bluring is introduced which reduces the overall quality of the
     visual. Anisotropic filtering can be used to help reduce this bluring.
-    Sample multiplier: 0= Disabled, 1=2x, 2=4x, 3=8x, 4=16x.
+    Sample multiplier: 0=Disabled, 1=2x, 2=4x, 3=8x, 4=16x.
 }
 
 @chapter{Graphics: Objects}

@@ -1,3 +1,3 @@
 @summary{
-    3-bit bitfield. 0=Disable menu effects. 0x1= text type-in, 0x2= text shadow, 0x4= text glitter.
+    3-bit bitfield. 0=Disable menu effects. 0x1=text type-in, 0x2=text shadow, 0x4=text glitter.
 }
