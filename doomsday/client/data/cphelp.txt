@@ -932,7 +932,8 @@ desc = Show client latencies.
 desc = The name of this computer if it's a server.
 
 [server-password]
-desc = Password for remote login.
+desc = Password for remote login. 
+inf = Password that shell users must know in order to connect to the server. Applicable only to shell users; regular clients wishing to join the game do not need the password.\nNOTE! Public servers must have a password to be accepted by the master server.
 
 [server-player-limit]
 desc = Maximum number of players on the server.
