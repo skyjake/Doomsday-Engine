@@ -31,6 +31,7 @@
 #include "de_filesys.h"
 
 #include "Game"
+#include "map/gamemap.h"
 #include "map/propertyvalue.h"
 #include "render/rend_bias.h"
 #include "render/vlight.h"

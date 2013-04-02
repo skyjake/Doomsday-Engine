@@ -263,7 +263,6 @@ DENG_HEADERS += \
     include/map/p_particle.h \
     include/map/p_players.h \
     include/map/p_polyobjs.h \
-    include/map/p_sight.h \
     include/map/p_ticker.h \
     include/map/plane.h \
     include/map/polyobj.h \

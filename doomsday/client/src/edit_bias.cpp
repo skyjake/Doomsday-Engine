@@ -20,6 +20,9 @@
  * 02110-1301 USA</small>
  */
 
+#include <cmath>
+#include <de/mathutil.h>
+
 #include "de_base.h"
 #include "de_edit.h"
 #include "de_system.h"
@@ -31,8 +34,7 @@
 #include "de_play.h"
 #include "de_filesys.h"
 
-#include <math.h>
-#include <de/mathutil.h>
+#include "map/gamemap.h"
 
 D_CMD(BLEditor);
 

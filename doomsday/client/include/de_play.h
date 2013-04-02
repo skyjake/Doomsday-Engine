@@ -41,7 +41,6 @@
 #include "map/p_intercept.h"
 #include "map/p_maputil.h"
 #include "map/p_particle.h"
-#include "map/p_sight.h"
 #include "map/p_ticker.h"
 #include "map/p_players.h"
 #include "map/p_objlink.h"

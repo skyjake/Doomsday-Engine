@@ -91,8 +91,6 @@ public:
         boolean inited;
     } thinkers;
 
-    struct generators_s *generators;
-
     // Client only data:
     cmhash_t clMobjHash[CLIENT_MOBJ_HASH_SIZE];
 
@@ -108,7 +106,7 @@ public:
     uint numPolyObjs;
     Polyobj **polyObjs;
 
-    de::MapElement *bsp;
+    de::MapElement *_bspRoot;
 
     /// BSP object LUTs:
     HEdges hedges;
@@ -118,6 +116,8 @@ public:
     EntityDatabase *entityDatabase;
 
 private:
+    struct generators_s *_generators;
+
     PlaneSet _trackedPlanes;
     SurfaceSet _scrollingSurfaces;
 #ifdef __CLIENT__
@@ -132,7 +132,7 @@ public:
     struct blockmap_s *bspLeafBlockmap;
 
     nodepile_t mobjNodes, lineNodes; // All kinds of wacky links.
-    nodeindex_t* lineLinks; // Indices to roots.
+    nodeindex_t *lineLinks; // Indices to roots.
 
     coord_t globalGravity; // The defined gravity for this map.
     coord_t effectiveGravity; // The effective gravity for this map.
@@ -159,11 +159,61 @@ public:
 
     uint lineCount() const { return lines.size(); }
 
+    /**
+     * Returns the root element for the map's BSP tree.
+     */
+    de::MapElement *bspRoot() const;
+
     uint hedgeCount() const { return hedges.count(); }
 
     uint bspNodeCount() const { return bspNodes.count(); }
 
     uint bspLeafCount() const { return bspLeafs.count(); }
+
+    /**
+     * Determine the BSP leaf on the back side of the BS partition that lies in front
+     * of the specified point within the map's coordinate space.
+     *
+     * @note Always returns a valid BspLeaf although the point may not actually lay
+     *       within it (however it is on the same side of the space partition)!
+     *
+     * @param point  XY coordinates of the point to test.
+     *
+     * @return     BspLeaf instance for that BSP node's leaf.
+     */
+    BspLeaf *bspLeafAtPoint(const_pvec2d_t point);
+
+    /**
+     * @copybrief bspLeafAtPoint()
+     * @param x  X coordinate of the point to test.
+     * @param y  Y coordinate of the point to test.
+     * @return   BspLeaf instance for that BSP node's leaf.
+     */
+    inline BspLeaf *bspLeafAtPoint(coord_t x, coord_t y) {
+        coord_t point[2] = { x, y };
+        return bspLeafAtPoint(point);
+    }
+
+    /**
+     * Traces a line of sight.
+     *
+     * @param from          World position, trace origin coordinates.
+     * @param to            World position, trace target coordinates.
+     * @param flags         Line Sight Flags (LS_*) @ref lineSightFlags
+     *
+     * @return              @c true if the traverser function returns @c true
+     *                      for all visited lines.
+     */
+    bool lineOfSight(const_pvec3d_t from, const_pvec3d_t to, coord_t bottomSlope,
+                     coord_t topSlope, int flags);
+
+    /**
+     * Retrieve a pointer to the Generators collection for the map. If no collection
+     * has yet been constructed a new empty collection will be initialized.
+     *
+     * @return  Generators collection for the map.
+     */
+    struct generators_s *generators();
 
 #ifdef __CLIENT__
 
@@ -675,16 +725,6 @@ struct clplane_s *GameMap_NewClPlane(GameMap *map, uint sectornum, clplanetype_t
     coord_t dest, float speed);
 
 /**
- * Retrieve a pointer to the Generators collection for this map.
- * If no collection has yet been constructed a new empty collection will be
- * initialized as a result of this call.
- *
- * @param map  GameMap instance.
- * @return  Generators collection for this map.
- */
-struct generators_s *GameMap_Generators(GameMap *map);
-
-/**
  * Initialize all Polyobjs in the map. To be called after map load.
  *
  * @param map  GameMap instance.
@@ -801,37 +841,16 @@ int GameMap_BspNodeIterator(GameMap *map, int (*callback) (BspNode *, void *), v
  * interceptable object linked within Blockmap cells which cover the path this
  * defines.
  */
-int GameMap_PathTraverse2(GameMap *map, const_pvec2d_t from, const_pvec2d_t to,
-    int flags, traverser_t callback, void *parameters);
 int GameMap_PathTraverse(GameMap *map, const_pvec2d_t from, const_pvec2d_t to,
-    int flags, traverser_t callback/* void* parameters=NULL*/);
+    int flags, traverser_t callback, void *parameters = 0);
 
-int GameMap_PathXYTraverse2(GameMap *map, coord_t fromX, coord_t fromY, coord_t toX, coord_t toY,
-    int flags, traverser_t callback, void *parameters);
-int GameMap_PathXYTraverse(GameMap *map, coord_t fromX, coord_t fromY, coord_t toX, coord_t toY,
-    int flags, traverser_t callback);
-
-/**
- * Determine the BSP leaf on the back side of the BS partition that lies in front
- * of the specified point within the map's coordinate space.
- *
- * @note Always returns a valid BspLeaf although the point may not actually lay
- *       within it (however it is on the same side of the space partition)!
- *
- * @param map  GameMap instance.
- * @param x    X coordinate of the point to test.
- * @param y    Y coordinate of the point to test.
- * @return     BspLeaf instance for that BSP node's leaf.
- */
-BspLeaf *GameMap_BspLeafAtPointXY(GameMap *map, coord_t x, coord_t y);
-
-/**
- * @copybrief    GameMap_BspLeafAtPointXY()
- * @param map    GameMap instance.
- * @param point  XY coordinates of the point to test.
- * @return       BspLeaf instance for that BSP node's leaf.
- */
-BspLeaf *GameMap_BspLeafAtPoint(GameMap *map, coord_t const point[2]);
+inline int GameMap_PathTraverse(GameMap *map, coord_t fromX, coord_t fromY,
+    coord_t toX, coord_t toY, int flags, traverser_t callback, void *parameters = 0)
+{
+    coord_t from[2] = { fromX, fromY };
+    coord_t to[2] = { toX, toY };
+    return GameMap_PathTraverse(map, from, to, flags, callback, parameters);
+}
 
 /**
  * Private member functions:

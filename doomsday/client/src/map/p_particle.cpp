@@ -92,7 +92,7 @@ static int destroyGenerator(ptcgen_t *gen, void *parameters)
 
     GameMap *map = theMap; /// @todo Do not assume generator is from the CURRENT map.
 
-    Generators_Unlink(GameMap_Generators(map), gen);
+    Generators_Unlink(map->generators(), gen);
     GameMap_ThinkerRemove(map, &gen->thinker);
 
     PtcGen_Delete(gen);
@@ -133,7 +133,7 @@ static ptcgenid_t findIdForNewGenerator(Generators *gens)
 static ptcgen_t *P_NewGenerator()
 {
     GameMap *map = theMap;
-    Generators *gens = GameMap_Generators(map);
+    Generators *gens = map->generators();
     ptcgenid_t id = findIdForNewGenerator(gens);
     if(id)
     {
@@ -226,7 +226,7 @@ void P_CreatePtcGenLinks()
 
 BEGIN_PROF(PROF_PTCGEN_LINK);
 
-    Generators *gens = GameMap_Generators(theMap);
+    Generators *gens = theMap->generators();
     Generators_EmptyLists(gens);
 
     if(useParticles)
@@ -351,8 +351,8 @@ static int generatorByPlaneIterator(ptcgen_t *gen, void *parameters)
 
 static ptcgen_t *generatorByPlane(Plane *plane)
 {
-    GameMap *map = theMap; /// @todo Do not assume plane is from the CURRENT map.
-    Generators *gens = GameMap_Generators(map);
+    /// @todo Do not assume plane is from the CURRENT map.
+    Generators *gens = theMap->generators();
     generatorbyplaneiterator_params_t parm;
     parm.plane = plane;
     parm.found = NULL;
@@ -866,7 +866,7 @@ static void P_SpinParticle(ptcgen_t *gen, particle_t *pt)
     static int const yawSigns[4]   = { 1,  1, -1, -1 };
     static int const pitchSigns[4] = { 1, -1,  1, -1 };
 
-    Generators *gens = GameMap_Generators(theMap); /// @todo Do not assume generator is from the CURRENT map.
+    Generators *gens = theMap->generators(); /// @todo Do not assume generator is from the CURRENT map.
     ded_ptcstage_t const *stDef = &gen->def->stages[pt->stage];
     uint const index = pt - &gen->ptcs[Generators_GeneratorId(gens, gen) / 8];
 
@@ -1470,10 +1470,9 @@ static int updateGenerator(ptcgen_t *gen, void *parameters)
 
 void P_UpdateParticleGens()
 {
-    Generators* gens;
-
     if(!theMap) return;
-    gens = GameMap_Generators(theMap);
+
+    Generators *gens = theMap->generators();
     if(!gens) return;
 
     // Update existing generators.

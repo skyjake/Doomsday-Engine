@@ -30,6 +30,7 @@
 #include "de_misc.h"
 #include "de_filesys.h"
 
+#include "map/gamemap.h"
 #include "map/p_mapdata.h"
 
 // Global archived map format version identifier. Increment when making

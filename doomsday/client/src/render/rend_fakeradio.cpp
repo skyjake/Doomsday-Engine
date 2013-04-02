@@ -31,6 +31,7 @@
 #include <de/vector1.h>
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
+#include "map/gamemap.h"
 #include "render/rendpoly.h"
 
 using namespace de;

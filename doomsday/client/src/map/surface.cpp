@@ -18,13 +18,17 @@
  * 02110-1301 USA</small>
  */
 
+#include <de/LegacyCore>
+#include <de/Log>
+#include <de/String>
+
 #include "de_base.h"
 #include "de_play.h"
 #include "de_defs.h"
 #include "Materials"
-#include <de/LegacyCore>
-#include <de/Log>
-#include <de/String>
+#include "map/gamemap.h"
+
+#include "map/surface.h"
 
 using namespace de;
 

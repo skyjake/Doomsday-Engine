@@ -35,6 +35,7 @@
 #include "de_resource.h"
 
 #include "gl/sys_opengl.h" // TODO: get rid of this
+#include "map/gamemap.h"
 
 #include "def_main.h"
 #ifdef __CLIENT__

@@ -343,9 +343,9 @@ private:
     }
 };
 
-boolean GameMap_CheckLineSight(GameMap *map, const_pvec3d_t from, const_pvec3d_t to,
+bool GameMap::lineOfSight(const_pvec3d_t from, const_pvec3d_t to,
     coord_t bottomSlope, coord_t topSlope, int flags)
 {
-    DENG_ASSERT(map && map->bsp);
-    return LineSightTest(from, to, float(bottomSlope), float(topSlope), flags).trace(*map->bsp);
+    DENG_ASSERT(_bspRoot);
+    return LineSightTest(from, to, float(bottomSlope), float(topSlope), flags).trace(*_bspRoot);
 }

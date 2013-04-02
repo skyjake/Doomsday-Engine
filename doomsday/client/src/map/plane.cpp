@@ -21,10 +21,14 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_play.h"
+
 #include "map/linedef.h"
+#include "map/gamemap.h"
+#include "map/surface.h"
+
 #include "render/r_main.h" // frameTimePos
 
-#include "map/surface.h"
+#include "map/plane.h"
 
 using namespace de;
 

@@ -22,6 +22,8 @@
 #include "de_base.h"
 #include "de_play.h"
 
+#include "map/gamemap.h"
+
 // Called when the polyobj hits a mobj.
 static void (*po_callback) (mobj_t *mobj, void *line, void *polyobj);
 

@@ -33,6 +33,7 @@
 #include "resource/image.h"
 #include "gl/texturecontent.h"
 #include "map/generators.h"
+#include "map/gamemap.h"
 
 using namespace de;
 
@@ -234,12 +235,12 @@ void Rend_ParticleInitForNewFrame(void)
     memset(visiblePtcGens, 0, GENERATORS_MAX);
 }
 
-void Rend_ParticleMarkInSectorVisible(Sector* sector)
+void Rend_ParticleMarkInSectorVisible(Sector *sector)
 {
     if(!useParticles || !theMap || !sector) return;
 
     /// @todo Do the assume sector is from the CURRENT map.
-    gens = GameMap_Generators(theMap);
+    gens = theMap->generators();
     if(!gens) return;
 
     Generators_IterateList(gens, GameMap_SectorIndex(theMap, sector), markPtcGenVisible, NULL/*no parameters*/);
@@ -843,11 +844,11 @@ static void renderPass(boolean useBlending)
     assert(!Sys_GLCheckError());
 }
 
-void Rend_RenderParticles(void)
+void Rend_RenderParticles()
 {
     if(!useParticles || !theMap) return;
 
-    gens = GameMap_Generators(theMap);
+    gens = theMap->generators();
     if(!gens) return;
 
     // No visible particles at all?
@@ -928,15 +929,14 @@ static int drawGeneratorOrigin(ptcgen_t* gen, void* parameters)
 #undef MAX_GENERATOR_DIST
 }
 
-void Rend_RenderGenerators(void)
+void Rend_RenderGenerators()
 {
-    float eye[3];
-
     if(!devDrawGenerators || !theMap) return;
 
-    gens = GameMap_Generators(theMap);
+    gens = theMap->generators();
     if(!gens) return;
 
+    float eye[3];
     eye[VX] = vOrigin[VX];
     eye[VY] = vOrigin[VZ];
     eye[VZ] = vOrigin[VY];

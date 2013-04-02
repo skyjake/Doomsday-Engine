@@ -28,6 +28,10 @@
 #include "de_network.h"
 #include "de_render.h"
 
+#include "map/gamemap.h"
+
+#include "map/dam_main.h"
+
 using namespace de;
 
 // Should we be caching successfully loaded maps?

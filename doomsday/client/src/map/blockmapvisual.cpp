@@ -19,7 +19,9 @@
  * 02110-1301 USA</small>
  */
 
-#include <math.h>
+#include <cmath>
+
+#include <de/concurrency.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -28,9 +30,10 @@
 #include "de_play.h"
 #include "de_ui.h"
 
-#include <de/concurrency.h>
-#include "map/blockmapvisual.h"
 #include "map/blockmap.h"
+#include "map/gamemap.h"
+
+#include "map/blockmapvisual.h"
 
 byte bmapShowDebug = 0; // 1 = mobjs, 2 = linedefs, 3 = BSP leafs, 4 = polyobjs.
 float bmapDebugSize = 1.5f;

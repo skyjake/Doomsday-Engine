@@ -37,6 +37,7 @@
 #include "de_play.h"
 
 #include "gl/sys_opengl.h"
+#include "map/gamemap.h"
 
 // MACROS ------------------------------------------------------------------
 

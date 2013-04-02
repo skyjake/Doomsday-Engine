@@ -215,7 +215,6 @@ DENG_HEADERS += \
     $$SRC/include/map/p_particle.h \
     $$SRC/include/map/p_players.h \
     $$SRC/include/map/p_polyobjs.h \
-    $$SRC/include/map/p_sight.h \
     $$SRC/include/map/p_ticker.h \
     $$SRC/include/map/plane.h \
     $$SRC/include/map/polyobj.h \

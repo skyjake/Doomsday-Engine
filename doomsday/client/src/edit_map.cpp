@@ -1458,7 +1458,7 @@ static bool buildBsp(GameMap &map)
         collateVertexes(nodeBuilder, map, e_mapNumVertexes, e_mapVertexesArray);
 
         BspTreeNode *rootNode = nodeBuilder.root();
-        map.bsp = rootNode->userData(); // We'll formally take ownership shortly...
+        map._bspRoot = rootNode->userData(); // We'll formally take ownership shortly...
 
         // Iterative pre-order traversal of the BspBuilder's map element tree.
         BspTreeNode *cur = rootNode;

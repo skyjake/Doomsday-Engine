@@ -29,6 +29,8 @@
 #include "de_misc.h"
 #include "de_play.h"
 
+#include "map/gamemap.h"
+
 using namespace de;
 
 BEGIN_PROF_TIMERS()

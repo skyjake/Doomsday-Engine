@@ -1,4 +1,4 @@
-/** @file p_maputil.cpp
+/** @file p_maputil.cpp Map Utility Routines
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,17 +17,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Map Utility Routines
- */
-
-#include <math.h>
+#include <cmath>
 
 #include "de_base.h"
 #include "de_console.h"
 #include "de_play.h"
 #include "de_misc.h"
 
+#include "map/gamemap.h"
 #include "render/r_main.h" // validCount
 
 #define ORDER(x,y,a,b)  ( (x)<(y)? ((a)=(x),(b)=(y)) : ((b)=(x),(a)=(y)) )
@@ -49,7 +46,7 @@
 }
 
 #undef P_TraceLOS
-DENG_EXTERN_C const divline_t* P_TraceLOS()
+DENG_EXTERN_C divline_t const *P_TraceLOS()
 {
     static divline_t emptyLOS;
     if(theMap)
@@ -83,17 +80,17 @@ DENG_EXTERN_C void P_SetTraceOpening(LineDef *line)
 }
 
 #undef P_BspLeafAtPoint
-DENG_EXTERN_C BspLeaf *P_BspLeafAtPoint(coord_t const point[])
+DENG_EXTERN_C BspLeaf *P_BspLeafAtPoint(const_pvec2d_t point)
 {
     if(!theMap) return NULL;
-    return GameMap_BspLeafAtPoint(theMap, point);
+    return theMap->bspLeafAtPoint(point);
 }
 
 #undef P_BspLeafAtPointXY
 DENG_EXTERN_C BspLeaf *P_BspLeafAtPointXY(coord_t x, coord_t y)
 {
     if(!theMap) return NULL;
-    return GameMap_BspLeafAtPointXY(theMap, x, y);
+    return theMap->bspLeafAtPoint(x, y);
 }
 
 boolean P_IsPointXYInBspLeaf(coord_t x, coord_t y, BspLeaf const *bspLeaf)
@@ -130,7 +127,8 @@ boolean P_IsPointXYInSector(coord_t x, coord_t y, Sector const *sector)
     if(!sector) return false; // I guess?
 
     /// @todo Do not assume @a sector is from the current map.
-    BspLeaf *bspLeaf = GameMap_BspLeafAtPointXY(theMap, x, y);
+    DENG_ASSERT(theMap);
+    BspLeaf *bspLeaf = theMap->bspLeafAtPoint(x, y);
     if(bspLeaf->sectorPtr() != sector) return false;
 
     return P_IsPointXYInBspLeaf(x, y, bspLeaf);
@@ -729,15 +727,15 @@ DENG_EXTERN_C int P_AllLinesBoxIterator(const AABoxd* box, int (*callback) (Line
 }
 
 #undef P_PathTraverse2
-DENG_EXTERN_C int P_PathTraverse2(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback,
-    void* paramaters)
+DENG_EXTERN_C int P_PathTraverse2(const_pvec2d_t from, const_pvec2d_t to, int flags, traverser_t callback,
+    void *parameters)
 {
     if(!theMap) return false; // Continue iteration.
-    return GameMap_PathTraverse2(theMap, from, to, flags, callback, paramaters);
+    return GameMap_PathTraverse(theMap, from, to, flags, callback, parameters);
 }
 
 #undef P_PathTraverse
-DENG_EXTERN_C int P_PathTraverse(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback)
+DENG_EXTERN_C int P_PathTraverse(const_pvec2d_t from, const_pvec2d_t to, int flags, traverser_t callback)
 {
     if(!theMap) return false; // Continue iteration.
     return GameMap_PathTraverse(theMap, from, to, flags, callback);
@@ -748,7 +746,7 @@ DENG_EXTERN_C int P_PathXYTraverse2(coord_t fromX, coord_t fromY, coord_t toX, c
     traverser_t callback, void* paramaters)
 {
     if(!theMap) return false; // Continue iteration.
-    return GameMap_PathXYTraverse2(theMap, fromX, fromY, toX, toY, flags, callback, paramaters);
+    return GameMap_PathTraverse(theMap, fromX, fromY, toX, toY, flags, callback, paramaters);
 }
 
 #undef P_PathXYTraverse
@@ -756,13 +754,13 @@ DENG_EXTERN_C int P_PathXYTraverse(coord_t fromX, coord_t fromY, coord_t toX, co
     traverser_t callback)
 {
     if(!theMap) return false; // Continue iteration.
-    return GameMap_PathXYTraverse(theMap, fromX, fromY, toX, toY, flags, callback);
+    return GameMap_PathTraverse(theMap, fromX, fromY, toX, toY, flags, callback);
 }
 
 #undef P_CheckLineSight
-DENG_EXTERN_C boolean P_CheckLineSight(coord_t const from[3], coord_t const to[3], coord_t bottomSlope,
+DENG_EXTERN_C boolean P_CheckLineSight(const_pvec3d_t from, const_pvec3d_t to, coord_t bottomSlope,
     coord_t topSlope, int flags)
 {
     if(!theMap) return false; // I guess?
-    return GameMap_CheckLineSight(theMap, from, to, bottomSlope, topSlope, flags);
+    return theMap->lineOfSight(from, to, bottomSlope, topSlope, flags);
 }

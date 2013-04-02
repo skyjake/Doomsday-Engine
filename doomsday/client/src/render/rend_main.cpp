@@ -40,6 +40,7 @@
 #endif
 #include "Texture"
 #include "map/blockmapvisual.h"
+#include "map/gamemap.h"
 #include "render/sprite.h"
 #include "gl/sys_opengl.h"
 
@@ -3529,15 +3530,16 @@ void Rend_RenderMap()
         viewsidey = viewData->viewCos;
 
         // We don't want BSP clip checking for the first BSP leaf.
+        MapElement *bspRootElement = theMap->bspRoot();
         firstBspLeaf = true;
-        if(theMap->bsp->type() == DMU_BSPNODE)
+        if(bspRootElement->type() == DMU_BSPNODE)
         {
-            Rend_RenderNode(theMap->bsp);
+            Rend_RenderNode(bspRootElement);
         }
         else
         {
             // A single leaf is a special case.
-            Rend_RenderBspLeaf(theMap->bsp->castTo<BspLeaf>());
+            Rend_RenderBspLeaf(bspRootElement->castTo<BspLeaf>());
         }
 
         if(Rend_MobjShadowsEnabled())

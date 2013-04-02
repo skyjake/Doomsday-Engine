@@ -1,4 +1,4 @@
-/** @file p_ticker.cpp
+/** @file p_ticker.cpp Timed Playsim Events.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,37 +17,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Timed Playsim Events.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "de_base.h"
 #include "de_network.h"
 #include "de_render.h"
 #include "de_play.h"
 #include "de_misc.h"
 
+#include "map/gamemap.h"
 #include "render/sky.h"
-
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 int P_MobjTicker(thinker_t* th, void* context)
 {

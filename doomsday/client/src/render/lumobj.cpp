@@ -32,6 +32,7 @@
 #include "de_defs.h"
 
 #include "gl/sys_opengl.h"
+#include "map/gamemap.h"
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "Texture"

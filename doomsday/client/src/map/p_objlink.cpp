@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <math.h>
+#include <cmath>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -28,6 +28,9 @@
 #include "de_defs.h"
 
 #include "gridmap.h"
+#include "map/gamemap.h"
+
+#include "map/p_objlink.h"
 
 #define BLOCK_WIDTH                 (128)
 #define BLOCK_HEIGHT                (128)

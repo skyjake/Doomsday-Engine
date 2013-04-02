@@ -39,34 +39,39 @@ using namespace de;
 GameMap::GameMap()
 {
     uri = 0;
-    memset(uniqueId, 0, sizeof(uniqueId));
-    memset(&aaBox, 0, sizeof(aaBox));
-    memset(&thinkers, 0, sizeof(thinkers));
-    generators = 0;
-    memset(&clMobjHash, 0, sizeof(clMobjHash));
-    memset(&clActivePlanes, 0, sizeof(clActivePlanes));
-    memset(&clActivePolyobjs, 0, sizeof(clActivePolyobjs));
+    std::memset(uniqueId, 0, sizeof(uniqueId));
+    std::memset(&aaBox, 0, sizeof(aaBox));
+    std::memset(&thinkers, 0, sizeof(thinkers));
+    _generators = 0;
+    std::memset(&clMobjHash, 0, sizeof(clMobjHash));
+    std::memset(&clActivePlanes, 0, sizeof(clActivePlanes));
+    std::memset(&clActivePolyobjs, 0, sizeof(clActivePolyobjs));
     numPolyObjs = 0;
     polyObjs = 0;
-    bsp = 0;
+    _bspRoot = 0;
     entityDatabase = 0;
     mobjBlockmap = 0;
     polyobjBlockmap = 0;
     lineBlockmap = 0;
     bspLeafBlockmap = 0;
-    memset(&mobjNodes, 0, sizeof(mobjNodes));
-    memset(&lineNodes, 0, sizeof(lineNodes));
+    std::memset(&mobjNodes, 0, sizeof(mobjNodes));
+    std::memset(&lineNodes, 0, sizeof(lineNodes));
     lineLinks = 0;
     globalGravity = 0;
     effectiveGravity = 0;
     ambientLightLevel = 0;
-    memset(skyFix, 0, sizeof(skyFix));
-    memset(&traceOpening, 0, sizeof(traceOpening));
-    memset(&traceLOS, 0, sizeof(traceLOS));
+    std::memset(skyFix, 0, sizeof(skyFix));
+    std::memset(&traceOpening, 0, sizeof(traceOpening));
+    std::memset(&traceLOS, 0, sizeof(traceLOS));
 }
 
 GameMap::~GameMap()
 {}
+
+MapElement *GameMap::bspRoot() const
+{
+    return _bspRoot;
+}
 
 void GameMap::updateBounds()
 {
@@ -479,30 +484,28 @@ static void initPolyobj(Polyobj *po)
     P_PolyobjLink(po);
 }
 
-Generators* GameMap_Generators(GameMap* map)
+Generators *GameMap::generators()
 {
-    DENG2_ASSERT(map);
     // Time to initialize a new collection?
-    if(!map->generators)
+    if(!_generators)
     {
-        map->generators = Generators_New(map->sectorCount());
+        _generators = Generators_New(sectorCount());
     }
-    return map->generators;
+    return _generators;
 }
 
-void GameMap_InitPolyobjs(GameMap* map)
+void GameMap_InitPolyobjs(GameMap *map)
 {
-    uint i;
     DENG2_ASSERT(map);
-    for(i = 0; i < map->numPolyObjs; ++i)
+    for(uint i = 0; i < map->numPolyObjs; ++i)
     {
         initPolyobj(map->polyObjs[i]);
     }
 }
 
-void GameMap_InitNodePiles(GameMap* map)
+void GameMap_InitNodePiles(GameMap *map)
 {
-    uint i, starttime = 0;
+    uint starttime = 0;
 
     DENG2_ASSERT(map);
 
@@ -516,7 +519,7 @@ void GameMap_InitNodePiles(GameMap* map)
     // Allocate the rings.
     map->lineLinks = (nodeindex_t *) Z_Malloc(sizeof(*map->lineLinks) * map->lineCount(), PU_MAPSTATIC, 0);
 
-    for(i = 0; i < map->lineCount(); ++i)
+    for(uint i = 0; i < map->lineCount(); ++i)
     {
         map->lineLinks[i] = NP_New(&map->lineNodes, NP_ROOT_NODE);
     }
@@ -1427,7 +1430,7 @@ static int collectMobjIntercepts(uint const block[2], void* parameters)
     return GameMap_IterateCellMobjs(map, block, PIT_AddMobjIntercepts, NULL);
 }
 
-int GameMap_PathTraverse2(GameMap *map, const_pvec2d_t from, const_pvec2d_t to,
+int GameMap_PathTraverse(GameMap *map, const_pvec2d_t from, const_pvec2d_t to,
     int flags, traverser_t callback, void *parameters)
 {
     DENG2_ASSERT(map);
@@ -1454,32 +1457,9 @@ int GameMap_PathTraverse2(GameMap *map, const_pvec2d_t from, const_pvec2d_t to,
     return P_TraverseIntercepts(callback, parameters);
 }
 
-int GameMap_PathTraverse(GameMap *map, const_pvec2d_t from, const_pvec2d_t to,
-    int flags, traverser_t callback)
+BspLeaf *GameMap::bspLeafAtPoint(const_pvec2d_t const point)
 {
-    return GameMap_PathTraverse2(map, from, to, flags, callback, NULL/*no parameters*/);
-}
-
-int GameMap_PathXYTraverse2(GameMap *map, coord_t fromX, coord_t fromY, coord_t toX, coord_t toY,
-    int flags, traverser_t callback, void *parameters)
-{
-    vec2d_t from; V2d_Set(from, fromX, fromY);
-    vec2d_t to;   V2d_Set(to, toX, toY);
-    return GameMap_PathTraverse2(map, from, to, flags, callback, parameters);
-}
-
-int GameMap_PathXYTraverse(GameMap *map, coord_t fromX, coord_t fromY, coord_t toX, coord_t toY,
-    int flags, traverser_t callback)
-{
-    return GameMap_PathXYTraverse2(map, fromX, fromY, toX, toY, flags, callback, NULL/*no parameters*/);
-}
-
-BspLeaf *GameMap_BspLeafAtPoint(GameMap *map, coord_t const point_[])
-{
-    vec2d_t point; V2d_Set(point, point_? point_[VX] : 0,
-                                  point_? point_[VY] : 0);
-
-    MapElement *bspElement = map->bsp;
+    MapElement *bspElement = _bspRoot;
     while(bspElement->type() != DMU_BSPLEAF)
     {
         BspNode const &node = *bspElement->castTo<BspNode>();
@@ -1489,10 +1469,4 @@ BspLeaf *GameMap_BspLeafAtPoint(GameMap *map, coord_t const point_[])
         bspElement = node.childPtr(side);
     }
     return bspElement->castTo<BspLeaf>();
-}
-
-BspLeaf *GameMap_BspLeafAtPointXY(GameMap *map, coord_t x, coord_t y)
-{
-    vec2d_t point; V2d_Set(point, x, y);
-    return GameMap_BspLeafAtPoint(map, point);
 }

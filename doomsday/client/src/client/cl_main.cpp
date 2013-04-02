@@ -1,4 +1,4 @@
-/** @file
+/** @file cl_main.cpp Network Client
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,12 +17,6 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * cl_main.c: Network Client
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -35,23 +29,10 @@
 #include "de_misc.h"
 #include "de_play.h"
 
+#include "map/gamemap.h"
 #include "render/r_main.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
 extern int gotFrame;
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 ident_t clientID;
 boolean handshakeReceived = false;
@@ -59,10 +40,6 @@ int gameReady = false;
 int serverTime;
 boolean netLoggedIn = false; // Logged in to the server.
 int clientPaused = false; // Set by the server.
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 void Cl_InitID(void)
 {
