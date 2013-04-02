@@ -249,17 +249,17 @@ LinkWindow::LinkWindow(QWidget *parent)
     statusBar()->addPermanentWidget(d->currentHost);
     statusBar()->addPermanentWidget(d->timeCounter);
 
-    QIcon icon(":/images/toolbar_placeholder.png");
-
     d->tools = addToolBar(tr("View"));
     d->tools->setMovable(false);
     d->tools->setFloatable(false);
 
-    d->statusButton = d->addToolButton(tr("Status"), icon);
+    d->statusButton = d->addToolButton(tr("Status"), QIcon(":/images/toolbar_status.png"));
     connect(d->statusButton, SIGNAL(pressed()), this, SLOT(switchToStatus()));
     d->statusButton->setChecked(true);
 
 #ifdef DENG2_DEBUG
+    QIcon icon(":/images/toolbar_placeholder.png");
+
     QToolButton *btn = d->addToolButton(tr("Frags"), icon);
     btn->setDisabled(true);
 
@@ -270,7 +270,7 @@ LinkWindow::LinkWindow(QWidget *parent)
     btn->setDisabled(true);
 #endif
 
-    d->consoleButton = d->addToolButton(tr("Console"), icon);
+    d->consoleButton = d->addToolButton(tr("Console"), QIcon(":/images/toolbar_console.png"));
     connect(d->consoleButton, SIGNAL(pressed()), this, SLOT(switchToConsole()));
 
     // Initial state for the window.
