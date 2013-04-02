@@ -72,6 +72,11 @@ typedef struct skyfix_s {
 class GameMap
 {
 public:
+    typedef QList<Vertex *> Vertexes;
+    typedef QList<Sector *> Sectors;
+    typedef QList<LineDef *> Lines;
+    typedef QList<SideDef *> SideDefs;
+
     typedef QList<HEdge *> HEdges;
     typedef QList<BspNode *> BspNodes;
     typedef QList<BspLeaf *> BspLeafs;
@@ -98,10 +103,10 @@ public:
     struct clpolyobj_s *clActivePolyobjs[CLIENT_MAX_MOVERS];
     // End client only data.
 
-    de::MapElementList<Vertex> vertexes;
-    de::MapElementList<Sector> sectors;
-    de::MapElementList<LineDef> lines;
-    de::MapElementList<SideDef> sideDefs;
+    Vertexes _vertexes;
+    Sectors _sectors;
+    Lines _lines;
+    SideDefs _sideDefs;
 
     uint numPolyObjs;
     Polyobj **polyObjs;
@@ -151,13 +156,21 @@ public:
 
     virtual ~GameMap();
 
-    uint vertexCount() const { return vertexes.size(); }
+    Vertexes const &vertexes() const { return _vertexes; }
 
-    uint sectorCount() const { return sectors.size(); }
+    inline uint vertexCount() const { return vertexes().size(); }
 
-    uint sideDefCount() const { return sideDefs.size(); }
+    SideDefs const &sideDefs() const { return _sideDefs; }
 
-    uint lineCount() const { return lines.size(); }
+    inline uint sideDefCount() const { return sideDefs().size(); }
+
+    Lines const &lines() const { return _lines; }
+
+    inline uint lineCount() const { return lines().size(); }
+
+    Sectors const &sectors() const { return _sectors; }
+
+    inline uint sectorCount() const { return sectors().size(); }
 
     /**
      * Returns the root element for the map's BSP tree.
@@ -767,8 +780,6 @@ int GameMap_MobjsBoxIterator(GameMap *map, AABoxd const *box,
  */
 void GameMap_LinkLineDef(GameMap *map, LineDef *line);
 
-int GameMap_LineDefIterator(GameMap *map, int (*callback) (LineDef *, void *), void *parameters);
-
 int GameMap_LineDefsBoxIterator(GameMap *map, AABoxd const *box,
     int (*callback) (LineDef *, void *), void *parameters);
 
@@ -825,16 +836,6 @@ int GameMap_PolyobjsBoxIterator(GameMap *map, AABoxd const *box,
     int (*callback) (struct polyobj_s *, void *), void *parameters);
 
 int GameMap_PolyobjIterator(GameMap *map, int (*callback) (Polyobj *, void *), void *parameters);
-
-int GameMap_VertexIterator(GameMap *map, int (*callback) (Vertex *, void *), void *parameters);
-
-int GameMap_SideDefIterator(GameMap *map, int (*callback) (SideDef *, void *), void *parameters);
-
-int GameMap_SectorIterator(GameMap *map, int (*callback)(Sector *, void *), void *parameters);
-
-int GameMap_HEdgeIterator(GameMap *map, int (*callback) (HEdge *, void *), void *parameters);
-
-int GameMap_BspNodeIterator(GameMap *map, int (*callback) (BspNode *, void *), void *parameters);
 
 /**
  * Traces a line between @a from and @a to, making a callback for each

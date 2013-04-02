@@ -309,9 +309,9 @@ void GameMap_InitSkyFix(GameMap *map)
     map->skyFix[Plane::Ceiling].height = DDMINFLOAT;
 
     // Update for sector plane heights and mobjs which intersect the ceiling.
-    for(uint i = 0; i < map->sectorCount(); ++i)
+    foreach(Sector *sector, map->_sectors)
     {
-        GameMap_UpdateSkyFixForSector(map, &map->sectors[i]);
+        GameMap_UpdateSkyFixForSector(map, sector);
     }
 
     LOG_INFO(String("GameMap_InitSkyFix: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
@@ -765,10 +765,9 @@ static void updateAllMapSectors(GameMap &map, bool forceUpdate = false)
 {
     if(novideo) return;
 
-    for(uint i = 0; i < map.sectorCount(); ++i)
+    foreach(Sector *sector, map.sectors())
     {
-        Sector *sec = &map.sectors[i];
-        R_UpdateSector(sec, forceUpdate);
+        R_UpdateSector(sector, forceUpdate);
     }
 }
 
@@ -780,24 +779,18 @@ static inline void initSurfaceMaterialOrigin(Surface &suf)
 
 static void initAllMapSurfaceMaterialOrigins(GameMap &map)
 {
-    for(uint i = 0; i < map.sectorCount(); ++i)
+    foreach(Sector *sector, map.sectors())
+    foreach(Plane *plane, sector->planes())
     {
-        Sector &sector = map.sectors[i];
-
-        foreach(Plane *plane, sector.planes())
-        {
-            plane->_visHeight = plane->_oldHeight[0] = plane->_oldHeight[1] = plane->_height;
-            initSurfaceMaterialOrigin(plane->surface());
-        }
+        plane->_visHeight = plane->_oldHeight[0] = plane->_oldHeight[1] = plane->_height;
+        initSurfaceMaterialOrigin(plane->surface());
     }
 
-    for(uint i = 0; i < map.sideDefCount(); ++i)
+    foreach(SideDef *sideDef, map.sideDefs())
     {
-        SideDef &sideDef = map.sideDefs[i];
-
-        initSurfaceMaterialOrigin(sideDef.top());
-        initSurfaceMaterialOrigin(sideDef.middle());
-        initSurfaceMaterialOrigin(sideDef.bottom());
+        initSurfaceMaterialOrigin(sideDef->top());
+        initSurfaceMaterialOrigin(sideDef->middle());
+        initSurfaceMaterialOrigin(sideDef->bottom());
     }
 }
 
@@ -807,22 +800,19 @@ void GameMap::buildSurfaceLists()
     _decoratedSurfaces.clear();
     _glowingSurfaces.clear();
 
-    for(int i = 0; i < sideDefs.count(); ++i)
+    foreach(SideDef *sideDef, _sideDefs)
     {
-        SideDef &sideDef = sideDefs[i];
-        addSurfaceToLists(sideDef.middle());
-        addSurfaceToLists(sideDef.top());
-        addSurfaceToLists(sideDef.bottom());
+        addSurfaceToLists(sideDef->middle());
+        addSurfaceToLists(sideDef->top());
+        addSurfaceToLists(sideDef->bottom());
     }
 
-    for(int i = 0; i < sectors.count(); ++i)
+    foreach(Sector *sector, _sectors)
     {
-        Sector &sector = sectors[i];
-
         // Skip sectors with no lines as their planes will never be drawn.
-        if(!sector.lineCount()) continue;
+        if(!sector->lineCount()) continue;
 
-        foreach(Plane *plane, sector.planes())
+        foreach(Plane *plane, sector->planes())
         {
             addSurfaceToLists(plane->surface());
         }

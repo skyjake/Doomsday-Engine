@@ -573,33 +573,31 @@ static void pruneMapElements(EditMap & /*e_map*/, int /*flags*/)
 
 static void buildSectorBspLeafLists(GameMap &map)
 {
-    for(uint i = 0; i < map.sectorCount(); ++i)
+    foreach(Sector *sector, map.sectors())
     {
-        Sector &sector = map.sectors[i];
-
-        sector._bspLeafs.clear();
+        sector->_bspLeafs.clear();
 
 #ifdef DENG2_QT_4_7_OR_NEWER
         uint count = 0;
         for(uint k = 0; k < map.bspLeafCount(); ++k)
         {
             BspLeaf *bspLeaf = map.bspLeafs[k];
-            if(bspLeaf->sectorPtr() == &sector)
+            if(bspLeaf->sectorPtr() == sector)
                 ++count;
         }
 
         if(0 == count) continue;
 
-        sector._bspLeafs.reserve(count);
+        sector->_bspLeafs.reserve(count);
 #endif
 
-        for(uint k = 0; k < map.bspLeafCount(); ++k)
+        for(uint i = 0; i < map.bspLeafCount(); ++i)
         {
-            BspLeaf *bspLeaf = map.bspLeafs[k];
-            if(bspLeaf->sectorPtr() == &sector)
+            BspLeaf *bspLeaf = map.bspLeafs[i];
+            if(bspLeaf->sectorPtr() == sector)
             {
                 // Ownership of the BSP leaf is not given to the sector.
-                sector._bspLeafs.append(bspLeaf);
+                sector->_bspLeafs.append(bspLeaf);
             }
         }
     }
@@ -619,10 +617,8 @@ static void buildSectorLineLists(GameMap &map)
     zblockset_t *lineLinksBlockSet = ZBlockSet_New(sizeof(LineLink), 512, PU_APPSTATIC);
     LineLink **sectorLineLinks = (LineLink **) Z_Calloc(sizeof(*sectorLineLinks) * map.sectorCount(), PU_APPSTATIC, 0);
 
-    for(uint i = 0; i < map.lineCount(); ++i)
+    foreach(LineDef *line, map.lines())
     {
-        LineDef *line = &map.lines[i];
-
         if(line->hasFrontSector())
         {
             int const sectorIndex = GameMap_SectorIndex(&map, &line->frontSector());
@@ -645,18 +641,18 @@ static void buildSectorLineLists(GameMap &map)
     }
 
     // Build the actual sector line lists.
-    for(uint i = 0; i < map.sectorCount(); ++i)
+    foreach(Sector *sector, map.sectors())
     {
-        Sector *sector = &map.sectors[i];
+        int const sectorIndex = GameMap_SectorIndex(&map, sector);
 
         sector->_lines.clear();
 
-        if(!sectorLineLinks[i]) continue;
+        if(!sectorLineLinks[sectorIndex]) continue;
 
 #ifdef DENG2_QT_4_7_OR_NEWER
         // Count the total number of lines in this sector.
         uint numLines = 0;
-        for(LineLink *link = sectorLineLinks[i]; link; link = link->next)
+        for(LineLink *link = sectorLineLinks[sectorIndex]; link; link = link->next)
         {
             numLines++;
         }
@@ -671,7 +667,7 @@ static void buildSectorLineLists(GameMap &map)
          *
          * Sort: Original line index, ascending.
          */
-        for(LineLink *link = sectorLineLinks[i]; link; link = link->next)
+        for(LineLink *link = sectorLineLinks[sectorIndex]; link; link = link->next)
         {
             // Ownership of the line is not given to the sector.
             sector->_lines.prepend(link->line);
@@ -703,47 +699,45 @@ static void finishSectors(GameMap &map)
     buildSectorBspLeafLists(map);
     buildSectorLineLists(map);
 
-    for(uint i = 0; i < map.sectorCount(); ++i)
+    foreach(Sector *sector, map.sectors())
     {
-        Sector &sector = map.sectors[i];
-
-        sector.updateAABox();
-        sector.updateRoughArea();
-        sector.updateSoundEmitterOrigin();
+        sector->updateAABox();
+        sector->updateRoughArea();
+        sector->updateSoundEmitterOrigin();
 
         /*
          * Chain sound emitters (ddmobj_base_t) owned by all Surfaces in the
-         * sector. These chains are used for efficiently traversing all of the
+         * sector-> These chains are used for efficiently traversing all of the
          * sound emitters in a sector (e.g., when stopping all sounds emitted
          * in the sector).
          */
-        ddmobj_base_t &emitter = sector.soundEmitter();
+        ddmobj_base_t &emitter = sector->soundEmitter();
 
         // Clear the head of the emitter chain.
         emitter.thinker.next = emitter.thinker.prev = 0;
 
         // Link plane surface emitters:
-        foreach(Plane *plane, sector.planes())
+        foreach(Plane *plane, sector->planes())
         {
-            linkToSectorEmitterChain(sector, plane->surface().soundEmitter());
+            linkToSectorEmitterChain(*sector, plane->surface().soundEmitter());
         }
 
         // Link wall surface emitters:
-        foreach(LineDef *line, sector.lines())
+        foreach(LineDef *line, sector->lines())
         {
-            if(line->frontSectorPtr() == &sector)
+            if(line->frontSectorPtr() == sector)
             {
                 SideDef &side = line->frontSideDef();
-                linkToSectorEmitterChain(sector, side.middle().soundEmitter());
-                linkToSectorEmitterChain(sector, side.bottom().soundEmitter());
-                linkToSectorEmitterChain(sector, side.top().soundEmitter());
+                linkToSectorEmitterChain(*sector, side.middle().soundEmitter());
+                linkToSectorEmitterChain(*sector, side.bottom().soundEmitter());
+                linkToSectorEmitterChain(*sector, side.top().soundEmitter());
             }
-            if(line->hasBackSideDef() && line->backSectorPtr() == &sector)
+            if(line->hasBackSideDef() && line->backSectorPtr() == sector)
             {
                 SideDef &side = line->backSideDef();
-                linkToSectorEmitterChain(sector, side.middle().soundEmitter());
-                linkToSectorEmitterChain(sector, side.bottom().soundEmitter());
-                linkToSectorEmitterChain(sector, side.top().soundEmitter());
+                linkToSectorEmitterChain(*sector, side.middle().soundEmitter());
+                linkToSectorEmitterChain(*sector, side.bottom().soundEmitter());
+                linkToSectorEmitterChain(*sector, side.top().soundEmitter());
             }
         }
     }
@@ -752,32 +746,30 @@ static void finishSectors(GameMap &map)
 static void finishSideDefs(GameMap &map)
 {
     // Calculate the tangent space surface vectors.
-    for(uint i = 0; i < map.sideDefCount(); ++i)
+    foreach(SideDef *sideDef, map.sideDefs())
     {
-        SideDef &side = map.sideDefs[i];
-        side.updateSurfaceTangents();
-        side.updateSoundEmitterOrigins();
+        sideDef->updateSurfaceTangents();
+        sideDef->updateSoundEmitterOrigins();
     }
 }
 
 static void finishLines(GameMap &map)
 {
-    for(uint i = 0; i < map.lineCount(); ++i)
+    foreach(LineDef *line, map.lines())
     {
-        LineDef &line = map.lines[i];
-        LineDef::Side &front = line.front();
+        LineDef::Side &front = line->front();
 
         if(!front._leftHEdge) continue;
 
-        line._v[0] = &front.leftHEdge().v1();
-        line._v[1] = &front.rightHEdge().v2();
+        line->_v[0] = &front.leftHEdge().v1();
+        line->_v[1] = &front.rightHEdge().v2();
 
-        line.updateSlopeType();
-        line.updateAABox();
+        line->updateSlopeType();
+        line->updateAABox();
 
-        line._length = V2d_Length(line._direction);
-        line._angle = bamsAtan2(int( line._direction[VY] ),
-                                int( line._direction[VX] ));
+        line->_length = V2d_Length(line->_direction);
+        line->_angle = bamsAtan2(int( line->_direction[VY] ),
+                                int( line->_direction[VX] ));
     }
 }
 
@@ -1044,66 +1036,62 @@ static void buildVertexLineOwnerRings()
     }
 }
 
-static void finishPlanes(GameMap &dest)
+static void finishPlanes(GameMap &map)
 {
-    for(uint i = 0; i < dest.sectorCount(); ++i)
+    foreach(Sector *sector, map.sectors())
+    foreach(Plane *plane, sector->planes())
     {
-        Sector &sector = dest.sectors[i];
+        // Set target heights for each plane.
+        plane->_targetHeight =
+            plane->_oldHeight[0] =
+                plane->_oldHeight[1] =
+                    plane->_visHeight = plane->_height;
 
-        foreach(Plane *plane, sector.planes())
-        {
-            // Set target heights for each plane.
-            plane->_targetHeight =
-                plane->_oldHeight[0] =
-                    plane->_oldHeight[1] =
-                        plane->_visHeight = plane->_height;
+        plane->_visHeightDelta = 0;
 
-            plane->_visHeightDelta = 0;
-
-            plane->surface().updateSoundEmitterOrigin();
+        plane->surface().updateSoundEmitterOrigin();
 
 #ifdef __CLIENT__
-            // Resize the biassurface lists for the BSP leaf planes.
-            foreach(BspLeaf *bspLeaf, sector.bspLeafs())
-            {
-                uint n = 0;
+        // Resize the biassurface lists for the BSP leaf planes.
+        foreach(BspLeaf *bspLeaf, sector->bspLeafs())
+        {
+            uint n = 0;
 
-                biassurface_t **newList = (biassurface_t **) Z_Calloc(sector.planeCount() * sizeof(biassurface_t *), PU_MAP, 0);
-                // Copy the existing list?
-                if(bspLeaf->_bsuf)
+            biassurface_t **newList = (biassurface_t **) Z_Calloc(sector->planeCount() * sizeof(biassurface_t *), PU_MAP, 0);
+            // Copy the existing list?
+            if(bspLeaf->_bsuf)
+            {
+                for(; n < sector->planeCount() - 1 /* exclude newly added */; ++n)
                 {
-                    for(; n < sector.planeCount() - 1 /* exclude newly added */; ++n)
-                    {
-                        newList[n] = bspLeaf->_bsuf[n];
-                    }
-                    Z_Free(bspLeaf->_bsuf);
-                    bspLeaf->_bsuf = 0;
+                    newList[n] = bspLeaf->_bsuf[n];
+                }
+                Z_Free(bspLeaf->_bsuf);
+                bspLeaf->_bsuf = 0;
+            }
+
+            /*
+             * @todo So where is this data initialized now? -ds
+             * If we are in map setup mode, don't create the biassurfaces now,
+             * as planes are created before the bias system is available.
+             */
+            /*if(!ddMapSetup)
+            {
+                biassurface_t *bsuf = SB_CreateSurface();
+
+                bsuf->size = Rend_NumFanVerticesForBspLeaf(bspLeaf);
+                bsuf->illum = (vertexillum_t *) Z_Calloc(sizeof(vertexillum_t) * bsuf->size, PU_MAP, 0);
+
+                for(uint k = 0; k < bsuf->size; ++k)
+                {
+                    SB_InitVertexIllum(&bsuf->illum[k]);
                 }
 
-                /*
-                 * @todo So where is this data initialized now? -ds
-                 * If we are in map setup mode, don't create the biassurfaces now,
-                 * as planes are created before the bias system is available.
-                 */
-                /*if(!ddMapSetup)
-                {
-                    biassurface_t *bsuf = SB_CreateSurface();
+                newList[n] = bsuf;
+            }*/
 
-                    bsuf->size = Rend_NumFanVerticesForBspLeaf(bspLeaf);
-                    bsuf->illum = (vertexillum_t *) Z_Calloc(sizeof(vertexillum_t) * bsuf->size, PU_MAP, 0);
-
-                    for(uint k = 0; k < bsuf->size; ++k)
-                    {
-                        SB_InitVertexIllum(&bsuf->illum[k]);
-                    }
-
-                    newList[n] = bsuf;
-                }*/
-
-                bspLeaf->_bsuf = newList;
-            }
-#endif
+            bspLeaf->_bsuf = newList;
         }
+#endif
     }
 }
 
@@ -1143,7 +1131,7 @@ static void hardenPolyobjs(GameMap &dest, EditMap &e_map)
         destP->lines = (LineDef **) Z_Malloc(sizeof(*destP->lines) * (destP->lineCount + 1), PU_MAP, 0);
         for(uint j = 0; j < destP->lineCount; ++j)
         {
-            LineDef *line = &dest.lines[srcP->lines[j]->_origIndex - 1];
+            LineDef *line = GameMap_LineDef(&dest, srcP->lines[j]->_origIndex - 1);
             HEdge *hedge = &hedges[j];
 
             // This line belongs to a polyobj.
@@ -1318,16 +1306,16 @@ static void collateVertexes(BspBuilder &builder, GameMap &map,
 {
     uint bspVertexCount = builder.numVertexes();
 
-    DENG2_ASSERT(map.vertexes.isEmpty());
+    DENG2_ASSERT(map._vertexes.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
-    map.vertexes.reserve(numEditableVertexes + bspVertexCount);
+    map._vertexes.reserve(numEditableVertexes + bspVertexCount);
 #endif
 
     uint n = 0;
     for(; n < numEditableVertexes; ++n)
     {
         Vertex *vtx = const_cast<Vertex *>(editableVertexes[n]);
-        map.vertexes.append(vtx);
+        map._vertexes.append(vtx);
     }
 
     for(uint i = 0; i < bspVertexCount; ++i, ++n)
@@ -1335,7 +1323,7 @@ static void collateVertexes(BspBuilder &builder, GameMap &map,
         Vertex &vtx  = builder.vertex(i);
 
         builder.take(&vtx);
-        map.vertexes.append(&vtx);
+        map._vertexes.append(&vtx);
     }
 }
 
@@ -1695,33 +1683,33 @@ boolean MPE_End()
     gamemap->entityDatabase = editMap.entityDatabase; // Take ownership.
 
     // Collate sectors:
-    DENG2_ASSERT(gamemap->sectors.isEmpty());
+    DENG2_ASSERT(gamemap->_sectors.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
-    gamemap->sectors.reserve(editMap.sectors.size());
+    gamemap->_sectors.reserve(editMap.sectors.size());
 #endif
     for(uint i = 0; i < editMap.sectors.size(); ++i)
     {
-        gamemap->sectors.append(editMap.sectors[i]); // Take ownership.
+        gamemap->_sectors.append(editMap.sectors[i]); // Take ownership.
     }
 
     // Collate sidedefs:
-    DENG2_ASSERT(gamemap->sideDefs.isEmpty());
+    DENG2_ASSERT(gamemap->_sideDefs.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
-    gamemap->sideDefs.reserve(editMap.sideDefs.size());
+    gamemap->_sideDefs.reserve(editMap.sideDefs.size());
 #endif
     for(uint i = 0; i < editMap.sideDefs.size(); ++i)
     {
-        gamemap->sideDefs.append(editMap.sideDefs[i]); // Take ownership.
+        gamemap->_sideDefs.append(editMap.sideDefs[i]); // Take ownership.
     }
 
     // Collate lines:
-    DENG2_ASSERT(gamemap->lines.isEmpty());
+    DENG2_ASSERT(gamemap->_lines.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
-    gamemap->lines.reserve(editMap.lines.size());
+    gamemap->_lines.reserve(editMap.lines.size());
 #endif
     for(uint i = 0; i < editMap.lines.size(); ++i)
     {
-        gamemap->lines.append(editMap.lines[i]); // Take ownership.
+        gamemap->_lines.append(editMap.lines[i]); // Take ownership.
     }
 
     buildVertexLineOwnerRings();
@@ -1736,9 +1724,9 @@ boolean MPE_End()
     findBounds(editMap.verticesAsArray(), editMap.vertexCount(), min, max);
 
     GameMap_InitLineDefBlockmap(gamemap, min, max);
-    for(uint i = 0; i < gamemap->lineCount(); ++i)
+    for(int i = 0; i < gamemap->_lines.count(); ++i)
     {
-        GameMap_LinkLineDef(gamemap, &gamemap->lines[i]);
+        GameMap_LinkLineDef(gamemap, gamemap->_lines[i]);
     }
 
     // Mobj and Polyobj blockmaps are maintained dynamically.

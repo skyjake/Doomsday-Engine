@@ -388,24 +388,23 @@ void Cl_MoverThinker(clplane_t* mover)
     }
 }
 
-clplane_t* GameMap_NewClPlane(GameMap* map, uint sectorIndex, clplanetype_t type, coord_t dest, float speed)
+clplane_t *GameMap_NewClPlane(GameMap *map, uint sectorIndex, clplanetype_t type, coord_t dest, float speed)
 {
+    DENG_ASSERT(map);
+
     int dmuPlane = (type == CPT_FLOOR ? DMU_FLOOR_OF_SECTOR : DMU_CEILING_OF_SECTOR);
-    clplane_t* mov;
-    int i;
-    assert(map);
 
     DEBUG_Message(("GameMap_NewClPlane: Sector #%i, type:%s, dest:%f, speed:%f\n",
                    sectorIndex, type==CPT_FLOOR? "floor" : "ceiling", dest, speed));
 
-    if((int)sectorIndex >= map->sectors.size())
+    if(int( sectorIndex ) >= map->_sectors.size())
     {
-        assert(0); // Invalid Sector index.
-        return NULL;
+        DENG_ASSERT(false); // Invalid Sector index.
+        return 0;
     }
 
     // Remove any existing movers for the same plane.
-    for(i = 0; i < CLIENT_MAX_MOVERS; ++i)
+    for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
         if(GameMap_IsValidClPlane(map, i) &&
            map->clActivePlanes[i]->sectorIndex == sectorIndex &&
@@ -419,14 +418,14 @@ clplane_t* GameMap_NewClPlane(GameMap* map, uint sectorIndex, clplanetype_t type
     }
 
     // Add a new mover.
-    for(i = 0; i < CLIENT_MAX_MOVERS; ++i)
+    for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
         if(map->clActivePlanes[i]) continue;
 
         DEBUG_Message(("GameMap_NewClPlane: ...new mover [%i]\n", i));
 
         // Allocate a new clplane_t thinker.
-        mov = map->clActivePlanes[i] = (clplane_t *) Z_Calloc(sizeof(clplane_t), PU_MAP, &map->clActivePlanes[i]);
+        clplane_t *mov = map->clActivePlanes[i] = (clplane_t *) Z_Calloc(sizeof(clplane_t), PU_MAP, &map->clActivePlanes[i]);
         mov->thinker.function = reinterpret_cast<thinkfunc_t>(Cl_MoverThinker);
         mov->type = type;
         mov->sectorIndex = sectorIndex;

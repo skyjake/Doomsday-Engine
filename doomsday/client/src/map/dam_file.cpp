@@ -977,11 +977,11 @@ static void writePolyobj(GameMap *map, uint idx)
         LineDef *line = p->lines[i];
         HEdge *he = line->front()._leftHEdge;
 
-        writeLong(map->vertexes.indexOf(he->_v[0]) + 1);
-        writeLong(map->vertexes.indexOf(he->_v[1]) + 1);
+        writeLong(map->_vertexes.indexOf(he->_v[0]) + 1);
+        writeLong(map->_vertexes.indexOf(he->_v[1]) + 1);
         writeFloat(he->_length);
         writeFloat(he->_lineOffset);
-        writeLong(he->_line? (map->lines.indexOf(he->_line) + 1) : 0);
+        writeLong(he->_line? (map->_lines.indexOf(he->_line) + 1) : 0);
         writeByte(he->_lineSide);
         writeLong(he->_sector? (GameMap_SectorIndex(map, he->_sector) + 1) : 0);
         writeLong((long) he->_angle);
@@ -1021,18 +1021,18 @@ static void readPolyobj(GameMap *map, uint idx)
     {
         HEdge *he = hedges + i;
 
-        he->_v[0] = &map->vertexes[(unsigned) readLong() - 1];
-        he->_v[1] = &map->vertexes[(unsigned) readLong() - 1];
+        he->_v[0] = map->_vertexes[(unsigned) readLong() - 1];
+        he->_v[1] = map->_vertexes[(unsigned) readLong() - 1];
         he->_length = readFloat();
         he->_lineOffset = readFloat();
 
         long obIdx = readLong();
         DENG_ASSERT(obIdx);
-        he->_line = &map->lines[(unsigned) obIdx - 1];
+        he->_line = map->_lines[(unsigned) obIdx - 1];
         he->_lineSide = (readByte()? 1 : 0);
 
         obIdx = readLong();
-        he->_sector = (obIdx == 0? NULL : &map->sectors[(unsigned) obIdx - 1]);
+        he->_sector = (obIdx == 0? NULL : map->_sectors[(unsigned) obIdx - 1]);
 
         he->_angle = (angle_t) readLong();
 

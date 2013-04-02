@@ -3127,50 +3127,6 @@ static void drawSoundOrigin(coord_t const origin[3], const char* label, coord_t 
     }
 }
 
-static int drawSideDefSoundOrigins(SideDef *sideDef, void *parameters)
-{
-    DENG_ASSERT(sideDef);
-
-    uint idx = GameMap_SideDefIndex(theMap, sideDef); /// @todo Do not assume current map.
-    char buf[80];
-
-    dd_snprintf(buf, 80, "Side #%i (middle)", idx);
-    drawSoundOrigin(sideDef->middle().soundEmitter().origin, buf, (coord_t const *) parameters);
-
-    dd_snprintf(buf, 80, "Side #%i (bottom)", idx);
-    drawSoundOrigin(sideDef->bottom().soundEmitter().origin, buf, (coord_t const *) parameters);
-
-    dd_snprintf(buf, 80, "Side #%i (top)", idx);
-    drawSoundOrigin(sideDef->top().soundEmitter().origin, buf, (coord_t const *) parameters);
-    return false; // Continue iteration.
-}
-
-static int drawSectorSoundOrigins(Sector *sec, void *parameters)
-{
-    DENG_ASSERT(sec);
-
-    uint sectorIndex = GameMap_SectorIndex(theMap, sec); /// @todo Do not assume current map.
-    char buf[80];
-
-    if(devSoundOrigins & SOF_PLANE)
-    {
-        for(uint i = 0; i < sec->planeCount(); ++i)
-        {
-            Plane &plane = sec->plane(i);
-            dd_snprintf(buf, 80, "Sector #%i (pln:%i)", sectorIndex, i);
-            drawSoundOrigin(plane.surface().soundEmitter().origin, buf, (coord_t const *) parameters);
-        }
-    }
-
-    if(devSoundOrigins & SOF_SECTOR)
-    {
-        dd_snprintf(buf, 80, "Sector #%i", sectorIndex);
-        drawSoundOrigin(sec->soundEmitter().origin, buf, (coord_t const*) parameters);
-    }
-
-    return false; // Continue iteration.
-}
-
 /**
  * Debugging aid for visualizing sound origins.
  */
@@ -3187,12 +3143,47 @@ void Rend_RenderSoundOrigins()
 
     if(devSoundOrigins & SOF_SIDEDEF)
     {
-        GameMap_SideDefIterator(theMap, drawSideDefSoundOrigins, eye);
+        /// @todo Do not assume current map.
+        foreach(SideDef *sideDef, theMap->sideDefs())
+        {
+            uint idx = GameMap_SideDefIndex(theMap, sideDef);
+            char buf[80];
+
+            dd_snprintf(buf, 80, "Side #%i (middle)", idx);
+            drawSoundOrigin(sideDef->middle().soundEmitter().origin, buf, eye);
+
+            dd_snprintf(buf, 80, "Side #%i (bottom)", idx);
+            drawSoundOrigin(sideDef->bottom().soundEmitter().origin, buf, eye);
+
+            dd_snprintf(buf, 80, "Side #%i (top)", idx);
+            drawSoundOrigin(sideDef->top().soundEmitter().origin, buf, eye);
+        }
     }
 
     if(devSoundOrigins & (SOF_SECTOR|SOF_PLANE))
     {
-        GameMap_SectorIterator(theMap, drawSectorSoundOrigins, eye);
+        /// @todo Do not assume current map.
+        foreach(Sector *sec, theMap->sectors())
+        {
+            uint sectorIndex = GameMap_SectorIndex(theMap, sec);
+            char buf[80];
+
+            if(devSoundOrigins & SOF_PLANE)
+            {
+                for(uint i = 0; i < sec->planeCount(); ++i)
+                {
+                    Plane &plane = sec->plane(i);
+                    dd_snprintf(buf, 80, "Sector #%i (pln:%i)", sectorIndex, i);
+                    drawSoundOrigin(plane.surface().soundEmitter().origin, buf, eye);
+                }
+            }
+
+            if(devSoundOrigins & SOF_SECTOR)
+            {
+                dd_snprintf(buf, 80, "Sector #%i", sectorIndex);
+                drawSoundOrigin(sec->soundEmitter().origin, buf, eye);
+            }
+        }
     }
 
     // Restore previous state.

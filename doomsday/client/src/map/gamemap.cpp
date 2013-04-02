@@ -76,23 +76,21 @@ MapElement *GameMap::bspRoot() const
 void GameMap::updateBounds()
 {
     bool isFirst = true;
-    for(uint i = 0; i < sectorCount(); ++i)
+    foreach(Sector *sector, _sectors)
     {
-        Sector &sector = sectors[i];
-
         // Sectors with no lines have invalid bounds; skip them.
-        if(!sector.lineCount()) continue;
+        if(!sector->lineCount()) continue;
 
         if(isFirst)
         {
             // The first sector is used as is.
-            V2d_CopyBox(aaBox.arvec2, sector.aaBox().arvec2);
+            V2d_CopyBox(aaBox.arvec2, sector->aaBox().arvec2);
             isFirst = false;
         }
         else
         {
             // Expand the bounding box.
-            V2d_UniteBox(aaBox.arvec2, sector.aaBox().arvec2);
+            V2d_UniteBox(aaBox.arvec2, sector->aaBox().arvec2);
         }
     }
 }
@@ -211,68 +209,67 @@ GameMap *GameMap_SetSkyFix(GameMap *map, boolean ceiling, coord_t height)
 Vertex *GameMap_Vertex(GameMap *map, uint idx)
 {
     DENG2_ASSERT(map);
-    if(idx >= (uint)map->vertexes.size()) return NULL;
-    return &map->vertexes[idx];
+    if(idx >= uint( map->_vertexes.size() )) return 0;
+    return map->_vertexes[idx];
 }
 
 int GameMap_VertexIndex(GameMap *map, Vertex const *vtx)
 {
     DENG2_ASSERT(map);
     if(!vtx) return -1;
-    return map->vertexes.indexOf(vtx);
+    return map->_vertexes.indexOf(const_cast<Vertex *>(vtx)); // Bad performance: O(n)
 }
 
 int GameMap_LineDefIndex(GameMap *map, LineDef const *line)
 {
     DENG2_ASSERT(map);
     if(!line) return -1;
-    return map->lines.indexOf(line);
+    return map->_lines.indexOf(const_cast<LineDef *>(line)); // Bad performance: O(n)
 }
 
 LineDef *GameMap_LineDef(GameMap *map, uint idx)
 {
     DENG2_ASSERT(map);
-    if(idx >= (uint)map->lines.size()) return NULL;
-    return &map->lines[idx];
+    if(idx >= uint( map->_lines.size() )) return 0;
+    return map->_lines[idx];
 }
 
 int GameMap_SideDefIndex(GameMap *map, SideDef const *side)
 {
     DENG2_ASSERT(map);
     if(!side) return -1;
-    return map->sideDefs.indexOf(side);
+    return map->_sideDefs.indexOf(const_cast<SideDef *>(side)); // Bad performance: O(n)
 }
 
 SideDef *GameMap_SideDef(GameMap *map, uint idx)
 {
     DENG2_ASSERT(map);
-    if(idx >= (uint)map->sideDefs.size()) return NULL;
-    return &map->sideDefs[idx];
+    if(idx >= uint( map->_sideDefs.size() )) return 0;
+    return map->_sideDefs[idx];
 }
 
 int GameMap_SectorIndex(GameMap *map, Sector const *sec)
 {
     DENG2_ASSERT(map);
     if(!sec) return -1;
-    return map->sectors.indexOf(sec);
+    return map->_sectors.indexOf(const_cast<Sector *>(sec)); // Bad performance: O(n)
 }
 
 Sector *GameMap_Sector(GameMap *map, uint idx)
 {
     DENG2_ASSERT(map);
     if(idx >= map->sectorCount()) return NULL;
-    return &map->sectors[idx];
+    return map->_sectors[idx];
 }
 
 Sector *GameMap_SectorBySoundEmitter(GameMap *map, void const *soundEmitter)
 {
     DENG2_ASSERT(map);
-    for(int i = 0; i < map->sectors.size(); ++i)
+    foreach(Sector *sector, map->_sectors)
     {
-        Sector *sec = &map->sectors[i];
-        if(soundEmitter == &sec->soundEmitter())
+        if(soundEmitter == &sector->soundEmitter())
         {
-            return sec;
+            return sector;
         }
     }
     return 0; // Not found.
@@ -287,24 +284,18 @@ Surface *GameMap_SurfaceBySoundEmitter(GameMap *map, void const *soundEmitter)
     if(!soundEmitter) return 0;
 
     // First try plane surfaces.
-    for(uint i = 0; i < map->sectorCount(); ++i)
+    foreach(Sector *sector, map->_sectors)
+    foreach(Plane *plane, sector->planes())
     {
-        Sector *sec = &map->sectors[i];
-
-        foreach(Plane *plane, sec->planes())
+        if(soundEmitter == &plane->surface().soundEmitter())
         {
-            if(soundEmitter == &plane->surface().soundEmitter())
-            {
-                return &plane->surface();
-            }
+            return &plane->surface();
         }
     }
 
     // Perhaps a wall surface?
-    for(uint i = 0; i < map->sideDefCount(); ++i)
+    foreach(SideDef *sideDef, map->_sideDefs)
     {
-        SideDef *sideDef = &map->sideDefs[i];
-
         if(soundEmitter == &sideDef->middle().soundEmitter())
         {
             return &sideDef->middle();
@@ -367,7 +358,7 @@ BspNode *GameMap_BspNode(GameMap *map, uint idx)
 uint GameMap_VertexCount(GameMap *map)
 {
     DENG2_ASSERT(map);
-    return map->vertexes.size();
+    return map->vertexCount();
 }
 
 uint GameMap_LineDefCount(GameMap *map)
@@ -821,17 +812,6 @@ static int GameMap_IterateCellBlockLineDefs(GameMap *map, BlockmapCellBlock cons
                                             blockmapCellLinesIterator, (void *) &parms);
 }
 
-int GameMap_LineDefIterator(GameMap *map, int (*callback) (LineDef *, void *), void *context)
-{
-    DENG2_ASSERT(map);
-    for(uint i = 0; i < map->lineCount(); ++i)
-    {
-        int result = callback(&map->lines[i], context);
-        if(result) return result;
-    }
-    return false; // Continue iteration.
-}
-
 void GameMap_LinkBspLeaf(GameMap *map, BspLeaf *bspLeaf)
 {
     DENG2_ASSERT(map);
@@ -1161,62 +1141,6 @@ int GameMap_AllLineDefsBoxIterator(GameMap* map, const AABoxd* box,
         if(result) return result;
     }
     return P_LinesBoxIterator(box, callback, parameters);
-}
-
-int GameMap_VertexIterator(GameMap* map, int (*callback) (Vertex*, void*), void* parameters)
-{
-    DENG2_ASSERT(map);
-    for(int i = 0; i < map->vertexes.size(); ++i)
-    {
-        int result = callback(&map->vertexes[i], parameters);
-        if(result) return result;
-    }
-    return false; // Continue iteration.
-}
-
-int GameMap_SideDefIterator(GameMap* map, int (*callback) (SideDef*, void*), void* parameters)
-{
-    uint i;
-    DENG2_ASSERT(map);
-    for(i = 0; i < map->sideDefCount(); ++i)
-    {
-        int result = callback(&map->sideDefs[i], parameters);
-        if(result) return result;
-    }
-    return false; // Continue iteration.
-}
-
-int GameMap_SectorIterator(GameMap *map, int (*callback) (Sector *, void *), void *parameters)
-{
-    DENG2_ASSERT(map);
-    for(uint i = 0; i < map->sectorCount(); ++i)
-    {
-        int result = callback(&map->sectors[i], parameters);
-        if(result) return result;
-    }
-    return false; // Continue iteration.
-}
-
-int GameMap_HEdgeIterator(GameMap *map, int (*callback) (HEdge *, void *), void *parameters)
-{
-    DENG2_ASSERT(map);
-    for(uint i = 0; i < map->hedgeCount(); ++i)
-    {
-        int result = callback(map->hedges[i], parameters);
-        if(result) return result;
-    }
-    return false; // Continue iteration.
-}
-
-int GameMap_BspNodeIterator(GameMap *map, int (*callback) (BspNode *, void *), void *parameters)
-{
-    DENG2_ASSERT(map);
-    for(uint i = 0; i < map->bspNodeCount(); ++i)
-    {
-        int result = callback(map->bspNodes[i], parameters);
-        if(result) return result;
-    }
-    return false; // Continue iteration.
 }
 
 static int traverseCellPath2(Blockmap* bmap, uint const fromBlock[2],
