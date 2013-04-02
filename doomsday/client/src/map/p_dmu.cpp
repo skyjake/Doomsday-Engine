@@ -294,25 +294,25 @@ uint P_ToIndex(void const *ptr)
     switch(elem->type())
     {
     case DMU_VERTEX:
-        return GET_VERTEX_IDX(elem->castTo<Vertex>());
+        return GameMap_VertexIndex(theMap, elem->castTo<Vertex>());
 
     case DMU_HEDGE:
-        return GET_HEDGE_IDX(elem->castTo<HEdge>());
+        return GameMap_HEdgeIndex(theMap, elem->castTo<HEdge>());
 
     case DMU_LINEDEF:
-        return GET_LINE_IDX(elem->castTo<LineDef>());
+        return GameMap_LineDefIndex(theMap, elem->castTo<LineDef>());
 
     case DMU_SIDEDEF:
-        return GET_SIDE_IDX(elem->castTo<SideDef>());
+        return GameMap_SideDefIndex(theMap, elem->castTo<SideDef>());
 
     case DMU_BSPLEAF:
-        return GET_BSPLEAF_IDX(elem->castTo<BspLeaf>());
+        return GameMap_BspLeafIndex(theMap, elem->castTo<BspLeaf>());
 
     case DMU_SECTOR:
-        return GET_SECTOR_IDX(elem->castTo<Sector>());
+        return GameMap_SectorIndex(theMap, elem->castTo<Sector>());
 
     case DMU_BSPNODE:
-        return GET_BSPNODE_IDX(elem->castTo<BspNode>());
+        return GameMap_BspNodeIndex(theMap, elem->castTo<BspNode>());
 
     case DMU_PLANE:
         return elem->castTo<Plane>()->inSectorIndex();
@@ -333,25 +333,25 @@ void *P_ToPtr(int type, uint index)
     switch(type)
     {
     case DMU_VERTEX:
-        return VERTEX_PTR(index);
+        return GameMap_Vertex(theMap, index);
 
     case DMU_HEDGE:
-        return HEDGE_PTR(index);
+        return GameMap_HEdge(theMap, index);
 
     case DMU_LINEDEF:
-        return LINE_PTR(index);
+        return GameMap_LineDef(theMap, index);
 
     case DMU_SIDEDEF:
-        return SIDE_PTR(index);
+        return GameMap_SideDef(theMap, index);
 
     case DMU_BSPLEAF:
-        return BSPLEAF_PTR(index);
+        return GameMap_BspLeaf(theMap, index);
 
     case DMU_SECTOR:
-        return SECTOR_PTR(index);
+        return GameMap_Sector(theMap, index);
 
     case DMU_BSPNODE:
-        return BSPNODE_PTR(index);
+        return GameMap_BspNode(theMap, index);
 
     case DMU_PLANE: {
         /// @todo Throw exception.
@@ -449,43 +449,44 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
  *                      aborted immediately when the callback function
  *                      returns @c false.
  */
+#undef P_Callback
 int P_Callback(int type, uint index, void *context, int (*callback)(void *p, void *ctx))
 {
     switch(type)
     {
     case DMU_VERTEX:
-        if(index < NUM_VERTEXES)
-            return callback(VERTEX_PTR(index), context);
+        if(index < GameMap_VertexCount(theMap))
+            return callback(GameMap_Vertex(theMap, index), context);
         break;
 
     case DMU_HEDGE:
-        if(index < NUM_HEDGES)
-            return callback(HEDGE_PTR(index), context);
+        if(index < GameMap_HEdgeCount(theMap))
+            return callback(GameMap_HEdge(theMap, index), context);
         break;
 
     case DMU_LINEDEF:
-        if(index < NUM_LINEDEFS)
-            return callback(LINE_PTR(index), context);
+        if(index < GameMap_LineDefCount(theMap))
+            return callback(GameMap_LineDef(theMap, index), context);
         break;
 
     case DMU_SIDEDEF:
-        if(index < NUM_SIDEDEFS)
-            return callback(SIDE_PTR(index), context);
+        if(index < GameMap_SideDefCount(theMap))
+            return callback(GameMap_SideDef(theMap, index), context);
         break;
 
     case DMU_BSPNODE:
-        if(index < NUM_BSPNODES)
-            return callback(BSPNODE_PTR(index), context);
+        if(index < GameMap_BspNodeCount(theMap))
+            return callback(GameMap_BspNode(theMap, index), context);
         break;
 
     case DMU_BSPLEAF:
-        if(index < NUM_BSPLEAFS)
-            return callback(BSPLEAF_PTR(index), context);
+        if(index < GameMap_BspLeafCount(theMap))
+            return callback(GameMap_BspLeaf(theMap, index), context);
         break;
 
     case DMU_SECTOR:
-        if(index < NUM_SECTORS)
-            return callback(SECTOR_PTR(index), context);
+        if(index < GameMap_SectorCount(theMap))
+            return callback(GameMap_Sector(theMap, index), context);
         break;
 
     case DMU_PLANE: {
@@ -523,6 +524,7 @@ int P_Callback(int type, uint index, void *context, int (*callback)(void *p, voi
  * Another version of callback iteration. The set of selected objects is
  * determined by 'type' and 'ptr'. Otherwise works like P_Callback.
  */
+#undef P_Callbackp
 int P_Callbackp(int type, void *elPtr, void *context, int (*callback)(void *p, void *ctx))
 {
     de::MapElement *elem = IN_ELEM(elPtr);

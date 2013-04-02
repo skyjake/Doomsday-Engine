@@ -221,9 +221,9 @@ void Rend_RadioInitForMap()
 
     Time begunAt;
 
-    for(uint i = 0; i < NUM_VERTEXES; ++i)
+    for(uint i = 0; i < GameMap_VertexCount(theMap); ++i)
     {
-        Rend_RadioUpdateVertexShadowOffsets(*VERTEX_PTR(i));
+        Rend_RadioUpdateVertexShadowOffsets(*GameMap_Vertex(theMap, i));
     }
 
     /**
@@ -244,9 +244,9 @@ void Rend_RadioInitForMap()
     AABoxd bounds;
     vec2d_t point;
 
-    for(uint i = 0; i < NUM_LINEDEFS; ++i)
+    for(uint i = 0; i < GameMap_LineDefCount(theMap); ++i)
     {
-        LineDef *line = LINE_PTR(i);
+        LineDef *line = GameMap_LineDef(theMap, i);
 
         if(!Rend_RadioLineCastsShadow(*line)) continue;
 

@@ -445,9 +445,9 @@ void LG_InitForMap(void)
         M_Free(sampleResults);
 
     // Find the blocks of all sectors.
-    for(s = 0; s < NUM_SECTORS; ++s)
+    for(s = 0; s < GameMap_SectorCount(theMap); ++s)
     {
-        Sector *sector = SECTOR_PTR(s);
+        Sector *sector = GameMap_Sector(theMap, s);
 
         count = changedCount = 0;
 
@@ -633,7 +633,7 @@ void LG_MarkAllForUpdate(void)
 
     // Mark all blocks and contributors.
     { uint i;
-    for(i = 0; i < NUM_SECTORS; ++i)
+    for(i = 0; i < GameMap_SectorCount(theMap); ++i)
     {
         LG_SectorChanged(GameMap_Sector(theMap, i));
     }}

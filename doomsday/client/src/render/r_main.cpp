@@ -510,7 +510,7 @@ static void R_UpdateMap()
 
 #ifdef __CLIENT__
     // Update all world surfaces.
-    for(uint i = 0; i < NUM_SECTORS; ++i)
+    for(uint i = 0; i < GameMap_SectorCount(theMap); ++i)
     {
         Sector *sec = GameMap_Sector(theMap, i);
 
@@ -520,7 +520,7 @@ static void R_UpdateMap()
         }
     }
 
-    for(uint i = 0; i < NUM_SIDEDEFS; ++i)
+    for(uint i = 0; i < GameMap_SideDefCount(theMap); ++i)
     {
         SideDef *sideDef = GameMap_SideDef(theMap, i);
 
@@ -530,7 +530,7 @@ static void R_UpdateMap()
     }
 
     /// @todo Is this even necessary?
-    for(uint i = 0; i < NUM_POLYOBJS; ++i)
+    for(uint i = 0; i < GameMap_PolyobjCount(theMap); ++i)
     {
         Polyobj *po = GameMap_PolyobjByID(theMap, i);
 
@@ -807,7 +807,7 @@ void R_CreateMobjLinks()
 
 BEGIN_PROF( PROF_MOBJ_INIT_ADD );
 
-    for(uint i = 0; i < NUM_SECTORS; ++i)
+    for(uint i = 0; i < GameMap_SectorCount(theMap); ++i)
     {
         Sector *sec = GameMap_Sector(theMap, i);
         for(mobj_t *iter = sec->firstMobj(); iter; iter = iter->sNext)
@@ -1377,9 +1377,9 @@ void Rend_CacheForMap()
     {
         MaterialVariantSpec const &spec = Rend_MapSurfaceMaterialSpec();
 
-        for(uint i = 0; i < NUM_SIDEDEFS; ++i)
+        for(uint i = 0; i < GameMap_SideDefCount(theMap); ++i)
         {
-            SideDef *sideDef = SIDE_PTR(i);
+            SideDef *sideDef = GameMap_SideDef(theMap, i);
 
             if(sideDef->middle().hasMaterial())
                 App_Materials().cache(sideDef->middle().material(), spec);
@@ -1391,9 +1391,9 @@ void Rend_CacheForMap()
                 App_Materials().cache(sideDef->bottom().material(), spec);
         }
 
-        for(uint i = 0; i < NUM_SECTORS; ++i)
+        for(uint i = 0; i < GameMap_SectorCount(theMap); ++i)
         {
-            Sector *sec = SECTOR_PTR(i);
+            Sector *sec = GameMap_Sector(theMap, i);
 
             // Skip sectors with no lines as their planes will never be drawn.
             if(!sec->lineCount()) continue;

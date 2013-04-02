@@ -240,7 +240,7 @@ void R_InitObjlinkBlockmapForMap(void)
     }
 
     // Initialize obj => BspLeaf contact lists.
-    bspLeafContacts = (objcontactlist_t *) Z_Calloc(sizeof *bspLeafContacts * NUM_BSPLEAFS, PU_MAPSTATIC, 0);
+    bspLeafContacts = (objcontactlist_t *) Z_Calloc(sizeof *bspLeafContacts * GameMap_BspLeafCount(theMap), PU_MAPSTATIC, 0);
 }
 
 void R_DestroyObjlinkBlockmap(void)
@@ -305,14 +305,14 @@ void R_ObjlinkCreate(void* obj, objtype_t type)
     link->type = type;
 }
 
-int RIT_LinkObjToBspLeaf(BspLeaf* bspLeaf, void* paramaters)
+int RIT_LinkObjToBspLeaf(BspLeaf *bspLeaf, void *parameters)
 {
-    const linkobjtobspleafparams_t* p = (linkobjtobspleafparams_t*) paramaters;
-    objcontact_t* con = allocObjContact();
+    linkobjtobspleafparams_t const *p = (linkobjtobspleafparams_t *) parameters;
+    objcontact_t *con = allocObjContact();
 
     con->obj = p->obj;
     // Link the contact list for this bspLeaf.
-    linkContactToBspLeaf(con, p->type, GET_BSPLEAF_IDX(bspLeaf));
+    linkContactToBspLeaf(con, p->type, GameMap_BspLeafIndex(theMap, bspLeaf));
 
     return false; // Continue iteration.
 }
@@ -572,7 +572,7 @@ BEGIN_PROF( PROF_OBJLINK_LINK );
 END_PROF( PROF_OBJLINK_LINK );
 }
 
-void R_InitForNewFrame(void)
+void R_InitForNewFrame()
 {
 #ifdef DD_PROFILE
     static int i;
@@ -588,25 +588,25 @@ void R_InitForNewFrame(void)
     // Start reusing nodes from the first one in the list.
     contCursor = contFirst;
     if(bspLeafContacts)
-        memset(bspLeafContacts, 0, NUM_BSPLEAFS * sizeof *bspLeafContacts);
+        memset(bspLeafContacts, 0, GameMap_BspLeafCount(theMap) * sizeof *bspLeafContacts);
 }
 
-int R_IterateBspLeafContacts2(BspLeaf* bspLeaf, objtype_t type,
-    int (*callback) (void* object, void* paramaters), void* paramaters)
+int R_IterateBspLeafContacts2(BspLeaf *bspLeaf, objtype_t type,
+    int (*callback) (void *object, void *parameters), void *parameters)
 {
-    objcontact_t* con = bspLeafContacts[GET_BSPLEAF_IDX(bspLeaf)].head[type];
+    objcontact_t *con = bspLeafContacts[GameMap_BspLeafIndex(theMap, bspLeaf)].head[type];
     int result = false; // Continue iteration.
     while(con)
     {
-        result = callback(con->obj, paramaters);
+        result = callback(con->obj, parameters);
         if(result) break;
         con = con->next;
     }
     return result;
 }
 
-int R_IterateBspLeafContacts(BspLeaf* bspLeaf, objtype_t type,
-    int (*callback) (void* object, void* paramaters))
+int R_IterateBspLeafContacts(BspLeaf *bspLeaf, objtype_t type,
+    int (*callback) (void *object, void *parameters))
 {
-    return R_IterateBspLeafContacts2(bspLeaf, type, callback, NULL/*no paramaters*/);
+    return R_IterateBspLeafContacts2(bspLeaf, type, callback, NULL/*no parameters*/);
 }

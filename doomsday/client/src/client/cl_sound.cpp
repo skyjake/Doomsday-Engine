@@ -97,9 +97,9 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     {        
         uint index = deltaId;
 
-        if(index < NUM_SECTORS)
+        if(index < GameMap_SectorCount(theMap))
         {
-            sector = SECTOR_PTR(index);
+            sector = GameMap_Sector(theMap, index);
         }
         else
         {
@@ -111,9 +111,9 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     {
         uint index = deltaId;
 
-        if(index < NUM_SIDEDEFS)
+        if(index < GameMap_SideDefCount(theMap))
         {
-            side = SIDE_PTR(index);
+            side = GameMap_SideDef(theMap, index);
         }
         else
         {
@@ -127,7 +127,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 
         LOG_DEBUG("DT_POLY_SOUND: poly=%i") << index;
 
-        if(index < NUM_POLYOBJS)
+        if(index < GameMap_PolyobjCount(theMap))
         {
             DENG_ASSERT(theMap);
             poly = GameMap_PolyobjByID(theMap, index);
@@ -253,7 +253,7 @@ ifdef _DEBUG
 Con_Printf("Cl_ReadSoundDelta2(%i): Start snd=%i [%x] vol=%.2f",
            type, sound, flags, volume);
 if(cmo) Con_Printf(", mo=%i\n", cmo->mo.thinker.id);
-else if(sector) Con_Printf(", sector=%i\n", GET_SECTOR_IDX(sector));
+else if(sector) Con_Printf(", sector=%i\n", GameMap_SectorIndex(theMap, (sector));
 else if(poly) Con_Printf(", poly=%i\n", GET_POLYOBJ_IDX(poly));
 else Con_Printf("\n");
 #endif
@@ -272,7 +272,7 @@ else Con_Printf("\n");
 Con_Printf("Cl_ReadSoundDelta2(%i): Stop sound %i",
            type, sound);
 if(cmo)  Con_Printf(", mo=%i\n", cmo->mo.thinker.id);
-else if(sector) Con_Printf(", sector=%i\n", GET_SECTOR_IDX(sector));
+else if(sector) Con_Printf(", sector=%i\n", GameMap_SectorIndex(theMap, (sector));
 else if(poly) Con_Printf(", poly=%i\n", GET_POLYOBJ_IDX(poly));
 else Con_Printf("\n");
 #endif
@@ -335,12 +335,12 @@ void Cl_Sound(void)
     else if(flags & SNDF_SECTOR)
     {
         num = Reader_ReadPackedUInt16(msgReader);
-        if(num >= NUM_SECTORS)
+        if(num >= GameMap_SectorCount(theMap))
         {
             Con_Message("Cl_Sound: Invalid sector number %i.", num);
             return;
         }
-        mo = (mobj_t *) &SECTOR_PTR(num)->soundEmitter();
+        mo = (mobj_t *) &GameMap_Sector(theMap, num)->soundEmitter();
         //S_StopSound(0, mo);
         S_LocalSoundAtVolume(sound, mo, volume / 127.0f);
     }

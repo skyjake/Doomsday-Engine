@@ -1585,7 +1585,7 @@ void Rend_DrawShadowOffsetVerts()
                             GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
     glEnable(GL_TEXTURE_2D);
 
-    for(uint i = 0; i < NUM_LINEDEFS; ++i)
+    for(uint i = 0; i < GameMap_LineDefCount(theMap); ++i)
     {
         LineDef *line = GameMap_LineDef(theMap, i);
 

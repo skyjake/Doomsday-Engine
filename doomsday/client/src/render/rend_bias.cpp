@@ -281,7 +281,7 @@ void SB_InitForMap(char const *uniqueID)
     uint numVertIllums = 0;
 
     // First, determine the total number of vertexillum_ts we need.
-    for(uint i = 0; i < NUM_HEDGES; ++i)
+    for(uint i = 0; i < GameMap_HEdgeCount(theMap); ++i)
     {
         HEdge *hedge = GameMap_HEdge(theMap, i);
         if(hedge->hasLine())
@@ -290,7 +290,7 @@ void SB_InitForMap(char const *uniqueID)
 
     numVertIllums *= 3 * 4;
 
-    for(uint i = 0; i < NUM_SECTORS; ++i)
+    for(uint i = 0; i < GameMap_SectorCount(theMap); ++i)
     {
         Sector *sec = GameMap_Sector(theMap, i);
 
@@ -300,7 +300,7 @@ void SB_InitForMap(char const *uniqueID)
         }
     }
 
-    for(uint i = 0; i < NUM_POLYOBJS; ++i)
+    for(uint i = 0; i < GameMap_PolyobjCount(theMap); ++i)
     {
         Polyobj *po = GameMap_PolyobjByID(theMap, i);
         numVertIllums += po->lineCount * 3 * 4;
@@ -314,7 +314,7 @@ void SB_InitForMap(char const *uniqueID)
     }
 
     // Allocate bias surfaces and attach vertexillum_ts.
-    for(uint i = 0; i < NUM_HEDGES; ++i)
+    for(uint i = 0; i < GameMap_HEdgeCount(theMap); ++i)
     {
         HEdge *hedge = GameMap_HEdge(theMap, i);
 
@@ -332,7 +332,7 @@ void SB_InitForMap(char const *uniqueID)
         }
     }
 
-    for(uint i = 0; i < NUM_SECTORS; ++i)
+    for(uint i = 0; i < GameMap_SectorCount(theMap); ++i)
     {
         Sector *sec = GameMap_Sector(theMap, i);
 
@@ -352,7 +352,7 @@ void SB_InitForMap(char const *uniqueID)
         }
     }
 
-    for(uint i = 0; i < NUM_POLYOBJS; ++i)
+    for(uint i = 0; i < GameMap_PolyobjCount(theMap); ++i)
     {
         Polyobj *po = GameMap_PolyobjByID(theMap, i);
 

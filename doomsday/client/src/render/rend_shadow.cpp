@@ -175,7 +175,7 @@ void Rend_RenderMobjShadows()
     initShadowPrimitive();
 
     // Process all sectors:
-    for(uint i = 0; i < NUM_SECTORS; ++i)
+    for(uint i = 0; i < GameMap_SectorCount(theMap); ++i)
     {
         Sector const *sec = GameMap_Sector(theMap, i);
 

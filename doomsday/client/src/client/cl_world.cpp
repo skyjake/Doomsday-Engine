@@ -625,13 +625,13 @@ void Cl_ReadSectorDelta2(int deltaType, boolean /*skip*/)
 
     Sector *sec = 0;
 #ifdef _DEBUG
-    if(num >= NUM_SECTORS)
+    if(num >= GameMap_SectorCount(theMap))
     {
         // This is worrisome.
         Con_Error("Cl_ReadSectorDelta2: Sector %i out of range.\n", num);
     }
 #endif
-    sec = SECTOR_PTR(num);
+    sec = GameMap_Sector(theMap, num);
 
     // Flags.
     int df = Reader_ReadPackedUInt32(msgReader);
@@ -773,14 +773,14 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
         return;
 
 #ifdef _DEBUG
-    if(num >= NUM_SIDEDEFS)
+    if(num >= GameMap_SideDefCount(theMap))
     {
         // This is worrisome.
         Con_Error("Cl_ReadSideDelta2: Side %i out of range.\n", num);
     }
 #endif
 
-    SideDef *sideDef = SIDE_PTR(num);
+    SideDef *sideDef = GameMap_SideDef(theMap, num);
 
     if(df & SIDF_TOP_MATERIAL)
     {
@@ -874,7 +874,7 @@ void Cl_ReadPolyDelta2(boolean skip)
         return;
 
 #ifdef _DEBUG
-    if(num >= NUM_POLYOBJS)
+    if(num >= GameMap_PolyobjCount(theMap))
     {
         // This is worrisome.
         Con_Error("Cl_ReadPolyDelta2: PO %i out of range.\n", num);

@@ -178,9 +178,9 @@ void P_MapSpawnPlaneParticleGens()
     GameMap *map = theMap;
     if(!map) return;
 
-    for(uint i = 0; i < NUM_SECTORS; ++i)
+    for(uint i = 0; i < GameMap_SectorCount(theMap); ++i)
     {
-        Sector *sector = SECTOR_PTR(i);
+        Sector *sector = GameMap_Sector(theMap, i);
 
         // Only planes of sectors with volume on the world X/Y axis support generators.
         if(!sector->lineCount()) continue;

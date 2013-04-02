@@ -1777,7 +1777,8 @@ static void reportLineDrawn(LineDef &line)
     // Send a status report.
     if(gx.HandleMapObjectStatusReport)
     {
-        gx.HandleMapObjectStatusReport(DMUSC_LINE_FIRSTRENDERED, GET_LINE_IDX(&line), DMU_LINEDEF, &playerNum);
+        gx.HandleMapObjectStatusReport(DMUSC_LINE_FIRSTRENDERED, GameMap_LineDefIndex(theMap, &line),
+                                       DMU_LINEDEF, &playerNum);
     }
 }
 
@@ -2882,7 +2883,7 @@ static void Rend_RenderBspLeaf(BspLeaf *bspLeaf)
     R_InitForBspLeaf(bspLeaf);
     Rend_RadioBspLeafEdges(*bspLeaf);
 
-    uint bspLeafIdx = GET_BSPLEAF_IDX(bspLeaf);
+    uint bspLeafIdx = GameMap_BspLeafIndex(theMap, bspLeaf);
     occludeBspLeaf(bspLeaf, false);
     LO_ClipInBspLeaf(bspLeafIdx);
     occludeBspLeaf(bspLeaf, true);
@@ -2992,7 +2993,7 @@ void Rend_RenderSurfaceVectors()
     glDisable(GL_CULL_FACE);
 
     vec3f_t origin;
-    for(uint i = 0; i < NUM_HEDGES; ++i)
+    for(uint i = 0; i < GameMap_HEdgeCount(theMap); ++i)
     {
         HEdge *hedge = GameMap_HEdge(theMap, i);
 
@@ -3057,7 +3058,7 @@ void Rend_RenderSurfaceVectors()
         }
     }
 
-    for(uint i = 0; i < NUM_BSPLEAFS; ++i)
+    for(uint i = 0; i < GameMap_BspLeafCount(theMap); ++i)
     {
         BspLeaf *bspLeaf = GameMap_BspLeaf(theMap, i);
 
@@ -3077,7 +3078,7 @@ void Rend_RenderSurfaceVectors()
         }
     }
 
-    for(uint i = 0; i < NUM_POLYOBJS; ++i)
+    for(uint i = 0; i < GameMap_PolyobjCount(theMap); ++i)
     {
         Polyobj const *po = GameMap_PolyobjByID(theMap, i);
         Sector const &sector = po->bspLeaf->sector();
@@ -3357,7 +3358,7 @@ void Rend_Vertexes()
         oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
         DGL_SetFloat(DGL_LINE_WIDTH, 2);
 
-        for(uint i = 0; i < NUM_VERTEXES; ++i)
+        for(uint i = 0; i < GameMap_VertexCount(theMap); ++i)
         {
             Vertex *vtx = GameMap_Vertex(theMap, i);
 
@@ -3389,7 +3390,7 @@ void Rend_Vertexes()
     glEnable(GL_POINT_SMOOTH);
     DGL_SetFloat(DGL_POINT_SIZE, 6);
 
-    for(uint i = 0; i < NUM_VERTEXES; ++i)
+    for(uint i = 0; i < GameMap_VertexCount(theMap); ++i)
     {
         Vertex *vtx = GameMap_Vertex(theMap, i);
         coord_t dist;
@@ -3422,7 +3423,7 @@ void Rend_Vertexes()
         eye[VY] = vOrigin[VZ];
         eye[VZ] = vOrigin[VY];
 
-        for(uint i = 0; i < NUM_VERTEXES; ++i)
+        for(uint i = 0; i < GameMap_VertexCount(theMap); ++i)
         {
             Vertex *vtx = GameMap_Vertex(theMap, i);
             coord_t pos[3], dist;
@@ -3444,7 +3445,7 @@ void Rend_Vertexes()
             if(dist < MAX_VERTEX_POINT_DIST)
             {
                 float const alpha = 1 - dist / MAX_VERTEX_POINT_DIST;
-                float const scale = dist / (DENG_WINDOW-width() / 2);
+                float const scale = dist / (DENG_WINDOW->width() / 2);
 
                 drawVertexIndex(vtx, pos[VZ], scale, alpha);
             }
@@ -3917,7 +3918,7 @@ static void Rend_RenderBoundingBoxes()
 
     if(devPolyobjBBox)
     {
-        for(uint i = 0; i < NUM_POLYOBJS; ++i)
+        for(uint i = 0; i < GameMap_PolyobjCount(theMap); ++i)
         {
             Polyobj const *po = GameMap_PolyobjByID(theMap, i);
             Sector const &sec = po->bspLeaf->sector();

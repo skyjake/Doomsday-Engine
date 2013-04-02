@@ -465,7 +465,8 @@ static void initPolyobj(Polyobj *po)
         {
             Con_Message("Warning: GameMap::initPolyobj: Multiple polyobjs in a single BSP leaf\n"
                         "  (BSP leaf %lu, sector %lu). Previous polyobj overridden.",
-                        (unsigned long) GET_BSPLEAF_IDX(bspLeaf), (unsigned long) GET_SECTOR_IDX(bspLeaf->sectorPtr()));
+                        ulong( GameMap_BspLeafIndex(theMap, bspLeaf) ),
+                        ulong( GameMap_SectorIndex(theMap, bspLeaf->sectorPtr()) ));
         }
         bspLeaf->_polyObj = po;
         po->bspLeaf = bspLeaf;
@@ -1438,7 +1439,7 @@ int GameMap_PathTraverse2(GameMap *map, const_pvec2d_t from, const_pvec2d_t to,
     // Step #1: Collect intercepts.
     if(flags & PT_ADDLINES)
     {
-        if(NUM_POLYOBJS != 0)
+        if(GameMap_PolyobjCount(theMap) != 0)
         {
             traverseCellPath(map, map->polyobjBlockmap, from, to, collectPolyobjLineDefIntercepts, (void *)map);
         }

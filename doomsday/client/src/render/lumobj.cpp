@@ -154,9 +154,7 @@ static lumlistnode_t* allocListNode(void)
 static void linkLumObjToSSec(lumobj_t *lum, BspLeaf *bspLeaf)
 {
     lumlistnode_t *ln = allocListNode();
-    lumlistnode_t **root;
-
-    root = &bspLeafLumObjList[GET_BSPLEAF_IDX(bspLeaf)];
+    lumlistnode_t **root = &bspLeafLumObjList[GameMap_BspLeafIndex(theMap, bspLeaf)];
     ln->next = *root;
     ln->data = lum;
     *root = ln;
@@ -530,7 +528,7 @@ static int projectOmniLightToSurface(lumobj_t *lum, void *paramaters)
 void LO_InitForMap(void)
 {
     // First initialize the BSP leaf links (root pointers).
-    bspLeafLumObjList = (lumlistnode_t **) Z_Calloc(sizeof(*bspLeafLumObjList) * NUM_BSPLEAFS, PU_MAPSTATIC, 0);
+    bspLeafLumObjList = (lumlistnode_t **) Z_Calloc(sizeof(*bspLeafLumObjList) * GameMap_BspLeafCount(theMap), PU_MAPSTATIC, 0);
 
     maxLuminous = 0;
     luminousBlockSet = 0; // Will have already been free'd.
@@ -579,7 +577,7 @@ void LO_BeginWorldFrame(void)
     // Start reusing nodes from the first one in the list.
     listNodeCursor = listNodeFirst;
     if(bspLeafLumObjList)
-        memset(bspLeafLumObjList, 0, sizeof(lumlistnode_t *) * NUM_BSPLEAFS);
+        memset(bspLeafLumObjList, 0, sizeof(lumlistnode_t *) * GameMap_BspLeafCount(theMap));
     numLuminous = 0;
 }
 
@@ -1044,7 +1042,7 @@ BEGIN_PROF( PROF_LUMOBJ_INIT_ADD );
 
     if(useDynLights)
     {
-        for(uint i = 0; i < NUM_SECTORS; ++i)
+        for(uint i = 0; i < GameMap_SectorCount(theMap); ++i)
         {
             Sector *sec = GameMap_Sector(theMap, i);
 
@@ -1204,7 +1202,7 @@ void LO_ClipInBspLeafBySight(uint bspLeafIdx)
 static boolean iterateBspLeafLumObjs(BspLeaf *bspLeaf,
     boolean (*func) (void *, void *), void *data)
 {
-    lumlistnode_t *ln = bspLeafLumObjList[GET_BSPLEAF_IDX(bspLeaf)];
+    lumlistnode_t *ln = bspLeafLumObjList[GameMap_BspLeafIndex(theMap, bspLeaf)];
     while(ln)
     {
         if(!func(ln->data, data))

@@ -430,7 +430,7 @@ void Sv_RegisterPlayer(dt_player_t* reg, uint number)
  */
 void Sv_RegisterSector(dt_sector_t *reg, uint number)
 {
-    Sector *sec = SECTOR_PTR(number);
+    Sector *sec = GameMap_Sector(theMap, number);
 
     reg->lightLevel = sec->lightLevel();
     std::memcpy(reg->rgb, sec->lightColor(), sizeof(reg->rgb));
@@ -462,7 +462,7 @@ void Sv_RegisterSide(dt_side_t *reg, uint number)
 {
     DENG_ASSERT(reg);
 
-    SideDef *sideDef = SIDE_PTR(number);
+    SideDef *sideDef = GameMap_SideDef(theMap, number);
 
     reg->top.material    = sideDef->top().materialPtr();
     reg->middle.material = sideDef->middle().materialPtr();
@@ -625,7 +625,7 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
                                  sectordelta_t *d, byte doUpdate)
 {
     dt_sector_t *r = &reg->sectors[number];
-    Sector const *s = SECTOR_PTR(number);
+    Sector const *s = GameMap_Sector(theMap, number);
     int df = 0;
 
     // Determine which data is different.
@@ -746,7 +746,7 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
 boolean Sv_RegisterCompareSide(cregister_t *reg, uint number,
     sidedelta_t *d, byte doUpdate)
 {
-    SideDef const *s = SIDE_PTR(number);
+    SideDef const *s = GameMap_SideDef(theMap, number);
     dt_side_t *r = &reg->sideDefs[number];
     byte lineFlags = s->line().flags() & 0xff;
     byte sideFlags = s->flags() & 0xff;
@@ -945,24 +945,24 @@ void Sv_RegisterWorld(cregister_t* reg, boolean isInitial)
     reg->isInitial = isInitial;
 
     // Init sectors.
-    reg->sectors = (dt_sector_t *) Z_Calloc(sizeof(dt_sector_t) * NUM_SECTORS, PU_MAP, 0);
-    for(i = 0; i < NUM_SECTORS; ++i)
+    reg->sectors = (dt_sector_t *) Z_Calloc(sizeof(dt_sector_t) * GameMap_SectorCount(theMap), PU_MAP, 0);
+    for(i = 0; i < GameMap_SectorCount(theMap); ++i)
     {
         Sv_RegisterSector(&reg->sectors[i], i);
     }
 
     // Init sides.
-    reg->sideDefs = (dt_side_t *) Z_Calloc(sizeof(dt_side_t) * NUM_SIDEDEFS, PU_MAP, 0);
-    for(i = 0; i < NUM_SIDEDEFS; ++i)
+    reg->sideDefs = (dt_side_t *) Z_Calloc(sizeof(dt_side_t) * GameMap_SideDefCount(theMap), PU_MAP, 0);
+    for(i = 0; i < GameMap_SideDefCount(theMap); ++i)
     {
         Sv_RegisterSide(&reg->sideDefs[i], i);
     }
 
     // Init polyobjs.
-    numPolyobjs = NUM_POLYOBJS;
+    numPolyobjs = GameMap_PolyobjCount(theMap);
     if(numPolyobjs)
     {
-        reg->polyObjs = (dt_poly_t *) Z_Calloc(sizeof(dt_poly_t) * NUM_POLYOBJS, PU_MAP, 0);
+        reg->polyObjs = (dt_poly_t *) Z_Calloc(sizeof(dt_poly_t) * GameMap_PolyobjCount(theMap), PU_MAP, 0);
         for(i = 0; i < numPolyobjs; ++i)
         {
             Sv_RegisterPoly(&reg->polyObjs[i], i);
@@ -1519,7 +1519,7 @@ coord_t Sv_MobjDistance(const mobj_t* mo, const ownerinfo_t* info, boolean isRea
  */
 coord_t Sv_SectorDistance(int index, ownerinfo_t const *info)
 {
-    Sector const *sector = SECTOR_PTR(index);
+    Sector const *sector = GameMap_Sector(theMap, index);
 
     return M_ApproxDistance3(info->origin[VX] - sector->soundEmitter().origin[VX],
                              info->origin[VY] - sector->soundEmitter().origin[VY],
@@ -1528,7 +1528,7 @@ coord_t Sv_SectorDistance(int index, ownerinfo_t const *info)
 
 coord_t Sv_SideDistance(int index, int deltaFlags, ownerinfo_t const *info)
 {
-    SideDef const *sideDef = SIDE_PTR(index);
+    SideDef const *sideDef = GameMap_SideDef(theMap, index);
 
     ddmobj_base_t const &emitter = (deltaFlags & SNDDF_SIDE_MIDDLE? sideDef->middle().soundEmitter()
                                      : deltaFlags & SNDDF_SIDE_TOP? sideDef->top().soundEmitter()
@@ -2233,7 +2233,7 @@ void Sv_NewSectorDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
     uint                i;
     sectordelta_t       delta;
 
-    for(i = 0; i < NUM_SECTORS; ++i)
+    for(i = 0; i < GameMap_SectorCount(theMap); ++i)
     {
         if(Sv_RegisterCompareSector(reg, i, &delta, doUpdate))
         {
@@ -2258,15 +2258,15 @@ void Sv_NewSideDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
     if(reg->isInitial)
     {
         start = 0;
-        end = NUM_SIDEDEFS;
+        end = GameMap_SideDefCount(theMap);
     }
     else
     {
         // Because there are so many sides in a typical map, the number
         // of compared sides soon accumulates to millions. To reduce the
         // load, we'll check only a portion of all sides for a frame.
-        start = shift * NUM_SIDEDEFS / numShifts;
-        end = ++shift * NUM_SIDEDEFS / numShifts;
+        start = shift * GameMap_SideDefCount(theMap) / numShifts;
+        end = ++shift * GameMap_SideDefCount(theMap) / numShifts;
         shift %= numShifts;
     }
 
@@ -2290,7 +2290,7 @@ void Sv_NewPolyDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
     uint                i;
     polydelta_t         delta;
 
-    for(i = 0; i < NUM_POLYOBJS; ++i)
+    for(i = 0; i < GameMap_PolyobjCount(theMap); ++i)
     {
         if(Sv_RegisterComparePoly(reg, i, &delta))
         {

@@ -1,8 +1,4 @@
-/**
- * @file p_mapdata.h
- * Playsim Data Structures, Macros and Constants. @ingroup play
- *
- * These are internal to Doomsday. The games have no direct access to this data.
+/** @file p_mapdata.h Map entity definitions.
  *
  * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -22,12 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_PLAY_MAPDATA_H
-#define LIBDENG_PLAY_MAPDATA_H
-
-#if defined(__JDOOM__) || defined(__JHERETIC__) || defined(__JHEXEN__)
-#  error Attempted to include internal Doomsday p_mapdata.h from a game
-#endif
+#ifndef LIBDENG_PLAY_MAPENTIYDEF_H
+#define LIBDENG_PLAY_MAPENTIYDEF_H
 
 #include "dd_share.h"
 #include "api_mapedit.h"
@@ -36,33 +28,6 @@
 #include <de/binangle.h>
 #include <de/vector1.h>
 
-#define GET_VERTEX_IDX(vtx)     GameMap_VertexIndex(theMap, vtx)
-#define GET_LINE_IDX(li)        GameMap_LineDefIndex(theMap, li)
-#define GET_SIDE_IDX(si)        GameMap_SideDefIndex(theMap, si)
-#define GET_SECTOR_IDX(sec)     GameMap_SectorIndex(theMap, sec)
-#define GET_HEDGE_IDX(he)       GameMap_HEdgeIndex(theMap, he)
-#define GET_BSPLEAF_IDX(bl)     GameMap_BspLeafIndex(theMap, bl)
-#define GET_BSPNODE_IDX(nd)     GameMap_BspNodeIndex(theMap, nd)
-
-#define VERTEX_PTR(idx)         GameMap_Vertex(theMap, idx)
-#define LINE_PTR(idx)           GameMap_LineDef(theMap, idx)
-#define SIDE_PTR(idx)           GameMap_SideDef(theMap, idx)
-#define SECTOR_PTR(idx)         GameMap_Sector(theMap, idx)
-#define HEDGE_PTR(idx)          GameMap_HEdge(theMap, idx)
-#define BSPLEAF_PTR(idx)        GameMap_BspLeaf(theMap, idx)
-#define BSPNODE_PTR(idx)        GameMap_BspNode(theMap, idx)
-
-#define NUM_VERTEXES            GameMap_VertexCount(theMap)
-#define NUM_LINEDEFS            GameMap_LineDefCount(theMap)
-#define NUM_SIDEDEFS            GameMap_SideDefCount(theMap)
-#define NUM_SECTORS             GameMap_SectorCount(theMap)
-#define NUM_HEDGES              GameMap_HEdgeCount(theMap)
-#define NUM_BSPLEAFS            GameMap_BspLeafCount(theMap)
-#define NUM_BSPNODES            GameMap_BspNodeCount(theMap)
-
-#define NUM_POLYOBJS            GameMap_PolyobjCount(theMap)
-
-// Map entity definitions.
 struct mapentitydef_s;
 
 typedef struct mapentitypropertydef_s {
@@ -79,6 +44,9 @@ typedef struct mapentitypropertydef_s {
     struct mapentitydef_s* entity;
 } MapEntityPropertyDef;
 
+/**
+ * @ingroup play
+ */
 typedef struct mapentitydef_s {
     /// Unique identifier associated with this entity.
     int id;
@@ -184,4 +152,4 @@ void P_ShutdownMapEntityDefs(void);
 } // extern "C"
 #endif
 
-#endif // LIBDENG_PLAY_MAPDATA_H
+#endif // LIBDENG_PLAY_MAPENTIYDEF_H

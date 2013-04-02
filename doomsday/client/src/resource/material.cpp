@@ -414,7 +414,7 @@ DENG2_PIMPL(Material)
         if(theMap)
         {
             /// @todo Replace with a de::Observers-based mechanism.
-            theMap->updateSurfacesOnMaterialChange(&self);
+            theMap->updateSurfacesOnMaterialChange(self);
         }
     }
 
