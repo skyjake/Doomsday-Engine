@@ -95,6 +95,9 @@ for col in collections:
             templ += '@macro{summary}{== Summary == @break @arg}\n'
             templ += '@macro{description}{@break == Description == @break @arg}\n'
             templ += '@macro{cbr}{<br/>}\n'
+            templ += '@macro{usage}{@break === Usage === @break @arg}\n'
+            templ += '@macro{examples}{@break === Examples === @break @arg}\n'
+            templ += '@macro{seealso}{@break === See also === @break @arg}\n'
             templ += '@macro{params}{@break === Usage === @break @arg}\n'
             templ += '@macro{example}{@break === Example === @break @arg}\n'
             templ += '@begin\n' + \
