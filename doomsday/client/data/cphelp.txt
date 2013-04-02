@@ -176,8 +176,8 @@ desc = Show when the latest check for updates was made.
 [listaliases]
 desc = List all aliases and their expanded forms.
 
-[listbindclasses]
-desc = List all event binding classes.
+[listbcontexts]
+desc = List all binding contexts and their current state.
 
 [listbindings]
 desc = List all event bindings.
