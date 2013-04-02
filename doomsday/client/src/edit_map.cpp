@@ -50,7 +50,7 @@ class EditMap
 {
 public:
     typedef std::vector<Vertex *> Vertices;
-    Vertices vertexes; // really needs to be std::vector? (not a MapElementList?)
+    Vertices vertexes; // really needs to be std::vector? (not a QList?)
 
     typedef std::vector<LineDef *> Lines;
     Lines lines;
