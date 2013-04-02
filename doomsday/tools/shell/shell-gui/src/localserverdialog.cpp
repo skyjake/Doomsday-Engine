@@ -47,8 +47,9 @@ DENG2_PIMPL(LocalServerDialog)
     QLabel *portMsg;
     QTextEdit *options;
     FolderSelection *runtime;
+    bool portChanged;
 
-    Instance(Public &i) : Base(i)
+    Instance(Public &i) : Base(i), portChanged(false)
     {
 #ifdef WIN32
         self.setWindowFlags(self.windowFlags() & ~Qt::WindowContextHelpButtonHint);
@@ -92,6 +93,21 @@ DENG2_PIMPL(LocalServerDialog)
         port->setMinimumWidth(80);
         port->setMaximumWidth(80);
         port->setText(QString::number(st.value("LocalServer/port", 13209).toInt()));
+        /*
+        // Find an unused port.
+        if(isPortInUse())
+        {
+            for(int tries = 20; tries > 0; --tries)
+            {
+                port->setText(QString::number(portNumber() + 1));
+                if(!isPortInUse())
+                {
+                    break;
+                }
+            }
+        }
+        */
+        portChanged = false;
         port->setToolTip(tr("The default port is 13209."));
         portMsg = new QLabel;
         QPalette pal = portMsg->palette();
@@ -133,13 +149,34 @@ DENG2_PIMPL(LocalServerDialog)
         QObject::connect(opt, SIGNAL(clicked()), &self, SLOT(configureGameOptions()));
         yes->setDefault(true);
     }
+
+    int portNumber() const
+    {
+        QString txt = port->text().trimmed();
+        return txt.toInt();
+    }
+
+    bool isPortInUse() const
+    {
+        int const portNum = portNumber();
+        foreach(Address const &sv, GuiShellApp::app().serverFinder().foundServers())
+        {
+            if(sv.isLocal() && sv.port() == portNum)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
 };
 
 LocalServerDialog::LocalServerDialog(QWidget *parent)
     : QDialog(parent), d(new Instance(*this))
 {
     connect(d->port, SIGNAL(textChanged(QString)), this, SLOT(validate()));
+    connect(d->port, SIGNAL(textEdited(QString)), this, SLOT(portChanged())); // causes port to be saved
     connect(this, SIGNAL(accepted()), this, SLOT(saveState()));
+    connect(&GuiShellApp::app().serverFinder(), SIGNAL(updated()), this, SLOT(validate()));
 
     validate();
 }
@@ -170,8 +207,13 @@ NativePath LocalServerDialog::runtimeFolder() const
     return d->runtime->path();
 }
 
-void LocalServerDialog::configureGameOptions()
+void LocalServerDialog::portChanged()
 {
+    d->portChanged = true;
+}
+
+void LocalServerDialog::configureGameOptions()
+{    
 }
 
 void LocalServerDialog::saveState()
@@ -179,7 +221,10 @@ void LocalServerDialog::saveState()
     QSettings st;
     st.setValue("LocalServer/name", d->name->text());
     st.setValue("LocalServer/gameMode", d->games->itemData(d->games->currentIndex()).toString());
-    st.setValue("LocalServer/port", d->port->text().toInt());
+    if(d->portChanged)
+    {
+        st.setValue("LocalServer/port", d->port->text().toInt());
+    }
     st.setValue("LocalServer/runtime", d->runtime->path().toString());
     st.setValue("LocalServer/options", d->options->toPlainText());
 }
@@ -189,9 +234,8 @@ void LocalServerDialog::validate()
     bool isValid = true;
 
     // Check port.
-    QString txt = d->port->text().trimmed();
-    int port = txt.toInt();
-    if(txt.isEmpty() || port < 0 || port >= 0x10000)
+    int port = d->portNumber();
+    if(d->port->text().isEmpty() || port < 0 || port >= 0x10000)
     {
         isValid = false;
         d->portMsg->setText(tr("Must be between 0 and 65535."));
@@ -200,16 +244,11 @@ void LocalServerDialog::validate()
     else
     {
         // Check known running servers.
-        bool inUse = false;
-        foreach(Address const &sv, GuiShellApp::app().serverFinder().foundServers())
+        bool inUse = d->isPortInUse();
+        if(inUse)
         {
-            if(sv.isLocal() && sv.port() == port)
-            {
-                isValid = false;
-                inUse = true;
-                d->portMsg->setText(tr("Port already in use."));
-                break;
-            }
+            isValid = false;
+            d->portMsg->setText(tr("Port already in use."));
         }
         d->portMsg->setVisible(inUse);
     }

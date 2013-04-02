@@ -1,0 +1,6 @@
+@summary{
+    Load a DKM keymap file.
+}
+@description{
+    Params: keymap (dkm-file) @cbr For example, 'keymap finnish'.
+}

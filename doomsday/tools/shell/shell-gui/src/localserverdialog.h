@@ -36,6 +36,7 @@ public:
     de::NativePath runtimeFolder() const;
 
 protected slots:
+    void portChanged();
     void configureGameOptions();
     void saveState();
     void validate();

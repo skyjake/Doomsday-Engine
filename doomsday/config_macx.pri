@@ -9,7 +9,7 @@ DEFINES += MACOSX
 CONFIG += deng_nofixedasm deng_embedfluidsynth
 
 # The native SDK option assumes the build is not for distribution.
-!deng_nativesdk {
+deng_qtautoselect:!deng_nativesdk {
     contains(QT_VERSION, ^4\\.[0-6]\\..*) {
         # 4.6 or earlier, assume Tiger with 32-bit Universal Intel/PowerPC binaries.
         CONFIG += deng_macx4u_32bit
@@ -31,11 +31,7 @@ CONFIG += deng_nofixedasm deng_embedfluidsynth
 
 # Apply deng_* Configuration -------------------------------------------------
 
-deng_nativesdk {
-    echo(Using native SDK.)
-    DEFINES += MACOSX_NATIVESDK
-}
-else:deng_macx8_64bit {
+deng_macx8_64bit {
     echo(Using Mac OS 10.8 SDK.)
     CONFIG -= x86
     CONFIG += x86_64
@@ -75,15 +71,21 @@ else:deng_macx4u_32bit {
 
     QMAKE_CFLAGS_WARN_ON -= -fdiagnostics-show-option
 }
+else:deng_nativesdk {
+    echo(Using native SDK.)
+    DEFINES += MACOSX_NATIVESDK
+}
 else {
     error(Unspecified SDK configuration.)
 }
 
 # Adjust Qt paths as needed.
-qtbase = $$(QTDIR)
-isEmpty(qtbase):!isEmpty(QMAKE_MAC_SDK) {
-    QMAKE_INCDIR_QT = $${QMAKE_MAC_SDK}$$QMAKE_INCDIR_QT
-    QMAKE_LIBDIR_QT = $${QMAKE_MAC_SDK}$$QMAKE_LIBDIR_QT
+!deng_macx8_64bit {
+	qtbase = $$(QTDIR)
+	isEmpty(qtbase):!isEmpty(QMAKE_MAC_SDK) {
+	    QMAKE_INCDIR_QT = $${QMAKE_MAC_SDK}$$QMAKE_INCDIR_QT
+	    QMAKE_LIBDIR_QT = $${QMAKE_MAC_SDK}$$QMAKE_LIBDIR_QT
+	}
 }
 
 # What's our arch?

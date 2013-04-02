@@ -26,7 +26,7 @@
 #include "common.h"
 
 #include "g_controls.h"
-#include "p_tick.h" // for P_IsPaused()
+#include "pause.h"
 #include "d_netsv.h"
 #include "hu_menu.h"
 #include "hu_msg.h"
@@ -71,9 +71,6 @@ typedef enum joyaxis_e {
 } joyaxis_t;
 
 D_CMD(DefaultGameBinds);
-D_CMD(Pause);
-
-extern boolean sendpause;
 
 // Input devices; state controls.
 static int     povangle = -1;          // -1 means centered (really 0 - 7).
@@ -105,7 +102,6 @@ void G_ControlRegister(void)
     C_VAR_INT   ("ctl-look-joy-delta", &cfg.jLookDeltaMode, 0, 0, 1);
 
     C_CMD("defaultgamebindings",    "",     DefaultGameBinds);
-    C_CMD("pause",                  "",     Pause);
 
     G_DefineControls();
 }
@@ -417,43 +413,6 @@ void G_RegisterBindClasses(void)
     // FIXME: Move the game's binding class creation here.
 }
 
-D_CMD(Pause)
-{
-    if(G_GameAction() == GA_QUIT)
-        return false;
-
-    // Toggle pause.
-    G_SetPause(!(paused & 1));
-    return true;
-}
-
-void G_SetPause(boolean yes)
-{
-    if(Hu_MenuIsActive() || Hu_IsMessageActive() || IS_CLIENT)
-        return; // No change.
-
-    if(yes)
-        paused |= 1;
-    else
-        paused &= ~1;
-
-    if(paused)
-    {
-        // This will stop all sounds from all origins.
-        S_StopSound(0, 0);
-    }
-    else
-    {
-        // Any impulses or accumulated relative offsets that occured
-        // during the pause should be ignored.
-        DD_Execute(true, "resetctlaccum");
-    }
-
-    // Servers are responsible for informing clients about
-    // pauses in the game.
-    NetSv_Paused(paused);
-}
-
 /**
  * Retrieve the look offset for the given player.
  */
@@ -639,7 +598,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
 {
     float elapsedTics = elapsedTime * 35;
 
-    boolean pausestate = P_IsPaused();
+    boolean pausestate = Pause_IsPaused();
     int     i;
     boolean strafe = 0;
     boolean bstrafe = 0;
@@ -1132,41 +1091,6 @@ void G_ControlReset(int player)
 {
     DD_Execute(true, "resetctlaccum");
 }
-
-/**
- * Handles special controls, such as pause.
- */
-/*void G_SpecialButton(int pnum)
-{
-    player_t *pl = &players[pnum];
-    if(pl->plr->inGame)
-    {
-        if(pl->plr->cmd.actions & BT_SPECIAL)
-        {
-            switch(pl->plr->cmd.actions & BT_SPECIALMASK)
-            {
-            case BTS_PAUSE:
-                paused ^= 1;
-                if(paused)
-                {
-                    // This will stop all sounds from all origins.
-                    S_StopSound(0, 0);
-                }
-
-                // Servers are responsible for informing clients about
-                // pauses in the game.
-                NetSv_Paused(paused);
-
-                pl->plr->cmd.actions = 0;
-                break;
-
-            default:
-                break;
-            }
-        }
-    }
-}
-*/
 
 /**
  * Resets the look offsets.

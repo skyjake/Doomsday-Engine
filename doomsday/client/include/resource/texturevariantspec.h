@@ -24,6 +24,7 @@
 #  error "resource/texturevariantspec.h only exists in the Client"
 #endif
 
+#include <de/String>
 #include "dd_types.h"
 
 typedef enum {
@@ -149,6 +150,11 @@ typedef struct texturevariantspecification_s {
         variantspecification_t variant;
         detailvariantspecification_t detailvariant;
     } data; // type-specific data.
+
+    /**
+     * Returns a textual, human-readable representation of the specification.
+     */
+    de::String asText() const;
 } texturevariantspecification_t;
 
 /**

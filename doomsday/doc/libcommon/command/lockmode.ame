@@ -1,0 +1,6 @@
+@summary{
+    Set camera viewlock mode.
+}
+@description{
+    Params: lockmode (0-1).
+}

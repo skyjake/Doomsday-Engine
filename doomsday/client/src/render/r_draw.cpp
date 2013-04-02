@@ -128,33 +128,33 @@ void R_ShutdownViewWindow(void)
     inited = false;
 }
 
-texturevariantspecification_t *Rend_PatchTextureSpec(int flags, int wrapS, int wrapT)
+texturevariantspecification_t &Rend_PatchTextureSpec(int flags, int wrapS, int wrapT)
 {
-    return &GL_TextureVariantSpec(TC_UI, flags, 0, 0, 0,
-                                  wrapS, wrapT, 0, -3, 0,
-                                  false, false, false, false);
+    return GL_TextureVariantSpec(TC_UI, flags, 0, 0, 0,
+                                 wrapS, wrapT, 0, -3, 0,
+                                 false, false, false, false);
 }
 
-void R_DrawPatch(Texture &tex, int x, int y, int w, int h, bool useOffsets)
+void R_DrawPatch(Texture &texture, int x, int y, int w, int h, bool useOffsets)
 {
-    if(tex.manifest().schemeName().compareWithoutCase("Patches"))
+    if(texture.manifest().schemeName().compareWithoutCase("Patches"))
     {
-#if _DEBUG
+#ifdef DENG_DEBUG
         LOG_AS("R_DrawPatch3");
-        LOG_WARNING("Attempted to draw a non-patch [%p].") << dintptr(&tex);
+        LOG_WARNING("Attempted to draw a non-patch [%p].") << dintptr(&texture);
 #endif
         return;
     }
 
-    texturevariantspecification_t *texSpec =
-        Rend_PatchTextureSpec(0 | (tex.isFlagged(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
-                                | (tex.isFlagged(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
-    GL_BindTexture(GL_PrepareTexture(tex, *texSpec));
+    texturevariantspecification_t &texSpec =
+        Rend_PatchTextureSpec(0 | (texture.isFlagged(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
+                                | (texture.isFlagged(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
+    GL_BindTexture(texture.prepareVariant(texSpec));
 
     if(useOffsets)
     {
-        x += tex.origin().x;
-        y += tex.origin().y;
+        x += texture.origin().x;
+        y += texture.origin().y;
     }
 
     GL_DrawRectf2Color(x, y, w, h, 1, 1, 1, 1);
@@ -165,15 +165,15 @@ void R_DrawPatch(Texture &tex, int x, int y)
     R_DrawPatch(tex, x, y, tex.width(), tex.height());
 }
 
-void R_DrawPatchTiled(Texture &tex, int x, int y, int w, int h, int wrapS, int wrapT)
+void R_DrawPatchTiled(Texture &texture, int x, int y, int w, int h, int wrapS, int wrapT)
 {
-    texturevariantspecification_t *texSpec =
-        Rend_PatchTextureSpec(0 | (tex.isFlagged(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
-                                | (tex.isFlagged(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0),
+    texturevariantspecification_t const &spec =
+        Rend_PatchTextureSpec(0 | (texture.isFlagged(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
+                                | (texture.isFlagged(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0),
                               wrapS, wrapT);
 
-    GL_BindTexture(GL_PrepareTexture(tex, *texSpec));
-    GL_DrawRectf2Tiled(x, y, w, h, tex.width(), tex.height());
+    GL_BindTexture(texture.prepareVariant(spec));
+    GL_DrawRectf2Tiled(x, y, w, h, texture.width(), texture.height());
 }
 
 static MaterialVariantSpec const &bgMaterialSpec()

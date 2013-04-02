@@ -38,7 +38,7 @@
 #include "doomsday.h"
 #include "g_common.h"
 #include "p_player.h"
-#include "p_tick.h" // for P_IsPaused()
+#include "p_tick.h" // for Pause_IsPaused()
 #include "p_view.h"
 #include "d_net.h"
 #include "p_player.h"
@@ -1456,7 +1456,8 @@ void P_PlayerThinkPowers(player_t* player)
     }
 #endif
 
-#if __JDOOM__ || __JDOOM64__ || __JHEXEN__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__ || __JHEXEN__
+    // Infrared/Torch times out eventually.
     if(player->powers[PT_INFRARED])
         player->powers[PT_INFRARED]--;
 #endif
@@ -1514,50 +1515,53 @@ void P_PlayerThinkPowers(player_t* player)
 
     // Colormaps
 #if __JHERETIC__ || __JHEXEN__
-    if(player->powers[PT_INFRARED])
+    if(!IS_CLIENT)
     {
-        if(player->powers[PT_INFRARED] <= BLINKTHRESHOLD)
+        if(player->powers[PT_INFRARED])
         {
-            if(player->powers[PT_INFRARED] & 8)
+            if(player->powers[PT_INFRARED] <= BLINKTHRESHOLD)
             {
-                player->plr->fixedColorMap = 0;
-            }
-            else
-            {
-                player->plr->fixedColorMap = 1;
-            }
-        }
-        else if(!(mapTime & 16))  /* && player == &players[CONSOLEPLAYER]) */
-        {
-            ddplayer_t *dp = player->plr;
-            int     playerNumber = player - players;
-
-            if(newTorch[playerNumber])
-            {
-                if(dp->fixedColorMap + newTorchDelta[playerNumber] > 7 ||
-                   dp->fixedColorMap + newTorchDelta[playerNumber] < 1 ||
-                   newTorch[playerNumber] == dp->fixedColorMap)
+                if(player->powers[PT_INFRARED] & 8)
                 {
-                    newTorch[playerNumber] = 0;
+                    player->plr->fixedColorMap = 0;
                 }
                 else
                 {
-                    dp->fixedColorMap += newTorchDelta[playerNumber];
+                    player->plr->fixedColorMap = 1;
                 }
             }
-            else
+            else if(!(mapTime & 16))  /* && player == &players[CONSOLEPLAYER]) */
             {
-                newTorch[playerNumber] = (M_Random() & 7) + 1;
-                newTorchDelta[playerNumber] =
-                    (newTorch[playerNumber] ==
-                     dp->fixedColorMap) ? 0 : ((newTorch[playerNumber] >
-                                                dp->fixedColorMap) ? 1 : -1);
+                ddplayer_t *dp = player->plr;
+                int     playerNumber = player - players;
+
+                if(newTorch[playerNumber])
+                {
+                    if(dp->fixedColorMap + newTorchDelta[playerNumber] > 7 ||
+                       dp->fixedColorMap + newTorchDelta[playerNumber] < 1 ||
+                       newTorch[playerNumber] == dp->fixedColorMap)
+                    {
+                        newTorch[playerNumber] = 0;
+                    }
+                    else
+                    {
+                        dp->fixedColorMap += newTorchDelta[playerNumber];
+                    }
+                }
+                else
+                {
+                    newTorch[playerNumber] = (M_Random() & 7) + 1;
+                    newTorchDelta[playerNumber] =
+                        (newTorch[playerNumber] ==
+                         dp->fixedColorMap) ? 0 : ((newTorch[playerNumber] >
+                                                    dp->fixedColorMap) ? 1 : -1);
+                }
             }
         }
-    }
-    else
-    {
-        player->plr->fixedColorMap = 0;
+        else
+        {
+            player->plr->fixedColorMap = 0;
+        }
     }
 #endif
 
@@ -1926,7 +1930,7 @@ void P_PlayerThinkAssertions(player_t* player)
  */
 void P_PlayerThink(player_t *player, timespan_t ticLength)
 {
-    if(P_IsPaused())
+    if(Pause_IsPaused())
         return;
 
     if(G_GameState() != GS_MAP)

@@ -1,0 +1,3 @@
+@summary{
+    Change weapon automatically when picking up ammo. 1=If better 2=Always
+}

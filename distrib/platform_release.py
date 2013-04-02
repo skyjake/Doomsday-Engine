@@ -100,7 +100,8 @@ def mac_os_version():
 
 
 def mac_target_ext():
-    if mac_os_version() == '10.6': return '.dmg'
+    if mac_os_version() == '10.8': return '.dmg'
+    if mac_os_version() == '10.6': return '_mac10_6.dmg'
     return '_32bit.dmg'
 
 
@@ -202,7 +203,7 @@ def mac_release():
     remkdir(MAC_WORK_DIR)
     os.chdir(MAC_WORK_DIR)
     if os.system('qmake -r -spec macx-g++ CONFIG+=release DENG_BUILD=%s ' % (DOOMSDAY_BUILD_NUMBER) +
-                 '../doomsday/doomsday.pro && make -w'):
+                 '../doomsday/doomsday.pro && make -j2 -w'):
         raise Exception("Failed to build from source.")
 
     # Now we can proceed to packaging.
@@ -337,7 +338,7 @@ def main():
 
     try:
         if sys.platform == "darwin":
-            print "Mac OS X"
+            print "Mac OS X (%s)" % mac_os_version()
             mac_release()
         elif sys.platform == "win32":
             print "Windows"

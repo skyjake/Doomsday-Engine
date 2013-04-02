@@ -1,0 +1,3 @@
+@summary{
+    Bind a command to an  unless the event is already bound.
+}

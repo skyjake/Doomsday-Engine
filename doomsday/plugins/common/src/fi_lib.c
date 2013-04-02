@@ -49,8 +49,8 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
-    char secret:1;
-    char leave_hub:1;
+    byte secret:1;
+    byte leave_hub:1;
 } fi_state_conditions_t;
 
 typedef struct {
@@ -128,6 +128,9 @@ static void initStateConditions(fi_state_t* s)
 
     // Current hub has been completed?
     s->conditions.leave_hub = (P_GetMapCluster(gameMap) != P_GetMapCluster(nextMap));
+# ifdef _DEBUG
+    Con_Message("Infine state condition: leave_hub=%i", s->conditions.leave_hub);
+# endif
 #else
     s->conditions.secret = secretExit;
     // Only Hexen has hubs.
@@ -475,6 +478,7 @@ int Hook_FinaleScriptStop(int hookType, int finaleId, void* parameters)
         S_MapMusic(gameEpisode, gameMap);
         HU_WakeWidgets(-1 /* all players */);
         G_BeginMap();
+        Pause_End(); // skip forced period
     }
     return true;
 }
@@ -521,7 +525,7 @@ static int playerClassForName(const char* name)
         if(!stricmp(name, "mage"))
             return PCLASS_MAGE;
     }
-    return 0;
+    return PCLASS_NONE;
 }
 #endif
 
@@ -559,9 +563,17 @@ int Hook_FinaleScriptEvalIf(int hookType, int finaleId, void* paramaters)
 
 #if __JHEXEN__
     // Player class names.
-    if((pclass = playerClassForName(p->token)))
+    if((pclass = playerClassForName(p->token)) != PCLASS_NONE)
     {
-        p->returnVal = pclass;
+        if(IS_DEDICATED)
+        {
+            // Always false; no local players on the server.
+            p->returnVal = false;
+        }
+        else
+        {
+            p->returnVal = (cfg.playerClass[CONSOLEPLAYER] == pclass);
+        }
         return true;
     }
 #endif

@@ -836,7 +836,7 @@ void SB_RendPoly(struct ColorRawf_s *rcolors, biassurface_t *bsuf,
     std::memset(&trackApplied, 0, sizeof(trackApplied));
 
     // Has any of the old affected lights changed?
-    //boolean forced = false;
+    //bool forced = false;
 
     if(doUpdateAffected)
     {
@@ -1141,17 +1141,17 @@ void SB_EvalPoint(float light[4], vertexillum_t *illum,
 
     if(illum)
     {
-        boolean willOverride = false;
+        // bool willOverride = false;
 
         // Combine the casted light from each source.
         for(aff = affecting; aff->source; aff++)
         {
             float *casted = SB_GetCasted(illum, aff->index, affectedSources);
 
-            if(aff->overrider &&
+/*          if(aff->overrider &&
                (casted[CR] > 0 || casted[CG] > 0 || casted[CB] > 0))
                 willOverride = true;
-
+*/
             /*
             if(!(casted[3] > 0))
             {

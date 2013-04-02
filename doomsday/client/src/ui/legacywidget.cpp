@@ -32,6 +32,7 @@
 #include "render/rend_list.h"
 #include "render/rend_console.h"
 #include "audio/s_main.h"
+#include "gl/gl_main.h"
 #include "gl/sys_opengl.h"
 #include "gl/gl_defer.h"
 
@@ -86,7 +87,7 @@ void LegacyWidget::update()
     DENG2_ASSERT(!BusyMode_Active());
 
     // We may be performing GL operations.
-    Window_GLActivate(Window_Main());
+    Window::main().glActivate();
 
     // Run at least one (fractional) tic.
     Loop_RunTics();
@@ -99,7 +100,7 @@ void LegacyWidget::update()
     GL_ProcessDeferredTasks(FRAME_DEFERRED_UPLOAD_TIMEOUT);
 
     // Request update of window contents.
-    Window_Draw(Window_Main());
+    Window::main().draw();
 
     // After the first frame, start timedemo.
     //DD_CheckTimeDemo();
@@ -107,16 +108,16 @@ void LegacyWidget::update()
 
 void LegacyWidget::draw()
 {
-    if(renderWireframe || isDisabled())
+    bool cannotDraw = (isDisabled() || !GL_IsFullyInited());
+
+    if(renderWireframe || cannotDraw)
     {
         // When rendering is wireframe mode, we must clear the screen
         // before rendering a frame.
         glClear(GL_COLOR_BUFFER_BIT);
     }
 
-    if(isDisabled()) return;
-
-    //LOG_DEBUG("Legacy draw");
+    if(cannotDraw) return;
 
     if(drawGame)
     {
@@ -149,7 +150,10 @@ void LegacyWidget::draw()
 
             // Draw any full window game graphics.
             if(App_GameLoaded() && gx.DrawWindow)
-                gx.DrawWindow(Window_Size(theWindow));
+            {
+                Size2Raw dimensions(DENG_WINDOW->width(), DENG_WINDOW->height());
+                gx.DrawWindow(&dimensions);
+            }
         }
     }
 

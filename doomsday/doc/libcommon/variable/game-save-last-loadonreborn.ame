@@ -1,0 +1,3 @@
+@summary{
+    1=Load the last used save slot on player reborn. (default: off).
+}

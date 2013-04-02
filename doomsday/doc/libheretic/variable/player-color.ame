@@ -1,0 +1,3 @@
+@summary{
+    Player color: 0=green, 1=yellow, 2=red, 3=blue, 4=default.
+}

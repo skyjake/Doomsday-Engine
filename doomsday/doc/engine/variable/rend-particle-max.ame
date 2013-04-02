@@ -1,0 +1,3 @@
+@summary{
+    Maximum number of particles to render. 0=no limit.
+}

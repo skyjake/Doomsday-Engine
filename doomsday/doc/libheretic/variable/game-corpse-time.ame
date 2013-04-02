@@ -1,0 +1,3 @@
+@summary{
+    Corpse vanish time in seconds, 0=disabled.
+}

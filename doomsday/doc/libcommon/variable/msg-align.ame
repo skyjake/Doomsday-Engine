@@ -1,0 +1,3 @@
+@summary{
+    Alignment of HUD messages. 0 = left, 1 = center, 2 = right.
+}

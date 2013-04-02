@@ -1,0 +1,3 @@
+@summary{
+    Maximum number of seconds to attempt connecting to a server.
+}

@@ -186,12 +186,10 @@ void Canvas::setInitFunc(void (*canvasInitializeFunc)(Canvas&))
     d->initCallback = canvasInitializeFunc;
 }
 
-/*
-void Canvas::setDrawFunc(void (*canvasDrawFunc)(Canvas&))
+void Canvas::setParent(CanvasWindow *parent)
 {
-    d->drawCallback = canvasDrawFunc;
+    d->parent = parent;
 }
-*/
 
 void Canvas::setFocusFunc(void (*canvasFocusChanged)(Canvas&, bool))
 {
@@ -200,7 +198,6 @@ void Canvas::setFocusFunc(void (*canvasFocusChanged)(Canvas&, bool))
 
 void Canvas::useCallbacksFrom(Canvas &other)
 {
-    //d->drawCallback = other.d->drawCallback;
     d->focusCallback = other.d->focusCallback;
 }
 
@@ -304,17 +301,25 @@ void Canvas::showEvent(QShowEvent* ev)
 
 void Canvas::notifyInit()
 {
-    if(!d->initNotified && d->initCallback)
-    {
-        d->initNotified = true;
+    if(d->initNotified) return;
 
-        d->initCallback(*this);
+    d->initNotified = true;
+    if(d->parent)
+    {
         d->parent->canvasReady(*this);
+    }
+
+    if(d->initCallback)
+    {
+        d->initCallback(*this);
+        // Canvas might be destroyed now.
     }
 }
 
 void Canvas::paintGL()
 {
+    if(!d->parent) return;
+
     // The parent knows what to draw here (UI widgets).
     d->parent->paintCanvas(*this);
 

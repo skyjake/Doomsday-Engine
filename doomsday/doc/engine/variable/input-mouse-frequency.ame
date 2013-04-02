@@ -1,0 +1,3 @@
+@summary{
+    Mouse input polling frequency (events per second). 0=unlimited.
+}

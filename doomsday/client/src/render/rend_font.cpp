@@ -1225,7 +1225,6 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
     Size2Raw textSize;
     size_t charCount;
     float origColor[4];
-    short textFlags;
     char* str, *end;
     boolean escaped = false;
 
@@ -1251,6 +1250,8 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
     for(pass = ((_textFlags & DTF_NO_SHADOW)  != 0? 1 : 0);
         pass < ((_textFlags & DTF_NO_GLITTER) != 0? 2 : 3); ++pass)
     {
+        short textFlags = 0;
+
         // Configure the next pass.
         cx = (float) origin.x;
         cy = (float) origin.y;

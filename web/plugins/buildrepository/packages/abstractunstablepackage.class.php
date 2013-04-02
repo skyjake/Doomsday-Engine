@@ -32,12 +32,12 @@ abstract class AbstractUnstablePackage extends AbstractPackage
     // Override implementation in AbstractPackage.
     public function composeFullTitle($includeVersion=true, $includePlatformName=true)
     {
-        $includeVersion = (boolean) $includeVersion;
-        $includeBuildId = (boolean) $includeBuildId;
+        $includeVersion = (bool) $includeVersion;
+        $includeBuildId = (bool) $includeBuildId;
 
         $title = $this->title;
         if($includeVersion && isset($this->version))
-            $title .= ' '. $this->version;
+            $title .= " {$this->version}";
         if($includePlatformName && $this->platformId !== PID_ANY)
         {
             $plat = &BuildRepositoryPlugin::platform($this->platformId);

@@ -33,3 +33,4 @@ Include "objects.ded";
 Include "sprites.ded";
 Include "text.ded";
 Include "sounds.ded";
+Include "values.ded";

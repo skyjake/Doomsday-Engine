@@ -443,8 +443,11 @@ struct ServerDiscoveryObserver : DENG2_OBSERVES(ServerLink, DiscoveryUpdate)
 {
     void linkDiscoveryUpdate(ServerLink const &)
     {
-        LOG_DEBUG("ServerDiscoveryObserver notified, updating server list");
-        MPIUpdateServerList();
+        if(searchMode == SEARCH_CUSTOM && UI_IsActive())
+        {
+            LOG_DEBUG("ServerDiscoveryObserver notified, updating server list");
+            MPIUpdateServerList();
+        }
     }
 };
 

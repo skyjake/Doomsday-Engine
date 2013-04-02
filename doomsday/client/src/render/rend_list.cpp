@@ -218,10 +218,6 @@ int useMultiTexDetails = true;
 // Rendering paramaters for dynamic lights.
 int dynlightBlend = 0;
 
-// Rendering parameters for detail textures.
-float detailFactor = .5f;
-float detailScale = 4;
-
 float torchColor[3] = {1, 1, 1};
 int torchAdditive = true;
 

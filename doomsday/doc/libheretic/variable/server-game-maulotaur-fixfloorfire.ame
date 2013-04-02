@@ -1,0 +1,3 @@
+@summary{
+    1=Fix bug in original Heretic which would explode the Maulotaur floor fire if spawned while it's feet are clipped.
+}

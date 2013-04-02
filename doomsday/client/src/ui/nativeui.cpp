@@ -30,6 +30,9 @@
 #include <QVBoxLayout>
 #include <QDebug>
 
+#include <de/App>
+#include <de/ByteArrayFile>
+
 #include "ui/nativeui.h"
 
 void Sys_MessageBox(messageboxtype_t type, const char* title, const char* msg, const char* detailedMsg)
@@ -109,14 +112,22 @@ int Sys_MessageBoxWithButtons(messageboxtype_t type, const char* title, const ch
 void Sys_MessageBoxWithDetailsFromFile(messageboxtype_t type, const char* title, const char* msg,
                                        const char* informativeMsg, const char* detailsFileName)
 {
-    QByteArray details;
-    QFile file(detailsFileName);
-    if(file.open(QFile::ReadOnly | QFile::Text))
+    try
     {
-        details = file.readAll();
+        de::Block details;
+        de::ByteArrayFile const &file = de::App::rootFolder().locate<de::ByteArrayFile>(detailsFileName);
+        file >> details;
+
         // This will be used as a null-terminated string.
-        details.append(char(0));
-        file.close();
+        details.append('\0');
+
+        Sys_MessageBox2(type, title, msg, informativeMsg, details.constData());
     }
-    Sys_MessageBox2(type, title, msg, informativeMsg, details.constData());
+    catch(de::Error const &er)
+    {
+        qWarning() << "Could not read" << detailsFileName << ":" << er.asText().toLatin1().constData();
+
+        // Show it without the details, then.
+        Sys_MessageBox2(type, title, msg, informativeMsg, 0);
+    }
 }

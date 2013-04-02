@@ -183,19 +183,20 @@ void CanvasWindow::initCanvasAfterRecreation(Canvas &canvas)
     LOG_DEBUG("Canvas replaced with %p") << de::dintptr(self->d->canvas);
 }
 
-void CanvasWindow::recreateCanvas()
+bool CanvasWindow::recreateCanvas()
 {
     // Update the GL format for subsequently created Canvases.
     if(!setDefaultGLFormat())
     {
         // No need to recreate.
         LOG_DEBUG("Canvas not recreated because the format was not changed.");
-        return;
+        return false;
     }
 
     // We'll re-trap the mouse after the new canvas is ready.
     d->mouseWasTrapped = canvas().isMouseTrapped();
     canvas().trapMouse(false);
+    canvas().setParent(0);
 
     // Create the replacement Canvas. Once it's created and visible, we'll
     // finish the switch-over.
@@ -206,6 +207,8 @@ void CanvasWindow::recreateCanvas()
     d->recreated->show();
 
     LOG_DEBUG("Canvas recreated, old one still exists.");
+
+    return true;
 }
 
 Canvas& CanvasWindow::canvas()
@@ -271,10 +274,10 @@ void CanvasWindow::resizeEvent(QResizeEvent *ev)
 
     LOG_AS("CanvasWindow");
 
-    de::Vector2i size(width(), height());
+    Vector2i size(width(), height());
     LOG_DEBUG("Resized ") << size.asText();
 
-    Window_UpdateAfterResize(Window_Main()); /// @todo remove this
+    Window::main().updateAfterResize(); /// @todo remove this
 
     d->root.setViewSize(size);
     d->busyRoot.setViewSize(size);

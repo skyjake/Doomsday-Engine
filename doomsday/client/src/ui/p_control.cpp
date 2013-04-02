@@ -156,7 +156,10 @@ void P_ControlRegister(void)
 {
     C_CMD("listcontrols",   "",     ListPlayerControls);
     C_CMD("impulse",        NULL,   Impulse);
+
+#ifdef __CLIENT__
     C_CMD("resetctlaccum",  "",     ClearControlAccumulation);
+#endif
 
     C_VAR_INT("input-doubleclick-threshold", &doubleClickThresholdMilliseconds, 0, 0, 2000);
 }
@@ -455,10 +458,13 @@ void P_ControlTicker(timespan_t time)
 
 }
 
+#ifdef __CLIENT__
 D_CMD(ClearControlAccumulation)
 {
     int     i, p;
     playercontrol_t* pc;
+
+    I_ResetAllDevices();
 
     for(i = 0; i < playerControlCount; ++i)
     {
@@ -475,6 +481,7 @@ D_CMD(ClearControlAccumulation)
     }
     return true;
 }
+#endif
 
 /**
  * Prints a list of the registered control descriptors.

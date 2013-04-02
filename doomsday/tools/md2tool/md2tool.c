@@ -264,6 +264,10 @@ void DoError(int code)
     case MTERR_LISTFILE_NA:
         printf("The specified list file doesn't exist.\n");
         break;
+
+    case MTERR_READ_FAILED:
+        printf("Failed reading from file.\n");
+        exit(4);
     }
 }
 
@@ -275,7 +279,10 @@ void *Load(FILE *file, int offset, int len)
 {
     void *ptr = malloc(len);
     fseek(file, offset, SEEK_SET);
-    fread(ptr, len, 1, file);
+    if(!fread(ptr, len, 1, file))
+    {
+        DoError(MTERR_READ_FAILED);
+    }
     return ptr;
 }
 
@@ -336,19 +343,28 @@ int ModelOpen(model_t *mo, const char *filename)
 
     memset(mo, 0, sizeof(*mo));
     strcpy(mo->fileName, fn);
-    fread(&mo->header, sizeof(mo->header), 1, file);
+    if(!fread(&mo->header, sizeof(mo->header), 1, file))
+    {
+        DoError(MTERR_READ_FAILED);
+    }
     hd = &mo->header;
     inf = &mo->info;
     if(hd->magic == DMD_MAGIC)
     {
         // Read the chunks.
-        fread(&chunk, sizeof(chunk), 1, file);
+        if(!fread(&chunk, sizeof(chunk), 1, file))
+        {
+            DoError(MTERR_READ_FAILED);
+        }
         while(chunk.type != DMC_END)
         {
             switch(chunk.type)
             {
             case DMC_INFO:
-                fread(inf, sizeof(*inf), 1, file);
+                if(!fread(inf, sizeof(*inf), 1, file))
+                {
+                    DoError(MTERR_READ_FAILED);
+                }
                 break;
 
             default:
@@ -358,7 +374,10 @@ int ModelOpen(model_t *mo, const char *filename)
                     chunk.type, chunk.length);
             }
             // Read the next chunk.
-            fread(&chunk, sizeof(chunk), 1, file);
+            if(!fread(&chunk, sizeof(chunk), 1, file))
+            {
+                DoError(MTERR_READ_FAILED);
+            }
         }
 
         // Allocate and load in the data.
@@ -383,7 +402,10 @@ int ModelOpen(model_t *mo, const char *filename)
     else if(hd->magic == MD2_MAGIC)
     {
         rewind(file);
-        fread(&oldhd, sizeof(oldhd), 1, file);
+        if(!fread(&oldhd, sizeof(oldhd), 1, file))
+        {
+            DoError(MTERR_READ_FAILED);
+        }
 
         // Convert it to DMD data but keep it as an MD2.
         hd->magic = MD2_MAGIC;
@@ -1919,9 +1941,11 @@ void ReadText(FILE *file, char *buf, int size)
     int i;
 
     memset(buf, 0, size);
-    fgets(buf, size - 1, file);
-    i = strlen(buf) - 1;
-    if(buf[i] == '\n') buf[i] = 0;
+    if(fgets(buf, size - 1, file))
+    {
+        i = strlen(buf) - 1;
+        if(buf[i] == '\n') buf[i] = 0;
+    }
 }
 
 //===========================================================================

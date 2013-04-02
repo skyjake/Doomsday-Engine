@@ -263,7 +263,8 @@ sfxbuffer_t* DS_SDLMixer_SFX_CreateBuffer(int flags, int bits, int rate)
 
     // The cursor is used to keep track of the channel on which the sample
     // is playing.
-    if(-1 == (buf->cursor = getFreeChannel()))
+    buf->cursor = getFreeChannel();
+    if((int)buf->cursor < 0)
     {
         buf->cursor = numChannels++;
         usedChannels = (ddboolean_t *) M_Realloc(usedChannels, sizeof(usedChannels[0]) * numChannels);

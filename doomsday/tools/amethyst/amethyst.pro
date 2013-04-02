@@ -107,7 +107,8 @@ library.files += \
     lib/amehtml.ame \
     lib/amertf.ame \
     lib/ameman.ame \
-    lib/amewiki.ame
+    lib/amewiki.ame \
+    lib/amehelp.ame
 
 unix {
     isEmpty(PREFIX) {

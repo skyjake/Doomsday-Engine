@@ -75,7 +75,9 @@ static Updater* updater = 0;
 #  define PLATFORM_ID       "win-x86"
 
 #elif defined(MACOSX)
-#  if defined(__64BIT__)
+#  if defined(MACOS_10_7)
+#    define PLATFORM_ID     "mac10_8-x86_64"
+#  elif defined(__64BIT__)
 #    define PLATFORM_ID     "mac10_6-x86-x86_64"
 #  else
 #    define PLATFORM_ID     "mac10_4-x86-ppc"
@@ -96,6 +98,8 @@ static de::CommandLine* installerCommand;
  */
 static void runInstallerCommand(void)
 {
+    DENG_ASSERT(installerCommand != 0);
+
     installerCommand->execute();
     delete installerCommand;
     installerCommand = 0;
@@ -103,11 +107,12 @@ static void runInstallerCommand(void)
 
 static bool switchToWindowedMode()
 {
-    bool wasFull = Window_IsFullscreen(Window_Main());
+    Window &mainWindow = Window::main();
+    bool wasFull = mainWindow.isFullscreen();
     if(wasFull)
     {
-        int attribs[] = { DDWA_FULLSCREEN, false, DDWA_END };
-        Window_ChangeAttributes(Window_Main(), attribs);
+        int attribs[] = { Window::Fullscreen, false, Window::End };
+        mainWindow.changeAttributes(attribs);
     }
     return wasFull;
 }
@@ -116,8 +121,8 @@ static void switchBackToFullscreen(bool wasFull)
 {
     if(wasFull)
     {
-        int attribs[] = { DDWA_FULLSCREEN, true, DDWA_END };
-        Window_ChangeAttributes(Window_Main(), attribs);
+        int attribs[] = { Window::Fullscreen, true, Window::End };
+        Window::main().changeAttributes(attribs);
     }
 }
 
@@ -237,7 +242,7 @@ DENG2_PIMPL(Updater)
     {
         if(!settingsDlg)
         {
-            settingsDlg = new UpdaterSettingsDialog(Window_Widget(Window_Main()));
+            settingsDlg = new UpdaterSettingsDialog(Window::main().widgetPtr());
             QObject::connect(settingsDlg, SIGNAL(finished(int)), thisPublic, SLOT(settingsDialogClosed(int)));
         }
         else
@@ -308,7 +313,7 @@ DENG2_PIMPL(Updater)
             // Automatically switch to windowed mode for convenience.
             bool wasFull = switchToWindowedMode();
 
-            UpdateAvailableDialog dlg(latestVersion, latestLogUri, Window_Widget(Window_Main()));
+            UpdateAvailableDialog dlg(latestVersion, latestLogUri, Window::main().widgetPtr());
             availableDlg = &dlg;
             execAvailableDialog(wasFull);
         }
@@ -348,52 +353,48 @@ DENG2_PIMPL(Updater)
     void startInstall(de::String distribPackagePath)
     {
 #ifdef MACOSX
-        // Generate a script to:
-        // 1. Open the distrib package.
-        // 2. Check that there is a "Doomsday Engine.app" inside.
-        // 3. Move current app bundle to the Trash.
-        // 4. Copy the on-disk app bundle to the old app's place.
-        // 5. Close the distrib package.
-        // 6. Open the new "Doomsday Engine.app".
-
-        // This assumes the Doomsday executable is inside the Snowberry bundle.
-        de::String execPath = QDir::cleanPath(QDir(de::App::executablePath().fileNamePath())
-                                              .filePath("../../../.."));
-        if(!execPath.fileName().endsWith(".app"))
-        {
-#ifdef _DEBUG
-            execPath = "/Applications/Doomsday Engine.app";
-#else
-            Sys_MessageBox2(MBT_ERROR, "Updating", "Automatic update failed.",
-                            ("Expected an application bundle, but found <b>" +
-                             execPath.fileName() + "</b> instead.").toUtf8(), 0);
-            return;
-#endif
-        }
-
         de::String volName = "Doomsday Engine " + latestVersion.base();
 
 #ifdef DENG2_QT_5_0_OR_NEWER
-        QString scriptPath = QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation))
-                .filePath(INSTALL_SCRIPT_NAME);
+        QString scriptPath = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
 #else
-        QString scriptPath = QDir(QDesktopServices::storageLocation(QDesktopServices::TempLocation))
-                .filePath(INSTALL_SCRIPT_NAME);
+        QString scriptPath = QDesktopServices::storageLocation(QDesktopServices::CacheLocation);
 #endif
+        QDir::current().mkpath(scriptPath); // may not exist
+        scriptPath = QDir(scriptPath).filePath(INSTALL_SCRIPT_NAME);
         QFile file(scriptPath);
         if(file.open(QFile::WriteOnly | QFile::Truncate))
         {
             QTextStream out(&file);
-            out << "tell application \"Finder\"\n"
-                << "  open document POSIX file \"" << distribPackagePath << "\"\n"
-                << "  -- Wait for it to get mounted\n"
-                << "  repeat until name of every disk contains \"" << volName << "\"\n"
-                << "    delay 1\n"
-                << "  end repeat\n"
-                << "  -- Start the installer\n"
-                << "  open document file \"" << volName << ":Doomsday.pkg\"\n"
-                << "end tell\n";
+            out << "tell application \"System Events\" to set visible of process \"Finder\" to false\n"
+                   "tell application \"Finder\"\n"
+                   "  open POSIX file \"" << distribPackagePath << "\"\n"
+                   "  -- Wait for it to get mounted\n"
+                   "  repeat until name of every disk contains \"" << volName << "\"\n"
+                   "    delay 1\n"
+                   "  end repeat\n"
+                   "  -- Start the installer\n"
+                   "  open file \"" << volName << ":Doomsday.pkg\"\n"
+                   "  -- Activate the Installer\n"
+                   "  repeat until name of every process contains \"Installer\"\n"
+                   "    delay 2\n"
+                   "  end repeat\n"
+                   "end tell\n"
+                   "delay 1\n"
+                   "tell application \"Installer\" to activate\n"
+                   "tell application \"Finder\"\n"
+                   "  -- Wait for it to finish\n"
+                   "  repeat until name of every process does not contain \"Installer\"\n"
+                   "    delay 1\n"
+                   "  end repeat\n"
+                   "  -- Unmount\n"
+                   "  eject disk \"" << volName << "\"\n"
+                   "end tell\n";
             file.close();
+        }
+        else
+        {
+            qWarning() << "Could not write" << scriptPath;
         }
 
         // Register a shutdown action to execute the script and quit.
@@ -403,7 +404,19 @@ DENG2_PIMPL(Updater)
         atexit(runInstallerCommand);
 
 #elif defined(WIN32)
+        /**
+         * @todo It would be slightly neater to check all these processes at
+         * the same time.
+         */
         Updater_AskToStopProcess("snowberry.exe", "Please quit the Doomsday Engine Frontend "
+                                 "before starting the update. Windows cannot update "
+                                 "files that are currently in use.");
+
+        Updater_AskToStopProcess("doomsday-shell.exe", "Please quit all Doomsday Shell instances "
+                                 "before starting the update. Windows cannot update "
+                                 "files that are currently in use.");
+
+        Updater_AskToStopProcess("doomsday-server.exe", "Please stop all Doomsday servers "
                                  "before starting the update. Windows cannot update "
                                  "files that are currently in use.");
 
@@ -523,7 +536,7 @@ void Updater::checkNowShowingProgress()
     // Not if there is an ongoing download.
     if(d->download) return;
 
-    d->availableDlg = new UpdateAvailableDialog(Window_Widget(Window_Main()));
+    d->availableDlg = new UpdateAvailableDialog(Window::main().widgetPtr());
     d->queryLatestVersion(true);
 
     d->execAvailableDialog(false);

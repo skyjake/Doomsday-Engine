@@ -1,0 +1,3 @@
+@summary{
+    1=If a control is influenced by two or more conflicting input device states, the control position gets zeroed.
+}

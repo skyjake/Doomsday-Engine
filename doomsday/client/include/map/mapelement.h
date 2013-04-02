@@ -44,13 +44,27 @@ namespace de {
 class MapElement
 {
 public:
-    MapElement(int t = DMU_NONE) : _type(t) {}
+    enum { NoIndex = -1 };
+
+public:
+    MapElement(int t = DMU_NONE)
+        : _type(t), _indexInList(NoIndex) {}
 
     virtual ~MapElement() {}
 
     int type() const
     {
         return _type;
+    }
+
+    int indexInList() const
+    {
+        return _indexInList;
+    }
+
+    void setIndexInList(int idx = NoIndex)
+    {
+        _indexInList = idx;
     }
 
     template <typename Type>
@@ -69,17 +83,30 @@ public:
         return t;
     }
 
+    MapElement &operator = (MapElement const &other)
+    {
+        _type = other._type;
+        // We retain our current index in the list.
+        return *this;
+    }
+
 private:
     int _type;
+    int _indexInList;
 };
 
 /**
- * Collection of owned map elements with type @a Type.
+ * Collection of owned map elements with type @a Type. The template argument
+ * @a Type must be a class derived from MapElement.
+ *
+ * The base class is protected because MapElement instances remember their
+ * indices: all access to the list must occur through this class's public
+ * interface so that the indices can be maintained appropriately.
  */
 template <typename Type>
-class MapElementList : public QList<MapElement *>
+class MapElementList : protected QList<MapElement *>
 {
-    typedef QList<MapElement *> Super;
+    typedef QList<MapElement *> Base;
 
 public:
     MapElementList() {}
@@ -92,6 +119,11 @@ public:
         clear();
     }
 
+    int size() const
+    {
+        return Base::size();
+    }
+
     void clear()
     {
         // Delete all the objects.
@@ -99,7 +131,7 @@ public:
         {
             delete *i;
         }
-        Super::clear();
+        Base::clear();
     }
 
     void clearAndResize(int count)
@@ -107,26 +139,35 @@ public:
         clear();
         while(count-- > 0)
         {
-            append(new Type);
+            Type *t = new Type;
+            t->setIndexInList(size());
+            append(t);
         }
     }
 
-    int indexOf(Type const *t, int from = 0) const
+    /**
+     * Looks up the index of an element in the list. Complexity: O(1).
+     *
+     * @param t  Element. Must be in the list.
+     *
+     * @return Index of the element @a t.
+     */
+    int indexOf(Type const *t) const
     {
-        // Note: Bad performance!
-        return Super::indexOf(const_cast<Type *>(t), from);
+        //DENG2_ASSERT(Base::indexOf(const_cast<Type *>(t)) == t->indexInList());
+        return t->indexInList();
     }
 
     Type &operator [] (int index)
     {
         DENG_ASSERT(dynamic_cast<Type *>(at(index)) != 0);
-        return *static_cast<Type *>(Super::at(index));
+        return *static_cast<Type *>(Base::at(index));
     }
 
     Type const &operator [] (int index) const
     {
         DENG_ASSERT(dynamic_cast<Type const *>(at(index)) != 0);
-        return *static_cast<Type const *>(Super::at(index));
+        return *static_cast<Type const *>(Base::at(index));
     }
 };
 

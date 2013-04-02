@@ -72,12 +72,6 @@ Material Mods "textures:X_FAC01" {
     Stage { Glow = 1.8; }
     Stage { Glow = 1.8; }
     Stage { Glow = 1.8; }
-    Stage { Glow = 1.8; }
-    Stage { Glow = 1.8; }
-    Stage { Glow = 1.8; }
-    Stage { Glow = 1.8; }
-    Stage { Glow = 1.8; }
-    Stage { Glow = 1.8; }
   }
 }
 
@@ -110,7 +104,13 @@ Material Mods "textures:X_FAC08" {
 }
 
 Material Mods "textures:X_FAC09" {
-  Layer { Stage { Glow = 1.8; } }
+  Layer
+  {
+    Stage { Glow = 1.8; }
+    Stage { Glow = 1.8; }
+    Stage { Glow = 1.8; }
+    Stage { Glow = 1.8; }
+  }
 }
 
 Material Mods "textures:X_FAC10" {

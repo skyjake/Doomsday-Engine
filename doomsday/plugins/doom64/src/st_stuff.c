@@ -39,7 +39,7 @@
 #include "hu_log.h"
 #include "hu_automap.h"
 #include "p_mapsetup.h"
-#include "p_tick.h" // for P_IsPaused
+#include "p_tick.h" // for Pause_IsPaused
 #include "p_inventory.h"
 #include "p_player.h"
 #include "am_map.h"
@@ -235,7 +235,7 @@ void ST_Ticker(timespan_t ticLength)
         }
 
         // The following is restricted to fixed 35 Hz ticks.
-        if(isSharpTic && !P_IsPaused())
+        if(isSharpTic && !Pause_IsPaused())
         {
             if(cfg.hudTimer == 0)
             {

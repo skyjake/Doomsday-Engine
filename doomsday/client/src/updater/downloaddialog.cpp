@@ -105,6 +105,7 @@ DENG2_PIMPL(DownloadDialog)
         redirected.clear();
 
         de::String path = uri.path();
+        QDir::current().mkpath(UpdaterSettings().downloadPath()); // may not exist
         savedFilePath = UpdaterSettings().downloadPath() / path.fileName();
 
         reply = network->get(QNetworkRequest(uri));
@@ -129,7 +130,7 @@ DownloadDialog::DownloadDialog(de::String downloadUri, de::String fallbackUri, Q
 {
 #ifndef MACOSX
     setWindowTitle(DOOMSDAY_NICENAME" Update");
-    setWindowIcon(Window_Widget(Window_Main())->windowIcon());
+    setWindowIcon(Window::main().widgetPtr()->windowIcon());
 #endif
 }
 

@@ -42,13 +42,13 @@ static int busyFontHgt; // Height of the font.
 static DGLuint texLoading[2];
 static DGLuint texScreenshot; // Captured screenshot of the latest frame.
 
-static void releaseScreenshotTexture(void)
+static void releaseScreenshotTexture()
 {
-    glDeleteTextures(1, (const GLuint*) &texScreenshot);
+    glDeleteTextures(1, (GLuint const *) &texScreenshot);
     texScreenshot = 0;
 }
 
-static void acquireScreenshotTexture(void)
+static void acquireScreenshotTexture()
 {
 #ifdef _DEBUG
     timespan_t startTime;
@@ -63,17 +63,17 @@ static void acquireScreenshotTexture(void)
     startTime = Timer_RealSeconds();
 #endif
 
-    texScreenshot = Window_GrabAsTexture(Window_Main(), true /*halfsized*/);
+    texScreenshot = Window::main().grabAsTexture(true /*halfsized*/);
 
     DEBUG_Message(("Busy Mode: Took %.2f seconds acquiring screenshot texture #%i.\n",
                    Timer_RealSeconds() - startTime, texScreenshot));
 }
 
-void BusyVisual_ReleaseTextures(void)
+void BusyVisual_ReleaseTextures()
 {
     if(novideo) return;
 
-    glDeleteTextures(2, (const GLuint*) texLoading);
+    glDeleteTextures(2, (GLuint const *) texLoading);
     texLoading[0] = texLoading[1] = 0;
 
     // Don't release yet if doing a transition.
@@ -123,7 +123,7 @@ void BusyVisual_PrepareFont(void)
             { "System:normal12", "}data/fonts/normal12.dfn" },
             { "System:normal18", "}data/fonts/normal18.dfn" }
         };
-        int fontIdx = !(Window_Width(theWindow) > 640)? 0 : 1;
+        int fontIdx = !(DENG_WINDOW->width() > 640)? 0 : 1;
         Uri* uri = Uri_NewWithPath2(fonts[fontIdx].name, RC_NULL);
         font_t* font = R_CreateFontFromFile(uri, fonts[fontIdx].path);
         Uri_Delete(uri);
@@ -375,18 +375,18 @@ static void drawConsoleOutput(void)
     // Dark gradient as background.
     glBegin(GL_QUADS);
     glColor4ub(0, 0, 0, 0);
-    y = Window_Height(theWindow) - (LINE_COUNT + 3) * busyFontHgt;
+    y = DENG_WINDOW->height() - (LINE_COUNT + 3) * busyFontHgt;
     glVertex2f(0, y);
-    glVertex2f(Window_Width(theWindow), y);
+    glVertex2f(DENG_WINDOW->width(), y);
     glColor4ub(0, 0, 0, 128);
-    glVertex2f(Window_Width(theWindow), Window_Height(theWindow));
-    glVertex2f(0, Window_Height(theWindow));
+    glVertex2f(DENG_WINDOW->width(), DENG_WINDOW->height());
+    glVertex2f(0, DENG_WINDOW->height());
     glEnd();
 
     glEnable(GL_TEXTURE_2D);
 
     // The text lines.
-    topY = y = Window_Height(theWindow) - busyFontHgt * (2 * LINE_COUNT + .5f);
+    topY = y = DENG_WINDOW->height() - busyFontHgt * (2 * LINE_COUNT + .5f);
     if(newCount > 0 ||
        (nowTime >= scrollStartTime && nowTime < scrollEndTime && scrollEndTime > scrollStartTime))
     {
@@ -413,7 +413,7 @@ static void drawConsoleOutput(void)
             alpha = 1 - (alpha - LINE_COUNT);
 
         FR_SetAlpha(alpha);
-        FR_DrawTextXY3(line->text, Window_Width(theWindow)/2, y, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(line->text, DENG_WINDOW->width()/2, y, ALIGN_TOP, DTF_ONLY_SHADOW);
     }
 
     glDisable(GL_TEXTURE_2D);
@@ -434,9 +434,9 @@ void BusyVisual_Render(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, Window_Width(theWindow), Window_Height(theWindow), 0, -1, 1);
+    glOrtho(0, DENG_WINDOW->width(), DENG_WINDOW->height(), 0, -1, 1);
 
-    drawBackground(0, 0, Window_Width(theWindow), Window_Height(theWindow));
+    drawBackground(0, 0, DENG_WINDOW->width(), DENG_WINDOW->height());
 
     // Indefinite activity?
     if((task->mode & BUSYF_ACTIVITY) || (task->mode & BUSYF_PROGRESS_BAR))
@@ -446,9 +446,9 @@ void BusyVisual_Render(void)
         else // The progress is animated elsewhere.
             pos = Con_GetProgress();
 
-        drawPositionIndicator(Window_Width(theWindow)/2,
-                              Window_Height(theWindow)/2,
-                              Window_Height(theWindow)/12, pos, task->name);
+        drawPositionIndicator(DENG_WINDOW->width()/2,
+                              DENG_WINDOW->height()/2,
+                              DENG_WINDOW->height()/12, pos, task->name);
     }
 
     // Output from the console?
@@ -465,7 +465,10 @@ void BusyVisual_Render(void)
     glPopMatrix();
 
     // The frame is ready to be shown.
-    //Window_SwapBuffers(Window_Main());
+/*  Window *wnd = Window::main();
+    DENG_ASSERT(wnd != 0);
+    wnd->swapBuffers();
+*/
 }
 
 /**
@@ -524,10 +527,6 @@ boolean Con_TransitionInProgress(void)
 static void Con_EndTransition(void)
 {
     if(!transition.inProgress) return;
-
-    // Clear any input events that might have accumulated during the transition.
-    DD_ClearEvents();
-    B_ActivateContext(B_ContextByName(UI_BINDING_CONTEXT_NAME), false);
 
     releaseScreenshotTexture();
     transition.inProgress = false;

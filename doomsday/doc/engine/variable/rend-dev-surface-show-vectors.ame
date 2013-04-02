@@ -1,0 +1,3 @@
+@summary{
+    3-bit bitfield. Show surface tangent-space vectors (red:tangent, green:bitangent, blue:normal).
+}

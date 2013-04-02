@@ -20,7 +20,6 @@
 #include <de/Log>
 #include <de/math.h>
 #include <QDir>
-#include <QTimer>
 
 namespace de {
 

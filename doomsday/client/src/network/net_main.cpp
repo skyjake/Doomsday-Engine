@@ -695,7 +695,7 @@ static boolean recordingDemo(void)
 void Net_DrawDemoOverlay(void)
 {
     char buf[160], tmp[40];
-    int x = Window_Width(theWindow) - 10, y = 10;
+    int x = DENG_WINDOW->width() - 10, y = 10;
 
     if(!recordingDemo() || !(SECONDS_TO_TICKS(gameTime) & 8))
         return;
@@ -723,7 +723,7 @@ void Net_DrawDemoOverlay(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, Window_Width(theWindow), Window_Height(theWindow), 0, -1, 1);
+    glOrtho(0, DENG_WINDOW->width(), DENG_WINDOW->height(), 0, -1, 1);
 
     glEnable(GL_TEXTURE_2D);
 
@@ -1221,13 +1221,11 @@ D_CMD(Net)
         Con_Printf("  setup client\n");
         Con_Printf("  search (address) [port]   (local or targeted query)\n");
         Con_Printf("  servers   (asks the master server)\n");
-        //Con_Printf("  connect (idx)\n");
+        Con_Printf("  connect (idx)\n");
         Con_Printf("  mconnect (m-idx)\n");
         Con_Printf("  disconnect\n");
 #endif
 #ifdef __SERVER__
-        Con_Printf("  server go/start\n");
-        Con_Printf("  server close/stop\n");
         Con_Printf("  announce\n");
 #endif
         return true;
@@ -1284,45 +1282,6 @@ D_CMD(Net)
 
     if(argc == 3) // Two arguments?
     {
-#ifdef __SERVER__
-        if(!stricmp(argv[1], "server"))
-        {
-            if(!stricmp(argv[2], "go") || !stricmp(argv[2], "start"))
-            {
-                if(netGame)
-                {
-                    Con_Message("Already in a netGame.");
-                    return false;
-                }
-
-                CmdReturnValue = success = N_ServerOpen();
-
-                if(success)
-                {
-                    Con_Message("Server \"%s\" started.", serverName);
-                }
-            }
-            else if(!stricmp(argv[2], "close") || !stricmp(argv[2], "stop"))
-            {
-                if(!isServer)
-                {
-                    Con_Message("This is not a server!");
-                    return false;
-                }
-
-                // Close the server and kick everybody out.
-                if((success = N_ServerClose()) != false)
-                {
-                    Con_Message("Server \"%s\" closed.", serverName);
-                }
-            }
-            else
-            {
-                Con_Message("Bad arguments.");
-                return false;
-            }
-        }
-#endif // __SERVER__
 #ifdef __CLIENT__
         if(!stricmp(argv[1], "search"))
         {

@@ -1,0 +1,3 @@
+@summary{
+    1=Precache sprites during map setup (slow).
+}

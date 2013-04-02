@@ -1,0 +1,3 @@
+@summary{
+    1=Load generated GL nodes data from the bspcache directory. 0=Always generate new GL data.
+}

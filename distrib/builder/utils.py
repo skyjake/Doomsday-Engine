@@ -65,11 +65,17 @@ class DirState:
 def sys_id():
     bits = platform.architecture()[0]
     
+    plat = sys.platform
+    
     # Special case: the Snow Leopard builder targets 64-bit.
-    if sys.platform == 'darwin' and platform.mac_ver()[0][:4] == '10.6':
-        bits = '64bit'
+    if plat == 'darwin':
+        if platform.mac_ver()[0][:4] == '10.8':
+            plat = 'macx8'
+            bits = '64bit'
+        elif platform.mac_ver()[0][:4] == '10.6':
+            bits = '64bit'
         
-    return "%s-%s" % (sys.platform, bits)
+    return "%s-%s" % (plat, bits)
 
 
 def remote_copy(src, dst):

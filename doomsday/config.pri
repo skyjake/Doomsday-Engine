@@ -25,6 +25,7 @@
 # - deng_nosnowberry            (Unix) Exclude Snowberry from installation
 # - deng_notools                Do not build and deploy the tools
 # - deng_openal                 Build the OpenAL sound driver
+# - deng_qtautoselect           (Mac) Select OS X SDK based on Qt version
 # - deng_nopackres              Do not package the Doomsday resources
 # - deng_rangecheck             Parameter range checking/value assertions
 # - deng_snowberry              (Unix) Include Snowberry in installation
@@ -88,14 +89,15 @@ defineTest(doPostLink) {
 }
 
 macx {
+    defineTest(removeQtLibPrefix) {
+        doPostLink("install_name_tool -change $$[QT_INSTALL_LIBS]/$$2 $$2 $$1")
+    }
     defineTest(fixInstallName) {
         # 1: binary file
         # 2: library name
         # 3: path to Frameworks/
+        removeQtLibPrefix($$1, $$2)
         doPostLink("install_name_tool -change $$2 @executable_path/$$3/Frameworks/$$2 $$1")
-
-        # Also try the Qt frameworks directory.
-        doPostLink("install_name_tool -change $$[QT_INSTALL_LIBS]/$$2 @executable_path/$$3/Frameworks/$$2 $$1")
     }
     defineTest(fixPluginInstallId) {
         # 1: target name

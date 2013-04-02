@@ -80,10 +80,13 @@ void Cl_InitID(void)
     srand(time(NULL));
     if((file = fopen("client.id", "rb")) != NULL)
     {
-        DENG_UNUSED(fread(&clientID, sizeof(clientID), 1, file)); // return value ignored
-        clientID = ULONG(clientID);
+        if(fread(&clientID, sizeof(clientID), 1, file))
+        {
+            clientID = ULONG(clientID);
+            fclose(file);
+            return;
+        }
         fclose(file);
-        return;
     }
     // Ah-ha, we need to generate a new ID.
     clientID = (ident_t)

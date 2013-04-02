@@ -54,6 +54,7 @@ class Texture
 
 public:
     DENG2_DEFINE_AUDIENCE(Deletion, void textureBeingDeleted(Texture const &texture))
+    DENG2_DEFINE_AUDIENCE(DimensionsChange, void textureDimensionsChanged(Texture const &texture))
 
     /**
      * Classification/processing flags.
@@ -130,6 +131,46 @@ public:
         Variant(Texture &generalCase, texturevariantspecification_t const &spec);
 
     public:
+        /// @return  Superior texture of which the variant is a derivative.
+        Texture &generalCase() const;
+
+        /// Returns @c true if the variant is "prepared".
+        inline bool isPrepared() const { return glName() != 0; }
+
+        /// Returns @c true if the variant is flagged as "masked".
+        inline bool isMasked() const { return isFlagged(Masked); }
+
+        /**
+         * Prepare the texture variant for render.
+         *
+         * @note If a cache miss occurs texture content data may need to be
+         * (re-)uploaded to GL. However, the actual upload will be deferred
+         * if possible. This has the side effect that although the variant
+         * is considered "prepared", attempts to render using the associated
+         * GL texture will result in "uninitialized" white texels being used
+         * instead.
+         *
+         * @return  GL-name of the uploaded texture.
+         */
+        uint prepare();
+
+        /**
+         * Release any uploaded GL-texture and clear the associated GL-name
+         * for the variant.
+         */
+        void release();
+
+        /**
+         * Returns the specification used to derive the variant.
+         */
+        texturevariantspecification_t const &spec() const;
+
+        /**
+         * Returns the source of the image used to prepare the uploaded GL-texture
+         * for the variant.
+         */
+        TexSource source() const;
+
         /**
          * Returns a textual description of the source of the variant.
          *
@@ -138,57 +179,17 @@ public:
         String sourceDescription() const;
 
         /**
-         * Retrieve the general case for this variant. Allows for a variant
-         * reference to be used in place of a texture (implicit indirection).
-         *
-         * @see generalCase()
-         */
-        inline operator Texture &() const {
-            return generalCase();
-        }
-
-        /// @return  Superior texture of which the variant is a derivative.
-        Texture &generalCase() const;
-
-        /// @return  Texture variant specification for the variant.
-        texturevariantspecification_t const &spec() const;
-
-        /// @return  Source of the variant.
-        TexSource source() const;
-
-        /**
-         * Change the source of the variant.
-         * @param newSource  New TextureSource.
-         */
-        void setSource(TexSource newSource);
-
-        void coords(float *s, float *t) const;
-
-        void setCoords(float s, float t);
-
-        /// Returns @c true if the variant is flagged as "masked".
-        inline bool isMasked() const { return isFlagged(Masked); }
-
-        /// Returns @c true if the variant is "prepared".
-        inline bool isPrepared() const { return glName() != 0; }
-
-        /**
-         * Returns @c true if the variant is flagged @a flagsToTest.
-         */
-        inline bool isFlagged(Flags flagsToTest) const { return !!(flags() & flagsToTest); }
-
-        /**
          * Returns the flags for the variant.
          */
         Flags flags() const;
 
         /**
-         * Change the variant's flags.
-         *
-         * @param flagsToChange  Flags to change the value of.
-         * @param set  @c true to set, @c false to clear.
+         * Returns @c true if the variant is flagged @a flagsToTest.
          */
-        void setFlags(Flags flagsToChange, bool set = true);
+        inline bool isFlagged(Flags flagsToTest) const
+        {
+            return (flags() & flagsToTest) != 0;
+        }
 
         /**
          * Returns the GL-name of the uploaded texture content for the variant;
@@ -197,12 +198,12 @@ public:
         uint glName() const;
 
         /**
-         * Change the GL-name of the uploaded texture content associated with
-         * the variant.
+         * Returns the prepared GL-texture coordinates for the variant.
          *
-         * @param newGLName  New GL-name. Can be @c 0.
+         * @param s  S axis coordinate.
+         * @param t  T axis coordinate.
          */
-        void setGLName(uint newGLName);
+        void glCoords(float *s, float *t) const;
 
         friend class Texture;
         friend struct Texture::Instance;
@@ -240,6 +241,11 @@ public:
     ~Texture();
 
     /**
+     * Returns the TextureManifest derived to yield the texture.
+     */
+    TextureManifest &manifest() const;
+
+    /**
      * Returns a brief textual description/overview of the texture.
      *
      * @return Human-friendly description/overview of the texture.
@@ -247,17 +253,26 @@ public:
     String description() const;
 
     /**
-     * Returns the TextureManifest derived to yield the texture.
+     * Returns the world dimensions of the texture, in map coordinate space
+     * units. The DimensionsChange audience is notified whenever dimensions
+     * are changed.
      */
-    TextureManifest &manifest() const;
-
-    /// Returns the dimensions of the texture in map coordinate space units.
     Vector2i const &dimensions() const;
 
-    /// Returns the world width of the texture in map coordinate space units.
+    /**
+     * Convenient accessor method for returning the X axis size (width) of
+     * the world dimensions for the texture, in map coordinate space units.
+     *
+     * @see dimensions()
+     */
     inline int width() const { return dimensions().x; }
 
-    /// Returns the world height of the texture in map coordinate space units.
+    /**
+     * Convenient accessor method for returning the X axis size (height) of
+     * the world dimensions for the texture, in map coordinate space units.
+     *
+     * @see dimensions()
+     */
     inline int height() const { return dimensions().y; }
 
     /**
@@ -331,6 +346,23 @@ public:
      */
     Variant *chooseVariant(ChooseVariantMethod method,
         texturevariantspecification_t const &spec, bool canCreate = false);
+
+    /**
+     * Choose/create a variant of the texture which fulfills @a spec and then
+     * immediately prepare it for render.
+     *
+     * @note A convenient shorthand of the call tree:
+     * <pre>
+     *    chooseVariant(MatchSpec, @a spec, true)->prepareVariant();
+     * </pre>
+     *
+     * @param spec      Specification for the derivation of the texture.
+     *
+     * @return  The prepared texture variant if successful; otherwise @c 0.
+     *
+     * @see chooseVariant()
+     */
+    Variant *prepareVariant(texturevariantspecification_t const &spec);
 
     /**
      * Provides access to the list of variant instances for efficent traversal.

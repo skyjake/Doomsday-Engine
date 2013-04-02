@@ -60,7 +60,7 @@ int maxFrameRate = 120; // Zero means 'unlimited'.
 // Refresh frame count (independant of the viewport-specific frameCount).
 int rFrameCount = 0;
 byte devShowFrameTimeDeltas = false;
-byte processSharpEventsAfterTickers = false;
+byte processSharpEventsAfterTickers = true;
 
 timespan_t sysTime, gameTime, demoTime, ddMapTime;
 //timespan_t frameStartTime;
@@ -99,10 +99,10 @@ int DD_GameLoopExitCode(void)
     return gameLoopExitCode;
 }
 
-float DD_GetFrameRate(void)
+float DD_GetFrameRate()
 {
 #ifdef __CLIENT__
-    return Window_CanvasWindow(Window_Main())->frameRate();
+    return Window::main().canvasWindow().frameRate();
 #else
     return 0;
 #endif
@@ -117,12 +117,6 @@ DENG_EXTERN_C boolean DD_IsSharpTick(void)
 boolean DD_IsFrameTimeAdvancing(void)
 {
     if(BusyMode_Active()) return false;
-#ifdef __CLIENT__
-    if(Con_TransitionInProgress())
-    {
-        return false;
-    }
-#endif
     return tickFrame || netGame;
 }
 

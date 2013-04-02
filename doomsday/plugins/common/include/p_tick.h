@@ -30,6 +30,7 @@
 #define LIBCOMMON_P_TICK_H
 
 #include "dd_types.h"
+#include "pause.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,7 +41,6 @@ extern int actualMapTime;
 extern int timerGame;
 
 void    P_RunPlayers(timespan_t ticLength);
-boolean P_IsPaused(void);
 void    P_DoTick(void);
 
 #ifdef __cplusplus

@@ -1322,6 +1322,8 @@ boolean R_UpdateSector(Sector *sec, boolean forceUpdate)
         changed = true;
     }
 
+    DENG_UNUSED(changed); /// @todo Should it be used? -jk
+
     return planeChanged;
 }
 
@@ -1335,10 +1337,10 @@ boolean R_UpdateSector(Sector *sec, boolean forceUpdate)
  */
 float R_DistAttenuateLightLevel(float distToViewer, float lightLevel)
 {
-    if(distToViewer > 0 && rendLightDistanceAttentuation > 0)
+    if(distToViewer > 0 && rendLightDistanceAttenuation > 0)
     {
         float real = lightLevel -
-            (distToViewer - 32) / rendLightDistanceAttentuation *
+            (distToViewer - 32) / rendLightDistanceAttenuation *
                 (1 - lightLevel);
 
         float minimum = lightLevel * lightLevel + (lightLevel - .63f) * .5f;

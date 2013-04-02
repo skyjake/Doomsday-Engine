@@ -38,9 +38,9 @@ using namespace de;
 static QString defaultLocationName()
 {
 #ifdef DENG2_QT_5_0_OR_NEWER
-    QString name = QStandardPaths::displayName(QStandardPaths::TempLocation);
+    QString name = QStandardPaths::displayName(QStandardPaths::CacheLocation);
 #else
-    QString name = QDesktopServices::displayName(QDesktopServices::TempLocation);
+    QString name = QDesktopServices::displayName(QDesktopServices::CacheLocation);
 #endif
     if(name.isEmpty())
     {

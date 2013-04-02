@@ -43,7 +43,8 @@ DENG_EXTERN_C float viewsidex, viewsidey;
 DENG_EXTERN_C boolean usingFog;
 DENG_EXTERN_C float fogColor[4];
 DENG_EXTERN_C int rAmbient;
-DENG_EXTERN_C float rendLightDistanceAttentuation;
+DENG_EXTERN_C float rendLightDistanceAttenuation;
+DENG_EXTERN_C int rendLightAttenuateFixedColormap;
 DENG_EXTERN_C float lightModRange[255];
 DENG_EXTERN_C int devRendSkyMode;
 DENG_EXTERN_C int gameDrawHUD;
@@ -61,6 +62,8 @@ DENG_EXTERN_C int shadowMaxRadius;
 DENG_EXTERN_C int shadowMaxDistance;
 
 DENG_EXTERN_C int useShinySurfaces;
+
+DENG_EXTERN_C float detailFactor, detailScale;
 
 DENG_EXTERN_C byte devRendSkyAlways;
 DENG_EXTERN_C byte freezeRLs;
@@ -106,6 +109,10 @@ void R_DrawLightRange(void);
 
 #ifdef __CLIENT__
 de::MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec();
+
+texturevariantspecification_t &Rend_MapSurfaceShinyTextureSpec();
+
+texturevariantspecification_t &Rend_MapSurfaceShinyMaskTextureSpec();
 #endif
 
 #endif // __cplusplus

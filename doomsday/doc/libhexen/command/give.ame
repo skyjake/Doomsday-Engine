@@ -1,0 +1,24 @@
+@summary{
+    Cheat command to give you various kinds of things.
+}
+@description{
+    @params{
+        give (stuff) @cbr 
+        (stuff) consists of one or more of (type:id). 
+        If no id, all is given:
+        @deflist{
+            @item{a} ammo
+            @item{h} health
+            @item{i} items
+            @item{k} keys
+            @item{p} puzzle
+            @item{r} armor
+            @item{w} weapons
+        }
+    }
+    @cbr
+    @example{
+        @code{give ikw} gives items, keys and weapons. @cbr
+        @code{give w2k1} gives weapon two and key one.
+    }
+}

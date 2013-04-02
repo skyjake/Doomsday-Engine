@@ -205,6 +205,12 @@ D_CMD(ShowUpdateSettings)
 
 #endif // __CLIENT__
 
+void App_DeleteMaterials()
+{
+    delete materials;
+    materials = 0;
+}
+
 void DD_CreateResourceClasses()
 {
     resourceClasses.push_back(new ResourceClass("RC_PACKAGE",       "Packages"));
@@ -591,7 +597,10 @@ void DD_ClearSystemTextureSchemes()
 
 Materials &App_Materials()
 {
-    if(!materials) throw Error("App_Materials", "Materials collection not yet initialized");
+    if(!materials)
+    {
+        throw Error("App_Materials", "Materials collection not yet initialized");
+    }
     return *materials;
 }
 
@@ -720,8 +729,8 @@ void DD_StartTitle(void)
     ddstring_t setupCmds; Str_Init(&setupCmds);
 
     // Configure the predefined fonts (all normal, variable width).
-    char const *fontName = R_ChooseVariableFont(FS_NORMAL, Window_Width(theWindow),
-                                                           Window_Height(theWindow));
+    char const *fontName = R_ChooseVariableFont(FS_NORMAL, DENG_WINDOW->width(),
+                                                           DENG_WINDOW->height());
 
     for(int i = 1; i <= FIPAGE_NUM_PREDEFINED_FONTS; ++i)
     {
@@ -1407,8 +1416,17 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
     }
 
     // Quit netGame if one is in progress.
+#ifdef __SERVER__
+    if(netGame && isServer)
+    {
+        N_ServerClose();
+    }
+#else
     if(netGame)
-        Con_Execute(CMDS_DDAY, isServer ? "net server close" : "net disconnect", true, false);
+    {
+        Con_Execute(CMDS_DDAY, "net disconnect", true, false);
+    }
+#endif
 
     S_Reset();
 
@@ -1527,8 +1545,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
     titleFinale = 0; // If the title finale was in progress it isn't now.
 
     /// @todo Material collection should not be destroyed during a reload.
-    DENG_ASSERT(materials);
-    delete materials; materials = 0;
+    App_DeleteMaterials();
 
     VERBOSE(
         if(!isNullGame(game))
@@ -1546,7 +1563,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
 #ifdef __CLIENT__
     char buf[256];
     DD_ComposeMainWindowTitle(buf);
-    Window_SetTitle(theWindow, buf);
+    DENG_WINDOW->setTitle(buf);
 #endif
 
     if(!DD_IsShuttingDown())
@@ -1570,7 +1587,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
 
 #ifdef __CLIENT__
     DD_ComposeMainWindowTitle(buf);
-    Window_SetTitle(theWindow, buf);
+    DENG_WINDOW->setTitle(buf);
 #endif
 
     /**
@@ -1706,7 +1723,7 @@ de::Game* DD_AutoselectGame(void)
     return NULL;
 }
 
-int DD_EarlyInit(void)
+int DD_EarlyInit()
 {
     // Determine the requested degree of verbosity.
     verbose = CommandLine_Exists("-verbose");
@@ -1727,11 +1744,11 @@ int DD_EarlyInit(void)
 
 #ifdef __CLIENT__
     // Bring the window manager online.
-    Sys_InitWindowManager();
+    Window::initialize();
 #endif
 
     // Instantiate the Games collection.
-    games = new de::Games();
+    games = new Games();
 
     return true;
 }
@@ -1740,7 +1757,7 @@ int DD_EarlyInit(void)
  * This gets called when the main window is ready for GL init. The application
  * event loop is already running.
  */
-void DD_FinishInitializationAfterWindowReady(void)
+void DD_FinishInitializationAfterWindowReady()
 {
     LOG_DEBUG("Window is ready, finishing initialization");
 
@@ -1757,7 +1774,7 @@ void DD_FinishInitializationAfterWindowReady(void)
     {
         char buf[256];
         DD_ComposeMainWindowTitle(buf);
-        Window_SetTitle(theWindow, buf);
+        DENG_WINDOW->setTitle(buf);
     }
 #endif
 
@@ -1996,7 +2013,7 @@ boolean DD_Init(void)
 
 #ifdef __SERVER__
         // Automatically start the server.
-        Con_Executef(CMDS_CMDLINE, false, "net server start");
+        N_ServerOpen();
 #endif
     }
     else
@@ -2290,7 +2307,6 @@ void DD_UpdateEngineState(void)
 #endif
 }
 
-/* *INDENT-OFF* */
 ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&netGame, 0},
     {&isServer, 0},                         // An *open* server?
@@ -2305,14 +2321,11 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
 #ifdef __CLIENT__
     {&mipmapping, 0},
     {&filterUI, 0},
-#else
-    {0, 0},
-    {0, 0},
-#endif
-#ifdef __CLIENT__
     {&defResX, &defResX},
     {&defResY, &defResY},
 #else
+    {0, 0},
+    {0, 0},
     {0, 0},
     {0, 0},
 #endif
@@ -2346,18 +2359,16 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&gameDataFormat, &gameDataFormat},
 #ifdef __CLIENT__
     {&gameDrawHUD, 0},
-#else
-    {0, 0},
-#endif
-#ifdef __CLIENT__
     {&symbolicEchoMode, &symbolicEchoMode},
-    {&numTexUnits, 0}
+    {&numTexUnits, 0},
+    {&rendLightAttenuateFixedColormap, &rendLightAttenuateFixedColormap}
 #else
     {0, 0},
     {0, 0},
+    {0, 0},
+    {0, 0}
 #endif
 };
-/* *INDENT-ON* */
 
 /**
  * Get a 32-bit signed integer value.
@@ -2372,10 +2383,10 @@ int DD_GetInteger(int ddvalue)
         return I_ShiftDown();
 
     case DD_WINDOW_WIDTH:
-        return Window_Width(theWindow);
+        return DENG_WINDOW->width();
 
     case DD_WINDOW_HEIGHT:
-        return Window_Height(theWindow);
+        return DENG_WINDOW->height();
 
     case DD_CURRENT_CLIENT_FINALE_ID:
         return Cl_CurrentFinale();
@@ -2559,7 +2570,7 @@ void* DD_GetVariable(int ddvalue)
 
 # ifdef WIN32
     case DD_WINDOW_HANDLE:
-        return Window_NativeHandle(Window_Main());
+        return Window::main().nativeHandle();
 # endif
 #endif
 

@@ -525,7 +525,11 @@ void Compile(char *fileName)
 	length = ftell(file);
 	rewind(file);
 	sourcePos = source = new unsigned char[length + 1];
-	fread(source, length, 1, file); 
+    if(!fread(source, length, 1, file))
+    {
+        perror(fileName);
+        return;
+    }
 	source[length] = 0;
 	fclose(file);
 

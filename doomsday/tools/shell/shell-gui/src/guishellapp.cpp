@@ -88,8 +88,8 @@ GuiShellApp::GuiShellApp(int &argc, char **argv)
                     QKeySequence(tr("Ctrl+W", "Connection|Close Window")));
 
     QMenu *svMenu = d->menuBar->addMenu(tr("Server"));
-    svMenu->addAction(tr("Start Local Server..."), this, SLOT(startLocalServer()),
-                      QKeySequence(tr("Ctrl+N", "Server|Start Local")));
+    svMenu->addAction(tr("New Local Server..."), this, SLOT(startLocalServer()),
+                      QKeySequence(tr("Ctrl+N", "Server|New Local Server")));
     d->stopAction = svMenu->addAction(tr("Stop"), this, SLOT(stopServer()));
     svMenu->addSeparator();
     svMenu->addMenu(d->localMenu);
@@ -106,8 +106,6 @@ GuiShellApp::GuiShellApp(int &argc, char **argv)
 
     newOrReusedConnectionWindow();
 }
-
-
 
 LinkWindow *GuiShellApp::newOrReusedConnectionWindow()
 {
@@ -275,6 +273,11 @@ void GuiShellApp::aboutShell()
 void GuiShellApp::showHelp()
 {
     QDesktopServices::openUrl(QUrl(tr("http://dengine.net/dew/index.php?title=Shell_Help")));
+}
+
+void GuiShellApp::openWebAddress(QString url)
+{
+    QDesktopServices::openUrl(QUrl(url));
 }
 
 void GuiShellApp::showPreferences()

@@ -26,6 +26,62 @@ includeGuard('MasterBrowserPlugin');
 
 require_once(DIR_CLASSES.'/masterserver.class.php');
 
+class ServerInfo
+{
+    public $at     = '';
+    public $port   = '';
+    public $locked = '';
+    public $ver    = '';
+    public $map    = '';
+    public $game   = '';
+    public $name   = '';
+    public $info   = '';
+    public $nump   = '';
+    public $maxp   = '';
+    public $open   = '';
+    public $mode   = '';
+    public $setup  = '';
+    public $iwad   = '';
+    public $pwads  = '';
+    public $wcrc   = '';
+    public $plrn   = '';
+    public $data0  = '';
+    public $data1  = '';
+    public $data2  = '';
+
+    public function __construct()
+    {}
+
+    /**
+     * @param array:$record  Record representation of a ServerInfo.
+     */
+    public static function fromRecord(&$record)
+    {
+        $info = new ServerInfo();
+        if(array_key_exists('at',     $record)) $info->at     = $record['at'];
+        if(array_key_exists('port',   $record)) $info->port   = $record['port'];
+        if(array_key_exists('locked', $record)) $info->locked = $record['locked'];
+        if(array_key_exists('ver',    $record)) $info->ver    = $record['ver'];
+        if(array_key_exists('map',    $record)) $info->map    = $record['map'];
+        if(array_key_exists('game',   $record)) $info->game   = $record['game'];
+        if(array_key_exists('name',   $record)) $info->name   = $record['name'];
+        if(array_key_exists('info',   $record)) $info->info   = $record['info'];
+        if(array_key_exists('nump',   $record)) $info->nump   = $record['nump'];
+        if(array_key_exists('maxp',   $record)) $info->maxp   = $record['maxp'];
+        if(array_key_exists('open',   $record)) $info->open   = $record['open'];
+        if(array_key_exists('mode',   $record)) $info->mode   = $record['mode'];
+        if(array_key_exists('setup',  $record)) $info->setup  = $record['setup'];
+        if(array_key_exists('iwad',   $record)) $info->iwad   = $record['iwad'];
+        if(array_key_exists('pwads',  $record)) $info->pwads  = $record['pwads'];
+        if(array_key_exists('wcrc',   $record)) $info->wcrc   = $record['wcrc'];
+        if(array_key_exists('plrn',   $record)) $info->plrn   = $record['plrn'];
+        if(array_key_exists('data0',  $record)) $info->data0  = $record['data0'];
+        if(array_key_exists('data1',  $record)) $info->data1  = $record['data1'];
+        if(array_key_exists('data2',  $record)) $info->data2  = $record['data2'];
+        return $info;
+    }
+}
+
 class MasterBrowserPlugin extends Plugin implements Actioner, RequestInterpreter
 {
     public static $name = 'masterbrowser';
@@ -63,24 +119,21 @@ class MasterBrowserPlugin extends Plugin implements Actioner, RequestInterpreter
      *
      * Presently unused properties:
      *
-     * '<span class="game_plugin">'. $info['game'] .'</span>'.
-     * '<span class="iwad_info">'. $info['iwad'] .' ('. dechex($info['wcrc']) .')</span>';
-     * '<span class="player-names">'. $info['plrn'] .'</span>';
-     * '<span class="version">'. $info['ver'] .'</span>'.
+     * '<span class="game_plugin">'. $info->game .'</span>'.
+     * '<span class="iwad_info">'. $info->iwad .' ('. dechex($info->wcrc) .')</span>';
+     * '<span class="player-names">'. $info->plrn .'</span>';
+     * '<span class="version">'. $info->ver .'</span>'.
      */
-    private function generateServerBadgeHtml(&$info)
+    private function generateServerBadgeHtml(ServerInfo &$info)
     {
-        if(!is_array($info))
-            throw new Exception('Invalid info argument, array expected.');
-
-        $addonArr = array_filter(explode(';', $info['pwads']));
-        $setupArr = array_filter(explode(' ', $info['setup']));
+        $addonArr = array_filter(explode(';', $info->pwads));
+        $setupArr = array_filter(explode(' ', $info->setup));
 
         $playerCountLabel = 'Number of players currently in-game';
 
         $playerMaxLabel = 'Maximum number of players';
 
-        $openStatusLabel = $info['open']? 'Server is open to all players' : 'Server requires a password to join';
+        $openStatusLabel = $info->locked? 'Server requires a password to join' : 'Server is open to all players';
 
         $addressLabel = 'IP address and port number of the server';
 
@@ -88,23 +141,23 @@ class MasterBrowserPlugin extends Plugin implements Actioner, RequestInterpreter
         $setupStr = implode(' ', $setupArr);
 
         // Begin html generation.
-        $html = '<span class="game-mode">'. htmlspecialchars($info['mode']) .'</span>'.
+        $html = '<span class="game-mode">'. htmlspecialchars($info->mode) .'</span>'.
                 '<div class="wrapper"><div class="heading collapsible" title="Toggle server info display">'.
                 '<div class="player-summary">'.
-                    '<span class="player-count"><label title="'. htmlspecialchars($playerCountLabel) .'">'. htmlspecialchars($info['nump']) .'</label></span>/'.
-                    '<span class="player-max"><label title="'. htmlspecialchars($playerMaxLabel) .'">'. htmlspecialchars($info['maxp']) .'</label></span>'.
+                    '<span class="player-count"><label title="'. htmlspecialchars($playerCountLabel) .'">'. htmlspecialchars($info->nump) .'</label></span>/'.
+                    '<span class="player-max"><label title="'. htmlspecialchars($playerMaxLabel) .'">'. htmlspecialchars($info->maxp) .'</label></span>'.
                 '</div>'.
-                '<span class="name">'. htmlspecialchars($info['name']) .'</span>'.
+                '<span class="name">'. htmlspecialchars($info->name) .'</span>'.
                 '<div class="server-metadata">'.
-                     '<span class="address"><label title="'. htmlspecialchars($addressLabel) .'">'. htmlspecialchars($info['at']) .'<span class="port" '. (((integer)$info['port']) === 0? 'style="color:red;"' : '') .'>'. htmlspecialchars($info['port']) .'</span></label></span>'.
-                     '<div class="'. ($info['open']? 'lock-off' : 'lock-on') .'" title="'. htmlspecialchars($openStatusLabel) .'"></div>'.
+                     '<span class="address"><label title="'. htmlspecialchars($addressLabel) .'">'. htmlspecialchars($info->at) .'<span class="port" '. (((integer)$info->port) === 0? 'style="color:red;"' : '') .'>'. htmlspecialchars($info->port) .'</span></label></span>'.
+                     '<div class="'. ($info->locked? 'lock-on' : 'lock-off') .'" title="'. htmlspecialchars($openStatusLabel) .'"></div>'.
                 '</div>'.
                 '<div class="game-metadata">'.
                     'Setup: <span class="game-setup">'. htmlspecialchars($setupStr) .'</span>'.
-                    'Current Map: <span class="game-current-map">'. htmlspecialchars($info['map']) .'</span>'.
+                    'Current Map: <span class="game-current-map">'. htmlspecialchars($info->map) .'</span>'.
                 '</div></div>';
 
-        $html .='<div class="extended-info"><blockquote class="game-info"><p>'. htmlspecialchars($info['info']) .'</p></blockquote>';
+        $html .='<div class="extended-info"><blockquote class="game-info"><p>'. htmlspecialchars($info->info) .'</p></blockquote>';
 
         // Any required addons?.
         if(count($addonArr))
@@ -136,22 +189,22 @@ jQuery(document).ready(function() {
 </script><?php
     }
 
-    public static function serverSorter($b, $a)
+    public static function serverSorter(ServerInfo $b, ServerInfo $a)
     {
-        // Open servers are grouped together.
-        $diff = (integer)($b['open'] - $a['open']);
+        // Group servers according to lock status.
+        $diff = (integer)($b->locked - $a->locked);
         if($diff) return $diff;
 
         // Servers with active players get priority
-        $diff = (integer)($b['nump'] - $a['nump']);
+        $diff = (integer)($b->nump - $a->nump);
         if($diff) return -($diff);
 
         // Order by lexicographical difference in the server name.
-        $diff = strcmp($b['mode'], $a['mode']);
+        $diff = strcmp($b->mode, $a->mode);
         if($diff) return $diff;
 
         // Order by lexicographical difference in the server name.
-        return strcmp($b['name'], $a['name']);
+        return strcmp($b->name, $a->name);
     }
 
     /**
@@ -198,7 +251,7 @@ jQuery(document).ready(function() {
                     while(list($ident, $info) = each($this->db->servers))
                     {
                         if(!is_array($info)) continue;
-                        $servers[] = $info;
+                        $servers[] = ServerInfo::fromRecord($info);
                     }
 
                     // Sort the collection.
@@ -211,7 +264,7 @@ jQuery(document).ready(function() {
                         $playerCount = (integer)0;
                         foreach($servers as &$server)
                         {
-                            $playerCount += $server['nump'];
+                            $playerCount += $server->nump;
                         }
 
                         $content .= '<h3>Active servers</h3>'.

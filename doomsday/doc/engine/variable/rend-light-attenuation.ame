@@ -1,0 +1,3 @@
+@summary{
+    Maximum light attentuation distance, in map units (default: 1024).
+}

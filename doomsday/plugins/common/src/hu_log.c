@@ -252,7 +252,7 @@ void UILog_Ticker(uiwidget_t* obj, timespan_t ticLength)
     int i, oldest;
     assert(obj->type == GUI_LOG);
 
-    if(P_IsPaused() || !DD_IsSharpTick()) return;
+    if(Pause_IsPaused() || !DD_IsSharpTick()) return;
 
     // All messags tic away.
     for(i = 0; i < LOG_MAX_MESSAGES; ++i)

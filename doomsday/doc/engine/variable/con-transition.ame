@@ -1,0 +1,3 @@
+@summary{
+    Transition effect used when leaving busy mode: 0=Crossfade, 1=DOOM (smooth), 2=DOOM
+}

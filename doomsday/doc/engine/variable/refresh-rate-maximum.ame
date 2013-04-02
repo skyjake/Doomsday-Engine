@@ -1,0 +1,3 @@
+@summary{
+    Maximum limit for the frame rate (default: 200).
+}

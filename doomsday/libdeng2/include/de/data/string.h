@@ -21,6 +21,7 @@
 #define LIBDENG2_STRING_H
 
 #include <QString>
+#include <QList>
 
 #include "../libdeng2.h"
 #include "../Block"
@@ -67,6 +68,8 @@ public:
         /// Returns the value of the argument as a number.
         virtual ddouble asNumber() const = 0;
     };
+
+    typedef QList<IPatternArg const *> PatternArgs;
 
     typedef dint size_type;
 
@@ -129,6 +132,16 @@ public:
      * @param path  Path to concatenate.
      */
     String operator / (String const &path) const;
+
+    /**
+     * Applies pattern formatting using the string as a format string.
+     *
+     * @param args  List of arguments.
+     *
+     * @return String with placeholders replaced using the arguments.
+     * @see patternFormat()
+     */
+    String operator % (PatternArgs args) const;
 
     /**
      * Does a record member concatenation on a variable name. Record members

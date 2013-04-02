@@ -1,0 +1,6 @@
+@summary{
+    Dump a data lump currently loaded in memory.
+}
+@description{
+    Params: dump (name) @cbr For example, 'dump PLAYPAL'.
+}

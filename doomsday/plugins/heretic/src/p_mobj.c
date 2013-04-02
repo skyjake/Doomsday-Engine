@@ -1141,25 +1141,42 @@ mobj_t* P_SpawnMobj(mobjtype_t type, coord_t const pos[3], angle_t angle, int sp
     return P_SpawnMobjXYZ(type, pos[VX], pos[VY], pos[VZ], angle, spawnFlags);
 }
 
-/**
- * Chooses the next spot to place the mace.
- */
-void P_RepositionMace(mobj_t* mo)
+void P_RepositionMace(mobj_t *mo)
 {
-    mapspotid_t spot;
-    BspLeaf* bspLeaf;
+    mapspot_t const *mapSpot;
+    BspLeaf *bspLeaf;
+
+    DENG_ASSERT(mo && mo->type == MT_WMACE);
+#if _DEBUG
+    Con_Message("P_RepositionMace: Repositioning mobj [%p], thinkerId:%i.", mo, mo->thinker.id);
+#endif
+
+    mapSpot = P_ChooseRandomMaceSpot();
+    if(!mapSpot)
+    {
+#if _DEBUG
+        Con_Message("P_RepositionMace: Failed to choose a map spot, aborting...");
+#endif
+        return;
+    }
 
     P_MobjUnsetOrigin(mo);
-    spot = maceSpots[P_Random() % maceSpotCount];
-    mo->origin[VX] = mapSpots[spot].origin[VX];
-    mo->origin[VY] = mapSpots[spot].origin[VY];
-    bspLeaf = P_BspLeafAtPoint(mo->origin);
+    {
+        mo->origin[VX] = mapSpot->origin[VX];
+        mo->origin[VY] = mapSpot->origin[VY];
+        bspLeaf = P_BspLeafAtPoint(mo->origin);
 
-    mo->floorZ = P_GetDoublep(bspLeaf, DMU_CEILING_HEIGHT);
-    mo->origin[VZ] = mo->floorZ;
+        mo->floorZ = P_GetDoublep(bspLeaf, DMU_CEILING_HEIGHT);
+        mo->origin[VZ] = mo->floorZ;
 
-    mo->ceilingZ = P_GetDoublep(bspLeaf, DMU_CEILING_HEIGHT);
+        mo->ceilingZ = P_GetDoublep(bspLeaf, DMU_CEILING_HEIGHT);
+    }
     P_MobjSetOrigin(mo);
+
+#if _DEBUG
+    Con_Message("P_RepositionMace: Mobj [%p], thinkerId:%i - now at (%.2f, %.2f, %.2f).",
+                mo, mo->thinker.id, mo->origin[VX], mo->origin[VY], mo->origin[VZ]);
+#endif
 }
 
 void P_SpawnPuff(coord_t x, coord_t y, coord_t z, angle_t angle)

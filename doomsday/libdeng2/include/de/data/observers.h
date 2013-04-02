@@ -200,10 +200,10 @@ namespace de
         void remove(Type *observer) {
             if(_members) {
                 _members->erase(observer);
-            }
-            if(!_members->size()) {
-                delete _members;
-                _members = 0;
+                if(!_members->size()) {
+                    delete _members;
+                    _members = 0;
+                }
             }
         }
         

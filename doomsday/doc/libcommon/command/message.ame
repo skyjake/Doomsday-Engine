@@ -1,0 +1,7 @@
+@summary{
+    Show a local game message.
+}
+@description{
+    @params{message (text)} @cbr 
+    @example{@code{message "this is a message"}}
+}

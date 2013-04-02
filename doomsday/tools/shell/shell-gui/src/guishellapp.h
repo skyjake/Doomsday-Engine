@@ -49,6 +49,7 @@ public slots:
     void updateLocalServerMenu();
     void aboutShell();
     void showHelp();
+    void openWebAddress(QString address);
     void showPreferences();
     void preferencesDone();
     void updateMenu();

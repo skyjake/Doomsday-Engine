@@ -55,11 +55,16 @@ $CP tools/md2tool/md2tool $APPDIR/Resources
 if [ -e plugins/fluidsynth/audio_fluidsynth.bundle ]; then
     $CP plugins/fluidsynth/audio_fluidsynth.bundle $PLUGDIR/
 
+	GLIB_VER=`pkg-config --modversion glib-2.0`
+    GETTEXT_VER=0.18.2
+
     echo "Installing deps for audio_fluidsynth..."
+	echo "- glib version: $GLIB_VER"
+	echo "- gettext version: $GETTEXT_VER"
     FWDIR=$BUILDDIR/Doomsday.app/Contents/Frameworks
     cp /usr/local/lib/libglib-2.0.0.dylib $FWDIR
     cp /usr/local/lib/libgthread-2.0.0.dylib $FWDIR
-    cp /usr/local/Cellar/gettext/0.18.1.1/lib/libintl.8.dylib $FWDIR
+    cp /usr/local/Cellar/gettext/$GETTEXT_VER/lib/libintl.8.dylib $FWDIR
     chmod u+w $FWDIR/libglib-2.0.0.dylib $FWDIR/libgthread-2.0.0.dylib $FWDIR/libintl.8.dylib
 
     # IDs
@@ -68,13 +73,17 @@ if [ -e plugins/fluidsynth/audio_fluidsynth.bundle ]; then
     install_name_tool -id @executable_path/../Frameworks/libintl.8.dylib $FWDIR/libintl.8.dylib
 
     # glib-2.0.0
-    install_name_tool -change /usr/local/Cellar/gettext/0.18.1.1/lib/libintl.8.dylib \
+    install_name_tool -change /usr/local/Cellar/gettext/$GETTEXT_VER/lib/libintl.8.dylib \
+    	@executable_path/../Frameworks/libintl.8.dylib $FWDIR/libglib-2.0.0.dylib
+    install_name_tool -change /usr/local/opt/gettext/lib/libintl.8.dylib \
     	@executable_path/../Frameworks/libintl.8.dylib $FWDIR/libglib-2.0.0.dylib
 
     # gthread-2.0.0
-    install_name_tool -change /usr/local/Cellar/glib/2.32.3/lib/libglib-2.0.0.dylib \
+    install_name_tool -change /usr/local/Cellar/glib/$GLIB_VER/lib/libglib-2.0.0.dylib \
     	@executable_path/../Frameworks/libglib-2.0.0.dylib $FWDIR/libgthread-2.0.0.dylib
-    install_name_tool -change /usr/local/Cellar/gettext/0.18.1.1/lib/libintl.8.dylib \
+    install_name_tool -change /usr/local/Cellar/gettext/$GETTEXT_VER/lib/libintl.8.dylib \
+    	@executable_path/../Frameworks/libintl.8.dylib $FWDIR/libgthread-2.0.0.dylib
+    install_name_tool -change /usr/local/opt/gettext/lib/libintl.8.dylib \
     	@executable_path/../Frameworks/libintl.8.dylib $FWDIR/libgthread-2.0.0.dylib
 
     # audio_fluidsynth
@@ -83,7 +92,9 @@ if [ -e plugins/fluidsynth/audio_fluidsynth.bundle ]; then
     	@executable_path/../Frameworks/libglib-2.0.0.dylib $DSFS
     install_name_tool -change /usr/local/lib/libgthread-2.0.0.dylib \
     	@executable_path/../Frameworks/libgthread-2.0.0.dylib $DSFS
-    install_name_tool -change /usr/local/Cellar/gettext/0.18.1.1/lib/libintl.8.dylib \
+    install_name_tool -change /usr/local/Cellar/gettext/$GETTEXT_VER/lib/libintl.8.dylib \
+    	@executable_path/../Frameworks/libintl.8.dylib $DSFS
+    install_name_tool -change /usr/local/opt/gettext/lib/libintl.8.dylib \
     	@executable_path/../Frameworks/libintl.8.dylib $DSFS
 fi
 

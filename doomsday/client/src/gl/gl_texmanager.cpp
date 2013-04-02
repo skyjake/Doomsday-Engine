@@ -55,12 +55,6 @@ int mipmapping = 5;
 int filterUI   = 1;
 int texQuality = TEXQ_BEST;
 
-enum uploadcontentmethod_t
-{
-    METHOD_IMMEDIATE = 0,
-    METHOD_DEFERRED
-};
-
 struct texturevariantspecificationlist_node_t
 {
     texturevariantspecificationlist_node_t *next;
@@ -87,7 +81,7 @@ static TexSource loadPatch(image_t &image, de::FileHandle &file, int tclass = 0,
 static TexSource loadDetail(image_t &image, de::FileHandle &file);
 
 static TexSource loadRaw(image_t &image, rawtex_t const &raw);
-static TexSource loadPatchComposite(image_t &image, Texture &tex,
+static TexSource loadPatchComposite(image_t &image, Texture const &tex,
     bool zeroMask = false, bool useZeroOriginIfOneComponent = false);
 
 int ratioLimit = 0; // Zero if none.
@@ -511,79 +505,53 @@ static void destroyVariantSpecifications()
     }
 }
 
-static uploadcontentmethod_t chooseContentUploadMethod(texturecontent_t const &content)
+GLUploadMethod GL_ChooseUploadMethod(texturecontent_t const &content)
 {
     // Must the operation be carried out immediately?
     if((content.flags & TXCF_NEVER_DEFER) || !BusyMode_Active())
     {
-        return METHOD_IMMEDIATE;
+        return Immediate;
     }
     // We can defer.
-    return METHOD_DEFERRED;
+    return Deferred;
 }
 
 static int releaseVariantGLTexture(TextureVariant &variant, texturevariantspecification_t *spec = 0)
 {
     if(!spec || spec == &variant.spec())
     {
-        if(variant.isPrepared())
-        {
-            // Delete and mark it not-loaded.
-            DGLuint glName = variant.glName();
-            glDeleteTextures(1, (GLuint const *) &glName);
-            variant.setGLName(0);
-        }
-
+        variant.release();
         if(spec) return true; // We're done.
     }
     return 0; // Continue iteration.
 }
 
-static void uploadContent(uploadcontentmethod_t uploadMethod, texturecontent_t const &content)
-{
-    if(METHOD_IMMEDIATE == uploadMethod)
-    {
-        // Do this right away. No need to take a copy.
-        GL_UploadTextureContent(content);
-        return;
-    }
-    GL_DeferTextureUpload(&content);
-}
-
-static uploadcontentmethod_t uploadContentForVariant(uploadcontentmethod_t uploadMethod,
-    texturecontent_t const &content)
-{
-    if(!novideo)
-    {
-        uploadContent(uploadMethod, content);
-    }
-    return uploadMethod;
-}
-
-static void uploadContentUnmanaged(uploadcontentmethod_t uploadMethod,
-    texturecontent_t const &content)
+static void uploadContentUnmanaged(texturecontent_t const &content)
 {
     LOG_AS("uploadContentUnmanaged");
     if(novideo) return;
-    if(METHOD_IMMEDIATE == uploadMethod)
+
+    GLUploadMethod uploadMethod = GL_ChooseUploadMethod(content);
+    if(uploadMethod == Immediate)
     {
-#ifdef _DEBUG
+#ifdef DENG_DEBUG
         LOG_VERBOSE("Uploading texture (%i:%ix%i) while not busy! Should be precached in busy mode?")
             << content.name << content.width << content.height;
 #endif
     }
-    uploadContent(uploadMethod, content);
+
+    GL_UploadTextureContent(content, uploadMethod);
 }
 
-static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t const &baseSpec,
-    image_t &image)
+TexSource GL_LoadSourceImage(image_t &image, Texture const &tex,
+    texturevariantspecification_t const &spec)
 {
     TexSource source = TEXS_NONE;
-    variantspecification_t const &spec = TS_GENERAL(baseSpec);
+    variantspecification_t const &vspec = TS_GENERAL(spec);
     if(!tex.manifest().schemeName().compareWithoutCase("Textures"))
     {
         // Attempt to load an external replacement for this composite texture?
-        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.isFlagged(de::Texture::Custom)))
+        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.isFlagged(Texture::Custom)))
         {
             // First try the textures scheme.
             de::Uri uri = tex.manifest().composeUri();
@@ -592,13 +560,13 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
 
         if(source == TEXS_NONE)
         {
-            if(TC_SKYSPHERE_DIFFUSE != spec.context)
+            if(TC_SKYSPHERE_DIFFUSE != vspec.context)
             {
                 source = loadPatchComposite(image, tex);
             }
             else
             {
-                bool const zeroMask = !!(spec.flags & TSF_ZEROMASK);
+                bool const zeroMask = (vspec.flags & TSF_ZEROMASK) != 0;
                 bool const useZeroOriginIfOneComponent = true;
                 source = loadPatchComposite(image, tex, zeroMask, useZeroOriginIfOneComponent);
             }
@@ -607,7 +575,7 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
     else if(!tex.manifest().schemeName().compareWithoutCase("Flats"))
     {
         // Attempt to load an external replacement for this flat?
-        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.isFlagged(de::Texture::Custom)))
+        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.isFlagged(Texture::Custom)))
         {
             // First try the flats scheme.
             de::Uri uri = tex.manifest().composeUri();
@@ -647,15 +615,15 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
     else if(!tex.manifest().schemeName().compareWithoutCase("Patches"))
     {
         int tclass = 0, tmap = 0;
-        if(spec.flags & TSF_HAS_COLORPALETTE_XLAT)
+        if(vspec.flags & TSF_HAS_COLORPALETTE_XLAT)
         {
-            DENG_ASSERT(spec.translated);
-            tclass = spec.translated->tClass;
-            tmap   = spec.translated->tMap;
+            DENG_ASSERT(vspec.translated);
+            tclass = vspec.translated->tClass;
+            tmap   = vspec.translated->tMap;
         }
 
         // Attempt to load an external replacement for this patch?
-        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.isFlagged(de::Texture::Custom)))
+        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.isFlagged(Texture::Custom)))
         {
             de::Uri uri = tex.manifest().composeUri();
             source = loadExternalTexture(image, uri.compose(), "-ck");
@@ -674,7 +642,7 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
                         de::File1 &lump = App_FileSystem().nameIndex().lump(lumpNum);
                         de::FileHandle &hndl = App_FileSystem().openLump(lump);
 
-                        source = loadPatch(image, hndl, tclass, tmap, spec.border);
+                        source = loadPatch(image, hndl, tclass, tmap, vspec.border);
 
                         App_FileSystem().releaseFile(hndl.file());
                         delete &hndl;
@@ -688,11 +656,11 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
     else if(!tex.manifest().schemeName().compareWithoutCase("Sprites"))
     {
         int tclass = 0, tmap = 0;
-        if(spec.flags & TSF_HAS_COLORPALETTE_XLAT)
+        if(vspec.flags & TSF_HAS_COLORPALETTE_XLAT)
         {
-            DENG_ASSERT(spec.translated);
-            tclass = spec.translated->tClass;
-            tmap   = spec.translated->tMap;
+            DENG_ASSERT(vspec.translated);
+            tclass = vspec.translated->tClass;
+            tmap   = vspec.translated->tMap;
         }
 
         // Attempt to load an external replacement for this sprite?
@@ -701,7 +669,7 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
             de::Uri uri = tex.manifest().composeUri();
 
             // Prefer psprite or translated versions if available.
-            if(TC_PSPRITE_DIFFUSE == spec.context)
+            if(TC_PSPRITE_DIFFUSE == vspec.context)
             {
                 source = loadExternalTexture(image, "Patches:" + uri.path() + "-hud", "-ck");
             }
@@ -729,7 +697,7 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
                         de::File1 &lump = App_FileSystem().nameIndex().lump(lumpNum);
                         de::FileHandle &hndl = App_FileSystem().openLump(lump);
 
-                        source = loadPatch(image, hndl, tclass, tmap, spec.border);
+                        source = loadPatch(image, hndl, tclass, tmap, vspec.border);
 
                         App_FileSystem().releaseFile(hndl.file());
                         delete &hndl;
@@ -778,18 +746,23 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
     return source;
 }
 
-static uploadcontentmethod_t prepareVariantFromImage(TextureVariant &tex, image_t &image)
+/**
+ * Prepares the image for use as a GL texture in accordance with the given
+ * specification.
+ *
+ * @param image     The image to prepare (in place).
+ * @param spec      Specification describing any transformations which should
+ *                  be applied to the image.
+ *
+ * @return  The DGL texture format determined for the image.
+ */
+static dgltexformat_t prepareImageAsTexture(image_t &image,
+    variantspecification_t const &spec)
 {
-    variantspecification_t const &spec = TS_GENERAL(tex.spec());
-    bool monochrome    = (spec.flags & TSF_MONOCHROME) != 0;
-    bool noCompression = (spec.flags & TSF_NO_COMPRESSION) != 0;
-    bool scaleSharp    = (spec.flags & TSF_UPSCALE_AND_SHARPEN) != 0;
-    int wrapS = spec.wrapS, wrapT = spec.wrapT;
-    int magFilter, minFilter, anisoFilter, flags = 0;
-    boolean noSmartFilter = false;
-    dgltexformat_t dglFormat;
-    texturecontent_t c;
-    float s, t;
+    DENG_ASSERT(image.pixels);
+
+    bool const monochrome = (spec.flags & TSF_MONOCHROME) != 0;
+    bool const scaleSharp = (spec.flags & TSF_UPSCALE_AND_SHARPEN) != 0;
 
     if(spec.toAlpha)
     {
@@ -830,7 +803,7 @@ static uploadcontentmethod_t prepareVariantFromImage(TextureVariant &tex, image_
             bool origMasked = (image.flags & IMGF_IS_MASKED) != 0;
             colorpaletteid_t origPaletteId = image.paletteId;
 
-            uint8_t* newPixels = GL_ConvertBuffer(image.pixels, image.size.width, image.size.height,
+            uint8_t *newPixels = GL_ConvertBuffer(image.pixels, image.size.width, image.size.height,
                                                   ((image.flags & IMGF_IS_MASKED)? 2 : 1),
                                                   R_ToColorPalette(image.paletteId), 4);
             if(newPixels != image.pixels)
@@ -879,9 +852,6 @@ static uploadcontentmethod_t prepareVariantFromImage(TextureVariant &tex, image_
                         image.flags |= IMGF_IS_MASKED;
                 }
             }
-
-            // Lets not do this again.
-            noSmartFilter = true;
         }
     }
     else if(image.pixelSize > 2)
@@ -893,132 +863,52 @@ static uploadcontentmethod_t prepareVariantFromImage(TextureVariant &tex, image_
         }
     }
 
-    if(noCompression || (image.size.width < 128 || image.size.height < 128))
-        flags |= TXCF_NO_COMPRESSION;
-
-    if(spec.gammaCorrection) flags |= TXCF_APPLY_GAMMACORRECTION;
-    if(spec.noStretch)       flags |= TXCF_UPLOAD_ARG_NOSTRETCH;
-    if(spec.mipmapped)       flags |= TXCF_MIPMAP;
-    if(noSmartFilter)         flags |= TXCF_UPLOAD_ARG_NOSMARTFILTER;
-
+    /*
+     * Choose the final GL texture format.
+     */
     if(monochrome)
     {
-        dglFormat = ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 : DGL_LUMINANCE );
+        return image.pixelSize == 2? DGL_LUMINANCE_PLUS_A8 : DGL_LUMINANCE;
     }
-    else
+    if(image.paletteId)
     {
-        if(0 != image.paletteId)
-        {   // Paletted.
-            dglFormat = (image.flags & IMGF_IS_MASKED)? DGL_COLOR_INDEX_8_PLUS_A8 : DGL_COLOR_INDEX_8;
-        }
-        else
-        {
-            dglFormat = ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
-                          image.pixelSize == 3 ? DGL_RGB :
-                          image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE );
-        }
+        return (image.flags & IMGF_IS_MASKED)? DGL_COLOR_INDEX_8_PLUS_A8 : DGL_COLOR_INDEX_8;
     }
-
-    minFilter   = GL_MinFilterForVariantSpec(spec);
-    magFilter   = GL_MagFilterForVariantSpec(spec);
-    anisoFilter = GL_LogicalAnisoLevelForVariantSpec(spec);
-
-    /**
-     * Calculate texture coordinates based on the image dimensions. The
-     * coordinates are calculated as width/CeilPow2(width), or 1 if larger
-     * than the maximum texture size.
-     *
-     * @todo Image dimensions may not be the same as the final uploaded texture!
-     */
-    if((flags & TXCF_UPLOAD_ARG_NOSTRETCH) &&
-       (!GL_state.features.texNonPowTwo || spec.mipmapped))
-    {
-        int pw = M_CeilPow2(image.size.width), ph = M_CeilPow2(image.size.height);
-        s =  image.size.width / (float) pw;
-        t = image.size.height / (float) ph;
-    }
-    else
-    {
-        s = t = 1;
-    }
-
-    tex.setCoords(s, t);
-    tex.setFlags(TextureVariant::Masked, !!(image.flags & IMGF_IS_MASKED));
-
-    GL_InitTextureContent(&c);
-    c.name = tex.glName();
-    c.format = dglFormat;
-    c.width = image.size.width;
-    c.height = image.size.height;
-    c.pixels = image.pixels;
-    c.paletteId = image.paletteId;
-    c.flags = flags;
-    c.magFilter = magFilter;
-    c.minFilter = minFilter;
-    c.anisoFilter = anisoFilter;
-    c.wrap[0] = wrapS;
-    c.wrap[1] = wrapT;
-
-    return uploadContentForVariant(chooseContentUploadMethod(c), c);
+    return   image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8
+           : image.pixelSize == 3 ? DGL_RGB
+           : image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE;
 }
 
-static uploadcontentmethod_t prepareDetailVariantFromImage(TextureVariant &tex, image_t &image)
+/**
+ * Prepares the image for use as a detail GL texture in accordance with the
+ * given specification.
+ *
+ * @param image     The image to prepare (in place).
+ * @param spec      Specification describing any transformations which should
+ *                  be applied to the image.
+ *
+ * Return values:
+ * @param baMul     Luminance equalization balance factor is written here.
+ * @param hiMul     Luminance equalization white-shift factor is written here.
+ * @param loMul     Luminance equalization black-shift factor is written here.
+ *
+ * @return  The DGL texture format determined for the image.
+ */
+static dgltexformat_t prepareImageAsDetailTexture(image_t &image,
+    detailvariantspecification_t const &spec, float *baMul, float *hiMul, float *loMul)
 {
-    detailvariantspecification_t const &spec = TS_DETAIL(tex.spec());
-    float baMul, hiMul, loMul, s, t;
-    int grayMipmapFactor, pw, ph, flags = 0;
-    texturecontent_t c;
+    DENG_UNUSED(spec);
 
-    grayMipmapFactor = spec.contrast;
-
-    // We only want a luminance map.
+    // We want a luminance map.
     if(image.pixelSize > 2)
     {
         Image_ConvertToLuminance(&image, false);
     }
 
     // Try to normalize the luminance data so it works expectedly as a detail texture.
-    EqualizeLuma(image.pixels, image.size.width, image.size.height, &baMul, &hiMul, &loMul);
-    if(baMul != 1 || hiMul != 1 || loMul != 1)
-    {
-        // Integrate the normalization factor with contrast.
-        float const hiContrast = 1 - 1. / hiMul;
-        float const loContrast = 1 - loMul;
-        float const shift = ((hiContrast + loContrast) / 2);
-        grayMipmapFactor = (uint8_t)(255 * MINMAX_OF(0, spec.contrast / 255.f - shift, 1));
+    EqualizeLuma(image.pixels, image.size.width, image.size.height, baMul, hiMul, loMul);
 
-        // Announce the normalization.
-        de::Uri uri = tex.generalCase().manifest().composeUri();
-        LOG_VERBOSE("Normalized detail texture \"%s\" (balance: %g, high amp: %g, low amp: %g).")
-            << uri << baMul << hiMul << loMul;
-    }
-
-    // Disable compression?
-    if(image.size.width < 128 || image.size.height < 128)
-        flags |= TXCF_NO_COMPRESSION;
-
-    // Calculate prepared texture coordinates.
-    pw = M_CeilPow2(image.size.width);
-    ph = M_CeilPow2(image.size.height);
-    s =  image.size.width / (float) pw;
-    t = image.size.height / (float) ph;
-    tex.setCoords(s, t);
-
-    GL_InitTextureContent(&c);
-    c.name = tex.glName();
-    c.format = DGL_LUMINANCE;
-    c.flags = flags | TXCF_GRAY_MIPMAP | TXCF_UPLOAD_ARG_NOSMARTFILTER;
-    c.grayMipmap = grayMipmapFactor;
-    c.width = image.size.width;
-    c.height = image.size.height;
-    c.pixels = image.pixels;
-    c.anisoFilter = texAniso;
-    c.magFilter = glmode[texMagMode];
-    c.minFilter = GL_LINEAR_MIPMAP_LINEAR;
-    c.wrap[0] = GL_REPEAT;
-    c.wrap[1] = GL_REPEAT;
-
-    return uploadContentForVariant(chooseContentUploadMethod(c), c);
+    return DGL_LUMINANCE;
 }
 
 void GL_InitTextureManager()
@@ -1057,9 +947,9 @@ void GL_ResetTextureManager()
     GL_LoadSystemTextures();
 }
 
-void GL_PrintTextureVariantSpecification(texturevariantspecification_t const &baseSpec)
+String texturevariantspecification_t::asText() const
 {
-    static char const *textureUsageContextNames[1 + TEXTUREVARIANTUSAGECONTEXT_COUNT] = {
+    static String const textureUsageContextNames[1 + TEXTUREVARIANTUSAGECONTEXT_COUNT] = {
         /* TC_UNKNOWN */                    "unknown",
         /* TC_UI */                         "ui",
         /* TC_MAPSURFACE_DIFFUSE */         "mapsurface_diffuse",
@@ -1073,27 +963,27 @@ void GL_PrintTextureVariantSpecification(texturevariantspecification_t const &ba
         /* TC_PSPRITE_DIFFUSE */            "psprite_diffuse",
         /* TC_SKYSPHERE_DIFFUSE */          "skysphere_diffuse"
     };
-    static char const *textureSpecificationTypeNames[TEXTUREVARIANTSPECIFICATIONTYPE_COUNT] = {
+    static String const textureSpecificationTypeNames[TEXTUREVARIANTSPECIFICATIONTYPE_COUNT] = {
         /* TST_GENERAL */   "general",
         /* TST_DETAIL */    "detail"
     };
-    static char const *filterModeNames[] = { "ui", "sprite", "noclass", "const" };
-    static char const *glFilterNames[] = {
+    static String const filterModeNames[] = { "ui", "sprite", "noclass", "const" };
+    static String const glFilterNames[] = {
         "nearest", "linear", "nearest_mipmap_nearest", "linear_mipmap_nearest",
         "nearest_mipmap_linear", "linear_mipmap_linear"
     };
 
-    Con_Printf("type:%s", textureSpecificationTypeNames[baseSpec.type]);
+    String text = String("Type:%1").arg(textureSpecificationTypeNames[type]);
 
-    switch(baseSpec.type)
+    switch(type)
     {
     case TST_DETAIL: {
-        detailvariantspecification_t const &spec = TS_DETAIL(baseSpec);
-        Con_Printf(" contrast:%i%%\n", int(.5f + spec.contrast / 255.f * 100));
+        detailvariantspecification_t const &spec = data.detailvariant;
+        text += " Contrast:" + String::number(int(.5f + spec.contrast / 255.f * 100)) + "%";
         break; }
 
     case TST_GENERAL: {
-        variantspecification_t const &spec = TS_GENERAL(baseSpec);
+        variantspecification_t const &spec = data.variant;
         texturevariantusagecontext_t tc = spec.context;
         DENG_ASSERT(tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc));
 
@@ -1128,26 +1018,26 @@ void GL_PrintTextureVariantSpecification(texturevariantspecification_t const &ba
             }
         }
 
-        Con_Printf(" context:%s flags:%i border:%i\n"
-                   "    minFilter:(%s|%s) magFilter:(%s|%s) anisoFilter:%i",
-                   textureUsageContextNames[tc-TEXTUREVARIANTUSAGECONTEXT_FIRST + 1],
-                   (spec.flags & ~TSF_INTERNAL_MASK), spec.border,
-                   filterModeNames[3 + MINMAX_OF(-1, spec.minFilter, 0)],
-                   glFilterNames[glMinFilterNameIdx],
-                   filterModeNames[3 + MINMAX_OF(-3, spec.magFilter, 0)],
-                   glFilterNames[glMagFilterNameIdx],
-                   spec.anisoFilter);
+        text += " Context:" + textureUsageContextNames[tc-TEXTUREVARIANTUSAGECONTEXT_FIRST + 1];
+              + " Flags:" + String::number(spec.flags & ~TSF_INTERNAL_MASK)
+              + " Border:" + String::number(spec.border)
+              + " MinFilter:" + filterModeNames[3 + de::clamp(-1, spec.minFilter, 0)]
+                              + "|" + glFilterNames[glMinFilterNameIdx]
+              + " MagFilter:" + filterModeNames[3 + de::clamp(-3, spec.magFilter, 0)]
+                              + "|" + glFilterNames[glMagFilterNameIdx]
+              + " AnisoFilter:" + String::number(spec.anisoFilter);
 
         if(spec.flags & TSF_HAS_COLORPALETTE_XLAT)
         {
             colorpalettetranslationspecification_t const *cpt = spec.translated;
             DENG_ASSERT(cpt);
-            Con_Printf(" translated:(tclass:%i tmap:%i)", cpt->tClass, cpt->tMap);
+            text += " Translated:(tclass:" + String::number(cpt->tClass)
+                                           + " tmap:" + String::number(cpt->tMap) + ")";
         }
-
-        Con_Printf("\n");
         break; }
     }
+
+    return text;
 }
 
 texturevariantspecification_t &GL_TextureVariantSpec(
@@ -1175,7 +1065,7 @@ texturevariantspecification_t &GL_TextureVariantSpec(
     return *tvs;
 }
 
-texturevariantspecification_t &GL_DetailTextureVariantSpecificationForContext(
+texturevariantspecification_t &GL_DetailTextureSpec(
     float contrast)
 {
     if(!initedOk) Con_Error("GL_DetailTextureVariantSpecificationForContext: GL texture manager not yet initialized.");
@@ -1591,13 +1481,22 @@ boolean GL_UploadTexture(int glFormat, int loadFormat, const uint8_t* pixels,
 }
 
 /// @note Texture parameters will NOT be set here!
-void GL_UploadTextureContent(texturecontent_t const &content)
+void GL_UploadTextureContent(texturecontent_t const &content, GLUploadMethod method)
 {
-    bool generateMipmaps = !!(content.flags & (TXCF_MIPMAP|TXCF_GRAY_MIPMAP));
-    bool applyTexGamma   = !!(content.flags & TXCF_APPLY_GAMMACORRECTION);
-    bool noCompression   = !!(content.flags & TXCF_NO_COMPRESSION);
-    bool noSmartFilter   = !!(content.flags & TXCF_UPLOAD_ARG_NOSMARTFILTER);
-    bool noStretch       = !!(content.flags & TXCF_UPLOAD_ARG_NOSTRETCH);
+    if(method == Deferred)
+    {
+        GL_DeferTextureUpload(&content);
+        return;
+    }
+
+    if(novideo) return;
+
+    // Do this right away. No need to take a copy.
+    bool generateMipmaps = (content.flags & (TXCF_MIPMAP|TXCF_GRAY_MIPMAP)) != 0;
+    bool applyTexGamma   = (content.flags & TXCF_APPLY_GAMMACORRECTION)     != 0;
+    bool noCompression   = (content.flags & TXCF_NO_COMPRESSION)            != 0;
+    bool noSmartFilter   = (content.flags & TXCF_UPLOAD_ARG_NOSMARTFILTER)  != 0;
+    bool noStretch       = (content.flags & TXCF_UPLOAD_ARG_NOSTRETCH)      != 0;
 
     int loadWidth = content.width, loadHeight = content.height;
     uint8_t const *loadPixels = content.pixels;
@@ -1607,8 +1506,9 @@ void GL_UploadTextureContent(texturecontent_t const &content)
     {
         // Convert a paletted source image to truecolor.
         uint8_t *newPixels = GL_ConvertBuffer(loadPixels, loadWidth, loadHeight,
-            DGL_COLOR_INDEX_8_PLUS_A8 == dglFormat ? 2 : 1, R_ToColorPalette(content.paletteId),
-            DGL_COLOR_INDEX_8_PLUS_A8 == dglFormat ? 4 : 3);
+                                              DGL_COLOR_INDEX_8_PLUS_A8 == dglFormat ? 2 : 1,
+                                              R_ToColorPalette(content.paletteId),
+                                              DGL_COLOR_INDEX_8_PLUS_A8 == dglFormat ? 4 : 3);
         if(loadPixels != content.pixels)
         {
             M_Free(const_cast<uint8_t *>(loadPixels));
@@ -1674,7 +1574,8 @@ void GL_UploadTextureContent(texturecontent_t const &content)
             }
 
             uint8_t *filtered = GL_SmartFilter(GL_ChooseSmartFilter(loadWidth, loadHeight, 0),
-                                               loadPixels, loadWidth, loadHeight, ICF_UPSCALE_SAMPLE_WRAP,
+                                               loadPixels, loadWidth, loadHeight,
+                                               ICF_UPSCALE_SAMPLE_WRAP,
                                                &loadWidth, &loadHeight);
             if(filtered != loadPixels)
             {
@@ -1764,7 +1665,8 @@ void GL_UploadTextureContent(texturecontent_t const &content)
         else
         {
             // Stretch into a new power-of-two texture.
-            uint8_t *newPixels = GL_ScaleBuffer(loadPixels, width, height, comps, loadWidth, loadHeight);
+            uint8_t *newPixels = GL_ScaleBuffer(loadPixels, width, height, comps,
+                                                loadWidth, loadHeight);
             if(loadPixels != content.pixels)
             {
                 M_Free(const_cast<uint8_t *>(loadPixels));
@@ -1779,8 +1681,8 @@ void GL_UploadTextureContent(texturecontent_t const &content)
     glBindTexture(GL_TEXTURE_2D, content.name);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, content.minFilter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, content.magFilter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, content.wrap[0]);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, content.wrap[1]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     content.wrap[0]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     content.wrap[1]);
     if(GL_state.features.texFilterAniso)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(content.anisoFilter));
 
@@ -1790,12 +1692,11 @@ void GL_UploadTextureContent(texturecontent_t const &content)
         switch(dglFormat)
         {
         case DGL_LUMINANCE_PLUS_A8: loadFormat = GL_LUMINANCE_ALPHA; break;
-        case DGL_LUMINANCE:         loadFormat = GL_LUMINANCE; break;
-        case DGL_RGB:               loadFormat = GL_RGB; break;
-        case DGL_RGBA:              loadFormat = GL_RGBA; break;
+        case DGL_LUMINANCE:         loadFormat = GL_LUMINANCE;       break;
+        case DGL_RGB:               loadFormat = GL_RGB;             break;
+        case DGL_RGBA:              loadFormat = GL_RGBA;            break;
         default:
-            Con_Error("GL_UploadTextureContent: Unknown format %i.", int(dglFormat));
-            exit(1);
+            throw Error("GL_UploadTextureContent", QString("Unknown format %1").arg(int(dglFormat)));
         }
 
         GLint glFormat = ChooseTextureFormat(dglFormat, !noCompression);
@@ -1803,8 +1704,10 @@ void GL_UploadTextureContent(texturecontent_t const &content)
         if(!GL_UploadTexture(glFormat, loadFormat, loadPixels, loadWidth, loadHeight,
                              generateMipmaps ? true : false))
         {
-            Con_Error("GL_UploadTextureContent: TexImage failed (%u:%ix%i fmt%i).",
-                      content.name, loadWidth, loadHeight, int(dglFormat));
+            throw Error("GL_UploadTextureContent", QString("TexImage failed (%1:%2 fmt%3)")
+                                                       .arg(content.name)
+                                                       .arg(Vector2i(loadWidth, loadHeight).asText())
+                                                       .arg(int(dglFormat)));
         }
     }
     else
@@ -1815,10 +1718,9 @@ void GL_UploadTextureContent(texturecontent_t const &content)
         switch(dglFormat)
         {
         case DGL_LUMINANCE:         loadFormat = GL_LUMINANCE; break;
-        case DGL_RGB:               loadFormat = GL_RGB; break;
+        case DGL_RGB:               loadFormat = GL_RGB;       break;
         default:
-            Con_Error("GL_UploadTextureContent: Unknown format %i.", int(dglFormat));
-            exit(1); // Unreachable.
+            throw Error("GL_UploadTextureContent", QString("Unknown format %1").arg(int(dglFormat)));
         }
 
         glFormat = ChooseTextureFormat(DGL_LUMINANCE, !noCompression);
@@ -1826,8 +1728,10 @@ void GL_UploadTextureContent(texturecontent_t const &content)
         if(!GL_UploadTextureGrayMipmap(glFormat, loadFormat, loadPixels, loadWidth, loadHeight,
                                        content.grayMipmap * reciprocal255))
         {
-            Con_Error("GL_UploadTextureContent: TexImageGrayMipmap failed (%u:%ix%i fmt%i).",
-                      content.name, loadWidth, loadHeight, int(dglFormat));
+            throw Error("GL_UploadTextureContent", QString("TexImageGrayMipmap failed (%1:%2 fmt%3)")
+                                                       .arg(content.name)
+                                                       .arg(Vector2i(loadWidth, loadHeight).asText())
+                                                       .arg(int(dglFormat)));
         }
     }
 
@@ -2184,8 +2088,8 @@ static TexSource loadPatch(image_t &image, de::FileHandle &hndl, int tclass, int
     return TEXS_NONE;
 }
 
-static TexSource loadPatchComposite(image_t &image, de::Texture &tex, bool maskZero,
-    bool useZeroOriginIfOneComponent)
+static TexSource loadPatchComposite(image_t &image, Texture const &tex,
+    bool maskZero, bool useZeroOriginIfOneComponent)
 {
     LOG_AS("GL_LoadPatchComposite");
 
@@ -2195,8 +2099,7 @@ static TexSource loadPatchComposite(image_t &image, de::Texture &tex, bool maskZ
     image.size.height = tex.height();
     image.paletteId = defaultColorPalette;
 
-    image.pixels = (uint8_t*) M_Calloc(2 * image.size.width * image.size.height);
-    if(!image.pixels) Con_Error("GL_LoadPatchComposite: Failed on allocation of %lu bytes for new Image pixel data.", (unsigned long) (2 * image.size.width * image.size.height));
+    image.pixels = (uint8_t *) M_Calloc(2 * image.size.width * image.size.height);
 
     CompositeTexture const &texDef = *reinterpret_cast<CompositeTexture *>(tex.userDataPointer());
     DENG2_FOR_EACH_CONST(CompositeTexture::Components, i, texDef.components())
@@ -2509,265 +2412,97 @@ void GL_SetAllTexturesMinFilter(int /*minFilter*/)
     ///       filter should not modify the uploaded texture content.
 }
 
-static void performImageAnalyses(de::Texture &tex, image_t const *image,
-    texturevariantspecification_t const &spec, bool forceUpdate)
+void GL_PrepareTextureContent(texturecontent_t &c, DGLuint glTexName,
+    image_t &image, texturevariantspecification_t const &spec,
+    TextureManifest const &textureManifest)
 {
-    DENG_ASSERT(image);
+    DENG_ASSERT(glTexName != 0);
+    DENG_ASSERT(image.pixels != 0);
 
-    // Do we need color palette info?
-    if(TST_GENERAL == spec.type && image->paletteId != 0)
-    {
-        colorpalette_analysis_t *cp = reinterpret_cast<colorpalette_analysis_t *>(tex.analysisDataPointer(Texture::ColorPaletteAnalysis));
-        bool firstInit = (!cp);
+    // Initialize and assign a GL name to the content.
+    GL_InitTextureContent(&c);
+    c.name = glTexName;
 
-        if(firstInit)
-        {
-            cp = (colorpalette_analysis_t*) M_Malloc(sizeof(*cp));
-            if(!cp) Con_Error("performImageAnalyses: Failed on allocation of %lu bytes for new ColorPaletteAnalysis.", (unsigned long) sizeof(*cp));
-            tex.setAnalysisDataPointer(Texture::ColorPaletteAnalysis, cp);
-        }
-
-        if(firstInit || forceUpdate)
-            cp->paletteId = image->paletteId;
-    }
-
-    // Calculate a point light source for Dynlight and/or Halo?
-    if(TST_GENERAL == spec.type && TC_SPRITE_DIFFUSE == TS_GENERAL(spec).context)
-    {
-        pointlight_analysis_t *pl = reinterpret_cast<pointlight_analysis_t*>(tex.analysisDataPointer(Texture::BrightPointAnalysis));
-        bool firstInit = (!pl);
-
-        if(firstInit)
-        {
-            pl = (pointlight_analysis_t *) M_Malloc(sizeof *pl);
-            if(!pl) Con_Error("performImageAnalyses: Failed on allocation of %lu bytes for new PointLightAnalysis.", (unsigned long) sizeof(*pl));
-            tex.setAnalysisDataPointer(Texture::BrightPointAnalysis, pl);
-        }
-
-        if(firstInit || forceUpdate)
-            GL_CalcLuminance(image->pixels, image->size.width, image->size.height, image->pixelSize,
-                             R_ToColorPalette(image->paletteId), &pl->originX, &pl->originY,
-                             &pl->color, &pl->brightMul);
-    }
-
-    // Average alpha?
-    if(spec.type == TST_GENERAL &&
-       (TS_GENERAL(spec).context == TC_SPRITE_DIFFUSE ||
-        TS_GENERAL(spec).context == TC_UI))
-    {
-        averagealpha_analysis_t *aa = reinterpret_cast<averagealpha_analysis_t*>(tex.analysisDataPointer(Texture::AverageAlphaAnalysis));
-        bool firstInit = (!aa);
-
-        if(firstInit)
-        {
-            aa = (averagealpha_analysis_t *) M_Malloc(sizeof(*aa));
-            if(!aa) Con_Error("performImageAnalyses: Failed on allocation of %lu bytes for new AverageAlphaAnalysis.", (unsigned long) sizeof(*aa));
-            tex.setAnalysisDataPointer(Texture::AverageAlphaAnalysis, aa);
-        }
-
-        if(firstInit || forceUpdate)
-        {
-            if(!image->paletteId)
-            {
-                FindAverageAlpha(image->pixels, image->size.width, image->size.height,
-                                 image->pixelSize, &aa->alpha, &aa->coverage);
-            }
-            else
-            {
-                if(image->flags & IMGF_IS_MASKED)
-                {
-                    FindAverageAlphaIdx(image->pixels, image->size.width, image->size.height,
-                                        R_ToColorPalette(image->paletteId), &aa->alpha, &aa->coverage);
-                }
-                else
-                {
-                    // It has no mask, so it must be opaque.
-                    aa->alpha = 1;
-                    aa->coverage = 0;
-                }
-            }
-        }
-    }
-
-    // Average color for sky ambient color?
-    if(TST_GENERAL == spec.type && TC_SKYSPHERE_DIFFUSE == TS_GENERAL(spec).context)
-    {
-        averagecolor_analysis_t *ac = reinterpret_cast<averagecolor_analysis_t *>(tex.analysisDataPointer(Texture::AverageColorAnalysis));
-        bool firstInit = (!ac);
-
-        if(firstInit)
-        {
-            ac = (averagecolor_analysis_t *) M_Malloc(sizeof(*ac));
-            if(!ac) Con_Error("performImageAnalyses: Failed on allocation of %lu bytes for new AverageColorAnalysis.", (unsigned long) sizeof(*ac));
-            tex.setAnalysisDataPointer(Texture::AverageColorAnalysis, ac);
-        }
-
-        if(firstInit || forceUpdate)
-        {
-            if(0 == image->paletteId)
-            {
-                FindAverageColor(image->pixels, image->size.width, image->size.height,
-                                 image->pixelSize, &ac->color);
-            }
-            else
-            {
-                FindAverageColorIdx(image->pixels, image->size.width, image->size.height,
-                                    R_ToColorPalette(image->paletteId), false, &ac->color);
-            }
-        }
-    }
-
-    // Amplified average color for plane glow?
-    if(TST_GENERAL == spec.type && TC_MAPSURFACE_DIFFUSE == TS_GENERAL(spec).context)
-    {
-        averagecolor_analysis_t *ac = reinterpret_cast<averagecolor_analysis_t *>(tex.analysisDataPointer(Texture::AverageColorAmplifiedAnalysis));
-        bool firstInit = (!ac);
-
-        if(firstInit)
-        {
-            ac = (averagecolor_analysis_t *) M_Malloc(sizeof(*ac));
-            if(!ac) Con_Error("performImageAnalyses: Failed on allocation of %lu bytes for new AverageColorAnalysis.", (unsigned long) sizeof(*ac));
-            tex.setAnalysisDataPointer(Texture::AverageColorAmplifiedAnalysis, ac);
-        }
-
-        if(firstInit || forceUpdate)
-        {
-            if(0 == image->paletteId)
-            {
-                FindAverageColor(image->pixels, image->size.width, image->size.height,
-                                 image->pixelSize, &ac->color);
-            }
-            else
-            {
-                FindAverageColorIdx(image->pixels, image->size.width, image->size.height,
-                                    R_ToColorPalette(image->paletteId), false, &ac->color);
-            }
-            R_AmplifyColor(ac->color.rgb);
-        }
-    }
-
-    // Average top line color for sky sphere fadeout?
-    if(TST_GENERAL == spec.type && TC_SKYSPHERE_DIFFUSE == TS_GENERAL(spec).context)
-    {
-        averagecolor_analysis_t *ac = reinterpret_cast<averagecolor_analysis_t *>(tex.analysisDataPointer(Texture::AverageTopColorAnalysis));
-        bool firstInit = (!ac);
-
-        if(firstInit)
-        {
-            ac = (averagecolor_analysis_t *) M_Malloc(sizeof(*ac));
-            if(!ac) Con_Error("performImageAnalyses: Failed on allocation of %lu bytes for new AverageColorAnalysis.", (unsigned long) sizeof(*ac));
-            tex.setAnalysisDataPointer(Texture::AverageTopColorAnalysis, ac);
-        }
-
-        if(firstInit || forceUpdate)
-        {
-            if(0 == image->paletteId)
-            {
-                FindAverageLineColor(image->pixels, image->size.width, image->size.height,
-                                     image->pixelSize, 0, &ac->color);
-            }
-            else
-            {
-                FindAverageLineColorIdx(image->pixels, image->size.width, image->size.height, 0,
-                                        R_ToColorPalette(image->paletteId), false, &ac->color);
-            }
-        }
-    }
-
-    // Average bottom line color for sky sphere fadeout?
-    if(TST_GENERAL == spec.type && TC_SKYSPHERE_DIFFUSE == TS_GENERAL(spec).context)
-    {
-        averagecolor_analysis_t *ac = reinterpret_cast<averagecolor_analysis_t *>(tex.analysisDataPointer(Texture::AverageBottomColorAnalysis));
-        bool firstInit = (!ac);
-
-        if(firstInit)
-        {
-            ac = (averagecolor_analysis_t *) M_Malloc(sizeof(*ac));
-            if(!ac) Con_Error("performImageAnalyses: Failed on allocation of %lu bytes for new AverageColorAnalysis.", (unsigned long) sizeof(*ac));
-            tex.setAnalysisDataPointer(Texture::AverageBottomColorAnalysis, ac);
-        }
-
-        if(firstInit || forceUpdate)
-        {
-            if(0 == image->paletteId)
-            {
-                FindAverageLineColor(image->pixels, image->size.width, image->size.height,
-                                     image->pixelSize, image->size.height - 1, &ac->color);
-            }
-            else
-            {
-                FindAverageLineColorIdx(image->pixels, image->size.width, image->size.height,
-                                        image->size.height - 1, R_ToColorPalette(image->paletteId),
-                                        false, &ac->color);
-            }
-        }
-    }
-}
-
-preparetextureresult_t GL_PrepareTexture(TextureVariant &variant)
-{
-    DENG_ASSERT(initedOk);
-    LOG_AS("GL_PrepareTexture");
-
-    // Already been here?
-    if(variant.isPrepared()) return PTR_FOUND;
-
-    Texture &tex = variant.generalCase();
-    texturevariantspecification_t const &spec = variant.spec();
-
-    // Load the source image data.
-    image_t image;
-    TexSource source = loadSourceImage(tex, spec, image);
-    if(source == TEXS_NONE) return PTR_NOTFOUND;
-
-    // Are we setting the logical dimensions to the actual pixel dimensions?
-    if(tex.width() == 0 && tex.height() == 0)
-    {
-#if _DEBUG
-        LOG_VERBOSE("World dimensions for \"%s\" taken from image pixels (%ix%i).")
-            << tex.manifest().composeUri() << image.size.width << image.size.height;
-#endif
-        tex.setDimensions(Vector2i(image.size.width, image.size.height));
-    }
-
-    performImageAnalyses(tex, &image, spec, true /*Always update*/);
-
-    // Are we re-preparing a released texture?
-    if(0 == variant.glName())
-    {
-        DGLuint newGLName = GL_GetReservedTextureName();
-        variant.setSource(source);
-        variant.setGLName(newGLName);
-    }
-
-    // (Re)Prepare the variant according to specification.
-    uploadcontentmethod_t uploadMethod;
     switch(spec.type)
     {
-    case TST_GENERAL: uploadMethod = prepareVariantFromImage(variant, image); break;
-    case TST_DETAIL:  uploadMethod = prepareDetailVariantFromImage(variant, image); break;
+    case TST_GENERAL: {
+        variantspecification_t const &vspec = TS_GENERAL(spec);
+        bool const noCompression = (vspec.flags & TSF_NO_COMPRESSION) != 0;
+        // If the Upscale And Sharpen filter is enabled, scaling is applied
+        // implicitly by prepareImageAsTexture(), so don't do it again.
+        bool const noSmartFilter = (vspec.flags & TSF_UPSCALE_AND_SHARPEN) != 0;
+
+        // Prepare the image for upload.
+        dgltexformat_t dglFormat = prepareImageAsTexture(image, vspec);
+
+        // Configure the texture content.
+        c.format      = dglFormat;
+        c.width       = image.size.width;
+        c.height      = image.size.height;
+        c.pixels      = image.pixels;
+        c.paletteId   = image.paletteId;
+
+        if(noCompression || (image.size.width < 128 || image.size.height < 128))
+            c.flags |= TXCF_NO_COMPRESSION;
+        if(vspec.gammaCorrection) c.flags |= TXCF_APPLY_GAMMACORRECTION;
+        if(vspec.noStretch)       c.flags |= TXCF_UPLOAD_ARG_NOSTRETCH;
+        if(vspec.mipmapped)       c.flags |= TXCF_MIPMAP;
+        if(noSmartFilter)         c.flags |= TXCF_UPLOAD_ARG_NOSMARTFILTER;
+
+        c.magFilter   = GL_MagFilterForVariantSpec(vspec);
+        c.minFilter   = GL_MinFilterForVariantSpec(vspec);
+        c.anisoFilter = GL_LogicalAnisoLevelForVariantSpec(vspec);
+        c.wrap[0]     = vspec.wrapS;
+        c.wrap[1]     = vspec.wrapT;
+        break; }
+
+    case TST_DETAIL: {
+        detailvariantspecification_t const &dspec = TS_DETAIL(spec);
+
+        // Prepare the image for upload.
+        float baMul, hiMul, loMul;
+        dgltexformat_t dglFormat = prepareImageAsDetailTexture(image, dspec, &baMul, &hiMul, &loMul);
+
+        // Determine the gray mipmap factor.
+        int grayMipmapFactor = dspec.contrast;
+        if(baMul != 1 || hiMul != 1 || loMul != 1)
+        {
+            // Integrate the normalization factor with contrast.
+            float const hiContrast = 1 - 1. / hiMul;
+            float const loContrast = 1 - loMul;
+            float const shift = ((hiContrast + loContrast) / 2);
+
+            grayMipmapFactor = int(255 * de::clamp(0.f, dspec.contrast / 255.f - shift, 1.f));
+
+            // Announce the normalization.
+            de::Uri uri = textureManifest.composeUri();
+            LOG_VERBOSE("Normalized detail texture \"%s\" (balance: %g, high amp: %g, low amp: %g).")
+                << uri << baMul << hiMul << loMul;
+        }
+
+        // Configure the texture content.
+        c.format      = dglFormat;
+        c.flags       = TXCF_GRAY_MIPMAP | TXCF_UPLOAD_ARG_NOSMARTFILTER;
+
+        // Disable compression?
+        if(image.size.width < 128 || image.size.height < 128)
+            c.flags |= TXCF_NO_COMPRESSION;
+
+        c.grayMipmap  = grayMipmapFactor;
+        c.width       = image.size.width;
+        c.height      = image.size.height;
+        c.pixels      = image.pixels;
+        c.anisoFilter = texAniso;
+        c.magFilter   = glmode[texMagMode];
+        c.minFilter   = GL_LINEAR_MIPMAP_LINEAR;
+        c.wrap[0]     = GL_REPEAT;
+        c.wrap[1]     = GL_REPEAT;
+        break; }
+
     default:
-        Con_Error("GL_PrepareTexture: Invalid spec type %i.", spec.type);
-        exit(1); // Unreachable.
+        // Invalid spec type.
+        DENG_ASSERT(false);
     }
-
-    // We're done with the image data.
-    Image_Destroy(&image);
-
-#ifdef _DEBUG
-    LOG_VERBOSE("Prepared \"%s\" variant (glName:%u)%s")
-        << tex.manifest().composeUri() << uint(variant.glName())
-        << (METHOD_IMMEDIATE == uploadMethod? " while not busy!" : "");
-
-    VERBOSE2(
-        Con_Printf("  Content: ");
-        Image_PrintMetadata(&image);
-        Con_Printf("  Specification [%p]: ", de::dintptr(&spec));
-        GL_PrintTextureVariantSpecification(spec);
-        )
-#endif
-
-    return source == TEXS_ORIGINAL? PTR_UPLOADED_ORIGINAL : PTR_UPLOADED_EXTERNAL;
 }
 
 void GL_ReleaseGLTexturesByTexture(Texture &texture)
@@ -2873,7 +2608,7 @@ DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height,
     c.pixels = pixels;
     c.flags = flags;
 
-    uploadContentUnmanaged(chooseContentUploadMethod(c), c);
+    uploadContentUnmanaged(c);
     return c.name;
 }
 
@@ -2897,7 +2632,7 @@ DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height,
     c.wrap[0] = wrapS;
     c.wrap[1] = wrapT;
 
-    uploadContentUnmanaged(chooseContentUploadMethod(c), c);
+    uploadContentUnmanaged(c);
     return c.name;
 }
 

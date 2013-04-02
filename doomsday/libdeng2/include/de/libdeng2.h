@@ -268,7 +268,8 @@ struct IPrivate {
     virtual ~IPrivate() {}
 #ifdef DENG2_DEBUG
     unsigned int _privateInstVerification;
-    IPrivate() : _privateInstVerification(0xdeadbeef) {}
+#define DENG2_IPRIVATE_VERIFICATION 0xdeadbeef
+    IPrivate() : _privateInstVerification(DENG2_IPRIVATE_VERIFICATION) {}
     unsigned int privateInstVerification() const { return _privateInstVerification; }
 #endif
 };
@@ -294,7 +295,7 @@ public:
         IPrivate *ip = reinterpret_cast<IPrivate *>(ptr);
         if(ip)
         {
-            DENG2_ASSERT(ip->privateInstVerification() == 0xdeadbeef);
+            DENG2_ASSERT(ip->privateInstVerification() == DENG2_IPRIVATE_VERIFICATION);
             delete ip;
         }
         ptr = p;
@@ -310,6 +311,14 @@ public:
     void swap(PrivateAutoPtr &other) {
         std::swap(ptr, other.ptr);
     }
+    bool isNull() const {
+        return !ptr;
+    }
+#ifdef DENG2_DEBUG
+    bool isValid() const {
+        return ptr && reinterpret_cast<IPrivate *>(ptr)->privateInstVerification() == DENG2_IPRIVATE_VERIFICATION;
+    }
+#endif
 
 private:
     InstType *ptr;

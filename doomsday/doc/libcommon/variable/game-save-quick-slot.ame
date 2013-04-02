@@ -1,0 +1,3 @@
+@summary{
+    Current "quick" save slot number. -1=None (default).
+}

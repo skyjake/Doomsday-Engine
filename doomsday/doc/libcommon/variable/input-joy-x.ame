@@ -1,0 +1,3 @@
+@summary{
+    X axis control: 0=None, 1=Move, 2=Turn, 3=Strafe, 4=Look.
+}

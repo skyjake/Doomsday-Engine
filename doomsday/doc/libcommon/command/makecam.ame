@@ -1,0 +1,6 @@
+@summary{
+    Toggle camera mode.
+}
+@description{
+    Params: makecam (playernum) @cbr For example, 'makecam 1'.
+}

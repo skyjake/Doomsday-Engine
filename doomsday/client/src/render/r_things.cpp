@@ -474,7 +474,7 @@ DENG_EXTERN_C boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
     info->geometry.size.width  = ms.width()  + texSpec.border * 2;
     info->geometry.size.height = ms.height() + texSpec.border * 2;
 
-    ms.texture(MTU_PRIMARY).coords(&info->texCoord[0], &info->texCoord[1]);
+    ms.texture(MTU_PRIMARY).glCoords(&info->texCoord[0], &info->texCoord[1]);
 #else
     Texture &tex = *info->material->layers()[0]->stages()[0]->texture;
 
@@ -973,7 +973,7 @@ static DGLuint prepareFlaremap(de::Uri const &resourceUri)
     }
     if(Texture *tex = R_FindTextureByResourceUri("Flaremaps", &resourceUri))
     {
-        if(TextureVariant const *variant = GL_PrepareTexture(*tex, *Rend_HaloTextureSpec()))
+        if(TextureVariant const *variant = tex->prepareVariant(Rend_HaloTextureSpec()))
         {
             return variant->glName();
         }

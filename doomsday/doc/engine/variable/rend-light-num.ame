@@ -1,0 +1,3 @@
+@summary{
+    The maximum number of dynamic lights. 0=no limit.
+}

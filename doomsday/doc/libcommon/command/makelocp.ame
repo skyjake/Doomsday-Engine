@@ -1,0 +1,6 @@
+@summary{
+    Make local player.
+}
+@description{
+    Params: makelocp (playernum) @cbr For example, 'makelocp 1'.
+}

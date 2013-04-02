@@ -218,9 +218,25 @@ bool NativePath::exists() const
     return QFile::exists(toString());
 }
 
+static NativePath currentNativeWorkPath;
+
 NativePath NativePath::workPath()
 {
-    return QDir::currentPath();
+    if(currentNativeWorkPath.isEmpty())
+    {
+        currentNativeWorkPath = QDir::currentPath();
+    }
+    return currentNativeWorkPath;
 }
 
+bool NativePath::setWorkPath(const NativePath &cwd)
+{
+    if(QDir::setCurrent(cwd))
+    {
+        currentNativeWorkPath = cwd;
+        return true;
+    }
+    return false;
 }
+
+} // namespace de

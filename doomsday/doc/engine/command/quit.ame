@@ -1,0 +1,3 @@
+@summary{
+    If a game is loaded execute a quit request, otherwise, exit immediately.
+}

@@ -40,6 +40,8 @@
 #  include "jhexen.h"
 #endif
 
+#include "pause.h"
+
 int Common_GetInteger(int id);
 
 #endif // LIBCOMMON_GAME_INCLUDES

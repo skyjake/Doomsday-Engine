@@ -1,0 +1,7 @@
+@summary{
+    Echo the parameters on separate lines.
+}
+@description{
+    @params{echo (text) ...} @cbr 
+    @example{@code{echo "hello world"}}
+}

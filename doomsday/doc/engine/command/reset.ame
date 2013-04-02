@@ -1,0 +1,3 @@
+@summary{
+    Resets the engine (reloading all data files and definitions).
+}

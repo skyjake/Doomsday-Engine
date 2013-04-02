@@ -1,0 +1,31 @@
+@summary{
+    Network setup and control.
+}
+
+$*
+
+4.4.3 Net info
+
+Displays the current network settings along with some debug information.
+
+4.4.14 Net search
+
+If you want to connect to a server and you have configured your service provider with the necessary commands listed above, this command lists all the servers that can be found. Unless you're using the IPX service provider, there will be a slight delay before this command gives you the server list because DirectPlay has to first make the actual connection between the computers. It's best to keep repeating this command until you see the server you want.
+
+4.4.15 Net connect (server number)
+
+Connects to the specified server. Only works after "net search" shows the number of the server (usually zero).
+
+4.4.16 Net servers
+
+Connects to the master server and retrieves a list of running servers. You must set the console variable "net-master-address" before you can use this command. "net-master-port" should be zero, or a port of your choice (not 10123) if you're behind a firewall.
+
+4.4.17 Net mconnect (server number received from master)
+
+This command connects to the specified server. Only works after "net servers" has successfully ended and the list of servers has been printed in the console.
+
+4.4.19 Net disconnect
+
+Disconnects from the server you're currently connected to. Automatically done when you return to the operating system. You will naturally have to disconnect from a server if you want to connect to another one.
+
+*$

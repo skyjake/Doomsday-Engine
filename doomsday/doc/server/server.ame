@@ -1,0 +1,14 @@
+$ Man page for doomsday-server
+@macro{TITLE}{ doomsday-server }
+@macro{ONELINER}{ Doomsday Engine multiplayer daemon }
+@macro{VERSION}{ Version 1.10 }
+@macro{AUTHOR}{ Deng Team }
+@macro{LINK}{ http://dengine.net/ }
+@require{amestd}
+
+$ Extra formatting macros.
+@macro{plugin}{@arg}
+
+@begin
+
+@require{manpage}

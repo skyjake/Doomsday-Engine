@@ -756,7 +756,7 @@ void GameMap_LinkLineDef(GameMap *map, LineDef *line)
         }
 
         // Would LineDef intersect this?
-        if(line->pointOnSide(from) < 0 != line->pointOnSide(to) < 0)
+        if((line->pointOnSide(from) < 0) != (line->pointOnSide(to) < 0))
         {
             Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y, line);
         }

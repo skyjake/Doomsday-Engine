@@ -1,0 +1,77 @@
+$ Amethyst Doomsday Help formatting.
+
+$*** STRUCTURE ***$
+@macro{summary}{desc = @arg @br}
+@macro{description}{inf = @arg @br}
+@macro{default}{def = @arg @br}
+@macro{cvar}{cvar = @arg @br}
+@macro{cbr}{@set{spacing 0}{\n}}
+@macro{cbreak}{@set{spacing 0}{\b}}
+
+$*** FORMATTING RULES ***$
+@format{@=}
+@format{break}{@n}
+@format{br}{@n}
+
+$ Styles.
+$*
+@format{order 1 parent try em file pass parent !em}{''@=}
+@format{order -1 parent try em file pass parent !em}{@=''}
+@format{order 1 parent strong}{'''@=}
+@format{order -1 parent strong}{@='''}
+@format{parent count 1 opt parent !samp}{[[@=]]}
+@format{order 1 parent try opt cmd code pass}{<tt>@=}
+@format{order -1 parent try opt cmd code pass}{@=</tt>}
+*$
+@format{order 1 parent email}{<@=}
+@format{order -1 parent email}{@=>}
+$ @format{pre !control}{@n@= @< @B<pre> @> </pre>@b}
+$ @format{order 1 parent caption}{<div@_style="font-size:80%"><nowiki>@=}
+$ @format{order -1 parent caption}{@=</nowiki></div>}
+
+$ Indented styles.
+
+$ Remove all section numbers, they are not needed.
+@format{parent child 1 parent try chapter section subsec sub2sec pass}{}
+
+$ Titles.
+@format{child 2 parent chapter}{@< @N#@n#@_ @> @n#}
+@format{child 2 parent section}{@< @N[ @> ]}
+$*
+@format{child 2 parent chapter}{@<==@_@>@_==}
+@format{child 2 parent section}{@<===@_@>@_===}
+@format{child 2 parent subsec}{@<====@_@>@_====}
+@format{child 2 parent sub2sec}{@<=====@_@>@_=====}
+@format{child 2 parent sub3sec}{@<======@_@>@_======}
+*$
+
+$ Lists.
+$ @format{parent list}{*@_ @> @n}
+$ @format{parent enum list}{#@_}
+$ @format{list}{@< <ul> @> </ul>}
+$ @format{enum list}{@< <ol> @> </ol>}
+$ @format{parent list !note}{<li> @> </li>@n}
+$ @format{child 1 parent2 deflist}{@< @n;}
+$ @format{child 2 parent2 deflist}{@< @n:}
+$ @format{note list}{@< <blockquote>'''Note:''' @> </blockquote>}
+
+$ Tables.
+$ @format{table}{@< @{|@_align="center"@_class="wikitable"@n @> |@}}
+$ @format{!child 1 parent table}{@< |-@n }
+$ @format{first !header @ parent2 table}{count 0 parent2 table}{@< |@_valign="top"@_width="@w%"@_| @> @n}
+$ @format{first header @ parent2 table}{@< !@_valign="top"@_width="@w%"@_| @> @n}
+
+$*** LENGTH RULES ***$
+
+$ Word spacing.
+@length{!text ? !text . !text , !text : !text ; !begins ) !begins ] !email !url}{
+    try email url pass order 1}{opt !order 1}{spacing 1}
+@length{try text ) text ] pass}{prev try text ( text [ text \n text \b pass}{
+    order 1 parent prev try text ( text [ pass}{
+    order 1 parent2 try part chapter section subsec sub2sec sub3sec pass}{
+    order 1 single}{spacing 0}
+
+$ Lists.
+@length{leftmargin 0}
+@length{try table list deflist pre pass}{spacing 0}
+@length{section}{spacing 2}

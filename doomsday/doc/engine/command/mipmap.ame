@@ -1,0 +1,6 @@
+@summary{
+    Set the mipmapping mode.
+}
+@description{
+    Params: mipmap (0-5) @cbr 0 = GL_NEAREST @cbr 1 = GL_LINEAR @cbr 2 = GL_NEAREST_MIPMAP_NEAREST @cbr 3 = GL_LINEAR_MIPMAP_NEAREST @cbr 4 = GL_NEAREST_MIPMAP_LINEAR @cbr 5 = GL_LINEAR_MIPMAP_LINEAR
+}

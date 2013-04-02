@@ -3,11 +3,12 @@ $*
     -------------------------
 
     The following output languages are defined by the library: 
-     - TXT: plain text
+     - TXT:  plain text
      - HTML: HTML/CSS formatted text
-     - RTF: rich text format
-     - MAN: Unix manual page
+     - RTF:  rich text format
+     - MAN:  Unix manual page
      - WIKI: Mediawiki source
+     - HELP: Doomsday Help strings
 
     Note: For everything to work properly, @begin must be called at the
     beginning of the document.
@@ -22,6 +23,7 @@ $ Format and length rules
 @ifdef{RTF}{ @require{amertf} }
 @ifdef{MAN}{ @require{ameman} }
 @ifdef{WIKI}{ @require{amewiki} }
+@ifdef{HELP}{ @require{amehelp} }
 
 $*** COMMON MACROS ***$
 
@@ -157,6 +159,9 @@ $ Document header and any output language specific things.
 			@date @br
 	    }
 	}
+	@ifdef{HELP}{
+	    $ Doomsday Help does not use a header.
+	} 
 }
 
 $ Specify an author with contact information. (Manual page only.) 

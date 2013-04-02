@@ -43,6 +43,32 @@ public:
      */
     void clear();
 
+    void setScrollIndicatorVisible(bool visible);
+
+    /**
+     * Returns the current scroll position, with 0 being the bottom of the
+     * history (present time) and maximumScroll() being the top of the history
+     * (most distant past).
+     */
+    int scrollPosition() const;
+
+    int scrollPageSize() const;
+
+    /**
+     * Returns the maximum scroll position. The scrollMaxChanged() signal
+     * is emitted whenever the maximum changed.
+     */
+    int maximumScroll() const;
+
+    /**
+     * Scrolls the view to a specified position. Position 0 means the bottom of
+     * the log entry buffer, while maximumScroll() is the top of the buffer
+     * (the oldest entry).
+     *
+     * @param to  Scroll position.
+     */
+    void scroll(int to);
+
     void draw();
     bool handleEvent(Event const &event);
 
@@ -51,6 +77,10 @@ public slots:
      * Moves the scroll offset of the widget to the bottom of the history.
      */
     void scrollToBottom();
+
+signals:
+    void scrollPositionChanged(int pos);
+    void scrollMaxChanged(int maximum);
 
 private:
     DENG2_PRIVATE(d)

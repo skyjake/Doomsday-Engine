@@ -526,6 +526,13 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
             pl->keys[i] = val;
         }
 #endif
+#if __JHEXEN__
+        if((pl->keys & b) != 0)
+        {
+            ST_HUDUnHide(plrNum, HUE_ON_PICKUP_KEY);
+        }
+        pl->keys = b;
+#endif
     }
 
     if(flags & PSF_FRAGS)
@@ -893,14 +900,6 @@ void NetCl_LoadGame(Reader* msg)
 #if __JDOOM__ || __JDOOM64__
     P_SetMessage(&players[CONSOLEPLAYER], 0, GET_TXT(TXT_CLNETLOAD));
 #endif
-}
-
-/**
- * Pause or unpause the game.
- */
-void NetCl_Paused(Reader* msg)
-{
-    DD_SetInteger(DD_CLIENT_PAUSED, Reader_ReadByte(msg));
 }
 
 /**

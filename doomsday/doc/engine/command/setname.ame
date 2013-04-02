@@ -1,0 +1,6 @@
+@summary{
+    Set your name.
+}
+@description{
+    Params: setname (name) @cbr For example, 'setname "my name"'.
+}

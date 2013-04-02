@@ -86,6 +86,9 @@ float shadowFactor = 1.2f;
 int shadowMaxRadius = 80;
 int shadowMaxDistance = 1000;
 
+float detailFactor = .5f;
+float detailScale = 4;
+
 coord_t vOrigin[3];
 float vang, vpitch;
 float viewsidex, viewsidey;
@@ -119,7 +122,8 @@ float lightRangeCompression = 0;
 float lightModRange[255];
 byte devLightModRange = 0;
 
-float rendLightDistanceAttentuation = 1024;
+float rendLightDistanceAttenuation = 1024;
+int rendLightAttenuateFixedColormap = 1;
 
 byte devMobjVLights = 0; // @c 1= Draw mobj vertex lighting vector.
 int devMobjBBox = 0; // 1 = Draw mobj bounding boxes (for debug)
@@ -155,7 +159,7 @@ void Rend_Register()
 
     C_VAR_INT2  ("rend-light",                      &useDynLights,                  0, 0, 1, LO_UnlinkMobjLumobjs);
     C_VAR_INT2  ("rend-light-ambient",              &ambientLight,                  0, 0, 255, Rend_CalcLightModRange);
-    C_VAR_FLOAT ("rend-light-attenuation",          &rendLightDistanceAttentuation, CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT ("rend-light-attenuation",          &rendLightDistanceAttenuation, CVF_NO_MAX, 0, 0);
     C_VAR_FLOAT ("rend-light-bright",               &dynlightFactor,                0, 0, 1);
     C_VAR_FLOAT2("rend-light-compression",          &lightRangeCompression,         0, -1, 1, Rend_CalcLightModRange);
     C_VAR_FLOAT ("rend-light-fog-bright",           &dynlightFogBright,             0, 0, 1);
@@ -296,12 +300,15 @@ void Rend_ApplyTorchLight(float color[3], float distance)
     if(!ddpl->fixedColorMap) return;
 
     // Check for torch.
-    if(distance < 1024)
+    if(!rendLightAttenuateFixedColormap || distance < 1024)
     {
         // Colormap 1 is the brightest. I'm guessing 16 would be
         // the darkest.
-        int ll = 16 - ddpl->fixedColorMap;
-        float d = (1024 - distance) / 1024.0f * ll / 15.0f;
+        float d = (16 - ddpl->fixedColorMap) / 15.0f;
+        if(rendLightAttenuateFixedColormap)
+        {
+            d *= (1024 - distance) / 1024.0f;
+        }
 
         if(torchAdditive)
         {
@@ -2267,10 +2274,10 @@ static void Rend_BuildBspLeafSkyFixStripGeometry(BspLeaf *leaf, HEdge *startNode
         if(n == 0)
         {
             // Add the first edge.
-            rvertex_t *v1 = &(*verts)[n + antiClockwise^0];
-            rvertex_t *v2 = &(*verts)[n + antiClockwise^1];
-            rtexcoord_t *t1 = coords? &(*coords)[n + antiClockwise^0] : NULL;
-            rtexcoord_t *t2 = coords? &(*coords)[n + antiClockwise^1] : NULL;
+            rvertex_t *v1 = &(*verts)[n + antiClockwise];
+            rvertex_t *v2 = &(*verts)[n + (antiClockwise^1)];
+            rtexcoord_t *t1 = coords? &(*coords)[n + antiClockwise] : NULL;
+            rtexcoord_t *t2 = coords? &(*coords)[n + (antiClockwise^1)] : NULL;
 
             Rend_BuildBspLeafSkyFixStripEdge(node->v1Origin(), zBottom, zTop, texS,
                                              v1, v2, t1, t2);
@@ -2285,10 +2292,10 @@ static void Rend_BuildBspLeafSkyFixStripGeometry(BspLeaf *leaf, HEdge *startNode
 
         // Add the next edge.
         {
-            rvertex_t *v1 = &(*verts)[n + antiClockwise^0];
-            rvertex_t *v2 = &(*verts)[n + antiClockwise^1];
-            rtexcoord_t *t1 = coords? &(*coords)[n + antiClockwise^0] : NULL;
-            rtexcoord_t *t2 = coords? &(*coords)[n + antiClockwise^1] : NULL;
+            rvertex_t *v1 = &(*verts)[n + antiClockwise];
+            rvertex_t *v2 = &(*verts)[n + (antiClockwise^1)];
+            rtexcoord_t *t1 = coords? &(*coords)[n + antiClockwise] : NULL;
+            rtexcoord_t *t2 = coords? &(*coords)[n + (antiClockwise^1)] : NULL;
 
             Rend_BuildBspLeafSkyFixStripEdge((antiClockwise? &node->prev() : &node->next())->v1Origin(),
                                              zBottom, zTop, texS,
@@ -3100,7 +3107,7 @@ static void drawSoundOrigin(coord_t const origin[3], const char* label, coord_t 
 
     if(alpha > 0)
     {
-        float scale = dist / (Window_Width(theWindow) / 2);
+        float scale = dist / (DENG_WINDOW->width() / 2);
 
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
@@ -3318,7 +3325,7 @@ static int drawVertex1(LineDef *li, void *context)
 
         if(dist3D < MAX_VERTEX_POINT_DIST)
         {
-            drawVertexIndex(vtx, pos[VZ], dist3D / (Window_Width(theWindow) / 2),
+            drawVertexIndex(vtx, pos[VZ], dist3D / (DENG_WINDOW->width() / 2),
                             1 - dist3D / MAX_VERTEX_POINT_DIST);
         }
     }
@@ -3437,7 +3444,7 @@ void Rend_Vertexes()
             if(dist < MAX_VERTEX_POINT_DIST)
             {
                 float const alpha = 1 - dist / MAX_VERTEX_POINT_DIST;
-                float const scale = dist / (Window_Width(theWindow) / 2);
+                float const scale = dist / (DENG_WINDOW-width() / 2);
 
                 drawVertexIndex(vtx, pos[VZ], scale, alpha);
             }
@@ -3644,7 +3651,7 @@ void R_DrawLightRange()
 #define BLOCK_HEIGHT            (BLOCK_WIDTH * 255.0f)
 #define BORDER                  (20)
 
-    ui_color_t color;
+    //ui_color_t color;
     float c, off;
     int i;
 
@@ -3654,13 +3661,15 @@ void R_DrawLightRange()
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, Window_Width(theWindow), Window_Height(theWindow), 0, -1, 1);
+    glOrtho(0, DENG_WINDOW->width(), DENG_WINDOW->height(), 0, -1, 1);
 
     glTranslatef(BORDER, BORDER, 0);
 
+    /*
     color.red = 0.2f;
     color.green = 0;
     color.blue = 0.6f;
+    */
 
     // Draw an outside border.
     glColor4f(1, 1, 0, 1);
@@ -3845,7 +3854,7 @@ static int drawMobjBBox(thinker_t *th, void * /*context*/)
 
     V3d_Set(eye, vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
 
-    alpha = 1 - ((V3d_Distance(mo->origin, eye) / (Window_Width(theWindow)/2)) / 4);
+    alpha = 1 - ((V3d_Distance(mo->origin, eye) / (DENG_WINDOW->width()/2)) / 4);
     if(alpha < .25f)
         alpha = .25f; // Don't make them totally invisible.
 
@@ -3920,7 +3929,7 @@ static void Rend_RenderBoundingBoxes()
                                po->aaBox.minY + length,
                                sec.floor().height() };
 
-            float alpha = 1 - ((V3d_Distance(pos, eye) / (Window_Width(theWindow)/2)) / 4);
+            float alpha = 1 - ((V3d_Distance(pos, eye) / (DENG_WINDOW->width()/2)) / 4);
             if(alpha < .25f)
                 alpha = .25f; // Don't make them totally invisible.
 
@@ -3952,6 +3961,20 @@ MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec()
 {
     return App_Materials().variantSpec(MapSurfaceContext, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
                                        -1, -1, -1, true, true, false, false);
+}
+
+texturevariantspecification_t &Rend_MapSurfaceShinyTextureSpec()
+{
+    return GL_TextureVariantSpec(TC_MAPSURFACE_REFLECTION, TSF_NO_COMPRESSION,
+                                 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, -1,
+                                 false, false, false, false);
+}
+
+texturevariantspecification_t &Rend_MapSurfaceShinyMaskTextureSpec()
+{
+    return GL_TextureVariantSpec(TC_MAPSURFACE_REFLECTIONMASK, 0,
+                                 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1,
+                                 true, false, false, false);
 }
 
 #endif // __CLIENT__

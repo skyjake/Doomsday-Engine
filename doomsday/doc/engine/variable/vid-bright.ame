@@ -1,0 +1,3 @@
+@summary{
+    Display brightness: -1=dark, 0=normal, 1=light.
+}

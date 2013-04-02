@@ -24,6 +24,8 @@
 
 includeGuard('PackageFactory');
 
+require_once(DIR_CLASSES.'/version.class.php');
+
 require_once('packages/basepackage.class.php');
 require_once('packages/nullpackage.class.php');
 require_once('packages/distributionpackage.class.php');
@@ -106,9 +108,14 @@ class PackageFactory
         }
 
         if(!empty($log_pack->version))
-            $version = clean_text($log_pack->version);
+        {
+            $versionText = clean_text($log_pack->version);
+            $version = Version::fromString($versionText);
+        }
         else
+        {
             $version = NULL;
+        }
 
         // Determine package type.
         foreach($log_pack->attributes() as $attrib => $value)

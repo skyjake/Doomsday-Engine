@@ -104,9 +104,9 @@ ded_material_t* Def_GetMaterial(const char* uri);
 ded_compositefont_t* Def_GetCompositeFont(const char* uri);
 ded_light_t*    Def_GetLightDef(int spr, int frame);
 /// @todo $revise-texture-animation
-ded_decor_t*    Def_GetDecoration(Uri const *uri /*, boolean hasExternal, boolean isCustom*/);
-ded_reflection_t* Def_GetReflection(Uri const *uri/*, boolean hasExternal, boolean isCustom*/);
-ded_detailtexture_t* Def_GetDetailTex(Uri const *uri/*, boolean hasExternal, boolean isCustom*/);
+ded_decor_t*    Def_GetDecoration(Uri const *uri, /*bool hasExternal,*/ bool isCustom);
+ded_reflection_t* Def_GetReflection(Uri const *uri, /*bool hasExternal,*/ bool isCustom);
+ded_detailtexture_t* Def_GetDetailTex(Uri const *uri, /*bool hasExternal,*/ bool isCustom);
 ded_ptcgen_t*   Def_GetGenerator(Uri const *uri);
 ded_ptcgen_t*   Def_GetDamageGenerator(int mobjType);
 
@@ -144,19 +144,17 @@ StringArray* Def_ListStateIDs(void);
 /**
  * Returns @c true iff @a def is compatible with the specified context.
  */
-#if 0 /// @todo $revise-texture-animation
-boolean Def_IsAllowedDecoration(ded_decor_t *def, boolean hasExternal, boolean isCustom);
+bool Def_IsAllowedDecoration(ded_decor_t *def, /*bool hasExternal,*/ bool isCustom);
 
 /**
  * Returns @c true iff @a def is compatible with the specified context.
  */
-boolean Def_IsAllowedReflection(ded_reflection_t *def, boolean hasExternal, boolean isCustom);
+bool Def_IsAllowedReflection(ded_reflection_t *def, /*bool hasExternal,*/ bool isCustom);
 
 /**
  * Returns @c true iff @a def is compatible with the specified context.
  */
-boolean Def_IsAllowedDetailTex(ded_detailtexture_t *def, boolean hasExternal, boolean isCustom);
-#endif
+bool Def_IsAllowedDetailTex(ded_detailtexture_t *def, /*bool hasExternal,*/ bool isCustom);
 
 D_CMD(ListMobjs);
 

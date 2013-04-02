@@ -349,7 +349,8 @@ CHEAT_FUNC(Inventory)
     DENG_UNUSED(args);
     DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
 
-    if(IS_NETGAME) return false;
+    //if(IS_NETGAME) return false;
+
     if(gameSkill == SM_NIGHTMARE) return false;
     // Dead players can't cheat.
     if(plr->health <= 0) return false;

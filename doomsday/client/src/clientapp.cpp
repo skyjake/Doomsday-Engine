@@ -57,11 +57,11 @@ static void handleLegacyCoreTerminate(char const *msg)
     Con_Error("Application terminated due to exception:\n%s\n", msg);
 }
 
-static void continueInitWithEventLoopRunning(void)
+static void continueInitWithEventLoopRunning()
 {
     // Show the main window. This causes initialization to finish (in busy mode)
     // as the canvas is visible and ready for initialization.
-    Window_Show(Window_Main(), true);
+    Window::main().show();
 }
 
 DENG2_PIMPL(ClientApp)
@@ -164,7 +164,7 @@ void ClientApp::initialize()
     // Create the main window.
     char title[256];
     DD_ComposeMainWindowTitle(title);
-    Window_New(title);
+    Window::create(title);
 
     LegacyCore_Timer(1, continueInitWithEventLoopRunning);
 }
@@ -172,9 +172,9 @@ void ClientApp::initialize()
 void ClientApp::preFrame()
 {
     // Frame syncronous I/O operations.
-    S_StartFrame(); /// @todo belongs in AudioSystem::timeChanged()
+    S_StartFrame(); /// @todo Move to AudioSystem::timeChanged().
 
-    if(gx.BeginFrame) /// @todo GameSystem::timeChanged()
+    if(gx.BeginFrame) /// @todo Move to GameSystem::timeChanged().
     {
         gx.BeginFrame();
     }
@@ -182,7 +182,8 @@ void ClientApp::preFrame()
 
 void ClientApp::postFrame()
 {
-    /// @todo should these be here?
+    /// @todo Should these be here? Consider multiple windows, each having a postFrame?
+    /// Or maybe the frames need to be synced? Or only one of them has a postFrame?
 
     if(gx.EndFrame)
     {

@@ -1,0 +1,6 @@
+@summary{
+    Write bindings and aliases to a file.
+}
+@description{
+    Params: write (filename) @cbr For example, 'write myconfig.cfg'.
+}

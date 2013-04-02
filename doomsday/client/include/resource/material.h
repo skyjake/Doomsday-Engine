@@ -28,6 +28,7 @@
 #ifdef __CLIENT__
 #  include "MaterialContext"
 #endif
+#include "Texture"
 #include "uri.hh"
 #include <de/Error>
 #include <de/Observers>
@@ -45,7 +46,6 @@ class MaterialManifest;
 class MaterialSnapshot;
 struct MaterialVariantSpec;
 #endif
-class Texture;
 
 }
 
@@ -54,10 +54,10 @@ class Texture;
  *
  * @ingroup resource
  */
-class Material : public de::MapElement
+class Material : public de::MapElement,
+                 DENG2_OBSERVES(de::Texture, DimensionsChange),
+                 DENG2_OBSERVES(de::Texture, Deletion)
 {
-    struct Instance; // Needs to be friended by Variant (etc...).
-
     /// Internal typedefs for brevity/cleanliness.
     typedef de::MaterialManifest Manifest;
 #ifdef __CLIENT__
@@ -73,6 +73,9 @@ public:
     /// Maximum number of (light) decorations a material supports.
     static int const max_decorations = 16;
 #endif
+
+    /// Required animation is missing. @ingroup errors
+    DENG2_ERROR(MissingAnimationError);
 
     /// The referenced layer does not exist. @ingroup errors
     DENG2_ERROR(UnknownLayerError);
@@ -480,7 +483,11 @@ public:
      */
     class Animation
     {
-    private:
+#ifdef MACOS_10_4
+        // GCC 4.0 on Mac OS X 10.5 doesn't handle nested classes
+        // and friends that well.
+    public:
+#endif
         Animation(Material &material, MaterialContextId context);
 
     public:
@@ -564,7 +571,6 @@ public:
         DecorationState const &decoration(int decorNum) const;
 
         friend class Material;
-        friend struct Material::Instance;
 
     private:
         DENG2_PRIVATE(d)
@@ -586,7 +592,6 @@ public:
      */
     class Variant
     {
-    private:
         /**
          * @param generalCase  Material from which the variant is to be derived.
          * @param spec         Specification used to derive the variant.
@@ -635,7 +640,6 @@ public:
         Snapshot const &prepare(bool forceSnapshotUpdate = false);
 
         friend class Material;
-        friend struct Material::Instance;
 
     private:
         DENG2_PRIVATE(d)
@@ -911,10 +915,7 @@ public:
     /**
      * Retrieve the animation state for the specified render @a context.
      */
-    inline Animation *animation(MaterialContextId context) const
-    {
-        return animations().value(context, NULL);
-    }
+    Animation &animation(MaterialContextId context) const;
 
     /**
      * Provides access to the set of usage context animation states,
@@ -940,12 +941,25 @@ public:
     /**
      * Choose/create a context variant of the material which fulfills @a spec.
      *
-     * @param spec      Specification for the derivation of @a material.
+     * @param spec      Material specialization specification.
      * @param canCreate @c true= Create a new variant if no suitable one exists.
      *
      * @return  The chosen variant; otherwise @c 0 (if none suitable, when not creating).
      */
     Variant *chooseVariant(VariantSpec const &spec, bool canCreate = false);
+
+    /**
+     * Shorthand alternative to @c chooseVariant(@a spec, true).
+     *
+     * @param spec      Material specialization specification.
+     * @return  The (perhaps newly created) variant.
+     *
+     * @see chooseVariant()
+     */
+    inline Variant &createVariant(VariantSpec const &spec)
+    {
+        return *chooseVariant(spec, true/*create*/);
+    }
 
     /**
      * Choose/create a variant of the material which fulfills @a spec and then
@@ -968,7 +982,7 @@ public:
      */
     inline Snapshot const &prepare(VariantSpec const &spec, bool forceSnapshotUpdate = false)
     {
-        return chooseVariant(spec, true /*can-create*/)->prepare(forceSnapshotUpdate);
+        return createVariant(spec).prepare(forceSnapshotUpdate);
     }
 
 #endif // __CLIENT__
@@ -989,8 +1003,15 @@ public:
      */
     int setProperty(setargs_t const &args);
 
+protected:
+    // Observes Texture DimensionsChange.
+    void textureDimensionsChanged(de::Texture const &texture);
+
+    // Observes Texture Deletion.
+    void textureBeingDeleted(de::Texture const &texture);
+
 private:
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Material::Flags)

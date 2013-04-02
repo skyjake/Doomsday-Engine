@@ -1,6 +1,7 @@
-/** @file texturevariant.cpp Context specialized logical texture variant.
+/** @file texturevariant.cpp Context specialized texture variant.
  *
- * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1999-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -16,6 +17,16 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA</small>
  */
+
+#include <de/Log>
+#include <de/mathutil.h> // M_CeilPow
+#include "de_base.h"
+#include "r_util.h"
+#include "gl/gl_defer.h"
+#include "gl/gl_main.h"
+#include "gl/gl_texmanager.h"
+#include "gl/gl_tex.h"
+#include "resource/colorpalettes.h"
 
 #include "resource/texture.h"
 
@@ -108,6 +119,301 @@ Texture::Variant::Variant(Texture &generalCase, texturevariantspecification_t co
     : d(new Instance(this, generalCase, spec))
 {}
 
+/**
+ * Perform analyses of the @a image pixel data and record this information
+ * for reference later.
+ *
+ * @param image         Image data to be analyzed.
+ * @param context       Context in which the uploaded image will be used.
+ * @param tex           Logical texture which will hold the analysis data.
+ * @param forceUpdate   Force an update of the recorded analysis data.
+ */
+static void performImageAnalyses(image_t const &image,
+    texturevariantusagecontext_t context, Texture &tex, bool forceUpdate)
+{
+    // Do we need color palette info?
+    if(image.paletteId != 0)
+    {
+        colorpalette_analysis_t *cp = reinterpret_cast<colorpalette_analysis_t *>(tex.analysisDataPointer(Texture::ColorPaletteAnalysis));
+        bool firstInit = (!cp);
+
+        if(firstInit)
+        {
+            cp = (colorpalette_analysis_t *) M_Malloc(sizeof(*cp));
+            tex.setAnalysisDataPointer(Texture::ColorPaletteAnalysis, cp);
+        }
+
+        if(firstInit || forceUpdate)
+            cp->paletteId = image.paletteId;
+    }
+
+    // Calculate a point light source for Dynlight and/or Halo?
+    if(context == TC_SPRITE_DIFFUSE)
+    {
+        pointlight_analysis_t *pl = reinterpret_cast<pointlight_analysis_t*>(tex.analysisDataPointer(Texture::BrightPointAnalysis));
+        bool firstInit = (!pl);
+
+        if(firstInit)
+        {
+            pl = (pointlight_analysis_t *) M_Malloc(sizeof *pl);
+            tex.setAnalysisDataPointer(Texture::BrightPointAnalysis, pl);
+        }
+
+        if(firstInit || forceUpdate)
+            GL_CalcLuminance(image.pixels, image.size.width, image.size.height, image.pixelSize,
+                             R_ToColorPalette(image.paletteId), &pl->originX, &pl->originY,
+                             &pl->color, &pl->brightMul);
+    }
+
+    // Average alpha?
+    if(context == TC_SPRITE_DIFFUSE || context == TC_UI)
+    {
+        averagealpha_analysis_t *aa = reinterpret_cast<averagealpha_analysis_t*>(tex.analysisDataPointer(Texture::AverageAlphaAnalysis));
+        bool firstInit = (!aa);
+
+        if(firstInit)
+        {
+            aa = (averagealpha_analysis_t *) M_Malloc(sizeof(*aa));
+            tex.setAnalysisDataPointer(Texture::AverageAlphaAnalysis, aa);
+        }
+
+        if(firstInit || forceUpdate)
+        {
+            if(!image.paletteId)
+            {
+                FindAverageAlpha(image.pixels, image.size.width, image.size.height,
+                                 image.pixelSize, &aa->alpha, &aa->coverage);
+            }
+            else
+            {
+                if(image.flags & IMGF_IS_MASKED)
+                {
+                    FindAverageAlphaIdx(image.pixels, image.size.width, image.size.height,
+                                        R_ToColorPalette(image.paletteId), &aa->alpha, &aa->coverage);
+                }
+                else
+                {
+                    // It has no mask, so it must be opaque.
+                    aa->alpha = 1;
+                    aa->coverage = 0;
+                }
+            }
+        }
+    }
+
+    // Average color for sky ambient color?
+    if(context == TC_SKYSPHERE_DIFFUSE)
+    {
+        averagecolor_analysis_t *ac = reinterpret_cast<averagecolor_analysis_t *>(tex.analysisDataPointer(Texture::AverageColorAnalysis));
+        bool firstInit = (!ac);
+
+        if(firstInit)
+        {
+            ac = (averagecolor_analysis_t *) M_Malloc(sizeof(*ac));
+            tex.setAnalysisDataPointer(Texture::AverageColorAnalysis, ac);
+        }
+
+        if(firstInit || forceUpdate)
+        {
+            if(0 == image.paletteId)
+            {
+                FindAverageColor(image.pixels, image.size.width, image.size.height,
+                                 image.pixelSize, &ac->color);
+            }
+            else
+            {
+                FindAverageColorIdx(image.pixels, image.size.width, image.size.height,
+                                    R_ToColorPalette(image.paletteId), false, &ac->color);
+            }
+        }
+    }
+
+    // Amplified average color for plane glow?
+    if(context == TC_MAPSURFACE_DIFFUSE)
+    {
+        averagecolor_analysis_t *ac = reinterpret_cast<averagecolor_analysis_t *>(tex.analysisDataPointer(Texture::AverageColorAmplifiedAnalysis));
+        bool firstInit = (!ac);
+
+        if(firstInit)
+        {
+            ac = (averagecolor_analysis_t *) M_Malloc(sizeof(*ac));
+            tex.setAnalysisDataPointer(Texture::AverageColorAmplifiedAnalysis, ac);
+        }
+
+        if(firstInit || forceUpdate)
+        {
+            if(0 == image.paletteId)
+            {
+                FindAverageColor(image.pixels, image.size.width, image.size.height,
+                                 image.pixelSize, &ac->color);
+            }
+            else
+            {
+                FindAverageColorIdx(image.pixels, image.size.width, image.size.height,
+                                    R_ToColorPalette(image.paletteId), false, &ac->color);
+            }
+            R_AmplifyColor(ac->color.rgb);
+        }
+    }
+
+    // Average top line color for sky sphere fadeout?
+    if(context == TC_SKYSPHERE_DIFFUSE)
+    {
+        averagecolor_analysis_t *ac = reinterpret_cast<averagecolor_analysis_t *>(tex.analysisDataPointer(Texture::AverageTopColorAnalysis));
+        bool firstInit = (!ac);
+
+        if(firstInit)
+        {
+            ac = (averagecolor_analysis_t *) M_Malloc(sizeof(*ac));
+            tex.setAnalysisDataPointer(Texture::AverageTopColorAnalysis, ac);
+        }
+
+        if(firstInit || forceUpdate)
+        {
+            if(0 == image.paletteId)
+            {
+                FindAverageLineColor(image.pixels, image.size.width, image.size.height,
+                                     image.pixelSize, 0, &ac->color);
+            }
+            else
+            {
+                FindAverageLineColorIdx(image.pixels, image.size.width, image.size.height, 0,
+                                        R_ToColorPalette(image.paletteId), false, &ac->color);
+            }
+        }
+    }
+
+    // Average bottom line color for sky sphere fadeout?
+    if(context == TC_SKYSPHERE_DIFFUSE)
+    {
+        averagecolor_analysis_t *ac = reinterpret_cast<averagecolor_analysis_t *>(tex.analysisDataPointer(Texture::AverageBottomColorAnalysis));
+        bool firstInit = (!ac);
+
+        if(firstInit)
+        {
+            ac = (averagecolor_analysis_t *) M_Malloc(sizeof(*ac));
+            tex.setAnalysisDataPointer(Texture::AverageBottomColorAnalysis, ac);
+        }
+
+        if(firstInit || forceUpdate)
+        {
+            if(0 == image.paletteId)
+            {
+                FindAverageLineColor(image.pixels, image.size.width, image.size.height,
+                                     image.pixelSize, image.size.height - 1, &ac->color);
+            }
+            else
+            {
+                FindAverageLineColorIdx(image.pixels, image.size.width, image.size.height,
+                                        image.size.height - 1, R_ToColorPalette(image.paletteId),
+                                        false, &ac->color);
+            }
+        }
+    }
+}
+
+uint Texture::Variant::prepare()
+{
+    LOG_AS("TextureVariant::prepare");
+
+    // Have we already prepared this?
+    if(isPrepared())
+        return d->glTexName;
+
+    // Load the source image data.
+    image_t image;
+    TexSource source = GL_LoadSourceImage(image, d->texture, d->spec);
+    if(source == TEXS_NONE)
+        return 0;
+
+    // Do we need to perform any image pixel data analyses?
+    if(d->spec.type == TST_GENERAL)
+    {
+        performImageAnalyses(image, TS_GENERAL(d->spec).context,
+                             d->texture, true /*force update*/);
+    }
+
+    // Are we preparing a new GL texture?
+    if(d->glTexName == 0)
+    {
+        // Acquire a new GL texture name.
+        d->glTexName = GL_GetReservedTextureName();
+
+        // Record the source of the image.
+        d->texSource = source;
+    }
+
+    // Prepare texture content for uploading.
+    texturecontent_t c;
+    GL_PrepareTextureContent(c, d->glTexName, image, d->spec, d->texture.manifest());
+
+    /**
+     * Calculate GL texture coordinates based on the image dimensions. The
+     * coordinates are calculated as width / CeilPow2(width), or 1 if larger
+     * than the maximum texture size.
+     *
+     * @todo fixme: Image dimensions may not be the same as the uploaded
+     * texture - defer this logic until all processing has been completed.
+     */
+    if((c.flags & TXCF_UPLOAD_ARG_NOSTRETCH) &&
+       (!GL_state.features.texNonPowTwo || (c.flags & TXCF_MIPMAP)))
+    {
+        d->s =  image.size.width / float( M_CeilPow2(image.size.width) );
+        d->t = image.size.height / float( M_CeilPow2(image.size.height) );
+    }
+    else
+    {
+        d->s = 1;
+        d->t = 1;
+    }
+
+    if(image.flags & IMGF_IS_MASKED)
+        d->flags |= TextureVariant::Masked;
+
+    // Submit the content for uploading (possibly deferred).
+    GLUploadMethod uploadMethod = GL_ChooseUploadMethod(c);
+    GL_UploadTextureContent(c, uploadMethod);
+
+#ifdef DENG_DEBUG
+    LOG_VERBOSE("Prepared \"%s\" variant (glName:%u)%s")
+        << d->texture.manifest().composeUri() << uint(d->glTexName)
+        << (uploadMethod == Immediate? " while not busy!" : "");
+
+    if(verbose >= 2)
+    {
+        String textualVariantSpec = d->spec.asText();
+        LOG_INFO("  Content: %s") << Image_Description(&image);
+        LOG_INFO("  Specification [%p]: %s")
+            << de::dintptr(&d->spec) << textualVariantSpec;
+    }
+#endif
+
+    // Are we setting the logical dimensions to the pixel dimensions
+    // of the source image?
+    if(d->texture.width() == 0 && d->texture.height() == 0)
+    {
+        Vector2i dimensions = Image_Dimensions(&image);
+#ifdef DENG_DEBUG
+        LOG_VERBOSE("World dimensions for \"%s\" taken from image pixels %s.")
+            << d->texture.manifest().composeUri() << dimensions.asText();
+#endif
+        d->texture.setDimensions(dimensions);
+    }
+
+    // We're done with the image data.
+    Image_Destroy(&image);
+
+    return d->glTexName;
+}
+
+void Texture::Variant::release()
+{
+    if(!isPrepared()) return;
+
+    glDeleteTextures(1, (GLuint const *) &d->glTexName);
+    d->glTexName = 0;
+}
+
 Texture &Texture::Variant::generalCase() const
 {
     return d->texture;
@@ -123,9 +429,11 @@ TexSource Texture::Variant::source() const
     return d->texSource;
 }
 
-void Texture::Variant::setSource(TexSource newSource)
+String Texture::Variant::sourceDescription() const
 {
-    d->texSource = newSource;
+    if(d->texSource == TEXS_ORIGINAL) return "original";
+    if(d->texSource == TEXS_EXTERNAL) return "external";
+    return "none";
 }
 
 Texture::Variant::Flags Texture::Variant::flags() const
@@ -133,43 +441,13 @@ Texture::Variant::Flags Texture::Variant::flags() const
     return d->flags;
 }
 
-void Texture::Variant::setFlags(Texture::Variant::Flags flagsToChange, bool set)
-{
-    if(set)
-    {
-        d->flags |= flagsToChange;
-    }
-    else
-    {
-        d->flags &= ~flagsToChange;
-    }
-}
-
-void Texture::Variant::coords(float *outS, float *outT) const
+void Texture::Variant::glCoords(float *outS, float *outT) const
 {
     if(outS) *outS = d->s;
     if(outT) *outT = d->t;
 }
 
-void Texture::Variant::setCoords(float newS, float newT)
-{
-    d->s = newS;
-    d->t = newT;
-}
-
 uint Texture::Variant::glName() const
 {
     return d->glTexName;
-}
-
-void Texture::Variant::setGLName(uint newGLName)
-{
-    d->glTexName = newGLName;
-}
-
-String Texture::Variant::sourceDescription() const
-{
-    if(d->texSource == TEXS_ORIGINAL) return "original";
-    if(d->texSource == TEXS_EXTERNAL) return "external";
-    return "none";
 }

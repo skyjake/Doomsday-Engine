@@ -1,0 +1,6 @@
+@summary{
+    Map cheat.
+}
+@description{
+    Params: reveal (0-4) @cbr Modes: @cbr  0=nothing @cbr  1=show unseen @cbr  2=full map @cbr  3=map+things
+}

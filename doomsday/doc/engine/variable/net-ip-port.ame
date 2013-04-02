@@ -1,0 +1,3 @@
+@summary{
+    TCP port to use for control connections.
+}

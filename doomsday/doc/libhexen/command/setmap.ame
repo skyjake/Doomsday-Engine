@@ -1,0 +1,6 @@
+@summary{
+    Set map.
+}
+@description{
+    Params: setmap (map) @cbr For example, 'setmap 23'.
+}

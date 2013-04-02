@@ -696,6 +696,8 @@ void C_DECL A_FHammerAttack(player_t *plr, pspdef_t *psp)
     float       power;
     float       slope;
 
+    if(IS_CLIENT) return;
+
     damage = 60 + (P_Random() & 63);
     power = 10;
     PuffType = MT_HAMMERPUFF;
@@ -758,6 +760,8 @@ void C_DECL A_FHammerAttack(player_t *plr, pspdef_t *psp)
 void C_DECL A_FHammerThrow(player_t *plr, pspdef_t *psp)
 {
     mobj_t             *pmo;
+
+    if(IS_CLIENT) return;
 
     if(!plr->plr->mo->special1)
         return;

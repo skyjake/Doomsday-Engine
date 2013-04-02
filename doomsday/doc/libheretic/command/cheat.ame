@@ -1,0 +1,6 @@
+@summary{
+    Issue a cheat code using the original Heretic cheats.
+}
+@description{
+    Params: cheat (cheat) @cbr For example, 'cheat rambo'.
+}

@@ -68,8 +68,6 @@ extern int useMultiTexDetails;
 
 extern int dynlightBlend;
 
-extern float detailFactor, detailScale;
-
 extern int torchAdditive;
 extern float torchColor[];
 

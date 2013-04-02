@@ -22,6 +22,7 @@
 #include "de_console.h"
 #ifdef __CLIENT__
 #  include "gl/gl_texmanager.h" // GL_TextureVariantSpec
+#  include "render/rend_main.h" // detailFactor, smoothTexAnim
 #  include "MaterialSnapshot"
 #endif
 #include <de/Log>
@@ -171,7 +172,7 @@ DENG2_PIMPL(Materials)
     {
         static MaterialVariantSpec tpl;
 
-        texturevariantusagecontext_t primaryContext;
+        texturevariantusagecontext_t primaryContext = TC_UNKNOWN;
         switch(contextId)
         {
         case UiContext:         primaryContext = TC_UI;                 break;
@@ -181,7 +182,7 @@ DENG2_PIMPL(Materials)
         case PSpriteContext:    primaryContext = TC_PSPRITE_DIFFUSE;    break;
         case SkySphereContext:  primaryContext = TC_SKYSPHERE_DIFFUSE;  break;
 
-        default: DENG2_ASSERT(0);
+        default: DENG2_ASSERT(false);
         }
 
         texturevariantspecification_t &primarySpec =
@@ -414,10 +415,48 @@ void Materials::processCacheQueue()
 {
     while(!d->variantCacheQueue.isEmpty())
     {
-         QScopedPointer<VariantCacheTask> task(d->variantCacheQueue.takeFirst());
+        QScopedPointer<VariantCacheTask> task(d->variantCacheQueue.takeFirst());
 
-         /// @todo $revise-texture-animation: prepare all textures in the animation (if animated).
-         task->material->prepare(*task->spec);
+        Material *material = task->material;
+        MaterialVariantSpec const *spec = task->spec;
+
+        // Ensure a variant for the specified context is created.
+        material->createVariant(*spec);
+
+#ifdef __CLIENT__
+
+        // Prepare all layer textures.
+        foreach(Material::Layer *layer, material->layers())
+        foreach(Material::Layer::Stage *stage, layer->stages())
+        {
+            if(stage->texture)
+                stage->texture->prepareVariant(*spec->primarySpec);
+        }
+
+        // Do we need to prepare detail texture(s)?
+        if(!material->isSkyMasked() && material->isDetailed())
+        foreach(Material::DetailLayer::Stage *stage, material->detailLayer().stages())
+        {
+            if(stage->texture)
+            {
+                float const contrast = de::clamp(0.f, stage->strength, 1.f) * detailFactor /*Global strength multiplier*/;
+                stage->texture->prepareVariant(GL_DetailTextureSpec(contrast));
+            }
+        }
+
+        // Do we need to prepare a shiny texture (and possibly a mask)?
+        if(!material->isSkyMasked() && material->isShiny())
+        foreach(Material::ShineLayer::Stage *stage, material->shineLayer().stages())
+        {
+           if(stage->texture)
+           {
+               stage->texture->prepareVariant(Rend_MapSurfaceShinyTextureSpec());
+               if(stage->maskTexture)
+                   stage->maskTexture->prepareVariant(Rend_MapSurfaceShinyMaskTextureSpec());
+           }
+        }
+
+#endif // __CLIENT__
     }
 }
 

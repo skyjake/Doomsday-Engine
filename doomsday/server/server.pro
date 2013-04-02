@@ -496,8 +496,7 @@ macx {
     else {
         # Generic Unix installation.
         INSTALLS += readme
-
-        readme.files = ../doc/output/doomsday.6
+        readme.files = ../doc/output/doomsday-server.6
         readme.path = $$PREFIX/share/man/man6
     }
 }

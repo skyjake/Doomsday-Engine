@@ -61,6 +61,7 @@
 
 #ifdef __CLIENT__
 #  include "updater/downloaddialog.h"
+#  include <de/GuiApp>
 #endif
 
 using namespace de;
@@ -249,7 +250,7 @@ void Con_ResizeHistoryBuffer(void)
         cw = (FR_TextWidth("AA") * consoleFontScale[0]) / 2;
         if(0 != cw)
         {
-            maxLength = MIN_OF(Window_Width(theWindow) / cw - 2, 250);
+            maxLength = MIN_OF(DENG_WINDOW->width() / cw - 2, 250);
         }
     }
 #endif
@@ -1995,15 +1996,16 @@ void Con_Message(char const *message, ...)
     M_Free(buffer);
 }
 
-void Con_Error(const char* error, ...)
+void Con_Error(char const *error, ...)
 {
     static boolean errorInProgress = false;
-    int         i, numBufLines;
-    char        buff[2048], err[256];
-    va_list     argptr;
+
+    int i, numBufLines;
+    char buff[2048], err[256];
+    va_list argptr;
 
 #ifdef __CLIENT__
-    Window_TrapMouse(Window_Main(), false);
+    Window::main().trapMouse(false);
 #endif
 
     // Already in an error?
@@ -2069,14 +2071,15 @@ void Con_Error(const char* error, ...)
     }
 }
 
-void Con_AbnormalShutdown(const char* message)
+void Con_AbnormalShutdown(char const *message)
 {
     Sys_Shutdown();
     DisplayMode_Shutdown();
 
 #ifdef __CLIENT__
-    // Be a bit more graphic.
-    Window_TrapMouse(Window_Main(), false);
+    Window::main().trapMouse(false);
+
+    DENG2_GUI_APP->loop().pause();
 #endif
 
     if(message) // Only show if a message given.
@@ -2091,10 +2094,6 @@ void Con_AbnormalShutdown(const char* message)
     }
 
     DD_Shutdown();
-
-    // Open Doomsday.out in a text editor.
-    //fflush(outFile); // Make sure all the buffered stuff goes into the file.
-    //Sys_OpenTextEditor("doomsday.out");
 
     // Get outta here.
     exit(1);

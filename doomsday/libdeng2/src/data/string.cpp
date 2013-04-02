@@ -98,6 +98,51 @@ String String::operator / (String const &path) const
     return concatenatePath(path);
 }
 
+String String::operator % (PatternArgs args) const
+{
+    String result;
+    QTextStream output(&result);
+
+    PatternArgs::const_iterator arg = args.begin();
+
+    DENG2_FOR_EACH_CONST(String, i, *this)
+    {
+        if(*i == '%')
+        {
+            String::const_iterator next = i;
+            advanceFormat(next, end());
+            if(*next == '%')
+            {
+                // Escaped.
+                output << *next;
+                ++i;
+                continue;
+            }
+
+            if(arg == args.end())
+            {
+                // Out of args.
+                throw IllegalPatternError("String::operator %", "Ran out of arguments");
+            }
+
+            output << patternFormat(i, end(), **arg);
+            ++arg;
+        }
+        else
+        {
+            output << *i;
+        }
+    }
+
+    // Just append the rest of the arguments without special instructions.
+    for(; arg != args.end(); ++arg)
+    {
+        output << (*arg)->asText();
+    }
+
+    return result;
+}
+
 String String::concatenatePath(String const &other, QChar dirChar) const
 {
     if(QDir::isAbsolutePath(other))
@@ -425,16 +470,16 @@ String String::patternFormat(String::const_iterator &formatIter,
 {
     advanceFormat(formatIter, formatEnd);
 
+    QString result;
+    QTextStream output(&result);
+
     // An argument comes here.
     bool rightAlign = true;
     dint maxWidth = 0;
     dint minWidth = 0;
 
-    if(*formatIter == '%')
-    {
-        // Escaped.
-        return String(1, *formatIter);
-    }
+    DENG2_ASSERT(*formatIter != '%');
+
     if(*formatIter == '-')
     {
         // Left aligned.
@@ -464,9 +509,6 @@ String String::patternFormat(String::const_iterator &formatIter,
     }
     
     // Finally, the type formatting.
-    QString result;
-    QTextStream output(&result);
-
     switch((*formatIter).toLatin1())
     {
     case 's':

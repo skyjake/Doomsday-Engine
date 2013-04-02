@@ -21,6 +21,7 @@
 #include "qtrootwidget.h"
 #include "qttextcanvas.h"
 #include "guishellapp.h"
+#include "consolepage.h"
 #include "preferences.h"
 #include <de/LogBuffer>
 #include <de/shell/LogWidget>
@@ -34,10 +35,16 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QToolButton>
+#include <QHBoxLayout>
 #include <QStackedWidget>
 #include <QStatusBar>
+#include <QScrollBar>
 #include <QLabel>
 #include <QCryptographicHash>
+
+#ifndef MACOSX
+#  define MENU_IN_LINK_WINDOW
+#endif
 
 using namespace de;
 using namespace de::shell;
@@ -54,18 +61,20 @@ static QString statusText(QString txt)
 DENG2_PIMPL(LinkWindow)
 {
     LogBuffer logBuffer;
-    LogWidget *log;
-    CommandLineWidget *cli;
     Link *link;
     QToolBar *tools;
     QToolButton *statusButton;
     QToolButton *consoleButton;
     QStackedWidget *stack;
     StatusWidget *status;
-    QtRootWidget *root;
+    ConsolePage *console;
+    QLabel *gameStatus;
     QLabel *timeCounter;
     QLabel *currentHost;
     QAction *stopAction;
+#ifdef MENU_IN_LINK_WINDOW
+    QAction *disconnectAction;
+#endif
 
     Instance(Public &i)
         : Base(i),
@@ -75,7 +84,7 @@ DENG2_PIMPL(LinkWindow)
           consoleButton(0),
           stack(0),
           status(0),
-          root(0),
+          gameStatus(0),
           timeCounter(0),
           currentHost(0)
     {
@@ -84,27 +93,19 @@ DENG2_PIMPL(LinkWindow)
 #ifdef _DEBUG
         logBuffer.enable(LogEntry::DEBUG);
 #endif
-
-        // Shell widgets.
-        cli = new CommandLineWidget;
-        log = new LogWidget;
-
-        logBuffer.addSink(log->logSink());
-
-        QObject::connect(cli, SIGNAL(commandEntered(de::String)), &self, SLOT(sendCommandToServer(de::String)));
     }
 
     void updateStyle()
     {
         if(self.isConnected())
         {
-            root->canvas().setBackgroundColor(Qt::white);
-            root->canvas().setForegroundColor(Qt::black);
+            console->root().canvas().setBackgroundColor(Qt::white);
+            console->root().canvas().setForegroundColor(Qt::black);
         }
         else
         {
-            root->canvas().setBackgroundColor(QColor(192, 192, 192));
-            root->canvas().setForegroundColor(QColor(64, 64, 64));
+            console->root().canvas().setBackgroundColor(QColor(192, 192, 192));
+            console->root().canvas().setForegroundColor(QColor(64, 64, 64));
         }
     }
 
@@ -130,10 +131,14 @@ DENG2_PIMPL(LinkWindow)
     void disconnected()
     {
         self.setTitle(tr("Disconnected"));
-        root->setOverlaidMessage(tr("Disconnected"));
+        console->root().setOverlaidMessage(tr("Disconnected"));
         self.statusBar()->clearMessage();
         stopAction->setDisabled(true);
+#ifdef MENU_IN_LINK_WINDOW
+        disconnectAction->setDisabled(true);
+#endif
 
+        gameStatus->clear();
         status->linkDisconnected();
         updateCurrentHost();
         updateStyle();
@@ -154,11 +159,24 @@ DENG2_PIMPL(LinkWindow)
         tools->addWidget(tb);
         return tb;
     }
+
+    void updateStatusBarWithGameState(de::Record &rec)
+    {
+        String gameMode = rec["mode"].value().asText();
+        String mapId    = rec["mapId"].value().asText();
+        String rules    = rec["rules"].value().asText();
+
+        String msg = gameMode;
+        if(!mapId.isEmpty()) msg += " " + mapId;
+        if(!rules.isEmpty()) msg += " (" + rules + ")";
+
+        gameStatus->setText(statusText(msg));
+    }
 };
 
 LinkWindow::LinkWindow(QWidget *parent)
     : QMainWindow(parent), d(new Instance(*this))
-{
+{    
     setUnifiedTitleAndToolBarOnMac(true);
 #ifndef MACOSX
     setWindowIcon(QIcon(":/images/shell.png"));
@@ -169,21 +187,22 @@ LinkWindow::LinkWindow(QWidget *parent)
     d->stopAction = new QAction(tr("S&top"), this);
     connect(d->stopAction, SIGNAL(triggered()), app, SLOT(stopServer()));
 
-#ifndef MACOSX
+#ifdef MENU_IN_LINK_WINDOW
     QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
     fileMenu->addAction(tr("&Settings..."), app, SLOT(showPreferences()));
-    fileMenu->addAction(tr("&Quit"), app, SLOT(quit()), QKeySequence(tr("Ctrl+Q")));
+    fileMenu->addAction(tr("E&xit"), app, SLOT(quit()), QKeySequence(tr("Ctrl+Q")));
 
     // Menus are window-specific on non-Mac platforms.
     QMenu *menu = menuBar()->addMenu(tr("&Connection"));
     menu->addAction(tr("C&onnect..."), app, SLOT(connectToServer()),
                     QKeySequence(tr("Ctrl+O", "Connection|Connect")));
-    menu->addAction(tr("&Disconnect"), this, SLOT(closeConnection()),
-                    QKeySequence(tr("Ctrl+D", "Connection|Disconnect")));
+    d->disconnectAction = menu->addAction(tr("&Disconnect"), this, SLOT(closeConnection()),
+                                          QKeySequence(tr("Ctrl+D", "Connection|Disconnect")));
+    d->disconnectAction->setDisabled(true);
 
     QMenu *svMenu = menuBar()->addMenu(tr("&Server"));
-    svMenu->addAction(tr("&Start Local Server..."), app, SLOT(startLocalServer()),
-                      QKeySequence(tr("Ctrl+N", "Server|Start Local")));
+    svMenu->addAction(tr("&New Local Server..."), app, SLOT(startLocalServer()),
+                      QKeySequence(tr("Ctrl+N", "Server|New Local Server")));
     svMenu->addAction(d->stopAction);
     svMenu->addSeparator();
     svMenu->addMenu(app->localServersMenu());
@@ -202,11 +221,11 @@ LinkWindow::LinkWindow(QWidget *parent)
     d->status = new StatusWidget;
     d->stack->addWidget(d->status);
 
-    // Console page.
-    d->root = new QtRootWidget;
-    d->stack->addWidget(d->root);
-
-    d->root->setFont(Preferences::consoleFont());
+    // Console page.    
+    d->console = new ConsolePage;
+    d->stack->addWidget(d->console);
+    d->logBuffer.addSink(d->console->log().logSink());
+    connect(&d->console->cli(), SIGNAL(commandEntered(de::String)), this, SLOT(sendCommandToServer(de::String)));
 
     d->updateStyle();
 
@@ -220,20 +239,26 @@ LinkWindow::LinkWindow(QWidget *parent)
     statusFont.setPointSize(font().pointSize() * 4 / 5);
     statusBar()->setFont(statusFont);
 #endif
-    d->timeCounter = new QLabel(statusText("0:00:00"));
+    d->gameStatus = new QLabel;
+    d->gameStatus->setContentsMargins(6, 0, 6, 0);
     d->currentHost = new QLabel;
+    d->currentHost->setContentsMargins(6, 0, 6, 0);
+    d->timeCounter = new QLabel(statusText("0:00:00"));
+    d->timeCounter->setContentsMargins(6, 0, 0, 0);
+    statusBar()->addPermanentWidget(d->gameStatus);
     statusBar()->addPermanentWidget(d->currentHost);
     statusBar()->addPermanentWidget(d->timeCounter);
-
-    QIcon icon(":/images/toolbar_placeholder.png");
 
     d->tools = addToolBar(tr("View"));
     d->tools->setMovable(false);
     d->tools->setFloatable(false);
 
-    d->statusButton = d->addToolButton(tr("Status"), icon);
+    d->statusButton = d->addToolButton(tr("Status"), QIcon(":/images/toolbar_status.png"));
     connect(d->statusButton, SIGNAL(pressed()), this, SLOT(switchToStatus()));
     d->statusButton->setChecked(true);
+
+#ifdef DENG2_DEBUG
+    QIcon icon(":/images/toolbar_placeholder.png");
 
     QToolButton *btn = d->addToolButton(tr("Frags"), icon);
     btn->setDisabled(true);
@@ -243,30 +268,15 @@ LinkWindow::LinkWindow(QWidget *parent)
 
     btn = d->addToolButton(tr("Options"), icon);
     btn->setDisabled(true);
+#endif
 
-    d->consoleButton = d->addToolButton(tr("Console"), icon);
+    d->consoleButton = d->addToolButton(tr("Console"), QIcon(":/images/toolbar_console.png"));
     connect(d->consoleButton, SIGNAL(pressed()), this, SLOT(switchToConsole()));
-
-    // Set up the widgets.
-    TextRootWidget &root = d->root->rootWidget();
-    d->cli->rule()
-            .setInput(Rule::Left,   root.viewLeft())
-            .setInput(Rule::Width,  root.viewWidth())
-            .setInput(Rule::Bottom, root.viewBottom());
-    d->log->rule()
-            .setInput(Rule::Top,    root.viewTop())
-            .setInput(Rule::Left,   root.viewLeft())
-            .setInput(Rule::Right,  root.viewRight())
-            .setInput(Rule::Bottom, d->cli->rule().top());
-
-    root.add(d->log);
-    root.add(d->cli);
-    root.setFocus(d->cli);
 
     // Initial state for the window.
     resize(QSize(640, 480));
 
-    d->root->setOverlaidMessage(tr("Disconnected"));
+    d->console->root().setOverlaidMessage(tr("Disconnected"));
     setTitle(tr("Disconnected"));
     d->stopAction->setDisabled(true);
 }
@@ -311,7 +321,7 @@ void LinkWindow::openConnection(Link *link, String name)
     closeConnection();
 
     d->logBuffer.flush();
-    d->log->clear();
+    d->console->log().clear();
 
     d->link = link;
 
@@ -322,7 +332,7 @@ void LinkWindow::openConnection(Link *link, String name)
 
     if(name.isEmpty()) name = link->address().asText();
     setTitle(name);
-    d->root->setOverlaidMessage(tr("Looking up host..."));
+    d->console->root().setOverlaidMessage(tr("Looking up host..."));
     statusBar()->showMessage(tr("Looking up host..."));
     d->status->linkConnected(d->link);
     d->updateCurrentHost();
@@ -365,8 +375,8 @@ void LinkWindow::switchToStatus()
 void LinkWindow::switchToConsole()
 {
     d->statusButton->setChecked(false);
-    d->stack->setCurrentWidget(d->root);
-    d->root->setFocus();
+    d->stack->setCurrentWidget(d->console);
+    d->console->root().setFocus();
 }
 
 void LinkWindow::updateWhenConnected()
@@ -417,7 +427,7 @@ void LinkWindow::handleIncomingPackets()
 
         case shell::Protocol::ConsoleLexicon:
             // Terms for auto-completion.
-            d->cli->setLexicon(protocol.lexicon(*packet));
+            d->console->cli().setLexicon(protocol.lexicon(*packet));
             break;
 
         case shell::Protocol::GameState: {
@@ -427,6 +437,8 @@ void LinkWindow::handleIncomingPackets()
                     rec["rules"].value().asText(),
                     rec["mapId"].value().asText(),
                     rec["mapTitle"].value().asText());
+
+            d->updateStatusBarWithGameState(rec);
             break; }
 
         case shell::Protocol::MapOutline:
@@ -459,18 +471,21 @@ void LinkWindow::sendCommandToServer(de::String command)
 
 void LinkWindow::addressResolved()
 {
-    d->root->setOverlaidMessage(tr("Connecting..."));
+    d->console->root().setOverlaidMessage(tr("Connecting..."));
     statusBar()->showMessage(tr("Connecting..."));
     d->updateCurrentHost();
 }
 
 void LinkWindow::connected()
 {
-    d->root->setOverlaidMessage("");
+    d->console->root().setOverlaidMessage("");
     d->status->linkConnected(d->link);
     statusBar()->clearMessage();
     updateWhenConnected();
     d->stopAction->setEnabled(true);
+#ifdef MENU_IN_LINK_WINDOW
+    d->disconnectAction->setEnabled(true);
+#endif
 
     emit linkOpened(this);
 }
@@ -516,6 +531,6 @@ void LinkWindow::askForPassword()
 
 void LinkWindow::updateConsoleFontFromPreferences()
 {
-    d->root->setFont(Preferences::consoleFont());
-    update();
+    d->console->root().setFont(Preferences::consoleFont());
+    d->console->update();
 }

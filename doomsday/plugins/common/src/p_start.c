@@ -79,7 +79,7 @@ mapspot_t* mapSpots;
 
 #if __JHERETIC__
 uint maceSpotCount;
-mapspotid_t* maceSpots;
+mapspotid_t *maceSpots;
 uint bossSpotCount;
 mapspotid_t* bossSpots;
 #endif
@@ -702,6 +702,9 @@ void P_SpawnClient(int plrNum)
     // until we know it.
     p->plr->flags |= DDPF_UNDEFINED_WEAPON;
 
+    // Clear the view filter.
+    p->plr->flags &= ~DDPF_USE_VIEW_FILTER;
+
     // The weapon should be in the down state when spawning.
     p->pSprites[0].pos[VY] = WEAPONBOTTOM;
 }
@@ -709,7 +712,7 @@ void P_SpawnClient(int plrNum)
 /**
  * Called by G_DoReborn if playing a net game.
  */
-void P_RebornPlayer(int plrNum)
+void P_RebornPlayerInMultiplayer(int plrNum)
 {
 #if __JHEXEN__
     int oldKeys = 0, oldPieces = 0, bestWeapon;
@@ -772,12 +775,6 @@ void P_RebornPlayer(int plrNum)
     {
         P_SpawnClient(plrNum);
         return;
-
-        // Anywhere will do for now.
-        //pos[VX] = pos[VY] = pos[VZ] = 0;
-        //angle = 0;
-        //spawnFlags = MSF_Z_FLOOR;
-        //makeCamera = true; // Clients spawn as spectators.
     }
     else
     {
@@ -907,10 +904,11 @@ void P_RebornPlayer(int plrNum)
     spawnPlayer(plrNum, pClass, pos[VX], pos[VY], pos[VZ], angle,
                 spawnFlags, makeCamera, true, true);
 
+    DENG_ASSERT(!IS_CLIENT);
+
     // Restore player state?
-    if(!IS_CLIENT)
-    {
 #if __JHEXEN__
+    {
         int i;
 
         // Restore keys and weapons
@@ -925,14 +923,22 @@ void P_RebornPlayer(int plrNum)
             }
         }
 
-        p->ammo[AT_BLUEMANA].owned = 25; //// @todo values.ded
-        p->ammo[AT_GREENMANA].owned = 25; //// @todo values.ded
-        if(bestWeapon)
-        {   // Bring up the best weapon.
-            p->pendingWeapon = bestWeapon;
-        }
+        GetDefInt("Multiplayer|Reborn|Blue mana",  &p->ammo[AT_BLUEMANA].owned);
+        GetDefInt("Multiplayer|Reborn|Green mana", &p->ammo[AT_GREENMANA].owned);
+
+#ifdef _DEBUG
+        Con_Message("P_RebornPlayerInMultiplayer: Giving mana (b:%i g:%i) to player %i; "
+                    "also old weapons, with best weapon %i", p->ammo[AT_BLUEMANA].owned,
+                    p->ammo[AT_GREENMANA].owned, plrNum, bestWeapon);
 #endif
+
+        if(bestWeapon)
+        {
+            // Bring up the best weapon.
+            p->readyWeapon = p->pendingWeapon = bestWeapon;
+        }
     }
+#endif
 }
 
 boolean P_CheckSpot(coord_t x, coord_t y)
@@ -970,6 +976,9 @@ boolean P_CheckSpot(coord_t x, coord_t y)
 #if __JHERETIC__
 void P_AddMaceSpot(mapspotid_t id)
 {
+#ifdef _DEBUG
+    Con_Message("P_AddMaceSpot: Added mace spot %u", id);
+#endif
     maceSpots = Z_Realloc(maceSpots, sizeof(mapspotid_t) * ++maceSpotCount, PU_MAP);
     maceSpots[maceSpotCount-1] = id;
 }

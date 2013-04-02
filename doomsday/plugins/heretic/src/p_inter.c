@@ -378,18 +378,16 @@ void P_HideSpecialThing(mobj_t* thing)
     P_MobjChangeState(thing, S_HIDESPECIAL1);
 }
 
-/**
- * Make a special thing visible again.
- */
-void C_DECL A_RestoreSpecialThing1(mobj_t* thing)
+void C_DECL A_RestoreSpecialThing1(mobj_t *mo)
 {
-    if(thing->type == MT_WMACE)
-    {   // Do random mace placement.
-        P_RepositionMace(thing);
+    if(mo->type == MT_WMACE)
+    {
+        // Do random mace placement.
+        P_RepositionMace(mo);
     }
 
-    thing->flags2 &= ~MF2_DONTDRAW;
-    S_StartSound(SFX_RESPAWN, thing);
+    mo->flags2 &= ~MF2_DONTDRAW;
+    S_StartSound(SFX_RESPAWN, mo);
 }
 
 void C_DECL A_RestoreSpecialThing2(mobj_t* thing)

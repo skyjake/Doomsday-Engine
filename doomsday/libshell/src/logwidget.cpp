@@ -98,13 +98,17 @@ DENG2_PIMPL(LogWidget)
     QList<TextCanvas *> cache; ///< Indices match entry indices in sink.
     int maxEntries;
     int visibleOffset;
+    bool showScrollIndicator;
+    int lastMaxScroll;
 
     Instance(Public *inst)
         : Base(inst),
           sink(*inst),
           cacheWidth(0),
           maxEntries(1000),
-          visibleOffset(0)
+          visibleOffset(0),
+          showScrollIndicator(true),
+          lastMaxScroll(0)
     {}
 
     ~Instance()
@@ -156,7 +160,16 @@ DENG2_PIMPL(LogWidget)
 
     void clampVisibleOffset(int visibleHeight)
     {
-        visibleOffset = de::min(visibleOffset, maxVisibleOffset(visibleHeight));
+        setVisibleOffset(de::min(visibleOffset, maxVisibleOffset(visibleHeight)));
+    }
+
+    void setVisibleOffset(int off)
+    {
+        if(visibleOffset != off)
+        {
+            visibleOffset = off;
+            emit self.scrollPositionChanged(off);
+        }
     }
 };
 
@@ -171,6 +184,32 @@ LogSink &LogWidget::logSink()
 void LogWidget::clear()
 {
     d->clear();
+    redraw();
+}
+
+void LogWidget::setScrollIndicatorVisible(bool visible)
+{
+    d->showScrollIndicator = visible;
+}
+
+int LogWidget::scrollPosition() const
+{
+    return d->visibleOffset;
+}
+
+int LogWidget::scrollPageSize() const
+{
+    return de::max(1, de::floor(rule().height().value()) - 1);
+}
+
+int LogWidget::maximumScroll() const
+{
+    return d->lastMaxScroll;
+}
+
+void LogWidget::scroll(int to)
+{
+    d->visibleOffset = de::max(0, to);
     redraw();
 }
 
@@ -214,7 +253,10 @@ void LogWidget::draw()
         }
 
         // Adjust visible offset.
-        if(d->visibleOffset > 0) d->visibleOffset += lines.size();
+        if(d->visibleOffset > 0)
+        {
+            d->setVisibleOffset(d->visibleOffset + lines.size());
+        }
     }
 
     DENG2_ASSERT(d->cache.size() == d->sink.entryCount());
@@ -235,11 +277,12 @@ void LogWidget::draw()
     }
 
     // Draw the scroll indicator.
-    if(d->visibleOffset > 0)
+    int const maxScroll = d->maxVisibleOffset(buf.height());
+    if(d->showScrollIndicator && d->visibleOffset > 0)
     {
         int const indHeight = de::clamp(2, de::floor(float(buf.height() * buf.height()) /
                                                float(d->totalHeight())), buf.height() / 2);
-        float const indPos = float(d->visibleOffset) / float(d->maxVisibleOffset(buf.height()));
+        float const indPos = float(d->visibleOffset) / float(maxScroll);
         int const avail = buf.height() - indHeight;
         for(int i = 0; i < indHeight; ++i)
         {
@@ -252,6 +295,13 @@ void LogWidget::draw()
 
     d->prune();
     d->sink.unlock();
+
+    // Notify now that we know what the max scroll is.
+    if(d->lastMaxScroll != maxScroll)
+    {
+        d->lastMaxScroll = maxScroll;
+        emit scrollMaxChanged(maxScroll);
+    }
 }
 
 bool LogWidget::handleEvent(Event const &event)
@@ -260,15 +310,17 @@ bool LogWidget::handleEvent(Event const &event)
 
     KeyEvent const &ev = static_cast<KeyEvent const &>(event);
 
+    int pageSize = scrollPageSize();
+
     switch(ev.key())
     {
     case Qt::Key_PageUp:
-        d->visibleOffset += 5;
+        d->setVisibleOffset(d->visibleOffset + pageSize);
         redraw();
         return true;
 
     case Qt::Key_PageDown:
-        d->visibleOffset = de::max(0, d->visibleOffset - 5);
+        d->setVisibleOffset(de::max(0, d->visibleOffset - pageSize));
         redraw();
         return true;
 
@@ -281,7 +333,7 @@ bool LogWidget::handleEvent(Event const &event)
 
 void LogWidget::scrollToBottom()
 {
-    d->visibleOffset = 0;
+    d->setVisibleOffset(0);
     redraw();
 }
 

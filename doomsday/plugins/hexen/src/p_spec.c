@@ -204,6 +204,10 @@ boolean P_ExecuteLineSpecial(int special, byte* args, LineDef* line,
 {
     boolean             success;
 
+#ifdef _DEBUG
+    Con_Message("P_ExecuteLineSpecial: special=%i mo=%i", special, mo? mo->thinker.id : 0);
+#endif
+
     success = false;
     switch(special)
     {

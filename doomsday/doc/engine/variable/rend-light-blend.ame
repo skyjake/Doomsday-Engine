@@ -1,0 +1,3 @@
+@summary{
+    Dynamic lights color blending mode: 0=normal, 1=additive, 2=no blending.
+}

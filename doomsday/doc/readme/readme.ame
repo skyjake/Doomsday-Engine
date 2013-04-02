@@ -1,0 +1,33 @@
+@ifndef{MAN}{
+    @macro{TITLE}{ Doomsday Engine }
+}
+@else{
+    @macro{TITLE}{ doomsday }
+}
+@macro{ONELINER}{ Enhanced source port of Doom, Heretic and Hexen }
+@macro{VERSION}{ Version 1.10 }
+@macro{AUTHOR}{ Deng Team }
+@macro{LINK}{ http://dengine.net/ }
+@require{amestd}
+
+$ Readme-specific formatting macros.
+@macro{plugin}{@arg}
+
+@begin
+
+@include{introduction}
+@ifndef{MAN}{@include{documentation}}
+@include{gamemodes}
+@include{files}
+@include{environment}
+@include{network}
+@include{resources}
+@include{plugins}
+@include{bugs}
+@ifdef{MAN}{
+    $ See also
+    @include{documentation}
+    $ Man pages have an author section.
+    @include{../author}
+}
+@include{credit}

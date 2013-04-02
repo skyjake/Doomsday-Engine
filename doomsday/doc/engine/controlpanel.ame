@@ -1,0 +1,352 @@
+@require{amestd}
+@begin
+
+# Control Panel help strings
+
+@chapter{Video}
+
+@section{Gamma correction}
+@cvar{vid-gamma}
+@default{1.0}
+@summary{     
+    Smaller values result in a darker picture. In order for this setting to
+    work your display adapter must support color adjustments. You should lower
+    the gamma correction value until dark areas in maps become sufficiently
+    dark. Note that with some monitors different resolutions require different
+    gamma correction levels. @cbreak Use the -noramp option to disable all
+    color adjustments. 
+}
+
+@section{Display contrast}
+@cvar{vid-contrast}
+@default{1.0}
+@summary{        
+    Modifies the steepness of the gamma ramp. Values greater than 1.0 result in
+    a more colorful picture but since the colors are clamped, some are lost in
+    both the bright and dark ends of the ramp. Values less than 1.0 fade the
+    picture towards gray. In order for this setting to work your display
+    adapter must support color adjustments. @cbreak Use the -noramp option to
+    disable all color adjustments.
+}
+
+@section{Display brightness}
+@cvar{vid-bright}
+@default{0.0}
+@summary{        
+    Applies an offset to the gamma ramp. Positive values make the picture
+    lighter, negative ones darker. For the best results, use a small positive
+    brightness value with dark gamma and slightly increased contrast. In order
+    for this setting to work your display adapter must support color
+    adjustments. @cbreak Use the -noramp option to disable all color
+    adjustments.
+}
+
+@chapter{Audio}
+
+@section{Preferred music source}
+@cvar{music-source}
+@default{External files}
+@summary{    
+    There can be a WAD lump, external file and a CD track associated with each
+    song. This setting controls which of these resources is actually played
+    when the song is started. If the selected resource is not available, one
+    that is will be chosen instead.
+}
+
+@section{16-bit sound effects}
+@cvar{sound-16bit}
+@default{No}
+@summary{    
+    When this setting is activated, 8-bit sounds are converted to 16-bit before
+    playing. In order for this to be effective you must also choose a sample
+    rate higher than 11025 Hz.
+}
+
+@section{Sound effects sample rate}
+@cvar{sound-rate}
+@default{11025 Hz}
+@summary{    
+    The minimum sample rate for all sound effects. Samples with a smaller rate
+    will be resampled to this rate before playing. To increase the quality of
+    the resampling, activate the 16-bit sound effects option.
+}
+
+@section{Show status of channels}
+@cvar{sound-info}
+@default{No}
+@summary{
+    The status of all sound channels is drawn on screen. This is intended for
+    debugging. The displayed information consists of sample cache size, channel
+    flags, volume, frequency, latest start time, cursor positions, buffer flags
+    and sample information. @cbreak O = Origin @cbr A = Attenuated @cbr E = Emitter
+    @cbr 3 = 3D @cbr P = Playing @cbr R = Repeat @cbr L = Reload
+}
+
+@chapter{Graphics}
+
+@section{Field Of View angle}
+@cvar{rend-camera-fov}
+@default{90}
+@summary{    
+    Adjust the camera's Field Of View angle according to your monitor
+    configuration. If you have a large monitor and view it close by, using a
+    larger FOV angle (around 100 degrees) will result in a more natural game
+    view. With small monitors it's best to stick to 90 degrees or else the fish
+    eye effect may become distracting.
+}
+
+@section{Sky sphere radius}
+@cvar{rend-sky-distance}
+@default{1600}
+@summary{    
+    The sky is composed of two capped hemispheres rendered around the camera
+    location. The sky sphere radius is the radius of these hemispheres. The
+    primary purpose of this setting is to determine how large an impact fog has
+    on the sky. Larger radii will result in a sky with heavier fog.
+}
+
+@section{Shadow visible distance}
+@cvar{rend-shadow-far}
+@default{1000}
+@summary{
+    Maximum distance at which shadows under objects are visible. If the object
+    is farther than this, no shadow will be drawn. Since the shadows are
+    extremely simple, posing little fear of performance loss, it's safe to
+    increase this value as needed.
+}
+
+@chapter{Graphics: Lights}
+
+@section{Blending mode}
+@cvar{rend-light-blend}
+@default{Multiply}
+@summary{    
+    The method used to draw dynamic lights. In the Multiply mode, color from
+    dynamic lights is multiplied with the underlying surface pixels. This
+    allows dark areas to be correctly lit up by the lights. The Add mode is
+    faster but doesn't look as realistic. @cbreak The third mode, Process
+    wo/rendering, is for debugging. In it, all dynamic light polygons are
+    calculated but none are rendered.
+}
+
+@section{Dynamic light radius factor}
+@cvar{rend-light-radius-scale}
+@default{3}
+@summary{    
+    The radius of all dynamic lights is multiplied by this factor. Lights are
+    never larger than the Maximum dynamic light radius, though.
+}
+
+@section{Maximum dynamic light radius}
+@cvar{rend-light-radius-max}
+@default{256}
+@summary{    
+    The maximum radius a dynamic light can have. This is just a limit: to make
+    the lights larger, you also need to increase the Dynamic light radius
+    factor.
+}
+
+@section{Light range compression}
+@cvar{rend-light-compression}
+@default{0}
+@summary{    
+    Sector light range compression. Positive values will brighten dark areas
+    while negative values will darken light areas of the map.
+}
+
+@section{Floor/ceiling glow on walls}
+@cvar{rend-glow-wall}
+@default{Yes}
+@summary{    
+    Glowing floor and ceiling textures will cast a dynamic light on surrounding
+    walls.
+}
+
+@chapter{Graphics: Halos}
+
+@section{Number of flares per halo}
+@cvar{rend-halo}
+@default{5}
+@summary{    
+    Maximum number of lens flares originating from a luminous object. To
+    disable lens flares, set this to None (zero).
+}
+
+@section{Use realistic halos}
+@cvar{rend-halo-realistic}
+@default{Yes}
+@summary{    
+    When enabled, halos are rendered in a more true-to-life way. This also
+    means that secondary lens flares are disabled.
+}
+
+@section{Occlusion fade speed}
+@cvar{rend-halo-occlusion}
+@default{48}
+@summary{    
+    The rate at which a halo changes state from "visible" to "occluded" and
+    vice versa. A small fade speed results in halos that appear and disappear
+    softly, but are visible through walls for a short while before
+    disappearing.
+}
+
+@section{Flare visibility limitation}
+@cvar{rend-halo-secondary-limit}
+@default{1}
+@summary{    
+    Controls when secondary lens flares become visible. They are only visible
+    when the light source is close enough to the camera. The larger the number,
+    the farther away secondary flares are visible.
+}
+
+@section{Z magnification divisor}
+@cvar{rend-halo-zmag-div}
+@default{100}
+@summary{    
+    The higher the number, the smaller lens flares become when the source is
+    far away. Normally halos grow slightly larger as they move away from the
+    camera.
+}
+
+@chapter{Graphics: Textures}
+
+@section{Texture quality}
+@cvar{rend-tex-quality}
+@default{8}
+@summary{    
+    Depending on your system configuration, some textures must be resized so
+    that their dimensions are powers of two. In these instances, this setting
+    controls whether the higher or smaller matching power of two is chosen. At
+    quality zero, all textures are reduced in size, to match the largest power
+    of two smaller than the original size. At quality 8, the resizing is always
+    done upwards.
+}
+
+@section{Smart texture filtering}
+@cvar{rend-tex-filter-smart}
+@default{No}
+@summary{    
+    When enabled the hq2x texture filtering algorithm is used to enlarge all
+    textures as opposed to linear scaling.
+}
+
+@section{Bilinear filtering}
+@summary{    
+    Controls which class(es) of graphics receive bilinear filtering. Disabling
+    bilinear filtering results in "pixelated" textures when up close.
+}
+
+@section{Anisotropic filtering}
+@cvar{rend-tex-filter-anisotropic}
+@default{Best}
+@summary{    
+    When textures are drawn onto surfaces at high angles compared to the
+    camera, bluring is introduced which reduces the overall quality of the
+    visual. Anisotropic filtering can be used to help reduce this bluring.
+    Sample multiplier: 0=Disabled, 1=2x, 2=4x, 3=8x, 4=16x.
+}
+
+@chapter{Graphics: Objects}
+
+@section{3D model visibility limit}
+@cvar{rend-model-distance}
+@default{1500}
+@summary{    
+    Objects farther than this will never be rendered as 3D models.
+}
+
+@section{Align sprites to...}
+@cvar{rend-sprite-align}
+@default{Camera}
+@summary{    
+    This setting controls which direction sprites face. Aligning to camera
+    means the sprites are always upright (to make them appear more 3D) but they
+    will turn to face the camera coordinates. Aligning to view plane resembles
+    the way the sprites were drawn in software. The "limited" options restrict
+    how much the sprite can tilt vertically.
+}
+
+@section{LOD level zero distance}
+@cvar{rend-model-lod}
+@default{256}
+@summary{    
+    The distance where LOD level zero becomes LOD level one. Only affects 3D
+    models that have Level Of Detail information (DMDs).
+}
+
+@chapter{Graphics: Particles}
+
+@section{Near diffusion factor}
+@cvar{rend-particle-diffuse}
+@default{4}
+@summary{    
+    Particles may cause excessive overdraw if many are visible just in front of
+    the camera. This setting makes large particles near the camera more
+    transparent and ultimately invisible. The larger the diffuse factor, the
+    smaller particles will be affected. The end result is that particles will
+    not be visible near the camera. Increase the setting if framerate drops
+    alarmingly when in smoke.
+}
+
+@section{Near clip distance}
+@cvar{rend-particle-visible-near}
+@default{Disabled}
+@summary{    
+    Particles that are closer to the camera than this are not drawn at all.
+}
+
+@chapter{Network}
+
+@section{Cl-to-sv pos transmit tics}
+@cvar{client-pos-interval}
+@default{10}
+@summary{    
+    The client periodically sends its coordinates to the server in order to
+    keep it synchronized with the player position the client perceives as
+    correct. The interval between the coordinate transmissions as a number of
+    35 Hz tics. Use a larger interval with low-bandwidth connections (can lead
+    to more warping, though).
+}
+
+@section{Server login password}
+@cvar{server-password}
+@summary{    
+    If a client wishes to make a remote console connection to the server it
+    must specify this password. If the password is empty, clients can issue
+    console commands on the server without specifying a password. Clients use
+    the "login" and "logout" commands to begin and end a remote connection.
+}
+
+@section{Frame interval tics}
+@cvar{server-frame-interval}
+@default{1}
+@summary{    
+    Number of 35 Hz ticks between frames sent to clients. Only for the server.
+    Small intervals require more bandwidth but result in smoother animation and
+    other world events. Use larger intervals (2..5) with low-bandwidth
+    connections.
+}
+
+@chapter{Console}
+
+@section{Silent console variables}
+@cvar{con-var-silent}
+@default{No}
+@summary{    
+    Normally when the value of a console variable is changed, its name and the
+    new value get printed in the console. If the variables are silent, this
+    will not happen and the value can be changed without anything being printed
+    as a confirmation.
+}
+
+@section{Command completion with Tab}
+@cvar{con-completion}
+@default{List with values}
+@summary{    
+    The Tab key is used to complete words in the console. The console knows how
+    to complete command, variable and alias names. The completion can work in
+    two ways. In the "List with values" mode, pressing Tab will complete the
+    unambiguous part of the word and print a list of possible completions.
+    Variables will be printed with their values. In the "Cycle" mode, Tab is
+    used to cycle through all the choices.
+}

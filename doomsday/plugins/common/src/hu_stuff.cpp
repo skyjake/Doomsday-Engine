@@ -1385,7 +1385,7 @@ static void drawFogEffect(void)
 void Hu_Drawer(void)
 {
     boolean menuOrMessageVisible = (Hu_MenuIsVisible() || Hu_IsMessageActive());
-    boolean pauseGraphicVisible = paused && !FI_StackActive();
+    boolean pauseGraphicVisible = Pause_IsUserPaused() && !FI_StackActive();
 
     if(!menuOrMessageVisible && !pauseGraphicVisible)
         return;

@@ -36,6 +36,8 @@ public:
     void setTitle(QString const &title);
 
     bool isConnected() const;
+
+    // Qt events.
     void closeEvent(QCloseEvent *);
 
 signals:

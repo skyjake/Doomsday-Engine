@@ -65,7 +65,12 @@ void            NetSv_LoadReply(int plnum, int console);
 void            NetSv_FragsForAll(player_t* player);
 void            NetSv_KillMessage(player_t* killer, player_t* fragged, boolean stomping);
 void            NetSv_UpdateGameConfigDescription(void);
-void            NetSv_Paused(boolean isPaused);
+
+/**
+ * Inform all clients about a change in the 'pausedness' of a game.
+ */
+void NetSv_Paused(int pauseState);
+
 void            NetSv_DoCheat(int player, Reader *reader);
 void            NetSv_ExecuteCheat(int player, const char* command);
 void            NetSv_DoAction(int player, Reader *reader);

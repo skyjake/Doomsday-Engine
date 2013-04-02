@@ -121,13 +121,13 @@ static dt_mobj_t dummyZeroMobj;
  */
 void Sv_InitPools(void)
 {
-    uint                i;
-    uint                startTime;
+    de::Time startedAt;
+    uint i;
 
     // Clients don't register anything.
     if(isClient) return;
 
-    startTime = Timer_RealMilliseconds();
+    LOG_AS("Sv_InitPools");
 
     // Set base priority scores for all the delta types.
     for(i = 0; i < NUM_DELTA_TYPES; ++i)
@@ -170,8 +170,7 @@ void Sv_InitPools(void)
     Sv_RegisterWorld(&initialRegister, true);
 
     // How much time did we spend?
-    DEBUG_Message(("Sv_InitPools: World registered, done in %.2f seconds.\n",
-                   (Timer_RealMilliseconds() - startTime) / 1000.0f));
+    LOG_DEBUG("World registered in %.2f seconds.") << startedAt.since();
 }
 
 /**

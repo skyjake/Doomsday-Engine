@@ -72,6 +72,12 @@ DENG2_PIMPL(Texture)
         self.clearVariants();
 #endif
     }
+
+    /// Notify iterested parties of a change in world dimensions.
+    void notifyDimensionsChanged()
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE(DimensionsChange, i) i->textureDimensionsChanged(self);
+    }
 };
 
 Texture::Texture(TextureManifest &manifest) : d(new Instance(this, manifest))
@@ -131,6 +137,7 @@ void Texture::setDimensions(Vector2i const &_newDimensions)
     if(d->dimensions != newDimensions)
     {
         d->dimensions = newDimensions;
+        d->notifyDimensionsChanged();
     }
 }
 
@@ -139,6 +146,7 @@ void Texture::setWidth(int newWidth)
     if(d->dimensions.x != newWidth)
     {
         d->dimensions.x = newWidth;
+        d->notifyDimensionsChanged();
     }
 }
 
@@ -147,6 +155,7 @@ void Texture::setHeight(int newHeight)
     if(d->dimensions.y != newHeight)
     {
         d->dimensions.y = newHeight;
+        d->notifyDimensionsChanged();
     }
 }
 
@@ -195,7 +204,8 @@ Texture::Variant *Texture::chooseVariant(ChooseVariantMethod method,
             break;
         }
     }
-# if _DEBUG
+
+#ifdef DENG_DEBUG
     // 07/04/2011 dj: The "fuzzy selection" features are yet to be implemented.
     // As such, the following should NOT return a valid variant iff the rest of
     // this subsystem has been implemented correctly.
@@ -205,12 +215,20 @@ Texture::Variant *Texture::chooseVariant(ChooseVariantMethod method,
     {
         DENG_ASSERT(!chooseVariant(FuzzyMatchSpec, spec));
     }
-# endif
+#endif
 
     if(!canCreate) return 0;
 
     d->variants.push_back(new Variant(*this, spec));
     return d->variants.back();
+}
+
+Texture::Variant *Texture::prepareVariant(texturevariantspecification_t const &spec)
+{
+    Variant *variant = chooseVariant(MatchSpec, spec, true /*can create*/);
+    DENG2_ASSERT(variant);
+    variant->prepare();
+    return variant;
 }
 
 Texture::Variants const &Texture::variants() const
@@ -223,16 +241,19 @@ void Texture::clearVariants()
     while(!d->variants.isEmpty())
     {
         Texture::Variant *variant = d->variants.takeFirst();
-# ifdef _DEBUG
+
+#ifdef DENG_DEBUG
         if(variant->glName())
         {
+            String textualVariantSpec = variant->spec().asText();
+
             LOG_AS("Texture::clearVariants")
             LOG_WARNING("GLName (%i) still set for a variant of \"%s\" [%p]. Perhaps it wasn't released?")
-                << variant->glName() << d->manifest.composeUri() << de::dintptr(this);
-
-            GL_PrintTextureVariantSpecification(variant->spec());
+                << variant->glName() << d->manifest.composeUri()
+                << de::dintptr(this) << textualVariantSpec;
         }
-# endif
+#endif
+
         delete variant;
     }
 }

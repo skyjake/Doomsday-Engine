@@ -579,7 +579,7 @@ void FIPage_Drawer(fi_page_t *p)
 
     // The 3D projection matrix.
     // We're assuming pixels are squares.
-    /*float aspect = theWindow->width / (float) theWindow->height;
+    /*float aspect = DENG_WINDOW->width / (float) DENG_WINDOW->height;
     yfov = 2 * RAD2DEG(atan(tan(DEG2RAD(90) / 2) / aspect));
     GL_InfinitePerspective(yfov, aspect, .05f);*/
 
@@ -1042,7 +1042,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
                         ms.width() + TS_GENERAL(texSpec).border * 2,
                         ms.height() + TS_GENERAL(texSpec).border * 2, 0);
                 V2f_Set(rotateCenter, dimensions[VX] / 2, dimensions[VY] / 2);
-                ms.texture(MTU_PRIMARY).coords(&texScale[VX], &texScale[VY]);
+                ms.texture(MTU_PRIMARY).glCoords(&texScale[VX], &texScale[VY]);
 
                 Texture const &texture = ms.texture(MTU_PRIMARY).generalCase();
                 de::Uri uri = texture.manifest().composeUri();
@@ -1063,9 +1063,9 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
             {
                 Texture &tex = manifest.texture();
                 texturevariantspecification_t &texSpec =
-                    *Rend_PatchTextureSpec(0 | (tex.isFlagged(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
-                                             | (tex.isFlagged(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
-                GL_BindTexture(GL_PrepareTexture(tex, texSpec));
+                    Rend_PatchTextureSpec(0 | (tex.isFlagged(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
+                                            | (tex.isFlagged(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
+                GL_BindTexture(tex.prepareVariant(texSpec));
                 glEnable(GL_TEXTURE_2D);
                 textureEnabled = true;
 

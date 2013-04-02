@@ -1,0 +1,6 @@
+@summary{
+    Take a screenshot.
+}
+@description{
+    The screenshot is saved into the runtime directory.
+}

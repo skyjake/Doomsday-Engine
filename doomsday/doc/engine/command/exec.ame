@@ -1,0 +1,6 @@
+@summary{
+    Loads and executes a file containing console commands.
+}
+@description{
+    Params: exec (file) ... @cbr For example, 'exec "myconfig.cfg"'.
+}

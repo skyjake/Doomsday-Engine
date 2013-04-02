@@ -1,0 +1,16 @@
+# libhexen: Values
+# 
+# The strings from all Values definition blocks are merged together.
+# This means you don't have to add all your values here; they can be
+# in a Values block in another file.
+
+Header { Version = 5; }
+
+Values {
+  Multiplayer {
+    Reborn {
+      Green mana = "25";  # Mana given when reborn in netgame.
+      Blue mana = "25";  
+    };
+  };
+};

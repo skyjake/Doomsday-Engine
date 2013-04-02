@@ -205,7 +205,8 @@ static void processTask(deferredtask_t *task)
     {
     case DTT_UPLOAD_TEXTURECONTENT:
         DENG2_ASSERT(task->data);
-        GL_UploadTextureContent(*reinterpret_cast<texturecontent_t *>(task->data));
+        GL_UploadTextureContent(*reinterpret_cast<texturecontent_t *>(task->data),
+                                Immediate);
         break;
 
     case DTT_SET_VSYNC:
@@ -433,6 +434,8 @@ void GL_ProcessDeferredTasks(uint timeOutMilliSeconds)
 
 void GL_DeferTextureUpload(struct texturecontent_s const *content)
 {
+    if(novideo) return;
+
     // Defer this operation. Need to make a copy.
     enqueueTask(DTT_UPLOAD_TEXTURECONTENT, GL_ConstructTextureContentCopy(content));
 }

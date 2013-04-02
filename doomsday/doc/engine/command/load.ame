@@ -1,0 +1,7 @@
+@summary{
+    Load a complete game or one or more data files (e.g., a WAD or a lump).
+}
+@description{
+    @params{load (name) ...} @cbr
+    @example{@code{load (gamename)} or @code{load mylevel.wad}}
+}

@@ -204,7 +204,7 @@ void P_CalcHeight(player_t* plr)
 
 #if __JHEXEN__
     // How about a bit of quake?
-    if(localQuakeHappening[plrNum] && !P_IsPaused())
+    if(localQuakeHappening[plrNum] && !Pause_IsPaused())
     {
         int intensity = localQuakeHappening[plrNum];
         plr->viewOffset[VX] = (coord_t) ((M_Random() % (intensity << 2)) - (intensity << 1));

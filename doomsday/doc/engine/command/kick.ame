@@ -1,0 +1,6 @@
+@summary{
+    Kick client out of the game (server only).
+}
+@description{
+    Params: kick (playernum) @cbr For example, 'kick 1'.
+}
