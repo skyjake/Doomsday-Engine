@@ -72,6 +72,11 @@ typedef struct skyfix_s {
 class GameMap
 {
 public:
+    typedef QList<HEdge *> HEdges;
+    typedef QList<BspNode *> BspNodes;
+    typedef QList<BspLeaf *> BspLeafs;
+
+public:
     Uri *uri;
     char uniqueId[256];
 
@@ -106,9 +111,9 @@ public:
     de::MapElement *bsp;
 
     /// BSP object LUTs:
-    de::MapElementList<HEdge> hedges;
-    de::MapElementList<BspNode> bspNodes;
-    de::MapElementList<BspLeaf> bspLeafs;
+    HEdges hedges;
+    BspNodes bspNodes;
+    BspLeafs bspLeafs;
 
     EntityDatabase *entityDatabase;
 
@@ -154,11 +159,11 @@ public:
 
     uint lineCount() const { return lines.size(); }
 
-    uint hedgeCount() const { return hedges.size(); }
+    uint hedgeCount() const { return hedges.count(); }
 
-    uint bspNodeCount() const { return bspNodes.size(); }
+    uint bspNodeCount() const { return bspNodes.count(); }
 
-    uint bspLeafCount() const { return bspLeafs.size(); }
+    uint bspLeafCount() const { return bspLeafs.count(); }
 
 #ifdef __CLIENT__
 

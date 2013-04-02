@@ -68,7 +68,7 @@ static int rendBspLeaf(BspLeaf *bspLeaf, void * /*parameters*/)
 {
     if(bspLeaf->validCount() != validCount)
     {
-        float const scale = de::max(bmapDebugSize, 1);
+        float const scale = de::max(bmapDebugSize, 1.f);
         float const width = (DENG_WINDOW->width() / 16) / scale;
         float length, dx, dy, normal[2], unit[2];
         vec2f_t start, end;

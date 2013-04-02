@@ -583,8 +583,8 @@ static void buildSectorBspLeafLists(GameMap &map)
         uint count = 0;
         for(uint k = 0; k < map.bspLeafCount(); ++k)
         {
-            BspLeaf &bspLeaf = map.bspLeafs[k];
-            if(bspLeaf.sectorPtr() == &sector)
+            BspLeaf *bspLeaf = map.bspLeafs[k];
+            if(bspLeaf->sectorPtr() == &sector)
                 ++count;
         }
 
@@ -595,11 +595,11 @@ static void buildSectorBspLeafLists(GameMap &map)
 
         for(uint k = 0; k < map.bspLeafCount(); ++k)
         {
-            BspLeaf &bspLeaf = map.bspLeafs[k];
-            if(bspLeaf.sectorPtr() == &sector)
+            BspLeaf *bspLeaf = map.bspLeafs[k];
+            if(bspLeaf->sectorPtr() == &sector)
             {
                 // Ownership of the BSP leaf is not given to the sector.
-                sector._bspLeafs.append(&bspLeaf);
+                sector._bspLeafs.append(bspLeaf);
             }
         }
     }
@@ -1349,7 +1349,7 @@ static void collateBspLeafHEdges(GameMap &map, BspBuilder &builder, BspLeaf &lea
         builder.take(hedge);
 
         // Add this HEdge to the LUT.
-        hedge->_origIndex = map.hedges.count();
+        hedge->_origIndex = map.hedgeCount();
         map.hedges.append(hedge);
 
         if(hedge->hasLine())
