@@ -119,16 +119,6 @@ public:
 
     EntityDatabase *entityDatabase;
 
-private:
-    struct generators_s *_generators;
-
-    PlaneSet _trackedPlanes;
-    SurfaceSet _scrollingSurfaces;
-#ifdef __CLIENT__
-    SurfaceSet _decoratedSurfaces;
-    SurfaceSet _glowingSurfaces;
-#endif
-
 public:
     struct blockmap_s *mobjBlockmap;
     struct blockmap_s *polyobjBlockmap;
@@ -142,13 +132,6 @@ public:
     coord_t _effectiveGravity; // The effective gravity for this map.
 
     int _ambientLightLevel; // Ambient lightlevel for the current map.
-
-    skyfix_t _skyFix[2]; // [floor, ceiling]
-
-    /// Current LOS trace state.
-    /// @todo Refactor to support concurrent traces.
-    TraceOpening _traceOpening;
-    divline_t _traceLine;
 
 public:
     GameMap();
@@ -658,8 +641,6 @@ public: /// @todo Make private:
     void initSkyFix();
 
 #ifdef __CLIENT__
-    void addSurfaceToLists(Surface &suf);
-
     void buildSurfaceLists();
 #endif
 

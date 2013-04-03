@@ -34,11 +34,136 @@
 /// Size of Blockmap blocks in map units. Must be an integer power of two.
 #define MAPBLOCKUNITS               (128)
 
+/// $smoothmatoffset: Maximum speed for a smoothed material offset.
+#define MAX_SMOOTH_MATERIAL_MOVE    (8)
+
 using namespace de;
 
 DENG2_PIMPL(GameMap)
 {
-    Instance(Public *i) : Base(i) {}
+    struct generators_s *generators;
+
+    PlaneSet trackedPlanes;
+    SurfaceSet scrollingSurfaces;
+#ifdef __CLIENT__
+    SurfaceSet decoratedSurfaces;
+    SurfaceSet glowingSurfaces;
+#endif
+
+    skyfix_t skyFix[2]; // [floor, ceiling]
+
+    // Current LOS trace state.
+    /// @todo Does not belong here.
+    TraceOpening traceOpening;
+    divline_t traceLine;
+
+    Instance(Public *i)
+        : Base(i),
+          generators(0)
+    {
+        std::memset(skyFix,        0, sizeof(skyFix));
+        std::memset(&traceOpening, 0, sizeof(traceOpening));
+        std::memset(&traceLine,    0, sizeof(traceLine));
+    }
+
+#ifdef __CLIENT__
+
+    void addSurfaceToLists(Surface &suf)
+    {
+        if(!suf.hasMaterial()) return;
+
+        if(suf.material().hasGlow())
+        {
+            glowingSurfaces.insert(&suf);
+        }
+
+        if(suf.material().isDecorated())
+        {
+            decoratedSurfaces.insert(&suf);
+        }
+    }
+
+#endif // __CLIENT__
+
+    void updateMapSkyFixForSector(Sector &sector)
+    {
+        if(!sector.lineCount()) return;
+
+        bool skyFloor = sector.floorSurface().hasSkyMaskedMaterial();
+        bool skyCeil  = sector.ceilingSurface().hasSkyMaskedMaterial();
+
+        if(!skyFloor && !skyCeil) return;
+
+        if(skyCeil)
+        {
+            // Adjust for the plane height.
+            if(sector.ceiling().visHeight() > self.skyFixCeiling())
+            {
+                // Must raise the skyfix ceiling.
+                self.setSkyFixCeiling(sector.ceiling().visHeight());
+            }
+
+            // Check that all the mobjs in the sector fit in.
+            for(mobj_t *mo = sector.firstMobj(); mo; mo = mo->sNext)
+            {
+                coord_t extent = mo->origin[VZ] + mo->height;
+
+                if(extent > self.skyFixCeiling())
+                {
+                    // Must raise the skyfix ceiling.
+                    self.setSkyFixCeiling(extent);
+                }
+            }
+        }
+
+        if(skyFloor)
+        {
+            // Adjust for the plane height.
+            if(sector.floor().visHeight() < self.skyFixFloor())
+            {
+                // Must lower the skyfix floor.
+                self.setSkyFixFloor(sector.floor().visHeight());
+            }
+        }
+
+        // Update for middle textures on two sided lines which intersect the
+        // floor and/or ceiling of their front and/or back sectors.
+        foreach(LineDef *line, sector.lines())
+        {
+            // Must be twosided.
+            if(!line->hasFrontSideDef() || !line->hasBackSideDef())
+                continue;
+
+            int side = line->frontSectorPtr() == &sector? FRONT : BACK;
+            SideDef const &sideDef = line->sideDef(side);
+
+            if(!sideDef.middle().hasMaterial())
+                continue;
+
+            if(skyCeil)
+            {
+                coord_t const top = sector.ceiling().visHeight() + sideDef.middle().visMaterialOrigin()[VY];
+
+                if(top > self.skyFixCeiling())
+                {
+                    // Must raise the skyfix ceiling.
+                    self.setSkyFixCeiling(top);
+                }
+            }
+
+            if(skyFloor)
+            {
+                coord_t const bottom = sector.floor().visHeight() +
+                    sideDef.middle().visMaterialOrigin()[VY] - sideDef.middle().material().height();
+
+                if(bottom < self.skyFixFloor())
+                {
+                    // Must lower the skyfix floor.
+                    self.setSkyFixFloor(bottom);
+                }
+            }
+        }
+    }
 };
 
 GameMap::GameMap() : d(new Instance(this))
@@ -46,7 +171,6 @@ GameMap::GameMap() : d(new Instance(this))
     std::memset(_oldUniqueId, 0, sizeof(_oldUniqueId));
     std::memset(&aaBox, 0, sizeof(aaBox));
     std::memset(&thinkers, 0, sizeof(thinkers));
-    _generators = 0;
     std::memset(&clMobjHash, 0, sizeof(clMobjHash));
     std::memset(&clActivePlanes, 0, sizeof(clActivePlanes));
     std::memset(&clActivePolyobjs, 0, sizeof(clActivePolyobjs));
@@ -62,9 +186,6 @@ GameMap::GameMap() : d(new Instance(this))
     _globalGravity = 0;
     _effectiveGravity = 0;
     _ambientLightLevel = 0;
-    std::memset(_skyFix, 0, sizeof(_skyFix));
-    std::memset(&_traceOpening, 0, sizeof(_traceOpening));
-    std::memset(&_traceLine, 0, sizeof(_traceLine));
 }
 
 MapElement *GameMap::bspRoot() const
@@ -98,26 +219,35 @@ void GameMap::updateBounds()
 
 SurfaceSet &GameMap::decoratedSurfaces()
 {
-    return _decoratedSurfaces;
+    return d->decoratedSurfaces;
 }
 
 SurfaceSet &GameMap::glowingSurfaces()
 {
-    return _glowingSurfaces;
+    return d->glowingSurfaces;
 }
 
-void GameMap::addSurfaceToLists(Surface &suf)
+void GameMap::buildSurfaceLists()
 {
-    if(!suf.hasMaterial()) return;
+    d->decoratedSurfaces.clear();
+    d->glowingSurfaces.clear();
 
-    if(suf.material().hasGlow())
+    foreach(SideDef *sideDef, _sideDefs)
     {
-        _glowingSurfaces.insert(&suf);
+        d->addSurfaceToLists(sideDef->middle());
+        d->addSurfaceToLists(sideDef->top());
+        d->addSurfaceToLists(sideDef->bottom());
     }
 
-    if(suf.material().isDecorated())
+    foreach(Sector *sector, _sectors)
     {
-        _decoratedSurfaces.insert(&suf);
+        // Skip sectors with no lines as their planes will never be drawn.
+        if(!sector->lineCount()) continue;
+
+        foreach(Plane *plane, sector->planes())
+        {
+            d->addSurfaceToLists(plane->surface());
+        }
     }
 }
 
@@ -151,12 +281,12 @@ void GameMap::setGravity(coord_t newGravity)
 
 divline_t const &GameMap::traceLine() const
 {
-    return _traceLine;
+    return d->traceLine;
 }
 
 TraceOpening const &GameMap::traceOpening() const
 {
-    return _traceOpening;
+    return d->traceOpening;
 }
 
 void GameMap::setTraceOpening(LineDef &line)
@@ -164,7 +294,7 @@ void GameMap::setTraceOpening(LineDef &line)
     // Is the linedef part of this map?
     if(lineIndex(&line) < 0) return; // Odd...
 
-    line.configureTraceOpening(_traceOpening);
+    line.configureTraceOpening(d->traceOpening);
 }
 
 int GameMap::ambientLightLevel() const
@@ -172,16 +302,32 @@ int GameMap::ambientLightLevel() const
     return _ambientLightLevel;
 }
 
+void GameMap::initSkyFix()
+{
+    Time begunAt;
+
+    d->skyFix[Plane::Floor].height   = DDMAXFLOAT;
+    d->skyFix[Plane::Ceiling].height = DDMINFLOAT;
+
+    // Update for sector plane heights and mobjs which intersect the ceiling.
+    foreach(Sector *sector, _sectors)
+    {
+        d->updateMapSkyFixForSector(*sector);
+    }
+
+    LOG_INFO(String("GameMap::initSkyFix: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+}
+
 coord_t GameMap::skyFix(bool ceiling) const
 {
     Plane::Type plane = ceiling? Plane::Ceiling : Plane::Floor;
-    return _skyFix[plane].height;
+    return d->skyFix[plane].height;
 }
 
 void GameMap::setSkyFix(bool ceiling, coord_t height)
 {
     Plane::Type plane = ceiling? Plane::Ceiling : Plane::Floor;
-    _skyFix[plane].height = height;
+    d->skyFix[plane].height = height;
 }
 
 int GameMap::vertexIndex(Vertex const *vtx) const
@@ -328,11 +474,11 @@ void GameMap::initPolyobjs()
 Generators *GameMap::generators()
 {
     // Time to initialize a new collection?
-    if(!_generators)
+    if(!d->generators)
     {
-        _generators = Generators_New(sectorCount());
+        d->generators = Generators_New(sectorCount());
     }
-    return _generators;
+    return d->generators;
 }
 
 void GameMap::initNodePiles()
@@ -884,15 +1030,16 @@ int GameMap::allLinesBoxIterator(AABoxd const &box,
     return P_LinesBoxIterator(&box, callback, parameters);
 }
 
-static int traverseCellPath2(Blockmap* bmap, uint const fromBlock[2],
-    uint const toBlock[2], coord_t const from[2], coord_t const to[2],
-    int (*callback) (uint const block[2], void* parameters), void* parameters)
+static int traverseCellPath2(Blockmap *bmap, uint const fromBlock[2],
+    uint const toBlock[2], const_pvec2d_t from, const_pvec2d_t to,
+    int (*callback) (uint const block[2], void *parameters), void *parameters)
 {
+    DENG2_ASSERT(bmap != 0);
+
     int result = false; // Continue iteration.
     coord_t intercept[2], delta[2], partial;
     uint count, block[2];
     int stepDir[2];
-    DENG2_ASSERT(bmap);
 
     if(toBlock[VX] > fromBlock[VX])
     {
@@ -970,25 +1117,23 @@ static int traverseCellPath2(Blockmap* bmap, uint const fromBlock[2],
     return false; // Continue iteration.
 }
 
-static int traverseCellPath(GameMap* map, Blockmap* bmap, coord_t const from_[2],
-    coord_t const to_[2], int (*callback) (uint const block[2], void* parameters),
-    void* parameters)
+static int traverseCellPath(divline_t &traceLine, Blockmap *bmap,
+    const_pvec2d_t from_, const_pvec2d_t to_,
+    int (*callback) (uint const block[2], void *parameters), void *parameters = 0)
 {
+    DENG2_ASSERT(bmap != 0);
+
     // Constant terms implicitly defined by DOOM's original version of this
     // algorithm (we must honor these fudge factors for compatibility).
-    const coord_t epsilon    = FIX2FLT(FRACUNIT);
-    const coord_t unitOffset = FIX2FLT(FRACUNIT);
-    uint fromBlock[2], toBlock[2];
-    vec2d_t from, to, min, max;
-    coord_t dX, dY;
-    DENG2_ASSERT(bmap);
+    coord_t const epsilon    = FIX2FLT(FRACUNIT);
+    coord_t const unitOffset = FIX2FLT(FRACUNIT);
 
-    V2d_Copy(min, Blockmap_Bounds(bmap)->min);
-    V2d_Copy(max, Blockmap_Bounds(bmap)->max);
+    vec2d_t min; V2d_Copy(min, Blockmap_Bounds(bmap)->min);
+    vec2d_t max; V2d_Copy(max, Blockmap_Bounds(bmap)->max);
 
     // We may need to clip and/or fudge these points.
-    V2d_Copy(from, from_);
-    V2d_Copy(to, to_);
+    vec2d_t from; V2d_Copy(from, from_);
+    vec2d_t to;   V2d_Copy(to, to_);
 
     if(!(from[VX] >= min[VX] && from[VX] <= max[VX] &&
          from[VY] >= min[VY] && from[VY] <= max[VY]))
@@ -1010,15 +1155,15 @@ static int traverseCellPath(GameMap* map, Blockmap* bmap, coord_t const from_[2]
     // Lines should not be perfectly parallel to a blockmap axis.
     // We honor these so-called fudge factors for compatible behavior
     // with DOOM's algorithm.
-    dX = (from[VX] - Blockmap_Origin(bmap)[VX]) / Blockmap_CellWidth(bmap);
-    dY = (from[VY] - Blockmap_Origin(bmap)[VY]) / Blockmap_CellHeight(bmap);
+    coord_t dX = (from[VX] - Blockmap_Origin(bmap)[VX]) / Blockmap_CellWidth(bmap);
+    coord_t dY = (from[VY] - Blockmap_Origin(bmap)[VY]) / Blockmap_CellHeight(bmap);
     if(INRANGE_OF(dX, 0, epsilon)) from[VX] += unitOffset;
     if(INRANGE_OF(dY, 0, epsilon)) from[VY] += unitOffset;
 
-    map->_traceLine.origin[VX] = FLT2FIX(from[VX]);
-    map->_traceLine.origin[VY] = FLT2FIX(from[VY]);
-    map->_traceLine.direction[VX] = FLT2FIX(to[VX] - from[VX]);
-    map->_traceLine.direction[VY] = FLT2FIX(to[VY] - from[VY]);
+    traceLine.origin[VX] = FLT2FIX(from[VX]);
+    traceLine.origin[VY] = FLT2FIX(from[VY]);
+    traceLine.direction[VX] = FLT2FIX(to[VX] - from[VX]);
+    traceLine.direction[VY] = FLT2FIX(to[VY] - from[VY]);
 
     /**
      * It is possible that one or both points are outside the blockmap.
@@ -1055,8 +1200,8 @@ static int traverseCellPath(GameMap* map, Blockmap* bmap, coord_t const from_[2]
     }
 
     // Clipping already applied above, so we don't need to check it again...
-    Blockmap_Cell(bmap, fromBlock, from);
-    Blockmap_Cell(bmap, toBlock, to);
+    uint fromBlock[2]; Blockmap_Cell(bmap, fromBlock, from);
+    uint toBlock[2];   Blockmap_Cell(bmap, toBlock, to);
 
     V2d_Subtract(from, from, min);
     V2d_Subtract(to, to, min);
@@ -1077,28 +1222,24 @@ static int iteratePolyobjLines(Polyobj *po, void *parameters = 0)
 
 static int collectPolyobjLineIntercepts(uint const block[2], void *parameters)
 {
-    GameMap *map = (GameMap *)parameters;
-    DENG_ASSERT(map != 0 && map->polyobjBlockmap != 0);
+    Blockmap *polyobjBlockmap = (Blockmap *)parameters;
     iteratepolyobjlines_params_t iplParams;
-    iplParams.callback   = PIT_AddLineDefIntercepts;
-    iplParams.parms = 0;
-    return iterateCellPolyobjs(*map->polyobjBlockmap, block,
+    iplParams.callback = PIT_AddLineDefIntercepts;
+    iplParams.parms    = 0;
+    return iterateCellPolyobjs(*polyobjBlockmap, block,
                                iteratePolyobjLines, (void *)&iplParams);
 }
 
 static int collectLineIntercepts(uint const block[2], void *parameters)
 {
-    GameMap *map = (GameMap *)parameters;
-    DENG_ASSERT(map != 0 && map->lineBlockmap != 0);
-    return iterateCellLines(*map->lineBlockmap, block,
-                            PIT_AddLineDefIntercepts);
+    Blockmap *lineBlockmap = (Blockmap *)parameters;
+    return iterateCellLines(*lineBlockmap, block, PIT_AddLineDefIntercepts);
 }
 
 static int collectMobjIntercepts(uint const block[2], void *parameters)
 {
-    GameMap *map = (GameMap *)parameters;
-    DENG_ASSERT(map != 0 && map->mobjBlockmap != 0);
-    return iterateCellMobjs(*map->mobjBlockmap, block, PIT_AddMobjIntercepts);
+    Blockmap *mobjBlockmap = (Blockmap *)parameters;
+    return iterateCellMobjs(*mobjBlockmap, block, PIT_AddMobjIntercepts);
 }
 
 int GameMap::pathTraverse(const_pvec2d_t from, const_pvec2d_t to, int flags,
@@ -1113,13 +1254,20 @@ int GameMap::pathTraverse(const_pvec2d_t from, const_pvec2d_t to, int flags,
     {
         if(!_polyobjs.isEmpty())
         {
-            traverseCellPath(this, polyobjBlockmap, from, to, collectPolyobjLineIntercepts, (void *)this);
+            DENG_ASSERT(polyobjBlockmap != 0);
+            traverseCellPath(d->traceLine, polyobjBlockmap, from, to,
+                             collectPolyobjLineIntercepts, (void *)polyobjBlockmap);
         }
-        traverseCellPath(this, lineBlockmap, from, to, collectLineIntercepts, (void *)this);
+
+        DENG_ASSERT(lineBlockmap != 0);
+        traverseCellPath(d->traceLine, lineBlockmap, from, to, collectLineIntercepts,
+                         (void *)lineBlockmap);
     }
     if(flags & PT_ADDMOBJS)
     {
-        traverseCellPath(this, mobjBlockmap, from, to, collectMobjIntercepts, (void *)this);
+        DENG_ASSERT(mobjBlockmap != 0);
+        traverseCellPath(d->traceLine, mobjBlockmap, from, to, collectMobjIntercepts,
+                         (void *)mobjBlockmap);
     }
 
     // Step #2: Process sorted intercepts.
@@ -1138,4 +1286,164 @@ BspLeaf *GameMap::bspLeafAtPoint(const_pvec2d_t const point)
         bspElement = node.childPtr(side);
     }
     return bspElement->castTo<BspLeaf>();
+}
+
+void GameMap::lerpScrollingSurfaces(bool resetNextViewer)
+{
+    SurfaceSet::iterator it = d->scrollingSurfaces.begin();
+    while(it != d->scrollingSurfaces.end())
+    {
+        Surface &suf = **it;
+
+        if(resetNextViewer)
+        {
+            // Reset the material offset trackers.
+            // X Offset.
+            suf._visOffsetDelta[0] = 0;
+            suf._oldOffset[0][0] = suf._oldOffset[0][1] = suf._offset[0];
+
+            // Y Offset.
+            suf._visOffsetDelta[1] = 0;
+            suf._oldOffset[1][0] = suf._oldOffset[1][1] = suf._offset[1];
+
+#ifdef __CLIENT__
+            suf.markAsNeedingDecorationUpdate();
+#endif
+
+            it++;
+        }
+        // While the game is paused there is no need to calculate any
+        // visual material offsets.
+        else //if(!clientPaused)
+        {
+            // Set the visible material offsets.
+            // X Offset.
+            suf._visOffsetDelta[0] =
+                suf._oldOffset[0][0] * (1 - frameTimePos) +
+                        suf._offset[0] * frameTimePos - suf._offset[0];
+
+            // Y Offset.
+            suf._visOffsetDelta[1] =
+                suf._oldOffset[1][0] * (1 - frameTimePos) +
+                        suf._offset[1] * frameTimePos - suf._offset[1];
+
+            // Visible material offset.
+            suf._visOffset[0] = suf._offset[0] + suf._visOffsetDelta[0];
+            suf._visOffset[1] = suf._offset[1] + suf._visOffsetDelta[1];
+
+#ifdef __CLIENT__
+            suf.markAsNeedingDecorationUpdate();
+#endif
+
+            // Has this material reached its destination?
+            if(suf._visOffset[0] == suf._offset[0] && suf._visOffset[1] == suf._offset[1])
+            {
+                it = d->scrollingSurfaces.erase(it);
+            }
+            else
+            {
+                it++;
+            }
+        }
+    }
+}
+
+void GameMap::updateScrollingSurfaces()
+{
+    foreach(Surface *surface, d->scrollingSurfaces)
+    {
+        // X Offset
+        surface->_oldOffset[0][0] = surface->_oldOffset[0][1];
+        surface->_oldOffset[0][1] = surface->_offset[0];
+
+        if(surface->_oldOffset[0][0] != surface->_oldOffset[0][1])
+        {
+            if(de::abs(surface->_oldOffset[0][0] - surface->_oldOffset[0][1]) >=
+               MAX_SMOOTH_MATERIAL_MOVE)
+            {
+                // Too fast: make an instantaneous jump.
+                surface->_oldOffset[0][0] = surface->_oldOffset[0][1];
+            }
+        }
+
+        // Y Offset
+        surface->_oldOffset[1][0] = surface->_oldOffset[1][1];
+        surface->_oldOffset[1][1] = surface->_offset[1];
+        if(surface->_oldOffset[1][0] != surface->_oldOffset[1][1])
+        {
+            if(de::abs(surface->_oldOffset[1][0] - surface->_oldOffset[1][1]) >=
+               MAX_SMOOTH_MATERIAL_MOVE)
+            {
+                // Too fast: make an instantaneous jump.
+                surface->_oldOffset[1][0] = surface->_oldOffset[1][1];
+            }
+        }
+    }
+}
+
+SurfaceSet &GameMap::scrollingSurfaces()
+{
+    return d->scrollingSurfaces;
+}
+
+void GameMap::lerpTrackedPlanes(bool resetNextViewer)
+{
+    if(resetNextViewer)
+    {
+        // Reset the plane height trackers.
+        foreach(Plane *plane, d->trackedPlanes)
+        {
+            plane->resetVisHeight();
+        }
+
+        // Tracked movement is now all done.
+        d->trackedPlanes.clear();
+    }
+    // While the game is paused there is no need to calculate any
+    // visual plane offsets $smoothplane.
+    else //if(!clientPaused)
+    {
+        // Set the visible offsets.
+        QMutableSetIterator<Plane *> iter(d->trackedPlanes);
+        while(iter.hasNext())
+        {
+            Plane *plane = iter.next();
+
+            plane->lerpVisHeight();
+
+            // Has this plane reached its destination?
+            if(plane->visHeight() == plane->height()) /// @todo  Can this fail? (float equality)
+            {
+                iter.remove();
+            }
+        }
+    }
+}
+
+void GameMap::updateTrackedPlanes()
+{
+    foreach(Plane *plane, d->trackedPlanes)
+    {
+        plane->updateHeightTracking();
+    }
+}
+
+PlaneSet &GameMap::trackedPlanes()
+{
+    return d->trackedPlanes;
+}
+
+void GameMap::updateSurfacesOnMaterialChange(Material &material)
+{
+    if(ddMapSetup) return;
+
+#ifdef __CLIENT__
+    foreach(Surface *surface, d->decoratedSurfaces)
+    {
+        if(&material == surface->materialPtr())
+        {
+            surface->markAsNeedingDecorationUpdate();
+        }
+    }
+#endif
 }
