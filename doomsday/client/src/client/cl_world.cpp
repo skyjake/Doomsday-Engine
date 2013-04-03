@@ -780,7 +780,7 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
     }
 #endif
 
-    SideDef *sideDef = GameMap_SideDef(theMap, num);
+    SideDef *sideDef = theMap->sideDefs().at(num);
 
     if(df & SIDF_TOP_MATERIAL)
     {

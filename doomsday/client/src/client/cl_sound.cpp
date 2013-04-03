@@ -113,7 +113,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 
         if(index < GameMap_SideDefCount(theMap))
         {
-            side = GameMap_SideDef(theMap, index);
+            side = theMap->sideDefs().at(index);
         }
         else
         {

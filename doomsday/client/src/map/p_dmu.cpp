@@ -342,7 +342,7 @@ void *P_ToPtr(int type, uint index)
         return theMap->lines().at(index);
 
     case DMU_SIDEDEF:
-        return GameMap_SideDef(theMap, index);
+        return theMap->sideDefs().at(index);
 
     case DMU_BSPLEAF:
         return GameMap_BspLeaf(theMap, index);
@@ -471,7 +471,7 @@ int P_Callback(int type, uint index, void *context, int (*callback)(void *p, voi
 
     case DMU_SIDEDEF:
         if(index < GameMap_SideDefCount(theMap))
-            return callback(GameMap_SideDef(theMap, index), context);
+            return callback(theMap->sideDefs().at(index), context);
         break;
 
     case DMU_BSPNODE:

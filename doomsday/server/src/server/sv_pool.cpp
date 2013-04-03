@@ -462,7 +462,7 @@ void Sv_RegisterSide(dt_side_t *reg, uint number)
 {
     DENG_ASSERT(reg);
 
-    SideDef *sideDef = GameMap_SideDef(theMap, number);
+    SideDef *sideDef = theMap->sideDefs().at(number);
 
     reg->top.material    = sideDef->top().materialPtr();
     reg->middle.material = sideDef->middle().materialPtr();
@@ -746,7 +746,7 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
 boolean Sv_RegisterCompareSide(cregister_t *reg, uint number,
     sidedelta_t *d, byte doUpdate)
 {
-    SideDef const *s = GameMap_SideDef(theMap, number);
+    SideDef const *s = theMap->sideDefs().at(number);
     dt_side_t *r = &reg->sideDefs[number];
     byte lineFlags = s->line().flags() & 0xff;
     byte sideFlags = s->flags() & 0xff;
@@ -1528,7 +1528,7 @@ coord_t Sv_SectorDistance(int index, ownerinfo_t const *info)
 
 coord_t Sv_SideDistance(int index, int deltaFlags, ownerinfo_t const *info)
 {
-    SideDef const *sideDef = GameMap_SideDef(theMap, index);
+    SideDef const *sideDef = theMap->sideDefs().at(index);
 
     ddmobj_base_t const &emitter = (deltaFlags & SNDDF_SIDE_MIDDLE? sideDef->middle().soundEmitter()
                                      : deltaFlags & SNDDF_SIDE_TOP? sideDef->top().soundEmitter()
@@ -1570,7 +1570,7 @@ coord_t Sv_DeltaDistance(void const *deltaPtr, ownerinfo_t const *info)
 
     if(delta->type == DT_SIDE)
     {
-        SideDef *sideDef = GameMap_SideDef(theMap, delta->id);
+        SideDef *sideDef = theMap->sideDefs().at(delta->id);
         LineDef &line = sideDef->line();
         vec2d_t origin; V2d_Set(origin, line.v1Origin()[VX] + line.direction()[VX] / 2,
                                         line.v1Origin()[VY] + line.direction()[VY] / 2);
@@ -2272,9 +2272,6 @@ void Sv_NewSideDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
 
     for(i = start; i < end; ++i)
     {
-        // The side must be owned by a line.
-        //if(GameMap_SideDef(theMap, i)->line == NULL) continue;
-
         if(Sv_RegisterCompareSide(reg, i, &delta, doUpdate))
         {
             Sv_AddDeltaToPools(&delta, targets);

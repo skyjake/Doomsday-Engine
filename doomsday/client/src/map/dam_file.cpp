@@ -311,7 +311,7 @@ static void readLine(GameMap *map, uint idx)
         side._sector = (index? GameMap_Sector(map, index-1) : NULL);
 
         index = readLong();
-        side._sideDef = (index? GameMap_SideDef(map, index-1) : NULL);
+        side._sideDef = (index? map->sideDefs().at(index-1) : NULL);
 
         index = readLong();
         side._leftHEdge  = (index? GameMap_HEdge(map, index-1) : NULL);

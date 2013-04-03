@@ -227,13 +227,6 @@ int GameMap_SideDefIndex(GameMap *map, SideDef const *side)
     return map->_sideDefs.indexOf(const_cast<SideDef *>(side)); // Bad performance: O(n)
 }
 
-SideDef *GameMap_SideDef(GameMap *map, uint idx)
-{
-    DENG2_ASSERT(map);
-    if(idx >= uint( map->_sideDefs.size() )) return 0;
-    return map->_sideDefs[idx];
-}
-
 int GameMap_SectorIndex(GameMap *map, Sector const *sec)
 {
     DENG2_ASSERT(map);

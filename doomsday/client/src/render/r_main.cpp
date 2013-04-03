@@ -520,10 +520,8 @@ static void R_UpdateMap()
         }
     }
 
-    for(uint i = 0; i < GameMap_SideDefCount(theMap); ++i)
+    foreach(SideDef *sideDef, theMap->sideDefs())
     {
-        SideDef *sideDef = GameMap_SideDef(theMap, i);
-
         sideDef->top().markAsNeedingDecorationUpdate();
         sideDef->middle().markAsNeedingDecorationUpdate();
         sideDef->bottom().markAsNeedingDecorationUpdate();
@@ -1377,10 +1375,8 @@ void Rend_CacheForMap()
     {
         MaterialVariantSpec const &spec = Rend_MapSurfaceMaterialSpec();
 
-        for(uint i = 0; i < GameMap_SideDefCount(theMap); ++i)
+        foreach(SideDef *sideDef, theMap->sideDefs())
         {
-            SideDef *sideDef = GameMap_SideDef(theMap, i);
-
             if(sideDef->middle().hasMaterial())
                 App_Materials().cache(sideDef->middle().material(), spec);
 

@@ -444,15 +444,6 @@ void GameMap_InitSkyFix(GameMap *map);
 void GameMap_UpdateSkyFixForSector(GameMap *map, Sector *sec);
 
 /**
- * Lookup a SideDef by its unique index.
- *
- * @param map  GameMap instance.
- * @param idx  Unique index of the sidedef.
- * @return  Pointer to SideDef with this index else @c NULL if @a idx is not valid.
- */
-SideDef *GameMap_SideDef(GameMap *map, uint idx);
-
-/**
  * Lookup a Sector by its unique index.
  *
  * @param map  GameMap instance.
