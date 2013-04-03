@@ -1,5 +1,5 @@
 @summary{
-    Deactive a binding context.
+    Deactivate a binding context.
 }
 @description{
     Bindings in deactivated binding contexts cannot be triggered.
