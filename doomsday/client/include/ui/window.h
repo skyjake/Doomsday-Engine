@@ -46,9 +46,12 @@
 #define FLIP(y)             (DENG_WINDOW->height() - (y+1))
 
 /**
- * Window and window management.
+ * General-purpose top-level window with persistent state, plus legacy window
+ * management.
  *
- * @deprecated  Windows will be represented by CanvasWindow instances.
+ * @todo Merge this into libgui (as de::Window).
+ * @todo The class hierarchy should be CanvasWindow <= de::Window <= QMainWindow.
+ * @todo Window management belongs in the WindowSystem.
  */
 class Window
 {

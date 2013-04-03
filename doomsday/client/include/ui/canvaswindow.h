@@ -27,7 +27,7 @@
 #  error "canvaswindow.h is only for __CLIENT__"
 #endif
 
-#include <QMainWindow>
+#include <de/Window>
 #include <de/RootWidget>
 #include "canvas.h"
 
@@ -35,7 +35,7 @@
  * Top-level window that contains an OpenGL drawing canvas. @ingroup base
  * @see Canvas
  */
-class CanvasWindow : public QMainWindow
+class CanvasWindow : public de::Window
 {
     Q_OBJECT
 
@@ -47,7 +47,7 @@ public:
     };
 
 public:
-    explicit CanvasWindow(QWidget *parent = 0);
+    CanvasWindow();
 
     de::RootWidget &root();
 
