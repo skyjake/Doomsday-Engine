@@ -234,13 +234,6 @@ int GameMap_SectorIndex(GameMap *map, Sector const *sec)
     return map->_sectors.indexOf(const_cast<Sector *>(sec)); // Bad performance: O(n)
 }
 
-Sector *GameMap_Sector(GameMap *map, uint idx)
-{
-    DENG2_ASSERT(map);
-    if(idx >= map->sectorCount()) return NULL;
-    return map->_sectors[idx];
-}
-
 Sector *GameMap_SectorBySoundEmitter(GameMap *map, void const *soundEmitter)
 {
     DENG2_ASSERT(map);

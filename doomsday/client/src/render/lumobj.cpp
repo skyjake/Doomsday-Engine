@@ -1043,15 +1043,11 @@ BEGIN_PROF( PROF_LUMOBJ_INIT_ADD );
 
     if(useDynLights)
     {
-        for(uint i = 0; i < GameMap_SectorCount(theMap); ++i)
+        foreach(Sector *sector, theMap->sectors())
+        for(mobj_t *iter = sector->firstMobj(); iter; iter = iter->sNext)
         {
-            Sector *sec = GameMap_Sector(theMap, i);
-
-            for(mobj_t *iter = sec->firstMobj(); iter; iter = iter->sNext)
-            {
-                iter->lumIdx = 0;
-                addLuminous(iter);
-            }
+            iter->lumIdx = 0;
+            addLuminous(iter);
         }
     }
 

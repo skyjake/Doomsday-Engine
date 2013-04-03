@@ -430,15 +430,15 @@ void Sv_RegisterPlayer(dt_player_t* reg, uint number)
  */
 void Sv_RegisterSector(dt_sector_t *reg, uint number)
 {
-    Sector *sec = GameMap_Sector(theMap, number);
+    Sector *sector = theMap->sectors().at(number);
 
-    reg->lightLevel = sec->lightLevel();
-    std::memcpy(reg->rgb, sec->lightColor(), sizeof(reg->rgb));
+    reg->lightLevel = sector->lightLevel();
+    std::memcpy(reg->rgb, sector->lightColor(), sizeof(reg->rgb));
 
     // @todo $nplanes
     for(uint i = 0; i < 2; ++i) // number of planes in sector.
     {
-        Plane const &plane = sec->plane(i);
+        Plane const &plane = sector->plane(i);
 
         // Plane properties
         reg->planes[i].height = plane.height();
@@ -625,7 +625,7 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
                                  sectordelta_t *d, byte doUpdate)
 {
     dt_sector_t *r = &reg->sectors[number];
-    Sector const *s = GameMap_Sector(theMap, number);
+    Sector const *s = theMap->sectors().at(number);
     int df = 0;
 
     // Determine which data is different.
@@ -1519,7 +1519,7 @@ coord_t Sv_MobjDistance(const mobj_t* mo, const ownerinfo_t* info, boolean isRea
  */
 coord_t Sv_SectorDistance(int index, ownerinfo_t const *info)
 {
-    Sector const *sector = GameMap_Sector(theMap, index);
+    Sector const *sector = theMap->sectors().at(index);
 
     return M_ApproxDistance3(info->origin[VX] - sector->soundEmitter().origin[VX],
                              info->origin[VY] - sector->soundEmitter().origin[VY],

@@ -510,14 +510,10 @@ static void R_UpdateMap()
 
 #ifdef __CLIENT__
     // Update all world surfaces.
-    for(uint i = 0; i < GameMap_SectorCount(theMap); ++i)
+    foreach(Sector *sector, theMap->sectors())
+    foreach(Plane *plane, sector->planes())
     {
-        Sector *sec = GameMap_Sector(theMap, i);
-
-        foreach(Plane *plane, sec->planes())
-        {
-            plane->surface().markAsNeedingDecorationUpdate();
-        }
+        plane->surface().markAsNeedingDecorationUpdate();
     }
 
     foreach(SideDef *sideDef, theMap->sideDefs())
@@ -805,13 +801,10 @@ void R_CreateMobjLinks()
 
 BEGIN_PROF( PROF_MOBJ_INIT_ADD );
 
-    for(uint i = 0; i < GameMap_SectorCount(theMap); ++i)
+    foreach(Sector *sector, theMap->sectors())
+    for(mobj_t *iter = sector->firstMobj(); iter; iter = iter->sNext)
     {
-        Sector *sec = GameMap_Sector(theMap, i);
-        for(mobj_t *iter = sec->firstMobj(); iter; iter = iter->sNext)
-        {
-            R_ObjlinkCreate(iter, OT_MOBJ); // For spreading purposes.
-        }
+        R_ObjlinkCreate(iter, OT_MOBJ); // For spreading purposes.
     }
 
 END_PROF( PROF_MOBJ_INIT_ADD );
@@ -1387,14 +1380,12 @@ void Rend_CacheForMap()
                 App_Materials().cache(sideDef->bottom().material(), spec);
         }
 
-        for(uint i = 0; i < GameMap_SectorCount(theMap); ++i)
+        foreach(Sector *sector, theMap->sectors())
         {
-            Sector *sec = GameMap_Sector(theMap, i);
-
             // Skip sectors with no lines as their planes will never be drawn.
-            if(!sec->lineCount()) continue;
+            if(!sector->lineCount()) continue;
 
-            foreach(Plane *plane, sec->planes())
+            foreach(Plane *plane, sector->planes())
             {
                 if(plane->surface().hasMaterial())
                     App_Materials().cache(plane->surface().material(), spec);

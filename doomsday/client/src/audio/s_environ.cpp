@@ -145,7 +145,7 @@ static void setBspLeafSectorOwner(ownerlist_t *ownerList, BspLeaf *bspLeaf)
 
 static void findBspLeafsAffectingSector(GameMap *map, uint secIDX)
 {
-    Sector *sec = GameMap_Sector(map, secIDX);
+    Sector *sec = map->sectors().at(secIDX);
     if(!sec || !sec->lineCount()) return;
 
     ownerlist_t bspLeafOwnerList;

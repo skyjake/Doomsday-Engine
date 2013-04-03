@@ -167,7 +167,6 @@ void LG_InitForMap(void)
     gridblock_t *block;
     int        *sampleResults = 0;
     int         n, size, numSamples, center, best;
-    uint        s;
     coord_t     off[2];
     lgsamplepoint_t *samplePoints = 0, sample;
 
@@ -446,10 +445,8 @@ void LG_InitForMap(void)
         M_Free(sampleResults);
 
     // Find the blocks of all sectors.
-    for(s = 0; s < GameMap_SectorCount(theMap); ++s)
+    foreach(Sector *sector, theMap->sectors())
     {
-        Sector *sector = GameMap_Sector(theMap, s);
-
         count = changedCount = 0;
 
         if(sector->lineCount())
@@ -515,7 +512,7 @@ void LG_InitForMap(void)
         }
 
 /*if _DEBUG
-Con_Message("  Sector %i: %i / %i", s, changedCount, count);
+Con_Message("  Sector %i: %i / %i", GameMap_SectorIndex(theMap, s), changedCount, count);
 #endif*/
 
         Sector::LightGridData &lgData = sector->_lightGridData;
@@ -627,17 +624,16 @@ void LG_SectorChanged(Sector *sector)
     needsUpdate = true;
 }
 
-void LG_MarkAllForUpdate(void)
+void LG_MarkAllForUpdate()
 {
     if(!lgInited || !theMap)
         return;
 
     // Mark all blocks and contributors.
-    { uint i;
-    for(i = 0; i < GameMap_SectorCount(theMap); ++i)
+    foreach(Sector *sector, theMap->sectors())
     {
-        LG_SectorChanged(GameMap_Sector(theMap, i));
-    }}
+        LG_SectorChanged(sector);
+    }
 }
 
 #if 0

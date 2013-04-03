@@ -174,20 +174,16 @@ void P_PtcInitForMap()
 void P_MapSpawnPlaneParticleGens()
 {
     if(isDedicated || !useParticles) return;
+    if(!theMap) return;
 
-    GameMap *map = theMap;
-    if(!map) return;
-
-    for(uint i = 0; i < GameMap_SectorCount(theMap); ++i)
+    foreach(Sector *sector, theMap->sectors())
     {
-        Sector *sector = GameMap_Sector(theMap, i);
-
         // Only planes of sectors with volume on the world X/Y axis support generators.
         if(!sector->lineCount()) continue;
 
-        for(uint j = 0; j < 2; ++j)
+        for(uint i = 0; i < 2; ++i)
         {
-            Plane &plane = sector->plane(j);
+            Plane &plane = sector->plane(i);
             if(!plane.surface().hasMaterial()) continue;
 
             de::Uri uri = plane.surface().material().manifest().composeUri();

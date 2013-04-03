@@ -963,11 +963,12 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
 
 void R_ClearSectorFlags()
 {
-    for(uint i = 0; i < GameMap_SectorCount(theMap); ++i)
+    if(!theMap) return;
+
+    foreach(Sector *sector, theMap->sectors())
     {
-        Sector *sec = GameMap_Sector(theMap, i);
         // Clear all flags that can be cleared before each frame.
-        sec->_frameFlags &= ~SIF_FRAME_CLEAR;
+        sector->_frameFlags &= ~SIF_FRAME_CLEAR;
     }
 }
 

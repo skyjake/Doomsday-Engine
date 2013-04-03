@@ -99,7 +99,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 
         if(index < GameMap_SectorCount(theMap))
         {
-            sector = GameMap_Sector(theMap, index);
+            sector = theMap->sectors().at(index);
         }
         else
         {
@@ -340,7 +340,7 @@ void Cl_Sound(void)
             Con_Message("Cl_Sound: Invalid sector number %i.", num);
             return;
         }
-        mo = (mobj_t *) &GameMap_Sector(theMap, num)->soundEmitter();
+        mo = (mobj_t *) &theMap->sectors().at(num)->soundEmitter();
         //S_StopSound(0, mo);
         S_LocalSoundAtVolume(sound, mo, volume / 127.0f);
     }

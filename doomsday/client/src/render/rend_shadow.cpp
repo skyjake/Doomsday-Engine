@@ -178,17 +178,14 @@ void Rend_RenderMobjShadows()
     // Initialize the invariant parts of our shadow primitive now.
     initShadowPrimitive();
 
-    // Process all sectors:
-    for(uint i = 0; i < GameMap_SectorCount(theMap); ++i)
+    foreach(Sector *sector, theMap->sectors())
     {
-        Sector const *sec = GameMap_Sector(theMap, i);
-
         // We are only interested in those mobjs within sectors marked as
         // 'visible' for the current render frame (viewer dependent).
-        if(!(sec->frameFlags() & SIF_VISIBLE)) continue;
+        if(!(sector->frameFlags() & SIF_VISIBLE)) continue;
 
         // Process all mobjs linked to this sector:
-        for(mobj_t *mo = sec->firstMobj(); mo; mo = mo->sNext)
+        for(mobj_t *mo = sector->firstMobj(); mo; mo = mo->sNext)
         {
             processMobjShadow(mo);
         }

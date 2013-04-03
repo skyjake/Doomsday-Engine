@@ -348,7 +348,7 @@ void *P_ToPtr(int type, uint index)
         return GameMap_BspLeaf(theMap, index);
 
     case DMU_SECTOR:
-        return GameMap_Sector(theMap, index);
+        return theMap->sectors().at(index);
 
     case DMU_BSPNODE:
         return GameMap_BspNode(theMap, index);
@@ -486,7 +486,7 @@ int P_Callback(int type, uint index, void *context, int (*callback)(void *p, voi
 
     case DMU_SECTOR:
         if(index < GameMap_SectorCount(theMap))
-            return callback(GameMap_Sector(theMap, index), context);
+            return callback(theMap->sectors().at(index), context);
         break;
 
     case DMU_PLANE: {

@@ -623,7 +623,6 @@ void Cl_ReadSectorDelta2(int deltaType, boolean /*skip*/)
     // Sector index number.
     ushort num = Reader_ReadUInt16(msgReader);
 
-    Sector *sec = 0;
 #ifdef _DEBUG
     if(num >= GameMap_SectorCount(theMap))
     {
@@ -631,7 +630,7 @@ void Cl_ReadSectorDelta2(int deltaType, boolean /*skip*/)
         Con_Error("Cl_ReadSectorDelta2: Sector %i out of range.\n", num);
     }
 #endif
-    sec = GameMap_Sector(theMap, num);
+    Sector *sec = theMap->sectors().at(num);
 
     // Flags.
     int df = Reader_ReadPackedUInt32(msgReader);

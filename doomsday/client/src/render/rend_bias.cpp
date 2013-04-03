@@ -292,14 +292,10 @@ void SB_InitForMap(char const *uniqueID)
 
     numVertIllums *= 3 * 4;
 
-    for(uint i = 0; i < GameMap_SectorCount(theMap); ++i)
+    foreach(Sector *sector, theMap->sectors())
+    foreach(BspLeaf *bspLeaf, sector->bspLeafs())
     {
-        Sector *sec = GameMap_Sector(theMap, i);
-
-        foreach(BspLeaf *bspLeaf, sec->bspLeafs())
-        {
-            numVertIllums += Rend_NumFanVerticesForBspLeaf(bspLeaf) * sec->planeCount();
-        }
+        numVertIllums += Rend_NumFanVerticesForBspLeaf(bspLeaf) * sector->planeCount();
     }
 
     for(uint i = 0; i < GameMap_PolyobjCount(theMap); ++i)
@@ -334,23 +330,19 @@ void SB_InitForMap(char const *uniqueID)
         }
     }
 
-    for(uint i = 0; i < GameMap_SectorCount(theMap); ++i)
+    foreach(Sector *sector, theMap->sectors())
+    foreach(BspLeaf *bspLeaf, sector->bspLeafs())
     {
-        Sector *sec = GameMap_Sector(theMap, i);
-
-        foreach(BspLeaf *bspLeaf, sec->bspLeafs())
+        for(uint j = 0; j < sector->planeCount(); ++j)
         {
-            for(uint j = 0; j < sec->planeCount(); ++j)
-            {
-                biassurface_t *bsuf = SB_CreateSurface();
+            biassurface_t *bsuf = SB_CreateSurface();
 
-                bsuf->size = Rend_NumFanVerticesForBspLeaf(bspLeaf);
-                bsuf->illum = illums;
-                illums += bsuf->size;
+            bsuf->size = Rend_NumFanVerticesForBspLeaf(bspLeaf);
+            bsuf->illum = illums;
+            illums += bsuf->size;
 
-                DENG2_ASSERT(bspLeaf->_bsuf != 0);
-                bspLeaf->_bsuf[j] = bsuf;
-            }
+            DENG2_ASSERT(bspLeaf->_bsuf != 0);
+            bspLeaf->_bsuf[j] = bsuf;
         }
     }
 

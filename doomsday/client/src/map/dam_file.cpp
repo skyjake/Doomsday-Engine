@@ -308,7 +308,7 @@ static void readLine(GameMap *map, uint idx)
         long index;
 
         index = readLong();
-        side._sector = (index? GameMap_Sector(map, index-1) : NULL);
+        side._sector = (index? map->sectors().at(index-1) : NULL);
 
         index = readLong();
         side._sideDef = (index? map->sideDefs().at(index-1) : NULL);
@@ -780,7 +780,7 @@ static void readSeg(GameMap *map, HEdge *s)
     obIdx = readLong();
     s->line = (obIdx == 0? NULL : &map->lineDefs[(unsigned) obIdx - 1]);
     obIdx = readLong();
-    s->sector = (obIdx == 0? NULL : GameMap_Sector(map, (unsigned) obIdx - 1));
+    s->sector = (obIdx == 0? NULL : map->sectors().at((unsigned) obIdx - 1));
     obIdx = readLong();
     s->bspLeaf = (obIdx == 0? NULL : GameMap_BspLeaf(map, (unsigned) obIdx - 1));
     obIdx = readLong();
