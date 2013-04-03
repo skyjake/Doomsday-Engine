@@ -333,7 +333,7 @@ void *P_ToPtr(int type, uint index)
     switch(type)
     {
     case DMU_VERTEX:
-        return GameMap_Vertex(theMap, index);
+        return theMap->vertexes().at(index);
 
     case DMU_HEDGE:
         return GameMap_HEdge(theMap, index);
@@ -456,7 +456,7 @@ int P_Callback(int type, uint index, void *context, int (*callback)(void *p, voi
     {
     case DMU_VERTEX:
         if(index < GameMap_VertexCount(theMap))
-            return callback(GameMap_Vertex(theMap, index), context);
+            return callback(theMap->vertexes().at(index), context);
         break;
 
     case DMU_HEDGE:

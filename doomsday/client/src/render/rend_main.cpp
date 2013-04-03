@@ -3351,28 +3351,26 @@ void Rend_Vertexes()
         oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
         DGL_SetFloat(DGL_LINE_WIDTH, 2);
 
-        for(uint i = 0; i < GameMap_VertexCount(theMap); ++i)
+        foreach(Vertex *vertex, theMap->vertexes())
         {
-            Vertex *vtx = GameMap_Vertex(theMap, i);
-
             // Not a linedef vertex?
-            LineOwner const *own = vtx->firstLineOwner();
+            LineOwner const *own = vertex->firstLineOwner();
             if(!own) continue;
 
             // Ignore polyobj vertexes.
             if(own->line().isFromPolyobj()) continue;
 
-            float alpha = 1 - M_ApproxDistance(vOrigin[VX] - vtx->origin()[VX],
-                                               vOrigin[VZ] - vtx->origin()[VY]) / MAX_VERTEX_POINT_DIST;
+            float alpha = 1 - M_ApproxDistance(vOrigin[VX] - vertex->origin()[VX],
+                                               vOrigin[VZ] - vertex->origin()[VY]) / MAX_VERTEX_POINT_DIST;
             alpha = de::min(alpha, .15f);
 
             if(alpha > 0)
             {
                 coord_t bottom = DDMAXFLOAT;
                 coord_t top    = DDMINFLOAT;
-                getVertexPlaneMinMax(vtx, &bottom, &top);
+                getVertexPlaneMinMax(vertex, &bottom, &top);
 
-                drawVertexBar(vtx, bottom, top, alpha);
+                drawVertexBar(vertex, bottom, top, alpha);
             }
         }
     }
@@ -3383,27 +3381,24 @@ void Rend_Vertexes()
     glEnable(GL_POINT_SMOOTH);
     DGL_SetFloat(DGL_POINT_SIZE, 6);
 
-    for(uint i = 0; i < GameMap_VertexCount(theMap); ++i)
+    foreach(Vertex *vertex, theMap->vertexes())
     {
-        Vertex *vtx = GameMap_Vertex(theMap, i);
-        coord_t dist;
-
         // Not a linedef vertex?
-        LineOwner const *own = vtx->firstLineOwner();
+        LineOwner const *own = vertex->firstLineOwner();
         if(!own) continue;
 
         // Ignore polyobj vertexes.
         if(own->line().isFromPolyobj()) continue;
 
-        dist = M_ApproxDistance(vOrigin[VX] - vtx->origin()[VX],
-                                vOrigin[VZ] - vtx->origin()[VY]);
+        coord_t dist = M_ApproxDistance(vOrigin[VX] - vertex->origin()[VX],
+                                       vOrigin[VZ] - vertex->origin()[VY]);
 
         if(dist < MAX_VERTEX_POINT_DIST)
         {
             coord_t bottom = DDMAXFLOAT;
-            getVertexPlaneMinMax(vtx, &bottom, NULL);
+            getVertexPlaneMinMax(vertex, &bottom, NULL);
 
-            drawVertexPoint(vtx, bottom, (1 - dist / MAX_VERTEX_POINT_DIST) * 2);
+            drawVertexPoint(vertex, bottom, (1 - dist / MAX_VERTEX_POINT_DIST) * 2);
         }
     }
 
@@ -3416,22 +3411,21 @@ void Rend_Vertexes()
         eye[VY] = vOrigin[VZ];
         eye[VZ] = vOrigin[VY];
 
-        for(uint i = 0; i < GameMap_VertexCount(theMap); ++i)
+        foreach(Vertex *vertex, theMap->vertexes())
         {
-            Vertex *vtx = GameMap_Vertex(theMap, i);
             coord_t pos[3], dist;
 
             // Not a linedef vertex?
-            LineOwner const *own = vtx->firstLineOwner();
+            LineOwner const *own = vertex->firstLineOwner();
             if(!own) continue;
 
             // Ignore polyobj vertexes.
             if(own->line().isFromPolyobj()) continue;
 
-            pos[VX] = vtx->origin()[VX];
-            pos[VY] = vtx->origin()[VY];
+            pos[VX] = vertex->origin()[VX];
+            pos[VY] = vertex->origin()[VY];
             pos[VZ] = DDMAXFLOAT;
-            getVertexPlaneMinMax(vtx, &pos[VZ], NULL);
+            getVertexPlaneMinMax(vertex, &pos[VZ], NULL);
 
             dist = V3d_Distance(pos, eye);
 
@@ -3440,7 +3434,7 @@ void Rend_Vertexes()
                 float const alpha = 1 - dist / MAX_VERTEX_POINT_DIST;
                 float const scale = dist / (DENG_WINDOW->width() / 2);
 
-                drawVertexIndex(vtx, pos[VZ], scale, alpha);
+                drawVertexIndex(vertex, pos[VZ], scale, alpha);
             }
         }
     }

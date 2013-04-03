@@ -221,9 +221,9 @@ void Rend_RadioInitForMap()
 
     Time begunAt;
 
-    for(uint i = 0; i < GameMap_VertexCount(theMap); ++i)
+    foreach(Vertex *vertex, theMap->vertexes())
     {
-        Rend_RadioUpdateVertexShadowOffsets(*GameMap_Vertex(theMap, i));
+        Rend_RadioUpdateVertexShadowOffsets(*vertex);
     }
 
     /**

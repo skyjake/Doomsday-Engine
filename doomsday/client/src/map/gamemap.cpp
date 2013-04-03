@@ -206,13 +206,6 @@ GameMap *GameMap_SetSkyFix(GameMap *map, boolean ceiling, coord_t height)
     return map;
 }
 
-Vertex *GameMap_Vertex(GameMap *map, uint idx)
-{
-    DENG2_ASSERT(map);
-    if(idx >= uint( map->_vertexes.size() )) return 0;
-    return map->_vertexes[idx];
-}
-
 int GameMap_VertexIndex(GameMap *map, Vertex const *vtx)
 {
     DENG2_ASSERT(map);
