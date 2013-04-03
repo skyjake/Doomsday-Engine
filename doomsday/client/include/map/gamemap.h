@@ -153,8 +153,6 @@ public:
 public:
     GameMap();
 
-    virtual ~GameMap();
-
     /**
      * This ID is the name of the lump tag that marks the beginning of map
      * data, e.g. "MAP03" or "E2M8".
@@ -672,6 +670,9 @@ public: /// @todo Make private:
      * @todo Replace with a de::Observers-based mechanism.
      */
     void updateSurfacesOnMaterialChange(Material &material);
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 /**

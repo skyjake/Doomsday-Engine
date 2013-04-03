@@ -1,4 +1,4 @@
-/** @file gamemap.cpp Gamemap.
+/** @file gamemap.cpp World Map.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -36,7 +36,12 @@
 
 using namespace de;
 
-GameMap::GameMap()
+DENG2_PIMPL(GameMap)
+{
+    Instance(Public *i) : Base(i) {}
+};
+
+GameMap::GameMap() : d(new Instance(this))
 {
     std::memset(_oldUniqueId, 0, sizeof(_oldUniqueId));
     std::memset(&aaBox, 0, sizeof(aaBox));
@@ -61,9 +66,6 @@ GameMap::GameMap()
     std::memset(&_traceOpening, 0, sizeof(_traceOpening));
     std::memset(&_traceLine, 0, sizeof(_traceLine));
 }
-
-GameMap::~GameMap()
-{}
 
 MapElement *GameMap::bspRoot() const
 {
