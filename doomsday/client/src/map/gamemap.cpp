@@ -512,13 +512,12 @@ static int GameMap_IterateCellBlockMobjs(GameMap *map, BlockmapCellBlock const *
                                             blockmapCellMobjsIterator, (void*) &args);
 }
 
-int GameMap_MobjsBoxIterator(GameMap *map, AABoxd const *box,
+int GameMap::mobjsBoxIterator(AABoxd const &box,
     int (*callback) (mobj_t *, void *), void *parameters)
 {
-    DENG2_ASSERT(map);
     BlockmapCellBlock cellBlock;
-    Blockmap_CellBlock(map->mobjBlockmap, &cellBlock, box);
-    return GameMap_IterateCellBlockMobjs(map, &cellBlock, callback, parameters);
+    Blockmap_CellBlock(mobjBlockmap, &cellBlock, &box);
+    return GameMap_IterateCellBlockMobjs(this, &cellBlock, callback, parameters);
 }
 
 void GameMap::linkLine(LineDef &line)
@@ -721,21 +720,19 @@ static int GameMap_IterateCellBlockBspLeafs(GameMap *map, BlockmapCellBlock cons
                                             blockmapCellBspLeafsIterator, (void*) &args);
 }
 
-int GameMap_BspLeafsBoxIterator(GameMap *map, AABoxd const *box, Sector *sector,
+int GameMap::bspLeafsBoxIterator(AABoxd const &box, Sector *sector,
     int (*callback) (BspLeaf *, void *), void *parameters)
 {
-    DENG2_ASSERT(map);
-
     static int localValidCount = 0;
 
     // This is only used here.
     localValidCount++;
 
     BlockmapCellBlock cellBlock;
-    Blockmap_CellBlock(map->bspLeafBlockmap, &cellBlock, box);
+    Blockmap_CellBlock(bspLeafBlockmap, &cellBlock, &box);
 
-    return GameMap_IterateCellBlockBspLeafs(map, &cellBlock, sector, box,
-                                              localValidCount, callback, parameters);
+    return GameMap_IterateCellBlockBspLeafs(this, &cellBlock, sector, &box,
+                                            localValidCount, callback, parameters);
 }
 
 void GameMap::linkPolyobj(Polyobj &polyobj)
@@ -809,13 +806,12 @@ static int GameMap_IterateCellBlockPolyobjs(GameMap* map, const BlockmapCellBloc
                                             blockmapCellPolyobjsIterator, (void*) &args);
 }
 
-int GameMap_PolyobjsBoxIterator(GameMap* map, const AABoxd* box,
-    int (*callback) (struct polyobj_s*, void*), void* parameters)
+int GameMap::polyobjsBoxIterator(AABoxd const &box,
+    int (*callback) (struct polyobj_s *, void *), void *parameters)
 {
     BlockmapCellBlock cellBlock;
-    DENG2_ASSERT(map);
-    Blockmap_CellBlock(map->polyobjBlockmap, &cellBlock, box);
-    return GameMap_IterateCellBlockPolyobjs(map, &cellBlock, callback, parameters);
+    Blockmap_CellBlock(polyobjBlockmap, &cellBlock, &box);
+    return GameMap_IterateCellBlockPolyobjs(this, &cellBlock, callback, parameters);
 }
 
 typedef struct poiterparams_s {
@@ -868,41 +864,31 @@ static int GameMap_IterateCellBlockPolyobjLineDefs(GameMap* map, const BlockmapC
                                             blockmapCellPolyobjsIterator, (void*) &args);
 }
 
-int GameMap_LinesBoxIterator(GameMap* map, const AABoxd* box,
-    int (*callback) (LineDef*, void*), void* parameters)
-{
-    BlockmapCellBlock cellBlock;
-    DENG2_ASSERT(map);
-    Blockmap_CellBlock(map->lineBlockmap, &cellBlock, box);
-    return GameMap_IterateCellBlockLineDefs(map, &cellBlock, callback, parameters);
-}
-
-int GameMap_PolyobjLinesBoxIterator(GameMap* map, const AABoxd* box,
-    int (*callback) (LineDef*, void*), void* parameters)
-{
-    BlockmapCellBlock cellBlock;
-    DENG2_ASSERT(map);
-    Blockmap_CellBlock(map->polyobjBlockmap, &cellBlock, box);
-    return GameMap_IterateCellBlockPolyobjLineDefs(map, &cellBlock, callback, parameters);
-}
-
-/**
- * LineDefs and Polyobj LineDefs (note Polyobj LineDefs are iterated first).
- *
- * The validCount flags are used to avoid checking lines that are marked
- * in multiple mapblocks, so increment validCount before the first call
- * to GameMap_IterateCellLineDefs(), then make one or more calls to it.
- */
-int GameMap_AllLinesBoxIterator(GameMap *map, AABoxd const *box,
+int GameMap::linesBoxIterator(AABoxd const &box,
     int (*callback) (LineDef *, void *), void *parameters)
 {
-    DENG2_ASSERT(map);
-    if(map->polyobjCount() != 0)
+    BlockmapCellBlock cellBlock;
+    Blockmap_CellBlock(lineBlockmap, &cellBlock, &box);
+    return GameMap_IterateCellBlockLineDefs(this, &cellBlock, callback, parameters);
+}
+
+int GameMap::polyobjLinesBoxIterator(AABoxd const &box,
+    int (*callback) (LineDef *, void *), void *parameters)
+{
+    BlockmapCellBlock cellBlock;
+    Blockmap_CellBlock(polyobjBlockmap, &cellBlock, &box);
+    return GameMap_IterateCellBlockPolyobjLineDefs(this, &cellBlock, callback, parameters);
+}
+
+int GameMap::allLinesBoxIterator(AABoxd const &box,
+    int (*callback) (LineDef *, void *), void *parameters)
+{
+    if(!_polyobjs.isEmpty())
     {
-        int result = P_PolyobjLinesBoxIterator(box, callback, parameters);
+        int result = P_PolyobjLinesBoxIterator(&box, callback, parameters);
         if(result) return result;
     }
-    return P_LinesBoxIterator(box, callback, parameters);
+    return P_LinesBoxIterator(&box, callback, parameters);
 }
 
 static int traverseCellPath2(Blockmap* bmap, uint const fromBlock[2],
@@ -1095,32 +1081,30 @@ static int iteratePolyobjLines(Polyobj *po, void *parameters)
     return po->lineIterator(p->callback, p->parameters);
 }
 
-static int collectPolyobjLineIntercepts(uint const block[2], void* parameters)
+static int collectPolyobjLineIntercepts(uint const block[2], void *parameters)
 {
-    GameMap* map = (GameMap*)parameters;
+    GameMap *map = (GameMap *)parameters;
     iteratepolyobjlines_params_t iplParams;
-    iplParams.callback = PIT_AddLineDefIntercepts;
-    iplParams.parameters = NULL;
-    return GameMap_IterateCellPolyobjs(map, block, iteratePolyobjLines, (void*)&iplParams);
+    iplParams.callback   = PIT_AddLineDefIntercepts;
+    iplParams.parameters = 0;
+    return GameMap_IterateCellPolyobjs(map, block, iteratePolyobjLines, (void *)&iplParams);
 }
 
-static int collectLineIntercepts(uint const block[2], void* parameters)
+static int collectLineIntercepts(uint const block[2], void *parameters)
 {
-    GameMap* map = (GameMap*)parameters;
+    GameMap *map = (GameMap *)parameters;
     return GameMap_IterateCellLines(map, block, PIT_AddLineDefIntercepts, NULL);
 }
 
 static int collectMobjIntercepts(uint const block[2], void* parameters)
 {
-    GameMap* map = (GameMap*)parameters;
+    GameMap *map = (GameMap *)parameters;
     return GameMap_IterateCellMobjs(map, block, PIT_AddMobjIntercepts, NULL);
 }
 
-int GameMap_PathTraverse(GameMap *map, const_pvec2d_t from, const_pvec2d_t to,
-    int flags, traverser_t callback, void *parameters)
+int GameMap::pathTraverse(const_pvec2d_t from, const_pvec2d_t to, int flags,
+    traverser_t callback, void *parameters)
 {
-    DENG2_ASSERT(map);
-
     // A new intercept trace begins...
     P_ClearIntercepts();
     validCount++;
@@ -1128,15 +1112,15 @@ int GameMap_PathTraverse(GameMap *map, const_pvec2d_t from, const_pvec2d_t to,
     // Step #1: Collect intercepts.
     if(flags & PT_ADDLINES)
     {
-        if(theMap->polyobjCount() != 0)
+        if(!_polyobjs.isEmpty())
         {
-            traverseCellPath(map, map->polyobjBlockmap, from, to, collectPolyobjLineIntercepts, (void *)map);
+            traverseCellPath(this, polyobjBlockmap, from, to, collectPolyobjLineIntercepts, (void *)this);
         }
-        traverseCellPath(map, map->lineBlockmap, from, to, collectLineIntercepts, (void *)map);
+        traverseCellPath(this, lineBlockmap, from, to, collectLineIntercepts, (void *)this);
     }
     if(flags & PT_ADDMOBJS)
     {
-        traverseCellPath(map, map->mobjBlockmap, from, to, collectMobjIntercepts, (void *)map);
+        traverseCellPath(this, mobjBlockmap, from, to, collectMobjIntercepts, (void *)this);
     }
 
     // Step #2: Process sorted intercepts.

@@ -684,69 +684,75 @@ DENG_EXTERN_C int P_SectorTouchingMobjsIterator(Sector *sector, int (*callback) 
 }
 
 #undef P_MobjsBoxIterator
-DENG_EXTERN_C int P_MobjsBoxIterator(const AABoxd* box, int (*callback) (mobj_t*, void*), void* parameters)
+DENG_EXTERN_C int P_MobjsBoxIterator(AABoxd const *box,
+    int (*callback) (mobj_t *, void *), void *parameters)
 {
-    if(!theMap) return false; // Continue iteration.
-    return GameMap_MobjsBoxIterator(theMap, box, callback, parameters);
+    if(!theMap || !box) return false; // Continue iteration.
+    return theMap->mobjsBoxIterator(*box, callback, parameters);
 }
 
 #undef P_PolyobjsBoxIterator
-DENG_EXTERN_C int P_PolyobjsBoxIterator(const AABoxd* box, int (*callback) (struct polyobj_s*, void*), void* parameters)
+DENG_EXTERN_C int P_PolyobjsBoxIterator(AABoxd const *box,
+    int (*callback) (struct polyobj_s *, void *), void *parameters)
 {
-    if(!theMap) return false; // Continue iteration.
-    return GameMap_PolyobjsBoxIterator(theMap, box, callback, parameters);
+    if(!theMap || !box) return false; // Continue iteration.
+    return theMap->polyobjsBoxIterator(*box, callback, parameters);
 }
 
 #undef P_LinesBoxIterator
-DENG_EXTERN_C int P_LinesBoxIterator(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters)
+DENG_EXTERN_C int P_LinesBoxIterator(AABoxd const *box,
+    int (*callback) (LineDef *, void *), void *parameters)
 {
-    if(!theMap) return false; // Continue iteration.
-    return GameMap_LinesBoxIterator(theMap, box, callback, parameters);
+    if(!theMap || !box) return false; // Continue iteration.
+    return theMap->linesBoxIterator(*box, callback, parameters);
 }
 
 #undef P_PolyobjLinesBoxIterator
-DENG_EXTERN_C int P_PolyobjLinesBoxIterator(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters)
+DENG_EXTERN_C int P_PolyobjLinesBoxIterator(AABoxd const *box,
+    int (*callback) (LineDef *, void *), void *parameters)
 {
-    if(!theMap) return false; // Continue iteration.
-    return GameMap_PolyobjLinesBoxIterator(theMap, box, callback, parameters);
+    if(!theMap || !box) return false; // Continue iteration.
+    return theMap->polyobjLinesBoxIterator(*box, callback, parameters);
 }
 
 #undef P_BspLeafsBoxIterator
-DENG_EXTERN_C int P_BspLeafsBoxIterator(const AABoxd* box, Sector* sector,
-    int (*callback) (BspLeaf*, void*), void* parameters)
+DENG_EXTERN_C int P_BspLeafsBoxIterator(AABoxd const *box, Sector *sector,
+    int (*callback) (BspLeaf *, void *), void *parameters)
 {
-    if(!theMap) return false; // Continue iteration.
-    return GameMap_BspLeafsBoxIterator(theMap, box, sector, callback, parameters);
+    if(!theMap || !box) return false; // Continue iteration.
+    return theMap->bspLeafsBoxIterator(*box, sector, callback, parameters);
 }
 
 #undef P_AllLinesBoxIterator
-DENG_EXTERN_C int P_AllLinesBoxIterator(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters)
+DENG_EXTERN_C int P_AllLinesBoxIterator(AABoxd const *box,
+    int (*callback) (LineDef *, void *), void *parameters)
 {
-    if(!theMap) return false; // Continue iteration.
-    return GameMap_AllLinesBoxIterator(theMap, box, callback, parameters);
+    if(!theMap || !box) return false; // Continue iteration.
+    return theMap->allLinesBoxIterator(*box, callback, parameters);
 }
 
 #undef P_PathTraverse2
-DENG_EXTERN_C int P_PathTraverse2(const_pvec2d_t from, const_pvec2d_t to, int flags, traverser_t callback,
-    void *parameters)
+DENG_EXTERN_C int P_PathTraverse2(const_pvec2d_t from, const_pvec2d_t to,
+    int flags, traverser_t callback, void *parameters)
 {
     if(!theMap) return false; // Continue iteration.
-    return GameMap_PathTraverse(theMap, from, to, flags, callback, parameters);
+    return theMap->pathTraverse(from, to, flags, callback, parameters);
 }
 
 #undef P_PathTraverse
-DENG_EXTERN_C int P_PathTraverse(const_pvec2d_t from, const_pvec2d_t to, int flags, traverser_t callback)
+DENG_EXTERN_C int P_PathTraverse(const_pvec2d_t from, const_pvec2d_t to,
+    int flags, traverser_t callback)
 {
     if(!theMap) return false; // Continue iteration.
-    return GameMap_PathTraverse(theMap, from, to, flags, callback);
+    return theMap->pathTraverse(from, to, flags, callback);
 }
 
 #undef P_PathXYTraverse2
-DENG_EXTERN_C int P_PathXYTraverse2(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags,
-    traverser_t callback, void* paramaters)
+DENG_EXTERN_C int P_PathXYTraverse2(coord_t fromX, coord_t fromY,
+    coord_t toX, coord_t toY, int flags, traverser_t callback, void* paramaters)
 {
     if(!theMap) return false; // Continue iteration.
-    return GameMap_PathTraverse(theMap, fromX, fromY, toX, toY, flags, callback, paramaters);
+    return theMap->pathTraverse(fromX, fromY, toX, toY, flags, callback, paramaters);
 }
 
 #undef P_PathXYTraverse
@@ -754,7 +760,7 @@ DENG_EXTERN_C int P_PathXYTraverse(coord_t fromX, coord_t fromY, coord_t toX, co
     traverser_t callback)
 {
     if(!theMap) return false; // Continue iteration.
-    return GameMap_PathTraverse(theMap, fromX, fromY, toX, toY, flags, callback);
+    return theMap->pathTraverse(fromX, fromY, toX, toY, flags, callback);
 }
 
 #undef P_CheckLineSight

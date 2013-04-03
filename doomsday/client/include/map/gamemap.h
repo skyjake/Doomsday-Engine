@@ -292,6 +292,38 @@ public:
         return bspLeafAtPoint(point);
     }
 
+    int mobjsBoxIterator(AABoxd const &box,
+        int (*callback) (struct mobj_s *, void *), void *parameters = 0);
+
+    int linesBoxIterator(AABoxd const &box,
+        int (*callback) (LineDef *, void *), void *parameters = 0);
+
+    int polyobjLinesBoxIterator(AABoxd const &box,
+        int (*callback) (LineDef *, void *), void *parameters = 0);
+
+    /**
+     * LineDefs and Polyobj lines (note polyobj lines are iterated first).
+     *
+     * @note validCount should be incremented before calling this to begin
+     * a new logical traversal. Otherwise LineDefs marked with a validCount
+     * equal to this will be skipped over (can be used to avoid processing
+     * a line multiple times during complex / non-linear traversals.
+     */
+    int allLinesBoxIterator(AABoxd const &box,
+        int (*callback) (LineDef *, void *), void *parameters = 0);
+
+    int bspLeafsBoxIterator(AABoxd const &box, Sector *sector,
+        int (*callback) (BspLeaf *, void *), void *parameters = 0);
+
+    /**
+     * @note validCount should be incremented before calling this to begin a
+     * new logical traversal. Otherwise LineDefs marked with a validCount equal
+     * to this will be skipped over (can be used to avoid processing a line
+     * multiple times during complex / non-linear traversals.
+     */
+    int polyobjsBoxIterator(AABoxd const &box,
+        int (*callback) (struct polyobj_s *, void *), void *parameters = 0);
+
     /**
      * Traces a line of sight.
      *
@@ -304,6 +336,30 @@ public:
      */
     bool lineOfSight(const_pvec3d_t from, const_pvec3d_t to, coord_t bottomSlope,
                      coord_t topSlope, int flags);
+
+    /**
+     * Trace a line between @a from and @a to, making a callback for each
+     * interceptable object linked within Blockmap cells which cover the path
+     * this defines.
+     */
+    int pathTraverse(const_pvec2d_t from, const_pvec2d_t to, int flags,
+                     traverser_t callback, void *parameters = 0);
+
+    /**
+     * @copybrief pathTraverse()
+     *
+     * @param fromX         X axis map space coordinate for the path origin.
+     * @param fromY         Y axis map space coordinate for the path origin.
+     * @param toX           X axis map space coordinate for the path origin.
+     * @param toY           Y axis map space coordinate for the path origin.
+     */
+    inline int pathTraverse(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY,
+                            int flags, traverser_t callback, void *parameters = 0)
+    {
+        coord_t from[2] = { fromX, fromY };
+        coord_t to[2]   = { toX, toY };
+        return pathTraverse(from, to, flags, callback, parameters);
+    }
 
     coord_t skyFix(bool ceiling) const;
 
@@ -682,52 +738,6 @@ boolean GameMap_IsUsedMobjID(GameMap* map, thid_t id);
  * @param inUse In-use state of @a id. @c true = the id is in use.
  */
 void GameMap_SetMobjID(GameMap *map, thid_t id, boolean inUse);
-
-int GameMap_MobjsBoxIterator(GameMap *map, AABoxd const *box,
-    int (*callback) (struct mobj_s *, void *), void *parameters);
-
-int GameMap_LinesBoxIterator(GameMap *map, AABoxd const *box,
-    int (*callback) (LineDef *, void *), void *parameters);
-
-int GameMap_PolyobjLinesBoxIterator(GameMap *map, AABoxd const *box,
-    int (*callback) (LineDef *, void *), void *parameters);
-
-/**
- * LineDefs and Polyobj lines (note polyobj lines are iterated first).
- *
- * @note validCount should be incremented before calling this to begin a new logical traversal.
- *       Otherwise LineDefs marked with a validCount equal to this will be skipped over (can
- *       be used to avoid processing a line multiple times during complex / non-linear traversals.
- */
-int GameMap_AllLinesBoxIterator(GameMap *map, AABoxd const *box,
-    int (*callback) (LineDef *, void *), void *parameters);
-
-int GameMap_BspLeafsBoxIterator(GameMap *map, AABoxd const *box, Sector *sector,
-    int (*callback) (BspLeaf *, void *), void *parameters);
-
-/**
- * @note validCount should be incremented before calling this to begin a new logical traversal.
- *       Otherwise LineDefs marked with a validCount equal to this will be skipped over (can
- *       be used to avoid processing a line multiple times during complex / non-linear traversals.
- */
-int GameMap_PolyobjsBoxIterator(GameMap *map, AABoxd const *box,
-    int (*callback) (struct polyobj_s *, void *), void *parameters);
-
-/**
- * Traces a line between @a from and @a to, making a callback for each
- * interceptable object linked within Blockmap cells which cover the path this
- * defines.
- */
-int GameMap_PathTraverse(GameMap *map, const_pvec2d_t from, const_pvec2d_t to,
-    int flags, traverser_t callback, void *parameters = 0);
-
-inline int GameMap_PathTraverse(GameMap *map, coord_t fromX, coord_t fromY,
-    coord_t toX, coord_t toY, int flags, traverser_t callback, void *parameters = 0)
-{
-    coord_t from[2] = { fromX, fromY };
-    coord_t to[2] = { toX, toY };
-    return GameMap_PathTraverse(map, from, to, flags, callback, parameters);
-}
 
 // The current map.
 DENG_EXTERN_C GameMap *theMap;
