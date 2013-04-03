@@ -61,8 +61,8 @@ public:
     typedef QList<Sector *> Sectors;
     Sectors sectors;
 
-    uint numPolyObjs;
-    Polyobj **polyObjs;
+    typedef QList<Polyobj *> Polyobjs;
+    Polyobjs polyobjs;
 
     /// Map entity data (things, line specials, etc...).
     EntityDatabase *entityDatabase;
@@ -70,26 +70,13 @@ public:
 public:
     EditMap::EditMap()
     {
-        numPolyObjs = 0;
-        polyObjs = 0;
-
         entityDatabase = 0;
     }
 
-    void destroyPolyObjs()
+    void clearPolyobjs()
     {
-        if(polyObjs)
-        {
-            for(uint i = 0; i < numPolyObjs; ++i)
-            {
-                Polyobj *po = polyObjs[i];
-                M_Free(po->lines);
-                M_Free(po);
-            }
-            M_Free(polyObjs);
-        }
-        polyObjs = 0;
-        numPolyObjs = 0;
+        qDeleteAll(polyobjs);
+        polyobjs.clear();
     }
 
     void clear()
@@ -99,13 +86,14 @@ public:
         sideDefs.clear();
         sectors.clear();
 
-        destroyPolyObjs();
+        clearPolyobjs();
     }
 
     uint vertexCount() const { return vertexes.count(); }
     uint lineCount() const { return lines.count(); }
     uint sideDefCount() const { return sideDefs.count(); }
     uint sectorCount() const { return sectors.count(); }
+    uint polyobjCount() const { return polyobjs.count(); }
 };
 
 static EditMap editMap; // singleton
@@ -322,13 +310,10 @@ static Sector *createSector(Vector3f const &ambientLightColor, float lightLevel)
 
 static Polyobj *createPolyobj()
 {
-    Polyobj *po = (Polyobj *) M_Calloc(sizeof(*po));
+    Polyobj *po = new Polyobj;
 
-    editMap.polyObjs = (Polyobj **) M_Realloc(editMap.polyObjs, sizeof(po) * (++editMap.numPolyObjs + 1));
-    editMap.polyObjs[editMap.numPolyObjs-1] = po;
-    editMap.polyObjs[editMap.numPolyObjs] = NULL;
-
-    po->buildData.index = editMap.numPolyObjs; // 1-based index, 0 = NIL.
+    editMap.polyobjs.append(po);
+    po->buildData.index = editMap.polyobjs.count(); // 1-based index, 0 = NIL.
 
     return po;
 }
@@ -1091,19 +1076,19 @@ static void finishPlanes(GameMap &map)
 
 static void hardenPolyobjs(GameMap &dest, EditMap &e_map)
 {
-    if(e_map.numPolyObjs == 0)
+    if(!e_map.polyobjCount())
     {
         dest.numPolyObjs = 0;
-        dest.polyObjs = NULL;
+        dest.polyObjs = 0;
         return;
     }
 
-    dest.numPolyObjs = e_map.numPolyObjs;
+    dest.numPolyObjs = e_map.polyobjCount();
     dest.polyObjs = (Polyobj **) Z_Malloc((dest.numPolyObjs + 1) * sizeof(Polyobj *), PU_MAP, 0);
 
     for(uint i = 0; i < dest.numPolyObjs; ++i)
     {
-        Polyobj *srcP  = e_map.polyObjs[i];
+        Polyobj *srcP  = e_map.polyobjs[i];
         Polyobj *destP = (Polyobj *) Z_Calloc(POLYOBJ_SIZE, PU_MAP, 0);
 
         destP->idx = i;
@@ -1710,7 +1695,7 @@ boolean MPE_End()
     buildVertexLineOwnerRings();
 
     hardenPolyobjs(*gamemap, editMap);
-    editMap.destroyPolyObjs();
+    editMap.clearPolyobjs();
 
     /*
      * Build blockmaps.

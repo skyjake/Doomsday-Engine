@@ -28,6 +28,11 @@
 // We'll use the base polyobj template directly as our polyobj.
 typedef struct polyobj_s {
     DD_BASE_POLYOBJ_ELEMENTS()
+
+    polyobj_s()
+    {
+        std::memset(this, 0, sizeof(polyobj_s));
+    }
 } Polyobj;
 
 #define POLYOBJ_SIZE        gx.polyobjSize
