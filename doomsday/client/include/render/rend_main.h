@@ -95,7 +95,15 @@ void Rend_ApplyLightAdaptation(float *lightValue);
 /// Same as Rend_ApplyLightAdaptation except the delta is returned.
 float Rend_LightAdaptationDelta(float lightvalue);
 
-void Rend_CalcLightModRange(void);
+/**
+ * Updates the lightModRange which is used to applify sector light to help
+ * compensate for the differences between the OpenGL lighting equation,
+ * the software Doom lighting model and the light grid (ambient lighting).
+ *
+ * The offsets in the lightRangeModTables are added to the sector->lightLevel
+ * during rendering (both positive and negative).
+ */
+void Rend_CalcLightModRange();
 
 /**
  * Number of vertices needed for this leaf's trifan.

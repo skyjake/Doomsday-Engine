@@ -58,9 +58,9 @@ extern "C" boolean mapSetup; // We are currently setting up a map.
 
 struct uri_s* mapUri; // Name by which the game referred to the current map.
 
-GameMap* theMap; // Available globally inside the engine.
+GameMap *theMap; // Available globally inside the engine.
 
-void P_SetCurrentMap(GameMap* map)
+void P_SetCurrentMap(GameMap *map)
 {
     if(!map)
     {
@@ -69,18 +69,11 @@ void P_SetCurrentMap(GameMap* map)
         // Most memory is allocated from the zone.
         Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
 
-        if(mapUri)
-        {
-            Uri_Delete(mapUri);
-            mapUri = NULL;
-        }
-
-        theMap = map;
+        theMap = 0;
         return;
     }
 
-    mapUri = map->uri;
-
+    mapUri = reinterpret_cast<uri_s *>(&map->_uri);
     theMap = map;
 }
 
@@ -147,16 +140,14 @@ DENG_EXTERN_C boolean P_LoadMap(char const *uriCString)
 
     if(DAM_AttemptMapLoad(reinterpret_cast<uri_s*>(&uri)))
     {
-        GameMap* map = theMap;
-
         // Init the thinker lists (public and private).
-        GameMap_InitThinkerLists(map, 0x1 | 0x2);
+        GameMap_InitThinkerLists(theMap, 0x1 | 0x2);
 
-        GameMap_ClMobjReset(map);
+        GameMap_ClMobjReset(theMap);
 
 #ifdef __CLIENT__
         // Tell shadow bias to initialize the bias light sources.
-        SB_InitForMap(GameMap_OldUniqueId(map));
+        SB_InitForMap(theMap->oldUniqueId());
 
         // Clear player data, too, since we just lost all clmobjs.
         Cl_InitPlayers();
@@ -168,7 +159,7 @@ DENG_EXTERN_C boolean P_LoadMap(char const *uriCString)
         // Invalidate old cmds and init player values.
         for(uint i = 0; i < DDMAXPLAYERS; ++i)
         {
-            player_t* plr = &ddPlayers[i];
+            player_t *plr = &ddPlayers[i];
 
             /*
             if(isServer && plr->shared.inGame)

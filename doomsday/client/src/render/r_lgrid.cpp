@@ -183,7 +183,7 @@ void LG_InitForMap(void)
     lgInited = true;
 
     // Allocate the grid.
-    GameMap_Bounds(map, &lgOrigin[0], &max[0]);
+    map->bounds(&lgOrigin[0], &max[0]);
 
     width  = max[VX] - lgOrigin[VX];
     height = max[VY] - lgOrigin[VY];

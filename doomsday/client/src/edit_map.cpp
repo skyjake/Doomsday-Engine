@@ -1771,27 +1771,27 @@ boolean MPE_End()
     }
 
     // Are we caching this map?
-    if(gamemap->uri && !Str_IsEmpty(Uri_Path(gamemap->uri)))
+    /*de::Uri mapUri = gamemap->uri();
+    if(!mapUri.isEmpty())
     {
         // Yes, write the cached map data file.
         char const *markerLumpName = Str_Text(Uri_Path(gamemap->uri));
         lumpnum_t markerLumpNum = F_LumpNumForName(markerLumpName);
         AutoStr *cachedMapDir = DAM_ComposeCacheDir(Str_Text(F_ComposeLumpFilePath(markerLumpNum)));
 
-        ddstring_t cachedMapPath; Str_InitStd(&cachedMapPath);
-        F_FileName(&cachedMapPath, markerLumpName);
-        Str_Append(&cachedMapPath, ".dcm");
-        Str_Prepend(&cachedMapPath, Str_Text(cachedMapDir));
-        F_ExpandBasePath(&cachedMapPath, &cachedMapPath);
+        AutoStr *cachedMapPath = AutoStr_NewStd();
+        F_FileName(cachedMapPath, markerLumpName);
+
+        Str_Append(cachedMapPath, ".dcm");
+        Str_Prepend(cachedMapPath, Str_Text(cachedMapDir));
+        F_ExpandBasePath(cachedMapPath, cachedMapPath);
 
         // Ensure the destination directory exists.
         F_MakePath(Str_Text(cachedMapDir));
 
         // Archive this map!
-        DAM_MapWrite(gamemap, Str_Text(&cachedMapPath));
-
-        Str_Free(&cachedMapPath);
-    }
+        DAM_MapWrite(gamemap, Str_Text(cachedMapPath));
+    }*/
 
     lastBuiltMap = gamemap;
     lastBuiltMapResult = true; // Success.

@@ -38,8 +38,7 @@ using namespace de;
 
 GameMap::GameMap()
 {
-    uri = 0;
-    std::memset(uniqueId, 0, sizeof(uniqueId));
+    std::memset(_oldUniqueId, 0, sizeof(_oldUniqueId));
     std::memset(&aaBox, 0, sizeof(aaBox));
     std::memset(&thinkers, 0, sizeof(thinkers));
     _generators = 0;
@@ -57,9 +56,9 @@ GameMap::GameMap()
     std::memset(&mobjNodes, 0, sizeof(mobjNodes));
     std::memset(&lineNodes, 0, sizeof(lineNodes));
     lineLinks = 0;
-    globalGravity = 0;
-    effectiveGravity = 0;
-    ambientLightLevel = 0;
+    _globalGravity = 0;
+    _effectiveGravity = 0;
+    _ambientLightLevel = 0;
     std::memset(skyFix, 0, sizeof(skyFix));
     std::memset(&traceOpening, 0, sizeof(traceOpening));
     std::memset(&traceLOS, 0, sizeof(traceLOS));
@@ -124,44 +123,30 @@ void GameMap::addSurfaceToLists(Surface &suf)
 
 #endif // __CLIENT__
 
-uri_s const *GameMap_Uri(GameMap *map)
+de::Uri GameMap::uri() const
 {
-    DENG2_ASSERT(map);
-    return map->uri;
+    return _uri;
 }
 
-char const *GameMap_OldUniqueId(GameMap *map)
+char const *GameMap::oldUniqueId() const
 {
-    DENG2_ASSERT(map);
-    return map->uniqueId;
+    return _oldUniqueId;
 }
 
-void GameMap_Bounds(GameMap *map, coord_t *min, coord_t *max)
+void GameMap::bounds(coord_t *min, coord_t *max) const
 {
-    DENG2_ASSERT(map);
-
-    V2d_Copy(min, map->aaBox.min);
-    V2d_Copy(max, map->aaBox.max);
+    if(min) V2d_Copy(min, aaBox.min);
+    if(max) V2d_Copy(max, aaBox.max);
 }
 
-coord_t GameMap_Gravity(GameMap *map)
+coord_t GameMap::gravity() const
 {
-    DENG2_ASSERT(map);
-    return map->effectiveGravity;
+    return _effectiveGravity;
 }
 
-GameMap *GameMap_SetGravity(GameMap *map, coord_t gravity)
+void GameMap::setGravity(coord_t newGravity)
 {
-    DENG2_ASSERT(map);
-    map->effectiveGravity = gravity;
-    return map;
-}
-
-GameMap *GameMap_RestoreGravity(GameMap *map)
-{
-    DENG2_ASSERT(map);
-    map->effectiveGravity = map->globalGravity;
-    return map;
+    _effectiveGravity = newGravity;
 }
 
 divline_t const *GameMap_TraceLOS(GameMap *map)
@@ -185,10 +170,9 @@ void GameMap_SetTraceOpening(GameMap *map, LineDef *line)
     line->configureTraceOpening(map->traceOpening);
 }
 
-int GameMap_AmbientLightLevel(GameMap *map)
+int GameMap::ambientLightLevel() const
 {
-    DENG2_ASSERT(map);
-    return map->ambientLightLevel;
+    return _ambientLightLevel;
 }
 
 coord_t GameMap_SkyFix(GameMap *map, boolean ceiling)

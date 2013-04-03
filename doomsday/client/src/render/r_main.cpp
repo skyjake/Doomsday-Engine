@@ -540,12 +540,13 @@ static void R_UpdateMap()
 #endif
 
     // See what mapinfo says about this map.
-    ded_mapinfo_t *mapInfo = Def_GetMapInfo(GameMap_Uri(theMap));
+    de::Uri mapUri = theMap->uri();
+    ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
     if(!mapInfo)
     {
-        struct uri_s *mapUri = Uri_NewWithPath2("*", RC_NULL);
-        mapInfo = Def_GetMapInfo(mapUri);
-        Uri_Delete(mapUri);
+        // Use the default def instead.
+        de::Uri defaultDefUri = de::Uri(RC_NULL, "*");
+        mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&defaultDefUri));
     }
 
     // Reconfigure the sky
@@ -561,17 +562,17 @@ static void R_UpdateMap()
 
     if(mapInfo)
     {
-        theMap->globalGravity     = mapInfo->gravity;
-        theMap->ambientLightLevel = mapInfo->ambient * 255;
+        theMap->_globalGravity     = mapInfo->gravity;
+        theMap->_ambientLightLevel = mapInfo->ambient * 255;
     }
     else
     {
         // No theMap info found, so set some basic stuff.
-        theMap->globalGravity = 1.0f;
-        theMap->ambientLightLevel = 0;
+        theMap->_globalGravity = 1.0f;
+        theMap->_ambientLightLevel = 0;
     }
 
-    theMap->effectiveGravity = theMap->globalGravity;
+    theMap->_effectiveGravity = theMap->_globalGravity;
 
     // Recalculate the light range mod matrix.
     Rend_CalcLightModRange();

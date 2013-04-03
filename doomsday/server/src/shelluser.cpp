@@ -136,7 +136,8 @@ void ShellUser::sendGameState()
     // Check the map's information from definitions.
     if(theMap)
     {
-        ded_mapinfo_t *mapInfo = Def_GetMapInfo(theMap->uri);
+        de::Uri mapUri = theMap->uri();
+        ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
         if(mapInfo)
         {
             mapId = Str_Text(Uri_ToString(mapInfo->uri));

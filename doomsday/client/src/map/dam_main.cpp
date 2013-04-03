@@ -299,7 +299,7 @@ boolean DAM_AttemptMapLoad(uri_s const *_uri)
             Rend_DecorInit();
 
             vec2d_t min, max;
-            GameMap_Bounds(map, min, max);
+            map->bounds(min, max);
 
             // Init blockmap for searching BSP leafs.
             GameMap_InitBspLeafBlockmap(map, min, max);
@@ -308,24 +308,25 @@ boolean DAM_AttemptMapLoad(uri_s const *_uri)
                 map->linkBspLeaf(*bspLeaf);
             }
 
-            map->uri = Uri_Dup(dam->uri);
+            map->_uri = *reinterpret_cast<de::Uri *>(dam->uri);
 
             // Generate the unique map id.
-            lumpnum_t markerLumpNum = App_FileSystem().lumpNumForName(Str_Text(Uri_Path(map->uri)));
+            lumpnum_t markerLumpNum = App_FileSystem().lumpNumForName(Str_Text(Uri_Path(dam->uri)));
             de::File1 &markerLump   = App_FileSystem().nameIndex().lump(markerLumpNum);
 
             String uniqueId     = DAM_ComposeUniqueId(markerLump);
             QByteArray uniqueIdUtf8 = uniqueId.toUtf8();
-            qstrncpy(map->uniqueId, uniqueIdUtf8.constData(), sizeof(map->uniqueId));
+            qstrncpy(map->_oldUniqueId, uniqueIdUtf8.constData(), sizeof(map->_oldUniqueId));
 
             // See what mapinfo says about this map.
-            ded_mapinfo_t *mapInfo = Def_GetMapInfo(map->uri);
+            ded_mapinfo_t *mapInfo = Def_GetMapInfo(dam->uri);
             if(!mapInfo)
             {
                 de::Uri mapUri("*", RC_NULL);
                 mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
             }
 
+#ifdef __CLIENT__
             ded_sky_t *skyDef = 0;
             if(mapInfo)
             {
@@ -333,25 +334,23 @@ boolean DAM_AttemptMapLoad(uri_s const *_uri)
                 if(!skyDef)
                     skyDef = &mapInfo->sky;
             }
-
-#ifdef __CLIENT__
             Sky_Configure(skyDef);
 #endif
 
             // Setup accordingly.
             if(mapInfo)
             {
-                map->globalGravity = mapInfo->gravity;
-                map->ambientLightLevel = mapInfo->ambient * 255;
+                map->_globalGravity = mapInfo->gravity;
+                map->_ambientLightLevel = mapInfo->ambient * 255;
             }
             else
             {
                 // No map info found, so set some basic stuff.
-                map->globalGravity = 1.0f;
-                map->ambientLightLevel = 0;
+                map->_globalGravity = 1.0f;
+                map->_ambientLightLevel = 0;
             }
 
-            map->effectiveGravity = map->globalGravity;
+            map->_effectiveGravity = map->_globalGravity;
 
             // @todo should be called from P_LoadMap() but R_InitMap requires the
             //       theMap to be set first.

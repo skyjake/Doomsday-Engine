@@ -901,7 +901,7 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
 
     // Changes to momentum.
     /// @todo Do not assume generator is from the CURRENT map.
-    pt->mov[VZ] -= FixedMul(FLT2FIX(GameMap_Gravity(theMap)), st->gravity);
+    pt->mov[VZ] -= FixedMul(FLT2FIX(theMap->gravity()), st->gravity);
 
     // Vector force.
     if(stDef->vectorForce[VX] != 0 || stDef->vectorForce[VY] != 0 ||
@@ -1289,19 +1289,21 @@ void P_SpawnTypeParticleGens()
 void P_SpawnMapParticleGens()
 {
     if(isDedicated || !useParticles) return;
-
     if(!theMap) return;
-    GameMap* map = theMap;
 
     ded_ptcgen_t* def = defs.ptcGens;
     for(int i = 0; i < defs.count.ptcGens.num; ++i, def++)
     {
-        if(!def->map || !Uri_Equality(def->map, GameMap_Uri(map))) continue;
+        if(!def->map) continue;
+
+        de::Uri mapUri = theMap->uri();
+        if(!Uri_Equality(def->map, reinterpret_cast<uri_s *>(&mapUri)))
+            continue;
 
         // Are we still spawning using this generator?
         if(def->spawnAge > 0 && ddMapTime > def->spawnAge) continue;
 
-        ptcgen_t* gen = P_NewGenerator();
+        ptcgen_t *gen = P_NewGenerator();
         if(!gen) return; // No more generators.
 
         // Initialize the particle generator.

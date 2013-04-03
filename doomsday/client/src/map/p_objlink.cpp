@@ -221,22 +221,19 @@ static objlink_t* allocObjlink(void)
     return link;
 }
 
-void R_InitObjlinkBlockmapForMap(void)
+void R_InitObjlinkBlockmapForMap()
 {
-    GameMap* map = theMap;
-    coord_t min[2], max[2];
-    uint width, height;
-    int i;
-
     // Determine the dimensions of the objlink blockmaps in blocks.
-    GameMap_Bounds(map, min, max);
-    width  = (uint)ceil((max[VX] - min[VX]) / (coord_t)BLOCK_WIDTH);
-    height = (uint)ceil((max[VY] - min[VY]) / (coord_t)BLOCK_HEIGHT);
+    coord_t min[2], max[2];
+    theMap->bounds(min, max);
+
+    uint width  = uint( de::ceil((max[VX] - min[VX]) / coord_t( BLOCK_WIDTH  )) );
+    uint height = uint( de::ceil((max[VY] - min[VY]) / coord_t( BLOCK_HEIGHT )) );
 
     // Create the blockmaps.
-    for(i = 0; i < NUM_OBJ_TYPES; ++i)
+    for(int i = 0; i < NUM_OBJ_TYPES; ++i)
     {
-        objlinkblockmap_t* obm = chooseObjlinkBlockmap((objtype_t)i);
+        objlinkblockmap_t *obm = chooseObjlinkBlockmap(objtype_t( i ));
         obm->origin[0] = min[VX];
         obm->origin[1] = min[VY];
         obm->gridmap = Gridmap_New(width, height, sizeof(objlinkblock_t), PU_MAPSTATIC);

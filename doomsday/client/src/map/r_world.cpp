@@ -891,19 +891,18 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
         // Map setup has been completed.
 
         // Run any commands specified in Map Info.
-        ded_mapinfo_t *mapInfo = Def_GetMapInfo(GameMap_Uri(theMap));
+        de::Uri mapUri = theMap->uri();
+        ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
         if(mapInfo && mapInfo->execute)
         {
             Con_Execute(CMDS_SCRIPT, mapInfo->execute, true, false);
         }
 
         // Run the special map setup command, which the user may alias to do something useful.
-        AutoStr *mapPath = Uri_Resolved(GameMap_Uri(theMap));
-        char cmd[80];
-        dd_snprintf(cmd, 80, "init-%s", Str_Text(mapPath));
-        if(Con_IsValidCommand(cmd))
+        String cmd = "init-" + mapUri.resolved();
+        if(Con_IsValidCommand(cmd.toUtf8().constData()))
         {
-            Con_Executef(CMDS_SCRIPT, false, "%s", cmd);
+            Con_Executef(CMDS_SCRIPT, false, "%s", cmd.toUtf8().constData());
         }
 
 #ifdef __CLIENT__

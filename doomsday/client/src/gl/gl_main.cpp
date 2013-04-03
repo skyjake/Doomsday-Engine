@@ -608,9 +608,6 @@ void GL_TotalReset()
 
 void GL_TotalRestore()
 {
-    ded_mapinfo_t* mapInfo = NULL;
-    GameMap* map;
-
     if(isDedicated) return;
 
     // Getting back up and running.
@@ -621,10 +618,12 @@ void GL_TotalRestore()
     R_LoadSystemFonts();
     Con_Resize();
 
-    map = theMap;
-    if(map)
+    /// @todo fixme: Should this use the default MapInfo def if none found? -ds
+    ded_mapinfo_t *mapInfo = 0;
+    if(theMap)
     {
-        mapInfo = Def_GetMapInfo(GameMap_Uri(map));
+        de::Uri mapUri = theMap->uri();
+        mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
     }
 
     // Restore map's fog settings.

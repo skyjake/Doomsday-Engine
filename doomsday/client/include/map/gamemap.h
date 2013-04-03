@@ -82,8 +82,8 @@ public:
     typedef QList<BspLeaf *> BspLeafs;
 
 public:
-    Uri *uri;
-    char uniqueId[256];
+    de::Uri _uri;
+    char _oldUniqueId[256];
 
     AABoxd aaBox;
 
@@ -139,10 +139,10 @@ public:
     nodepile_t mobjNodes, lineNodes; // All kinds of wacky links.
     nodeindex_t *lineLinks; // Indices to roots.
 
-    coord_t globalGravity; // The defined gravity for this map.
-    coord_t effectiveGravity; // The effective gravity for this map.
+    coord_t _globalGravity; // The defined gravity for this map.
+    coord_t _effectiveGravity; // The effective gravity for this map.
 
-    int ambientLightLevel; // Ambient lightlevel for the current map.
+    int _ambientLightLevel; // Ambient lightlevel for the current map.
 
     skyfix_t skyFix[2]; // [floor, ceiling]
 
@@ -155,6 +155,41 @@ public:
     GameMap();
 
     virtual ~GameMap();
+
+    /**
+     * This ID is the name of the lump tag that marks the beginning of map
+     * data, e.g. "MAP03" or "E2M8".
+     */
+    de::Uri uri() const;
+
+    /// @return  The old 'unique' identifier of the map.
+    char const *oldUniqueId() const;
+
+    /**
+     * Returns the minimal and maximal boundary points for the map.
+     *
+     * Return values:
+     * @param min  Coordinates for the minimal point are written here.
+     * @param max  Coordinates for the maximal point are written here.
+     */
+    void bounds(coord_t *min, coord_t *max) const;
+
+    /**
+     * Returns the currently effective gravity multiplier for the map.
+     */
+    coord_t gravity() const;
+
+    /**
+     * Change the effective gravity multiplier for the map.
+     *
+     * @param gravity  New gravity multiplier.
+     */
+    void setGravity(coord_t gravity);
+
+    /**
+     * Returns the global ambient light level for the map.
+     */
+    int ambientLightLevel() const;
 
     Vertexes const &vertexes() const { return _vertexes; }
 
@@ -362,42 +397,6 @@ public: ///@ todo make private:
 void P_SetCurrentMap(GameMap *map);
 
 /**
- * This ID is the name of the lump tag that marks the beginning of map
- * data, e.g. "MAP03" or "E2M8".
- */
-Uri const *GameMap_Uri(GameMap *map);
-
-/// @return  The old 'unique' identifier of the map.
-char const *GameMap_OldUniqueId(GameMap *map);
-
-void GameMap_Bounds(GameMap *map, coord_t *min, coord_t *max);
-
-/**
- * Retrieve the current effective gravity multiplier for this map.
- *
- * @param map  GameMap instance.
- * @return  Effective gravity multiplier for this map.
- */
-coord_t GameMap_Gravity(GameMap *map);
-
-/**
- * Change the effective gravity multiplier for this map.
- *
- * @param map  GameMap instance.
- * @param gravity  New gravity multiplier.
- * @return  Same as @a map for caller convenience.
- */
-GameMap *GameMap_SetGravity(GameMap *map, coord_t gravity);
-
-/**
- * Return the effective gravity multiplier to that originally defined for this map.
- *
- * @param map  GameMap instance.
- * @return  Same as @a map for caller convenience.
- */
-GameMap *GameMap_RestoreGravity(GameMap *map);
-
-/**
  * Retrieve an immutable copy of the LOS trace line.
  *
  * @param map  GameMap instance.
@@ -421,14 +420,6 @@ TraceOpening const *GameMap_TraceOpening(GameMap *map);
  * @param line  Map line to configure the opening for.
  */
 void GameMap_SetTraceOpening(GameMap *map, LineDef *line);
-
-/**
- * Retrieve the map-global ambient light level.
- *
- * @param map  GameMap instance.
- * @return  Ambient light level.
- */
-int GameMap_AmbientLightLevel(GameMap *map);
 
 coord_t GameMap_SkyFix(GameMap *map, boolean ceiling);
 

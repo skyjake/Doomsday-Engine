@@ -3545,51 +3545,39 @@ void Rend_RenderMap()
     GL_SetMultisample(false);
 }
 
-/**
- * Updates the lightModRange which is used to applify sector light to help
- * compensate for the differences between the OpenGL lighting equation,
- * the software Doom lighting model and the light grid (ambient lighting).
- *
- * The offsets in the lightRangeModTables are added to the sector->lightLevel
- * during rendering (both positive and negative).
- */
 void Rend_CalcLightModRange()
 {
-    GameMap* map = theMap;
-    int j, mapAmbient;
-    float f;
-
     if(novideo) return;
 
-    memset(lightModRange, 0, sizeof(float) * 255);
+    std::memset(lightModRange, 0, sizeof(float) * 255);
 
-    if(!map)
+    if(!theMap)
     {
         rAmbient = 0;
         return;
     }
 
-    mapAmbient = GameMap_AmbientLightLevel(map);
+    int mapAmbient = theMap->ambientLightLevel();
     if(mapAmbient > ambientLight)
         rAmbient = mapAmbient;
     else
         rAmbient = ambientLight;
 
-    for(j = 0; j < 255; ++j)
+    for(int j = 0; j < 255; ++j)
     {
         // Adjust the white point/dark point?
-        f = 0;
+        float f = 0;
         if(lightRangeCompression != 0)
         {
             if(lightRangeCompression >= 0)
             {
                 // Brighten dark areas.
-                f = (float) (255 - j) * lightRangeCompression;
+                f = float(255 - j) * lightRangeCompression;
             }
             else
             {
                 // Darken bright areas.
-                f = (float) -j * -lightRangeCompression;
+                f = float(-j) * -lightRangeCompression;
             }
         }
 

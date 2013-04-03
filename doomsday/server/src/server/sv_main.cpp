@@ -61,14 +61,12 @@ static MaterialArchive* materialDict;
 /**
  * Fills the provided struct with information about the local server.
  */
-void Sv_GetInfo(serverinfo_t* info)
+void Sv_GetInfo(serverinfo_t *info)
 {
-    AutoStr* mapPath;
-    int i;
+    DENG_ASSERT(theMap != 0);
+    DENG_ASSERT(info != 0);
 
-    assert(theMap);
-
-    memset(info, 0, sizeof(*info));
+    std::memset(info, 0, sizeof(*info));
 
     // Let's figure out what we want to tell about ourselves.
     info->version = DOOMSDAY_VERSION;
@@ -89,18 +87,18 @@ void Sv_GetInfo(serverinfo_t* info)
     info->canJoin = (isServer != 0 && Sv_GetNumPlayers() < svMaxPlayers);
 
     // Identifier of the current map.
-    mapPath = Uri_Resolved(GameMap_Uri(theMap));
-    strncpy(info->map, Str_Text(mapPath), sizeof(info->map) - 1);
+    QByteArray mapPath = theMap->uri().resolved().toUtf8();
+    qstrncpy(info->map, mapPath.constData(), sizeof(info->map) - 1);
 
     // These are largely unused at the moment... Mainly intended for
     // the game's custom values.
-    memcpy(info->data, serverData, sizeof(info->data));
+    std::memcpy(info->data, serverData, sizeof(info->data));
 
     // Also include the port we're using.
     info->port = nptIPPort;
 
     // Let's compile a list of client names.
-    for(i = 0; i < DDMAXPLAYERS; ++i)
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
         if(clients[i].connected)
             M_LimitedStrCat(info->clientNames, clients[i].name, 15, ';', sizeof(info->clientNames));

@@ -343,19 +343,13 @@ static void SBE_Dupe(int which)
     }
 }
 
-static boolean SBE_Save(const char* name)
+static boolean SBE_Save(char const *name)
 {
-    GameMap* map = theMap;
-    const char* uid = GameMap_OldUniqueId(map);
-    ddstring_t fileName;
-    source_t* s;
-    FILE* file;
-
-    Str_Init(&fileName);
+    ddstring_t fileName; Str_Init(&fileName);
     if(!name || !name[0])
     {
-        AutoStr* mapPath = Uri_Resolved(GameMap_Uri(map));
-        Str_Appendf(&fileName, "%s.ded", Str_Text(mapPath));
+        de::String mapPath = theMap->uri().resolvedRef() + ".ded";
+        Str_Set(&fileName, mapPath.toUtf8().constData());
     }
     else
     {
@@ -369,37 +363,38 @@ static boolean SBE_Save(const char* name)
     }
 
     F_ToNativeSlashes(&fileName, &fileName);
-    file = fopen(Str_Text(&fileName), "wt");
+    FILE *file = fopen(Str_Text(&fileName), "wt");
     if(!file)
     {
-        Con_Message("Warning: Failed opening \"%s\" for write. Bias Lights not saved.", F_PrettyPath(Str_Text(&fileName)));
+        Con_Message("Warning: Failed opening \"%s\" for write. Bias Lights not saved.",
+                    F_PrettyPath(Str_Text(&fileName)));
         Str_Free(&fileName);
         return false;
     }
 
     Con_Printf("Saving to \"%s\"...\n", F_PrettyPath(Str_Text(&fileName)));
 
+    char const *uid = theMap->oldUniqueId();
     fprintf(file, "# %i Bias Lights for %s\n\n", numSources, uid);
 
     // Since there can be quite a lot of these, make sure we'll skip
     // the ones that are definitely not suitable.
     fprintf(file, "SkipIf Not %s\n", Str_Text(App_CurrentGame().identityKey()));
 
-    s = SB_GetSource(0);
-    { int i;
-    for(i = 0; i < numSources; ++i, ++s)
+    source_t *s = SB_GetSource(0);
+    for(int i = 0; i < numSources; ++i, ++s)
     {
         fprintf(file, "\nLight {\n");
         fprintf(file, "  Map = \"%s\"\n", uid);
         fprintf(file, "  Origin { %g %g %g }\n",
-                s->origin[0], s->origin[1], s->origin[2]);
+                      s->origin[0], s->origin[1], s->origin[2]);
         fprintf(file, "  Color { %g %g %g }\n",
-                s->color[0], s->color[1], s->color[2]);
+                      s->color[0], s->color[1], s->color[2]);
         fprintf(file, "  Intensity = %g\n", s->primaryIntensity);
         fprintf(file, "  Sector levels { %g %g }\n", s->sectorLevel[0],
-                s->sectorLevel[1]);
+                      s->sectorLevel[1]);
         fprintf(file, "}\n");
-    }}
+    }
 
     fclose(file);
     Str_Free(&fileName);
@@ -831,7 +826,7 @@ void SBE_DrawHUD(void)
 
     // The map ID.
     origin.y = top - size.height / 2;
-    UI_TextOutEx2(GameMap_OldUniqueId(map), &origin, UI_Color(UIC_TITLE), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    UI_TextOutEx2(map->oldUniqueId(), &origin, UI_Color(UIC_TITLE), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
 
     glDisable(GL_TEXTURE_2D);
 

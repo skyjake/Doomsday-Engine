@@ -2401,7 +2401,8 @@ int DD_GetInteger(int ddvalue)
     case DD_MAP_MUSIC: {
         if(GameMap *map = theMap)
         {
-            if(ded_mapinfo_t *mapInfo = Def_GetMapInfo(GameMap_Uri(map)))
+            de::Uri mapUri = map->uri();
+            if(ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri)))
             {
                 return Def_GetMusicNum(mapInfo->music);
             }
@@ -2488,7 +2489,8 @@ void *DD_GetVariable(int ddvalue)
     case DD_MAP_NAME:
         if(theMap)
         {
-            ded_mapinfo_t *mapInfo = Def_GetMapInfo(GameMap_Uri(theMap));
+            de::Uri mapUri = theMap->uri();
+            ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
             if(mapInfo && mapInfo->name[0])
             {
                 int id = Def_Get(DD_DEF_TEXT, mapInfo->name, NULL);
@@ -2504,7 +2506,8 @@ void *DD_GetVariable(int ddvalue)
     case DD_MAP_AUTHOR:
         if(theMap)
         {
-            ded_mapinfo_t* mapInfo = Def_GetMapInfo(GameMap_Uri(theMap));
+            de::Uri mapUri = theMap->uri();
+            ded_mapinfo_t* mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
             if(mapInfo && mapInfo->author[0])
             {
                 return mapInfo->author;
@@ -2553,7 +2556,7 @@ void *DD_GetVariable(int ddvalue)
         return &cplrThrustMul;*/
 
     case DD_GRAVITY:
-        valueD = theMap? GameMap_Gravity(theMap) : 0;
+        valueD = theMap? theMap->gravity() : 0;
         return &valueD;
 
 #ifdef __CLIENT__
@@ -2620,6 +2623,7 @@ void *DD_GetVariable(int ddvalue)
  * Set the value of a variable. The pointer can point to any data, its
  * interpretation depends on the variable. Added for 64-bit support.
  */
+#undef DD_SetVariable
 void DD_SetVariable(int ddvalue, void *parm)
 {
     if(ddvalue <= DD_FIRST_VALUE || ddvalue >= DD_LAST_VALUE)
@@ -2631,19 +2635,20 @@ void DD_SetVariable(int ddvalue, void *parm)
             return;*/
 
         case DD_GRAVITY:
-            if(theMap) GameMap_SetGravity(theMap, *(coord_t*) parm);
+            if(theMap)
+                theMap->setGravity(*(coord_t*) parm);
             return;
 
         case DD_PSPRITE_OFFSET_X:
-            pspOffset[VX] = *(float*) parm;
+            pspOffset[VX] = *(float *) parm;
             return;
 
         case DD_PSPRITE_OFFSET_Y:
-            pspOffset[VY] = *(float*) parm;
+            pspOffset[VY] = *(float *) parm;
             return;
 
         case DD_PSPRITE_LIGHTLEVEL_MULTIPLIER:
-            pspLightLevelMultiplier = *(float*) parm;
+            pspLightLevelMultiplier = *(float *) parm;
             return;
 
 #ifdef __CLIENT__
