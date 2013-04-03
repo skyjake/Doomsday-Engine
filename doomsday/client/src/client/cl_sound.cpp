@@ -130,13 +130,13 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
         if(index < GameMap_PolyobjCount(theMap))
         {
             DENG_ASSERT(theMap);
-            poly = GameMap_PolyobjByID(theMap, index);
+            poly = theMap->polyobjByIndex(index);
             emitter = (mobj_t *) poly;
         }
         else
         {
             Con_Message("Cl_ReadSoundDelta2: DT_POLY_SOUND contains "
-                        "invalid polyobj num %u. Skipping.", index);
+                        "invalid polyobj index %u. Skipping.", index);
             skip = true;
         }
     }

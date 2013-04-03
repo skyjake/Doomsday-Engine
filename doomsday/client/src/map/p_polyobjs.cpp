@@ -80,21 +80,21 @@ DENG_EXTERN_C void P_PolyobjLink(Polyobj *po)
 DENG_EXTERN_C Polyobj *P_PolyobjByID(uint id)
 {
     if(!theMap) return NULL;
-    return GameMap_PolyobjByID(theMap, id);
+    return theMap->polyobjByIndex(id);
 }
 
 #undef P_PolyobjByTag
 DENG_EXTERN_C Polyobj *P_PolyobjByTag(int tag)
 {
     if(!theMap) return NULL;
-    return GameMap_PolyobjByTag(theMap, tag);
+    return theMap->polyobjByTag(tag);
 }
 
 #undef P_PolyobjByBase
 DENG_EXTERN_C Polyobj *P_PolyobjByBase(void *ddMobjBase)
 {
-    if(!theMap) return NULL;
-    return GameMap_PolyobjByBase(theMap, ddMobjBase);
+    if(!theMap || !ddMobjBase) return NULL;
+    return theMap->polyobjByBase(*reinterpret_cast<ddmobj_base_t *>(ddMobjBase));
 }
 
 #undef P_PolyobjMove

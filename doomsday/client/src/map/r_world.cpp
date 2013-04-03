@@ -843,7 +843,7 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
 
         updateAllMapSectors(*theMap, true /*force*/);
         initAllMapSurfaceMaterialOrigins(*theMap);
-        GameMap_InitPolyobjs(theMap);
+        theMap->initPolyobjs();
         DD_ResetTimer();
         return;
 
@@ -869,7 +869,7 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
         // Recalculate the light range mod matrix.
         Rend_CalcLightModRange();
 
-        GameMap_InitPolyobjs(theMap);
+        theMap->initPolyobjs();
         P_MapSpawnPlaneParticleGens();
 
         updateAllMapSectors(*theMap, true /*force*/);

@@ -460,7 +460,7 @@ void Sv_RegisterSector(dt_sector_t *reg, uint number)
  */
 void Sv_RegisterSide(dt_side_t *reg, uint number)
 {
-    DENG_ASSERT(reg);
+    DENG_ASSERT(reg != 0);
 
     SideDef *sideDef = theMap->sideDefs().at(number);
 
@@ -481,25 +481,27 @@ void Sv_RegisterSide(dt_side_t *reg, uint number)
  * Store the state of the polyobj into the register-poly.
  * Called at register init and after each delta generation.
  */
-void Sv_RegisterPoly(dt_poly_t* reg, uint number)
+void Sv_RegisterPoly(dt_poly_t *reg, uint number)
 {
-    Polyobj* poly = GameMap_PolyobjByID(theMap, number);
+    DENG_ASSERT(reg != 0);
 
-    reg->dest[VX] = poly->dest[VX];
-    reg->dest[VY] = poly->dest[VY];
-    reg->speed = poly->speed;
-    reg->destAngle = poly->destAngle;
+    Polyobj *poly = theMap->polyobjByIndex(number);
+
+    reg->dest[VX]   = poly->dest[VX];
+    reg->dest[VY]   = poly->dest[VY];
+    reg->speed      = poly->speed;
+    reg->destAngle  = poly->destAngle;
     reg->angleSpeed = poly->angleSpeed;
 }
 
 /**
- * @return              @c true, if the result is not void.
+ * @return  @c true if the result is not void.
  */
-boolean Sv_RegisterCompareMobj(cregister_t* reg, const mobj_t* s, mobjdelta_t* d)
+boolean Sv_RegisterCompareMobj(cregister_t *reg, mobj_t const *s, mobjdelta_t *d)
 {
-    int                 df;
-    reg_mobj_t*         regMo = NULL;
-    const dt_mobj_t*    r = &dummyZeroMobj;
+    int df;
+    reg_mobj_t *regMo = 0;
+    dt_mobj_t const *r = &dummyZeroMobj;
 
     if((regMo = Sv_RegisterFindMobj(reg, s->thinker.id)) != NULL)
     {
@@ -1581,7 +1583,7 @@ coord_t Sv_DeltaDistance(void const *deltaPtr, ownerinfo_t const *info)
 
     if(delta->type == DT_POLY)
     {
-        Polyobj *po = GameMap_PolyobjByID(theMap, delta->id);
+        Polyobj *po = theMap->polyobjByIndex(delta->id);
         return M_ApproxDistance(info->origin[VX] - po->origin[VX],
                                 info->origin[VY] - po->origin[VY]);
     }
@@ -1604,7 +1606,7 @@ coord_t Sv_DeltaDistance(void const *deltaPtr, ownerinfo_t const *info)
 
     if(delta->type == DT_POLY_SOUND)
     {
-        Polyobj *po = GameMap_PolyobjByID(theMap, delta->id);
+        Polyobj *po = theMap->polyobjByIndex(delta->id);
         return M_ApproxDistance(info->origin[VX] - po->origin[VX],
                                 info->origin[VY] - po->origin[VY]);
     }

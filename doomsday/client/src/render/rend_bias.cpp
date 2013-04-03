@@ -299,7 +299,7 @@ void SB_InitForMap(char const *uniqueID)
 
     for(uint i = 0; i < GameMap_PolyobjCount(theMap); ++i)
     {
-        Polyobj *po = GameMap_PolyobjByID(theMap, i);
+        Polyobj *po = theMap->polyobjByIndex(i);
         numVertIllums += po->lineCount * 3 * 4;
     }
 
@@ -345,7 +345,7 @@ void SB_InitForMap(char const *uniqueID)
 
     for(uint i = 0; i < GameMap_PolyobjCount(theMap); ++i)
     {
-        Polyobj *po = GameMap_PolyobjByID(theMap, i);
+        Polyobj *po = theMap->polyobjByIndex(i);
 
         for(uint j = 0; j < po->lineCount; ++j)
         {

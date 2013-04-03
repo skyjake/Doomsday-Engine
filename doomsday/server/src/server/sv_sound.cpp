@@ -35,8 +35,8 @@ static inline boolean isRealMobj(const mobj_t* base)
 /**
  * Find the map object to whom @a base belongs.
  */
-static void Sv_IdentifySoundBase(mobj_t** base, Sector** sector, Polyobj** poly,
-                                 Surface** surface)
+static void Sv_IdentifySoundBase(mobj_t **base, Sector **sector, Polyobj **poly,
+                                 Surface **surface)
 {
     *sector = 0;
     *poly = 0;
@@ -44,10 +44,11 @@ static void Sv_IdentifySoundBase(mobj_t** base, Sector** sector, Polyobj** poly,
 
     if(!*base || isRealMobj(*base)) return;
 
-    /// @todo Optimize: Performance here could be a LOT better...
+    /// @todo Optimize: All sound emitters in a sector are linked together forming
+    /// a chain. Make use of the chains instead.
 
     // No mobj ID => it's not a real mobj.
-    *poly = GameMap_PolyobjByBase(theMap, *base);
+    *poly = theMap->polyobjByBase(*reinterpret_cast<ddmobj_base_t *>(base));
     if(!*poly)
     {
         // Not a polyobj. Try the sectors next.

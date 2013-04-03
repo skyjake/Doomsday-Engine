@@ -861,15 +861,8 @@ void Cl_ReadPolyDelta2(boolean skip)
     if(skip)
         return;
 
-#ifdef _DEBUG
-    if(num >= GameMap_PolyobjCount(theMap))
-    {
-        // This is worrisome.
-        Con_Error("Cl_ReadPolyDelta2: PO %i out of range.\n", num);
-    }
-#endif
-
-    po = GameMap_PolyobjByID(theMap, num);
+    DENG_ASSERT(num < GameMap_PolyobjCount(theMap));
+    po = theMap->polyobjByIndex(num);
 
     if(df & PODF_DEST_X)
         po->dest[VX] = destX;

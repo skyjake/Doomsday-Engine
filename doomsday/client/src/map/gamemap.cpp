@@ -293,38 +293,33 @@ uint GameMap_PolyobjCount(GameMap *map)
     return map->numPolyObjs;
 }
 
-Polyobj *GameMap_PolyobjByID(GameMap *map, uint id)
+Polyobj *GameMap::polyobjByIndex(uint id) const
 {
-    DENG2_ASSERT(map);
-    if(id < map->numPolyObjs)
-        return map->polyObjs[id];
-    return 0;
-}
-
-Polyobj *GameMap_PolyobjByTag(GameMap *map, int tag)
-{
-    DENG2_ASSERT(map);
-    for(uint i = 0; i < map->numPolyObjs; ++i)
+    if(id < numPolyObjs)
     {
-        Polyobj *po = map->polyObjs[i];
-        if(po->tag == tag)
-        {
-            return po;
-        }
+        return polyObjs[id];
     }
     return 0;
 }
 
-Polyobj *GameMap_PolyobjByBase(GameMap *map, void *ddMobjBase)
+Polyobj *GameMap::polyobjByTag(int tag) const
 {
-    DENG2_ASSERT(map);
-    for(uint i = 0; i < map->numPolyObjs; ++i)
+    for(uint i = 0; i < numPolyObjs; ++i)
     {
-        Polyobj *po = map->polyObjs[i];
-        if(po == ddMobjBase)
-        {
+        Polyobj *po = polyObjs[i];
+        if(po->tag == tag)
             return po;
-        }
+    }
+    return 0;
+}
+
+Polyobj *GameMap::polyobjByBase(ddmobj_base_t const &ddMobjBase) const
+{
+    for(uint i = 0; i < numPolyObjs; ++i)
+    {
+        Polyobj *po = polyObjs[i];
+        if(reinterpret_cast<ddmobj_base_t *>(po) == &ddMobjBase)
+            return po;
     }
     return 0;
 }
@@ -363,6 +358,14 @@ static void initPolyobj(Polyobj *po)
     P_PolyobjLink(po);
 }
 
+void GameMap::initPolyobjs()
+{
+    for(uint i = 0; i < numPolyObjs; ++i)
+    {
+        initPolyobj(polyObjs[i]);
+    }
+}
+
 Generators *GameMap::generators()
 {
     // Time to initialize a new collection?
@@ -371,15 +374,6 @@ Generators *GameMap::generators()
         _generators = Generators_New(sectorCount());
     }
     return _generators;
-}
-
-void GameMap_InitPolyobjs(GameMap *map)
-{
-    DENG2_ASSERT(map);
-    for(uint i = 0; i < map->numPolyObjs; ++i)
-    {
-        initPolyobj(map->polyObjs[i]);
-    }
 }
 
 void GameMap_InitNodePiles(GameMap *map)

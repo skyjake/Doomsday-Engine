@@ -208,6 +208,31 @@ public:
     inline uint sectorCount() const { return sectors().size(); }
 
     /**
+     * Locate a polyobj in the map by unique in-map index number (0-based).
+     *
+     * @param index  Index of the polyobj to be located.
+     * @return  Pointer to the referenced polyobj instance; otherwise @c 0.
+     */
+    Polyobj *polyobjByIndex(uint id) const;
+
+    /**
+     * Locate a polyobj in the map by unique in-map tag.
+     *
+     * @param tag  Tag associated with the polyobj to be located.
+     * @return  Pointer to the referenced polyobj instance; otherwise @c 0.
+     */
+    Polyobj *polyobjByTag(int tag) const;
+
+    /**
+     * Locate a polyobj in the map by mobj base.
+     *
+     * @param ddMobjBase  Base mobj to search for.
+     *
+     * @return  Pointer to the referenced polyobj instance; otherwise @c 0.
+     */
+    Polyobj *polyobjByBase(ddmobj_base_t const &ddMobjBase) const;
+
+    /**
      * Returns the root element for the map's BSP tree.
      */
     de::MapElement *bspRoot() const;
@@ -391,6 +416,11 @@ public: ///@ todo make private:
     void updateBounds();
 
     /**
+     * Initialize all polyobjs in the map. To be called after map load.
+     */
+    void initPolyobjs();
+
+    /**
      * Fixing the sky means that for adjacent sky sectors the lower sky
      * ceiling is lifted to match the upper sky. The raising only affects
      * rendering, it has no bearing on gameplay.
@@ -529,34 +559,6 @@ int GameMap_BspNodeIndex(GameMap *map, BspNode const *bspNode);
 uint GameMap_PolyobjCount(GameMap *map);
 
 /**
- * Lookup a Polyobj in the map by unique ID.
- *
- * @param map  GameMap instance.
- * @param id  Unique identifier of the Polyobj to be found.
- * @return  Found Polyobj instance else @c NULL.
- */
-Polyobj *GameMap_PolyobjByID(GameMap *map, uint id);
-
-/**
- * Lookup a Polyobj in the map by tag.
- *
- * @param map  GameMap instance.
- * @param tag  Tag associated with the Polyobj to be found.
- * @return  Found Polyobj instance else @c NULL.
- */
-Polyobj *GameMap_PolyobjByTag(GameMap *map, int tag);
-
-/**
- * Lookup a Polyobj in the map by origin.
- *
- * @param map  GameMap instance.
- * @param ddMobjBase  ddmobj_base_t to search for.
- *
- * @return  Found Polyobj instance else @c NULL.
- */
-Polyobj *GameMap_PolyobjByBase(GameMap *map, void *ddMobjBase);
-
-/**
  * Have the thinker lists been initialized yet?
  * @param map       GameMap instance.
  */
@@ -667,13 +669,6 @@ boolean GameMap_ClMobjIterator(GameMap *map, boolean (*callback) (struct mobj_s 
  */
 struct clplane_s *GameMap_NewClPlane(GameMap *map, uint sectornum, clplanetype_t type,
     coord_t dest, float speed);
-
-/**
- * Initialize all Polyobjs in the map. To be called after map load.
- *
- * @param map  GameMap instance.
- */
-void GameMap_InitPolyobjs(GameMap *map);
 
 /**
  * Initialize the node piles and link rings. To be called after map load.

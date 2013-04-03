@@ -3077,7 +3077,7 @@ void Rend_RenderSurfaceVectors()
 
     for(uint i = 0; i < GameMap_PolyobjCount(theMap); ++i)
     {
-        Polyobj const *po = GameMap_PolyobjByID(theMap, i);
+        Polyobj const *po = theMap->polyobjByIndex(i);
         Sector const &sector = po->bspLeaf->sector();
         float zPos = sector.floor().height() + (sector.ceiling().height() - sector.floor().height())/2;
 
@@ -3892,7 +3892,7 @@ static void Rend_RenderBoundingBoxes()
     {
         for(uint i = 0; i < GameMap_PolyobjCount(theMap); ++i)
         {
-            Polyobj const *po = GameMap_PolyobjByID(theMap, i);
+            Polyobj const *po = theMap->polyobjByIndex(i);
             Sector const &sec = po->bspLeaf->sector();
             coord_t width  = (po->aaBox.maxX - po->aaBox.minX)/2;
             coord_t length = (po->aaBox.maxY - po->aaBox.minY)/2;
