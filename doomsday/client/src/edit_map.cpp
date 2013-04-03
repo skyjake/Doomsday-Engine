@@ -1701,15 +1701,15 @@ boolean MPE_End()
     vec2d_t min, max;
     findBounds(editMap.vertexes, min, max);
 
-    GameMap_InitLineDefBlockmap(gamemap, min, max);
+    gamemap->initLineBlockmap(min, max);
     for(int i = 0; i < gamemap->_lines.count(); ++i)
     {
         gamemap->linkLine(*gamemap->_lines[i]);
     }
 
     // Mobj and Polyobj blockmaps are maintained dynamically.
-    GameMap_InitMobjBlockmap(gamemap, min, max);
-    GameMap_InitPolyobjBlockmap(gamemap, min, max);
+    gamemap->initMobjBlockmap(min, max);
+    gamemap->initPolyobjBlockmap(min, max);
 
     /*
      * Build a BSP for this map.

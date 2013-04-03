@@ -453,6 +453,43 @@ public: ///@ todo make private:
     void updateBounds();
 
     /**
+     * Construct an initial (empty) Mobj Blockmap for this map.
+     *
+     * @param min  Minimal coordinates for the map.
+     * @param max  Maximal coordinates for the map.
+     */
+    void initMobjBlockmap(const_pvec2d_t min, const_pvec2d_t max);
+
+    /**
+     * Construct an initial (empty) LineDef Blockmap for this map.
+     *
+     * @param min  Minimal coordinates for the map.
+     * @param max  Maximal coordinates for the map.
+     */
+    void initLineBlockmap(const_pvec2d_t min, const_pvec2d_t max);
+
+    /**
+     * Construct an initial (empty) BspLeaf Blockmap for this map.
+     *
+     * @param min  Minimal coordinates for the map.
+     * @param max  Maximal coordinates for the map.
+     */
+    void initBspLeafBlockmap(const_pvec2d_t min, const_pvec2d_t max);
+
+    /**
+     * Construct an initial (empty) Polyobj Blockmap for this map.
+     *
+     * @param min  Minimal coordinates for the map.
+     * @param max  Maximal coordinates for the map.
+     */
+    void initPolyobjBlockmap(const_pvec2d_t min, const_pvec2d_t max);
+
+    /**
+     * Initialize the node piles and link rings. To be called after map load.
+     */
+    void initNodePiles();
+
+    /**
      * Initialize all polyobjs in the map. To be called after map load.
      */
     void initPolyobjs();
@@ -661,13 +698,6 @@ boolean GameMap_IsUsedMobjID(GameMap* map, thid_t id);
  */
 void GameMap_SetMobjID(GameMap *map, thid_t id, boolean inUse);
 
-/**
- * Initialize the node piles and link rings. To be called after map load.
- *
- * @param map  GameMap instance.
- */
-void GameMap_InitNodePiles(GameMap *map);
-
 int GameMap_MobjsBoxIterator(GameMap *map, AABoxd const *box,
     int (*callback) (struct mobj_s *, void *), void *parameters);
 
@@ -715,46 +745,6 @@ inline int GameMap_PathTraverse(GameMap *map, coord_t fromX, coord_t fromY,
     coord_t to[2] = { toX, toY };
     return GameMap_PathTraverse(map, from, to, flags, callback, parameters);
 }
-
-/**
- * Private member functions:
- */
-
-/**
- * Construct an initial (empty) Mobj Blockmap for this map.
- *
- * @param map  GameMap instance.
- * @param min  Minimal coordinates for the map.
- * @param max  Maximal coordinates for the map.
- */
-void GameMap_InitMobjBlockmap(GameMap *map, const_pvec2d_t min, const_pvec2d_t max);
-
-/**
- * Construct an initial (empty) LineDef Blockmap for this map.
- *
- * @param map  GameMap instance.
- * @param min  Minimal coordinates for the map.
- * @param max  Maximal coordinates for the map.
- */
-void GameMap_InitLineDefBlockmap(GameMap *map, const_pvec2d_t min, const_pvec2d_t max);
-
-/**
- * Construct an initial (empty) BspLeaf Blockmap for this map.
- *
- * @param map  GameMap instance.
- * @param min  Minimal coordinates for the map.
- * @param max  Maximal coordinates for the map.
- */
-void GameMap_InitBspLeafBlockmap(GameMap *map, const_pvec2d_t min, const_pvec2d_t max);
-
-/**
- * Construct an initial (empty) Polyobj Blockmap for this map.
- *
- * @param map  GameMap instance.
- * @param min  Minimal coordinates for the map.
- * @param max  Maximal coordinates for the map.
- */
-void GameMap_InitPolyobjBlockmap(GameMap *map, const_pvec2d_t min, const_pvec2d_t max);
 
 // The current map.
 DENG_EXTERN_C GameMap *theMap;

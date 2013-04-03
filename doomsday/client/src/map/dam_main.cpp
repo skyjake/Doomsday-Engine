@@ -286,7 +286,7 @@ boolean DAM_AttemptMapLoad(uri_s const *_uri)
             P_InitUnusedMobjList();
 
             // Must be called before any mobjs are spawned.
-            GameMap_InitNodePiles(map);
+            map->initNodePiles();
 
 #ifdef __CLIENT__
             // Prepare the client-side data.
@@ -302,7 +302,7 @@ boolean DAM_AttemptMapLoad(uri_s const *_uri)
             map->bounds(min, max);
 
             // Init blockmap for searching BSP leafs.
-            GameMap_InitBspLeafBlockmap(map, min, max);
+            map->initBspLeafBlockmap(min, max);
             foreach(BspLeaf *bspLeaf, map->bspLeafs())
             {
                 map->linkBspLeaf(*bspLeaf);

@@ -376,110 +376,104 @@ Generators *GameMap::generators()
     return _generators;
 }
 
-void GameMap_InitNodePiles(GameMap *map)
+void GameMap::initNodePiles()
 {
     uint starttime = 0;
-
-    DENG2_ASSERT(map);
 
     VERBOSE( Con_Message("GameMap::InitNodePiles: Initializing...") )
     VERBOSE2( starttime = Timer_RealMilliseconds() )
 
     // Initialize node piles and line rings.
-    NP_Init(&map->mobjNodes, 256);  // Allocate a small pile.
-    NP_Init(&map->lineNodes, map->lineCount() + 1000);
+    NP_Init(&mobjNodes, 256);  // Allocate a small pile.
+    NP_Init(&lineNodes, lineCount() + 1000);
 
     // Allocate the rings.
-    map->lineLinks = (nodeindex_t *) Z_Malloc(sizeof(*map->lineLinks) * map->lineCount(), PU_MAPSTATIC, 0);
+    lineLinks = (nodeindex_t *) Z_Malloc(sizeof(*lineLinks) * lineCount(), PU_MAPSTATIC, 0);
 
-    for(uint i = 0; i < map->lineCount(); ++i)
+    for(uint i = 0; i < lineCount(); ++i)
     {
-        map->lineLinks[i] = NP_New(&map->lineNodes, NP_ROOT_NODE);
+        lineLinks[i] = NP_New(&lineNodes, NP_ROOT_NODE);
     }
 
     // How much time did we spend?
     VERBOSE2( Con_Message("  Done in %.2f seconds.", (Timer_RealMilliseconds() - starttime) / 1000.0f) )
 }
 
-void GameMap_InitLineDefBlockmap(GameMap* map, const_pvec2d_t min_, const_pvec2d_t max_)
+void GameMap::initLineBlockmap(const_pvec2d_t min_, const_pvec2d_t max_)
 {
 #define BLOCKMAP_MARGIN      8 // size guardband around map
 #define CELL_SIZE            MAPBLOCKUNITS
 
-    vec2d_t min, max;
-    DENG2_ASSERT(map && min_ && max_);
+    DENG2_ASSERT(min_ && max_);
 
     // Setup the blockmap area to enclose the whole map, plus a margin
     // (margin is needed for a map that fits entirely inside one blockmap cell).
-    V2d_Set(min, min_[VX] - BLOCKMAP_MARGIN,
-                 min_[VY] - BLOCKMAP_MARGIN);
-    V2d_Set(max, max_[VX] + BLOCKMAP_MARGIN,
-                 max_[VY] + BLOCKMAP_MARGIN);
+    vec2d_t min; V2d_Set(min, min_[VX] - BLOCKMAP_MARGIN,
+                              min_[VY] - BLOCKMAP_MARGIN);
+    vec2d_t max; V2d_Set(max, max_[VX] + BLOCKMAP_MARGIN,
+                              max_[VY] + BLOCKMAP_MARGIN);
 
-    map->lineBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE);
+    lineBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE);
 
 #undef CELL_SIZE
 #undef BLOCKMAP_MARGIN
 }
 
-void GameMap_InitMobjBlockmap(GameMap* map, const_pvec2d_t min_, const_pvec2d_t max_)
+void GameMap::initMobjBlockmap(const_pvec2d_t min_, const_pvec2d_t max_)
 {
 #define BLOCKMAP_MARGIN      8 // size guardband around map
 #define CELL_SIZE            MAPBLOCKUNITS
 
-    vec2d_t min, max;
-    DENG2_ASSERT(map && min_ && max_);
+    DENG2_ASSERT(min_ && max_);
 
     // Setup the blockmap area to enclose the whole map, plus a margin
     // (margin is needed for a map that fits entirely inside one blockmap cell).
-    V2d_Set(min, min_[VX] - BLOCKMAP_MARGIN,
-                 min_[VY] - BLOCKMAP_MARGIN);
-    V2d_Set(max, max_[VX] + BLOCKMAP_MARGIN,
-                 max_[VY] + BLOCKMAP_MARGIN);
+    vec2d_t min; V2d_Set(min, min_[VX] - BLOCKMAP_MARGIN,
+                              min_[VY] - BLOCKMAP_MARGIN);
+    vec2d_t max; V2d_Set(max, max_[VX] + BLOCKMAP_MARGIN,
+                              max_[VY] + BLOCKMAP_MARGIN);
 
-    map->mobjBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE);
+    mobjBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE);
 
 #undef CELL_SIZE
 #undef BLOCKMAP_MARGIN
 }
 
-void GameMap_InitPolyobjBlockmap(GameMap* map, const_pvec2d_t min_, const_pvec2d_t max_)
+void GameMap::initPolyobjBlockmap(const_pvec2d_t min_, const_pvec2d_t max_)
 {
 #define BLOCKMAP_MARGIN      8 // size guardband around map
 #define CELL_SIZE            MAPBLOCKUNITS
 
-    vec2d_t min, max;
-    DENG2_ASSERT(map && min_ && max_);
+    DENG2_ASSERT(min_ && max_);
 
     // Setup the blockmap area to enclose the whole map, plus a margin
     // (margin is needed for a map that fits entirely inside one blockmap cell).
-    V2d_Set(min, min_[VX] - BLOCKMAP_MARGIN,
-                 min_[VY] - BLOCKMAP_MARGIN);
-    V2d_Set(max, max_[VX] + BLOCKMAP_MARGIN,
-                 max_[VY] + BLOCKMAP_MARGIN);
+    vec2d_t min; V2d_Set(min, min_[VX] - BLOCKMAP_MARGIN,
+                              min_[VY] - BLOCKMAP_MARGIN);
+    vec2d_t max; V2d_Set(max, max_[VX] + BLOCKMAP_MARGIN,
+                              max_[VY] + BLOCKMAP_MARGIN);
 
-    map->polyobjBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE);
+    polyobjBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE);
 
 #undef CELL_SIZE
 #undef BLOCKMAP_MARGIN
 }
 
-void GameMap_InitBspLeafBlockmap(GameMap* map, const_pvec2d_t min_, const_pvec2d_t max_)
+void GameMap::initBspLeafBlockmap(const_pvec2d_t min_, const_pvec2d_t max_)
 {
 #define BLOCKMAP_MARGIN      8 // size guardband around map
 #define CELL_SIZE            MAPBLOCKUNITS
 
-    vec2d_t min, max;
-    DENG2_ASSERT(map && min_ && max_);
+    DENG2_ASSERT(min_ && max_);
 
     // Setup the blockmap area to enclose the whole map, plus a margin
     // (margin is needed for a map that fits entirely inside one blockmap cell).
-    V2d_Set(min, min_[VX] - BLOCKMAP_MARGIN,
-                 min_[VY] - BLOCKMAP_MARGIN);
-    V2d_Set(max, max_[VX] + BLOCKMAP_MARGIN,
-                 max_[VY] + BLOCKMAP_MARGIN);
+    vec2d_t min; V2d_Set(min, min_[VX] - BLOCKMAP_MARGIN,
+                              min_[VY] - BLOCKMAP_MARGIN);
+    vec2d_t max; V2d_Set(max, max_[VX] + BLOCKMAP_MARGIN,
+                              max_[VY] + BLOCKMAP_MARGIN);
 
-    map->bspLeafBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE);
+    bspLeafBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE);
 
 #undef CELL_SIZE
 #undef BLOCKMAP_MARGIN
