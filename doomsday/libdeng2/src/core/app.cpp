@@ -322,12 +322,12 @@ void App::initSubsystems(SubsystemInitFlags flags)
 
     d->initFileSystem(allowPlugins);
 
-    if(!homeFolder().has("persist.pack"))
+    if(!homeFolder().has("persist.pack") || commandLine().has("-reset"))
     {
         // Recreate the persistent state data package.
         ZipArchive arch;
         arch.add("Info", String("# Package for Doomsday's persistent state.\n").toUtf8());
-        Writer(homeFolder().newFile("persist.pack")) << arch;
+        Writer(homeFolder().replaceFile("persist.pack")) << arch;
 
         homeFolder().populate(Folder::PopulateOnlyThisFolder);
     }            
