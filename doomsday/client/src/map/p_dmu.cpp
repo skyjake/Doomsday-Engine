@@ -336,7 +336,7 @@ void *P_ToPtr(int type, uint index)
         return theMap->vertexes().at(index);
 
     case DMU_HEDGE:
-        return GameMap_HEdge(theMap, index);
+        return theMap->hedges().at(index);
 
     case DMU_LINEDEF:
         return theMap->lines().at(index);
@@ -461,7 +461,7 @@ int P_Callback(int type, uint index, void *context, int (*callback)(void *p, voi
 
     case DMU_HEDGE:
         if(index < GameMap_HEdgeCount(theMap))
-            return callback(GameMap_HEdge(theMap, index), context);
+            return callback(theMap->hedges().at(index), context);
         break;
 
     case DMU_LINEDEF:

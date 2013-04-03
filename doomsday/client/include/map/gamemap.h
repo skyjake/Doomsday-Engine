@@ -470,15 +470,6 @@ Sector *GameMap_SectorBySoundEmitter(GameMap *map, void const *soundEmitter);
 Surface *GameMap_SurfaceBySoundEmitter(GameMap* map, void const *soundEmitter);
 
 /**
- * Lookup a HEdge by its unique index.
- *
- * @param map  GameMap instance.
- * @param idx  Unique index of the hedge.
- * @return  Pointer to HEdge with this index else @c NULL if @a idx is not valid.
- */
-HEdge *GameMap_HEdge(GameMap *map, uint idx);
-
-/**
  * Lookup a BspNode by its unique index.
  *
  * @param map  GameMap instance.

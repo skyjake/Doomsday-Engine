@@ -2994,10 +2994,8 @@ void Rend_RenderSurfaceVectors()
     glDisable(GL_CULL_FACE);
 
     vec3f_t origin;
-    for(uint i = 0; i < GameMap_HEdgeCount(theMap); ++i)
+    foreach(HEdge *hedge, theMap->hedges())
     {
-        HEdge *hedge = GameMap_HEdge(theMap, i);
-
         if(!hedge->hasLine() || hedge->line().isFromPolyobj())
             continue;
 

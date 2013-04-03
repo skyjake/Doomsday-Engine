@@ -299,13 +299,6 @@ int GameMap_HEdgeIndex(GameMap *map, HEdge const *hedge)
     return hedge->origIndex();
 }
 
-HEdge *GameMap_HEdge(GameMap *map, uint idx)
-{
-    DENG2_ASSERT(map);
-    if(idx >= map->hedgeCount()) return NULL;
-    return map->_hedges[idx];
-}
-
 int GameMap_BspNodeIndex(GameMap *map, BspNode const *bspLeaf)
 {
     DENG_UNUSED(map);

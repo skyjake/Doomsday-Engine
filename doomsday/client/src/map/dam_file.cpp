@@ -314,10 +314,10 @@ static void readLine(GameMap *map, uint idx)
         side._sideDef = (index? map->sideDefs().at(index-1) : NULL);
 
         index = readLong();
-        side._leftHEdge  = (index? GameMap_HEdge(map, index-1) : NULL);
+        side._leftHEdge  = (index? map->hedges().at(index-1) : NULL);
 
         index = readLong();
-        side._rightHEdge = (index? GameMap_HEdge(map, index-1) : NULL);
+        side._rightHEdge = (index? map->hedges().at(index-1) : NULL);
     }
 }
 
@@ -704,7 +704,7 @@ static void readBspLeaf(GameMap *map, BspLeaf *s)
     HEdge *prevHEdge = 0;
     for(uint i = 0; i < s->_hedgeCount; ++i)
     {
-        HEdge *hedge = GameMap_HEdge(map, (unsigned) readLong() - 1);
+        HEdge *hedge = map->hedges().at((unsigned) readLong() - 1);
         if(!prevHEdge)
         {
             s->_hedge  = hedge;
@@ -784,13 +784,13 @@ static void readSeg(GameMap *map, HEdge *s)
     obIdx = readLong();
     s->bspLeaf = (obIdx == 0? NULL : map->bspLeafs().at((unsigned) obIdx - 1));
     obIdx = readLong();
-    s->twin = (obIdx == 0? NULL : GameMap_HEdge(map, (unsigned) obIdx - 1));
+    s->twin = (obIdx == 0? NULL : map->hedges().at((unsigned) obIdx - 1));
     s->angle = (angle_t) readLong();
     s->side = readByte();
     obIdx = readLong();
-    s->next = (obIdx == 0? NULL : GameMap_HEdge(map, (unsigned) obIdx - 1));
+    s->next = (obIdx == 0? NULL : map->hedges().at((unsigned) obIdx - 1));
     obIdx = readLong();
-    s->prev = (obIdx == 0? NULL : GameMap_HEdge(map, (unsigned) obIdx - 1));
+    s->prev = (obIdx == 0? NULL : map->hedges().at((unsigned) obIdx - 1));
 }
 
 static void archiveSegs(GameMap *map, boolean write)

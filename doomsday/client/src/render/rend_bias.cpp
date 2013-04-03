@@ -283,9 +283,8 @@ void SB_InitForMap(char const *uniqueID)
     uint numVertIllums = 0;
 
     // First, determine the total number of vertexillum_ts we need.
-    for(uint i = 0; i < GameMap_HEdgeCount(theMap); ++i)
+    foreach(HEdge *hedge, theMap->hedges())
     {
-        HEdge *hedge = GameMap_HEdge(theMap, i);
         if(hedge->hasLine())
             numVertIllums++;
     }
@@ -312,13 +311,11 @@ void SB_InitForMap(char const *uniqueID)
     }
 
     // Allocate bias surfaces and attach vertexillum_ts.
-    for(uint i = 0; i < GameMap_HEdgeCount(theMap); ++i)
+    foreach(HEdge *hedge, theMap->hedges())
     {
-        HEdge *hedge = GameMap_HEdge(theMap, i);
-
         if(!hedge->hasLine()) continue;
 
-        for(int j = 0; j < 3; ++j)
+        for(int i = 0; i < 3; ++i)
         {
             biassurface_t *bsuf = SB_CreateSurface();
 
@@ -326,7 +323,7 @@ void SB_InitForMap(char const *uniqueID)
             bsuf->illum = illums;
             illums += 4;
 
-            hedge->_bsuf[j] = bsuf;
+            hedge->_bsuf[i] = bsuf;
         }
     }
 
