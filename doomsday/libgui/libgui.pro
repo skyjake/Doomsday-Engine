@@ -9,7 +9,7 @@ include(../config.pri)
 
 TEMPLATE = lib
 TARGET   = deng_gui
-VERSION  = 0.1.0
+VERSION  = $$DENG_VERSION
 
 CONFIG += deng_qtgui
 include(../dep_deng2.pri)
@@ -26,13 +26,16 @@ INCLUDEPATH += include
 # Public headers.
 HEADERS += \
     include/de/GuiApp \
+    include/de/Window \
     \
     include/de/gui/guiapp.h \
-    include/de/gui/libgui.h
+    include/de/gui/libgui.h \
+    include/de/gui/window.h
 
 # Sources and private headers.
 SOURCES += \
-    src/guiapp.cpp
+    src/guiapp.cpp \
+    src/window.cpp
 
 # Installation ---------------------------------------------------------------
 
