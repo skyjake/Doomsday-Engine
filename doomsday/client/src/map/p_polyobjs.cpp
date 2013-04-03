@@ -96,22 +96,22 @@ DENG_EXTERN_C Polyobj *P_PolyobjByBase(void *ddMobjBase)
 }
 
 #undef P_PolyobjMove
-DENG_EXTERN_C boolean P_PolyobjMove(Polyobj *po, coord_t xy[2])
+DENG_EXTERN_C boolean P_PolyobjMove(Polyobj *po, const_pvec3d_t xy)
 {
     if(!po) return false;
-    return Polyobj_Move(po, xy);
+    return po->move(xy);
 }
 
 #undef P_PolyobjMoveXY
 DENG_EXTERN_C boolean P_PolyobjMoveXY(Polyobj *po, coord_t x, coord_t y)
 {
     if(!po) return false;
-    return Polyobj_MoveXY(po, x, y);
+    return po->move(x, y);
 }
 
 #undef P_PolyobjRotate
 DENG_EXTERN_C boolean P_PolyobjRotate(Polyobj *po, angle_t angle)
 {
     if(!po) return false;
-    return Polyobj_Rotate(po, angle);
+    return po->rotate(angle);
 }

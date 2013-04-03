@@ -25,6 +25,8 @@
 
 #include "dd_share.h"
 
+#include <de/vector1.h>
+
 // We'll use the base polyobj template directly as our polyobj.
 typedef struct polyobj_s {
     DD_BASE_POLYOBJ_ELEMENTS()
@@ -33,71 +35,64 @@ typedef struct polyobj_s {
     {
         std::memset(this, 0, sizeof(polyobj_s));
     }
+
+    /**
+     * Translate the origin of the polyobj in the map coordinate space.
+     *
+     * @param delta  Movement delta on the X|Y plane.
+     */
+    bool move(const_pvec2d_t delta);
+
+    /// @copybrief move()
+    inline bool move(coord_t x, coord_t y)
+    {
+        coord_t point[2] = { x, y };
+        return move(point);
+    }
+
+    /**
+     * Rotate the angle of the polyobj in the map coordinate space.
+     *
+     * @param angle  World angle delta.
+     */
+    bool rotate(angle_t angle);
+
+    /**
+     * Update the axis-aligned bounding box for the polyobj (map coordinate
+     * space) to encompass the points defined by it's vertices.
+     *
+     * @todo Should be private.
+     */
+    void updateAABox();
+
+    /**
+     * Update the tangent space vectors for all surfaces of the polyobj,
+     * according to the points defined by the relevant LineDef's vertices.
+     */
+    void updateSurfaceTangents();
+
+    /**
+     * Iterate over the lines of the Polyobj making a callback for each.
+     * Iteration ends when all lines have been visited or @a callback
+     * returns non-zero.
+     *
+     * Caller should increment validCount if necessary before calling this
+     * function as it is used to prevent repeated processing of lines.
+     *
+     * @param callback    Callback function ptr.
+     * @param paramaters  Passed to the callback.
+     *
+     * @return  @c 0 iff iteration completed wholly.
+     */
+    int lineIterator(int (*callback) (LineDef *, void *parameters),
+                     void *parameters = 0);
+
+#if 0
+    bool property(setargs_t &args) const;
+    bool setProperty(setargs_t const &args);
+#endif
 } Polyobj;
 
 #define POLYOBJ_SIZE        gx.polyobjSize
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/**
- * Translate the origin in the map coordinate space.
- *
- * @param po     Polyobj instance.
- * @param delta  Movement delta on the X|Y plane of the map coordinate space.
- */
-boolean Polyobj_Move(Polyobj* po, coord_t delta[2]);
-boolean Polyobj_MoveXY(Polyobj* po, coord_t x, coord_t y);
-
-/**
- * Rotate in the map coordinate space.
- *
- * @param po     Polyobj instance.
- * @param angle  World angle delta.
- */
-boolean Polyobj_Rotate(Polyobj* po, angle_t angle);
-
-/**
- * Update the Polyobj's map space axis-aligned bounding box to encompass
- * the points defined by it's vertices.
- *
- * @param polyobj  Polyobj instance.
- */
-void Polyobj_UpdateAABox(Polyobj* polyobj);
-
-/**
- * Update the Polyobj's map space surface tangents according to the points
- * defined by the associated LineDef's vertices.
- *
- * @param polyobj  Polyobj instance.
- */
-void Polyobj_UpdateSurfaceTangents(Polyobj* polyobj);
-
-/**
- * Iterate over the lines of the Polyobj making a callback for each.
- * Iteration ends when all lines have been visited or @a callback
- * returns non-zero.
- *
- * Caller should increment validCount if necessary before calling this
- * function as it is used to prevent repeated processing of lines.
- *
- * @param po          Polyobj instance.
- * @param callback    Callback function ptr.
- * @param paramaters  Passed to the callback.
- *
- * @return  @c 0 iff iteration completed wholly.
- */
-int Polyobj_LineIterator(Polyobj* polyobj,
-    int (*callback) (LineDef*, void* paramaters), void* paramaters);
-
-#if 0
-boolean Polyobj_GetProperty(const Polyobj* po, setargs_t* args);
-boolean Polyobj_SetProperty(Polyobj* po, const setargs_t* args);
-#endif
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif // LIBDENG_MAP_POLYOB_H

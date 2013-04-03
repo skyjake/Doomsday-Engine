@@ -152,9 +152,11 @@ int rendCellLineDefs(Blockmap* blockmap, uint const coords[2], void* parameters)
     return false; // Continue iteration.
 }
 
-int rendCellPolyobjLineDefs(void* object, void* parameters)
+int rendCellPolyobjLineDefs(void *object, void *parameters)
 {
-    return Polyobj_LineIterator((Polyobj*)object, rendLineDef, parameters);
+    Polyobj *po = (Polyobj *)object;
+    DENG_ASSERT(po != 0);
+    return po->lineIterator(rendLineDef, parameters);
 }
 
 int rendCellPolyobjs(Blockmap* blockmap, uint const coords[2], void* parameters)

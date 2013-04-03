@@ -468,8 +468,8 @@ static void initPolyobj(Polyobj *po)
         po->bspLeaf = bspLeaf;
     }
 
-    Polyobj_UpdateAABox(po);
-    Polyobj_UpdateSurfaceTangents(po);
+    po->updateAABox();
+    po->updateSurfaceTangents();
 
     P_PolyobjUnlink(po);
     P_PolyobjLink(po);
@@ -1057,15 +1057,15 @@ int GameMap_PolyobjIterator(GameMap* map, int (*callback) (Polyobj*, void*), voi
 }
 
 typedef struct poiterparams_s {
-    int (*func) (LineDef*, void*);
-    void* param;
+    int (*func) (LineDef *, void *);
+    void *param;
 } poiterparams_t;
 
-int PTR_PolyobjLines(Polyobj* po, void* context)
+int PTR_PolyobjLines(Polyobj *po, void* context)
 {
-    poiterparams_t* args = (poiterparams_t*) context;
+    poiterparams_t *args = (poiterparams_t *) context;
 
-    return Polyobj_LineIterator(po, args->func, args->param);
+    return po->lineIterator(args->func, args->param);
 }
 
 /*
@@ -1327,10 +1327,10 @@ typedef struct {
     void* parameters;
 } iteratepolyobjlinedefs_params_t;
 
-static int iteratePolyobjLineDefs(Polyobj* po, void* parameters)
+static int iteratePolyobjLineDefs(Polyobj *po, void *parameters)
 {
-    const iteratepolyobjlinedefs_params_t* p = (iteratepolyobjlinedefs_params_t*)parameters;
-    return Polyobj_LineIterator(po, p->callback, p->parameters);
+    iteratepolyobjlinedefs_params_t const *p = (iteratepolyobjlinedefs_params_t *)parameters;
+    return po->lineIterator(p->callback, p->parameters);
 }
 
 static int collectPolyobjLineDefIntercepts(uint const block[2], void* parameters)

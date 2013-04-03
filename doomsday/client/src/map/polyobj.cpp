@@ -26,32 +26,28 @@
 
 #include "render/r_main.h" // validCount
 
-static boolean checkMobjBlocking(LineDef *line, Polyobj *po);
+static bool checkMobjBlocking(Polyobj &po, LineDef &line);
 
-void Polyobj_UpdateAABox(Polyobj *po)
+void Polyobj::updateAABox()
 {
-    DENG2_ASSERT(po);
-
-    LineDef **lineIter = po->lines;
+    LineDef **lineIter = lines;
     if(!*lineIter) return; // Very odd...
 
     LineDef *line = *lineIter;
-    V2d_InitBox(po->aaBox.arvec2, line->v1Origin());
+    V2d_InitBox(aaBox.arvec2, line->v1Origin());
     lineIter++;
 
     while(*lineIter)
     {
         line = *lineIter;
-        V2d_AddToBox(po->aaBox.arvec2, line->v1Origin());
+        V2d_AddToBox(aaBox.arvec2, line->v1Origin());
         lineIter++;
     }
 }
 
-void Polyobj_UpdateSurfaceTangents(Polyobj *po)
+void Polyobj::updateSurfaceTangents()
 {
-    DENG2_ASSERT(po);
-
-    for(LineDef **lineIter = po->lines; *lineIter; lineIter++)
+    for(LineDef **lineIter = lines; *lineIter; lineIter++)
     {
         LineDef *line = *lineIter;
 
@@ -63,38 +59,29 @@ void Polyobj_UpdateSurfaceTangents(Polyobj *po)
     }
 }
 
-static boolean mobjIsBlockingPolyobj(Polyobj* po)
+static bool mobjIsBlockingPolyobj(Polyobj &po)
 {
-    LineDef** lineIter;
-    if(!po) return false;
-
-    for(lineIter = po->lines; *lineIter; lineIter++)
+    for(LineDef **lineIter = po.lines; *lineIter; lineIter++)
     {
-        LineDef* line = *lineIter;
-        if(checkMobjBlocking(line, po))
-        {
+        if(checkMobjBlocking(po, **lineIter))
             return true;
-        }
     }
-    // All clear.
-    return false;
+    return false; // All clear.
 }
 
-boolean Polyobj_Move(Polyobj *po, coord_t delta[2])
+bool Polyobj::move(const_pvec2d_t delta)
 {
-    DENG2_ASSERT(po);
+    P_PolyobjUnlink(this);
 
-    P_PolyobjUnlink(po);
-
-    LineDef **lineIter = po->lines;
-    povertex_t *prevPts = po->prevPts;
+    LineDef **lineIter = lines;
+    povertex_t *prevPtIt = prevPts;
     uint i;
-    for(i = 0; i < po->lineCount; ++i, lineIter++, prevPts++)
+    for(i = 0; i < lineCount; ++i, lineIter++, prevPtIt++)
     {
         LineDef *line = *lineIter;
         LineDef **veryTempLine;
 
-        for(veryTempLine = po->lines; veryTempLine != lineIter; veryTempLine++)
+        for(veryTempLine = lines; veryTempLine != lineIter; veryTempLine++)
         {
             if(&(*veryTempLine)->v1() == &line->v1())
             {
@@ -108,36 +95,36 @@ boolean Polyobj_Move(Polyobj *po, coord_t delta[2])
             line->v1()._origin[VY] += delta[VY];
         }
 
-        (*prevPts).origin[VX] += delta[VX]; // Previous points are unique for each hedge.
-        (*prevPts).origin[VY] += delta[VY];
+        (*prevPtIt).origin[VX] += delta[VX]; // Previous points are unique for each hedge.
+        (*prevPtIt).origin[VY] += delta[VY];
     }
 
-    lineIter = po->lines;
-    for(i = 0; i < po->lineCount; ++i, lineIter++)
+    lineIter = lines;
+    for(i = 0; i < lineCount; ++i, lineIter++)
     {
         LineDef *line = *lineIter;
         line->updateAABox();
     }
-    po->origin[VX] += delta[VX];
-    po->origin[VY] += delta[VY];
-    Polyobj_UpdateAABox(po);
+    origin[VX] += delta[VX];
+    origin[VY] += delta[VY];
+    updateAABox();
 
     // With translation applied now determine if we collided with anything.
-    P_PolyobjLink(po);
-    if(mobjIsBlockingPolyobj(po))
+    P_PolyobjLink(this);
+    if(mobjIsBlockingPolyobj(*this))
     {
         // Something is blocking our path. We must undo...
-        P_PolyobjUnlink(po);
+        P_PolyobjUnlink(this);
 
         i = 0;
-        lineIter = po->lines;
-        prevPts = po->prevPts;
-        for(i = 0; i < po->lineCount; ++i, lineIter++, prevPts++)
+        lineIter = lines;
+        prevPtIt = prevPts;
+        for(i = 0; i < lineCount; ++i, lineIter++, prevPtIt++)
         {
             LineDef *line = *lineIter;
             LineDef **veryTempLine;
 
-            for(veryTempLine = po->lines; veryTempLine != lineIter; veryTempLine++)
+            for(veryTempLine = lines; veryTempLine != lineIter; veryTempLine++)
             {
                 if(&(*veryTempLine)->v1() == &line->v1())
                 {
@@ -151,34 +138,28 @@ boolean Polyobj_Move(Polyobj *po, coord_t delta[2])
                 line->v1()._origin[VY] -= delta[VY];
             }
 
-            (*prevPts).origin[VX] -= delta[VX];
-            (*prevPts).origin[VY] -= delta[VY];
+            (*prevPtIt).origin[VX] -= delta[VX];
+            (*prevPtIt).origin[VY] -= delta[VY];
         }
 
-        lineIter = po->lines;
-        for(i = 0; i < po->lineCount; ++i, lineIter++)
+        lineIter = lines;
+        for(i = 0; i < lineCount; ++i, lineIter++)
         {
             LineDef *line = *lineIter;
             line->updateAABox();
         }
-        po->origin[VX] -= delta[VX];
-        po->origin[VY] -= delta[VY];
-        Polyobj_UpdateAABox(po);
+        origin[VX] -= delta[VX];
+        origin[VY] -= delta[VY];
+        updateAABox();
 
-        P_PolyobjLink(po);
+        P_PolyobjLink(this);
         return false;
     }
 
     // Various parties may be interested in this change; signal it.
-    P_PolyobjChanged(po);
+    P_PolyobjChanged(this);
 
     return true;
-}
-
-boolean Polyobj_MoveXY(Polyobj *po, coord_t x, coord_t y)
-{
-    coord_t delta[2] = { x, y };
-    return Polyobj_Move(po, delta);
 }
 
 static void rotatePoint2d(coord_t point[2], coord_t const origin[2], uint fineAngle)
@@ -197,31 +178,29 @@ static void rotatePoint2d(coord_t point[2], coord_t const origin[2], uint fineAn
     point[VY] = rotated[VY] + rotated[VX] + origin[VY];
 }
 
-boolean Polyobj_Rotate(Polyobj *po, angle_t angle)
+bool Polyobj::rotate(angle_t angle)
 {
-    DENG2_ASSERT(po);
+    P_PolyobjUnlink(this);
 
-    P_PolyobjUnlink(po);
+    uint fineAngle = (angle + angle) >> ANGLETOFINESHIFT;
 
-    uint fineAngle = (po->angle + angle) >> ANGLETOFINESHIFT;
-
-    LineDef **lineIter      = po->lines;
-    povertex_t *originalPts = po->originalPts;
-    povertex_t *prevPts     = po->prevPts;
+    LineDef **lineIter       = lines;
+    povertex_t *originalPtIt = originalPts;
+    povertex_t *prevPtIt     = prevPts;
     uint i = 0;
-    for(i = 0; i < po->lineCount; ++i, lineIter++, originalPts++, prevPts++)
+    for(i = 0; i < lineCount; ++i, lineIter++, originalPtIt++, prevPtIt++)
     {
         LineDef *line = *lineIter;
         Vertex &vtx = line->v1();
 
-        V2d_Copy(prevPts->origin, vtx.origin());
-        V2d_Copy(vtx._origin, originalPts->origin);
+        V2d_Copy(prevPtIt->origin, vtx.origin());
+        V2d_Copy(vtx._origin, originalPtIt->origin);
 
-        rotatePoint2d(vtx._origin, po->origin, fineAngle);
+        rotatePoint2d(vtx._origin, origin, fineAngle);
     }
 
-    lineIter = po->lines;
-    for(i = 0; i < po->lineCount; ++i, lineIter++)
+    lineIter = lines;
+    for(i = 0; i < lineCount; ++i, lineIter++)
     {
         LineDef *line = *lineIter;
 
@@ -232,26 +211,26 @@ boolean Polyobj_Rotate(Polyobj *po, angle_t angle)
         // HEdge angle must be kept in sync.
         line->front().leftHEdge()._angle = BANG_TO_ANGLE(line->_angle);
     }
-    Polyobj_UpdateAABox(po);
-    po->angle += angle;
+    updateAABox();
+    angle += angle;
 
     // With rotation applied now determine if we collided with anything.
-    P_PolyobjLink(po);
-    if(mobjIsBlockingPolyobj(po))
+    P_PolyobjLink(this);
+    if(mobjIsBlockingPolyobj(*this))
     {
         // Something is blocking our path. We must undo...
-        P_PolyobjUnlink(po);
+        P_PolyobjUnlink(this);
 
-        lineIter = po->lines;
-        prevPts = po->prevPts;
-        for(i = 0; i < po->lineCount; ++i, lineIter++, prevPts++)
+        lineIter = lines;
+        prevPtIt = prevPts;
+        for(i = 0; i < lineCount; ++i, lineIter++, prevPtIt++)
         {
             Vertex &vtx = (*lineIter)->v1();
-            V2d_Copy(vtx._origin, prevPts->origin);
+            V2d_Copy(vtx._origin, prevPtIt->origin);
         }
 
-        lineIter = po->lines;
-        for(i = 0; i < po->lineCount; ++i, lineIter++)
+        lineIter = lines;
+        for(i = 0; i < lineCount; ++i, lineIter++)
         {
             LineDef *line = *lineIter;
 
@@ -262,17 +241,17 @@ boolean Polyobj_Rotate(Polyobj *po, angle_t angle)
             // HEdge angle must be kept in sync.
             line->front().leftHEdge()._angle = BANG_TO_ANGLE(line->_angle);
         }
-        Polyobj_UpdateAABox(po);
-        po->angle -= angle;
+        updateAABox();
+        angle -= angle;
 
-        P_PolyobjLink(po);
+        P_PolyobjLink(this);
         return false;
     }
 
-    Polyobj_UpdateSurfaceTangents(po);
+    updateSurfaceTangents();
 
     // Various parties may be interested in this change; signal it.
-    P_PolyobjChanged(po);
+    P_PolyobjChanged(this);
     return true;
 }
 
@@ -312,17 +291,17 @@ int PTR_checkMobjBlocking(mobj_t *mo, void *data)
     return false; // Continue iteration.
 }
 
-static boolean checkMobjBlocking(LineDef *line, Polyobj *po)
+static bool checkMobjBlocking(Polyobj &po, LineDef &line)
 {
     ptrmobjblockingparams_t params;
     params.isBlocked = false;
-    params.line      = line;
-    params.polyobj   = po;
+    params.line      = &line;
+    params.polyobj   = &po;
 
-    AABoxd aaBox(line->aaBox().minX - DDMOBJ_RADIUS_MAX,
-                 line->aaBox().minY - DDMOBJ_RADIUS_MAX,
-                 line->aaBox().maxX + DDMOBJ_RADIUS_MAX,
-                 line->aaBox().maxY + DDMOBJ_RADIUS_MAX);
+    AABoxd aaBox(line.aaBox().minX - DDMOBJ_RADIUS_MAX,
+                 line.aaBox().minY - DDMOBJ_RADIUS_MAX,
+                 line.aaBox().maxX + DDMOBJ_RADIUS_MAX,
+                 line.aaBox().maxY + DDMOBJ_RADIUS_MAX);
 
     validCount++;
     P_MobjsBoxIterator(&aaBox, PTR_checkMobjBlocking, &params);
@@ -330,13 +309,12 @@ static boolean checkMobjBlocking(LineDef *line, Polyobj *po)
     return params.isBlocked;
 }
 
-int Polyobj_LineIterator(Polyobj *po, int (*callback) (LineDef *, void *),
-    void *parameters)
+int Polyobj::lineIterator(int (*callback) (LineDef *, void *), void *parameters)
 {
     int result = false; // Continue iteration.
     if(callback)
     {
-        for(LineDef **lineIter = po->lines; *lineIter; lineIter++)
+        for(LineDef **lineIter = lines; *lineIter; lineIter++)
         {
             LineDef *line = *lineIter;
 

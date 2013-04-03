@@ -3328,7 +3328,8 @@ static int drawVertex1(LineDef *li, void *context)
 
 static int drawPolyObjVertexes(Polyobj *po, void * /*context*/)
 {
-    return Polyobj_LineIterator(po, drawVertex1, po);
+    DENG_ASSERT(po != 0);
+    return po->lineIterator(drawVertex1, po);
 }
 
 /**
