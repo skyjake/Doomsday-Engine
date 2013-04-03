@@ -470,15 +470,6 @@ Sector *GameMap_SectorBySoundEmitter(GameMap *map, void const *soundEmitter);
 Surface *GameMap_SurfaceBySoundEmitter(GameMap* map, void const *soundEmitter);
 
 /**
- * Lookup a BspNode by its unique index.
- *
- * @param map  GameMap instance.
- * @param idx  Unique index of the bsp node.
- * @return  Pointer to BspNode with this index else @c NULL if @a idx is not valid.
- */
-BspNode *GameMap_BspNode(GameMap *map, uint idx);
-
-/**
  * Lookup the unique index for @a vertex.
  *
  * @param map  GameMap instance.

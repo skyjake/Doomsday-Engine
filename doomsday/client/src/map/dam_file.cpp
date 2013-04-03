@@ -841,7 +841,7 @@ static MapElement *readBspReference(GameMap *map)
     {
         return map->bspLeaf().at(idx & ~NF_LEAF);
     }
-    return GameMap_BspNode(map, idx);
+    return map->bspNodes().at(idx);
 }
 
 #undef NF_LEAF

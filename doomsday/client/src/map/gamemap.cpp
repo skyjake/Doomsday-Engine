@@ -306,13 +306,6 @@ int GameMap_BspNodeIndex(GameMap *map, BspNode const *bspLeaf)
     return bspLeaf->origIndex();
 }
 
-BspNode *GameMap_BspNode(GameMap *map, uint idx)
-{
-    DENG2_ASSERT(map);
-    if(idx >= map->bspNodeCount()) return NULL;
-    return map->_bspNodes[idx];
-}
-
 uint GameMap_VertexCount(GameMap *map)
 {
     DENG2_ASSERT(map);

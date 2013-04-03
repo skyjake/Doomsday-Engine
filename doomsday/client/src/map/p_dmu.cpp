@@ -344,20 +344,20 @@ void *P_ToPtr(int type, uint index)
     case DMU_SIDEDEF:
         return theMap->sideDefs().at(index);
 
-    case DMU_BSPLEAF:
-        return theMap->bspLeafs().at(index);
-
     case DMU_SECTOR:
         return theMap->sectors().at(index);
-
-    case DMU_BSPNODE:
-        return GameMap_BspNode(theMap, index);
 
     case DMU_PLANE: {
         /// @todo Throw exception.
         QByteArray msg = String("P_ToPtr: Cannot convert %1 to a ptr (sector is unknown).").arg(DMU_Str(type)).toUtf8();
         LegacyCore_FatalError(msg.constData());
         return 0; /* Unreachable. */ }
+
+    case DMU_BSPLEAF:
+        return theMap->bspLeafs().at(index);
+
+    case DMU_BSPNODE:
+        return theMap->bspNodes().at(index);
 
     case DMU_MATERIAL:
         if(index == 0) return 0;
@@ -476,7 +476,7 @@ int P_Callback(int type, uint index, void *context, int (*callback)(void *p, voi
 
     case DMU_BSPNODE:
         if(index < GameMap_BspNodeCount(theMap))
-            return callback(GameMap_BspNode(theMap, index), context);
+            return callback(theMap->bspNodes().at(index), context);
         break;
 
     case DMU_BSPLEAF:
