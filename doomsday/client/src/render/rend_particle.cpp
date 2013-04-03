@@ -243,7 +243,8 @@ void Rend_ParticleMarkInSectorVisible(Sector *sector)
     gens = theMap->generators();
     if(!gens) return;
 
-    Generators_IterateList(gens, GameMap_SectorIndex(theMap, sector), markPtcGenVisible, NULL/*no parameters*/);
+    Generators_IterateList(gens, theMap->sectorIndex(sector),
+                           markPtcGenVisible, NULL/*no parameters*/);
 }
 
 /**

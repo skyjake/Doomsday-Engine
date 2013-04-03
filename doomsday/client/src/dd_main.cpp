@@ -2471,7 +2471,7 @@ void *DD_GetVariable(int ddvalue)
         return &valueU;
 
     case DD_POLYOBJ_COUNT:
-        valueU = theMap? GameMap_PolyobjCount(theMap) : 0;
+        valueU = theMap? theMap->polyobjCount() : 0;
         return &valueU;
 
     case DD_HEDGE_COUNT:

@@ -38,8 +38,8 @@ static inline boolean isRealMobj(const mobj_t* base)
 static void Sv_IdentifySoundBase(mobj_t **base, Sector **sector, Polyobj **poly,
                                  Surface **surface)
 {
-    *sector = 0;
-    *poly = 0;
+    *sector  = 0;
+    *poly    = 0;
     *surface = 0;
 
     if(!*base || isRealMobj(*base)) return;
@@ -52,11 +52,11 @@ static void Sv_IdentifySoundBase(mobj_t **base, Sector **sector, Polyobj **poly,
     if(!*poly)
     {
         // Not a polyobj. Try the sectors next.
-        *sector = GameMap_SectorBySoundEmitter(theMap, *base);
+        *sector = theMap->sectorBySoundEmitter(*reinterpret_cast<ddmobj_base_t *>(base));
         if(!*sector)
         {
             // Not a sector. Try the surfaces.
-            *surface = GameMap_SurfaceBySoundEmitter(theMap, *base);
+            *surface = theMap->surfaceBySoundEmitter(*reinterpret_cast<ddmobj_base_t *>(base));
         }
     }
 

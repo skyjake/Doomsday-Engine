@@ -512,7 +512,7 @@ void LG_InitForMap(void)
         }
 
 /*if _DEBUG
-Con_Message("  Sector %i: %i / %i", GameMap_SectorIndex(theMap, s), changedCount, count);
+Con_Message("  Sector %i: %i / %i", theMap->sectorIndex(s), changedCount, count);
 #endif*/
 
         Sector::LightGridData &lgData = sector->_lightGridData;

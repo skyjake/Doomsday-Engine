@@ -297,7 +297,7 @@ void SB_InitForMap(char const *uniqueID)
         numVertIllums += Rend_NumFanVerticesForBspLeaf(bspLeaf) * sector->planeCount();
     }
 
-    for(uint i = 0; i < GameMap_PolyobjCount(theMap); ++i)
+    for(uint i = 0; i < theMap->polyobjCount(); ++i)
     {
         Polyobj *po = theMap->polyobjByIndex(i);
         numVertIllums += po->lineCount * 3 * 4;
@@ -343,7 +343,7 @@ void SB_InitForMap(char const *uniqueID)
         }
     }
 
-    for(uint i = 0; i < GameMap_PolyobjCount(theMap); ++i)
+    for(uint i = 0; i < theMap->polyobjCount(); ++i)
     {
         Polyobj *po = theMap->polyobjByIndex(i);
 

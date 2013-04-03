@@ -127,7 +127,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 
         LOG_DEBUG("DT_POLY_SOUND: poly=%i") << index;
 
-        if(index < GameMap_PolyobjCount(theMap))
+        if(index < theMap->polyobjCount())
         {
             DENG_ASSERT(theMap);
             poly = theMap->polyobjByIndex(index);
@@ -253,7 +253,7 @@ ifdef _DEBUG
 Con_Printf("Cl_ReadSoundDelta2(%i): Start snd=%i [%x] vol=%.2f",
            type, sound, flags, volume);
 if(cmo) Con_Printf(", mo=%i\n", cmo->mo.thinker.id);
-else if(sector) Con_Printf(", sector=%i\n", GameMap_SectorIndex(theMap, sector));
+else if(sector) Con_Printf(", sector=%i\n", theMap->sectorIndex(sector));
 else if(poly) Con_Printf(", poly=%i\n", GET_POLYOBJ_IDX(poly));
 else Con_Printf("\n");
 #endif
@@ -272,7 +272,7 @@ else Con_Printf("\n");
 Con_Printf("Cl_ReadSoundDelta2(%i): Stop sound %i",
            type, sound);
 if(cmo)  Con_Printf(", mo=%i\n", cmo->mo.thinker.id);
-else if(sector) Con_Printf(", sector=%i\n", GameMap_SectorIndex(theMap, sector));
+else if(sector) Con_Printf(", sector=%i\n", theMap->sectorIndex(sector));
 else if(poly) Con_Printf(", poly=%i\n", GET_POLYOBJ_IDX(poly));
 else Con_Printf("\n");
 #endif

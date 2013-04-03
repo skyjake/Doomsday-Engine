@@ -961,10 +961,10 @@ void Sv_RegisterWorld(cregister_t *reg, boolean isInitial)
     }
 
     // Init polyobjs.
-    uint numPolyobjs = GameMap_PolyobjCount(theMap);
+    uint numPolyobjs = theMap->polyobjCount();
     if(numPolyobjs)
     {
-        reg->polyObjs = (dt_poly_t *) Z_Calloc(sizeof(*reg->polyObjs) * GameMap_PolyobjCount(theMap), PU_MAP, 0);
+        reg->polyObjs = (dt_poly_t *) Z_Calloc(sizeof(*reg->polyObjs) * theMap->polyobjCount(), PU_MAP, 0);
         for(uint i = 0; i < numPolyobjs; ++i)
         {
             Sv_RegisterPoly(&reg->polyObjs[i], i);
@@ -2284,16 +2284,15 @@ void Sv_NewSideDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
 /**
  * Poly deltas are generated for changed polyobjs.
  */
-void Sv_NewPolyDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
+void Sv_NewPolyDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
 {
-    uint                i;
-    polydelta_t         delta;
+    polydelta_t delta;
 
-    for(i = 0; i < GameMap_PolyobjCount(theMap); ++i)
+    for(uint i = 0; i < theMap->polyobjCount(); ++i)
     {
         if(Sv_RegisterComparePoly(reg, i, &delta))
         {
-#ifdef _DEBUG
+#ifdef DENG_DEBUG
             VERBOSE( Con_Message("Sv_NewPolyDeltas: Change in %i", i) );
 #endif
             Sv_AddDeltaToPools(&delta, targets);
@@ -2321,7 +2320,7 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
     if(sourceSector)
     {
         type = DT_SECTOR_SOUND;
-        id = GameMap_SectorIndex(theMap, sourceSector);
+        id = theMap->sectorIndex(sourceSector);
         // Client assumes the sector's sound origin.
     }
     else if(sourcePoly)
@@ -2354,7 +2353,7 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
             }
             // else client assumes the sector's sound emitter.
 
-            id = GameMap_SectorIndex(theMap, &pln->sector());
+            id = theMap->sectorIndex(&pln->sector());
             break; }
 
         case DMU_SIDEDEF: {
@@ -2383,7 +2382,7 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
                 DENG2_ASSERT(false);
             }
 
-            id = GameMap_SideDefIndex(theMap, sideDef);
+            id = theMap->sideDefIndex(sideDef);
             break; }
 
         default:

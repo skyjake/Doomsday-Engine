@@ -859,7 +859,7 @@ void Cl_ReadPolyDelta2(boolean skip)
     if(skip)
         return;
 
-    DENG_ASSERT(num < GameMap_PolyobjCount(theMap));
+    DENG_ASSERT(num < theMap->polyobjCount());
     po = theMap->polyobjByIndex(num);
 
     if(df & PODF_DEST_X)

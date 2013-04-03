@@ -524,7 +524,7 @@ static void R_UpdateMap()
     }
 
     /// @todo Is this even necessary?
-    for(uint i = 0; i < GameMap_PolyobjCount(theMap); ++i)
+    for(uint i = 0; i < theMap->polyobjCount(); ++i)
     {
         Polyobj *po = theMap->polyobjByIndex(i);
 

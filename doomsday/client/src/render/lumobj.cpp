@@ -155,7 +155,7 @@ static lumlistnode_t* allocListNode(void)
 static void linkLumObjToSSec(lumobj_t *lum, BspLeaf *bspLeaf)
 {
     lumlistnode_t *ln = allocListNode();
-    lumlistnode_t **root = &bspLeafLumObjList[GameMap_BspLeafIndex(theMap, bspLeaf)];
+    lumlistnode_t **root = &bspLeafLumObjList[theMap->bspLeafIndex(bspLeaf)];
     ln->next = *root;
     ln->data = lum;
     *root = ln;
@@ -1210,7 +1210,7 @@ void LO_ClipInBspLeafBySight(uint bspLeafIdx)
 static boolean iterateBspLeafLumObjs(BspLeaf *bspLeaf,
     boolean (*func) (void *, void *), void *data)
 {
-    lumlistnode_t *ln = bspLeafLumObjList[GameMap_BspLeafIndex(theMap, bspLeaf)];
+    lumlistnode_t *ln = bspLeafLumObjList[theMap->bspLeafIndex(bspLeaf)];
     while(ln)
     {
         if(!func(ln->data, data))

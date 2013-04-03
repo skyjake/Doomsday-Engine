@@ -175,7 +175,7 @@ static void writeVertex(GameMap const *map, uint idx)
         LineOwner *own = base;
         do
         {
-            writeLong((long) (map->lines.indexOf(&own->line()) + 1));
+            writeLong((long) (map->lineIndex(&own->line()) + 1));
             writeLong((long) own->angle());
 
             own = &own->prev();
@@ -249,8 +249,8 @@ static void writeLine(GameMap *map, uint idx)
 
     LineDef *l = &map->lines[idx];
 
-    writeLong((long) (map->vertexes.indexOf(static_cast<Vertex const *>(l->_v[0])) + 1));
-    writeLong((long) (map->vertexes.indexOf(static_cast<Vertex const *>(l->_v[1])) + 1));
+    writeLong((long) (map->vertexIndex(static_cast<Vertex const *>(l->_v[0])) + 1));
+    writeLong((long) (map->vertexIndex(static_cast<Vertex const *>(l->_v[1])) + 1));
     writeLong(l->_flags);
     writeByte(l->_inFlags);
     writeFloat(l->_direction[VX]);
@@ -270,11 +270,11 @@ static void writeLine(GameMap *map, uint idx)
     {
         LineDef::Side &side = l->side(i);
 
-        writeLong(side._sector? (GameMap_SectorIndex(map, static_cast<Sector *>(side._sector)) + 1) : 0);
-        writeLong(side._sideDef? (GameMap_SideDefIndex(map, side._sideDef) + 1) : 0);
+        writeLong(side._sector? (map->sectorIndex(static_cast<Sector *>(side._sector)) + 1) : 0);
+        writeLong(side._sideDef? (map->sideDefIndex(side._sideDef) + 1) : 0);
 
-        writeLong(side._leftHEdge? (GameMap_HEdgeIndex(map, side._leftHEdge)  + 1) : 0);
-        writeLong(side._rightHEdge? (GameMap_HEdgeIndex(map, side._rightHEdge) + 1) : 0);
+        writeLong(side._leftHEdge? (map->hedgeIndex(side._leftHEdge)  + 1) : 0);
+        writeLong(side._rightHEdge? (map->hedgeIndex(side._rightHEdge) + 1) : 0);
     }
 }
 
@@ -489,21 +489,21 @@ static void writeSector(GameMap *map, uint idx)
     writeLong((long) s->_lines.count());
     foreach(LineDef *line, s->_lines)
     {
-        writeLong(GameMap_LineDefIndex(map, line) + 1);
+        writeLong(map->lineIndex(line) + 1);
     }
 
     // BspLeaf list.
     writeLong((long) s->_bspLeafs.count());
     foreach(BspLeaf *bspLeaf, s->_bspLeafs)
     {
-        writeLong(GameMap_BspLeafIndex(map, bspLeaf) + 1);
+        writeLong(map->bspLeafIndex(bspLeaf) + 1);
     }
 
     // Reverb BSP leaf attributors.
     writeLong((long) s->_reverbBspLeafs.count());
     foreach(BspLeaf *bspLeaf, s->_reverbBspLeafs)
     {
-        writeLong(GameMap_BspLeafIndex(map, bspLeaf) + 1);
+        writeLong(map->bspLeafIndex(bspLeaf) + 1);
     }
 }
 
@@ -653,7 +653,7 @@ static void writeBspLeaf(GameMap *map, BspLeaf *s)
     writeFloat(s->_aaBox.maxY);
     writeFloat(s->_center[VX]);
     writeFloat(s->_center[VY]);
-    writeLong(s->_sector? ((map->sectors.indexOf(static_cast<Sector *>(s->_sector))) + 1) : 0);
+    writeLong(s->_sector? ((map->sectorIndex(static_cast<Sector *>(s->_sector))) + 1) : 0);
     writeLong(s->_polyObj? (s->_polyObj->idx + 1) : 0);
 
     // BspLeaf reverb.
@@ -668,7 +668,7 @@ static void writeBspLeaf(GameMap *map, BspLeaf *s)
     HEdge const *hedge = base;
     do
     {
-        writeLong(GameMap_HEdgeIndex(map, hedge) + 1);
+        writeLong(map->hedgeIndex(hedge) + 1);
     } while((hedge = hedge->next) != base);
 }
 
@@ -754,18 +754,18 @@ static void writeSeg(GameMap *map, HEdge *s)
 {
     DENG_ASSERT(map && s);
 
-    writeLong(map->vertexes.indexOf(static_cast<Vertex const *>(s->v[0])) + 1);
-    writeLong(map->vertexes.indexOf(static_cast<Vertex const *>(s->v[1])) + 1);
+    writeLong(map->vertexIndex(static_cast<Vertex const *>(s->v[0])) + 1);
+    writeLong(map->vertexIndex(static_cast<Vertex const *>(s->v[1])) + 1);
     writeFloat(s->length);
     writeFloat(s->offset);
-    writeLong(s->line? (map->lineDefs.indexOf(s->line) + 1) : 0);
-    writeLong(s->sector? (GameMap_SectorIndex(map, s->sector) + 1) : 0);
-    writeLong(s->bspLeaf? (GameMap_BspLeafIndex(map, s->bspLeaf) + 1) : 0);
-    writeLong(s->twin? (GameMap_HEdgeIndex(map, s->twin) + 1) : 0);
+    writeLong(s->line? (map->lineIndex(s->line) + 1) : 0);
+    writeLong(s->sector? (map->sectorIndex(s->sector) + 1) : 0);
+    writeLong(s->bspLeaf? (map->bspLeafIndex(s->bspLeaf) + 1) : 0);
+    writeLong(s->twin? (map->hedgeIndex(s->twin) + 1) : 0);
     writeLong((long) s->angle);
     writeByte(s->side);
-    writeLong(s->next? (GameMap_HEdgeIndex(map, s->next) + 1) : 0);
-    writeLong(s->twin? (GameMap_HEdgeIndex(map, s->prev) + 1) : 0);
+    writeLong(s->next? (map->hedgeIndex(s->next) + 1) : 0);
+    writeLong(s->twin? (map->hedgeIndex(s->prev) + 1) : 0);
 }
 
 static void readSeg(GameMap *map, HEdge *s)
@@ -828,9 +828,9 @@ static void writeBspReference(GameMap* map, de::MapElement* bspRef)
 {
     assert(map);
     if(bspRef->type() == DMU_BSPLEAF)
-        writeLong((long)(GameMap_BspLeafIndex(map, bspRef->castTo<BspLeaf>()) | NF_LEAF));
+        writeLong((long)(map->bspLeafIndex(bspRef->castTo<BspLeaf>()) | NF_LEAF));
     else
-        writeLong((long)GameMap_BspNodeIndex(map, bspRef->castTo<BspNode>()));
+        writeLong((long)map->bspNodeIndex(bspRef->castTo<BspNode>()));
 }
 
 static MapElement *readBspReference(GameMap *map)
@@ -976,13 +976,13 @@ static void writePolyobj(GameMap *map, uint idx)
         LineDef *line = p->lines[i];
         HEdge *he = line->front()._leftHEdge;
 
-        writeLong(map->_vertexes.indexOf(he->_v[0]) + 1);
-        writeLong(map->_vertexes.indexOf(he->_v[1]) + 1);
+        writeLong(map->vertexIndex(he->_v[0]) + 1);
+        writeLong(map->vertexIndex(he->_v[1]) + 1);
         writeFloat(he->_length);
         writeFloat(he->_lineOffset);
-        writeLong(he->_line? (map->_lines.indexOf(he->_line) + 1) : 0);
+        writeLong(he->_line? (map->lineIndex(he->_line) + 1) : 0);
         writeByte(he->_lineSide);
-        writeLong(he->_sector? (GameMap_SectorIndex(map, he->_sector) + 1) : 0);
+        writeLong(he->_sector? (map->sectorIndex(he->_sector) + 1) : 0);
         writeLong((long) he->_angle);
     }
 }

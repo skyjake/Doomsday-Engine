@@ -165,7 +165,7 @@ void GameMap_SetTraceOpening(GameMap *map, LineDef *line)
 {
     DENG2_ASSERT(map);
     // Is the linedef part of this map?
-    if(!line || GameMap_LineDefIndex(map, line) < 0) return; // Odd...
+    if(!line || map->lineIndex(line) < 0) return; // Odd...
 
     line->configureTraceOpening(map->traceOpening);
 }
@@ -187,77 +187,66 @@ void GameMap::setSkyFix(bool ceiling, coord_t height)
     _skyFix[plane].height = height;
 }
 
-int GameMap_VertexIndex(GameMap *map, Vertex const *vtx)
+int GameMap::vertexIndex(Vertex const *vtx) const
 {
-    DENG2_ASSERT(map);
     if(!vtx) return -1;
-    return map->_vertexes.indexOf(const_cast<Vertex *>(vtx)); // Bad performance: O(n)
+    return _vertexes.indexOf(const_cast<Vertex *>(vtx)); // Bad performance: O(n)
 }
 
-int GameMap_LineDefIndex(GameMap *map, LineDef const *line)
+int GameMap::lineIndex(LineDef const *line) const
 {
-    DENG2_ASSERT(map);
     if(!line) return -1;
-    return map->_lines.indexOf(const_cast<LineDef *>(line)); // Bad performance: O(n)
+    return _lines.indexOf(const_cast<LineDef *>(line)); // Bad performance: O(n)
 }
 
-int GameMap_SideDefIndex(GameMap *map, SideDef const *side)
+int GameMap::sideDefIndex(SideDef const *side) const
 {
-    DENG2_ASSERT(map);
     if(!side) return -1;
-    return map->_sideDefs.indexOf(const_cast<SideDef *>(side)); // Bad performance: O(n)
+    return _sideDefs.indexOf(const_cast<SideDef *>(side)); // Bad performance: O(n)
 }
 
-int GameMap_SectorIndex(GameMap *map, Sector const *sec)
+int GameMap::sectorIndex(Sector const *sec) const
 {
-    DENG2_ASSERT(map);
     if(!sec) return -1;
-    return map->_sectors.indexOf(const_cast<Sector *>(sec)); // Bad performance: O(n)
+    return _sectors.indexOf(const_cast<Sector *>(sec)); // Bad performance: O(n)
 }
 
-Sector *GameMap_SectorBySoundEmitter(GameMap *map, void const *soundEmitter)
+Sector *GameMap::sectorBySoundEmitter(ddmobj_base_t const &soundEmitter) const
 {
-    DENG2_ASSERT(map);
-    foreach(Sector *sector, map->_sectors)
+    foreach(Sector *sector, _sectors)
     {
-        if(soundEmitter == &sector->soundEmitter())
-        {
+        if(&soundEmitter == &sector->soundEmitter())
             return sector;
-        }
     }
     return 0; // Not found.
 }
 
 /// @todo Optimize: All sound emitters in a sector are linked together forming
 /// a chain. Make use of the chains instead of iterating the sidedefs.
-Surface *GameMap_SurfaceBySoundEmitter(GameMap *map, void const *soundEmitter)
+Surface *GameMap::surfaceBySoundEmitter(ddmobj_base_t const &soundEmitter) const
 {
-    DENG2_ASSERT(map);
-
-    if(!soundEmitter) return 0;
-
     // First try plane surfaces.
-    foreach(Sector *sector, map->_sectors)
+    foreach(Sector *sector, _sectors)
     foreach(Plane *plane, sector->planes())
     {
-        if(soundEmitter == &plane->surface().soundEmitter())
+        if(&soundEmitter == &plane->surface().soundEmitter())
         {
             return &plane->surface();
         }
     }
 
     // Perhaps a wall surface?
-    foreach(SideDef *sideDef, map->_sideDefs)
+    foreach(SideDef *sideDef, _sideDefs)
     {
-        if(soundEmitter == &sideDef->middle().soundEmitter())
+        if(&soundEmitter == &sideDef->middle().soundEmitter())
         {
             return &sideDef->middle();
         }
-        if(soundEmitter == &sideDef->bottom().soundEmitter())
+        if(&soundEmitter == &sideDef->bottom().soundEmitter())
         {
             return &sideDef->bottom();
         }
-        if(soundEmitter == &sideDef->top().soundEmitter())
+        if(&soundEmitter == &sideDef->top().soundEmitter())
         {
             return &sideDef->top();
         }
@@ -266,38 +255,34 @@ Surface *GameMap_SurfaceBySoundEmitter(GameMap *map, void const *soundEmitter)
     return 0; // Not found.
 }
 
-int GameMap_BspLeafIndex(GameMap *map, BspLeaf const *bspLeaf)
+int GameMap::bspLeafIndex(BspLeaf const *bspLeaf) const
 {
-    DENG_UNUSED(map);
     if(!bspLeaf) return -1;
     return bspLeaf->origIndex();
 }
 
-int GameMap_HEdgeIndex(GameMap *map, HEdge const *hedge)
+int GameMap::hedgeIndex(HEdge const *hedge) const
 {
-    DENG_UNUSED(map);
     if(!hedge) return -1;
     return hedge->origIndex();
 }
 
-int GameMap_BspNodeIndex(GameMap *map, BspNode const *bspLeaf)
+int GameMap::bspNodeIndex(BspNode const *bspLeaf) const
 {
-    DENG_UNUSED(map);
     if(!bspLeaf) return -1;
     return bspLeaf->origIndex();
 }
 
-uint GameMap_PolyobjCount(GameMap *map)
+uint GameMap::polyobjCount() const
 {
-    DENG2_ASSERT(map);
-    return map->numPolyObjs;
+    return numPolyObjs;
 }
 
-Polyobj *GameMap::polyobjByIndex(uint id) const
+Polyobj *GameMap::polyobjByIndex(uint index) const
 {
-    if(id < numPolyObjs)
+    if(index < numPolyObjs)
     {
-        return polyObjs[id];
+        return polyObjs[index];
     }
     return 0;
 }
@@ -344,8 +329,8 @@ static void initPolyobj(Polyobj *po)
         {
             Con_Message("Warning: GameMap::initPolyobj: Multiple polyobjs in a single BSP leaf\n"
                         "  (BSP leaf %lu, sector %lu). Previous polyobj overridden.",
-                        ulong( GameMap_BspLeafIndex(theMap, bspLeaf) ),
-                        ulong( GameMap_SectorIndex(theMap, bspLeaf->sectorPtr()) ));
+                        ulong( theMap->bspLeafIndex(bspLeaf) ),
+                        ulong( theMap->sectorIndex(bspLeaf->sectorPtr()) ));
         }
         bspLeaf->_polyObj = po;
         po->bspLeaf = bspLeaf;
@@ -1173,7 +1158,7 @@ int GameMap_PathTraverse(GameMap *map, const_pvec2d_t from, const_pvec2d_t to,
     // Step #1: Collect intercepts.
     if(flags & PT_ADDLINES)
     {
-        if(GameMap_PolyobjCount(theMap) != 0)
+        if(theMap->polyobjCount() != 0)
         {
             traverseCellPath(map, map->polyobjBlockmap, from, to, collectPolyobjLineDefIntercepts, (void *)map);
         }

@@ -208,6 +208,29 @@ public:
     inline uint sectorCount() const { return sectors().size(); }
 
     /**
+     * Locate a sector in the map by sound emitter.
+     *
+     * @param soundEmitter  ddmobj_base_t to search for.
+     *
+     * @return  Pointer to the referenced Sector instance; otherwise @c 0.
+     */
+    Sector *sectorBySoundEmitter(ddmobj_base_t const &soundEmitter) const;
+
+    /**
+     * Locate a surface in the map by sound emitter.
+     *
+     * @param soundEmitter  ddmobj_base_t to search for.
+     *
+     * @return  Pointe to the referenced Surface instance; otherwise @c 0.
+     */
+    Surface *surfaceBySoundEmitter(ddmobj_base_t const &soundEmitter) const;
+
+    /**
+     * Returns the total number of Polyobjs in the map.
+     */
+    uint polyobjCount() const;
+
+    /**
      * Locate a polyobj in the map by unique in-map index number (0-based).
      *
      * @param index  Index of the polyobj to be located.
@@ -445,7 +468,64 @@ public:
      */
     PlaneSet /*const*/ &trackedPlanes();
 
-public: ///@ todo make private:
+public: /// @todo Replace with object level methods:
+    /**
+     * Lookup the in-map unique index for @a vertex.
+     *
+     * @param vtx  Vertex to lookup.
+     * @return  Unique index for the Vertex else @c -1 if not present.
+     */
+    int vertexIndex(Vertex const *vtx) const;
+
+    /**
+     * Lookup the in-map unique index for @a line.
+     *
+     * @param line  LineDef to lookup.
+     * @return  Unique index for the Line else @c -1 if not present.
+     */
+    int lineIndex(LineDef const *line) const;
+
+    /**
+     * Lookup the in-map unique index for @a sideDef.
+     *
+     * @param side  SideDef to lookup.
+     * @return  Unique index for the SideDef else @c -1 if not present.
+     */
+    int sideDefIndex(SideDef const *side) const;
+
+    /**
+     * Lookup the in-map unique index for @a sector.
+     *
+     * @param sector  Sector to lookup.
+     * @return  Unique index for the Sector else @c -1 if not present.
+     */
+    int sectorIndex(Sector const *sector) const;
+
+    /**
+     * Lookup the in-map unique index for @a bspLeaf.
+     *
+     * @param bspLeaf  BspLeaf to lookup.
+     * @return  Unique index for the BspLeaf else @c -1 if not present.
+     */
+    int bspLeafIndex(BspLeaf const *bspLeaf) const;
+
+    /**
+     * Lookup the in-map unique index for @a hedge.
+     *
+     * @param hedge  HEdge to lookup.
+     * @return  Unique index for the HEdge else @c -1 if not present.
+     */
+    int hedgeIndex(HEdge const *hedge) const;
+
+    /**
+     * Lookup the in-map unique index for @a node.
+     *
+     * @param bspNode  BspNode to lookup.
+     * @return  Unique index for the BspNode else @c -1 if not present.
+     */
+    int bspNodeIndex(BspNode const *bspNode) const;
+
+public: /// @todo Make private:
 
     /**
      * @pre Axis-aligned bounding boxes of all Sectors must be initialized.
@@ -501,9 +581,9 @@ public: ///@ todo make private:
      */
     void initSkyFix();
 
+#ifdef __CLIENT__
     void addSurfaceToLists(Surface &suf);
 
-#ifdef __CLIENT__
     void buildSurfaceLists();
 #endif
 
@@ -540,97 +620,6 @@ TraceOpening const *GameMap_TraceOpening(GameMap *map);
  * @param line  Map line to configure the opening for.
  */
 void GameMap_SetTraceOpening(GameMap *map, LineDef *line);
-
-/**
- * Lookup a Sector in the map by it's sound emitter.
- *
- * @param map  GameMap instance.
- * @param soundEmitter  ddmobj_base_t to search for.
- *
- * @return  Found Sector instance else @c NULL.
- */
-Sector *GameMap_SectorBySoundEmitter(GameMap *map, void const *soundEmitter);
-
-/**
- * Lookup a Surface in the map by it's sound emitter.
- *
- * @param map  GameMap instance.
- * @param soundEmitter  ddmobj_base_t to search for.
- *
- * @return  Found Surface instance else @c NULL.
- */
-Surface *GameMap_SurfaceBySoundEmitter(GameMap* map, void const *soundEmitter);
-
-/**
- * Lookup the unique index for @a vertex.
- *
- * @param map  GameMap instance.
- * @param vtx  Vertex to lookup.
- * @return  Unique index for the Vertex else @c -1 if not present.
- */
-int GameMap_VertexIndex(GameMap *map, Vertex const *vtx);
-
-/**
- * Lookup the unique index for @a line.
- *
- * @param map  GameMap instance.
- * @param line  Line to lookup.
- * @return  Unique index for the Line else @c -1 if not present.
- */
-int GameMap_LineDefIndex(GameMap *map, LineDef const *line);
-
-/**
- * Lookup the unique index for @a sideDef.
- *
- * @param map  GameMap instance.
- * @param side  SideDef to lookup.
- * @return  Unique index for the SideDef else @c -1 if not present.
- */
-int GameMap_SideDefIndex(GameMap *map, SideDef const *side);
-
-/**
- * Lookup the unique index for @a sector.
- *
- * @param map  GameMap instance.
- * @param sector  Sector to lookup.
- * @return  Unique index for the Sector else @c -1 if not present.
- */
-int GameMap_SectorIndex(GameMap *map, Sector const *sector);
-
-/**
- * Lookup the unique index for @a bspLeaf.
- *
- * @param map  GameMap instance.
- * @param bspLeaf  BspLeaf to lookup.
- * @return  Unique index for the BspLeaf else @c -1 if not present.
- */
-int GameMap_BspLeafIndex(GameMap *map, BspLeaf const *bspLeaf);
-
-/**
- * Lookup the unique index for @a hedge.
- *
- * @param map  GameMap instance.
- * @param hedge  HEdge to lookup.
- * @return  Unique index for the HEdge else @c -1 if not present.
- */
-int GameMap_HEdgeIndex(GameMap *map, HEdge const *hedge);
-
-/**
- * Lookup the unique index for @a node.
- *
- * @param map  GameMap instance.
- * @param bspNode  BspNode to lookup.
- * @return  Unique index for the BspNode else @c -1 if not present.
- */
-int GameMap_BspNodeIndex(GameMap *map, BspNode const *bspNode);
-
-/**
- * Retrieve the number of Polyobj instances owned by this.
- *
- * @param map  GameMap instance.
- * @return  Number Polyobj.
- */
-uint GameMap_PolyobjCount(GameMap *map);
 
 /**
  * Have the thinker lists been initialized yet?

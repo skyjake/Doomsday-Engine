@@ -294,25 +294,25 @@ uint P_ToIndex(void const *ptr)
     switch(elem->type())
     {
     case DMU_VERTEX:
-        return GameMap_VertexIndex(theMap, elem->castTo<Vertex>());
+        return theMap->vertexIndex(elem->castTo<Vertex>());
 
     case DMU_HEDGE:
-        return GameMap_HEdgeIndex(theMap, elem->castTo<HEdge>());
+        return theMap->hedgeIndex(elem->castTo<HEdge>());
 
     case DMU_LINEDEF:
-        return GameMap_LineDefIndex(theMap, elem->castTo<LineDef>());
+        return theMap->lineIndex(elem->castTo<LineDef>());
 
     case DMU_SIDEDEF:
-        return GameMap_SideDefIndex(theMap, elem->castTo<SideDef>());
+        return theMap->sideDefIndex(elem->castTo<SideDef>());
 
     case DMU_BSPLEAF:
-        return GameMap_BspLeafIndex(theMap, elem->castTo<BspLeaf>());
+        return theMap->bspLeafIndex(elem->castTo<BspLeaf>());
 
     case DMU_SECTOR:
-        return GameMap_SectorIndex(theMap, elem->castTo<Sector>());
+        return theMap->sectorIndex(elem->castTo<Sector>());
 
     case DMU_BSPNODE:
-        return GameMap_BspNodeIndex(theMap, elem->castTo<BspNode>());
+        return theMap->bspNodeIndex(elem->castTo<BspNode>());
 
     case DMU_PLANE:
         return elem->castTo<Plane>()->inSectorIndex();

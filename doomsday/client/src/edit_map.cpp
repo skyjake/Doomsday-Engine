@@ -604,7 +604,7 @@ static void buildSectorLineLists(GameMap &map)
     {
         if(line->hasFrontSector())
         {
-            int const sectorIndex = GameMap_SectorIndex(&map, &line->frontSector());
+            int const sectorIndex = map.sectorIndex(&line->frontSector());
 
             LineLink *link = (LineLink *) ZBlockSet_Allocate(lineLinksBlockSet);
             link->line = line;
@@ -614,7 +614,7 @@ static void buildSectorLineLists(GameMap &map)
 
         if(line->hasBackSector() && !line->isSelfReferencing())
         {
-            int const sectorIndex = GameMap_SectorIndex(&map, &line->backSector());
+            int const sectorIndex = map.sectorIndex(&line->backSector());
 
             LineLink *link = (LineLink *) ZBlockSet_Allocate(lineLinksBlockSet);
             link->line = line;
@@ -626,7 +626,7 @@ static void buildSectorLineLists(GameMap &map)
     // Build the actual sector line lists.
     foreach(Sector *sector, map.sectors())
     {
-        int const sectorIndex = GameMap_SectorIndex(&map, sector);
+        int const sectorIndex = map.sectorIndex(sector);
 
         sector->_lines.clear();
 

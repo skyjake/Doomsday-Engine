@@ -1778,7 +1778,7 @@ static void reportLineDrawn(LineDef &line)
     // Send a status report.
     if(gx.HandleMapObjectStatusReport)
     {
-        gx.HandleMapObjectStatusReport(DMUSC_LINE_FIRSTRENDERED, GameMap_LineDefIndex(theMap, &line),
+        gx.HandleMapObjectStatusReport(DMUSC_LINE_FIRSTRENDERED, theMap->lineIndex(&line),
                                        DMU_LINEDEF, &playerNum);
     }
 }
@@ -2884,7 +2884,7 @@ static void Rend_RenderBspLeaf(BspLeaf *bspLeaf)
     R_InitForBspLeaf(bspLeaf);
     Rend_RadioBspLeafEdges(*bspLeaf);
 
-    uint bspLeafIdx = GameMap_BspLeafIndex(theMap, bspLeaf);
+    uint bspLeafIdx = theMap->bspLeafIndex(bspLeaf);
     occludeBspLeaf(bspLeaf, false);
     LO_ClipInBspLeaf(bspLeafIdx);
     occludeBspLeaf(bspLeaf, true);
@@ -3075,7 +3075,7 @@ void Rend_RenderSurfaceVectors()
         }
     }
 
-    for(uint i = 0; i < GameMap_PolyobjCount(theMap); ++i)
+    for(uint i = 0; i < theMap->polyobjCount(); ++i)
     {
         Polyobj const *po = theMap->polyobjByIndex(i);
         Sector const &sector = po->bspLeaf->sector();
@@ -3142,7 +3142,7 @@ void Rend_RenderSoundOrigins()
         /// @todo Do not assume current map.
         foreach(SideDef *sideDef, theMap->sideDefs())
         {
-            uint idx = GameMap_SideDefIndex(theMap, sideDef);
+            uint idx = theMap->sideDefIndex(sideDef);
             char buf[80];
 
             dd_snprintf(buf, 80, "Side #%i (middle)", idx);
@@ -3161,7 +3161,7 @@ void Rend_RenderSoundOrigins()
         /// @todo Do not assume current map.
         foreach(Sector *sec, theMap->sectors())
         {
-            uint sectorIndex = GameMap_SectorIndex(theMap, sec);
+            uint sectorIndex = theMap->sectorIndex(sec);
             char buf[80];
 
             if(devSoundOrigins & SOF_PLANE)
@@ -3255,7 +3255,7 @@ static void drawVertexIndex(Vertex const *vtx, coord_t z, float scale, float alp
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
 
-    sprintf(buf, "%i", GameMap_VertexIndex(theMap, static_cast<Vertex const *>(vtx)));
+    sprintf(buf, "%i", theMap->vertexIndex(static_cast<Vertex const *>(vtx)));
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -3890,7 +3890,7 @@ static void Rend_RenderBoundingBoxes()
 
     if(devPolyobjBBox)
     {
-        for(uint i = 0; i < GameMap_PolyobjCount(theMap); ++i)
+        for(uint i = 0; i < theMap->polyobjCount(); ++i)
         {
             Polyobj const *po = theMap->polyobjByIndex(i);
             Sector const &sec = po->bspLeaf->sector();

@@ -312,7 +312,7 @@ int RIT_LinkObjToBspLeaf(BspLeaf *bspLeaf, void *parameters)
 
     con->obj = p->obj;
     // Link the contact list for this bspLeaf.
-    linkContactToBspLeaf(con, p->type, GameMap_BspLeafIndex(theMap, bspLeaf));
+    linkContactToBspLeaf(con, p->type, theMap->bspLeafIndex(bspLeaf));
 
     return false; // Continue iteration.
 }
@@ -596,7 +596,7 @@ void R_InitForNewFrame()
 int R_IterateBspLeafContacts2(BspLeaf *bspLeaf, objtype_t type,
     int (*callback) (void *object, void *parameters), void *parameters)
 {
-    objcontact_t *con = bspLeafContacts[GameMap_BspLeafIndex(theMap, bspLeaf)].head[type];
+    objcontact_t *con = bspLeafContacts[theMap->bspLeafIndex(bspLeaf)].head[type];
     int result = false; // Continue iteration.
     while(con)
     {

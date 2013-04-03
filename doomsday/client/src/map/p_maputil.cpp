@@ -230,7 +230,7 @@ void GameMap_LinkMobjToLineDef(GameMap *map, mobj_t *mo, LineDef *line)
 
     if(!mo) return;
 
-    int lineIndex = GameMap_LineDefIndex(map, line);
+    int lineIndex = map->lineIndex(line);
     if(lineIndex < 0) return;
 
     // Add a node to the mobj's ring.
@@ -450,7 +450,7 @@ int GameMap_LineMobjsIterator(GameMap *map, LineDef *line,
     void *linkStore[MAXLINKED];
     void **end = linkStore;
 
-    nodeindex_t root = map->lineLinks[GameMap_LineDefIndex(map, line)];
+    nodeindex_t root = map->lineLinks[map->lineIndex(line)];
     linknode_t *ln = map->lineNodes.nodes;
 
     for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
@@ -497,7 +497,7 @@ int GameMap_SectorTouchingMobjsIterator(GameMap *map, Sector *sector,
     linknode_t const *ln = map->lineNodes.nodes;
     foreach(LineDef *line, sector->lines())
     {
-        int lineIndex = GameMap_LineDefIndex(map, line);
+        int lineIndex = map->lineIndex(line);
         nodeindex_t root = map->lineLinks[lineIndex];
 
         for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
