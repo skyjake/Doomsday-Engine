@@ -465,11 +465,11 @@ static DGLuint chooseOmniLightTexture(lumobj_t *lum, lightprojectparams_t const 
  *
  * @return  @c 0 = continue iteration.
  */
-static int projectOmniLightToSurface(lumobj_t *lum, void *paramaters)
+static int projectOmniLightToSurface(lumobj_t *lum, void *parameters)
 {
-    assert(lum && paramaters);
+    DENG_ASSERT(lum && parameters);
 
-    projectlighttosurfaceiteratorparams_t *p = (projectlighttosurfaceiteratorparams_t *)paramaters;
+    projectlighttosurfaceiteratorparams_t *p = (projectlighttosurfaceiteratorparams_t *)parameters;
     lightprojectparams_t *spParams = &p->spParams;
     float luma, scale, color[3];
     vec3d_t lumCenter, vToLum, point;
@@ -526,10 +526,11 @@ static int projectOmniLightToSurface(lumobj_t *lum, void *paramaters)
     return false; // Continue iteration.
 }
 
-void LO_InitForMap(void)
+void LO_InitForMap()
 {
     // First initialize the BSP leaf links (root pointers).
-    bspLeafLumObjList = (lumlistnode_t **) Z_Calloc(sizeof(*bspLeafLumObjList) * GameMap_BspLeafCount(theMap), PU_MAPSTATIC, 0);
+    bspLeafLumObjList = (lumlistnode_t **) Z_Calloc(sizeof(*bspLeafLumObjList) * theMap->bspLeafCount(),
+                                                    PU_MAPSTATIC, 0);
 
     maxLuminous = 0;
     luminousBlockSet = 0; // Will have already been free'd.
@@ -537,32 +538,42 @@ void LO_InitForMap(void)
     initProjectionLists();
 }
 
-void LO_Clear(void)
+void LO_Clear()
 {
     if(luminousBlockSet)
+    {
         ZBlockSet_Delete(luminousBlockSet);
-    luminousBlockSet = 0;
+        luminousBlockSet = 0;
+    }
 
     if(luminousList)
+    {
         M_Free(luminousList);
-    luminousList = 0;
+        luminousList = 0;
+    }
 
     if(luminousDist)
+    {
         M_Free(luminousDist);
-    luminousDist = 0;
+        luminousDist = 0;
+    }
 
     if(luminousClipped)
+    {
         M_Free(luminousClipped);
-    luminousClipped = 0;
+        luminousClipped = 0;
+    }
 
     if(luminousOrder)
+    {
         M_Free(luminousOrder);
-    luminousOrder = 0;
+        luminousOrder = 0;
+    }
 
     maxLuminous = numLuminous = 0;
 }
 
-void LO_BeginWorldFrame(void)
+void LO_BeginWorldFrame()
 {
 #ifdef DD_PROFILE
     static int i;
@@ -578,20 +589,20 @@ void LO_BeginWorldFrame(void)
     // Start reusing nodes from the first one in the list.
     listNodeCursor = listNodeFirst;
     if(bspLeafLumObjList)
-        memset(bspLeafLumObjList, 0, sizeof(lumlistnode_t *) * GameMap_BspLeafCount(theMap));
+    {
+        std::memset(bspLeafLumObjList, 0, sizeof(lumlistnode_t *) * theMap->bspLeafCount());
+    }
     numLuminous = 0;
 }
 
-uint LO_GetNumLuminous(void)
+uint LO_GetNumLuminous()
 {
     return numLuminous;
 }
 
-static lumobj_t *allocLumobj(void)
+static lumobj_t *allocLumobj()
 {
 #define LUMOBJ_BATCH_SIZE       (32)
-
-    lumobj_t *lum;
 
     // Only allocate memory when it's needed.
     /// @todo No upper limit?
@@ -620,7 +631,7 @@ static lumobj_t *allocLumobj(void)
         luminousOrder   =    (uint *) M_Realloc(luminousOrder,   sizeof(*luminousOrder)   * maxLuminous);
     }
 
-    lum = luminousList[numLuminous - 1];
+    lumobj_t *lum = luminousList[numLuminous - 1];
     std::memset(lum, 0, sizeof(*lum));
 
     return lum;

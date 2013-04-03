@@ -533,62 +533,6 @@ int GameMap_HEdgeIndex(GameMap *map, HEdge const *hedge);
 int GameMap_BspNodeIndex(GameMap *map, BspNode const *bspNode);
 
 /**
- * Retrieve the number of Vertex instances owned by this.
- *
- * @param map  GameMap instance.
- * @return  Number Vertexes.
- */
-uint GameMap_VertexCount(GameMap *map);
-
-/**
- * Retrieve the number of LineDef instances owned by this.
- *
- * @param map  GameMap instance.
- * @return  Number LineDef.
- */
-uint GameMap_LineDefCount(GameMap *map);
-
-/**
- * Retrieve the number of SideDef instances owned by this.
- *
- * @param map  GameMap instance.
- * @return  Number SideDef.
- */
-uint GameMap_SideDefCount(GameMap *map);
-
-/**
- * Retrieve the number of Sector instances owned by this.
- *
- * @param map  GameMap instance.
- * @return  Number Sector.
- */
-uint GameMap_SectorCount(GameMap *map);
-
-/**
- * Retrieve the number of BspLeaf instances owned by this.
- *
- * @param map  GameMap instance.
- * @return  Number BspLeaf.
- */
-uint GameMap_BspLeafCount(GameMap *map);
-
-/**
- * Retrieve the number of HEdge instances owned by this.
- *
- * @param map  GameMap instance.
- * @return  Number HEdge.
- */
-uint GameMap_HEdgeCount(GameMap *map);
-
-/**
- * Retrieve the number of BspNode instances owned by this.
- *
- * @param map  GameMap instance.
- * @return  Number BspNode.
- */
-uint GameMap_BspNodeCount(GameMap *map);
-
-/**
  * Retrieve the number of Polyobj instances owned by this.
  *
  * @param map  GameMap instance.

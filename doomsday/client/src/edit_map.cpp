@@ -564,9 +564,8 @@ static void buildSectorBspLeafLists(GameMap &map)
 
 #ifdef DENG2_QT_4_7_OR_NEWER
         uint count = 0;
-        for(uint k = 0; k < map.bspLeafCount(); ++k)
+        foreach(BspLeaf *bspLeaf, map.bspLeafs())
         {
-            BspLeaf *bspLeaf = map.bspLeafs[k];
             if(bspLeaf->sectorPtr() == sector)
                 ++count;
         }
@@ -576,9 +575,8 @@ static void buildSectorBspLeafLists(GameMap &map)
         sector->_bspLeafs.reserve(count);
 #endif
 
-        for(uint i = 0; i < map.bspLeafCount(); ++i)
+        foreach(BspLeaf *bspLeaf, map.bspLeafs())
         {
-            BspLeaf *bspLeaf = map.bspLeafs[i];
             if(bspLeaf->sectorPtr() == sector)
             {
                 // Ownership of the BSP leaf is not given to the sector.
@@ -1321,7 +1319,7 @@ static void collateBspLeafHEdges(GameMap &map, BspBuilder &builder, BspLeaf &lea
 
         // Add this HEdge to the LUT.
         hedge->_origIndex = map.hedgeCount();
-        map.hedges.append(hedge);
+        map._hedges.append(hedge);
 
         if(hedge->hasLine())
         {
@@ -1353,8 +1351,8 @@ static void collateBspElements(GameMap &map, BspBuilder &builder, BspTreeNode &t
         builder.take(leaf);
 
         // Add this BspLeaf to the LUT.
-        leaf->_index = map.bspLeafs.count();
-        map.bspLeafs.append(leaf);
+        leaf->_index = map._bspLeafs.count();
+        map._bspLeafs.append(leaf);
 
         collateBspLeafHEdges(map, builder, *leaf);
 
@@ -1373,8 +1371,8 @@ static void collateBspElements(GameMap &map, BspBuilder &builder, BspTreeNode &t
     builder.take(node);
 
     // Add this BspNode to the LUT.
-    node->_index = map.bspNodes.count();
-    map.bspNodes.append(node);
+    node->_index = map._bspNodes.count();
+    map._bspNodes.append(node);
 }
 
 static bool buildBsp(GameMap &map)
@@ -1413,14 +1411,14 @@ static bool buildBsp(GameMap &map)
         /*
          * Take ownership of all the built map data elements.
          */
-        DENG2_ASSERT(map.hedges.isEmpty());
-        DENG2_ASSERT(map.bspLeafs.isEmpty());
-        DENG2_ASSERT(map.bspNodes.isEmpty());
+        DENG2_ASSERT(map._hedges.isEmpty());
+        DENG2_ASSERT(map._bspLeafs.isEmpty());
+        DENG2_ASSERT(map._bspNodes.isEmpty());
 
 #ifdef DENG2_QT_4_7_OR_NEWER
-        map.hedges.reserve(nodeBuilder.numHEdges());
-        map.bspNodes.reserve(nodeBuilder.numNodes());
-        map.bspLeafs.reserve(nodeBuilder.numLeafs());
+        map._hedges.reserve(nodeBuilder.numHEdges());
+        map._bspNodes.reserve(nodeBuilder.numNodes());
+        map._bspLeafs.reserve(nodeBuilder.numLeafs());
 #endif
 
         collateVertexes(nodeBuilder, map, editMap.vertexes);

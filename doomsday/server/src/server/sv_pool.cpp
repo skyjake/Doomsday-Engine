@@ -934,36 +934,36 @@ boolean Sv_IsPlayerIgnored(int plrNum)
  * initial register, clients wouldn't receive much info from mobjs that
  * haven't moved since the beginning.
  */
-void Sv_RegisterWorld(cregister_t* reg, boolean isInitial)
+void Sv_RegisterWorld(cregister_t *reg, boolean isInitial)
 {
-    uint i, numPolyobjs;
+    DENG_ASSERT(reg != 0);
 
-    memset(reg, 0, sizeof(*reg));
+    std::memset(reg, 0, sizeof(*reg));
     reg->gametic = SECONDS_TO_TICKS(gameTime);
 
     // Is this the initial state?
     reg->isInitial = isInitial;
 
     // Init sectors.
-    reg->sectors = (dt_sector_t *) Z_Calloc(sizeof(dt_sector_t) * GameMap_SectorCount(theMap), PU_MAP, 0);
-    for(i = 0; i < GameMap_SectorCount(theMap); ++i)
+    reg->sectors = (dt_sector_t *) Z_Calloc(sizeof(*reg->sectors) * theMap->sectorCount(), PU_MAP, 0);
+    for(uint i = 0; i < theMap->sectorCount(); ++i)
     {
         Sv_RegisterSector(&reg->sectors[i], i);
     }
 
     // Init sides.
-    reg->sideDefs = (dt_side_t *) Z_Calloc(sizeof(dt_side_t) * GameMap_SideDefCount(theMap), PU_MAP, 0);
-    for(i = 0; i < GameMap_SideDefCount(theMap); ++i)
+    reg->sideDefs = (dt_side_t *) Z_Calloc(sizeof(*reg->sideDefs) * theMap->sideDefCount(), PU_MAP, 0);
+    for(uint i = 0; i < theMap->sideDefCount(); ++i)
     {
         Sv_RegisterSide(&reg->sideDefs[i], i);
     }
 
     // Init polyobjs.
-    numPolyobjs = GameMap_PolyobjCount(theMap);
+    uint numPolyobjs = GameMap_PolyobjCount(theMap);
     if(numPolyobjs)
     {
-        reg->polyObjs = (dt_poly_t *) Z_Calloc(sizeof(dt_poly_t) * GameMap_PolyobjCount(theMap), PU_MAP, 0);
-        for(i = 0; i < numPolyobjs; ++i)
+        reg->polyObjs = (dt_poly_t *) Z_Calloc(sizeof(*reg->polyObjs) * GameMap_PolyobjCount(theMap), PU_MAP, 0);
+        for(uint i = 0; i < numPolyobjs; ++i)
         {
             Sv_RegisterPoly(&reg->polyObjs[i], i);
         }
@@ -977,19 +977,19 @@ void Sv_RegisterWorld(cregister_t* reg, boolean isInitial)
 /**
  * Update the pool owner's info.
  */
-void Sv_UpdateOwnerInfo(pool_t* pool)
+void Sv_UpdateOwnerInfo(pool_t *pool)
 {
-    player_t* plr = &ddPlayers[pool->owner];
-    ownerinfo_t* info = &pool->ownerInfo;
+    player_t *plr = &ddPlayers[pool->owner];
+    ownerinfo_t *info = &pool->ownerInfo;
 
-    memset(info, 0, sizeof(*info));
+    std::memset(info, 0, sizeof(*info));
 
     // Pointer to the owner's pool.
     info->pool = pool;
 
     if(plr->shared.mo)
     {
-        mobj_t* mo = plr->shared.mo;
+        mobj_t *mo = plr->shared.mo;
 
         V3d_Copy(info->origin, mo->origin);
         info->angle = mo->angle;
@@ -1005,7 +1005,7 @@ void Sv_UpdateOwnerInfo(pool_t* pool)
 /**
  * @return  A timestamp that is used to track how old deltas are.
  */
-uint Sv_GetTimeStamp(void)
+uint Sv_GetTimeStamp()
 {
     return Timer_RealMilliseconds();
 }
@@ -1013,12 +1013,13 @@ uint Sv_GetTimeStamp(void)
 /**
  * Initialize a new delta.
  */
-void Sv_NewDelta(void* deltaPtr, deltatype_t type, uint id)
+void Sv_NewDelta(void *deltaPtr, deltatype_t type, uint id)
 {
-    delta_t *delta = (delta_t *) deltaPtr;
+    if(!deltaPtr) return;
 
-    // NOTE: This only clears the common delta_t part, not the extra data.
-    memset(delta, 0, sizeof(*delta));
+    delta_t *delta = (delta_t *) deltaPtr;
+    /// @note This only clears the common delta_t part, not the extra data.
+    std::memset(delta, 0, sizeof(*delta));
 
     delta->id = id;
     delta->type = type;
@@ -1027,19 +1028,19 @@ void Sv_NewDelta(void* deltaPtr, deltatype_t type, uint id)
 }
 
 /**
- * @return              @c true, if the delta contains no information.
+ * @return  @c true, if the delta contains no information.
  */
-boolean Sv_IsVoidDelta(const void* delta)
+boolean Sv_IsVoidDelta(void const *delta)
 {
-    return ((const delta_t *) delta)->flags == 0;
+    return ((delta_t const *) delta)->flags == 0;
 }
 
 /**
- * @return              @c true, if the delta is a Sound delta.
+ * @return  @c true, if the delta is a Sound delta.
  */
-boolean Sv_IsSoundDelta(const void* delta)
+boolean Sv_IsSoundDelta(void const *delta)
 {
-    const delta_t *d = (delta_t const *) delta;
+    delta_t const *d = (delta_t const *) delta;
 
     return (d->type == DT_SOUND ||
             d->type == DT_MOBJ_SOUND ||
@@ -1049,51 +1050,51 @@ boolean Sv_IsSoundDelta(const void* delta)
 }
 
 /**
- * @return              @c true, if the delta is a Start Sound delta.
+ * @return  @c true, if the delta is a Start Sound delta.
  */
-boolean Sv_IsStartSoundDelta(const void* delta)
+boolean Sv_IsStartSoundDelta(void const *delta)
 {
-    const sounddelta_t* d = (sounddelta_t const *) delta;
+    sounddelta_t const *d = (sounddelta_t const *) delta;
 
     return Sv_IsSoundDelta(delta) &&
         ((d->delta.flags & SNDDF_VOLUME) && d->volume > 0);
 }
 
 /**
- * @return              @c true, if the delta is Stop Sound delta.
+ * @return  @c true, if the delta is Stop Sound delta.
  */
-boolean Sv_IsStopSoundDelta(const void* delta)
+boolean Sv_IsStopSoundDelta(void const *delta)
 {
-    const sounddelta_t* d = (sounddelta_t const *) delta;
+    sounddelta_t const *d = (sounddelta_t const *) delta;
 
     return Sv_IsSoundDelta(delta) &&
         ((d->delta.flags & SNDDF_VOLUME) && d->volume <= 0);
 }
 
 /**
- * @return              @c true, if the delta is a Null Mobj delta.
+ * @return  @c true, if the delta is a Null Mobj delta.
  */
-boolean Sv_IsNullMobjDelta(const void *delta)
+boolean Sv_IsNullMobjDelta(void const *delta)
 {
-    return ((const delta_t *) delta)->type == DT_MOBJ &&
-        (((const delta_t *) delta)->flags & MDFC_NULL);
+    return ((delta_t const *) delta)->type == DT_MOBJ &&
+        (((delta_t const *) delta)->flags & MDFC_NULL);
 }
 
 /**
- * @return              @c true, if the delta is a Create Mobj delta.
+ * @return  @c true, if the delta is a Create Mobj delta.
  */
-boolean Sv_IsCreateMobjDelta(const void* delta)
+boolean Sv_IsCreateMobjDelta(void const *delta)
 {
-    return ((const delta_t *) delta)->type == DT_MOBJ &&
-        (((const delta_t *) delta)->flags & MDFC_CREATE);
+    return ((delta_t const *) delta)->type == DT_MOBJ &&
+        (((delta_t const *) delta)->flags & MDFC_CREATE);
 }
 
 /**
- * @return              @c true, if the deltas refer to the same object.
+ * @return  @c true, if the deltas refer to the same object.
  */
-boolean Sv_IsSameDelta(const void* delta1, const void* delta2)
+boolean Sv_IsSameDelta(void const *delta1, void const *delta2)
 {
-    const delta_t *a = (delta_t const *) delta1, *b = (delta_t const *) delta2;
+    delta_t const *a = (delta_t const *) delta1, *b = (delta_t const *) delta2;
 
     return (a->type == b->type) && (a->id == b->id);
 }
@@ -2228,12 +2229,11 @@ void Sv_NewPlayerDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
 /**
  * Sector deltas are generated for changed sectors.
  */
-void Sv_NewSectorDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
+void Sv_NewSectorDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
 {
-    uint                i;
-    sectordelta_t       delta;
+    sectordelta_t delta;
 
-    for(i = 0; i < GameMap_SectorCount(theMap); ++i)
+    for(uint i = 0; i < theMap->sectorCount(); ++i)
     {
         if(Sv_RegisterCompareSector(reg, i, &delta, doUpdate))
         {
@@ -2247,30 +2247,30 @@ void Sv_NewSectorDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
  * Changes in sides (textures) are so rare that all sides need not be
  * checked on every tic.
  */
-void Sv_NewSideDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
+void Sv_NewSideDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
 {
     static uint numShifts = 2, shift = 0;
-    sidedelta_t delta;
-    uint i, start, end;
 
     // When comparing against an initial register, always compare all
     // sides (since the comparing is only done once, not continuously).
+    uint start, end;
     if(reg->isInitial)
     {
         start = 0;
-        end = GameMap_SideDefCount(theMap);
+        end = theMap->sideDefCount();
     }
     else
     {
         // Because there are so many sides in a typical map, the number
         // of compared sides soon accumulates to millions. To reduce the
         // load, we'll check only a portion of all sides for a frame.
-        start = shift * GameMap_SideDefCount(theMap) / numShifts;
-        end = ++shift * GameMap_SideDefCount(theMap) / numShifts;
+        start = shift * theMap->sideDefCount() / numShifts;
+        end = ++shift * theMap->sideDefCount() / numShifts;
         shift %= numShifts;
     }
 
-    for(i = start; i < end; ++i)
+    sidedelta_t delta;
+    for(uint i = start; i < end; ++i)
     {
         if(Sv_RegisterCompareSide(reg, i, &delta, doUpdate))
         {

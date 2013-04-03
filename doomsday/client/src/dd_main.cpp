@@ -2434,7 +2434,8 @@ void DD_SetInteger(int ddvalue, int parm)
  * Get a pointer to the value of a variable. Not all variables support
  * this. Added for 64-bit support.
  */
-void* DD_GetVariable(int ddvalue)
+#undef DD_GetVariable
+void *DD_GetVariable(int ddvalue)
 {
     static uint valueU;
     static float valueF;
@@ -2446,19 +2447,19 @@ void* DD_GetVariable(int ddvalue)
         return &gx;
 
     case DD_SECTOR_COUNT:
-        valueU = theMap? GameMap_SectorCount(theMap) : 0;
+        valueU = theMap? theMap->sectorCount() : 0;
         return &valueU;
 
     case DD_LINE_COUNT:
-        valueU = theMap? GameMap_LineDefCount(theMap) : 0;
+        valueU = theMap? theMap->lineCount() : 0;
         return &valueU;
 
     case DD_SIDE_COUNT:
-        valueU = theMap? GameMap_SideDefCount(theMap) : 0;
+        valueU = theMap? theMap->sideDefCount() : 0;
         return &valueU;
 
     case DD_VERTEX_COUNT:
-        valueU = theMap? GameMap_VertexCount(theMap) : 0;
+        valueU = theMap? theMap->vertexCount() : 0;
         return &valueU;
 
     case DD_POLYOBJ_COUNT:
@@ -2466,15 +2467,15 @@ void* DD_GetVariable(int ddvalue)
         return &valueU;
 
     case DD_HEDGE_COUNT:
-        valueU = theMap? GameMap_HEdgeCount(theMap) : 0;
+        valueU = theMap? theMap->hedgeCount() : 0;
         return &valueU;
 
     case DD_BSPLEAF_COUNT:
-        valueU = theMap? GameMap_BspLeafCount(theMap) : 0;
+        valueU = theMap? theMap->bspLeafCount() : 0;
         return &valueU;
 
     case DD_BSPNODE_COUNT:
-        valueU = theMap? GameMap_BspNodeCount(theMap) : 0;
+        valueU = theMap? theMap->bspNodeCount() : 0;
         return &valueU;
 
     case DD_TRACE_ADDRESS:
@@ -2487,7 +2488,7 @@ void* DD_GetVariable(int ddvalue)
     case DD_MAP_NAME:
         if(theMap)
         {
-            ded_mapinfo_t* mapInfo = Def_GetMapInfo(GameMap_Uri(theMap));
+            ded_mapinfo_t *mapInfo = Def_GetMapInfo(GameMap_Uri(theMap));
             if(mapInfo && mapInfo->name[0])
             {
                 int id = Def_Get(DD_DEF_TEXT, mapInfo->name, NULL);

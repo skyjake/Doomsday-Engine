@@ -243,23 +243,23 @@ void R_InitObjlinkBlockmapForMap(void)
     }
 
     // Initialize obj => BspLeaf contact lists.
-    bspLeafContacts = (objcontactlist_t *) Z_Calloc(sizeof *bspLeafContacts * GameMap_BspLeafCount(theMap), PU_MAPSTATIC, 0);
+    bspLeafContacts = (objcontactlist_t *) Z_Calloc(sizeof *bspLeafContacts * theMap->bspLeafCount(),
+                                                    PU_MAPSTATIC, 0);
 }
 
-void R_DestroyObjlinkBlockmap(void)
+void R_DestroyObjlinkBlockmap()
 {
-    int i;
-    for(i = 0; i < NUM_OBJ_TYPES; ++i)
+    for(int i = 0; i < NUM_OBJ_TYPES; ++i)
     {
-        objlinkblockmap_t* obm = chooseObjlinkBlockmap((objtype_t)i);
+        objlinkblockmap_t *obm = chooseObjlinkBlockmap(objtype_t( i ));
         if(!obm->gridmap) continue;
         Gridmap_Delete(obm->gridmap);
-        obm->gridmap = NULL;
+        obm->gridmap = 0;
     }
     if(bspLeafContacts)
     {
         Z_Free(bspLeafContacts);
-        bspLeafContacts = NULL;
+        bspLeafContacts = 0;
     }
 }
 
@@ -591,7 +591,9 @@ void R_InitForNewFrame()
     // Start reusing nodes from the first one in the list.
     contCursor = contFirst;
     if(bspLeafContacts)
-        memset(bspLeafContacts, 0, GameMap_BspLeafCount(theMap) * sizeof *bspLeafContacts);
+    {
+        std::memset(bspLeafContacts, 0, theMap->bspLeafCount() * sizeof *bspLeafContacts);
+    }
 }
 
 int R_IterateBspLeafContacts2(BspLeaf *bspLeaf, objtype_t type,

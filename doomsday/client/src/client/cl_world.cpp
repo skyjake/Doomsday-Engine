@@ -624,11 +624,7 @@ void Cl_ReadSectorDelta2(int deltaType, boolean /*skip*/)
     ushort num = Reader_ReadUInt16(msgReader);
 
 #ifdef _DEBUG
-    if(num >= GameMap_SectorCount(theMap))
-    {
-        // This is worrisome.
-        Con_Error("Cl_ReadSectorDelta2: Sector %i out of range.\n", num);
-    }
+    DENG_ASSERT(num < theMap->sectorCount());
 #endif
     Sector *sec = theMap->sectors().at(num);
 
@@ -771,14 +767,7 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
     if(skip)
         return;
 
-#ifdef _DEBUG
-    if(num >= GameMap_SideDefCount(theMap))
-    {
-        // This is worrisome.
-        Con_Error("Cl_ReadSideDelta2: Side %i out of range.\n", num);
-    }
-#endif
-
+    DENG_ASSERT(num < theMap->sideDefCount());
     SideDef *sideDef = theMap->sideDefs().at(num);
 
     if(df & SIDF_TOP_MATERIAL)

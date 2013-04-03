@@ -143,9 +143,8 @@ static void setBspLeafSectorOwner(ownerlist_t *ownerList, BspLeaf *bspLeaf)
     ownerList->head = node;
 }
 
-static void findBspLeafsAffectingSector(GameMap *map, uint secIDX)
+static void findBspLeafsAffectingSector(GameMap *map, Sector *sec)
 {
-    Sector *sec = map->sectors().at(secIDX);
     if(!sec || !sec->lineCount()) return;
 
     ownerlist_t bspLeafOwnerList;
@@ -158,7 +157,8 @@ static void findBspLeafsAffectingSector(GameMap *map, uint secIDX)
     aaBox.maxY += 128;
 
     // LOG_DEBUG("sector %u: min[x:%f, y:%f]  max[x:%f, y:%f]")
-    //    << secIDX <<  aaBox.minX << aaBox.minY << aaBox.maxX << aaBox.maxY;
+    //    << GameMap_SectorIndex(map, sec)
+    //    << aaBox.minX << aaBox.minY << aaBox.maxX << aaBox.maxY;
 
     foreach(BspLeaf *bspLeaf, map->bspLeafs())
     {
@@ -206,15 +206,14 @@ static void findBspLeafsAffectingSector(GameMap *map, uint secIDX)
     }
 }
 
-void S_DetermineBspLeafsAffectingSectorReverb(GameMap* map)
+void S_DetermineBspLeafsAffectingSectorReverb(GameMap *map)
 {
     uint startTime = Timer_RealMilliseconds();
 
     /// @todo optimize: Make use of the BSP leaf blockmap.
-    uint numSectors = GameMap_SectorCount(map);
-    for(uint i = 0; i < numSectors; ++i)
+    foreach(Sector *sector, map->sectors())
     {
-        findBspLeafsAffectingSector(map, i);
+        findBspLeafsAffectingSector(map, sector);
     }
 
     clearUnusedNodes();

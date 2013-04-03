@@ -306,90 +306,46 @@ int GameMap_BspNodeIndex(GameMap *map, BspNode const *bspLeaf)
     return bspLeaf->origIndex();
 }
 
-uint GameMap_VertexCount(GameMap *map)
-{
-    DENG2_ASSERT(map);
-    return map->vertexCount();
-}
-
-uint GameMap_LineDefCount(GameMap *map)
-{
-    DENG2_ASSERT(map);
-    return map->lineCount();
-}
-
-uint GameMap_SideDefCount(GameMap *map)
-{
-    DENG2_ASSERT(map);
-    return map->sideDefCount();
-}
-
-uint GameMap_SectorCount(GameMap *map)
-{
-    DENG2_ASSERT(map);
-    return map->sectorCount();
-}
-
-uint GameMap_BspLeafCount(GameMap *map)
-{
-    DENG2_ASSERT(map);
-    return map->bspLeafCount();
-}
-
-uint GameMap_HEdgeCount(GameMap *map)
-{
-    DENG2_ASSERT(map);
-    return map->hedgeCount();
-}
-
-uint GameMap_BspNodeCount(GameMap *map)
-{
-    DENG2_ASSERT(map);
-    return map->bspNodeCount();
-}
-
-uint GameMap_PolyobjCount(GameMap* map)
+uint GameMap_PolyobjCount(GameMap *map)
 {
     DENG2_ASSERT(map);
     return map->numPolyObjs;
 }
 
-Polyobj* GameMap_PolyobjByID(GameMap* map, uint id)
+Polyobj *GameMap_PolyobjByID(GameMap *map, uint id)
 {
     DENG2_ASSERT(map);
     if(id < map->numPolyObjs)
         return map->polyObjs[id];
-    return NULL;
+    return 0;
 }
 
-Polyobj* GameMap_PolyobjByTag(GameMap* map, int tag)
+Polyobj *GameMap_PolyobjByTag(GameMap *map, int tag)
 {
-    uint i;
     DENG2_ASSERT(map);
-    for(i = 0; i < map->numPolyObjs; ++i)
+    for(uint i = 0; i < map->numPolyObjs; ++i)
     {
-        Polyobj* po = map->polyObjs[i];
+        Polyobj *po = map->polyObjs[i];
         if(po->tag == tag)
         {
             return po;
         }
     }
-    return NULL;
+    return 0;
 }
 
-Polyobj* GameMap_PolyobjByBase(GameMap* map, void* ddMobjBase)
+Polyobj *GameMap_PolyobjByBase(GameMap *map, void *ddMobjBase)
 {
-    uint i;
     DENG2_ASSERT(map);
-    for(i = 0; i < map->numPolyObjs; ++i)
+    for(uint i = 0; i < map->numPolyObjs; ++i)
     {
-        Polyobj* po = map->polyObjs[i];
+        Polyobj *po = map->polyObjs[i];
         if(po == ddMobjBase)
         {
             return po;
         }
     }
-    return NULL;
+    return 0;
 }
 
 static void initPolyobj(Polyobj *po)

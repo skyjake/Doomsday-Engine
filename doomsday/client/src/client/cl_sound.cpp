@@ -97,7 +97,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     {        
         uint index = deltaId;
 
-        if(index < GameMap_SectorCount(theMap))
+        if(index < theMap->sectorCount())
         {
             sector = theMap->sectors().at(index);
         }
@@ -111,7 +111,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     {
         uint index = deltaId;
 
-        if(index < GameMap_SideDefCount(theMap))
+        if(index < theMap->sideDefCount())
         {
             side = theMap->sideDefs().at(index);
         }
@@ -335,7 +335,7 @@ void Cl_Sound(void)
     else if(flags & SNDF_SECTOR)
     {
         num = Reader_ReadPackedUInt16(msgReader);
-        if(num >= GameMap_SectorCount(theMap))
+        if(num >= theMap->sectorCount())
         {
             Con_Message("Cl_Sound: Invalid sector number %i.", num);
             return;

@@ -398,8 +398,7 @@ struct Partitioner::Instance
         }
 
         // Initialize line info.
-        uint numLines = GameMap_LineDefCount(map);
-        lineInfos.reserve(numLines);
+        lineInfos.reserve(map->lineCount());
         foreach(LineDef *line, map->lines())
         {
             lineInfos.push_back(LineInfo(line, DIST_EPSILON));

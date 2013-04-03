@@ -455,37 +455,37 @@ int P_Callback(int type, uint index, void *context, int (*callback)(void *p, voi
     switch(type)
     {
     case DMU_VERTEX:
-        if(index < GameMap_VertexCount(theMap))
+        if(index < theMap->vertexCount())
             return callback(theMap->vertexes().at(index), context);
         break;
 
     case DMU_HEDGE:
-        if(index < GameMap_HEdgeCount(theMap))
+        if(index < theMap->hedgeCount())
             return callback(theMap->hedges().at(index), context);
         break;
 
     case DMU_LINEDEF:
-        if(index < GameMap_LineDefCount(theMap))
+        if(index < theMap->lineCount())
             return callback(theMap->lines().at(index), context);
         break;
 
     case DMU_SIDEDEF:
-        if(index < GameMap_SideDefCount(theMap))
+        if(index < theMap->sideDefCount())
             return callback(theMap->sideDefs().at(index), context);
         break;
 
     case DMU_BSPNODE:
-        if(index < GameMap_BspNodeCount(theMap))
+        if(index < theMap->bspNodeCount())
             return callback(theMap->bspNodes().at(index), context);
         break;
 
     case DMU_BSPLEAF:
-        if(index < GameMap_BspLeafCount(theMap))
+        if(index < theMap->bspLeafCount())
             return callback(theMap->bspLeafs().at(index), context);
         break;
 
     case DMU_SECTOR:
-        if(index < GameMap_SectorCount(theMap))
+        if(index < theMap->sectorCount())
             return callback(theMap->sectors().at(index), context);
         break;
 
