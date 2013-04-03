@@ -36,8 +36,6 @@
 #  error "Attempted to include server's header in a non-server build"
 #endif
 
-void GameMap_ClMobjReset(GameMap* map);
-
 DENG_EXTERN_C void Con_TransitionRegister();
 DENG_EXTERN_C void Con_TransitionTicker(timespan_t t);
 

@@ -711,7 +711,7 @@ static void P_NewParticle(ptcgen_t *gen)
 /**
  * Callback for the client mobj iterator, called from P_PtcGenThinker.
  */
-boolean PIT_ClientMobjParticles(mobj_t *cmo, void *context)
+int PIT_ClientMobjParticles(mobj_t *cmo, void *context)
 {
     ptcgen_t *gen = (ptcgen_t *) context;
     clmoinfo_t *info = ClMobj_GetInfo(cmo);
@@ -719,18 +719,18 @@ boolean PIT_ClientMobjParticles(mobj_t *cmo, void *context)
     // If the clmobj is not valid at the moment, don't do anything.
     if(info->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN))
     {
-        return true;
+        return false;
     }
 
     if(cmo->type != gen->type && cmo->type != gen->type2)
     {
         // Type mismatch.
-        return true;
+        return false;
     }
 
     gen->source = cmo;
     P_NewParticle(gen);
-    return true;
+    return false;
 }
 
 #endif
@@ -1211,7 +1211,7 @@ void P_PtcGenThinker(ptcgen_t *gen)
                 // Client's should also check the client mobjs.
                 if(isClient)
                 {
-                    GameMap_ClMobjIterator(theMap, PIT_ClientMobjParticles, gen);
+                    theMap->clMobjIterator(PIT_ClientMobjParticles, gen);
                 }
 #endif
                 GameMap_IterateThinkers(theMap, reinterpret_cast<thinkfunc_t>(gx.MobjThinker),

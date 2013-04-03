@@ -292,7 +292,7 @@ boolean DAM_AttemptMapLoad(uri_s const *_uri)
             // Prepare the client-side data.
             if(isClient)
             {
-                GameMap_InitClMobjs(map);
+                map->initClMobjs();
             }
 #endif
 

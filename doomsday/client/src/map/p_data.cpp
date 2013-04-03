@@ -123,9 +123,12 @@ DENG_EXTERN_C boolean P_LoadMap(char const *uriCString)
         // Init the thinker lists (public and private).
         GameMap_InitThinkerLists(theMap, 0x1 | 0x2);
 
-        GameMap_ClMobjReset(theMap);
-
 #ifdef __CLIENT__
+        if(isClient)
+        {
+            theMap->clMobjReset();
+        }
+
         // Tell shadow bias to initialize the bias light sources.
         SB_InitForMap(theMap->oldUniqueId());
 

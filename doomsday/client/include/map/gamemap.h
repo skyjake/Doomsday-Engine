@@ -365,6 +365,43 @@ public:
     struct generators_s *generators();
 
 #ifdef __CLIENT__
+    /// @todo Should be private?
+    void initClMobjs();
+
+    /**
+     * To be called when the client is shut down.
+     * @todo Should be private?
+     */
+    void destroyClMobjs();
+
+    /**
+     * Deletes hidden, unpredictable or nulled mobjs for which we have not received
+     * updates in a while.
+     */
+    void expireClMobjs();
+
+    /**
+     * Reset the client status. To be called when the map changes.
+     */
+    void clMobjReset();
+
+    /**
+     * Iterate the client mobj hash, exec the callback on each. Abort if callback
+     * returns non-zero.
+     *
+     * @param callback  Function to callback for each client mobj.
+     * @param context   Data pointer passed to the callback.
+     *
+     * @return  @c 0 if all callbacks return @c 0; otherwise the result of the last.
+     */
+    int clMobjIterator(int (*callback) (struct mobj_s *, void *), void *context);
+
+    /**
+     * Allocate a new client-side plane mover.
+     *
+     * @return  The new mover or @c NULL if arguments are invalid.
+     */
+    struct clplane_s *newClPlane(uint sectornum, clplanetype_t type, coord_t dest, float speed);
 
     /**
      * Returns the set of decorated surfaces for the map.
@@ -623,52 +660,6 @@ boolean GameMap_IsUsedMobjID(GameMap* map, thid_t id);
  * @param inUse In-use state of @a id. @c true = the id is in use.
  */
 void GameMap_SetMobjID(GameMap *map, thid_t id, boolean inUse);
-
-/**
- * @param map  GameMap instance.
- */
-void GameMap_InitClMobjs(GameMap *map);
-
-/**
- * To be called when the client is shut down.
- */
-void GameMap_DestroyClMobjs(GameMap *map);
-
-/**
- * Deletes hidden, unpredictable or nulled mobjs for which we have not received
- * updates in a while.
- *
- * @param map  GameMap instance.
- */
-void GameMap_ExpireClMobjs(GameMap *map);
-
-/**
- * Reset the client status. To be called when the map changes.
- *
- * @param map  GameMap instance.
- */
-void GameMap_ClMobjReset(GameMap *map);
-
-/**
- * Iterate the client mobj hash, exec the callback on each. Abort if callback
- * returns @c false.
- *
- * @param map       GameMap instance.
- * @param callback  Function to callback for each client mobj.
- * @param context   Data pointer passed to the callback.
- *
- * @return  If the callback returns @c false.
- */
-boolean GameMap_ClMobjIterator(GameMap *map, boolean (*callback) (struct mobj_s *, void *), void *context);
-
-/**
- * Allocate a new client-side plane mover.
- *
- * @param map  GameMap instance.
- * @return  The new mover or @c NULL if arguments are invalid.
- */
-struct clplane_s *GameMap_NewClPlane(GameMap *map, uint sectornum, clplanetype_t type,
-    coord_t dest, float speed);
 
 /**
  * Initialize the node piles and link rings. To be called after map load.

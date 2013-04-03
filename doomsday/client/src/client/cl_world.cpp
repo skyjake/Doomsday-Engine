@@ -173,7 +173,7 @@ int Cl_LocalMobjState(int serverMobjState)
     return xlatMobjState.serverToLocal[serverMobjState];
 }
 
-static boolean GameMap_IsValidClPlane(GameMap* map, int i)
+static boolean GameMap_IsValidClPlane(GameMap *map, int i)
 {
     assert(map);
     if(!map->clActivePlanes[i]) return false;
@@ -388,16 +388,14 @@ void Cl_MoverThinker(clplane_t* mover)
     }
 }
 
-clplane_t *GameMap_NewClPlane(GameMap *map, uint sectorIndex, clplanetype_t type, coord_t dest, float speed)
+clplane_t *GameMap::newClPlane(uint sectorIndex, clplanetype_t type, coord_t dest, float speed)
 {
-    DENG_ASSERT(map);
-
     int dmuPlane = (type == CPT_FLOOR ? DMU_FLOOR_OF_SECTOR : DMU_CEILING_OF_SECTOR);
 
-    DEBUG_Message(("GameMap_NewClPlane: Sector #%i, type:%s, dest:%f, speed:%f\n",
-                   sectorIndex, type==CPT_FLOOR? "floor" : "ceiling", dest, speed));
+    DEBUG_Message(("GameMap::newClPlane: Sector #%i, type:%s, dest:%f, speed:%f",
+                   sectorIndex, type == CPT_FLOOR? "floor" : "ceiling", dest, speed));
 
-    if(int( sectorIndex ) >= map->_sectors.size())
+    if(int( sectorIndex ) >= _sectors.size())
     {
         DENG_ASSERT(false); // Invalid Sector index.
         return 0;
@@ -406,26 +404,26 @@ clplane_t *GameMap_NewClPlane(GameMap *map, uint sectorIndex, clplanetype_t type
     // Remove any existing movers for the same plane.
     for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
-        if(GameMap_IsValidClPlane(map, i) &&
-           map->clActivePlanes[i]->sectorIndex == sectorIndex &&
-           map->clActivePlanes[i]->type == type)
+        if(GameMap_IsValidClPlane(this, i) &&
+           clActivePlanes[i]->sectorIndex == sectorIndex &&
+           clActivePlanes[i]->type == type)
         {
-            DEBUG_Message(("GameMap_NewClPlane: Removing existing mover [%i] in sector #%i, type %s\n",
+            DEBUG_Message(("GameMap::newClPlane: Removing existing mover [%i] in sector #%i, type %s",
                            i, sectorIndex, type == CPT_FLOOR? "floor" : "ceiling"));
 
-            GameMap_DeleteClPlane(map, map->clActivePlanes[i]);
+            GameMap_DeleteClPlane(this, clActivePlanes[i]);
         }
     }
 
     // Add a new mover.
     for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
-        if(map->clActivePlanes[i]) continue;
+        if(clActivePlanes[i]) continue;
 
-        DEBUG_Message(("GameMap_NewClPlane: ...new mover [%i]\n", i));
+        DEBUG_Message(("GameMap::newClPlane: ...new mover [%i]", i));
 
         // Allocate a new clplane_t thinker.
-        clplane_t *mov = map->clActivePlanes[i] = (clplane_t *) Z_Calloc(sizeof(clplane_t), PU_MAP, &map->clActivePlanes[i]);
+        clplane_t *mov = clActivePlanes[i] = (clplane_t *) Z_Calloc(sizeof(clplane_t), PU_MAP, &clActivePlanes[i]);
         mov->thinker.function = reinterpret_cast<thinkfunc_t>(Cl_MoverThinker);
         mov->type = type;
         mov->sectorIndex = sectorIndex;
@@ -442,7 +440,7 @@ clplane_t *GameMap_NewClPlane(GameMap *map, uint sectorIndex, clplanetype_t type
         P_SetDouble(DMU_SECTOR, sectorIndex, dmuPlane | DMU_TARGET_HEIGHT, dest);
         P_SetFloat(DMU_SECTOR, sectorIndex, dmuPlane | DMU_SPEED, speed);
 
-        GameMap_ThinkerAdd(map, &mov->thinker, false /*not public*/);
+        GameMap_ThinkerAdd(this, &mov->thinker, false /*not public*/);
 
         // Immediate move?
         if(FEQUAL(speed, 0))
@@ -453,7 +451,7 @@ clplane_t *GameMap_NewClPlane(GameMap *map, uint sectorIndex, clplanetype_t type
         return mov;
     }
 
-    Con_Error("GameMap_NewClPlane: Exhausted activemovers.");
+    Con_Error("GameMap::newClPlane: Exhausted activemovers.");
     exit(1); // Unreachable.
 }
 
@@ -684,20 +682,20 @@ void Cl_ReadSectorDelta2(int deltaType, boolean /*skip*/)
     // Do we need to start any moving planes?
     if(df & SDF_FLOOR_HEIGHT)
     {
-        GameMap_NewClPlane(map, num, CPT_FLOOR, height[PLN_FLOOR], 0);
+        map->newClPlane(num, CPT_FLOOR, height[PLN_FLOOR], 0);
     }
     else if(df & (SDF_FLOOR_TARGET | SDF_FLOOR_SPEED))
     {
-        GameMap_NewClPlane(map, num, CPT_FLOOR, target[PLN_FLOOR], speed[PLN_FLOOR]);
+        map->newClPlane(num, CPT_FLOOR, target[PLN_FLOOR], speed[PLN_FLOOR]);
     }
 
     if(df & SDF_CEILING_HEIGHT)
     {
-        GameMap_NewClPlane(map, num, CPT_CEILING, height[PLN_CEILING], 0);
+        map->newClPlane(num, CPT_CEILING, height[PLN_CEILING], 0);
     }
     else if(df & (SDF_CEILING_TARGET | SDF_CEILING_SPEED))
     {
-        GameMap_NewClPlane(map, num, CPT_CEILING, target[PLN_CEILING], speed[PLN_CEILING]);
+        map->newClPlane(num, CPT_CEILING, target[PLN_CEILING], speed[PLN_CEILING]);
     }
 
 #undef PLN_CEILING

@@ -1473,13 +1473,18 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
             ddpl->extraLight = 0;
         }
 
-        // If a map was loaded; unload it.
-        if(theMap)
+#ifdef __CLIENT__
+        if(isClient)
         {
-            GameMap_ClMobjReset(theMap);
+            // If a map was loaded; unload it.
+            if(theMap)
+            {
+                theMap->clMobjReset();
+            }
+            // Clear player data, too, since we just lost all clmobjs.
+            Cl_InitPlayers();
         }
-        // Clear player data, too, since we just lost all clmobjs.
-        Cl_InitPlayers();
+#endif
 
         // Most memory is allocated from the zone.
         //Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);

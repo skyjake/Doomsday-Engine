@@ -82,7 +82,7 @@ int Cl_GameReady(void)
     return (handshakeReceived && gameReady);
 }
 
-void Cl_CleanUp(void)
+void Cl_CleanUp()
 {
     Con_Printf("Cl_CleanUp.\n");
 
@@ -91,7 +91,7 @@ void Cl_CleanUp(void)
 
     if(theMap)
     {
-        GameMap_DestroyClMobjs(theMap);
+        theMap->destroyClMobjs();
     }
 
     Cl_InitPlayers();
@@ -479,7 +479,7 @@ void Cl_Ticker(timespan_t ticLength)
 
     if(theMap)
     {
-        GameMap_ExpireClMobjs(theMap);
+        theMap->expireClMobjs();
     }
 }
 

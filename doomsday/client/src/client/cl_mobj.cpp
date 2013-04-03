@@ -156,6 +156,7 @@ mobj_t* ClMobj_MobjForInfo(clmoinfo_t* info)
     return (mobj_t*) ((char*)info + sizeof(clmoinfo_t));
 }
 
+#undef ClMobj_Find
 struct mobj_s* ClMobj_Find(thid_t id)
 {
     cmhash_t* hash = ClMobj_Hash(id);
@@ -175,19 +176,13 @@ struct mobj_s* ClMobj_Find(thid_t id)
     return NULL;
 }
 
-boolean GameMap_ClMobjIterator(GameMap* map, boolean (*callback) (mobj_t*, void*), void* parm)
+int GameMap::clMobjIterator(int (*callback) (mobj_t *, void *), void *context)
 {
-    clmoinfo_t* info;
-    int i;
-    assert(map);
-
-    for(i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)
+    for(int i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)
+    for(clmoinfo_t *info = clMobjHash[i].first; info; info = info->next)
     {
-        for(info = map->clMobjHash[i].first; info; info = info->next)
-        {
-            if(!callback(ClMobj_MobjForInfo(info), parm))
-                return false;
-        }
+        int result = callback(ClMobj_MobjForInfo(info), context);
+        if(result) return result;
     }
     return true;
 }
@@ -360,84 +355,71 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int fl
     }
 }
 
-void GameMap_InitClMobjs(GameMap* map)
+void GameMap::initClMobjs()
 {
-    assert(map);
-    memset(map->clMobjHash, 0, sizeof(map->clMobjHash));
+    std::memset(clMobjHash, 0, sizeof(clMobjHash));
 }
 
-void GameMap_DestroyClMobjs(GameMap* map)
+void GameMap::destroyClMobjs()
 {
-    clmoinfo_t* info;
-    int i;
-    assert(map);
-
-    for(i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)
+    for(int i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)
+    for(clmoinfo_t *info = clMobjHash[i].first; info; info = info->next)
     {
-        for(info = map->clMobjHash[i].first; info; info = info->next)
-        {
-            mobj_t* mo = ClMobj_MobjForInfo(info);
-            // Players' clmobjs are not linked anywhere.
-            if(!mo->dPlayer)
-                ClMobj_Unlink(mo);
-        }
+        mobj_t *mo = ClMobj_MobjForInfo(info);
+        // Players' clmobjs are not linked anywhere.
+        if(!mo->dPlayer)
+            ClMobj_Unlink(mo);
     }
 
-    GameMap_ClMobjReset(map);
+    clMobjReset();
 }
 
-void GameMap_ClMobjReset(GameMap* map)
+void GameMap::clMobjReset()
 {
-    assert(map);
-
     Cl_ResetFrame();
 
     // The PU_MAP memory was freed, so just clear the hash.
-    memset(map->clMobjHash, 0, sizeof(map->clMobjHash));
+    std::memset(clMobjHash, 0, sizeof(clMobjHash));
 }
 
-void GameMap_ExpireClMobjs(GameMap* map)
+void GameMap::expireClMobjs()
 {
     uint nowTime = Timer_RealMilliseconds();
-    clmoinfo_t* info;
-    clmoinfo_t* next = 0;
-    mobj_t* mo;
-    int i;
-    assert(map);
+
+    clmoinfo_t *next = 0;
 
     // Move all client mobjs.
-    for(i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)
+    for(int i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)
+    for(clmoinfo_t *info = clMobjHash[i].first; info; info = next)
     {
-        for(info = map->clMobjHash[i].first; info; info = next)
+        next = info->next;
+
+        mobj_t *mo = ClMobj_MobjForInfo(info);
+
+        // Already deleted?
+        if(mo->thinker.function == (thinkfunc_t)-1) continue;
+
+        // Don't expire player mobjs.
+        if(mo->dPlayer) continue;
+
+        if((info->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN | CLMF_NULLED)) || !mo->info)
         {
-            next = info->next;
-            mo = ClMobj_MobjForInfo(info);
-
-            // Already deleted?
-            if(mo->thinker.function == (thinkfunc_t)-1) continue;
-
-            // Don't expire player mobjs.
-            if(mo->dPlayer) continue;
-
-            if((info->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN | CLMF_NULLED)) || !mo->info)
+            // Has this mobj timed out?
+            if(nowTime - info->time > CLMOBJ_TIMEOUT)
             {
-                // Has this mobj timed out?
-                if(nowTime - info->time > CLMOBJ_TIMEOUT)
-                {
-#ifdef _DEBUG
-                    Con_Message("GameMap_ExpireClMobjs: Mobj %i has expired (%i << %i), in state %s [%c%c%c].",
-                                mo->thinker.id,
-                                info->time, nowTime,
-                                Def_GetStateName(mo->state),
-                                info->flags & CLMF_UNPREDICTABLE? 'U' : '_',
-                                info->flags & CLMF_HIDDEN? 'H' : '_',
-                                info->flags & CLMF_NULLED? '0' : '_');
+#ifdef DENG_DEBUG
+                Con_Message("GameMap::expireClMobjs: Mobj %i has expired (%i << %i), in state %s [%c%c%c].",
+                            mo->thinker.id,
+                            info->time, nowTime,
+                            Def_GetStateName(mo->state),
+                            info->flags & CLMF_UNPREDICTABLE? 'U' : '_',
+                            info->flags & CLMF_HIDDEN? 'H' : '_',
+                            info->flags & CLMF_NULLED? '0' : '_');
 #endif
-                    // Too long. The server will probably never send anything
-                    // for this mobj, so get rid of it. (Both unpredictable
-                    // and hidden mobjs are not visible or bl/seclinked.)
-                    P_MobjDestroy(mo);
-                }
+                // Too long. The server will probably never send anything
+                // for this mobj, so get rid of it. (Both unpredictable
+                // and hidden mobjs are not visible or bl/seclinked.)
+                P_MobjDestroy(mo);
             }
         }
     }
