@@ -153,18 +153,18 @@ Folder::Contents const &Folder::contents() const
     return _contents;
 }
 
-File &Folder::newFile(String const &newPath, bool replaceExisting)
+File &Folder::newFile(String const &newPath, FileCreationBehavior behavior)
 {
     String path = newPath.fileNamePath();
     if(!path.empty())
     {
         // Locate the folder where the file will be created in.
-        return locate<Folder>(path).newFile(newPath.fileName(), replaceExisting);
+        return locate<Folder>(path).newFile(newPath.fileName(), behavior);
     }
     
     verifyWriteAccess();
 
-    if(replaceExisting && has(newPath))
+    if(behavior == ReplaceExisting && has(newPath))
     {
         try
         {
@@ -199,7 +199,7 @@ File &Folder::newFile(String const &newPath, bool replaceExisting)
 
 File &Folder::replaceFile(String const &newPath)
 {
-    return newFile(newPath, true);
+    return newFile(newPath, ReplaceExisting);
 }
 
 void Folder::removeFile(String const &removePath)

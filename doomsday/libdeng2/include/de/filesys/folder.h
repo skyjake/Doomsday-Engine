@@ -83,6 +83,12 @@ public:
         PopulateOnlyThisFolder = 0x1    ///< Do not descend into subfolders while populating.
     };
 
+    /// Behavior for creating new files.
+    enum FileCreationBehavior {
+        KeepExisting,       ///< Existing file will be kept unchanged (safe).
+        ReplaceExisting     ///< Existing file will be replaced.
+    };
+
 public:
     Folder(String const &name = "");
 
@@ -120,12 +126,12 @@ public:
      * decide what kind of file is actually created. The new file is added to
      * the file system's index.
      *
-     * @param name             Name or path of the new file, relative to this folder.
-     * @param replaceExisting  Replacing existing file with the same name.
+     * @param name      Name or path of the new file, relative to this folder.
+     * @param behavior  How to treat existing files.
      *
      * @return  The created file (write mode enabled).
      */
-    File &newFile(String const &name, bool replaceExisting = false);
+    File &newFile(String const &name, FileCreationBehavior behavior = KeepExisting);
 
     /**
      * Creates a new file in the folder, replacing an existing file with the
