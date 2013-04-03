@@ -103,8 +103,7 @@ struct Partitioner::Instance
     AABoxd mapBounds;
 
     /// @todo Refactor me away:
-    uint numEditableVertexes;
-    Vertex const **editableVertexes;
+    QList<Vertex *> const &editableVertexes;
 
     /// Running totals of constructed BSP data objects.
     uint numNodes;
@@ -188,11 +187,10 @@ struct Partitioner::Instance
     /// @c true = a BSP for the current map has been built successfully.
     bool builtOK;
 
-    Instance(GameMap *_map, uint _numEditableVertexes,
-             Vertex const **_editableVertexes, int _splitCostFactor)
+    Instance(GameMap *_map, QList<Vertex *> const &_editableVertexes, int _splitCostFactor)
       : splitCostFactor(_splitCostFactor),
         map(_map),
-        numEditableVertexes(_numEditableVertexes), editableVertexes(_editableVertexes),
+        editableVertexes(_editableVertexes),
         numNodes(0), numLeafs(0), numHEdges(0), numVertexes(0),
         rootNode(0), treeNodeMap(), partition(), partitionLine(0),
         unclosedSectors(), unclosedBspLeafs(), migrantHEdges(),
@@ -389,13 +387,12 @@ struct Partitioner::Instance
         mapBounds = findMapBounds(map);
 
         // Initialize vertex info for the initial set of vertexes.
-        vertexInfos.resize(numEditableVertexes);
+        vertexInfos.resize(editableVertexes.count());
 
         // Count the total number of one and two-sided line owners for each vertex.
         // (Used in the process of locating window effect lines.)
-        for(uint i = 0; i < numEditableVertexes; ++i)
+        foreach(Vertex *vtx, editableVertexes)
         {
-            Vertex const *vtx = editableVertexes[i];
             VertexInfo &vtxInfo = vertexInfo(*vtx);
             vtx->countLineOwners(&vtxInfo.oneSidedOwnerCount, &vtxInfo.twoSidedOwnerCount);
         }
@@ -2009,7 +2006,7 @@ struct Partitioner::Instance
     Vertex *newVertex(const_pvec2d_t origin)
     {
         Vertex *vtx = new Vertex;
-        vtx->_buildData.index = numEditableVertexes + uint(vertexes.size() + 1); // 1-based index, 0 = NIL.
+        vtx->_buildData.index = editableVertexes.count() + uint(vertexes.size() + 1); // 1-based index, 0 = NIL.
         vertexes.push_back(vtx);
 
         // There is now one more Vertex.
@@ -2037,9 +2034,9 @@ struct Partitioner::Instance
 
     void clearAllHEdgeTips()
     {
-        for(uint i = 0; i < numEditableVertexes; ++i)
+        foreach(Vertex *vertex, editableVertexes)
         {
-            clearHEdgeTipsByVertex(editableVertexes[i]);
+            clearHEdgeTipsByVertex(vertex);
         }
     }
 
@@ -2205,11 +2202,11 @@ struct Partitioner::Instance
         {
         case DMU_VERTEX: {
             Vertex *vtx = dmuOb->castTo<Vertex>();
-            if(vtx->_buildData.index > 0 && uint(vtx->_buildData.index) > numEditableVertexes)
+            if(vtx->_buildData.index > 0 && vtx->_buildData.index > editableVertexes.count())
             {
                 // Is this object owned?
-                uint idx = uint(vtx->_buildData.index) - 1 - numEditableVertexes;
-                if(idx < vertexes.size() && vertexes[idx])
+                int idx = vtx->_buildData.index - 1 - editableVertexes.count();
+                if((unsigned) idx < vertexes.size() && vertexes[idx])
                 {
                     vertexes[idx] = 0;
                     // There is now one fewer Vertex.
@@ -2404,9 +2401,8 @@ struct Partitioner::Instance
     }
 };
 
-Partitioner::Partitioner(GameMap &map, uint numEditableVertexes,
-    Vertex const **editableVertexes, int splitCostFactor)
-    : d(new Instance(&map, numEditableVertexes, editableVertexes, splitCostFactor))
+Partitioner::Partitioner(GameMap &map, QList<Vertex *> const &editableVertexes, int splitCostFactor)
+    : d(new Instance(&map, editableVertexes, splitCostFactor))
 {
     d->initForMap();
 }

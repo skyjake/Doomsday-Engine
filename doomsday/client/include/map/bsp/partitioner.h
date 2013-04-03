@@ -49,8 +49,8 @@ static const coord_t ANG_EPSILON = (1.0 / 1024.0);
 class Partitioner
 {
 public:
-    Partitioner(GameMap &map, uint numEditableVertexes,
-                Vertex const **editableVertexes, int splitCostFactor = 7);
+    Partitioner(GameMap &map, QList<Vertex *> const &editableVertexes,
+                int splitCostFactor = 7);
     ~Partitioner();
 
     /**

@@ -47,7 +47,7 @@ public:
      * @param map  GameMap for which to construct a BSP object tree.
      * @param splitCostFactor  Cost factor attributed to splitting an existing half-edge.
      */
-    BspBuilder(GameMap &map, uint numEditableVertexes, Vertex const **editableVertexes,
+    BspBuilder(GameMap &map, QList<Vertex *> const &editableVertexes,
                int splitCostFactor = DEFAULT_PARTITION_COST_HEDGESPLIT);
 
     /**

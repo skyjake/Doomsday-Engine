@@ -31,14 +31,14 @@ DENG2_PIMPL_NOREF(BspBuilder)
     /// The space partitioner.
     Partitioner partitioner;
 
-    Instance(GameMap &map, uint numEditableVertexes, Vertex const **editableVertexes)
-        : partitioner(map, numEditableVertexes, editableVertexes)
+    Instance(GameMap &map, QList<Vertex *> const &editableVertexes)
+        : partitioner(map, editableVertexes)
     {}
 };
 
-BspBuilder::BspBuilder(GameMap &map, uint numEditableVertexes, Vertex const **editableVertexes,
+BspBuilder::BspBuilder(GameMap &map, QList<Vertex *> const &editableVertexes,
                        int splitCostFactor)
-    : d(new Instance(map, numEditableVertexes, editableVertexes))
+    : d(new Instance(map, editableVertexes))
 {
     d->partitioner.setSplitCostFactor(splitCostFactor);
 }

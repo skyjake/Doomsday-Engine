@@ -49,16 +49,16 @@ using namespace de;
 class EditMap
 {
 public:
-    typedef std::vector<Vertex *> Vertices;
-    Vertices vertexes; // really needs to be std::vector? (not a QList?)
+    typedef QList<Vertex *> Vertexes;
+    Vertexes vertexes;
 
-    typedef std::vector<LineDef *> Lines;
+    typedef QList<LineDef *> Lines;
     Lines lines;
 
-    typedef std::vector<SideDef *> SideDefs;
+    typedef QList<SideDef *> SideDefs;
     SideDefs sideDefs;
 
-    typedef std::vector<Sector *> Sectors;
+    typedef QList<Sector *> Sectors;
     Sectors sectors;
 
     uint numPolyObjs;
@@ -102,10 +102,10 @@ public:
         destroyPolyObjs();
     }
 
-    Vertex const **verticesAsArray() const { return const_cast<Vertex const **>(&(vertexes[0])); }
-
-    uint vertexCount() const { return vertexes.size(); }
-    uint sectorCount() const { return sectors.size(); }
+    uint vertexCount() const { return vertexes.count(); }
+    uint lineCount() const { return lines.count(); }
+    uint sideDefCount() const { return sideDefs.count(); }
+    uint sectorCount() const { return sectors.count(); }
 };
 
 static EditMap editMap; // singleton
@@ -279,8 +279,8 @@ static Vertex *createVertex(coord_t x, coord_t y)
 {
     Vertex *vtx = new Vertex(x, y);
 
-    editMap.vertexes.push_back(vtx);
-    vtx->_buildData.index = editMap.vertexes.size(); // 1-based index, 0 = NIL.
+    editMap.vertexes.append(vtx);
+    vtx->_buildData.index = editMap.vertexes.count(); // 1-based index, 0 = NIL.
 
     return vtx;
 }
@@ -289,8 +289,8 @@ static LineDef *createLine()
 {
     LineDef *line = new LineDef;
 
-    editMap.lines.push_back(line);
-    line->_origIndex = editMap.lines.size(); // 1-based index, 0 = NIL.
+    editMap.lines.append(line);
+    line->_origIndex = editMap.lines.count(); // 1-based index, 0 = NIL.
 
     return line;
 }
@@ -299,8 +299,8 @@ static SideDef *createSideDef()
 {
     SideDef *sideDef = new SideDef;
 
-    editMap.sideDefs.push_back(sideDef);
-    sideDef->_buildData.index = editMap.sideDefs.size(); // 1-based index, 0 = NIL.
+    editMap.sideDefs.append(sideDef);
+    sideDef->_buildData.index = editMap.sideDefs.count(); // 1-based index, 0 = NIL.
 
     return sideDef;
 }
@@ -314,8 +314,8 @@ static Sector *createSector(Vector3f const &ambientLightColor, float lightLevel)
     sec->_lightColor[CB] = de::clamp(0.f, ambientLightColor.z, 1.f);
     sec->_lightLevel = de::clamp(0.f, lightLevel, 1.f);
     
-    editMap.sectors.push_back(sec);
-    sec->_origIndex = editMap.sectors.size(); // 1-based index, 0 = NIL.
+    editMap.sectors.append(sec);
+    sec->_origIndex = editMap.sectors.count(); // 1-based index, 0 = NIL.
 
     return sec;
 }
@@ -966,26 +966,20 @@ static void buildVertexLineOwnerRings()
      * Step 1: Find and link up all line owners.
      */
     // We know how many vertex line owners we need (numLineDefs * 2).
-    LineOwner *lineOwners = (LineOwner *) Z_Malloc(sizeof(LineOwner) * editMap.lines.size() * 2, PU_MAPSTATIC, 0);
+    LineOwner *lineOwners = (LineOwner *) Z_Malloc(sizeof(LineOwner) * editMap.lines.count() * 2, PU_MAPSTATIC, 0);
     LineOwner *allocator = lineOwners;
 
-    for(uint i = 0; i < editMap.lines.size(); ++i)
+    foreach(LineDef *line, editMap.lines)
+    for(uint p = 0; p < 2; ++p)
     {
-        LineDef *line = editMap.lines[i];
-
-        for(uint p = 0; p < 2; ++p)
-        {
-            setVertexLineOwner(&line->vertex(p), line, &allocator);
-        }
+        setVertexLineOwner(&line->vertex(p), line, &allocator);
     }
 
     /*
      * Step 2: Sort line owners of each vertex and finalize the rings.
      */
-    for(uint i = 0; i < editMap.vertexCount(); ++i)
+    foreach(Vertex *v, editMap.vertexes)
     {
-        Vertex *v = editMap.vertexes[i];
-
         if(!v->_numLineOwners) continue;
 
         // Sort them; ordered clockwise by angle.
@@ -1016,7 +1010,7 @@ static void buildVertexLineOwnerRings()
 
 /*#ifdef DENG2_DEBUG
         LOG_VERBOSE("Vertex #%i: line owners #%i")
-            << i << v->lineOwnerCount();
+            << editMap.vertexes.indexOf(v) << v->lineOwnerCount();
 
         LineOwner const *base = v->firstLineOwner();
         LineOwner const *cur = base;
@@ -1263,16 +1257,15 @@ void MPE_DetectOverlappingLines(GameMap *map)
 /**
  * Find the extremal coordinates for the given set of vertexes.
  *
- * @param vertexes  Address of the list of vertexes to be scanned.
- * @param numVertexes  Number of vertex elements in @a vertexes.
+ * @param vertexes  List of editable vertexes to be scanned.
  * @param min  Minimal coordinates will be written here.
  * @param max  Maximal coordinates will be written here.
  */
-static void findBounds(Vertex const **vertexes, uint numVertexes, vec2d_t min, vec2d_t max)
+static void findBounds(QList<Vertex *> const &vertexes, vec2d_t min, vec2d_t max)
 {
     if(!min && !max) return;
 
-    if(!vertexes || !numVertexes)
+    if(!vertexes.count())
     {
         V2d_Set(min, DDMAXFLOAT, DDMAXFLOAT);
         V2d_Set(max, DDMINFLOAT, DDMINFLOAT);
@@ -1281,14 +1274,19 @@ static void findBounds(Vertex const **vertexes, uint numVertexes, vec2d_t min, v
 
     vec2d_t bounds[2], point;
 
-    for(uint i = 0; i < numVertexes; ++i)
+    QListIterator<Vertex *> vIt(vertexes);
+
+    // Add the first vertex.
+    Vertex *vertex = vIt.next();
+    V2d_Set(point, vertex->origin()[VX], vertex->origin()[VY]);
+    V2d_InitBox(bounds, point);
+
+    // Add the rest of the vertexes.
+    while(vIt.hasNext())
     {
-        Vertex const *vtx = vertexes[i];
-        V2d_Set(point, vtx->origin()[VX], vtx->origin()[VY]);
-        if(!i)
-            V2d_InitBox(bounds, point);
-        else
-            V2d_AddToBox(bounds, point);
+        Vertex *vertex = vIt.next();
+        V2d_Set(point, vertex->origin()[VX], vertex->origin()[VY]);
+        V2d_AddToBox(bounds, point);
     }
 
     if(min)
@@ -1302,28 +1300,28 @@ static void findBounds(Vertex const **vertexes, uint numVertexes, vec2d_t min, v
 }
 
 static void collateVertexes(BspBuilder &builder, GameMap &map,
-    uint numEditableVertexes, Vertex const **editableVertexes)
+    QList<Vertex *> const &editableVertexes)
 {
     uint bspVertexCount = builder.numVertexes();
 
     DENG2_ASSERT(map._vertexes.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
-    map._vertexes.reserve(numEditableVertexes + bspVertexCount);
+    map._vertexes.reserve(editableVertexes.count() + bspVertexCount);
 #endif
 
     uint n = 0;
-    for(; n < numEditableVertexes; ++n)
+    foreach(Vertex *vertex, editableVertexes)
     {
-        Vertex *vtx = const_cast<Vertex *>(editableVertexes[n]);
-        map._vertexes.append(vtx);
+        map._vertexes.append(vertex);
+        ++n;
     }
 
     for(uint i = 0; i < bspVertexCount; ++i, ++n)
     {
-        Vertex &vtx  = builder.vertex(i);
+        Vertex *vertex = &builder.vertex(i);
 
-        builder.take(&vtx);
-        map._vertexes.append(&vtx);
+        builder.take(vertex);
+        map._vertexes.append(vertex);
     }
 }
 
@@ -1402,15 +1400,12 @@ static bool buildBsp(GameMap &map)
     LOG_INFO("Building BSP using tunable split factor of %d...") << bspFactor;
 
     // Instantiate and configure a new BSP builder.
-    BspBuilder nodeBuilder(map, editMap.vertexCount(), editMap.verticesAsArray(), bspFactor);
+    BspBuilder nodeBuilder(map, editMap.vertexes, bspFactor);
 
     // Build the BSP.
     bool builtOK = nodeBuilder.buildBsp();
     if(builtOK)
     {
-        Vertex const **e_mapVertexesArray = editMap.verticesAsArray();
-        uint const e_mapNumVertexes = editMap.vertexCount();
-
         BspTreeNode &treeRoot = *nodeBuilder.root();
 
         // Determine the max depth of the two main branches.
@@ -1443,7 +1438,7 @@ static bool buildBsp(GameMap &map)
         map.bspLeafs.reserve(nodeBuilder.numLeafs());
 #endif
 
-        collateVertexes(nodeBuilder, map, e_mapNumVertexes, e_mapVertexesArray);
+        collateVertexes(nodeBuilder, map, editMap.vertexes);
 
         BspTreeNode *rootNode = nodeBuilder.root();
         map._bspRoot = rootNode->userData(); // We'll formally take ownership shortly...
@@ -1685,31 +1680,31 @@ boolean MPE_End()
     // Collate sectors:
     DENG2_ASSERT(gamemap->_sectors.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
-    gamemap->_sectors.reserve(editMap.sectors.size());
+    gamemap->_sectors.reserve(editMap.sectors.count());
 #endif
-    for(uint i = 0; i < editMap.sectors.size(); ++i)
+    foreach(Sector *sector, editMap.sectors)
     {
-        gamemap->_sectors.append(editMap.sectors[i]); // Take ownership.
+        gamemap->_sectors.append(sector); // Take ownership.
     }
 
     // Collate sidedefs:
     DENG2_ASSERT(gamemap->_sideDefs.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
-    gamemap->_sideDefs.reserve(editMap.sideDefs.size());
+    gamemap->_sideDefs.reserve(editMap.sideDefs.count());
 #endif
-    for(uint i = 0; i < editMap.sideDefs.size(); ++i)
+    foreach(SideDef *sideDef, editMap.sideDefs)
     {
-        gamemap->_sideDefs.append(editMap.sideDefs[i]); // Take ownership.
+        gamemap->_sideDefs.append(sideDef); // Take ownership.
     }
 
     // Collate lines:
     DENG2_ASSERT(gamemap->_lines.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
-    gamemap->_lines.reserve(editMap.lines.size());
+    gamemap->_lines.reserve(editMap.lines.count());
 #endif
-    for(uint i = 0; i < editMap.lines.size(); ++i)
+    foreach(LineDef *line, editMap.lines)
     {
-        gamemap->_lines.append(editMap.lines[i]); // Take ownership.
+        gamemap->_lines.append(line); // Take ownership.
     }
 
     buildVertexLineOwnerRings();
@@ -1721,7 +1716,7 @@ boolean MPE_End()
      * Build blockmaps.
      */
     vec2d_t min, max;
-    findBounds(editMap.verticesAsArray(), editMap.vertexCount(), min, max);
+    findBounds(editMap.vertexes, min, max);
 
     GameMap_InitLineDefBlockmap(gamemap, min, max);
     for(int i = 0; i < gamemap->_lines.count(); ++i)
@@ -1886,8 +1881,8 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector,
 
     if(frontSector > editMap.sectorCount()) return 0;
     if(backSector > editMap.sectorCount()) return 0;
-    if(frontSide > editMap.sideDefs.size()) return 0;
-    if(backSide > editMap.sideDefs.size()) return 0;
+    if(frontSide > editMap.sideDefCount()) return 0;
+    if(backSide > editMap.sideDefCount()) return 0;
     if(v1 == 0 || v1 > editMap.vertexCount()) return 0;
     if(v2 == 0 || v2 > editMap.vertexCount()) return 0;
     if(v1 == v2) return 0;
@@ -1994,7 +1989,7 @@ uint MPE_PolyobjCreate(uint *lines, uint lineCount, int tag, int sequenceType,
     // already part of another polyobj.
     for(uint i = 0; i < lineCount; ++i)
     {
-        if(lines[i] == 0 || lines[i] > editMap.lines.size()) return 0;
+        if(lines[i] == 0 || lines[i] > editMap.lineCount()) return 0;
 
         LineDef *line = editMap.lines[lines[i] - 1];
         if(line->isFromPolyobj()) return 0;
