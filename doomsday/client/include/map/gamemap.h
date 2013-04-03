@@ -147,8 +147,8 @@ public:
 
     /// Current LOS trace state.
     /// @todo Refactor to support concurrent traces.
-    TraceOpening traceOpening;
-    divline_t traceLOS;
+    TraceOpening _traceOpening;
+    divline_t _traceLine;
 
 public:
     GameMap();
@@ -327,15 +327,41 @@ public:
     /**
      * Traces a line of sight.
      *
-     * @param from          World position, trace origin coordinates.
-     * @param to            World position, trace target coordinates.
-     * @param flags         Line Sight Flags (LS_*) @ref lineSightFlags
+     * @param from   World position, trace origin coordinates.
+     * @param to     World position, trace target coordinates.
+     * @param flags  Line Sight Flags (LS_*) @ref lineSightFlags.
      *
-     * @return              @c true if the traverser function returns @c true
-     *                      for all visited lines.
+     * @return  @c true if the traverser function returns @c true for all
+     *          visited lines.
      */
     bool lineOfSight(const_pvec3d_t from, const_pvec3d_t to, coord_t bottomSlope,
                      coord_t topSlope, int flags);
+
+    /**
+     * Retrieve an immutable copy of the LOS trace line state.
+     *
+     * @todo GameMap should not own this data.
+     */
+    divline_t const &traceLine() const;
+
+    /**
+     * Retrieve an immutable copy of the LOS TraceOpening state.
+     *
+     * @todo GameMap should not own this data.
+     */
+    TraceOpening const &traceOpening() const;
+
+    /**
+     * Update the TraceOpening state for according to the opening defined by the
+     * inner-minimal planes heights which intercept @a line
+     *
+     * If @a line is not owned by the map this is a no-op.
+     *
+     * @todo GameMap should not own this data.
+     *
+     * @param line  Map line to configure the opening for.
+     */
+    void setTraceOpening(LineDef &line);
 
     /**
      * Trace a line between @a from and @a to, making a callback for each
@@ -350,8 +376,8 @@ public:
      *
      * @param fromX         X axis map space coordinate for the path origin.
      * @param fromY         Y axis map space coordinate for the path origin.
-     * @param toX           X axis map space coordinate for the path origin.
-     * @param toY           Y axis map space coordinate for the path origin.
+     * @param toX           X axis map space coordinate for the path destination.
+     * @param toY           Y axis map space coordinate for the path destination.
      */
     inline int pathTraverse(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY,
                             int flags, traverser_t callback, void *parameters = 0)
@@ -647,31 +673,6 @@ public: /// @todo Make private:
      */
     void updateSurfacesOnMaterialChange(Material &material);
 };
-
-/**
- * Retrieve an immutable copy of the LOS trace line.
- *
- * @param map  GameMap instance.
- */
-divline_t const *GameMap_TraceLOS(GameMap *map);
-
-/**
- * Retrieve an immutable copy of the LOS TraceOpening state.
- *
- * @param map  GameMap instance.
- */
-TraceOpening const *GameMap_TraceOpening(GameMap *map);
-
-/**
- * Update the TraceOpening state for according to the opening defined by the
- * inner-minimal planes heights which intercept @a line
- *
- * If @a line is not owned by the map this is a no-op.
- *
- * @param map  GameMap instance.
- * @param line  Map line to configure the opening for.
- */
-void GameMap_SetTraceOpening(GameMap *map, LineDef *line);
 
 /**
  * Have the thinker lists been initialized yet?

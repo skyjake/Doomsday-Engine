@@ -51,7 +51,7 @@ DENG_EXTERN_C divline_t const *P_TraceLOS()
     static divline_t emptyLOS;
     if(theMap)
     {
-        return GameMap_TraceLOS(theMap);
+        return &theMap->traceLine();
     }
     return &emptyLOS;
 }
@@ -62,7 +62,7 @@ DENG_EXTERN_C TraceOpening const *P_TraceOpening()
     static TraceOpening zeroOpening;
     if(theMap)
     {
-        return GameMap_TraceOpening(theMap);
+        return &theMap->traceOpening();
     }
     return &zeroOpening;
 }
@@ -70,13 +70,9 @@ DENG_EXTERN_C TraceOpening const *P_TraceOpening()
 #undef P_SetTraceOpening
 DENG_EXTERN_C void P_SetTraceOpening(LineDef *line)
 {
-    if(!theMap)
-    {
-        DEBUG_Message(("Warning: P_SetTraceOpening() attempted with no current map, ignoring."));
-        return;
-    }
+    if(!theMap || !line) return;
     /// @todo Do not assume line is from the CURRENT map.
-    GameMap_SetTraceOpening(theMap, line);
+    theMap->setTraceOpening(*line);
 }
 
 #undef P_BspLeafAtPoint
@@ -530,29 +526,29 @@ int GameMap_SectorTouchingMobjsIterator(GameMap *map, Sector *sector,
 int PIT_AddLineDefIntercepts(LineDef *line, void * /*parameters*/)
 {
     /// @todo Do not assume line is from the current map.
-    divline_t const *traceLOS = GameMap_TraceLOS(theMap);
+    divline_t const &traceLos = theMap->traceLine();
     int s1, s2;
 
     // Is this line crossed?
     // Avoid precision problems with two routines.
-    if(traceLOS->direction[VX] >  FRACUNIT * 16 || traceLOS->direction[VY] >  FRACUNIT * 16 ||
-       traceLOS->direction[VX] < -FRACUNIT * 16 || traceLOS->direction[VY] < -FRACUNIT * 16)
+    if(traceLos.direction[VX] >  FRACUNIT * 16 || traceLos.direction[VY] >  FRACUNIT * 16 ||
+       traceLos.direction[VX] < -FRACUNIT * 16 || traceLos.direction[VY] < -FRACUNIT * 16)
     {
-        s1 = Divline_PointOnSide(traceLOS, line->v1Origin());
-        s2 = Divline_PointOnSide(traceLOS, line->v2Origin());
+        s1 = Divline_PointOnSide(&traceLos, line->v1Origin());
+        s2 = Divline_PointOnSide(&traceLos, line->v2Origin());
     }
     else
     {
-        s1 = line->pointOnSide(FIX2FLT(traceLOS->origin[VX]), FIX2FLT(traceLOS->origin[VY])) < 0;
-        s2 = line->pointOnSide(FIX2FLT(traceLOS->origin[VX] + traceLOS->direction[VX]),
-                               FIX2FLT(traceLOS->origin[VY] + traceLOS->direction[VY])) < 0;
+        s1 = line->pointOnSide(FIX2FLT(traceLos.origin[VX]), FIX2FLT(traceLos.origin[VY])) < 0;
+        s2 = line->pointOnSide(FIX2FLT(traceLos.origin[VX] + traceLos.direction[VX]),
+                               FIX2FLT(traceLos.origin[VY] + traceLos.direction[VY])) < 0;
     }
     if(s1 == s2) return false;
 
     // Calculate interception point.
     divline_t dl;
     line->configureDivline(dl);
-    float distance = FIX2FLT(Divline_Intersection(&dl, traceLOS));
+    float distance = FIX2FLT(Divline_Intersection(&dl, &traceLos));
 
     // On the correct side of the trace origin?
     if(!(distance < 0))
@@ -564,21 +560,16 @@ int PIT_AddLineDefIntercepts(LineDef *line, void * /*parameters*/)
     return false;
 }
 
-int PIT_AddMobjIntercepts(mobj_t* mo, void* /*paramaters*/)
+int PIT_AddMobjIntercepts(mobj_t *mo, void * /*parameters*/)
 {
-    const divline_t* traceLOS;
-    vec2d_t from, to;
-    coord_t distance;
-    divline_t dl;
-    int s1, s2;
-
     if(mo->dPlayer && (mo->dPlayer->flags & DDPF_CAMERA))
         return false; // $democam: ssshh, keep going, we're not here...
 
     // Check a corner to corner crossection for hit.
     /// @todo Do not assume mobj is from the current map.
-    traceLOS = GameMap_TraceLOS(theMap);
-    if((traceLOS->direction[VX] ^ traceLOS->direction[VY]) > 0)
+    divline_t const &traceLos = theMap->traceLine();
+    vec2d_t from, to;
+    if((traceLos.direction[VX] ^ traceLos.direction[VY]) > 0)
     {
         // \ Slope
         V2d_Set(from, mo->origin[VX] - mo->radius,
@@ -596,21 +587,23 @@ int PIT_AddMobjIntercepts(mobj_t* mo, void* /*paramaters*/)
     }
 
     // Is this line crossed?
-    s1 = Divline_PointOnSide(traceLOS, from);
-    s2 = Divline_PointOnSide(traceLOS, to);
-    if(s1 == s2) return false;
+    if(Divline_PointOnSide(&traceLos, from) != Divline_PointOnSide(&traceLos, to))
+        return false;
 
     // Calculate interception point.
-    dl.origin[VX] = FLT2FIX((float)from[VX]);
-    dl.origin[VY] = FLT2FIX((float)from[VY]);
-    dl.direction[VX] = FLT2FIX((float)(to[VX] - from[VX]));
-    dl.direction[VY] = FLT2FIX((float)(to[VY] - from[VY]));
-    distance = FIX2FLT(Divline_Intersection(&dl, traceLOS));
+    divline_t dl;
+    dl.origin[VX] = FLT2FIX(float( from[VX] ));
+    dl.origin[VY] = FLT2FIX(float( from[VY] ));
+    dl.direction[VX] = FLT2FIX(float( to[VX] - from[VX] ));
+    dl.direction[VY] = FLT2FIX(float( to[VY] - from[VY] ));
+    coord_t distance = FIX2FLT(Divline_Intersection(&dl, &traceLos));
+
     // On the correct side of the trace origin?
     if(!(distance < 0))
     {
         P_AddIntercept(ICPT_MOBJ, distance, mo);
     }
+
     // Continue iteration.
     return false;
 }

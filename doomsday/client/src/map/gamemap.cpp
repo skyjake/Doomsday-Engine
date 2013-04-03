@@ -58,8 +58,8 @@ GameMap::GameMap()
     _effectiveGravity = 0;
     _ambientLightLevel = 0;
     std::memset(_skyFix, 0, sizeof(_skyFix));
-    std::memset(&traceOpening, 0, sizeof(traceOpening));
-    std::memset(&traceLOS, 0, sizeof(traceLOS));
+    std::memset(&_traceOpening, 0, sizeof(_traceOpening));
+    std::memset(&_traceLine, 0, sizeof(_traceLine));
 }
 
 GameMap::~GameMap()
@@ -147,25 +147,22 @@ void GameMap::setGravity(coord_t newGravity)
     _effectiveGravity = newGravity;
 }
 
-divline_t const *GameMap_TraceLOS(GameMap *map)
+divline_t const &GameMap::traceLine() const
 {
-    DENG2_ASSERT(map);
-    return &map->traceLOS;
+    return _traceLine;
 }
 
-TraceOpening const *GameMap_TraceOpening(GameMap *map)
+TraceOpening const &GameMap::traceOpening() const
 {
-    DENG2_ASSERT(map);
-    return &map->traceOpening;
+    return _traceOpening;
 }
 
-void GameMap_SetTraceOpening(GameMap *map, LineDef *line)
+void GameMap::setTraceOpening(LineDef &line)
 {
-    DENG2_ASSERT(map);
     // Is the linedef part of this map?
-    if(!line || map->lineIndex(line) < 0) return; // Odd...
+    if(lineIndex(&line) < 0) return; // Odd...
 
-    line->configureTraceOpening(map->traceOpening);
+    line.configureTraceOpening(_traceOpening);
 }
 
 int GameMap::ambientLightLevel() const
@@ -1022,10 +1019,10 @@ static int traverseCellPath(GameMap* map, Blockmap* bmap, coord_t const from_[2]
     if(INRANGE_OF(dX, 0, epsilon)) from[VX] += unitOffset;
     if(INRANGE_OF(dY, 0, epsilon)) from[VY] += unitOffset;
 
-    map->traceLOS.origin[VX] = FLT2FIX(from[VX]);
-    map->traceLOS.origin[VY] = FLT2FIX(from[VY]);
-    map->traceLOS.direction[VX] = FLT2FIX(to[VX] - from[VX]);
-    map->traceLOS.direction[VY] = FLT2FIX(to[VY] - from[VY]);
+    map->_traceLine.origin[VX] = FLT2FIX(from[VX]);
+    map->_traceLine.origin[VY] = FLT2FIX(from[VY]);
+    map->_traceLine.direction[VX] = FLT2FIX(to[VX] - from[VX]);
+    map->_traceLine.direction[VY] = FLT2FIX(to[VY] - from[VY]);
 
     /**
      * It is possible that one or both points are outside the blockmap.
