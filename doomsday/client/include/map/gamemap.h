@@ -144,7 +144,7 @@ public:
 
     int _ambientLightLevel; // Ambient lightlevel for the current map.
 
-    skyfix_t skyFix[2]; // [floor, ceiling]
+    skyfix_t _skyFix[2]; // [floor, ceiling]
 
     /// Current LOS trace state.
     /// @todo Refactor to support concurrent traces.
@@ -261,6 +261,20 @@ public:
     bool lineOfSight(const_pvec3d_t from, const_pvec3d_t to, coord_t bottomSlope,
                      coord_t topSlope, int flags);
 
+    coord_t skyFix(bool ceiling) const;
+
+    inline coord_t skyFixFloor() const   { return skyFix(false /*the floor*/); }
+    inline coord_t skyFixCeiling() const { return skyFix(true /*the ceiling*/); }
+
+    void setSkyFix(bool ceiling, coord_t height);
+
+    inline void setSkyFixFloor(coord_t height) {
+        setSkyFix(false /*the floor*/, height);
+    }
+    inline void setSkyFixCeiling(coord_t height) {
+        setSkyFix(true /*the ceiling*/, height);
+    }
+
     /**
      * Link the specified @a bspLeaf in internal data structures for
      * bookkeeping purposes.
@@ -376,6 +390,13 @@ public: ///@ todo make private:
      */
     void updateBounds();
 
+    /**
+     * Fixing the sky means that for adjacent sky sectors the lower sky
+     * ceiling is lifted to match the upper sky. The raising only affects
+     * rendering, it has no bearing on gameplay.
+     */
+    void initSkyFix();
+
     void addSurfaceToLists(Surface &suf);
 
 #ifdef __CLIENT__
@@ -415,25 +436,6 @@ TraceOpening const *GameMap_TraceOpening(GameMap *map);
  * @param line  Map line to configure the opening for.
  */
 void GameMap_SetTraceOpening(GameMap *map, LineDef *line);
-
-coord_t GameMap_SkyFix(GameMap *map, boolean ceiling);
-
-#define GameMap_SkyFixCeiling(m)       GameMap_SkyFix((m), true)
-#define GameMap_SkyFixFloor(m)         GameMap_SkyFix((m), false)
-
-GameMap *GameMap_SetSkyFix(GameMap *map, boolean ceiling, coord_t height);
-
-#define GameMap_SetSkyFixCeiling(m, h) GameMap_SetSkyFix((m), true, (h))
-#define GameMap_SetSkyFixFloor(m, h)   GameMap_SetSkyFix((m), false, (h))
-
-/**
- * Fixing the sky means that for adjacent sky sectors the lower sky
- * ceiling is lifted to match the upper sky. The raising only affects
- * rendering, it has no bearing on gameplay.
- */
-void GameMap_InitSkyFix(GameMap *map);
-
-void GameMap_UpdateSkyFixForSector(GameMap *map, Sector *sec);
 
 /**
  * Lookup a Sector in the map by it's sound emitter.

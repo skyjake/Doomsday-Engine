@@ -1412,10 +1412,10 @@ int RIT_AddSprite(void *ptr, void *parameters)
                mo->origin[VZ] >= sec.floor().height())
             {
                 coord_t visibleTop = mo->origin[VZ] + material->height();
-                if(visibleTop > GameMap_SkyFixCeiling(map))
+                if(visibleTop > map->skyFixCeiling())
                 {
                     // Raise skyfix ceiling.
-                    GameMap_SetSkyFixCeiling(map, visibleTop + 16/*leeway*/);
+                    map->setSkyFixCeiling(visibleTop + 16/*leeway*/);
                 }
             }
         }

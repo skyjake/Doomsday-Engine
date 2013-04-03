@@ -359,7 +359,7 @@ boolean DAM_AttemptMapLoad(uri_s const *_uri)
             Rend_RadioInitForMap();
 #endif
 
-            GameMap_InitSkyFix(map);
+            map->initSkyFix();
         }
     }
 

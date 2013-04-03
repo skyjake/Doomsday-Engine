@@ -217,11 +217,11 @@ void GameMap::updateSurfacesOnMaterialChange(Material &material)
 #endif
 }
 
-void GameMap_UpdateSkyFixForSector(GameMap *map, Sector *sec)
+static void updateMapSkyFixForSector(GameMap *map, Sector *sec)
 {
-    DENG_ASSERT(map);
+    DENG_ASSERT(map && sec);
 
-    if(!sec || !sec->lineCount()) return;
+    if(!sec->lineCount()) return;
 
     bool skyFloor = sec->floorSurface().hasSkyMaskedMaterial();
     bool skyCeil  = sec->ceilingSurface().hasSkyMaskedMaterial();
@@ -231,21 +231,21 @@ void GameMap_UpdateSkyFixForSector(GameMap *map, Sector *sec)
     if(skyCeil)
     {
         // Adjust for the plane height.
-        if(sec->ceiling().visHeight() > map->skyFix[Plane::Ceiling].height)
+        if(sec->ceiling().visHeight() > map->skyFixCeiling())
         {
             // Must raise the skyfix ceiling.
-            map->skyFix[Plane::Ceiling].height = sec->ceiling().visHeight();
+            map->setSkyFixCeiling(sec->ceiling().visHeight());
         }
 
         // Check that all the mobjs in the sector fit in.
         for(mobj_t *mo = sec->firstMobj(); mo; mo = mo->sNext)
         {
-            float extent = mo->origin[VZ] + mo->height;
+            coord_t extent = mo->origin[VZ] + mo->height;
 
-            if(extent > map->skyFix[Plane::Ceiling].height)
+            if(extent > map->skyFixCeiling())
             {
                 // Must raise the skyfix ceiling.
-                map->skyFix[Plane::Ceiling].height = extent;
+                map->setSkyFixCeiling(extent);
             }
         }
     }
@@ -253,10 +253,10 @@ void GameMap_UpdateSkyFixForSector(GameMap *map, Sector *sec)
     if(skyFloor)
     {
         // Adjust for the plane height.
-        if(sec->floor().visHeight() < map->skyFix[Plane::Floor].height)
+        if(sec->floor().visHeight() < map->skyFixFloor())
         {
             // Must lower the skyfix floor.
-            map->skyFix[Plane::Floor].height = sec->floor().visHeight();
+            map->setSkyFixFloor(sec->floor().visHeight());
         }
     }
 
@@ -276,45 +276,43 @@ void GameMap_UpdateSkyFixForSector(GameMap *map, Sector *sec)
 
         if(skyCeil)
         {
-            float const top = sec->ceiling().visHeight() + sideDef.middle().visMaterialOrigin()[VY];
+            coord_t const top = sec->ceiling().visHeight() + sideDef.middle().visMaterialOrigin()[VY];
 
-            if(top > map->skyFix[Plane::Ceiling].height)
+            if(top > map->skyFixCeiling())
             {
                 // Must raise the skyfix ceiling.
-                map->skyFix[Plane::Ceiling].height = top;
+                map->setSkyFixCeiling(top);
             }
         }
 
         if(skyFloor)
         {
-            float const bottom = sec->floor().visHeight() +
+            coord_t const bottom = sec->floor().visHeight() +
                 sideDef.middle().visMaterialOrigin()[VY] - sideDef.middle().material().height();
 
-            if(bottom < map->skyFix[Plane::Floor].height)
+            if(bottom < map->skyFixFloor())
             {
                 // Must lower the skyfix floor.
-                map->skyFix[Plane::Floor].height = bottom;
+                map->setSkyFixFloor(bottom);
             }
         }
     }
 }
 
-void GameMap_InitSkyFix(GameMap *map)
+void GameMap::initSkyFix()
 {
-    DENG_ASSERT(map);
-
     Time begunAt;
 
-    map->skyFix[Plane::Floor].height = DDMAXFLOAT;
-    map->skyFix[Plane::Ceiling].height = DDMINFLOAT;
+    _skyFix[Plane::Floor].height = DDMAXFLOAT;
+    _skyFix[Plane::Ceiling].height = DDMINFLOAT;
 
     // Update for sector plane heights and mobjs which intersect the ceiling.
-    foreach(Sector *sector, map->_sectors)
+    foreach(Sector *sector, _sectors)
     {
-        GameMap_UpdateSkyFixForSector(map, sector);
+        updateMapSkyFixForSector(this, sector);
     }
 
-    LOG_INFO(String("GameMap_InitSkyFix: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_INFO(String("GameMap::initSkyFix: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 /**
@@ -841,7 +839,7 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
 
         // Update everything again. Its possible that after loading we
         // now have more HOMs to fix, etc..
-        GameMap_InitSkyFix(theMap);
+        theMap->initSkyFix();
 
         updateAllMapSectors(*theMap, true /*force*/);
         initAllMapSurfaceMaterialOrigins(*theMap);
@@ -1398,6 +1396,7 @@ coord_t R_SkyCapZ(BspLeaf *bspLeaf, int skyCap)
 {
     DENG_ASSERT(bspLeaf);
     Plane::Type const plane = (skyCap & SKYCAP_UPPER)? Plane::Ceiling : Plane::Floor;
-    if(!bspLeaf->hasSector() || !P_IsInVoid(viewPlayer)) return GameMap_SkyFix(theMap, plane == Plane::Ceiling);
+    if(!bspLeaf->hasSector() || !P_IsInVoid(viewPlayer))
+        return theMap->skyFix(plane == Plane::Ceiling);
     return bspLeaf->sector().plane(plane).visHeight();
 }

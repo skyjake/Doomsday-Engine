@@ -2060,7 +2060,7 @@ static coord_t skyFixFloorZ(Plane const *frontFloor, Plane const *backFloor)
     DENG_UNUSED(backFloor);
     if(devRendSkyMode || P_IsInVoid(viewPlayer))
         return frontFloor->visHeight();
-    return GameMap_SkyFixFloor(theMap);
+    return theMap->skyFixFloor();
 }
 
 static coord_t skyFixCeilZ(Plane const *frontCeil, Plane const *backCeil)
@@ -2068,7 +2068,7 @@ static coord_t skyFixCeilZ(Plane const *frontCeil, Plane const *backCeil)
     DENG_UNUSED(backCeil);
     if(devRendSkyMode || P_IsInVoid(viewPlayer))
         return frontCeil->visHeight();
-    return GameMap_SkyFixCeiling(theMap);
+    return theMap->skyFixCeiling();
 }
 
 /**
@@ -3069,7 +3069,7 @@ void Rend_RenderSurfaceVectors()
                             plane->visHeight());
 
             if(plane->type() != Plane::Middle && plane->surface().hasSkyMaskedMaterial())
-                origin[VZ] = GameMap_SkyFix(theMap, plane->type() == Plane::Ceiling);
+                origin[VZ] = theMap->skyFix(plane->type() == Plane::Ceiling);
 
             drawSurfaceTangentSpaceVectors(&plane->surface(), origin);
         }

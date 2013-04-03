@@ -59,7 +59,7 @@ GameMap::GameMap()
     _globalGravity = 0;
     _effectiveGravity = 0;
     _ambientLightLevel = 0;
-    std::memset(skyFix, 0, sizeof(skyFix));
+    std::memset(_skyFix, 0, sizeof(_skyFix));
     std::memset(&traceOpening, 0, sizeof(traceOpening));
     std::memset(&traceLOS, 0, sizeof(traceLOS));
 }
@@ -175,19 +175,16 @@ int GameMap::ambientLightLevel() const
     return _ambientLightLevel;
 }
 
-coord_t GameMap_SkyFix(GameMap *map, boolean ceiling)
+coord_t GameMap::skyFix(bool ceiling) const
 {
-    DENG2_ASSERT(map);
     Plane::Type plane = ceiling? Plane::Ceiling : Plane::Floor;
-    return map->skyFix[plane].height;
+    return _skyFix[plane].height;
 }
 
-GameMap *GameMap_SetSkyFix(GameMap *map, boolean ceiling, coord_t height)
+void GameMap::setSkyFix(bool ceiling, coord_t height)
 {
-    DENG2_ASSERT(map);
     Plane::Type plane = ceiling? Plane::Ceiling : Plane::Floor;
-    map->skyFix[plane].height = height;
-    return map;
+    _skyFix[plane].height = height;
 }
 
 int GameMap_VertexIndex(GameMap *map, Vertex const *vtx)
