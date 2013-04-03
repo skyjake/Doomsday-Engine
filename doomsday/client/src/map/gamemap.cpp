@@ -603,49 +603,30 @@ void GameMap_InitBspLeafBlockmap(GameMap* map, const_pvec2d_t min_, const_pvec2d
 #undef BLOCKMAP_MARGIN
 }
 
-void GameMap_LinkMobj(GameMap* map, mobj_t* mo)
+void GameMap::linkMobj(mobj_t &mo)
 {
-    Blockmap* blockmap;
     BlockmapCell cell;
-    DENG2_ASSERT(map);
-
-    // Do not link NULL mobjs.
-    if(!mo)
-    {
-        DEBUG_Message(("Warning: GameMap::LinkMobjInBlockmap: Attempted with NULL mobj argument.\n"));
-        return;
-    }
-
-    blockmap = map->mobjBlockmap;
-    Blockmap_Cell(blockmap, cell, mo->origin);
-    Blockmap_CreateCellAndLinkObject(blockmap, cell, mo);
+    Blockmap_Cell(mobjBlockmap, cell, mo.origin);
+    Blockmap_CreateCellAndLinkObject(mobjBlockmap, cell, &mo);
 }
 
-boolean GameMap_UnlinkMobj(GameMap* map, mobj_t* mo)
+bool GameMap::unlinkMobj(mobj_t &mo)
 {
-    boolean unlinked = false;
-    DENG2_ASSERT(map);
-
-    if(mo)
-    {
-        Blockmap* blockmap = map->mobjBlockmap;
-        BlockmapCell cell;
-        Blockmap_Cell(blockmap, cell, mo->origin);
-        return Blockmap_UnlinkObjectInCell(blockmap, cell, mo);
-    }
-    return unlinked;
+    BlockmapCell cell;
+    Blockmap_Cell(mobjBlockmap, cell, mo.origin);
+    return Blockmap_UnlinkObjectInCell(mobjBlockmap, cell, &mo);
 }
 
 typedef struct bmapmoiterparams_s {
     int localValidCount;
-    int (*func) (mobj_t*, void *);
-    void* param;
+    int (*func) (mobj_t *, void *);
+    void *param;
 } bmapmoiterparams_t;
 
-static int blockmapCellMobjsIterator(void* object, void* context)
+static int blockmapCellMobjsIterator(void *object, void *context)
 {
-    mobj_t* mobj = (mobj_t*)object;
-    bmapmoiterparams_t* args = (bmapmoiterparams_t*) context;
+    mobj_t *mobj = (mobj_t *)object;
+    bmapmoiterparams_t *args = (bmapmoiterparams_t *) context;
     if(mobj->validCount != args->localValidCount)
     {
         int result;
@@ -660,15 +641,15 @@ static int blockmapCellMobjsIterator(void* object, void* context)
     return false; // Continue iteration.
 }
 
-static int GameMap_IterateCellMobjs(GameMap* map, const_BlockmapCell cell,
-    int (*callback) (mobj_t*, void*), void* context)
+static int GameMap_IterateCellMobjs(GameMap *map, const_BlockmapCell cell,
+    int (*callback) (mobj_t *, void *), void *context)
 {
-    bmapmoiterparams_t args;
     DENG2_ASSERT(map);
 
+    bmapmoiterparams_t args;
     args.localValidCount = validCount;
-    args.func = callback;
-    args.param = context;
+    args.func            = callback;
+    args.param           = context;
 
     return Blockmap_IterateCellObjects(map->mobjBlockmap, cell,
                                        blockmapCellMobjsIterator, (void*)&args);
@@ -681,8 +662,8 @@ static int GameMap_IterateCellBlockMobjs(GameMap *map, BlockmapCellBlock const *
 
     bmapmoiterparams_t args;
     args.localValidCount = validCount;
-    args.func = callback;
-    args.param = context;
+    args.func            = callback;
+    args.param           = context;
 
     return Blockmap_IterateCellBlockObjects(map->mobjBlockmap, cellBlock,
                                             blockmapCellMobjsIterator, (void*) &args);
@@ -697,47 +678,37 @@ int GameMap_MobjsBoxIterator(GameMap *map, AABoxd const *box,
     return GameMap_IterateCellBlockMobjs(map, &cellBlock, callback, parameters);
 }
 
-void GameMap_LinkLineDef(GameMap *map, LineDef *line)
+void GameMap::linkLine(LineDef &line)
 {
-    DENG2_ASSERT(map);
-
-    // Do not link NULL linedefs.
-    if(!line)
-    {
-        DEBUG_Message(("Warning: GameMap::LinkLineDefInBlockmap: Attempted with NULL linedef argument."));
-        return;
-    }
-
     // LineDefs of Polyobjs don't get into the blockmap (presently...).
-    if(line->isFromPolyobj()) return;
+    if(line.isFromPolyobj()) return;
 
-    Blockmap *blockmap = map->lineBlockmap;
-    vec2d_t origin; V2d_Copy(origin, Blockmap_Origin(blockmap));
-    vec2d_t cellSize; V2d_Copy(cellSize, Blockmap_CellSize(blockmap));
+    vec2d_t origin; V2d_Copy(origin, Blockmap_Origin(lineBlockmap));
+    vec2d_t cellSize; V2d_Copy(cellSize, Blockmap_CellSize(lineBlockmap));
 
     // Determine the block of cells we'll be working within.
     BlockmapCellBlock cellBlock;
-    Blockmap_CellBlock(blockmap, &cellBlock, &line->aaBox());
+    Blockmap_CellBlock(lineBlockmap, &cellBlock, &line.aaBox());
 
     vec2d_t cell, from, to;
 
     for(uint y = cellBlock.minY; y <= cellBlock.maxY; ++y)
     for(uint x = cellBlock.minX; x <= cellBlock.maxX; ++x)
     {
-        if(line->slopeType() == ST_VERTICAL ||
-           line->slopeType() == ST_HORIZONTAL)
+        if(line.slopeType() == ST_VERTICAL ||
+           line.slopeType() == ST_HORIZONTAL)
         {
-            Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y, line);
+            Blockmap_CreateCellAndLinkObjectXY(lineBlockmap, x, y, &line);
             continue;
         }
 
         // Calculate cell origin.
-        V2d_Copy(cell, Blockmap_CellSize(blockmap));
+        V2d_Copy(cell, Blockmap_CellSize(lineBlockmap));
         cell[VX] *= x; cell[VY] *= y;
-        V2d_Sum(cell, cell, Blockmap_Origin(blockmap));
+        V2d_Sum(cell, cell, Blockmap_Origin(lineBlockmap));
 
         // Choose a cell diagonal to test.
-        if(line->slopeType() == ST_POSITIVE)
+        if(line.slopeType() == ST_POSITIVE)
         {
             // LineDef slope / vs \ cell diagonal.
             V2d_Set(from, cell[VX], cell[VY] + cellSize[VY]);
@@ -751,9 +722,9 @@ void GameMap_LinkLineDef(GameMap *map, LineDef *line)
         }
 
         // Would LineDef intersect this?
-        if((line->pointOnSide(from) < 0) != (line->pointOnSide(to) < 0))
+        if((line.pointOnSide(from) < 0) != (line.pointOnSide(to) < 0))
         {
-            Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y, line);
+            Blockmap_CreateCellAndLinkObjectXY(lineBlockmap, x, y, &line);
         }
     }
 }
@@ -812,32 +783,21 @@ static int GameMap_IterateCellBlockLineDefs(GameMap *map, BlockmapCellBlock cons
                                             blockmapCellLinesIterator, (void *) &parms);
 }
 
-void GameMap_LinkBspLeaf(GameMap *map, BspLeaf *bspLeaf)
+void GameMap::linkBspLeaf(BspLeaf &bspLeaf)
 {
-    DENG2_ASSERT(map);
-
-    // Do not link NULL BSP leafs.
-    if(!bspLeaf)
-    {
-        DEBUG_Message(("Warning: GameMap::LinkBspLeafInBlockmap: Attempted with NULL bspLeaf argument.\n"));
-        return;
-    }
-
     // BspLeafs without sectors don't get in.
-    if(!bspLeaf->hasSector()) return;
+    if(!bspLeaf.hasSector()) return;
 
-    Blockmap *blockmap = map->bspLeafBlockmap;
-
-    AABoxd aaBox(bspLeaf->aaBox().minX, bspLeaf->aaBox().minY,
-                 bspLeaf->aaBox().maxX, bspLeaf->aaBox().maxY);
+    AABoxd aaBox(bspLeaf.aaBox().minX, bspLeaf.aaBox().minY,
+                 bspLeaf.aaBox().maxX, bspLeaf.aaBox().maxY);
 
     BlockmapCellBlock cellBlock;
-    Blockmap_CellBlock(blockmap, &cellBlock, &aaBox);
+    Blockmap_CellBlock(bspLeafBlockmap, &cellBlock, &aaBox);
 
     for(uint y = cellBlock.minY; y <= cellBlock.maxY; ++y)
     for(uint x = cellBlock.minX; x <= cellBlock.maxX; ++x)
     {
-        Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y, bspLeaf);
+        Blockmap_CreateCellAndLinkObjectXY(bspLeafBlockmap, x, y, &bspLeaf);
     }
 }
 
@@ -935,41 +895,23 @@ int GameMap_BspLeafsBoxIterator(GameMap *map, AABoxd const *box, Sector *sector,
                                               localValidCount, callback, parameters);
 }
 
-void GameMap_LinkPolyobj(GameMap* map, Polyobj* po)
+void GameMap::linkPolyobj(Polyobj &polyobj)
 {
-    Blockmap* blockmap;
     BlockmapCellBlock cellBlock;
-    uint x, y;
-    DENG2_ASSERT(map);
+    Blockmap_CellBlock(polyobjBlockmap, &cellBlock, &polyobj.aaBox);
 
-    // Do not link NULL polyobjs.
-    if(!po)
+    for(uint y = cellBlock.minY; y <= cellBlock.maxY; ++y)
+    for(uint x = cellBlock.minX; x <= cellBlock.maxX; ++x)
     {
-        DEBUG_Message(("Warning: GameMap::LinkPolyobjInBlockmap: Attempted with NULL polyobj argument.\n"));
-        return;
-    }
-
-    blockmap = map->polyobjBlockmap;
-    Blockmap_CellBlock(blockmap, &cellBlock, &po->aaBox);
-
-    for(y = cellBlock.minY; y <= cellBlock.maxY; ++y)
-    for(x = cellBlock.minX; x <= cellBlock.maxX; ++x)
-    {
-        Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y, po);
+        Blockmap_CreateCellAndLinkObjectXY(polyobjBlockmap, x, y, &polyobj);
     }
 }
 
-void GameMap_UnlinkPolyobj(GameMap* map, Polyobj* po)
+void GameMap::unlinkPolyobj(Polyobj &polyobj)
 {
-    Blockmap* blockmap;
     BlockmapCellBlock cellBlock;
-    DENG2_ASSERT(map);
-
-    if(!po) return;
-
-    blockmap = map->polyobjBlockmap;
-    Blockmap_CellBlock(map->polyobjBlockmap, &cellBlock, &po->aaBox);
-    Blockmap_UnlinkObjectInCellBlock(blockmap, &cellBlock, po);
+    Blockmap_CellBlock(polyobjBlockmap, &cellBlock, &polyobj.aaBox);
+    Blockmap_UnlinkObjectInCellBlock(polyobjBlockmap, &cellBlock, &polyobj);
 }
 
 typedef struct bmappoiterparams_s {

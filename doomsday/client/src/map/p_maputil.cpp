@@ -615,21 +615,21 @@ int PIT_AddMobjIntercepts(mobj_t* mo, void* /*paramaters*/)
     return false;
 }
 
-void P_LinkMobjInBlockmap(mobj_t* mo)
+void P_LinkMobjInBlockmap(mobj_t *mo)
 {
     /// @todo Do not assume mobj is from the current map.
-    if(!theMap) return;
-    GameMap_LinkMobj(theMap, mo);
+    if(!theMap || !mo) return;
+    theMap->linkMobj(*mo);
 }
 
-boolean P_UnlinkMobjFromBlockmap(mobj_t* mo)
+boolean P_UnlinkMobjFromBlockmap(mobj_t *mo)
 {
     /// @todo Do not assume mobj is from the current map.
-    if(!theMap) return false;
-    return GameMap_UnlinkMobj(theMap, mo);
+    if(!theMap || !mo) return false;
+    return theMap->unlinkMobj(*mo);
 }
 
-void P_LinkMobjToLineDefs(mobj_t* mo)
+void P_LinkMobjToLineDefs(mobj_t *mo)
 {
     /// @todo Do not assume mobj is from the current map.
     if(!theMap) return;

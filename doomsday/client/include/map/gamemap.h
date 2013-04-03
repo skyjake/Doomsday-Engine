@@ -221,6 +221,62 @@ public:
                      coord_t topSlope, int flags);
 
     /**
+     * Link the specified @a bspLeaf in internal data structures for
+     * bookkeeping purposes.
+     *
+     * @todo Does this really need to be public? -ds
+     *
+     * @param bspLeaf  BspLeaf to be linked.
+     */
+    void linkBspLeaf(BspLeaf &bspLeaf);
+
+    /**
+     * Link the specified @a line in any internal data structures for
+     * bookkeeping purposes.
+     *
+     * @todo Does this really need to be public? -ds
+     *
+     * @param line  Line to be linked.
+     */
+    void linkLine(LineDef &line);
+
+    /**
+     * Link the specified @a mobj in any internal data structures for
+     * bookkeeping purposes. Should be called AFTER mobj translation to
+     * (re-)insert the mobj.
+     *
+     * @param mobj  Mobj to be linked.
+     */
+    void linkMobj(struct mobj_s &mobj);
+
+    /**
+     * Unlink the specified @a mobj from any internal data structures for
+     * bookkeeping purposes. Should be called BEFORE mobj translation to
+     * extract the mobj.
+     *
+     * @param mobj  Mobj to be unlinked.
+     */
+    bool unlinkMobj(struct mobj_s &mobj);
+
+    /**
+     * Link the specified @a polyobj in any internal data structures for
+     * bookkeeping purposes. Should be called AFTER Polyobj rotation and/or
+     * translation to (re-)insert the polyobj.
+     *
+     * @param polyobj  Polyobj to be linked.
+     */
+    void linkPolyobj(Polyobj &polyobj);
+
+    /**
+     * Unlink the specified @a polyobj from any internal data structures for
+     * bookkeeping purposes. Should be called BEFORE Polyobj rotation and/or
+     * translation to extract the polyobj.
+     *
+     * @param polyobj  Polyobj to be unlinked.
+     */
+    void unlinkPolyobj(Polyobj &polyobj);
+
+    /**
      * Retrieve a pointer to the Generators collection for the map. If no collection
      * has yet been constructed a new empty collection will be initialized.
      *
@@ -751,34 +807,8 @@ void GameMap_InitPolyobjs(GameMap *map);
  */
 void GameMap_InitNodePiles(GameMap *map);
 
-/**
- * Link the specified @a mobj in any internal data structures for bookkeeping purposes.
- * Should be called AFTER mobj translation to (re-)insert the mobj.
- *
- * @param map  GameMap instance.
- * @param mobj  Mobj to be linked.
- */
-void GameMap_LinkMobj(GameMap *map, struct mobj_s *mobj);
-
-/**
- * Unlink the specified @a mobj from any internal data structures for bookkeeping purposes.
- * Should be called BEFORE mobj translation to extract the mobj.
- *
- * @param map  GameMap instance.
- * @param mobj  Mobj to be unlinked.
- */
-boolean GameMap_UnlinkMobj(GameMap *map, struct mobj_s *mobj);
-
 int GameMap_MobjsBoxIterator(GameMap *map, AABoxd const *box,
     int (*callback) (struct mobj_s *, void *), void *parameters);
-
-/**
- * Link the specified @a line in any internal data structures for bookkeeping purposes.
- *
- * @param map  GameMap instance.
- * @param line  Line to be linked.
- */
-void GameMap_LinkLineDef(GameMap *map, LineDef *line);
 
 int GameMap_LineDefsBoxIterator(GameMap *map, AABoxd const *box,
     int (*callback) (LineDef *, void *), void *parameters);
@@ -796,36 +826,8 @@ int GameMap_PolyobjLinesBoxIterator(GameMap *map, AABoxd const *box,
 int GameMap_AllLineDefsBoxIterator(GameMap *map, AABoxd const *box,
     int (*callback) (LineDef *, void *), void *parameters);
 
-/**
- * Link the specified @a bspLeaf in internal data structures for bookkeeping purposes.
- *
- * @param map  GameMap instance.
- * @param bspLeaf  BspLeaf to be linked.
- */
-void GameMap_LinkBspLeaf(GameMap *map, BspLeaf *bspLeaf);
-
 int GameMap_BspLeafsBoxIterator(GameMap *map, AABoxd const *box, Sector *sector,
     int (*callback) (BspLeaf *, void *), void *parameters);
-
-int GameMap_BspLeafIterator(GameMap *map, int (*callback) (BspLeaf *, void *), void *parameters);
-
-/**
- * Link the specified @a polyobj in any internal data structures for bookkeeping purposes.
- * Should be called AFTER Polyobj rotation and/or translation to (re-)insert the polyobj.
- *
- * @param map  GameMap instance.
- * @param polyobj  Polyobj to be linked.
- */
-void GameMap_LinkPolyobj(GameMap *map, Polyobj *polyobj);
-
-/**
- * Unlink the specified @a polyobj from any internal data structures for bookkeeping purposes.
- * Should be called BEFORE Polyobj rotation and/or translation to extract the polyobj.
- *
- * @param map  GameMap instance.
- * @param polyobj  Polyobj to be unlinked.
- */
-void  GameMap_UnlinkPolyobj(GameMap *map, Polyobj *polyobj);
 
 /**
  * @note validCount should be incremented before calling this to begin a new logical traversal.

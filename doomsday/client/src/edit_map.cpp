@@ -1706,7 +1706,7 @@ boolean MPE_End()
     GameMap_InitLineDefBlockmap(gamemap, min, max);
     for(int i = 0; i < gamemap->_lines.count(); ++i)
     {
-        GameMap_LinkLineDef(gamemap, gamemap->_lines[i]);
+        gamemap->linkLine(*gamemap->_lines[i]);
     }
 
     // Mobj and Polyobj blockmaps are maintained dynamically.

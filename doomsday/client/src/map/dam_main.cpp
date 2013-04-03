@@ -305,7 +305,7 @@ boolean DAM_AttemptMapLoad(uri_s const *_uri)
             GameMap_InitBspLeafBlockmap(map, min, max);
             for(uint i = 0; i < map->bspLeafCount(); ++i)
             {
-                GameMap_LinkBspLeaf(map, GameMap_BspLeaf(map, i));
+                map->linkBspLeaf(*GameMap_BspLeaf(map, i));
             }
 
             map->uri = Uri_Dup(dam->uri);
