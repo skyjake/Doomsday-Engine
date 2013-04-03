@@ -292,13 +292,6 @@ int GameMap_BspLeafIndex(GameMap *map, BspLeaf const *bspLeaf)
     return bspLeaf->origIndex();
 }
 
-BspLeaf *GameMap_BspLeaf(GameMap *map, uint idx)
-{
-    DENG2_ASSERT(map);
-    if(idx >= map->bspLeafCount()) return NULL;
-    return map->bspLeafs[idx];
-}
-
 int GameMap_HEdgeIndex(GameMap *map, HEdge const *hedge)
 {
     DENG_UNUSED(map);
@@ -310,7 +303,7 @@ HEdge *GameMap_HEdge(GameMap *map, uint idx)
 {
     DENG2_ASSERT(map);
     if(idx >= map->hedgeCount()) return NULL;
-    return map->hedges[idx];
+    return map->_hedges[idx];
 }
 
 int GameMap_BspNodeIndex(GameMap *map, BspNode const *bspLeaf)
@@ -324,7 +317,7 @@ BspNode *GameMap_BspNode(GameMap *map, uint idx)
 {
     DENG2_ASSERT(map);
     if(idx >= map->bspNodeCount()) return NULL;
-    return map->bspNodes[idx];
+    return map->_bspNodes[idx];
 }
 
 uint GameMap_VertexCount(GameMap *map)

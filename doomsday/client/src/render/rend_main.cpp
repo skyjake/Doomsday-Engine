@@ -3059,10 +3059,8 @@ void Rend_RenderSurfaceVectors()
         }
     }
 
-    for(uint i = 0; i < GameMap_BspLeafCount(theMap); ++i)
+    foreach(BspLeaf *bspLeaf, theMap->bspLeafs())
     {
-        BspLeaf *bspLeaf = GameMap_BspLeaf(theMap, i);
-
         if(!bspLeaf->hasSector()) continue;
         Sector &sector = bspLeaf->sector();
 

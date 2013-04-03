@@ -303,9 +303,9 @@ boolean DAM_AttemptMapLoad(uri_s const *_uri)
 
             // Init blockmap for searching BSP leafs.
             GameMap_InitBspLeafBlockmap(map, min, max);
-            for(uint i = 0; i < map->bspLeafCount(); ++i)
+            foreach(BspLeaf *bspLeaf, map->bspLeafs())
             {
-                map->linkBspLeaf(*GameMap_BspLeaf(map, i));
+                map->linkBspLeaf(*bspLeaf);
             }
 
             map->uri = Uri_Dup(dam->uri);

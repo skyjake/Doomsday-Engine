@@ -114,9 +114,9 @@ public:
     de::MapElement *_bspRoot;
 
     /// BSP object LUTs:
-    HEdges hedges;
-    BspNodes bspNodes;
-    BspLeafs bspLeafs;
+    HEdges _hedges;
+    BspNodes _bspNodes;
+    BspLeafs _bspLeafs;
 
     EntityDatabase *entityDatabase;
 
@@ -177,11 +177,17 @@ public:
      */
     de::MapElement *bspRoot() const;
 
-    uint hedgeCount() const { return hedges.count(); }
+    HEdges const &hedges() const { return _hedges; }
 
-    uint bspNodeCount() const { return bspNodes.count(); }
+    inline uint hedgeCount() const { return hedges().count(); }
 
-    uint bspLeafCount() const { return bspLeafs.count(); }
+    BspNodes const &bspNodes() const { return _bspNodes; }
+
+    inline uint bspNodeCount() const { return bspNodes().count(); }
+
+    BspLeafs const &bspLeafs() const { return _bspLeafs; }
+
+    inline uint bspLeafCount() const { return bspLeafs().count(); }
 
     /**
      * Determine the BSP leaf on the back side of the BS partition that lies in front
@@ -462,15 +468,6 @@ Sector *GameMap_SectorBySoundEmitter(GameMap *map, void const *soundEmitter);
  * @return  Found Surface instance else @c NULL.
  */
 Surface *GameMap_SurfaceBySoundEmitter(GameMap* map, void const *soundEmitter);
-
-/**
- * Lookup a BspLeaf by its unique index.
- *
- * @param map  GameMap instance.
- * @param idx  Unique index of the bsp leaf.
- * @return  Pointer to BspLeaf with this index else @c NULL if @a idx is not valid.
- */
-BspLeaf *GameMap_BspLeaf(GameMap *map, uint idx);
 
 /**
  * Lookup a HEdge by its unique index.

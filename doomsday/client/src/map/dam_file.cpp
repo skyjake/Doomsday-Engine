@@ -596,7 +596,7 @@ static void readSector(GameMap *map, uint idx)
 #endif
     for(int i = 0; i < bspLeafCount; ++i)
     {
-        BspLeaf *bspLeaf = GameMap_BspLeaf(map, readLong() - 1);
+        BspLeaf *bspLeaf = map->bspLeafs().at(readLong() - 1);
         // Ownership of the BSP leaf is not given to the sector.
         s->_bspLeafs.append(bspLeaf);
     }
@@ -609,7 +609,7 @@ static void readSector(GameMap *map, uint idx)
 #endif
     for(int i = 0; i < reverbBspLeafCount; ++i)
     {
-        BspLeaf *bspLeaf = GameMap_BspLeaf(map, readLong() - 1);
+        BspLeaf *bspLeaf = map->bspLeafs().at(readLong() - 1);
         // Ownership of the BSP leaf is not given to the sector.
         s->_reverbBspLeafs.append(bspLeaf);
     }
@@ -782,7 +782,7 @@ static void readSeg(GameMap *map, HEdge *s)
     obIdx = readLong();
     s->sector = (obIdx == 0? NULL : map->sectors().at((unsigned) obIdx - 1));
     obIdx = readLong();
-    s->bspLeaf = (obIdx == 0? NULL : GameMap_BspLeaf(map, (unsigned) obIdx - 1));
+    s->bspLeaf = (obIdx == 0? NULL : map->bspLeafs().at((unsigned) obIdx - 1));
     obIdx = readLong();
     s->twin = (obIdx == 0? NULL : GameMap_HEdge(map, (unsigned) obIdx - 1));
     s->angle = (angle_t) readLong();
@@ -833,14 +833,13 @@ static void writeBspReference(GameMap* map, de::MapElement* bspRef)
         writeLong((long)GameMap_BspNodeIndex(map, bspRef->castTo<BspNode>()));
 }
 
-static de::MapElement* readBspReference(GameMap* map)
+static MapElement *readBspReference(GameMap *map)
 {
-    long idx;
-    assert(map);
-    idx = readLong();
+    DENG_ASSERT(map);
+    long idx = readLong();
     if(idx & NF_LEAF)
     {
-        return GameMap_BspLeaf(map, idx & ~NF_LEAF);
+        return map->bspLeaf().at(idx & ~NF_LEAF);
     }
     return GameMap_BspNode(map, idx);
 }
