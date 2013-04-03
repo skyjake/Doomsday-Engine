@@ -2019,7 +2019,7 @@ boolean MPE_GameObjProperty(char const *entityName, uint elementIndex,
 
     // Is this a known property?
     MapEntityPropertyDef *propertyDef;
-    if(MapEntityDef_PropertyByName2(entityDef, propertyName, &propertyDef) < 0)
+    if(MapEntityDef_PropertyByName(entityDef, propertyName, &propertyDef) < 0)
     {
         Con_Message("Warning: MPE_GameObjProperty: Entity \"%s\" has no \"%s\" property, ignoring.",
                     entityName, propertyName);

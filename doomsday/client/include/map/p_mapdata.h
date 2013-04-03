@@ -35,13 +35,13 @@ typedef struct mapentitypropertydef_s {
     int id;
 
     /// Entity-unique name for this property.
-    char* name;
+    char *name;
 
     /// Value type identifier for this property.
     valuetype_t type;
 
     /// Entity definition which owns this property.
-    struct mapentitydef_s* entity;
+    struct mapentitydef_s *entity;
 } MapEntityPropertyDef;
 
 /**
@@ -53,7 +53,7 @@ typedef struct mapentitydef_s {
 
     /// Set of known properties for this entity.
     uint numProps;
-    MapEntityPropertyDef* props;
+    MapEntityPropertyDef *props;
 
 #ifdef __cplusplus
     mapentitydef_s(int _id) : id(_id), numProps(0), props(0) {}
@@ -69,24 +69,26 @@ extern "C" {
  *
  * @param def           MapEntityDef instance.
  * @param propertyId    Entity-unique identifier for the property to lookup.
- * @param retDef        If not @c NULL, the found property definition is written here (else @c 0 if not found).
+ * @param retDef        If not @c NULL, the found property definition is
+ *                      written here (else @c 0 if not found).
  *
  * @return Logical index of the found property (zero-based) else @c -1 if not found.
  */
-int MapEntityDef_Property2(MapEntityDef* def, int propertyId, MapEntityPropertyDef** retDef);
-int MapEntityDef_Property(MapEntityDef* def, int propertyId/*,MapEntityPropertyDef** retDef = NULL*/);
+int MapEntityDef_Property2(MapEntityDef *def, int propertyId,
+                           MapEntityPropertyDef **retDef = 0);
 
 /**
  * Lookup a defined property by name.
  *
  * @param def           MapEntityDef instance.
  * @param propertyName  Entity-unique name for the property to lookup.
- * @param retDef        If not @c NULL, the found property definition is written here (else @c 0 if not found).
+ * @param retDef        If not @c NULL, the found property definition is
+ *                      written here (else @c 0 if not found).
  *
  * @return Logical index of the found property (zero-based) else @c -1 if not found.
  */
-int MapEntityDef_PropertyByName2(MapEntityDef* def, const char* propertyName, MapEntityPropertyDef** retDef);
-int MapEntityDef_PropertyByName(MapEntityDef* def, const char* propertyName/*,MapEntityPropertyDef** retDef = NULL*/);
+int MapEntityDef_PropertyByName(MapEntityDef *def, char const *propertyName,
+                                MapEntityPropertyDef **retDef = 0);
 
 /**
  * Lookup a MapEntityDef by unique identfier @a id.
@@ -95,7 +97,7 @@ int MapEntityDef_PropertyByName(MapEntityDef* def, const char* propertyName/*,Ma
  *
  * @return Found MapEntityDef else @c NULL.
  */
-MapEntityDef* P_MapEntityDef(int id);
+MapEntityDef *P_MapEntityDef(int id);
 
 /**
  * Lookup a MapEntityDef by unique name.
@@ -104,7 +106,7 @@ MapEntityDef* P_MapEntityDef(int id);
  *
  * @return Found MapEntityDef else @c NULL.
  */
-MapEntityDef* P_MapEntityDefByName(char const* name);
+MapEntityDef *P_MapEntityDefByName(char const *name);
 
 /**
  * Lookup the unique name associated with MapEntityDef @a def.
@@ -113,7 +115,7 @@ MapEntityDef* P_MapEntityDefByName(char const* name);
  *
  * @return Unique name associated with @a def if found, else a zero-length string.
  */
-AutoStr* P_NameForMapEntityDef(MapEntityDef* def);
+AutoStr *P_NameForMapEntityDef(MapEntityDef *def);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -125,28 +127,18 @@ AutoStr* P_NameForMapEntityDef(MapEntityDef* def);
 extern "C" {
 #endif
 
-boolean P_SetMapEntityProperty(EntityDatabase* db, MapEntityPropertyDef* propertyDef, uint elementIndex, valuetype_t valueType, void* valueAdr);
-
-/*
-byte P_GetGMOByte(int entityId, uint elementIndex, int propertyId);
-short P_GetGMOShort(int entityId, uint elementIndex, int propertyId);
-int P_GetGMOInt(int entityId, uint elementIndex, int propertyId);
-fixed_t P_GetGMOFixed(int entityId, uint elementIndex, int propertyId);
-angle_t P_GetGMOAngle(int entityId, uint elementIndex, int propertyId);
-float P_GetGMOFloat(int entityId, uint elementIndex, int propertyId);
-*/
-
-extern Uri* mapUri;
+boolean P_SetMapEntityProperty(EntityDatabase *db, MapEntityPropertyDef *propertyDef,
+                               uint elementIndex, valuetype_t valueType, void* valueAdr);
 
 /**
  * To be called to initialize the game map object defs.
  */
-void P_InitMapEntityDefs(void);
+void P_InitMapEntityDefs();
 
 /**
  * To be called to free all memory allocated for the map obj defs.
  */
-void P_ShutdownMapEntityDefs(void);
+void P_ShutdownMapEntityDefs();
 
 #ifdef __cplusplus
 } // extern "C"

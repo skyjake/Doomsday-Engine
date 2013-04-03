@@ -352,9 +352,8 @@ boolean DAM_AttemptMapLoad(uri_s const *_uri)
 
             map->_effectiveGravity = map->_globalGravity;
 
-            // @todo should be called from P_LoadMap() but R_InitMap requires the
-            //       theMap to be set first.
-            P_SetCurrentMap(map);
+            /// @todo Should be done in P_LoadMap() (note: R_InitMap)
+            theMap = map;
 
 #ifdef __CLIENT__
             Rend_RadioInitForMap();

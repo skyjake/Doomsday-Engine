@@ -392,11 +392,6 @@ public: ///@ todo make private:
 };
 
 /**
- * Change the global "current" map.
- */
-void P_SetCurrentMap(GameMap *map);
-
-/**
  * Retrieve an immutable copy of the LOS trace line.
  *
  * @param map  GameMap instance.
