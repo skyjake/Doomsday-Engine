@@ -935,17 +935,6 @@ int GameMap_BspLeafsBoxIterator(GameMap *map, AABoxd const *box, Sector *sector,
                                               localValidCount, callback, parameters);
 }
 
-int GameMap_BspLeafIterator(GameMap *map, int (*callback) (BspLeaf *, void *), void *parameters)
-{
-    DENG2_ASSERT(map);
-    for(uint i = 0; i < map->bspLeafCount(); ++i)
-    {
-        int result = callback(map->bspLeafs[i], parameters);
-        if(result) return result;
-    }
-    return false; // Continue iteration.
-}
-
 void GameMap_LinkPolyobj(GameMap* map, Polyobj* po)
 {
     Blockmap* blockmap;
