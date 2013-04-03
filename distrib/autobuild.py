@@ -87,14 +87,21 @@ def todays_platform_release():
 
 
 def sign_packages():
-    """Sign all packages in today's build."""
-    ev = builder.Event()
-    print "Signing today's build %i." % ev.number()    
+    """Sign all packages in the latest build."""
+    ev = builder.Event(latestAvailable=True)
+    print "Signing build %i." % ev.number()    
     for fn in os.listdir(ev.path()):
         if fn.endswith('.exe') or fn.endswith('.dmg') or fn.endswith('.deb'):
             # Make a signature for this.
             os.system("gpg --output %s -ba %s" % (ev.file_path(fn) + '.sig', ev.file_path(fn)))
 
+
+def publish_packages():
+    """Publish all packages to SourceForge."""
+    ev = builder.Event(latestAvailable=True)
+    print "Publishing build %i." % ev.number()
+    system_command('deng_copy_build_to_sourceforge.sh "%s"' % ev.path())
+    
 
 def find_previous_tag(toTag, version):
     builds = builder.events_by_time()
@@ -348,7 +355,7 @@ def generate_wiki():
     import dew
     dew.login()
     # Today's event data.
-    ev = builder.Event()
+    ev = builder.Event(latestAvailable=True)
     if ev.release_type() == 'stable':
         dew.submitPage('Latest Doomsday release',
             '#REDIRECT [[Doomsday version %s]]' % ev.version())
@@ -437,6 +444,7 @@ commands = {
     'create': create_build_event,
     'platform_release': todays_platform_release,
     'sign': sign_packages,
+    'publish': publish_packages,
     'changes': update_changes,
     'debchanges': update_debian_changelog,
     'apt': rebuild_apt_repository,
