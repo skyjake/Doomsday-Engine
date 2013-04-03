@@ -11,6 +11,7 @@ def amethyst(input):
     p = subprocess.Popen(['amethyst', '-dHELP'], 
         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (output, errs) = p.communicate(input)
+    #print >>sys.stderr, errs
     return output 
        
 
@@ -34,12 +35,12 @@ def makeHelp(outName, components):
                 if not fn.endswith('.ame'): continue
                 name = fn[:-4]
                 print '- %s %s: %s' % (com, mode, name)
-                print >> outFile, "[%s]" % name
+                print >> outFile, "\n[%s]" % name
             
                 templ = '@require{amestd} @begin\n' + \
                         file(os.path.join(path, fn)).read()
             
-                print >> outFile, amethyst(templ)
+                print >> outFile, amethyst(templ).strip()
 
                 
 if __name__ == '__main__':

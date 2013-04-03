@@ -3,6 +3,7 @@
 #
 # CONSOLE COMMANDS: libcommon
 #
+
 [beginchat]
 desc = Begin chat mode.
 
@@ -22,7 +23,7 @@ desc = Send a chat macro.
 desc = Print the coordinates of the consoleplayer.
 
 [deletegamesave]
-desc = Deletes a game-save state. 
+desc = Deletes a game-save state.
 inf = Params: deletegamesave (game-save-name|<keyword>|save-slot-num) (confirm)\nKeywords: last, quick\nExamples:\nA game save by name 'deletegamesave "running low on ammo"'\nLast game save in the "quick" slot, confirmed: 'deletegamesave quick confirm'
 
 [endcycle]
@@ -41,19 +42,19 @@ desc = Kill all the monsters on the map.
 desc = List all loaded maps.
 
 [loadgame]
-desc = Load a game-save or open the load menu. 
+desc = Load a game-save or open the load menu.
 inf = Params: loadgame (game-save-name|<keyword>|save-slot-num) (confirm)\nKeywords: last, quick\nExamples:\nOpen load menu: 'loadgame'\nLoading named game: 'loadgame "running low on ammo"'\nLoading current "quick" slot, confirmed: 'loadgame quick confirm'\nLoading slot #0: 'loadgame 0'
 
 [lockmode]
-desc = Set camera viewlock mode. 
+desc = Set camera viewlock mode.
 inf = Params: lockmode (0-1).
 
 [makecam]
-desc = Toggle camera mode. 
+desc = Toggle camera mode.
 inf = Params: makecam (playernum)\nFor example, 'makecam 1'.
 
 [makelocp]
-desc = Make local player. 
+desc = Make local player.
 inf = Params: makelocp (playernum)\nFor example, 'makelocp 1'.
 
 [menu]
@@ -78,7 +79,7 @@ desc = Select/Accept the current menu item.
 desc = Move the menu cursor up.
 
 [message]
-desc = Show a local game message. 
+desc = Show a local game message.
 inf = Params: message (text)\nFor example, 'message "this is a message"'
 
 [messagecancel]
@@ -115,19 +116,19 @@ desc = Load the quicksaved game.
 desc = Quicksave the game.
 
 [reveal]
-desc = Map cheat. 
+desc = Map cheat.
 inf = Params: reveal (0-4)\nModes:\n0=nothing\n1=show unseen\n2=full map\n3=map+things
 
 [savegame]
-desc = Create a new game-save or open the save menu. 
+desc = Create a new game-save or open the save menu.
 inf = Params: savegame (game-save-name|<keyword>|save-slot-num) (new game-save-name) (confirm)\nKeywords: last, quick\nFor example, 'savegame' opens the Save Menu\n 'savegame quick "running low on ammo"' saves to current "quick" slot\n 'savegame 0 "running low on ammo"' saves to slot #0
 
 [screenshot]
-desc = Take a screenshot. 
+desc = Take a screenshot.
 inf = The screenshot is saved into the runtime directory.
 
 [setcolor]
-desc = Set player color. 
+desc = Set player color.
 inf = Params: setcolor (playernum)\nFor example, 'setcolor 4'.
 
 [setlock]
@@ -140,7 +141,7 @@ desc = Spawn a new mobj.
 desc = Begin map rotation.
 
 [startinf]
-desc = Start an InFine script. 
+desc = Start an InFine script.
 inf = Params: startinf (script-id)\nFor example, 'startinf coolscript'.
 
 [stopinf]
@@ -157,12 +158,12 @@ desc = Warp to a map.
 
 [where]
 desc = Prints your map number and exact location.
-
 #
 # CONSOLE COMMANDS: libheretic
 #
+
 [cheat]
-desc = Issue a cheat code using the original Heretic cheats. 
+desc = Issue a cheat code using the original Heretic cheats.
 inf = Params: cheat (cheat)\nFor example, 'cheat rambo'.
 
 [chicken]
@@ -181,7 +182,7 @@ desc = Toggle God mode (invulnerability).
 desc = Set player class.
 
 [setmap]
-desc = Set map. 
+desc = Set map.
 inf = Params: setmap (episode) (map)\nFor example, 'setmap 1 7'.
 
 [spy]
@@ -189,10 +190,10 @@ desc = Change the viewplayer when not in deathmatch.
 
 [stopfinale]
 desc = Stop the currently playing interlude/finale.
-
 #
 # CONSOLE VARIABLES: libcommon
 #
+
 [chat-beep]
 desc = 1=Play a beep sound when a new chat message arrives.
 
@@ -720,10 +721,10 @@ desc = Strength of view filter.
 
 [view-size]
 desc = View window size (3-13).
-
 #
 # CONSOLE VARIABLES: libheretic
 #
+
 [ctl-inventory-mode]
 desc = Inventory selection mode 0=cursor, 1=scroll.
 
@@ -948,4 +949,3 @@ desc = Ring effect filter. 1=Brownish, 2=Blue.
 
 [xg-dev]
 desc = 1=Print XG debug messages.
-

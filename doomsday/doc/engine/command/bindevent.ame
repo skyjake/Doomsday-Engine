@@ -1,6 +1,31 @@
 @summary{
     Bind a console command to an event.
 }
-@description{
-    Params: bindevent (event-descriptor) (command) @cbr Examples: @cbr   bindevent "key-M-down" @{print "M was pressed"@} @cbr   bindevent "mouse-right-up + key-shift" @{print "RMB released while Shift down"@}
+@description{  
+
+@usage
+
+@ident{bindevent} 
+    @help_optionalarg{context} @help_arg{spec} 
+    @help_arg{command}
+
+The event specification @help_arg{spec} is composed of an event descriptor and
+optionally any additional conditions for the validity of the binding. The
+specification may be prefixed with a context name; if omitted, the binding is
+created in the default "game" context.
+        
+@examples
+ 
+@pre{bindevent key-M-down "toggle ctl-run"
+bindevent "mouse-right-up + key-shift" @{print "RMB released while Shift down"@}
+bindevent shortcut:key-f8 "toggle msg-show"
+bindevent key-equals-down "add view-size 1"
+bindevent key-equals-repeat "add view-size 1"}
+
+@seealso
+
+@list{
+    @item @wikiterm{Bindings}
 }
+
+} $ @description

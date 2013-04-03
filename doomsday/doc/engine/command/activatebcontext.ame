@@ -1,0 +1,11 @@
+@summary{
+    Activate a binding context.
+}
+@description{
+    Input events can only trigger bindings in active binding contexts.
+
+    @seealso
+    @list{
+        @item @wikiterm{Bindings}
+    }
+}
