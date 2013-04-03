@@ -5,7 +5,7 @@
 #
 
 [activatebcontext]
-desc = Active a binding context.
+desc = Activate a binding context.
 inf = Input events can only trigger bindings in active binding contexts.\nSEE ALSO:\n- "Bindings" in wiki\n
 
 [add]
@@ -103,7 +103,7 @@ desc = Open the console prompt.
 desc = Open/close the console prompt.
 
 [deactivatebcontext]
-desc = Deactive a binding context.
+desc = Deactivate a binding context.
 inf = Bindings in deactivated binding contexts cannot be triggered.\nSEE ALSO:\n- "Bindings" in wiki\n
 
 [dec]
