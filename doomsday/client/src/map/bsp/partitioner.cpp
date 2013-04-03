@@ -370,7 +370,7 @@ struct Partitioner::Instance
             scanRegion.maxX = de::max(line->v1Origin()[VX], line->v2Origin()[VX]) + DIST_EPSILON;
         }
         validCount++;
-        GameMap_LineDefsBoxIterator(map, &scanRegion, testForWindowEffectWorker, &p);
+        GameMap_LinesBoxIterator(map, &scanRegion, testForWindowEffectWorker, &p);
 
         if(p.backOpen && p.frontOpen && line->frontSectorPtr() == p.backOpen)
         {

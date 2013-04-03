@@ -885,7 +885,6 @@ static void readNode(GameMap *map, BspNode *n)
     n->_children[RIGHT] = readBspReference(map);
     n->_children[LEFT]  = readBspReference(map);
 }
-#endif
 
 static void archiveNodes(GameMap* map, boolean write)
 {
@@ -950,7 +949,7 @@ static void writePolyobj(GameMap *map, uint idx)
 {
     DENG_ASSERT(map);
 
-    Polyobj *p = map->polyObjs[idx];
+    Polyobj *p = map->_polyobjs[idx];
 
     writeLong((long) p->idx);
     writeFloat(p->origin[VX]);
@@ -991,7 +990,7 @@ static void readPolyobj(GameMap *map, uint idx)
 {
     DENG_ASSERT(map);
 
-    Polyobj *p = map->polyObjs[idx];
+    Polyobj *p = map->_polyobjs[idx];
 
     p->idx = (uint) readLong();
     p->origin[VX] = readFloat();
@@ -1070,6 +1069,7 @@ static void archivePolyobjs(GameMap* map, boolean write)
     else
         assertSegment(DAMSEG_END);
 }
+#endif
 
 static void archiveMap(GameMap *map, boolean write)
 {

@@ -130,7 +130,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
         if(index < theMap->polyobjCount())
         {
             DENG_ASSERT(theMap);
-            poly = theMap->polyobjByIndex(index);
+            poly = theMap->polyobjs().at(index);
             emitter = (mobj_t *) poly;
         }
         else

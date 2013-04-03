@@ -701,7 +701,7 @@ DENG_EXTERN_C int P_PolyobjsBoxIterator(const AABoxd* box, int (*callback) (stru
 DENG_EXTERN_C int P_LinesBoxIterator(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters)
 {
     if(!theMap) return false; // Continue iteration.
-    return GameMap_LineDefsBoxIterator(theMap, box, callback, parameters);
+    return GameMap_LinesBoxIterator(theMap, box, callback, parameters);
 }
 
 #undef P_PolyobjLinesBoxIterator
@@ -723,7 +723,7 @@ DENG_EXTERN_C int P_BspLeafsBoxIterator(const AABoxd* box, Sector* sector,
 DENG_EXTERN_C int P_AllLinesBoxIterator(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters)
 {
     if(!theMap) return false; // Continue iteration.
-    return GameMap_AllLineDefsBoxIterator(theMap, box, callback, parameters);
+    return GameMap_AllLinesBoxIterator(theMap, box, callback, parameters);
 }
 
 #undef P_PathTraverse2

@@ -524,15 +524,10 @@ static void R_UpdateMap()
     }
 
     /// @todo Is this even necessary?
-    for(uint i = 0; i < theMap->polyobjCount(); ++i)
+    foreach(Polyobj *polyobj, theMap->polyobjs())
+    for(LineDef **lineIt = polyobj->lines; *lineIt; lineIt++)
     {
-        Polyobj *po = theMap->polyobjByIndex(i);
-
-        for(LineDef **lineIter = po->lines; *lineIter; lineIter++)
-        {
-            LineDef *line = *lineIter;
-            line->frontSideDef().middle().markAsNeedingDecorationUpdate();
-        }
+        (*lineIt)->frontSideDef().middle().markAsNeedingDecorationUpdate();
     }
 
     theMap->buildSurfaceLists();

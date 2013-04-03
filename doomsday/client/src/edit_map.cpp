@@ -1075,19 +1075,19 @@ static void finishPlanes(GameMap &map)
 static void hardenPolyobjs(GameMap &dest, EditMap &e_map)
 {
     if(!e_map.polyobjCount())
-    {
-        dest.numPolyObjs = 0;
-        dest.polyObjs = 0;
         return;
-    }
 
-    dest.numPolyObjs = e_map.polyobjCount();
-    dest.polyObjs = (Polyobj **) Z_Malloc((dest.numPolyObjs + 1) * sizeof(Polyobj *), PU_MAP, 0);
+    DENG2_ASSERT(dest._polyobjs.isEmpty());
+#ifdef DENG2_QT_4_7_OR_NEWER
+    dest._polyobjs.reserve(e_map.polyobjCount());
+#endif
 
-    for(uint i = 0; i < dest.numPolyObjs; ++i)
+    for(uint i = 0; i < e_map.polyobjCount(); ++i)
     {
         Polyobj *srcP  = e_map.polyobjs[i];
-        Polyobj *destP = (Polyobj *) Z_Calloc(POLYOBJ_SIZE, PU_MAP, 0);
+
+        void *region = M_Calloc(POLYOBJ_SIZE);
+        Polyobj *destP = new (region) Polyobj;
 
         destP->idx = i;
         destP->crush = srcP->crush;
@@ -1128,9 +1128,8 @@ static void hardenPolyobjs(GameMap &dest, EditMap &e_map)
         destP->lines[destP->lineCount] = 0; // Terminate.
 
         // Add this polyobj to the global list.
-        dest.polyObjs[i] = destP;
+        dest._polyobjs.append(destP);
     }
-    dest.polyObjs[dest.numPolyObjs] = 0; // Terminate.
 }
 
 #if 0 /* Currently unused. */
@@ -1717,10 +1716,8 @@ boolean MPE_End()
     bool builtOK = buildBsp(*gamemap);
 
     // Finish the polyobjs (after the vertexes are hardened).
-    for(uint i = 0; i < gamemap->numPolyObjs; ++i)
+    foreach(Polyobj *po, gamemap->polyobjs())
     {
-        Polyobj *po = gamemap->polyObjs[i];
-
         uint n = 0;
         for(LineDef **lineIter = po->lines; *lineIter; lineIter++, n++)
         {

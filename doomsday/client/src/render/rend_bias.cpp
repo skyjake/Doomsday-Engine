@@ -297,10 +297,9 @@ void SB_InitForMap(char const *uniqueID)
         numVertIllums += Rend_NumFanVerticesForBspLeaf(bspLeaf) * sector->planeCount();
     }
 
-    for(uint i = 0; i < theMap->polyobjCount(); ++i)
+    foreach(Polyobj *polyobj, theMap->polyobjs())
     {
-        Polyobj *po = theMap->polyobjByIndex(i);
-        numVertIllums += po->lineCount * 3 * 4;
+        numVertIllums += polyobj->lineCount * 3 * 4;
     }
 
     // Allocate and initialize the vertexillum_ts.
@@ -343,25 +342,21 @@ void SB_InitForMap(char const *uniqueID)
         }
     }
 
-    for(uint i = 0; i < theMap->polyobjCount(); ++i)
+    foreach(Polyobj *polyobj, theMap->polyobjs())
+    for(uint i = 0; i < polyobj->lineCount; ++i)
     {
-        Polyobj *po = theMap->polyobjByIndex(i);
+        LineDef *line = polyobj->lines[i];
+        HEdge &hedge = line->front().leftHEdge();
 
-        for(uint j = 0; j < po->lineCount; ++j)
+        for(int k = 0; k < 3; ++k)
         {
-            LineDef *line = po->lines[j];
-            HEdge &hedge = line->front().leftHEdge();
+            biassurface_t *bsuf = SB_CreateSurface();
 
-            for(int k = 0; k < 3; ++k)
-            {
-                biassurface_t *bsuf = SB_CreateSurface();
+            bsuf->size = 4;
+            bsuf->illum = illums;
+            illums += 4;
 
-                bsuf->size = 4;
-                bsuf->illum = illums;
-                illums += 4;
-
-                hedge._bsuf[k] = bsuf;
-            }
+            hedge._bsuf[k] = bsuf;
         }
     }
 

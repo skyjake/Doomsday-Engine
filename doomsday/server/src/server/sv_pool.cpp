@@ -485,7 +485,7 @@ void Sv_RegisterPoly(dt_poly_t *reg, uint number)
 {
     DENG_ASSERT(reg != 0);
 
-    Polyobj *poly = theMap->polyobjByIndex(number);
+    Polyobj *poly = theMap->polyobjs().at(number);
 
     reg->dest[VX]   = poly->dest[VX];
     reg->dest[VY]   = poly->dest[VY];
@@ -1583,7 +1583,7 @@ coord_t Sv_DeltaDistance(void const *deltaPtr, ownerinfo_t const *info)
 
     if(delta->type == DT_POLY)
     {
-        Polyobj *po = theMap->polyobjByIndex(delta->id);
+        Polyobj *po = theMap->polyobjs().at(delta->id);
         return M_ApproxDistance(info->origin[VX] - po->origin[VX],
                                 info->origin[VY] - po->origin[VY]);
     }
@@ -1606,7 +1606,7 @@ coord_t Sv_DeltaDistance(void const *deltaPtr, ownerinfo_t const *info)
 
     if(delta->type == DT_POLY_SOUND)
     {
-        Polyobj *po = theMap->polyobjByIndex(delta->id);
+        Polyobj *po = theMap->polyobjs().at(delta->id);
         return M_ApproxDistance(info->origin[VX] - po->origin[VX],
                                 info->origin[VY] - po->origin[VY]);
     }

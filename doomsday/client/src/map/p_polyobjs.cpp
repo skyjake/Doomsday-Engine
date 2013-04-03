@@ -77,10 +77,10 @@ DENG_EXTERN_C void P_PolyobjLink(Polyobj *po)
 }
 
 #undef P_PolyobjByID
-DENG_EXTERN_C Polyobj *P_PolyobjByID(uint id)
+DENG_EXTERN_C Polyobj *P_PolyobjByID(uint index)
 {
     if(!theMap) return NULL;
-    return theMap->polyobjByIndex(id);
+    return theMap->polyobjs().at(index);
 }
 
 #undef P_PolyobjByTag

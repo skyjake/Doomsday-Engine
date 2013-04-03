@@ -518,46 +518,45 @@ void Cl_PolyMoverThinker(clpolyobj_t* mover)
     }
 }
 
-clpolyobj_t* GameMap_ClPolyobjByPolyobjIndex(GameMap* map, uint index)
+clpolyobj_t *GameMap_ClPolyobjByPolyobjIndex(GameMap *map, uint index)
 {
-    int i;
-    assert(map);
-    for(i = 0; i < CLIENT_MAX_MOVERS; ++i)
+    DENG_ASSERT(map);
+
+    for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
         if(!GameMap_IsValidClPolyobj(map, i)) continue;
 
         if(map->clActivePolyobjs[i]->number == index)
             return map->clActivePolyobjs[i];
     }
-    return NULL;
+
+    return 0;
 }
 
 /**
  * @note Assumes there is no existing ClPolyobj for Polyobj @a index.
  */
-clpolyobj_t* GameMap_NewClPolyobj(GameMap* map, uint polyobjIndex)
+clpolyobj_t *GameMap_NewClPolyobj(GameMap *map, uint polyobjIndex)
 {
-    clpolyobj_t* mover;
-    int i;
-    assert(map);
+    DENG_ASSERT(map);
 
     // Take the first unused slot.
-    for(i = 0; i < CLIENT_MAX_MOVERS; ++i)
+    for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
         if(map->clActivePolyobjs[i]) continue;
 
         DEBUG_Message(("GameMap_NewClPolyobj: New polymover [%i] for polyobj #%i.\n", i, polyobjIndex));
 
-        map->clActivePolyobjs[i] = mover = (clpolyobj_t *) Z_Calloc(sizeof(clpolyobj_t), PU_MAP, &map->clActivePolyobjs[i]);
+        clpolyobj_t *mover = (clpolyobj_t *) Z_Calloc(sizeof(clpolyobj_t), PU_MAP, &map->clActivePolyobjs[i]);
+        map->clActivePolyobjs[i] = mover;
         mover->thinker.function = reinterpret_cast<thinkfunc_t>(Cl_PolyMoverThinker);
-        mover->polyobj = map->polyObjs[polyobjIndex];
+        mover->polyobj = map->_polyobjs.at(polyobjIndex);
         mover->number = polyobjIndex;
         GameMap_ThinkerAdd(map, &mover->thinker, false /*not public*/);
         return mover;
     }
 
-    // Not successful.
-    return NULL;
+    return 0; // Not successful.
 }
 
 clpolyobj_t* Cl_FindOrMakeActivePoly(uint polyobjIndex)
@@ -860,7 +859,7 @@ void Cl_ReadPolyDelta2(boolean skip)
         return;
 
     DENG_ASSERT(num < theMap->polyobjCount());
-    po = theMap->polyobjByIndex(num);
+    po = theMap->polyobjs().at(num);
 
     if(df & PODF_DEST_X)
         po->dest[VX] = destX;

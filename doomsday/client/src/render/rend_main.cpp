@@ -3075,15 +3075,14 @@ void Rend_RenderSurfaceVectors()
         }
     }
 
-    for(uint i = 0; i < theMap->polyobjCount(); ++i)
+    foreach(Polyobj *polyobj, theMap->polyobjs())
     {
-        Polyobj const *po = theMap->polyobjByIndex(i);
-        Sector const &sector = po->bspLeaf->sector();
+        Sector const &sector = polyobj->bspLeaf->sector();
         float zPos = sector.floor().height() + (sector.ceiling().height() - sector.floor().height())/2;
 
-        for(uint j = 0; j < po->lineCount; ++j)
+        for(uint i = 0; i < polyobj->lineCount; ++i)
         {
-            LineDef *line = po->lines[j];
+            LineDef *line = polyobj->lines[i];
 
             V3f_Set(origin, (line->v2Origin()[VX] + line->v1Origin()[VX])/2,
                             (line->v2Origin()[VY] + line->v1Origin()[VY])/2, zPos);
@@ -3890,16 +3889,15 @@ static void Rend_RenderBoundingBoxes()
 
     if(devPolyobjBBox)
     {
-        for(uint i = 0; i < theMap->polyobjCount(); ++i)
+        foreach(Polyobj const *polyobj, theMap->polyobjs())
         {
-            Polyobj const *po = theMap->polyobjByIndex(i);
-            Sector const &sec = po->bspLeaf->sector();
-            coord_t width  = (po->aaBox.maxX - po->aaBox.minX)/2;
-            coord_t length = (po->aaBox.maxY - po->aaBox.minY)/2;
+            Sector const &sec = polyobj->bspLeaf->sector();
+            coord_t width  = (polyobj->aaBox.maxX - polyobj->aaBox.minX)/2;
+            coord_t length = (polyobj->aaBox.maxY - polyobj->aaBox.minY)/2;
             coord_t height = (sec.ceiling().height() - sec.floor().height())/2;
 
-            coord_t pos[3] = { po->aaBox.minX + width,
-                               po->aaBox.minY + length,
+            coord_t pos[3] = { polyobj->aaBox.minX + width,
+                               polyobj->aaBox.minY + length,
                                sec.floor().height() };
 
             float alpha = 1 - ((V3d_Distance(pos, eye) / (DENG_WINDOW->width()/2)) / 4);
@@ -3908,9 +3906,9 @@ static void Rend_RenderBoundingBoxes()
 
             Rend_DrawBBox(pos, width, length, height, 0, yellow, alpha, .08f, true);
 
-            for(uint j = 0; j < po->lineCount; ++j)
+            for(uint i = 0; i < polyobj->lineCount; ++i)
             {
-                LineDef *line = po->lines[j];
+                LineDef *line = polyobj->lines[i];
 
                 coord_t pos[3] = { (line->v2Origin()[VX] + line->v1Origin()[VX])/2,
                                    (line->v2Origin()[VY] + line->v1Origin()[VY])/2,

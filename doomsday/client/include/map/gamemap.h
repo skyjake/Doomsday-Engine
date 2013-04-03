@@ -76,6 +76,7 @@ public:
     typedef QList<Sector *> Sectors;
     typedef QList<LineDef *> Lines;
     typedef QList<SideDef *> SideDefs;
+    typedef QList<Polyobj *> Polyobjs;
 
     typedef QList<HEdge *> HEdges;
     typedef QList<BspNode *> BspNodes;
@@ -107,9 +108,7 @@ public:
     Sectors _sectors;
     Lines _lines;
     SideDefs _sideDefs;
-
-    uint numPolyObjs;
-    Polyobj **polyObjs;
+    Polyobjs _polyobjs;
 
     de::MapElement *_bspRoot;
 
@@ -193,19 +192,19 @@ public:
 
     Vertexes const &vertexes() const { return _vertexes; }
 
-    inline uint vertexCount() const { return vertexes().size(); }
+    inline uint vertexCount() const { return vertexes().count(); }
 
     SideDefs const &sideDefs() const { return _sideDefs; }
 
-    inline uint sideDefCount() const { return sideDefs().size(); }
+    inline uint sideDefCount() const { return sideDefs().count(); }
 
     Lines const &lines() const { return _lines; }
 
-    inline uint lineCount() const { return lines().size(); }
+    inline uint lineCount() const { return lines().count(); }
 
     Sectors const &sectors() const { return _sectors; }
 
-    inline uint sectorCount() const { return sectors().size(); }
+    inline uint sectorCount() const { return sectors().count(); }
 
     /**
      * Locate a sector in the map by sound emitter.
@@ -226,17 +225,14 @@ public:
     Surface *surfaceBySoundEmitter(ddmobj_base_t const &soundEmitter) const;
 
     /**
-     * Returns the total number of Polyobjs in the map.
+     * Provides access to the list of polyobjs for efficient traversal.
      */
-    uint polyobjCount() const;
+    Polyobjs const &polyobjs() const { return _polyobjs; }
 
     /**
-     * Locate a polyobj in the map by unique in-map index number (0-based).
-     *
-     * @param index  Index of the polyobj to be located.
-     * @return  Pointer to the referenced polyobj instance; otherwise @c 0.
+     * Returns the total number of Polyobjs in the map.
      */
-    Polyobj *polyobjByIndex(uint id) const;
+    inline uint polyobjCount() const { return polyobjs().count(); }
 
     /**
      * Locate a polyobj in the map by unique in-map tag.
@@ -690,20 +686,20 @@ void GameMap_SetMobjID(GameMap *map, thid_t id, boolean inUse);
 int GameMap_MobjsBoxIterator(GameMap *map, AABoxd const *box,
     int (*callback) (struct mobj_s *, void *), void *parameters);
 
-int GameMap_LineDefsBoxIterator(GameMap *map, AABoxd const *box,
+int GameMap_LinesBoxIterator(GameMap *map, AABoxd const *box,
     int (*callback) (LineDef *, void *), void *parameters);
 
 int GameMap_PolyobjLinesBoxIterator(GameMap *map, AABoxd const *box,
     int (*callback) (LineDef *, void *), void *parameters);
 
 /**
- * Lines and Polyobj Lines (note Polyobj Lines are iterated first).
+ * LineDefs and Polyobj lines (note polyobj lines are iterated first).
  *
  * @note validCount should be incremented before calling this to begin a new logical traversal.
- *       Otherwise Lines marked with a validCount equal to this will be skipped over (can
- *       be used to avoid processing a Line multiple times during complex / non-linear traversals.
+ *       Otherwise LineDefs marked with a validCount equal to this will be skipped over (can
+ *       be used to avoid processing a line multiple times during complex / non-linear traversals.
  */
-int GameMap_AllLineDefsBoxIterator(GameMap *map, AABoxd const *box,
+int GameMap_AllLinesBoxIterator(GameMap *map, AABoxd const *box,
     int (*callback) (LineDef *, void *), void *parameters);
 
 int GameMap_BspLeafsBoxIterator(GameMap *map, AABoxd const *box, Sector *sector,
@@ -712,12 +708,10 @@ int GameMap_BspLeafsBoxIterator(GameMap *map, AABoxd const *box, Sector *sector,
 /**
  * @note validCount should be incremented before calling this to begin a new logical traversal.
  *       Otherwise LineDefs marked with a validCount equal to this will be skipped over (can
- *       be used to avoid processing a LineDef multiple times during complex / non-linear traversals.
+ *       be used to avoid processing a line multiple times during complex / non-linear traversals.
  */
 int GameMap_PolyobjsBoxIterator(GameMap *map, AABoxd const *box,
     int (*callback) (struct polyobj_s *, void *), void *parameters);
-
-int GameMap_PolyobjIterator(GameMap *map, int (*callback) (Polyobj *, void *), void *parameters);
 
 /**
  * Traces a line between @a from and @a to, making a callback for each
