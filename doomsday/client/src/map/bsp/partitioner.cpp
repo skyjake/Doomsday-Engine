@@ -400,9 +400,8 @@ struct Partitioner::Instance
         // Initialize line info.
         uint numLines = GameMap_LineDefCount(map);
         lineInfos.reserve(numLines);
-        for(uint i = 0; i < numLines; ++i)
+        foreach(LineDef *line, map->lines())
         {
-            LineDef *line = GameMap_LineDef(map, i);
             lineInfos.push_back(LineInfo(line, DIST_EPSILON));
             LineInfo &lineInfo = lineInfos.back();
 
@@ -2578,10 +2577,8 @@ static AABoxd findMapBounds2(GameMap *map)
     AABoxd bounds;
     bool initialized = false;
 
-    for(uint i = 0; i < GameMap_LineDefCount(map); ++i)
+    foreach(LineDef *line, map->lines())
     {
-        LineDef *line = GameMap_LineDef(map, i);
-
         // Do not consider zero-length lines (already screened at a higher level).
         //if(lineDefInfo(*line).flags.testFlag(LineDefInfo::ZEROLENGTH)) continue;
 

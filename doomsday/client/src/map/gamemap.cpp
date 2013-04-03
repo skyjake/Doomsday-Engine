@@ -220,13 +220,6 @@ int GameMap_LineDefIndex(GameMap *map, LineDef const *line)
     return map->_lines.indexOf(const_cast<LineDef *>(line)); // Bad performance: O(n)
 }
 
-LineDef *GameMap_LineDef(GameMap *map, uint idx)
-{
-    DENG2_ASSERT(map);
-    if(idx >= uint( map->_lines.size() )) return 0;
-    return map->_lines[idx];
-}
-
 int GameMap_SideDefIndex(GameMap *map, SideDef const *side)
 {
     DENG2_ASSERT(map);

@@ -339,7 +339,7 @@ void *P_ToPtr(int type, uint index)
         return GameMap_HEdge(theMap, index);
 
     case DMU_LINEDEF:
-        return GameMap_LineDef(theMap, index);
+        return theMap->lines().at(index);
 
     case DMU_SIDEDEF:
         return GameMap_SideDef(theMap, index);
@@ -466,7 +466,7 @@ int P_Callback(int type, uint index, void *context, int (*callback)(void *p, voi
 
     case DMU_LINEDEF:
         if(index < GameMap_LineDefCount(theMap))
-            return callback(GameMap_LineDef(theMap, index), context);
+            return callback(theMap->lines().at(index), context);
         break;
 
     case DMU_SIDEDEF:

@@ -1110,7 +1110,7 @@ static void hardenPolyobjs(GameMap &dest, EditMap &e_map)
         destP->lines = (LineDef **) Z_Malloc(sizeof(*destP->lines) * (destP->lineCount + 1), PU_MAP, 0);
         for(uint j = 0; j < destP->lineCount; ++j)
         {
-            LineDef *line = GameMap_LineDef(&dest, srcP->lines[j]->_origIndex - 1);
+            LineDef *line = dest.lines().at(srcP->lines[j]->_origIndex - 1);
             HEdge *hedge = &hedges[j];
 
             // This line belongs to a polyobj.

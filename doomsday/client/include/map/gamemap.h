@@ -444,15 +444,6 @@ void GameMap_InitSkyFix(GameMap *map);
 void GameMap_UpdateSkyFixForSector(GameMap *map, Sector *sec);
 
 /**
- * Lookup a LineDef by its unique index.
- *
- * @param map  GameMap instance.
- * @param idx  Unique index of the line.
- * @return  Pointer to LineDef with this index else @c NULL if @a idx is not valid.
- */
-LineDef *GameMap_LineDef(GameMap *map, uint idx);
-
-/**
  * Lookup a SideDef by its unique index.
  *
  * @param map  GameMap instance.

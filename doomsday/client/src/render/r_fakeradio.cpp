@@ -244,10 +244,8 @@ void Rend_RadioInitForMap()
     AABoxd bounds;
     vec2d_t point;
 
-    for(uint i = 0; i < GameMap_LineDefCount(theMap); ++i)
+    foreach(LineDef *line, theMap->lines())
     {
-        LineDef *line = GameMap_LineDef(theMap, i);
-
         if(!Rend_RadioLineCastsShadow(*line)) continue;
 
         // For each side of the line.

@@ -1586,29 +1586,25 @@ void Rend_DrawShadowOffsetVerts()
                             GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
     glEnable(GL_TEXTURE_2D);
 
-    for(uint i = 0; i < GameMap_LineDefCount(theMap); ++i)
+    foreach(LineDef *line, theMap->lines())
+    for(uint k = 0; k < 2; ++k)
     {
-        LineDef *line = GameMap_LineDef(theMap, i);
-
-        for(uint k = 0; k < 2; ++k)
+        Vertex &vtx = line->vertex(k);
+        LineOwner const *base = vtx.firstLineOwner();
+        LineOwner const *own = base;
+        do
         {
-            Vertex &vtx = line->vertex(k);
-            LineOwner const *base = vtx.firstLineOwner();
-            LineOwner const *own = base;
-            do
-            {
-                coord_t pos[3];
-                pos[VZ] = own->line().frontSector().floor().visHeight();
+            coord_t pos[3];
+            pos[VZ] = own->line().frontSector().floor().visHeight();
 
-                V2d_Sum(pos, vtx.origin(), own->extendedShadowOffset());
-                drawPoint(pos, 1, yellow);
+            V2d_Sum(pos, vtx.origin(), own->extendedShadowOffset());
+            drawPoint(pos, 1, yellow);
 
-                V2d_Sum(pos, vtx.origin(), own->innerShadowOffset());
-                drawPoint(pos, 1, red);
+            V2d_Sum(pos, vtx.origin(), own->innerShadowOffset());
+            drawPoint(pos, 1, red);
 
-                own = &own->next();
-            } while(own != base);
-        }
+            own = &own->next();
+        } while(own != base);
     }
 
     glDisable(GL_TEXTURE_2D);

@@ -583,7 +583,7 @@ static void readSector(GameMap *map, uint idx)
 #endif
     for(int i = 0; i < lineCount; ++i)
     {
-        LineDef *line = GameMap_LineDef(map, readLong() - 1);
+        LineDef *line = map->lines().at(readLong() - 1);
         // Ownership of the line is not given to the sector.
         s->_lines.append(line);
     }
