@@ -41,7 +41,6 @@ def create_build_event():
     ev = builder.Event(todaysBuild)
     ev.clean()
 
-    #if prevBuild:
     update_changes()
     
 
@@ -49,8 +48,15 @@ def todays_platform_release():
     """Build today's release for the current platform."""
     print "Building today's build."
     ev = builder.Event()
-    
+
     git_pull()
+
+    if sys.platform == 'darwin' and mac_os_version() == '10.5':
+        if version_cmp(ev.version_base(), '1.11') >= 0:
+            # Build should not occur on this platform.
+            print 'Version %s is not buildable on OS X %s.' % (ev.version(), mac_os_version())
+            return
+    
     git_checkout(ev.tag() + builder.config.TAG_MODIFIER)
     
     # We'll copy the new files to the build dir.
