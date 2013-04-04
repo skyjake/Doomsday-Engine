@@ -19,9 +19,16 @@
 #ifndef LIBDENG_MAP_EDITOR_H
 #define LIBDENG_MAP_EDITOR_H
 
+#include <QList>
+#include "map/vertex.h"
+
 class GameMap;
 
+DENG_EXTERN_C int bspFactor;
+
 void MPE_Register();
+
+QList<Vertex *> &MPE_EditableVertexes();
 
 GameMap *MPE_GetLastBuiltMap();
 

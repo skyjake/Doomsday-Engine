@@ -179,7 +179,7 @@ AutoStr *DAM_ComposeCacheDir(char const *sourcePath)
 
 static bool loadMap(GameMap **map, archivedmap_t *dam)
 {
-    *map = (GameMap *) Z_Calloc(sizeof(**map), PU_MAPSTATIC, 0);
+    *map = new GameMap;
     return DAM_MapRead(*map, Str_Text(&dam->cachedMapPath));
 }
 

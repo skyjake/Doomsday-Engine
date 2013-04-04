@@ -25,11 +25,14 @@
 #include "de_play.h"
 #include "de_system.h"
 
+#include <BspBuilder>
+#include "edit_map.h"
 #include "map/blockmap.h"
 #include "map/generators.h"
-#include "map/gamemap.h"
 #include "render/r_main.h" // validCount
 #include "r_util.h"
+
+#include "map/gamemap.h"
 
 /// Size of Blockmap blocks in map units. Must be an integer power of two.
 #define MAPBLOCKUNITS               (128)
@@ -41,6 +44,9 @@ using namespace de;
 
 DENG2_PIMPL(GameMap)
 {
+    /// Boundary points which encompass the entire map.
+    AABoxd bounds;
+
     struct generators_s *generators;
 
     PlaneSet trackedPlanes;
@@ -61,9 +67,103 @@ DENG2_PIMPL(GameMap)
         : Base(i),
           generators(0)
     {
+        std::memset(&bounds,       0, sizeof(bounds));
         std::memset(skyFix,        0, sizeof(skyFix));
         std::memset(&traceOpening, 0, sizeof(traceOpening));
         std::memset(&traceLine,    0, sizeof(traceLine));
+    }
+
+    void collateVertexes(BspBuilder &builder,
+                         QList<Vertex *> const &editableVertexes)
+    {
+        uint bspVertexCount = builder.numVertexes();
+
+        DENG2_ASSERT(self._vertexes.isEmpty());
+#ifdef DENG2_QT_4_7_OR_NEWER
+        self._vertexes.reserve(editableVertexes.count() + bspVertexCount);
+#endif
+
+        uint n = 0;
+        foreach(Vertex *vertex, editableVertexes)
+        {
+            self._vertexes.append(vertex);
+            ++n;
+        }
+
+        for(uint i = 0; i < bspVertexCount; ++i, ++n)
+        {
+            Vertex *vertex = &builder.vertex(i);
+
+            builder.take(vertex);
+            self._vertexes.append(vertex);
+        }
+    }
+
+    void collateBspLeafHEdges(BspBuilder &builder, BspLeaf &leaf)
+    {
+        HEdge *base = leaf.firstHEdge();
+        HEdge *hedge = base;
+        do
+        {
+            // Take ownership of this HEdge.
+            builder.take(hedge);
+
+            // Add this HEdge to the LUT.
+            hedge->_origIndex = self.hedgeCount();
+            self._hedges.append(hedge);
+
+            if(hedge->hasLine())
+            {
+                Vertex const &vtx = hedge->line().vertex(hedge->lineSideId());
+
+                hedge->_sector = hedge->line().sectorPtr(hedge->lineSideId());
+                hedge->_lineOffset = V2d_Distance(hedge->v1Origin(), vtx.origin());
+            }
+
+            hedge->_angle = bamsAtan2(int( hedge->v2Origin()[VY] - hedge->v1Origin()[VY] ),
+                                      int( hedge->v2Origin()[VX] - hedge->v1Origin()[VX] )) << FRACBITS;
+
+            // Calculate the length of the segment.
+            hedge->_length = V2d_Distance(hedge->v2Origin(), hedge->v1Origin());
+
+            if(hedge->_length == 0)
+                hedge->_length = 0.01f; // Hmm...
+
+        } while((hedge = &hedge->next()) != base);
+    }
+
+    void collateBspElements(BspBuilder &builder, BspTreeNode &tree)
+    {
+        if(tree.isLeaf())
+        {
+            // Take ownership of the built BspLeaf.
+            DENG2_ASSERT(tree.userData() != 0);
+            BspLeaf *leaf = tree.userData()->castTo<BspLeaf>();
+            builder.take(leaf);
+
+            // Add this BspLeaf to the LUT.
+            leaf->_index = self._bspLeafs.count();
+            self._bspLeafs.append(leaf);
+
+            collateBspLeafHEdges(builder, *leaf);
+
+            // The geometry of the leaf is now finalized; update dependent metadata.
+            leaf->updateAABox();
+            leaf->updateCenter();
+            leaf->updateWorldGridOffset();
+
+            return;
+        }
+        // Else; a node.
+
+        // Take ownership of this BspNode.
+        DENG2_ASSERT(tree.userData() != 0);
+        BspNode *node = tree.userData()->castTo<BspNode>();
+        builder.take(node);
+
+        // Add this BspNode to the LUT.
+        node->_index = self._bspNodes.count();
+        self._bspNodes.append(node);
     }
 
 #ifdef __CLIENT__
@@ -169,7 +269,6 @@ DENG2_PIMPL(GameMap)
 GameMap::GameMap() : d(new Instance(this))
 {
     std::memset(_oldUniqueId, 0, sizeof(_oldUniqueId));
-    std::memset(&aaBox, 0, sizeof(aaBox));
     std::memset(&thinkers, 0, sizeof(thinkers));
     std::memset(&clMobjHash, 0, sizeof(clMobjHash));
     std::memset(&clActivePlanes, 0, sizeof(clActivePlanes));
@@ -193,6 +292,111 @@ MapElement *GameMap::bspRoot() const
     return _bspRoot;
 }
 
+bool GameMap::buildBsp()
+{
+    /// @todo Test preconditions!
+
+    // It begins...
+    Time begunAt;
+
+    LOG_INFO("Building BSP using tunable split factor of %d...") << bspFactor;
+
+    Vertexes &editableVertexes = MPE_EditableVertexes();
+
+    // Instantiate and configure a new BSP builder.
+    BspBuilder nodeBuilder(*this, editableVertexes, bspFactor);
+
+    // Build the BSP.
+    bool builtOK = nodeBuilder.buildBsp();
+    if(builtOK)
+    {
+        BspTreeNode &treeRoot = *nodeBuilder.root();
+
+        // Determine the max depth of the two main branches.
+        dint32 rightBranchDpeth, leftBranchDepth;
+        if(!treeRoot.isLeaf())
+        {
+            rightBranchDpeth = dint32( treeRoot.right().height() );
+            leftBranchDepth  = dint32(  treeRoot.left().height() );
+        }
+        else
+        {
+            rightBranchDpeth = leftBranchDepth = 0;
+        }
+
+        LOG_INFO("BSP built: (%d:%d) %d Nodes, %d Leafs, %d HEdges, %d Vertexes.")
+                << rightBranchDpeth << leftBranchDepth
+                << nodeBuilder.numNodes()  << nodeBuilder.numLeafs()
+                << nodeBuilder.numHEdges() << nodeBuilder.numVertexes();
+
+        /*
+         * Take ownership of all the built map data elements.
+         */
+        DENG2_ASSERT(_hedges.isEmpty());
+        DENG2_ASSERT(_bspLeafs.isEmpty());
+        DENG2_ASSERT(_bspNodes.isEmpty());
+
+#ifdef DENG2_QT_4_7_OR_NEWER
+        _hedges.reserve(nodeBuilder.numHEdges());
+        _bspNodes.reserve(nodeBuilder.numNodes());
+        _bspLeafs.reserve(nodeBuilder.numLeafs());
+#endif
+
+        d->collateVertexes(nodeBuilder, editableVertexes);
+
+        BspTreeNode *rootNode = nodeBuilder.root();
+        _bspRoot = rootNode->userData(); // We'll formally take ownership shortly...
+
+        // Iterative pre-order traversal of the BspBuilder's map element tree.
+        BspTreeNode *cur = rootNode;
+        BspTreeNode *prev = 0;
+        while(cur)
+        {
+            while(cur)
+            {
+                if(cur->userData())
+                {
+                    // Acquire ownership of and collate all map data elements at
+                    // this node of the tree.
+                    d->collateBspElements(nodeBuilder, *cur);
+                }
+
+                if(prev == cur->parentPtr())
+                {
+                    // Descending - right first, then left.
+                    prev = cur;
+                    if(cur->hasRight()) cur = cur->rightPtr();
+                    else                cur = cur->leftPtr();
+                }
+                else if(prev == cur->rightPtr())
+                {
+                    // Last moved up the right branch - descend the left.
+                    prev = cur;
+                    cur = cur->leftPtr();
+                }
+                else if(prev == cur->leftPtr())
+                {
+                    // Last moved up the left branch - continue upward.
+                    prev = cur;
+                    cur = cur->parentPtr();
+                }
+            }
+
+            if(prev)
+            {
+                // No left child - back up.
+                cur = prev->parentPtr();
+            }
+        }
+    }
+
+    // How much time did we spend?
+    LOG_INFO(String("BSP build completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+
+    return builtOK;
+}
+
+/// @todo Don't use sector bounds here, derive from lines instead. -ds
 void GameMap::updateBounds()
 {
     bool isFirst = true;
@@ -204,13 +408,13 @@ void GameMap::updateBounds()
         if(isFirst)
         {
             // The first sector is used as is.
-            V2d_CopyBox(aaBox.arvec2, sector->aaBox().arvec2);
+            V2d_CopyBox(d->bounds.arvec2, sector->aaBox().arvec2);
             isFirst = false;
         }
         else
         {
             // Expand the bounding box.
-            V2d_UniteBox(aaBox.arvec2, sector->aaBox().arvec2);
+            V2d_UniteBox(d->bounds.arvec2, sector->aaBox().arvec2);
         }
     }
 }
@@ -263,10 +467,9 @@ char const *GameMap::oldUniqueId() const
     return _oldUniqueId;
 }
 
-void GameMap::bounds(coord_t *min, coord_t *max) const
+AABoxd const &GameMap::bounds() const
 {
-    if(min) V2d_Copy(min, aaBox.min);
-    if(max) V2d_Copy(max, aaBox.max);
+    return d->bounds;
 }
 
 coord_t GameMap::gravity() const

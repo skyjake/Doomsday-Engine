@@ -43,7 +43,7 @@ typedef struct polyobj_s {
      */
     bool move(const_pvec2d_t delta);
 
-    /// @copybrief move()
+    /// @copydoc move()
     inline bool move(coord_t x, coord_t y)
     {
         coord_t point[2] = { x, y };

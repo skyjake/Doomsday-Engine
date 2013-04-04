@@ -31,11 +31,11 @@
 #include "de_edit.h"
 #include "de_dam.h"
 #include "de_filesys.h"
+#include "map/gamemap.h"
 #ifdef __CLIENT__
 #  include "render/rend_main.h"
 #endif
 #include <de/StringPool>
-#include <BspBuilder>
 
 #include "audio/s_environ.h"
 
@@ -102,11 +102,16 @@ static bool lastBuiltMapResult;
 
 static GameMap *lastBuiltMap;
 
-static int bspFactor = 7;
+int bspFactor = 7;
 
 void MPE_Register()
 {
     C_VAR_INT("bsp-factor", &bspFactor, CVF_NO_MAX, 0, 0);
+}
+
+QList<Vertex *> &MPE_EditableVertexes()
+{
+    return editMap.vertexes;
 }
 
 /**
@@ -1281,199 +1286,6 @@ static void findBounds(QList<Vertex *> const &vertexes, vec2d_t min, vec2d_t max
     }
 }
 
-static void collateVertexes(BspBuilder &builder, GameMap &map,
-    QList<Vertex *> const &editableVertexes)
-{
-    uint bspVertexCount = builder.numVertexes();
-
-    DENG2_ASSERT(map._vertexes.isEmpty());
-#ifdef DENG2_QT_4_7_OR_NEWER
-    map._vertexes.reserve(editableVertexes.count() + bspVertexCount);
-#endif
-
-    uint n = 0;
-    foreach(Vertex *vertex, editableVertexes)
-    {
-        map._vertexes.append(vertex);
-        ++n;
-    }
-
-    for(uint i = 0; i < bspVertexCount; ++i, ++n)
-    {
-        Vertex *vertex = &builder.vertex(i);
-
-        builder.take(vertex);
-        map._vertexes.append(vertex);
-    }
-}
-
-static void collateBspLeafHEdges(GameMap &map, BspBuilder &builder, BspLeaf &leaf)
-{
-    HEdge *base = leaf.firstHEdge();
-    HEdge *hedge = base;
-    do
-    {
-        // Take ownership of this HEdge.
-        builder.take(hedge);
-
-        // Add this HEdge to the LUT.
-        hedge->_origIndex = map.hedgeCount();
-        map._hedges.append(hedge);
-
-        if(hedge->hasLine())
-        {
-            Vertex const &vtx = hedge->line().vertex(hedge->lineSideId());
-
-            hedge->_sector = hedge->line().sectorPtr(hedge->lineSideId());
-            hedge->_lineOffset = V2d_Distance(hedge->v1Origin(), vtx.origin());
-        }
-
-        hedge->_angle = bamsAtan2(int( hedge->v2Origin()[VY] - hedge->v1Origin()[VY] ),
-                                  int( hedge->v2Origin()[VX] - hedge->v1Origin()[VX] )) << FRACBITS;
-
-        // Calculate the length of the segment.
-        hedge->_length = V2d_Distance(hedge->v2Origin(), hedge->v1Origin());
-
-        if(hedge->_length == 0)
-            hedge->_length = 0.01f; // Hmm...
-
-    } while((hedge = &hedge->next()) != base);
-}
-
-static void collateBspElements(GameMap &map, BspBuilder &builder, BspTreeNode &tree)
-{
-    if(tree.isLeaf())
-    {
-        // Take ownership of the built BspLeaf.
-        DENG2_ASSERT(tree.userData() != 0);
-        BspLeaf *leaf = tree.userData()->castTo<BspLeaf>();
-        builder.take(leaf);
-
-        // Add this BspLeaf to the LUT.
-        leaf->_index = map._bspLeafs.count();
-        map._bspLeafs.append(leaf);
-
-        collateBspLeafHEdges(map, builder, *leaf);
-
-        // The geometry of the leaf is now finalized; update dependent metadata.
-        leaf->updateAABox();
-        leaf->updateCenter();
-        leaf->updateWorldGridOffset();
-
-        return;
-    }
-    // Else; a node.
-
-    // Take ownership of this BspNode.
-    DENG2_ASSERT(tree.userData() != 0);
-    BspNode *node = tree.userData()->castTo<BspNode>();
-    builder.take(node);
-
-    // Add this BspNode to the LUT.
-    node->_index = map._bspNodes.count();
-    map._bspNodes.append(node);
-}
-
-static bool buildBsp(GameMap &map)
-{
-    // It begins...
-    Time begunAt;
-
-    LOG_INFO("Building BSP using tunable split factor of %d...") << bspFactor;
-
-    // Instantiate and configure a new BSP builder.
-    BspBuilder nodeBuilder(map, editMap.vertexes, bspFactor);
-
-    // Build the BSP.
-    bool builtOK = nodeBuilder.buildBsp();
-    if(builtOK)
-    {
-        BspTreeNode &treeRoot = *nodeBuilder.root();
-
-        // Determine the max depth of the two main branches.
-        dint32 rightBranchDpeth, leftBranchDepth;
-        if(!treeRoot.isLeaf())
-        {
-            rightBranchDpeth = dint32( treeRoot.right().height() );
-            leftBranchDepth  = dint32(  treeRoot.left().height() );
-        }
-        else
-        {
-            rightBranchDpeth = leftBranchDepth = 0;
-        }
-
-        LOG_INFO("BSP built: (%d:%d) %d Nodes, %d Leafs, %d HEdges, %d Vertexes.")
-                << rightBranchDpeth << leftBranchDepth
-                << nodeBuilder.numNodes()  << nodeBuilder.numLeafs()
-                << nodeBuilder.numHEdges() << nodeBuilder.numVertexes();
-
-        /*
-         * Take ownership of all the built map data elements.
-         */
-        DENG2_ASSERT(map._hedges.isEmpty());
-        DENG2_ASSERT(map._bspLeafs.isEmpty());
-        DENG2_ASSERT(map._bspNodes.isEmpty());
-
-#ifdef DENG2_QT_4_7_OR_NEWER
-        map._hedges.reserve(nodeBuilder.numHEdges());
-        map._bspNodes.reserve(nodeBuilder.numNodes());
-        map._bspLeafs.reserve(nodeBuilder.numLeafs());
-#endif
-
-        collateVertexes(nodeBuilder, map, editMap.vertexes);
-
-        BspTreeNode *rootNode = nodeBuilder.root();
-        map._bspRoot = rootNode->userData(); // We'll formally take ownership shortly...
-
-        // Iterative pre-order traversal of the BspBuilder's map element tree.
-        BspTreeNode *cur = rootNode;
-        BspTreeNode *prev = 0;
-        while(cur)
-        {
-            while(cur)
-            {
-                if(cur->userData())
-                {
-                    // Acquire ownership of and collate all map data elements at
-                    // this node of the tree.
-                    collateBspElements(map, nodeBuilder, *cur);
-                }
-
-                if(prev == cur->parentPtr())
-                {
-                    // Descending - right first, then left.
-                    prev = cur;
-                    if(cur->hasRight()) cur = cur->rightPtr();
-                    else                cur = cur->leftPtr();
-                }
-                else if(prev == cur->rightPtr())
-                {
-                    // Last moved up the right branch - descend the left.
-                    prev = cur;
-                    cur = cur->leftPtr();
-                }
-                else if(prev == cur->leftPtr())
-                {
-                    // Last moved up the left branch - continue upward.
-                    prev = cur;
-                    cur = cur->parentPtr();
-                }
-            }
-
-            if(prev)
-            {
-                // No left child - back up.
-                cur = prev->parentPtr();
-            }
-        }
-    }
-
-    // How much time did we spend?
-    LOG_INFO(String("BSP build completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
-
-    return builtOK;
-}
-
 #if 0
 /**
  * The REJECT resource is a LUT that provides the results of trivial
@@ -1713,7 +1525,7 @@ boolean MPE_End()
     /*
      * Build a BSP for this map.
      */
-    bool builtOK = buildBsp(*gamemap);
+    bool builtOK = gamemap->buildBsp();
 
     // Finish the polyobjs (after the vertexes are hardened).
     foreach(Polyobj *po, gamemap->polyobjs())

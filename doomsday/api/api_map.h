@@ -332,7 +332,20 @@ DENG_API_TYPEDEF(Map)
     int             (*PathXYTraverse2)(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, int (*callback) (const struct intercept_s*, void* paramaters), void* parameters);
     int             (*PathXYTraverse)(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, int (*callback) (const struct intercept_s*, void* paramaters)/*parameters=NULL*/);
 
-    boolean         (*CheckLineSight)(coord_t const from[3], coord_t const to[3], coord_t bottomSlope, coord_t topSlope, int flags);
+    /**
+     * Traces a line of sight.
+     *
+     * @param from          World position, trace origin coordinates.
+     * @param to            World position, trace target coordinates.
+     * @param bottomSlope   Lower limit to the Z axis angle/slope range.
+     * @param topSlope      Upper limit to the Z axis angle/slope range.
+     * @param flags         @ref lineSightFlags dictate trace behavior/logic.
+     *
+     * @return  @c true if the traverser function returns @c true for all
+     *          visited lines.
+     */
+    boolean         (*CheckLineSight)(coord_t const from[3], coord_t const to[3],
+                                      coord_t bottomSlope, coord_t topSlope, int flags);
 
     /**
      * Retrieve an immutable copy of the LOS trace line for the CURRENT map.

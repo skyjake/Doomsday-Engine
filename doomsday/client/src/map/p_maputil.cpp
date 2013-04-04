@@ -755,11 +755,3 @@ DENG_EXTERN_C int P_PathXYTraverse(coord_t fromX, coord_t fromY, coord_t toX, co
     if(!theMap) return false; // Continue iteration.
     return theMap->pathTraverse(fromX, fromY, toX, toY, flags, callback);
 }
-
-#undef P_CheckLineSight
-DENG_EXTERN_C boolean P_CheckLineSight(const_pvec3d_t from, const_pvec3d_t to, coord_t bottomSlope,
-    coord_t topSlope, int flags)
-{
-    if(!theMap) return false; // I guess?
-    return theMap->lineOfSight(from, to, bottomSlope, topSlope, flags);
-}

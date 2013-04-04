@@ -2523,32 +2523,20 @@ void *DD_GetVariable(int ddvalue)
         return NULL;
 
     case DD_MAP_MIN_X:
-        if(theMap)
-        {
-            return &theMap->aaBox.minX;
-        }
-        return NULL;
+        valueD = theMap? theMap->bounds().minX : 0;
+        return &valueD;
 
     case DD_MAP_MIN_Y:
-        if(theMap)
-        {
-            return &theMap->aaBox.minY;
-        }
-        return NULL;
+        valueD = theMap? theMap->bounds().minY : 0;
+        return &valueD;
 
     case DD_MAP_MAX_X:
-        if(theMap)
-        {
-            return &theMap->aaBox.maxX;
-        }
-        return NULL;
+        valueD = theMap? theMap->bounds().maxX : 0;
+        return &valueD;
 
     case DD_MAP_MAX_Y:
-        if(theMap)
-        {
-            return &theMap->aaBox.maxY;
-        }
-        return NULL;
+        valueD = theMap? theMap->bounds().maxY : 0;
+        return &valueD;
 
     case DD_PSPRITE_OFFSET_X:
         return &pspOffset[VX];

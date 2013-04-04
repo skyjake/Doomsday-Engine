@@ -343,9 +343,10 @@ private:
     }
 };
 
-bool GameMap::lineOfSight(const_pvec3d_t from, const_pvec3d_t to,
-    coord_t bottomSlope, coord_t topSlope, int flags)
+#undef P_CheckLineSight
+DENG_EXTERN_C boolean P_CheckLineSight(const_pvec3d_t from, const_pvec3d_t to, coord_t bottomSlope,
+    coord_t topSlope, int flags)
 {
-    DENG_ASSERT(_bspRoot);
-    return LineSightTest(from, to, float(bottomSlope), float(topSlope), flags).trace(*_bspRoot);
+    if(!theMap) return false; // I guess?
+    return LineSightTest(from, to, float(bottomSlope), float(topSlope), flags).trace(*theMap->bspRoot());
 }

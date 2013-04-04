@@ -86,8 +86,6 @@ public:
     de::Uri _uri;
     char _oldUniqueId[256];
 
-    AABoxd aaBox;
-
     struct thinkers_s {
         int idtable[2048]; // 65536 bits telling which IDs are in use.
         ushort iddealer;
@@ -147,12 +145,20 @@ public:
 
     /**
      * Returns the minimal and maximal boundary points for the map.
+     */
+    AABoxd const &bounds() const;
+
+    /**
+     * @copydoc bounds()
      *
      * Return values:
      * @param min  Coordinates for the minimal point are written here.
      * @param max  Coordinates for the maximal point are written here.
      */
-    void bounds(coord_t *min, coord_t *max) const;
+    inline void bounds(coord_t *min, coord_t *max) const {
+        if(min) V2d_Copy(min, bounds().min);
+        if(max) V2d_Copy(max, bounds().max);
+    }
 
     /**
      * Returns the currently effective gravity multiplier for the map.
@@ -263,7 +269,8 @@ public:
     BspLeaf *bspLeafAtPoint(const_pvec2d_t point);
 
     /**
-     * @copybrief bspLeafAtPoint()
+     * @copydoc bspLeafAtPoint()
+     *
      * @param x  X coordinate of the point to test.
      * @param y  Y coordinate of the point to test.
      * @return   BspLeaf instance for that BSP node's leaf.
@@ -306,19 +313,6 @@ public:
         int (*callback) (struct polyobj_s *, void *), void *parameters = 0);
 
     /**
-     * Traces a line of sight.
-     *
-     * @param from   World position, trace origin coordinates.
-     * @param to     World position, trace target coordinates.
-     * @param flags  Line Sight Flags (LS_*) @ref lineSightFlags.
-     *
-     * @return  @c true if the traverser function returns @c true for all
-     *          visited lines.
-     */
-    bool lineOfSight(const_pvec3d_t from, const_pvec3d_t to, coord_t bottomSlope,
-                     coord_t topSlope, int flags);
-
-    /**
      * Retrieve an immutable copy of the LOS trace line state.
      *
      * @todo GameMap should not own this data.
@@ -353,7 +347,7 @@ public:
                      traverser_t callback, void *parameters = 0);
 
     /**
-     * @copybrief pathTraverse()
+     * @copydoc pathTraverse()
      *
      * @param fromX         X axis map space coordinate for the path origin.
      * @param fromY         Y axis map space coordinate for the path origin.
@@ -643,6 +637,8 @@ public: /// @todo Make private:
 #ifdef __CLIENT__
     void buildSurfaceLists();
 #endif
+
+    bool buildBsp();
 
     /**
      * To be called in response to a Material property changing which may
