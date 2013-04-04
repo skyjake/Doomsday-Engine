@@ -76,35 +76,6 @@ short SideDef::flags() const
     return _flags;
 }
 
-void SideDef::updateSoundEmitterOrigins()
-{
-    _middleSurface.updateSoundEmitterOrigin();
-    _bottomSurface.updateSoundEmitterOrigin();
-    _topSurface.updateSoundEmitterOrigin();
-}
-
-void SideDef::updateSurfaceTangents()
-{
-    DENG2_ASSERT(_line != 0);
-
-    byte sid = _line->frontSideDefPtr() == this? FRONT : BACK;
-
-    V3f_Set(_topSurface._normal, (_line->vertexOrigin(sid^1)[VY] - _line->vertexOrigin(sid  )[VY]) / _line->length(),
-                                 (_line->vertexOrigin(sid  )[VX] - _line->vertexOrigin(sid^1)[VX]) / _line->length(),
-                                 0);
-
-    V3f_BuildTangents(_topSurface._tangent, _topSurface._bitangent, _topSurface._normal);
-
-    // All surfaces of a sidedef have the same tangent space vectors.
-    V3f_Copy(_middleSurface._tangent,   _topSurface._tangent);
-    V3f_Copy(_middleSurface._bitangent, _topSurface._bitangent);
-    V3f_Copy(_middleSurface._normal,    _topSurface._normal);
-
-    V3f_Copy(_bottomSurface._tangent,   _topSurface._tangent);
-    V3f_Copy(_bottomSurface._bitangent, _topSurface._bitangent);
-    V3f_Copy(_bottomSurface._normal,    _topSurface._normal);
-}
-
 #ifdef __CLIENT__
 
 SideDef::FakeRadioData &SideDef::fakeRadioData()

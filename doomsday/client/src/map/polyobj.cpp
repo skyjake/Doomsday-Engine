@@ -51,11 +51,8 @@ void Polyobj::updateSurfaceTangents()
     {
         LineDef *line = *lineIter;
 
-        line->frontSideDef().updateSurfaceTangents();
-        if(line->hasBackSideDef())
-        {
-            line->backSideDef().updateSurfaceTangents();
-        }
+        line->front().updateSurfaceTangents();
+        line->back().updateSurfaceTangents();
     }
 }
 

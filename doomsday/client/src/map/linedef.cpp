@@ -77,6 +77,42 @@ int LineDef::Side::shadowVisCount() const
     return _shadowVisCount;
 }
 
+void LineDef::Side::updateSoundEmitterOrigins()
+{
+    if(!_sideDef) return;
+
+    _sideDef->middle().updateSoundEmitterOrigin();
+    _sideDef->bottom().updateSoundEmitterOrigin();
+    _sideDef->top().updateSoundEmitterOrigin();
+}
+
+void LineDef::Side::updateSurfaceTangents()
+{
+    if(!_sideDef) return;
+
+    LineDef const &line = _sideDef->line();
+    byte sid = line.frontSideDefPtr() == _sideDef? FRONT : BACK;
+
+    Surface &middleSurface = _sideDef->middle();
+    Surface &bottomSurface = _sideDef->bottom();
+    Surface &topSurface    = _sideDef->top();
+
+    V3f_Set(topSurface._normal, (line.vertexOrigin(sid^1)[VY] - line.vertexOrigin(sid  )[VY]) / line.length(),
+                                 (line.vertexOrigin(sid  )[VX] - line.vertexOrigin(sid^1)[VX]) / line.length(),
+                                 0);
+
+    V3f_BuildTangents(topSurface._tangent, topSurface._bitangent, topSurface._normal);
+
+    // All surfaces of a sidedef have the same tangent space vectors.
+    V3f_Copy(middleSurface._tangent,   topSurface._tangent);
+    V3f_Copy(middleSurface._bitangent, topSurface._bitangent);
+    V3f_Copy(middleSurface._normal,    topSurface._normal);
+
+    V3f_Copy(bottomSurface._tangent,   topSurface._tangent);
+    V3f_Copy(bottomSurface._bitangent, topSurface._bitangent);
+    V3f_Copy(bottomSurface._normal,    topSurface._normal);
+}
+
 LineDef::LineDef() : MapElement(DMU_LINEDEF)
 {
     std::memset(_v,     0, sizeof(_v));
@@ -119,12 +155,12 @@ bool LineDef::mappedByPlayer(int playerNum) const
 
 bool LineDef::isBspWindow() const
 {
-    return !!(_inFlags & LF_BSPWINDOW);
+    return (_inFlags & LF_BSPWINDOW) != 0;
 }
 
 bool LineDef::isFromPolyobj() const
 {
-    return !!(_inFlags & LF_POLYOBJ);
+    return (_inFlags & LF_POLYOBJ) != 0;
 }
 
 LineDef::Side &LineDef::side(int back)

@@ -731,16 +731,6 @@ static void finishSectors(GameMap &map)
     }
 }
 
-static void finishSideDefs(GameMap &map)
-{
-    // Calculate the tangent space surface vectors.
-    foreach(SideDef *sideDef, map.sideDefs())
-    {
-        sideDef->updateSurfaceTangents();
-        sideDef->updateSoundEmitterOrigins();
-    }
-}
-
 static void finishLines(GameMap &map)
 {
     foreach(LineDef *line, map.lines())
@@ -749,6 +739,7 @@ static void finishLines(GameMap &map)
 
         if(!front._leftHEdge) continue;
 
+        /// @todo It should no longer be necessary to update the vtx ptrs here. -ds
         line->_v[0] = &front.leftHEdge().v1();
         line->_v[1] = &front.rightHEdge().v2();
 
@@ -757,7 +748,13 @@ static void finishLines(GameMap &map)
 
         line->_length = V2d_Length(line->_direction);
         line->_angle = bamsAtan2(int( line->_direction[VY] ),
-                                int( line->_direction[VX] ));
+                                 int( line->_direction[VX] ));
+
+        for(int i = 0; i < 2; ++i)
+        {
+            line->side(i).updateSurfaceTangents();
+            line->side(i).updateSoundEmitterOrigins();
+        }
     }
 }
 
@@ -1448,14 +1445,14 @@ boolean MPE_End()
     if(!editMapInited)
         return false;
 
-    GameMap *gamemap = new GameMap;
-
     /*
      * Log warnings about any issues we encountered during conversion of
      * the basic map data elements.
      */
     printMissingMaterialsInDict();
     clearMaterialDict();
+
+    GameMap *gamemap = new GameMap;
 
     /*
      * Perform cleanup on the loaded map data, removing duplicate vertexes,
@@ -1561,7 +1558,6 @@ boolean MPE_End()
 
     editMapInited = false;
 
-    finishSideDefs(*gamemap);
     finishLines(*gamemap);
     finishSectors(*gamemap);
     finishPlanes(*gamemap);

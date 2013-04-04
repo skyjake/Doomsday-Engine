@@ -936,15 +936,8 @@ boolean R_UpdatePlane(Plane *pln, boolean forceUpdate)
         pln->surface().updateSoundEmitterOrigin();
         foreach(LineDef *line, sec->lines())
         {
-            if(line->hasFrontSideDef()) // $degenleaf
-            {
-                line->frontSideDef().updateSoundEmitterOrigins();
-            }
-
-            if(line->hasBackSideDef())
-            {
-                line->backSideDef().updateSoundEmitterOrigins();
-            }
+            line->front().updateSoundEmitterOrigins();
+            line->back().updateSoundEmitterOrigins();
         }
 
 #ifdef __CLIENT__
