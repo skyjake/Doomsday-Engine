@@ -78,6 +78,9 @@ Type wrap(Type value, Type const &low, Type const &high) {
     return value;
 }
 
+template <typename Type>
+inline Type squared(Type const &value) { return value * value; }
+
 inline dint32 floor(dfloat const &value) {
     return dint32(std::floor(value));
 }

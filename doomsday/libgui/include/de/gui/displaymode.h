@@ -22,10 +22,10 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_DISPLAYMODE_H
-#define LIBDENG_DISPLAYMODE_H
+#ifndef LIBGUI_DISPLAYMODE_H
+#define LIBGUI_DISPLAYMODE_H
 
-#include "dd_types.h"
+#include "de/libdeng2.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,7 +44,7 @@ typedef struct displaymode_s {
 
 typedef struct displaycolortransfer_s {
     unsigned short table[3 * 256]; // 0-255:red, 256-511:green, 512-767:blue (range: 0..ffff)
-} displaycolortransfer_t;
+} DisplayColorTransfer;
 
 /**
  * Initializes the DisplayMode class. Enumerates all available display modes and
@@ -69,12 +69,12 @@ void DisplayMode_Shutdown(void);
 /**
  * Returns the display mode that was in use when DisplayMode_Init() was called.
  */
-const DisplayMode* DisplayMode_OriginalMode(void);
+DisplayMode const *DisplayMode_OriginalMode(void);
 
 /**
  * Returns the current display mode.
  */
-const DisplayMode* DisplayMode_Current(void);
+DisplayMode const *DisplayMode_Current(void);
 
 /**
  * Returns the number of available display modes.
@@ -87,7 +87,7 @@ int DisplayMode_Count(void);
  *
  * @param index  Index of the mode, must be between 0 and DisplayMode_Count() - 1.
  */
-const DisplayMode* DisplayMode_ByIndex(int index);
+DisplayMode const *DisplayMode_ByIndex(int index);
 
 /**
  * Finds the closest available mode to the given criteria.
@@ -101,7 +101,7 @@ const DisplayMode* DisplayMode_ByIndex(int index);
  * the available modes; returns @c NULL only if DisplayMode_Init() has not yet
  * been called.
  */
-const DisplayMode* DisplayMode_FindClosest(int width, int height, int depth, float freq);
+DisplayMode const *DisplayMode_FindClosest(int width, int height, int depth, float freq);
 
 /**
  * Determines if two display modes are equivalent.
@@ -111,7 +111,7 @@ const DisplayMode* DisplayMode_FindClosest(int width, int height, int depth, flo
  *
  * @return  @c true or @c false.
  */
-boolean DisplayMode_IsEqual(const DisplayMode* a, const DisplayMode* b);
+int DisplayMode_IsEqual(DisplayMode const *a, DisplayMode const *b);
 
 /**
  * Changes the display mode.
@@ -122,24 +122,24 @@ boolean DisplayMode_IsEqual(const DisplayMode* a, const DisplayMode* b);
  * @return @c true, if a mode change occurred. @c false, otherwise (bad mode or
  * when attempting to change to the current mode).
  */
-int DisplayMode_Change(const DisplayMode* mode, boolean shouldCapture);
+int DisplayMode_Change(DisplayMode const *mode, int shouldCapture);
 
 /**
  * Gets the current color transfer table.
  *
  * @param colors  Color transfer.
  */
-void DisplayMode_GetColorTransfer(displaycolortransfer_t* colors);
+void DisplayMode_GetColorTransfer(DisplayColorTransfer *colors);
 
 /**
  * Sets the color transfer table.
  *
  * @param colors  Color transfer.
  */
-void DisplayMode_SetColorTransfer(const displaycolortransfer_t* colors);
+void DisplayMode_SetColorTransfer(DisplayColorTransfer const *colors);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif // LIBDENG_DISPLAYMODE_H
+#endif // LIBGUI_DISPLAYMODE_H

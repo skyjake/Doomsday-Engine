@@ -1,4 +1,4 @@
-/** @file displaymode_win32.cpp Win32 implementation of the DisplayMode native functionality. 
+/** @file displaymode_win32.cpp Win32 implementation of the DisplayMode native functionality.
  * @ingroup gl
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -76,7 +76,7 @@ int DisplayMode_Native_Count(void)
 
 void DisplayMode_Native_GetMode(int index, DisplayMode* mode)
 {
-    assert(index >= 0 && index < DisplayMode_Native_Count());
+    DENG2_ASSERT(index >= 0 && index < DisplayMode_Native_Count());
     *mode = devToDisplayMode(devModes[index]);
 }
 
@@ -100,8 +100,8 @@ static int findMode(const DisplayMode* mode)
 
 int DisplayMode_Native_Change(const DisplayMode* mode, boolean shouldCapture)
 {
-    assert(mode);
-    assert(findMode(mode) >= 0);
+    DENG2_ASSERT(mode);
+    DENG2_ASSERT(findMode(mode) >= 0);
 
     DEVMODE m = devModes[findMode(mode)];
     m.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL | DM_DISPLAYFREQUENCY;
@@ -116,7 +116,7 @@ int DisplayMode_Native_Change(const DisplayMode* mode, boolean shouldCapture)
 void DisplayMode_Native_SetColorTransfer(displaycolortransfer_t const *colors)
 {
     HWND hWnd = (HWND) Window::main().nativeHandle();
-    DENG_ASSERT(hWnd != 0);
+    DENG2_ASSERT(hWnd != 0);
 
     HDC hDC = GetDC(hWnd);
     if(hDC)
@@ -129,7 +129,7 @@ void DisplayMode_Native_SetColorTransfer(displaycolortransfer_t const *colors)
 void DisplayMode_Native_GetColorTransfer(displaycolortransfer_t *colors)
 {
     HWND hWnd = (HWND) Window::main().nativeHandle();
-    DENG_ASSERT(hWnd != 0);
+    DENG2_ASSERT(hWnd != 0);
 
     HDC hDC = GetDC(hWnd);
     if(hDC)

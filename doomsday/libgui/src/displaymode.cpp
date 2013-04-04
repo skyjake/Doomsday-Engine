@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#include "ui/displaymode.h"
-#include "ui/displaymode_native.h"
+#include "de/gui/displaymode.h"
+#include "de/gui/displaymode_native.h"
 
 #include <de/App>
 #include <de/Record>
@@ -36,7 +36,7 @@
 #include <de/Log>
 
 static bool inited = false;
-static displaycolortransfer_t originalColorTransfer;
+static DisplayColorTransfer originalColorTransfer;
 static de::Record *bindings;
 
 static float differenceToOriginalHz(float hz);
@@ -174,7 +174,7 @@ static de::Value *Binding_DisplayMode_OriginalMode(de::Context &, de::Function::
     return dict;
 }
 
-static void setupBindings()
+static void initBindings()
 {
     de::Function::registerNativeEntryPoint("DisplayMode_OriginalMode", Binding_DisplayMode_OriginalMode);
 
@@ -185,7 +185,7 @@ static void setupBindings()
     de::App::scriptSystem().addNativeModule("DisplayMode", *bindings);
 }
 
-static void tearDownBindings()
+static void deinitBindings()
 {
     delete bindings; // App observes
     bindings = 0;
@@ -223,7 +223,7 @@ int DisplayMode_Init(void)
         i->debugPrint();
     }
 
-    setupBindings();
+    initBindings();
 
     inited = true;
     return true;
@@ -233,7 +233,7 @@ void DisplayMode_Shutdown(void)
 {
     if(!inited) return;
 
-    tearDownBindings();
+    deinitBindings();
 
     LOG_INFO("Restoring original display mode due to shutdown.");
 
@@ -260,7 +260,7 @@ DisplayMode const *DisplayMode_OriginalMode(void)
     return &originalMode;
 }
 
-const DisplayMode* DisplayMode_Current(void)
+DisplayMode const *DisplayMode_Current(void)
 {
     static Mode currentMode;
     // Update it with current mode.
@@ -273,10 +273,10 @@ int DisplayMode_Count(void)
     return (int) modes.size();
 }
 
-const DisplayMode* DisplayMode_ByIndex(int index)
+DisplayMode const *DisplayMode_ByIndex(int index)
 {
-    Q_ASSERT(index >= 0);
-    Q_ASSERT(index < (int) modes.size());
+    DENG2_ASSERT(index >= 0);
+    DENG2_ASSERT(index < (int) modes.size());
 
     int pos = 0;
     for(Modes::iterator i = modes.begin(); i != modes.end(); ++i, ++pos)
@@ -287,24 +287,23 @@ const DisplayMode* DisplayMode_ByIndex(int index)
         }
     }
 
-    Q_ASSERT(false);
+    DENG2_ASSERT(false);
     return 0; // unreachable
 }
 
-template <typename T>
-T squared(const T& v) { return v * v; }
-
-const DisplayMode* DisplayMode_FindClosest(int width, int height, int depth, float freq)
+DisplayMode const *DisplayMode_FindClosest(int width, int height, int depth, float freq)
 {
     int bestScore = -1;
-    const DisplayMode* best = 0;
+    DisplayMode const *best = 0;
 
     for(Modes::iterator i = modes.begin(); i != modes.end(); ++i)
     {
-        int score = squared(i->width - width) + squared(i->height - height) + squared(i->depth - depth);
-        if(freq)
+        int score = de::squared(i->width  - width) +
+                    de::squared(i->height - height) +
+                    de::squared(i->depth  - depth);
+        if(freq >= 1)
         {
-            score += squared(i->refreshRate - freq);
+            score += de::squared(i->refreshRate - freq);
         }
 
         // Note: The first mode to hit the lowest score wins; if there are many modes
@@ -320,12 +319,12 @@ const DisplayMode* DisplayMode_FindClosest(int width, int height, int depth, flo
     return best;
 }
 
-boolean DisplayMode_IsEqual(const DisplayMode* a, const DisplayMode* b)
+int DisplayMode_IsEqual(DisplayMode const *a, DisplayMode const *b)
 {
     return Mode(*a) == Mode(*b);
 }
 
-int DisplayMode_Change(const DisplayMode* mode, boolean shouldCapture)
+int DisplayMode_Change(DisplayMode const *mode, int shouldCapture)
 {
     if(Mode::fromCurrent() == *mode && !shouldCapture == !captured)
     {
@@ -343,9 +342,9 @@ static inline de::duint16 intensity8To16(de::duint8 b)
     return (b << 8) | b; // 0xFF => 0xFFFF
 }
 
-void DisplayMode_GetColorTransfer(displaycolortransfer_t *colors)
+void DisplayMode_GetColorTransfer(DisplayColorTransfer *colors)
 {
-    displaycolortransfer_t mapped;
+    DisplayColorTransfer mapped;
     DisplayMode_Native_GetColorTransfer(&mapped);
 
     // Factor out the original color transfer function, which may be set up
@@ -360,9 +359,9 @@ void DisplayMode_GetColorTransfer(displaycolortransfer_t *colors)
     }
 }
 
-void DisplayMode_SetColorTransfer(displaycolortransfer_t const *colors)
+void DisplayMode_SetColorTransfer(DisplayColorTransfer const *colors)
 {
-    displaycolortransfer_t mapped;
+    DisplayColorTransfer mapped;
 
     // Factor in the original color transfer function, which may be set up
     // specifically by the user.

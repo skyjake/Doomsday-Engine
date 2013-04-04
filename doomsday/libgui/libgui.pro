@@ -11,31 +11,78 @@ TEMPLATE = lib
 TARGET   = deng_gui
 VERSION  = $$DENG_VERSION
 
-CONFIG += deng_qtgui
+CONFIG += deng_qtgui deng_qtopengl
+
 include(../dep_deng2.pri)
+
+DEFINES += __LIBGUI__
+INCLUDEPATH += include
 
 win32 {
     # Keep the version number out of the file name.
     TARGET_EXT = .dll
 }
+else:macx {
+    useFramework(Cocoa)
+}
+else:unix {
+    LIBS += -lX11
 
-DEFINES += __LIBGUI__
+    # DisplayMode uses the Xrandr and XFree86-VideoMode extensions.
+    !deng_nodisplaymode {
+        # Check that the X11 extensions exist.
+        !system(pkg-config --exists xxf86vm) {
+            error(Missing dependency: X11 XFree86 video mode extension library (development headers). Alternatively disable display mode functionality with: CONFIG+=deng_nodisplaymode)
+        }
+        !system(pkg-config --exists xrandr) {
+            error(Missing dependency: X11 RandR extension library (development headers). Alternatively disable display mode functionality with: CONFIG+=deng_nodisplaymode)
+        }
 
-INCLUDEPATH += include
+        QMAKE_CXXFLAGS += $$system(pkg-config xrandr xxf86vm --cflags)
+                  LIBS += $$system(pkg-config xrandr xxf86vm --libs)
+    }
+}
 
 # Public headers.
 HEADERS += \
+    include/de/Canvas \
+    include/de/CanvasWindow \
     include/de/GuiApp \
-    include/de/Window \
+    include/de/KeyEventSource \
+    include/de/MouseEventSource \
+    include/de/PersistentCanvasWindow \
     \
+    include/de/gui/canvas.h \
+    include/de/gui/canvaswindow.h \
+    include/de/gui/ddkey.h \
+    include/de/gui/displaymode.h \
+    include/de/gui/displaymode_native.h \
     include/de/gui/guiapp.h \
+    include/de/gui/keyeventsource.h \
     include/de/gui/libgui.h \
-    include/de/gui/window.h
+    include/de/gui/mouseeventsource.h \
+    include/de/gui/persistentcanvaswindow.h
 
 # Sources and private headers.
 SOURCES += \
+    src/canvas.cpp \
+    src/canvaswindow.cpp \
+    src/displaymode.cpp \
     src/guiapp.cpp \
-    src/window.cpp
+    src/keyeventsource.cpp \
+    src/persistentcanvaswindow.cpp
+
+# DisplayMode
+!deng_nodisplaymode {
+    win32:      SOURCES += src/displaymode_windows.cpp
+    else:macx:  OBJECTIVE_SOURCES += src/displaymode_macx.mm
+    else:       SOURCES += src/displaymode_x11.cpp
+}
+else {
+    SOURCES += src/displaymode_dummy.c
+}
+
+unix:!macx: SOURCES += src/imKStoUCS_unix.c
 
 # Installation ---------------------------------------------------------------
 
