@@ -338,11 +338,7 @@ void GL_SetVSync(boolean on)
         assert(context != 0);
         if(context)
         {
-#ifdef MACOS_10_4
-            long params[1] = { on? 1 : 0 };
-#else
             GLint params[1] = { on? 1 : 0 };
-#endif
             CGLSetParameter(context, kCGLCPSwapInterval, params);
         }
     }

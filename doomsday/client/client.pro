@@ -61,9 +61,6 @@ win32 {
 else:macx {
     useFramework(Cocoa)
     useFramework(QTKit)
-
-    # The old 10.4 build uses a Carbon-based Qt.
-    deng_carbonqt: useFramework(Carbon)
 }
 else {
     # Generic Unix.

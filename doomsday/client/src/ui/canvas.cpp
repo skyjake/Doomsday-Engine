@@ -46,15 +46,11 @@
 #include "ui/keycode.h"
 #include "ui/canvas.h"
 
-#ifdef MACOS_10_4
-#  include <ApplicationServices/ApplicationServices.h>
-#endif
-
 #ifndef DENG2_QT_4_7_OR_NEWER // older than 4.7?
 #  define constBits bits
 #endif
 
-#if defined(LIBDENG_CANVAS_XWARPPOINTER) || defined(MACOS_10_4)
+#if defined(LIBDENG_CANVAS_XWARPPOINTER)
 static const int MOUSE_TRACK_INTERVAL = 10; // ms
 #else
 static const int MOUSE_TRACK_INTERVAL = 1; // ms
@@ -515,15 +511,7 @@ void Canvas::recenterMouse()
 
     QPoint screenPoint = mapToGlobal(rect().center()); 
 
-#ifdef MACOS_10_4
-    CGSetLocalEventsSuppressionInterval(0.0);
-#endif
-
     QCursor::setPos(screenPoint);
-
-#ifdef MACOS_10_4
-    CGSetLocalEventsSuppressionInterval(0.25);
-#endif
 
 #endif // __CLIENT__
 }

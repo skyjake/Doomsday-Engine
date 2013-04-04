@@ -23,9 +23,6 @@
 #include <CoreFoundation/CoreFoundation.h>
 #include <ApplicationServices/ApplicationServices.h>
 #include <AppKit/AppKit.h>
-#ifdef MACOS_10_4
-#  include <Carbon/Carbon.h>
-#endif
 #include <vector>
 
 #include "dd_types.h"
@@ -216,17 +213,10 @@ void DisplayMode_Native_Raise(void* nativeHandle)
 {
     assert(nativeHandle);
 
-#ifndef MACOS_10_4
     // Qt uses the Cocoa framework.
     NSView* handle = (NSView*) nativeHandle;
     NSWindow* wnd = [handle window];
     [wnd setLevel:CGShieldingWindowLevel()];
-#else
-    // Qt uses the Carbon framework.
-    WindowRef wnd = HIViewGetWindow((HIViewRef) nativeHandle);
-    WindowGroupRef wndGroup = GetWindowGroup(wnd);
-    SetWindowGroupLevel(wndGroup, CGShieldingWindowLevel());
-#endif
 }
 
 void DisplayMode_Native_GetColorTransfer(displaycolortransfer_t* colors)

@@ -39,10 +39,6 @@ class CanvasWindow;
 //#  define LIBDENG_CANVAS_XWARPPOINTER
 #endif
 
-#ifdef MACOS_10_4
-#  define LIBDENG_CANVAS_TRACK_WITH_MOUSE_MOVE_EVENTS
-#endif
-
 /**
  * Drawing canvas with an OpenGL context and window surface. Each CanvasWindow
  * creates one Canvas instance on which to draw. Buffer swapping must be done
