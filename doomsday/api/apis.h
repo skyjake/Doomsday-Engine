@@ -70,8 +70,8 @@ enum {
     DE_API_INTERNAL_DATA_v1     = 1000,    // 1.10
     DE_API_INTERNAL_DATA        = DE_API_INTERNAL_DATA_v1,
 
-    DE_API_MAP_v1               = 1100,    // 1.10
-    DE_API_MAP                  = DE_API_MAP_v1,
+    DE_API_MAP_v2               = 1101,    // 1.11
+    DE_API_MAP                  = DE_API_MAP_v2,
 
     DE_API_MAP_EDIT_v1          = 1200,    // 1.10
     DE_API_MAP_EDIT             = DE_API_MAP_EDIT_v1,

@@ -217,7 +217,7 @@ static int RIT_ShadowBspLeafLinker(BspLeaf *bspLeaf, void *context)
 
 void Rend_RadioInitForMap()
 {
-    DENG_ASSERT(theMap);
+    DENG_ASSERT(theMap != 0);
 
     Time begunAt;
 
@@ -249,32 +249,28 @@ void Rend_RadioInitForMap()
         if(!Rend_RadioLineCastsShadow(*line)) continue;
 
         // For each side of the line.
-        for(uint j = 0; j < 2; ++j)
+        for(uint i = 0; i < 2; ++i)
         {
-            LineDef::Side &side = line->side(j);
+            LineDef::Side &side = line->side(i);
 
             if(!side.hasSector() || !side.hasSideDef()) continue;
 
-            Vertex &vtx0 = line->vertex(j);
-            Vertex &vtx1 = line->vertex(j^1);
-            LineOwner &vo0 = line->vertexOwner(j)->next();
-            LineOwner &vo1 = line->vertexOwner(j^1)->prev();
+            Vertex &vtx0 = line->vertex(i);
+            Vertex &vtx1 = line->vertex(i^1);
+            LineOwner &vo0 = line->vertexOwner(i)->next();
+            LineOwner &vo1 = line->vertexOwner(i^1)->prev();
+
+            V2d_CopyBox(bounds.arvec2, line->aaBox().arvec2);
 
             // Use the extended points, they are wider than inoffsets.
-            V2d_Copy(point, vtx0.origin());
-            V2d_InitBox(bounds.arvec2, point);
-
-            V2d_Sum(point, point, vo0.extendedShadowOffset());
+            V2d_Sum(point, vtx0.origin(), vo0.extendedShadowOffset());
             V2d_AddToBox(bounds.arvec2, point);
 
-            V2d_Copy(point, vtx1.origin());
-            V2d_AddToBox(bounds.arvec2, point);
-
-            V2d_Sum(point, point, vo1.extendedShadowOffset());
+            V2d_Sum(point, vtx1.origin(), vo1.extendedShadowOffset());
             V2d_AddToBox(bounds.arvec2, point);
 
             parms.line = line;
-            parms.side = j;
+            parms.side = i;
 
             // Link the shadowing line to all the BspLeafs whose axis-aligned
             // bounding box intersects 'bounds'.

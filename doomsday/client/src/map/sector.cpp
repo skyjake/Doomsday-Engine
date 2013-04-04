@@ -33,7 +33,6 @@ Sector::Sector() : MapElement(DMU_SECTOR)
 {
     _frameFlags = 0;
     _validCount = 0;
-    std::memset(&_aaBox, 0, sizeof(_aaBox));
     _roughArea = 0;
     _lightLevel = 0;
     _oldLightLevel = 0;
@@ -151,14 +150,12 @@ void Sector::updateAABox()
     QListIterator<LineDef *> lineIt(_lines);
 
     LineDef *line = lineIt.next();
-    V2d_InitBox(_aaBox.arvec2, line->aaBox().min);
-    V2d_AddToBox(_aaBox.arvec2, line->aaBox().max);
+    V2d_CopyBox(_aaBox.arvec2, line->aaBox().arvec2);
 
     while(lineIt.hasNext())
     {
         line = lineIt.next();
-        V2d_AddToBox(_aaBox.arvec2, line->aaBox().min);
-        V2d_AddToBox(_aaBox.arvec2, line->aaBox().max);
+        V2d_UniteBox(_aaBox.arvec2, line->aaBox().arvec2);
     }
 }
 

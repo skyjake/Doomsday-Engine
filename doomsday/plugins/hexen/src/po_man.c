@@ -221,12 +221,12 @@ boolean EV_RotatePoly(LineDef *line, byte *args, int direction,
 void T_MovePoly(void *polyThinker)
 {
     polyevent_t *pe = polyThinker;
-    unsigned int        absSpeed;
-    Polyobj*            po = P_GetPolyobj(pe->polyobj);
+    Polyobj *po = P_GetPolyobj(pe->polyobj);
 
     if(P_PolyobjMoveXY(po, pe->speed[MX], pe->speed[MY]))
     {
-        absSpeed = abs(pe->intSpeed);
+        uint const absSpeed = abs(pe->intSpeed);
+
         pe->dist -= absSpeed;
         if(pe->dist <= 0)
         {
@@ -242,33 +242,27 @@ void T_MovePoly(void *polyThinker)
         if(pe->dist < absSpeed)
         {
             pe->intSpeed = pe->dist * (pe->intSpeed < 0 ? -1 : 1);
+
             pe->speed[MX] = FIX2FLT(FixedMul(pe->intSpeed, finecosine[pe->fangle]));
             pe->speed[MY] = FIX2FLT(FixedMul(pe->intSpeed, finesine[pe->fangle]));
         }
     }
 }
 
-boolean EV_MovePoly(LineDef* line, byte* args, boolean timesEight,
-                    boolean overRide)
+boolean EV_MovePoly(LineDef *line, byte *args, boolean timesEight,
+                    boolean override)
 {
-    int                 mirror, polyNum;
-    polyevent_t*        pe;
-    Polyobj*            po;
-    angle_t             angle;
+    int polyNum = args[0];
+    Polyobj *po = P_GetPolyobj(polyNum);
+    polyevent_t *pe;
+    angle_t angle;
+    int mirror;
 
-    polyNum = args[0];
-    po = P_GetPolyobj(polyNum);
-    if(po)
-    {
-        if(po->specialData && !overRide)
-        {   // Is already moving.
-            return false;
-        }
-    }
-    else
-    {
-        Con_Error("EV_MovePoly:  Invalid polyobj num: %d\n", polyNum);
-    }
+    DENG_ASSERT(po != 0);
+
+    // Already moving?
+    if(po->specialData && !override)
+        return false;
 
     pe = Z_Calloc(sizeof(*pe), PU_MAP, 0);
     pe->thinker.function = T_MovePoly;
@@ -298,10 +292,10 @@ boolean EV_MovePoly(LineDef* line, byte* args, boolean timesEight,
     while((mirror = getPolyobjMirror(polyNum)) != 0)
     {
         po = P_GetPolyobj(mirror);
-        if(po && po->specialData && !overRide)
-        {                       // mirroring po is already in motion
+
+        // Is the mirror already in motion?
+        if(po && po->specialData && !override)
             break;
-        }
 
         pe = Z_Calloc(sizeof(*pe), PU_MAP, 0);
         pe->thinker.function = T_MovePoly;
@@ -332,9 +326,8 @@ boolean EV_MovePoly(LineDef* line, byte* args, boolean timesEight,
 
 void T_PolyDoor(void *polyDoorThinker)
 {
-    polydoor_t* pd = polyDoorThinker;
-    int                 absSpeed;
-    Polyobj*            po = P_GetPolyobj(pd->polyobj);
+    polydoor_t *pd = polyDoorThinker;
+    Polyobj *po = P_GetPolyobj(pd->polyobj);
 
     if(pd->tics)
     {
@@ -353,7 +346,7 @@ void T_PolyDoor(void *polyDoorThinker)
     case PODOOR_SLIDE:
         if(P_PolyobjMoveXY(po, pd->speed[MX], pd->speed[MY]))
         {
-            absSpeed = abs(pd->intSpeed);
+            int absSpeed = abs(pd->intSpeed);
             pd->dist -= absSpeed;
             if(pd->dist <= 0)
             {
@@ -400,7 +393,7 @@ void T_PolyDoor(void *polyDoorThinker)
     case PODOOR_SWING:
         if(P_PolyobjRotate(po, pd->intSpeed))
         {
-            absSpeed = abs(pd->intSpeed);
+            int absSpeed = abs(pd->intSpeed);
             if(pd->dist == -1)
             {   // Perpetual polyobj.
                 return;
@@ -551,24 +544,23 @@ static int getPolyobjMirror(uint poly)
 
     for(i = 0; i < numpolyobjs; ++i)
     {
-        Polyobj* po = P_GetPolyobj(i | 0x80000000);
+        Polyobj *po = P_GetPolyobj(i | 0x80000000);
 
         if(po->tag == poly)
         {
-            LineDef* line = po->lines[0];
-            return P_ToXLine(line)->arg2;
+            return P_ToXLine(P_PolyobjFirstLine(po))->arg2;
         }
     }
 
     return 0;
 }
 
-static void thrustMobj(struct mobj_s* mo, void* linep, void* pop)
+static void thrustMobj(struct mobj_s *mo, void *linep, void *pop)
 {
-    LineDef* line = (LineDef*) linep;
-    Polyobj* po = (Polyobj*) pop;
+    LineDef *line = (LineDef *) linep;
+    Polyobj *po = (Polyobj *) pop;
     coord_t thrust[2], force;
-    polyevent_t* pe;
+    polyevent_t *pe;
     uint thrustAn;
 
     // Clients do no polyobj <-> mobj interaction.
@@ -581,7 +573,7 @@ static void thrustMobj(struct mobj_s* mo, void* linep, void* pop)
 
     thrustAn = (P_GetAnglep(line, DMU_ANGLE) - ANGLE_90) >> ANGLETOFINESHIFT;
 
-    pe = (polyevent_t*) po->specialData;
+    pe = (polyevent_t *) po->specialData;
     if(pe)
     {
         if(pe->thinker.function == (thinkfunc_t) T_RotatePoly)
@@ -619,7 +611,7 @@ static void thrustMobj(struct mobj_s* mo, void* linep, void* pop)
  */
 void PO_InitForMap(void)
 {
-    uint                i;
+    uint i;
 
     Con_Message("PO_InitForMap: Initializing polyobjects.");
 
@@ -628,8 +620,8 @@ void PO_InitForMap(void)
     for(i = 0; i < numpolyobjs; ++i)
     {
         uint j;
-        const mapspot_t* spot;
-        Polyobj* po;
+        mapspot_t const *spot;
+        Polyobj *po;
 
         po = P_GetPolyobj(i | 0x80000000);
 
@@ -669,7 +661,7 @@ void PO_InitForMap(void)
 
 boolean PO_Busy(int polyobj)
 {
-    Polyobj* po = P_GetPolyobj(polyobj);
+    Polyobj *po = P_GetPolyobj(polyobj);
 
     if(po && po->specialData != NULL)
         return true;

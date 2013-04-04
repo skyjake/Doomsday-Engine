@@ -276,16 +276,15 @@ private:
         if(Polyobj *po = bspLeaf.firstPolyobj())
         {
             // Check polyobj lines.
-            for(LineDef **lineIter = po->lines; *lineIter; lineIter++)
+            foreach(LineDef *line, po->lines())
             {
-                LineDef &line = **lineIter;
-                if(line.validCount() != validCount)
-                {
-                    line._validCount = validCount;
+                if(line->validCount() == validCount)
+                    continue;
 
-                    if(!crossLine(line, FRONT))
-                        return false; // Stop iteration.
-                }
+                line->_validCount = validCount;
+
+                if(!crossLine(*line, FRONT))
+                    return false; // Stop iteration.
             }
         }
 

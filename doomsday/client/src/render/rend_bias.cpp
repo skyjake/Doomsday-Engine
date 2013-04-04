@@ -299,7 +299,7 @@ void SB_InitForMap(char const *uniqueID)
 
     foreach(Polyobj *polyobj, theMap->polyobjs())
     {
-        numVertIllums += polyobj->lineCount * 3 * 4;
+        numVertIllums += polyobj->lineCount() * 3 * 4;
     }
 
     // Allocate and initialize the vertexillum_ts.
@@ -329,7 +329,7 @@ void SB_InitForMap(char const *uniqueID)
     foreach(Sector *sector, theMap->sectors())
     foreach(BspLeaf *bspLeaf, sector->bspLeafs())
     {
-        for(uint j = 0; j < sector->planeCount(); ++j)
+        for(uint i = 0; i < sector->planeCount(); ++i)
         {
             biassurface_t *bsuf = SB_CreateSurface();
 
@@ -338,17 +338,16 @@ void SB_InitForMap(char const *uniqueID)
             illums += bsuf->size;
 
             DENG2_ASSERT(bspLeaf->_bsuf != 0);
-            bspLeaf->_bsuf[j] = bsuf;
+            bspLeaf->_bsuf[i] = bsuf;
         }
     }
 
     foreach(Polyobj *polyobj, theMap->polyobjs())
-    for(uint i = 0; i < polyobj->lineCount; ++i)
+    foreach(LineDef *line, polyobj->lines())
     {
-        LineDef *line = polyobj->lines[i];
         HEdge &hedge = line->front().leftHEdge();
 
-        for(int k = 0; k < 3; ++k)
+        for(int i = 0; i < 3; ++i)
         {
             biassurface_t *bsuf = SB_CreateSurface();
 
@@ -356,7 +355,7 @@ void SB_InitForMap(char const *uniqueID)
             bsuf->illum = illums;
             illums += 4;
 
-            hedge._bsuf[k] = bsuf;
+            hedge._bsuf[i] = bsuf;
         }
     }
 

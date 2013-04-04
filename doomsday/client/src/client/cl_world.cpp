@@ -455,19 +455,17 @@ clplane_t *GameMap::newClPlane(uint sectorIndex, clplanetype_t type, coord_t des
     exit(1); // Unreachable.
 }
 
-void Cl_PolyMoverThinker(clpolyobj_t* mover)
+void Cl_PolyMoverThinker(clpolyobj_t *mover)
 {
-    Polyobj* po;
-    float dx, dy, dist;
-    assert(mover);
+    DENG_ASSERT(mover != 0);
 
-    po = mover->polyobj;
+    Polyobj *po = mover->polyobj;
     if(mover->move)
     {
         // How much to go?
-        dx = po->dest[VX] - po->origin[VX];
-        dy = po->dest[VY] - po->origin[VY];
-        dist = M_ApproxDistance(dx, dy);
+        coord_t dx = po->dest[VX] - po->origin[VX];
+        coord_t dy = po->dest[VY] - po->origin[VY];
+        coord_t dist = M_ApproxDistance(dx, dy);
         if(dist <= po->speed || FEQUAL(po->speed, 0))
         {
             // We'll arrive at the destination.

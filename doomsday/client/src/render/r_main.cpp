@@ -530,9 +530,9 @@ static void R_UpdateMap()
 
     /// @todo Is this even necessary?
     foreach(Polyobj *polyobj, theMap->polyobjs())
-    for(LineDef **lineIt = polyobj->lines; *lineIt; lineIt++)
+    foreach(LineDef *line, polyobj->lines())
     {
-        (*lineIt)->frontSideDef().middle().markAsNeedingDecorationUpdate();
+        line->frontSideDef().middle().markAsNeedingDecorationUpdate();
     }
 
     theMap->buildSurfaceLists();

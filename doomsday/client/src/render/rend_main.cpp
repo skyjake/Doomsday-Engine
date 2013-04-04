@@ -2006,10 +2006,9 @@ static void Rend_MarkSegsFacingFront(BspLeaf *leaf)
 
     if(Polyobj *po = leaf->firstPolyobj())
     {
-        for(uint i = 0; i < po->lineCount; ++i)
+        foreach(LineDef *line, po->lines())
         {
-            LineDef *line = po->lines[i];
-            HEdge &hedge  = line->front().leftHEdge();
+            HEdge &hedge = line->front().leftHEdge();
 
             // Which way should it be facing?
             if(!(viewFacingDot(hedge.v1Origin(), hedge.v2Origin()) < 0))
@@ -2038,10 +2037,9 @@ static void occludeFrontFacingSegsInBspLeaf(BspLeaf const *bspLeaf)
 
     if(Polyobj *po = bspLeaf->firstPolyobj())
     {
-        for(uint i = 0; i < po->lineCount; ++i)
+        foreach(LineDef *line, po->lines())
         {
-            LineDef *line = po->lines[i];
-            HEdge &hedge  = line->front().leftHEdge();
+            HEdge &hedge = line->front().leftHEdge();
 
             if(!(hedge._frameFlags & HEDGEINF_FACINGFRONT)) continue;
 
@@ -2691,9 +2689,8 @@ static void Rend_RenderPolyobjs()
     Polyobj *po = leaf->firstPolyobj();
     if(!po) return;
 
-    for(uint i = 0; i < po->lineCount; ++i)
+    foreach(LineDef *line, po->lines())
     {
-        LineDef *line = po->lines[i];
         HEdge &hedge = line->front().leftHEdge();
 
         // Let's first check which way this hedge is facing.
@@ -3080,10 +3077,8 @@ void Rend_RenderSurfaceVectors()
         Sector const &sector = polyobj->bspLeaf->sector();
         float zPos = sector.floor().height() + (sector.ceiling().height() - sector.floor().height())/2;
 
-        for(uint i = 0; i < polyobj->lineCount; ++i)
+        foreach(LineDef *line, polyobj->lines())
         {
-            LineDef *line = polyobj->lines[i];
-
             V3f_Set(origin, (line->v2Origin()[VX] + line->v1Origin()[VX])/2,
                             (line->v2Origin()[VY] + line->v1Origin()[VY])/2, zPos);
             drawSurfaceTangentSpaceVectors(&line->frontSideDef().middle(), origin);
@@ -3329,7 +3324,16 @@ static int drawVertex1(LineDef *li, void *context)
 static int drawPolyObjVertexes(Polyobj *po, void * /*context*/)
 {
     DENG_ASSERT(po != 0);
-    return po->lineIterator(drawVertex1, po);
+    foreach(LineDef *line, po->lines())
+    {
+        if(line->validCount() == validCount)
+            continue;
+
+        line->_validCount = validCount;
+        int result = drawVertex1(line, po);
+        if(result) return result;
+    }
+    return false; // Continue iteration.
 }
 
 /**
@@ -3401,7 +3405,6 @@ void Rend_Vertexes()
             drawVertexPoint(vertex, bottom, (1 - dist / MAX_VERTEX_POINT_DIST) * 2);
         }
     }
-
 
     if(devVertexIndices)
     {
@@ -3911,10 +3914,8 @@ static void Rend_RenderBoundingBoxes()
 
             Rend_DrawBBox(pos, width, length, height, 0, yellow, alpha, .08f, true);
 
-            for(uint i = 0; i < polyobj->lineCount; ++i)
+            foreach(LineDef *line, polyobj->lines())
             {
-                LineDef *line = polyobj->lines[i];
-
                 coord_t pos[3] = { (line->v2Origin()[VX] + line->v1Origin()[VX])/2,
                                    (line->v2Origin()[VY] + line->v1Origin()[VY])/2,
                                    sec.floor().height() };

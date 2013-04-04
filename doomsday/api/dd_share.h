@@ -789,7 +789,7 @@ typedef struct povertex_s {
 #define DD_BASE_POLYOBJ_ELEMENTS() \
     DD_BASE_DDMOBJ_ELEMENTS() \
 \
-    BspLeaf *bspLeaf; /* bspLeaf in which this resides */ \
+    BspLeaf        *bspLeaf; /* bspLeaf in which this resides */ \
     unsigned int    idx; /* Idx of polyobject. */ \
     int             tag; /* Reference tag. */ \
     int             validCount; \
@@ -798,10 +798,10 @@ typedef struct povertex_s {
     angle_t         angle; \
     angle_t         destAngle; /* Destination angle. */ \
     angle_t         angleSpeed; /* Rotation speed. */ \
-    LineDef** lines; \
-    unsigned int    lineCount; \
-    struct povertex_s* originalPts; /* Used as the base for the rotations. */ \
-    struct povertex_s* prevPts; /* Use to restore the old point values. */ \
+    void           *_lines; \
+    void           *_uniqueVertexes; \
+    struct povertex_s *originalPts; /* Used as the base for the rotations. */ \
+    struct povertex_s *prevPts; /* Use to restore the old point values. */ \
     double          speed; /* Movement speed. */ \
     boolean         crush; /* Should the polyobj attempt to crush mobjs? */ \
     int             seqType; \

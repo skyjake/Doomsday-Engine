@@ -2877,7 +2877,7 @@ static void SV_WritePolyObj(Polyobj* po)
 
 static int SV_ReadPolyObj(void)
 {
-    float deltaX, deltaY;
+    coord_t deltaX, deltaY;
     angle_t angle;
     Polyobj* po;
     int ver;

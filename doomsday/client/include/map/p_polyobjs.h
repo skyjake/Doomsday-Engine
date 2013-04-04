@@ -27,7 +27,7 @@
  */
 void P_PolyobjCallback(struct mobj_s *mobj, LineDef *line, Polyobj *polyobj);
 
-void P_PolyobjChanged(Polyobj *po);
+//void P_PolyobjChanged(Polyobj *po);
 
 /**
  * Lookup a Polyobj on the current map by the base mobj.

@@ -32,7 +32,7 @@ using namespace de;
 
 bool LineDef::Side::hasSector() const
 {
-    return !!_sector;
+    return _sector != 0;
 }
 
 Sector &LineDef::Side::sector() const
@@ -47,7 +47,7 @@ Sector &LineDef::Side::sector() const
 
 bool LineDef::Side::hasSideDef() const
 {
-    return !!_sideDef;
+    return _sideDef != 0;
 }
 
 SideDef &LineDef::Side::sideDef() const
@@ -381,11 +381,8 @@ void LineDef::unitVector(pvec2f_t unitvec) const
 
 void LineDef::updateAABox()
 {
-    _aaBox.minX = de::min(_v[1]->origin()[VX], _v[0]->origin()[VX]);
-    _aaBox.minY = de::min(_v[1]->origin()[VY], _v[0]->origin()[VY]);
-
-    _aaBox.maxX = de::max(_v[1]->origin()[VX], _v[0]->origin()[VX]);
-    _aaBox.maxY = de::max(_v[1]->origin()[VY], _v[0]->origin()[VY]);
+    V2d_InitBox(_aaBox.arvec2, _v[0]->origin());
+    V2d_AddToBox(_aaBox.arvec2, _v[1]->origin());
 }
 
 void LineDef::lightLevelDelta(int side, float *deltaL, float *deltaR) const

@@ -2586,15 +2586,13 @@ static AABoxd findMapBounds2(GameMap *map)
 
         if(initialized)
         {
-            V2d_AddToBox(bounds.arvec2, lineAABox.min);
+            V2d_UniteBox(bounds.arvec2, lineAABox.arvec2);
         }
         else
         {
-            V2d_InitBox(bounds.arvec2, lineAABox.min);
+            V2d_CopyBox(bounds.arvec2, lineAABox.arvec2);
             initialized = true;
         }
-
-        V2d_AddToBox(bounds.arvec2, lineAABox.max);
     }
 
     if(!initialized)

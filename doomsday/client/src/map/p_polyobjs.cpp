@@ -39,27 +39,6 @@ DENG_EXTERN_C void P_SetPolyobjCallback(void (*func) (struct mobj_s *, void *, v
     po_callback = func;
 }
 
-void P_PolyobjChanged(Polyobj *po)
-{
-#ifdef __CLIENT__
-    DENG_ASSERT(po);
-
-    for(LineDef **lineIter = po->lines; *lineIter; lineIter++)
-    {
-        LineDef *line = *lineIter;
-        HEdge &hedge = line->front().leftHEdge();
-
-        // Shadow bias must be told.
-        for(int i = 0; i < 3; ++i)
-        {
-            SB_SurfaceMoved(&hedge.biasSurfaceForGeometryGroup(i));
-        }
-    }
-#else // !__CLIENT__
-    DENG2_UNUSED(po);
-#endif
-}
-
 #undef P_PolyobjUnlink
 DENG_EXTERN_C void P_PolyobjUnlink(Polyobj *po)
 {
@@ -116,4 +95,12 @@ DENG_EXTERN_C boolean P_PolyobjRotate(Polyobj *po, angle_t angle)
 {
     if(!po) return false;
     return po->rotate(angle);
+}
+
+#undef P_PolyobjFirstLine
+DENG_EXTERN_C LineDef *P_PolyobjFirstLine(Polyobj *po)
+{
+    if(!po) return 0;
+    /// @todo Do not assume polyobj is from the CURRENT map.
+    return po->lines()[0];
 }

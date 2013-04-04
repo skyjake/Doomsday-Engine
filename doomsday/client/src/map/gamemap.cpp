@@ -205,6 +205,41 @@ DENG2_PIMPL(GameMap)
         }
     }
 
+    void finishLines()
+    {
+        foreach(LineDef *line, self._lines)
+        {
+            line->updateSlopeType();
+            line->updateAABox();
+
+            line->_length = V2d_Length(line->_direction);
+            line->_angle = bamsAtan2(int( line->_direction[VY] ),
+                                     int( line->_direction[VX] ));
+
+            for(int i = 0; i < 2; ++i)
+            {
+                line->side(i).updateSurfaceTangents();
+                line->side(i).updateSoundEmitterOrigins();
+            }
+        }
+    }
+
+    void finishPolyobjs()
+    {
+        foreach(Polyobj *po, self._polyobjs)
+        {
+            uint n = 0;
+            foreach(Vertex *vertex, po->uniqueVertexes())
+            {
+                // The originalPts are relative to the polyobj origin.
+                vec2d_t const &vertexOrigin = vertex->origin();
+                po->originalPts[n].origin[VX] = vertexOrigin[VX] - po->origin[VX];
+                po->originalPts[n].origin[VY] = vertexOrigin[VY] - po->origin[VY];
+                n++;
+            }
+        }
+    }
+
     void buildSectorLineLists()
     {
         LOG_VERBOSE("Building Sector line lists...");
@@ -290,7 +325,6 @@ DENG2_PIMPL(GameMap)
         {
             sector->updateAABox();
             sector->updateRoughArea();
-            sector->updateSoundEmitterOrigin();
 
             /*
              * Chain sound emitters (ddmobj_base_t) owned by all Surfaces in the
@@ -327,35 +361,11 @@ DENG2_PIMPL(GameMap)
                     sector->linkSoundEmitter(side.top().soundEmitter());
                 }
             }
+
+            sector->updateSoundEmitterOrigin();
         }
     }
 
-    void finishLines()
-    {
-        foreach(LineDef *line, self._lines)
-        {
-            LineDef::Side &front = line->front();
-
-            if(!front._leftHEdge) continue;
-
-            /// @todo It should no longer be necessary to update the vtx ptrs here. -ds
-            line->_v[0] = &front.leftHEdge().v1();
-            line->_v[1] = &front.rightHEdge().v2();
-
-            line->updateSlopeType();
-            line->updateAABox();
-
-            line->_length = V2d_Length(line->_direction);
-            line->_angle = bamsAtan2(int( line->_direction[VY] ),
-                                     int( line->_direction[VX] ));
-
-            for(int i = 0; i < 2; ++i)
-            {
-                line->side(i).updateSurfaceTangents();
-                line->side(i).updateSoundEmitterOrigins();
-            }
-        }
-    }
 
     void finishPlanes()
     {
@@ -662,29 +672,26 @@ bool GameMap::buildBsp()
 void GameMap::finishMapElements()
 {
     d->finishLines();
+    d->finishPolyobjs();
     d->finishSectors();
     d->finishPlanes();
 }
 
-/// @todo Don't use sector bounds here, derive from lines instead. -ds
 void GameMap::updateBounds()
 {
     bool isFirst = true;
-    foreach(Sector *sector, _sectors)
+    foreach(LineDef *line, _lines)
     {
-        // Sectors with no lines have invalid bounds; skip them.
-        if(!sector->lineCount()) continue;
-
         if(isFirst)
         {
-            // The first sector is used as is.
-            V2d_CopyBox(d->bounds.arvec2, sector->aaBox().arvec2);
+            // The first line's bounds are used as is.
+            V2d_CopyBox(d->bounds.arvec2, line->aaBox().arvec2);
             isFirst = false;
         }
         else
         {
             // Expand the bounding box.
-            V2d_UniteBox(d->bounds.arvec2, sector->aaBox().arvec2);
+            V2d_UniteBox(d->bounds.arvec2, line->aaBox().arvec2);
         }
     }
 }
@@ -923,16 +930,15 @@ void GameMap::initPolyobjs()
 {
     foreach(Polyobj *po, _polyobjs)
     {
-        vec2d_t avg; /// < Used to find a polyobj's center, and hence BSP leaf.
-        V2d_Set(avg, 0, 0);
-
-        for(LineDef **lineIter = po->lines; *lineIter; lineIter++)
+        // Find the center point of the polyobj.
+        vec2d_t avg; V2d_Set(avg, 0, 0);
+        foreach(LineDef *line, po->lines())
         {
-            LineDef *line = *lineIter;
             V2d_Sum(avg, avg, line->v1Origin());
         }
-        V2d_Scale(avg, 1.f / po->lineCount);
+        V2d_Scale(avg, 1.f / po->lineCount());
 
+        // Given the center point determine in which BSP leaf the polyobj resides.
         if(BspLeaf *bspLeaf = P_BspLeafAtPoint(avg))
         {
             if(bspLeaf->hasPolyobj())
@@ -1445,8 +1451,16 @@ struct poiterparams_t
 int PTR_PolyobjLines(Polyobj *po, void* context)
 {
     poiterparams_t *args = (poiterparams_t *) context;
+    foreach(LineDef *line, po->lines())
+    {
+        if(line->validCount() == validCount)
+            continue;
 
-    return po->lineIterator(args->func, args->parms);
+        line->_validCount = validCount;
+        int result = args->func(line, args->parms);
+        if(result) return result;
+    }
+    return false; // Continue iteration.
 }
 
 /*
@@ -1700,7 +1714,16 @@ struct iteratepolyobjlines_params_t
 static int iteratePolyobjLines(Polyobj *po, void *parameters = 0)
 {
     iteratepolyobjlines_params_t const *p = (iteratepolyobjlines_params_t *)parameters;
-    return po->lineIterator(p->callback, p->parms);
+    foreach(LineDef *line, po->lines())
+    {
+        if(line->validCount() == validCount)
+            continue;
+
+        line->_validCount = validCount;
+        int result = p->callback(line, p->parms);
+        if(result) return result;
+    }
+    return false; // Continue iteration.
 }
 
 static int collectPolyobjLineIntercepts(uint const block[2], void *parameters)

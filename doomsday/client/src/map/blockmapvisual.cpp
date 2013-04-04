@@ -55,7 +55,7 @@ static int rendMobj(mobj_t *mo, void * /*parameters*/)
     return false; // Continue iteration.
 }
 
-static int rendLineDef(LineDef *line, void * /*parameters*/)
+static int rendLine(LineDef *line, void * /*parameters*/)
 {
     if(line->validCount() != validCount)
     {
@@ -144,25 +144,34 @@ static int rendBspLeaf(BspLeaf *bspLeaf, void * /*parameters*/)
     return false; // Continue iteration.
 }
 
-int rendCellLineDefs(Blockmap* blockmap, uint const coords[2], void* parameters)
+int rendCellLines(Blockmap* blockmap, uint const coords[2], void* parameters)
 {
     glBegin(GL_LINES);
-        Blockmap_IterateCellObjects(blockmap, coords, (int (*)(void*,void*)) rendLineDef, parameters);
+        Blockmap_IterateCellObjects(blockmap, coords, (int (*)(void*,void*)) rendLine, parameters);
     glEnd();
     return false; // Continue iteration.
 }
 
-int rendCellPolyobjLineDefs(void *object, void *parameters)
+int rendCellPolyobjLines(void *object, void *parameters)
 {
     Polyobj *po = (Polyobj *)object;
     DENG_ASSERT(po != 0);
-    return po->lineIterator(rendLineDef, parameters);
+    foreach(LineDef *line, po->lines())
+    {
+        if(line->validCount() == validCount)
+            continue;
+
+        line->_validCount = validCount;
+        int result = rendLine(line, parameters);
+        if(result) return result;
+    }
+    return false; // Continue iteration.
 }
 
 int rendCellPolyobjs(Blockmap* blockmap, uint const coords[2], void* parameters)
 {
     glBegin(GL_LINES);
-        Blockmap_IterateCellObjects(blockmap, coords, (int (*)(void*,void*)) rendCellPolyobjLineDefs, parameters);
+        Blockmap_IterateCellObjects(blockmap, coords, (int (*)(void*,void*)) rendCellPolyobjLines, parameters);
     glEnd();
     return false; // Continue iteration.
 }
@@ -532,7 +541,7 @@ void Rend_BlockmapDebug(void)
         if(!map->lineBlockmap) return;
 
         blockmap = map->lineBlockmap;
-        cellDrawer = rendCellLineDefs;
+        cellDrawer = rendCellLines;
         objectTypeName = "LineDef";
         break;
 

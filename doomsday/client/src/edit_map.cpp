@@ -822,44 +822,45 @@ static void hardenPolyobjs(GameMap &dest, EditableMap &e_map)
         void *region = M_Calloc(POLYOBJ_SIZE);
         Polyobj *destP = new (region) Polyobj;
 
-        destP->idx = dest._polyobjs.count(); // 0-based index.
-
-        destP->crush = srcP->crush;
-        destP->tag = srcP->tag;
-        destP->seqType = srcP->seqType;
+        destP->idx        = dest._polyobjs.count(); // 0-based index.
+        destP->crush      = srcP->crush;
+        destP->tag        = srcP->tag;
+        destP->seqType    = srcP->seqType;
         destP->origin[VX] = srcP->origin[VX];
         destP->origin[VY] = srcP->origin[VY];
 
-        destP->lineCount = srcP->lineCount;
-
-        destP->originalPts = (povertex_t *) Z_Malloc(destP->lineCount * sizeof(povertex_t), PU_MAP, 0);
-        destP->prevPts     = (povertex_t *) Z_Malloc(destP->lineCount * sizeof(povertex_t), PU_MAP, 0);
-
         // Create a hedge for each line of this polyobj.
-        // TODO: Polyobj has ownership, must free it.
-        HEdge *hedges = new HEdge[destP->lineCount];
+        /// @todo fixme: Polyobj has ownership, must free it.
+        HEdge *hedges = new HEdge[srcP->lineCount()];
 
-        destP->lines = (LineDef **) Z_Malloc(sizeof(*destP->lines) * (destP->lineCount + 1), PU_MAP, 0);
-        for(uint i = 0; i < destP->lineCount; ++i)
+        DENG_ASSERT(static_cast<Polyobj::Lines *>(destP->_lines)->isEmpty());
+#ifdef DENG2_QT_4_7_OR_NEWER
+        static_cast<Polyobj::Lines *>(destP->_lines)->reserve(srcP->lineCount());
+#endif
+        uint n = 0;
+        foreach(LineDef *line, srcP->lines())
         {
-            LineDef *line = dest.lines().at(srcP->lines[i]->_origIndex - 1);
-            HEdge *hedge = &hedges[i];
-
             // This line belongs to a polyobj.
             line->_inFlags |= LF_POLYOBJ;
 
-            //hedge->header.type = DMU_HEDGE;
-            hedge->_line = line;
-            hedge->_length = V2d_Distance(line->v2Origin(), line->v1Origin());
-            hedge->_twin = NULL;
+            HEdge *hedge = &hedges[n];
+            hedge->_v[0]    = &line->v1();
+            hedge->_v[1]    = &line->v2();
+            hedge->_line    = line;
+            hedge->_length  = line->length();
+            hedge->_sector  = line->frontSectorPtr();
+            hedge->_twin    = 0;
             hedge->_bspLeaf = 0;
-            hedge->_sector = line->frontSectorPtr();
 
-            line->front()._leftHEdge = line->front()._rightHEdge = hedge;
+            line->front()._leftHEdge =
+                line->front()._rightHEdge = hedge;
 
-            destP->lines[i] = line;
+            static_cast<Polyobj::Lines *>(destP->_lines)->append(line);
+
+            n++;
         }
-        destP->lines[destP->lineCount] = 0; // Terminate.
+
+        destP->buildUniqueVertexes();
 
         // Add this polyobj to the global list.
         dest._polyobjs.append(destP);
@@ -1256,25 +1257,6 @@ boolean MPE_End()
      */
     bool builtOK = gamemap->buildBsp();
 
-    // Finish the polyobjs (after the vertexes are hardened).
-    foreach(Polyobj *po, gamemap->polyobjs())
-    {
-        uint n = 0;
-        for(LineDef **lineIter = po->lines; *lineIter; lineIter++, n++)
-        {
-            LineDef *line = *lineIter;
-            HEdge &hedge = line->front().leftHEdge();
-
-            hedge._v[0] = &line->v1();
-            hedge._v[1] = &line->v2();
-
-            // The original Pts are based off the anchor Pt, and are unique
-            // to each hedge, not each linedef.
-            po->originalPts[n].origin[VX] = line->v1Origin()[VX] - po->origin[VX];
-            po->originalPts[n].origin[VY] = line->v1Origin()[VY] - po->origin[VY];
-        }
-    }
-
     // Destroy the rest of editable map, we are finished with it.
     editMap.clear();
 
@@ -1518,17 +1500,14 @@ uint MPE_PolyobjCreate(uint *lines, uint lineCount, int tag, int sequenceType,
     po->origin[VX] = originX;
     po->origin[VY] = originY;
 
-    po->lineCount = lineCount;
-    po->lines = (LineDef **) M_Calloc(sizeof(*po->lines) * (po->lineCount+1));
     for(uint i = 0; i < lineCount; ++i)
     {
         LineDef *line = editMap.lines[lines[i] - 1];
 
         // This line belongs to a polyobj.
         line->_inFlags |= LF_POLYOBJ;
-        po->lines[i] = line;
+        static_cast<Polyobj::Lines *>(po->_lines)->append(line);
     }
-    po->lines[lineCount] = NULL;
 
     return po->buildData.index;
 }

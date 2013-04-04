@@ -150,11 +150,11 @@ static void findBspLeafsAffectingSector(GameMap *map, Sector *sec)
     ownerlist_t bspLeafOwnerList;
     std::memset(&bspLeafOwnerList, 0, sizeof(bspLeafOwnerList));
 
-    AABoxd aaBox = sec->aaBox();
-    aaBox.minX -= 128;
-    aaBox.minY -= 128;
-    aaBox.maxX += 128;
-    aaBox.maxY += 128;
+    AABoxd affectionBounds = sec->aaBox();
+    affectionBounds.minX -= 128;
+    affectionBounds.minY -= 128;
+    affectionBounds.maxX += 128;
+    affectionBounds.maxY += 128;
 
     // LOG_DEBUG("sector %u: min[x:%f, y:%f]  max[x:%f, y:%f]")
     //    << map->sectorIndex(sec)
@@ -164,10 +164,10 @@ static void findBspLeafsAffectingSector(GameMap *map, Sector *sec)
     {
         // Is this BSP leaf close enough?
         if(bspLeaf->sectorPtr() == sec || // leaf is IN this sector
-           (bspLeaf->center()[VX] > aaBox.minX &&
-            bspLeaf->center()[VY] > aaBox.minY &&
-            bspLeaf->center()[VX] < aaBox.maxX &&
-            bspLeaf->center()[VY] < aaBox.maxY))
+           (bspLeaf->center()[VX] > affectionBounds.minX &&
+            bspLeaf->center()[VY] > affectionBounds.minY &&
+            bspLeaf->center()[VX] < affectionBounds.maxX &&
+            bspLeaf->center()[VY] < affectionBounds.maxY))
         {
             // It will contribute to the reverb settings of this sector.
             setBspLeafSectorOwner(&bspLeafOwnerList, bspLeaf);

@@ -45,7 +45,6 @@ BspLeaf::BspLeaf() : MapElement(DMU_BSPLEAF)
     _polyObj = 0;
     _fanBase = 0;
     _shadows = 0;
-    std::memset(&_aaBox, 0, sizeof(_aaBox));
     std::memset(_center, 0, sizeof(_center));
     std::memset(_worldGridOffset, 0, sizeof(_worldGridOffset));
     _bsuf = 0;

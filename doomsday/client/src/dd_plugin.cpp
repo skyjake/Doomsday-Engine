@@ -1,4 +1,4 @@
-/** @file dd_plugin.cpp Plugin subsystem. 
+/** @file dd_plugin.cpp Plugin subsystem.
  * @ingroup base
  *
  * @todo Convert to C++, rename.
@@ -245,12 +245,11 @@ void DD_SetActivePluginId(pluginid_t id)
 int DD_CallHooks(int hookType, int parm, void *data)
 {
     int ret = 0;
-    boolean allGood = true;
+    bool allGood = true;
     pluginid_t oldPlugin = DD_ActivePluginId();
 
     // Try all the hooks.
-    { int i;
-    for(i = 0; i < MAX_HOOKS; ++i)
+    for(int i = 0; i < MAX_HOOKS; ++i)
     {
         if(!hooks[hookType].list[i].func)
             continue;
@@ -258,12 +257,15 @@ int DD_CallHooks(int hookType, int parm, void *data)
         DD_SetActivePluginId(hooks[hookType].list[i].pluginId);
 
         if(hooks[hookType].list[i].func(hookType, parm, data))
-        {   // One hook executed; return nonzero from this routine.
+        {
+            // One hook executed; return nonzero from this routine.
             ret = 1;
         }
         else
+        {
             allGood = false;
-    }}
+        }
+    }
 
     DD_SetActivePluginId(oldPlugin);
 

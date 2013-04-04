@@ -261,6 +261,11 @@ DENG_API_TYPEDEF(Map)
     void            (*PO_Unlink)(struct polyobj_s* po);
 
     /**
+     * Returns a pointer to the first LineDef in the polyobj.
+     */
+    LineDef*        (*PO_FirstLine)(struct polyobj_s* po);
+
+    /**
      * Lookup a Polyobj on the current map by unique ID.
      *
      * @param id  Unique identifier of the Polyobj to be found.
@@ -507,6 +512,7 @@ DENG_API_T(Map);
 #define P_PolyobjRotate                     _api_Map.PO_Rotate
 #define P_PolyobjLink                       _api_Map.PO_Link
 #define P_PolyobjUnlink                     _api_Map.PO_Unlink
+#define P_PolyobjFirstLine                  _api_Map.PO_FirstLine
 #define P_PolyobjByID                       _api_Map.PO_PolyobjByID
 #define P_PolyobjByTag                      _api_Map.PO_PolyobjByTag
 #define P_SetPolyobjCallback                _api_Map.PO_SetCallback

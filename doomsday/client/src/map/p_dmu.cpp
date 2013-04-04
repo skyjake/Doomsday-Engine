@@ -2255,6 +2255,7 @@ DENG_EXTERN_C boolean P_PolyobjMoveXY(Polyobj* polyobj, coord_t x, coord_t y);
 DENG_EXTERN_C boolean P_PolyobjRotate(Polyobj* polyobj, angle_t angle);
 DENG_EXTERN_C void P_PolyobjLink(Polyobj* polyobj);
 DENG_EXTERN_C void P_PolyobjUnlink(Polyobj* polyobj);
+DENG_EXTERN_C LineDef *P_PolyobjFirstLine(Polyobj *polyobj);
 DENG_EXTERN_C Polyobj* P_PolyobjByID(uint id);
 DENG_EXTERN_C Polyobj* P_PolyobjByTag(int tag);
 DENG_EXTERN_C void P_SetPolyobjCallback(void (*func) (struct mobj_s*, void*, void*));
@@ -2341,6 +2342,7 @@ DENG_DECLARE_API(Map) =
     P_PolyobjRotate,
     P_PolyobjLink,
     P_PolyobjUnlink,
+    P_PolyobjFirstLine,
     P_PolyobjByID,
     P_PolyobjByTag,
     P_SetPolyobjCallback,

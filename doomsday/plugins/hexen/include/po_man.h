@@ -54,7 +54,7 @@ typedef struct {
     int             intSpeed;
     unsigned int    dist;
     int             fangle;
-    float           speed[2]; // for sliding walls
+    coord_t         speed[2]; // for sliding doors
 } polyevent_t;
 
 typedef struct {
@@ -68,7 +68,7 @@ typedef struct {
     int             tics;
     int             waitTics;
     podoortype_t    type;
-    boolean         close;
+    coord_t         close;
 } polydoor_t;
 
 enum {

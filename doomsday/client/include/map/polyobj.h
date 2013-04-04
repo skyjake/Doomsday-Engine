@@ -1,6 +1,4 @@
-/**
- * @file polyobj.h
- * Moveable Polygonal Map Objects (Polyobj). @ingroup map
+/** @file polyobj.h Moveable Polygonal Map-Object (Polyobj).
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -25,20 +23,78 @@
 
 #include "dd_share.h"
 
+#include <QList>
+#include <QSet>
 #include <de/vector1.h>
 
-// We'll use the base polyobj template directly as our polyobj.
-typedef struct polyobj_s {
+/**
+ * @ingroup map
+ */
+typedef struct polyobj_s
+{
+public:
+    typedef QList<LineDef *> Lines;
+    typedef QSet<Vertex *> Vertexes;
+
+public:
     DD_BASE_POLYOBJ_ELEMENTS()
 
     polyobj_s()
     {
-        std::memset(this, 0, sizeof(polyobj_s));
+        bspLeaf = 0;
+        idx = 0;
+        tag = 0;
+        validCount = 0;
+        dest[0] = dest[1] = 0;
+        angle = destAngle = 0;
+        angleSpeed = 0;
+        _lines = new Lines;
+        _uniqueVertexes = new Vertexes;
+        originalPts = 0;
+        prevPts = 0;
+        speed = 0;
+        crush = false;
+        seqType = 0;
+        buildData.index = 0;
     }
 
     // Does nothing about the user data section.
     ~polyobj_s()
-    {}
+    {
+        delete static_cast<Lines *>(_lines);
+        delete static_cast<Vertexes *>(_uniqueVertexes);
+    }
+
+    /**
+     * Provides access to the list of LineDefs for the polyobj.
+     */
+    Lines const &lines() const;
+
+    /**
+     * Returns the total number of LineDefs for the polyobj.
+     */
+    inline uint lineCount() const { return lines().count(); }
+
+    /**
+     * To be called once all LineDefs have been added in order to compile the
+     * set of unique vertexes for the polyobj. A vertex referenced by multiple
+     * lines is only included once in this set.
+     */
+    void buildUniqueVertexes();
+
+    /**
+     * Provides access to the set of unique vertexes for the polyobj.
+     *
+     * @see buildUniqueVertexSet()
+     */
+    Vertexes const &uniqueVertexes() const;
+
+    /**
+     * Returns the total number of unique Vertexes for the polyobj.
+     *
+     * @see buildUniqueVertexSet()
+     */
+    inline uint uniqueVertexCount() const { return uniqueVertexes().count(); }
 
     /**
      * Translate the origin of the polyobj in the map coordinate space.
@@ -74,22 +130,6 @@ typedef struct polyobj_s {
      * according to the points defined by the relevant LineDef's vertices.
      */
     void updateSurfaceTangents();
-
-    /**
-     * Iterate over the lines of the Polyobj making a callback for each.
-     * Iteration ends when all lines have been visited or @a callback
-     * returns non-zero.
-     *
-     * Caller should increment validCount if necessary before calling this
-     * function as it is used to prevent repeated processing of lines.
-     *
-     * @param callback    Callback function ptr.
-     * @param paramaters  Passed to the callback.
-     *
-     * @return  @c 0 iff iteration completed wholly.
-     */
-    int lineIterator(int (*callback) (LineDef *, void *parameters),
-                     void *parameters = 0);
 
 #if 0
     bool property(setargs_t &args) const;
