@@ -587,7 +587,7 @@ int PIT_AddMobjIntercepts(mobj_t *mo, void * /*parameters*/)
     }
 
     // Is this line crossed?
-    if(Divline_PointOnSide(&traceLos, from) != Divline_PointOnSide(&traceLos, to))
+    if(Divline_PointOnSide(&traceLos, from) == Divline_PointOnSide(&traceLos, to))
         return false;
 
     // Calculate interception point.
