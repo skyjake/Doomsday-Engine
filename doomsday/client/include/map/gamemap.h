@@ -108,13 +108,6 @@ public:
     SideDefs _sideDefs;
     Polyobjs _polyobjs;
 
-    de::MapElement *_bspRoot;
-
-    /// BSP object LUTs:
-    HEdges _hedges;
-    BspNodes _bspNodes;
-    BspLeafs _bspLeafs;
-
     EntityDatabase *entityDatabase;
 
 public:
@@ -243,16 +236,34 @@ public:
      */
     de::MapElement *bspRoot() const;
 
-    HEdges const &hedges() const { return _hedges; }
+    /**
+     * Provides access to the list of half-edges for efficient traversal.
+     */
+    HEdges const &hedges() const;
 
+    /**
+     * Returns the total number of HEdges in the map.
+     */
     inline uint hedgeCount() const { return hedges().count(); }
 
-    BspNodes const &bspNodes() const { return _bspNodes; }
+    /**
+     * Provides access to the list of BSP nodes for efficient traversal.
+     */
+    BspNodes const &bspNodes() const;
 
+    /**
+     * Returns the total number of BspNodes in the map.
+     */
     inline uint bspNodeCount() const { return bspNodes().count(); }
 
-    BspLeafs const &bspLeafs() const { return _bspLeafs; }
+    /**
+     * Provides access to the list of BSP leafs for efficient traversal.
+     */
+    BspLeafs const &bspLeafs() const;
 
+    /**
+     * Returns the total number of BspLeafs in the map.
+     */
     inline uint bspLeafCount() const { return bspLeafs().count(); }
 
     /**

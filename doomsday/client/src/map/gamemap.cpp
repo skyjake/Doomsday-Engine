@@ -47,6 +47,14 @@ DENG2_PIMPL(GameMap)
     /// Boundary points which encompass the entire map.
     AABoxd bounds;
 
+    /// BSP root element.
+    MapElement *bspRoot;
+
+    /// BSP element LUTs:
+    HEdges hedges;
+    BspNodes bspNodes;
+    BspLeafs bspLeafs;
+
     struct generators_s *generators;
 
     PlaneSet trackedPlanes;
@@ -65,6 +73,7 @@ DENG2_PIMPL(GameMap)
 
     Instance(Public *i)
         : Base(i),
+          bspRoot(0),
           generators(0)
     {
         std::memset(&bounds,       0, sizeof(bounds));
@@ -109,8 +118,8 @@ DENG2_PIMPL(GameMap)
             builder.take(hedge);
 
             // Add this HEdge to the LUT.
-            hedge->_origIndex = self.hedgeCount();
-            self._hedges.append(hedge);
+            hedge->_origIndex = hedges.count();
+            hedges.append(hedge);
 
             if(hedge->hasLine())
             {
@@ -142,8 +151,8 @@ DENG2_PIMPL(GameMap)
             builder.take(leaf);
 
             // Add this BspLeaf to the LUT.
-            leaf->_index = self._bspLeafs.count();
-            self._bspLeafs.append(leaf);
+            leaf->_index = bspLeafs.count();
+            bspLeafs.append(leaf);
 
             collateBspLeafHEdges(builder, *leaf);
 
@@ -162,8 +171,8 @@ DENG2_PIMPL(GameMap)
         builder.take(node);
 
         // Add this BspNode to the LUT.
-        node->_index = self._bspNodes.count();
-        self._bspNodes.append(node);
+        node->_index = bspNodes.count();
+        bspNodes.append(node);
     }
 
 #ifdef __CLIENT__
@@ -273,7 +282,6 @@ GameMap::GameMap() : d(new Instance(this))
     std::memset(&clMobjHash, 0, sizeof(clMobjHash));
     std::memset(&clActivePlanes, 0, sizeof(clActivePlanes));
     std::memset(&clActivePolyobjs, 0, sizeof(clActivePolyobjs));
-    _bspRoot = 0;
     entityDatabase = 0;
     mobjBlockmap = 0;
     polyobjBlockmap = 0;
@@ -289,12 +297,30 @@ GameMap::GameMap() : d(new Instance(this))
 
 MapElement *GameMap::bspRoot() const
 {
-    return _bspRoot;
+    return d->bspRoot;
+}
+
+GameMap::HEdges const &GameMap::hedges() const
+{
+    return d->hedges;
+}
+
+GameMap::BspNodes const &GameMap::bspNodes() const
+{
+    return d->bspNodes;
+}
+
+GameMap::BspLeafs const &GameMap::bspLeafs() const
+{
+    return d->bspLeafs;
 }
 
 bool GameMap::buildBsp()
 {
-    /// @todo Test preconditions!
+    /// @todo Test @em ALL preconditions!
+    DENG2_ASSERT(d->hedges.isEmpty());
+    DENG2_ASSERT(d->bspLeafs.isEmpty());
+    DENG2_ASSERT(d->bspNodes.isEmpty());
 
     // It begins...
     Time begunAt;
@@ -332,20 +358,16 @@ bool GameMap::buildBsp()
         /*
          * Take ownership of all the built map data elements.
          */
-        DENG2_ASSERT(_hedges.isEmpty());
-        DENG2_ASSERT(_bspLeafs.isEmpty());
-        DENG2_ASSERT(_bspNodes.isEmpty());
-
 #ifdef DENG2_QT_4_7_OR_NEWER
-        _hedges.reserve(nodeBuilder.numHEdges());
-        _bspNodes.reserve(nodeBuilder.numNodes());
-        _bspLeafs.reserve(nodeBuilder.numLeafs());
+        d->hedges.reserve(nodeBuilder.numHEdges());
+        d->bspNodes.reserve(nodeBuilder.numNodes());
+        d->bspLeafs.reserve(nodeBuilder.numLeafs());
 #endif
 
         d->collateVertexes(nodeBuilder, editableVertexes);
 
         BspTreeNode *rootNode = nodeBuilder.root();
-        _bspRoot = rootNode->userData(); // We'll formally take ownership shortly...
+        d->bspRoot = rootNode->userData(); // We'll formally take ownership shortly...
 
         // Iterative pre-order traversal of the BspBuilder's map element tree.
         BspTreeNode *cur = rootNode;
@@ -1479,7 +1501,7 @@ int GameMap::pathTraverse(const_pvec2d_t from, const_pvec2d_t to, int flags,
 
 BspLeaf *GameMap::bspLeafAtPoint(const_pvec2d_t const point)
 {
-    MapElement *bspElement = _bspRoot;
+    MapElement *bspElement = d->bspRoot;
     while(bspElement->type() != DMU_BSPLEAF)
     {
         BspNode const &node = *bspElement->castTo<BspNode>();
