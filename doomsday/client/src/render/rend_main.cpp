@@ -3139,19 +3139,24 @@ void Rend_RenderSoundOrigins()
     if(devSoundOrigins & SOF_SIDEDEF)
     {
         /// @todo Do not assume current map.
-        foreach(SideDef *sideDef, theMap->sideDefs())
+        foreach(LineDef *line, theMap->lines())
+        for(int i = 0; i < 2; ++i)
         {
-            uint idx = theMap->sideDefIndex(sideDef);
+            if(!line->hasSideDef(i))
+                continue;
+
+            SideDef &sideDef = line->sideDef(i);
+            uint idx = theMap->sideDefIndex(&sideDef);
             char buf[80];
 
             dd_snprintf(buf, 80, "Side #%i (middle)", idx);
-            drawSoundOrigin(sideDef->middle().soundEmitter().origin, buf, eye);
+            drawSoundOrigin(sideDef.middle().soundEmitter().origin, buf, eye);
 
             dd_snprintf(buf, 80, "Side #%i (bottom)", idx);
-            drawSoundOrigin(sideDef->bottom().soundEmitter().origin, buf, eye);
+            drawSoundOrigin(sideDef.bottom().soundEmitter().origin, buf, eye);
 
             dd_snprintf(buf, 80, "Side #%i (top)", idx);
-            drawSoundOrigin(sideDef->top().soundEmitter().origin, buf, eye);
+            drawSoundOrigin(sideDef.top().soundEmitter().origin, buf, eye);
         }
     }
 

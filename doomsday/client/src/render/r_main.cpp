@@ -516,11 +516,16 @@ static void R_UpdateMap()
         plane->surface().markAsNeedingDecorationUpdate();
     }
 
-    foreach(SideDef *sideDef, theMap->sideDefs())
+    foreach(LineDef *line, theMap->lines())
+    for(int i = 0; i < 2; ++i)
     {
-        sideDef->top().markAsNeedingDecorationUpdate();
-        sideDef->middle().markAsNeedingDecorationUpdate();
-        sideDef->bottom().markAsNeedingDecorationUpdate();
+        if(!line->hasSideDef(i))
+            continue;
+
+        SideDef &sideDef = line->sideDef(i);
+        sideDef.top().markAsNeedingDecorationUpdate();
+        sideDef.middle().markAsNeedingDecorationUpdate();
+        sideDef.bottom().markAsNeedingDecorationUpdate();
     }
 
     /// @todo Is this even necessary?
@@ -1364,16 +1369,21 @@ void Rend_CacheForMap()
     {
         MaterialVariantSpec const &spec = Rend_MapSurfaceMaterialSpec();
 
-        foreach(SideDef *sideDef, theMap->sideDefs())
+        foreach(LineDef *line, theMap->lines())
+        for(int i = 0; i < 2; ++i)
         {
-            if(sideDef->middle().hasMaterial())
-                App_Materials().cache(sideDef->middle().material(), spec);
+            if(!line->hasSideDef(i))
+                continue;
 
-            if(sideDef->top().hasMaterial())
-                App_Materials().cache(sideDef->top().material(), spec);
+            SideDef &sideDef = line->sideDef(i);
+            if(sideDef.middle().hasMaterial())
+                App_Materials().cache(sideDef.middle().material(), spec);
 
-            if(sideDef->bottom().hasMaterial())
-                App_Materials().cache(sideDef->bottom().material(), spec);
+            if(sideDef.top().hasMaterial())
+                App_Materials().cache(sideDef.top().material(), spec);
+
+            if(sideDef.bottom().hasMaterial())
+                App_Materials().cache(sideDef.bottom().material(), spec);
         }
 
         foreach(Sector *sector, theMap->sectors())

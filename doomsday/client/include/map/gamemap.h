@@ -174,10 +174,6 @@ public:
 
     inline uint vertexCount() const { return vertexes().count(); }
 
-    SideDefs const &sideDefs() const { return _sideDefs; }
-
-    inline uint sideDefCount() const { return sideDefs().count(); }
-
     Lines const &lines() const { return _lines; }
 
     inline uint lineCount() const { return lines().count(); }
@@ -531,6 +527,14 @@ public:
      * Returns the set of tracked planes for the map.
      */
     PlaneSet /*const*/ &trackedPlanes();
+
+public: /// @todo Remove:
+
+    /// @deprecated SideDefs are being phased out.
+    SideDefs const &sideDefs() const { return _sideDefs; }
+
+    /// @deprecated SideDefs are being phased out.
+    inline uint sideDefCount() const { return sideDefs().count(); }
 
 public: /// @todo Replace with object level methods:
     /**

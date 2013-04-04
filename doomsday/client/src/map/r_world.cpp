@@ -523,11 +523,16 @@ static void initAllMapSurfaceMaterialOrigins(GameMap &map)
         initSurfaceMaterialOrigin(plane->surface());
     }
 
-    foreach(SideDef *sideDef, map.sideDefs())
+    foreach(LineDef *line, map.lines())
+    for(int i = 0; i < 2; ++i)
     {
-        initSurfaceMaterialOrigin(sideDef->top());
-        initSurfaceMaterialOrigin(sideDef->middle());
-        initSurfaceMaterialOrigin(sideDef->bottom());
+        if(!line->hasSideDef(i))
+            continue;
+
+        SideDef &sideDef = line->sideDef(i);
+        initSurfaceMaterialOrigin(sideDef.top());
+        initSurfaceMaterialOrigin(sideDef.middle());
+        initSurfaceMaterialOrigin(sideDef.bottom());
     }
 }
 

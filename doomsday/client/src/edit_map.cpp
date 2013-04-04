@@ -1510,9 +1510,9 @@ boolean MPE_End()
     findBounds(editMap.vertexes, min, max);
 
     gamemap->initLineBlockmap(min, max);
-    for(int i = 0; i < gamemap->_lines.count(); ++i)
+    foreach(LineDef *line, gamemap->lines())
     {
-        gamemap->linkLine(*gamemap->_lines[i]);
+        gamemap->linkLine(*line);
     }
 
     // Mobj and Polyobj blockmaps are maintained dynamically.

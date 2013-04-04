@@ -458,11 +458,16 @@ void GameMap::buildSurfaceLists()
     d->decoratedSurfaces.clear();
     d->glowingSurfaces.clear();
 
-    foreach(SideDef *sideDef, _sideDefs)
+    foreach(LineDef *line, _lines)
+    for(int i = 0; i < 2; ++i)
     {
-        d->addSurfaceToLists(sideDef->middle());
-        d->addSurfaceToLists(sideDef->top());
-        d->addSurfaceToLists(sideDef->bottom());
+        if(!line->hasSideDef(i))
+            continue;
+
+        SideDef &sideDef = line->sideDef(i);
+        d->addSurfaceToLists(sideDef.middle());
+        d->addSurfaceToLists(sideDef.top());
+        d->addSurfaceToLists(sideDef.bottom());
     }
 
     foreach(Sector *sector, _sectors)
@@ -590,7 +595,7 @@ Sector *GameMap::sectorBySoundEmitter(ddmobj_base_t const &soundEmitter) const
 }
 
 /// @todo Optimize: All sound emitters in a sector are linked together forming
-/// a chain. Make use of the chains instead of iterating the sidedefs.
+/// a chain. Make use of the chains instead of traversing lines.
 Surface *GameMap::surfaceBySoundEmitter(ddmobj_base_t const &soundEmitter) const
 {
     // First try plane surfaces.
@@ -604,19 +609,24 @@ Surface *GameMap::surfaceBySoundEmitter(ddmobj_base_t const &soundEmitter) const
     }
 
     // Perhaps a wall surface?
-    foreach(SideDef *sideDef, _sideDefs)
+    foreach(LineDef *line, _lines)
+    for(int i = 0; i < 2; ++i)
     {
-        if(&soundEmitter == &sideDef->middle().soundEmitter())
+        if(!line->hasSideDef(i))
+            continue;
+
+        SideDef &sideDef = line->sideDef(i);
+        if(&soundEmitter == &sideDef.middle().soundEmitter())
         {
-            return &sideDef->middle();
+            return &sideDef.middle();
         }
-        if(&soundEmitter == &sideDef->bottom().soundEmitter())
+        if(&soundEmitter == &sideDef.bottom().soundEmitter())
         {
-            return &sideDef->bottom();
+            return &sideDef.bottom();
         }
-        if(&soundEmitter == &sideDef->top().soundEmitter())
+        if(&soundEmitter == &sideDef.top().soundEmitter())
         {
-            return &sideDef->top();
+            return &sideDef.top();
         }
     }
 
