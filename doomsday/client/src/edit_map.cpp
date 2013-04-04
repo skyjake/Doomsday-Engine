@@ -41,41 +41,117 @@
 
 using namespace de;
 
+#if 0
+static int vertexCompare(void const *p1, void const *p2)
+{
+    Vertex const *a = (Vertex const *) *((void const **) p1);
+    Vertex const *b = (Vertex const *) *((void const **) p2);
+
+    if(a == b) return 0;
+
+    if(int(a->origin()[VX]) != int(b->origin()[VX]))
+        return int(a->origin()[VX]) - int(b->origin()[VX]);
+
+    return int(a->origin()[VY]) - int(b->origin()[VY]);
+}
+#endif
+
 /**
- * Editable map data.
- *
- * @todo Now redundant; refactor away. -ds
+ * @defgroup pruneMapElementFlags Prune Map Element Flags
+ * Flags for pruneMapElements()
  */
-class EditMap
+///@{
+#define PRUNE_LINES         0x1
+#define PRUNE_VERTEXES      0x2
+#define PRUNE_SIDEDEFS      0x4
+#define PRUNE_SECTORS       0x8
+#define PRUNE_ALL           (PRUNE_LINES|PRUNE_VERTEXES|PRUNE_SIDEDEFS|PRUNE_SECTORS)
+///@}
+
+/**
+ * Editable map data elements.
+ *
+ * @todo Move into GameMap.
+ */
+class EditableMap
 {
 public:
-    typedef QList<Vertex *> Vertexes;
-    Vertexes vertexes;
-
-    typedef QList<LineDef *> Lines;
-    Lines lines;
-
-    typedef QList<SideDef *> SideDefs;
-    SideDefs sideDefs;
-
-    typedef QList<Sector *> Sectors;
-    Sectors sectors;
-
-    typedef QList<Polyobj *> Polyobjs;
-    Polyobjs polyobjs;
+    GameMap::Vertexes vertexes;
+    GameMap::Lines lines;
+    GameMap::SideDefs sideDefs;
+    GameMap::Sectors sectors;
+    GameMap::Polyobjs polyobjs;
 
     /// Map entity data (things, line specials, etc...).
     EntityDatabase *entityDatabase;
 
-public:
-    EditMap::EditMap()
+    EditableMap::EditableMap()
+        : entityDatabase(0)
+    {}
+
+    Vertex *createVertex(coord_t x, coord_t y)
     {
-        entityDatabase = 0;
+        Vertex *vtx = new Vertex(x, y);
+
+        vertexes.append(vtx);
+        vtx->_buildData.index = vertexes.count(); // 1-based index, 0 = NIL.
+
+        return vtx;
+    }
+
+    LineDef *createLine()
+    {
+        LineDef *line = new LineDef;
+
+        lines.append(line);
+        line->_origIndex = lines.count(); // 1-based index, 0 = NIL.
+
+        return line;
+    }
+
+    SideDef *createSideDef()
+    {
+        SideDef *sideDef = new SideDef;
+
+        sideDefs.append(sideDef);
+        sideDef->_buildData.index = sideDefs.count(); // 1-based index, 0 = NIL.
+
+        return sideDef;
+    }
+
+    Sector *createSector(Vector3f const &ambientLightColor, float lightLevel)
+    {
+        Sector *sec = new Sector;
+
+        sec->_lightColor[CR] = de::clamp(0.f, ambientLightColor.x, 1.f);
+        sec->_lightColor[CG] = de::clamp(0.f, ambientLightColor.y, 1.f);
+        sec->_lightColor[CB] = de::clamp(0.f, ambientLightColor.z, 1.f);
+        sec->_lightLevel = de::clamp(0.f, lightLevel, 1.f);
+
+        sectors.append(sec);
+        sec->_origIndex = sectors.count(); // 1-based index, 0 = NIL.
+
+        return sec;
+    }
+
+    Polyobj *createPolyobj()
+    {
+        void *region = M_Calloc(POLYOBJ_SIZE);
+        Polyobj *po = new (region) Polyobj;
+
+        polyobjs.append(po);
+        po->buildData.index = polyobjs.count(); // 1-based index, 0 = NIL.
+
+        return po;
     }
 
     void clearPolyobjs()
     {
-        qDeleteAll(polyobjs);
+        foreach(Polyobj *po, polyobjs)
+        {
+            po->~Polyobj();
+            M_Free(po);
+        }
         polyobjs.clear();
     }
 
@@ -89,14 +165,232 @@ public:
         clearPolyobjs();
     }
 
-    uint vertexCount() const { return vertexes.count(); }
-    uint lineCount() const { return lines.count(); }
-    uint sideDefCount() const { return sideDefs.count(); }
-    uint sectorCount() const { return sectors.count(); }
-    uint polyobjCount() const { return polyobjs.count(); }
+#if 0
+    void markDuplicateVertexes()
+    {
+        Vertex **hits = (Vertex **) M_Malloc(vertexes.count() * sizeof(Vertex *));
+
+        // Sort array of ptrs.
+        for(uint i = 0; i < vertexes.count(); ++i)
+        {
+            hits[i] = vertexes[i];
+        }
+        qsort(hits, vertexes.count(), sizeof(Vertex *), vertexCompare);
+
+        // Now mark them off.
+        for(uint i = 0; i < vertexes.count() - 1; ++i)
+        {
+            // A duplicate?
+            if(vertexCompare(hits + i, hits + i + 1) == 0)
+            {
+                // Yes.
+                Vertex *a = hits[i];
+                Vertex *b = hits[i + 1];
+
+                b->_buildData.equiv = (a->_buildData.equiv ? a->_buildData.equiv : a);
+            }
+        }
+
+        M_Free(hits);
+    }
+
+    void findEquivalentVertexes()
+    {
+        uint i, newNum;
+
+        // Scan all linedefs.
+        for(i = 0, newNum = 0; i < lines.count(); ++i)
+        {
+            LineDef *l = lines[i];
+
+            // Handle duplicated vertices.
+            while(l->v[0]->_buildData.equiv)
+            {
+                l->v[0]->_buildData.refCount--;
+                l->v[0] = l->v[0]->_buildData.equiv;
+                l->v[0]->_buildData.refCount++;
+            }
+
+            while(l->v[1]->_buildData.equiv)
+            {
+                l->v[1]->_buildData.refCount--;
+                l->v[1] = l->v[1]->_buildData.equiv;
+                l->v[1]->_buildData.refCount++;
+            }
+
+            l->_buildData.index = newNum + 1;
+            lines[newNum++] = lines[i];
+        }
+    }
+
+    void pruneLinedefs()
+    {
+        uint i, newNum, unused = 0;
+
+        for(i = 0, newNum = 0; i < lines.count(); ++i)
+        {
+            LineDef *l = lines[i];
+
+            if(!l->hasFrontSideDef() && !l->hasBackSideDef())
+            {
+                unused++;
+
+                M_Free(l);
+                continue;
+            }
+
+            l->_buildData.index = newNum + 1;
+            lines[newNum++] = l;
+        }
+
+        if(newNum < lines.count())
+        {
+            if(unused > 0)
+                Con_Message("  Pruned %d unused linedefs.", unused);
+
+            lines.resize(newNum);
+        }
+    }
+
+    void pruneVertices()
+    {
+        uint i, newNum, unused = 0;
+
+        // Scan all vertices.
+        for(i = 0, newNum = 0; i < vertexes.count(); ++i)
+        {
+            Vertex *v = vertexes[i];
+
+            if(v->_buildData.refCount < 0)
+                Con_Error("Vertex %d ref_count is %d", i, v->_buildData.refCount);
+
+            if(v->_buildData.refCount == 0)
+            {
+                if(v->_buildData.equiv == NULL)
+                    unused++;
+
+                M_Free(v);
+                continue;
+            }
+
+            v->_buildData.index = newNum + 1;
+            vertexes[newNum++] = v;
+        }
+
+        if(newNum < vertexes.count())
+        {
+            int dupNum = vertexes.count() - newNum - unused;
+
+            if(unused > 0)
+                Con_Message("  Pruned %d unused vertices.", unused);
+
+            if(dupNum > 0)
+                Con_Message("  Pruned %d duplicate vertices.", dupNum);
+
+            vertexes.resize(newNum);
+        }
+    }
+
+    void pruneUnusedSidedefs()
+    {
+        uint i, newNum, unused = 0;
+
+        for(i = 0, newNum = 0; i < sideDefs.count(); ++i)
+        {
+            SideDef *s = sideDefs[i];
+
+            if(s->buildData.refCount == 0)
+            {
+                unused++;
+
+                M_Free(s);
+                continue;
+            }
+
+            s->_buildData.index = newNum + 1;
+            sideDefs[newNum++] = s;
+        }
+
+        if(newNum < sideDefs.count())
+        {
+            int dupNum = sideDefs.count() - newNum - unused;
+
+            if(unused > 0)
+                Con_Message("  Pruned %d unused sidedefs.", unused);
+
+            if(dupNum > 0)
+                Con_Message("  Pruned %d duplicate sidedefs.", dupNum);
+
+            sideDefs.resize(newNum);
+        }
+    }
+
+    void pruneUnusedSectors()
+    {
+        for(uint i = 0; i < sideDefs.count(); ++i)
+        {
+            SideDef *s = sideDefs[i];
+
+            if(s->sector)
+                s->sector->buildData.refCount++;
+        }
+
+        // Scan all sectors.
+        uint newNum = 0;
+        for(uint i = 0; i < sectors.count(); ++i)
+        {
+            Sector* s = sectors[i];
+
+            if(s->buildData.refCount == 0)
+            {
+                M_Free(s);
+                continue;
+            }
+
+            s->buildData.index = newNum + 1;
+            sectors[newNum++] = s;
+        }
+
+        if(newNum < sectors.count())
+        {
+            Con_Message("  Pruned %d unused sectors.", sectors.count() - newNum);
+            sectors.resize(newNum);
+        }
+    }
+
+    /**
+     * @param flags  @ref pruneMapElementFlags
+     */
+    void pruneMapElements(int /*flags*/)
+    {
+        /**
+         * @todo Pruning cannot be done as game map data object properties
+         * are currently indexed by their original indices as determined by the
+         * position in the map data. The same problem occurs within ACS scripts
+         * and XG line/sector references.
+         *
+         * @warning Order here is critical!
+         */
+
+        findEquivalentVertexes();
+
+        if(flags & PRUNE_LINES)
+            pruneLines();
+
+        if(flags & PRUNE_VERTEXES)
+            pruneVertices();
+
+        if(flags & PRUNE_SIDEDEFS)
+            pruneUnusedSidedefs();
+
+        if(flags & PRUNE_SECTORS)
+            pruneUnusedSectors();
+    }
+#endif
 };
 
-static EditMap editMap; // singleton
+static EditableMap editMap; // singleton
+
 static bool editMapInited;
 static bool lastBuiltMapResult;
 
@@ -113,18 +407,6 @@ QList<Vertex *> &MPE_EditableVertexes()
 {
     return editMap.vertexes;
 }
-
-/**
- * @defgroup pruneMapElementFlags Prune Map Element Flags
- * Flags for pruneMapElements()
- */
-///@{
-#define PRUNE_LINES         0x1
-#define PRUNE_VERTEXES      0x2
-#define PRUNE_SIDEDEFS      0x4
-#define PRUNE_SECTORS       0x8
-#define PRUNE_ALL           (PRUNE_LINES|PRUNE_VERTEXES|PRUNE_SIDEDEFS|PRUNE_SECTORS)
-///@}
 
 /**
  * Material name references specified during map conversion are recorded in
@@ -266,496 +548,6 @@ static Material *findMaterialInDict(ddstring_t const *materialUriStr)
     materialDict->setUserValue(internId, refCount);
 
     return material;
-}
-
-static Vertex *createVertex(coord_t x, coord_t y)
-{
-    Vertex *vtx = new Vertex(x, y);
-
-    editMap.vertexes.append(vtx);
-    vtx->_buildData.index = editMap.vertexes.count(); // 1-based index, 0 = NIL.
-
-    return vtx;
-}
-
-static LineDef *createLine()
-{
-    LineDef *line = new LineDef;
-
-    editMap.lines.append(line);
-    line->_origIndex = editMap.lines.count(); // 1-based index, 0 = NIL.
-
-    return line;
-}
-
-static SideDef *createSideDef()
-{
-    SideDef *sideDef = new SideDef;
-
-    editMap.sideDefs.append(sideDef);
-    sideDef->_buildData.index = editMap.sideDefs.count(); // 1-based index, 0 = NIL.
-
-    return sideDef;
-}
-
-static Sector *createSector(Vector3f const &ambientLightColor, float lightLevel)
-{
-    Sector *sec = new Sector;
-
-    sec->_lightColor[CR] = de::clamp(0.f, ambientLightColor.x, 1.f);
-    sec->_lightColor[CG] = de::clamp(0.f, ambientLightColor.y, 1.f);
-    sec->_lightColor[CB] = de::clamp(0.f, ambientLightColor.z, 1.f);
-    sec->_lightLevel = de::clamp(0.f, lightLevel, 1.f);
-    
-    editMap.sectors.append(sec);
-    sec->_origIndex = editMap.sectors.count(); // 1-based index, 0 = NIL.
-
-    return sec;
-}
-
-static Polyobj *createPolyobj()
-{
-    Polyobj *po = new Polyobj;
-
-    editMap.polyobjs.append(po);
-    po->buildData.index = editMap.polyobjs.count(); // 1-based index, 0 = NIL.
-
-    return po;
-}
-
-#if 0
-static int vertexCompare(void const *p1, void const *p2)
-{
-    Vertex const *a = (Vertex const *) *((void const **) p1);
-    Vertex const *b = (Vertex const *) *((void const **) p2);
-
-    if(a == b) return 0;
-
-    if(int(a->origin()[VX]) != int(b->origin()[VX]))
-        return int(a->origin()[VX]) - int(b->origin()[VX]);
-
-    return int(a->origin()[VY]) - int(b->origin()[VY]);
-}
-
-static void markDuplicateVertexes(EditMap &e_map)
-{
-    Vertex **hits = (Vertex **) M_Malloc(e_map.vertexCount() * sizeof(Vertex *));
-
-    // Sort array of ptrs.
-    for(uint i = 0; i < e_map.vertexCount(); ++i)
-    {
-        hits[i] = e_map.vertexes[i];
-    }
-    qsort(hits, e_map.vertexCount(), sizeof(Vertex *), vertexCompare);
-
-    // Now mark them off.
-    for(uint i = 0; i < e_map.vertexCount() - 1; ++i)
-    {
-        // A duplicate?
-        if(vertexCompare(hits + i, hits + i + 1) == 0)
-        {
-            // Yes.
-            Vertex *a = hits[i];
-            Vertex *b = hits[i + 1];
-
-            b->_buildData.equiv = (a->_buildData.equiv ? a->_buildData.equiv : a);
-        }
-    }
-
-    M_Free(hits);
-}
-
-static void findEquivalentVertexes(EditMap *src)
-{
-    uint i, newNum;
-
-    // Scan all linedefs.
-    for(i = 0, newNum = 0; i < src->numLineDefs; ++i)
-    {
-        LineDef *l = src->lineDefs[i];
-
-        // Handle duplicated vertices.
-        while(l->v[0]->buildData.equiv)
-        {
-            l->v[0]->buildData.refCount--;
-            l->v[0] = l->v[0]->buildData.equiv;
-            l->v[0]->buildData.refCount++;
-        }
-
-        while(l->v[1]->buildData.equiv)
-        {
-            l->v[1]->buildData.refCount--;
-            l->v[1] = l->v[1]->buildData.equiv;
-            l->v[1]->buildData.refCount++;
-        }
-
-        l->buildData.index = newNum + 1;
-        src->lineDefs[newNum++] = src->lineDefs[i];
-    }
-}
-
-static void pruneLinedefs(EditMap *map)
-{
-    uint i, newNum, unused = 0;
-
-    for(i = 0, newNum = 0; i < map->numLineDefs; ++i)
-    {
-        LineDef *l = map->lineDefs[i];
-
-        if(!l->hasFrontSideDef() && !l->hasBackSideDef())
-        {
-            unused++;
-
-            M_Free(l);
-            continue;
-        }
-
-        l->buildData.index = newNum + 1;
-        map->lineDefs[newNum++] = l;
-    }
-
-    if(newNum < map->numLineDefs)
-    {
-        if(unused > 0)
-            Con_Message("  Pruned %d unused linedefs.", unused);
-
-        map->numLineDefs = newNum;
-    }
-}
-
-static void pruneVertices(EditMap *map)
-{
-    uint i, newNum, unused = 0;
-
-    // Scan all vertices.
-    for(i = 0, newNum = 0; i < map->vertexCount(); ++i)
-    {
-        Vertex *v = map->vertexes[i];
-
-        if(v->buildData.refCount < 0)
-            Con_Error("Vertex %d ref_count is %d", i, v->buildData.refCount);
-
-        if(v->buildData.refCount == 0)
-        {
-            if(v->buildData.equiv == NULL)
-                unused++;
-
-            M_Free(v);
-            continue;
-        }
-
-        v->buildData.index = newNum + 1;
-        map->vertexes[newNum++] = v;
-    }
-
-    if(newNum < map->vertexCount())
-    {
-        int dupNum = map->vertexCount() - newNum - unused;
-
-        if(unused > 0)
-            Con_Message("  Pruned %d unused vertices.", unused);
-
-        if(dupNum > 0)
-            Con_Message("  Pruned %d duplicate vertices.", dupNum);
-
-        map->vertexCount() = newNum;
-    }
-}
-
-static void pruneUnusedSidedefs(EditMap *map)
-{
-    uint i, newNum, unused = 0;
-
-    for(i = 0, newNum = 0; i < map->numSideDefs; ++i)
-    {
-        SideDef *s = map->sideDefs[i];
-
-        if(s->buildData.refCount == 0)
-        {
-            unused++;
-
-            M_Free(s);
-            continue;
-        }
-
-        s->buildData.index = newNum + 1;
-        map->sideDefs[newNum++] = s;
-    }
-
-    if(newNum < map->numSideDefs)
-    {
-        int dupNum = map->numSideDefs - newNum - unused;
-
-        if(unused > 0)
-            Con_Message("  Pruned %d unused sidedefs.", unused);
-
-        if(dupNum > 0)
-            Con_Message("  Pruned %d duplicate sidedefs.", dupNum);
-
-        map->numSideDefs = newNum;
-    }
-}
-
-static void pruneUnusedSectors(EditMap *map)
-{
-    for(uint i = 0; i < map->numSideDefs; ++i)
-    {
-        SideDef* s = map->sideDefs[i];
-
-        if(s->sector)
-            s->sector->buildData.refCount++;
-    }
-
-    // Scan all sectors.
-    uint newNum = 0;
-    for(uint i = 0; i < map->sectorCount(); ++i)
-    {
-        Sector* s = map->sectors[i];
-
-        if(s->buildData.refCount == 0)
-        {
-            M_Free(s);
-            continue;
-        }
-
-        s->buildData.index = newNum + 1;
-        map->sectors[newNum++] = s;
-    }
-
-    if(newNum < map->sectorCount())
-    {
-        Con_Message("  Pruned %d unused sectors.", map->sectorCount() - newNum);
-        map->sectorCount() = newNum;
-    }
-}
-
-/**
- * @param e_map     Editable map to prune elements from.
- * @param flags     @ref pruneMapElementFlags
- */
-static void pruneMapElements(EditMap & /*e_map*/, int /*flags*/)
-{
-    /**
-     * @todo Pruning cannot be done as game map data object properties
-     * are currently indexed by their original indices as determined by the
-     * position in the map data. The same problem occurs within ACS scripts
-     * and XG line/sector references.
-     *
-     * @warning Order here is critical!
-     */
-    if(!editMapInited) return;
-
-    findEquivalentVertexes(e_map);
-
-    if(flags & PRUNE_LINES)
-        pruneLines(e_map);
-
-    if(flags & PRUNE_VERTEXES)
-        pruneVertices(e_map);
-
-    if(flags & PRUNE_SIDEDEFS)
-        pruneUnusedSidedefs(e_map);
-
-    if(flags & PRUNE_SECTORS)
-        pruneUnusedSectors(e_map);
-}
-#endif
-
-static void buildSectorBspLeafLists(GameMap &map)
-{
-    foreach(Sector *sector, map.sectors())
-    {
-        sector->_bspLeafs.clear();
-
-#ifdef DENG2_QT_4_7_OR_NEWER
-        uint count = 0;
-        foreach(BspLeaf *bspLeaf, map.bspLeafs())
-        {
-            if(bspLeaf->sectorPtr() == sector)
-                ++count;
-        }
-
-        if(0 == count) continue;
-
-        sector->_bspLeafs.reserve(count);
-#endif
-
-        foreach(BspLeaf *bspLeaf, map.bspLeafs())
-        {
-            if(bspLeaf->sectorPtr() == sector)
-            {
-                // Ownership of the BSP leaf is not given to the sector.
-                sector->_bspLeafs.append(bspLeaf);
-            }
-        }
-    }
-}
-
-static void buildSectorLineLists(GameMap &map)
-{
-    LOG_VERBOSE("Building Sector line lists...");
-
-    struct LineLink
-    {
-        LineDef *line;
-        LineLink *next;
-    };
-
-    // Collate a list of lines for each sector.
-    zblockset_t *lineLinksBlockSet = ZBlockSet_New(sizeof(LineLink), 512, PU_APPSTATIC);
-    LineLink **sectorLineLinks = (LineLink **) Z_Calloc(sizeof(*sectorLineLinks) * map.sectorCount(), PU_APPSTATIC, 0);
-
-    foreach(LineDef *line, map.lines())
-    {
-        if(line->hasFrontSector())
-        {
-            int const sectorIndex = map.sectorIndex(&line->frontSector());
-
-            LineLink *link = (LineLink *) ZBlockSet_Allocate(lineLinksBlockSet);
-            link->line = line;
-            link->next = sectorLineLinks[sectorIndex];
-            sectorLineLinks[sectorIndex] = link;
-        }
-
-        if(line->hasBackSector() && !line->isSelfReferencing())
-        {
-            int const sectorIndex = map.sectorIndex(&line->backSector());
-
-            LineLink *link = (LineLink *) ZBlockSet_Allocate(lineLinksBlockSet);
-            link->line = line;
-            link->next = sectorLineLinks[sectorIndex];
-            sectorLineLinks[sectorIndex] = link;
-        }
-    }
-
-    // Build the actual sector line lists.
-    foreach(Sector *sector, map.sectors())
-    {
-        int const sectorIndex = map.sectorIndex(sector);
-
-        sector->_lines.clear();
-
-        if(!sectorLineLinks[sectorIndex]) continue;
-
-#ifdef DENG2_QT_4_7_OR_NEWER
-        // Count the total number of lines in this sector.
-        uint numLines = 0;
-        for(LineLink *link = sectorLineLinks[sectorIndex]; link; link = link->next)
-        {
-            numLines++;
-        }
-        // Reserve this much storage.
-        sector->_lines.reserve(numLines);
-#endif
-
-        /**
-         * The behavior of some algorithms used in the DOOM game logic are
-         * dependant upon the order of these lists (e.g., EV_DoFloor and
-         * EV_BuildStairs). Lets be helpful and use the same order.
-         *
-         * Sort: Original line index, ascending.
-         */
-        for(LineLink *link = sectorLineLinks[sectorIndex]; link; link = link->next)
-        {
-            // Ownership of the line is not given to the sector.
-            sector->_lines.prepend(link->line);
-        }
-    }
-
-    // Free temporary storage.
-    ZBlockSet_Delete(lineLinksBlockSet);
-    Z_Free(sectorLineLinks);
-}
-
-/**
- * @param sector  Sector in which to link @a base.
- * @param base  Mobj base to link in @a sector. Caller should ensure that the
- *              same object is not linked multiple times into the chain.
- */
-static void linkToSectorEmitterChain(Sector &sector, ddmobj_base_t &otherEmitter)
-{
-    // The sector's base is always head of the chain, so link the other after it.
-    otherEmitter.thinker.prev = &sector._soundEmitter.thinker;
-    otherEmitter.thinker.next = sector._soundEmitter.thinker.next;
-    if(otherEmitter.thinker.next)
-        otherEmitter.thinker.next->prev = &otherEmitter.thinker;
-    sector._soundEmitter.thinker.next = &otherEmitter.thinker;
-}
-
-static void finishSectors(GameMap &map)
-{
-    buildSectorBspLeafLists(map);
-    buildSectorLineLists(map);
-
-    foreach(Sector *sector, map.sectors())
-    {
-        sector->updateAABox();
-        sector->updateRoughArea();
-        sector->updateSoundEmitterOrigin();
-
-        /*
-         * Chain sound emitters (ddmobj_base_t) owned by all Surfaces in the
-         * sector-> These chains are used for efficiently traversing all of the
-         * sound emitters in a sector (e.g., when stopping all sounds emitted
-         * in the sector).
-         */
-        ddmobj_base_t &emitter = sector->soundEmitter();
-
-        // Clear the head of the emitter chain.
-        emitter.thinker.next = emitter.thinker.prev = 0;
-
-        // Link plane surface emitters:
-        foreach(Plane *plane, sector->planes())
-        {
-            linkToSectorEmitterChain(*sector, plane->surface().soundEmitter());
-        }
-
-        // Link wall surface emitters:
-        foreach(LineDef *line, sector->lines())
-        {
-            if(line->frontSectorPtr() == sector)
-            {
-                SideDef &side = line->frontSideDef();
-                linkToSectorEmitterChain(*sector, side.middle().soundEmitter());
-                linkToSectorEmitterChain(*sector, side.bottom().soundEmitter());
-                linkToSectorEmitterChain(*sector, side.top().soundEmitter());
-            }
-            if(line->hasBackSideDef() && line->backSectorPtr() == sector)
-            {
-                SideDef &side = line->backSideDef();
-                linkToSectorEmitterChain(*sector, side.middle().soundEmitter());
-                linkToSectorEmitterChain(*sector, side.bottom().soundEmitter());
-                linkToSectorEmitterChain(*sector, side.top().soundEmitter());
-            }
-        }
-    }
-}
-
-static void finishLines(GameMap &map)
-{
-    foreach(LineDef *line, map.lines())
-    {
-        LineDef::Side &front = line->front();
-
-        if(!front._leftHEdge) continue;
-
-        /// @todo It should no longer be necessary to update the vtx ptrs here. -ds
-        line->_v[0] = &front.leftHEdge().v1();
-        line->_v[1] = &front.rightHEdge().v2();
-
-        line->updateSlopeType();
-        line->updateAABox();
-
-        line->_length = V2d_Length(line->_direction);
-        line->_angle = bamsAtan2(int( line->_direction[VY] ),
-                                 int( line->_direction[VX] ));
-
-        for(int i = 0; i < 2; ++i)
-        {
-            line->side(i).updateSurfaceTangents();
-            line->side(i).updateSoundEmitterOrigins();
-        }
-    }
 }
 
 /// Used when sorting vertex line owners.
@@ -1015,83 +807,23 @@ static void buildVertexLineOwnerRings()
     }
 }
 
-static void finishPlanes(GameMap &map)
+static void hardenPolyobjs(GameMap &dest, EditableMap &e_map)
 {
-    foreach(Sector *sector, map.sectors())
-    foreach(Plane *plane, sector->planes())
-    {
-        // Set target heights for each plane.
-        plane->_targetHeight =
-            plane->_oldHeight[0] =
-                plane->_oldHeight[1] =
-                    plane->_visHeight = plane->_height;
-
-        plane->_visHeightDelta = 0;
-
-        plane->surface().updateSoundEmitterOrigin();
-
-#ifdef __CLIENT__
-        // Resize the biassurface lists for the BSP leaf planes.
-        foreach(BspLeaf *bspLeaf, sector->bspLeafs())
-        {
-            uint n = 0;
-
-            biassurface_t **newList = (biassurface_t **) Z_Calloc(sector->planeCount() * sizeof(biassurface_t *), PU_MAP, 0);
-            // Copy the existing list?
-            if(bspLeaf->_bsuf)
-            {
-                for(; n < sector->planeCount() - 1 /* exclude newly added */; ++n)
-                {
-                    newList[n] = bspLeaf->_bsuf[n];
-                }
-                Z_Free(bspLeaf->_bsuf);
-                bspLeaf->_bsuf = 0;
-            }
-
-            /*
-             * @todo So where is this data initialized now? -ds
-             * If we are in map setup mode, don't create the biassurfaces now,
-             * as planes are created before the bias system is available.
-             */
-            /*if(!ddMapSetup)
-            {
-                biassurface_t *bsuf = SB_CreateSurface();
-
-                bsuf->size = Rend_NumFanVerticesForBspLeaf(bspLeaf);
-                bsuf->illum = (vertexillum_t *) Z_Calloc(sizeof(vertexillum_t) * bsuf->size, PU_MAP, 0);
-
-                for(uint k = 0; k < bsuf->size; ++k)
-                {
-                    SB_InitVertexIllum(&bsuf->illum[k]);
-                }
-
-                newList[n] = bsuf;
-            }*/
-
-            bspLeaf->_bsuf = newList;
-        }
-#endif
-    }
-}
-
-static void hardenPolyobjs(GameMap &dest, EditMap &e_map)
-{
-    if(!e_map.polyobjCount())
+    if(!e_map.polyobjs.count())
         return;
 
     DENG2_ASSERT(dest._polyobjs.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
-    dest._polyobjs.reserve(e_map.polyobjCount());
+    dest._polyobjs.reserve(e_map.polyobjs.count());
 #endif
 
-    for(uint i = 0; i < e_map.polyobjCount(); ++i)
+    foreach(Polyobj *srcP, e_map.polyobjs)
     {
-        Polyobj *srcP  = e_map.polyobjs[i];
-
         void *region = M_Calloc(POLYOBJ_SIZE);
         Polyobj *destP = new (region) Polyobj;
 
-        destP->idx = i;
+        destP->idx = dest._polyobjs.count(); // 0-based index.
+
         destP->crush = srcP->crush;
         destP->tag = srcP->tag;
         destP->seqType = srcP->seqType;
@@ -1108,10 +840,10 @@ static void hardenPolyobjs(GameMap &dest, EditMap &e_map)
         HEdge *hedges = new HEdge[destP->lineCount];
 
         destP->lines = (LineDef **) Z_Malloc(sizeof(*destP->lines) * (destP->lineCount + 1), PU_MAP, 0);
-        for(uint j = 0; j < destP->lineCount; ++j)
+        for(uint i = 0; i < destP->lineCount; ++i)
         {
-            LineDef *line = dest.lines().at(srcP->lines[j]->_origIndex - 1);
-            HEdge *hedge = &hedges[j];
+            LineDef *line = dest.lines().at(srcP->lines[i]->_origIndex - 1);
+            HEdge *hedge = &hedges[i];
 
             // This line belongs to a polyobj.
             line->_inFlags |= LF_POLYOBJ;
@@ -1125,7 +857,7 @@ static void hardenPolyobjs(GameMap &dest, EditMap &e_map)
 
             line->front()._leftHEdge = line->front()._rightHEdge = hedge;
 
-            destP->lines[j] = line;
+            destP->lines[i] = line;
         }
         destP->lines[destP->lineCount] = 0; // Terminate.
 
@@ -1558,10 +1290,7 @@ boolean MPE_End()
 
     editMapInited = false;
 
-    finishLines(*gamemap);
-    finishSectors(*gamemap);
-    finishPlanes(*gamemap);
-
+    gamemap->finishMapElements();
     gamemap->updateBounds();
 
     S_DetermineBspLeafsAffectingSectorReverb(gamemap);
@@ -1609,7 +1338,7 @@ uint MPE_VertexCreate(coord_t x, coord_t y)
 {
     if(!editMapInited) return 0;
 
-    Vertex *v = createVertex(x, y);
+    Vertex *v = editMap.createVertex(x, y);
 
     return v->_buildData.index;
 }
@@ -1623,7 +1352,7 @@ boolean MPE_VertexCreatev(size_t num, coord_t *values, uint *indices)
     // Create many vertexes.
     for(uint n = 0; n < num; ++n)
     {
-        Vertex *v = createVertex(values[n * 2], values[n * 2 + 1]);
+        Vertex *v = editMap.createVertex(values[n * 2], values[n * 2 + 1]);
 
         if(indices)
             indices[n] = v->_buildData.index;
@@ -1642,7 +1371,7 @@ uint MPE_SidedefCreate(short flags, ddstring_t const *topMaterialUri,
 {
     if(!editMapInited) return 0;
 
-    SideDef *s = createSideDef();
+    SideDef *s = editMap.createSideDef();
     s->_flags = flags;
 
     // Assign the resolved material if found.
@@ -1667,12 +1396,12 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector,
 {
     if(!editMapInited) return 0;
 
-    if(frontSector > editMap.sectorCount()) return 0;
-    if(backSector > editMap.sectorCount()) return 0;
-    if(frontSide > editMap.sideDefCount()) return 0;
-    if(backSide > editMap.sideDefCount()) return 0;
-    if(v1 == 0 || v1 > editMap.vertexCount()) return 0;
-    if(v2 == 0 || v2 > editMap.vertexCount()) return 0;
+    if(frontSector > (uint)editMap.sectors.count())    return 0;
+    if(backSector  > (uint)editMap.sectors.count())    return 0;
+    if(frontSide   > (uint)editMap.sideDefs.count())   return 0;
+    if(backSide    > (uint)editMap.sideDefs.count())   return 0;
+    if(v1 == 0 || v1 > (uint)editMap.vertexes.count()) return 0;
+    if(v2 == 0 || v2 > (uint)editMap.vertexes.count()) return 0;
     if(v1 == v2) return 0;
 
     // Ensure that the side indices are unique.
@@ -1690,7 +1419,7 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector,
     SideDef *front = frontSide? editMap.sideDefs[frontSide - 1] : 0;
     SideDef *back  = backSide?  editMap.sideDefs[backSide  - 1] : 0;
 
-    LineDef *l = createLine();
+    LineDef *l = editMap.createLine();
     l->_v[FROM] = vtx1;
     l->_v[TO] = vtx2;
 
@@ -1740,7 +1469,7 @@ uint MPE_PlaneCreate(uint sector, coord_t height, ddstring_t const *materialUri,
     float normalX, float normalY, float normalZ)
 {
     if(!editMapInited) return 0;
-    if(sector == 0 || sector > editMap.sectorCount()) return 0;
+    if(sector == 0 || sector > (uint)editMap.sectors.count()) return 0;
 
     Sector *s = editMap.sectors[sector - 1];
 
@@ -1763,7 +1492,7 @@ uint MPE_SectorCreate(float lightlevel, float red, float green, float blue)
 {
     if(!editMapInited) return 0;
 
-    Sector *s = createSector(Vector3f(red, green, blue), lightlevel);
+    Sector *s = editMap.createSector(Vector3f(red, green, blue), lightlevel);
     return s->origIndex();
 }
 
@@ -1777,13 +1506,13 @@ uint MPE_PolyobjCreate(uint *lines, uint lineCount, int tag, int sequenceType,
     // already part of another polyobj.
     for(uint i = 0; i < lineCount; ++i)
     {
-        if(lines[i] == 0 || lines[i] > editMap.lineCount()) return 0;
+        if(lines[i] == 0 || lines[i] > (uint)editMap.lines.count()) return 0;
 
         LineDef *line = editMap.lines[lines[i] - 1];
         if(line->isFromPolyobj()) return 0;
     }
 
-    Polyobj *po = createPolyobj();
+    Polyobj *po = editMap.createPolyobj();
     po->tag = tag;
     po->seqType = sequenceType;
     po->origin[VX] = originX;

@@ -316,6 +316,12 @@ public:
     void updateRoughArea();
 
     /**
+     * @param base  Mobj base to link in @a sector. Caller should ensure that the
+     *              same object is not linked multiple times into the chain.
+     */
+    void linkSoundEmitter(ddmobj_base_t &newEmitter);
+
+    /**
      * Update the origin of the sector according to the point defined by the
      * center of the sector's axis-aligned bounding box (which must be
      * initialized before calling).

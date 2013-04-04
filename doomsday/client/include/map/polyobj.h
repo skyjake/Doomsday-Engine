@@ -36,6 +36,10 @@ typedef struct polyobj_s {
         std::memset(this, 0, sizeof(polyobj_s));
     }
 
+    // Does nothing about the user data section.
+    ~polyobj_s()
+    {}
+
     /**
      * Translate the origin of the polyobj in the map coordinate space.
      *

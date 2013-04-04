@@ -595,6 +595,8 @@ public: /// @todo Replace with object level methods:
 
 public: /// @todo Make private:
 
+    void finishMapElements();
+
     /**
      * @pre Axis-aligned bounding boxes of all Sectors must be initialized.
      */

@@ -169,6 +169,16 @@ void Sector::updateRoughArea()
                  ((_aaBox.maxY - _aaBox.minY) / 128);
 }
 
+void Sector::linkSoundEmitter(ddmobj_base_t &newEmitter)
+{
+    // The sector's base is always head of the chain, so link the other after it.
+    newEmitter.thinker.prev = &_soundEmitter.thinker;
+    newEmitter.thinker.next = _soundEmitter.thinker.next;
+    if(newEmitter.thinker.next)
+        newEmitter.thinker.next->prev = &newEmitter.thinker;
+    _soundEmitter.thinker.next = &newEmitter.thinker;
+}
+
 void Sector::updateSoundEmitterOrigin()
 {
     _soundEmitter.origin[VX] = (_aaBox.minX + _aaBox.maxX) / 2;

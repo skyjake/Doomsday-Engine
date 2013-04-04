@@ -175,6 +175,247 @@ DENG2_PIMPL(GameMap)
         bspNodes.append(node);
     }
 
+    void buildSectorBspLeafLists()
+    {
+        foreach(Sector *sector, self._sectors)
+        {
+            sector->_bspLeafs.clear();
+
+#ifdef DENG2_QT_4_7_OR_NEWER
+            uint count = 0;
+            foreach(BspLeaf *bspLeaf, bspLeafs)
+            {
+                if(bspLeaf->sectorPtr() == sector)
+                    ++count;
+            }
+
+            if(0 == count) continue;
+
+            sector->_bspLeafs.reserve(count);
+#endif
+
+            foreach(BspLeaf *bspLeaf, bspLeafs)
+            {
+                if(bspLeaf->sectorPtr() == sector)
+                {
+                    // Ownership of the BSP leaf is not given to the sector.
+                    sector->_bspLeafs.append(bspLeaf);
+                }
+            }
+        }
+    }
+
+    void buildSectorLineLists()
+    {
+        LOG_VERBOSE("Building Sector line lists...");
+
+        struct LineLink
+        {
+            LineDef *line;
+            LineLink *next;
+        };
+
+        // Collate a list of lines for each sector.
+        zblockset_t *lineLinksBlockSet = ZBlockSet_New(sizeof(LineLink), 512, PU_APPSTATIC);
+        LineLink **sectorLineLinks = (LineLink **) Z_Calloc(sizeof(*sectorLineLinks) * self._sectors.count(), PU_APPSTATIC, 0);
+
+        foreach(LineDef *line, self._lines)
+        {
+            if(line->hasFrontSector())
+            {
+                int const sectorIndex = self.sectorIndex(&line->frontSector());
+
+                LineLink *link = (LineLink *) ZBlockSet_Allocate(lineLinksBlockSet);
+                link->line = line;
+                link->next = sectorLineLinks[sectorIndex];
+                sectorLineLinks[sectorIndex] = link;
+            }
+
+            if(line->hasBackSector() && !line->isSelfReferencing())
+            {
+                int const sectorIndex = self.sectorIndex(&line->backSector());
+
+                LineLink *link = (LineLink *) ZBlockSet_Allocate(lineLinksBlockSet);
+                link->line = line;
+                link->next = sectorLineLinks[sectorIndex];
+                sectorLineLinks[sectorIndex] = link;
+            }
+        }
+
+        // Build the actual sector line lists.
+        foreach(Sector *sector, self._sectors)
+        {
+            int const sectorIndex = self.sectorIndex(sector);
+
+            sector->_lines.clear();
+
+            if(!sectorLineLinks[sectorIndex]) continue;
+
+#ifdef DENG2_QT_4_7_OR_NEWER
+            // Count the total number of lines in this sector.
+            uint numLines = 0;
+            for(LineLink *link = sectorLineLinks[sectorIndex]; link; link = link->next)
+            {
+                numLines++;
+            }
+            // Reserve this much storage.
+            sector->_lines.reserve(numLines);
+#endif
+
+            /**
+             * The behavior of some algorithms used in the DOOM game logic are
+             * dependant upon the order of these lists (e.g., EV_DoFloor and
+             * EV_BuildStairs). Lets be helpful and use the same order.
+             *
+             * Sort: Original line index, ascending.
+             */
+            for(LineLink *link = sectorLineLinks[sectorIndex]; link; link = link->next)
+            {
+                // Ownership of the line is not given to the sector.
+                sector->_lines.prepend(link->line);
+            }
+        }
+
+        // Free temporary storage.
+        ZBlockSet_Delete(lineLinksBlockSet);
+        Z_Free(sectorLineLinks);
+    }
+
+    void finishSectors()
+    {
+        buildSectorBspLeafLists();
+        buildSectorLineLists();
+
+        foreach(Sector *sector, self._sectors)
+        {
+            sector->updateAABox();
+            sector->updateRoughArea();
+            sector->updateSoundEmitterOrigin();
+
+            /*
+             * Chain sound emitters (ddmobj_base_t) owned by all Surfaces in the
+             * sector-> These chains are used for efficiently traversing all of the
+             * sound emitters in a sector (e.g., when stopping all sounds emitted
+             * in the sector).
+             */
+            ddmobj_base_t &emitter = sector->soundEmitter();
+
+            // Clear the head of the emitter chain.
+            emitter.thinker.next = emitter.thinker.prev = 0;
+
+            // Link plane surface emitters:
+            foreach(Plane *plane, sector->planes())
+            {
+                sector->linkSoundEmitter(plane->surface().soundEmitter());
+            }
+
+            // Link wall surface emitters:
+            foreach(LineDef *line, sector->lines())
+            {
+                if(line->frontSectorPtr() == sector)
+                {
+                    SideDef &side = line->frontSideDef();
+                    sector->linkSoundEmitter(side.middle().soundEmitter());
+                    sector->linkSoundEmitter(side.bottom().soundEmitter());
+                    sector->linkSoundEmitter(side.top().soundEmitter());
+                }
+                if(line->hasBackSideDef() && line->backSectorPtr() == sector)
+                {
+                    SideDef &side = line->backSideDef();
+                    sector->linkSoundEmitter(side.middle().soundEmitter());
+                    sector->linkSoundEmitter(side.bottom().soundEmitter());
+                    sector->linkSoundEmitter(side.top().soundEmitter());
+                }
+            }
+        }
+    }
+
+    void finishLines()
+    {
+        foreach(LineDef *line, self._lines)
+        {
+            LineDef::Side &front = line->front();
+
+            if(!front._leftHEdge) continue;
+
+            /// @todo It should no longer be necessary to update the vtx ptrs here. -ds
+            line->_v[0] = &front.leftHEdge().v1();
+            line->_v[1] = &front.rightHEdge().v2();
+
+            line->updateSlopeType();
+            line->updateAABox();
+
+            line->_length = V2d_Length(line->_direction);
+            line->_angle = bamsAtan2(int( line->_direction[VY] ),
+                                     int( line->_direction[VX] ));
+
+            for(int i = 0; i < 2; ++i)
+            {
+                line->side(i).updateSurfaceTangents();
+                line->side(i).updateSoundEmitterOrigins();
+            }
+        }
+    }
+
+    void finishPlanes()
+    {
+        foreach(Sector *sector, self._sectors)
+        foreach(Plane *plane, sector->planes())
+        {
+            // Set target heights for each plane.
+            plane->_targetHeight =
+                plane->_oldHeight[0] =
+                    plane->_oldHeight[1] =
+                        plane->_visHeight = plane->_height;
+
+            plane->_visHeightDelta = 0;
+
+            plane->surface().updateSoundEmitterOrigin();
+
+#ifdef __CLIENT__
+            // Resize the biassurface lists for the BSP leaf planes.
+            foreach(BspLeaf *bspLeaf, sector->bspLeafs())
+            {
+                uint n = 0;
+
+                biassurface_t **newList = (biassurface_t **) Z_Calloc(sector->planeCount() * sizeof(biassurface_t *), PU_MAP, 0);
+                // Copy the existing list?
+                if(bspLeaf->_bsuf)
+                {
+                    for(; n < sector->planeCount() - 1 /* exclude newly added */; ++n)
+                    {
+                        newList[n] = bspLeaf->_bsuf[n];
+                    }
+                    Z_Free(bspLeaf->_bsuf);
+                    bspLeaf->_bsuf = 0;
+                }
+
+                /*
+                 * @todo So where is this data initialized now? -ds
+                 * If we are in map setup mode, don't create the biassurfaces now,
+                 * as planes are created before the bias system is available.
+                 */
+                /*if(!ddMapSetup)
+                {
+                    biassurface_t *bsuf = SB_CreateSurface();
+
+                    bsuf->size = Rend_NumFanVerticesForBspLeaf(bspLeaf);
+                    bsuf->illum = (vertexillum_t *) Z_Calloc(sizeof(vertexillum_t) * bsuf->size, PU_MAP, 0);
+
+                    for(uint k = 0; k < bsuf->size; ++k)
+                    {
+                        SB_InitVertexIllum(&bsuf->illum[k]);
+                    }
+
+                    newList[n] = bsuf;
+                }*/
+
+                bspLeaf->_bsuf = newList;
+            }
+#endif
+        }
+    }
+
 #ifdef __CLIENT__
 
     void addSurfaceToLists(Surface &suf)
@@ -416,6 +657,13 @@ bool GameMap::buildBsp()
     LOG_INFO(String("BSP build completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 
     return builtOK;
+}
+
+void GameMap::finishMapElements()
+{
+    d->finishLines();
+    d->finishSectors();
+    d->finishPlanes();
 }
 
 /// @todo Don't use sector bounds here, derive from lines instead. -ds
