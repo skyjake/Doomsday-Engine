@@ -28,9 +28,9 @@ extern "C" {
 
 typedef struct archivedmap_s {
     Uri* uri;
-    ddstring_t cachedMapPath;
+    /*ddstring_t cachedMapPath;
     boolean cachedMapFound;
-    boolean lastLoadAttemptFailed;
+    boolean lastLoadAttemptFailed;*/
 } archivedmap_t;
 
 extern byte mapCache;
@@ -44,6 +44,7 @@ void DAM_Init(void);
 /// Shutdown this module.
 void DAM_Shutdown(void);
 
+#if 0
 /**
  * Compose the relative path (relative to the runtime directory) to the directory
  * within the archived map cache where maps from the specified source will reside.
@@ -52,6 +53,7 @@ void DAM_Shutdown(void);
  * @return  The composed path.
  */
 AutoStr* DAM_ComposeCacheDir(const char* sourcePath);
+#endif
 
 boolean DAM_AttemptMapLoad(const Uri* uri);
 

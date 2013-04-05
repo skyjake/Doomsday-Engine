@@ -20,6 +20,8 @@
  * Doomsday Archived Map (DAM) reader/writer.
  */
 
+#if 0
+
 #include <lzss.h>
 #include <stdlib.h>
 
@@ -158,8 +160,6 @@ static void endSegment(void)
 {
     writeLong(DAMSEG_END);
 }
-
-#if 0
 
 static void writeVertex(GameMap const *map, uint idx)
 {
@@ -1069,7 +1069,6 @@ static void archivePolyobjs(GameMap* map, boolean write)
     else
         assertSegment(DAMSEG_END);
 }
-#endif
 
 static void archiveMap(GameMap *map, boolean write)
 {
@@ -1088,7 +1087,7 @@ static void archiveMap(GameMap *map, boolean write)
             gx.SetupForMapData(DMU_SECTOR, map->sectorCount());
         }
     }
-/*
+
     archivePolyobjs(map, write);
     archiveVertexes(map, write);
     archiveLines(map, write); // Must follow vertexes (lineowner nodes).
@@ -1099,7 +1098,7 @@ static void archiveMap(GameMap *map, boolean write)
     archiveNodes(map, write);
     archiveBlockmap(map, write);
     archiveReject(map, write);
-*/
+
     if(write)
         endSegment();
     else
@@ -1216,3 +1215,5 @@ boolean DAM_MapIsValid(char const* cachedMapPath, lumpnum_t markerLumpNum)
     }
     return false;
 }
+
+#endif

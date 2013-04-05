@@ -34,10 +34,12 @@
 
 using namespace de;
 
+/*
 // Should we be caching successfully loaded maps?
 byte mapCache = true;
 
 static char const *mapCacheDir = "mapcache/";
+*/
 
 static archivedmap_t **archivedMaps;
 static uint numArchivedMaps;
@@ -60,7 +62,7 @@ static void clearArchivedMaps()
 
 void DAM_Register()
 {
-    C_VAR_BYTE("map-cache", &mapCache, 0, 0, 1);
+    //C_VAR_BYTE("map-cache", &mapCache, 0, 0, 1);
 }
 
 void DAM_Init()
@@ -86,17 +88,17 @@ static archivedmap_t *allocArchivedMap()
 static void freeArchivedMap(archivedmap_t &dam)
 {
     Uri_Delete(dam.uri);
-    Str_Free(&dam.cachedMapPath);
+    //Str_Free(&dam.cachedMapPath);
     Z_Free(&dam);
 }
 
 /// Create a new archived map record.
-static archivedmap_t *createArchivedMap(de::Uri const &uri, ddstring_t const *cachedMapPath)
+static archivedmap_t *createArchivedMap(de::Uri const &uri/*, ddstring_t const *cachedMapPath*/)
 {
     archivedmap_t *dam = allocArchivedMap();
 
     dam->uri = reinterpret_cast<uri_s *>(new de::Uri(uri));
-    dam->lastLoadAttemptFailed = false;
+    /*dam->lastLoadAttemptFailed = false;
     Str_Init(&dam->cachedMapPath);
     Str_Set(&dam->cachedMapPath, Str_Text(cachedMapPath));
 
@@ -104,7 +106,7 @@ static archivedmap_t *createArchivedMap(de::Uri const &uri, ddstring_t const *ca
                       F_LumpNumForName(uri.path().toString().toLatin1().constData())))
     {
         dam->cachedMapFound = true;
-    }
+    }*/
 
     LOG_DEBUG("Added record for map '%s'.") << uri;
 
@@ -142,6 +144,8 @@ static void addArchivedMap(archivedmap_t *dam)
     archivedMaps[numArchivedMaps - 1] = dam;
     archivedMaps[numArchivedMaps] = 0; // Terminate.
 }
+
+#if 0
 
 /// Calculate the identity key for maps loaded from this path.
 static ushort calculateIdentifierForMapPath(char const *path)
@@ -182,6 +186,7 @@ static bool loadMap(GameMap **map, archivedmap_t *dam)
     *map = new GameMap;
     return DAM_MapRead(*map, Str_Text(&dam->cachedMapPath));
 }
+#endif
 
 static bool convertMap(GameMap **map, archivedmap_t *dam)
 {
@@ -244,6 +249,7 @@ boolean DAM_AttemptMapLoad(uri_s const *_uri)
         lumpnum_t markerLumpNum = F_LumpNumForName(uri.path().toString().toLatin1().constData());
         if(0 > markerLumpNum) return false;
 
+/*
         // Compose the cache directory path and ensure it exists.
         AutoStr *cachedMapDir = DAM_ComposeCacheDir(Str_Text(F_ComposeLumpFilePath(markerLumpNum)));
         F_MakePath(Str_Text(cachedMapDir));
@@ -253,26 +259,27 @@ boolean DAM_AttemptMapLoad(uri_s const *_uri)
         F_FileName(cachedMapPath, Str_Text(F_LumpName(markerLumpNum)));
         Str_Append(cachedMapPath, ".dcm");
         Str_Prepend(cachedMapPath, Str_Text(cachedMapDir));
+*/
 
         // Create an archived map record for this.
-        dam = createArchivedMap(uri, cachedMapPath);
+        dam = createArchivedMap(uri/*, cachedMapPath*/);
         addArchivedMap(dam);
     }
 
     // Load it in.
-    if(!dam->lastLoadAttemptFailed)
+    //if(!dam->lastLoadAttemptFailed)
     {
         GameMap *map = 0;
 
         Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
 
-        if(mapCache && dam->cachedMapFound)
+        /*if(mapCache && dam->cachedMapFound)
         {
             // Attempt to load the cached map data.
             if(loadMap(&map, dam))
                 loadedOK = true;
         }
-        else
+        else*/
         {
             // Try a JIT conversion with the help of a plugin.
             if(convertMap(&map, dam))
@@ -363,8 +370,9 @@ boolean DAM_AttemptMapLoad(uri_s const *_uri)
         }
     }
 
-    if(!loadedOK)
+/*  if(!loadedOK)
         dam->lastLoadAttemptFailed = true;
+*/
 
     return loadedOK;
 }
