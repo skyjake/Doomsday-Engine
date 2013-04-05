@@ -42,7 +42,7 @@ static const int MOUSE_WHEEL_CONTINUOUS_THRESHOLD_MS = 100;
 DENG2_PIMPL(Canvas)
 {
     CanvasWindow *parent;
-    bool initNotified;
+    bool readyNotified;
     Vector2i currentSize;
     bool cursorHidden;
     bool mouseGrabbed;
@@ -56,7 +56,7 @@ DENG2_PIMPL(Canvas)
     Instance(Public *i, CanvasWindow *parentWindow)
         : Base(i),
           parent(parentWindow),
-          initNotified(false),
+          readyNotified(false),
           cursorHidden(false),
           mouseGrabbed(false)
     {
@@ -311,19 +311,19 @@ void Canvas::showEvent(QShowEvent* ev)
     // The first time the window is shown, run the initialization callback. On
     // some platforms, OpenGL is not fully ready to be used before the window
     // actually appears on screen.
-    if(isVisible() && !d->initNotified)
+    if(isVisible() && !d->readyNotified)
     {
         LOG_DEBUG("Received first show event, scheduling GL ready notification");
 
-        QTimer::singleShot(1, this, SLOT(notifyInit()));
+        QTimer::singleShot(1, this, SLOT(notifyReady()));
     }
 }
 
-void Canvas::notifyInit()
+void Canvas::notifyReady()
 {
-    if(d->initNotified) return;
+    if(d->readyNotified) return;
 
-    d->initNotified = true;
+    d->readyNotified = true;
 
     LOG_AS("Canvas");
     LOG_DEBUG("Notifying GL ready");

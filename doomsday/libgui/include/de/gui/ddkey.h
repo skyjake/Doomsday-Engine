@@ -1,6 +1,7 @@
 /** @file ddkey.h  DDKEY codes.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -22,20 +23,23 @@
 /**
  * @defgroup keyConstants Key Constants
  * @ingroup gui
- * Most key data is regular ASCII so key constants correspond to ASCII codes.
  */
-///@{
 
-#define DDKEY_ESCAPE        27
-#define DDKEY_RETURN        13
-#define DDKEY_TAB           9
-#define DDKEY_BACKSPACE     127
-#define DDKEY_EQUALS        0x3d
-#define DDKEY_MINUS         0x2d
-#define DDKEY_BACKSLASH     0x5C
-
-// Extended keys (above 127).
+/**
+ * DDKEY codes. Most key data is regular ASCII so key constants correspond to
+ * ASCII codes. Note that these are used when dealing with the physical state
+ * of individual keys; text is entered separately as Unicode.
+ *
+ * @ingroup keyConstants
+ */
 enum {
+    DDKEY_TAB = 9,
+    DDKEY_RETURN = 13,
+    DDKEY_ESCAPE = 27,
+    DDKEY_MINUS = 0x2d,
+    DDKEY_EQUALS = 0x3d,
+    DDKEY_BACKSLASH = 0x5c,
+    DDKEY_BACKSPACE = 127,
     DDKEY_RIGHTARROW = 0x80,
     DDKEY_LEFTARROW,
     DDKEY_UPARROW,
@@ -88,7 +92,5 @@ enum {
     DDKEY_SECTION,      ///< §
     DD_HIGHEST_KEYCODE
 };
-
-///@}
 
 #endif // LIBGUI_DDKEY_H

@@ -29,7 +29,6 @@
 
 namespace de {
 
-//struct image_s; // see image.h
 class CanvasWindow;
 
 /**
@@ -106,6 +105,9 @@ public:
      */
     GLuint grabAsTexture(QSize const &outputSize = QSize());
 
+    /**
+     * Returns the size of the canvas in pixels.
+     */
     Vector2i size() const;
 
     /**
@@ -126,6 +128,12 @@ public:
      */
     bool isCursorVisible() const;
 
+    /**
+     * Replaces the current audiences of this canvas with another canvas's
+     * audiences.
+     *
+     * @param other  Canvas instance.
+     */
     void copyAudiencesFrom(Canvas const &other);
 
 protected:
@@ -133,7 +141,7 @@ protected:
     void resizeGL(int w, int h);
     void paintGL();
 
-    // Events.
+    // Native events.
     void focusInEvent(QFocusEvent *ev);
     void focusOutEvent(QFocusEvent *ev);
     void keyPressEvent(QKeyEvent *ev);
@@ -144,7 +152,7 @@ protected:
     void showEvent(QShowEvent *ev);
 
 protected slots:
-    void notifyInit();
+    void notifyReady();
 
 private:
     DENG2_PRIVATE(d)
