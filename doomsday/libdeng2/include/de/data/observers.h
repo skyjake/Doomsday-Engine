@@ -228,6 +228,10 @@ namespace de
             }
             return 0;
         }
+
+        bool isEmpty() const {
+            return size() == 0;
+        }
         
         iterator begin() {
             checkExists();
