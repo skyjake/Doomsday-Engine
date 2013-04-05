@@ -82,7 +82,7 @@ else {
     SOURCES += src/displaymode_dummy.c
 }
 
-unix:!macx: SOURCES += src/imKStoUCS_unix.c
+unix:!macx: SOURCES += src/imKStoUCS_x11.c
 
 # Installation ---------------------------------------------------------------
 
