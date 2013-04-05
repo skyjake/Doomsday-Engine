@@ -31,7 +31,6 @@
 #include "dd_main.h"
 #include "dd_loop.h"
 #include "con_main.h"
-#include "ui/displaymode.h"
 #include "sys_system.h"
 #include "serversystem.h"
 
