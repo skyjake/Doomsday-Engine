@@ -62,7 +62,6 @@ static void Mouse_Qt_Poll()
 {
     if(!mouseTrapped) return;
 
-#ifndef LIBDENG_CANVAS_TRACK_WITH_MOUSE_MOVE_EVENTS
     Window &mainWindow = Window::main();
     QWidget *widget = mainWindow.widgetPtr();
     if(!widget) return; // Hmm?
@@ -85,7 +84,6 @@ static void Mouse_Qt_Poll()
     {
         prevMousePos = curPos;
     }
-#endif
 }
 
 static void Mouse_Qt_GetState(mousestate_t *state)
