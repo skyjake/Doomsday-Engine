@@ -30,6 +30,14 @@ namespace de {
 
 /**
  * Top-level window that contains an OpenGL drawing canvas. @ingroup base
+ *
+ * CanvasWindow is the window frame and Canvas is the drawing surface. These
+ * two are in separate classes as the former is a top-level window and the
+ * latter is a regular widget inside the window. Also, the canvas may need to
+ * be replaced with one using a different OpenGL surface (for instance when
+ * switching on FSAA). This @em recreation of the canvas is managed here in
+ * CanvasWindow.
+ *
  * @see Canvas
  */
 class CanvasWindow : public QMainWindow,
@@ -57,9 +65,7 @@ public:
      */
     void recreateCanvas();
 
-    Canvas& canvas();
-
-    Canvas const &canvas() const;
+    Canvas& canvas() const;
 
     /**
      * Determines if a Canvas instance is owned by this window.
@@ -74,14 +80,11 @@ public:
 #ifdef WIN32
     bool event(QEvent *); // Alt key kludge
 #endif
-    //void closeEvent(QCloseEvent *);
-    //void moveEvent(QMoveEvent *);
-    //void resizeEvent(QResizeEvent *);
     void hideEvent(QHideEvent *);
 
     /**
      * Called when the Canvas is ready for OpenGL drawing (and visible).
-     * Overriding methods do not need to call this.
+     * Overriding methods must call this.
      *
      * @param canvas  Canvas.
      */
@@ -92,17 +95,6 @@ public:
      * must call this as the last operation (updates frame rate statistics).
      */
     virtual void canvasGLDraw(Canvas &);
-
-#if 0
-    /**
-     * Must be called before any canvas windows are created. Defines the
-     * default OpenGL format settings for the contained canvases.
-     *
-     * @return @c true, if the new format was applied. @c false, if the new
-     * format remains the same because none of the settings have changed.
-     */
-    static bool updateDefaultGLFormat();
-#endif
 
     enum GrabMode
     {

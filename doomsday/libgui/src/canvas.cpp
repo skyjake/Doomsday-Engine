@@ -192,13 +192,7 @@ Canvas::Canvas(CanvasWindow* parent, QGLWidget* shared)
     LOG_AS("Canvas");
     LOG_DEBUG("swap interval: ") << format().swapInterval();
     LOG_DEBUG("multisample: %b") << format().sampleBuffers();
-/*
-    TODO: needs to be moved to ClientWindow's GLInit
-#ifdef __CLIENT__
-    // Update the capability flags.
-    GL_state.features.multisample = format().sampleBuffers();
-#endif
-*/
+
     // We will be doing buffer swaps manually (for timing purposes).
     setAutoBufferSwap(false);
 
@@ -274,10 +268,7 @@ void Canvas::copyAudiencesFrom(Canvas const &other)
 void Canvas::initializeGL()
 {
     LOG_AS("Canvas");
-    LOG_DEBUG("Notifying GL init");
-
-    /// @todo Can this be used instead of GLReady to notify when the
-    /// canvas is ready (on all platforms)?
+    LOG_DEBUG("Notifying GL init (during paint)");
 
     DENG2_FOR_AUDIENCE(GLInit, i) i->canvasGLInit(*this);
 

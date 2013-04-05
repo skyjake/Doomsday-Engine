@@ -14,7 +14,7 @@ LIBS += -ldeng_gui
 
 macx {
     defineTest(linkBinaryToBundledLibdengGui) {
-        fixInstallName($${1}, libdeng_gui.0.dylib, ..)
+        fixInstallName($${1}, libdeng_gui.1.dylib, ..)
     }
     defineTest(linkToBundledLibdengGui) {
         linkBinaryToBundledLibdengGui($${1}.bundle/$$1)

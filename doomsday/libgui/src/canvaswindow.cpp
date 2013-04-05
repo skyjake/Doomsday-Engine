@@ -93,10 +93,6 @@ DENG2_PIMPL(CanvasWindow)
         DENG2_FOR_EACH_OBSERVER(Canvas::GLInitAudience, i, canvas->audienceForGLInit)
         {
             i->canvasGLInit(*canvas);
-
-            /*#ifdef __CLIENT__
-                GL_Init2DState();
-            #endif*/
         }
 
         canvas->doneCurrent();
@@ -138,16 +134,6 @@ float CanvasWindow::frameRate() const
 
 void CanvasWindow::recreateCanvas()
 {
-    /*
-    // Update the GL format for subsequently created Canvases.
-    if(!setDefaultGLFormat())
-    {
-        // No need to recreate.
-        LOG_DEBUG("Canvas not recreated because the format was not changed.");
-        return false;
-    }
-    */
-
     d->ready = false;
 
     // We'll re-trap the mouse after the new canvas is ready.
@@ -166,13 +152,7 @@ void CanvasWindow::recreateCanvas()
     LOG_DEBUG("Canvas recreated, old one still exists.");
 }
 
-Canvas &CanvasWindow::canvas()
-{
-    DENG2_ASSERT(d->canvas != 0);
-    return *d->canvas;
-}
-
-Canvas const &CanvasWindow::canvas() const
+Canvas &CanvasWindow::canvas() const
 {
     DENG2_ASSERT(d->canvas != 0);
     return *d->canvas;
@@ -197,49 +177,6 @@ bool CanvasWindow::event(QEvent *ev)
 }
 #endif
 
-/*
-void CanvasWindow::closeEvent(QCloseEvent *ev)
-{
-    if(d->closeFunc)
-    {
-        if(!d->closeFunc(*this))
-        {
-            ev->ignore();
-            return;
-        }
-    }
-
-    QMainWindow::closeEvent(ev);
-}
-
-void CanvasWindow::moveEvent(QMoveEvent *ev)
-{
-    QMainWindow::moveEvent(ev);
-
-    if(d->moveFunc)
-    {
-        d->moveFunc(*this);
-    }
-}
-*/
-
-/*
-void CanvasWindow::resizeEvent(QResizeEvent *ev)
-{
-    QMainWindow::resizeEvent(ev);
-
-    LOG_AS("CanvasWindow");
-
-    Vector2i size(width(), height());
-    LOG_DEBUG("Resized ") << size.asText();
-
-    Window::main().updateAfterResize(); /// @todo remove this
-
-    d->root.setViewSize(size);
-    d->busyRoot.setViewSize(size);
-}
-*/
-
 void CanvasWindow::hideEvent(QHideEvent *ev)
 {
     LOG_AS("CanvasWindow");
@@ -259,80 +196,10 @@ void CanvasWindow::canvasGLReady(Canvas &canvas)
     }
 }
 
-void CanvasWindow::canvasGLDraw(Canvas &/*canvas*/)
+void CanvasWindow::canvasGLDraw(Canvas &)
 {
-    // All of this occurs during the Canvas paintGL event.
-/* TODO: move to ClientWindow
-    ClientApp::app().preFrame(); /// @todo what about multiwindow?
-
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    root().draw();
-
-    // Finish GL drawing and swap it on to the screen. Blocks until buffers
-    // swapped.
-    GL_DoUpdate();
-  //  ClientApp::app().postFrame(); /// @todo what about multiwindow?
-*/
-
     d->updateFrameRateStatistics();
 }
-
-#if 0
-/*
- * TODO: move to ClientWindow
- */
-bool ClientWindow::updateDefaultGLFormat() // static
-{
-    LOG_AS("DefaultGLFormat");
-
-    // Configure the GL settings for all subsequently created canvases.
-    QGLFormat fmt;
-    fmt.setDepthBufferSize(16);
-    fmt.setStencilBufferSize(8);
-    fmt.setDoubleBuffer(true);
-
-    if(CommandLine_Exists("-novsync") || !Con_GetByte("vid-vsync"))
-    {
-        fmt.setSwapInterval(0); // vsync off
-        LOG_DEBUG("vsync off");
-    }
-    else
-    {
-        fmt.setSwapInterval(1);
-        LOG_DEBUG("vsync on");
-    }
-
-    // The value of the "vid-fsaa" variable is written to this settings
-    // key when the value of the variable changes.
-    bool configured = de::App::config().getb("window.fsaa");
-
-    if(CommandLine_Exists("-nofsaa") || !configured)
-    {
-        fmt.setSampleBuffers(false);
-        LOG_DEBUG("multisampling off");
-    }
-    else
-    {
-        fmt.setSampleBuffers(true); // multisampling on (default: highest available)
-        //fmt.setSamples(4);
-        LOG_DEBUG("multisampling on (max)");
-    }
-
-    if(fmt != QGLFormat::defaultFormat())
-    {
-        LOG_DEBUG("Applying new format...");
-        QGLFormat::setDefaultFormat(fmt);
-        return true;
-    }
-    else
-    {
-        LOG_DEBUG("New format is the same as before.");
-        return false;
-    }
-}
-#endif
 
 duint CanvasWindow::grabAsTexture(GrabMode mode) const
 {

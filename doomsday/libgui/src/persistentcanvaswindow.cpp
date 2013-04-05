@@ -26,8 +26,7 @@
 
 #include "de/PersistentCanvasWindow"
 #include "de/GuiApp"
-#include "de/gui/displaymode.h"
-#include "de/gui/displaymode_native.h"
+#include "de/DisplayMode"
 #include <de/ArrayValue>
 #include <de/NumberValue>
 #include <QDesktopWidget>

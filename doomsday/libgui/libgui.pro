@@ -89,7 +89,7 @@ unix:!macx: SOURCES += src/imKStoUCS_x11.c
 macx {
     linkDylibToBundledLibdeng2(libdeng_gui)
 
-    doPostLink("install_name_tool -id @executable_path/../Frameworks/libdeng_gui.0.dylib libdeng_gui.0.dylib")
+    doPostLink("install_name_tool -id @executable_path/../Frameworks/libdeng_gui.1.dylib libdeng_gui.1.dylib")
 
     # Update the library included in the main app bundle.
     doPostLink("mkdir -p ../client/Doomsday.app/Contents/Frameworks")

@@ -49,13 +49,16 @@ public:
     /**
      * Notified when the canvas is ready for GL operations. The OpenGL context
      * and drawing surface are not ready to be used before that. The
-     * notification occurs immediately after the widget first becomes visible
-     * on screen.
+     * notification occurs soon after the widget first becomes visible on
+     * screen. Note that the notification comes straight from the event loop
+     * (timer signal) instead of during a paint event.
      */
     DENG2_DEFINE_AUDIENCE(GLReady, void canvasGLReady(Canvas &))
 
     /**
-     * Notified when the canvas's GL state needs to be initialized.
+     * Notified when the canvas's GL state needs to be initialized. This is
+     * called immediately before drawing the contents of the canvas for the
+     * first time (during a paint event).
      */
     DENG2_DEFINE_AUDIENCE(GLInit, void canvasGLInit(Canvas &))
 
