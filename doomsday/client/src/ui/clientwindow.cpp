@@ -239,6 +239,7 @@ void ClientWindow::canvasGLReady(Canvas &canvas)
 
 void ClientWindow::canvasGLInit(Canvas &)
 {
+    Sys_GLConfigureDefaultState();
     GL_Init2DState();
 }
 

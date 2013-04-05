@@ -271,13 +271,6 @@ void Canvas::initializeGL()
     LOG_DEBUG("Notifying GL init (during paint)");
 
     DENG2_FOR_AUDIENCE(GLInit, i) i->canvasGLInit(*this);
-
-    /*
-     * TODO: move to ClientWindow
-#ifdef __CLIENT__
-    Sys_GLConfigureDefaultState();
-#endif
-    */
 }
 
 void Canvas::resizeGL(int w, int h)
