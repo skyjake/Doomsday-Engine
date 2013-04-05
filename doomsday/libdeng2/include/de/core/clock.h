@@ -59,6 +59,7 @@ public:
 public:
     static void setAppClock(Clock *c);
     static Clock &appClock();
+    static Time const &appTime();
 
 private:
     Time _startedAt;
