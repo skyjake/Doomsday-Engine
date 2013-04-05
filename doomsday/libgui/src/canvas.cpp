@@ -37,7 +37,6 @@
 
 namespace de {
 
-static const int MOUSE_TRACK_INTERVAL_MS = 1;
 static const int MOUSE_WHEEL_CONTINUOUS_THRESHOLD_MS = 100;
 
 DENG2_PIMPL(Canvas)
@@ -194,7 +193,7 @@ Canvas::Canvas(CanvasWindow* parent, QGLWidget* shared)
     LOG_DEBUG("swap interval: ") << format().swapInterval();
     LOG_DEBUG("multisample: %b") << format().sampleBuffers();
 /*
-    TODO: needs to be moved to ClientWindow
+    TODO: needs to be moved to ClientWindow's GLInit
 #ifdef __CLIENT__
     // Update the capability flags.
     GL_state.features.multisample = format().sampleBuffers();
@@ -257,7 +256,7 @@ bool Canvas::isCursorVisible() const
     return !d->cursorHidden;
 }
 
-void Canvas::copyAudiencesFrom(Canvas &other)
+void Canvas::copyAudiencesFrom(Canvas const &other)
 {
     audienceForGLReady          = other.audienceForGLReady;
     audienceForGLInit           = other.audienceForGLInit;
@@ -274,6 +273,12 @@ void Canvas::copyAudiencesFrom(Canvas &other)
 
 void Canvas::initializeGL()
 {
+    LOG_AS("Canvas");
+    LOG_DEBUG("Notifying GL init");
+
+    /// @todo Can this be used instead of GLReady to notify when the
+    /// canvas is ready (on all platforms)?
+
     DENG2_FOR_AUDIENCE(GLInit, i) i->canvasGLInit(*this);
 
     /*
@@ -299,6 +304,8 @@ void Canvas::resizeGL(int w, int h)
 
 void Canvas::showEvent(QShowEvent* ev)
 {
+    LOG_AS("Canvas");
+
     QGLWidget::showEvent(ev);
 
     // The first time the window is shown, run the initialization callback. On
@@ -306,6 +313,8 @@ void Canvas::showEvent(QShowEvent* ev)
     // actually appears on screen.
     if(isVisible() && !d->initNotified)
     {
+        LOG_DEBUG("Received first show event, scheduling GL ready notification");
+
         QTimer::singleShot(1, this, SLOT(notifyInit()));
     }
 }
@@ -315,6 +324,9 @@ void Canvas::notifyInit()
     if(d->initNotified) return;
 
     d->initNotified = true;
+
+    LOG_AS("Canvas");
+    LOG_DEBUG("Notifying GL ready");
 
     DENG2_FOR_AUDIENCE(GLReady, i) i->canvasGLReady(*this);
 

@@ -126,7 +126,7 @@ public:
      */
     bool isCursorVisible() const;
 
-    void copyAudiencesFrom(Canvas &other);
+    void copyAudiencesFrom(Canvas const &other);
 
 protected:
     void initializeGL();
