@@ -879,8 +879,8 @@ void CP_VideoModeInfo(ui_object_t *ob)
                 (mainWindow.isFullscreen()? "fullscreen" : "windowed"));
     }
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glEnable(GL_TEXTURE_2D);
     FR_SetFont(fontVariable[FS_LIGHT]);

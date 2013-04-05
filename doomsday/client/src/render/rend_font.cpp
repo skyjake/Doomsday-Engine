@@ -539,8 +539,8 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
 
     if(renderWireframe > 1)
     {
-        LIBDENG_ASSERT_IN_MAIN_THREAD();
-        LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+        DENG_ASSERT_IN_MAIN_THREAD();
+        DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glDisable(GL_TEXTURE_2D);
@@ -1241,8 +1241,8 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
     if(alignFlags & ALIGN_RIGHT)
         FR_TextSize(&textSize, text);
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // We need to change the current color, so remember for restore.
     glGetFloatv(GL_CURRENT_COLOR, origColor);

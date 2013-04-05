@@ -1553,8 +1553,8 @@ static void drawPoint(coord_t pos[3], int radius, const float color[4])
     float radX = radius * 1;
     float radY = radX / 1.2f;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glColor4fv(color);
 
@@ -1585,8 +1585,8 @@ void Rend_DrawShadowOffsetVerts()
 
     if(!theMap) return;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glDepthMask(GL_FALSE);
     glDisable(GL_DEPTH_TEST);

@@ -60,8 +60,8 @@ void GL_DrawRectWithCoords(const RectRaw* rect, Point2Raw coords[4])
 {
     if(!rect) return;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glBegin(GL_QUADS);
         // Upper left.
@@ -110,8 +110,8 @@ void GL_DrawRectfWithCoords(const RectRawf* rect, Point2Rawf coords[4])
 {
     if(!rect) return;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glBegin(GL_QUADS);
         // Upper left.
@@ -168,8 +168,8 @@ void GL_DrawRectf2TextureColor(double x, double y, double width, double height,
 {
     if(topAlpha <= 0 && bottomAlpha <= 0) return;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glBegin(GL_QUADS);
         // Top color.
@@ -190,8 +190,8 @@ void GL_DrawRectf2TextureColor(double x, double y, double width, double height,
 
 void GL_DrawRectf2Tiled(double x, double y, double w, double h, int tw, int th)
 {
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
@@ -219,8 +219,8 @@ void GL_DrawCutRectfTiled(const RectRawf* rect, int tw, int th, int txoff, int t
     float lefth = cutRect->origin.x - rect->origin.x;
     float righth = rect->origin.x + rect->size.width - (cutRect->origin.x + cutRect->size.width);
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glBegin(GL_QUADS);
     if(toph > 0)
@@ -309,8 +309,8 @@ void GL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int t
 void GL_DrawLine(float x1, float y1, float x2, float y2, float r, float g,
                  float b, float a)
 {
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glColor4f(r, g, b, a);
     glBegin(GL_LINES);
@@ -347,8 +347,8 @@ void GL_DrawFilter(void)
     const viewdata_t* vd = R_ViewData(displayPlayer);
     assert(NULL != vd);
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glColor4fv(filterColor);
     glBegin(GL_QUADS);
@@ -403,8 +403,8 @@ DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp)
 
     if(SCALEMODE_STRETCH == bp->scaleMode) return;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     /**
      * Use an orthographic projection in screenspace, translating and
@@ -468,8 +468,8 @@ DENG_EXTERN_C void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp)
 
     if(SCALEMODE_STRETCH == bp->scaleMode) return;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();

@@ -179,8 +179,8 @@ static void printGLUInfo(void)
     GLfloat fVals[2];
     GLint iVal;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     Con_Message("OpenGL information:");
     Con_Message("  Vendor: %s", glGetString(GL_VENDOR));
@@ -445,8 +445,8 @@ boolean Sys_GLInitialize(void)
 
     assert(doneEarlyInit);
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     assert(!Sys_GLCheckError());
 
@@ -520,8 +520,8 @@ void Sys_GLConfigureDefaultState(void)
      */
     assert(doneEarlyInit);
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glFrontFace(GL_CW);
     glDisable(GL_CULL_FACE);

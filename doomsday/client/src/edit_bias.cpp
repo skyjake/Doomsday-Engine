@@ -640,7 +640,7 @@ static void SBE_InfoBox(source_t *s, int rightX, char const *title, float alpha)
     color.green = s->color[CG];
     color.blue  = s->color[CB];
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_IN_MAIN_THREAD();
 
     glEnable(GL_TEXTURE_2D);
 
@@ -802,7 +802,7 @@ void SBE_DrawHUD(void)
 
     if(!editActive || editHidden || !map) return;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_IN_MAIN_THREAD();
 
     // Go into screen projection mode.
     glMatrixMode(GL_PROJECTION);

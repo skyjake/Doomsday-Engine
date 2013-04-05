@@ -172,8 +172,8 @@ void GL_DoUpdate()
         GL_SetGamma();
     }
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Wait until the right time to show the frame so that the realized
     // frame rate is exactly right.
@@ -387,8 +387,8 @@ void GL_Shutdown()
     if(!initGLOk)
         return; // Not yet initialized fully.
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // We won't be drawing anything further but we don't want to shutdown
     // with the previous frame still visible as this can lead to unwanted
@@ -432,8 +432,8 @@ void GL_Init2DState()
     glNearClip = 5;
     glFarClip = 16500;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Here we configure the OpenGL state and set the projection matrix.
     glDisable(GL_CULL_FACE);
@@ -468,8 +468,8 @@ void GL_Init2DState()
 
 void GL_SwitchTo3DState(boolean push_state, viewport_t const *port, viewdata_t const *viewData)
 {
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(push_state)
     {
@@ -497,8 +497,8 @@ void GL_SwitchTo3DState(boolean push_state, viewport_t const *port, viewdata_t c
 
 void GL_Restore2DState(int step, viewport_t const *port, viewdata_t const *viewData)
 {
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch(step)
     {
@@ -573,8 +573,8 @@ void GL_ProjectionMatrix()
     // We're assuming pixels are squares.
     float aspect = viewpw / (float) viewph;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -640,8 +640,8 @@ void GL_TotalRestore()
 
 void GL_BlendMode(blendmode_t mode)
 {
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch(mode)
     {
@@ -790,8 +790,8 @@ void GL_BindTexture(TextureVariant *vtexture)
         return;
     }
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glBindTexture(GL_TEXTURE_2D, glTexName);
     Sys_GLCheckError();
@@ -822,8 +822,8 @@ void GL_BindTextureUnmanaged(DGLuint glName, int wrapS, int wrapT, int magMode)
         return;
     }
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glBindTexture(GL_TEXTURE_2D, glName);
     Sys_GLCheckError();
@@ -839,8 +839,8 @@ void GL_SetNoTexture()
 {
     if(BusyMode_InWorkerThread()) return;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     /// @todo Don't actually change the current binding. Instead we should disable
     ///       all currently enabled texture types.

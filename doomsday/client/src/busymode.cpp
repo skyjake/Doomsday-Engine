@@ -160,7 +160,7 @@ static void beginTask(BusyTask* task)
 static void endTask(BusyTask* task)
 {
     DENG_ASSERT(task);
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_IN_MAIN_THREAD();
 
     if(verbose)
     {
@@ -408,7 +408,7 @@ static void BusyMode_Exit(void)
     int result;
     systhreadexitstatus_t status;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_IN_MAIN_THREAD();
 
     busyDone = true;
 

@@ -1829,8 +1829,8 @@ void Rend_RenderInputDeviceStateVisual(inputdev_t* device, const inputdev_layout
     Point2Raw offset;
     uint i;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(retVisualDimensions)
     {
@@ -2194,8 +2194,8 @@ void Rend_AllInputDeviceStateVisuals(void)
 
     if(novideo || isDedicated) return; // Not for us.
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Disabled?
     if(!devRendKeyState && !devRendMouseState && !devRendJoyState) return;

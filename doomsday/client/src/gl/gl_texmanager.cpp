@@ -1396,8 +1396,8 @@ boolean GL_UploadTexture(int glFormat, int loadFormat, const uint8_t* pixels,
         genMipmaps = 0;
     }
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Automatic mipmap generation?
     if(GL_state.extensions.genMipmapSGIS && genMipmaps)
@@ -1675,8 +1675,8 @@ void GL_UploadTextureContent(texturecontent_t const &content, GLUploadMethod met
         }
     }
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glBindTexture(GL_TEXTURE_2D, content.name);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, content.minFilter);
@@ -2317,8 +2317,8 @@ void GL_SetRawTexturesMinFilter(int newMinFilter)
         rawtex_t *r = *ptr;
         if(r->tex) // Is the texture loaded?
         {
-            LIBDENG_ASSERT_IN_MAIN_THREAD();
-            LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+            DENG_ASSERT_IN_MAIN_THREAD();
+            DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
             glBindTexture(GL_TEXTURE_2D, r->tex);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, newMinFilter);
