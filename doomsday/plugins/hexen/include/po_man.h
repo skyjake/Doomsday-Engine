@@ -68,7 +68,7 @@ typedef struct {
     int             tics;
     int             waitTics;
     podoortype_t    type;
-    coord_t         close;
+    boolean         close;
 } polydoor_t;
 
 enum {

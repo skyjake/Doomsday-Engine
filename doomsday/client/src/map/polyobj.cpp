@@ -287,7 +287,7 @@ bool Polyobj::rotate(angle_t delta)
     // With rotation applied now determine if we collided with anything.
     if(mobjIsBlockingPolyobj(*this))
     {
-        LOG_DEBUG("Blocked by mobj, undoing...");
+        //LOG_DEBUG("Blocked by mobj, undoing...");
 
         P_PolyobjUnlink(this);
         {
