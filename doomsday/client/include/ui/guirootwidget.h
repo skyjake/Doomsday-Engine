@@ -1,4 +1,4 @@
-/** @file guiwidget.h  Base class for graphical widgets.
+/** @file guirootwidget.h  Graphical root widget.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,41 +16,36 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef GUIWIDGET_H
-#define GUIWIDGET_H
+#ifndef CLIENT_GUIROOTWIDGET_H
+#define CLIENT_GUIROOTWIDGET_H
 
-#include <de/Widget>
-#include <de/RuleRectangle>
+#include <de/RootWidget>
 
-class GuiRootWidget;
+class ClientWindow;
 
 /**
- * Base class for graphical widgets.
+ * Graphical root widget.
  * @ingroup gui
  */
-class GuiWidget : public de::Widget
+class GuiRootWidget : public de::RootWidget
 {
 public:
-    GuiWidget(de::String const &name = "");
-
-    GuiRootWidget &root();
+    GuiRootWidget(ClientWindow *window = 0);
 
     /**
-     * Returns the rule rectangle that defines the placement of the widget on
-     * the target canvas.
+     * Sets the window in which the root widget resides.
+     *
+     * @param window  Client window instance.
      */
-    de::RuleRectangle &rule();
+    void setWindow(ClientWindow *window);
 
     /**
-     * Returns the rule rectangle that defines the placement of the widget on
-     * the target canvas.
+     * Returns the window in which the root widget resides.
      */
-    de::RuleRectangle const &rule() const;
-
-    void deleteLater();
+    ClientWindow &window();
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // GUIWIDGET_H
+#endif // CLIENT_GUIROOTWIDGET_H

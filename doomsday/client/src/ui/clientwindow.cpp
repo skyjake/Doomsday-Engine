@@ -1,30 +1,5 @@
-/** @file window.cpp Window manager. Window manager that manages a QWidget-based window. 
+/** @file clientwindow.cpp  Top-level window with UI widgets.
  * @ingroup base
- *
- * The Doomsday window management is responsible for the positioning, sizing,
- * and state of the game's native windows. In practice, the code operates on Qt
- * top-level windows.
- *
- * At the moment, the quality of the code is adequate at best. See the todo
- * notes below for ideas for future improvements.
- *
- * @todo Instead of 'rect' and 'normalRect', the window should have a
- * 'fullscreenSize' and a 'normalRect'. It isn't ideal that when toggling
- * between fullscreen and windowed mode, the fullscreen resolution is chosen
- * based on the size of the normal-mode window.
- *
- * @todo It is not a good idea to duplicate window state locally (position,
- * size, flags). Much of the complexity here is due to this duplication, trying
- * to keep all the state consistent. Instead, the real QWidget should be used
- * for these properties. Qt has a mechanism for storing the state of a window:
- * QWidget::saveGeometry(), QMainWindow::saveState().
- *
- * @todo Refactor for multiple window support. One window should be the "main"
- * window while others are secondary windows.
- *
- * @todo Deferred window changes should be done using a queue-type solution
- * where it is possible to schedule multiple tasks into the future separately
- * for each window. Each window could have its own queue.
  *
  * @todo Platform-specific behavior should be encapsulated in subclasses, e.g.,
  * MacWindowBehavior. This would make the code easier to follow and more adaptable
@@ -49,6 +24,23 @@
  * 02110-1301 USA</small>
  */
 
+#include "ui/clientwindow.h"
+#include "clientapp.h"
+#include <de/DisplayMode>
+#include <de/NumberValue>
+#include <QGLFormat>
+#include <QCloseEvent>
+
+#include "gl/sys_opengl.h"
+#include "gl/gl_main.h"
+#include "ui/sys_input.h"
+#include "ui/legacywidget.h"
+#include "ui/busywidget.h"
+
+#include "dd_main.h"
+#include "con_main.h"
+
+#if 0
 #include <cstdlib>
 #include <cstdio>
 
@@ -84,69 +76,356 @@
 #include "con_main.h"
 #include "gl/gl_main.h"
 
-using namespace de;
+// --------------------------------------------------------------------------
 
-#define IS_NONZERO(x) ((x) != 0)
+#include <QApplication>
+#include <QGLFormat>
+#include <QMoveEvent>
+#include <de/App>
+#include <de/Config>
+#include <de/Record>
+#include <de/NumberValue>
+#include <de/Log>
+#include <de/RootWidget>
+#include <de/c_wrapper.h>
 
-/**
- * @defgroup windowFlags Window Flags.
- */
-///@{
-#define WF_VISIBLE              0x01
-#define WF_CENTERED             0x02
-#define WF_MAXIMIZED            0x04
-#define WF_FULLSCREEN           0x08
-///@}
+#include "de_platform.h"
+#include "dd_loop.h"
+#include "con_main.h"
+#ifdef __CLIENT__
+#  include "gl/gl_main.h"
+#endif
+#include "ui/canvaswindow.h"
+#include "clientapp.h"
 
-uint mainWindowIdx;
-
-#ifdef MACOSX
-static const int WAIT_MILLISECS_AFTER_MODE_CHANGE = 100; // ms
-#else
-static const int WAIT_MILLISECS_AFTER_MODE_CHANGE = 10; // ms
+#include <assert.h>
+#include <QThread>
 #endif
 
-/// Used to determine the valid region for windows on the desktop.
-/// A window should never go fully (or nearly fully) outside the desktop.
-static const int DESKTOP_EDGE_GRACE = 30; // pixels
+using namespace de;
 
-int const Window::MIN_WIDTH  = 320;
-int const Window::MIN_HEIGHT = 240;
+static String const LEGACY_WIDGET_NAME = "legacy";
 
-static bool winManagerInited;
-static Window *mainWindow;
-
-static QRect desktopRect()
+DENG2_PIMPL(ClientWindow)
 {
-    /// @todo Multimonitor? This checks the default screen.
-    return QApplication::desktop()->screenGeometry();
+    bool needMainInit;
+    bool needRecreateCanvas;
+
+    Mode mode;
+
+    /// Root of the nomal UI widgets of this window.
+    GuiRootWidget root;
+
+    GuiRootWidget busyRoot;
+
+    Instance(Public *i)
+        : Base(i),
+          needMainInit(true),
+          needRecreateCanvas(false),
+          mode(Normal),
+          root(thisPublic),
+          busyRoot(thisPublic)
+    {
+        LegacyWidget *legacy = new LegacyWidget(LEGACY_WIDGET_NAME);
+        legacy->rule()
+                .setLeftTop    (root.viewLeft(),  root.viewTop())
+                .setRightBottom(root.viewRight(), root.viewBottom());
+        root.add(legacy);
+
+        // Initially the widget is disabled. It will be enabled when the window
+        // is visible and ready to be drawn.
+        legacy->disable();
+
+        // For busy mode we have an entirely different widget tree.
+        BusyWidget *busy = new BusyWidget;
+        busy->rule()
+                .setLeftTop    (busyRoot.viewLeft(),  busyRoot.viewTop())
+                .setRightBottom(busyRoot.viewRight(), busyRoot.viewBottom());
+        busyRoot.add(busy);
+    }
+
+    void setMode(Mode const &newMode)
+    {
+        LOG_VERBOSE("Switching to %s mode") << (newMode == Busy? "Busy" : "Normal");
+
+        mode = newMode;
+    }
+
+    void finishMainWindowInit()
+    {
+#ifdef MACOSX
+        if(self.isFullScreen())
+        {
+            // The window must be manually raised above the shielding window put up by
+            // the fullscreen display capture.
+            DisplayMode_Native_Raise(self.nativeHandle());
+        }
+#endif
+
+        self.raise();
+        self.activateWindow();
+
+        // Automatically grab the mouse from the get-go if in fullscreen mode.
+        if(Mouse_IsPresent() && self.isFullScreen())
+        {
+            self.canvas().trapMouse();
+        }
+
+        self.canvas().audienceForFocusChange += self;
+
+#ifdef WIN32
+        if(self.isFullScreen())
+        {
+            // It would seem we must manually give our canvas focus. Bug in Qt?
+            self.canvas().setFocus();
+        }
+#endif
+
+        DD_FinishInitializationAfterWindowReady();
+    }
+};
+
+ClientWindow::ClientWindow(String const &id)
+    : PersistentCanvasWindow(id), d(new Instance(this))
+{
+    canvas().audienceForGLResize += this;
+    canvas().audienceForGLInit += this;
 }
 
-/*
-static QRect desktopValidRect()
+GuiRootWidget &ClientWindow::root()
 {
-    return desktopRect().adjusted(DESKTOP_EDGE_GRACE, DESKTOP_EDGE_GRACE,
-                                  -DESKTOP_EDGE_GRACE, -DESKTOP_EDGE_GRACE);
-}
-*/
-
-static QRect centeredRect(QSize size)
-{
-    QSize screenSize = desktopRect().size();
-    LOG_DEBUG("centeredGeometry: Current desktop rect %s")
-            << Vector2i(screenSize.width(), screenSize.height()).asText();
-
-    return QRect(desktopRect().topLeft() +
-                 QPoint((screenSize.width()  - size.width())  / 2,
-                        (screenSize.height() - size.height()) / 2),
-                 size);
+    return d->mode == Busy? d->busyRoot : d->root;
 }
 
-static void notifyAboutModeChange()
+void ClientWindow::setMode(Mode const &mode)
 {
-    LOG_MSG("Display mode has changed.");
-    DENG2_GUI_APP->notifyDisplayModeChanged();
+    LOG_AS("ClientWindow");
+
+    d->setMode(mode);
 }
+
+void ClientWindow::closeEvent(QCloseEvent *ev)
+{
+    LOG_DEBUG("Window is about to close, executing 'quit'.");
+
+    /// @todo autosave and quit?
+    Con_Execute(CMDS_DDAY, "quit", true, false);
+
+    // We are not authorizing immediate closing of the window;
+    // engine shutdown will take care of it later.
+    ev->ignore(); // don't close
+}
+
+void ClientWindow::canvasGLReady(Canvas &canvas)
+{
+    PersistentCanvasWindow::canvasGLReady(canvas);
+
+    // Update the capability flags.
+    GL_state.features.multisample = canvas.format().sampleBuffers();
+
+    LOG_DEBUG("GL feature: Multisampling: %b") << GL_state.features.multisample;
+
+    // Now that the Canvas is ready for drawing we can enable the LegacyWidget.
+    d->root.find(LEGACY_WIDGET_NAME)->enable();
+
+    LOG_DEBUG("LegacyWidget enabled");
+
+    if(d->needMainInit)
+    {
+        d->needMainInit = false;
+        d->finishMainWindowInit();
+    }
+}
+
+void ClientWindow::canvasGLInit(Canvas &)
+{
+    GL_Init2DState();
+}
+
+void ClientWindow::canvasGLDraw(Canvas &canvas)
+{
+    // All of this occurs during the Canvas paintGL event.
+
+    ClientApp::app().preFrame(); /// @todo what about multiwindow?
+
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+    root().draw();
+
+    // Finish GL drawing and swap it on to the screen. Blocks until buffers
+    // swapped.
+    GL_DoUpdate();
+
+    ClientApp::app().postFrame(); /// @todo what about multiwindow?
+
+    PersistentCanvasWindow::canvasGLDraw(canvas);
+}
+
+void ClientWindow::canvasGLResized(Canvas &canvas)
+{
+    LOG_AS("ClientWindow");
+
+    Vector2i size = canvas.size();
+    LOG_DEBUG("Canvas resized to ") << size.asText();
+
+    // Tell the widgets.
+    d->root.setViewSize(size);
+    d->busyRoot.setViewSize(size);
+}
+
+void ClientWindow::canvasFocusChanged(Canvas &canvas, bool hasFocus)
+{
+    LOG_DEBUG("canvasFocusChanged focus:%b fullscreen:%b hidden:%b minimized:%b")
+            << hasFocus << isFullScreen() << isHidden() << isMinimized();
+
+    if(!hasFocus)
+    {
+        DD_ClearEvents();
+        I_ResetAllDevices();
+        canvas.trapMouse(false);
+    }
+    else if(isFullScreen())
+    {
+        // Trap the mouse again in fullscreen mode.
+        canvas.trapMouse();
+    }
+
+    // Generate an event about this.
+    ddevent_t ev;
+    ev.type           = E_FOCUS;
+    ev.focus.gained   = hasFocus;
+    ev.focus.inWindow = 1; /// @todo Ask WindowSystem for an identifier number.
+    DD_PostEvent(&ev);
+}
+
+bool ClientWindow::setDefaultGLFormat() // static
+{
+    LOG_AS("DefaultGLFormat");
+
+    // Configure the GL settings for all subsequently created canvases.
+    QGLFormat fmt;
+    fmt.setDepthBufferSize(16);
+    fmt.setStencilBufferSize(8);
+    fmt.setDoubleBuffer(true);
+
+    if(CommandLine_Exists("-novsync") || !Con_GetByte("vid-vsync"))
+    {
+        fmt.setSwapInterval(0); // vsync off
+        LOG_DEBUG("vsync off");
+    }
+    else
+    {
+        fmt.setSwapInterval(1);
+        LOG_DEBUG("vsync on");
+    }
+
+    // The value of the "vid-fsaa" variable is written to this settings
+    // key when the value of the variable changes.
+    bool configured = de::App::config().getb("window.fsaa");
+
+    if(CommandLine_Exists("-nofsaa") || !configured)
+    {
+        fmt.setSampleBuffers(false);
+        LOG_DEBUG("multisampling off");
+    }
+    else
+    {
+        fmt.setSampleBuffers(true); // multisampling on (default: highest available)
+        //fmt.setSamples(4);
+        LOG_DEBUG("multisampling on (max)");
+    }
+
+    if(fmt != QGLFormat::defaultFormat())
+    {
+        LOG_DEBUG("Applying new format...");
+        QGLFormat::setDefaultFormat(fmt);
+        return true;
+    }
+    else
+    {
+        LOG_DEBUG("New format is the same as before.");
+        return false;
+    }
+}
+
+void ClientWindow::draw()
+{
+    // Don't run the main loop until after the paint event has been dealt with.
+    ClientApp::app().loop().pause();
+
+    // The canvas needs to be recreated when the GL format has changed
+    // (e.g., multisampling).
+    if(d->needRecreateCanvas)
+    {
+        d->needRecreateCanvas = false;
+        if(setDefaultGLFormat())
+        {
+            recreateCanvas();
+            // Wait until the new Canvas is ready (note: loop remains paused!).
+            return;
+        }
+    }
+
+    if(shouldRepaintManually())
+    {
+        DENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+        // Perform the drawing manually right away.
+        canvas().updateGL();
+    }
+    else
+    {
+        // Request update at the earliest convenience.
+        canvas().update();
+    }
+}
+
+bool ClientWindow::shouldRepaintManually() const
+{
+    // When the mouse is not trapped, allow the system to regulate window
+    // updates (e.g., for window manipulation).
+    if(isFullScreen()) return true;
+    return !Mouse_IsPresent() || canvas().isMouseTrapped();
+}
+
+void ClientWindow::grab(image_t &img, bool halfSized) const
+{
+    DENG_ASSERT_IN_MAIN_THREAD();
+
+    QSize outputSize = (halfSized? QSize(width()/2, height()/2) : QSize());
+    QImage grabbed = canvas().grabImage(outputSize);
+
+    Image_Init(&img);
+    img.size.width  = grabbed.width();
+    img.size.height = grabbed.height();
+    img.pixelSize   = grabbed.depth()/8;
+    img.pixels = (uint8_t *) malloc(grabbed.byteCount());
+    memcpy(img.pixels, grabbed.constBits(), grabbed.byteCount());
+
+    LOG_DEBUG("Canvas: grabbed %i x %i, byteCount:%i depth:%i format:%i")
+            << grabbed.width() << grabbed.height()
+            << grabbed.byteCount() << grabbed.depth() << grabbed.format();
+
+    DENG_ASSERT(img.pixelSize != 0);
+}
+
+void ClientWindow::updateCanvasFormat()
+{
+    d->needRecreateCanvas = true;
+
+    // Save the relevant format settings.
+    App::config().names()["window.fsaa"] = new NumberValue(Con_GetByte("vid-fsaa") != 0);
+}
+
+ClientWindow &ClientWindow::main()
+{
+    return static_cast<ClientWindow &>(PersistentCanvasWindow::main());
+}
+
+#if 0
+// --------------------------------------------------------------------------
+
 
 DENG2_PIMPL(Window)
 {
@@ -720,79 +999,12 @@ DENG2_PIMPL(Window)
 
     static void windowFocusChanged(Canvas &canvas, bool focus)
     {
-        Window *wnd = canvasToWindow(canvas);
-        DENG_ASSERT(wnd->d->widget);
 
-        LOG_DEBUG("windowFocusChanged focus:%b fullscreen:%b hidden:%b minimized:%b")
-                << focus << wnd->isFullscreen()
-                << wnd->d->widget->isHidden() << wnd->d->widget->isMinimized();
-
-        if(!focus)
-        {
-            DD_ClearEvents();
-            I_ResetAllDevices();
-            wnd->trapMouse(false);
-        }
-        else if(wnd->isFullscreen())
-        {
-            // Trap the mouse again in fullscreen mode.
-            wnd->trapMouse();
-        }
-
-        // Generate an event about this.
-        ddevent_t ev;
-        ev.type           = E_FOCUS;
-        ev.focus.gained   = focus;
-        ev.focus.inWindow = getWindowIdx(*wnd);
-        DD_PostEvent(&ev);
     }
 
-    static void finishMainWindowInit(Canvas &canvas)
-    {
-        Window *wnd = canvasToWindow(canvas);
-        DENG_ASSERT(wnd == mainWindow);
-
-#if defined MACOSX
-        if(wnd->isFullscreen())
-        {
-            // The window must be manually raised above the shielding window put up by
-            // the fullscreen display capture.
-            DisplayMode_Native_Raise(wnd->nativeHandle());
-        }
-#endif
-
-        wnd->d->widget->raise();
-        wnd->d->widget->activateWindow();
-
-        // Automatically grab the mouse from the get-go if in fullscreen mode.
-        if(Mouse_IsPresent() && wnd->isFullscreen())
-        {
-            wnd->trapMouse();
-        }
-
-        wnd->d->widget->canvas().setFocusFunc(windowFocusChanged);
-
-#ifdef WIN32
-        if(wnd->isFullscreen())
-        {
-            // It would seem we must manually give our canvas focus. Bug in Qt?
-            wnd->d->widget->canvas().setFocus();
-        }
-#endif
-
-        DD_FinishInitializationAfterWindowReady();
-    }
 
     static bool windowIsClosing(CanvasWindow &)
     {
-        LOG_DEBUG("Window is about to close, executing 'quit'.");
-
-        /// @todo autosave and quit?
-        Con_Execute(CMDS_DDAY, "quit", true, false);
-
-        // We are not authorizing immediate closing of the window;
-        // engine shutdown will take care of it later.
-        return false; // don't close
     }
 
     /**
@@ -828,36 +1040,6 @@ DENG2_PIMPL(Window)
         }
     }
 };
-
-void Window::initialize()
-{
-    LOG_AS("Window::initialize");
-
-    // Already been here?
-    if(winManagerInited)
-        return;
-
-    LOG_MSG("Using Qt window management.");
-
-    CanvasWindow::setDefaultGLFormat();
-
-    winManagerInited = true;
-}
-
-void Window::shutdown()
-{
-    // Presently initialized?
-    if(!winManagerInited)
-        return;
-
-    /// @todo Delete all windows, not just the main one.
-
-    // Get rid of the windows.
-    delete mainWindow; mainWindow = 0;
-
-    // Now off-line, no more window management will be possible.
-    winManagerInited = false;
-}
 
 Window *Window::create(char const *title)
 {
@@ -1004,7 +1186,7 @@ bool Window::changeAttributes(int const *attribs)
 
 void Window::swapBuffers() const
 {
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_IN_MAIN_THREAD();
 
     if(!d->widget) return;
 
@@ -1012,18 +1194,9 @@ void Window::swapBuffers() const
     d->widget->canvas().swapBuffers();
 }
 
-void Window::grab(image_t &image, bool halfSized) const
-{
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT(d->widget);
-
-    d->widget->canvas().grab(&image, halfSized? QSize(d->geometry.width()/2,
-                                                      d->geometry.height()/2) : QSize());
-}
-
 DGLuint Window::grabAsTexture(bool halfSized) const
 {
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT(d->widget);
     return d->widget->canvas().grabAsTexture(halfSized? QSize(d->geometry.width()/2,
                                                               d->geometry.height()/2) : QSize());
@@ -1031,14 +1204,14 @@ DGLuint Window::grabAsTexture(bool halfSized) const
 
 bool Window::grabToFile(char const *fileName) const
 {
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT(d->widget);
     return d->widget->canvas().grabImage().save(fileName);
 }
 
 void Window::setTitle(char const *title) const
 {
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT(d->widget);
     d->widget->setWindowTitle(QString::fromLatin1(title));
 }
@@ -1056,12 +1229,6 @@ bool Window::isCentered() const
 bool Window::isMaximized() const
 {
     return (d->flags & WF_MAXIMIZED) != 0;
-}
-
-void *Window::nativeHandle() const
-{
-    if(!d->widget) return 0;
-    return reinterpret_cast<void *>(d->widget->winId());
 }
 
 void Window::draw()
@@ -1085,7 +1252,7 @@ void Window::draw()
 
     if(shouldRepaintManually())
     {
-        LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+        DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
         // Perform the drawing manually right away.
         d->widget->canvas().updateGL();
@@ -1217,14 +1384,6 @@ bool Window::shouldRepaintManually() const
     return !Mouse_IsPresent() || isMouseTrapped();
 }
 
-void Window::updateCanvasFormat()
-{
-    d->needRecreateCanvas = true;
-
-    // Save the relevant format settings.
-    App::config().names()["window.fsaa"] = new NumberValue(Con_GetByte("vid-fsaa") != 0);
-}
-
 #if defined(UNIX) && !defined(MACOSX)
 void GL_AssertContextActive()
 {
@@ -1232,20 +1391,6 @@ void GL_AssertContextActive()
     DENG_ASSERT(QGLContext::currentContext() != 0);
 }
 #endif
-
-void Window::glActivate()
-{
-    DENG_ASSERT(d->widget);
-    d->widget->canvas().makeCurrent();
-
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
-}
-
-void Window::glDone()
-{
-    DENG_ASSERT(d->widget);
-    d->widget->canvas().doneCurrent();
-}
 
 QWidget *Window::widgetPtr()
 {
@@ -1257,3 +1402,6 @@ CanvasWindow &Window::canvasWindow()
     DENG_ASSERT(d->widget);
     return *d->widget;
 }
+
+#endif
+

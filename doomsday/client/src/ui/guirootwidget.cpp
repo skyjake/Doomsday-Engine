@@ -1,4 +1,4 @@
-/** @file guiwidget.cpp  Base class for graphical widgets.
+/** @file guirootwidget.cpp  Graphical root widget.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -13,47 +13,32 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/guiwidget.h"
 #include "ui/guirootwidget.h"
-#include <de/garbage.h>
 
 using namespace de;
 
-DENG2_PIMPL(GuiWidget)
+DENG2_PIMPL(GuiRootWidget)
 {
-    RuleRectangle rule;
+    ClientWindow *window;
 
-    Instance(Public *i) : Base(i)
+    Instance(Public *i, ClientWindow *win) : Base(i), window(win)
     {}
 };
 
-GuiWidget::GuiWidget(String const &name) : Widget(name), d(new Instance(this))
+GuiRootWidget::GuiRootWidget(ClientWindow *window)
+    : d(new Instance(this, window))
 {}
 
-GuiRootWidget &GuiWidget::root()
+void GuiRootWidget::setWindow(ClientWindow *window)
 {
-    return static_cast<GuiRootWidget &>(Widget::root());
+    d->window = window;
 }
 
-RuleRectangle &GuiWidget::rule()
+ClientWindow &GuiRootWidget::window()
 {
-    return d->rule;
-}
-
-RuleRectangle const &GuiWidget::rule() const
-{
-    return d->rule;
-}
-
-static void deleteGuiWidget(void *ptr)
-{
-    delete reinterpret_cast<GuiWidget *>(ptr);
-}
-
-void GuiWidget::deleteLater()
-{
-    Garbage_TrashInstance(this, deleteGuiWidget);
+    DENG2_ASSERT(d->window != 0);
+    return *d->window;
 }

@@ -341,6 +341,7 @@ DENG_HEADERS += \
     include/ui/dd_ui.h \
     include/ui/fi_main.h \
     include/ui/finaleinterpreter.h \
+    include/ui/guirootwidget.h \
     include/ui/guiwidget.h \
     include/ui/joystick.h \
     include/ui/legacywidget.h \
@@ -604,6 +605,7 @@ SOURCES += \
     src/ui/dd_input.cpp \
     src/ui/fi_main.cpp \
     src/ui/finaleinterpreter.cpp \
+    src/ui/guirootwidget.cpp \
     src/ui/guiwidget.cpp \
     src/ui/legacywidget.cpp \
     src/ui/mouse_qt.cpp \

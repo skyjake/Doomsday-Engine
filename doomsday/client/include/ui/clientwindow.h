@@ -1,8 +1,7 @@
-/** @file window.h Window management. @ingroup base
+/** @file clientwindow.h  Top-level window with UI widgets.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright © 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,26 +18,19 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_BASE_WINDOW_H
-#define LIBDENG_BASE_WINDOW_H
+#ifndef CLIENT_CLIENTWINDOW_H
+#define CLIENT_CLIENTWINDOW_H
 
-#ifndef __CLIENT__
-#  error "window.h requires __CLIENT__"
-#endif
-
-#include <QRect>
-
-#include "dd_types.h"
+#include <de/PersistentCanvasWindow>
+#include "ui/guirootwidget.h"
 #include "resource/image.h"
-#include "canvaswindow.h"
-#include <de/Error>
 
 /**
  * Macro for conveniently accessing the current active window. There is always
  * one active window, so no need to worry about NULLs. The easiest way to get
  * information about the window where drawing is done.
  */
-#define DENG_WINDOW         (&Window::main())
+#define DENG_WINDOW         (&ClientWindow::main())
 
 /**
  * A helpful macro that changes the origin of the window space coordinate system.
@@ -46,174 +38,43 @@
 #define FLIP(y)             (DENG_WINDOW->height() - (y+1))
 
 /**
- * General-purpose top-level window with persistent state, plus legacy window
- * management.
- *
- * @todo Merge this into libgui (as de::Window).
- * @todo The class hierarchy should be CanvasWindow <= de::Window <= QMainWindow.
- * @todo Window management belongs in the WindowSystem.
+ * Top-level window that contains a libdeng2 UI widgets. @ingroup gui
  */
-class Window
+class ClientWindow : public de::PersistentCanvasWindow,
+                     DENG2_OBSERVES(de::Canvas, GLInit),
+                     DENG2_OBSERVES(de::Canvas, GLResize),
+                     DENG2_OBSERVES(de::Canvas, FocusChange)
 {
+    Q_OBJECT
+
 public:
-    /// Required/referenced Window instance is missing. @ingroup errors
-    DENG2_ERROR(MissingWindowError);
-
-    /// Minimum width of a window (in fullscreen also).
-    static int const MIN_WIDTH;
-
-    /// Minimum height of a window (in fullscreen also).
-    static int const MIN_HEIGHT;
-
-    /**
-     * Logical window attribute identifiers.
-     */
-    enum
+    enum Mode
     {
-        End, ///< Marks the end of an attribute list (not a valid attribute in itself)
-
-        X,
-        Y,
-        Width,
-        Height,
-        Centered,
-        Maximized,
-        Fullscreen,
-        Visible,
-        ColorDepthBits
+        Normal,
+        Busy
     };
 
 public:
-    /**
-     * Initialize the window manager.
-     * Tasks include; checking the system environment for feature enumeration.
-     */
-    static void initialize();
+    ClientWindow(de::String const &id = "main");
+
+    GuiRootWidget &root();
 
     /**
-     * Shutdown the window manager.
-     */
-    static void shutdown();
-
-    /**
-     * Constructs a new window using the default configuration. Note that the
-     * default configuration is saved persistently when the engine shuts down
-     * and is restored when the engine is restarted.
+     * Sets the operating mode of the window. In Busy mode, the normal
+     * widgets of the window will be replaced with a single BusyWidget.
      *
-     * Command line options (e.g., -xpos) can be used to modify the window
-     * configuration.
+     * @param mode  Mode.
+     */
+    void setMode(Mode const &mode);
+
+    /**
+     * Must be called before any canvas windows are created. Defines the
+     * default OpenGL format settings for the contained canvases.
      *
-     * @param title  Text for the window title.
-     *
-     * @note Ownership of the Window is @em not given to the caller.
+     * @return @c true, if the new format was applied. @c false, if the new
+     * format remains the same because none of the settings have changed.
      */
-    static Window *create(char const *title);
-
-    /**
-     * Returns @c true iff a main window is available.
-     */
-    static bool haveMain();
-
-    /**
-     * Returns the main window.
-     */
-    static Window &main();
-
-    /**
-     * Returns a pointer to the @em main window.
-     *
-     * @see haveMain()
-     */
-    inline static Window *mainPtr() { return haveMain()? &main() : 0; }
-
-    /**
-     * Returns a pointer to the window associated with unique index @a idx.
-     */
-    static Window *byIndex(uint idx);
-
-public:
-    /**
-     * Returns @c true iff the window is currently fullscreen.
-     */
-    bool isFullscreen() const;
-
-    /**
-     * Returns @c true iff the window is currently centered.
-     */
-    bool isCentered() const;
-
-    /**
-     * Returns @c true iff the window is currently maximized.
-     */
-    bool isMaximized() const;
-
-    /**
-     * Returns the current geometry of the window.
-     */
-    QRect rect() const;
-
-    /**
-     * Convenient accessor method for retrieving the x axis origin (in pixels)
-     * for the current window geometry.
-     */
-    inline int x() const { return rect().x(); }
-
-    /**
-     * Convenient accessor method for retrieving the y axis origin (in pixels)
-     * for the current window geometry.
-     */
-    inline int y() const { return rect().y(); }
-
-    /**
-     * Convenient accessor method for retrieving the width dimension (in pixels)
-     * of the current window geometry.
-     */
-    inline int width() const { return rect().width(); }
-
-    /**
-     * Convenient accessor method for retrieving the height dimension (in pixels)
-     * of the current window geometry.
-     */
-    inline int height() const { return rect().height(); }
-
-    /**
-     * Returns the windowed geometry of the window (used when not maximized or
-     * fullscreen).
-     */
-    QRect normalRect() const;
-
-    inline int normalX() const { return normalRect().x(); }
-
-    inline int normalY() const { return normalRect().y(); }
-
-    inline int normalWidth() const { return normalRect().width(); }
-
-    inline int normalHeight() const { return normalRect().height(); }
-
-    int colorDepthBits() const;
-
-    /**
-     * Sets the title of a window.
-     *
-     * @param title  New title for the window.
-     */
-    void setTitle(char const *title) const; /// @todo semantically !const
-
-    void show(bool show = true);
-
-    /**
-     * Sets or changes one or more window attributes.
-     *
-     * @param attribs  Array of values:
-     *      <pre>[ attribId, value, attribId, value, ..., 0 ]</pre>
-     *      The array must be zero-terminated, as that indicates where the
-     *      array ends (see windowattribute_e).
-     *
-     * @return @c true iff all attribute deltas were validated and the window
-     * was then successfully updated accordingly. If any attribute failed to
-     * validate, the window will remain unchanged and @a false is returned.
-     */
-    bool changeAttributes(int const *attribs);
+    static bool setDefaultGLFormat();
 
     /**
      * Request drawing the contents of the window as soon as possible.
@@ -221,29 +82,11 @@ public:
     void draw();
 
     /**
-     * Make the content of the framebuffer visible.
+     * Determines whether the contents of a window should be drawn during the
+     * execution of the main loop callback, or should we wait for an update event
+     * from the windowing system.
      */
-    void swapBuffers() const;
-
-    /**
-     * Grab the contents of the window into an OpenGL texture.
-     *
-     * @param halfSized  If @c true, scales the image to half the full size.
-     *
-     * @return OpenGL texture name. Caller is reponsible for deleting the texture.
-     */
-    uint grabAsTexture(bool halfSized = false) const;
-
-    /**
-     * Grabs the contents of the window and saves it into an image file.
-     *
-     * @param fileName  Name of the file to save. May include a file extension
-     *                  that indicates which format to use (e.g, "screenshot.jpg").
-     *                  If omitted, defaults to PNG.
-     *
-     * @return @c true if successful, otherwise @c false.
-     */
-    bool grabToFile(char const *fileName) const;
+    bool shouldRepaintManually() const;
 
     /**
      * Grab the contents of the window into the supplied @a image. Ownership of
@@ -254,95 +97,20 @@ public:
      */
     void grab(image_t &image, bool halfSized = false) const;
 
-    /**
-     * Saves the window's state into a persistent storage so that it can be later
-     * on restored. Used at shutdown time to save window geometry.
-     */
-    void saveState();
-
-    /**
-     * Restores the window's state from persistent storage. Used at engine startup
-     * to determine the default window geometry.
-     */
-    void restoreState();
-
-    /**
-     * Activates or deactivates the window mouse trap. When trapped, the mouse
-     * cursor is not visible and all mouse motions are interpreted as deltas.
-     *
-     * @param enable  @c true, if the mouse is to be trapped in the window.
-     *
-     * @note Effectively a wrapper for Canvas::trapMouse().
-     */
-    void trapMouse(bool enable = true) const; /// @todo semantically !const
-
-    bool isMouseTrapped() const;
-
-    /**
-     * Determines whether the contents of a window should be drawn during the
-     * execution of the main loop callback, or should we wait for an update event
-     * from the windowing system.
-     */
-    bool shouldRepaintManually() const;
-
     void updateCanvasFormat();
 
-    /**
-     * Activates the window's GL context so that OpenGL API calls can be made.
-     * The GL context is automatically active during the drawing of the window's
-     * contents; at other times it needs to be manually activated.
-     */
-    void glActivate();
+    // Events.
+    void closeEvent(QCloseEvent *);
+    void canvasGLReady(de::Canvas &);
+    void canvasGLInit(de::Canvas &);
+    void canvasGLDraw(de::Canvas &);
+    void canvasGLResized(de::Canvas &);
+    void canvasFocusChanged(de::Canvas &, bool hasFocus);
 
-    /**
-     * Dectivates the window's GL context after OpenGL API calls have been done.
-     * The GL context is automatically deactived after the drawing of the window's
-     * contents; at other times it needs to be manually deactivated.
-     */
-    void glDone();
-
-    void *nativeHandle() const;
-
-    /**
-     * Returns a pointer to the native widget for the window (may be @c NULL).
-     */
-    QWidget *widgetPtr();
-
-    /**
-     * Returns the CanvasWindow for the window.
-     */
-    CanvasWindow &canvasWindow();
-
-    /**
-     * Utility to call after changing the size of a CanvasWindow. This will
-     * update the Window state.
-     *
-     * @deprecated In the future, size management will be done internally in
-     * CanvasWindow/WindowSystem.
-     */
-    void updateAfterResize();
-
-private:
-    /**
-     * Constructs a new window using the default configuration. Note that the
-     * default configuration is saved persistently when the engine shuts down
-     * and is restored when the engine is restarted.
-     *
-     * Command line options (e.g., -xpos) can be used to modify the window
-     * configuration.
-     *
-     * @param title  Text for the window title.
-     */
-    Window(char const *title = "");
-
-    /**
-     * Close and destroy the window. Its state is saved persistently and used
-     * as the default configuration the next time the same window is created.
-     */
-    ~Window();
+    static ClientWindow &main();
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // LIBDENG_BASE_WINDOW_H
+#endif // CANVASWINDOW_H
