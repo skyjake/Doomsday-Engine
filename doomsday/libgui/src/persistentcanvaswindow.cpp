@@ -757,9 +757,15 @@ void PersistentCanvasWindow::performQueuedTasks()
     d->checkQueue();
 }
 
-PersistentCanvasWindow *PersistentCanvasWindow::main()
+PersistentCanvasWindow &PersistentCanvasWindow::main()
 {
-    return mainWindow;
+    DENG2_ASSERT(mainWindow != 0);
+    if(mainWindow == 0)
+    {
+        throw InvalidIdError("PersistentCanvasWindow::main",
+                             "No window found with id \"" + MAIN_WINDOW_ID + "\"");
+    }
+    return *mainWindow;
 }
 
 } // namespace de

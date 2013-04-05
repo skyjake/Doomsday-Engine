@@ -26,8 +26,7 @@
 #include <X11/extensions/Xrandr.h>
 #include <X11/extensions/xf86vmode.h>
 
-#include "de_platform.h"
-#include "ui/displaymode_native.h"
+#include "de/gui/displaymode_native.h"
 
 #include <assert.h>
 #include <vector>

@@ -21,15 +21,16 @@
 
 #include <QDebug>
 
-#include "de_platform.h"
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #include <icm.h>
 #include <math.h>
-
-#include "ui/displaymode_native.h"
-#include "ui/window.h"
-
 #include <assert.h>
+
 #include <vector>
+
+#include "de/gui/displaymode_native.h"
+#include "de/PersistentCanvasWindow"
 
 static std::vector<DEVMODE> devModes;
 static DEVMODE currentDevMode;
@@ -115,7 +116,7 @@ int DisplayMode_Native_Change(const DisplayMode* mode, boolean shouldCapture)
 
 void DisplayMode_Native_SetColorTransfer(displaycolortransfer_t const *colors)
 {
-    HWND hWnd = (HWND) Window::main().nativeHandle();
+    HWND hWnd = (HWND) PersistentCanvasWindow::main().nativeHandle();
     DENG2_ASSERT(hWnd != 0);
 
     HDC hDC = GetDC(hWnd);
@@ -128,7 +129,7 @@ void DisplayMode_Native_SetColorTransfer(displaycolortransfer_t const *colors)
 
 void DisplayMode_Native_GetColorTransfer(displaycolortransfer_t *colors)
 {
-    HWND hWnd = (HWND) Window::main().nativeHandle();
+    HWND hWnd = (HWND) PersistentCanvasWindow::main().nativeHandle();
     DENG2_ASSERT(hWnd != 0);
 
     HDC hDC = GetDC(hWnd);

@@ -38,6 +38,9 @@ class PersistentCanvasWindow : public CanvasWindow
     Q_OBJECT
 
 public:
+    /// Provided window ID was not valid. @ingroup errors
+    DENG2_ERROR(InvalidIdError);
+
     /// Absolute minimum width of a window (in fullscreen also).
     static int const MIN_WIDTH;
 
@@ -153,7 +156,7 @@ public:
      */
     void restoreFromConfig();
 
-    static PersistentCanvasWindow *main();
+    static PersistentCanvasWindow &main();
 
 protected slots:
     void performQueuedTasks();

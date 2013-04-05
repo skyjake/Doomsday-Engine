@@ -33,7 +33,7 @@
 #  include <QX11Info>
 #  include <X11/keysym.h>
 #  include <X11/Xlib.h>
-#  include "imKStoUCS_unix.c"
+#  include "imKStoUCS_x11.c"
 #  define XFREE_KEYMAPPING
 static int x11ScancodeToDDKey(int scancode);
 #endif
