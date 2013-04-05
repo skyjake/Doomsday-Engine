@@ -35,13 +35,21 @@ class Rectangle
 public:
     typedef VectorType Corner;
     typedef typename Corner::ValueType Type;
+    typedef VectorType Size;
 
 public:
     Rectangle() {}
+    Rectangle(Type left, Type top, Type width, Type height)
+        : topLeft(left, top), bottomRight(left + width, top + height) {}
     Rectangle(Corner const &tl, Corner const &br) : topLeft(tl), bottomRight(br) {}
     Type width() const { return abs(bottomRight.x - topLeft.x); }
     Type height() const { return abs(bottomRight.y - topLeft.y); }
-    Vector2<Type> size() const { return Vector2<Type>(width(), height()); }
+    Size size() const { return Size(width(), height()); }
+    void moveTopLeft(VectorType const &point) {
+        Size s = size();
+        topLeft = point;
+        bottomRight = point + s;
+    }
     void setWidth(Type w) { bottomRight.x = topLeft.x + w; }
     void setHeight(Type h) { bottomRight.y = topLeft.y + h; }
     void setSize(Vector2<Type> const &s) { setWidth(s.x); setHeight(s.y); }
@@ -54,6 +62,9 @@ public:
     }
     bool contains(Corner const &point) const {
         return point >= topLeft && point <= bottomRight;
+    }
+    bool operator == (Rectangle<VectorType> const &other) const {
+        return topLeft == other.topLeft && bottomRight == other.bottomRight;
     }
     String asText() const {
         return "[" + topLeft.asText() + ", " + bottomRight.asText() + "]";
