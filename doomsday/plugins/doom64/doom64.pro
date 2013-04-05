@@ -5,6 +5,7 @@
 include(../config_plugin.pri)
 include(../common/common.pri)
 include(../../dep_lzss.pri)
+include(../../dep_gui.pri)
 
 TEMPLATE = lib
 TARGET   = doom64
