@@ -1,6 +1,4 @@
-/**
- * @file dam_main.h
- * Doomsday Archived Map (DAM), map management. @ingroup map
+/** @file dam_main.h Doomsday Archived Map (DAM), map management.
  *
  * @author Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -22,27 +20,21 @@
 #ifndef LIBDENG_ARCHIVED_MAP_MAIN_H
 #define LIBDENG_ARCHIVED_MAP_MAIN_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "dd_share.h"
+#include "uri.hh"
 
-typedef struct archivedmap_s {
-    Uri* uri;
-    /*ddstring_t cachedMapPath;
-    boolean cachedMapFound;
-    boolean lastLoadAttemptFailed;*/
-} archivedmap_t;
+class GameMap;
 
-extern byte mapCache;
+DENG_EXTERN_C byte mapCache;
 
 /// To be called during init to register the cvars and ccmds for this module.
-void DAM_Register(void);
+void DAM_Register();
 
 /// Initialize this module.
-void DAM_Init(void);
+void DAM_Init();
 
 /// Shutdown this module.
-void DAM_Shutdown(void);
+void DAM_Shutdown();
 
 #if 0
 /**
@@ -52,13 +44,12 @@ void DAM_Shutdown(void);
  * @param sourcePath  Path to the primary resource file for the original map data.
  * @return  The composed path.
  */
-AutoStr* DAM_ComposeCacheDir(const char* sourcePath);
+AutoStr* DAM_ComposeCacheDir(char const *sourcePath);
 #endif
 
-boolean DAM_AttemptMapLoad(const Uri* uri);
+/**
+ * Attempt to load the map associated with the specified identifier.
+ */
+GameMap *DAM_LoadMap(de::Uri const &uri);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif /* LIBDENG_ARCHIVED_MAP_MAIN_H */
+#endif // LIBDENG_ARCHIVED_MAP_MAIN_H

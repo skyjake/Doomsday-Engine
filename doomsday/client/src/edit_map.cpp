@@ -1185,7 +1185,7 @@ boolean MPE_End()
     printMissingMaterialsInDict();
     clearMaterialDict();
 
-    GameMap *gamemap = new GameMap;
+    GameMap *map = new GameMap;
 
     /*
      * Perform cleanup on the loaded map data, removing duplicate vertexes,
@@ -1199,41 +1199,41 @@ boolean MPE_End()
     /*
      * Acquire ownership of the map elements from the editable map.
      */
-    gamemap->entityDatabase = editMap.entityDatabase; // Take ownership.
+    map->entityDatabase = editMap.entityDatabase; // Take ownership.
 
     // Collate sectors:
-    DENG2_ASSERT(gamemap->_sectors.isEmpty());
+    DENG2_ASSERT(map->_sectors.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
-    gamemap->_sectors.reserve(editMap.sectors.count());
+    map->_sectors.reserve(editMap.sectors.count());
 #endif
     foreach(Sector *sector, editMap.sectors)
     {
-        gamemap->_sectors.append(sector); // Take ownership.
+        map->_sectors.append(sector); // Take ownership.
     }
 
     // Collate sidedefs:
-    DENG2_ASSERT(gamemap->_sideDefs.isEmpty());
+    DENG2_ASSERT(map->_sideDefs.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
-    gamemap->_sideDefs.reserve(editMap.sideDefs.count());
+    map->_sideDefs.reserve(editMap.sideDefs.count());
 #endif
     foreach(SideDef *sideDef, editMap.sideDefs)
     {
-        gamemap->_sideDefs.append(sideDef); // Take ownership.
+        map->_sideDefs.append(sideDef); // Take ownership.
     }
 
     // Collate lines:
-    DENG2_ASSERT(gamemap->_lines.isEmpty());
+    DENG2_ASSERT(map->_lines.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
-    gamemap->_lines.reserve(editMap.lines.count());
+    map->_lines.reserve(editMap.lines.count());
 #endif
     foreach(LineDef *line, editMap.lines)
     {
-        gamemap->_lines.append(line); // Take ownership.
+        map->_lines.append(line); // Take ownership.
     }
 
     buildVertexLineOwnerRings();
 
-    hardenPolyobjs(*gamemap, editMap);
+    hardenPolyobjs(*map, editMap);
     editMap.clearPolyobjs();
 
     /*
@@ -1242,20 +1242,20 @@ boolean MPE_End()
     vec2d_t min, max;
     findBounds(editMap.vertexes, min, max);
 
-    gamemap->initLineBlockmap(min, max);
-    foreach(LineDef *line, gamemap->lines())
+    map->initLineBlockmap(min, max);
+    foreach(LineDef *line, map->lines())
     {
-        gamemap->linkLine(*line);
+        map->linkLine(*line);
     }
 
     // Mobj and Polyobj blockmaps are maintained dynamically.
-    gamemap->initMobjBlockmap(min, max);
-    gamemap->initPolyobjBlockmap(min, max);
+    map->initMobjBlockmap(min, max);
+    map->initPolyobjBlockmap(min, max);
 
     /*
-     * Build a BSP for this map.
+     * Build a BSP.
      */
-    bool builtOK = gamemap->buildBsp();
+    bool builtOK = map->buildBsp();
 
     // Destroy the rest of editable map, we are finished with it.
     editMap.clear();
@@ -1263,8 +1263,8 @@ boolean MPE_End()
     if(!builtOK)
     {
         // Darn, clean up...
-        EntityDatabase_Delete(gamemap->entityDatabase);
-        delete gamemap;
+        EntityDatabase_Delete(map->entityDatabase);
+        delete map;
 
         lastBuiltMapResult = false; // Failed :$
         return lastBuiltMapResult;
@@ -1272,44 +1272,12 @@ boolean MPE_End()
 
     editMapInited = false;
 
-    gamemap->finishMapElements();
-    gamemap->updateBounds();
+    map->finishMapElements();
+    map->updateBounds();
 
-    S_DetermineBspLeafsAffectingSectorReverb(gamemap);
+    S_DetermineBspLeafsAffectingSectorReverb(map);
 
-    // Call the game's setup routines.
-    if(gx.SetupForMapData)
-    {
-        gx.SetupForMapData(DMU_VERTEX,  gamemap->vertexCount());
-        gx.SetupForMapData(DMU_LINEDEF, gamemap->lineCount());
-        gx.SetupForMapData(DMU_SIDEDEF, gamemap->sideDefCount());
-        gx.SetupForMapData(DMU_SECTOR,  gamemap->sectorCount());
-    }
-
-    // Are we caching this map?
-    /*de::Uri mapUri = gamemap->uri();
-    if(!mapUri.isEmpty())
-    {
-        // Yes, write the cached map data file.
-        char const *markerLumpName = Str_Text(Uri_Path(gamemap->uri));
-        lumpnum_t markerLumpNum = F_LumpNumForName(markerLumpName);
-        AutoStr *cachedMapDir = DAM_ComposeCacheDir(Str_Text(F_ComposeLumpFilePath(markerLumpNum)));
-
-        AutoStr *cachedMapPath = AutoStr_NewStd();
-        F_FileName(cachedMapPath, markerLumpName);
-
-        Str_Append(cachedMapPath, ".dcm");
-        Str_Prepend(cachedMapPath, Str_Text(cachedMapDir));
-        F_ExpandBasePath(cachedMapPath, cachedMapPath);
-
-        // Ensure the destination directory exists.
-        F_MakePath(Str_Text(cachedMapDir));
-
-        // Archive this map!
-        DAM_MapWrite(gamemap, Str_Text(cachedMapPath));
-    }*/
-
-    lastBuiltMap = gamemap;
+    lastBuiltMap = map;
     lastBuiltMapResult = true; // Success.
 
     return lastBuiltMapResult;

@@ -23,6 +23,7 @@
 #define DENG_NO_API_MACROS_MAP
 
 #include "de_base.h"
+#include "de_defs.h"
 #include "de_network.h"
 #include "de_play.h"
 #include "de_render.h"
@@ -85,23 +86,10 @@ DENG_EXTERN_C AutoStr *P_MapSourceFile(char const *uriCString)
 #undef P_LoadMap
 DENG_EXTERN_C boolean P_LoadMap(char const *uriCString)
 {
-    if(!uriCString || !uriCString[0])
-    {
-        LegacyCore_FatalError("P_LoadMap: Invalid Uri argument.");
-    }
+    DENG_ASSERT(uriCString && uriCString[0]);
 
     de::Uri uri(uriCString, RC_NULL);
-    LOG_MSG("Loading Map \"%s\"...") << uri;
-
-    // It would be very cool if map loading happened in another
-    // thread. That way we could be keeping ourselves busy while
-    // the intermission is played...
-
-    // We could even try to divide a HUB up into zones, so that
-    // when a player enters a zone we could begin loading the map(s)
-    // reachable through exits in that zone (providing they have
-    // enough M_Free memory of course) so that transitions are
-    // (potentially) seamless :-)
+    LOG_MSG("Loading map \"%s\"...") << uri;
 
     if(isServer)
     {
@@ -118,8 +106,51 @@ DENG_EXTERN_C boolean P_LoadMap(char const *uriCString)
         }
     }
 
-    if(DAM_AttemptMapLoad(reinterpret_cast<uri_s *>(&uri)))
+    Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
+
+    if((theMap = DAM_LoadMap(uri)))
     {
+        // See what mapinfo says about this map.
+        de::Uri mapUri = theMap->uri();
+        ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
+        if(!mapInfo)
+        {
+            de::Uri defaultMapUri("*", RC_NULL);
+            mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&defaultMapUri));
+        }
+
+#ifdef __CLIENT__
+        ded_sky_t *skyDef = 0;
+        if(mapInfo)
+        {
+            skyDef = Def_GetSky(mapInfo->skyID);
+            if(!skyDef)
+                skyDef = &mapInfo->sky;
+        }
+        Sky_Configure(skyDef);
+#endif
+
+        // Setup accordingly.
+        if(mapInfo)
+        {
+            theMap->_globalGravity = mapInfo->gravity;
+            theMap->_ambientLightLevel = mapInfo->ambient * 255;
+        }
+        else
+        {
+            // No map info found, so set some basic stuff.
+            theMap->_globalGravity = 1.0f;
+            theMap->_ambientLightLevel = 0;
+        }
+
+        theMap->_effectiveGravity = theMap->_globalGravity;
+
+#ifdef __CLIENT__
+        Rend_RadioInitForMap();
+#endif
+
+        theMap->initSkyFix();
+
         // Init the thinker lists (public and private).
         GameMap_InitThinkerLists(theMap, 0x1 | 0x2);
 
@@ -170,6 +201,7 @@ DENG_EXTERN_C boolean P_LoadMap(char const *uriCString)
 
         R_InitRendPolyPools();
 #endif
+
         // Init Particle Generator links.
         P_PtcInitForMap();
 

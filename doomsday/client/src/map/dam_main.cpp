@@ -1,6 +1,15 @@
-/** @file dam_main.cpp Doomsday Archived Map (DAM), map management. 
+/** @file dam_main.cpp (Cached) Map Archive.
  *
  * @authors Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
+ *
+ * Ideas for improvement:
+ *
+ * "background loading" - it would be very cool if map loading happened in
+ * another thread. This way we could be keeping busy while players watch the
+ * intermission animations.
+ *
+ * "seamless world" - multiple concurrent maps with no perceivable delay when
+ * players move between them.
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,15 +28,15 @@
 
 #include <cmath>
 
+#include <de/Log>
+
 #include "de_base.h"
-#include "de_console.h"
 #include "de_dam.h"
 #include "de_defs.h"
 #include "de_edit.h"
 #include "de_filesys.h"
 #include "de_network.h"
 #include "de_render.h"
-
 #include "map/gamemap.h"
 
 #include "map/dam_main.h"
@@ -41,113 +50,23 @@ byte mapCache = true;
 static char const *mapCacheDir = "mapcache/";
 */
 
-static archivedmap_t **archivedMaps;
-static uint numArchivedMaps;
-
-static void freeArchivedMap(archivedmap_t &dam);
-
-static void clearArchivedMaps()
-{
-    if(archivedMaps)
-    {
-        for(uint i = 0; i < numArchivedMaps; ++i)
-        {
-            freeArchivedMap(*archivedMaps[i]);
-        }
-        Z_Free(archivedMaps);
-        archivedMaps = 0;
-    }
-    numArchivedMaps = 0;
-}
-
 void DAM_Register()
 {
     //C_VAR_BYTE("map-cache", &mapCache, 0, 0, 1);
 }
 
-void DAM_Init()
+static String composeUniqueMapId(de::File1 &markerLump)
 {
-    // Allow re-init.
-    clearArchivedMaps();
-}
-
-void DAM_Shutdown()
-{
-    clearArchivedMaps();
-}
-
-/**
- * Allocate memory for a new archived map record.
- */
-static archivedmap_t *allocArchivedMap()
-{
-    return (archivedmap_t *) Z_Calloc(sizeof(archivedmap_t), PU_APPSTATIC, 0);
-}
-
-/// Free all memory acquired for an archived map record.
-static void freeArchivedMap(archivedmap_t &dam)
-{
-    Uri_Delete(dam.uri);
-    //Str_Free(&dam.cachedMapPath);
-    Z_Free(&dam);
-}
-
-/// Create a new archived map record.
-static archivedmap_t *createArchivedMap(de::Uri const &uri/*, ddstring_t const *cachedMapPath*/)
-{
-    archivedmap_t *dam = allocArchivedMap();
-
-    dam->uri = reinterpret_cast<uri_s *>(new de::Uri(uri));
-    /*dam->lastLoadAttemptFailed = false;
-    Str_Init(&dam->cachedMapPath);
-    Str_Set(&dam->cachedMapPath, Str_Text(cachedMapPath));
-
-    if(DAM_MapIsValid(Str_Text(&dam->cachedMapPath),
-                      F_LumpNumForName(uri.path().toString().toLatin1().constData())))
-    {
-        dam->cachedMapFound = true;
-    }*/
-
-    LOG_DEBUG("Added record for map '%s'.") << uri;
-
-    return dam;
-}
-
-/**
- * Search the list of maps for one matching the specified identifier.
- *
- * @param uri  Identifier of the map to be searched for.
- * @return  The found map else @c NULL.
- */
-static archivedmap_t *findArchivedMap(de::Uri const &uri)
-{
-    if(numArchivedMaps)
-    {
-        for(archivedmap_t **p = archivedMaps; *p; p++)
-        {
-            archivedmap_t *dam = *p;
-            if(uri == reinterpret_cast<de::Uri &>(*dam->uri))
-            {
-                return dam;
-            }
-        }
-    }
-    return 0;
-}
-
-/**
- * Add an archived map to the list of maps.
- */
-static void addArchivedMap(archivedmap_t *dam)
-{
-    archivedMaps = (archivedmap_t **) Z_Realloc(archivedMaps, sizeof(archivedmap_t *) * (++numArchivedMaps + 1), PU_APPSTATIC);
-    archivedMaps[numArchivedMaps - 1] = dam;
-    archivedMaps[numArchivedMaps] = 0; // Terminate.
+    return String("%1|%2|%3|%4")
+              .arg(markerLump.name().fileNameWithoutExtension())
+              .arg(markerLump.container().name().fileNameWithoutExtension())
+              .arg(markerLump.container().hasCustom()? "pwad" : "iwad")
+              .arg(Str_Text(App_CurrentGame().identityKey()))
+              .toLower();
 }
 
 #if 0
-
-/// Calculate the identity key for maps loaded from this path.
+/// Calculate the identity key for maps loaded from the specified @a path.
 static ushort calculateIdentifierForMapPath(char const *path)
 {
     DENG_ASSERT(path && path[0]);
@@ -159,7 +78,288 @@ static ushort calculateIdentifierForMapPath(char const *path)
     }
     return identifier;
 }
+#endif
 
+class MapArchive
+{
+public:
+    /**
+     * Information about a map in the archive.
+     */
+    class Info
+    {
+        de::Uri _uri;
+        /*ddstring_t cachedMapPath;
+        bool cachedMapFound;
+        bool lastLoadAttemptFailed;*/
+
+#ifdef MACOS_10_4
+        // GCC 4.0 on Mac OS X 10.5 doesn't handle nested classes
+        // and friends that well.
+    public:
+#endif
+        Info(de::Uri const &mapUri/*, ddstring_t const *cachedMapPath*/)
+            : _uri(mapUri)/*,
+              cachedMapFound(false),
+              lastLoadAttemptFailed(false)*/
+        {
+            /*Str_Init(&cachedMapPath);
+            Str_Set(&cachedMapPath, Str_Text(cachedMapPath));*/
+        }
+
+        ~Info()
+        {
+            //Str_Free(&cachedMapPath);
+        }
+
+    public:
+        de::Uri mapUri() const
+        {
+            return _uri;
+        }
+
+        /**
+         * Attempt to load the associated map data.
+         *
+         * @return  Pointer to the loaded map; otherwise @c 0.
+         */
+        GameMap *loadMap(/*bool override = false*/)
+        {
+            //if(lastLoadAttemptFailed && !override)
+            //    return false;
+
+            //lastLoadAttemptFailed = false;
+
+            // Load from cache?
+            /*if(mapCache && cachedMapFound)
+            {
+                if(GameMap *map = loadCachedMap())
+                    return map;
+
+                lastLoadAttemptFailed = true;
+                return 0;
+            }*/
+
+            // Try a JIT conversion with the help of a plugin.
+            if(GameMap *map = convertMap())
+                return map;
+
+            LOG_WARNING("Failed conversion of \"%s\".") << _uri;
+            //lastLoadAttemptFailed = true;
+            return 0;
+        }
+
+        friend class MapArchive;
+
+    private:
+        inline lumpnum_t markerLumpNum()
+        {
+            return App_FileSystem().lumpNumForName(_uri.path());
+        }
+
+#if 0
+        bool cachedMapDataIsAvailable()
+        {
+            if(DAM_MapIsValid(Str_Text(&cachedMapPath), markerLumpNum()))
+            {
+                cachedMapFound = true;
+            }
+            return cachedMapFound;
+        }
+
+        GameMap *loadCachedMap()
+        {
+            GameMap *map = DAM_MapRead(Str_Text(&cachedMapPath));
+            if(!map) return 0;
+
+            map->_uri = _uri;
+            return map;
+        }
+#endif
+
+        GameMap *convertMap()
+        {
+            LOG_AS("ArchivedMapInfo::convertMap");
+
+            // At least one available converter?
+            if(!Plug_CheckForHook(HOOK_MAP_CONVERT))
+                return 0;
+
+            LOG_VERBOSE("Attempting \"%s\"...") << _uri;
+
+            if(markerLumpNum() < 0)
+                return 0;
+
+            // Ask each converter in turn whether the map format is
+            // recognizable and if so to interpret and transfer it to us
+            // via the map editing interface.
+            if(!DD_CallHooks(HOOK_MAP_CONVERT, 0, (void *) reinterpret_cast<uri_s *>(&_uri)))
+                return 0;
+
+            // A converter signalled success.
+            // Were we able to produce a valid map from the data it provided?
+            if(!MPE_GetLastBuiltMapResult())
+                return 0;
+
+            GameMap *map = MPE_GetLastBuiltMap();
+            DENG_ASSERT(map != 0);
+            map->_uri = _uri;
+
+            // Are we caching this map?
+            /*if(mapCache)
+            {
+                AutoStr *cachedMapDir =
+                    DAM_ComposeCacheDir(Str_Text(F_ComposeLumpFilePath(markerLumpNum())));
+
+                AutoStr *cachedMapPath = AutoStr_NewStd();
+                F_FileName(cachedMapPath, F_LumpName(markerLumpName));
+
+                Str_Append(cachedMapPath, ".dcm");
+                Str_Prepend(cachedMapPath, Str_Text(cachedMapDir));
+                F_ExpandBasePath(cachedMapPath, cachedMapPath);
+
+                // Ensure the destination directory exists.
+                F_MakePath(Str_Text(cachedMapDir));
+
+                // Cache the map!
+                DAM_MapWrite(map, Str_Text(cachedMapPath));
+            }*/
+
+            return map;
+        }
+    };
+
+    typedef QList<Info *> Infos;
+
+public:
+    MapArchive() {}
+    ~MapArchive() { clear(); }
+
+    void clear()
+    {
+        foreach(Info *info, _infos) { delete info; }
+        _infos.clear();
+    }
+
+    /**
+     * Attempt to locate the info for an archived map by URI.
+     *
+     * @param uri  Identifier of the info to be located.
+     *
+     * @return  Pointer to the found info; otherwise @c 0.
+     */
+    Info *findByUri(de::Uri const &uri)
+    {
+        foreach(Info *info, _infos)
+        {
+            // Is this the info we are looking for?
+            if(uri == info->mapUri())
+                return info;
+        }
+        return 0; // Not found.
+    }
+
+    Info &createInfo(de::Uri const &uri)
+    {
+        // Do we have existing info for this?
+        if(Info *info = findByUri(uri))
+            return *info;
+
+        LOG_DEBUG("Adding new ArchivedMapInfo for '%s'.") << uri;
+
+        /*
+        // Compose the cache directory path and ensure it exists.
+        AutoStr *cachedMapPath = AutoStr_NewStd();
+        lumpnum_t markerLumpNum = F_LumpNumForName(uri.path().toString().toLatin1().constData());
+        if(markerLumpNum >= 0)
+        {
+            AutoStr *cachedMapDir = DAM_ComposeCacheDir(Str_Text(F_ComposeLumpFilePath(markerLumpNum)));
+            F_MakePath(Str_Text(cachedMapDir));
+
+            // Compose the full path to the cached map data file.
+            F_FileName(cachedMapPath, Str_Text(F_LumpName(markerLumpNum)));
+            Str_Append(cachedMapPath, ".dcm");
+            Str_Prepend(cachedMapPath, Str_Text(cachedMapDir));
+        }
+        */
+
+        _infos.append(new Info(uri/*, ddstring_t const *cachedMapPath*/));
+        return *_infos.last();
+    }
+
+private:
+    Infos _infos;
+};
+
+static MapArchive archive;
+
+void DAM_Init()
+{
+    // Allow re-init.
+    archive.clear();
+}
+
+void DAM_Shutdown()
+{
+    archive.clear();
+}
+
+GameMap *DAM_LoadMap(de::Uri const &uri)
+{
+    // Record this map in the archive if we haven't already.
+    MapArchive::Info &arcInfo = archive.createInfo(uri);
+
+    // Load in the map!
+    GameMap *map = arcInfo.loadMap();
+    if(!map) return 0;
+
+    // Call the game's setup routines.
+    if(gx.SetupForMapData)
+    {
+        gx.SetupForMapData(DMU_VERTEX,  map->vertexCount());
+        gx.SetupForMapData(DMU_LINEDEF, map->lineCount());
+        gx.SetupForMapData(DMU_SIDEDEF, map->sideDefCount());
+        gx.SetupForMapData(DMU_SECTOR,  map->sectorCount());
+    }
+
+    // Do any initialization/error checking work we need to do.
+    // Must be called before we go any further.
+    P_InitUnusedMobjList();
+
+    // Must be called before any mobjs are spawned.
+    map->initNodePiles();
+
+#ifdef __CLIENT__
+    // Prepare the client-side data.
+    if(isClient)
+    {
+        map->initClMobjs();
+    }
+#endif
+
+    Rend_DecorInit();
+
+    vec2d_t min, max;
+    map->bounds(min, max);
+
+    // Init blockmap for searching BSP leafs.
+    map->initBspLeafBlockmap(min, max);
+    foreach(BspLeaf *bspLeaf, map->bspLeafs())
+    {
+        map->linkBspLeaf(*bspLeaf);
+    }
+
+    // Generate the unique map id.
+    lumpnum_t markerLumpNum = App_FileSystem().lumpNumForName(arcInfo.mapUri().path());
+    de::File1 &markerLump   = App_FileSystem().nameIndex().lump(markerLumpNum);
+    String uniqueId         = composeUniqueMapId(markerLump);
+    QByteArray uniqueIdUtf8 = uniqueId.toUtf8();
+    qstrncpy(map->_oldUniqueId, uniqueIdUtf8.constData(), sizeof(map->_oldUniqueId));
+
+    return map;
+}
+
+#if 0
 AutoStr *DAM_ComposeCacheDir(char const *sourcePath)
 {
     if(!sourcePath || !sourcePath[0]) return 0;
@@ -180,199 +380,4 @@ AutoStr *DAM_ComposeCacheDir(char const *sourcePath)
 
     return path;
 }
-
-static bool loadMap(GameMap **map, archivedmap_t *dam)
-{
-    *map = new GameMap;
-    return DAM_MapRead(*map, Str_Text(&dam->cachedMapPath));
-}
 #endif
-
-static bool convertMap(GameMap **map, archivedmap_t *dam)
-{
-    bool converted = false;
-
-    VERBOSE(
-        AutoStr *path = Uri_ToString(dam->uri);
-        Con_Message("convertMap: Attempting conversion of '%s'.", Str_Text(path));
-        );
-
-    // Any converters available?
-    if(Plug_CheckForHook(HOOK_MAP_CONVERT))
-    {
-        // Ask each converter in turn whether the map format is recognised
-        // and if so, to interpret/transfer it to us via the map edit interface.
-        if(DD_CallHooks(HOOK_MAP_CONVERT, 0, (void*) dam->uri))
-        {
-            // Transfer went OK.
-            // Were we able to produce a valid map?
-            converted = MPE_GetLastBuiltMapResult();
-            if(converted)
-            {
-                *map = MPE_GetLastBuiltMap();
-            }
-        }
-    }
-
-    if(!converted || verbose >= 2)
-        Con_Message("convertMap: %s.", (converted? "Successful" : "Failed"));
-
-    return converted;
-}
-
-static String DAM_ComposeUniqueId(de::File1 &markerLump)
-{
-    return String("%1|%2|%3|%4")
-              .arg(markerLump.name().fileNameWithoutExtension())
-              .arg(markerLump.container().name().fileNameWithoutExtension())
-              .arg(markerLump.container().hasCustom()? "pwad" : "iwad")
-              .arg(Str_Text(App_CurrentGame().identityKey()))
-              .toLower();
-}
-
-/**
- * Attempt to load the map associated with the specified identifier.
- */
-boolean DAM_AttemptMapLoad(uri_s const *_uri)
-{
-    DENG_ASSERT(_uri);
-    de::Uri const &uri = reinterpret_cast<de::Uri const &>(*_uri);
-
-    bool loadedOK = false;
-
-    LOG_VERBOSE("Attempting to load map '%s'...") << uri;
-
-    archivedmap_t *dam = findArchivedMap(uri);
-    if(!dam)
-    {
-        // We've not yet attempted to load this map.
-        lumpnum_t markerLumpNum = F_LumpNumForName(uri.path().toString().toLatin1().constData());
-        if(0 > markerLumpNum) return false;
-
-/*
-        // Compose the cache directory path and ensure it exists.
-        AutoStr *cachedMapDir = DAM_ComposeCacheDir(Str_Text(F_ComposeLumpFilePath(markerLumpNum)));
-        F_MakePath(Str_Text(cachedMapDir));
-
-        // Compose the full path to the cached map data file.
-        AutoStr *cachedMapPath = AutoStr_NewStd();
-        F_FileName(cachedMapPath, Str_Text(F_LumpName(markerLumpNum)));
-        Str_Append(cachedMapPath, ".dcm");
-        Str_Prepend(cachedMapPath, Str_Text(cachedMapDir));
-*/
-
-        // Create an archived map record for this.
-        dam = createArchivedMap(uri/*, cachedMapPath*/);
-        addArchivedMap(dam);
-    }
-
-    // Load it in.
-    //if(!dam->lastLoadAttemptFailed)
-    {
-        GameMap *map = 0;
-
-        Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
-
-        /*if(mapCache && dam->cachedMapFound)
-        {
-            // Attempt to load the cached map data.
-            if(loadMap(&map, dam))
-                loadedOK = true;
-        }
-        else*/
-        {
-            // Try a JIT conversion with the help of a plugin.
-            if(convertMap(&map, dam))
-                loadedOK = true;
-        }
-
-        if(loadedOK)
-        {
-            // Do any initialization/error checking work we need to do.
-            // Must be called before we go any further.
-            P_InitUnusedMobjList();
-
-            // Must be called before any mobjs are spawned.
-            map->initNodePiles();
-
-#ifdef __CLIENT__
-            // Prepare the client-side data.
-            if(isClient)
-            {
-                map->initClMobjs();
-            }
-#endif
-
-            Rend_DecorInit();
-
-            vec2d_t min, max;
-            map->bounds(min, max);
-
-            // Init blockmap for searching BSP leafs.
-            map->initBspLeafBlockmap(min, max);
-            foreach(BspLeaf *bspLeaf, map->bspLeafs())
-            {
-                map->linkBspLeaf(*bspLeaf);
-            }
-
-            map->_uri = *reinterpret_cast<de::Uri *>(dam->uri);
-
-            // Generate the unique map id.
-            lumpnum_t markerLumpNum = App_FileSystem().lumpNumForName(Str_Text(Uri_Path(dam->uri)));
-            de::File1 &markerLump   = App_FileSystem().nameIndex().lump(markerLumpNum);
-
-            String uniqueId     = DAM_ComposeUniqueId(markerLump);
-            QByteArray uniqueIdUtf8 = uniqueId.toUtf8();
-            qstrncpy(map->_oldUniqueId, uniqueIdUtf8.constData(), sizeof(map->_oldUniqueId));
-
-            // See what mapinfo says about this map.
-            ded_mapinfo_t *mapInfo = Def_GetMapInfo(dam->uri);
-            if(!mapInfo)
-            {
-                de::Uri mapUri("*", RC_NULL);
-                mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
-            }
-
-#ifdef __CLIENT__
-            ded_sky_t *skyDef = 0;
-            if(mapInfo)
-            {
-                skyDef = Def_GetSky(mapInfo->skyID);
-                if(!skyDef)
-                    skyDef = &mapInfo->sky;
-            }
-            Sky_Configure(skyDef);
-#endif
-
-            // Setup accordingly.
-            if(mapInfo)
-            {
-                map->_globalGravity = mapInfo->gravity;
-                map->_ambientLightLevel = mapInfo->ambient * 255;
-            }
-            else
-            {
-                // No map info found, so set some basic stuff.
-                map->_globalGravity = 1.0f;
-                map->_ambientLightLevel = 0;
-            }
-
-            map->_effectiveGravity = map->_globalGravity;
-
-            /// @todo Should be done in P_LoadMap() (note: R_InitMap)
-            theMap = map;
-
-#ifdef __CLIENT__
-            Rend_RadioInitForMap();
-#endif
-
-            map->initSkyFix();
-        }
-    }
-
-/*  if(!loadedOK)
-        dam->lastLoadAttemptFailed = true;
-*/
-
-    return loadedOK;
-}
