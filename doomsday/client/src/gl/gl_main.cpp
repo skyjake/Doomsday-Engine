@@ -37,13 +37,15 @@
 
 #include "map/gamemap.h"
 #include "gl/texturecontent.h"
+#include "ui/windowsystem.h"
 #include "resource/colorpalettes.h"
 #include "resource/hq2x.h"
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "Texture"
-#include "ui/displaymode.h"
 #include "api_render.h"
+
+#include <de/DisplayMode>
 
 D_CMD(Fog);
 D_CMD(SetBPP);
@@ -87,18 +89,18 @@ static viewport_t currentView;
 
 static void videoFSAAChanged()
 {
-    if(novideo || !Window::haveMain()) return;
-    Window::main().updateCanvasFormat();
+    if(novideo || !WindowSystem::haveMain()) return;
+    WindowSystem::main().updateCanvasFormat();
 }
 
 static void videoVsyncChanged()
 {
-    if(novideo || !Window::haveMain()) return;
+    if(novideo || !WindowSystem::haveMain()) return;
 
 #if defined(WIN32) || defined(MACOSX)
     GL_SetVSync(Con_GetByte("vid-vsync") != 0);
 #else
-    Window::main().updateCanvasFormat();
+    WindowSystem::main().updateCanvasFormat();
 #endif
 }
 
@@ -188,14 +190,14 @@ void GL_DoUpdate()
     Mouse_Poll();
 }
 
-void GL_GetGammaRamp(displaycolortransfer_t *ramp)
+void GL_GetGammaRamp(DisplayColorTransfer *ramp)
 {
     if(!gamma_support) return;
 
     DisplayMode_GetColorTransfer(ramp);
 }
 
-void GL_SetGammaRamp(displaycolortransfer_t const *ramp)
+void GL_SetGammaRamp(DisplayColorTransfer const *ramp)
 {
     if(!gamma_support) return;
 
@@ -265,7 +267,7 @@ void GL_MakeGammaRamp(ushort *ramp, float gamma, float contrast, float bright)
  */
 void GL_SetGamma()
 {
-    displaycolortransfer_t myramp;
+    DisplayColorTransfer myramp;
 
     oldgamma    = vid_gamma;
     oldcontrast = vid_contrast;
@@ -1145,86 +1147,102 @@ D_CMD(SetRes)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    if(!Window::haveMain())
+    ClientWindow *win = WindowSystem::mainPtr();
+
+    if(!win)
         return false;
 
+    bool isFull = win->isFullScreen();
+
     int attribs[] = {
-        Window::Width, atoi(argv[1]),
-        Window::Height, atoi(argv[2]),
-        Window::End
+        isFull? ClientWindow::FullscreenWidth : ClientWindow::Width,
+        atoi(argv[1]),
+
+        isFull? ClientWindow::FullscreenHeight : ClientWindow::Height,
+        atoi(argv[2]),
+
+        ClientWindow::End
     };
-    return Window::main().changeAttributes(attribs);
+    return win->changeAttributes(attribs);
 }
 
 D_CMD(SetFullRes)
 {
     DENG2_UNUSED2(src, argc);
 
-    if(!Window::haveMain())
+    ClientWindow *win = WindowSystem::mainPtr();
+
+    if(!win)
         return false;
 
     int attribs[] = {
-        Window::Width, atoi(argv[1]),
-        Window::Height, atoi(argv[2]),
-        Window::Fullscreen, true,
-        Window::End
+        ClientWindow::FullscreenWidth,  atoi(argv[1]),
+        ClientWindow::FullscreenHeight, atoi(argv[2]),
+        ClientWindow::Fullscreen,       true,
+        ClientWindow::End
     };
-    return Window::main().changeAttributes(attribs);
+    return win->changeAttributes(attribs);
 }
 
 D_CMD(SetWinRes)
 {
     DENG2_UNUSED2(src, argc);
 
-    if(!Window::haveMain())
+    ClientWindow *win = WindowSystem::mainPtr();
+
+    if(!win)
         return false;
 
     int attribs[] = {
-        Window::Width, atoi(argv[1]),
-        Window::Height, atoi(argv[2]),
-        Window::Fullscreen, false,
-        Window::End
+        ClientWindow::Width,      atoi(argv[1]),
+        ClientWindow::Height,     atoi(argv[2]),
+        ClientWindow::Fullscreen, false,
+        ClientWindow::End
     };
-    return Window::main().changeAttributes(attribs);
+    return win->changeAttributes(attribs);
 }
 
 D_CMD(ToggleFullscreen)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    if(!Window::haveMain())
+    ClientWindow *win = WindowSystem::mainPtr();
+
+    if(!win)
         return false;
 
-    Window &mainWindow = Window::main();
     int attribs[] = {
-        Window::Fullscreen, !mainWindow.isFullscreen(),
-        Window::End
+        ClientWindow::Fullscreen, !win->isFullScreen(),
+        ClientWindow::End
     };
-    return mainWindow.changeAttributes(attribs);
+    return win->changeAttributes(attribs);
 }
 
 D_CMD(SetBPP)
 {
     DENG2_UNUSED2(src, argc);
 
-    if(!Window::haveMain())
+    ClientWindow *win = WindowSystem::mainPtr();
+
+    if(!win)
         return false;
 
     int attribs[] = {
-        Window::ColorDepthBits, atoi(argv[1]),
-        Window::End
+        ClientWindow::ColorDepthBits, atoi(argv[1]),
+        ClientWindow::End
     };
-    return Window::main().changeAttributes(attribs);
+    return win->changeAttributes(attribs);
 }
 
 D_CMD(DisplayModeInfo)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    if(!Window::haveMain())
+    ClientWindow *win = WindowSystem::mainPtr();
+
+    if(!win)
         return false;
 
-    Window const &mainWindow = Window::main();
     DisplayMode const *mode = DisplayMode_Current();
 
     QString str = QString("Current display mode:%1 depth:%2 (%3:%4")
@@ -1234,17 +1252,16 @@ D_CMD(DisplayModeInfo)
                       .arg(mode->ratioY);
     if(mode->refreshRate > 0)
     {
-        str += QString(", refresh: %1 Hz").arg(mode->refreshRate, 0, 'f', 3);
+        str += QString(", refresh: %1 Hz").arg(mode->refreshRate, 0, 'f', 1);
     }
-    str += QString(")\nMain window:\n  origin:%1 dimensions:%2\n  windowed-origin:%1 windowed-dimensions:%2")
-                .arg(de::Vector2i(mainWindow.x(), mainWindow.y()).asText())
-                .arg(de::Vector2i(mainWindow.width(), mainWindow.height()).asText())
-                .arg(de::Vector2i(mainWindow.normalX(), mainWindow.normalY()).asText())
-                .arg(de::Vector2i(mainWindow.normalWidth(), mainWindow.normalHeight()).asText());
-    str += QString("\n  fullscreen:%3 centered:%4 maximized:%5")
-                .arg(mainWindow.isFullscreen()     ? "yes" : "no")
-                .arg(mainWindow.isCentered()       ? "yes" : "no")
-                .arg(mainWindow.isMaximized()      ? "yes" : "no");
+    str += QString(")\nMain window:\n  origin:%1 dimensions:%2\n  fullscreen-dimensions:%3")
+                .arg(de::Vector2i(win->x(), win->y()).asText())
+                .arg(de::Vector2i(win->width(), win->height()).asText())
+                .arg(de::Vector2i(win->fullscreenWidth(), win->fullscreenHeight()).asText());
+    str += QString("\n  fullscreen:%1 centered:%2 maximized:%3")
+                .arg(win->isFullScreen()     ? "yes" : "no")
+                .arg(win->isCentered()       ? "yes" : "no")
+                .arg(win->isMaximized()      ? "yes" : "no");
 
     Con_Message(str.toUtf8().constData());
     return true;

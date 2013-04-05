@@ -33,6 +33,8 @@
 #include "dd_main.h"
 #include "dd_loop.h"
 
+#include "ui/windowsystem.h"
+
 // For the debug visuals:
 #if _DEBUG
 #  include "de_graphics.h"
@@ -103,9 +105,9 @@ static char defaultShiftTable[96] = // Contains characters 32 to 127.
 };
 
 static repeater_t keyReps[MAX_DOWNKEYS];
-#ifdef __CLIENT__
+
 static float oldPOV = IJOY_POV_CENTER;
-#endif
+
 static char* eventStrings[MAXEVENTS];
 static boolean uiMouseMode = false; // Can mouse data be modified?
 
@@ -210,8 +212,6 @@ void I_InitVirtualInputDevices(void)
     strcpy(dev->name, "key");
     I_DeviceAllocKeys(dev, 256);
 
-#ifdef __CLIENT__
-
     // The mouse may not be active.
     dev = &inputDevices[IDEV_MOUSE];
     strcpy(dev->niceName, "Mouse");
@@ -295,8 +295,6 @@ void I_InitVirtualInputDevices(void)
     // The joystick may not be active.
     if(Joystick_IsPresent())
         dev->flags = ID_ACTIVE;
-
-#endif // __CLIENT__
 }
 
 /**
@@ -1366,8 +1364,6 @@ void I_SetUIMouseMode(boolean on)
 #endif
 }
 
-#ifdef __CLIENT__
-
 /**
  * Checks the current mouse state (axis, buttons and wheel).
  * Generates events and mickeys and posts them.
@@ -2229,7 +2225,6 @@ void Rend_AllInputDeviceStateVisuals(void)
 #undef SPACING
 }
 #endif // _DEBUG
-#endif // __CLIENT__
 
 static void I_PrintAxisConfig(inputdev_t* device, inputdevaxis_t* axis)
 {
@@ -2367,12 +2362,11 @@ D_CMD(ListInputDevices)
 D_CMD(ReleaseMouse)
 {
     DENG2_UNUSED3(src, argc, argv);
-#ifdef __CLIENT__
-    if(Window::haveMain())
+
+    if(WindowSystem::haveMain())
     {
-        Window::main().trapMouse(false);
+        WindowSystem::main().canvas().trapMouse(false);
         return true;
     }
-#endif
     return false;
 }

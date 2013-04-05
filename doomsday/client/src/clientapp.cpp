@@ -25,6 +25,7 @@
 #include <stdlib.h>
 
 #include <de/Log>
+#include <de/DisplayMode>
 #include <de/Error>
 #include <de/c_wrapper.h>
 #include <de/garbage.h>
@@ -37,9 +38,8 @@
 #include "sys_system.h"
 #include "audio/s_main.h"
 #include "gl/gl_main.h"
-#include "ui/displaymode.h"
 #include "ui/windowsystem.h"
-#include "ui/window.h"
+#include "ui/clientwindow.h"
 #include "updater.h"
 
 #if WIN32
@@ -61,20 +61,21 @@ static void continueInitWithEventLoopRunning()
 {
     // Show the main window. This causes initialization to finish (in busy mode)
     // as the canvas is visible and ready for initialization.
-    Window::main().show();
+    WindowSystem::main().show();
 }
 
 DENG2_PIMPL(ClientApp)
 {
     LegacyCore *legacyCore;
     QMenuBar *menuBar;
-    WindowSystem winSys;
+    WindowSystem *winSys;
     ServerLink *svLink;
 
     Instance(Public *i)
         : Base(i),
           legacyCore(0),
           menuBar(0),
+          winSys(0),
           svLink(0)
     {
         clientAppSingleton = thisPublic;
@@ -88,6 +89,7 @@ DENG2_PIMPL(ClientApp)
         LegacyCore_Delete(legacyCore);
 
         delete svLink;
+        delete winSys;
         delete menuBar;
         clientAppSingleton = 0;
     }
@@ -125,9 +127,6 @@ ClientApp::ClientApp(int &argc, char **argv)
     QCoreApplication::setApplicationVersion (DOOMSDAY_VERSION_BASE);
 
     setTerminateFunc(handleLegacyCoreTerminate);
-
-    // Subsystems.
-    addSystem(d->winSys);
 }
 
 void ClientApp::initialize()
@@ -161,10 +160,16 @@ void ClientApp::initialize()
     }
 #endif
 
+    // Create the window system.
+    d->winSys = new WindowSystem;
+    addSystem(*d->winSys);
+
+    Plug_LoadAll();
+
     // Create the main window.
     char title[256];
     DD_ComposeMainWindowTitle(title);
-    Window::create(title);
+    d->winSys->createWindow()->setWindowTitle(title);
 
     LegacyCore_Timer(1, continueInitWithEventLoopRunning);
 }
@@ -207,4 +212,11 @@ ServerLink &ClientApp::serverLink()
     ClientApp &a = ClientApp::app();
     DENG2_ASSERT(a.d->svLink != 0);
     return *a.d->svLink;
+}
+
+WindowSystem &ClientApp::windowSystem()
+{
+    ClientApp &a = ClientApp::app();
+    DENG2_ASSERT(a.d->winSys != 0);
+    return *a.d->winSys;
 }

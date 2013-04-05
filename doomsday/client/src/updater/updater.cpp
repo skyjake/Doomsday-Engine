@@ -49,7 +49,8 @@
 #include "dd_main.h"
 #include "con_main.h"
 #include "ui/nativeui.h"
-#include "ui/window.h"
+#include "ui/windowsystem.h"
+#include "ui/clientwindow.h"
 #include "updater.h"
 #include "downloaddialog.h"
 #include "processcheckdialog.h"
@@ -107,11 +108,11 @@ static void runInstallerCommand(void)
 
 static bool switchToWindowedMode()
 {
-    Window &mainWindow = Window::main();
-    bool wasFull = mainWindow.isFullscreen();
+    ClientWindow &mainWindow = WindowSystem::main();
+    bool wasFull = mainWindow.isFullScreen();
     if(wasFull)
     {
-        int attribs[] = { Window::Fullscreen, false, Window::End };
+        int attribs[] = { ClientWindow::Fullscreen, false, ClientWindow::End };
         mainWindow.changeAttributes(attribs);
     }
     return wasFull;
@@ -121,8 +122,8 @@ static void switchBackToFullscreen(bool wasFull)
 {
     if(wasFull)
     {
-        int attribs[] = { Window::Fullscreen, true, Window::End };
-        Window::main().changeAttributes(attribs);
+        int attribs[] = { ClientWindow::Fullscreen, true, ClientWindow::End };
+        ClientWindow::main().changeAttributes(attribs);
     }
 }
 
@@ -242,7 +243,7 @@ DENG2_PIMPL(Updater)
     {
         if(!settingsDlg)
         {
-            settingsDlg = new UpdaterSettingsDialog(Window::main().widgetPtr());
+            settingsDlg = new UpdaterSettingsDialog(&ClientWindow::main());
             QObject::connect(settingsDlg, SIGNAL(finished(int)), thisPublic, SLOT(settingsDialogClosed(int)));
         }
         else
@@ -313,7 +314,7 @@ DENG2_PIMPL(Updater)
             // Automatically switch to windowed mode for convenience.
             bool wasFull = switchToWindowedMode();
 
-            UpdateAvailableDialog dlg(latestVersion, latestLogUri, Window::main().widgetPtr());
+            UpdateAvailableDialog dlg(latestVersion, latestLogUri, &ClientWindow::main());
             availableDlg = &dlg;
             execAvailableDialog(wasFull);
         }
@@ -536,7 +537,7 @@ void Updater::checkNowShowingProgress()
     // Not if there is an ongoing download.
     if(d->download) return;
 
-    d->availableDlg = new UpdateAvailableDialog(Window::main().widgetPtr());
+    d->availableDlg = new UpdateAvailableDialog(&ClientWindow::main());
     d->queryLatestVersion(true);
 
     d->execAvailableDialog(false);

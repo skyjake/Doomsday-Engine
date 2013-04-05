@@ -493,7 +493,7 @@ void UI_Drawer(void)
     uiCurrentPage->drawer(uiCurrentPage);
 
     // Draw mouse cursor?
-    if(!uiNoMouse && DENG_WINDOW->isMouseTrapped())
+    if(!uiNoMouse && DENG_WINDOW->canvas().isMouseTrapped())
     {
         Point2Raw origin;
         Size2Raw size;

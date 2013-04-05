@@ -24,9 +24,9 @@
 #include "de_base.h"
 #include "con_main.h"
 #include "ui/sys_input.h"
-#include "ui/window.h"
+#include "ui/windowsystem.h"
+#include "ui/clientwindow.h"
 #include "ui/mouse_qt.h"
-#include "ui/canvas.h"
 #include <string.h>
 
 #include <QWidget>
@@ -62,11 +62,10 @@ static void Mouse_Qt_Poll()
 {
     if(!mouseTrapped) return;
 
-    Window &mainWindow = Window::main();
-    QWidget *widget = mainWindow.widgetPtr();
-    if(!widget) return; // Hmm?
+    ClientWindow *win = WindowSystem::mainPtr();
+    if(!win) return; // Hmm?
 
-    QPoint curPos = widget->mapFromGlobal(QCursor::pos());
+    QPoint curPos = win->mapFromGlobal(QCursor::pos());
     if(!prevMousePos.isNull())
     {
         QPoint delta = curPos - prevMousePos;
@@ -75,8 +74,8 @@ static void Mouse_Qt_Poll()
             Mouse_Qt_SubmitMotion(IMA_POINTER, delta.x(), delta.y());
 
             // Keep the cursor centered.
-            QPoint mid(mainWindow.width() / 2, mainWindow.height() / 2);
-            QCursor::setPos(widget->mapToGlobal(mid));
+            QPoint mid(win->width() / 2, win->height() / 2);
+            QCursor::setPos(win->mapToGlobal(mid));
             prevMousePos = mid;
         }
     }

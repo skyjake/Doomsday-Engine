@@ -29,8 +29,8 @@
 #ifdef __CLIENT__
 #  include "network/sys_network.h"
 #  include "gl/sys_opengl.h"
-#  include "ui/window.h"
 #  include "ui/sys_input.h"
+#  include "ui/clientwindow.h"
 #endif
 
 #ifdef __SERVER__

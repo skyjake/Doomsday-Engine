@@ -63,7 +63,7 @@ static void acquireScreenshotTexture()
     startTime = Timer_RealSeconds();
 #endif
 
-    texScreenshot = Window::main().grabAsTexture(true /*halfsized*/);
+    texScreenshot = ClientWindow::main().grabAsTexture(ClientWindow::GrabHalfSized);
 
     DEBUG_Message(("Busy Mode: Took %.2f seconds acquiring screenshot texture #%i.\n",
                    Timer_RealSeconds() - startTime, texScreenshot));

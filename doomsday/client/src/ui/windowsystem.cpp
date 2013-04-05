@@ -18,28 +18,74 @@
 
 #include "de_platform.h"
 #include "ui/windowsystem.h"
-#include "ui/window.h"
+#include "ui/clientwindow.h"
+#include "clientapp.h"
+
+#include <QMap>
 
 using namespace de;
 
 DENG2_PIMPL(WindowSystem)
 {
-    /// @todo Creation and ownership of windows belongs here (from window.cpp).
+    typedef QMap<String, ClientWindow *> Windows;
+    Windows windows;
 
     Instance(Public *i) : Base(i)
     {}
+
+    ~Instance()
+    {
+        self.closeAll();
+    }
 };
 
 WindowSystem::WindowSystem()
     : System(ObservesTime | ReceivesInputEvents), d(new Instance(this))
-{}
+{
+    ClientWindow::setDefaultGLFormat();
+}
+
+ClientWindow *WindowSystem::createWindow(String const &id)
+{
+    DENG2_ASSERT(!d->windows.contains(id));
+
+    ClientWindow *win = new ClientWindow(id);
+    d->windows.insert(id, win);
+    return win;
+}
+
+bool WindowSystem::haveMain() // static
+{
+    return ClientApp::app().windowSystem().d->windows.contains("main");
+}
+
+ClientWindow &WindowSystem::main() // static
+{
+    return static_cast<ClientWindow &>(PersistentCanvasWindow::main());
+}
+
+ClientWindow *WindowSystem::find(String const &id) const
+{
+    Instance::Windows::const_iterator found = d->windows.constFind(id);
+    if(found != d->windows.constEnd())
+    {
+        return found.value();
+    }
+    return 0;
+}
+
+void WindowSystem::closeAll()
+{
+    qDeleteAll(d->windows.values());
+    d->windows.clear();
+}
 
 bool WindowSystem::processEvent(Event const &event)
 {
-    return Window::main().canvasWindow().root().processEvent(event);
+    return main().root().processEvent(event);
 }
 
 void WindowSystem::timeChanged(Clock const &/*clock*/)
 {
-    Window::main().canvasWindow().root().update();
+    main().root().update();
 }

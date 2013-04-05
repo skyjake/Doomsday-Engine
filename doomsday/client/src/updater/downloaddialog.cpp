@@ -24,7 +24,6 @@
 #include "downloaddialog.h"
 #include "updatersettings.h"
 #include "dd_version.h"
-#include "ui/window.h"
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QDialogButtonBox>

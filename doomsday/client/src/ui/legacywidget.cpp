@@ -22,6 +22,7 @@
 #include "ui/ui_main.h"
 #include "ui/ui2_main.h"
 #include "ui/busyvisual.h"
+#include "ui/windowsystem.h"
 #include "dd_def.h"
 #include "dd_main.h"
 #include "dd_loop.h"
@@ -87,7 +88,7 @@ void LegacyWidget::update()
     DENG2_ASSERT(!BusyMode_Active());
 
     // We may be performing GL operations.
-    Window::main().glActivate();
+    ClientWindow::main().glActivate();
 
     // Run at least one (fractional) tic.
     Loop_RunTics();
@@ -100,7 +101,7 @@ void LegacyWidget::update()
     GL_ProcessDeferredTasks(FRAME_DEFERRED_UPLOAD_TIMEOUT);
 
     // Request update of window contents.
-    Window::main().draw();
+    root().window().draw();
 
     // After the first frame, start timedemo.
     //DD_CheckTimeDemo();
