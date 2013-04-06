@@ -246,7 +246,6 @@ DENG_HEADERS += \
     include/map/bspleaf.h \
     include/map/bspnode.h \
     include/map/dam_file.h \
-    include/map/dam_main.h \
     include/map/entitydatabase.h \
     include/map/gamemap.h \
     include/map/generators.h \
@@ -320,6 +319,7 @@ DENG_HEADERS += \
     include/resource/hq2x.h \
     include/resource/image.h \
     include/resource/lumpcache.h \
+    include/resource/maparchive.h \
     include/resource/material.h \
     include/resource/materialarchive.h \
     include/resource/materialmanifest.h \
@@ -527,7 +527,6 @@ SOURCES += \
     src/map/bspleaf.cpp \
     src/map/bspnode.cpp \
     src/map/dam_file.cpp \
-    src/map/dam_main.cpp \
     src/map/entitydatabase.cpp \
     src/map/gamemap.cpp \
     src/map/generators.cpp \
@@ -601,6 +600,7 @@ SOURCES += \
     src/resource/fonts.cpp \
     src/resource/hq2x.cpp \
     src/resource/image.cpp \
+    src/resource/maparchive.cpp \
     src/resource/material.cpp \
     src/resource/materialanimation.cpp \
     src/resource/materialarchive.cpp \

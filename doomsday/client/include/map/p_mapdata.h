@@ -23,7 +23,6 @@
 
 #include "dd_share.h"
 #include "api_mapedit.h"
-#include "map/dam_main.h"
 #include "m_nodepile.h"
 #include <de/binangle.h>
 #include <de/vector1.h>

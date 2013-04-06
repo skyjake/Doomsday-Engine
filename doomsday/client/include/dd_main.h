@@ -33,9 +33,9 @@
 #include "api_plugin.h"
 #include "api_gameexport.h"
 #include "Materials"
+#include "resource/maparchive.h"
 #include "resource/textures.h"
 #include "filesys/sys_direc.h"
-#include "map/dam_main.h"
 #include <de/c_wrapper.h>
 
 #include <QList>

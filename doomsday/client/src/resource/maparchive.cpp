@@ -1,4 +1,4 @@
-/** @file dam_main.cpp (Cached) Map Archive.
+/** @file resource/maparchive.cpp (Cached) Map Archive.
  *
  * @authors Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -33,7 +33,7 @@
 #include "de_filesys.h"
 #include "map/gamemap.h"
 
-#include "map/dam_main.h"
+#include "resource/maparchive.h"
 
 using namespace de;
 

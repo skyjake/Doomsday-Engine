@@ -200,7 +200,6 @@ DENG_HEADERS += \
     $$SRC/include/map/bspleaf.h \
     $$SRC/include/map/bspnode.h \
     $$SRC/include/map/dam_file.h \
-    $$SRC/include/map/dam_main.h \
     $$SRC/include/map/entitydatabase.h \
     $$SRC/include/map/gamemap.h \
     $$SRC/include/map/generators.h \
@@ -241,6 +240,7 @@ DENG_HEADERS += \
     $$SRC/include/resource/font.h \
     $$SRC/include/resource/image.h \
     $$SRC/include/resource/lumpcache.h \
+    $$SRC/include/resource/maparchive.h \
     $$SRC/include/resource/material.h \
     $$SRC/include/resource/materialarchive.h \
     $$SRC/include/resource/materialmanifest.h \
@@ -371,7 +371,6 @@ SOURCES += \
     $$SRC/src/map/bspleaf.cpp \
     $$SRC/src/map/bspnode.cpp \
     $$SRC/src/map/dam_file.cpp \
-    $$SRC/src/map/dam_main.cpp \
     $$SRC/src/map/entitydatabase.cpp \
     $$SRC/src/map/gamemap.cpp \
     $$SRC/src/map/generators.cpp \
@@ -415,6 +414,7 @@ SOURCES += \
     $$SRC/src/resource/compositetexture.cpp \
     $$SRC/src/resource/hq2x.cpp \
     $$SRC/src/resource/image.cpp \
+    $$SRC/src/resource/maparchive.cpp \
     $$SRC/src/resource/material.cpp \
     $$SRC/src/resource/materialarchive.cpp \
     $$SRC/src/resource/materialmanifest.cpp \

@@ -24,7 +24,7 @@
 #ifndef __DOOMSDAY_DAM__
 #define __DOOMSDAY_DAM__
 
-#include "map/dam_main.h"
+#include "resource/maparchive.h"
 #include "map/dam_file.h"
 
 #endif

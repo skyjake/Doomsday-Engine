@@ -1,4 +1,4 @@
-/** @file dam_main.h (Cached) Map Archive.
+/** @file resource/maparchive.h (Cached) Map Archive.
  *
  * @author Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_ARCHIVED_MAP_MAIN_H
-#define LIBDENG_ARCHIVED_MAP_MAIN_H
+#ifndef DENG_RESOURCE_MAP_ARCHIVE_H
+#define DENG_RESOURCE_MAP_ARCHIVE_H
 
 #include "dd_share.h"
 #include "uri.hh"
@@ -28,7 +28,7 @@ class GameMap;
 namespace de {
 
 /**
- * @ingroup base
+ * @ingroup resource
  */
 class MapArchive
 {
@@ -156,4 +156,4 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG_ARCHIVED_MAP_MAIN_H
+#endif // DENG_RESOURCE_MAP_ARCHIVE_H
