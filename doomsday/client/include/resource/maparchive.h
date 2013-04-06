@@ -141,7 +141,7 @@ public:
      */
     inline GameMap *loadMap(Uri const &uri)
     {
-        // Record this map if we haven't already and load then it in!
+        // Record this map if we haven't already and then load it in!
         return createInfo(uri).loadMap();
     }
 
