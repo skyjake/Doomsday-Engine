@@ -56,7 +56,7 @@ ClientWindow *WindowSystem::createWindow(String const &id)
 
 bool WindowSystem::haveMain() // static
 {
-    return ClientApp::app().windowSystem().d->windows.contains("main");
+    return ClientApp::windowSystem().d->windows.contains("main");
 }
 
 ClientWindow &WindowSystem::main() // static

@@ -2087,7 +2087,7 @@ void Con_AbnormalShutdown(char const *message)
     // windows. (Alternatively could hide/disable drawing of the windows.) Note
     // that the app's event loop is running normally while we show the native
     // message box below.
-    ClientApp::app().windowSystem().closeAll();
+    ClientApp::windowSystem().closeAll();
 #endif
 
     if(message) // Only show if a message given.
