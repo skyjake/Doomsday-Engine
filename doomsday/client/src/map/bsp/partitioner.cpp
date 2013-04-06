@@ -1967,7 +1967,7 @@ struct Partitioner::Instance
             if(!vtx) continue;
 
             clearHEdgeTipsByVertex(vtx);
-            M_Free(vtx);
+            delete vtx;
         }
 
         DENG2_FOR_EACH(BspTreeNodeMap, it, treeNodeMap)
