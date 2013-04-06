@@ -67,7 +67,8 @@ public:
         return topLeft == other.topLeft && bottomRight == other.bottomRight;
     }
     String asText() const {
-        return "[" + topLeft.asText() + ", " + bottomRight.asText() + "]";
+        return "[" + topLeft.asText() + "->" + bottomRight.asText() +
+                " size:" + size().asText() + "]";
     }
     Type left() const { return topLeft.x; }
     Type right() const { return bottomRight.x; }
