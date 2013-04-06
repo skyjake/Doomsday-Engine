@@ -54,7 +54,7 @@ static QRect centeredQRect(Vector2i size)
 {
     QSize screenSize = desktopRect().size();
 
-    LOG_DEBUG("centeredGeometry: Current desktop rect %i x %i")
+    LOG_TRACE("centeredGeometry: Current desktop rect %i x %i")
             << screenSize.width() << screenSize.height();
 
     return QRect(desktopRect().topLeft() +
@@ -479,6 +479,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
         DENG2_ASSERT(attribs);
 
         // The new modified state.
+        state = widgetState();
         State mod = state;
 
         for(int i = 0; attribs[i]; ++i)
@@ -542,6 +543,12 @@ DENG2_PIMPL(PersistentCanvasWindow)
             }
         }
 
+        LOG_DEBUG("windowRect:%s fullSize:%s depth:%i flags:%x")
+                << mod.windowRect.asText()
+                << mod.fullSize.asText()
+                << mod.colorDepthBits
+                << mod.flags;
+
         // Apply them.
         if(mod != state)
         {
@@ -572,6 +579,9 @@ DENG2_PIMPL(PersistentCanvasWindow)
 #endif
         }
 
+        queue << Task(newState.windowRect, defer);
+        defer = 0;
+
         if(self.isVisible())
         {
 //#ifndef MACOSX
@@ -588,10 +598,6 @@ DENG2_PIMPL(PersistentCanvasWindow)
                           newState.isMaximized()?  Task::ShowMaximized :
                                                    Task::ShowNormal, defer);
         }
-        if(newState.isWindow())
-        {
-            queue << Task(newState.windowRect);
-        }
 
         if(modeChanged)
         {
@@ -602,7 +608,9 @@ DENG2_PIMPL(PersistentCanvasWindow)
             queue << Task(Task::NotifyModeChange, .1);
         }
 
-        state.windowRect = newState.windowRect;
+        //state.windowRect = newState.windowRect;
+        //LOG_DEBUG("applied windowRect:") << state.windowRect.asText();
+
         state.fullSize   = newState.fullSize;
         state.flags      = newState.flags;
 
@@ -649,6 +657,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
                     LOG_DEBUG("Setting window geometry to ") << next.rect.asText();
                     self.setGeometry(next.rect.left(),  next.rect.top(),
                                      next.rect.width(), next.rect.height());
+                    state.windowRect = next.rect;
                     break;
 
                 case Task::NotifyModeChange:
@@ -803,7 +812,13 @@ void PersistentCanvasWindow::resizeEvent(QResizeEvent *ev)
 {
     LOG_DEBUG("Window resized: maximized:%b old:%ix%i new:%ix%i")
             << isMaximized() << ev->oldSize().width() << ev->oldSize().height()
-               << ev->size().width() << ev->size().height();
+            << ev->size().width() << ev->size().height();
+
+    /*
+    if(!isMaximized() && !isFullScreen())
+    {
+        d->state.windowRect.setSize(Vector2i(ev->size().width(), ev->size().height()));
+    }*/
 }
 
 } // namespace de
