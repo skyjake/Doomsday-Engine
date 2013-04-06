@@ -1019,7 +1019,7 @@ boolean MPE_End()
     // Collate polyobjs:
     DENG2_ASSERT(map->_polyobjs.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
-    map->_lines.reserve(editMap.polyobjs.count());
+    map->_polyobjs.reserve(editMap.polyobjs.count());
 #endif
     while(!editMap.polyobjs.isEmpty())
     {
