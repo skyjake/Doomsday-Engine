@@ -158,7 +158,7 @@ public:
         }
 
 #if 0
-        bool cachedMapDataIsAvailable()
+        bool isCachedMapDataAvailable()
         {
             if(DAM_MapIsValid(Str_Text(&cachedMapPath), markerLumpNum()))
             {
@@ -338,16 +338,6 @@ GameMap *DAM_LoadMap(de::Uri const &uri)
 #endif
 
     Rend_DecorInit();
-
-    vec2d_t min, max;
-    map->bounds(min, max);
-
-    // Init blockmap for searching BSP leafs.
-    map->initBspLeafBlockmap(min, max);
-    foreach(BspLeaf *bspLeaf, map->bspLeafs())
-    {
-        map->linkBspLeaf(*bspLeaf);
-    }
 
     // Generate the unique map id.
     lumpnum_t markerLumpNum = App_FileSystem().lumpNumForName(arcInfo.mapUri().path());

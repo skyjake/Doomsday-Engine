@@ -969,54 +969,7 @@ void MPE_DetectOverlappingLines(GameMap *map)
 
     VERBOSE( Con_Message("Detected %lu overlapping linedefs.", (unsigned long) numOverlaps) )
 }
-#endif
 
-/**
- * Find the extremal coordinates for the given set of vertexes.
- *
- * @param vertexes  List of editable vertexes to be scanned.
- * @param min  Minimal coordinates will be written here.
- * @param max  Maximal coordinates will be written here.
- */
-static void findBounds(QList<Vertex *> const &vertexes, vec2d_t min, vec2d_t max)
-{
-    if(!min && !max) return;
-
-    if(!vertexes.count())
-    {
-        V2d_Set(min, DDMAXFLOAT, DDMAXFLOAT);
-        V2d_Set(max, DDMINFLOAT, DDMINFLOAT);
-        return;
-    }
-
-    vec2d_t bounds[2], point;
-
-    QListIterator<Vertex *> vIt(vertexes);
-
-    // Add the first vertex.
-    Vertex *vertex = vIt.next();
-    V2d_Set(point, vertex->origin()[VX], vertex->origin()[VY]);
-    V2d_InitBox(bounds, point);
-
-    // Add the rest of the vertexes.
-    while(vIt.hasNext())
-    {
-        Vertex *vertex = vIt.next();
-        V2d_Set(point, vertex->origin()[VX], vertex->origin()[VY]);
-        V2d_AddToBox(bounds, point);
-    }
-
-    if(min)
-    {
-        V2d_Set(min, bounds[0][VX], bounds[0][VY]);
-    }
-    if(max)
-    {
-        V2d_Set(max, bounds[1][VX], bounds[1][VY]);
-    }
-}
-
-#if 0
 /**
  * The REJECT resource is a LUT that provides the results of trivial
  * line-of-sight tests between sectors. This is done with a matrix of sector
@@ -1229,6 +1182,13 @@ boolean MPE_End()
     foreach(LineDef *line, editMap.lines)
     {
         map->_lines.append(line); // Take ownership.
+
+        line->updateSlopeType();
+        line->updateAABox();
+
+        line->_length = V2d_Length(line->_direction);
+        line->_angle  = bamsAtan2(int( line->_direction[VY] ),
+                                  int( line->_direction[VX] ));
     }
 
     buildVertexLineOwnerRings();
@@ -1239,8 +1199,10 @@ boolean MPE_End()
     /*
      * Build blockmaps.
      */
+    map->updateBounds();
+
     vec2d_t min, max;
-    findBounds(editMap.vertexes, min, max);
+    map->bounds(min, max);
 
     map->initLineBlockmap(min, max);
     foreach(LineDef *line, map->lines())
@@ -1248,7 +1210,7 @@ boolean MPE_End()
         map->linkLine(*line);
     }
 
-    // Mobj and Polyobj blockmaps are maintained dynamically.
+    // The mobj and polyobj blockmaps are maintained dynamically.
     map->initMobjBlockmap(min, max);
     map->initPolyobjBlockmap(min, max);
 
@@ -1273,7 +1235,13 @@ boolean MPE_End()
     editMapInited = false;
 
     map->finishMapElements();
-    map->updateBounds();
+
+    // We can now initialize the BSP leaf blockmap.
+    map->initBspLeafBlockmap(min, max);
+    foreach(BspLeaf *bspLeaf, map->bspLeafs())
+    {
+        map->linkBspLeaf(*bspLeaf);
+    }
 
     S_DetermineBspLeafsAffectingSectorReverb(map);
 

@@ -208,19 +208,10 @@ DENG2_PIMPL(GameMap)
     void finishLines()
     {
         foreach(LineDef *line, self._lines)
+        for(int i = 0; i < 2; ++i)
         {
-            line->updateSlopeType();
-            line->updateAABox();
-
-            line->_length = V2d_Length(line->_direction);
-            line->_angle = bamsAtan2(int( line->_direction[VY] ),
-                                     int( line->_direction[VX] ));
-
-            for(int i = 0; i < 2; ++i)
-            {
-                line->side(i).updateSurfaceTangents();
-                line->side(i).updateSoundEmitterOrigins();
-            }
+            line->side(i).updateSurfaceTangents();
+            line->side(i).updateSoundEmitterOrigins();
         }
     }
 

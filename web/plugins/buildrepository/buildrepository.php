@@ -338,9 +338,9 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         {
             try
             {
-                // Grab a copy and store it in the local file cache.
+                // Grab a copy of the latest build log..
                 $logXml = self::retrieveBuildLogXml($buildLogUri);
-                if($logXml == FALSE)
+                if($logXml === false)
                     throw new Exception('Failed retrieving build log');
 
                 // Attempt to parse the new log.
@@ -352,11 +352,10 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             }
             catch(Exception $e)
             {
-                // Free up resources.
-                unset($logXml);
-
                 // Log the error.
-                trigger_error(sprintf('Failed parsing new XML build log.\nError:%s', $e->getMessage()), E_USER_WARNING);
+                $msg = "Failed parsing new XML build log.";
+                $msg .= "\nError:" . $e->getMessage();
+                trigger_error($msg, E_USER_WARNING);
 
                 // Touch our cached copy so we don't try again too soon.
                 $FrontController->contentCache()->touch($logCacheName);
