@@ -1,4 +1,5 @@
 import os, sys, platform
+import subprocess
 import string
 import glob
 import gzip
@@ -152,3 +153,9 @@ def count_word(word, inText):
         count += 1
         pos += len(word)
     return count
+
+
+def system_command(cmd):
+    result = subprocess.call(cmd, shell=True)
+    if result != 0:
+        raise Exception("Error from " + cmd)

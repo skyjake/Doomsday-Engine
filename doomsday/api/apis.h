@@ -28,13 +28,34 @@
 /**
  * All APIs exported from the executable.
  *
- * @par Freezing Policy
+ * @par Freezing policy
  *
  * If changes are made to an API after it has been included in a stable
  * release, a new version of the API must be added. If feasible, the old
  * version of the API should be published in addition to the new version. Note
  * that it is possible to add completely new APIs without affecting the
  * existing ones.
+ *
+ * @par Adding a new API version
+ *
+ * Add a new enumeration into the table below for the API in question,
+ * incrementing by one from the previous value of the API version. For
+ * instance: <pre>DE_API_MAP_v2 = 1101, // 1.11</pre>
+ *
+ * Leave the existing enumerations as-is: if old plugins request obsolete API
+ * versions from the engine, the engine should be able to identify which API is
+ * being asked. It is also useful for developers to have a historical record of
+ * which API version was in which release.
+ *
+ * Update the 'versionless'/latest API definition (e.g., DE_API_MAP) to the
+ * value of the latest version of that particular API. This will automatically
+ * cause the engine to export the latest version and all of the project's
+ * plugins are also then using the latest version.
+ *
+ * When it is necessary to also export an older version of an API for backwards
+ * compatibility, it must be manually added to the set of published APIs (see
+ * library.cpp) and the API struct in question should be copied to a separate
+ * header file for that version of the API (e.g., api_map_v1.h).
  */
 enum {
     DE_API_BASE_v1              = 0,       // 1.10

@@ -328,7 +328,7 @@ def doTask(task):
 
     elif task == 'publish':
         msg("PUBLISH")
-        systemCommand('deng_copy_build_to_sourceforge.sh')
+        return autobuild("publish")
 
     elif task == 'apt_refresh':
         msg("APT REPOSITORY REFRESH")

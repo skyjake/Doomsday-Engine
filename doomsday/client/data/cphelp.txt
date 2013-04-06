@@ -3,11 +3,16 @@
 #
 # CONSOLE COMMANDS: engine
 #
+
+[activatebcontext]
+desc = Activate a binding context.
+inf = Input events can only trigger bindings in active binding contexts.\nSEE ALSO:\n- "Bindings" in wiki\n
+
 [add]
 desc = Add something to a cvar.
 
 [after]
-desc = Execute the specified command after a delay. 
+desc = Execute the specified command after a delay.
 inf = Params: after (tics) (cmd)\nFor example, 'after 35 "echo End"'.
 
 [alias]
@@ -20,11 +25,11 @@ desc = Summarize all help containing a search term.
 desc = Bind an input device to a player control.
 
 [bindevent]
-desc = Bind a console command to an event. 
-inf = Params: bindevent (event-descriptor) (command)\nExamples:\nbindevent "key-M-down" { print "M was pressed" }\nbindevent "mouse-right-up + key-shift" { print "RMB released while Shift down" }
+desc = Bind a console command to an event.
+inf = USAGE:\nbindevent [(context)] (spec) (command)\nThe event specification (spec) is composed of an event descriptor and optionally any additional conditions for the validity of the binding. The specification may be prefixed with a context name; if omitted, the binding is created in the default "game" context.\nEXAMPLES:\nbindevent key-M-down "toggle ctl-run"\nbindevent "mouse-right-up + key-shift" {print "RMB released while Shift down"}\nbindevent shortcut:key-f8 "toggle msg-show"\nbindevent key-equals-down "add view-size 1"\nbindevent key-equals-repeat "add view-size 1"\nSEE ALSO:\n- "Bindings" in wiki\n\n
 
 [blc]
-desc = Set color of light at cursor. 
+desc = Set color of light at cursor.
 inf = Params: blc (red) (green) (blue)\nFor example, 'blc 1 0.5 0.2'.
 
 [blclear]
@@ -85,7 +90,7 @@ desc = Deletes all existing bindings.
 desc = Close the console prompt.
 
 [conlocp]
-desc = Connect a local player. 
+desc = Connect a local player.
 inf = Params: conlocp (playernum)\nFor example, 'conlocp 1'.
 
 [connect]
@@ -97,6 +102,10 @@ desc = Open the console prompt.
 [contoggle]
 desc = Open/close the console prompt.
 
+[deactivatebcontext]
+desc = Deactivate a binding context.
+inf = Bindings in deactivated binding contexts cannot be triggered.\nSEE ALSO:\n- "Bindings" in wiki\n
+
 [dec]
 desc = Subtract 1 from a cvar.
 
@@ -104,27 +113,27 @@ desc = Subtract 1 from a cvar.
 desc = Deletes all bindings to the given console command.
 
 [demolump]
-desc = Write a reference lump file for a demo. 
+desc = Write a reference lump file for a demo.
 inf = Params: demolump (demofile) (lumpfile)\nFor example, 'demolump demo1.dmo DEMO1'.
 
 [dir]
-desc = Print contents of directories. 
+desc = Print contents of directories.
 inf = Params: dir (dirs) ...\nFor example, 'dir data/'.\nVirtual files are listed, too.\nPaths are relative to the base path.
 
 [dump]
-desc = Dump a data lump currently loaded in memory. 
+desc = Dump a data lump currently loaded in memory.
 inf = Params: dump (name)\nFor example, 'dump PLAYPAL'.
 
 [dumpkeymap]
-desc = Write the current keymap to a file. 
+desc = Write the current keymap to a file.
 inf = Params: dumpkeymap (file)\nFor example, 'dumpkeymap finnish.dkm'.
 
 [echo]
-desc = Echo the parameters on separate lines. 
+desc = Echo the parameters on separate lines.
 inf = Params: echo (text) ...\nFor example, 'echo "hello world"'
 
 [exec]
-desc = Loads and executes a file containing console commands. 
+desc = Loads and executes a file containing console commands.
 inf = Params: exec (file) ...\nFor example, 'exec "myconfig.cfg"'.
 
 [flareconfig]
@@ -146,19 +155,19 @@ desc = Execute a command if the condition is true.
 desc = Add 1 to a cvar.
 
 [inspectmaterial]
-desc = Print extended information about a Material to the console. 
+desc = Print extended information about a Material to the console.
 inf = Params: inspectmaterial (uri)\nFor example, 'inspectmaterial flats:fwater1'.
 
 [inspecttexture]
-desc = Print extended information about a Texture to the console. 
+desc = Print extended information about a Texture to the console.
 inf = Params: inspecttexture (uri)\nFor example, 'inspecttexture flats:fwater1'.
 
 [keymap]
-desc = Load a DKM keymap file. 
+desc = Load a DKM keymap file.
 inf = Params: keymap (dkm-file)\nFor example, 'keymap finnish'.
 
 [kick]
-desc = Kick client out of the game (server only). 
+desc = Kick client out of the game (server only).
 inf = Params: kick (playernum)\nFor example, 'kick 1'.
 
 [lastupdated]
@@ -167,8 +176,8 @@ desc = Show when the latest check for updates was made.
 [listaliases]
 desc = List all aliases and their expanded forms.
 
-[listbindclasses]
-desc = List all event binding classes.
+[listbcontexts]
+desc = List all binding contexts and their current state.
 
 [listbindings]
 desc = List all event bindings.
@@ -207,7 +216,7 @@ desc = List all known textures.
 desc = List all console variables and their values.
 
 [load]
-desc = Load a complete game or one or more data files (e.g., a WAD or a lump). 
+desc = Load a complete game or one or more data files (e.g., a WAD or a lump).
 inf = Params: load (name) ...\nFor example, 'load (gamename)' or 'load mylevel.wad'
 
 [login]
@@ -220,11 +229,11 @@ desc = Terminate remote connection to server console.
 desc = Select the poorest rendering quality.
 
 [ls]
-desc = Print contents of directories. 
+desc = Print contents of directories.
 inf = Params: ls (dirs) ...\nFor example, 'ls data/'.\nVirtual files are listed, too.\nPaths are relative to the base path.
 
 [mipmap]
-desc = Set the mipmapping mode. 
+desc = Set the mipmapping mode.
 inf = Params: mipmap (0-5)\n0 = GL_NEAREST\n1 = GL_LINEAR\n2 = GL_NEAREST_MIPMAP_NEAREST\n3 = GL_LINEAR_MIPMAP_NEAREST\n4 = GL_NEAREST_MIPMAP_LINEAR\n5 = GL_LINEAR_MIPMAP_LINEAR
 
 [net]
@@ -243,7 +252,7 @@ desc = Pause the currently playing music track.
 desc = Ping the server (or a player if you're the server).
 
 [playdemo]
-desc = Play a demo. 
+desc = Play a demo.
 inf = Params: playdemo (fileName)\nFor example, 'playdemo demo1.dmo'.
 
 [playmusic]
@@ -265,7 +274,7 @@ desc = Start recording a demo.
 desc = Reloads the current game (if loaded).
 
 [repeat]
-desc = Repeat a command at given intervals. 
+desc = Repeat a command at given intervals.
 inf = Params: repeat (count) (interval) (cmd)\nFor example, 'repeat 10 35 "screenshot"'.
 
 [reset]
@@ -287,23 +296,23 @@ desc = Send a chat message to the specified player.
 desc = Send a chat message to the specified player.
 
 [setbpp]
-desc = Change color depth (bits per pixel), either 16 or 32. 
+desc = Change color depth (bits per pixel), either 16 or 32.
 inf = Params: setbpp (bits)\nFor example, 'setbpp 32'.
 
 [setcon]
-desc = Set console and viewplayer. 
+desc = Set console and viewplayer.
 inf = Params: setcon (playernum)\nFor example, 'setcon 1'.
 
 [setname]
-desc = Set your name. 
+desc = Set your name.
 inf = Params: setname (name)\nFor example, 'setname "my name"'.
 
 [setres]
-desc = Change video mode resolution or window size. 
+desc = Change video mode resolution or window size.
 inf = Params: setres (width) (height)\nFor example, 'setres 1024 768'.
 
 [settics]
-desc = Set number of game tics per second (default: 35). 
+desc = Set number of game tics per second (default: 35).
 inf = Params: settics (tics)\nFor example, 'settics 15'.
 
 [setvidramp]
@@ -322,18 +331,18 @@ desc = Subtract something from a cvar.
 desc = Force a texture reload.
 
 [toggle]
-desc = Toggle the value of a cvar between zero and nonzero. 
+desc = Toggle the value of a cvar between zero and nonzero.
 inf = Params: toggle (cvar)\nFor example, 'toggle rend-light'.
 
 [togglefullscreen]
 desc = Toggle between fullscreen and windowed video modes.
 
 [uicolor]
-desc = Change Doomsday user interface colors. 
+desc = Change Doomsday user interface colors.
 inf = Params: uicolor (object) (red) (green) (blue)\nFor example, 'uicolor text 1 1 1'.\nPossible objects are:\ntext, shadow, bglight, bgmed, bgdark,\nborhigh, bormed, borlow, help
 
 [unload]
-desc = Unload the current game or one or more data files. 
+desc = Unload the current game or one or more data files.
 inf = Params: unload (name) ...\nFor example, 'unload mylevel.wad'.
 
 [update]
@@ -352,12 +361,12 @@ desc = Show detailed statistics for console variables.
 desc = Show detailed version information.
 
 [write]
-desc = Write bindings and aliases to a file. 
+desc = Write bindings and aliases to a file.
 inf = Params: write (filename)\nFor example, 'write myconfig.cfg'.
-
 #
 # CONSOLE VARIABLES: engine
 #
+
 [blockmap-build]
 desc = Automatically generate blockmap data when necessary, 0=Never, 1=When needed, 2=Always.
 
@@ -932,7 +941,7 @@ desc = Show client latencies.
 desc = The name of this computer if it's a server.
 
 [server-password]
-desc = Password for remote login. 
+desc = Password for remote login.
 inf = Password that shell users must know in order to connect to the server. Applicable only to shell users; regular clients wishing to join the game do not need the password.\nNOTE! Public servers must have a password to be accepted by the master server.
 
 [server-player-limit]
@@ -994,212 +1003,212 @@ desc = Default resolution (X).
 
 [vid-res-y]
 desc = Default resolution (Y).
-
-# Control Panel help strings 
+# Control Panel help strings
 
 #
 # Video
-# 
+#
 
-[Gamma correction] 
-cvar = vid-gamma 
-def = 1.0 
-desc = Smaller values result in a darker picture. In order for this setting to work your display adapter must support color adjustments. You should lower the gamma correction value until dark areas in maps become sufficiently dark. Note that with some monitors different resolutions require different gamma correction levels.\bUse the -noramp option to disable all color adjustments. 
+[Gamma correction]
+cvar = vid-gamma
+def = 1.0
+desc = Smaller values result in a darker picture. In order for this setting to work your display adapter must support color adjustments. You should lower the gamma correction value until dark areas in maps become sufficiently dark. Note that with some monitors different resolutions require different gamma correction levels.\bUse the -noramp option to disable all color adjustments.
 
-[Display contrast] 
-cvar = vid-contrast 
-def = 1.0 
-desc = Modifies the steepness of the gamma ramp. Values greater than 1.0 result in a more colorful picture but since the colors are clamped, some are lost in both the bright and dark ends of the ramp. Values less than 1.0 fade the picture towards gray. In order for this setting to work your display adapter must support color adjustments.\bUse the -noramp option to disable all color adjustments. 
+[Display contrast]
+cvar = vid-contrast
+def = 1.0
+desc = Modifies the steepness of the gamma ramp. Values greater than 1.0 result in a more colorful picture but since the colors are clamped, some are lost in both the bright and dark ends of the ramp. Values less than 1.0 fade the picture towards gray. In order for this setting to work your display adapter must support color adjustments.\bUse the -noramp option to disable all color adjustments.
 
-[Display brightness] 
-cvar = vid-bright 
-def = 0.0 
-desc = Applies an offset to the gamma ramp. Positive values make the picture lighter, negative ones darker. For the best results, use a small positive brightness value with dark gamma and slightly increased contrast. In order for this setting to work your display adapter must support color adjustments.\bUse the -noramp option to disable all color adjustments. 
+[Display brightness]
+cvar = vid-bright
+def = 0.0
+desc = Applies an offset to the gamma ramp. Positive values make the picture lighter, negative ones darker. For the best results, use a small positive brightness value with dark gamma and slightly increased contrast. In order for this setting to work your display adapter must support color adjustments.\bUse the -noramp option to disable all color adjustments.
 
 #
 # Audio
-# 
+#
 
-[Preferred music source] 
-cvar = music-source 
-def = External files 
-desc = There can be a WAD lump, external file and a CD track associated with each song. This setting controls which of these resources is actually played when the song is started. If the selected resource is not available, one that is will be chosen instead. 
+[Preferred music source]
+cvar = music-source
+def = External files
+desc = There can be a WAD lump, external file and a CD track associated with each song. This setting controls which of these resources is actually played when the song is started. If the selected resource is not available, one that is will be chosen instead.
 
-[16-bit sound effects] 
-cvar = sound-16bit 
-def = No 
-desc = When this setting is activated, 8-bit sounds are converted to 16-bit before playing. In order for this to be effective you must also choose a sample rate higher than 11025 Hz. 
+[16-bit sound effects]
+cvar = sound-16bit
+def = No
+desc = When this setting is activated, 8-bit sounds are converted to 16-bit before playing. In order for this to be effective you must also choose a sample rate higher than 11025 Hz.
 
-[Sound effects sample rate] 
-cvar = sound-rate 
-def = 11025 Hz 
-desc = The minimum sample rate for all sound effects. Samples with a smaller rate will be resampled to this rate before playing. To increase the quality of the resampling, activate the 16-bit sound effects option. 
+[Sound effects sample rate]
+cvar = sound-rate
+def = 11025 Hz
+desc = The minimum sample rate for all sound effects. Samples with a smaller rate will be resampled to this rate before playing. To increase the quality of the resampling, activate the 16-bit sound effects option.
 
-[Show status of channels] 
-cvar = sound-info 
-def = No 
-desc = The status of all sound channels is drawn on screen. This is intended for debugging. The displayed information consists of sample cache size, channel flags, volume, frequency, latest start time, cursor positions, buffer flags and sample information.\bO = Origin\nA = Attenuated\nE = Emitter\n3 = 3D\nP = Playing\nR = Repeat\nL = Reload 
+[Show status of channels]
+cvar = sound-info
+def = No
+desc = The status of all sound channels is drawn on screen. This is intended for debugging. The displayed information consists of sample cache size, channel flags, volume, frequency, latest start time, cursor positions, buffer flags and sample information.\bO = Origin\nA = Attenuated\nE = Emitter\n3 = 3D\nP = Playing\nR = Repeat\nL = Reload
 
 #
 # Graphics
-# 
+#
 
-[Field Of View angle] 
-cvar = rend-camera-fov 
-def = 90 
-desc = Adjust the camera's Field Of View angle according to your monitor configuration. If you have a large monitor and view it close by, using a larger FOV angle (around 100 degrees) will result in a more natural game view. With small monitors it's best to stick to 90 degrees or else the fish eye effect may become distracting. 
+[Field Of View angle]
+cvar = rend-camera-fov
+def = 90
+desc = Adjust the camera's Field Of View angle according to your monitor configuration. If you have a large monitor and view it close by, using a larger FOV angle (around 100 degrees) will result in a more natural game view. With small monitors it's best to stick to 90 degrees or else the fish eye effect may become distracting.
 
-[Sky sphere radius] 
-cvar = rend-sky-distance 
-def = 1600 
-desc = The sky is composed of two capped hemispheres rendered around the camera location. The sky sphere radius is the radius of these hemispheres. The primary purpose of this setting is to determine how large an impact fog has on the sky. Larger radii will result in a sky with heavier fog. 
+[Sky sphere radius]
+cvar = rend-sky-distance
+def = 1600
+desc = The sky is composed of two capped hemispheres rendered around the camera location. The sky sphere radius is the radius of these hemispheres. The primary purpose of this setting is to determine how large an impact fog has on the sky. Larger radii will result in a sky with heavier fog.
 
-[Shadow visible distance] 
-cvar = rend-shadow-far 
-def = 1000 
-desc = Maximum distance at which shadows under objects are visible. If the object is farther than this, no shadow will be drawn. Since the shadows are extremely simple, posing little fear of performance loss, it's safe to increase this value as needed. 
+[Shadow visible distance]
+cvar = rend-shadow-far
+def = 1000
+desc = Maximum distance at which shadows under objects are visible. If the object is farther than this, no shadow will be drawn. Since the shadows are extremely simple, posing little fear of performance loss, it's safe to increase this value as needed.
 
 #
 # Graphics: Lights
-# 
+#
 
-[Blending mode] 
-cvar = rend-light-blend 
-def = Multiply 
-desc = The method used to draw dynamic lights. In the Multiply mode, color from dynamic lights is multiplied with the underlying surface pixels. This allows dark areas to be correctly lit up by the lights. The Add mode is faster but doesn't look as realistic.\bThe third mode, Process wo/rendering, is for debugging. In it, all dynamic light polygons are calculated but none are rendered. 
+[Blending mode]
+cvar = rend-light-blend
+def = Multiply
+desc = The method used to draw dynamic lights. In the Multiply mode, color from dynamic lights is multiplied with the underlying surface pixels. This allows dark areas to be correctly lit up by the lights. The Add mode is faster but doesn't look as realistic.\bThe third mode, Process wo/rendering, is for debugging. In it, all dynamic light polygons are calculated but none are rendered.
 
-[Dynamic light radius factor] 
-cvar = rend-light-radius-scale 
-def = 3 
-desc = The radius of all dynamic lights is multiplied by this factor. Lights are never larger than the Maximum dynamic light radius, though. 
+[Dynamic light radius factor]
+cvar = rend-light-radius-scale
+def = 3
+desc = The radius of all dynamic lights is multiplied by this factor. Lights are never larger than the Maximum dynamic light radius, though.
 
-[Maximum dynamic light radius] 
-cvar = rend-light-radius-max 
-def = 256 
-desc = The maximum radius a dynamic light can have. This is just a limit: to make the lights larger, you also need to increase the Dynamic light radius factor. 
+[Maximum dynamic light radius]
+cvar = rend-light-radius-max
+def = 256
+desc = The maximum radius a dynamic light can have. This is just a limit: to make the lights larger, you also need to increase the Dynamic light radius factor.
 
-[Light range compression] 
-cvar = rend-light-compression 
-def = 0 
-desc = Sector light range compression. Positive values will brighten dark areas while negative values will darken light areas of the map. 
+[Light range compression]
+cvar = rend-light-compression
+def = 0
+desc = Sector light range compression. Positive values will brighten dark areas while negative values will darken light areas of the map.
 
-[Floor/ceiling glow on walls] 
-cvar = rend-glow-wall 
-def = Yes 
-desc = Glowing floor and ceiling textures will cast a dynamic light on surrounding walls. 
+[Floor/ceiling glow on walls]
+cvar = rend-glow-wall
+def = Yes
+desc = Glowing floor and ceiling textures will cast a dynamic light on surrounding walls.
 
 #
 # Graphics: Halos
-# 
+#
 
-[Number of flares per halo] 
-cvar = rend-halo 
-def = 5 
-desc = Maximum number of lens flares originating from a luminous object. To disable lens flares, set this to None (zero). 
+[Number of flares per halo]
+cvar = rend-halo
+def = 5
+desc = Maximum number of lens flares originating from a luminous object. To disable lens flares, set this to None (zero).
 
-[Use realistic halos] 
-cvar = rend-halo-realistic 
-def = Yes 
-desc = When enabled, halos are rendered in a more true-to-life way. This also means that secondary lens flares are disabled. 
+[Use realistic halos]
+cvar = rend-halo-realistic
+def = Yes
+desc = When enabled, halos are rendered in a more true-to-life way. This also means that secondary lens flares are disabled.
 
-[Occlusion fade speed] 
-cvar = rend-halo-occlusion 
-def = 48 
-desc = The rate at which a halo changes state from "visible" to "occluded" and vice versa. A small fade speed results in halos that appear and disappear softly, but are visible through walls for a short while before disappearing. 
+[Occlusion fade speed]
+cvar = rend-halo-occlusion
+def = 48
+desc = The rate at which a halo changes state from "visible" to "occluded" and vice versa. A small fade speed results in halos that appear and disappear softly, but are visible through walls for a short while before disappearing.
 
-[Flare visibility limitation] 
-cvar = rend-halo-secondary-limit 
-def = 1 
-desc = Controls when secondary lens flares become visible. They are only visible when the light source is close enough to the camera. The larger the number, the farther away secondary flares are visible. 
+[Flare visibility limitation]
+cvar = rend-halo-secondary-limit
+def = 1
+desc = Controls when secondary lens flares become visible. They are only visible when the light source is close enough to the camera. The larger the number, the farther away secondary flares are visible.
 
-[Z magnification divisor] 
-cvar = rend-halo-zmag-div 
-def = 100 
-desc = The higher the number, the smaller lens flares become when the source is far away. Normally halos grow slightly larger as they move away from the camera. 
+[Z magnification divisor]
+cvar = rend-halo-zmag-div
+def = 100
+desc = The higher the number, the smaller lens flares become when the source is far away. Normally halos grow slightly larger as they move away from the camera.
 
 #
 # Graphics: Textures
-# 
+#
 
-[Texture quality] 
-cvar = rend-tex-quality 
-def = 8 
-desc = Depending on your system configuration, some textures must be resized so that their dimensions are powers of two. In these instances, this setting controls whether the higher or smaller matching power of two is chosen. At quality zero, all textures are reduced in size, to match the largest power of two smaller than the original size. At quality 8, the resizing is always done upwards. 
+[Texture quality]
+cvar = rend-tex-quality
+def = 8
+desc = Depending on your system configuration, some textures must be resized so that their dimensions are powers of two. In these instances, this setting controls whether the higher or smaller matching power of two is chosen. At quality zero, all textures are reduced in size, to match the largest power of two smaller than the original size. At quality 8, the resizing is always done upwards.
 
-[Smart texture filtering] 
-cvar = rend-tex-filter-smart 
-def = No 
-desc = When enabled the hq2x texture filtering algorithm is used to enlarge all textures as opposed to linear scaling. 
+[Smart texture filtering]
+cvar = rend-tex-filter-smart
+def = No
+desc = When enabled the hq2x texture filtering algorithm is used to enlarge all textures as opposed to linear scaling.
 
-[Bilinear filtering] 
-desc = Controls which class(es) of graphics receive bilinear filtering. Disabling bilinear filtering results in "pixelated" textures when up close. 
+[Bilinear filtering]
+desc = Controls which class(es) of graphics receive bilinear filtering. Disabling bilinear filtering results in "pixelated" textures when up close.
 
-[Anisotropic filtering] 
-cvar = rend-tex-filter-anisotropic 
-def = Best 
-desc = When textures are drawn onto surfaces at high angles compared to the camera, bluring is introduced which reduces the overall quality of the visual. Anisotropic filtering can be used to help reduce this bluring. Sample multiplier: 0=Disabled, 1=2x, 2=4x, 3=8x, 4=16x. 
+[Anisotropic filtering]
+cvar = rend-tex-filter-anisotropic
+def = Best
+desc = When textures are drawn onto surfaces at high angles compared to the camera, bluring is introduced which reduces the overall quality of the visual. Anisotropic filtering can be used to help reduce this bluring. Sample multiplier: 0=Disabled, 1=2x, 2=4x, 3=8x, 4=16x.
 
 #
 # Graphics: Objects
-# 
+#
 
-[3D model visibility limit] 
-cvar = rend-model-distance 
-def = 1500 
-desc = Objects farther than this will never be rendered as 3D models. 
+[3D model visibility limit]
+cvar = rend-model-distance
+def = 1500
+desc = Objects farther than this will never be rendered as 3D models.
 
-[Align sprites to...] 
-cvar = rend-sprite-align 
-def = Camera 
-desc = This setting controls which direction sprites face. Aligning to camera means the sprites are always upright (to make them appear more 3D) but they will turn to face the camera coordinates. Aligning to view plane resembles the way the sprites were drawn in software. The "limited" options restrict how much the sprite can tilt vertically. 
+[Align sprites to...]
+cvar = rend-sprite-align
+def = Camera
+desc = This setting controls which direction sprites face. Aligning to camera means the sprites are always upright (to make them appear more 3D) but they will turn to face the camera coordinates. Aligning to view plane resembles the way the sprites were drawn in software. The "limited" options restrict how much the sprite can tilt vertically.
 
-[LOD level zero distance] 
-cvar = rend-model-lod 
-def = 256 
-desc = The distance where LOD level zero becomes LOD level one. Only affects 3D models that have Level Of Detail information (DMDs). 
+[LOD level zero distance]
+cvar = rend-model-lod
+def = 256
+desc = The distance where LOD level zero becomes LOD level one. Only affects 3D models that have Level Of Detail information (DMDs).
 
 #
 # Graphics: Particles
-# 
+#
 
-[Near diffusion factor] 
-cvar = rend-particle-diffuse 
-def = 4 
-desc = Particles may cause excessive overdraw if many are visible just in front of the camera. This setting makes large particles near the camera more transparent and ultimately invisible. The larger the diffuse factor, the smaller particles will be affected. The end result is that particles will not be visible near the camera. Increase the setting if framerate drops alarmingly when in smoke. 
+[Near diffusion factor]
+cvar = rend-particle-diffuse
+def = 4
+desc = Particles may cause excessive overdraw if many are visible just in front of the camera. This setting makes large particles near the camera more transparent and ultimately invisible. The larger the diffuse factor, the smaller particles will be affected. The end result is that particles will not be visible near the camera. Increase the setting if framerate drops alarmingly when in smoke.
 
-[Near clip distance] 
-cvar = rend-particle-visible-near 
-def = Disabled 
-desc = Particles that are closer to the camera than this are not drawn at all. 
+[Near clip distance]
+cvar = rend-particle-visible-near
+def = Disabled
+desc = Particles that are closer to the camera than this are not drawn at all.
 
 #
 # Network
-# 
+#
 
-[Cl-to-sv pos transmit tics] 
-cvar = client-pos-interval 
-def = 10 
-desc = The client periodically sends its coordinates to the server in order to keep it synchronized with the player position the client perceives as correct. The interval between the coordinate transmissions as a number of 35 Hz tics. Use a larger interval with low-bandwidth connections (can lead to more warping, though). 
+[Cl-to-sv pos transmit tics]
+cvar = client-pos-interval
+def = 10
+desc = The client periodically sends its coordinates to the server in order to keep it synchronized with the player position the client perceives as correct. The interval between the coordinate transmissions as a number of 35 Hz tics. Use a larger interval with low-bandwidth connections (can lead to more warping, though).
 
-[Server login password] 
-cvar = server-password 
-desc = If a client wishes to make a remote console connection to the server it must specify this password. If the password is empty, clients can issue console commands on the server without specifying a password. Clients use the "login" and "logout" commands to begin and end a remote connection. 
+[Server login password]
+cvar = server-password
+desc = If a client wishes to make a remote console connection to the server it must specify this password. If the password is empty, clients can issue console commands on the server without specifying a password. Clients use the "login" and "logout" commands to begin and end a remote connection.
 
-[Frame interval tics] 
-cvar = server-frame-interval 
-def = 1 
-desc = Number of 35 Hz ticks between frames sent to clients. Only for the server. Small intervals require more bandwidth but result in smoother animation and other world events. Use larger intervals (2..5) with low-bandwidth connections. 
+[Frame interval tics]
+cvar = server-frame-interval
+def = 1
+desc = Number of 35 Hz ticks between frames sent to clients. Only for the server. Small intervals require more bandwidth but result in smoother animation and other world events. Use larger intervals (2..5) with low-bandwidth connections.
 
 #
 # Console
-# 
+#
 
-[Silent console variables] 
-cvar = con-var-silent 
-def = No 
-desc = Normally when the value of a console variable is changed, its name and the new value get printed in the console. If the variables are silent, this will not happen and the value can be changed without anything being printed as a confirmation. 
+[Silent console variables]
+cvar = con-var-silent
+def = No
+desc = Normally when the value of a console variable is changed, its name and the new value get printed in the console. If the variables are silent, this will not happen and the value can be changed without anything being printed as a confirmation.
 
-[Command completion with Tab] 
-cvar = con-completion 
-def = List with values 
+[Command completion with Tab]
+cvar = con-completion
+def = List with values
 desc = The Tab key is used to complete words in the console. The console knows how to complete command, variable and alias names. The completion can work in two ways. In the "List with values" mode, pressing Tab will complete the unambiguous part of the word and print a list of possible completions. Variables will be printed with their values. In the "Cycle" mode, Tab is used to cycle through all the choices.
+

@@ -3,9 +3,9 @@
 
 # Control Panel help strings
 
-@chapter{Video}
+@part{Video}
 
-@section{Gamma correction}
+@chapter{Gamma correction}
 @cvar{vid-gamma}
 @default{1.0}
 @summary{     
@@ -17,7 +17,7 @@
     color adjustments. 
 }
 
-@section{Display contrast}
+@chapter{Display contrast}
 @cvar{vid-contrast}
 @default{1.0}
 @summary{        
@@ -29,7 +29,7 @@
     disable all color adjustments.
 }
 
-@section{Display brightness}
+@chapter{Display brightness}
 @cvar{vid-bright}
 @default{0.0}
 @summary{        
@@ -41,9 +41,9 @@
     adjustments.
 }
 
-@chapter{Audio}
+@part{Audio}
 
-@section{Preferred music source}
+@chapter{Preferred music source}
 @cvar{music-source}
 @default{External files}
 @summary{    
@@ -53,7 +53,7 @@
     that is will be chosen instead.
 }
 
-@section{16-bit sound effects}
+@chapter{16-bit sound effects}
 @cvar{sound-16bit}
 @default{No}
 @summary{    
@@ -62,7 +62,7 @@
     rate higher than 11025 Hz.
 }
 
-@section{Sound effects sample rate}
+@chapter{Sound effects sample rate}
 @cvar{sound-rate}
 @default{11025 Hz}
 @summary{    
@@ -71,7 +71,7 @@
     the resampling, activate the 16-bit sound effects option.
 }
 
-@section{Show status of channels}
+@chapter{Show status of channels}
 @cvar{sound-info}
 @default{No}
 @summary{
@@ -82,9 +82,9 @@
     @cbr 3 = 3D @cbr P = Playing @cbr R = Repeat @cbr L = Reload
 }
 
-@chapter{Graphics}
+@part{Graphics}
 
-@section{Field Of View angle}
+@chapter{Field Of View angle}
 @cvar{rend-camera-fov}
 @default{90}
 @summary{    
@@ -95,7 +95,7 @@
     eye effect may become distracting.
 }
 
-@section{Sky sphere radius}
+@chapter{Sky sphere radius}
 @cvar{rend-sky-distance}
 @default{1600}
 @summary{    
@@ -105,7 +105,7 @@
     on the sky. Larger radii will result in a sky with heavier fog.
 }
 
-@section{Shadow visible distance}
+@chapter{Shadow visible distance}
 @cvar{rend-shadow-far}
 @default{1000}
 @summary{
@@ -115,9 +115,9 @@
     increase this value as needed.
 }
 
-@chapter{Graphics: Lights}
+@part{Graphics: Lights}
 
-@section{Blending mode}
+@chapter{Blending mode}
 @cvar{rend-light-blend}
 @default{Multiply}
 @summary{    
@@ -129,7 +129,7 @@
     calculated but none are rendered.
 }
 
-@section{Dynamic light radius factor}
+@chapter{Dynamic light radius factor}
 @cvar{rend-light-radius-scale}
 @default{3}
 @summary{    
@@ -137,7 +137,7 @@
     never larger than the Maximum dynamic light radius, though.
 }
 
-@section{Maximum dynamic light radius}
+@chapter{Maximum dynamic light radius}
 @cvar{rend-light-radius-max}
 @default{256}
 @summary{    
@@ -146,7 +146,7 @@
     factor.
 }
 
-@section{Light range compression}
+@chapter{Light range compression}
 @cvar{rend-light-compression}
 @default{0}
 @summary{    
@@ -154,7 +154,7 @@
     while negative values will darken light areas of the map.
 }
 
-@section{Floor/ceiling glow on walls}
+@chapter{Floor/ceiling glow on walls}
 @cvar{rend-glow-wall}
 @default{Yes}
 @summary{    
@@ -162,9 +162,9 @@
     walls.
 }
 
-@chapter{Graphics: Halos}
+@part{Graphics: Halos}
 
-@section{Number of flares per halo}
+@chapter{Number of flares per halo}
 @cvar{rend-halo}
 @default{5}
 @summary{    
@@ -172,7 +172,7 @@
     disable lens flares, set this to None (zero).
 }
 
-@section{Use realistic halos}
+@chapter{Use realistic halos}
 @cvar{rend-halo-realistic}
 @default{Yes}
 @summary{    
@@ -180,7 +180,7 @@
     means that secondary lens flares are disabled.
 }
 
-@section{Occlusion fade speed}
+@chapter{Occlusion fade speed}
 @cvar{rend-halo-occlusion}
 @default{48}
 @summary{    
@@ -190,7 +190,7 @@
     disappearing.
 }
 
-@section{Flare visibility limitation}
+@chapter{Flare visibility limitation}
 @cvar{rend-halo-secondary-limit}
 @default{1}
 @summary{    
@@ -199,7 +199,7 @@
     the farther away secondary flares are visible.
 }
 
-@section{Z magnification divisor}
+@chapter{Z magnification divisor}
 @cvar{rend-halo-zmag-div}
 @default{100}
 @summary{    
@@ -208,9 +208,9 @@
     camera.
 }
 
-@chapter{Graphics: Textures}
+@part{Graphics: Textures}
 
-@section{Texture quality}
+@chapter{Texture quality}
 @cvar{rend-tex-quality}
 @default{8}
 @summary{    
@@ -222,7 +222,7 @@
     done upwards.
 }
 
-@section{Smart texture filtering}
+@chapter{Smart texture filtering}
 @cvar{rend-tex-filter-smart}
 @default{No}
 @summary{    
@@ -230,13 +230,13 @@
     textures as opposed to linear scaling.
 }
 
-@section{Bilinear filtering}
+@chapter{Bilinear filtering}
 @summary{    
     Controls which class(es) of graphics receive bilinear filtering. Disabling
     bilinear filtering results in "pixelated" textures when up close.
 }
 
-@section{Anisotropic filtering}
+@chapter{Anisotropic filtering}
 @cvar{rend-tex-filter-anisotropic}
 @default{Best}
 @summary{    
@@ -246,16 +246,16 @@
     Sample multiplier: 0=Disabled, 1=2x, 2=4x, 3=8x, 4=16x.
 }
 
-@chapter{Graphics: Objects}
+@part{Graphics: Objects}
 
-@section{3D model visibility limit}
+@chapter{3D model visibility limit}
 @cvar{rend-model-distance}
 @default{1500}
 @summary{    
     Objects farther than this will never be rendered as 3D models.
 }
 
-@section{Align sprites to...}
+@chapter{Align sprites to...}
 @cvar{rend-sprite-align}
 @default{Camera}
 @summary{    
@@ -266,7 +266,7 @@
     how much the sprite can tilt vertically.
 }
 
-@section{LOD level zero distance}
+@chapter{LOD level zero distance}
 @cvar{rend-model-lod}
 @default{256}
 @summary{    
@@ -274,9 +274,9 @@
     models that have Level Of Detail information (DMDs).
 }
 
-@chapter{Graphics: Particles}
+@part{Graphics: Particles}
 
-@section{Near diffusion factor}
+@chapter{Near diffusion factor}
 @cvar{rend-particle-diffuse}
 @default{4}
 @summary{    
@@ -288,16 +288,16 @@
     alarmingly when in smoke.
 }
 
-@section{Near clip distance}
+@chapter{Near clip distance}
 @cvar{rend-particle-visible-near}
 @default{Disabled}
 @summary{    
     Particles that are closer to the camera than this are not drawn at all.
 }
 
-@chapter{Network}
+@part{Network}
 
-@section{Cl-to-sv pos transmit tics}
+@chapter{Cl-to-sv pos transmit tics}
 @cvar{client-pos-interval}
 @default{10}
 @summary{    
@@ -308,7 +308,7 @@
     to more warping, though).
 }
 
-@section{Server login password}
+@chapter{Server login password}
 @cvar{server-password}
 @summary{    
     If a client wishes to make a remote console connection to the server it
@@ -317,7 +317,7 @@
     the "login" and "logout" commands to begin and end a remote connection.
 }
 
-@section{Frame interval tics}
+@chapter{Frame interval tics}
 @cvar{server-frame-interval}
 @default{1}
 @summary{    
@@ -327,9 +327,9 @@
     connections.
 }
 
-@chapter{Console}
+@part{Console}
 
-@section{Silent console variables}
+@chapter{Silent console variables}
 @cvar{con-var-silent}
 @default{No}
 @summary{    
@@ -339,7 +339,7 @@
     as a confirmation.
 }
 
-@section{Command completion with Tab}
+@chapter{Command completion with Tab}
 @cvar{con-completion}
 @default{List with values}
 @summary{    

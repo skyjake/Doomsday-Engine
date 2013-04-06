@@ -202,7 +202,14 @@ def mac_release():
     MAC_WORK_DIR = os.path.abspath(os.path.join(DOOMSDAY_DIR, '../macx_release_build'))
     remkdir(MAC_WORK_DIR)
     os.chdir(MAC_WORK_DIR)
-    if os.system('qmake -r -spec macx-g++ CONFIG+=release DENG_BUILD=%s ' % (DOOMSDAY_BUILD_NUMBER) +
+
+    # Choose the appropriate compiler.
+    if mac_os_version() == '10.8':
+        mkspec = 'unsupported/macx-clang'
+    else:
+        mkspec = 'macx-g++'
+        
+    if os.system('qmake -r -spec %s CONFIG+=release DENG_BUILD=%s ' % (mkspec, DOOMSDAY_BUILD_NUMBER) +
                  '../doomsday/doomsday.pro && make -j2 -w'):
         raise Exception("Failed to build from source.")
 

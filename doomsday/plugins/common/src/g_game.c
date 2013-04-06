@@ -1928,39 +1928,44 @@ void G_PlayerLeaveMap(int player)
  */
 void ClearPlayer(player_t *p)
 {
-    ddplayer_t *ddplayer = p->plr;
-    int         playeringame = ddplayer->inGame;
-    int         flags = ddplayer->flags;
-    int         start = p->startSpot;
-    fixcounters_t counter, acked;
+    player_t playerCopy;
+    ddplayer_t ddPlayerCopy;
 
-    // Restore counters.
-    counter = ddplayer->fixCounter;
-    acked = ddplayer->fixAcked;
+    // Take a backup of the old data.
+    memcpy(&playerCopy, p, sizeof(*p));
+    memcpy(&ddPlayerCopy, p->plr, sizeof(*p->plr));
 
+    // Clear everything.
+    memset(p->plr, 0, sizeof(*p->plr));
     memset(p, 0, sizeof(*p));
-    // Restore the pointer to ddplayer.
-    p->plr = ddplayer;
+
+    // Restore important data:
+
+    // The pointer to ddplayer.
+    p->plr = playerCopy.plr;
+
 #if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
     P_InventoryEmpty(p - players);
     P_InventorySetReadyItem(p - players, IIT_NONE);
 #endif
-    // Also clear ddplayer.
-    memset(ddplayer, 0, sizeof(*ddplayer));
-    // Restore the pointer to this player.
-    ddplayer->extraData = p;
-    // Restore the playeringame data.
-    ddplayer->inGame = playeringame;
-    ddplayer->flags = flags & ~(DDPF_INTERYAW | DDPF_INTERPITCH);
-    // Don't clear the start spot.
-    p->startSpot = start;
-    // Restore counters.
-    ddplayer->fixCounter = counter;
-    ddplayer->fixAcked = acked;
 
-    ddplayer->fixCounter.angles++;
-    ddplayer->fixCounter.origin++;
-    ddplayer->fixCounter.mom++;
+    // Restore the pointer to this player.
+    p->plr->extraData = p;
+
+    // Restore the inGame status.
+    p->plr->inGame = ddPlayerCopy.inGame;
+    p->plr->flags = ddPlayerCopy.flags & ~(DDPF_INTERYAW | DDPF_INTERPITCH);
+
+    // Don't clear the start spot.
+    p->startSpot = playerCopy.startSpot;
+
+    // Restore counters.
+    memcpy(&p->plr->fixCounter, &ddPlayerCopy.fixCounter, sizeof(ddPlayerCopy.fixCounter));
+    memcpy(&p->plr->fixAcked,   &ddPlayerCopy.fixAcked,   sizeof(ddPlayerCopy.fixAcked));
+
+    p->plr->fixCounter.angles++;
+    p->plr->fixCounter.origin++;
+    p->plr->fixCounter.mom++;
 }
 
 /**

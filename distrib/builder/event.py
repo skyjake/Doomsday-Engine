@@ -11,9 +11,16 @@ class Event:
     """Build event. Manages the contents of a single build directory under
     the event directory."""
     
-    def __init__(self, build=None):
+    def __init__(self, build=None, latestAvailable=False):
         """Any .txt logs present in the build directory are compressed into
         a combined .txt.gz (one per package)."""
+
+        if latestAvailable:
+            # Look for the latest build.
+            build = int(build_number.todays_build())
+            while not os.path.exists(os.path.join(config.EVENT_DIR, 'build%i' % build)):
+                build -= 1
+                if build == 0: raise Exception("No builds available")
         
         if build is None:
             # Use today's build number.

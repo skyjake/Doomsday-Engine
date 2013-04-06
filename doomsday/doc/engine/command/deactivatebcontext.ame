@@ -1,0 +1,11 @@
+@summary{
+    Deactivate a binding context.
+}
+@description{
+    Bindings in deactivated binding contexts cannot be triggered.
+    
+    @seealso
+    @list{
+        @item @wikiterm{Bindings}
+    }
+}

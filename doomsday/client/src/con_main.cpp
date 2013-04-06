@@ -2080,6 +2080,12 @@ void Con_AbnormalShutdown(char const *message)
     Window::main().trapMouse(false);
 
     DENG2_GUI_APP->loop().pause();
+
+    // This is an abnormal shutdown, we cannot continue drawing any of the
+    // windows. (Alternatively could hide/disable drawing of the windows.) Note
+    // that the app's event loop is running normally while we show the native
+    // message box below.
+    Window::shutdown();
 #endif
 
     if(message) // Only show if a message given.

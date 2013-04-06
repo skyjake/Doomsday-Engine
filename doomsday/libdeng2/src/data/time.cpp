@@ -153,7 +153,7 @@ TimeDelta Time::operator - (Time const &earlierTime) const
 
 dint Time::asBuildNumber() const
 {
-    return QDate(2011, 1, 1).daysTo(_time.date()) + 1;
+    return (_time.date().year() - 2011)*365 + _time.date().dayOfYear();
 }
 
 String Time::asText(Format format) const
