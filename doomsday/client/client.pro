@@ -267,6 +267,7 @@ DENG_HEADERS += \
     include/map/polyobj.h \
     include/map/propertyvalue.h \
     include/map/r_world.h \
+    include/map/reject.h \
     include/map/sector.h \
     include/map/sidedef.h \
     include/map/surface.h \
@@ -548,6 +549,7 @@ SOURCES += \
     src/map/polyobj.cpp \
     src/map/propertyvalue.cpp \
     src/map/r_world.cpp \
+    src/map/reject.cpp \
     src/map/sector.cpp \
     src/map/sidedef.cpp \
     src/map/surface.cpp \
