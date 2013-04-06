@@ -36,7 +36,7 @@ void Rend_DecorRegister(void);
  * Re-initialize the decoration source tracking (might be called during a map
  * load or othersuch situation).
  */
-void Rend_DecorInit(void);
+void Rend_DecorInitForMap(void);
 
 /**
  * Decorations are generated for each frame.

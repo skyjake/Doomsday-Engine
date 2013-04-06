@@ -428,11 +428,13 @@ struct font_s* R_CreateFontFromDef(ded_compositefont_t* def)
     return 0;
 }
 
-void Rend_Init(void)
+void Rend_Init()
 {}
 
-void Rend_DecorInit()
+/*
+void Rend_DecorInitForMap()
 {}
+*/
 
 void Rend_CacheForMobjType(int num)
 {

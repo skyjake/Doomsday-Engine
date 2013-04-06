@@ -648,7 +648,7 @@ void DD_Register(void)
     Materials::consoleRegister();
     Textures::consoleRegister();
     Net_Register();
-    DAM_Register();
+    MapArchive_Register();
     MPE_Register();
     FI_Register();
 }
@@ -882,7 +882,7 @@ static int DD_BeginGameChangeWorker(void* parameters)
     if(p->initiatedBusyMode)
         Con_SetProgress(100);
 
-    DAM_Init();
+    MapArchive_Initialize();
 
     if(p->initiatedBusyMode)
     {

@@ -163,7 +163,7 @@ static void projectSource(decorsource_t const &src)
     }
 }
 
-void Rend_DecorInit()
+void Rend_DecorInitForMap()
 {
     recycleSources();
 }

@@ -108,8 +108,34 @@ DENG_EXTERN_C boolean P_LoadMap(char const *uriCString)
 
     Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
 
-    if((theMap = DAM_LoadMap(uri)))
+    if((theMap = MapArchive_LoadMap(uri)))
     {
+        // Call the game's setup routines.
+        if(gx.SetupForMapData)
+        {
+            gx.SetupForMapData(DMU_VERTEX,  theMap->vertexCount());
+            gx.SetupForMapData(DMU_LINEDEF, theMap->lineCount());
+            gx.SetupForMapData(DMU_SIDEDEF, theMap->sideDefCount());
+            gx.SetupForMapData(DMU_SECTOR,  theMap->sectorCount());
+        }
+
+        // Do any initialization/error checking work we need to do.
+        // Must be called before we go any further.
+        P_InitUnusedMobjList();
+
+        // Must be called before any mobjs are spawned.
+        theMap->initNodePiles();
+
+#ifdef __CLIENT__
+        // Prepare the client-side data.
+        if(isClient)
+        {
+            theMap->initClMobjs();
+        }
+
+        Rend_DecorInitForMap();
+#endif
+
         // See what mapinfo says about this map.
         de::Uri mapUri = theMap->uri();
         ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));

@@ -28,13 +28,13 @@ class GameMap;
 DENG_EXTERN_C byte mapCache;
 
 /// To be called during init to register the cvars and ccmds for this module.
-void DAM_Register();
+void MapArchive_Register();
 
 /// Initialize this module.
-void DAM_Init();
+void MapArchive_Initialize();
 
 /// Shutdown this module.
-void DAM_Shutdown();
+void MapArchive_Shutdown();
 
 #if 0
 /**
@@ -44,12 +44,12 @@ void DAM_Shutdown();
  * @param sourcePath  Path to the primary resource file for the original map data.
  * @return  The composed path.
  */
-AutoStr* DAM_ComposeCacheDir(char const *sourcePath);
+AutoStr* MapArchive_MapCachePath(char const *sourcePath);
 #endif
 
 /**
  * Attempt to load the map associated with the specified identifier.
  */
-GameMap *DAM_LoadMap(de::Uri const &uri);
+GameMap *MapArchive_LoadMap(de::Uri const &uri);
 
 #endif // LIBDENG_ARCHIVED_MAP_MAIN_H

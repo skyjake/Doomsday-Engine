@@ -58,7 +58,7 @@ DENG_EXTERN_C void Fonts_ClearDefinitionLinks(void);
 DENG_EXTERN_C void Fonts_ClearRuntime(void);
 
 DENG_EXTERN_C void Rend_Init(void);
-DENG_EXTERN_C void Rend_DecorInit();
+//DENG_EXTERN_C void Rend_DecorInitForMap();
 //DENG_EXTERN_C void Rend_CacheForMap();
 DENG_EXTERN_C void Rend_CacheForMobjType(int num);
 DENG_EXTERN_C void Rend_CalcLightModRange();

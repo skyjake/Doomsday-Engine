@@ -26,17 +26,11 @@
  * 02110-1301 USA</small>
  */
 
-#include <cmath>
-
 #include <de/Log>
 
 #include "de_base.h"
-#include "de_dam.h"
-#include "de_defs.h"
 #include "de_edit.h"
 #include "de_filesys.h"
-#include "de_network.h"
-#include "de_render.h"
 #include "map/gamemap.h"
 
 #include "map/dam_main.h"
@@ -50,7 +44,7 @@ byte mapCache = true;
 static char const *mapCacheDir = "mapcache/";
 */
 
-void DAM_Register()
+void MapArchive_Register()
 {
     //C_VAR_BYTE("map-cache", &mapCache, 0, 0, 1);
 }
@@ -152,7 +146,7 @@ public:
         friend class MapArchive;
 
     private:
-        inline lumpnum_t markerLumpNum()
+        inline lumpnum_t markerLumpNumForPath()
         {
             return App_FileSystem().lumpNumForName(_uri.path());
         }
@@ -187,7 +181,8 @@ public:
 
             LOG_VERBOSE("Attempting \"%s\"...") << _uri;
 
-            if(markerLumpNum() < 0)
+            lumpnum_t markerLumpNum = markerLumpNumForPath();
+            if(markerLumpNum < 0)
                 return 0;
 
             // Ask each converter in turn whether the map format is
@@ -205,11 +200,17 @@ public:
             DENG_ASSERT(map != 0);
             map->_uri = _uri;
 
+            // Generate the unique map id.
+            de::File1 &markerLump   = App_FileSystem().nameIndex().lump(markerLumpNum);
+            String uniqueId         = composeUniqueMapId(markerLump);
+            QByteArray uniqueIdUtf8 = uniqueId.toUtf8();
+            qstrncpy(map->_oldUniqueId, uniqueIdUtf8.constData(), sizeof(map->_oldUniqueId));
+
             // Are we caching this map?
             /*if(mapCache)
             {
                 AutoStr *cachedMapDir =
-                    DAM_ComposeCacheDir(Str_Text(F_ComposeLumpFilePath(markerLumpNum())));
+                    MapArchive_MapCachePath(Str_Text(F_ComposeLumpFilePath(markerLumpNum())));
 
                 AutoStr *cachedMapPath = AutoStr_NewStd();
                 F_FileName(cachedMapPath, F_LumpName(markerLumpName));
@@ -273,7 +274,7 @@ public:
         lumpnum_t markerLumpNum = F_LumpNumForName(uri.path().toString().toLatin1().constData());
         if(markerLumpNum >= 0)
         {
-            AutoStr *cachedMapDir = DAM_ComposeCacheDir(Str_Text(F_ComposeLumpFilePath(markerLumpNum)));
+            AutoStr *cachedMapDir = MapArchive_MapCachePath(Str_Text(F_ComposeLumpFilePath(markerLumpNum)));
             F_MakePath(Str_Text(cachedMapDir));
 
             // Compose the full path to the cached map data file.
@@ -293,64 +294,25 @@ private:
 
 static MapArchive archive;
 
-void DAM_Init()
+void MapArchive_Initialize()
 {
     // Allow re-init.
     archive.clear();
 }
 
-void DAM_Shutdown()
+void MapArchive_Shutdown()
 {
     archive.clear();
 }
 
-GameMap *DAM_LoadMap(de::Uri const &uri)
+GameMap *MapArchive_LoadMap(de::Uri const &uri)
 {
-    // Record this map in the archive if we haven't already.
-    MapArchive::Info &arcInfo = archive.createInfo(uri);
-
-    // Load in the map!
-    GameMap *map = arcInfo.loadMap();
-    if(!map) return 0;
-
-    // Call the game's setup routines.
-    if(gx.SetupForMapData)
-    {
-        gx.SetupForMapData(DMU_VERTEX,  map->vertexCount());
-        gx.SetupForMapData(DMU_LINEDEF, map->lineCount());
-        gx.SetupForMapData(DMU_SIDEDEF, map->sideDefCount());
-        gx.SetupForMapData(DMU_SECTOR,  map->sectorCount());
-    }
-
-    // Do any initialization/error checking work we need to do.
-    // Must be called before we go any further.
-    P_InitUnusedMobjList();
-
-    // Must be called before any mobjs are spawned.
-    map->initNodePiles();
-
-#ifdef __CLIENT__
-    // Prepare the client-side data.
-    if(isClient)
-    {
-        map->initClMobjs();
-    }
-#endif
-
-    Rend_DecorInit();
-
-    // Generate the unique map id.
-    lumpnum_t markerLumpNum = App_FileSystem().lumpNumForName(arcInfo.mapUri().path());
-    de::File1 &markerLump   = App_FileSystem().nameIndex().lump(markerLumpNum);
-    String uniqueId         = composeUniqueMapId(markerLump);
-    QByteArray uniqueIdUtf8 = uniqueId.toUtf8();
-    qstrncpy(map->_oldUniqueId, uniqueIdUtf8.constData(), sizeof(map->_oldUniqueId));
-
-    return map;
+    // Record this map if we haven't already and load then it in!
+    return archive.createInfo(uri).loadMap();
 }
 
 #if 0
-AutoStr *DAM_ComposeCacheDir(char const *sourcePath)
+AutoStr *MapArchive_MapCachePath(char const *sourcePath)
 {
     if(!sourcePath || !sourcePath[0]) return 0;
 
