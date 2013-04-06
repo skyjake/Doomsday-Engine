@@ -53,6 +53,8 @@ D_CMD(SetRes);
 D_CMD(SetFullRes);
 D_CMD(SetWinRes);
 D_CMD(ToggleFullscreen);
+D_CMD(ToggleMaximized);
+D_CMD(CenterWindow);
 D_CMD(DisplayModeInfo);
 D_CMD(ListDisplayModes);
 
@@ -132,15 +134,17 @@ void GL_Register()
 
     // Ccmds
     C_CMD_FLAGS("fog",              NULL,   Fog,                CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("displaymode",      "",     DisplayModeInfo,    CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("listdisplaymodes", "",     ListDisplayModes,   CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("setcolordepth",    "i",    SetBPP,             CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("setbpp",           "i",    SetBPP,             CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("setres",           "ii",   SetRes,             CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("setfullres",       "ii",   SetFullRes,         CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("setwinres",        "ii",   SetWinRes,          CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("setvidramp",       "",     UpdateGammaRamp,    CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("togglefullscreen", "",     ToggleFullscreen,   CMDF_NO_DEDICATED);
+    C_CMD      ("displaymode",      "",     DisplayModeInfo);
+    C_CMD      ("listdisplaymodes", "",     ListDisplayModes);
+    C_CMD      ("setcolordepth",    "i",    SetBPP);
+    C_CMD      ("setbpp",           "i",    SetBPP);
+    C_CMD      ("setres",           "ii",   SetRes);
+    C_CMD      ("setfullres",       "ii",   SetFullRes);
+    C_CMD      ("setwinres",        "ii",   SetWinRes);
+    C_CMD      ("setvidramp",       "",     UpdateGammaRamp);
+    C_CMD      ("togglefullscreen", "",     ToggleFullscreen);
+    C_CMD      ("togglemaximized",  "",     ToggleMaximized);
+    C_CMD      ("centerwindow",     "",     CenterWindow);
 
     GL_TexRegister();
 }
@@ -1218,6 +1222,38 @@ D_CMD(ToggleFullscreen)
     return win->changeAttributes(attribs);
 }
 
+D_CMD(ToggleMaximized)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    ClientWindow *win = WindowSystem::mainPtr();
+
+    if(!win)
+        return false;
+
+    int attribs[] = {
+        ClientWindow::Maximized, !win->isMaximized(),
+        ClientWindow::End
+    };
+    return win->changeAttributes(attribs);
+}
+
+D_CMD(CenterWindow)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    ClientWindow *win = WindowSystem::mainPtr();
+
+    if(!win)
+        return false;
+
+    int attribs[] = {
+        ClientWindow::Centered, true,
+        ClientWindow::End
+    };
+    return win->changeAttributes(attribs);
+}
+
 D_CMD(SetBPP)
 {
     DENG2_UNUSED2(src, argc);
@@ -1254,10 +1290,14 @@ D_CMD(DisplayModeInfo)
     {
         str += QString(", refresh: %1 Hz").arg(mode->refreshRate, 0, 'f', 1);
     }
-    str += QString(")\nMain window:\n  origin:%1 dimensions:%2\n  fullscreen-dimensions:%3")
-                .arg(de::Vector2i(win->x(), win->y()).asText())
-                .arg(de::Vector2i(win->width(), win->height()).asText())
-                .arg(de::Vector2i(win->fullscreenWidth(), win->fullscreenHeight()).asText());
+    str += QString(")\nMain window:\n  origin:%1 size:%2"
+                   "\n  window-origin:%3 window-size:%4"
+                   "\n  fullscreen-size:%5")
+                .arg(win->pos().asText())
+                .arg(win->size().asText())
+                .arg(win->windowRect().topLeft.asText())
+                .arg(win->windowRect().size().asText())
+                .arg(win->fullscreenSize().asText());
     str += QString("\n  fullscreen:%1 centered:%2 maximized:%3")
                 .arg(win->isFullScreen()     ? "yes" : "no")
                 .arg(win->isCentered()       ? "yes" : "no")
