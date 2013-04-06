@@ -42,8 +42,7 @@
  */
 class ClientWindow : public de::PersistentCanvasWindow,
                      DENG2_OBSERVES(de::Canvas, GLInit),
-                     DENG2_OBSERVES(de::Canvas, GLResize),
-                     DENG2_OBSERVES(de::Canvas, FocusChange)
+                     DENG2_OBSERVES(de::Canvas, GLResize)
 {
     Q_OBJECT
 
@@ -105,7 +104,6 @@ public:
     void canvasGLInit(de::Canvas &);
     void canvasGLDraw(de::Canvas &);
     void canvasGLResized(de::Canvas &);
-    void canvasFocusChanged(de::Canvas &, bool hasFocus);
 
     static ClientWindow &main();
 

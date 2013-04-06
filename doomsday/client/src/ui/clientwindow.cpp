@@ -36,6 +36,7 @@
 #include "ui/sys_input.h"
 #include "ui/legacywidget.h"
 #include "ui/busywidget.h"
+#include "ui/mouse_qt.h"
 
 #include "dd_main.h"
 #include "con_main.h"
@@ -106,7 +107,14 @@ using namespace de;
 
 static String const LEGACY_WIDGET_NAME = "legacy";
 
-DENG2_PIMPL(ClientWindow)
+DENG2_PIMPL(ClientWindow),
+    DENG2_OBSERVES(KeyEventSource,   KeyEvent),
+    DENG2_OBSERVES(MouseEventSource, MouseStateChange),
+#ifndef WIN32
+    DENG2_OBSERVES(MouseEventSource, MouseAxisEvent),
+    DENG2_OBSERVES(MouseEventSource, MouseButtonEvent),
+#endif
+    DENG2_OBSERVES(Canvas,           FocusChange)
 {
     bool needMainInit;
     bool needRecreateCanvas;
@@ -142,6 +150,23 @@ DENG2_PIMPL(ClientWindow)
                 .setLeftTop    (busyRoot.viewLeft(),  busyRoot.viewTop())
                 .setRightBottom(busyRoot.viewRight(), busyRoot.viewBottom());
         busyRoot.add(busy);
+
+        /// @todo The decision whether to receive input notifications from the
+        /// canvas is really a concern for the input drivers.
+
+        // Listen to input.
+        self.canvas().audienceForKeyEvent += this;
+        self.canvas().audienceForMouseStateChange += this;
+
+#ifndef WIN32 // On Windows, DirectInput bypasses the mouse input from Canvas.
+        self.canvas().audienceForMouseAxisEvent += this;
+        self.canvas().audienceForMouseButtonEvent += this;
+#endif
+    }
+
+    ~Instance()
+    {
+        self.canvas().audienceForFocusChange -= this;
     }
 
     void setMode(Mode const &newMode)
@@ -171,7 +196,7 @@ DENG2_PIMPL(ClientWindow)
             self.canvas().trapMouse();
         }
 
-        self.canvas().audienceForFocusChange += self;
+        self.canvas().audienceForFocusChange += this;
 
 #ifdef WIN32
         if(self.isFullScreen())
@@ -182,6 +207,76 @@ DENG2_PIMPL(ClientWindow)
 #endif
 
         DD_FinishInitializationAfterWindowReady();
+    }
+
+    void keyEvent(KeyEventSource::KeyState state, int ddKey, int nativeCode, String const &text)
+    {
+        /**
+         * @todo Input drivers need to support Unicode text; for now we have to
+         * submit as Latin1.
+         */
+        Keyboard_Submit(state == KeyEventSource::Pressed? IKE_DOWN : IKE_UP,
+                        ddKey, nativeCode, text.toLatin1());
+    }
+
+    void mouseStateChanged(MouseEventSource::State state)
+    {
+        Mouse_Trap(state == MouseEventSource::Trapped);
+    }
+
+#ifndef WIN32
+    void mouseAxisEvent(MouseEventSource::Axis axis, Vector2i const &value)
+    {
+        switch(axis)
+        {
+        case MouseEventSource::Motion:
+            Mouse_Qt_SubmitMotion(IMA_POINTER, value.x, value.y);
+            break;
+
+        case MouseEventSource::Wheel:
+            Mouse_Qt_SubmitMotion(IMA_WHEEL, value.x, value.y);
+            break;
+
+        default:
+            break;
+        }
+    }
+
+    void mouseButtonEvent(MouseEventSource::Button button, MouseEventSource::ButtonState state)
+    {
+        Mouse_Qt_SubmitButton(
+                    button == MouseEventSource::Left?     IMB_LEFT :
+                    button == MouseEventSource::Middle?   IMB_MIDDLE :
+                    button == MouseEventSource::Right?    IMB_RIGHT :
+                    button == MouseEventSource::XButton1? IMB_EXTRA1 :
+                    button == MouseEventSource::XButton2? IMB_EXTRA2 : IMB_MAXBUTTONS,
+                    state == MouseEventSource::Pressed);
+    }
+#endif // !WIN32
+
+    void canvasFocusChanged(Canvas &canvas, bool hasFocus)
+    {
+        LOG_DEBUG("canvasFocusChanged focus:%b fullscreen:%b hidden:%b minimized:%b")
+                << hasFocus << self.isFullScreen() << self.isHidden() << self.isMinimized();
+
+        if(!hasFocus)
+        {
+            DD_ClearEvents();
+            I_ResetAllDevices();
+            canvas.trapMouse(false);
+        }
+        else if(self.isFullScreen())
+        {
+            // Trap the mouse again in fullscreen mode.
+            canvas.trapMouse();
+        }
+
+        // Generate an event about this.
+        ddevent_t ev;
+        ev.type           = E_FOCUS;
+        ev.focus.gained   = hasFocus;
+        ev.focus.inWindow = 1; /// @todo Ask WindowSystem for an identifier number.
+        DD_PostEvent(&ev);
     }
 };
 
@@ -272,31 +367,6 @@ void ClientWindow::canvasGLResized(Canvas &canvas)
     // Tell the widgets.
     d->root.setViewSize(size);
     d->busyRoot.setViewSize(size);
-}
-
-void ClientWindow::canvasFocusChanged(Canvas &canvas, bool hasFocus)
-{
-    LOG_DEBUG("canvasFocusChanged focus:%b fullscreen:%b hidden:%b minimized:%b")
-            << hasFocus << isFullScreen() << isHidden() << isMinimized();
-
-    if(!hasFocus)
-    {
-        DD_ClearEvents();
-        I_ResetAllDevices();
-        canvas.trapMouse(false);
-    }
-    else if(isFullScreen())
-    {
-        // Trap the mouse again in fullscreen mode.
-        canvas.trapMouse();
-    }
-
-    // Generate an event about this.
-    ddevent_t ev;
-    ev.type           = E_FOCUS;
-    ev.focus.gained   = hasFocus;
-    ev.focus.inWindow = 1; /// @todo Ask WindowSystem for an identifier number.
-    DD_PostEvent(&ev);
 }
 
 bool ClientWindow::setDefaultGLFormat() // static

@@ -44,7 +44,6 @@ DENG2_PIMPL(Canvas)
     CanvasWindow *parent;
     bool readyNotified;
     Vector2i currentSize;
-    bool cursorHidden;
     bool mouseGrabbed;
 #ifdef WIN32
     bool altIsDown;
@@ -57,7 +56,6 @@ DENG2_PIMPL(Canvas)
         : Base(i),
           parent(parentWindow),
           readyNotified(false),
-          cursorHidden(false),
           mouseGrabbed(false)
     {
         wheelDir[0] = wheelDir[1] = 0;
@@ -66,46 +64,21 @@ DENG2_PIMPL(Canvas)
 #endif
     }
 
-    void showCursor(bool yes)
-    {
-        LOG_DEBUG("%s cursor (presently visible? %b)")
-                << (yes? "showing" : "hiding") << !cursorHidden;
-
-        if(!yes && !cursorHidden)
-        {
-            cursorHidden = true;
-            self.setCursor(QCursor(Qt::BlankCursor));
-            qApp->setOverrideCursor(QCursor(Qt::BlankCursor));
-        }
-        else if(yes && cursorHidden)
-        {
-            cursorHidden = false;
-            qApp->restoreOverrideCursor();
-            self.setCursor(QCursor(Qt::ArrowCursor)); // Default cursor.
-        }
-    }
-
     void grabMouse()
     {
         if(!self.isVisible()) return;
 
         LOG_DEBUG("grabbing mouse (already grabbed? %b)") << mouseGrabbed;
 
-        if(mouseGrabbed) return;
-
-        mouseGrabbed = true;
-
-        DENG2_FOR_PUBLIC_AUDIENCE(MouseStateChange, i)
+        if(!mouseGrabbed)
         {
-            i->mouseStateChanged(Trapped);
-        }
+            mouseGrabbed = true;
 
-#ifndef WIN32
-        // Start tracking the mouse now.
-        QCursor::setPos(self.mapToGlobal(self.rect().center()));
-        self.grabMouse();
-        showCursor(false);
-#endif
+            DENG2_FOR_PUBLIC_AUDIENCE(MouseStateChange, i)
+            {
+                i->mouseStateChanged(Trapped);
+            }
+        }
     }
 
     void ungrabMouse()
@@ -114,19 +87,15 @@ DENG2_PIMPL(Canvas)
 
         LOG_DEBUG("ungrabbing mouse (presently grabbed? %b)") << mouseGrabbed;
 
-        if(!mouseGrabbed) return;
-
-#ifndef WIN32
-        self.releaseMouse();
-        showCursor(true);
-#endif
-        // Tell the mouse driver that the mouse is untrapped.
-        mouseGrabbed = false;
-        //Mouse_Trap(false);
-
-        DENG2_FOR_PUBLIC_AUDIENCE(MouseStateChange, i)
+        if(mouseGrabbed)
         {
-            i->mouseStateChanged(Untrapped);
+            // Tell the mouse driver that the mouse is untrapped.
+            mouseGrabbed = false;
+
+            DENG2_FOR_PUBLIC_AUDIENCE(MouseStateChange, i)
+            {
+                i->mouseStateChanged(Untrapped);
+            }
         }
     }
 
@@ -243,11 +212,6 @@ void Canvas::trapMouse(bool trap)
 bool Canvas::isMouseTrapped() const
 {
     return d->mouseGrabbed;
-}
-
-bool Canvas::isCursorVisible() const
-{
-    return !d->cursorHidden;
 }
 
 void Canvas::copyAudiencesFrom(Canvas const &other)

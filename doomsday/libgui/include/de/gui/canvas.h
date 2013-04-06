@@ -127,11 +127,6 @@ public:
     bool isMouseTrapped() const;
 
     /**
-     * Determines if the mouse cursor is currently visible or not.
-     */
-    bool isCursorVisible() const;
-
-    /**
      * Replaces the current audiences of this canvas with another canvas's
      * audiences.
      *
