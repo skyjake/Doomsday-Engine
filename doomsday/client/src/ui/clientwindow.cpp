@@ -218,12 +218,11 @@ void ClientWindow::closeEvent(QCloseEvent *ev)
 
 void ClientWindow::canvasGLReady(Canvas &canvas)
 {
-    PersistentCanvasWindow::canvasGLReady(canvas);
-
     // Update the capability flags.
     GL_state.features.multisample = canvas.format().sampleBuffers();
-
     LOG_DEBUG("GL feature: Multisampling: %b") << GL_state.features.multisample;
+
+    PersistentCanvasWindow::canvasGLReady(canvas);
 
     // Now that the Canvas is ready for drawing we can enable the LegacyWidget.
     d->root.find(LEGACY_WIDGET_NAME)->enable();

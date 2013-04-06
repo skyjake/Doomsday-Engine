@@ -166,7 +166,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
 
         QString configName(String const &key) const
         {
-            return QString("window.$1.$2").arg(winId).arg(key);
+            return QString("window.%1.%2").arg(winId).arg(key);
         }
 
         void saveToConfig()
