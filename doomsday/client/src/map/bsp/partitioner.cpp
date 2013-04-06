@@ -100,10 +100,9 @@ struct Partitioner::Instance
     /// Current map which we are building BSP data for.
     GameMap *map;
 
-    AABoxd mapBounds;
+    /// Original counts
 
-    /// @todo Refactor me away:
-    QList<Vertex *> const &editableVertexes;
+    AABoxd mapBounds;
 
     /// Running totals of constructed BSP data objects.
     uint numNodes;
@@ -187,10 +186,9 @@ struct Partitioner::Instance
     /// @c true = a BSP for the current map has been built successfully.
     bool builtOK;
 
-    Instance(GameMap *_map, QList<Vertex *> const &_editableVertexes, int _splitCostFactor)
+    Instance(GameMap *_map, int _splitCostFactor)
       : splitCostFactor(_splitCostFactor),
         map(_map),
-        editableVertexes(_editableVertexes),
         numNodes(0), numLeafs(0), numHEdges(0), numVertexes(0),
         rootNode(0), treeNodeMap(), partition(), partitionLine(0),
         unclosedSectors(), unclosedBspLeafs(), migrantHEdges(),
@@ -387,11 +385,11 @@ struct Partitioner::Instance
         mapBounds = findMapBounds(map);
 
         // Initialize vertex info for the initial set of vertexes.
-        vertexInfos.resize(editableVertexes.count());
+        vertexInfos.resize(map->vertexCount());
 
         // Count the total number of one and two-sided line owners for each vertex.
         // (Used in the process of locating window effect lines.)
-        foreach(Vertex *vtx, editableVertexes)
+        foreach(Vertex *vtx, map->vertexes())
         {
             VertexInfo &vtxInfo = vertexInfo(*vtx);
             vtx->countLineOwners(&vtxInfo.oneSidedOwnerCount, &vtxInfo.twoSidedOwnerCount);
@@ -2004,7 +2002,9 @@ struct Partitioner::Instance
     Vertex *newVertex(const_pvec2d_t origin)
     {
         Vertex *vtx = new Vertex;
-        vtx->_buildData.index = editableVertexes.count() + uint(vertexes.size() + 1); // 1-based index, 0 = NIL.
+        /// @todo We do not have authorization to specify this index. -ds
+        /// (This job should be done post BSP build.)
+        vtx->_buildData.index = map->vertexCount() + uint(vertexes.size() + 1); // 1-based index, 0 = NIL.
         vertexes.push_back(vtx);
 
         // There is now one more Vertex.
@@ -2032,9 +2032,9 @@ struct Partitioner::Instance
 
     void clearAllHEdgeTips()
     {
-        foreach(Vertex *vertex, editableVertexes)
+        for(uint i = 0; i < vertexInfos.size(); ++i)
         {
-            clearHEdgeTipsByVertex(vertex);
+            vertexInfos[i].clearHEdgeTips();
         }
     }
 
@@ -2200,13 +2200,12 @@ struct Partitioner::Instance
         {
         case DMU_VERTEX: {
             Vertex *vtx = dmuOb->castTo<Vertex>();
-            if(vtx->_buildData.index > 0 && vtx->_buildData.index > editableVertexes.count())
+            /// @todo optimize: Poor performance O(n).
+            for(uint i = 0; i < vertexes.size(); ++i)
             {
-                // Is this object owned?
-                int idx = vtx->_buildData.index - 1 - editableVertexes.count();
-                if((unsigned) idx < vertexes.size() && vertexes[idx])
+                if(vertexes[i] == vtx)
                 {
-                    vertexes[idx] = 0;
+                    vertexes[i] = 0;
                     // There is now one fewer Vertex.
                     numVertexes -= 1;
                     return true;
@@ -2399,8 +2398,8 @@ struct Partitioner::Instance
     }
 };
 
-Partitioner::Partitioner(GameMap &map, QList<Vertex *> const &editableVertexes, int splitCostFactor)
-    : d(new Instance(&map, editableVertexes, splitCostFactor))
+Partitioner::Partitioner(GameMap &map, int splitCostFactor)
+    : d(new Instance(&map, splitCostFactor))
 {
     d->initForMap();
 }
@@ -2460,8 +2459,8 @@ void Partitioner::release(MapElement *mapElement)
     if(!d->release(mapElement))
     {
         LOG_AS("Partitioner::release");
-        LOG_DEBUG("Attempted to release an unknown/unowned object %p.")
-            << de::dintptr(mapElement);
+        LOG_DEBUG("Attempted to release an unknown/unowned %s %p.")
+            << DMU_Str(mapElement->type()) << de::dintptr(mapElement);
     }
 }
 

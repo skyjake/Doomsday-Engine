@@ -145,24 +145,26 @@ public:
         return po;
     }
 
-    void clearPolyobjs()
+    void clear()
     {
+        qDeleteAll(vertexes);
+        vertexes.clear();
+
+        qDeleteAll(lines);
+        lines.clear();
+
+        qDeleteAll(sideDefs);
+        sideDefs.clear();
+
+        qDeleteAll(sectors);
+        sectors.clear();
+
         foreach(Polyobj *po, polyobjs)
         {
             po->~Polyobj();
             M_Free(po);
         }
         polyobjs.clear();
-    }
-
-    void clear()
-    {
-        vertexes.clear();
-        lines.clear();
-        sideDefs.clear();
-        sectors.clear();
-
-        clearPolyobjs();
     }
 
 #if 0
@@ -401,11 +403,6 @@ int bspFactor = 7;
 void MPE_Register()
 {
     C_VAR_INT("bsp-factor", &bspFactor, CVF_NO_MAX, 0, 0);
-}
-
-QList<Vertex *> &MPE_EditableVertexes()
-{
-    return editMap.vertexes;
 }
 
 /**
@@ -807,66 +804,6 @@ static void buildVertexLineOwnerRings()
     }
 }
 
-static void hardenPolyobjs(GameMap &dest, EditableMap &e_map)
-{
-    if(!e_map.polyobjs.count())
-        return;
-
-    DENG2_ASSERT(dest._polyobjs.isEmpty());
-#ifdef DENG2_QT_4_7_OR_NEWER
-    dest._polyobjs.reserve(e_map.polyobjs.count());
-#endif
-
-    foreach(Polyobj *srcP, e_map.polyobjs)
-    {
-        void *region = M_Calloc(POLYOBJ_SIZE);
-        Polyobj *destP = new (region) Polyobj;
-
-        destP->idx        = dest._polyobjs.count(); // 0-based index.
-        destP->crush      = srcP->crush;
-        destP->tag        = srcP->tag;
-        destP->seqType    = srcP->seqType;
-        destP->origin[VX] = srcP->origin[VX];
-        destP->origin[VY] = srcP->origin[VY];
-
-        // Create a hedge for each line of this polyobj.
-        /// @todo fixme: Polyobj has ownership, must free it.
-        HEdge *hedges = new HEdge[srcP->lineCount()];
-
-        DENG_ASSERT(static_cast<Polyobj::Lines *>(destP->_lines)->isEmpty());
-#ifdef DENG2_QT_4_7_OR_NEWER
-        static_cast<Polyobj::Lines *>(destP->_lines)->reserve(srcP->lineCount());
-#endif
-        uint n = 0;
-        foreach(LineDef *line, srcP->lines())
-        {
-            // This line belongs to a polyobj.
-            line->_inFlags |= LF_POLYOBJ;
-
-            HEdge *hedge = &hedges[n];
-            hedge->_v[0]    = &line->v1();
-            hedge->_v[1]    = &line->v2();
-            hedge->_line    = line;
-            hedge->_length  = line->length();
-            hedge->_sector  = line->frontSectorPtr();
-            hedge->_twin    = 0;
-            hedge->_bspLeaf = 0;
-
-            line->front()._leftHEdge =
-                line->front()._rightHEdge = hedge;
-
-            static_cast<Polyobj::Lines *>(destP->_lines)->append(line);
-
-            n++;
-        }
-
-        destP->buildUniqueVertexes();
-
-        // Add this polyobj to the global list.
-        dest._polyobjs.append(destP);
-    }
-}
-
 #if 0 /* Currently unused. */
 /**
  * @return  The "lowest" vertex (normally the left-most, but if the line is vertical,
@@ -1025,19 +962,30 @@ boolean MPE_End()
     pruneMapElements(editMap, PRUNE_ALL);
 #endif
 
+    buildVertexLineOwnerRings();
+
     /*
      * Acquire ownership of the map elements from the editable map.
      */
     map->entityDatabase = editMap.entityDatabase; // Take ownership.
+
+    DENG2_ASSERT(map->_vertexes.isEmpty());
+#ifdef DENG2_QT_4_7_OR_NEWER
+    map->_vertexes.reserve(editMap.vertexes.count());
+#endif
+    while(!editMap.vertexes.isEmpty())
+    {
+        map->_vertexes.append(editMap.vertexes.takeFirst());
+    }
 
     // Collate sectors:
     DENG2_ASSERT(map->_sectors.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
     map->_sectors.reserve(editMap.sectors.count());
 #endif
-    foreach(Sector *sector, editMap.sectors)
+    while(!editMap.sectors.isEmpty())
     {
-        map->_sectors.append(sector); // Take ownership.
+        map->_sectors.append(editMap.sectors.takeFirst());
     }
 
     // Collate sidedefs:
@@ -1045,9 +993,9 @@ boolean MPE_End()
 #ifdef DENG2_QT_4_7_OR_NEWER
     map->_sideDefs.reserve(editMap.sideDefs.count());
 #endif
-    foreach(SideDef *sideDef, editMap.sideDefs)
+    while(!editMap.sideDefs.isEmpty())
     {
-        map->_sideDefs.append(sideDef); // Take ownership.
+        map->_sideDefs.append(editMap.sideDefs.takeFirst());
     }
 
     // Collate lines:
@@ -1055,9 +1003,10 @@ boolean MPE_End()
 #ifdef DENG2_QT_4_7_OR_NEWER
     map->_lines.reserve(editMap.lines.count());
 #endif
-    foreach(LineDef *line, editMap.lines)
+    while(!editMap.lines.isEmpty())
     {
-        map->_lines.append(line); // Take ownership.
+        map->_lines.append(editMap.lines.takeFirst());
+        LineDef *line = map->_lines.back();
 
         line->updateSlopeType();
         line->updateAABox();
@@ -1067,10 +1016,46 @@ boolean MPE_End()
                                   int( line->_direction[VX] ));
     }
 
-    buildVertexLineOwnerRings();
+    // Collate polyobjs:
+    DENG2_ASSERT(map->_polyobjs.isEmpty());
+#ifdef DENG2_QT_4_7_OR_NEWER
+    map->_lines.reserve(editMap.polyobjs.count());
+#endif
+    while(!editMap.polyobjs.isEmpty())
+    {
+        map->_polyobjs.append(editMap.polyobjs.takeFirst());
+        Polyobj *polyobj = map->_polyobjs.back();
 
-    hardenPolyobjs(*map, editMap);
-    editMap.clearPolyobjs();
+        polyobj->idx = map->_polyobjs.count(); // 0-based index.
+
+        // Create a hedge for each line of this polyobj.
+        foreach(LineDef *line, polyobj->lines())
+        {
+            HEdge *hedge = new HEdge; // Polyobj has ownership.
+
+            hedge->_v[0]    = &line->v1();
+            hedge->_v[1]    = &line->v2();
+            hedge->_line    = line;
+            hedge->_length  = line->length();
+            hedge->_sector  = line->frontSectorPtr();
+            hedge->_twin    = 0;
+            hedge->_bspLeaf = 0;
+
+            line->front()._leftHEdge =
+                line->front()._rightHEdge = hedge;
+        }
+
+        polyobj->buildUniqueVertexes();
+        uint n = 0;
+        foreach(Vertex *vertex, polyobj->uniqueVertexes())
+        {
+            // The originalPts are relative to the polyobj origin.
+            vec2d_t const &vertexOrigin = vertex->origin();
+            polyobj->originalPts[n].origin[VX] = vertexOrigin[VX] - polyobj->origin[VX];
+            polyobj->originalPts[n].origin[VY] = vertexOrigin[VY] - polyobj->origin[VY];
+            n++;
+        }
+    }
 
     /*
      * Build blockmaps.

@@ -82,28 +82,15 @@ DENG2_PIMPL(GameMap)
         std::memset(&traceLine,    0, sizeof(traceLine));
     }
 
-    void collateVertexes(BspBuilder &builder,
-                         QList<Vertex *> const &editableVertexes)
+    void collateVertexes(BspBuilder &builder)
     {
         uint bspVertexCount = builder.numVertexes();
-
-        DENG2_ASSERT(self._vertexes.isEmpty());
-#ifdef DENG2_QT_4_7_OR_NEWER
-        self._vertexes.reserve(editableVertexes.count() + bspVertexCount);
-#endif
-
-        uint n = 0;
-        foreach(Vertex *vertex, editableVertexes)
+        for(uint i = 0; i < bspVertexCount; ++i)
         {
-            self._vertexes.append(vertex);
-            ++n;
-        }
-
-        for(uint i = 0; i < bspVertexCount; ++i, ++n)
-        {
+            // Take ownership of this Vertex.
             Vertex *vertex = &builder.vertex(i);
-
             builder.take(vertex);
+
             self._vertexes.append(vertex);
         }
     }
@@ -212,22 +199,6 @@ DENG2_PIMPL(GameMap)
         {
             line->side(i).updateSurfaceTangents();
             line->side(i).updateSoundEmitterOrigins();
-        }
-    }
-
-    void finishPolyobjs()
-    {
-        foreach(Polyobj *po, self._polyobjs)
-        {
-            uint n = 0;
-            foreach(Vertex *vertex, po->uniqueVertexes())
-            {
-                // The originalPts are relative to the polyobj origin.
-                vec2d_t const &vertexOrigin = vertex->origin();
-                po->originalPts[n].origin[VX] = vertexOrigin[VX] - po->origin[VX];
-                po->originalPts[n].origin[VY] = vertexOrigin[VY] - po->origin[VY];
-                n++;
-            }
         }
     }
 
@@ -357,7 +328,7 @@ DENG2_PIMPL(GameMap)
         }
     }
 
-
+    /// @todo Relocate this work to R_SetupMap() -ds
     void finishPlanes()
     {
         foreach(Sector *sector, self._sectors)
@@ -569,10 +540,8 @@ bool GameMap::buildBsp()
 
     LOG_INFO("Building BSP using tunable split factor of %d...") << bspFactor;
 
-    Vertexes &editableVertexes = MPE_EditableVertexes();
-
     // Instantiate and configure a new BSP builder.
-    BspBuilder nodeBuilder(*this, editableVertexes, bspFactor);
+    BspBuilder nodeBuilder(*this, bspFactor);
 
     // Build the BSP.
     bool builtOK = nodeBuilder.buildBsp();
@@ -601,12 +570,12 @@ bool GameMap::buildBsp()
          * Take ownership of all the built map data elements.
          */
 #ifdef DENG2_QT_4_7_OR_NEWER
+        _vertexes.reserve(_vertexes.count() + nodeBuilder.numVertexes());
         d->hedges.reserve(nodeBuilder.numHEdges());
         d->bspNodes.reserve(nodeBuilder.numNodes());
         d->bspLeafs.reserve(nodeBuilder.numLeafs());
 #endif
-
-        d->collateVertexes(nodeBuilder, editableVertexes);
+        d->collateVertexes(nodeBuilder);
 
         BspTreeNode *rootNode = nodeBuilder.root();
         d->bspRoot = rootNode->userData(); // We'll formally take ownership shortly...
@@ -663,7 +632,6 @@ bool GameMap::buildBsp()
 void GameMap::finishMapElements()
 {
     d->finishLines();
-    d->finishPolyobjs();
     d->finishSectors();
     d->finishPlanes();
 }
@@ -943,6 +911,8 @@ void GameMap::initPolyobjs()
             po->bspLeaf = bspLeaf;
         }
 
+        /// @todo Is this still necessary? -ds
+        /// (This data is updated automatically when moving/rotating).
         po->updateAABox();
         po->updateSurfaceTangents();
 

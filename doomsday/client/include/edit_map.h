@@ -28,8 +28,6 @@ DENG_EXTERN_C int bspFactor;
 
 void MPE_Register();
 
-QList<Vertex *> &MPE_EditableVertexes();
-
 GameMap *MPE_GetLastBuiltMap();
 
 bool MPE_GetLastBuiltMapResult();

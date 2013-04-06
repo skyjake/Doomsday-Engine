@@ -61,6 +61,11 @@ public:
     // Does nothing about the user data section.
     ~polyobj_s()
     {
+        foreach(LineDef *line, lines())
+        {
+            delete line->front()._leftHEdge;
+        }
+
         delete static_cast<Lines *>(_lines);
         delete static_cast<Vertexes *>(_uniqueVertexes);
     }
