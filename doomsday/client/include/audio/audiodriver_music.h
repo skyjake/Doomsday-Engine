@@ -36,7 +36,7 @@
 extern "C" {
 #endif
 
-void AudioDriver_Music_Set(int property, void* ptr);
+void AudioDriver_Music_Set(int property, void const *ptr);
 
 int AudioDriver_Music_PlayNativeFile(const char* fileName, boolean looped);
 

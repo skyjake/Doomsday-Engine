@@ -64,7 +64,7 @@ typedef struct audiodriver_s {
     int (*Init) (void);
     void (*Shutdown) (void);
     void (*Event) (int type);
-    int (*Set) (int prop, const void* ptr);
+    int (*Set) (int prop, void const *ptr);
 } audiodriver_t;
 
 typedef struct audiointerface_base_s {

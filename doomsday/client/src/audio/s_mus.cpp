@@ -109,7 +109,8 @@ boolean Mus_Init(void)
     }
 
     // Tell the audio driver about our soundfont config.
-    AudioDriver_Music_Set(AUDIOP_SOUNDFONT_FILENAME, soundFontPath);
+    AudioDriver_Music_Set(AUDIOP_SOUNDFONT_FILENAME,
+                          de::NativePath(soundFontPath).expand().toString().toLatin1().constData());
 
     musAvail = true;
     return true;
@@ -447,7 +448,8 @@ int Mus_Start(ded_music_t* def, boolean looped)
 
 static void Mus_UpdateSoundFont(void)
 {
-    AudioDriver_Music_Set(AUDIOP_SOUNDFONT_FILENAME, (void*)Con_GetString("music-soundfont"));
+    AudioDriver_Music_Set(AUDIOP_SOUNDFONT_FILENAME,
+        de::NativePath(Con_GetString("music-soundfont")).expand().toString().toLatin1().constData());
 }
 
 /**
