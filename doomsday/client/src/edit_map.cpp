@@ -968,6 +968,7 @@ boolean MPE_End()
      * Acquire ownership of the map elements from the editable map.
      */
     map->entityDatabase = editMap.entityDatabase; // Take ownership.
+    editMap.entityDatabase = 0;
 
     DENG2_ASSERT(map->_vertexes.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
@@ -1086,7 +1087,6 @@ boolean MPE_End()
     if(!builtOK)
     {
         // Darn, clean up...
-        EntityDatabase_Delete(map->entityDatabase);
         delete map;
 
         lastBuiltMapResult = false; // Failed :$

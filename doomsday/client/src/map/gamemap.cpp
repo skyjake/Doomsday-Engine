@@ -508,6 +508,31 @@ GameMap::GameMap() : d(new Instance(this))
     _ambientLightLevel = 0;
 }
 
+/// @todo fixme: Free all memory we have ownership of.
+GameMap::~GameMap()
+{
+    // thinker lists - free them!
+
+    // Client only data:
+    // mobjHash/activePlanes/activePolyobjs - free them!
+    // End client only data.
+
+    qDeleteAll(_vertexes);
+    qDeleteAll(_sectors);
+    qDeleteAll(_lines);
+    qDeleteAll(_sideDefs);
+    foreach(Polyobj *polyobj, _polyobjs)
+    {
+        polyobj->~Polyobj();
+        M_Free(polyobj);
+    }
+
+    EntityDatabase_Delete(entityDatabase);
+
+    // mobj/line/polyobj/bspLeaf blockmaps - free them!
+    // mobjNodes/lineNodes/lineLinks - free them!
+}
+
 MapElement *GameMap::bspRoot() const
 {
     return d->bspRoot;

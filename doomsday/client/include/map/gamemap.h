@@ -126,6 +126,7 @@ public:
 
 public:
     GameMap();
+    ~GameMap();
 
     /**
      * This ID is the name of the lump tag that marks the beginning of map
