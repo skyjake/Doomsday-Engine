@@ -44,9 +44,9 @@ byte mapCache = true;
 static char const *mapCacheDir = "mapcache/";
 */
 
-void MapArchive_Register()
+static inline lumpnum_t markerLumpNumForPath(String path)
 {
-    //C_VAR_BYTE("map-cache", &mapCache, 0, 0, 1);
+    return App_FileSystem().lumpNumForName(path);
 }
 
 static String composeUniqueMapId(de::File1 &markerLump)
@@ -72,257 +72,25 @@ static ushort calculateIdentifierForMapPath(char const *path)
     }
     return identifier;
 }
-#endif
 
-class MapArchive
+/**
+ * Compose the relative path (relative to the runtime directory) to the directory
+ * within the archived map cache where maps from the specified source will reside.
+ *
+ * @param sourcePath  Path to the primary resource file for the original map data.
+ * @return  The composed path.
+ */
+static AutoStr *mapCachePath(char const *path)
 {
-public:
-    /**
-     * Information about a map in the archive.
-     */
-    class Info
-    {
-        de::Uri _uri;
-        /*ddstring_t cachedMapPath;
-        bool cachedMapFound;
-        bool lastLoadAttemptFailed;*/
-
-#ifdef MACOS_10_4
-        // GCC 4.0 on Mac OS X 10.5 doesn't handle nested classes
-        // and friends that well.
-    public:
-#endif
-        Info(de::Uri const &mapUri/*, ddstring_t const *cachedMapPath*/)
-            : _uri(mapUri)/*,
-              cachedMapFound(false),
-              lastLoadAttemptFailed(false)*/
-        {
-            /*Str_Init(&cachedMapPath);
-            Str_Set(&cachedMapPath, Str_Text(cachedMapPath));*/
-        }
-
-        ~Info()
-        {
-            //Str_Free(&cachedMapPath);
-        }
-
-    public:
-        de::Uri mapUri() const
-        {
-            return _uri;
-        }
-
-        /**
-         * Attempt to load the associated map data.
-         *
-         * @return  Pointer to the loaded map; otherwise @c 0.
-         */
-        GameMap *loadMap(/*bool override = false*/)
-        {
-            //if(lastLoadAttemptFailed && !override)
-            //    return false;
-
-            //lastLoadAttemptFailed = false;
-
-            // Load from cache?
-            /*if(mapCache && cachedMapFound)
-            {
-                if(GameMap *map = loadCachedMap())
-                    return map;
-
-                lastLoadAttemptFailed = true;
-                return 0;
-            }*/
-
-            // Try a JIT conversion with the help of a plugin.
-            if(GameMap *map = convertMap())
-                return map;
-
-            LOG_WARNING("Failed conversion of \"%s\".") << _uri;
-            //lastLoadAttemptFailed = true;
-            return 0;
-        }
-
-        friend class MapArchive;
-
-    private:
-        inline lumpnum_t markerLumpNumForPath()
-        {
-            return App_FileSystem().lumpNumForName(_uri.path());
-        }
-
-#if 0
-        bool isCachedMapDataAvailable()
-        {
-            if(DAM_MapIsValid(Str_Text(&cachedMapPath), markerLumpNum()))
-            {
-                cachedMapFound = true;
-            }
-            return cachedMapFound;
-        }
-
-        GameMap *loadCachedMap()
-        {
-            GameMap *map = DAM_MapRead(Str_Text(&cachedMapPath));
-            if(!map) return 0;
-
-            map->_uri = _uri;
-            return map;
-        }
-#endif
-
-        GameMap *convertMap()
-        {
-            LOG_AS("ArchivedMapInfo::convertMap");
-
-            // At least one available converter?
-            if(!Plug_CheckForHook(HOOK_MAP_CONVERT))
-                return 0;
-
-            LOG_VERBOSE("Attempting \"%s\"...") << _uri;
-
-            lumpnum_t markerLumpNum = markerLumpNumForPath();
-            if(markerLumpNum < 0)
-                return 0;
-
-            // Ask each converter in turn whether the map format is
-            // recognizable and if so to interpret and transfer it to us
-            // via the map editing interface.
-            if(!DD_CallHooks(HOOK_MAP_CONVERT, 0, (void *) reinterpret_cast<uri_s *>(&_uri)))
-                return 0;
-
-            // A converter signalled success.
-            // Were we able to produce a valid map from the data it provided?
-            if(!MPE_GetLastBuiltMapResult())
-                return 0;
-
-            GameMap *map = MPE_GetLastBuiltMap();
-            DENG_ASSERT(map != 0);
-            map->_uri = _uri;
-
-            // Generate the unique map id.
-            de::File1 &markerLump   = App_FileSystem().nameIndex().lump(markerLumpNum);
-            String uniqueId         = composeUniqueMapId(markerLump);
-            QByteArray uniqueIdUtf8 = uniqueId.toUtf8();
-            qstrncpy(map->_oldUniqueId, uniqueIdUtf8.constData(), sizeof(map->_oldUniqueId));
-
-            // Are we caching this map?
-            /*if(mapCache)
-            {
-                AutoStr *cachedMapDir =
-                    MapArchive_MapCachePath(Str_Text(F_ComposeLumpFilePath(markerLumpNum())));
-
-                AutoStr *cachedMapPath = AutoStr_NewStd();
-                F_FileName(cachedMapPath, F_LumpName(markerLumpName));
-
-                Str_Append(cachedMapPath, ".dcm");
-                Str_Prepend(cachedMapPath, Str_Text(cachedMapDir));
-                F_ExpandBasePath(cachedMapPath, cachedMapPath);
-
-                // Ensure the destination directory exists.
-                F_MakePath(Str_Text(cachedMapDir));
-
-                // Cache the map!
-                DAM_MapWrite(map, Str_Text(cachedMapPath));
-            }*/
-
-            return map;
-        }
-    };
-
-    typedef QList<Info *> Infos;
-
-public:
-    MapArchive() {}
-    ~MapArchive() { clear(); }
-
-    void clear()
-    {
-        foreach(Info *info, _infos) { delete info; }
-        _infos.clear();
-    }
-
-    /**
-     * Attempt to locate the info for an archived map by URI.
-     *
-     * @param uri  Identifier of the info to be located.
-     *
-     * @return  Pointer to the found info; otherwise @c 0.
-     */
-    Info *findByUri(de::Uri const &uri)
-    {
-        foreach(Info *info, _infos)
-        {
-            // Is this the info we are looking for?
-            if(uri == info->mapUri())
-                return info;
-        }
-        return 0; // Not found.
-    }
-
-    Info &createInfo(de::Uri const &uri)
-    {
-        // Do we have existing info for this?
-        if(Info *info = findByUri(uri))
-            return *info;
-
-        LOG_DEBUG("Adding new ArchivedMapInfo for '%s'.") << uri;
-
-        /*
-        // Compose the cache directory path and ensure it exists.
-        AutoStr *cachedMapPath = AutoStr_NewStd();
-        lumpnum_t markerLumpNum = F_LumpNumForName(uri.path().toString().toLatin1().constData());
-        if(markerLumpNum >= 0)
-        {
-            AutoStr *cachedMapDir = MapArchive_MapCachePath(Str_Text(F_ComposeLumpFilePath(markerLumpNum)));
-            F_MakePath(Str_Text(cachedMapDir));
-
-            // Compose the full path to the cached map data file.
-            F_FileName(cachedMapPath, Str_Text(F_LumpName(markerLumpNum)));
-            Str_Append(cachedMapPath, ".dcm");
-            Str_Prepend(cachedMapPath, Str_Text(cachedMapDir));
-        }
-        */
-
-        _infos.append(new Info(uri/*, ddstring_t const *cachedMapPath*/));
-        return *_infos.last();
-    }
-
-private:
-    Infos _infos;
-};
-
-static MapArchive archive;
-
-void MapArchive_Initialize()
-{
-    // Allow re-init.
-    archive.clear();
-}
-
-void MapArchive_Shutdown()
-{
-    archive.clear();
-}
-
-GameMap *MapArchive_LoadMap(de::Uri const &uri)
-{
-    // Record this map if we haven't already and load then it in!
-    return archive.createInfo(uri).loadMap();
-}
-
-#if 0
-AutoStr *MapArchive_MapCachePath(char const *sourcePath)
-{
-    if(!sourcePath || !sourcePath[0]) return 0;
+    if(!path || !path[0]) return 0;
 
     DENG_ASSERT(App_GameLoaded());
 
     ddstring_t const *gameIdentityKey = App_CurrentGame().identityKey();
-    ushort mapPathIdentifier   = calculateIdentifierForMapPath(sourcePath);
+    ushort mapPathIdentifier   = calculateIdentifierForMapPath(path);
 
     AutoStr *mapFileName = AutoStr_NewStd();
-    F_FileName(mapFileName, sourcePath);
+    F_FileName(mapFileName, path);
 
     // Compose the final path.
     AutoStr *path = AutoStr_NewStd();
@@ -333,3 +101,192 @@ AutoStr *MapArchive_MapCachePath(char const *sourcePath)
     return path;
 }
 #endif
+
+MapArchive::Info::Info(de::Uri const &mapUri/*, ddstring_t const *cachedMapPath*/)
+    : _uri(mapUri)/*,
+      cachedMapFound(false),
+      lastLoadAttemptFailed(false)*/
+{
+    /*Str_Init(&cachedMapPath);
+    Str_Set(&cachedMapPath, Str_Text(cachedMapPath));*/
+}
+
+MapArchive::Info::~Info()
+{
+    //Str_Free(&cachedMapPath);
+}
+
+de::Uri MapArchive::Info::mapUri() const
+{
+    return _uri;
+}
+
+GameMap *MapArchive::Info::loadMap(/*bool forceRetry = false*/)
+{
+    //if(lastLoadAttemptFailed && !forceRetry)
+    //    return false;
+
+    //lastLoadAttemptFailed = false;
+
+    // Load from cache?
+    /*if(mapCache && cachedMapFound)
+    {
+        if(GameMap *map = loadCachedMap())
+            return map;
+
+        lastLoadAttemptFailed = true;
+        return 0;
+    }*/
+
+    // Try a JIT conversion with the help of a plugin.
+    if(GameMap *map = convertMap())
+        return map;
+
+    LOG_WARNING("Failed conversion of \"%s\".") << _uri;
+    //lastLoadAttemptFailed = true;
+    return 0;
+}
+
+#if 0
+bool MapArchive::Info::isCachedMapDataAvailable()
+{
+    if(DAM_MapIsValid(Str_Text(&cachedMapPath), markerLumpNum()))
+    {
+        cachedMapFound = true;
+    }
+    return cachedMapFound;
+}
+
+GameMap *MapArchive::Info::loadCachedMap()
+{
+    GameMap *map = DAM_MapRead(Str_Text(&cachedMapPath));
+    if(!map) return 0;
+
+    map->_uri = _uri;
+    return map;
+}
+#endif
+
+GameMap *MapArchive::Info::convertMap()
+{
+    LOG_AS("MapArchive::Info::convertMap");
+
+    // At least one available converter?
+    if(!Plug_CheckForHook(HOOK_MAP_CONVERT))
+        return 0;
+
+    LOG_VERBOSE("Attempting \"%s\"...") << _uri;
+
+    lumpnum_t markerLumpNum = markerLumpNumForPath(_uri.path());
+    if(markerLumpNum < 0)
+        return 0;
+
+    // Ask each converter in turn whether the map format is
+    // recognizable and if so to interpret and transfer it to us
+    // via the map editing interface.
+    if(!DD_CallHooks(HOOK_MAP_CONVERT, 0, (void *) reinterpret_cast<uri_s *>(&_uri)))
+        return 0;
+
+    // A converter signalled success.
+    // Were we able to produce a valid map from the data it provided?
+    if(!MPE_GetLastBuiltMapResult())
+        return 0;
+
+    GameMap *map = MPE_GetLastBuiltMap();
+    DENG_ASSERT(map != 0);
+    map->_uri = _uri;
+
+    // Generate the unique map id.
+    de::File1 &markerLump   = App_FileSystem().nameIndex().lump(markerLumpNum);
+    String uniqueId         = composeUniqueMapId(markerLump);
+    QByteArray uniqueIdUtf8 = uniqueId.toUtf8();
+    qstrncpy(map->_oldUniqueId, uniqueIdUtf8.constData(), sizeof(map->_oldUniqueId));
+
+    // Are we caching this map?
+    /*if(mapCache)
+    {
+        AutoStr *cachedMapDir =
+            MapArchive_MapCachePath(Str_Text(F_ComposeLumpFilePath(markerLumpNum())));
+
+        AutoStr *cachedMapPath = AutoStr_NewStd();
+        F_FileName(cachedMapPath, F_LumpName(markerLumpName));
+
+        Str_Append(cachedMapPath, ".dcm");
+        Str_Prepend(cachedMapPath, Str_Text(cachedMapDir));
+        F_ExpandBasePath(cachedMapPath, cachedMapPath);
+
+        // Ensure the destination directory exists.
+        F_MakePath(Str_Text(cachedMapDir));
+
+        // Cache the map!
+        DAM_MapWrite(map, Str_Text(cachedMapPath));
+    }*/
+
+    return map;
+}
+
+DENG2_PIMPL(MapArchive)
+{
+public:
+    MapArchive::Infos infos;
+
+    Instance(Public *i) : Base(i) {}
+
+    ~Instance() { self.clear(); }
+};
+
+MapArchive::MapArchive() : d(new Instance(this))
+{}
+
+void MapArchive::consoleRegister() // static
+{
+    //C_VAR_BYTE("map-cache", &mapCache, 0, 0, 1);
+}
+
+void MapArchive::clear()
+{
+    foreach(Info *info, d->infos) { delete info; }
+    d->infos.clear();
+}
+
+MapArchive::Info *MapArchive::findInfo(de::Uri const &uri) const
+{
+    foreach(Info *info, d->infos)
+    {
+        // Is this the info we are looking for?
+        if(uri == info->mapUri())
+            return info;
+    }
+    return 0; // Not found.
+}
+
+MapArchive::Info &MapArchive::createInfo(de::Uri const &uri)
+{
+    // Do we have existing info for this?
+    if(Info *info = findInfo(uri))
+        return *info;
+
+    /*
+    // Compose the cache directory path and ensure it exists.
+    AutoStr *cachedMapPath = AutoStr_NewStd();
+    lumpnum_t markerLumpNum = F_LumpNumForName(uri.path().toString().toLatin1().constData());
+    if(markerLumpNum >= 0)
+    {
+        AutoStr *cachedMapDir = MapArchive_MapCachePath(Str_Text(F_ComposeLumpFilePath(markerLumpNum)));
+        F_MakePath(Str_Text(cachedMapDir));
+
+        // Compose the full path to the cached map data file.
+        F_FileName(cachedMapPath, Str_Text(F_LumpName(markerLumpNum)));
+        Str_Append(cachedMapPath, ".dcm");
+        Str_Prepend(cachedMapPath, Str_Text(cachedMapDir));
+    }
+    */
+
+    d->infos.append(new Info(uri/*, ddstring_t const *cachedMapPath*/));
+    return *d->infos.last();
+}
+
+MapArchive::Infos const &MapArchive::infos() const
+{
+    return d->infos;
+}

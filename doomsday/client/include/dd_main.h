@@ -35,6 +35,7 @@
 #include "Materials"
 #include "resource/textures.h"
 #include "filesys/sys_direc.h"
+#include "map/dam_main.h"
 #include <de/c_wrapper.h>
 
 #include <QList>
@@ -186,6 +187,9 @@ de::Games& App_Games();
 
 /// @return  The current Game in the application's global collection.
 de::Game &App_CurrentGame();
+
+/// @return  The application's global MapArchive.
+de::MapArchive &App_MapArchive();
 
 /// @return  The application's global Material collection.
 de::Materials &App_Materials();

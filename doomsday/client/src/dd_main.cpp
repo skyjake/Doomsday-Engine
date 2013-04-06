@@ -157,14 +157,17 @@ static size_t numSessionResourceFileList;
 extern GETGAMEAPI GetGameAPI;
 #endif
 
-// The Game collection.
-static de::Games *games;
+// The app's Game collection.
+static Games *games;
 
-// The Material collection.
-static de::Materials *materials;
+// The app's MapArchive.
+static MapArchive mapArchive;
 
-// The Texture collection.
-static de::Textures* textures;
+// The app's global Material collection.
+static Materials *materials;
+
+// The app's global Texture collection.
+static Textures* textures;
 
 #ifdef __CLIENT__
 
@@ -538,6 +541,11 @@ void DD_CreateFileSystemSchemes()
     }
 }
 
+MapArchive &App_MapArchive()
+{
+    return mapArchive;
+}
+
 Textures &App_Textures()
 {
     if(!textures) throw Error("App_Textures", "Textures collection not yet initialized");
@@ -648,7 +656,7 @@ void DD_Register(void)
     Materials::consoleRegister();
     Textures::consoleRegister();
     Net_Register();
-    MapArchive_Register();
+    MapArchive::consoleRegister();
     MPE_Register();
     FI_Register();
 }
@@ -881,8 +889,6 @@ static int DD_BeginGameChangeWorker(void* parameters)
 
     if(p->initiatedBusyMode)
         Con_SetProgress(100);
-
-    MapArchive_Initialize();
 
     if(p->initiatedBusyMode)
     {

@@ -108,7 +108,7 @@ DENG_EXTERN_C boolean P_LoadMap(char const *uriCString)
 
     Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
 
-    if((theMap = MapArchive_LoadMap(uri)))
+    if((theMap = App_MapArchive().loadMap(uri)))
     {
         // Call the game's setup routines.
         if(gx.SetupForMapData)
