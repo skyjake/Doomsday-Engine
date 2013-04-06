@@ -92,35 +92,12 @@ public:
     bool isCentered() const;
 
     /**
-     * Returns the current window geometry (non-fullscreen).
+     * Returns the current placement of the window when it is in normal window
+     * mode (neither fullscreen or maximized).
      */
     Rectanglei windowRect() const;
 
     Size fullscreenSize() const;
-
-    /**
-     * Convenient accessor method for retrieving the x axis origin (in pixels)
-     * for the current window geometry.
-     */
-    inline int x() const { return windowRect().topLeft.x; }
-
-    /**
-     * Convenient accessor method for retrieving the y axis origin (in pixels)
-     * for the current window geometry.
-     */
-    inline int y() const { return windowRect().topLeft.y; }
-
-    /**
-     * Convenient accessor method for retrieving the width dimension (in pixels)
-     * of the current window geometry.
-     */
-    inline int width() const { return windowRect().width(); }
-
-    /**
-     * Convenient accessor method for retrieving the height dimension (in pixels)
-     * of the current window geometry.
-     */
-    inline int height() const { return windowRect().height(); }
 
     inline int fullscreenWidth() const { return fullscreenSize().x; }
 
@@ -157,6 +134,10 @@ public:
     void restoreFromConfig();
 
     static PersistentCanvasWindow &main();
+
+    // Events.
+    void moveEvent(QMoveEvent *);
+    void resizeEvent(QResizeEvent *);
 
 protected slots:
     void performQueuedTasks();

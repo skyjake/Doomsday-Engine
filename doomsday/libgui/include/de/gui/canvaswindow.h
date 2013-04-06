@@ -60,6 +60,23 @@ public:
     float frameRate() const;
 
     /**
+     * Determines the current top left corner (origin) of the window.
+     */
+    inline Vector2i pos() const { return Vector2i(x(), y()); }
+
+    inline Vector2i size() const { return Vector2i(width(), height()); }
+
+    /**
+     * Determines the current width of window's Canvas in pixels.
+     */
+    inline int width() const { return canvas().width(); }
+
+    /**
+     * Determines the current height of window's Canvas in pixels.
+     */
+    inline int height() const { return canvas().height(); }
+
+    /**
      * Recreates the contained Canvas with an updated GL format. The context is
      * shared with the old Canvas.
      */

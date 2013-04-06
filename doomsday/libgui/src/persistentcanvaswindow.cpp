@@ -30,6 +30,7 @@
 #include <de/ArrayValue>
 #include <de/NumberValue>
 #include <QDesktopWidget>
+#include <QResizeEvent>
 #include <QTimer>
 #include <QVector>
 #include <QList>
@@ -41,24 +42,30 @@ static String const MAIN_WINDOW_ID = "main";
 int const PersistentCanvasWindow::MIN_WIDTH  = 320;
 int const PersistentCanvasWindow::MIN_HEIGHT = 240;
 
+static int const BREAK_CENTERING_THRESHOLD = 5;
+
 static QRect desktopRect()
 {
     /// @todo Multimonitor? This checks the default screen.
     return QApplication::desktop()->screenGeometry();
 }
 
-static Rectanglei centeredRect(Vector2i size)
+static QRect centeredQRect(Vector2i size)
 {
     QSize screenSize = desktopRect().size();
 
     LOG_DEBUG("centeredGeometry: Current desktop rect %i x %i")
             << screenSize.width() << screenSize.height();
 
-    QRect rect(desktopRect().topLeft() +
-               QPoint((screenSize.width()  - size.x) / 2,
-                      (screenSize.height() - size.y) / 2),
-               QSize(size.x, size.y));
+    return QRect(desktopRect().topLeft() +
+                 QPoint((screenSize.width()  - size.x) / 2,
+                        (screenSize.height() - size.y) / 2),
+                 QSize(size.x, size.y));
+}
 
+static Rectanglei centeredRect(Vector2i size)
+{
+    QRect rect = centeredQRect(size);
     return Rectanglei(rect.left(), rect.top(), rect.width(), rect.height());
 }
 
@@ -285,6 +292,8 @@ DENG2_PIMPL(PersistentCanvasWindow)
             DENG2_ASSERT(mainWindow == 0);
             mainWindow = thisPublic;
         }
+
+        self.setMinimumSize(MIN_WIDTH, MIN_HEIGHT);
     }
 
     ~Instance()
@@ -321,15 +330,19 @@ DENG2_PIMPL(PersistentCanvasWindow)
                     return false;
                 break;
 
-            /*case Fullscreen:
+            case Fullscreen:
                 // Can't go to fullscreen when downloading.
-                if(attribs[i] && Updater_IsDownloadInProgress())
-                    return false;
-                break;*/
+                //if(attribs[i] && Updater_IsDownloadInProgress())
+                //    return false;
+                break;
 
             case ColorDepthBits:
                 if(attribs[i] < 8 || attribs[i] > 32)
                     return false; // Illegal value.
+                break;
+
+            case Centered:
+            case Maximized:
                 break;
 
             default:
@@ -589,8 +602,9 @@ DENG2_PIMPL(PersistentCanvasWindow)
             queue << Task(Task::NotifyModeChange, .1);
         }
 
-        state.fullSize = newState.fullSize;
-        state.flags    = newState.flags;
+        state.windowRect = newState.windowRect;
+        state.fullSize   = newState.fullSize;
+        state.flags      = newState.flags;
 
         checkQueue();
     }
@@ -765,6 +779,31 @@ PersistentCanvasWindow &PersistentCanvasWindow::main()
                              "No window found with id \"" + MAIN_WINDOW_ID + "\"");
     }
     return *mainWindow;
+}
+
+void PersistentCanvasWindow::moveEvent(QMoveEvent *)
+{
+    if(isCentered() && !isMaximized() && !isFullScreen())
+    {
+        int len = (geometry().topLeft() - centeredQRect(size()).topLeft()).manhattanLength();
+
+        if(len > BREAK_CENTERING_THRESHOLD)
+        {
+            d->state.setFlag(Instance::State::Centered, false);
+        }
+        else
+        {
+            // Recenter.
+            setGeometry(centeredQRect(size()));
+        }
+    }
+}
+
+void PersistentCanvasWindow::resizeEvent(QResizeEvent *ev)
+{
+    LOG_DEBUG("Window resized: maximized:%b old:%ix%i new:%ix%i")
+            << isMaximized() << ev->oldSize().width() << ev->oldSize().height()
+               << ev->size().width() << ev->size().height();
 }
 
 } // namespace de
