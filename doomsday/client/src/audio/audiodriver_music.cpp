@@ -40,7 +40,7 @@ static AutoStr *composeBufferedMusicFilename(int id, char const *ext)
     return Str_Appendf(AutoStr_NewStd(), "%s%i", BUFFERED_MUSIC_FILE, id);
 }
 
-static void musicSet(audiointerface_music_t *iMusic, int property, void *ptr)
+static void musicSet(audiointerface_music_t *iMusic, int property, void const *ptr)
 {
     audiodriver_t *d = AudioDriver_Interface(iMusic);
     if(!d || !d->Set) return;
@@ -140,7 +140,7 @@ AutoStr *AudioDriver_Music_ComposeTempBufferFilename(char const *ext)
     return composeBufferedMusicFilename(currentBufFile, ext);
 }
 
-void AudioDriver_Music_Set(int property, void *ptr)
+void AudioDriver_Music_Set(int property, void const *ptr)
 {
     void *ifs[MAX_AUDIO_INTERFACES];
     int i, count = AudioDriver_FindInterfaces(AUDIO_IMUSIC, ifs);
