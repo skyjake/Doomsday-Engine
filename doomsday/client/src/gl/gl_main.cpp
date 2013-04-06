@@ -1290,9 +1290,9 @@ D_CMD(DisplayModeInfo)
     {
         str += QString(", refresh: %1 Hz").arg(mode->refreshRate, 0, 'f', 1);
     }
-    str += QString(")\nMain window:\n  origin:%1 size:%2"
-                   "\n  window-origin:%3 window-size:%4"
-                   "\n  fullscreen-size:%5")
+    str += QString(")\nMain window:\n  current origin:%1 size:%2"
+                   "\n  windowed origin:%3 size:%4"
+                   "\n  fullscreen size:%5")
                 .arg(win->pos().asText())
                 .arg(win->size().asText())
                 .arg(win->windowRect().topLeft.asText())
