@@ -1,4 +1,4 @@
-/** @file partitioner.cpp BSP Partitioner. Recursive node creation and sorting. 
+/** @file partitioner.cpp BSP Partitioner.
  *
  * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright &copy; 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
@@ -23,8 +23,8 @@
  */
 
 #include <cmath>
-#include <list>
-#include <map>
+#include <QList>
+#include <QHash>
 #include <vector>
 #include <algorithm>
 
@@ -59,8 +59,8 @@ using namespace de::bsp;
 // Misc utility routines (most don't belong here...):
 
 /**
- * LineRelationship delineates the possible logical relationships between two
- * line segments in the plane.
+ * LineRelationship delineates the possible logical relationships between
+ * two line segments in the plane.
  */
 enum LineRelationship
 {
@@ -82,24 +82,22 @@ static Sector *findFirstSectorInHEdgeList(BspLeaf const *leaf);
 //DENG_DEBUG_ONLY(static int printSuperBlockHEdgesWorker(SuperBlock *block, void * /*parameters*/));
 //DENG_DEBUG_ONLY(static void printPartitionIntercepts(HPlane const &partition));
 
-struct Partitioner::Instance
+DENG2_PIMPL(Partitioner)
 {
-    typedef std::map<MapElement *, BspTreeNode *> BspTreeNodeMap;
+    typedef QHash<MapElement *, BspTreeNode *> BuiltBspElementMap;
 
-    /// Used when sorting BSP leaf half-edges by angle around midpoint.
-    typedef std::vector<HEdge *> HEdgeSortBuffer;
+    /// Used when sorting half-edges by angle around a map point.
+    typedef QList<HEdge *> HEdgeSortBuffer;
 
-    /// Used when collection half-edges from the blockmap to build a leaf.
+    /// Used when collecting half-edges from to build a leaf.
     /// @todo Refactor me away.
-    typedef std::list<HEdge *> HEdgeList;
+    typedef QList<HEdge *> HEdgeList;
 
-    /// HEdge split cost factor.
+    /// Cost factor attributed to splitting a half-edge.
     int splitCostFactor;
 
-    /// Current map which we are building BSP data for.
+    /// The map we are building BSP data for.
     GameMap const *map;
-
-    /// Original counts
 
     AABoxd mapBounds;
 
@@ -114,7 +112,7 @@ struct Partitioner::Instance
     LineInfos lineInfos;
 
     /// Extended info about HEdges in the BSP object tree.
-    typedef std::map<HEdge *, HEdgeInfo> HEdgeInfos;
+    typedef QHash<HEdge *, HEdgeInfo> HEdgeInfos;
     HEdgeInfos hedgeInfos;
 
     /// Extended info about Vertexes in the current map (including extras).
@@ -131,8 +129,9 @@ struct Partitioner::Instance
     /// objects are constructed.
     BspTreeNode *rootNode;
 
-    /// Built BSP object to internal tree node LUT.
-    BspTreeNodeMap treeNodeMap;
+    /// Mapping table which relates built BSP map elements to their counterpart
+    /// in the internal tree.
+    BuiltBspElementMap treeNodeMap;
 
     /// HPlane used to model the "current" binary space half-plane.
     HPlane partition;
@@ -141,57 +140,16 @@ struct Partitioner::Instance
     HEdgeInfo partitionInfo;
     LineDef *partitionLine;
 
-    /// Unclosed sectors are recorded here so we don't print too many warnings.
-    struct UnclosedSectorRecord
-    {
-        Sector *sector;
-        vec2d_t nearPoint;
-
-        UnclosedSectorRecord(Sector *_sector, coord_t x, coord_t y)
-            : sector(_sector)
-        {
-            V2d_Set(nearPoint, x, y);
-        }
-    };
-    typedef std::map<Sector *, UnclosedSectorRecord> UnclosedSectors;
-    UnclosedSectors unclosedSectors;
-
-    /// Unclosed BSP leafs are recorded here so we don't print too many warnings.
-    struct UnclosedBspLeafRecord
-    {
-        BspLeaf *leaf;
-        uint gapTotal;
-
-        UnclosedBspLeafRecord(BspLeaf *_leaf, uint _gapTotal)
-            : leaf(_leaf), gapTotal(_gapTotal)
-        {}
-    };
-    typedef std::map<BspLeaf *, UnclosedBspLeafRecord> UnclosedBspLeafs;
-    UnclosedBspLeafs unclosedBspLeafs;
-
-    /// Migrant hedges are recorded here so we don't print too many warnings.
-    struct MigrantHEdgeRecord
-    {
-        HEdge *hedge;
-        Sector *facingSector;
-
-        MigrantHEdgeRecord(HEdge *_hedge, Sector *_facingSector)
-            : hedge(_hedge), facingSector(_facingSector)
-        {}
-    };
-    typedef std::map<HEdge *, MigrantHEdgeRecord> MigrantHEdges;
-    MigrantHEdges migrantHEdges;
-
     /// @c true = a BSP for the current map has been built successfully.
-    bool builtOK;
+    bool builtOk;
 
-    Instance(GameMap const &_map, int _splitCostFactor)
-      : splitCostFactor(_splitCostFactor),
+    Instance(Public *i, GameMap const &_map, int _splitCostFactor)
+      : Base(i),
+        splitCostFactor(_splitCostFactor),
         map(&_map),
         numNodes(0), numLeafs(0), numHEdges(0), numVertexes(0),
-        rootNode(0), treeNodeMap(), partition(), partitionLine(0),
-        unclosedSectors(), unclosedBspLeafs(), migrantHEdges(),
-        builtOK(false)
+        rootNode(0), partitionLine(0),
+        builtOk(false)
     {
         initPartitionInfo();
     }
@@ -212,28 +170,28 @@ struct Partitioner::Instance
     }
 
     /**
-     * Retrieve the extended build info for the specified @a hedge.
-     * @return  Extended info for that HEdge.
+     * Returns the associated HEdgeInfo for the given @a hedge.
      */
     HEdgeInfo &hedgeInfo(HEdge &hedge)
     {
         HEdgeInfos::iterator found = hedgeInfos.find(&hedge);
-        if(found != hedgeInfos.end()) return found->second;
+        if(found != hedgeInfos.end())
+        {
+            return found.value();
+        }
         throw Error("Partitioner::hedgeInfo", QString("Failed locating HEdgeInfo for 0x%1")
                                                   .arg(de::dintptr(&hedge), 0, 16));
     }
 
+    /// @copydoc hedgeInfo()
     HEdgeInfo const &hedgeInfo(HEdge const &hedge) const
     {
-        HEdgeInfos::const_iterator found = hedgeInfos.find(const_cast<HEdge *>(&hedge));
-        if(found != hedgeInfos.end()) return found->second;
-        throw Error("Partitioner::hedgeInfo", QString("Failed locating HEdgeInfo for 0x%1")
-                                                  .arg(de::dintptr(&hedge), 0, 16));
+        return const_cast<HEdgeInfo const &>(
+                    const_cast<Instance *>(this)->hedgeInfo(const_cast<HEdge &>(hedge)));
     }
 
     /**
-     * Retrieve the extended build info for the specified @a vertex.
-     * @return  Extended info for that Vertex.
+     * Returns the associated VertexInfo for the given @a vertex.
      */
     VertexInfo &vertexInfo(Vertex const &vertex)
     {
@@ -483,7 +441,7 @@ struct Partitioner::Instance
         }
     }
 
-    bool buildBsp(SuperBlock &rootBlock)
+    void buildBsp(SuperBlock &rootBlock)
     {
         try
         {
@@ -491,18 +449,16 @@ struct Partitioner::Instance
 
             rootNode = buildNodes(rootBlock);
             // At this point we know that something useful was built.
-            builtOK = true;
+            builtOk = true;
 
             windLeafs();
         }
         catch(Error & /*er*/)
         {
             // Don't handle the error here, simply record failure.
-            builtOK = false;
+            builtOk = false;
             throw;
         }
-
-        return builtOK;
     }
 
     HPlaneIntercept const *makePartitionIntersection(HEdge *hedge, bool leftSide)
@@ -612,28 +568,24 @@ struct Partitioner::Instance
                 {
                     if(!cur->selfRef)
                     {
-                        coord_t pos[2];
+                        Vector2d nearPoint = Vector2d(cur->vertex->origin())
+                                           + Vector2d(next->vertex->origin());
+                        nearPoint.x /= 2;
+                        nearPoint.y /= 2;
 
-                        pos[VX] = cur->vertex->origin()[VX] + next->vertex->origin()[VX];
-                        pos[VY] = cur->vertex->origin()[VY] + next->vertex->origin()[VY];
-                        pos[VX] /= 2;
-                        pos[VY] /= 2;
-
-                        registerUnclosedSector(cur->after, pos[VX], pos[VY]);
+                        notifyUnclosedSectorFound(*cur->after, nearPoint);
                     }
                 }
                 else if(!cur->after && next->before)
                 {
                     if(!next->selfRef)
                     {
-                        coord_t pos[2];
+                        Vector2d nearPoint = Vector2d(cur->vertex->origin())
+                                           + Vector2d(next->vertex->origin());
+                        nearPoint.x /= 2;
+                        nearPoint.y /= 2;
 
-                        pos[VX] = cur->vertex->origin()[VX] + next->vertex->origin()[VX];
-                        pos[VY] = cur->vertex->origin()[VY] + next->vertex->origin()[VY];
-                        pos[VX] /= 2;
-                        pos[VY] /= 2;
-
-                        registerUnclosedSector(next->before, pos[VX], pos[VY]);
+                        notifyUnclosedSectorFound(*next->before, nearPoint);
                     }
                 }
                 else // This is definitely open space.
@@ -642,12 +594,13 @@ struct Partitioner::Instance
                     Sector *sector = cur->after;
                     if(cur->after != next->before)
                     {
-                        // Do a sanity check on the sectors (just for good measure).
                         if(!cur->selfRef && !next->selfRef)
                         {
-                            LOG_DEBUG("Sector mismatch (#%d [%1.1f, %1.1f] != #%d [%1.1f, %1.1f]).")
-                                <<   cur->after->origIndex() - 1 <<  cur->vertex->origin()[VX] <<  cur->vertex->origin()[VY]
-                                << next->before->origIndex() - 1 << next->vertex->origin()[VX] << next->vertex->origin()[VY];
+                            LOG_DEBUG("Sector mismatch (#%d (%1.1f, %1.1f) != #%d (%1.1f, %1.1f]).")
+                                <<   cur->after->origIndex() - 1
+                                <<  cur->vertex->origin()[VX] <<  cur->vertex->origin()[VY]
+                                << next->before->origIndex() - 1
+                                << next->vertex->origin()[VX] << next->vertex->origin()[VY];
                         }
 
                         if(cur->selfRef && !next->selfRef)
@@ -664,8 +617,8 @@ struct Partitioner::Instance
                     /*
                     HEdge *left = right->twin;
                     LOG_DEBUG("Capped partition gap:\n"
-                              "  %p RIGHT sector #%d [%1.1f, %1.1f] to [%1.1f, %1.1f]\n"
-                              "  %p LEFT  sector #%d [%1.1f, %1.1f] to [%1.1f, %1.1f]")
+                              "  %p RIGHT sector #%d (%1.1f, %1.1f) to (%1.1f, %1.1f)\n"
+                              "  %p LEFT  sector #%d (%1.1f, %1.1f) to (%1.1f, %1.1f)")
                         << de::dintptr(right) << (right->sector? right->sector->buildData.index - 1 : -1)
                         << right->v1Origin[VX] << right->v1Origin[VY]
                         << right->v2Origin[VX] << right->v2Origin[VY]
@@ -689,7 +642,7 @@ struct Partitioner::Instance
      */
     HEdge &splitHEdge(HEdge &oldHEdge, const_pvec2d_t point)
     {
-        //LOG_DEBUG("Splitting hedge %p at [%1.1f, %1.1f].")
+        //LOG_DEBUG("Splitting hedge %p at (%1.1f, %1.1f).")
         //    << de::dintptr(&oldHEdge) << point[VX] << point[VY];
 
         Vertex *newVert = newVertex(point);
@@ -1213,7 +1166,7 @@ struct Partitioner::Instance
         {
             HEdge *hedge = *it;
 
-            //LOG_DEBUG("chooseNextPartitionFromSuperBlock: %shedge %p sector:%d [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
+            //LOG_DEBUG("chooseNextPartitionFromSuperBlock: %shedge %p sector:%d (%1.1f, %1.1f) -> (%1.1f, %1.1f)")
             //    << (hedge->line? "" : "mini-") << de::dintptr(hedge)
             //    << (hedge->sector? hedge->sector->buildData.index - 1 : -1)
             //    << hedge->v1Origin[VX] << hedge->v1Origin[VY]
@@ -1312,25 +1265,25 @@ struct Partitioner::Instance
     }
 
     /**
-     * Attempt to construct a new BspLeaf and from the supplied list of
-     * half-edges.
+     * Attempt to construct a new BspLeaf from the list of half-edges.
      *
-     * @param hedges  SuperBlock containing the list of half-edges with which
-     *                to build the leaf using.
+     * @param hedges  List of half-edges from which to build the leaf.
+     *                Ownership of the list and it's contents is given
+     *                to this function. Once emptied, ownership of the
+     *                list is returned to the caller.
      *
-     * @return  Newly created BspLeaf else @c NULL if degenerate.
+     * @return  Newly created BspLeaf; otherwise @c 0 if degenerate.
      */
-    BspLeaf *buildBspLeaf(HEdgeList const &hedges)
+    BspLeaf *buildBspLeaf(HEdgeList &hedges)
     {
-        if(!hedges.size()) return 0;
+        if(!hedges.count()) return 0;
 
         // Collapse all degenerate and orphaned leafs.
 #if 0
-        bool const isDegenerate = hedges.size() < 3;
+        bool const isDegenerate = hedges.count() < 3;
         bool isOrphan = true;
-        DENG2_FOR_EACH_CONST(HEdgeList, it, hedges)
+        foreach(HEdge *hedge, hedges)
         {
-            HEdge const *hedge = *it;
             if(hedge->line && hedge->line->hasSector(hedge->side))
             {
                 isOrphan = false;
@@ -1340,12 +1293,12 @@ struct Partitioner::Instance
 #endif
 
         BspLeaf *leaf = 0;
-        DENG2_FOR_EACH_CONST(HEdgeList, it, hedges)
+        while(!hedges.isEmpty())
         {
-            HEdge *hedge = *it;
+            HEdge *hedge = hedges.takeFirst();
 #if 0
             HEdgeInfos::iterator hInfoIt = hedgeInfos.find(hedge);
-            HEdgeInfo &hInfo = hInfoIt->second;
+            HEdgeInfo &hInfo = hInfoIt.value();
 
             if(isDegenerate || isOrphan)
             {
@@ -1459,7 +1412,7 @@ struct Partitioner::Instance
             leftChild->setParent(subtree);
         }
 
-        treeNodeMap.insert(std::pair<MapElement *, BspTreeNode *>(mapBspElement, subtree));
+        treeNodeMap.insert(mapBspElement, subtree);
         return subtree;
     }
 
@@ -1492,7 +1445,7 @@ struct Partitioner::Instance
         HEdge *partHEdge = chooseNextPartition(partList);
         if(partHEdge)
         {
-            //LOG_TRACE("Partition %p [%1.0f, %1.0f] -> [%1.0f, %1.0f].") << de::dintptr(hedge)
+            //LOG_TRACE("Partition %p (%1.1f, %1.1f) -> (%1.1f, %1.1f).") << de::dintptr(hedge)
             //    << hedge->v1Origin[VX] << hedge->v1Origin[VY]
             //    << hedge->v2Origin[VX] << hedge->v2Origin[VY];
 
@@ -1632,7 +1585,7 @@ struct Partitioner::Instance
         vec2d_t angle; V2d_Subtract(angle, to.origin(), from.origin());
         partition.setDirection(angle);
 
-        //LOG_DEBUG("hedge %p [%1.1f, %1.1f] -> [%1.1f, %1.1f].")
+        //LOG_DEBUG("hedge %p (%1.1f, %1.1f) -> (%1.1f, %1.1f).")
         //    << de::dintptr(best) << from.origin()[VX] << from.origin()[VY]
         //    << angle[VX] << angle[VY];
 
@@ -1643,24 +1596,21 @@ struct Partitioner::Instance
      * Sort half-edges by angle (from the middle point to the start vertex).
      * The desired order (clockwise) means descending angles.
      */
-    static void sortHEdgesByAngleAroundPoint(HEdgeSortBuffer::iterator begin,
-        HEdgeSortBuffer::iterator end, pvec2d_t point)
+    static void sortHEdgesByAngleAroundPoint(HEdgeSortBuffer &hedges,
+        int lastHEdgeIndex, const_pvec2d_t point)
     {
-        DENG2_ASSERT(point);
+        DENG2_ASSERT(point != 0);
 
         /// @par Algorithm
         /// "double bubble"
-        bool done = false;
-        while(begin != end && !done)
+        for(int pass = 0; pass < lastHEdgeIndex; ++pass)
         {
-            done = true;
-            HEdgeSortBuffer::iterator it(begin);
-            HEdgeSortBuffer::iterator next(begin);
-            ++next;
-            while(next != end)
+            bool swappedAny = false;
+            for(int i = 0; i < lastHEdgeIndex; ++i)
             {
-                HEdge *a = *it;
-                HEdge *b = *next;
+                HEdge const *a = hedges.at(i);
+                HEdge const *b = hedges.at(i+1);
+
                 coord_t angle1 = M_DirectionToAngleXY(a->v1Origin()[VX] - point[VX],
                                                       a->v1Origin()[VY] - point[VY]);
                 coord_t angle2 = M_DirectionToAngleXY(b->v1Origin()[VX] - point[VX],
@@ -1668,18 +1618,11 @@ struct Partitioner::Instance
 
                 if(angle1 + ANG_EPSILON < angle2)
                 {
-                    // Swap them.
-                    std::swap(*next, *it);
-                    done = false;
+                    hedges.swap(i, i + 1);
+                    swappedAny = true;
                 }
-
-                // Bubble down.
-                ++it;
-                ++next;
             }
-
-            // Bubble up.
-            --end;
+            if(!swappedAny) break;
         }
     }
 
@@ -1696,26 +1639,22 @@ struct Partitioner::Instance
      * the access rights of the BspLeaf class this algorithm belongs here in
      * the BSP partitioner. -ds
      */
-    static void clockwiseOrder(BspLeaf &leaf, pvec2d_t point, HEdgeSortBuffer &sortBuffer)
+    static void clockwiseOrder(BspLeaf &leaf, const_pvec2d_t point,
+                               HEdgeSortBuffer &sortBuffer)
     {
         if(!leaf._hedge) return;
 
-        // Ensure the sort buffer is large enough.
-        if(leaf._hedgeCount > sortBuffer.size())
-        {
-            sortBuffer.resize(leaf._hedgeCount);
-        }
-
         // Insert the hedges into the sort buffer.
-        uint i = 0;
+#ifdef DENG2_QT_4_7_OR_NEWER
+        sortBuffer.reserve(leaf._hedgeCount);
+#endif
+        int i = 0;
         for(HEdge *hedge = leaf._hedge; hedge; hedge = hedge->_next, ++i)
         {
-            sortBuffer[i] = hedge;
+            sortBuffer.insert(i, hedge);
         }
 
-        HEdgeSortBuffer::iterator begin = sortBuffer.begin();
-        HEdgeSortBuffer::iterator end = begin + leaf._hedgeCount;
-        sortHEdgesByAngleAroundPoint(begin, end, point);
+        sortHEdgesByAngleAroundPoint(sortBuffer, leaf._hedgeCount -1, point);
 
         // Re-link the half-edge list in the order of the sort buffer.
         leaf._hedge = 0;
@@ -1728,7 +1667,7 @@ struct Partitioner::Instance
             leaf._hedge = sortBuffer[j];
         }
 
-        // LOG_DEBUG("Sorted half-edges around [%1.1f, %1.1f]" << point[VX] << point[VY];
+        // LOG_DEBUG("Sorted half-edges around (%1.1f, %1.1f)" << point[VX] << point[VY];
         // printBspLeafHEdges(leaf);
     }
 
@@ -1776,14 +1715,9 @@ struct Partitioner::Instance
         return 0; // Not reachable.
     }
 
-    void clockwiseLeaf(BspTreeNode &tree, HEdgeSortBuffer &sortBuffer)
+    void clockwiseLeaf(BspLeaf *leaf, HEdgeSortBuffer &sortBuffer)
     {
-        DENG2_ASSERT(tree.isLeaf());
-
-        BspLeaf *leaf = tree.userData()->castTo<BspLeaf>();
-        vec2d_t center;
-
-        V2d_Set(center, 0, 0);
+        vec2d_t center; V2d_Set(center, 0, 0);
         findBspLeafCenter(*leaf, center);
         clockwiseOrder(*leaf, center, sortBuffer);
 
@@ -1829,40 +1763,88 @@ struct Partitioner::Instance
                 }
             }
         }
-
-        leaf->_sector = chooseSectorForBspLeaf(leaf);
-        if(!leaf->_sector)
-        {
-            leaf->_sector = 0;
-            LOG_WARNING("BspLeaf %p is degenerate/orphan (%d HEdges).")
-                << de::dintptr(leaf) << leaf->hedgeCount();
-        }
-
-        logMigrantHEdges(leaf);
-        logUnclosedBspLeaf(leaf);
-
-        if(!sanityCheckHasRealHEdge(leaf))
-        {
-            throw Error("Partitioner::clockwiseLeaf", QString("BSP Leaf 0x%1 has no linedef-linked half-edge")
-                                                          .arg(dintptr(leaf), 0, 16));
-        }
     }
 
     /**
      * Sort all half-edges in each BSP leaf into a clockwise order.
      *
-     * @note This cannot be done during Partitioner::buildNodes() as splitting
-     * a half-edge with a twin will result in another half-edge being inserted
-     * into that twin's leaf (usually in the wrong place order-wise).
+     * @note This cannot be done during Partitioner::buildNodes() as
+     * splitting a half-edge with a twin will result in another half-edge
+     * being inserted into that twin's leaf (usually in the wrong place
+     * order-wise).
      */
     void windLeafs()
     {
         HEdgeSortBuffer sortBuffer;
-        DENG2_FOR_EACH(BspTreeNodeMap, it, treeNodeMap)
+        foreach(BspTreeNode *node, treeNodeMap)
         {
-            BspTreeNode *node = it->second;
             if(!node->isLeaf()) continue;
-            clockwiseLeaf(*node, sortBuffer);
+            BspLeaf *leaf = node->userData()->castTo<BspLeaf>();
+
+            // Sort the leaf's half-edges.
+            clockwiseLeaf(leaf, sortBuffer);
+
+            /*
+             * Perform some post analysis on the built leaf.
+             */
+            if(!sanityCheckHasRealHEdge(leaf))
+                throw Error("Partitioner::clockwiseLeaf",
+                            QString("BSP Leaf 0x%1 has no linedef-linked half-edge")
+                                .arg(dintptr(leaf), 0, 16));
+
+            // Look for migrant half-edges in the leaf.
+            if(Sector *sector = findFirstSectorInHEdgeList(leaf))
+            {
+                HEdge *base = leaf->firstHEdge();
+                HEdge *hedge = base;
+                do
+                {
+                    if(hedge->hasSector() && hedge->sectorPtr() != sector)
+                    {
+                        notifyMigrantHEdgeBuilt(*hedge, *sector);
+                    }
+                } while((hedge = &hedge->next()) != base);
+            }
+
+            leaf->_sector = chooseSectorForBspLeaf(leaf);
+            if(!leaf->_sector)
+            {
+                leaf->_sector = 0;
+                LOG_WARNING("BspLeaf %p is degenerate/orphan (%d HEdges).")
+                    << de::dintptr(leaf) << leaf->hedgeCount();
+            }
+
+            // See if we built a partial leaf...
+            uint gaps = 0;
+            HEdge const *base = leaf->firstHEdge();
+            HEdge const *hedge = base;
+            do
+            {
+                HEdge &next = hedge->next();
+                if(!FEQUAL(hedge->v2Origin()[VX], next.v1Origin()[VX]) ||
+                   !FEQUAL(hedge->v2Origin()[VY], next.v1Origin()[VY]))
+                {
+                    gaps++;
+                }
+            } while((hedge = &hedge->next()) != base);
+
+            if(gaps > 0)
+            {
+                /*
+                HEdge const *base = leaf.firstHEdge();
+                HEdge const *hedge = base;
+                do
+                {
+                    LOG_DEBUG("  half-edge %p (%1.1f, %1.1f) -> (%1.1f, %1.1f)")
+                        << de::dintptr(hedge)
+                        << hedge->v1Origin[VX] << hedge->v1Origin[VY],
+                        << hedge->v2Origin[VX] << hedge->v2Origin[VY];
+
+                } while((hedge = hedge->next) != base);
+                */
+
+                notifyPartialBspLeafBuilt(*leaf, gaps);
+            }
         }
     }
 
@@ -1876,7 +1858,7 @@ struct Partitioner::Instance
      */
     void addMiniHEdges(SuperBlock &rightList, SuperBlock &leftList)
     {
-        LOG_TRACE("Building HEdges along partition [%1.1f, %1.1f] > [%1.1f, %1.1f]")
+        LOG_TRACE("Building HEdges along partition (%1.1f, %1.1f) > (%1.1f, %1.1f)")
             <<     partitionInfo.start[VX] <<     partitionInfo.start[VY]
             << partitionInfo.direction[VX] << partitionInfo.direction[VY];
 
@@ -1932,7 +1914,7 @@ struct Partitioner::Instance
         MapElement *dmuOb = tree.userData();
         if(!dmuOb) return;
 
-        if(builtOK)
+        if(builtOk)
         {
             LOG_DEBUG("Clearing unclaimed %s %p.") << (tree.isLeaf()? "leaf" : "node") << de::dintptr(dmuOb);
         }
@@ -1952,7 +1934,7 @@ struct Partitioner::Instance
         delete dmuOb;
         tree.setUserData(0);
 
-        BspTreeNodeMap::iterator found = treeNodeMap.find(dmuOb);
+        BuiltBspElementMap::iterator found = treeNodeMap.find(dmuOb);
         DENG2_ASSERT(found != treeNodeMap.end());
         treeNodeMap.erase(found);
     }
@@ -1969,9 +1951,9 @@ struct Partitioner::Instance
             delete vtx;
         }
 
-        DENG2_FOR_EACH(BspTreeNodeMap, it, treeNodeMap)
+        foreach(BspTreeNode *node, treeNodeMap)
         {
-            clearBspObject(*it->second);
+            clearBspObject(*node);
         }
     }
 
@@ -1982,9 +1964,9 @@ struct Partitioner::Instance
         int const dmuType = ob->type();
         if(dmuType == DMU_BSPLEAF || dmuType == DMU_BSPNODE)
         {
-            BspTreeNodeMap::const_iterator found = treeNodeMap.find(ob);
+            BuiltBspElementMap::const_iterator found = treeNodeMap.find(ob);
             if(found == treeNodeMap.end()) return 0;
-            return found->second;
+            return found.value();
         }
         LOG_DEBUG("Attempted to locate using an unknown object %p (type: %d).")
             << de::dintptr(ob) << dmuType;
@@ -2053,7 +2035,7 @@ struct Partitioner::Instance
 
         // There is now one more HEdge.
         numHEdges += 1;
-        hedgeInfos.insert(std::pair<HEdge *, HEdgeInfo>(hedge, HEdgeInfo()));
+        hedgeInfos.insert(hedge, HEdgeInfo());
 
         HEdgeInfo &info = hedgeInfo(*hedge);
         info.line = line;
@@ -2072,7 +2054,7 @@ struct Partitioner::Instance
 
         // There is now one more HEdge.
         numHEdges += 1;
-        hedgeInfos.insert(std::pair<HEdge *, HEdgeInfo>(hedge, HEdgeInfo()));
+        hedgeInfos.insert(hedge, HEdgeInfo());
 
         std::memcpy(&hedgeInfo(*hedge), &hedgeInfo(other), sizeof(HEdgeInfo));
 
@@ -2096,7 +2078,7 @@ struct Partitioner::Instance
                     // Disassociate the half-edge from the blockmap.
                     hedgeInfo(*hedge).bmapBlock = 0;
 
-                    hedges.push_back(hedge);
+                    hedges.append(hedge);
                 }
 
                 if(prev == cur->parent())
@@ -2221,7 +2203,7 @@ struct Partitioner::Instance
             BspTreeNode *treeNode = treeNodeForBspObject(dmuOb);
             if(treeNode)
             {
-                BspTreeNodeMap::iterator found = treeNodeMap.find(dmuOb);
+                BuiltBspElementMap::iterator found = treeNodeMap.find(dmuOb);
                 DENG2_ASSERT(found != treeNodeMap.end());
                 treeNodeMap.erase(found);
 
@@ -2248,140 +2230,45 @@ struct Partitioner::Instance
     }
 
     /**
-     * Register the specified sector in the list of unclosed sectors.
+     * Notify interested parties of an unclosed sector in the map.
      *
-     * @param sector  Sector to be registered.
-     * @param x  X coordinate near the open point.
-     * @param y  X coordinate near the open point.
-     *
-     * @return @c true iff the sector was newly registered.
+     * @param sector    The problem sector.
+     * @param nearPoint  Coordinates near to where the problem was found.
      */
-    bool registerUnclosedSector(Sector *sector, coord_t x, coord_t y)
+    void notifyUnclosedSectorFound(Sector &sector, Vector2d const &nearPoint)
     {
-        if(!sector) return false;
-
-        // Has this sector already been registered?
-        if(unclosedSectors.count(sector)) return false;
-
-        // Add a new record.
-        unclosedSectors.insert(std::pair<Sector *, UnclosedSectorRecord>(sector, UnclosedSectorRecord(sector, x, y)));
-
-        // In the absence of a better mechanism, simply log this right away.
-        /// @todo Implement something better!
-        LOG_WARNING("Sector %p (#%d) is unclosed near [%1.1f, %1.1f].")
-            << de::dintptr(sector) << sector->origIndex() - 1 << x << y;
-
-        return true;
-    }
-
-    bool registerUnclosedBspLeaf(BspLeaf *leaf, uint gapTotal)
-    {
-        if(!leaf) return false;
-
-        // Has this leaf already been registered?
-        if(unclosedBspLeafs.count(leaf)) return false;
-
-        // Add a new record.
-        unclosedBspLeafs.insert(std::pair<BspLeaf *, UnclosedBspLeafRecord>(leaf, UnclosedBspLeafRecord(leaf, gapTotal)));
-
-        // In the absence of a better mechanism, simply log this right away.
-        /// @todo Implement something better!
-        LOG_WARNING("HEdge list for BspLeaf %p is not closed (%u gaps, %u hedges).")
-            << de::dintptr(leaf) << gapTotal << leaf->hedgeCount();
-
-        /*
-        HEdge const *base = leaf->firstHEdge();
-        HEdge const *hedge = base;
-        do
+        DENG2_FOR_PUBLIC_AUDIENCE(UnclosedSectorFound, i)
         {
-            LOG_DEBUG("  half-edge %p [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
-                << de::dintptr(hedge)
-                << hedge->v1Origin[VX] << hedge->v1Origin[VY],
-                << hedge->v2Origin[VX] << hedge->v2Origin[VY];
-
-        } while((hedge = hedge->next) != base);
-        */
-        return true;
-    }
-
-    void logUnclosedBspLeaf(BspLeaf *leaf)
-    {
-        if(!leaf) return;
-
-        uint gaps = 0;
-        HEdge const *base = leaf->firstHEdge();
-        HEdge const *hedge = base;
-        do
-        {
-            HEdge &next = hedge->next();
-            if(!FEQUAL(hedge->v2Origin()[VX], next.v1Origin()[VX]) ||
-               !FEQUAL(hedge->v2Origin()[VY], next.v1Origin()[VY]))
-            {
-                gaps++;
-            }
-        } while((hedge = &hedge->next()) != base);
-
-        if(gaps > 0)
-        {
-            registerUnclosedBspLeaf(leaf, gaps);
+            i->unclosedSectorFound(sector, nearPoint);
         }
     }
 
     /**
-     * Register the specified half-edge as as migrant edge of the specified sector.
+     * Notify interested parties that a partial BSP leaf was built.
      *
-     * @param migrant  Migrant half-edge to register.
-     * @param sector  Sector containing the @a migrant half-edge.
-     *
-     * @return @c true iff the half-edge was newly registered.
+     * @param leaf      The incomplete BSP leaf.
+     * @param gapTotal  Number of gaps in the leaf.
      */
-    bool registerMigrantHEdge(HEdge *migrant, Sector *sector)
+    void notifyPartialBspLeafBuilt(BspLeaf &leaf, uint gapTotal)
     {
-        if(!migrant || !sector) return false;
-
-        // Has this pair already been registered?
-        if(migrantHEdges.count(migrant)) return false;
-
-        // Add a new record.
-        migrantHEdges.insert(std::pair<HEdge *, MigrantHEdgeRecord>(migrant, MigrantHEdgeRecord(migrant, sector)));
-
-        // In the absence of a better mechanism, simply log this right away.
-        /// @todo Implement something better!
-        if(migrant->hasLine())
-            LOG_WARNING("Sector #%d has migrant HEdge facing #%d (line #%d).")
-                << sector->origIndex() - 1 << migrant->sector().origIndex() - 1
-                << migrant->line().origIndex() - 1;
-        else
-            LOG_WARNING("Sector #%d has migrant HEdge facing #%d.")
-                << sector->origIndex() - 1 << migrant->sector().origIndex() - 1;
-
-        return true;
+        DENG2_FOR_PUBLIC_AUDIENCE(PartialBspLeafBuilt, i)
+        {
+            i->partialBspLeafBuilt(leaf, gapTotal);
+        }
     }
 
     /**
-     * Look for migrant half-edges in the specified leaf and register them to the
-     * list of migrants.
+     * Notify interested parties that a migrant half-edge was built.
      *
-     * @param leaf  BSP leaf to be searched.
+     * @param hedge         The migrant half-edge.
+     * @param facingSector  Sector that the half-edge is facing.
      */
-    void logMigrantHEdges(BspLeaf const *leaf)
+    void notifyMigrantHEdgeBuilt(HEdge &migrant, Sector &facingSector)
     {
-        if(!leaf) return;
-
-        // Find a suitable half-edge for comparison.
-        Sector *sector = findFirstSectorInHEdgeList(leaf);
-        if(!sector) return;
-
-        // Log migrants.
-        HEdge *base = leaf->firstHEdge();
-        HEdge *hedge = base;
-        do
+        DENG2_FOR_PUBLIC_AUDIENCE(MigrantHEdgeBuilt, i)
         {
-            if(hedge->hasSector() && hedge->sectorPtr() != sector)
-            {
-                registerMigrantHEdge(hedge, sector);
-            }
-        } while((hedge = &hedge->next()) != base);
+            i->migrantHEdgeBuilt(migrant, facingSector);
+        }
     }
 
     bool sanityCheckHasRealHEdge(BspLeaf const *leaf) const
@@ -2398,14 +2285,9 @@ struct Partitioner::Instance
 };
 
 Partitioner::Partitioner(GameMap const &map, int splitCostFactor)
-    : d(new Instance(map, splitCostFactor))
+    : d(new Instance(this, map, splitCostFactor))
 {
     d->initForMap();
-}
-
-Partitioner::~Partitioner()
-{
-    delete d;
 }
 
 void Partitioner::setSplitCostFactor(int newFactor)
@@ -2416,9 +2298,9 @@ void Partitioner::setSplitCostFactor(int newFactor)
     }
 }
 
-bool Partitioner::build()
+void Partitioner::build()
 {
-    return d->buildBsp(SuperBlockmap(blockmapBounds(d->mapBounds)));
+    d->buildBsp(SuperBlockmap(blockmapBounds(d->mapBounds)));
 }
 
 BspTreeNode *Partitioner::root() const
@@ -2532,7 +2414,7 @@ static void printBspLeafHEdges(BspLeaf const &leaf)
         coord_t angle = M_DirectionToAngleXY(hedge->v1Origin[VX] - point[VX],
                                              hedge->v1Origin[VY] - point[VY]);
 
-        LOG_DEBUG("  half-edge %p: Angle %1.6f [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
+        LOG_DEBUG("  half-edge %p: Angle %1.6f (%1.1f, %1.1f) -> (%1.1f, %1.1f)")
             << de::dintptr(hedge) << angle
             << hedge->v1Origin[VX] << hedge->v1Origin[VY]
             << hedge->v2Origin[VX] << hedge->v2Origin[VY];

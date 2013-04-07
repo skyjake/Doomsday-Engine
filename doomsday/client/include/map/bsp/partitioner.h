@@ -23,6 +23,9 @@
 #ifndef LIBDENG_BSP_PARTITIONER
 #define LIBDENG_BSP_PARTITIONER
 
+#include <de/Observers>
+#include <de/Vector>
+
 #include "map/p_maptypes.h"
 #include "map/bsp/bsptreenode.h"
 
@@ -49,8 +52,17 @@ static const coord_t ANG_EPSILON = (1.0 / 1024.0);
 class Partitioner
 {
 public:
+    DENG2_DEFINE_AUDIENCE(UnclosedSectorFound,
+        void unclosedSectorFound(Sector &sector, Vector2d const &nearPoint))
+
+    DENG2_DEFINE_AUDIENCE(MigrantHEdgeBuilt,
+        void migrantHEdgeBuilt(HEdge &hedge, Sector &facingSector))
+
+    DENG2_DEFINE_AUDIENCE(PartialBspLeafBuilt,
+        void partialBspLeafBuilt(BspLeaf &bspLeaf, uint gapCount))
+
+public:
     Partitioner(GameMap const &map, int splitCostFactor = 7);
-    ~Partitioner();
 
     /**
      * Set the cost factor associated with splitting an existing half-edge.
@@ -70,10 +82,8 @@ public:
      *      the only argument to CreateNodes.
      *   3. Save the Nodes, Segs and BspLeafs to disk.  Start with the leaves of
      *      the Nodes tree and continue up to the root (last Node).
-     *
-     * @return  @c true= iff completed successfully.
      */
-    bool build();
+    void build();
 
     /**
      * Retrieve a pointer to the root BinaryTree node for the constructed BSP.
@@ -134,8 +144,7 @@ public:
     void release(MapElement *mapElement);
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace bsp
