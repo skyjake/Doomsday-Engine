@@ -37,7 +37,7 @@ at startup. More files can be loaded at runtime with the @cmd{load} command.
 
 }
 
-In addition to these, @cmd{doomsday-server} supports many of the command line
+In addition to these, @bin{doomsday-server} supports many of the command line
 options of doomsday(6).
 
 

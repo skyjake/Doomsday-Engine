@@ -14,8 +14,8 @@
     
     @seealso
     @list{
-        @item listdisplaymodes
-        @item setfullres
-        @item setwinres
+        @item @cmd{listdisplaymodes}
+        @item @cmd{setfullres}
+        @item @cmd{setwinres}
     }
 }

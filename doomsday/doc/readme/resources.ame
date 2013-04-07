@@ -79,10 +79,10 @@ A virtual directory mapping is defined using the @opt{-vdmap} option. It takes
 the source and destination directories as parameters. For example:
 
 @ifdef{WIN32}{
-    @samp{@cmd{-vdmap "D:\Games\MyAuto" "C:\Doomsday\Data\jDoom\Auto"}}
+    @code{-vdmap "D:\Games\MyAuto" "C:\Doomsday\Data\jDoom\Auto"}
 }
 @else{
-    @samp{@cmd{-vdmap /home/username/myauto /usr/share/doomsday/data/jdoom/auto}}    
+    @code{-vdmap /home/username/myauto /usr/share/doomsday/data/jdoom/auto}
 }
 
 You can define an unlimited number of virtual directory mappings using
@@ -178,11 +178,11 @@ that contains the current directory and all its subdirectories plus a
 @file{DD_DIREC} lump that has (with a high probability) a unique lump name for
 each file. You can invoke the utility like this:
 
-@samp{@cmd{ wadtool myfiles.wad /data/jdoom/textures/ }}
+@code{ wadtool myfiles.wad /data/jdoom/textures/ }
 
 This would create a WAD file that contains all the files from the current
 directory. When writing the @file{DD_DIREC} table, the prefix
-"/data/jdoom/textures/" would be added to each file name. @cmd{wadtool} is
+"/data/jdoom/textures/" would be added to each file name. @bin{wadtool} is
 available in the Doomsday source repository under @file{/tools/wadtool}.
 
 
