@@ -2,5 +2,20 @@
     Change video mode resolution or window size.
 }
 @description{
-    Params: setres (width) (height) @cbr For example, 'setres 1024 768'.
+    @usage
+    @ident{setres} @help_arg{width} @help_arg{height}
+    
+    The window retains its current mode, adjusting the display mode if in
+    fullscreen and the window size if in a windowed mode.
+    
+    @examples
+    Change resolution to 1024 x 768:
+    @code{setres 1024 768}
+    
+    @seealso
+    @list{
+        @item @cmd{listdisplaymodes}
+        @item @cmd{setfullres}
+        @item @cmd{setwinres}
+    }
 }

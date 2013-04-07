@@ -18,7 +18,7 @@ $ Extra formatting macros.
 
 @chapter{ Options }
 
-This version of @cmd{doomsday-shell-text} does not support any command line
+This version of @bin{doomsday-shell-text} does not support any command line
 options.
 
 $*

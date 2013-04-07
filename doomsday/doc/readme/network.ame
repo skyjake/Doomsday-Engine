@@ -105,7 +105,7 @@ servers, check that your firewall isn't blocking these UDP ports on either end.
 
 You can see information about the network subsystem status with the command:
 
-@samp{@cmd{net info}}
+@code{net info}
 
 @subsec{Server}
 
@@ -124,5 +124,5 @@ client only needs to be able to reach the server via the server's TCP port.
 A server running on the same computer can be connected to with the following
 command:
 
-@samp{@cmd{connect localhost}}
+@code{connect localhost}
 

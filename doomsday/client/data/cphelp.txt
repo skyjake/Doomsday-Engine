@@ -308,8 +308,8 @@ desc = Set your name.
 inf = Params: setname (name)\nFor example, 'setname "my name"'.
 
 [setres]
-desc = Change video mode resolution or window size.
-inf = Params: setres (width) (height)\nFor example, 'setres 1024 768'.
+desc = Change display mode resolution or window size.
+inf = USAGE:\nsetres (width) (height)\nThe window retains its current mode, adjusting the display mode if in fullscreen and the window size if in a windowed mode.\nEXAMPLES:\nChange resolution to 1024 x 768: 'setres 1024 768'\nSEE ALSO:\n- 'listdisplaymodes'\n- 'setfullres'\n- 'setwinres'\n
 
 [settics]
 desc = Set number of game tics per second (default: 35).
