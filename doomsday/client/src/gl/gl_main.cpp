@@ -1201,6 +1201,7 @@ D_CMD(SetWinRes)
         ClientWindow::Width,      atoi(argv[1]),
         ClientWindow::Height,     atoi(argv[2]),
         ClientWindow::Fullscreen, false,
+        ClientWindow::Maximized,  false,
         ClientWindow::End
     };
     return win->changeAttributes(attribs);

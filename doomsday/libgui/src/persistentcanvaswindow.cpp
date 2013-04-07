@@ -277,6 +277,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
 
     // Logical state.
     State state;
+    bool neverShown;
 
     typedef QList<Task> Tasks;
     Tasks queue;
@@ -284,7 +285,8 @@ DENG2_PIMPL(PersistentCanvasWindow)
     Instance(Public *i, String const &windowId)
         : Base(i),
           id(windowId),
-          state(windowId)
+          state(windowId),
+          neverShown(true)
     {
         // Keep a global pointer to the main window.
         if(id == MAIN_WINDOW_ID)
@@ -575,10 +577,19 @@ DENG2_PIMPL(PersistentCanvasWindow)
         DisplayMode const *newMode = newState.displayMode();
         bool modeChanged = false;
 
+        if(!self.isVisible())
+        {
+            // Change size immediately.
+            queue << Task(newState.windowRect);
+        }
+
+        // Change display mode, if necessary.
         if(!DisplayMode_IsEqual(DisplayMode_Current(), newMode))
         {
             modeChanged = DisplayMode_Change(newMode, newState.shouldCaptureScreen());
             state.colorDepthBits = newMode->depth;
+
+            // Wait a while after the mode change to let changes settle in.
 #ifdef MACOSX
             defer = .1;
 #else
@@ -586,21 +597,19 @@ DENG2_PIMPL(PersistentCanvasWindow)
 #endif
         }
 
-        queue << Task(newState.windowRect, defer);
-        defer = 0;
-
         if(self.isVisible())
         {
-//#ifndef MACOSX
-#if 1
-            if(state.isFullscreen() && newState.isFullscreen() && modeChanged)
+            if(state.isFullscreen() && modeChanged)
             {
-                // Switch back to normal and then again to fullscreen.
+                // Switch back to normal and then to the correct mode.
                 queue << Task(Task::ShowNormal, defer);
                 defer = 0;
             }
-#endif
-            // Geometry needs to be applied in a deferred way.
+
+            queue << Task(newState.windowRect, defer);
+            defer = 0;
+
+            // Switch to correct window mode.
             queue << Task(newState.isFullscreen()? Task::ShowFullscreen :
                           newState.isMaximized()?  Task::ShowMaximized :
                                                    Task::ShowNormal, defer);
@@ -617,11 +626,8 @@ DENG2_PIMPL(PersistentCanvasWindow)
             queue << Task(Task::NotifyModeChange, .1);
         }
 
-        //state.windowRect = newState.windowRect;
-        //LOG_DEBUG("applied windowRect:") << state.windowRect.asText();
-
-        state.fullSize   = newState.fullSize;
-        state.flags      = newState.flags;
+        state.fullSize = newState.fullSize;
+        state.flags    = newState.flags;
 
         checkQueue();
     }
@@ -732,6 +738,13 @@ bool PersistentCanvasWindow::isCentered() const
 
 Rectanglei PersistentCanvasWindow::windowRect() const
 {
+    if(d->neverShown)
+    {
+        // If the window hasn't been shown yet, it doesn't have a valid
+        // normal geometry. Use the one defined in the logical state.
+        return d->state.windowRect;
+    }
+
     QRect geom = normalGeometry();
     return Rectanglei(geom.left(), geom.top(), geom.width(), geom.height());
 }
@@ -762,6 +775,9 @@ void PersistentCanvasWindow::show(bool yes)
         {
             showNormal();
         }
+
+        // Now it has been shown.
+        d->neverShown = false;
     }
     else
     {

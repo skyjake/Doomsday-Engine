@@ -29,9 +29,11 @@
 namespace de {
 
 /**
- * General-purpose top-level window with persistent state.
+ * General-purpose top-level window with persistent state. Each instance must
+ * be identified by a unique name (e.g., "main") that is used when saving the
+ * window's state to Config.
  *
- * Also supports fullscreen display modes (using DisplayMode).
+ * Supports fullscreen display modes (using DisplayMode).
  */
 class PersistentCanvasWindow : public CanvasWindow
 {
