@@ -471,15 +471,22 @@ DENG2_PIMPL(PersistentCanvasWindow)
         applyAttributes(attribs.constData());
     }
 
+    /**
+     * Parse attributes and apply the values to the widget.
+     *
+     * @param attribs  Zero-terminated array of attributes and values.
+     */
     void applyAttributes(int const *attribs)
     {
         LOG_AS("applyAttributes");
 
-        // Parse the attributes array and check the values.
         DENG2_ASSERT(attribs);
 
-        // The new modified state.
+        // Update the cached state from the authoritative source:
+        // the widget itself.
         state = widgetState();
+
+        // The new modified state.
         State mod = state;
 
         for(int i = 0; attribs[i]; ++i)
@@ -563,7 +570,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
     void applyToWidget(State const &newState)
     {
         // If the display mode needs to change, we will have to defer the rest
-        // of the state changes.
+        // of the state changes so that everything catches up after the change.
         TimeDelta defer = 0;
         DisplayMode const *newMode = newState.displayMode();
         bool modeChanged = false;
@@ -601,10 +608,12 @@ DENG2_PIMPL(PersistentCanvasWindow)
 
         if(modeChanged)
         {
+#ifdef MACOSX
             if(newState.isFullscreen())
             {
                 queue << Task(Task::MacRaiseOverShield);
             }
+#endif
             queue << Task(Task::NotifyModeChange, .1);
         }
 
