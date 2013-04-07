@@ -38,16 +38,20 @@ namespace de {
 class BspBuilder
 {
 public:
-    /// Default cost factor attributed to splitting an existing half-edge.
+    /// Default cost factor attributed to splitting a half-edge.
     static const int DEFAULT_PARTITION_COST_HEDGESPLIT = 7;
 
 public:
     /**
-     * Create a new BspBuilder initialized for construction using the specified map.
-     * @param map  GameMap for which to construct a BSP object tree.
-     * @param splitCostFactor  Cost factor attributed to splitting an existing half-edge.
+     * Create and configure a new BSP builder, initializing in preparation
+     * for building a BSP for the specified @a map.
+     *
+     * @param map  Map to construct a BSP for. The caller must ensure that
+     *             the map remains accessible until the build process has
+     *             completed (ownership is unaffected).
+     * @param splitCostFactor  Cost factor attributed to splitting a half-edge.
      */
-    BspBuilder(GameMap &map, int splitCostFactor = DEFAULT_PARTITION_COST_HEDGESPLIT);
+    BspBuilder(GameMap const &map, int splitCostFactor = DEFAULT_PARTITION_COST_HEDGESPLIT);
 
     /**
      * Set the cost factor associated with splitting an existing half-edge.

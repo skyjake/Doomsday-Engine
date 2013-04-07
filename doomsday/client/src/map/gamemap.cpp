@@ -1127,7 +1127,7 @@ static int iterateCellBlockMobjs(Blockmap &mobjBlockmap, BlockmapCellBlock const
 }
 
 int GameMap::mobjsBoxIterator(AABoxd const &box,
-    int (*callback) (mobj_t *, void *), void *parameters)
+    int (*callback) (mobj_t *, void *), void *parameters) const
 {
     DENG_ASSERT(mobjBlockmap != 0);
     BlockmapCellBlock cellBlock;
@@ -1335,7 +1335,7 @@ static int iterateCellBlockBspLeafs(Blockmap &bspLeafBlockmap,
 }
 
 int GameMap::bspLeafsBoxIterator(AABoxd const &box, Sector *sector,
-    int (*callback) (BspLeaf *, void *), void *parameters)
+    int (*callback) (BspLeaf *, void *), void *parameters) const
 {
     DENG_ASSERT(bspLeafBlockmap != 0);
     static int localValidCount = 0;
@@ -1420,7 +1420,7 @@ static int iterateCellBlockPolyobjs(Blockmap &polyobjBlockmap, BlockmapCellBlock
 }
 
 int GameMap::polyobjsBoxIterator(AABoxd const &box,
-    int (*callback) (struct polyobj_s *, void *), void *parameters)
+    int (*callback) (struct polyobj_s *, void *), void *parameters) const
 {
     DENG_ASSERT(polyobjBlockmap != 0);
     BlockmapCellBlock cellBlock;
@@ -1485,7 +1485,7 @@ static int iterateCellBlockPolyobjLines(Blockmap &polyobjBlockmap,
 }
 
 int GameMap::linesBoxIterator(AABoxd const &box,
-    int (*callback) (LineDef *, void *), void *parameters)
+    int (*callback) (LineDef *, void *), void *parameters) const
 {
     DENG_ASSERT(polyobjBlockmap != 0);
     BlockmapCellBlock cellBlock;
@@ -1494,7 +1494,7 @@ int GameMap::linesBoxIterator(AABoxd const &box,
 }
 
 int GameMap::polyobjLinesBoxIterator(AABoxd const &box,
-    int (*callback) (LineDef *, void *), void *parameters)
+    int (*callback) (LineDef *, void *), void *parameters) const
 {
     DENG_ASSERT(polyobjBlockmap != 0);
     BlockmapCellBlock cellBlock;
@@ -1503,7 +1503,7 @@ int GameMap::polyobjLinesBoxIterator(AABoxd const &box,
 }
 
 int GameMap::allLinesBoxIterator(AABoxd const &box,
-    int (*callback) (LineDef *, void *), void *parameters)
+    int (*callback) (LineDef *, void *), void *parameters) const
 {
     if(!_polyobjs.isEmpty())
     {
@@ -1766,7 +1766,7 @@ int GameMap::pathTraverse(const_pvec2d_t from, const_pvec2d_t to, int flags,
     return P_TraverseIntercepts(callback, parameters);
 }
 
-BspLeaf *GameMap::bspLeafAtPoint(const_pvec2d_t const point)
+BspLeaf *GameMap::bspLeafAtPoint(const_pvec2d_t const point) const
 {
     MapElement *bspElement = d->bspRoot;
     while(bspElement->type() != DMU_BSPLEAF)

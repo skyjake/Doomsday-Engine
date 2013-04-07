@@ -274,7 +274,7 @@ public:
      *
      * @return     BspLeaf instance for that BSP node's leaf.
      */
-    BspLeaf *bspLeafAtPoint(const_pvec2d_t point);
+    BspLeaf *bspLeafAtPoint(const_pvec2d_t point) const;
 
     /**
      * @copydoc bspLeafAtPoint()
@@ -283,19 +283,19 @@ public:
      * @param y  Y coordinate of the point to test.
      * @return   BspLeaf instance for that BSP node's leaf.
      */
-    inline BspLeaf *bspLeafAtPoint(coord_t x, coord_t y) {
+    inline BspLeaf *bspLeafAtPoint(coord_t x, coord_t y) const {
         coord_t point[2] = { x, y };
         return bspLeafAtPoint(point);
     }
 
     int mobjsBoxIterator(AABoxd const &box,
-        int (*callback) (struct mobj_s *, void *), void *parameters = 0);
+        int (*callback) (struct mobj_s *, void *), void *parameters = 0) const;
 
     int linesBoxIterator(AABoxd const &box,
-        int (*callback) (LineDef *, void *), void *parameters = 0);
+        int (*callback) (LineDef *, void *), void *parameters = 0) const;
 
     int polyobjLinesBoxIterator(AABoxd const &box,
-        int (*callback) (LineDef *, void *), void *parameters = 0);
+        int (*callback) (LineDef *, void *), void *parameters = 0) const;
 
     /**
      * LineDefs and Polyobj lines (note polyobj lines are iterated first).
@@ -306,10 +306,10 @@ public:
      * a line multiple times during complex / non-linear traversals.
      */
     int allLinesBoxIterator(AABoxd const &box,
-        int (*callback) (LineDef *, void *), void *parameters = 0);
+        int (*callback) (LineDef *, void *), void *parameters = 0) const;
 
     int bspLeafsBoxIterator(AABoxd const &box, Sector *sector,
-        int (*callback) (BspLeaf *, void *), void *parameters = 0);
+        int (*callback) (BspLeaf *, void *), void *parameters = 0) const;
 
     /**
      * @note validCount should be incremented before calling this to begin a
@@ -318,7 +318,7 @@ public:
      * multiple times during complex / non-linear traversals.
      */
     int polyobjsBoxIterator(AABoxd const &box,
-        int (*callback) (struct polyobj_s *, void *), void *parameters = 0);
+        int (*callback) (struct polyobj_s *, void *), void *parameters = 0) const;
 
     /**
      * Retrieve an immutable copy of the LOS trace line state.

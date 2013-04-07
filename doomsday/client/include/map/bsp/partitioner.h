@@ -49,7 +49,7 @@ static const coord_t ANG_EPSILON = (1.0 / 1024.0);
 class Partitioner
 {
 public:
-    Partitioner(GameMap &map, int splitCostFactor = 7);
+    Partitioner(GameMap const &map, int splitCostFactor = 7);
     ~Partitioner();
 
     /**

@@ -97,7 +97,7 @@ struct Partitioner::Instance
     int splitCostFactor;
 
     /// Current map which we are building BSP data for.
-    GameMap *map;
+    GameMap const *map;
 
     /// Original counts
 
@@ -185,9 +185,9 @@ struct Partitioner::Instance
     /// @c true = a BSP for the current map has been built successfully.
     bool builtOK;
 
-    Instance(GameMap *_map, int _splitCostFactor)
+    Instance(GameMap const &_map, int _splitCostFactor)
       : splitCostFactor(_splitCostFactor),
-        map(_map),
+        map(&_map),
         numNodes(0), numLeafs(0), numHEdges(0), numVertexes(0),
         rootNode(0), treeNodeMap(), partition(), partitionLine(0),
         unclosedSectors(), unclosedBspLeafs(), migrantHEdges(),
@@ -2397,8 +2397,8 @@ struct Partitioner::Instance
     }
 };
 
-Partitioner::Partitioner(GameMap &map, int splitCostFactor)
-    : d(new Instance(&map, splitCostFactor))
+Partitioner::Partitioner(GameMap const &map, int splitCostFactor)
+    : d(new Instance(map, splitCostFactor))
 {
     d->initForMap();
 }
