@@ -190,18 +190,6 @@ public:
     /// Required child element is missing. @ingroup errors
     DENG2_ERROR(MissingChildError);
 
-public: /// @todo make private:
-    Partition _partition;
-
-    /// Bounding box for each child subspace [Right, Left].
-    AABoxd _aaBox[2];
-
-    /// Child map elements [Right, Left].
-    de::MapElement *_children[2];
-
-    /// Unique. Set when saving the BSP.
-    uint _index;
-
 public:
     /**
      * @param origin  2D point in the map coordinate space which describes the
@@ -210,7 +198,6 @@ public:
      *                angle of the half-plane.
      */
     BspNode(const_pvec2d_t partitionOrigin, const_pvec2d_t partitionDirection);
-    ~BspNode();
 
     /**
      * Returns the Partition for the BSP node.
@@ -277,36 +264,41 @@ public:
     inline void setLeft(de::MapElement *newChild) { setChild(LEFT, newChild); }
 
     /**
-     * Returns the axis-aligned bounding box for the specified child which encompases
+     * Returns the axis-aligned bounding box for the specified child, which, encompases
      * all the vertexes which define the geometry of that subspace of the BSP, in map
      * coordinate space units.
      */
     AABoxd const &childAABox(int left) const;
 
     /**
-     * Returns the axis-aligned bounding box for the Right child which encompases all
+     * Returns the axis-aligned bounding box for the Right child, which, encompases all
      * the vertexes which define the geometry of that subspace of the BSP, in map
      * coordinate space units.
      */
     inline AABoxd const &rightAABox() const { return childAABox(RIGHT); }
 
     /**
-     * Returns the axis-aligned bounding box for the Left child which encompases all
+     * Returns the axis-aligned bounding box for the Left child, which, encompases all
      * the vertexes which define the geometry of that subspace of the BSP, in map
      * coordinate space units.
      */
     inline AABoxd const &leftAABox() const { return childAABox(LEFT); }
 
-    void setChildAABox(int left, AABoxd *newAABox);
+    void setChildAABox(int left, AABoxd const *newAABox);
 
-    inline void setRightAABox(AABoxd *newAABox) { setChildAABox(RIGHT, newAABox); }
+    inline void setRightAABox(AABoxd const *newAABox) { setChildAABox(RIGHT, newAABox); }
 
-    inline void setLeftAABox(AABoxd *newAABox) { setChildAABox(LEFT, newAABox); }
+    inline void setLeftAABox(AABoxd const *newAABox) { setChildAABox(LEFT, newAABox); }
 
     /**
      * Returns the original index of the BSP node.
      */
     uint origIndex() const;
+
+    void setOrigIndex(uint newIndex);
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 #endif // LIBDENG_MAP_BSPNODE

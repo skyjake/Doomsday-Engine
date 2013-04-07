@@ -158,7 +158,7 @@ DENG2_PIMPL(GameMap)
         builder.take(node);
 
         // Add this BspNode to the LUT.
-        node->_index = bspNodes.count();
+        node->setOrigIndex(bspNodes.count());
         bspNodes.append(node);
     }
 

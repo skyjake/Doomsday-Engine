@@ -26,38 +26,53 @@
 
 using namespace de;
 
-BspNode::BspNode(const_pvec2d_t partitionOrigin, const_pvec2d_t partitionDirection)
-    : MapElement(DMU_BSPNODE), _partition(partitionOrigin, partitionDirection)
+DENG2_PIMPL(BspNode)
 {
-    std::memset(_aaBox,      0, sizeof(_aaBox));
-    std::memset(_children,   0, sizeof(_children));
-    _index = 0;
+    /// Space partition (half-plane).
+    Partition partition;
 
-    _children[RIGHT] = 0;
-    _children[LEFT]  = 0;
+    /// Bounding box for each child subspace [Right, Left].
+    AABoxd aaBox[2];
 
+    /// Child map elements [Right, Left].
+    MapElement *children[2];
+
+    /// Unique index. Set when saving the BSP.
+    uint index;
+
+    Instance(Public *i, const_pvec2d_t partitionOrigin,
+             const_pvec2d_t partitionDirection)
+        : Base(i),
+          partition(partitionOrigin, partitionDirection)
+    {
+        std::memset(aaBox,      0, sizeof(aaBox));
+        std::memset(children,   0, sizeof(children));
+    }
+};
+
+BspNode::BspNode(const_pvec2d_t partitionOrigin, const_pvec2d_t partitionDirection)
+    : MapElement(DMU_BSPNODE),
+      d(new Instance(this, partitionOrigin, partitionDirection))
+{
     setRightAABox(0);
     setLeftAABox(0);
 }
 
-BspNode::~BspNode()
-{}
-
 Partition const &BspNode::partition() const
 {
-    return _partition;
+    return d->partition;
 }
 
 bool BspNode::hasChild(int left) const
 {
-    return !!_children[left? LEFT : RIGHT];
+    return d->children[left? LEFT : RIGHT] != 0;
 }
 
 MapElement &BspNode::child(int left) const
 {
-    if(_children[left? LEFT:RIGHT])
+    if(d->children[left? LEFT:RIGHT])
     {
-        return *_children[left? LEFT:RIGHT];
+        return *d->children[left? LEFT:RIGHT];
     }
     /// @throw MissingChildError The specified child element is missing.
     throw MissingChildError("BspNode::child", QString("No %1 child is configured").arg(left? "left" : "right"));
@@ -66,25 +81,25 @@ MapElement &BspNode::child(int left) const
 void BspNode::setChild(int left, MapElement *newChild)
 {
     DENG2_ASSERT(newChild != this);
-    _children[left? LEFT:RIGHT] = newChild;
+    d->children[left? LEFT:RIGHT] = newChild;
 }
 
 AABoxd const &BspNode::childAABox(int left) const
 {
-    return _aaBox[left? LEFT:RIGHT];
+    return d->aaBox[left? LEFT:RIGHT];
 }
 
-void BspNode::setChildAABox(int left, AABoxd *newAABox)
+void BspNode::setChildAABox(int left, AABoxd const *newAABox)
 {
     if(newAABox)
     {
-        AABoxd &dst = _aaBox[left? LEFT:RIGHT];
+        AABoxd &dst = d->aaBox[left? LEFT:RIGHT];
         V2d_CopyBox(dst.arvec2, newAABox->arvec2);
     }
     else
     {
         // Clear.
-        AABoxd &dst = _aaBox[left? LEFT:RIGHT];
+        AABoxd &dst = d->aaBox[left? LEFT:RIGHT];
         V2d_Set(dst.min, DDMAXFLOAT, DDMAXFLOAT);
         V2d_Set(dst.max, DDMINFLOAT, DDMINFLOAT);
     }
@@ -92,7 +107,12 @@ void BspNode::setChildAABox(int left, AABoxd *newAABox)
 
 uint BspNode::origIndex() const
 {
-    return _index;
+    return d->index;
+}
+
+void BspNode::setOrigIndex(uint newIndex)
+{
+    d->index = newIndex;
 }
 
 // Partition -------------------------------------------------------------------
