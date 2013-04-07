@@ -41,6 +41,8 @@ public:
 
     Partition(Partition const &other);
 
+    virtual ~Partition() {}
+
     /**
      * Returns the origin point of the partition.
      */
@@ -161,8 +163,8 @@ public:
     }
 
 private:
-    double _origin[2];
-    double _direction[2];
+    vec2d_t _origin;
+    vec2d_t _direction;
 };
 
 /*

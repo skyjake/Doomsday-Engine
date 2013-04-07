@@ -30,11 +30,11 @@
 using namespace de;
 using namespace de::bsp;
 
-HPlane::HPlane() : _partition(), _intercepts(0)
+HPlane::HPlane() : Partition(), _intercepts(0)
 {}
 
 HPlane::HPlane(const_pvec2d_t origin, const_pvec2d_t direction)
-    : _partition(origin, direction), _intercepts(0)
+    : Partition(origin, direction), _intercepts(0)
 {}
 
 HPlane::~HPlane()
@@ -49,85 +49,53 @@ void HPlane::clear()
 
 const_pvec2d_t &HPlane::origin() const
 {
-    return _partition.origin();
-}
-
-coord_t HPlane::xOrigin() const
-{
-    return _partition.xOrigin();
-}
-
-coord_t HPlane::yOrigin() const
-{
-    return _partition.yOrigin();
+    return Partition::origin();
 }
 
 void HPlane::setOrigin(const_pvec2d_t newOrigin)
 {
     if(newOrigin)
     {
-        _partition.setOrigin(newOrigin);
+        Partition::setOrigin(newOrigin);
         clear();
     }
 }
 
-void HPlane::setOrigin(coord_t newX, coord_t newY)
-{
-    coord_t newOrigin[2] = { newX, newY };
-    setOrigin(newOrigin);
-}
-
 void HPlane::setXOrigin(coord_t newX)
 {
-    _partition.setXOrigin(newX);
+    Partition::setXOrigin(newX);
     clear();
 }
 
 void HPlane::setYOrigin(coord_t newY)
 {
-    _partition.setYOrigin(newY);
+    Partition::setYOrigin(newY);
     clear();
 }
 
 const_pvec2d_t &HPlane::direction() const
 {
-    return _partition.direction();
-}
-
-coord_t HPlane::xDirection() const
-{
-    return _partition.xDirection();
-}
-
-coord_t HPlane::yDirection() const
-{
-    return _partition.yDirection();
+    return Partition::direction();
 }
 
 void HPlane::setDirection(const_pvec2d_t newDirection)
 {
     if(newDirection)
     {
-        _partition.setDirection(newDirection);
+        Partition::setDirection(newDirection);
         clear();
     }
 }
 
-void HPlane::setDirection(coord_t newDX, coord_t newDY)
-{
-    coord_t newDirection[2] = { newDX, newDY };
-    setDirection(newDirection);
-}
-
 void HPlane::setXDirection(coord_t newDX)
 {
-    _partition.setXDirection(newDX);
+    Partition::setXDirection(newDX);
     clear();
 }
 
 void HPlane::setYDirection(coord_t newDY)
 {
-    _partition.setYDirection(newDY);
+    Partition::setYDirection(newDY);
     clear();
 }
 
@@ -178,7 +146,7 @@ HPlane::Intercepts const &HPlane::intercepts() const
     return _intercepts;
 }
 
-#if _DEBUG
+#ifdef DENG_DEBUG
 void HPlane::DebugPrint(HPlane const &inst)
 {
     int index = 0;

@@ -80,7 +80,7 @@ private:
 /**
  * @ingroup bsp
  */
-class HPlane
+class HPlane : private Partition
 {
 public:
     typedef std::list<HPlaneIntercept> Intercepts;
@@ -95,28 +95,34 @@ public:
 
     const_pvec2d_t &origin() const;
 
-    coord_t xOrigin() const;
-
-    coord_t yOrigin() const;
+    inline coord_t xOrigin() const { return origin()[VX]; }
+    inline coord_t yOrigin() const { return origin()[VY]; }
 
     void setOrigin(const_pvec2d_t newOrigin);
-    void setOrigin(coord_t newX, coord_t newY);
+
+    inline void setOrigin(coord_t newX, coord_t newY)
+    {
+        coord_t newOrigin[2] = { newX, newY };
+        setOrigin(newOrigin);
+    }
 
     void setXOrigin(coord_t newX);
-
     void setYOrigin(coord_t newY);
 
     const_pvec2d_t &direction() const;
 
-    coord_t xDirection() const;
-
-    coord_t yDirection() const;
+    inline coord_t xDirection() const { return direction()[VX]; }
+    inline coord_t yDirection() const { return direction()[VY]; }
 
     void setDirection(const_pvec2d_t newDirection);
-    void setDirection(coord_t newDX, coord_t newDY);
+
+    inline void setDirection(coord_t newDX, coord_t newDY)
+    {
+        coord_t newDirection[2] = { newDX, newDY };
+        setDirection(newDirection);
+    }
 
     void setXDirection(coord_t newDX);
-
     void setYDirection(coord_t newDY);
 
     /**
@@ -138,12 +144,11 @@ public:
 
     Intercepts const &intercepts() const;
 
+#ifdef DENG_DEBUG
     static void DebugPrint(HPlane const &inst);
+#endif
 
 private:
-    /// The space partition.
-    Partition _partition;
-
     /// The intercept list. Kept sorted by distance, in ascending order.
     Intercepts _intercepts;
 };
