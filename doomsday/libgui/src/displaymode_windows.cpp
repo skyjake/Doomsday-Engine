@@ -99,7 +99,7 @@ static int findMode(const DisplayMode* mode)
     return -1;
 }
 
-int DisplayMode_Native_Change(const DisplayMode* mode, boolean shouldCapture)
+int DisplayMode_Native_Change(const DisplayMode* mode, int shouldCapture)
 {
     DENG2_ASSERT(mode);
     DENG2_ASSERT(findMode(mode) >= 0);
@@ -114,9 +114,9 @@ int DisplayMode_Native_Change(const DisplayMode* mode, boolean shouldCapture)
     return true;
 }
 
-void DisplayMode_Native_SetColorTransfer(displaycolortransfer_t const *colors)
+void DisplayMode_Native_SetColorTransfer(DisplayColorTransfer const *colors)
 {
-    HWND hWnd = (HWND) PersistentCanvasWindow::main().nativeHandle();
+    HWND hWnd = (HWND) de::PersistentCanvasWindow::main().nativeHandle();
     DENG2_ASSERT(hWnd != 0);
 
     HDC hDC = GetDC(hWnd);
@@ -127,9 +127,9 @@ void DisplayMode_Native_SetColorTransfer(displaycolortransfer_t const *colors)
     }
 }
 
-void DisplayMode_Native_GetColorTransfer(displaycolortransfer_t *colors)
+void DisplayMode_Native_GetColorTransfer(DisplayColorTransfer *colors)
 {
-    HWND hWnd = (HWND) PersistentCanvasWindow::main().nativeHandle();
+    HWND hWnd = (HWND) de::PersistentCanvasWindow::main().nativeHandle();
     DENG2_ASSERT(hWnd != 0);
 
     HDC hDC = GetDC(hWnd);

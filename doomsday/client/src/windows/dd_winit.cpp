@@ -42,7 +42,10 @@
 
 #include "filesys/fs_util.h"
 #include "dd_winit.h"
-#include <de/DisplayMode>
+
+#ifdef __CLIENT__
+#  include <de/DisplayMode>
+#endif
 
 application_t app;
 
@@ -271,7 +274,9 @@ void DD_Shutdown()
     // No more use of COM beyond, this point.
     CoUninitialize();
 
+#ifdef __CLIENT__
     DisplayMode_Shutdown();
+#endif
 }
 
 /**

@@ -23,6 +23,7 @@
 #include "de_platform.h"
 #include "downloaddialog.h"
 #include "updatersettings.h"
+#include "ui/clientwindow.h"
 #include "dd_version.h"
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
@@ -129,7 +130,7 @@ DownloadDialog::DownloadDialog(de::String downloadUri, de::String fallbackUri, Q
 {
 #ifndef MACOSX
     setWindowTitle(DOOMSDAY_NICENAME" Update");
-    setWindowIcon(Window::main().widgetPtr()->windowIcon());
+    setWindowIcon(ClientWindow::main().windowIcon());
 #endif
 }
 

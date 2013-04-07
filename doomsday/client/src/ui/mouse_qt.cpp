@@ -156,7 +156,7 @@ static void Mouse_Qt_DeinitTrap()
 
 static void Mouse_Qt_Trap(boolean enabled)
 {
-    if(mouseTrapped == enabled) return;
+    if(mouseTrapped == CPP_BOOL(enabled)) return;
 
     mouseTrapped = enabled;
     prevMousePos = QPoint();

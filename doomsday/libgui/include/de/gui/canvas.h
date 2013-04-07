@@ -41,7 +41,7 @@ class CanvasWindow;
  *
  * @ingroup gui
  */
-class Canvas : public QGLWidget, public KeyEventSource, public MouseEventSource
+class LIBGUI_PUBLIC Canvas : public QGLWidget, public KeyEventSource, public MouseEventSource
 {
     Q_OBJECT
 

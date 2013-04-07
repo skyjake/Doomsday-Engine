@@ -128,17 +128,17 @@ DENG2_PIMPL(Canvas)
         {
             if(ev->type() == QEvent::KeyPress)
             {
-                if(d->altIsDown) return; // Ignore repeat down events(!)?
-                d->altIsDown = true;
+                if(altIsDown) return; // Ignore repeat down events(!)?
+                altIsDown = true;
             }
             else if(ev->type() == QEvent::KeyRelease)
             {
-                if(!d->altIsDown)
+                if(!altIsDown)
                 {
                     LOG_DEBUG("Ignoring repeat alt up.");
                     return; // Ignore repeat up events.
                 }
-                d->altIsDown = false;
+                altIsDown = false;
                 //LOG_DEBUG("Alt is up.");
             }
         }

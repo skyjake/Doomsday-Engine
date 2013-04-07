@@ -167,6 +167,8 @@ DENG2_PIMPL(ClientWindow),
     ~Instance()
     {
         self.canvas().audienceForFocusChange -= this;
+        self.canvas().audienceForMouseStateChange -= this;
+        self.canvas().audienceForKeyEvent -= this;
     }
 
     void setMode(Mode const &newMode)
@@ -285,6 +287,13 @@ ClientWindow::ClientWindow(String const &id)
 {
     canvas().audienceForGLResize += this;
     canvas().audienceForGLInit += this;
+
+#ifdef WIN32
+    // Set an icon for the window.
+    Path iconPath = DENG2_APP->nativeBasePath() / "data\\graphics\\doomsday.ico";
+    LOG_DEBUG("Window icon: ") << NativePath(iconPath).pretty();
+    setWindowIcon(QIcon(iconPath));
+#endif
 }
 
 GuiRootWidget &ClientWindow::root()

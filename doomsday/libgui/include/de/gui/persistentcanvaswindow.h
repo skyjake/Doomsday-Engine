@@ -35,7 +35,7 @@ namespace de {
  *
  * Supports fullscreen display modes (using DisplayMode).
  */
-class PersistentCanvasWindow : public CanvasWindow
+class LIBGUI_PUBLIC PersistentCanvasWindow : public CanvasWindow
 {
     Q_OBJECT
 

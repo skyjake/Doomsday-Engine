@@ -22,6 +22,11 @@
 
 #include "Vector"
 
+#ifdef WIN32
+#  undef min
+#  undef max
+#endif
+
 namespace de {
 
 /**

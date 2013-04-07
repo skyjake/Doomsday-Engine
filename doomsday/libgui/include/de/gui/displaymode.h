@@ -25,6 +25,7 @@
 #ifndef LIBGUI_DISPLAYMODE_H
 #define LIBGUI_DISPLAYMODE_H
 
+#include "libgui.h"
 #include "de/libdeng2.h"
 
 #ifdef __cplusplus
@@ -52,34 +53,34 @@ typedef struct displaycolortransfer_s {
  *
  * @return @c true, if display modes were initialized successfully.
  */
-int DisplayMode_Init(void);
+LIBGUI_PUBLIC int DisplayMode_Init(void);
 
 /**
  * Gets the current color transfer function and saves it as the one that will be
  * restored at shutdown.
  */
-void DisplayMode_SaveOriginalColorTransfer(void);
+LIBGUI_PUBLIC void DisplayMode_SaveOriginalColorTransfer(void);
 
 /**
  * Shuts down the DisplayMode class. The current display mode is restored to what
  * it was at initialization time.
  */
-void DisplayMode_Shutdown(void);
+LIBGUI_PUBLIC void DisplayMode_Shutdown(void);
 
 /**
  * Returns the display mode that was in use when DisplayMode_Init() was called.
  */
-DisplayMode const *DisplayMode_OriginalMode(void);
+LIBGUI_PUBLIC DisplayMode const *DisplayMode_OriginalMode(void);
 
 /**
  * Returns the current display mode.
  */
-DisplayMode const *DisplayMode_Current(void);
+LIBGUI_PUBLIC DisplayMode const *DisplayMode_Current(void);
 
 /**
  * Returns the number of available display modes.
  */
-int DisplayMode_Count(void);
+LIBGUI_PUBLIC int DisplayMode_Count(void);
 
 /**
  * Returns one of the available display modes. Use DisplayMode_Count() to
@@ -87,7 +88,7 @@ int DisplayMode_Count(void);
  *
  * @param index  Index of the mode, must be between 0 and DisplayMode_Count() - 1.
  */
-DisplayMode const *DisplayMode_ByIndex(int index);
+LIBGUI_PUBLIC DisplayMode const *DisplayMode_ByIndex(int index);
 
 /**
  * Finds the closest available mode to the given criteria.
@@ -101,7 +102,7 @@ DisplayMode const *DisplayMode_ByIndex(int index);
  * the available modes; returns @c NULL only if DisplayMode_Init() has not yet
  * been called.
  */
-DisplayMode const *DisplayMode_FindClosest(int width, int height, int depth, float freq);
+LIBGUI_PUBLIC DisplayMode const *DisplayMode_FindClosest(int width, int height, int depth, float freq);
 
 /**
  * Determines if two display modes are equivalent.
@@ -111,7 +112,7 @@ DisplayMode const *DisplayMode_FindClosest(int width, int height, int depth, flo
  *
  * @return  @c true or @c false.
  */
-int DisplayMode_IsEqual(DisplayMode const *a, DisplayMode const *b);
+LIBGUI_PUBLIC int DisplayMode_IsEqual(DisplayMode const *a, DisplayMode const *b);
 
 /**
  * Changes the display mode.
@@ -122,21 +123,21 @@ int DisplayMode_IsEqual(DisplayMode const *a, DisplayMode const *b);
  * @return @c true, if a mode change occurred. @c false, otherwise (bad mode or
  * when attempting to change to the current mode).
  */
-int DisplayMode_Change(DisplayMode const *mode, int shouldCapture);
+LIBGUI_PUBLIC int DisplayMode_Change(DisplayMode const *mode, int shouldCapture);
 
 /**
  * Gets the current color transfer table.
  *
  * @param colors  Color transfer.
  */
-void DisplayMode_GetColorTransfer(DisplayColorTransfer *colors);
+LIBGUI_PUBLIC void DisplayMode_GetColorTransfer(DisplayColorTransfer *colors);
 
 /**
  * Sets the color transfer table.
  *
  * @param colors  Color transfer.
  */
-void DisplayMode_SetColorTransfer(DisplayColorTransfer const *colors);
+LIBGUI_PUBLIC void DisplayMode_SetColorTransfer(DisplayColorTransfer const *colors);
 
 #ifdef __cplusplus
 } // extern "C"

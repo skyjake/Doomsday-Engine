@@ -2568,7 +2568,7 @@ void* DD_GetVariable(int ddvalue)
 
 # ifdef WIN32
     case DD_WINDOW_HANDLE:
-        return Window::main().nativeHandle();
+        return ClientWindow::main().nativeHandle();
 # endif
 #endif
 
