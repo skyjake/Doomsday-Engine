@@ -30,11 +30,9 @@
 
 #include <de/Error>
 #include <de/Log>
-#include <de/memory.h>
 
 #include "de_base.h"
 
-#include "map/p_mapdata.h"
 #include "map/bspleaf.h"
 #include "map/bspnode.h"
 #include "map/hedge.h"
@@ -48,10 +46,11 @@
 #include "map/bsp/partitioncost.h"
 #include "map/bsp/superblockmap.h"
 #include "map/bsp/vertexinfo.h"
-#include "map/bsp/partitioner.h"
 
 #include "render/r_main.h"  // validCount
 #include "m_misc.h"         // M_BoxOnLineSide2
+
+#include "map/bsp/partitioner.h"
 
 using namespace de;
 using namespace de::bsp;
@@ -72,11 +71,21 @@ enum LineRelationship
     Intersects
 };
 
-static LineRelationship lineRelationship(coord_t a, coord_t b, coord_t distEpsilon);
-static AABox blockmapBounds(AABoxd const &mapBounds);
-static bool findBspLeafCenter(BspLeaf const &leaf, pvec2d_t midPoint);
-static void initAABoxFromEditableLineDefVertexes(AABoxd *aaBox, LineDef const *line);
-static Sector *findFirstSectorInHEdgeList(BspLeaf const *leaf);
+/**
+ * @param a  Perpendicular distance from the start vertex to the partition.
+ * @param b  Perpendicular distance from the end vertex to the partition.
+ * @param distEpsilon  Rounding threshold within which points are considered
+ *                     to intercept of the partition line.
+ *
+ * @return  Logical relationship between the line and the partition.
+ */
+static LineRelationship lineRelationship(coord_t a, coord_t b,
+    coord_t distEpsilon = DIST_EPSILON);
+
+static Vector2d findBspLeafCenter(BspLeaf const &leaf);
+
+static Sector *findFirstSectorInHEdgeList(BspLeaf const &leaf);
+
 //DENG_DEBUG_ONLY(static bool bspLeafHasRealHEdge(BspLeaf const &leaf));
 //DENG_DEBUG_ONLY(static void printBspLeafHEdges(BspLeaf const &leaf));
 //DENG_DEBUG_ONLY(static int printSuperBlockHEdgesWorker(SuperBlock *block, void * /*parameters*/));
@@ -98,8 +107,6 @@ DENG2_PIMPL(Partitioner)
 
     /// The map we are building BSP data for.
     GameMap const *map;
-
-    AABoxd mapBounds;
 
     /// Running totals of constructed BSP data objects.
     uint numNodes;
@@ -313,7 +320,7 @@ DENG2_PIMPL(Partitioner)
         p.mY = (line->v1Origin()[VY] + line->v2Origin()[VY]) / 2.0;
         p.castHoriz = (de::abs(line->direction()[VX]) < de::abs(line->direction()[VY])? true : false);
 
-        AABoxd scanRegion = mapBounds;
+        AABoxd scanRegion = map->bounds();
         if(p.castHoriz)
         {
             scanRegion.minY = de::min(line->v1Origin()[VY], line->v2Origin()[VY]) - DIST_EPSILON;
@@ -339,8 +346,6 @@ DENG2_PIMPL(Partitioner)
 
     void initForMap()
     {
-        mapBounds = map->bounds();
-
         // Initialize vertex info for the initial set of vertexes.
         vertexInfos.resize(map->vertexCount());
 
@@ -697,12 +702,18 @@ DENG2_PIMPL(Partitioner)
         return newHEdge;
     }
 
-    void hedgePartitionDistance(HEdge const *hedge, HEdgeInfo const &pInfo, coord_t &a, coord_t &b)
+    /**
+     * Return values:
+     * @param a  Perpendicular distance from the start vertex to the partition.
+     * @param b  Perpendicular distance from the end vertex to the partition.
+     */
+    void hedgePartitionDistance(HEdge const *hedge, HEdgeInfo const &pInfo,
+                                coord_t &a, coord_t &b)
     {
         DENG2_ASSERT(hedge);
-        /// @attention Ensure half-edges produced from the partition's source line are
-        /// always treated as collinear. This special case is necessary due to precision
-        /// inaccuracies when a line is split into multiple segments.
+        /// @attention Ensure half-edges produced from the partition's source
+        /// line are always treated as collinear. This special case is necessary
+        /// due to precision inaccuracies when a line is split into multiple segments.
         HEdgeInfo const &hInfo = hedgeInfo(*hedge);
         if(hInfo.sourceLine == pInfo.sourceLine)
         {
@@ -723,7 +734,7 @@ DENG2_PIMPL(Partitioner)
         HEdgeInfo const &pInfo, coord_t &a, coord_t &b)
     {
         hedgePartitionDistance(hedge, pInfo, a, b);
-        return lineRelationship(a, b, DIST_EPSILON);
+        return lineRelationship(a, b);
     }
 
     /**
@@ -1597,10 +1608,8 @@ DENG2_PIMPL(Partitioner)
      * The desired order (clockwise) means descending angles.
      */
     static void sortHEdgesByAngleAroundPoint(HEdgeSortBuffer &hedges,
-        int lastHEdgeIndex, const_pvec2d_t point)
+        int lastHEdgeIndex, Vector2d const &point)
     {
-        DENG2_ASSERT(point != 0);
-
         /// @par Algorithm
         /// "double bubble"
         for(int pass = 0; pass < lastHEdgeIndex; ++pass)
@@ -1608,15 +1617,16 @@ DENG2_PIMPL(Partitioner)
             bool swappedAny = false;
             for(int i = 0; i < lastHEdgeIndex; ++i)
             {
-                HEdge const *a = hedges.at(i);
-                HEdge const *b = hedges.at(i+1);
+                HEdge const *hedge1 = hedges.at(i);
+                HEdge const *hedge2 = hedges.at(i+1);
 
-                coord_t angle1 = M_DirectionToAngleXY(a->v1Origin()[VX] - point[VX],
-                                                      a->v1Origin()[VY] - point[VY]);
-                coord_t angle2 = M_DirectionToAngleXY(b->v1Origin()[VX] - point[VX],
-                                                      b->v1Origin()[VY] - point[VY]);
+                Vector2d v1Dist = Vector2d(hedge1->v1Origin()) - point;
+                Vector2d v2Dist = Vector2d(hedge2->v1Origin()) - point;
 
-                if(angle1 + ANG_EPSILON < angle2)
+                coord_t v1Angle = M_DirectionToAngleXY(v1Dist.x, v1Dist.y);
+                coord_t v2Angle = M_DirectionToAngleXY(v2Dist.x, v2Dist.y);
+
+                if(v1Angle + ANG_EPSILON < v2Angle)
                 {
                     hedges.swap(i, i + 1);
                     swappedAny = true;
@@ -1639,7 +1649,7 @@ DENG2_PIMPL(Partitioner)
      * the access rights of the BspLeaf class this algorithm belongs here in
      * the BSP partitioner. -ds
      */
-    static void clockwiseOrder(BspLeaf &leaf, const_pvec2d_t point,
+    static void clockwiseOrder(BspLeaf &leaf, Vector2d const &point,
                                HEdgeSortBuffer &sortBuffer)
     {
         if(!leaf._hedge) return;
@@ -1667,7 +1677,7 @@ DENG2_PIMPL(Partitioner)
             leaf._hedge = sortBuffer[j];
         }
 
-        // LOG_DEBUG("Sorted half-edges around (%1.1f, %1.1f)" << point[VX] << point[VY];
+        // LOG_DEBUG("Sorted half-edges around %s" << point.asText();
         // printBspLeafHEdges(leaf);
     }
 
@@ -1715,16 +1725,14 @@ DENG2_PIMPL(Partitioner)
         return 0; // Not reachable.
     }
 
-    void clockwiseLeaf(BspLeaf *leaf, HEdgeSortBuffer &sortBuffer)
+    void clockwiseLeaf(BspLeaf &leaf, HEdgeSortBuffer &sortBuffer)
     {
-        vec2d_t center; V2d_Set(center, 0, 0);
-        findBspLeafCenter(*leaf, center);
-        clockwiseOrder(*leaf, center, sortBuffer);
+        clockwiseOrder(leaf, findBspLeafCenter(leaf), sortBuffer);
 
         // Construct the leaf's hedge ring.
-        if(leaf->_hedge)
+        if(leaf._hedge)
         {
-            HEdge *hedge = leaf->_hedge;
+            HEdge *hedge = leaf._hedge;
             forever
             {
                 /// @todo Kludge: This should not be done here!
@@ -1757,7 +1765,7 @@ DENG2_PIMPL(Partitioner)
                 else
                 {
                     // Circular link.
-                    hedge->_next = leaf->_hedge;
+                    hedge->_next = leaf._hedge;
                     hedge->_next->_prev = hedge;
                     break;
                 }
@@ -1782,7 +1790,7 @@ DENG2_PIMPL(Partitioner)
             BspLeaf *leaf = node->userData()->castTo<BspLeaf>();
 
             // Sort the leaf's half-edges.
-            clockwiseLeaf(leaf, sortBuffer);
+            clockwiseLeaf(*leaf, sortBuffer);
 
             /*
              * Perform some post analysis on the built leaf.
@@ -1793,7 +1801,7 @@ DENG2_PIMPL(Partitioner)
                                 .arg(dintptr(leaf), 0, 16));
 
             // Look for migrant half-edges in the leaf.
-            if(Sector *sector = findFirstSectorInHEdgeList(leaf))
+            if(Sector *sector = findFirstSectorInHEdgeList(*leaf))
             {
                 HEdge *base = leaf->firstHEdge();
                 HEdge *hedge = base;
@@ -2298,9 +2306,28 @@ void Partitioner::setSplitCostFactor(int newFactor)
     }
 }
 
+static AABox blockmapBounds(AABoxd const &mapBounds)
+{
+    AABox mapBoundsi;
+    mapBoundsi.minX = int( de::floor(mapBounds.minX) );
+    mapBoundsi.minY = int( de::floor(mapBounds.minY) );
+    mapBoundsi.maxX = int(  de::ceil(mapBounds.maxX) );
+    mapBoundsi.maxY = int(  de::ceil(mapBounds.maxY) );
+
+    AABox blockBounds;
+    blockBounds.minX = mapBoundsi.minX - (mapBoundsi.minX & 0x7);
+    blockBounds.minY = mapBoundsi.minY - (mapBoundsi.minY & 0x7);
+    int bw = ((mapBoundsi.maxX - blockBounds.minX) / 128) + 1;
+    int bh = ((mapBoundsi.maxY - blockBounds.minY) / 128) + 1;
+
+    blockBounds.maxX = blockBounds.minX + 128 * M_CeilPow2(bw);
+    blockBounds.maxY = blockBounds.minY + 128 * M_CeilPow2(bh);
+    return blockBounds;
+}
+
 void Partitioner::build()
 {
-    d->buildBsp(SuperBlockmap(blockmapBounds(d->mapBounds)));
+    d->buildBsp(SuperBlockmap(blockmapBounds(d->map->bounds())));
 }
 
 BspTreeNode *Partitioner::root() const
@@ -2372,26 +2399,25 @@ static LineRelationship lineRelationship(coord_t a, coord_t b, coord_t distEpsil
     return Intersects;
 }
 
-static bool findBspLeafCenter(BspLeaf const &leaf, pvec2d_t center)
+static Vector2d findBspLeafCenter(BspLeaf const &leaf)
 {
-    DENG2_ASSERT(center);
-
-    vec2d_t avg; V2d_Set(avg, 0, 0);
+    Vector2d center;
     size_t numPoints = 0;
 
     for(HEdge const *hedge = leaf.firstHEdge(); hedge; hedge = hedge->_next)
     {
-        V2d_Sum(avg, avg, hedge->v1Origin());
-        V2d_Sum(avg, avg, hedge->v2Origin());
+        center += hedge->v1Origin();
+        center += hedge->v2Origin();
         numPoints += 2;
     }
 
     if(numPoints)
     {
-        V2d_Set(center, avg[VX] / numPoints, avg[VY] / numPoints);
+        center.x /= numPoints;
+        center.y /= numPoints;
     }
 
-    return true;
+    return center;
 }
 
 #if 0
@@ -2440,29 +2466,9 @@ static void printPartitionIntercepts(HPlane const &partition)
 })
 #endif
 
-static AABox blockmapBounds(AABoxd const &mapBounds)
+static Sector *findFirstSectorInHEdgeList(BspLeaf const &leaf)
 {
-    AABox mapBoundsi;
-    mapBoundsi.minX = int( de::floor(mapBounds.minX) );
-    mapBoundsi.minY = int( de::floor(mapBounds.minY) );
-    mapBoundsi.maxX = int(  de::ceil(mapBounds.maxX) );
-    mapBoundsi.maxY = int(  de::ceil(mapBounds.maxY) );
-
-    AABox blockBounds;
-    blockBounds.minX = mapBoundsi.minX - (mapBoundsi.minX & 0x7);
-    blockBounds.minY = mapBoundsi.minY - (mapBoundsi.minY & 0x7);
-    int bw = ((mapBoundsi.maxX - blockBounds.minX) / 128) + 1;
-    int bh = ((mapBoundsi.maxY - blockBounds.minY) / 128) + 1;
-
-    blockBounds.maxX = blockBounds.minX + 128 * M_CeilPow2(bw);
-    blockBounds.maxY = blockBounds.minY + 128 * M_CeilPow2(bh);
-    return blockBounds;
-}
-
-static Sector *findFirstSectorInHEdgeList(BspLeaf const *leaf)
-{
-    DENG2_ASSERT(leaf);
-    HEdge const *base = leaf->firstHEdge();
+    HEdge const *base = leaf.firstHEdge();
     HEdge const *hedge = base;
     do
     {

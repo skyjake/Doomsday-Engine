@@ -135,7 +135,7 @@ uint BspLeaf::hedgeCount() const
 
 bool BspLeaf::hasSector() const
 {
-    return !!_sector;
+    return _sector != 0;
 }
 
 Sector &BspLeaf::sector() const
