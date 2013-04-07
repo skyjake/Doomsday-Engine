@@ -73,7 +73,6 @@ enum LineRelationship
 };
 
 static LineRelationship lineRelationship(coord_t a, coord_t b, coord_t distEpsilon);
-static AABoxd findMapBounds(GameMap *map);
 static AABox blockmapBounds(AABoxd const &mapBounds);
 static bool findBspLeafCenter(BspLeaf const &leaf, pvec2d_t midPoint);
 static void initAABoxFromEditableLineDefVertexes(AABoxd *aaBox, LineDef const *line);
@@ -382,7 +381,7 @@ struct Partitioner::Instance
 
     void initForMap()
     {
-        mapBounds = findMapBounds(map);
+        mapBounds = map->bounds();
 
         // Initialize vertex info for the initial set of vertexes.
         vertexInfos.resize(map->vertexCount());
@@ -732,13 +731,13 @@ struct Partitioner::Instance
             hedgeInfo(newHEdge.twin()).initFromHEdge(newHEdge.twin());
 
             // Has this already been added to a leaf?
-            if(oldHEdge.twin()._bspLeaf)
+            if(oldHEdge.twin().hasBspLeaf())
             {
                 // Update the in-leaf references.
                 oldHEdge.twin()._next = newHEdge.twinPtr();
 
                 // There is now one more half-edge in this leaf.
-                oldHEdge.twin()._bspLeaf->_hedgeCount += 1;
+                oldHEdge.twin().bspLeaf()._hedgeCount += 1;
             }
         }
 
@@ -847,7 +846,7 @@ struct Partitioner::Instance
 
             // Ensure the new twin half-edge is inserted into the same block as the old twin.
             /// @todo This logic can now be moved into splitHEdge().
-            if(hedge->hasTwin() && !hedge->twin()._bspLeaf)
+            if(hedge->hasTwin() && !hedge->twin().hasBspLeaf())
             {
                 SuperBlock *bmapBlock = hedgeInfo(hedge->twin()).bmapBlock;
                 DENG2_ASSERT(bmapBlock);
@@ -2558,59 +2557,6 @@ static void printPartitionIntercepts(HPlane const &partition)
     }
 })
 #endif
-
-static void initAABoxFromEditableLineDefVertexes(AABoxd *aaBox, LineDef const *line)
-{
-    const_pvec2d_t &from = line->fromOrigin();
-    const_pvec2d_t &to   = line->toOrigin();
-    aaBox->minX = de::min(from[VX], to[VX]);
-    aaBox->minY = de::min(from[VY], to[VY]);
-    aaBox->maxX = de::max(from[VX], to[VX]);
-    aaBox->maxY = de::max(from[VY], to[VY]);
-}
-
-static AABoxd findMapBounds2(GameMap *map)
-{
-    DENG2_ASSERT(map);
-    AABoxd bounds;
-    bool initialized = false;
-
-    foreach(LineDef *line, map->lines())
-    {
-        // Do not consider zero-length lines (already screened at a higher level).
-        //if(lineDefInfo(*line).flags.testFlag(LineDefInfo::ZEROLENGTH)) continue;
-
-        AABoxd lineAABox;
-        initAABoxFromEditableLineDefVertexes(&lineAABox, line);
-
-        if(initialized)
-        {
-            V2d_UniteBox(bounds.arvec2, lineAABox.arvec2);
-        }
-        else
-        {
-            V2d_CopyBox(bounds.arvec2, lineAABox.arvec2);
-            initialized = true;
-        }
-    }
-
-    if(!initialized)
-    {
-        // Clear.
-        V2d_Set(bounds.min, DDMAXFLOAT, DDMAXFLOAT);
-        V2d_Set(bounds.max, DDMINFLOAT, DDMINFLOAT);
-    }
-    return bounds;
-}
-
-static AABoxd findMapBounds(GameMap *map)
-{
-    AABoxd mapBounds = findMapBounds2(map);
-    LOG_VERBOSE("Map bounds:")
-        << " min[x:" << mapBounds.minX << ", y:" << mapBounds.minY << "]"
-        << " max[x:" << mapBounds.maxX << ", y:" << mapBounds.maxY << "]";
-    return mapBounds;
-}
 
 static AABox blockmapBounds(AABoxd const &mapBounds)
 {

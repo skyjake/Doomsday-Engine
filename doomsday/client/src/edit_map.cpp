@@ -1058,11 +1058,15 @@ boolean MPE_End()
         }
     }
 
+    map->updateBounds();
+    AABoxd const &mapBounds = map->bounds();
+    LOG_INFO("Map bounds: min%s max%s")
+        << Vector2d(mapBounds.min).asText()
+        << Vector2d(mapBounds.max).asText();
+
     /*
      * Build blockmaps.
      */
-    map->updateBounds();
-
     vec2d_t min, max;
     map->bounds(min, max);
 

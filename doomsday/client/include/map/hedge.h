@@ -265,6 +265,11 @@ public:
     inline HEdge *twinPtr() const { return hasTwin()? &twin() : 0; }
 
     /**
+     * Returns @c true iff a BspLeaf is linked to the half-edge.
+     */
+    bool hasBspLeaf() const;
+
+    /**
      * Returns the BSP leaf for the half-edge.
      */
     BspLeaf &bspLeaf() const;

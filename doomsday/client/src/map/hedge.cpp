@@ -122,6 +122,11 @@ HEdge &HEdge::twin() const
     throw MissingTwinError("HEdge::twin", "No twin half-edge is associated");
 }
 
+bool HEdge::hasBspLeaf() const
+{
+    return _bspLeaf != 0;
+}
+
 BspLeaf &HEdge::bspLeaf() const
 {
     DENG2_ASSERT(_bspLeaf != 0);
