@@ -1,0 +1,14 @@
+@summary{
+    Change to fullscreen mode using the specified resolution.
+}
+@description{
+    @usage
+    @ident{setfullres} @help_arg{width} @help_arg{height}
+
+    @seealso
+    @list{
+        @item @cmd{listdisplaymodes}
+        @item @cmd{setwinres}
+        @item @cmd{setres}
+    }
+}

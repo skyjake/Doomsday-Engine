@@ -1,0 +1,14 @@
+@summary{
+    Set window size and change to windowed mode.
+}
+@description{
+    @usage
+    @ident{setwinres} @help_arg{width} @help_arg{height}
+
+    @seealso
+    @list{
+        @item @cmd{setfullres}
+        @item @cmd{setres}
+        @item @cmd{listdisplaymodes}
+    }
+}
