@@ -482,11 +482,6 @@ void Models_CacheForState(int stateIndex)
     DENG_UNUSED(stateIndex);
 }
 
-void LG_SectorChanged(Sector* sector)
-{
-    DENG_UNUSED(sector);
-}
-
 void Cl_InitPlayers(void)
 {}
 

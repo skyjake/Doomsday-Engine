@@ -29,15 +29,42 @@
 
 using namespace de;
 
-Sector::Sector() : MapElement(DMU_SECTOR)
+DENG2_PIMPL(Sector)
+{
+    Instance(Public *i) : Base(i)
+    {}
+
+    ~Instance()
+    {
+        qDeleteAll(self._planes);
+    }
+
+    void notifyLightLevelChanged(float oldLightLevel)
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE(LightLevelChange, i)
+        {
+            i->lightLevelChanged(self, oldLightLevel);
+        }
+    }
+
+    void notifyLightColorChanged(Vector3f const &oldLightColor)
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE(LightColorChange, i)
+        {
+            i->lightColorChanged(self, oldLightColor);
+        }
+    }
+};
+
+Sector::Sector(float lightLevel, Vector3f const &lightColor)
+    : MapElement(DMU_SECTOR),
+      d(new Instance(this)),
+      _lightLevel(lightLevel), _oldLightLevel(_lightLevel),
+      _lightColor(lightColor), _oldLightColor(_lightColor)
 {
     _frameFlags = 0;
     _validCount = 0;
     _roughArea = 0;
-    _lightLevel = 0;
-    _oldLightLevel = 0;
-    V3f_Set(_lightColor, 0, 0, 0);
-    V3f_Set(_oldLightColor, 0, 0, 0);
     _mobjList = 0;
     std::memset(&_soundEmitter, 0, sizeof(_soundEmitter));
     std::memset(&_lightGridData, 0, sizeof(_lightGridData));
@@ -45,19 +72,56 @@ Sector::Sector() : MapElement(DMU_SECTOR)
     _origIndex = 0;
 }
 
-Sector::~Sector()
-{
-    qDeleteAll(_planes);
-}
-
 float Sector::lightLevel() const
 {
     return _lightLevel;
 }
 
-const_pvec3f_t &Sector::lightColor() const
+void Sector::setLightLevel(float newLightLevel_)
+{
+    float newLightLevel = de::clamp(0.f, newLightLevel_, 1.f);
+    if(!de::fequal(_lightLevel, newLightLevel))
+    {
+        float oldLightLevel = _lightLevel;
+        _lightLevel = newLightLevel;
+
+        // Notify interested parties of the change.
+        d->notifyLightLevelChanged(oldLightLevel);
+    }
+}
+
+Vector3f const &Sector::lightColor() const
 {
     return _lightColor;
+}
+
+void Sector::setLightColor(Vector3f const &newLightColor_)
+{
+    Vector3f newLightColor = Vector3f(de::clamp(0.f, newLightColor_.x, 1.f),
+                                      de::clamp(0.f, newLightColor_.y, 1.f),
+                                      de::clamp(0.f, newLightColor_.z, 1.f));
+    if(_lightColor != newLightColor)
+    {
+        Vector3f oldLightColor = _lightColor;
+        _lightColor = newLightColor;
+
+        // Notify interested parties of the change.
+        d->notifyLightColorChanged(oldLightColor);
+    }
+}
+
+void Sector::setLightColorComponent(int component, float newStrength)
+{
+    DENG_ASSERT(component >= 0 && component < 3);
+    newStrength = de::clamp(0.f, newStrength, 1.f);
+    if(!de::fequal(_lightColor[component], newStrength))
+    {
+        Vector3f oldLightColor = _lightColor;
+        _lightColor[component] = newStrength;
+
+        // Notify interested parties of the change.
+        d->notifyLightColorChanged(oldLightColor);
+    }
 }
 
 struct mobj_s *Sector::firstMobj() const
@@ -191,18 +255,18 @@ int Sector::property(setargs_t &args) const
         DMU_GetValue(DMT_SECTOR_LIGHTLEVEL, &_lightLevel, &args, 0);
         break;
     case DMU_COLOR:
-        DMU_GetValue(DMT_SECTOR_RGB, &_lightColor[0], &args, 0);
-        DMU_GetValue(DMT_SECTOR_RGB, &_lightColor[1], &args, 1);
-        DMU_GetValue(DMT_SECTOR_RGB, &_lightColor[2], &args, 2);
+        DMU_GetValue(DMT_SECTOR_RGB, &_lightColor.x, &args, 0);
+        DMU_GetValue(DMT_SECTOR_RGB, &_lightColor.y, &args, 1);
+        DMU_GetValue(DMT_SECTOR_RGB, &_lightColor.z, &args, 2);
         break;
     case DMU_COLOR_RED:
-        DMU_GetValue(DMT_SECTOR_RGB, &_lightColor[0], &args, 0);
+        DMU_GetValue(DMT_SECTOR_RGB, &_lightColor.x, &args, 0);
         break;
     case DMU_COLOR_GREEN:
-        DMU_GetValue(DMT_SECTOR_RGB, &_lightColor[1], &args, 0);
+        DMU_GetValue(DMT_SECTOR_RGB, &_lightColor.y, &args, 0);
         break;
     case DMU_COLOR_BLUE:
-        DMU_GetValue(DMT_SECTOR_RGB, &_lightColor[2], &args, 0);
+        DMU_GetValue(DMT_SECTOR_RGB, &_lightColor.z, &args, 0);
         break;
     case DMU_BASE: {
         ddmobj_base_t const *soundEmitterAdr = &_soundEmitter;
@@ -238,23 +302,33 @@ int Sector::setProperty(setargs_t const &args)
 {
     switch(args.prop)
     {
-    case DMU_COLOR:
-        DMU_SetValue(DMT_SECTOR_RGB, &_lightColor[0], &args, 0);
-        DMU_SetValue(DMT_SECTOR_RGB, &_lightColor[1], &args, 1);
-        DMU_SetValue(DMT_SECTOR_RGB, &_lightColor[2], &args, 2);
-        break;
-    case DMU_COLOR_RED:
-        DMU_SetValue(DMT_SECTOR_RGB, &_lightColor[0], &args, 0);
-        break;
-    case DMU_COLOR_GREEN:
-        DMU_SetValue(DMT_SECTOR_RGB, &_lightColor[1], &args, 0);
-        break;
-    case DMU_COLOR_BLUE:
-        DMU_SetValue(DMT_SECTOR_RGB, &_lightColor[2], &args, 0);
-        break;
-    case DMU_LIGHT_LEVEL:
-        DMU_SetValue(DMT_SECTOR_LIGHTLEVEL, &_lightLevel, &args, 0);
-        break;
+    case DMU_COLOR: {
+        Vector3f newLightColor;
+        DMU_SetValue(DMT_SECTOR_RGB, &newLightColor.x, &args, 0);
+        DMU_SetValue(DMT_SECTOR_RGB, &newLightColor.y, &args, 1);
+        DMU_SetValue(DMT_SECTOR_RGB, &newLightColor.z, &args, 2);
+        setLightColor(newLightColor);
+        break; }
+    case DMU_COLOR_RED: {
+        float newStrength;
+        DMU_SetValue(DMT_SECTOR_RGB, &newStrength, &args, 0);
+        setLightRed(newStrength);
+        break; }
+    case DMU_COLOR_GREEN: {
+        float newStrength;
+        DMU_SetValue(DMT_SECTOR_RGB, &newStrength, &args, 0);
+        setLightGreen(newStrength);
+        break; }
+    case DMU_COLOR_BLUE: {
+        float newStrength;
+        DMU_SetValue(DMT_SECTOR_RGB, &newStrength, &args, 0);
+        setLightBlue(newStrength);
+        break; }
+    case DMU_LIGHT_LEVEL: {
+        float newLightLevel;
+        DMU_SetValue(DMT_SECTOR_LIGHTLEVEL, &newLightLevel, &args, 0);
+        setLightLevel(newLightLevel);
+        break; }
     case DMU_VALID_COUNT:
         DMU_SetValue(DMT_SECTOR_VALIDCOUNT, &_validCount, &args, 0);
         break;

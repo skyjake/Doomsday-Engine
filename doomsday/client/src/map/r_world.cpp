@@ -984,6 +984,7 @@ boolean R_UpdateSector(Sector *sec, boolean forceUpdate)
 
     boolean changed = false, planeChanged = false;
 
+#ifdef __CLIENT__
     // Check if there are any lightlevel or color changes.
     if(forceUpdate ||
        (sec->_lightLevel != sec->_oldLightLevel ||
@@ -993,7 +994,7 @@ boolean R_UpdateSector(Sector *sec, boolean forceUpdate)
     {
         sec->_frameFlags |= SIF_LIGHT_CHANGED;
         sec->_oldLightLevel = sec->_lightLevel;
-        std::memcpy(sec->_oldLightColor, sec->_lightColor, sizeof(sec->_oldLightColor));
+        sec->_oldLightColor = sec->_lightColor;
 
         LG_SectorChanged(static_cast<Sector *>(sec));
         changed = true;
@@ -1002,6 +1003,7 @@ boolean R_UpdateSector(Sector *sec, boolean forceUpdate)
     {
         sec->_frameFlags &= ~SIF_LIGHT_CHANGED;
     }
+#endif
 
     foreach(Plane *plane, sec->planes())
     {
@@ -1067,29 +1069,33 @@ float R_CheckSectorLight(float lightlevel, float min, float max)
 
 #ifdef __CLIENT__
 
-const_pvec3f_t &R_GetSectorLightColor(Sector const *sector)
+Vector3f const &R_GetSectorLightColor(Sector const &sector)
 {
-    static vec3f_t skyLightColor, oldSkyAmbientColor = { -1, -1, -1 };
+    static Vector3f skyLightColor;
+    static Vector3f oldSkyAmbientColor(-1.f, -1.f, -1.f);
     static float oldRendSkyLight = -1;
 
-    if(rendSkyLight > .001f && R_SectorContainsSkySurfaces(sector))
+    if(rendSkyLight > .001f && R_SectorContainsSkySurfaces(&sector))
     {
         ColorRawf const *ambientColor = Sky_AmbientColor();
+
         if(rendSkyLight != oldRendSkyLight ||
-           !INRANGE_OF(ambientColor->red,   oldSkyAmbientColor[CR], .001f) ||
-           !INRANGE_OF(ambientColor->green, oldSkyAmbientColor[CG], .001f) ||
-           !INRANGE_OF(ambientColor->blue,  oldSkyAmbientColor[CB], .001f))
+           !INRANGE_OF(ambientColor->red,   oldSkyAmbientColor.x, .001f) ||
+           !INRANGE_OF(ambientColor->green, oldSkyAmbientColor.y, .001f) ||
+           !INRANGE_OF(ambientColor->blue,  oldSkyAmbientColor.z, .001f))
         {
-            vec3f_t white = { 1, 1, 1 };
-            V3f_Copy(skyLightColor, ambientColor->rgb);
+            skyLightColor = Vector3f(ambientColor->rgb);
             R_AmplifyColor(skyLightColor);
 
             // Apply the intensity factor cvar.
-            V3f_Lerp(skyLightColor, skyLightColor, white, 1-rendSkyLight);
+            for(int i = 0; i < 3; ++i)
+            {
+                skyLightColor[i] = skyLightColor[i] + (1 - rendSkyLight) * (1.f - skyLightColor[i]);
+            }
 
             // When the sky light color changes we must update the lightgrid.
             LG_MarkAllForUpdate();
-            V3f_Copy(oldSkyAmbientColor, ambientColor->rgb);
+            oldSkyAmbientColor = Vector3f(ambientColor->rgb);
         }
 
         oldRendSkyLight = rendSkyLight;
@@ -1098,7 +1104,7 @@ const_pvec3f_t &R_GetSectorLightColor(Sector const *sector)
 
     // A non-skylight sector (i.e., everything else!)
     // Return the sector's ambient light color.
-    return sector->lightColor();
+    return sector.lightColor();
 }
 
 #endif // __CLIENT__

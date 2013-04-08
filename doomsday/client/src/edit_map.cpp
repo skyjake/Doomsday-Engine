@@ -119,19 +119,14 @@ public:
         return sideDef;
     }
 
-    Sector *createSector(Vector3f const &ambientLightColor, float lightLevel)
+    Sector *createSector(float lightLevel, Vector3f const &lightColor)
     {
-        Sector *sec = new Sector;
+        Sector *sector = new Sector(lightLevel, lightColor);
 
-        sec->_lightColor[CR] = de::clamp(0.f, ambientLightColor.x, 1.f);
-        sec->_lightColor[CG] = de::clamp(0.f, ambientLightColor.y, 1.f);
-        sec->_lightColor[CB] = de::clamp(0.f, ambientLightColor.z, 1.f);
-        sec->_lightLevel = de::clamp(0.f, lightLevel, 1.f);
+        sectors.append(sector);
+        sector->_origIndex = sectors.count(); // 1-based index, 0 = NIL.
 
-        sectors.append(sec);
-        sec->_origIndex = sectors.count(); // 1-based index, 0 = NIL.
-
-        return sec;
+        return sector;
     }
 
     Polyobj *createPolyobj()
@@ -1275,7 +1270,7 @@ uint MPE_SectorCreate(float lightlevel, float red, float green, float blue)
 {
     if(!editMapInited) return 0;
 
-    Sector *s = editMap.createSector(Vector3f(red, green, blue), lightlevel);
+    Sector *s = editMap.createSector(lightlevel, Vector3f(red, green, blue));
     return s->origIndex();
 }
 

@@ -433,7 +433,8 @@ void Sv_RegisterSector(dt_sector_t *reg, uint number)
     Sector *sector = theMap->sectors().at(number);
 
     reg->lightLevel = sector->lightLevel();
-    std::memcpy(reg->rgb, sector->lightColor(), sizeof(reg->rgb));
+    for(int i = 0; i < 3; ++i)
+        reg->rgb[i] = sector->lightColor()[i];
 
     // @todo $nplanes
     for(uint i = 0; i < 2; ++i) // number of planes in sector.
@@ -637,11 +638,11 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
        df |= SDF_CEILING_MATERIAL;
     if(r->lightLevel != s->lightLevel())
         df |= SDF_LIGHT;
-    if(r->rgb[0] != s->lightColor()[0])
+    if(r->rgb[0] != s->lightColor().x)
         df |= SDF_COLOR_RED;
-    if(r->rgb[1] != s->lightColor()[1])
+    if(r->rgb[1] != s->lightColor().y)
         df |= SDF_COLOR_GREEN;
-    if(r->rgb[2] != s->lightColor()[2])
+    if(r->rgb[2] != s->lightColor().z)
         df |= SDF_COLOR_BLUE;
 
     if(r->planes[PLN_FLOOR].surface.rgba[0] != s->floorSurface().colorAndAlpha()[0])

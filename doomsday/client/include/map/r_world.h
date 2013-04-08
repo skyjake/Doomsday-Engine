@@ -20,13 +20,15 @@
 #ifndef LIBDENG_MAP_WORLD_H
 #define LIBDENG_MAP_WORLD_H
 
+#include <de/Observers>
+#include <de/Vector>
+
 #include "resource/r_data.h"
 #include "map/vertex.h"
 #include "map/sector.h"
 #include "map/sidedef.h"
 #include "map/plane.h"
 #include "map/sidedef.h"
-#include <de/Observers>
 
 /// @todo The MapChange audience belongs in a class.
 DENG2_DECLARE_AUDIENCE(MapChange, void currentMapChanged())
@@ -45,7 +47,7 @@ extern boolean firstFrameAfterLoad;
 /**
  * Sector light color may be affected by the sky light color.
  */
-const_pvec3f_t &R_GetSectorLightColor(Sector const *sector);
+de::Vector3f const &R_GetSectorLightColor(Sector const &sector);
 
 float R_DistAttenuateLightLevel(float distToViewer, float lightLevel);
 

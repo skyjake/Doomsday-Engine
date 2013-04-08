@@ -62,6 +62,12 @@ public:
     /// The referenced property is not writeable. @ingroup errors
     DENG2_ERROR(WritePropertyError);
 
+    DENG2_DEFINE_AUDIENCE(LightLevelChange,
+        void lightLevelChanged(Sector &sector, float oldLightLevel))
+
+    DENG2_DEFINE_AUDIENCE(LightColorChange,
+        void lightColorChanged(Sector &sector, de::Vector3f const &oldLightColor))
+
     typedef QList<LineDef *> Lines;
     typedef QList<Plane *> Planes;
     typedef QList<BspLeaf *> BspLeafs;
@@ -101,10 +107,10 @@ public: /// @todo Make private:
     float _oldLightLevel;
 
     /// Ambient light color in the sector.
-    vec3f_t _lightColor;
+    de::Vector3f _lightColor;
 
     /// Old ambient light color in the sector. For smoothing.
-    vec3f_t _oldLightColor;
+    de::Vector3f _oldLightColor;
 
     /// Head of the linked list of mobjs "in" the sector (not owned).
     struct mobj_s *_mobjList;
@@ -135,18 +141,8 @@ public: /// @todo Make private:
     int _origIndex;
 
 public:
-    Sector();    
-    ~Sector();
-
-    /**
-     * Returns the ambient light level in the sector.
-     */
-    float lightLevel() const;
-
-    /**
-     * Returns the ambient light color in the sector.
-     */
-    const_pvec3f_t &lightColor() const;
+    Sector(float lightLevel = 1.f,
+           de::Vector3f const &lightColor = de::Vector3f(1.f, 1.f, 1.f));
 
     /**
      * Returns the first mobj in the linked list of mobjs "in" the sector.
@@ -329,6 +325,125 @@ public:
     void updateSoundEmitterOrigin();
 
     /**
+     * Returns the ambient light level in the sector. The LightLevelChange
+     * audience is notified whenever the light level changes.
+     *
+     * @see setLightLevel()
+     */
+    float lightLevel() const;
+
+    /**
+     * Change the ambient light level in the sector. The LightLevelChange
+     * audience is notified whenever the light level changes.
+     *
+     * @param newLightLevel  New ambient light level.
+     *
+     * @see lightLevel()
+     */
+    void setLightLevel(float newLightLevel);
+
+    /**
+     * Returns the ambient light color in the sector. The LightColorChange
+     * audience is notified whenever the light color changes.
+     *
+     * @see setLightColor(), lightColorComponent(), lightRed(), lightGreen(), lightBlue()
+     */
+    de::Vector3f const &lightColor() const;
+
+    /**
+     * Returns the strength of the specified @a component of the ambient light
+     * color in the sector. The LightColorChange audience is notified whenever
+     * the light color changes.
+     *
+     * @param component    RGB index of the color component (0=Red, 1=Green, 2=Blue).
+     *
+     * @see lightColor(), lightRed(), lightGreen(), lightBlue()
+     */
+    inline float lightColorComponent(int component) const { return lightColor()[component]; }
+
+    /**
+     * Returns the strength of the @em red component of the ambient light
+     * color in the sector. The LightColorChange audience is notified whenever
+     * the light color changes.
+     *
+     * @see lightColorComponent(), lightGreen(), lightBlue()
+     */
+    inline float lightRed() const   { return lightColorComponent(0); }
+
+    /**
+     * Returns the strength of the @em green component of the ambient light
+     * color in the sector. The LightColorChange audience is notified whenever
+     * the light color changes.
+     *
+     * @see lightColorComponent(), lightRed(), lightBlue()
+     */
+    inline float lightGreen() const { return lightColorComponent(1); }
+
+    /**
+     * Returns the strength of the @em blue component of the ambient light
+     * color in the sector. The LightColorChange audience is notified whenever
+     * the light color changes.
+     *
+     * @see lightColorComponent(), lightRed(), lightGreen()
+     */
+    inline float lightBlue() const  { return lightColorComponent(2); }
+
+    /**
+     * Change the ambient light color in the sector. The LightColorChange
+     * audience is notified whenever the light color changes.
+     *
+     * @param newLightColor  New ambient light color.
+     *
+     * @see lightColor(), setLightColorComponent(), setLightRed(), setLightGreen(), setLightBlue()
+     */
+    void setLightColor(de::Vector3f const &newLightColor);
+
+    /**
+     * Change the strength of the specified @a component of the ambient light
+     * color in the sector. The LightColorChange audience is notified whenever
+     * the light color changes.
+     *
+     * @param component    RGB index of the color component (0=Red, 1=Green, 2=Blue).
+     * @param newStrength  New strength factor for the color component.
+     *
+     * @see setLightColor(), setLightRed(), setLightGreen(), setLightBlue()
+     */
+    inline void setLightColorComponent(int component, float newStrength);
+
+    /**
+     * Change the strength of the red component of the ambient light color in
+     * the sector. The LightColorChange audience is notified whenever the light
+     * color changes.
+     *
+     * @param newStrength  New red strength for the ambient light color.
+     *
+     * @see setLightColorComponent(), setLightGreen(), setLightBlue()
+     */
+    inline void setLightRed(float newStrength)  { setLightColorComponent(0, newStrength); }
+
+    /**
+     * Change the strength of the green component of the ambient light color in
+     * the sector. The LightColorChange audience is notified whenever the light
+     * color changes.
+     *
+     * @param newStrength  New green strength for the ambient light color.
+     *
+     * @see setLightColorComponent(), setLightRed(), setLightBlue()
+     */
+    inline void setLightGreen(float newStrength) { setLightColorComponent(1, newStrength); }
+
+    /**
+     * Change the strength of the blue component of the ambient light color in
+     * the sector. The LightColorChange audience is notified whenever the light
+     * color changes.
+     *
+     * @param newStrength  New blue strength for the ambient light color.
+     *
+     * @see setLightColorComponent(), setLightRed(), setLightGreen()
+     */
+    inline void setLightBlue(float newStrength)  { setLightColorComponent(2, newStrength); }
+
+    /**
      * Get a property value, selected by DMU_* name.
      *
      * @param args  Property arguments.
@@ -343,6 +458,9 @@ public:
      * @return  Always @c 0 (can be used as an iterator).
      */
     int setProperty(setargs_t const &args);
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 #endif // LIBDENG_MAP_SECTOR

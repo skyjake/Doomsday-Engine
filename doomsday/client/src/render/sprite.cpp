@@ -342,7 +342,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
         else
         {
             Sector &sector = spr->data.sprite.bspLeaf->sector();
-            float const *secColor = R_GetSectorLightColor(&sector);
+            Vector3f const &secColor = R_GetSectorLightColor(sector);
 
             // No need for distance attentuation.
             float lightLevel = sector.lightLevel();
@@ -354,9 +354,10 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
             Rend_ApplyLightAdaptation(&lightLevel);
 
             // Determine the final ambientColor in affect.
-            params->ambientColor[CR] = lightLevel * secColor[CR];
-            params->ambientColor[CG] = lightLevel * secColor[CG];
-            params->ambientColor[CB] = lightLevel * secColor[CB];
+            for(int i = 0; i < 3; ++i)
+            {
+                params->ambientColor[i] = lightLevel * secColor[i];
+            }
         }
 
         Rend_ApplyTorchLight(params->ambientColor, 0);
@@ -729,7 +730,7 @@ static void setupModelParamsForVisPSprite(rendmodelparams_t *params, vispsprite_
         else
         {
             Sector &sector = spr->data.model.bspLeaf->sector();
-            float const *secColor = R_GetSectorLightColor(&sector);
+            Vector3f const &secColor = R_GetSectorLightColor(sector);
 
             // Diminished light (with compression).
             float lightLevel = sector.lightLevel();
@@ -744,9 +745,10 @@ static void setupModelParamsForVisPSprite(rendmodelparams_t *params, vispsprite_
             Rend_ApplyLightAdaptation(&lightLevel);
 
             // Determine the final ambientColor in effect.
-            params->ambientColor[CR] = lightLevel * secColor[CR];
-            params->ambientColor[CG] = lightLevel * secColor[CG];
-            params->ambientColor[CB] = lightLevel * secColor[CB];
+            for(int i = 0; i < 3; ++i)
+            {
+                params->ambientColor[i] = lightLevel * secColor[i];
+            }
         }
 
         Rend_ApplyTorchLight(params->ambientColor, params->distance);

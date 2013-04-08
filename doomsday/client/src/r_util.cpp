@@ -80,19 +80,18 @@ void R_ProjectViewRelativeLine2D(coord_t const center[2], boolean alignToViewPla
     end[VY] = start[VY] + sinrv * width;
 }
 
-void R_AmplifyColor(float rgb[3])
+void R_AmplifyColor(de::Vector3f &rgb)
 {
     float max = 0;
-    int i;
 
-    for(i = 0; i < 3; ++i)
+    for(int i = 0; i < 3; ++i)
     {
         if(rgb[i] > max)
             max = rgb[i];
     }
     if(!max || max == 1) return;
 
-    for(i = 0; i < 3; ++i)
+    for(int i = 0; i < 3; ++i)
     {
         rgb[i] = rgb[i] / max;
     }

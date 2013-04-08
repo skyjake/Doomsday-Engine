@@ -24,13 +24,10 @@
 #ifndef LIBDENG_REFRESH_UTIL_H
 #define LIBDENG_REFRESH_UTIL_H
 
+#include <de/Vector>
 #include <de/vector1.h>
 #include "map/bspnode.h"
 #include "map/p_mapdata.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Get a global angle from Cartesian coordinates relative to the viewer.
@@ -58,7 +55,7 @@ void R_ProjectViewRelativeLine2D(coord_t const center[2], boolean alignToViewPla
 /**
  * Scale @a color uniformly so that the highest component becomes one.
  */
-void R_AmplifyColor(float color[3]);
+void R_AmplifyColor(de::Vector3f &color);
 
 void R_ScaleAmbientRGB(float* out, const float* in, float mul);
 
@@ -81,9 +78,5 @@ boolean R_GenerateTexCoords(pvec2f_t s, pvec2f_t t, const_pvec3d_t point, float 
     const_pvec3d_t v1, const_pvec3d_t v2, const_pvec3f_t tangent, const_pvec3f_t bitangent);
 
 char const *R_NameForBlendMode(blendmode_t mode);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /* LIBDENG_REFRESH_UTIL_H */

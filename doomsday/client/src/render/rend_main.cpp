@@ -327,7 +327,7 @@ void Rend_ApplyTorchLight(float color[3], float distance)
 }
 
 static void lightVertex(ColorRawf &color, rvertex_t const &vtx, float lightLevel,
-                        float const ambientColor[3])
+                        Vector3f const &ambientColor)
 {
     float const dist = Rend_PointDist2D(vtx.pos);
     float lightVal = R_DistAttenuateLightLevel(dist, lightLevel);
@@ -338,13 +338,14 @@ static void lightVertex(ColorRawf &color, rvertex_t const &vtx, float lightLevel
     Rend_ApplyLightAdaptation(&lightVal);
 
     // Mix with the surface color.
-    color.rgba[CR] = lightVal * ambientColor[CR];
-    color.rgba[CG] = lightVal * ambientColor[CG];
-    color.rgba[CB] = lightVal * ambientColor[CB];
+    for(int i = 0; i < 3; ++i)
+    {
+        color.rgba[i] = lightVal * ambientColor[i];
+    }
 }
 
 static void lightVertices(uint num, ColorRawf *colors, rvertex_t const *verts,
-                          float lightLevel, float const ambientColor[3])
+                          float lightLevel, Vector3f const &ambientColor)
 {
     for(uint i = 0; i < num; ++i)
     {
@@ -710,7 +711,7 @@ struct rendworldpoly_params_t
     float           sectorLightLevel;
     float           surfaceLightLevelDL;
     float           surfaceLightLevelDR;
-    float const    *sectorLightColor;
+    Vector3f const *sectorLightColor;
     float const    *surfaceColor;
 
     uint            lightListIdx; // List of lights that affect this poly.
@@ -905,19 +906,16 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
             }
             else
             {
-                float llL = MINMAX_OF(0, p.sectorLightLevel + p.surfaceLightLevelDL + p.glowing, 1);
-                float llR = MINMAX_OF(0, p.sectorLightLevel + p.surfaceLightLevelDR + p.glowing, 1);
+                float llL = de::clamp(0.f, p.sectorLightLevel + p.surfaceLightLevelDL + p.glowing, 1.f);
+                float llR = de::clamp(0.f, p.sectorLightLevel + p.surfaceLightLevelDR + p.glowing, 1.f);
 
                 // Calculate the color for each vertex, blended with plane color?
                 if(p.surfaceColor[0] < 1 || p.surfaceColor[1] < 1 || p.surfaceColor[2] < 1)
                 {
                     // Blend sector light+color+surfacecolor
-                    float vColor[4] = {
-                        p.surfaceColor[CR] * p.sectorLightColor[CR],
-                        p.surfaceColor[CG] * p.sectorLightColor[CG],
-                        p.surfaceColor[CB] * p.sectorLightColor[CB],
-                        1
-                    };
+                    Vector3f vColor(p.surfaceColor[CR] * p.sectorLightColor->x,
+                                    p.surfaceColor[CG] * p.sectorLightColor->y,
+                                    p.surfaceColor[CB] * p.sectorLightColor->z);
 
                     if(p.isWall && llL != llR)
                     {
@@ -936,14 +934,14 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
                     // Use sector light+color only.
                     if(p.isWall && llL != llR)
                     {
-                        lightVertex(rcolors[0], rvertices[0], llL, p.sectorLightColor);
-                        lightVertex(rcolors[1], rvertices[1], llL, p.sectorLightColor);
-                        lightVertex(rcolors[2], rvertices[2], llR, p.sectorLightColor);
-                        lightVertex(rcolors[3], rvertices[3], llR, p.sectorLightColor);
+                        lightVertex(rcolors[0], rvertices[0], llL, *p.sectorLightColor);
+                        lightVertex(rcolors[1], rvertices[1], llL, *p.sectorLightColor);
+                        lightVertex(rcolors[2], rvertices[2], llR, *p.sectorLightColor);
+                        lightVertex(rcolors[3], rvertices[3], llR, *p.sectorLightColor);
                     }
                     else
                     {
-                        lightVertices(numVertices, rcolors, rvertices, llL, p.sectorLightColor);
+                        lightVertices(numVertices, rcolors, rvertices, llL, *p.sectorLightColor);
                     }
                 }
 
@@ -951,12 +949,9 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
                 if(p.isWall && p.wall.surfaceColor2)
                 {
                     // Blend sector light+color+surfacecolor
-                    float vColor[4] = {
-                        p.wall.surfaceColor2[CR] * p.sectorLightColor[CR],
-                        p.wall.surfaceColor2[CG] * p.sectorLightColor[CG],
-                        p.wall.surfaceColor2[CB] * p.sectorLightColor[CB],
-                        1
-                    };
+                    Vector3f vColor(p.wall.surfaceColor2[CR] * p.sectorLightColor->x,
+                                    p.wall.surfaceColor2[CG] * p.sectorLightColor->y,
+                                    p.wall.surfaceColor2[CB] * p.sectorLightColor->z);
 
                     lightVertex(rcolors[0], rvertices[0], llL, vColor);
                     lightVertex(rcolors[2], rvertices[2], llR, vColor);
@@ -1215,7 +1210,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
 
 static boolean doRenderHEdge(HEdge *hedge, const_pvec3f_t normal,
     float alpha, float lightLevel, float lightLevelDL, float lightLevelDR,
-    float const *lightColor, uint lightListIdx, uint shadowListIdx,
+    Vector3f const *lightColor, uint lightListIdx, uint shadowListIdx,
     walldivs_t *leftWallDivs, walldivs_t *rightWallDivs,
     boolean skyMask, boolean addFakeRadio, vec3d_t texTL, vec3d_t texBR,
     float const texOffset[2], float const texScale[2],
@@ -1398,7 +1393,7 @@ static void renderPlane(BspLeaf *bspLeaf, Plane::Type type, coord_t height,
     params.texTL = texTL;
     params.texBR = texBR;
     params.sectorLightLevel = sec->lightLevel();
-    params.sectorLightColor = R_GetSectorLightColor(sec);
+    params.sectorLightColor = &R_GetSectorLightColor(*sec);
     params.surfaceLightLevelDL = params.surfaceLightLevelDR = 0;
     params.surfaceColor = sufColor;
     params.texOffset = texOffset;
@@ -1547,7 +1542,7 @@ static void Rend_RenderPlane(Plane::Type type, coord_t height,
 ///@}
 
 static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
-    int flags, float lightLevel, float const *lightColor,
+    int flags, float lightLevel, Vector3f const &lightColor,
     walldivs_t *leftWallDivs, walldivs_t *rightWallDivs,
     float const matOffset[2])
 {
@@ -1752,7 +1747,7 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
 
         opaque = doRenderHEdge(hedge,
                                surface->normal(), ((flags & RHF_FORCE_OPAQUE)? -1 : alpha),
-                               lightLevel, deltaL, deltaR, lightColor,
+                               lightLevel, deltaL, deltaR, &lightColor,
                                lightListIdx, shadowListIdx,
                                leftWallDivs, rightWallDivs,
                                !!(rpFlags & RPF_SKYMASK), !!(flags & RHF_ADD_RADIO),
@@ -1807,7 +1802,7 @@ static boolean Rend_RenderHEdge(HEdge *hedge, byte sections)
         {
             Rend_RadioUpdateLine(hedge->line(), hedge->lineSideId());
             opaque = rendHEdgeSection(hedge, SS_MIDDLE, RHF_ADD_DYNLIGHTS|RHF_ADD_DYNSHADOWS|RHF_ADD_RADIO,
-                                      frontSec->lightLevel(), R_GetSectorLightColor(frontSec),
+                                      frontSec->lightLevel(), R_GetSectorLightColor(*frontSec),
                                       &leftWallDivs, &rightWallDivs, matOffset);
         }
 
@@ -1871,7 +1866,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
 
             Rend_RadioUpdateLine(line, hedge->lineSideId());
             solidSeg = rendHEdgeSection(hedge, SS_MIDDLE, rhFlags,
-                                        front->sector().lightLevel(), R_GetSectorLightColor(front->sectorPtr()),
+                                        front->sector().lightLevel(), R_GetSectorLightColor(front->sector()),
                                         &leftWallDivs, &rightWallDivs, matOffset);
             if(solidSeg)
             {
@@ -1911,7 +1906,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
         {
             Rend_RadioUpdateLine(line, hedge->lineSideId());
             rendHEdgeSection(hedge, SS_TOP, RHF_ADD_DYNLIGHTS|RHF_ADD_DYNSHADOWS|RHF_ADD_RADIO,
-                             front->sector().lightLevel(), R_GetSectorLightColor(front->sectorPtr()),
+                             front->sector().lightLevel(), R_GetSectorLightColor(front->sector()),
                              &leftWallDivs, &rightWallDivs, matOffset);
         }
     }
@@ -1927,7 +1922,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
         {
             Rend_RadioUpdateLine(line, hedge->lineSideId());
             rendHEdgeSection(hedge, SS_BOTTOM, RHF_ADD_DYNLIGHTS|RHF_ADD_DYNSHADOWS|RHF_ADD_RADIO,
-                             front->sector().lightLevel(), R_GetSectorLightColor(front->sectorPtr()),
+                             front->sector().lightLevel(), R_GetSectorLightColor(front->sector()),
                              &leftWallDivs, &rightWallDivs, matOffset);
         }
     }

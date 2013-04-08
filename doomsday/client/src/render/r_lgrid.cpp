@@ -1,4 +1,4 @@
-/** @file r_lgrid.cpp
+/** @file r_lgrid.cpp Light Grid (Large-Scale FakeRadio).
  *
  * @authors Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -38,6 +38,10 @@
 
 #include "gl/sys_opengl.h"
 #include "map/gamemap.h"
+
+#include "render/r_lgrid.h"
+
+using namespace de;
 
 // MACROS ------------------------------------------------------------------
 
@@ -230,9 +234,9 @@ void LG_InitForMap(void)
     size = center = 0;
     if(numSamples > 1)
     {
-        float       f = sqrt(float(numSamples));
+        float f = sqrt(float(numSamples));
 
-        if(ceil(f) != floor(f))
+        if(de::ceil(f) != de::floor(f))
         {
             size = sqrt(float(numSamples -1));
             center = 0;
@@ -549,11 +553,9 @@ Con_Message("  Sector %i: %i / %i", theMap->sectorIndex(s), changedCount, count)
 /**
  * Apply the sector's lighting to the block.
  */
-static void LG_ApplySector(gridblock_t *block, const float *color, float level,
-                           float factor, int bias)
+static void LG_ApplySector(gridblock_t *block, Vector3f const &color,
+                           float level, float factor, int bias)
 {
-    int                 i;
-
     // Apply a bias to the light level.
     level -= (0.95f - level);
     if(level < 0)
@@ -564,11 +566,11 @@ static void LG_ApplySector(gridblock_t *block, const float *color, float level,
     if(level <= 0)
         return;
 
-    for(i = 0; i < 3; ++i)
+    for(int i = 0; i < 3; ++i)
     {
-        float           c = color[i] * level;
+        float c = color[i] * level;
 
-        c = MINMAX_OF(0, c, 1);
+        c = de::clamp(0.f, c, 1.f);
 
         if(block->rgb[i] + c > 1)
         {
@@ -581,8 +583,8 @@ static void LG_ApplySector(gridblock_t *block, const float *color, float level,
     }
 
     // Influenced by the source bias.
-    i = block->bias * (1 - factor) + bias * factor;
-    i = MINMAX_OF(-0x80, i, 0x7f);
+    int i = block->bias * (1 - factor) + bias * factor;
+    i = de::clamp(-0x80, i, 0x7f);
     block->bias = i;
 }
 
@@ -742,7 +744,6 @@ void LG_Update(void)
     gridblock_t        *block, *lastBlock, *other;
     int                 x, y, a, b;
     Sector             *sector;
-    const float        *color;
     int                 bias;
     int                 height;
 
@@ -806,7 +807,7 @@ BEGIN_PROF( PROF_GRID_UPDATE );
 
             // Determine the color of the ambient light in this sector.
             sector = block->sector;
-            color = R_GetSectorLightColor(sector);
+            Vector3f const &color = R_GetSectorLightColor(*sector);
             height = (int) (sector->ceiling().height() - sector->floor().height());
 
             bool isSkyFloor = sector->ceilingSurface().hasSkyMaskedMaterial();

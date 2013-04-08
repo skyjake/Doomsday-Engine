@@ -466,7 +466,7 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
         else
         {
             float lightLevel = pt->sector->lightLevel();
-            float const *secColor = R_GetSectorLightColor(pt->sector);
+            Vector3f const &secColor = R_GetSectorLightColor(*pt->sector);
 
             // Apply distance attenuation.
             lightLevel = R_DistAttenuateLightLevel(params->distance, lightLevel);
@@ -477,9 +477,10 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
             Rend_ApplyLightAdaptation(&lightLevel);
 
             // Determine the final ambientColor in affect.
-            params->ambientColor[CR] = lightLevel * secColor[CR];
-            params->ambientColor[CG] = lightLevel * secColor[CG];
-            params->ambientColor[CB] = lightLevel * secColor[CB];
+            for(int i = 0; i < 3; ++i)
+            {
+                params->ambientColor[i] = lightLevel * secColor[i];
+            }
         }
 
         Rend_ApplyTorchLight(params->ambientColor, params->distance);

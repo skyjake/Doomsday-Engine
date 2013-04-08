@@ -925,7 +925,7 @@ void getLightingParams(coord_t x, coord_t y, coord_t z, BspLeaf *bspLeaf,
         {
             Sector &sec = bspLeaf->sector();
             float lightLevel = sec.lightLevel();
-            float const *secColor = R_GetSectorLightColor(&sec);
+            Vector3f const &secColor = R_GetSectorLightColor(sec);
 
             /* if(spr->type == VSPR_DECORATION)
             {
@@ -942,9 +942,10 @@ void getLightingParams(coord_t x, coord_t y, coord_t z, BspLeaf *bspLeaf,
             Rend_ApplyLightAdaptation(&lightLevel);
 
             // Determine the final ambientColor in affect.
-            ambientColor[CR] = lightLevel * secColor[CR];
-            ambientColor[CG] = lightLevel * secColor[CG];
-            ambientColor[CB] = lightLevel * secColor[CB];
+            for(int i = 0; i < 3; ++i)
+            {
+                ambientColor[i] = lightLevel * secColor[i];
+            }
         }
 
         Rend_ApplyTorchLight(ambientColor, distance);

@@ -252,7 +252,12 @@ static void performImageAnalyses(image_t const &image,
                 FindAverageColorIdx(image.pixels, image.size.width, image.size.height,
                                     R_ToColorPalette(image.paletteId), false, &ac->color);
             }
-            R_AmplifyColor(ac->color.rgb);
+            Vector3f color(ac->color.rgb);
+            R_AmplifyColor(color);
+            for(int i = 0; i < 3; ++i)
+            {
+                ac->color.rgb[i] = color[i];
+            }
         }
     }
 
