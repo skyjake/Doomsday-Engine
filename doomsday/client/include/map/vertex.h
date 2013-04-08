@@ -22,7 +22,8 @@
 #define LIBDENG_MAP_VERTEX
 
 #include <de/Error>
-#include <de/vector1.h>
+#include <de/Vector>
+#include <de/vector1.h> /// @todo remove me
 #include <de/binangle.h>
 #include "resource/r_data.h"
 #include "map/p_dmu.h"
@@ -182,6 +183,7 @@ public: /// @todo Make private:
 
 public:
     Vertex(coord_t x = 0, coord_t y = 0);
+    Vertex(de::Vector2d const &origin);
 
     /**
      * Returns the origin (i.e., location) of the vertex in the map coordinate space.

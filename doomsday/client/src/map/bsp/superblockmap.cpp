@@ -22,6 +22,8 @@
  */
 
 #include <de/kdtree.h>
+#include "map/hedge.h"
+
 #include "map/bsp/superblockmap.h"
 
 using namespace de;
@@ -44,7 +46,7 @@ struct SuperBlock::Instance
     int miniNum;
 
     Instance(SuperBlockmap &blockmap)
-      : bmap(blockmap), tree(0), hedges(0), realNum(0), miniNum(0)
+      : bmap(blockmap), tree(0), realNum(0), miniNum(0)
     {}
 
     ~Instance()
@@ -54,7 +56,7 @@ struct SuperBlock::Instance
 
     inline void linkHEdge(HEdge &hedge)
     {
-        hedges.push_front(&hedge);
+        hedges.prepend(&hedge);
     }
 
     inline void incrementHEdgeCount(HEdge const &hedge)
@@ -115,13 +117,7 @@ AABox const &SuperBlock::bounds() const
     return *KdTreeNode_Bounds(d->tree);
 }
 
-bool SuperBlock::isLeaf() const
-{
-    AABox const &aaBox = bounds();
-    return (aaBox.maxX - aaBox.minX <= 256 && aaBox.maxY - aaBox.minY <= 256);
-}
-
-SuperBlock *SuperBlock::parent() const
+SuperBlock *SuperBlock::parentPtr() const
 {
     KdTreeNode *pNode = KdTreeNode_Parent(d->tree);
     if(!pNode) return 0;
@@ -130,10 +126,10 @@ SuperBlock *SuperBlock::parent() const
 
 bool SuperBlock::hasParent() const
 {
-    return 0 != parent();
+    return parentPtr() != 0;
 }
 
-SuperBlock *SuperBlock::child(ChildId childId) const
+SuperBlock *SuperBlock::childPtr(ChildId childId) const
 {
     assertValidChildId(childId);
     KdTreeNode *subtree = KdTreeNode_Child(d->tree, childId==LEFT);
@@ -144,7 +140,7 @@ SuperBlock *SuperBlock::child(ChildId childId) const
 bool SuperBlock::hasChild(ChildId childId) const
 {
     assertValidChildId(childId);
-    return 0 != child(childId);
+    return 0 != childPtr(childId);
 }
 
 SuperBlock *SuperBlock::addChild(ChildId childId, bool splitVertical)
@@ -166,15 +162,14 @@ uint SuperBlock::hedgeCount(bool addReal, bool addMini) const
     return total;
 }
 
-static void initAABoxFromHEdgeVertexes(AABoxd *aaBox, HEdge const *hedge)
+static void initAABoxFromHEdgeVertexes(AABoxd &aaBox, HEdge const &hedge)
 {
-    DENG_ASSERT(aaBox && hedge);
-    const_pvec2d_t &from = hedge->v1Origin();
-    const_pvec2d_t &to   = hedge->v2Origin();
-    aaBox->minX = de::min(from[VX], to[VX]);
-    aaBox->minY = de::min(from[VY], to[VY]);
-    aaBox->maxX = de::max(from[VX], to[VX]);
-    aaBox->maxY = de::max(from[VY], to[VY]);
+    const_pvec2d_t &from = hedge.v1Origin();
+    const_pvec2d_t &to   = hedge.v2Origin();
+    aaBox.minX = de::min(from[VX], to[VX]);
+    aaBox.minY = de::min(from[VY], to[VY]);
+    aaBox.maxX = de::max(from[VX], to[VX]);
+    aaBox.maxY = de::max(from[VY], to[VY]);
 }
 
 /// @todo Optimize: Cache this result.
@@ -183,20 +178,18 @@ void SuperBlock::findHEdgeBounds(AABoxd &bounds)
     bool initialized = false;
     AABoxd hedgeAABox;
 
-    DENG2_FOR_EACH(HEdges, it, d->hedges)
+    foreach(HEdge *hedge, d->hedges)
     {
-        HEdge *hedge = *it;
-        initAABoxFromHEdgeVertexes(&hedgeAABox, hedge);
+        initAABoxFromHEdgeVertexes(hedgeAABox, *hedge);
         if(initialized)
         {
-            V2d_AddToBox(bounds.arvec2, hedgeAABox.min);
+            V2d_UniteBox(bounds.arvec2, hedgeAABox.arvec2);
         }
         else
         {
-            V2d_InitBox(bounds.arvec2, hedgeAABox.min);
+            V2d_CopyBox(bounds.arvec2, hedgeAABox.arvec2);
             initialized = true;
         }
-        V2d_AddToBox(bounds.arvec2, hedgeAABox.max);
     }
 }
 
@@ -251,17 +244,17 @@ SuperBlock &SuperBlock::push(HEdge &hedge)
             sb->addChild(p1, (int)splitVertical);
         }
 
-        sb = sb->child(p1);
+        sb = sb->childPtr(p1);
     }
     return *sb;
 }
 
 HEdge *SuperBlock::pop()
 {
-    if(d->hedges.empty()) return 0;
+    if(d->hedges.isEmpty())
+        return 0;
 
-    HEdge *hedge = d->hedges.front();
-    d->hedges.pop_front();
+    HEdge *hedge = d->hedges.takeFirst();
 
     // Update half-edge counts.
     d->decrementHEdgeCount(*hedge);
@@ -294,6 +287,20 @@ int SuperBlock::traverse(int (*callback)(SuperBlock *, void *), void *parameters
 
     return false; // Continue iteration.
 }
+
+#ifdef DENG_DEBUG
+void SuperBlock::DebugPrint(SuperBlock const &inst) //static
+{
+    foreach(HEdge const *hedge, inst.hedges())
+    {
+        LOG_DEBUG("Build: %s %p sector: %d [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
+            << (hedge->hasLine()? "NORM" : "MINI")
+            << hedge << hedge->sector().origIndex()
+            << hedge->fromOrigin()[VX] << hedge->fromOrigin()[VY]
+            << hedge->toOrigin()[VX] << hedge->toOrigin()[VY];
+    }
+}
+#endif
 
 struct SuperBlockmap::Instance
 {
@@ -368,31 +375,31 @@ AABoxd SuperBlockmap::findHEdgeBounds()
         {
             findHEdgeBoundsWorker(*cur, bounds, &initialized);
 
-            if(prev == cur->parent())
+            if(prev == cur->parentPtr())
             {
                 // Descending - right first, then left.
                 prev = cur;
-                if(cur->hasRight()) cur = cur->right();
-                else                cur = cur->left();
+                if(cur->hasRight()) cur = cur->rightPtr();
+                else                cur = cur->leftPtr();
             }
-            else if(prev == cur->right())
+            else if(prev == cur->rightPtr())
             {
                 // Last moved up the right branch - descend the left.
                 prev = cur;
-                cur = cur->left();
+                cur = cur->leftPtr();
             }
-            else if(prev == cur->left())
+            else if(prev == cur->leftPtr())
             {
                 // Last moved up the left branch - continue upward.
                 prev = cur;
-                cur = cur->parent();
+                cur = cur->parentPtr();
             }
         }
 
         if(prev)
         {
             // No left child - back up.
-            cur = prev->parent();
+            cur = prev->parentPtr();
         }
     }
 

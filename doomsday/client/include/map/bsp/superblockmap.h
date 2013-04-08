@@ -26,25 +26,17 @@
 #ifndef LIBDENG_BSP_SUPERBLOCKMAP
 #define LIBDENG_BSP_SUPERBLOCKMAP
 
-#include "dd_def.h"
-#include "dd_types.h"
-#include "map/p_maptypes.h"
-
+#include <QList>
+#include <de/aabox.h>
 #include <de/Log>
-#include <list>
+#include <de/Vector>
+
+class HEdge;
 
 namespace de {
 namespace bsp {
 
 class SuperBlock;
-
-#ifdef RIGHT
-#  undef RIGHT
-#endif
-
-#ifdef LEFT
-#  undef LEFT
-#endif
 
 /**
  * Design is effectively that of a 2-dimensional kd-tree.
@@ -90,6 +82,14 @@ private:
     friend class SuperBlock;
 };
 
+#ifdef RIGHT
+#  undef RIGHT
+#endif
+
+#ifdef LEFT
+#  undef LEFT
+#endif
+
 /**
  * Subblocks:
  * RIGHT - has the lower coordinates.
@@ -100,7 +100,7 @@ private:
 class SuperBlock
 {
 public:
-    typedef std::list<HEdge *> HEdges;
+    typedef QList<HEdge *> HEdges;
 
     /// A SuperBlock may be subdivided with two child subblocks which are
     /// uniquely identifiable by these associated ids.
@@ -116,7 +116,29 @@ public:
         DENG_ASSERT(childId == RIGHT || childId == LEFT);
     }
 
+private:
+    /**
+     * SuperBlock objects must be constructed within the context of an
+     * owning SuperBlockmap. Instantiation outside of this context is not
+     * permitted. @ref SuperBlockmap
+     */
+    SuperBlock(SuperBlockmap &blockmap);
+    SuperBlock(SuperBlock &parentPtr, ChildId childId, bool splitVertical);
+    ~SuperBlock();
+
+    /**
+     * Attach a new SuperBlock instance as a child of this.
+     * @param childId  Unique identifier of the child.
+     * @param splitVertical  @c true= Subdivide this block on the y axis
+     *                       rather than the x axis.
+     */
+    SuperBlock *addChild(ChildId childId, bool splitVertical);
+
+    inline SuperBlock *addRight(bool splitVertical) { return addChild(RIGHT, splitVertical); }
+    inline SuperBlock *addLeft(bool splitVertical)  { return addChild(LEFT,  splitVertical); }
+
 public:
+
     SuperBlock &clear();
 
     /**
@@ -139,24 +161,37 @@ public:
      * context is a block whose dimensions are <= [256, 256] and thus can
      * not be subdivided any further.
      */
-    bool isLeaf() const;
+    bool isLeaf() const
+    {
+        AABox const &aaBox = bounds();
+        Vector2i dimensions = Vector2i(aaBox.max) - Vector2i(aaBox.min);
+        return (dimensions.x <= 256 && dimensions.y <= 256);
+    }
 
+    /**
+     * Returns @c true iff the block has a parent.
+     */
     bool hasParent() const;
 
-    SuperBlock *parent() const;
-
     /**
-     * Does this block have a child subblock?
+     * Returns a pointer to the parent block; otherwise @c 0.
+     *
+     * @see hasParent()
      */
-    bool hasChild(ChildId childId) const;
+    SuperBlock *parentPtr() const;
 
     /**
-     * Does this block have a Right child subblock?
+     * Returns @c true iff the block has the specified @a child subblock.
+     */
+    bool hasChild(ChildId child) const;
+
+    /**
+     * Returns @c true iff the block has a right child subblock.
      */
     inline bool hasRight() const { return hasChild(RIGHT); }
 
     /**
-     * Does this block have a Left child subblock?
+     * Returns @c true iff the block has a left child subblock.
      */
     inline bool hasLeft() const  { return hasChild(LEFT); }
 
@@ -168,19 +203,19 @@ public:
      * @param childId  Subblock identifier.
      * @return  Selected subblock.
      */
-    SuperBlock *child(ChildId childId) const;
+    SuperBlock *childPtr(ChildId childId) const;
 
     /**
-     * Returns the right sub-block.
-     * @see SuperBlock::child()
+     * Returns the right subblock.
+     * @see SuperBlock::childPtr()
      */
-    inline SuperBlock *right() const { return child(RIGHT); }
+    inline SuperBlock *rightPtr() const { return childPtr(RIGHT); }
 
     /**
-     * Returns the left sub-block.
-     * @see SuperBlock::child()
+     * Returns the left subblock.
+     * @see SuperBlock::childPtr()
      */
-    inline SuperBlock *left()  const { return child(LEFT); }
+    inline SuperBlock *leftPtr()  const { return childPtr(LEFT); }
 
     /**
      * Perform a depth-first traversal over all child superblocks and
@@ -238,47 +273,10 @@ public:
      */
     HEdge *pop();
 
+    /**
+     * Provides access to the list of half-edges for efficient traversal.
+     */
     HEdges const &hedges() const;
-
-#ifdef DENG_DEBUG
-    static void DebugPrint(SuperBlock const &inst)
-    {
-        DENG2_FOR_EACH_CONST(SuperBlock::HEdges, it, inst.hedges())
-        {
-            HEdge *hedge = *it;
-            LOG_DEBUG("Build: %s %p sector: %d [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
-                << (hedge->hasLine()? "NORM" : "MINI")
-                << hedge << hedge->sector().origIndex()
-                << hedge->fromOrigin()[VX] << hedge->fromOrigin()[VY]
-                << hedge->toOrigin()[VX] << hedge->toOrigin()[VY];
-        }
-    }
-#endif
-
-private:
-    /**
-     * SuperBlock objects must be constructed within the context of an
-     * owning SuperBlockmap. Instantiation outside of this context is not
-     * permitted. @ref SuperBlockmap
-     */
-    SuperBlock(SuperBlockmap &blockmap);
-    SuperBlock(SuperBlock &parent, ChildId childId, bool splitVertical);
-    ~SuperBlock();
-
-    /**
-     * Attach a new SuperBlock instance as a child of this.
-     * @param childId  Unique identifier of the child.
-     * @param splitVertical  @c true= Subdivide this block on the y axis
-     *                       rather than the x axis.
-     */
-    SuperBlock *addChild(ChildId childId, bool splitVertical);
-
-    inline SuperBlock *addRight(bool splitVertical) { return addChild(RIGHT, splitVertical); }
-    inline SuperBlock *addLeft(bool splitVertical)  { return addChild(LEFT,  splitVertical); }
-
-private:
-    struct Instance;
-    Instance *d;
 
     /**
      * SuperBlockmap creates instances of SuperBlock so it needs to use
@@ -286,6 +284,14 @@ private:
      * object reference as a parameter.
      */
     friend struct SuperBlockmap::Instance;
+
+#ifdef DENG_DEBUG
+    static void DebugPrint(SuperBlock const &inst);
+#endif
+
+private:
+    struct Instance;
+    Instance *d;
 };
 
 } // namespace bsp

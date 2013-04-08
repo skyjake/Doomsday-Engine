@@ -41,6 +41,15 @@ Vertex::Vertex(coord_t x, coord_t y) : MapElement(DMU_VERTEX)
     std::memset(&_buildData, 0, sizeof(_buildData));
 }
 
+Vertex::Vertex(Vector2d const &origin) : MapElement(DMU_VERTEX)
+{
+    _origin[VX] = origin.x;
+    _origin[VY] = origin.y;
+    _lineOwners = 0;
+    _numLineOwners = 0;
+    std::memset(&_buildData, 0, sizeof(_buildData));
+}
+
 vec2d_t const &Vertex::origin() const
 {
     return _origin;

@@ -70,12 +70,17 @@ static int maxWarningsPerType = 10;
  * @todo Consolidate with the missing material reporting done elsewhere -ds
  */
 class Reporter : DENG2_OBSERVES(Partitioner, UnclosedSectorFound),
+                 DENG2_OBSERVES(Partitioner, OneWayWindowFound),
                  DENG2_OBSERVES(Partitioner, MigrantHEdgeBuilt),
                  DENG2_OBSERVES(Partitioner, PartialBspLeafBuilt)
 {
     /// Record "unclosed sectors".
     /// Sector => world point relatively near to the problem area.
     typedef std::map<Sector *,  Vector2d> UnclosedSectorMap;
+
+    /// Record "one-way window lines".
+    /// Line => Sector the back side faces.
+    typedef std::map<LineDef *,  Sector *> OneWayWindowMap;
 
     /// Record "migrant half-edges".
     /// HEdge => Sector the half-edge faces.
@@ -100,6 +105,19 @@ public:
 
             if(numToLog < _unclosedSectors.size())
                 LOG_INFO("(%u more like this)") << (_unclosedSectors.size() - numToLog);
+        }
+
+        if(uint numToLog = de::max(0, de::min(int(_oneWayWindows.size()), maxWarningsPerType)))
+        {
+            OneWayWindowMap::const_iterator it = _oneWayWindows.begin();
+            for(uint i = 0; i < numToLog; ++i, ++it)
+            {
+                LOG_VERBOSE("Line #%u seems to be a One-Way Window (back faces sector #%u).")
+                    << it->first->origIndex() - 1 << it->second->origIndex() - 1;
+            }
+
+            if(numToLog < _oneWayWindows.size())
+                LOG_INFO("(%u more like this)") << (_oneWayWindows.size() - numToLog);
         }
 
         if(uint numToLog = de::max(0, de::min(int(_migrantHEdges.size()), maxWarningsPerType)))
@@ -146,6 +164,12 @@ protected:
         _unclosedSectors.insert(std::make_pair(&sector, nearPoint));
     }
 
+    // Observes Partitioner OneWayWindowFound.
+    void oneWayWindowFound(LineDef &line, Sector &backFacingSector)
+    {
+        _oneWayWindows.insert(std::make_pair(&line, &backFacingSector));
+    }
+
     // Observes Partitioner MigrantHEdgeBuilt.
     void migrantHEdgeBuilt(HEdge &hedge, Sector &facingSector)
     {
@@ -160,6 +184,7 @@ protected:
 
 private:
     UnclosedSectorMap _unclosedSectors;
+    OneWayWindowMap   _oneWayWindows;
     MigrantHEdgeMap   _migrantHEdges;
     PartialBspLeafMap _partialBspLeafs;
 };
@@ -169,6 +194,7 @@ bool BspBuilder::buildBsp()
     Reporter reporter;
 
     d->partitioner.audienceForUnclosedSectorFound += reporter;
+    d->partitioner.audienceForOneWayWindowFound   += reporter;
     d->partitioner.audienceForMigrantHEdgeBuilt   += reporter;
     d->partitioner.audienceForPartialBspLeafBuilt += reporter;
 

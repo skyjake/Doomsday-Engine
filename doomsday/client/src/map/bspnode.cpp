@@ -40,19 +40,25 @@ DENG2_PIMPL(BspNode)
     /// Unique index. Set when saving the BSP.
     uint index;
 
-    Instance(Public *i, const_pvec2d_t partitionOrigin,
-             const_pvec2d_t partitionDirection)
-        : Base(i),
-          partition(partitionOrigin, partitionDirection)
+    Instance(Public *i, Partition const &partition_)
+        : Base(i), partition(partition_)
     {
-        std::memset(aaBox,      0, sizeof(aaBox));
         std::memset(children,   0, sizeof(children));
     }
 };
 
-BspNode::BspNode(const_pvec2d_t partitionOrigin, const_pvec2d_t partitionDirection)
+BspNode::BspNode(const_pvec2d_t partitionOrigin,
+                 const_pvec2d_t partitionDirection)
     : MapElement(DMU_BSPNODE),
-      d(new Instance(this, partitionOrigin, partitionDirection))
+      d(new Instance(this, Partition(partitionOrigin, partitionDirection)))
+{
+    setRightAABox(0);
+    setLeftAABox(0);
+}
+
+BspNode::BspNode(Partition const &partition_)
+    : MapElement(DMU_BSPNODE),
+      d(new Instance(this, partition_))
 {
     setRightAABox(0);
     setLeftAABox(0);

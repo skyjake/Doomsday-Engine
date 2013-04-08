@@ -55,6 +55,9 @@ public:
     DENG2_DEFINE_AUDIENCE(UnclosedSectorFound,
         void unclosedSectorFound(Sector &sector, Vector2d const &nearPoint))
 
+    DENG2_DEFINE_AUDIENCE(OneWayWindowFound,
+        void oneWayWindowFound(LineDef &line, Sector &backFacingSector))
+
     DENG2_DEFINE_AUDIENCE(MigrantHEdgeBuilt,
         void migrantHEdgeBuilt(HEdge &hedge, Sector &facingSector))
 

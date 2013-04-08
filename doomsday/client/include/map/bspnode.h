@@ -200,6 +200,7 @@ public:
      *                angle of the half-plane.
      */
     BspNode(const_pvec2d_t partitionOrigin, const_pvec2d_t partitionDirection);
+    BspNode(Partition const &partition);
 
     /**
      * Returns the Partition for the BSP node.
