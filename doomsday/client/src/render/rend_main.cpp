@@ -395,7 +395,7 @@ static byte pvisibleLineSections(LineDef *line, int backSide)
 
         // Middle?
         if(!sideDef.middle().hasMaterial() || !sideDef.middle().material().isDrawable() ||
-            sideDef.middle().colorAndAlpha()[CA] <= 0)
+            sideDef.middle().opacity() <= 0)
             sections &= ~SSF_MIDDLE;
 
         // Top?
@@ -414,25 +414,25 @@ static byte pvisibleLineSections(LineDef *line, int backSide)
     return sections;
 }
 
-static void selectSurfaceColors(float const **topColor,
-    float const **bottomColor, SideDef *sideDef, SideDefSection section)
+static void selectSurfaceColors(Vector3f const **topColor,
+    Vector3f const **bottomColor, SideDef *sideDef, SideDefSection section)
 {
     switch(section)
     {
     case SS_MIDDLE:
         if(sideDef->flags() & SDF_BLENDMIDTOTOP)
         {
-            *topColor    = sideDef->top().colorAndAlpha();
-            *bottomColor = sideDef->middle().colorAndAlpha();
+            *topColor    = &sideDef->top().tintColor();
+            *bottomColor = &sideDef->middle().tintColor();
         }
         else if(sideDef->flags() & SDF_BLENDMIDTOBOTTOM)
         {
-            *topColor    = sideDef->middle().colorAndAlpha();
-            *bottomColor = sideDef->bottom().colorAndAlpha();
+            *topColor    = &sideDef->middle().tintColor();
+            *bottomColor = &sideDef->bottom().tintColor();
         }
         else
         {
-            *topColor    = sideDef->middle().colorAndAlpha();
+            *topColor    = &sideDef->middle().tintColor();
             *bottomColor = 0;
         }
         break;
@@ -440,12 +440,12 @@ static void selectSurfaceColors(float const **topColor,
     case SS_TOP:
         if(sideDef->flags() & SDF_BLENDTOPTOMID)
         {
-            *topColor    = sideDef->top().colorAndAlpha();
-            *bottomColor = sideDef->middle().colorAndAlpha();
+            *topColor    = &sideDef->top().tintColor();
+            *bottomColor = &sideDef->middle().tintColor();
         }
         else
         {
-            *topColor    = sideDef->top().colorAndAlpha();
+            *topColor    = &sideDef->top().tintColor();
             *bottomColor = 0;
         }
         break;
@@ -453,12 +453,12 @@ static void selectSurfaceColors(float const **topColor,
     case SS_BOTTOM:
         if(sideDef->flags() & SDF_BLENDBOTTOMTOMID)
         {
-            *topColor    = sideDef->middle().colorAndAlpha();
-            *bottomColor = sideDef->bottom().colorAndAlpha();
+            *topColor    = &sideDef->middle().tintColor();
+            *bottomColor = &sideDef->bottom().tintColor();
         }
         else
         {
-            *topColor    = sideDef->bottom().colorAndAlpha();
+            *topColor    = &sideDef->bottom().tintColor();
             *bottomColor = 0;
         }
         break;
@@ -712,7 +712,7 @@ struct rendworldpoly_params_t
     float           surfaceLightLevelDL;
     float           surfaceLightLevelDR;
     Vector3f const *sectorLightColor;
-    float const    *surfaceColor;
+    Vector3f const *surfaceColor;
 
     uint            lightListIdx; // List of lights that affect this poly.
     uint            shadowListIdx; // List of shadows that affect this poly.
@@ -727,7 +727,7 @@ struct rendworldpoly_params_t
 // Wall only:
     struct {
         coord_t segLength;
-        float const *surfaceColor2; // Secondary color.
+        Vector3f const *surfaceColor2; // Secondary color.
         struct {
             walldivnode_t *firstDiv;
             uint divCount;
@@ -898,9 +898,9 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
                 {
                     for(uint i = 0; i < numVertices; ++i)
                     {
-                        rcolors[i].rgba[CR] = MINMAX_OF(0, rcolors[i].rgba[CR] + p.glowing, 1);
-                        rcolors[i].rgba[CG] = MINMAX_OF(0, rcolors[i].rgba[CG] + p.glowing, 1);
-                        rcolors[i].rgba[CB] = MINMAX_OF(0, rcolors[i].rgba[CB] + p.glowing, 1);
+                        rcolors[i].rgba[CR] = de::clamp(0.f, rcolors[i].rgba[CR] + p.glowing, 1.f);
+                        rcolors[i].rgba[CG] = de::clamp(0.f, rcolors[i].rgba[CG] + p.glowing, 1.f);
+                        rcolors[i].rgba[CB] = de::clamp(0.f, rcolors[i].rgba[CB] + p.glowing, 1.f);
                     }
                 }
             }
@@ -910,12 +910,13 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
                 float llR = de::clamp(0.f, p.sectorLightLevel + p.surfaceLightLevelDR + p.glowing, 1.f);
 
                 // Calculate the color for each vertex, blended with plane color?
-                if(p.surfaceColor[0] < 1 || p.surfaceColor[1] < 1 || p.surfaceColor[2] < 1)
+                if(p.surfaceColor->x < 1 || p.surfaceColor->y < 1 || p.surfaceColor->z < 1)
                 {
                     // Blend sector light+color+surfacecolor
-                    Vector3f vColor(p.surfaceColor[CR] * p.sectorLightColor->x,
-                                    p.surfaceColor[CG] * p.sectorLightColor->y,
-                                    p.surfaceColor[CB] * p.sectorLightColor->z);
+                    Vector3f vColor;
+
+                    for(int c = 0; c < 3; ++c)
+                        vColor[c] = (*p.surfaceColor)[c] * (*p.sectorLightColor)[c];
 
                     if(p.isWall && llL != llR)
                     {
@@ -949,9 +950,10 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
                 if(p.isWall && p.wall.surfaceColor2)
                 {
                     // Blend sector light+color+surfacecolor
-                    Vector3f vColor(p.wall.surfaceColor2[CR] * p.sectorLightColor->x,
-                                    p.wall.surfaceColor2[CG] * p.sectorLightColor->y,
-                                    p.wall.surfaceColor2[CB] * p.sectorLightColor->z);
+                    Vector3f vColor;
+
+                    for(int c = 0; c < 3; ++c)
+                        vColor[c] = (*p.wall.surfaceColor2)[c] * (*p.sectorLightColor)[c];
 
                     lightVertex(rcolors[0], rvertices[0], llL, vColor);
                     lightVertex(rcolors[2], rvertices[2], llR, vColor);
@@ -1214,7 +1216,7 @@ static boolean doRenderHEdge(HEdge *hedge, const_pvec3f_t normal,
     walldivs_t *leftWallDivs, walldivs_t *rightWallDivs,
     boolean skyMask, boolean addFakeRadio, vec3d_t texTL, vec3d_t texBR,
     float const texOffset[2], float const texScale[2],
-    blendmode_t blendMode, float const *color, float const *color2,
+    blendmode_t blendMode, Vector3f const &color, Vector3f const &color2,
     biassurface_t *bsuf, uint elmIdx /*tmp*/,
     MaterialSnapshot const &ms,
     boolean isTwosidedMiddle)
@@ -1241,8 +1243,8 @@ static boolean doRenderHEdge(HEdge *hedge, const_pvec3f_t normal,
     params.surfaceLightLevelDL = lightLevelDL;
     params.surfaceLightLevelDR = lightLevelDR;
     params.sectorLightColor = lightColor;
-    params.surfaceColor = color;
-    params.wall.surfaceColor2 = color2;
+    params.surfaceColor = &color;
+    params.wall.surfaceColor2 = &color2;
     if(glowFactor > .0001f)
         params.glowing = ms.glowStrength() * glowFactor; // Global scale factor.
     params.blendMode = blendMode;
@@ -1371,7 +1373,7 @@ static boolean doRenderHEdge(HEdge *hedge, const_pvec3f_t normal,
 
 static void renderPlane(BspLeaf *bspLeaf, Plane::Type type, coord_t height,
     vec3f_t tangent, vec3f_t bitangent, vec3f_t normal,
-    Material *inMat, float const sufColor[4], blendmode_t blendMode,
+    Material *inMat, Vector3f const &sufColor, float sufAlpha, blendmode_t blendMode,
     vec3d_t texTL, vec3d_t texBR,
     float const texOffset[2], float const texScale[2],
     boolean skyMasked,
@@ -1395,7 +1397,7 @@ static void renderPlane(BspLeaf *bspLeaf, Plane::Type type, coord_t height,
     params.sectorLightLevel = sec->lightLevel();
     params.sectorLightColor = &R_GetSectorLightColor(*sec);
     params.surfaceLightLevelDL = params.surfaceLightLevelDR = 0;
-    params.surfaceColor = sufColor;
+    params.surfaceColor = &sufColor;
     params.texOffset = texOffset;
     params.texScale = texScale;
 
@@ -1432,7 +1434,7 @@ static void renderPlane(BspLeaf *bspLeaf, Plane::Type type, coord_t height,
                 params.blendMode = BM_ZEROALPHA; // "no translucency" mode
             else
                 params.blendMode = blendMode;
-            params.alpha = sufColor[CA];
+            params.alpha = sufAlpha;
         }
     }
 
@@ -1487,7 +1489,7 @@ static void renderPlane(BspLeaf *bspLeaf, Plane::Type type, coord_t height,
 
 static void Rend_RenderPlane(Plane::Type type, coord_t height,
     const_pvec3f_t _tangent, const_pvec3f_t _bitangent, const_pvec3f_t _normal,
-    Material* inMat, float const sufColor[4], blendmode_t blendMode,
+    Material* inMat, Vector3f const &sufColor, float sufAlpha, blendmode_t blendMode,
     float const texOffset[2], float const texScale[2],
     boolean skyMasked, boolean addDLights, boolean addMobjShadows,
     biassurface_t* bsuf, uint elmIdx /*tmp*/,
@@ -1523,7 +1525,7 @@ static void Rend_RenderPlane(Plane::Type type, coord_t height,
                        bspLeaf->aaBox().arvec2[type == Plane::Floor? 0 : 1][VY], height);
 
         renderPlane(bspLeaf, type, height, tangent, bitangent, normal, inMat,
-                    sufColor, blendMode, texTL, texBR, texOffset, texScale,
+                    sufColor, sufAlpha, blendMode, texTL, texBR, texOffset, texScale,
                     skyMasked, addDLights, addMobjShadows, bsuf, elmIdx, texMode);
     }
 }
@@ -1558,7 +1560,7 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
     if(WallDivNode_Height(WallDivs_First(leftWallDivs)) >=
        WallDivNode_Height(WallDivs_Last(rightWallDivs))) return true;
 
-    alpha = (section == SS_MIDDLE? surface->colorAndAlpha()[CA] : 1.0f);
+    alpha = (section == SS_MIDDLE? surface->opacity() : 1.0f);
 
     if(section == SS_MIDDLE && (flags & RHF_VIEWER_NEAR_BLEND))
     {
@@ -1609,7 +1611,7 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
         int rpFlags = RPF_DEFAULT;
         boolean isTwoSided = (hedge->hasLine() && hedge->line().hasFrontSideDef() && hedge->line().hasBackSideDef())? true:false;
         blendmode_t blendMode = BM_NORMAL;
-        float const *color = NULL, *color2 = NULL;
+        Vector3f const *color = 0, *color2 = 0;
 
         texScale[0] = ((surface->flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1);
         texScale[1] = ((surface->flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
@@ -1752,7 +1754,7 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
                                leftWallDivs, rightWallDivs,
                                !!(rpFlags & RPF_SKYMASK), !!(flags & RHF_ADD_RADIO),
                                texTL, texBR, matOffset, texScale, blendMode,
-                               color, color2,
+                               *color, *color2,
                                &hedge->biasSurfaceForGeometryGroup(section), (uint) section,
                                ms,
                                (section == SS_MIDDLE && isTwoSided));
@@ -2761,8 +2763,8 @@ static void Rend_RenderPlanes()
 
         Rend_RenderPlane(plane->type(), plane->visHeight(),
                          suf->tangent(), suf->bitangent(), suf->normal(),
-                         mat, suf->colorAndAlpha(), suf->blendMode(), matOrigin, matScale, isSkyMasked,
-                         addDynLights, (!devRendSkyMode && plane->type() == Plane::Floor),
+                         mat, suf->tintColor(), suf->opacity(), suf->blendMode(), matOrigin, matScale,
+                         isSkyMasked, addDynLights, (!devRendSkyMode && plane->type() == Plane::Floor),
                          &leaf->biasSurfaceForGeometryGroup(plane->inSectorIndex()),
                          plane->inSectorIndex(), texMode, clipBackFacing);
     }

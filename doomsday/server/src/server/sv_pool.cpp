@@ -449,7 +449,9 @@ void Sv_RegisterSector(dt_sector_t *reg, uint number)
         // Surface properties.
         Surface const &surface = plane.surface();
 
-        V4f_Copy(reg->planes[i].surface.rgba, surface.colorAndAlpha());
+        for(int c = 0; c < 3; ++c)
+            reg->planes[i].surface.rgba[c] = surface.tintColorComponent(c);
+        reg->planes[i].surface.rgba[CA] = surface.opacity();
 
         reg->planes[i].surface.material = surface.materialPtr();
     }
@@ -470,12 +472,17 @@ void Sv_RegisterSide(dt_side_t *reg, uint number)
     reg->bottom.material = sideDef->bottom().materialPtr();
     reg->lineFlags       = sideDef->line().flags() & 0xff;
 
-    V4f_Copy(reg->middle.rgba, sideDef->middle().colorAndAlpha());
-    V4f_Copy(reg->bottom.rgba, sideDef->bottom().colorAndAlpha());
-    V4f_Copy(reg->top.rgba, sideDef->top().colorAndAlpha());
+    for(int c = 0; c < 3; ++c)
+    {
+        reg->middle.rgba[c] = sideDef->middle().tintColorComponent(c);
+        reg->bottom.rgba[c] = sideDef->bottom().tintColorComponent(c);
+        reg->top.rgba[c]    = sideDef->top().tintColorComponent(c);
+    }
+    // Only middle sections support blending.
+    reg->middle.rgba[CA]  = sideDef->middle().opacity();
+    reg->middle.blendMode = sideDef->middle().blendMode();
 
-    reg->middle.blendMode = sideDef->middle().blendMode(); // Only middle sections support blendmodes.
-    reg->flags           = sideDef->flags() & 0xff;
+    reg->flags = sideDef->flags() & 0xff;
 }
 
 /**
@@ -645,18 +652,18 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
     if(r->rgb[2] != s->lightColor().z)
         df |= SDF_COLOR_BLUE;
 
-    if(r->planes[PLN_FLOOR].surface.rgba[0] != s->floorSurface().colorAndAlpha()[0])
+    if(r->planes[PLN_FLOOR].surface.rgba[0] != s->floorSurface().tintRed())
         df |= SDF_FLOOR_COLOR_RED;
-    if(r->planes[PLN_FLOOR].surface.rgba[1] != s->floorSurface().colorAndAlpha()[1])
+    if(r->planes[PLN_FLOOR].surface.rgba[1] != s->floorSurface().tintGreen())
         df |= SDF_FLOOR_COLOR_GREEN;
-    if(r->planes[PLN_FLOOR].surface.rgba[2] != s->floorSurface().colorAndAlpha()[2])
+    if(r->planes[PLN_FLOOR].surface.rgba[2] != s->floorSurface().tintBlue())
         df |= SDF_FLOOR_COLOR_BLUE;
 
-    if(r->planes[PLN_CEILING].surface.rgba[0] != s->ceilingSurface().colorAndAlpha()[0])
+    if(r->planes[PLN_CEILING].surface.rgba[0] != s->ceilingSurface().tintRed())
         df |= SDF_CEIL_COLOR_RED;
-    if(r->planes[PLN_CEILING].surface.rgba[1] != s->ceilingSurface().colorAndAlpha()[1])
+    if(r->planes[PLN_CEILING].surface.rgba[1] != s->ceilingSurface().tintGreen())
         df |= SDF_CEIL_COLOR_GREEN;
-    if(r->planes[PLN_CEILING].surface.rgba[2] != s->ceilingSurface().colorAndAlpha()[2])
+    if(r->planes[PLN_CEILING].surface.rgba[2] != s->ceilingSurface().tintBlue())
         df |= SDF_CEIL_COLOR_BLUE;
 
     // The cases where an immediate change to a plane's height is needed:
@@ -783,74 +790,74 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number,
             r->lineFlags = lineFlags;
     }
 
-    if(r->top.rgba[0] != s->top().colorAndAlpha()[0])
+    if(r->top.rgba[0] != s->top().tintRed())
     {
         df |= SIDF_TOP_COLOR_RED;
         if(doUpdate)
-            r->top.rgba[0] = s->top().colorAndAlpha()[0];
+            r->top.rgba[0] = s->top().tintRed();
     }
 
-    if(r->top.rgba[1] != s->top().colorAndAlpha()[1])
+    if(r->top.rgba[1] != s->top().tintGreen())
     {
         df |= SIDF_TOP_COLOR_GREEN;
         if(doUpdate)
-            r->top.rgba[1] = s->top().colorAndAlpha()[1];
+            r->top.rgba[1] = s->top().tintGreen();
     }
 
-    if(r->top.rgba[2] != s->top().colorAndAlpha()[2])
+    if(r->top.rgba[2] != s->top().tintBlue())
     {
         df |= SIDF_TOP_COLOR_BLUE;
         if(doUpdate)
-            r->top.rgba[3] = s->top().colorAndAlpha()[3];
+            r->top.rgba[3] = s->top().tintBlue();
     }
 
-    if(r->middle.rgba[0] != s->middle().colorAndAlpha()[0])
+    if(r->middle.rgba[0] != s->middle().tintRed())
     {
         df |= SIDF_MID_COLOR_RED;
         if(doUpdate)
-            r->middle.rgba[0] = s->middle().colorAndAlpha()[0];
+            r->middle.rgba[0] = s->middle().tintRed();
     }
 
-    if(r->middle.rgba[1] != s->middle().colorAndAlpha()[1])
+    if(r->middle.rgba[1] != s->middle().tintGreen())
     {
         df |= SIDF_MID_COLOR_GREEN;
         if(doUpdate)
-            r->middle.rgba[1] = s->middle().colorAndAlpha()[1];
+            r->middle.rgba[1] = s->middle().tintGreen();
     }
 
-    if(r->middle.rgba[2] != s->middle().colorAndAlpha()[2])
+    if(r->middle.rgba[2] != s->middle().tintBlue())
     {
         df |= SIDF_MID_COLOR_BLUE;
         if(doUpdate)
-            r->middle.rgba[3] = s->middle().colorAndAlpha()[3];
+            r->middle.rgba[3] = s->middle().tintBlue();
     }
 
-    if(r->middle.rgba[3] != s->middle().colorAndAlpha()[3])
+    if(r->middle.rgba[3] != s->middle().opacity())
     {
         df |= SIDF_MID_COLOR_ALPHA;
         if(doUpdate)
-            r->middle.rgba[3] = s->middle().colorAndAlpha()[3];
+            r->middle.rgba[3] = s->middle().opacity();
     }
 
-    if(r->bottom.rgba[0] != s->bottom().colorAndAlpha()[0])
+    if(r->bottom.rgba[0] != s->bottom().tintRed())
     {
         df |= SIDF_BOTTOM_COLOR_RED;
         if(doUpdate)
-            r->bottom.rgba[0] = s->bottom().colorAndAlpha()[0];
+            r->bottom.rgba[0] = s->bottom().tintRed();
     }
 
-    if(r->bottom.rgba[1] != s->bottom().colorAndAlpha()[1])
+    if(r->bottom.rgba[1] != s->bottom().tintGreen())
     {
         df |= SIDF_BOTTOM_COLOR_GREEN;
         if(doUpdate)
-            r->bottom.rgba[1] = s->bottom().colorAndAlpha()[1];
+            r->bottom.rgba[1] = s->bottom().tintGreen();
     }
 
-    if(r->bottom.rgba[2] != s->bottom().colorAndAlpha()[2])
+    if(r->bottom.rgba[2] != s->bottom().tintBlue())
     {
         df |= SIDF_BOTTOM_COLOR_BLUE;
         if(doUpdate)
-            r->bottom.rgba[3] = s->bottom().colorAndAlpha()[3];
+            r->bottom.rgba[3] = s->bottom().tintBlue();
     }
 
     if(r->middle.blendMode != s->middle().blendMode())

@@ -661,18 +661,18 @@ void Cl_ReadSectorDelta2(int deltaType, boolean /*skip*/)
         sec->setLightBlue(Reader_ReadByte(msgReader) / 255.f);
 
     if(df & SDF_FLOOR_COLOR_RED)
-        sec->floorSurface().setColorRed(Reader_ReadByte(msgReader) / 255.f);
+        sec->floorSurface().setTintRed(Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_FLOOR_COLOR_GREEN)
-        sec->floorSurface().setColorGreen(Reader_ReadByte(msgReader) / 255.f);
+        sec->floorSurface().setTintGreen(Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_FLOOR_COLOR_BLUE)
-        sec->floorSurface().setColorBlue(Reader_ReadByte(msgReader) / 255.f);
+        sec->floorSurface().setTintBlue(Reader_ReadByte(msgReader) / 255.f);
 
     if(df & SDF_CEIL_COLOR_RED)
-        sec->ceilingSurface().setColorRed(Reader_ReadByte(msgReader) / 255.f);
+        sec->ceilingSurface().setTintRed(Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_CEIL_COLOR_GREEN)
-        sec->ceilingSurface().setColorGreen(Reader_ReadByte(msgReader) / 255.f);
+        sec->ceilingSurface().setTintGreen(Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_CEIL_COLOR_BLUE)
-        sec->ceilingSurface().setColorBlue(Reader_ReadByte(msgReader) / 255.f);
+        sec->ceilingSurface().setTintBlue(Reader_ReadByte(msgReader) / 255.f);
 
     // The whole delta has now been read.
 
@@ -779,27 +779,27 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
     }
 
     if(df & SIDF_TOP_COLOR_RED)
-        sideDef->top().setColorRed(toprgb[CR]);
+        sideDef->top().setTintRed(toprgb[CR]);
     if(df & SIDF_TOP_COLOR_GREEN)
-        sideDef->top().setColorGreen(toprgb[CG]);
+        sideDef->top().setTintGreen(toprgb[CG]);
     if(df & SIDF_TOP_COLOR_BLUE)
-        sideDef->top().setColorBlue(toprgb[CB]);
+        sideDef->top().setTintBlue(toprgb[CB]);
 
     if(df & SIDF_MID_COLOR_RED)
-        sideDef->middle().setColorRed(midrgba[CR]);
+        sideDef->middle().setTintRed(midrgba[CR]);
     if(df & SIDF_MID_COLOR_GREEN)
-        sideDef->middle().setColorGreen(midrgba[CG]);
+        sideDef->middle().setTintGreen(midrgba[CG]);
     if(df & SIDF_MID_COLOR_BLUE)
-        sideDef->middle().setColorBlue(midrgba[CB]);
+        sideDef->middle().setTintBlue(midrgba[CB]);
     if(df & SIDF_MID_COLOR_ALPHA)
-        sideDef->middle().setAlpha(midrgba[CA]);
+        sideDef->middle().setOpacity(midrgba[CA]);
 
     if(df & SIDF_BOTTOM_COLOR_RED)
-        sideDef->bottom().setColorRed(bottomrgb[CR]);
+        sideDef->bottom().setTintRed(bottomrgb[CR]);
     if(df & SIDF_BOTTOM_COLOR_GREEN)
-        sideDef->bottom().setColorGreen(bottomrgb[CG]);
+        sideDef->bottom().setTintGreen(bottomrgb[CG]);
     if(df & SIDF_BOTTOM_COLOR_BLUE)
-        sideDef->bottom().setColorBlue(bottomrgb[CB]);
+        sideDef->bottom().setTintBlue(bottomrgb[CB]);
 
     if(df & SIDF_MID_BLENDMODE)
         sideDef->middle().setBlendMode(blendmode_t(blendmode));

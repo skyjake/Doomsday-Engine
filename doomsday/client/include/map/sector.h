@@ -415,6 +415,11 @@ public:
      */
     void setLightColor(de::Vector3f const &newLightColor);
 
+    /// @copydoc setLightColor()
+    inline void setLightColor(float red, float green, float blue) {
+        setLightColor(de::Vector3f(red, green, blue));
+    }
+
     /**
      * Change the strength of the specified @a component of the ambient light
      * color in the sector. The LightColorChange audience is notified whenever

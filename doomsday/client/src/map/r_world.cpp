@@ -314,7 +314,7 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector const *frontSec,
     // Ensure we have up to date info about the material.
     MaterialSnapshot const &ms = frontDef->middle().material().prepare(Rend_MapSurfaceMaterialSpec());
 
-    if(ignoreOpacity || (ms.isOpaque() && !frontDef->middle().blendMode() && frontDef->middle().colorAndAlpha()[CA] >= 1))
+    if(ignoreOpacity || (ms.isOpaque() && !frontDef->middle().blendMode() && frontDef->middle().opacity() >= 1))
     {
         coord_t openRange, openBottom, openTop;
 

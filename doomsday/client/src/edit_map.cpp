@@ -1155,15 +1155,16 @@ uint MPE_SidedefCreate(short flags, ddstring_t const *topMaterialUri,
     // Assign the resolved material if found.
     s->top().setMaterial(findMaterialInDict(topMaterialUri));
     s->top().setMaterialOrigin(topOffsetX, topOffsetY);
-    s->top().setColorAndAlpha(topRed, topGreen, topBlue, 1);
+    s->top().setTintColor(topRed, topGreen, topBlue);
 
     s->middle().setMaterial(findMaterialInDict(middleMaterialUri));
     s->middle().setMaterialOrigin(middleOffsetX, middleOffsetY);
-    s->middle().setColorAndAlpha(middleRed, middleGreen, middleBlue, middleAlpha);
+    s->middle().setTintColor(middleRed, middleGreen, middleBlue);
+    s->middle().setOpacity(middleAlpha);
 
     s->bottom().setMaterial(findMaterialInDict(bottomMaterialUri));
     s->bottom().setMaterialOrigin(bottomOffsetX, bottomOffsetY);
-    s->bottom().setColorAndAlpha(bottomRed, bottomGreen, bottomBlue, 1);
+    s->bottom().setTintColor(bottomRed, bottomGreen, bottomBlue);
 
     return s->_buildData.index;
 }
@@ -1256,7 +1257,8 @@ uint MPE_PlaneCreate(uint sector, coord_t height, ddstring_t const *materialUri,
     Plane *pln = new Plane(*s, normal, height);
 
     pln->surface().setMaterial(findMaterialInDict(materialUri));
-    pln->surface().setColorAndAlpha(r, g, b, a);
+    pln->surface().setTintColor(r, g, b);
+    pln->surface().setOpacity(a);
     pln->surface().setMaterialOrigin(matOffsetX, matOffsetY);
 
     s->_planes.append(pln);

@@ -32,9 +32,41 @@
 
 using namespace de;
 
-Surface::Surface(MapElement &owner)
+DENG2_PIMPL(Surface)
+{
+    Instance(Public *i) : Base(i)
+    {}
+
+    void notifyOpacityChanged(float oldOpacity)
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE(OpacityChange, i)
+        {
+            i->opacityChanged(self, oldOpacity);
+        }
+    }
+
+    void notifyTintColorChanged(Vector3f const &oldTintColor)
+    {
+        // Predetermine which components have changed.
+        int changedComponents = 0;
+        for(int i = 0; i < 3; ++i)
+        {
+            if(!fequal(self._tintColor[i], oldTintColor[i]))
+                changedComponents |= (1 << i);
+        }
+
+        DENG2_FOR_PUBLIC_AUDIENCE(TintColorChange, i)
+        {
+            i->tintColorChanged(self, oldTintColor, changedComponents);
+        }
+    }
+};
+
+Surface::Surface(MapElement &owner, Vector3f const &tintColor, float opacity)
     : MapElement(DMU_SURFACE),
-      _owner(owner)
+      _owner(owner),
+      _tintColor(tintColor),
+      _opacity(opacity)
 {
     std::memset(&_soundEmitter, 0, sizeof(_soundEmitter));
     _flags = 0;
@@ -49,7 +81,6 @@ Surface::Surface(MapElement &owner)
     V2f_Set(_oldOffset[1], 0, 0);
     V2f_Set(_visOffset, 0, 0);
     V2f_Set(_visOffsetDelta, 0, 0);
-    V4f_Set(_colorAndAlpha, 1, 1, 1, 1);
 
 #ifdef __CLIENT__
     _decorationData.needsUpdate = false;
@@ -57,9 +88,6 @@ Surface::Surface(MapElement &owner)
     _decorationData.numSources  = 0;
 #endif
 }
-
-Surface::~Surface()
-{}
 
 de::MapElement &Surface::owner() const
 {
@@ -275,81 +303,56 @@ const_pvec2f_t &Surface::visMaterialOriginDelta() const
     return _visOffsetDelta;
 }
 
-const_pvec4f_t &Surface::colorAndAlpha() const
+float Surface::opacity() const
 {
-    return _colorAndAlpha;
+    return _opacity;
 }
 
-bool Surface::setColorAndAlpha(const_pvec4f_t newColorAndAlpha_)
+void Surface::setOpacity(float newOpacity)
 {
-    vec4f_t newColorAndAlpha;
-    for(int c = 0; c < 4; ++c)
-        newColorAndAlpha[c] = de::clamp(0.f, newColorAndAlpha_[c], 1.f);
-
-    if(_colorAndAlpha[CR] == newColorAndAlpha[CR] &&
-       _colorAndAlpha[CG] == newColorAndAlpha[CG] &&
-       _colorAndAlpha[CB] == newColorAndAlpha[CB] &&
-       _colorAndAlpha[CA] == newColorAndAlpha[CA])
-        return true;
-
-    /// @todo when surface colours are intergrated with the
-    /// bias lighting model we will need to recalculate the
-    /// vertex colours when they are changed.
-    V4f_Copy(_colorAndAlpha, newColorAndAlpha);
-
-    return true;
-}
-
-bool Surface::setColorRed(float r)
-{
-    r = de::clamp(0.f, r, 1.f);
-    if(_colorAndAlpha[CR] != r)
+    newOpacity = de::clamp(0.f, newOpacity, 1.f);
+    if(!de::fequal(_opacity, newOpacity))
     {
-        /// @todo when surface colours are intergrated with the
-        /// bias lighting model we will need to recalculate the
-        /// vertex colours when they are changed.
-        _colorAndAlpha[CR] = r;
+        float oldOpacity = _opacity;
+        _opacity = newOpacity;
+
+        // Notify interested parties of the change.
+        d->notifyOpacityChanged(oldOpacity);
     }
-    return true;
 }
 
-bool Surface::setColorGreen(float g)
+Vector3f const &Surface::tintColor() const
 {
-    g = de::clamp(0.f, g, 1.f);
-    if(_colorAndAlpha[CG] != g)
-    {
-        /// @todo when surface colours are intergrated with the
-        /// bias lighting model we will need to recalculate the
-        /// vertex colours when they are changed.
-        _colorAndAlpha[CG] = g;
-    }
-    return true;
+    return _tintColor;
 }
 
-bool Surface::setColorBlue(float b)
+void Surface::setTintColor(Vector3f const &newTintColor_)
 {
-    b = de::clamp(0.f, b, 1.f);
-    if(_colorAndAlpha[CB] != b)
+    Vector3f newTintColor = Vector3f(de::clamp(0.f, newTintColor_.x, 1.f),
+                                     de::clamp(0.f, newTintColor_.y, 1.f),
+                                     de::clamp(0.f, newTintColor_.z, 1.f));
+    if(_tintColor != newTintColor)
     {
-        /// @todo when surface colours are intergrated with the
-        /// bias lighting model we will need to recalculate the
-        /// vertex colours when they are changed.
-        _colorAndAlpha[CB] = b;
+        Vector3f oldTintColor = _tintColor;
+        _tintColor = newTintColor;
+
+        // Notify interested parties of the change.
+        d->notifyTintColorChanged(oldTintColor);
     }
-    return true;
 }
 
-bool Surface::setAlpha(float a)
+void Surface::setTintColorComponent(int component, float newStrength)
 {
-    a = de::clamp(0.f, a, 1.f);
-    if(_colorAndAlpha[CA] != a)
+    DENG_ASSERT(component >= 0 && component < 3);
+    newStrength = de::clamp(0.f, newStrength, 1.f);
+    if(!de::fequal(_tintColor[component], newStrength))
     {
-        /// @todo when surface colours are intergrated with the
-        /// bias lighting model we will need to recalculate the
-        /// vertex colours when they are changed.
-        _colorAndAlpha[CA] = a;
+        Vector3f oldTintColor = _tintColor;
+        _tintColor[component] = newStrength;
+
+        // Notify interested parties of the change.
+        d->notifyTintColorChanged(oldTintColor);
     }
-    return true;
 }
 
 blendmode_t Surface::blendMode() const
@@ -574,26 +577,26 @@ int Surface::property(setargs_t &args) const
         break;
 
     case DMU_COLOR:
-        DMU_GetValue(DMT_SURFACE_RGBA, &_colorAndAlpha[CR], &args, 0);
-        DMU_GetValue(DMT_SURFACE_RGBA, &_colorAndAlpha[CG], &args, 1);
-        DMU_GetValue(DMT_SURFACE_RGBA, &_colorAndAlpha[CB], &args, 2);
-        DMU_GetValue(DMT_SURFACE_RGBA, &_colorAndAlpha[CA], &args, 2);
+        DMU_GetValue(DMT_SURFACE_RGBA, &_tintColor[CR], &args, 0);
+        DMU_GetValue(DMT_SURFACE_RGBA, &_tintColor[CG], &args, 1);
+        DMU_GetValue(DMT_SURFACE_RGBA, &_tintColor[CB], &args, 2);
+        DMU_GetValue(DMT_SURFACE_RGBA, &_opacity, &args, 2);
         break;
 
     case DMU_COLOR_RED:
-        DMU_GetValue(DMT_SURFACE_RGBA, &_colorAndAlpha[CR], &args, 0);
+        DMU_GetValue(DMT_SURFACE_RGBA, &_tintColor[CR], &args, 0);
         break;
 
     case DMU_COLOR_GREEN:
-        DMU_GetValue(DMT_SURFACE_RGBA, &_colorAndAlpha[CG], &args, 0);
+        DMU_GetValue(DMT_SURFACE_RGBA, &_tintColor[CG], &args, 0);
         break;
 
     case DMU_COLOR_BLUE:
-        DMU_GetValue(DMT_SURFACE_RGBA, &_colorAndAlpha[CB], &args, 0);
+        DMU_GetValue(DMT_SURFACE_RGBA, &_tintColor[CB], &args, 0);
         break;
 
     case DMU_ALPHA:
-        DMU_GetValue(DMT_SURFACE_RGBA, &_colorAndAlpha[CA], &args, 0);
+        DMU_GetValue(DMT_SURFACE_RGBA, &_opacity, &args, 0);
         break;
 
     case DMU_BLENDMODE:
@@ -631,33 +634,33 @@ int Surface::setProperty(setargs_t const &args)
         DMU_SetValue(DMT_SURFACE_RGBA, &rgb[CR], &args, 0);
         DMU_SetValue(DMT_SURFACE_RGBA, &rgb[CG], &args, 1);
         DMU_SetValue(DMT_SURFACE_RGBA, &rgb[CB], &args, 2);
-        setColorRed(rgb[CR]);
-        setColorGreen(rgb[CG]);
-        setColorBlue(rgb[CB]);
+        setTintRed(rgb[CR]);
+        setTintGreen(rgb[CG]);
+        setTintBlue(rgb[CB]);
         break; }
 
     case DMU_COLOR_RED: {
         float r;
         DMU_SetValue(DMT_SURFACE_RGBA, &r, &args, 0);
-        setColorRed(r);
+        setTintRed(r);
         break; }
 
     case DMU_COLOR_GREEN: {
         float g;
         DMU_SetValue(DMT_SURFACE_RGBA, &g, &args, 0);
-        setColorGreen(g);
+        setTintGreen(g);
         break; }
 
     case DMU_COLOR_BLUE: {
         float b;
         DMU_SetValue(DMT_SURFACE_RGBA, &b, &args, 0);
-        setColorBlue(b);
+        setTintBlue(b);
         break; }
 
     case DMU_ALPHA: {
         float a;
         DMU_SetValue(DMT_SURFACE_RGBA, &a, &args, 0);
-        setAlpha(a);
+        setOpacity(a);
         break; }
 
     case DMU_MATERIAL: {

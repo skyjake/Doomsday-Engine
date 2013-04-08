@@ -21,15 +21,19 @@
 #ifndef LIBDENG_MAP_SURFACE
 #define LIBDENG_MAP_SURFACE
 
-#include "resource/r_data.h"
-#include "map/p_dmu.h"
-#include "map/bspleaf.h"
+#include <QSet>
+
+#include <de/Observers>
+#include <de/Vector>
+#include <de/vector1.h> /// @todo remove me
+
 #include "Material"
 #ifdef __CLIENT__
 #  include "MaterialSnapshot"
 #endif
-#include <de/vector1.h>
-#include <QSet>
+#include "map/p_dmu.h"
+#include "map/bspleaf.h"
+#include "resource/r_data.h"
 
 /**
  * @ingroup map
@@ -46,10 +50,17 @@ public:
     /// The referenced property is not writeable. @ingroup errors
     DENG2_ERROR(WritePropertyError);
 
+    DENG2_DEFINE_AUDIENCE(OpacityChange,
+        void opacityChanged(Surface &surface, float oldOpacity))
+
+    DENG2_DEFINE_AUDIENCE(TintColorChange,
+        void tintColorChanged(Surface &sector, de::Vector3f const &oldTintColor,
+                               int changedComponents /*bit-field (0x1=Red, 0x2=Green, 0x4=Blue)*/))
+
 #ifdef __CLIENT__
     struct DecorSource
     {
-        coord_t origin[3]; ///< World coordinates of the decoration.
+        vec3d_t origin; ///< World coordinates of the decoration.
         BspLeaf *bspLeaf;
         /// @todo $revise-texture-animation reference by index.
         de::MaterialSnapshot::Decoration const *decor;
@@ -92,8 +103,11 @@ public:
     /// Smoother [X, Y] Planar material origin offset delta.
     vec2f_t _visOffsetDelta;
 
-    /// Surface color tint and alpha.
-    vec4f_t _colorAndAlpha;
+    /// Surface color tint.
+    de::Vector3f _tintColor;
+
+    /// Surface opacity.
+    float _opacity;
 
 #ifdef __CLIENT__
     /// @todo Does not belong here - move to the map renderer.
@@ -109,8 +123,9 @@ public:
 #endif
 
 public:
-    Surface(de::MapElement &owner);
-    ~Surface();
+    Surface(de::MapElement &owner,
+            de::Vector3f const &tintColor = de::Vector3f(1.f, 1.f, 1.f),
+            float opacity                 = 1.f);
 
     /**
      * Returns the owning map element. Either @c DMU_SIDEDEF, or @c DMU_PLANE.
@@ -263,58 +278,120 @@ public:
     void updateSoundEmitterOrigin();
 
     /**
-     * Returns the surface color and alpha for the surface.
+     * Returns the opacity of the surface. The OpacityChange audience is notified
+     * whenever the opacity changes.
+     *
+     * @see setOpacity()
      */
-    const_pvec4f_t &colorAndAlpha() const;
+    float opacity() const;
 
     /**
-     * Change surface color tint and alpha.
+     * Change the opacity of the surface. The OpacityChange audience is notified
+     * whenever the opacity changes.
      *
-     * @param newColorAndAlpha  [red, green, blue, alpha] All components [0..1].
+     * @param newOpacity  New opacity strength.
+     *
+     * @see opacity()
      */
-    bool setColorAndAlpha(const_pvec4f_t newColorAndAlpha);
+    void setOpacity(float newOpacity);
 
     /**
-     * @copydoc setColorAndAlpha()
+     * Returns the tint color of the surface. The TintColorChange audience is notified
+     * whenever the tint color changes.
      *
-     * @param red      Red color component [0..1].
-     * @param green    Green color component [0..1].
-     * @param blue     Blue color component [0..1].
-     * @param alpha    Alpha component [0..1].
+     * @see setTintColor(), tintColorComponent(), tintRed(), tintGreen(), tintBlue()
      */
-    inline bool setColorAndAlpha(float red, float green, float blue, float alpha)
-    {
-        float newColorAndAlpha[4] = { red, green, blue, alpha };
-        return setColorAndAlpha(newColorAndAlpha);
+    de::Vector3f const &tintColor() const;
+
+    /**
+     * Returns the strength of the specified @a component of the tint color for the
+     * surface. The TintColorChange audience is notified whenever the tint color changes.
+     *
+     * @param component    RGB index of the color component (0=Red, 1=Green, 2=Blue).
+     *
+     * @see tintColor(), tintRed(), tintGreen(), tintBlue()
+     */
+    inline float tintColorComponent(int component) const { return tintColor()[component]; }
+
+    /**
+     * Returns the strength of the @em red component of the tint color for the surface
+     * The TintColorChange audience is notified whenever the tint color changes.
+     *
+     * @see tintColorComponent(), tintGreen(), tintBlue()
+     */
+    inline float tintRed() const   { return tintColorComponent(0); }
+
+    /**
+     * Returns the strength of the @em green component of the tint color for the
+     * surface. The TintColorChange audience is notified whenever the tint color changes.
+     *
+     * @see tintColorComponent(), tintRed(), tintBlue()
+     */
+    inline float tintGreen() const { return tintColorComponent(1); }
+
+    /**
+     * Returns the strength of the @em blue component of the tint color for the
+     * surface. The TintColorChange audience is notified whenever the tint color changes.
+     *
+     * @see tintColorComponent(), tintRed(), tintGreen()
+     */
+    inline float tintBlue() const  { return tintColorComponent(2); }
+
+    /**
+     * Change the tint color for the sector. The TintColorChange audience is notified
+     * whenever the tint color changes.
+     *
+     * @param newTintColor  New tint color.
+     *
+     * @see tintColor(), setTintColorComponent(), setTintRed(), setTintGreen(), setTintBlue()
+     */
+    void setTintColor(de::Vector3f const &newTintColor);
+
+    /// @copydoc setTintColor
+    inline void setTintColor(float red, float green, float blue) {
+        setTintColor(de::Vector3f(red, green, blue));
     }
 
     /**
-     * Change surface color tint.
+     * Change the strength of the specified @a component of the tint color for the
+     * surface. The TintColorChange audience is notified whenever the tint color changes.
      *
-     * @param red      Red color component [0..1].
+     * @param component    RGB index of the color component (0=Red, 1=Green, 2=Blue).
+     * @param newStrength  New strength factor for the color component.
+     *
+     * @see setTintColor(), setTintRed(), setTintGreen(), setTintBlue()
      */
-    bool setColorRed(float red);
+    inline void setTintColorComponent(int component, float newStrength);
 
     /**
-     * Change surface color tint.
+     * Change the strength of the red component of the tint color for the surface.
+     * The TintColorChange audience is notified whenever the tint color changes.
      *
-     * @param green    Green color component [0..1].
+     * @param newStrength  New red strength for the tint color.
+     *
+     * @see setTintColorComponent(), setTintGreen(), setTintBlue()
      */
-    bool setColorGreen(float green);
+    inline void setTintRed(float newStrength)  { setTintColorComponent(0, newStrength); }
 
     /**
-     * Change surface color tint.
+     * Change the strength of the green component of the tint color for the surface.
+     * The TintColorChange audience is notified whenever the tint color changes.
      *
-     * @param blue     Blue color component [0..1].
+     * @param newStrength  New green strength for the tint color.
+     *
+     * @see setTintColorComponent(), setTintRed(), setTintBlue()
      */
-    bool setColorBlue(float blue);
+    inline void setTintGreen(float newStrength) { setTintColorComponent(1, newStrength); }
 
     /**
-     * Change surface alpha.
+     * Change the strength of the blue component of the tint color for the surface.
+     * The TintColorChange audience is notified whenever the tint color changes.
      *
-     * @param alpha    New alpha value [0..1].
+     * @param newStrength  New blue strength for the tint color.
+     *
+     * @see setTintColorComponent(), setTintRed(), setTintGreen()
      */
-    bool setAlpha(float alpha);
+    inline void setTintBlue(float newStrength)  { setTintColorComponent(2, newStrength); }
 
     /**
      * Returns the blendmode for the surface.
@@ -379,6 +456,9 @@ public:
      * Line which is itself owned by a Polyobj.
      */
     static bool isFromPolyobj(Surface const &surface);
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 struct surfacedecorsource_s;
