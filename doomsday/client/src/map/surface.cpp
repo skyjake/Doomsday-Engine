@@ -1,4 +1,4 @@
-/** @file surface.cpp Logical map surface.
+/** @file surface.cpp World Map Surface.
  *
  * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,15 +18,15 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/LegacyCore>
-#include <de/Log>
-#include <de/String>
+#include <de/memoryzone.h> /// @todo remove me
 
-#include "de_base.h"
-#include "de_play.h"
-#include "de_defs.h"
+#include <de/Log>
+
+#include "de_defs.h" // Def_GetGenerator
+
 #include "Materials"
 #include "map/gamemap.h"
+#include "map/r_world.h" /// ddMapSetup @todo remove me
 
 #include "map/surface.h"
 
@@ -58,10 +58,10 @@ DENG2_PIMPL(Surface)
     /// @ref sufFlags
     int flags;
 
-    Instance(Public *i, MapElement &owner_, de::Vector3f const &tintColor,
+    Instance(Public *i, MapElement &owner, de::Vector3f const &tintColor,
              float opacity)
         : Base(i),
-          owner(owner_),
+          owner(owner),
           material(0),
           materialIsMissingFix(false),
           tintColor(tintColor),
@@ -605,22 +605,22 @@ int Surface::property(setargs_t &args) const
         break;
 
     case DMU_COLOR:
-        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor[CR], &args, 0);
-        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor[CG], &args, 1);
-        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor[CB], &args, 2);
+        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor.x, &args, 0);
+        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor.y, &args, 1);
+        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor.z, &args, 2);
         DMU_GetValue(DMT_SURFACE_RGBA, &d->opacity, &args, 2);
         break;
 
     case DMU_COLOR_RED:
-        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor[CR], &args, 0);
+        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor.x, &args, 0);
         break;
 
     case DMU_COLOR_GREEN:
-        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor[CG], &args, 0);
+        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor.y, &args, 0);
         break;
 
     case DMU_COLOR_BLUE:
-        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor[CB], &args, 0);
+        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor.z, &args, 0);
         break;
 
     case DMU_ALPHA:
@@ -658,13 +658,13 @@ int Surface::setProperty(setargs_t const &args)
         break;
 
     case DMU_COLOR: {
-        float rgb[3];
-        DMU_SetValue(DMT_SURFACE_RGBA, &rgb[CR], &args, 0);
-        DMU_SetValue(DMT_SURFACE_RGBA, &rgb[CG], &args, 1);
-        DMU_SetValue(DMT_SURFACE_RGBA, &rgb[CB], &args, 2);
-        setTintRed(rgb[CR]);
-        setTintGreen(rgb[CG]);
-        setTintBlue(rgb[CB]);
+        float red, green, blue;
+        DMU_SetValue(DMT_SURFACE_RGBA, &red,   &args, 0);
+        DMU_SetValue(DMT_SURFACE_RGBA, &green, &args, 1);
+        DMU_SetValue(DMT_SURFACE_RGBA, &blue,  &args, 2);
+        setTintRed(red);
+        setTintGreen(green);
+        setTintBlue(blue);
         break; }
 
     case DMU_COLOR_RED: {
