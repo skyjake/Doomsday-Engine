@@ -172,42 +172,11 @@ DENG2_PIMPL(GameMap)
         }
     }
 
-    void buildSectorBspLeafLists()
-    {
-        foreach(Sector *sector, self._sectors)
-        {
-            sector->_bspLeafs.clear();
-
-#ifdef DENG2_QT_4_7_OR_NEWER
-            uint count = 0;
-            foreach(BspLeaf *bspLeaf, bspLeafs)
-            {
-                if(bspLeaf->sectorPtr() == sector)
-                    ++count;
-            }
-
-            if(0 == count) continue;
-
-            sector->_bspLeafs.reserve(count);
-#endif
-
-            foreach(BspLeaf *bspLeaf, bspLeafs)
-            {
-                if(bspLeaf->sectorPtr() == sector)
-                {
-                    // Ownership of the BSP leaf is not given to the sector.
-                    sector->_bspLeafs.append(bspLeaf);
-                }
-            }
-        }
-    }
-
     void finishSectors()
     {
-        buildSectorBspLeafLists();
-
         foreach(Sector *sector, self._sectors)
         {
+            sector->buildBspLeafs(self);
             sector->buildLines(self);
             sector->updateAABox();
             sector->updateRoughArea();

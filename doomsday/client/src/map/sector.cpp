@@ -23,10 +23,12 @@
 
 #include <de/Log>
 
-//#include "de_base.h"
 #include "map/bspleaf.h"
 #include "map/linedef.h"
 #include "map/gamemap.h"
+#ifdef __CLIENT__
+#  include "render/rend_bias.h"
+#endif
 
 #include "map/sector.h"
 
@@ -34,11 +36,26 @@ using namespace de;
 
 DENG2_PIMPL(Sector)
 {
+    /// List of lines which reference the sector (not owned).
+    Lines lines;
+
+    /// List of BSP leafs which reference the sector (not owned).
+    BspLeafs bspLeafs;
+
     Instance(Public *i) : Base(i)
     {}
 
     ~Instance()
     {
+#ifdef __CLIENT__
+        // Destroy the biassurfaces for each plane.
+        foreach(BspLeaf *bspLeaf, bspLeafs)
+        for(uint i = 0; i < self.planeCount(); ++i)
+        {
+            SB_DestroySurface(bspLeaf->_bsuf[i]);
+        }
+#endif
+
         qDeleteAll(self._planes);
     }
 
@@ -187,12 +204,26 @@ Plane const &Sector::plane(int planeIndex) const
 
 Sector::Lines const &Sector::lines() const
 {
-    return _lines;
+    return d->lines;
 }
 
 void Sector::buildLines(GameMap const &map)
 {
-    _lines.erase(_lines.begin(), _lines.end());
+    d->lines.clear();
+
+#ifdef DENG2_QT_4_7_OR_NEWER
+    uint count = 0;
+    foreach(LineDef *line, map.lines())
+    {
+        if(line->frontSectorPtr() == this ||
+           line->backSectorPtr()  == this)
+            ++count;
+    }
+
+    if(0 == count) return;
+
+    d->lines.reserve(count);
+#endif
 
     foreach(LineDef *line, map.lines())
     {
@@ -200,7 +231,7 @@ void Sector::buildLines(GameMap const &map)
            line->backSectorPtr()  == this)
         {
             // Ownership of the line is not given to the sector.
-            _lines.append(line);
+            d->lines.append(line);
         }
     }
 }
@@ -212,7 +243,34 @@ Sector::Planes const &Sector::planes() const
 
 Sector::BspLeafs const &Sector::bspLeafs() const
 {
-    return _bspLeafs;
+    return d->bspLeafs;
+}
+
+void Sector::buildBspLeafs(GameMap const &map)
+{
+    d->bspLeafs.clear();
+
+#ifdef DENG2_QT_4_7_OR_NEWER
+    uint count = 0;
+    foreach(BspLeaf *bspLeaf, map.bspLeafs())
+    {
+        if(bspLeaf->sectorPtr() == this)
+            ++count;
+    }
+
+    if(0 == count) return;
+
+    d->bspLeafs.reserve(count);
+#endif
+
+    foreach(BspLeaf *bspLeaf, map.bspLeafs())
+    {
+        if(bspLeaf->sectorPtr() == this)
+        {
+            // Ownership of the BSP leaf is not given to the sector.
+            d->bspLeafs.append(bspLeaf);
+        }
+    }
 }
 
 Sector::BspLeafs const &Sector::reverbBspLeafs() const
@@ -235,9 +293,9 @@ void Sector::updateAABox()
     V2d_Set(_aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
     V2d_Set(_aaBox.max, DDMINFLOAT, DDMINFLOAT);
 
-    if(!_lines.count()) return;
+    if(!d->lines.count()) return;
 
-    QListIterator<LineDef *> lineIt(_lines);
+    QListIterator<LineDef *> lineIt(d->lines);
 
     LineDef *line = lineIt.next();
     V2d_CopyBox(_aaBox.arvec2, line->aaBox().arvec2);
@@ -299,7 +357,7 @@ int Sector::property(setargs_t &args) const
         DMU_GetValue(DMT_SECTOR_BASE, &soundEmitterAdr, &args, 0);
         break; }
     case DMU_LINEDEF_COUNT: {
-        int val = _lines.count();
+        int val = lineCount();
         DMU_GetValue(DDVT_INT, &val, &args, 0);
         break; }
     case DMT_MOBJS:

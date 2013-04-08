@@ -24,7 +24,9 @@
 #include <QList>
 
 #include <de/aabox.h>
+
 #include <de/Error>
+#include <de/Observers>
 
 #include "map/plane.h"
 #include "p_mapdata.h"
@@ -116,12 +118,6 @@ public: /// @todo Make private:
 
     /// Head of the linked list of mobjs "in" the sector (not owned).
     struct mobj_s *_mobjList;
-
-    /// List of lines which reference the sector (not owned).
-    Lines _lines;
-
-    /// List of BSP leafs which reference the sector (not owned).
-    BspLeafs _bspLeafs;
 
     /// List of BSP leafs which contribute to the environmental audio
     /// characteristics of the sector (not owned).
@@ -247,7 +243,7 @@ public:
     inline uint lineCount() const { return uint(lines().count()); }
 
     /**
-     * (Re)Build the sector line list for the sector.
+     * (Re)Build the line list for the sector.
      *
      * @attention The behavior of some algorithms used in the DOOM game logic
      * is dependant upon the order of this list. For example, EV_DoFloor and
@@ -260,12 +256,13 @@ public:
     void buildLines(GameMap const &map);
 
     /**
-     * Provides access to the list of planes for efficient traversal.
+     * Provides access to the list of planes in/owned by the sector, for efficient
+     * traversal.
      */
     Planes const &planes() const;
 
     /**
-     * Returns the total number of planes in the sector.
+     * Returns the total number of planes in/owned by the sector.
      */
     inline uint planeCount() const { return uint(planes().count()); }
 
@@ -279,6 +276,13 @@ public:
      * Returns the total number of BSP leafs which reference the sector.
      */
     inline uint bspLeafCount() const { return uint(bspLeafs().count()); }
+
+    /**
+     * (Re)Build the BSP leaf list for the sector.
+     *
+     * @param map  Map to collate BSP leafs from. @todo Refactor away.
+     */
+    void buildBspLeafs(GameMap const &map);
 
     /**
      * Provides access to the list of BSP leafs which contribute to the environmental
@@ -306,7 +310,10 @@ public:
     /**
      * Update the sector's map space axis-aligned bounding box to encompass
      * the points defined by it's LineDefs' vertexes.
-     * @pre Line list must have been initialized.
+     *
+     * @pre Line list must have be initialized.
+     *
+     * @see buildLines()
      */
     void updateAABox();
 
@@ -316,13 +323,17 @@ public:
      *
      * @deprecated Algorithms which are dependent on this are likely making
      * invalid assumptions about the geometry of the map.
+     *
+     * @see updateRoughArea()
      */
     coord_t roughArea() const;
 
     /**
      * Update the sector's rough area approximation.
      *
-     * @pre Axis-aligned bounding box must have been initialized.
+     * @pre Axis-aligned bounding box must be initialized.
+     *
+     * @see updateAABox()
      */
     void updateRoughArea();
 
