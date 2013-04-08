@@ -338,7 +338,7 @@ public:
     inline float tintBlue() const  { return tintColorComponent(2); }
 
     /**
-     * Change the tint color for the sector. The TintColorChange audience is notified
+     * Change the tint color for the surface. The TintColorChange audience is notified
      * whenever the tint color changes.
      *
      * @param newTintColor  New tint color.

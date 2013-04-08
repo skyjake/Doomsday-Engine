@@ -66,7 +66,8 @@ Surface::Surface(MapElement &owner, Vector3f const &tintColor, float opacity)
     : MapElement(DMU_SURFACE),
       _owner(owner),
       _tintColor(tintColor),
-      _opacity(opacity)
+      _opacity(opacity),
+      d(new Instance(this))
 {
     std::memset(&_soundEmitter, 0, sizeof(_soundEmitter));
     _flags = 0;
