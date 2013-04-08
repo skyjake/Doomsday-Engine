@@ -502,6 +502,13 @@ ClientWindow &ClientWindow::main()
     return static_cast<ClientWindow &>(PersistentCanvasWindow::main());
 }
 
+#if defined(UNIX) && !defined(MACOSX)
+void GL_AssertContextActive()
+{
+    DENG_ASSERT(QGLContext::currentContext() != 0);
+}
+#endif
+
 #if 0
 // --------------------------------------------------------------------------
 
@@ -1462,14 +1469,6 @@ bool Window::shouldRepaintManually() const
     if(isFullscreen()) return true;
     return !Mouse_IsPresent() || isMouseTrapped();
 }
-
-#if defined(UNIX) && !defined(MACOSX)
-void GL_AssertContextActive()
-{
-    //Window *wnd = Window::main();
-    DENG_ASSERT(QGLContext::currentContext() != 0);
-}
-#endif
 
 QWidget *Window::widgetPtr()
 {

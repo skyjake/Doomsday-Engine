@@ -205,13 +205,13 @@ static int findMode(const DisplayMode* mode)
 }
 #endif
 
-int DisplayMode_Native_Change(const DisplayMode* mode, boolean shouldCapture)
+int DisplayMode_Native_Change(DisplayMode const *mode, int shouldCapture)
 {
-    DENG_UNUSED(shouldCapture);
+    DENG2_UNUSED(shouldCapture);
     return RRInfo().apply(mode);
 }
 
-void DisplayMode_Native_GetColorTransfer(displaycolortransfer_t* colors)
+void DisplayMode_Native_GetColorTransfer(DisplayColorTransfer *colors)
 {
     Display *dpy = QX11Info::display();
     int screen = QX11Info::appScreen();
@@ -249,7 +249,7 @@ void DisplayMode_Native_GetColorTransfer(displaycolortransfer_t* colors)
     delete [] xRamp;
 }
 
-void DisplayMode_Native_SetColorTransfer(const displaycolortransfer_t* colors)
+void DisplayMode_Native_SetColorTransfer(DisplayColorTransfer const *colors)
 {
     Display* dpy = QX11Info::display();
     if(!dpy) return;
