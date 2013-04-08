@@ -22,9 +22,10 @@
 #define LIBDENG_MAP_SECTOR
 
 #include <QList>
+
 #include <de/aabox.h>
-#include <de/vector1.h>
 #include <de/Error>
+
 #include "map/plane.h"
 #include "p_mapdata.h"
 #include "p_dmu.h"
@@ -66,7 +67,8 @@ public:
         void lightLevelChanged(Sector &sector, float oldLightLevel))
 
     DENG2_DEFINE_AUDIENCE(LightColorChange,
-        void lightColorChanged(Sector &sector, de::Vector3f const &oldLightColor))
+        void lightColorChanged(Sector &sector, de::Vector3f const &oldLightColor,
+                               int changedComponents /*bit-field (0x1=Red, 0x2=Green, 0x4=Blue)*/))
 
     typedef QList<LineDef *> Lines;
     typedef QList<Plane *> Planes;
@@ -234,8 +236,8 @@ public:
     inline Surface const &ceilingSurface() const { return ceiling().surface(); }
 
     /**
-     * Provides access to the list of lines which reference the sector, for
-     * efficient traversal.
+     * Provides access to the list of lines which reference the sector,
+     * for efficient traversal.
      */
     Lines const &lines() const;
 
@@ -243,6 +245,19 @@ public:
      * Returns the total number of lines which reference the sector.
      */
     inline uint lineCount() const { return uint(lines().count()); }
+
+    /**
+     * (Re)Build the sector line list for the sector.
+     *
+     * @attention The behavior of some algorithms used in the DOOM game logic
+     * is dependant upon the order of this list. For example, EV_DoFloor and
+     * EV_BuildStairs. That same order is used here, for compatibility.
+     *
+     * Order: Original line index, ascending.
+     *
+     * @param map  Map to collate lines from. @todo Refactor away.
+     */
+    void buildLines(GameMap const &map);
 
     /**
      * Provides access to the list of planes for efficient traversal.

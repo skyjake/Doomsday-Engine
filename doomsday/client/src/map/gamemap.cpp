@@ -162,6 +162,16 @@ DENG2_PIMPL(GameMap)
         bspNodes.append(node);
     }
 
+    void finishLines()
+    {
+        foreach(LineDef *line, self._lines)
+        for(int i = 0; i < 2; ++i)
+        {
+            line->side(i).updateSurfaceTangents();
+            line->side(i).updateSoundEmitterOrigins();
+        }
+    }
+
     void buildSectorBspLeafLists()
     {
         foreach(Sector *sector, self._sectors)
@@ -192,99 +202,13 @@ DENG2_PIMPL(GameMap)
         }
     }
 
-    void finishLines()
-    {
-        foreach(LineDef *line, self._lines)
-        for(int i = 0; i < 2; ++i)
-        {
-            line->side(i).updateSurfaceTangents();
-            line->side(i).updateSoundEmitterOrigins();
-        }
-    }
-
-    void buildSectorLineLists()
-    {
-        LOG_VERBOSE("Building Sector line lists...");
-
-        struct LineLink
-        {
-            LineDef *line;
-            LineLink *next;
-        };
-
-        // Collate a list of lines for each sector.
-        zblockset_t *lineLinksBlockSet = ZBlockSet_New(sizeof(LineLink), 512, PU_APPSTATIC);
-        LineLink **sectorLineLinks = (LineLink **) Z_Calloc(sizeof(*sectorLineLinks) * self._sectors.count(), PU_APPSTATIC, 0);
-
-        foreach(LineDef *line, self._lines)
-        {
-            if(line->hasFrontSector())
-            {
-                int const sectorIndex = self.sectorIndex(&line->frontSector());
-
-                LineLink *link = (LineLink *) ZBlockSet_Allocate(lineLinksBlockSet);
-                link->line = line;
-                link->next = sectorLineLinks[sectorIndex];
-                sectorLineLinks[sectorIndex] = link;
-            }
-
-            if(line->hasBackSector() && !line->isSelfReferencing())
-            {
-                int const sectorIndex = self.sectorIndex(&line->backSector());
-
-                LineLink *link = (LineLink *) ZBlockSet_Allocate(lineLinksBlockSet);
-                link->line = line;
-                link->next = sectorLineLinks[sectorIndex];
-                sectorLineLinks[sectorIndex] = link;
-            }
-        }
-
-        // Build the actual sector line lists.
-        foreach(Sector *sector, self._sectors)
-        {
-            int const sectorIndex = self.sectorIndex(sector);
-
-            sector->_lines.clear();
-
-            if(!sectorLineLinks[sectorIndex]) continue;
-
-#ifdef DENG2_QT_4_7_OR_NEWER
-            // Count the total number of lines in this sector.
-            uint numLines = 0;
-            for(LineLink *link = sectorLineLinks[sectorIndex]; link; link = link->next)
-            {
-                numLines++;
-            }
-            // Reserve this much storage.
-            sector->_lines.reserve(numLines);
-#endif
-
-            /**
-             * The behavior of some algorithms used in the DOOM game logic are
-             * dependant upon the order of these lists (e.g., EV_DoFloor and
-             * EV_BuildStairs). Lets be helpful and use the same order.
-             *
-             * Sort: Original line index, ascending.
-             */
-            for(LineLink *link = sectorLineLinks[sectorIndex]; link; link = link->next)
-            {
-                // Ownership of the line is not given to the sector.
-                sector->_lines.prepend(link->line);
-            }
-        }
-
-        // Free temporary storage.
-        ZBlockSet_Delete(lineLinksBlockSet);
-        Z_Free(sectorLineLinks);
-    }
-
     void finishSectors()
     {
         buildSectorBspLeafLists();
-        buildSectorLineLists();
 
         foreach(Sector *sector, self._sectors)
         {
+            sector->buildLines(self);
             sector->updateAABox();
             sector->updateRoughArea();
 

@@ -1,4 +1,4 @@
-/** @file sector.h Map Sector.
+/** @file sector.h World Map Sector.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,12 +18,15 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
-#include "map/bspleaf.h"
-#include "map/linedef.h"
-#include <de/Log>
 #include <QListIterator>
 #include <QtAlgorithms>
+
+#include <de/Log>
+
+//#include "de_base.h"
+#include "map/bspleaf.h"
+#include "map/linedef.h"
+#include "map/gamemap.h"
 
 #include "map/sector.h"
 
@@ -49,9 +52,17 @@ DENG2_PIMPL(Sector)
 
     void notifyLightColorChanged(Vector3f const &oldLightColor)
     {
+        // Predetermine which components have changed.
+        int changedComponents = 0;
+        for(int i = 0; i < 3; ++i)
+        {
+            if(!fequal(self._lightColor[i], oldLightColor[i]))
+                changedComponents |= (1 << i);
+        }
+
         DENG2_FOR_PUBLIC_AUDIENCE(LightColorChange, i)
         {
-            i->lightColorChanged(self, oldLightColor);
+            i->lightColorChanged(self, oldLightColor, changedComponents);
         }
     }
 };
@@ -177,6 +188,21 @@ Plane const &Sector::plane(int planeIndex) const
 Sector::Lines const &Sector::lines() const
 {
     return _lines;
+}
+
+void Sector::buildLines(GameMap const &map)
+{
+    _lines.erase(_lines.begin(), _lines.end());
+
+    foreach(LineDef *line, map.lines())
+    {
+        if(line->frontSectorPtr() == this ||
+           line->backSectorPtr()  == this)
+        {
+            // Ownership of the line is not given to the sector.
+            _lines.append(line);
+        }
+    }
 }
 
 Sector::Planes const &Sector::planes() const
