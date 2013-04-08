@@ -565,7 +565,7 @@ public:
     {
         int result = str.toInt(0, 0, String::AllowSuffix);
         if(weaponNum) *weaponNum = result;
-        return (weaponNum >= 0);
+        return (result >= 0);
     }
 
     bool parseMobjTypeState(const QString& token, const StateMapping** state)
