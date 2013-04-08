@@ -98,12 +98,6 @@ public: /// @todo Make private:
     /// if == validCount, already checked.
     int _validCount;
 
-    /// Bounding box for the sector.
-    AABoxd _aaBox;
-
-    /// Rough approximation of sector area.
-    coord_t _roughArea;
-
     /// Ambient light level in the sector.
     float _lightLevel;
 
@@ -122,9 +116,6 @@ public: /// @todo Make private:
     /// List of BSP leafs which contribute to the environmental audio
     /// characteristics of the sector (not owned).
     BspLeafs _reverbBspLeafs;
-
-    /// Primary sound emitter. Others are linked to this, forming a chain.
-    ddmobj_base_t _soundEmitter;
 
     /// List of sector planes (owned).
     Planes _planes;

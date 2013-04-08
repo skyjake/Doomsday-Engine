@@ -36,14 +36,27 @@ using namespace de;
 
 DENG2_PIMPL(Sector)
 {
+    /// Bounding box for the sector.
+    AABoxd aaBox;
+
+    /// Rough approximation of sector area (map units squared).
+    coord_t roughArea;
+
+    /// Primary sound emitter. Others are linked to this, forming a chain.
+    ddmobj_base_t soundEmitter;
+
     /// List of lines which reference the sector (not owned).
     Lines lines;
 
     /// List of BSP leafs which reference the sector (not owned).
     BspLeafs bspLeafs;
 
-    Instance(Public *i) : Base(i)
-    {}
+    Instance(Public *i)
+        : Base(i),
+          roughArea(0)
+    {
+        std::memset(&soundEmitter, 0, sizeof(soundEmitter));
+    }
 
     ~Instance()
     {
@@ -92,9 +105,7 @@ Sector::Sector(float lightLevel, Vector3f const &lightColor)
 {
     _frameFlags = 0;
     _validCount = 0;
-    _roughArea = 0;
     _mobjList = 0;
-    std::memset(&_soundEmitter, 0, sizeof(_soundEmitter));
     std::memset(&_lightGridData, 0, sizeof(_lightGridData));
     std::memset(_reverb, 0, sizeof(_reverb));
     _origIndex = 0;
@@ -159,7 +170,7 @@ struct mobj_s *Sector::firstMobj() const
 
 ddmobj_base_t &Sector::soundEmitter()
 {
-    return _soundEmitter;
+    return d->soundEmitter;
 }
 
 ddmobj_base_t const &Sector::soundEmitter() const
@@ -280,55 +291,55 @@ Sector::BspLeafs const &Sector::reverbBspLeafs() const
 
 AABoxd const &Sector::aaBox() const
 {
-    return _aaBox;
+    return d->aaBox;
 }
 
 coord_t Sector::roughArea() const
 {
-    return _roughArea;
+    return d->roughArea;
 }
 
 void Sector::updateAABox()
 {
-    V2d_Set(_aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
-    V2d_Set(_aaBox.max, DDMINFLOAT, DDMINFLOAT);
+    V2d_Set(d->aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
+    V2d_Set(d->aaBox.max, DDMINFLOAT, DDMINFLOAT);
 
     if(!d->lines.count()) return;
 
     QListIterator<LineDef *> lineIt(d->lines);
 
     LineDef *line = lineIt.next();
-    V2d_CopyBox(_aaBox.arvec2, line->aaBox().arvec2);
+    V2d_CopyBox(d->aaBox.arvec2, line->aaBox().arvec2);
 
     while(lineIt.hasNext())
     {
         line = lineIt.next();
-        V2d_UniteBox(_aaBox.arvec2, line->aaBox().arvec2);
+        V2d_UniteBox(d->aaBox.arvec2, line->aaBox().arvec2);
     }
 }
 
 void Sector::updateRoughArea()
 {
     // Only a very rough estimate is required.
-    _roughArea = ((_aaBox.maxX - _aaBox.minX) / 128) *
-                 ((_aaBox.maxY - _aaBox.minY) / 128);
+    d->roughArea = ((d->aaBox.maxX - d->aaBox.minX) / 128) *
+                   ((d->aaBox.maxY - d->aaBox.minY) / 128);
 }
 
 void Sector::linkSoundEmitter(ddmobj_base_t &newEmitter)
 {
     // The sector's base is always head of the chain, so link the other after it.
-    newEmitter.thinker.prev = &_soundEmitter.thinker;
-    newEmitter.thinker.next = _soundEmitter.thinker.next;
+    newEmitter.thinker.prev = &d->soundEmitter.thinker;
+    newEmitter.thinker.next = d->soundEmitter.thinker.next;
     if(newEmitter.thinker.next)
         newEmitter.thinker.next->prev = &newEmitter.thinker;
-    _soundEmitter.thinker.next = &newEmitter.thinker;
+    d->soundEmitter.thinker.next = &newEmitter.thinker;
 }
 
 void Sector::updateSoundEmitterOrigin()
 {
-    _soundEmitter.origin[VX] = (_aaBox.minX + _aaBox.maxX) / 2;
-    _soundEmitter.origin[VY] = (_aaBox.minY + _aaBox.maxY) / 2;
-    _soundEmitter.origin[VZ] = (floor().height() + ceiling().height()) / 2;
+    d->soundEmitter.origin[VX] = (d->aaBox.minX + d->aaBox.maxX) / 2;
+    d->soundEmitter.origin[VY] = (d->aaBox.minY + d->aaBox.maxY) / 2;
+    d->soundEmitter.origin[VZ] = (floor().height() + ceiling().height()) / 2;
 }
 
 int Sector::property(setargs_t &args) const
@@ -353,7 +364,7 @@ int Sector::property(setargs_t &args) const
         DMU_GetValue(DMT_SECTOR_RGB, &_lightColor.z, &args, 0);
         break;
     case DMU_BASE: {
-        ddmobj_base_t const *soundEmitterAdr = &_soundEmitter;
+        ddmobj_base_t const *soundEmitterAdr = &d->soundEmitter;
         DMU_GetValue(DMT_SECTOR_BASE, &soundEmitterAdr, &args, 0);
         break; }
     case DMU_LINEDEF_COUNT: {
