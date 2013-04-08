@@ -86,7 +86,7 @@ DENG2_PIMPL(Sector)
         int changedComponents = 0;
         for(int i = 0; i < 3; ++i)
         {
-            if(!fequal(self._lightColor[i], oldLightColor[i]))
+            if(!de::fequal(self._lightColor[i], oldLightColor[i]))
                 changedComponents |= (1 << i);
         }
 

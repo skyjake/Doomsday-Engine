@@ -68,24 +68,6 @@ public:
 #endif // __CLIENT__
 
 public:
-    /// Owning map element, either @c DMU_SIDEDEF, or @c DMU_PLANE.
-    de::MapElement &_owner;
-
-    /// Sound emitter.
-    ddmobj_base_t _soundEmitter;
-
-    /// @ref sufFlags
-    int _flags;
-
-    /// Bound material.
-    Material *_material;
-
-    /// @c true= Bound material is a "missing material fix".
-    bool _materialIsMissingFix;
-
-    /// Blending mode.
-    blendmode_t _blendMode;
-
     /// Tangent space vectors:
     vec3f_t _tangent;
     vec3f_t _bitangent;
@@ -102,12 +84,6 @@ public:
 
     /// Smoother [X, Y] Planar material origin offset delta.
     vec2f_t _visOffsetDelta;
-
-    /// Surface color tint.
-    de::Vector3f _tintColor;
-
-    /// Surface opacity.
-    float _opacity;
 
 #ifdef __CLIENT__
     /// @todo Does not belong here - move to the map renderer.

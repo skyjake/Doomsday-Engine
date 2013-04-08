@@ -34,8 +34,43 @@ using namespace de;
 
 DENG2_PIMPL(Surface)
 {
-    Instance(Public *i) : Base(i)
-    {}
+    /// Owning map element, either @c DMU_SIDEDEF, or @c DMU_PLANE.
+    de::MapElement &owner;
+
+    /// Sound emitter.
+    ddmobj_base_t soundEmitter;
+
+    /// Bound material.
+    Material *material;
+
+    /// @c true= Bound material is a "missing material fix".
+    bool materialIsMissingFix;
+
+    /// Surface color tint.
+    de::Vector3f tintColor;
+
+    /// Surface opacity.
+    float opacity;
+
+    /// Blending mode.
+    blendmode_t blendMode;
+
+    /// @ref sufFlags
+    int flags;
+
+    Instance(Public *i, MapElement &owner_, de::Vector3f const &tintColor,
+             float opacity)
+        : Base(i),
+          owner(owner_),
+          material(0),
+          materialIsMissingFix(false),
+          tintColor(tintColor),
+          opacity(opacity),
+          blendMode(BM_NORMAL),
+          flags(0)
+    {
+        std::memset(&soundEmitter, 0, sizeof(soundEmitter));
+    }
 
     void notifyOpacityChanged(float oldOpacity)
     {
@@ -51,7 +86,7 @@ DENG2_PIMPL(Surface)
         int changedComponents = 0;
         for(int i = 0; i < 3; ++i)
         {
-            if(!fequal(self._tintColor[i], oldTintColor[i]))
+            if(!de::fequal(tintColor[i], oldTintColor[i]))
                 changedComponents |= (1 << i);
         }
 
@@ -63,17 +98,8 @@ DENG2_PIMPL(Surface)
 };
 
 Surface::Surface(MapElement &owner, Vector3f const &tintColor, float opacity)
-    : MapElement(DMU_SURFACE),
-      _owner(owner),
-      _tintColor(tintColor),
-      _opacity(opacity),
-      d(new Instance(this))
+    : MapElement(DMU_SURFACE), d(new Instance(this, owner, tintColor, opacity))
 {
-    std::memset(&_soundEmitter, 0, sizeof(_soundEmitter));
-    _flags = 0;
-    _material = 0;
-    _materialIsMissingFix = false;
-    _blendMode = BM_NORMAL;
     V3f_Set(_tangent, 0, 0, 0);
     V3f_Set(_bitangent, 0, 0, 0);
     V3f_Set(_normal, 0, 0, 0);
@@ -92,7 +118,7 @@ Surface::Surface(MapElement &owner, Vector3f const &tintColor, float opacity)
 
 de::MapElement &Surface::owner() const
 {
-    return _owner;
+    return d->owner;
 }
 
 const_pvec3f_t &Surface::tangent() const
@@ -112,19 +138,19 @@ const_pvec3f_t &Surface::normal() const
 
 bool Surface::hasMaterial() const
 {
-    return _material != 0;
+    return d->material != 0;
 }
 
 bool Surface::hasFixMaterial() const
 {
-    return _material != 0 && _materialIsMissingFix;
+    return d->material != 0 && d->materialIsMissingFix;
 }
 
 Material &Surface::material() const
 {
-    if(_material)
+    if(d->material)
     {
-        return *_material;
+        return *d->material;
     }
     /// @throw MissingMaterialError Attempted with no material bound.
     throw MissingMaterialError("Surface::material", "No material is bound");
@@ -132,12 +158,12 @@ Material &Surface::material() const
 
 int Surface::flags() const
 {
-    return _flags;
+    return d->flags;
 }
 
 ddmobj_base_t &Surface::soundEmitter()
 {
-    return _soundEmitter;
+    return d->soundEmitter;
 }
 
 ddmobj_base_t const &Surface::soundEmitter() const
@@ -147,10 +173,10 @@ ddmobj_base_t const &Surface::soundEmitter() const
 
 bool Surface::isAttachedToMap() const
 {
-    if(_owner.type() == DMU_PLANE)
+    if(d->owner.type() == DMU_PLANE)
     {
-        Sector const &sec = _owner.castTo<Plane>()->sector();
-        if(!sec.bspLeafCount())
+        Sector const &sector = d->owner.castTo<Plane>()->sector();
+        if(!sector.bspLeafCount())
             return false;
     }
     return true;
@@ -158,17 +184,17 @@ bool Surface::isAttachedToMap() const
 
 bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
 {
-    if(_material != newMaterial)
+    if(d->material != newMaterial)
     {
         // Update the missing-material-fix state.
-        if(!_material)
+        if(!d->material)
         {
             if(newMaterial && isMissingFix)
-                _materialIsMissingFix = true;
+               d->materialIsMissingFix = true;
         }
-        else if(newMaterial && _materialIsMissingFix)
+        else if(newMaterial && d->materialIsMissingFix)
         {
-            _materialIsMissingFix = false;
+            d->materialIsMissingFix = false;
         }
 
         if(isAttachedToMap())
@@ -199,17 +225,17 @@ bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
                     }
 #endif // __CLIENT__
 
-                    if(_owner.type() == DMU_PLANE)
+                    if(d->owner.type() == DMU_PLANE)
                     {
                         de::Uri uri = newMaterial->manifest().composeUri();
                         ded_ptcgen_t const *def = Def_GetGenerator(reinterpret_cast<uri_s *>(&uri));
-                        P_SpawnPlaneParticleGen(def, _owner.castTo<Plane>());
+                        P_SpawnPlaneParticleGen(def, d->owner.castTo<Plane>());
                     }
                 }
             }
         }
 
-        _material = newMaterial;
+        d->material = newMaterial;
 
 #ifdef __CLIENT__
         if(isAttachedToMap())
@@ -306,16 +332,16 @@ const_pvec2f_t &Surface::visMaterialOriginDelta() const
 
 float Surface::opacity() const
 {
-    return _opacity;
+    return d->opacity;
 }
 
 void Surface::setOpacity(float newOpacity)
 {
     newOpacity = de::clamp(0.f, newOpacity, 1.f);
-    if(!de::fequal(_opacity, newOpacity))
+    if(!de::fequal(d->opacity, newOpacity))
     {
-        float oldOpacity = _opacity;
-        _opacity = newOpacity;
+        float oldOpacity = d->opacity;
+        d->opacity = newOpacity;
 
         // Notify interested parties of the change.
         d->notifyOpacityChanged(oldOpacity);
@@ -324,7 +350,7 @@ void Surface::setOpacity(float newOpacity)
 
 Vector3f const &Surface::tintColor() const
 {
-    return _tintColor;
+    return d->tintColor;
 }
 
 void Surface::setTintColor(Vector3f const &newTintColor_)
@@ -332,10 +358,10 @@ void Surface::setTintColor(Vector3f const &newTintColor_)
     Vector3f newTintColor = Vector3f(de::clamp(0.f, newTintColor_.x, 1.f),
                                      de::clamp(0.f, newTintColor_.y, 1.f),
                                      de::clamp(0.f, newTintColor_.z, 1.f));
-    if(_tintColor != newTintColor)
+    if(d->tintColor != newTintColor)
     {
-        Vector3f oldTintColor = _tintColor;
-        _tintColor = newTintColor;
+        Vector3f oldTintColor = d->tintColor;
+        d->tintColor = newTintColor;
 
         // Notify interested parties of the change.
         d->notifyTintColorChanged(oldTintColor);
@@ -346,10 +372,10 @@ void Surface::setTintColorComponent(int component, float newStrength)
 {
     DENG_ASSERT(component >= 0 && component < 3);
     newStrength = de::clamp(0.f, newStrength, 1.f);
-    if(!de::fequal(_tintColor[component], newStrength))
+    if(!de::fequal(d->tintColor[component], newStrength))
     {
-        Vector3f oldTintColor = _tintColor;
-        _tintColor[component] = newStrength;
+        Vector3f oldTintColor = d->tintColor;
+        d->tintColor[component] = newStrength;
 
         // Notify interested parties of the change.
         d->notifyTintColorChanged(oldTintColor);
@@ -358,14 +384,14 @@ void Surface::setTintColorComponent(int component, float newStrength)
 
 blendmode_t Surface::blendMode() const
 {
-    return _blendMode;
+    return d->blendMode;
 }
 
 bool Surface::setBlendMode(blendmode_t newBlendMode)
 {
-    if(_blendMode != newBlendMode)
+    if(d->blendMode != newBlendMode)
     {
-        _blendMode = newBlendMode;
+        d->blendMode = newBlendMode;
     }
     return true;
 }
@@ -374,23 +400,23 @@ void Surface::updateSoundEmitterOrigin()
 {
     LOG_AS("Surface::updateSoundEmitterOrigin");
 
-    switch(_owner.type())
+    switch(d->owner.type())
     {
     case DMU_PLANE: {
-        Plane *pln = _owner.castTo<Plane>();
-        Sector &sec = pln->sector();
+        Plane *plane = d->owner.castTo<Plane>();
+        Sector &sector = plane->sector();
 
-        _soundEmitter.origin[VX] = sec.soundEmitter().origin[VX];
-        _soundEmitter.origin[VY] = sec.soundEmitter().origin[VY];
-        _soundEmitter.origin[VZ] = pln->height();
+        d->soundEmitter.origin[VX] = sector.soundEmitter().origin[VX];
+        d->soundEmitter.origin[VY] = sector.soundEmitter().origin[VY];
+        d->soundEmitter.origin[VZ] = plane->height();
         break; }
 
     case DMU_SIDEDEF: {
-        SideDef *sideDef = _owner.castTo<SideDef>();
+        SideDef *sideDef = d->owner.castTo<SideDef>();
         LineDef &line = sideDef->line();
 
-        _soundEmitter.origin[VX] = (line.v1Origin()[VX] + line.v2Origin()[VX]) / 2;
-        _soundEmitter.origin[VY] = (line.v1Origin()[VY] + line.v2Origin()[VY]) / 2;
+        d->soundEmitter.origin[VX] = (line.v1Origin()[VX] + line.v2Origin()[VX]) / 2;
+        d->soundEmitter.origin[VY] = (line.v1Origin()[VY] + line.v2Origin()[VY]) / 2;
 
         Sector *sec = line.sectorPtr(sideDef == line.frontSideDefPtr()? FRONT:BACK);
         if(sec)
@@ -401,10 +427,10 @@ void Surface::updateSoundEmitterOrigin()
             if(this == &sideDef->middle())
             {
                 if(!line.hasBackSideDef() || line.isSelfReferencing())
-                    _soundEmitter.origin[VZ] = (ffloor + fceil) / 2;
+                    d->soundEmitter.origin[VZ] = (ffloor + fceil) / 2;
                 else
-                    _soundEmitter.origin[VZ] = (de::max(ffloor, line.backSector().floor().height()) +
-                                                de::min(fceil,  line.backSector().ceiling().height())) / 2;
+                    d->soundEmitter.origin[VZ] = (de::max(ffloor, line.backSector().floor().height()) +
+                                                  de::min(fceil,  line.backSector().ceiling().height())) / 2;
                 break;
             }
             else if(this == &sideDef->bottom())
@@ -412,11 +438,11 @@ void Surface::updateSoundEmitterOrigin()
                 if(!line.hasBackSideDef() || line.isSelfReferencing() ||
                    line.backSector().floor().height() <= ffloor)
                 {
-                    _soundEmitter.origin[VZ] = ffloor;
+                    d->soundEmitter.origin[VZ] = ffloor;
                 }
                 else
                 {
-                    _soundEmitter.origin[VZ] = (de::min(line.backSector().floor().height(), fceil) + ffloor) / 2;
+                    d->soundEmitter.origin[VZ] = (de::min(line.backSector().floor().height(), fceil) + ffloor) / 2;
                 }
                 break;
             }
@@ -425,24 +451,25 @@ void Surface::updateSoundEmitterOrigin()
                 if(!line.hasBackSideDef() || line.isSelfReferencing() ||
                    line.backSector().ceiling().height() >= fceil)
                 {
-                    _soundEmitter.origin[VZ] = fceil;
+                    d->soundEmitter.origin[VZ] = fceil;
                 }
                 else
                 {
-                    _soundEmitter.origin[VZ] = (de::max(line.backSector().ceiling().height(), ffloor) + fceil) / 2;
+                    d->soundEmitter.origin[VZ] = (de::max(line.backSector().ceiling().height(), ffloor) + fceil) / 2;
                 }
                 break;
             }
         }
 
         // We cannot determine a better Z axis origin - set to 0.
-        _soundEmitter.origin[VZ] = 0;
+        d->soundEmitter.origin[VZ] = 0;
         break; }
 
     default:
-        throw Error("Surface::updateSoundEmitterOrigin", QString("Invalid DMU type %1 for owner object 0x%2")
-                                                            .arg(DMU_Str(_owner.type()))
-                                                            .arg(de::dintptr(&_owner), 0, 16));
+        throw Error("Surface::updateSoundEmitterOrigin",
+                        QString("Invalid DMU type %1 for owner object 0x%2")
+                            .arg(DMU_Str(d->owner.type()))
+                            .arg(de::dintptr(&d->owner), 0, 16));
     }
 }
 
@@ -500,12 +527,12 @@ int Surface::property(setargs_t &args) const
     switch(args.prop)
     {
     case DMU_BASE: {
-        DMU_GetValue(DMT_SURFACE_BASE, &_soundEmitter, &args, 0);
+        DMU_GetValue(DMT_SURFACE_BASE, &d->soundEmitter, &args, 0);
         break; }
 
     case DMU_MATERIAL: {
-        Material *mat = _material;
-        if(_materialIsMissingFix)
+        Material *mat = d->material;
+        if(d->materialIsMissingFix)
             mat = 0;
         DMU_GetValue(DMT_SURFACE_MATERIAL, &mat, &args, 0);
         break; }
@@ -578,34 +605,34 @@ int Surface::property(setargs_t &args) const
         break;
 
     case DMU_COLOR:
-        DMU_GetValue(DMT_SURFACE_RGBA, &_tintColor[CR], &args, 0);
-        DMU_GetValue(DMT_SURFACE_RGBA, &_tintColor[CG], &args, 1);
-        DMU_GetValue(DMT_SURFACE_RGBA, &_tintColor[CB], &args, 2);
-        DMU_GetValue(DMT_SURFACE_RGBA, &_opacity, &args, 2);
+        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor[CR], &args, 0);
+        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor[CG], &args, 1);
+        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor[CB], &args, 2);
+        DMU_GetValue(DMT_SURFACE_RGBA, &d->opacity, &args, 2);
         break;
 
     case DMU_COLOR_RED:
-        DMU_GetValue(DMT_SURFACE_RGBA, &_tintColor[CR], &args, 0);
+        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor[CR], &args, 0);
         break;
 
     case DMU_COLOR_GREEN:
-        DMU_GetValue(DMT_SURFACE_RGBA, &_tintColor[CG], &args, 0);
+        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor[CG], &args, 0);
         break;
 
     case DMU_COLOR_BLUE:
-        DMU_GetValue(DMT_SURFACE_RGBA, &_tintColor[CB], &args, 0);
+        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor[CB], &args, 0);
         break;
 
     case DMU_ALPHA:
-        DMU_GetValue(DMT_SURFACE_RGBA, &_opacity, &args, 0);
+        DMU_GetValue(DMT_SURFACE_RGBA, &d->opacity, &args, 0);
         break;
 
     case DMU_BLENDMODE:
-        DMU_GetValue(DMT_SURFACE_BLENDMODE, &_blendMode, &args, 0);
+        DMU_GetValue(DMT_SURFACE_BLENDMODE, &d->blendMode, &args, 0);
         break;
 
     case DMU_FLAGS:
-        DMU_GetValue(DMT_SURFACE_FLAGS, &_flags, &args, 0);
+        DMU_GetValue(DMT_SURFACE_FLAGS, &d->flags, &args, 0);
         break;
 
     default:
@@ -627,7 +654,7 @@ int Surface::setProperty(setargs_t const &args)
         break; }
 
     case DMU_FLAGS:
-        DMU_SetValue(DMT_SURFACE_FLAGS, &_flags, &args, 0);
+        DMU_SetValue(DMT_SURFACE_FLAGS, &d->flags, &args, 0);
         break;
 
     case DMU_COLOR: {
