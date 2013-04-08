@@ -55,16 +55,13 @@ def todays_platform_release():
     
     # We'll copy the new files to the build dir.
     os.chdir(builder.config.DISTRIB_DIR)
-    existingFiles = os.listdir('releases')    
+    oldFiles = DirState('releases', subdirs=False)
     
     print 'platform_release.py...'
-    os.system("python platform_release.py > %s 2> %s" % ('buildlog.txt', 'builderrors.txt'))
-    
-    currentFiles = os.listdir('releases')
-    for n in existingFiles:
-        currentFiles.remove(n)
-        
-    for n in currentFiles:
+    os.system("python platform_release.py > %s 2> %s" % \
+        ('buildlog.txt', 'builderrors.txt'))
+            
+    for n in DirState('releases', subdirs=False).list_new_files(oldFiles):
         # Copy any new files.
         remote_copy(os.path.join('releases', n), ev.file_path(n))
 
@@ -74,7 +71,8 @@ def todays_platform_release():
             if '_amd64' in n: arch = 'amd64'
             remote_copy(os.path.join('releases', n),
                         os.path.join(builder.config.APT_REPO_DIR, 
-                                     builder.config.APT_DIST + '/main/binary-%s' % arch, n))
+                                     builder.config.APT_DIST + \
+                                     '/main/binary-%s' % arch, n))
                                  
     # Also the build logs.
     remote_copy('buildlog.txt', ev.file_path('doomsday-out-%s.txt' % sys_id()))

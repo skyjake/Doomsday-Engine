@@ -28,8 +28,9 @@ class FileState:
 
 
 class DirState:
-    def __init__(self, path=None):
+    def __init__(self, path=None, subdirs=True):
         self.files = {} # path -> FileState
+        self.subdirs = subdirs
         if path:
             self.update(path, path)
     
@@ -39,7 +40,7 @@ class DirState:
             fullPath = os.path.join(path, name)
             self.files[omit_path(fullPath, omitted)] = \
                 FileState(os.path.isdir(fullPath), os.stat(fullPath).st_mtime)
-            if os.path.isdir(fullPath):
+            if os.path.isdir(fullPath) and self.subdirs:
                 self.update(fullPath, omitted)
     
     def list_new_files(self, oldState):
