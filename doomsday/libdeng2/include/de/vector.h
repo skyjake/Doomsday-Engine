@@ -495,6 +495,70 @@ inline bool operator != (Vector4<duint> const &a, Vector4<duint> const &b)
     return !(a == b);
 }
 
+// Equality operators for single-precision floating-point types.
+inline bool operator == (Vector2<dfloat> const &a, Vector2<dfloat> const &b)
+{
+    return de::fequal(a.x, b.x) && de::fequal(a.y, b.y);
+}
+
+inline bool operator == (Vector3<dfloat> const &a, Vector3<dfloat> const &b)
+{
+    return de::fequal(a.x, b.x) && de::fequal(a.y, b.y) && de::fequal(a.z, b.z);
+}
+
+inline bool operator == (Vector4<dfloat> const &a, Vector4<dfloat> const &b)
+{
+    return de::fequal(a.x, b.x) && de::fequal(a.y, b.y) && de::fequal(a.z, b.z) && de::fequal(a.w, b.w);
+}
+
+// Equality operators for double-precision floating-point types.
+inline bool operator == (Vector2<ddouble> const &a, Vector2<ddouble> const &b)
+{
+    return de::fequal(a.x, b.x) && de::fequal(a.y, b.y);
+}
+
+inline bool operator == (Vector3<ddouble> const &a, Vector3<ddouble> const &b)
+{
+    return de::fequal(a.x, b.x) && de::fequal(a.y, b.y) && de::fequal(a.z, b.z);
+}
+
+inline bool operator == (Vector4<ddouble> const &a, Vector4<ddouble> const &b)
+{
+    return de::fequal(a.x, b.x) && de::fequal(a.y, b.y) && de::fequal(a.z, b.z) && de::fequal(a.w, b.w);
+}
+
+// Inequality operators for single-precision floating-point types.
+inline bool operator != (Vector2<dfloat> const &a, Vector2<dfloat> const &b)
+{
+    return !(a == b);
+}
+
+inline bool operator != (Vector3<dfloat> const &a, Vector3<dfloat> const &b)
+{
+    return !(a == b);
+}
+
+inline bool operator != (Vector4<dfloat> const &a, Vector4<dfloat> const &b)
+{
+    return !(a == b);
+}
+
+// Inequality operators for double-precision floating-point types.
+inline bool operator != (Vector2<ddouble> const &a, Vector2<ddouble> const &b)
+{
+    return !(a == b);
+}
+
+inline bool operator != (Vector3<ddouble> const &a, Vector3<ddouble> const &b)
+{
+    return !(a == b);
+}
+
+inline bool operator != (Vector4<ddouble> const &a, Vector4<ddouble> const &b)
+{
+    return !(a == b);
+}
+
 //@{
 /// @ingroup types
 typedef Vector2<dint>    Vector2i;  ///< 2-component vector of integer values.
