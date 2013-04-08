@@ -22,8 +22,11 @@
 #define LIBDENG_MAP_PLANE
 
 #include <QSet>
+
 #include <de/Error>
+#include <de/Observers>
 #include <de/Vector>
+
 #include "MapElement"
 #include "resource/r_data.h"
 #include "map/p_dmu.h"
@@ -44,6 +47,8 @@ public:
 
     /// The referenced property is not writeable. @ingroup errors
     DENG2_ERROR(WritePropertyError);
+
+    DENG2_DEFINE_AUDIENCE(Deletion, void planeBeingDeleted(Plane const &plane))
 
     /// In-Sector plane types: @todo move to Sector
     enum Type

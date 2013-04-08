@@ -40,6 +40,29 @@ DENG2_PIMPL(Plane)
     Instance(Public *i) : Base(i)
     {}
 
+    ~Instance()
+    {
+        // If this plane is currently being watched, remove it.
+        /// @todo GameMap should observe Deletion.
+        theMap->trackedPlanes().remove(&self);
+
+        // If this plane's surface is in the moving list, remove it.
+        /// @todo GameMap should observe Deletion.
+        theMap->scrollingSurfaces().remove(&self._surface);
+
+#ifdef __CLIENT__
+
+        // If this plane's surface is in the glowing list, remove it.
+        /// @todo GameMap should observe Deletion.
+        theMap->glowingSurfaces().remove(&self._surface);
+
+        // If this plane's surface is in the decorated list, remove it.
+        /// @todo GameMap should observe Deletion.
+        theMap->decoratedSurfaces().remove(&self._surface);
+
+#endif // __CLIENT__
+    }
+
 #ifdef __CLIENT__
     /**
      * To be called when the height changes to update the plotted decoration
@@ -90,34 +113,7 @@ Plane::Plane(Sector &sector, Vector3f const &normal, coord_t height)
 
 Plane::~Plane()
 {
-    // If this plane is currently being watched, remove it.
-    theMap->trackedPlanes().remove(this);
-
-    // If this plane's surface is in the moving list, remove it.
-    theMap->scrollingSurfaces().remove(&_surface);
-
-#ifdef __CLIENT__
-
-    // If this plane's surface is in the glowing list, remove it.
-    theMap->glowingSurfaces().remove(&_surface);
-
-    // If this plane's surface is in the decorated list, remove it.
-    theMap->decoratedSurfaces().remove(&_surface);
-
-    // Destroy the biassurfaces for this plane.
-    foreach(BspLeaf *bspLeaf, _sector->bspLeafs())
-    {
-        DENG2_ASSERT(bspLeaf->_bsuf != 0);
-        SB_DestroySurface(bspLeaf->_bsuf[_inSectorIndex]);
-        if(_inSectorIndex < _sector->planeCount())
-        {
-            std::memmove(bspLeaf->_bsuf + _inSectorIndex, bspLeaf->_bsuf + _inSectorIndex + 1, sizeof(biassurface_t *));
-        }
-    }
-
-#endif // __CLIENT__
-
-    _sector->_planes.removeOne(this);
+    DENG2_FOR_AUDIENCE(Deletion, i) i->planeBeingDeleted(*this);
 }
 
 Sector &Plane::sector()
