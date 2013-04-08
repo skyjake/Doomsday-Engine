@@ -36,7 +36,7 @@ namespace de {
 #undef PI
 ddouble const PI = 3.14159265358979323846;
 ddouble const EPSILON = 1.0e-7;
-dfloat const FLOAT_EPSILON = 1.0e-5;
+dfloat const FLOAT_EPSILON = 1.0e-5f;
 
 /// Absolute value.
 template <typename Type>
