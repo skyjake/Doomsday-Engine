@@ -1782,6 +1782,13 @@ void DD_FinishInitializationAfterWindowReady()
         exit(2); // Cannot continue...
         return;
     }
+
+    /// @todo This notification should be done from the app.
+    for(de::App::StartupCompleteAudience::Loop iter(de::App::app().audienceForStartupComplete);
+        !iter.done(); ++iter)
+    {
+        iter->appStartupCompleted();
+    }
 }
 
 /**
