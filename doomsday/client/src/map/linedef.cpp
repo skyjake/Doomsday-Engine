@@ -86,7 +86,7 @@ void LineDef::Side::updateSoundEmitterOrigins()
     _sideDef->top().updateSoundEmitterOrigin();
 }
 
-void LineDef::Side::updateSurfaceTangents()
+void LineDef::Side::updateSurfaceNormals()
 {
     if(!_sideDef) return;
 
@@ -97,20 +97,14 @@ void LineDef::Side::updateSurfaceTangents()
     Surface &bottomSurface = _sideDef->bottom();
     Surface &topSurface    = _sideDef->top();
 
-    V3f_Set(topSurface._normal, (line.vertexOrigin(sid^1)[VY] - line.vertexOrigin(sid  )[VY]) / line.length(),
-                                 (line.vertexOrigin(sid  )[VX] - line.vertexOrigin(sid^1)[VX]) / line.length(),
-                                 0);
+    Vector3f normal((line.vertexOrigin(sid^1)[VY] - line.vertexOrigin(sid  )[VY]) / line.length(),
+                    (line.vertexOrigin(sid  )[VX] - line.vertexOrigin(sid^1)[VX]) / line.length(),
+                    0);
 
-    V3f_BuildTangents(topSurface._tangent, topSurface._bitangent, topSurface._normal);
-
-    // All surfaces of a sidedef have the same tangent space vectors.
-    V3f_Copy(middleSurface._tangent,   topSurface._tangent);
-    V3f_Copy(middleSurface._bitangent, topSurface._bitangent);
-    V3f_Copy(middleSurface._normal,    topSurface._normal);
-
-    V3f_Copy(bottomSurface._tangent,   topSurface._tangent);
-    V3f_Copy(bottomSurface._bitangent, topSurface._bitangent);
-    V3f_Copy(bottomSurface._normal,    topSurface._normal);
+    // All line side surfaces have the same normals.
+    middleSurface.setNormal(normal); // will normalize
+    bottomSurface.setNormal(normal);
+    topSurface.setNormal(normal);
 }
 
 LineDef::LineDef() : MapElement(DMU_LINEDEF)

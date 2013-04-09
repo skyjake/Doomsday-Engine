@@ -1016,7 +1016,7 @@ static void createGlowLightForSurface(Surface &suf)
         V3d_Copy(lum->origin, suf.soundEmitter().origin);
         lum->origin[VZ] = pln->visHeight(); // Sound emitter origins are not smoothed.
 
-        V3f_Copy(LUM_PLANE(lum)->normal, suf.normal());
+        V3f_Set(LUM_PLANE(lum)->normal, suf.normal().x, suf.normal().y, suf.normal().z);
         V3f_Copy(LUM_PLANE(lum)->color, avgColorAmplified->color.rgb);
 
         LUM_PLANE(lum)->intensity = glowStrength;
@@ -1264,7 +1264,7 @@ int RIT_ProjectLightToSurfaceIterator(void *obj, void *paramaters)
 
 uint LO_ProjectToSurface(int flags, BspLeaf *bspLeaf, float blendFactor,
     pvec3d_t topLeft, pvec3d_t bottomRight,
-    const_pvec3f_t tangent, const_pvec3f_t bitangent, const_pvec3f_t normal)
+    Vector3f const &tangent, Vector3f const &bitangent, Vector3f const &normal)
 {
     projectlighttosurfaceiteratorparams_t parm;
     parm.listIdx               = 0;
@@ -1272,9 +1272,9 @@ uint LO_ProjectToSurface(int flags, BspLeaf *bspLeaf, float blendFactor,
     parm.spParams.flags        = flags;
     parm.spParams.v1           = topLeft;
     parm.spParams.v2           = bottomRight;
-    V3f_Copy(parm.spParams.tangent,   tangent);
-    V3f_Copy(parm.spParams.bitangent, bitangent);
-    V3f_Copy(parm.spParams.normal,    normal);
+    V3f_Set(parm.spParams.tangent,     tangent.x,   tangent.y,   tangent.z);
+    V3f_Set(parm.spParams.bitangent, bitangent.x, bitangent.y, bitangent.z);
+    V3f_Set(parm.spParams.normal,       normal.x,    normal.y,    normal.z);
 
     R_IterateBspLeafContacts2(bspLeaf, OT_LUMOBJ, RIT_ProjectLightToSurfaceIterator, (void *)&parm);
 

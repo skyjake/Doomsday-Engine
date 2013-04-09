@@ -97,8 +97,8 @@ void Polyobj::updateSurfaceTangents()
 {
     foreach(LineDef *line, lines())
     {
-        line->front().updateSurfaceTangents();
-        line->back().updateSurfaceTangents();
+        line->front().updateSurfaceNormals();
+        line->back().updateSurfaceNormals();
     }
 }
 

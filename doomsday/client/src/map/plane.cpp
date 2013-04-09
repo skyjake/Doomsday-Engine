@@ -210,11 +210,9 @@ void Plane::updateHeightTracking()
 
 void Plane::setNormal(Vector3f const &newNormal)
 {
-    V3f_Set(_surface._normal, newNormal.x, newNormal.y, newNormal.z);
-    V3f_Normalize(_surface._normal);
-    V3f_BuildTangents(_surface._tangent, _surface._bitangent, _surface._normal);
+    _surface.setNormal(newNormal); // will normalize
 
-    _type = (_surface._normal[VZ] < 0? Ceiling : Floor);
+    _type = (_surface.normal().z < 0? Ceiling : Floor);
 }
 
 Plane::Type Plane::type() const

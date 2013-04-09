@@ -706,7 +706,7 @@ struct rendworldpoly_params_t
     pvec3d_t        texTL, texBR;
     float const    *texOffset;
     float const    *texScale;
-    float const    *normal; // Surface normal.
+    Vector3f const *normal; // Surface normal.
     float           alpha;
     float           sectorLightLevel;
     float           surfaceLightLevelDL;
@@ -891,7 +891,8 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
             if(useBias && p.bsuf)
             {
                 // Do BIAS lighting for this poly.
-                SB_RendPoly(rcolors, p.bsuf, rvertices, numVertices, p.normal,
+                vec3f_t v1Normal; V3f_Set(v1Normal, p.normal->x, p.normal->y, p.normal->z);
+                SB_RendPoly(rcolors, p.bsuf, rvertices, numVertices, v1Normal,
                             p.sectorLightLevel, p.mapElement, p.elmIdx);
 
                 if(p.glowing > 0)
@@ -1210,7 +1211,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
             !(p.alpha < 1 || !ms.isOpaque() || p.blendMode > 0));
 }
 
-static boolean doRenderHEdge(HEdge *hedge, const_pvec3f_t normal,
+static boolean doRenderHEdge(HEdge *hedge, Vector3f const &normal,
     float alpha, float lightLevel, float lightLevelDL, float lightLevelDR,
     Vector3f const *lightColor, uint lightListIdx, uint shadowListIdx,
     walldivs_t *leftWallDivs, walldivs_t *rightWallDivs,
@@ -1236,7 +1237,7 @@ static boolean doRenderHEdge(HEdge *hedge, const_pvec3f_t normal,
     params.mapElement = hedge;
     params.elmIdx = elmIdx;
     params.bsuf = bsuf;
-    params.normal = normal;
+    params.normal = &normal;
     params.texTL = texTL;
     params.texBR = texBR;
     params.sectorLightLevel = lightLevel;
@@ -1372,7 +1373,7 @@ static boolean doRenderHEdge(HEdge *hedge, const_pvec3f_t normal,
 }
 
 static void renderPlane(BspLeaf *bspLeaf, Plane::Type type, coord_t height,
-    vec3f_t tangent, vec3f_t bitangent, vec3f_t normal,
+    Vector3f const &tangent, Vector3f const &bitangent, Vector3f const &normal,
     Material *inMat, Vector3f const &sufColor, float sufAlpha, blendmode_t blendMode,
     vec3d_t texTL, vec3d_t texBR,
     float const texOffset[2], float const texScale[2],
@@ -1391,7 +1392,7 @@ static void renderPlane(BspLeaf *bspLeaf, Plane::Type type, coord_t height,
     params.mapElement = bspLeaf;
     params.elmIdx = elmIdx;
     params.bsuf = bsuf;
-    params.normal = normal;
+    params.normal = &normal;
     params.texTL = texTL;
     params.texBR = texBR;
     params.sectorLightLevel = sec->lightLevel();
@@ -1488,33 +1489,24 @@ static void renderPlane(BspLeaf *bspLeaf, Plane::Type type, coord_t height,
 }
 
 static void Rend_RenderPlane(Plane::Type type, coord_t height,
-    const_pvec3f_t _tangent, const_pvec3f_t _bitangent, const_pvec3f_t _normal,
+    Vector3f const &tangent, Vector3f const &bitangent, Vector3f const &normal,
     Material* inMat, Vector3f const &sufColor, float sufAlpha, blendmode_t blendMode,
     float const texOffset[2], float const texScale[2],
     boolean skyMasked, boolean addDLights, boolean addMobjShadows,
     biassurface_t* bsuf, uint elmIdx /*tmp*/,
     int texMode /*tmp*/, boolean clipBackFacing)
 {
-    BspLeaf* bspLeaf = currentBspLeaf;
-    vec3f_t vec, tangent, bitangent, normal;
+    BspLeaf *bspLeaf = currentBspLeaf;
 
     // Must have a visible surface.
     if(!inMat || !inMat->isDrawable()) return;
 
-    V3f_Set(vec, vOrigin[VX] - bspLeaf->center()[VX],
-                 vOrigin[VZ] - bspLeaf->center()[VY],
-                 vOrigin[VY] - height);
-
-    /**
-     * Flip surface tangent space vectors according to the z positon of the viewer relative
-     * to the plane height so that the plane is always visible.
-     */
-    V3f_Copy(tangent, _tangent);
-    V3f_Copy(bitangent, _bitangent);
-    V3f_Copy(normal, _normal);
+    Vector3f viewToEye(vOrigin[VX] - bspLeaf->center()[VX],
+                       vOrigin[VZ] - bspLeaf->center()[VY],
+                       vOrigin[VY] - height);
 
     // Don't bother with planes facing away from the camera.
-    if(!(clipBackFacing && !(V3f_DotProduct(vec, normal) < 0)))
+    if(!(clipBackFacing && !(viewToEye.dot(normal) < 0)))
     {
         coord_t texTL[3], texBR[3];
 
@@ -2944,13 +2936,13 @@ static void Rend_RenderNode(MapElement *bspPtr)
     }
 }
 
-static void drawVector(const_pvec3f_t normal, float scalar, const float color[3])
+static void drawVector(Vector3f const &vector, float scalar, const float color[3])
 {
     static const float black[4] = { 0, 0, 0, 0 };
 
     glBegin(GL_LINES);
         glColor4fv(black);
-        glVertex3f(scalar * normal[VX], scalar * normal[VZ], scalar * normal[VY]);
+        glVertex3f(scalar * vector.x, scalar * vector.z, scalar * vector.y);
         glColor3fv(color);
         glVertex3f(0, 0, 0);
     glEnd();

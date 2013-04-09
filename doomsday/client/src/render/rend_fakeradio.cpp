@@ -1471,10 +1471,9 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
     // Any need to continue?
     if(!(shadowDark > .0001f)) return;
 
-    float vec[3];
-    vec[VX] = vOrigin[VX] - bspLeaf.center()[VX];
-    vec[VY] = vOrigin[VZ] - bspLeaf.center()[VY];
-    vec[VZ] = 0;
+    Vector3f vec(vOrigin[VX] - bspLeaf.center()[VX],
+                 vOrigin[VZ] - bspLeaf.center()[VY],
+                 0);
 
     // Do we need to enlarge the size of the doPlanes array?
     if(sector.planeCount() > doPlaneSize)
@@ -1494,10 +1493,10 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
     {
         Plane const &plane = sector.plane(pln);
 
-        vec[VZ] = vOrigin[VY] - plane.visHeight();
+        vec.z = vOrigin[VY] - plane.visHeight();
 
         // Don't bother with planes facing away from the camera.
-        if(V3f_DotProduct(vec, plane.surface().normal()) < 0) continue;
+        if(vec.dot(plane.surface().normal()) < 0) continue;
 
         doPlanes[pln] = true;
         workToDo = true;

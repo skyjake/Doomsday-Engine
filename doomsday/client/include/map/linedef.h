@@ -180,11 +180,11 @@ public:
         void updateSoundEmitterOrigins();
 
         /**
-         * Update the side's map space surface tangents according to the points
-         * defined by the associated LineDef's vertices. If no LineDef is presently
-         * associated this is a no-op.
+         * Update the tangent space normals of the side's surfaces according to the
+         * points defined by the associated LineDef's vertices. If no LineDef is
+         * presently associated this is a no-op.
          */
-        void updateSurfaceTangents();
+        void updateSurfaceNormals();
 
         /**
          * Returns the frame number of the last time shadows linked to the side

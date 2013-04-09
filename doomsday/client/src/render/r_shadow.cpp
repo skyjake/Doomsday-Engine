@@ -28,6 +28,10 @@
 #include "api_map.h"
 #include <de/vector1.h>
 
+#include "render/r_shadow.h"
+
+using namespace de;
+
 typedef struct listnode_s {
     struct listnode_s *next, *nextUsed;
     shadowprojection_t projection;
@@ -308,7 +312,7 @@ void R_InitShadowProjectionListsForNewFrame()
 }
 
 uint R_ProjectShadowsToSurface(BspLeaf *bspLeaf, float blendFactor, pvec3d_t topLeft,
-    pvec3d_t bottomRight, const_pvec3f_t tangent, const_pvec3f_t bitangent, const_pvec3f_t normal)
+    pvec3d_t bottomRight, Vector3f const &tangent, Vector3f const &bitangent, Vector3f const &normal)
 {
     DENG_ASSERT(bspLeaf);
 
@@ -320,9 +324,9 @@ uint R_ProjectShadowsToSurface(BspLeaf *bspLeaf, float blendFactor, pvec3d_t top
     p.spParams.blendFactor = blendFactor;
     p.spParams.v1          = topLeft;
     p.spParams.v2          = bottomRight;
-    V3f_Copy(p.spParams.tangent,   tangent);
-    V3f_Copy(p.spParams.bitangent, bitangent);
-    V3f_Copy(p.spParams.normal,    normal);
+    V3f_Set(p.spParams.tangent,     tangent.x,   tangent.y,   tangent.z);
+    V3f_Set(p.spParams.bitangent, bitangent.x, bitangent.y, bitangent.z);
+    V3f_Set(p.spParams.normal,       normal.x,    normal.y,    normal.z);
 
     R_IterateBspLeafContacts2(bspLeaf, OT_MOBJ, RIT_ProjectShadowToSurfaceIterator, (void *)&p);
 

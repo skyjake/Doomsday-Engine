@@ -21,14 +21,12 @@
 #define LIBDENG_REFRESH_MOBJ_SHADOW_H
 
 #include "dd_types.h"
+#include <de/Vector>
 #include <de/vector1.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct mobj_s;
 class BspLeaf;
+class Plane;
 
 /**
  * ShadowProjection. Shadow Projection (POD) stores the results of projection.
@@ -71,7 +69,7 @@ float R_ShadowAttenuationFactor(coord_t distance);
  */
 uint R_ProjectShadowsToSurface(BspLeaf *bspLeaf, float blendFactor,
     pvec3d_t topLeft, pvec3d_t bottomRight,
-    const_pvec3f_t tangent, const_pvec3f_t bitangent, const_pvec3f_t normal);
+    de::Vector3f const &tangent, de::Vector3f const &bitangent, de::Vector3f const &normal);
 
 /**
  * Iterate over projections in the identified shadow-projection list, making
@@ -93,10 +91,6 @@ int R_IterateShadowProjections(uint listIdx, int (*callback) (shadowprojection_t
  *
  * @return  Found plane else @c NULL if @a mobj is not presently sector-linked.
  */
-Plane* R_FindShadowPlane(struct mobj_s *mobj);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
+Plane *R_FindShadowPlane(struct mobj_s *mobj);
 
 #endif /* LIBDENG_REFRESH_SHADOW_H */

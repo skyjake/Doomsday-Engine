@@ -167,7 +167,7 @@ DENG2_PIMPL(GameMap)
         foreach(LineDef *line, self._lines)
         for(int i = 0; i < 2; ++i)
         {
-            line->side(i).updateSurfaceTangents();
+            line->side(i).updateSurfaceNormals();
             line->side(i).updateSoundEmitterOrigins();
         }
     }

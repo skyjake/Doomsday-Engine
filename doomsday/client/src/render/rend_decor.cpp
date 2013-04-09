@@ -423,17 +423,18 @@ static void updateSurfaceDecorations(Surface &suf, Vector2f const &offset,
     Vector3d delta = v2 - v1;
     if(de::fequal(delta.length(), 0)) return;
 
-    int const axis = V3f_MajorAxis(suf.normal());
+    int const axis = suf.normal().maxAxis();
+
     Vector2d sufDimensions;
-    if(axis == VX || axis == VY)
+    if(axis == 0 || axis == 1)
     {
-        sufDimensions.x = std::sqrt(delta[VX] * delta[VX] + delta[VY] * delta[VY]);
-        sufDimensions.y = delta[VZ];
+        sufDimensions.x = std::sqrt(delta.x * delta.x + delta.y * delta.y);
+        sufDimensions.y = delta.z;
     }
     else
     {
-        sufDimensions.x = std::sqrt(delta[VX] * delta[VX]);
-        sufDimensions.y = delta[VY];
+        sufDimensions.x = std::sqrt(delta.x * delta.x);
+        sufDimensions.y = delta.y;
     }
 
     if(sufDimensions.x < 0) sufDimensions.x = -sufDimensions.x;

@@ -40,6 +40,13 @@ DENG2_PIMPL(Surface)
     /// Sound emitter.
     ddmobj_base_t soundEmitter;
 
+    /// Tangent space vectors:
+    Vector3f tangent;
+    Vector3f bitangent;
+    Vector3f normal;
+
+    bool needUpdateTangents;
+
     /// Bound material.
     Material *material;
 
@@ -62,6 +69,7 @@ DENG2_PIMPL(Surface)
              float opacity)
         : Base(i),
           owner(owner),
+          needUpdateTangents(false),
           material(0),
           materialIsMissingFix(false),
           tintColor(tintColor),
@@ -95,14 +103,37 @@ DENG2_PIMPL(Surface)
             i->tintColorChanged(self, oldTintColor, changedComponents);
         }
     }
+
+    void notifyNormalChanged(Vector3f const &oldNormal)
+    {
+        // Predetermine which axes have changed.
+        int changedAxes = 0;
+        for(int i = 0; i < 3; ++i)
+        {
+            if(!de::fequal(normal[i], oldNormal[i]))
+                changedAxes |= (1 << i);
+        }
+
+        DENG2_FOR_PUBLIC_AUDIENCE(NormalChange, i)
+        {
+            i->normalChanged(self, oldNormal, changedAxes);
+        }
+    }
+
+    void updateTangents()
+    {
+        vec3f_t v1Tangent, v1Bitangent;
+        vec3f_t v1Normal; V3f_Set(v1Normal, normal.x, normal.y, normal.z);
+        V3f_BuildTangents(v1Tangent, v1Bitangent, v1Normal);
+        tangent = Vector3f(v1Tangent);
+        bitangent = Vector3f(v1Bitangent);
+        needUpdateTangents = false;
+    }
 };
 
 Surface::Surface(MapElement &owner, Vector3f const &tintColor, float opacity)
     : MapElement(DMU_SURFACE), d(new Instance(this, owner, tintColor, opacity))
 {
-    V3f_Set(_tangent, 0, 0, 0);
-    V3f_Set(_bitangent, 0, 0, 0);
-    V3f_Set(_normal, 0, 0, 0);
     V2f_Set(_offset, 0, 0);
     V2f_Set(_oldOffset[0], 0, 0);
     V2f_Set(_oldOffset[1], 0, 0);
@@ -121,19 +152,47 @@ de::MapElement &Surface::owner() const
     return d->owner;
 }
 
-const_pvec3f_t &Surface::tangent() const
+de::Vector3f const &Surface::tangent() const
 {
-    return _tangent;
+    if(d->needUpdateTangents)
+        d->updateTangents();
+    return d->tangent;
 }
 
-const_pvec3f_t &Surface::bitangent() const
+de::Vector3f const &Surface::bitangent() const
 {
-    return _bitangent;
+    if(d->needUpdateTangents)
+        d->updateTangents();
+    return d->bitangent;
 }
 
-const_pvec3f_t &Surface::normal() const
+de::Vector3f const &Surface::normal() const
 {
-    return _normal;
+    return d->normal;
+}
+
+void Surface::setNormal(Vector3f const &newNormal_)
+{
+    // Normalize
+    Vector3f newNormal = newNormal_;
+    dfloat length = newNormal.length();
+    if(length)
+    {
+        for(int i = 0; i < 3; ++i)
+            newNormal[i] /= length;
+    }
+
+    if(d->normal != newNormal)
+    {
+        Vector3f oldNormal = d->normal;
+        d->normal = newNormal;
+
+        // We'll need to recalculate the tangents when next referenced.
+        d->needUpdateTangents = true;
+
+        // Notify interested parties of the change.
+        d->notifyNormalChanged(oldNormal);
+    }
 }
 
 bool Surface::hasMaterial() const
@@ -550,59 +609,71 @@ int Surface::property(setargs_t &args) const
         DMU_GetValue(DMT_SURFACE_OFFSET, &_offset[VY], &args, 1);
         break;
 
-    case DMU_TANGENT_X:
-        DMU_GetValue(DMT_SURFACE_TANGENT, &_tangent[VX], &args, 0);
-        break;
+    case DMU_TANGENT_X: {
+        float x = tangent().x;
+        DMU_GetValue(DMT_SURFACE_TANGENT, &x, &args, 0);
+        break; }
 
-    case DMU_TANGENT_Y:
-        DMU_GetValue(DMT_SURFACE_TANGENT, &_tangent[VY], &args, 0);
-        break;
+    case DMU_TANGENT_Y: {
+        float y = tangent().y;
+        DMU_GetValue(DMT_SURFACE_TANGENT, &y, &args, 0);
+        break; }
 
-    case DMU_TANGENT_Z:
-        DMU_GetValue(DMT_SURFACE_TANGENT, &_tangent[VZ], &args, 0);
-        break;
+    case DMU_TANGENT_Z: {
+        float z = tangent().z;
+        DMU_GetValue(DMT_SURFACE_TANGENT, &z, &args, 0);
+        break; }
 
-    case DMU_TANGENT_XYZ:
-        DMU_GetValue(DMT_SURFACE_TANGENT, &_tangent[VX], &args, 0);
-        DMU_GetValue(DMT_SURFACE_TANGENT, &_tangent[VY], &args, 1);
-        DMU_GetValue(DMT_SURFACE_TANGENT, &_tangent[VZ], &args, 2);
-        break;
+    case DMU_TANGENT_XYZ: {
+        Vector3f const &tan = tangent();
+        DMU_GetValue(DMT_SURFACE_TANGENT, &tan.x, &args, 0);
+        DMU_GetValue(DMT_SURFACE_TANGENT, &tan.y, &args, 1);
+        DMU_GetValue(DMT_SURFACE_TANGENT, &tan.z, &args, 2);
+        break; }
 
-    case DMU_BITANGENT_X:
-        DMU_GetValue(DMT_SURFACE_BITANGENT, &_bitangent[VX], &args, 0);
-        break;
+    case DMU_BITANGENT_X: {
+        float x = bitangent().x;
+        DMU_GetValue(DMT_SURFACE_BITANGENT, &x, &args, 0);
+        break; }
 
-    case DMU_BITANGENT_Y:
-        DMU_GetValue(DMT_SURFACE_BITANGENT, &_bitangent[VY], &args, 0);
-        break;
+    case DMU_BITANGENT_Y: {
+        float y = bitangent().y;
+        DMU_GetValue(DMT_SURFACE_BITANGENT, &y, &args, 0);
+        break; }
 
-    case DMU_BITANGENT_Z:
-        DMU_GetValue(DMT_SURFACE_BITANGENT, &_bitangent[VZ], &args, 0);
-        break;
+    case DMU_BITANGENT_Z: {
+        float z = bitangent().z;
+        DMU_GetValue(DMT_SURFACE_BITANGENT, &z, &args, 0);
+        break; }
 
-    case DMU_BITANGENT_XYZ:
-        DMU_GetValue(DMT_SURFACE_BITANGENT, &_bitangent[VX], &args, 0);
-        DMU_GetValue(DMT_SURFACE_BITANGENT, &_bitangent[VY], &args, 1);
-        DMU_GetValue(DMT_SURFACE_BITANGENT, &_bitangent[VZ], &args, 2);
-        break;
+    case DMU_BITANGENT_XYZ: {
+        Vector3f const &btn = bitangent();
+        DMU_GetValue(DMT_SURFACE_BITANGENT, &btn.x, &args, 0);
+        DMU_GetValue(DMT_SURFACE_BITANGENT, &btn.y, &args, 1);
+        DMU_GetValue(DMT_SURFACE_BITANGENT, &btn.z, &args, 2);
+        break; }
 
-    case DMU_NORMAL_X:
-        DMU_GetValue(DMT_SURFACE_NORMAL, &_normal[VX], &args, 0);
-        break;
+    case DMU_NORMAL_X: {
+        float x = normal().x;
+        DMU_GetValue(DMT_SURFACE_NORMAL, &x, &args, 0);
+        break; }
 
-    case DMU_NORMAL_Y:
-        DMU_GetValue(DMT_SURFACE_NORMAL, &_normal[VY], &args, 0);
-        break;
+    case DMU_NORMAL_Y: {
+        float y = normal().y;
+        DMU_GetValue(DMT_SURFACE_NORMAL, &y, &args, 0);
+        break; }
 
-    case DMU_NORMAL_Z:
-        DMU_GetValue(DMT_SURFACE_NORMAL, &_normal[VZ], &args, 0);
-        break;
+    case DMU_NORMAL_Z: {
+        float z = normal().z;
+        DMU_GetValue(DMT_SURFACE_NORMAL, &z, &args, 0);
+        break; }
 
-    case DMU_NORMAL_XYZ:
-        DMU_GetValue(DMT_SURFACE_NORMAL, &_normal[VX], &args, 0);
-        DMU_GetValue(DMT_SURFACE_NORMAL, &_normal[VY], &args, 1);
-        DMU_GetValue(DMT_SURFACE_NORMAL, &_normal[VZ], &args, 2);
-        break;
+    case DMU_NORMAL_XYZ: {
+        Vector3f const &nrm = normal();
+        DMU_GetValue(DMT_SURFACE_NORMAL, &nrm.x, &args, 0);
+        DMU_GetValue(DMT_SURFACE_NORMAL, &nrm.y, &args, 1);
+        DMU_GetValue(DMT_SURFACE_NORMAL, &nrm.z, &args, 2);
+        break; }
 
     case DMU_COLOR:
         DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor.x, &args, 0);

@@ -50,12 +50,16 @@ public:
     /// The referenced property is not writeable. @ingroup errors
     DENG2_ERROR(WritePropertyError);
 
+    DENG2_DEFINE_AUDIENCE(NormalChange,
+        void normalChanged(Surface &surface, de::Vector3f oldNormal,
+                           int changedAxes /*bit-field (0x1=X, 0x2=Y, 0x4=Z)*/))
+
     DENG2_DEFINE_AUDIENCE(OpacityChange,
         void opacityChanged(Surface &surface, float oldOpacity))
 
     DENG2_DEFINE_AUDIENCE(TintColorChange,
         void tintColorChanged(Surface &sector, de::Vector3f const &oldTintColor,
-                               int changedComponents /*bit-field (0x1=Red, 0x2=Green, 0x4=Blue)*/))
+                              int changedComponents /*bit-field (0x1=Red, 0x2=Green, 0x4=Blue)*/))
 
 #ifdef __CLIENT__
     struct DecorSource
@@ -68,11 +72,6 @@ public:
 #endif // __CLIENT__
 
 public:
-    /// Tangent space vectors:
-    vec3f_t _tangent;
-    vec3f_t _bitangent;
-    vec3f_t _normal;
-
     /// [X, Y] Planar offset to surface material origin.
     vec2f_t _offset;
 
@@ -111,17 +110,31 @@ public:
     /**
      * Returns the normalized tangent vector for the surface.
      */
-    const_pvec3f_t &tangent() const;
+    de::Vector3f const &tangent() const;
 
     /**
      * Returns the normalized bitangent vector for the surface.
      */
-    const_pvec3f_t &bitangent() const;
+    de::Vector3f const &bitangent() const;
 
     /**
      * Returns the normalized normal vector for the surface.
      */
-    const_pvec3f_t &normal() const;
+    de::Vector3f const &normal() const;
+
+    /**
+     * Change the tangent space normal vector for the surface. If changed,
+     * the tangent vectors will be recalculated next time they are needed.
+     * The NormalChange audience is notified whenever the normal changes.
+     *
+     * @param newNormal  New normal vector (will be normalized if needed).
+     */
+    void setNormal(de::Vector3f const &newNormal);
+
+    /// @copydoc setNormal()
+    inline void setNormal(float x, float y, float z) {
+        setNormal(de::Vector3f(x, y, z));
+    }
 
     /**
      * Returns the @ref surfaceFlags of the surface.
