@@ -1522,6 +1522,137 @@ static void Rend_RenderPlane(Plane::Type type, coord_t height,
     }
 }
 
+static float calcLightLevelDelta(Vector2f const &normal)
+{
+    return (1.0f / 255) * (normal.x * 18) * rendLightWallAngle;
+}
+
+static Vector2f calcLineNormal(LineDef const &line, byte side)
+{
+    return Vector2f((line.vertexOrigin(side^1)[VY] - line.vertexOrigin(side)  [VY]) / line.length(),
+                    (line.vertexOrigin(side)  [VX] - line.vertexOrigin(side^1)[VX]) / line.length());
+}
+
+/**
+ * @param line  LineDef instance.
+ * @param ignoreOpacity  @c true= do not consider Material opacity.
+ * @return  @c true if this LineDef's side is considered "closed" (i.e.,
+ *     there is no opening through which the back Sector can be seen).
+ *     Tests consider all Planes which interface with this and the "middle"
+ *     Material used on the relative front side (if any).
+ */
+static bool lineBackClosedForBlend(LineDef const &line, int side, bool ignoreOpacity)
+{
+    if(!line.front().hasSideDef()) return false;
+    if(!line.back().hasSideDef()) return true;
+
+    Sector const *frontSec = line.sectorPtr(side);
+    Sector const *backSec  = line.sectorPtr(side^1);
+    if(frontSec == backSec) return false; // Never.
+
+    if(frontSec && backSec)
+    {
+        if(backSec->floor().visHeight()   >= backSec->ceiling().visHeight())  return true;
+        if(backSec->ceiling().visHeight() <= frontSec->floor().visHeight())   return true;
+        if(backSec->floor().visHeight()   >= frontSec->ceiling().visHeight()) return true;
+    }
+
+    return R_MiddleMaterialCoversLineOpening(&line, side, ignoreOpacity);
+}
+
+static LineDef *findLineBlendNeighbor(LineDef const &line, byte side, byte right,
+                                      binangle_t *diff)
+{
+    LineOwner const *farVertOwner = line.vertexOwner(right^side);
+    if(lineBackClosedForBlend(line, side, true/*ignore opacity*/))
+    {
+        return R_FindSolidLineNeighbor(line.sectorPtr(side), &line, farVertOwner, right, diff);
+    }
+    return R_FindLineNeighbor(line.sectorPtr(side), &line, farVertOwner, right, diff);
+}
+
+/**
+ * The DOOM lighting model applies a sector light level delta when drawing
+ * line segments based on their 2D world angle.
+ *
+ * @param line    Line to calculate light level deltas for.
+ * @param side    Side of the line we are interested in.
+ * @param deltaL  Light delta for the left edge written here. Can be @c NULL.
+ * @param deltaR  Light delta for the right edge written here. Can be @c NULL.
+ *
+ * @deprecated Now that we store surface tangent space normals use those
+ *             rather than angles. @todo Remove me.
+ */
+static void lineLightLevelDeltas(LineDef const &line, int side,
+                                 float *deltaL, float *deltaR)
+{
+    // Disabled?
+    if(!(rendLightWallAngle > 0))
+    {
+        if(deltaL) *deltaL = 0;
+        if(deltaR) *deltaR = 0;
+        return;
+    }
+
+    Vector2f normal = calcLineNormal(line, side);
+    float delta = calcLightLevelDelta(normal);
+
+    // If smoothing is disabled use this delta for left and right edges.
+    // Must forcibly disable smoothing for polyobj linedefs as they have
+    // no owner rings.
+    if(!rendLightWallAngleSmooth || line.isFromPolyobj())
+    {
+        if(deltaL) *deltaL = delta;
+        if(deltaR) *deltaR = delta;
+        return;
+    }
+
+    // Find the left neighbour linedef for which we will calculate the
+    // lightlevel delta and then blend with this to produce the value for
+    // the left edge. Blend iff the angle between the two linedefs is less
+    // than 45 degrees.
+    if(deltaL)
+    {
+        binangle_t diff = 0;
+        LineDef *other = findLineBlendNeighbor(line, side, 0, &diff);
+        if(other && INRANGE_OF(diff, BANG_180, BANG_45))
+        {
+            Vector2f otherNormal = calcLineNormal(*other, &other->v2() != &line.vertex(side));
+
+            // Average normals.
+            otherNormal += normal;
+            otherNormal.x /= 2; otherNormal.y /= 2;
+
+            *deltaL = calcLightLevelDelta(otherNormal);
+        }
+        else
+        {
+            *deltaL = delta;
+        }
+    }
+
+    // Do the same for the right edge but with the right neighbor linedef.
+    if(deltaR)
+    {
+        binangle_t diff = 0;
+        LineDef *other = findLineBlendNeighbor(line, side, 1, &diff);
+        if(other && INRANGE_OF(diff, BANG_180, BANG_45))
+        {
+            Vector2f otherNormal = calcLineNormal(*other, &other->v1() != &line.vertex(side^1));
+
+            // Average normals.
+            otherNormal += normal;
+            otherNormal.x /= 2; otherNormal.y /= 2;
+
+            *deltaR = calcLightLevelDelta(otherNormal);
+        }
+        else
+        {
+            *deltaR = delta;
+        }
+    }
+}
+
 /**
  * @defgroup rendHEdgeFlags Rend Half-edge Flags
  * Flags for rendHEdgeSection()
@@ -1731,7 +1862,7 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
         else
         {
             LineDef const &line = hedge->line();
-            line.lightLevelDelta(hedge->lineSideId(), &deltaL, &deltaR);
+            lineLightLevelDeltas(line, hedge->lineSideId(), &deltaL, &deltaR);
 
             // Linear interpolation of the linedef light deltas to the edges of the hedge.
             float diff = deltaR - deltaL;

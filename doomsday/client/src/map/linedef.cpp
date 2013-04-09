@@ -1,4 +1,4 @@
-/** @file linedef.h Map LineDef.
+/** @file linedef.h World Map Line.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -24,7 +24,6 @@
 #include <de/Vector>
 
 #include "de_base.h"
-//#include "de_render.h"
 #include "m_misc.h"
 
 #include "Materials"
@@ -146,47 +145,6 @@ DENG2_PIMPL(LineDef)
     {
         std::memset(mapped, 0, sizeof(mapped));
     }
-
-#ifdef __CLIENT__
-
-    /**
-     * @param line  LineDef instance.
-     * @param ignoreOpacity  @c true= do not consider Material opacity.
-     * @return  @c true if this LineDef's side is considered "closed" (i.e.,
-     *     there is no opening through which the back Sector can be seen).
-     *     Tests consider all Planes which interface with this and the "middle"
-     *     Material used on the relative front side (if any).
-     */
-    bool backClosedForBlendNeighbor(int side, bool ignoreOpacity) const
-    {
-        if(!front.hasSideDef()) return false;
-        if(!back.hasSideDef()) return true;
-
-        Sector const *frontSec = self.sectorPtr(side);
-        Sector const *backSec  = self.sectorPtr(side^1);
-        if(frontSec == backSec) return false; // Never.
-
-        if(frontSec && backSec)
-        {
-            if(backSec->floor().visHeight()   >= backSec->ceiling().visHeight())  return true;
-            if(backSec->ceiling().visHeight() <= frontSec->floor().visHeight())   return true;
-            if(backSec->floor().visHeight()   >= frontSec->ceiling().visHeight()) return true;
-        }
-
-        return R_MiddleMaterialCoversLineOpening(&self, side, ignoreOpacity);
-    }
-
-    LineDef *findBlendNeighbor(byte side, byte right, binangle_t *diff) const
-    {
-        LineOwner const *farVertOwner = self.vertexOwner(right^side);
-        if(backClosedForBlendNeighbor(side, true/*ignore opacity*/))
-        {
-            return R_FindSolidLineNeighbor(self.sectorPtr(side), &self, farVertOwner, right, diff);
-        }
-        return R_FindLineNeighbor(self.sectorPtr(side), &self, farVertOwner, right, diff);
-    }
-
-#endif // __CLIENT__
 };
 
 LineDef::LineDef()
@@ -218,23 +176,6 @@ uint LineDef::origIndex() const
 void LineDef::setOrigIndex(uint newIndex)
 {
     d->origIndex = newIndex;
-}
-
-int LineDef::validCount() const
-{
-    return _validCount;
-}
-
-bool LineDef::isMappedByPlayer(int playerNum) const
-{
-    DENG2_ASSERT(playerNum >= 0 && playerNum < DDMAXPLAYERS);
-    return d->mapped[playerNum];
-}
-
-void LineDef::markMappedByPlayer(int playerNum, bool yes)
-{
-    DENG2_ASSERT(playerNum >= 0 && playerNum < DDMAXPLAYERS);
-    d->mapped[playerNum] = yes;
 }
 
 bool LineDef::isBspWindow() const
@@ -275,9 +216,20 @@ LineOwner *LineDef::vertexOwner(int to) const
     return to? _vo2 : _vo1;
 }
 
-binangle_t LineDef::angle() const
+AABoxd const &LineDef::aaBox() const
 {
-    return _angle;
+    return d->aaBox;
+}
+
+void LineDef::updateAABox()
+{
+    V2d_InitBox(d->aaBox.arvec2, _v1->origin());
+    V2d_AddToBox(d->aaBox.arvec2, _v2->origin());
+}
+
+coord_t LineDef::length() const
+{
+    return _length;
 }
 
 const_pvec2d_t &LineDef::direction() const
@@ -290,14 +242,15 @@ slopetype_t LineDef::slopeType() const
     return d->slopeType;
 }
 
-coord_t LineDef::length() const
+void LineDef::updateSlopeType()
 {
-    return _length;
+    V2d_Subtract(_direction, _v2->origin(), _v1->origin());
+    d->slopeType = M_SlopeType(_direction);
 }
 
-AABoxd const &LineDef::aaBox() const
+binangle_t LineDef::angle() const
 {
-    return d->aaBox;
+    return _angle;
 }
 
 int LineDef::boxOnSide(AABoxd const &box) const
@@ -333,113 +286,22 @@ int LineDef::boxOnSide_FixedPrecision(AABoxd const &box) const
     return M_BoxOnLineSide_FixedPrecision(boxx, pos, delta);
 }
 
-void LineDef::updateSlopeType()
+bool LineDef::isMappedByPlayer(int playerNum) const
 {
-    V2d_Subtract(_direction, _v2->origin(), _v1->origin());
-    d->slopeType = M_SlopeType(_direction);
+    DENG2_ASSERT(playerNum >= 0 && playerNum < DDMAXPLAYERS);
+    return d->mapped[playerNum];
 }
 
-void LineDef::unitVector(pvec2f_t unitvec) const
+void LineDef::markMappedByPlayer(int playerNum, bool yes)
 {
-    coord_t len = M_ApproxDistance(_direction[VX], _direction[VY]);
-    if(len)
-    {
-        unitvec[VX] = _direction[VX] / len;
-        unitvec[VY] = _direction[VY] / len;
-    }
-    else
-    {
-        unitvec[VX] = unitvec[VY] = 0;
-    }
+    DENG2_ASSERT(playerNum >= 0 && playerNum < DDMAXPLAYERS);
+    d->mapped[playerNum] = yes;
 }
 
-void LineDef::updateAABox()
+int LineDef::validCount() const
 {
-    V2d_InitBox(d->aaBox.arvec2, _v1->origin());
-    V2d_AddToBox(d->aaBox.arvec2, _v2->origin());
+    return _validCount;
 }
-
-#ifdef __CLIENT__
-static float calcLightLevelDelta(Vector2f const &normal)
-{
-    return (1.0f / 255) * (normal.x * 18) * rendLightWallAngle;
-}
-
-static Vector2f calcNormal(LineDef const &line, byte side)
-{
-    return Vector2f((line.vertexOrigin(side^1)[VY] - line.vertexOrigin(side)  [VY]) / line.length(),
-                    (line.vertexOrigin(side)  [VX] - line.vertexOrigin(side^1)[VX]) / line.length());
-}
-
-void LineDef::lightLevelDelta(int side, float *deltaL, float *deltaR) const
-{
-    // Disabled?
-    if(!(rendLightWallAngle > 0))
-    {
-        if(deltaL) *deltaL = 0;
-        if(deltaR) *deltaR = 0;
-        return;
-    }
-
-    Vector2f normal = calcNormal(*this, side);
-    float delta = calcLightLevelDelta(normal);
-
-    // If smoothing is disabled use this delta for left and right edges.
-    // Must forcibly disable smoothing for polyobj linedefs as they have
-    // no owner rings.
-    if(!rendLightWallAngleSmooth || (_inFlags & LF_POLYOBJ))
-    {
-        if(deltaL) *deltaL = delta;
-        if(deltaR) *deltaR = delta;
-        return;
-    }
-
-    // Find the left neighbour linedef for which we will calculate the
-    // lightlevel delta and then blend with this to produce the value for
-    // the left edge. Blend iff the angle between the two linedefs is less
-    // than 45 degrees.
-    if(deltaL)
-    {
-        binangle_t diff = 0;
-        LineDef *other = d->findBlendNeighbor(side, 0, &diff);
-        if(other && INRANGE_OF(diff, BANG_180, BANG_45))
-        {
-            Vector2f otherNormal = calcNormal(*other, &other->v2() != &vertex(side));
-
-            // Average normals.
-            otherNormal += normal;
-            otherNormal.x /= 2; otherNormal.y /= 2;
-
-            *deltaL = calcLightLevelDelta(otherNormal);
-        }
-        else
-        {
-            *deltaL = delta;
-        }
-    }
-
-    // Do the same for the right edge but with the right neighbor linedef.
-    if(deltaR)
-    {
-        binangle_t diff = 0;
-        LineDef *other = d->findBlendNeighbor(side, 1, &diff);
-        if(other && INRANGE_OF(diff, BANG_180, BANG_45))
-        {
-            Vector2f otherNormal = calcNormal(*other, &other->v1() != &vertex(side^1));
-
-            // Average normals.
-            otherNormal += normal;
-            otherNormal.x /= 2; otherNormal.y /= 2;
-
-            *deltaR = calcLightLevelDelta(otherNormal);
-        }
-        else
-        {
-            *deltaR = delta;
-        }
-    }
-}
-#endif
 
 int LineDef::property(setargs_t &args) const
 {
@@ -554,6 +416,7 @@ int LineDef::setProperty(setargs_t const &args)
         DMU_SetValue(DMT_LINEDEF_FLAGS, &_flags, &args, 0);
 
 #ifdef __CLIENT__
+        /// @todo Surface should observe.
         if(hasFrontSideDef())
         {
             SideDef &frontDef = frontSideDef();

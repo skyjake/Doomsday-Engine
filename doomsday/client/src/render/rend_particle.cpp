@@ -496,6 +496,27 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
     }
 }
 
+/**
+ * Calculate a unit vector parallel to @a line.
+ *
+ * @todo No longer needed (Surface has tangent space vectors).
+ *
+ * @param unitVect  Unit vector is written here.
+ */
+static void lineUnitVector(LineDef const &line, pvec2f_t unitVec)
+{
+    coord_t len = M_ApproxDistance(line.direction()[VX], line.direction()[VY]);
+    if(len)
+    {
+        unitVec[VX] = line.direction()[VX] / len;
+        unitVec[VY] = line.direction()[VY] / len;
+    }
+    else
+    {
+        unitVec[VX] = unitVec[VY] = 0;
+    }
+}
+
 static void renderParticles(int rtype, boolean withBlend)
 {
     float leftoff[3], rightoff[3];
@@ -723,7 +744,6 @@ static void renderParticles(int rtype, boolean withBlend)
             else if(flatOnWall)
             {
                 vec2d_t origin, projected;
-                float line[2];
 
                 // There will be a slight approximation on the XY plane since
                 // the particles aren't that accurate when it comes to wall
@@ -744,23 +764,25 @@ static void renderParticles(int rtype, boolean withBlend)
                     projected[VY] += diff[VY] / dist * gap;
                 }
 
-                pt->contact->unitVector(line);
+                DENG_ASSERT(pt->contact != 0);
+                float unitvec[2];
+                lineUnitVector(*pt->contact, unitvec);
 
                 glTexCoord2f(0, 0);
-                glVertex3d(projected[VX] - size * line[VX], center[VY] - size,
-                           projected[VY] - size * line[VY]);
+                glVertex3d(projected[VX] - size * unitvec[VX], center[VY] - size,
+                           projected[VY] - size * unitvec[VY]);
 
                 glTexCoord2f(1, 0);
-                glVertex3d(projected[VX] - size * line[VX], center[VY] + size,
-                           projected[VY] - size * line[VY]);
+                glVertex3d(projected[VX] - size * unitvec[VX], center[VY] + size,
+                           projected[VY] - size * unitvec[VY]);
 
                 glTexCoord2f(1, 1);
-                glVertex3d(projected[VX] + size * line[VX], center[VY] + size,
-                           projected[VY] + size * line[VY]);
+                glVertex3d(projected[VX] + size * unitvec[VX], center[VY] + size,
+                           projected[VY] + size * unitvec[VY]);
 
                 glTexCoord2f(0, 1);
-                glVertex3d(projected[VX] + size * line[VX], center[VY] - size,
-                           projected[VY] + size * line[VY]);
+                glVertex3d(projected[VX] + size * unitvec[VX], center[VY] - size,
+                           projected[VY] + size * unitvec[VY]);
             }
             else
             {

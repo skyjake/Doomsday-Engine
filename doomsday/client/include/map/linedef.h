@@ -68,7 +68,7 @@ class HEdge;
 ///@}
 
 /**
- * Map line.
+ * World map line.
  *
  * Despite sharing it's name with a map element present in the id Tech 1 map
  * format, this component has a notably different design and slightly different
@@ -671,32 +671,6 @@ public:
         coord_t point[2] = { x, y };
         return pointOnSide(point);
     }
-
-    /**
-     * Calculate a unit vector parallel to the line.
-     *
-     * @todo No longer needed (Surface has tangent space vectors).
-     *
-     * @param unitVector  Unit vector is written here.
-     */
-    void unitVector(pvec2f_t unitVec) const;
-
-#ifdef __CLIENT__
-
-    /**
-     * The DOOM lighting model applies a sector light level delta when drawing
-     * line segments based on their 2D world angle.
-     *
-     * @param side  Side of the line we are interested in.
-     * @param deltaL  Light delta for the left edge written here. Can be @c NULL.
-     * @param deltaR  Light delta for the right edge written here. Can be @c NULL.
-     *
-     * @deprecated Now that we store surface tangent space normals use those
-     *             rather than angles. @todo Remove me.
-     */
-    void lightLevelDelta(int side, float *deltaL, float *deltaR) const;
-
-#endif // __CLIENT__
 
     /**
      * Get a property value, selected by DMU_* name.
