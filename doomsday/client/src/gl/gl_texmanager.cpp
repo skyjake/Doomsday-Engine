@@ -1018,7 +1018,7 @@ String texturevariantspecification_t::asText() const
             }
         }
 
-        text += " Context:" + textureUsageContextNames[tc-TEXTUREVARIANTUSAGECONTEXT_FIRST + 1];
+        text += " Context:" + textureUsageContextNames[tc-TEXTUREVARIANTUSAGECONTEXT_FIRST + 1]
               + " Flags:" + String::number(spec.flags & ~TSF_INTERNAL_MASK)
               + " Border:" + String::number(spec.border)
               + " MinFilter:" + filterModeNames[3 + de::clamp(-1, spec.minFilter, 0)]
