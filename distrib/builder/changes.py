@@ -285,16 +285,13 @@ class Changes:
             os.chdir(os.path.join(config.DISTRIB_DIR, 'linux'))
 
             # First we need to update the version.
-            if build_version.DOOMSDAY_RELEASE_TYPE == 'Stable':
-                debVersion = build_version.DOOMSDAY_VERSION_FULL
-            else:
-                debVersion = build_version.DOOMSDAY_VERSION_FULL + '-' + Event().tag()
+            debVersion = build_version.DOOMSDAY_VERSION_FULL + '-' + Event().tag()
 
             # Always make one entry.
             print 'Marking new version...'
             msg = 'New release: %s build %i.' % (build_version.DOOMSDAY_RELEASE_TYPE,
                                                  Event().number())
-            os.system("dch -b --check-dirname-level 0 -v %s \"%s\"" % (debVersion, msg))       
+            os.system("dch -b --check-dirname-level 0 -v %s \"%s\"" % (debVersion, msg))
 
             for entry in self.debChangeEntries:
                 # Quote it for the command line.

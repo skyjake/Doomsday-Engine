@@ -443,7 +443,7 @@ D_CMD(InspectTexture)
                     de::String info =
                         de::String("Variant #%1:"
                                    "\n  Source:%2 Masked:%3 GLName:%4 Coords:%5"
-                                   "\n  Specification:")
+                                   "\n  Specification: %6")
                             .arg(variantIdx)
                             .arg(variant->sourceDescription())
                             .arg(variant->isMasked()? "yes":"no")
