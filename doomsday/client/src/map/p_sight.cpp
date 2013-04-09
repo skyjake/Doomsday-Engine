@@ -67,10 +67,10 @@ public:
         V3d_Copy(_to,   to);
 
         // Configure the ray:
-        _ray.origin[VX]    = FLT2FIX(float( _from[VX] ));
-        _ray.origin[VY]    = FLT2FIX(float( _from[VY] ));
-        _ray.direction[VX] = FLT2FIX(float( _to[VX] - _from[VX] ));
-        _ray.direction[VY] = FLT2FIX(float( _to[VY] - _from[VY] ));
+        _ray.origin[VX]    = DBL2FIX(_from[VX]);
+        _ray.origin[VY]    = DBL2FIX(_from[VY]);
+        _ray.direction[VX] = DBL2FIX(_to[VX] - _from[VX]);
+        _ray.direction[VY] = DBL2FIX(_to[VY] - _from[VY]);
 
         if(_from[VX] > _to[VX])
         {
@@ -153,11 +153,11 @@ private:
            Divline_PointOnSide(&_ray, line.v2Origin()))
             return true;
 
-        fixed_t linePointX[2]     = { FLT2FIX(float( line.v1Origin()[VX] )), FLT2FIX(float( line.v1Origin()[VY] )) };
-        fixed_t lineDirectionX[2] = { FLT2FIX(float( line.direction()[VX] )), FLT2FIX(float( line.direction()[VY] )) };
+        fixed_t linePointX[2]     = { DBL2FIX(line.v1Origin()[VX]), DBL2FIX(line.v1Origin()[VY]) };
+        fixed_t lineDirectionX[2] = { DBL2FIX(line.direction()[VX]), DBL2FIX(line.direction()[VY]) };
 
-        fixed_t fromPointX[2] = { FLT2FIX(float( _from[VX] )), FLT2FIX(float( _from[VY] )) };
-        fixed_t toPointX[2]   = { FLT2FIX(float( _to[VX] )),   FLT2FIX(float( _to[VY] )) };
+        fixed_t fromPointX[2] = { DBL2FIX(_from[VX]), DBL2FIX(_from[VY]) };
+        fixed_t toPointX[2]   = { DBL2FIX(_to[VX]),   DBL2FIX(_to[VY]) };
 
         if(V2x_PointOnLineSide(fromPointX, linePointX, lineDirectionX) ==
            V2x_PointOnLineSide(toPointX, linePointX, lineDirectionX))

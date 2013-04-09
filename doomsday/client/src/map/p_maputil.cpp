@@ -546,8 +546,8 @@ int PIT_AddLineDefIntercepts(LineDef *line, void * /*parameters*/)
     if(s1 == s2) return false;
 
     // On the correct side of the trace origin?
-    fixed_t linePointX[2]     = { FLT2FIX(float( line->v1Origin()[VX] )), FLT2FIX(float( line->v1Origin()[VY] )) };
-    fixed_t lineDirectionX[2] = { FLT2FIX(float( line->direction()[VX] )), FLT2FIX(float( line->direction()[VY] )) };
+    fixed_t linePointX[2]     = { DBL2FIX(line->v1Origin()[VX]), DBL2FIX(line->v1Origin()[VY]) };
+    fixed_t lineDirectionX[2] = { DBL2FIX(line->direction()[VX]), DBL2FIX(line->direction()[VY]) };
 
     float distance = V2x_Intersection(linePointX, lineDirectionX,
                                       traceLos.origin, traceLos.direction);
@@ -592,10 +592,10 @@ int PIT_AddMobjIntercepts(mobj_t *mo, void * /*parameters*/)
 
     // Calculate interception point.
     divline_t dl;
-    dl.origin[VX] = FLT2FIX(float( from[VX] ));
-    dl.origin[VY] = FLT2FIX(float( from[VY] ));
-    dl.direction[VX] = FLT2FIX(float( to[VX] - from[VX] ));
-    dl.direction[VY] = FLT2FIX(float( to[VY] - from[VY] ));
+    dl.origin[VX] = DBL2FIX(from[VX]);
+    dl.origin[VY] = DBL2FIX(from[VY]);
+    dl.direction[VX] = DBL2FIX(to[VX] - from[VX]);
+    dl.direction[VY] = DBL2FIX(to[VY] - from[VY]);
     coord_t distance = FIX2FLT(Divline_Intersection(&dl, &traceLos));
 
     // On the correct side of the trace origin?

@@ -37,6 +37,7 @@
 #define FIX2FLT(x)      ( (x) / (float) FRACUNIT )
 #define Q_FIX2FLT(x)    ( (float) ((x) >> FRACBITS) )
 #define FLT2FIX(x)      ( (fixed_t) ((x) * FRACUNIT) )
+#define DBL2FIX(x)      ( (fixed_t) FLT2FIX((float)(x)) )
 
 #ifdef __cplusplus
 extern "C" {
