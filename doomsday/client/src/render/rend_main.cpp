@@ -1501,12 +1501,12 @@ static void Rend_RenderPlane(Plane::Type type, coord_t height,
     // Must have a visible surface.
     if(!inMat || !inMat->isDrawable()) return;
 
-    Vector3f viewToEye(vOrigin[VX] - bspLeaf->center()[VX],
-                       vOrigin[VZ] - bspLeaf->center()[VY],
-                       vOrigin[VY] - height);
+    Vector3f eyeToSurface(vOrigin[VX] - bspLeaf->center()[VX],
+                          vOrigin[VZ] - bspLeaf->center()[VY],
+                          vOrigin[VY] - height);
 
     // Don't bother with planes facing away from the camera.
-    if(!(clipBackFacing && !(viewToEye.dot(normal) < 0)))
+    if(!(clipBackFacing && !(eyeToSurface.dot(normal) < 0)))
     {
         coord_t texTL[3], texBR[3];
 
