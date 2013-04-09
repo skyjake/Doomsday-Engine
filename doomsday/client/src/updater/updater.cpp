@@ -454,15 +454,23 @@ Updater::Updater(QObject *parent) : QObject(parent), d(new Instance(this))
     connect(d->network, SIGNAL(finished(QNetworkReply*)), this, SLOT(gotReply(QNetworkReply*)));
 
     // Do a silent auto-update check when starting.
-    if(d->shouldCheckForUpdate())
-    {
-        d->queryLatestVersion(false);
-    }
+    de::App::app().audienceForStartupComplete += this;
 }
 
 void Updater::setBackToFullscreen(bool yes)
 {
     d->backToFullscreen = yes;
+}
+
+void Updater::appStartupCompleted()
+{
+    LOG_AS("Updater")
+    LOG_DEBUG("App startup was completed");
+
+    if(d->shouldCheckForUpdate())
+    {
+        checkNow(false);
+    }
 }
 
 void Updater::gotReply(QNetworkReply* reply)
