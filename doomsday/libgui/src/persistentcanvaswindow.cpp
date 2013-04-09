@@ -754,12 +754,26 @@ DENG2_PIMPL(PersistentCanvasWindow)
 PersistentCanvasWindow::PersistentCanvasWindow(String const &id)
     : d(new Instance(this, id))
 {
-    restoreFromConfig();
+    try
+    {
+        restoreFromConfig();
+    }
+    catch(Error const &er)
+    {
+        LOG_WARNING("Failed to restore window state:\n%s") << er.asText();
+    }
 }
 
 void PersistentCanvasWindow::saveToConfig()
 {
-    d->widgetState().saveToConfig();
+    try
+    {
+        d->widgetState().saveToConfig();
+    }
+    catch(Error const &er)
+    {
+        LOG_WARNING("Failed to save window state:\n%s") << er.asText();
+    }
 }
 
 void PersistentCanvasWindow::restoreFromConfig()
