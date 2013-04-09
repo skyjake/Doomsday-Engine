@@ -549,8 +549,8 @@ int PIT_AddLineDefIntercepts(LineDef *line, void * /*parameters*/)
     fixed_t linePointX[2]     = { DBL2FIX(line->v1Origin()[VX]), DBL2FIX(line->v1Origin()[VY]) };
     fixed_t lineDirectionX[2] = { DBL2FIX(line->direction()[VX]), DBL2FIX(line->direction()[VY]) };
 
-    float distance = V2x_Intersection(linePointX, lineDirectionX,
-                                      traceLos.origin, traceLos.direction);
+    float distance = FIX2FLT(V2x_Intersection(linePointX, lineDirectionX,
+                                              traceLos.origin, traceLos.direction));
     if(!(distance < 0))
     {
         P_AddIntercept(ICPT_LINE, distance, line);

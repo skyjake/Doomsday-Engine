@@ -18,8 +18,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_MAPELEMENT_H
-#define LIBDENG_MAPELEMENT_H
+#ifndef DENG_MAPELEMENT_H
+#define DENG_MAPELEMENT_H
 
 #include "dd_share.h"
 
@@ -79,7 +79,7 @@ public:
     inline Type const *castTo() const
     {
         Type const *t = dynamic_cast<Type const *>(this);
-        DENG2_ASSERT(t != 0);
+        DENG_ASSERT(t != 0);
         return t;
     }
 
@@ -97,4 +97,4 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG_MAPELEMENT_H
+#endif // DENG_MAPELEMENT_H

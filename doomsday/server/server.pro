@@ -377,6 +377,7 @@ SOURCES += \
     $$SRC/src/map/generators.cpp \
     $$SRC/src/map/hedge.cpp \
     $$SRC/src/map/linedef.cpp \
+    $$SRC/src/map/linesighttest.cpp \
     $$SRC/src/map/p_data.cpp \
     $$SRC/src/map/p_dmu.cpp \
     $$SRC/src/map/p_intercept.cpp \
@@ -385,7 +386,6 @@ SOURCES += \
     $$SRC/src/map/p_particle.cpp \
     $$SRC/src/map/p_players.cpp \
     $$SRC/src/map/p_polyobjs.cpp \
-    $$SRC/src/map/p_sight.cpp \
     $$SRC/src/map/p_think.cpp \
     $$SRC/src/map/p_ticker.cpp \
     $$SRC/src/map/plane.cpp \

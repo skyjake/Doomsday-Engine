@@ -2231,7 +2231,16 @@ DENG_EXTERN_C int P_PathTraverse2(coord_t const from[2], coord_t const to[2], in
 DENG_EXTERN_C int P_PathTraverse(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback/*parameters=NULL*/);
 DENG_EXTERN_C int P_PathXYTraverse2(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, traverser_t callback, void* paramaters);
 DENG_EXTERN_C int P_PathXYTraverse(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, traverser_t callback/*parameters=NULL*/);
-DENG_EXTERN_C boolean P_CheckLineSight(coord_t const from[3], coord_t const to[3], coord_t bottomSlope, coord_t topSlope, int flags);
+
+#undef P_CheckLineSight
+DENG_EXTERN_C boolean P_CheckLineSight(const_pvec3d_t from, const_pvec3d_t to, coord_t bottomSlope,
+    coord_t topSlope, int flags)
+{
+    if(!theMap) return false; // I guess?
+    return LineSightTest(Vector3d(from), Vector3d(to),
+                         dfloat(bottomSlope), dfloat(topSlope), flags).trace(*theMap->bspRoot());
+}
+
 DENG_EXTERN_C const divline_t* P_TraceLOS(void);
 DENG_EXTERN_C TraceOpening const *P_TraceOpening(void);
 DENG_EXTERN_C void P_SetTraceOpening(LineDef* linedef);

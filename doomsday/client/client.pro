@@ -251,6 +251,7 @@ DENG_HEADERS += \
     include/map/generators.h \
     include/map/hedge.h \
     include/map/linedef.h \
+    include/map/linesighttest.h \
     include/map/mapelement.h \
     include/map/p_dmu.h \
     include/map/p_intercept.h \
@@ -533,6 +534,7 @@ SOURCES += \
     src/map/generators.cpp \
     src/map/hedge.cpp \
     src/map/linedef.cpp \
+    src/map/linesighttest.cpp \
     src/map/p_data.cpp \
     src/map/p_dmu.cpp \
     src/map/p_intercept.cpp \
@@ -542,7 +544,6 @@ SOURCES += \
     src/map/p_particle.cpp \
     src/map/p_players.cpp \
     src/map/p_polyobjs.cpp \
-    src/map/p_sight.cpp \
     src/map/p_think.cpp \
     src/map/p_ticker.cpp \
     src/map/plane.cpp \
