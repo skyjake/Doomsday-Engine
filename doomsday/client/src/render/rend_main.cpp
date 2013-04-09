@@ -1759,10 +1759,10 @@ static void reportLineDrawn(LineDef &line)
 {
     // Already been here?
     int playerNum = viewPlayer - ddPlayers;
-    if(line.mappedByPlayer(playerNum)) return;
+    if(line.isMappedByPlayer(playerNum)) return;
 
     // Mark as drawn.
-    line._mapped[playerNum] = true;
+    line.markMappedByPlayer(playerNum);
 
     // Send a status report.
     if(gx.HandleMapObjectStatusReport)

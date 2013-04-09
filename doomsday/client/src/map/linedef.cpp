@@ -120,7 +120,29 @@ void LineDef::Side::updateSurfaceNormals()
 
 DENG2_PIMPL(LineDef)
 {
-    Instance(Public *i) : Base(i) {}
+    /// Logical slope classification.
+    slopetype_t slopeType;
+
+    /// Bounding box encompassing the map space coordinates of both vertexes.
+    AABoxd aaBox;
+
+    /// Logical sides:
+    Side front;
+    Side back;
+
+    /// Original index in the archived map.
+    uint origIndex;
+
+    /// Whether the line has been mapped by each player yet.
+    bool mapped[DDMAXPLAYERS];
+
+    Instance(Public *i)
+        : Base(i),
+          slopeType(ST_HORIZONTAL),
+          origIndex(0)
+    {
+        std::memset(mapped, 0, sizeof(mapped));
+    }
 
 #ifdef __CLIENT__
 
@@ -134,8 +156,8 @@ DENG2_PIMPL(LineDef)
      */
     bool backClosedForBlendNeighbor(int side, bool ignoreOpacity) const
     {
-        if(!self.hasFrontSideDef()) return false;
-        if(!self.hasBackSideDef()) return true;
+        if(!front.hasSideDef()) return false;
+        if(!back.hasSideDef()) return true;
 
         Sector const *frontSec = self.sectorPtr(side);
         Sector const *backSec  = self.sectorPtr(side^1);
@@ -172,15 +194,12 @@ LineDef::LineDef()
       _vo2(0),
       _flags(0),
       _inFlags(0),
-      _slopeType(ST_HORIZONTAL),
-      _validCount(0),
       _angle(0),
       _length(0),
-      _origIndex(0),
+      _validCount(0),
       d(new Instance(this))
 {
     V2d_Set(_direction, 0, 0);
-    std::memset(_mapped, 0, sizeof(_mapped));
 }
 
 int LineDef::flags() const
@@ -190,7 +209,12 @@ int LineDef::flags() const
 
 uint LineDef::origIndex() const
 {
-    return _origIndex;
+    return d->origIndex;
+}
+
+void LineDef::setOrigIndex(uint newIndex)
+{
+    d->origIndex = newIndex;
 }
 
 int LineDef::validCount() const
@@ -198,10 +222,16 @@ int LineDef::validCount() const
     return _validCount;
 }
 
-bool LineDef::mappedByPlayer(int playerNum) const
+bool LineDef::isMappedByPlayer(int playerNum) const
 {
     DENG2_ASSERT(playerNum >= 0 && playerNum < DDMAXPLAYERS);
-    return _mapped[playerNum];
+    return d->mapped[playerNum];
+}
+
+void LineDef::markMappedByPlayer(int playerNum, bool yes)
+{
+    DENG2_ASSERT(playerNum >= 0 && playerNum < DDMAXPLAYERS);
+    d->mapped[playerNum] = yes;
 }
 
 bool LineDef::isBspWindow() const
@@ -216,12 +246,12 @@ bool LineDef::isFromPolyobj() const
 
 LineDef::Side &LineDef::side(int back)
 {
-    return back? _back : _front;
+    return back? d->back : d->front;
 }
 
 LineDef::Side const &LineDef::side(int back) const
 {
-    return back? _back : _front;
+    return back? d->back : d->front;
 }
 
 Vertex &LineDef::vertex(int to)
@@ -254,7 +284,7 @@ const_pvec2d_t &LineDef::direction() const
 
 slopetype_t LineDef::slopeType() const
 {
-    return _slopeType;
+    return d->slopeType;
 }
 
 coord_t LineDef::length() const
@@ -264,7 +294,7 @@ coord_t LineDef::length() const
 
 AABoxd const &LineDef::aaBox() const
 {
-    return _aaBox;
+    return d->aaBox;
 }
 
 int LineDef::boxOnSide(AABoxd const &box) const
@@ -348,7 +378,7 @@ void LineDef::configureTraceOpening(TraceOpening &opening) const
 void LineDef::updateSlopeType()
 {
     V2d_Subtract(_direction, _v2->origin(), _v1->origin());
-    _slopeType = M_SlopeType(_direction);
+    d->slopeType = M_SlopeType(_direction);
 }
 
 void LineDef::unitVector(pvec2f_t unitvec) const
@@ -367,8 +397,8 @@ void LineDef::unitVector(pvec2f_t unitvec) const
 
 void LineDef::updateAABox()
 {
-    V2d_InitBox(_aaBox.arvec2, _v1->origin());
-    V2d_AddToBox(_aaBox.arvec2, _v2->origin());
+    V2d_InitBox(d->aaBox.arvec2, _v1->origin());
+    V2d_AddToBox(d->aaBox.arvec2, _v2->origin());
 }
 
 #ifdef __CLIENT__
@@ -481,39 +511,39 @@ int LineDef::property(setargs_t &args) const
         DMU_GetValue(DDVT_ANGLE, &lineAngle, &args, 0);
         break; }
     case DMU_SLOPETYPE:
-        DMU_GetValue(DMT_LINEDEF_SLOPETYPE, &_slopeType, &args, 0);
+        DMU_GetValue(DMT_LINEDEF_SLOPETYPE, &d->slopeType, &args, 0);
         break;
     case DMU_FRONT_SECTOR: {
-        Sector *frontSector = _front.sectorPtr();
+        Sector const *frontSector = frontSectorPtr();
         DMU_GetValue(DMT_LINEDEF_SECTOR, &frontSector, &args, 0);
         break; }
     case DMU_BACK_SECTOR: {
-        Sector *backSector = _back.sectorPtr();
+        Sector const *backSector = backSectorPtr();
         DMU_GetValue(DMT_LINEDEF_SECTOR, &backSector, &args, 0);
         break; }
     case DMU_FLAGS:
         DMU_GetValue(DMT_LINEDEF_FLAGS, &_flags, &args, 0);
         break;
     case DMU_SIDEDEF0: {
-        SideDef *frontSideDef = _front.sideDefPtr();
+        SideDef const *frontSideDef = frontSideDefPtr();
         DMU_GetValue(DDVT_PTR, &frontSideDef, &args, 0);
         break; }
     case DMU_SIDEDEF1: {
-        SideDef *backSideDef = _back.sideDefPtr();
+        SideDef const *backSideDef = backSideDefPtr();
         DMU_GetValue(DDVT_PTR, &backSideDef, &args, 0);
         break; }
     case DMU_BOUNDING_BOX:
         if(args.valueType == DDVT_PTR)
         {
-            AABoxd const *aaBoxAdr = &_aaBox;
+            AABoxd const *aaBoxAdr = &d->aaBox;
             DMU_GetValue(DDVT_PTR, &aaBoxAdr, &args, 0);
         }
         else
         {
-            DMU_GetValue(DMT_LINEDEF_AABOX, &_aaBox.minX, &args, 0);
-            DMU_GetValue(DMT_LINEDEF_AABOX, &_aaBox.maxX, &args, 1);
-            DMU_GetValue(DMT_LINEDEF_AABOX, &_aaBox.minY, &args, 2);
-            DMU_GetValue(DMT_LINEDEF_AABOX, &_aaBox.maxY, &args, 3);
+            DMU_GetValue(DMT_LINEDEF_AABOX, &d->aaBox.minX, &args, 0);
+            DMU_GetValue(DMT_LINEDEF_AABOX, &d->aaBox.maxX, &args, 1);
+            DMU_GetValue(DMT_LINEDEF_AABOX, &d->aaBox.minY, &args, 2);
+            DMU_GetValue(DMT_LINEDEF_AABOX, &d->aaBox.maxY, &args, 3);
         }
         break;
     case DMU_VALID_COUNT:
@@ -529,20 +559,36 @@ int LineDef::property(setargs_t &args) const
 
 int LineDef::setProperty(setargs_t const &args)
 {
+    /// @todo fixme: Changing the sector and/or sidedef references via the DMU
+    /// API should be disabled - it has no concept of what is actually needed
+    /// to effect such changes at run time.
+    ///
+    /// At best this will result in strange glitches but more than likely a
+    /// fatal error (or worse) would happen should anyone try to use this...
+
     switch(args.prop)
     {
-    case DMU_FRONT_SECTOR:
-        DMU_SetValue(DMT_LINEDEF_SECTOR, &_front._sector, &args, 0);
-        break;
-    case DMU_BACK_SECTOR:
-        DMU_SetValue(DMT_LINEDEF_SECTOR, &_back._sector, &args, 0);
-        break;
-    case DMU_SIDEDEF0:
-        DMU_SetValue(DMT_LINEDEF_SIDEDEF, &_front._sideDef, &args, 0);
-        break;
-    case DMU_SIDEDEF1:
-        DMU_SetValue(DMT_LINEDEF_SIDEDEF, &_back._sideDef, &args, 0);
-        break;
+    case DMU_FRONT_SECTOR: {
+        Sector *newFrontSector = frontSectorPtr();
+        DMU_SetValue(DMT_LINEDEF_SECTOR, &newFrontSector, &args, 0);
+        d->front._sector = newFrontSector;
+        break; }
+    case DMU_BACK_SECTOR: {
+        Sector *newBackSector = backSectorPtr();
+        DMU_SetValue(DMT_LINEDEF_SECTOR, &newBackSector, &args, 0);
+        d->back._sector = newBackSector;
+        break; }
+    case DMU_SIDEDEF0: {
+        SideDef *newFrontSideDef = frontSideDefPtr();
+        DMU_SetValue(DMT_LINEDEF_SIDEDEF, &newFrontSideDef, &args, 0);
+        d->front._sideDef = newFrontSideDef;
+        break; }
+    case DMU_SIDEDEF1: {
+        SideDef *newBackSideDef = backSideDefPtr();
+        DMU_SetValue(DMT_LINEDEF_SIDEDEF, &newBackSideDef, &args, 0);
+        d->back._sideDef = newBackSideDef;
+        break; }
+
     case DMU_VALID_COUNT:
         DMU_SetValue(DMT_LINEDEF_VALIDCOUNT, &_validCount, &args, 0);
         break;

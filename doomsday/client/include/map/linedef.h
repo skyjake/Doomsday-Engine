@@ -203,20 +203,11 @@ public: /// @todo make private:
     LineOwner *_vo1;
     LineOwner *_vo2;
 
-    /// Logical sides:
-    Side _front;
-    Side _back;
-
     /// Public DDLF_* flags.
     int _flags;
 
     /// Internal LF_* flags.
     byte _inFlags;
-
-    /// Logical slope type.
-    slopetype_t _slopeType;
-
-    int _validCount;
 
     /// Calculated from the direction vector.
     binangle_t _angle;
@@ -227,13 +218,7 @@ public: /// @todo make private:
     /// Accurate length.
     coord_t _length;
 
-    AABoxd _aaBox;
-
-    /// Whether the line has been mapped by each player yet.
-    boolean _mapped[DDMAXPLAYERS];
-
-    /// Original index in the archived map.
-    uint _origIndex;
+    int _validCount;
 
 public:
     LineDef();
@@ -260,17 +245,29 @@ public:
     /**
      * Returns @c true if the line is flagged @a flagsToTest.
      */
-    inline bool isFlagged(int flagsToTest) const { return !!(flags() & flagsToTest); }
+    inline bool isFlagged(int flagsToTest) const { return (flags() & flagsToTest) != 0; }
 
     /**
      * Returns @c true if the line is marked as @em mapped for @a playerNum.
      */
-    bool mappedByPlayer(int playerNum) const;
+    bool isMappedByPlayer(int playerNum) const;
+
+    /**
+     * Change the @em mapped by player state of the line.
+     */
+    void markMappedByPlayer(int playerNum, bool yes = true);
 
     /**
      * Returns the original index of the line.
      */
     uint origIndex() const;
+
+    /**
+     * Change the original index of the line.
+     *
+     * @param newIndex  New original index.
+     */
+    void setOrigIndex(uint newIndex);
 
     /**
      * Returns the @em validCount of the line. Used by some legacy iteration

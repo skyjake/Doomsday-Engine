@@ -104,7 +104,7 @@ public:
         LineDef *line = new LineDef;
 
         lines.append(line);
-        line->_origIndex = lines.count(); // 1-based index, 0 = NIL.
+        line->setOrigIndex(lines.count()); // 1-based index, 0 = NIL.
 
         return line;
     }
@@ -1206,11 +1206,11 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector,
     l->_v1->_buildData.refCount++;
     l->_v2->_buildData.refCount++;
 
-    l->_front._sector = (frontSector == 0? NULL: editMap.sectors[frontSector-1]);
-    l->_back._sector  = (backSector  == 0? NULL: editMap.sectors[backSector-1]);
+    l->front()._sector = (frontSector == 0? NULL: editMap.sectors[frontSector-1]);
+    l->back()._sector  = (backSector  == 0? NULL: editMap.sectors[backSector-1]);
 
-    l->_front._sideDef = front;
-    l->_back._sideDef = back;
+    l->front()._sideDef = front;
+    l->back()._sideDef = back;
 
     l->_length = length;
 
@@ -1240,7 +1240,7 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector,
     if(!front || !back)
         l->_flags |= DDLF_BLOCKING;
 
-    return l->_origIndex;
+    return l->origIndex();
 }
 
 #undef MPE_PlaneCreate
