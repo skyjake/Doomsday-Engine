@@ -598,6 +598,13 @@ void Updater_ShowSettings(void)
 
 void Updater_PrintLastUpdated(void)
 {
-    Con_Message("Latest update check was made %s.",
-                UpdaterSettings().lastCheckAgo().toLatin1().constData());
+    de::String ago = UpdaterSettings().lastCheckAgo();
+    if(ago.isEmpty())
+    {
+        Con_Message("Never checked for updates.");
+    }
+    else
+    {
+        Con_Message("Latest update check was made %s.", ago.toLatin1().constData());
+    }
 }

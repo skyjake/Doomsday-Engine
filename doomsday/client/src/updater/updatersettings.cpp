@@ -191,6 +191,8 @@ de::NativePath UpdaterSettings::defaultDownloadPath()
 de::String UpdaterSettings::lastCheckAgo() const
 {
     de::Time when = lastCheckTime();
+    if(!when.isValid()) return ""; // Never checked.
+
     de::TimeDelta delta = when.since();
 
     int t;
