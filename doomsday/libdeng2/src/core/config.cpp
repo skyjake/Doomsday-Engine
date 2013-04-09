@@ -77,7 +77,7 @@ void Config::read()
              << NumberValue(verInfo.build);
 
     File &scriptFile = App::rootFolder().locate<File>(d->configPath);
-    bool shouldRunScript = false;
+    bool shouldRunScript = App::commandLine().has("-reconfig");
 
     try
     {
