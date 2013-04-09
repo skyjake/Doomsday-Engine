@@ -519,10 +519,12 @@ DENG2_PIMPL(PersistentCanvasWindow)
 
             case Maximized:
                 mod.setFlag(State::Maximized, attribs[i]);
+                if(attribs[i]) mod.setFlag(State::Fullscreen, false);
                 break;
 
             case Fullscreen:
                 mod.setFlag(State::Fullscreen, attribs[i]);
+                if(attribs[i]) mod.setFlag(State::Maximized, false);
                 break;
 
             case FullscreenWidth:
@@ -569,6 +571,13 @@ DENG2_PIMPL(PersistentCanvasWindow)
         }
     }
 
+    /**
+     * Apply a logical state to the concrete widget instance. All properties of
+     * the widget may not be updated instantly during this method. Particularly
+     * a display mode change will cause geometry changes to occur later.
+     *
+     * @param newState  State to apply.
+     */
     void applyToWidget(State const &newState)
     {
         // If the display mode needs to change, we will have to defer the rest
@@ -586,6 +595,9 @@ DENG2_PIMPL(PersistentCanvasWindow)
         // Change display mode, if necessary.
         if(!DisplayMode_IsEqual(DisplayMode_Current(), newMode))
         {
+            LOG_INFO("Changing display mode to %i x %i x %i (%.1f Hz)")
+                    << newMode->width << newMode->height << newMode->depth << newMode->refreshRate;
+
             modeChanged = DisplayMode_Change(newMode, newState.shouldCaptureScreen());
             state.colorDepthBits = newMode->depth;
 
@@ -599,20 +611,46 @@ DENG2_PIMPL(PersistentCanvasWindow)
 
         if(self.isVisible())
         {
-            if(state.isFullscreen() && modeChanged)
+            // Possible actions:
+            //
+            // Window -> Window:    Geometry
+            // Window -> Max:       ShowMax
+            // Window -> Full:      ShowFull
+            // Window -> Mode+Full: Mode, ShowFull
+            // Max -> Window:       ShowNormal, Geometry
+            // Max -> Max:          -
+            // Max -> Full:         ShowFull
+            // Max -> Mode+Full:    Mode, ShowFull
+            // Full -> Window:      ShowNormal, Geometry
+            // Full -> Max:         ShowMax
+            // Full -> Full:        -
+            // Full -> Mode+Full:   Mode, SnowNormal, ShowFull
+
+            if(newState.isWindow())
             {
-                // Switch back to normal and then to the correct mode.
-                queue << Task(Task::ShowNormal, defer);
-                defer = 0;
+                queue << Task(Task::ShowNormal, defer) << Task(newState.windowRect);
+            }
+            else
+            {
+                if(modeChanged)
+                {
+                    queue << Task(Task::ShowNormal, defer);
+                    defer = 0.01;
+                }
+
+                if(newState.isMaximized())
+                {
+                    queue << Task(Task::ShowMaximized, defer);
+                    state.windowRect = newState.windowRect;
+                }
+                else if(newState.isFullscreen())
+                {
+                    queue << Task(Task::ShowFullscreen, defer);
+                    state.windowRect = newState.windowRect;
+                }
             }
 
-            queue << Task(newState.windowRect, defer);
             defer = 0;
-
-            // Switch to correct window mode.
-            queue << Task(newState.isFullscreen()? Task::ShowFullscreen :
-                          newState.isMaximized()?  Task::ShowMaximized :
-                                                   Task::ShowNormal, defer);
         }
 
         if(modeChanged)
