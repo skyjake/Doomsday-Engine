@@ -545,12 +545,12 @@ int PIT_AddLineDefIntercepts(LineDef *line, void * /*parameters*/)
     }
     if(s1 == s2) return false;
 
-    // Calculate interception point.
-    divline_t dl;
-    line->configureDivline(dl);
-    float distance = FIX2FLT(Divline_Intersection(&dl, &traceLos));
-
     // On the correct side of the trace origin?
+    fixed_t linePointX[2]     = { FLT2FIX(float( line->v1Origin()[VX] )), FLT2FIX(float( line->v1Origin()[VY] )) };
+    fixed_t lineDirectionX[2] = { FLT2FIX(float( line->direction()[VX] )), FLT2FIX(float( line->direction()[VY] )) };
+
+    float distance = V2x_Intersection(linePointX, lineDirectionX,
+                                      traceLos.origin, traceLos.direction);
     if(!(distance < 0))
     {
         P_AddIntercept(ICPT_LINE, distance, line);

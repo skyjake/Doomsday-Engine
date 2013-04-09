@@ -153,10 +153,14 @@ private:
            Divline_PointOnSide(&_ray, line.v2Origin()))
             return true;
 
-        divline_t dl;
-        line.configureDivline(dl);
+        fixed_t linePointX[2]     = { FLT2FIX(float( line.v1Origin()[VX] )), FLT2FIX(float( line.v1Origin()[VY] )) };
+        fixed_t lineDirectionX[2] = { FLT2FIX(float( line.direction()[VX] )), FLT2FIX(float( line.direction()[VY] )) };
 
-        if(Divline_PointOnSide(&dl, _from) == Divline_PointOnSide(&dl, _to))
+        fixed_t fromPointX[2] = { FLT2FIX(float( _from[VX] )), FLT2FIX(float( _from[VY] )) };
+        fixed_t toPointX[2]   = { FLT2FIX(float( _to[VX] )),   FLT2FIX(float( _to[VY] )) };
+
+        if(V2x_PointOnLineSide(fromPointX, linePointX, lineDirectionX) ==
+           V2x_PointOnLineSide(toPointX, linePointX, lineDirectionX))
             return true;
 
         // Is this the passable side of a one-way BSP window?
@@ -210,7 +214,7 @@ private:
         if(!ranges)
             return true;
 
-        float frac = FIX2FLT(Divline_Intersection(&dl, &_ray));
+        float frac = V2x_Intersection(linePointX, lineDirectionX, _ray.origin, _ray.direction);
 
         // Does the ray pass over the top range?
         if(_flags & LS_PASSOVER) // Allowed.

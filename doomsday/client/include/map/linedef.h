@@ -673,21 +673,6 @@ public:
     }
 
     /**
-     * Configure the specified divline_t by setting the origin point to the
-     * line's left (i.e., first) vertex and the direction vector parallel to
-     * the line's direction vector.
-     *
-     * @param divline  divline_t instance to be configured.
-     */
-    inline void configureDivline(divline_t &dl) const
-    {
-        dl.origin[VX]    = FLT2FIX(v1Origin()[VX]);
-        dl.origin[VY]    = FLT2FIX(v1Origin()[VY]);
-        dl.direction[VX] = FLT2FIX(direction()[VX]);
-        dl.direction[VY] = FLT2FIX(direction()[VY]);
-    }
-
-    /**
      * Calculate a unit vector parallel to the line.
      *
      * @todo No longer needed (Surface has tangent space vectors).
