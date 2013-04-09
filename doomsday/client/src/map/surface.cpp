@@ -32,6 +32,9 @@
 
 using namespace de;
 
+float const Surface::DEFAULT_OPACITY = 1.f;
+Vector3f const Surface::DEFAULT_TINT_COLOR = Vector3f(1.f, 1.f, 1.f);
+
 DENG2_PIMPL(Surface)
 {
     /// Owning map element, either @c DMU_SIDEDEF, or @c DMU_PLANE.
@@ -65,15 +68,12 @@ DENG2_PIMPL(Surface)
     /// @ref sufFlags
     int flags;
 
-    Instance(Public *i, MapElement &owner, de::Vector3f const &tintColor,
-             float opacity)
+    Instance(Public *i, MapElement &owner)
         : Base(i),
           owner(owner),
           needUpdateTangents(false),
           material(0),
           materialIsMissingFix(false),
-          tintColor(tintColor),
-          opacity(opacity),
           blendMode(BM_NORMAL),
           flags(0)
     {
@@ -88,6 +88,15 @@ DENG2_PIMPL(Surface)
         }
     }
 
+    void notifyTintColorChanged(Vector3f const &oldTintColor,
+                                int changedComponents)
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE(TintColorChange, i)
+        {
+            i->tintColorChanged(self, oldTintColor, changedComponents);
+        }
+    }
+
     void notifyTintColorChanged(Vector3f const &oldTintColor)
     {
         // Predetermine which components have changed.
@@ -98,10 +107,7 @@ DENG2_PIMPL(Surface)
                 changedComponents |= (1 << i);
         }
 
-        DENG2_FOR_PUBLIC_AUDIENCE(TintColorChange, i)
-        {
-            i->tintColorChanged(self, oldTintColor, changedComponents);
-        }
+        notifyTintColorChanged(oldTintColor, changedComponents);
     }
 
     void notifyNormalChanged(Vector3f const &oldNormal)
@@ -131,8 +137,8 @@ DENG2_PIMPL(Surface)
     }
 };
 
-Surface::Surface(MapElement &owner, Vector3f const &tintColor, float opacity)
-    : MapElement(DMU_SURFACE), d(new Instance(this, owner, tintColor, opacity))
+Surface::Surface(MapElement &owner, float opacity, Vector3f const &tintColor)
+    : MapElement(DMU_SURFACE), d(new Instance(this, owner))
 {
     V2f_Set(_offset, 0, 0);
     V2f_Set(_oldOffset[0], 0, 0);
@@ -145,6 +151,9 @@ Surface::Surface(MapElement &owner, Vector3f const &tintColor, float opacity)
     _decorationData.sources     = 0;
     _decorationData.numSources  = 0;
 #endif
+
+    d->opacity   = opacity;
+    d->tintColor = tintColor;
 }
 
 de::MapElement &Surface::owner() const
@@ -437,7 +446,7 @@ void Surface::setTintColorComponent(int component, float newStrength)
         d->tintColor[component] = newStrength;
 
         // Notify interested parties of the change.
-        d->notifyTintColorChanged(oldTintColor);
+        d->notifyTintColorChanged(oldTintColor, (1 << component));
     }
 }
 
@@ -733,9 +742,7 @@ int Surface::setProperty(setargs_t const &args)
         DMU_SetValue(DMT_SURFACE_RGBA, &red,   &args, 0);
         DMU_SetValue(DMT_SURFACE_RGBA, &green, &args, 1);
         DMU_SetValue(DMT_SURFACE_RGBA, &blue,  &args, 2);
-        setTintRed(red);
-        setTintGreen(green);
-        setTintBlue(blue);
+        setTintColor(red, green, blue);
         break; }
 
     case DMU_COLOR_RED: {

@@ -34,6 +34,9 @@
 
 using namespace de;
 
+float const Sector::DEFAULT_LIGHT_LEVEL = 1.f;
+Vector3f const Sector::DEFAULT_LIGHT_COLOR = Vector3f(1.f, 1.f, 1.f);
+
 DENG2_PIMPL(Sector)
 {
     /// Bounding box for the sector.
@@ -80,6 +83,15 @@ DENG2_PIMPL(Sector)
         }
     }
 
+    void notifyLightColorChanged(Vector3f const &oldLightColor,
+                                 int changedComponents)
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE(LightColorChange, i)
+        {
+            i->lightColorChanged(self, oldLightColor, changedComponents);
+        }
+    }
+
     void notifyLightColorChanged(Vector3f const &oldLightColor)
     {
         // Predetermine which components have changed.
@@ -89,19 +101,15 @@ DENG2_PIMPL(Sector)
             if(!de::fequal(self._lightColor[i], oldLightColor[i]))
                 changedComponents |= (1 << i);
         }
-
-        DENG2_FOR_PUBLIC_AUDIENCE(LightColorChange, i)
-        {
-            i->lightColorChanged(self, oldLightColor, changedComponents);
-        }
+        notifyLightColorChanged(oldLightColor, changedComponents);
     }
 };
 
 Sector::Sector(float lightLevel, Vector3f const &lightColor)
     : MapElement(DMU_SECTOR),
-      d(new Instance(this)),
       _lightLevel(lightLevel), _oldLightLevel(_lightLevel),
-      _lightColor(lightColor), _oldLightColor(_lightColor)
+      _lightColor(lightColor), _oldLightColor(_lightColor),
+      d(new Instance(this))
 {
     _frameFlags = 0;
     _validCount = 0;
@@ -159,7 +167,7 @@ void Sector::setLightColorComponent(int component, float newStrength)
         _lightColor[component] = newStrength;
 
         // Notify interested parties of the change.
-        d->notifyLightColorChanged(oldLightColor);
+        d->notifyLightColorChanged(oldLightColor, (1 << component));
     }
 }
 

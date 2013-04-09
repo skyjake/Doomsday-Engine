@@ -72,6 +72,9 @@ public:
         void lightColorChanged(Sector &sector, de::Vector3f const &oldLightColor,
                                int changedComponents /*bit-field (0x1=Red, 0x2=Green, 0x4=Blue)*/))
 
+    static float const DEFAULT_LIGHT_LEVEL; ///< 1.f
+    static de::Vector3f const DEFAULT_LIGHT_COLOR; ///< red=1.f green=1.f, blue=1.f
+
     typedef QList<LineDef *> Lines;
     typedef QList<Plane *> Planes;
     typedef QList<BspLeaf *> BspLeafs;
@@ -130,8 +133,8 @@ public: /// @todo Make private:
     int _origIndex;
 
 public:
-    Sector(float lightLevel = 1.f,
-           de::Vector3f const &lightColor = de::Vector3f(1.f, 1.f, 1.f));
+    Sector(float lightLevel               = DEFAULT_LIGHT_LEVEL,
+           de::Vector3f const &lightColor = DEFAULT_LIGHT_COLOR);
 
     /**
      * Returns the first mobj in the linked list of mobjs "in" the sector.

@@ -61,6 +61,9 @@ public:
         void tintColorChanged(Surface &sector, de::Vector3f const &oldTintColor,
                               int changedComponents /*bit-field (0x1=Red, 0x2=Green, 0x4=Blue)*/))
 
+    static float const DEFAULT_OPACITY; ///< 1.f
+    static de::Vector3f const DEFAULT_TINT_COLOR; ///< red=1.f, green=1.f, blue=1.f
+
 #ifdef __CLIENT__
     struct DecorSource
     {
@@ -99,8 +102,8 @@ public:
 
 public:
     Surface(de::MapElement &owner,
-            de::Vector3f const &tintColor = de::Vector3f(1.f, 1.f, 1.f),
-            float opacity                 = 1.f);
+            float opacity                 = DEFAULT_OPACITY,
+            de::Vector3f const &tintColor = DEFAULT_TINT_COLOR);
 
     /**
      * Returns the owning map element. Either @c DMU_SIDEDEF, or @c DMU_PLANE.
