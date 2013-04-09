@@ -19,7 +19,10 @@
  */
 
 #include <cmath>
+
 #include <de/mathutil.h>
+
+#include <de/Vector>
 
 #include "de_base.h"
 #include "de_render.h"
@@ -29,6 +32,14 @@
 #include "map/linedef.h"
 
 using namespace de;
+
+LineDef::Side::Side()
+    : _sector(0),
+      _sideDef(0),
+      _leftHEdge(0),
+      _rightHEdge(0),
+      _shadowVisCount(0)
+{}
 
 bool LineDef::Side::hasSector() const
 {
@@ -62,13 +73,13 @@ SideDef &LineDef::Side::sideDef() const
 
 HEdge &LineDef::Side::leftHEdge() const
 {
-    DENG_ASSERT(_leftHEdge);
+    DENG_ASSERT(_leftHEdge != 0);
     return *_leftHEdge;
 }
 
 HEdge &LineDef::Side::rightHEdge() const
 {
-    DENG_ASSERT(_rightHEdge);
+    DENG_ASSERT(_rightHEdge != 0);
     return *_rightHEdge;
 }
 
@@ -107,24 +118,70 @@ void LineDef::Side::updateSurfaceNormals()
     topSurface.setNormal(normal);
 }
 
-LineDef::LineDef() : MapElement(DMU_LINEDEF)
+DENG2_PIMPL(LineDef)
 {
-    std::memset(_v,     0, sizeof(_v));
-    std::memset(_vo,    0, sizeof(_vo));
-    std::memset(_sides, 0, sizeof(_sides));
-    _flags = 0;
-    _inFlags = 0;
-    _slopeType = slopetype_t(0);
-    _validCount = 0;
-    _angle = 0;
-    V2d_Set(_direction, 0, 0);
-    _length = 0;
-    std::memset(_mapped, 0, sizeof(_mapped));
-    _origIndex = 0;
-}
+    Instance(Public *i) : Base(i) {}
 
-LineDef::~LineDef()
-{}
+#ifdef __CLIENT__
+
+    /**
+     * @param line  LineDef instance.
+     * @param ignoreOpacity  @c true= do not consider Material opacity.
+     * @return  @c true if this LineDef's side is considered "closed" (i.e.,
+     *     there is no opening through which the back Sector can be seen).
+     *     Tests consider all Planes which interface with this and the "middle"
+     *     Material used on the relative front side (if any).
+     */
+    bool backClosedForBlendNeighbor(int side, bool ignoreOpacity) const
+    {
+        if(!self.hasFrontSideDef()) return false;
+        if(!self.hasBackSideDef()) return true;
+
+        Sector const *frontSec = self.sectorPtr(side);
+        Sector const *backSec  = self.sectorPtr(side^1);
+        if(frontSec == backSec) return false; // Never.
+
+        if(frontSec && backSec)
+        {
+            if(backSec->floor().visHeight()   >= backSec->ceiling().visHeight())  return true;
+            if(backSec->ceiling().visHeight() <= frontSec->floor().visHeight())   return true;
+            if(backSec->floor().visHeight()   >= frontSec->ceiling().visHeight()) return true;
+        }
+
+        return R_MiddleMaterialCoversLineOpening(&self, side, ignoreOpacity);
+    }
+
+    LineDef *findBlendNeighbor(byte side, byte right, binangle_t *diff) const
+    {
+        LineOwner const *farVertOwner = self.vertexOwner(right^side);
+        if(backClosedForBlendNeighbor(side, true/*ignore opacity*/))
+        {
+            return R_FindSolidLineNeighbor(self.sectorPtr(side), &self, farVertOwner, right, diff);
+        }
+        return R_FindLineNeighbor(self.sectorPtr(side), &self, farVertOwner, right, diff);
+    }
+
+#endif // __CLIENT__
+};
+
+LineDef::LineDef()
+    : MapElement(DMU_LINEDEF),
+      _v1(0),
+      _v2(0),
+      _vo1(0),
+      _vo2(0),
+      _flags(0),
+      _inFlags(0),
+      _slopeType(ST_HORIZONTAL),
+      _validCount(0),
+      _angle(0),
+      _length(0),
+      _origIndex(0),
+      d(new Instance(this))
+{
+    V2d_Set(_direction, 0, 0);
+    std::memset(_mapped, 0, sizeof(_mapped));
+}
 
 int LineDef::flags() const
 {
@@ -159,27 +216,30 @@ bool LineDef::isFromPolyobj() const
 
 LineDef::Side &LineDef::side(int back)
 {
-    return _sides[back? BACK:FRONT];
+    return back? _back : _front;
 }
 
 LineDef::Side const &LineDef::side(int back) const
 {
-    return _sides[back? BACK:FRONT];
+    return back? _back : _front;
 }
 
 Vertex &LineDef::vertex(int to)
 {
-    return *_v[to? TO:FROM];
+    DENG_ASSERT((to? _v2 : _v1) != 0);
+    return to? *_v2 : *_v1;
 }
 
 Vertex const &LineDef::vertex(int to) const
 {
-    return *_v[to? TO:FROM];
+    DENG_ASSERT((to? _v2 : _v1) != 0);
+    return to? *_v2 : *_v1;
 }
 
 LineOwner *LineDef::vertexOwner(int to) const
 {
-    return _vo[to? TO:FROM];
+    DENG_ASSERT((to? _vo2 : _vo1) != 0);
+    return to? _vo2 : _vo1;
 }
 
 binangle_t LineDef::angle() const
@@ -207,74 +267,9 @@ AABoxd const &LineDef::aaBox() const
     return _aaBox;
 }
 
-#ifdef __CLIENT__
-static void calcNormal(LineDef const *l, byte side, pvec2f_t normal)
-{
-    V2f_Set(normal, (l->vertexOrigin(side^1)[VY] - l->vertexOrigin(side)  [VY]) / l->length(),
-                    (l->vertexOrigin(side)  [VX] - l->vertexOrigin(side^1)[VX]) / l->length());
-}
-
-static float calcLightLevelDelta(pvec2f_t const normal)
-{
-    return (1.0f / 255) * (normal[VX] * 18) * rendLightWallAngle;
-}
-
-/**
- * @param line  LineDef instance.
- * @param ignoreOpacity  @c true= do not consider Material opacity.
- * @return  @c true if this LineDef's side is considered "closed" (i.e.,
- *     there is no opening through which the back Sector can be seen).
- *     Tests consider all Planes which interface with this and the "middle"
- *     Material used on the relative front side (if any).
- */
-static bool backClosedForBlendNeighbor(LineDef const *line, int side,
-    bool ignoreOpacity)
-{
-    DENG_ASSERT(line);
-
-    if(!line->hasFrontSideDef()) return false;
-    if(!line->hasBackSideDef()) return true;
-
-    Sector const *frontSec = line->sectorPtr(side);
-    Sector const *backSec  = line->sectorPtr(side^1);
-    if(frontSec == backSec) return false; // Never.
-
-    if(frontSec && backSec)
-    {
-        if(backSec->floor().visHeight() >= backSec->ceiling().visHeight())   return true;
-        if(backSec->ceiling().visHeight()  <= frontSec->floor().visHeight()) return true;
-        if(backSec->floor().visHeight() >= frontSec->ceiling().visHeight())  return true;
-    }
-
-    return R_MiddleMaterialCoversLineOpening(line, side, ignoreOpacity);
-}
-
-static LineDef *findBlendNeighbor(LineDef const *l, byte side, byte right,
-    binangle_t *diff)
-{
-    LineOwner const *farVertOwner = l->vertexOwner(right^side);
-    if(backClosedForBlendNeighbor(l, side, true/*ignore opacity*/))
-    {
-        return R_FindSolidLineNeighbor(l->sectorPtr(side), l, farVertOwner, right, diff);
-    }
-    return R_FindLineNeighbor(l->sectorPtr(side), l, farVertOwner, right, diff);
-}
-#endif // __CLIENT__
-
-coord_t LineDef::pointDistance(const_pvec2d_t point, coord_t *offset) const
-{
-    return V2d_PointLineDistance(point, _v[0]->origin(), _direction, offset);
-}
-
-coord_t LineDef::pointOnSide(const_pvec2d_t point) const
-{
-    DENG2_ASSERT(point);
-    return V2d_PointOnLineSide(point, _v[0]->origin(), _direction);
-}
-
 int LineDef::boxOnSide(AABoxd const &box) const
 {
-    return M_BoxOnLineSide(&box, _v[0]->origin(), _direction);
+    return M_BoxOnLineSide(&box, _v1->origin(), _direction);
 }
 
 int LineDef::boxOnSide_FixedPrecision(AABoxd const &box) const
@@ -287,9 +282,8 @@ int LineDef::boxOnSide_FixedPrecision(AABoxd const &box) const
      * so we won't change the discretization of the fractional part into 16-bit
      * precision.
      */
-    coord_t offset[2];
-    offset[VX] = de::floor(_v[0]->origin()[VX] + _direction[VX]/2);
-    offset[VY] = de::floor(_v[0]->origin()[VY] + _direction[VY]/2);
+    coord_t offset[2] = { de::floor(_v1->origin()[VX] + _direction[VX]/2),
+                          de::floor(_v1->origin()[VY] + _direction[VY]/2) };
 
     fixed_t boxx[4];
     boxx[BOXLEFT]   = FLT2FIX(box.minX - offset[VX]);
@@ -297,21 +291,19 @@ int LineDef::boxOnSide_FixedPrecision(AABoxd const &box) const
     boxx[BOXBOTTOM] = FLT2FIX(box.minY - offset[VY]);
     boxx[BOXTOP]    = FLT2FIX(box.maxY - offset[VY]);
 
-    fixed_t pos[2];
-    pos[VX]         = FLT2FIX(_v[0]->origin()[VX] - offset[VX]);
-    pos[VY]         = FLT2FIX(_v[0]->origin()[VY] - offset[VY]);
+    fixed_t pos[2] = { FLT2FIX(_v1->origin()[VX] - offset[VX]),
+                       FLT2FIX(_v1->origin()[VY] - offset[VY]) };
 
-    fixed_t delta[2];
-    delta[VX]       = FLT2FIX(_direction[VX]);
-    delta[VY]       = FLT2FIX(_direction[VY]);
+    fixed_t delta[2] = { FLT2FIX(_direction[VX]),
+                         FLT2FIX(_direction[VY]) };
 
     return M_BoxOnLineSide_FixedPrecision(boxx, pos, delta);
 }
 
 void LineDef::configureDivline(divline_t &dl) const
 {
-    dl.origin[VX]    = FLT2FIX(_v[0]->origin()[VX]);
-    dl.origin[VY]    = FLT2FIX(_v[0]->origin()[VY]);
+    dl.origin[VX]    = FLT2FIX(_v1->origin()[VX]);
+    dl.origin[VY]    = FLT2FIX(_v1->origin()[VY]);
     dl.direction[VX] = FLT2FIX(_direction[VX]);
     dl.direction[VY] = FLT2FIX(_direction[VY]);
 }
@@ -355,7 +347,7 @@ void LineDef::configureTraceOpening(TraceOpening &opening) const
 
 void LineDef::updateSlopeType()
 {
-    V2d_Subtract(_direction, _v[1]->origin(), _v[0]->origin());
+    V2d_Subtract(_direction, _v2->origin(), _v1->origin());
     _slopeType = M_SlopeType(_direction);
 }
 
@@ -375,13 +367,24 @@ void LineDef::unitVector(pvec2f_t unitvec) const
 
 void LineDef::updateAABox()
 {
-    V2d_InitBox(_aaBox.arvec2, _v[0]->origin());
-    V2d_AddToBox(_aaBox.arvec2, _v[1]->origin());
+    V2d_InitBox(_aaBox.arvec2, _v1->origin());
+    V2d_AddToBox(_aaBox.arvec2, _v2->origin());
+}
+
+#ifdef __CLIENT__
+static float calcLightLevelDelta(Vector2f const &normal)
+{
+    return (1.0f / 255) * (normal.x * 18) * rendLightWallAngle;
+}
+
+static Vector2f calcNormal(LineDef const &line, byte side)
+{
+    return Vector2f((line.vertexOrigin(side^1)[VY] - line.vertexOrigin(side)  [VY]) / line.length(),
+                    (line.vertexOrigin(side)  [VX] - line.vertexOrigin(side^1)[VX]) / line.length());
 }
 
 void LineDef::lightLevelDelta(int side, float *deltaL, float *deltaR) const
 {
-#ifdef __CLIENT__
     // Disabled?
     if(!(rendLightWallAngle > 0))
     {
@@ -390,8 +393,7 @@ void LineDef::lightLevelDelta(int side, float *deltaL, float *deltaR) const
         return;
     }
 
-    vec2f_t normal;
-    calcNormal(this, side, normal);
+    Vector2f normal = calcNormal(*this, side);
     float delta = calcLightLevelDelta(normal);
 
     // If smoothing is disabled use this delta for left and right edges.
@@ -411,15 +413,14 @@ void LineDef::lightLevelDelta(int side, float *deltaL, float *deltaR) const
     if(deltaL)
     {
         binangle_t diff = 0;
-        LineDef *other = findBlendNeighbor(this, side, 0, &diff);
+        LineDef *other = d->findBlendNeighbor(side, 0, &diff);
         if(other && INRANGE_OF(diff, BANG_180, BANG_45))
         {
-            vec2f_t otherNormal;
-            calcNormal(other, &other->v2() != &vertex(side), otherNormal);
+            Vector2f otherNormal = calcNormal(*other, &other->v2() != &vertex(side));
 
             // Average normals.
-            V2f_Sum(otherNormal, otherNormal, normal);
-            otherNormal[VX] /= 2; otherNormal[VY] /= 2;
+            otherNormal += normal;
+            otherNormal.x /= 2; otherNormal.y /= 2;
 
             *deltaL = calcLightLevelDelta(otherNormal);
         }
@@ -433,15 +434,14 @@ void LineDef::lightLevelDelta(int side, float *deltaL, float *deltaR) const
     if(deltaR)
     {
         binangle_t diff = 0;
-        LineDef *other = findBlendNeighbor(this, side, 1, &diff);
+        LineDef *other = d->findBlendNeighbor(side, 1, &diff);
         if(other && INRANGE_OF(diff, BANG_180, BANG_45))
         {
-            vec2f_t otherNormal;
-            calcNormal(other, &other->v1() != &vertex(side^1), otherNormal);
+            Vector2f otherNormal = calcNormal(*other, &other->v1() != &vertex(side^1));
 
             // Average normals.
-            V2f_Sum(otherNormal, otherNormal, normal);
-            otherNormal[VX] /= 2; otherNormal[VY] /= 2;
+            otherNormal += normal;
+            otherNormal.x /= 2; otherNormal.y /= 2;
 
             *deltaR = calcLightLevelDelta(otherNormal);
         }
@@ -450,23 +450,18 @@ void LineDef::lightLevelDelta(int side, float *deltaL, float *deltaR) const
             *deltaR = delta;
         }
     }
-#else // !__CLIENT__
-    DENG2_UNUSED(side);
-
-    if(deltaL) *deltaL = 0;
-    if(deltaR) *deltaR = 0;
-#endif
 }
+#endif
 
 int LineDef::property(setargs_t &args) const
 {
     switch(args.prop)
     {
     case DMU_VERTEX0:
-        DMU_GetValue(DMT_LINEDEF_V, &_v[0], &args, 0);
+        DMU_GetValue(DMT_LINEDEF_V, &_v1, &args, 0);
         break;
     case DMU_VERTEX1:
-        DMU_GetValue(DMT_LINEDEF_V, &_v[1], &args, 0);
+        DMU_GetValue(DMT_LINEDEF_V, &_v2, &args, 0);
         break;
     case DMU_DX:
         DMU_GetValue(DMT_LINEDEF_DX, &_direction[VX], &args, 0);
@@ -489,22 +484,24 @@ int LineDef::property(setargs_t &args) const
         DMU_GetValue(DMT_LINEDEF_SLOPETYPE, &_slopeType, &args, 0);
         break;
     case DMU_FRONT_SECTOR: {
-        Sector *sec = (_sides[FRONT]._sideDef? _sides[FRONT]._sector : NULL);
-        DMU_GetValue(DMT_LINEDEF_SECTOR, &sec, &args, 0);
+        Sector *frontSector = _front.sectorPtr();
+        DMU_GetValue(DMT_LINEDEF_SECTOR, &frontSector, &args, 0);
         break; }
     case DMU_BACK_SECTOR: {
-        Sector *sec = (_sides[BACK]._sideDef? _sides[BACK]._sector : NULL);
-        DMU_GetValue(DMT_LINEDEF_SECTOR, &sec, &args, 0);
+        Sector *backSector = _back.sectorPtr();
+        DMU_GetValue(DMT_LINEDEF_SECTOR, &backSector, &args, 0);
         break; }
     case DMU_FLAGS:
         DMU_GetValue(DMT_LINEDEF_FLAGS, &_flags, &args, 0);
         break;
-    case DMU_SIDEDEF0:
-        DMU_GetValue(DDVT_PTR, &_sides[FRONT]._sideDef, &args, 0);
-        break;
-    case DMU_SIDEDEF1:
-        DMU_GetValue(DDVT_PTR, &_sides[BACK]._sideDef, &args, 0);
-        break;
+    case DMU_SIDEDEF0: {
+        SideDef *frontSideDef = _front.sideDefPtr();
+        DMU_GetValue(DDVT_PTR, &frontSideDef, &args, 0);
+        break; }
+    case DMU_SIDEDEF1: {
+        SideDef *backSideDef = _back.sideDefPtr();
+        DMU_GetValue(DDVT_PTR, &backSideDef, &args, 0);
+        break; }
     case DMU_BOUNDING_BOX:
         if(args.valueType == DDVT_PTR)
         {
@@ -535,16 +532,16 @@ int LineDef::setProperty(setargs_t const &args)
     switch(args.prop)
     {
     case DMU_FRONT_SECTOR:
-        DMU_SetValue(DMT_LINEDEF_SECTOR, &_sides[FRONT]._sector, &args, 0);
+        DMU_SetValue(DMT_LINEDEF_SECTOR, &_front._sector, &args, 0);
         break;
     case DMU_BACK_SECTOR:
-        DMU_SetValue(DMT_LINEDEF_SECTOR, &_sides[BACK]._sector, &args, 0);
+        DMU_SetValue(DMT_LINEDEF_SECTOR, &_back._sector, &args, 0);
         break;
     case DMU_SIDEDEF0:
-        DMU_SetValue(DMT_LINEDEF_SIDEDEF, &_sides[FRONT]._sideDef, &args, 0);
+        DMU_SetValue(DMT_LINEDEF_SIDEDEF, &_front._sideDef, &args, 0);
         break;
     case DMU_SIDEDEF1:
-        DMU_SetValue(DMT_LINEDEF_SIDEDEF, &_sides[BACK]._sideDef, &args, 0);
+        DMU_SetValue(DMT_LINEDEF_SIDEDEF, &_back._sideDef, &args, 0);
         break;
     case DMU_VALID_COUNT:
         DMU_SetValue(DMT_LINEDEF_VALIDCOUNT, &_validCount, &args, 0);

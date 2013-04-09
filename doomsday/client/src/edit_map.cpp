@@ -698,9 +698,9 @@ static void setVertexLineOwner(Vertex *vtx, LineDef *lineptr, LineOwner **storag
 
     // Link the line to its respective owner node.
     if(vtx == &lineptr->v1())
-        lineptr->_vo[FROM] = newOwner;
+        lineptr->_vo1 = newOwner;
     else
-        lineptr->_vo[TO] = newOwner;
+        lineptr->_vo2 = newOwner;
 }
 
 #ifdef DENG2_DEBUG
@@ -1004,6 +1004,7 @@ boolean MPE_End()
         map->_lines.append(editMap.lines.takeFirst());
         LineDef *line = map->_lines.back();
 
+        /// @todo This init should already have been done elsewhere. -ds
         line->updateSlopeType();
         line->updateAABox();
 
@@ -1199,17 +1200,17 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector,
     SideDef *back  = backSide?  editMap.sideDefs[backSide  - 1] : 0;
 
     LineDef *l = editMap.createLine();
-    l->_v[FROM] = vtx1;
-    l->_v[TO] = vtx2;
+    l->_v1 = vtx1;
+    l->_v2 = vtx2;
 
-    l->_v[FROM]->_buildData.refCount++;
-    l->_v[TO]->_buildData.refCount++;
+    l->_v1->_buildData.refCount++;
+    l->_v2->_buildData.refCount++;
 
-    l->_sides[FRONT]._sector = (frontSector == 0? NULL: editMap.sectors[frontSector-1]);
-    l->_sides[BACK]._sector  = (backSector  == 0? NULL: editMap.sectors[backSector-1]);
+    l->_front._sector = (frontSector == 0? NULL: editMap.sectors[frontSector-1]);
+    l->_back._sector  = (backSector  == 0? NULL: editMap.sectors[backSector-1]);
 
-    l->_sides[FRONT]._sideDef = front;
-    l->_sides[BACK]._sideDef = back;
+    l->_front._sideDef = front;
+    l->_back._sideDef = back;
 
     l->_length = length;
 

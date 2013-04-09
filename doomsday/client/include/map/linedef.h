@@ -124,6 +124,8 @@ public:
         int _shadowVisCount;
 
     public:
+        Side();
+
         /**
          * Returns @c true iff a Sector is attributed to the side.
          */
@@ -193,14 +195,17 @@ public:
     };
 
 public: /// @todo make private:
-    /// Vertexes [From, To]
-    Vertex *_v[2];
+    /// Vertexes:
+    Vertex *_v1;
+    Vertex *_v2;
 
-    /// Links to vertex line owner nodes [From, To].
-    LineOwner *_vo[2];
+    /// Links to vertex line owner nodes:
+    LineOwner *_vo1;
+    LineOwner *_vo2;
 
-    /// Logical sides [Front, Back]
-    Side _sides[2];
+    /// Logical sides:
+    Side _front;
+    Side _back;
 
     /// Public DDLF_* flags.
     int _flags;
@@ -232,7 +237,6 @@ public: /// @todo make private:
 
 public:
     LineDef();
-    ~LineDef();
 
     /**
      * Returns @c true iff the line is part of some Polyobj.
@@ -636,8 +640,12 @@ public:
     /**
      * @param offset  Returns the position of the nearest point along the line [0..1].
      */
-    coord_t pointDistance(const_pvec2d_t point, coord_t *offset) const;
+    inline coord_t pointDistance(const_pvec2d_t point, coord_t *offset) const
+    {
+        return V2d_PointLineDistance(point, v1().origin(), direction(), offset);
+    }
 
+    /// @copydoc pointDistance()
     inline coord_t pointDistance(coord_t x, coord_t y, coord_t *offset) const
     {
         coord_t point[2] = { x, y };
@@ -654,8 +662,12 @@ public:
      * - Zero: @a point lies directly on the line.
      * - Positive: @a point is to the right/front side.
      */
-    coord_t pointOnSide(const_pvec2d_t point) const;
+    inline coord_t pointOnSide(const_pvec2d_t point) const
+    {
+        return V2d_PointOnLineSide(point, v1().origin(), direction());
+    }
 
+    /// @copydoc pointOnSide()
     inline coord_t pointOnSide(coord_t x, coord_t y) const
     {
         coord_t point[2] = { x, y };
@@ -704,6 +716,8 @@ public:
      */
     void unitVector(pvec2f_t unitVec) const;
 
+#ifdef __CLIENT__
+
     /**
      * The DOOM lighting model applies a sector light level delta when drawing
      * line segments based on their 2D world angle.
@@ -716,6 +730,8 @@ public:
      *             rather than angles. @todo Remove me.
      */
     void lightLevelDelta(int side, float *deltaL, float *deltaR) const;
+
+#endif // __CLIENT__
 
     /**
      * Get a property value, selected by DMU_* name.
@@ -732,6 +748,9 @@ public:
      * @return  Always @c 0 (can be used as an iterator).
      */
     int setProperty(setargs_t const &args);
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 #endif // LIBDENG_MAP_LINEDEF
