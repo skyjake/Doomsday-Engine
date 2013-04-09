@@ -144,7 +144,7 @@ public:
         inline Sector *sectorPtr() const { return hasSector()? &sector() : 0; }
 
         /**
-         * Returns @c true iff a Sector is attributed to the side.
+         * Returns @c true iff a SideDef is attributed to the side.
          */
         bool hasSideDef() const;
 
@@ -163,7 +163,7 @@ public:
         inline SideDef *sideDefPtr() const { return hasSideDef()? &sideDef() : 0; }
 
         /**
-         * Returns the left-moset HEdge for the side.
+         * Returns the left-most HEdge for the side.
          */
         HEdge &leftHEdge() const;
 
@@ -173,22 +173,21 @@ public:
         HEdge &rightHEdge() const;
 
         /**
-         * Update the side's map space surface base origins according to the points
-         * defined by the associated LineDef's vertices and the plane heights of the
-         * Sector on this side. If no LineDef is presently associated this is a no-op.
+         * Update the side's sound emitter origins according to the points defined by
+         * the LineDef's vertices and the plane heights of the Sector on this side.
+         * If no SideDef is associated this is a no-op.
          */
         void updateSoundEmitterOrigins();
 
         /**
          * Update the tangent space normals of the side's surfaces according to the
-         * points defined by the associated LineDef's vertices. If no LineDef is
-         * presently associated this is a no-op.
+         * points defined by the LineDef's vertices. If no SideDef is associated this
+         * is a no-op.
          */
         void updateSurfaceNormals();
 
         /**
-         * Returns the frame number of the last time shadows linked to the side
-         * were drawn.
+         * Returns the frame number of the last time shadows were drawn for the side.
          */
         int shadowVisCount() const;
     };
