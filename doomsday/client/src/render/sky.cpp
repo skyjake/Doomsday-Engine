@@ -999,6 +999,8 @@ void Sky_Render()
     // Is there a sky to be rendered?
     if(!Sky_FirstActiveLayer()) return;
 
+    if(usingFog) glEnable(GL_FOG);
+
     // If sky models have been inited, they will be used.
     if(!skyModelsInited || alwaysDrawSphere)
     {
@@ -1042,6 +1044,8 @@ void Sky_Render()
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
     }
+
+    if(usingFog) glDisable(GL_FOG);
 }
 
 /// @note A CVar callback.
