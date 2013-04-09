@@ -25,11 +25,12 @@
 #include <de/mathutil.h> // Divline
 #include <de/Error>
 #include "resource/r_data.h"
-#include "map/vertex.h"
+#include "map/r_world.h"
 #include "p_mapdata.h"
 #include "p_dmu.h"
 #include "MapElement"
 
+class Vertex;
 class Sector;
 class SideDef;
 class HEdge;
@@ -678,7 +679,13 @@ public:
      *
      * @param divline  divline_t instance to be configured.
      */
-    void configureDivline(divline_t &divline) const;
+    inline void configureDivline(divline_t &dl) const
+    {
+        dl.origin[VX]    = FLT2FIX(v1Origin()[VX]);
+        dl.origin[VY]    = FLT2FIX(v1Origin()[VY]);
+        dl.direction[VX] = FLT2FIX(direction()[VX]);
+        dl.direction[VY] = FLT2FIX(direction()[VY]);
+    }
 
     /**
      * Find the "sharp" Z coordinate range of the opening on @a side. The
@@ -690,24 +697,24 @@ public:
      *
      * @return Height of the open range.
      */
-    coord_t openRange(int side, coord_t *bottom, coord_t *top) const;
+    inline coord_t openRange(int side_, coord_t *bottom, coord_t *top) const
+    {
+        return R_OpenRange(side(side_).sectorPtr(), side(side_^1).sectorPtr(),
+                           bottom, top);
+    }
 
     /// Same as openRange() but works with the "visual" (i.e., smoothed)
     /// plane height coordinates rather than the "sharp" coordinates.
-    coord_t visOpenRange(int side, coord_t *bottom, coord_t *top) const;
-
-    /**
-     * Configure the specified TraceOpening according to the opening defined
-     * by the inner-minimal plane heights which intercept the line.
-     *
-     * @param opening  TraceOpening instance to be configured.
-     */
-    void configureTraceOpening(TraceOpening &opening) const;
+    inline coord_t visOpenRange(int side_, coord_t *bottom, coord_t *top) const
+    {
+        return R_VisOpenRange(side(side_).sectorPtr(), side(side_^1).sectorPtr(),
+                              bottom, top);
+    }
 
     /**
      * Calculate a unit vector parallel to the line.
      *
-     * @todo No longer needed (SideDef stores tangent space normals).
+     * @todo No longer needed (Surface has tangent space vectors).
      *
      * @param unitVector  Unit vector is written here.
      */

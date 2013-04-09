@@ -21,13 +21,16 @@
 #include <cmath>
 
 #include <de/mathutil.h>
-
 #include <de/Vector>
 
 #include "de_base.h"
-#include "de_render.h"
+//#include "de_render.h"
 #include "m_misc.h"
+
 #include "Materials"
+#include "map/sector.h"
+#include "map/sidedef.h"
+#include "map/vertex.h"
 
 #include "map/linedef.h"
 
@@ -120,7 +123,7 @@ void LineDef::Side::updateSurfaceNormals()
 
 DENG2_PIMPL(LineDef)
 {
-    /// Logical slope classification.
+    /// Logical line slope (i.e., world angle) classification.
     slopetype_t slopeType;
 
     /// Bounding box encompassing the map space coordinates of both vertexes.
@@ -328,51 +331,6 @@ int LineDef::boxOnSide_FixedPrecision(AABoxd const &box) const
                          FLT2FIX(_direction[VY]) };
 
     return M_BoxOnLineSide_FixedPrecision(boxx, pos, delta);
-}
-
-void LineDef::configureDivline(divline_t &dl) const
-{
-    dl.origin[VX]    = FLT2FIX(_v1->origin()[VX]);
-    dl.origin[VY]    = FLT2FIX(_v1->origin()[VY]);
-    dl.direction[VX] = FLT2FIX(_direction[VX]);
-    dl.direction[VY] = FLT2FIX(_direction[VY]);
-}
-
-coord_t LineDef::openRange(int side_, coord_t *retBottom, coord_t *retTop) const
-{
-    return R_OpenRange(side(side_).sectorPtr(), side(side_^1).sectorPtr(), retBottom, retTop);
-}
-
-coord_t LineDef::visOpenRange(int side_, coord_t *retBottom, coord_t *retTop) const
-{
-    return R_VisOpenRange(side(side_).sectorPtr(), side(side_^1).sectorPtr(), retBottom, retTop);
-}
-
-void LineDef::configureTraceOpening(TraceOpening &opening) const
-{
-    if(!hasBackSideDef())
-    {
-        opening.range = 0;
-        return;
-    }
-
-    coord_t bottom, top;
-    opening.range  = float( openRange(FRONT, &bottom, &top) );
-    opening.bottom = float( bottom );
-    opening.top    = float( top );
-
-    // Determine the "low floor".
-    Sector const &fsec = frontSector();
-    Sector const &bsec = backSector();
-
-    if(fsec.floor().height() > bsec.floor().height())
-    {
-        opening.lowFloor = float( bsec.floor().height() );
-    }
-    else
-    {
-        opening.lowFloor = float( fsec.floor().height() );
-    }
 }
 
 void LineDef::updateSlopeType()

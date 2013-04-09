@@ -656,7 +656,29 @@ void GameMap::setTraceOpening(LineDef &line)
     // Is the linedef part of this map?
     if(lineIndex(&line) < 0) return; // Odd...
 
-    line.configureTraceOpening(d->traceOpening);
+    if(!line.hasBackSideDef())
+    {
+        d->traceOpening.range = 0;
+        return;
+    }
+
+    coord_t bottom, top;
+    d->traceOpening.range  = float( line.openRange(FRONT, &bottom, &top) );
+    d->traceOpening.bottom = float( bottom );
+    d->traceOpening.top    = float( top );
+
+    // Determine the "low floor".
+    Sector const &frontSector = line.frontSector();
+    Sector const &backSector  = line.backSector();
+
+    if(frontSector.floor().height() > backSector.floor().height())
+    {
+        d->traceOpening.lowFloor = float( backSector.floor().height() );
+    }
+    else
+    {
+        d->traceOpening.lowFloor = float( frontSector.floor().height() );
+    }
 }
 
 int GameMap::ambientLightLevel() const
