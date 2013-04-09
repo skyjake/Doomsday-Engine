@@ -781,7 +781,7 @@ int PIT_CheckLinePtc(LineDef *ld, void *parameters)
     Sector *back  = ld->backSectorPtr();
 
     // Determine the opening we have here.
-    /// @todo Use LineDef::openRange()
+    /// @todo Use R_OpenRange()
     fixed_t ceil;
     if(front->ceiling().height() < back->ceiling().height())
         ceil = FLT2FIX(front->ceiling().height());

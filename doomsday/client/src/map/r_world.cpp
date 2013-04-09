@@ -272,6 +272,12 @@ coord_t R_OpenRange(Sector const *frontSec, Sector const *backSec, coord_t *retB
     return top - bottom;
 }
 
+coord_t R_OpenRange(LineDef const &line, int side, coord_t *bottom, coord_t *top)
+{
+    return R_OpenRange(line.side(side).sectorPtr(), line.side(side^1).sectorPtr(),
+                       bottom, top);
+}
+
 coord_t R_VisOpenRange(Sector const *frontSec, Sector const *backSec, coord_t *retBottom, coord_t *retTop)
 {
     DENG_ASSERT(frontSec);
@@ -300,6 +306,12 @@ coord_t R_VisOpenRange(Sector const *frontSec, Sector const *backSec, coord_t *r
     if(retTop)    *retTop    = top;
 
     return top - bottom;
+}
+
+coord_t R_VisOpenRange(LineDef const &line, int side, coord_t *bottom, coord_t *top)
+{
+    return R_VisOpenRange(line.side(side).sectorPtr(), line.side(side^1).sectorPtr(),
+                          bottom, top);
 }
 
 #ifdef __CLIENT__

@@ -688,30 +688,6 @@ public:
     }
 
     /**
-     * Find the "sharp" Z coordinate range of the opening on @a side. The
-     * open range is defined as the gap between foor and ceiling on @a side
-     * clipped by the floor and ceiling planes on the back side (if present).
-     *
-     * @param bottom    Bottom Z height is written here. Can be @c NULL.
-     * @param top       Top Z height is written here. Can be @c NULL.
-     *
-     * @return Height of the open range.
-     */
-    inline coord_t openRange(int side_, coord_t *bottom, coord_t *top) const
-    {
-        return R_OpenRange(side(side_).sectorPtr(), side(side_^1).sectorPtr(),
-                           bottom, top);
-    }
-
-    /// Same as openRange() but works with the "visual" (i.e., smoothed)
-    /// plane height coordinates rather than the "sharp" coordinates.
-    inline coord_t visOpenRange(int side_, coord_t *bottom, coord_t *top) const
-    {
-        return R_VisOpenRange(side(side_).sectorPtr(), side(side_^1).sectorPtr(),
-                              bottom, top);
-    }
-
-    /**
      * Calculate a unit vector parallel to the line.
      *
      * @todo No longer needed (Surface has tangent space vectors).

@@ -24,11 +24,10 @@
 #include <de/Vector>
 
 #include "resource/r_data.h"
-#include "map/vertex.h"
+#include "map/plane.h"
 #include "map/sector.h"
 #include "map/sidedef.h"
-#include "map/plane.h"
-#include "map/sidedef.h"
+#include "map/vertex.h"
 
 /// @todo The MapChange audience belongs in a class.
 DENG2_DECLARE_AUDIENCE(MapChange, void currentMapChanged())
@@ -110,9 +109,42 @@ boolean R_FindBottomTop(SideDefSection section, int lineFlags,
  */
 coord_t R_OpenRange(Sector const *frontSec, Sector const *backSec, coord_t *retBottom, coord_t *retTop);
 
-/// Same as @ref R_OpenRange() but works with the "visual" (i.e., smoothed) plane
-/// height coordinates rather than the "sharp" coordinates.
+/**
+ * @copydoc R_OpenRange()
+ *
+ * @param line      Line to find the open range for.
+ * @param side      Logical side of the line to find the open range for.
+ * @param bottom    Bottom Z height is written here. Can be @c NULL.
+ * @param top       Top Z height is written here. Can be @c NULL.
+ *
+ * @return Height of the open range.
+ */
+coord_t R_OpenRange(LineDef const &line, int side, coord_t *bottom, coord_t *top);
+
+/**
+ * Same as @ref R_OpenRange() but works with the "visual" (i.e., smoothed) plane
+ * height coordinates rather than the "sharp" coordinates.
+ *
+ * @param frontSec  Sector on the front side.
+ * @param backSec   Sector on the back side. Can be @c NULL.
+ * @param bottom    Bottom Z height is written here. Can be @c NULL.
+ * @param top       Top Z height is written here. Can be @c NULL.
+ *
+ * @return Height of the open range.
+ */
 coord_t R_VisOpenRange(Sector const *frontSec, Sector const *backSec, coord_t *retBottom, coord_t *retTop);
+
+/**
+ * @copydoc R_VisOpenRange()
+ *
+ * @param line      Line to find the open range for.
+ * @param side      Logical side of the line to find the open range for.
+ * @param bottom    Bottom Z height is written here. Can be @c NULL.
+ * @param top       Top Z height is written here. Can be @c NULL.
+ *
+ * @return Height of the open range.
+ */
+coord_t R_VisOpenRange(LineDef const &line, int side, coord_t *bottom, coord_t *top);
 
 #ifdef __CLIENT__
 /**
