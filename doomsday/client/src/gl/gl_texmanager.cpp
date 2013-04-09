@@ -947,6 +947,14 @@ void GL_ResetTextureManager()
     GL_LoadSystemTextures();
 }
 
+static String nameForGLTextureWrapMode(int mode)
+{
+    if(mode == GL_REPEAT) return "repeat";
+    if(mode == GL_CLAMP) return "clamp";
+    if(mode == GL_CLAMP_TO_EDGE) return "clamp_edge";
+    return "(unknown)";
+}
+
 String texturevariantspecification_t::asText() const
 {
     static String const textureUsageContextNames[1 + TEXTUREVARIANTUSAGECONTEXT_COUNT] = {
@@ -1025,7 +1033,12 @@ String texturevariantspecification_t::asText() const
                               + "|" + glFilterNames[glMinFilterNameIdx]
               + " MagFilter:" + filterModeNames[3 + de::clamp(-3, spec.magFilter, 0)]
                               + "|" + glFilterNames[glMagFilterNameIdx]
-              + " AnisoFilter:" + String::number(spec.anisoFilter);
+              + " AnisoFilter:" + String::number(spec.anisoFilter)
+              + " WrapS:" + nameForGLTextureWrapMode(spec.wrapS)
+              + " WrapT:" + nameForGLTextureWrapMode(spec.wrapT)
+              + " CorrectGamma:" + (spec.gammaCorrection? "yes" : "no")
+              + " NoStretch:" + (spec.noStretch? "yes" : "no")
+              + " ToAlpha:" + (spec.toAlpha? "yes" : "no");
 
         if(spec.flags & TSF_HAS_COLORPALETTE_XLAT)
         {
