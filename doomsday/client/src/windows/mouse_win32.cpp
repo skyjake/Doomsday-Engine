@@ -215,15 +215,18 @@ static void Mouse_Win32_GetState(mousestate_t* state)
 
 static void Mouse_Win32_Trap(boolean enabled)
 {
-    assert(didMouse);
+    LOG_AS("Mouse_Win32");
+    DENG_ASSERT(didMouse);
 
     mouseTrapped = (enabled != 0);
     if(enabled)
     {
+        LOG_DEBUG("Acquiring the mouse");
         didMouse->Acquire();
     }
     else
     {
+        LOG_DEBUG("Unacquiring the mouse");
         didMouse->Unacquire();
     }
 }

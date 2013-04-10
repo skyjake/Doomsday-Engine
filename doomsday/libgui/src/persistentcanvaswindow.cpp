@@ -260,6 +260,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
             ShowMaximized,
             SetGeometry,
             NotifyModeChange,
+            TrapMouse,
             MacRaiseOverShield
         };
 
@@ -580,6 +581,8 @@ DENG2_PIMPL(PersistentCanvasWindow)
      */
     void applyToWidget(State const &newState)
     {
+        bool trapped = self.canvas().isMouseTrapped();
+
         // If the display mode needs to change, we will have to defer the rest
         // of the state changes so that everything catches up after the change.
         TimeDelta defer = 0;
@@ -664,6 +667,11 @@ DENG2_PIMPL(PersistentCanvasWindow)
             queue << Task(Task::NotifyModeChange, .1);
         }
 
+        if(trapped || newState.isFullscreen())
+        {
+            queue << Task(Task::TrapMouse);
+        }
+
         state.fullSize = newState.fullSize;
         state.flags    = newState.flags;
 
@@ -723,6 +731,10 @@ DENG2_PIMPL(PersistentCanvasWindow)
                     // Pull the window again over the shield after the mode change.
                     DisplayMode_Native_Raise(self.nativeHandle());
 #endif
+                    break;
+
+                case Task::TrapMouse:
+                    self.canvas().trapMouse();
                     break;
                 }
 
