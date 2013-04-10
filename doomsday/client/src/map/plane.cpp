@@ -32,15 +32,21 @@
 using namespace de;
 
 // $smoothplane: Maximum speed for a smoothed plane.
-static int const MAX_SMOOTH_MOVE = 64;
+int const Plane::MAX_SMOOTH_MOVE = 64;
 
 DENG2_PIMPL(Plane)
 {
     /// Sector that owns the plane.
     Sector *sector;
 
-    /// Current height relative to @c 0 on the map up axis (positive is up).
+    /// Index of the plane in the owning sector.
+    uint inSectorIndex;
+
+    /// Current @em sharp height relative to @c 0 on the map up axis (positive is up).
     coord_t height;
+
+    /// Delta between the current @em sharp height and the visual height.
+    coord_t visHeightDelta;
 
     /// Movement speed (map space units per tic).
     coord_t speed;
@@ -54,7 +60,9 @@ DENG2_PIMPL(Plane)
     Instance(Public *i, Sector &sector, coord_t height)
         : Base(i),
           sector(&sector),
+          inSectorIndex(0),
           height(height),
+          visHeightDelta(0),
           speed(0),
           surface(dynamic_cast<MapElement &>(*i)),
           type(Floor)
@@ -81,6 +89,40 @@ DENG2_PIMPL(Plane)
         theMap->decoratedSurfaces().remove(&surface);
 
 #endif // __CLIENT__
+    }
+
+    void notifyHeightChanged(coord_t oldHeight)
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE(HeightChange, i)
+        {
+            i->planeHeightChanged(self, oldHeight);
+        }
+    }
+
+    void applySharpHeightChange(coord_t newHeight)
+    {
+        // No change?
+        if(de::fequal(newHeight, height))
+            return;
+
+        coord_t oldHeight = height;
+        height = newHeight;
+
+        // Notify interested parties of the change.
+        notifyHeightChanged(oldHeight);
+
+        /// @todo GameMap should observe.
+        if(!ddMapSetup)
+        {
+            if(theMap)
+            {
+                theMap->trackedPlanes().insert(&self);
+            }
+
+#ifdef __CLIENT__
+            markDependantSurfacesForDecorationUpdate();
+#endif
+        }
     }
 
 #ifdef __CLIENT__
@@ -118,8 +160,6 @@ Plane::Plane(Sector &sector, Vector3f const &normal, coord_t height)
     : MapElement(DMU_PLANE),
       _targetHeight(height),
       _visHeight(height),
-      _visHeightDelta(0),
-      _inSectorIndex(0),
       d(new Instance(this, sector, height))
 {
     _oldHeight[0] = _oldHeight[1] = d->height;
@@ -143,7 +183,12 @@ Sector const &Plane::sector() const
 
 uint Plane::inSectorIndex() const
 {
-    return _inSectorIndex;
+    return d->inSectorIndex;
+}
+
+void Plane::setInSectorIndex(uint newIndex)
+{
+    d->inSectorIndex = newIndex;
 }
 
 Surface &Plane::surface()
@@ -180,16 +225,16 @@ coord_t Plane::visHeight() const
 coord_t Plane::visHeightDelta() const
 {
     // $smoothplane
-    return _visHeightDelta;
+    return d->visHeightDelta;
 }
 
 void Plane::lerpVisHeight()
 {
     // $smoothplane
-    _visHeightDelta = _oldHeight[0] * (1 - frameTimePos) + d->height * frameTimePos - d->height;
+    d->visHeightDelta = _oldHeight[0] * (1 - frameTimePos) + d->height * frameTimePos - d->height;
 
     // Visible plane height.
-    _visHeight = d->height + _visHeightDelta;
+    _visHeight = d->height + d->visHeightDelta;
 
 #ifdef __CLIENT__
     d->markDependantSurfacesForDecorationUpdate();
@@ -199,7 +244,7 @@ void Plane::lerpVisHeight()
 void Plane::resetVisHeight()
 {
     // $smoothplane
-    _visHeightDelta = 0;
+    d->visHeightDelta = 0;
     _visHeight = _oldHeight[0] = _oldHeight[1] = d->height;
 
 #ifdef __CLIENT__
@@ -263,20 +308,11 @@ int Plane::setProperty(setargs_t const &args)
 {
     switch(args.prop)
     {
-    case DMU_HEIGHT:
-        DMU_SetValue(DMT_PLANE_HEIGHT, &d->height, &args, 0);
-        if(!ddMapSetup)
-        {
-            if(theMap)
-            {
-                theMap->trackedPlanes().insert(this);
-            }
-
-#ifdef __CLIENT__
-            d->markDependantSurfacesForDecorationUpdate();
-#endif
-        }
-        break;
+    case DMU_HEIGHT: {
+        coord_t newHeight = d->height;
+        DMU_SetValue(DMT_PLANE_HEIGHT, &newHeight, &args, 0);
+        d->applySharpHeightChange(newHeight);
+        break; }
     case DMU_TARGET_HEIGHT:
         DMU_SetValue(DMT_PLANE_TARGET, &_targetHeight, &args, 0);
         break;

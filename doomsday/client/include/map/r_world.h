@@ -172,8 +172,8 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector const *frontSec,
 boolean R_MiddleMaterialCoversLineOpening(LineDef const *line, int side, boolean ignoreOpacity);
 #endif // __CLIENT__
 
-boolean R_UpdateSector(Sector *sec, boolean forceUpdate);
-boolean R_UpdatePlane(Plane *pln, boolean forceUpdate);
+bool R_UpdateSector(Sector &sector, bool forceUpdate = false);
+bool R_UpdatePlane(Plane &plane, bool forceUpdate = false);
 
 /// @return  Current glow strength for the plane.
 float R_GlowStrength(Plane const *pln);

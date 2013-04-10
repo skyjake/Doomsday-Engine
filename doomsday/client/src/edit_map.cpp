@@ -1232,37 +1232,33 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSectorIdx, uint backSectorIdx
 }
 
 #undef MPE_PlaneCreate
-uint MPE_PlaneCreate(uint sector, coord_t height, ddstring_t const *materialUri,
+uint MPE_PlaneCreate(uint sectorIdx, coord_t height, ddstring_t const *materialUri,
     float matOffsetX, float matOffsetY, float r, float g, float b, float a,
     float normalX, float normalY, float normalZ)
 {
     if(!editMapInited) return 0;
-    if(sector == 0 || sector > (uint)editMap.sectors.count()) return 0;
+    if(sectorIdx == 0 || sectorIdx > (uint)editMap.sectors.count()) return 0;
 
-    Sector *s = editMap.sectors[sector - 1];
+    Sector *sector = editMap.sectors[sectorIdx - 1];
 
-    vec3f_t normal; V3f_Set(normal, normalX, normalY, normalZ);
+    Plane *plane = new Plane(*sector, Vector3f(normalX, normalY, normalZ), height);
 
-    Plane *pln = new Plane(*s, normal, height);
+    plane->surface().setMaterial(findMaterialInDict(materialUri));
+    plane->surface().setTintColor(r, g, b);
+    plane->surface().setOpacity(a);
+    plane->surface().setMaterialOrigin(matOffsetX, matOffsetY);
 
-    pln->surface().setMaterial(findMaterialInDict(materialUri));
-    pln->surface().setTintColor(r, g, b);
-    pln->surface().setOpacity(a);
-    pln->surface().setMaterialOrigin(matOffsetX, matOffsetY);
+    sector->_planes.append(plane);
+    plane->setInSectorIndex(sector->planeCount() - 1);
 
-    s->_planes.append(pln);
-    pln->_inSectorIndex = s->planeCount() - 1;
-
-    return pln->inSectorIndex() + 1; // 1-based index.
+    return plane->inSectorIndex() + 1; // 1-based index.
 }
 
 #undef MPE_SectorCreate
 uint MPE_SectorCreate(float lightlevel, float red, float green, float blue)
 {
     if(!editMapInited) return 0;
-
-    Sector *s = editMap.createSector(lightlevel, Vector3f(red, green, blue));
-    return s->origIndex();
+    return editMap.createSector(lightlevel, Vector3f(red, green, blue))->origIndex();
 }
 
 #undef MPE_PolyobjCreate

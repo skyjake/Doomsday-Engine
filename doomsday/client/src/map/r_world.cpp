@@ -516,7 +516,7 @@ static void updateAllMapSectors(GameMap &map, bool forceUpdate = false)
 
     foreach(Sector *sector, map.sectors())
     {
-        R_UpdateSector(sector, forceUpdate);
+        R_UpdateSector(*sector, forceUpdate);
     }
 }
 
@@ -932,13 +932,13 @@ static void updateMissingMaterialsForLinesOfSector(Sector const &sec)
 }
 #endif // __CLIENT__
 
-boolean R_UpdatePlane(Plane *pln, boolean forceUpdate)
+bool R_UpdatePlane(Plane &plane, bool forceUpdate)
 {
-    Sector *sec = &pln->sector();
-    boolean changed = false;
+    Sector *sec = &plane.sector();
+    bool changed = false;
 
     // Geometry change?
-    if(forceUpdate || pln->height() != pln->_oldHeight[1])
+    if(forceUpdate || plane.height() != plane._oldHeight[1])
     {
         // Check if there are any camera players in this sector. If their
         // height is now above the ceiling/below the floor they are now in
@@ -959,8 +959,8 @@ boolean R_UpdatePlane(Plane *pln, boolean forceUpdate)
             }
         }
 
-        // Update the base origins for this plane and all affected wall surfaces.
-        pln->surface().updateSoundEmitterOrigin();
+        // Update the sound emitter origins for this plane and all dependent wall surfaces.
+        plane.surface().updateSoundEmitterOrigin();
         foreach(LineDef *line, sec->lines())
         {
             line->front().updateSoundEmitterOrigins();
@@ -986,11 +986,11 @@ boolean R_UpdatePlane(Plane *pln, boolean forceUpdate)
                 } while((hedge = &hedge->next()) != base);
             }
 
-            SB_SurfaceMoved(&bspLeaf->biasSurfaceForGeometryGroup(pln->inSectorIndex()));
+            SB_SurfaceMoved(&bspLeaf->biasSurfaceForGeometryGroup(plane.inSectorIndex()));
         }
 
         // We need the decorations updated.
-        pln->surface().markAsNeedingDecorationUpdate();
+        plane.surface().markAsNeedingDecorationUpdate();
 
 #endif // __CLIENT__
 
@@ -1000,36 +1000,34 @@ boolean R_UpdatePlane(Plane *pln, boolean forceUpdate)
     return changed;
 }
 
-boolean R_UpdateSector(Sector *sec, boolean forceUpdate)
+bool R_UpdateSector(Sector &sector, bool forceUpdate)
 {
-    DENG_ASSERT(sec);
-
-    boolean changed = false, planeChanged = false;
+    bool changed = false, planeChanged = false;
 
 #ifdef __CLIENT__
     // Check if there are any lightlevel or color changes.
     if(forceUpdate ||
-       (sec->_lightLevel != sec->_oldLightLevel ||
-        sec->_lightColor[0] != sec->_oldLightColor[0] ||
-        sec->_lightColor[1] != sec->_oldLightColor[1] ||
-        sec->_lightColor[2] != sec->_oldLightColor[2]))
+       (sector._lightLevel != sector._oldLightLevel ||
+        sector._lightColor[0] != sector._oldLightColor[0] ||
+        sector._lightColor[1] != sector._oldLightColor[1] ||
+        sector._lightColor[2] != sector._oldLightColor[2]))
     {
-        sec->_frameFlags |= SIF_LIGHT_CHANGED;
-        sec->_oldLightLevel = sec->_lightLevel;
-        sec->_oldLightColor = sec->_lightColor;
+        sector._frameFlags |= SIF_LIGHT_CHANGED;
+        sector._oldLightLevel = sector._lightLevel;
+        sector._oldLightColor = sector._lightColor;
 
-        LG_SectorChanged(static_cast<Sector *>(sec));
+        LG_SectorChanged(&sector);
         changed = true;
     }
     else
     {
-        sec->_frameFlags &= ~SIF_LIGHT_CHANGED;
+        sector._frameFlags &= ~SIF_LIGHT_CHANGED;
     }
 #endif
 
-    foreach(Plane *plane, sec->planes())
+    foreach(Plane *plane, sector.planes())
     {
-        if(R_UpdatePlane(plane, forceUpdate))
+        if(R_UpdatePlane(*plane, forceUpdate))
         {
             planeChanged = true;
         }
@@ -1037,11 +1035,11 @@ boolean R_UpdateSector(Sector *sec, boolean forceUpdate)
 
     if(forceUpdate || planeChanged)
     {
-        sec->updateSoundEmitterOrigin();
+        sector.updateSoundEmitterOrigin();
 #ifdef __CLIENT__
-        updateMissingMaterialsForLinesOfSector(*sec);
+        updateMissingMaterialsForLinesOfSector(sector);
 #endif
-        S_MarkSectorReverbDirty(sec);
+        S_MarkSectorReverbDirty(&sector);
         changed = true;
     }
 

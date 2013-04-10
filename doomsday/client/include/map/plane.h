@@ -48,7 +48,17 @@ public:
     /// The referenced property is not writeable. @ingroup errors
     DENG2_ERROR(WritePropertyError);
 
+    /**
+     * Observers to be notified when a Plane is about to be deleted.
+     */
     DENG2_DEFINE_AUDIENCE(Deletion, void planeBeingDeleted(Plane const &plane))
+
+    /**
+     * Observers to be notified whenever a @em sharp height change occurs.
+     */
+    DENG2_DEFINE_AUDIENCE(HeightChange, void planeHeightChanged(Plane const &plane, coord_t oldHeight))
+
+    static int const MAX_SMOOTH_MOVE; ///< 64, $smoothplane: Maximum speed for a smoothed plane.
 
     /// In-Sector plane types: @todo move to Sector
     enum Type
@@ -62,14 +72,12 @@ public: /// @todo Make private:
     coord_t     _oldHeight[2];
     coord_t     _targetHeight; ///< Target height.
     coord_t     _visHeight;    ///< Visual plane height (smoothed).
-    coord_t     _visHeightDelta;
-    uint        _inSectorIndex;
 
 public:
     /**
      * Construct a new plane.
      *
-     * @param sector  Sector which will own the plane.
+     * @param sector  Sector that will own the plane.
      * @param normal  Normal of the plane (will be normalized if necessary).
      * @param height  Height of the plane in map space coordinates.
      */
@@ -86,8 +94,13 @@ public:
 
     /**
      * Returns the index of the plane within the owning Sector.
+     *
+     * @todo Refactor away.
      */
     uint inSectorIndex() const;
+
+    /// @todo Refactor away.
+    void setInSectorIndex(uint newIndex);
 
     /**
      * Returns the Surface of the plane.
@@ -98,15 +111,20 @@ public:
     Surface const &surface() const;
 
     /**
-     * Returns the current height of the plane in the map coordinate space.
+     * Returns the current @em sharp height of the plane relative to @c 0 on the
+     * map up axis. The HeightChange audience is notified whenever the height
+     * changes.
      */
     coord_t height() const;
 
     /**
      * Returns the target height of the plane in the map coordinate space.
      * The target height is the destination height following a successful move.
-     * Note that this may be the same as height(), in which case the plane is
-     * not currently moving.
+     * Note that this may be the same as @ref height(), in which case the plane
+     * is not currently moving. The HeightChange audience is notified whenever
+     * the current @em sharp height changes.
+     *
+     * @see speed(), height()
      */
     coord_t targetHeight() const;
 
@@ -114,7 +132,7 @@ public:
      * Returns the rate at which the plane height will be updated (units per tic)
      * when moving to the target height in the map coordinate space.
      *
-     * @see targetHeight
+     * @see targetHeight(), height()
      */
     coord_t speed() const;
 
@@ -122,7 +140,7 @@ public:
      * Returns the current interpolated visual height of the plane in the map
      * coordinate space.
      *
-     * @see targetHeight()
+     * @see targetHeight(), height()
      */
     coord_t visHeight() const;
 
