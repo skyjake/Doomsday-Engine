@@ -62,7 +62,7 @@ static int rendLine(LineDef *line, void * /*parameters*/)
         glVertex2f(line->v1Origin()[VX], line->v1Origin()[VY]);
         glVertex2f(line->v2Origin()[VX], line->v2Origin()[VY]);
 
-        line->_validCount = validCount;
+        line->setValidCount(validCount);
     }
     return false; // Continue iteration.
 }
@@ -161,7 +161,7 @@ int rendCellPolyobjLines(void *object, void *parameters)
         if(line->validCount() == validCount)
             continue;
 
-        line->_validCount = validCount;
+        line->setValidCount(validCount);
         int result = rendLine(line, parameters);
         if(result) return result;
     }

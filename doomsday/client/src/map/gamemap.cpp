@@ -1120,7 +1120,7 @@ static int blockmapCellLinesIterator(void *mapElement, void *context)
         int result;
 
         // This linedef has now been processed for the current iteration.
-        line->_validCount = parms->localValidCount;
+        line->setValidCount(parms->localValidCount);
 
         // Action the callback.
         result = parms->callback(line, parms->parms);
@@ -1357,7 +1357,7 @@ int PTR_PolyobjLines(Polyobj *po, void* context)
         if(line->validCount() == validCount)
             continue;
 
-        line->_validCount = validCount;
+        line->setValidCount(validCount);
         int result = args->func(line, args->parms);
         if(result) return result;
     }
@@ -1620,7 +1620,7 @@ static int iteratePolyobjLines(Polyobj *po, void *parameters = 0)
         if(line->validCount() == validCount)
             continue;
 
-        line->_validCount = validCount;
+        line->setValidCount(validCount);
         int result = p->callback(line, p->parms);
         if(result) return result;
     }

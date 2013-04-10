@@ -3449,7 +3449,7 @@ static int drawPolyObjVertexes(Polyobj *po, void * /*context*/)
         if(line->validCount() == validCount)
             continue;
 
-        line->_validCount = validCount;
+        line->setValidCount(validCount);
         int result = drawVertex1(line, po);
         if(result) return result;
     }

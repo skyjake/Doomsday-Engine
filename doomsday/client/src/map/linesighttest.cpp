@@ -242,7 +242,7 @@ DENG2_PIMPL(LineSightTest)
                 if(line->validCount() == validCount)
                     continue;
 
-                line->_validCount = validCount;
+                line->setValidCount(validCount);
 
                 if(!crossLine(*line, FRONT))
                     return false; // Stop iteration.
@@ -258,7 +258,7 @@ DENG2_PIMPL(LineSightTest)
                 if(hedge->hasLine() && hedge->line().validCount() != validCount)
                 {
                     LineDef &line = hedge->line();
-                    line._validCount = validCount;
+                    line.setValidCount(validCount);
 
                     if(!crossLine(line, hedge->lineSideId()))
                         return false;
