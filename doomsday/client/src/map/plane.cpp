@@ -24,7 +24,6 @@
 
 #include "map/linedef.h"
 #include "map/gamemap.h"
-#include "map/surface.h"
 
 #include "render/r_main.h" // frameTimePos
 
@@ -37,7 +36,28 @@ static int const MAX_SMOOTH_MOVE = 64;
 
 DENG2_PIMPL(Plane)
 {
-    Instance(Public *i) : Base(i)
+    /// Sector that owns the plane.
+    Sector *sector;
+
+    /// Current height relative to @c 0 on the map up axis (positive is up).
+    coord_t height;
+
+    /// Movement speed (map space units per tic).
+    coord_t speed;
+
+    /// Plane surface.
+    Surface surface;
+
+    /// Logical type of the plane. @todo resolve ambiguous meaning -ds
+    Type type;
+
+    Instance(Public *i, Sector &sector, coord_t height)
+        : Base(i),
+          sector(&sector),
+          height(height),
+          speed(0),
+          surface(dynamic_cast<MapElement &>(*i)),
+          type(Floor)
     {}
 
     ~Instance()
@@ -48,17 +68,17 @@ DENG2_PIMPL(Plane)
 
         // If this plane's surface is in the moving list, remove it.
         /// @todo GameMap should observe Deletion.
-        theMap->scrollingSurfaces().remove(&self._surface);
+        theMap->scrollingSurfaces().remove(&surface);
 
 #ifdef __CLIENT__
 
         // If this plane's surface is in the glowing list, remove it.
         /// @todo GameMap should observe Deletion.
-        theMap->glowingSurfaces().remove(&self._surface);
+        theMap->glowingSurfaces().remove(&surface);
 
         // If this plane's surface is in the decorated list, remove it.
         /// @todo GameMap should observe Deletion.
-        theMap->decoratedSurfaces().remove(&self._surface);
+        theMap->decoratedSurfaces().remove(&surface);
 
 #endif // __CLIENT__
     }
@@ -71,11 +91,11 @@ DENG2_PIMPL(Plane)
     void markDependantSurfacesForDecorationUpdate()
     {
         // "Middle" planes have no dependent surfaces.
-        if(self._type == Plane::Middle) return;
+        if(type == Plane::Middle) return;
 
         // Mark the decor lights on the sides of this plane as requiring
         // an update.
-        foreach(LineDef *line, self._sector->lines())
+        foreach(LineDef *line, sector->lines())
         {
             SideDef &frontSideDef = line->frontSideDef();
             frontSideDef.surface(SS_MIDDLE).markAsNeedingDecorationUpdate();
@@ -96,18 +116,13 @@ DENG2_PIMPL(Plane)
 
 Plane::Plane(Sector &sector, Vector3f const &normal, coord_t height)
     : MapElement(DMU_PLANE),
-    _surface(dynamic_cast<MapElement &>(*this)),
-    _sector(&sector), _height(height),
-    d(new Instance(this))
+      _targetHeight(height),
+      _visHeight(height),
+      _visHeightDelta(0),
+      _inSectorIndex(0),
+      d(new Instance(this, sector, height))
 {
-    std::memset(_oldHeight, 0, sizeof(_oldHeight));
-    _targetHeight = 0;
-    _speed = 0;
-    _visHeight = 0;
-    _visHeightDelta = 0;
-    _type = Floor;
-    _inSectorIndex = 0;
-
+    _oldHeight[0] = _oldHeight[1] = d->height;
     setNormal(normal);
 }
 
@@ -118,12 +133,12 @@ Plane::~Plane()
 
 Sector &Plane::sector()
 {
-    return *_sector;
+    return *d->sector;
 }
 
 Sector const &Plane::sector() const
 {
-    return *_sector;
+    return *d->sector;
 }
 
 uint Plane::inSectorIndex() const
@@ -133,17 +148,17 @@ uint Plane::inSectorIndex() const
 
 Surface &Plane::surface()
 {
-    return _surface;
+    return d->surface;
 }
 
 Surface const &Plane::surface() const
 {
-    return _surface;
+    return d->surface;
 }
 
 coord_t Plane::height() const
 {
-    return _height;
+    return d->height;
 }
 
 coord_t Plane::targetHeight() const
@@ -153,7 +168,7 @@ coord_t Plane::targetHeight() const
 
 coord_t Plane::speed() const
 {
-    return _speed;
+    return d->speed;
 }
 
 coord_t Plane::visHeight() const
@@ -171,10 +186,10 @@ coord_t Plane::visHeightDelta() const
 void Plane::lerpVisHeight()
 {
     // $smoothplane
-    _visHeightDelta = _oldHeight[0] * (1 - frameTimePos) + _height * frameTimePos - _height;
+    _visHeightDelta = _oldHeight[0] * (1 - frameTimePos) + d->height * frameTimePos - d->height;
 
     // Visible plane height.
-    _visHeight = _height + _visHeightDelta;
+    _visHeight = d->height + _visHeightDelta;
 
 #ifdef __CLIENT__
     d->markDependantSurfacesForDecorationUpdate();
@@ -185,7 +200,7 @@ void Plane::resetVisHeight()
 {
     // $smoothplane
     _visHeightDelta = 0;
-    _visHeight = _oldHeight[0] = _oldHeight[1] = _height;
+    _visHeight = _oldHeight[0] = _oldHeight[1] = d->height;
 
 #ifdef __CLIENT__
     d->markDependantSurfacesForDecorationUpdate();
@@ -196,7 +211,7 @@ void Plane::updateHeightTracking()
 {
     // $smoothplane
     _oldHeight[0] = _oldHeight[1];
-    _oldHeight[1] = _height;
+    _oldHeight[1] = d->height;
 
     if(_oldHeight[0] != _oldHeight[1])
     {
@@ -210,14 +225,14 @@ void Plane::updateHeightTracking()
 
 void Plane::setNormal(Vector3f const &newNormal)
 {
-    _surface.setNormal(newNormal); // will normalize
+    d->surface.setNormal(newNormal); // will normalize
 
-    _type = (_surface.normal().z < 0? Ceiling : Floor);
+    d->type = (d->surface.normal().z < 0? Ceiling : Floor);
 }
 
 Plane::Type Plane::type() const
 {
-    return _type;
+    return d->type;
 }
 
 int Plane::property(setargs_t &args) const
@@ -225,16 +240,16 @@ int Plane::property(setargs_t &args) const
     switch(args.prop)
     {
     case DMU_SECTOR:
-        DMU_GetValue(DMT_PLANE_SECTOR, &_sector, &args, 0);
+        DMU_GetValue(DMT_PLANE_SECTOR, &d->sector, &args, 0);
         break;
     case DMU_HEIGHT:
-        DMU_GetValue(DMT_PLANE_HEIGHT, &_height, &args, 0);
+        DMU_GetValue(DMT_PLANE_HEIGHT, &d->height, &args, 0);
         break;
     case DMU_TARGET_HEIGHT:
         DMU_GetValue(DMT_PLANE_TARGET, &_targetHeight, &args, 0);
         break;
     case DMU_SPEED:
-        DMU_GetValue(DMT_PLANE_SPEED, &_speed, &args, 0);
+        DMU_GetValue(DMT_PLANE_SPEED, &d->speed, &args, 0);
         break;
     default:
         /// @throw UnknownPropertyError  The requested property does not exist.
@@ -249,7 +264,7 @@ int Plane::setProperty(setargs_t const &args)
     switch(args.prop)
     {
     case DMU_HEIGHT:
-        DMU_SetValue(DMT_PLANE_HEIGHT, &_height, &args, 0);
+        DMU_SetValue(DMT_PLANE_HEIGHT, &d->height, &args, 0);
         if(!ddMapSetup)
         {
             if(theMap)
@@ -266,7 +281,7 @@ int Plane::setProperty(setargs_t const &args)
         DMU_SetValue(DMT_PLANE_TARGET, &_targetHeight, &args, 0);
         break;
     case DMU_SPEED:
-        DMU_SetValue(DMT_PLANE_SPEED, &_speed, &args, 0);
+        DMU_SetValue(DMT_PLANE_SPEED, &d->speed, &args, 0);
         break;
     default:
         /// @throw WritePropertyError  The requested property is not writable.

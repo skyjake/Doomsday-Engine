@@ -1,4 +1,4 @@
-/** @file plane.h Map Plane.
+/** @file plane.h World Map Plane.
  *
  * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_MAP_PLANE
-#define LIBDENG_MAP_PLANE
+#ifndef DENG_WORLD_MAP_PLANE
+#define DENG_WORLD_MAP_PLANE
 
 #include <QSet>
 
@@ -35,7 +35,7 @@
 class Sector;
 
 /**
- * Map sector plane.
+ * World map sector plane.
  *
  * @ingroup map
  */
@@ -59,15 +59,10 @@ public:
     };
 
 public: /// @todo Make private:
-    Surface     _surface;
-    Sector     *_sector;       ///< Owner of the plane.
-    coord_t     _height;       ///< Current height.
     coord_t     _oldHeight[2];
     coord_t     _targetHeight; ///< Target height.
-    coord_t     _speed;        ///< Move speed.
     coord_t     _visHeight;    ///< Visual plane height (smoothed).
     coord_t     _visHeightDelta;
-    Type        _type;
     uint        _inSectorIndex;
 
 public:
@@ -200,4 +195,4 @@ private:
  */
 typedef QSet<Plane *> PlaneSet;
 
-#endif // LIBDENG_MAP_PLANE
+#endif // DENG_WORLD_MAP_PLANE

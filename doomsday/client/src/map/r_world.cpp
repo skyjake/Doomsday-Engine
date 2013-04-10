@@ -520,6 +520,15 @@ static void updateAllMapSectors(GameMap &map, bool forceUpdate = false)
     }
 }
 
+static void initAllMapPlaneHeights(GameMap &map)
+{
+    foreach(Sector *sector, map.sectors())
+    foreach(Plane *plane, sector->planes())
+    {
+        plane->_visHeight = plane->_oldHeight[0] = plane->_oldHeight[1] = plane->height();
+    }
+}
+
 static inline void initSurfaceMaterialOrigin(Surface &suf)
 {
     suf._visOffset[VX] = suf._oldOffset[0][VX] = suf._oldOffset[1][VX] = suf._offset[VX];
@@ -531,7 +540,6 @@ static void initAllMapSurfaceMaterialOrigins(GameMap &map)
     foreach(Sector *sector, map.sectors())
     foreach(Plane *plane, sector->planes())
     {
-        plane->_visHeight = plane->_oldHeight[0] = plane->_oldHeight[1] = plane->_height;
         initSurfaceMaterialOrigin(plane->surface());
     }
 
@@ -572,6 +580,7 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
         theMap->initSkyFix();
 
         updateAllMapSectors(*theMap, true /*force*/);
+        initAllMapPlaneHeights(*theMap);
         initAllMapSurfaceMaterialOrigins(*theMap);
         theMap->initPolyobjs();
         DD_ResetTimer();
@@ -603,6 +612,7 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
         P_MapSpawnPlaneParticleGens();
 
         updateAllMapSectors(*theMap, true /*force*/);
+        initAllMapPlaneHeights(*theMap);
         initAllMapSurfaceMaterialOrigins(*theMap);
 
 #ifdef __CLIENT__
