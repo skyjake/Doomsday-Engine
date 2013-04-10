@@ -2871,7 +2871,7 @@ static void Rend_RenderPlanes()
             // For lighting debug, render all solid surfaces using the gray texture.
             mat = &App_Materials().find(de::Uri("System", Path("gray"))).material();
 
-        V2f_Copy(matOrigin, suf->visMaterialOrigin());
+        V2f_Set(matOrigin, suf->visMaterialOrigin().x, suf->visMaterialOrigin().y);
         // Add the Y offset to orient the Y flipped texture.
         if(plane->type() == Plane::Ceiling)
             matOrigin[VY] -= leaf->aaBox().maxY - leaf->aaBox().minY;

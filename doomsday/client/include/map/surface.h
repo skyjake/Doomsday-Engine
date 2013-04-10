@@ -25,7 +25,6 @@
 
 #include <de/Observers>
 #include <de/Vector>
-#include <de/vector1.h> /// @todo remove me
 
 #include "Material"
 #ifdef __CLIENT__
@@ -63,11 +62,12 @@ public:
 
     static float const DEFAULT_OPACITY; ///< 1.f
     static de::Vector3f const DEFAULT_TINT_COLOR; ///< red=1.f, green=1.f, blue=1.f
+    static int const MAX_SMOOTH_MATERIAL_MOVE; ///< 8, $smoothmatoffset: Maximum speed for a smoothed material offset.
 
 #ifdef __CLIENT__
     struct DecorSource
     {
-        vec3d_t origin; ///< World coordinates of the decoration.
+        de::Vector3d origin; ///< World coordinates of the decoration.
         BspLeaf *bspLeaf;
         /// @todo $revise-texture-animation reference by index.
         de::MaterialSnapshot::Decoration const *decor;
@@ -75,17 +75,17 @@ public:
 #endif // __CLIENT__
 
 public:
-    /// [X, Y] Planar offset to surface material origin.
-    vec2f_t _offset;
+    /// @em Sharp origin of the surface material.
+    de::Vector2f _materialOrigin;
 
-    /// Old [X, Y] Planar material origin offset. For smoothing.
-    vec2f_t _oldOffset[2];
+    /// Old @em sharp origin of the surface material, for smoothing.
+    de::Vector2f _oldMaterialOrigin[2];
 
-    /// Smoothed [X, Y] Planar material origin offset.
-    vec2f_t _visOffset;
+    /// Smoothed origin of the surface material.
+    de::Vector2f _visMaterialOrigin;
 
-    /// Smoother [X, Y] Planar material origin offset delta.
-    vec2f_t _visOffsetDelta;
+    /// Delta between the @sharp and smoothed origin of the surface material.
+    de::Vector2f _visMaterialOriginDelta;
 
 #ifdef __CLIENT__
     /// @todo Does not belong here - move to the map renderer.
@@ -194,14 +194,14 @@ public:
     /**
      * Returns the material origin offset for the surface.
      */
-    const_pvec2f_t &materialOrigin() const;
+    de::Vector2f const &materialOrigin() const;
 
     /**
      * Change the material origin offset for the surface.
      *
      * @param newOrigin  New origin offset in map coordinate space units.
      */
-    bool setMaterialOrigin(const_pvec2f_t newOrigin);
+    bool setMaterialOrigin(de::Vector2f const &newOrigin);
 
     /**
      * @copydoc setMaterialOrigin()
@@ -209,10 +209,8 @@ public:
      * @param x  New X origin offset in map coordinate space units.
      * @param y  New Y origin offset in map coordinate space units.
      */
-    inline bool setMaterialOrigin(float x, float y)
-    {
-        float newOrigin[2] = { x, y};
-        return setMaterialOrigin(newOrigin);
+    inline bool setMaterialOrigin(float x, float y) {
+        return setMaterialOrigin(de::Vector2f(x, y));
     }
 
     /**
@@ -235,7 +233,7 @@ public:
      *
      * @see setMaterialOrigin()
      */
-    const_pvec2f_t &visMaterialOrigin() const;
+    de::Vector2f const &visMaterialOrigin() const;
 
     /**
      * Returns the delta between current material origin and the interpolated
@@ -243,7 +241,26 @@ public:
      *
      * @see setMaterialOrigin(), visMaterialOrigin()
      */
-    const_pvec2f_t &visMaterialOriginDelta() const;
+    de::Vector2f const &visMaterialOriginDelta() const;
+
+    /**
+     * Interpolate the visible material origin.
+     *
+     * @see visMaterialOrigin()
+     */
+    void lerpVisMaterialOrigin();
+
+    /**
+     * Reset the surface's material origin tracking.
+     *
+     * @see visMaterialOrigin()
+     */
+    void resetVisMaterialOrigin();
+
+    /**
+     * Roll the surface's material origin tracking buffer.
+     */
+    void updateMaterialOriginTracking();
 
     /**
      * Returns the sound emitter for the surface.
@@ -423,6 +440,10 @@ public:
     void markAsNeedingDecorationUpdate();
 #endif // __CLIENT__
 
+    /// @return @c true= is owned by some element of the Map geometry.
+    /// @deprecated Unnecessary; refactor away.
+    bool isAttachedToMap() const;
+
     /**
      * Get a property value, selected by DMU_* name.
      *
@@ -438,10 +459,6 @@ public:
      * @return  Always @c 0 (can be used as an iterator).
      */
     int setProperty(setargs_t const &args);
-
-    /// @return @c true= is owned by some element of the Map geometry.
-    /// @deprecated Unnecessary; refactor away.
-    bool isAttachedToMap() const;
 
     /**
      * Helper function for determining whether the surface is owned by a

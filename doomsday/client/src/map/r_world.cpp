@@ -110,7 +110,7 @@ boolean R_FindBottomTop(SideDefSection section, int lineFlags,
         if(matOffset)
         {
             Surface const &suf = frontDef->middle();
-            V2f_Copy(matOffset, suf.visMaterialOrigin());
+            V2f_Set(matOffset, suf.visMaterialOrigin().x, suf.visMaterialOrigin().y);
             if(unpegBottom)
             {
                 matOffset[1] -= *hi - *low;
@@ -138,7 +138,7 @@ boolean R_FindBottomTop(SideDefSection section, int lineFlags,
 
             if(matOffset)
             {
-                V2f_Copy(matOffset, suf->visMaterialOrigin());
+                V2f_Set(matOffset, suf->visMaterialOrigin().x, suf->visMaterialOrigin().y);
                 if(!unpegTop)
                 {
                     // Align with normal middle texture.
@@ -167,7 +167,7 @@ boolean R_FindBottomTop(SideDefSection section, int lineFlags,
 
             if(matOffset)
             {
-                V2f_Copy(matOffset, suf->visMaterialOrigin());
+                V2f_Set(matOffset, suf->visMaterialOrigin().x, suf->visMaterialOrigin().y);
                 if(bfloor->visHeight() > fceil->visHeight())
                 {
                     matOffset[1] -= (raiseToBackFloor? t : fceil->visHeight()) - bfloor->visHeight();
@@ -531,8 +531,7 @@ static void initAllMapPlaneHeights(GameMap &map)
 
 static inline void initSurfaceMaterialOrigin(Surface &suf)
 {
-    suf._visOffset[VX] = suf._oldOffset[0][VX] = suf._oldOffset[1][VX] = suf._offset[VX];
-    suf._visOffset[VY] = suf._oldOffset[0][VY] = suf._oldOffset[1][VY] = suf._offset[VY];
+    suf._visMaterialOrigin = suf._oldMaterialOrigin[0] = suf._oldMaterialOrigin[1] = suf._materialOrigin;
 }
 
 static void initAllMapSurfaceMaterialOrigins(GameMap &map)

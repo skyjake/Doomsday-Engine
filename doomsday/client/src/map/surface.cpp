@@ -27,6 +27,7 @@
 #include "Materials"
 #include "map/gamemap.h"
 #include "map/r_world.h" /// ddMapSetup @todo remove me
+#include "render/r_main.h" /// frameTimePos
 
 #include "map/surface.h"
 
@@ -34,6 +35,7 @@ using namespace de;
 
 float const Surface::DEFAULT_OPACITY = 1.f;
 Vector3f const Surface::DEFAULT_TINT_COLOR = Vector3f(1.f, 1.f, 1.f);
+int const Surface::MAX_SMOOTH_MATERIAL_MOVE = 8;
 
 DENG2_PIMPL(Surface)
 {
@@ -138,14 +140,9 @@ DENG2_PIMPL(Surface)
 };
 
 Surface::Surface(MapElement &owner, float opacity, Vector3f const &tintColor)
-    : MapElement(DMU_SURFACE), d(new Instance(this, owner))
+    : MapElement(DMU_SURFACE),
+      d(new Instance(this, owner))
 {
-    V2f_Set(_offset, 0, 0);
-    V2f_Set(_oldOffset[0], 0, 0);
-    V2f_Set(_oldOffset[1], 0, 0);
-    V2f_Set(_visOffset, 0, 0);
-    V2f_Set(_visOffsetDelta, 0, 0);
-
 #ifdef __CLIENT__
     _decorationData.needsUpdate = false;
     _decorationData.sources     = 0;
@@ -316,16 +313,16 @@ bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
     return true;
 }
 
-const_pvec2f_t &Surface::materialOrigin() const
+Vector2f const &Surface::materialOrigin() const
 {
-    return _offset;
+    return _materialOrigin;
 }
 
-bool Surface::setMaterialOrigin(const_pvec2f_t newOrigin)
+bool Surface::setMaterialOrigin(Vector2f const &newOrigin)
 {
-    if(_offset[VX] != newOrigin[VX] || _offset[VY] != newOrigin[VY])
+    if(_materialOrigin != newOrigin)
     {
-        V2f_Copy(_offset, newOrigin);
+        _materialOrigin = newOrigin;
 
         if(isAttachedToMap())
         {
@@ -346,9 +343,9 @@ bool Surface::setMaterialOrigin(const_pvec2f_t newOrigin)
 
 bool Surface::setMaterialOriginX(float x)
 {
-    if(_offset[VX] != x)
+    if(_materialOrigin.x != x)
     {
-        _offset[VX] = x;
+        _materialOrigin.x = x;
         if(isAttachedToMap())
         {
 #ifdef __CLIENT__
@@ -368,9 +365,9 @@ bool Surface::setMaterialOriginX(float x)
 
 bool Surface::setMaterialOriginY(float y)
 {
-    if(_offset[VY] != y)
+    if(_materialOrigin.y != y)
     {
-        _offset[VY] = y;
+        _materialOrigin.y = y;
         if(isAttachedToMap())
         {
 #ifdef __CLIENT__
@@ -388,14 +385,58 @@ bool Surface::setMaterialOriginY(float y)
     return true;
 }
 
-const_pvec2f_t &Surface::visMaterialOrigin() const
+Vector2f const &Surface::visMaterialOrigin() const
 {
-    return _visOffset;
+    return _visMaterialOrigin;
 }
 
-const_pvec2f_t &Surface::visMaterialOriginDelta() const
+Vector2f const &Surface::visMaterialOriginDelta() const
 {
-    return _visOffsetDelta;
+    return _visMaterialOriginDelta;
+}
+
+void Surface::lerpVisMaterialOrigin()
+{
+    // $smoothmaterialorigin
+
+    _visMaterialOriginDelta = _oldMaterialOrigin[0] * (1 - frameTimePos)
+        + _materialOrigin * frameTimePos - _materialOrigin;
+
+    // Visible material origin.
+    _visMaterialOrigin = _materialOrigin + _visMaterialOriginDelta;
+
+#ifdef __CLIENT__
+    markAsNeedingDecorationUpdate();
+#endif
+}
+
+void Surface::resetVisMaterialOrigin()
+{
+    // $smoothmaterialorigin
+    _visMaterialOriginDelta.x = _visMaterialOriginDelta.y = 0;
+    _oldMaterialOrigin[0] = _oldMaterialOrigin[1] = _materialOrigin;
+
+#ifdef __CLIENT__
+    markAsNeedingDecorationUpdate();
+#endif
+}
+
+void Surface::updateMaterialOriginTracking()
+{
+    // $smoothmaterialorigin
+    _oldMaterialOrigin[0] = _oldMaterialOrigin[1];
+    _oldMaterialOrigin[1] = _materialOrigin;
+
+    if(_oldMaterialOrigin[0] != _oldMaterialOrigin[1])
+    {
+        float moveDistance = de::abs(Vector2f(_oldMaterialOrigin[1] - _oldMaterialOrigin[0]).length());
+
+        if(moveDistance >= MAX_SMOOTH_MATERIAL_MOVE)
+        {
+            // Too fast: make an instantaneous jump.
+            _oldMaterialOrigin[0] = _oldMaterialOrigin[1];
+        }
+    }
 }
 
 float Surface::opacity() const
@@ -606,16 +647,16 @@ int Surface::property(setargs_t &args) const
         break; }
 
     case DMU_OFFSET_X:
-        DMU_GetValue(DMT_SURFACE_OFFSET, &_offset[VX], &args, 0);
+        DMU_GetValue(DMT_SURFACE_OFFSET, &_materialOrigin.x, &args, 0);
         break;
 
     case DMU_OFFSET_Y:
-        DMU_GetValue(DMT_SURFACE_OFFSET, &_offset[VY], &args, 0);
+        DMU_GetValue(DMT_SURFACE_OFFSET, &_materialOrigin.y, &args, 0);
         break;
 
     case DMU_OFFSET_XY:
-        DMU_GetValue(DMT_SURFACE_OFFSET, &_offset[VX], &args, 0);
-        DMU_GetValue(DMT_SURFACE_OFFSET, &_offset[VY], &args, 1);
+        DMU_GetValue(DMT_SURFACE_OFFSET, &_materialOrigin.x, &args, 0);
+        DMU_GetValue(DMT_SURFACE_OFFSET, &_materialOrigin.y, &args, 1);
         break;
 
     case DMU_TANGENT_X: {
@@ -788,9 +829,9 @@ int Surface::setProperty(setargs_t const &args)
         break; }
 
     case DMU_OFFSET_XY: {
-        vec2f_t newOrigin;
-        DMU_SetValue(DMT_SURFACE_OFFSET, &newOrigin[VX], &args, 0);
-        DMU_SetValue(DMT_SURFACE_OFFSET, &newOrigin[VY], &args, 1);
+        Vector2f newOrigin = _materialOrigin;
+        DMU_SetValue(DMT_SURFACE_OFFSET, &newOrigin.x, &args, 0);
+        DMU_SetValue(DMT_SURFACE_OFFSET, &newOrigin.y, &args, 1);
         setMaterialOrigin(newOrigin);
         break; }
 

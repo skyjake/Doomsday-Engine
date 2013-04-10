@@ -299,7 +299,7 @@ static void newSource(Surface const &suf, Surface::DecorSource const &dec)
     decorsource_t *src = allocDecorSource();
 
     // Fill in the data for a new surface decoration.
-    V3d_Copy(src->origin, dec.origin);
+    V3d_Set(src->origin, dec.origin.x, dec.origin.y, dec.origin.z);
     src->maxDistance = MAX_DECOR_DISTANCE;
     src->bspLeaf = dec.bspLeaf;
     src->surface = &suf;
@@ -403,8 +403,8 @@ static uint generateDecorLights(MaterialSnapshot::Decoration const &decor,
 
             if(Surface::DecorSource *source = suf.newDecoration())
             {
-                V3d_Set(source->origin, origin.x, origin.y, origin.z);
-                source->bspLeaf = P_BspLeafAtPoint(source->origin);
+                source->origin  = Vector3d(origin.x, origin.y, origin.z);
+                source->bspLeaf = P_BspLeafAtPointXY(source->origin.x, source->origin.y);
                 source->decor   = &decor;
                 decorCount++;
             }

@@ -37,9 +37,6 @@
 /// Size of Blockmap blocks in map units. Must be an integer power of two.
 #define MAPBLOCKUNITS               (128)
 
-/// $smoothmatoffset: Maximum speed for a smoothed material offset.
-#define MAX_SMOOTH_MATERIAL_MOVE    (8)
-
 using namespace de;
 
 DENG2_PIMPL(GameMap)
@@ -227,14 +224,6 @@ DENG2_PIMPL(GameMap)
         foreach(Sector *sector, self._sectors)
         foreach(Plane *plane, sector->planes())
         {
-            // Set target heights for each plane.
-            plane->_targetHeight =
-                plane->_oldHeight[0] =
-                    plane->_oldHeight[1] =
-                        plane->_visHeight = plane->_height;
-
-            plane->_visHeightDelta = 0;
-
             plane->surface().updateSoundEmitterOrigin();
 
 #ifdef __CLIENT__
@@ -1697,59 +1686,33 @@ BspLeaf *GameMap::bspLeafAtPoint(const_pvec2d_t const point) const
 
 void GameMap::lerpScrollingSurfaces(bool resetNextViewer)
 {
-    SurfaceSet::iterator it = d->scrollingSurfaces.begin();
-    while(it != d->scrollingSurfaces.end())
+    if(resetNextViewer)
     {
-        Surface &suf = **it;
-
-        if(resetNextViewer)
+        // Reset the surface material origin trackers.
+        foreach(Surface *surface, d->scrollingSurfaces)
         {
-            // Reset the material offset trackers.
-            // X Offset.
-            suf._visOffsetDelta[0] = 0;
-            suf._oldOffset[0][0] = suf._oldOffset[0][1] = suf._offset[0];
-
-            // Y Offset.
-            suf._visOffsetDelta[1] = 0;
-            suf._oldOffset[1][0] = suf._oldOffset[1][1] = suf._offset[1];
-
-#ifdef __CLIENT__
-            suf.markAsNeedingDecorationUpdate();
-#endif
-
-            it++;
+            surface->resetVisMaterialOrigin();
         }
-        // While the game is paused there is no need to calculate any
-        // visual material offsets.
-        else //if(!clientPaused)
+
+        // Tracked movement is now all done.
+        d->scrollingSurfaces.clear();
+    }
+    // While the game is paused there is no need to calculate any
+    // visual material origin offsets $smoothmaterialorigin.
+    else //if(!clientPaused)
+    {
+        // Set the visible origins.
+        QMutableSetIterator<Surface *> iter(d->scrollingSurfaces);
+        while(iter.hasNext())
         {
-            // Set the visible material offsets.
-            // X Offset.
-            suf._visOffsetDelta[0] =
-                suf._oldOffset[0][0] * (1 - frameTimePos) +
-                        suf._offset[0] * frameTimePos - suf._offset[0];
+            Surface *surface = iter.next();
 
-            // Y Offset.
-            suf._visOffsetDelta[1] =
-                suf._oldOffset[1][0] * (1 - frameTimePos) +
-                        suf._offset[1] * frameTimePos - suf._offset[1];
+            surface->lerpVisMaterialOrigin();
 
-            // Visible material offset.
-            suf._visOffset[0] = suf._offset[0] + suf._visOffsetDelta[0];
-            suf._visOffset[1] = suf._offset[1] + suf._visOffsetDelta[1];
-
-#ifdef __CLIENT__
-            suf.markAsNeedingDecorationUpdate();
-#endif
-
-            // Has this material reached its destination?
-            if(suf._visOffset[0] == suf._offset[0] && suf._visOffset[1] == suf._offset[1])
+            // Has this plane reached its destination?
+            if(surface->visMaterialOrigin() == surface->materialOrigin())
             {
-                it = d->scrollingSurfaces.erase(it);
-            }
-            else
-            {
-                it++;
+                iter.remove();
             }
         }
     }
@@ -1759,32 +1722,7 @@ void GameMap::updateScrollingSurfaces()
 {
     foreach(Surface *surface, d->scrollingSurfaces)
     {
-        // X Offset
-        surface->_oldOffset[0][0] = surface->_oldOffset[0][1];
-        surface->_oldOffset[0][1] = surface->_offset[0];
-
-        if(surface->_oldOffset[0][0] != surface->_oldOffset[0][1])
-        {
-            if(de::abs(surface->_oldOffset[0][0] - surface->_oldOffset[0][1]) >=
-               MAX_SMOOTH_MATERIAL_MOVE)
-            {
-                // Too fast: make an instantaneous jump.
-                surface->_oldOffset[0][0] = surface->_oldOffset[0][1];
-            }
-        }
-
-        // Y Offset
-        surface->_oldOffset[1][0] = surface->_oldOffset[1][1];
-        surface->_oldOffset[1][1] = surface->_offset[1];
-        if(surface->_oldOffset[1][0] != surface->_oldOffset[1][1])
-        {
-            if(de::abs(surface->_oldOffset[1][0] - surface->_oldOffset[1][1]) >=
-               MAX_SMOOTH_MATERIAL_MOVE)
-            {
-                // Too fast: make an instantaneous jump.
-                surface->_oldOffset[1][0] = surface->_oldOffset[1][1];
-            }
-        }
+        surface->updateMaterialOriginTracking();
     }
 }
 
