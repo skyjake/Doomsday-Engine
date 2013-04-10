@@ -22,13 +22,17 @@
 #define LIBDENG_MAP_LINEDEF
 
 #include <de/binangle.h>
-#include <de/mathutil.h> // Divline
+
+#include <de/Vector>
 #include <de/Error>
-#include "resource/r_data.h"
-#include "map/r_world.h"
-#include "p_mapdata.h"
-#include "p_dmu.h"
+
+//#include "resource/r_data.h"
+
 #include "MapElement"
+#include "map/r_world.h"
+//#include "p_mapdata.h"
+
+#include "p_dmu.h"
 
 class Vertex;
 class Sector;
@@ -125,7 +129,7 @@ public:
         int _shadowVisCount;
 
     public:
-        Side();
+        Side(Sector *sector = 0);
 
         /**
          * Returns @c true iff a Sector is attributed to the side.
@@ -196,10 +200,6 @@ public:
     };
 
 public: /// @todo make private:
-    /// Vertexes:
-    Vertex *_v1;
-    Vertex *_v2;
-
     /// Links to vertex line owner nodes:
     LineOwner *_vo1;
     LineOwner *_vo2;
@@ -213,16 +213,12 @@ public: /// @todo make private:
     /// Calculated from the direction vector.
     binangle_t _angle;
 
-    /// Direction vector from Start to End vertex.
-    vec2d_t _direction;
-
-    /// Accurate length.
-    coord_t _length;
-
     int _validCount;
 
 public:
-    LineDef();
+    LineDef(Vertex &v1, Vertex &v2,
+            Sector *frontSector = 0,
+            Sector *backSector  = 0);
 
     /**
      * Returns @c true iff the line is part of some Polyobj.
@@ -573,7 +569,7 @@ public:
     /**
      * Returns a direction vector for the line from Start to End vertex.
      */
-    const_pvec2d_t &direction() const;
+    de::Vector2d const &direction() const;
 
     /**
      * Returns the logical @em slopetype for the line (which, is determined
@@ -640,7 +636,8 @@ public:
      */
     inline coord_t pointDistance(const_pvec2d_t point, coord_t *offset) const
     {
-        return V2d_PointLineDistance(point, v1().origin(), direction(), offset);
+        coord_t v1Direction[2] = { direction().x, direction().y };
+        return V2d_PointLineDistance(point, v1().origin(), v1Direction, offset);
     }
 
     /// @copydoc pointDistance()
@@ -662,7 +659,8 @@ public:
      */
     inline coord_t pointOnSide(const_pvec2d_t point) const
     {
-        return V2d_PointOnLineSide(point, v1().origin(), direction());
+        coord_t v1Direction[2] = { direction().x, direction().y };
+        return V2d_PointOnLineSide(point, v1().origin(), v1Direction);
     }
 
     /// @copydoc pointOnSide()

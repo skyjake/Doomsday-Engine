@@ -144,24 +144,24 @@ void Rend_RadioUpdateVertexShadowOffsets(Vertex &vtx)
 
         if(&lineB.v1() == &vtx)
         {
-            rightDir[VX] = lineB.direction()[VX];
-            rightDir[VY] = lineB.direction()[VY];
+            rightDir[VX] = lineB.direction().x;
+            rightDir[VY] = lineB.direction().y;
         }
         else
         {
-            rightDir[VX] = -lineB.direction()[VX];
-            rightDir[VY] = -lineB.direction()[VY];
+            rightDir[VX] = -lineB.direction().x;
+            rightDir[VY] = -lineB.direction().y;
         }
 
         if(&lineA.v1() == &vtx)
         {
-            leftDir[VX] = -lineA.direction()[VX];
-            leftDir[VY] = -lineA.direction()[VY];
+            leftDir[VX] = -lineA.direction().x;
+            leftDir[VY] = -lineA.direction().y;
         }
         else
         {
-            leftDir[VX] = lineA.direction()[VX];
-            leftDir[VY] = lineA.direction()[VY];
+            leftDir[VX] = lineA.direction().x;
+            leftDir[VY] = lineA.direction().y;
         }
 
         // The left side is always flipped.

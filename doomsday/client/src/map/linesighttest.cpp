@@ -111,7 +111,7 @@ DENG2_PIMPL(LineSightTest)
            V2x_PointOnLineSide(lineV2OriginX, ray.origin, ray.direction))
             return true;
 
-        fixed_t lineDirectionX[2] = { DBL2FIX(line.direction()[VX]), DBL2FIX(line.direction()[VY]) };
+        fixed_t lineDirectionX[2] = { DBL2FIX(line.direction().x), DBL2FIX(line.direction().y) };
 
         fixed_t fromPointX[2] = { DBL2FIX(from.x), DBL2FIX(from.y) };
         fixed_t toPointX[2]   = { DBL2FIX(to.x),   DBL2FIX(to.y) };

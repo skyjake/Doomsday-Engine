@@ -1701,9 +1701,9 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
            viewData->current.origin[VZ] < WallDivNode_Height(WallDivs_Last(rightWallDivs)))
         {
             LineDef const &line = hedge->line();
+            coord_t lineDirection[2] = { line.direction().x, line.direction().y };
             vec2d_t result;
-            double pos = V2d_ProjectOnLine(result, mo->origin, line.v1Origin(),
-                                                   line.direction());
+            double pos = V2d_ProjectOnLine(result, mo->origin, line.v1Origin(), lineDirection);
 
             if(pos > 0 && pos < 1)
             {

@@ -1135,8 +1135,8 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
         // - Multiply with bounce.
 
         // Calculate the normal.
-        normal[VX] = -FLT2FIX(ptcHitLine->direction()[VX]);
-        normal[VY] = -FLT2FIX(ptcHitLine->direction()[VY]);
+        normal[VX] = -FLT2FIX(ptcHitLine->direction().x);
+        normal[VY] = -FLT2FIX(ptcHitLine->direction().y);
 
         if(!normal[VX] && !normal[VY])
             goto quit_iteration;

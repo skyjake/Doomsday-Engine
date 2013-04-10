@@ -1583,8 +1583,8 @@ coord_t Sv_DeltaDistance(void const *deltaPtr, ownerinfo_t const *info)
     {
         SideDef *sideDef = theMap->sideDefs().at(delta->id);
         LineDef &line = sideDef->line();
-        vec2d_t origin; V2d_Set(origin, line.v1Origin()[VX] + line.direction()[VX] / 2,
-                                        line.v1Origin()[VY] + line.direction()[VY] / 2);
+        vec2d_t origin; V2d_Set(origin, line.v1Origin()[VX] + line.direction().x / 2,
+                                        line.v1Origin()[VY] + line.direction().y / 2);
         return M_ApproxDistance(info->origin[VX] - origin[VX],
                                 info->origin[VY] - origin[VY]);
     }

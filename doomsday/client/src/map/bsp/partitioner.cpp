@@ -228,39 +228,39 @@ DENG2_PIMPL(Partitioner)
         bool isFront = false;
         if(p.castHoriz)
         {
-            if(de::abs(line.direction()[VY]) < DIST_EPSILON)
+            if(de::abs(line.direction().y) < DIST_EPSILON)
                 return;
 
             if((de::max(line.v1Origin()[VY], line.v2Origin()[VY]) < p.mY - DIST_EPSILON) ||
                (de::min(line.v1Origin()[VY], line.v2Origin()[VY]) > p.mY + DIST_EPSILON))
                 return;
 
-            dist = (line.v1Origin()[VX] + (p.mY - line.v1Origin()[VY]) * line.direction()[VX] / line.direction()[VY]) - p.mX;
+            dist = (line.v1Origin()[VX] + (p.mY - line.v1Origin()[VY]) * line.direction().x / line.direction().y) - p.mX;
 
-            isFront = ((p.testLine->direction()[VY] > 0) != (dist > 0));
+            isFront = ((p.testLine->direction().y > 0) != (dist > 0));
             dist = de::abs(dist);
 
             // Too close? (overlapping lines?)
             if(dist < DIST_EPSILON)
                 return;
 
-            hitSector = line.sectorPtr((p.testLine->direction()[VY] > 0) ^ (line.direction()[VY] > 0) ^ !isFront);
+            hitSector = line.sectorPtr((p.testLine->direction().y > 0) ^ (line.direction().y > 0) ^ !isFront);
         }
         else // Cast vertically.
         {
-            if(de::abs(line.direction()[VX]) < DIST_EPSILON)
+            if(de::abs(line.direction().x) < DIST_EPSILON)
                 return;
 
             if((de::max(line.v1Origin()[VX], line.v2Origin()[VX]) < p.mX - DIST_EPSILON) ||
                (de::min(line.v1Origin()[VX], line.v2Origin()[VX]) > p.mX + DIST_EPSILON))
                 return;
 
-            dist = (line.v1Origin()[VY] + (p.mX - line.v1Origin()[VX]) * line.direction()[VY] / line.direction()[VX]) - p.mY;
+            dist = (line.v1Origin()[VY] + (p.mX - line.v1Origin()[VX]) * line.direction().y / line.direction().x) - p.mY;
 
-            isFront = ((p.testLine->direction()[VX] > 0) == (dist > 0));
+            isFront = ((p.testLine->direction().x > 0) == (dist > 0));
             dist = de::abs(dist);
 
-            hitSector = line.sectorPtr((p.testLine->direction()[VX] > 0) ^ (line.direction()[VX] > 0) ^ !isFront);
+            hitSector = line.sectorPtr((p.testLine->direction().x > 0) ^ (line.direction().x > 0) ^ !isFront);
         }
 
         // Too close? (overlapping lines?)
@@ -326,7 +326,7 @@ DENG2_PIMPL(Partitioner)
         p.testLine = line;
         p.mX = (line->v1Origin()[VX] + line->v2Origin()[VX]) / 2.0;
         p.mY = (line->v1Origin()[VY] + line->v2Origin()[VY]) / 2.0;
-        p.castHoriz = (de::abs(line->direction()[VX]) < de::abs(line->direction()[VY])? true : false);
+        p.castHoriz = (de::abs(line->direction().x) < de::abs(line->direction().y)? true : false);
 
         AABoxd scanRegion = map->bounds();
         if(p.castHoriz)

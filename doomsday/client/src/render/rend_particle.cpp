@@ -505,11 +505,11 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
  */
 static void lineUnitVector(LineDef const &line, pvec2f_t unitVec)
 {
-    coord_t len = M_ApproxDistance(line.direction()[VX], line.direction()[VY]);
+    coord_t len = M_ApproxDistance(line.direction().x, line.direction().y);
     if(len)
     {
-        unitVec[VX] = line.direction()[VX] / len;
-        unitVec[VY] = line.direction()[VY] / len;
+        unitVec[VX] = line.direction().x / len;
+        unitVec[VY] = line.direction().y / len;
     }
     else
     {
@@ -751,8 +751,9 @@ static void renderParticles(int rtype, boolean withBlend)
 
                 // Calculate a new center point (project onto the wall).
                 V2d_Set(origin, FIX2FLT(pt->origin[VX]), FIX2FLT(pt->origin[VY]));
-                V2d_ProjectOnLine(projected, origin, pt->contact->v1Origin(),
-                                             pt->contact->direction());
+
+                coord_t lineDirection[2] = { pt->contact->direction().x, pt->contact->direction().y };
+                V2d_ProjectOnLine(projected, origin, pt->contact->v1Origin(), lineDirection);
 
                 // Move away from the wall to avoid the worst Z-fighting.
                 double const gap = -1; // 1 map unit.

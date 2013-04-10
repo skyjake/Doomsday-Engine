@@ -99,9 +99,10 @@ public:
         return vtx;
     }
 
-    LineDef *createLine()
+    LineDef *createLine(Vertex &v1, Vertex &v2, Sector *frontSector = 0,
+                        Sector *backSector = 0)
     {
-        LineDef *line = new LineDef;
+        LineDef *line = new LineDef(v1, v2, frontSector, backSector);
 
         lines.append(line);
         line->setOrigIndex(lines.count()); // 1-based index, 0 = NIL.
@@ -1002,15 +1003,7 @@ boolean MPE_End()
     while(!editMap.lines.isEmpty())
     {
         map->_lines.append(editMap.lines.takeFirst());
-        LineDef *line = map->_lines.back();
-
-        /// @todo This init should already have been done elsewhere. -ds
-        line->updateSlopeType();
-        line->updateAABox();
-
-        line->_length = V2d_Length(line->_direction);
-        line->_angle  = bamsAtan2(int( line->_direction[VY] ),
-                                  int( line->_direction[VX] ));
+        map->_lines.back();
     }
 
     // Collate polyobjs:
@@ -1171,13 +1164,13 @@ uint MPE_SidedefCreate(short flags, ddstring_t const *topMaterialUri,
 }
 
 #undef MPE_LinedefCreate
-uint MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector,
+uint MPE_LinedefCreate(uint v1, uint v2, uint frontSectorIdx, uint backSectorIdx,
     uint frontSide, uint backSide, int flags)
 {
     if(!editMapInited) return 0;
 
-    if(frontSector > (uint)editMap.sectors.count())    return 0;
-    if(backSector  > (uint)editMap.sectors.count())    return 0;
+    if(frontSectorIdx > (uint)editMap.sectors.count()) return 0;
+    if(backSectorIdx  > (uint)editMap.sectors.count()) return 0;
     if(frontSide   > (uint)editMap.sideDefs.count())   return 0;
     if(backSide    > (uint)editMap.sideDefs.count())   return 0;
     if(v1 == 0 || v1 > (uint)editMap.vertexes.count()) return 0;
@@ -1191,54 +1184,49 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector,
         return 0;
 
     // Next, check the length is not zero.
+    /// @todo fixme: We need to allow these... -ds
     Vertex *vtx1 = editMap.vertexes[v1 - 1];
     Vertex *vtx2 = editMap.vertexes[v2 - 1];
-    coord_t length = V2d_Distance(vtx2->origin(), vtx1->origin());
-    if(!(length > 0)) return 0;
+    if(!(V2d_Distance(vtx2->origin(), vtx1->origin()) > 0)) return 0;
 
     SideDef *front = frontSide? editMap.sideDefs[frontSide - 1] : 0;
     SideDef *back  = backSide?  editMap.sideDefs[backSide  - 1] : 0;
 
-    LineDef *l = editMap.createLine();
-    l->_v1 = vtx1;
-    l->_v2 = vtx2;
+    Sector *frontSector = (frontSectorIdx == 0? NULL: editMap.sectors[frontSectorIdx-1]);
+    Sector *backSector  = (backSectorIdx  == 0? NULL: editMap.sectors[backSectorIdx-1]);
 
-    l->_v1->_buildData.refCount++;
-    l->_v2->_buildData.refCount++;
-
-    l->front()._sector = (frontSector == 0? NULL: editMap.sectors[frontSector-1]);
-    l->back()._sector  = (backSector  == 0? NULL: editMap.sectors[backSector-1]);
+    LineDef *l = editMap.createLine(*vtx1, *vtx2, frontSector, backSector);
 
     l->front()._sideDef = front;
-    l->back()._sideDef = back;
-
-    l->_length = length;
-
-    l->updateSlopeType();
-    l->updateAABox();
-
-    l->_angle = bamsAtan2(int( l->_direction[VY] ),
-                          int( l->_direction[VX] ));
-
-    // Remember the number of unique references.
     if(l->hasFrontSideDef())
     {
         l->frontSideDef()._line = l;
+    }
+
+    l->back()._sideDef = back;
+    if(l->hasBackSideDef())
+    {
+        l->backSideDef()._line = l;
+    }
+
+    // Determine the default line flags.
+    l->_flags = flags;
+    if(!front || !back)
+        l->_flags |= DDLF_BLOCKING;
+
+    // Remember the number of unique references.
+    l->v1()._buildData.refCount++;
+    l->v2()._buildData.refCount++;
+
+    if(l->hasFrontSideDef())
+    {
         l->frontSideDef()._buildData.refCount++;
     }
 
     if(l->hasBackSideDef())
     {
-        l->backSideDef()._line = l;
         l->backSideDef()._buildData.refCount++;
     }
-
-    l->_inFlags = 0;
-
-    // Determine the default linedef flags.
-    l->_flags = flags;
-    if(!front || !back)
-        l->_flags |= DDLF_BLOCKING;
 
     return l->origIndex();
 }

@@ -52,12 +52,19 @@ struct DummyData
     virtual ~DummyData() {} // polymorphic
 };
 
+class DummyVertex  : public Vertex,  public DummyData {};
 class DummySideDef : public SideDef, public DummyData {};
-class DummyLineDef : public LineDef, public DummyData {};
 class DummySector  : public Sector,  public DummyData {};
+
+class DummyLineDef : public LineDef, public DummyData
+{
+public:
+    DummyLineDef(DummyVertex &v1, DummyVertex &v2) : LineDef(v1, v2) {}
+};
 
 typedef QSet<de::MapElement *> Dummies;
 static Dummies dummies;
+static DummyVertex dummyVertex; // The one dummy vertex.
 
 char const *DMU_Str(uint prop)
 {
@@ -209,7 +216,7 @@ void *P_AllocDummy(int type, void *extraData)
         return ds; }
 
     case DMU_LINEDEF: {
-        DummyLineDef *dl = new DummyLineDef;
+        DummyLineDef *dl = new DummyLineDef(dummyVertex, dummyVertex);
         dummies.insert(dl);
         dl->extraData = extraData;
         return dl; }
