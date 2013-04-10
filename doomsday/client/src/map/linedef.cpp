@@ -123,10 +123,10 @@ void LineDef::Side::updateSurfaceNormals()
 DENG2_PIMPL(LineDef)
 {
     /// Vertexes:
-    Vertex *v1;
-    Vertex *v2;
+    Vertex *from;
+    Vertex *to;
 
-    /// Direction vector from vertex v1 to v2.
+    /// Direction vector from -> to.
     Vector2d direction;
 
     /// Logical line slope (i.e., world angle) classification.
@@ -148,12 +148,12 @@ DENG2_PIMPL(LineDef)
     /// Whether the line has been mapped by each player yet.
     bool mapped[DDMAXPLAYERS];
 
-    Instance(Public *i, Vertex &v1, Vertex &v2,
+    Instance(Public *i, Vertex &from, Vertex &to,
              Sector *frontSector, Sector *backSector)
         : Base(i),
-          v1(&v1),
-          v2(&v2),
-          direction(Vector2d(v2.origin()) - Vector2d(v1.origin())),
+          from(&from),
+          to(&to),
+          direction(Vector2d(to.origin()) - Vector2d(from.origin())),
           slopeType(M_SlopeTypeXY(direction.x, direction.y)),
           length(direction.length()),
           front(frontSector),
@@ -164,7 +164,7 @@ DENG2_PIMPL(LineDef)
     }
 };
 
-LineDef::LineDef(Vertex &v1, Vertex &v2, Sector *frontSector, Sector *backSector)
+LineDef::LineDef(Vertex &from, Vertex &to, Sector *frontSector, Sector *backSector)
     : MapElement(DMU_LINEDEF),
       _vo1(0),
       _vo2(0),
@@ -172,7 +172,7 @@ LineDef::LineDef(Vertex &v1, Vertex &v2, Sector *frontSector, Sector *backSector
       _inFlags(0),
       _angle(0),
       _validCount(0),
-      d(new Instance(this, v1, v2, frontSector, backSector))
+      d(new Instance(this, from, to, frontSector, backSector))
 {
     _angle = bamsAtan2(int( d->direction.y ), int( d->direction.x ));
     updateAABox();
@@ -215,14 +215,14 @@ LineDef::Side const &LineDef::side(int back) const
 
 Vertex &LineDef::vertex(int to)
 {
-    DENG_ASSERT((to? d->v2 : d->v1) != 0);
-    return to? *d->v2 : *d->v1;
+    DENG_ASSERT((to? d->to : d->from) != 0);
+    return to? *d->to : *d->from;
 }
 
 Vertex const &LineDef::vertex(int to) const
 {
-    DENG_ASSERT((to? d->v2 : d->v1) != 0);
-    return to? *d->v2 : *d->v1;
+    DENG_ASSERT((to? d->to : d->from) != 0);
+    return to? *d->to : *d->from;
 }
 
 LineOwner *LineDef::vertexOwner(int to) const
@@ -238,8 +238,8 @@ AABoxd const &LineDef::aaBox() const
 
 void LineDef::updateAABox()
 {
-    V2d_InitBox(d->aaBox.arvec2, d->v1->origin());
-    V2d_AddToBox(d->aaBox.arvec2, d->v2->origin());
+    V2d_InitBox(d->aaBox.arvec2, d->from->origin());
+    V2d_AddToBox(d->aaBox.arvec2, d->to->origin());
 }
 
 coord_t LineDef::length() const
@@ -259,7 +259,7 @@ slopetype_t LineDef::slopeType() const
 
 void LineDef::updateSlopeType()
 {
-    d->direction = d->v2->origin() - d->v1->origin();
+    d->direction = d->to->origin() - d->from->origin();
     d->slopeType = M_SlopeTypeXY(d->direction.x, d->direction.y);
 }
 
@@ -271,7 +271,7 @@ binangle_t LineDef::angle() const
 int LineDef::boxOnSide(AABoxd const &box) const
 {
     coord_t v1Direction[2] = { direction().x, direction().y };
-    return M_BoxOnLineSide(&box, d->v1->origin(), v1Direction);
+    return M_BoxOnLineSide(&box, d->from->origin(), v1Direction);
 }
 
 int LineDef::boxOnSide_FixedPrecision(AABoxd const &box) const
@@ -284,8 +284,8 @@ int LineDef::boxOnSide_FixedPrecision(AABoxd const &box) const
      * so we won't change the discretization of the fractional part into 16-bit
      * precision.
      */
-    coord_t offset[2] = { de::floor(d->v1->origin()[VX] + d->direction.x/2),
-                          de::floor(d->v1->origin()[VY] + d->direction.y/2) };
+    coord_t offset[2] = { de::floor(d->from->origin()[VX] + d->direction.x/2),
+                          de::floor(d->from->origin()[VY] + d->direction.y/2) };
 
     fixed_t boxx[4];
     boxx[BOXLEFT]   = FLT2FIX(box.minX - offset[VX]);
@@ -293,8 +293,8 @@ int LineDef::boxOnSide_FixedPrecision(AABoxd const &box) const
     boxx[BOXBOTTOM] = FLT2FIX(box.minY - offset[VY]);
     boxx[BOXTOP]    = FLT2FIX(box.maxY - offset[VY]);
 
-    fixed_t pos[2] = { FLT2FIX(d->v1->origin()[VX] - offset[VX]),
-                       FLT2FIX(d->v1->origin()[VY] - offset[VY]) };
+    fixed_t pos[2] = { FLT2FIX(d->from->origin()[VX] - offset[VX]),
+                       FLT2FIX(d->from->origin()[VY] - offset[VY]) };
 
     fixed_t delta[2] = { FLT2FIX(d->direction.x),
                          FLT2FIX(d->direction.y) };
@@ -324,10 +324,10 @@ int LineDef::property(setargs_t &args) const
     switch(args.prop)
     {
     case DMU_VERTEX0:
-        DMU_GetValue(DMT_LINEDEF_V, &d->v1, &args, 0);
+        DMU_GetValue(DMT_LINEDEF_V, &d->from, &args, 0);
         break;
     case DMU_VERTEX1:
-        DMU_GetValue(DMT_LINEDEF_V, &d->v2, &args, 0);
+        DMU_GetValue(DMT_LINEDEF_V, &d->to, &args, 0);
         break;
     case DMU_DX:
         DMU_GetValue(DMT_LINEDEF_DX, &d->direction.x, &args, 0);
@@ -428,28 +428,28 @@ int LineDef::setProperty(setargs_t const &args)
     case DMU_VALID_COUNT:
         DMU_SetValue(DMT_LINEDEF_VALIDCOUNT, &_validCount, &args, 0);
         break;
-    case DMU_FLAGS:
+    case DMU_FLAGS: {
+#ifdef __CLIENT__
+        int oldFlags = _flags;
+#endif
         DMU_SetValue(DMT_LINEDEF_FLAGS, &_flags, &args, 0);
 
 #ifdef __CLIENT__
         /// @todo Surface should observe.
         if(hasFrontSideDef())
         {
-            SideDef &frontDef = frontSideDef();
-            frontDef.top().markAsNeedingDecorationUpdate();
-            frontDef.bottom().markAsNeedingDecorationUpdate();
-            frontDef.middle().markAsNeedingDecorationUpdate();
+            if((_flags & DDLF_DONTPEGTOP) != (oldFlags & DDLF_DONTPEGTOP))
+            {
+                frontSideDef().top().markAsNeedingDecorationUpdate();
+            }
+            if((_flags & DDLF_DONTPEGBOTTOM) != (oldFlags & DDLF_DONTPEGBOTTOM))
+            {
+                frontSideDef().bottom().markAsNeedingDecorationUpdate();
+            }
         }
 
-        if(hasBackSideDef())
-        {
-            SideDef &backDef = backSideDef();
-            backDef.top().markAsNeedingDecorationUpdate();
-            backDef.bottom().markAsNeedingDecorationUpdate();
-            backDef.middle().markAsNeedingDecorationUpdate();
-        }
 #endif // __CLIENT__
-        break;
+        break; }
 
     default:
         /// @throw WritePropertyError  The requested property is not writable.

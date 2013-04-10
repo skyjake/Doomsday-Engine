@@ -216,7 +216,7 @@ public: /// @todo make private:
     int _validCount;
 
 public:
-    LineDef(Vertex &v1, Vertex &v2,
+    LineDef(Vertex &from, Vertex &to,
             Sector *frontSector = 0,
             Sector *backSector  = 0);
 
