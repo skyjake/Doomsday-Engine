@@ -132,6 +132,8 @@ DENG2_PIMPL(Plane)
      */
     void markDependantSurfacesForDecorationUpdate()
     {
+        if(ddMapSetup) return;
+
         // "Middle" planes have no dependent surfaces.
         if(type == Plane::Middle) return;
 

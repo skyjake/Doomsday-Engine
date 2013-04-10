@@ -520,26 +520,21 @@ static void updateAllMapSectors(GameMap &map, bool forceUpdate = false)
     }
 }
 
-static void initAllMapPlaneHeights(GameMap &map)
+static void resetAllMapPlaneVisHeights(GameMap &map)
 {
     foreach(Sector *sector, map.sectors())
     foreach(Plane *plane, sector->planes())
     {
-        plane->_visHeight = plane->_oldHeight[0] = plane->_oldHeight[1] = plane->height();
+        plane->resetVisHeight();
     }
 }
 
-static inline void initSurfaceMaterialOrigin(Surface &suf)
-{
-    suf._visMaterialOrigin = suf._oldMaterialOrigin[0] = suf._oldMaterialOrigin[1] = suf._materialOrigin;
-}
-
-static void initAllMapSurfaceMaterialOrigins(GameMap &map)
+static void resetAllMapSurfaceVisMaterialOrigins(GameMap &map)
 {
     foreach(Sector *sector, map.sectors())
     foreach(Plane *plane, sector->planes())
     {
-        initSurfaceMaterialOrigin(plane->surface());
+        plane->surface().resetVisMaterialOrigin();
     }
 
     foreach(LineDef *line, map.lines())
@@ -549,9 +544,9 @@ static void initAllMapSurfaceMaterialOrigins(GameMap &map)
             continue;
 
         SideDef &sideDef = line->sideDef(i);
-        initSurfaceMaterialOrigin(sideDef.top());
-        initSurfaceMaterialOrigin(sideDef.middle());
-        initSurfaceMaterialOrigin(sideDef.bottom());
+        sideDef.top().resetVisMaterialOrigin();
+        sideDef.middle().resetVisMaterialOrigin();
+        sideDef.bottom().resetVisMaterialOrigin();
     }
 }
 
@@ -579,8 +574,8 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
         theMap->initSkyFix();
 
         updateAllMapSectors(*theMap, true /*force*/);
-        initAllMapPlaneHeights(*theMap);
-        initAllMapSurfaceMaterialOrigins(*theMap);
+        resetAllMapPlaneVisHeights(*theMap);
+        resetAllMapSurfaceVisMaterialOrigins(*theMap);
         theMap->initPolyobjs();
         DD_ResetTimer();
         return;
@@ -611,8 +606,8 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
         P_MapSpawnPlaneParticleGens();
 
         updateAllMapSectors(*theMap, true /*force*/);
-        initAllMapPlaneHeights(*theMap);
-        initAllMapSurfaceMaterialOrigins(*theMap);
+        resetAllMapPlaneVisHeights(*theMap);
+        resetAllMapSurfaceVisMaterialOrigins(*theMap);
 
 #ifdef __CLIENT__
         theMap->buildSurfaceLists();

@@ -75,20 +75,8 @@ public:
 #endif // __CLIENT__
 
 public:
-    /// @em Sharp origin of the surface material.
-    de::Vector2f _materialOrigin;
-
-    /// Old @em sharp origin of the surface material, for smoothing.
-    de::Vector2f _oldMaterialOrigin[2];
-
-    /// Smoothed origin of the surface material.
-    de::Vector2f _visMaterialOrigin;
-
-    /// Delta between the @sharp and smoothed origin of the surface material.
-    de::Vector2f _visMaterialOriginDelta;
-
 #ifdef __CLIENT__
-    /// @todo Does not belong here - move to the map renderer.
+    /// @todo Does this data belong here?
     struct DecorationData
     {
         /// @c true= An update is needed.

@@ -1709,7 +1709,7 @@ void GameMap::lerpScrollingSurfaces(bool resetNextViewer)
 
             surface->lerpVisMaterialOrigin();
 
-            // Has this plane reached its destination?
+            // Has this material reached its destination?
             if(surface->visMaterialOrigin() == surface->materialOrigin())
             {
                 iter.remove();
@@ -1757,7 +1757,7 @@ void GameMap::lerpTrackedPlanes(bool resetNextViewer)
             plane->lerpVisHeight();
 
             // Has this plane reached its destination?
-            if(plane->visHeight() == plane->height()) /// @todo  Can this fail? (float equality)
+            if(de::fequal(plane->visHeight(), plane->height()))
             {
                 iter.remove();
             }
