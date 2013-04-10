@@ -274,10 +274,9 @@ bool Polyobj::rotate(angle_t delta)
         {
             line->updateAABox();
             line->updateSlopeType();
-            line->_angle += ANGLE_TO_BANG(delta);
 
             // HEdge angle must be kept in sync.
-            line->front().leftHEdge()._angle = BANG_TO_ANGLE(line->_angle);
+            line->front().leftHEdge()._angle = BANG_TO_ANGLE(line->angle());
         }
         updateAABox();
         angle += delta;
@@ -302,10 +301,9 @@ bool Polyobj::rotate(angle_t delta)
             {
                 line->updateAABox();
                 line->updateSlopeType();
-                line->_angle -= ANGLE_TO_BANG(delta);
 
                 // HEdge angle must be kept in sync.
-                line->front().leftHEdge()._angle = BANG_TO_ANGLE(line->_angle);
+                line->front().leftHEdge()._angle = BANG_TO_ANGLE(line->angle());
             }
             updateAABox();
             angle -= delta;

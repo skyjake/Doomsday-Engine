@@ -210,11 +210,6 @@ public: /// @todo make private:
     /// Internal LF_* flags.
     byte _inFlags;
 
-    /// Calculated from the direction vector.
-    binangle_t _angle;
-
-    int _validCount;
-
 public:
     LineDef(Vertex &from, Vertex &to,
             Sector *frontSector = 0,
@@ -273,6 +268,9 @@ public:
      * @todo Refactor away.
      */
     int validCount() const;
+
+    /// @todo Refactor away.
+    void setValidCount(int newValidCount);
 
     /**
      * Returns the specified logical side of the line.

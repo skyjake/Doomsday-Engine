@@ -129,6 +129,9 @@ DENG2_PIMPL(LineDef)
     /// Direction vector from -> to.
     Vector2d direction;
 
+    /// Calculated from the direction vector.
+    binangle_t angle;
+
     /// Logical line slope (i.e., world angle) classification.
     slopetype_t slopeType;
 
@@ -145,6 +148,9 @@ DENG2_PIMPL(LineDef)
     /// Original index in the archived map.
     uint origIndex;
 
+    /// Used by legacy algorithms to prevent repeated processing.
+    int validCount;
+
     /// Whether the line has been mapped by each player yet.
     bool mapped[DDMAXPLAYERS];
 
@@ -154,11 +160,13 @@ DENG2_PIMPL(LineDef)
           from(&from),
           to(&to),
           direction(Vector2d(to.origin()) - Vector2d(from.origin())),
+          angle(bamsAtan2(int( direction.y ), int( direction.x ))),
           slopeType(M_SlopeTypeXY(direction.x, direction.y)),
           length(direction.length()),
           front(frontSector),
           back(backSector),
-          origIndex(0)
+          origIndex(0),
+          validCount(0)
     {
         std::memset(mapped, 0, sizeof(mapped));
     }
@@ -170,11 +178,8 @@ LineDef::LineDef(Vertex &from, Vertex &to, Sector *frontSector, Sector *backSect
       _vo2(0),
       _flags(0),
       _inFlags(0),
-      _angle(0),
-      _validCount(0),
       d(new Instance(this, from, to, frontSector, backSector))
 {
-    _angle = bamsAtan2(int( d->direction.y ), int( d->direction.x ));
     updateAABox();
 }
 
@@ -260,12 +265,13 @@ slopetype_t LineDef::slopeType() const
 void LineDef::updateSlopeType()
 {
     d->direction = d->to->origin() - d->from->origin();
+    d->angle     = bamsAtan2(int( d->direction.y ), int( d->direction.x ));
     d->slopeType = M_SlopeTypeXY(d->direction.x, d->direction.y);
 }
 
 binangle_t LineDef::angle() const
 {
-    return _angle;
+    return d->angle;
 }
 
 int LineDef::boxOnSide(AABoxd const &box) const
@@ -316,7 +322,12 @@ void LineDef::markMappedByPlayer(int playerNum, bool yes)
 
 int LineDef::validCount() const
 {
-    return _validCount;
+    return d->validCount;
+}
+
+void LineDef::setValidCount(int newValidCount)
+{
+    d->validCount = newValidCount;
 }
 
 int LineDef::property(setargs_t &args) const
@@ -343,7 +354,7 @@ int LineDef::property(setargs_t &args) const
         DMU_GetValue(DMT_LINEDEF_LENGTH, &d->length, &args, 0);
         break;
     case DMU_ANGLE: {
-        angle_t lineAngle = BANG_TO_ANGLE(_angle);
+        angle_t lineAngle = BANG_TO_ANGLE(d->angle);
         DMU_GetValue(DDVT_ANGLE, &lineAngle, &args, 0);
         break; }
     case DMU_SLOPETYPE:
@@ -383,7 +394,7 @@ int LineDef::property(setargs_t &args) const
         }
         break;
     case DMU_VALID_COUNT:
-        DMU_GetValue(DMT_LINEDEF_VALIDCOUNT, &_validCount, &args, 0);
+        DMU_GetValue(DMT_LINEDEF_VALIDCOUNT, &d->validCount, &args, 0);
         break;
     default:
         /// @throw UnknownPropertyError  The requested property does not exist.
@@ -426,7 +437,7 @@ int LineDef::setProperty(setargs_t const &args)
         break; }
 
     case DMU_VALID_COUNT:
-        DMU_SetValue(DMT_LINEDEF_VALIDCOUNT, &_validCount, &args, 0);
+        DMU_SetValue(DMT_LINEDEF_VALIDCOUNT, &d->validCount, &args, 0);
         break;
     case DMU_FLAGS: {
 #ifdef __CLIENT__
