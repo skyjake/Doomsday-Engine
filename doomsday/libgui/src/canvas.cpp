@@ -278,7 +278,7 @@ void Canvas::notifyReady()
 
     DENG2_FOR_AUDIENCE(GLReady, i) i->canvasGLReady(*this);
 
-    // The Canvas instance might have been destroyed now.
+    // This Canvas instance might have been destroyed now.
 }
 
 void Canvas::paintGL()

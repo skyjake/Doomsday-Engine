@@ -113,9 +113,16 @@ namespace de
 {
     /**
      * Template for observer sets. The template type should be an interface
-     * implemented by all the observers.
+     * implemented by all the observers. @ingroup data
      *
-     * @ingroup data
+     * @todo This could use further improvement, perhaps by utilizing a QSet in
+     * Observers<>. If the observers set is destroyed in the middle of
+     * iterating through a large number of observers, there will likely still
+     * be a crash because the 'next' iterator of the loop will become invalid
+     * (and not just point to the end of the set as in this instance when there
+     * is a single observer). Observers<>::Loop could also observe the set
+     * itself, although in that case it would be necessary to derive a custom
+     * set class that provides the necessary notifications to Loop.
      */
     template <typename Type>
     class Observers
@@ -166,6 +173,10 @@ namespace de
     public:
         Observers() : _members(0) {}
 
+        Observers(Observers<Type> const &other) : _members(0) {
+            *this = other;
+        }
+
         virtual ~Observers() {
             clear();
         }
@@ -173,6 +184,22 @@ namespace de
         void clear() {
             delete _members;
             _members = 0;
+        }
+
+        Observers<Type> &operator = (Observers<Type> const &other) {
+            // If _members already exists, the instance is retained
+            // in case someone is using it.
+            if(other._members) {
+                checkExists();
+                _members->clear();
+                DENG2_FOR_EACH_CONST(typename Members, i, *other._members) {
+                    add(*i);
+                }
+            }
+            else {
+                if(_members) _members->clear();
+            }
+            return *this;
         }
 
         /// Add an observer into the set. The set does not receive
