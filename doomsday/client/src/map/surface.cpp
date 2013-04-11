@@ -94,6 +94,54 @@ DENG2_PIMPL(Surface)
         std::memset(&soundEmitter, 0, sizeof(soundEmitter));
     }
 
+    void notifyNormalChanged(Vector3f const &oldNormal)
+    {
+        // Predetermine which axes have changed.
+        int changedAxes = 0;
+        for(int i = 0; i < 3; ++i)
+        {
+            if(!de::fequal(normal[i], oldNormal[i]))
+                changedAxes |= (1 << i);
+        }
+
+        DENG2_FOR_PUBLIC_AUDIENCE(NormalChange, i)
+        {
+            i->normalChanged(self, oldNormal, changedAxes);
+        }
+    }
+
+    void notifyMaterialOriginChanged(Vector2f const &oldMaterialOrigin,
+                                     int changedComponents)
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE(MaterialOriginChange, i)
+        {
+            i->materialOriginChanged(self, oldMaterialOrigin, changedComponents);
+        }
+
+        if(!ddMapSetup && self.isAttachedToMap())
+        {
+#ifdef __CLIENT__
+            /// @todo Replace with a de::Observer-based mechanism.
+            self._decorationData.needsUpdate = true;
+#endif
+            /// @todo Do not assume surface is from the CURRENT map.
+            theMap->scrollingSurfaces().insert(&self);
+        }
+    }
+
+    void notifyMaterialOriginChanged(Vector2f const &oldMaterialOrigin)
+    {
+        // Predetermine which axes have changed.
+        int changedAxes = 0;
+        for(int i = 0; i < 3; ++i)
+        {
+            if(!de::fequal(materialOrigin[i], oldMaterialOrigin[i]))
+                changedAxes |= (1 << i);
+        }
+
+        notifyMaterialOriginChanged(oldMaterialOrigin, changedAxes);
+    }
+
     void notifyOpacityChanged(float oldOpacity)
     {
         DENG2_FOR_PUBLIC_AUDIENCE(OpacityChange, i)
@@ -122,22 +170,6 @@ DENG2_PIMPL(Surface)
         }
 
         notifyTintColorChanged(oldTintColor, changedComponents);
-    }
-
-    void notifyNormalChanged(Vector3f const &oldNormal)
-    {
-        // Predetermine which axes have changed.
-        int changedAxes = 0;
-        for(int i = 0; i < 3; ++i)
-        {
-            if(!de::fequal(normal[i], oldNormal[i]))
-                changedAxes |= (1 << i);
-        }
-
-        DENG2_FOR_PUBLIC_AUDIENCE(NormalChange, i)
-        {
-            i->normalChanged(self, oldNormal, changedAxes);
-        }
     }
 
     void updateTangents()
@@ -329,71 +361,30 @@ Vector2f const &Surface::materialOrigin() const
     return d->materialOrigin;
 }
 
-bool Surface::setMaterialOrigin(Vector2f const &newOrigin)
+void Surface::setMaterialOrigin(Vector2f const &newOrigin)
 {
     if(d->materialOrigin != newOrigin)
     {
+        Vector2f oldMaterialOrigin = d->materialOrigin;
+
         d->materialOrigin = newOrigin;
 
-        if(isAttachedToMap())
-        {
-#ifdef __CLIENT__
-            /// @todo Replace with a de::Observer-based mechanism.
-            _decorationData.needsUpdate = true;
-#endif
-
-            if(!ddMapSetup)
-            {
-                /// @todo Do not assume surface is from the CURRENT map.
-                theMap->scrollingSurfaces().insert(this);
-            }
-        }
+        // Notify interested parties of the change.
+        d->notifyMaterialOriginChanged(oldMaterialOrigin);
     }
-    return true;
 }
 
-bool Surface::setMaterialOriginX(float x)
+void Surface::setMaterialOriginComponent(int component, float newPosition)
 {
-    if(d->materialOrigin.x != x)
+    if(!de::fequal(d->materialOrigin[component], newPosition))
     {
-        d->materialOrigin.x = x;
-        if(isAttachedToMap())
-        {
-#ifdef __CLIENT__
-            /// @todo Replace with a de::Observer-based mechanism.
-            _decorationData.needsUpdate = true;
-#endif
+        Vector2f oldMaterialOrigin = d->materialOrigin;
 
-            if(!ddMapSetup)
-            {
-                /// @todo Do not assume surface is from the CURRENT map.
-                theMap->scrollingSurfaces().insert(this);
-            }
-        }
+        d->materialOrigin[component] = newPosition;
+
+        // Notify interested parties of the change.
+        d->notifyMaterialOriginChanged(oldMaterialOrigin, (1 << component));
     }
-    return true;
-}
-
-bool Surface::setMaterialOriginY(float y)
-{
-    if(d->materialOrigin.y != y)
-    {
-        d->materialOrigin.y = y;
-        if(isAttachedToMap())
-        {
-#ifdef __CLIENT__
-            /// @todo Replace with a de::Observer-based mechanism.
-            _decorationData.needsUpdate = true;
-#endif
-
-            if(!ddMapSetup)
-            {
-                /// @todo Do not assume surface is from the CURRENT map.
-                theMap->scrollingSurfaces().insert(this);
-            }
-        }
-    }
-    return true;
 }
 
 Vector2f const &Surface::visMaterialOrigin() const

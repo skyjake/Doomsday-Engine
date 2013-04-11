@@ -49,13 +49,27 @@ public:
     /// The referenced property is not writeable. @ingroup errors
     DENG2_ERROR(WritePropertyError);
 
+    /**
+     * Observers to be notified when the normal vector changes.
+     */
     DENG2_DEFINE_AUDIENCE(NormalChange,
         void normalChanged(Surface &surface, de::Vector3f oldNormal,
                            int changedAxes /*bit-field (0x1=X, 0x2=Y, 0x4=Z)*/))
-
+    /**
+     * Observers to be notified when the @em sharp material origin changes.
+     */
+    DENG2_DEFINE_AUDIENCE(MaterialOriginChange,
+        void materialOriginChanged(Surface &surface, de::Vector2f oldMaterialOrigin,
+                                   int changedAxes /*bit-field (0x1=X, 0x2=Y)*/))
+    /**
+     * Observers to be notified when the opacity changes.
+     */
     DENG2_DEFINE_AUDIENCE(OpacityChange,
         void opacityChanged(Surface &surface, float oldOpacity))
 
+    /**
+     * Observers to be notified when the tint color changes.
+     */
     DENG2_DEFINE_AUDIENCE(TintColorChange,
         void tintColorChanged(Surface &sector, de::Vector3f const &oldTintColor,
                               int changedComponents /*bit-field (0x1=Red, 0x2=Green, 0x4=Blue)*/))
@@ -189,7 +203,7 @@ public:
      *
      * @param newOrigin  New origin offset in map coordinate space units.
      */
-    bool setMaterialOrigin(de::Vector2f const &newOrigin);
+    void setMaterialOrigin(de::Vector2f const &newOrigin);
 
     /**
      * @copydoc setMaterialOrigin()
@@ -197,23 +211,43 @@ public:
      * @param x  New X origin offset in map coordinate space units.
      * @param y  New Y origin offset in map coordinate space units.
      */
-    inline bool setMaterialOrigin(float x, float y) {
+    inline void setMaterialOrigin(float x, float y) {
         return setMaterialOrigin(de::Vector2f(x, y));
     }
 
     /**
-     * Change Material origin X coordinate.
+     * Change the specified @a component of the material origin for the surface.
+     * The MaterialOriginChange audience is notified whenever the material origin
+     * changes.
      *
-     * @param x  New X origin in map space.
+     * @param component    Index of the component axis (0=X, 1=Y).
+     * @param newPosition  New position for the origin component axis.
+     *
+     * @see setMaterialorigin(), setMaterialOriginX(), setMaterialOriginY()
      */
-    bool setMaterialOriginX(float x);
+    void setMaterialOriginComponent(int component, float newPosition);
 
     /**
-     * Change Material origin Y coordinate.
+     * Change the position of the X axis component of the material origin for the
+     * surface. The MaterialOriginChange audience is notified whenever the material
+     * origin changes.
      *
-     * @param y  New Y origin in map space.
+     * @param newPosition  New X axis position for the material origin.
+     *
+     * @see setMaterialOriginComponent(), setMaterialOriginY()
      */
-    bool setMaterialOriginY(float y);
+    inline void setMaterialOriginX(float newPosition) { setMaterialOriginComponent(0, newPosition); }
+
+    /**
+     * Change the position of the Y axis component of the material origin for the
+     * surface. The MaterialOriginChange audience is notified whenever the material
+     * origin changes.
+     *
+     * @param newPosition  New Y axis position for the material origin.
+     *
+     * @see setMaterialOriginComponent(), setMaterialOriginX()
+     */
+    inline void setMaterialOriginY(float newPosition) { setMaterialOriginComponent(1, newPosition); }
 
     /**
      * Returns the current interpolated visual material origin of the surface
