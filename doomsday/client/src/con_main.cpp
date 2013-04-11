@@ -54,14 +54,15 @@
 #include "de_filesys.h"
 
 #include "resource/fonts.h"
-#include "ui/displaymode.h"
 #include "ui/busyvisual.h"
 #include "cbuffer.h"
 #include "Game"
 
 #ifdef __CLIENT__
+#  include <de/DisplayMode>
+#  include "clientapp.h"
+#  include "ui/windowsystem.h"
 #  include "updater/downloaddialog.h"
-#  include <de/GuiApp>
 #endif
 
 using namespace de;
@@ -2005,13 +2006,15 @@ void Con_Error(char const *error, ...)
     va_list argptr;
 
 #ifdef __CLIENT__
-    Window::main().trapMouse(false);
+    ClientWindow::main().canvas().trapMouse(false);
 #endif
 
     // Already in an error?
     if(!ConsoleInited || errorInProgress)
     {
+#ifdef __CLIENT__
         DisplayMode_Shutdown();
+#endif
 
         va_start(argptr, error);
         dd_vsnprintf(buff, sizeof(buff), error, argptr);
@@ -2074,10 +2077,9 @@ void Con_Error(char const *error, ...)
 void Con_AbnormalShutdown(char const *message)
 {
     Sys_Shutdown();
-    DisplayMode_Shutdown();
 
 #ifdef __CLIENT__
-    Window::main().trapMouse(false);
+    DisplayMode_Shutdown();
 
     DENG2_GUI_APP->loop().pause();
 
@@ -2085,7 +2087,7 @@ void Con_AbnormalShutdown(char const *message)
     // windows. (Alternatively could hide/disable drawing of the windows.) Note
     // that the app's event loop is running normally while we show the native
     // message box below.
-    Window::shutdown();
+    ClientApp::windowSystem().closeAll();
 #endif
 
     if(message) // Only show if a message given.

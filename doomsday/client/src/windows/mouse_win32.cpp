@@ -23,9 +23,9 @@
 
 #include "directinput.h"
 #include "ui/sys_input.h"
+#include "ui/clientwindow.h"
 #include "sys_system.h"
 #include "con_main.h"
-#include "ui/window.h"
 #include <de/c_wrapper.h>
 
 static LPDIRECTINPUTDEVICE8 didMouse;
@@ -37,7 +37,7 @@ static int Mouse_Win32_Init()
     if(CommandLine_Check("-nomouse") || novideo) return false;
 
     // We'll need a window handle for this.
-    HWND hWnd = (HWND) Window::main().nativeHandle();
+    HWND hWnd = (HWND) ClientWindow::main().nativeHandle();
     if(!hWnd)
     {
         Con_Error("Mouse_Init: Main window not available, cannot init mouse.");
@@ -215,15 +215,18 @@ static void Mouse_Win32_GetState(mousestate_t* state)
 
 static void Mouse_Win32_Trap(boolean enabled)
 {
-    assert(didMouse);
+    LOG_AS("Mouse_Win32");
+    DENG_ASSERT(didMouse);
 
     mouseTrapped = (enabled != 0);
     if(enabled)
     {
+        LOG_DEBUG("Acquiring the mouse");
         didMouse->Acquire();
     }
     else
     {
+        LOG_DEBUG("Unacquiring the mouse");
         didMouse->Unacquire();
     }
 }

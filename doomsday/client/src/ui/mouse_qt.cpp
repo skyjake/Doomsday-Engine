@@ -24,14 +24,16 @@
 #include "de_base.h"
 #include "con_main.h"
 #include "ui/sys_input.h"
-#include "ui/window.h"
+#include "ui/windowsystem.h"
+#include "ui/clientwindow.h"
 #include "ui/mouse_qt.h"
-#include "ui/canvas.h"
 #include <string.h>
 
+#include <QApplication>
 #include <QWidget>
 #include <QPoint>
 #include <QCursor>
+#include <de/Canvas>
 
 typedef struct clicker_s {
     int down;                   // Count for down events.
@@ -42,6 +44,7 @@ typedef struct clicker_s {
 static struct { int dx, dy; } mouseDelta[IMA_MAXAXES];
 static clicker_t mouseClickers[IMB_MAXBUTTONS];
 static bool mouseTrapped = false;
+static bool cursorHidden = false;
 static QPoint prevMousePos;
 
 static int Mouse_Qt_Init(void)
@@ -49,6 +52,7 @@ static int Mouse_Qt_Init(void)
     memset(&mouseDelta, 0, sizeof(mouseDelta));
     memset(&mouseClickers, 0, sizeof(mouseClickers));
     mouseTrapped = false;
+    cursorHidden = false;
     prevMousePos = QPoint();
     return true;
 }
@@ -62,12 +66,10 @@ static void Mouse_Qt_Poll()
 {
     if(!mouseTrapped) return;
 
-#ifndef LIBDENG_CANVAS_TRACK_WITH_MOUSE_MOVE_EVENTS
-    Window &mainWindow = Window::main();
-    QWidget *widget = mainWindow.widgetPtr();
-    if(!widget) return; // Hmm?
+    ClientWindow *win = WindowSystem::mainPtr();
+    if(!win) return; // Hmm?
 
-    QPoint curPos = widget->mapFromGlobal(QCursor::pos());
+    QPoint curPos = win->mapFromGlobal(QCursor::pos());
     if(!prevMousePos.isNull())
     {
         QPoint delta = curPos - prevMousePos;
@@ -76,8 +78,8 @@ static void Mouse_Qt_Poll()
             Mouse_Qt_SubmitMotion(IMA_POINTER, delta.x(), delta.y());
 
             // Keep the cursor centered.
-            QPoint mid(mainWindow.width() / 2, mainWindow.height() / 2);
-            QCursor::setPos(widget->mapToGlobal(mid));
+            QPoint mid(win->width() / 2, win->height() / 2);
+            QCursor::setPos(win->mapToGlobal(mid));
             prevMousePos = mid;
         }
     }
@@ -85,7 +87,6 @@ static void Mouse_Qt_Poll()
     {
         prevMousePos = curPos;
     }
-#endif
 }
 
 static void Mouse_Qt_GetState(mousestate_t *state)
@@ -115,10 +116,59 @@ static void Mouse_Qt_GetState(mousestate_t *state)
     }
 }
 
+static void Mouse_Qt_ShowCursor(bool yes)
+{
+    de::Canvas &canvas = WindowSystem::main().canvas();
+
+    LOG_DEBUG("%s cursor (presently visible? %b)")
+            << (yes? "showing" : "hiding") << !cursorHidden;
+
+    if(!yes && !cursorHidden)
+    {
+        cursorHidden = true;
+        canvas.setCursor(QCursor(Qt::BlankCursor));
+        qApp->setOverrideCursor(QCursor(Qt::BlankCursor));
+    }
+    else if(yes && cursorHidden)
+    {
+        cursorHidden = false;
+        qApp->restoreOverrideCursor();
+        canvas.setCursor(QCursor(Qt::ArrowCursor)); // Default cursor.
+    }
+}
+
+static void Mouse_Qt_InitTrap()
+{
+    de::Canvas &canvas = WindowSystem::main().canvas();
+
+    QCursor::setPos(canvas.mapToGlobal(canvas.rect().center()));
+    canvas.grabMouse();
+
+    Mouse_Qt_ShowCursor(false);
+}
+
+static void Mouse_Qt_DeinitTrap()
+{
+    WindowSystem::main().canvas().releaseMouse();
+
+    Mouse_Qt_ShowCursor(true);
+}
+
 static void Mouse_Qt_Trap(boolean enabled)
 {
+    if(mouseTrapped == CPP_BOOL(enabled)) return;
+
     mouseTrapped = enabled;
     prevMousePos = QPoint();
+
+    if(enabled)
+    {
+        Mouse_Qt_InitTrap();
+    }
+    else
+    {
+        Mouse_Qt_DeinitTrap();
+    }
 }
 
 void Mouse_Qt_SubmitButton(int button, boolean isDown)

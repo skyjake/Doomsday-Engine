@@ -156,6 +156,22 @@ def count_word(word, inText):
     return count
 
 
+def mac_os_version():
+    """Determines the Mac OS version."""
+    return platform.mac_ver()[0][:4]
+
+
+def version_cmp(a, b):
+    """Compares two versions, returning -1 if a < b, 0 if a == b, and 1 if a > b.
+    - a: String in the form 1.2.3
+    - b: String in the form 3.4.5"""
+    va = map(lambda s: int(s), a.split('.'))
+    vb = map(lambda s: int(s), b.split('.'))
+    if va < vb: return -1
+    if va > vb: return 1
+    return 0
+
+
 def system_command(cmd):
     result = subprocess.call(cmd, shell=True)
     if result != 0:

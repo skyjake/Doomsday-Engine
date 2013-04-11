@@ -77,10 +77,11 @@
 #ifdef DENG2_USE_QT
 #  include <QtCore/qglobal.h>
 
-// Qt versioning helper. Qt 4.6 is the oldest we support.
-#  if (QT_VERSION >= QT_VERSION_CHECK(4, 6, 0))
-#    define DENG2_QT_4_6_OR_NEWER
+// Qt versioning helper. Qt 4.7 is the oldest we support.
+#  if (QT_VERSION <= QT_VERSION_CHECK(4, 6, 0))
+#    error "Unsupported version of Qt"
 #  endif
+#  define DENG2_QT_4_6_OR_NEWER
 #  if (QT_VERSION >= QT_VERSION_CHECK(4, 7, 0))
 #    define DENG2_QT_4_7_OR_NEWER
 #  endif

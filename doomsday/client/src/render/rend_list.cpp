@@ -343,8 +343,8 @@ static void rlBindTo(int unit, rendlist_texmapunit_t const *tmu)
     DENG2_ASSERT(tmu);
     if(!tmu->hasTexture()) return;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
     glActiveTexture(GL_TEXTURE0 + byte(unit));
 
     rlBind(tmu);
@@ -1205,8 +1205,8 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
     // Should we just skip all this?
     if(conditions & DCF_SKIP) return;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     boolean bypass = false;
     if(TU(list, TU_INTER)->hasTexture())
@@ -1373,8 +1373,8 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
  */
 static void selectTexUnits(int count)
 {
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     for(int i = numTexUnits - 1; i >= count; i--)
     {
@@ -1399,8 +1399,8 @@ static void selectTexUnits(int count)
  */
 static int setupListState(listmode_t mode, rendlist_t *list)
 {
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch(mode)
     {
@@ -2047,8 +2047,8 @@ void RL_RenderAllLists()
     uint count;
 
     DENG_ASSERT(!Sys_GLCheckError());
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
 BEGIN_PROF( PROF_RL_RENDER_ALL );
 

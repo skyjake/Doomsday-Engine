@@ -53,9 +53,9 @@ DENG_EXTERN_C float vid_gamma, vid_bright, vid_contrast;
 DENG_EXTERN_C int r_detail;
 
 #ifdef _DEBUG
-#  define LIBDENG_ASSERT_GL_CONTEXT_ACTIVE()  {GL_AssertContextActive();}
+#  define DENG_ASSERT_GL_CONTEXT_ACTIVE()  {GL_AssertContextActive();}
 #else
-#  define LIBDENG_ASSERT_GL_CONTEXT_ACTIVE()
+#  define DENG_ASSERT_GL_CONTEXT_ACTIVE()
 #endif
 
 #ifdef _DEBUG

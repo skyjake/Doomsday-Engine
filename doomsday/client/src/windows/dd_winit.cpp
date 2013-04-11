@@ -1,4 +1,4 @@
-/** @file dd_winit.cpp
+/** @file dd_winit.cpp  Engine Initialization (Windows).
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -16,14 +16,6 @@
  * General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small>
  */
-
-/**
- * Engine Initialization - Windows.
- *
- * Create windows, load DLLs, setup APIs.
- */
-
-// HEADER FILES ------------------------------------------------------------
 
 #define WIN32_LEAN_AND_MEAN
 #define _WIN32_DCOM
@@ -50,32 +42,17 @@
 
 #include "filesys/fs_util.h"
 #include "dd_winit.h"
-#include "ui/displaymode.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+#ifdef __CLIENT__
+#  include <de/DisplayMode>
+#endif
 
 application_t app;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 #ifdef UNICODE
 static LPWSTR convBuf;
 static LPSTR utf8ConvBuf;
 #endif
-
-// CODE --------------------------------------------------------------------
 
 #ifdef UNICODE
 LPCWSTR ToWideString(const char* str)
@@ -111,8 +88,8 @@ LPCSTR ToAnsiString(const wchar_t* wstr)
  * \note GetLastError() should only be called when we *know* an error was thrown.
  * The result of calling this any other time is undefined.
  *
- * @return              Ptr to a string containing a textual representation of
- *                      the last error thrown in the current thread else @c NULL.
+ * @return Ptr to a string containing a textual representation of the last
+ * error thrown in the current thread else @c NULL.
  */
 const char* DD_Win32_GetLastErrorMessage(void)
 {
@@ -267,8 +244,6 @@ boolean DD_Win32_Init(void)
         failed = FALSE;
     }
 
-    Plug_LoadAll();
-
 #ifdef __CLIENT__
     // No Windows system keys?
     if(CommandLine_Check("-nowsk"))
@@ -299,7 +274,9 @@ void DD_Shutdown()
     // No more use of COM beyond, this point.
     CoUninitialize();
 
+#ifdef __CLIENT__
     DisplayMode_Shutdown();
+#endif
 }
 
 /**

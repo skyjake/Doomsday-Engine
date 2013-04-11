@@ -31,6 +31,11 @@
 #include <QTextStream>
 #include <cmath>
 
+#ifdef WIN32
+#  undef min
+#  undef max
+#endif
+
 namespace de {
 
 /**

@@ -1,4 +1,4 @@
-/** @file keycode.cpp Keycode translation. 
+/** @file keyeventsource.cpp  Object that produces key events.
  * @ingroup input
  *
  * Depends on Qt GUI.
@@ -20,24 +20,23 @@
  * 02110-1301 USA</small>
  */
 
-#include <QKeyEvent>
-#include <QDebug>
-
 #ifdef WIN32
-#  include "de_platform.h"
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h>
 #endif
+
+#include "de/KeyEventSource"
+#include <QKeyEvent>
+#include <de/Log>
 
 #if defined(UNIX) && !defined(MACOSX)
 #  include <QX11Info>
 #  include <X11/keysym.h>
 #  include <X11/Xlib.h>
-#  include "../unix/imKStoUCS.c"
+#  include "imKStoUCS_x11.c"
 #  define XFREE_KEYMAPPING
 static int x11ScancodeToDDKey(int scancode);
 #endif
-
-#include "ui/keycode.h"
-#include "dd_share.h"
 
 #ifdef WIN32
 static int win32Keymap[256];
@@ -178,8 +177,8 @@ static void checkWin32Keymap()
 }
 #endif // WIN32
 
-int Keycode_TranslateFromQt(int qtKey, int nativeVirtualKey, int nativeScanCode)
-{   
+int de::KeyEventSource::ddKeyFromQt(int qtKey, int nativeVirtualKey, int nativeScanCode)
+{
 #ifdef MACOSX
     switch(qtKey)
     {
@@ -198,7 +197,7 @@ int Keycode_TranslateFromQt(int qtKey, int nativeVirtualKey, int nativeScanCode)
     int mapped = x11ScancodeToDDKey(nativeScanCode);
     if(mapped) return mapped;
 #else
-    DENG_UNUSED(nativeScanCode);
+    DENG2_UNUSED(nativeScanCode);
 #endif
 
     // Non-character-inserting keys.
@@ -335,10 +334,9 @@ int Keycode_TranslateFromQt(int qtKey, int nativeVirtualKey, int nativeScanCode)
     }
 #endif
 
-    // Not supported.
-    qDebug() << "Keycode" << qtKey << QString("0x%1").arg(qtKey, 0, 16)
-             << "virtualKey" << nativeVirtualKey << "scancode" << nativeScanCode
-             << "not translated.";
+    // Not supported!
+    LOG_DEBUG("Not translated: Qt key %i (%x), virtualKey %i, scancode %i")
+            << qtKey << qtKey << nativeVirtualKey << nativeScanCode;
 
     return 0;
 }

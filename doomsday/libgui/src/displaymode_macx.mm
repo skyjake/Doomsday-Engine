@@ -23,14 +23,10 @@
 #include <CoreFoundation/CoreFoundation.h>
 #include <ApplicationServices/ApplicationServices.h>
 #include <AppKit/AppKit.h>
-#ifdef MACOS_10_4
-#  include <Carbon/Carbon.h>
-#endif
 #include <vector>
 
-#include "dd_types.h"
-#include "ui/displaymode_native.h"
-#include "ui/window.h"
+//#include "de/libdeng2.h"
+#include "de/gui/displaymode_native.h"
 
 /// Returns -1 on error.
 static int intFromDict(CFDictionaryRef dict, CFStringRef key)
@@ -129,18 +125,18 @@ int DisplayMode_Native_Count(void)
     return displayModes.size();
 }
 
-void DisplayMode_Native_GetMode(int index, DisplayMode* mode)
+void DisplayMode_Native_GetMode(int index, DisplayMode *mode)
 {
     assert(index >= 0 && index < (int)displayModes.size());
     *mode = displayModes[index];
 }
 
-void DisplayMode_Native_GetCurrentMode(DisplayMode* mode)
+void DisplayMode_Native_GetCurrentMode(DisplayMode *mode)
 {
     *mode = modeFromDict(getCurrentDisplayDict());
 }
 
-static int findIndex(const DisplayMode* mode)
+static int findIndex(DisplayMode const *mode)
 {
     for(unsigned int i = 0; i < displayModes.size(); ++i)
     {
@@ -155,7 +151,7 @@ static int findIndex(const DisplayMode* mode)
     return -1; // Invalid mode.
 }
 
-int DisplayMode_Native_Change(const DisplayMode* mode, boolean shouldCapture)
+int DisplayMode_Native_Change(DisplayMode const *mode, int shouldCapture)
 {
     const CGDisplayFadeInterval fadeTime = .5f;
 
@@ -212,24 +208,17 @@ int DisplayMode_Native_Change(const DisplayMode* mode, boolean shouldCapture)
     return result == kCGErrorSuccess;
 }
 
-void DisplayMode_Native_Raise(void* nativeHandle)
+void DisplayMode_Native_Raise(void *nativeHandle)
 {
     assert(nativeHandle);
 
-#ifndef MACOS_10_4
     // Qt uses the Cocoa framework.
     NSView* handle = (NSView*) nativeHandle;
     NSWindow* wnd = [handle window];
     [wnd setLevel:CGShieldingWindowLevel()];
-#else
-    // Qt uses the Carbon framework.
-    WindowRef wnd = HIViewGetWindow((HIViewRef) nativeHandle);
-    WindowGroupRef wndGroup = GetWindowGroup(wnd);
-    SetWindowGroupLevel(wndGroup, CGShieldingWindowLevel());
-#endif
 }
 
-void DisplayMode_Native_GetColorTransfer(displaycolortransfer_t* colors)
+void DisplayMode_Native_GetColorTransfer(DisplayColorTransfer *colors)
 {
     const uint size = 256;
     CGGammaValue red[size];
@@ -248,7 +237,7 @@ void DisplayMode_Native_GetColorTransfer(displaycolortransfer_t* colors)
     }
 }
 
-void DisplayMode_Native_SetColorTransfer(const displaycolortransfer_t* colors)
+void DisplayMode_Native_SetColorTransfer(DisplayColorTransfer const *colors)
 {
     const uint size = 256;
     CGGammaValue red[size];

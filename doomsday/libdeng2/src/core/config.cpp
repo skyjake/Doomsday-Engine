@@ -77,7 +77,7 @@ void Config::read()
              << NumberValue(verInfo.build);
 
     File &scriptFile = App::rootFolder().locate<File>(d->configPath);
-    bool shouldRunScript = false;
+    bool shouldRunScript = App::commandLine().has("-reconfig");
 
     try
     {
@@ -137,7 +137,7 @@ void Config::read()
     }
 }
 
-void Config::write()
+void Config::write() const
 {
     Writer(App::persistentData().entryBlock(d->persistentPath)).withHeader() << names();
 }
@@ -147,39 +147,128 @@ Record &Config::names()
     return d->config.globals();
 }
 
-Value &Config::get(String const &name)
+Record const &Config::names() const
+{
+    return d->config.globals();
+}
+
+Variable &Config::operator [] (String const &name)
+{
+    return names()[name];
+}
+
+Variable const &Config::operator [] (String const &name) const
+{
+    return names()[name];
+}
+
+Value &Config::get(String const &name) const
 {
     return d->config.globals()[name].value();
 }
 
-dint Config::geti(String const &name)
+dint Config::geti(String const &name) const
 {
     return dint(get(name).asNumber());
 }
 
-bool Config::getb(String const &name)
+bool Config::getb(String const &name) const
 {
     return get(name).isTrue();
 }
 
-duint Config::getui(String const &name)
+duint Config::getui(String const &name) const
 {
     return duint(get(name).asNumber());
 }
 
-ddouble Config::getd(String const &name)
+ddouble Config::getd(String const &name) const
 {
     return get(name).asNumber();
 }
 
-String Config::gets(String const &name)
+String Config::gets(String const &name) const
 {
     return get(name).asText();
 }
 
-ArrayValue &Config::geta(String const &name)
+ArrayValue &Config::geta(String const &name) const
 {
     return getAs<ArrayValue>(name);
+}
+
+Variable &Config::set(String const &name, bool value)
+{
+    if(names().has(name))
+    {
+        // Change value of existing variable.
+        Variable &var = names()[name];
+        var = new NumberValue(value);
+        return var;
+    }
+    else
+    {
+        // Create a new variable.
+        return names().addBoolean(name, value);
+    }
+}
+
+Variable &Config::set(String const &name, Value::Number const &value)
+{
+    if(names().has(name))
+    {
+        // Change value of existing variable.
+        Variable &var = names()[name];
+        var = new NumberValue(value);
+        return var;
+    }
+    else
+    {
+        // Create a new variable.
+        return names().addBoolean(name, value);
+    }
+}
+
+Variable &Config::set(String const &name, dint value)
+{
+    return set(name, Value::Number(value));
+}
+
+Variable &Config::set(String const &name, duint value)
+{
+    return set(name, Value::Number(value));
+}
+
+Variable &Config::set(String const &name, ArrayValue *value)
+{
+    if(names().has(name))
+    {
+        // Change value of existing variable.
+        Variable &var = names()[name];
+        var = value;
+        return var;
+    }
+    else
+    {
+        // Create a new variable.
+        return names().addArray(name, value);
+    }
+}
+
+Variable &Config::set(String const &name, Value::Text const &value)
+{
+    if(names().has(name))
+    {
+        // Change value of existing variable.
+        Variable &var = names()[name];
+        var = new TextValue(value);
+        return var;
+    }
+    else
+    {
+        // Create a new variable.
+        return names().addText(name, value);
+    }
 }
 
 } // namespace de

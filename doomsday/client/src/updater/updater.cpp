@@ -49,7 +49,8 @@
 #include "dd_main.h"
 #include "con_main.h"
 #include "ui/nativeui.h"
-#include "ui/window.h"
+#include "ui/windowsystem.h"
+#include "ui/clientwindow.h"
 #include "updater.h"
 #include "downloaddialog.h"
 #include "processcheckdialog.h"
@@ -107,11 +108,11 @@ static void runInstallerCommand(void)
 
 static bool switchToWindowedMode()
 {
-    Window &mainWindow = Window::main();
-    bool wasFull = mainWindow.isFullscreen();
+    ClientWindow &mainWindow = WindowSystem::main();
+    bool wasFull = mainWindow.isFullScreen();
     if(wasFull)
     {
-        int attribs[] = { Window::Fullscreen, false, Window::End };
+        int attribs[] = { ClientWindow::Fullscreen, false, ClientWindow::End };
         mainWindow.changeAttributes(attribs);
     }
     return wasFull;
@@ -121,8 +122,8 @@ static void switchBackToFullscreen(bool wasFull)
 {
     if(wasFull)
     {
-        int attribs[] = { Window::Fullscreen, true, Window::End };
-        Window::main().changeAttributes(attribs);
+        int attribs[] = { ClientWindow::Fullscreen, true, ClientWindow::End };
+        ClientWindow::main().changeAttributes(attribs);
     }
 }
 
@@ -242,7 +243,7 @@ DENG2_PIMPL(Updater)
     {
         if(!settingsDlg)
         {
-            settingsDlg = new UpdaterSettingsDialog(Window::main().widgetPtr());
+            settingsDlg = new UpdaterSettingsDialog(&ClientWindow::main());
             QObject::connect(settingsDlg, SIGNAL(finished(int)), thisPublic, SLOT(settingsDialogClosed(int)));
         }
         else
@@ -313,7 +314,7 @@ DENG2_PIMPL(Updater)
             // Automatically switch to windowed mode for convenience.
             bool wasFull = switchToWindowedMode();
 
-            UpdateAvailableDialog dlg(latestVersion, latestLogUri, Window::main().widgetPtr());
+            UpdateAvailableDialog dlg(latestVersion, latestLogUri, &ClientWindow::main());
             availableDlg = &dlg;
             execAvailableDialog(wasFull);
         }
@@ -453,15 +454,23 @@ Updater::Updater(QObject *parent) : QObject(parent), d(new Instance(this))
     connect(d->network, SIGNAL(finished(QNetworkReply*)), this, SLOT(gotReply(QNetworkReply*)));
 
     // Do a silent auto-update check when starting.
-    if(d->shouldCheckForUpdate())
-    {
-        d->queryLatestVersion(false);
-    }
+    de::App::app().audienceForStartupComplete += this;
 }
 
 void Updater::setBackToFullscreen(bool yes)
 {
     d->backToFullscreen = yes;
+}
+
+void Updater::appStartupCompleted()
+{
+    LOG_AS("Updater")
+    LOG_DEBUG("App startup was completed");
+
+    if(d->shouldCheckForUpdate())
+    {
+        checkNow(false);
+    }
 }
 
 void Updater::gotReply(QNetworkReply* reply)
@@ -536,7 +545,7 @@ void Updater::checkNowShowingProgress()
     // Not if there is an ongoing download.
     if(d->download) return;
 
-    d->availableDlg = new UpdateAvailableDialog(Window::main().widgetPtr());
+    d->availableDlg = new UpdateAvailableDialog(&ClientWindow::main());
     d->queryLatestVersion(true);
 
     d->execAvailableDialog(false);
@@ -598,6 +607,13 @@ void Updater_ShowSettings(void)
 
 void Updater_PrintLastUpdated(void)
 {
-    Con_Message("Latest update check was made %s.",
-                UpdaterSettings().lastCheckAgo().toLatin1().constData());
+    de::String ago = UpdaterSettings().lastCheckAgo();
+    if(ago.isEmpty())
+    {
+        Con_Message("Never checked for updates.");
+    }
+    else
+    {
+        Con_Message("Latest update check was made %s.", ago.toLatin1().constData());
+    }
 }

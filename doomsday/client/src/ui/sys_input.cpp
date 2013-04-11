@@ -138,6 +138,13 @@ static void Mouse_Init(void)
 
     // Init was successful.
     useMouse = true;
+
+    // Now that the mouse is initialized, make sure the mouse gets trapped if the
+    // canvas wants it to be.
+    if(ClientWindow::main().canvas().isMouseTrapped())
+    {
+        Mouse_Trap(true);
+    }
 }
 
 boolean I_Init(void)

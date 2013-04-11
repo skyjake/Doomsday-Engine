@@ -17,6 +17,7 @@
  */
 
 #include "ui/guiwidget.h"
+#include "ui/guirootwidget.h"
 #include <de/garbage.h>
 
 using namespace de;
@@ -31,6 +32,11 @@ DENG2_PIMPL(GuiWidget)
 
 GuiWidget::GuiWidget(String const &name) : Widget(name), d(new Instance(this))
 {}
+
+GuiRootWidget &GuiWidget::root()
+{
+    return static_cast<GuiRootWidget &>(Widget::root());
+}
 
 RuleRectangle &GuiWidget::rule()
 {

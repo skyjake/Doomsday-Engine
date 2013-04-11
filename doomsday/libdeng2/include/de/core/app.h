@@ -58,6 +58,12 @@ public:
     };
     Q_DECLARE_FLAGS(SubsystemInitFlags, SubsystemInitFlag)
 
+    /**
+     * Observers to be notified when application startup has been fully
+     * completed.
+     */
+    DENG2_DEFINE_AUDIENCE(StartupComplete, void appStartupCompleted())
+
 public:
     /**
      * Construct an App instance. The application will not be fully usable

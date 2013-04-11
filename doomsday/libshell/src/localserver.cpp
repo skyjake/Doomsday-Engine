@@ -93,8 +93,6 @@ void LocalServer::start(duint16 port, String const &gameMode, QStringList additi
      */
 
     cmd.append(bin);
-    cmd.append("-appdir");
-    cmd.append(".");
     cmd.append("-vdmap");
     cmd.append("..");
     cmd.append("}Data");
