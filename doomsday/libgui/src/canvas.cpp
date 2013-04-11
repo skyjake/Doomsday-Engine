@@ -20,6 +20,9 @@
 #include "de/Canvas"
 #include "de/CanvasWindow"
 
+#include <de/App>
+#include <de/Log>
+
 #include <QApplication>
 #include <QKeyEvent>
 #include <QMouseEvent>
@@ -33,7 +36,6 @@
 #include <QTimer>
 #include <QTime>
 #include <QDebug>
-#include <de/Log>
 
 namespace de {
 
@@ -44,6 +46,7 @@ DENG2_PIMPL(Canvas)
     CanvasWindow *parent;
     bool readyNotified;
     Vector2i currentSize;
+    bool mouseDisabled;
     bool mouseGrabbed;
 #ifdef WIN32
     bool altIsDown;
@@ -56,17 +59,20 @@ DENG2_PIMPL(Canvas)
         : Base(i),
           parent(parentWindow),
           readyNotified(false),
+          mouseDisabled(false),
           mouseGrabbed(false)
     {
         wheelDir[0] = wheelDir[1] = 0;
 #ifdef WIN32
         altIsDown = false;
 #endif
+
+        mouseDisabled = App::commandLine().has("-nomouse");
     }
 
     void grabMouse()
     {
-        if(!self.isVisible()) return;
+        if(!self.isVisible() || mouseDisabled) return;
 
         LOG_DEBUG("grabbing mouse (already grabbed? %b)") << mouseGrabbed;
 
@@ -83,7 +89,7 @@ DENG2_PIMPL(Canvas)
 
     void ungrabMouse()
     {
-        if(!self.isVisible()) return;
+        if(!self.isVisible() || mouseDisabled) return;
 
         LOG_DEBUG("ungrabbing mouse (presently grabbed? %b)") << mouseGrabbed;
 
@@ -199,6 +205,8 @@ Vector2i Canvas::size() const
 
 void Canvas::trapMouse(bool trap)
 {
+    if(d->mouseDisabled) return;
+
     if(trap)
     {
         d->grabMouse();
@@ -363,6 +371,12 @@ void Canvas::mousePressEvent(QMouseEvent *ev)
 
 void Canvas::mouseReleaseEvent(QMouseEvent* ev)
 {
+    if(d->mouseDisabled)
+    {
+        ev->ignore();
+        return;
+    }
+
     ev->accept();
 
     if(!d->mouseGrabbed)
@@ -380,6 +394,12 @@ void Canvas::mouseReleaseEvent(QMouseEvent* ev)
 
 void Canvas::wheelEvent(QWheelEvent *ev)
 {
+    if(d->mouseDisabled)
+    {
+        ev->ignore();
+        return;
+    }
+
     ev->accept();
 
     bool continuousMovement = (d->prevWheelAt.elapsed() < MOUSE_WHEEL_CONTINUOUS_THRESHOLD_MS);
