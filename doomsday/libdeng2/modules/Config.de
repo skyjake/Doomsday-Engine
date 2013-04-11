@@ -47,26 +47,33 @@ def setDefaults(d = None)
 
     # Window manager defaults.
     record d.window
-    d.window.fsaa = True
+    d.window.fsaa = True    # Remove this (should be window-specific).
 
+    # Configure the main window.
     record d.window.main
     d.window.main.center = True
+    d.window.main.fsaa   = True
+    d.window.main.vsync  = True
 
     try
         # The default window parameters depend on the original display mode.
         import DisplayMode
         mode = DisplayMode.originalMode()
 
-        d.window.main.rect = [0, 0, mode['width'], mode['height']]
-        # The normal-mode window leaves some space on the sides so that
+        # By default the fullscreen resolution is the desktop resolution.
+        d.window.main.fullSize = [mode['width'], mode['height']]
+        
+        # In windowed mode mode, leave some space on the sides so that
         # the first switch to windowed mode does not place the window in an
         # inconvenient location. The reduction is done proportionally.
         offx = mode['width'] * 0.15
         offy = mode['height'] * 0.15
-        d.window.main.normalRect = [offx, offy, mode['width'] - 2*offx, mode['height'] - 2*offy]
+        d.window.main.rect = [offx, offy, 
+                              mode['width'] - 2*offx,
+                              mode['height'] - 2*offy]
         d.window.main.colorDepth = mode['depth']
     catch NotFoundError
-        # DisplayMode isn't available when running in non-GUI mode.
+        # DisplayMode isn't available on the server.
     end
 
     import Version
@@ -108,12 +115,18 @@ updateWithDefaults()
 
 # Check the previous version and decide what to do.
 if '__oldversion__' in locals()
+    # Check for a new build.
     if __version__[3] > __oldversion__[3]
-        # Current build number is newer.
         print 'Detected new build:', __oldversion__[3], '=>', __version__[3]
+        
+        # Get rid of some old stuff.
+        try
+            if __version__[3] >= 826: del window.main.normalRect
+        catch: pass
     end
+    
+    # Check for a new release.
     if __version__[0:2] > __oldversion__[0:2]
-        # Current version is newer.
         print 'Detected new release:', __oldversion__, '=>', __version__
     end
 

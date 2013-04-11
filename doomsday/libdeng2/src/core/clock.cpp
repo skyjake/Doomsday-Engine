@@ -66,4 +66,9 @@ Clock &Clock::appClock()
     return *_appClock;
 }
 
+Time const &Clock::appTime()
+{
+    return appClock().time();
+}
+
 } // namespace de

@@ -32,6 +32,7 @@
 #ifdef __cplusplus
 
 #include <de/libdeng2.h>
+#include <de/App>
 #include <QObject>
 #include <QNetworkReply>
 
@@ -39,7 +40,7 @@
  * Automatic updater. Communicates with dengine.net and coordinates the
  * download and reinstall procedure.
  */
-class Updater : public QObject
+class Updater : public QObject, DENG2_OBSERVES(de::App, StartupComplete)
 {
     Q_OBJECT
 
@@ -47,6 +48,8 @@ public:
     explicit Updater(QObject* parent = 0);
 
     void setBackToFullscreen(bool yes);
+
+    void appStartupCompleted();
 
 public slots:
     void gotReply(QNetworkReply*);

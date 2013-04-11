@@ -61,28 +61,10 @@ win32 {
 else:macx {
     useFramework(Cocoa)
     useFramework(QTKit)
-
-    # The old 10.4 build uses a Carbon-based Qt.
-    deng_carbonqt: useFramework(Carbon)
 }
 else {
     # Generic Unix.
     !freebsd-*: LIBS += -ldl
-    LIBS += -lX11
-
-    # DisplayMode uses the Xrandr and XFree86-VideoMode extensions.
-    !deng_nodisplaymode {
-        # Check that the X11 extensions exist.
-        !system(pkg-config --exists xxf86vm) {
-            error(Missing dependency: X11 XFree86 video mode extension library (development headers). Alternatively disable display mode functionality with: CONFIG+=deng_nodisplaymode)
-        }
-        !system(pkg-config --exists xrandr) {
-            error(Missing dependency: X11 RandR extension library (development headers). Alternatively disable display mode functionality with: CONFIG+=deng_nodisplaymode)
-        }
-
-        QMAKE_CXXFLAGS += $$system(pkg-config xrandr xxf86vm --cflags)
-                  LIBS += $$system(pkg-config xrandr xxf86vm --libs)
-    }
 }
 
 # Source Files ---------------------------------------------------------------
@@ -353,17 +335,14 @@ DENG_HEADERS += \
     include/ui/b_util.h \
     include/ui/busyvisual.h \
     include/ui/busywidget.h \
-    include/ui/canvas.h \
-    include/ui/canvaswindow.h \
+    include/ui/clientwindow.h \
     include/ui/dd_input.h \
     include/ui/dd_ui.h \
-    include/ui/displaymode.h \
-    include/ui/displaymode_native.h \
     include/ui/fi_main.h \
     include/ui/finaleinterpreter.h \
+    include/ui/guirootwidget.h \
     include/ui/guiwidget.h \
     include/ui/joystick.h \
-    include/ui/keycode.h \
     include/ui/legacywidget.h \
     include/ui/mouse_qt.h \
     include/ui/nativeui.h \
@@ -372,7 +351,6 @@ DENG_HEADERS += \
     include/ui/ui2_main.h \
     include/ui/ui_main.h \
     include/ui/ui_panel.h \
-    include/ui/window.h \
     include/ui/windowsystem.h \
     include/ui/zonedebug.h \
     include/updater.h \
@@ -409,8 +387,6 @@ win32 {
         src/windows/directinput.cpp \
         src/windows/joystick_win32.cpp \
         src/windows/mouse_win32.cpp
-
-    !deng_nodisplaymode: SOURCES += src/windows/displaymode_win32.cpp
 }
 else:unix {
     # Common Unix (including Mac OS X).
@@ -432,21 +408,10 @@ macx {
     OBJECTIVE_SOURCES += \
         src/macx/MusicPlayer.m
 
-    !deng_nodisplaymode: OBJECTIVE_SOURCES += src/macx/displaymode_macx.mm
-
     INCLUDEPATH += $$DENG_MAC_INCLUDE_DIR
 }
 else:unix {
-    !deng_nodisplaymode {
-        # Unix (non-Mac) only.
-        SOURCES += \
-            src/unix/displaymode_x11.cpp \
-            src/unix/imKStoUCS.c
-    }
-}
-
-deng_nodisplaymode {
-    SOURCES += src/ui/displaymode_dummy.c
+    # Unix (non-Mac) only.
 }
 
 # Platform-independent sources.
@@ -635,14 +600,12 @@ SOURCES += \
     src/ui/b_util.cpp \
     src/ui/busyvisual.cpp \
     src/ui/busywidget.cpp \
-    src/ui/canvas.cpp \
-    src/ui/canvaswindow.cpp \
+    src/ui/clientwindow.cpp \
     src/ui/dd_input.cpp \
-    src/ui/displaymode.cpp \
     src/ui/fi_main.cpp \
     src/ui/finaleinterpreter.cpp \
+    src/ui/guirootwidget.cpp \
     src/ui/guiwidget.cpp \
-    src/ui/keycode.cpp \
     src/ui/legacywidget.cpp \
     src/ui/mouse_qt.cpp \
     src/ui/nativeui.cpp \
@@ -651,7 +614,6 @@ SOURCES += \
     src/ui/ui2_main.cpp \
     src/ui/ui_main.cpp \
     src/ui/ui_panel.cpp \
-    src/ui/window.cpp \
     src/ui/windowsystem.cpp \
     src/ui/zonedebug.cpp \
     src/updater/downloaddialog.cpp \

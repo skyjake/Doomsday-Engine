@@ -51,6 +51,8 @@ enum {
     IMB_RIGHT,
     IMB_MWHEELUP,           // virtual button
     IMB_MWHEELDOWN,         // virtual button
+    IMB_EXTRA1,
+    IMB_EXTRA2,
     // ...other buttons...
     IMB_MWHEELLEFT = 14,    // virtual button
     IMB_MWHEELRIGHT = 15,   // virtual button

@@ -322,8 +322,8 @@ void GL_ReserveNames(void)
     Sys_Lock(deferredMutex);
     if(reservedCount < NUM_RESERVED_TEXTURENAMES)
     {
-        LIBDENG_ASSERT_IN_MAIN_THREAD();
-        LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+        DENG_ASSERT_IN_MAIN_THREAD();
+        DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
         glGenTextures(NUM_RESERVED_TEXTURENAMES - reservedCount,
             (GLuint*) &reservedTextureNames[reservedCount]);
@@ -337,8 +337,8 @@ void GL_ReleaseReservedNames(void)
     if(!inited)
         return; // Just ignore.
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD(); // not deferring here
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD(); // not deferring here
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     Sys_Lock(deferredMutex);
     glDeleteTextures(reservedCount, (const GLuint*) reservedTextureNames);
@@ -411,8 +411,8 @@ void GL_ProcessDeferredTasks(uint timeOutMilliSeconds)
 
     if(novideo || !inited) return;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     startTime = Timer_RealMilliseconds();
 

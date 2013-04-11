@@ -502,6 +502,15 @@ reference.memberViaRef = 'added via ref'
 print "Added a member via a reference:"
 print reference
 
+sections.subsection('Accessing members through a record reference.')
+record other
+other.refd = reference
+print 'The other is:'
+print other
+other.refd.newMember = 300
+print 'myrec after modifications:'
+print myrec
+
 sections.subsection('Making a copy of a record.')
 def recCopyTest()
     print "Record() can be used to make a copy of a record."

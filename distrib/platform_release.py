@@ -10,6 +10,7 @@ import time
 import glob
 import build_version
 import build_number
+import builder.utils
 
 # Configuration.
 LAUNCH_DIR    = os.path.abspath(os.getcwd())
@@ -96,7 +97,7 @@ def prepare_work_dir():
 
 def mac_os_version():
     """Determines the Mac OS version."""
-    return platform.mac_ver()[0][:4]
+    return builder.utils.mac_os_version()
 
 
 def mac_target_ext():

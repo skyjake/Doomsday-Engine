@@ -1309,8 +1309,8 @@ void LO_DrawLumobjs(void)
 
     if(!devDrawLums) return;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);

@@ -39,6 +39,7 @@ class Event:
         self.buildDir = os.path.join(config.EVENT_DIR, self.name)
         
         self.packages = ['doomsday', 'fmod']
+        
         self.packageName = {'doomsday': 'Doomsday',
                             'fmod':     'FMOD Ex Audio Plugin'}
         
@@ -49,7 +50,11 @@ class Event:
                          ('Mac OS X 10.6+ (x86_64/i386)', 'mac10_6.dmg', 'darwin-64bit'),
                          ('Mac OS X 10.4+ (ppc/i386)',    '32bit.dmg',   'darwin-32bit'),
                          ('Ubuntu (x86_64)',              'amd64.deb',   'linux2-64bit'),
-                         ('Ubuntu (x86)',                 'i386.deb',    'linux2-32bit')]            
+                         ('Ubuntu (x86)',                 'i386.deb',    'linux2-32bit')]
+
+            if self.has_version() and utils.version_cmp(self.version_base(), '1.11') >= 0:
+                del self.oses[3] # no more OS X 10.4
+                
         elif self.num >= 778: # Mac distribution naming was changed.
             # Platforms:  Name                            File ext     sys_id()
             self.oses = [('Windows (x86)',                '.exe',      'win32-32bit'),
@@ -57,6 +62,7 @@ class Event:
                          ('Mac OS X 10.4+ (ppc/i386)',    '32bit.dmg', 'darwin-32bit'),
                          ('Ubuntu (x86_64)',              'amd64.deb', 'linux2-64bit'),
                          ('Ubuntu (x86)',                 'i386.deb',  'linux2-32bit')]
+
         else:
             # Platforms:  Name                            File ext     sys_id()
             self.oses = [('Windows (x86)',                '.exe',      'win32-32bit'),
@@ -128,6 +134,9 @@ class Event:
         fn = self.file_path('version.txt')
         if os.path.exists(fn): return file(fn).read().strip()
         return None
+        
+    def has_version(self):
+        return os.path.exists(self.file_path('version.txt'))
         
     def name(self):
         return self.name

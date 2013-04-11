@@ -1,9 +1,5 @@
 /** @file loop.h  Continually triggered loop.
  *
- * Long summary of the functionality.
- *
- * @todo Update the fields above as appropriate.
- *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License

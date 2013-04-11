@@ -980,8 +980,8 @@ void LG_Debug(void)
     if(!lgInited || !lgShowDebug)
         return;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(ddpl)
     {

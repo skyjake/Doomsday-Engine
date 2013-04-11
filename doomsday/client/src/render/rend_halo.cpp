@@ -86,8 +86,8 @@ texturevariantspecification_t &Rend_HaloTextureSpec()
 
 void H_SetupState(bool dosetup)
 {
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(dosetup)
     {
@@ -215,8 +215,8 @@ bool H_RenderHalo(coord_t x, coord_t y, coord_t z, float size,
     if(primary)
         H_SetupState(true);
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Prepare the texture rotation matrix.
     glMatrixMode(GL_TEXTURE);

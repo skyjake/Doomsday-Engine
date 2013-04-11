@@ -337,9 +337,9 @@ String String::wideToString(std::wstring const &str)
 }
 */
 
-String String::fileName() const
+String String::fileName(QChar dirChar) const
 {
-    size_type pos = lastIndexOf('/');
+    size_type pos = lastIndexOf(dirChar);
     if(pos >= 0)
     {
         return mid(pos + 1);

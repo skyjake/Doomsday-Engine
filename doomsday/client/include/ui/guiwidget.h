@@ -22,6 +22,8 @@
 #include <de/Widget>
 #include <de/RuleRectangle>
 
+class GuiRootWidget;
+
 /**
  * Base class for graphical widgets.
  * @ingroup gui
@@ -30,6 +32,8 @@ class GuiWidget : public de::Widget
 {
 public:
     GuiWidget(de::String const &name = "");
+
+    GuiRootWidget &root();
 
     /**
      * Returns the rule rectangle that defines the placement of the widget on

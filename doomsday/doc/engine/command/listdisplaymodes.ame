@@ -1,0 +1,12 @@
+@summary{
+    List all display modes supported by the graphics hardware.
+}
+@description{
+    @seealso
+    @list{
+        @item @cmd{displaymode}
+        @item @cmd{setres}
+        @item @cmd{setfullres}
+        @item @cmd{setwinres}
+    }
+}

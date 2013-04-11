@@ -21,6 +21,7 @@
 
 #include <de/GuiApp>
 #include "network/serverlink.h"
+#include "ui/windowsystem.h"
 
 /**
  * The client application.
@@ -42,6 +43,7 @@ public:
 public:
     static ClientApp &app();
     static ServerLink &serverLink();
+    static WindowSystem &windowSystem();
 
 private:
     DENG2_PRIVATE(d)

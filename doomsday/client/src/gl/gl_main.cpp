@@ -37,13 +37,15 @@
 
 #include "map/gamemap.h"
 #include "gl/texturecontent.h"
+#include "ui/windowsystem.h"
 #include "resource/colorpalettes.h"
 #include "resource/hq2x.h"
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "Texture"
-#include "ui/displaymode.h"
 #include "api_render.h"
+
+#include <de/DisplayMode>
 
 D_CMD(Fog);
 D_CMD(SetBPP);
@@ -51,6 +53,8 @@ D_CMD(SetRes);
 D_CMD(SetFullRes);
 D_CMD(SetWinRes);
 D_CMD(ToggleFullscreen);
+D_CMD(ToggleMaximized);
+D_CMD(CenterWindow);
 D_CMD(DisplayModeInfo);
 D_CMD(ListDisplayModes);
 
@@ -87,18 +91,18 @@ static viewport_t currentView;
 
 static void videoFSAAChanged()
 {
-    if(novideo || !Window::haveMain()) return;
-    Window::main().updateCanvasFormat();
+    if(novideo || !WindowSystem::haveMain()) return;
+    WindowSystem::main().updateCanvasFormat();
 }
 
 static void videoVsyncChanged()
 {
-    if(novideo || !Window::haveMain()) return;
+    if(novideo || !WindowSystem::haveMain()) return;
 
 #if defined(WIN32) || defined(MACOSX)
     GL_SetVSync(Con_GetByte("vid-vsync") != 0);
 #else
-    Window::main().updateCanvasFormat();
+    WindowSystem::main().updateCanvasFormat();
 #endif
 }
 
@@ -130,15 +134,17 @@ void GL_Register()
 
     // Ccmds
     C_CMD_FLAGS("fog",              NULL,   Fog,                CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("displaymode",      "",     DisplayModeInfo,    CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("listdisplaymodes", "",     ListDisplayModes,   CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("setcolordepth",    "i",    SetBPP,             CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("setbpp",           "i",    SetBPP,             CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("setres",           "ii",   SetRes,             CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("setfullres",       "ii",   SetFullRes,         CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("setwinres",        "ii",   SetWinRes,          CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("setvidramp",       "",     UpdateGammaRamp,    CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("togglefullscreen", "",     ToggleFullscreen,   CMDF_NO_DEDICATED);
+    C_CMD      ("displaymode",      "",     DisplayModeInfo);
+    C_CMD      ("listdisplaymodes", "",     ListDisplayModes);
+    C_CMD      ("setcolordepth",    "i",    SetBPP);
+    C_CMD      ("setbpp",           "i",    SetBPP);
+    C_CMD      ("setres",           "ii",   SetRes);
+    C_CMD      ("setfullres",       "ii",   SetFullRes);
+    C_CMD      ("setwinres",        "ii",   SetWinRes);
+    C_CMD      ("setvidramp",       "",     UpdateGammaRamp);
+    C_CMD      ("togglefullscreen", "",     ToggleFullscreen);
+    C_CMD      ("togglemaximized",  "",     ToggleMaximized);
+    C_CMD      ("centerwindow",     "",     CenterWindow);
 
     GL_TexRegister();
 }
@@ -172,8 +178,8 @@ void GL_DoUpdate()
         GL_SetGamma();
     }
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Wait until the right time to show the frame so that the realized
     // frame rate is exactly right.
@@ -188,14 +194,14 @@ void GL_DoUpdate()
     Mouse_Poll();
 }
 
-void GL_GetGammaRamp(displaycolortransfer_t *ramp)
+void GL_GetGammaRamp(DisplayColorTransfer *ramp)
 {
     if(!gamma_support) return;
 
     DisplayMode_GetColorTransfer(ramp);
 }
 
-void GL_SetGammaRamp(displaycolortransfer_t const *ramp)
+void GL_SetGammaRamp(DisplayColorTransfer const *ramp)
 {
     if(!gamma_support) return;
 
@@ -265,7 +271,7 @@ void GL_MakeGammaRamp(ushort *ramp, float gamma, float contrast, float bright)
  */
 void GL_SetGamma()
 {
-    displaycolortransfer_t myramp;
+    DisplayColorTransfer myramp;
 
     oldgamma    = vid_gamma;
     oldcontrast = vid_contrast;
@@ -387,8 +393,8 @@ void GL_Shutdown()
     if(!initGLOk)
         return; // Not yet initialized fully.
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // We won't be drawing anything further but we don't want to shutdown
     // with the previous frame still visible as this can lead to unwanted
@@ -432,8 +438,8 @@ void GL_Init2DState()
     glNearClip = 5;
     glFarClip = 16500;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Here we configure the OpenGL state and set the projection matrix.
     glDisable(GL_CULL_FACE);
@@ -468,8 +474,8 @@ void GL_Init2DState()
 
 void GL_SwitchTo3DState(boolean push_state, viewport_t const *port, viewdata_t const *viewData)
 {
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(push_state)
     {
@@ -497,8 +503,8 @@ void GL_SwitchTo3DState(boolean push_state, viewport_t const *port, viewdata_t c
 
 void GL_Restore2DState(int step, viewport_t const *port, viewdata_t const *viewData)
 {
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch(step)
     {
@@ -573,8 +579,8 @@ void GL_ProjectionMatrix()
     // We're assuming pixels are squares.
     float aspect = viewpw / (float) viewph;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -639,8 +645,8 @@ void GL_TotalRestore()
 
 void GL_BlendMode(blendmode_t mode)
 {
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch(mode)
     {
@@ -789,8 +795,8 @@ void GL_BindTexture(TextureVariant *vtexture)
         return;
     }
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glBindTexture(GL_TEXTURE_2D, glTexName);
     Sys_GLCheckError();
@@ -821,8 +827,8 @@ void GL_BindTextureUnmanaged(DGLuint glName, int wrapS, int wrapT, int magMode)
         return;
     }
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glBindTexture(GL_TEXTURE_2D, glName);
     Sys_GLCheckError();
@@ -838,8 +844,8 @@ void GL_SetNoTexture()
 {
     if(BusyMode_InWorkerThread()) return;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     /// @todo Don't actually change the current binding. Instead we should disable
     ///       all currently enabled texture types.
@@ -1147,86 +1153,135 @@ D_CMD(SetRes)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    if(!Window::haveMain())
+    ClientWindow *win = WindowSystem::mainPtr();
+
+    if(!win)
         return false;
 
+    bool isFull = win->isFullScreen();
+
     int attribs[] = {
-        Window::Width, atoi(argv[1]),
-        Window::Height, atoi(argv[2]),
-        Window::End
+        isFull? ClientWindow::FullscreenWidth : ClientWindow::Width,
+        atoi(argv[1]),
+
+        isFull? ClientWindow::FullscreenHeight : ClientWindow::Height,
+        atoi(argv[2]),
+
+        ClientWindow::End
     };
-    return Window::main().changeAttributes(attribs);
+    return win->changeAttributes(attribs);
 }
 
 D_CMD(SetFullRes)
 {
     DENG2_UNUSED2(src, argc);
 
-    if(!Window::haveMain())
+    ClientWindow *win = WindowSystem::mainPtr();
+
+    if(!win)
         return false;
 
     int attribs[] = {
-        Window::Width, atoi(argv[1]),
-        Window::Height, atoi(argv[2]),
-        Window::Fullscreen, true,
-        Window::End
+        ClientWindow::FullscreenWidth,  atoi(argv[1]),
+        ClientWindow::FullscreenHeight, atoi(argv[2]),
+        ClientWindow::Fullscreen,       true,
+        ClientWindow::End
     };
-    return Window::main().changeAttributes(attribs);
+    return win->changeAttributes(attribs);
 }
 
 D_CMD(SetWinRes)
 {
     DENG2_UNUSED2(src, argc);
 
-    if(!Window::haveMain())
+    ClientWindow *win = WindowSystem::mainPtr();
+
+    if(!win)
         return false;
 
     int attribs[] = {
-        Window::Width, atoi(argv[1]),
-        Window::Height, atoi(argv[2]),
-        Window::Fullscreen, false,
-        Window::End
+        ClientWindow::Width,      atoi(argv[1]),
+        ClientWindow::Height,     atoi(argv[2]),
+        ClientWindow::Fullscreen, false,
+        ClientWindow::Maximized,  false,
+        ClientWindow::End
     };
-    return Window::main().changeAttributes(attribs);
+    return win->changeAttributes(attribs);
 }
 
 D_CMD(ToggleFullscreen)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    if(!Window::haveMain())
+    ClientWindow *win = WindowSystem::mainPtr();
+
+    if(!win)
         return false;
 
-    Window &mainWindow = Window::main();
     int attribs[] = {
-        Window::Fullscreen, !mainWindow.isFullscreen(),
-        Window::End
+        ClientWindow::Fullscreen, !win->isFullScreen(),
+        ClientWindow::End
     };
-    return mainWindow.changeAttributes(attribs);
+    return win->changeAttributes(attribs);
+}
+
+D_CMD(ToggleMaximized)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    ClientWindow *win = WindowSystem::mainPtr();
+
+    if(!win)
+        return false;
+
+    int attribs[] = {
+        ClientWindow::Maximized, !win->isMaximized(),
+        ClientWindow::End
+    };
+    return win->changeAttributes(attribs);
+}
+
+D_CMD(CenterWindow)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    ClientWindow *win = WindowSystem::mainPtr();
+
+    if(!win)
+        return false;
+
+    int attribs[] = {
+        ClientWindow::Centered, true,
+        ClientWindow::End
+    };
+    return win->changeAttributes(attribs);
 }
 
 D_CMD(SetBPP)
 {
     DENG2_UNUSED2(src, argc);
 
-    if(!Window::haveMain())
+    ClientWindow *win = WindowSystem::mainPtr();
+
+    if(!win)
         return false;
 
     int attribs[] = {
-        Window::ColorDepthBits, atoi(argv[1]),
-        Window::End
+        ClientWindow::ColorDepthBits, atoi(argv[1]),
+        ClientWindow::End
     };
-    return Window::main().changeAttributes(attribs);
+    return win->changeAttributes(attribs);
 }
 
 D_CMD(DisplayModeInfo)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    if(!Window::haveMain())
+    ClientWindow *win = WindowSystem::mainPtr();
+
+    if(!win)
         return false;
 
-    Window const &mainWindow = Window::main();
     DisplayMode const *mode = DisplayMode_Current();
 
     QString str = QString("Current display mode:%1 depth:%2 (%3:%4")
@@ -1236,17 +1291,20 @@ D_CMD(DisplayModeInfo)
                       .arg(mode->ratioY);
     if(mode->refreshRate > 0)
     {
-        str += QString(", refresh: %1 Hz").arg(mode->refreshRate, 0, 'f', 3);
+        str += QString(", refresh: %1 Hz").arg(mode->refreshRate, 0, 'f', 1);
     }
-    str += QString(")\nMain window:\n  origin:%1 dimensions:%2\n  windowed-origin:%1 windowed-dimensions:%2")
-                .arg(de::Vector2i(mainWindow.x(), mainWindow.y()).asText())
-                .arg(de::Vector2i(mainWindow.width(), mainWindow.height()).asText())
-                .arg(de::Vector2i(mainWindow.normalX(), mainWindow.normalY()).asText())
-                .arg(de::Vector2i(mainWindow.normalWidth(), mainWindow.normalHeight()).asText());
-    str += QString("\n  fullscreen:%3 centered:%4 maximized:%5")
-                .arg(mainWindow.isFullscreen()     ? "yes" : "no")
-                .arg(mainWindow.isCentered()       ? "yes" : "no")
-                .arg(mainWindow.isMaximized()      ? "yes" : "no");
+    str += QString(")\nMain window:\n  current origin:%1 size:%2"
+                   "\n  windowed origin:%3 size:%4"
+                   "\n  fullscreen size:%5")
+                .arg(win->pos().asText())
+                .arg(win->size().asText())
+                .arg(win->windowRect().topLeft.asText())
+                .arg(win->windowRect().size().asText())
+                .arg(win->fullscreenSize().asText());
+    str += QString("\n  fullscreen:%1 centered:%2 maximized:%3")
+                .arg(win->isFullScreen()     ? "yes" : "no")
+                .arg(win->isCentered()       ? "yes" : "no")
+                .arg(win->isMaximized()      ? "yes" : "no");
 
     Con_Message(str.toUtf8().constData());
     return true;

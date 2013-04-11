@@ -31,8 +31,9 @@
 #include "de_graphics.h"
 #include "de_ui.h"
 
-#include "ui/displaymode.h"
 #include "render/rend_font.h"
+
+#include <de/DisplayMode>
 
 // MACROS ------------------------------------------------------------------
 
@@ -871,16 +872,16 @@ void CP_VideoModeInfo(ui_object_t *ob)
     }
     else
     {
-        Window const &mainWindow = Window::main();
+        ClientWindow const &mainWindow = WindowSystem::main();
 
         sprintf(buf, "%i x %i x %i (%s)",
                 mainWindow.width(), mainWindow.height(),
                 mainWindow.colorDepthBits(),
-                (mainWindow.isFullscreen()? "fullscreen" : "windowed"));
+                (mainWindow.isFullScreen()? "fullscreen" : "windowed"));
     }
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glEnable(GL_TEXTURE_2D);
     FR_SetFont(fontVariable[FS_LIGHT]);
@@ -896,8 +897,8 @@ void CP_VideoModeInfo(ui_object_t *ob)
 
 void CP_UpdateSetVidModeButton(int w, int h, int bpp, bool fullscreen)
 {
-    Window &mainWindow = Window::main();
-    bool cFullscreen = mainWindow.isFullscreen();
+    ClientWindow &mainWindow = WindowSystem::main();
+    bool isFull = mainWindow.isFullScreen();
     ui_object_t* ob;
 
     ob = UI_FindObject(ob_panel, CPG_VIDEO, CPID_SET_RES);
@@ -906,8 +907,11 @@ void CP_UpdateSetVidModeButton(int w, int h, int bpp, bool fullscreen)
     sprintf(ob->text, "%i x %i x %i (%s)", w, h, bpp,
             fullscreen? "fullscreen" : "windowed");
 
-    if(w == mainWindow.width() && h == mainWindow.height() &&
-       bpp == mainWindow.colorDepthBits() && fullscreen == cFullscreen)
+    int winWidth  = (isFull? mainWindow.fullscreenWidth()  : mainWindow.width());
+    int winHeight = (isFull? mainWindow.fullscreenHeight() : mainWindow.height());
+
+    if(w == winWidth && h == winHeight &&
+       bpp == mainWindow.colorDepthBits() && fullscreen == isFull)
         ob->flags |= UIF_DISABLED;
     else
         ob->flags &= ~UIF_DISABLED;
@@ -948,16 +952,16 @@ void CP_SetVidMode(ui_object_t* ob)
 
     ob->flags |= UIF_DISABLED;
 
-    if(Window::haveMain())
+    if(WindowSystem::haveMain())
     {
         int attribs[] = {
-            Window::Width, x,
-            Window::Height, y,
-            Window::ColorDepthBits, bpp,
-            Window::Fullscreen, panel_fullscreen != 0,
-            Window::End
+            ClientWindow::Fullscreen, panel_fullscreen != 0,
+            panel_fullscreen? ClientWindow::FullscreenWidth  : ClientWindow::Width,  x,
+            panel_fullscreen? ClientWindow::FullscreenHeight : ClientWindow::Height, y,
+            ClientWindow::ColorDepthBits, bpp,
+            ClientWindow::End
         };
-        Window::main().changeAttributes(attribs);
+        WindowSystem::main().changeAttributes(attribs);
     }
 }
 
@@ -1315,19 +1319,20 @@ D_CMD(OpenPanel)
     CP_InitCvarSliders(ob_panel);
 
     // Update width the current resolution.
-    Window &mainWindow = Window::main();
-    bool cFullscreen = mainWindow.isFullscreen();
+    ClientWindow &mainWindow = ClientWindow::main();
+    bool isFull = mainWindow.isFullScreen();
 
     ob = UI_FindObject(ob_panel, CPG_VIDEO, CPID_RES_LIST);
     list = (uidata_list_t *) ob->data;
     list->selection = UI_ListFindItem(ob,
-        RES(mainWindow.width(), mainWindow.height()));
+        RES(isFull? mainWindow.fullscreenWidth()  : mainWindow.width(),
+            isFull? mainWindow.fullscreenHeight() : mainWindow.height()));
     if(list->selection == -1)
     {
         // Then use a reasonable default.
         list->selection = UI_ListFindItem(ob, RES(640, 480));
     }
-    panel_fullscreen = cFullscreen;
+    panel_fullscreen = isFull;
     panel_bpp = (mainWindow.colorDepthBits() == 32? 1 : 0);
     CP_ResolutionList(ob);
 

@@ -39,7 +39,7 @@
 
 #ifdef __CLIENT__
 #  include "ui/busyvisual.h"
-#  include "ui/window.h"
+#  include "ui/clientwindow.h"
 #endif
 
 /// Development utility: on sharp tics, print player 0 movement state.
@@ -102,7 +102,7 @@ int DD_GameLoopExitCode(void)
 float DD_GetFrameRate()
 {
 #ifdef __CLIENT__
-    return Window::main().canvasWindow().frameRate();
+    return ClientWindow::main().frameRate();
 #else
     return 0;
 #endif

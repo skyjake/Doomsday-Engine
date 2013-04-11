@@ -71,6 +71,9 @@ desc = Write the current lights to a DED file.
 [blunlock]
 desc = Unlock current/specified light.
 
+[centerwindow]
+desc = Center the window on the desktop when in windowed mode.
+
 [chat]
 desc = Broadcast a chat message.
 
@@ -119,6 +122,10 @@ inf = Params: demolump (demofile) (lumpfile)\nFor example, 'demolump demo1.dmo D
 [dir]
 desc = Print contents of directories.
 inf = Params: dir (dirs) ...\nFor example, 'dir data/'.\nVirtual files are listed, too.\nPaths are relative to the base path.
+
+[displaymode]
+desc = Print information about the current display mode and window state.
+inf = SEE ALSO:\n- 'listdisplaymodes'\n- 'setres'\n- 'setfullres'\n- 'setwinres'\n
 
 [dump]
 desc = Dump a data lump currently loaded in memory.
@@ -187,6 +194,10 @@ desc = List all console commands.
 
 [listcontrols]
 desc = List the names of all player controls.
+
+[listdisplaymodes]
+desc = List all display modes supported by the graphics hardware.
+inf = SEE ALSO:\n- 'displaymode'\n- 'setres'\n- 'setfullres'\n- 'setwinres'\n
 
 [listfiles]
 desc = List all loaded resource files.
@@ -303,6 +314,10 @@ inf = Params: setbpp (bits)\nFor example, 'setbpp 32'.
 desc = Set console and viewplayer.
 inf = Params: setcon (playernum)\nFor example, 'setcon 1'.
 
+[setfullres]
+desc = Change to fullscreen mode using the specified resolution.
+inf = USAGE:\nsetfullres (width) (height)\nSEE ALSO:\n- 'listdisplaymodes'\n- 'setwinres'\n- 'setres'\n
+
 [setname]
 desc = Set your name.
 inf = Params: setname (name)\nFor example, 'setname "my name"'.
@@ -317,6 +332,10 @@ inf = Params: settics (tics)\nFor example, 'settics 15'.
 
 [setvidramp]
 desc = Update display's hardware gamma ramp.
+
+[setwinres]
+desc = Set window size and change to windowed mode.
+inf = USAGE:\nsetwinres (width) (height)\nSEE ALSO:\n- 'setfullres'\n- 'setres'\n- 'listdisplaymodes'\n
 
 [stopdemo]
 desc = Stop currently playing demo.
@@ -335,7 +354,10 @@ desc = Toggle the value of a cvar between zero and nonzero.
 inf = Params: toggle (cvar)\nFor example, 'toggle rend-light'.
 
 [togglefullscreen]
-desc = Toggle between fullscreen and windowed video modes.
+desc = Toggle between fullscreen and windowed modes.
+
+[togglemaximized]
+desc = Toggle between maximized and normal window modes.
 
 [uicolor]
 desc = Change Doomsday user interface colors.

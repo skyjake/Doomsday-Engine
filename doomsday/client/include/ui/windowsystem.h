@@ -1,5 +1,9 @@
 /** @file windowsystem.h  Window management subsystem.
  *
+ * @todo Deferred window changes should be done using a queue-type solution
+ * where it is possible to schedule multiple tasks into the future separately
+ * for each window. Each window could have its own queue.
+ *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
@@ -20,6 +24,9 @@
 #define CLIENT_WINDOWSYSTEM_H
 
 #include <de/System>
+#include <de/String>
+
+class ClientWindow;
 
 /**
  * Window management subsystem.
@@ -32,10 +39,59 @@
 class WindowSystem : public de::System
 {
 public:
+    /// Required/referenced Window instance is missing. @ingroup errors
+    DENG2_ERROR(MissingWindowError);
+
+public:
     WindowSystem();
 
-    bool processEvent(de::Event const &);
+    /**
+     * Constructs a new window using the default configuration. Note that the
+     * default configuration is saved persistently when the engine shuts down
+     * and is restored when the engine is restarted.
+     *
+     * Command line options (e.g., -xpos) can be used to modify the window
+     * configuration.
+     *
+     * @param id     Identifier of the window ("main" for the main window).
+     *
+     * @return ClientWindow instance. Ownership is retained by the window system.
+     */
+    ClientWindow *createWindow(de::String const &id = "main");
 
+    /**
+     * Returns @c true iff a main window is available.
+     */
+    static bool haveMain();
+
+    /**
+     * Returns the main window.
+     */
+    static ClientWindow &main();
+
+    /**
+     * Returns a pointer to the @em main window.
+     *
+     * @see haveMain()
+     */
+    inline static ClientWindow *mainPtr() { return haveMain()? &main() : 0; }
+
+    /**
+     * Find a window.
+     *
+     * @param id  Window identifier. "main" for the main window.
+     *
+     * @return Window instance or @c NULL if not found.
+     */
+    ClientWindow *find(de::String const &id) const;
+
+    /**
+     * Closes all windows, including the main window.
+     */
+    void closeAll();
+
+    // System.
+    bool processEvent(de::Event const &);
     void timeChanged(de::Clock const &);
 
 private:

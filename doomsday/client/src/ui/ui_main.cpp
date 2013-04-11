@@ -480,8 +480,8 @@ void UI_Drawer(void)
 {
     if(!uiActive || !uiCurrentPage) return;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Go into screen projection mode.
     glMatrixMode(GL_PROJECTION);
@@ -493,7 +493,7 @@ void UI_Drawer(void)
     uiCurrentPage->drawer(uiCurrentPage);
 
     // Draw mouse cursor?
-    if(!uiNoMouse && DENG_WINDOW->isMouseTrapped())
+    if(!uiNoMouse && DENG_WINDOW->canvas().isMouseTrapped())
     {
         Point2Raw origin;
         Size2Raw size;

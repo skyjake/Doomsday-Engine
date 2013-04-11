@@ -34,6 +34,9 @@
 #include <de/App>
 #include <de/NativePath>
 #include <de/binangle.h>
+#ifdef __CLIENT__
+#  include <de/DisplayMode>
+#endif
 
 #include "de_platform.h"
 
@@ -59,7 +62,6 @@
 #include "map/p_players.h"
 #include "map/p_maputil.h"
 #include "map/p_objlink.h"
-#include "ui/displaymode.h"
 #include "ui/p_control.h"
 #include "updater.h"
 #include "m_misc.h"
@@ -1576,7 +1578,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
 #ifdef __CLIENT__
     char buf[256];
     DD_ComposeMainWindowTitle(buf);
-    DENG_WINDOW->setTitle(buf);
+    DENG_WINDOW->setWindowTitle(buf);
 #endif
 
     if(!DD_IsShuttingDown())
@@ -1600,7 +1602,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
 
 #ifdef __CLIENT__
     DD_ComposeMainWindowTitle(buf);
-    DENG_WINDOW->setTitle(buf);
+    DENG_WINDOW->setWindowTitle(buf);
 #endif
 
     /**
@@ -1755,11 +1757,6 @@ int DD_EarlyInit()
     // Register the engine's console commands and variables.
     DD_Register();
 
-#ifdef __CLIENT__
-    // Bring the window manager online.
-    Window::initialize();
-#endif
-
     // Instantiate the Games collection.
     games = new Games();
 
@@ -1787,7 +1784,7 @@ void DD_FinishInitializationAfterWindowReady()
     {
         char buf[256];
         DD_ComposeMainWindowTitle(buf);
-        DENG_WINDOW->setTitle(buf);
+        DENG_WINDOW->setWindowTitle(buf);
     }
 #endif
 
@@ -1796,6 +1793,13 @@ void DD_FinishInitializationAfterWindowReady()
     {
         exit(2); // Cannot continue...
         return;
+    }
+
+    /// @todo This notification should be done from the app.
+    for(de::App::StartupCompleteAudience::Loop iter(de::App::app().audienceForStartupComplete);
+        !iter.done(); ++iter)
+    {
+        iter->appStartupCompleted();
     }
 }
 
@@ -2575,7 +2579,7 @@ void *DD_GetVariable(int ddvalue)
 
 # ifdef WIN32
     case DD_WINDOW_HANDLE:
-        return Window::main().nativeHandle();
+        return ClientWindow::main().nativeHandle();
 # endif
 #endif
 
