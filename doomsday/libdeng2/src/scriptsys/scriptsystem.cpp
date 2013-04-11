@@ -128,7 +128,7 @@ Record &ScriptSystem::importModule(String const &name, String const &fromPath)
     ArrayValue *importPath = defaultImportPath.get();
     try
     {
-        importPath = &App::config().names()["importPath"].value<ArrayValue>();
+        importPath = &App::config()["importPath"].value<ArrayValue>();
     }
     catch(Record::NotFoundError const &)
     {}

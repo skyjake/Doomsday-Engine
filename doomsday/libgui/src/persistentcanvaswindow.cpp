@@ -185,19 +185,19 @@ DENG2_PIMPL(PersistentCanvasWindow)
                    << NumberValue(windowRect.top())
                    << NumberValue(windowRect.width())
                    << NumberValue(windowRect.height());
-            config.names()[configName("rect")] = array;
+            config.set(configName("rect"), array);
 
             array = new ArrayValue;
             *array << NumberValue(fullSize.x)
                    << NumberValue(fullSize.y);
-            config.names()[configName("fullSize")] = array;
+            config.set(configName("fullSize"), array);
 
-            config.names()[configName("center")]     = new NumberValue(isCentered());
-            config.names()[configName("maximize")]   = new NumberValue(isMaximized());
-            config.names()[configName("fullscreen")] = new NumberValue(isFullscreen());
-            config.names()[configName("colorDepth")] = new NumberValue(colorDepthBits);
-            config.names()[configName("fsaa")]       = new NumberValue(isAntialiased());
-            config.names()[configName("vsync")]      = new NumberValue(isVSync());
+            config.set(configName("center"),     isCentered());
+            config.set(configName("maximize"),   isMaximized());
+            config.set(configName("fullscreen"), isFullscreen());
+            config.set(configName("colorDepth"), colorDepthBits);
+            config.set(configName("fsaa"),       isAntialiased());
+            config.set(configName("vsync"),      isVSync());
         }
 
         void restoreFromConfig()

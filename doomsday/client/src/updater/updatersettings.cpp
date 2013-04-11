@@ -141,32 +141,32 @@ void UpdaterSettings::setDownloadPath(de::NativePath downloadPath)
     {
         downloadPath = SYMBOL_DEFAULT_DOWNLOAD;
     }
-    App::config().names()[CONF(VAR_DOWNLOAD_PATH)] = new TextValue(downloadPath);
+    App::config().set(CONF(VAR_DOWNLOAD_PATH), downloadPath.toString());
 }
 
 void UpdaterSettings::setFrequency(UpdaterSettings::Frequency freq)
 {
-    App::config().names()[CONF(VAR_FREQUENCY)] = new NumberValue(dint(freq));
+    App::config().set(CONF(VAR_FREQUENCY), dint(freq));
 }
 
 void UpdaterSettings::setChannel(UpdaterSettings::Channel channel)
 {
-    App::config().names()[CONF(VAR_CHANNEL)] = new NumberValue(dint(channel));
+    App::config().set(CONF(VAR_CHANNEL), dint(channel));
 }
 
-void UpdaterSettings::setLastCheckTime(const de::Time &time)
+void UpdaterSettings::setLastCheckTime(de::Time const &time)
 {
-    App::config().names()[CONF(VAR_LAST_CHECKED)] = new TimeValue(time);
+    App::config()[CONF(VAR_LAST_CHECKED)] = new TimeValue(time);
 }
 
 void UpdaterSettings::setOnlyCheckManually(bool onlyManually)
 {
-    App::config().names()[CONF(VAR_ONLY_MANUAL)] = new NumberValue(onlyManually);
+    App::config().set(CONF(VAR_ONLY_MANUAL), onlyManually);
 }
 
 void UpdaterSettings::setDeleteAfterUpdate(bool deleteAfter)
 {
-    App::config().names()[CONF(VAR_DELETE)] = new NumberValue(deleteAfter);
+    App::config().set(CONF(VAR_DELETE), deleteAfter);
 }
 
 void UpdaterSettings::useDefaultDownloadPath()
@@ -176,7 +176,7 @@ void UpdaterSettings::useDefaultDownloadPath()
 
 void UpdaterSettings::setPathToDeleteAtStartup(de::NativePath deletePath)
 {
-    App::config().names()[CONF(VAR_DELETE_PATH)] = new TextValue(deletePath);
+    App::config().set(CONF(VAR_DELETE_PATH), deletePath.toString());
 }
 
 de::NativePath UpdaterSettings::defaultDownloadPath()

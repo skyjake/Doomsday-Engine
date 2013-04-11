@@ -494,7 +494,7 @@ void ClientWindow::updateCanvasFormat()
     d->needRecreateCanvas = true;
 
     // Save the relevant format settings.
-    App::config().names()["window.fsaa"] = new NumberValue(Con_GetByte("vid-fsaa") != 0);
+    App::config().set("window.fsaa", Con_GetByte("vid-fsaa") != 0);
 }
 
 ClientWindow &ClientWindow::main()

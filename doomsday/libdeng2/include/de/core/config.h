@@ -62,32 +62,32 @@ public:
     void read();
 
     /// Writes the configuration to /home.
-    void write();
+    void write() const;
 
     /// Returns the value of @a name as a Value.
-    Value &get(String const &name);
+    Value &get(String const &name) const;
 
     /// Returns the value of @a name as an integer.
-    dint geti(String const &name);
+    dint geti(String const &name) const;
 
     /// Returns the value of @a name as a boolean.
-    bool getb(String const &name);
+    bool getb(String const &name) const;
 
     /// Returns the value of @a name as an unsigned integer.
-    duint getui(String const &name);
+    duint getui(String const &name) const;
 
     /// Returns the value of @a name as a double-precision floating point number.
-    ddouble getd(String const &name);
+    ddouble getd(String const &name) const;
 
     /// Returns the value of @a name as a string.
-    String gets(String const &name);
+    String gets(String const &name) const;
 
     /// Returns the value of @a name as an array value. An exception is thrown
     /// if the variable does not have an array value.
-    ArrayValue &geta(String const &name);
+    ArrayValue &geta(String const &name) const;
 
     template <typename ValueType>
-    ValueType &getAs(String const &name) {
+    ValueType &getAs(String const &name) const {
         ValueType *v = dynamic_cast<ValueType *>(&get(name));
         if(!v)
         {
@@ -98,9 +98,58 @@ public:
     }
 
     /**
+     * Sets the value of a variable, creating the variable if needed.
+     *
+     * @param name   Name of the variable. May contain subrecords using the dot notation.
+     * @param value  Value for the variable.
+     *
+     * @return Variable whose value was set.
+     */
+    Variable &set(String const &name, bool value);
+
+    Variable &set(String const &name, Value::Text const &value);
+    Variable &set(String const &name, Value::Number const &value);
+    Variable &set(String const &name, dint value);
+    Variable &set(String const &name, duint value);
+
+    /**
+     * Sets the value of a variable, creating the variable if it doesn't exist.
+     *
+     * @param name   Name of the variable. May contain subrecords using the dot notation.
+     * @param value  Array to use as the value of the variable. Ownership taken.
+     */
+    Variable &set(String const &name, ArrayValue *value);
+
+    /**
      * Returns the configuration namespace.
      */
     Record &names();
+
+    Record const &names() const;
+
+    /**
+     * Looks up a variable in the Config. Variables in subrecords can be accessed
+     * using the member notation: <code>subrecord-name.variable-name</code>
+     *
+     * If the variable does not exist, an Record::NotFoundError is thrown.
+     *
+     * @param name  Variable name.
+     *
+     * @return  Variable.
+     */
+    Variable &operator [] (String const &name);
+
+    /**
+     * Looks up a variable in the record. Variables in subrecords can be accessed
+     * using the member notation: <code>subrecord-name.variable-name</code>
+     *
+     * If the variable does not exist, an Record::NotFoundError is thrown.
+     *
+     * @param name  Variable name.
+     *
+     * @return  Variable (non-modifiable).
+     */
+    Variable const &operator [] (String const &name) const;
 
 private:
     DENG2_PRIVATE(d)
