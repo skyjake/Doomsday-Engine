@@ -133,7 +133,7 @@ DENG2_PIMPL(Surface)
     {
         // Predetermine which axes have changed.
         int changedAxes = 0;
-        for(int i = 0; i < 3; ++i)
+        for(int i = 0; i < 2; ++i)
         {
             if(!de::fequal(materialOrigin[i], oldMaterialOrigin[i]))
                 changedAxes |= (1 << i);
