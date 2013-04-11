@@ -38,6 +38,9 @@ class ArrayValue;
  * The version of the engine is stored in the serialized config namespace.
  * This is for actions needed when upgrading: the config script can check
  * the previous version and apply changes accordingly.
+ *
+ * In practice, Config is a specialized script namespace stored in a Record. It
+ * gets written to the application's persistent data store (persist.pack).
  */
 class DENG2_PUBLIC Config
 {
@@ -107,9 +110,16 @@ public:
      */
     Variable &set(String const &name, bool value);
 
+    /// @copydoc set()
     Variable &set(String const &name, Value::Text const &value);
+
+    /// @copydoc set()
     Variable &set(String const &name, Value::Number const &value);
+
+    /// @copydoc set()
     Variable &set(String const &name, dint value);
+
+    /// @copydoc set()
     Variable &set(String const &name, duint value);
 
     /**
@@ -125,13 +135,16 @@ public:
      */
     Record &names();
 
+    /**
+     * Returns the configuration namespace (immutable).
+     */
     Record const &names() const;
 
     /**
      * Looks up a variable in the Config. Variables in subrecords can be accessed
      * using the member notation: <code>subrecord-name.variable-name</code>
      *
-     * If the variable does not exist, an Record::NotFoundError is thrown.
+     * If the variable does not exist, a Record::NotFoundError is thrown.
      *
      * @param name  Variable name.
      *

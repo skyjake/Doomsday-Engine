@@ -27,11 +27,11 @@
 namespace de {
 
 /**
- * The NumberValue class is a subclass of Value that holds a single
- * double precision floating point number.
+ * The NumberValue class is a subclass of Value that holds a single double
+ * precision floating point number. All numbers are stored using ddouble.
  *
- * All numbers are stored using ddouble. 32-bit integer values can be
- * represented exactly with doubles:
+ * Note that all 32-bit integer values can be represented exactly with doubles,
+ * however all 64-bit integers cannot be:
  * http://en.wikipedia.org/wiki/Floating_point#IEEE_754:_floating_point_in_modern_computers
  *
  * @ingroup data
