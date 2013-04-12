@@ -264,7 +264,7 @@ slopetype_t LineDef::slopeType() const
 
 void LineDef::updateSlopeType()
 {
-    d->direction = d->to->origin() - d->from->origin();
+    d->direction = Vector2d(d->to->origin()) - Vector2d(d->from->origin());
     d->angle     = bamsAtan2(int( d->direction.y ), int( d->direction.x ));
     d->slopeType = M_SlopeTypeXY(d->direction.x, d->direction.y);
 }

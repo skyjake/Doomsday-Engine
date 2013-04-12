@@ -365,6 +365,10 @@ void Sector::updateSoundEmitterOrigin()
 
 void Sector::planeHeightChanged(Plane &plane, coord_t oldHeight)
 {
+    // We are presently only interested in floor and/or ceiling height changes.
+    if(!(&plane == &floor() || &plane == &ceiling()))
+        return;
+
     updateSoundEmitterOrigin();
 #ifdef __CLIENT__
     R_UpdateMissingMaterialsForLinesOfSector(*this);
@@ -382,7 +386,6 @@ void Sector::planeHeightChanged(Plane &plane, coord_t oldHeight)
         if(!ddpl->inGame || !ddpl->mo || !ddpl->mo->bspLeaf)
             continue;
 
-        /// @todo $nplanes
         if((ddpl->flags & DDPF_CAMERA) && ddpl->mo->bspLeaf->sectorPtr() == this &&
            (ddpl->mo->origin[VZ] > ceiling().height() - 4 || ddpl->mo->origin[VZ] < floor().height()))
         {
@@ -421,7 +424,7 @@ void Sector::planeHeightChanged(Plane &plane, coord_t oldHeight)
 
 #endif // __CLIENT__
 
-    DENG2_UNUSED2(plane, oldHeight);
+    DENG2_UNUSED(oldHeight);
 }
 
 int Sector::property(setargs_t &args) const
