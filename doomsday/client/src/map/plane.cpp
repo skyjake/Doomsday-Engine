@@ -110,13 +110,13 @@ DENG2_PIMPL(Plane)
 
         if(!ddMapSetup)
         {
-#ifdef __CLIENT__
             // Update the sound emitter origin for the plane.
             surface.updateSoundEmitterOrigin();
-#endif
 
+#ifdef __CLIENT__
             // We need the decorations updated.
             surface.markAsNeedingDecorationUpdate();
+#endif
         }
 
         // Notify interested parties of the change.
