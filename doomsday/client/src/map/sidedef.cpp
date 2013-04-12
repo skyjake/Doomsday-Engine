@@ -33,7 +33,6 @@ SideDef::SideDef()
       _topSurface(dynamic_cast<MapElement &>(*this))
 {
     _line = 0;
-    _flags = 0;
 }
 
 SideDef::~SideDef()
@@ -62,11 +61,6 @@ Surface const &SideDef::surface(int surface) const
     return const_cast<Surface const &>(const_cast<SideDef &>(*this).surface(surface));
 }
 
-short SideDef::flags() const
-{
-    return _flags;
-}
-
 int SideDef::property(setargs_t &args) const
 {
     switch(args.prop)
@@ -79,9 +73,11 @@ int SideDef::property(setargs_t &args) const
     case DMU_LINEDEF:
         DMU_GetValue(DMT_SIDEDEF_LINE, &_line, &args, 0);
         break;
-    case DMU_FLAGS:
-        DMU_GetValue(DMT_SIDEDEF_FLAGS, &_flags, &args, 0);
-        break;
+    case DMU_FLAGS: {
+        DENG2_ASSERT(_line != 0);
+        short flags = _line->side(this == _line->frontSideDefPtr()? FRONT : BACK).flags();
+        DMU_GetValue(DMT_SIDEDEF_FLAGS, &flags, &args, 0);
+        break; }
     default:
         /// @throw UnknownPropertyError  The requested property does not exist.
         throw UnknownPropertyError("SideDef::property", QString("Property '%1' is unknown").arg(DMU_Str(args.prop)));
@@ -93,9 +89,13 @@ int SideDef::setProperty(setargs_t const &args)
 {
     switch(args.prop)
     {
-    case DMU_FLAGS:
-        DMU_SetValue(DMT_SIDEDEF_FLAGS, &_flags, &args, 0);
-        break;
+    case DMU_FLAGS: {
+        DENG2_ASSERT(_line != 0);
+        LineDef::Side &side =_line->side(this == _line->frontSideDefPtr()? FRONT : BACK);
+        short newFlags = side.flags();
+        DMU_SetValue(DMT_SIDEDEF_FLAGS, &newFlags, &args, 0);
+        side._flags = newFlags;
+        break; }
 
     case DMU_LINEDEF:
         DMU_SetValue(DMT_SIDEDEF_LINE, &_line, &args, 0);

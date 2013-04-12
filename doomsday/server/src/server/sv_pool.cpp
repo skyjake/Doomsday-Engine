@@ -466,6 +466,8 @@ void Sv_RegisterSide(dt_side_t *reg, uint number)
     DENG_ASSERT(reg != 0);
 
     SideDef *sideDef = theMap->sideDefs().at(number);
+    LineDef &line = sideDef->line();
+    LineDef::Side &side = line.side(line.frontSideDefPtr() == sideDef? FRONT : BACK);
 
     reg->top.material    = sideDef->top().materialPtr();
     reg->middle.material = sideDef->middle().materialPtr();
@@ -482,7 +484,7 @@ void Sv_RegisterSide(dt_side_t *reg, uint number)
     reg->middle.rgba[CA]  = sideDef->middle().opacity();
     reg->middle.blendMode = sideDef->middle().blendMode();
 
-    reg->flags = sideDef->flags() & 0xff;
+    reg->flags = side.flags() & 0xff;
 }
 
 /**
@@ -757,9 +759,11 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number,
     sidedelta_t *d, byte doUpdate)
 {
     SideDef const *s = theMap->sideDefs().at(number);
+    LineDef const &line = s->line();
+    LineDef::Side const &side = line.side(line.frontSideDefPtr() == s? FRONT : BACK);
     dt_side_t *r = &reg->sideDefs[number];
     byte lineFlags = s->line().flags() & 0xff;
-    byte sideFlags = s->flags() & 0xff;
+    byte sideFlags = side.flags() & 0xff;
     int df = 0;
 
     if(!s->top().hasFixMaterial() && r->top.material != s->top().materialPtr())

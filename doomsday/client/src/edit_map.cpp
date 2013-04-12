@@ -110,11 +110,12 @@ public:
         return line;
     }
 
-    SideDef *createSideDef(LineDef &line)
+    SideDef *createSideDef(LineDef &line, int side)
     {
+        DENG_ASSERT(line.side(side).sideDefPtr() == 0);
         SideDef *sideDef = new SideDef;
         sideDef->_line = &line;
-
+        line.side(side)._sideDef = sideDef;
         sideDefs.append(sideDef);
         return sideDef;
     }
@@ -952,6 +953,14 @@ boolean MPE_End()
      * Perform cleanup on the loaded map data, removing duplicate vertexes,
      * pruning unused sectors etc, etc...
      */
+
+    /// Ensure one sided lines are flagged as blocking. @todo Refactor away.
+    foreach(LineDef *line, editMap.lines)
+    {
+        if(!line->hasFrontSideDef() || !line->hasBackSideDef())
+            line->_flags |= DDLF_BLOCKING;
+    }
+
 #if 0
     markDuplicateVertexes(editMap);
     pruneMapElements(editMap, PRUNE_ALL);
@@ -1165,7 +1174,7 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSectorIdx, uint backSectorIdx
 }
 
 #undef MPE_LinedefAddSide
-void MPE_LinedefAddSide(uint lineIdx, int side, short flags, ddstring_t const *topMaterialUri,
+void MPE_LinedefAddSide(uint lineIdx, int sideId, short flags, ddstring_t const *topMaterialUri,
     float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue,
     ddstring_t const *middleMaterialUri, float middleOffsetX, float middleOffsetY, float middleRed,
     float middleGreen, float middleBlue, float middleAlpha, ddstring_t const *bottomMaterialUri,
@@ -1178,16 +1187,17 @@ void MPE_LinedefAddSide(uint lineIdx, int side, short flags, ddstring_t const *t
 
     LineDef *line = editMap.lines[lineIdx - 1];
     SideDef *s;
-    if(line->hasSideDef(side))
+    if(line->hasSideDef(sideId))
     {
-        s = line->sideDefPtr(side);
+        s = line->sideDefPtr(sideId);
     }
     else
     {
-        s = line->side(side)._sideDef = editMap.createSideDef(*line);
+        s = editMap.createSideDef(*line, sideId);
     }
 
-    s->_flags = flags;
+    LineDef::Side &side = line->side(sideId);
+    side._flags = flags;
 
     // Assign the resolved material if found.
     s->top().setMaterial(findMaterialInDict(topMaterialUri));
@@ -1202,11 +1212,6 @@ void MPE_LinedefAddSide(uint lineIdx, int side, short flags, ddstring_t const *t
     s->bottom().setMaterial(findMaterialInDict(bottomMaterialUri));
     s->bottom().setMaterialOrigin(bottomOffsetX, bottomOffsetY);
     s->bottom().setTintColor(bottomRed, bottomGreen, bottomBlue);
-
-    // Update line flags.
-    line->_flags &= ~DDLF_BLOCKING;
-    if(!line->hasFrontSideDef() || !line->hasBackSideDef())
-        line->_flags |= DDLF_BLOCKING;
 }
 
 #undef MPE_PlaneCreate

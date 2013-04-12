@@ -47,7 +47,8 @@ LineDef::Side::Side(Sector *sector)
       _sideDef(0),
       _leftHEdge(0),
       _rightHEdge(0),
-      _shadowVisCount(0)
+      _shadowVisCount(0),
+      _flags(0)
 {
     std::memset(&_middleSoundEmitter, 0, sizeof(_middleSoundEmitter));
     std::memset(&_bottomSoundEmitter, 0, sizeof(_bottomSoundEmitter));
@@ -251,6 +252,11 @@ LineDef::Side::FakeRadioData const &LineDef::Side::fakeRadioData() const
 }
 
 #endif // __CLIENT__
+
+short LineDef::Side::flags() const
+{
+    return _flags;
+}
 
 int LineDef::Side::shadowVisCount() const
 {

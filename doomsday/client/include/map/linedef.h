@@ -22,6 +22,7 @@
 #define LIBDENG_MAP_LINEDEF
 
 #include <de/binangle.h>
+#include <de/vector1.h>
 
 #include <de/Vector>
 #include <de/Error>
@@ -29,15 +30,16 @@
 //#include "resource/r_data.h"
 
 #include "MapElement"
-#include "map/r_world.h"
+#include "map/vertex.h"
+//#include "map/r_world.h"
 //#include "p_mapdata.h"
 
 #include "p_dmu.h"
 
-class Vertex;
+class HEdge;
+class LineOwner;
 class Sector;
 class SideDef;
-class HEdge;
 
 // Internal flags:
 #define LF_POLYOBJ              0x1 ///< Line is part of a polyobject.
@@ -70,6 +72,32 @@ class HEdge;
 #define SSF_BOTTOM              0x2
 #define SSF_TOP                 0x4
 ///@}
+
+#ifdef __CLIENT__
+
+/**
+ * FakeRadio shadow data.
+ * @ingroup map
+ */
+struct shadowcorner_t
+{
+    float corner;
+    Sector *proximity;
+    float pOffset;
+    float pHeight;
+};
+
+/**
+ * FakeRadio connected edge data.
+ * @ingroup map
+ */
+struct edgespan_t
+{
+    float length;
+    float shift;
+};
+
+#endif // __CLIENT__
 
 /**
  * World map line.
@@ -127,6 +155,9 @@ public:
 
         /// Framecount of last time shadows were drawn on this side.
         int _shadowVisCount;
+
+        /// @ref sdefFlags
+        short _flags;
 
         /// Sound emitters.
         ddmobj_base_t _middleSoundEmitter;
@@ -271,6 +302,11 @@ public:
          * is a no-op.
          */
         void updateSurfaceNormals();
+
+        /**
+         * Returns the @ref sdefFlags fro the side.
+         */
+        short flags() const;
 
         /**
          * Returns the frame number of the last time shadows were drawn for the side.

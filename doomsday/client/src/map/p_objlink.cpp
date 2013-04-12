@@ -379,12 +379,12 @@ static void processSeg(HEdge *hedge, void *parameters)
         LineDef &line = hedge->line();
         Sector *frontSec  = lineSide == FRONT? leaf->sectorPtr() : backLeaf->sectorPtr();
         Sector *backSec   = lineSide == FRONT? backLeaf->sectorPtr() : leaf->sectorPtr();
-        SideDef *frontDef = line.sideDefPtr(lineSide);
-        SideDef *backDef  = line.sideDefPtr(lineSide^1);
+        LineDef::Side &front = line.side(lineSide);
+        LineDef::Side &back  = line.side(lineSide^1);
 
-        if(backSec && !backDef) return; // One-sided window.
+        if(backSec && !back.hasSideDef()) return; // One-sided window.
 
-        if(R_MiddleMaterialCoversOpening(line.flags(), frontSec, backSec, frontDef, backDef,
+        if(R_MiddleMaterialCoversOpening(line.flags(), frontSec, backSec, &front, &back,
                                          false /*do not ignore material opacity*/)) return;
     }
 

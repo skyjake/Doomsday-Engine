@@ -365,11 +365,12 @@ bool HEdge::prepareWallDivs(SideDefSection section, Sector *frontSec, Sector *ba
     walldivs_t *leftWallDivs, walldivs_t *rightWallDivs, pvec2f_t matOffset) const
 {
     int lineFlags = _line? _line->flags() : 0;
-    SideDef *frontDef = _line? _line->side(_lineSide).sideDefPtr() : 0;
-    SideDef *backDef  = _twin && _twin->hasLine()? _twin->lineSide().sideDefPtr() : 0;
+    LineDef::Side *front = _line? &_line->side(_lineSide) : 0;
+    LineDef::Side *back  = _twin && _twin->hasLine()? &_twin->lineSide() : 0;
     coord_t low, hi;
-    bool visible = R_FindBottomTop(section, lineFlags, frontSec, backSec, frontDef, backDef,
-                                    &low, &hi, matOffset);
+    bool visible = R_FindBottomTop(section, lineFlags, frontSec, backSec, front, back,
+                                   &low, &hi, matOffset);
+
     matOffset[0] += float(_line? _lineOffset : 0);
     if(!visible) return false;
 

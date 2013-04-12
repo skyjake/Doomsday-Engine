@@ -415,50 +415,50 @@ static byte pvisibleLineSections(LineDef *line, int backSide)
 }
 
 static void selectSurfaceColors(Vector3f const **topColor,
-    Vector3f const **bottomColor, SideDef *sideDef, SideDefSection section)
+    Vector3f const **bottomColor, LineDef::Side &lineSide, SideDefSection section)
 {
     switch(section)
     {
     case SS_MIDDLE:
-        if(sideDef->flags() & SDF_BLENDMIDTOTOP)
+        if(lineSide.flags() & SDF_BLENDMIDTOTOP)
         {
-            *topColor    = &sideDef->top().tintColor();
-            *bottomColor = &sideDef->middle().tintColor();
+            *topColor    = &lineSide.sideDef().top().tintColor();
+            *bottomColor = &lineSide.sideDef().middle().tintColor();
         }
-        else if(sideDef->flags() & SDF_BLENDMIDTOBOTTOM)
+        else if(lineSide.flags() & SDF_BLENDMIDTOBOTTOM)
         {
-            *topColor    = &sideDef->middle().tintColor();
-            *bottomColor = &sideDef->bottom().tintColor();
+            *topColor    = &lineSide.sideDef().middle().tintColor();
+            *bottomColor = &lineSide.sideDef().bottom().tintColor();
         }
         else
         {
-            *topColor    = &sideDef->middle().tintColor();
+            *topColor    = &lineSide.sideDef().middle().tintColor();
             *bottomColor = 0;
         }
         break;
 
     case SS_TOP:
-        if(sideDef->flags() & SDF_BLENDTOPTOMID)
+        if(lineSide.flags() & SDF_BLENDTOPTOMID)
         {
-            *topColor    = &sideDef->top().tintColor();
-            *bottomColor = &sideDef->middle().tintColor();
+            *topColor    = &lineSide.sideDef().top().tintColor();
+            *bottomColor = &lineSide.sideDef().middle().tintColor();
         }
         else
         {
-            *topColor    = &sideDef->top().tintColor();
+            *topColor    = &lineSide.sideDef().top().tintColor();
             *bottomColor = 0;
         }
         break;
 
     case SS_BOTTOM:
-        if(sideDef->flags() & SDF_BLENDBOTTOMTOMID)
+        if(lineSide.flags() & SDF_BLENDBOTTOMTOMID)
         {
-            *topColor    = &sideDef->middle().tintColor();
-            *bottomColor = &sideDef->bottom().tintColor();
+            *topColor    = &lineSide.sideDef().middle().tintColor();
+            *bottomColor = &lineSide.sideDef().bottom().tintColor();
         }
         else
         {
-            *topColor    = &sideDef->bottom().tintColor();
+            *topColor    = &lineSide.sideDef().bottom().tintColor();
             *bottomColor = 0;
         }
         break;
@@ -1847,7 +1847,7 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
             if(glowStrength > 0)
                 flags &= ~RHF_ADD_RADIO;
 
-            selectSurfaceColors(&color, &color2, &hedge->lineSideDef(), section);
+            selectSurfaceColors(&color, &color2, hedge->lineSide(), section);
         }
 
         float deltaL, deltaR;
@@ -2228,14 +2228,14 @@ static void skyFixZCoords(HEdge *hedge, int skyCap, coord_t *bottom, coord_t *to
  */
 static bool hedgeBackClosedForSkyFix(HEdge const &hedge)
 {
-    LineDef const &line     = hedge.line();
+    LineDef const &line = hedge.line();
+    LineDef::Side const &front = line.side(hedge.lineSideId());
+    LineDef::Side const &back  = line.side(hedge.lineSideId()^1);
     Sector const *frontSec  = line.sectorPtr(hedge.lineSideId());
     Sector const *backSec   = line.sectorPtr(hedge.lineSideId()^1);
-    SideDef const *frontDef = line.sideDefPtr(hedge.lineSideId());
-    SideDef const *backDef  = line.sideDefPtr(hedge.lineSideId()^1);
 
-    if(!frontDef) return false;
-    if(!backDef) return true;
+    if(!front.hasSideDef()) return false;
+    if(!back.hasSideDef()) return true;
 
     if(frontSec == backSec) return false; // Never.
 
@@ -2246,7 +2246,7 @@ static bool hedgeBackClosedForSkyFix(HEdge const &hedge)
         if(backSec->floor().visHeight()   >= frontSec->ceiling().visHeight()) return true;
     }
 
-    return R_MiddleMaterialCoversOpening(line.flags(), frontSec, backSec, frontDef, backDef,
+    return R_MiddleMaterialCoversOpening(line.flags(), frontSec, backSec, &front, &back,
                                          false/*don't ignore opacity*/);
 }
 

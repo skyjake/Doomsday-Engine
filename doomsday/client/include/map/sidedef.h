@@ -29,32 +29,6 @@
 
 class LineDef;
 
-#ifdef __CLIENT__
-
-/**
- * FakeRadio shadow data.
- * @ingroup map
- */
-struct shadowcorner_t
-{
-    float corner;
-    Sector *proximity;
-    float pOffset;
-    float pHeight;
-};
-
-/**
- * FakeRadio connected edge data.
- * @ingroup map
- */
-struct edgespan_t
-{
-    float length;
-    float shift;
-};
-
-#endif // __CLIENT__
-
 /**
  * @attention SideDef is in the process of being replaced by lineside_t. All
  * data/values which concern the geometry of surfaces should be relocated to
@@ -83,9 +57,6 @@ public:
 
     /// Owning line of the sidedef.
     LineDef *_line;
-
-    /// @ref sdefFlags
-    short _flags;
 
 public:
     SideDef();
@@ -129,11 +100,6 @@ public:
 
     /// @copydoc middle()
     inline Surface const &top() const { return surface(SS_TOP); }
-
-    /**
-     * Returns the @ref sdefFlags of the sidedef.
-     */
-    short flags() const;
 
     /**
      * Get a property value, selected by DMU_* name.

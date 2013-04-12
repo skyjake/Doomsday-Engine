@@ -473,16 +473,16 @@ static void plotSourcesForLine(LineDef &line, byte side, SideDefSection section)
 
     Sector *frontSec  = line.sectorPtr(side);
     Sector *backSec   = line.sectorPtr(side ^ 1);
-    SideDef *frontDef = line.sideDefPtr(side);
-    SideDef *backDef  = line.sideDefPtr(side ^ 1);
-    Surface &surface  = line.sideDef(side).surface(section);
+    LineDef::Side *front = &line.side(side);
+    LineDef::Side *back  = &line.side(side ^ 1);
+    Surface &surface  = front->sideDef().surface(section);
 
     if(!surface.hasMaterial()) return;
 
     // Is the line section potentially visible?
     coord_t low, hi;
     float matOffset[2] = { 0, 0 };
-    if(!R_FindBottomTop(section, line.flags(), frontSec, backSec, frontDef, backDef,
+    if(!R_FindBottomTop(section, line.flags(), frontSec, backSec, front, back,
                          &low, &hi, matOffset)) return;
 
     Vector3d v1(line.vertexOrigin(side  )[VX], line.vertexOrigin(side  )[VY], hi);

@@ -24,6 +24,7 @@
 #include <de/Vector>
 
 #include "resource/r_data.h"
+#include "map/linedef.h"
 #include "map/plane.h"
 #include "map/sector.h"
 #include "map/sidedef.h"
@@ -83,8 +84,8 @@ void R_OrderVertices(LineDef *line, Sector const *sector, Vertex *verts[2]);
  * @param lineFlags     @ref ldefFlags.
  * @param frontSec      Sector in front of the wall.
  * @param backSec       Sector behind the wall. Can be @c NULL
- * @param frontDef      Definition for the front side. Can be @c NULL
- * @param backDef       Definition for the back side. Can be @c NULL
+ * @param front         Front line side. Can be @c NULL.  @todo Refactor away
+ * @param back          Back line side. Can be @c NULL.  @todo Refactor away
  *
  * Return values:
  * @param low           Z map space coordinate at the bottom of the wall section.
@@ -94,7 +95,8 @@ void R_OrderVertices(LineDef *line, Sector const *sector, Vertex *verts[2]);
  * @return  @c true iff the determined wall section height is @c >0
  */
 boolean R_FindBottomTop(SideDefSection section, int lineFlags,
-    Sector const *frontSec, Sector const *backSec, SideDef const *frontDef, SideDef const *backDef,
+    Sector const *frontSec, Sector const *backSec,
+    LineDef::Side const *front, LineDef::Side const *back,
     coord_t *low, coord_t *hi, pvec2f_t matOffset = 0);
 
 /**
@@ -153,15 +155,15 @@ coord_t R_VisOpenRange(LineDef const &line, int side, coord_t *bottom, coord_t *
  * @param lineFlags     @ref ldefFlags.
  * @param frontSec      Sector in front of the wall.
  * @param backSec       Sector behind the wall. Can be @c NULL
- * @param frontDef      Definition for the front side. Can be @c NULL
- * @param backDef       Definition for the back side. Can be @c NULL
+ * @param front         Front line side. Can be @c NULL. @todo Refactor away
+ * @param back          Back line side. Can be @c NULL.  @todo Refactor away
  * @param ignoreOpacity @c true= material opacity should be ignored.
  *
  * @return  @c true iff SideDef @a frontDef has a "middle" Material which completely
  *     covers the open range defined by sectors @a frontSec and @a backSec.
  */
 boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector const *frontSec,
-    Sector const *backSec, SideDef const *frontDef, SideDef const *backDef,
+    Sector const *backSec, LineDef::Side const *front, LineDef::Side const *back,
     boolean ignoreOpacity = true);
 
 /**
