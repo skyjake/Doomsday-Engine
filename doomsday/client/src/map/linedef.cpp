@@ -52,6 +52,14 @@ LineDef::Side::Side(Sector *sector)
     std::memset(&_middleSoundEmitter, 0, sizeof(_middleSoundEmitter));
     std::memset(&_bottomSoundEmitter, 0, sizeof(_bottomSoundEmitter));
     std::memset(&_topSoundEmitter,    0, sizeof(_topSoundEmitter));
+
+#ifdef __CLIENT__
+    _fakeRadioData.updateCount = 0;
+    std::memset(_fakeRadioData.topCorners,    0, sizeof(_fakeRadioData.topCorners));
+    std::memset(_fakeRadioData.bottomCorners, 0, sizeof(_fakeRadioData.bottomCorners));
+    std::memset(_fakeRadioData.sideCorners,   0, sizeof(_fakeRadioData.sideCorners));
+    std::memset(_fakeRadioData.spans,         0, sizeof(_fakeRadioData.spans));
+#endif
 }
 
 bool LineDef::Side::hasSector() const
@@ -84,6 +92,18 @@ SideDef &LineDef::Side::sideDef() const
     throw LineDef::MissingSideDefError("LineDef::Side::sideDef", "No sidedef is configured");
 }
 
+HEdge &LineDef::Side::leftHEdge() const
+{
+    DENG_ASSERT(_leftHEdge != 0);
+    return *_leftHEdge;
+}
+
+HEdge &LineDef::Side::rightHEdge() const
+{
+    DENG_ASSERT(_rightHEdge != 0);
+    return *_rightHEdge;
+}
+
 ddmobj_base_t &LineDef::Side::middleSoundEmitter()
 {
     return _middleSoundEmitter;
@@ -91,7 +111,7 @@ ddmobj_base_t &LineDef::Side::middleSoundEmitter()
 
 ddmobj_base_t const &LineDef::Side::middleSoundEmitter() const
 {
-    return const_cast<ddmobj_base_t const &>(const_cast<LineDef::Side &>(*this).middleSoundEmitter());
+    return const_cast<ddmobj_base_t const &>(const_cast<Side &>(*this).middleSoundEmitter());
 }
 
 void LineDef::Side::updateMiddleSoundEmitterOrigin()
@@ -123,7 +143,7 @@ ddmobj_base_t &LineDef::Side::bottomSoundEmitter()
 
 ddmobj_base_t const &LineDef::Side::bottomSoundEmitter() const
 {
-    return const_cast<ddmobj_base_t const &>(const_cast<LineDef::Side &>(*this).bottomSoundEmitter());
+    return const_cast<ddmobj_base_t const &>(const_cast<Side &>(*this).bottomSoundEmitter());
 }
 
 void LineDef::Side::updateBottomSoundEmitterOrigin()
@@ -159,7 +179,7 @@ ddmobj_base_t &LineDef::Side::topSoundEmitter()
 
 ddmobj_base_t const &LineDef::Side::topSoundEmitter() const
 {
-    return const_cast<ddmobj_base_t const &>(const_cast<LineDef::Side &>(*this).topSoundEmitter());
+    return const_cast<ddmobj_base_t const &>(const_cast<Side &>(*this).topSoundEmitter());
 }
 
 void LineDef::Side::updateTopSoundEmitterOrigin()
@@ -188,24 +208,7 @@ void LineDef::Side::updateTopSoundEmitterOrigin()
     }
 }
 
-HEdge &LineDef::Side::leftHEdge() const
-{
-    DENG_ASSERT(_leftHEdge != 0);
-    return *_leftHEdge;
-}
-
-HEdge &LineDef::Side::rightHEdge() const
-{
-    DENG_ASSERT(_rightHEdge != 0);
-    return *_rightHEdge;
-}
-
-int LineDef::Side::shadowVisCount() const
-{
-    return _shadowVisCount;
-}
-
-void LineDef::Side::updateSoundEmitterOrigins()
+void LineDef::Side::updateAllSoundEmitterOrigins()
 {
     if(!_sideDef) return;
 
@@ -233,6 +236,25 @@ void LineDef::Side::updateSurfaceNormals()
     middleSurface.setNormal(normal); // will normalize
     bottomSurface.setNormal(normal);
     topSurface.setNormal(normal);
+}
+
+#ifdef __CLIENT__
+
+LineDef::Side::FakeRadioData &LineDef::Side::fakeRadioData()
+{
+    return _fakeRadioData;
+}
+
+LineDef::Side::FakeRadioData const &LineDef::Side::fakeRadioData() const
+{
+    return const_cast<FakeRadioData const &>(const_cast<Side *>(this)->fakeRadioData());
+}
+
+#endif // __CLIENT__
+
+int LineDef::Side::shadowVisCount() const
+{
+    return _shadowVisCount;
 }
 
 DENG2_PIMPL(LineDef)

@@ -94,24 +94,6 @@ public:
         int refCount;
     } _buildData;
 
-#ifdef __CLIENT__
-
-    /// @todo Does not belong here - move to the map renderer. -ds
-    struct FakeRadioData
-    {
-        /// Frame number of last update
-        int updateCount;
-
-        shadowcorner_t topCorners[2];
-        shadowcorner_t bottomCorners[2];
-        shadowcorner_t sideCorners[2];
-
-        /// [left, right]
-        edgespan_t spans[2];
-    } _fakeRadioData;
-
-#endif // __CLIENT__
-
 public:
     SideDef();
     ~SideDef();
@@ -159,18 +141,6 @@ public:
      * Returns the @ref sdefFlags of the sidedef.
      */
     short flags() const;
-
-#ifdef __CLIENT__
-
-    /**
-     * Returns the FakeRadio data for the sidedef.
-     */
-    FakeRadioData &fakeRadioData();
-
-    /// @copydoc fakeRadioData()
-    FakeRadioData const &fakeRadioData() const;
-
-#endif // __CLIENT__
 
     /**
      * Get a property value, selected by DMU_* name.

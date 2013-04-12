@@ -1405,7 +1405,6 @@ static int getProperty(void *ptr, void *context)
         case DMU_ALPHA:
         case DMU_BLENDMODE:
         case DMU_FLAGS:
-        case DMU_BASE:
             elem = &elem->castTo<Plane>()->surface();
             args->type = DMU_SURFACE;
             DENG2_ASSERT(elem->type() == args->type);

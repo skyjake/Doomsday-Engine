@@ -35,14 +35,6 @@ SideDef::SideDef()
     _line = 0;
     _flags = 0;
     std::memset(&_buildData, 0, sizeof(_buildData));
-
-#ifdef __CLIENT__
-    _fakeRadioData.updateCount = 0;
-    std::memset(_fakeRadioData.topCorners,    0, sizeof(_fakeRadioData.topCorners));
-    std::memset(_fakeRadioData.bottomCorners, 0, sizeof(_fakeRadioData.bottomCorners));
-    std::memset(_fakeRadioData.sideCorners,   0, sizeof(_fakeRadioData.sideCorners));
-    std::memset(_fakeRadioData.spans,         0, sizeof(_fakeRadioData.spans));
-#endif
 }
 
 SideDef::~SideDef()
@@ -75,20 +67,6 @@ short SideDef::flags() const
 {
     return _flags;
 }
-
-#ifdef __CLIENT__
-
-SideDef::FakeRadioData &SideDef::fakeRadioData()
-{
-    return _fakeRadioData;
-}
-
-SideDef::FakeRadioData const &SideDef::fakeRadioData() const
-{
-    return const_cast<FakeRadioData const &>(const_cast<SideDef *>(this)->fakeRadioData());
-}
-
-#endif // __CLIENT__
 
 int SideDef::property(setargs_t &args) const
 {

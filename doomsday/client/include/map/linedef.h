@@ -113,11 +113,6 @@ public:
     struct Side
     {
     public: /// @todo make private:
-        /// Sound emitters.
-        ddmobj_base_t _middleSoundEmitter;
-        ddmobj_base_t _bottomSoundEmitter;
-        ddmobj_base_t _topSoundEmitter;
-
         /// Sector on this side.
         Sector *_sector;
 
@@ -132,6 +127,28 @@ public:
 
         /// Framecount of last time shadows were drawn on this side.
         int _shadowVisCount;
+
+        /// Sound emitters.
+        ddmobj_base_t _middleSoundEmitter;
+        ddmobj_base_t _bottomSoundEmitter;
+        ddmobj_base_t _topSoundEmitter;
+
+#ifdef __CLIENT__
+        /// @todo Does not belong here - move to the map renderer. -ds
+        struct FakeRadioData
+        {
+            /// Frame number of last update
+            int updateCount;
+
+            shadowcorner_t topCorners[2];
+            shadowcorner_t bottomCorners[2];
+            shadowcorner_t sideCorners[2];
+
+            /// [left, right]
+            edgespan_t spans[2];
+        } _fakeRadioData;
+
+#endif // __CLIENT__
 
     public:
         Side(Sector *sector = 0);
@@ -173,6 +190,28 @@ public:
          * @see hasSideDef()
          */
         inline SideDef *sideDefPtr() const { return hasSideDef()? &sideDef() : 0; }
+
+#ifdef __CLIENT__
+
+        /**
+         * Returns the FakeRadio data for the side.
+         */
+        FakeRadioData &fakeRadioData();
+
+        /// @copydoc fakeRadioData()
+        FakeRadioData const &fakeRadioData() const;
+
+#endif // __CLIENT__
+
+        /**
+         * Returns the left-most HEdge for the side.
+         */
+        HEdge &leftHEdge() const;
+
+        /**
+         * Returns the right-most HEdge for the side.
+         */
+        HEdge &rightHEdge() const;
 
         /**
          * Returns the sound emitter for the middle surface.
@@ -220,21 +259,11 @@ public:
         void updateTopSoundEmitterOrigin();
 
         /**
-         * Returns the left-most HEdge for the side.
-         */
-        HEdge &leftHEdge() const;
-
-        /**
-         * Returns the right-most HEdge for the side.
-         */
-        HEdge &rightHEdge() const;
-
-        /**
          * Update the side's sound emitter origins according to the points defined by
          * the LineDef's vertices and the plane heights of the Sector on this side.
          * If no SideDef is associated this is a no-op.
          */
-        void updateSoundEmitterOrigins();
+        void updateAllSoundEmitterOrigins();
 
         /**
          * Update the tangent space normals of the side's surfaces according to the

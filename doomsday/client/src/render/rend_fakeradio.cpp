@@ -86,7 +86,7 @@ void Rend_RadioUpdateLine(LineDef &line, int backSide)
     if(!line.hasSector(backSide)) return;
 
     // Have already determined the shadow properties on this side?
-    SideDef::FakeRadioData &frData = line.sideDef(backSide).fakeRadioData();
+    LineDef::Side::FakeRadioData &frData = line.side(backSide).fakeRadioData();
     if(frData.updateCount == frameCount) return;
 
     // Not yet - Calculate now.

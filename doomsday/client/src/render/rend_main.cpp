@@ -1222,7 +1222,6 @@ static boolean doRenderHEdge(HEdge *hedge, Vector3f const &normal,
     MaterialSnapshot const &ms,
     boolean isTwosidedMiddle)
 {
-    SideDef *sideDef = hedge->hasLine()? hedge->lineSide().sideDefPtr() : 0;
     rvertex_t *rvertices;
 
     // Init the params.
@@ -1298,7 +1297,7 @@ static boolean doRenderHEdge(HEdge *hedge, Vector3f const &normal,
 
             radioParams.line      = hedge->linePtr();
 
-            SideDef::FakeRadioData &frData = sideDef->fakeRadioData();
+            LineDef::Side::FakeRadioData &frData = hedge->lineSide().fakeRadioData();
             radioParams.botCn     = frData.bottomCorners;
             radioParams.topCn     = frData.topCorners;
             radioParams.sideCn    = frData.sideCorners;

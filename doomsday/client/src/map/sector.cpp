@@ -396,8 +396,8 @@ void Sector::planeHeightChanged(Plane &plane, coord_t oldHeight)
     // Update the sound emitter origins for all dependent wall surfaces.
     foreach(LineDef *line, d->lines)
     {
-        line->front().updateSoundEmitterOrigins();
-        line->back().updateSoundEmitterOrigins();
+        line->front().updateAllSoundEmitterOrigins();
+        line->back().updateAllSoundEmitterOrigins();
     }
 
 #ifdef __CLIENT__
