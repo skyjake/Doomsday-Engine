@@ -19,12 +19,9 @@
  * 02110-1301 USA</small>
  */
 
-//#include <cmath>
-
 #include "de_base.h"
 #include "de_console.h"
 #include "de_play.h"
-//#include "de_graphics.h"
 #include "de_render.h"
 
 #include "def_main.h"
@@ -309,7 +306,6 @@ static void newSource(Surface const &suf, Surface::DecorSource const &dec)
 
 static void plotSourcesForSurface(Surface &suf)
 {
-    /// @todo Replace with a de::Observer-based mechanism.
     if(suf._decorationData.needsUpdate)
     {
         suf.clearDecorations();
@@ -333,7 +329,6 @@ static void plotSourcesForSurface(Surface &suf)
             DENG2_ASSERT(0); // Invalid type.
         }
 
-        /// @todo Replace with a de::Observer-based mechanism.
         suf._decorationData.needsUpdate = false;
     }
 

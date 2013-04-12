@@ -187,7 +187,7 @@ Surface::Surface(MapElement &owner, float opacity, Vector3f const &tintColor)
     : MapElement(DMU_SURFACE), d(new Instance(this, owner))
 {
 #ifdef __CLIENT__
-    _decorationData.needsUpdate = false;
+    _decorationData.needsUpdate = true;
     _decorationData.sources     = 0;
     _decorationData.numSources  = 0;
 #endif
@@ -628,7 +628,6 @@ void Surface::markAsNeedingDecorationUpdate()
 {
     if(ddMapSetup || !isAttachedToMap()) return;
 
-    /// @todo Replace with a de::Observer-based mechanism.
     _decorationData.needsUpdate = true;
 }
 #endif // __CLIENT__

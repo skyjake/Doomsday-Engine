@@ -90,7 +90,6 @@ public:
 
 public:
 #ifdef __CLIENT__
-    /// @todo Does this data belong here?
     struct DecorationData
     {
         /// @c true= An update is needed.
@@ -456,8 +455,6 @@ public:
 
     /**
      * Mark the surface as needing a decoration source update.
-     *
-     * @todo This data should not be owned by Surface.
      */
     void markAsNeedingDecorationUpdate();
 #endif // __CLIENT__
