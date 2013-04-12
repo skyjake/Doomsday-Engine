@@ -68,11 +68,6 @@ public:
         Middle
     };
 
-public: /// @todo Make private:
-    coord_t _oldHeight[2];
-    coord_t _targetHeight; ///< Target height.
-    coord_t _visHeight;    ///< Visual plane height (smoothed).
-
 public:
     /**
      * Construct a new plane.

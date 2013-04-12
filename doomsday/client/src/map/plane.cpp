@@ -45,6 +45,15 @@ DENG2_PIMPL(Plane)
     /// Current @em sharp height relative to @c 0 on the map up axis (positive is up).
     coord_t height;
 
+    /// @em sharp height change tracking buffer (for smoothing).
+    coord_t oldHeight[2];
+
+    /// Target @em sharp height.
+    coord_t targetHeight;
+
+    /// Visual plane height (smoothed).
+    coord_t visHeight;
+
     /// Delta between the current @em sharp height and the visual height.
     coord_t visHeightDelta;
 
@@ -62,11 +71,15 @@ DENG2_PIMPL(Plane)
           sector(&sector),
           inSectorIndex(0),
           height(height),
+          targetHeight(height),
+          visHeight(height),
           visHeightDelta(0),
           speed(0),
           surface(dynamic_cast<MapElement &>(*i)),
           type(Floor)
-    {}
+    {
+        oldHeight[0] = oldHeight[1] = height;
+    }
 
     ~Instance()
     {
@@ -172,12 +185,8 @@ DENG2_PIMPL(Plane)
 };
 
 Plane::Plane(Sector &sector, Vector3f const &normal, coord_t height)
-    : MapElement(DMU_PLANE),
-      _targetHeight(height),
-      _visHeight(height),
-      d(new Instance(this, sector, height))
+    : MapElement(DMU_PLANE), d(new Instance(this, sector, height))
 {
-    _oldHeight[0] = _oldHeight[1] = d->height;
     setNormal(normal);
 }
 
@@ -223,7 +232,7 @@ coord_t Plane::height() const
 
 coord_t Plane::targetHeight() const
 {
-    return _targetHeight;
+    return d->targetHeight;
 }
 
 coord_t Plane::speed() const
@@ -234,7 +243,7 @@ coord_t Plane::speed() const
 coord_t Plane::visHeight() const
 {
     // $smoothplane
-    return _visHeight;
+    return d->visHeight;
 }
 
 coord_t Plane::visHeightDelta() const
@@ -246,10 +255,10 @@ coord_t Plane::visHeightDelta() const
 void Plane::lerpVisHeight()
 {
     // $smoothplane
-    d->visHeightDelta = _oldHeight[0] * (1 - frameTimePos) + d->height * frameTimePos - d->height;
+    d->visHeightDelta = d->oldHeight[0] * (1 - frameTimePos) + d->height * frameTimePos - d->height;
 
     // Visible plane height.
-    _visHeight = d->height + d->visHeightDelta;
+    d->visHeight = d->height + d->visHeightDelta;
 
 #ifdef __CLIENT__
     d->markDependantSurfacesForDecorationUpdate();
@@ -260,7 +269,7 @@ void Plane::resetVisHeight()
 {
     // $smoothplane
     d->visHeightDelta = 0;
-    _visHeight = _oldHeight[0] = _oldHeight[1] = d->height;
+    d->visHeight = d->oldHeight[0] = d->oldHeight[1] = d->height;
 
 #ifdef __CLIENT__
     d->markDependantSurfacesForDecorationUpdate();
@@ -270,15 +279,15 @@ void Plane::resetVisHeight()
 void Plane::updateHeightTracking()
 {
     // $smoothplane
-    _oldHeight[0] = _oldHeight[1];
-    _oldHeight[1] = d->height;
+    d->oldHeight[0] = d->oldHeight[1];
+    d->oldHeight[1] = d->height;
 
-    if(_oldHeight[0] != _oldHeight[1])
+    if(d->oldHeight[0] != d->oldHeight[1])
     {
-        if(de::abs(_oldHeight[0] - _oldHeight[1]) >= MAX_SMOOTH_MOVE)
+        if(de::abs(d->oldHeight[0] - d->oldHeight[1]) >= MAX_SMOOTH_MOVE)
         {
             // Too fast: make an instantaneous jump.
-            _oldHeight[0] = _oldHeight[1];
+            d->oldHeight[0] = d->oldHeight[1];
         }
     }
 }
@@ -306,7 +315,7 @@ int Plane::property(setargs_t &args) const
         DMU_GetValue(DMT_PLANE_HEIGHT, &d->height, &args, 0);
         break;
     case DMU_TARGET_HEIGHT:
-        DMU_GetValue(DMT_PLANE_TARGET, &_targetHeight, &args, 0);
+        DMU_GetValue(DMT_PLANE_TARGET, &d->targetHeight, &args, 0);
         break;
     case DMU_SPEED:
         DMU_GetValue(DMT_PLANE_SPEED, &d->speed, &args, 0);
@@ -329,7 +338,7 @@ int Plane::setProperty(setargs_t const &args)
         d->applySharpHeightChange(newHeight);
         break; }
     case DMU_TARGET_HEIGHT:
-        DMU_SetValue(DMT_PLANE_TARGET, &_targetHeight, &args, 0);
+        DMU_SetValue(DMT_PLANE_TARGET, &d->targetHeight, &args, 0);
         break;
     case DMU_SPEED:
         DMU_SetValue(DMT_PLANE_SPEED, &d->speed, &args, 0);
