@@ -44,16 +44,13 @@ using namespace de;
 
 LineDef::Side::Side(Sector *sector)
     : _sector(sector),
+      _sections(0),
       _sideDef(0),
       _leftHEdge(0),
       _rightHEdge(0),
       _shadowVisCount(0),
       _flags(0)
 {
-    std::memset(&_middleSoundEmitter, 0, sizeof(_middleSoundEmitter));
-    std::memset(&_bottomSoundEmitter, 0, sizeof(_bottomSoundEmitter));
-    std::memset(&_topSoundEmitter,    0, sizeof(_topSoundEmitter));
-
 #ifdef __CLIENT__
     _fakeRadioData.updateCount = 0;
     std::memset(_fakeRadioData.topCorners,    0, sizeof(_fakeRadioData.topCorners));
@@ -61,6 +58,11 @@ LineDef::Side::Side(Sector *sector)
     std::memset(_fakeRadioData.sideCorners,   0, sizeof(_fakeRadioData.sideCorners));
     std::memset(_fakeRadioData.spans,         0, sizeof(_fakeRadioData.spans));
 #endif
+}
+
+LineDef::Side::~Side()
+{
+    delete _sections;
 }
 
 bool LineDef::Side::hasSector() const
@@ -93,6 +95,27 @@ SideDef &LineDef::Side::sideDef() const
     throw LineDef::MissingSideDefError("LineDef::Side::sideDef", "No sidedef is configured");
 }
 
+LineDef::Side::Section &LineDef::Side::section(SideDefSection sectionId)
+{
+    if(_sections)
+    {
+        switch(sectionId)
+        {
+        case SS_MIDDLE: return _sections->middle;
+        case SS_BOTTOM: return _sections->bottom;
+        case SS_TOP:    return _sections->top;
+        default:        break;
+        }
+    }
+    /// @throw LineDef::InvalidSectionIdError The given section identifier is not valid.
+    throw LineDef::InvalidSectionIdError("LineDef::Side::section", QString("Invalid section id %1").arg(sectionId));
+}
+
+LineDef::Side::Section const &LineDef::Side::section(SideDefSection sectionId) const
+{
+    return const_cast<Section const &>(const_cast<Side &>(*this).section(sectionId));
+}
+
 HEdge &LineDef::Side::leftHEdge() const
 {
     DENG_ASSERT(_leftHEdge != 0);
@@ -107,7 +130,7 @@ HEdge &LineDef::Side::rightHEdge() const
 
 ddmobj_base_t &LineDef::Side::middleSoundEmitter()
 {
-    return _middleSoundEmitter;
+    return middle()._soundEmitter;
 }
 
 ddmobj_base_t const &LineDef::Side::middleSoundEmitter() const
@@ -123,23 +146,23 @@ void LineDef::Side::updateMiddleSoundEmitterOrigin()
 
     LineDef &line = _sideDef->line();
 
-    _middleSoundEmitter.origin[VX] = (line.v1Origin()[VX] + line.v2Origin()[VX]) / 2;
-    _middleSoundEmitter.origin[VY] = (line.v1Origin()[VY] + line.v2Origin()[VY]) / 2;
+    middle()._soundEmitter.origin[VX] = (line.v1Origin()[VX] + line.v2Origin()[VX]) / 2;
+    middle()._soundEmitter.origin[VY] = (line.v1Origin()[VY] + line.v2Origin()[VY]) / 2;
 
     DENG_ASSERT(_sector != 0);
     coord_t const ffloor = _sector->floor().height();
     coord_t const fceil  = _sector->ceiling().height();
 
     if(!line.hasBackSideDef() || line.isSelfReferencing())
-        _middleSoundEmitter.origin[VZ] = (ffloor + fceil) / 2;
+        middle()._soundEmitter.origin[VZ] = (ffloor + fceil) / 2;
     else
-        _middleSoundEmitter.origin[VZ] = (de::max(ffloor, line.backSector().floor().height()) +
-                                          de::min(fceil,  line.backSector().ceiling().height())) / 2;
+        middle()._soundEmitter.origin[VZ] = (de::max(ffloor, line.backSector().floor().height()) +
+                                             de::min(fceil,  line.backSector().ceiling().height())) / 2;
 }
 
 ddmobj_base_t &LineDef::Side::bottomSoundEmitter()
 {
-    return _bottomSoundEmitter;
+    return bottom()._soundEmitter;
 }
 
 ddmobj_base_t const &LineDef::Side::bottomSoundEmitter() const
@@ -155,8 +178,8 @@ void LineDef::Side::updateBottomSoundEmitterOrigin()
 
     LineDef &line = _sideDef->line();
 
-    _bottomSoundEmitter.origin[VX] = (line.v1Origin()[VX] + line.v2Origin()[VX]) / 2;
-    _bottomSoundEmitter.origin[VY] = (line.v1Origin()[VY] + line.v2Origin()[VY]) / 2;
+    bottom()._soundEmitter.origin[VX] = (line.v1Origin()[VX] + line.v2Origin()[VX]) / 2;
+    bottom()._soundEmitter.origin[VY] = (line.v1Origin()[VY] + line.v2Origin()[VY]) / 2;
 
     DENG_ASSERT(_sector != 0);
     coord_t const ffloor = _sector->floor().height();
@@ -165,17 +188,17 @@ void LineDef::Side::updateBottomSoundEmitterOrigin()
     if(!line.hasBackSideDef() || line.isSelfReferencing() ||
        line.backSector().floor().height() <= ffloor)
     {
-        _bottomSoundEmitter.origin[VZ] = ffloor;
+        bottom()._soundEmitter.origin[VZ] = ffloor;
     }
     else
     {
-        _bottomSoundEmitter.origin[VZ] = (de::min(line.backSector().floor().height(), fceil) + ffloor) / 2;
+        bottom()._soundEmitter.origin[VZ] = (de::min(line.backSector().floor().height(), fceil) + ffloor) / 2;
     }
 }
 
 ddmobj_base_t &LineDef::Side::topSoundEmitter()
 {
-    return _topSoundEmitter;
+    return top()._soundEmitter;
 }
 
 ddmobj_base_t const &LineDef::Side::topSoundEmitter() const
@@ -191,8 +214,8 @@ void LineDef::Side::updateTopSoundEmitterOrigin()
 
     LineDef &line = _sideDef->line();
 
-    _topSoundEmitter.origin[VX] = (line.v1Origin()[VX] + line.v2Origin()[VX]) / 2;
-    _topSoundEmitter.origin[VY] = (line.v1Origin()[VY] + line.v2Origin()[VY]) / 2;
+    top()._soundEmitter.origin[VX] = (line.v1Origin()[VX] + line.v2Origin()[VX]) / 2;
+    top()._soundEmitter.origin[VY] = (line.v1Origin()[VY] + line.v2Origin()[VY]) / 2;
 
     DENG_ASSERT(_sector != 0);
     coord_t const ffloor = _sector->floor().height();
@@ -201,11 +224,11 @@ void LineDef::Side::updateTopSoundEmitterOrigin()
     if(!line.hasBackSideDef() || line.isSelfReferencing() ||
        line.backSector().ceiling().height() >= fceil)
     {
-        _topSoundEmitter.origin[VZ] = fceil;
+        top()._soundEmitter.origin[VZ] = fceil;
     }
     else
     {
-        _topSoundEmitter.origin[VZ] = (de::max(line.backSector().ceiling().height(), ffloor) + fceil) / 2;
+        top()._soundEmitter.origin[VZ] = (de::max(line.backSector().ceiling().height(), ffloor) + fceil) / 2;
     }
 }
 
@@ -225,18 +248,14 @@ void LineDef::Side::updateSurfaceNormals()
     LineDef const &line = _sideDef->line();
     byte sid = &line.front() == this? FRONT : BACK;
 
-    Surface &middleSurface = _sideDef->middle();
-    Surface &bottomSurface = _sideDef->bottom();
-    Surface &topSurface    = _sideDef->top();
-
     Vector3f normal((line.vertexOrigin(sid^1)[VY] - line.vertexOrigin(sid  )[VY]) / line.length(),
                     (line.vertexOrigin(sid  )[VX] - line.vertexOrigin(sid^1)[VX]) / line.length(),
                     0);
 
     // All line side surfaces have the same normals.
-    middleSurface.setNormal(normal); // will normalize
-    bottomSurface.setNormal(normal);
-    topSurface.setNormal(normal);
+    middle().surface().setNormal(normal); // will normalize
+    bottom().surface().setNormal(normal);
+    top().surface().setNormal(normal);
 }
 
 #ifdef __CLIENT__
@@ -594,11 +613,11 @@ int LineDef::setProperty(setargs_t const &args)
         {
             if((_flags & DDLF_DONTPEGTOP) != (oldFlags & DDLF_DONTPEGTOP))
             {
-                frontSideDef().top().markAsNeedingDecorationUpdate();
+                front().top().surface().markAsNeedingDecorationUpdate();
             }
             if((_flags & DDLF_DONTPEGBOTTOM) != (oldFlags & DDLF_DONTPEGBOTTOM))
             {
-                frontSideDef().bottom().markAsNeedingDecorationUpdate();
+                front().bottom().surface().markAsNeedingDecorationUpdate();
             }
         }
 

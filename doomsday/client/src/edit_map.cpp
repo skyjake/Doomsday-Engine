@@ -112,10 +112,10 @@ public:
 
     SideDef *createSideDef(LineDef &line, int side)
     {
-        DENG_ASSERT(line.side(side).sideDefPtr() == 0);
-        SideDef *sideDef = new SideDef;
-        sideDef->_line = &line;
+        DENG_ASSERT(!line.side(side).hasSideDef());
+        SideDef *sideDef = new SideDef(line);
         line.side(side)._sideDef = sideDef;
+        line.side(side)._sections = new LineDef::Side::Sections(*sideDef);
         sideDefs.append(sideDef);
         return sideDef;
     }
@@ -1200,18 +1200,18 @@ void MPE_LinedefAddSide(uint lineIdx, int sideId, short flags, ddstring_t const 
     side._flags = flags;
 
     // Assign the resolved material if found.
-    s->top().setMaterial(findMaterialInDict(topMaterialUri));
-    s->top().setMaterialOrigin(topOffsetX, topOffsetY);
-    s->top().setTintColor(topRed, topGreen, topBlue);
+    side.top().surface().setMaterial(findMaterialInDict(topMaterialUri));
+    side.top().surface().setMaterialOrigin(topOffsetX, topOffsetY);
+    side.top().surface().setTintColor(topRed, topGreen, topBlue);
 
-    s->middle().setMaterial(findMaterialInDict(middleMaterialUri));
-    s->middle().setMaterialOrigin(middleOffsetX, middleOffsetY);
-    s->middle().setTintColor(middleRed, middleGreen, middleBlue);
-    s->middle().setOpacity(middleAlpha);
+    side.middle().surface().setMaterial(findMaterialInDict(middleMaterialUri));
+    side.middle().surface().setMaterialOrigin(middleOffsetX, middleOffsetY);
+    side.middle().surface().setTintColor(middleRed, middleGreen, middleBlue);
+    side.middle().surface().setOpacity(middleAlpha);
 
-    s->bottom().setMaterial(findMaterialInDict(bottomMaterialUri));
-    s->bottom().setMaterialOrigin(bottomOffsetX, bottomOffsetY);
-    s->bottom().setTintColor(bottomRed, bottomGreen, bottomBlue);
+    side.bottom().surface().setMaterial(findMaterialInDict(bottomMaterialUri));
+    side.bottom().surface().setMaterialOrigin(bottomOffsetX, bottomOffsetY);
+    side.bottom().surface().setTintColor(bottomRed, bottomGreen, bottomBlue);
 }
 
 #undef MPE_PlaneCreate

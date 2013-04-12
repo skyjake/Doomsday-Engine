@@ -315,9 +315,10 @@ static void plotSourcesForSurface(Surface &suf)
         case DMU_SIDEDEF: {
             SideDef *sideDef = suf.owner().castTo<SideDef>();
             LineDef &line = sideDef->line();
-            plotSourcesForLine(line, sideDef == line.frontSideDefPtr()? FRONT : BACK,
-                               &sideDef->middle() == &suf? SS_MIDDLE :
-                               &sideDef->bottom() == &suf? SS_BOTTOM : SS_TOP);
+            LineDef::Side &side = line.side(line.frontSideDefPtr() == sideDef? FRONT : BACK);
+            plotSourcesForLine(line, &side == &line.front()? FRONT : BACK,
+                               &side.middle().surface() == &suf? SS_MIDDLE :
+                               &side.bottom().surface() == &suf? SS_BOTTOM : SS_TOP);
             break; }
 
         case DMU_PLANE: {
@@ -475,7 +476,7 @@ static void plotSourcesForLine(LineDef &line, byte side, SideDefSection section)
     Sector *backSec   = line.sectorPtr(side ^ 1);
     LineDef::Side *front = &line.side(side);
     LineDef::Side *back  = &line.side(side ^ 1);
-    Surface &surface  = front->sideDef().surface(section);
+    Surface &surface  = front->section(section).surface();
 
     if(!surface.hasMaterial()) return;
 

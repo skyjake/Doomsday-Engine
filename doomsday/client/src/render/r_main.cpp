@@ -36,6 +36,7 @@
 #include "gl/svg.h"
 #include "map/p_players.h"
 #include "map/p_objlink.h"
+#include "map/r_world.h"
 #include "render/vignette.h"
 #include "api_render.h"
 
@@ -522,17 +523,17 @@ static void R_UpdateMap()
         if(!line->hasSideDef(i))
             continue;
 
-        SideDef &sideDef = line->sideDef(i);
-        sideDef.top().markAsNeedingDecorationUpdate();
-        sideDef.middle().markAsNeedingDecorationUpdate();
-        sideDef.bottom().markAsNeedingDecorationUpdate();
+        LineDef::Side &side = line->side(i);
+        side.top().surface().markAsNeedingDecorationUpdate();
+        side.middle().surface().markAsNeedingDecorationUpdate();
+        side.bottom().surface().markAsNeedingDecorationUpdate();
     }
 
     /// @todo Is this even necessary?
     foreach(Polyobj *polyobj, theMap->polyobjs())
     foreach(LineDef *line, polyobj->lines())
     {
-        line->frontSideDef().middle().markAsNeedingDecorationUpdate();
+        line->front().middle().surface().markAsNeedingDecorationUpdate();
     }
 
     theMap->buildSurfaceLists();
@@ -1375,15 +1376,15 @@ void Rend_CacheForMap()
             if(!line->hasSideDef(i))
                 continue;
 
-            SideDef &sideDef = line->sideDef(i);
-            if(sideDef.middle().hasMaterial())
-                App_Materials().cache(sideDef.middle().material(), spec);
+            LineDef::Side &side = line->side(i);
+            if(side.middle().surface().hasMaterial())
+                App_Materials().cache(side.middle().surface().material(), spec);
 
-            if(sideDef.top().hasMaterial())
-                App_Materials().cache(sideDef.top().material(), spec);
+            if(side.top().surface().hasMaterial())
+                App_Materials().cache(side.top().surface().material(), spec);
 
-            if(sideDef.bottom().hasMaterial())
-                App_Materials().cache(sideDef.bottom().material(), spec);
+            if(side.bottom().surface().hasMaterial())
+                App_Materials().cache(side.bottom().surface().material(), spec);
         }
 
         foreach(Sector *sector, theMap->sectors())

@@ -25,6 +25,7 @@
 #include "audio/s_environ.h"
 #include "map/linedef.h"
 #include "map/gamemap.h"
+#include "map/r_world.h" // ddMapSetup
 #include "render/r_main.h" // frameTimePos
 
 #include "map/plane.h"
@@ -171,17 +172,20 @@ DENG2_PIMPL(Plane)
         // an update.
         foreach(LineDef *line, sector->lines())
         {
-            SideDef &frontSideDef = line->frontSideDef();
-            frontSideDef.surface(SS_MIDDLE).markAsNeedingDecorationUpdate();
-            frontSideDef.surface(SS_BOTTOM).markAsNeedingDecorationUpdate();
-            frontSideDef.surface(SS_TOP).markAsNeedingDecorationUpdate();
+            if(line->hasFrontSideDef())
+            {
+                LineDef::Side &front = line->front();
+                front.middle().surface().markAsNeedingDecorationUpdate();
+                front.bottom().surface().markAsNeedingDecorationUpdate();
+                front.top().surface().markAsNeedingDecorationUpdate();
+            }
 
             if(line->hasBackSideDef())
             {
-                SideDef &backSideDef = line->backSideDef();
-                backSideDef.surface(SS_MIDDLE).markAsNeedingDecorationUpdate();
-                backSideDef.surface(SS_BOTTOM).markAsNeedingDecorationUpdate();
-                backSideDef.surface(SS_TOP).markAsNeedingDecorationUpdate();
+                LineDef::Side &back = line->back();
+                back.middle().surface().markAsNeedingDecorationUpdate();
+                back.bottom().surface().markAsNeedingDecorationUpdate();
+                back.top().surface().markAsNeedingDecorationUpdate();
             }
         }
     }

@@ -338,15 +338,15 @@ DENG2_PIMPL(GameMap)
             if(!line->hasFrontSideDef() || !line->hasBackSideDef())
                 continue;
 
-            int side = line->frontSectorPtr() == &sector? FRONT : BACK;
-            SideDef const &sideDef = line->sideDef(side);
+            LineDef::Side &side = line->side(line->frontSectorPtr() == &sector? FRONT : BACK);
 
-            if(!sideDef.middle().hasMaterial())
+            if(!side.middle().surface().hasMaterial())
                 continue;
 
             if(skyCeil)
             {
-                coord_t const top = sector.ceiling().visHeight() + sideDef.middle().visMaterialOrigin()[VY];
+                coord_t const top = sector.ceiling().visHeight()
+                    + side.middle().surface().visMaterialOrigin()[VY];
 
                 if(top > self.skyFixCeiling())
                 {
@@ -357,8 +357,9 @@ DENG2_PIMPL(GameMap)
 
             if(skyFloor)
             {
-                coord_t const bottom = sector.floor().visHeight() +
-                    sideDef.middle().visMaterialOrigin()[VY] - sideDef.middle().material().height();
+                coord_t const bottom = sector.floor().visHeight()
+                    + side.middle().surface().visMaterialOrigin()[VY]
+                        - side.middle().surface().material().height();
 
                 if(bottom < self.skyFixFloor())
                 {
@@ -585,10 +586,10 @@ void GameMap::buildSurfaceLists()
         if(!line->hasSideDef(i))
             continue;
 
-        SideDef &sideDef = line->sideDef(i);
-        d->addSurfaceToLists(sideDef.middle());
-        d->addSurfaceToLists(sideDef.top());
-        d->addSurfaceToLists(sideDef.bottom());
+        LineDef::Side &side = line->side(i);
+        d->addSurfaceToLists(side.middle().surface());
+        d->addSurfaceToLists(side.top().surface());
+        d->addSurfaceToLists(side.bottom().surface());
     }
 
     foreach(Sector *sector, _sectors)
@@ -762,15 +763,15 @@ Surface *GameMap::surfaceBySoundEmitter(ddmobj_base_t const &soundEmitter) const
         LineDef::Side &side = line->side(i);
         if(&soundEmitter == &side.middleSoundEmitter())
         {
-            return &side.sideDef().middle();
+            return &side.middle().surface();
         }
         if(&soundEmitter == &side.bottomSoundEmitter())
         {
-            return &side.sideDef().bottom();
+            return &side.bottom().surface();
         }
         if(&soundEmitter == &side.topSoundEmitter())
         {
-            return &side.sideDef().top();
+            return &side.top().surface();
         }
     }
 

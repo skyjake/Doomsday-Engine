@@ -26,47 +26,37 @@
 
 using namespace de;
 
-SideDef::SideDef()
+SideDef::SideDef(LineDef &line)
     : MapElement(DMU_SIDEDEF),
-      _middleSurface(dynamic_cast<MapElement &>(*this)),
-      _bottomSurface(dynamic_cast<MapElement &>(*this)),
-      _topSurface(dynamic_cast<MapElement &>(*this))
-{
-    _line = 0;
-}
+      _line(&line)
+{}
 
 SideDef::~SideDef()
 {}
 
 LineDef &SideDef::line() const
 {
-    DENG2_ASSERT(_line != 0);
     return *_line;
 }
 
-Surface &SideDef::surface(int surface)
+#if 0
+Surface &SideDef::surface(int sectionId)
 {
-    switch(SideDefSection(surface))
-    {
-    case SS_MIDDLE: return _middleSurface;
-    case SS_BOTTOM: return _bottomSurface;
-    case SS_TOP:    return _topSurface;
-    }
-    /// @throw InvalidSectionError The given surface section identifier is not valid.
-    throw InvalidSectionError("SideDef::surface", QString("Invalid section %1").arg(surface));
+    LineDef::Side &side = _line->side(this == _line->frontSideDefPtr()? FRONT : BACK);
+    return side.section(SideDefSection(sectionId)).surface();
 }
 
 Surface const &SideDef::surface(int surface) const
 {
     return const_cast<Surface const &>(const_cast<SideDef &>(*this).surface(surface));
 }
+#endif
 
 int SideDef::property(setargs_t &args) const
 {
     switch(args.prop)
     {
     case DMU_SECTOR: {
-        DENG2_ASSERT(_line != 0);
         Sector *sector = _line->sectorPtr(this == _line->frontSideDefPtr()? FRONT : BACK);
         DMU_GetValue(DMT_SIDEDEF_SECTOR, &sector, &args, 0);
         break; }
@@ -90,7 +80,6 @@ int SideDef::setProperty(setargs_t const &args)
     switch(args.prop)
     {
     case DMU_FLAGS: {
-        DENG2_ASSERT(_line != 0);
         LineDef::Side &side =_line->side(this == _line->frontSideDefPtr()? FRONT : BACK);
         short newFlags = side.flags();
         DMU_SetValue(DMT_SIDEDEF_FLAGS, &newFlags, &args, 0);

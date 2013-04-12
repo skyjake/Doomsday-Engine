@@ -28,6 +28,7 @@
 #include "map/gamemap.h"
 #include "map/p_players.h"
 #ifdef __CLIENT__
+#  include "map/r_world.h"
 #  include "render/rend_bias.h"
 #endif
 

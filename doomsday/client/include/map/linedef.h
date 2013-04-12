@@ -30,6 +30,8 @@
 //#include "resource/r_data.h"
 
 #include "MapElement"
+#include "map/sidedef.h"
+#include "map/surface.h"
 #include "map/vertex.h"
 //#include "map/r_world.h"
 //#include "p_mapdata.h"
@@ -39,7 +41,6 @@
 class HEdge;
 class LineOwner;
 class Sector;
-class SideDef;
 
 // Internal flags:
 #define LF_POLYOBJ              0x1 ///< Line is part of a polyobject.
@@ -126,6 +127,9 @@ public:
     /// Required sector attribution is missing. @ingroup errors
     DENG2_ERROR(MissingSectorError);
 
+    /// The given side section identifier is invalid. @ingroup errors
+    DENG2_ERROR(InvalidSectionIdError);
+
     /// Required sidedef attribution is missing. @ingroup errors
     DENG2_ERROR(MissingSideDefError);
 
@@ -140,12 +144,49 @@ public:
      */
     struct Side
     {
+    public:
+        struct Section
+        {
+            Surface _surface;
+            ddmobj_base_t _soundEmitter;
+
+            Section(SideDef &sideDef)
+                : _surface(dynamic_cast<MapElement &>(sideDef))
+            {
+                std::memset(&_soundEmitter, 0, sizeof(_soundEmitter));
+            }
+
+            Surface &surface() {
+                return _surface;
+            }
+
+            Surface const &surface() const {
+                return const_cast<Surface const &>(const_cast<Section &>(*this).surface());
+            }
+        };
+
+        struct Sections /// @todo choose a better name
+        {
+            Section middle;
+            Section bottom;
+            Section top;
+
+            Sections(SideDef &sideDef)
+                : middle(sideDef),
+                  bottom(sideDef),
+                  top(sideDef)
+            {}
+        };
+
     public: /// @todo make private:
         /// Sector on this side.
         Sector *_sector;
 
         /// SideDef on this side.
         SideDef *_sideDef;
+
+        /// Sections.
+        Sections *_sections;
 
         /// Left-most HEdge on this side.
         HEdge *_leftHEdge;
@@ -158,11 +199,6 @@ public:
 
         /// @ref sdefFlags
         short _flags;
-
-        /// Sound emitters.
-        ddmobj_base_t _middleSoundEmitter;
-        ddmobj_base_t _bottomSoundEmitter;
-        ddmobj_base_t _topSoundEmitter;
 
 #ifdef __CLIENT__
         /// @todo Does not belong here - move to the map renderer. -ds
@@ -183,6 +219,7 @@ public:
 
     public:
         Side(Sector *sector = 0);
+        ~Side();
 
         /**
          * Returns @c true iff a Sector is attributed to the side.
@@ -221,6 +258,40 @@ public:
          * @see hasSideDef()
          */
         inline SideDef *sideDefPtr() const { return hasSideDef()? &sideDef() : 0; }
+
+        /**
+         * Returns the specified section of the side.
+         *
+         * @param sectionId  Identifier of the section to return.
+         */
+        Section &section(SideDefSection sectionId);
+
+        /// @copydoc section()
+        Section const &section(SideDefSection sectionId) const;
+
+        /**
+         * Returns the middle section of the side.
+         */
+        inline Section &middle() { return section(SS_MIDDLE); }
+
+        /// @copydoc middle()
+        inline Section const &middle() const { return section(SS_MIDDLE); }
+
+        /**
+         * Returns the bottom section of the side.
+         */
+        inline Section &bottom() { return section(SS_BOTTOM); }
+
+        /// @copydoc bottom()
+        inline Section const &bottom() const { return section(SS_BOTTOM); }
+
+        /**
+         * Returns the middle section of the side.
+         */
+        inline Section &top() { return section(SS_TOP); }
+
+        /// @copydoc top()
+        inline Section const &top() const { return section(SS_TOP); }
 
 #ifdef __CLIENT__
 

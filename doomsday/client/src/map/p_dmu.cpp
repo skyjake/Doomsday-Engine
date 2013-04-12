@@ -53,7 +53,7 @@ struct DummyData
 };
 
 class DummyVertex  : public Vertex,  public DummyData {};
-class DummySideDef : public SideDef, public DummyData {};
+//class DummySideDef : public SideDef, public DummyData {};
 class DummySector  : public Sector,  public DummyData {};
 
 class DummyLineDef : public LineDef, public DummyData
@@ -209,11 +209,11 @@ void *P_AllocDummy(int type, void *extraData)
 {
     switch(type)
     {
-    case DMU_SIDEDEF: {
+    /*case DMU_SIDEDEF: {
         DummySideDef *ds = new DummySideDef;
         dummies.insert(ds);
         ds->extraData = extraData;
-        return ds; }
+        return ds; }*/
 
     case DMU_LINEDEF: {
         DummyLineDef *dl = new DummyLineDef(dummyVertex, dummyVertex);
@@ -910,20 +910,22 @@ static int setProperty(void *ptr, void *context)
     if(args->type == DMU_SIDEDEF)
     {
         updateSidedef = elem->castTo<SideDef>();
+        LineDef &line = updateSidedef->line();
+        LineDef::Side &side = line.side(line.frontSideDefPtr() == updateSidedef? FRONT : BACK);
 
         if(args->modifiers & DMU_TOP_OF_SIDEDEF)
         {
-            elem = &updateSidedef->top();
+            elem = &side.top().surface();
             args->type = DMU_SURFACE;
         }
         else if(args->modifiers & DMU_MIDDLE_OF_SIDEDEF)
         {
-            elem = &updateSidedef->middle();
+            elem = &side.middle().surface();
             args->type = DMU_SURFACE;
         }
         else if(args->modifiers & DMU_BOTTOM_OF_SIDEDEF)
         {
-            elem = &updateSidedef->bottom();
+            elem = &side.bottom().surface();
             args->type = DMU_SURFACE;
         }
     }
@@ -1358,21 +1360,25 @@ static int getProperty(void *ptr, void *context)
 
     if(args->type == DMU_SIDEDEF)
     {
+        SideDef const *sideDef = elem->castTo<SideDef>();
+        LineDef &line = sideDef->line();
+        LineDef::Side &side = line.side(line.frontSideDefPtr() == sideDef? FRONT : BACK);
+
         if(args->modifiers & DMU_TOP_OF_SIDEDEF)
         {
-            elem = &elem->castTo<SideDef>()->top();
+            elem = &side.top().surface();
             args->type = DMU_SURFACE;
             DENG2_ASSERT(args->type == elem->type());
         }
         else if(args->modifiers & DMU_MIDDLE_OF_SIDEDEF)
         {
-            elem = &elem->castTo<SideDef>()->middle();
+            elem = &side.middle().surface();
             args->type = DMU_SURFACE;
             DENG2_ASSERT(args->type == elem->type());
         }
         else if(args->modifiers & DMU_BOTTOM_OF_SIDEDEF)
         {
-            elem = &elem->castTo<SideDef>()->bottom();
+            elem = &side.bottom().surface();
             args->type = DMU_SURFACE;
             DENG2_ASSERT(args->type == elem->type());
         }

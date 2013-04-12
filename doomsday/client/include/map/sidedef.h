@@ -40,9 +40,6 @@ class LineDef;
 class SideDef : public de::MapElement
 {
 public:
-    /// The given surface section identifier is invalid. @ingroup errors
-    DENG2_ERROR(InvalidSectionError);
-
     /// The referenced property does not exist. @ingroup errors
     DENG2_ERROR(UnknownPropertyError);
 
@@ -50,16 +47,11 @@ public:
     DENG2_ERROR(WritePropertyError);
 
 public:
-    /// Component section surfaces:
-    Surface _middleSurface;
-    Surface _bottomSurface;
-    Surface _topSurface;
-
     /// Owning line of the sidedef.
     LineDef *_line;
 
 public:
-    SideDef();
+    SideDef(LineDef &line);
     ~SideDef();
 
     /**
@@ -67,6 +59,7 @@ public:
      */
     LineDef &line() const;
 
+#if 0
     /**
      * Returns the specified surface of the sidedef.
      *
@@ -100,6 +93,7 @@ public:
 
     /// @copydoc middle()
     inline Surface const &top() const { return surface(SS_TOP); }
+#endif
 
     /**
      * Get a property value, selected by DMU_* name.

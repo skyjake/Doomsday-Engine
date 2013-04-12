@@ -383,7 +383,7 @@ static byte pvisibleLineSections(LineDef *line, int backSide)
     }
     else
     {
-        SideDef const &sideDef = line->sideDef(backSide);
+        LineDef::Side const &side = line->side(backSide);
         Sector const *fsec  = line->sectorPtr(backSide);
         Sector const *bsec  = line->sectorPtr(backSide^1);
         Plane const *fceil  = &fsec->ceiling();
@@ -394,8 +394,9 @@ static byte pvisibleLineSections(LineDef *line, int backSide)
         sections |= SSF_MIDDLE | SSF_BOTTOM | SSF_TOP;
 
         // Middle?
-        if(!sideDef.middle().hasMaterial() || !sideDef.middle().material().isDrawable() ||
-            sideDef.middle().opacity() <= 0)
+        if(!side.middle().surface().hasMaterial() ||
+           !side.middle().surface().material().isDrawable() ||
+            side.middle().surface().opacity() <= 0)
             sections &= ~SSF_MIDDLE;
 
         // Top?
@@ -422,17 +423,17 @@ static void selectSurfaceColors(Vector3f const **topColor,
     case SS_MIDDLE:
         if(lineSide.flags() & SDF_BLENDMIDTOTOP)
         {
-            *topColor    = &lineSide.sideDef().top().tintColor();
-            *bottomColor = &lineSide.sideDef().middle().tintColor();
+            *topColor    = &lineSide.top().surface().tintColor();
+            *bottomColor = &lineSide.middle().surface().tintColor();
         }
         else if(lineSide.flags() & SDF_BLENDMIDTOBOTTOM)
         {
-            *topColor    = &lineSide.sideDef().middle().tintColor();
-            *bottomColor = &lineSide.sideDef().bottom().tintColor();
+            *topColor    = &lineSide.middle().surface().tintColor();
+            *bottomColor = &lineSide.bottom().surface().tintColor();
         }
         else
         {
-            *topColor    = &lineSide.sideDef().middle().tintColor();
+            *topColor    = &lineSide.middle().surface().tintColor();
             *bottomColor = 0;
         }
         break;
@@ -440,12 +441,12 @@ static void selectSurfaceColors(Vector3f const **topColor,
     case SS_TOP:
         if(lineSide.flags() & SDF_BLENDTOPTOMID)
         {
-            *topColor    = &lineSide.sideDef().top().tintColor();
-            *bottomColor = &lineSide.sideDef().middle().tintColor();
+            *topColor    = &lineSide.top().surface().tintColor();
+            *bottomColor = &lineSide.middle().surface().tintColor();
         }
         else
         {
-            *topColor    = &lineSide.sideDef().top().tintColor();
+            *topColor    = &lineSide.top().surface().tintColor();
             *bottomColor = 0;
         }
         break;
@@ -453,12 +454,12 @@ static void selectSurfaceColors(Vector3f const **topColor,
     case SS_BOTTOM:
         if(lineSide.flags() & SDF_BLENDBOTTOMTOMID)
         {
-            *topColor    = &lineSide.sideDef().middle().tintColor();
-            *bottomColor = &lineSide.sideDef().bottom().tintColor();
+            *topColor    = &lineSide.middle().surface().tintColor();
+            *bottomColor = &lineSide.bottom().surface().tintColor();
         }
         else
         {
-            *topColor    = &lineSide.sideDef().bottom().tintColor();
+            *topColor    = &lineSide.bottom().surface().tintColor();
             *bottomColor = 0;
         }
         break;
@@ -1670,8 +1671,7 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
     walldivs_t *leftWallDivs, walldivs_t *rightWallDivs,
     float const matOffset[2])
 {
-    SideDef *frontSide = hedge->hasLine()? hedge->lineSide().sideDefPtr() : 0;
-    Surface *surface = &frontSide->surface(section);
+    Surface *surface = &hedge->lineSide().section(section).surface();
     boolean opaque = true;
     float alpha;
 
@@ -1820,7 +1820,7 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
             if((flags & RHF_ADD_DYNLIGHTS) &&
                glowStrength < 1 && !(!useDynLights && !useWallGlow))
             {
-                Surface const &middleSurface = hedge->lineSideDef().middle();
+                Surface const &middleSurface = hedge->lineSide().middle().surface();
                 int plFlags = ((section == SS_MIDDLE && isTwoSided)? PLF_SORT_LUMINOSITY_DESC : 0);
 
                 lightListIdx = LO_ProjectToSurface(plFlags, currentBspLeaf, 1, texTL, texBR,
@@ -1833,7 +1833,7 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
             if((flags & RHF_ADD_DYNSHADOWS) &&
                glowStrength < 1 && Rend_MobjShadowsEnabled())
             {
-                Surface const &middleSurface = hedge->lineSideDef().middle();
+                Surface const &middleSurface = hedge->lineSide().middle().surface();
 
                 // Glowing planes inversely diminish shadow strength.
                 float const shadowStrength = 1 - glowStrength;
@@ -1958,8 +1958,8 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
     reportLineDrawn(line);
 
     if(back->sectorPtr() == front->sectorPtr() &&
-       !front->sideDef().top().hasMaterial() && !front->sideDef().bottom().hasMaterial() &&
-       !front->sideDef().middle().hasMaterial())
+       !front->top().surface().hasMaterial() && !front->bottom().surface().hasMaterial() &&
+       !front->middle().surface().hasMaterial())
        return false; // Ugh... an obvious wall hedge hack. Best take no chances...
 
     Plane *ffloor = &leaf->sector().floor();
@@ -1995,7 +1995,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
                                         &leftWallDivs, &rightWallDivs, matOffset);
             if(solidSeg)
             {
-                Surface &surface = front->sideDef().middle();
+                Surface &surface = front->middle().surface();
                 coord_t xbottom, xtop;
 
                 if(line.isSelfReferencing())
@@ -2067,9 +2067,9 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
         }
         else*/
              if(   (bceil->visHeight() <= ffloor->visHeight() &&
-                        (front->sideDef().top().hasMaterial()    || front->sideDef().middle().hasMaterial()))
+                        (front->top().surface().hasMaterial()    || front->middle().surface().hasMaterial()))
                 || (bfloor->visHeight() >= fceil->visHeight() &&
-                        (front->sideDef().bottom().hasMaterial() || front->sideDef().middle().hasMaterial())))
+                        (front->bottom().surface().hasMaterial() || front->middle().surface().hasMaterial())))
         {
             // A closed gap?
             if(FEQUAL(fceil->visHeight(), bfloor->visHeight()))
@@ -2092,7 +2092,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
         /// @todo Is this still necessary?
         else if(bceil->visHeight() <= bfloor->visHeight() ||
                 (!(bceil->visHeight() - bfloor->visHeight() > 0) && bfloor->visHeight() > ffloor->visHeight() && bceil->visHeight() < fceil->visHeight() &&
-                front->sideDef().top().hasMaterial() && front->sideDef().bottom().hasMaterial()))
+                front->top().surface().hasMaterial() && front->bottom().surface().hasMaterial()))
         {
             // A zero height back segment
             solidSeg = true;
@@ -3126,7 +3126,7 @@ void Rend_RenderSurfaceVectors()
         {
             coord_t const bottom = hedge->sector().floor().visHeight();
             coord_t const top    = hedge->sector().ceiling().visHeight();
-            Surface *suf = &hedge->lineSideDef().middle();
+            Surface *suf = &hedge->lineSide().middle().surface();
 
             V3f_Set(origin, x, y, bottom + (top - bottom) / 2);
             drawSurfaceTangentSpaceVectors(suf, origin);
@@ -3134,13 +3134,13 @@ void Rend_RenderSurfaceVectors()
         else
         {
             Sector *backSec  = hedge->twin().sectorPtr();
-            SideDef *sideDef = &hedge->lineSideDef();
+            LineDef::Side &side = hedge->lineSide();
 
-            if(sideDef->middle().hasMaterial())
+            if(side.middle().surface().hasMaterial())
             {
                 coord_t const bottom = hedge->sector().floor().visHeight();
                 coord_t const top    = hedge->sector().ceiling().visHeight();
-                Surface *suf = &sideDef->middle();
+                Surface *suf = &side.middle().surface();
 
                 V3f_Set(origin, x, y, bottom + (top - bottom) / 2);
                 drawSurfaceTangentSpaceVectors(suf, origin);
@@ -3153,7 +3153,7 @@ void Rend_RenderSurfaceVectors()
             {
                 coord_t const bottom = backSec->ceiling().visHeight();
                 coord_t const top    = hedge->sector().ceiling().visHeight();
-                Surface *suf = &sideDef->top();
+                Surface *suf = &side.top().surface();
 
                 V3f_Set(origin, x, y, bottom + (top - bottom) / 2);
                 drawSurfaceTangentSpaceVectors(suf, origin);
@@ -3166,7 +3166,7 @@ void Rend_RenderSurfaceVectors()
             {
                 coord_t const bottom = hedge->sector().floor().visHeight();
                 coord_t const top    = backSec->floor().visHeight();
-                Surface *suf = &sideDef->bottom();
+                Surface *suf = &side.bottom().surface();
 
                 V3f_Set(origin, x, y, bottom + (top - bottom) / 2);
                 drawSurfaceTangentSpaceVectors(suf, origin);
@@ -3201,7 +3201,7 @@ void Rend_RenderSurfaceVectors()
         {
             V3f_Set(origin, (line->v2Origin()[VX] + line->v1Origin()[VX])/2,
                             (line->v2Origin()[VY] + line->v1Origin()[VY])/2, zPos);
-            drawSurfaceTangentSpaceVectors(&line->frontSideDef().middle(), origin);
+            drawSurfaceTangentSpaceVectors(&line->front().middle().surface(), origin);
         }
     }
 
