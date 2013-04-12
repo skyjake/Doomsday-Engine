@@ -415,8 +415,8 @@ void Surface::lerpVisMaterialOrigin()
 void Surface::resetVisMaterialOrigin()
 {
     // $smoothmaterialorigin
+    d->visMaterialOrigin = d->oldMaterialOrigin[0] = d->oldMaterialOrigin[1] = d->materialOrigin;
     d->visMaterialOriginDelta.x = d->visMaterialOriginDelta.y = 0;
-    d->oldMaterialOrigin[0] = d->oldMaterialOrigin[1] = d->materialOrigin;
 
 #ifdef __CLIENT__
     markAsNeedingDecorationUpdate();
