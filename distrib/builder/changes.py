@@ -209,11 +209,11 @@ class Changes:
         """Pretty group list for use in HTML output."""
         listed = ''
         if len(tags) > 1:
-            listed = string.join(encodedText(tags[:-1]), ', ')
+            listed = string.join(tags[:-1], ', ')
             listed += ' and ' + tags[-1]
         elif len(tags) == 1:
             listed = tags[0]
-        return listed
+        return encodedText(listed)
             
     def generate(self, format):
         fromTag = self.fromTag
@@ -290,6 +290,7 @@ class Changes:
 
             # Append the changes to the debian package changelog.
             os.chdir(os.path.join(config.DISTRIB_DIR, 'linux'))
+            os.system('echo "" > ../debian/changelog')
 
             # First we need to update the version.
             debVersion = build_version.DOOMSDAY_VERSION_FULL + '-' + Event().tag()
