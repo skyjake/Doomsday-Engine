@@ -192,7 +192,7 @@ DENG2_PIMPL(GameMap)
             // Link plane surface emitters:
             foreach(Plane *plane, sector->planes())
             {
-                sector->linkSoundEmitter(plane->surface().soundEmitter());
+                sector->linkSoundEmitter(plane->soundEmitter());
             }
 
             // Link wall surface emitters:
@@ -200,17 +200,17 @@ DENG2_PIMPL(GameMap)
             {
                 if(line->frontSectorPtr() == sector)
                 {
-                    SideDef &side = line->frontSideDef();
-                    sector->linkSoundEmitter(side.middle().soundEmitter());
-                    sector->linkSoundEmitter(side.bottom().soundEmitter());
-                    sector->linkSoundEmitter(side.top().soundEmitter());
+                    LineDef::Side &side = line->front();
+                    sector->linkSoundEmitter(side.middleSoundEmitter());
+                    sector->linkSoundEmitter(side.bottomSoundEmitter());
+                    sector->linkSoundEmitter(side.topSoundEmitter());
                 }
                 if(line->hasBackSideDef() && line->backSectorPtr() == sector)
                 {
-                    SideDef &side = line->backSideDef();
-                    sector->linkSoundEmitter(side.middle().soundEmitter());
-                    sector->linkSoundEmitter(side.bottom().soundEmitter());
-                    sector->linkSoundEmitter(side.top().soundEmitter());
+                    LineDef::Side &side = line->back();
+                    sector->linkSoundEmitter(side.middleSoundEmitter());
+                    sector->linkSoundEmitter(side.bottomSoundEmitter());
+                    sector->linkSoundEmitter(side.topSoundEmitter());
                 }
             }
 
@@ -224,7 +224,7 @@ DENG2_PIMPL(GameMap)
         foreach(Sector *sector, self._sectors)
         foreach(Plane *plane, sector->planes())
         {
-            plane->surface().updateSoundEmitterOrigin();
+            plane->updateSoundEmitterOrigin();
 
 #ifdef __CLIENT__
             // Resize the biassurface lists for the BSP leaf planes.
@@ -737,20 +737,21 @@ Sector *GameMap::sectorBySoundEmitter(ddmobj_base_t const &soundEmitter) const
     return 0; // Not found.
 }
 
-/// @todo Optimize: All sound emitters in a sector are linked together forming
-/// a chain. Make use of the chains instead of traversing lines.
-Surface *GameMap::surfaceBySoundEmitter(ddmobj_base_t const &soundEmitter) const
+Plane *GameMap::planeBySoundEmitter(ddmobj_base_t const &soundEmitter) const
 {
-    // First try plane surfaces.
     foreach(Sector *sector, _sectors)
     foreach(Plane *plane, sector->planes())
     {
-        if(&soundEmitter == &plane->surface().soundEmitter())
+        if(&soundEmitter == &plane->soundEmitter())
         {
-            return &plane->surface();
+            return plane;
         }
     }
+    return 0; // Not found.
+}
 
+Surface *GameMap::surfaceBySoundEmitter(ddmobj_base_t const &soundEmitter) const
+{
     // Perhaps a wall surface?
     foreach(LineDef *line, _lines)
     for(int i = 0; i < 2; ++i)
@@ -758,18 +759,18 @@ Surface *GameMap::surfaceBySoundEmitter(ddmobj_base_t const &soundEmitter) const
         if(!line->hasSideDef(i))
             continue;
 
-        SideDef &sideDef = line->sideDef(i);
-        if(&soundEmitter == &sideDef.middle().soundEmitter())
+        LineDef::Side &side = line->side(i);
+        if(&soundEmitter == &side.middleSoundEmitter())
         {
-            return &sideDef.middle();
+            return &side.sideDef().middle();
         }
-        if(&soundEmitter == &sideDef.bottom().soundEmitter())
+        if(&soundEmitter == &side.bottomSoundEmitter())
         {
-            return &sideDef.bottom();
+            return &side.sideDef().bottom();
         }
-        if(&soundEmitter == &sideDef.top().soundEmitter())
+        if(&soundEmitter == &side.topSoundEmitter())
         {
-            return &sideDef.top();
+            return &side.sideDef().top();
         }
     }
 

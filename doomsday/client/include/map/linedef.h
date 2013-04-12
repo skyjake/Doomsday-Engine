@@ -113,6 +113,11 @@ public:
     struct Side
     {
     public: /// @todo make private:
+        /// Sound emitters.
+        ddmobj_base_t _middleSoundEmitter;
+        ddmobj_base_t _bottomSoundEmitter;
+        ddmobj_base_t _topSoundEmitter;
+
         /// Sector on this side.
         Sector *_sector;
 
@@ -168,6 +173,51 @@ public:
          * @see hasSideDef()
          */
         inline SideDef *sideDefPtr() const { return hasSideDef()? &sideDef() : 0; }
+
+        /**
+         * Returns the sound emitter for the middle surface.
+         */
+        ddmobj_base_t &middleSoundEmitter();
+
+        /// @copydoc soundEmitter()
+        ddmobj_base_t const &middleSoundEmitter() const;
+
+        /**
+         * Update the middle sound emitter origin according to the point defined by
+         * the owning line's vertices and the current @em sharp heights of the sector
+         * on this side of the line.
+         */
+        void updateMiddleSoundEmitterOrigin();
+
+        /**
+         * Returns the sound emitter for the bottom surface.
+         */
+        ddmobj_base_t &bottomSoundEmitter();
+
+        /// @copydoc soundEmitter()
+        ddmobj_base_t const &bottomSoundEmitter() const;
+
+        /**
+         * Update the bottom sound emitter origin according to the point defined by
+         * the owning line's vertices and the current @em sharp heights of the sector
+         * on this side of the line.
+         */
+        void updateBottomSoundEmitterOrigin();
+
+        /**
+         * Returns the sound emitter for the top surface.
+         */
+        ddmobj_base_t &topSoundEmitter();
+
+        /// @copydoc soundEmitter()
+        ddmobj_base_t const &topSoundEmitter() const;
+
+        /**
+         * Update the top sound emitter origin according to the point defined by the
+         * owning line's vertices and the current @em sharp heights of the sector on
+         * this side of the line.
+         */
+        void updateTopSoundEmitterOrigin();
 
         /**
          * Returns the left-most HEdge for the side.

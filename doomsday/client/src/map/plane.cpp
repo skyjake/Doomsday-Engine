@@ -39,6 +39,9 @@ DENG2_PIMPL(Plane)
     /// Sector that owns the plane.
     Sector *sector;
 
+    /// Sound emitter.
+    ddmobj_base_t soundEmitter;
+
     /// Index of the plane in the owning sector.
     uint inSectorIndex;
 
@@ -79,6 +82,7 @@ DENG2_PIMPL(Plane)
           type(Floor)
     {
         oldHeight[0] = oldHeight[1] = height;
+        std::memset(&soundEmitter, 0, sizeof(soundEmitter));
     }
 
     ~Instance()
@@ -124,7 +128,7 @@ DENG2_PIMPL(Plane)
         if(!ddMapSetup)
         {
             // Update the sound emitter origin for the plane.
-            surface.updateSoundEmitterOrigin();
+            self.updateSoundEmitterOrigin();
 
 #ifdef __CLIENT__
             // We need the decorations updated.
@@ -225,6 +229,25 @@ Surface const &Plane::surface() const
     return d->surface;
 }
 
+ddmobj_base_t &Plane::soundEmitter()
+{
+    return d->soundEmitter;
+}
+
+ddmobj_base_t const &Plane::soundEmitter() const
+{
+    return const_cast<ddmobj_base_t const &>(const_cast<Plane &>(*this).soundEmitter());
+}
+
+void Plane::updateSoundEmitterOrigin()
+{
+    LOG_AS("Plane::updateSoundEmitterOrigin");
+
+    d->soundEmitter.origin[VX] = d->sector->soundEmitter().origin[VX];
+    d->soundEmitter.origin[VY] = d->sector->soundEmitter().origin[VY];
+    d->soundEmitter.origin[VZ] = d->height;
+}
+
 coord_t Plane::height() const
 {
     return d->height;
@@ -308,6 +331,9 @@ int Plane::property(setargs_t &args) const
 {
     switch(args.prop)
     {
+    case DMU_BASE:
+        DMU_GetValue(DMT_PLANE_BASE, &d->soundEmitter, &args, 0);
+        break;
     case DMU_SECTOR:
         DMU_GetValue(DMT_PLANE_SECTOR, &d->sector, &args, 0);
         break;

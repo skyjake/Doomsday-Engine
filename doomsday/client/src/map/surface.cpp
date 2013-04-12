@@ -42,9 +42,6 @@ DENG2_PIMPL(Surface)
     /// Owning map element, either @c DMU_SIDEDEF, or @c DMU_PLANE.
     de::MapElement &owner;
 
-    /// Sound emitter.
-    ddmobj_base_t soundEmitter;
-
     /// Tangent space vectors:
     Vector3f tangent;
     Vector3f bitangent;
@@ -90,9 +87,7 @@ DENG2_PIMPL(Surface)
           materialIsMissingFix(false),
           blendMode(BM_NORMAL),
           flags(0)
-    {
-        std::memset(&soundEmitter, 0, sizeof(soundEmitter));
-    }
+    {}
 
     void notifyNormalChanged(Vector3f const &oldNormal)
     {
@@ -267,16 +262,6 @@ Material &Surface::material() const
 int Surface::flags() const
 {
     return d->flags;
-}
-
-ddmobj_base_t &Surface::soundEmitter()
-{
-    return d->soundEmitter;
-}
-
-ddmobj_base_t const &Surface::soundEmitter() const
-{
-    return const_cast<ddmobj_base_t const &>(const_cast<Surface &>(*this).soundEmitter());
 }
 
 bool Surface::isAttachedToMap() const
@@ -507,83 +492,6 @@ bool Surface::setBlendMode(blendmode_t newBlendMode)
     return true;
 }
 
-void Surface::updateSoundEmitterOrigin()
-{
-    LOG_AS("Surface::updateSoundEmitterOrigin");
-
-    switch(d->owner.type())
-    {
-    case DMU_PLANE: {
-        Plane *plane = d->owner.castTo<Plane>();
-        Sector &sector = plane->sector();
-
-        d->soundEmitter.origin[VX] = sector.soundEmitter().origin[VX];
-        d->soundEmitter.origin[VY] = sector.soundEmitter().origin[VY];
-        d->soundEmitter.origin[VZ] = plane->height();
-        break; }
-
-    case DMU_SIDEDEF: {
-        SideDef *sideDef = d->owner.castTo<SideDef>();
-        LineDef &line = sideDef->line();
-
-        d->soundEmitter.origin[VX] = (line.v1Origin()[VX] + line.v2Origin()[VX]) / 2;
-        d->soundEmitter.origin[VY] = (line.v1Origin()[VY] + line.v2Origin()[VY]) / 2;
-
-        Sector *sec = line.sectorPtr(sideDef == line.frontSideDefPtr()? FRONT:BACK);
-        if(sec)
-        {
-            coord_t const ffloor = sec->floor().height();
-            coord_t const fceil  = sec->ceiling().height();
-
-            if(this == &sideDef->middle())
-            {
-                if(!line.hasBackSideDef() || line.isSelfReferencing())
-                    d->soundEmitter.origin[VZ] = (ffloor + fceil) / 2;
-                else
-                    d->soundEmitter.origin[VZ] = (de::max(ffloor, line.backSector().floor().height()) +
-                                                  de::min(fceil,  line.backSector().ceiling().height())) / 2;
-                break;
-            }
-            else if(this == &sideDef->bottom())
-            {
-                if(!line.hasBackSideDef() || line.isSelfReferencing() ||
-                   line.backSector().floor().height() <= ffloor)
-                {
-                    d->soundEmitter.origin[VZ] = ffloor;
-                }
-                else
-                {
-                    d->soundEmitter.origin[VZ] = (de::min(line.backSector().floor().height(), fceil) + ffloor) / 2;
-                }
-                break;
-            }
-            else if(this == &sideDef->top())
-            {
-                if(!line.hasBackSideDef() || line.isSelfReferencing() ||
-                   line.backSector().ceiling().height() >= fceil)
-                {
-                    d->soundEmitter.origin[VZ] = fceil;
-                }
-                else
-                {
-                    d->soundEmitter.origin[VZ] = (de::max(line.backSector().ceiling().height(), ffloor) + fceil) / 2;
-                }
-                break;
-            }
-        }
-
-        // We cannot determine a better Z axis origin - set to 0.
-        d->soundEmitter.origin[VZ] = 0;
-        break; }
-
-    default:
-        throw Error("Surface::updateSoundEmitterOrigin",
-                        QString("Invalid DMU type %1 for owner object 0x%2")
-                            .arg(DMU_Str(d->owner.type()))
-                            .arg(de::dintptr(&d->owner), 0, 16));
-    }
-}
-
 #ifdef __CLIENT__
 Surface::DecorSource *Surface::newDecoration()
 {
@@ -636,10 +544,6 @@ int Surface::property(setargs_t &args) const
 {
     switch(args.prop)
     {
-    case DMU_BASE: {
-        DMU_GetValue(DMT_SURFACE_BASE, &d->soundEmitter, &args, 0);
-        break; }
-
     case DMU_MATERIAL: {
         Material *mat = d->material;
         if(d->materialIsMissingFix)

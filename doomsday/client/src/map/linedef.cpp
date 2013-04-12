@@ -33,6 +33,13 @@
 
 #include "map/linedef.h"
 
+#ifdef max
+#  undef max
+#endif
+#ifdef min
+#  undef min
+#endif
+
 using namespace de;
 
 LineDef::Side::Side(Sector *sector)
@@ -41,7 +48,11 @@ LineDef::Side::Side(Sector *sector)
       _leftHEdge(0),
       _rightHEdge(0),
       _shadowVisCount(0)
-{}
+{
+    std::memset(&_middleSoundEmitter, 0, sizeof(_middleSoundEmitter));
+    std::memset(&_bottomSoundEmitter, 0, sizeof(_bottomSoundEmitter));
+    std::memset(&_topSoundEmitter,    0, sizeof(_topSoundEmitter));
+}
 
 bool LineDef::Side::hasSector() const
 {
@@ -73,6 +84,110 @@ SideDef &LineDef::Side::sideDef() const
     throw LineDef::MissingSideDefError("LineDef::Side::sideDef", "No sidedef is configured");
 }
 
+ddmobj_base_t &LineDef::Side::middleSoundEmitter()
+{
+    return _middleSoundEmitter;
+}
+
+ddmobj_base_t const &LineDef::Side::middleSoundEmitter() const
+{
+    return const_cast<ddmobj_base_t const &>(const_cast<LineDef::Side &>(*this).middleSoundEmitter());
+}
+
+void LineDef::Side::updateMiddleSoundEmitterOrigin()
+{
+    LOG_AS("LineDef::Side::updateMiddleSoundEmitterOrigin");
+
+    if(!_sideDef) return;
+
+    LineDef &line = _sideDef->line();
+
+    _middleSoundEmitter.origin[VX] = (line.v1Origin()[VX] + line.v2Origin()[VX]) / 2;
+    _middleSoundEmitter.origin[VY] = (line.v1Origin()[VY] + line.v2Origin()[VY]) / 2;
+
+    DENG_ASSERT(_sector != 0);
+    coord_t const ffloor = _sector->floor().height();
+    coord_t const fceil  = _sector->ceiling().height();
+
+    if(!line.hasBackSideDef() || line.isSelfReferencing())
+        _middleSoundEmitter.origin[VZ] = (ffloor + fceil) / 2;
+    else
+        _middleSoundEmitter.origin[VZ] = (de::max(ffloor, line.backSector().floor().height()) +
+                                          de::min(fceil,  line.backSector().ceiling().height())) / 2;
+}
+
+ddmobj_base_t &LineDef::Side::bottomSoundEmitter()
+{
+    return _bottomSoundEmitter;
+}
+
+ddmobj_base_t const &LineDef::Side::bottomSoundEmitter() const
+{
+    return const_cast<ddmobj_base_t const &>(const_cast<LineDef::Side &>(*this).bottomSoundEmitter());
+}
+
+void LineDef::Side::updateBottomSoundEmitterOrigin()
+{
+    LOG_AS("LineDef::Side::updateBottomSoundEmitterOrigin");
+
+    if(!_sideDef) return;
+
+    LineDef &line = _sideDef->line();
+
+    _bottomSoundEmitter.origin[VX] = (line.v1Origin()[VX] + line.v2Origin()[VX]) / 2;
+    _bottomSoundEmitter.origin[VY] = (line.v1Origin()[VY] + line.v2Origin()[VY]) / 2;
+
+    DENG_ASSERT(_sector != 0);
+    coord_t const ffloor = _sector->floor().height();
+    coord_t const fceil  = _sector->ceiling().height();
+
+    if(!line.hasBackSideDef() || line.isSelfReferencing() ||
+       line.backSector().floor().height() <= ffloor)
+    {
+        _bottomSoundEmitter.origin[VZ] = ffloor;
+    }
+    else
+    {
+        _bottomSoundEmitter.origin[VZ] = (de::min(line.backSector().floor().height(), fceil) + ffloor) / 2;
+    }
+}
+
+ddmobj_base_t &LineDef::Side::topSoundEmitter()
+{
+    return _topSoundEmitter;
+}
+
+ddmobj_base_t const &LineDef::Side::topSoundEmitter() const
+{
+    return const_cast<ddmobj_base_t const &>(const_cast<LineDef::Side &>(*this).topSoundEmitter());
+}
+
+void LineDef::Side::updateTopSoundEmitterOrigin()
+{
+    LOG_AS("LineDef::Side::updateTopSoundEmitterOrigin");
+
+    if(!_sideDef) return;
+
+    LineDef &line = _sideDef->line();
+
+    _topSoundEmitter.origin[VX] = (line.v1Origin()[VX] + line.v2Origin()[VX]) / 2;
+    _topSoundEmitter.origin[VY] = (line.v1Origin()[VY] + line.v2Origin()[VY]) / 2;
+
+    DENG_ASSERT(_sector != 0);
+    coord_t const ffloor = _sector->floor().height();
+    coord_t const fceil  = _sector->ceiling().height();
+
+    if(!line.hasBackSideDef() || line.isSelfReferencing() ||
+       line.backSector().ceiling().height() >= fceil)
+    {
+        _topSoundEmitter.origin[VZ] = fceil;
+    }
+    else
+    {
+        _topSoundEmitter.origin[VZ] = (de::max(line.backSector().ceiling().height(), ffloor) + fceil) / 2;
+    }
+}
+
 HEdge &LineDef::Side::leftHEdge() const
 {
     DENG_ASSERT(_leftHEdge != 0);
@@ -94,9 +209,9 @@ void LineDef::Side::updateSoundEmitterOrigins()
 {
     if(!_sideDef) return;
 
-    _sideDef->middle().updateSoundEmitterOrigin();
-    _sideDef->bottom().updateSoundEmitterOrigin();
-    _sideDef->top().updateSoundEmitterOrigin();
+    updateMiddleSoundEmitterOrigin();
+    updateBottomSoundEmitterOrigin();
+    updateTopSoundEmitterOrigin();
 }
 
 void LineDef::Side::updateSurfaceNormals()

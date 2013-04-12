@@ -193,11 +193,20 @@ public:
     Sector *sectorBySoundEmitter(ddmobj_base_t const &soundEmitter) const;
 
     /**
+     * Locate a sector plane in the map by sound emitter.
+     *
+     * @param soundEmitter  ddmobj_base_t to search for.
+     *
+     * @return  Pointer to the referenced Plane instance; otherwise @c 0.
+     */
+    Plane *planeBySoundEmitter(ddmobj_base_t const &soundEmitter) const;
+
+    /**
      * Locate a surface in the map by sound emitter.
      *
      * @param soundEmitter  ddmobj_base_t to search for.
      *
-     * @return  Pointe to the referenced Surface instance; otherwise @c 0.
+     * @return  Pointer to the referenced Surface instance; otherwise @c 0.
      */
     Surface *surfaceBySoundEmitter(ddmobj_base_t const &soundEmitter) const;
 

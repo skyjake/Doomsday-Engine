@@ -558,7 +558,7 @@ static void readSector(GameMap *map, uint idx)
     for(uint i = 0; i < numPlanes; ++i)
     {
         Plane *pln = s->_planes[i];
-        pln->_surface.updateSoundEmitterOrigin();
+        pln->updateSoundEmitterOrigin();
     }
 
     for(uint i = 0; i < NUM_REVERB_DATA; ++i)

@@ -106,6 +106,20 @@ public:
     Surface const &surface() const;
 
     /**
+     * Returns the sound emitter for the plane.
+     */
+    ddmobj_base_t &soundEmitter();
+
+    /// @copydoc soundEmitter()
+    ddmobj_base_t const &soundEmitter() const;
+
+    /**
+     * Update the sound emitter origin according to the point defined by the center
+     * of the plane's owning Sector (on the XY plane) and the Z height of the plane.
+     */
+    void updateSoundEmitterOrigin();
+
+    /**
      * Returns the current @em sharp height of the plane relative to @c 0 on the
      * map up axis. The HeightChange audience is notified whenever the height
      * changes.

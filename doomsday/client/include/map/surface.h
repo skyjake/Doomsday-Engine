@@ -284,30 +284,6 @@ public:
     void updateMaterialOriginTracking();
 
     /**
-     * Returns the sound emitter for the surface.
-     */
-    ddmobj_base_t &soundEmitter();
-
-    /// @copydoc soundEmitter()
-    ddmobj_base_t const &soundEmitter() const;
-
-    /**
-     * Update the Surface's map space base origin according to relevant points in
-     * the owning object.
-     *
-     * If this surface is owned by a SideDef then the origin is updated using the
-     * points defined by the associated LineDef's vertices and the plane heights of
-     * the Sector on that SideDef's side.
-     *
-     * If this surface is owned by a Plane then the origin is updated using the
-     * points defined the center of the Plane's Sector (on the XY plane) and the Z
-     * height of the plane.
-     *
-     * If no owner is presently associated this is a no-op.
-     */
-    void updateSoundEmitterOrigin();
-
-    /**
      * Returns the opacity of the surface. The OpacityChange audience is notified
      * whenever the opacity changes.
      *

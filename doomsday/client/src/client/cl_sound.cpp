@@ -62,7 +62,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     thid_t              mobjId = 0;
     Sector             *sector = NULL;
     Polyobj            *poly = NULL;
-    SideDef            *side = NULL;
+    SideDef            *sidedef = NULL;
     mobj_t             *emitter = NULL;
     float               volume = 1;
 
@@ -113,7 +113,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 
         if(index < theMap->sideDefCount())
         {
-            side = theMap->sideDefs().at(index);
+            sidedef = theMap->sideDefs().at(index);
         }
         else
         {
@@ -152,11 +152,11 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
         // Select the emitter for the sound.
         if(flags & SNDDF_PLANE_FLOOR)
         {
-            emitter = (mobj_t *) &sector->floorSurface().soundEmitter();
+            emitter = (mobj_t *) &sector->floor().soundEmitter();
         }
         else if(flags & SNDDF_PLANE_CEILING)
         {
-            emitter = (mobj_t *) &sector->ceilingSurface().soundEmitter();
+            emitter = (mobj_t *) &sector->ceiling().soundEmitter();
         }
         else
         {
@@ -167,12 +167,15 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 
     if(type == DT_SIDE_SOUND)
     {
+        LineDef *line = &sidedef->line();
+        LineDef::Side &side = line->side(sidedef == line->frontSideDefPtr()? FRONT : BACK);
+
         if(flags & SNDDF_SIDE_MIDDLE)
-            emitter = (mobj_t *) &side->middle().soundEmitter();
+            emitter = (mobj_t *) &side.middleSoundEmitter();
         else if(flags & SNDDF_SIDE_TOP)
-            emitter = (mobj_t *) &side->top().soundEmitter();
+            emitter = (mobj_t *) &side.topSoundEmitter();
         else if(flags & SNDDF_SIDE_BOTTOM)
-            emitter = (mobj_t *) &side->bottom().soundEmitter();
+            emitter = (mobj_t *) &side.bottomSoundEmitter();
     }
 
     if(flags & SNDDF_VOLUME)

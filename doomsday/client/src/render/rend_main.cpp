@@ -3261,18 +3261,17 @@ void Rend_RenderSoundOrigins()
             if(!line->hasSideDef(i))
                 continue;
 
-            SideDef &sideDef = line->sideDef(i);
-            uint idx = theMap->sideDefIndex(&sideDef);
+            LineDef::Side &side = line->side(i);
             char buf[80];
 
-            dd_snprintf(buf, 80, "Side #%i (middle)", idx);
-            drawSoundOrigin(sideDef.middle().soundEmitter().origin, buf, eye);
+            dd_snprintf(buf, 80, "Line #%u (%s, middle)", line->origIndex() - 1, (i? "back" : "front"));
+            drawSoundOrigin(side.middleSoundEmitter().origin, buf, eye);
 
-            dd_snprintf(buf, 80, "Side #%i (bottom)", idx);
-            drawSoundOrigin(sideDef.bottom().soundEmitter().origin, buf, eye);
+            dd_snprintf(buf, 80, "Line #%u (%s, bottom)", line->origIndex() - 1, (i? "back" : "front"));
+            drawSoundOrigin(side.bottomSoundEmitter().origin, buf, eye);
 
-            dd_snprintf(buf, 80, "Side #%i (top)", idx);
-            drawSoundOrigin(sideDef.top().soundEmitter().origin, buf, eye);
+            dd_snprintf(buf, 80, "Line #%u (%s, top)", line->origIndex() - 1, (i? "back" : "front"));
+            drawSoundOrigin(side.topSoundEmitter().origin, buf, eye);
         }
     }
 
@@ -3290,7 +3289,7 @@ void Rend_RenderSoundOrigins()
                 {
                     Plane &plane = sec->plane(i);
                     dd_snprintf(buf, 80, "Sector #%i (pln:%i)", sectorIndex, i);
-                    drawSoundOrigin(plane.surface().soundEmitter().origin, buf, eye);
+                    drawSoundOrigin(plane.soundEmitter().origin, buf, eye);
                 }
             }
 

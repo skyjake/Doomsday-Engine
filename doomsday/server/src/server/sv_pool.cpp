@@ -1540,10 +1540,12 @@ coord_t Sv_SectorDistance(int index, ownerinfo_t const *info)
 coord_t Sv_SideDistance(int index, int deltaFlags, ownerinfo_t const *info)
 {
     SideDef const *sideDef = theMap->sideDefs().at(index);
+    LineDef &line = sideDef->line();
+    LineDef::Side &side = line.side(sideDef == line.frontSideDefPtr()? FRONT : BACK);
 
-    ddmobj_base_t const &emitter = (deltaFlags & SNDDF_SIDE_MIDDLE? sideDef->middle().soundEmitter()
-                                     : deltaFlags & SNDDF_SIDE_TOP? sideDef->top().soundEmitter()
-                                                                  : sideDef->bottom().soundEmitter());
+    ddmobj_base_t const &emitter = (deltaFlags & SNDDF_SIDE_MIDDLE? side.middleSoundEmitter()
+                                     : deltaFlags & SNDDF_SIDE_TOP? side.topSoundEmitter()
+                                                                  : side.bottomSoundEmitter());
 
     return M_ApproxDistance3(info->origin[VX]  - emitter.origin[VX],
                              info->origin[VY]  - emitter.origin[VY],
@@ -2314,8 +2316,8 @@ void Sv_NewPolyDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
 }
 
 void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
-    Polyobj* sourcePoly, Surface* sourceSurface, float volume, boolean isRepeating,
-    int clientsMask)
+    Polyobj* sourcePoly, Plane *sourcePlane, Surface* sourceSurface,
+    float volume, boolean isRepeating, int clientsMask)
 {
     pool_t* targets[DDMAXPLAYERS + 1];
     sounddelta_t soundDelta;
@@ -2336,67 +2338,50 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
         type = DT_POLY_SOUND;
         id = sourcePoly->idx;
     }
+    else if(sourcePlane)
+    {
+        type = DT_SECTOR_SOUND;
+
+        // Clients need to know which emitter to use.
+        if(emitter && emitter == (mobj_t *) &sourcePlane->soundEmitter())
+        {
+            if(sourcePlane == &sourcePlane->sector().floor())
+            {
+                df |= SNDDF_PLANE_FLOOR;
+            }
+            else if(sourcePlane == &sourcePlane->sector().ceiling())
+            {
+                df |= SNDDF_PLANE_CEILING;
+            }
+        }
+        // else client assumes the sector's sound emitter.
+
+        id = theMap->sectorIndex(&sourcePlane->sector());
+    }
     else if(sourceSurface)
     {
-        switch(sourceSurface->owner().type())
+        DENG_ASSERT(sourceSurface->owner().type() == DMU_SIDEDEF);
+        DENG2_ASSERT(emitter == 0); // surface sound emitter rather than a real mobj
+
+        type = DT_SIDE_SOUND;
+
+        // Clients need to know which emitter to use.
+        SideDef *sideDef = sourceSurface->owner().castTo<SideDef>();
+
+        if(&sideDef->middle() == sourceSurface)
         {
-        case DMU_PLANE: {
-            type = DT_SECTOR_SOUND;
-
-            Plane *pln = sourceSurface->owner().castTo<Plane>();
-
-            // Clients need to know which emitter to use.
-            if(emitter)
-            {
-                if(pln == &pln->sector().floor())
-                {
-                    if(emitter == (mobj_t *) &sourceSurface->soundEmitter())
-                        df |= SNDDF_PLANE_FLOOR;
-                }
-                else if(pln == &pln->sector().ceiling())
-                {
-                    if(emitter == (mobj_t *) &sourceSurface->soundEmitter())
-                        df |= SNDDF_PLANE_CEILING;
-                }
-            }
-            // else client assumes the sector's sound emitter.
-
-            id = theMap->sectorIndex(&pln->sector());
-            break; }
-
-        case DMU_SIDEDEF: {
-            type = DT_SIDE_SOUND;
-
-            DENG2_ASSERT(emitter == 0); // surface sound emitter rather than a real mobj
-
-            SideDef *sideDef = sourceSurface->owner().castTo<SideDef>();
-
-            // Clients need to know which emitter to use.
-            if(&sideDef->middle() == sourceSurface)
-            {
-                df |= SNDDF_SIDE_MIDDLE;
-            }
-            else if(&sideDef->bottom() == sourceSurface)
-            {
-                df |= SNDDF_SIDE_BOTTOM;
-            }
-            else if(&sideDef->top() == sourceSurface)
-            {
-                df |= SNDDF_SIDE_TOP;
-            }
-            else
-            {
-                // Surface not owned by its owner?!
-                DENG2_ASSERT(false);
-            }
-
-            id = theMap->sideDefIndex(sideDef);
-            break; }
-
-        default:
-            DENG2_ASSERT(false); // Invalid map element type.
-            return;
+            df |= SNDDF_SIDE_MIDDLE;
         }
+        else if(&sideDef->bottom() == sourceSurface)
+        {
+            df |= SNDDF_SIDE_BOTTOM;
+        }
+        else if(&sideDef->top() == sourceSurface)
+        {
+            df |= SNDDF_SIDE_TOP;
+        }
+
+        id = theMap->sideDefIndex(sideDef);
     }
     else if(emitter)
     {

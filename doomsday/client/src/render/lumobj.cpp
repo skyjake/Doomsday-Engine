@@ -986,62 +986,54 @@ END_PROF( PROF_LUMOBJ_FRAME_SORT );
  */
 static void createGlowLightForSurface(Surface &suf)
 {
-    switch(suf.owner().type())
+    if(suf.owner().type() != DMU_PLANE)
+        return;
+
+    Plane *pln = suf.owner().castTo<Plane>();
+    Sector *sec = &pln->sector();
+
+    // Only produce a light for sectors with open space.
+    /// @todo Do not add surfaces from sectors with zero BSP leafs to the glowing list.
+    if(!sec->bspLeafCount() || sec->floor().visHeight() >= sec->ceiling().visHeight())
+        return;
+
+    MaterialSnapshot const &ms = suf.material().prepare(Rend_MapSurfaceMaterialSpec());
+
+    // Are we glowing at this moment in time?
+    float glowStrength = 0;
+    if(glowFactor > .0001f)
     {
-    case DMU_PLANE: {
-        Plane *pln = suf.owner().castTo<Plane>();
-        Sector *sec = &pln->sector();
+        glowStrength = ms.glowStrength() * glowFactor; // Global scale factor.
+    }
+    if(!(glowStrength > .0001f)) return;
 
-        // Only produce a light for sectors with open space.
-        /// @todo Do not add surfaces from sectors with zero BSP leafs to the glowing list.
-        if(!sec->bspLeafCount() || sec->floor().visHeight() >= sec->ceiling().visHeight())
-            break;
+    averagecolor_analysis_t const *avgColorAmplified = reinterpret_cast<averagecolor_analysis_t const *>(ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::AverageColorAmplifiedAnalysis));
+    if(!avgColorAmplified) throw Error("createGlowLightForSurface", QString("Texture \"%1\" has no AverageColorAmplifiedAnalysis").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
 
-        MaterialSnapshot const &ms = suf.material().prepare(Rend_MapSurfaceMaterialSpec());
+    // @note Plane lights do not spread so simply link to all BspLeafs of this sector.
+    lumobj_t *lum = createLuminous(LT_PLANE, sec->bspLeafs().at(0));
 
-        // Are we glowing at this moment in time?
-        float glowStrength = 0;
-        if(glowFactor > .0001f)
-        {
-            glowStrength = ms.glowStrength() * glowFactor; // Global scale factor.
-        }
-        if(!(glowStrength > .0001f)) break;
+    V3d_Copy(lum->origin, pln->soundEmitter().origin);
+    lum->origin[VZ] = pln->visHeight(); // Sound emitter origins are not smoothed.
 
-        averagecolor_analysis_t const *avgColorAmplified = reinterpret_cast<averagecolor_analysis_t const *>(ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::AverageColorAmplifiedAnalysis));
-        if(!avgColorAmplified) throw Error("createGlowLightForSurface", QString("Texture \"%1\" has no AverageColorAmplifiedAnalysis").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
+    V3f_Set(LUM_PLANE(lum)->normal, suf.normal().x, suf.normal().y, suf.normal().z);
+    V3f_Copy(LUM_PLANE(lum)->color, avgColorAmplified->color.rgb);
 
-        // @note Plane lights do not spread so simply link to all BspLeafs of this sector.
-        lumobj_t *lum = createLuminous(LT_PLANE, sec->bspLeafs().at(0));
+    LUM_PLANE(lum)->intensity = glowStrength;
+    lum->maxDistance = 0;
+    lum->decorSource = 0;
 
-        V3d_Copy(lum->origin, suf.soundEmitter().origin);
-        lum->origin[VZ] = pln->visHeight(); // Sound emitter origins are not smoothed.
+    linkobjtobspleafparams_t parm;
+    parm.obj = lum;
+    parm.type = OT_LUMOBJ;
 
-        V3f_Set(LUM_PLANE(lum)->normal, suf.normal().x, suf.normal().y, suf.normal().z);
-        V3f_Copy(LUM_PLANE(lum)->color, avgColorAmplified->color.rgb);
-
-        LUM_PLANE(lum)->intensity = glowStrength;
-        lum->maxDistance = 0;
-        lum->decorSource = 0;
-
-        linkobjtobspleafparams_t parm;
-        parm.obj = lum;
-        parm.type = OT_LUMOBJ;
-
-        QListIterator<BspLeaf *> bspLeafIt(sec->bspLeafs());
-        RIT_LinkObjToBspLeaf(bspLeafIt.next(), (void *)&parm);
-        while(bspLeafIt.hasNext())
-        {
-            BspLeaf *bspLeaf = bspLeafIt.next();
-            linkLumObjToSSec(lum, bspLeaf);
-            RIT_LinkObjToBspLeaf(bspLeaf, (void *)&parm);
-        }
-        break; }
-
-    case DMU_SIDEDEF:
-        break; // Not yet supported by this algorithm.
-
-    default:
-        DENG2_ASSERT(false); // Invalid type.
+    QListIterator<BspLeaf *> bspLeafIt(sec->bspLeafs());
+    RIT_LinkObjToBspLeaf(bspLeafIt.next(), (void *)&parm);
+    while(bspLeafIt.hasNext())
+    {
+        BspLeaf *bspLeaf = bspLeafIt.next();
+        linkLumObjToSSec(lum, bspLeaf);
+        RIT_LinkObjToBspLeaf(bspLeaf, (void *)&parm);
     }
 }
 
