@@ -312,25 +312,37 @@ void Sector::updateAABox()
     V2d_Set(d->aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
     V2d_Set(d->aaBox.max, DDMINFLOAT, DDMINFLOAT);
 
-    if(!d->lines.count()) return;
+    if(!d->bspLeafs.count()) return;
 
-    QListIterator<LineDef *> lineIt(d->lines);
+    QListIterator<BspLeaf *> leafIt(d->bspLeafs);
 
-    LineDef *line = lineIt.next();
-    V2d_CopyBox(d->aaBox.arvec2, line->aaBox().arvec2);
+    BspLeaf *leaf = leafIt.next();
+    V2d_CopyBox(d->aaBox.arvec2, leaf->aaBox().arvec2);
 
-    while(lineIt.hasNext())
+    while(leafIt.hasNext())
     {
-        line = lineIt.next();
-        V2d_UniteBox(d->aaBox.arvec2, line->aaBox().arvec2);
+        leaf = leafIt.next();
+        V2d_UniteBox(d->aaBox.arvec2, leaf->aaBox().arvec2);
     }
 }
 
 void Sector::updateRoughArea()
 {
-    // Only a very rough estimate is required.
-    d->roughArea = ((d->aaBox.maxX - d->aaBox.minX) / 128) *
-                   ((d->aaBox.maxY - d->aaBox.minY) / 128);
+    d->roughArea = 0;
+    if(!d->bspLeafs.count()) return;
+
+    QListIterator<BspLeaf *> leafIt(d->bspLeafs);
+
+    BspLeaf *leaf = leafIt.next();
+    d->roughArea += (leaf->aaBox().maxX - leaf->aaBox().minX) *
+                    (leaf->aaBox().maxY - leaf->aaBox().minY);
+
+    while(leafIt.hasNext())
+    {
+        leaf = leafIt.next();
+        d->roughArea += (leaf->aaBox().maxX - leaf->aaBox().minX) *
+                        (leaf->aaBox().maxY - leaf->aaBox().minY);
+    }
 }
 
 void Sector::linkSoundEmitter(ddmobj_base_t &newEmitter)

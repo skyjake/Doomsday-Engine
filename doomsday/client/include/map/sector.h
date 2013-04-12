@@ -291,32 +291,26 @@ public:
     inline uint reverbBspLeafCount() const { return uint(reverbBspLeafs().count()); }
 
     /**
-     * Returns the axis-aligned bounding box which encompases all vertex
-     * origin points for lines which reference the sector, in map coordinate
-     * space units. Note that if no lines reference the sector the bounding
-     * box will be invalid (has negative dimensions).
-     *
-     * @deprecated Algorithms which are dependent on this are likely making
-     * invalid assumptions about the geometry of the map.
+     * Returns the axis-aligned bounding box which encompases the geometry of
+     * all BSP leafs attributed to the sector (map units squared). Note that if
+     * no BSP leafs reference the sector the bounding box will be invalid (has
+     * negative dimensions).
      */
     AABoxd const &aaBox() const;
 
     /**
      * Update the sector's map space axis-aligned bounding box to encompass
-     * the points defined by it's LineDefs' vertexes.
+     * the geometry of all BSP leafs attributed to the sector.
      *
-     * @pre Line list must have be initialized.
+     * @pre BSP leaf list must have be initialized.
      *
-     * @see buildLines()
+     * @see buildBspLeafs()
      */
     void updateAABox();
 
     /**
-     * Returns a rough approximation of the area of the sector in the map
-     * coordinate space (units squared).
-     *
-     * @deprecated Algorithms which are dependent on this are likely making
-     * invalid assumptions about the geometry of the map.
+     * Returns a rough approximation of the total combined area of the geometry
+     * for all BSP leafs attributed to the sector (map units squared).
      *
      * @see updateRoughArea()
      */
@@ -325,22 +319,24 @@ public:
     /**
      * Update the sector's rough area approximation.
      *
-     * @pre Axis-aligned bounding box must be initialized.
+     * @pre BSP leaf list must have be initialized.
      *
-     * @see updateAABox()
+     * @see buildBspLeafs(), roughArea()
      */
     void updateRoughArea();
 
     /**
-     * @param base  Mobj base to link in @a sector. Caller should ensure that the
-     *              same object is not linked multiple times into the chain.
+     * @param newEmitter  Mobj base to link to the sector. Caller must ensure
+     *                    that the object is not linked multiple times into
+     *                    the chain.
      */
     void linkSoundEmitter(ddmobj_base_t &newEmitter);
 
     /**
-     * Update the origin of the sector according to the point defined by the
-     * center of the sector's axis-aligned bounding box (which must be
-     * initialized before calling).
+     * Update the sound emitter origin of the sector according to the point
+     * defined by the center of the sector's axis-aligned bounding box (which
+     * must be initialized before calling) and the mid point on the map up
+     * axis between floor and ceiling planes.
      */
     void updateSoundEmitterOrigin();
 

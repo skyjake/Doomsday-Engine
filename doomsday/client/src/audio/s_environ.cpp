@@ -314,14 +314,7 @@ static void calculateSectorReverb(Sector *sec)
 {
     if(!sec || !sec->lineCount()) return;
 
-    /// @todo fixme: This 3D volume rough estimate may be massively off.
-    ///       Consider the case of a single sector used over an entire map
-    ///       with multiple disjoint groups of small geometries.
-    ///       In general a sector should never be considered as playing any
-    ///       part in the definition of a map's geometry. -ds
-    uint spaceVolume = (int) (sec->ceiling().height() - sec->floor().height()) *
-        (sec->aaBox().maxX - sec->aaBox().minX) *
-        (sec->aaBox().maxY - sec->aaBox().minY);
+    uint spaceVolume = int((sec->ceiling().height() - sec->floor().height()) * sec->roughArea());
 
     sec->_reverb[SRD_SPACE] = sec->_reverb[SRD_VOLUME] =
         sec->_reverb[SRD_DECAY] = sec->_reverb[SRD_DAMPING] = 0;
