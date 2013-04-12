@@ -479,12 +479,6 @@ public:
      */
     int setProperty(setargs_t const &args);
 
-    /**
-     * Helper function for determining whether the surface is owned by a
-     * Line which is itself owned by a Polyobj.
-     */
-    static bool isFromPolyobj(Surface const &surface);
-
 private:
     DENG2_PRIVATE(d)
 };

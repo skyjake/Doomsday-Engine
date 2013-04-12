@@ -1310,7 +1310,7 @@ static void processEdgeShadow(BspLeaf const &bspLeaf, LineDef const *line,
     coord_t plnHeight  = plane.visHeight();
 
     // Polyobj surfaces never shadow.
-    if(Surface::isFromPolyobj(*suf)) return;
+    if(line->isFromPolyobj()) return;
 
     // Surfaces with a missing material don't shadow.
     if(!suf->hasMaterial()) return;

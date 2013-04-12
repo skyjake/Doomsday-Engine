@@ -547,11 +547,9 @@ static void resetAllMapSurfaceVisMaterialOrigins(GameMap &map)
  * Non-animated materials are preferred.
  * Sky materials are ignored.
  */
-static Material *chooseFixMaterial(SideDef *s, SideDefSection section)
+static Material *chooseFixMaterial(LineDef &line, int side, SideDefSection section)
 {
     Material *choice1 = 0, *choice2 = 0;
-    LineDef &line = s->line();
-    byte side = (line.frontSideDefPtr() == s? FRONT : BACK);
     Sector *frontSec = line.sectorPtr(side);
     Sector *backSec  = line.sideDefPtr(side ^ 1)? line.sectorPtr(side ^ 1) : 0;
 
@@ -640,25 +638,23 @@ static Material *chooseFixMaterial(SideDef *s, SideDefSection section)
     return &App_Materials().find(de::Uri("System", Path("missing"))).material();
 }
 
-static void addMissingMaterial(SideDef *s, SideDefSection section)
+static void addMissingMaterial(LineDef &line, int side, SideDefSection section)
 {
-    DENG_ASSERT(s);
-
     // A material must be missing for this test to apply.
-    Surface &surface = s->surface(section);
+    Surface &surface = line.sideDef(side).surface(section);
     if(surface.hasMaterial()) return;
 
     // Look for a suitable replacement.
-    surface.setMaterial(chooseFixMaterial(s, section), true/* is missing fix */);
+    surface.setMaterial(chooseFixMaterial(line, side, section), true/* is missing fix */);
 
     // During map load we log missing materials.
     if(ddMapSetup && verbose)
     {
         String path = surface.hasMaterial()? surface.material().manifest().composeUri().asText() : "<null>";
 
-        LOG_WARNING("SideDef #%u is missing a material for the %s section.\n"
+        LOG_WARNING("%s of LineDef #%u is missing a material for the %s section.\n"
                     "  %s was chosen to complete the definition.")
-            << s->_buildData.index - 1
+            << (side? "Back" : "Front") << line.origIndex() - 1
             << (section == SS_MIDDLE? "middle" : section == SS_TOP? "top" : "bottom")
             << path;
     }
@@ -688,27 +684,27 @@ void R_UpdateMissingMaterialsForLinesOfSector(Sector const &sec)
             // A potential bottom section fix?
             if(frontSec.floor().height() < backSec.floor().height())
             {
-                addMissingMaterial(line->frontSideDefPtr(), SS_BOTTOM);
+                addMissingMaterial(*line, FRONT, SS_BOTTOM);
             }
             else if(frontSec.floor().height() > backSec.floor().height())
             {
-                addMissingMaterial(line->backSideDefPtr(), SS_BOTTOM);
+                addMissingMaterial(*line, BACK, SS_BOTTOM);
             }
 
             // A potential top section fix?
             if(backSec.ceiling().height() < frontSec.ceiling().height())
             {
-                addMissingMaterial(line->frontSideDefPtr(), SS_TOP);
+                addMissingMaterial(*line, FRONT, SS_TOP);
             }
             else if(backSec.ceiling().height() > frontSec.ceiling().height())
             {
-                addMissingMaterial(line->backSideDefPtr(), SS_TOP);
+                addMissingMaterial(*line, BACK, SS_TOP);
             }
         }
         else
         {
             // A potential middle section fix.
-            addMissingMaterial(line->frontSideDefPtr(), SS_MIDDLE);
+            addMissingMaterial(*line, FRONT, SS_MIDDLE);
         }
     }
 }

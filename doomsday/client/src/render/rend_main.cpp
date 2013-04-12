@@ -1809,7 +1809,8 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
                     blendMode = surface->blendMode();
             }
 
-            if(Surface::isFromPolyobj(*surface))
+            // Polyobj surfaces never shadow.
+            if(hedge->line().isFromPolyobj())
                 flags &= ~RHF_ADD_RADIO;
 
             float glowStrength = 0;

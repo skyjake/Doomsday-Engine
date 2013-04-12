@@ -843,13 +843,3 @@ int Surface::setProperty(setargs_t const &args)
 
     return false; // Continue iteration.
 }
-
-bool Surface::isFromPolyobj(Surface const &surface)
-{
-    if(surface.owner().type() == DMU_SIDEDEF)
-    {
-        SideDef *sideDef = surface.owner().castTo<SideDef>();
-        if(sideDef->line().isFromPolyobj()) return true;
-    }
-    return false;
-}

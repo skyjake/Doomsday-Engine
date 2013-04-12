@@ -104,7 +104,7 @@ void LineDef::Side::updateSurfaceNormals()
     if(!_sideDef) return;
 
     LineDef const &line = _sideDef->line();
-    byte sid = line.frontSideDefPtr() == _sideDef? FRONT : BACK;
+    byte sid = &line.front() == this? FRONT : BACK;
 
     Surface &middleSurface = _sideDef->middle();
     Surface &bottomSurface = _sideDef->bottom();
