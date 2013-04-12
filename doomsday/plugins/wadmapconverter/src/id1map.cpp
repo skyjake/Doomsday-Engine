@@ -336,41 +336,36 @@ void Id1Map::transferSectors(void)
     }
 }
 
-void Id1Map::transferLinesAndSides(void)
+void Id1Map::transferLinesAndSides()
 {
     LOG_TRACE("Transfering lines and sides...");
     DENG2_FOR_EACH(Lines, i, lines)
     {
-        uint frontIdx = 0;
-        mside_t* front = ((i)->sides[RIGHT] != 0? &sides[(i)->sides[RIGHT]-1] : NULL);
-        if(front)
-        {
-            frontIdx =
-                MPE_SidedefCreate((mapFormat == MF_DOOM64? SDF_MIDDLE_STRETCH : 0),
-                                  composeMaterialRef(front->topMaterial),
-                                  front->offset[VX], front->offset[VY], 1, 1, 1,
-                                  composeMaterialRef(front->middleMaterial),
-                                  front->offset[VX], front->offset[VY], 1, 1, 1, 1,
-                                  composeMaterialRef(front->bottomMaterial),
-                                  front->offset[VX], front->offset[VY], 1, 1, 1);
-        }
-
-        uint backIdx = 0;
-        mside_t* back = ((i)->sides[LEFT] != 0? &sides[(i)->sides[LEFT]-1] : NULL);
-        if(back)
-        {
-            backIdx =
-                MPE_SidedefCreate((mapFormat == MF_DOOM64? SDF_MIDDLE_STRETCH : 0),
-                                  composeMaterialRef(back->topMaterial),
-                                  back->offset[VX], back->offset[VY], 1, 1, 1,
-                                  composeMaterialRef(back->middleMaterial),
-                                  back->offset[VX], back->offset[VY], 1, 1, 1, 1,
-                                  composeMaterialRef(back->bottomMaterial),
-                                  back->offset[VX], back->offset[VY], 1, 1, 1);
-        }
+        mside_t *front = ((i)->sides[RIGHT] != 0? &sides[(i)->sides[RIGHT]-1] : NULL);
+        mside_t *back  = ((i)->sides[LEFT]  != 0? &sides[(i)->sides[LEFT] -1] : NULL);
 
         uint lineIdx = MPE_LinedefCreate((i)->v[0], (i)->v[1], front? front->sector : 0,
-                                         back? back->sector : 0, frontIdx, backIdx, (i)->ddFlags);
+                                         back? back->sector : 0, (i)->ddFlags);
+        if(front)
+        {
+            MPE_LinedefAddSide(lineIdx, RIGHT, (mapFormat == MF_DOOM64? SDF_MIDDLE_STRETCH : 0),
+                               composeMaterialRef(front->topMaterial),
+                               front->offset[VX], front->offset[VY], 1, 1, 1,
+                               composeMaterialRef(front->middleMaterial),
+                               front->offset[VX], front->offset[VY], 1, 1, 1, 1,
+                               composeMaterialRef(front->bottomMaterial),
+                               front->offset[VX], front->offset[VY], 1, 1, 1);
+        }
+        if(back)
+        {
+            MPE_LinedefAddSide(lineIdx, LEFT, (mapFormat == MF_DOOM64? SDF_MIDDLE_STRETCH : 0),
+                               composeMaterialRef(back->topMaterial),
+                               back->offset[VX], back->offset[VY], 1, 1, 1,
+                               composeMaterialRef(back->middleMaterial),
+                               back->offset[VX], back->offset[VY], 1, 1, 1, 1,
+                               composeMaterialRef(back->bottomMaterial),
+                               back->offset[VX], back->offset[VY], 1, 1, 1);
+        }
 
         MPE_GameObjProperty("XLinedef", lineIdx-1, "Flags", DDVT_SHORT, &(i)->flags);
 

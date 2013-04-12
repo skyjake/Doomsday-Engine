@@ -34,7 +34,6 @@ SideDef::SideDef()
 {
     _line = 0;
     _flags = 0;
-    std::memset(&_buildData, 0, sizeof(_buildData));
 }
 
 SideDef::~SideDef()

@@ -87,13 +87,6 @@ public:
     /// @ref sdefFlags
     short _flags;
 
-    /// @todo This temporary load-time data does not belong here. -ds
-    struct {
-        // Sidedef index. Always valid after loading & pruning.
-        int index;
-        int refCount;
-    } _buildData;
-
 public:
     SideDef();
     ~SideDef();

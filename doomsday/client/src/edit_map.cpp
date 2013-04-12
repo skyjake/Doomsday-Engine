@@ -110,13 +110,12 @@ public:
         return line;
     }
 
-    SideDef *createSideDef()
+    SideDef *createSideDef(LineDef &line)
     {
         SideDef *sideDef = new SideDef;
+        sideDef->_line = &line;
 
         sideDefs.append(sideDef);
-        sideDef->_buildData.index = sideDefs.count(); // 1-based index, 0 = NIL.
-
         return sideDef;
     }
 
@@ -1133,17 +1132,61 @@ boolean MPE_VertexCreatev(size_t num, coord_t *values, uint *indices)
     return true;
 }
 
-#undef MPE_SidedefCreate
-uint MPE_SidedefCreate(short flags, ddstring_t const *topMaterialUri,
+#undef MPE_LinedefCreate
+uint MPE_LinedefCreate(uint v1, uint v2, uint frontSectorIdx, uint backSectorIdx, int flags)
+{
+    if(!editMapInited) return 0;
+
+    if(frontSectorIdx > (uint)editMap.sectors.count()) return 0;
+    if(backSectorIdx  > (uint)editMap.sectors.count()) return 0;
+    if(v1 == 0 || v1 > (uint)editMap.vertexes.count()) return 0;
+    if(v2 == 0 || v2 > (uint)editMap.vertexes.count()) return 0;
+    if(v1 == v2) return 0;
+
+    // Next, check the length is not zero.
+    /// @todo fixme: We need to allow these... -ds
+    Vertex *vtx1 = editMap.vertexes[v1 - 1];
+    Vertex *vtx2 = editMap.vertexes[v2 - 1];
+    if(!(V2d_Distance(vtx2->origin(), vtx1->origin()) > 0)) return 0;
+
+    Sector *frontSector = (frontSectorIdx == 0? NULL: editMap.sectors[frontSectorIdx-1]);
+    Sector *backSector  = (backSectorIdx  == 0? NULL: editMap.sectors[backSectorIdx-1]);
+
+    LineDef *l = editMap.createLine(*vtx1, *vtx2, frontSector, backSector);
+
+    // Determine the default line flags.
+    l->_flags = flags;
+
+    // Remember the number of unique references.
+    l->v1()._buildData.refCount++;
+    l->v2()._buildData.refCount++;
+
+    return l->origIndex();
+}
+
+#undef MPE_LinedefAddSide
+void MPE_LinedefAddSide(uint lineIdx, int side, short flags, ddstring_t const *topMaterialUri,
     float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue,
     ddstring_t const *middleMaterialUri, float middleOffsetX, float middleOffsetY, float middleRed,
     float middleGreen, float middleBlue, float middleAlpha, ddstring_t const *bottomMaterialUri,
     float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen,
     float bottomBlue)
 {
-    if(!editMapInited) return 0;
+    if(!editMapInited) return;
 
-    SideDef *s = editMap.createSideDef();
+    if(lineIdx == 0 || lineIdx > (uint)editMap.lines.count()) return;
+
+    LineDef *line = editMap.lines[lineIdx - 1];
+    SideDef *s;
+    if(line->hasSideDef(side))
+    {
+        s = line->sideDefPtr(side);
+    }
+    else
+    {
+        s = line->side(side)._sideDef = editMap.createSideDef(*line);
+    }
+
     s->_flags = flags;
 
     // Assign the resolved material if found.
@@ -1160,75 +1203,10 @@ uint MPE_SidedefCreate(short flags, ddstring_t const *topMaterialUri,
     s->bottom().setMaterialOrigin(bottomOffsetX, bottomOffsetY);
     s->bottom().setTintColor(bottomRed, bottomGreen, bottomBlue);
 
-    return s->_buildData.index;
-}
-
-#undef MPE_LinedefCreate
-uint MPE_LinedefCreate(uint v1, uint v2, uint frontSectorIdx, uint backSectorIdx,
-    uint frontSide, uint backSide, int flags)
-{
-    if(!editMapInited) return 0;
-
-    if(frontSectorIdx > (uint)editMap.sectors.count()) return 0;
-    if(backSectorIdx  > (uint)editMap.sectors.count()) return 0;
-    if(frontSide   > (uint)editMap.sideDefs.count())   return 0;
-    if(backSide    > (uint)editMap.sideDefs.count())   return 0;
-    if(v1 == 0 || v1 > (uint)editMap.vertexes.count()) return 0;
-    if(v2 == 0 || v2 > (uint)editMap.vertexes.count()) return 0;
-    if(v1 == v2) return 0;
-
-    // Ensure that the side indices are unique.
-    if(frontSide && editMap.sideDefs[frontSide - 1]->_buildData.refCount)
-        return 0;
-    if(backSide && editMap.sideDefs[backSide - 1]->_buildData.refCount)
-        return 0;
-
-    // Next, check the length is not zero.
-    /// @todo fixme: We need to allow these... -ds
-    Vertex *vtx1 = editMap.vertexes[v1 - 1];
-    Vertex *vtx2 = editMap.vertexes[v2 - 1];
-    if(!(V2d_Distance(vtx2->origin(), vtx1->origin()) > 0)) return 0;
-
-    SideDef *front = frontSide? editMap.sideDefs[frontSide - 1] : 0;
-    SideDef *back  = backSide?  editMap.sideDefs[backSide  - 1] : 0;
-
-    Sector *frontSector = (frontSectorIdx == 0? NULL: editMap.sectors[frontSectorIdx-1]);
-    Sector *backSector  = (backSectorIdx  == 0? NULL: editMap.sectors[backSectorIdx-1]);
-
-    LineDef *l = editMap.createLine(*vtx1, *vtx2, frontSector, backSector);
-
-    l->front()._sideDef = front;
-    if(l->hasFrontSideDef())
-    {
-        l->frontSideDef()._line = l;
-    }
-
-    l->back()._sideDef = back;
-    if(l->hasBackSideDef())
-    {
-        l->backSideDef()._line = l;
-    }
-
-    // Determine the default line flags.
-    l->_flags = flags;
-    if(!front || !back)
-        l->_flags |= DDLF_BLOCKING;
-
-    // Remember the number of unique references.
-    l->v1()._buildData.refCount++;
-    l->v2()._buildData.refCount++;
-
-    if(l->hasFrontSideDef())
-    {
-        l->frontSideDef()._buildData.refCount++;
-    }
-
-    if(l->hasBackSideDef())
-    {
-        l->backSideDef()._buildData.refCount++;
-    }
-
-    return l->origIndex();
+    // Update line flags.
+    line->_flags &= ~DDLF_BLOCKING;
+    if(!line->hasFrontSideDef() || !line->hasBackSideDef())
+        line->_flags |= DDLF_BLOCKING;
 }
 
 #undef MPE_PlaneCreate
@@ -1344,8 +1322,8 @@ DENG_DECLARE_API(MPE) =
     MPE_End,
     MPE_VertexCreate,
     MPE_VertexCreatev,
-    MPE_SidedefCreate,
     MPE_LinedefCreate,
+    MPE_LinedefAddSide,
     MPE_SectorCreate,
     MPE_PlaneCreate,
     MPE_PolyobjCreate,
