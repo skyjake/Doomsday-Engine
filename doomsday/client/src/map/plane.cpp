@@ -1,4 +1,4 @@
-/** @file plane.h Map Plane.
+/** @file plane.h World Map Plane.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,13 +18,13 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
-#include "de_console.h"
-#include "de_play.h"
+#include <de/Log>
 
+#include "de_base.h"
+
+#include "audio/s_environ.h"
 #include "map/linedef.h"
 #include "map/gamemap.h"
-
 #include "render/r_main.h" // frameTimePos
 
 #include "map/plane.h"
@@ -108,6 +108,17 @@ DENG2_PIMPL(Plane)
         coord_t oldHeight = height;
         height = newHeight;
 
+        if(!ddMapSetup)
+        {
+#ifdef __CLIENT__
+            // Update the sound emitter origin for the plane.
+            surface.updateSoundEmitterOrigin();
+#endif
+
+            // We need the decorations updated.
+            surface.markAsNeedingDecorationUpdate();
+        }
+
         // Notify interested parties of the change.
         notifyHeightChanged(oldHeight);
 
@@ -129,6 +140,8 @@ DENG2_PIMPL(Plane)
     /**
      * To be called when the height changes to update the plotted decoration
      * origins for surfaces whose material offset is dependant upon this.
+     *
+     * @todo Sector should observe instead.
      */
     void markDependantSurfacesForDecorationUpdate()
     {

@@ -26,6 +26,7 @@
 #include "map/bspleaf.h"
 #include "map/linedef.h"
 #include "map/gamemap.h"
+#include "map/p_players.h"
 #ifdef __CLIENT__
 #  include "render/rend_bias.h"
 #endif
@@ -360,6 +361,67 @@ void Sector::updateSoundEmitterOrigin()
     d->soundEmitter.origin[VX] = (d->aaBox.minX + d->aaBox.maxX) / 2;
     d->soundEmitter.origin[VY] = (d->aaBox.minY + d->aaBox.maxY) / 2;
     d->soundEmitter.origin[VZ] = (floor().height() + ceiling().height()) / 2;
+}
+
+void Sector::planeHeightChanged(Plane &plane, coord_t oldHeight)
+{
+    updateSoundEmitterOrigin();
+#ifdef __CLIENT__
+    R_UpdateMissingMaterialsForLinesOfSector(*this);
+#endif
+    S_MarkSectorReverbDirty(this);
+
+    // Check if there are any camera players in this sector. If their
+    // height is now above the ceiling/below the floor they are now in
+    // the void.
+    for(uint i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        player_t *plr = &ddPlayers[i];
+        ddplayer_t *ddpl = &plr->shared;
+
+        if(!ddpl->inGame || !ddpl->mo || !ddpl->mo->bspLeaf)
+            continue;
+
+        /// @todo $nplanes
+        if((ddpl->flags & DDPF_CAMERA) && ddpl->mo->bspLeaf->sectorPtr() == this &&
+           (ddpl->mo->origin[VZ] > ceiling().height() - 4 || ddpl->mo->origin[VZ] < floor().height()))
+        {
+            ddpl->inVoid = true;
+        }
+    }
+
+    // Update the sound emitter origins for all dependent wall surfaces.
+    foreach(LineDef *line, d->lines)
+    {
+        line->front().updateSoundEmitterOrigins();
+        line->back().updateSoundEmitterOrigins();
+    }
+
+#ifdef __CLIENT__
+    // Inform the shadow bias of changed geometry.
+    foreach(BspLeaf *bspLeaf, d->bspLeafs)
+    {
+        if(HEdge *base = bspLeaf->firstHEdge())
+        {
+            HEdge *hedge = base;
+            do
+            {
+                if(hedge->hasLine())
+                {
+                    for(uint i = 0; i < 3; ++i)
+                    {
+                        SB_SurfaceMoved(&hedge->biasSurfaceForGeometryGroup(i));
+                    }
+                }
+            } while((hedge = &hedge->next()) != base);
+        }
+
+        SB_SurfaceMoved(&bspLeaf->biasSurfaceForGeometryGroup(plane.inSectorIndex()));
+    }
+
+#endif // __CLIENT__
+
+    DENG2_UNUSED2(plane, oldHeight);
 }
 
 int Sector::property(setargs_t &args) const

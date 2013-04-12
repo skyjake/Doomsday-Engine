@@ -1251,6 +1251,8 @@ uint MPE_PlaneCreate(uint sectorIdx, coord_t height, ddstring_t const *materialU
     sector->_planes.append(plane);
     plane->setInSectorIndex(sector->planeCount() - 1);
 
+    plane->audienceForHeightChange += sector;
+
     return plane->inSectorIndex() + 1; // 1-based index.
 }
 

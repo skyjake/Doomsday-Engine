@@ -506,20 +506,6 @@ LineDef *R_FindLineAlignNeighbor(Sector const *sec, LineDef const *line,
 }
 #endif // __CLIENT__
 
-/**
- * Set intial values of various tracked and interpolated properties
- * (lighting, smoothed planes etc).
- */
-static void updateAllMapSectors(GameMap &map, bool forceUpdate = false)
-{
-    if(novideo) return;
-
-    foreach(Sector *sector, map.sectors())
-    {
-        R_UpdateSector(*sector, forceUpdate);
-    }
-}
-
 static void resetAllMapPlaneVisHeights(GameMap &map)
 {
     foreach(Sector *sector, map.sectors())
@@ -550,6 +536,196 @@ static void resetAllMapSurfaceVisMaterialOrigins(GameMap &map)
     }
 }
 
+#ifdef __CLIENT__
+
+/**
+ * Given a sidedef section, look at the neighbouring surfaces and pick the
+ * best choice of material used on those surfaces to be applied to "this"
+ * surface.
+ *
+ * Material on back neighbour plane has priority.
+ * Non-animated materials are preferred.
+ * Sky materials are ignored.
+ */
+static Material *chooseFixMaterial(SideDef *s, SideDefSection section)
+{
+    Material *choice1 = 0, *choice2 = 0;
+    LineDef &line = s->line();
+    byte side = (line.frontSideDefPtr() == s? FRONT : BACK);
+    Sector *frontSec = line.sectorPtr(side);
+    Sector *backSec  = line.sideDefPtr(side ^ 1)? line.sectorPtr(side ^ 1) : 0;
+
+    if(backSec)
+    {
+        // Our first choice is a material in the other sector.
+        if(section == SS_BOTTOM)
+        {
+            if(frontSec->floor().height() < backSec->floor().height())
+            {
+                choice1 = backSec->floorSurface().materialPtr();
+            }
+        }
+        else if(section == SS_TOP)
+        {
+            if(frontSec->ceiling().height()  > backSec->ceiling().height())
+            {
+                choice1 = backSec->ceilingSurface().materialPtr();
+            }
+        }
+
+        // In the special case of sky mask on the back plane, our best
+        // choice is always this material.
+        if(choice1 && choice1->isSkyMasked())
+        {
+            return choice1;
+        }
+    }
+    else
+    {
+        // Our first choice is a material on an adjacent wall section.
+        // Try the left neighbor first.
+        LineDef *other = R_FindLineNeighbor(frontSec, &line, line.vertexOwner(side),
+                                            false /*next clockwise*/, NULL/*angle delta is irrelevant*/);
+        if(!other)
+            // Try the right neighbor.
+            other = R_FindLineNeighbor(frontSec, &line, line.vertexOwner(side^1),
+                                       true /*next anti-clockwise*/, NULL/*angle delta is irrelevant*/);
+
+        if(other)
+        {
+            if(!other->hasBackSideDef())
+            {
+                // Our choice is clear - the middle material.
+                choice1 = other->frontSideDef().middle().materialPtr();
+            }
+            else
+            {
+                // Compare the relative heights to decide.
+                SideDef &otherSide = other->sideDef(&other->frontSector() == frontSec? FRONT : BACK);
+                Sector &otherSec   = other->sector(&other->frontSector() == frontSec? BACK  : FRONT);
+
+                if(otherSec.ceiling().height() <= frontSec->floor().height())
+                    choice1 = otherSide.top().materialPtr();
+                else if(otherSec.floor().height() >= frontSec->ceiling().height())
+                    choice1 = otherSide.bottom().materialPtr();
+                else if(otherSec.ceiling().height() < frontSec->ceiling().height())
+                    choice1 = otherSide.top().materialPtr();
+                else if(otherSec.floor().height() > frontSec->floor().height())
+                    choice1 = otherSide.bottom().materialPtr();
+                // else we'll settle for a plane material.
+            }
+        }
+    }
+
+    // Our second choice is a material from this sector.
+    choice2 = frontSec->planeSurface(section == SS_BOTTOM? Plane::Floor : Plane::Ceiling).materialPtr();
+
+    // Prefer a non-animated, non-masked material.
+    if(choice1 && !choice1->isAnimated() && !choice1->isSkyMasked())
+        return choice1;
+    if(choice2 && !choice2->isAnimated() && !choice2->isSkyMasked())
+        return choice2;
+
+    // Prefer a non-masked material.
+    if(choice1 && !choice1->isSkyMasked())
+        return choice1;
+    if(choice2 && !choice2->isSkyMasked())
+        return choice2;
+
+    // At this point we'll accept anything if it means avoiding HOM.
+    if(choice1) return choice1;
+    if(choice2) return choice2;
+
+    // We'll assign the special "missing" material...
+    return &App_Materials().find(de::Uri("System", Path("missing"))).material();
+}
+
+static void addMissingMaterial(SideDef *s, SideDefSection section)
+{
+    DENG_ASSERT(s);
+
+    // A material must be missing for this test to apply.
+    Surface &surface = s->surface(section);
+    if(surface.hasMaterial()) return;
+
+    // Look for a suitable replacement.
+    surface.setMaterial(chooseFixMaterial(s, section), true/* is missing fix */);
+
+    // During map load we log missing materials.
+    if(ddMapSetup && verbose)
+    {
+        String path = surface.hasMaterial()? surface.material().manifest().composeUri().asText() : "<null>";
+
+        LOG_WARNING("SideDef #%u is missing a material for the %s section.\n"
+                    "  %s was chosen to complete the definition.")
+            << s->_buildData.index - 1
+            << (section == SS_MIDDLE? "middle" : section == SS_TOP? "top" : "bottom")
+            << path;
+    }
+}
+
+void R_UpdateMissingMaterialsForLinesOfSector(Sector const &sec)
+{
+    foreach(LineDef *line, sec.lines())
+    {
+        // Self-referencing lines don't need fixing.
+        if(line->isSelfReferencing()) continue;
+
+        // Do not fix BSP "window" lines.
+        if(!line->hasFrontSideDef() || (!line->hasBackSideDef() && line->hasBackSector()))
+            continue;
+
+        /**
+         * Do as in the original Doom if the texture has not been defined -
+         * extend the floor/ceiling to fill the space (unless it is skymasked),
+         * or if there is a midtexture use that instead.
+         */
+        if(line->hasBackSector())
+        {
+            Sector const &frontSec = line->frontSector();
+            Sector const &backSec  = line->backSector();
+
+            // A potential bottom section fix?
+            if(frontSec.floor().height() < backSec.floor().height())
+            {
+                addMissingMaterial(line->frontSideDefPtr(), SS_BOTTOM);
+            }
+            else if(frontSec.floor().height() > backSec.floor().height())
+            {
+                addMissingMaterial(line->backSideDefPtr(), SS_BOTTOM);
+            }
+
+            // A potential top section fix?
+            if(backSec.ceiling().height() < frontSec.ceiling().height())
+            {
+                addMissingMaterial(line->frontSideDefPtr(), SS_TOP);
+            }
+            else if(backSec.ceiling().height() > frontSec.ceiling().height())
+            {
+                addMissingMaterial(line->backSideDefPtr(), SS_TOP);
+            }
+        }
+        else
+        {
+            // A potential middle section fix.
+            addMissingMaterial(line->frontSideDefPtr(), SS_MIDDLE);
+        }
+    }
+}
+#endif // __CLIENT__
+
+static void updateAllMapSectors(GameMap &map)
+{
+    foreach(Sector *sector, map.sectors())
+    {
+        sector->updateSoundEmitterOrigin();
+#ifdef __CLIENT__
+        R_UpdateMissingMaterialsForLinesOfSector(*sector);
+#endif
+        S_MarkSectorReverbDirty(sector);
+    }
+}
+
 #undef R_SetupMap
 DENG_EXTERN_C void R_SetupMap(int mode, int flags)
 {
@@ -573,9 +749,10 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
         // now have more HOMs to fix, etc..
         theMap->initSkyFix();
 
-        updateAllMapSectors(*theMap, true /*force*/);
+        updateAllMapSectors(*theMap);
         resetAllMapPlaneVisHeights(*theMap);
         resetAllMapSurfaceVisMaterialOrigins(*theMap);
+
         theMap->initPolyobjs();
         DD_ResetTimer();
         return;
@@ -605,7 +782,7 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
         theMap->initPolyobjs();
         P_MapSpawnPlaneParticleGens();
 
-        updateAllMapSectors(*theMap, true /*force*/);
+        updateAllMapSectors(*theMap);
         resetAllMapPlaneVisHeights(*theMap);
         resetAllMapSurfaceVisMaterialOrigins(*theMap);
 
@@ -746,258 +923,8 @@ boolean R_SectorContainsSkySurfaces(Sector const *sec)
     return sectorContainsSkySurfaces;
 }
 
-#ifdef __CLIENT__
-
-/**
- * Given a sidedef section, look at the neighbouring surfaces and pick the
- * best choice of material used on those surfaces to be applied to "this"
- * surface.
- *
- * Material on back neighbour plane has priority.
- * Non-animated materials are preferred.
- * Sky materials are ignored.
- */
-static Material *chooseFixMaterial(SideDef *s, SideDefSection section)
+void R_UpdateSector(Sector &sector, bool forceUpdate)
 {
-    Material *choice1 = 0, *choice2 = 0;
-    LineDef &line = s->line();
-    byte side = (line.frontSideDefPtr() == s? FRONT : BACK);
-    Sector *frontSec = line.sectorPtr(side);
-    Sector *backSec  = line.sideDefPtr(side ^ 1)? line.sectorPtr(side ^ 1) : 0;
-
-    if(backSec)
-    {
-        // Our first choice is a material in the other sector.
-        if(section == SS_BOTTOM)
-        {
-            if(frontSec->floor().height() < backSec->floor().height())
-            {
-                choice1 = backSec->floorSurface().materialPtr();
-            }
-        }
-        else if(section == SS_TOP)
-        {
-            if(frontSec->ceiling().height()  > backSec->ceiling().height())
-            {
-                choice1 = backSec->ceilingSurface().materialPtr();
-            }
-        }
-
-        // In the special case of sky mask on the back plane, our best
-        // choice is always this material.
-        if(choice1 && choice1->isSkyMasked())
-        {
-            return choice1;
-        }
-    }
-    else
-    {
-        // Our first choice is a material on an adjacent wall section.
-        // Try the left neighbor first.
-        LineDef *other = R_FindLineNeighbor(frontSec, &line, line.vertexOwner(side),
-                                            false /*next clockwise*/, NULL/*angle delta is irrelevant*/);
-        if(!other)
-            // Try the right neighbor.
-            other = R_FindLineNeighbor(frontSec, &line, line.vertexOwner(side^1),
-                                       true /*next anti-clockwise*/, NULL/*angle delta is irrelevant*/);
-
-        if(other)
-        {
-            if(!other->hasBackSideDef())
-            {
-                // Our choice is clear - the middle material.
-                choice1 = other->frontSideDef().middle().materialPtr();
-            }
-            else
-            {
-                // Compare the relative heights to decide.
-                SideDef &otherSide = other->sideDef(&other->frontSector() == frontSec? FRONT : BACK);
-                Sector &otherSec   = other->sector(&other->frontSector() == frontSec? BACK  : FRONT);
-
-                if(otherSec.ceiling().height() <= frontSec->floor().height())
-                    choice1 = otherSide.top().materialPtr();
-                else if(otherSec.floor().height() >= frontSec->ceiling().height())
-                    choice1 = otherSide.bottom().materialPtr();
-                else if(otherSec.ceiling().height() < frontSec->ceiling().height())
-                    choice1 = otherSide.top().materialPtr();
-                else if(otherSec.floor().height() > frontSec->floor().height())
-                    choice1 = otherSide.bottom().materialPtr();
-                // else we'll settle for a plane material.
-            }
-        }
-    }
-
-    // Our second choice is a material from this sector.
-    choice2 = frontSec->planeSurface(section == SS_BOTTOM? Plane::Floor : Plane::Ceiling).materialPtr();
-
-    // Prefer a non-animated, non-masked material.
-    if(choice1 && !choice1->isAnimated() && !choice1->isSkyMasked())
-        return choice1;
-    if(choice2 && !choice2->isAnimated() && !choice2->isSkyMasked())
-        return choice2;
-
-    // Prefer a non-masked material.
-    if(choice1 && !choice1->isSkyMasked())
-        return choice1;
-    if(choice2 && !choice2->isSkyMasked())
-        return choice2;
-
-    // At this point we'll accept anything if it means avoiding HOM.
-    if(choice1) return choice1;
-    if(choice2) return choice2;
-
-    // We'll assign the special "missing" material...
-    return &App_Materials().find(de::Uri("System", Path("missing"))).material();
-}
-
-static void addMissingMaterial(SideDef *s, SideDefSection section)
-{
-    DENG_ASSERT(s);
-
-    // A material must be missing for this test to apply.
-    Surface &surface = s->surface(section);
-    if(surface.hasMaterial()) return;
-
-    // Look for a suitable replacement.
-    surface.setMaterial(chooseFixMaterial(s, section), true/* is missing fix */);
-
-    // During map load we log missing materials.
-    if(ddMapSetup && verbose)
-    {
-        String path = surface.hasMaterial()? surface.material().manifest().composeUri().asText() : "<null>";
-
-        LOG_WARNING("SideDef #%u is missing a material for the %s section.\n"
-                    "  %s was chosen to complete the definition.")
-            << s->_buildData.index - 1
-            << (section == SS_MIDDLE? "middle" : section == SS_TOP? "top" : "bottom")
-            << path;
-    }
-}
-#endif // __CLIENT__
-
-#ifdef __CLIENT__
-static void updateMissingMaterialsForLinesOfSector(Sector const &sec)
-{
-    foreach(LineDef *line, sec.lines())
-    {
-        // Self-referencing lines don't need fixing.
-        if(line->isSelfReferencing()) continue;
-
-        // Do not fix BSP "window" lines.
-        if(!line->hasFrontSideDef() || (!line->hasBackSideDef() && line->hasBackSector()))
-            continue;
-
-        /**
-         * Do as in the original Doom if the texture has not been defined -
-         * extend the floor/ceiling to fill the space (unless it is skymasked),
-         * or if there is a midtexture use that instead.
-         */
-        if(line->hasBackSector())
-        {
-            Sector const &frontSec = line->frontSector();
-            Sector const &backSec  = line->backSector();
-
-            // A potential bottom section fix?
-            if(frontSec.floor().height() < backSec.floor().height())
-            {
-                addMissingMaterial(line->frontSideDefPtr(), SS_BOTTOM);
-            }
-            else if(frontSec.floor().height() > backSec.floor().height())
-            {
-                addMissingMaterial(line->backSideDefPtr(), SS_BOTTOM);
-            }
-
-            // A potential top section fix?
-            if(backSec.ceiling().height() < frontSec.ceiling().height())
-            {
-                addMissingMaterial(line->frontSideDefPtr(), SS_TOP);
-            }
-            else if(backSec.ceiling().height() > frontSec.ceiling().height())
-            {
-                addMissingMaterial(line->backSideDefPtr(), SS_TOP);
-            }
-        }
-        else
-        {
-            // A potential middle section fix.
-            addMissingMaterial(line->frontSideDefPtr(), SS_MIDDLE);
-        }
-    }
-}
-#endif // __CLIENT__
-
-bool R_UpdatePlane(Plane &plane, bool forceUpdate)
-{
-    Sector *sec = &plane.sector();
-    bool changed = false;
-
-    // Geometry change?
-    if(forceUpdate || plane.height() != plane._oldHeight[1])
-    {
-        // Check if there are any camera players in this sector. If their
-        // height is now above the ceiling/below the floor they are now in
-        // the void.
-        for(uint i = 0; i < DDMAXPLAYERS; ++i)
-        {
-            player_t *plr = &ddPlayers[i];
-            ddplayer_t *ddpl = &plr->shared;
-
-            if(!ddpl->inGame || !ddpl->mo || !ddpl->mo->bspLeaf)
-                continue;
-
-            /// @todo $nplanes
-            if((ddpl->flags & DDPF_CAMERA) && ddpl->mo->bspLeaf->sectorPtr() == sec &&
-               (ddpl->mo->origin[VZ] > sec->ceiling().height() - 4 || ddpl->mo->origin[VZ] < sec->floor().height()))
-            {
-                ddpl->inVoid = true;
-            }
-        }
-
-        // Update the sound emitter origins for this plane and all dependent wall surfaces.
-        plane.surface().updateSoundEmitterOrigin();
-        foreach(LineDef *line, sec->lines())
-        {
-            line->front().updateSoundEmitterOrigins();
-            line->back().updateSoundEmitterOrigins();
-        }
-
-#ifdef __CLIENT__
-        // Inform the shadow bias of changed geometry.
-        foreach(BspLeaf *bspLeaf, sec->bspLeafs())
-        {
-            if(HEdge *base = bspLeaf->firstHEdge())
-            {
-                HEdge *hedge = base;
-                do
-                {
-                    if(hedge->hasLine())
-                    {
-                        for(uint i = 0; i < 3; ++i)
-                        {
-                            SB_SurfaceMoved(&hedge->biasSurfaceForGeometryGroup(i));
-                        }
-                    }
-                } while((hedge = &hedge->next()) != base);
-            }
-
-            SB_SurfaceMoved(&bspLeaf->biasSurfaceForGeometryGroup(plane.inSectorIndex()));
-        }
-
-        // We need the decorations updated.
-        plane.surface().markAsNeedingDecorationUpdate();
-
-#endif // __CLIENT__
-
-        changed = true;
-    }
-
-    return changed;
-}
-
-bool R_UpdateSector(Sector &sector, bool forceUpdate)
-{
-    bool changed = false, planeChanged = false;
-
 #ifdef __CLIENT__
     // Check if there are any lightlevel or color changes.
     if(forceUpdate ||
@@ -1011,35 +938,12 @@ bool R_UpdateSector(Sector &sector, bool forceUpdate)
         sector._oldLightColor = sector._lightColor;
 
         LG_SectorChanged(&sector);
-        changed = true;
     }
     else
     {
         sector._frameFlags &= ~SIF_LIGHT_CHANGED;
     }
 #endif
-
-    foreach(Plane *plane, sector.planes())
-    {
-        if(R_UpdatePlane(*plane, forceUpdate))
-        {
-            planeChanged = true;
-        }
-    }
-
-    if(forceUpdate || planeChanged)
-    {
-        sector.updateSoundEmitterOrigin();
-#ifdef __CLIENT__
-        updateMissingMaterialsForLinesOfSector(sector);
-#endif
-        S_MarkSectorReverbDirty(&sector);
-        changed = true;
-    }
-
-    DENG_UNUSED(changed); /// @todo Should it be used? -jk
-
-    return planeChanged;
 }
 
 /**

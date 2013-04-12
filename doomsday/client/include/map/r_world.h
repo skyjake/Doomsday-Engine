@@ -67,6 +67,8 @@ boolean R_SectorContainsSkySurfaces(Sector const *sec);
 
 void R_ClearSectorFlags();
 
+void R_UpdateMissingMaterialsForLinesOfSector(Sector const &sec);
+
 /**
  * Returns pointers to the line's vertices in such a fashion that @c verts[0]
  * is the leftmost vertex and @c verts[1] is the rightmost vertex, when the
@@ -172,8 +174,7 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector const *frontSec,
 boolean R_MiddleMaterialCoversLineOpening(LineDef const *line, int side, boolean ignoreOpacity);
 #endif // __CLIENT__
 
-bool R_UpdateSector(Sector &sector, bool forceUpdate = false);
-bool R_UpdatePlane(Plane &plane, bool forceUpdate = false);
+void R_UpdateSector(Sector &sector, bool forceUpdate = false);
 
 /// @return  Current glow strength for the plane.
 float R_GlowStrength(Plane const *pln);

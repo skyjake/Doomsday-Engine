@@ -49,11 +49,12 @@ class LineDef;
 ///@}
 
 /**
- * Map sector.
+ * World map sector.
  *
  * @ingroup map
  */
-class Sector : public de::MapElement
+class Sector : public de::MapElement,
+               DENG2_OBSERVES(Plane, HeightChange)
 {
 public:
     /// Required/referenced plane is missing. @ingroup errors
@@ -479,6 +480,10 @@ public:
      * @return  Always @c 0 (can be used as an iterator).
      */
     int setProperty(setargs_t const &args);
+
+protected:
+    // Observes Plane HeightChange.
+    void planeHeightChanged(Plane &plane, coord_t oldHeight);
 
 private:
     DENG2_PRIVATE(d)

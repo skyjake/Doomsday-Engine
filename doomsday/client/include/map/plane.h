@@ -56,7 +56,7 @@ public:
     /**
      * Observers to be notified whenever a @em sharp height change occurs.
      */
-    DENG2_DEFINE_AUDIENCE(HeightChange, void planeHeightChanged(Plane const &plane, coord_t oldHeight))
+    DENG2_DEFINE_AUDIENCE(HeightChange, void planeHeightChanged(Plane &plane, coord_t oldHeight))
 
     static int const MAX_SMOOTH_MOVE; ///< 64, $smoothplane: Maximum speed for a smoothed plane.
 
@@ -69,9 +69,9 @@ public:
     };
 
 public: /// @todo Make private:
-    coord_t     _oldHeight[2];
-    coord_t     _targetHeight; ///< Target height.
-    coord_t     _visHeight;    ///< Visual plane height (smoothed).
+    coord_t _oldHeight[2];
+    coord_t _targetHeight; ///< Target height.
+    coord_t _visHeight;    ///< Visual plane height (smoothed).
 
 public:
     /**

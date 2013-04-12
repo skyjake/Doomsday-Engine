@@ -1036,8 +1036,7 @@ static int setProperty(void *ptr, void *context)
 
     if(updatePlane)
     {
-        if(R_UpdatePlane(*updatePlane))
-            updateSector1 = &updatePlane->sector();
+        updateSector1 = &updatePlane->sector();
     }
 
     if(updateSector1)
