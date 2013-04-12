@@ -19,9 +19,15 @@ def encodedText(logText):
     
     
 def xmlEncodedText(logText):
-    logText = logText.replace('<', '&lt;')
-    logText = logText.replace('>', '&gt;')
-    return logText
+    result = ''
+    for c in logText:
+        if c == '<': 
+            result += '<![CDATA[<]]>'
+        elif c == '>': 
+            result += '<![CDATA[>]]>'
+        else:
+            result += c
+    return result
 
 
 class Entry:
