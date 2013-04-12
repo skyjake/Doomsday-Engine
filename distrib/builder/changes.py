@@ -283,6 +283,7 @@ class Changes:
 
             # Append the changes to the debian package changelog.
             os.chdir(os.path.join(config.DISTRIB_DIR, 'linux'))
+            os.system('echo "" > ../debian/changelog')
 
             # First we need to update the version.
             debVersion = build_version.DOOMSDAY_VERSION_FULL + '-' + Event().tag()
