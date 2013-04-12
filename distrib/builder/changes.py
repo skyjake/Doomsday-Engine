@@ -16,6 +16,12 @@ def encodedText(logText):
     logText = logText.replace('>', '&gt;')
     logText = filter(lambda c: c in string.whitespace or c > ' ', logText)
     return logText
+    
+    
+def xmlEncodedText(logText):
+    logText = logText.replace('<', '&lt;')
+    logText = logText.replace('>', '&gt;')
+    return logText
 
 
 class Entry:
@@ -200,9 +206,10 @@ class Changes:
         return groups
     
     def pretty_group_list(self, tags):
+        """Pretty group list for use in HTML output."""
         listed = ''
         if len(tags) > 1:
-            listed = string.join(tags[:-1], ', ')
+            listed = string.join(encodedText(tags[:-1]), ', ')
             listed += ' and ' + tags[-1]
         elif len(tags) == 1:
             listed = tags[0]
@@ -266,9 +273,9 @@ class Changes:
                 if entry.tags or entry.guessedTags:
                     print >> out, '<tags>'
                     for t in entry.tags:
-                        print >> out, '<tag guessed="false">%s</tag>' % t
+                        print >> out, '<tag guessed="false">%s</tag>' % xmlEncodedText(t)
                     for t in entry.guessedTags:
-                        print >> out, '<tag guessed="true">%s</tag>' % t
+                        print >> out, '<tag guessed="true">%s</tag>' % xmlEncodedText(t)
                     print >> out, '</tags>'
                 print >> out, '<title>%s</title>' % entry.subject
                 if len(entry.message()):
