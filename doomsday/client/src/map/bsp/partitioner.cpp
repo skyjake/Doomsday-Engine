@@ -1309,12 +1309,12 @@ DENG2_PIMPL(Partitioner)
         if(!hedges.count()) return 0;
 
         // Collapse all degenerate and orphaned leafs.
-#if 0
+#ifdef DENG_BSP_COLLAPSE_ORPHANED_LEAFS
         bool const isDegenerate = hedges.count() < 3;
         bool isOrphan = true;
         foreach(HEdge *hedge, hedges)
         {
-            if(hedge->line && hedge->line->hasSector(hedge->side))
+            if(hedge->hasLine() && hedge->lineSide().hasSector())
             {
                 isOrphan = false;
                 break;
@@ -1326,7 +1326,7 @@ DENG2_PIMPL(Partitioner)
         while(!hedges.isEmpty())
         {
             HEdge *hedge = hedges.takeFirst();
-#if 0
+#ifdef DENG_BSP_COLLAPSE_ORPHANED_LEAFS
             HEdgeInfos::iterator hInfoIt = hedgeInfos.find(hedge);
             HEdgeInfo &hInfo = hInfoIt.value();
 
@@ -1357,10 +1357,10 @@ DENG2_PIMPL(Partitioner)
                 {
                     LineDef::Side &side = hedge->lineSide();
 
-                    side->_sector  = 0;
-                    side->_sideDef = 0;
+                    side._sector  = 0;
+                    side._sideDef = 0;
 
-                    lineDefInfo(hedge->line()).flags &=
+                    lineInfos[hedge->line().origIndex() - 1].flags &=
                         ~(LineInfo::SelfRef | LineInfo::Twosided);
                 }
 
