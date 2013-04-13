@@ -76,6 +76,7 @@ bool Action::tryTrigger(KeyEvent const &ev)
 
 void Action::trigger()
 {
+    de::Action::trigger();
     emit triggered();
 }
 
