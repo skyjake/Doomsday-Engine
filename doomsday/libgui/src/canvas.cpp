@@ -107,11 +107,11 @@ DENG2_PIMPL(Canvas)
 
     static int nativeCode(QKeyEvent const *ev)
     {
-    #if defined(UNIX) && !defined(MACOSX)
+#if defined(UNIX) && !defined(MACOSX)
         return ev->nativeScanCode();
-    #else
+#else
         return ev->nativeVirtualKey();
-    #endif
+#endif
     }
 
     void handleKeyEvent(QKeyEvent *ev)
