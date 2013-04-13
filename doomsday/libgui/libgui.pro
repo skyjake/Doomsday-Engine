@@ -48,6 +48,7 @@ HEADERS += \
     include/de/Canvas \
     include/de/CanvasWindow \
     include/de/GuiApp \
+    include/de/KeyEvent \
     include/de/KeyEventSource \
     include/de/MouseEventSource \
     include/de/PersistentCanvasWindow \
@@ -58,6 +59,7 @@ HEADERS += \
     include/de/gui/displaymode.h \
     include/de/gui/displaymode_native.h \
     include/de/gui/guiapp.h \
+    include/de/gui/keyevent.h \
     include/de/gui/keyeventsource.h \
     include/de/gui/libgui.h \
     include/de/gui/mouseeventsource.h \
@@ -69,7 +71,7 @@ SOURCES += \
     src/canvaswindow.cpp \
     src/displaymode.cpp \
     src/guiapp.cpp \
-    src/keyeventsource.cpp \
+    src/keyevent.cpp \
     src/persistentcanvaswindow.cpp
 
 # DisplayMode

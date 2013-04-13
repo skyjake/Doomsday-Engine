@@ -20,7 +20,7 @@
 #define LIBGUI_KEYEVENTSOURCE_H
 
 #include "libgui.h"
-#include "ddkey.h"
+#include "keyevent.h"
 #include <de/Observers>
 #include <de/String>
 
@@ -32,27 +32,10 @@ namespace de {
 class LIBGUI_PUBLIC KeyEventSource
 {
 public:
-    enum KeyState
-    {
-        Released,   ///< Released button.
-        Pressed     ///< Pressed button.
-    };
-
-    DENG2_DEFINE_AUDIENCE(KeyEvent, void keyEvent(KeyState state, int ddKey, int nativeCode, String const &text))
+    DENG2_DEFINE_AUDIENCE(KeyEvent, void keyEvent(KeyEvent const &))
 
 public:
     virtual ~KeyEventSource() {}
-
-    /**
-     * Translates a Qt key code to a Doomsday key code (see ddkey.h).
-     *
-     * @param qtKey             Qt key code.
-     * @param nativeVirtualKey  Native virtual key code.
-     * @param nativeScanCode    Native scan code.
-     *
-     * @return DDKEY code.
-     */
-    static int ddKeyFromQt(int qtKey, int nativeVirtualKey, int nativeScanCode);
 };
 
 } // namespace de

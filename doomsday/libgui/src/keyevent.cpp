@@ -1,4 +1,4 @@
-/** @file keyeventsource.cpp  Object that produces key events.
+/** @file keyevent.cpp  Input event from a keyboard.
  * @ingroup input
  *
  * Depends on Qt GUI.
@@ -25,7 +25,7 @@
 #  include <windows.h>
 #endif
 
-#include "de/KeyEventSource"
+#include "de/KeyEvent"
 #include <QKeyEvent>
 #include <de/Log>
 
@@ -177,7 +177,7 @@ static void checkWin32Keymap()
 }
 #endif // WIN32
 
-int de::KeyEventSource::ddKeyFromQt(int qtKey, int nativeVirtualKey, int nativeScanCode)
+int de::KeyEvent::ddKeyFromQt(int qtKey, int nativeVirtualKey, int nativeScanCode)
 {
 #ifdef MACOSX
     switch(qtKey)
@@ -396,3 +396,24 @@ static int x11ScancodeToDDKey(int scancode)
     return 0;
 }
 #endif
+
+namespace de {
+
+KeyEvent::KeyEvent()
+    : Event(KeyPress), _qtKey(0), _ddKey(0), _nativeCode(0)
+{}
+
+KeyEvent::KeyEvent(State keyState, int qtKeyCode, int ddKeyCode, int nativeKeyCode, String const &keyText)
+    : Event(keyState == Pressed? KeyPress : KeyRelease),
+      _qtKey(qtKeyCode),
+      _ddKey(ddKeyCode),
+      _nativeCode(nativeKeyCode),
+      _text(keyText)
+{}
+
+KeyEvent::State KeyEvent::state() const
+{
+    return type() == KeyPress? Pressed : Released;
+}
+
+} // namespace de
