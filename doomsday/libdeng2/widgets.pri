@@ -1,4 +1,5 @@
 HEADERS += \
+    include/de/Action \
     include/de/Animation \
     include/de/AnimationVector \
     include/de/DelegateRule \
@@ -10,6 +11,7 @@ HEADERS += \
     include/de/Widget
 
 HEADERS += \
+    include/de/widgets/action.h \
     include/de/widgets/animation.h \
     include/de/widgets/animationvector.h \
     include/de/widgets/constantrule.h \
@@ -23,6 +25,7 @@ HEADERS += \
     include/de/widgets/widget.h
 
 SOURCES += \
+    src/widgets/action.cpp \
     src/widgets/animation.cpp \
     src/widgets/constantrule.cpp \
     src/widgets/delegaterule.cpp \
