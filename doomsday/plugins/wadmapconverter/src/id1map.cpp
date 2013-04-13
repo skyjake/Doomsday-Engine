@@ -354,7 +354,8 @@ void Id1Map::transferLinesAndSides()
                                composeMaterialRef(front->middleMaterial),
                                front->offset[VX], front->offset[VY], 1, 1, 1, 1,
                                composeMaterialRef(front->bottomMaterial),
-                               front->offset[VX], front->offset[VY], 1, 1, 1);
+                               front->offset[VX], front->offset[VY], 1, 1, 1,
+                               (i)->sides[RIGHT]);
         }
         if(back)
         {
@@ -364,7 +365,8 @@ void Id1Map::transferLinesAndSides()
                                composeMaterialRef(back->middleMaterial),
                                back->offset[VX], back->offset[VY], 1, 1, 1, 1,
                                composeMaterialRef(back->bottomMaterial),
-                               back->offset[VX], back->offset[VY], 1, 1, 1);
+                               back->offset[VX], back->offset[VY], 1, 1, 1,
+                               (i)->sides[LEFT]);
         }
 
         MPE_GameObjProperty("XLinedef", lineIdx-1, "Flags", DDVT_SHORT, &(i)->flags);

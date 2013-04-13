@@ -1179,25 +1179,22 @@ void MPE_LinedefAddSide(uint lineIdx, int sideId, short flags, ddstring_t const 
     ddstring_t const *middleMaterialUri, float middleOffsetX, float middleOffsetY, float middleRed,
     float middleGreen, float middleBlue, float middleAlpha, ddstring_t const *bottomMaterialUri,
     float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen,
-    float bottomBlue)
+    float bottomBlue, uint sideDefArchiveIndex)
 {
     if(!editMapInited) return;
 
     if(lineIdx == 0 || lineIdx > (uint)editMap.lines.count()) return;
 
     LineDef *line = editMap.lines[lineIdx - 1];
-    SideDef *s;
-    if(line->hasSideDef(sideId))
+    if(!line->hasSideDef(sideId))
     {
-        s = line->sideDefPtr(sideId);
-    }
-    else
-    {
-        s = editMap.createSideDef(*line, sideId);
+        editMap.createSideDef(*line, sideId);
     }
 
     LineDef::Side &side = line->side(sideId);
+
     side._flags = flags;
+    side.setSideDefArchiveIndex(sideDefArchiveIndex);
 
     // Assign the resolved material if found.
     side.top().surface().setMaterial(findMaterialInDict(topMaterialUri));

@@ -188,6 +188,9 @@ public:
         /// SideDef.
         SideDef *_sideDef;
 
+        /// 1-based index of the associated sidedef in the archived map; otherwise @c 0.
+        uint _sideDefArchiveIndex;
+
         /// Sections.
         Sections *_sections;
 
@@ -269,6 +272,15 @@ public:
          * @see hasSideDef()
          */
         inline SideDef *sideDefPtr() const { return hasSideDef()? &sideDef() : 0; }
+
+        /**
+         * Change the "archive index" of the associated sidedef. The archive
+         * index is the position of the sidedef in the archived map data. Note
+         * that this index is unrelated to the "in map index" used by GameMap.
+         *
+         * @param newIndex  New 1-based index. Can be @c 0 signifying "no-index".
+         */
+        void setSideDefArchiveIndex(uint newIndex);
 
         /**
          * Returns the specified section of the side.

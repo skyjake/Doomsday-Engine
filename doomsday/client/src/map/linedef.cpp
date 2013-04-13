@@ -47,6 +47,7 @@ LineDef::Side::Side(LineDef &line, Sector *sector)
       _sector(sector),
       _sections(0),
       _sideDef(0),
+      _sideDefArchiveIndex(0), // no-index
       _leftHEdge(0),
       _rightHEdge(0),
       _shadowVisCount(0),
@@ -104,6 +105,11 @@ SideDef &LineDef::Side::sideDef() const
     }
     /// @throw LineDef::MissingSideDefError Attempted with no sidedef configured.
     throw LineDef::MissingSideDefError("LineDef::Side::sideDef", "No sidedef is configured");
+}
+
+void LineDef::Side::setSideDefArchiveIndex(uint newIndex)
+{
+    _sideDefArchiveIndex = newIndex;
 }
 
 LineDef::Side::Section &LineDef::Side::section(SideDefSection sectionId)

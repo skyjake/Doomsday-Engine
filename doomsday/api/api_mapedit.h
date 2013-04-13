@@ -110,7 +110,7 @@ DENG_API_TYPEDEF(MPE)
      * @return  Index of the newly created linedef else @c 0 if there was an error.
      */
     uint            (*LinedefCreate)(uint v1, uint v2, uint frontSector, uint backSector, int flags);
-    void            (*LinedefAddSide)(uint line, int side, short flags, const ddstring_t* topMaterial, float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue, const ddstring_t* middleMaterial, float middleOffsetX, float middleOffsetY, float middleRed, float middleGreen, float middleBlue, float middleAlpha, const ddstring_t* bottomMaterial, float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen, float bottomBlue);
+    void            (*LinedefAddSide)(uint line, int side, short flags, const ddstring_t* topMaterial, float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue, const ddstring_t* middleMaterial, float middleOffsetX, float middleOffsetY, float middleRed, float middleGreen, float middleBlue, float middleAlpha, const ddstring_t* bottomMaterial, float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen, float bottomBlue, uint sideDefArchiveIndex);
     uint            (*SectorCreate)(float lightlevel, float red, float green, float blue);
     uint            (*PlaneCreate)(uint sector, coord_t height, const ddstring_t* materialUri, float matOffsetX, float matOffsetY, float r, float g, float b, float a, float normalX, float normalY, float normalZ);
     uint            (*PolyobjCreate)(uint* lines, uint linecount, int tag, int sequenceType, coord_t originX, coord_t originY);
