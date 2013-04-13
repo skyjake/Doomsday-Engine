@@ -22,7 +22,6 @@
 #include "de_play.h"
 #include "de_defs.h"
 #include "Materials"
-#include <de/LegacyCore>
 #include <de/Log>
 #include <de/String>
 
@@ -457,7 +456,7 @@ int Surface::setProperty(setargs_t const &args)
 
     default:
         String msg = String("Surface::setProperty: Property '%s' is not writable.").arg(DMU_Str(args.prop));
-        LegacyCore_FatalError(msg.toUtf8().constData());
+        App_FatalError(msg.toUtf8().constData());
     }
 
     return false; // Continue iteration.
@@ -578,7 +577,7 @@ int Surface::property(setargs_t &args) const
 
     default:
         String msg = String("Surface::getProperty: Surface has no property '%s'.").arg(DMU_Str(args.prop));
-        LegacyCore_FatalError(msg.toUtf8().constData());
+        App_FatalError(msg.toUtf8().constData());
     }
 
     return false; // Continue iteration.

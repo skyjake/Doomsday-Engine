@@ -1349,7 +1349,7 @@ static boolean buildBsp(GameMap* gamemap)
 
     if(!e_map) return false;
 
-    LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_INFO,
+    LogBuffer_Printf(DE2_LOG_INFO,
         "Building BSP using tunable split factor of %d...\n", bspFactor);
 
     // It begins...
@@ -1367,7 +1367,7 @@ static boolean buildBsp(GameMap* gamemap)
     BspBuilder_Delete(bspBuilder);
 
     // How much time did we spend?
-    LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_INFO,
+    LogBuffer_Printf(DE2_LOG_INFO,
         "BSP built in %.2f seconds.\n", (Timer_RealMilliseconds() - startTime) / 1000.0f);
     return builtOK;
 }

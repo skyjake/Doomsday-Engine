@@ -81,7 +81,7 @@ void Library_ReleaseGames(void)
     {
         if(lib->isGamePlugin)
         {
-            LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_DEBUG,
+            LogBuffer_Printf(DE2_LOG_DEBUG,
                     "Library_ReleaseGames: Closing '%s'\n", Str_Text(lib->path));
 
             // Close the Library.
@@ -99,7 +99,7 @@ static void reopenLibraryIfNeeded(Library* lib)
 
     if(!lib->file->loaded())
     {
-        LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_DEBUG,
+        LogBuffer_Printf(DE2_LOG_DEBUG,
                 "reopenLibraryIfNeeded: Opening '%s'\n", Str_Text(lib->path));
 
         // Make sure the Library gets opened again now.

@@ -124,25 +124,6 @@ void DD_InitCommandLine(void)
 
 void DD_ConsoleInit(void)
 {
-    const char* outFileName = "doomsday.out";
-    ddstring_t nativePath;
-    boolean outFileOk;
-    int p;
-
-    DD_CheckArg("-out", &outFileName);
-    Str_Init(&nativePath); Str_Set(&nativePath, outFileName);
-    F_ToNativeSlashes(&nativePath, &nativePath);
-
-    // We'll redirect log output to a file.
-    outFileOk = LegacyCore_SetLogFile(Str_Text(&nativePath));
-    Str_Free(&nativePath);
-
-    if(!outFileOk)
-    {
-        Sys_MessageBoxf(MBT_WARNING, "Console", "Couldn't open message output file: %s",
-                        LegacyCore_LogFile());
-    }
-
     // Get the console online ASAP.
     Con_Init();
 
@@ -150,7 +131,7 @@ void DD_ConsoleInit(void)
 
     // Print the used command line.
     Con_Message("Command line (%i strings):", CommandLine_Count());
-    for(p = 0; p < CommandLine_Count(); ++p)
+    for(int p = 0; p < CommandLine_Count(); ++p)
     {
         Con_Message("  %i: %s", p, CommandLine_At(p));
     }

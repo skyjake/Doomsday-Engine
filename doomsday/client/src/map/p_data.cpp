@@ -39,7 +39,6 @@
 #include <EntityDatabase>
 
 #include <de/Error>
-#include <de/LegacyCore>
 #include <de/Log>
 #include <de/String>
 #include <de/StringPool>
@@ -113,7 +112,7 @@ DENG_EXTERN_C boolean P_LoadMap(char const *uriCString)
 {
     if(!uriCString || !uriCString[0])
     {
-        LegacyCore_FatalError("P_LoadMap: Invalid Uri argument.");
+        App_FatalError("P_LoadMap: Invalid Uri argument.");
     }
 
     de::Uri uri(uriCString, RC_NULL);

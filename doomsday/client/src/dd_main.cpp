@@ -254,7 +254,7 @@ ResourceClass& DD_ResourceClassById(resourceclassid_t id)
     if(!VALID_RESOURCECLASSID(id))
     {
         QByteArray msg = String("DD_ResourceClassById: Invalid id '%1'").arg(int(id)).toUtf8();
-        LegacyCore_FatalError(msg.constData());
+        App_FatalError(msg.constData());
     }
     return *resourceClasses[uint(id)];
 }

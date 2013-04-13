@@ -29,7 +29,6 @@
 #include "de_play.h"
 #include "de_audio.h"
 
-#include <de/LegacyCore>
 #include <de/memoryzone.h>
 
 #include "Materials"
@@ -223,7 +222,7 @@ void *P_AllocDummy(int type, void *extraData)
     default: {
         /// @throw Throw exception.
         QByteArray msg = String("P_AllocDummy: Dummies of type %1 not supported.").arg(DMU_Str(type)).toUtf8();
-        LegacyCore_FatalError(msg.constData());
+        App_FatalError(msg.constData());
         break; }
     }
 
@@ -245,7 +244,7 @@ void P_FreeDummy(void *dummy)
     if(type == DMU_NONE)
     {
         /// @todo Throw exception.
-        LegacyCore_FatalError("P_FreeDummy: Dummy is of unknown type.");
+        App_FatalError("P_FreeDummy: Dummy is of unknown type.");
     }
 
     DENG2_ASSERT(dummies.contains(elem));
@@ -356,7 +355,7 @@ void *P_ToPtr(int type, uint index)
     case DMU_PLANE: {
         /// @todo Throw exception.
         QByteArray msg = String("P_ToPtr: Cannot convert %1 to a ptr (sector is unknown).").arg(DMU_Str(type)).toUtf8();
-        LegacyCore_FatalError(msg.constData());
+        App_FatalError(msg.constData());
         return 0; /* Unreachable. */ }
 
     case DMU_MATERIAL:
@@ -366,7 +365,7 @@ void *P_ToPtr(int type, uint index)
     default: {
         /// @todo Throw exception.
         QByteArray msg = String("P_ToPtr: unknown type %1.").arg(DMU_Str(type)).toUtf8();
-        LegacyCore_FatalError(msg.constData());
+        App_FatalError(msg.constData());
         return 0; /* Unreachable. */ }
     }
 }
@@ -423,7 +422,7 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
         default: {
             /// @todo Throw exception.
             QByteArray msg = String("P_Iteratep: Property %1 unknown/not vector.").arg(DMU_Str(prop)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             return 0; /* Unreachable */ }
         }
 
@@ -447,14 +446,14 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
         default: {
             /// @todo Throw exception.
             QByteArray msg = String("P_Iteratep: Property %1 unknown/not vector.").arg(DMU_Str(prop)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             return 0; /* Unreachable */ }
         }
 
     default: {
         /// @todo Throw exception.
         QByteArray msg = String("P_Iteratep: Type %1 unknown.").arg(DMU_Str(elem->type())).toUtf8();
-        LegacyCore_FatalError(msg.constData());
+        App_FatalError(msg.constData());
         return 0; /* Unreachable */ }
     }
 
@@ -516,7 +515,7 @@ int P_Callback(int type, uint index, void *context, int (*callback)(void *p, voi
     case DMU_PLANE: {
         /// @todo Throw exception.
         QByteArray msg = String("P_Callback: %1 cannot be referenced by id alone (sector is unknown).").arg(DMU_Str(type)).toUtf8();
-        LegacyCore_FatalError(msg.constData());
+        App_FatalError(msg.constData());
         return 0; /* Unreachable */ }
 
     case DMU_MATERIAL:
@@ -530,13 +529,13 @@ int P_Callback(int type, uint index, void *context, int (*callback)(void *p, voi
     case DMU_SECTOR_BY_ACT_TAG: {
         /// @todo Throw exception.
         QByteArray msg = String("P_Callback: Type %1 not implemented yet.").arg(DMU_Str(type)).toUtf8();
-        LegacyCore_FatalError(msg.constData());
+        App_FatalError(msg.constData());
         return 0; /* Unreachable */ }
 
     default: {
         /// @todo Throw exception.
         QByteArray msg = String("P_Callback: Type %1 unknown (index %2).").arg(DMU_Str(type)).arg(index).toUtf8();
-        LegacyCore_FatalError(msg.constData());
+        App_FatalError(msg.constData());
         return 0; /* Unreachable */ }
     }
 
@@ -582,7 +581,7 @@ int P_Callbackp(int type, void *elPtr, void *context, int (*callback)(void *p, v
     default: {
         /// @todo Throw exception.
         QByteArray msg = String("P_Callbackp: Type %1 unknown.").arg(DMU_Str(elem->type())).toUtf8();
-        LegacyCore_FatalError(msg.constData());
+        App_FatalError(msg.constData());
         return 0; /* Unreachable */ }
     }
     return true;
@@ -615,7 +614,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
         default: {
             /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_FIXED incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -643,7 +642,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
         default: {
             /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_FLOAT incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -671,7 +670,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
         default: {
             /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_DOUBLE incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -687,7 +686,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
         default: {
             /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_BOOL incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -715,7 +714,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
         default: {
             /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_BYTE incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -746,7 +745,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
         default: {
             /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_INT incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -777,7 +776,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
         default: {
             /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_SHORT incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -793,7 +792,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
         default: {
             /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_ANGLE incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -807,7 +806,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
             if(args->intValues[index] > DDNUM_BLENDMODES || args->intValues[index] < 0)
             {
                 QByteArray msg = String("SetValue: %1 is not a valid value for DDVT_BLENDMODE.").arg(args->intValues[index]).toUtf8();
-                LegacyCore_FatalError(msg.constData());
+                App_FatalError(msg.constData());
             }
 
             *d = blendmode_t(args->intValues[index]);
@@ -815,7 +814,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
         default: {
             /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_BLENDMODE incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -831,7 +830,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
         default: {
             /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_PTR incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -839,7 +838,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
     {
         /// @todo Throw exception.
         QByteArray msg = String("SetValue: unknown value type %1.").arg(valueType).toUtf8();
-        LegacyCore_FatalError(msg.constData());
+        App_FatalError(msg.constData());
     }
 }
 
@@ -925,7 +924,7 @@ static int setProperty(void *ptr, void *context)
             {
                 /// @todo Throw exception.
                 QByteArray msg = String("DMU_setProperty: Linedef %1 has no back side.").arg(P_ToIndex(li)).toUtf8();
-                LegacyCore_FatalError(msg.constData());
+                App_FatalError(msg.constData());
             }
 
             elem = li->L_backsidedef;
@@ -1050,13 +1049,13 @@ static int setProperty(void *ptr, void *context)
     case DMU_BSPNODE: {
         /// @todo Throw exception.
         QByteArray msg = String("SetProperty: Property %1 is not writable in DMU_BSPNODE.").arg(DMU_Str(args->prop)).toUtf8();
-        LegacyCore_FatalError(msg.constData());
+        App_FatalError(msg.constData());
         break; }
 
     default: {
         /// @todo Throw exception.
         QByteArray msg = String("SetProperty: Type %1 not writable.").arg(DMU_Str(args->type)).toUtf8();
-        LegacyCore_FatalError(msg.constData());
+        App_FatalError(msg.constData());
         return 0; /* Unreachable */ }
     }
 
@@ -1144,7 +1143,7 @@ void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint 
             break;
         default: {
             QByteArray msg = String("GetValue: DDVT_FIXED incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -1171,7 +1170,7 @@ void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint 
             break;
         default: {
             QByteArray msg = String("GetValue: DDVT_FLOAT incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -1198,7 +1197,7 @@ void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint 
             break;
         default: {
             QByteArray msg = String("GetValue: DDVT_DOUBLE incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -1213,7 +1212,7 @@ void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint 
             break;
         default: {
             QByteArray msg = String("GetValue: DDVT_BOOL incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -1240,7 +1239,7 @@ void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint 
             break;
         default: {
             QByteArray msg = String("GetValue: DDVT_BYTE incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -1270,7 +1269,7 @@ void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint 
             break;
         default: {
             QByteArray msg = String("GetValue: DDVT_INT incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -1300,7 +1299,7 @@ void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint 
             break;
         default: {
             QByteArray msg = String("GetValue: DDVT_SHORT incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -1315,7 +1314,7 @@ void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint 
             break;
         default: {
             QByteArray msg = String("GetValue: DDVT_ANGLE incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -1330,7 +1329,7 @@ void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint 
             break;
         default: {
             QByteArray msg = String("GetValue: DDVT_BLENDMODE incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -1350,14 +1349,14 @@ void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint 
             break;
         default: {
             QByteArray msg = String("GetValue: DDVT_PTR incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
     else
     {
         QByteArray msg = String("GetValue: unknown value type %1.").arg(valueType).toUtf8();
-        LegacyCore_FatalError(msg.constData());
+        App_FatalError(msg.constData());
     }
 }
 
@@ -1418,7 +1417,7 @@ static int getProperty(void *ptr, void *context)
             {
                 /// @todo Throw exception.
                 QByteArray msg = String("DMU_setProperty: Linedef %1 has no front side.").arg(P_ToIndex(li)).toUtf8();
-                LegacyCore_FatalError(msg.constData());
+                App_FatalError(msg.constData());
             }
 
             elem = li->L_frontsidedef;
@@ -1432,7 +1431,7 @@ static int getProperty(void *ptr, void *context)
             {
                 /// @todo Throw exception.
                 QByteArray msg = String("DMU_setProperty: Linedef %1 has no back side.").arg(P_ToIndex(li)).toUtf8();
-                LegacyCore_FatalError(msg.constData());
+                App_FatalError(msg.constData());
             }
 
             elem = li->L_backsidedef;
@@ -1541,7 +1540,7 @@ static int getProperty(void *ptr, void *context)
 
     default: {
         QByteArray msg = String("GetProperty: Type %1 not readable.").arg(DMU_Str(args->type)).toUtf8();
-        LegacyCore_FatalError(msg.constData());
+        App_FatalError(msg.constData());
         return 0; /* Unreachable */ }
     }
 

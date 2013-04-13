@@ -24,7 +24,7 @@
 /**
  * Input devices and events. @ingroup ui
  *
- * @todo Input drivers belong under this.
+ * @todo Input drivers belong in this system.
  */
 class InputSystem : public de::System
 {

@@ -67,7 +67,6 @@ static void continueInitWithEventLoopRunning()
 
 DENG2_PIMPL(ClientApp)
 {
-    LegacyCore *legacyCore;
     QMenuBar *menuBar;
     InputSystem *inputSys;
     std::auto_ptr<WidgetActions> widgetActions;
@@ -76,7 +75,6 @@ DENG2_PIMPL(ClientApp)
 
     Instance(Public *i)
         : Base(i),
-          legacyCore(0),
           menuBar(0),
           inputSys(0),
           winSys(0),
@@ -89,8 +87,6 @@ DENG2_PIMPL(ClientApp)
     {
         Sys_Shutdown();
         DD_Shutdown();
-
-        LegacyCore_Delete(legacyCore);
 
         delete svLink;
         delete winSys;
@@ -136,7 +132,6 @@ ClientApp::ClientApp(int &argc, char **argv)
 
 void ClientApp::initialize()
 {
-    d->legacyCore = LegacyCore_New();
     Libdeng_Init();
 
     d->svLink = new ServerLink;
@@ -181,7 +176,7 @@ void ClientApp::initialize()
     DD_ComposeMainWindowTitle(title);
     d->winSys->createWindow()->setWindowTitle(title);
 
-    LegacyCore_Timer(1, continueInitWithEventLoopRunning);
+    App_Timer(1, continueInitWithEventLoopRunning);
 }
 
 void ClientApp::preFrame()

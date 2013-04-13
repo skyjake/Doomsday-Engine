@@ -57,6 +57,7 @@
 #include "ui/busyvisual.h"
 #include "cbuffer.h"
 #include "Game"
+#include <de/LogBuffer>
 
 #ifdef __CLIENT__
 #  include <de/DisplayMode>
@@ -1831,7 +1832,7 @@ void Con_PrintRuler(void)
 
     if(consoleDump)
     {
-        LegacyCore_PrintLogFragment(DENG2_STR_ESCAPE("R") "\n");
+        LogBuffer_Msg(DENG2_STR_ESCAPE("R") "\n");
     }
 }
 
@@ -1851,7 +1852,7 @@ static void conPrintf(int flags, const char* format, va_list args)
 
         if(consoleDump)
         {
-            LegacyCore_PrintLogFragment(prbuff);
+            LogBuffer_Msg(prbuff);
         }
     }
 
@@ -1988,7 +1989,7 @@ void Con_Message(char const *message, ...)
     if(!consoleDump)
     {
         //printf("%s", buffer);
-        LegacyCore_PrintLogFragment(buffer);
+        LogBuffer_Msg(buffer);
     }
 
     // Also print in the console.
@@ -2039,8 +2040,8 @@ void Con_Error(char const *error, ...)
     dd_vsnprintf(err, sizeof(err), error, argptr);
     va_end(argptr);
     //fprintf(outFile, "%s\n", err);
-    LegacyCore_PrintLogFragment(err);
-    LegacyCore_PrintLogFragment("\n");
+    LogBuffer_Msg(err);
+    LogBuffer_Msg("\n");
 
     strcpy(buff, "");
     if(histBuf != NULL)
@@ -2098,7 +2099,7 @@ void Con_AbnormalShutdown(char const *message)
         /// @todo Get the actual output filename (might be a custom one).
         Sys_MessageBoxWithDetailsFromFile(MBT_ERROR, DOOMSDAY_NICENAME, message,
                                           "See Details for complete messsage log contents.",
-                                          LegacyCore_LogFile());
+                                          de::LogBuffer::appBuffer().outputFile().toUtf8());
     }
 
     DD_Shutdown();
