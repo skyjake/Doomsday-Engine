@@ -38,6 +38,7 @@
 #include "sys_system.h"
 #include "audio/s_main.h"
 #include "gl/gl_main.h"
+#include "ui/inputsystem.h"
 #include "ui/windowsystem.h"
 #include "ui/clientwindow.h"
 #include "updater.h"
@@ -68,6 +69,8 @@ DENG2_PIMPL(ClientApp)
 {
     LegacyCore *legacyCore;
     QMenuBar *menuBar;
+    InputSystem *inputSys;
+    std::auto_ptr<WidgetActions> widgetActions;
     WindowSystem *winSys;
     ServerLink *svLink;
 
@@ -75,6 +78,7 @@ DENG2_PIMPL(ClientApp)
         : Base(i),
           legacyCore(0),
           menuBar(0),
+          inputSys(0),
           winSys(0),
           svLink(0)
     {
@@ -90,6 +94,7 @@ DENG2_PIMPL(ClientApp)
 
         delete svLink;
         delete winSys;
+        delete inputSys;
         delete menuBar;
         clientAppSingleton = 0;
     }
@@ -132,6 +137,8 @@ ClientApp::ClientApp(int &argc, char **argv)
 void ClientApp::initialize()
 {
     d->legacyCore = LegacyCore_New();
+    Libdeng_Init();
+
     d->svLink = new ServerLink;
 
     // Config needs DisplayMode, so let's initialize it before the libdeng2
@@ -139,8 +146,6 @@ void ClientApp::initialize()
     DisplayMode_Init();
 
     initSubsystems();
-
-    Libdeng_Init();
 
     // Check for updates automatically.
     Updater_Init();
@@ -159,6 +164,11 @@ void ClientApp::initialize()
         throw Error("ClientApp::initialize", "DD_Unix_Init failed");
     }
 #endif
+
+    // Create the input system.
+    d->inputSys = new InputSystem;
+    addSystem(*d->inputSys);
+    d->widgetActions.reset(new WidgetActions);
 
     // Create the window system.
     d->winSys = new WindowSystem;
@@ -214,9 +224,21 @@ ServerLink &ClientApp::serverLink()
     return *a.d->svLink;
 }
 
+InputSystem &ClientApp::inputSystem()
+{
+    ClientApp &a = ClientApp::app();
+    DENG2_ASSERT(a.d->inputSys != 0);
+    return *a.d->inputSys;
+}
+
 WindowSystem &ClientApp::windowSystem()
 {
     ClientApp &a = ClientApp::app();
     DENG2_ASSERT(a.d->winSys != 0);
     return *a.d->winSys;
+}
+
+WidgetActions &ClientApp::widgetActions()
+{
+    return *app().d->widgetActions.get();
 }

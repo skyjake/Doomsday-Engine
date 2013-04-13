@@ -1,7 +1,6 @@
-/** @file
+/** @file commandaction.cpp  Action that executes a console command.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,27 +16,16 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Console Subsystem.
- */
-
-#ifndef LIBDENG_CONSOLE
-#define LIBDENG_CONSOLE
-
-#ifdef WIN32
-#  include "de_platform.h"
-#endif
-
+#include "ui/commandaction.h"
 #include "con_main.h"
-#include "con_config.h"
-#include "con_bar.h"
 
-#ifdef __CLIENT__
-#  include "ui/widgetactions.h"
-#  include "ui/b_main.h"
-#  include "ui/b_context.h"
-#endif
+using namespace de;
 
-#include "api_console.h"
+CommandAction::CommandAction(String const &cmd, int commandSource)
+    : _command(cmd), _source(commandSource)
+{}
 
-#endif /* LIBDENG_CONSOLE */
+void CommandAction::trigger()
+{
+    Con_Execute(_source, _command.toUtf8(), false /*silent*/, false /*net*/);
+}

@@ -1,4 +1,4 @@
-/** @file
+/** @file dd_input.h  Input Subsystem.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -17,25 +17,19 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Input Subsystem.
- */
-
-#ifndef LIBDENG_CORE_INPUT_H
-#define LIBDENG_CORE_INPUT_H
+#ifndef CLIENT_CORE_INPUT_H
+#define CLIENT_CORE_INPUT_H
 
 #define NUMKKEYS            256
 
 #include <de/smoother.h>
 #include <de/ddstring.h>
+#include <de/Event>
+
 #include "api_event.h"
 
 #if _DEBUG
 #  include <de/point.h> // For the debug visual.
-#endif
-
-#ifdef __cplusplus
-extern "C" {
 #endif
 
 // Input devices.
@@ -77,8 +71,14 @@ typedef enum ddevent_axistype_e {
     EAXIS_RELATIVE          // Offset relative to the previous position
 } ddevent_axistype_t;
 
-// These are used internally, a cutdown version containing
-// only need-to-know metadata is sent down the games' responder chain.
+/**
+ * Internal input event.
+ *
+ * These are used internally, a cutdown version containing
+ * only need-to-know metadata is sent down the games' responder chain.
+ *
+ * @todo Replace with a de::Event-derived class.
+ */
 typedef struct ddevent_s {
     uint            device; // e.g. IDEV_KEYBOARD
     ddeventtype_t   type;   // E_TOGGLE, E_AXIS, E_ANGLE, or E_SYMBOLIC
@@ -188,17 +188,12 @@ typedef struct inputdev_s {
     inputdevhat_t *hats;
 } inputdev_t;
 
-#ifdef __CLIENT__
-
 extern int      repWait1, repWait2;
 extern int      keyRepeatDelay1, keyRepeatDelay2;   // milliseconds
 extern boolean  shiftDown, altDown;
 
 void        DD_RegisterInput(void);
 void        DD_InitInput(void);
-void        DD_ShutdownInput(void);
-void        DD_StartInput(void);
-void        DD_StopInput(void);
 boolean     DD_IgnoreInput(boolean ignore);
 
 void        DD_ReadKeyboard(void);
@@ -212,6 +207,14 @@ void        DD_ClearEvents(void);
 void        DD_ClearKeyRepeaterForKey(int ddkey, int native);
 byte        DD_ModKey(byte key);
 void        DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev);
+
+/**
+ * Converts a libdeng2 Event into an old-fashioned ddevent_t.
+ *
+ * @param event    Event instance.
+ * @param ddEvent  ddevent_t instance.
+ */
+void DD_ConvertEvent(de::Event const &event, ddevent_t *ddEvent);
 
 void        I_InitVirtualInputDevices(void);
 void        I_ShutdownInputDevices(void);
@@ -309,10 +312,4 @@ void Rend_AllInputDeviceStateVisuals(void);
 #  define Rend_AllInputDeviceStateVisuals()
 #endif
 
-#endif // __CLIENT__
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif /* LIBDENG_CORE_INPUT_H */
+#endif /* CLIENT_CORE_INPUT_H */

@@ -316,7 +316,7 @@ static int printIndex2(TextureScheme *scheme, Path const &like,
     if(!printSchemeName && scheme)
         heading += " in scheme '" + scheme->name() + "'";
     if(!like.isEmpty())
-        heading += " like \"" + like + "\"";
+        heading += " like \"" + like.toStringRef() + "\"";
     heading += ":";
     Con_FPrintf(CPF_YELLOW, "%s\n", heading.toUtf8().constData());
 

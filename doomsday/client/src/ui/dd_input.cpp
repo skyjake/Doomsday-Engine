@@ -34,6 +34,7 @@
 #include "dd_loop.h"
 
 #include "ui/windowsystem.h"
+#include <de/KeyEvent>
 
 // For the debug visuals:
 #if _DEBUG
@@ -969,6 +970,32 @@ static ddevent_t* nextFromQueue(eventqueue_t* q)
     q->tail = (q->tail + 1) & (MAXEVENTS - 1);
 
     return ev;
+}
+
+void DD_ConvertEvent(de::Event const &event, ddevent_t *ddEvent)
+{
+    using de::KeyEvent;
+
+    memset(ddEvent, 0, sizeof(*ddEvent));
+
+    switch(event.type())
+    {
+    case de::Event::KeyPress:
+    case de::Event::KeyRelease:
+    {
+        KeyEvent const &kev = static_cast<KeyEvent const &>(event);
+
+        ddEvent->device       = IDEV_KEYBOARD;
+        ddEvent->type         = E_TOGGLE;
+        ddEvent->toggle.id    = kev.ddKey();
+        ddEvent->toggle.state = (kev.state() == KeyEvent::Pressed? ETOG_DOWN : ETOG_UP);
+        strcpy(ddEvent->toggle.text, kev.text().toLatin1());
+        break;
+    }
+
+    default:
+        break;
+    }
 }
 
 void DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev)

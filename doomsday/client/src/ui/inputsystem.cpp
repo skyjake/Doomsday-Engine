@@ -1,7 +1,6 @@
-/** @file
+/** @file inputsystem.cpp  Input subsystem.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,27 +16,39 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Console Subsystem.
- */
-
-#ifndef LIBDENG_CONSOLE
-#define LIBDENG_CONSOLE
-
-#ifdef WIN32
-#  include "de_platform.h"
-#endif
-
+#include "ui/inputsystem.h"
+#include "ui/dd_input.h"
+#include "ui/sys_input.h"
 #include "con_main.h"
-#include "con_config.h"
-#include "con_bar.h"
 
-#ifdef __CLIENT__
-#  include "ui/widgetactions.h"
-#  include "ui/b_main.h"
-#  include "ui/b_context.h"
-#endif
+using namespace de;
 
-#include "api_console.h"
+DENG2_PIMPL(InputSystem)
+{
+    Instance(Public *i) : Base(i)
+    {
+        // Initialize the system.
+        DD_InitInput();
 
-#endif /* LIBDENG_CONSOLE */
+        if(!I_Init())
+        {
+            Con_Error("Failed to initialize Input subsystem.\n");
+        }
+
+        I_InitVirtualInputDevices();
+    }
+
+    ~Instance()
+    {
+        // Shutdown.
+        I_ShutdownInputDevices();
+        I_Shutdown();
+    }
+};
+
+InputSystem::InputSystem() : d(new Instance(this))
+{}
+
+void InputSystem::timeChanged(Clock const &)
+{
+}

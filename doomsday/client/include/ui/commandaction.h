@@ -1,4 +1,4 @@
-/** @file clientapp.h  The client application.
+/** @file commandaction.h  Action that executes a console command.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,41 +16,28 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef CLIENTAPP_H
-#define CLIENTAPP_H
+#ifndef CLIENT_COMMANDACTION_H
+#define CLIENT_COMMANDACTION_H
 
-#include <de/GuiApp>
-#include "network/serverlink.h"
-#include "ui/inputsystem.h"
-#include "ui/windowsystem.h"
-#include "ui/widgetactions.h"
+#include "dd_share.h"
+#include <de/Action>
+#include <de/String>
 
 /**
- * The client application.
+ * Action that executes a console command.
+ *
+ * @ingroup ui
  */
-class ClientApp : public de::GuiApp
+class CommandAction : public de::Action
 {
 public:
-    ClientApp(int &argc, char **argv);
+    CommandAction(de::String const &cmd, int commandSource = CMDS_DDAY);
 
-    /**
-     * Sets up all the subsystems of the application. Must be called before the
-     * event loop is started.
-     */
-    void initialize();
-
-    void preFrame();
-    void postFrame();
-
-public:
-    static ClientApp &app();
-    static ServerLink &serverLink();
-    static InputSystem &inputSystem();
-    static WindowSystem &windowSystem();
-    static WidgetActions &widgetActions();
+    void trigger();
 
 private:
-    DENG2_PRIVATE(d)
+    de::String _command;
+    int _source;
 };
 
-#endif // CLIENTAPP_H
+#endif // CLIENT_COMMANDACTION_H

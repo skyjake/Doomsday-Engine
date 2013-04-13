@@ -1,4 +1,4 @@
-/** @file b_command.cpp
+/** @file b_command.cpp  Event-Command Bindings. @ingroup ui
  *
  * @authors Copyright © 2007-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
@@ -17,12 +17,6 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Event-Command Bindings.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <de/memory.h>
 
 #include "de_console.h"
@@ -31,24 +25,7 @@
 #include "map/p_players.h"
 #include "ui/b_main.h"
 #include "ui/b_command.h"
-
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
+#include "ui/commandaction.h"
 
 void B_InitCommandBindingList(evbinding_t* listRoot)
 {
@@ -320,7 +297,8 @@ void B_DestroyCommandBinding(evbinding_t* eb)
  * @param eb       Binding data.
  * @param out      String with placeholders replaced.
  */
-void B_SubstituteInCommand(const char* command, ddevent_t* event, evbinding_t* eb, ddstring_t* out)
+static void B_SubstituteInCommand(char const *command, ddevent_t const *event,
+                                  evbinding_t *eb, ddstring_t *out)
 {
     const char* ptr = command;
 
@@ -380,14 +358,14 @@ void B_SubstituteInCommand(const char* command, ddevent_t* event, evbinding_t* e
     }
 }
 
-boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bcontext_s* eventClass)
+de::Action *B_FindCommandBindingAction(evbinding_t *eb, ddevent_t const *event, struct bcontext_s *eventClass)
 {
     int         i;
     inputdev_t* dev = 0;
     ddstring_t  command;
 
     if(eb->device != event->device || eb->type != event->type)
-        return false;
+        return 0;
 
     if(event->type != E_SYMBOLIC)
     {
@@ -395,7 +373,7 @@ boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bcontext_s
         if(!dev)
         {
             // The device is not active, there is no way this could get executed.
-            return false;
+            return 0;
         }
     }
 
@@ -403,9 +381,9 @@ boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bcontext_s
     {
     case E_TOGGLE:
         if(eb->id != event->toggle.id)
-            return false;
+            return 0;
         if(eventClass && dev->keys[eb->id].assoc.bContext != eventClass)
-            return false; // Shadowed by a more important active class.
+            return 0; // Shadowed by a more important active class.
 
         // We're checking it, so clear the triggered flag.
         dev->keys[eb->id].assoc.flags &= ~IDAF_TRIGGERED;
@@ -419,66 +397,66 @@ boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bcontext_s
 
             case EBTOG_DOWN:
                 if(event->toggle.state != ETOG_DOWN)
-                    return false;
+                    return 0;
                 break;
 
             case EBTOG_UP:
                 if(event->toggle.state != ETOG_UP)
-                    return false;
+                    return 0;
                 break;
 
             case EBTOG_REPEAT:
                 if(event->toggle.state != ETOG_REPEAT)
-                    return false;
+                    return 0;
                 break;
 
             case EBTOG_PRESS:
                 if(event->toggle.state == ETOG_UP)
-                    return false;
+                    return 0;
                 break;
 
             default:
-                return false;
+                return 0;
         }
         break;
 
     case E_AXIS:
         if(eb->id != event->axis.id)
-            return false;
+            return 0;
         if(eventClass && dev->axes[eb->id].assoc.bContext != eventClass)
-            return false; // Shadowed by a more important active class.
+            return 0; // Shadowed by a more important active class.
 
         // Is the position as required?
         if(!B_CheckAxisPos(eb->state, eb->pos,
                            I_TransformAxis(I_GetDevice(event->device, false),
                                            event->axis.id, event->axis.pos)))
-            return false;
+            return 0;
         break;
 
     case E_ANGLE:
         if(eb->id != event->angle.id)
-            return false;
+            return 0;
         if(eventClass && dev->hats[eb->id].assoc.bContext != eventClass)
-            return false; // Shadowed by a more important active class.
+            return 0; // Shadowed by a more important active class.
         // Is the position as required?
         if(event->angle.pos != eb->pos)
-            return false;
+            return 0;
         break;
 
     case E_SYMBOLIC:
         if(strcmp(event->symbolic.name, eb->symbolicName))
-            return false;
+            return 0;
         break;
 
     default:
-        return false;
+        return 0;
     }
 
     // Any conditions on the current state of the input devices?
     for(i = 0; i < eb->numConds; ++i)
     {
         if(!B_CheckCondition(&eb->conds[i], 0, NULL))
-            return false;
+            return 0;
     }
 
     // Substitute parameters in the command.
@@ -486,11 +464,10 @@ boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bcontext_s
     Str_Reserve(&command, strlen(eb->command));
     B_SubstituteInCommand(eb->command, event, eb, &command);
 
-    // Do the command.
-    Con_Executef(CMDS_BIND, false, "%s", Str_Text(&command));
+    de::Action *act = new CommandAction(Str_Text(&command), CMDS_BIND);
 
     Str_Free(&command);
-    return true;
+    return act;
 }
 
 /**

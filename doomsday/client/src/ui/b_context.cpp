@@ -559,36 +559,37 @@ boolean B_DeleteBinding(bcontext_t* bc, int bid)
     return false;
 }
 
-boolean B_TryEvent(ddevent_t* event)
+de::Action *B_ActionForEvent(ddevent_t const *event)
 {
-    int                 i;
-    evbinding_t*        eb;
-    event_t             ev;
-
+    event_t ev;
     DD_ConvertEvent(event, &ev);
 
-    for(i = 0; i < bindContextCount; ++i)
+    for(int i = 0; i < bindContextCount; ++i)
     {
-        bcontext_t* bc = bindContexts[i];
+        bcontext_t *bc = bindContexts[i];
+        de::Action *act = 0;
 
         if(!(bc->flags & BCF_ACTIVE))
             continue;
 
         // See if the command bindings will have it.
-        for(eb = bc->commandBinds.next; eb != &bc->commandBinds; eb = eb->next)
+        for(evbinding_t *eb = bc->commandBinds.next; eb != &bc->commandBinds; eb = eb->next)
         {
-            if(B_TryCommandBinding(eb, event, bc))
-                return true;
+            if((act = B_FindCommandBindingAction(eb, event, bc)) != 0)
+            {
+                return act;
+            }
         }
 
         // Try the fallbacks.
         if(bc->ddFallbackResponder && bc->ddFallbackResponder(event))
-            return true;
+            return 0; // fallback responder executed something
         if(bc->fallbackResponder && bc->fallbackResponder(&ev))
-            return true;
+            return 0; // fallback responder executed something
     }
-    // Nobody used it.
-    return false;
+
+    // Nobody had a binding for this event.
+    return 0;
 }
 
 /**
