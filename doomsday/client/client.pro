@@ -154,7 +154,6 @@ DENG_HEADERS += \
     include/clientapp.h \
     include/color.h \
     include/con_bar.h \
-    include/con_bind.h \
     include/con_config.h \
     include/con_main.h \
     include/dd_def.h \
