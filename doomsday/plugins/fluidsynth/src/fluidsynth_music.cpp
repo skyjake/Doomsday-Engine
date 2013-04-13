@@ -364,12 +364,12 @@ void DMFluid_SetSoundFont(const char* fileName)
     sfontId = fluid_synth_sfload(DMFluid_Synth(), fileName, true);
     if(sfontId >= 0)
     {
-        LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_VERBOSE,
+        LogBuffer_Printf(DE2_LOG_VERBOSE,
             "FluidSynth: Loaded SF2 soundfont \"%s\" with id:%i\n", fileName, sfontId);
     }
     else
     {
-        LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_VERBOSE,
+        LogBuffer_Printf(DE2_LOG_VERBOSE,
             "FluidSynth: Failed to load soundfont \"%s\" (not SF2 or not found)\n", fileName);
     }
 }
@@ -463,14 +463,14 @@ int DM_Music_PlayFile(const char *filename, int looped)
     if(!fluid_is_midifile(filename))
     {
         // It doesn't look like MIDI.
-        LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_VERBOSE,
+        LogBuffer_Printf(DE2_LOG_VERBOSE,
             "FluidSynth: Cannot play \"%s\": not a MIDI file.\n", filename);
         return false;
     }
 
     if(sfontId < 0)
     {
-        LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_VERBOSE,
+        LogBuffer_Printf(DE2_LOG_VERBOSE,
             "FluidSynth: Cannot play \"%s\" without an SF2 soundfont.\n", filename);
         return false;
     }

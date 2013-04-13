@@ -1002,13 +1002,13 @@ DENG2_PIMPL(Window)
         // While we're adjusting the window, the window move/resizing callbacks
         // should've mess with the geometry values.
         needWait = true;
-        LegacyCore_Timer(WAIT_MILLISECS_AFTER_MODE_CHANGE * 20, endWindowWait);
+        App_Timer(WAIT_MILLISECS_AFTER_MODE_CHANGE * 20, endWindowWait);
 
         bool modeChanged = applyDisplayMode();
         if(modeChanged)
         {
             // Others might be interested to hear about the mode change.
-            LegacyCore_Timer(WAIT_MILLISECS_AFTER_MODE_CHANGE, notifyAboutModeChange);
+            App_Timer(WAIT_MILLISECS_AFTER_MODE_CHANGE, notifyAboutModeChange);
         }
 
         /*
@@ -1051,7 +1051,7 @@ DENG2_PIMPL(Window)
 
                 // The window is already visible, so let's allow a mode change to
                 // resolve itself before we go changing the window.
-                LegacyCore_Timer(WAIT_MILLISECS_AFTER_MODE_CHANGE, updateMainWindowLayout);
+                App_Timer(WAIT_MILLISECS_AFTER_MODE_CHANGE, updateMainWindowLayout);
             }
             else
             {
@@ -1098,7 +1098,7 @@ DENG2_PIMPL(Window)
                     {
                         // We'll wait before the mode change takes full effect.
                         needShowNormal = true;
-                        LegacyCore_Timer(WAIT_MILLISECS_AFTER_MODE_CHANGE, updateMainWindowLayout);
+                        App_Timer(WAIT_MILLISECS_AFTER_MODE_CHANGE, updateMainWindowLayout);
                     }
                     else
                     {
@@ -1115,7 +1115,7 @@ DENG2_PIMPL(Window)
                     // The native window may not be ready to receive the updated
                     // geometry (e.g., window decoration not made visible yet).
                     // We'll apply the geometry after a delay.
-                    LegacyCore_Timer(50 + WAIT_MILLISECS_AFTER_MODE_CHANGE, useAppliedGeometryForWindows);
+                    App_Timer(50 + WAIT_MILLISECS_AFTER_MODE_CHANGE, useAppliedGeometryForWindows);
                 }
                 else
                 {
@@ -1477,7 +1477,7 @@ DENG2_PIMPL(Window)
         if(!wnd->d->willUpdateWindowState)
         {
             wnd->d->willUpdateWindowState = true;
-            LegacyCore_Timer(500, updateWindowStateAfterUserChange);
+            App_Timer(500, updateWindowStateAfterUserChange);
         }
     }
 };
