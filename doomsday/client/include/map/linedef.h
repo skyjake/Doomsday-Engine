@@ -179,19 +179,22 @@ public:
         };
 
     public: /// @todo make private:
-        /// Sector on this side.
+        /// Line owner of the side.
+        LineDef &_line;
+
+        /// Attributed sector.
         Sector *_sector;
 
-        /// SideDef on this side.
+        /// SideDef.
         SideDef *_sideDef;
 
         /// Sections.
         Sections *_sections;
 
-        /// Left-most HEdge on this side.
+        /// Left-most half-edge on this side of the owning line.
         HEdge *_leftHEdge;
 
-        /// Right-most HEdge on this side.
+        /// Right-most half-edge on this side of the owning line.
         HEdge *_rightHEdge;
 
         /// Framecount of last time shadows were drawn on this side.
@@ -218,8 +221,16 @@ public:
 #endif // __CLIENT__
 
     public:
-        Side(Sector *sector = 0);
+        Side(LineDef &line, Sector *sector = 0);
         ~Side();
+
+        /**
+         * Returns the LineDef owner of the side.
+         */
+        LineDef &line();
+
+        /// @copydoc line()
+        LineDef const &line() const;
 
         /**
          * Returns @c true iff a Sector is attributed to the side.
