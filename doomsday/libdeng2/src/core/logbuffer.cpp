@@ -235,6 +235,11 @@ void LogBuffer::setOutputFile(String const &path)
     }
 }
 
+String LogBuffer::outputFile() const
+{
+    return d->outputFile->path();
+}
+
 void LogBuffer::addSink(LogSink &sink)
 {
     DENG2_GUARD(this);

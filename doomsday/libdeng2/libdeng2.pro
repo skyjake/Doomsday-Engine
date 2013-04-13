@@ -57,7 +57,6 @@ INCLUDEPATH += include
 
 include(data.pri)
 include(filesys.pri)
-include(legacy.pri)
 include(network.pri)
 include(scriptsys.pri)
 include(widgets.pri)

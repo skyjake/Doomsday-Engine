@@ -50,31 +50,10 @@ extern "C" {
 #endif
 
 /*
- * LegacyCore
+ * App
  */
-DENG2_OPAQUE(LegacyCore)
-
-// Log levels (see de::Log for description).
-typedef enum legacycore_loglevel_e {
-    DE2_LOG_TRACE,
-    DE2_LOG_DEBUG,
-    DE2_LOG_VERBOSE,
-    DE2_LOG_MESSAGE,
-    DE2_LOG_INFO,
-    DE2_LOG_WARNING,
-    DE2_LOG_ERROR,
-    DE2_LOG_CRITICAL
-} legacycore_loglevel_t;
-
-DENG2_PUBLIC LegacyCore *LegacyCore_New();
-DENG2_PUBLIC void LegacyCore_Delete(LegacyCore *lc);
-DENG2_PUBLIC LegacyCore *LegacyCore_Instance();
-DENG2_PUBLIC void LegacyCore_Timer(unsigned int milliseconds, void (*callback)(void));
-DENG2_PUBLIC int LegacyCore_SetLogFile(char const *filePath);
-DENG2_PUBLIC char const *LegacyCore_LogFile();
-DENG2_PUBLIC void LegacyCore_PrintLogFragment(char const *text);
-DENG2_PUBLIC void LegacyCore_PrintfLogFragmentAtLevel(legacycore_loglevel_t level, char const *format, ...);
-DENG2_PUBLIC void LegacyCore_FatalError(char const *msg);
+DENG2_PUBLIC void App_Timer(unsigned int milliseconds, void (*callback)(void));
+DENG2_PUBLIC void App_FatalError(char const *msg);
 
 /*
  * CommandLine
@@ -94,9 +73,23 @@ DENG2_PUBLIC int CommandLine_IsMatchingAlias(char const *original, char const *o
 /*
  * LogBuffer
  */
+// Log levels (see de::Log for description).
+typedef enum legacycore_loglevel_e {
+    DE2_LOG_TRACE,
+    DE2_LOG_DEBUG,
+    DE2_LOG_VERBOSE,
+    DE2_LOG_MESSAGE,
+    DE2_LOG_INFO,
+    DE2_LOG_WARNING,
+    DE2_LOG_ERROR,
+    DE2_LOG_CRITICAL
+} legacycore_loglevel_t;
+
 DENG2_PUBLIC void LogBuffer_EnableStandardOutput(int enable);
 DENG2_PUBLIC void LogBuffer_Flush(void);
 DENG2_PUBLIC void LogBuffer_Clear(void);
+DENG2_PUBLIC void LogBuffer_Msg(char const *text);
+DENG2_PUBLIC void LogBuffer_Printf(legacycore_loglevel_t level, char const *format, ...);
 
 /*
  * Info

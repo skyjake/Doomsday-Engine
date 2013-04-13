@@ -133,6 +133,11 @@ public:
     void setOutputFile(String const &path);
 
     /**
+     * Returns the path of the file used for log output.
+     */
+    String outputFile() const;
+
+    /**
      * Adds a new sink where log entries will be flushed. There can be any
      * number of sinks in use. The sink must not be deleted while it is
      * being used in the log buffer.

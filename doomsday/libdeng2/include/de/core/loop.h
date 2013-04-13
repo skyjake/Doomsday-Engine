@@ -21,6 +21,7 @@
 
 #include <QObject>
 #include <de/Observers>
+#include <de/Time>
 
 namespace de {
 
@@ -69,6 +70,14 @@ public:
     void pause();
 
     void resume();
+
+    /**
+     * Registers a new single-shot timer that will do a callback.
+     *
+     * @param delay  Time to wait before calling.
+     * @param func   Callback to call.
+     */
+    static void timer(TimeDelta const &delay, void (*func)(void));
 
 public slots:
     void nextLoopIteration();
