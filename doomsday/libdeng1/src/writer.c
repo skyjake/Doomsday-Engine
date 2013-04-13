@@ -89,13 +89,13 @@ static boolean Writer_Check(Writer const *writer, size_t len)
             if((int)writer->pos <= (int)writer->size - (int)len)
                 return true;
         }
-        LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_ERROR,
+        LogBuffer_Printf(DE2_LOG_ERROR,
             "Writer_Check: Position %lu[+%lu] out of bounds, size=%lu, dynamic=%i.\n",
                 (unsigned long) writer->pos,
                 (unsigned long) len,
                 (unsigned long) writer->size,
                 writer->isDynamic);
-        LegacyCore_FatalError("Writer bounds check failed.");
+        App_FatalError("Writer bounds check failed.");
     }
     return true;
 }
@@ -321,7 +321,7 @@ void Writer_WritePackedUInt16(Writer *writer, uint16_t v)
 {
     if(v & 0x8000)
     {
-        LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_ERROR,
+        LogBuffer_Printf(DE2_LOG_ERROR,
             "Writer_WritePackedUInt16: Cannot write %i (%x).\n", v, v);
         return;
     }

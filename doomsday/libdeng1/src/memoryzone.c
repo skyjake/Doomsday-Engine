@@ -163,7 +163,7 @@ static memvolume_t *createVolume(size_t volumeSize)
 
     unlockZone();
 
-    LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_MESSAGE,
+    LogBuffer_Printf(DE2_LOG_MESSAGE,
             "Created a new %.1f MB memory volume.\n", vol->size / 1024.0 / 1024.0);
 
     Z_CheckHeap();
@@ -208,7 +208,7 @@ void Z_Shutdown(void)
         M_Free(vol);
     }
 
-    LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_INFO,
+    LogBuffer_Printf(DE2_LOG_INFO,
             "Z_Shutdown: Used %i volumes, total %u bytes.\n", numVolumes, totalMemory);
 
     Sys_DestroyMutex(zoneMutex);
@@ -259,7 +259,7 @@ static void freeBlock(void *ptr, memblock_t **tracked)
     {
         unlockZone();
         DENG_ASSERT(block->id == LIBDENG_ZONEID);
-        LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_WARNING,
+        LogBuffer_Printf(DE2_LOG_WARNING,
                 "Attempted to free pointer without ZONEID.\n");
         return;
     }
@@ -445,7 +445,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
 
     if(tag < PU_APPSTATIC || tag > PU_PURGELEVEL)
     {
-        LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_WARNING, "Z_Malloc: Invalid purgelevel %i, cannot allocate memory.\n", tag);
+        LogBuffer_Printf(DE2_LOG_WARNING, "Z_Malloc: Invalid purgelevel %i, cannot allocate memory.\n", tag);
         return NULL;
     }
     if(!size)
@@ -558,7 +558,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
             {
                 // Scanned all the way through, no suitable space found.
                 gotoNextVolume = true;
-                LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_DEBUG,
+                LogBuffer_Printf(DE2_LOG_DEBUG,
                         "Z_Malloc: gave up on volume after %i checks\n", numChecked);
                 break;
             }
@@ -707,7 +707,7 @@ void Z_CheckHeap(void)
     memblock_t *block;
     boolean     isDone;
 
-    LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_TRACE, "Z_CheckHeap\n");
+    LogBuffer_Printf(DE2_LOG_TRACE, "Z_CheckHeap\n");
 
     lockZone();
 
@@ -718,10 +718,10 @@ void Z_CheckHeap(void)
         // Validate the counter.
         if(allocatedMemoryInVolume(volume) != volume->allocatedBytes)
         {
-            LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_CRITICAL,
+            LogBuffer_Printf(DE2_LOG_CRITICAL,
                 "Z_CheckHeap: allocated bytes counter is off (counter:%u != actual:%u)\n",
                 volume->allocatedBytes, allocatedMemoryInVolume(volume));
-            LegacyCore_FatalError("Z_CheckHeap: zone book-keeping is wrong");
+            App_FatalError("Z_CheckHeap: zone book-keeping is wrong");
         }
 
         // Does the memory in the blocks sum up to the total volume size?
@@ -732,21 +732,21 @@ void Z_CheckHeap(void)
         }
         if(total != volume->size - sizeof(memzone_t))
         {
-            LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_CRITICAL,
+            LogBuffer_Printf(DE2_LOG_CRITICAL,
                     "Z_CheckHeap: invalid total size of blocks (%u != %u)\n",
                     total, volume->size - sizeof(memzone_t));
-            LegacyCore_FatalError("Z_CheckHeap: zone book-keeping is wrong");
+            App_FatalError("Z_CheckHeap: zone book-keeping is wrong");
         }
 
         // Does the last block extend all the way to the end?
         block = volume->zone->blockList.prev;
         if((byte *)block - ((byte *)volume->zone + sizeof(memzone_t)) + block->size != volume->size - sizeof(memzone_t))
         {
-            LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_CRITICAL,
+            LogBuffer_Printf(DE2_LOG_CRITICAL,
                     "Z_CheckHeap: last block does not cover the end (%u != %u)\n",
                      (byte *)block - ((byte *)volume->zone + sizeof(memzone_t)) + block->size,
                      volume->size - sizeof(memzone_t));
-            LegacyCore_FatalError("Z_CheckHeap: zone is corrupted");
+            App_FatalError("Z_CheckHeap: zone is corrupted");
         }
 
         block = volume->zone->blockList.next;
@@ -757,19 +757,19 @@ void Z_CheckHeap(void)
             if(block->next != &volume->zone->blockList)
             {
                 if(block->size == 0)
-                    LegacyCore_FatalError("Z_CheckHeap: zero-size block");
+                    App_FatalError("Z_CheckHeap: zero-size block");
                 if((byte *) block + block->size != (byte *) block->next)
-                    LegacyCore_FatalError("Z_CheckHeap: block size does not touch the "
+                    App_FatalError("Z_CheckHeap: block size does not touch the "
                               "next block");
                 if(block->next->prev != block)
-                    LegacyCore_FatalError("Z_CheckHeap: next block doesn't have proper "
+                    App_FatalError("Z_CheckHeap: next block doesn't have proper "
                               "back link");
                 if(!block->user && !block->next->user)
-                    LegacyCore_FatalError("Z_CheckHeap: two consecutive free blocks");
+                    App_FatalError("Z_CheckHeap: two consecutive free blocks");
                 if(block->user == (void **) -1)
                 {
                     DENG_ASSERT(block->user != (void **) -1);
-                    LegacyCore_FatalError("Z_CheckHeap: bad user pointer");
+                    App_FatalError("Z_CheckHeap: bad user pointer");
                 }
 
                 /*
@@ -791,7 +791,7 @@ void Z_CheckHeap(void)
                     {
                         if(block->next->seqFirst != block->seqFirst)
                         {
-                            LegacyCore_FatalError("Z_CheckHeap: disconnected sequence");
+                            App_FatalError("Z_CheckHeap: disconnected sequence");
                         }
                     }
                 }
@@ -816,7 +816,7 @@ void Z_ChangeTag2(void *ptr, int tag)
 
         if(tag >= PU_PURGELEVEL && PTR2INT(block->user) < 0x100)
         {
-            LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_ERROR,
+            LogBuffer_Printf(DE2_LOG_ERROR,
                 "Z_ChangeTag: An owner is required for purgable blocks.\n");
         }
         else
@@ -1034,7 +1034,7 @@ void Z_PrintStatus(void)
     size_t allocated = Z_AllocatedMemory();
     size_t wasted = Z_FreeMemory();
 
-    LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_DEBUG,
+    LogBuffer_Printf(DE2_LOG_DEBUG,
             "Memory zone status: %u volumes, %u bytes allocated, %u bytes free (%f%% in use)\n",
             Z_VolumeCount(), (uint)allocated, (uint)wasted, (float)allocated/(float)(allocated+wasted)*100.f);
 }
@@ -1056,7 +1056,7 @@ static void addBlockToSet(zblockset_t *set)
     set->_blockCount++;
     set->_blocks = Z_Recalloc(set->_blocks, sizeof(zblockset_block_t) * set->_blockCount, set->_tag);
 
-    LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_DEBUG,
+    LogBuffer_Printf(DE2_LOG_DEBUG,
             "addBlockToSet: set=%p blockCount=%u elemSize=%u elemCount=%u (total=%u)\n",
              set, set->_blockCount, (uint)set->_elementSize, set->_elementsPerBlock,
             (uint)(set->_blockCount * set->_elementSize * set->_elementsPerBlock));
