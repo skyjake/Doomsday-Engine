@@ -40,11 +40,6 @@
 #  include "dd_uinit.h"
 #endif
 
-/**
- * libdeng2 application core.
- */
-static LegacyCore* de2LegacyCore;
-
 static void handleAppTerminate(char const *msg)
 {
     qFatal("Application terminated due to exception:\n%s\n", msg);
@@ -80,9 +75,6 @@ int main(int argc, char** argv)
     // Initialization.
     try
     {
-        // C interface to the app.
-        de2LegacyCore = LegacyCore_New();
-
         if(!CommandLine_Exists("-stdout"))
         {
             // In server mode, stay quiet on the standard outputs.
@@ -114,7 +106,6 @@ int main(int argc, char** argv)
     // Cleanup.
     Sys_Shutdown();
     DD_Shutdown();
-    LegacyCore_Delete(de2LegacyCore);
 
     return result;
 }
