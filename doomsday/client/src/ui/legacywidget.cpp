@@ -21,6 +21,7 @@
 #include "ui/dd_input.h"
 #include "ui/ui_main.h"
 #include "ui/ui2_main.h"
+#include "ui/sys_input.h"
 #include "ui/busyvisual.h"
 #include "ui/windowsystem.h"
 #include "dd_def.h"
@@ -184,8 +185,22 @@ void LegacyWidget::draw()
     DGL_End();
 }
 
-bool LegacyWidget::handleEvent(Event const &/*event*/)
+bool LegacyWidget::handleEvent(Event const &event)
 {
     /// @todo Event processing should occur here, not during Loop_RunTics().
+
+    /**
+     * @todo Input drivers need to support Unicode text; for now we have to
+     * submit as Latin1.
+     */
+
+    if(event.type() == Event::KeyPress ||
+       event.type() == Event::KeyRelease)
+    {
+        KeyEvent const &ev = static_cast<KeyEvent const &>(event);
+        Keyboard_Submit(ev.state() == KeyEvent::Pressed? IKE_DOWN : IKE_UP,
+                        ev.ddKey(), ev.nativeCode(), ev.text().toLatin1());
+    }
+
     return false;
 }

@@ -33,7 +33,6 @@
 
 #include "gl/sys_opengl.h"
 #include "gl/gl_main.h"
-#include "ui/sys_input.h"
 #include "ui/legacywidget.h"
 #include "ui/busywidget.h"
 #include "ui/mouse_qt.h"
@@ -211,14 +210,13 @@ DENG2_PIMPL(ClientWindow),
         DD_FinishInitializationAfterWindowReady();
     }
 
-    void keyEvent(KeyEventSource::KeyState state, int ddKey, int nativeCode, String const &text)
+    void keyEvent(KeyEvent const &ev)
     {
-        /**
-         * @todo Input drivers need to support Unicode text; for now we have to
-         * submit as Latin1.
-         */
-        Keyboard_Submit(state == KeyEventSource::Pressed? IKE_DOWN : IKE_UP,
-                        ddKey, nativeCode, text.toLatin1());
+        /// @todo Input drivers should observe the notification instead, input
+        /// subsystem passes it to window system. -jk
+
+        // Pass the event onto the window system.
+        ClientApp::windowSystem().processEvent(ev);
     }
 
     void mouseStateChanged(MouseEventSource::State state)
