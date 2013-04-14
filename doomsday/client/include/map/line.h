@@ -312,7 +312,7 @@ public:
         inline Surface const &bottom() const { return surface(SS_BOTTOM); }
 
         /**
-         * Returns the middle surface of the side.
+         * Returns the top surface of the side.
          */
         inline Surface &top() { return surface(SS_TOP); }
 
@@ -562,23 +562,6 @@ public:
     inline Side const &back() const { return side(BACK); }
 
     /**
-     * Returns @c true iff a sector is attributed to the specified side of the line.
-     *
-     * @param back  If not @c 0 test the Back side; otherwise the Front side.
-     */
-    inline bool hasSector(int back) const { return side(back).hasSector(); }
-
-    /**
-     * Returns @c true iff a sector is attributed to the Front side of the line.
-     */
-    inline bool hasFrontSector() const { return hasSector(FRONT); }
-
-    /**
-     * Returns @c true iff a sector is attributed to the Back side of the line.
-     */
-    inline bool hasBackSector() const { return hasSector(BACK); }
-
-    /**
      * Returns @c true iff Side::Sections are defined for the specified side
      * of the line.
      *
@@ -595,6 +578,23 @@ public:
      * Returns @c true iff Side::Sections are defined for the Back side of the line.
      */
     inline bool hasBackSections() const { return hasSections(BACK); }
+
+    /**
+     * Returns @c true iff a sector is attributed to the specified side of the line.
+     *
+     * @param back  If not @c 0 test the Back side; otherwise the Front side.
+     */
+    inline bool hasSector(int back) const { return side(back).hasSector(); }
+
+    /**
+     * Returns @c true iff a sector is attributed to the Front side of the line.
+     */
+    inline bool hasFrontSector() const { return hasSector(FRONT); }
+
+    /**
+     * Returns @c true iff a sector is attributed to the Back side of the line.
+     */
+    inline bool hasBackSector() const { return hasSector(BACK); }
 
     /**
      * Convenient accessor method for returning the sector attributed to the
