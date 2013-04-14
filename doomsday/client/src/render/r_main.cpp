@@ -524,16 +524,16 @@ static void R_UpdateMap()
             continue;
 
         Line::Side &side = line->side(i);
-        side.top().surface().markAsNeedingDecorationUpdate();
-        side.middle().surface().markAsNeedingDecorationUpdate();
-        side.bottom().surface().markAsNeedingDecorationUpdate();
+        side.top().markAsNeedingDecorationUpdate();
+        side.middle().markAsNeedingDecorationUpdate();
+        side.bottom().markAsNeedingDecorationUpdate();
     }
 
     /// @todo Is this even necessary?
     foreach(Polyobj *polyobj, theMap->polyobjs())
     foreach(Line *line, polyobj->lines())
     {
-        line->front().middle().surface().markAsNeedingDecorationUpdate();
+        line->front().middle().markAsNeedingDecorationUpdate();
     }
 
     theMap->buildSurfaceLists();
@@ -1377,14 +1377,14 @@ void Rend_CacheForMap()
                 continue;
 
             Line::Side &side = line->side(i);
-            if(side.middle().surface().hasMaterial())
-                App_Materials().cache(side.middle().surface().material(), spec);
+            if(side.middle().hasMaterial())
+                App_Materials().cache(side.middle().material(), spec);
 
-            if(side.top().surface().hasMaterial())
-                App_Materials().cache(side.top().surface().material(), spec);
+            if(side.top().hasMaterial())
+                App_Materials().cache(side.top().material(), spec);
 
-            if(side.bottom().surface().hasMaterial())
-                App_Materials().cache(side.bottom().surface().material(), spec);
+            if(side.bottom().hasMaterial())
+                App_Materials().cache(side.bottom().material(), spec);
         }
 
         foreach(Sector *sector, theMap->sectors())

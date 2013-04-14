@@ -139,44 +139,24 @@ HEdge &Line::Side::rightHEdge() const
     return *_rightHEdge;
 }
 
-ddmobj_base_t &Line::Side::middleSoundEmitter()
-{
-    return middle()._soundEmitter;
-}
-
-ddmobj_base_t const &Line::Side::middleSoundEmitter() const
-{
-    return const_cast<ddmobj_base_t const &>(const_cast<Side &>(*this).middleSoundEmitter());
-}
-
 void Line::Side::updateMiddleSoundEmitterOrigin()
 {
     LOG_AS("Line::Side::updateMiddleSoundEmitterOrigin");
 
     if(!_sections) return;
 
-    middle()._soundEmitter.origin[VX] = (_line.v1Origin()[VX] + _line.v2Origin()[VX]) / 2;
-    middle()._soundEmitter.origin[VY] = (_line.v1Origin()[VY] + _line.v2Origin()[VY]) / 2;
+    _sections->middle._soundEmitter.origin[VX] = (_line.v1Origin()[VX] + _line.v2Origin()[VX]) / 2;
+    _sections->middle._soundEmitter.origin[VY] = (_line.v1Origin()[VY] + _line.v2Origin()[VY]) / 2;
 
     DENG_ASSERT(_sector != 0);
     coord_t const ffloor = _sector->floor().height();
     coord_t const fceil  = _sector->ceiling().height();
 
     if(!_line.hasBackSections() || _line.isSelfReferencing())
-        middle()._soundEmitter.origin[VZ] = (ffloor + fceil) / 2;
+        _sections->middle._soundEmitter.origin[VZ] = (ffloor + fceil) / 2;
     else
-        middle()._soundEmitter.origin[VZ] = (de::max(ffloor, _line.backSector().floor().height()) +
-                                             de::min(fceil,  _line.backSector().ceiling().height())) / 2;
-}
-
-ddmobj_base_t &Line::Side::bottomSoundEmitter()
-{
-    return bottom()._soundEmitter;
-}
-
-ddmobj_base_t const &Line::Side::bottomSoundEmitter() const
-{
-    return const_cast<ddmobj_base_t const &>(const_cast<Side &>(*this).bottomSoundEmitter());
+        _sections->middle._soundEmitter.origin[VZ] = (de::max(ffloor, _line.backSector().floor().height()) +
+                                                      de::min(fceil,  _line.backSector().ceiling().height())) / 2;
 }
 
 void Line::Side::updateBottomSoundEmitterOrigin()
@@ -185,8 +165,8 @@ void Line::Side::updateBottomSoundEmitterOrigin()
 
     if(!_sections) return;
 
-    bottom()._soundEmitter.origin[VX] = (_line.v1Origin()[VX] + _line.v2Origin()[VX]) / 2;
-    bottom()._soundEmitter.origin[VY] = (_line.v1Origin()[VY] + _line.v2Origin()[VY]) / 2;
+    _sections->bottom._soundEmitter.origin[VX] = (_line.v1Origin()[VX] + _line.v2Origin()[VX]) / 2;
+    _sections->bottom._soundEmitter.origin[VY] = (_line.v1Origin()[VY] + _line.v2Origin()[VY]) / 2;
 
     DENG_ASSERT(_sector != 0);
     coord_t const ffloor = _sector->floor().height();
@@ -195,22 +175,12 @@ void Line::Side::updateBottomSoundEmitterOrigin()
     if(!_line.hasBackSections() || _line.isSelfReferencing() ||
        _line.backSector().floor().height() <= ffloor)
     {
-        bottom()._soundEmitter.origin[VZ] = ffloor;
+        _sections->bottom._soundEmitter.origin[VZ] = ffloor;
     }
     else
     {
-        bottom()._soundEmitter.origin[VZ] = (de::min(_line.backSector().floor().height(), fceil) + ffloor) / 2;
+        _sections->bottom._soundEmitter.origin[VZ] = (de::min(_line.backSector().floor().height(), fceil) + ffloor) / 2;
     }
-}
-
-ddmobj_base_t &Line::Side::topSoundEmitter()
-{
-    return top()._soundEmitter;
-}
-
-ddmobj_base_t const &Line::Side::topSoundEmitter() const
-{
-    return const_cast<ddmobj_base_t const &>(const_cast<Side &>(*this).topSoundEmitter());
 }
 
 void Line::Side::updateTopSoundEmitterOrigin()
@@ -219,8 +189,8 @@ void Line::Side::updateTopSoundEmitterOrigin()
 
     if(!_sections) return;
 
-    top()._soundEmitter.origin[VX] = (_line.v1Origin()[VX] + _line.v2Origin()[VX]) / 2;
-    top()._soundEmitter.origin[VY] = (_line.v1Origin()[VY] + _line.v2Origin()[VY]) / 2;
+    _sections->top._soundEmitter.origin[VX] = (_line.v1Origin()[VX] + _line.v2Origin()[VX]) / 2;
+    _sections->top._soundEmitter.origin[VY] = (_line.v1Origin()[VY] + _line.v2Origin()[VY]) / 2;
 
     DENG_ASSERT(_sector != 0);
     coord_t const ffloor = _sector->floor().height();
@@ -229,11 +199,11 @@ void Line::Side::updateTopSoundEmitterOrigin()
     if(!_line.hasBackSections() || _line.isSelfReferencing() ||
        _line.backSector().ceiling().height() >= fceil)
     {
-        top()._soundEmitter.origin[VZ] = fceil;
+        _sections->top._soundEmitter.origin[VZ] = fceil;
     }
     else
     {
-        top()._soundEmitter.origin[VZ] = (de::max(_line.backSector().ceiling().height(), ffloor) + fceil) / 2;
+        _sections->top._soundEmitter.origin[VZ] = (de::max(_line.backSector().ceiling().height(), ffloor) + fceil) / 2;
     }
 }
 
@@ -257,9 +227,9 @@ void Line::Side::updateSurfaceNormals()
                     0);
 
     // All line side surfaces have the same normals.
-    middle().surface().setNormal(normal); // will normalize
-    bottom().surface().setNormal(normal);
-    top().surface().setNormal(normal);
+    middle().setNormal(normal); // will normalize
+    bottom().setNormal(normal);
+    top().setNormal(normal);
 }
 
 #ifdef __CLIENT__
@@ -663,11 +633,11 @@ int Line::setProperty(setargs_t const &args)
         {
             if((_flags & DDLF_DONTPEGTOP) != (oldFlags & DDLF_DONTPEGTOP))
             {
-                front().top().surface().markAsNeedingDecorationUpdate();
+                front().top().markAsNeedingDecorationUpdate();
             }
             if((_flags & DDLF_DONTPEGBOTTOM) != (oldFlags & DDLF_DONTPEGBOTTOM))
             {
-                front().bottom().surface().markAsNeedingDecorationUpdate();
+                front().bottom().markAsNeedingDecorationUpdate();
             }
         }
 

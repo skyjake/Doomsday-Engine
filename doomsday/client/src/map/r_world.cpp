@@ -109,7 +109,7 @@ boolean R_FindBottomTop(SideSection section, int lineFlags,
 
         if(matOffset)
         {
-            Surface const &suf = front->middle().surface();
+            Surface const &suf = front->middle();
             V2f_Set(matOffset, suf.visMaterialOrigin().x, suf.visMaterialOrigin().y);
             if(unpegBottom)
             {
@@ -124,7 +124,7 @@ boolean R_FindBottomTop(SideSection section, int lineFlags,
         Plane const *fceil  = &frontSec->ceiling();
         Plane const *bfloor = &backSec->floor();
         Plane const *bceil  = &backSec->ceiling();
-        Surface const *suf = &front->section(section).surface();
+        Surface const *suf = &front->surface(section);
 
         switch(section)
         {
@@ -321,12 +321,12 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector const *frontSec,
 {
     if(!frontSec || !front || !front->hasSections()) return false; // Never.
 
-    if(!front->middle().surface().hasMaterial()) return false;
+    if(!front->middle().hasMaterial()) return false;
 
     // Ensure we have up to date info about the material.
-    MaterialSnapshot const &ms = front->middle().surface().material().prepare(Rend_MapSurfaceMaterialSpec());
+    MaterialSnapshot const &ms = front->middle().material().prepare(Rend_MapSurfaceMaterialSpec());
 
-    if(ignoreOpacity || (ms.isOpaque() && !front->middle().surface().blendMode() && front->middle().surface().opacity() >= 1))
+    if(ignoreOpacity || (ms.isOpaque() && !front->middle().blendMode() && front->middle().opacity() >= 1))
     {
         coord_t openRange, openBottom, openTop;
 
@@ -418,7 +418,7 @@ Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
         // Check for mid texture which fills the gap between floor and ceiling.
         // We should not give away the location of false walls (secrets).
         side = (other->frontSectorPtr() == sector? 0 : 1);
-        if(other->side(side).middle().surface().hasMaterial())
+        if(other->side(side).middle().hasMaterial())
         {
             float oFCeil  = other->frontSector().ceiling().visHeight();
             float oFFloor = other->frontSector().floor().visHeight();
@@ -530,9 +530,9 @@ static void resetAllMapSurfaceVisMaterialOrigins(GameMap &map)
             continue;
 
         Line::Side &side = line->side(i);
-        side.top().surface().resetVisMaterialOrigin();
-        side.middle().surface().resetVisMaterialOrigin();
-        side.bottom().surface().resetVisMaterialOrigin();
+        side.top().resetVisMaterialOrigin();
+        side.middle().resetVisMaterialOrigin();
+        side.bottom().resetVisMaterialOrigin();
     }
 }
 
@@ -594,7 +594,7 @@ static Material *chooseFixMaterial(Line &line, int side, SideSection section)
             if(!other->hasBackSections())
             {
                 // Our choice is clear - the middle material.
-                choice1 = other->front().middle().surface().materialPtr();
+                choice1 = other->front().middle().materialPtr();
             }
             else
             {
@@ -603,13 +603,13 @@ static Material *chooseFixMaterial(Line &line, int side, SideSection section)
                 Sector &otherSec = other->sector(&other->frontSector() == frontSec? BACK  : FRONT);
 
                 if(otherSec.ceiling().height() <= frontSec->floor().height())
-                    choice1 = otherSide.top().surface().materialPtr();
+                    choice1 = otherSide.top().materialPtr();
                 else if(otherSec.floor().height() >= frontSec->ceiling().height())
-                    choice1 = otherSide.bottom().surface().materialPtr();
+                    choice1 = otherSide.bottom().materialPtr();
                 else if(otherSec.ceiling().height() < frontSec->ceiling().height())
-                    choice1 = otherSide.top().surface().materialPtr();
+                    choice1 = otherSide.top().materialPtr();
                 else if(otherSec.floor().height() > frontSec->floor().height())
-                    choice1 = otherSide.bottom().surface().materialPtr();
+                    choice1 = otherSide.bottom().materialPtr();
                 // else we'll settle for a plane material.
             }
         }
@@ -641,7 +641,7 @@ static Material *chooseFixMaterial(Line &line, int side, SideSection section)
 static void addMissingMaterial(Line &line, int side, SideSection section)
 {
     // A material must be missing for this test to apply.
-    Surface &surface = line.side(side).section(section).surface();
+    Surface &surface = line.side(side).surface(section);
     if(surface.hasMaterial()) return;
 
     // Look for a suitable replacement.

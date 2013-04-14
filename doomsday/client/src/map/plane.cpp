@@ -175,17 +175,17 @@ DENG2_PIMPL(Plane)
             if(line->hasFrontSections())
             {
                 Line::Side &front = line->front();
-                front.middle().surface().markAsNeedingDecorationUpdate();
-                front.bottom().surface().markAsNeedingDecorationUpdate();
-                front.top().surface().markAsNeedingDecorationUpdate();
+                front.middle().markAsNeedingDecorationUpdate();
+                front.bottom().markAsNeedingDecorationUpdate();
+                front.top().markAsNeedingDecorationUpdate();
             }
 
             if(line->hasBackSections())
             {
                 Line::Side &back = line->back();
-                back.middle().surface().markAsNeedingDecorationUpdate();
-                back.bottom().surface().markAsNeedingDecorationUpdate();
-                back.top().surface().markAsNeedingDecorationUpdate();
+                back.middle().markAsNeedingDecorationUpdate();
+                back.bottom().markAsNeedingDecorationUpdate();
+                back.top().markAsNeedingDecorationUpdate();
             }
         }
     }

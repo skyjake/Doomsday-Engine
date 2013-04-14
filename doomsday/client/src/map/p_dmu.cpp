@@ -913,17 +913,17 @@ static int setProperty(void *ptr, void *context)
 
         if(args->modifiers & DMU_TOP_OF_SIDE)
         {
-            elem = &elem->castTo<Line::Side>()->top().surface();
+            elem = &elem->castTo<Line::Side>()->top();
             args->type = DMU_SURFACE;
         }
         else if(args->modifiers & DMU_MIDDLE_OF_SIDE)
         {
-            elem = &elem->castTo<Line::Side>()->middle().surface();
+            elem = &elem->castTo<Line::Side>()->middle();
             args->type = DMU_SURFACE;
         }
         else if(args->modifiers & DMU_BOTTOM_OF_SIDE)
         {
-            elem = &elem->castTo<Line::Side>()->bottom().surface();
+            elem = &elem->castTo<Line::Side>()->bottom();
             args->type = DMU_SURFACE;
         }
     }
@@ -1360,19 +1360,19 @@ static int getProperty(void *ptr, void *context)
     {
         if(args->modifiers & DMU_TOP_OF_SIDE)
         {
-            elem = &elem->castTo<Line::Side>()->top().surface();
+            elem = &elem->castTo<Line::Side>()->top();
             args->type = DMU_SURFACE;
             DENG2_ASSERT(args->type == elem->type());
         }
         else if(args->modifiers & DMU_MIDDLE_OF_SIDE)
         {
-            elem = &elem->castTo<Line::Side>()->middle().surface();
+            elem = &elem->castTo<Line::Side>()->middle();
             args->type = DMU_SURFACE;
             DENG2_ASSERT(args->type == elem->type());
         }
         else if(args->modifiers & DMU_BOTTOM_OF_SIDE)
         {
-            elem = &elem->castTo<Line::Side>()->bottom().surface();
+            elem = &elem->castTo<Line::Side>()->bottom();
             args->type = DMU_SURFACE;
             DENG2_ASSERT(args->type == elem->type());
         }

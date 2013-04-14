@@ -1143,18 +1143,18 @@ void MPE_LineAddSide(uint lineIdx, int sideId, short flags, ddstring_t const *to
     side.setSideDefArchiveIndex(sideDefArchiveIndex);
 
     // Assign the resolved material if found.
-    side.top().surface().setMaterial(findMaterialInDict(topMaterialUri));
-    side.top().surface().setMaterialOrigin(topOffsetX, topOffsetY);
-    side.top().surface().setTintColor(topRed, topGreen, topBlue);
+    side.top().setMaterial(findMaterialInDict(topMaterialUri));
+    side.top().setMaterialOrigin(topOffsetX, topOffsetY);
+    side.top().setTintColor(topRed, topGreen, topBlue);
 
-    side.middle().surface().setMaterial(findMaterialInDict(middleMaterialUri));
-    side.middle().surface().setMaterialOrigin(middleOffsetX, middleOffsetY);
-    side.middle().surface().setTintColor(middleRed, middleGreen, middleBlue);
-    side.middle().surface().setOpacity(middleAlpha);
+    side.middle().setMaterial(findMaterialInDict(middleMaterialUri));
+    side.middle().setMaterialOrigin(middleOffsetX, middleOffsetY);
+    side.middle().setTintColor(middleRed, middleGreen, middleBlue);
+    side.middle().setOpacity(middleAlpha);
 
-    side.bottom().surface().setMaterial(findMaterialInDict(bottomMaterialUri));
-    side.bottom().surface().setMaterialOrigin(bottomOffsetX, bottomOffsetY);
-    side.bottom().surface().setTintColor(bottomRed, bottomGreen, bottomBlue);
+    side.bottom().setMaterial(findMaterialInDict(bottomMaterialUri));
+    side.bottom().setMaterialOrigin(bottomOffsetX, bottomOffsetY);
+    side.bottom().setTintColor(bottomRed, bottomGreen, bottomBlue);
 }
 
 #undef MPE_PlaneCreate

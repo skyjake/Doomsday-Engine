@@ -1197,7 +1197,7 @@ static void setRelativeHeights(Sector const *front, Sector const *back, boolean 
 static uint radioEdgeHackType(Line const *line, Sector const *front, Sector const *back,
     int backside, boolean isCeiling, float fz, float bz)
 {
-    Surface const &surface = line->side(backside).section(isCeiling? SS_TOP:SS_BOTTOM).surface();
+    Surface const &surface = line->side(backside).surface(isCeiling? SS_TOP:SS_BOTTOM);
 
     if(fz < bz && !surface.hasMaterial())
         return 3; // Consider it fully open.

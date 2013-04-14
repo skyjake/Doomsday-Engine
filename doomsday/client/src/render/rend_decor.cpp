@@ -316,8 +316,8 @@ static void plotSourcesForSurface(Surface &suf)
             Line::Side *side = suf.owner().castTo<Line::Side>();
             Line &line = side->line();
             plotSourcesForLine(line, side->isFront()? FRONT : BACK,
-                               &side->middle().surface() == &suf? SS_MIDDLE :
-                               &side->bottom().surface() == &suf? SS_BOTTOM : SS_TOP);
+                               &side->middle() == &suf? SS_MIDDLE :
+                               &side->bottom() == &suf? SS_BOTTOM : SS_TOP);
             break; }
 
         case DMU_PLANE: {
@@ -475,7 +475,7 @@ static void plotSourcesForLine(Line &line, byte side, SideSection section)
     Sector *backSec   = line.sectorPtr(side ^ 1);
     Line::Side *front = &line.side(side);
     Line::Side *back  = &line.side(side ^ 1);
-    Surface &surface  = front->section(section).surface();
+    Surface &surface  = front->surface(section);
 
     if(!surface.hasMaterial()) return;
 

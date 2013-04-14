@@ -140,11 +140,13 @@ public:
         /// The referenced property is not writeable. @ingroup errors
         DENG2_ERROR(WritePropertyError);
 
-        struct Section
+        class Section
         {
+        public: /// @todo make private:
             Surface _surface;
             ddmobj_base_t _soundEmitter;
 
+        public:
             Section(Side &side)
                 : _surface(dynamic_cast<MapElement &>(side))
             {
@@ -157,6 +159,14 @@ public:
 
             Surface const &surface() const {
                 return const_cast<Surface const &>(const_cast<Section &>(*this).surface());
+            }
+
+            ddmobj_base_t &soundEmitter() {
+                return _soundEmitter;
+            }
+
+            ddmobj_base_t const &soundEmitter() const {
+                return const_cast<ddmobj_base_t const &>(const_cast<Section &>(*this).soundEmitter());
             }
         };
 
@@ -272,28 +282,120 @@ public:
         Section const &section(SideSection sectionId) const;
 
         /**
-         * Returns the middle section of the side.
+         * Returns the specified surface of the side.
+         *
+         * @param sectionId  Identifier of the surface to return.
          */
-        inline Section &middle() { return section(SS_MIDDLE); }
+        inline Surface &surface(SideSection sectionId) {
+            return section(sectionId).surface();
+        }
+
+        /// @copydoc surface()
+        inline Surface const &surface(SideSection sectionId) const {
+            return const_cast<Surface const &>(const_cast<Side *>(this)->surface(sectionId));
+        }
+
+        /**
+         * Returns the middle surface of the side.
+         */
+        inline Surface &middle() { return surface(SS_MIDDLE); }
 
         /// @copydoc middle()
-        inline Section const &middle() const { return section(SS_MIDDLE); }
+        inline Surface const &middle() const { return surface(SS_MIDDLE); }
 
         /**
-         * Returns the bottom section of the side.
+         * Returns the bottom surface of the side.
          */
-        inline Section &bottom() { return section(SS_BOTTOM); }
+        inline Surface &bottom() { return surface(SS_BOTTOM); }
 
         /// @copydoc bottom()
-        inline Section const &bottom() const { return section(SS_BOTTOM); }
+        inline Surface const &bottom() const { return surface(SS_BOTTOM); }
 
         /**
-         * Returns the middle section of the side.
+         * Returns the middle surface of the side.
          */
-        inline Section &top() { return section(SS_TOP); }
+        inline Surface &top() { return surface(SS_TOP); }
 
         /// @copydoc top()
-        inline Section const &top() const { return section(SS_TOP); }
+        inline Surface const &top() const { return surface(SS_TOP); }
+
+        /**
+         * Returns the specified sound emitter of the side.
+         *
+         * @param sectionId  Identifier of the sound emitter to return.
+         */
+        inline ddmobj_base_t &soundEmitter(SideSection sectionId) {
+            return section(sectionId).soundEmitter();
+        }
+
+        /// @copydoc surface()
+        inline ddmobj_base_t const &soundEmitter(SideSection sectionId) const {
+            return const_cast<ddmobj_base_t const &>(const_cast<Side *>(this)->soundEmitter(sectionId));
+        }
+
+        /**
+         * Returns the middle sound emitter of the side.
+         */
+        inline ddmobj_base_t &middleSoundEmitter() {
+            return section(SS_MIDDLE).soundEmitter();
+        }
+
+        /// @copydoc middleSoundEmitter()
+        inline ddmobj_base_t const &middleSoundEmitter() const {
+            return section(SS_MIDDLE).soundEmitter();
+        }
+
+        /**
+         * Update the middle sound emitter origin according to the point defined by
+         * the owning line's vertices and the current @em sharp heights of the sector
+         * on this side of the line.
+         */
+        void updateMiddleSoundEmitterOrigin();
+
+        /**
+         * Returns the bottom sound emitter (tee-hee) for the side.
+         */
+        inline ddmobj_base_t &bottomSoundEmitter() {
+            return section(SS_BOTTOM).soundEmitter();
+        }
+
+        /// @copydoc bottomSoundEmitter()
+        inline ddmobj_base_t const &bottomSoundEmitter() const {
+            return section(SS_BOTTOM).soundEmitter();
+        }
+
+        /**
+         * Update the bottom sound emitter origin according to the point defined by
+         * the owning line's vertices and the current @em sharp heights of the sector
+         * on this side of the line.
+         */
+        void updateBottomSoundEmitterOrigin();
+
+        /**
+         * Returns the top sound emitter for the side.
+         */
+        inline ddmobj_base_t &topSoundEmitter() {
+            return section(SS_TOP).soundEmitter();
+        }
+
+        /// @copydoc topSoundEmitter()
+        inline ddmobj_base_t const &topSoundEmitter() const {
+            return section(SS_TOP).soundEmitter();
+        }
+
+        /**
+         * Update the top sound emitter origin according to the point defined by the
+         * owning line's vertices and the current @em sharp heights of the sector on
+         * this side of the line.
+         */
+        void updateTopSoundEmitterOrigin();
+
+        /**
+         * Update the side's sound emitter origins according to the points defined by
+         * the Line's vertices and the plane heights of the Sector on this side.
+         * If no Sections are defined this is a no-op.
+         */
+        void updateAllSoundEmitterOrigins();
 
 #ifdef __CLIENT__
 
@@ -316,58 +418,6 @@ public:
          * Returns the right-most HEdge for the side.
          */
         HEdge &rightHEdge() const;
-
-        /**
-         * Returns the sound emitter for the middle surface.
-         */
-        ddmobj_base_t &middleSoundEmitter();
-
-        /// @copydoc soundEmitter()
-        ddmobj_base_t const &middleSoundEmitter() const;
-
-        /**
-         * Update the middle sound emitter origin according to the point defined by
-         * the owning line's vertices and the current @em sharp heights of the sector
-         * on this side of the line.
-         */
-        void updateMiddleSoundEmitterOrigin();
-
-        /**
-         * Returns the sound emitter for the bottom surface.
-         */
-        ddmobj_base_t &bottomSoundEmitter();
-
-        /// @copydoc soundEmitter()
-        ddmobj_base_t const &bottomSoundEmitter() const;
-
-        /**
-         * Update the bottom sound emitter origin according to the point defined by
-         * the owning line's vertices and the current @em sharp heights of the sector
-         * on this side of the line.
-         */
-        void updateBottomSoundEmitterOrigin();
-
-        /**
-         * Returns the sound emitter for the top surface.
-         */
-        ddmobj_base_t &topSoundEmitter();
-
-        /// @copydoc soundEmitter()
-        ddmobj_base_t const &topSoundEmitter() const;
-
-        /**
-         * Update the top sound emitter origin according to the point defined by the
-         * owning line's vertices and the current @em sharp heights of the sector on
-         * this side of the line.
-         */
-        void updateTopSoundEmitterOrigin();
-
-        /**
-         * Update the side's sound emitter origins according to the points defined by
-         * the Line's vertices and the plane heights of the Sector on this side.
-         * If no Sections are defined this is a no-op.
-         */
-        void updateAllSoundEmitterOrigins();
 
         /**
          * Update the tangent space normals of the side's surfaces according to the

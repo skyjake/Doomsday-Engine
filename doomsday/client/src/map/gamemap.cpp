@@ -340,13 +340,13 @@ DENG2_PIMPL(GameMap)
 
             Line::Side &side = line->side(line->frontSectorPtr() == &sector? FRONT : BACK);
 
-            if(!side.middle().surface().hasMaterial())
+            if(!side.middle().hasMaterial())
                 continue;
 
             if(skyCeil)
             {
                 coord_t const top = sector.ceiling().visHeight()
-                    + side.middle().surface().visMaterialOrigin()[VY];
+                    + side.middle().visMaterialOrigin()[VY];
 
                 if(top > self.skyFixCeiling())
                 {
@@ -358,8 +358,8 @@ DENG2_PIMPL(GameMap)
             if(skyFloor)
             {
                 coord_t const bottom = sector.floor().visHeight()
-                    + side.middle().surface().visMaterialOrigin()[VY]
-                        - side.middle().surface().material().height();
+                    + side.middle().visMaterialOrigin()[VY]
+                        - side.middle().material().height();
 
                 if(bottom < self.skyFixFloor())
                 {
@@ -586,9 +586,9 @@ void GameMap::buildSurfaceLists()
             continue;
 
         Line::Side &side = line->side(i);
-        d->addSurfaceToLists(side.middle().surface());
-        d->addSurfaceToLists(side.top().surface());
-        d->addSurfaceToLists(side.bottom().surface());
+        d->addSurfaceToLists(side.middle());
+        d->addSurfaceToLists(side.top());
+        d->addSurfaceToLists(side.bottom());
     }
 
     foreach(Sector *sector, _sectors)
@@ -770,15 +770,15 @@ Surface *GameMap::surfaceBySoundEmitter(ddmobj_base_t const &soundEmitter) const
         Line::Side &side = line->side(i);
         if(&soundEmitter == &side.middleSoundEmitter())
         {
-            return &side.middle().surface();
+            return &side.middle();
         }
         if(&soundEmitter == &side.bottomSoundEmitter())
         {
-            return &side.bottom().surface();
+            return &side.bottom();
         }
         if(&soundEmitter == &side.topSoundEmitter())
         {
-            return &side.top().surface();
+            return &side.top();
         }
     }
 
