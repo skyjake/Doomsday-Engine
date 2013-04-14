@@ -99,7 +99,7 @@ DENG2_PIMPL(Record)
      * Returns the record inside which the variable identified by path @a name
      * resides. The necessary subrecords are created if they don't exist.
      *
-     * @param name  Variable name or path.
+     * @param pathOrName  Variable name or path.
      *
      * @return  Parent record for the variable.
      */
