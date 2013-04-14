@@ -201,7 +201,7 @@ int applySurfaceColor(void* obj, void* context)
     if((dFlags & LDF_BLEND) &&
        params->frontSec == P_GetPtrp(li, DMU_FRONT_SECTOR))
     {
-        SideDef* side = P_GetPtrp(li, DMU_SIDEDEF0);
+        Side* side = P_GetPtrp(li, DMU_FRONT);
 
         if(side)
         {
@@ -225,7 +225,7 @@ int applySurfaceColor(void* obj, void* context)
     if((dFlags & LDF_BLEND) &&
        params->frontSec == P_GetPtrp(li, DMU_BACK_SECTOR))
     {
-        SideDef* side = P_GetPtrp(li, DMU_SIDEDEF1);
+        Side* side = P_GetPtrp(li, DMU_BACK);
 
         if(side)
         {
@@ -964,7 +964,7 @@ static void P_FinalizeMap(void)
         Material* mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString("Textures:NUKE24"));
         Material* bottomMat, *midMat;
         float yoff;
-        SideDef* sidedef;
+        Side* side;
         Line* line;
 
         for(i = 0; i < numlines; ++i)
@@ -973,16 +973,16 @@ static void P_FinalizeMap(void)
 
             for(k = 0; k < 2; ++k)
             {
-                sidedef = P_GetPtrp(line, k == 0? DMU_SIDEDEF0 : DMU_SIDEDEF1);
-                if(sidedef)
+                side = P_GetPtrp(line, k == 0? DMU_FRONT : DMU_BACK);
+                if(side)
                 {
-                    bottomMat = P_GetPtrp(sidedef, DMU_BOTTOM_MATERIAL);
-                    midMat = P_GetPtrp(sidedef, DMU_MIDDLE_MATERIAL);
+                    bottomMat = P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
+                    midMat = P_GetPtrp(side, DMU_MIDDLE_MATERIAL);
 
                     if(bottomMat == mat && midMat == NULL)
                     {
-                        yoff = P_GetFloatp(sidedef, DMU_BOTTOM_MATERIAL_OFFSET_Y);
-                        P_SetFloatp(sidedef, DMU_BOTTOM_MATERIAL_OFFSET_Y, yoff + 1.0f);
+                        yoff = P_GetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y);
+                        P_SetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y, yoff + 1.0f);
                     }
                 }
             }
@@ -1131,11 +1131,11 @@ void P_SpawnSideMaterialOriginScrollers(void)
     {
         Line* line  = P_ToPtr(DMU_LINE, i);
         xline_t* xline = P_ToXLine(line);
-        SideDef* frontSide;
+        Side* frontSide;
 
         if(!xline->special) continue;
 
-        frontSide = P_GetPtrp(line, DMU_SIDEDEF0);
+        frontSide = P_GetPtrp(line, DMU_FRONT);
         P_SpawnSideMaterialOriginScroller(frontSide, xline->special);
     }
 }

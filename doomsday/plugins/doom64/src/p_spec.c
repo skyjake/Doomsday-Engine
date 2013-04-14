@@ -481,7 +481,7 @@ static void P_CrossSpecialLine(Line* line, int side, mobj_t* thing)
         // Lower Ceiling to Floor
         if(EV_DoCeiling(line, CT_LOWERTOFLOOR))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;
@@ -815,7 +815,7 @@ static void P_CrossSpecialLine(Line* line, int side, mobj_t* thing)
         // FIXME: DJS - again, might as well do this in XG.
         if(EV_DoFloor(line, FT_RAISE32))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             P_ToXLine(line)->special = 0;
         }
         break;
@@ -845,24 +845,24 @@ static void P_ShootSpecialLine(mobj_t* thing, Line* line)
     {
     case 24: ///< RAISE FLOOR
         EV_DoFloor(line, FT_RAISEFLOOR);
-        P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+        P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
         xline->special = 0;
         break;
 
     case 46: ///< OPEN DOOR
         EV_DoDoor(line, DT_OPEN);
-        P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
+        P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 47: ///< RAISE FLOOR NEAR AND CHANGE
         EV_DoPlat(line, PT_RAISETONEARESTANDCHANGE, 0);
-        P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+        P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
         xline->special = 0;
         break;
 
     case 191: ///< LOWER FLOOR WAIT RAISE (jd64)
         EV_DoPlat(line, PT_DOWNWAITUPSTAYBLAZE, 0);
-        P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
+        P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, BUTTONTIME);
         break;
     }
 }
@@ -1120,7 +1120,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
         // Build Stairs,
         if(EV_BuildStairs(line, build8))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;
@@ -1129,7 +1129,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
         // Change Donut,
         if(EV_DoDonut(line))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;
@@ -1146,7 +1146,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
             return false;
         }
 
-        P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_SWTCHX, false, 0);
+        P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_SWTCHX, false, 0);
         xline->special = 0;
         G_LeaveMap(G_GetNextMap(gameEpisode, gameMap, false), 0, false);
         break;
@@ -1155,7 +1155,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
         // Raise Floor 32 and change texture.
         if(EV_DoPlat(line, PT_RAISEANDCHANGE, 32))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;
@@ -1164,7 +1164,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
         // Raise Floor 24 and change texture.
         if(EV_DoPlat(line, PT_RAISEANDCHANGE, 24))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;
@@ -1173,7 +1173,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
         // Raise Floor to next highest floor.
         if(EV_DoFloor(line, FT_RAISEFLOORTONEAREST))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;
@@ -1182,7 +1182,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
         // Raise Plat next highest floor and change texture.
         if(EV_DoPlat(line, PT_RAISETONEARESTANDCHANGE, 0))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;
@@ -1191,7 +1191,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
         // PlatDownWaitUpStay.
         if(EV_DoPlat(line, PT_DOWNWAITUPSTAY, 0))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;
@@ -1200,7 +1200,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
         // Lower Floor to Lowest.
         if(EV_DoFloor(line, FT_LOWERTOLOWEST))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;
@@ -1209,7 +1209,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
         // Raise Door.
         if(EV_DoDoor(line, DT_NORMAL))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;
@@ -1218,7 +1218,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
         // Lower Ceiling to Floor.
         if(EV_DoCeiling(line, CT_LOWERTOFLOOR))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;
@@ -1227,7 +1227,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
         // Turbo Lower Floor.
         if(EV_DoFloor(line, FT_LOWERTURBO))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;
@@ -1236,7 +1236,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
         // Ceiling Crush And Raise.
         if(EV_DoCeiling(line, CT_CRUSHANDRAISE))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;
@@ -1245,7 +1245,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
         // Close Door.
         if(EV_DoDoor(line, DT_CLOSE))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;
@@ -1262,7 +1262,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
             return false;
         }
 
-        P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+        P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
         xline->special = 0;
         G_LeaveMap(G_GetNextMap(gameEpisode, gameMap, true), 0, true);
         break;
@@ -1271,7 +1271,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
         // Raise Floor Crush.
         if(EV_DoFloor(line, FT_RAISEFLOORCRUSH))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;
@@ -1280,7 +1280,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
         // Raise Floor.
         if(EV_DoFloor(line, FT_RAISEFLOOR))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;
@@ -1289,7 +1289,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
         // Lower Floor to Surrounding floor height.
         if(EV_DoFloor(line, FT_LOWER))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;
@@ -1298,7 +1298,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
         // Open Door.
         if(EV_DoDoor(line, DT_OPEN))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;
@@ -1307,7 +1307,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
         // Blazing Door Raise (faster than TURBO!).
         if(EV_DoDoor(line, DT_BLAZERAISE))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;
@@ -1316,7 +1316,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
         // Blazing Door Open (faster than TURBO!).
         if(EV_DoDoor(line, DT_BLAZEOPEN))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;
@@ -1325,7 +1325,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
         // Blazing Door Close (faster than TURBO!).
         if(EV_DoDoor(line, DT_BLAZECLOSE))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;
@@ -1334,7 +1334,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
         // Blazing PlatDownWaitUpStay.
         if(EV_DoPlat(line, PT_DOWNWAITUPSTAYBLAZE, 0))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;
@@ -1343,7 +1343,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
         // Build Stairs Turbo 16.
         if(EV_BuildStairs(line, turbo16))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;
@@ -1352,7 +1352,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
         // Raise Floor Turbo.
         if(EV_DoFloor(line, FT_RAISEFLOORTURBO))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;
@@ -1365,7 +1365,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
         // BlzOpenDoor YELLOW.
         if(EV_DoLockedDoor(line, DT_BLAZEOPEN, mo))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;
@@ -1374,7 +1374,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
         // Raise Floor 512.
         if(EV_DoFloor(line, FT_RAISE512))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;
@@ -1383,115 +1383,115 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
     case 42:
         // Close Door.
         if(EV_DoDoor(line, DT_CLOSE))
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 43:
         // Lower Ceiling to Floor.
         if(EV_DoCeiling(line, CT_LOWERTOFLOOR))
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 45:
         // Lower Floor to Surrounding floor height.
         if(EV_DoFloor(line, FT_LOWER))
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 60:
         // Lower Floor to Lowest.
         if(EV_DoFloor(line, FT_LOWERTOLOWEST))
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 61:
         // Open Door.
         if(EV_DoDoor(line, DT_OPEN))
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 62:
         // PlatDownWaitUpStay.
         if(EV_DoPlat(line, PT_DOWNWAITUPSTAY, 1))
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 63:
         // Raise Door.
         if(EV_DoDoor(line, DT_NORMAL))
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 64:
         // Raise Floor to ceiling.
         if(EV_DoFloor(line, FT_RAISEFLOOR))
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 66:
         // Raise Floor 24 and change texture.
         if(EV_DoPlat(line, PT_RAISEANDCHANGE, 24))
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 67:
         // Raise Floor 32 and change texture.
         if(EV_DoPlat(line, PT_RAISEANDCHANGE, 32))
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 65:
         // Raise Floor Crush.
         if(EV_DoFloor(line, FT_RAISEFLOORCRUSH))
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 68:
         // Raise Plat to next highest floor and change texture.
         if(EV_DoPlat(line, PT_RAISETONEARESTANDCHANGE, 0))
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 69:
         // Raise Floor to next highest floor.
         if(EV_DoFloor(line, FT_RAISEFLOORTONEAREST))
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 70:
         // Turbo Lower Floor.
         if(EV_DoFloor(line, FT_LOWERTURBO))
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 114:
         // Blazing Door Raise (faster than TURBO!).
         if(EV_DoDoor(line, DT_BLAZERAISE))
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 115:
         // Blazing Door Open (faster than TURBO!).
         if(EV_DoDoor(line, DT_BLAZEOPEN))
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 116:
         // Blazing Door Close (faster than TURBO!).
         if(EV_DoDoor(line, DT_BLAZECLOSE))
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 123:
         // Blazing PlatDownWaitUpStay.
         if(EV_DoPlat(line, PT_DOWNWAITUPSTAYBLAZE, 0))
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 132:
         // Raise Floor Turbo.
         if(EV_DoFloor(line, FT_RAISEFLOORTURBO))
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 99:
@@ -1501,19 +1501,19 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
     case 136:
         // BlzOpenDoor YELLOW.
         if(EV_DoLockedDoor(line, DT_BLAZERAISE, mo)) // jd64 was "DT_BLAZEOPEN"
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 138:
         // Light Turn On.
         EV_LightTurnOn(line, 1);
-        P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
+        P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 139:
         // Light Turn Off.
         EV_LightTurnOn(line, 35.0f/255.0f);
-        P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
+        P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 343: // jd64 - BlzOpenDoor LaserPowerup 1.
@@ -1521,46 +1521,46 @@ boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
     case 345: // jd64 - BlzOpenDoor LaserPowerup 3.
         if(EV_DoLockedDoor(line, DT_BLAZEOPEN, mo))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;
 
     case 414: // jd64
         if(EV_DoPlat(line, PT_UPWAITDOWNSTAY, 1))
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 416: // jd64
         if(EV_DoFloorAndCeiling(line, FT_TOHIGHESTPLUS8, CT_RAISETOHIGHEST))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;
 
     case 424: // jd64
         if(EV_DoCeiling(line, CT_CUSTOM))
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 425: // jd64
         if(EV_DoCeiling(line, CT_CUSTOM))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;
 
     case 428: // jd64
         if(EV_DoFloor(line, FT_TOHIGHESTPLUSBITMIP))
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 429: // jd64
         if(EV_DoFloor(line, FT_TOHIGHESTPLUSBITMIP))
         {
-            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
             xline->special = 0;
         }
         break;

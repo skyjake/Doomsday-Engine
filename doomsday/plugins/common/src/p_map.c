@@ -1867,7 +1867,7 @@ int PTR_ShootTraverse(intercept_t const *in, void *parameters)
         }
 /*
 if(lineWasHit)
-    Con_Message("Hit line [%i,%i]", P_GetIntp(li, DMU_SIDEDEF0), P_GetIntp(li, DMU_SIDEDEF1));
+    Con_Message("Hit line [%i,%i]", P_GetIntp(li, DMU_FRONT), P_GetIntp(li, DMU_BACK));
 */
 #endif
         // Don't go any farther.

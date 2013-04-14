@@ -413,7 +413,7 @@ static void P_v19_UnArchiveWorld(void)
         {
             Uri *topTextureUrn, *bottomTextureUrn, *middleTextureUrn;
 
-            SideDef* sdef = P_GetPtrp(line, (j? DMU_SIDEDEF1:DMU_SIDEDEF0));
+            Side* sdef = P_GetPtrp(line, (j? DMU_BACK:DMU_FRONT));
             if(!sdef) continue;
 
             matOffset[VX] = (float) (Reader_ReadInt16(svReader));

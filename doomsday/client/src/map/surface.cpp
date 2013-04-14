@@ -39,7 +39,7 @@ int const Surface::MAX_SMOOTH_MATERIAL_MOVE = 8;
 
 DENG2_PIMPL(Surface)
 {
-    /// Owning map element, either @c DMU_SIDEDEF, or @c DMU_PLANE.
+    /// Owning map element, either @c DMU_SIDE, or @c DMU_PLANE.
     de::MapElement &owner;
 
     /// Tangent space vectors:

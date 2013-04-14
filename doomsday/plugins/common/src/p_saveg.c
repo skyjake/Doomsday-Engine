@@ -722,7 +722,7 @@ static boolean recogniseState(const char* path, SaveInfo* info)
 
 #if __JHEXEN__
         // We are incompatible with v3 saves due to an invalid test used to determine
-        // present sidedefs (ver3 format's sidedefs contain chunks of junk data).
+        // present sides (ver3 format's sides contain chunks of junk data).
         if(info->header.version == 3) return false;
 #endif
         return true;
@@ -2632,7 +2632,7 @@ static void SV_WriteLine(Line* li)
     // For each side
     for(i = 0; i < 2; ++i)
     {
-        SideDef *si = P_GetPtrp(li, (i? DMU_SIDEDEF1:DMU_SIDEDEF0));
+        Side *si = P_GetPtrp(li, (i? DMU_BACK:DMU_FRONT));
         if(!si)
             continue;
 
@@ -2780,7 +2780,7 @@ static void SV_ReadLine(Line* li)
     // For each side
     for(i = 0; i < 2; ++i)
     {
-        SideDef* si = P_GetPtrp(li, (i? DMU_SIDEDEF1:DMU_SIDEDEF0));
+        Side* si = P_GetPtrp(li, (i? DMU_BACK:DMU_FRONT));
 
         if(!si)
             continue;
@@ -4192,7 +4192,7 @@ static void SV_WriteMaterialChanger(const materialchanger_t* mchanger)
     // is present as we ALWAYS add one when loading.
 
     // Write a type byte. For future use (e.g., changing plane surface
-    // materials as well as sidedef surface materials).
+    // materials as well as side surface materials).
     SV_WriteByte(0);
     SV_WriteLong(mchanger->timer);
     SV_WriteLong(P_ToIndex(mchanger->side));
@@ -4202,17 +4202,17 @@ static void SV_WriteMaterialChanger(const materialchanger_t* mchanger)
 
 static int SV_ReadMaterialChanger(materialchanger_t* mchanger)
 {
-    SideDef* side;
+    Side* side;
     /*int ver =*/ SV_ReadByte(); // version byte.
 
     SV_ReadByte(); // Type byte.
     mchanger->timer = SV_ReadLong();
     // Note: the thinker class byte has already been read.
-    side = P_ToPtr(DMU_SIDEDEF, (int) SV_ReadLong());
+    side = P_ToPtr(DMU_SIDE, (int) SV_ReadLong());
     if(!side)
-        Con_Error("t_materialchanger: bad sidedef number\n");
+        Con_Error("t_materialchanger: bad side number\n");
     mchanger->side = side;
-    mchanger->section = (SideDefSection) SV_ReadByte();
+    mchanger->section = (SideSection) SV_ReadByte();
     mchanger->material = SV_GetArchiveMaterial(SV_ReadShort(), 0);
 
     mchanger->thinker.function = T_MaterialChanger;
@@ -4230,7 +4230,7 @@ static void SV_WriteScroll(const scroll_t* scroll)
     // is present as we ALWAYS add one when loading.
 
     // Write a type byte. For future use (e.g., scrolling plane surface
-    // materials as well as sidedef surface materials).
+    // materials as well as side surface materials).
     SV_WriteByte(DMU_GetType(scroll->dmuObject));
     SV_WriteLong(P_ToIndex(scroll->dmuObject));
     SV_WriteLong(scroll->elementBits);
@@ -4247,10 +4247,10 @@ static int SV_ReadScroll(scroll_t* scroll)
     /*ver =*/ SV_ReadByte(); // version byte.
     // Note: the thinker class byte has already been read.
 
-    if(SV_ReadByte() == DMU_SIDEDEF) // Type byte.
+    if(SV_ReadByte() == DMU_SIDE) // Type byte.
     {
-        SideDef* side = P_ToPtr(DMU_SIDEDEF, (int) SV_ReadLong());
-        if(!side) Con_Error("t_scroll: bad sidedef number\n");
+        Side* side = P_ToPtr(DMU_SIDE, (int) SV_ReadLong());
+        if(!side) Con_Error("t_scroll: bad side number\n");
         scroll->dmuObject = side;
     }
     else // Sector plane-surface.

@@ -68,7 +68,7 @@ static uint sourceCount = 0;
 static decorsource_t *sourceFirst = 0;
 static decorsource_t *sourceCursor = 0;
 
-static void plotSourcesForLine(Line &line, byte side, SideDefSection section);
+static void plotSourcesForLine(Line &line, byte side, SideSection section);
 static void plotSourcesForPlane(Plane &pln);
 
 void Rend_DecorRegister()
@@ -312,7 +312,7 @@ static void plotSourcesForSurface(Surface &suf)
 
         switch(suf.owner().type())
         {
-        case DMU_SIDEDEF: {
+        case DMU_SIDE: {
             Line::Side *side = suf.owner().castTo<Line::Side>();
             Line &line = side->line();
             plotSourcesForLine(line, side->isFront()? FRONT : BACK,
@@ -467,7 +467,7 @@ static void plotSourcesForPlane(Plane &pln)
     updateSurfaceDecorations(surface, offset, v1, v2, &sector);
 }
 
-static void plotSourcesForLine(Line &line, byte side, SideDefSection section)
+static void plotSourcesForLine(Line &line, byte side, SideSection section)
 {
     if(!line.hasSections(side)) return;
 

@@ -208,7 +208,7 @@ static walldivnode_t *findWallDivNodeByZOrigin(walldivs_t *wallDivs, coord_t hei
 }
 
 static void addWallDivNodesForPlaneIntercepts(HEdge const *hedge, walldivs_t *wallDivs,
-    SideDefSection section, coord_t bottomZ, coord_t topZ, boolean doRight)
+    SideSection section, coord_t bottomZ, coord_t topZ, boolean doRight)
 {
     bool const clockwise = !doRight;
 
@@ -334,7 +334,7 @@ static int sortWallDivNode(void const *e1, void const *e2)
 }
 
 static void buildWallDiv(walldivs_t *wallDivs, HEdge const *hedge,
-   SideDefSection section, coord_t bottomZ, coord_t topZ, boolean doRight)
+   SideSection section, coord_t bottomZ, coord_t topZ, boolean doRight)
 {
     wallDivs->num = 0;
 
@@ -358,7 +358,7 @@ static void buildWallDiv(walldivs_t *wallDivs, HEdge const *hedge,
     WallDivs_AssertInRange(wallDivs, bottomZ, topZ);
 }
 
-bool HEdge::prepareWallDivs(SideDefSection section, Sector *frontSec, Sector *backSec,
+bool HEdge::prepareWallDivs(SideSection section, Sector *frontSec, Sector *backSec,
     walldivs_t *leftWallDivs, walldivs_t *rightWallDivs, pvec2f_t matOffset) const
 {
     int lineFlags = _line? _line->flags() : 0;
@@ -417,9 +417,9 @@ int HEdge::property(setargs_t &args) const
         coord_t offset = _line? _lineOffset : 0;
         DMU_GetValue(DMT_HEDGE_OFFSET, &offset, &args, 0);
         break; }
-    case DMU_SIDEDEF: {
+    case DMU_SIDE: {
         Line::Side *sideAdr = _line? &_line->side(_lineSide) : 0;
-        DMU_GetValue(DMT_HEDGE_SIDEDEF, &sideAdr, &args, 0);
+        DMU_GetValue(DMT_HEDGE_SIDE, &sideAdr, &args, 0);
         break; }
     case DMU_LINE:
         DMU_GetValue(DMT_HEDGE_LINE, &_line, &args, 0);

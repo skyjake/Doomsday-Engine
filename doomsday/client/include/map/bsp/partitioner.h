@@ -78,9 +78,9 @@ public:
      * Build the BSP for the given map.
      *
      * High-level description (courtesy of Raphael Quinet):
-     *   1. Create one Seg for each SideDef: pick each Line in turn.  If it
-     *      has a "first" SideDef, then create a normal Seg.  If it has a
-     *      "second" SideDef, then create a flipped Seg.
+     *   1. Create one Seg for each Side: pick each Line in turn.  If it
+     *      has a "first" Side, then create a normal Seg.  If it has a
+     *      "second" Side, then create a flipped Seg.
      *   2. Call CreateNodes with the current list of Segs.  The list of Segs is
      *      the only argument to CreateNodes.
      *   3. Save the Nodes, Segs and BspLeafs to disk.  Start with the leaves of

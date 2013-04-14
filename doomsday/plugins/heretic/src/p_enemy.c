@@ -1494,7 +1494,7 @@ void C_DECL A_MinotaurAtk3(mobj_t* actor)
          *
          * This in turn means that when P_TryMoveXY is called (via
          * P_CheckMissileSpawn), the test which is there to check whether a
-         * missile hits an upper sidedef section will return true
+         * missile hits an upper side section will return true
          * (ceilingheight - thingz > thingheight).
          *
          * This results in P_ExplodeMissile being called instantly.

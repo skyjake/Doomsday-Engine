@@ -606,7 +606,7 @@ static int rendSeg(void* hedge_, void* data)
     // We only want to draw twosided lines once.
     frontSector = P_GetPtrp(line, DMU_FRONT_SECTOR);
     if(frontSector // $degenleaf
-       && frontSector != P_GetPtrp(line, DMU_SIDEDEF0_OF_LINE | DMU_SECTOR)) return false;
+       && frontSector != P_GetPtrp(line, DMU_FRONT_OF_LINE | DMU_SECTOR)) return false;
 
     info = NULL;
     if((am->flags & AMF_REND_ALLLINES) || xLine->mapped[plr - players])
@@ -622,7 +622,7 @@ static int rendSeg(void* hedge_, void* data)
             /// @todo Implement an option which changes the vanilla behavior of always
             ///       coloring non-secret lines with the solid-wall color to instead
             ///       use whichever color it would be if not flagged secret.
-            if(!backSector || !P_GetPtrp(line, DMU_SIDEDEF1) || (xLine->flags & ML_SECRET))
+            if(!backSector || !P_GetPtrp(line, DMU_BACK) || (xLine->flags & ML_SECRET))
             {
                 // solid wall (well probably anyway...)
                 info = AM_GetInfoForLine(UIAutomap_Config(obj), AMO_SINGLESIDEDLINE);

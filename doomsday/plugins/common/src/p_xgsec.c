@@ -761,7 +761,7 @@ int FindPrevOf(int *list, int num, int h)
  */
 int XS_TextureHeight(Line* line, int part)
 {
-    SideDef* side;
+    Side* side;
     int snum = 0;
     int minfloor = 0, maxfloor = 0, maxceil = 0;
     Sector* front = P_GetPtrp(line, DMU_FRONT_SECTOR);
@@ -802,7 +802,7 @@ int XS_TextureHeight(Line* line, int part)
     }
     else
     {
-        if(P_GetPtrp(line, DMU_SIDEDEF0))
+        if(P_GetPtrp(line, DMU_FRONT))
             snum = 0;
         else
             snum = 1;
@@ -810,9 +810,9 @@ int XS_TextureHeight(Line* line, int part)
 
     // Which side are we working with?
     if(snum == 0)
-        side = P_GetPtrp(line, DMU_SIDEDEF0);
+        side = P_GetPtrp(line, DMU_FRONT);
     else
-        side = P_GetPtrp(line, DMU_SIDEDEF1);
+        side = P_GetPtrp(line, DMU_BACK);
 
     // Which section of the wall?
     switch(part)
@@ -2627,7 +2627,7 @@ void XS_DoChain(Sector* sec, int ch, int activating, void* act_thing)
     Line* dummyLine;
     xline_t* xdummyLine;
     linetype_t* ltype;
-    SideDef* dummySideDef;
+    Side* dummySideDef;
 
     xg = P_ToXSector(sec)->xg;
     info = &xg->info;
@@ -2653,9 +2653,9 @@ void XS_DoChain(Sector* sec, int ch, int activating, void* act_thing)
     dummyLine = P_AllocDummyLine();
     xdummyLine = P_ToXLine(dummyLine);
     xdummyLine->xg = Z_Calloc(sizeof(xgline_t), PU_MAP, 0);
-    dummySideDef = P_AllocDummySideDef();
+    dummySideDef = P_AllocDummySide();
 
-    P_SetPtrp(dummyLine, DMU_SIDEDEF0, dummySideDef);
+    P_SetPtrp(dummyLine, DMU_FRONT, dummySideDef);
     P_SetPtrp(dummyLine, DMU_FRONT_SECTOR, sec);
     P_SetPtrp(dummySideDef, DMU_LINE, dummyLine);
 
@@ -2711,7 +2711,7 @@ void XS_DoChain(Sector* sec, int ch, int activating, void* act_thing)
     // We're done, free the dummies.
     Z_Free(xdummyLine->xg);
     P_FreeDummyLine(dummyLine);
-    P_FreeDummySideDef(dummySideDef);
+    P_FreeDummySide(dummySideDef);
 }
 
 static boolean checkChainRequirements(Sector* sec, mobj_t* mo, int ch,

@@ -103,8 +103,8 @@ DENG_API_TYPEDEF(MPE)
      * @param v2            Idx of the end vertex.
      * @param frontSector   Idx of the front sector.
      * @param backSector    Idx of the back sector.
-     * @param frontSide     Idx of the front sidedef.
-     * @param backSide      Idx of the back sidedef.
+     * @param frontSide     Idx of the front side.
+     * @param backSide      Idx of the back side.
      * @param flags         DDLF_* flags.
      *
      * @return  Index of the newly created line else @c 0 if there was an error.

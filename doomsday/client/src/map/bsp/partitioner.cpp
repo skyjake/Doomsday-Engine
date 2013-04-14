@@ -1358,7 +1358,8 @@ DENG2_PIMPL(Partitioner)
                     Line::Side &side = hedge->lineSide();
 
                     side._sector  = 0;
-                    side._sideDef = 0;
+                    delete side._sections;
+                    side._sections = 0;
 
                     lineInfos[hedge->line().origIndex() - 1].flags &=
                         ~(LineInfo::SelfRef | LineInfo::Twosided);

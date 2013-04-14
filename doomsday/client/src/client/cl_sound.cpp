@@ -107,7 +107,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
             skip = true;
         }
     }
-    else if(type == DT_SIDE_SOUND) // SideDef section as emitter
+    else if(type == DT_SIDE_SOUND) // Side section as emitter
     {
         uint index = deltaId;
 

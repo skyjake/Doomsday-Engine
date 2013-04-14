@@ -326,7 +326,7 @@ xgclass_t xgClasses[NUMXGCLASSES] =
 
     { XLTrav_ChangeWallMaterial, NULL, TRAV_LINES, 0, 1, 0, "Wall Material",
       // Changes material(s) on the referenced line(s).
-      // Changes surface colour(s), alpha, mid textue blendmode and sidedef flags
+      // Changes surface colour(s), alpha, mid textue blendmode and side flags
        {{XGPF_INT, "Target Ref", "lref_", 0},               // ip0: (line ref) line(s) to change
         {XGPF_INT, "Target Num", "", -1},                   // ip1:
         {XGPF_INT, "Side Num", "", -1},                     // ip2: non-zero change the back side
@@ -334,7 +334,7 @@ xgclass_t xgClasses[NUMXGCLASSES] =
         {XGPF_INT, "Middle Material", "", 4 | MAP_MATERIAL}, // ip4: middle texture to change to (blank indicates no change)
         {XGPF_INT, "Bottom Material", "", 5 | MAP_MATERIAL}, // ip5: bottom texture to change to (blank indicates no change)
         {XGPF_INT, "Set Mid If None", "", -1},              // ip6: set mid texture even if previously zero
-        {XGPF_INT, "Sidedef Flags", "sdf_", 7},             // ip7: (sdf_) sidedef flags (used with surface colour blending, fullbright etc)
+        {XGPF_INT, "Sidedef Flags", "sdf_", 7},             // ip7: (sdf_) side flags (used with surface colour blending, fullbright etc)
         {XGPF_INT, "Middle Blendmode", "bm_", 8},           // ip8: (bm_) middle texture blendmode
         {XGPF_INT, "Top Red Delta", "", -1},                // ip9:
         {XGPF_INT, "Top Green Delta", "", -1},              // ip10:
@@ -966,7 +966,7 @@ int XL_ValidateLineRef(Line* line, int reftype, void* context,
                        char* parmname)
 {
     int                 answer = 0;
-    SideDef*            side;
+    Side*               side;
 
     switch(reftype)
     {
@@ -1030,10 +1030,10 @@ int XL_ValidateLineRef(Line* line, int reftype, void* context,
 
     case LDREF_TOP_OFFSETX:
         // Can this ever fail?
-        side = P_GetPtrp(line, DMU_SIDEDEF0);
+        side = P_GetPtrp(line, DMU_FRONT);
         if(!side)
         {
-            XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDEDEF!");
+            XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDE!");
             break;
         }
 
@@ -1044,10 +1044,10 @@ int XL_ValidateLineRef(Line* line, int reftype, void* context,
 
     case LDREF_TOP_OFFSETY:
         // Can this ever fail?
-        side = P_GetPtrp(line, DMU_SIDEDEF0);
+        side = P_GetPtrp(line, DMU_FRONT);
         if(!side)
         {
-            XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDEDEF!");
+            XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDE!");
             break;
         }
 
@@ -1058,10 +1058,10 @@ int XL_ValidateLineRef(Line* line, int reftype, void* context,
 
     case LDREF_MIDDLE_OFFSETX:
         // Can this ever fail?
-        side = P_GetPtrp(line, DMU_SIDEDEF0);
+        side = P_GetPtrp(line, DMU_FRONT);
         if(!side)
         {
-            XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDEDEF!");
+            XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDE!");
             break;
         }
 
@@ -1072,10 +1072,10 @@ int XL_ValidateLineRef(Line* line, int reftype, void* context,
 
     case LDREF_MIDDLE_OFFSETY:
         // Can this ever fail?
-        side = P_GetPtrp(line, DMU_SIDEDEF0);
+        side = P_GetPtrp(line, DMU_FRONT);
         if(!side)
         {
-            XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDEDEF!");
+            XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDE!");
             break;
         }
 
@@ -1086,10 +1086,10 @@ int XL_ValidateLineRef(Line* line, int reftype, void* context,
 
     case LDREF_BOTTOM_OFFSETX:
         // Can this ever fail?
-        side = P_GetPtrp(line, DMU_SIDEDEF0);
+        side = P_GetPtrp(line, DMU_FRONT);
         if(!side)
         {
-            XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDEDEF!");
+            XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDE!");
             break;
         }
 
@@ -1100,10 +1100,10 @@ int XL_ValidateLineRef(Line* line, int reftype, void* context,
 
     case LDREF_BOTTOM_OFFSETY:
         // Can this ever fail?
-        side = P_GetPtrp(line, DMU_SIDEDEF0);
+        side = P_GetPtrp(line, DMU_FRONT);
         if(!side)
         {
-            XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDEDEF!");
+            XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDE!");
             break;
         }
 
@@ -1418,10 +1418,10 @@ int C_DECL XLTrav_ChangeWallMaterial(Line* line, boolean dummy,
                                      mobj_t* activator)
 {
     linetype_t*     info = context2;
-    SideDef*        side;
+    Side*           side;
     blendmode_t     blend = BM_NORMAL;
     byte            rgba[4];
-    Material*     mat = NULL;
+    Material*       mat = NULL;
 
     if(!line)
         return true; // Continue iteration.
@@ -1444,20 +1444,20 @@ int C_DECL XLTrav_ChangeWallMaterial(Line* line, boolean dummy,
     // i17: bottom green
     // i18: bottom blue
 
-    // Is there a sidedef?
+    // Is there a side?
     if(info->iparm[2])
     {
         if(!P_GetPtrp(line, DMU_BACK_SECTOR))
             return true;
 
-        side = P_GetPtrp(line, DMU_SIDEDEF1);
+        side = P_GetPtrp(line, DMU_BACK);
     }
     else
     {
         if(!P_GetPtrp(line, DMU_FRONT_SECTOR))
             return true;
 
-        side = P_GetPtrp(line, DMU_SIDEDEF0);
+        side = P_GetPtrp(line, DMU_FRONT);
     }
 
     XG_Dev("XLTrav_ChangeWallMaterial: Line %i", P_ToIndex(line));
@@ -1910,8 +1910,8 @@ void XL_SwapSwitchTextures(Line* line, int snum)
 {
     if(line)
     {
-        SideDef*            side = P_GetPtrp(line,
-            snum? DMU_SIDEDEF1 : DMU_SIDEDEF0);
+        Side*               side = P_GetPtrp(line,
+            snum? DMU_BACK : DMU_FRONT);
 
         if(side && P_ToggleSwitch(side, SFX_NONE, true, 0))
             XG_Dev("XL_SwapSwitchTextures: Line %i, side %i",
@@ -1928,8 +1928,8 @@ void XL_ChangeMaterial(Line* line, int sidenum, int section,
 {
     int                 i;
     int                 currentFlags;
-    SideDef*            side =
-        P_GetPtrp(line, sidenum? DMU_SIDEDEF1:DMU_SIDEDEF0);
+    Side*               side =
+        P_GetPtrp(line, sidenum? DMU_BACK:DMU_FRONT);
 
     if(!side)
         return;
@@ -2523,7 +2523,7 @@ int XL_HitLine(Line *line, int sidenum, mobj_t *thing)
 
 void XL_DoChain(Line *line, int chain, boolean activating, mobj_t *actThing)
 {
-    SideDef *dummyFrontSideDef, *dummyBackSideDef = NULL;
+    Side *dummyFrontSideDef, *dummyBackSideDef = NULL;
     Line *dummyLineDef;
     xline_t *xdummyLineDef;
 
@@ -2531,14 +2531,14 @@ void XL_DoChain(Line *line, int chain, boolean activating, mobj_t *actThing)
     dummyLineDef = P_AllocDummyLine();
     xdummyLineDef = P_ToXLine(dummyLineDef);
     xdummyLineDef->xg = Z_Calloc(sizeof(xgline_t), PU_MAP, 0);
-    dummyFrontSideDef = P_AllocDummySideDef();
-    P_SetPtrp(dummyLineDef, DMU_SIDEDEF0, dummyFrontSideDef);
+    dummyFrontSideDef = P_AllocDummySide();
+    P_SetPtrp(dummyLineDef, DMU_FRONT, dummyFrontSideDef);
     P_SetPtrp(dummyFrontSideDef, DMU_LINE, dummyLineDef);
     P_SetPtrp(dummyLineDef, DMU_FRONT_SECTOR, P_GetPtrp(line, DMU_FRONT_SECTOR));
-    if(0 != P_GetPtrp(line, DMU_SIDEDEF1))
+    if(0 != P_GetPtrp(line, DMU_BACK))
     {
-        dummyBackSideDef = P_AllocDummySideDef();
-        P_SetPtrp(dummyLineDef, DMU_SIDEDEF1, dummyBackSideDef);
+        dummyBackSideDef = P_AllocDummySide();
+        P_SetPtrp(dummyLineDef, DMU_BACK, dummyBackSideDef);
         P_SetPtrp(dummyBackSideDef, DMU_LINE, dummyLineDef);
         P_SetPtrp(dummyLineDef, DMU_BACK_SECTOR, P_GetPtrp(line, DMU_BACK_SECTOR));
     }
@@ -2556,9 +2556,9 @@ void XL_DoChain(Line *line, int chain, boolean activating, mobj_t *actThing)
 
     Z_Free(xdummyLineDef->xg);
     P_FreeDummyLine(dummyLineDef);
-    P_FreeDummySideDef(dummyFrontSideDef);
+    P_FreeDummySide(dummyFrontSideDef);
     if(dummyBackSideDef)
-        P_FreeDummySideDef(dummyBackSideDef);
+        P_FreeDummySide(dummyBackSideDef);
 }
 
 /**
@@ -2693,7 +2693,7 @@ void XL_Thinker(void *xlThinkerPtr)
     {
         // The texture should be moved. Calculate the offsets.
         coord_t current[2]; // The current offset.
-        SideDef* side;
+        Side* side;
         float spd = info->materialMoveSpeed;
         coord_t offset[2];
         angle_t ang = ((angle_t) (ANGLE_MAX * (info->materialMoveAngle / 360))) >> ANGLETOFINESHIFT;
@@ -2711,7 +2711,7 @@ void XL_Thinker(void *xlThinkerPtr)
          */
 
         // Front side.
-        side = P_GetPtrp(line, DMU_SIDEDEF0);
+        side = P_GetPtrp(line, DMU_FRONT);
         if(side)
         {
             P_GetDoublepv(side, DMU_TOP_MATERIAL_OFFSET_XY, current);
@@ -2731,7 +2731,7 @@ void XL_Thinker(void *xlThinkerPtr)
         }
 
         // Back side.
-        side = P_GetPtrp(line, DMU_SIDEDEF1);
+        side = P_GetPtrp(line, DMU_BACK);
         if(side)
         {
             P_GetDoublepv(side, DMU_TOP_MATERIAL_OFFSET_XY, current);

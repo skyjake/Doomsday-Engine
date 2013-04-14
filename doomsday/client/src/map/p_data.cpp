@@ -115,7 +115,7 @@ DENG_EXTERN_C boolean P_LoadMap(char const *uriCString)
         {
             gx.SetupForMapData(DMU_VERTEX,  theMap->vertexCount());
             gx.SetupForMapData(DMU_LINE,    theMap->lineCount());
-            gx.SetupForMapData(DMU_SIDEDEF, theMap->sideCount());
+            gx.SetupForMapData(DMU_SIDE,    theMap->sideCount());
             gx.SetupForMapData(DMU_SECTOR,  theMap->sectorCount());
         }
 

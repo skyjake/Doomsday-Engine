@@ -56,19 +56,19 @@ void P_FreeDummyLine(Line* line)
     P_FreeDummy(line);
 }
 
-SideDef* P_AllocDummySideDef(void)
+Side* P_AllocDummySide(void)
 {
-    return P_AllocDummy(DMU_SIDEDEF, 0);
+    return P_AllocDummy(DMU_SIDE, 0);
 }
 
-void P_FreeDummySideDef(SideDef* sideDef)
+void P_FreeDummySide(Side* side)
 {
-    P_FreeDummy(sideDef);
+    P_FreeDummy(side);
 }
 
 void P_CopyLine(Line* dest, Line* src)
 {
-    SideDef* sidefrom, *sideto;
+    Side* sidefrom, *sideto;
     xline_t* xsrc = P_ToXLine(src);
     xline_t* xdest = P_ToXLine(dest);
     int i, sidx;
@@ -79,7 +79,7 @@ void P_CopyLine(Line* dest, Line* src)
     // Copy the built-in properties
     for(i = 0; i < 2; ++i) // For each side
     {
-        sidx = (i==0? DMU_SIDEDEF0 : DMU_SIDEDEF1);
+        sidx = (i==0? DMU_FRONT : DMU_BACK);
 
         sidefrom = P_GetPtrp(src, sidx);
         sideto = P_GetPtrp(dest, sidx);
@@ -690,12 +690,12 @@ const terraintype_t* P_PlaneMaterialTerrainType(Sector* sec, int plane)
     return P_TerrainTypeForMaterial(P_GetPtrp(sec, (plane? DMU_CEILING_MATERIAL : DMU_FLOOR_MATERIAL)));
 }
 
-void P_TranslateSideMaterialOrigin(SideDef* side, SideDefSection section, float deltaXY[2])
+void P_TranslateSideMaterialOrigin(Side* side, SideSection section, float deltaXY[2])
 {
     DENG_ASSERT(side);
-    DENG_ASSERT(VALID_SIDEDEFSECTION(section));
+    DENG_ASSERT(VALID_SIDESECTION(section));
 {
-    const uint dmuSurfaceOriginFlags = DMU_OFFSET_XY | DMU_FLAG_FOR_SIDEDEFSECTION(section);
+    const uint dmuSurfaceOriginFlags = DMU_OFFSET_XY | DMU_FLAG_FOR_SIDESECTION(section);
     float origin[2];
 
     if(FEQUAL(deltaXY[0], 0) && FEQUAL(deltaXY[1], 0)) return;
@@ -712,7 +712,7 @@ void P_TranslateSideMaterialOrigin(SideDef* side, SideDefSection section, float 
     P_SetFloatpv(side, dmuSurfaceOriginFlags, origin);
 }}
 
-void P_TranslateSideMaterialOriginXY(SideDef* side, SideDefSection section,
+void P_TranslateSideMaterialOriginXY(Side* side, SideSection section,
     float deltaX, float deltaY)
 {
     float delta[2];

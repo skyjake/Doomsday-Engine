@@ -650,7 +650,7 @@ boolean P_ActivateLine(Line *line, mobj_t *mo, int side, int activationType)
     if((lineActivation == SPAC_USE || lineActivation == SPAC_IMPACT) &&
        buttonSuccess)
     {
-        P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), 0, false,
+        P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), 0, false,
                        repeat? BUTTONTIME : 0);
     }
 

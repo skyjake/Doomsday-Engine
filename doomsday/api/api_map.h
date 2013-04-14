@@ -32,7 +32,7 @@
 
 #define DMT_VERTEX_ORIGIN DDVT_DOUBLE
 
-#define DMT_HEDGE_SIDEDEF DDVT_PTR
+#define DMT_HEDGE_SIDE DDVT_PTR
 
 #define DMT_HEDGE_V DDVT_PTR             // [Start, End] of the segment.
 #define DMT_HEDGE_LINE DDVT_PTR
@@ -40,7 +40,7 @@
 #define DMT_HEDGE_BSPLEAF DDVT_PTR
 #define DMT_HEDGE_TWIN DDVT_PTR
 #define DMT_HEDGE_ANGLE DDVT_ANGLE
-#define DMT_HEDGE_SIDE DDVT_BYTE         // 0=front, 1=back
+#define DMT_HEDGE_SIDEID DDVT_BYTE         // 0=front, 1=back
 #define DMT_HEDGE_LENGTH DDVT_DOUBLE     // Accurate length of the segment (v1 -> v2).
 #define DMT_HEDGE_OFFSET DDVT_DOUBLE
 #define DMT_HEDGE_NEXT DDVT_PTR
@@ -92,7 +92,7 @@
 #define DMT_LINESIDE_FLAGS DDVT_SHORT
 
 #define DMT_LINE_SECTOR DDVT_PTR
-#define DMT_LINE_SIDEDEF DDVT_PTR
+#define DMT_LINE_SIDE DDVT_PTR
 #define DMT_LINE_AABOX DDVT_DOUBLE
 #define DMT_LINE_V DDVT_PTR
 #define DMT_LINE_FLAGS DDVT_INT     // Public DDLF_* flags.
@@ -127,7 +127,7 @@ struct line_s;
 struct mobj_s;
 struct plane_s;
 struct sector_s;
-struct sidedef_s;
+struct side_s;
 struct vertex_s;
 struct material_s;
 
@@ -137,7 +137,7 @@ typedef struct hedge_s      HEdge;
 typedef struct line_s       Line;
 typedef struct plane_s      Plane;
 typedef struct sector_s     Sector;
-typedef struct sidedef_s    SideDef;
+typedef struct side_s       Side;
 typedef struct vertex_s     Vertex;
 typedef struct material_s   Material;
 

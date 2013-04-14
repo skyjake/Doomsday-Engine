@@ -93,7 +93,7 @@ void R_OrderVertices(Line *line, Sector const *sector, Vertex *verts[2])
     verts[1] = &line->vertex(edge^1);
 }
 
-boolean R_FindBottomTop(SideDefSection section, int lineFlags,
+boolean R_FindBottomTop(SideSection section, int lineFlags,
     Sector const *frontSec, Sector const *backSec,
     Line::Side const *front, Line::Side const *back,
     coord_t *low, coord_t *hi, pvec2f_t matOffset)
@@ -539,7 +539,7 @@ static void resetAllMapSurfaceVisMaterialOrigins(GameMap &map)
 #ifdef __CLIENT__
 
 /**
- * Given a sidedef section, look at the neighbouring surfaces and pick the
+ * Given a side section, look at the neighbouring surfaces and pick the
  * best choice of material used on those surfaces to be applied to "this"
  * surface.
  *
@@ -547,7 +547,7 @@ static void resetAllMapSurfaceVisMaterialOrigins(GameMap &map)
  * Non-animated materials are preferred.
  * Sky materials are ignored.
  */
-static Material *chooseFixMaterial(Line &line, int side, SideDefSection section)
+static Material *chooseFixMaterial(Line &line, int side, SideSection section)
 {
     Material *choice1 = 0, *choice2 = 0;
     Sector *frontSec = line.sectorPtr(side);
@@ -638,7 +638,7 @@ static Material *chooseFixMaterial(Line &line, int side, SideDefSection section)
     return &App_Materials().find(de::Uri("System", Path("missing"))).material();
 }
 
-static void addMissingMaterial(Line &line, int side, SideDefSection section)
+static void addMissingMaterial(Line &line, int side, SideSection section)
 {
     // A material must be missing for this test to apply.
     Surface &surface = line.side(side).section(section).surface();

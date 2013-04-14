@@ -266,10 +266,10 @@ public:
          *
          * @param sectionId  Identifier of the section to return.
          */
-        Section &section(SideDefSection sectionId);
+        Section &section(SideSection sectionId);
 
         /// @copydoc section()
-        Section const &section(SideDefSection sectionId) const;
+        Section const &section(SideSection sectionId) const;
 
         /**
          * Returns the middle section of the side.
@@ -365,14 +365,14 @@ public:
         /**
          * Update the side's sound emitter origins according to the points defined by
          * the Line's vertices and the plane heights of the Sector on this side.
-         * If no SideDef is associated this is a no-op.
+         * If no Sections are defined this is a no-op.
          */
         void updateAllSoundEmitterOrigins();
 
         /**
          * Update the tangent space normals of the side's surfaces according to the
-         * points defined by the Line's vertices. If no SideDef is associated this
-         * is a no-op.
+         * points defined by the Line's vertices. If no Sections are defined this is
+         * a no-op.
          */
         void updateSurfaceNormals();
 

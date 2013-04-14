@@ -59,7 +59,7 @@ using namespace de;
 ///@{
 #define SOF_SECTOR              0x01
 #define SOF_PLANE               0x02
-#define SOF_SIDEDEF             0x04
+#define SOF_SIDE                0x04
 ///@}
 
 void Rend_DrawBBox(coord_t const pos[3], coord_t w, coord_t l, coord_t h, float a,
@@ -401,13 +401,13 @@ static byte pvisibleLineSections(Line *line, int backSide)
 
         // Top?
         if((!devRendSkyMode && fceil->surface().hasSkyMaskedMaterial() && bceil->surface().hasSkyMaskedMaterial()) ||
-           //(!devRendSkyMode && bceil->surface().isSkyMasked() && (sideDef.top().hasFixMaterial())) ||
+           //(!devRendSkyMode && bceil->surface().isSkyMasked() && (side.top().surface().hasFixMaterial())) ||
            (fceil->visHeight() <= bceil->visHeight()))
             sections &= ~SSF_TOP;
 
         // Bottom?
         if((!devRendSkyMode && ffloor->surface().hasSkyMaskedMaterial() && bfloor->surface().hasSkyMaskedMaterial()) ||
-           //(!devRendSkyMode && bfloor->surface().isSkyMasked() && (sideDef.bottom().hasFixMaterial())) ||
+           //(!devRendSkyMode && bfloor->surface().isSkyMasked() && (side.bottom().surface().hasFixMaterial())) ||
            (ffloor->visHeight() >= bfloor->visHeight()))
             sections &= ~SSF_BOTTOM;
     }
@@ -416,7 +416,7 @@ static byte pvisibleLineSections(Line *line, int backSide)
 }
 
 static void selectSurfaceColors(Vector3f const **topColor,
-    Vector3f const **bottomColor, Line::Side &lineSide, SideDefSection section)
+    Vector3f const **bottomColor, Line::Side &lineSide, SideSection section)
 {
     switch(section)
     {
@@ -1666,7 +1666,7 @@ static void lineLightLevelDeltas(Line const &line, int side,
 #define RHF_FORCE_OPAQUE        0x10 ///< Force the geometry to be opaque.
 ///@}
 
-static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
+static boolean rendHEdgeSection(HEdge *hedge, SideSection section,
     int flags, float lightLevel, Vector3f const &lightColor,
     walldivs_t *leftWallDivs, walldivs_t *rightWallDivs,
     float const matOffset[2])
@@ -2775,7 +2775,7 @@ static void Rend_RenderWalls()
     do
     {
         if((hedge->_frameFlags & HEDGEINF_FACINGFRONT) &&
-           /* "mini-hedges" have no lines and "windows" have no sidedef */
+           /* "mini-hedges" have no lines and "windows" have no sections */
            hedge->hasLine() && hedge->lineSide().hasSections())
         {
             Sector *frontSec = hedge->sectorPtr();
@@ -3252,7 +3252,7 @@ void Rend_RenderSoundOrigins()
 
     V3d_Set(eye, vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
 
-    if(devSoundOrigins & SOF_SIDEDEF)
+    if(devSoundOrigins & SOF_SIDE)
     {
         /// @todo Do not assume current map.
         foreach(Line *line, theMap->lines())

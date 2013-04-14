@@ -63,9 +63,8 @@ static int vertexCompare(void const *p1, void const *p2)
 ///@{
 #define PRUNE_LINES         0x1
 #define PRUNE_VERTEXES      0x2
-#define PRUNE_SIDEDEFS      0x4
-#define PRUNE_SECTORS       0x8
-#define PRUNE_ALL           (PRUNE_LINES|PRUNE_VERTEXES|PRUNE_SIDEDEFS|PRUNE_SECTORS)
+#define PRUNE_SECTORS       0x4
+#define PRUNE_ALL           (PRUNE_LINES|PRUNE_VERTEXES|PRUNE_SECTORS)
 ///@}
 
 /**
@@ -223,7 +222,7 @@ public:
         {
             Line *l = lines[i];
 
-            if(!l->hasFrontSideDef() && !l->hasBackSideDef())
+            if(!l->hasFrontSections() && !l->hasBackSections())
             {
                 unused++;
 
@@ -283,45 +282,11 @@ public:
         }
     }
 
-    void pruneUnusedSidedefs()
-    {
-        uint i, newNum, unused = 0;
-
-        for(i = 0, newNum = 0; i < sideDefs.count(); ++i)
-        {
-            SideDef *s = sideDefs[i];
-
-            if(s->buildData.refCount == 0)
-            {
-                unused++;
-
-                M_Free(s);
-                continue;
-            }
-
-            s->_buildData.index = newNum + 1;
-            sideDefs[newNum++] = s;
-        }
-
-        if(newNum < sideDefs.count())
-        {
-            int dupNum = sideDefs.count() - newNum - unused;
-
-            if(unused > 0)
-                Con_Message("  Pruned %d unused sidedefs.", unused);
-
-            if(dupNum > 0)
-                Con_Message("  Pruned %d duplicate sidedefs.", dupNum);
-
-            sideDefs.resize(newNum);
-        }
-    }
-
     void pruneUnusedSectors()
     {
-        for(uint i = 0; i < sideDefs.count(); ++i)
+        for(uint i = 0; i < sides.count(); ++i)
         {
-            SideDef *s = sideDefs[i];
+            Side *s = sides[i];
 
             if(s->sector)
                 s->sector->buildData.refCount++;
@@ -371,9 +336,6 @@ public:
 
         if(flags & PRUNE_VERTEXES)
             pruneVertices();
-
-        if(flags & PRUNE_SIDEDEFS)
-            pruneUnusedSidedefs();
 
         if(flags & PRUNE_SECTORS)
             pruneUnusedSectors();

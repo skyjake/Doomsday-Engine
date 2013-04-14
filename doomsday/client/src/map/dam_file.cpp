@@ -353,7 +353,7 @@ static void writeSide(GameMap *map, uint idx)
 {
     DENG_ASSERT(map);
 
-    SideDef *s = &map->sideDefs[idx];
+    Side *s = &map->sideDefs[idx];
 
     for(uint i = 0; i < 3; ++i)
     {
@@ -381,7 +381,7 @@ static void readSide(GameMap *map, uint idx)
 
     vec2f_t newOrigin;
     vec4f_t newColorAndAlpha;
-    SideDef *s = &map->sideDefs[idx];
+    Side *s = &map->sideDefs[idx];
 
     for(uint i = 0; i < 3; ++i)
     {
@@ -1082,8 +1082,8 @@ static void archiveMap(GameMap *map, boolean write)
         if(gx.SetupForMapData)
         {
             gx.SetupForMapData(DMU_VERTEX, map->vertexCount());
-            gx.SetupForMapData(DMU_LINE, map->lineCount());
-            gx.SetupForMapData(DMU_SIDEDEF, map->sideDefCount());
+            gx.SetupForMapData(DMU_LINE,   map->lineCount());
+            gx.SetupForMapData(DMU_SIDE,   map->sideDefCount());
             gx.SetupForMapData(DMU_SECTOR, map->sectorCount());
         }
     }

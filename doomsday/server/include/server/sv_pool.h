@@ -160,7 +160,7 @@ typedef struct {
     dt_surface_t    middle;
     dt_surface_t    bottom;
     byte            lineFlags; // note: only a byte!
-    byte            flags; // Sidedef flags.
+    byte            flags; // Side flags.
 } dt_side_t;
 
 typedef struct {

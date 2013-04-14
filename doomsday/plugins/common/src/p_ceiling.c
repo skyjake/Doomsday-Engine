@@ -359,8 +359,8 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
         case CT_CUSTOM: // jd64
             {
             //bitmip? wha?
-            SideDef* front = P_GetPtrp(line, DMU_SIDEDEF0);
-            SideDef* back = P_GetPtrp(line, DMU_SIDEDEF1);
+            Side* front = P_GetPtrp(line, DMU_FRONT);
+            Side* back = P_GetPtrp(line, DMU_BACK);
             coord_t bitmipL = 0, bitmipR = 0;
 
             bitmipL = P_GetDoublep(front, DMU_MIDDLE_MATERIAL_OFFSET_X);

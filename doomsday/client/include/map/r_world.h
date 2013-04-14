@@ -93,7 +93,7 @@ void R_OrderVertices(Line *line, Sector const *sector, Vertex *verts[2]);
  *
  * @return  @c true iff the determined wall section height is @c >0
  */
-boolean R_FindBottomTop(SideDefSection section, int lineFlags,
+boolean R_FindBottomTop(SideSection section, int lineFlags,
     Sector const *frontSec, Sector const *backSec,
     Line::Side const *front, Line::Side const *back,
     coord_t *low, coord_t *hi, pvec2f_t matOffset = 0);
@@ -158,7 +158,7 @@ coord_t R_VisOpenRange(Line const &line, int side, coord_t *bottom, coord_t *top
  * @param back          Back line side. Can be @c NULL.  @todo Refactor away
  * @param ignoreOpacity @c true= material opacity should be ignored.
  *
- * @return  @c true iff SideDef @a frontDef has a "middle" Material which completely
+ * @return  @c true iff Line::Side @a front has a "middle" Material which completely
  *     covers the open range defined by sectors @a frontSec and @a backSec.
  */
 boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector const *frontSec,
@@ -197,7 +197,7 @@ Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
  * A line's align neighbor is a line that shares a vertex with 'line' and
  * whos orientation is aligned with it (thus, making it unnecessary to have
  * a shadow between them. In practice, they would be considered a single,
- * long sidedef by the shadow generator).
+ * long side by the shadow generator).
  */
 Line *R_FindLineAlignNeighbor(Sector const *sec, Line const *line,
     LineOwner const *own, boolean antiClockwise, int alignment);

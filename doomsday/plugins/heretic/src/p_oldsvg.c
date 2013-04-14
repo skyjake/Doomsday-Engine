@@ -430,7 +430,7 @@ static void P_v13_UnArchiveWorld(void)
         {
             Uri *topTextureUrn, *bottomTextureUrn, *middleTextureUrn;
 
-            SideDef* sdef = P_GetPtrp(line, j == 0? DMU_SIDEDEF0 : DMU_SIDEDEF1);
+            Side* sdef = P_GetPtrp(line, j == 0? DMU_FRONT : DMU_BACK);
             if(!sdef) continue;
 
             offx = Reader_ReadInt16(svReader) << FRACBITS;

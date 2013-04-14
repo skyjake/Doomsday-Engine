@@ -155,9 +155,9 @@ typedef enum {
 #define SNDDF_REPEAT            0x02 // Start repeating sound.
 #define SNDDF_PLANE_FLOOR       0x04 // Play sound from a sector's floor.
 #define SNDDF_PLANE_CEILING     0x08 // Play sound from a sector's ceiling.
-#define SNDDF_SIDE_TOP          0x10 // Play sound from a sidedef's top part.
-#define SNDDF_SIDE_MIDDLE       0x20 // Play sound from a sidedef's middle part.
-#define SNDDF_SIDE_BOTTOM       0x40 // Play sound from a sidedef's bottom part.
+#define SNDDF_SIDE_TOP          0x10 // Play sound from a side's top part.
+#define SNDDF_SIDE_MIDDLE       0x20 // Play sound from a side's middle part.
+#define SNDDF_SIDE_BOTTOM       0x40 // Play sound from a side's bottom part.
 
 /**
  * @defgroup soundPacketFlags  Sound Packet Flags

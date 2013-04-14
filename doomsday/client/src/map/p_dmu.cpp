@@ -53,7 +53,7 @@ struct DummyData
 };
 
 class DummyVertex  : public Vertex,  public DummyData {};
-//class DummySideDef : public SideDef, public DummyData {};
+//class DummySide : public Side, public DummyData {};
 class DummySector  : public Sector,  public DummyData {};
 
 class DummyLine : public Line, public DummyData
@@ -79,7 +79,7 @@ char const *DMU_Str(uint prop)
         { DMU_VERTEX, "DMU_VERTEX" },
         { DMU_HEDGE, "DMU_HEDGE" },
         { DMU_LINE, "DMU_LINE" },
-        { DMU_SIDEDEF, "DMU_SIDEDEF" },
+        { DMU_SIDE, "DMU_SIDE" },
         { DMU_BSPNODE, "DMU_BSPNODE" },
         { DMU_BSPLEAF, "DMU_BSPLEAF" },
         { DMU_SECTOR, "DMU_SECTOR" },
@@ -108,8 +108,8 @@ char const *DMU_Str(uint prop)
         { DMU_VERTEX1, "DMU_VERTEX1" },
         { DMU_FRONT_SECTOR, "DMU_FRONT_SECTOR" },
         { DMU_BACK_SECTOR, "DMU_BACK_SECTOR" },
-        { DMU_SIDEDEF0, "DMU_SIDEDEF0" },
-        { DMU_SIDEDEF1, "DMU_SIDEDEF1" },
+        { DMU_FRONT, "DMU_FRONT" },
+        { DMU_BACK, "DMU_BACK" },
         { DMU_FLAGS, "DMU_FLAGS" },
         { DMU_DX, "DMU_DX" },
         { DMU_DY, "DMU_DY" },
@@ -166,7 +166,7 @@ int DMU_GetType(void const *ptr)
     case DMU_VERTEX:
     case DMU_HEDGE:
     case DMU_LINE:
-    case DMU_SIDEDEF:
+    case DMU_SIDE:
     case DMU_BSPLEAF:
     case DMU_SECTOR:
     case DMU_PLANE:
@@ -209,8 +209,8 @@ void *P_AllocDummy(int type, void *extraData)
 {
     switch(type)
     {
-    /*case DMU_SIDEDEF: {
-        DummySideDef *ds = new DummySideDef;
+    /*case DMU_SIDE: {
+        DummySide *ds = new DummySide;
         dummies.insert(ds);
         ds->extraData = extraData;
         return ds; }*/
@@ -309,7 +309,7 @@ uint P_ToIndex(void const *ptr)
     case DMU_LINE:
         return theMap->lineIndex(elem->castTo<Line>());
 
-    case DMU_SIDEDEF:
+    case DMU_SIDE:
         return theMap->sideIndex(elem->castTo<Line::Side>());
 
     case DMU_BSPLEAF:
@@ -348,7 +348,7 @@ void *P_ToPtr(int type, uint index)
     case DMU_LINE:
         return theMap->lines().at(index);
 
-    case DMU_SIDEDEF:
+    case DMU_SIDE:
         return theMap->sideByIndex(index);
 
     case DMU_SECTOR:
@@ -476,7 +476,7 @@ int P_Callback(int type, uint index, void *context, int (*callback)(void *p, voi
             return callback(theMap->lines().at(index), context);
         break;
 
-    case DMU_SIDEDEF: {
+    case DMU_SIDE: {
         Line::Side *side = theMap->sideByIndex(index);
         if(side)
             return callback(side, context);
@@ -544,7 +544,7 @@ int P_Callbackp(int type, void *elPtr, void *context, int (*callback)(void *p, v
     case DMU_VERTEX:
     case DMU_HEDGE:
     case DMU_LINE:
-    case DMU_SIDEDEF:
+    case DMU_SIDE:
     case DMU_BSPNODE:
     case DMU_BSPLEAF:
     case DMU_SECTOR:
@@ -895,33 +895,33 @@ static int setProperty(void *ptr, void *context)
     {
         updateLine = elem->castTo<Line>();
 
-        if(args->modifiers & DMU_SIDEDEF0_OF_LINE)
+        if(args->modifiers & DMU_FRONT_OF_LINE)
         {
             elem = &elem->castTo<Line>()->front();
-            args->type = DMU_SIDEDEF;
+            args->type = DMU_SIDE;
         }
-        else if(args->modifiers & DMU_SIDEDEF1_OF_LINE)
+        else if(args->modifiers & DMU_BACK_OF_LINE)
         {
             elem = &elem->castTo<Line>()->back();
-            args->type = DMU_SIDEDEF;
+            args->type = DMU_SIDE;
         }
     }
 
-    if(args->type == DMU_SIDEDEF)
+    if(args->type == DMU_SIDE)
     {
         updateSide = elem->castTo<Line::Side>();
 
-        if(args->modifiers & DMU_TOP_OF_SIDEDEF)
+        if(args->modifiers & DMU_TOP_OF_SIDE)
         {
             elem = &elem->castTo<Line::Side>()->top().surface();
             args->type = DMU_SURFACE;
         }
-        else if(args->modifiers & DMU_MIDDLE_OF_SIDEDEF)
+        else if(args->modifiers & DMU_MIDDLE_OF_SIDE)
         {
             elem = &elem->castTo<Line::Side>()->middle().surface();
             args->type = DMU_SURFACE;
         }
-        else if(args->modifiers & DMU_BOTTOM_OF_SIDEDEF)
+        else if(args->modifiers & DMU_BOTTOM_OF_SIDE)
         {
             elem = &elem->castTo<Line::Side>()->bottom().surface();
             args->type = DMU_SURFACE;
@@ -1005,7 +1005,7 @@ static int setProperty(void *ptr, void *context)
         elem->castTo<Line>()->setProperty(*args);
         break;
 
-    case DMU_SIDEDEF:
+    case DMU_SIDE:
         elem->castTo<Line::Side>()->setProperty(*args);
         break;
 
@@ -1342,35 +1342,35 @@ static int getProperty(void *ptr, void *context)
 
     if(args->type == DMU_LINE)
     {
-        if(args->modifiers & DMU_SIDEDEF0_OF_LINE)
+        if(args->modifiers & DMU_FRONT_OF_LINE)
         {
             elem = &elem->castTo<Line>()->front();
-            args->type = DMU_SIDEDEF;
+            args->type = DMU_SIDE;
             DENG2_ASSERT(args->type == elem->type());
         }
-        else if(args->modifiers & DMU_SIDEDEF1_OF_LINE)
+        else if(args->modifiers & DMU_BACK_OF_LINE)
         {
             elem = &elem->castTo<Line>()->back();
-            args->type = DMU_SIDEDEF;
+            args->type = DMU_SIDE;
             DENG2_ASSERT(args->type == elem->type());
         }
     }
 
-    if(args->type == DMU_SIDEDEF)
+    if(args->type == DMU_SIDE)
     {
-        if(args->modifiers & DMU_TOP_OF_SIDEDEF)
+        if(args->modifiers & DMU_TOP_OF_SIDE)
         {
             elem = &elem->castTo<Line::Side>()->top().surface();
             args->type = DMU_SURFACE;
             DENG2_ASSERT(args->type == elem->type());
         }
-        else if(args->modifiers & DMU_MIDDLE_OF_SIDEDEF)
+        else if(args->modifiers & DMU_MIDDLE_OF_SIDE)
         {
             elem = &elem->castTo<Line::Side>()->middle().surface();
             args->type = DMU_SURFACE;
             DENG2_ASSERT(args->type == elem->type());
         }
-        else if(args->modifiers & DMU_BOTTOM_OF_SIDEDEF)
+        else if(args->modifiers & DMU_BOTTOM_OF_SIDE)
         {
             elem = &elem->castTo<Line::Side>()->bottom().surface();
             args->type = DMU_SURFACE;
@@ -1441,7 +1441,7 @@ static int getProperty(void *ptr, void *context)
         elem->castTo<Sector>()->property(*args);
         break;
 
-    case DMU_SIDEDEF:
+    case DMU_SIDE:
         elem->castTo<Line::Side>()->property(*args);
         break;
 

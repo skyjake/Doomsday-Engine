@@ -327,11 +327,11 @@ enum {
     /// significant byte.
     /// @{
     DMU_FLAG_MASK           = 0xff000000,
-    DMU_SIDEDEF1_OF_LINE    = 0x80000000,
-    DMU_SIDEDEF0_OF_LINE    = 0x40000000,
-    DMU_TOP_OF_SIDEDEF      = 0x20000000,
-    DMU_MIDDLE_OF_SIDEDEF   = 0x10000000,
-    DMU_BOTTOM_OF_SIDEDEF   = 0x08000000,
+    DMU_BACK_OF_LINE        = 0x80000000,
+    DMU_FRONT_OF_LINE       = 0x40000000,
+    DMU_TOP_OF_SIDE         = 0x20000000,
+    DMU_MIDDLE_OF_SIDE      = 0x10000000,
+    DMU_BOTTOM_OF_SIDE      = 0x08000000,
     DMU_FLOOR_OF_SECTOR     = 0x04000000,
     DMU_CEILING_OF_SECTOR   = 0x02000000,
     // (1 bits left)
@@ -343,7 +343,7 @@ enum {
     DMU_VERTEX = DMU_FIRST_ELEMENT_TYPE_ID,
     DMU_HEDGE,
     DMU_LINE,
-    DMU_SIDEDEF,
+    DMU_SIDE,
     DMU_BSPNODE,
     DMU_BSPLEAF,
     DMU_SECTOR,
@@ -382,8 +382,8 @@ enum {
 
     DMU_FRONT_SECTOR,
     DMU_BACK_SECTOR,
-    DMU_SIDEDEF0,
-    DMU_SIDEDEF1,
+    DMU_FRONT,
+    DMU_BACK,
     DMU_FLAGS,
     DMU_DX,
     DMU_DY,
@@ -435,9 +435,9 @@ enum {
 ///@}
 
 /**
- * @defgroup sdefFlags Sidedef Flags
+ * @defgroup sdefFlags Side Flags
  * @ingroup dmu apiFlags
- * For use with P_Set/Get(DMU_SIDEDEF, n, DMU_FLAGS).
+ * For use with P_Set/Get(DMU_SIDE, n, DMU_FLAGS).
  */
 
 /// @addtogroup sdefFlags
@@ -502,19 +502,19 @@ enum {
 /// Environmental audio characteristics. @ingroup map
 typedef float AudioEnvironmentFactors[NUM_REVERB_DATA];
 
-/// SideDef section indices. @ingroup map
-typedef enum sidedefsection_e {
+/// Side section indices. @ingroup map
+typedef enum sidesection_e {
     SS_MIDDLE,
     SS_BOTTOM,
     SS_TOP
-} SideDefSection;
+} SideSection;
 
-#define VALID_SIDEDEFSECTION(v) ((v) >= SS_MIDDLE && (v) <= SS_TOP)
+#define VALID_SIDESECTION(v) ((v) >= SS_MIDDLE && (v) <= SS_TOP)
 
-/// Helper macro for converting SideDefSection indices to their associated DMU flag. @ingroup map
-#define DMU_FLAG_FOR_SIDEDEFSECTION(s) (\
-    (s) == SS_MIDDLE? DMU_MIDDLE_OF_SIDEDEF : \
-    (s) == SS_BOTTOM? DMU_BOTTOM_OF_SIDEDEF : DMU_TOP_OF_SIDEDEF)
+/// Helper macro for converting SideSection indices to their associated DMU flag. @ingroup map
+#define DMU_FLAG_FOR_SIDESECTION(s) (\
+    (s) == SS_MIDDLE? DMU_MIDDLE_OF_SIDE : \
+    (s) == SS_BOTTOM? DMU_BOTTOM_OF_SIDE : DMU_TOP_OF_SIDE)
 
 typedef struct {
     float origin[2];

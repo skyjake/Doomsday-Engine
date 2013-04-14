@@ -42,7 +42,7 @@
 using namespace de;
 
 Line::Side::Side(Line &line, Sector *sector)
-    : MapElement(DMU_SIDEDEF),
+    : MapElement(DMU_SIDE),
       _line(line),
       _sector(sector),
       _sections(0),
@@ -106,7 +106,7 @@ void Line::Side::setSideDefArchiveIndex(uint newIndex)
     _sideDefArchiveIndex = newIndex;
 }
 
-Line::Side::Section &Line::Side::section(SideDefSection sectionId)
+Line::Side::Section &Line::Side::section(SideSection sectionId)
 {
     if(_sections)
     {
@@ -122,7 +122,7 @@ Line::Side::Section &Line::Side::section(SideDefSection sectionId)
     throw Line::InvalidSectionIdError("Line::Side::section", QString("Invalid section id %1").arg(sectionId));
 }
 
-Line::Side::Section const &Line::Side::section(SideDefSection sectionId) const
+Line::Side::Section const &Line::Side::section(SideSection sectionId) const
 {
     return const_cast<Section const &>(const_cast<Side &>(*this).section(sectionId));
 }
@@ -581,12 +581,12 @@ int Line::property(setargs_t &args) const
     case DMU_FLAGS:
         DMU_GetValue(DMT_LINE_FLAGS, &_flags, &args, 0);
         break;
-    case DMU_SIDEDEF0: {
+    case DMU_FRONT: {
         /// @todo Update the games so that sides without sections can be returned.
         Line::Side const *frontAdr = hasFrontSections()? &d->front : 0;
         DMU_GetValue(DDVT_PTR, &frontAdr, &args, 0);
         break; }
-    case DMU_SIDEDEF1: {
+    case DMU_BACK: {
         /// @todo Update the games so that sides without sections can be returned.
         Line::Side const *backAdr = hasBackSections()? &d->back : 0;
         DMU_GetValue(DDVT_PTR, &backAdr, &args, 0);
@@ -618,7 +618,7 @@ int Line::property(setargs_t &args) const
 
 int Line::setProperty(setargs_t const &args)
 {
-    /// @todo fixme: Changing the sector and/or sidedef references via the DMU
+    /// @todo fixme: Changing the sector and/or side references via the DMU
     /// API should be disabled - it has no concept of what is actually needed
     /// to effect such changes at run time.
     ///
@@ -637,14 +637,14 @@ int Line::setProperty(setargs_t const &args)
         DMU_SetValue(DMT_LINE_SECTOR, &newBackSector, &args, 0);
         d->back._sector = newBackSector;
         break; }
-    /*case DMU_SIDEDEF0: {
+    /*case DMU_FRONT: {
         SideDef *newFrontSideDef = frontSideDefPtr();
-        DMU_SetValue(DMT_LINE_SIDEDEF, &newFrontSideDef, &args, 0);
+        DMU_SetValue(DMT_LINE_SIDE, &newFrontSideDef, &args, 0);
         d->front._sideDef = newFrontSideDef;
         break; }
-    case DMU_SIDEDEF1: {
+    case DMU_BACK: {
         SideDef *newBackSideDef = backSideDefPtr();
-        DMU_SetValue(DMT_LINE_SIDEDEF, &newBackSideDef, &args, 0);
+        DMU_SetValue(DMT_LINE_SIDE, &newBackSideDef, &args, 0);
         d->back._sideDef = newBackSideDef;
         break; }*/
 

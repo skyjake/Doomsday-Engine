@@ -32,9 +32,9 @@ void T_Scroll(scroll_t* s)
     if(FEQUAL(s->offset[0], 0) && FEQUAL(s->offset[1], 0)) return;
 
     // Side surface(s)?
-    if(DMU_GetType(s->dmuObject) == DMU_SIDEDEF)
+    if(DMU_GetType(s->dmuObject) == DMU_SIDE)
     {
-        SideDef* side = s->dmuObject;
+        Side* side = s->dmuObject;
 
         if(s->elementBits & (1 << SS_TOP))
         {
@@ -87,7 +87,7 @@ static scroll_t* spawnMaterialOriginScroller(void* dmuObject, int elementBits, f
     return scroll;
 }
 
-scroll_t* P_SpawnSideMaterialOriginScroller(SideDef* side, short special)
+scroll_t* P_SpawnSideMaterialOriginScroller(Side* side, short special)
 {
     int elementBits;
     float offset[2];

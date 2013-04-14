@@ -124,7 +124,7 @@ public: /// @todo Make private:
     /// Accurate length of the segment (v1 -> v2).
     coord_t _length;
 
-    /// For each @ref SideDefSection.
+    /// For each @ref SideSection.
     biassurface_t *_bsuf[3];
 
     /// @ref hedgeFrameFlags
@@ -406,7 +406,7 @@ public:
      * @return  @c true if divisions were prepared (the specified @a section has a
      *          non-zero Z axis height).
      */
-    bool prepareWallDivs(SideDefSection section, Sector *frontSector, Sector *backSector,
+    bool prepareWallDivs(SideSection section, Sector *frontSector, Sector *backSector,
         walldivs_t *leftWallDivs, walldivs_t *rightWallDivs, pvec2f_t matOffset) const;
 
     /**

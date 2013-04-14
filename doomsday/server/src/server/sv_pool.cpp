@@ -75,7 +75,7 @@ typedef struct cregister_s {
 
     dt_player_t         ddPlayers[DDMAXPLAYERS];
     dt_sector_t*        sectors;
-    dt_side_t*          sideDefs;
+    dt_side_t*          sides;
     dt_poly_t*          polyObjs;
 } cregister_t;
 
@@ -757,7 +757,7 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number,
     sidedelta_t *d, byte doUpdate)
 {
     Line::Side const *side = theMap->sideByIndex(number);
-    dt_side_t *r = &reg->sideDefs[number];
+    dt_side_t *r = &reg->sides[number];
     byte lineFlags = side->line().flags() & 0xff;
     byte sideFlags = side->flags() & 0xff;
     int df = 0;
@@ -962,10 +962,10 @@ void Sv_RegisterWorld(cregister_t *reg, boolean isInitial)
     }
 
     // Init sides.
-    reg->sideDefs = (dt_side_t *) Z_Calloc(sizeof(*reg->sideDefs) * theMap->sideCount(), PU_MAP, 0);
+    reg->sides = (dt_side_t *) Z_Calloc(sizeof(*reg->sides) * theMap->sideCount(), PU_MAP, 0);
     for(uint i = 0; i < theMap->sideCount(); ++i)
     {
-        Sv_RegisterSide(&reg->sideDefs[i], i);
+        Sv_RegisterSide(&reg->sides[i], i);
     }
 
     // Init polyobjs.
@@ -2358,7 +2358,7 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
     }
     else if(sourceSurface)
     {
-        DENG_ASSERT(sourceSurface->owner().type() == DMU_SIDEDEF);
+        DENG_ASSERT(sourceSurface->owner().type() == DMU_SIDE);
         DENG2_ASSERT(emitter == 0); // surface sound emitter rather than a real mobj
 
         type = DT_SIDE_SOUND;

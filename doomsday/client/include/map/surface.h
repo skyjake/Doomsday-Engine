@@ -107,7 +107,7 @@ public:
             de::Vector3f const &tintColor = DEFAULT_TINT_COLOR);
 
     /**
-     * Returns the owning map element. Either @c DMU_SIDEDEF, or @c DMU_PLANE.
+     * Returns the owning map element. Either @c DMU_SIDE, or @c DMU_PLANE.
      */
     de::MapElement &owner() const;
 
