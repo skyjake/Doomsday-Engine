@@ -38,16 +38,29 @@ DENG2_PIMPL(WidgetActions)
 WidgetActions::WidgetActions() : d(new Instance(this))
 {}
 
-Action *WidgetActions::actionForEvent(Event const &event)
-{
-    return 0;
-}
-
-bool WidgetActions::tryEvent(Event const &event)
+bool WidgetActions::tryEvent(Event const &event, String const &context)
 {
     ddevent_t ddev;
     DD_ConvertEvent(event, &ddev);
-    return tryEvent(&ddev);
+    if(context.isEmpty())
+    {
+        // Check all enabled contexts.
+        return tryEvent(&ddev);
+    }
+
+    // Check a specific binding context for an action.
+    bcontext_t *bc = B_ContextByName(context.toLatin1());
+    if(bc)
+    {
+        std::auto_ptr<Action> act(BindContext_ActionForEvent(bc, &ddev));
+        if(act.get())
+        {
+            act->trigger();
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool WidgetActions::tryEvent(ddevent_t const *ev)

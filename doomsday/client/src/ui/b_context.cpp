@@ -365,9 +365,7 @@ void B_SetContextFallback(const char* name, int (*responderFunc)(event_t*))
 
 bcontext_t* B_ContextByName(const char* name)
 {
-    int                 i;
-
-    for(i = 0; i < bindContextCount; ++i)
+    for(int i = 0; i < bindContextCount; ++i)
     {
         if(!strcasecmp(name, bindContexts[i]->name))
             return bindContexts[i];
@@ -535,6 +533,23 @@ boolean B_DeleteBinding(bcontext_t* bc, int bid)
     return false;
 }
 
+de::Action *BindContext_ActionForEvent(bcontext_t *bc, ddevent_t const *event)
+{
+    if(!(bc->flags & BCF_ACTIVE))
+        return 0;
+
+    // See if the command bindings will have it.
+    for(evbinding_t *eb = bc->commandBinds.next; eb != &bc->commandBinds; eb = eb->next)
+    {
+        de::Action *act = 0;
+        if((act = EventBinding_ActionForEvent(eb, event, bc)) != 0)
+        {
+            return act;
+        }
+    }
+    return 0;
+}
+
 de::Action *B_ActionForEvent(ddevent_t const *event)
 {
     event_t ev;
@@ -543,23 +558,25 @@ de::Action *B_ActionForEvent(ddevent_t const *event)
     for(int i = 0; i < bindContextCount; ++i)
     {
         bcontext_t *bc = bindContexts[i];
-        de::Action *act = 0;
-
         if(!(bc->flags & BCF_ACTIVE))
             continue;
 
-        // See if the command bindings will have it.
-        for(evbinding_t *eb = bc->commandBinds.next; eb != &bc->commandBinds; eb = eb->next)
+        de::Action *act = BindContext_ActionForEvent(bc, event);
+        if(act)
         {
-            if((act = B_FindCommandBindingAction(eb, event, bc)) != 0)
-            {
-                return act;
-            }
+            return act;
         }
 
-        // Try the fallbacks.
+        /**
+         * @todo Conceptually the fallback responders don't belong: instead of
+         * "responding" (immediately performing a reaction), we should be
+         * returning an Action instance. -jk
+         */
+
+        // Try the fallback responders.
         if(bc->ddFallbackResponder && bc->ddFallbackResponder(event))
             return 0; // fallback responder executed something
+
         if(bc->fallbackResponder && bc->fallbackResponder(&ev))
             return 0; // fallback responder executed something
     }

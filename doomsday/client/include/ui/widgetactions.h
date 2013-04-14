@@ -32,7 +32,9 @@
  * @todo "WidgetActions" is a work-in-progress name.
  *
  * @todo There should be one of these in every widget that has actions bound.
- * When that's done, the old binding contexts become obsolete.
+ * When that's done, many of the old binding contexts become obsolete. There
+ * should still be support for several alternative contexts within one widget,
+ * for instance depending on the mode of the widget (e.g., automap pan).
  *
  * @todo What to do about control bindings?
  */
@@ -42,22 +44,18 @@ public:
     WidgetActions();
 
     /**
-     * Returns an action that the user has bound to the provided event.
-     *
-     * @param event  Event instance.
-     *
-     * @return  Action bound to the event. Caller gets ownership of the Action.
-     */
-    de::Action *actionForEvent(de::Event const &event);
-
-    /**
      * If an action has been defined for the event, trigger it.
      *
-     * @param event  Event instance.
+     * This is meant to be used as a way for Widgets to take advantage of the
+     * traditional bindings system for user-customizable actions.
+     *
+     * @param event    Event instance.
+     * @param context  Name of the binding context. If empty, all contexts
+     *                 all checked.
      *
      * @return @c true if even was triggered, @c false otherwise.
      */
-    bool tryEvent(de::Event const &event);
+    bool tryEvent(de::Event const &event, de::String const &context = "");
 
     bool tryEvent(ddevent_t const *ev);
 

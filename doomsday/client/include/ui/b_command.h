@@ -64,6 +64,6 @@ void         B_EventBindingToString(const evbinding_t* eb, ddstring_t* str);
  *
  * @return  Action to be triggered, or @c NULL. Caller gets ownership.
  */
-de::Action *B_FindCommandBindingAction(evbinding_t *eb, ddevent_t const *event, struct bcontext_s *eventClass);
+de::Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event, struct bcontext_s *eventClass);
 
 #endif // __DOOMSDAY_BIND_COMMAND_H__

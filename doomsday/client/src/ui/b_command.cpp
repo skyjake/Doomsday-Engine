@@ -358,7 +358,7 @@ static void B_SubstituteInCommand(char const *command, ddevent_t const *event,
     }
 }
 
-de::Action *B_FindCommandBindingAction(evbinding_t *eb, ddevent_t const *event, struct bcontext_s *eventClass)
+de::Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event, struct bcontext_s *eventClass)
 {
     int         i;
     inputdev_t* dev = 0;
