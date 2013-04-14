@@ -18,14 +18,15 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_GAMEMAP_H
-#define LIBDENG_GAMEMAP_H
+#ifndef DENG_WORLD_MAP_H
+#define DENG_WORLD_MAP_H
 
+#include <de/mathutil.h>
+
+#include <EntityDatabase>
 #include "p_maptypes.h"
 #include "p_particle.h"
 #include "plane.h"
-#include <EntityDatabase>
-#include <de/mathutil.h>
 
 struct thinkerlist_s;
 struct clmoinfo_s;
@@ -75,7 +76,6 @@ public:
     typedef QList<Vertex *> Vertexes;
     typedef QList<Sector *> Sectors;
     typedef QList<Line *> Lines;
-    typedef QList<SideDef *> SideDefs;
     typedef QList<Polyobj *> Polyobjs;
 
     typedef QList<HEdge *> HEdges;
@@ -105,7 +105,6 @@ public:
     Vertexes _vertexes;
     Sectors _sectors;
     Lines _lines;
-    SideDefs _sideDefs;
     Polyobjs _polyobjs;
 
     EntityDatabase *entityDatabase;
@@ -178,6 +177,8 @@ public:
     Lines const &lines() const { return _lines; }
 
     inline uint lineCount() const { return lines().count(); }
+
+    inline uint sideCount() const { return lines().count() * 2; }
 
     Sectors const &sectors() const { return _sectors; }
 
@@ -538,14 +539,6 @@ public:
      */
     PlaneSet /*const*/ &trackedPlanes();
 
-public: /// @todo Remove:
-
-    /// @deprecated SideDefs are being phased out.
-    SideDefs const &sideDefs() const { return _sideDefs; }
-
-    /// @deprecated SideDefs are being phased out.
-    inline uint sideDefCount() const { return sideDefs().count(); }
-
 public: /// @todo Replace with object level methods:
     /**
      * Lookup the in-map unique index for @a vertex.
@@ -564,12 +557,18 @@ public: /// @todo Replace with object level methods:
     int lineIndex(Line const *line) const;
 
     /**
-     * Lookup the in-map unique index for @a sideDef.
+     * Lookup the in-map unique index for @a side.
      *
-     * @param side  SideDef to lookup.
-     * @return  Unique index for the SideDef else @c -1 if not present.
+     * @param side  Line::Side to lookup.
+     * @return  Unique index for the Line::Side else @c -1 if not present.
      */
-    int sideDefIndex(SideDef const *side) const;
+    int sideIndex(Line::Side const *side) const;
+
+    /**
+     * Returns a pointer to the Line::Side associated with the specified @a index;
+     * otherwise @c 0.
+     */
+    Line::Side *sideByIndex(int index) const;
 
     /**
      * Lookup the in-map unique index for @a sector.
@@ -748,4 +747,4 @@ void GameMap_SetMobjID(GameMap *map, thid_t id, boolean inUse);
 // The current map.
 DENG_EXTERN_C GameMap *theMap;
 
-#endif // LIBDENG_GAMEMAP_H
+#endif // DENG_WORLD_MAP_H

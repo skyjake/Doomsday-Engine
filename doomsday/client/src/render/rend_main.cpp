@@ -1312,7 +1312,7 @@ static boolean doRenderHEdge(HEdge *hedge, Vector3f const &normal,
             radioParams.wall.right.firstDiv = params.wall.right.firstDiv;
             radioParams.wall.right.divCount = params.wall.right.divCount;
 
-            if(!isTwosidedMiddle && !(hedge->hasTwin() && !hedge->twin().hasLineSideDef()))
+            if(!isTwosidedMiddle && !(hedge->hasTwin() && !(hedge->twin().hasLine() && hedge->twin().lineSide().hasSideDef())))
             {
                 radioParams.backSec = hedge->hasTwin()? hedge->twin().sectorPtr() : 0;
             }
@@ -1855,7 +1855,8 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
         // Do not apply an angle based lighting delta if this surface's material
         // has been chosen as a HOM fix (we must remain consistent with the lighting
         // applied to the back plane (on this half-edge's back side)).
-        if(hedge->hasLineSideDef() && isTwoSided && section != SS_MIDDLE && surface->hasFixMaterial())
+        if(hedge->hasLine() && hedge->lineSide().hasSideDef() &&
+           isTwoSided && section != SS_MIDDLE && surface->hasFixMaterial())
         {
             deltaL = deltaR = 0;
         }
@@ -2775,7 +2776,7 @@ static void Rend_RenderWalls()
     {
         if((hedge->_frameFlags & HEDGEINF_FACINGFRONT) &&
            /* "mini-hedges" have no lines and "windows" have no sidedef */
-           hedge->hasLineSideDef())
+           hedge->hasLine() && hedge->lineSide().hasSideDef())
         {
             Sector *frontSec = hedge->sectorPtr();
             Sector *backSec  = hedge->hasTwin()? hedge->twin().sectorPtr() : 0;
@@ -2783,7 +2784,7 @@ static void Rend_RenderWalls()
             boolean opaque;
 
             if(!frontSec || !backSec ||
-               (hedge->hasTwin() && !hedge->twin().hasLineSideDef()) /* front side of a "window" */)
+               (hedge->hasTwin() && !(hedge->twin().hasLine() && hedge->twin().lineSide().hasSideDef())) /* front side of a "window" */)
             {
                 opaque = Rend_RenderHEdge(hedge, sections);
             }

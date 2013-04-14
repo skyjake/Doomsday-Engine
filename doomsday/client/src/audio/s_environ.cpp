@@ -250,7 +250,7 @@ static boolean calcBspLeafReverb(BspLeaf *bspLeaf)
     HEdge *hedge = base;
     do
     {
-        if(hedge->hasLineSideDef() && hedge->lineSide().middle().surface().hasMaterial())
+        if(hedge->hasLine() && hedge->lineSide().hasSideDef() && hedge->lineSide().middle().surface().hasMaterial())
         {
             Material &material = hedge->lineSide().middle().surface().material();
             AudioEnvironmentClass env = material.audioEnvironment();

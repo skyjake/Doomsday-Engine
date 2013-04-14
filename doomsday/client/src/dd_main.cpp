@@ -2473,7 +2473,7 @@ void *DD_GetVariable(int ddvalue)
         return &valueU;
 
     case DD_SIDE_COUNT:
-        valueU = theMap? theMap->sideDefCount() : 0;
+        valueU = theMap? theMap->sideCount() : 0;
         return &valueU;
 
     case DD_VERTEX_COUNT:

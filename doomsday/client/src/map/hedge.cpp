@@ -19,10 +19,7 @@
  */
 
 #include "de_base.h"
-//#include "de_console.h"
-//#include "de_play.h"
 #include "map/line.h"
-#include "map/sidedef.h"
 #include "map/vertex.h"
 #include "map/r_world.h"
 #include <de/Log>
@@ -421,8 +418,8 @@ int HEdge::property(setargs_t &args) const
         DMU_GetValue(DMT_HEDGE_OFFSET, &offset, &args, 0);
         break; }
     case DMU_SIDEDEF: {
-        SideDef *sideDef = _line? _line->side(_lineSide).sideDefPtr() : 0;
-        DMU_GetValue(DMT_HEDGE_SIDEDEF, &sideDef, &args, 0);
+        Line::Side *sideAdr = _line? &_line->side(_lineSide) : 0;
+        DMU_GetValue(DMT_HEDGE_SIDEDEF, &sideAdr, &args, 0);
         break; }
     case DMU_LINE:
         DMU_GetValue(DMT_HEDGE_LINE, &_line, &args, 0);

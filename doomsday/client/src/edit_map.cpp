@@ -78,7 +78,6 @@ class EditableMap
 public:
     GameMap::Vertexes vertexes;
     GameMap::Lines lines;
-    GameMap::SideDefs sideDefs;
     GameMap::Sectors sectors;
     GameMap::Polyobjs polyobjs;
 
@@ -100,7 +99,7 @@ public:
     }
 
     Line *createLine(Vertex &v1, Vertex &v2, Sector *frontSector = 0,
-                        Sector *backSector = 0)
+                     Sector *backSector = 0)
     {
         Line *line = new Line(v1, v2, frontSector, backSector);
 
@@ -110,14 +109,12 @@ public:
         return line;
     }
 
-    SideDef *createSideDef(Line &line, int side)
+    Line::Side *createLineSideSections(Line &line, int sideId)
     {
-        DENG_ASSERT(!line.side(side).hasSideDef());
-        SideDef *sideDef = new SideDef(line);
-        line.side(side)._sideDef = sideDef;
-        line.side(side)._sections = new Line::Side::Sections(*sideDef);
-        sideDefs.append(sideDef);
-        return sideDef;
+        Line::Side &side = line.side(sideId);
+        DENG_ASSERT(!side._sections);
+        side._sections = new Line::Side::Sections(side);
+        return &side;
     }
 
     Sector *createSector(float lightLevel, Vector3f const &lightColor)
@@ -148,9 +145,6 @@ public:
 
         qDeleteAll(lines);
         lines.clear();
-
-        qDeleteAll(sideDefs);
-        sideDefs.clear();
 
         qDeleteAll(sectors);
         sectors.clear();
@@ -993,16 +987,6 @@ boolean MPE_End()
         map->_sectors.append(editMap.sectors.takeFirst());
     }
 
-    // Collate sidedefs:
-    DENG2_ASSERT(map->_sideDefs.isEmpty());
-#ifdef DENG2_QT_4_7_OR_NEWER
-    map->_sideDefs.reserve(editMap.sideDefs.count());
-#endif
-    while(!editMap.sideDefs.isEmpty())
-    {
-        map->_sideDefs.append(editMap.sideDefs.takeFirst());
-    }
-
     // Collate lines:
     DENG2_ASSERT(map->_lines.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
@@ -1188,7 +1172,7 @@ void MPE_LineAddSide(uint lineIdx, int sideId, short flags, ddstring_t const *to
     Line *line = editMap.lines[lineIdx - 1];
     if(!line->hasSideDef(sideId))
     {
-        editMap.createSideDef(*line, sideId);
+        editMap.createLineSideSections(*line, sideId);
     }
 
     Line::Side &side = line->side(sideId);

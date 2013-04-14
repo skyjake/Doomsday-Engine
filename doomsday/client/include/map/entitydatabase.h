@@ -33,6 +33,8 @@
 #ifndef LIBDENG_MAP_ENTITYDATABASE_H
 #define LIBDENG_MAP_ENTITYDATABASE_H
 
+#include "api_mapedit.h" // valuetype_t
+
 #ifdef __cplusplus
 class PropertyValue;
 

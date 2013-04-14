@@ -465,26 +465,24 @@ void Sv_RegisterSide(dt_side_t *reg, uint number)
 {
     DENG_ASSERT(reg != 0);
 
-    SideDef *sideDef = theMap->sideDefs().at(number);
-    Line &line = sideDef->line();
-    Line::Side &side = line.side(line.frontSideDefPtr() == sideDef? FRONT : BACK);
+    Line::Side *side = theMap->sideByIndex(number);
 
-    reg->top.material    = side.top().surface().materialPtr();
-    reg->middle.material = side.middle().surface().materialPtr();
-    reg->bottom.material = side.bottom().surface().materialPtr();
-    reg->lineFlags       = line.flags() & 0xff;
+    reg->top.material    = side->top().surface().materialPtr();
+    reg->middle.material = side->middle().surface().materialPtr();
+    reg->bottom.material = side->bottom().surface().materialPtr();
+    reg->lineFlags       = side->line().flags() & 0xff;
 
     for(int c = 0; c < 3; ++c)
     {
-        reg->middle.rgba[c] = side.middle().surface().tintColorComponent(c);
-        reg->bottom.rgba[c] = side.bottom().surface().tintColorComponent(c);
-        reg->top.rgba[c]    = side.top().surface().tintColorComponent(c);
+        reg->middle.rgba[c] = side->middle().surface().tintColorComponent(c);
+        reg->bottom.rgba[c] = side->bottom().surface().tintColorComponent(c);
+        reg->top.rgba[c]    = side->top().surface().tintColorComponent(c);
     }
     // Only middle sections support blending.
-    reg->middle.rgba[CA]  = side.middle().surface().opacity();
-    reg->middle.blendMode = side.middle().surface().blendMode();
+    reg->middle.rgba[CA]  = side->middle().surface().opacity();
+    reg->middle.blendMode = side->middle().surface().blendMode();
 
-    reg->flags = side.flags() & 0xff;
+    reg->flags = side->flags() & 0xff;
 }
 
 /**
@@ -758,33 +756,31 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
 boolean Sv_RegisterCompareSide(cregister_t *reg, uint number,
     sidedelta_t *d, byte doUpdate)
 {
-    SideDef const *s = theMap->sideDefs().at(number);
-    Line const &line = s->line();
-    Line::Side const &side = line.side(line.frontSideDefPtr() == s? FRONT : BACK);
+    Line::Side const *side = theMap->sideByIndex(number);
     dt_side_t *r = &reg->sideDefs[number];
-    byte lineFlags = s->line().flags() & 0xff;
-    byte sideFlags = side.flags() & 0xff;
+    byte lineFlags = side->line().flags() & 0xff;
+    byte sideFlags = side->flags() & 0xff;
     int df = 0;
 
-    if(!side.top().surface().hasFixMaterial() && r->top.material != side.top().surface().materialPtr())
+    if(!side->top().surface().hasFixMaterial() && r->top.material != side->top().surface().materialPtr())
     {
         df |= SIDF_TOP_MATERIAL;
         if(doUpdate)
-            r->top.material = side.top().surface().materialPtr();
+            r->top.material = side->top().surface().materialPtr();
     }
 
-    if(!side.middle().surface().hasFixMaterial() && r->middle.material != side.middle().surface().materialPtr())
+    if(!side->middle().surface().hasFixMaterial() && r->middle.material != side->middle().surface().materialPtr())
     {
         df |= SIDF_MID_MATERIAL;
         if(doUpdate)
-            r->middle.material = side.middle().surface().materialPtr();
+            r->middle.material = side->middle().surface().materialPtr();
     }
 
-    if(!side.bottom().surface().hasFixMaterial() && r->bottom.material != side.bottom().surface().materialPtr())
+    if(!side->bottom().surface().hasFixMaterial() && r->bottom.material != side->bottom().surface().materialPtr())
     {
         df |= SIDF_BOTTOM_MATERIAL;
         if(doUpdate)
-            r->bottom.material = side.bottom().surface().materialPtr();
+            r->bottom.material = side->bottom().surface().materialPtr();
     }
 
     if(r->lineFlags != lineFlags)
@@ -794,81 +790,81 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number,
             r->lineFlags = lineFlags;
     }
 
-    if(r->top.rgba[0] != side.top().surface().tintRed())
+    if(r->top.rgba[0] != side->top().surface().tintRed())
     {
         df |= SIDF_TOP_COLOR_RED;
         if(doUpdate)
-            r->top.rgba[0] = side.top().surface().tintRed();
+            r->top.rgba[0] = side->top().surface().tintRed();
     }
 
-    if(r->top.rgba[1] != side.top().surface().tintGreen())
+    if(r->top.rgba[1] != side->top().surface().tintGreen())
     {
         df |= SIDF_TOP_COLOR_GREEN;
         if(doUpdate)
-            r->top.rgba[1] = side.top().surface().tintGreen();
+            r->top.rgba[1] = side->top().surface().tintGreen();
     }
 
-    if(r->top.rgba[2] != side.top().surface().tintBlue())
+    if(r->top.rgba[2] != side->top().surface().tintBlue())
     {
         df |= SIDF_TOP_COLOR_BLUE;
         if(doUpdate)
-            r->top.rgba[3] = side.top().surface().tintBlue();
+            r->top.rgba[3] = side->top().surface().tintBlue();
     }
 
-    if(r->middle.rgba[0] != side.middle().surface().tintRed())
+    if(r->middle.rgba[0] != side->middle().surface().tintRed())
     {
         df |= SIDF_MID_COLOR_RED;
         if(doUpdate)
-            r->middle.rgba[0] = side.middle().surface().tintRed();
+            r->middle.rgba[0] = side->middle().surface().tintRed();
     }
 
-    if(r->middle.rgba[1] != side.middle().surface().tintGreen())
+    if(r->middle.rgba[1] != side->middle().surface().tintGreen())
     {
         df |= SIDF_MID_COLOR_GREEN;
         if(doUpdate)
-            r->middle.rgba[1] = side.middle().surface().tintGreen();
+            r->middle.rgba[1] = side->middle().surface().tintGreen();
     }
 
-    if(r->middle.rgba[2] != side.middle().surface().tintBlue())
+    if(r->middle.rgba[2] != side->middle().surface().tintBlue())
     {
         df |= SIDF_MID_COLOR_BLUE;
         if(doUpdate)
-            r->middle.rgba[3] = side.middle().surface().tintBlue();
+            r->middle.rgba[3] = side->middle().surface().tintBlue();
     }
 
-    if(r->middle.rgba[3] != side.middle().surface().opacity())
+    if(r->middle.rgba[3] != side->middle().surface().opacity())
     {
         df |= SIDF_MID_COLOR_ALPHA;
         if(doUpdate)
-            r->middle.rgba[3] = side.middle().surface().opacity();
+            r->middle.rgba[3] = side->middle().surface().opacity();
     }
 
-    if(r->bottom.rgba[0] != side.bottom().surface().tintRed())
+    if(r->bottom.rgba[0] != side->bottom().surface().tintRed())
     {
         df |= SIDF_BOTTOM_COLOR_RED;
         if(doUpdate)
-            r->bottom.rgba[0] = side.bottom().surface().tintRed();
+            r->bottom.rgba[0] = side->bottom().surface().tintRed();
     }
 
-    if(r->bottom.rgba[1] != side.bottom().surface().tintGreen())
+    if(r->bottom.rgba[1] != side->bottom().surface().tintGreen())
     {
         df |= SIDF_BOTTOM_COLOR_GREEN;
         if(doUpdate)
-            r->bottom.rgba[1] = side.bottom().surface().tintGreen();
+            r->bottom.rgba[1] = side->bottom().surface().tintGreen();
     }
 
-    if(r->bottom.rgba[2] != side.bottom().surface().tintBlue())
+    if(r->bottom.rgba[2] != side->bottom().surface().tintBlue())
     {
         df |= SIDF_BOTTOM_COLOR_BLUE;
         if(doUpdate)
-            r->bottom.rgba[3] = side.bottom().surface().tintBlue();
+            r->bottom.rgba[3] = side->bottom().surface().tintBlue();
     }
 
-    if(r->middle.blendMode != side.middle().surface().blendMode())
+    if(r->middle.blendMode != side->middle().surface().blendMode())
     {
         df |= SIDF_MID_BLENDMODE;
         if(doUpdate)
-            r->middle.blendMode = side.middle().surface().blendMode();
+            r->middle.blendMode = side->middle().surface().blendMode();
     }
 
     if(r->flags != sideFlags)
@@ -966,8 +962,8 @@ void Sv_RegisterWorld(cregister_t *reg, boolean isInitial)
     }
 
     // Init sides.
-    reg->sideDefs = (dt_side_t *) Z_Calloc(sizeof(*reg->sideDefs) * theMap->sideDefCount(), PU_MAP, 0);
-    for(uint i = 0; i < theMap->sideDefCount(); ++i)
+    reg->sideDefs = (dt_side_t *) Z_Calloc(sizeof(*reg->sideDefs) * theMap->sideCount(), PU_MAP, 0);
+    for(uint i = 0; i < theMap->sideCount(); ++i)
     {
         Sv_RegisterSide(&reg->sideDefs[i], i);
     }
@@ -1543,13 +1539,11 @@ coord_t Sv_SectorDistance(int index, ownerinfo_t const *info)
 
 coord_t Sv_SideDistance(int index, int deltaFlags, ownerinfo_t const *info)
 {
-    SideDef const *sideDef = theMap->sideDefs().at(index);
-    Line &line = sideDef->line();
-    Line::Side &side = line.side(sideDef == line.frontSideDefPtr()? FRONT : BACK);
+    Line::Side const *side = theMap->sideByIndex(index);
 
-    ddmobj_base_t const &emitter = (deltaFlags & SNDDF_SIDE_MIDDLE? side.middleSoundEmitter()
-                                     : deltaFlags & SNDDF_SIDE_TOP? side.topSoundEmitter()
-                                                                  : side.bottomSoundEmitter());
+    ddmobj_base_t const &emitter = (deltaFlags & SNDDF_SIDE_MIDDLE? side->middleSoundEmitter()
+                                     : deltaFlags & SNDDF_SIDE_TOP? side->topSoundEmitter()
+                                                                  : side->bottomSoundEmitter());
 
     return M_ApproxDistance3(info->origin[VX]  - emitter.origin[VX],
                              info->origin[VY]  - emitter.origin[VY],
@@ -1587,8 +1581,8 @@ coord_t Sv_DeltaDistance(void const *deltaPtr, ownerinfo_t const *info)
 
     if(delta->type == DT_SIDE)
     {
-        SideDef *sideDef = theMap->sideDefs().at(delta->id);
-        Line &line = sideDef->line();
+        Line::Side *side = theMap->sideByIndex(delta->id);
+        Line &line = side->line();
         vec2d_t origin; V2d_Set(origin, line.v1Origin()[VX] + line.direction().x / 2,
                                         line.v1Origin()[VY] + line.direction().y / 2);
         return M_ApproxDistance(info->origin[VX] - origin[VX],
@@ -2273,15 +2267,15 @@ void Sv_NewSideDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
     if(reg->isInitial)
     {
         start = 0;
-        end = theMap->sideDefCount();
+        end = theMap->sideCount();
     }
     else
     {
         // Because there are so many sides in a typical map, the number
         // of compared sides soon accumulates to millions. To reduce the
         // load, we'll check only a portion of all sides for a frame.
-        start = shift * theMap->sideDefCount() / numShifts;
-        end = ++shift * theMap->sideDefCount() / numShifts;
+        start = shift * theMap->sideCount() / numShifts;
+        end = ++shift * theMap->sideCount() / numShifts;
         shift %= numShifts;
     }
 
@@ -2370,24 +2364,22 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
         type = DT_SIDE_SOUND;
 
         // Clients need to know which emitter to use.
-        SideDef *sideDef = sourceSurface->owner().castTo<SideDef>();
-        Line &line = sideDef->line();
-        Line::Side &side = line.side(line.frontSideDefPtr() == sideDef? FRONT : BACK);
+        Line::Side *side = sourceSurface->owner().castTo<Line::Side>();
 
-        if(&side.middle().surface() == sourceSurface)
+        if(&side->middle().surface() == sourceSurface)
         {
             df |= SNDDF_SIDE_MIDDLE;
         }
-        else if(&side.bottom().surface() == sourceSurface)
+        else if(&side->bottom().surface() == sourceSurface)
         {
             df |= SNDDF_SIDE_BOTTOM;
         }
-        else if(&side.top().surface() == sourceSurface)
+        else if(&side->top().surface() == sourceSurface)
         {
             df |= SNDDF_SIDE_TOP;
         }
 
-        id = theMap->sideDefIndex(sideDef);
+        id = theMap->sideIndex(side);
     }
     else if(emitter)
     {

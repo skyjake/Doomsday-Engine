@@ -302,24 +302,6 @@ public:
     inline Line::Side &lineSide() const { return line().side(lineSideId()); }
 
     /**
-     * Convenient method for determining if the Side of the line attributed to
-     * the half-edge has a sidedef.
-     *
-     * @see hasLine(), lineSide(), Line::Side::hasSideDef()
-     */
-    inline bool hasLineSideDef() const {
-        return hasLine() && lineSide().hasSideDef();
-    }
-
-    /**
-     * Convenient accessor method for returning the SideDef of the Side of the
-     * line attributed to the half-edge.
-     *
-     * @see hasLineSideDef()
-     */
-    inline SideDef &lineSideDef() const { return lineSide().sideDef(); }
-
-    /**
      * Returns the logical side of the line attributed to the half-edge.
      */
     int lineSideId() const;

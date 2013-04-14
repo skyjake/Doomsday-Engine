@@ -403,7 +403,6 @@ GameMap::~GameMap()
     qDeleteAll(_vertexes);
     qDeleteAll(_sectors);
     qDeleteAll(_lines);
-    qDeleteAll(_sideDefs);
     foreach(Polyobj *polyobj, _polyobjs)
     {
         polyobj->~Polyobj();
@@ -716,10 +715,18 @@ int GameMap::lineIndex(Line const *line) const
     return _lines.indexOf(const_cast<Line *>(line)); // Bad performance: O(n)
 }
 
-int GameMap::sideDefIndex(SideDef const *side) const
+int GameMap::sideIndex(Line::Side const *side) const
 {
     if(!side) return -1;
-    return _sideDefs.indexOf(const_cast<SideDef *>(side)); // Bad performance: O(n)
+    // The high bit is used to mark the back side.
+    return lineIndex(&side->line()) | (side->isBack()? 0x80000000 : 0);
+}
+
+Line::Side *GameMap::sideByIndex(int index) const
+{
+    if(index < 0) return 0;
+    // The high bit is used to mark the back side.
+    return &_lines.at(index & ~0xf0000000)->side(index & 0x80000000);
 }
 
 int GameMap::sectorIndex(Sector const *sec) const

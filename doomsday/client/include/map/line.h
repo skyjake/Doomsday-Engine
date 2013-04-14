@@ -28,7 +28,6 @@
 #include <de/Error>
 
 #include "MapElement"
-#include "map/sidedef.h"
 #include "map/surface.h"
 #include "map/vertex.h"
 #include "p_dmu.h"
@@ -135,16 +134,22 @@ public:
     /**
      * Logical side of which there are always two (a front and a back).
      */
-    struct Side
+    class Side : public de::MapElement
     {
     public:
+        /// The referenced property does not exist. @ingroup errors
+        DENG2_ERROR(UnknownPropertyError);
+
+        /// The referenced property is not writeable. @ingroup errors
+        DENG2_ERROR(WritePropertyError);
+
         struct Section
         {
             Surface _surface;
             ddmobj_base_t _soundEmitter;
 
-            Section(SideDef &sideDef)
-                : _surface(dynamic_cast<MapElement &>(sideDef))
+            Section(Side &side)
+                : _surface(dynamic_cast<MapElement &>(side))
             {
                 std::memset(&_soundEmitter, 0, sizeof(_soundEmitter));
             }
@@ -164,10 +169,10 @@ public:
             Section bottom;
             Section top;
 
-            Sections(SideDef &sideDef)
-                : middle(sideDef),
-                  bottom(sideDef),
-                  top(sideDef)
+            Sections(Side &side)
+                : middle(side),
+                  bottom(side),
+                  top(side)
             {}
         };
 
@@ -177,9 +182,6 @@ public:
 
         /// Attributed sector.
         Sector *_sector;
-
-        /// SideDef.
-        SideDef *_sideDef;
 
         /// 1-based index of the associated sidedef in the archived map; otherwise @c 0.
         uint _sideDefArchiveIndex;
@@ -229,6 +231,16 @@ public:
         Line const &line() const;
 
         /**
+         * Returns @c true if this is the front side of the owning line.
+         */
+        bool isFront() const;
+
+        /**
+         * Returns @c true if this is the front side of the owning line.
+         */
+        inline bool isBack() const { return !isFront(); }
+
+        /**
          * Returns @c true iff a Sector is attributed to the side.
          */
         bool hasSector() const;
@@ -251,20 +263,6 @@ public:
          * Returns @c true iff a SideDef is attributed to the side.
          */
         bool hasSideDef() const;
-
-        /**
-         * Returns the SideDef attributed to the side.
-         *
-         * @see hasSideDef()
-         */
-        SideDef &sideDef() const;
-
-        /**
-         * Returns a pointer to the SideDef attributed to the side; otherwise @c 0.
-         *
-         * @see hasSideDef()
-         */
-        inline SideDef *sideDefPtr() const { return hasSideDef()? &sideDef() : 0; }
 
         /**
          * Change the "archive index" of the associated sidedef. The archive
@@ -399,6 +397,22 @@ public:
          * Returns the frame number of the last time shadows were drawn for the side.
          */
         int shadowVisCount() const;
+
+        /**
+         * Get a property value, selected by DMU_* name.
+         *
+         * @param args  Property arguments.
+         * @return  Always @c 0 (can be used as an iterator).
+         */
+        int property(setargs_t &args) const;
+
+        /**
+         * Update a property value, selected by DMU_* name.
+         *
+         * @param args  Property arguments.
+         * @return  Always @c 0 (can be used as an iterator).
+         */
+        int setProperty(setargs_t const &args);
     };
 
 public: /// @todo make private:
@@ -591,64 +605,6 @@ public:
 
     /// @copydoc frontSectorPtr()
     inline Sector const *backSectorPtr() const { return sectorPtr(BACK); }
-
-    /**
-     * Convenient accessor method for returning the sidedef attributed to the
-     * specified side of the line.
-     *
-     * @param back  If not @c 0 return the sidedef for the Back side; otherwise
-     *              the sidedef of the Front side.
-     */
-    inline SideDef &sideDef(int back) { return side(back).sideDef(); }
-
-    /// @copydoc sideDef()
-    inline SideDef const &sideDef(int back) const { return side(back).sideDef(); }
-
-    /**
-     * Convenient accessor method for returning a pointer to the sidedef attributed
-     * to the specified side of the line.
-     *
-     * @param back  If not @c 0 return the sidedef for the Back side; otherwise
-     *              the sidedef of the Front side.
-     */
-    inline SideDef *sideDefPtr(int back) { return side(back).sideDefPtr(); }
-
-    /// @copydoc sideDef()
-    inline SideDef const *sideDefPtr(int back) const { return side(back).sideDefPtr(); }
-
-    /**
-     * Returns the sidedef attributed to the Front side of the line.
-     */
-    inline SideDef &frontSideDef() { return sideDef(FRONT); }
-
-    /// @copydoc backSideDef()
-    inline SideDef const &frontSideDef() const { return sideDef(FRONT); }
-
-    /**
-     * Returns the sidedef attributed to the Back side of the line.
-     */
-    inline SideDef &backSideDef() { return sideDef(BACK); }
-
-    /// @copydoc backSideDef()
-    inline SideDef const &backSideDef() const { return sideDef(BACK); }
-
-    /**
-     * Convenient accessor method for returning a pointer to the sidedef attributed
-     * to the front side of the line.
-     */
-    inline SideDef *frontSideDefPtr() { return sideDefPtr(FRONT); }
-
-    /// @copydoc frontSideDefPtr()
-    inline SideDef const *frontSideDefPtr() const { return sideDefPtr(FRONT); }
-
-    /**
-     * Convenient accessor method for returning a pointer to the sidedef attributed
-     * to the back side of the line.
-     */
-    inline SideDef *backSideDefPtr() { return sideDefPtr(BACK); }
-
-    /// @copydoc frontSideDefPtr()
-    inline SideDef const *backSideDefPtr() const { return sideDefPtr(BACK); }
 
     /**
      * Returns @c true iff the line is considered @em self-referencing.

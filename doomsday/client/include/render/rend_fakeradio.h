@@ -35,7 +35,6 @@
 #define LIBDENG_RENDER_FAKERADIO_H
 
 #include "map/line.h"
-#include "map/sidedef.h"
 #include "map/vertex.h"
 #include "map/sector.h"
 #include "render/rendpoly.h"

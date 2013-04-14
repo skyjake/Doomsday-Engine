@@ -221,7 +221,6 @@ DENG_HEADERS += \
     $$SRC/include/map/r_world.h \
     $$SRC/include/map/reject.h \
     $$SRC/include/map/sector.h \
-    $$SRC/include/map/sidedef.h \
     $$SRC/include/map/surface.h \
     $$SRC/include/map/vertex.h \
     $$SRC/include/network/masterserver.h \
@@ -392,7 +391,6 @@ SOURCES += \
     $$SRC/src/map/r_world.cpp \
     $$SRC/src/map/reject.cpp \
     $$SRC/src/map/sector.cpp \
-    $$SRC/src/map/sidedef.cpp \
     $$SRC/src/map/surface.cpp \
     $$SRC/src/map/vertex.cpp \
     $$SRC/src/network/masterserver.cpp \

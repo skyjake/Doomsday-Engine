@@ -27,7 +27,6 @@
 #include "api_thinker.h"
 #include "map/vertex.h"
 #include "map/surface.h"
-#include "map/sidedef.h"
 #include "map/line.h"
 #include "map/linesighttest.h"
 #include "map/plane.h"

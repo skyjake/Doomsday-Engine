@@ -28,7 +28,6 @@
 
 #include "Materials"
 #include "map/sector.h"
-#include "map/sidedef.h"
 #include "map/vertex.h"
 
 #include "map/line.h"
@@ -43,10 +42,10 @@
 using namespace de;
 
 Line::Side::Side(Line &line, Sector *sector)
-    : _line(line),
+    : MapElement(DMU_SIDEDEF),
+      _line(line),
       _sector(sector),
       _sections(0),
-      _sideDef(0),
       _sideDefArchiveIndex(0), // no-index
       _leftHEdge(0),
       _rightHEdge(0),
@@ -77,6 +76,11 @@ Line const &Line::Side::line() const
     return const_cast<Line const &>(const_cast<Side *>(this)->line());
 }
 
+bool Line::Side::isFront() const
+{
+    return &_line.front() == this;
+}
+
 bool Line::Side::hasSector() const
 {
     return _sector != 0;
@@ -94,17 +98,7 @@ Sector &Line::Side::sector() const
 
 bool Line::Side::hasSideDef() const
 {
-    return _sideDef != 0;
-}
-
-SideDef &Line::Side::sideDef() const
-{
-    if(_sideDef)
-    {
-        return *_sideDef;
-    }
-    /// @throw Line::MissingSideDefError Attempted with no sidedef configured.
-    throw Line::MissingSideDefError("Line::Side::sideDef", "No sidedef is configured");
+    return _sections != 0;
 }
 
 void Line::Side::setSideDefArchiveIndex(uint newIndex)
@@ -159,7 +153,7 @@ void Line::Side::updateMiddleSoundEmitterOrigin()
 {
     LOG_AS("Line::Side::updateMiddleSoundEmitterOrigin");
 
-    if(!_sideDef) return;
+    if(!_sections) return;
 
     middle()._soundEmitter.origin[VX] = (_line.v1Origin()[VX] + _line.v2Origin()[VX]) / 2;
     middle()._soundEmitter.origin[VY] = (_line.v1Origin()[VY] + _line.v2Origin()[VY]) / 2;
@@ -189,7 +183,7 @@ void Line::Side::updateBottomSoundEmitterOrigin()
 {
     LOG_AS("Line::Side::updateBottomSoundEmitterOrigin");
 
-    if(!_sideDef) return;
+    if(!_sections) return;
 
     bottom()._soundEmitter.origin[VX] = (_line.v1Origin()[VX] + _line.v2Origin()[VX]) / 2;
     bottom()._soundEmitter.origin[VY] = (_line.v1Origin()[VY] + _line.v2Origin()[VY]) / 2;
@@ -223,7 +217,7 @@ void Line::Side::updateTopSoundEmitterOrigin()
 {
     LOG_AS("Line::Side::updateTopSoundEmitterOrigin");
 
-    if(!_sideDef) return;
+    if(!_sections) return;
 
     top()._soundEmitter.origin[VX] = (_line.v1Origin()[VX] + _line.v2Origin()[VX]) / 2;
     top()._soundEmitter.origin[VY] = (_line.v1Origin()[VY] + _line.v2Origin()[VY]) / 2;
@@ -245,7 +239,7 @@ void Line::Side::updateTopSoundEmitterOrigin()
 
 void Line::Side::updateAllSoundEmitterOrigins()
 {
-    if(!_sideDef) return;
+    if(!_sections) return;
 
     updateMiddleSoundEmitterOrigin();
     updateBottomSoundEmitterOrigin();
@@ -254,12 +248,12 @@ void Line::Side::updateAllSoundEmitterOrigins()
 
 void Line::Side::updateSurfaceNormals()
 {
-    if(!_sideDef) return;
+    if(!_sections) return;
 
-    byte sid = &_line.front() == this? FRONT : BACK;
+    int edge = isFront()? 0 : 1;
 
-    Vector3f normal((_line.vertexOrigin(sid^1)[VY] - _line.vertexOrigin(sid  )[VY]) / _line.length(),
-                    (_line.vertexOrigin(sid  )[VX] - _line.vertexOrigin(sid^1)[VX]) / _line.length(),
+    Vector3f normal((_line.vertexOrigin(edge^1)[VY] - _line.vertexOrigin(edge  )[VY]) / _line.length(),
+                    (_line.vertexOrigin(edge  )[VX] - _line.vertexOrigin(edge^1)[VX]) / _line.length(),
                     0);
 
     // All line side surfaces have the same normals.
@@ -290,6 +284,50 @@ short Line::Side::flags() const
 int Line::Side::shadowVisCount() const
 {
     return _shadowVisCount;
+}
+
+int Line::Side::property(setargs_t &args) const
+{
+    switch(args.prop)
+    {
+    case DMU_SECTOR: {
+        Sector *sector = sectorPtr();
+        DMU_GetValue(DMT_LINESIDE_SECTOR, &sector, &args, 0);
+        break; }
+    case DMU_LINE: {
+        Line *line = &_line;
+        DMU_GetValue(DMT_LINESIDE_LINE, &line, &args, 0);
+        break; }
+    case DMU_FLAGS:
+        DMU_GetValue(DMT_LINESIDE_FLAGS, &_flags, &args, 0);
+        break;
+    default:
+        /// @throw UnknownPropertyError  The requested property does not exist.
+        throw UnknownPropertyError("Line::Side::property", QString("Property '%1' is unknown").arg(DMU_Str(args.prop)));
+    }
+    return false; // Continue iteration.
+}
+
+int Line::Side::setProperty(setargs_t const &args)
+{
+    switch(args.prop)
+    {
+    case DMU_FLAGS: {
+        short newFlags = _flags;
+        DMU_SetValue(DMT_LINESIDE_FLAGS, &newFlags, &args, 0);
+        _flags = newFlags;
+        break; }
+
+    /*case DMU_LINE: {
+        Line *line = &_line;
+        DMU_SetValue(DMT_LINESIDE_LINE, &line, &args, 0);
+        break; }*/
+
+    default:
+        /// @throw WritePropertyError  The requested property is not writable.
+        throw WritePropertyError("Line::Side::setProperty", QString("Property '%1' is not writable").arg(DMU_Str(args.prop)));
+    }
+    return false; // Continue iteration.
 }
 
 DENG2_PIMPL(Line)
@@ -544,12 +582,14 @@ int Line::property(setargs_t &args) const
         DMU_GetValue(DMT_LINE_FLAGS, &_flags, &args, 0);
         break;
     case DMU_SIDEDEF0: {
-        SideDef const *frontSideDef = frontSideDefPtr();
-        DMU_GetValue(DDVT_PTR, &frontSideDef, &args, 0);
+        /// @todo Update the games so that sides without defs can be returned.
+        Line::Side const *frontAdr = hasFrontSideDef()? &d->front : 0;
+        DMU_GetValue(DDVT_PTR, &frontAdr, &args, 0);
         break; }
     case DMU_SIDEDEF1: {
-        SideDef const *backSideDef = backSideDefPtr();
-        DMU_GetValue(DDVT_PTR, &backSideDef, &args, 0);
+        /// @todo Update the games so that sides without defs can be returned.
+        Line::Side const *backAdr = hasBackSideDef()? &d->back : 0;
+        DMU_GetValue(DDVT_PTR, &backAdr, &args, 0);
         break; }
     case DMU_BOUNDING_BOX:
         if(args.valueType == DDVT_PTR)
@@ -597,7 +637,7 @@ int Line::setProperty(setargs_t const &args)
         DMU_SetValue(DMT_LINE_SECTOR, &newBackSector, &args, 0);
         d->back._sector = newBackSector;
         break; }
-    case DMU_SIDEDEF0: {
+    /*case DMU_SIDEDEF0: {
         SideDef *newFrontSideDef = frontSideDefPtr();
         DMU_SetValue(DMT_LINE_SIDEDEF, &newFrontSideDef, &args, 0);
         d->front._sideDef = newFrontSideDef;
@@ -606,7 +646,7 @@ int Line::setProperty(setargs_t const &args)
         SideDef *newBackSideDef = backSideDefPtr();
         DMU_SetValue(DMT_LINE_SIDEDEF, &newBackSideDef, &args, 0);
         d->back._sideDef = newBackSideDef;
-        break; }
+        break; }*/
 
     case DMU_VALID_COUNT:
         DMU_SetValue(DMT_LINE_VALIDCOUNT, &d->validCount, &args, 0);

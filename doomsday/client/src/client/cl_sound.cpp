@@ -62,7 +62,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     thid_t              mobjId = 0;
     Sector             *sector = NULL;
     Polyobj            *poly = NULL;
-    SideDef            *sidedef = NULL;
+    Line::Side         *side = NULL;
     mobj_t             *emitter = NULL;
     float               volume = 1;
 
@@ -111,11 +111,8 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     {
         uint index = deltaId;
 
-        if(index < theMap->sideDefCount())
-        {
-            sidedef = theMap->sideDefs().at(index);
-        }
-        else
+        side = theMap->sideByIndex(index);
+        if(!side)
         {
             LOG_WARNING("Cl_ReadSoundDelta2: DT_SIDE_SOUND contains invalid side index %u, skipping") << index;
             skip = true;
@@ -167,15 +164,12 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 
     if(type == DT_SIDE_SOUND)
     {
-        Line *line = &sidedef->line();
-        Line::Side &side = line->side(sidedef == line->frontSideDefPtr()? FRONT : BACK);
-
         if(flags & SNDDF_SIDE_MIDDLE)
-            emitter = (mobj_t *) &side.middleSoundEmitter();
+            emitter = (mobj_t *) &side->middleSoundEmitter();
         else if(flags & SNDDF_SIDE_TOP)
-            emitter = (mobj_t *) &side.topSoundEmitter();
+            emitter = (mobj_t *) &side->topSoundEmitter();
         else if(flags & SNDDF_SIDE_BOTTOM)
-            emitter = (mobj_t *) &side.bottomSoundEmitter();
+            emitter = (mobj_t *) &side->bottomSoundEmitter();
     }
 
     if(flags & SNDDF_VOLUME)

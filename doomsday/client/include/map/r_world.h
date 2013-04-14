@@ -27,7 +27,6 @@
 #include "map/line.h"
 #include "map/plane.h"
 #include "map/sector.h"
-#include "map/sidedef.h"
 #include "map/vertex.h"
 
 /// @todo The MapChange audience belongs in a class.

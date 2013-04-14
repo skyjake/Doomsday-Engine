@@ -551,7 +551,7 @@ static Material *chooseFixMaterial(Line &line, int side, SideDefSection section)
 {
     Material *choice1 = 0, *choice2 = 0;
     Sector *frontSec = line.sectorPtr(side);
-    Sector *backSec  = line.sideDefPtr(side ^ 1)? line.sectorPtr(side ^ 1) : 0;
+    Sector *backSec  = line.hasSideDef(side ^ 1)? line.sectorPtr(side ^ 1) : 0;
 
     if(backSec)
     {

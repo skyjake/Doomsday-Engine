@@ -313,12 +313,11 @@ static void plotSourcesForSurface(Surface &suf)
         switch(suf.owner().type())
         {
         case DMU_SIDEDEF: {
-            SideDef *sideDef = suf.owner().castTo<SideDef>();
-            Line &line = sideDef->line();
-            Line::Side &side = line.side(line.frontSideDefPtr() == sideDef? FRONT : BACK);
-            plotSourcesForLine(line, &side == &line.front()? FRONT : BACK,
-                               &side.middle().surface() == &suf? SS_MIDDLE :
-                               &side.bottom().surface() == &suf? SS_BOTTOM : SS_TOP);
+            Line::Side *side = suf.owner().castTo<Line::Side>();
+            Line &line = side->line();
+            plotSourcesForLine(line, side->isFront()? FRONT : BACK,
+                               &side->middle().surface() == &suf? SS_MIDDLE :
+                               &side->bottom().surface() == &suf? SS_BOTTOM : SS_TOP);
             break; }
 
         case DMU_PLANE: {
