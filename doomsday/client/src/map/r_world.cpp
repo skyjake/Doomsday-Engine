@@ -102,7 +102,7 @@ boolean R_FindBottomTop(SideDefSection section, int lineFlags,
     bool const unpegTop    = (lineFlags & DDLF_DONTPEGTOP) != 0;
 
     // Single sided?
-    if(!frontSec || !backSec || !back->hasSideDef()/*front side of a "window"*/)
+    if(!frontSec || !backSec || !back->hasSections()/*front side of a "window"*/)
     {
         *low = frontSec->floor().visHeight();
         *hi  = frontSec->ceiling().visHeight();
@@ -319,7 +319,7 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector const *frontSec,
     Sector const *backSec, Line::Side const *front, Line::Side const *back,
     boolean ignoreOpacity)
 {
-    if(!frontSec || !front || !front->hasSideDef()) return false; // Never.
+    if(!frontSec || !front || !front->hasSections()) return false; // Never.
 
     if(!front->middle().surface().hasMaterial()) return false;
 
@@ -371,12 +371,12 @@ Line *R_FindLineNeighbor(Sector const *sector, Line const *line,
 
     if(diff) *diff += (antiClockwise? cown->angle() : own->angle());
 
-    if(!other->hasBackSideDef() || other->frontSectorPtr() != other->backSectorPtr())
+    if(!other->hasBackSections() || other->frontSectorPtr() != other->backSectorPtr())
     {
         if(sector) // Must one of the sectors match?
         {
             if(other->frontSectorPtr() == sector ||
-               (other->hasBackSideDef() && other->backSectorPtr() == sector))
+               (other->hasBackSections() && other->backSectorPtr() == sector))
                 return other;
         }
         else
@@ -402,7 +402,7 @@ Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
 
     if(!((other->isBspWindow()) && other->frontSectorPtr() != sector))
     {
-        if(!other->hasFrontSideDef() || !other->hasBackSideDef())
+        if(!other->hasFrontSections() || !other->hasBackSections())
             return other;
 
         if(!other->isSelfReferencing() &&
@@ -461,11 +461,11 @@ Line *R_FindLineBackNeighbor(Sector const *sector, Line const *line,
 
     if(diff) *diff += (antiClockwise? cown->angle() : own->angle());
 
-    if(!other->hasBackSideDef() || other->frontSectorPtr() != other->backSectorPtr() ||
+    if(!other->hasBackSections() || other->frontSectorPtr() != other->backSectorPtr() ||
        (other->isBspWindow()))
     {
         if(!(other->frontSectorPtr() == sector ||
-             (other->hasBackSideDef() && other->backSectorPtr() == sector)))
+             (other->hasBackSections() && other->backSectorPtr() == sector)))
             return other;
     }
 
@@ -498,7 +498,7 @@ Line *R_FindLineAlignNeighbor(Sector const *sec, Line const *line,
     }
 
     // Can't step over non-twosided lines.
-    if(!other->hasFrontSideDef() || !other->hasBackSideDef())
+    if(!other->hasFrontSections() || !other->hasBackSections())
         return NULL;
 
     // Not suitable, try the next.
@@ -526,7 +526,7 @@ static void resetAllMapSurfaceVisMaterialOrigins(GameMap &map)
     foreach(Line *line, map.lines())
     for(int i = 0; i < 2; ++i)
     {
-        if(!line->hasSideDef(i))
+        if(!line->hasSections(i))
             continue;
 
         Line::Side &side = line->side(i);
@@ -551,7 +551,7 @@ static Material *chooseFixMaterial(Line &line, int side, SideDefSection section)
 {
     Material *choice1 = 0, *choice2 = 0;
     Sector *frontSec = line.sectorPtr(side);
-    Sector *backSec  = line.hasSideDef(side ^ 1)? line.sectorPtr(side ^ 1) : 0;
+    Sector *backSec  = line.hasSections(side ^ 1)? line.sectorPtr(side ^ 1) : 0;
 
     if(backSec)
     {
@@ -591,7 +591,7 @@ static Material *chooseFixMaterial(Line &line, int side, SideDefSection section)
 
         if(other)
         {
-            if(!other->hasBackSideDef())
+            if(!other->hasBackSections())
             {
                 // Our choice is clear - the middle material.
                 choice1 = other->front().middle().surface().materialPtr();
@@ -668,7 +668,7 @@ void R_UpdateMissingMaterialsForLinesOfSector(Sector const &sec)
         if(line->isSelfReferencing()) continue;
 
         // Do not fix BSP "window" lines.
-        if(!line->hasFrontSideDef() || (!line->hasBackSideDef() && line->hasBackSector()))
+        if(!line->hasFrontSections() || (!line->hasBackSections() && line->hasBackSector()))
             continue;
 
         /**

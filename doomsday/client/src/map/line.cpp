@@ -96,7 +96,7 @@ Sector &Line::Side::sector() const
     throw Line::MissingSectorError("Line::Side::sector", "No sector is attributed");
 }
 
-bool Line::Side::hasSideDef() const
+bool Line::Side::hasSections() const
 {
     return _sections != 0;
 }
@@ -162,7 +162,7 @@ void Line::Side::updateMiddleSoundEmitterOrigin()
     coord_t const ffloor = _sector->floor().height();
     coord_t const fceil  = _sector->ceiling().height();
 
-    if(!_line.hasBackSideDef() || _line.isSelfReferencing())
+    if(!_line.hasBackSections() || _line.isSelfReferencing())
         middle()._soundEmitter.origin[VZ] = (ffloor + fceil) / 2;
     else
         middle()._soundEmitter.origin[VZ] = (de::max(ffloor, _line.backSector().floor().height()) +
@@ -192,7 +192,7 @@ void Line::Side::updateBottomSoundEmitterOrigin()
     coord_t const ffloor = _sector->floor().height();
     coord_t const fceil  = _sector->ceiling().height();
 
-    if(!_line.hasBackSideDef() || _line.isSelfReferencing() ||
+    if(!_line.hasBackSections() || _line.isSelfReferencing() ||
        _line.backSector().floor().height() <= ffloor)
     {
         bottom()._soundEmitter.origin[VZ] = ffloor;
@@ -226,7 +226,7 @@ void Line::Side::updateTopSoundEmitterOrigin()
     coord_t const ffloor = _sector->floor().height();
     coord_t const fceil  = _sector->ceiling().height();
 
-    if(!_line.hasBackSideDef() || _line.isSelfReferencing() ||
+    if(!_line.hasBackSections() || _line.isSelfReferencing() ||
        _line.backSector().ceiling().height() >= fceil)
     {
         top()._soundEmitter.origin[VZ] = fceil;
@@ -582,13 +582,13 @@ int Line::property(setargs_t &args) const
         DMU_GetValue(DMT_LINE_FLAGS, &_flags, &args, 0);
         break;
     case DMU_SIDEDEF0: {
-        /// @todo Update the games so that sides without defs can be returned.
-        Line::Side const *frontAdr = hasFrontSideDef()? &d->front : 0;
+        /// @todo Update the games so that sides without sections can be returned.
+        Line::Side const *frontAdr = hasFrontSections()? &d->front : 0;
         DMU_GetValue(DDVT_PTR, &frontAdr, &args, 0);
         break; }
     case DMU_SIDEDEF1: {
-        /// @todo Update the games so that sides without defs can be returned.
-        Line::Side const *backAdr = hasBackSideDef()? &d->back : 0;
+        /// @todo Update the games so that sides without sections can be returned.
+        Line::Side const *backAdr = hasBackSections()? &d->back : 0;
         DMU_GetValue(DDVT_PTR, &backAdr, &args, 0);
         break; }
     case DMU_BOUNDING_BOX:
@@ -659,7 +659,7 @@ int Line::setProperty(setargs_t const &args)
 
 #ifdef __CLIENT__
         /// @todo Surface should observe.
-        if(hasFrontSideDef())
+        if(hasFrontSections())
         {
             if((_flags & DDLF_DONTPEGTOP) != (oldFlags & DDLF_DONTPEGTOP))
             {

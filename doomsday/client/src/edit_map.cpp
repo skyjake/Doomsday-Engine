@@ -951,7 +951,7 @@ boolean MPE_End()
     /// Ensure one sided lines are flagged as blocking. @todo Refactor away.
     foreach(Line *line, editMap.lines)
     {
-        if(!line->hasFrontSideDef() || !line->hasBackSideDef())
+        if(!line->hasFrontSections() || !line->hasBackSections())
             line->_flags |= DDLF_BLOCKING;
     }
 
@@ -1170,7 +1170,7 @@ void MPE_LineAddSide(uint lineIdx, int sideId, short flags, ddstring_t const *to
     if(lineIdx == 0 || lineIdx > (uint)editMap.lines.count()) return;
 
     Line *line = editMap.lines[lineIdx - 1];
-    if(!line->hasSideDef(sideId))
+    if(!line->hasSections(sideId))
     {
         editMap.createLineSideSections(*line, sideId);
     }

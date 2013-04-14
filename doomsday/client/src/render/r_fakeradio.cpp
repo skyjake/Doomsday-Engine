@@ -253,7 +253,7 @@ void Rend_RadioInitForMap()
         {
             Line::Side &side = line->side(i);
 
-            if(!side.hasSector() || !side.hasSideDef()) continue;
+            if(!side.hasSector() || !side.hasSections()) continue;
 
             Vertex &vtx0 = line->vertex(i);
             Vertex &vtx1 = line->vertex(i^1);

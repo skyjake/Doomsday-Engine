@@ -190,7 +190,7 @@ static void scanNeighbor(boolean scanTop, Line const *line, uint side,
         }
 
         // Determine the relative backsector.
-        if(iter->hasSideDef(scanSecSide))
+        if(iter->hasSections(scanSecSide))
             scanSector = iter->sectorPtr(scanSecSide);
         else
             scanSector = NULL;
@@ -201,7 +201,7 @@ static void scanNeighbor(boolean scanTop, Line const *line, uint side,
             iFFloor = iter->frontSector().floor().visHeight();
             iFCeil  = iter->frontSector().ceiling().visHeight();
 
-            if(iter->hasBackSideDef())
+            if(iter->hasBackSections())
             {
                 iBFloor = iter->backSector().floor().visHeight();
                 iBCeil  = iter->backSector().ceiling().visHeight();
@@ -220,7 +220,7 @@ static void scanNeighbor(boolean scanTop, Line const *line, uint side,
             edge->sector = const_cast<Sector *>(scanSector);
 
             closed = false;
-            if(side == 0 && iter->hasBackSideDef())
+            if(side == 0 && iter->hasBackSections())
             {
                 if(scanTop)
                 {
@@ -238,7 +238,7 @@ static void scanNeighbor(boolean scanTop, Line const *line, uint side,
             // texture on the hedge shadow edge being rendered?
             if(scanTop)
             {
-                if(iter->hasBackSideDef() &&
+                if(iter->hasBackSections() &&
                    ((side == 0 && iter->backSectorPtr() == line->frontSectorPtr() &&
                     iFCeil >= fCeil) ||
                    (side == 1 && iter->backSectorPtr() == line->backSectorPtr() &&
@@ -257,7 +257,7 @@ static void scanNeighbor(boolean scanTop, Line const *line, uint side,
             }
             else
             {
-                if(iter->hasBackSideDef() &&
+                if(iter->hasBackSections() &&
                    ((side == 0 && iter->backSectorPtr() == line->frontSectorPtr() &&
                     iFFloor <= fFloor) ||
                    (side == 1 && iter->backSectorPtr() == line->backSectorPtr() &&
@@ -325,7 +325,7 @@ static void scanNeighbor(boolean scanTop, Line const *line, uint side,
 
             // Skip into the back neighbor sector of the iter line if
             // heights are within accepted range.
-            if(scanSector && line->hasSideDef(side^1) &&
+            if(scanSector && line->hasSections(side^1) &&
                scanSector != line->sectorPtr(side^1) &&
                 ((scanTop && scanSector->ceiling().visHeight() ==
                                 startSector->ceiling().visHeight()) ||
@@ -360,7 +360,7 @@ static void scanNeighbor(boolean scanTop, Line const *line, uint side,
         // get the next neighbor (it IS the backneighbor).
         edge->line =
             R_FindLineNeighbor(edge->sector, edge->line,
-                               edge->line->vertexOwner((edge->line->hasBackSideDef() && edge->line->backSectorPtr() == edge->sector)^!toLeft),
+                               edge->line->vertexOwner((edge->line->hasBackSections() && edge->line->backSectorPtr() == edge->sector)^!toLeft),
                                !toLeft, &edge->diff);
     }
 }
@@ -1301,7 +1301,7 @@ static void addShadowEdge(vec2d_t inner[2], vec2d_t outer[2], coord_t innerLeftZ
 static void processEdgeShadow(BspLeaf const &bspLeaf, Line const *line,
     uint side, uint planeIndex, float shadowDark)
 {
-    DENG_ASSERT(line && (side == FRONT || side == BACK) && line->hasSideDef(side));
+    DENG_ASSERT(line && (side == FRONT || side == BACK) && line->hasSections(side));
 
     if(!(shadowDark > .0001)) return;
 
@@ -1327,7 +1327,7 @@ static void processEdgeShadow(BspLeaf const &bspLeaf, Line const *line,
     Sector const *front = 0;
     Sector const *back = 0;
     coord_t fz = 0, bz = 0, bhz = 0;
-    if(line->hasBackSideDef())
+    if(line->hasBackSections())
     {
         front = line->sectorPtr(side);
         back  = line->sectorPtr(side ^ 1);
@@ -1358,14 +1358,14 @@ static void processEdgeShadow(BspLeaf const &bspLeaf, Line const *line,
         LineOwner *vo = line->vertexOwner(side^i)->_link[i^1];
         Line *neighbor = &vo->line();
 
-        if(neighbor != line && !neighbor->hasBackSideDef() &&
+        if(neighbor != line && !neighbor->hasBackSections() &&
            (neighbor->isBspWindow()) &&
            neighbor->frontSectorPtr() != bspLeaf.sectorPtr())
         {
             // A one-way window, edgeOpen side.
             sideOpen[i] = 1;
         }
-        else if(!(neighbor == line || !neighbor->hasBackSideDef()))
+        else if(!(neighbor == line || !neighbor->hasBackSections()))
         {
             byte otherSide = (&line->vertex(i^side) == &neighbor->v1()? i : i^1);
             Sector *othersec = neighbor->sectorPtr(otherSide);

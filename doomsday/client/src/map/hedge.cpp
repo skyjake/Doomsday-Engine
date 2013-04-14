@@ -215,7 +215,7 @@ static void addWallDivNodesForPlaneIntercepts(HEdge const *hedge, walldivs_t *wa
     // Polyobj edges are never split.
     if(!hedge->hasLine() || hedge->line().isFromPolyobj()) return;
 
-    bool const isTwoSided = (hedge->line().hasFrontSideDef() && hedge->line().hasBackSideDef())? true:false;
+    bool const isTwoSided = (hedge->line().hasFrontSections() && hedge->line().hasBackSections())? true:false;
 
     // Check for neighborhood division?
     if(section == SS_MIDDLE && isTwoSided) return;
@@ -253,9 +253,9 @@ static void addWallDivNodesForPlaneIntercepts(HEdge const *hedge, walldivs_t *wa
             do
             {   // First front, then back.
                 Sector *scanSec = NULL;
-                if(!i && iter->hasFrontSideDef() && iter->frontSectorPtr() != frontSec)
+                if(!i && iter->hasFrontSections() && iter->frontSectorPtr() != frontSec)
                     scanSec = iter->frontSectorPtr();
-                else if(i && iter->hasBackSideDef() && iter->backSectorPtr() != frontSec)
+                else if(i && iter->hasBackSections() && iter->backSectorPtr() != frontSec)
                     scanSec = iter->backSectorPtr();
 
                 if(scanSec)
@@ -318,7 +318,7 @@ static void addWallDivNodesForPlaneIntercepts(HEdge const *hedge, walldivs_t *wa
             } while(!stopScan && ++i < 2);
 
             // Stop the scan when a single sided line is reached.
-            if(!iter->hasFrontSideDef() || !iter->hasBackSideDef())
+            if(!iter->hasFrontSections() || !iter->hasBackSections())
                 stopScan = true;
         }
     } while(!stopScan);

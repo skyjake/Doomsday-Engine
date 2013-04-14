@@ -121,16 +121,16 @@ DENG2_PIMPL(LineSightTest)
             return true;
 
         // Is this the passable side of a one-way BSP window?
-        if(!line.hasSideDef(side))
+        if(!line.hasSections(side))
             return true;
 
         if(!line.hasSector(side)) /*$degenleaf*/
             return false;
 
         Sector const *frontSec = line.sectorPtr(side);
-        Sector const *backSec  = (line.hasBackSideDef()? line.sectorPtr(side^1) : NULL);
+        Sector const *backSec  = (line.hasBackSections()? line.sectorPtr(side^1) : NULL);
 
-        bool noBack = !line.hasBackSideDef();
+        bool noBack = !line.hasBackSections();
         if(!noBack && !(flags & LS_PASSLEFT))
         {
             noBack = (!( backSec->floor().height() < frontSec->ceiling().height()) ||

@@ -469,7 +469,7 @@ static void plotSourcesForPlane(Plane &pln)
 
 static void plotSourcesForLine(Line &line, byte side, SideDefSection section)
 {
-    if(!line.hasSideDef(side)) return;
+    if(!line.hasSections(side)) return;
 
     Sector *frontSec  = line.sectorPtr(side);
     Sector *backSec   = line.sectorPtr(side ^ 1);

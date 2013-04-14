@@ -382,7 +382,7 @@ static void processSeg(HEdge *hedge, void *parameters)
         Line::Side &front = line.side(lineSide);
         Line::Side &back  = line.side(lineSide^1);
 
-        if(backSec && !back.hasSideDef()) return; // One-sided window.
+        if(backSec && !back.hasSections()) return; // One-sided window.
 
         if(R_MiddleMaterialCoversOpening(line.flags(), frontSec, backSec, &front, &back,
                                          false /*do not ignore material opacity*/)) return;

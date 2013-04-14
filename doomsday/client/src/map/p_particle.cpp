@@ -775,7 +775,7 @@ int PIT_CheckLinePtc(Line *ld, void *parameters)
 
     // Bounce if we hit a one-sided line.
     ptcHitLine = ld;
-    if(!ld->hasBackSideDef()) return true; // Boing!
+    if(!ld->hasBackSections()) return true; // Boing!
 
     Sector *front = ld->frontSectorPtr();
     Sector *back  = ld->backSectorPtr();
@@ -1066,8 +1066,8 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
         // particle should be killed (if it's moving slowly at max).
         if(pt->contact)
         {
-            Sector *front = (pt->contact->hasFrontSideDef()? pt->contact->frontSectorPtr() : NULL);
-            Sector *back  = (pt->contact->hasBackSideDef()?  pt->contact->backSectorPtr()  : NULL);
+            Sector *front = (pt->contact->hasFrontSections()? pt->contact->frontSectorPtr() : NULL);
+            Sector *back  = (pt->contact->hasBackSections()?  pt->contact->backSectorPtr()  : NULL);
 
             if(front && back && abs(pt->mov[VZ]) < FRACUNIT / 2)
             {

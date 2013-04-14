@@ -172,7 +172,7 @@ DENG2_PIMPL(Plane)
         // an update.
         foreach(Line *line, sector->lines())
         {
-            if(line->hasFrontSideDef())
+            if(line->hasFrontSections())
             {
                 Line::Side &front = line->front();
                 front.middle().surface().markAsNeedingDecorationUpdate();
@@ -180,7 +180,7 @@ DENG2_PIMPL(Plane)
                 front.top().surface().markAsNeedingDecorationUpdate();
             }
 
-            if(line->hasBackSideDef())
+            if(line->hasBackSections())
             {
                 Line::Side &back = line->back();
                 back.middle().surface().markAsNeedingDecorationUpdate();

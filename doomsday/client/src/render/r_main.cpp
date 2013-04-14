@@ -520,7 +520,7 @@ static void R_UpdateMap()
     foreach(Line *line, theMap->lines())
     for(int i = 0; i < 2; ++i)
     {
-        if(!line->hasSideDef(i))
+        if(!line->hasSections(i))
             continue;
 
         Line::Side &side = line->side(i);
@@ -1373,7 +1373,7 @@ void Rend_CacheForMap()
         foreach(Line *line, theMap->lines())
         for(int i = 0; i < 2; ++i)
         {
-            if(!line->hasSideDef(i))
+            if(!line->hasSections(i))
                 continue;
 
             Line::Side &side = line->side(i);

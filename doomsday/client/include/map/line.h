@@ -122,9 +122,6 @@ public:
     /// The given side section identifier is invalid. @ingroup errors
     DENG2_ERROR(InvalidSectionIdError);
 
-    /// Required sidedef attribution is missing. @ingroup errors
-    DENG2_ERROR(MissingSideDefError);
-
     /// The referenced property does not exist. @ingroup errors
     DENG2_ERROR(UnknownPropertyError);
 
@@ -236,7 +233,7 @@ public:
         bool isFront() const;
 
         /**
-         * Returns @c true if this is the front side of the owning line.
+         * Returns @c true if this is the back side of the owning line.
          */
         inline bool isBack() const { return !isFront(); }
 
@@ -260,18 +257,9 @@ public:
         inline Sector *sectorPtr() const { return hasSector()? &sector() : 0; }
 
         /**
-         * Returns @c true iff a SideDef is attributed to the side.
+         * Returns @c true iff Sections are defined for the side.
          */
-        bool hasSideDef() const;
-
-        /**
-         * Change the "archive index" of the associated sidedef. The archive
-         * index is the position of the sidedef in the archived map data. Note
-         * that this index is unrelated to the "in map index" used by GameMap.
-         *
-         * @param newIndex  New 1-based index. Can be @c 0 signifying "no-index".
-         */
-        void setSideDefArchiveIndex(uint newIndex);
+        bool hasSections() const;
 
         /**
          * Returns the specified section of the side.
@@ -397,6 +385,15 @@ public:
          * Returns the frame number of the last time shadows were drawn for the side.
          */
         int shadowVisCount() const;
+
+        /**
+         * Change the "archive index" of the associated sidedef. The archive
+         * index is the position of the sidedef in the archived map data. Note
+         * that this index is unrelated to the "in map index" used by GameMap.
+         *
+         * @param newIndex  New 1-based index. Can be @c 0 signifying "no-index".
+         */
+        void setSideDefArchiveIndex(uint newIndex);
 
         /**
          * Get a property value, selected by DMU_* name.
@@ -532,21 +529,22 @@ public:
     inline bool hasBackSector() const { return hasSector(BACK); }
 
     /**
-     * Returns @c true iff a sidedef is attributed to the specified side of the line.
+     * Returns @c true iff Side::Sections are defined for the specified side
+     * of the line.
      *
      * @param back  If not @c 0 test the Back side; otherwise the Front side.
      */
-    inline bool hasSideDef(int back) const { return side(back).hasSideDef(); }
+    inline bool hasSections(int back) const { return side(back).hasSections(); }
 
     /**
-     * Returns @c true iff a sidedef is attributed to the Front side of the line.
+     * Returns @c true iff Side::Sections are defined for the Front side of the line.
      */
-    inline bool hasFrontSideDef() const { return hasSideDef(FRONT); }
+    inline bool hasFrontSections() const { return hasSections(FRONT); }
 
     /**
-     * Returns @c true iff a sidedef is attributed to the Back side of the line.
+     * Returns @c true iff Side::Sections are defined for the Back side of the line.
      */
-    inline bool hasBackSideDef() const { return hasSideDef(BACK); }
+    inline bool hasBackSections() const { return hasSections(BACK); }
 
     /**
      * Convenient accessor method for returning the sector attributed to the
@@ -615,7 +613,7 @@ public:
      */
     inline bool isSelfReferencing() const
     {
-        return hasFrontSideDef() && hasBackSideDef() && frontSectorPtr() == backSectorPtr();
+        return hasFrontSections() && hasBackSections() && frontSectorPtr() == backSectorPtr();
     }
 
     /**

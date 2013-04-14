@@ -374,9 +374,9 @@ static byte pvisibleLineSections(Line *line, int backSide)
 {
     byte sections = 0;
 
-    if(!line || !line->hasSideDef(backSide)) return 0;
+    if(!line || !line->hasSections(backSide)) return 0;
 
-    if(!line->hasSector(backSide^1) /*$degenleaf*/ || !line->hasBackSideDef())
+    if(!line->hasSector(backSide^1) /*$degenleaf*/ || !line->hasBackSections())
     {
         // Only a middle.
         sections |= SSF_MIDDLE;
@@ -1312,7 +1312,7 @@ static boolean doRenderHEdge(HEdge *hedge, Vector3f const &normal,
             radioParams.wall.right.firstDiv = params.wall.right.firstDiv;
             radioParams.wall.right.divCount = params.wall.right.divCount;
 
-            if(!isTwosidedMiddle && !(hedge->hasTwin() && !(hedge->twin().hasLine() && hedge->twin().lineSide().hasSideDef())))
+            if(!isTwosidedMiddle && !(hedge->hasTwin() && !(hedge->twin().hasLine() && hedge->twin().lineSide().hasSections())))
             {
                 radioParams.backSec = hedge->hasTwin()? hedge->twin().sectorPtr() : 0;
             }
@@ -1543,8 +1543,8 @@ static Vector2f calcLineNormal(Line const &line, byte side)
  */
 static bool lineBackClosedForBlend(Line const &line, int side, bool ignoreOpacity)
 {
-    if(!line.front().hasSideDef()) return false;
-    if(!line.back().hasSideDef()) return true;
+    if(!line.front().hasSections()) return false;
+    if(!line.back().hasSections()) return true;
 
     Sector const *frontSec = line.sectorPtr(side);
     Sector const *backSec  = line.sectorPtr(side^1);
@@ -1731,7 +1731,7 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
         float texScale[2];
         Material *mat = NULL;
         int rpFlags = RPF_DEFAULT;
-        boolean isTwoSided = (hedge->hasLine() && hedge->line().hasFrontSideDef() && hedge->line().hasBackSideDef())? true:false;
+        boolean isTwoSided = (hedge->hasLine() && hedge->line().hasFrontSections() && hedge->line().hasBackSections())? true:false;
         blendmode_t blendMode = BM_NORMAL;
         Vector3f const *color = 0, *color2 = 0;
 
@@ -1855,7 +1855,7 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
         // Do not apply an angle based lighting delta if this surface's material
         // has been chosen as a HOM fix (we must remain consistent with the lighting
         // applied to the back plane (on this half-edge's back side)).
-        if(hedge->hasLine() && hedge->lineSide().hasSideDef() &&
+        if(hedge->hasLine() && hedge->lineSide().hasSections() &&
            isTwoSided && section != SS_MIDDLE && surface->hasFixMaterial())
         {
             deltaL = deltaR = 0;
@@ -1910,7 +1910,7 @@ static void reportLineDrawn(Line &line)
  */
 static boolean Rend_RenderHEdge(HEdge *hedge, byte sections)
 {
-    if(!hedge->hasLine() || !hedge->lineSide().hasSideDef()) return false;
+    if(!hedge->hasLine() || !hedge->lineSide().hasSections()) return false;
 
     // Only a "middle" section.
     if(sections & SSF_MIDDLE)
@@ -2235,8 +2235,8 @@ static bool hedgeBackClosedForSkyFix(HEdge const &hedge)
     Sector const *frontSec  = line.sectorPtr(hedge.lineSideId());
     Sector const *backSec   = line.sectorPtr(hedge.lineSideId()^1);
 
-    if(!front.hasSideDef()) return false;
-    if(!back.hasSideDef()) return true;
+    if(!front.hasSections()) return false;
+    if(!back.hasSections()) return true;
 
     if(frontSec == backSec) return false; // Never.
 
@@ -2776,7 +2776,7 @@ static void Rend_RenderWalls()
     {
         if((hedge->_frameFlags & HEDGEINF_FACINGFRONT) &&
            /* "mini-hedges" have no lines and "windows" have no sidedef */
-           hedge->hasLine() && hedge->lineSide().hasSideDef())
+           hedge->hasLine() && hedge->lineSide().hasSections())
         {
             Sector *frontSec = hedge->sectorPtr();
             Sector *backSec  = hedge->hasTwin()? hedge->twin().sectorPtr() : 0;
@@ -2784,7 +2784,7 @@ static void Rend_RenderWalls()
             boolean opaque;
 
             if(!frontSec || !backSec ||
-               (hedge->hasTwin() && !(hedge->twin().hasLine() && hedge->twin().lineSide().hasSideDef())) /* front side of a "window" */)
+               (hedge->hasTwin() && !(hedge->twin().hasLine() && hedge->twin().lineSide().hasSections())) /* front side of a "window" */)
             {
                 opaque = Rend_RenderHEdge(hedge, sections);
             }
@@ -3258,7 +3258,7 @@ void Rend_RenderSoundOrigins()
         foreach(Line *line, theMap->lines())
         for(int i = 0; i < 2; ++i)
         {
-            if(!line->hasSideDef(i))
+            if(!line->hasSections(i))
                 continue;
 
             Line::Side &side = line->side(i);
@@ -3315,7 +3315,7 @@ static void getVertexPlaneMinMax(Vertex const *vtx, coord_t *min, coord_t *max)
     {
         Line *li = &own->line();
 
-        if(li->hasFrontSideDef())
+        if(li->hasFrontSections())
         {
             if(min && li->frontSector().floor().visHeight() < *min)
                 *min = li->frontSector().floor().visHeight();
@@ -3324,7 +3324,7 @@ static void getVertexPlaneMinMax(Vertex const *vtx, coord_t *min, coord_t *max)
                 *max = li->frontSector().ceiling().visHeight();
         }
 
-        if(li->hasBackSideDef())
+        if(li->hasBackSections())
         {
             if(min && li->backSector().floor().visHeight() < *min)
                 *min = li->backSector().floor().visHeight();

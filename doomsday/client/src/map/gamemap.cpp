@@ -205,7 +205,7 @@ DENG2_PIMPL(GameMap)
                     sector->linkSoundEmitter(side.bottomSoundEmitter());
                     sector->linkSoundEmitter(side.topSoundEmitter());
                 }
-                if(line->hasBackSideDef() && line->backSectorPtr() == sector)
+                if(line->hasBackSections() && line->backSectorPtr() == sector)
                 {
                     Line::Side &side = line->back();
                     sector->linkSoundEmitter(side.middleSoundEmitter());
@@ -335,7 +335,7 @@ DENG2_PIMPL(GameMap)
         foreach(Line *line, sector.lines())
         {
             // Must be twosided.
-            if(!line->hasFrontSideDef() || !line->hasBackSideDef())
+            if(!line->hasFrontSections() || !line->hasBackSections())
                 continue;
 
             Line::Side &side = line->side(line->frontSectorPtr() == &sector? FRONT : BACK);
@@ -582,7 +582,7 @@ void GameMap::buildSurfaceLists()
     foreach(Line *line, _lines)
     for(int i = 0; i < 2; ++i)
     {
-        if(!line->hasSideDef(i))
+        if(!line->hasSections(i))
             continue;
 
         Line::Side &side = line->side(i);
@@ -645,7 +645,7 @@ void GameMap::setTraceOpening(Line &line)
     // Is the line part of this map?
     if(lineIndex(&line) < 0) return; // Odd...
 
-    if(!line.hasBackSideDef())
+    if(!line.hasBackSections())
     {
         d->traceOpening.range = 0;
         return;
@@ -764,7 +764,7 @@ Surface *GameMap::surfaceBySoundEmitter(ddmobj_base_t const &soundEmitter) const
     foreach(Line *line, _lines)
     for(int i = 0; i < 2; ++i)
     {
-        if(!line->hasSideDef(i))
+        if(!line->hasSections(i))
             continue;
 
         Line::Side &side = line->side(i);

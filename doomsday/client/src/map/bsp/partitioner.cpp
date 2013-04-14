@@ -296,8 +296,8 @@ DENG2_PIMPL(Partitioner)
     inline bool lineMightHaveWindowEffect(Line const &line)
     {
         if(line.isFromPolyobj()) return false;
-        if(line.hasFrontSideDef() && line.hasBackSideDef()) return false;
-        if(!line.hasFrontSideDef()) return false;
+        if(line.hasFrontSections() && line.hasBackSections()) return false;
+        if(!line.hasFrontSections()) return false;
         //if(line.length() <= 0 || line._buildData.overlap) return false;
 
         // Look for window effects by checking for an odd number of one-sided
@@ -428,7 +428,7 @@ DENG2_PIMPL(Partitioner)
                 Sector *frontSec = line->frontSectorPtr();
                 Sector *backSec  = 0;
 
-                if(line->hasBackSideDef())
+                if(line->hasBackSections())
                 {
                     backSec = line->backSectorPtr();
                 }
