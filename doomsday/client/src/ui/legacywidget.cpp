@@ -187,9 +187,11 @@ void LegacyWidget::draw()
 
 bool LegacyWidget::handleEvent(Event const &event)
 {
-    /// @todo Event processing should occur here, not during Loop_RunTics().
-
     /**
+     * @todo Event processing should occur here, not during Loop_RunTics().
+     * However, care must be taken to reproduce the vanilla behavior of
+     * controls with regard to response times.
+     *
      * @todo Input drivers need to support Unicode text; for now we have to
      * submit as Latin1.
      */
