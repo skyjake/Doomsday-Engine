@@ -1,4 +1,4 @@
-/** @file
+/** @file b_device.cpp  Control-Device Bindings. @ingroup ui
  *
  * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
@@ -17,12 +17,6 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Control-Device Bindings.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <de/memory.h>
 
 #include "de_console.h"
@@ -32,30 +26,12 @@
 #include "ui/b_device.h"
 #include "ui/b_context.h"
 
-// MACROS ------------------------------------------------------------------
-
 #define EVTYPE_TO_CBDTYPE(evt)  ((evt) == E_AXIS? CBD_AXIS : (evt) == E_TOGGLE? CBD_TOGGLE : CBD_ANGLE)
 #define CBDTYPE_TO_EVTYPE(cbt)  ((cbt) == CBD_AXIS? E_AXIS : (cbt) == CBD_TOGGLE? E_TOGGLE : E_ANGLE)
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 float       stageThreshold = 6.f/35;
 float       stageFactor = .5f;
 byte        zeroControlUponConflict = true;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 static dbinding_t* B_AllocDeviceBinding(void)
 {

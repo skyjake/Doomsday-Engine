@@ -1,4 +1,4 @@
-/** @file b_context.cpp
+/** @file b_context.cpp  Bindings Contexts. @ingroup ui
  *
  * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
@@ -17,12 +17,6 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Bindings Contexts.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #define DENG_NO_API_MACROS_BINDING
 
 #include <de/memory.h>
@@ -37,26 +31,8 @@
 
 #include <string.h>
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static int bindContextCount;
 static bcontext_t** bindContexts;
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Destroy all binding contexts and the bindings within the contexts.

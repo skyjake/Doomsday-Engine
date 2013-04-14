@@ -1,4 +1,4 @@
-/** @file
+/** @file b_util.cpp  Bindings-related Utility Functions. @ingroup ui
  *
  * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
@@ -17,12 +17,6 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Bindings-related Utility Functions.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <math.h>
 
 #include "de_platform.h"
@@ -34,24 +28,6 @@
 #include "ui/b_context.h"
 
 #include "network/net_main.h" // netGame
-
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 boolean B_ParseToggleState(const char* toggleName, ebstate_t* state)
 {
