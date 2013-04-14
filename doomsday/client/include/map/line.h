@@ -184,27 +184,6 @@ public:
         };
 
     public: /// @todo make private:
-        /// Line owner of the side.
-        Line &_line;
-
-        /// Attributed sector.
-        Sector *_sector;
-
-        /// 1-based index of the associated sidedef in the archived map; otherwise @c 0.
-        uint _sideDefArchiveIndex;
-
-        /// Sections.
-        Sections *_sections;
-
-        /// Left-most half-edge on this side of the owning line.
-        HEdge *_leftHEdge;
-
-        /// Right-most half-edge on this side of the owning line.
-        HEdge *_rightHEdge;
-
-        /// Framecount of last time shadows were drawn on this side.
-        int _shadowVisCount;
-
         /// @ref sdefFlags
         short _flags;
 
@@ -272,9 +251,18 @@ public:
         bool hasSections() const;
 
         /**
+         * Add default sections to the side if they aren't already defined.
+         *
+         * @see hasSections()
+         */
+        void addSections();
+
+        /**
          * Returns the specified section of the side.
          *
          * @param sectionId  Identifier of the section to return.
+         *
+         * @see hasSections()
          */
         Section &section(SideSection sectionId);
 
@@ -285,6 +273,8 @@ public:
          * Returns the specified surface of the side.
          *
          * @param sectionId  Identifier of the surface to return.
+         *
+         * @see section()
          */
         inline Surface &surface(SideSection sectionId) {
             return section(sectionId).surface();
@@ -297,6 +287,8 @@ public:
 
         /**
          * Returns the middle surface of the side.
+         *
+         * @see surface()
          */
         inline Surface &middle() { return surface(SS_MIDDLE); }
 
@@ -305,6 +297,8 @@ public:
 
         /**
          * Returns the bottom surface of the side.
+         *
+         * @see surface()
          */
         inline Surface &bottom() { return surface(SS_BOTTOM); }
 
@@ -313,6 +307,8 @@ public:
 
         /**
          * Returns the top surface of the side.
+         *
+         * @see surface()
          */
         inline Surface &top() { return surface(SS_TOP); }
 
@@ -323,6 +319,8 @@ public:
          * Returns the specified sound emitter of the side.
          *
          * @param sectionId  Identifier of the sound emitter to return.
+         *
+         * @see section(), Section::soundEmitter()
          */
         inline ddmobj_base_t &soundEmitter(SideSection sectionId) {
             return section(sectionId).soundEmitter();
@@ -335,6 +333,8 @@ public:
 
         /**
          * Returns the middle sound emitter of the side.
+         *
+         * @see section(), Section::soundEmitter()
          */
         inline ddmobj_base_t &middleSoundEmitter() {
             return section(SS_MIDDLE).soundEmitter();
@@ -354,6 +354,8 @@ public:
 
         /**
          * Returns the bottom sound emitter (tee-hee) for the side.
+         *
+         * @see section(), Section::soundEmitter()
          */
         inline ddmobj_base_t &bottomSoundEmitter() {
             return section(SS_BOTTOM).soundEmitter();
@@ -373,6 +375,8 @@ public:
 
         /**
          * Returns the top sound emitter for the side.
+         *
+         * @see section(), Section::soundEmitter()
          */
         inline ddmobj_base_t &topSoundEmitter() {
             return section(SS_TOP).soundEmitter();
@@ -410,14 +414,32 @@ public:
 #endif // __CLIENT__
 
         /**
-         * Returns the left-most HEdge for the side.
+         * Returns the left-most half-edge for the side.
          */
         HEdge &leftHEdge() const;
 
         /**
-         * Returns the right-most HEdge for the side.
+         * Change the left-most half-edge for the side.
+         *
+         * @param newHEdge  New half-edge to set as the left-most. Can be @c 0.
+         *
+         * @todo Refactor away. Only needed presently because of Polyobj.
+         */
+        void setLeftHEdge(HEdge *newHEdge);
+
+        /**
+         * Returns the right-most half-edge for the side.
          */
         HEdge &rightHEdge() const;
+
+        /**
+         * Change the right-most half-edge for the side.
+         *
+         * @param newHEdge  New half-edge to set as the right-most. Can be @c 0.
+         *
+         * @todo Refactor away. Only needed presently because of Polyobj.
+         */
+        void setRightHEdge(HEdge *newHEdge);
 
         /**
          * Update the tangent space normals of the side's surfaces according to the
@@ -435,6 +457,13 @@ public:
          * Returns the frame number of the last time shadows were drawn for the side.
          */
         int shadowVisCount() const;
+
+        /**
+         * Change the frame number of the last time shadows were drawn for the side.
+         *
+         * @param newCount  New shadow vis count.
+         */
+        void setShadowVisCount(int newCount);
 
         /**
          * Change the "archive index" of the associated sidedef. The archive
@@ -460,6 +489,28 @@ public:
          * @return  Always @c 0 (can be used as an iterator).
          */
         int setProperty(setargs_t const &args);
+
+    private: /// @todo Move to a private Instance.
+        /// Line owner of the side.
+        Line &_line;
+
+        /// Attributed sector.
+        Sector *_sector;
+
+        /// 1-based index of the associated sidedef in the archived map; otherwise @c 0.
+        uint _sideDefArchiveIndex;
+
+        /// Sections.
+        Sections *_sections;
+
+        /// Left-most half-edge on this side of the owning line.
+        HEdge *_leftHEdge;
+
+        /// Right-most half-edge on this side of the owning line.
+        HEdge *_rightHEdge;
+
+        /// Framecount of last time shadows were drawn on this side.
+        int _shadowVisCount;
     };
 
 public: /// @todo make private:

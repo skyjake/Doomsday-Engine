@@ -43,14 +43,14 @@ using namespace de;
 
 Line::Side::Side(Line &line, Sector *sector)
     : MapElement(DMU_SIDE),
+      _flags(0),
       _line(line),
       _sector(sector),
       _sections(0),
       _sideDefArchiveIndex(0), // no-index
       _leftHEdge(0),
       _rightHEdge(0),
-      _shadowVisCount(0),
-      _flags(0)
+      _shadowVisCount(0)
 {
 #ifdef __CLIENT__
     _fakeRadioData.updateCount = 0;
@@ -101,6 +101,14 @@ bool Line::Side::hasSections() const
     return _sections != 0;
 }
 
+void Line::Side::addSections()
+{
+    // Already defined?
+    if(_sections) return;
+
+    _sections = new Sections(*this);
+}
+
 void Line::Side::setSideDefArchiveIndex(uint newIndex)
 {
     _sideDefArchiveIndex = newIndex;
@@ -124,13 +132,23 @@ Line::Side::Section &Line::Side::section(SideSection sectionId)
 
 Line::Side::Section const &Line::Side::section(SideSection sectionId) const
 {
-    return const_cast<Section const &>(const_cast<Side &>(*this).section(sectionId));
+    return const_cast<Section const &>(const_cast<Side *>(this)->section(sectionId));
 }
 
 HEdge &Line::Side::leftHEdge() const
 {
     DENG_ASSERT(_leftHEdge != 0);
     return *_leftHEdge;
+}
+
+void Line::Side::setLeftHEdge(HEdge *newLeftHEdge)
+{
+    _leftHEdge = newLeftHEdge;
+}
+
+void Line::Side::setRightHEdge(HEdge *newRightHEdge)
+{
+    _rightHEdge = newRightHEdge;
 }
 
 HEdge &Line::Side::rightHEdge() const
@@ -254,6 +272,11 @@ short Line::Side::flags() const
 int Line::Side::shadowVisCount() const
 {
     return _shadowVisCount;
+}
+
+void Line::Side::setShadowVisCount(int newCount)
+{
+    _shadowVisCount = newCount;
 }
 
 int Line::Side::property(setargs_t &args) const
@@ -597,7 +620,7 @@ int Line::setProperty(setargs_t const &args)
 
     switch(args.prop)
     {
-    case DMU_FRONT_SECTOR: {
+    /*case DMU_FRONT_SECTOR: {
         Sector *newFrontSector = frontSectorPtr();
         DMU_SetValue(DMT_LINE_SECTOR, &newFrontSector, &args, 0);
         d->front._sector = newFrontSector;
@@ -607,7 +630,7 @@ int Line::setProperty(setargs_t const &args)
         DMU_SetValue(DMT_LINE_SECTOR, &newBackSector, &args, 0);
         d->back._sector = newBackSector;
         break; }
-    /*case DMU_FRONT: {
+    case DMU_FRONT: {
         SideDef *newFrontSideDef = frontSideDefPtr();
         DMU_SetValue(DMT_LINE_SIDE, &newFrontSideDef, &args, 0);
         d->front._sideDef = newFrontSideDef;

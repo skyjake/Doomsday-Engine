@@ -108,14 +108,6 @@ public:
         return line;
     }
 
-    Line::Side *createLineSideSections(Line &line, int sideId)
-    {
-        Line::Side &side = line.side(sideId);
-        DENG_ASSERT(!side._sections);
-        side._sections = new Line::Side::Sections(side);
-        return &side;
-    }
-
     Sector *createSector(float lightLevel, Vector3f const &lightColor)
     {
         Sector *sector = new Sector(lightLevel, lightColor);
@@ -985,8 +977,8 @@ boolean MPE_End()
             hedge->_twin    = 0;
             hedge->_bspLeaf = 0;
 
-            line->front()._leftHEdge =
-                line->front()._rightHEdge = hedge;
+            line->front().setLeftHEdge(hedge);
+            line->front().setRightHEdge(hedge);
         }
 
         polyobj->buildUniqueVertexes();
@@ -1132,15 +1124,13 @@ void MPE_LineAddSide(uint lineIdx, int sideId, short flags, ddstring_t const *to
     if(lineIdx == 0 || lineIdx > (uint)editMap.lines.count()) return;
 
     Line *line = editMap.lines[lineIdx - 1];
-    if(!line->hasSections(sideId))
-    {
-        editMap.createLineSideSections(*line, sideId);
-    }
-
     Line::Side &side = line->side(sideId);
 
     side._flags = flags;
     side.setSideDefArchiveIndex(sideDefArchiveIndex);
+
+    // Ensure sections are defined if they aren't already.
+    side.addSections();
 
     // Assign the resolved material if found.
     side.top().setMaterial(findMaterialInDict(topMaterialUri));

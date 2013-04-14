@@ -1440,7 +1440,7 @@ static void drawLinkedEdgeShadows(BspLeaf const &bspLeaf, ShadowLink &link,
     }
 
     // Mark it rendered for this frame.
-    link.lineSide()._shadowVisCount = frameCount;
+    link.lineSide().setShadowVisCount(frameCount);
 }
 
 /**

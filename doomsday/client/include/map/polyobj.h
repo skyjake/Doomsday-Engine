@@ -63,7 +63,7 @@ public:
     {
         foreach(Line *line, lines())
         {
-            delete line->front()._leftHEdge;
+            delete &line->front().leftHEdge();
         }
 
         delete static_cast<Lines *>(_lines);
