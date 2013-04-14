@@ -23,7 +23,7 @@
 #include "de_base.h"
 
 #include "audio/s_environ.h"
-#include "map/linedef.h"
+#include "map/line.h"
 #include "map/gamemap.h"
 #include "map/r_world.h" // ddMapSetup
 #include "render/r_main.h" // frameTimePos
@@ -170,11 +170,11 @@ DENG2_PIMPL(Plane)
 
         // Mark the decor lights on the sides of this plane as requiring
         // an update.
-        foreach(LineDef *line, sector->lines())
+        foreach(Line *line, sector->lines())
         {
             if(line->hasFrontSideDef())
             {
-                LineDef::Side &front = line->front();
+                Line::Side &front = line->front();
                 front.middle().surface().markAsNeedingDecorationUpdate();
                 front.bottom().surface().markAsNeedingDecorationUpdate();
                 front.top().surface().markAsNeedingDecorationUpdate();
@@ -182,7 +182,7 @@ DENG2_PIMPL(Plane)
 
             if(line->hasBackSideDef())
             {
-                LineDef::Side &back = line->back();
+                Line::Side &back = line->back();
                 back.middle().surface().markAsNeedingDecorationUpdate();
                 back.bottom().surface().markAsNeedingDecorationUpdate();
                 back.top().surface().markAsNeedingDecorationUpdate();

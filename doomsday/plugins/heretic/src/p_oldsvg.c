@@ -386,7 +386,7 @@ static void P_v13_UnArchiveWorld(void)
     fixed_t offx, offy;
     Sector* sec;
     xsector_t* xsec;
-    LineDef* line;
+    Line* line;
     xline_t* xline;
 
     // Do sectors.
@@ -419,7 +419,7 @@ static void P_v13_UnArchiveWorld(void)
     // Do lines.
     for(i = 0; i < numlines; ++i)
     {
-        line = P_ToPtr(DMU_LINEDEF, i);
+        line = P_ToPtr(DMU_LINE, i);
         xline = P_ToXLine(line);
 
         xline->flags   = Reader_ReadInt16(svReader);

@@ -376,11 +376,11 @@ static void processSeg(HEdge *hedge, void *parameters)
     {
         // On which side of the line are we? (distance is from hedge to origin).
         int lineSide = hedge->lineSideId() ^ (distance < 0);
-        LineDef &line = hedge->line();
+        Line &line = hedge->line();
         Sector *frontSec  = lineSide == FRONT? leaf->sectorPtr() : backLeaf->sectorPtr();
         Sector *backSec   = lineSide == FRONT? backLeaf->sectorPtr() : leaf->sectorPtr();
-        LineDef::Side &front = line.side(lineSide);
-        LineDef::Side &back  = line.side(lineSide^1);
+        Line::Side &front = line.side(lineSide);
+        Line::Side &back  = line.side(lineSide^1);
 
         if(backSec && !back.hasSideDef()) return; // One-sided window.
 

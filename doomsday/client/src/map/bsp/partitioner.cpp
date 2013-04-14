@@ -41,7 +41,7 @@
 #include "map/bsp/hedgeintercept.h"
 #include "map/bsp/hedgetip.h"
 #include "map/bsp/hplane.h"
-#include "map/bsp/linedefinfo.h"
+#include "map/bsp/lineinfo.h"
 #include "map/bsp/partitioncost.h"
 #include "map/bsp/superblockmap.h"
 #include "map/bsp/vertexinfo.h"
@@ -144,7 +144,7 @@ DENG2_PIMPL(Partitioner)
 
     /// Extra info about the partition plane.
     HEdgeInfo partitionInfo;
-    LineDef *partitionLine;
+    Line *partitionLine;
 
     /// @c true = a BSP for the current map has been built successfully.
     bool builtOk;
@@ -206,8 +206,8 @@ DENG2_PIMPL(Partitioner)
     {
         double frontDist, backDist;
         Sector *frontOpen, *backOpen;
-        LineDef *frontLine, *backLine;
-        LineDef *testLine;
+        Line *frontLine, *backLine;
+        Line *testLine;
         coord_t mX, mY;
         bool castHoriz;
 
@@ -217,7 +217,7 @@ DENG2_PIMPL(Partitioner)
         {}
     };
 
-    static void testForWindowEffect2(LineDef &line, testForWindowEffectParams &p)
+    static void testForWindowEffect2(Line &line, testForWindowEffectParams &p)
     {
         if(&line == p.testLine) return;
         if(line.isSelfReferencing()) return;
@@ -287,13 +287,13 @@ DENG2_PIMPL(Partitioner)
         }
     }
 
-    static int testForWindowEffectWorker(LineDef *line, void *parms)
+    static int testForWindowEffectWorker(Line *line, void *parms)
     {
         testForWindowEffect2(*line, *reinterpret_cast<testForWindowEffectParams *>(parms));
         return false; // Continue iteration.
     }
 
-    inline bool lineMightHaveWindowEffect(LineDef const &line)
+    inline bool lineMightHaveWindowEffect(Line const &line)
     {
         if(line.isFromPolyobj()) return false;
         if(line.hasFrontSideDef() && line.hasBackSideDef()) return false;
@@ -317,7 +317,7 @@ DENG2_PIMPL(Partitioner)
 
     void testForWindowEffect(LineInfo &lineInfo)
     {
-        LineDef *line = lineInfo.line;
+        Line *line = lineInfo.line;
         DENG_ASSERT(line != 0);
         if(!lineMightHaveWindowEffect(*line)) return;
 
@@ -367,7 +367,7 @@ DENG2_PIMPL(Partitioner)
 
         // Initialize line info.
         lineInfos.reserve(map->lineCount());
-        foreach(LineDef *line, map->lines())
+        foreach(Line *line, map->lines())
         {
             lineInfos.push_back(LineInfo(line, DIST_EPSILON));
             LineInfo &lineInfo = lineInfos.back();
@@ -380,8 +380,8 @@ DENG2_PIMPL(Partitioner)
      * @return The right half-edge (from @a start to @a end).
      */
     HEdge *buildHEdgesBetweenVertexes(Vertex &start, Vertex &end,
-        Sector *frontSec, Sector *backSec, LineDef *line,
-        LineDef *partitionLine)
+        Sector *frontSec, Sector *backSec, Line *line,
+        Line *partitionLine)
     {
         HEdge *right = newHEdge(start, end, *frontSec, line, partitionLine);
         if(!backSec)
@@ -415,7 +415,7 @@ DENG2_PIMPL(Partitioner)
         DENG2_FOR_EACH(LineInfos, i, lineInfos)
         {
             LineInfo const &lineInfo = *i;
-            LineDef *line = lineInfo.line;
+            Line *line = lineInfo.line;
 
             // Polyobj lines are completely ignored.
             if(line->isFromPolyobj()) continue;
@@ -1355,7 +1355,7 @@ DENG2_PIMPL(Partitioner)
                  */
                 if(hedge->hasLine())
                 {
-                    LineDef::Side &side = hedge->lineSide();
+                    Line::Side &side = hedge->lineSide();
 
                     side._sector  = 0;
                     side._sideDef = 0;
@@ -1770,7 +1770,7 @@ DENG2_PIMPL(Partitioner)
                 /// @todo kludge: This should not be done here!
                 if(hedge->hasLine())
                 {
-                    LineDef::Side &side = hedge->line().side(hedge->lineSideId());
+                    Line::Side &side = hedge->line().side(hedge->lineSideId());
 
                     // Already processed?
                     if(!side._leftHEdge)
@@ -1829,7 +1829,7 @@ DENG2_PIMPL(Partitioner)
              */
             if(!sanityCheckHasRealHEdge(leaf))
                 throw Error("Partitioner::clockwiseLeaf",
-                            QString("BSP Leaf 0x%1 has no linedef-linked half-edge")
+                            QString("BSP Leaf 0x%1 has no line-linked half-edge")
                                 .arg(dintptr(leaf), 0, 16));
 
             // Look for migrant half-edges in the leaf.
@@ -1932,11 +1932,11 @@ DENG2_PIMPL(Partitioner)
      * Create a new intersection.
      */
     HEdgeIntercept *newHEdgeIntercept(Vertex &vertex,
-                                      bool lineDefIsSelfReferencing)
+                                      bool lineIsSelfReferencing)
     {
         HEdgeIntercept *inter = new HEdgeIntercept;
         inter->vertex  = &vertex;
-        inter->selfRef = lineDefIsSelfReferencing;
+        inter->selfRef = lineIsSelfReferencing;
 
         inter->before  = openSectorAtAngle(vertex, M_InverseAngle(partitionInfo.pAngle));
         inter->after   = openSectorAtAngle(vertex, partitionInfo.pAngle);
@@ -2055,8 +2055,8 @@ DENG2_PIMPL(Partitioner)
     /**
      * Create a new half-edge.
      */
-    HEdge *newHEdge(Vertex &start, Vertex &end, Sector &sec, LineDef *line = 0,
-                    LineDef *sourceLineDef = 0)
+    HEdge *newHEdge(Vertex &start, Vertex &end, Sector &sec, Line *line = 0,
+                    Line *sourceLine = 0)
     {
         HEdge *hedge = new HEdge;
 
@@ -2071,7 +2071,7 @@ DENG2_PIMPL(Partitioner)
 
         HEdgeInfo &info = hedgeInfo(*hedge);
         info.line = line;
-        info.sourceLine = sourceLineDef;
+        info.sourceLine = sourceLine;
         info.initFromHEdge(*hedge);
 
         return hedge;
@@ -2195,7 +2195,7 @@ DENG2_PIMPL(Partitioner)
     /**
      * Update the extra info about the current partition plane.
      */
-    void setPartitionInfo(HEdgeInfo const &info, LineDef *line)
+    void setPartitionInfo(HEdgeInfo const &info, Line *line)
     {
         std::memcpy(&partitionInfo, &info, sizeof(partitionInfo));
         partitionLine = line;
@@ -2261,7 +2261,7 @@ DENG2_PIMPL(Partitioner)
      * @param line    The window line.
      * @param backFacingSector  Sector that the back of the line is facing.
      */
-    void notifyOneWayWindowFound(LineDef &line, Sector &backFacingSector)
+    void notifyOneWayWindowFound(Line &line, Sector &backFacingSector)
     {
         DENG2_FOR_PUBLIC_AUDIENCE(OneWayWindowFound, i)
         {

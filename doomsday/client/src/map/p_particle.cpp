@@ -64,7 +64,7 @@ float particleSpawnRate = 1; // Unmodified.
 static AABoxd mbox;
 static fixed_t tmpz, tmprad, tmpx1, tmpx2, tmpy1, tmpy2;
 static boolean tmcross;
-static LineDef *ptcHitLine;
+static Line *ptcHitLine;
 
 static int releaseGeneratorParticles(ptcgen_t *gen, void *parameters)
 {
@@ -754,7 +754,7 @@ static int manyNewParticles(thinker_t *th, void *context)
     return false; // Continue iteration.
 }
 
-int PIT_CheckLinePtc(LineDef *ld, void *parameters)
+int PIT_CheckLinePtc(Line *ld, void *parameters)
 {
     DENG_ASSERT(ld);
     DENG_UNUSED(parameters);

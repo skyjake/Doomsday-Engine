@@ -183,7 +183,7 @@ static boolean CheckedLockedDoor(mobj_t* mo, byte lock)
     return true;
 }
 
-boolean EV_LineSearchForPuzzleItem(LineDef* line, byte* args, mobj_t* mo)
+boolean EV_LineSearchForPuzzleItem(Line* line, byte* args, mobj_t* mo)
 {
     inventoryitemtype_t  type;
 
@@ -199,7 +199,7 @@ boolean EV_LineSearchForPuzzleItem(LineDef* line, byte* args, mobj_t* mo)
     return P_InventoryUse(mo->player - players, type, false);
 }
 
-boolean P_ExecuteLineSpecial(int special, byte* args, LineDef* line,
+boolean P_ExecuteLineSpecial(int special, byte* args, Line* line,
                              int side, mobj_t* mo)
 {
     boolean             success;
@@ -609,7 +609,7 @@ boolean P_ExecuteLineSpecial(int special, byte* args, LineDef* line,
     return success;
 }
 
-boolean P_ActivateLine(LineDef *line, mobj_t *mo, int side, int activationType)
+boolean P_ActivateLine(Line *line, mobj_t *mo, int side, int activationType)
 {
     int             lineActivation;
     boolean         repeat;

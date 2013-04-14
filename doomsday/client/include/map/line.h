@@ -1,4 +1,4 @@
-/** @file linedef.h Map LineDef.
+/** @file line.h World Map Line.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_MAP_LINEDEF
-#define LIBDENG_MAP_LINEDEF
+#ifndef DENG_WORLD_MAP_LINE
+#define DENG_WORLD_MAP_LINE
 
 #include <de/binangle.h>
 #include <de/vector1.h>
@@ -27,15 +27,10 @@
 #include <de/Vector>
 #include <de/Error>
 
-//#include "resource/r_data.h"
-
 #include "MapElement"
 #include "map/sidedef.h"
 #include "map/surface.h"
 #include "map/vertex.h"
-//#include "map/r_world.h"
-//#include "p_mapdata.h"
-
 #include "p_dmu.h"
 
 class HEdge;
@@ -103,25 +98,23 @@ struct edgespan_t
 /**
  * World map line.
  *
- * Despite sharing it's name with a map element present in the id Tech 1 map
- * format, this component has a notably different design and slightly different
- * purpose in the Doomsday Engine.
+ * @attention This component has a notably different design and slightly different
+ * purpose when compared to a Linedef in the id Tech 1 map format. The definitions
+ * of which are not always interchangeable.
  *
- * Lines always have two logical sides, however they may not have a sector
+ * DENG lines always have two logical sides, however they may not have a sector
  * attributed to either or both sides.
  *
- * @note Lines are @em not considered to define the geometry of a map. Instead
- * a line should be thought of as a finite line segment in the plane, according
- * to the standard definition of a line as used with an arrangement of lines in
+ * @note Lines are @em not considered to define the geometry of a map. Instead a
+ * line should be thought of as a finite line segment in the plane, according to
+ * the standard definition of a line as used with an arrangement of lines in
  * computational geometry.
  *
  * @see http://en.wikipedia.org/wiki/Arrangement_of_lines
  *
  * @ingroup map
- *
- * @todo Should be renamed "Line" (this is not a definition, it @em is a line).
  */
-class LineDef : public de::MapElement
+class Line : public de::MapElement
 {
 public:
     /// Required sector attribution is missing. @ingroup errors
@@ -180,7 +173,7 @@ public:
 
     public: /// @todo make private:
         /// Line owner of the side.
-        LineDef &_line;
+        Line &_line;
 
         /// Attributed sector.
         Sector *_sector;
@@ -224,16 +217,16 @@ public:
 #endif // __CLIENT__
 
     public:
-        Side(LineDef &line, Sector *sector = 0);
+        Side(Line &line, Sector *sector = 0);
         ~Side();
 
         /**
-         * Returns the LineDef owner of the side.
+         * Returns the Line owner of the side.
          */
-        LineDef &line();
+        Line &line();
 
         /// @copydoc line()
-        LineDef const &line() const;
+        Line const &line() const;
 
         /**
          * Returns @c true iff a Sector is attributed to the side.
@@ -385,14 +378,14 @@ public:
 
         /**
          * Update the side's sound emitter origins according to the points defined by
-         * the LineDef's vertices and the plane heights of the Sector on this side.
+         * the Line's vertices and the plane heights of the Sector on this side.
          * If no SideDef is associated this is a no-op.
          */
         void updateAllSoundEmitterOrigins();
 
         /**
          * Update the tangent space normals of the side's surfaces according to the
-         * points defined by the LineDef's vertices. If no SideDef is associated this
+         * points defined by the Line's vertices. If no SideDef is associated this
          * is a no-op.
          */
         void updateSurfaceNormals();
@@ -420,7 +413,7 @@ public: /// @todo make private:
     byte _inFlags;
 
 public:
-    LineDef(Vertex &from, Vertex &to,
+    Line(Vertex &from, Vertex &to,
             Sector *frontSector = 0,
             Sector *backSector  = 0);
 
@@ -897,4 +890,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif // LIBDENG_MAP_LINEDEF
+#endif // DENG_WORLD_MAP_LINE

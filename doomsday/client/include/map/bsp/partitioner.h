@@ -56,7 +56,7 @@ public:
         void unclosedSectorFound(Sector &sector, Vector2d const &nearPoint))
 
     DENG2_DEFINE_AUDIENCE(OneWayWindowFound,
-        void oneWayWindowFound(LineDef &line, Sector &backFacingSector))
+        void oneWayWindowFound(Line &line, Sector &backFacingSector))
 
     DENG2_DEFINE_AUDIENCE(MigrantHEdgeBuilt,
         void migrantHEdgeBuilt(HEdge &hedge, Sector &facingSector))
@@ -78,7 +78,7 @@ public:
      * Build the BSP for the given map.
      *
      * High-level description (courtesy of Raphael Quinet):
-     *   1. Create one Seg for each SideDef: pick each LineDef in turn.  If it
+     *   1. Create one Seg for each SideDef: pick each Line in turn.  If it
      *      has a "first" SideDef, then create a normal Seg.  If it has a
      *      "second" SideDef, then create a flipped Seg.
      *   2. Call CreateNodes with the current list of Segs.  The list of Segs is

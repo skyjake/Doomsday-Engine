@@ -192,7 +192,7 @@ DENG_HEADERS += \
     $$SRC/include/map/bsp/hedgeintercept.h \
     $$SRC/include/map/bsp/hedgetip.h \
     $$SRC/include/map/bsp/hplane.h \
-    $$SRC/include/map/bsp/linedefinfo.h \
+    $$SRC/include/map/bsp/lineinfo.h \
     $$SRC/include/map/bsp/partitioncost.h \
     $$SRC/include/map/bsp/partitioner.h \
     $$SRC/include/map/bsp/superblockmap.h \
@@ -204,7 +204,7 @@ DENG_HEADERS += \
     $$SRC/include/map/gamemap.h \
     $$SRC/include/map/generators.h \
     $$SRC/include/map/hedge.h \
-    $$SRC/include/map/linedef.h \
+    $$SRC/include/map/line.h \
     $$SRC/include/map/p_dmu.h \
     $$SRC/include/map/p_intercept.h \
     $$SRC/include/map/p_mapdata.h \
@@ -374,7 +374,7 @@ SOURCES += \
     $$SRC/src/map/gamemap.cpp \
     $$SRC/src/map/generators.cpp \
     $$SRC/src/map/hedge.cpp \
-    $$SRC/src/map/linedef.cpp \
+    $$SRC/src/map/line.cpp \
     $$SRC/src/map/linesighttest.cpp \
     $$SRC/src/map/p_data.cpp \
     $$SRC/src/map/p_dmu.cpp \

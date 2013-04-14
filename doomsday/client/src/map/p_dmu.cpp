@@ -56,10 +56,10 @@ class DummyVertex  : public Vertex,  public DummyData {};
 //class DummySideDef : public SideDef, public DummyData {};
 class DummySector  : public Sector,  public DummyData {};
 
-class DummyLineDef : public LineDef, public DummyData
+class DummyLine : public Line, public DummyData
 {
 public:
-    DummyLineDef(DummyVertex &v1, DummyVertex &v2) : LineDef(v1, v2) {}
+    DummyLine(DummyVertex &v1, DummyVertex &v2) : Line(v1, v2) {}
 };
 
 typedef QSet<de::MapElement *> Dummies;
@@ -78,16 +78,16 @@ char const *DMU_Str(uint prop)
         { DMU_NONE, "(invalid)" },
         { DMU_VERTEX, "DMU_VERTEX" },
         { DMU_HEDGE, "DMU_HEDGE" },
-        { DMU_LINEDEF, "DMU_LINEDEF" },
+        { DMU_LINE, "DMU_LINE" },
         { DMU_SIDEDEF, "DMU_SIDEDEF" },
         { DMU_BSPNODE, "DMU_BSPNODE" },
         { DMU_BSPLEAF, "DMU_BSPLEAF" },
         { DMU_SECTOR, "DMU_SECTOR" },
         { DMU_PLANE, "DMU_PLANE" },
         { DMU_MATERIAL, "DMU_MATERIAL" },
-        { DMU_LINEDEF_BY_TAG, "DMU_LINEDEF_BY_TAG" },
+        { DMU_LINE_BY_TAG, "DMU_LINE_BY_TAG" },
         { DMU_SECTOR_BY_TAG, "DMU_SECTOR_BY_TAG" },
-        { DMU_LINEDEF_BY_ACT_TAG, "DMU_LINEDEF_BY_ACT_TAG" },
+        { DMU_LINE_BY_ACT_TAG, "DMU_LINE_BY_ACT_TAG" },
         { DMU_SECTOR_BY_ACT_TAG, "DMU_SECTOR_BY_ACT_TAG" },
         { DMU_X, "DMU_X" },
         { DMU_Y, "DMU_Y" },
@@ -123,7 +123,7 @@ char const *DMU_Str(uint prop)
         { DMU_OFFSET_XY, "DMU_OFFSET_XY" },
         { DMU_BLENDMODE, "DMU_BLENDMODE" },
         { DMU_VALID_COUNT, "DMU_VALID_COUNT" },
-        { DMU_LINEDEF_COUNT, "DMU_LINEDEF_COUNT" },
+        { DMU_LINE_COUNT, "DMU_LINE_COUNT" },
         { DMU_COLOR, "DMU_COLOR" },
         { DMU_COLOR_RED, "DMU_COLOR_RED" },
         { DMU_COLOR_GREEN, "DMU_COLOR_GREEN" },
@@ -165,7 +165,7 @@ int DMU_GetType(void const *ptr)
     {
     case DMU_VERTEX:
     case DMU_HEDGE:
-    case DMU_LINEDEF:
+    case DMU_LINE:
     case DMU_SIDEDEF:
     case DMU_BSPLEAF:
     case DMU_SECTOR:
@@ -215,8 +215,8 @@ void *P_AllocDummy(int type, void *extraData)
         ds->extraData = extraData;
         return ds; }*/
 
-    case DMU_LINEDEF: {
-        DummyLineDef *dl = new DummyLineDef(dummyVertex, dummyVertex);
+    case DMU_LINE: {
+        DummyLine *dl = new DummyLine(dummyVertex, dummyVertex);
         dummies.insert(dl);
         dl->extraData = extraData;
         return dl; }
@@ -306,8 +306,8 @@ uint P_ToIndex(void const *ptr)
     case DMU_HEDGE:
         return theMap->hedgeIndex(elem->castTo<HEdge>());
 
-    case DMU_LINEDEF:
-        return theMap->lineIndex(elem->castTo<LineDef>());
+    case DMU_LINE:
+        return theMap->lineIndex(elem->castTo<Line>());
 
     case DMU_SIDEDEF:
         return theMap->sideDefIndex(elem->castTo<SideDef>());
@@ -345,7 +345,7 @@ void *P_ToPtr(int type, uint index)
     case DMU_HEDGE:
         return theMap->hedges().at(index);
 
-    case DMU_LINEDEF:
+    case DMU_LINE:
         return theMap->lines().at(index);
 
     case DMU_SIDEDEF:
@@ -388,8 +388,8 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
     case DMU_SECTOR:
         switch(prop)
         {
-        case DMU_LINEDEF:
-            foreach(LineDef *line, elem->castTo<Sector>()->lines())
+        case DMU_LINE:
+            foreach(Line *line, elem->castTo<Sector>()->lines())
             {
                 int result = callback(line, context);
                 if(result) return result;
@@ -471,7 +471,7 @@ int P_Callback(int type, uint index, void *context, int (*callback)(void *p, voi
             return callback(theMap->hedges().at(index), context);
         break;
 
-    case DMU_LINEDEF:
+    case DMU_LINE:
         if(index < theMap->lineCount())
             return callback(theMap->lines().at(index), context);
         break;
@@ -507,9 +507,9 @@ int P_Callback(int type, uint index, void *context, int (*callback)(void *p, voi
             return callback(&App_Materials().toManifest(materialid_t(index)).material(), context);
         break;
 
-    case DMU_LINEDEF_BY_TAG:
+    case DMU_LINE_BY_TAG:
     case DMU_SECTOR_BY_TAG:
-    case DMU_LINEDEF_BY_ACT_TAG:
+    case DMU_LINE_BY_ACT_TAG:
     case DMU_SECTOR_BY_ACT_TAG: {
         /// @todo Throw exception.
         QByteArray msg = String("P_Callback: Type %1 not implemented yet.").arg(DMU_Str(type)).toUtf8();
@@ -542,7 +542,7 @@ int P_Callbackp(int type, void *elPtr, void *context, int (*callback)(void *p, v
     {
     case DMU_VERTEX:
     case DMU_HEDGE:
-    case DMU_LINEDEF:
+    case DMU_LINE:
     case DMU_SIDEDEF:
     case DMU_BSPNODE:
     case DMU_BSPLEAF:
@@ -841,7 +841,7 @@ static int setProperty(void *ptr, void *context)
     setargs_t *args = (setargs_t *) context;
     Sector *updateSector1 = NULL, *updateSector2 = NULL;
     Plane *updatePlane = NULL;
-    LineDef *updateLinedef = NULL;
+    Line *updateLine = NULL;
     SideDef *updateSidedef = NULL;
     Surface *updateSurface = NULL;
     // BspLeaf *updateBspLeaf = NULL;
@@ -891,18 +891,18 @@ static int setProperty(void *ptr, void *context)
         }
     }
 
-    if(args->type == DMU_LINEDEF)
+    if(args->type == DMU_LINE)
     {
-        updateLinedef = elem->castTo<LineDef>();
+        updateLine = elem->castTo<Line>();
 
         if(args->modifiers & DMU_SIDEDEF0_OF_LINE)
         {
-            elem = &elem->castTo<LineDef>()->frontSideDef();
+            elem = &elem->castTo<Line>()->frontSideDef();
             args->type = DMU_SIDEDEF;
         }
         else if(args->modifiers & DMU_SIDEDEF1_OF_LINE)
         {
-            elem = &elem->castTo<LineDef>()->backSideDef();
+            elem = &elem->castTo<Line>()->backSideDef();
             args->type = DMU_SIDEDEF;
         }
     }
@@ -910,8 +910,8 @@ static int setProperty(void *ptr, void *context)
     if(args->type == DMU_SIDEDEF)
     {
         updateSidedef = elem->castTo<SideDef>();
-        LineDef &line = updateSidedef->line();
-        LineDef::Side &side = line.side(line.frontSideDefPtr() == updateSidedef? FRONT : BACK);
+        Line &line = updateSidedef->line();
+        Line::Side &side = line.side(line.frontSideDefPtr() == updateSidedef? FRONT : BACK);
 
         if(args->modifiers & DMU_TOP_OF_SIDEDEF)
         {
@@ -1003,8 +1003,8 @@ static int setProperty(void *ptr, void *context)
         elem->castTo<HEdge>()->setProperty(*args);
         break;
 
-    case DMU_LINEDEF:
-        elem->castTo<LineDef>()->setProperty(*args);
+    case DMU_LINE:
+        elem->castTo<Line>()->setProperty(*args);
         break;
 
     case DMU_SIDEDEF:
@@ -1342,17 +1342,17 @@ static int getProperty(void *ptr, void *context)
         }
     }
 
-    if(args->type == DMU_LINEDEF)
+    if(args->type == DMU_LINE)
     {
         if(args->modifiers & DMU_SIDEDEF0_OF_LINE)
         {
-            elem = &elem->castTo<LineDef>()->frontSideDef();
+            elem = &elem->castTo<Line>()->frontSideDef();
             args->type = DMU_SIDEDEF;
             DENG2_ASSERT(args->type == elem->type());
         }
         else if(args->modifiers & DMU_SIDEDEF1_OF_LINE)
         {
-            elem = &elem->castTo<LineDef>()->backSideDef();
+            elem = &elem->castTo<Line>()->backSideDef();
             args->type = DMU_SIDEDEF;
             DENG2_ASSERT(args->type == elem->type());
         }
@@ -1361,8 +1361,8 @@ static int getProperty(void *ptr, void *context)
     if(args->type == DMU_SIDEDEF)
     {
         SideDef const *sideDef = elem->castTo<SideDef>();
-        LineDef &line = sideDef->line();
-        LineDef::Side &side = line.side(line.frontSideDefPtr() == sideDef? FRONT : BACK);
+        Line &line = sideDef->line();
+        Line::Side &side = line.side(line.frontSideDefPtr() == sideDef? FRONT : BACK);
 
         if(args->modifiers & DMU_TOP_OF_SIDEDEF)
         {
@@ -1431,8 +1431,8 @@ static int getProperty(void *ptr, void *context)
         elem->castTo<HEdge>()->property(*args);
         break;
 
-    case DMU_LINEDEF:
-        elem->castTo<LineDef>()->property(*args);
+    case DMU_LINE:
+        elem->castTo<Line>()->property(*args);
         break;
 
     case DMU_SURFACE:
@@ -2226,17 +2226,17 @@ DENG_EXTERN_C float P_GetGMOFloat(int entityId, uint elementIndex, int propertyI
 // p_maputil.cpp
 DENG_EXTERN_C void P_MobjLink(mobj_t* mo, byte flags);
 DENG_EXTERN_C int P_MobjUnlink(mobj_t* mo);
-DENG_EXTERN_C int P_MobjLinesIterator(mobj_t* mo, int (*callback) (LineDef*, void*), void* parameters);
+DENG_EXTERN_C int P_MobjLinesIterator(mobj_t* mo, int (*callback) (Line*, void*), void* parameters);
 DENG_EXTERN_C int P_MobjSectorsIterator(mobj_t* mo, int (*callback) (Sector*, void*), void* parameters);
-DENG_EXTERN_C int P_LineMobjsIterator(LineDef *line, int (*callback) (mobj_t *, void *), void *parameters);
+DENG_EXTERN_C int P_LineMobjsIterator(Line *line, int (*callback) (mobj_t *, void *), void *parameters);
 DENG_EXTERN_C int P_SectorTouchingMobjsIterator(Sector* sector, int (*callback) (mobj_t*, void*), void *parameters);
 DENG_EXTERN_C BspLeaf* P_BspLeafAtPointXY(coord_t x, coord_t y);
 DENG_EXTERN_C BspLeaf* P_BspLeafAtPoint(coord_t const point[2]);
 DENG_EXTERN_C int P_MobjsBoxIterator(const AABoxd* box, int (*callback) (mobj_t*, void*), void* parameters);
-DENG_EXTERN_C int P_LinesBoxIterator(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters);
+DENG_EXTERN_C int P_LinesBoxIterator(const AABoxd* box, int (*callback) (Line*, void*), void* parameters);
 DENG_EXTERN_C int P_PolyobjsBoxIterator(const AABoxd* box, int (*callback) (Polyobj*, void*), void* parameters);
-DENG_EXTERN_C int P_PolyobjLinesBoxIterator(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters);
-DENG_EXTERN_C int P_AllLinesBoxIterator(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters);
+DENG_EXTERN_C int P_PolyobjLinesBoxIterator(const AABoxd* box, int (*callback) (Line*, void*), void* parameters);
+DENG_EXTERN_C int P_AllLinesBoxIterator(const AABoxd* box, int (*callback) (Line*, void*), void* parameters);
 DENG_EXTERN_C int P_BspLeafsBoxIterator(const AABoxd* box, Sector* sector, int (*callback) (BspLeaf*, void*), void* parameters);
 DENG_EXTERN_C int P_PathTraverse2(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback, void* parameters);
 DENG_EXTERN_C int P_PathTraverse(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback/*parameters=NULL*/);
@@ -2254,7 +2254,7 @@ DENG_EXTERN_C boolean P_CheckLineSight(const_pvec3d_t from, const_pvec3d_t to, c
 
 DENG_EXTERN_C const divline_t* P_TraceLOS(void);
 DENG_EXTERN_C TraceOpening const *P_TraceOpening(void);
-DENG_EXTERN_C void P_SetTraceOpening(LineDef* linedef);
+DENG_EXTERN_C void P_SetTraceOpening(Line* line);
 
 // p_mobj.c
 DENG_EXTERN_C mobj_t* P_MobjCreateXYZ(thinkfunc_t function, coord_t x, coord_t y, coord_t z, angle_t angle, coord_t radius, coord_t height, int ddflags);
@@ -2275,54 +2275,54 @@ DENG_EXTERN_C boolean P_PolyobjMoveXY(Polyobj* polyobj, coord_t x, coord_t y);
 DENG_EXTERN_C boolean P_PolyobjRotate(Polyobj* polyobj, angle_t angle);
 DENG_EXTERN_C void P_PolyobjLink(Polyobj* polyobj);
 DENG_EXTERN_C void P_PolyobjUnlink(Polyobj* polyobj);
-DENG_EXTERN_C LineDef *P_PolyobjFirstLine(Polyobj *polyobj);
+DENG_EXTERN_C Line *P_PolyobjFirstLine(Polyobj *polyobj);
 DENG_EXTERN_C Polyobj* P_PolyobjByID(uint id);
 DENG_EXTERN_C Polyobj* P_PolyobjByTag(int tag);
 DENG_EXTERN_C void P_SetPolyobjCallback(void (*func) (struct mobj_s*, void*, void*));
 
-#undef LineDef_PointDistance
-DENG_EXTERN_C coord_t LineDef_PointDistance(LineDef *line, coord_t const point[2], coord_t *offset)
+#undef Line_PointDistance
+DENG_EXTERN_C coord_t Line_PointDistance(Line *line, coord_t const point[2], coord_t *offset)
 {
     DENG_ASSERT(line);
     return line->pointDistance(point, offset);
 }
 
-#undef LineDef_PointXYDistance
-DENG_EXTERN_C coord_t LineDef_PointXYDistance(LineDef* line, coord_t x, coord_t y, coord_t* offset)
+#undef Line_PointXYDistance
+DENG_EXTERN_C coord_t Line_PointXYDistance(Line* line, coord_t x, coord_t y, coord_t* offset)
 {
     DENG_ASSERT(line);
     return line->pointDistance(x, y, offset);
 }
 
-#undef LineDef_PointOnSide
-DENG_EXTERN_C coord_t LineDef_PointOnSide(LineDef const *line, coord_t const point[2])
+#undef Line_PointOnSide
+DENG_EXTERN_C coord_t Line_PointOnSide(Line const *line, coord_t const point[2])
 {
     DENG_ASSERT(line);
     if(!point)
     {
-        LOG_AS("LineDef_PointOnSide");
+        LOG_AS("Line_PointOnSide");
         LOG_DEBUG("Invalid arguments, returning >0.");
         return 1;
     }
     return line->pointOnSide(point);
 }
 
-#undef LineDef_PointXYOnSide
-DENG_EXTERN_C coord_t LineDef_PointXYOnSide(LineDef const *line, coord_t x, coord_t y)
+#undef Line_PointXYOnSide
+DENG_EXTERN_C coord_t Line_PointXYOnSide(Line const *line, coord_t x, coord_t y)
 {
     DENG_ASSERT(line);
     return line->pointOnSide(x, y);
 }
 
-#undef LineDef_BoxOnSide
-DENG_EXTERN_C int LineDef_BoxOnSide(LineDef *line, AABoxd const *box)
+#undef Line_BoxOnSide
+DENG_EXTERN_C int Line_BoxOnSide(Line *line, AABoxd const *box)
 {
     DENG_ASSERT(line && box);
     return line->boxOnSide(*box);
 }
 
-#undef LineDef_BoxOnSide_FixedPrecision
-DENG_EXTERN_C int LineDef_BoxOnSide_FixedPrecision(LineDef *line, AABoxd const *box)
+#undef Line_BoxOnSide_FixedPrecision
+DENG_EXTERN_C int Line_BoxOnSide_FixedPrecision(Line *line, AABoxd const *box)
 {
     DENG_ASSERT(line && box);
     return line->boxOnSide_FixedPrecision(*box);
@@ -2336,12 +2336,12 @@ DENG_DECLARE_API(Map) =
     P_MapSourceFile,
     P_LoadMap,
 
-    LineDef_BoxOnSide,
-    LineDef_BoxOnSide_FixedPrecision,
-    LineDef_PointDistance,
-    LineDef_PointXYDistance,
-    LineDef_PointOnSide,
-    LineDef_PointXYOnSide,
+    Line_BoxOnSide,
+    Line_BoxOnSide_FixedPrecision,
+    Line_PointDistance,
+    Line_PointXYDistance,
+    Line_PointOnSide,
+    Line_PointXYOnSide,
     P_LineMobjsIterator,
 
     P_SectorTouchingMobjsIterator,

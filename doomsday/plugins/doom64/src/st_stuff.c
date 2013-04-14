@@ -727,7 +727,7 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
         xline_t* xline = &xlines[i];
         if(!(xline->flags & ML_MAPPED)) continue;
 
-        P_SetLinedefAutomapVisibility(UIWidget_Player(obj), i, true);
+        P_SetLineAutomapVisibility(UIWidget_Player(obj), i, true);
     }
 }
 

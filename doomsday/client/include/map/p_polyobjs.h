@@ -25,7 +25,7 @@
 /**
  * Action the callback if set, otherwise this is no-op.
  */
-void P_PolyobjCallback(struct mobj_s *mobj, LineDef *line, Polyobj *polyobj);
+void P_PolyobjCallback(struct mobj_s *mobj, Line *line, Polyobj *polyobj);
 
 //void P_PolyobjChanged(Polyobj *po);
 

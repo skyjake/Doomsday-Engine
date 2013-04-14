@@ -241,9 +241,9 @@ void T_PlatRaise(void *platThinkerPtr)
 }
 
 #if __JHEXEN__
-static int doPlat(LineDef* line, int tag, byte* args, plattype_e type, int amount)
+static int doPlat(Line* line, int tag, byte* args, plattype_e type, int amount)
 #else
-static int doPlat(LineDef* line, int tag, plattype_e type, int amount)
+static int doPlat(Line* line, int tag, plattype_e type, int amount)
 #endif
 {
     int rtn = 0;
@@ -460,9 +460,9 @@ static int doPlat(LineDef* line, int tag, plattype_e type, int amount)
  * @param amount: is only used for SOME platforms.
  */
 #if __JHEXEN__
-int EV_DoPlat(LineDef *line, byte *args, plattype_e type, int amount)
+int EV_DoPlat(Line *line, byte *args, plattype_e type, int amount)
 #else
-int EV_DoPlat(LineDef *line, plattype_e type, int amount)
+int EV_DoPlat(Line *line, plattype_e type, int amount)
 #endif
 {
 #if __JHEXEN__
@@ -559,7 +559,7 @@ static int deactivatePlat(thinker_t* th, void* context)
 }
 
 /**
- * Handler for "stop perpetual floor" linedef type.
+ * Handler for "stop perpetual floor" line type.
  *
  * @param tag           Tag of plats to put into stasis.
  *

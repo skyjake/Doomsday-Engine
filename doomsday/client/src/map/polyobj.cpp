@@ -34,7 +34,7 @@ static void notifyGeometryChanged(Polyobj &po)
 {
 #ifdef __CLIENT__
     // Shadow bias must be informed when surfaces move/deform.
-    foreach(LineDef *line, po.lines())
+    foreach(Line *line, po.lines())
     {
         HEdge &hedge = line->front().leftHEdge();
         for(int i = 0; i < 3; ++i)
@@ -63,7 +63,7 @@ void Polyobj::buildUniqueVertexes()
 
     uniqueVertexes.clear();
 
-    foreach(LineDef *line, lines())
+    foreach(Line *line, lines())
     {
         uniqueVertexes.insert(&line->v1());
         uniqueVertexes.insert(&line->v2());
@@ -81,9 +81,9 @@ void Polyobj::updateAABox()
 
     if(!lineCount()) return;
 
-    QListIterator<LineDef *> lineIt(lines());
+    QListIterator<Line *> lineIt(lines());
 
-    LineDef *line = lineIt.next();
+    Line *line = lineIt.next();
     V2d_CopyBox(aaBox.arvec2, line->aaBox().arvec2);
 
     while(lineIt.hasNext())
@@ -95,7 +95,7 @@ void Polyobj::updateAABox()
 
 void Polyobj::updateSurfaceTangents()
 {
-    foreach(LineDef *line, lines())
+    foreach(Line *line, lines())
     {
         line->front().updateSurfaceNormals();
         line->back().updateSurfaceNormals();
@@ -105,7 +105,7 @@ void Polyobj::updateSurfaceTangents()
 struct ptrmobjblockingparams_t
 {
     bool isBlocked;
-    LineDef *line;
+    Line *line;
     Polyobj *polyobj;
 };
 
@@ -144,7 +144,7 @@ static int PTR_CheckMobjBlocking(mobj_t *mo, void *context)
     return false;
 }
 
-static bool checkMobjBlocking(Polyobj &po, LineDef &line)
+static bool checkMobjBlocking(Polyobj &po, Line &line)
 {
     ptrmobjblockingparams_t parms;
     parms.isBlocked = false;
@@ -164,7 +164,7 @@ static bool checkMobjBlocking(Polyobj &po, LineDef &line)
 
 static bool mobjIsBlockingPolyobj(Polyobj &po)
 {
-    foreach(LineDef *line, po.lines())
+    foreach(Line *line, po.lines())
     {
         if(checkMobjBlocking(po, *line))
             return true;
@@ -188,7 +188,7 @@ bool Polyobj::move(const_pvec2d_t delta)
             prevPtIt++;
         }
 
-        foreach(LineDef *line, lines())
+        foreach(Line *line, lines())
         {
             line->updateAABox();
         }
@@ -212,7 +212,7 @@ bool Polyobj::move(const_pvec2d_t delta)
                 prevPtIt++;
             }
 
-            foreach(LineDef *line, lines())
+            foreach(Line *line, lines())
             {
                 line->updateAABox();
             }
@@ -270,7 +270,7 @@ bool Polyobj::rotate(angle_t delta)
             prevPtIt++;
         }
 
-        foreach(LineDef *line, lines())
+        foreach(Line *line, lines())
         {
             line->updateAABox();
             line->updateSlopeType();
@@ -297,7 +297,7 @@ bool Polyobj::rotate(angle_t delta)
                 prevPtIt++;
             }
 
-            foreach(LineDef *line, lines())
+            foreach(Line *line, lines())
             {
                 line->updateAABox();
                 line->updateSlopeType();

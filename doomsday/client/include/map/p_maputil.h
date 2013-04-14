@@ -82,13 +82,13 @@ boolean P_IsPointXYInBspLeaf(coord_t x, coord_t y, const BspLeaf* bspLeaf);
 /**
  * @note Caller must ensure that the mobj is currently unlinked.
  */
-void P_LinkMobjToLineDefs(mobj_t* mo);
+void P_LinkMobjToLines(mobj_t* mo);
 
 /**
  * Unlinks the mobj from all the lines it's been linked to. Can be called
  * without checking that the list does indeed contain lines.
  */
-boolean P_UnlinkMobjFromLineDefs(mobj_t* mo);
+boolean P_UnlinkMobjFromLines(mobj_t* mo);
 
 /**
  * @note  The mobj must be currently unlinked.
@@ -97,7 +97,7 @@ void P_LinkMobjInBlockmap(mobj_t* mo);
 
 boolean P_UnlinkMobjFromBlockmap(mobj_t* mo);
 
-int PIT_AddLineDefIntercepts(LineDef* ld, void* parameters);
+int PIT_AddLineIntercepts(Line* ld, void* parameters);
 
 int PIT_AddMobjIntercepts(mobj_t* mobj, void* parameters);
 

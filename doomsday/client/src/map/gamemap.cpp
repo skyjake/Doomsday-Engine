@@ -161,7 +161,7 @@ DENG2_PIMPL(GameMap)
 
     void finishLines()
     {
-        foreach(LineDef *line, self._lines)
+        foreach(Line *line, self._lines)
         for(int i = 0; i < 2; ++i)
         {
             line->side(i).updateSurfaceNormals();
@@ -196,18 +196,18 @@ DENG2_PIMPL(GameMap)
             }
 
             // Link wall surface emitters:
-            foreach(LineDef *line, sector->lines())
+            foreach(Line *line, sector->lines())
             {
                 if(line->frontSectorPtr() == sector)
                 {
-                    LineDef::Side &side = line->front();
+                    Line::Side &side = line->front();
                     sector->linkSoundEmitter(side.middleSoundEmitter());
                     sector->linkSoundEmitter(side.bottomSoundEmitter());
                     sector->linkSoundEmitter(side.topSoundEmitter());
                 }
                 if(line->hasBackSideDef() && line->backSectorPtr() == sector)
                 {
-                    LineDef::Side &side = line->back();
+                    Line::Side &side = line->back();
                     sector->linkSoundEmitter(side.middleSoundEmitter());
                     sector->linkSoundEmitter(side.bottomSoundEmitter());
                     sector->linkSoundEmitter(side.topSoundEmitter());
@@ -332,13 +332,13 @@ DENG2_PIMPL(GameMap)
 
         // Update for middle textures on two sided lines which intersect the
         // floor and/or ceiling of their front and/or back sectors.
-        foreach(LineDef *line, sector.lines())
+        foreach(Line *line, sector.lines())
         {
             // Must be twosided.
             if(!line->hasFrontSideDef() || !line->hasBackSideDef())
                 continue;
 
-            LineDef::Side &side = line->side(line->frontSectorPtr() == &sector? FRONT : BACK);
+            Line::Side &side = line->side(line->frontSectorPtr() == &sector? FRONT : BACK);
 
             if(!side.middle().surface().hasMaterial())
                 continue;
@@ -547,7 +547,7 @@ void GameMap::finishMapElements()
 void GameMap::updateBounds()
 {
     bool isFirst = true;
-    foreach(LineDef *line, _lines)
+    foreach(Line *line, _lines)
     {
         if(isFirst)
         {
@@ -580,13 +580,13 @@ void GameMap::buildSurfaceLists()
     d->decoratedSurfaces.clear();
     d->glowingSurfaces.clear();
 
-    foreach(LineDef *line, _lines)
+    foreach(Line *line, _lines)
     for(int i = 0; i < 2; ++i)
     {
         if(!line->hasSideDef(i))
             continue;
 
-        LineDef::Side &side = line->side(i);
+        Line::Side &side = line->side(i);
         d->addSurfaceToLists(side.middle().surface());
         d->addSurfaceToLists(side.top().surface());
         d->addSurfaceToLists(side.bottom().surface());
@@ -641,9 +641,9 @@ TraceOpening const &GameMap::traceOpening() const
     return d->traceOpening;
 }
 
-void GameMap::setTraceOpening(LineDef &line)
+void GameMap::setTraceOpening(Line &line)
 {
-    // Is the linedef part of this map?
+    // Is the line part of this map?
     if(lineIndex(&line) < 0) return; // Odd...
 
     if(!line.hasBackSideDef())
@@ -710,10 +710,10 @@ int GameMap::vertexIndex(Vertex const *vtx) const
     return _vertexes.indexOf(const_cast<Vertex *>(vtx)); // Bad performance: O(n)
 }
 
-int GameMap::lineIndex(LineDef const *line) const
+int GameMap::lineIndex(Line const *line) const
 {
     if(!line) return -1;
-    return _lines.indexOf(const_cast<LineDef *>(line)); // Bad performance: O(n)
+    return _lines.indexOf(const_cast<Line *>(line)); // Bad performance: O(n)
 }
 
 int GameMap::sideDefIndex(SideDef const *side) const
@@ -754,13 +754,13 @@ Plane *GameMap::planeBySoundEmitter(ddmobj_base_t const &soundEmitter) const
 Surface *GameMap::surfaceBySoundEmitter(ddmobj_base_t const &soundEmitter) const
 {
     // Perhaps a wall surface?
-    foreach(LineDef *line, _lines)
+    foreach(Line *line, _lines)
     for(int i = 0; i < 2; ++i)
     {
         if(!line->hasSideDef(i))
             continue;
 
-        LineDef::Side &side = line->side(i);
+        Line::Side &side = line->side(i);
         if(&soundEmitter == &side.middleSoundEmitter())
         {
             return &side.middle().surface();
@@ -822,7 +822,7 @@ void GameMap::initPolyobjs()
     {
         // Find the center point of the polyobj.
         vec2d_t avg; V2d_Set(avg, 0, 0);
-        foreach(LineDef *line, po->lines())
+        foreach(Line *line, po->lines())
         {
             V2d_Sum(avg, avg, line->v1Origin());
         }
@@ -1041,11 +1041,11 @@ int GameMap::mobjsBoxIterator(AABoxd const &box,
     return iterateCellBlockMobjs(*mobjBlockmap, &cellBlock, callback, parameters);
 }
 
-void GameMap::linkLine(LineDef &line)
+void GameMap::linkLine(Line &line)
 {
     DENG_ASSERT(lineBlockmap != 0);
 
-    // LineDefs of Polyobjs don't get into the blockmap (presently...).
+    // Lines of Polyobjs don't get into the blockmap (presently...).
     if(line.isFromPolyobj()) return;
 
     vec2d_t origin; V2d_Copy(origin, Blockmap_Origin(lineBlockmap));
@@ -1075,18 +1075,18 @@ void GameMap::linkLine(LineDef &line)
         // Choose a cell diagonal to test.
         if(line.slopeType() == ST_POSITIVE)
         {
-            // LineDef slope / vs \ cell diagonal.
+            // Line slope / vs \ cell diagonal.
             V2d_Set(from, cell[VX], cell[VY] + cellSize[VY]);
             V2d_Set(to,   cell[VX] + cellSize[VX], cell[VY]);
         }
         else
         {
-            // LineDef slope \ vs / cell diagonal.
+            // Line slope \ vs / cell diagonal.
             V2d_Set(from, cell[VX] + cellSize[VX], cell[VY] + cellSize[VY]);
             V2d_Set(to,   cell[VX], cell[VY]);
         }
 
-        // Would LineDef intersect this?
+        // Would Line intersect this?
         if((line.pointOnSide(from) < 0) != (line.pointOnSide(to) < 0))
         {
             Blockmap_CreateCellAndLinkObjectXY(lineBlockmap, x, y, &line);
@@ -1097,20 +1097,20 @@ void GameMap::linkLine(LineDef &line)
 struct bmapiterparams_t
 {
     int localValidCount;
-    int (*callback) (LineDef *, void *);
+    int (*callback) (Line *, void *);
     void *parms;
 };
 
 static int blockmapCellLinesIterator(void *mapElement, void *context)
 {
-    LineDef *line = static_cast<LineDef *>(mapElement);
+    Line *line = static_cast<Line *>(mapElement);
     bmapiterparams_t *parms = static_cast<bmapiterparams_t *>(context);
 
     if(line->validCount() != parms->localValidCount)
     {
         int result;
 
-        // This linedef has now been processed for the current iteration.
+        // This line has now been processed for the current iteration.
         line->setValidCount(parms->localValidCount);
 
         // Action the callback.
@@ -1122,7 +1122,7 @@ static int blockmapCellLinesIterator(void *mapElement, void *context)
 }
 
 static int iterateCellLines(Blockmap &lineBlockmap, const_BlockmapCell cell,
-    int (*callback) (LineDef *, void *), void *context = 0)
+    int (*callback) (Line *, void *), void *context = 0)
 {
     bmapiterparams_t parms;
     parms.localValidCount = validCount;
@@ -1134,7 +1134,7 @@ static int iterateCellLines(Blockmap &lineBlockmap, const_BlockmapCell cell,
 }
 
 static int iterateCellBlockLines(Blockmap &lineBlockmap, BlockmapCellBlock const *cellBlock,
-    int (*callback) (LineDef *, void *), void *context = 0)
+    int (*callback) (Line *, void *), void *context = 0)
 {
     bmapiterparams_t parms;
     parms.localValidCount = validCount;
@@ -1336,14 +1336,14 @@ int GameMap::polyobjsBoxIterator(AABoxd const &box,
 
 struct poiterparams_t
 {
-    int (*func) (LineDef *, void *);
+    int (*func) (Line *, void *);
     void *parms;
 };
 
 int PTR_PolyobjLines(Polyobj *po, void* context)
 {
     poiterparams_t *args = (poiterparams_t *) context;
-    foreach(LineDef *line, po->lines())
+    foreach(Line *line, po->lines())
     {
         if(line->validCount() == validCount)
             continue;
@@ -1357,7 +1357,7 @@ int PTR_PolyobjLines(Polyobj *po, void* context)
 
 /*
 static int iterateCellPolyobjLinesIterator(Blockmap &polyobjBlockmap, const_BlockmapCell cell,
-    int (*callback) (LineDef *, void *), void *context = 0)
+    int (*callback) (Line *, void *), void *context = 0)
 {
     poiterparams_t poargs;
     poargs.func  = callback;
@@ -1375,7 +1375,7 @@ static int iterateCellPolyobjLinesIterator(Blockmap &polyobjBlockmap, const_Bloc
 
 static int iterateCellBlockPolyobjLines(Blockmap &polyobjBlockmap,
     BlockmapCellBlock const &cellBlock,
-    int (*callback) (LineDef *, void *), void *context = 0)
+    int (*callback) (Line *, void *), void *context = 0)
 {
     poiterparams_t poargs;
     poargs.func  = callback;
@@ -1391,7 +1391,7 @@ static int iterateCellBlockPolyobjLines(Blockmap &polyobjBlockmap,
 }
 
 int GameMap::linesBoxIterator(AABoxd const &box,
-    int (*callback) (LineDef *, void *), void *parameters) const
+    int (*callback) (Line *, void *), void *parameters) const
 {
     DENG_ASSERT(polyobjBlockmap != 0);
     BlockmapCellBlock cellBlock;
@@ -1400,7 +1400,7 @@ int GameMap::linesBoxIterator(AABoxd const &box,
 }
 
 int GameMap::polyobjLinesBoxIterator(AABoxd const &box,
-    int (*callback) (LineDef *, void *), void *parameters) const
+    int (*callback) (Line *, void *), void *parameters) const
 {
     DENG_ASSERT(polyobjBlockmap != 0);
     BlockmapCellBlock cellBlock;
@@ -1409,7 +1409,7 @@ int GameMap::polyobjLinesBoxIterator(AABoxd const &box,
 }
 
 int GameMap::allLinesBoxIterator(AABoxd const &box,
-    int (*callback) (LineDef *, void *), void *parameters) const
+    int (*callback) (Line *, void *), void *parameters) const
 {
     if(!_polyobjs.isEmpty())
     {
@@ -1599,14 +1599,14 @@ static int traverseCellPath(divline_t &traceLine, Blockmap *bmap,
 
 struct iteratepolyobjlines_params_t
 {
-    int (*callback) (LineDef *, void *);
+    int (*callback) (Line *, void *);
     void *parms;
 };
 
 static int iteratePolyobjLines(Polyobj *po, void *parameters = 0)
 {
     iteratepolyobjlines_params_t const *p = (iteratepolyobjlines_params_t *)parameters;
-    foreach(LineDef *line, po->lines())
+    foreach(Line *line, po->lines())
     {
         if(line->validCount() == validCount)
             continue;
@@ -1622,7 +1622,7 @@ static int collectPolyobjLineIntercepts(uint const block[2], void *parameters)
 {
     Blockmap *polyobjBlockmap = (Blockmap *)parameters;
     iteratepolyobjlines_params_t iplParams;
-    iplParams.callback = PIT_AddLineDefIntercepts;
+    iplParams.callback = PIT_AddLineIntercepts;
     iplParams.parms    = 0;
     return iterateCellPolyobjs(*polyobjBlockmap, block,
                                iteratePolyobjLines, (void *)&iplParams);
@@ -1631,7 +1631,7 @@ static int collectPolyobjLineIntercepts(uint const block[2], void *parameters)
 static int collectLineIntercepts(uint const block[2], void *parameters)
 {
     Blockmap *lineBlockmap = (Blockmap *)parameters;
-    return iterateCellLines(*lineBlockmap, block, PIT_AddLineDefIntercepts);
+    return iterateCellLines(*lineBlockmap, block, PIT_AddLineIntercepts);
 }
 
 static int collectMobjIntercepts(uint const block[2], void *parameters)

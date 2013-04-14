@@ -432,13 +432,13 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
 }
 
 #if __JHEXEN__
-int EV_DoDoor(LineDef *line, byte *args, doortype_e type)
+int EV_DoDoor(Line *line, byte *args, doortype_e type)
 {
     return EV_DoDoor2((int) args[0], (float) args[1] * (1.0 / 8),
                       (int) args[2], type);
 }
 #else
-int EV_DoDoor(LineDef *line, doortype_e type)
+int EV_DoDoor(Line *line, doortype_e type)
 {
     return EV_DoDoor2(P_ToXLine(line)->tag, DOORSPEED, DOORWAIT, type);
 }
@@ -479,13 +479,13 @@ static void sendNeedKeyMessage(player_t* p, textenum_t msgTxt, int keyNum)
 
 #if __JDOOM__ || __JDOOM64__
 /**
- * Checks whether the given linedef is a locked door.
+ * Checks whether the given line is a locked door.
  * If locked and the player IS ABLE to open it, return @c true.
  * If locked and the player IS NOT ABLE to open it, send an appropriate
  * message and play a sound before returning @c false.
  * Else, NOT a locked door and can be opened, return @c true.
  */
-static boolean tryLockedDoor(LineDef *line, player_t *p)
+static boolean tryLockedDoor(Line *line, player_t *p)
 {
     xline_t *xline = P_ToXLine(line);
 
@@ -561,13 +561,13 @@ static boolean tryLockedDoor(LineDef *line, player_t *p)
 #endif
 
 /**
- * Checks whether the given linedef is a locked manual door.
+ * Checks whether the given line is a locked manual door.
  * If locked and the player IS ABLE to open it, return @c true.
  * If locked and the player IS NOT ABLE to open it, send an appropriate
  * message and play a sound before returning @c false.
  * Else, NOT a locked door and can be opened, return @c true.
  */
-static boolean tryLockedManualDoor(LineDef* line, mobj_t* mo)
+static boolean tryLockedManualDoor(Line* line, mobj_t* mo)
 {
     xline_t*            xline = P_ToXLine(line);
     player_t*           p;
@@ -683,7 +683,7 @@ static boolean tryLockedManualDoor(LineDef* line, mobj_t* mo)
  * Move a locked door up/down.
  */
 #if __JDOOM__ || __JDOOM64__
-int EV_DoLockedDoor(LineDef *line, doortype_e type, mobj_t *thing)
+int EV_DoLockedDoor(Line *line, doortype_e type, mobj_t *thing)
 {
     if(!tryLockedDoor(line, thing->player))
         return 0;
@@ -695,7 +695,7 @@ int EV_DoLockedDoor(LineDef *line, doortype_e type, mobj_t *thing)
 /**
  * Open a door manually, no tag value.
  */
-boolean EV_VerticalDoor(LineDef* line, mobj_t* mo)
+boolean EV_VerticalDoor(Line* line, mobj_t* mo)
 {
     xline_t*            xline;
     xsector_t*          xsec;

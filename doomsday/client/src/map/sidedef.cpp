@@ -20,13 +20,13 @@
 
 #include <de/Log>
 #include "de_base.h"
-#include "map/linedef.h"
+#include "map/line.h"
 
 #include "map/sidedef.h"
 
 using namespace de;
 
-SideDef::SideDef(LineDef &line)
+SideDef::SideDef(Line &line)
     : MapElement(DMU_SIDEDEF),
       _line(&line)
 {}
@@ -34,7 +34,7 @@ SideDef::SideDef(LineDef &line)
 SideDef::~SideDef()
 {}
 
-LineDef &SideDef::line() const
+Line &SideDef::line() const
 {
     return *_line;
 }
@@ -42,7 +42,7 @@ LineDef &SideDef::line() const
 #if 0
 Surface &SideDef::surface(int sectionId)
 {
-    LineDef::Side &side = _line->side(this == _line->frontSideDefPtr()? FRONT : BACK);
+    Line::Side &side = _line->side(this == _line->frontSideDefPtr()? FRONT : BACK);
     return side.section(SideDefSection(sectionId)).surface();
 }
 
@@ -60,7 +60,7 @@ int SideDef::property(setargs_t &args) const
         Sector *sector = _line->sectorPtr(this == _line->frontSideDefPtr()? FRONT : BACK);
         DMU_GetValue(DMT_SIDEDEF_SECTOR, &sector, &args, 0);
         break; }
-    case DMU_LINEDEF:
+    case DMU_LINE:
         DMU_GetValue(DMT_SIDEDEF_LINE, &_line, &args, 0);
         break;
     case DMU_FLAGS: {
@@ -80,13 +80,13 @@ int SideDef::setProperty(setargs_t const &args)
     switch(args.prop)
     {
     case DMU_FLAGS: {
-        LineDef::Side &side =_line->side(this == _line->frontSideDefPtr()? FRONT : BACK);
+        Line::Side &side =_line->side(this == _line->frontSideDefPtr()? FRONT : BACK);
         short newFlags = side.flags();
         DMU_SetValue(DMT_SIDEDEF_FLAGS, &newFlags, &args, 0);
         side._flags = newFlags;
         break; }
 
-    case DMU_LINEDEF:
+    case DMU_LINE:
         DMU_SetValue(DMT_SIDEDEF_LINE, &_line, &args, 0);
         break;
 

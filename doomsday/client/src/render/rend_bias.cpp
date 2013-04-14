@@ -343,7 +343,7 @@ void SB_InitForMap(char const *uniqueID)
     }
 
     foreach(Polyobj *polyobj, theMap->polyobjs())
-    foreach(LineDef *line, polyobj->lines())
+    foreach(Line *line, polyobj->lines())
     {
         HEdge &hedge = line->front().leftHEdge();
 

@@ -60,7 +60,7 @@ typedef struct acsinfo_s {
 typedef struct acs_s {
     thinker_t       thinker;
     mobj_t*         activator;
-    LineDef*        line;
+    Line*           line;
     int             side;
     int             number;
     int             infoIndex;
@@ -87,8 +87,8 @@ extern acsstore_t* ACSStore;
 
 void            P_LoadACScripts(int lump);
 boolean         P_StartACS(int number, uint map, byte* args,
-                           mobj_t* activator, LineDef* line, int side);
-boolean         P_StartLockedACS(LineDef* line, byte* args, mobj_t* mo,
+                           mobj_t* activator, Line* line, int side);
+boolean         P_StartLockedACS(Line* line, byte* args, mobj_t* mo,
                                  int side);
 boolean         P_TerminateACS(int number, uint map);
 boolean         P_SuspendACS(int number, uint map);

@@ -517,13 +517,13 @@ static void R_UpdateMap()
         plane->surface().markAsNeedingDecorationUpdate();
     }
 
-    foreach(LineDef *line, theMap->lines())
+    foreach(Line *line, theMap->lines())
     for(int i = 0; i < 2; ++i)
     {
         if(!line->hasSideDef(i))
             continue;
 
-        LineDef::Side &side = line->side(i);
+        Line::Side &side = line->side(i);
         side.top().surface().markAsNeedingDecorationUpdate();
         side.middle().surface().markAsNeedingDecorationUpdate();
         side.bottom().surface().markAsNeedingDecorationUpdate();
@@ -531,7 +531,7 @@ static void R_UpdateMap()
 
     /// @todo Is this even necessary?
     foreach(Polyobj *polyobj, theMap->polyobjs())
-    foreach(LineDef *line, polyobj->lines())
+    foreach(Line *line, polyobj->lines())
     {
         line->front().middle().surface().markAsNeedingDecorationUpdate();
     }
@@ -1370,13 +1370,13 @@ void Rend_CacheForMap()
     {
         MaterialVariantSpec const &spec = Rend_MapSurfaceMaterialSpec();
 
-        foreach(LineDef *line, theMap->lines())
+        foreach(Line *line, theMap->lines())
         for(int i = 0; i < 2; ++i)
         {
             if(!line->hasSideDef(i))
                 continue;
 
-            LineDef::Side &side = line->side(i);
+            Line::Side &side = line->side(i);
             if(side.middle().surface().hasMaterial())
                 App_Materials().cache(side.middle().surface().material(), spec);
 

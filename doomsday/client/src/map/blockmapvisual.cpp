@@ -35,7 +35,7 @@
 
 #include "map/blockmapvisual.h"
 
-byte bmapShowDebug = 0; // 1 = mobjs, 2 = linedefs, 3 = BSP leafs, 4 = polyobjs.
+byte bmapShowDebug = 0; // 1 = mobjs, 2 = lines, 3 = BSP leafs, 4 = polyobjs.
 float bmapDebugSize = 1.5f;
 
 static int rendMobj(mobj_t *mo, void * /*parameters*/)
@@ -55,7 +55,7 @@ static int rendMobj(mobj_t *mo, void * /*parameters*/)
     return false; // Continue iteration.
 }
 
-static int rendLine(LineDef *line, void * /*parameters*/)
+static int rendLine(Line *line, void * /*parameters*/)
 {
     if(line->validCount() != validCount)
     {
@@ -156,7 +156,7 @@ int rendCellPolyobjLines(void *object, void *parameters)
 {
     Polyobj *po = (Polyobj *)object;
     DENG_ASSERT(po != 0);
-    foreach(LineDef *line, po->lines())
+    foreach(Line *line, po->lines())
     {
         if(line->validCount() == validCount)
             continue;
@@ -537,12 +537,12 @@ void Rend_BlockmapDebug(void)
         objectTypeName = "Mobj";
         break;
 
-    case 2: // LineDefs.
+    case 2: // Lines.
         if(!map->lineBlockmap) return;
 
         blockmap = map->lineBlockmap;
         cellDrawer = rendCellLines;
-        objectTypeName = "LineDef";
+        objectTypeName = "Line";
         break;
 
     case 3: // BspLeafs.

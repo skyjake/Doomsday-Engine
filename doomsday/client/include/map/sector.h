@@ -34,7 +34,7 @@
 #include "MapElement"
 
 class BspLeaf;
-class LineDef;
+class Line;
 
 /**
  * @defgroup sectorFrameFlags Sector frame flags
@@ -76,7 +76,7 @@ public:
     static float const DEFAULT_LIGHT_LEVEL; ///< 1.f
     static de::Vector3f const DEFAULT_LIGHT_COLOR; ///< red=1.f green=1.f, blue=1.f
 
-    typedef QList<LineDef *> Lines;
+    typedef QList<Line *> Lines;
     typedef QList<Plane *> Planes;
     typedef QList<BspLeaf *> BspLeafs;
 

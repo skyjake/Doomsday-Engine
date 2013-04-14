@@ -24,7 +24,7 @@
 #include <de/Vector>
 
 #include "resource/r_data.h"
-#include "map/linedef.h"
+#include "map/line.h"
 #include "map/plane.h"
 #include "map/sector.h"
 #include "map/sidedef.h"
@@ -75,7 +75,7 @@ void R_UpdateMissingMaterialsForLinesOfSector(Sector const &sec);
  * is the leftmost vertex and @c verts[1] is the rightmost vertex, when the
  * @a line lies at the edge of @a sector.
  */
-void R_OrderVertices(LineDef *line, Sector const *sector, Vertex *verts[2]);
+void R_OrderVertices(Line *line, Sector const *sector, Vertex *verts[2]);
 
 /**
  * Determine the map space Z coordinates of a wall section.
@@ -96,7 +96,7 @@ void R_OrderVertices(LineDef *line, Sector const *sector, Vertex *verts[2]);
  */
 boolean R_FindBottomTop(SideDefSection section, int lineFlags,
     Sector const *frontSec, Sector const *backSec,
-    LineDef::Side const *front, LineDef::Side const *back,
+    Line::Side const *front, Line::Side const *back,
     coord_t *low, coord_t *hi, pvec2f_t matOffset = 0);
 
 /**
@@ -123,7 +123,7 @@ coord_t R_OpenRange(Sector const *frontSec, Sector const *backSec, coord_t *retB
  *
  * @return Height of the open range.
  */
-coord_t R_OpenRange(LineDef const &line, int side, coord_t *bottom, coord_t *top);
+coord_t R_OpenRange(Line const &line, int side, coord_t *bottom, coord_t *top);
 
 /**
  * Same as @ref R_OpenRange() but works with the "visual" (i.e., smoothed) plane
@@ -148,7 +148,7 @@ coord_t R_VisOpenRange(Sector const *frontSec, Sector const *backSec, coord_t *r
  *
  * @return Height of the open range.
  */
-coord_t R_VisOpenRange(LineDef const &line, int side, coord_t *bottom, coord_t *top);
+coord_t R_VisOpenRange(Line const &line, int side, coord_t *bottom, coord_t *top);
 
 #ifdef __CLIENT__
 /**
@@ -163,17 +163,17 @@ coord_t R_VisOpenRange(LineDef const &line, int side, coord_t *bottom, coord_t *
  *     covers the open range defined by sectors @a frontSec and @a backSec.
  */
 boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector const *frontSec,
-    Sector const *backSec, LineDef::Side const *front, LineDef::Side const *back,
+    Sector const *backSec, Line::Side const *front, Line::Side const *back,
     boolean ignoreOpacity = true);
 
 /**
  * Same as @ref R_MiddleMaterialCoversOpening except all arguments are derived from
- * the specified linedef @a line.
+ * the specified line @a line.
  *
  * @note Anything calling this is likely working at the wrong level (should work with
  *       hedges instead).
  */
-boolean R_MiddleMaterialCoversLineOpening(LineDef const *line, int side, boolean ignoreOpacity);
+boolean R_MiddleMaterialCoversLineOpening(Line const *line, int side, boolean ignoreOpacity);
 #endif // __CLIENT__
 
 void R_UpdateSector(Sector &sector, bool forceUpdate = false);
@@ -181,17 +181,17 @@ void R_UpdateSector(Sector &sector, bool forceUpdate = false);
 /// @return  Current glow strength for the plane.
 float R_GlowStrength(Plane const *pln);
 
-LineOwner *R_GetVtxLineOwner(Vertex const *vtx, LineDef const *line);
+LineOwner *R_GetVtxLineOwner(Vertex const *vtx, Line const *line);
 
 #ifdef __CLIENT__
 /**
  * A neighbour is a line that shares a vertex with 'line', and faces the
  * specified sector.
  */
-LineDef *R_FindLineNeighbor(Sector const *sector, LineDef const *line,
+Line *R_FindLineNeighbor(Sector const *sector, Line const *line,
     LineOwner const *own, boolean antiClockwise, binangle_t *diff);
 
-LineDef *R_FindSolidLineNeighbor(Sector const *sector, LineDef const *line,
+Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
     LineOwner const *own, boolean antiClockwise, binangle_t *diff);
 
 /**
@@ -200,14 +200,14 @@ LineDef *R_FindSolidLineNeighbor(Sector const *sector, LineDef const *line,
  * a shadow between them. In practice, they would be considered a single,
  * long sidedef by the shadow generator).
  */
-LineDef *R_FindLineAlignNeighbor(Sector const *sec, LineDef const *line,
+Line *R_FindLineAlignNeighbor(Sector const *sec, Line const *line,
     LineOwner const *own, boolean antiClockwise, int alignment);
 
 /**
  * Find a backneighbour for the given line. They are the neighbouring line
  * in the backsector of the imediate line neighbor.
  */
-LineDef *R_FindLineBackNeighbor(Sector const *sector, LineDef const *line,
+Line *R_FindLineBackNeighbor(Sector const *sector, Line const *line,
     LineOwner const *own, boolean antiClockwise, binangle_t *diff);
 #endif // __CLIENT__
 

@@ -74,7 +74,7 @@ class GameMap
 public:
     typedef QList<Vertex *> Vertexes;
     typedef QList<Sector *> Sectors;
-    typedef QList<LineDef *> Lines;
+    typedef QList<Line *> Lines;
     typedef QList<SideDef *> SideDefs;
     typedef QList<Polyobj *> Polyobjs;
 
@@ -301,28 +301,28 @@ public:
         int (*callback) (struct mobj_s *, void *), void *parameters = 0) const;
 
     int linesBoxIterator(AABoxd const &box,
-        int (*callback) (LineDef *, void *), void *parameters = 0) const;
+        int (*callback) (Line *, void *), void *parameters = 0) const;
 
     int polyobjLinesBoxIterator(AABoxd const &box,
-        int (*callback) (LineDef *, void *), void *parameters = 0) const;
+        int (*callback) (Line *, void *), void *parameters = 0) const;
 
     /**
-     * LineDefs and Polyobj lines (note polyobj lines are iterated first).
+     * Lines and Polyobj lines (note polyobj lines are iterated first).
      *
      * @note validCount should be incremented before calling this to begin
-     * a new logical traversal. Otherwise LineDefs marked with a validCount
+     * a new logical traversal. Otherwise Lines marked with a validCount
      * equal to this will be skipped over (can be used to avoid processing
      * a line multiple times during complex / non-linear traversals.
      */
     int allLinesBoxIterator(AABoxd const &box,
-        int (*callback) (LineDef *, void *), void *parameters = 0) const;
+        int (*callback) (Line *, void *), void *parameters = 0) const;
 
     int bspLeafsBoxIterator(AABoxd const &box, Sector *sector,
         int (*callback) (BspLeaf *, void *), void *parameters = 0) const;
 
     /**
      * @note validCount should be incremented before calling this to begin a
-     * new logical traversal. Otherwise LineDefs marked with a validCount equal
+     * new logical traversal. Otherwise Lines marked with a validCount equal
      * to this will be skipped over (can be used to avoid processing a line
      * multiple times during complex / non-linear traversals.
      */
@@ -353,7 +353,7 @@ public:
      *
      * @param line  Map line to configure the opening for.
      */
-    void setTraceOpening(LineDef &line);
+    void setTraceOpening(Line &line);
 
     /**
      * Trace a line between @a from and @a to, making a callback for each
@@ -411,7 +411,7 @@ public:
      *
      * @param line  Line to be linked.
      */
-    void linkLine(LineDef &line);
+    void linkLine(Line &line);
 
     /**
      * Link the specified @a mobj in any internal data structures for
@@ -558,10 +558,10 @@ public: /// @todo Replace with object level methods:
     /**
      * Lookup the in-map unique index for @a line.
      *
-     * @param line  LineDef to lookup.
+     * @param line  Line to lookup.
      * @return  Unique index for the Line else @c -1 if not present.
      */
-    int lineIndex(LineDef const *line) const;
+    int lineIndex(Line const *line) const;
 
     /**
      * Lookup the in-map unique index for @a sideDef.
@@ -621,7 +621,7 @@ public: /// @todo Make private:
     void initMobjBlockmap(const_pvec2d_t min, const_pvec2d_t max);
 
     /**
-     * Construct an initial (empty) LineDef Blockmap for this map.
+     * Construct an initial (empty) Line Blockmap for this map.
      *
      * @param min  Minimal coordinates for the map.
      * @param max  Maximal coordinates for the map.

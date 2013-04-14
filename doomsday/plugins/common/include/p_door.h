@@ -76,16 +76,16 @@ typedef struct {
 
 void T_Door(void *doorThinkerPtr);
 
-boolean EV_VerticalDoor(LineDef* li, mobj_t* mo);
+boolean EV_VerticalDoor(Line* li, mobj_t* mo);
 
 #if __JHEXEN__
-int EV_DoDoor(LineDef* li, byte* args, doortype_e type);
+int EV_DoDoor(Line* li, byte* args, doortype_e type);
 #else
-int EV_DoDoor(LineDef* li, doortype_e type);
+int EV_DoDoor(Line* li, doortype_e type);
 #endif
 
 #if __JDOOM__ || __JDOOM64__
-int EV_DoLockedDoor(LineDef* li, doortype_e type, mobj_t* mo);
+int EV_DoLockedDoor(Line* li, doortype_e type, mobj_t* mo);
 #endif
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
@@ -94,7 +94,7 @@ void  P_SpawnDoorRaiseIn5Mins(Sector* sec);
 #endif
 
 #if __JDOOM64__
-int EV_AnimateDoor(LineDef* li, mobj_t* mo);
+int EV_AnimateDoor(Line* li, mobj_t* mo);
 #endif
 
 #endif // LIBCOMMON_THINKER_DOOR_H

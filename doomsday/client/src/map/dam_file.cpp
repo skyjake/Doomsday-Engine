@@ -247,7 +247,7 @@ static void writeLine(GameMap *map, uint idx)
 {
     DENG_ASSERT(map);
 
-    LineDef *l = &map->lines[idx];
+    Line *l = &map->lines[idx];
 
     writeLong((long) (map->vertexIndex(static_cast<Vertex const *>(l->_v[0])) + 1));
     writeLong((long) (map->vertexIndex(static_cast<Vertex const *>(l->_v[1])) + 1));
@@ -268,7 +268,7 @@ static void writeLine(GameMap *map, uint idx)
 
     for(int i = 0; i < 2; ++i)
     {
-        LineDef::Side &side = l->side(i);
+        Line::Side &side = l->side(i);
 
         writeLong(side._sector? (map->sectorIndex(static_cast<Sector *>(side._sector)) + 1) : 0);
         writeLong(side._sideDef? (map->sideDefIndex(side._sideDef) + 1) : 0);
@@ -282,7 +282,7 @@ static void readLine(GameMap *map, uint idx)
 {
     DENG_ASSERT(map);
 
-    LineDef *l = &map->lines[idx];
+    Line *l = &map->lines[idx];
 
     l->_v[0] = &map->vertexes[(unsigned) (readLong() - 1)];
     l->_v[1] = &map->vertexes[(unsigned) (readLong() - 1)];
@@ -304,7 +304,7 @@ static void readLine(GameMap *map, uint idx)
 
     for(int i = 0; i < 2; ++i)
     {
-        LineDef::Side &side = l->side(i);
+        Line::Side &side = l->side(i);
         long index;
 
         index = readLong();
@@ -487,7 +487,7 @@ static void writeSector(GameMap *map, uint idx)
 
     // Line list.
     writeLong((long) s->_lines.count());
-    foreach(LineDef *line, s->_lines)
+    foreach(Line *line, s->_lines)
     {
         writeLong(map->lineIndex(line) + 1);
     }
@@ -583,7 +583,7 @@ static void readSector(GameMap *map, uint idx)
 #endif
     for(int i = 0; i < lineCount; ++i)
     {
-        LineDef *line = map->lines().at(readLong() - 1);
+        Line *line = map->lines().at(readLong() - 1);
         // Ownership of the line is not given to the sector.
         s->_lines.append(line);
     }
@@ -778,7 +778,7 @@ static void readSeg(GameMap *map, HEdge *s)
     s->length = readFloat();
     s->offset = readFloat();
     obIdx = readLong();
-    s->line = (obIdx == 0? NULL : &map->lineDefs[(unsigned) obIdx - 1]);
+    s->line = (obIdx == 0? NULL : &map->lines[(unsigned) obIdx - 1]);
     obIdx = readLong();
     s->sector = (obIdx == 0? NULL : map->sectors().at((unsigned) obIdx - 1));
     obIdx = readLong();
@@ -972,7 +972,7 @@ static void writePolyobj(GameMap *map, uint idx)
     writeLong((long) p->lineCount);
     for(uint i = 0; i < p->lineCount; ++i)
     {
-        LineDef *line = p->lines[i];
+        Line *line = p->lines[i];
         HEdge *he = line->front()._leftHEdge;
 
         writeLong(map->vertexIndex(he->_v[0]) + 1);
@@ -1014,7 +1014,7 @@ static void readPolyobj(GameMap *map, uint idx)
     p->lineCount = (uint) readLong();
 
     HEdge *hedges = (HEdge *) Z_Calloc(sizeof(HEdge) * p->lineCount, PU_MAP, 0);
-    p->lines = (LineDef **) Z_Malloc(sizeof(LineDef *) * (p->lineCount + 1), PU_MAP, 0);
+    p->lines = (Line **) Z_Malloc(sizeof(Line *) * (p->lineCount + 1), PU_MAP, 0);
     for(uint i = 0; i < p->lineCount; ++i)
     {
         HEdge *he = hedges + i;
@@ -1034,7 +1034,7 @@ static void readPolyobj(GameMap *map, uint idx)
 
         he->_angle = (angle_t) readLong();
 
-        LineDef &line = *he->_line;
+        Line &line = *he->_line;
         line.front()._leftHEdge = line.front()._rightHEdge = he;
 
         p->lines[i] = &line;
@@ -1082,7 +1082,7 @@ static void archiveMap(GameMap *map, boolean write)
         if(gx.SetupForMapData)
         {
             gx.SetupForMapData(DMU_VERTEX, map->vertexCount());
-            gx.SetupForMapData(DMU_LINEDEF, map->lineCount());
+            gx.SetupForMapData(DMU_LINE, map->lineCount());
             gx.SetupForMapData(DMU_SIDEDEF, map->sideDefCount());
             gx.SetupForMapData(DMU_SECTOR, map->sectorCount());
         }

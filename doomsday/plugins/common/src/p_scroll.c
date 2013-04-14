@@ -129,7 +129,7 @@ scroll_t* P_SpawnSideMaterialOriginScroller(SideDef* side, short special)
 #if __JHEXEN__
     case 100:  ///< Tagless, scroll left at speed.
     case 101: {  ///< Tagless, scroll right at speed.
-        xline_t* xline = P_ToXLine(P_GetPtrp(side, DMU_LINEDEF));
+        xline_t* xline = P_ToXLine(P_GetPtrp(side, DMU_LINE));
         float speed = FIX2FLT(xline->arg1 << 10);
         offset[0] = (special == 100? speed : -speed);
         offset[1] = 0;
@@ -137,7 +137,7 @@ scroll_t* P_SpawnSideMaterialOriginScroller(SideDef* side, short special)
 
     case 102: ///< Tagless, scroll up at speed.
     case 103: {  ///< Tagless, scroll down speed.
-        xline_t* xline = P_ToXLine(P_GetPtrp(side, DMU_LINEDEF));
+        xline_t* xline = P_ToXLine(P_GetPtrp(side, DMU_LINE));
         float speed = FIX2FLT(xline->arg1 << 10);
         offset[0] = 0;
         offset[1] = (special == 102? speed : -speed);

@@ -66,10 +66,10 @@ extern mobj_t *tmThing;
  * of the edges of moving lifts, or to slide up and then back down stairs,
  * or to fall into a ditch.
  *
- * If more than one linedef is contacted, the effects are cumulative, so
+ * If more than one line is contacted, the effects are cumulative, so
  * balancing is possible.
  */
-static int PIT_ApplyTorque(LineDef* ld, void* parameters)
+static int PIT_ApplyTorque(Line* ld, void* parameters)
 {
     mobj_t* mo = tmThing;
     coord_t dist;
@@ -97,7 +97,7 @@ static int PIT_ApplyTorque(LineDef* ld, void* parameters)
        (dist >= 0 && bfloor < mo->origin[VZ] && ffloor >= mo->origin[VZ]))
     {
         // At this point, we know that the object straddles a two-sided
-        // linedef, and that the object's center of mass is above-ground.
+        // line, and that the object's center of mass is above-ground.
         coord_t x = fabs(d1[0]), y = fabs(d1[1]);
 
         if(y > x)
@@ -112,7 +112,7 @@ static int PIT_ApplyTorque(LineDef* ld, void* parameters)
 
         /**
          * Momentum is proportional to distance between the object's center
-         * of mass and the pivot linedef.
+         * of mass and the pivot line.
          *
          * It is scaled by 2^(OVERDRIVE - gear). When gear is increased, the
          * momentum gradually decreases to 0 for the same amount of
@@ -125,7 +125,7 @@ static int PIT_ApplyTorque(LineDef* ld, void* parameters)
         else
             dist = (dist * FIX2FLT(FLT2FIX(y) >> +(mo->gear - OVERDRIVE))) / x;
 
-        // Apply momentum away from the pivot linedef.
+        // Apply momentum away from the pivot line.
         x = d1[1] * dist;
         y = d1[0] * dist;
 
@@ -147,7 +147,7 @@ static int PIT_ApplyTorque(LineDef* ld, void* parameters)
 }
 
 /**
- * Applies "torque" to objects, based on all contacted linedefs.
+ * Applies "torque" to objects, based on all contacted lines.
  * \note $dropoff_fix
  */
 void P_ApplyTorque(mobj_t *mo)

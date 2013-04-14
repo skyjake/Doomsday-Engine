@@ -99,10 +99,10 @@ public:
         return vtx;
     }
 
-    LineDef *createLine(Vertex &v1, Vertex &v2, Sector *frontSector = 0,
+    Line *createLine(Vertex &v1, Vertex &v2, Sector *frontSector = 0,
                         Sector *backSector = 0)
     {
-        LineDef *line = new LineDef(v1, v2, frontSector, backSector);
+        Line *line = new Line(v1, v2, frontSector, backSector);
 
         lines.append(line);
         line->setOrigIndex(lines.count()); // 1-based index, 0 = NIL.
@@ -110,12 +110,12 @@ public:
         return line;
     }
 
-    SideDef *createSideDef(LineDef &line, int side)
+    SideDef *createSideDef(Line &line, int side)
     {
         DENG_ASSERT(!line.side(side).hasSideDef());
         SideDef *sideDef = new SideDef(line);
         line.side(side)._sideDef = sideDef;
-        line.side(side)._sections = new LineDef::Side::Sections(*sideDef);
+        line.side(side)._sections = new Line::Side::Sections(*sideDef);
         sideDefs.append(sideDef);
         return sideDef;
     }
@@ -196,10 +196,10 @@ public:
     {
         uint i, newNum;
 
-        // Scan all linedefs.
+        // Scan all lines.
         for(i = 0, newNum = 0; i < lines.count(); ++i)
         {
-            LineDef *l = lines[i];
+            Line *l = lines[i];
 
             // Handle duplicated vertices.
             while(l->v[0]->_buildData.equiv)
@@ -221,13 +221,13 @@ public:
         }
     }
 
-    void pruneLinedefs()
+    void pruneLines()
     {
         uint i, newNum, unused = 0;
 
         for(i = 0, newNum = 0; i < lines.count(); ++i)
         {
-            LineDef *l = lines[i];
+            Line *l = lines[i];
 
             if(!l->hasFrontSideDef() && !l->hasBackSideDef())
             {
@@ -244,7 +244,7 @@ public:
         if(newNum < lines.count())
         {
             if(unused > 0)
-                Con_Message("  Pruned %d unused linedefs.", unused);
+                Con_Message("  Pruned %d unused lines.", unused);
 
             lines.resize(newNum);
         }
@@ -565,7 +565,7 @@ static int lineAngleSorter(void const *a, void const *b)
         }
         else
         {
-            LineDef *line = &own[i]->line();
+            Line *line = &own[i]->line();
             Vertex const &otherVtx = line->vertex(&line->v1() == rootVtx? 1:0);
 
             fixed_t dx = otherVtx.origin()[VX] - rootVtx->origin()[VX];
@@ -668,7 +668,7 @@ static LineOwner *sortLineOwners(LineOwner *list,
     return list;
 }
 
-static void setVertexLineOwner(Vertex *vtx, LineDef *lineptr, LineOwner **storage)
+static void setVertexLineOwner(Vertex *vtx, Line *lineptr, LineOwner **storage)
 {
     if(!lineptr) return;
 
@@ -735,11 +735,11 @@ static void buildVertexLineOwnerRings()
     /*
      * Step 1: Find and link up all line owners.
      */
-    // We know how many vertex line owners we need (numLineDefs * 2).
+    // We know how many vertex line owners we need (numLines * 2).
     LineOwner *lineOwners = (LineOwner *) Z_Malloc(sizeof(LineOwner) * editMap.lines.count() * 2, PU_MAPSTATIC, 0);
     LineOwner *allocator = lineOwners;
 
-    foreach(LineDef *line, editMap.lines)
+    foreach(Line *line, editMap.lines)
     for(uint p = 0; p < 2; ++p)
     {
         setVertexLineOwner(&line->vertex(p), line, &allocator);
@@ -805,7 +805,7 @@ static void buildVertexLineOwnerRings()
  * @return  The "lowest" vertex (normally the left-most, but if the line is vertical,
  *          then the bottom-most). @c => 0 for start, 1 for end.
  */
-static inline int lineVertexLowest(LineDef const *l)
+static inline int lineVertexLowest(Line const *l)
 {
     if(int( l->v[0]->buildData.pos[VX] ) < int( l->v[1]->buildData.pos[VX] ))
         return 0;
@@ -816,8 +816,8 @@ static inline int lineVertexLowest(LineDef const *l)
 
 static int lineStartCompare(void const *p1, void const *p2)
 {
-    LineDef const *a = (LineDef const *) p1;
-    LineDef const *b = (LineDef const *) p2;
+    Line const *a = (Line const *) p1;
+    Line const *b = (Line const *) p2;
 
     // Determine left-most vertex of each line.
     Vertex *c = (lineVertexLowest(a)? a->v[1] : a->v[0]);
@@ -831,8 +831,8 @@ static int lineStartCompare(void const *p1, void const *p2)
 
 static int lineEndCompare(void const *p1, void const *p2)
 {
-    LineDef const *a = (LineDef const *) p1;
-    LineDef const *b = (LineDef const *) p2;
+    Line const *a = (Line const *) p1;
+    Line const *b = (Line const *) p2;
 
     // Determine right-most vertex of each line.
     Vertex *c = (lineVertexLowest(a)? a->v[0] : a->v[1]);
@@ -846,9 +846,9 @@ static int lineEndCompare(void const *p1, void const *p2)
 
 size_t numOverlaps;
 
-int testOverlaps(LineDef *b, void *data)
+int testOverlaps(Line *b, void *data)
 {
-    LineDef *a = (LineDef *) data;
+    Line *a = (Line *) data;
 
     if(a != b)
     {
@@ -870,10 +870,10 @@ struct findoverlaps_params_t
     uint coords[2]; // Blockmap cell coordinates.
 };
 
-static int findOverlapsForLine(LineDef *l, void *parameters)
+static int findOverlapsForLine(Line *l, void *parameters)
 {
     findoverlaps_params_t *p = (findoverlaps_params_t *) parameters;
-    GameMap_IterateCellLineDefs(p->map, p->coords, testOverlaps, l);
+    GameMap_IterateCellLines(p->map, p->coords, testOverlaps, l);
     return false; // Continue iteration.
 }
 
@@ -885,7 +885,7 @@ void MPE_DetectOverlappingLines(GameMap *map)
     numOverlaps = 0;
 
     uint bmapDimensions[2];
-    Blockmap_Size(map->lineDefBlockmap, bmapDimensions);
+    Blockmap_Size(map->lineBlockmap, bmapDimensions);
 
     findoverlaps_params_t parms;
     for(uint y = 0; y < bmapSize[VY]; ++y)
@@ -895,12 +895,12 @@ void MPE_DetectOverlappingLines(GameMap *map)
         parms.coords[VX] = x;
         parms.coords[VY] = y;
 
-        GameMap_IterateCellLineDefs(map, params.coords, findOverlapsForLine, &parms);
+        GameMap_IterateCellLines(map, params.coords, findOverlapsForLine, &parms);
     }
 
     if(numOverlaps == 0) return;
 
-    VERBOSE( Con_Message("Detected %lu overlapping linedefs.", (unsigned long) numOverlaps) )
+    VERBOSE( Con_Message("Detected %lu overlapping lines.", (unsigned long) numOverlaps) )
 }
 #endif
 
@@ -955,7 +955,7 @@ boolean MPE_End()
      */
 
     /// Ensure one sided lines are flagged as blocking. @todo Refactor away.
-    foreach(LineDef *line, editMap.lines)
+    foreach(Line *line, editMap.lines)
     {
         if(!line->hasFrontSideDef() || !line->hasBackSideDef())
             line->_flags |= DDLF_BLOCKING;
@@ -1027,7 +1027,7 @@ boolean MPE_End()
         polyobj->idx = map->_polyobjs.count(); // 0-based index.
 
         // Create a hedge for each line of this polyobj.
-        foreach(LineDef *line, polyobj->lines())
+        foreach(Line *line, polyobj->lines())
         {
             HEdge *hedge = new HEdge; // Polyobj has ownership.
 
@@ -1068,7 +1068,7 @@ boolean MPE_End()
     map->bounds(min, max);
 
     map->initLineBlockmap(min, max);
-    foreach(LineDef *line, map->lines())
+    foreach(Line *line, map->lines())
     {
         map->linkLine(*line);
     }
@@ -1141,8 +1141,8 @@ boolean MPE_VertexCreatev(size_t num, coord_t *values, uint *indices)
     return true;
 }
 
-#undef MPE_LinedefCreate
-uint MPE_LinedefCreate(uint v1, uint v2, uint frontSectorIdx, uint backSectorIdx, int flags)
+#undef MPE_LineCreate
+uint MPE_LineCreate(uint v1, uint v2, uint frontSectorIdx, uint backSectorIdx, int flags)
 {
     if(!editMapInited) return 0;
 
@@ -1161,7 +1161,7 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSectorIdx, uint backSectorIdx
     Sector *frontSector = (frontSectorIdx == 0? NULL: editMap.sectors[frontSectorIdx-1]);
     Sector *backSector  = (backSectorIdx  == 0? NULL: editMap.sectors[backSectorIdx-1]);
 
-    LineDef *l = editMap.createLine(*vtx1, *vtx2, frontSector, backSector);
+    Line *l = editMap.createLine(*vtx1, *vtx2, frontSector, backSector);
 
     // Determine the default line flags.
     l->_flags = flags;
@@ -1173,8 +1173,8 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSectorIdx, uint backSectorIdx
     return l->origIndex();
 }
 
-#undef MPE_LinedefAddSide
-void MPE_LinedefAddSide(uint lineIdx, int sideId, short flags, ddstring_t const *topMaterialUri,
+#undef MPE_LineAddSide
+void MPE_LineAddSide(uint lineIdx, int sideId, short flags, ddstring_t const *topMaterialUri,
     float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue,
     ddstring_t const *middleMaterialUri, float middleOffsetX, float middleOffsetY, float middleRed,
     float middleGreen, float middleBlue, float middleAlpha, ddstring_t const *bottomMaterialUri,
@@ -1185,13 +1185,13 @@ void MPE_LinedefAddSide(uint lineIdx, int sideId, short flags, ddstring_t const 
 
     if(lineIdx == 0 || lineIdx > (uint)editMap.lines.count()) return;
 
-    LineDef *line = editMap.lines[lineIdx - 1];
+    Line *line = editMap.lines[lineIdx - 1];
     if(!line->hasSideDef(sideId))
     {
         editMap.createSideDef(*line, sideId);
     }
 
-    LineDef::Side &side = line->side(sideId);
+    Line::Side &side = line->side(sideId);
 
     side._flags = flags;
     side.setSideDefArchiveIndex(sideDefArchiveIndex);
@@ -1255,7 +1255,7 @@ uint MPE_PolyobjCreate(uint *lines, uint lineCount, int tag, int sequenceType,
     {
         if(lines[i] == 0 || lines[i] > (uint)editMap.lines.count()) return 0;
 
-        LineDef *line = editMap.lines[lines[i] - 1];
+        Line *line = editMap.lines[lines[i] - 1];
         if(line->isFromPolyobj()) return 0;
     }
 
@@ -1267,7 +1267,7 @@ uint MPE_PolyobjCreate(uint *lines, uint lineCount, int tag, int sequenceType,
 
     for(uint i = 0; i < lineCount; ++i)
     {
-        LineDef *line = editMap.lines[lines[i] - 1];
+        Line *line = editMap.lines[lines[i] - 1];
 
         // This line belongs to a polyobj.
         line->_inFlags |= LF_POLYOBJ;
@@ -1324,8 +1324,8 @@ DENG_DECLARE_API(MPE) =
     MPE_End,
     MPE_VertexCreate,
     MPE_VertexCreatev,
-    MPE_LinedefCreate,
-    MPE_LinedefAddSide,
+    MPE_LineCreate,
+    MPE_LineAddSide,
     MPE_SectorCreate,
     MPE_PlaneCreate,
     MPE_PolyobjCreate,

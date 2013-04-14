@@ -27,7 +27,7 @@
 #include "map/surface.h"
 #include "MapElement"
 
-class LineDef;
+class Line;
 
 /**
  * @attention SideDef is in the process of being replaced by lineside_t. All
@@ -48,16 +48,16 @@ public:
 
 public:
     /// Owning line of the sidedef.
-    LineDef *_line;
+    Line *_line;
 
 public:
-    SideDef(LineDef &line);
+    SideDef(Line &line);
     ~SideDef();
 
     /**
      * Returns the line which owns the sidedef.
      */
-    LineDef &line() const;
+    Line &line() const;
 
 #if 0
     /**

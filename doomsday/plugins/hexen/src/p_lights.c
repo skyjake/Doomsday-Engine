@@ -141,7 +141,7 @@ void T_Light(light_t *light)
     }
 }
 
-boolean EV_SpawnLight(LineDef *line, byte *arg, lighttype_t type)
+boolean EV_SpawnLight(Line *line, byte *arg, lighttype_t type)
 {
     int         arg1, arg2, arg3, arg4;
     boolean     think = false;
@@ -294,7 +294,7 @@ typedef struct {
 
 static int findLightSequenceSector(void* p, void* context)
 {
-    LineDef*            li = (LineDef*) p;
+    Line*            li = (Line*) p;
     findlightsequencesectorparams_t* params =
         (findlightsequencesectorparams_t*) context;
     Sector*             tempSec = P_GetNextSector(li, params->sec);
@@ -322,7 +322,7 @@ typedef struct {
 
 static int findLightSequenceStartSector(void* p, void* context)
 {
-    LineDef*           li = (LineDef*) p;
+    Line*           li = (Line*) p;
     findlightsequencestartsectorparams_t* params =
         (findlightsequencestartsectorparams_t*) context;
     Sector*             tempSec = P_GetNextSector(li, params->sec);
@@ -354,7 +354,7 @@ void P_SpawnLightSequence(Sector* sector, int indexStep)
         P_ToXSector(params.sec)->special = LIGHT_SEQUENCE_START;
 
         params.nextSec = NULL;
-        P_Iteratep(params.sec, DMU_LINEDEF, &params,
+        P_Iteratep(params.sec, DMU_LINE, &params,
                    findLightSequenceSector);
         params.sec = params.nextSec;
     } while(params.sec);
@@ -382,7 +382,7 @@ void P_SpawnLightSequence(Sector* sector, int indexStep)
         index += indexDelta;
 
         params.nextSec = NULL;
-        P_Iteratep(params.sec, DMU_LINEDEF, &params,
+        P_Iteratep(params.sec, DMU_LINE, &params,
                    findLightSequenceStartSector);
         params.sec = params.nextSec;
     } while(params.sec);

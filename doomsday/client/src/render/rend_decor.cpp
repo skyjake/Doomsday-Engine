@@ -68,7 +68,7 @@ static uint sourceCount = 0;
 static decorsource_t *sourceFirst = 0;
 static decorsource_t *sourceCursor = 0;
 
-static void plotSourcesForLine(LineDef &line, byte side, SideDefSection section);
+static void plotSourcesForLine(Line &line, byte side, SideDefSection section);
 static void plotSourcesForPlane(Plane &pln);
 
 void Rend_DecorRegister()
@@ -314,8 +314,8 @@ static void plotSourcesForSurface(Surface &suf)
         {
         case DMU_SIDEDEF: {
             SideDef *sideDef = suf.owner().castTo<SideDef>();
-            LineDef &line = sideDef->line();
-            LineDef::Side &side = line.side(line.frontSideDefPtr() == sideDef? FRONT : BACK);
+            Line &line = sideDef->line();
+            Line::Side &side = line.side(line.frontSideDefPtr() == sideDef? FRONT : BACK);
             plotSourcesForLine(line, &side == &line.front()? FRONT : BACK,
                                &side.middle().surface() == &suf? SS_MIDDLE :
                                &side.bottom().surface() == &suf? SS_BOTTOM : SS_TOP);
@@ -468,14 +468,14 @@ static void plotSourcesForPlane(Plane &pln)
     updateSurfaceDecorations(surface, offset, v1, v2, &sector);
 }
 
-static void plotSourcesForLine(LineDef &line, byte side, SideDefSection section)
+static void plotSourcesForLine(Line &line, byte side, SideDefSection section)
 {
     if(!line.hasSideDef(side)) return;
 
     Sector *frontSec  = line.sectorPtr(side);
     Sector *backSec   = line.sectorPtr(side ^ 1);
-    LineDef::Side *front = &line.side(side);
-    LineDef::Side *back  = &line.side(side ^ 1);
+    Line::Side *front = &line.side(side);
+    Line::Side *back  = &line.side(side ^ 1);
     Surface &surface  = front->section(section).surface();
 
     if(!surface.hasMaterial()) return;

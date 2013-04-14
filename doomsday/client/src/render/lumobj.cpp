@@ -1171,7 +1171,7 @@ boolean LOIT_ClipLumObjBySight(void *data, void *context)
         // between the viewpoint and the lumobj.
         BspLeaf *bspLeaf = (BspLeaf *) context;
         Polyobj *po = bspLeaf->firstPolyobj();
-        foreach(LineDef *line, po->lines())
+        foreach(Line *line, po->lines())
         {
             HEdge &hedge = line->front().leftHEdge();
 

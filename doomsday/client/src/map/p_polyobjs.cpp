@@ -27,7 +27,7 @@
 // Called when the polyobj hits a mobj.
 static void (*po_callback) (mobj_t *mobj, void *line, void *polyobj);
 
-void P_PolyobjCallback(mobj_t *mobj, LineDef *line, Polyobj *polyobj)
+void P_PolyobjCallback(mobj_t *mobj, Line *line, Polyobj *polyobj)
 {
     if(!po_callback) return;
     po_callback(mobj, line, polyobj);
@@ -98,7 +98,7 @@ DENG_EXTERN_C boolean P_PolyobjRotate(Polyobj *po, angle_t angle)
 }
 
 #undef P_PolyobjFirstLine
-DENG_EXTERN_C LineDef *P_PolyobjFirstLine(Polyobj *po)
+DENG_EXTERN_C Line *P_PolyobjFirstLine(Polyobj *po)
 {
     if(!po) return 0;
     /// @todo Do not assume polyobj is from the CURRENT map.

@@ -37,8 +37,8 @@ extern coord_t tmFloorZ;
 extern coord_t tmCeilingZ;
 extern Material* tmFloorMaterial;
 
-extern LineDef* ceilingLine, *floorLine;
-extern LineDef* blockLine;
+extern Line* ceilingLine, *floorLine;
+extern Line* blockLine;
 extern mobj_t* lineTarget; // Who got hit (or NULL).
 extern mobj_t* tmThing;
 

@@ -930,7 +930,7 @@ void getLightingParams(coord_t x, coord_t y, coord_t z, BspLeaf *bspLeaf,
             /* if(spr->type == VSPR_DECORATION)
             {
                 // Wall decorations receive an additional light delta.
-                lightLevel += R_WallAngleLightLevelDelta(linedef, side);
+                lightLevel += R_WallAngleLightLevelDelta(line, side);
             } */
 
             // Apply distance attenuation.

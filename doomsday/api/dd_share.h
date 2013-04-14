@@ -342,7 +342,7 @@ enum {
     DMU_FIRST_ELEMENT_TYPE_ID = 1,
     DMU_VERTEX = DMU_FIRST_ELEMENT_TYPE_ID,
     DMU_HEDGE,
-    DMU_LINEDEF,
+    DMU_LINE,
     DMU_SIDEDEF,
     DMU_BSPNODE,
     DMU_BSPLEAF,
@@ -352,10 +352,10 @@ enum {
     DMU_MATERIAL,
     DMU_LAST_ELEMENT_TYPE_ID = DMU_MATERIAL,
 
-    DMU_LINEDEF_BY_TAG,
+    DMU_LINE_BY_TAG,
     DMU_SECTOR_BY_TAG,
 
-    DMU_LINEDEF_BY_ACT_TAG,
+    DMU_LINE_BY_ACT_TAG,
     DMU_SECTOR_BY_ACT_TAG,
 
     DMU_X,
@@ -398,7 +398,7 @@ enum {
     DMU_OFFSET_XY,
 
     DMU_VALID_COUNT,
-    DMU_LINEDEF_COUNT,
+    DMU_LINE_COUNT,
     DMU_COLOR, ///< RGB
     DMU_COLOR_RED, ///< red component
     DMU_COLOR_GREEN, ///< green component
@@ -422,9 +422,9 @@ enum {
 #define VALID_DMU_ELEMENT_TYPE_ID(val) ((int)(val) >= (int)DMU_FIRST_ELEMENT_TYPE_ID && (int)(val) <= (int)DMU_LAST_ELEMENT_TYPE_ID)
 
 /**
- * @defgroup ldefFlags Linedef Flags
+ * @defgroup ldefFlags Line Flags
  * @ingroup dmu apiFlags
- * For use with P_Set/Get(DMU_LINEDEF, n, DMU_FLAGS).
+ * For use with P_Set/Get(DMU_LINE, n, DMU_FLAGS).
  */
 
 /// @addtogroup ldefFlags
@@ -526,7 +526,7 @@ typedef struct {
  * @ingroup apiFlags map
  */
 ///@{
-#define PT_ADDLINES            1 ///< Intercept with LineDefs.
+#define PT_ADDLINES            1 ///< Intercept with Lines.
 #define PT_ADDMOBJS            2 ///< Intercept with Mobjs.
 ///@}
 
@@ -536,7 +536,7 @@ typedef struct {
  * @ingroup apiFlags map
  */
 ///@{
-#define LS_PASSLEFT            0x1 ///< Ray may cross one-sided linedefs from left to right.
+#define LS_PASSLEFT            0x1 ///< Ray may cross one-sided lines from left to right.
 #define LS_PASSOVER            0x2 ///< Ray may cross over sector ceiling height on ray-entry side.
 #define LS_PASSUNDER           0x4 ///< Ray may cross under sector floor height on ray-entry side.
 ///@}
@@ -556,7 +556,7 @@ typedef struct intercept_s {
     intercepttype_t type;
     union {
         struct mobj_s *mobj;
-        LineDef *line;
+        Line *line;
     } d;
 } intercept_t;
 

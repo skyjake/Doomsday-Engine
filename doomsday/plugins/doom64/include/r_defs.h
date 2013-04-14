@@ -82,16 +82,16 @@ typedef struct xsector_s {
 #define ML_MAPPED               0x0100 // Set if already seen, thus drawn in automap.
 
 // FIXME! DJS - This is important!
-// Doom64tc unfortunetly used non standard values for the linedef flags
+// Doom64tc unfortunetly used non standard values for the line flags
 // it implemented from BOOM. It will make life simpler if we simply
 // update the Doom64TC IWAD rather than carry this on much further as
 // once jDoom64 is released with 1.9.0 I imagine we'll see a bunch
 // PWADs start cropping up.
 
-//#define ML_PASSUSE            0x0200 // Allows a USE action to pass through a linedef with a special
-//#define ML_ALLTRIGGER         0x0400 // If set allows any mobj to trigger the linedef's special
+//#define ML_PASSUSE            0x0200 // Allows a USE action to pass through a line with a special
+//#define ML_ALLTRIGGER         0x0400 // If set allows any mobj to trigger the line's special
 
-#define ML_ALLTRIGGER           0x0200 // Anything can use linedef if this is set - kaiser
+#define ML_ALLTRIGGER           0x0200 // Anything can use line if this is set - kaiser
 #define ML_PASSUSE              0x0400
 #define ML_BLOCKALL             0x0800
 
@@ -123,7 +123,7 @@ DENG_EXTERN_C boolean mapSetup;
 /**
  * Converts a line to an xline.
  */
-xline_t*        P_ToXLine(LineDef* line);
+xline_t*        P_ToXLine(Line* line);
 
 /**
  * Converts a sector to an xsector.
@@ -142,7 +142,7 @@ xsector_t*      P_ToXSectorOfBspLeaf(BspLeaf* sub);
  * @param line  Line to change.
  * @param visible  @c true= mark the line as visible.
  */
-void P_SetLinedefAutomapVisibility(int player, uint line, boolean visible);
+void P_SetLineAutomapVisibility(int player, uint line, boolean visible);
 
 xline_t*        P_GetXLine(uint index);
 xsector_t*      P_GetXSector(uint index);

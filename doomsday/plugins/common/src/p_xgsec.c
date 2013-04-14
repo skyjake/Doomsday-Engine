@@ -255,7 +255,7 @@ void XF_Init(Sector *sec, function_t *fn, char *func, int min, int max,
     fn->oldValue = -scale + offset;
 }
 
-int C_DECL XLTrav_LineAngle(LineDef* line, boolean dummy, void* context,
+int C_DECL XLTrav_LineAngle(Line* line, boolean dummy, void* context,
     void* context2, mobj_t* activator)
 {
     Sector* sec = (Sector *) context;
@@ -759,7 +759,7 @@ int FindPrevOf(int *list, int num, int h)
  *
  * @return              @c MAXINT if not height n/a.
  */
-int XS_TextureHeight(LineDef* line, int part)
+int XS_TextureHeight(Line* line, int part)
 {
     SideDef* side;
     int snum = 0;
@@ -957,7 +957,7 @@ typedef struct findsectorextremaltextureheightparams_s {
 
 int findSectorExtremalMaterialHeight(void* ptr, void* context)
 {
-    LineDef* li = (LineDef*) ptr;
+    Line* li = (Line*) ptr;
     findsectorextremalmaterialheightparams_t* params =
         (findsectorextremalmaterialheightparams_t*) context;
     coord_t height;
@@ -978,7 +978,7 @@ int findSectorExtremalMaterialHeight(void* ptr, void* context)
     return false; // Continue iteration.
 }
 
-boolean XS_GetPlane(LineDef* actline, Sector* sector, int ref, uint* refdata,
+boolean XS_GetPlane(Line* actline, Sector* sector, int ref, uint* refdata,
     coord_t* height, Material** mat, Sector** planeSector)
 {
     Material* otherMat;
@@ -1266,7 +1266,7 @@ boolean XS_GetPlane(LineDef* actline, Sector* sector, int ref, uint* refdata,
         params.part = part;
         params.flags = (findMin? FSETHF_MIN : 0);
         params.val = (findMin? DDMAXFLOAT : DDMINFLOAT);
-        P_Iteratep(sector, DMU_LINEDEF, &params,
+        P_Iteratep(sector, DMU_LINE, &params,
                    findSectorExtremalMaterialHeight);
         if(height)
             *height = params.val;
@@ -1370,7 +1370,7 @@ int C_DECL XSTrav_HighestSectorType(Sector *sec, boolean ceiling,
     return true; // Keep looking...
 }
 
-void XS_InitMovePlane(LineDef *line)
+void XS_InitMovePlane(Line *line)
 {
     xline_t *xline = P_ToXLine(line);
 
@@ -1382,11 +1382,11 @@ void XS_InitMovePlane(LineDef *line)
 int C_DECL XSTrav_MovePlane(Sector *sector, boolean ceiling, void *context,
                             void *context2, mobj_t *activator)
 {
-    LineDef*        line = (LineDef *) context;
+    Line*           line = (Line *) context;
     linetype_t*     info = (linetype_t *) context2;
     xgplanemover_t* mover;
     int             st;
-    Material*     mat;
+    Material*       mat;
     xline_t*        xline = P_ToXLine(line);
     boolean         playsound;
 
@@ -1417,7 +1417,7 @@ int C_DECL XSTrav_MovePlane(Sector *sector, boolean ceiling, void *context,
 
     mover = XS_GetPlaneMover(sector, ceiling);
     if(P_IsDummy(line))
-        Con_Error("XSTrav_MovePlane: Attempted to use dummy Linedef as XGPlaneMover origin.");
+        Con_Error("XSTrav_MovePlane: Attempted to use dummy Line as XGPlaneMover origin.");
     mover->origin = line;
 
     // Setup the thinker and add it to the list.
@@ -1515,7 +1515,7 @@ int C_DECL XSTrav_MovePlane(Sector *sector, boolean ceiling, void *context,
     return true; // Keep looking...
 }
 
-void XS_InitStairBuilder(LineDef* line)
+void XS_InitStairBuilder(Line* line)
 {
     uint i;
     for(i = 0; i < numsectors; ++i)
@@ -1524,7 +1524,7 @@ void XS_InitStairBuilder(LineDef* line)
     }
 }
 
-boolean XS_DoBuild(Sector* sector, boolean ceiling, LineDef* origin,
+boolean XS_DoBuild(Sector* sector, boolean ceiling, Line* origin,
                    linetype_t* info, uint stepcount)
 {
     static coord_t firstheight;
@@ -1546,7 +1546,7 @@ boolean XS_DoBuild(Sector* sector, boolean ceiling, LineDef* origin,
     // Create a new mover for the plane.
     mover = XS_GetPlaneMover(sector, ceiling);
     if(P_IsDummy(origin))
-        Con_Error("XS_DoBuild: Attempted to use dummy Linedef as XGPlaneMover origin.");
+        Con_Error("XS_DoBuild: Attempted to use dummy Line as XGPlaneMover origin.");
     mover->origin = origin;
 
     // Setup the mover.
@@ -1602,9 +1602,9 @@ boolean XS_DoBuild(Sector* sector, boolean ceiling, LineDef* origin,
 
 typedef struct spreadbuildparams_s {
     Sector*             baseSec;
-    Material*         baseMat;
+    Material*           baseMat;
     byte                flags;
-    LineDef*            origin;
+    Line*               origin;
     linetype_t*         info;
     int                 stepCount;
     size_t              spreaded;
@@ -1612,7 +1612,7 @@ typedef struct spreadbuildparams_s {
 
 int spreadBuild(void *ptr, void *context)
 {
-    LineDef             *li = (LineDef*) ptr;
+    Line                *li = (Line*) ptr;
     spreadbuildparams_t *params = (spreadbuildparams_t*) context;
     Sector              *frontSec, *backSec;
 
@@ -1669,7 +1669,7 @@ static void markBuiltSectors(void)
     }
 }
 
-static boolean spreadBuildToNeighborAll(LineDef* origin, linetype_t* info,
+static boolean spreadBuildToNeighborAll(Line* origin, linetype_t* info,
                                         boolean picstop, boolean ceiling,
                                         Material* myMat, int stepCount)
 {
@@ -1704,7 +1704,7 @@ static boolean spreadBuildToNeighborAll(LineDef* origin, linetype_t* info,
         params.baseSec = sec;
         params.spreaded = 0;
 
-        P_Iteratep(sec, DMU_LINEDEF, &params, spreadBuild);
+        P_Iteratep(sec, DMU_LINE, &params, spreadBuild);
         if(params.spreaded > 0)
             result = true;
     }
@@ -1717,9 +1717,9 @@ static boolean spreadBuildToNeighborAll(LineDef* origin, linetype_t* info,
 
 typedef struct findbuildneighborparams_s {
     Sector*             baseSec;
-    Material*         baseMat;
+    Material*           baseMat;
     byte                flags;
-    LineDef*            origin;
+    Line*               origin;
     linetype_t*         info;
     int                 stepCount;
     uint                foundIDX;
@@ -1728,7 +1728,7 @@ typedef struct findbuildneighborparams_s {
 
 int findBuildNeighbor(void* ptr, void* context)
 {
-    LineDef*            li = (LineDef*) ptr;
+    Line*               li = (Line*) ptr;
     findbuildneighborparams_t *params =
         (findbuildneighborparams_t*) context;
     Sector*             frontSec, *backSec;
@@ -1773,7 +1773,7 @@ int findBuildNeighbor(void* ptr, void* context)
     return false; // Continue iteration.
 }
 
-boolean spreadBuildToNeighborLowestIDX(LineDef* origin, linetype_t* info,
+boolean spreadBuildToNeighborLowestIDX(Line* origin, linetype_t* info,
                                        boolean picstop, boolean ceiling,
                                        Material* myMat, int stepcount,
                                        Sector* foundSec)
@@ -1810,7 +1810,7 @@ boolean spreadBuildToNeighborLowestIDX(LineDef* origin, linetype_t* info,
         params.foundIDX = numlines;
         params.foundSec = NULL;
 
-        P_Iteratep(sec, DMU_LINEDEF, &params, findBuildNeighbor);
+        P_Iteratep(sec, DMU_LINE, &params, findBuildNeighbor);
 
         if(params.foundSec)
         {
@@ -1827,12 +1827,12 @@ int C_DECL XSTrav_BuildStairs(Sector* sector, boolean ceiling,
                               mobj_t* activator)
 {
     uint                stepCount = 0;
-    LineDef*            origin = (LineDef *) context;
+    Line*               origin = (Line *) context;
     linetype_t*         info = context2;
     Sector*             foundSec = NULL;
     boolean             picstop = info->iparm[2] != 0;
     boolean             spread = info->iparm[3] != 0;
-    Material*         myMat;
+    Material*           myMat;
 
     XG_Dev("XSTrav_BuildStairs: Sector %i, %s", P_ToIndex(sector),
            ceiling ? "ceiling" : "floor");
@@ -1911,9 +1911,9 @@ int C_DECL XSTrav_PlaneMaterial(Sector *sec, boolean ceiling,
                                 void *context, void *context2,
                                 mobj_t *activator)
 {
-    LineDef*        line = (LineDef *) context;
+    Line*           line = (Line *) context;
     linetype_t*     info = context2;
-    Material*     mat;
+    Material*       mat;
     float           rgb[3];
 
     // i2: (spref) material origin
@@ -1956,7 +1956,7 @@ int C_DECL XSTrav_SectorLight(Sector* sector, boolean ceiling,
                               void* context, void* context2,
                               mobj_t* activator)
 {
-    LineDef*            line = (LineDef *) context;
+    Line*               line = (Line *) context;
     linetype_t*         info = context2;
     int                 num;
     float               usergb[3];
@@ -2067,7 +2067,7 @@ int C_DECL XSTrav_SectorLight(Sector* sector, boolean ceiling,
                 P_GetFloatpv(sector, DMU_COLOR, usergb);
             else
             {
-                XG_Dev("XSTrav_SectorLight: Warning, the referenced LineDef has no back sector. Using default color.");
+                XG_Dev("XSTrav_SectorLight: Warning, the referenced Line has no back sector. Using default color.");
                 memset(usergb, 0, sizeof(usergb));
             }
             break;
@@ -2099,7 +2099,7 @@ int C_DECL XSTrav_MimicSector(Sector *sector, boolean ceiling,
                               void *context, void *context2,
                               mobj_t *activator)
 {
-    LineDef    *line = (LineDef *) context;
+    Line       *line = (Line *) context;
     linetype_t *info = context2;
     Sector     *from = NULL;
     uint        refdata;
@@ -2624,7 +2624,7 @@ void XS_DoChain(Sector* sec, int ch, int activating, void* act_thing)
     xgsector_t* xg;
     sectortype_t* info;
     float flevtime = TIC2FLT(mapTime);
-    LineDef* dummyLine;
+    Line* dummyLine;
     xline_t* xdummyLine;
     linetype_t* ltype;
     SideDef* dummySideDef;
@@ -2657,7 +2657,7 @@ void XS_DoChain(Sector* sec, int ch, int activating, void* act_thing)
 
     P_SetPtrp(dummyLine, DMU_SIDEDEF0, dummySideDef);
     P_SetPtrp(dummyLine, DMU_FRONT_SECTOR, sec);
-    P_SetPtrp(dummySideDef, DMU_LINEDEF, dummyLine);
+    P_SetPtrp(dummySideDef, DMU_LINE, dummyLine);
 
     xdummyLine->special = (ch == XSCE_FUNCTION ? activating : info->chain[ch]);
 

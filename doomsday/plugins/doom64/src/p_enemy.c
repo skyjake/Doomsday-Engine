@@ -196,7 +196,7 @@ static boolean checkMissileRange(mobj_t* actor)
 static boolean moveMobj(mobj_t* actor, boolean dropoff)
 {
     coord_t pos[3], step[3];
-    LineDef* ld;
+    Line* ld;
     boolean good;
 
     if(actor->moveDir == DI_NODIR)
@@ -365,18 +365,18 @@ static void doNewChaseDir(mobj_t* actor, coord_t deltaX, coord_t deltaY)
  * p_map.c::P_TryMoveXY(), allows monsters to free themselves without making
  * them tend to hang over dropoffs.
  */
-static int PIT_AvoidDropoff(LineDef* line, void* data)
+static int PIT_AvoidDropoff(Line* line, void* data)
 {
     Sector* backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
     AABoxd* aaBox = P_GetPtrp(line, DMU_BOUNDING_BOX);
 
     if(backsector &&
-       // Linedef must be contacted
+       // Line must be contacted
        tmBox.minX < aaBox->maxX &&
        tmBox.maxX > aaBox->minX &&
        tmBox.minY < aaBox->maxY &&
        tmBox.maxY > aaBox->minY &&
-       !LineDef_BoxOnSide(line, &tmBox))
+       !Line_BoxOnSide(line, &tmBox))
     {
         Sector* frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
         coord_t front = P_GetDoublep(frontsector, DMU_FLOOR_HEIGHT);
@@ -401,7 +401,7 @@ static int PIT_AvoidDropoff(LineDef* line, void* data)
         }
 
         // Move away from drop off at a standard speed.
-        // Multiple contacted linedefs are cumulative (e.g. hanging over corner)
+        // Multiple contacted lines are cumulative (e.g. hanging over corner)
         dropoffDelta[VX] -= FIX2FLT(finesine[angle >> ANGLETOFINESHIFT]) * 32;
         dropoffDelta[VY] += FIX2FLT(finecosine[angle >> ANGLETOFINESHIFT]) * 32;
     }
@@ -571,7 +571,7 @@ void C_DECL A_RectSpecial(mobj_t* actor)
 
     if(!params.count)
     {   // No Bitches left alive.
-        LineDef*            dummyLine = P_AllocDummyLine();
+        Line*               dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4459; // jd64 was 666.
         EV_DoDoor(dummyLine, FT_LOWERTOLOWEST); // jd64 was open.
@@ -594,7 +594,7 @@ void C_DECL A_PossSpecial(mobj_t* mo)
 
     if(!params.count)
     {
-        LineDef*            dummyLine = P_AllocDummyLine();
+        Line*               dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4444;
         EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
@@ -617,7 +617,7 @@ void C_DECL A_SposSpecial(mobj_t* mo)
 
     if(!params.count)
     {
-        LineDef*            dummyLine = P_AllocDummyLine();
+        Line*               dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4445;
         EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
@@ -640,7 +640,7 @@ void C_DECL A_TrooSpecial(mobj_t* mo)
 
     if(!params.count)
     {
-        LineDef*            dummyLine = P_AllocDummyLine();
+        Line*               dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = (mo->type == MT_TROOP? 4446 : 4447);
         EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
@@ -663,7 +663,7 @@ void C_DECL A_SargSpecial(mobj_t* mo)
 
     if(!params.count)
     {
-        LineDef*            dummyLine = P_AllocDummyLine();
+        Line*               dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4448;
         EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
@@ -686,7 +686,7 @@ void C_DECL A_HeadSpecial(mobj_t* mo)
 
     if(!params.count)
     {
-        LineDef*            dummyLine = P_AllocDummyLine();
+        Line*               dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4450;
         EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
@@ -709,7 +709,7 @@ void C_DECL A_SkulSpecial(mobj_t* mo)
 
     if(!params.count)
     {
-        LineDef*            dummyLine = P_AllocDummyLine();
+        Line*               dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4452;
         EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
@@ -732,7 +732,7 @@ void C_DECL A_Bos2Special(mobj_t* mo)
 
     if(!params.count)
     {
-        LineDef*            dummyLine = P_AllocDummyLine();
+        Line*               dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4453;
         EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
@@ -755,7 +755,7 @@ void C_DECL A_BossSpecial(mobj_t* mo)
 
     if(!params.count)
     {
-        LineDef*            dummyLine = P_AllocDummyLine();
+        Line*               dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4454;
         EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
@@ -778,7 +778,7 @@ void C_DECL A_PainSpecial(mobj_t* mo)
 
     if(!params.count)
     {
-        LineDef*            dummyLine = P_AllocDummyLine();
+        Line*               dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4455;
         EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
@@ -801,7 +801,7 @@ void C_DECL A_FattSpecial(mobj_t* mo)
 
     if(!params.count)
     {
-        LineDef*            dummyLine = P_AllocDummyLine();
+        Line*               dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4456;
         EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
@@ -824,7 +824,7 @@ void C_DECL A_BabySpecial(mobj_t* mo)
 
     if(!params.count)
     {
-        LineDef*            dummyLine = P_AllocDummyLine();
+        Line*               dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4457;
         EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
@@ -847,7 +847,7 @@ void C_DECL A_CybrSpecial(mobj_t* mo)
 
     if(!params.count)
     {
-        LineDef*            dummyLine = P_AllocDummyLine();
+        Line*               dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4458;
         EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
@@ -1875,7 +1875,7 @@ void C_DECL A_Scream(mobj_t* actor)
 void C_DECL A_CyberDeath(mobj_t* actor)
 {
     countmobjoftypeparams_t params;
-    LineDef* dummyLine;
+    Line* dummyLine;
     coord_t pos[3];
     mobj_t* mo;
     int i;
@@ -1988,7 +1988,7 @@ void C_DECL A_Explode(mobj_t *mo)
 void C_DECL A_BarrelExplode(mobj_t* actor)
 {
     int                 i;
-    LineDef*            dummyLine;
+    Line*               dummyLine;
     countmobjoftypeparams_t params;
 
     S_StartSound(actor->info->deathSound, actor);

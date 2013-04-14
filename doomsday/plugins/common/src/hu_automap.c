@@ -590,10 +590,10 @@ static int rendSeg(void* hedge_, void* data)
     const automapcfg_lineinfo_t* info;
     player_t* plr = rs.plr;
     float v1[2], v2[2];
-    LineDef* line;
+    Line* line;
     xline_t* xLine;
 
-    line = P_GetPtrp(hedge, DMU_LINEDEF);
+    line = P_GetPtrp(hedge, DMU_LINE);
     if(!line) return false;
 
     xLine = P_ToXLine(line);
@@ -721,7 +721,7 @@ static void renderWalls(uiwidget_t* obj, int objType, boolean addToLists)
     }
 }
 
-static void rendLinedef(LineDef* line, float r, float g, float b, float a,
+static void rendLinedef(Line* line, float r, float g, float b, float a,
     blendmode_t blendMode, boolean drawNormal)
 {
     float length = P_GetFloatp(line, DMU_LENGTH);
@@ -757,7 +757,7 @@ static void rendLinedef(LineDef* line, float r, float g, float b, float a,
             normal[VX] = unit[VY];
             normal[VY] = -unit[VX];
 
-            // The center of the linedef.
+            // The center of the line.
             v1[VX] += (length / 2) * unit[VX];
             v1[VY] += (length / 2) * unit[VY];
 
@@ -780,10 +780,10 @@ static void rendLinedef(LineDef* line, float r, float g, float b, float a,
 }
 
 /**
- * Rather than draw the instead this will draw the linedef of which
+ * Rather than draw the instead this will draw the line of which
  * the hedge is a part.
  */
-int rendPolyobjLine(LineDef* line, void* context)
+int rendPolyobjLine(Line* line, void* context)
 {
     uiwidget_t* ob = (uiwidget_t*)context;
     guidata_automap_t* am = (guidata_automap_t*)ob->typedata;
@@ -846,7 +846,7 @@ static void rendPolyobjs(uiwidget_t* ob)
 }
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-int rendXGLinedef(LineDef* line, void* context)
+int rendXGLinedef(Line* line, void* context)
 {
     assert(line && context && ((uiwidget_t*)context)->type == GUI_AUTOMAP);
     {

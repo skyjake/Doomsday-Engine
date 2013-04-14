@@ -420,7 +420,7 @@ boolean P_ToggleSwitch(SideDef* side, int sound, boolean silent, int tics)
 }
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-boolean P_UseSpecialLine(mobj_t* activator, LineDef* line, int side)
+boolean P_UseSpecialLine(mobj_t* activator, Line* line, int side)
 {
     // Extended functionality overrides old.
     if(XL_UseLine(line, side, activator))

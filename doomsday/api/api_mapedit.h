@@ -97,7 +97,7 @@ DENG_API_TYPEDEF(MPE)
     boolean         (*VertexCreatev)(size_t num, coord_t* values, uint* indices);
 
     /**
-     * Create a new linedef in the editable map.
+     * Create a new line in the editable map.
      *
      * @param v1            Idx of the start vertex.
      * @param v2            Idx of the end vertex.
@@ -107,10 +107,10 @@ DENG_API_TYPEDEF(MPE)
      * @param backSide      Idx of the back sidedef.
      * @param flags         DDLF_* flags.
      *
-     * @return  Index of the newly created linedef else @c 0 if there was an error.
+     * @return  Index of the newly created line else @c 0 if there was an error.
      */
-    uint            (*LinedefCreate)(uint v1, uint v2, uint frontSector, uint backSector, int flags);
-    void            (*LinedefAddSide)(uint line, int side, short flags, const ddstring_t* topMaterial, float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue, const ddstring_t* middleMaterial, float middleOffsetX, float middleOffsetY, float middleRed, float middleGreen, float middleBlue, float middleAlpha, const ddstring_t* bottomMaterial, float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen, float bottomBlue, uint sideDefArchiveIndex);
+    uint            (*LineCreate)(uint v1, uint v2, uint frontSector, uint backSector, int flags);
+    void            (*LineAddSide)(uint line, int side, short flags, const ddstring_t* topMaterial, float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue, const ddstring_t* middleMaterial, float middleOffsetX, float middleOffsetY, float middleRed, float middleGreen, float middleBlue, float middleAlpha, const ddstring_t* bottomMaterial, float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen, float bottomBlue, uint sideDefArchiveIndex);
     uint            (*SectorCreate)(float lightlevel, float red, float green, float blue);
     uint            (*PlaneCreate)(uint sector, coord_t height, const ddstring_t* materialUri, float matOffsetX, float matOffsetY, float r, float g, float b, float a, float normalX, float normalY, float normalZ);
     uint            (*PolyobjCreate)(uint* lines, uint linecount, int tag, int sequenceType, coord_t originX, coord_t originY);
@@ -125,8 +125,8 @@ DENG_API_T(MPE);
 #define MPE_End             _api_MPE.End
 #define MPE_VertexCreate    _api_MPE.VertexCreate
 #define MPE_VertexCreatev   _api_MPE.VertexCreatev
-#define MPE_LinedefCreate   _api_MPE.LinedefCreate
-#define MPE_LinedefAddSide  _api_MPE.LinedefAddSide
+#define MPE_LineCreate   _api_MPE.LineCreate
+#define MPE_LineAddSide  _api_MPE.LineAddSide
 #define MPE_SectorCreate    _api_MPE.SectorCreate
 #define MPE_PlaneCreate     _api_MPE.PlaneCreate
 #define MPE_PolyobjCreate   _api_MPE.PolyobjCreate

@@ -24,7 +24,7 @@
  */
 
 /**
- * doomdata.h: Thing and linedef attributes.
+ * doomdata.h: Thing and line attributes.
  */
 
 #ifndef __DOOMDATA__
@@ -41,7 +41,7 @@ enum {
 };
 
 //
-// LineDef attributes.
+// Line attributes.
 //
 
 // Blocks monsters only.
@@ -59,17 +59,17 @@ enum {
 // Set if already seen, thus drawn in automap.
 #define ML_MAPPED               0x0100
 
-// Allows a USE action to pass through a linedef with a special
+// Allows a USE action to pass through a line with a special
 #define ML_PASSUSE              0x0200
 
-// If set allows any mobj to trigger the linedef's special
+// If set allows any mobj to trigger the line's special
 #define ML_ALLTRIGGER           0x0400
 
 #define ML_VALID_MASK           (ML_BLOCKMONSTERS|ML_SECRET|ML_SOUNDBLOCK|ML_DONTDRAW|ML_MAPPED|ML_PASSUSE|ML_ALLTRIGGER)
 
 // Special activation types:
-#define SPAC_CROSS              0 // Player crosses linedef.
-#define SPAC_USE                1 // Player uses linedef.
-#define SPAC_IMPACT             3 // Projectile hits linedef.
+#define SPAC_CROSS              0 // Player crosses line.
+#define SPAC_USE                1 // Player uses line.
+#define SPAC_IMPACT             3 // Projectile hits line.
 
 #endif

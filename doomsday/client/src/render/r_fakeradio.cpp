@@ -31,7 +31,7 @@ using namespace de;
 
 static zblockset_t *shadowLinksBlockSet;
 
-bool Rend_RadioLineCastsShadow(LineDef const &line)
+bool Rend_RadioLineCastsShadow(Line const &line)
 {
     if(line.isFromPolyobj()) return false;
     if(line.isSelfReferencing()) return false;
@@ -139,8 +139,8 @@ void Rend_RadioUpdateVertexShadowOffsets(Vertex &vtx)
     LineOwner *own = base;
     do
     {
-        LineDef const &lineB = own->line();
-        LineDef const &lineA = own->next().line();
+        Line const &lineB = own->line();
+        Line const &lineA = own->next().line();
 
         if(&lineB.v1() == &vtx)
         {
@@ -179,7 +179,7 @@ void Rend_RadioUpdateVertexShadowOffsets(Vertex &vtx)
 /**
  * Link @a line to @a bspLeaf for the purposes of shadowing.
  */
-static void linkShadowLineDefToSSec(LineDef *line, byte side, BspLeaf *bspLeaf)
+static void linkShadowLineToSSec(Line *line, byte side, BspLeaf *bspLeaf)
 {
     DENG_ASSERT(line && bspLeaf);
 
@@ -204,14 +204,14 @@ static void linkShadowLineDefToSSec(LineDef *line, byte side, BspLeaf *bspLeaf)
 
 struct ShadowLinkerParms
 {
-    LineDef *line;
+    Line *line;
     byte side;
 };
 
 static int RIT_ShadowBspLeafLinker(BspLeaf *bspLeaf, void *context)
 {
     ShadowLinkerParms *parms = static_cast<ShadowLinkerParms *>(context);
-    linkShadowLineDefToSSec(parms->line, parms->side, bspLeaf);
+    linkShadowLineToSSec(parms->line, parms->side, bspLeaf);
     return false; // Continue iteration.
 }
 
@@ -230,13 +230,13 @@ void Rend_RadioInitForMap()
      * The algorithm:
      *
      * 1. Use the BSP leaf blockmap to look for all the blocks that are
-     *    within the linedef's shadow bounding box.
+     *    within the line's shadow bounding box.
      *
-     * 2. Check the BspLeafs whose sector is the same as the linedef.
+     * 2. Check the BspLeafs whose sector is the same as the line.
      *
      * 3. If any of the shadow points are in the BSP leaf, or any of the
      *    shadow edges cross one of the BSP leaf's edges (not parallel),
-     *    link the linedef to the BspLeaf.
+     *    link the line to the BspLeaf.
      */
     shadowLinksBlockSet = ZBlockSet_New(sizeof(ShadowLink), 1024, PU_MAP);
 
@@ -244,14 +244,14 @@ void Rend_RadioInitForMap()
     AABoxd bounds;
     vec2d_t point;
 
-    foreach(LineDef *line, theMap->lines())
+    foreach(Line *line, theMap->lines())
     {
         if(!Rend_RadioLineCastsShadow(*line)) continue;
 
         // For each side of the line.
         for(uint i = 0; i < 2; ++i)
         {
-            LineDef::Side &side = line->side(i);
+            Line::Side &side = line->side(i);
 
             if(!side.hasSector() || !side.hasSideDef()) continue;
 

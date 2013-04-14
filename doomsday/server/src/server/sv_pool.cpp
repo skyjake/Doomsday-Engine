@@ -466,8 +466,8 @@ void Sv_RegisterSide(dt_side_t *reg, uint number)
     DENG_ASSERT(reg != 0);
 
     SideDef *sideDef = theMap->sideDefs().at(number);
-    LineDef &line = sideDef->line();
-    LineDef::Side &side = line.side(line.frontSideDefPtr() == sideDef? FRONT : BACK);
+    Line &line = sideDef->line();
+    Line::Side &side = line.side(line.frontSideDefPtr() == sideDef? FRONT : BACK);
 
     reg->top.material    = side.top().surface().materialPtr();
     reg->middle.material = side.middle().surface().materialPtr();
@@ -759,8 +759,8 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number,
     sidedelta_t *d, byte doUpdate)
 {
     SideDef const *s = theMap->sideDefs().at(number);
-    LineDef const &line = s->line();
-    LineDef::Side const &side = line.side(line.frontSideDefPtr() == s? FRONT : BACK);
+    Line const &line = s->line();
+    Line::Side const &side = line.side(line.frontSideDefPtr() == s? FRONT : BACK);
     dt_side_t *r = &reg->sideDefs[number];
     byte lineFlags = s->line().flags() & 0xff;
     byte sideFlags = side.flags() & 0xff;
@@ -1544,8 +1544,8 @@ coord_t Sv_SectorDistance(int index, ownerinfo_t const *info)
 coord_t Sv_SideDistance(int index, int deltaFlags, ownerinfo_t const *info)
 {
     SideDef const *sideDef = theMap->sideDefs().at(index);
-    LineDef &line = sideDef->line();
-    LineDef::Side &side = line.side(sideDef == line.frontSideDefPtr()? FRONT : BACK);
+    Line &line = sideDef->line();
+    Line::Side &side = line.side(sideDef == line.frontSideDefPtr()? FRONT : BACK);
 
     ddmobj_base_t const &emitter = (deltaFlags & SNDDF_SIDE_MIDDLE? side.middleSoundEmitter()
                                      : deltaFlags & SNDDF_SIDE_TOP? side.topSoundEmitter()
@@ -1588,7 +1588,7 @@ coord_t Sv_DeltaDistance(void const *deltaPtr, ownerinfo_t const *info)
     if(delta->type == DT_SIDE)
     {
         SideDef *sideDef = theMap->sideDefs().at(delta->id);
-        LineDef &line = sideDef->line();
+        Line &line = sideDef->line();
         vec2d_t origin; V2d_Set(origin, line.v1Origin()[VX] + line.direction().x / 2,
                                         line.v1Origin()[VY] + line.direction().y / 2);
         return M_ApproxDistance(info->origin[VX] - origin[VX],
@@ -2371,8 +2371,8 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
 
         // Clients need to know which emitter to use.
         SideDef *sideDef = sourceSurface->owner().castTo<SideDef>();
-        LineDef &line = sideDef->line();
-        LineDef::Side &side = line.side(line.frontSideDefPtr() == sideDef? FRONT : BACK);
+        Line &line = sideDef->line();
+        Line::Side &side = line.side(line.frontSideDefPtr() == sideDef? FRONT : BACK);
 
         if(&side.middle().surface() == sourceSurface)
         {

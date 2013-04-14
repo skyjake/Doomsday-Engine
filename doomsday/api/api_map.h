@@ -35,7 +35,7 @@
 #define DMT_HEDGE_SIDEDEF DDVT_PTR
 
 #define DMT_HEDGE_V DDVT_PTR             // [Start, End] of the segment.
-#define DMT_HEDGE_LINEDEF DDVT_PTR
+#define DMT_HEDGE_LINE DDVT_PTR
 #define DMT_HEDGE_SECTOR DDVT_PTR
 #define DMT_HEDGE_BSPLEAF DDVT_PTR
 #define DMT_HEDGE_TWIN DDVT_PTR
@@ -79,8 +79,8 @@
 #define DMT_SECTOR_LIGHTLEVEL DDVT_FLOAT
 #define DMT_SECTOR_RGB DDVT_FLOAT
 #define DMT_SECTOR_MOBJLIST DDVT_PTR   // List of mobjs in the sector.
-#define DMT_SECTOR_LINEDEFCOUNT DDVT_UINT
-#define DMT_SECTOR_LINEDEFS DDVT_PTR
+#define DMT_SECTOR_LINECOUNT DDVT_UINT
+#define DMT_SECTOR_LINES DDVT_PTR
 #define DMT_SECTOR_BSPLEAFCOUNT DDVT_UINT
 #define DMT_SECTOR_BSPLEAFS DDVT_PTR
 #define DMT_SECTOR_BASE DDVT_PTR
@@ -91,17 +91,17 @@
 #define DMT_SIDEDEF_LINE DDVT_PTR
 #define DMT_SIDEDEF_FLAGS DDVT_SHORT
 
-#define DMT_LINEDEF_SECTOR DDVT_PTR
-#define DMT_LINEDEF_SIDEDEF DDVT_PTR
-#define DMT_LINEDEF_AABOX DDVT_DOUBLE
+#define DMT_LINE_SECTOR DDVT_PTR
+#define DMT_LINE_SIDEDEF DDVT_PTR
+#define DMT_LINE_AABOX DDVT_DOUBLE
 
-#define DMT_LINEDEF_V DDVT_PTR
-#define DMT_LINEDEF_FLAGS DDVT_INT     // Public DDLF_* flags.
-#define DMT_LINEDEF_SLOPETYPE DDVT_INT
-#define DMT_LINEDEF_VALIDCOUNT DDVT_INT
-#define DMT_LINEDEF_DX DDVT_DOUBLE
-#define DMT_LINEDEF_DY DDVT_DOUBLE
-#define DMT_LINEDEF_LENGTH DDVT_DOUBLE
+#define DMT_LINE_V DDVT_PTR
+#define DMT_LINE_FLAGS DDVT_INT     // Public DDLF_* flags.
+#define DMT_LINE_SLOPETYPE DDVT_INT
+#define DMT_LINE_VALIDCOUNT DDVT_INT
+#define DMT_LINE_DX DDVT_DOUBLE
+#define DMT_LINE_DY DDVT_DOUBLE
+#define DMT_LINE_LENGTH DDVT_DOUBLE
 
 #define DMT_BSPNODE_AABOX DDVT_DOUBLE
 
@@ -124,7 +124,7 @@ struct intercept_s;
 struct bspleaf_s;
 struct bspnode_s;
 struct hedge_s;
-struct linedef_s;
+struct line_s;
 struct mobj_s;
 struct plane_s;
 struct sector_s;
@@ -135,7 +135,7 @@ struct material_s;
 typedef struct bspleaf_s    BspLeaf;
 typedef struct bspnode_s    BspNode;
 typedef struct hedge_s      HEdge;
-typedef struct linedef_s    LineDef;
+typedef struct line_s       Line;
 typedef struct plane_s      Plane;
 typedef struct sector_s     Sector;
 typedef struct sidedef_s    SideDef;
@@ -146,7 +146,7 @@ typedef struct material_s   Material;
 
 // Foward declarations.
 class BspLeaf;
-class LineDef;
+class Line;
 class Sector;
 class Material;
 
@@ -196,13 +196,13 @@ DENG_API_TYPEDEF(Map)
 
     // Lines
 
-    int             (*LD_BoxOnSide)(LineDef *line, AABoxd const *box);
-    int             (*LD_BoxOnSide_FixedPrecision)(LineDef *line, AABoxd const *box);
-    coord_t         (*LD_PointDistance)(LineDef* line, coord_t const point[2], coord_t *offset);
-    coord_t         (*LD_PointXYDistance)(LineDef* line, coord_t x, coord_t y, coord_t *offset);
-    coord_t         (*LD_PointOnSide)(LineDef const *line, coord_t const point[2]);
-    coord_t         (*LD_PointXYOnSide)(LineDef const *line, coord_t x, coord_t y);
-    int             (*LD_MobjsIterator)(LineDef *line, int (*callback) (struct mobj_s *, void *), void *parameters);
+    int             (*LD_BoxOnSide)(Line *line, AABoxd const *box);
+    int             (*LD_BoxOnSide_FixedPrecision)(Line *line, AABoxd const *box);
+    coord_t         (*LD_PointDistance)(Line* line, coord_t const point[2], coord_t *offset);
+    coord_t         (*LD_PointXYDistance)(Line* line, coord_t x, coord_t y, coord_t *offset);
+    coord_t         (*LD_PointOnSide)(Line const *line, coord_t const point[2]);
+    coord_t         (*LD_PointXYOnSide)(Line const *line, coord_t x, coord_t y);
+    int             (*LD_MobjsIterator)(Line *line, int (*callback) (struct mobj_s *, void *), void *parameters);
 
     // Sectors
 
@@ -222,7 +222,7 @@ DENG_API_TYPEDEF(Map)
      * The callback function will be called once for each line that crosses
      * trough the object. This means all the lines will be two-sided.
      */
-    int             (*MO_LinesIterator)(struct mobj_s* mo, int (*callback) (LineDef*, void*), void* parameters);
+    int             (*MO_LinesIterator)(struct mobj_s* mo, int (*callback) (Line*, void*), void* parameters);
 
     /**
      * Increment validCount before calling this routine. The callback function
@@ -261,9 +261,9 @@ DENG_API_TYPEDEF(Map)
     void            (*PO_Unlink)(struct polyobj_s* po);
 
     /**
-     * Returns a pointer to the first LineDef in the polyobj.
+     * Returns a pointer to the first Line in the polyobj.
      */
-    LineDef*        (*PO_FirstLine)(struct polyobj_s* po);
+    Line*           (*PO_FirstLine)(struct polyobj_s* po);
 
     /**
      * Lookup a Polyobj on the current map by unique ID.
@@ -307,23 +307,23 @@ DENG_API_TYPEDEF(Map)
     // Iterators
 
     int             (*Box_MobjsIterator)(const AABoxd* box, int (*callback) (struct mobj_s*, void*), void* parameters);
-    int             (*Box_LinesIterator)(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters);
+    int             (*Box_LinesIterator)(const AABoxd* box, int (*callback) (Line*, void*), void* parameters);
 
     /**
-     * LineDefs and Polyobj LineDefs (note Polyobj LineDefs are iterated first).
+     * Lines and Polyobj Lines (note Polyobj Lines are iterated first).
      *
      * The validCount flags are used to avoid checking lines that are marked
      * in multiple mapblocks, so increment validCount before the first call
-     * to GameMap_IterateCellLineDefs(), then make one or more calls to it.
+     * to GameMap_IterateCellLines(then make one or more calls to it.
      */
-    int             (*Box_AllLinesIterator)(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters);
+    int             (*Box_AllLinesIterator)(const AABoxd* box, int (*callback) (Line*, void*), void* parameters);
 
     /**
      * The validCount flags are used to avoid checking polys that are marked in
      * multiple mapblocks, so increment validCount before the first call, then
      * make one or more calls to it.
      */
-    int             (*Box_PolyobjLinesIterator)(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters);
+    int             (*Box_PolyobjLinesIterator)(const AABoxd* box, int (*callback) (Line*, void*), void* parameters);
 
     int             (*Box_BspLeafsIterator)(const AABoxd* box, Sector* sector, int (*callback) (BspLeaf*, void*), void* parameters);
     int             (*Box_PolyobjsIterator)(const AABoxd* box, int (*callback) (struct polyobj_s*, void*), void* parameters);
@@ -368,9 +368,9 @@ DENG_API_TYPEDEF(Map)
 
     /**
      * Update the TraceOpening state for the CURRENT map according to the opening
-     * defined by the inner-minimal planes heights which intercept @a linedef
+     * defined by the inner-minimal planes heights which intercept @a line.
      */
-    void            (*SetTraceOpening)(LineDef* linedef);
+    void            (*SetTraceOpening)(Line* line);
 
     // Map Updates (DMU)
 
@@ -486,12 +486,12 @@ DENG_API_T(Map);
 #define P_MapSourceFile                     _api_Map.SourceFile
 #define P_LoadMap                           _api_Map.Load
 
-#define LineDef_BoxOnSide                   _api_Map.LD_BoxOnSide
-#define LineDef_BoxOnSide_FixedPrecision    _api_Map.LD_BoxOnSide_FixedPrecision
-#define LineDef_PointDistance               _api_Map.LD_PointDistance
-#define LineDef_PointXYDistance             _api_Map.LD_PointXYDistance
-#define LineDef_PointOnSide                 _api_Map.LD_PointOnSide
-#define LineDef_PointXYOnSide               _api_Map.LD_PointXYOnSide
+#define Line_BoxOnSide                   _api_Map.LD_BoxOnSide
+#define Line_BoxOnSide_FixedPrecision    _api_Map.LD_BoxOnSide_FixedPrecision
+#define Line_PointDistance               _api_Map.LD_PointDistance
+#define Line_PointXYDistance             _api_Map.LD_PointXYDistance
+#define Line_PointOnSide                 _api_Map.LD_PointOnSide
+#define Line_PointXYOnSide               _api_Map.LD_PointXYOnSide
 #define P_LineMobjsIterator                 _api_Map.LD_MobjsIterator
 
 #define P_SectorTouchingMobjsIterator       _api_Map.S_TouchingMobjsIterator

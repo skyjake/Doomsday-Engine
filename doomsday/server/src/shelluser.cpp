@@ -154,7 +154,7 @@ void ShellUser::sendMapOutline()
 
     QScopedPointer<shell::MapOutlinePacket> packet(new shell::MapOutlinePacket);
 
-    foreach(LineDef *line, theMap->lines())
+    foreach(Line *line, theMap->lines())
     {
         packet->addLine(Vector2i(line->v1Origin()[VX], line->v1Origin()[VY]),
                         Vector2i(line->v2Origin()[VX], line->v2Origin()[VY]),

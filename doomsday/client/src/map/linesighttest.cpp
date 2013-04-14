@@ -26,7 +26,7 @@
 #include "map/bspleaf.h"
 #include "map/bspnode.h"
 #include "map/hedge.h"
-#include "map/linedef.h"
+#include "map/line.h"
 #include "map/polyobj.h"
 #include "map/sector.h"
 
@@ -91,7 +91,7 @@ DENG2_PIMPL(LineSightTest)
      *
      * @todo cleanup: Much unnecessary representation flipping...
      */
-    bool crossLine(LineDef const &line, dint side)
+    bool crossLine(Line const &line, dint side)
     {
 #define RTOP                    0x1 ///< Top range.
 #define RBOTTOM                 0x2 ///< Bottom range.
@@ -237,7 +237,7 @@ DENG2_PIMPL(LineSightTest)
         if(Polyobj *po = bspLeaf.firstPolyobj())
         {
             // Check polyobj lines.
-            foreach(LineDef *line, po->lines())
+            foreach(Line *line, po->lines())
             {
                 if(line->validCount() == validCount)
                     continue;
@@ -257,7 +257,7 @@ DENG2_PIMPL(LineSightTest)
             {
                 if(hedge->hasLine() && hedge->line().validCount() != validCount)
                 {
-                    LineDef &line = hedge->line();
+                    Line &line = hedge->line();
                     line.setValidCount(validCount);
 
                     if(!crossLine(line, hedge->lineSideId()))

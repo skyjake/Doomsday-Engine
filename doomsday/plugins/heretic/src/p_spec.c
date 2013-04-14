@@ -94,8 +94,8 @@ typedef struct animdef_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void P_CrossSpecialLine(LineDef* line, int side, mobj_t* thing);
-static void P_ShootSpecialLine(mobj_t* thing, LineDef* line);
+static void P_CrossSpecialLine(Line* line, int side, mobj_t* thing);
+static void P_ShootSpecialLine(mobj_t* thing, Line* line);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -385,7 +385,7 @@ void P_InitPicAnims(void)
     loadAnimDefs(anims, false);
 }
 
-boolean P_ActivateLine(LineDef* ld, mobj_t* mo, int side, int actType)
+boolean P_ActivateLine(Line* ld, mobj_t* mo, int side, int actType)
 {
     // Clients do not activate lines.
     if(IS_CLIENT) return false;
@@ -415,7 +415,7 @@ boolean P_ActivateLine(LineDef* ld, mobj_t* mo, int side, int actType)
  * Called every time a thing origin is about to cross a line with
  * a non 0 special.
  */
-static void P_CrossSpecialLine(LineDef* line, int side, mobj_t* thing)
+static void P_CrossSpecialLine(Line* line, int side, mobj_t* thing)
 {
     xline_t* xline;
 
@@ -770,7 +770,7 @@ static void P_CrossSpecialLine(LineDef* line, int side, mobj_t* thing)
 /**
  * Called when a thing shoots a special line.
  */
-static void P_ShootSpecialLine(mobj_t* thing, LineDef* line)
+static void P_ShootSpecialLine(mobj_t* thing, Line* line)
 {
     xline_t* xline = P_ToXLine(line);
 
@@ -1126,7 +1126,7 @@ void P_AmbientSound(void)
     } while(done == false);
 }
 
-boolean P_UseSpecialLine2(mobj_t* mo, LineDef* line, int side)
+boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
 {
     xline_t            *xline = P_ToXLine(line);
 

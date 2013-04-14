@@ -503,7 +503,7 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
  *
  * @param unitVect  Unit vector is written here.
  */
-static void lineUnitVector(LineDef const &line, pvec2f_t unitVec)
+static void lineUnitVector(Line const &line, pvec2f_t unitVec)
 {
     coord_t len = M_ApproxDistance(line.direction().x, line.direction().y);
     if(len)

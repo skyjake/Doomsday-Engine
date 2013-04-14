@@ -1,4 +1,4 @@
-/** @file linedefinfo.h BSP Builder Line info.
+/** @file lineinfo.h BSP Builder Line info.
  *
  * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
  * @see http://sourceforge.net/projects/glbsp/
@@ -52,7 +52,7 @@ struct LineInfo
     Q_DECLARE_FLAGS(Flags, Flag)
 
     /// The map line.
-    LineDef *line;
+    Line *line;
 
     Flags flags;
 
@@ -62,7 +62,7 @@ struct LineInfo
     /// If the line is used for a window effect, this is the sector on the back side.
     Sector *windowEffect;
 
-    explicit LineInfo(LineDef *line_, coord_t distEpsilon = 0.0001)
+    explicit LineInfo(Line *line_, coord_t distEpsilon = 0.0001)
         : line(line_), flags(0), validCount(0), windowEffect(0)
     {
         DENG2_ASSERT(line_);

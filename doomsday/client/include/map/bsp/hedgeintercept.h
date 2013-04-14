@@ -48,7 +48,7 @@ struct HEdgeIntercept
     // Vertex in question.
     Vertex *vertex;
 
-    // True if this intersection was on a self-referencing linedef.
+    // True if this intersection was on a self-referencing line.
     bool selfRef;
 
     // Sector on each side of the vertex (along the partition),

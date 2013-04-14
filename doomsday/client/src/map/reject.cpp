@@ -45,7 +45,7 @@ void BuildRejectForMap(GameMap const &map)
 
     for(uint i = 0; i < map.lineCount(); ++i)
     {
-        LineDef *line = &map.lines[i];
+        Line *line = &map.lines[i];
 
         if(!line->hasFrontSideDef() || !line->hasBackSideDef())
             continue;
@@ -62,7 +62,7 @@ void BuildRejectForMap(GameMap const &map)
 
         // Swap sectors so that the smallest group is added to the biggest
         // group. This is based on the assumption that sector numbers in
-        // wads will generally increase over the set of linedefs, and so
+        // wads will generally increase over the set of lines, and so
         // (by swapping) we'll tend to add small groups into larger
         // groups, thereby minimising the updates to 'rej_group' fields
         // that is required when merging.

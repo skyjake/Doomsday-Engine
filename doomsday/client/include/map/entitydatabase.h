@@ -3,7 +3,7 @@
  * Entity property value database. @ingroup map
  *
  * The EntityDatabase is used in the process of transferring mobj spawn spot
- * information and stuff like linedef action specials from the wad map loader
+ * information and stuff like line action specials from the wad map loader
  * plugin via the engine, through to the game plugin.
  *
  * The primary reason for its existence is that the engine does not know about

@@ -33,7 +33,7 @@
 typedef struct polyobj_s
 {
 public:
-    typedef QList<LineDef *> Lines;
+    typedef QList<Line *> Lines;
     typedef QSet<Vertex *> Vertexes;
 
 public:
@@ -61,7 +61,7 @@ public:
     // Does nothing about the user data section.
     ~polyobj_s()
     {
-        foreach(LineDef *line, lines())
+        foreach(Line *line, lines())
         {
             delete line->front()._leftHEdge;
         }
@@ -71,19 +71,19 @@ public:
     }
 
     /**
-     * Provides access to the list of LineDefs for the polyobj.
+     * Provides access to the list of Lines for the polyobj.
      */
     Lines const &lines() const;
 
     /**
-     * Returns the total number of LineDefs for the polyobj.
+     * Returns the total number of Lines for the polyobj.
      */
     inline uint lineCount() const { return lines().count(); }
 
     /**
-     * To be called once all LineDefs have been added in order to compile the
-     * set of unique vertexes for the polyobj. A vertex referenced by multiple
-     * lines is only included once in this set.
+     * To be called once all Lines have been added in order to compile the set
+     * of unique vertexes for the polyobj. A vertex referenced by multiple lines
+     * is only included once in this set.
      */
     void buildUniqueVertexes();
 
@@ -132,7 +132,7 @@ public:
 
     /**
      * Update the tangent space vectors for all surfaces of the polyobj,
-     * according to the points defined by the relevant LineDef's vertices.
+     * according to the points defined by the relevant Line's vertices.
      */
     void updateSurfaceTangents();
 

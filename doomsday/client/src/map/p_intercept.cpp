@@ -115,7 +115,7 @@ InterceptNode *P_AddIntercept(intercepttype_t type, float distance, void *object
         in->d.mobj = (mobj_s *) object;
         break;
     case ICPT_LINE:
-        in->d.line = (LineDef *) object;
+        in->d.line = (Line *) object;
         break;
     default:
         Con_Error("P_AddIntercept: Invalid type %i.", (int)type);

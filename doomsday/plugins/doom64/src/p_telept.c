@@ -95,7 +95,7 @@ static mobj_t* getTeleportDestination(short tag)
     return NULL;
 }
 
-int EV_Teleport(LineDef* line, int side, mobj_t* mo, boolean spawnFog)
+int EV_Teleport(Line* line, int side, mobj_t* mo, boolean spawnFog)
 {
     mobj_t* dest;
 
@@ -327,7 +327,7 @@ static int fadeSpawn(thinker_t* th, void* context)
  * \todo DJS - This is not a good design. There must be a better way
  *       to do this using a new thing flag (MF_NOTSPAWNONSTART?).
  */
-int EV_FadeSpawn(LineDef* li, mobj_t* mo)
+int EV_FadeSpawn(Line* li, mobj_t* mo)
 {
     iterlist_t*         list;
 
@@ -407,7 +407,7 @@ int PIT_ChangeMobjFlags(thinker_t* th, void* context)
  *
  * @todo: It appears the MF_TELEPORT flag has been hijacked.
  */
-int EV_FadeAway(LineDef* line, mobj_t* thing)
+int EV_FadeAway(Line* line, mobj_t* thing)
 {
     Sector*             sec = NULL;
     iterlist_t*         list;

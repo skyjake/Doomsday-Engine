@@ -29,7 +29,7 @@
 #include "p_saveg.h"
 #include "p_xg.h"
 
-void SV_WriteXGLine(LineDef* li)
+void SV_WriteXGLine(Line* li)
 {
     xgline_t* xg;
     linetype_t* info;
@@ -61,7 +61,7 @@ void SV_WriteXGLine(LineDef* li)
     SV_WriteFloat(xg->chTimer);
 }
 
-void SV_ReadXGLine(LineDef* li)
+void SV_ReadXGLine(Line* li)
 {
     xgline_t* xg;
     xline_t* xline = P_ToXLine(li);
@@ -218,9 +218,9 @@ int SV_ReadXGPlaneMover(xgplanemover_t* mov)
     mov->flags = SV_ReadLong();
 
     {
-    int lineDefIndex = SV_ReadLong();
-    if(lineDefIndex > 0)
-        mov->origin = P_ToPtr(DMU_LINEDEF, lineDefIndex - 1);
+    int lineIndex = SV_ReadLong();
+    if(lineIndex > 0)
+        mov->origin = P_ToPtr(DMU_LINE, lineIndex - 1);
     }
 
     mov->destination = FIX2FLT(SV_ReadLong());

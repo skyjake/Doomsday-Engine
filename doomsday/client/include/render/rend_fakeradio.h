@@ -34,7 +34,7 @@
 #ifndef LIBDENG_RENDER_FAKERADIO_H
 #define LIBDENG_RENDER_FAKERADIO_H
 
-#include "map/linedef.h"
+#include "map/line.h"
 #include "map/sidedef.h"
 #include "map/vertex.h"
 #include "map/sector.h"
@@ -47,16 +47,16 @@
 struct ShadowLink
 {
     ShadowLink *next;
-    LineDef *line;
+    Line *line;
     byte side;
 
-    LineDef::Side &lineSide()
+    Line::Side &lineSide()
     {
         DENG_ASSERT(line);
         return line->side(side);
     }
 
-    LineDef::Side const &lineSide() const
+    Line::Side const &lineSide() const
     {
         DENG_ASSERT(line);
         return line->side(side);
@@ -76,7 +76,7 @@ void Rend_RadioInitForMap();
 /**
  * Returns @c true iff @a line qualifies for (edge) shadow casting.
  */
-bool Rend_RadioLineCastsShadow(LineDef const &line);
+bool Rend_RadioLineCastsShadow(Line const &line);
 
 /**
  * Returns @c true iff @a plane qualifies for (wall) shadow casting.
@@ -100,7 +100,7 @@ float Rend_RadioCalcShadowDarkness(float lightLevel);
 /**
  * Called to update the shadow properties used when doing FakeRadio for @a line.
  */
-void Rend_RadioUpdateLine(LineDef &line, int backSide);
+void Rend_RadioUpdateLine(Line &line, int backSide);
 
 /**
  * Arguments for Rend_RadioWallSection()
@@ -113,7 +113,7 @@ struct RendRadioWallSectionParms
     edgespan_t const *spans;
     coord_t segOffset;
     coord_t segLength;
-    LineDef const *line;
+    Line const *line;
     Sector const *frontSec, *backSec;
     struct {
         struct {

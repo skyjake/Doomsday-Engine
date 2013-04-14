@@ -62,7 +62,7 @@ xline_t* xlines;
 // If true we are in the process of setting up a map
 boolean mapSetup;
 
-xline_t* P_ToXLine(LineDef* line)
+xline_t* P_ToXLine(Line* line)
 {
     if(!line) return NULL;
 
@@ -83,9 +83,9 @@ xline_t* P_GetXLine(uint idx)
     return &xlines[idx];
 }
 
-void P_SetLinedefAutomapVisibility(int player, uint lineIdx, boolean visible)
+void P_SetLineAutomapVisibility(int player, uint lineIdx, boolean visible)
 {
-    LineDef* line = P_ToPtr(DMU_LINEDEF, lineIdx);
+    Line* line = P_ToPtr(DMU_LINE, lineIdx);
     xline_t* xline;
     if(!line || P_IsDummy(line)) return;
 
@@ -151,7 +151,7 @@ void P_SetupForMapData(int type, uint num)
             xsectors = NULL;
         break;
 
-    case DMU_LINEDEF:
+    case DMU_LINE:
         if(num > 0)
             xlines = Z_Calloc(num * sizeof(xline_t), PU_MAP, 0);
         else
@@ -193,7 +193,7 @@ int applySurfaceColor(void* obj, void* context)
 
 #define LTF_SWAPCOLORS          4
 
-    LineDef* li = (LineDef*) obj;
+    Line* li = (Line*) obj;
     applysurfacecolorparams_t* params = (applysurfacecolorparams_t*) context;
     byte dFlags = P_GetGMOByte(MO_XLINEDEF, P_ToIndex(li), MO_DRAWFLAGS);
     byte tFlags = P_GetGMOByte(MO_XLINEDEF, P_ToIndex(li), MO_TEXFLAGS);
@@ -431,7 +431,7 @@ static void initXSectors(void)
         getSurfaceColor(TOLIGHTIDX(P_GetGMOShort(MO_XSECTOR, i, MO_WALLTOPCOLOR)), params.topColor);
         getSurfaceColor(TOLIGHTIDX(P_GetGMOShort(MO_XSECTOR, i, MO_WALLBOTTOMCOLOR)), params.bottomColor);
 
-        P_Iteratep(sec, DMU_LINEDEF, &params, applySurfaceColor);
+        P_Iteratep(sec, DMU_LINE, &params, applySurfaceColor);
         }
 #endif
     }
@@ -965,11 +965,11 @@ static void P_FinalizeMap(void)
         Material* bottomMat, *midMat;
         float yoff;
         SideDef* sidedef;
-        LineDef* line;
+        Line* line;
 
         for(i = 0; i < numlines; ++i)
         {
-            line = P_ToPtr(DMU_LINEDEF, i);
+            line = P_ToPtr(DMU_LINE, i);
 
             for(k = 0; k < 2; ++k)
             {
@@ -1090,7 +1090,7 @@ void P_FindSecrets(void)
     // Find secret lines.
     for(i = 0; i < numlines; ++i)
     {
-        LineDef* line  = P_ToPtr(DMU_LINEDEF, i);
+        Line* line  = P_ToPtr(DMU_LINE, i);
         xline_t* xline = P_ToXLine(line);
 
         if(xline->special != 994) continue;
@@ -1129,7 +1129,7 @@ void P_SpawnSideMaterialOriginScrollers(void)
 
     for(i = 0; i < numlines; ++i)
     {
-        LineDef* line  = P_ToPtr(DMU_LINEDEF, i);
+        Line* line  = P_ToPtr(DMU_LINE, i);
         xline_t* xline = P_ToXLine(line);
         SideDef* frontSide;
 

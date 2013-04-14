@@ -41,8 +41,8 @@ void P_SpawnSectorSpecialThinkers(void);
 void P_SpawnLineSpecialThinkers(void);
 void P_SpawnAllSpecialThinkers(void);
 
-boolean P_ExecuteLineSpecial(int special, byte* args, LineDef* line, int side, mobj_t* mo);
-boolean P_ActivateLine(LineDef* ld, mobj_t* mo, int side, int activationType);
+boolean P_ExecuteLineSpecial(int special, byte* args, Line* line, int side, mobj_t* mo);
+boolean P_ActivateLine(Line* ld, mobj_t* mo, int side, int activationType);
 
 void P_PlayerInSpecialSector(player_t* plr);
 void P_PlayerOnSpecialFloor(player_t* plr);
@@ -71,9 +71,9 @@ typedef enum {
 result_e    T_MovePlane(Sector *sector, float speed, coord_t dest,
                         int crush, int floorOrCeiling, int direction);
 
-int         EV_BuildStairs(LineDef *line, byte *args, int direction,
+int         EV_BuildStairs(Line *line, byte *args, int direction,
                            stairs_e type);
-int         EV_FloorCrushStop(LineDef *line, byte *args);
+int         EV_FloorCrushStop(Line *line, byte *args);
 
 #define TELEFOGHEIGHTF          (32)
 

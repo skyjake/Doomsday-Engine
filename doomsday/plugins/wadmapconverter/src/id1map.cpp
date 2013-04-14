@@ -344,11 +344,11 @@ void Id1Map::transferLinesAndSides()
         mside_t *front = ((i)->sides[RIGHT] != 0? &sides[(i)->sides[RIGHT]-1] : NULL);
         mside_t *back  = ((i)->sides[LEFT]  != 0? &sides[(i)->sides[LEFT] -1] : NULL);
 
-        uint lineIdx = MPE_LinedefCreate((i)->v[0], (i)->v[1], front? front->sector : 0,
+        uint lineIdx = MPE_LineCreate((i)->v[0], (i)->v[1], front? front->sector : 0,
                                          back? back->sector : 0, (i)->ddFlags);
         if(front)
         {
-            MPE_LinedefAddSide(lineIdx, RIGHT, (mapFormat == MF_DOOM64? SDF_MIDDLE_STRETCH : 0),
+            MPE_LineAddSide(lineIdx, RIGHT, (mapFormat == MF_DOOM64? SDF_MIDDLE_STRETCH : 0),
                                composeMaterialRef(front->topMaterial),
                                front->offset[VX], front->offset[VY], 1, 1, 1,
                                composeMaterialRef(front->middleMaterial),
@@ -359,7 +359,7 @@ void Id1Map::transferLinesAndSides()
         }
         if(back)
         {
-            MPE_LinedefAddSide(lineIdx, LEFT, (mapFormat == MF_DOOM64? SDF_MIDDLE_STRETCH : 0),
+            MPE_LineAddSide(lineIdx, LEFT, (mapFormat == MF_DOOM64? SDF_MIDDLE_STRETCH : 0),
                                composeMaterialRef(back->topMaterial),
                                back->offset[VX], back->offset[VY], 1, 1, 1,
                                composeMaterialRef(back->middleMaterial),

@@ -21,7 +21,7 @@
 #include "de_base.h"
 //#include "de_console.h"
 //#include "de_play.h"
-#include "map/linedef.h"
+#include "map/line.h"
 #include "map/sidedef.h"
 #include "map/vertex.h"
 #include "map/r_world.h"
@@ -138,7 +138,7 @@ bool HEdge::hasLine() const
     return _line != 0;
 }
 
-LineDef &HEdge::line() const
+Line &HEdge::line() const
 {
     if(_line)
     {
@@ -230,7 +230,7 @@ static void addWallDivNodesForPlaneIntercepts(HEdge const *hedge, walldivs_t *wa
 
     if(bottomZ >= topZ) return; // Obviously no division.
 
-    LineDef const &line = hedge->line();
+    Line const &line = hedge->line();
     Sector const *frontSec = line.sectorPtr(hedge->lineSideId());
 
     // Retrieve the start owner node.
@@ -247,7 +247,7 @@ static void addWallDivNodesForPlaneIntercepts(HEdge const *hedge, walldivs_t *wa
         }
         else
         {
-            LineDef *iter = &own->line();
+            Line *iter = &own->line();
 
             if(iter->isSelfReferencing())
                 continue;
@@ -365,8 +365,8 @@ bool HEdge::prepareWallDivs(SideDefSection section, Sector *frontSec, Sector *ba
     walldivs_t *leftWallDivs, walldivs_t *rightWallDivs, pvec2f_t matOffset) const
 {
     int lineFlags = _line? _line->flags() : 0;
-    LineDef::Side *front = _line? &_line->side(_lineSide) : 0;
-    LineDef::Side *back  = _twin && _twin->hasLine()? &_twin->lineSide() : 0;
+    Line::Side *front = _line? &_line->side(_lineSide) : 0;
+    Line::Side *back  = _twin && _twin->hasLine()? &_twin->lineSide() : 0;
     coord_t low, hi;
     bool visible = R_FindBottomTop(section, lineFlags, frontSec, backSec, front, back,
                                    &low, &hi, matOffset);
@@ -424,8 +424,8 @@ int HEdge::property(setargs_t &args) const
         SideDef *sideDef = _line? _line->side(_lineSide).sideDefPtr() : 0;
         DMU_GetValue(DMT_HEDGE_SIDEDEF, &sideDef, &args, 0);
         break; }
-    case DMU_LINEDEF:
-        DMU_GetValue(DMT_HEDGE_LINEDEF, &_line, &args, 0);
+    case DMU_LINE:
+        DMU_GetValue(DMT_HEDGE_LINE, &_line, &args, 0);
         break;
     case DMU_FRONT_SECTOR: {
         DMU_GetValue(DMT_HEDGE_SECTOR, &_sector, &args, 0);

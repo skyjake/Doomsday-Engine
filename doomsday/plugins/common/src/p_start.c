@@ -1156,20 +1156,20 @@ void G_DeathMatchSpawnPlayer(int playerNum)
 
 typedef struct {
     coord_t pos[2], minDist;
-} unstuckmobjinlinedefparams_t;
+} unstuckmobjinlineparams_t;
 
-int unstuckMobjInLinedef(LineDef* li, void* context)
+int unstuckMobjInLine(Line* li, void* context)
 {
-    unstuckmobjinlinedefparams_t* params =
-        (unstuckmobjinlinedefparams_t*) context;
+    unstuckmobjinlineparams_t* params =
+        (unstuckmobjinlineparams_t*) context;
 
     if(!P_GetPtrp(li, DMU_BACK_SECTOR))
     {
         coord_t pos, lineOrigin[2], lineDirection[2], result[2];
 
         /**
-         * Project the point (mo position) onto this linedef. If the
-         * resultant point lies on the linedef and the current position is
+         * Project the point (mo position) onto this line. If the
+         * resultant point lies on the line and the current position is
          * in range of that point, adjust the position moving it away from
          * the projected point.
          */
@@ -1216,15 +1216,15 @@ int unstuckMobjInLinedef(LineDef* li, void* context)
 typedef struct nearestfacinglineparams_s {
     mobj_t* mo;
     coord_t dist;
-    LineDef* line;
+    Line* line;
 } nearestfacinglineparams_t;
 
-static int PIT_FindNearestFacingLine(LineDef* line, void* ptr)
+static int PIT_FindNearestFacingLine(Line* line, void* ptr)
 {
     nearestfacinglineparams_t* params = (nearestfacinglineparams_t*) ptr;
     coord_t dist, off;
 
-    dist = LineDef_PointDistance(line, params->mo->origin, &off);
+    dist = Line_PointDistance(line, params->mo->origin, &off);
     if(off < 0 || off > P_GetDoublep(line, DMU_LENGTH) || dist < 0)
         return false; // Wrong way or too far.
 
@@ -1284,7 +1284,7 @@ static int moveMobjOutOfNearbyLines(thinker_t* th, void* paramaters)
 {
     mobj_t* mo = (mobj_t*) th;
     mobjtype_t type = *((mobjtype_t*)paramaters);
-    unstuckmobjinlinedefparams_t params;
+    unstuckmobjinlineparams_t params;
     AABoxd aaBox;
 
     // @todo Why not type-prune at an earlier point? We could specify a
@@ -1303,7 +1303,7 @@ static int moveMobjOutOfNearbyLines(thinker_t* th, void* paramaters)
 
     VALIDCOUNT++;
 
-    P_LinesBoxIterator(&aaBox, unstuckMobjInLinedef, &params);
+    P_LinesBoxIterator(&aaBox, unstuckMobjInLine, &params);
 
     if(!FEQUAL(mo->origin[VX], params.pos[VX]) || !FEQUAL(mo->origin[VY], params.pos[VY]))
     {
@@ -1356,7 +1356,7 @@ void P_TurnGizmosAwayFromDoors(void)
     mobj_t* iter;
     uint i, l;
     int k, t;
-    LineDef* closestline = NULL, *li;
+    Line* closestline = NULL, *li;
     xline_t* xli;
     coord_t closestdist = 0, dist, off, linelen;
     mobj_t* tlist[MAXLIST];
@@ -1384,7 +1384,7 @@ void P_TurnGizmosAwayFromDoors(void)
             {
                 coord_t d1[2];
 
-                li = P_ToPtr(DMU_LINEDEF, l);
+                li = P_ToPtr(DMU_LINE, l);
 
                 if(!P_GetPtrp(li, DMU_BACK_SECTOR))
                     continue;
@@ -1400,7 +1400,7 @@ void P_TurnGizmosAwayFromDoors(void)
                 P_GetDoublepv(li, DMU_DXY, d1);
                 linelen = M_ApproxDistance(d1[0], d1[1]);
 
-                dist = fabs(LineDef_PointDistance(li, iter->origin, &off));
+                dist = fabs(Line_PointDistance(li, iter->origin, &off));
                 if(!closestline || dist < closestdist)
                 {
                     closestdist = dist;

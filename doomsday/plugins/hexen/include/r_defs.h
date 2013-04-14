@@ -64,7 +64,7 @@ extern xsector_t* xsectors;
 /**
  * Converts a line to an xline.
  */
-xline_t*    P_ToXLine(LineDef* line);
+xline_t*    P_ToXLine(Line* line);
 
 xline_t*    P_GetXLine(uint index);
 
@@ -87,5 +87,5 @@ xsector_t*  P_ToXSectorOfBspLeaf(BspLeaf* sub);
  * @param line  Line to change.
  * @param visible  @c true= mark the line as visible.
  */
-void P_SetLinedefAutomapVisibility(int player, uint line, boolean visible);
+void P_SetLineAutomapVisibility(int player, uint line, boolean visible);
 #endif

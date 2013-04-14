@@ -47,14 +47,14 @@ using namespace de;
 
 typedef struct edge_s {
     boolean done;
-    LineDef *line;
+    Line *line;
     Sector *sector;
     float length;
     binangle_t diff;
 } edge_t;
 
 static void scanEdges(shadowcorner_t topCorners[2], shadowcorner_t bottomCorners[2],
-    shadowcorner_t sideCorners[2], edgespan_t spans[2], LineDef const &line, int backSide);
+    shadowcorner_t sideCorners[2], edgespan_t spans[2], Line const &line, int backSide);
 
 int rendFakeRadio = true; ///< cvar
 float rendFakeRadioDarkness = 1.2f; ///< cvar
@@ -74,7 +74,7 @@ float Rend_RadioCalcShadowDarkness(float lightLevel)
     return (0.6f - lightLevel * 0.4f) * 0.65f * rendFakeRadioDarkness;
 }
 
-void Rend_RadioUpdateLine(LineDef &line, int backSide)
+void Rend_RadioUpdateLine(Line &line, int backSide)
 {
     // Disabled completely?
     if(!rendFakeRadio || levelFullBright) return;
@@ -86,7 +86,7 @@ void Rend_RadioUpdateLine(LineDef &line, int backSide)
     if(!line.hasSector(backSide)) return;
 
     // Have already determined the shadow properties on this side?
-    LineDef::Side::FakeRadioData &frData = line.side(backSide).fakeRadioData();
+    Line::Side::FakeRadioData &frData = line.side(backSide).fakeRadioData();
     if(frData.updateCount == frameCount) return;
 
     // Not yet - Calculate now.
@@ -145,12 +145,12 @@ static inline float calcTexCoordY(float z, float bottom, float top, float texHei
 }
 
 /// @todo This algorithm should be rewritten to work at HEdge level.
-static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
+static void scanNeighbor(boolean scanTop, Line const *line, uint side,
     edge_t *edge, boolean toLeft)
 {
     int const SEP = 10;
 
-    LineDef *iter;
+    Line *iter;
     LineOwner *own;
     binangle_t diff = 0;
     coord_t lengthDelta = 0, gap = 0;
@@ -336,7 +336,7 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
                 // neighbor attached to this line. However, if this is not
                 // the case and a line which SHOULD be two sided isn't, we
                 // need to check whether there is a valid neighbor.
-                LineDef *backNeighbor =
+                Line *backNeighbor =
                     R_FindLineNeighbor(startSector, iter, own, !toLeft, NULL);
 
                 if(backNeighbor && backNeighbor != iter)
@@ -366,7 +366,7 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
 }
 
 static void scanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
-    LineDef const &line, uint side, edgespan_t spans[2], boolean toLeft)
+    Line const &line, uint side, edgespan_t spans[2], boolean toLeft)
 {
     if(line.isSelfReferencing()) return;
 
@@ -462,7 +462,7 @@ static void scanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
  * rare.
  */
 static void scanEdges(shadowcorner_t topCorners[2], shadowcorner_t bottomCorners[2],
-    shadowcorner_t sideCorners[2], edgespan_t spans[2], LineDef const &line,
+    shadowcorner_t sideCorners[2], edgespan_t spans[2], Line const &line,
     int backSide)
 {
     uint const sid = (backSide? BACK : FRONT);
@@ -475,7 +475,7 @@ static void scanEdges(shadowcorner_t topCorners[2], shadowcorner_t bottomCorners
         binangle_t diff = 0;
         LineOwner *vo = line.vertexOwner(i ^ sid);
 
-        LineDef *other = R_FindSolidLineNeighbor(line.sectorPtr(sid), &line, vo, i, &diff);
+        Line *other = R_FindSolidLineNeighbor(line.sectorPtr(sid), &line, vo, i, &diff);
         if(other && other != &line)
         {
             if(diff > BANG_180)
@@ -1194,7 +1194,7 @@ static void setRelativeHeights(Sector const *front, Sector const *back, boolean 
     }
 }
 
-static uint radioEdgeHackType(LineDef const *line, Sector const *front, Sector const *back,
+static uint radioEdgeHackType(Line const *line, Sector const *front, Sector const *back,
     int backside, boolean isCeiling, float fz, float bz)
 {
     Surface const &surface = line->side(backside).section(isCeiling? SS_TOP:SS_BOTTOM).surface();
@@ -1219,7 +1219,7 @@ static uint radioEdgeHackType(LineDef const *line, Sector const *front, Sector c
     // Check for unmasked midtextures on twosided lines that completely
     // fill the gap between floor and ceiling (we don't want to give away
     // the location of any secret areas (false walls)).
-    if(R_MiddleMaterialCoversLineOpening(const_cast<LineDef *>(line), backside, false))
+    if(R_MiddleMaterialCoversLineOpening(const_cast<Line *>(line), backside, false))
         return 1; // Consider it fully closed.
 
     return 0;
@@ -1298,7 +1298,7 @@ static void addShadowEdge(vec2d_t inner[2], vec2d_t outer[2], coord_t innerLeftZ
     RL_AddPoly(PT_FAN, RPF_DEFAULT | (!renderWireframe? RPF_SHADOW : 0), 4, rvertices, rcolors);
 }
 
-static void processEdgeShadow(BspLeaf const &bspLeaf, LineDef const *line,
+static void processEdgeShadow(BspLeaf const &bspLeaf, Line const *line,
     uint side, uint planeIndex, float shadowDark)
 {
     DENG_ASSERT(line && (side == FRONT || side == BACK) && line->hasSideDef(side));
@@ -1356,7 +1356,7 @@ static void processEdgeShadow(BspLeaf const &bspLeaf, LineDef const *line,
     for(int i = 0; i < 2; ++i)
     {
         LineOwner *vo = line->vertexOwner(side^i)->_link[i^1];
-        LineDef *neighbor = &vo->line();
+        Line *neighbor = &vo->line();
 
         if(neighbor != line && !neighbor->hasBackSideDef() &&
            (neighbor->isBspWindow()) &&
@@ -1585,7 +1585,7 @@ void Rend_DrawShadowOffsetVerts()
                             GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
     glEnable(GL_TEXTURE_2D);
 
-    foreach(LineDef *line, theMap->lines())
+    foreach(Line *line, theMap->lines())
     for(uint k = 0; k < 2; ++k)
     {
         Vertex &vtx = line->vertex(k);

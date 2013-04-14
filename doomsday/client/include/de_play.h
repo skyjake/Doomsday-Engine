@@ -28,7 +28,7 @@
 #include "map/vertex.h"
 #include "map/surface.h"
 #include "map/sidedef.h"
-#include "map/linedef.h"
+#include "map/line.h"
 #include "map/linesighttest.h"
 #include "map/plane.h"
 #include "map/hedge.h"

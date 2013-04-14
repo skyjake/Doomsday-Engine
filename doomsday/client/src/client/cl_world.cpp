@@ -764,8 +764,8 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
 
     DENG_ASSERT(num < theMap->sideDefCount());
     SideDef *sideDef = theMap->sideDefs().at(num);
-    LineDef &line = sideDef->line();
-    LineDef::Side &side = line.side(line.frontSideDefPtr() == sideDef? FRONT : BACK);
+    Line &line = sideDef->line();
+    Line::Side &side = line.side(line.frontSideDefPtr() == sideDef? FRONT : BACK);
 
     if(df & SIDF_TOP_MATERIAL)
     {

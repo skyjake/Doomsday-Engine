@@ -29,7 +29,7 @@
 #include "map/p_dmu.h"
 #include "MapElement"
 
-class LineDef;
+class Line;
 
 /**
  * @todo Replace ring navigation with a circular iterator at Vertex level -ds.
@@ -49,7 +49,7 @@ public:
     };
 
 public: /// @todo Make private:
-    LineDef *_line;
+    Line *_line;
 
     /// {Previous, Next} (i.e. {anticlk, clk}).
     LineOwner *_link[2];
@@ -122,7 +122,7 @@ public:
     /**
      * Returns the line "owner".
      */
-    LineDef &line() const { return *_line; }
+    Line &line() const { return *_line; }
 
     /**
      * Returns the angle between the line owner and the next in the ring (clockwise).
@@ -143,7 +143,7 @@ public:
 /**
  * Map geometry vertex.
  *
- * An @em owner in this context is any linedef whose start or end points are
+ * An @em owner in this context is any line whose start or end points are
  * defined as the vertex.
  *
  * @ingroup map
@@ -201,14 +201,14 @@ public:
     inline coord_t y() const { return origin()[VY]; }
 
     /**
-     * Returns the total number of LineDef owners for the vertex.
+     * Returns the total number of Line owners for the vertex.
      *
      * @see countLineOwners()
      */
     uint lineOwnerCount() const;
 
     /**
-     * Utility function for determining the number of one and two-sided LineDef
+     * Utility function for determining the number of one and two-sided Line
      * owners for the vertex.
      *
      * @note That if only the combined total is desired, it is more efficent to
@@ -217,9 +217,9 @@ public:
      * @pre Line owner rings must have already been calculated.
      * @pre @a oneSided and/or @a twoSided must have already been initialized.
      *
-     * @param oneSided  The number of one-sided LineDef owners will be added to
+     * @param oneSided  The number of one-sided Line owners will be added to
      *                  the pointed value if not @a NULL.
-     * @param twoSided  The number of two-sided LineDef owners will be added to
+     * @param twoSided  The number of two-sided Line owners will be added to
      *                  the pointed value if not @c NULL.
      *
      * @todo Optimize: Cache this result.
@@ -227,7 +227,7 @@ public:
     void countLineOwners(uint *oneSided, uint *twoSided) const;
 
     /**
-     * Returns the first LineDef owner for the vertex; otherwise @c 0 if unowned.
+     * Returns the first Line owner for the vertex; otherwise @c 0 if unowned.
      */
     LineOwner *firstLineOwner() const;
 

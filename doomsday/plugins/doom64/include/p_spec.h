@@ -50,9 +50,9 @@ enum {
 };
 
 // Special activation types:
-#define SPAC_CROSS              0 // Player crosses linedef.
-#define SPAC_USE                1 // Player uses linedef.
-#define SPAC_IMPACT             3 // Projectile hits linedef.
+#define SPAC_CROSS              0 // Player crosses line.
+#define SPAC_USE                1 // Player uses line.
+#define SPAC_IMPACT             3 // Projectile hits line.
 
 // at game start
 void            P_InitPicAnims(void);
@@ -64,7 +64,7 @@ void P_SpawnAllSpecialThinkers(void);
 
 void            P_ThunderSector(void); // jd64
 
-boolean         P_ActivateLine(LineDef *ld, mobj_t *mo, int side,
+boolean         P_ActivateLine(Line *ld, mobj_t *mo, int side,
                                int activationType);
 
 void            P_PlayerInSpecialSector(player_t *player);
@@ -80,12 +80,12 @@ typedef enum {
     turbo16 // quickly build by 16
 } stair_e;
 
-int             EV_BuildStairs(LineDef *line, stair_e type);
+int             EV_BuildStairs(Line *line, stair_e type);
 
 result_e    T_MovePlane(Sector* sector, float speed, coord_t dest,
                         int crush, int floorOrCeiling, int direction);
-int             EV_DoDonut(LineDef *line);
+int             EV_DoDonut(Line *line);
 
-boolean     P_UseSpecialLine2(mobj_t* mo, LineDef* line, int side);
+boolean     P_UseSpecialLine2(mobj_t* mo, Line* line, int side);
 
 #endif

@@ -77,9 +77,9 @@ typedef struct {
 void T_MoveCeiling(void *ceilingThinkerPtr);
 
 #if __JHEXEN__
-int EV_DoCeiling(LineDef* line, byte* args, ceilingtype_e type);
+int EV_DoCeiling(Line* line, byte* args, ceilingtype_e type);
 #else
-int EV_DoCeiling(LineDef* li, ceilingtype_e type);
+int EV_DoCeiling(Line* li, ceilingtype_e type);
 #endif
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__

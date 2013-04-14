@@ -1,4 +1,4 @@
-/** @file linedef.h World Map Line.
+#/** @file line.cpp World Map Line.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -31,7 +31,7 @@
 #include "map/sidedef.h"
 #include "map/vertex.h"
 
-#include "map/linedef.h"
+#include "map/line.h"
 
 #ifdef max
 #  undef max
@@ -42,7 +42,7 @@
 
 using namespace de;
 
-LineDef::Side::Side(LineDef &line, Sector *sector)
+Line::Side::Side(Line &line, Sector *sector)
     : _line(line),
       _sector(sector),
       _sections(0),
@@ -62,57 +62,57 @@ LineDef::Side::Side(LineDef &line, Sector *sector)
 #endif
 }
 
-LineDef::Side::~Side()
+Line::Side::~Side()
 {
     delete _sections;
 }
 
-LineDef &LineDef::Side::line()
+Line &Line::Side::line()
 {
     return _line;
 }
 
-LineDef const &LineDef::Side::line() const
+Line const &Line::Side::line() const
 {
-    return const_cast<LineDef const &>(const_cast<Side *>(this)->line());
+    return const_cast<Line const &>(const_cast<Side *>(this)->line());
 }
 
-bool LineDef::Side::hasSector() const
+bool Line::Side::hasSector() const
 {
     return _sector != 0;
 }
 
-Sector &LineDef::Side::sector() const
+Sector &Line::Side::sector() const
 {
     if(_sector)
     {
         return *_sector;
     }
-    /// @throw LineDef::MissingSectorError Attempted with no sector attributed.
-    throw LineDef::MissingSectorError("LineDef::Side::sector", "No sector is attributed");
+    /// @throw Line::MissingSectorError Attempted with no sector attributed.
+    throw Line::MissingSectorError("Line::Side::sector", "No sector is attributed");
 }
 
-bool LineDef::Side::hasSideDef() const
+bool Line::Side::hasSideDef() const
 {
     return _sideDef != 0;
 }
 
-SideDef &LineDef::Side::sideDef() const
+SideDef &Line::Side::sideDef() const
 {
     if(_sideDef)
     {
         return *_sideDef;
     }
-    /// @throw LineDef::MissingSideDefError Attempted with no sidedef configured.
-    throw LineDef::MissingSideDefError("LineDef::Side::sideDef", "No sidedef is configured");
+    /// @throw Line::MissingSideDefError Attempted with no sidedef configured.
+    throw Line::MissingSideDefError("Line::Side::sideDef", "No sidedef is configured");
 }
 
-void LineDef::Side::setSideDefArchiveIndex(uint newIndex)
+void Line::Side::setSideDefArchiveIndex(uint newIndex)
 {
     _sideDefArchiveIndex = newIndex;
 }
 
-LineDef::Side::Section &LineDef::Side::section(SideDefSection sectionId)
+Line::Side::Section &Line::Side::section(SideDefSection sectionId)
 {
     if(_sections)
     {
@@ -124,40 +124,40 @@ LineDef::Side::Section &LineDef::Side::section(SideDefSection sectionId)
         default:        break;
         }
     }
-    /// @throw LineDef::InvalidSectionIdError The given section identifier is not valid.
-    throw LineDef::InvalidSectionIdError("LineDef::Side::section", QString("Invalid section id %1").arg(sectionId));
+    /// @throw Line::InvalidSectionIdError The given section identifier is not valid.
+    throw Line::InvalidSectionIdError("Line::Side::section", QString("Invalid section id %1").arg(sectionId));
 }
 
-LineDef::Side::Section const &LineDef::Side::section(SideDefSection sectionId) const
+Line::Side::Section const &Line::Side::section(SideDefSection sectionId) const
 {
     return const_cast<Section const &>(const_cast<Side &>(*this).section(sectionId));
 }
 
-HEdge &LineDef::Side::leftHEdge() const
+HEdge &Line::Side::leftHEdge() const
 {
     DENG_ASSERT(_leftHEdge != 0);
     return *_leftHEdge;
 }
 
-HEdge &LineDef::Side::rightHEdge() const
+HEdge &Line::Side::rightHEdge() const
 {
     DENG_ASSERT(_rightHEdge != 0);
     return *_rightHEdge;
 }
 
-ddmobj_base_t &LineDef::Side::middleSoundEmitter()
+ddmobj_base_t &Line::Side::middleSoundEmitter()
 {
     return middle()._soundEmitter;
 }
 
-ddmobj_base_t const &LineDef::Side::middleSoundEmitter() const
+ddmobj_base_t const &Line::Side::middleSoundEmitter() const
 {
     return const_cast<ddmobj_base_t const &>(const_cast<Side &>(*this).middleSoundEmitter());
 }
 
-void LineDef::Side::updateMiddleSoundEmitterOrigin()
+void Line::Side::updateMiddleSoundEmitterOrigin()
 {
-    LOG_AS("LineDef::Side::updateMiddleSoundEmitterOrigin");
+    LOG_AS("Line::Side::updateMiddleSoundEmitterOrigin");
 
     if(!_sideDef) return;
 
@@ -175,19 +175,19 @@ void LineDef::Side::updateMiddleSoundEmitterOrigin()
                                              de::min(fceil,  _line.backSector().ceiling().height())) / 2;
 }
 
-ddmobj_base_t &LineDef::Side::bottomSoundEmitter()
+ddmobj_base_t &Line::Side::bottomSoundEmitter()
 {
     return bottom()._soundEmitter;
 }
 
-ddmobj_base_t const &LineDef::Side::bottomSoundEmitter() const
+ddmobj_base_t const &Line::Side::bottomSoundEmitter() const
 {
     return const_cast<ddmobj_base_t const &>(const_cast<Side &>(*this).bottomSoundEmitter());
 }
 
-void LineDef::Side::updateBottomSoundEmitterOrigin()
+void Line::Side::updateBottomSoundEmitterOrigin()
 {
-    LOG_AS("LineDef::Side::updateBottomSoundEmitterOrigin");
+    LOG_AS("Line::Side::updateBottomSoundEmitterOrigin");
 
     if(!_sideDef) return;
 
@@ -209,19 +209,19 @@ void LineDef::Side::updateBottomSoundEmitterOrigin()
     }
 }
 
-ddmobj_base_t &LineDef::Side::topSoundEmitter()
+ddmobj_base_t &Line::Side::topSoundEmitter()
 {
     return top()._soundEmitter;
 }
 
-ddmobj_base_t const &LineDef::Side::topSoundEmitter() const
+ddmobj_base_t const &Line::Side::topSoundEmitter() const
 {
     return const_cast<ddmobj_base_t const &>(const_cast<Side &>(*this).topSoundEmitter());
 }
 
-void LineDef::Side::updateTopSoundEmitterOrigin()
+void Line::Side::updateTopSoundEmitterOrigin()
 {
-    LOG_AS("LineDef::Side::updateTopSoundEmitterOrigin");
+    LOG_AS("Line::Side::updateTopSoundEmitterOrigin");
 
     if(!_sideDef) return;
 
@@ -243,7 +243,7 @@ void LineDef::Side::updateTopSoundEmitterOrigin()
     }
 }
 
-void LineDef::Side::updateAllSoundEmitterOrigins()
+void Line::Side::updateAllSoundEmitterOrigins()
 {
     if(!_sideDef) return;
 
@@ -252,7 +252,7 @@ void LineDef::Side::updateAllSoundEmitterOrigins()
     updateTopSoundEmitterOrigin();
 }
 
-void LineDef::Side::updateSurfaceNormals()
+void Line::Side::updateSurfaceNormals()
 {
     if(!_sideDef) return;
 
@@ -270,29 +270,29 @@ void LineDef::Side::updateSurfaceNormals()
 
 #ifdef __CLIENT__
 
-LineDef::Side::FakeRadioData &LineDef::Side::fakeRadioData()
+Line::Side::FakeRadioData &Line::Side::fakeRadioData()
 {
     return _fakeRadioData;
 }
 
-LineDef::Side::FakeRadioData const &LineDef::Side::fakeRadioData() const
+Line::Side::FakeRadioData const &Line::Side::fakeRadioData() const
 {
     return const_cast<FakeRadioData const &>(const_cast<Side *>(this)->fakeRadioData());
 }
 
 #endif // __CLIENT__
 
-short LineDef::Side::flags() const
+short Line::Side::flags() const
 {
     return _flags;
 }
 
-int LineDef::Side::shadowVisCount() const
+int Line::Side::shadowVisCount() const
 {
     return _shadowVisCount;
 }
 
-DENG2_PIMPL(LineDef)
+DENG2_PIMPL(Line)
 {
     /// Vertexes:
     Vertex *from;
@@ -344,8 +344,8 @@ DENG2_PIMPL(LineDef)
     }
 };
 
-LineDef::LineDef(Vertex &from, Vertex &to, Sector *frontSector, Sector *backSector)
-    : MapElement(DMU_LINEDEF),
+Line::Line(Vertex &from, Vertex &to, Sector *frontSector, Sector *backSector)
+    : MapElement(DMU_LINE),
       _vo1(0),
       _vo2(0),
       _flags(0),
@@ -355,104 +355,104 @@ LineDef::LineDef(Vertex &from, Vertex &to, Sector *frontSector, Sector *backSect
     updateAABox();
 }
 
-int LineDef::flags() const
+int Line::flags() const
 {
     return _flags;
 }
 
-uint LineDef::origIndex() const
+uint Line::origIndex() const
 {
     return d->origIndex;
 }
 
-void LineDef::setOrigIndex(uint newIndex)
+void Line::setOrigIndex(uint newIndex)
 {
     d->origIndex = newIndex;
 }
 
-bool LineDef::isBspWindow() const
+bool Line::isBspWindow() const
 {
     return (_inFlags & LF_BSPWINDOW) != 0;
 }
 
-bool LineDef::isFromPolyobj() const
+bool Line::isFromPolyobj() const
 {
     return (_inFlags & LF_POLYOBJ) != 0;
 }
 
-LineDef::Side &LineDef::side(int back)
+Line::Side &Line::side(int back)
 {
     return back? d->back : d->front;
 }
 
-LineDef::Side const &LineDef::side(int back) const
+Line::Side const &Line::side(int back) const
 {
     return back? d->back : d->front;
 }
 
-Vertex &LineDef::vertex(int to)
+Vertex &Line::vertex(int to)
 {
     DENG_ASSERT((to? d->to : d->from) != 0);
     return to? *d->to : *d->from;
 }
 
-Vertex const &LineDef::vertex(int to) const
+Vertex const &Line::vertex(int to) const
 {
     DENG_ASSERT((to? d->to : d->from) != 0);
     return to? *d->to : *d->from;
 }
 
-LineOwner *LineDef::vertexOwner(int to) const
+LineOwner *Line::vertexOwner(int to) const
 {
     DENG_ASSERT((to? _vo2 : _vo1) != 0);
     return to? _vo2 : _vo1;
 }
 
-AABoxd const &LineDef::aaBox() const
+AABoxd const &Line::aaBox() const
 {
     return d->aaBox;
 }
 
-void LineDef::updateAABox()
+void Line::updateAABox()
 {
     V2d_InitBox(d->aaBox.arvec2, d->from->origin());
     V2d_AddToBox(d->aaBox.arvec2, d->to->origin());
 }
 
-coord_t LineDef::length() const
+coord_t Line::length() const
 {
     return d->length;
 }
 
-Vector2d const &LineDef::direction() const
+Vector2d const &Line::direction() const
 {
     return d->direction;
 }
 
-slopetype_t LineDef::slopeType() const
+slopetype_t Line::slopeType() const
 {
     return d->slopeType;
 }
 
-void LineDef::updateSlopeType()
+void Line::updateSlopeType()
 {
     d->direction = Vector2d(d->to->origin()) - Vector2d(d->from->origin());
     d->angle     = bamsAtan2(int( d->direction.y ), int( d->direction.x ));
     d->slopeType = M_SlopeTypeXY(d->direction.x, d->direction.y);
 }
 
-binangle_t LineDef::angle() const
+binangle_t Line::angle() const
 {
     return d->angle;
 }
 
-int LineDef::boxOnSide(AABoxd const &box) const
+int Line::boxOnSide(AABoxd const &box) const
 {
     coord_t v1Direction[2] = { direction().x, direction().y };
     return M_BoxOnLineSide(&box, d->from->origin(), v1Direction);
 }
 
-int LineDef::boxOnSide_FixedPrecision(AABoxd const &box) const
+int Line::boxOnSide_FixedPrecision(AABoxd const &box) const
 {
     /*
      * Apply an offset to both the box and the line to bring everything into
@@ -480,68 +480,68 @@ int LineDef::boxOnSide_FixedPrecision(AABoxd const &box) const
     return M_BoxOnLineSide_FixedPrecision(boxx, pos, delta);
 }
 
-bool LineDef::isMappedByPlayer(int playerNum) const
+bool Line::isMappedByPlayer(int playerNum) const
 {
     DENG2_ASSERT(playerNum >= 0 && playerNum < DDMAXPLAYERS);
     return d->mapped[playerNum];
 }
 
-void LineDef::markMappedByPlayer(int playerNum, bool yes)
+void Line::markMappedByPlayer(int playerNum, bool yes)
 {
     DENG2_ASSERT(playerNum >= 0 && playerNum < DDMAXPLAYERS);
     d->mapped[playerNum] = yes;
 }
 
-int LineDef::validCount() const
+int Line::validCount() const
 {
     return d->validCount;
 }
 
-void LineDef::setValidCount(int newValidCount)
+void Line::setValidCount(int newValidCount)
 {
     d->validCount = newValidCount;
 }
 
-int LineDef::property(setargs_t &args) const
+int Line::property(setargs_t &args) const
 {
     switch(args.prop)
     {
     case DMU_VERTEX0:
-        DMU_GetValue(DMT_LINEDEF_V, &d->from, &args, 0);
+        DMU_GetValue(DMT_LINE_V, &d->from, &args, 0);
         break;
     case DMU_VERTEX1:
-        DMU_GetValue(DMT_LINEDEF_V, &d->to, &args, 0);
+        DMU_GetValue(DMT_LINE_V, &d->to, &args, 0);
         break;
     case DMU_DX:
-        DMU_GetValue(DMT_LINEDEF_DX, &d->direction.x, &args, 0);
+        DMU_GetValue(DMT_LINE_DX, &d->direction.x, &args, 0);
         break;
     case DMU_DY:
-        DMU_GetValue(DMT_LINEDEF_DY, &d->direction.y, &args, 0);
+        DMU_GetValue(DMT_LINE_DY, &d->direction.y, &args, 0);
         break;
     case DMU_DXY:
-        DMU_GetValue(DMT_LINEDEF_DX, &d->direction.x, &args, 0);
-        DMU_GetValue(DMT_LINEDEF_DY, &d->direction.y, &args, 1);
+        DMU_GetValue(DMT_LINE_DX, &d->direction.x, &args, 0);
+        DMU_GetValue(DMT_LINE_DY, &d->direction.y, &args, 1);
         break;
     case DMU_LENGTH:
-        DMU_GetValue(DMT_LINEDEF_LENGTH, &d->length, &args, 0);
+        DMU_GetValue(DMT_LINE_LENGTH, &d->length, &args, 0);
         break;
     case DMU_ANGLE: {
         angle_t lineAngle = BANG_TO_ANGLE(d->angle);
         DMU_GetValue(DDVT_ANGLE, &lineAngle, &args, 0);
         break; }
     case DMU_SLOPETYPE:
-        DMU_GetValue(DMT_LINEDEF_SLOPETYPE, &d->slopeType, &args, 0);
+        DMU_GetValue(DMT_LINE_SLOPETYPE, &d->slopeType, &args, 0);
         break;
     case DMU_FRONT_SECTOR: {
         Sector const *frontSector = frontSectorPtr();
-        DMU_GetValue(DMT_LINEDEF_SECTOR, &frontSector, &args, 0);
+        DMU_GetValue(DMT_LINE_SECTOR, &frontSector, &args, 0);
         break; }
     case DMU_BACK_SECTOR: {
         Sector const *backSector = backSectorPtr();
-        DMU_GetValue(DMT_LINEDEF_SECTOR, &backSector, &args, 0);
+        DMU_GetValue(DMT_LINE_SECTOR, &backSector, &args, 0);
         break; }
     case DMU_FLAGS:
-        DMU_GetValue(DMT_LINEDEF_FLAGS, &_flags, &args, 0);
+        DMU_GetValue(DMT_LINE_FLAGS, &_flags, &args, 0);
         break;
     case DMU_SIDEDEF0: {
         SideDef const *frontSideDef = frontSideDefPtr();
@@ -559,24 +559,24 @@ int LineDef::property(setargs_t &args) const
         }
         else
         {
-            DMU_GetValue(DMT_LINEDEF_AABOX, &d->aaBox.minX, &args, 0);
-            DMU_GetValue(DMT_LINEDEF_AABOX, &d->aaBox.maxX, &args, 1);
-            DMU_GetValue(DMT_LINEDEF_AABOX, &d->aaBox.minY, &args, 2);
-            DMU_GetValue(DMT_LINEDEF_AABOX, &d->aaBox.maxY, &args, 3);
+            DMU_GetValue(DMT_LINE_AABOX, &d->aaBox.minX, &args, 0);
+            DMU_GetValue(DMT_LINE_AABOX, &d->aaBox.maxX, &args, 1);
+            DMU_GetValue(DMT_LINE_AABOX, &d->aaBox.minY, &args, 2);
+            DMU_GetValue(DMT_LINE_AABOX, &d->aaBox.maxY, &args, 3);
         }
         break;
     case DMU_VALID_COUNT:
-        DMU_GetValue(DMT_LINEDEF_VALIDCOUNT, &d->validCount, &args, 0);
+        DMU_GetValue(DMT_LINE_VALIDCOUNT, &d->validCount, &args, 0);
         break;
     default:
         /// @throw UnknownPropertyError  The requested property does not exist.
-        throw UnknownPropertyError("LineDef::property", QString("Property '%1' is unknown").arg(DMU_Str(args.prop)));
+        throw UnknownPropertyError("Line::property", QString("Property '%1' is unknown").arg(DMU_Str(args.prop)));
     }
 
     return false; // Continue iteration.
 }
 
-int LineDef::setProperty(setargs_t const &args)
+int Line::setProperty(setargs_t const &args)
 {
     /// @todo fixme: Changing the sector and/or sidedef references via the DMU
     /// API should be disabled - it has no concept of what is actually needed
@@ -589,33 +589,33 @@ int LineDef::setProperty(setargs_t const &args)
     {
     case DMU_FRONT_SECTOR: {
         Sector *newFrontSector = frontSectorPtr();
-        DMU_SetValue(DMT_LINEDEF_SECTOR, &newFrontSector, &args, 0);
+        DMU_SetValue(DMT_LINE_SECTOR, &newFrontSector, &args, 0);
         d->front._sector = newFrontSector;
         break; }
     case DMU_BACK_SECTOR: {
         Sector *newBackSector = backSectorPtr();
-        DMU_SetValue(DMT_LINEDEF_SECTOR, &newBackSector, &args, 0);
+        DMU_SetValue(DMT_LINE_SECTOR, &newBackSector, &args, 0);
         d->back._sector = newBackSector;
         break; }
     case DMU_SIDEDEF0: {
         SideDef *newFrontSideDef = frontSideDefPtr();
-        DMU_SetValue(DMT_LINEDEF_SIDEDEF, &newFrontSideDef, &args, 0);
+        DMU_SetValue(DMT_LINE_SIDEDEF, &newFrontSideDef, &args, 0);
         d->front._sideDef = newFrontSideDef;
         break; }
     case DMU_SIDEDEF1: {
         SideDef *newBackSideDef = backSideDefPtr();
-        DMU_SetValue(DMT_LINEDEF_SIDEDEF, &newBackSideDef, &args, 0);
+        DMU_SetValue(DMT_LINE_SIDEDEF, &newBackSideDef, &args, 0);
         d->back._sideDef = newBackSideDef;
         break; }
 
     case DMU_VALID_COUNT:
-        DMU_SetValue(DMT_LINEDEF_VALIDCOUNT, &d->validCount, &args, 0);
+        DMU_SetValue(DMT_LINE_VALIDCOUNT, &d->validCount, &args, 0);
         break;
     case DMU_FLAGS: {
 #ifdef __CLIENT__
         int oldFlags = _flags;
 #endif
-        DMU_SetValue(DMT_LINEDEF_FLAGS, &_flags, &args, 0);
+        DMU_SetValue(DMT_LINE_FLAGS, &_flags, &args, 0);
 
 #ifdef __CLIENT__
         /// @todo Surface should observe.
@@ -636,7 +636,7 @@ int LineDef::setProperty(setargs_t const &args)
 
     default:
         /// @throw WritePropertyError  The requested property is not writable.
-        throw WritePropertyError("LineDef::setProperty", QString("Property '%1' is not writable").arg(DMU_Str(args.prop)));
+        throw WritePropertyError("Line::setProperty", QString("Property '%1' is not writable").arg(DMU_Str(args.prop)));
     }
 
     return false; // Continue iteration.

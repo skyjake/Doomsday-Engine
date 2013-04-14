@@ -597,7 +597,7 @@ desc = 1=Enable the use of line-of-sight checking with shadow bias.
 desc = Scale multiplier for the blockmap debug display.
 
 [rend-dev-blockmap]
-desc = Enable drawing of the blockmap debug display: 1=Mobjs, 2=Linedefs, 3=BspLeafs, 4=Polyobjs.
+desc = Enable drawing of the blockmap debug display: 1=Mobjs, 2=Lines, 3=BspLeafs, 4=Polyobjs.
 
 [rend-dev-cull-leafs]
 desc = 1=Disable non-visible bsp leaf culling.

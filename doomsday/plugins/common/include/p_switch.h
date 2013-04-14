@@ -72,10 +72,10 @@ boolean P_ToggleSwitch2(SideDef* side, SideDefSection ssurfaceID, int sound,
 boolean P_ToggleSwitch(SideDef* side, int sound, boolean silent, int tics);
 
 /**
- * To be called to execute any action(s) assigned to the specified LineDef's
+ * To be called to execute any action(s) assigned to the specified Line's
  * special.
  */
-boolean P_UseSpecialLine(mobj_t* activator, LineDef* line, int side);
+boolean P_UseSpecialLine(mobj_t* activator, Line* line, int side);
 
 void T_MaterialChanger(void *materialChangedThinker);
 

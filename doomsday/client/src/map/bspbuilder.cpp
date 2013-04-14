@@ -80,7 +80,7 @@ class Reporter : DENG2_OBSERVES(Partitioner, UnclosedSectorFound),
 
     /// Record "one-way window lines".
     /// Line => Sector the back side faces.
-    typedef std::map<LineDef *,  Sector *> OneWayWindowMap;
+    typedef std::map<Line *,  Sector *> OneWayWindowMap;
 
     /// Record "migrant half-edges".
     /// HEdge => Sector the half-edge faces.
@@ -165,7 +165,7 @@ protected:
     }
 
     // Observes Partitioner OneWayWindowFound.
-    void oneWayWindowFound(LineDef &line, Sector &backFacingSector)
+    void oneWayWindowFound(Line &line, Sector &backFacingSector)
     {
         _oneWayWindows.insert(std::make_pair(&line, &backFacingSector));
     }

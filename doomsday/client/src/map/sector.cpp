@@ -24,7 +24,7 @@
 #include <de/Log>
 
 #include "map/bspleaf.h"
-#include "map/linedef.h"
+#include "map/line.h"
 #include "map/gamemap.h"
 #include "map/p_players.h"
 #ifdef __CLIENT__
@@ -234,7 +234,7 @@ void Sector::buildLines(GameMap const &map)
 
 #ifdef DENG2_QT_4_7_OR_NEWER
     uint count = 0;
-    foreach(LineDef *line, map.lines())
+    foreach(Line *line, map.lines())
     {
         if(line->frontSectorPtr() == this ||
            line->backSectorPtr()  == this)
@@ -246,7 +246,7 @@ void Sector::buildLines(GameMap const &map)
     d->lines.reserve(count);
 #endif
 
-    foreach(LineDef *line, map.lines())
+    foreach(Line *line, map.lines())
     {
         if(line->frontSectorPtr() == this ||
            line->backSectorPtr()  == this)
@@ -395,7 +395,7 @@ void Sector::planeHeightChanged(Plane &plane, coord_t oldHeight)
     }
 
     // Update the sound emitter origins for all dependent wall surfaces.
-    foreach(LineDef *line, d->lines)
+    foreach(Line *line, d->lines)
     {
         line->front().updateAllSoundEmitterOrigins();
         line->back().updateAllSoundEmitterOrigins();
@@ -453,7 +453,7 @@ int Sector::property(setargs_t &args) const
         ddmobj_base_t const *soundEmitterAdr = &d->soundEmitter;
         DMU_GetValue(DMT_SECTOR_BASE, &soundEmitterAdr, &args, 0);
         break; }
-    case DMU_LINEDEF_COUNT: {
+    case DMU_LINE_COUNT: {
         int val = lineCount();
         DMU_GetValue(DDVT_INT, &val, &args, 0);
         break; }

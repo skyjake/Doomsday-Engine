@@ -23,7 +23,7 @@
 
 #include "MapElement"
 #include "map/vertex.h"
-#include "map/linedef.h"
+#include "map/line.h"
 #include "resource/r_data.h"
 #include "p_dmu.h"
 #include "sector.h"
@@ -107,7 +107,7 @@ public: /// @todo Make private:
     BspLeaf *_bspLeaf;
 
     /// Map line attributed to the half-edge.
-    LineDef *_line;
+    Line *_line;
 
     /// On which side of the attributed line (0=front, 1=back)?
     int _lineSide;
@@ -284,14 +284,14 @@ public:
      *
      * @see hasLine()
      */
-    LineDef &line() const;
+    Line &line() const;
 
     /**
      * Returns a pointer to the line attributed to the half-edge; otherwise @c 0.
      *
      * @see hasLine()
      */
-    inline LineDef *linePtr() const { return hasLine()? &line() : 0; }
+    inline Line *linePtr() const { return hasLine()? &line() : 0; }
 
     /**
      * Convenient accessor method for returning the Side of the line attributed
@@ -299,13 +299,13 @@ public:
      *
      * @see hasLine(), line()
      */
-    inline LineDef::Side &lineSide() const { return line().side(lineSideId()); }
+    inline Line::Side &lineSide() const { return line().side(lineSideId()); }
 
     /**
      * Convenient method for determining if the Side of the line attributed to
      * the half-edge has a sidedef.
      *
-     * @see hasLine(), lineSide(), LineDef::Side::hasSideDef()
+     * @see hasLine(), lineSide(), Line::Side::hasSideDef()
      */
     inline bool hasLineSideDef() const {
         return hasLine() && lineSide().hasSideDef();

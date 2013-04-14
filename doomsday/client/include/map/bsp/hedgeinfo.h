@@ -62,12 +62,12 @@ struct HEdgeInfo
     class SuperBlock *bmapBlock;
 
     /// Line this half-edge initially comes from else @c NULL if a "mini-edge".
-    LineDef *line;
+    Line *line;
 
     // Line that this half-edge initially comes from.
-    // For "real" half-edges, this is just the same as the 'linedef' field
+    // For "real" half-edges, this is just the same as the 'line' field
     // above. For "miniedges", this is the line of the partition.
-    LineDef *sourceLine;
+    Line *sourceLine;
 
     HEdgeInfo()
         : pLength(0), pAngle(0), pPara(0), pPerp(0), pSlopeType(ST_VERTICAL),

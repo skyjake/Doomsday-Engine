@@ -370,7 +370,7 @@ static void torchLightVertices(uint num, ColorRawf *colors, rvertex_t const *ver
  *
  * @return @ref sideSectionFlags denoting which sections are potentially visible.
  */
-static byte pvisibleLineSections(LineDef *line, int backSide)
+static byte pvisibleLineSections(Line *line, int backSide)
 {
     byte sections = 0;
 
@@ -383,7 +383,7 @@ static byte pvisibleLineSections(LineDef *line, int backSide)
     }
     else
     {
-        LineDef::Side const &side = line->side(backSide);
+        Line::Side const &side = line->side(backSide);
         Sector const *fsec  = line->sectorPtr(backSide);
         Sector const *bsec  = line->sectorPtr(backSide^1);
         Plane const *fceil  = &fsec->ceiling();
@@ -416,7 +416,7 @@ static byte pvisibleLineSections(LineDef *line, int backSide)
 }
 
 static void selectSurfaceColors(Vector3f const **topColor,
-    Vector3f const **bottomColor, LineDef::Side &lineSide, SideDefSection section)
+    Vector3f const **bottomColor, Line::Side &lineSide, SideDefSection section)
 {
     switch(section)
     {
@@ -1298,7 +1298,7 @@ static boolean doRenderHEdge(HEdge *hedge, Vector3f const &normal,
 
             radioParams.line      = hedge->linePtr();
 
-            LineDef::Side::FakeRadioData &frData = hedge->lineSide().fakeRadioData();
+            Line::Side::FakeRadioData &frData = hedge->lineSide().fakeRadioData();
             radioParams.botCn     = frData.bottomCorners;
             radioParams.topCn     = frData.topCorners;
             radioParams.sideCn    = frData.sideCorners;
@@ -1527,21 +1527,21 @@ static float calcLightLevelDelta(Vector2f const &normal)
     return (1.0f / 255) * (normal.x * 18) * rendLightWallAngle;
 }
 
-static Vector2f calcLineNormal(LineDef const &line, byte side)
+static Vector2f calcLineNormal(Line const &line, byte side)
 {
     return Vector2f((line.vertexOrigin(side^1)[VY] - line.vertexOrigin(side)  [VY]) / line.length(),
                     (line.vertexOrigin(side)  [VX] - line.vertexOrigin(side^1)[VX]) / line.length());
 }
 
 /**
- * @param line  LineDef instance.
+ * @param line  Line instance.
  * @param ignoreOpacity  @c true= do not consider Material opacity.
- * @return  @c true if this LineDef's side is considered "closed" (i.e.,
+ * @return  @c true if this Line's side is considered "closed" (i.e.,
  *     there is no opening through which the back Sector can be seen).
  *     Tests consider all Planes which interface with this and the "middle"
  *     Material used on the relative front side (if any).
  */
-static bool lineBackClosedForBlend(LineDef const &line, int side, bool ignoreOpacity)
+static bool lineBackClosedForBlend(Line const &line, int side, bool ignoreOpacity)
 {
     if(!line.front().hasSideDef()) return false;
     if(!line.back().hasSideDef()) return true;
@@ -1560,7 +1560,7 @@ static bool lineBackClosedForBlend(LineDef const &line, int side, bool ignoreOpa
     return R_MiddleMaterialCoversLineOpening(&line, side, ignoreOpacity);
 }
 
-static LineDef *findLineBlendNeighbor(LineDef const &line, byte side, byte right,
+static Line *findLineBlendNeighbor(Line const &line, byte side, byte right,
                                       binangle_t *diff)
 {
     LineOwner const *farVertOwner = line.vertexOwner(right^side);
@@ -1583,7 +1583,7 @@ static LineDef *findLineBlendNeighbor(LineDef const &line, byte side, byte right
  * @deprecated Now that we store surface tangent space normals use those
  *             rather than angles. @todo Remove me.
  */
-static void lineLightLevelDeltas(LineDef const &line, int side,
+static void lineLightLevelDeltas(Line const &line, int side,
                                  float *deltaL, float *deltaR)
 {
     // Disabled?
@@ -1598,7 +1598,7 @@ static void lineLightLevelDeltas(LineDef const &line, int side,
     float delta = calcLightLevelDelta(normal);
 
     // If smoothing is disabled use this delta for left and right edges.
-    // Must forcibly disable smoothing for polyobj linedefs as they have
+    // Must forcibly disable smoothing for polyobj lines as they have
     // no owner rings.
     if(!rendLightWallAngleSmooth || line.isFromPolyobj())
     {
@@ -1607,14 +1607,14 @@ static void lineLightLevelDeltas(LineDef const &line, int side,
         return;
     }
 
-    // Find the left neighbour linedef for which we will calculate the
+    // Find the left neighbour line for which we will calculate the
     // lightlevel delta and then blend with this to produce the value for
-    // the left edge. Blend iff the angle between the two linedefs is less
+    // the left edge. Blend iff the angle between the two lines is less
     // than 45 degrees.
     if(deltaL)
     {
         binangle_t diff = 0;
-        LineDef *other = findLineBlendNeighbor(line, side, 0, &diff);
+        Line *other = findLineBlendNeighbor(line, side, 0, &diff);
         if(other && INRANGE_OF(diff, BANG_180, BANG_45))
         {
             Vector2f otherNormal = calcLineNormal(*other, &other->v2() != &line.vertex(side));
@@ -1631,11 +1631,11 @@ static void lineLightLevelDeltas(LineDef const &line, int side,
         }
     }
 
-    // Do the same for the right edge but with the right neighbor linedef.
+    // Do the same for the right edge but with the right neighbor line.
     if(deltaR)
     {
         binangle_t diff = 0;
-        LineDef *other = findLineBlendNeighbor(line, side, 1, &diff);
+        Line *other = findLineBlendNeighbor(line, side, 1, &diff);
         if(other && INRANGE_OF(diff, BANG_180, BANG_45))
         {
             Vector2f otherNormal = calcLineNormal(*other, &other->v1() != &line.vertex(side^1));
@@ -1699,7 +1699,7 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
         if(viewData->current.origin[VZ] >  WallDivNode_Height(WallDivs_First(leftWallDivs)) &&
            viewData->current.origin[VZ] < WallDivNode_Height(WallDivs_Last(rightWallDivs)))
         {
-            LineDef const &line = hedge->line();
+            Line const &line = hedge->line();
             coord_t lineDirection[2] = { line.direction().x, line.direction().y };
             vec2d_t result;
             double pos = V2d_ProjectOnLine(result, mo->origin, line.v1Origin(), lineDirection);
@@ -1861,10 +1861,10 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
         }
         else
         {
-            LineDef const &line = hedge->line();
+            Line const &line = hedge->line();
             lineLightLevelDeltas(line, hedge->lineSideId(), &deltaL, &deltaR);
 
-            // Linear interpolation of the linedef light deltas to the edges of the hedge.
+            // Linear interpolation of the line light deltas to the edges of the hedge.
             float diff = deltaR - deltaL;
             deltaR = deltaL + ((hedge->lineOffset() + hedge->length()) / line.length()) * diff;
             deltaL += (hedge->lineOffset() / line.length()) * diff;
@@ -1886,7 +1886,7 @@ static boolean rendHEdgeSection(HEdge *hedge, SideDefSection section,
     return opaque;
 }
 
-static void reportLineDrawn(LineDef &line)
+static void reportLineDrawn(Line &line)
 {
     // Already been here?
     int playerNum = viewPlayer - ddPlayers;
@@ -1899,7 +1899,7 @@ static void reportLineDrawn(LineDef &line)
     if(gx.HandleMapObjectStatusReport)
     {
         gx.HandleMapObjectStatusReport(DMUSC_LINE_FIRSTRENDERED, theMap->lineIndex(&line),
-                                       DMU_LINEDEF, &playerNum);
+                                       DMU_LINE, &playerNum);
     }
 }
 
@@ -1939,7 +1939,7 @@ static boolean Rend_RenderHEdge(HEdge *hedge, byte sections)
 }
 
 /**
- * Render wall sections for a HEdge belonging to a two-sided LineDef.
+ * Render wall sections for a HEdge belonging to a two-sided Line.
  */
 static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
 {
@@ -1950,9 +1950,9 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
 
     if(!hedge->hasLine()) return false;
 
-    LineDef &line = hedge->line();
-    LineDef::Side *front = &hedge->lineSide();
-    LineDef::Side *back  = hedge->hasTwin()? &hedge->twin().lineSide() : 0;
+    Line &line = hedge->line();
+    Line::Side *front = &hedge->lineSide();
+    Line::Side *back  = hedge->hasTwin()? &hedge->twin().lineSide() : 0;
     Sector *backSector   = hedge->hasTwin()? hedge->twin().sectorPtr() : 0;
 
     reportLineDrawn(line);
@@ -2126,7 +2126,7 @@ static void Rend_MarkSegsFacingFront(BspLeaf *leaf)
 
     if(Polyobj *po = leaf->firstPolyobj())
     {
-        foreach(LineDef *line, po->lines())
+        foreach(Line *line, po->lines())
         {
             HEdge &hedge = line->front().leftHEdge();
 
@@ -2157,7 +2157,7 @@ static void occludeFrontFacingSegsInBspLeaf(BspLeaf const *bspLeaf)
 
     if(Polyobj *po = bspLeaf->firstPolyobj())
     {
-        foreach(LineDef *line, po->lines())
+        foreach(Line *line, po->lines())
         {
             HEdge &hedge = line->front().leftHEdge();
 
@@ -2228,9 +2228,9 @@ static void skyFixZCoords(HEdge *hedge, int skyCap, coord_t *bottom, coord_t *to
  */
 static bool hedgeBackClosedForSkyFix(HEdge const &hedge)
 {
-    LineDef const &line = hedge.line();
-    LineDef::Side const &front = line.side(hedge.lineSideId());
-    LineDef::Side const &back  = line.side(hedge.lineSideId()^1);
+    Line const &line = hedge.line();
+    Line::Side const &front = line.side(hedge.lineSideId());
+    Line::Side const &back  = line.side(hedge.lineSideId()^1);
     Sector const *frontSec  = line.sectorPtr(hedge.lineSideId());
     Sector const *backSec   = line.sectorPtr(hedge.lineSideId()^1);
 
@@ -2809,7 +2809,7 @@ static void Rend_RenderPolyobjs()
     Polyobj *po = leaf->firstPolyobj();
     if(!po) return;
 
-    foreach(LineDef *line, po->lines())
+    foreach(Line *line, po->lines())
     {
         HEdge &hedge = line->front().leftHEdge();
 
@@ -3134,7 +3134,7 @@ void Rend_RenderSurfaceVectors()
         else
         {
             Sector *backSec  = hedge->twin().sectorPtr();
-            LineDef::Side &side = hedge->lineSide();
+            Line::Side &side = hedge->lineSide();
 
             if(side.middle().surface().hasMaterial())
             {
@@ -3197,7 +3197,7 @@ void Rend_RenderSurfaceVectors()
         Sector const &sector = polyobj->bspLeaf->sector();
         float zPos = sector.floor().height() + (sector.ceiling().height() - sector.floor().height())/2;
 
-        foreach(LineDef *line, polyobj->lines())
+        foreach(Line *line, polyobj->lines())
         {
             V3f_Set(origin, (line->v2Origin()[VX] + line->v1Origin()[VX])/2,
                             (line->v2Origin()[VY] + line->v1Origin()[VY])/2, zPos);
@@ -3254,13 +3254,13 @@ void Rend_RenderSoundOrigins()
     if(devSoundOrigins & SOF_SIDEDEF)
     {
         /// @todo Do not assume current map.
-        foreach(LineDef *line, theMap->lines())
+        foreach(Line *line, theMap->lines())
         for(int i = 0; i < 2; ++i)
         {
             if(!line->hasSideDef(i))
                 continue;
 
-            LineDef::Side &side = line->side(i);
+            Line::Side &side = line->side(i);
             char buf[80];
 
             dd_snprintf(buf, 80, "Line #%u (%s, middle)", line->origIndex() - 1, (i? "back" : "front"));
@@ -3312,7 +3312,7 @@ static void getVertexPlaneMinMax(Vertex const *vtx, coord_t *min, coord_t *max)
     LineOwner const *own  = base;
     do
     {
-        LineDef *li = &own->line();
+        Line *li = &own->line();
 
         if(li->hasFrontSideDef())
         {
@@ -3394,7 +3394,7 @@ static void drawVertexIndex(Vertex const *vtx, coord_t z, float scale, float alp
 
 #define MAX_VERTEX_POINT_DIST 1280
 
-static int drawVertex1(LineDef *li, void *context)
+static int drawVertex1(Line *li, void *context)
 {
     Vertex *vtx = &li->v1();
     Polyobj *po = (Polyobj *) context;
@@ -3443,7 +3443,7 @@ static int drawVertex1(LineDef *li, void *context)
 static int drawPolyObjVertexes(Polyobj *po, void * /*context*/)
 {
     DENG_ASSERT(po != 0);
-    foreach(LineDef *line, po->lines())
+    foreach(Line *line, po->lines())
     {
         if(line->validCount() == validCount)
             continue;
@@ -3476,7 +3476,7 @@ void Rend_Vertexes()
 
         foreach(Vertex *vertex, theMap->vertexes())
         {
-            // Not a linedef vertex?
+            // Not a line vertex?
             LineOwner const *own = vertex->firstLineOwner();
             if(!own) continue;
 
@@ -3506,7 +3506,7 @@ void Rend_Vertexes()
 
     foreach(Vertex *vertex, theMap->vertexes())
     {
-        // Not a linedef vertex?
+        // Not a line vertex?
         LineOwner const *own = vertex->firstLineOwner();
         if(!own) continue;
 
@@ -3537,7 +3537,7 @@ void Rend_Vertexes()
         {
             coord_t pos[3], dist;
 
-            // Not a linedef vertex?
+            // Not a line vertex?
             LineOwner const *own = vertex->firstLineOwner();
             if(!own) continue;
 
@@ -4033,7 +4033,7 @@ static void Rend_RenderBoundingBoxes()
 
             Rend_DrawBBox(pos, width, length, height, 0, yellow, alpha, .08f, true);
 
-            foreach(LineDef *line, polyobj->lines())
+            foreach(Line *line, polyobj->lines())
             {
                 coord_t pos[3] = { (line->v2Origin()[VX] + line->v1Origin()[VX])/2,
                                    (line->v2Origin()[VY] + line->v1Origin()[VY])/2,

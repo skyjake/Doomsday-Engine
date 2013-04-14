@@ -42,7 +42,7 @@ typedef struct {
 } pillar_t;
 
 void T_BuildPillar(pillar_t* pillar);
-int EV_BuildPillar(LineDef* line, byte* args, boolean crush);
-int EV_OpenPillar(LineDef* line, byte* args);
+int EV_BuildPillar(Line* line, byte* args, boolean crush);
+int EV_OpenPillar(Line* line, byte* args);
 
 #endif // LIBHEXEN_P_PILLAR_H

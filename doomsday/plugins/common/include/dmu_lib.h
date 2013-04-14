@@ -143,8 +143,8 @@ iterlist_t* P_GetSectorIterListForTag(int tag, boolean createNewList);
 void P_BuildAllTagLists(void);
 void P_DestroyAllTagLists(void);
 
-LineDef* P_AllocDummyLine(void);
-void P_FreeDummyLine(LineDef* line);
+Line* P_AllocDummyLine(void);
+void P_FreeDummyLine(Line* line);
 
 SideDef* P_AllocDummySideDef(void);
 void P_FreeDummySideDef(SideDef* sideDef);
@@ -157,7 +157,7 @@ void P_FreeDummySideDef(SideDef* sideDef);
  *
  * @return  Ptr to the other sector or @c NULL if the specified line is NOT twosided.
  */
-Sector* P_GetNextSector(LineDef* line, Sector* sec);
+Sector* P_GetNextSector(Line* line, Sector* sec);
 
 #define FEPHF_MIN           0x1 // Get minium. If not set, get maximum.
 #define FEPHF_FLOOR         0x2 // Get floors. If not set, get ceilings.
@@ -247,7 +247,7 @@ const terraintype_t* P_PlaneMaterialTerrainType(Sector* sec, int plane);
  * Copies all (changeable) properties from one line to another including the
  * extended properties.
  */
-void P_CopyLine(LineDef* dest, LineDef* src);
+void P_CopyLine(Line* dest, Line* src);
 
 /**
  * Copies all (changeable) properties from one sector to another including

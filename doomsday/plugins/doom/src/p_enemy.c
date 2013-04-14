@@ -192,7 +192,7 @@ static boolean checkMissileRange(mobj_t* actor)
 static boolean moveMobj(mobj_t* actor, boolean dropoff)
 {
     coord_t pos[3], step[3];
-    LineDef* ld;
+    Line* ld;
     boolean good;
 
     if(actor->moveDir == DI_NODIR)
@@ -362,18 +362,18 @@ static void doNewChaseDir(mobj_t *actor, coord_t deltaX, coord_t deltaY)
  * p_map.c::P_TryMoveXY(), allows monsters to free themselves without making
  * them tend to hang over dropoffs.
  */
-static int PIT_AvoidDropoff(LineDef* line, void* data)
+static int PIT_AvoidDropoff(Line* line, void* data)
 {
     Sector* backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
     AABoxd* aaBox = P_GetPtrp(line, DMU_BOUNDING_BOX);
 
     if(backsector &&
-       // Linedef must be contacted
+       // Line must be contacted
        tmBox.minX < aaBox->maxX &&
        tmBox.maxX > aaBox->minX &&
        tmBox.minY < aaBox->maxY &&
        tmBox.maxY > aaBox->minY &&
-       !LineDef_BoxOnSide(line, &tmBox))
+       !Line_BoxOnSide(line, &tmBox))
     {
         Sector* frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
         coord_t front = P_GetDoublep(frontsector, DMU_FLOOR_HEIGHT);
@@ -397,7 +397,7 @@ static int PIT_AvoidDropoff(LineDef* line, void* data)
         }
 
         // Move away from drop off at a standard speed.
-        // Multiple contacted linedefs are cumulative (e.g. hanging over corner)
+        // Multiple contacted lines are cumulative (e.g. hanging over corner)
         dropoffDelta[VX] -= FIX2FLT(finesine[angle >> ANGLETOFINESHIFT]) * 32;
         dropoffDelta[VY] += FIX2FLT(finecosine[angle >> ANGLETOFINESHIFT]) * 32;
     }
@@ -510,7 +510,7 @@ void C_DECL A_KeenDie(mobj_t* mo)
 
     if(!params.count)
     {   // No Keens left alive.
-        LineDef*            dummyLine = P_AllocDummyLine();
+        Line*               dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 666;
         EV_DoDoor(dummyLine, DT_OPEN);
@@ -1485,7 +1485,7 @@ void C_DECL A_Explode(mobj_t* mo)
 void C_DECL A_BossDeath(mobj_t* mo)
 {
     int                 i;
-    LineDef*            dummyLine;
+    Line*               dummyLine;
     countmobjoftypeparams_t params;
 
     // Has the boss already been killed?

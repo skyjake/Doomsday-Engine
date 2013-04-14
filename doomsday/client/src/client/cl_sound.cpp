@@ -167,8 +167,8 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 
     if(type == DT_SIDE_SOUND)
     {
-        LineDef *line = &sidedef->line();
-        LineDef::Side &side = line->side(sidedef == line->frontSideDefPtr()? FRONT : BACK);
+        Line *line = &sidedef->line();
+        Line::Side &side = line->side(sidedef == line->frontSideDefPtr()? FRONT : BACK);
 
         if(flags & SNDDF_SIDE_MIDDLE)
             emitter = (mobj_t *) &side.middleSoundEmitter();

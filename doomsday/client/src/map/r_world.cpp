@@ -57,7 +57,7 @@ MapChangeAudience audienceForMapChange;
 /**
  * @return  Lineowner for this line for this vertex; otherwise @c 0.
  */
-LineOwner *R_GetVtxLineOwner(Vertex const *v, LineDef const *line)
+LineOwner *R_GetVtxLineOwner(Vertex const *v, Line const *line)
 {
     if(v == &line->v1())
         return line->v1Owner();
@@ -86,7 +86,7 @@ DENG_EXTERN_C void R_SetupFogDefaults()
     Con_Execute(CMDS_DDAY,"fog off", true, false);
 }
 
-void R_OrderVertices(LineDef *line, Sector const *sector, Vertex *verts[2])
+void R_OrderVertices(Line *line, Sector const *sector, Vertex *verts[2])
 {
     byte edge = (sector == line->frontSectorPtr()? 0:1);
     verts[0] = &line->vertex(edge);
@@ -95,7 +95,7 @@ void R_OrderVertices(LineDef *line, Sector const *sector, Vertex *verts[2])
 
 boolean R_FindBottomTop(SideDefSection section, int lineFlags,
     Sector const *frontSec, Sector const *backSec,
-    LineDef::Side const *front, LineDef::Side const *back,
+    Line::Side const *front, Line::Side const *back,
     coord_t *low, coord_t *hi, pvec2f_t matOffset)
 {
     bool const unpegBottom = (lineFlags & DDLF_DONTPEGBOTTOM) != 0;
@@ -272,7 +272,7 @@ coord_t R_OpenRange(Sector const *frontSec, Sector const *backSec, coord_t *retB
     return top - bottom;
 }
 
-coord_t R_OpenRange(LineDef const &line, int side, coord_t *bottom, coord_t *top)
+coord_t R_OpenRange(Line const &line, int side, coord_t *bottom, coord_t *top)
 {
     return R_OpenRange(line.side(side).sectorPtr(), line.side(side^1).sectorPtr(),
                        bottom, top);
@@ -308,7 +308,7 @@ coord_t R_VisOpenRange(Sector const *frontSec, Sector const *backSec, coord_t *r
     return top - bottom;
 }
 
-coord_t R_VisOpenRange(LineDef const &line, int side, coord_t *bottom, coord_t *top)
+coord_t R_VisOpenRange(Line const &line, int side, coord_t *bottom, coord_t *top)
 {
     return R_VisOpenRange(line.side(side).sectorPtr(), line.side(side^1).sectorPtr(),
                           bottom, top);
@@ -316,7 +316,7 @@ coord_t R_VisOpenRange(LineDef const &line, int side, coord_t *bottom, coord_t *
 
 #ifdef __CLIENT__
 boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector const *frontSec,
-    Sector const *backSec, LineDef::Side const *front, LineDef::Side const *back,
+    Sector const *backSec, Line::Side const *front, Line::Side const *back,
     boolean ignoreOpacity)
 {
     if(!frontSec || !front || !front->hasSideDef()) return false; // Never.
@@ -350,21 +350,21 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector const *frontSec,
     return false;
 }
 
-boolean R_MiddleMaterialCoversLineOpening(LineDef const *line, int side, boolean ignoreOpacity)
+boolean R_MiddleMaterialCoversLineOpening(Line const *line, int side, boolean ignoreOpacity)
 {
     DENG_ASSERT(line != 0);
     Sector const *frontSec  = line->sectorPtr(side);
     Sector const *backSec   = line->sectorPtr(side ^ 1);
-    LineDef::Side const &front = line->side(side);
-    LineDef::Side const &back  = line->side(side ^ 1);
+    Line::Side const &front = line->side(side);
+    Line::Side const &back  = line->side(side ^ 1);
     return R_MiddleMaterialCoversOpening(line->flags(), frontSec, backSec, &front, &back, ignoreOpacity);
 }
 
-LineDef *R_FindLineNeighbor(Sector const *sector, LineDef const *line,
+Line *R_FindLineNeighbor(Sector const *sector, Line const *line,
     LineOwner const *own, boolean antiClockwise, binangle_t *diff)
 {
     LineOwner const *cown = antiClockwise? &own->prev() : &own->next();
-    LineDef *other = &cown->line();
+    Line *other = &cown->line();
 
     if(other == line)
         return NULL;
@@ -389,11 +389,11 @@ LineDef *R_FindLineNeighbor(Sector const *sector, LineDef const *line,
     return R_FindLineNeighbor(sector, line, cown, antiClockwise, diff);
 }
 
-LineDef *R_FindSolidLineNeighbor(Sector const *sector, LineDef const *line,
+Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
     LineOwner const *own, boolean antiClockwise, binangle_t *diff)
 {
     LineOwner const *cown = antiClockwise? &own->prev() : &own->next();
-    LineDef *other = &cown->line();
+    Line *other = &cown->line();
     int side;
 
     if(other == line) return NULL;
@@ -451,11 +451,11 @@ LineDef *R_FindSolidLineNeighbor(Sector const *sector, LineDef const *line,
     return R_FindSolidLineNeighbor(sector, line, cown, antiClockwise, diff);
 }
 
-LineDef *R_FindLineBackNeighbor(Sector const *sector, LineDef const *line,
+Line *R_FindLineBackNeighbor(Sector const *sector, Line const *line,
     LineOwner const *own, boolean antiClockwise, binangle_t *diff)
 {
     LineOwner const *cown = antiClockwise? &own->prev() : &own->next();
-    LineDef *other = &cown->line();
+    Line *other = &cown->line();
 
     if(other == line) return 0;
 
@@ -473,13 +473,13 @@ LineDef *R_FindLineBackNeighbor(Sector const *sector, LineDef const *line,
     return R_FindLineBackNeighbor(sector, line, cown, antiClockwise, diff);
 }
 
-LineDef *R_FindLineAlignNeighbor(Sector const *sec, LineDef const *line,
+Line *R_FindLineAlignNeighbor(Sector const *sec, Line const *line,
     LineOwner const *own, boolean antiClockwise, int alignment)
 {
     int const SEP = 10;
 
     LineOwner const *cown = antiClockwise? &own->prev() : &own->next();
-    LineDef *other = &cown->line();
+    Line *other = &cown->line();
     binangle_t diff;
 
     if(other == line)
@@ -523,13 +523,13 @@ static void resetAllMapSurfaceVisMaterialOrigins(GameMap &map)
         plane->surface().resetVisMaterialOrigin();
     }
 
-    foreach(LineDef *line, map.lines())
+    foreach(Line *line, map.lines())
     for(int i = 0; i < 2; ++i)
     {
         if(!line->hasSideDef(i))
             continue;
 
-        LineDef::Side &side = line->side(i);
+        Line::Side &side = line->side(i);
         side.top().surface().resetVisMaterialOrigin();
         side.middle().surface().resetVisMaterialOrigin();
         side.bottom().surface().resetVisMaterialOrigin();
@@ -547,7 +547,7 @@ static void resetAllMapSurfaceVisMaterialOrigins(GameMap &map)
  * Non-animated materials are preferred.
  * Sky materials are ignored.
  */
-static Material *chooseFixMaterial(LineDef &line, int side, SideDefSection section)
+static Material *chooseFixMaterial(Line &line, int side, SideDefSection section)
 {
     Material *choice1 = 0, *choice2 = 0;
     Sector *frontSec = line.sectorPtr(side);
@@ -582,7 +582,7 @@ static Material *chooseFixMaterial(LineDef &line, int side, SideDefSection secti
     {
         // Our first choice is a material on an adjacent wall section.
         // Try the left neighbor first.
-        LineDef *other = R_FindLineNeighbor(frontSec, &line, line.vertexOwner(side),
+        Line *other = R_FindLineNeighbor(frontSec, &line, line.vertexOwner(side),
                                             false /*next clockwise*/, NULL/*angle delta is irrelevant*/);
         if(!other)
             // Try the right neighbor.
@@ -599,7 +599,7 @@ static Material *chooseFixMaterial(LineDef &line, int side, SideDefSection secti
             else
             {
                 // Compare the relative heights to decide.
-                LineDef::Side &otherSide = other->side(&other->frontSector() == frontSec? FRONT : BACK);
+                Line::Side &otherSide = other->side(&other->frontSector() == frontSec? FRONT : BACK);
                 Sector &otherSec = other->sector(&other->frontSector() == frontSec? BACK  : FRONT);
 
                 if(otherSec.ceiling().height() <= frontSec->floor().height())
@@ -638,7 +638,7 @@ static Material *chooseFixMaterial(LineDef &line, int side, SideDefSection secti
     return &App_Materials().find(de::Uri("System", Path("missing"))).material();
 }
 
-static void addMissingMaterial(LineDef &line, int side, SideDefSection section)
+static void addMissingMaterial(Line &line, int side, SideDefSection section)
 {
     // A material must be missing for this test to apply.
     Surface &surface = line.side(side).section(section).surface();
@@ -652,7 +652,7 @@ static void addMissingMaterial(LineDef &line, int side, SideDefSection section)
     {
         String path = surface.hasMaterial()? surface.material().manifest().composeUri().asText() : "<null>";
 
-        LOG_WARNING("%s of LineDef #%u is missing a material for the %s section.\n"
+        LOG_WARNING("%s of Line #%u is missing a material for the %s section.\n"
                     "  %s was chosen to complete the definition.")
             << (side? "Back" : "Front") << line.origIndex() - 1
             << (section == SS_MIDDLE? "middle" : section == SS_TOP? "top" : "bottom")
@@ -662,7 +662,7 @@ static void addMissingMaterial(LineDef &line, int side, SideDefSection section)
 
 void R_UpdateMissingMaterialsForLinesOfSector(Sector const &sec)
 {
-    foreach(LineDef *line, sec.lines())
+    foreach(Line *line, sec.lines())
     {
         // Self-referencing lines don't need fixing.
         if(line->isSelfReferencing()) continue;
