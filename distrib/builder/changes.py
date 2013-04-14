@@ -16,6 +16,18 @@ def encodedText(logText):
     logText = logText.replace('>', '&gt;')
     logText = filter(lambda c: c in string.whitespace or c > ' ', logText)
     return logText
+    
+    
+def xmlEncodedText(logText):
+    result = ''
+    for c in logText:
+        if c == '<': 
+            result += '<![CDATA[<]]>'
+        elif c == '>': 
+            result += '<![CDATA[>]]>'
+        else:
+            result += c
+    return result
 
 
 class Entry:
@@ -200,13 +212,14 @@ class Changes:
         return groups
     
     def pretty_group_list(self, tags):
+        """Pretty group list for use in HTML output."""
         listed = ''
         if len(tags) > 1:
             listed = string.join(tags[:-1], ', ')
             listed += ' and ' + tags[-1]
         elif len(tags) == 1:
             listed = tags[0]
-        return listed
+        return encodedText(listed)
             
     def generate(self, format):
         fromTag = self.fromTag
@@ -266,9 +279,9 @@ class Changes:
                 if entry.tags or entry.guessedTags:
                     print >> out, '<tags>'
                     for t in entry.tags:
-                        print >> out, '<tag guessed="false">%s</tag>' % t
+                        print >> out, '<tag guessed="false">%s</tag>' % xmlEncodedText(t)
                     for t in entry.guessedTags:
-                        print >> out, '<tag guessed="true">%s</tag>' % t
+                        print >> out, '<tag guessed="true">%s</tag>' % xmlEncodedText(t)
                     print >> out, '</tags>'
                 print >> out, '<title>%s</title>' % entry.subject
                 if len(entry.message()):
@@ -283,6 +296,7 @@ class Changes:
 
             # Append the changes to the debian package changelog.
             os.chdir(os.path.join(config.DISTRIB_DIR, 'linux'))
+            os.system('echo "" > ../debian/changelog')
 
             # First we need to update the version.
             debVersion = build_version.DOOMSDAY_VERSION_FULL + '-' + Event().tag()
