@@ -1771,20 +1771,22 @@ DENG2_PIMPL(Partitioner)
                 /// @todo kludge: This should not be done here!
                 if(hedge->hasLine())
                 {
-                    Line::Side &side = hedge->line().side(hedge->lineSideId());
+                    Line::Side &side = hedge->lineSide();
 
                     // Already processed?
-                    if(!side._leftHEdge)
+                    if(!side.leftHEdge())
                     {
-                        side._leftHEdge = hedge;
+                        HEdge *leftHEdge = hedge;
                         // Find the left-most hedge.
-                        while(hedgeInfo(*side._leftHEdge).prevOnSide)
-                            side._leftHEdge = hedgeInfo(*side._leftHEdge).prevOnSide;
+                        while(hedgeInfo(*leftHEdge).prevOnSide)
+                            leftHEdge = hedgeInfo(*leftHEdge).prevOnSide;
+                        side.setLeftHEdge(leftHEdge);
 
                         // Find the right-most hedge.
-                        side._rightHEdge = hedge;
-                        while(hedgeInfo(*side._rightHEdge).nextOnSide)
-                            side._rightHEdge = hedgeInfo(*side._rightHEdge).nextOnSide;
+                        HEdge *rightHEdge = hedge;
+                        while(hedgeInfo(*rightHEdge).nextOnSide)
+                            rightHEdge = hedgeInfo(*rightHEdge).nextOnSide;
+                        side.setRightHEdge(rightHEdge);
                     }
                 }
                 /// kludge end

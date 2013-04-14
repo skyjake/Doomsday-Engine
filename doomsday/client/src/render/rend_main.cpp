@@ -211,6 +211,16 @@ void Rend_Register()
 #endif
 }
 
+static inline bool isNullLeaf(BspLeaf *leaf)
+{
+    if(!leaf || !leaf->hasSector()) return true;
+
+    Sector &sec = leaf->sector();
+    if(sec.ceiling().visHeight() - sec.floor().visHeight() <= 0) return true;
+    if(leaf->hedgeCount() < 3) return true;
+    return false;
+}
+
 /**
  * Approximated! The Z axis aspect ratio is corrected.
  */
@@ -370,9 +380,9 @@ static void torchLightVertices(uint num, ColorRawf *colors, rvertex_t const *ver
  *
  * @return @ref sideSectionFlags denoting which sections are potentially visible.
  */
-static byte pvisibleLineSections(Line *line, int backSide)
+static int pvisibleWallSections(Line *line, int backSide)
 {
-    byte sections = 0;
+    int sections = 0;
 
     if(!line || !line->hasSections(backSide)) return 0;
 
@@ -413,6 +423,11 @@ static byte pvisibleLineSections(Line *line, int backSide)
     }
 
     return sections;
+}
+
+static inline int pvisibleWallSections(HEdge &hedge)
+{
+    return pvisibleWallSections(&hedge.line(), hedge.lineSideId());
 }
 
 static void selectSurfaceColors(Vector3f const **topColor,
@@ -1212,52 +1227,50 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
             !(p.alpha < 1 || !ms.isOpaque() || p.blendMode > 0));
 }
 
-static boolean doRenderHEdge(HEdge *hedge, Vector3f const &normal,
+static bool writeWallSection2(HEdge &hedge, Vector3f const &normal,
     float alpha, float lightLevel, float lightLevelDL, float lightLevelDR,
     Vector3f const *lightColor, uint lightListIdx, uint shadowListIdx,
     walldivs_t *leftWallDivs, walldivs_t *rightWallDivs,
-    boolean skyMask, boolean addFakeRadio, vec3d_t texTL, vec3d_t texBR,
+    bool skyMask, bool addFakeRadio, vec3d_t texTL, vec3d_t texBR,
     float const texOffset[2], float const texScale[2],
     blendmode_t blendMode, Vector3f const &color, Vector3f const &color2,
     biassurface_t *bsuf, uint elmIdx /*tmp*/,
     MaterialSnapshot const &ms,
-    boolean isTwosidedMiddle)
+    bool isTwosidedMiddle)
 {
-    rvertex_t *rvertices;
+    rendworldpoly_params_t parm;
+    std::memset(&parm, 0, sizeof(parm));
 
-    // Init the params.
-    rendworldpoly_params_t params;
-    std::memset(&params, 0, sizeof(params));
-
-    params.flags = RPF_DEFAULT | (skyMask? RPF_SKYMASK : 0);
-    params.isWall = true;
-    params.wall.segLength = hedge->length();
-    params.forceOpaque = (alpha < 0? true : false);
-    params.alpha = (alpha < 0? 1 : alpha);
-    params.mapElement = hedge;
-    params.elmIdx = elmIdx;
-    params.bsuf = bsuf;
-    params.normal = &normal;
-    params.texTL = texTL;
-    params.texBR = texBR;
-    params.sectorLightLevel = lightLevel;
-    params.surfaceLightLevelDL = lightLevelDL;
-    params.surfaceLightLevelDR = lightLevelDR;
-    params.sectorLightColor = lightColor;
-    params.surfaceColor = &color;
-    params.wall.surfaceColor2 = &color2;
+    parm.flags = RPF_DEFAULT | (skyMask? RPF_SKYMASK : 0);
+    parm.isWall = true;
+    parm.wall.segLength = hedge.length();
+    parm.forceOpaque = (alpha < 0? true : false);
+    parm.alpha = (alpha < 0? 1 : alpha);
+    parm.mapElement = &hedge;
+    parm.elmIdx = elmIdx;
+    parm.bsuf = bsuf;
+    parm.normal = &normal;
+    parm.texTL = texTL;
+    parm.texBR = texBR;
+    parm.sectorLightLevel = lightLevel;
+    parm.surfaceLightLevelDL = lightLevelDL;
+    parm.surfaceLightLevelDR = lightLevelDR;
+    parm.sectorLightColor = lightColor;
+    parm.surfaceColor = &color;
+    parm.wall.surfaceColor2 = &color2;
     if(glowFactor > .0001f)
-        params.glowing = ms.glowStrength() * glowFactor; // Global scale factor.
-    params.blendMode = blendMode;
-    params.texOffset = texOffset;
-    params.texScale = texScale;
-    params.lightListIdx = lightListIdx;
-    params.shadowListIdx = shadowListIdx;
-    params.wall.left.firstDiv = WallDivNode_Next(WallDivs_First(leftWallDivs)); // Step over first node.
-    params.wall.left.divCount = WallDivs_Size(leftWallDivs)-2;
-    params.wall.right.firstDiv = WallDivNode_Prev(WallDivs_Last(rightWallDivs)); // Step over last node.
-    params.wall.right.divCount = WallDivs_Size(rightWallDivs)-2;
+        parm.glowing = ms.glowStrength() * glowFactor; // Global scale factor.
+    parm.blendMode = blendMode;
+    parm.texOffset = texOffset;
+    parm.texScale = texScale;
+    parm.lightListIdx = lightListIdx;
+    parm.shadowListIdx = shadowListIdx;
+    parm.wall.left.firstDiv  = WallDivNode_Next(WallDivs_First(leftWallDivs)); // Step over first node.
+    parm.wall.left.divCount  = WallDivs_Size(leftWallDivs)-2;
+    parm.wall.right.firstDiv = WallDivNode_Prev(WallDivs_Last(rightWallDivs)); // Step over last node.
+    parm.wall.right.divCount = WallDivs_Size(rightWallDivs)-2;
 
+    rvertex_t *rvertices;
     // Allocate enough vertices for the divisions too.
     if(WallDivs_Size(leftWallDivs) > 2 || WallDivs_Size(rightWallDivs) > 2)
     {
@@ -1272,73 +1285,72 @@ static boolean doRenderHEdge(HEdge *hedge, Vector3f const &normal,
 
     // Vertex coords.
     // Bottom Left.
-    V2f_Copyd(rvertices[0].pos, hedge->v1Origin());
-    rvertices[0].pos[VZ] = (float)WallDivNode_Height(WallDivs_First(leftWallDivs));
+    V2f_Copyd(rvertices[0].pos, hedge.v1Origin());
+    rvertices[0].pos[VZ] = float( WallDivNode_Height(WallDivs_First(leftWallDivs)) );
 
     // Top Left.
-    V2f_Copyd(rvertices[1].pos, hedge->v1Origin());
-    rvertices[1].pos[VZ] = (float)WallDivNode_Height(WallDivs_Last(leftWallDivs));
+    V2f_Copyd(rvertices[1].pos, hedge.v1Origin());
+    rvertices[1].pos[VZ] = float( WallDivNode_Height(WallDivs_Last(leftWallDivs)) );
 
     // Bottom Right.
-    V2f_Copyd(rvertices[2].pos, hedge->v2Origin());
-    rvertices[2].pos[VZ] = (float)WallDivNode_Height(WallDivs_First(rightWallDivs));
+    V2f_Copyd(rvertices[2].pos, hedge.v2Origin());
+    rvertices[2].pos[VZ] = float( WallDivNode_Height(WallDivs_First(rightWallDivs)) );
 
     // Top Right.
-    V2f_Copyd(rvertices[3].pos, hedge->v2Origin());
-    rvertices[3].pos[VZ] = (float)WallDivNode_Height(WallDivs_Last(rightWallDivs));
+    V2f_Copyd(rvertices[3].pos, hedge.v2Origin());
+    rvertices[3].pos[VZ] = float( WallDivNode_Height(WallDivs_Last(rightWallDivs)) );
 
     // Draw this hedge.
-    if(renderWorldPoly(rvertices, 4, params, ms))
+    if(renderWorldPoly(rvertices, 4, parm, ms))
     {
         // Drawn poly was opaque.
         // Render Fakeradio polys for this hedge?
-        if(!(params.flags & RPF_SKYMASK) && addFakeRadio)
+        if(!(parm.flags & RPF_SKYMASK) && addFakeRadio)
         {
-            RendRadioWallSectionParms radioParams;
+            RendRadioWallSectionParms radioParms;
+            std::memset(&radioParms, 0, sizeof(radioParms));
 
-            radioParams.line      = hedge->linePtr();
+            radioParms.line      = hedge.linePtr();
 
-            Line::Side::FakeRadioData &frData = hedge->lineSide().fakeRadioData();
-            radioParams.botCn     = frData.bottomCorners;
-            radioParams.topCn     = frData.topCorners;
-            radioParams.sideCn    = frData.sideCorners;
-            radioParams.spans     = frData.spans;
+            Line::Side::FakeRadioData &frData = hedge.lineSide().fakeRadioData();
+            radioParms.botCn     = frData.bottomCorners;
+            radioParms.topCn     = frData.topCorners;
+            radioParms.sideCn    = frData.sideCorners;
+            radioParms.spans     = frData.spans;
 
-            radioParams.segOffset = hedge->lineOffset();
-            radioParams.segLength = hedge->length();
-            radioParams.frontSec  = hedge->sectorPtr();
-            radioParams.wall.left.firstDiv  = params.wall.left.firstDiv;
-            radioParams.wall.left.divCount  = params.wall.left.divCount;
-            radioParams.wall.right.firstDiv = params.wall.right.firstDiv;
-            radioParams.wall.right.divCount = params.wall.right.divCount;
+            radioParms.segOffset = hedge.lineOffset();
+            radioParms.segLength = hedge.length();
+            radioParms.frontSec  = hedge.sectorPtr();
 
-            if(!isTwosidedMiddle && !(hedge->hasTwin() && !(hedge->twin().hasLine() && hedge->twin().lineSide().hasSections())))
+            radioParms.wall.left.firstDiv  = parm.wall.left.firstDiv;
+            radioParms.wall.left.divCount  = parm.wall.left.divCount;
+            radioParms.wall.right.firstDiv = parm.wall.right.firstDiv;
+            radioParms.wall.right.divCount = parm.wall.right.divCount;
+
+            if(!isTwosidedMiddle && !(hedge.hasTwin() && !(hedge.twin().hasLine() && hedge.twin().lineSide().hasSections())))
             {
-                radioParams.backSec = hedge->hasTwin()? hedge->twin().sectorPtr() : 0;
-            }
-            else
-            {
-                radioParams.backSec = NULL;
+                if(hedge.hasTwin())
+                    radioParms.backSec = hedge.twin().sectorPtr();
             }
 
             /// @todo kludge: Revert the vertex coords as they may have been changed
             ///               due to height divisions.
 
             // Bottom Left.
-            V2f_Copyd(rvertices[0].pos, hedge->v1Origin());
-            rvertices[0].pos[VZ] = (float)WallDivNode_Height(WallDivs_First(leftWallDivs));
+            V2f_Copyd(rvertices[0].pos, hedge.v1Origin());
+            rvertices[0].pos[VZ] = float( WallDivNode_Height(WallDivs_First(leftWallDivs)) );
 
             // Top Left.
-            V2f_Copyd(rvertices[1].pos, hedge->v1Origin());
-            rvertices[1].pos[VZ] = (float)WallDivNode_Height(WallDivs_Last(leftWallDivs));
+            V2f_Copyd(rvertices[1].pos, hedge.v1Origin());
+            rvertices[1].pos[VZ] = float( WallDivNode_Height(WallDivs_Last(leftWallDivs)) );
 
             // Bottom Right.
-            V2f_Copyd(rvertices[2].pos, hedge->v2Origin());
-            rvertices[2].pos[VZ] = (float)WallDivNode_Height(WallDivs_First(rightWallDivs));
+            V2f_Copyd(rvertices[2].pos, hedge.v2Origin());
+            rvertices[2].pos[VZ] = float( WallDivNode_Height(WallDivs_First(rightWallDivs)) );
 
             // Top Right.
-            V2f_Copyd(rvertices[3].pos, hedge->v2Origin());
-            rvertices[3].pos[VZ] = (float)WallDivNode_Height(WallDivs_Last(rightWallDivs));
+            V2f_Copyd(rvertices[3].pos, hedge.v2Origin());
+            rvertices[3].pos[VZ] = float( WallDivNode_Height(WallDivs_Last(rightWallDivs)) );
 
             // kludge end.
 
@@ -1348,17 +1360,17 @@ static boolean doRenderHEdge(HEdge *hedge, Vector3f const &normal,
             {
                 // Determine the shadow properties.
                 /// @todo Make cvars out of constants.
-                radioParams.shadowSize = 2 * (8 + 16 - ll * 16);
-                radioParams.shadowDark = Rend_RadioCalcShadowDarkness(ll);
+                radioParms.shadowSize = 2 * (8 + 16 - ll * 16);
+                radioParms.shadowDark = Rend_RadioCalcShadowDarkness(ll);
 
-                if(radioParams.shadowSize > 0)
+                if(radioParms.shadowSize > 0)
                 {
                     // Shadows are black.
-                    radioParams.shadowRGB[CR] =
-                            radioParams.shadowRGB[CG] =
-                                radioParams.shadowRGB[CB] = 0;
+                    radioParms.shadowRGB[CR] =
+                            radioParms.shadowRGB[CG] =
+                                radioParms.shadowRGB[CB] = 0;
 
-                    Rend_RadioWallSection(rvertices, radioParams);
+                    Rend_RadioWallSection(rvertices, radioParms);
                 }
             }
         }
@@ -1372,35 +1384,34 @@ static boolean doRenderHEdge(HEdge *hedge, Vector3f const &normal,
     return false; // Do not clip with this.
 }
 
-static void renderPlane(BspLeaf *bspLeaf, Plane::Type type, coord_t height,
+static void writePlane2(BspLeaf &bspLeaf, Plane::Type type, coord_t height,
     Vector3f const &tangent, Vector3f const &bitangent, Vector3f const &normal,
     Material *inMat, Vector3f const &sufColor, float sufAlpha, blendmode_t blendMode,
     vec3d_t texTL, vec3d_t texBR,
     float const texOffset[2], float const texScale[2],
-    boolean skyMasked,
-    boolean addDLights, boolean addMobjShadows,
+    bool skyMasked, bool addDLights, bool addMobjShadows,
     biassurface_t *bsuf, uint elmIdx /*tmp*/,
     int texMode /*tmp*/)
 {
-    Sector *sec = bspLeaf->sectorPtr();
+    Sector *sec = bspLeaf.sectorPtr();
 
-    rendworldpoly_params_t params;
-    std::memset(&params, 0, sizeof(params));
+    rendworldpoly_params_t parms;
+    std::memset(&parms, 0, sizeof(parms));
 
-    params.flags = RPF_DEFAULT;
-    params.isWall = false;
-    params.mapElement = bspLeaf;
-    params.elmIdx = elmIdx;
-    params.bsuf = bsuf;
-    params.normal = &normal;
-    params.texTL = texTL;
-    params.texBR = texBR;
-    params.sectorLightLevel = sec->lightLevel();
-    params.sectorLightColor = &R_GetSectorLightColor(*sec);
-    params.surfaceLightLevelDL = params.surfaceLightLevelDR = 0;
-    params.surfaceColor = &sufColor;
-    params.texOffset = texOffset;
-    params.texScale = texScale;
+    parms.flags = RPF_DEFAULT;
+    parms.isWall = false;
+    parms.mapElement = &bspLeaf;
+    parms.elmIdx = elmIdx;
+    parms.bsuf = bsuf;
+    parms.normal = &normal;
+    parms.texTL = texTL;
+    parms.texBR = texBR;
+    parms.sectorLightLevel = sec->lightLevel();
+    parms.sectorLightColor = &R_GetSectorLightColor(*sec);
+    parms.surfaceLightLevelDL = parms.surfaceLightLevelDR = 0;
+    parms.surfaceColor = &sufColor;
+    parms.texOffset = texOffset;
+    parms.texScale = texScale;
 
     Material *mat = 0;
     if(skyMasked)
@@ -1409,14 +1420,14 @@ static void renderPlane(BspLeaf *bspLeaf, Plane::Type type, coord_t height,
         // skymask as regular world polys (with a few obvious properties).
         if(devRendSkyMode)
         {
-            params.blendMode = BM_NORMAL;
-            params.glowing = 1;
-            params.forceOpaque = true;
+            parms.blendMode = BM_NORMAL;
+            parms.glowing = 1;
+            parms.forceOpaque = true;
             mat = inMat;
         }
         else
         {   // We'll mask this.
-            params.flags |= RPF_SKYMASK;
+            parms.flags |= RPF_SKYMASK;
         }
     }
     else
@@ -1425,81 +1436,87 @@ static void renderPlane(BspLeaf *bspLeaf, Plane::Type type, coord_t height,
 
         if(type != Plane::Middle)
         {
-            params.blendMode = BM_NORMAL;
-            params.alpha = 1;
-            params.forceOpaque = true;
+            parms.blendMode = BM_NORMAL;
+            parms.alpha = 1;
+            parms.forceOpaque = true;
         }
         else
         {
             if(blendMode == BM_NORMAL && noSpriteTrans)
-                params.blendMode = BM_ZEROALPHA; // "no translucency" mode
+                parms.blendMode = BM_ZEROALPHA; // "no translucency" mode
             else
-                params.blendMode = blendMode;
-            params.alpha = sufAlpha;
+                parms.blendMode = blendMode;
+            parms.alpha = sufAlpha;
         }
     }
 
     uint numVertices;
     rvertex_t *rvertices;
-    Rend_BuildBspLeafPlaneGeometry(bspLeaf, (type == Plane::Ceiling), height,
+    Rend_BuildBspLeafPlaneGeometry(&bspLeaf, (type == Plane::Ceiling), height,
                                    &rvertices, &numVertices);
 
     MaterialSnapshot const &ms = mat->prepare(mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT));
 
-    if(!(params.flags & RPF_SKYMASK))
+    if(!(parms.flags & RPF_SKYMASK))
     {
         if(glowFactor > .0001f)
         {
             if(texMode != 2)
             {
-                params.glowing = ms.glowStrength();
+                parms.glowing = ms.glowStrength();
             }
             else
             {
                 Surface const &suf = sec->planeSurface(elmIdx);
-                Material &material = suf.hasMaterial()? suf.material()
-                                                      : App_Materials().find(de::Uri("System", Path("missing"))).material();
+                Material *material = suf.hasMaterial()? suf.materialPtr()
+                                                      : &App_Materials().find(de::Uri("System", Path("missing"))).material();
 
-                MaterialSnapshot const &ms = material.prepare(Rend_MapSurfaceMaterialSpec());
-                params.glowing = ms.glowStrength();
+                MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
+                parms.glowing = ms.glowStrength();
             }
 
-            params.glowing *= glowFactor; // Global scale factor.
+            parms.glowing *= glowFactor; // Global scale factor.
         }
 
         // Dynamic lights?
-        if(addDLights && params.glowing < 1 && !(!useDynLights && !useWallGlow))
+        if(addDLights && parms.glowing < 1 && !(!useDynLights && !useWallGlow))
         {
-            params.lightListIdx = LO_ProjectToSurface((PLF_NO_PLANE | (type == Plane::Floor? PLF_TEX_FLOOR : PLF_TEX_CEILING)), bspLeaf, 1,
-                params.texTL, params.texBR, tangent, bitangent, normal);
+            /// @ref projectLightFlags
+            int plFlags = (PLF_NO_PLANE | (type == Plane::Floor? PLF_TEX_FLOOR : PLF_TEX_CEILING));
+
+            parms.lightListIdx =
+                LO_ProjectToSurface(plFlags, &bspLeaf, 1, parms.texTL, parms.texBR,
+                                    tangent, bitangent, normal);
         }
 
         // Mobj shadows?
-        if(addMobjShadows && params.glowing < 1 && Rend_MobjShadowsEnabled())
+        if(addMobjShadows && parms.glowing < 1 && Rend_MobjShadowsEnabled())
         {
             // Glowing planes inversely diminish shadow strength.
-            params.shadowListIdx = R_ProjectShadowsToSurface(bspLeaf, 1 - params.glowing,
-                params.texTL, params.texBR, tangent, bitangent, normal);
+            float blendFactor = 1 - parms.glowing;
+
+            parms.shadowListIdx =
+                R_ProjectShadowsToSurface(&bspLeaf, blendFactor, parms.texTL, parms.texBR,
+                                          tangent, bitangent, normal);
         }
     }
 
-    renderWorldPoly(rvertices, numVertices, params, ms);
+    renderWorldPoly(rvertices, numVertices, parms, ms);
 
     R_FreeRendVertices(rvertices);
 }
 
-static void Rend_RenderPlane(Plane::Type type, coord_t height,
+static void writePlane(Plane::Type type, coord_t height,
     Vector3f const &tangent, Vector3f const &bitangent, Vector3f const &normal,
-    Material* inMat, Vector3f const &sufColor, float sufAlpha, blendmode_t blendMode,
+    Material *material, Vector3f const &tintColor, float opacity, blendmode_t blendMode,
     float const texOffset[2], float const texScale[2],
-    boolean skyMasked, boolean addDLights, boolean addMobjShadows,
-    biassurface_t* bsuf, uint elmIdx /*tmp*/,
-    int texMode /*tmp*/, boolean clipBackFacing)
+    bool skyMasked, bool addDLights, bool addMobjShadows,
+    biassurface_t *bsuf, uint elmIdx /*tmp*/,
+    int texMode /*tmp*/, bool clipBackFacing)
 {
     BspLeaf *bspLeaf = currentBspLeaf;
-
-    // Must have a visible surface.
-    if(!inMat || !inMat->isDrawable()) return;
+    DENG_ASSERT(bspLeaf != 0);
+    DENG_ASSERT(material != 0 && material->isDrawable()); // Must have a drawable material.
 
     Vector3f eyeToSurface(vOrigin[VX] - bspLeaf->center()[VX],
                           vOrigin[VZ] - bspLeaf->center()[VY],
@@ -1516,8 +1533,8 @@ static void Rend_RenderPlane(Plane::Type type, coord_t height,
         V3d_Set(texBR, bspLeaf->aaBox().maxX,
                        bspLeaf->aaBox().arvec2[type == Plane::Floor? 0 : 1][VY], height);
 
-        renderPlane(bspLeaf, type, height, tangent, bitangent, normal, inMat,
-                    sufColor, sufAlpha, blendMode, texTL, texBR, texOffset, texScale,
+        writePlane2(*bspLeaf, type, height, tangent, bitangent, normal, material,
+                    tintColor, opacity, blendMode, texTL, texBR, texOffset, texScale,
                     skyMasked, addDLights, addMobjShadows, bsuf, elmIdx, texMode);
     }
 }
@@ -1654,42 +1671,44 @@ static void lineLightLevelDeltas(Line const &line, int side,
 }
 
 /**
- * @defgroup rendHEdgeFlags Rend Half-edge Flags
- * Flags for rendHEdgeSection()
+ * @defgroup writeWallSectionFlags Write Wall Section Flags
+ * Flags for writeWallSection()
  * @ingroup flags
  */
 ///@{
-#define RHF_ADD_DYNLIGHTS       0x01 ///< Write geometry for dynamic lights.
-#define RHF_ADD_DYNSHADOWS      0x02 ///< Write geometry for dynamic (mobj) shadows.
-#define RHF_ADD_RADIO           0x04 ///< Write geometry for faked radiosity.
-#define RHF_VIEWER_NEAR_BLEND   0x08 ///< Alpha-blend geometry when viewer is near.
-#define RHF_FORCE_OPAQUE        0x10 ///< Force the geometry to be opaque.
+#define WSF_ADD_DYNLIGHTS       0x01 ///< Write geometry for dynamic lights.
+#define WSF_ADD_DYNSHADOWS      0x02 ///< Write geometry for dynamic (mobj) shadows.
+#define WSF_ADD_RADIO           0x04 ///< Write geometry for faked radiosity.
+#define WSF_VIEWER_NEAR_BLEND   0x08 ///< Alpha-blend geometry when viewer is near.
+#define WSF_FORCE_OPAQUE        0x10 ///< Force the geometry to be opaque.
 ///@}
 
-static boolean rendHEdgeSection(HEdge *hedge, SideSection section,
+/**
+ * @param flags  @ref writeWallSectionFlags
+ */
+static bool writeWallSection(HEdge &hedge, SideSection section,
     int flags, float lightLevel, Vector3f const &lightColor,
     walldivs_t *leftWallDivs, walldivs_t *rightWallDivs,
     float const matOffset[2])
 {
-    Surface *surface = &hedge->lineSide().surface(section);
-    boolean opaque = true;
-    float alpha;
+    Surface &surface = hedge.lineSide().surface(section);
 
     // Surfaces without a drawable material are never rendered.
-    if(!(surface->hasMaterial() && surface->material().isDrawable()))
+    if(!(surface.hasMaterial() && surface.material().isDrawable()))
         return false;
 
     if(WallDivNode_Height(WallDivs_First(leftWallDivs)) >=
        WallDivNode_Height(WallDivs_Last(rightWallDivs))) return true;
 
-    alpha = (section == SS_MIDDLE? surface->opacity() : 1.0f);
+    bool opaque = true;
+    float opacity = (section == SS_MIDDLE? surface.opacity() : 1.0f);
 
-    if(section == SS_MIDDLE && (flags & RHF_VIEWER_NEAR_BLEND))
+    if(section == SS_MIDDLE && (flags & WSF_VIEWER_NEAR_BLEND))
     {
         mobj_t *mo = viewPlayer->shared.mo;
         viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
 
-        /**
+        /*
          * Can the player walk through this surface?
          * If the player is close enough we should NOT add a solid hedge otherwise HOM
          * would occur when they are directly on top of the line (e.g., passing through
@@ -1699,7 +1718,7 @@ static boolean rendHEdgeSection(HEdge *hedge, SideSection section,
         if(viewData->current.origin[VZ] >  WallDivNode_Height(WallDivs_First(leftWallDivs)) &&
            viewData->current.origin[VZ] < WallDivNode_Height(WallDivs_Last(rightWallDivs)))
         {
-            Line const &line = hedge->line();
+            Line const &line = hedge.line();
             coord_t lineDirection[2] = { line.direction().x, line.direction().y };
             vec2d_t result;
             double pos = V2d_ProjectOnLine(result, mo->origin, line.v1Origin(), lineDirection);
@@ -1714,65 +1733,60 @@ static boolean rendHEdgeSection(HEdge *hedge, SideSection section,
                 if(distance < minDistance)
                 {
                     // Fade it out the closer the viewPlayer gets and clamp.
-                    alpha = (alpha / minDistance) * distance;
-                    alpha = de::clamp(0.f, alpha, 1.f);
+                    opacity = (opacity / minDistance) * distance;
+                    opacity = de::clamp(0.f, opacity, 1.f);
                 }
 
-                if(alpha < 1)
+                if(opacity < 1)
                     opaque = false;
             }
         }
     }
 
-    if(alpha > 0)
+    if(opacity > 0)
     {
-        uint lightListIdx = 0, shadowListIdx = 0;
-        vec3d_t texTL, texBR;
-        float texScale[2];
-        Material *mat = NULL;
-        int rpFlags = RPF_DEFAULT;
-        boolean isTwoSided = (hedge->hasLine() && hedge->line().hasFrontSections() && hedge->line().hasBackSections())? true:false;
-        blendmode_t blendMode = BM_NORMAL;
-        Vector3f const *color = 0, *color2 = 0;
+        bool const isTwoSided = (hedge.hasLine() && hedge.line().hasFrontSections() && hedge.line().hasBackSections())? true:false;
 
-        texScale[0] = ((surface->flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1);
-        texScale[1] = ((surface->flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
+        float texScale[2] = { ((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1),
+                              ((surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1) };
 
-        V2d_Copy(texTL,  hedge->v1Origin());
+        vec3d_t texTL; V2d_Copy(texTL,  hedge.v1Origin());
         texTL[VZ] =  WallDivNode_Height(WallDivs_Last(leftWallDivs));
 
-        V2d_Copy(texBR, hedge->v2Origin());
+        vec3d_t texBR; V2d_Copy(texBR, hedge.v2Origin());
         texBR[VZ] = WallDivNode_Height(WallDivs_First(rightWallDivs));
 
         // Determine which Material to use.
-        if(devRendSkyMode && hedge->hasTwin() &&
-           ((section == SS_BOTTOM && hedge->sector().floorSurface().hasSkyMaskedMaterial() &&
-                                     hedge->twin().sector().floorSurface().hasSkyMaskedMaterial()) ||
-            (section == SS_TOP    && hedge->sector().ceilingSurface().hasSkyMaskedMaterial() &&
-                                     hedge->twin().sector().ceilingSurface().hasSkyMaskedMaterial())))
+        Material *material = 0;
+        int rpFlags = RPF_DEFAULT; /// @ref rendPolyFlags
+        if(devRendSkyMode && hedge.hasTwin() &&
+           ((section == SS_BOTTOM && hedge.sector().floorSurface().hasSkyMaskedMaterial() &&
+                                     hedge.twin().sector().floorSurface().hasSkyMaskedMaterial()) ||
+            (section == SS_TOP    && hedge.sector().ceilingSurface().hasSkyMaskedMaterial() &&
+                                     hedge.twin().sector().ceilingSurface().hasSkyMaskedMaterial())))
         {
             // Geometry not normally rendered however we do so in dev sky mode.
-            mat = hedge->sector().planeSurface(section == SS_TOP? Plane::Ceiling : Plane::Floor).materialPtr();
+            material = hedge.sector().planeSurface(section == SS_TOP? Plane::Ceiling : Plane::Floor).materialPtr();
         }
         else
         {
             if(renderTextures == 2)
             {
                 // Lighting debug mode; render using System:gray.
-                mat = &App_Materials().find(de::Uri("System", Path("gray"))).material();
+                material = &App_Materials().find(de::Uri("System", Path("gray"))).material();
             }
-            else if(!surface->hasMaterial() || (surface->hasFixMaterial() && devNoTexFix))
+            else if(!surface.hasMaterial() || (surface.hasFixMaterial() && devNoTexFix))
             {
                 // Missing material debug mode; render using System:missing.
-                mat = &App_Materials().find(de::Uri("System", Path("missing"))).material();
+                material = &App_Materials().find(de::Uri("System", Path("missing"))).material();
             }
             else
             {
                 // Normal mode.
-                mat = surface->materialPtr();
+                material = surface.materialPtr();
             }
 
-            if(mat->isSkyMasked())
+            if(material->isSkyMasked())
             {
                 if(!devRendSkyMode)
                 {
@@ -1783,44 +1797,47 @@ static boolean rendHEdgeSection(HEdge *hedge, SideSection section,
                 {
                     // In dev sky mode we render all would-be skymask geometry
                     // as if it were non-skymask.
-                    flags |= RHF_FORCE_OPAQUE;
+                    flags |= WSF_FORCE_OPAQUE;
                 }
             }
         }
 
-        MaterialSnapshot const &ms = mat->prepare(mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT));
+        MaterialSnapshot const &ms = material->prepare(mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT));
 
         // Fill in the remaining params data.
+        Vector3f const *color = 0, *color2 = 0;
+        blendmode_t blendMode = BM_NORMAL;
+        uint lightListIdx = 0, shadowListIdx = 0;
         if(!(rpFlags & RPF_SKYMASK))
         {
             // Make any necessary adjustments to the draw flags to suit the
             // current texture mode.
             if(section != SS_MIDDLE || (section == SS_MIDDLE && !isTwoSided))
             {
-                flags |= RHF_FORCE_OPAQUE;
+                flags |= WSF_FORCE_OPAQUE;
                 blendMode = BM_NORMAL;
             }
             else
             {
-                if(surface->blendMode() == BM_NORMAL && noSpriteTrans)
+                if(surface.blendMode() == BM_NORMAL && noSpriteTrans)
                     blendMode = BM_ZEROALPHA; // "no translucency" mode
                 else
-                    blendMode = surface->blendMode();
+                    blendMode = surface.blendMode();
             }
 
             // Polyobj surfaces never shadow.
-            if(hedge->line().isFromPolyobj())
-                flags &= ~RHF_ADD_RADIO;
+            if(hedge.line().isFromPolyobj())
+                flags &= ~WSF_ADD_RADIO;
 
             float glowStrength = 0;
             if(glowFactor > .0001f)
                 glowStrength = ms.glowStrength() * glowFactor; // Global scale factor.
 
             // Dynamic Lights?
-            if((flags & RHF_ADD_DYNLIGHTS) &&
+            if((flags & WSF_ADD_DYNLIGHTS) &&
                glowStrength < 1 && !(!useDynLights && !useWallGlow))
             {
-                Surface const &middleSurface = hedge->lineSide().middle();
+                Surface const &middleSurface = hedge.lineSide().middle();
                 int plFlags = ((section == SS_MIDDLE && isTwoSided)? PLF_SORT_LUMINOSITY_DESC : 0);
 
                 lightListIdx = LO_ProjectToSurface(plFlags, currentBspLeaf, 1, texTL, texBR,
@@ -1830,10 +1847,10 @@ static boolean rendHEdgeSection(HEdge *hedge, SideSection section,
             }
 
             // Dynamic shadows?
-            if((flags & RHF_ADD_DYNSHADOWS) &&
+            if((flags & WSF_ADD_DYNSHADOWS) &&
                glowStrength < 1 && Rend_MobjShadowsEnabled())
             {
-                Surface const &middleSurface = hedge->lineSide().middle();
+                Surface const &middleSurface = hedge.lineSide().middle();
 
                 // Glowing planes inversely diminish shadow strength.
                 float const shadowStrength = 1 - glowStrength;
@@ -1845,9 +1862,9 @@ static boolean rendHEdgeSection(HEdge *hedge, SideSection section,
             }
 
             if(glowStrength > 0)
-                flags &= ~RHF_ADD_RADIO;
+                flags &= ~WSF_ADD_RADIO;
 
-            selectSurfaceColors(&color, &color2, hedge->lineSide(), section);
+            selectSurfaceColors(&color, &color2, hedge.lineSide(), section);
         }
 
         float deltaL, deltaR;
@@ -1855,33 +1872,33 @@ static boolean rendHEdgeSection(HEdge *hedge, SideSection section,
         // Do not apply an angle based lighting delta if this surface's material
         // has been chosen as a HOM fix (we must remain consistent with the lighting
         // applied to the back plane (on this half-edge's back side)).
-        if(hedge->hasLine() && hedge->lineSide().hasSections() &&
-           isTwoSided && section != SS_MIDDLE && surface->hasFixMaterial())
+        if(hedge.hasLine() && hedge.lineSide().hasSections() &&
+           isTwoSided && section != SS_MIDDLE && surface.hasFixMaterial())
         {
             deltaL = deltaR = 0;
         }
         else
         {
-            Line const &line = hedge->line();
-            lineLightLevelDeltas(line, hedge->lineSideId(), &deltaL, &deltaR);
+            Line const &line = hedge.line();
+            lineLightLevelDeltas(line, hedge.lineSideId(), &deltaL, &deltaR);
 
             // Linear interpolation of the line light deltas to the edges of the hedge.
             float diff = deltaR - deltaL;
-            deltaR = deltaL + ((hedge->lineOffset() + hedge->length()) / line.length()) * diff;
-            deltaL += (hedge->lineOffset() / line.length()) * diff;
+            deltaR = deltaL + ((hedge.lineOffset() + hedge.length()) / line.length()) * diff;
+            deltaL += (hedge.lineOffset() / line.length()) * diff;
         }
 
-        opaque = doRenderHEdge(hedge,
-                               surface->normal(), ((flags & RHF_FORCE_OPAQUE)? -1 : alpha),
-                               lightLevel, deltaL, deltaR, &lightColor,
-                               lightListIdx, shadowListIdx,
-                               leftWallDivs, rightWallDivs,
-                               !!(rpFlags & RPF_SKYMASK), !!(flags & RHF_ADD_RADIO),
-                               texTL, texBR, matOffset, texScale, blendMode,
-                               *color, *color2,
-                               &hedge->biasSurfaceForGeometryGroup(section), (uint) section,
-                               ms,
-                               (section == SS_MIDDLE && isTwoSided));
+        opaque = writeWallSection2(hedge,
+                                   surface.normal(), ((flags & WSF_FORCE_OPAQUE)? -1 : opacity),
+                                   lightLevel, deltaL, deltaR, &lightColor,
+                                   lightListIdx, shadowListIdx,
+                                   leftWallDivs, rightWallDivs,
+                                   !!(rpFlags & RPF_SKYMASK), !!(flags & WSF_ADD_RADIO),
+                                   texTL, texBR, matOffset, texScale, blendMode,
+                                   *color, *color2,
+                                   &hedge.biasSurfaceForGeometryGroup(section), (uint) section,
+                                   ms,
+                                   (section == SS_MIDDLE && isTwoSided));
     }
 
     return opaque;
@@ -1905,75 +1922,80 @@ static void reportLineDrawn(Line &line)
 }
 
 /**
- * @param hedge  HEdge to draw wall surfaces for.
+ * Prepare and write wall sections for a "one-sided" line to the render lists.
+ *
+ * @param hedge  HEdge to draw wall sections for.
  * @param sections  @ref sideSectionFlags
  */
-static boolean Rend_RenderHEdge(HEdge *hedge, byte sections)
+static bool writeWallSections2(HEdge &hedge, byte sections)
 {
-    if(!hedge->hasLine() || !hedge->lineSide().hasSections()) return false;
+    BspLeaf *leaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(leaf));
+
+    DENG_ASSERT(hedge.hasLine());
+    DENG_ASSERT(hedge.lineSide().hasSections());
+    DENG_ASSERT(hedge._frameFlags & HEDGEINF_FACINGFRONT);
 
     // Only a "middle" section.
-    if(sections & SSF_MIDDLE)
+    if(!(sections & SSF_MIDDLE)) return false;
+
+    Sector *frontSector = leaf->sectorPtr();
+    Sector *backSector  = hedge.hasTwin()? hedge.twin().sectorPtr() : 0;
+
+    walldivs_t leftWallDivs, rightWallDivs;
+    float materialOrigin[2];
+    bool opaque = false;
+
+    if(hedge.prepareWallDivs(SS_MIDDLE, frontSector, backSector,
+                             &leftWallDivs, &rightWallDivs, materialOrigin))
     {
-        BspLeaf *leaf    = currentBspLeaf;
-        Sector *frontSec = leaf->sectorPtr();
-        Sector *backSec  = hedge->hasTwin()? hedge->twin().sectorPtr() : 0;
+        Rend_RadioUpdateLine(hedge.line(), hedge.lineSideId());
 
-        walldivs_t leftWallDivs, rightWallDivs;
-        float matOffset[2];
-        boolean opaque = false;
+        int wsFlags = WSF_ADD_DYNLIGHTS|WSF_ADD_DYNSHADOWS|WSF_ADD_RADIO;
 
-        if(hedge->prepareWallDivs(SS_MIDDLE, frontSec, backSec,
-                                  &leftWallDivs, &rightWallDivs, matOffset))
-        {
-            Rend_RadioUpdateLine(hedge->line(), hedge->lineSideId());
-            opaque = rendHEdgeSection(hedge, SS_MIDDLE, RHF_ADD_DYNLIGHTS|RHF_ADD_DYNSHADOWS|RHF_ADD_RADIO,
-                                      frontSec->lightLevel(), R_GetSectorLightColor(*frontSec),
-                                      &leftWallDivs, &rightWallDivs, matOffset);
-        }
-
-        reportLineDrawn(hedge->line());
-        return opaque;
+        opaque = writeWallSection(hedge, SS_MIDDLE, wsFlags,
+                                  frontSector->lightLevel(), R_GetSectorLightColor(*frontSector),
+                                  &leftWallDivs, &rightWallDivs, materialOrigin);
     }
 
-    return false;
+    reportLineDrawn(hedge.line());
+    return opaque;
 }
 
 /**
- * Render wall sections for a HEdge belonging to a two-sided Line.
+ * Prepare and write wall sections for a "two-sided" line to the render lists.
+ *
+ * @param hedge  HEdge to draw wall sections for.
+ * @param sections  @ref sideSectionFlags
  */
-static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
+static bool writeWallSections2Twosided(HEdge &hedge, byte sections)
 {
-    DENG_ASSERT(hedge);
-
     BspLeaf *leaf = currentBspLeaf;
-    int solidSeg = false;
+    DENG_ASSERT(!isNullLeaf(leaf));
 
-    if(!hedge->hasLine()) return false;
+    DENG_ASSERT(hedge.hasLine() && hedge.hasTwin());
+    DENG_ASSERT(hedge.lineSide().hasSections());
+    DENG_ASSERT(hedge._frameFlags & HEDGEINF_FACINGFRONT);
 
-    Line &line = hedge->line();
-    Line::Side *front = &hedge->lineSide();
-    Line::Side *back  = hedge->hasTwin()? &hedge->twin().lineSide() : 0;
-    Sector *backSector   = hedge->hasTwin()? hedge->twin().sectorPtr() : 0;
+    Line &line = hedge.line();
 
     reportLineDrawn(line);
 
-    if(back->sectorPtr() == front->sectorPtr() &&
-       !front->top().hasMaterial() && !front->bottom().hasMaterial() &&
-       !front->middle().hasMaterial())
+    Line::Side &front  = hedge.lineSide();
+    Line::Side &back   = hedge.twin().lineSide();
+
+    /// @todo Is this now redundant? -ds
+    if(back.sectorPtr() == front.sectorPtr() &&
+       !front.top().hasMaterial() && !front.bottom().hasMaterial() &&
+       !front.middle().hasMaterial())
        return false; // Ugh... an obvious wall hedge hack. Best take no chances...
 
-    Plane *ffloor = &leaf->sector().floor();
-    Plane *fceil  = &leaf->sector().ceiling();
-    Plane *bfloor = &back->sector().floor();
-    Plane *bceil  = &back->sector().ceiling();
+    Plane &ffloor = leaf->sector().floor();
+    Plane &fceil  = leaf->sector().ceiling();
+    Plane &bfloor = back.sector().floor();
+    Plane &bceil  = back.sector().ceiling();
 
-    /**
-     * Create the wall sections.
-     *
-     * We may need multiple wall sections.
-     * Determine which parts of the segment are really visible.
-     */
+    bool opaque = false;
 
     // Middle section?
     if(sections & SSF_MIDDLE)
@@ -1981,33 +2003,33 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
         walldivs_t leftWallDivs, rightWallDivs;
         float matOffset[2];
 
-        if(hedge->prepareWallDivs(SS_MIDDLE, leaf->sectorPtr(), backSector,
-                                  &leftWallDivs, &rightWallDivs, matOffset))
+        if(hedge.prepareWallDivs(SS_MIDDLE, leaf->sectorPtr(), back.sectorPtr(),
+                                 &leftWallDivs, &rightWallDivs, matOffset))
         {
-            int rhFlags = RHF_ADD_DYNLIGHTS|RHF_ADD_DYNSHADOWS|RHF_ADD_RADIO;
+            int rhFlags = WSF_ADD_DYNLIGHTS|WSF_ADD_DYNSHADOWS|WSF_ADD_RADIO;
 
             if((viewPlayer->shared.flags & (DDPF_NOCLIP|DDPF_CAMERA)) ||
                !(line.isFlagged(DDLF_BLOCKING)))
-                rhFlags |= RHF_VIEWER_NEAR_BLEND;
+                rhFlags |= WSF_VIEWER_NEAR_BLEND;
 
-            Rend_RadioUpdateLine(line, hedge->lineSideId());
-            solidSeg = rendHEdgeSection(hedge, SS_MIDDLE, rhFlags,
-                                        front->sector().lightLevel(), R_GetSectorLightColor(front->sector()),
-                                        &leftWallDivs, &rightWallDivs, matOffset);
-            if(solidSeg)
+            Rend_RadioUpdateLine(line, hedge.lineSideId());
+            opaque = writeWallSection(hedge, SS_MIDDLE, rhFlags,
+                                      front.sector().lightLevel(), R_GetSectorLightColor(front.sector()),
+                                      &leftWallDivs, &rightWallDivs, matOffset);
+            if(opaque)
             {
-                Surface &surface = front->middle();
+                Surface &surface = front.middle();
                 coord_t xbottom, xtop;
 
                 if(line.isSelfReferencing())
                 {
-                    xbottom = de::min(bfloor->visHeight(), ffloor->visHeight());
-                    xtop    = de::max(bceil->visHeight(),  fceil->visHeight());
+                    xbottom = de::min(bfloor.visHeight(), ffloor.visHeight());
+                    xtop    = de::max(bceil.visHeight(),  fceil.visHeight());
                 }
                 else
                 {
-                    xbottom = de::max(bfloor->visHeight(), ffloor->visHeight());
-                    xtop    = de::min(bceil->visHeight(),  fceil->visHeight());
+                    xbottom = de::max(bfloor.visHeight(), ffloor.visHeight());
+                    xtop    = de::min(bceil.visHeight(),  fceil.visHeight());
                 }
 
                 xbottom += surface.visMaterialOrigin()[VY];
@@ -2016,7 +2038,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
                 // Can we make this a solid segment?
                 if(!(WallDivNode_Height(WallDivs_Last(&rightWallDivs)) >= xtop &&
                      WallDivNode_Height(WallDivs_First(&leftWallDivs)) <= xbottom))
-                     solidSeg = false;
+                     opaque = false;
             }
         }
     }
@@ -2027,12 +2049,12 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
         walldivs_t leftWallDivs, rightWallDivs;
         float matOffset[2];
 
-        if(hedge->prepareWallDivs(SS_TOP, leaf->sectorPtr(), backSector,
-                                  &leftWallDivs, &rightWallDivs, matOffset))
+        if(hedge.prepareWallDivs(SS_TOP, leaf->sectorPtr(), back.sectorPtr(),
+                                 &leftWallDivs, &rightWallDivs, matOffset))
         {
-            Rend_RadioUpdateLine(line, hedge->lineSideId());
-            rendHEdgeSection(hedge, SS_TOP, RHF_ADD_DYNLIGHTS|RHF_ADD_DYNSHADOWS|RHF_ADD_RADIO,
-                             front->sector().lightLevel(), R_GetSectorLightColor(front->sector()),
+            Rend_RadioUpdateLine(line, hedge.lineSideId());
+            writeWallSection(hedge, SS_TOP, WSF_ADD_DYNLIGHTS|WSF_ADD_DYNSHADOWS|WSF_ADD_RADIO,
+                             front.sector().lightLevel(), R_GetSectorLightColor(front.sector()),
                              &leftWallDivs, &rightWallDivs, matOffset);
         }
     }
@@ -2043,67 +2065,64 @@ static boolean Rend_RenderHEdgeTwosided(HEdge *hedge, byte sections)
         walldivs_t leftWallDivs, rightWallDivs;
         float matOffset[2];
 
-        if(hedge->prepareWallDivs(SS_BOTTOM, leaf->sectorPtr(), backSector,
-                                  &leftWallDivs, &rightWallDivs, matOffset))
+        if(hedge.prepareWallDivs(SS_BOTTOM, leaf->sectorPtr(), back.sectorPtr(),
+                                 &leftWallDivs, &rightWallDivs, matOffset))
         {
-            Rend_RadioUpdateLine(line, hedge->lineSideId());
-            rendHEdgeSection(hedge, SS_BOTTOM, RHF_ADD_DYNLIGHTS|RHF_ADD_DYNSHADOWS|RHF_ADD_RADIO,
-                             front->sector().lightLevel(), R_GetSectorLightColor(front->sector()),
+            Rend_RadioUpdateLine(line, hedge.lineSideId());
+            writeWallSection(hedge, SS_BOTTOM, WSF_ADD_DYNLIGHTS|WSF_ADD_DYNSHADOWS|WSF_ADD_RADIO,
+                             front.sector().lightLevel(), R_GetSectorLightColor(front.sector()),
                              &leftWallDivs, &rightWallDivs, matOffset);
         }
     }
 
     // Can we make this a solid segment in the clipper?
-    if(solidSeg == -1)
-        return false; // NEVER (we have a hole we couldn't fix).
+    //if(solidSeg == -1)
+    //    return false; // NEVER (we have a hole we couldn't fix).
 
     if(line.isSelfReferencing())
        return false;
 
-    if(!solidSeg) // We'll have to determine whether we can...
+    if(!opaque) // We'll have to determine whether we can...
     {
-        /*if(back->sector == front->sector)
+        /*if(back.sectorPtr() == front.sectorPtr())
         {
             // An obvious hack, what to do though??
         }
         else*/
-             if(   (bceil->visHeight() <= ffloor->visHeight() &&
-                        (front->top().hasMaterial()    || front->middle().hasMaterial()))
-                || (bfloor->visHeight() >= fceil->visHeight() &&
-                        (front->bottom().hasMaterial() || front->middle().hasMaterial())))
+             if(   (bceil.visHeight() <= ffloor.visHeight() &&
+                        (front.top().hasMaterial()    || front.middle().hasMaterial()))
+                || (bfloor.visHeight() >= fceil.visHeight() &&
+                        (front.bottom().hasMaterial() || front.middle().hasMaterial())))
         {
             // A closed gap?
-            if(FEQUAL(fceil->visHeight(), bfloor->visHeight()))
+            if(de::fequal(fceil.visHeight(), bfloor.visHeight()))
             {
-                solidSeg = (bceil->visHeight() <= bfloor->visHeight()) ||
-                           !(fceil->surface().hasSkyMaskedMaterial() &&
-                             bceil->surface().hasSkyMaskedMaterial());
+                opaque = (bceil.visHeight() <= bfloor.visHeight()) ||
+                           !(fceil.surface().hasSkyMaskedMaterial() &&
+                             bceil.surface().hasSkyMaskedMaterial());
             }
-            else if(FEQUAL(ffloor->visHeight(), bceil->visHeight()))
+            else if(de::fequal(ffloor.visHeight(), bceil.visHeight()))
             {
-                solidSeg = (bfloor->visHeight() >= bceil->visHeight()) ||
-                           !(ffloor->surface().hasSkyMaskedMaterial() &&
-                             bfloor->surface().hasSkyMaskedMaterial());
+                opaque = (bfloor.visHeight() >= bceil.visHeight()) ||
+                           !(ffloor.surface().hasSkyMaskedMaterial() &&
+                             bfloor.surface().hasSkyMaskedMaterial());
             }
             else
             {
-                solidSeg = true;
+                opaque = true;
             }
         }
         /// @todo Is this still necessary?
-        else if(bceil->visHeight() <= bfloor->visHeight() ||
-                (!(bceil->visHeight() - bfloor->visHeight() > 0) && bfloor->visHeight() > ffloor->visHeight() && bceil->visHeight() < fceil->visHeight() &&
-                front->top().hasMaterial() && front->bottom().hasMaterial()))
+        else if(bceil.visHeight() <= bfloor.visHeight() ||
+                (!(bceil.visHeight() - bfloor.visHeight() > 0) && bfloor.visHeight() > ffloor.visHeight() && bceil.visHeight() < fceil.visHeight() &&
+                front.top().hasMaterial() && front.bottom().hasMaterial()))
         {
             // A zero height back segment
-            solidSeg = true;
+            opaque = true;
         }
     }
 
-    if(solidSeg && !P_IsInVoid(viewPlayer))
-        return true;
-
-    return false;
+    return opaque;
 }
 
 static void Rend_MarkSegsFacingFront(BspLeaf *leaf)
@@ -2129,13 +2148,13 @@ static void Rend_MarkSegsFacingFront(BspLeaf *leaf)
     {
         foreach(Line *line, po->lines())
         {
-            HEdge &hedge = line->front().leftHEdge();
+            HEdge *hedge = line->front().leftHEdge();
 
             // Which way should it be facing?
-            if(!(viewFacingDot(hedge.v1Origin(), hedge.v2Origin()) < 0))
-                hedge._frameFlags |= HEDGEINF_FACINGFRONT;
+            if(!(viewFacingDot(hedge->v1Origin(), hedge->v2Origin()) < 0))
+                hedge->_frameFlags |= HEDGEINF_FACINGFRONT;
             else
-                hedge._frameFlags &= ~HEDGEINF_FACINGFRONT;
+                hedge->_frameFlags &= ~HEDGEINF_FACINGFRONT;
         }
     }
 }
@@ -2160,13 +2179,13 @@ static void occludeFrontFacingSegsInBspLeaf(BspLeaf const *bspLeaf)
     {
         foreach(Line *line, po->lines())
         {
-            HEdge &hedge = line->front().leftHEdge();
+            HEdge *hedge = line->front().leftHEdge();
 
-            if(!(hedge._frameFlags & HEDGEINF_FACINGFRONT)) continue;
+            if(!(hedge->_frameFlags & HEDGEINF_FACINGFRONT)) continue;
 
-            if(!C_CheckRangeFromViewRelPoints(hedge.v1Origin(), hedge.v2Origin()))
+            if(!C_CheckRangeFromViewRelPoints(hedge->v1Origin(), hedge->v2Origin()))
             {
-                hedge._frameFlags &= ~HEDGEINF_FACINGFRONT;
+                hedge->_frameFlags &= ~HEDGEINF_FACINGFRONT;
             }
         }
     }
@@ -2728,7 +2747,7 @@ static void Rend_RenderSkyCap(int skyCap)
 }
 
 /// @param skyCap  @ref skyCapFlags
-static void Rend_RenderSkySurfaces(int skyCap)
+static void writeLeafSkyMask(int skyCap)
 {
     BspLeaf *leaf = currentBspLeaf;
 
@@ -2765,79 +2784,88 @@ static void Rend_RenderSkySurfaces(int skyCap)
     }
 }
 
-static void Rend_RenderWalls()
+static void writeWallSections(HEdge &hedge)
 {
     BspLeaf *leaf = currentBspLeaf;
-    if(!leaf || !leaf->firstHEdge()) return;
+    DENG_ASSERT(!isNullLeaf(leaf));
+
+    DENG_ASSERT(hedge.hasLine());
+    DENG_ASSERT(hedge.lineSide().hasSections());
+    DENG_ASSERT(hedge._frameFlags & HEDGEINF_FACINGFRONT);
+
+    int const pvisSections = pvisibleWallSections(hedge); /// @ref sideSectionFlags
+    bool opaque;
+
+    if(hedge.line().isFromPolyobj() ||
+       !hedge.hasTwin() || !hedge.twin().sectorPtr() ||
+       /* solid side of a "one-way window"? */
+       !(hedge.twin().hasLine() && hedge.twin().lineSide().hasSections()))
+    {
+        // One-sided.
+        opaque = writeWallSections2(hedge, pvisSections);
+    }
+    else
+    {
+        // Two-sided.
+        opaque = writeWallSections2Twosided(hedge, pvisSections);
+    }
+
+    // We can occlude the wall range if the opening is filled (when the viewer is not in the void).
+    if(opaque && !P_IsInVoid(viewPlayer))
+    {
+        C_AddRangeFromViewRelPoints(hedge.v1Origin(), hedge.v2Origin());
+    }
+}
+
+static void writeLeafWallSections()
+{
+    BspLeaf *leaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(leaf));
+
+    if(!leaf->firstHEdge()) return; // Huh?
 
     HEdge *base = leaf->firstHEdge();
     HEdge *hedge = base;
     do
     {
-        if((hedge->_frameFlags & HEDGEINF_FACINGFRONT) &&
-           /* "mini-hedges" have no lines and "windows" have no sections */
-           hedge->hasLine() && hedge->lineSide().hasSections())
+        // Ignore back facing walls.
+        if(hedge->_frameFlags & HEDGEINF_FACINGFRONT)
+        if(hedge->hasLine() && hedge->lineSide().hasSections()) // "mini-hedges" have no lines and "windows" have no sections.
         {
-            Sector *frontSec = hedge->sectorPtr();
-            Sector *backSec  = hedge->hasTwin()? hedge->twin().sectorPtr() : 0;
-            byte sections = pvisibleLineSections(hedge->linePtr(), hedge->lineSideId());
-            boolean opaque;
-
-            if(!frontSec || !backSec ||
-               (hedge->hasTwin() && !(hedge->twin().hasLine() && hedge->twin().lineSide().hasSections())) /* front side of a "window" */)
-            {
-                opaque = Rend_RenderHEdge(hedge, sections);
-            }
-            else
-            {
-                opaque = Rend_RenderHEdgeTwosided(hedge, sections);
-            }
-
-            // When the viewer is in the void do not range-occlude.
-            if(opaque && !P_IsInVoid(viewPlayer))
-            {
-                C_AddRangeFromViewRelPoints(hedge->v1Origin(), hedge->v2Origin());
-            }
+            writeWallSections(*hedge);
         }
     } while((hedge = &hedge->next()) != base);
 }
 
-static void Rend_RenderPolyobjs()
+static void writeLeafPolyobjs()
 {
     BspLeaf *leaf = currentBspLeaf;
-    if(!leaf) return;
+    DENG_ASSERT(!isNullLeaf(leaf));
 
     Polyobj *po = leaf->firstPolyobj();
     if(!po) return;
 
     foreach(Line *line, po->lines())
     {
-        HEdge &hedge = line->front().leftHEdge();
+        HEdge *hedge = line->front().leftHEdge();
 
-        // Let's first check which way this hedge is facing.
-        if(hedge._frameFlags & HEDGEINF_FACINGFRONT)
+        // Ignore back facing walls.
+        if(hedge->_frameFlags & HEDGEINF_FACINGFRONT)
         {
-            byte sections  = pvisibleLineSections(hedge.linePtr(), hedge.lineSideId());
-            boolean opaque = Rend_RenderHEdge(&hedge, sections);
-
-            // When the viewer is in the void do not range-occlude.
-            if(opaque && !P_IsInVoid(viewPlayer))
-            {
-                C_AddRangeFromViewRelPoints(hedge.v1Origin(), hedge.v2Origin());
-            }
+            writeWallSections(*hedge);
         }
     }
 }
 
-static void Rend_RenderPlanes()
+static void writeLeafPlanes()
 {
     BspLeaf *leaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(leaf));
 
-    if(!leaf || !leaf->hasSector()) return; // An orphan BSP leaf?
-    Sector &sect = leaf->sector();
+    Sector &sector = leaf->sector();
 
     // Render all planes of this sector.
-    foreach(Plane *plane, sect.planes())
+    foreach(Plane *plane, sector.planes())
     {
         Surface const *suf = &plane->surface();
         bool isSkyMasked = false;
@@ -2885,12 +2913,15 @@ static void Rend_RenderPlanes()
         matScale[VX] = ((suf->flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1);
         matScale[VY] = ((suf->flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
-        Rend_RenderPlane(plane->type(), plane->visHeight(),
-                         suf->tangent(), suf->bitangent(), suf->normal(),
-                         mat, suf->tintColor(), suf->opacity(), suf->blendMode(), matOrigin, matScale,
-                         isSkyMasked, addDynLights, (!devRendSkyMode && plane->type() == Plane::Floor),
-                         &leaf->biasSurfaceForGeometryGroup(plane->inSectorIndex()),
-                         plane->inSectorIndex(), texMode, clipBackFacing);
+        if(mat && mat->isDrawable())
+        {
+            writePlane(plane->type(), plane->visHeight(),
+                       suf->tangent(), suf->bitangent(), suf->normal(),
+                       mat, suf->tintColor(), suf->opacity(), suf->blendMode(), matOrigin, matScale,
+                       isSkyMasked, addDynLights, (!devRendSkyMode && plane->type() == Plane::Floor),
+                       &leaf->biasSurfaceForGeometryGroup(plane->inSectorIndex()),
+                       plane->inSectorIndex(), texMode, clipBackFacing);
+        }
     }
 }
 
@@ -2959,16 +2990,6 @@ static void occludeBspLeaf(BspLeaf const *bspLeaf, bool forwardFacing)
     } while((hedge = &hedge->next()) != base);
 }
 
-static inline boolean isNullLeaf(BspLeaf *leaf)
-{
-    if(!leaf || !leaf->hasSector()) return true;
-
-    Sector &sec = leaf->sector();
-    if(sec.ceiling().visHeight() - sec.floor().visHeight() <= 0) return true;
-    if(leaf->hedgeCount() < 3) return true;
-    return false;
-}
-
 static void Rend_RenderBspLeaf(BspLeaf *bspLeaf)
 {
     DENG_ASSERT(bspLeaf);
@@ -3018,28 +3039,21 @@ static void Rend_RenderBspLeaf(BspLeaf *bspLeaf)
     // Mark the particle generators in the sector visible.
     Rend_ParticleMarkInSectorVisible(&sector);
 
-    /**
+    /*
      * Sprites for this BSP leaf have to be drawn.
-     * @note
-     * Must be done BEFORE the segments of this BspLeaf are added to the
-     * clipper. Otherwise the sprites would get clipped by them, and that
-     * wouldn't be right.
-     * Must be done AFTER the lumobjs have been clipped as this affects the
-     * projection of flares.
+     *
+     * Must be done BEFORE the segments of this BspLeaf are added to the clipper.
+     * Otherwise the sprites would get clipped by them, and that wouldn't be right.
+     *
+     * Must be done AFTER the lumobjs have been clipped as this affects the projection
+     * of halos.
      */
     R_AddSprites(bspLeaf);
 
-    // Write sky-surface geometry.
-    Rend_RenderSkySurfaces(SKYCAP_LOWER|SKYCAP_UPPER);
-
-    // Write wall geometry.
-    Rend_RenderWalls();
-
-    // Write polyobj geometry.
-    Rend_RenderPolyobjs();
-
-    // Write plane geometry.
-    Rend_RenderPlanes();
+    writeLeafSkyMask(SKYCAP_LOWER|SKYCAP_UPPER);
+    writeLeafWallSections();
+    writeLeafPolyobjs();
+    writeLeafPlanes();
 }
 
 static void Rend_RenderNode(MapElement *bspPtr)

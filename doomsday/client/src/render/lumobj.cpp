@@ -1173,14 +1173,14 @@ boolean LOIT_ClipLumObjBySight(void *data, void *context)
         Polyobj *po = bspLeaf->firstPolyobj();
         foreach(Line *line, po->lines())
         {
-            HEdge &hedge = line->front().leftHEdge();
+            HEdge *hedge = line->front().leftHEdge();
 
             // Ignore half-edges facing the wrong way.
-            if(hedge._frameFlags & HEDGEINF_FACINGFRONT)
+            if(hedge->_frameFlags & HEDGEINF_FACINGFRONT)
             {
                 vec2d_t origin; V2d_Set(origin, lum->origin[VX], lum->origin[VY]);
 
-                if(V2d_Intercept2(origin, eye, hedge.v1Origin(), hedge.v2Origin(), 0, 0, 0))
+                if(V2d_Intercept2(origin, eye, hedge->v1Origin(), hedge->v2Origin(), 0, 0, 0))
                 {
                     luminousClipped[lumIdx] = 1;
                     break;

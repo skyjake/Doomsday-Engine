@@ -135,10 +135,9 @@ Line::Side::Section const &Line::Side::section(SideSection sectionId) const
     return const_cast<Section const &>(const_cast<Side *>(this)->section(sectionId));
 }
 
-HEdge &Line::Side::leftHEdge() const
+HEdge *Line::Side::leftHEdge() const
 {
-    DENG_ASSERT(_leftHEdge != 0);
-    return *_leftHEdge;
+    return _leftHEdge;
 }
 
 void Line::Side::setLeftHEdge(HEdge *newLeftHEdge)
@@ -151,10 +150,9 @@ void Line::Side::setRightHEdge(HEdge *newRightHEdge)
     _rightHEdge = newRightHEdge;
 }
 
-HEdge &Line::Side::rightHEdge() const
+HEdge *Line::Side::rightHEdge() const
 {
-    DENG_ASSERT(_rightHEdge != 0);
-    return *_rightHEdge;
+    return _rightHEdge;
 }
 
 void Line::Side::updateMiddleSoundEmitterOrigin()

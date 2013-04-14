@@ -21,11 +21,15 @@
 #ifndef LIBDENG_MAP_POLYOBJ_H
 #define LIBDENG_MAP_POLYOBJ_H
 
-#include "dd_share.h"
-
 #include <QList>
 #include <QSet>
+
 #include <de/vector1.h>
+
+#include "dd_share.h"
+
+#include "map/line.h"
+#include "map/vertex.h"
 
 /**
  * @ingroup map
@@ -63,7 +67,7 @@ public:
     {
         foreach(Line *line, lines())
         {
-            delete &line->front().leftHEdge();
+            delete line->front().leftHEdge();
         }
 
         delete static_cast<Lines *>(_lines);

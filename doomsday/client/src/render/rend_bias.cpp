@@ -252,7 +252,7 @@ void SB_Clear()
 
 void SB_InitForMap(char const *uniqueID)
 {
-    uint startTime = Timer_RealMilliseconds();
+    de::Time begunAt;
 
     DENG_ASSERT(theMap);
 
@@ -345,7 +345,7 @@ void SB_InitForMap(char const *uniqueID)
     foreach(Polyobj *polyobj, theMap->polyobjs())
     foreach(Line *line, polyobj->lines())
     {
-        HEdge &hedge = line->front().leftHEdge();
+        HEdge *hedge = line->front().leftHEdge();
 
         for(int i = 0; i < 3; ++i)
         {
@@ -355,11 +355,11 @@ void SB_InitForMap(char const *uniqueID)
             bsuf->illum = illums;
             illums += 4;
 
-            hedge._bsuf[i] = bsuf;
+            hedge->_bsuf[i] = bsuf;
         }
     }
 
-    VERBOSE2( Con_Message("SB_InitForMap: Done in %.2f seconds.", (Timer_RealMilliseconds() - startTime) / 1000.0f) )
+    LOG_INFO(String("SB_InitForMap: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 void SB_SetColor(float *dest, float *src)

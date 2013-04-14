@@ -221,8 +221,8 @@ static void addWallDivNodesForPlaneIntercepts(HEdge const *hedge, walldivs_t *wa
     if(section == SS_MIDDLE && isTwoSided) return;
 
     // Only edges at line ends can/should be split.
-    if(!((hedge == &hedge->lineSide().leftHEdge()  && !doRight) ||
-         (hedge == &hedge->lineSide().rightHEdge() &&  doRight)))
+    if(!((hedge == hedge->lineSide().leftHEdge()  && !doRight) ||
+         (hedge == hedge->lineSide().rightHEdge() &&  doRight)))
         return;
 
     if(bottomZ >= topZ) return; // Obviously no division.

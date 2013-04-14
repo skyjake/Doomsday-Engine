@@ -36,10 +36,12 @@ static void notifyGeometryChanged(Polyobj &po)
     // Shadow bias must be informed when surfaces move/deform.
     foreach(Line *line, po.lines())
     {
-        HEdge &hedge = line->front().leftHEdge();
+        HEdge *hedge = line->front().leftHEdge();
+        if(!hedge) continue;
+
         for(int i = 0; i < 3; ++i)
         {
-            SB_SurfaceMoved(&hedge.biasSurfaceForGeometryGroup(i));
+            SB_SurfaceMoved(&hedge->biasSurfaceForGeometryGroup(i));
         }
     }
 #else // !__CLIENT__
@@ -276,7 +278,7 @@ bool Polyobj::rotate(angle_t delta)
             line->updateSlopeType();
 
             // HEdge angle must be kept in sync.
-            line->front().leftHEdge()._angle = BANG_TO_ANGLE(line->angle());
+            line->front().leftHEdge()->_angle = BANG_TO_ANGLE(line->angle());
         }
         updateAABox();
         angle += delta;
@@ -303,7 +305,7 @@ bool Polyobj::rotate(angle_t delta)
                 line->updateSlopeType();
 
                 // HEdge angle must be kept in sync.
-                line->front().leftHEdge()._angle = BANG_TO_ANGLE(line->angle());
+                line->front().leftHEdge()->_angle = BANG_TO_ANGLE(line->angle());
             }
             updateAABox();
             angle -= delta;

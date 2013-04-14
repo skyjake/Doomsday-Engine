@@ -414,9 +414,9 @@ public:
 #endif // __CLIENT__
 
         /**
-         * Returns the left-most half-edge for the side.
+         * Returns a pointer the left-most half-edge for the side; otherwise @c 0.
          */
-        HEdge &leftHEdge() const;
+        HEdge *leftHEdge() const;
 
         /**
          * Change the left-most half-edge for the side.
@@ -428,9 +428,9 @@ public:
         void setLeftHEdge(HEdge *newHEdge);
 
         /**
-         * Returns the right-most half-edge for the side.
+         * Returns a pointer to the right-most half-edge for the side; otherwise @c 0.
          */
-        HEdge &rightHEdge() const;
+        HEdge *rightHEdge() const;
 
         /**
          * Change the right-most half-edge for the side.
