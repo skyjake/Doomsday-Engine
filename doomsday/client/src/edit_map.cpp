@@ -37,12 +37,15 @@
 #include "de_edit.h"
 #include "de_dam.h"
 #include "de_filesys.h"
+
+#include "audio/s_environ.h"
+#include "map/lineowner.h"
 #include "map/gamemap.h"
 #ifdef __CLIENT__
 #  include "render/rend_main.h"
 #endif
 
-#include "audio/s_environ.h"
+#include "edit_map.h"
 
 using namespace de;
 

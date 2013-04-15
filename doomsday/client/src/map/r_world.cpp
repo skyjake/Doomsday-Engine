@@ -32,6 +32,7 @@
 #include "de_audio.h"
 #include "de_misc.h"
 
+#include "map/lineowner.h"
 #include "map/plane.h"
 #ifdef __CLIENT__
 #  include "MaterialSnapshot"

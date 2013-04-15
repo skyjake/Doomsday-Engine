@@ -18,12 +18,16 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
-#include "map/line.h"
-#include "map/vertex.h"
-#include "map/r_world.h"
-#include <de/Log>
 #include <QtAlgorithms>
+
+#include <de/Log>
+
+#include "de_base.h"
+
+#include "map/line.h"
+#include "map/lineowner.h"
+#include "map/r_world.h" /// R_GetVtxLineOwner @todo remove me
+#include "map/vertex.h"
 
 #include "map/hedge.h"
 

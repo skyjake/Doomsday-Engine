@@ -20,6 +20,8 @@
 
 #include <cstring>
 
+#include <de/vector1.h>
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_render.h"
@@ -28,11 +30,13 @@
 #include "de_play.h"
 
 #include "gl/sys_opengl.h"
-#include <de/vector1.h>
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "map/gamemap.h"
+#include "map/lineowner.h"
 #include "render/rendpoly.h"
+
+#include "render/rend_fakeradio.h"
 
 using namespace de;
 

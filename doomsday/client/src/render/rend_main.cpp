@@ -41,8 +41,11 @@
 #include "Texture"
 #include "map/blockmapvisual.h"
 #include "map/gamemap.h"
+#include "map/lineowner.h"
 #include "render/sprite.h"
 #include "gl/sys_opengl.h"
+
+#include "render/rend_main.h"
 
 using namespace de;
 

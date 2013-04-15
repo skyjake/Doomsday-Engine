@@ -205,6 +205,8 @@ DENG_HEADERS += \
     $$SRC/include/map/generators.h \
     $$SRC/include/map/hedge.h \
     $$SRC/include/map/line.h \
+    $$SRC/include/map/lineowner.h \
+    $$SRC/include/map/linesighttest.h \
     $$SRC/include/map/p_dmu.h \
     $$SRC/include/map/p_intercept.h \
     $$SRC/include/map/p_mapdata.h \

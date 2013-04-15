@@ -233,6 +233,7 @@ DENG_HEADERS += \
     include/map/generators.h \
     include/map/hedge.h \
     include/map/line.h \
+    include/map/lineowner.h \
     include/map/linesighttest.h \
     include/map/mapelement.h \
     include/map/p_dmu.h \

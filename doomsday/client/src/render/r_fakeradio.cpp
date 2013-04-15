@@ -18,14 +18,20 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
-#include "de_render.h"
-#include <de/Error>
-#include <de/Log>
 #include <de/memoryzone.h>
 #include <de/vector1.h>
+
+#include <de/Error>
+#include <de/Log>
+
+#include "de_base.h"
+#include "de_render.h"
+
+#include "map/lineowner.h"
 #include "map/gamemap.h"
 #include "map/vertex.h"
+
+//#include "render/r_fakeradio.h"
 
 using namespace de;
 
