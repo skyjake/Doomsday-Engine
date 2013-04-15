@@ -1,4 +1,4 @@
-/** @file bspnode.cpp Map BSP Node.
+/** @file bspnode.cpp World Map BSP Node.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,9 +18,11 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
-#include <de/Log>
 #include <de/vector1.h>
+#include <de/Log>
+
+#include "de_base.h"
+#include "partition.h"
 
 #include "map/bspnode.h"
 
@@ -47,8 +49,7 @@ DENG2_PIMPL(BspNode)
     }
 };
 
-BspNode::BspNode(const_pvec2d_t partitionOrigin,
-                 const_pvec2d_t partitionDirection)
+BspNode::BspNode(Vector2d partitionOrigin, Vector2d partitionDirection)
     : MapElement(DMU_BSPNODE),
       d(new Instance(this, Partition(partitionOrigin, partitionDirection)))
 {
@@ -57,8 +58,7 @@ BspNode::BspNode(const_pvec2d_t partitionOrigin,
 }
 
 BspNode::BspNode(Partition const &partition_)
-    : MapElement(DMU_BSPNODE),
-      d(new Instance(this, partition_))
+    : MapElement(DMU_BSPNODE), d(new Instance(this, partition_))
 {
     setRightAABox(0);
     setLeftAABox(0);
@@ -119,146 +119,4 @@ uint BspNode::origIndex() const
 void BspNode::setOrigIndex(uint newIndex)
 {
     d->index = newIndex;
-}
-
-// Partition -------------------------------------------------------------------
-/// @todo Move to another file.
-
-Partition::Partition(coord_t xOrigin, coord_t yOrigin, coord_t xDirection, coord_t yDirection)
-{
-    V2d_Set(_origin,    xOrigin, yOrigin);
-    V2d_Set(_direction, xDirection, yDirection);
-}
-
-Partition::Partition(const_pvec2d_t origin, const_pvec2d_t direction)
-{
-    V2d_Copy(_origin, origin);
-    V2d_Copy(_direction, direction);
-}
-
-Partition::Partition(Partition const &other)
-{
-    V2d_Copy(_origin, other._origin);
-    V2d_Copy(_direction, other._direction);
-}
-
-vec2d_t const &Partition::origin() const
-{
-    return _origin;
-}
-
-void Partition::setOrigin(const_pvec2d_t newOrigin)
-{
-    V2d_Copy(_origin, newOrigin);
-}
-
-void Partition::setXOrigin(double newX)
-{
-    _origin[VX] = newX;
-}
-
-void Partition::setYOrigin(double newY)
-{
-    _origin[VY] = newY;
-}
-
-vec2d_t const &Partition::direction() const
-{
-    return _direction;
-}
-
-void Partition::setDirection(const_pvec2d_t newDirection)
-{
-    V2d_Copy(_direction, newDirection);
-}
-
-void Partition::setXDirection(double newDX)
-{
-    _direction[VX] = newDX;
-}
-
-void Partition::setYDirection(double newDY)
-{
-    _direction[VY] = newDY;
-}
-
-/// @todo This geometric math logic should be defined in <de/math.h>
-int Partition::pointOnSide(const_pvec2d_t point) const
-{
-    if(!_direction[VX])
-    {
-        if(point[VX] <= _origin[VX])
-            return (_direction[VY] > 0? 1:0);
-        else
-            return (_direction[VY] < 0? 1:0);
-    }
-    if(!_direction[VY])
-    {
-        if(point[VY] <= _origin[VY])
-            return (_direction[VX] < 0? 1:0);
-        else
-            return (_direction[VX] > 0? 1:0);
-    }
-
-    coord_t delta[2] = { (point[VX] - _origin[VX]),
-                         (point[VY] - _origin[VY]) };
-
-    // Try to quickly decide by looking at the signs.
-    if(_direction[VX] < 0)
-    {
-        if(_direction[VY] < 0)
-        {
-            if(delta[VX] < 0)
-            {
-                if(delta[VY] >= 0) return 0;
-            }
-            else if(delta[VY] < 0)
-            {
-                return 1;
-            }
-        }
-        else
-        {
-            if(delta[VX] < 0)
-            {
-                if(delta[VY] < 0) return 1;
-            }
-            else if(delta[VY] >= 0)
-            {
-                return 0;
-            }
-        }
-    }
-    else
-    {
-        if(_direction[VY] < 0)
-        {
-            if(delta[VX] < 0)
-            {
-                if(delta[VY] < 0) return 0;
-            }
-            else if(delta[VY] >= 0)
-            {
-                return 1;
-            }
-        }
-        else
-        {
-            if(delta[VX] < 0)
-            {
-                if(delta[VY] >= 0) return 1;
-            }
-            else if(delta[VY] < 0)
-            {
-                return 0;
-            }
-        }
-    }
-
-    coord_t left  = _direction[VY] * delta[VX];
-    coord_t right = delta[VY] * _direction[VX];
-
-    if(right < left)
-        return 0; // front side
-    return 1; // back side
 }

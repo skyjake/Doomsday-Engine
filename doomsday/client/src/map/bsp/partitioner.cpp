@@ -1619,17 +1619,15 @@ DENG2_PIMPL(Partitioner)
         // We can now reconfire the half-plane itself.
         setPartitionInfo(hedgeInfo(*hedge), hedge->linePtr());
 
-        Vertex const &from = hedge->line().vertex(hedge->lineSideId());
-        Vertex const &to   = hedge->line().vertex(hedge->lineSideId()^1);
-        partition.setOrigin(from.origin());
+        Vector2d from = Vector2d(hedge->line().vertex(hedge->lineSideId()).origin());
+        Vector2d to   = Vector2d(hedge->line().vertex(hedge->lineSideId()^1).origin());
+        partition.setOrigin(from);
 
-        vec2d_t angle; V2d_Subtract(angle, to.origin(), from.origin());
+        Vector2d angle = to - from;
         partition.setDirection(angle);
 
         //LOG_DEBUG("hedge %p %s %s.")
-        //    << de::dintptr(best)
-        //    << Vector2d(from.origin()).asText()
-        //    << Vector2d(angle).asText();
+        //    << de::dintptr(best) << from.asText() << angle.asText();
 
         return true;
     }

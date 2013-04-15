@@ -231,6 +231,7 @@ DENG_HEADERS += \
     $$SRC/include/network/net_event.h \
     $$SRC/include/network/net_main.h \
     $$SRC/include/network/net_msg.h \
+    $$SRC/include/partition.h \
     $$SRC/include/r_util.h \
     $$SRC/include/render/r_main.h \
     $$SRC/include/render/r_things.h \
@@ -401,6 +402,7 @@ SOURCES += \
     $$SRC/src/network/net_main.cpp \
     $$SRC/src/network/net_msg.cpp \
     $$SRC/src/network/net_ping.cpp \
+    $$SRC/src/partition.cpp \
     $$SRC/src/r_util.cpp \
     $$SRC/src/render/r_main.cpp \
     $$SRC/src/render/r_things.cpp \

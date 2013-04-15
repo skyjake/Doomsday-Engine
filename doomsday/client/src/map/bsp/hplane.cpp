@@ -30,10 +30,7 @@
 using namespace de;
 using namespace de::bsp;
 
-HPlane::HPlane() : Partition(), _intercepts(0)
-{}
-
-HPlane::HPlane(const_pvec2d_t origin, const_pvec2d_t direction)
+HPlane::HPlane(Vector2d const &origin, Vector2d const &direction)
     : Partition(origin, direction), _intercepts(0)
 {}
 
@@ -47,56 +44,68 @@ void HPlane::clear()
     _intercepts.clear();
 }
 
-const_pvec2d_t &HPlane::origin() const
+Vector2d const &HPlane::origin() const
 {
-    return Partition::origin();
+    return Partition::origin;
 }
 
-void HPlane::setOrigin(const_pvec2d_t newOrigin)
+void HPlane::setOrigin(Vector2d const &newOrigin)
 {
-    if(newOrigin)
+    if(Partition::origin != newOrigin)
     {
-        Partition::setOrigin(newOrigin);
+        Partition::origin = newOrigin;
         clear();
     }
 }
 
 void HPlane::setXOrigin(coord_t newX)
 {
-    Partition::setXOrigin(newX);
-    clear();
+    if(!de::fequal(Partition::origin.x, newX))
+    {
+        Partition::origin.x = newX;
+        clear();
+    }
 }
 
 void HPlane::setYOrigin(coord_t newY)
 {
-    Partition::setYOrigin(newY);
-    clear();
-}
-
-const_pvec2d_t &HPlane::direction() const
-{
-    return Partition::direction();
-}
-
-void HPlane::setDirection(const_pvec2d_t newDirection)
-{
-    if(newDirection)
+    if(!de::fequal(Partition::origin.y, newY))
     {
-        Partition::setDirection(newDirection);
+        Partition::origin.y = newY;
+        clear();
+    }
+}
+
+Vector2d const &HPlane::direction() const
+{
+    return Partition::direction;
+}
+
+void HPlane::setDirection(Vector2d const &newDirection)
+{
+    if(Partition::direction != newDirection)
+    {
+        Partition::direction = newDirection;
         clear();
     }
 }
 
 void HPlane::setXDirection(coord_t newDX)
 {
-    Partition::setXDirection(newDX);
-    clear();
+    if(!de::fequal(Partition::direction.x, newDX))
+    {
+        Partition::direction.x = newDX;
+        clear();
+    }
 }
 
 void HPlane::setYDirection(coord_t newDY)
 {
-    Partition::setYDirection(newDY);
-    clear();
+    if(!de::fequal(Partition::direction.y, newDY))
+    {
+        Partition::direction.y = newDY;
+        clear();
+    }
 }
 
 HPlaneIntercept &HPlane::newIntercept(coord_t distance, void *userData)

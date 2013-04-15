@@ -106,8 +106,6 @@ DENG2_PIMPL(BspLeaf)
      * use as the center of our trifan. If a suitable vertex is not found then the
      * center of BSP leaf should be selected instead (it will always be valid as
      * BSP leafs are convex).
-     *
-     * @return  The chosen node. Can be @a NULL in which case there was no suitable node.
      */
     void chooseFanBase()
     {

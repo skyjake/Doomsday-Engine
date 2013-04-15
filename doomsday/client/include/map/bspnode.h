@@ -1,4 +1,4 @@
-/** @file bspnode.h Map BSP Node.
+/** @file bspnode.h World Map BSP Node.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,154 +18,17 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_MAP_BSPNODE
-#define LIBDENG_MAP_BSPNODE
+#ifndef DENG_WORLD_MAP_BSPNODE
+#define DENG_WORLD_MAP_BSPNODE
 
-#include <de/Error>
 #include <de/aabox.h>
 #include <de/vector1.h>
-#include "resource/r_data.h"
-#include "p_dmu.h"
+
+#include <de/Error>
+
 #include "MapElement"
-
-/**
- * An infinite line of the form point + direction vector.
- *
- * @ingroup map
- */
-class Partition
-{
-public:
-    Partition(double xOrigin = 0, double yOrigin = 0, double xDirection = 0, double yDirection = 0);
-    Partition(const_pvec2d_t origin, const_pvec2d_t direction);
-
-    Partition(Partition const &other);
-
-    virtual ~Partition() {}
-
-    /**
-     * Returns the origin point of the partition.
-     */
-    const_pvec2d_t &origin() const;
-
-    /**
-     * Convenient accessor method for returning the X axis origin of the partition.
-     * @see origin()
-     */
-    inline double xOrigin() const { return origin()[VX]; }
-
-    /**
-     * Convenient accessor method for returning the Y axis origin of the partition.
-     * @see origin()
-     */
-    inline double yOrigin() const { return origin()[VY]; }
-
-    /**
-     * Change the origin point of the partition.
-     *
-     * @param newOrigin  New origin coordinates.
-     */
-    void setOrigin(const_pvec2d_t newOrigin);
-
-    /// @copydoc setOrigin()
-    inline void setOrigin(double x, double y)
-    {
-        double newOrigin[2] = { x, y };
-        setOrigin(newOrigin);
-    }
-
-    /**
-     * Change the X axis origin point of the partition.
-     *
-     * @param newX  New X axis origin coordinate.
-     *
-     * @see setOrigin()
-     */
-    void setXOrigin(double newX);
-
-    /**
-     * Change the Y axis origin point of the partition.
-     *
-     * @param newY  New Y axis origin coordinate.
-     *
-     * @see setOrigin()
-     */
-    void setYOrigin(double newY);
-
-    /**
-     * Returns the direction vector of the partition.
-     */
-    const_pvec2d_t &direction() const;
-
-    /**
-     * Convenient accessor method for returning the X axis direction of the partition.
-     * @see direction()
-     */
-    inline double xDirection() const { return direction()[VX]; }
-
-    /**
-     * Convenient accessor method for returning the Y axis direction of the partition.
-     * @see direction()
-     */
-    inline double yDirection() const { return direction()[VY]; }
-
-    /**
-     * Change the direction vector of the partition.
-     *
-     * @param newDirection  New direction vector.
-     */
-    void setDirection(const_pvec2d_t newDirection);
-
-    /// @copydoc setDirection()
-    inline void setDirection(double newX, double newY)
-    {
-        double newDirection[2] = { newX, newY };
-        setDirection(newDirection);
-    }
-
-    /**
-     * Change the X axis direction of the partition.
-     *
-     * @param newDX  New X axis direction.
-     *
-     * @see setDirection()
-     */
-    void setXDirection(double newDX);
-
-    /**
-     * Change the Y axis direction of the partition.
-     *
-     * @param newDY  New Y axis direction.
-     *
-     * @see setDirection()
-     */
-    void setYDirection(double newDY);
-
-    /**
-     * Which side of the partition does the specified @a point lie?
-     *
-     * @param point  Point coordinates to test.
-     *
-     * @return  @c 0 = front, else @c 1 = back.
-     */
-    int pointOnSide(const_pvec2d_t point) const;
-
-    /**
-     * @copydoc pointOnSide()
-     *
-     * @param x  X coordinate to test.
-     * @param y  Y coordinate to test.
-     */
-    inline int pointOnSide(double x, double y) const
-    {
-        double point[2] = { x, y };
-        return pointOnSide(point);
-    }
-
-private:
-    vec2d_t _origin;
-    vec2d_t _direction;
-};
+#include "p_dmu.h"
+#include "partition.h"
 
 /*
  * Child node identifiers:
@@ -199,13 +62,13 @@ public:
      * @param angle   2D vector in the map coordinate space which describes the
      *                angle of the half-plane.
      */
-    BspNode(const_pvec2d_t partitionOrigin, const_pvec2d_t partitionDirection);
-    BspNode(Partition const &partition);
+    BspNode(de::Vector2d partitionOrigin, de::Vector2d partitionDirection);
+    BspNode(de::Partition const &partition);
 
     /**
      * Returns the Partition for the BSP node.
      */
-    Partition const &partition() const;
+    de::Partition const &partition() const;
 
     /**
      * Convenient accessor method for returning the origin of the partition for
@@ -213,7 +76,7 @@ public:
      *
      * @see partition()
      */
-    inline const_pvec2d_t &partitionOrigin() const { return partition().origin(); }
+    inline de::Vector2d const &partitionOrigin() const { return partition().origin; }
 
     /**
      * Convenient accessor method for returning the direction of the partition
@@ -221,7 +84,7 @@ public:
      *
      * @see partition()
      */
-    inline const_pvec2d_t &partitionDirection() const { return partition().direction(); }
+    inline de::Vector2d const &partitionDirection() const { return partition().direction; }
 
     /**
      * Returns @c true iff the specified child is configured for the BSP node.
@@ -304,4 +167,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif // LIBDENG_MAP_BSPNODE
+#endif // DENG_WORLD_MAP_BSPNODE

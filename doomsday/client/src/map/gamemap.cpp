@@ -1679,13 +1679,13 @@ int GameMap::pathTraverse(const_pvec2d_t from, const_pvec2d_t to, int flags,
     return P_TraverseIntercepts(callback, parameters);
 }
 
-BspLeaf *GameMap::bspLeafAtPoint(const_pvec2d_t const point) const
+BspLeaf *GameMap::bspLeafAtPoint(const_pvec2d_t point) const
 {
     MapElement *bspElement = d->bspRoot;
     while(bspElement->type() != DMU_BSPLEAF)
     {
         BspNode const &node = *bspElement->castTo<BspNode>();
-        int side = node.partition().pointOnSide(point);
+        int side = node.partition().pointOnSide(Vector2d(point));
 
         // Decend to the next child subspace.
         bspElement = node.childPtr(side);

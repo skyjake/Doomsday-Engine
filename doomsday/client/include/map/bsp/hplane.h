@@ -28,7 +28,7 @@
 
 #include "dd_types.h"
 #include <de/vector1.h>
-#include "map/bspnode.h" // Partition
+#include "partition.h"
 #include <list>
 
 namespace de {
@@ -88,38 +88,34 @@ public:
     typedef bool (*mergepredicate_t)(HPlaneIntercept &a, HPlaneIntercept &b, void *userData);
 
 public:
-    HPlane();
-    HPlane(const_pvec2d_t origin, const_pvec2d_t direction);
+    HPlane(Vector2d const &origin    = Vector2d(0, 0),
+           Vector2d const &direction = Vector2d(0, 0));
 
     virtual ~HPlane();
 
-    const_pvec2d_t &origin() const;
+    Vector2d const &origin() const;
 
-    inline coord_t xOrigin() const { return origin()[VX]; }
-    inline coord_t yOrigin() const { return origin()[VY]; }
+    inline coord_t xOrigin() const { return origin().x; }
+    inline coord_t yOrigin() const { return origin().y; }
 
-    void setOrigin(const_pvec2d_t newOrigin);
+    void setOrigin(Vector2d const &newOrigin);
 
-    inline void setOrigin(coord_t newX, coord_t newY)
-    {
-        coord_t newOrigin[2] = { newX, newY };
-        setOrigin(newOrigin);
+    inline void setOrigin(coord_t newX, coord_t newY) {
+        setOrigin(Vector2d(newX, newY));
     }
 
     void setXOrigin(coord_t newX);
     void setYOrigin(coord_t newY);
 
-    const_pvec2d_t &direction() const;
+    Vector2d const &direction() const;
 
-    inline coord_t xDirection() const { return direction()[VX]; }
-    inline coord_t yDirection() const { return direction()[VY]; }
+    inline coord_t xDirection() const { return direction().x; }
+    inline coord_t yDirection() const { return direction().y; }
 
-    void setDirection(const_pvec2d_t newDirection);
+    void setDirection(Vector2d const &newDirection);
 
-    inline void setDirection(coord_t newDX, coord_t newDY)
-    {
-        coord_t newDirection[2] = { newDX, newDY };
-        setDirection(newDirection);
+    inline void setDirection(coord_t newDX, coord_t newDY) {
+        setDirection(Vector2d(newDX, newDY));
     }
 
     void setXDirection(coord_t newDX);
