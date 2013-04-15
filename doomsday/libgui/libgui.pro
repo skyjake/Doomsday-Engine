@@ -47,6 +47,14 @@ else:unix {
 HEADERS += \
     include/de/Canvas \
     include/de/CanvasWindow \
+    include/de/DisplayMode \
+    include/de/GLBuffer \
+    include/de/GLProgram \
+    include/de/GLShader \
+    include/de/GLState \
+    include/de/GLTarget \
+    include/de/GLTexture \
+    include/de/GLUniform \
     include/de/GuiApp \
     include/de/KeyEvent \
     include/de/KeyEventSource \
@@ -58,6 +66,13 @@ HEADERS += \
     include/de/gui/ddkey.h \
     include/de/gui/displaymode.h \
     include/de/gui/displaymode_native.h \
+    include/de/gui/glbuffer.h \
+    include/de/gui/glprogram.h \
+    include/de/gui/glshader.h \
+    include/de/gui/glstate.h \
+    include/de/gui/gltarget.h \
+    include/de/gui/gltexture.h \
+    include/de/gui/gluniform.h \
     include/de/gui/guiapp.h \
     include/de/gui/keyevent.h \
     include/de/gui/keyeventsource.h \
@@ -70,6 +85,13 @@ SOURCES += \
     src/canvas.cpp \
     src/canvaswindow.cpp \
     src/displaymode.cpp \
+    src/glbuffer.cpp \
+    src/glprogram.cpp \
+    src/glshader.cpp \
+    src/glstate.cpp \
+    src/gltarget.cpp \
+    src/gltexture.cpp \
+    src/gluniform.cpp \
     src/guiapp.cpp \
     src/keyevent.cpp \
     src/persistentcanvaswindow.cpp
