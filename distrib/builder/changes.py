@@ -283,8 +283,7 @@ class Changes:
 
             # Append the changes to the debian package changelog.
             os.chdir(os.path.join(config.DISTRIB_DIR, 'linux'))
-            os.system('echo "" > ../debian/changelog')
-
+            
             # First we need to update the version.
             debVersion = build_version.DOOMSDAY_VERSION_FULL + '-' + Event().tag()
 
@@ -292,7 +291,10 @@ class Changes:
             print 'Marking new version...'
             msg = 'New release: %s build %i.' % (build_version.DOOMSDAY_RELEASE_TYPE,
                                                  Event().number())
-            os.system("dch -b --check-dirname-level 0 -v %s \"%s\"" % (debVersion, msg))
+            
+            # Reset the changelog.
+            os.system('rm -f ../debian/changelog && ' + \
+                'dch --check-dirname-level=0 --create --package doomsday -v %s "%s"' % (debVersion, msg))
 
             for entry in self.debChangeEntries:
                 # Quote it for the command line.

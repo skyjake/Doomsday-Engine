@@ -146,14 +146,12 @@ def update_changes(debChanges=False):
         # Also update the doomsday-fmod changelog (just version number).
         os.chdir(os.path.join(builder.config.DISTRIB_DIR, 'dsfmod'))
         
-        # Clear the old stuff.
-        os.system('echo "" > debian/changelog')
-
         fmodVer = build_version.parse_header_for_version('../../doomsday/plugins/fmod/include/version.h')
         debVer = "%s.%s.%s-%s" % (fmodVer[0], fmodVer[1], fmodVer[2], todays_build_tag())
         print "Marking new FMOD version:", debVer
         msg = 'New release: Doomsday Engine build %i.' % builder.Event().number()
-        os.system('dch --check-dirname-level 0 -v %s -b "%s"' % (debVer, msg))
+        os.system('rm -f debian/changelog && dch --check-dirname-level 0 --create --package doomsday-fmod -v %s "%s"' % (debVer, msg))
+
     else:
         # Save version information.
         print >> file(builder.Event(toTag).file_path('version.txt'), 'wt'), \
