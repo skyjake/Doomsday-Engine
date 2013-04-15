@@ -718,8 +718,8 @@ static void updateAllMapSectors(GameMap &map)
         sector->updateSoundEmitterOrigin();
 #ifdef __CLIENT__
         R_UpdateMissingMaterialsForLinesOfSector(*sector);
-#endif
         S_MarkSectorReverbDirty(sector);
+#endif
     }
 }
 

@@ -1,6 +1,5 @@
-/**
- * @file s_environ.h
- * Sound environment. @ingroup audio
+/** @file s_environ.h Sound environment.
+ * @ingroup audio
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
@@ -20,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_SOUND_ENVIRON_H
-#define LIBDENG_SOUND_ENVIRON_H
+#ifndef DENG_SOUND_ENVIRON
+#define DENG_SOUND_ENVIRON
 
 #include "api_uri.h"
 
@@ -40,10 +39,6 @@ typedef enum audioenvironmentclass_e {
 
 #define VALID_AUDIO_ENVIRONMENT_CLASS(val) (\
     (int)(val) >= AEC_FIRST && (int)(val) < NUM_AUDIO_ENVIRONMENT_CLASSES)
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Requests re-calculation of the reverb properties of the given sector. Should
@@ -90,9 +85,4 @@ char const *S_AudioEnvironmentName(AudioEnvironmentClass environment);
  */
 AudioEnvironmentClass S_AudioEnvironmentForMaterial(Uri const *uri);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif /* LIBDENG_SOUND_ENVIRON_H */
-
+#endif // DENG_SOUND_ENVIRON

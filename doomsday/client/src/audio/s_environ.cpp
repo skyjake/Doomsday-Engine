@@ -25,13 +25,15 @@
 #include <cstring>
 #include <set>
 
+#include <de/Log>
+
 #include "de_base.h"
 #include "de_audio.h"
 #include "de_play.h"
 #include "de_resource.h"
 #include "de_system.h"
 
-#include <de/Log>
+#include "audio/s_environ.h"
 
 // Used for vertex sector owners, side line owners and reverb BSP leafs.
 typedef struct ownernode_s {

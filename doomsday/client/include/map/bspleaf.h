@@ -1,4 +1,4 @@
-/** @file bspleaf.h Map BSP Leaf.
+/** @file bspleaf.h World Map BSP Leaf.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,15 +18,28 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_MAP_BSPLEAF
-#define LIBDENG_MAP_BSPLEAF
+#ifndef DENG_WORLD_MAP_BSPLEAF
+#define DENG_WORLD_MAP_BSPLEAF
+
+#include <de/aabox.h>
+#include <de/vector1.h>
+
+#include <de/Error>
 
 #include "MapElement"
-#include "resource/r_data.h"
-#include "render/rend_bias.h"
-#include "p_mapdata.h"
+//#include "resource/r_data.h"
+//#include "p_mapdata.h"
 #include "p_dmu.h"
-#include <de/Error>
+#ifdef __CLIENT__
+#  include "render/rend_bias.h"
+#endif
+
+class HEdge;
+class Sector;
+struct polyobj_s;
+
+#ifdef __CLIENT__
+struct ShadowLink;
 
 /**
  * @defgroup bspLeafFlags  Bsp Leaf Flags
@@ -36,9 +49,7 @@
 #define BLF_UPDATE_FANBASE      0x1 ///< The tri-fan base requires an update.
 ///@}
 
-class Sector;
-class HEdge;
-struct ShadowLink;
+#endif // __CLIENT__
 
 /**
  * Two dimensional convex polygon describing a @em leaf in a binary space
@@ -54,8 +65,10 @@ public:
     /// Required sector attribution is missing. @ingroup errors
     DENG2_ERROR(MissingSectorError);
 
+#ifdef __CLIENT__
     /// The referenced geometry group does not exist. @ingroup errors
     DENG2_ERROR(UnknownGeometryGroupError);
+#endif
 
     /// The referenced property does not exist. @ingroup errors
     DENG2_ERROR(UnknownPropertyError);
@@ -67,14 +80,8 @@ public: /// @todo Make private:
     /// First HEdge in this leaf.
     HEdge *_hedge;
 
-    /// @ref bspLeafFlags.
-    int _flags;
-
     /// Unique. Set when saving the BSP.
     uint _index;
-
-    /// Frame number of last R_AddSprites.
-    int _addSpriteCount;
 
     int _validCount;
 
@@ -86,12 +93,6 @@ public: /// @todo Make private:
     /// First Polyobj in this leaf. Can be @c NULL.
     struct polyobj_s *_polyObj;
 
-    /// HEdge whose vertex to use as the base for a trifan.
-    /// If @c NULL then midPoint will be used instead.
-    HEdge *_fanBase;
-
-    ShadowLink *_shadows;
-
     /// Vertex bounding box in the map coordinate space.
     AABoxd _aaBox;
 
@@ -102,10 +103,25 @@ public: /// @todo Make private:
     /// map coordinate space grid.
     coord_t _worldGridOffset[2];
 
+#ifdef __CLIENT__
+    /// @ref bspLeafFlags.
+    int _flags;
+
+    /// Frame number of last R_AddSprites.
+    int _addSpriteCount;
+
+    /// HEdge whose vertex to use as the base for a trifan.
+    /// If @c NULL then midPoint will be used instead.
+    HEdge *_fanBase;
+
+    ShadowLink *_shadows;
+
     /// [sector->planeCount] size.
     struct biassurface_s **_bsuf;
 
     uint _reverb[NUM_REVERB_DATA];
+
+#endif // __CLIENT__
 
 public:
     BspLeaf();
@@ -118,11 +134,24 @@ public:
     AABoxd const &aaBox() const;
 
     /**
+     * Update the BSP leaf's map space axis-aligned bounding box to encompass
+     * the points defined by it's vertices.
+     */
+    void updateAABox();
+
+    /**
      * Returns the point described by the average origin coordinates of all the
      * vertexes which define the geometry of the BSP leaf in map coordinate space
      * units.
      */
     vec2d_t const &center() const;
+
+    /**
+     * Update the center point in the map coordinate space.
+     *
+     * @pre Axis-aligned bounding box must have been initialized.
+     */
+    void updateCenter();
 
     /**
      * Returns a pointer to the first HEdge of the BSP leaf; otherwise @c 0.
@@ -156,30 +185,19 @@ public:
     inline Sector *sectorPtr() const { return hasSector()? &sector() : 0; }
 
     /**
-     * Returns @c true iff there is at least one polyobj linked with the BSP leaf.
-     */
-    inline bool hasPolyobj() { return !!firstPolyobj(); }
-
-    /**
      * Returns a pointer to the first polyobj linked to the BSP leaf; otherwise @c 0.
      */
     struct polyobj_s *firstPolyobj() const;
 
     /**
-     * Returns the @ref bspLeafFlags of the BSP leaf.
+     * Returns @c true iff there is at least one polyobj linked with the BSP leaf.
      */
-    int flags() const;
+    inline bool hasPolyobj() { return firstPolyobj() != 0; }
 
     /**
      * Returns the original index of the BSP leaf.
      */
     uint origIndex() const;
-
-    /**
-     * Returns the frame number of the last time sprites were projected for the
-     * BSP leaf.
-     */
-    int addSpriteCount() const;
 
     /**
      * Returns the @em validCount of the BSP leaf. Used by some legacy iteration
@@ -190,31 +208,39 @@ public:
     int validCount() const;
 
     /**
-     * Retrieve the bias surface for specified geometry @a groupId
-     *
-     * @param groupId  Geometry group identifier for the bias surface.
-     */
-    biassurface_t &biasSurfaceForGeometryGroup(uint groupId);
-
-    /**
-     * Update the BSP leaf's map space axis-aligned bounding box to encompass
-     * the points defined by it's vertices.
-     */
-    void updateAABox();
-
-    /**
-     * Update the center point in the map coordinate space.
-     *
-     * @pre Axis-aligned bounding box must have been initialized.
-     */
-    void updateCenter();
-
-    /**
      * Update the world grid offset.
      *
      * @pre Axis-aligned bounding box must have been initialized.
      */
     void updateWorldGridOffset();
+
+    /**
+     * Returns the vector described by the offset from the map coordinate space
+     * origin to the top most, left most point of the geometry of the BSP leaf.
+     *
+     * @see aaBox()
+     */
+    vec2d_t const &worldGridOffset() const;
+
+#ifdef __CLIENT__
+
+    /**
+     * Returns the @ref bspLeafFlags of the BSP leaf.
+     */
+    int flags() const;
+
+    /**
+     * Returns the frame number of the last time sprites were projected for the
+     * BSP leaf.
+     */
+    int addSpriteCount() const;
+
+    /**
+     * Retrieve the bias surface for specified geometry @a groupId
+     *
+     * @param groupId  Geometry group identifier for the bias surface.
+     */
+    biassurface_t &biasSurfaceForGeometryGroup(uint groupId);
 
     /**
      * Returns a pointer to the HEdge of the BSP lead which has been chosen for
@@ -228,13 +254,7 @@ public:
      */
     ShadowLink *firstShadowLink() const;
 
-    /**
-     * Returns the vector described by the offset from the map coordinate space
-     * origin to the top most, left most point of the geometry of the BSP leaf.
-     *
-     * @see aaBox()
-     */
-    vec2d_t const &worldGridOffset() const;
+#endif // __CLIENT__
 
     /**
      * Get a property value, selected by DMU_* name.
@@ -253,4 +273,4 @@ public:
     int setProperty(setargs_t const &args);
 };
 
-#endif // LIBDENG_MAP_BSPLEAF
+#endif // DENG_WORLD_MAP_BSPLEAF

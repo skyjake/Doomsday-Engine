@@ -163,9 +163,9 @@ void S_MapChange(void)
 
 #ifdef __CLIENT__
     Sfx_MapChange();
-#endif
 
     S_ResetReverb();
+#endif
 }
 
 void S_SetupForChangedMap(void)
@@ -182,7 +182,10 @@ void S_Reset(void)
     Sfx_Reset();
 #endif
     _api_S.StopMusic();
+
+#ifdef __CLIENT__
     S_ResetReverb();
+#endif
 }
 
 void S_StartFrame(void)

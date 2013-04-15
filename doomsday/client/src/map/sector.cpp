@@ -405,8 +405,8 @@ void Sector::planeHeightChanged(Plane &plane, coord_t oldHeight)
     updateSoundEmitterOrigin();
 #ifdef __CLIENT__
     R_UpdateMissingMaterialsForLinesOfSector(*this);
-#endif
     S_MarkSectorReverbDirty(this);
+#endif
 
     // Check if there are any camera players in this sector. If their
     // height is now above the ceiling/below the floor they are now in

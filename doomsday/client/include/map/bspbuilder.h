@@ -1,4 +1,4 @@
-/** @file bspbuilder.h BSP Builder.
+/** @file bspbuilder.h World Map BSP Builder.
  *
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
@@ -20,8 +20,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_BSPBUILDER
-#define LIBDENG_BSPBUILDER
+#ifndef DENG_WORLD_MAP_BSPBUILDER
+#define DENG_WORLD_MAP_BSPBUILDER
 
 #include "map/gamemap.h"
 #include "map/bsp/bsptreenode.h"
@@ -130,4 +130,4 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG_BSPBUILDER
+#endif // DENG_WORLD_MAP_BSPBUILDER

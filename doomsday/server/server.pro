@@ -324,7 +324,6 @@ SOURCES += \
     src/server/sv_sound.cpp \
     $$SRC/src/api_uri.cpp \
     $$SRC/src/audio/s_cache.cpp \
-    $$SRC/src/audio/s_environ.cpp \
     $$SRC/src/audio/s_logic.cpp \
     $$SRC/src/audio/s_main.cpp \
     $$SRC/src/audio/s_wav.cpp \

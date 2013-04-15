@@ -977,7 +977,9 @@ boolean MPE_End()
         map->linkBspLeaf(*bspLeaf);
     }
 
+#ifdef __CLIENT__
     S_DetermineBspLeafsAffectingSectorReverb(map);
+#endif
 
     lastBuiltMap = map;
     lastBuiltMapResult = true; // Success.

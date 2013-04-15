@@ -1,4 +1,4 @@
-/** @file bspleaf.cpp Map BSP Leaf
+/** @file bspleaf.cpp World Map BSP Leaf.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -20,14 +20,15 @@
 
 #include <cmath> // fmod
 
+#include <de/Log>
+
 #include "de_base.h"
-#include "m_misc.h"
+//#include "m_misc.h"
+
 #include "map/hedge.h"
 #include "map/polyobj.h"
 #include "map/sector.h"
 #include "map/vertex.h"
-#include <de/Log>
-#include <de/vector1.h>
 
 #include "map/bspleaf.h"
 
@@ -36,33 +37,36 @@ using namespace de;
 BspLeaf::BspLeaf() : MapElement(DMU_BSPLEAF)
 {
     _hedge = 0;
-    _flags = BLF_UPDATE_FANBASE;
     _index = 0;
-    _addSpriteCount = 0;
     _validCount = 0;
     _hedgeCount = 0;
     _sector = 0;
     _polyObj = 0;
-    _fanBase = 0;
-    _shadows = 0;
     std::memset(_center, 0, sizeof(_center));
     std::memset(_worldGridOffset, 0, sizeof(_worldGridOffset));
+
+#ifdef __CLIENT__
+    _flags = BLF_UPDATE_FANBASE;
+    _addSpriteCount = 0;
+    _fanBase = 0;
+    _shadows = 0;
     _bsuf = 0;
     std::memset(_reverb, 0, sizeof(_reverb));
+#endif
 }
 
 BspLeaf::~BspLeaf()
 {
+#ifdef __CLIENT__
     if(_bsuf)
     {
-#ifdef __CLIENT__
         for(uint i = 0; i < _sector->planeCount(); ++i)
         {
             SB_DestroySurface(_bsuf[i]);
         }
-#endif
         Z_Free(_bsuf);
     }
+#endif // __CLIENT__
 
     // Clear the HEdges.
     if(_hedge)
@@ -123,6 +127,17 @@ void BspLeaf::updateCenter()
     _center[VY] = _aaBox.minY + (_aaBox.maxY - _aaBox.minY) / 2;
 }
 
+vec2d_t const &BspLeaf::worldGridOffset() const
+{
+    return _worldGridOffset;
+}
+
+void BspLeaf::updateWorldGridOffset()
+{
+    _worldGridOffset[VX] = fmod(_aaBox.minX, 64);
+    _worldGridOffset[VY] = fmod(_aaBox.maxY, 64);
+}
+
 HEdge *BspLeaf::firstHEdge() const
 {
     return _hedge;
@@ -153,24 +168,26 @@ struct polyobj_s *BspLeaf::firstPolyobj() const
     return _polyObj;
 }
 
-int BspLeaf::flags() const
-{
-    return _flags;
-}
-
 uint BspLeaf::origIndex() const
 {
     return _index;
 }
 
-int BspLeaf::addSpriteCount() const
-{
-    return _addSpriteCount;
-}
-
 int BspLeaf::validCount() const
 {
     return _validCount;
+}
+
+#ifdef __CLIENT__
+
+int BspLeaf::flags() const
+{
+    return _flags;
+}
+
+int BspLeaf::addSpriteCount() const
+{
+    return _addSpriteCount;
 }
 
 biassurface_t &BspLeaf::biasSurfaceForGeometryGroup(uint groupId)
@@ -194,16 +211,7 @@ ShadowLink *BspLeaf::firstShadowLink() const
     return _shadows;
 }
 
-vec2d_t const &BspLeaf::worldGridOffset() const
-{
-    return _worldGridOffset;
-}
-
-void BspLeaf::updateWorldGridOffset()
-{
-    _worldGridOffset[VX] = fmod(_aaBox.minX, 64);
-    _worldGridOffset[VY] = fmod(_aaBox.maxY, 64);
-}
+#endif // __CLIENT__
 
 int BspLeaf::property(setargs_t &args) const
 {

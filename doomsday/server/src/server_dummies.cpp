@@ -701,3 +701,15 @@ DENG_EXTERN_C void Rend_ApplyLightAdaptation(float* val)
 {
     DENG_UNUSED(val);
 }
+
+char const *S_AudioEnvironmentName(AudioEnvironmentClass env)
+{
+    DENG_UNUSED(env);
+    return "";
+}
+
+AudioEnvironmentClass S_AudioEnvironmentForMaterial(Uri const *uri)
+{
+    DENG_UNUSED(uri);
+    return AEC_UNKNOWN;
+}
