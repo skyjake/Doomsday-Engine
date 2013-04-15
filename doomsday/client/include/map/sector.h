@@ -1,4 +1,4 @@
-/** @file sector.h Map Sector.
+/** @file sector.h World Map Sector.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_MAP_SECTOR
-#define LIBDENG_MAP_SECTOR
+#ifndef DENG_WORLD_MAP_SECTOR
+#define DENG_WORLD_MAP_SECTOR
 
 #include <QList>
 
@@ -27,14 +27,16 @@
 
 #include <de/Error>
 #include <de/Observers>
+#include <de/Vector>
 
-#include "map/plane.h"
-#include "p_mapdata.h"
-#include "p_dmu.h"
 #include "MapElement"
+#include "map/p_dmu.h"
+#include "map/plane.h"
 
 class BspLeaf;
+class GameMap;
 class Line;
+class Surface;
 
 /**
  * @defgroup sectorFrameFlags Sector frame flags
@@ -99,9 +101,6 @@ public: /// @todo Make private:
     /// @ref sectorFrameFlags
     int _frameFlags;
 
-    /// if == validCount, already checked.
-    int _validCount;
-
     /// Ambient light level in the sector.
     float _lightLevel;
 
@@ -121,59 +120,15 @@ public: /// @todo Make private:
     /// characteristics of the sector (not owned).
     BspLeafs _reverbBspLeafs;
 
-    /// List of sector planes (owned).
-    Planes _planes;
-
     /// LightGrid data values.
     LightGridData _lightGridData;
 
     /// Final environmental audio characteristics.
     AudioEnvironmentFactors _reverb;
 
-    /// Original index in the archived map.
-    int _origIndex;
-
 public:
     Sector(float lightLevel               = DEFAULT_LIGHT_LEVEL,
            de::Vector3f const &lightColor = DEFAULT_LIGHT_COLOR);
-
-    /**
-     * Returns the first mobj in the linked list of mobjs "in" the sector.
-     */
-    struct mobj_s *firstMobj() const;
-
-    /**
-     * Returns the primary sound emitter for the sector. Other emitters in the
-     * sector are linked to this, forming a chain which can be traversed using
-     * the 'next' pointer of the emitter's thinker_t.
-     */
-    ddmobj_base_t &soundEmitter();
-
-    /// @copydoc soundEmitter()
-    ddmobj_base_t const &soundEmitter() const;
-
-    /**
-     * Returns the final environmental audio characteristics of the sector.
-     */
-    AudioEnvironmentFactors const &audioEnvironmentFactors() const;
-
-    /**
-     * Returns the original index of the sector.
-     */
-    uint origIndex() const;
-
-    /**
-     * Returns the @ref sectorFrameFlags for the sector.
-     */
-    int frameFlags() const;
-
-    /**
-     * Returns the @em validCount of the sector. Used by some legacy iteration
-     * algorithms for marking sectors as processed/visited.
-     *
-     * @todo Refactor away.
-     */
-    int validCount() const;
 
     /**
      * Returns the sector plane with the specified @a planeIndex.
@@ -198,6 +153,19 @@ public:
 
     /// @copydoc ceiling()
     inline Plane const &ceiling() const { return plane(Plane::Ceiling); }
+
+    Plane *addPlane(de::Vector3f const &normal, coord_t height);
+
+    /**
+     * Provides access to the list of planes in/owned by the sector, for efficient
+     * traversal.
+     */
+    Planes const &planes() const;
+
+    /**
+     * Returns the total number of planes in/owned by the sector.
+     */
+    inline uint planeCount() const { return uint(planes().count()); }
 
     /**
      * Convenient accessor method for returning the surface of the specified
@@ -249,17 +217,6 @@ public:
      * @param map  Map to collate lines from. @todo Refactor away.
      */
     void buildLines(GameMap const &map);
-
-    /**
-     * Provides access to the list of planes in/owned by the sector, for efficient
-     * traversal.
-     */
-    Planes const &planes() const;
-
-    /**
-     * Returns the total number of planes in/owned by the sector.
-     */
-    inline uint planeCount() const { return uint(planes().count()); }
 
     /**
      * Provides access to the list of BSP leafs which reference the sector, for
@@ -327,11 +284,14 @@ public:
     void updateRoughArea();
 
     /**
-     * @param newEmitter  Mobj base to link to the sector. Caller must ensure
-     *                    that the object is not linked multiple times into
-     *                    the chain.
+     * Returns the primary sound emitter for the sector. Other emitters in the
+     * sector are linked to this, forming a chain which can be traversed using
+     * the 'next' pointer of the emitter's thinker_t.
      */
-    void linkSoundEmitter(ddmobj_base_t &newEmitter);
+    ddmobj_base_t &soundEmitter();
+
+    /// @copydoc soundEmitter()
+    ddmobj_base_t const &soundEmitter() const;
 
     /**
      * Update the sound emitter origin of the sector according to the point
@@ -340,6 +300,13 @@ public:
      * axis between floor and ceiling planes.
      */
     void updateSoundEmitterOrigin();
+
+    /**
+     * @param newEmitter  Mobj base to link to the sector. Caller must ensure
+     *                    that the object is not linked multiple times into
+     *                    the chain.
+     */
+    void linkSoundEmitter(ddmobj_base_t &newEmitter);
 
     /**
      * Returns the ambient light level in the sector. The LightLevelChange
@@ -466,6 +433,44 @@ public:
     inline void setLightBlue(float newStrength)  { setLightColorComponent(2, newStrength); }
 
     /**
+     * Returns the first mobj in the linked list of mobjs "in" the sector.
+     */
+    struct mobj_s *firstMobj() const;
+
+    /**
+     * Returns the final environmental audio characteristics of the sector.
+     */
+    AudioEnvironmentFactors const &audioEnvironmentFactors() const;
+
+    /**
+     * Returns the original index of the sector.
+     */
+    uint origIndex() const;
+
+    /**
+     * Change the original index of the sector.
+     *
+     * @param newIndex  New original index.
+     */
+    void setOrigIndex(uint newIndex);
+
+    /**
+     * Returns the @ref sectorFrameFlags for the sector.
+     */
+    int frameFlags() const;
+
+    /**
+     * Returns the @em validCount of the sector. Used by some legacy iteration
+     * algorithms for marking sectors as processed/visited.
+     *
+     * @todo Refactor away.
+     */
+    int validCount() const;
+
+    /// @todo Refactor away.
+    void setValidCount(int newValidCount);
+
+    /**
      * Get a property value, selected by DMU_* name.
      *
      * @param args  Property arguments.
@@ -489,4 +494,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif // LIBDENG_MAP_SECTOR
+#endif // DENG_WORLD_MAP_SECTOR

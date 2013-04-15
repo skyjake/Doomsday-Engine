@@ -18,23 +18,27 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_MAP_SURFACE
-#define LIBDENG_MAP_SURFACE
+#ifndef DENG_WORLD_MAP_SURFACE
+#define DENG_WORLD_MAP_SURFACE
 
 #include <QSet>
 
+#include <de/Error>
 #include <de/Observers>
 #include <de/Vector>
 
+#include "MapElement"
 #include "Material"
 #ifdef __CLIENT__
 #  include "MaterialSnapshot"
 #endif
 #include "map/p_dmu.h"
-#include "map/bspleaf.h"
-#include "resource/r_data.h"
+
+class BspLeaf;
 
 /**
+ * World map surface.
+ *
  * @ingroup map
  */
 class Surface : public de::MapElement
@@ -461,7 +465,4 @@ private:
 
 struct surfacedecorsource_s;
 
-/// Set of surfaces.
-typedef QSet<Surface *> SurfaceSet;
-
-#endif // LIBDENG_MAP_SURFACE
+#endif // DENG_WORLD_MAP_SURFACE

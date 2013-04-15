@@ -24,7 +24,9 @@
 #include "de_console.h"
 #include "de_play.h"
 #include "de_misc.h"
+
 #include "render/r_main.h" // validCount
+#include "map/hedge.h"
 
 #include "map/polyobj.h"
 
@@ -47,6 +49,38 @@ static void notifyGeometryChanged(Polyobj &po)
 #else // !__CLIENT__
     DENG2_UNUSED(po);
 #endif
+}
+
+polyobj_s::polyobj_s(de::Vector2d const &origin_)
+{
+    origin[VX] = origin_.x;
+    origin[VY] = origin_.y;
+    bspLeaf = 0;
+    idx = 0;
+    tag = 0;
+    validCount = 0;
+    dest[0] = dest[1] = 0;
+    angle = destAngle = 0;
+    angleSpeed = 0;
+    _lines = new Lines;
+    _uniqueVertexes = new Vertexes;
+    originalPts = 0;
+    prevPts = 0;
+    speed = 0;
+    crush = false;
+    seqType = 0;
+    _origIndex = 0;
+}
+
+polyobj_s::~polyobj_s()
+{
+    foreach(Line *line, lines())
+    {
+        delete line->front().leftHEdge();
+    }
+
+    delete static_cast<Lines *>(_lines);
+    delete static_cast<Vertexes *>(_uniqueVertexes);
 }
 
 Polyobj::Lines const &Polyobj::lines() const
@@ -321,4 +355,24 @@ bool Polyobj::rotate(angle_t delta)
     notifyGeometryChanged(*this);
 
     return true;
+}
+
+void Polyobj::setTag(int newTag)
+{
+    tag = newTag;
+}
+
+void Polyobj::setSequenceType(int newType)
+{
+    seqType = newType;
+}
+
+uint Polyobj::origIndex() const
+{
+    return _origIndex;
+}
+
+void Polyobj::setOrigIndex(uint newIndex)
+{
+    _origIndex = newIndex;
 }

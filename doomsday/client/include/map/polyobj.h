@@ -1,4 +1,4 @@
-/** @file polyobj.h Moveable Polygonal Map-Object (Polyobj).
+/** @file polyobj.h World Map Polyobj.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,20 +18,24 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_MAP_POLYOBJ_H
-#define LIBDENG_MAP_POLYOBJ_H
+#ifndef DENG_WORLD_MAP_POLYOBJ
+#define DENG_WORLD_MAP_POLYOBJ
 
 #include <QList>
 #include <QSet>
 
-#include <de/vector1.h>
+#include <de/vector1.h> /// @todo Remove me.
+
+#include <de/Vector>
 
 #include "dd_share.h"
 
-#include "map/line.h"
-#include "map/vertex.h"
+class Line;
+class Vertex;
 
 /**
+ * World map polyobj. Moveable Polygonal Map-Object (Polyobj).
+ *
  * @ingroup map
  */
 typedef struct polyobj_s
@@ -43,36 +47,10 @@ public:
 public:
     DD_BASE_POLYOBJ_ELEMENTS()
 
-    polyobj_s()
-    {
-        bspLeaf = 0;
-        idx = 0;
-        tag = 0;
-        validCount = 0;
-        dest[0] = dest[1] = 0;
-        angle = destAngle = 0;
-        angleSpeed = 0;
-        _lines = new Lines;
-        _uniqueVertexes = new Vertexes;
-        originalPts = 0;
-        prevPts = 0;
-        speed = 0;
-        crush = false;
-        seqType = 0;
-        buildData.index = 0;
-    }
+    polyobj_s(de::Vector2d const &origin = de::Vector2d(0, 0));
 
-    // Does nothing about the user data section.
-    ~polyobj_s()
-    {
-        foreach(Line *line, lines())
-        {
-            delete line->front().leftHEdge();
-        }
-
-        delete static_cast<Lines *>(_lines);
-        delete static_cast<Vertexes *>(_uniqueVertexes);
-    }
+    /// @note: Does nothing about the user data section.
+    ~polyobj_s();
 
     /**
      * Provides access to the list of Lines for the polyobj.
@@ -140,12 +118,34 @@ public:
      */
     void updateSurfaceTangents();
 
-#if 0
-    bool property(setargs_t &args) const;
-    bool setProperty(setargs_t const &args);
-#endif
+    /**
+     * Change the tag associated with the polyobj.
+     *
+     * @param newTag  New tag.
+     */
+    void setTag(int newTag);
+
+    /**
+     * Change the associated sequence type of the polyobj.
+     *
+     * @param newType  New sequence type.
+     */
+    void setSequenceType(int newType);
+
+    /**
+     * Returns the original index of the polyobj.
+     */
+    uint origIndex() const;
+
+    /**
+     * Change the original index of the polyobj.
+     *
+     * @param newIndex  New original index.
+     */
+    void setOrigIndex(uint newIndex);
+
 } Polyobj;
 
 #define POLYOBJ_SIZE        gx.polyobjSize
 
-#endif // LIBDENG_MAP_POLYOB_H
+#endif // DENG_WORLD_MAP_POLYOB

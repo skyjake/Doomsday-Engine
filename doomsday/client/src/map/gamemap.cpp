@@ -61,7 +61,7 @@ DENG2_PIMPL(GameMap)
     SurfaceSet glowingSurfaces;
 #endif
 
-    skyfix_t skyFix[2]; // [floor, ceiling]
+    coord_t skyFix[2]; // [floor, ceiling]
 
     // Current LOS trace state.
     /// @todo Does not belong here.
@@ -564,12 +564,12 @@ void GameMap::updateBounds()
 
 #ifdef __CLIENT__
 
-SurfaceSet &GameMap::decoratedSurfaces()
+GameMap::SurfaceSet &GameMap::decoratedSurfaces()
 {
     return d->decoratedSurfaces;
 }
 
-SurfaceSet &GameMap::glowingSurfaces()
+GameMap::SurfaceSet &GameMap::glowingSurfaces()
 {
     return d->glowingSurfaces;
 }
@@ -679,8 +679,8 @@ void GameMap::initSkyFix()
 {
     Time begunAt;
 
-    d->skyFix[Plane::Floor].height   = DDMAXFLOAT;
-    d->skyFix[Plane::Ceiling].height = DDMINFLOAT;
+    d->skyFix[Plane::Floor]   = DDMAXFLOAT;
+    d->skyFix[Plane::Ceiling] = DDMINFLOAT;
 
     // Update for sector plane heights and mobjs which intersect the ceiling.
     foreach(Sector *sector, _sectors)
@@ -694,13 +694,13 @@ void GameMap::initSkyFix()
 coord_t GameMap::skyFix(bool ceiling) const
 {
     Plane::Type plane = ceiling? Plane::Ceiling : Plane::Floor;
-    return d->skyFix[plane].height;
+    return d->skyFix[plane];
 }
 
-void GameMap::setSkyFix(bool ceiling, coord_t height)
+void GameMap::setSkyFix(bool ceiling, coord_t newHeight)
 {
     Plane::Type plane = ceiling? Plane::Ceiling : Plane::Floor;
-    d->skyFix[plane].height = height;
+    d->skyFix[plane] = newHeight;
 }
 
 int GameMap::vertexIndex(Vertex const *vtx) const
@@ -1735,7 +1735,7 @@ void GameMap::updateScrollingSurfaces()
     }
 }
 
-SurfaceSet &GameMap::scrollingSurfaces()
+GameMap::SurfaceSet &GameMap::scrollingSurfaces()
 {
     return d->scrollingSurfaces;
 }
@@ -1782,7 +1782,7 @@ void GameMap::updateTrackedPlanes()
     }
 }
 
-PlaneSet &GameMap::trackedPlanes()
+GameMap::PlaneSet &GameMap::trackedPlanes()
 {
     return d->trackedPlanes;
 }

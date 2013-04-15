@@ -24,7 +24,7 @@
 
 #include "audio/s_environ.h"
 #include "map/line.h"
-#include "map/gamemap.h"
+#include "map/gamemap.h" /// @todo remove me.
 #include "map/r_world.h" // ddMapSetup
 #include "render/r_main.h" // frameTimePos
 
@@ -107,6 +107,8 @@ DENG2_PIMPL(Plane)
         theMap->decoratedSurfaces().remove(&surface);
 
 #endif // __CLIENT__
+
+        DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->planeBeingDeleted(self);
     }
 
     void notifyHeightChanged(coord_t oldHeight)
@@ -196,11 +198,6 @@ Plane::Plane(Sector &sector, Vector3f const &normal, coord_t height)
     : MapElement(DMU_PLANE), d(new Instance(this, sector, height))
 {
     setNormal(normal);
-}
-
-Plane::~Plane()
-{
-    DENG2_FOR_AUDIENCE(Deletion, i) i->planeBeingDeleted(*this);
 }
 
 Sector &Plane::sector()

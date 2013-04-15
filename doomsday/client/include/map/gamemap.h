@@ -1,4 +1,4 @@
-/** @file gamemap.h Gamemap.
+/** @file gamemap.h World Map.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -21,18 +21,26 @@
 #ifndef DENG_WORLD_MAP_H
 #define DENG_WORLD_MAP_H
 
+#include <QList>
+#include <QSet>
+
 #include <de/mathutil.h>
 
-#include <EntityDatabase>
-#include "p_maptypes.h"
+#include "EntityDatabase"
+#include "m_nodepile.h"
 #include "p_particle.h"
-#include "plane.h"
+#include "map/polyobj.h"
+
+class Vertex;
+class Line;
+class Sector;
+class Plane;
+class BspLeaf;
+class BspNode;
 
 struct thinkerlist_s;
 struct clmoinfo_s;
 struct generators_s;
-
-/// @todo Remove me.
 struct blockmap_s;
 
 /**
@@ -61,13 +69,8 @@ struct clplane_s;
 struct clpolyobj_s;
 
 /**
- * @ingroup map
- */
-typedef struct skyfix_s {
-    coord_t height;
-} skyfix_t;
-
-/**
+ * World map.
+ *
  * @ingroup map
  */
 class GameMap
@@ -81,6 +84,9 @@ public:
     typedef QList<HEdge *> HEdges;
     typedef QList<BspNode *> BspNodes;
     typedef QList<BspLeaf *> BspLeafs;
+
+    typedef QSet<Plane *> PlaneSet;
+    typedef QSet<Surface *> SurfaceSet;
 
 public:
     de::Uri _uri;
@@ -385,13 +391,13 @@ public:
     inline coord_t skyFixFloor() const   { return skyFix(false /*the floor*/); }
     inline coord_t skyFixCeiling() const { return skyFix(true /*the ceiling*/); }
 
-    void setSkyFix(bool ceiling, coord_t height);
+    void setSkyFix(bool ceiling, coord_t newHeight);
 
-    inline void setSkyFixFloor(coord_t height) {
-        setSkyFix(false /*the floor*/, height);
+    inline void setSkyFixFloor(coord_t newHeight) {
+        setSkyFix(false /*the floor*/, newHeight);
     }
-    inline void setSkyFixCeiling(coord_t height) {
-        setSkyFix(true /*the ceiling*/, height);
+    inline void setSkyFixCeiling(coord_t newHeight) {
+        setSkyFix(true /*the ceiling*/, newHeight);
     }
 
     /**

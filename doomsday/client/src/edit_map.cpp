@@ -92,18 +92,18 @@ public:
         Sector *sector = new Sector(lightLevel, lightColor);
 
         sectors.append(sector);
-        sector->_origIndex = sectors.count(); // 1-based index, 0 = NIL.
+        sector->setOrigIndex(sectors.count()); // 1-based index, 0 = NIL.
 
         return sector;
     }
 
-    Polyobj *createPolyobj()
+    Polyobj *createPolyobj(Vector2d const &origin)
     {
         void *region = M_Calloc(POLYOBJ_SIZE);
-        Polyobj *po = new (region) Polyobj;
+        Polyobj *po = new (region) Polyobj(origin);
 
         polyobjs.append(po);
-        po->buildData.index = polyobjs.count(); // 1-based index, 0 = NIL.
+        po->setOrigIndex(polyobjs.count()); // 1-based index, 0 = NIL.
 
         return po;
     }
@@ -1076,18 +1076,12 @@ uint MPE_PlaneCreate(uint sectorIdx, coord_t height, ddstring_t const *materialU
     if(sectorIdx == 0 || sectorIdx > (uint)editMap.sectors.count()) return 0;
 
     Sector *sector = editMap.sectors[sectorIdx - 1];
-
-    Plane *plane = new Plane(*sector, Vector3f(normalX, normalY, normalZ), height);
+    Plane *plane = sector->addPlane(Vector3f(normalX, normalY, normalZ), height);
 
     plane->surface().setMaterial(findMaterialInDict(materialUri));
     plane->surface().setTintColor(r, g, b);
     plane->surface().setOpacity(a);
     plane->surface().setMaterialOrigin(matOffsetX, matOffsetY);
-
-    sector->_planes.append(plane);
-    plane->setInSectorIndex(sector->planeCount() - 1);
-
-    plane->audienceForHeightChange += sector;
 
     return plane->inSectorIndex() + 1; // 1-based index.
 }
@@ -1115,11 +1109,10 @@ uint MPE_PolyobjCreate(uint *lines, uint lineCount, int tag, int sequenceType,
         if(line->isFromPolyobj()) return 0;
     }
 
-    Polyobj *po = editMap.createPolyobj();
-    po->tag = tag;
-    po->seqType = sequenceType;
-    po->origin[VX] = originX;
-    po->origin[VY] = originY;
+    Polyobj *po = editMap.createPolyobj(Vector2d(originX, originY));
+    po->setSequenceType(sequenceType);
+    po->setTag(tag);
+
 
     for(uint i = 0; i < lineCount; ++i)
     {
@@ -1130,7 +1123,7 @@ uint MPE_PolyobjCreate(uint *lines, uint lineCount, int tag, int sequenceType,
         static_cast<Polyobj::Lines *>(po->_lines)->append(line);
     }
 
-    return po->buildData.index;
+    return po->origIndex();
 }
 
 #undef MPE_GameObjProperty

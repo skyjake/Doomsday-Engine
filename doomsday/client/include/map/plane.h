@@ -21,18 +21,17 @@
 #ifndef DENG_WORLD_MAP_PLANE
 #define DENG_WORLD_MAP_PLANE
 
-#include <QSet>
+#include <QList>
 
 #include <de/Error>
 #include <de/Observers>
 #include <de/Vector>
 
 #include "MapElement"
-#include "resource/r_data.h"
 #include "map/p_dmu.h"
-#include "map/surface.h"
 
 class Sector;
+class Surface;
 
 /**
  * World map sector plane.
@@ -77,7 +76,6 @@ public:
      * @param height  Height of the plane in map space coordinates.
      */
     Plane(Sector &sector, de::Vector3f const &normal, coord_t height = 0);
-    ~Plane();
 
     /**
      * Returns the owning Sector of the plane.
@@ -215,11 +213,5 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
-
-/**
- * A set of Planes.
- * @ingroup map
- */
-typedef QSet<Plane *> PlaneSet;
 
 #endif // DENG_WORLD_MAP_PLANE

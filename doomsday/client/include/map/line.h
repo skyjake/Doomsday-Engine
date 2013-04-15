@@ -22,10 +22,10 @@
 #define DENG_WORLD_MAP_LINE
 
 #include <de/binangle.h>
-#include <de/vector1.h>
+#include <de/vector1.h> /// @todo remove me
 
-#include <de/Vector>
 #include <de/Error>
+#include <de/Vector>
 
 #include "MapElement"
 #include "map/surface.h"
@@ -147,40 +147,15 @@ public:
             ddmobj_base_t _soundEmitter;
 
         public:
-            Section(Side &side)
-                : _surface(dynamic_cast<MapElement &>(side))
-            {
-                std::memset(&_soundEmitter, 0, sizeof(_soundEmitter));
-            }
+            Section(Side &side);
 
-            Surface &surface() {
-                return _surface;
-            }
+            Surface &surface();
 
-            Surface const &surface() const {
-                return const_cast<Surface const &>(const_cast<Section &>(*this).surface());
-            }
+            Surface const &surface() const;
 
-            ddmobj_base_t &soundEmitter() {
-                return _soundEmitter;
-            }
+            ddmobj_base_t &soundEmitter();
 
-            ddmobj_base_t const &soundEmitter() const {
-                return const_cast<ddmobj_base_t const &>(const_cast<Section &>(*this).soundEmitter());
-            }
-        };
-
-        struct Sections /// @todo choose a better name
-        {
-            Section middle;
-            Section bottom;
-            Section top;
-
-            Sections(Side &side)
-                : middle(side),
-                  bottom(side),
-                  top(side)
-            {}
+            ddmobj_base_t const &soundEmitter() const;
         };
 
     public: /// @todo make private:
@@ -491,6 +466,19 @@ public:
         int setProperty(setargs_t const &args);
 
     private: /// @todo Move to a private Instance.
+        struct Sections /// @todo choose a better name
+        {
+            Section middle;
+            Section bottom;
+            Section top;
+
+            Sections(Side &side)
+                : middle(side),
+                  bottom(side),
+                  top(side)
+            {}
+        };
+
         /// Line owner of the side.
         Line &_line;
 

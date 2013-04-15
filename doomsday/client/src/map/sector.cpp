@@ -27,6 +27,7 @@
 #include "map/line.h"
 #include "map/gamemap.h"
 #include "map/p_players.h"
+#include "map/p_maptypes.h"
 #ifdef __CLIENT__
 #  include "map/r_world.h"
 #  include "render/rend_bias.h"
@@ -50,15 +51,26 @@ DENG2_PIMPL(Sector)
     /// Primary sound emitter. Others are linked to this, forming a chain.
     ddmobj_base_t soundEmitter;
 
+    /// List of planes (owned).
+    Planes planes;
+
     /// List of lines which reference the sector (not owned).
     Lines lines;
 
     /// List of BSP leafs which reference the sector (not owned).
     BspLeafs bspLeafs;
 
+    /// if == validCount, already checked.
+    int validCount;
+
+    /// Original index in the archived map.
+    int origIndex;
+
     Instance(Public *i)
         : Base(i),
-          roughArea(0)
+          roughArea(0),
+          validCount(0),
+          origIndex(0)
     {
         std::memset(&soundEmitter, 0, sizeof(soundEmitter));
     }
@@ -74,7 +86,7 @@ DENG2_PIMPL(Sector)
         }
 #endif
 
-        qDeleteAll(self._planes);
+        qDeleteAll(planes);
     }
 
     void notifyLightLevelChanged(float oldLightLevel)
@@ -114,11 +126,9 @@ Sector::Sector(float lightLevel, Vector3f const &lightColor)
       d(new Instance(this))
 {
     _frameFlags = 0;
-    _validCount = 0;
     _mobjList = 0;
     std::memset(&_lightGridData, 0, sizeof(_lightGridData));
     std::memset(_reverb, 0, sizeof(_reverb));
-    _origIndex = 0;
 }
 
 float Sector::lightLevel() const
@@ -195,7 +205,12 @@ AudioEnvironmentFactors const &Sector::audioEnvironmentFactors() const
 
 uint Sector::origIndex() const
 {
-    return _origIndex;
+    return d->origIndex;
+}
+
+void Sector::setOrigIndex(uint newIndex)
+{
+    d->origIndex = newIndex;
 }
 
 int Sector::frameFlags() const
@@ -205,14 +220,19 @@ int Sector::frameFlags() const
 
 int Sector::validCount() const
 {
-    return _validCount;
+    return d->validCount;
+}
+
+void Sector::setValidCount(int newValidCount)
+{
+    d->validCount = newValidCount;
 }
 
 Plane &Sector::plane(int planeIndex)
 {
-    if(planeIndex >= 0 && planeIndex < _planes.count())
+    if(planeIndex >= 0 && planeIndex < d->planes.count())
     {
-        return *_planes[planeIndex];
+        return *d->planes[planeIndex];
     }
     /// @throw MissingPlaneError The referenced plane does not exist.
     throw MissingPlaneError("Sector::plane", QString("Missing plane %1").arg(planeIndex));
@@ -257,9 +277,21 @@ void Sector::buildLines(GameMap const &map)
     }
 }
 
+Plane *Sector::addPlane(Vector3f const &normal, coord_t height)
+{
+    Plane *plane = new Plane(*this, normal, height);
+
+    plane->audienceForHeightChange += this;
+    plane->setInSectorIndex(d->planes.count());
+
+    d->planes.append(plane);
+
+    return plane;
+}
+
 Sector::Planes const &Sector::planes() const
 {
-    return _planes;
+    return d->planes;
 }
 
 Sector::BspLeafs const &Sector::bspLeafs() const
@@ -461,14 +493,14 @@ int Sector::property(setargs_t &args) const
         DMU_GetValue(DMT_SECTOR_MOBJLIST, &_mobjList, &args, 0);
         break;
     case DMU_VALID_COUNT:
-        DMU_GetValue(DMT_SECTOR_VALIDCOUNT, &_validCount, &args, 0);
+        DMU_GetValue(DMT_SECTOR_VALIDCOUNT, &d->validCount, &args, 0);
         break;
     case DMU_FLOOR_PLANE: {
-        Plane *pln = _planes[Plane::Floor];
+        Plane *pln = d->planes[Plane::Floor];
         DMU_GetValue(DMT_SECTOR_FLOORPLANE, &pln, &args, 0);
         break; }
     case DMU_CEILING_PLANE: {
-        Plane* pln = _planes[Plane::Ceiling];
+        Plane* pln = d->planes[Plane::Ceiling];
         DMU_GetValue(DMT_SECTOR_CEILINGPLANE, &pln, &args, 0);
         break; }
     default:
@@ -511,7 +543,7 @@ int Sector::setProperty(setargs_t const &args)
         setLightLevel(newLightLevel);
         break; }
     case DMU_VALID_COUNT:
-        DMU_SetValue(DMT_SECTOR_VALIDCOUNT, &_validCount, &args, 0);
+        DMU_SetValue(DMT_SECTOR_VALIDCOUNT, &d->validCount, &args, 0);
         break;
     default:
         /// @throw WritePropertyError  The requested property is not writable.

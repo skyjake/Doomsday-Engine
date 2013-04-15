@@ -27,10 +27,8 @@
 #include <de/Error>
 #include <de/Vector>
 
-#include "resource/r_data.h"
-
-#include "map/p_dmu.h"
 #include "MapElement"
+#include "map/p_dmu.h"
 
 class Line;
 
@@ -144,7 +142,7 @@ public:
 };
 
 /**
- * Map geometry vertex.
+ * World map geometry vertex.
  *
  * An @em owner in this context is any line whose start or end points are
  * defined as the vertex.

@@ -32,6 +32,7 @@
 #include "network/net_main.h"
 #include "map/gamemap.h"
 #include "map/p_players.h"
+#include "map/p_maptypes.h"
 
 using namespace de;
 

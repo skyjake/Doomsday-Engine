@@ -403,7 +403,7 @@ int GameMap_MobjSectorsIterator(GameMap *map, mobj_t *mo,
     // Always process the mobj's own sector first.
     Sector &ownSec = mo->bspLeaf->sector();
     *end++ = &ownSec;
-    ownSec._validCount = validCount;
+    ownSec.setValidCount(validCount);
 
     // Any good lines around here?
     if(mo->lineRoot)
@@ -418,7 +418,7 @@ int GameMap_MobjSectorsIterator(GameMap *map, mobj_t *mo,
             if(frontSec.validCount() != validCount)
             {
                 *end++ = &frontSec;
-                frontSec._validCount = validCount;
+                frontSec.setValidCount(validCount);
             }
 
             // And then the back side.
@@ -428,7 +428,7 @@ int GameMap_MobjSectorsIterator(GameMap *map, mobj_t *mo,
                 if(backSec.validCount() != validCount)
                 {
                     *end++ = &backSec;
-                    backSec._validCount = validCount;
+                    backSec.setValidCount(validCount);
                 }
             }
         }

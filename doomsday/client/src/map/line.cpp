@@ -41,6 +41,28 @@
 
 using namespace de;
 
+Line::Side::Section::Section(Line::Side &side)
+    : _surface(dynamic_cast<MapElement &>(side))
+{
+    std::memset(&_soundEmitter, 0, sizeof(_soundEmitter));
+}
+
+Surface &Line::Side::Section::surface() {
+    return _surface;
+}
+
+Surface const &Line::Side::Section::surface() const {
+    return const_cast<Surface const &>(const_cast<Section &>(*this).surface());
+}
+
+ddmobj_base_t &Line::Side::Section::soundEmitter() {
+    return _soundEmitter;
+}
+
+ddmobj_base_t const &Line::Side::Section::soundEmitter() const {
+    return const_cast<ddmobj_base_t const &>(const_cast<Section &>(*this).soundEmitter());
+}
+
 Line::Side::Side(Line &line, Sector *sector)
     : MapElement(DMU_SIDE),
       _flags(0),

@@ -40,6 +40,7 @@
 
 #include "audio/sys_audio.h"
 #include "map/p_players.h"
+#include "map/bspleaf.h"
 
 // MACROS ------------------------------------------------------------------
 

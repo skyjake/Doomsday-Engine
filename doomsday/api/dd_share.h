@@ -726,9 +726,7 @@ typedef struct povertex_s {
     double          speed; /* Movement speed. */ \
     boolean         crush; /* Should the polyobj attempt to crush mobjs? */ \
     int             seqType; \
-    struct { \
-        int         index; \
-    } buildData;
+    uint            _origIndex;
 
 //------------------------------------------------------------------------
 //
