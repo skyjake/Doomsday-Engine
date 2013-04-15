@@ -1,4 +1,4 @@
-/** @file vertex.h Map Geometry Vertex
+/** @file vertex.h World Map Vertex.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,14 +18,17 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_MAP_VERTEX
-#define LIBDENG_MAP_VERTEX
+#ifndef DENG_WORLD_MAP_VERTEX
+#define DENG_WORLD_MAP_VERTEX
+
+#include <de/binangle.h>
+#include <de/vector1.h> /// @todo remove me
 
 #include <de/Error>
 #include <de/Vector>
-#include <de/vector1.h> /// @todo remove me
-#include <de/binangle.h>
+
 #include "resource/r_data.h"
+
 #include "map/p_dmu.h"
 #include "MapElement"
 
@@ -166,24 +169,8 @@ public: /// @todo Make private:
     LineOwner *_lineOwners;
     uint _numLineOwners; ///< Total number of line owners.
 
-    /// @todo This temporary load-time data does not belong here. -ds
-    struct {
-        /// Vertex index. Always valid after loading and pruning of unused
-        /// vertices has occurred.
-        int index;
-
-        /// Reference count. When building normal node info, unused vertices
-        /// will be pruned.
-        int refCount;
-
-        /// Usually NULL, unless this vertex occupies the same location as a
-        /// previous vertex. Only used during the pruning phase.
-        Vertex *equiv;
-    } _buildData;
-
 public:
-    Vertex(coord_t x = 0, coord_t y = 0);
-    Vertex(de::Vector2d const &origin);
+    Vertex(de::Vector2d const &origin = de::Vector2d(0, 0));
 
     /**
      * Returns the origin (i.e., location) of the vertex in the map coordinate space.
@@ -232,6 +219,18 @@ public:
     LineOwner *firstLineOwner() const;
 
     /**
+     * Returns the original index of the vertex.
+     */
+    uint origIndex() const;
+
+    /**
+     * Change the original index of the vertex.
+     *
+     * @param newIndex  New original index.
+     */
+    void setOrigIndex(uint newIndex);
+
+    /**
      * Get a property value, selected by DMU_* name.
      *
      * @param args  Property arguments.
@@ -251,4 +250,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif // LIBDENG_MAP_VERTEX
+#endif // DENG_WORLD_MAP_VERTEX

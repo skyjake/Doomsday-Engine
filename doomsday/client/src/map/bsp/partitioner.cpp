@@ -199,7 +199,7 @@ DENG2_PIMPL(Partitioner)
      */
     VertexInfo &vertexInfo(Vertex const &vertex)
     {
-        return vertexInfos[vertex._buildData.index - 1];
+        return vertexInfos[vertex.origIndex() - 1];
     }
 
     struct testForWindowEffectParams
@@ -2027,7 +2027,7 @@ DENG2_PIMPL(Partitioner)
 
         /// @todo We do not have authorization to specify this index. -ds
         /// (This job should be done post BSP build.)
-        vtx->_buildData.index = map->vertexCount() + uint(vertexes.size() + 1); // 1-based index, 0 = NIL.
+        vtx->setOrigIndex(map->vertexCount() + uint(vertexes.size()) + 1); // 1-based index, 0 = NIL.
         vertexes.push_back(vtx);
 
         // There is now one more Vertex.
@@ -2161,7 +2161,7 @@ DENG2_PIMPL(Partitioner)
         {
             throw Error("Partitioner::openSectorAtAngle",
                         QString("Vertex #%1 has no hedge tips!")
-                            .arg(vtx._buildData.index - 1));
+                            .arg(vtx.origIndex() - 1));
         }
 
         // First check whether there's a wall_tip that lies in the exact

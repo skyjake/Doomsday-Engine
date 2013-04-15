@@ -373,11 +373,11 @@ DENG2_PIMPL(Line)
     }
 };
 
-Line::Line(Vertex &from, Vertex &to, Sector *frontSector, Sector *backSector)
+Line::Line(Vertex &from, Vertex &to, int flags, Sector *frontSector, Sector *backSector)
     : MapElement(DMU_LINE),
       _vo1(0),
       _vo2(0),
-      _flags(0),
+      _flags(flags),
       _inFlags(0),
       d(new Instance(this, from, to, frontSector, backSector))
 {
@@ -429,6 +429,12 @@ Vertex const &Line::vertex(int to) const
 {
     DENG_ASSERT((to? d->to : d->from) != 0);
     return to? *d->to : *d->from;
+}
+
+void Line::replaceVertex(int to, Vertex &newVertex)
+{
+    if(to) d->to   = &newVertex;
+    else   d->from = &newVertex;
 }
 
 LineOwner *Line::vertexOwner(int to) const

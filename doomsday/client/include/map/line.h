@@ -526,8 +526,9 @@ public: /// @todo make private:
 
 public:
     Line(Vertex &from, Vertex &to,
-            Sector *frontSector = 0,
-            Sector *backSector  = 0);
+         int flags                   = 0,
+         Sector *frontSector         = 0,
+         Sector *backSector          = 0);
 
     /**
      * Returns @c true iff the line is part of some Polyobj.
@@ -718,7 +719,7 @@ public:
     }
 
     /**
-     * Returns the specified edge vertex for the line.
+     * Returns the specified edge vertex of the line.
      *
      * @param to  If not @c 0 return the To vertex; otherwise the From vertex.
      */
@@ -733,8 +734,7 @@ public:
      *
      * @see vertex()
      */
-    inline const_pvec2d_t &vertexOrigin(int to) const
-    {
+    inline const_pvec2d_t &vertexOrigin(int to) const {
         return vertex(to).origin();
     }
 
@@ -924,6 +924,19 @@ public:
         coord_t point[2] = { x, y };
         return pointOnSide(point);
     }
+
+    /**
+     * Replace the specified edge vertex of the line.
+     *
+     * @attention Should only be called in map edit mode.
+     *
+     * @param to  If not @c 0 replace the To vertex; otherwise the From vertex.
+     * @param newVertex  The replacement vertex.
+     */
+    void replaceVertex(int to, Vertex &newVertex);
+
+    inline void replaceFrom(Vertex &newVertex) { replaceVertex(FROM, newVertex); }
+    inline void replaceTo(Vertex &newVertex)   { replaceVertex(TO, newVertex); }
 
     /**
      * Get a property value, selected by DMU_* name.

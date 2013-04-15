@@ -1,4 +1,4 @@
-/** @file vertex.cpp Map Geometry Vertex
+/** @file vertex.cpp World Map Vertex.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,9 +18,11 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
-#include "de_console.h"
-#include "de_play.h"
+#include <de/vector1.h> /// @todo Remove me.
+#include <de/Vector>
+
+#include "dd_share.h"
+#include "map/line.h"
 
 #include "map/vertex.h"
 
@@ -28,26 +30,22 @@ using namespace de;
 
 DENG2_PIMPL(Vertex)
 {
-    Instance(Public *i) : Base(i)
+    /// Original index in the archived map.
+    uint origIndex;
+
+    Instance(Public *i)
+        : Base(i),
+          origIndex(0)
     {}
 };
 
-Vertex::Vertex(coord_t x, coord_t y) : MapElement(DMU_VERTEX)
-{
-    _origin[VX] = x;
-    _origin[VY] = y;
-    _lineOwners = 0;
-    _numLineOwners = 0;
-    std::memset(&_buildData, 0, sizeof(_buildData));
-}
-
-Vertex::Vertex(Vector2d const &origin) : MapElement(DMU_VERTEX)
+Vertex::Vertex(Vector2d const &origin)
+    : MapElement(DMU_VERTEX), d(new Instance(this))
 {
     _origin[VX] = origin.x;
     _origin[VY] = origin.y;
     _lineOwners = 0;
     _numLineOwners = 0;
-    std::memset(&_buildData, 0, sizeof(_buildData));
 }
 
 vec2d_t const &Vertex::origin() const
@@ -89,6 +87,16 @@ void Vertex::countLineOwners(uint *oneSided, uint *twoSided) const
 LineOwner *Vertex::firstLineOwner() const
 {
     return _lineOwners;
+}
+
+uint Vertex::origIndex() const
+{
+    return d->origIndex;
+}
+
+void Vertex::setOrigIndex(uint newIndex)
+{
+    d->origIndex = newIndex;
 }
 
 int Vertex::property(setargs_t &args) const

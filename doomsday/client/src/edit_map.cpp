@@ -24,6 +24,12 @@
 
 #include <cmath>
 
+#include <QList>
+#include <QVector>
+#include <qtAlgorithms>
+
+#include <de/StringPool>
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_play.h"
@@ -35,37 +41,10 @@
 #ifdef __CLIENT__
 #  include "render/rend_main.h"
 #endif
-#include <de/StringPool>
 
 #include "audio/s_environ.h"
 
 using namespace de;
-
-#if 0
-static int vertexCompare(void const *p1, void const *p2)
-{
-    Vertex const *a = (Vertex const *) *((void const **) p1);
-    Vertex const *b = (Vertex const *) *((void const **) p2);
-
-    if(a == b) return 0;
-
-    if(int(a->origin()[VX]) != int(b->origin()[VX]))
-        return int(a->origin()[VX]) - int(b->origin()[VX]);
-
-    return int(a->origin()[VY]) - int(b->origin()[VY]);
-}
-#endif
-
-/**
- * @defgroup pruneMapElementFlags Prune Map Element Flags
- * Flags for pruneMapElements()
- */
-///@{
-#define PRUNE_LINES         0x1
-#define PRUNE_VERTEXES      0x2
-#define PRUNE_SECTORS       0x4
-#define PRUNE_ALL           (PRUNE_LINES|PRUNE_VERTEXES|PRUNE_SECTORS)
-///@}
 
 /**
  * Editable map data elements.
@@ -87,20 +66,20 @@ public:
         : entityDatabase(0)
     {}
 
-    Vertex *createVertex(coord_t x, coord_t y)
+    Vertex *createVertex(Vector2d const &origin)
     {
-        Vertex *vtx = new Vertex(x, y);
+        Vertex *vtx = new Vertex(origin);
 
         vertexes.append(vtx);
-        vtx->_buildData.index = vertexes.count(); // 1-based index, 0 = NIL.
+        vtx->setOrigIndex(vertexes.count()); // 1-based index, 0 = NIL.
 
         return vtx;
     }
 
-    Line *createLine(Vertex &v1, Vertex &v2, Sector *frontSector = 0,
-                     Sector *backSector = 0)
+    Line *createLine(Vertex &v1, Vertex &v2, int flags = 0,
+                     Sector *frontSector = 0, Sector *backSector = 0)
     {
-        Line *line = new Line(v1, v2, frontSector, backSector);
+        Line *line = new Line(v1, v2, flags, frontSector, backSector);
 
         lines.append(line);
         line->setOrigIndex(lines.count()); // 1-based index, 0 = NIL.
@@ -148,191 +127,144 @@ public:
         polyobjs.clear();
     }
 
-#if 0
-    void markDuplicateVertexes()
+    void pruneVertexes()
     {
-        Vertex **hits = (Vertex **) M_Malloc(vertexes.count() * sizeof(Vertex *));
-
-        // Sort array of ptrs.
-        for(uint i = 0; i < vertexes.count(); ++i)
+        struct VertexInfo
         {
-            hits[i] = vertexes[i];
-        }
-        qsort(hits, vertexes.count(), sizeof(Vertex *), vertexCompare);
+            /// Vertex for this info.
+            Vertex *vertex;
 
-        // Now mark them off.
-        for(uint i = 0; i < vertexes.count() - 1; ++i)
-        {
-            // A duplicate?
-            if(vertexCompare(hits + i, hits + i + 1) == 0)
+            /// Determined equivalent vertex.
+            Vertex *equiv;
+
+            /// Line -> Vertex reference count.
+            uint refCount;
+
+            VertexInfo()
+                : vertex(0), equiv(0), refCount(0)
+            {}
+
+            /// @todo Math here is not correct (rounding directionality). -ds
+            int compareVertexOrigins(VertexInfo const &other) const
             {
-                // Yes.
-                Vertex *a = hits[i];
-                Vertex *b = hits[i + 1];
+                DENG_ASSERT(vertex != 0 && other.vertex != 0);
 
-                b->_buildData.equiv = (a->_buildData.equiv ? a->_buildData.equiv : a);
-            }
-        }
+                if(this == &other) return 0;
+                if(vertex == other.vertex) return 0;
 
-        M_Free(hits);
-    }
+                // Order is firstly X axis major.
+                if(int(vertex->origin()[VX]) != int(other.vertex->origin()[VX]))
+                    return int(vertex->origin()[VX]) - int(other.vertex->origin()[VX]);
 
-    void findEquivalentVertexes()
-    {
-        uint i, newNum;
-
-        // Scan all lines.
-        for(i = 0, newNum = 0; i < lines.count(); ++i)
-        {
-            Line *l = lines[i];
-
-            // Handle duplicated vertices.
-            while(l->v[0]->_buildData.equiv)
-            {
-                l->v[0]->_buildData.refCount--;
-                l->v[0] = l->v[0]->_buildData.equiv;
-                l->v[0]->_buildData.refCount++;
+                // Order is secondly Y axis major.
+                return int(vertex->origin()[VY]) - int(other.vertex->origin()[VY]);
             }
 
-            while(l->v[1]->_buildData.equiv)
-            {
-                l->v[1]->_buildData.refCount--;
-                l->v[1] = l->v[1]->_buildData.equiv;
-                l->v[1]->_buildData.refCount++;
+            bool operator < (VertexInfo const &other) const {
+                return compareVertexOrigins(other) < 0;
             }
+        };
 
-            l->_buildData.index = newNum + 1;
-            lines[newNum++] = lines[i];
-        }
-    }
-
-    void pruneLines()
-    {
-        uint i, newNum, unused = 0;
-
-        for(i = 0, newNum = 0; i < lines.count(); ++i)
-        {
-            Line *l = lines[i];
-
-            if(!l->hasFrontSections() && !l->hasBackSections())
-            {
-                unused++;
-
-                M_Free(l);
-                continue;
-            }
-
-            l->_buildData.index = newNum + 1;
-            lines[newNum++] = l;
-        }
-
-        if(newNum < lines.count())
-        {
-            if(unused > 0)
-                Con_Message("  Pruned %d unused lines.", unused);
-
-            lines.resize(newNum);
-        }
-    }
-
-    void pruneVertices()
-    {
-        uint i, newNum, unused = 0;
-
-        // Scan all vertices.
-        for(i = 0, newNum = 0; i < vertexes.count(); ++i)
-        {
-            Vertex *v = vertexes[i];
-
-            if(v->_buildData.refCount < 0)
-                Con_Error("Vertex %d ref_count is %d", i, v->_buildData.refCount);
-
-            if(v->_buildData.refCount == 0)
-            {
-                if(v->_buildData.equiv == NULL)
-                    unused++;
-
-                M_Free(v);
-                continue;
-            }
-
-            v->_buildData.index = newNum + 1;
-            vertexes[newNum++] = v;
-        }
-
-        if(newNum < vertexes.count())
-        {
-            int dupNum = vertexes.count() - newNum - unused;
-
-            if(unused > 0)
-                Con_Message("  Pruned %d unused vertices.", unused);
-
-            if(dupNum > 0)
-                Con_Message("  Pruned %d duplicate vertices.", dupNum);
-
-            vertexes.resize(newNum);
-        }
-    }
-
-    void pruneUnusedSectors()
-    {
-        for(uint i = 0; i < sides.count(); ++i)
-        {
-            Side *s = sides[i];
-
-            if(s->sector)
-                s->sector->buildData.refCount++;
-        }
-
-        // Scan all sectors.
-        uint newNum = 0;
-        for(uint i = 0; i < sectors.count(); ++i)
-        {
-            Sector* s = sectors[i];
-
-            if(s->buildData.refCount == 0)
-            {
-                M_Free(s);
-                continue;
-            }
-
-            s->buildData.index = newNum + 1;
-            sectors[newNum++] = s;
-        }
-
-        if(newNum < sectors.count())
-        {
-            Con_Message("  Pruned %d unused sectors.", sectors.count() - newNum);
-            sectors.resize(newNum);
-        }
-    }
-
-    /**
-     * @param flags  @ref pruneMapElementFlags
-     */
-    void pruneMapElements(int /*flags*/)
-    {
-        /**
-         * @todo Pruning cannot be done as game map data object properties
-         * are currently indexed by their original indices as determined by the
-         * position in the map data. The same problem occurs within ACS scripts
-         * and XG line/sector references.
-         *
-         * @warning Order here is critical!
+        /*
+         * Step 1 - Find equivalent vertexes:
          */
 
-        findEquivalentVertexes();
+        // Populate the vertex info.
+        QVector<VertexInfo> vertexInfo(vertexes.count());
+        for(int i = 0; i < vertexes.count(); ++i)
+            vertexInfo[i].vertex = vertexes[i];
 
-        if(flags & PRUNE_LINES)
-            pruneLines();
+        {
+            // Sort a copy to place near vertexes adjacently.
+            QVector<VertexInfo> sortedInfo(vertexInfo);
+            qSort(sortedInfo.begin(), sortedInfo.end());
 
-        if(flags & PRUNE_VERTEXES)
-            pruneVertices();
+            // Locate equivalent vertexes in the sorted info.
+            for(int i = 0; i < sortedInfo.count() - 1; ++i)
+            {
+                VertexInfo &a = sortedInfo[i];
+                VertexInfo &b = sortedInfo[i + 1];
 
-        if(flags & PRUNE_SECTORS)
-            pruneUnusedSectors();
+                // Are these equivalent?
+                /// @todo fixme: What about polyobjs? They need unique vertexes! -ds
+                if(a.compareVertexOrigins(b) == 0)
+                {
+                    b.equiv = (a.equiv? a.equiv : a.vertex);
+                }
+            }
+        }
+
+        /*
+         * Step 2 - Replace line references to equivalent vertexes:
+         */
+
+        // Count line -> vertex references.
+        foreach(Line *line, lines)
+        {
+            vertexInfo[line->from().origIndex() - 1].refCount++;
+            vertexInfo[  line->to().origIndex() - 1].refCount++;
+        }
+
+        // Perform the replacement.
+        foreach(Line *line, lines)
+        {
+            while(vertexInfo[line->from().origIndex() - 1].equiv)
+            {
+                VertexInfo &info = vertexInfo[line->from().origIndex() - 1];
+
+                info.refCount--;
+                line->replaceFrom(*info.equiv);
+
+                vertexInfo[line->from().origIndex() - 1].refCount++;
+            }
+
+            while(vertexInfo[line->to().origIndex() - 1].equiv)
+            {
+                VertexInfo &info = vertexInfo[line->to().origIndex() - 1];
+
+                info.refCount--;
+                line->replaceTo(*info.equiv);
+
+                vertexInfo[line->to().origIndex() - 1].refCount++;
+            }
+        }
+
+        /*
+         * Step 3 - Prune vertexes:
+         */
+        uint prunedCount = 0, numUnused = 0;
+        foreach(VertexInfo const &info, vertexInfo)
+        {
+            Vertex *vertex = info.vertex;
+
+            if(info.refCount)
+                continue;
+
+            vertexes.removeOne(vertex);
+            delete vertex;
+
+            prunedCount += 1;
+            if(!info.equiv) numUnused += 1;
+        }
+
+        if(prunedCount)
+        {
+            // Re-index with a contiguous range of indices.
+            uint idx = 0;
+            foreach(Vertex *vertex, vertexes)
+                vertex->setOrigIndex(++idx); // 1-based.
+
+            /// Update lines. @todo Line should handle this itself.
+            foreach(Line *line, lines)
+            {
+                line->updateSlopeType();
+                line->updateAABox();
+            }
+
+            LOG_INFO("Pruned %d vertexes (%d equivalents, %s unused).")
+                << prunedCount << (prunedCount - numUnused) << numUnused;
+        }
     }
-#endif
 };
 
 static EditableMap editMap; // singleton
@@ -888,6 +820,9 @@ boolean MPE_End()
     if(!editMapInited)
         return false;
 
+    LOG_DEBUG("New Elements: %d Vertexes, %d Lines, %d Sectors")
+        << editMap.vertexes.count() << editMap.lines.count() << editMap.sectors.count();
+
     /*
      * Log warnings about any issues we encountered during conversion of
      * the basic map data elements.
@@ -898,9 +833,10 @@ boolean MPE_End()
     GameMap *map = new GameMap;
 
     /*
-     * Perform cleanup on the loaded map data, removing duplicate vertexes,
-     * pruning unused sectors etc, etc...
+     * Perform cleanup on the loaded map data.
      */
+
+    editMap.pruneVertexes();
 
     /// Ensure one sided lines are flagged as blocking. @todo Refactor away.
     foreach(Line *line, editMap.lines)
@@ -908,11 +844,6 @@ boolean MPE_End()
         if(!line->hasFrontSections() || !line->hasBackSections())
             line->_flags |= DDLF_BLOCKING;
     }
-
-#if 0
-    markDuplicateVertexes(editMap);
-    pruneMapElements(editMap, PRUNE_ALL);
-#endif
 
     buildVertexLineOwnerRings();
 
@@ -1055,14 +986,11 @@ boolean MPE_End()
 uint MPE_VertexCreate(coord_t x, coord_t y)
 {
     if(!editMapInited) return 0;
-
-    Vertex *v = editMap.createVertex(x, y);
-
-    return v->_buildData.index;
+    return editMap.createVertex(Vector2d(x, y))->origIndex();
 }
 
 #undef MPE_VertexCreatev
-boolean MPE_VertexCreatev(size_t num, coord_t *values, uint *indices)
+boolean MPE_VertexCreatev(size_t num, coord_t *values, uint *retIndices)
 {
     if(!editMapInited || !num || !values)
         return false;
@@ -1070,10 +998,11 @@ boolean MPE_VertexCreatev(size_t num, coord_t *values, uint *indices)
     // Create many vertexes.
     for(uint n = 0; n < num; ++n)
     {
-        Vertex *v = editMap.createVertex(values[n * 2], values[n * 2 + 1]);
-
-        if(indices)
-            indices[n] = v->_buildData.index;
+        Vertex *vertex = editMap.createVertex(Vector2d(values[n * 2], values[n * 2 + 1]));
+        if(retIndices)
+        {
+            retIndices[n] = vertex->origIndex();
+        }
     }
 
     return true;
@@ -1096,19 +1025,10 @@ uint MPE_LineCreate(uint v1, uint v2, uint frontSectorIdx, uint backSectorIdx, i
     Vertex *vtx2 = editMap.vertexes[v2 - 1];
     if(!(V2d_Distance(vtx2->origin(), vtx1->origin()) > 0)) return 0;
 
-    Sector *frontSector = (frontSectorIdx == 0? NULL: editMap.sectors[frontSectorIdx-1]);
-    Sector *backSector  = (backSectorIdx  == 0? NULL: editMap.sectors[backSectorIdx-1]);
+    Sector *frontSector = (frontSectorIdx? editMap.sectors[frontSectorIdx - 1] : 0);
+    Sector *backSector  = (backSectorIdx ? editMap.sectors[ backSectorIdx - 1] : 0);
 
-    Line *l = editMap.createLine(*vtx1, *vtx2, frontSector, backSector);
-
-    // Determine the default line flags.
-    l->_flags = flags;
-
-    // Remember the number of unique references.
-    l->v1()._buildData.refCount++;
-    l->v2()._buildData.refCount++;
-
-    return l->origIndex();
+    return editMap.createLine(*vtx1, *vtx2, flags, frontSector, backSector)->origIndex();
 }
 
 #undef MPE_LineAddSide

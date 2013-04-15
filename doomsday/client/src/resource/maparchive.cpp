@@ -194,6 +194,7 @@ GameMap *MapArchive::Info::convertMap()
 
     GameMap *map = MPE_GetLastBuiltMap();
     DENG_ASSERT(map != 0);
+
     map->_uri = _uri;
 
     // Generate the unique map id.
