@@ -1,6 +1,6 @@
-/**
- * @file displaymode_dummy.c
- * Dummy implementation of the DisplayMode native functionality. @ingroup gl
+/** @file displaymode_dummy.c
+ * Dummy implementation of the DisplayMode native functionality.
+ * @ingroup gl
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -20,7 +20,7 @@
  */
 
 #include "ui/displaymode_native.h"
-#include <de/libdeng1.h>
+#include <de/libdeng2.h>
 
 void DisplayMode_Native_Init(void)
 {
@@ -37,28 +37,28 @@ int DisplayMode_Native_Count(void)
 
 void DisplayMode_Native_GetMode(int index, DisplayMode* mode)
 {
-    DENG_UNUSED(index);
-    DENG_UNUSED(mode);
+    DENG2_UNUSED(index);
+    DENG2_UNUSED(mode);
 }
 
 void DisplayMode_Native_GetCurrentMode(DisplayMode* mode)
 {
-    DENG_UNUSED(mode);
+    DENG2_UNUSED(mode);
 }
 
 int DisplayMode_Native_Change(const DisplayMode* mode, boolean shouldCapture)
 {
-    DENG_UNUSED(mode);
-    DENG_UNUSED(shouldCapture);
+    DENG2_UNUSED(mode);
+    DENG2_UNUSED(shouldCapture);
     return true;
 }
 
 void DisplayMode_Native_GetColorTransfer(displaycolortransfer_t* colors)
 {
-    DENG_UNUSED(colors);
+    DENG2_UNUSED(colors);
 }
 
 void DisplayMode_Native_SetColorTransfer(const displaycolortransfer_t* colors)
 {
-    DENG_UNUSED(colors);
+    DENG2_UNUSED(colors);
 }

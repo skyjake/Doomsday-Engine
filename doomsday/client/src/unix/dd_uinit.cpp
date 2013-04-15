@@ -1,4 +1,4 @@
-/**\file dd_uinit.cpp
+/** @file dd_uinit.cpp  Engine Initialization (Unix).
  *
  * @authors Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,14 +17,6 @@
  * General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small>
  */
-
-/**
- * Engine Initialization - Unix.
- *
- * Load libraries and set up APIs.
- */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,29 +38,14 @@
 #include "de_network.h"
 #include "de_misc.h"
 
-#include "ui/displaymode.h"
 #include "filesys/fs_util.h"
 #include "dd_uinit.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
+#ifdef __CLIENT__
+#  include <de/DisplayMode>
+#endif
 
 application_t app;
-
-// CODE --------------------------------------------------------------------
 
 #ifdef __CLIENT__
 static int initDGL(void)
@@ -190,8 +167,6 @@ boolean DD_Unix_Init(void)
         failed = false;
     }
 
-    Plug_LoadAll();
-
     return !failed;
 }
 
@@ -205,5 +180,7 @@ void DD_Shutdown(void)
 
     Plug_UnloadAll();
     Library_Shutdown();
+#ifdef __CLIENT__
     DisplayMode_Shutdown();
+#endif
 }

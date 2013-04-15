@@ -947,6 +947,14 @@ void GL_ResetTextureManager()
     GL_LoadSystemTextures();
 }
 
+static String nameForGLTextureWrapMode(int mode)
+{
+    if(mode == GL_REPEAT) return "repeat";
+    if(mode == GL_CLAMP) return "clamp";
+    if(mode == GL_CLAMP_TO_EDGE) return "clamp_edge";
+    return "(unknown)";
+}
+
 String texturevariantspecification_t::asText() const
 {
     static String const textureUsageContextNames[1 + TEXTUREVARIANTUSAGECONTEXT_COUNT] = {
@@ -1018,14 +1026,19 @@ String texturevariantspecification_t::asText() const
             }
         }
 
-        text += " Context:" + textureUsageContextNames[tc-TEXTUREVARIANTUSAGECONTEXT_FIRST + 1];
+        text += " Context:" + textureUsageContextNames[tc-TEXTUREVARIANTUSAGECONTEXT_FIRST + 1]
               + " Flags:" + String::number(spec.flags & ~TSF_INTERNAL_MASK)
               + " Border:" + String::number(spec.border)
               + " MinFilter:" + filterModeNames[3 + de::clamp(-1, spec.minFilter, 0)]
                               + "|" + glFilterNames[glMinFilterNameIdx]
               + " MagFilter:" + filterModeNames[3 + de::clamp(-3, spec.magFilter, 0)]
                               + "|" + glFilterNames[glMagFilterNameIdx]
-              + " AnisoFilter:" + String::number(spec.anisoFilter);
+              + " AnisoFilter:" + String::number(spec.anisoFilter)
+              + " WrapS:" + nameForGLTextureWrapMode(spec.wrapS)
+              + " WrapT:" + nameForGLTextureWrapMode(spec.wrapT)
+              + " CorrectGamma:" + (spec.gammaCorrection? "yes" : "no")
+              + " NoStretch:" + (spec.noStretch? "yes" : "no")
+              + " ToAlpha:" + (spec.toAlpha? "yes" : "no");
 
         if(spec.flags & TSF_HAS_COLORPALETTE_XLAT)
         {
@@ -1396,8 +1409,8 @@ boolean GL_UploadTexture(int glFormat, int loadFormat, const uint8_t* pixels,
         genMipmaps = 0;
     }
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Automatic mipmap generation?
     if(GL_state.extensions.genMipmapSGIS && genMipmaps)
@@ -1675,8 +1688,8 @@ void GL_UploadTextureContent(texturecontent_t const &content, GLUploadMethod met
         }
     }
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glBindTexture(GL_TEXTURE_2D, content.name);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, content.minFilter);
@@ -2317,8 +2330,8 @@ void GL_SetRawTexturesMinFilter(int newMinFilter)
         rawtex_t *r = *ptr;
         if(r->tex) // Is the texture loaded?
         {
-            LIBDENG_ASSERT_IN_MAIN_THREAD();
-            LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+            DENG_ASSERT_IN_MAIN_THREAD();
+            DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
             glBindTexture(GL_TEXTURE_2D, r->tex);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, newMinFilter);

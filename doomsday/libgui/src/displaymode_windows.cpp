@@ -1,4 +1,4 @@
-/** @file displaymode_win32.cpp Win32 implementation of the DisplayMode native functionality. 
+/** @file displaymode_win32.cpp Win32 implementation of the DisplayMode native functionality.
  * @ingroup gl
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -21,15 +21,16 @@
 
 #include <QDebug>
 
-#include "de_platform.h"
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #include <icm.h>
 #include <math.h>
-
-#include "ui/displaymode_native.h"
-#include "ui/window.h"
-
 #include <assert.h>
+
 #include <vector>
+
+#include "de/gui/displaymode_native.h"
+#include "de/PersistentCanvasWindow"
 
 static std::vector<DEVMODE> devModes;
 static DEVMODE currentDevMode;
@@ -76,7 +77,7 @@ int DisplayMode_Native_Count(void)
 
 void DisplayMode_Native_GetMode(int index, DisplayMode* mode)
 {
-    assert(index >= 0 && index < DisplayMode_Native_Count());
+    DENG2_ASSERT(index >= 0 && index < DisplayMode_Native_Count());
     *mode = devToDisplayMode(devModes[index]);
 }
 
@@ -98,10 +99,10 @@ static int findMode(const DisplayMode* mode)
     return -1;
 }
 
-int DisplayMode_Native_Change(const DisplayMode* mode, boolean shouldCapture)
+int DisplayMode_Native_Change(const DisplayMode* mode, int shouldCapture)
 {
-    assert(mode);
-    assert(findMode(mode) >= 0);
+    DENG2_ASSERT(mode);
+    DENG2_ASSERT(findMode(mode) >= 0);
 
     DEVMODE m = devModes[findMode(mode)];
     m.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL | DM_DISPLAYFREQUENCY;
@@ -113,10 +114,10 @@ int DisplayMode_Native_Change(const DisplayMode* mode, boolean shouldCapture)
     return true;
 }
 
-void DisplayMode_Native_SetColorTransfer(displaycolortransfer_t const *colors)
+void DisplayMode_Native_SetColorTransfer(DisplayColorTransfer const *colors)
 {
-    HWND hWnd = (HWND) Window::main().nativeHandle();
-    DENG_ASSERT(hWnd != 0);
+    HWND hWnd = (HWND) de::PersistentCanvasWindow::main().nativeHandle();
+    DENG2_ASSERT(hWnd != 0);
 
     HDC hDC = GetDC(hWnd);
     if(hDC)
@@ -126,10 +127,10 @@ void DisplayMode_Native_SetColorTransfer(displaycolortransfer_t const *colors)
     }
 }
 
-void DisplayMode_Native_GetColorTransfer(displaycolortransfer_t *colors)
+void DisplayMode_Native_GetColorTransfer(DisplayColorTransfer *colors)
 {
-    HWND hWnd = (HWND) Window::main().nativeHandle();
-    DENG_ASSERT(hWnd != 0);
+    HWND hWnd = (HWND) de::PersistentCanvasWindow::main().nativeHandle();
+    DENG2_ASSERT(hWnd != 0);
 
     HDC hDC = GetDC(hWnd);
     if(hDC)

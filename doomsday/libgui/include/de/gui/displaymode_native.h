@@ -42,11 +42,11 @@ void DisplayMode_Native_GetMode(int index, DisplayMode* mode);
 
 void DisplayMode_Native_GetCurrentMode(DisplayMode* mode);
 
-int DisplayMode_Native_Change(const DisplayMode* mode, boolean shouldCapture);
+int DisplayMode_Native_Change(const DisplayMode* mode, int shouldCapture);
 
-void DisplayMode_Native_GetColorTransfer(displaycolortransfer_t* colors);
+void DisplayMode_Native_GetColorTransfer(DisplayColorTransfer *colors);
 
-void DisplayMode_Native_SetColorTransfer(const displaycolortransfer_t* colors);
+void DisplayMode_Native_SetColorTransfer(DisplayColorTransfer const *colors);
 
 #ifdef MACOSX
 void DisplayMode_Native_Raise(void* handle);

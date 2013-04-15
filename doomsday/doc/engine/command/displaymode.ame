@@ -1,0 +1,12 @@
+@summary{
+    Print information about the current display mode and window state.
+}
+@description{
+    @seealso
+    @list{
+        @item @cmd{listdisplaymodes}
+        @item @cmd{setres}
+        @item @cmd{setfullres}
+        @item @cmd{setwinres}
+    }
+}

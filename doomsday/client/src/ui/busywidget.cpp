@@ -23,7 +23,7 @@
 #include "sys_system.h"
 #include "render/r_main.h"
 #include "ui/ui_main.h"
-#include "ui/window.h"
+#include "ui/clientwindow.h"
 
 #include <de/RootWidget>
 
@@ -43,7 +43,7 @@ void BusyWidget::viewResized()
 {
     if(!BusyMode_Active() || isDisabled() || Sys_IsShuttingDown()) return;
 
-    Window::main().glActivate(); // needed for legacy stuff
+    ClientWindow::main().glActivate(); // needed for legacy stuff
 
     //DENG_ASSERT(BusyMode_Active());
 

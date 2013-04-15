@@ -22,9 +22,9 @@
 
 using namespace de;
 
-const static QString WHITESPACE = " \t\r\n";
-const static QString WHITESPACE_OR_COMMENT = " \t\r\n#";
-const static QString TOKEN_BREAKING_CHARS = "#:=(){}<>,\"" + WHITESPACE;
+static QString const WHITESPACE = " \t\r\n";
+static QString const WHITESPACE_OR_COMMENT = " \t\r\n#";
+static QString const TOKEN_BREAKING_CHARS = "#:=(){}<>,\"" + WHITESPACE;
 
 DENG2_PIMPL_NOREF(Info)
 {

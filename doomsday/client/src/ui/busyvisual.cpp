@@ -63,7 +63,7 @@ static void acquireScreenshotTexture()
     startTime = Timer_RealSeconds();
 #endif
 
-    texScreenshot = Window::main().grabAsTexture(true /*halfsized*/);
+    texScreenshot = ClientWindow::main().grabAsTexture(ClientWindow::GrabHalfSized);
 
     DEBUG_Message(("Busy Mode: Took %.2f seconds acquiring screenshot texture #%i.\n",
                    Timer_RealSeconds() - startTime, texScreenshot));
@@ -169,8 +169,8 @@ static void drawBackground(float x, float y, float width, float height)
 {
     if(texScreenshot)
     {
-        LIBDENG_ASSERT_IN_MAIN_THREAD();
-        LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+        DENG_ASSERT_IN_MAIN_THREAD();
+        DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
         //GL_BindTextureUnmanaged(texScreenshot, GL_LINEAR);
         glBindTexture(GL_TEXTURE_2D, texScreenshot);
@@ -211,8 +211,8 @@ static void drawPositionIndicator(float x, float y, float radius, float pos,
     pos = MINMAX_OF(0, pos, 1);
     edgeCount = MAX_OF(1, pos * 30);
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Draw a background.
     GL_BlendMode(BM_NORMAL);
@@ -368,7 +368,7 @@ static void drawConsoleOutput(void)
         }
     }
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_IN_MAIN_THREAD();
 
     GL_BlendMode(BM_NORMAL);
 
@@ -428,8 +428,8 @@ void BusyVisual_Render(void)
 
     if(!task) return;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -577,8 +577,8 @@ void Con_DrawTransition(void)
     if(isDedicated) return;
     if(!Con_TransitionInProgress()) return;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();

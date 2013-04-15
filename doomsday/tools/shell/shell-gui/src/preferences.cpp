@@ -115,11 +115,7 @@ DENG2_PIMPL(Preferences)
     {
         QFont font;
 #ifdef MACOSX
-# ifdef MACOS_10_4
-        font = QFont("Monaco", 12);
-# else
         font = QFont("Menlo", 13);
-# endif
 #elif WIN32
         font = QFont("Courier New", 10);
 #else

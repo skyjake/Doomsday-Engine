@@ -28,8 +28,9 @@ class FileState:
 
 
 class DirState:
-    def __init__(self, path=None):
+    def __init__(self, path=None, subdirs=True):
         self.files = {} # path -> FileState
+        self.subdirs = subdirs
         if path:
             self.update(path, path)
     
@@ -39,7 +40,7 @@ class DirState:
             fullPath = os.path.join(path, name)
             self.files[omit_path(fullPath, omitted)] = \
                 FileState(os.path.isdir(fullPath), os.stat(fullPath).st_mtime)
-            if os.path.isdir(fullPath):
+            if os.path.isdir(fullPath) and self.subdirs:
                 self.update(fullPath, omitted)
     
     def list_new_files(self, oldState):
@@ -153,6 +154,22 @@ def count_word(word, inText):
         count += 1
         pos += len(word)
     return count
+
+
+def mac_os_version():
+    """Determines the Mac OS version."""
+    return platform.mac_ver()[0][:4]
+
+
+def version_cmp(a, b):
+    """Compares two versions, returning -1 if a < b, 0 if a == b, and 1 if a > b.
+    - a: String in the form 1.2.3
+    - b: String in the form 3.4.5"""
+    va = map(lambda s: int(s), a.split('.'))
+    vb = map(lambda s: int(s), b.split('.'))
+    if va < vb: return -1
+    if va > vb: return 1
+    return 0
 
 
 def system_command(cmd):

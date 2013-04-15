@@ -264,8 +264,6 @@ DENG_HEADERS += \
     $$SRC/include/tab_anorms.h \
     $$SRC/include/ui/busyvisual.h \
     $$SRC/include/ui/dd_ui.h \
-    $$SRC/include/ui/displaymode.h \
-    $$SRC/include/ui/displaymode_native.h \
     $$SRC/include/ui/fi_main.h \
     $$SRC/include/ui/finaleinterpreter.h \
     $$SRC/include/ui/p_control.h \
@@ -438,8 +436,6 @@ SOURCES += \
     $$SRC/src/resource/zip.cpp \
     $$SRC/src/sys_system.cpp \
     $$SRC/src/tab_tables.c \
-    $$SRC/src/ui/displaymode.cpp \
-    $$SRC/src/ui/displaymode_dummy.c \
     $$SRC/src/ui/fi_main.cpp \
     $$SRC/src/ui/finaleinterpreter.cpp \
     $$SRC/src/ui/p_control.cpp \

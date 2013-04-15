@@ -206,8 +206,8 @@ static void Mod_InitArrays()
 #if 0
 static void Mod_EnableArrays(int vertices, int colors, int coords)
 {
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(vertices)
     {
@@ -247,8 +247,8 @@ static void Mod_EnableArrays(int vertices, int colors, int coords)
 
 static void Mod_DisableArrays(int vertices, int colors, int coords)
 {
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(vertices)
     {
@@ -288,8 +288,8 @@ static void Mod_DisableArrays(int vertices, int colors, int coords)
 
 static inline void enableTexUnit(byte id)
 {
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glActiveTexture(GL_TEXTURE0 + id);
     glEnable(GL_TEXTURE_2D);
@@ -297,8 +297,8 @@ static inline void enableTexUnit(byte id)
 
 static inline void disableTexUnit(byte id)
 {
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glActiveTexture(GL_TEXTURE0 + id);
     glDisable(GL_TEXTURE_2D);
@@ -334,8 +334,8 @@ static void Mod_SelectTexUnits(int count)
 static void Mod_Arrays(void *vertices, void *colors, int numCoords, void **coords,
                        int lock)
 {
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(vertices)
     {
@@ -395,8 +395,8 @@ static void Mod_Arrays(void *vertices, void *colors, int numCoords, void **coord
 #if 0
 static void Mod_UnlockArrays()
 {
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(!GL_state.features.elementArrays) return;
 
@@ -407,8 +407,8 @@ static void Mod_UnlockArrays()
 
 static void Mod_ArrayElement(int index)
 {
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(GL_state.features.elementArrays)
     {
@@ -437,8 +437,8 @@ static void Mod_DrawElements(dglprimtype_t type, int count, uint const *indices)
     GLenum primType = (type == DGL_TRIANGLE_FAN ? GL_TRIANGLE_FAN :
                        type == DGL_TRIANGLE_STRIP ? GL_TRIANGLE_STRIP : GL_TRIANGLES);
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(GL_state.features.elementArrays)
     {
@@ -504,8 +504,8 @@ static model_frame_t *Mod_GetVisibleFrame(modeldef_t *mf, int subnumber, int mob
 static void Mod_RenderCommands(rendcmd_t mode, void *glCommands, /*uint numVertices,*/
     dgl_vertex_t *vertices, dgl_color_t *colors, dgl_texcoord_t *texCoords)
 {
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Disable all vertex arrays.
     Mod_DisableArrays(true, true, DDMAXINT);
@@ -866,8 +866,8 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     Texture::Variant *skinTexture = NULL, *shinyTexture = NULL;
     int zSign = (parm->mirror? -1 : 1);
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Do not bother with infinitely small models...
     if(mf->scale[VX] == 0 && (int)mf->scale[VY] == 0 && mf->scale[VZ] == 0) return;
@@ -1333,8 +1333,8 @@ void Rend_ModelShutdown()
 void Rend_RenderModel(rendmodelparams_t const *parm)
 {
     DENG_ASSERT(inited);
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(!parm || !parm->mf) return;
 

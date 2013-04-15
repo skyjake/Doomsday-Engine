@@ -10,11 +10,7 @@ CONFIG += deng_nofixedasm deng_embedfluidsynth
 
 # The native SDK option assumes the build is not for distribution.
 deng_qtautoselect:!deng_nativesdk {
-    contains(QT_VERSION, ^4\\.[0-6]\\..*) {
-        # 4.6 or earlier, assume Tiger with 32-bit Universal Intel/PowerPC binaries.
-        CONFIG += deng_macx4u_32bit
-    }
-    else:contains(QT_VERSION, ^4\\.7\\..*) {
+    contains(QT_VERSION, ^4\\.7\\..*) {
         # 4.7, assume Snow Leopard with 32/64-bit Intel.
         CONFIG += deng_macx6_32bit_64bit
     }
@@ -64,17 +60,6 @@ else:deng_macx6_32bit_64bit {
     QMAKE_CXXFLAGS += -mmacosx-version-min=10.5
     INCLUDEPATH = $$QMAKE_MAC_SDK/usr/X11/include $$INCLUDEPATH
 }
-else:deng_macx4u_32bit {
-    echo(Using Mac OS 10.4u SDK.)
-    CONFIG += x86 ppc deng_carbonqt
-    QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk
-    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.4
-    QMAKE_CFLAGS += -mmacosx-version-min=10.4
-    INCLUDEPATH = $$QMAKE_MAC_SDK/usr/X11R6/include $$INCLUDEPATH
-    DEFINES += MACOS_10_4 DENG_CARBON_QT
-
-    QMAKE_CFLAGS_WARN_ON -= -fdiagnostics-show-option
-}
 else:deng_nativesdk {
     echo(Using native SDK.)
     DEFINES += MACOSX_NATIVESDK
@@ -94,7 +79,6 @@ else {
 
 # What's our arch?
 archs = "Architectures:"
-   ppc: archs += ppc32
    x86: archs += intel32
 x86_64: archs += intel64
 echo($$archs)

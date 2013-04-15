@@ -75,13 +75,13 @@ extern "C" {
 #endif // __cplusplus
 
 /**
- * @def LIBDENG_ASSERT_IN_MAIN_THREAD
+ * @def DENG_ASSERT_IN_MAIN_THREAD
  * In a debug build, this asserts that the current code is executing in the main thread.
  */
 #ifdef _DEBUG
-#  define LIBDENG_ASSERT_IN_MAIN_THREAD() { DENG_ASSERT(Sys_InMainThread()); }
+#  define DENG_ASSERT_IN_MAIN_THREAD() { DENG_ASSERT(Sys_InMainThread()); }
 #else
-#  define LIBDENG_ASSERT_IN_MAIN_THREAD()
+#  define DENG_ASSERT_IN_MAIN_THREAD()
 #endif
 
 /**

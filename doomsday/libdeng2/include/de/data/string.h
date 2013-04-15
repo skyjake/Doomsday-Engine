@@ -170,7 +170,7 @@ public:
     String upper() const;
 
     /// Extracts the base name from the string (includes extension).
-    String fileName() const;
+    String fileName(QChar dirChar = '/') const;
 
     /// Extracts the base name from the string (does not include extension).
     String fileNameWithoutExtension() const;

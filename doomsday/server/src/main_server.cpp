@@ -31,7 +31,6 @@
 #include "dd_main.h"
 #include "dd_loop.h"
 #include "con_main.h"
-#include "ui/displaymode.h"
 #include "sys_system.h"
 #include "serversystem.h"
 
@@ -99,7 +98,8 @@ int main(int argc, char** argv)
         if(!DD_Win32_Init()) return 1;
 #elif UNIX
         if(!DD_Unix_Init()) return 1;
-#endif
+#endif       
+        Plug_LoadAll();
 
         DD_FinishInitializationAfterWindowReady();
     }

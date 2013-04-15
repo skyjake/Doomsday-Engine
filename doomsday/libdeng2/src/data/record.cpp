@@ -96,6 +96,43 @@ DENG2_PIMPL(Record)
     }
 
     /**
+     * Returns the record inside which the variable identified by path @a name
+     * resides. The necessary subrecords are created if they don't exist.
+     *
+     * @param pathOrName  Variable name or path.
+     *
+     * @return  Parent record for the variable.
+     */
+    Record &parentRecordByPath(String const &pathOrName)
+    {
+        int pos = pathOrName.indexOf('.');
+        if(pos >= 0)
+        {
+            String subName = pathOrName.substr(0, pos);
+            String remaining = pathOrName.substr(pos + 1);
+            Record *rec = 0;
+
+            if(!self.hasSubrecord(subName))
+            {
+                // Create it now.
+                rec = &self.addRecord(subName);
+            }
+            else
+            {
+                rec = &self.subrecord(subName);
+            }
+
+            return rec->d->parentRecordByPath(remaining);
+        }
+        return self;
+    }
+
+    static String memberNameFromPath(String const &path)
+    {
+        return path.fileName('.');
+    }
+
+    /**
      * Reconnect record values that used to reference known records. After a
      * record has been deserialized, it may contain variables whose values
      * reference other records. The default behavior for a record is to
@@ -208,7 +245,7 @@ Variable &Record::add(Variable *variable)
     if(variable->name().empty())
     {
         /// @throw UnnamedError All variables in a record must have a name.
-        throw UnnamedError("Record::add", "All variables in a record must have a name");
+        throw UnnamedError("Record::add", "All members of a record must have a name");
     }
     if(hasMember(variable->name()))
     {
@@ -229,83 +266,75 @@ Variable *Record::remove(Variable &variable)
 
 Variable &Record::addNumber(String const &name, Value::Number const &number)
 {
-    /// @throw Variable::NameError @a name is not a valid variable name.
-    Variable::verifyName(name);
-    return add(new Variable(name, new NumberValue(number), Variable::AllowNumber));
+    return d->parentRecordByPath(name)
+            .add(new Variable(Instance::memberNameFromPath(name),
+                              new NumberValue(number), Variable::AllowNumber));
 }
 
 Variable &Record::addBoolean(String const &name, bool booleanValue)
 {
-    /// @throw Variable::NameError @a name is not a valid variable name.
-    Variable::verifyName(name);
-    return add(new Variable(name, new NumberValue(booleanValue, NumberValue::Boolean),
-                            Variable::AllowNumber));
+    return d->parentRecordByPath(name)
+            .add(new Variable(Instance::memberNameFromPath(name),
+                              new NumberValue(booleanValue, NumberValue::Boolean),
+                              Variable::AllowNumber));
 }
 
 Variable &Record::addText(String const &name, Value::Text const &text)
 {
-    /// @throw Variable::NameError @a name is not a valid variable name.
-    Variable::verifyName(name);
-    return add(new Variable(name, new TextValue(text), Variable::AllowText));
+    return d->parentRecordByPath(name)
+            .add(new Variable(Instance::memberNameFromPath(name),
+                              new TextValue(text), Variable::AllowText));
 }
 
 Variable &Record::addTime(String const &name, Time const &time)
 {
-    /// @throw Variable::NameError @a name is not a valid variable name.
-    Variable::verifyName(name);
-    return add(new Variable(name, new TimeValue(time), Variable::AllowTime));
+    return d->parentRecordByPath(name)
+            .add(new Variable(Instance::memberNameFromPath(name),
+                              new TimeValue(time), Variable::AllowTime));
 }
 
 Variable &Record::addArray(String const &name, ArrayValue *array)
 {
-    // Ownership of the array was given to us.
-    std::auto_ptr<ArrayValue> val(array);
-    if(!array) val.reset(new ArrayValue);
-
-    /// @throw Variable::NameError @a name is not a valid variable name.
-    Variable::verifyName(name);
-
-    return add(new Variable(name, val.release(), Variable::AllowArray));
+    // Automatically create an empty array if one is not provided.
+    if(!array) array = new ArrayValue;
+    return d->parentRecordByPath(name)
+            .add(new Variable(Instance::memberNameFromPath(name),
+                              array, Variable::AllowArray));
 }
 
 Variable &Record::addDictionary(String const &name)
 {
-    /// @throw Variable::NameError @a name is not a valid variable name.
-    Variable::verifyName(name);
-    return add(new Variable(name, new DictionaryValue(), Variable::AllowDictionary));
+    return d->parentRecordByPath(name)
+            .add(new Variable(Instance::memberNameFromPath(name),
+                              new DictionaryValue, Variable::AllowDictionary));
 }
 
 Variable &Record::addBlock(String const &name)
 {
-    /// @throw Variable::NameError @a name is not a valid variable name.
-    Variable::verifyName(name);
-    return add(new Variable(name, new BlockValue(), Variable::AllowBlock));
+    return d->parentRecordByPath(name)
+            .add(new Variable(Instance::memberNameFromPath(name),
+                              new BlockValue, Variable::AllowBlock));
 }
 
 Variable &Record::addFunction(const String &name, Function *func)
 {
-    /// @throw Variable::NameError @a name is not a valid variable name.
-    Variable::verifyName(name);
-    return add(new Variable(name, new FunctionValue(func), Variable::AllowFunction));
+    return d->parentRecordByPath(name)
+            .add(new Variable(Instance::memberNameFromPath(name),
+                              new FunctionValue(func), Variable::AllowFunction));
 }
     
 Record &Record::add(String const &name, Record *subrecord)
 {
     std::auto_ptr<Record> sub(subrecord);
-    /// @throw Variable::NameError Subrecord names must be valid variable names.
-    Variable::verifyName(name);
-    if(name.empty())
-    {
-        /// @throw UnnamedError All subrecords in a record must have a name.
-        throw UnnamedError("Record::add", "All subrecords in a record must have a name");
-    }
-    add(new Variable(name, new RecordValue(sub.release(), RecordValue::OwnsRecord)));
+    d->parentRecordByPath(name)
+            .add(new Variable(Instance::memberNameFromPath(name),
+                              new RecordValue(sub.release(), RecordValue::OwnsRecord)));
     return *subrecord;
 }
 
 Record &Record::addRecord(String const &name)
 {
-    return add(name, new Record());
+    return add(name, new Record);
 }
 
 Record *Record::remove(String const &name)

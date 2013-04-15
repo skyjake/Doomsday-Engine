@@ -31,6 +31,11 @@
 #include <QTextStream>
 #include <cmath>
 
+#ifdef WIN32
+#  undef min
+#  undef max
+#endif
+
 namespace de {
 
 /**
@@ -114,6 +119,12 @@ public:
         s << *this;
         return str;
     }
+    Vector2 abs() const {
+        return Vector2(de::abs(x), de::abs(y));
+    }
+    ddouble dot(Vector2 const &other) const {
+        return x * other.x + y * other.y;
+    }
     Vector2 min(Vector2 const &other) const {
         return Vector2(de::min(x, other.x), de::min(y, other.y));
     }
@@ -126,7 +137,14 @@ public:
     Type max() const {
         return de::max(x, y);
     }
-
+    int minAxis() const {
+        Vector2 vecAbs = abs();
+        return vecAbs.x < vecAbs.y? 0 : 1;
+    }
+    int maxAxis() const {
+        Vector2 vecAbs = abs();
+        return vecAbs.x > vecAbs.y? 1 : 0;
+    }
 public:
     Type x;
     Type y;
@@ -241,6 +259,12 @@ public:
         os << *this;
         return str;
     }
+    Vector3 abs() const {
+        return Vector3(de::abs(Vector2<Type>::x), de::abs(Vector2<Type>::y), de::abs(z));
+    }
+    ddouble dot(Vector3 const &other) const {
+        return Vector2<Type>::x * other.x + Vector2<Type>::y * other.y + z * other.z;
+    }
     Vector3 min(Vector3 const &other) const {
         return Vector3(de::min(Vector2<Type>::x, other.x), de::min(Vector2<Type>::y, other.y),
             de::min(z, other.z));
@@ -254,6 +278,20 @@ public:
     }
     Type max() const {
         return de::max(z, Vector2<Type>::max());
+    }
+    int minAxis() const {
+        Vector3 vecAbs = abs();
+        int axis = 2;
+        if(vecAbs.y < vecAbs[axis]) axis = 1;
+        if(vecAbs.x < vecAbs[axis]) axis = 0;
+        return axis;
+    }
+    int maxAxis() const {
+        Vector3 vecAbs = abs();
+        int axis = 0;
+        if(vecAbs.y > vecAbs[axis]) axis = 1;
+        if(vecAbs.z > vecAbs[axis]) axis = 2;
+        return axis;
     }
 
 public:
@@ -373,6 +411,13 @@ public:
         os << *this;
         return str;
     }
+    Vector4 abs() const {
+        return Vector4(de::abs(Vector3<Type>::x), de::abs(Vector3<Type>::y), de::abs(Vector3<Type>::z), de::abs(w));
+    }
+    ddouble dot(Vector4 const &other) const {
+        return Vector3<Type>::x * other.x + Vector3<Type>::y * other.y
+             + Vector3<Type>::z * other.z + w * other.w;
+    }
     Vector4 min(Vector4 const &other) const {
         return Vector4(de::min(Vector3<Type>::x, other.x), de::min(Vector3<Type>::y, other.y),
             de::min(Vector3<Type>::z, other.z), de::min(w, other.w));
@@ -386,6 +431,22 @@ public:
     }
     Type max() const {
         return de::max(w, Vector3<Type>::max());
+    }
+    int minAxis() const {
+        Vector4 vecAbs = abs();
+        int axis = 3;
+        if(vecAbs.z < vecAbs[axis]) axis = 2;
+        if(vecAbs.y < vecAbs[axis]) axis = 1;
+        if(vecAbs.x < vecAbs[axis]) axis = 0;
+        return axis;
+    }
+    int maxAxis() const {
+        Vector4 vecAbs = abs();
+        int axis = 0;
+        if(vecAbs.y > vecAbs[axis]) axis = 1;
+        if(vecAbs.z > vecAbs[axis]) axis = 2;
+        if(vecAbs.w > vecAbs[axis]) axis = 3;
+        return axis;
     }
     // Implements ISerializable.
     void operator >> (Writer &to) const {
@@ -491,6 +552,70 @@ inline bool operator != (Vector3<duint> const &a, Vector3<duint> const &b)
 }
 
 inline bool operator != (Vector4<duint> const &a, Vector4<duint> const &b)
+{
+    return !(a == b);
+}
+
+// Equality operators for single-precision floating-point types.
+inline bool operator == (Vector2<dfloat> const &a, Vector2<dfloat> const &b)
+{
+    return de::fequal(a.x, b.x) && de::fequal(a.y, b.y);
+}
+
+inline bool operator == (Vector3<dfloat> const &a, Vector3<dfloat> const &b)
+{
+    return de::fequal(a.x, b.x) && de::fequal(a.y, b.y) && de::fequal(a.z, b.z);
+}
+
+inline bool operator == (Vector4<dfloat> const &a, Vector4<dfloat> const &b)
+{
+    return de::fequal(a.x, b.x) && de::fequal(a.y, b.y) && de::fequal(a.z, b.z) && de::fequal(a.w, b.w);
+}
+
+// Equality operators for double-precision floating-point types.
+inline bool operator == (Vector2<ddouble> const &a, Vector2<ddouble> const &b)
+{
+    return de::fequal(a.x, b.x) && de::fequal(a.y, b.y);
+}
+
+inline bool operator == (Vector3<ddouble> const &a, Vector3<ddouble> const &b)
+{
+    return de::fequal(a.x, b.x) && de::fequal(a.y, b.y) && de::fequal(a.z, b.z);
+}
+
+inline bool operator == (Vector4<ddouble> const &a, Vector4<ddouble> const &b)
+{
+    return de::fequal(a.x, b.x) && de::fequal(a.y, b.y) && de::fequal(a.z, b.z) && de::fequal(a.w, b.w);
+}
+
+// Inequality operators for single-precision floating-point types.
+inline bool operator != (Vector2<dfloat> const &a, Vector2<dfloat> const &b)
+{
+    return !(a == b);
+}
+
+inline bool operator != (Vector3<dfloat> const &a, Vector3<dfloat> const &b)
+{
+    return !(a == b);
+}
+
+inline bool operator != (Vector4<dfloat> const &a, Vector4<dfloat> const &b)
+{
+    return !(a == b);
+}
+
+// Inequality operators for double-precision floating-point types.
+inline bool operator != (Vector2<ddouble> const &a, Vector2<ddouble> const &b)
+{
+    return !(a == b);
+}
+
+inline bool operator != (Vector3<ddouble> const &a, Vector3<ddouble> const &b)
+{
+    return !(a == b);
+}
+
+inline bool operator != (Vector4<ddouble> const &a, Vector4<ddouble> const &b)
 {
     return !(a == b);
 }

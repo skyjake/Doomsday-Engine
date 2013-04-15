@@ -36,6 +36,7 @@ namespace de {
 #undef PI
 ddouble const PI = 3.14159265358979323846;
 ddouble const EPSILON = 1.0e-7;
+dfloat const FLOAT_EPSILON = 1.0e-5f;
 
 /// Absolute value.
 template <typename Type>
@@ -78,6 +79,9 @@ Type wrap(Type value, Type const &low, Type const &high) {
     return value;
 }
 
+template <typename Type>
+inline Type squared(Type const &value) { return value * value; }
+
 inline dint32 floor(dfloat const &value) {
     return dint32(std::floor(value));
 }
@@ -86,8 +90,15 @@ inline dint64 floor(ddouble const &value) {
     return dint64(std::floor(value));
 }
 
-/// Compare two floating-point values for equality, with the precision of EPSILON.
-inline ddouble fequal(ddouble a, ddouble b) {
+/// Compare two single-precision floating-point values for equality,
+/// with the precision of FLOAT_EPSILON.
+inline bool fequal(dfloat a, dfloat b) {
+    return abs(a - b) < FLOAT_EPSILON;
+}
+
+/// Compare two double-precision floating-point values for equality,
+/// with the precision of EPSILON.
+inline bool fequal(ddouble a, ddouble b) {
     return abs(a - b) < EPSILON;
 }
 

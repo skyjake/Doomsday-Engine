@@ -119,8 +119,16 @@ DENG2_PIMPL(UpdaterSettingsDialog)
     {
         UpdaterSettings st;
 
-        lastChecked->setText(tr("<small>Last checked %1.</small>")
-                             .arg(st.lastCheckAgo()));
+        String ago = st.lastCheckAgo();
+        if(!ago.isEmpty())
+        {
+            lastChecked->setText(tr("<small>Last checked %1.</small>")
+                                 .arg(st.lastCheckAgo()));
+        }
+        else
+        {
+            lastChecked->setText(tr("<small>Never checked.</small>"));
+        }
 
         autoCheck->setChecked(!st.onlyCheckManually());
         freqList->setEnabled(!st.onlyCheckManually());

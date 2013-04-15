@@ -502,8 +502,8 @@ static void renderParticles(int rtype, boolean withBlend)
     size_t i;
     int c;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
     // viewSideVec points to the left.

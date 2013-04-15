@@ -36,8 +36,8 @@
 #include <QEventLoop>
 
 #ifdef __CLIENT__
-
 #include "clientapp.h"
+#include "ui/windowsystem.h"
 
 static void BusyMode_Exit(void);
 
@@ -160,7 +160,7 @@ static void beginTask(BusyTask* task)
 static void endTask(BusyTask* task)
 {
     DENG_ASSERT(task);
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_IN_MAIN_THREAD();
 
     if(verbose)
     {
@@ -245,7 +245,7 @@ static void preBusySetup(int initialMode)
     ClientApp::app().loop().setRate(60);
 
     // Switch the window to busy mode UI.
-    Window::main().canvasWindow().setMode(CanvasWindow::Busy);
+    WindowSystem::main().setMode(ClientWindow::Busy);
 
 #else
     DENG_UNUSED(initialMode);
@@ -265,7 +265,7 @@ static void postBusyCleanup()
     ClientApp::app().loop().setRate(0);
 
     // Switch the window to normal UI.
-    Window::main().canvasWindow().setMode(CanvasWindow::Normal);
+    WindowSystem::main().setMode(ClientWindow::Normal);
 #endif
 }
 
@@ -408,7 +408,7 @@ static void BusyMode_Exit(void)
     int result;
     systhreadexitstatus_t status;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_IN_MAIN_THREAD();
 
     busyDone = true;
 
@@ -437,7 +437,7 @@ void BusyMode_Loop(void)
 
     if(canUpload)
     {
-        Window::main().glActivate();
+        WindowSystem::main().glActivate();
 
         // Any deferred content needs to get uploaded.
         GL_ProcessDeferredTasks(15);
@@ -460,7 +460,7 @@ void BusyMode_Loop(void)
        !Con_IsProgressAnimationCompleted())
     {
         // Let's keep running the busy loop.
-        Window::main().draw();
+        WindowSystem::main().draw();
         return;
     }
 

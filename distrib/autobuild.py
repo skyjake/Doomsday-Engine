@@ -41,7 +41,6 @@ def create_build_event():
     ev = builder.Event(todaysBuild)
     ev.clean()
 
-    #if prevBuild:
     update_changes()
     
 
@@ -49,22 +48,26 @@ def todays_platform_release():
     """Build today's release for the current platform."""
     print "Building today's build."
     ev = builder.Event()
-    
+
     git_pull()
+
+    if sys.platform == 'darwin' and mac_os_version() == '10.5':
+        if version_cmp(ev.version_base(), '1.11') >= 0:
+            # Build should not occur on this platform.
+            print 'Version %s is not buildable on OS X %s.' % (ev.version(), mac_os_version())
+            return
+    
     git_checkout(ev.tag() + builder.config.TAG_MODIFIER)
     
     # We'll copy the new files to the build dir.
     os.chdir(builder.config.DISTRIB_DIR)
-    existingFiles = os.listdir('releases')    
+    oldFiles = DirState('releases', subdirs=False)
     
     print 'platform_release.py...'
-    os.system("python platform_release.py > %s 2> %s" % ('buildlog.txt', 'builderrors.txt'))
-    
-    currentFiles = os.listdir('releases')
-    for n in existingFiles:
-        currentFiles.remove(n)
-        
-    for n in currentFiles:
+    os.system("python platform_release.py > %s 2> %s" % \
+        ('buildlog.txt', 'builderrors.txt'))
+            
+    for n in DirState('releases', subdirs=False).list_new_files(oldFiles):
         # Copy any new files.
         remote_copy(os.path.join('releases', n), ev.file_path(n))
 
@@ -74,7 +77,8 @@ def todays_platform_release():
             if '_amd64' in n: arch = 'amd64'
             remote_copy(os.path.join('releases', n),
                         os.path.join(builder.config.APT_REPO_DIR, 
-                                     builder.config.APT_DIST + '/main/binary-%s' % arch, n))
+                                     builder.config.APT_DIST + \
+                                     '/main/binary-%s' % arch, n))
                                  
     # Also the build logs.
     remote_copy('buildlog.txt', ev.file_path('doomsday-out-%s.txt' % sys_id()))
@@ -145,6 +149,9 @@ def update_changes(debChanges=False):
 
         # Also update the doomsday-fmod changelog (just version number).
         os.chdir(os.path.join(builder.config.DISTRIB_DIR, 'dsfmod'))
+        
+        # Clear the old stuff.
+        os.system('echo "" > debian/changelog')
 
         fmodVer = build_version.parse_header_for_version('../../doomsday/plugins/fmod/include/version.h')
         debVer = "%s.%s.%s-%s" % (fmodVer[0], fmodVer[1], fmodVer[2], todays_build_tag())
