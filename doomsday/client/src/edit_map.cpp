@@ -261,7 +261,7 @@ public:
                 line->updateAABox();
             }
 
-            LOG_INFO("Pruned %d vertexes (%d equivalents, %s unused).")
+            LOG_INFO("Pruned %d vertexes (%d equivalents, %d unused).")
                 << prunedCount << (prunedCount - numUnused) << numUnused;
         }
     }
