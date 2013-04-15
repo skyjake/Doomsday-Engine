@@ -95,6 +95,12 @@
  */
 
 /**
+ * @defgroup input Input Subsystem
+ * @ingroup ui
+ * Input devices and command/control bindings.
+ */
+
+/**
  * @defgroup system System Routines
  * @ingroup base
  * Functionality provided by or related to the operating system.
