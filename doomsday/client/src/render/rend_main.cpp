@@ -2576,97 +2576,10 @@ static void Rend_WriteBspLeafSkyFixGeometry(BspLeaf *leaf, int skyFix)
     }
 }
 
-/**
- * Determine the HEdge from @a bspleaf whose vertex is suitable for use as the
- * center point of a trifan primitive.
- *
- * Note that we do not want any overlapping or zero-area (degenerate) triangles.
- *
- * We are assured by the node build process that BspLeaf->hedges has been ordered
- * by angle, clockwise starting from the smallest angle.
- *
- * @par Algorithm
- * <pre>For each vertex
- *    For each triangle
- *        if area is not greater than minimum bound, move to next vertex
- *    Vertex is suitable</pre>
- *
- * If a vertex exists which results in no zero-area triangles it is suitable for
- * use as the center of our trifan. If a suitable vertex is not found then the
- * center of BSP leaf should be selected instead (it will always be valid as
- * BSP leafs are convex).
- *
- * @return  The chosen node. Can be @a NULL in which case there was no suitable node.
- */
-static HEdge *Rend_ChooseBspLeafFanBase(BspLeaf *leaf)
-{
-#define MIN_TRIANGLE_EPSILON  (0.1) ///< Area
-
-    if(!leaf) return NULL;
-
-    if(leaf->flags() & BLF_UPDATE_FANBASE)
-    {
-        HEdge *firstNode = leaf->firstHEdge();
-        HEdge *fanBase = firstNode;
-
-        if(leaf->hedgeCount() > 3)
-        {
-            // Splines with higher vertex counts demand checking.
-            Vertex const *base, *a, *b;
-
-            // Search for a good base.
-            do
-            {
-                HEdge *other = firstNode;
-
-                base = &fanBase->v1();
-                do
-                {
-                    // Test this triangle?
-                    if(!(fanBase != firstNode && (other == fanBase || other == &fanBase->prev())))
-                    {
-                        a = &other->from();
-                        b = &other->next().from();
-
-                        if(M_TriangleArea(base->origin(), a->origin(), b->origin()) <= MIN_TRIANGLE_EPSILON)
-                        {
-                            // No good. We'll move on to the next vertex.
-                            base = 0;
-                        }
-                    }
-
-                    // On to the next triangle.
-                } while(base && (other = &other->next()) != firstNode);
-
-                if(!base)
-                {
-                    // No good. Select the next vertex and start over.
-                    fanBase = &fanBase->next();
-                }
-            } while(!base && fanBase != firstNode);
-
-            // Did we find something suitable?
-            if(!base) // No.
-            {
-                fanBase = NULL;
-            }
-        }
-        //else Implicitly suitable (or completely degenerate...).
-
-        leaf->_fanBase = fanBase;
-        leaf->_flags &= ~BLF_UPDATE_FANBASE;
-    }
-
-    return leaf->fanBase();
-
-#undef MIN_TRIANGLE_EPSILON
-}
-
 uint Rend_NumFanVerticesForBspLeaf(BspLeaf *leaf)
 {
     if(!leaf) return 0;
     // Are we using a hedge vertex as the fan base?
-    Rend_ChooseBspLeafFanBase(leaf);
     return leaf->hedgeCount() + (leaf->fanBase()? 0 : 2);
 }
 
@@ -2688,7 +2601,7 @@ static uint Rend_BuildBspLeafPlaneGeometry(BspLeaf *leaf, boolean antiClockwise,
 {
     if(!leaf || !verts) return 0;
 
-    HEdge *fanBase = Rend_ChooseBspLeafFanBase(leaf);
+    HEdge *fanBase = leaf->fanBase();
     HEdge *baseNode = fanBase? fanBase : leaf->firstHEdge();
 
     uint totalVerts = leaf->hedgeCount() + (!fanBase? 2 : 0);

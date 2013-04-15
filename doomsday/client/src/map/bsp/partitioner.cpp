@@ -1849,10 +1849,9 @@ DENG2_PIMPL(Partitioner)
                 } while((hedge = &hedge->next()) != base);
             }
 
-            leaf->_sector = chooseSectorForBspLeaf(leaf);
-            if(!leaf->_sector)
+            leaf->setSector(chooseSectorForBspLeaf(leaf));
+            if(!leaf->hasSector())
             {
-                leaf->_sector = 0;
                 LOG_WARNING("BspLeaf %p is degenerate/orphan (%d HEdges).")
                     << de::dintptr(leaf) << leaf->hedgeCount();
             }

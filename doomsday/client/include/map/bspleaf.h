@@ -27,8 +27,6 @@
 #include <de/Error>
 
 #include "MapElement"
-//#include "resource/r_data.h"
-//#include "p_mapdata.h"
 #include "p_dmu.h"
 #ifdef __CLIENT__
 #  include "render/rend_bias.h"
@@ -40,15 +38,6 @@ struct polyobj_s;
 
 #ifdef __CLIENT__
 struct ShadowLink;
-
-/**
- * @defgroup bspLeafFlags  Bsp Leaf Flags
- * @ingroup flags
- */
-///@{
-#define BLF_UPDATE_FANBASE      0x1 ///< The tri-fan base requires an update.
-///@}
-
 #endif // __CLIENT__
 
 /**
@@ -77,42 +66,14 @@ public:
     DENG2_ERROR(WritePropertyError);
 
 public: /// @todo Make private:
-    /// First HEdge in this leaf.
+    /// First half-edge in the leaf. Ordered by angle, clockwise starting from
+    /// the smallest angle.
     HEdge *_hedge;
 
-    /// Unique. Set when saving the BSP.
-    uint _index;
-
-    int _validCount;
-
-    /// Number of HEdge's in this leaf.
+    /// Number of HEdge's in the leaf.
     uint _hedgeCount;
 
-    Sector *_sector;
-
-    /// First Polyobj in this leaf. Can be @c NULL.
-    struct polyobj_s *_polyObj;
-
-    /// Vertex bounding box in the map coordinate space.
-    AABoxd _aaBox;
-
-    /// Center of vertices.
-    coord_t _center[2];
-
-    /// Offset to align the top left of materials in the built geometry to the
-    /// map coordinate space grid.
-    coord_t _worldGridOffset[2];
-
 #ifdef __CLIENT__
-    /// @ref bspLeafFlags.
-    int _flags;
-
-    /// Frame number of last R_AddSprites.
-    int _addSpriteCount;
-
-    /// HEdge whose vertex to use as the base for a trifan.
-    /// If @c NULL then midPoint will be used instead.
-    HEdge *_fanBase;
 
     ShadowLink *_shadows;
 
@@ -185,9 +146,13 @@ public:
     inline Sector *sectorPtr() const { return hasSector()? &sector() : 0; }
 
     /**
-     * Returns a pointer to the first polyobj linked to the BSP leaf; otherwise @c 0.
+     * Change the sector attributed to the BSP leaf.
+     *
+     * @param newSector  New sector to be attributed. Can be @c 0.
+     *
+     * @todo Refactor away.
      */
-    struct polyobj_s *firstPolyobj() const;
+    void setSector(Sector *newSector);
 
     /**
      * Returns @c true iff there is at least one polyobj linked with the BSP leaf.
@@ -195,9 +160,23 @@ public:
     inline bool hasPolyobj() { return firstPolyobj() != 0; }
 
     /**
+     * Returns a pointer to the first polyobj linked to the BSP leaf; otherwise @c 0.
+     */
+    struct polyobj_s *firstPolyobj() const;
+
+    /**
+     * Change the first polyobj linked to the BSP leaf.
+     *
+     * @param newPolyobj  New polyobj. Can be @c 0.
+     */
+    void setFirstPolyobj(struct polyobj_s *newPolyobj);
+
+    /**
      * Returns the original index of the BSP leaf.
      */
     uint origIndex() const;
+
+    void setOrigIndex(uint newOrigIndex);
 
     /**
      * Returns the @em validCount of the BSP leaf. Used by some legacy iteration
@@ -206,6 +185,9 @@ public:
      * @todo Refactor away.
      */
     int validCount() const;
+
+    /// @todo Refactor away.
+    void setValidCount(int newValidCount);
 
     /**
      * Update the world grid offset.
@@ -225,15 +207,11 @@ public:
 #ifdef __CLIENT__
 
     /**
-     * Returns the @ref bspLeafFlags of the BSP leaf.
+     * Returns a pointer to the HEdge of the BSP leaf which has been chosen for
+     * use as the base for a triangle fan geometry. May return @c 0 if no suitable
+     * base was determined.
      */
-    int flags() const;
-
-    /**
-     * Returns the frame number of the last time sprites were projected for the
-     * BSP leaf.
-     */
-    int addSpriteCount() const;
+    HEdge *fanBase() const;
 
     /**
      * Retrieve the bias surface for specified geometry @a groupId
@@ -243,16 +221,23 @@ public:
     biassurface_t &biasSurfaceForGeometryGroup(uint groupId);
 
     /**
-     * Returns a pointer to the HEdge of the BSP lead which has been chosen for
-     * use as the base for a triangle fan geometry. May return @c 0 if no suitable
-     * base is configured.
-     */
-    HEdge *fanBase() const;
-
-    /**
      * Returns the first ShadowLink associated with the BSP leaf; otherwise @c 0.
      */
     ShadowLink *firstShadowLink() const;
+
+    /**
+     * Returns the frame number of the last time sprites were projected for the
+     * BSP leaf.
+     */
+    int addSpriteCount() const;
+
+    /**
+     * Change the frame number of the last time sprites were projected for the
+     * BSP leaf.
+     *
+     * @param newFrameCount  New frame number.
+     */
+    void setAddSpriteCount(int newFrameCount);
 
 #endif // __CLIENT__
 
@@ -271,6 +256,9 @@ public:
      * @return  Always @c 0 (can be used as an iterator).
      */
     int setProperty(setargs_t const &args);
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 #endif // DENG_WORLD_MAP_BSPLEAF

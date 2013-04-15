@@ -1436,7 +1436,7 @@ void R_AddSprites(BspLeaf *bspLeaf)
     params.bspLeaf = bspLeaf;
     R_IterateBspLeafContacts2(bspLeaf, OT_MOBJ, RIT_AddSprite, &params);
 
-    bspLeaf->_addSpriteCount = frameCount;
+    bspLeaf->setAddSpriteCount(frameCount);
 }
 
 void R_SortVisSprites()

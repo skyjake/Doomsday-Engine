@@ -139,7 +139,7 @@ static int rendBspLeaf(BspLeaf *bspLeaf, void * /*parameters*/)
             } while((hedge = &hedge->next()) != base);
         }
 
-        bspLeaf->_validCount = validCount;
+        bspLeaf->setValidCount(validCount);
     }
     return false; // Continue iteration.
 }

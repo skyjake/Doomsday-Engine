@@ -135,7 +135,7 @@ DENG2_PIMPL(GameMap)
             builder.take(leaf);
 
             // Add this BspLeaf to the LUT.
-            leaf->_index = bspLeafs.count();
+            leaf->setOrigIndex(bspLeafs.count());
             bspLeafs.append(leaf);
 
             collateBspLeafHEdges(builder, *leaf);
@@ -845,7 +845,7 @@ void GameMap::initPolyobjs()
                             ulong( theMap->bspLeafIndex(bspLeaf) ),
                             ulong( theMap->sectorIndex(bspLeaf->sectorPtr()) ));
             }
-            bspLeaf->_polyObj = po;
+            bspLeaf->setFirstPolyobj(po);
             po->bspLeaf = bspLeaf;
         }
 
@@ -1190,7 +1190,7 @@ static int blockmapCellBspLeafsIterator(void *object, void *context)
         bool ok = true;
 
         // This BspLeaf has now been processed for the current iteration.
-        bspLeaf->_validCount = args->localValidCount;
+        bspLeaf->setValidCount(args->localValidCount);
 
         // Check the sector restriction.
         if(args->sector && bspLeaf->sectorPtr() != args->sector)

@@ -23,7 +23,7 @@
 #include <de/Log>
 
 #include "de_base.h"
-//#include "m_misc.h"
+#include "m_misc.h" // M_TriangleArea()
 
 #include "map/hedge.h"
 #include "map/polyobj.h"
@@ -34,21 +34,147 @@
 
 using namespace de;
 
-BspLeaf::BspLeaf() : MapElement(DMU_BSPLEAF)
+DENG2_PIMPL(BspLeaf)
 {
-    _hedge = 0;
-    _index = 0;
-    _validCount = 0;
-    _hedgeCount = 0;
-    _sector = 0;
-    _polyObj = 0;
-    std::memset(_center, 0, sizeof(_center));
-    std::memset(_worldGridOffset, 0, sizeof(_worldGridOffset));
+    /// Vertex bounding box in the map coordinate space.
+    AABoxd aaBox;
+
+    /// Center of vertices.
+    coord_t center[2];
+
+    /// Offset to align the top left of materials in the built geometry to the
+    /// map coordinate space grid.
+    coord_t worldGridOffset[2];
+
+    /// Sector attributed to the leaf. @note can be @c 0 (degenerate!).
+    Sector *sector;
+
+    /// First Polyobj in the leaf. Can be @c 0 (none).
+    Polyobj *polyobj;
 
 #ifdef __CLIENT__
-    _flags = BLF_UPDATE_FANBASE;
-    _addSpriteCount = 0;
-    _fanBase = 0;
+
+    /// HEdge whose vertex to use as the base for a trifan.
+    /// If @c 0 the center point will be used instead.
+    HEdge *fanBase;
+
+    bool needUpdateFanBase; ///< @c true= need to rechoose a fan base half-edge.
+
+    /// Frame number of last R_AddSprites.
+    int addSpriteCount;
+
+#endif // __CLIENT__
+
+    /// Original index in the archived map.
+    uint origIndex;
+
+    /// Used by legacy algorithms to prevent repeated processing.
+    int validCount;
+
+    Instance(Public *i)
+        : Base(i),
+          sector(0),
+          polyobj(0),
+#ifdef __CLIENT__
+          fanBase(0),
+          needUpdateFanBase(true),
+          addSpriteCount(0),
+#endif
+          origIndex(0),
+          validCount(0)
+    {
+        std::memset(center, 0, sizeof(center));
+        std::memset(worldGridOffset, 0, sizeof(worldGridOffset));
+    }
+
+#ifdef __CLIENT__
+
+    /**
+     * Determine the HEdge from whose vertex is suitable for use as the center point
+     * of a trifan primitive.
+     *
+     * Note that we do not want any overlapping or zero-area (degenerate) triangles.
+     *
+     * @par Algorithm
+     * <pre>For each vertex
+     *    For each triangle
+     *        if area is not greater than minimum bound, move to next vertex
+     *    Vertex is suitable
+     * </pre>
+     *
+     * If a vertex exists which results in no zero-area triangles it is suitable for
+     * use as the center of our trifan. If a suitable vertex is not found then the
+     * center of BSP leaf should be selected instead (it will always be valid as
+     * BSP leafs are convex).
+     *
+     * @return  The chosen node. Can be @a NULL in which case there was no suitable node.
+     */
+    void chooseFanBase()
+    {
+#define MIN_TRIANGLE_EPSILON  (0.1) ///< Area
+
+        HEdge *firstNode = self._hedge;
+
+        fanBase = firstNode;
+
+        if(self.hedgeCount() > 3)
+        {
+            // Splines with higher vertex counts demand checking.
+            Vertex const *base, *a, *b;
+
+            // Search for a good base.
+            do
+            {
+                HEdge *other = firstNode;
+
+                base = &fanBase->v1();
+                do
+                {
+                    // Test this triangle?
+                    if(!(fanBase != firstNode && (other == fanBase || other == &fanBase->prev())))
+                    {
+                        a = &other->from();
+                        b = &other->next().from();
+
+                        if(M_TriangleArea(base->origin(), a->origin(), b->origin()) <= MIN_TRIANGLE_EPSILON)
+                        {
+                            // No good. We'll move on to the next vertex.
+                            base = 0;
+                        }
+                    }
+
+                    // On to the next triangle.
+                } while(base && (other = &other->next()) != firstNode);
+
+                if(!base)
+                {
+                    // No good. Select the next vertex and start over.
+                    fanBase = &fanBase->next();
+                }
+            } while(!base && fanBase != firstNode);
+
+            // Did we find something suitable?
+            if(!base) // No.
+            {
+                fanBase = NULL;
+            }
+        }
+        //else Implicitly suitable (or completely degenerate...).
+
+        needUpdateFanBase = false;
+
+#undef MIN_TRIANGLE_EPSILON
+    }
+
+#endif // __CLIENT__
+};
+
+BspLeaf::BspLeaf()
+    : MapElement(DMU_BSPLEAF), d(new Instance(this))
+{
+    _hedge = 0;
+    _hedgeCount = 0;
+#ifdef __CLIENT__
     _shadows = 0;
     _bsuf = 0;
     std::memset(_reverb, 0, sizeof(_reverb));
@@ -60,7 +186,7 @@ BspLeaf::~BspLeaf()
 #ifdef __CLIENT__
     if(_bsuf)
     {
-        for(uint i = 0; i < _sector->planeCount(); ++i)
+        for(uint i = 0; i < d->sector->planeCount(); ++i)
         {
             SB_DestroySurface(_bsuf[i]);
         }
@@ -96,46 +222,46 @@ BspLeaf::~BspLeaf()
 
 AABoxd const &BspLeaf::aaBox() const
 {
-    return _aaBox;
+    return d->aaBox;
 }
 
 void BspLeaf::updateAABox()
 {
-    V2d_Set(_aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
-    V2d_Set(_aaBox.max, DDMINFLOAT, DDMINFLOAT);
+    V2d_Set(d->aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
+    V2d_Set(d->aaBox.max, DDMINFLOAT, DDMINFLOAT);
 
     if(!_hedge) return; // Very odd...
 
     HEdge *hedgeIt = _hedge;
-    V2d_InitBox(_aaBox.arvec2, hedgeIt->v1Origin());
+    V2d_InitBox(d->aaBox.arvec2, hedgeIt->v1Origin());
 
     while((hedgeIt = &hedgeIt->next()) != _hedge)
     {
-        V2d_AddToBox(_aaBox.arvec2, hedgeIt->v1Origin());
+        V2d_AddToBox(d->aaBox.arvec2, hedgeIt->v1Origin());
     }
 }
 
 vec2d_t const &BspLeaf::center() const
 {
-    return _center;
+    return d->center;
 }
 
 void BspLeaf::updateCenter()
 {
     // The middle is the center of our AABox.
-    _center[VX] = _aaBox.minX + (_aaBox.maxX - _aaBox.minX) / 2;
-    _center[VY] = _aaBox.minY + (_aaBox.maxY - _aaBox.minY) / 2;
+    d->center[VX] = d->aaBox.minX + (d->aaBox.maxX - d->aaBox.minX) / 2;
+    d->center[VY] = d->aaBox.minY + (d->aaBox.maxY - d->aaBox.minY) / 2;
 }
 
 vec2d_t const &BspLeaf::worldGridOffset() const
 {
-    return _worldGridOffset;
+    return d->worldGridOffset;
 }
 
 void BspLeaf::updateWorldGridOffset()
 {
-    _worldGridOffset[VX] = fmod(_aaBox.minX, 64);
-    _worldGridOffset[VY] = fmod(_aaBox.maxY, 64);
+    d->worldGridOffset[VX] = fmod(d->aaBox.minX, 64);
+    d->worldGridOffset[VY] = fmod(d->aaBox.maxY, 64);
 }
 
 HEdge *BspLeaf::firstHEdge() const
@@ -150,65 +276,88 @@ uint BspLeaf::hedgeCount() const
 
 bool BspLeaf::hasSector() const
 {
-    return _sector != 0;
+    return d->sector != 0;
 }
 
 Sector &BspLeaf::sector() const
 {
-    if(_sector)
+    if(d->sector)
     {
-        return *_sector;
+        return *d->sector;
     }
     /// @throw MissingSectorError Attempted with no sector attributed.
     throw MissingSectorError("BspLeaf::sector", "No sector is attributed");
 }
 
-struct polyobj_s *BspLeaf::firstPolyobj() const
+void BspLeaf::setSector(Sector *newSector)
 {
-    return _polyObj;
+    d->sector = newSector;
+}
+
+Polyobj *BspLeaf::firstPolyobj() const
+{
+    return d->polyobj;
+}
+
+void BspLeaf::setFirstPolyobj(Polyobj *newPolyobj)
+{
+    d->polyobj = newPolyobj;
 }
 
 uint BspLeaf::origIndex() const
 {
-    return _index;
+    return d->origIndex;
+}
+
+void BspLeaf::setOrigIndex(uint newOrigIndex)
+{
+    d->origIndex = newOrigIndex;
 }
 
 int BspLeaf::validCount() const
 {
-    return _validCount;
+    return d->validCount;
+}
+
+void BspLeaf::setValidCount(int newValidCount)
+{
+    d->validCount = newValidCount;
 }
 
 #ifdef __CLIENT__
 
-int BspLeaf::flags() const
+HEdge *BspLeaf::fanBase() const
 {
-    return _flags;
-}
-
-int BspLeaf::addSpriteCount() const
-{
-    return _addSpriteCount;
+    if(d->needUpdateFanBase)
+        d->chooseFanBase();
+    return d->fanBase;
 }
 
 biassurface_t &BspLeaf::biasSurfaceForGeometryGroup(uint groupId)
 {
-    DENG2_ASSERT(_sector);
-    if(groupId > _sector->planeCount())
-        /// @throw InvalidGeometryGroupError Attempted with an invalid geometry group id.
-        throw UnknownGeometryGroupError("BspLeaf::biasSurfaceForGeometryGroup", QString("Invalid group id %1").arg(groupId));
-
-    DENG2_ASSERT(_bsuf && _bsuf[groupId]);
-    return *_bsuf[groupId];
-}
-
-HEdge *BspLeaf::fanBase() const
-{
-    return _fanBase;
+    DENG2_ASSERT(d->sector != 0);
+    if(groupId <= d->sector->planeCount())
+    {
+        DENG2_ASSERT(_bsuf != 0 && _bsuf[groupId] != 0);
+        return *_bsuf[groupId];
+    }
+    /// @throw InvalidGeometryGroupError Attempted with an invalid geometry group id.
+    throw UnknownGeometryGroupError("BspLeaf::biasSurfaceForGeometryGroup", QString("Invalid group id %1").arg(groupId));
 }
 
 ShadowLink *BspLeaf::firstShadowLink() const
 {
     return _shadows;
+}
+
+int BspLeaf::addSpriteCount() const
+{
+    return d->addSpriteCount;
+}
+
+void BspLeaf::setAddSpriteCount(int newFrameCount)
+{
+    d->addSpriteCount = newFrameCount;
 }
 
 #endif // __CLIENT__
@@ -218,7 +367,7 @@ int BspLeaf::property(setargs_t &args) const
     switch(args.prop)
     {
     case DMU_SECTOR:
-        DMU_GetValue(DMT_BSPLEAF_SECTOR, &_sector, &args, 0);
+        DMU_GetValue(DMT_BSPLEAF_SECTOR, &d->sector, &args, 0);
         break;
     case DMU_HEDGE_COUNT: {
         int val = int( _hedgeCount );

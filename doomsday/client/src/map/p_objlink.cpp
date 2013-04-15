@@ -389,7 +389,7 @@ static void processSeg(HEdge *hedge, void *parameters)
     }
 
     // During next step, obj will continue spreading from there.
-    backLeaf->_validCount = validCount;
+    backLeaf->setValidCount(validCount);
 
     // Link up a new contact with the back BSP leaf.
     linkobjtobspleafparams_t loParams;
@@ -406,61 +406,61 @@ static void processSeg(HEdge *hedge, void *parameters)
  *
  * @param oLink Ptr to objlink to find BspLeaf contacts for.
  */
-static void findContacts(objlink_t* link)
+static void findContacts(objlink_t *link)
 {
-    contactfinderparams_t cfParams;
-    linkobjtobspleafparams_t loParams;
+    DENG_ASSERT(link != 0);
+
     coord_t radius;
     pvec3d_t origin;
-    BspLeaf** ssecAdr;
+    BspLeaf **bspLeafAdr;
 
     switch(link->type)
     {
 #ifdef __CLIENT__
     case OT_LUMOBJ: {
-        lumobj_t* lum = (lumobj_t*) link->obj;
+        lumobj_t *lum = (lumobj_t *) link->obj;
         // Only omni lights spread.
         if(lum->type != LT_OMNI) return;
 
         origin = lum->origin;
         radius = LUM_OMNI(lum)->radius;
-        ssecAdr = &lum->bspLeaf;
-        break;
-      }
+        bspLeafAdr = &lum->bspLeaf;
+        break; }
 #endif
     case OT_MOBJ: {
-        mobj_t* mo = (mobj_t*) link->obj;
+        mobj_t *mo = (mobj_t *) link->obj;
 
         origin = mo->origin;
         radius = R_VisualRadius(mo);
-        ssecAdr = &mo->bspLeaf;
-        break;
-      }
+        bspLeafAdr = &mo->bspLeaf;
+        break; }
+
     default:
-        Con_Error("findContacts: Invalid objtype %i.", (int) link->type);
-        exit(1); // Unreachable.
+        DENG_ASSERT(false);
     }
 
     // Do the BSP leaf spread. Begin from the obj's own BspLeaf.
-    (*ssecAdr)->_validCount = ++validCount;
+    (*bspLeafAdr)->setValidCount(++validCount);
 
-    cfParams.obj = link->obj;
-    cfParams.objType = link->type;
-    V3d_Copy(cfParams.objOrigin, origin);
+    contactfinderparams_t cfParms;
+    cfParms.obj            = link->obj;
+    cfParms.objType        = link->type;
+    V3d_Copy(cfParms.objOrigin, origin);
     // Use a slightly smaller radius than what the obj really is.
-    cfParams.objRadius = radius * .98f;
+    cfParms.objRadius      = radius * .98f;
 
-    cfParams.box[BOXLEFT]   = cfParams.objOrigin[VX] - radius;
-    cfParams.box[BOXRIGHT]  = cfParams.objOrigin[VX] + radius;
-    cfParams.box[BOXBOTTOM] = cfParams.objOrigin[VY] - radius;
-    cfParams.box[BOXTOP]    = cfParams.objOrigin[VY] + radius;
+    cfParms.box[BOXLEFT]   = cfParms.objOrigin[VX] - radius;
+    cfParms.box[BOXRIGHT]  = cfParms.objOrigin[VX] + radius;
+    cfParms.box[BOXBOTTOM] = cfParms.objOrigin[VY] - radius;
+    cfParms.box[BOXTOP]    = cfParms.objOrigin[VY] + radius;
 
     // Always contact the obj's own BspLeaf.
-    loParams.obj = link->obj;
-    loParams.type = link->type;
-    RIT_LinkObjToBspLeaf(*ssecAdr, &loParams);
+    linkobjtobspleafparams_t loParms;
+    loParms.obj  = link->obj;
+    loParms.type = link->type;
+    RIT_LinkObjToBspLeaf(*bspLeafAdr, &loParms);
 
-    spreadInBspLeaf(*ssecAdr, &cfParams);
+    spreadInBspLeaf(*bspLeafAdr, &cfParms);
 }
 
 /**
