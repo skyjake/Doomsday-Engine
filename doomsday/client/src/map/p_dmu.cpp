@@ -2264,15 +2264,76 @@ DENG_EXTERN_C void P_SpawnDamageParticleGen(struct mobj_s* mo, struct mobj_s* in
 // p_think.c
 DENG_EXTERN_C struct mobj_s* P_MobjForID(int id);
 
-// polyobjs.c
-DENG_EXTERN_C boolean P_PolyobjMoveXY(Polyobj* polyobj, coord_t x, coord_t y);
-DENG_EXTERN_C boolean P_PolyobjRotate(Polyobj* polyobj, angle_t angle);
-DENG_EXTERN_C void P_PolyobjLink(Polyobj* polyobj);
-DENG_EXTERN_C void P_PolyobjUnlink(Polyobj* polyobj);
-DENG_EXTERN_C Line *P_PolyobjFirstLine(Polyobj *polyobj);
-DENG_EXTERN_C Polyobj* P_PolyobjByID(uint id);
-DENG_EXTERN_C Polyobj* P_PolyobjByTag(int tag);
-DENG_EXTERN_C void P_SetPolyobjCallback(void (*func) (struct mobj_s*, void*, void*));
+#undef P_SetPolyobjCallback
+DENG_EXTERN_C void P_SetPolyobjCallback(void (*func) (struct mobj_s *, void *, void *))
+{
+    Polyobj::setCollisionCallback(func);
+}
+
+#undef P_PolyobjUnlink
+DENG_EXTERN_C void P_PolyobjUnlink(Polyobj *po)
+{
+    if(!po) return;
+    /// @todo Do not assume polyobj is from the CURRENT map.
+    theMap->unlinkPolyobj(*po);
+}
+
+#undef P_PolyobjLink
+DENG_EXTERN_C void P_PolyobjLink(Polyobj *po)
+{
+    if(!po) return;
+    /// @todo Do not assume polyobj is from the CURRENT map.
+    theMap->linkPolyobj(*po);
+}
+
+#undef P_PolyobjByID
+DENG_EXTERN_C Polyobj *P_PolyobjByID(uint index)
+{
+    if(!theMap) return 0;
+    return theMap->polyobjs().at(index);
+}
+
+#undef P_PolyobjByTag
+DENG_EXTERN_C Polyobj *P_PolyobjByTag(int tag)
+{
+    if(!theMap) return 0;
+    return theMap->polyobjByTag(tag);
+}
+
+#undef P_PolyobjByBase
+DENG_EXTERN_C Polyobj *P_PolyobjByBase(void *ddMobjBase)
+{
+    if(!theMap || !ddMobjBase) return 0;
+    return theMap->polyobjByBase(*reinterpret_cast<ddmobj_base_t *>(ddMobjBase));
+}
+
+#undef P_PolyobjMove
+DENG_EXTERN_C boolean P_PolyobjMove(Polyobj *po, const_pvec3d_t xy)
+{
+    if(!po) return false;
+    return po->move(xy);
+}
+
+#undef P_PolyobjMoveXY
+DENG_EXTERN_C boolean P_PolyobjMoveXY(Polyobj *po, coord_t x, coord_t y)
+{
+    if(!po) return false;
+    return po->move(x, y);
+}
+
+#undef P_PolyobjRotate
+DENG_EXTERN_C boolean P_PolyobjRotate(Polyobj *po, angle_t angle)
+{
+    if(!po) return false;
+    return po->rotate(angle);
+}
+
+#undef P_PolyobjFirstLine
+DENG_EXTERN_C Line *P_PolyobjFirstLine(Polyobj *po)
+{
+    if(!po) return 0;
+    return po->lines()[0];
+}
 
 #undef Line_PointDistance
 DENG_EXTERN_C coord_t Line_PointDistance(Line *line, coord_t const point[2], coord_t *offset)

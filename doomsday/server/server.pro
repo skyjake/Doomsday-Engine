@@ -215,7 +215,6 @@ DENG_HEADERS += \
     $$SRC/include/map/p_object.h \
     $$SRC/include/map/p_particle.h \
     $$SRC/include/map/p_players.h \
-    $$SRC/include/map/p_polyobjs.h \
     $$SRC/include/map/p_ticker.h \
     $$SRC/include/map/plane.h \
     $$SRC/include/map/polyobj.h \
@@ -384,7 +383,6 @@ SOURCES += \
     $$SRC/src/map/p_mobj.cpp \
     $$SRC/src/map/p_particle.cpp \
     $$SRC/src/map/p_players.cpp \
-    $$SRC/src/map/p_polyobjs.cpp \
     $$SRC/src/map/p_think.cpp \
     $$SRC/src/map/p_ticker.cpp \
     $$SRC/src/map/plane.cpp \

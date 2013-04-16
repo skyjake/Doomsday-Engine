@@ -35,7 +35,6 @@
 #include "BspNode"
 #include "Sector"
 #include "Polyobj"
-#include "map/p_polyobjs.h"
 #include "map/p_dmu.h"
 #include "map/p_object.h"
 #include "map/p_intercept.h"

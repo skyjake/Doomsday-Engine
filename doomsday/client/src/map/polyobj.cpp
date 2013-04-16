@@ -26,13 +26,15 @@
 #include "de_base.h"
 
 #include "map/p_maptypes.h"
-#include "map/p_polyobjs.h"
 #include "render/r_main.h" // validCount
 #include "HEdge"
 
 #include "map/polyobj.h"
 
 using namespace de;
+
+// Function to be called when the polyobj collides with some map element.
+static void (*collisionCallback) (mobj_t *mobj, void *line, void *polyobj);
 
 /// Used to store the original/previous vertex coordinates.
 typedef QVector<Vector2d> VertexCoords;
@@ -54,6 +56,19 @@ static void notifyGeometryChanged(Polyobj &po)
 #else // !__CLIENT__
     DENG2_UNUSED(po);
 #endif
+}
+
+/**
+ * @param po    Polyobj instance.
+ * @param mobj  Mobj that @a line of the polyobj is in collision with.
+ * @param line  Polyobj line that @a mobj is in collision with.
+ */
+static void notifyCollision(Polyobj &po, mobj_t *mobj, Line *line)
+{
+    if(collisionCallback)
+    {
+        collisionCallback(mobj, line, &po);
+    }
 }
 
 polyobj_s::polyobj_s(de::Vector2d const &origin_)
@@ -88,6 +103,11 @@ polyobj_s::~polyobj_s()
     delete static_cast<Vertexes *>(_uniqueVertexes);
     delete static_cast<VertexCoords *>(_originalPts);
     delete static_cast<VertexCoords *>(_prevPts);
+}
+
+void Polyobj::setCollisionCallback(void (*func) (mobj_t *mobj, void *line, void *polyobj)) // static
+{
+    collisionCallback = func;
 }
 
 Polyobj::Lines const &Polyobj::lines() const
@@ -158,9 +178,9 @@ void Polyobj::updateSurfaceTangents()
 
 struct ptrmobjblockingparams_t
 {
-    bool isBlocked;
-    Line *line;
     Polyobj *polyobj;
+    Line *line; // Line of the polyobj which suffered collision.
+    bool isBlocked;
 };
 
 static inline bool mobjCanBlockMovement(mobj_t *mo)
@@ -192,7 +212,7 @@ static int PTR_CheckMobjBlocking(mobj_t *mo, void *context)
         return false;
 
     // This mobj blocks our path!
-    P_PolyobjCallback(mo, parms->line, parms->polyobj);
+    notifyCollision(*parms->polyobj, mo, parms->line);
     parms->isBlocked = true;
 
     // Process all blocking mobjs...
@@ -202,9 +222,9 @@ static int PTR_CheckMobjBlocking(mobj_t *mo, void *context)
 static bool checkMobjBlocking(Polyobj &po, Line &line)
 {
     ptrmobjblockingparams_t parms;
-    parms.isBlocked = false;
-    parms.line      = &line;
     parms.polyobj   = &po;
+    parms.line      = &line;
+    parms.isBlocked = false;
 
     AABoxd interceptRange(line.aaBox().minX - DDMOBJ_RADIUS_MAX,
                           line.aaBox().minY - DDMOBJ_RADIUS_MAX,

@@ -254,7 +254,6 @@ DENG_HEADERS += \
     include/map/p_objlink.h \
     include/map/p_particle.h \
     include/map/p_players.h \
-    include/map/p_polyobjs.h \
     include/map/p_ticker.h \
     include/map/plane.h \
     include/map/polyobj.h \
@@ -518,7 +517,6 @@ SOURCES += \
     src/map/p_objlink.cpp \
     src/map/p_particle.cpp \
     src/map/p_players.cpp \
-    src/map/p_polyobjs.cpp \
     src/map/p_think.cpp \
     src/map/p_ticker.cpp \
     src/map/plane.cpp \

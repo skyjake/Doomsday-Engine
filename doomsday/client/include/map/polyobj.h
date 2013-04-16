@@ -30,6 +30,9 @@
 class Line;
 class Vertex;
 
+/// Storage needed for a polyobj_s instance, plus the user data section (if any).
+#define POLYOBJ_SIZE        gx.polyobjSize
+
 /**
  * World map polyobj. Moveable Polygonal Map-Object (Polyobj).
  *
@@ -40,6 +43,9 @@ typedef struct polyobj_s
 public:
     typedef QList<Line *> Lines;
     typedef QList<Vertex *> Vertexes;
+
+public:
+    static void setCollisionCallback(void (*func) (struct mobj_s *mobj, void *line, void *polyobj));
 
 public:
     DD_BASE_POLYOBJ_ELEMENTS()
@@ -150,7 +156,5 @@ public:
     void setOrigIndex(uint newIndex);
 
 } Polyobj;
-
-#define POLYOBJ_SIZE        gx.polyobjSize
 
 #endif // DENG_WORLD_MAP_POLYOBJ
