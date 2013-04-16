@@ -87,6 +87,9 @@ public:
     /// Appends a block after this one.
     Block &operator += (Block const &other);
 
+    /// Appends a byte array after this one.
+    Block &operator += (IByteArray const &byteArray);
+
     /// Copies the contents of another block.
     Block &operator = (Block const &other);
 
