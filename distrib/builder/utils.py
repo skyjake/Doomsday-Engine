@@ -11,7 +11,7 @@ import config
 def omit_path(path, omitted):
     if path.startswith(omitted):
         path = path[len(omitted):]
-        if path[0] == '/': path = path[1:]
+        if path[0] == '/' or path[0] == '\\': path = path[1:]
     return path
 
 
