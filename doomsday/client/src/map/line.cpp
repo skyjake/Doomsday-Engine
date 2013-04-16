@@ -237,21 +237,22 @@ void Line::Side::updateMiddleSoundEmitterOrigin()
 
     ddmobj_base_t &emitter = d->sections->middle.soundEmitter();
 
-    emitter.origin[VX] = (d->line.v1Origin()[VX] + d->line.v2Origin()[VX]) / 2;
-    emitter.origin[VY] = (d->line.v1Origin()[VY] + d->line.v2Origin()[VY]) / 2;
+    Vector2d lineCenter = d->line.center();
+    emitter.origin[VX] = lineCenter.x;
+    emitter.origin[VY] = lineCenter.y;
 
     DENG_ASSERT(d->sector != 0);
     coord_t const ffloor = d->sector->floor().height();
     coord_t const fceil  = d->sector->ceiling().height();
 
-    if(!d->line.hasBackSections() || d->line.isSelfReferencing())
+    if(!back().hasSections() || d->line.isSelfReferencing())
     {
         emitter.origin[VZ] = (ffloor + fceil) / 2;
     }
     else
     {
-        emitter.origin[VZ] = (de::max(ffloor, d->line.backSector().floor().height()) +
-                              de::min(fceil,  d->line.backSector().ceiling().height())) / 2;
+        emitter.origin[VZ] = (de::max(ffloor, back().sector().floor().height()) +
+                              de::min(fceil,  back().sector().ceiling().height())) / 2;
     }
 }
 
@@ -263,21 +264,22 @@ void Line::Side::updateBottomSoundEmitterOrigin()
 
     ddmobj_base_t &emitter = d->sections->bottom.soundEmitter();
 
-    emitter.origin[VX] = (d->line.v1Origin()[VX] + d->line.v2Origin()[VX]) / 2;
-    emitter.origin[VY] = (d->line.v1Origin()[VY] + d->line.v2Origin()[VY]) / 2;
+    Vector2d lineCenter = d->line.center();
+    emitter.origin[VX] = lineCenter.x;
+    emitter.origin[VY] = lineCenter.y;
 
     DENG_ASSERT(d->sector != 0);
     coord_t const ffloor = d->sector->floor().height();
     coord_t const fceil  = d->sector->ceiling().height();
 
-    if(!d->line.hasBackSections() || d->line.isSelfReferencing() ||
-       d->line.backSector().floor().height() <= ffloor)
+    if(!back().hasSections() || d->line.isSelfReferencing() ||
+       back().sector().floor().height() <= ffloor)
     {
         emitter.origin[VZ] = ffloor;
     }
     else
     {
-        emitter.origin[VZ] = (de::min(d->line.backSector().floor().height(), fceil) + ffloor) / 2;
+        emitter.origin[VZ] = (de::min(back().sector().floor().height(), fceil) + ffloor) / 2;
     }
 }
 
@@ -289,21 +291,22 @@ void Line::Side::updateTopSoundEmitterOrigin()
 
     ddmobj_base_t &emitter = d->sections->top.soundEmitter();
 
-    emitter.origin[VX] = (d->line.v1Origin()[VX] + d->line.v2Origin()[VX]) / 2;
-    emitter.origin[VY] = (d->line.v1Origin()[VY] + d->line.v2Origin()[VY]) / 2;
+    Vector2d lineCenter = d->line.center();
+    emitter.origin[VX] = lineCenter.x;
+    emitter.origin[VY] = lineCenter.y;
 
     DENG_ASSERT(d->sector != 0);
     coord_t const ffloor = d->sector->floor().height();
     coord_t const fceil  = d->sector->ceiling().height();
 
-    if(!d->line.hasBackSections() || d->line.isSelfReferencing() ||
-       d->line.backSector().ceiling().height() >= fceil)
+    if(!back().hasSections() || d->line.isSelfReferencing() ||
+       back().sector().ceiling().height() >= fceil)
     {
         emitter.origin[VZ] = fceil;
     }
     else
     {
-        emitter.origin[VZ] = (de::max(d->line.backSector().ceiling().height(), ffloor) + fceil) / 2;
+        emitter.origin[VZ] = (de::max(back().sector().ceiling().height(), ffloor) + fceil) / 2;
     }
 }
 
@@ -320,10 +323,8 @@ void Line::Side::updateSurfaceNormals()
 {
     if(!hasSections()) return;
 
-    int edge = isFront()? 0 : 1;
-
-    Vector3f normal((d->line.vertexOrigin(edge^1)[VY] - d->line.vertexOrigin(edge  )[VY]) / d->line.length(),
-                    (d->line.vertexOrigin(edge  )[VX] - d->line.vertexOrigin(edge^1)[VX]) / d->line.length(),
+    Vector3f normal((to().origin()[VY] - from().origin()[VY]) / d->line.length(),
+                    (from().origin()[VX] - to().origin()[VX]) / d->line.length(),
                     0);
 
     // All line side surfaces have the same normals.

@@ -671,6 +671,16 @@ public:
     inline const_pvec2d_t &toOrigin() const { return v2Origin(); }
 
     /**
+     * Returns the point on the line which lies at the exact center of the
+     * two vertexes.
+     */
+    inline de::Vector2d center() const
+    {
+        return de::Vector2d((v1Origin()[VX] + v2Origin()[VX]) / 2,
+                            (v1Origin()[VY] + v2Origin()[VY]) / 2);
+    }
+
+    /**
      * Returns the binary angle of the line (which, is derived from the
      * direction vector).
      *
