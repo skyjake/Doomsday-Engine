@@ -220,7 +220,8 @@ DENG2_PIMPL(Partitioner)
     static void testForWindowEffect2(Line &line, testForWindowEffectParams &p)
     {
         if(&line == p.testLine) return;
-        if(line.isSelfReferencing()) return;
+        /// @todo Should the presence of sections really affect this? -ds
+        if(line.hasFrontSections() && line.hasBackSections() && line.isSelfReferencing()) return;
         //if(line._buildData.overlap || line.length() <= 0) return;
 
         double dist = 0;
@@ -395,7 +396,7 @@ DENG2_PIMPL(Partitioner)
 
         if(line)
         {
-            left->_lineSide = BACK;
+            left->_lineSide = Line::Back;
         }
 
         return right;
@@ -1724,10 +1725,13 @@ DENG2_PIMPL(Partitioner)
         {
             if(hedge->hasLine() && hedge->line().hasSector(hedge->lineSideId()))
             {
-                Sector &sector = hedge->line().sector(hedge->lineSideId());
+                Line &line = hedge->line();
+                Sector &sector = line.sector(hedge->lineSideId());
 
                 // The first sector from a non self-referencing line is our best choice.
-                if(!hedge->line().isSelfReferencing()) return &sector;
+                /// @todo Should the presence of sections really affect this? -ds
+                if(!(line.isSelfReferencing() && line.hasFrontSections() && line.hasBackSections()))
+                    return &sector;
 
                 // Remember the self-referencing choice in case we've no better option.
                 if(!selfRefChoice)
@@ -2174,7 +2178,7 @@ DENG2_PIMPL(Partitioner)
         }
 
         // OK, now just find the first wall_tip whose angle is greater than
-        // the angle we're interested in. Therefore we'll be on the FRONT side
+        // the angle we're interested in. Therefore we'll be on the front side
         // of that tip edge.
         DENG2_FOR_EACH_CONST(VertexInfo::HEdgeTips, it, hedgeTips)
         {
@@ -2186,7 +2190,7 @@ DENG2_PIMPL(Partitioner)
             }
         }
 
-        // Not found. The open sector will therefore be on the BACK of the tip
+        // Not found. The open sector will therefore be on the back of the tip
         // at the greatest angle.
         HEdgeTip const &tip = hedgeTips.back();
         return (tip.hasBack()? tip.back().sectorPtr() : 0);

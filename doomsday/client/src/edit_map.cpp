@@ -845,7 +845,7 @@ boolean MPE_End()
     foreach(Line *line, editMap.lines)
     {
         if(!line->hasFrontSections() || !line->hasBackSections())
-            line->_flags |= DDLF_BLOCKING;
+            line->setFlags(DDLF_BLOCKING);
     }
 
     buildVertexLineOwnerRings();
@@ -1051,7 +1051,7 @@ void MPE_LineAddSide(uint lineIdx, int sideId, short flags, ddstring_t const *to
     Line *line = editMap.lines[lineIdx - 1];
     Line::Side &side = line->side(sideId);
 
-    side._flags = flags;
+    side.setFlags(flags);
     side.setSideDefArchiveIndex(sideDefArchiveIndex);
 
     // Ensure sections are defined if they aren't already.

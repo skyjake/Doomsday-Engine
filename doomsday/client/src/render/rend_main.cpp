@@ -392,7 +392,7 @@ static int pvisibleWallSections(Line *line, int backSide)
     if(!line->hasSector(backSide^1) /*$degenleaf*/ || !line->hasBackSections())
     {
         // Only a middle.
-        sections |= SSF_MIDDLE;
+        sections |= Line::Side::MiddleFlag;
     }
     else
     {
@@ -404,25 +404,25 @@ static int pvisibleWallSections(Line *line, int backSide)
         Plane const *bceil  = &bsec->ceiling();
         Plane const *bfloor = &bsec->floor();
 
-        sections |= SSF_MIDDLE | SSF_BOTTOM | SSF_TOP;
+        sections |= Line::Side::AllSectionFlags;
 
         // Middle?
         if(!side.middle().hasMaterial() ||
            !side.middle().material().isDrawable() ||
             side.middle().opacity() <= 0)
-            sections &= ~SSF_MIDDLE;
+            sections &= ~Line::Side::MiddleFlag;
 
         // Top?
         if((!devRendSkyMode && fceil->surface().hasSkyMaskedMaterial() && bceil->surface().hasSkyMaskedMaterial()) ||
            //(!devRendSkyMode && bceil->surface().isSkyMasked() && (side.top().hasFixMaterial())) ||
            (fceil->visHeight() <= bceil->visHeight()))
-            sections &= ~SSF_TOP;
+            sections &= ~Line::Side::TopFlag;
 
         // Bottom?
         if((!devRendSkyMode && ffloor->surface().hasSkyMaskedMaterial() && bfloor->surface().hasSkyMaskedMaterial()) ||
            //(!devRendSkyMode && bfloor->surface().isSkyMasked() && (side.bottom().hasFixMaterial())) ||
            (ffloor->visHeight() >= bfloor->visHeight()))
-            sections &= ~SSF_BOTTOM;
+            sections &= ~Line::Side::BottomFlag;
     }
 
     return sections;
@@ -434,17 +434,17 @@ static inline int pvisibleWallSections(HEdge &hedge)
 }
 
 static void selectSurfaceColors(Vector3f const **topColor,
-    Vector3f const **bottomColor, Line::Side &lineSide, SideSection section)
+    Vector3f const **bottomColor, Line::Side &lineSide, int section)
 {
     switch(section)
     {
-    case SS_MIDDLE:
-        if(lineSide.flags() & SDF_BLENDMIDTOTOP)
+    case Line::Side::Middle:
+        if(lineSide.isFlagged(SDF_BLENDMIDTOTOP))
         {
             *topColor    = &lineSide.top().tintColor();
             *bottomColor = &lineSide.middle().tintColor();
         }
-        else if(lineSide.flags() & SDF_BLENDMIDTOBOTTOM)
+        else if(lineSide.isFlagged(SDF_BLENDMIDTOBOTTOM))
         {
             *topColor    = &lineSide.middle().tintColor();
             *bottomColor = &lineSide.bottom().tintColor();
@@ -456,8 +456,8 @@ static void selectSurfaceColors(Vector3f const **topColor,
         }
         break;
 
-    case SS_TOP:
-        if(lineSide.flags() & SDF_BLENDTOPTOMID)
+    case Line::Side::Top:
+        if(lineSide.isFlagged(SDF_BLENDTOPTOMID))
         {
             *topColor    = &lineSide.top().tintColor();
             *bottomColor = &lineSide.middle().tintColor();
@@ -469,8 +469,8 @@ static void selectSurfaceColors(Vector3f const **topColor,
         }
         break;
 
-    case SS_BOTTOM:
-        if(lineSide.flags() & SDF_BLENDBOTTOMTOMID)
+    case Line::Side::Bottom:
+        if(lineSide.isFlagged(SDF_BLENDBOTTOMTOMID))
         {
             *topColor    = &lineSide.middle().tintColor();
             *bottomColor = &lineSide.bottom().tintColor();
@@ -1315,7 +1315,7 @@ static bool writeWallSection2(HEdge &hedge, Vector3f const &normal,
 
             radioParms.line      = hedge.linePtr();
 
-            Line::Side::FakeRadioData &frData = hedge.lineSide().fakeRadioData();
+            LineSideRadioData &frData = Rend_RadioDataForLineSide(hedge.lineSide());
             radioParms.botCn     = frData.bottomCorners;
             radioParms.topCn     = frData.topCorners;
             radioParms.sideCn    = frData.sideCorners;
@@ -1561,13 +1561,13 @@ static Vector2f calcLineNormal(Line const &line, byte side)
  *     Tests consider all Planes which interface with this and the "middle"
  *     Material used on the relative front side (if any).
  */
-static bool lineBackClosedForBlend(Line const &line, int side, bool ignoreOpacity)
+static bool lineBackClosedForBlend(Line const &line, int sideId, bool ignoreOpacity)
 {
     if(!line.front().hasSections()) return false;
     if(!line.back().hasSections()) return true;
 
-    Sector const *frontSec = line.sectorPtr(side);
-    Sector const *backSec  = line.sectorPtr(side^1);
+    Sector const *frontSec = line.sectorPtr(sideId);
+    Sector const *backSec  = line.sectorPtr(sideId^1);
     if(frontSec == backSec) return false; // Never.
 
     if(frontSec && backSec)
@@ -1577,18 +1577,18 @@ static bool lineBackClosedForBlend(Line const &line, int side, bool ignoreOpacit
         if(backSec->floor().visHeight()   >= frontSec->ceiling().visHeight()) return true;
     }
 
-    return R_MiddleMaterialCoversLineOpening(&line, side, ignoreOpacity);
+    return R_MiddleMaterialCoversLineOpening(&line, sideId, ignoreOpacity);
 }
 
-static Line *findLineBlendNeighbor(Line const &line, byte side, byte right,
-                                      binangle_t *diff)
+static Line *findLineBlendNeighbor(Line const &line, int sideId, bool right,
+                                   binangle_t *diff)
 {
-    LineOwner const *farVertOwner = line.vertexOwner(right^side);
-    if(lineBackClosedForBlend(line, side, true/*ignore opacity*/))
+    LineOwner const *farVertOwner = line.vertexOwner((int)right ^ sideId);
+    if(lineBackClosedForBlend(line, sideId, true/*ignore opacity*/))
     {
-        return R_FindSolidLineNeighbor(line.sectorPtr(side), &line, farVertOwner, right, diff);
+        return R_FindSolidLineNeighbor(line.sectorPtr(sideId), &line, farVertOwner, right, diff);
     }
-    return R_FindLineNeighbor(line.sectorPtr(side), &line, farVertOwner, right, diff);
+    return R_FindLineNeighbor(line.sectorPtr(sideId), &line, farVertOwner, right, diff);
 }
 
 /**
@@ -1689,7 +1689,7 @@ static void lineLightLevelDeltas(Line const &line, int side,
 /**
  * @param flags  @ref writeWallSectionFlags
  */
-static bool writeWallSection(HEdge &hedge, SideSection section,
+static bool writeWallSection(HEdge &hedge, int section,
     int flags, float lightLevel, Vector3f const &lightColor,
     walldivs_t *leftWallDivs, walldivs_t *rightWallDivs,
     float const matOffset[2])
@@ -1704,9 +1704,9 @@ static bool writeWallSection(HEdge &hedge, SideSection section,
        WallDivNode_Height(WallDivs_Last(rightWallDivs))) return true;
 
     bool opaque = true;
-    float opacity = (section == SS_MIDDLE? surface.opacity() : 1.0f);
+    float opacity = (section == Line::Side::Middle? surface.opacity() : 1.0f);
 
-    if(section == SS_MIDDLE && (flags & WSF_VIEWER_NEAR_BLEND))
+    if(section == Line::Side::Middle && (flags & WSF_VIEWER_NEAR_BLEND))
     {
         mobj_t *mo = viewPlayer->shared.mo;
         viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
@@ -1763,13 +1763,13 @@ static bool writeWallSection(HEdge &hedge, SideSection section,
         Material *material = 0;
         int rpFlags = RPF_DEFAULT; /// @ref rendPolyFlags
         if(devRendSkyMode && hedge.hasTwin() &&
-           ((section == SS_BOTTOM && hedge.sector().floorSurface().hasSkyMaskedMaterial() &&
-                                     hedge.twin().sector().floorSurface().hasSkyMaskedMaterial()) ||
-            (section == SS_TOP    && hedge.sector().ceilingSurface().hasSkyMaskedMaterial() &&
-                                     hedge.twin().sector().ceilingSurface().hasSkyMaskedMaterial())))
+           ((section == Line::Side::Bottom && hedge.sector().floorSurface().hasSkyMaskedMaterial() &&
+                                              hedge.twin().sector().floorSurface().hasSkyMaskedMaterial()) ||
+            (section == Line::Side::Top    && hedge.sector().ceilingSurface().hasSkyMaskedMaterial() &&
+                                              hedge.twin().sector().ceilingSurface().hasSkyMaskedMaterial())))
         {
             // Geometry not normally rendered however we do so in dev sky mode.
-            material = hedge.sector().planeSurface(section == SS_TOP? Plane::Ceiling : Plane::Floor).materialPtr();
+            material = hedge.sector().planeSurface(section == Line::Side::Top? Plane::Ceiling : Plane::Floor).materialPtr();
         }
         else
         {
@@ -1815,7 +1815,7 @@ static bool writeWallSection(HEdge &hedge, SideSection section,
         {
             // Make any necessary adjustments to the draw flags to suit the
             // current texture mode.
-            if(section != SS_MIDDLE || (section == SS_MIDDLE && !isTwoSided))
+            if(section != Line::Side::Middle || (section == Line::Side::Middle && !isTwoSided))
             {
                 flags |= WSF_FORCE_OPAQUE;
                 blendMode = BM_NORMAL;
@@ -1841,7 +1841,7 @@ static bool writeWallSection(HEdge &hedge, SideSection section,
                glowStrength < 1 && !(!useDynLights && !useWallGlow))
             {
                 Surface const &middleSurface = hedge.lineSide().middle();
-                int plFlags = ((section == SS_MIDDLE && isTwoSided)? PLF_SORT_LUMINOSITY_DESC : 0);
+                int plFlags = ((section == Line::Side::Middle && isTwoSided)? PLF_SORT_LUMINOSITY_DESC : 0);
 
                 lightListIdx = LO_ProjectToSurface(plFlags, currentBspLeaf, 1, texTL, texBR,
                                                    middleSurface.tangent(),
@@ -1876,7 +1876,7 @@ static bool writeWallSection(HEdge &hedge, SideSection section,
         // has been chosen as a HOM fix (we must remain consistent with the lighting
         // applied to the back plane (on this half-edge's back side)).
         if(hedge.hasLine() && hedge.lineSide().hasSections() &&
-           isTwoSided && section != SS_MIDDLE && surface.hasFixMaterial())
+           isTwoSided && section != Line::Side::Middle && surface.hasFixMaterial())
         {
             deltaL = deltaR = 0;
         }
@@ -1901,7 +1901,7 @@ static bool writeWallSection(HEdge &hedge, SideSection section,
                                    *color, *color2,
                                    &hedge.biasSurfaceForGeometryGroup(section), (uint) section,
                                    ms,
-                                   (section == SS_MIDDLE && isTwoSided));
+                                   (section == Line::Side::Middle && isTwoSided));
     }
 
     return opaque;
@@ -1930,7 +1930,7 @@ static void reportLineDrawn(Line &line)
  * @param hedge  HEdge to draw wall sections for.
  * @param sections  @ref sideSectionFlags
  */
-static bool writeWallSections2(HEdge &hedge, byte sections)
+static bool writeWallSections2(HEdge &hedge, int sections)
 {
     BspLeaf *leaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(leaf));
@@ -1940,7 +1940,7 @@ static bool writeWallSections2(HEdge &hedge, byte sections)
     DENG_ASSERT(hedge._frameFlags & HEDGEINF_FACINGFRONT);
 
     // Only a "middle" section.
-    if(!(sections & SSF_MIDDLE)) return false;
+    if(!(sections & Line::Side::MiddleFlag)) return false;
 
     Sector *frontSector = leaf->sectorPtr();
     Sector *backSector  = hedge.hasTwin()? hedge.twin().sectorPtr() : 0;
@@ -1949,14 +1949,14 @@ static bool writeWallSections2(HEdge &hedge, byte sections)
     float materialOrigin[2];
     bool opaque = false;
 
-    if(hedge.prepareWallDivs(SS_MIDDLE, frontSector, backSector,
+    if(hedge.prepareWallDivs(Line::Side::Middle, frontSector, backSector,
                              &leftWallDivs, &rightWallDivs, materialOrigin))
     {
-        Rend_RadioUpdateLine(hedge.line(), hedge.lineSideId());
+        Rend_RadioUpdateForLineSide(hedge.lineSide());
 
         int wsFlags = WSF_ADD_DYNLIGHTS|WSF_ADD_DYNSHADOWS|WSF_ADD_RADIO;
 
-        opaque = writeWallSection(hedge, SS_MIDDLE, wsFlags,
+        opaque = writeWallSection(hedge, Line::Side::Middle, wsFlags,
                                   frontSector->lightLevel(), R_GetSectorLightColor(*frontSector),
                                   &leftWallDivs, &rightWallDivs, materialOrigin);
     }
@@ -1971,7 +1971,7 @@ static bool writeWallSections2(HEdge &hedge, byte sections)
  * @param hedge  HEdge to draw wall sections for.
  * @param sections  @ref sideSectionFlags
  */
-static bool writeWallSections2Twosided(HEdge &hedge, byte sections)
+static bool writeWallSections2Twosided(HEdge &hedge, int sections)
 {
     BspLeaf *leaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(leaf));
@@ -2001,12 +2001,12 @@ static bool writeWallSections2Twosided(HEdge &hedge, byte sections)
     bool opaque = false;
 
     // Middle section?
-    if(sections & SSF_MIDDLE)
+    if(sections & Line::Side::MiddleFlag)
     {
         walldivs_t leftWallDivs, rightWallDivs;
         float matOffset[2];
 
-        if(hedge.prepareWallDivs(SS_MIDDLE, leaf->sectorPtr(), back.sectorPtr(),
+        if(hedge.prepareWallDivs(Line::Side::Middle, leaf->sectorPtr(), back.sectorPtr(),
                                  &leftWallDivs, &rightWallDivs, matOffset))
         {
             int rhFlags = WSF_ADD_DYNLIGHTS|WSF_ADD_DYNSHADOWS|WSF_ADD_RADIO;
@@ -2015,8 +2015,9 @@ static bool writeWallSections2Twosided(HEdge &hedge, byte sections)
                !(line.isFlagged(DDLF_BLOCKING)))
                 rhFlags |= WSF_VIEWER_NEAR_BLEND;
 
-            Rend_RadioUpdateLine(line, hedge.lineSideId());
-            opaque = writeWallSection(hedge, SS_MIDDLE, rhFlags,
+            Rend_RadioUpdateForLineSide(hedge.lineSide());
+
+            opaque = writeWallSection(hedge, Line::Side::Middle, rhFlags,
                                       front.sector().lightLevel(), R_GetSectorLightColor(front.sector()),
                                       &leftWallDivs, &rightWallDivs, matOffset);
             if(opaque)
@@ -2047,55 +2048,48 @@ static bool writeWallSections2Twosided(HEdge &hedge, byte sections)
     }
 
     // Upper section?
-    if(sections & SSF_TOP)
+    if(sections & Line::Side::TopFlag)
     {
         walldivs_t leftWallDivs, rightWallDivs;
         float matOffset[2];
 
-        if(hedge.prepareWallDivs(SS_TOP, leaf->sectorPtr(), back.sectorPtr(),
+        if(hedge.prepareWallDivs(Line::Side::Top, leaf->sectorPtr(), back.sectorPtr(),
                                  &leftWallDivs, &rightWallDivs, matOffset))
         {
-            Rend_RadioUpdateLine(line, hedge.lineSideId());
-            writeWallSection(hedge, SS_TOP, WSF_ADD_DYNLIGHTS|WSF_ADD_DYNSHADOWS|WSF_ADD_RADIO,
+            Rend_RadioUpdateForLineSide(hedge.lineSide());
+
+            writeWallSection(hedge, Line::Side::Top, WSF_ADD_DYNLIGHTS|WSF_ADD_DYNSHADOWS|WSF_ADD_RADIO,
                              front.sector().lightLevel(), R_GetSectorLightColor(front.sector()),
                              &leftWallDivs, &rightWallDivs, matOffset);
         }
     }
 
     // Lower section?
-    if(sections & SSF_BOTTOM)
+    if(sections & Line::Side::BottomFlag)
     {
         walldivs_t leftWallDivs, rightWallDivs;
         float matOffset[2];
 
-        if(hedge.prepareWallDivs(SS_BOTTOM, leaf->sectorPtr(), back.sectorPtr(),
+        if(hedge.prepareWallDivs(Line::Side::Bottom, leaf->sectorPtr(), back.sectorPtr(),
                                  &leftWallDivs, &rightWallDivs, matOffset))
         {
-            Rend_RadioUpdateLine(line, hedge.lineSideId());
-            writeWallSection(hedge, SS_BOTTOM, WSF_ADD_DYNLIGHTS|WSF_ADD_DYNSHADOWS|WSF_ADD_RADIO,
+            Rend_RadioUpdateForLineSide(hedge.lineSide());
+
+            writeWallSection(hedge, Line::Side::Bottom, WSF_ADD_DYNLIGHTS|WSF_ADD_DYNSHADOWS|WSF_ADD_RADIO,
                              front.sector().lightLevel(), R_GetSectorLightColor(front.sector()),
                              &leftWallDivs, &rightWallDivs, matOffset);
         }
     }
-
-    // Can we make this a solid segment in the clipper?
-    //if(solidSeg == -1)
-    //    return false; // NEVER (we have a hole we couldn't fix).
 
     if(line.isSelfReferencing())
        return false;
 
     if(!opaque) // We'll have to determine whether we can...
     {
-        /*if(back.sectorPtr() == front.sectorPtr())
-        {
-            // An obvious hack, what to do though??
-        }
-        else*/
-             if(   (bceil.visHeight() <= ffloor.visHeight() &&
-                        (front.top().hasMaterial()    || front.middle().hasMaterial()))
-                || (bfloor.visHeight() >= fceil.visHeight() &&
-                        (front.bottom().hasMaterial() || front.middle().hasMaterial())))
+        if(   (bceil.visHeight() <= ffloor.visHeight() &&
+                   (front.top().hasMaterial()    || front.middle().hasMaterial()))
+           || (bfloor.visHeight() >= fceil.visHeight() &&
+                   (front.bottom().hasMaterial() || front.middle().hasMaterial())))
         {
             // A closed gap?
             if(de::fequal(fceil.visHeight(), bfloor.visHeight()))

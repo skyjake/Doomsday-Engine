@@ -244,7 +244,7 @@ DENG2_PIMPL(LineSightTest)
 
                 line->setValidCount(validCount);
 
-                if(!crossLine(*line, FRONT))
+                if(!crossLine(*line, Line::Front))
                     return false; // Stop iteration.
             }
         }

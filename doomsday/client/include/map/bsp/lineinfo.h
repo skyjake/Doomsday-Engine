@@ -74,7 +74,7 @@ struct LineInfo
            (de::abs(from.origin()[VY] - to.origin()[VY]) < distEpsilon))
             flags |= ZeroLength;
 
-        if(line->hasBackSections() && line->hasFrontSections())
+        if(line->hasFrontSections() && line->hasBackSections())
         {
             flags |= Twosided;
 

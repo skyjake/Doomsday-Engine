@@ -79,7 +79,7 @@ void R_OrderVertices(Line *line, Sector const *sector, Vertex *verts[2]);
 /**
  * Determine the map space Z coordinates of a wall section.
  *
- * @param section       Identifier of the section to determine coordinates for.
+ * @param section       Line::Side section to determine coordinates for.
  * @param lineFlags     @ref ldefFlags.
  * @param frontSec      Sector in front of the wall.
  * @param backSec       Sector behind the wall. Can be @c NULL
@@ -93,7 +93,7 @@ void R_OrderVertices(Line *line, Sector const *sector, Vertex *verts[2]);
  *
  * @return  @c true iff the determined wall section height is @c >0
  */
-boolean R_FindBottomTop(SideSection section, int lineFlags,
+boolean R_FindBottomTop(int section, int lineFlags,
     Sector const *frontSec, Sector const *backSec,
     Line::Side const *front, Line::Side const *back,
     coord_t *low, coord_t *hi, pvec2f_t matOffset = 0);
@@ -188,10 +188,10 @@ LineOwner *R_GetVtxLineOwner(Vertex const *vtx, Line const *line);
  * specified sector.
  */
 Line *R_FindLineNeighbor(Sector const *sector, Line const *line,
-    LineOwner const *own, boolean antiClockwise, binangle_t *diff);
+    LineOwner const *own, bool antiClockwise, binangle_t *diff = 0);
 
 Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
-    LineOwner const *own, boolean antiClockwise, binangle_t *diff);
+    LineOwner const *own, bool antiClockwise, binangle_t *diff = 0);
 
 /**
  * A line's align neighbor is a line that shares a vertex with 'line' and
@@ -200,14 +200,14 @@ Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
  * long side by the shadow generator).
  */
 Line *R_FindLineAlignNeighbor(Sector const *sec, Line const *line,
-    LineOwner const *own, boolean antiClockwise, int alignment);
+    LineOwner const *own, bool antiClockwise, int alignment);
 
 /**
  * Find a backneighbour for the given line. They are the neighbouring line
  * in the backsector of the imediate line neighbor.
  */
 Line *R_FindLineBackNeighbor(Sector const *sector, Line const *line,
-    LineOwner const *own, boolean antiClockwise, binangle_t *diff);
+    LineOwner const *own, bool antiClockwise, binangle_t *diff = 0);
 #endif // __CLIENT__
 
 /**

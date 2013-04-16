@@ -212,7 +212,7 @@ static walldivnode_t *findWallDivNodeByZOrigin(walldivs_t *wallDivs, coord_t hei
 }
 
 static void addWallDivNodesForPlaneIntercepts(HEdge const *hedge, walldivs_t *wallDivs,
-    SideSection section, coord_t bottomZ, coord_t topZ, boolean doRight)
+    int section, coord_t bottomZ, coord_t topZ, boolean doRight)
 {
     bool const clockwise = !doRight;
 
@@ -222,7 +222,7 @@ static void addWallDivNodesForPlaneIntercepts(HEdge const *hedge, walldivs_t *wa
     bool const isTwoSided = (hedge->line().hasFrontSections() && hedge->line().hasBackSections())? true:false;
 
     // Check for neighborhood division?
-    if(section == SS_MIDDLE && isTwoSided) return;
+    if(section == Line::Side::Middle && isTwoSided) return;
 
     // Only edges at line ends can/should be split.
     if(!((hedge == hedge->lineSide().leftHEdge()  && !doRight) ||
@@ -338,7 +338,7 @@ static int sortWallDivNode(void const *e1, void const *e2)
 }
 
 static void buildWallDiv(walldivs_t *wallDivs, HEdge const *hedge,
-   SideSection section, coord_t bottomZ, coord_t topZ, boolean doRight)
+   int section, coord_t bottomZ, coord_t topZ, boolean doRight)
 {
     wallDivs->num = 0;
 
@@ -362,12 +362,12 @@ static void buildWallDiv(walldivs_t *wallDivs, HEdge const *hedge,
     WallDivs_AssertInRange(wallDivs, bottomZ, topZ);
 }
 
-bool HEdge::prepareWallDivs(SideSection section, Sector *frontSec, Sector *backSec,
+bool HEdge::prepareWallDivs(int section, Sector *frontSec, Sector *backSec,
     walldivs_t *leftWallDivs, walldivs_t *rightWallDivs, pvec2f_t matOffset) const
 {
-    int lineFlags = _line? _line->flags() : 0;
-    Line::Side *front = _line? &_line->side(_lineSide) : 0;
-    Line::Side *back  = _twin && _twin->hasLine()? &_twin->lineSide() : 0;
+    int lineFlags = hasLine()? line().flags() : 0;
+    Line::Side *front = hasLine()? &lineSide() : 0;
+    Line::Side *back  = hasTwin() && twin().hasLine()? &twin().lineSide() : 0;
     coord_t low, hi;
     bool visible = R_FindBottomTop(section, lineFlags, frontSec, backSec, front, back,
                                    &low, &hi, matOffset);
@@ -383,12 +383,13 @@ bool HEdge::prepareWallDivs(SideSection section, Sector *frontSec, Sector *backS
 
 biassurface_t &HEdge::biasSurfaceForGeometryGroup(uint groupId)
 {
-    if(groupId > SS_TOP)
-        /// @throw InvalidGeometryGroupError Attempted with an invalid geometry group id.
-        throw UnknownGeometryGroupError("HEdge::biasSurfaceForGeometryGroup", QString("Invalid group id %1").arg(groupId));
-
-    DENG2_ASSERT(_bsuf[groupId]);
-    return *_bsuf[groupId];
+    if(groupId <= Line::Side::Top)
+    {
+        DENG2_ASSERT(_bsuf[groupId]);
+        return *_bsuf[groupId];
+    }
+    /// @throw InvalidGeometryGroupError Attempted with an invalid geometry group id.
+    throw UnknownGeometryGroupError("HEdge::biasSurfaceForGeometryGroup", QString("Invalid group id %1").arg(groupId));
 }
 
 coord_t HEdge::pointDistance(const_pvec2d_t point, coord_t *offset) const

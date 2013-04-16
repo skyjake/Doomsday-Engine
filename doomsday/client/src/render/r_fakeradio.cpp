@@ -31,10 +31,11 @@
 #include "map/gamemap.h"
 #include "map/vertex.h"
 
-//#include "render/r_fakeradio.h"
+#include "render/rend_fakeradio.h"
 
 using namespace de;
 
+static LineSideRadioData *lineSideRadioData;
 static zblockset_t *shadowLinksBlockSet;
 
 bool Rend_RadioLineCastsShadow(Line const &line)
@@ -59,6 +60,11 @@ bool Rend_RadioPlaneCastsShadow(Plane const &plane)
         if(surfaceMaterial.isSkyMasked()) return false;
     }
     return true;
+}
+
+LineSideRadioData &Rend_RadioDataForLineSide(Line::Side &side)
+{
+    return lineSideRadioData[theMap->lineIndex(&side.line()) * 2 + (side.isBack()? 1 : 0)];
 }
 
 /**
@@ -226,6 +232,8 @@ void Rend_RadioInitForMap()
     DENG_ASSERT(theMap != 0);
 
     Time begunAt;
+
+    lineSideRadioData = reinterpret_cast<LineSideRadioData *>(Z_Calloc(sizeof(*lineSideRadioData) * theMap->sideCount(), PU_MAP, 0));
 
     foreach(Vertex *vertex, theMap->vertexes())
     {

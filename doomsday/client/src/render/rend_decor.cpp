@@ -68,7 +68,7 @@ static uint sourceCount = 0;
 static decorsource_t *sourceFirst = 0;
 static decorsource_t *sourceCursor = 0;
 
-static void plotSourcesForLine(Line &line, byte side, SideSection section);
+static void plotSourcesForLineSide(Line::Side &side, int section);
 static void plotSourcesForPlane(Plane &pln);
 
 void Rend_DecorRegister()
@@ -314,10 +314,8 @@ static void plotSourcesForSurface(Surface &suf)
         {
         case DMU_SIDE: {
             Line::Side *side = suf.owner().castTo<Line::Side>();
-            Line &line = side->line();
-            plotSourcesForLine(line, side->isFront()? FRONT : BACK,
-                               &side->middle() == &suf? SS_MIDDLE :
-                               &side->bottom() == &suf? SS_BOTTOM : SS_TOP);
+            plotSourcesForLineSide(*side, &side->middle() == &suf? Line::Side::Middle :
+                                          &side->bottom() == &suf? Line::Side::Bottom : Line::Side::Top);
             break; }
 
         case DMU_PLANE: {
@@ -467,28 +465,23 @@ static void plotSourcesForPlane(Plane &pln)
     updateSurfaceDecorations(surface, offset, v1, v2, &sector);
 }
 
-static void plotSourcesForLine(Line &line, byte side, SideSection section)
+static void plotSourcesForLineSide(Line::Side &side, int section)
 {
-    if(!line.hasSections(side)) return;
-
-    Sector *frontSec  = line.sectorPtr(side);
-    Sector *backSec   = line.sectorPtr(side ^ 1);
-    Line::Side *front = &line.side(side);
-    Line::Side *back  = &line.side(side ^ 1);
-    Surface &surface  = front->surface(section);
-
-    if(!surface.hasMaterial()) return;
+    if(!side.hasSections()) return;
+    if(!side.surface(section).hasMaterial()) return;
 
     // Is the line section potentially visible?
     coord_t low, hi;
     float matOffset[2] = { 0, 0 };
-    if(!R_FindBottomTop(section, line.flags(), frontSec, backSec, front, back,
-                         &low, &hi, matOffset)) return;
+    if(!R_FindBottomTop(section, side.line().flags(), side.sectorPtr(), side.back().sectorPtr(),
+                        &side, &side.back(), &low, &hi, matOffset))
+        return;
 
-    Vector3d v1(line.vertexOrigin(side  )[VX], line.vertexOrigin(side  )[VY], hi);
-    Vector3d v2(line.vertexOrigin(side^1)[VX], line.vertexOrigin(side^1)[VY], low);
+    Vector3d v1(side.from().origin()[VX], side.from().origin()[VY], hi);
+    Vector3d v2(  side.to().origin()[VX],   side.to().origin()[VY], low);
 
-    updateSurfaceDecorations(surface, Vector2f(-matOffset[0], -matOffset[1]), v1, v2);
+    updateSurfaceDecorations(side.surface(section), Vector2f(-matOffset[0], -matOffset[1]),
+                             v1, v2);
 }
 
 void Rend_DecorBeginFrame()

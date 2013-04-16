@@ -338,7 +338,7 @@ DENG2_PIMPL(GameMap)
             if(!line->hasFrontSections() || !line->hasBackSections())
                 continue;
 
-            Line::Side &side = line->side(line->frontSectorPtr() == &sector? FRONT : BACK);
+            Line::Side &side = line->side(line->frontSectorPtr() == &sector? Line::Front : Line::Back);
 
             if(!side.middle().hasMaterial())
                 continue;
@@ -652,7 +652,7 @@ void GameMap::setTraceOpening(Line &line)
     }
 
     coord_t bottom, top;
-    d->traceOpening.range  = float( R_OpenRange(line, FRONT, &bottom, &top) );
+    d->traceOpening.range  = float( R_OpenRange(line, Line::Front, &bottom, &top) );
     d->traceOpening.bottom = float( bottom );
     d->traceOpening.top    = float( top );
 

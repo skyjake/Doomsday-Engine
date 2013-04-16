@@ -124,7 +124,7 @@ public: /// @todo Make private:
     /// Accurate length of the segment (v1 -> v2).
     coord_t _length;
 
-    /// For each @ref SideSection.
+    /// For each section of a Line::Side.
     biassurface_t *_bsuf[3];
 
     /// @ref hedgeFrameFlags
@@ -396,7 +396,7 @@ public:
     /**
      * Prepare wall division data for a section of the HEdge.
      *
-     * @param section        Section to prepare divisions for.
+     * @param section        Line::Side section to prepare divisions for.
      * @param frontSector    Sector to use for the front side.
      * @param backSector     Sector to use for the back side.
      * @param leftWallDivs   Division data for the left edge is written here.
@@ -406,7 +406,7 @@ public:
      * @return  @c true if divisions were prepared (the specified @a section has a
      *          non-zero Z axis height).
      */
-    bool prepareWallDivs(SideSection section, Sector *frontSector, Sector *backSector,
+    bool prepareWallDivs(int section, Sector *frontSector, Sector *backSector,
         walldivs_t *leftWallDivs, walldivs_t *rightWallDivs, pvec2f_t matOffset) const;
 
     /**

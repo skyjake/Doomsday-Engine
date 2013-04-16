@@ -24,7 +24,10 @@
 #include <de/binangle.h>
 #include <de/vector1.h> /// @todo remove me
 
+#include <QFlags>
+
 #include <de/Error>
+#include <de/Observers>
 #include <de/Vector>
 
 #include "MapElement"
@@ -37,62 +40,8 @@ class LineOwner;
 class Sector;
 
 // Internal flags:
-#define LF_POLYOBJ              0x1 ///< Line is part of a polyobject.
-#define LF_BSPWINDOW            0x2 ///< Line produced a BSP window. @todo Refactor away.
-
-// Logical face identifiers:
-/// @addtogroup map
-///@{
-#define FRONT                   0
-#define BACK                    1
-///@}
-
-// Logical edge identifiers:
-/// @addtogroup map
-///@{
-#define FROM                    0
-#define TO                      1
-
-/// Aliases:
-#define START                   FROM
-#define END                     TO
-///@}
-
-/**
- * @defgroup sideSectionFlags  Side Section Flags
- * @ingroup map
- */
-///@{
-#define SSF_MIDDLE              0x1
-#define SSF_BOTTOM              0x2
-#define SSF_TOP                 0x4
-///@}
-
-#ifdef __CLIENT__
-
-/**
- * FakeRadio shadow data.
- * @ingroup map
- */
-struct shadowcorner_t
-{
-    float corner;
-    Sector *proximity;
-    float pOffset;
-    float pHeight;
-};
-
-/**
- * FakeRadio connected edge data.
- * @ingroup map
- */
-struct edgespan_t
-{
-    float length;
-    float shift;
-};
-
-#endif // __CLIENT__
+#define LF_POLYOBJ    0x1 ///< Line is part of a polyobject.
+#define LF_BSPWINDOW  0x2 ///< Line produced a BSP window. @todo Refactor away.
 
 /**
  * World map line.
@@ -104,9 +53,9 @@ struct edgespan_t
  * DENG lines always have two logical sides, however they may not have a sector
  * attributed to either or both sides.
  *
- * @note Lines are @em not considered to define the geometry of a map. Instead a
- * line should be thought of as a finite line segment in the plane, according to
- * the standard definition of a line as used with an arrangement of lines in
+ * @note Lines are @em not considered to define the geometry of a map. Instead
+ * a line should be thought of as a finite line segment in the plane, according
+ * to the standard definition of a line as used with an arrangement of lines in
  * computational geometry.
  *
  * @see http://en.wikipedia.org/wiki/Arrangement_of_lines
@@ -129,6 +78,25 @@ public:
     DENG2_ERROR(WritePropertyError);
 
     /**
+     * Observers to be notified when the flags change.
+     */
+    DENG2_DEFINE_AUDIENCE(FlagsChange, void lineFlagsChanged(Line &line, int oldFlags))
+
+    /// Edge/vertex identifiers:
+    enum
+    {
+        From,
+        To
+    };
+
+    /// Logical side identifiers:
+    enum
+    {
+        Front,
+        Back
+    };
+
+    /**
      * Logical side of which there are always two (a front and a back).
      */
     class Side : public de::MapElement
@@ -140,66 +108,269 @@ public:
         /// The referenced property is not writeable. @ingroup errors
         DENG2_ERROR(WritePropertyError);
 
+        /**
+         * Line side section of which there are three (middle, bottom and top).
+         */
         class Section
         {
-        public: /// @todo make private:
-            Surface _surface;
-            ddmobj_base_t _soundEmitter;
-
-        public:
             Section(Side &side);
 
+        public:
+            /**
+             * Returns the surface for the section.
+             */
             Surface &surface();
 
+            /// @copydoc surface()
             Surface const &surface() const;
 
+            /**
+             * Returns the sound emitter for the section.
+             */
             ddmobj_base_t &soundEmitter();
 
+            /// @copydoc soundEmitter();
             ddmobj_base_t const &soundEmitter() const;
+
+            friend class Side;
+
+        private:
+            DENG2_PRIVATE(d)
         };
 
-    public: /// @todo make private:
-        /// @ref sdefFlags
-        short _flags;
-
-#ifdef __CLIENT__
-        /// @todo Does not belong here - move to the map renderer. -ds
-        struct FakeRadioData
+        /// Section identifiers:
+        enum
         {
-            /// Frame number of last update
-            int updateCount;
+            Middle,
+            Bottom,
+            Top
+        };
 
-            shadowcorner_t topCorners[2];
-            shadowcorner_t bottomCorners[2];
-            shadowcorner_t sideCorners[2];
+        /**
+         * Flags used as Section identifiers:
+         */
+        enum SectionFlag
+        {
+            MiddleFlag  = 0x1,
+            BottomFlag  = 0x2,
+            TopFlag     = 0x4,
 
-            /// [left, right]
-            edgespan_t spans[2];
-        } _fakeRadioData;
-
-#endif // __CLIENT__
+            AllSectionFlags = MiddleFlag | BottomFlag | TopFlag
+        };
+        Q_DECLARE_FLAGS(SectionFlags, SectionFlag)
 
     public:
         Side(Line &line, Sector *sector = 0);
-        ~Side();
 
         /**
          * Returns the Line owner of the side.
          */
-        Line &line();
-
-        /// @copydoc line()
-        Line const &line() const;
+        Line &line() const;
 
         /**
-         * Returns @c true if this is the front side of the owning line.
+         * Returns the logical identifier for the side (Front or Back).
          */
-        bool isFront() const;
+        int lineSideId() const;
 
         /**
-         * Returns @c true if this is the back side of the owning line.
+         * Returns @c true iff this is the front side of the owning line.
+         *
+         * @see lineSideId()
+         */
+        inline bool isFront() const { return lineSideId() == Front; }
+
+        /**
+         * Returns @c true iff this is the back side of the owning line.
+         *
+         * @see lineSideId(), isFront()
          */
         inline bool isBack() const { return !isFront(); }
+
+        /**
+         * Returns the relative back Side from the Line owner.
+         *
+         * @see lineSideId(), line(), Line::side(),
+         */
+        inline Side &back() const { return line().side(lineSideId() ^ 1); }
+
+        /**
+         * Returns the specified relative vertex from the Line owner.
+         *
+         * @see lineSideId(), line(), Line::vertex(),
+         */
+        inline Vertex &vertex(int to) const { return line().vertex(lineSideId() ^ to); }
+
+        /**
+         * Returns the relative From Vertex for the side, from the Line owner.
+         *
+         * @see vertex(), to()
+         */
+        inline Vertex &from() const { return vertex(From); }
+
+        /**
+         * Returns the relative To Vertex for the side, from the Line owner.
+         *
+         * @see vertex(), from()
+         */
+        inline Vertex &to() const { return vertex(To); }
+
+        /**
+         * Returns @c true iff Sections are defined for the side.
+         *
+         * @see addSections()
+         */
+        bool hasSections() const;
+
+        /**
+         * Add default sections to the side if they aren't already defined.
+         *
+         * @see hasSections()
+         */
+        void addSections();
+
+        /**
+         * Returns the specified section of the side.
+         *
+         * @param sectionId  Identifier of the section to return.
+         *
+         * @see hasSections(), addSections()
+         */
+        Section &section(int sectionId);
+
+        /// @copydoc section()
+        Section const &section(int sectionId) const;
+
+        /**
+         * Returns the specified surface of the side.
+         *
+         * @param sectionId  Identifier of the surface to return.
+         *
+         * @see section()
+         */
+        inline Surface &surface(int sectionId) {
+            return section(sectionId).surface();
+        }
+
+        /// @copydoc surface()
+        inline Surface const &surface(int sectionId) const {
+            return const_cast<Surface const &>(const_cast<Side *>(this)->surface(sectionId));
+        }
+
+        /**
+         * Returns the middle surface of the side.
+         *
+         * @see surface()
+         */
+        inline Surface &middle() { return surface(Middle); }
+
+        /// @copydoc middle()
+        inline Surface const &middle() const { return surface(Middle); }
+
+        /**
+         * Returns the bottom surface of the side.
+         *
+         * @see surface()
+         */
+        inline Surface &bottom() { return surface(Bottom); }
+
+        /// @copydoc bottom()
+        inline Surface const &bottom() const { return surface(Bottom); }
+
+        /**
+         * Returns the top surface of the side.
+         *
+         * @see surface()
+         */
+        inline Surface &top() { return surface(Top); }
+
+        /// @copydoc top()
+        inline Surface const &top() const { return surface(Top); }
+
+        /**
+         * Returns the specified sound emitter of the side.
+         *
+         * @param sectionId  Identifier of the sound emitter to return.
+         *
+         * @see section(), Section::soundEmitter()
+         */
+        inline ddmobj_base_t &soundEmitter(int sectionId) {
+            return section(sectionId).soundEmitter();
+        }
+
+        /// @copydoc surface()
+        inline ddmobj_base_t const &soundEmitter(int sectionId) const {
+            return const_cast<ddmobj_base_t const &>(const_cast<Side *>(this)->soundEmitter(sectionId));
+        }
+
+        /**
+         * Returns the middle sound emitter of the side.
+         *
+         * @see section(), Section::soundEmitter()
+         */
+        inline ddmobj_base_t &middleSoundEmitter() {
+            return section(Middle).soundEmitter();
+        }
+
+        /// @copydoc middleSoundEmitter()
+        inline ddmobj_base_t const &middleSoundEmitter() const {
+            return section(Middle).soundEmitter();
+        }
+
+        /**
+         * Update the middle sound emitter origin according to the point defined by
+         * the owning line's vertices and the current @em sharp heights of the sector
+         * on this side of the line.
+         */
+        void updateMiddleSoundEmitterOrigin();
+
+        /**
+         * Returns the bottom sound emitter (tee-hee) for the side.
+         *
+         * @see section(), Section::soundEmitter()
+         */
+        inline ddmobj_base_t &bottomSoundEmitter() {
+            return section(Bottom).soundEmitter();
+        }
+
+        /// @copydoc bottomSoundEmitter()
+        inline ddmobj_base_t const &bottomSoundEmitter() const {
+            return section(Bottom).soundEmitter();
+        }
+
+        /**
+         * Update the bottom sound emitter origin according to the point defined by
+         * the owning line's vertices and the current @em sharp heights of the sector
+         * on this side of the line.
+         */
+        void updateBottomSoundEmitterOrigin();
+
+        /**
+         * Returns the top sound emitter for the side.
+         *
+         * @see section(), Section::soundEmitter()
+         */
+        inline ddmobj_base_t &topSoundEmitter() {
+            return section(Top).soundEmitter();
+        }
+
+        /// @copydoc topSoundEmitter()
+        inline ddmobj_base_t const &topSoundEmitter() const {
+            return section(Top).soundEmitter();
+        }
+
+        /**
+         * Update the top sound emitter origin according to the point defined by the
+         * owning line's vertices and the current @em sharp heights of the sector on
+         * this side of the line.
+         */
+        void updateTopSoundEmitterOrigin();
+
+        /**
+         * Update the side's sound emitter origins according to the points defined by
+         * the Line's vertices and the plane heights of the Sector on this side.
+         * If no Sections are defined this is a no-op.
+         */
+        void updateAllSoundEmitterOrigins();
 
         /**
          * Returns @c true iff a Sector is attributed to the side.
@@ -219,174 +390,6 @@ public:
          * @see hasSector()
          */
         inline Sector *sectorPtr() const { return hasSector()? &sector() : 0; }
-
-        /**
-         * Returns @c true iff Sections are defined for the side.
-         */
-        bool hasSections() const;
-
-        /**
-         * Add default sections to the side if they aren't already defined.
-         *
-         * @see hasSections()
-         */
-        void addSections();
-
-        /**
-         * Returns the specified section of the side.
-         *
-         * @param sectionId  Identifier of the section to return.
-         *
-         * @see hasSections()
-         */
-        Section &section(SideSection sectionId);
-
-        /// @copydoc section()
-        Section const &section(SideSection sectionId) const;
-
-        /**
-         * Returns the specified surface of the side.
-         *
-         * @param sectionId  Identifier of the surface to return.
-         *
-         * @see section()
-         */
-        inline Surface &surface(SideSection sectionId) {
-            return section(sectionId).surface();
-        }
-
-        /// @copydoc surface()
-        inline Surface const &surface(SideSection sectionId) const {
-            return const_cast<Surface const &>(const_cast<Side *>(this)->surface(sectionId));
-        }
-
-        /**
-         * Returns the middle surface of the side.
-         *
-         * @see surface()
-         */
-        inline Surface &middle() { return surface(SS_MIDDLE); }
-
-        /// @copydoc middle()
-        inline Surface const &middle() const { return surface(SS_MIDDLE); }
-
-        /**
-         * Returns the bottom surface of the side.
-         *
-         * @see surface()
-         */
-        inline Surface &bottom() { return surface(SS_BOTTOM); }
-
-        /// @copydoc bottom()
-        inline Surface const &bottom() const { return surface(SS_BOTTOM); }
-
-        /**
-         * Returns the top surface of the side.
-         *
-         * @see surface()
-         */
-        inline Surface &top() { return surface(SS_TOP); }
-
-        /// @copydoc top()
-        inline Surface const &top() const { return surface(SS_TOP); }
-
-        /**
-         * Returns the specified sound emitter of the side.
-         *
-         * @param sectionId  Identifier of the sound emitter to return.
-         *
-         * @see section(), Section::soundEmitter()
-         */
-        inline ddmobj_base_t &soundEmitter(SideSection sectionId) {
-            return section(sectionId).soundEmitter();
-        }
-
-        /// @copydoc surface()
-        inline ddmobj_base_t const &soundEmitter(SideSection sectionId) const {
-            return const_cast<ddmobj_base_t const &>(const_cast<Side *>(this)->soundEmitter(sectionId));
-        }
-
-        /**
-         * Returns the middle sound emitter of the side.
-         *
-         * @see section(), Section::soundEmitter()
-         */
-        inline ddmobj_base_t &middleSoundEmitter() {
-            return section(SS_MIDDLE).soundEmitter();
-        }
-
-        /// @copydoc middleSoundEmitter()
-        inline ddmobj_base_t const &middleSoundEmitter() const {
-            return section(SS_MIDDLE).soundEmitter();
-        }
-
-        /**
-         * Update the middle sound emitter origin according to the point defined by
-         * the owning line's vertices and the current @em sharp heights of the sector
-         * on this side of the line.
-         */
-        void updateMiddleSoundEmitterOrigin();
-
-        /**
-         * Returns the bottom sound emitter (tee-hee) for the side.
-         *
-         * @see section(), Section::soundEmitter()
-         */
-        inline ddmobj_base_t &bottomSoundEmitter() {
-            return section(SS_BOTTOM).soundEmitter();
-        }
-
-        /// @copydoc bottomSoundEmitter()
-        inline ddmobj_base_t const &bottomSoundEmitter() const {
-            return section(SS_BOTTOM).soundEmitter();
-        }
-
-        /**
-         * Update the bottom sound emitter origin according to the point defined by
-         * the owning line's vertices and the current @em sharp heights of the sector
-         * on this side of the line.
-         */
-        void updateBottomSoundEmitterOrigin();
-
-        /**
-         * Returns the top sound emitter for the side.
-         *
-         * @see section(), Section::soundEmitter()
-         */
-        inline ddmobj_base_t &topSoundEmitter() {
-            return section(SS_TOP).soundEmitter();
-        }
-
-        /// @copydoc topSoundEmitter()
-        inline ddmobj_base_t const &topSoundEmitter() const {
-            return section(SS_TOP).soundEmitter();
-        }
-
-        /**
-         * Update the top sound emitter origin according to the point defined by the
-         * owning line's vertices and the current @em sharp heights of the sector on
-         * this side of the line.
-         */
-        void updateTopSoundEmitterOrigin();
-
-        /**
-         * Update the side's sound emitter origins according to the points defined by
-         * the Line's vertices and the plane heights of the Sector on this side.
-         * If no Sections are defined this is a no-op.
-         */
-        void updateAllSoundEmitterOrigins();
-
-#ifdef __CLIENT__
-
-        /**
-         * Returns the FakeRadio data for the side.
-         */
-        FakeRadioData &fakeRadioData();
-
-        /// @copydoc fakeRadioData()
-        FakeRadioData const &fakeRadioData() const;
-
-#endif // __CLIENT__
 
         /**
          * Returns a pointer the left-most half-edge for the side; otherwise @c 0.
@@ -424,9 +427,22 @@ public:
         void updateSurfaceNormals();
 
         /**
-         * Returns the @ref sdefFlags fro the side.
+         * Returns the @ref sdefFlags for the side.
          */
-        short flags() const;
+        int flags() const;
+
+        /**
+         * Change the side's flags.
+         *
+         * @param flagsToChange  Flags to change the value of.
+         * @param set  @c true to set, @c false to clear.
+         */
+        void setFlags(int flagsToChange, bool set = true);
+
+        /**
+         * Returns @c true iff the side is flagged @a flagsToTest.
+         */
+        inline bool isFlagged(int flagsToTest) const { return (flags() & flagsToTest) != 0; }
 
         /**
          * Returns the frame number of the last time shadows were drawn for the side.
@@ -465,49 +481,14 @@ public:
          */
         int setProperty(setargs_t const &args);
 
-    private: /// @todo Move to a private Instance.
-        struct Sections /// @todo choose a better name
-        {
-            Section middle;
-            Section bottom;
-            Section top;
-
-            Sections(Side &side)
-                : middle(side),
-                  bottom(side),
-                  top(side)
-            {}
-        };
-
-        /// Line owner of the side.
-        Line &_line;
-
-        /// Attributed sector.
-        Sector *_sector;
-
-        /// 1-based index of the associated sidedef in the archived map; otherwise @c 0.
-        uint _sideDefArchiveIndex;
-
-        /// Sections.
-        Sections *_sections;
-
-        /// Left-most half-edge on this side of the owning line.
-        HEdge *_leftHEdge;
-
-        /// Right-most half-edge on this side of the owning line.
-        HEdge *_rightHEdge;
-
-        /// Framecount of last time shadows were drawn on this side.
-        int _shadowVisCount;
+    private:
+        DENG2_PRIVATE(d)
     };
 
 public: /// @todo make private:
     /// Links to vertex line owner nodes:
     LineOwner *_vo1;
     LineOwner *_vo2;
-
-    /// Public DDLF_* flags.
-    int _flags;
 
     /// Internal LF_* flags.
     byte _inFlags;
@@ -517,63 +498,6 @@ public:
          int flags                   = 0,
          Sector *frontSector         = 0,
          Sector *backSector          = 0);
-
-    /**
-     * Returns @c true iff the line is part of some Polyobj.
-     */
-    bool isFromPolyobj() const;
-
-    /**
-     * Returns @c true iff the line resulted in the creation of a BSP window
-     * effect when partitioning the map.
-     *
-     * @todo Refactor away. The prescence of a BSP window effect can now be
-     *       trivially determined through inspection of the tree elements.
-     */
-    bool isBspWindow() const;
-
-    /**
-     * Returns the public DDLF_* flags for the line.
-     */
-    int flags() const;
-
-    /**
-     * Returns @c true if the line is flagged @a flagsToTest.
-     */
-    inline bool isFlagged(int flagsToTest) const { return (flags() & flagsToTest) != 0; }
-
-    /**
-     * Returns @c true if the line is marked as @em mapped for @a playerNum.
-     */
-    bool isMappedByPlayer(int playerNum) const;
-
-    /**
-     * Change the @em mapped by player state of the line.
-     */
-    void markMappedByPlayer(int playerNum, bool yes = true);
-
-    /**
-     * Returns the original index of the line.
-     */
-    uint origIndex() const;
-
-    /**
-     * Change the original index of the line.
-     *
-     * @param newIndex  New original index.
-     */
-    void setOrigIndex(uint newIndex);
-
-    /**
-     * Returns the @em validCount of the line. Used by some legacy iteration
-     * algorithms for marking lines as processed/visited.
-     *
-     * @todo Refactor away.
-     */
-    int validCount() const;
-
-    /// @todo Refactor away.
-    void setValidCount(int newValidCount);
 
     /**
      * Returns the specified logical side of the line.
@@ -588,18 +512,18 @@ public:
     /**
      * Returns the logical Front side of the line.
      */
-    inline Side &front() { return side(FRONT); }
+    inline Side &front() { return side(Front); }
 
     /// @copydoc front()
-    inline Side const &front() const { return side(FRONT); }
+    inline Side const &front() const { return side(Front); }
 
     /**
      * Returns the logical Back side of the line.
      */
-    inline Side &back() { return side(BACK); }
+    inline Side &back() { return side(Back); }
 
     /// @copydoc back()
-    inline Side const &back() const { return side(BACK); }
+    inline Side const &back() const { return side(Back); }
 
     /**
      * Returns @c true iff Side::Sections are defined for the specified side
@@ -612,12 +536,12 @@ public:
     /**
      * Returns @c true iff Side::Sections are defined for the Front side of the line.
      */
-    inline bool hasFrontSections() const { return hasSections(FRONT); }
+    inline bool hasFrontSections() const { return hasSections(Front); }
 
     /**
      * Returns @c true iff Side::Sections are defined for the Back side of the line.
      */
-    inline bool hasBackSections() const { return hasSections(BACK); }
+    inline bool hasBackSections() const { return hasSections(Back); }
 
     /**
      * Returns @c true iff a sector is attributed to the specified side of the line.
@@ -629,12 +553,12 @@ public:
     /**
      * Returns @c true iff a sector is attributed to the Front side of the line.
      */
-    inline bool hasFrontSector() const { return hasSector(FRONT); }
+    inline bool hasFrontSector() const { return hasSector(Front); }
 
     /**
      * Returns @c true iff a sector is attributed to the Back side of the line.
      */
-    inline bool hasBackSector() const { return hasSector(BACK); }
+    inline bool hasBackSector() const { return hasSector(Back); }
 
     /**
      * Convenient accessor method for returning the sector attributed to the
@@ -643,10 +567,7 @@ public:
      * @param back  If not @c 0 return the sector for the Back side; otherwise
      *              the sector of the Front side.
      */
-    inline Sector &sector(int back) { return side(back).sector(); }
-
-    /// @copydoc sector()
-    inline Sector const &sector(int back) const { return side(back).sector(); }
+    inline Sector &sector(int back) const { return side(back).sector(); }
 
     /**
      * Convenient accessor method for returning a pointer to the sector attributed
@@ -655,44 +576,29 @@ public:
      * @param back  If not @c 0 return the sector for the Back side; otherwise
      *              the sector of the Front side.
      */
-    inline Sector *sectorPtr(int back) { return side(back).sectorPtr(); }
-
-    /// @copydoc sector()
-    inline Sector const *sectorPtr(int back) const { return side(back).sectorPtr(); }
+    inline Sector *sectorPtr(int back) const { return side(back).sectorPtr(); }
 
     /**
      * Returns the sector attributed to the Front side of the line.
      */
-    inline Sector &frontSector() { return sector(FRONT); }
-
-    /// @copydoc backSector()
-    inline Sector const &frontSector() const { return sector(FRONT); }
+    inline Sector &frontSector() const { return sector(Front); }
 
     /**
      * Returns the sector attributed to the Back side of the line.
      */
-    inline Sector &backSector() { return sector(BACK); }
-
-    /// @copydoc backSector()
-    inline Sector const &backSector() const { return sector(BACK); }
+    inline Sector &backSector() const { return sector(Back); }
 
     /**
      * Convenient accessor method for returning a pointer to the sector attributed
      * to the front side of the line.
      */
-    inline Sector *frontSectorPtr() { return sectorPtr(FRONT); }
-
-    /// @copydoc frontSectorPtr()
-    inline Sector const *frontSectorPtr() const { return sectorPtr(FRONT); }
+    inline Sector *frontSectorPtr() const { return sectorPtr(Front); }
 
     /**
      * Convenient accessor method for returning a pointer to the sector attributed
      * to the back side of the line.
      */
-    inline Sector *backSectorPtr() { return sectorPtr(BACK); }
-
-    /// @copydoc frontSectorPtr()
-    inline Sector const *backSectorPtr() const { return sectorPtr(BACK); }
+    inline Sector *backSectorPtr() const { return sectorPtr(Back); }
 
     /**
      * Returns @c true iff the line is considered @em self-referencing.
@@ -701,9 +607,8 @@ public:
      * a Sector is attributed to both logical sides of the line) where the
      * attributed sectors for each logical side are the same.
      */
-    inline bool isSelfReferencing() const
-    {
-        return hasFrontSections() && hasBackSections() && frontSectorPtr() == backSectorPtr();
+    inline bool isSelfReferencing() const {
+        return hasFrontSector() && frontSectorPtr() == backSectorPtr();
     }
 
     /**
@@ -711,10 +616,7 @@ public:
      *
      * @param to  If not @c 0 return the To vertex; otherwise the From vertex.
      */
-    Vertex &vertex(int to);
-
-    /// @copydoc vertex()
-    Vertex const &vertex(int to) const;
+    Vertex &vertex(int to) const;
 
     /**
      * Convenient accessor method for returning the origin of the specified
@@ -727,29 +629,13 @@ public:
     }
 
     /**
-     * Returns a pointer to the line owner node for the specified edge vertex
-     * of the line.
-     *
-     * @param to  If not @c 0 return the owner for the To vertex; otherwise the
-     *            From vertex.
-     */
-    LineOwner *vertexOwner(int to) const;
-
-    /**
      * Returns the From/Start vertex for the line.
      */
-    inline Vertex &v1() { return vertex(FROM); }
-
-    /// @copydoc v1()
-    inline Vertex const &v1() const { return vertex(FROM); }
+    inline Vertex &v1() const { return vertex(From); }
 
     /// @copydoc v1()
     /// An alias of v1().
-    inline Vertex &from() { return v1(); }
-
-    /// @copydoc from()
-    /// An alias of v1().
-    inline Vertex const &from() const { return v1(); }
+    inline Vertex &from() const { return v1(); }
 
     /**
      * Convenient accessor method for returning the origin of the From/Start
@@ -764,25 +650,13 @@ public:
     inline const_pvec2d_t &fromOrigin() const { return v1Origin(); }
 
     /**
-     * Returns a pointer to the line owner node for the From/Start vertex of the line.
-     */
-    inline LineOwner *v1Owner() const { return vertexOwner(FROM); }
-
-    /**
      * Returns the To/End vertex for the line.
      */
-    inline Vertex &v2() { return vertex(TO); }
-
-    /// @copydoc v2()
-    inline Vertex const &v2() const { return vertex(TO); }
+    inline Vertex &v2() const { return vertex(To); }
 
     /// @copydoc v2()
     /// An alias of v2().
-    inline Vertex &to() { return v2(); }
-
-    /// @copydoc to()
-    /// An alias of v2().
-    inline Vertex const &to() const { return v2(); }
+    inline Vertex &to() const { return v2(); }
 
     /**
      * Convenient accessor method for returning the origin of the To/End
@@ -795,11 +669,6 @@ public:
     /// @copydoc v2Origin()
     /// An alias of v2Origin()
     inline const_pvec2d_t &toOrigin() const { return v2Origin(); }
-
-    /**
-     * Returns a pointer to the line owner node for the To/End vertex of the line.
-     */
-    inline LineOwner *v2Owner() const { return vertexOwner(TO); }
 
     /**
      * Returns the binary angle of the line (which, is derived from the
@@ -914,6 +783,72 @@ public:
     }
 
     /**
+     * Returns @c true iff the line is part of some Polyobj.
+     */
+    bool isFromPolyobj() const;
+
+    /**
+     * Returns @c true iff the line resulted in the creation of a BSP window
+     * effect when partitioning the map.
+     *
+     * @todo Refactor away. The prescence of a BSP window effect can now be
+     *       trivially determined through inspection of the tree elements.
+     */
+    bool isBspWindow() const;
+
+    /**
+     * Returns the public DDLF_* flags for the line.
+     */
+    int flags() const;
+
+    /**
+     * Change the line's flags. The FlagsChange audience is notified whenever
+     * the flags are changed.
+     *
+     * @param flagsToChange  Flags to change the value of.
+     * @param set  @c true to set, @c false to clear.
+     */
+    void setFlags(int flagsToChange, bool set = true);
+
+    /**
+     * Returns @c true iff the line is flagged @a flagsToTest.
+     */
+    inline bool isFlagged(int flagsToTest) const { return (flags() & flagsToTest) != 0; }
+
+    /**
+     * Returns @c true if the line is marked as @em mapped for @a playerNum.
+     */
+    bool isMappedByPlayer(int playerNum) const;
+
+    /**
+     * Change the @em mapped by player state of the line.
+     */
+    void markMappedByPlayer(int playerNum, bool yes = true);
+
+    /**
+     * Returns the original index of the line.
+     */
+    uint origIndex() const;
+
+    /**
+     * Change the original index of the line.
+     *
+     * @param newIndex  New original index.
+     */
+    void setOrigIndex(uint newIndex);
+
+    /**
+     * Returns the @em validCount of the line. Used by some legacy iteration
+     * algorithms for marking lines as processed/visited.
+     *
+     * @todo Refactor away.
+     */
+    int validCount() const;
+
+    /// @todo Refactor away.
+    void setValidCount(int newValidCount);
+
+    /**
      * Replace the specified edge vertex of the line.
      *
      * @attention Should only be called in map edit mode.
@@ -923,8 +858,8 @@ public:
      */
     void replaceVertex(int to, Vertex &newVertex);
 
-    inline void replaceFrom(Vertex &newVertex) { replaceVertex(FROM, newVertex); }
-    inline void replaceTo(Vertex &newVertex)   { replaceVertex(TO, newVertex); }
+    inline void replaceFrom(Vertex &newVertex) { replaceVertex(From, newVertex); }
+    inline void replaceTo(Vertex &newVertex)   { replaceVertex(To, newVertex); }
 
     /**
      * Get a property value, selected by DMU_* name.
@@ -942,8 +877,36 @@ public:
      */
     int setProperty(setargs_t const &args);
 
+public:
+    /**
+     * Returns a pointer to the line owner node for the specified edge vertex
+     * of the line.
+     *
+     * @param to  If not @c 0 return the owner for the To vertex; otherwise the
+     *            From vertex.
+     *
+     * @deprecated Will be replaced with half-edge ring iterator/rover. -ds
+     */
+    LineOwner *vertexOwner(int to) const;
+
+    /**
+     * Returns a pointer to the line owner node for the From/Start vertex of the line.
+     *
+     * @deprecated Will be replaced with half-edge ring iterator/rover. -ds
+     */
+    inline LineOwner *v1Owner() const { return vertexOwner(From); }
+
+    /**
+     * Returns a pointer to the line owner node for the To/End vertex of the line.
+     *
+     * @deprecated Will be replaced with half-edge ring iterator/rover. -ds
+     */
+    inline LineOwner *v2Owner() const { return vertexOwner(To); }
+
 private:
     DENG2_PRIVATE(d)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(Line::Side::SectionFlags)
 
 #endif // DENG_WORLD_MAP_LINE

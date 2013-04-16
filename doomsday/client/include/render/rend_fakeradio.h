@@ -13,8 +13,8 @@
  * pieces than strictly necessary in order to achieve better accuracy in the
  * shadow effect.
  *
- * @author Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -31,8 +31,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RENDER_FAKERADIO_H
-#define LIBDENG_RENDER_FAKERADIO_H
+#ifndef DENG_RENDER_FAKERADIO
+#define DENG_RENDER_FAKERADIO
 
 #include "map/line.h"
 #include "map/vertex.h"
@@ -41,7 +41,8 @@
 #include "render/walldiv.h"
 
 /**
- * Used to link a line to a BSP leaf for the purposes of shadowing.
+ * Used to link a line to a BSP leaf for the purposes of FakeRadio shadowing.
+ * @ingroup render
  */
 struct ShadowLink
 {
@@ -60,6 +61,45 @@ struct ShadowLink
         DENG_ASSERT(line);
         return line->side(side);
     }
+};
+
+/**
+ * FakeRadio shadow data.
+ * @ingroup render
+ */
+struct shadowcorner_t
+{
+    float corner;
+    Sector *proximity;
+    float pOffset;
+    float pHeight;
+};
+
+/**
+ * FakeRadio connected edge data.
+ * @ingroup render
+ */
+struct edgespan_t
+{
+    float length;
+    float shift;
+};
+
+/**
+ * Stores the FakeRadio properties of a Line::Side.
+ * @ingroup render
+ */
+struct LineSideRadioData
+{
+    /// Frame number of last update
+    int updateCount;
+
+    shadowcorner_t topCorners[2];
+    shadowcorner_t bottomCorners[2];
+    shadowcorner_t sideCorners[2];
+
+    /// [left, right]
+    edgespan_t spans[2];
 };
 
 /**
@@ -83,6 +123,16 @@ bool Rend_RadioLineCastsShadow(Line const &line);
 bool Rend_RadioPlaneCastsShadow(Plane const &plane);
 
 /**
+ * Returns the FakeRadio data for the specified line @a side.
+ */
+LineSideRadioData &Rend_RadioDataForLineSide(Line::Side &side);
+
+/**
+ * To be called to update the shadow properties for the specified line @a side.
+ */
+void Rend_RadioUpdateForLineSide(Line::Side &side);
+
+/**
  * Updates all the shadow offsets for the given vertex.
  *
  * @pre Lineowner rings must be set up.
@@ -95,11 +145,6 @@ void Rend_RadioUpdateVertexShadowOffsets(Vertex &vtx);
  * Returns the global shadow darkness factor, derived from values in Config.
  */
 float Rend_RadioCalcShadowDarkness(float lightLevel);
-
-/**
- * Called to update the shadow properties used when doing FakeRadio for @a line.
- */
-void Rend_RadioUpdateLine(Line &line, int backSide);
 
 /**
  * Arguments for Rend_RadioWallSection()
@@ -148,4 +193,4 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf);
 void Rend_DrawShadowOffsetVerts();
 #endif
 
-#endif // LIBDENG_RENDER_FAKERADIO_H
+#endif // DENG_RENDER_FAKERADIO

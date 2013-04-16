@@ -807,16 +807,16 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
     if(df & SIDF_FLAGS)
     {
         // The delta includes the entire lowest byte.
-        side->_flags &= ~0xff;
-        side->_flags |= sideFlags;
+        side->setFlags(0xff, false);
+        side->setFlags(sideFlags);
     }
 
     if(df & SIDF_LINE_FLAGS)
     {
         Line &line = side->line();
         // The delta includes the entire lowest byte.
-        line._flags &= ~0xff;
-        line._flags |= lineFlags;
+        line.setFlags(0xff, false);
+        line.setFlags(lineFlags);
     }
 }
 

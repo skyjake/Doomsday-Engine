@@ -58,7 +58,7 @@ typedef struct edge_s {
 } edge_t;
 
 static void scanEdges(shadowcorner_t topCorners[2], shadowcorner_t bottomCorners[2],
-    shadowcorner_t sideCorners[2], edgespan_t spans[2], Line const &line, int backSide);
+    shadowcorner_t sideCorners[2], edgespan_t spans[2], Line::Side const &side);
 
 int rendFakeRadio = true; ///< cvar
 float rendFakeRadioDarkness = 1.2f; ///< cvar
@@ -78,7 +78,7 @@ float Rend_RadioCalcShadowDarkness(float lightLevel)
     return (0.6f - lightLevel * 0.4f) * 0.65f * rendFakeRadioDarkness;
 }
 
-void Rend_RadioUpdateLine(Line &line, int backSide)
+void Rend_RadioUpdateForLineSide(Line::Side &side)
 {
     // Disabled completely?
     if(!rendFakeRadio || levelFullBright) return;
@@ -87,20 +87,20 @@ void Rend_RadioUpdateLine(Line &line, int backSide)
     if(!devFakeRadioUpdate) return;
 
     // Sides without sectors don't need updating. $degenleaf
-    if(!line.hasSector(backSide)) return;
+    if(!side.hasSector()) return;
 
     // Have already determined the shadow properties on this side?
-    Line::Side::FakeRadioData &frData = line.side(backSide).fakeRadioData();
+    LineSideRadioData &frData = Rend_RadioDataForLineSide(side);
     if(frData.updateCount == frameCount) return;
 
     // Not yet - Calculate now.
     for(uint i = 0; i < 2; ++i)
     {
-        frData.spans[i].length = line.length();
+        frData.spans[i].length = side.line().length();
         frData.spans[i].shift = 0;
     }
 
-    scanEdges(frData.topCorners, frData.bottomCorners, frData.sideCorners, frData.spans, line, backSide);
+    scanEdges(frData.topCorners, frData.bottomCorners, frData.sideCorners, frData.spans, side);
     frData.updateCount = frameCount; // Mark as done.
 }
 
@@ -109,7 +109,7 @@ void Rend_RadioUpdateLine(Line &line, int backSide)
  */
 static void setRendpolyColor(ColorRawf *rcolors, uint num, float const shadowRGB[3], float darkness)
 {
-    darkness = MINMAX_OF(0, darkness, 1);
+    darkness = de::clamp(0.f, darkness, 1.f);
 
     for(uint i = 0; i < num; ++i)
     {
@@ -121,7 +121,7 @@ static void setRendpolyColor(ColorRawf *rcolors, uint num, float const shadowRGB
 }
 
 /// @return  @c true, if there is open space in the sector.
-static inline boolean isSectorOpen(Sector const *sector)
+static inline bool isSectorOpen(Sector const *sector)
 {
     return (sector && sector->ceiling().height() > sector->floor().height());
 }
@@ -149,30 +149,28 @@ static inline float calcTexCoordY(float z, float bottom, float top, float texHei
 }
 
 /// @todo This algorithm should be rewritten to work at HEdge level.
-static void scanNeighbor(boolean scanTop, Line const *line, uint side,
-    edge_t *edge, boolean toLeft)
+static void scanNeighbor(bool scanTop, Line::Side const &side, edge_t *edge,
+                         bool toLeft)
 {
     int const SEP = 10;
 
     Line *iter;
-    LineOwner *own;
     binangle_t diff = 0;
     coord_t lengthDelta = 0, gap = 0;
     coord_t iFFloor, iFCeil;
     coord_t iBFloor, iBCeil;
-    int scanSecSide = side;
-    Sector const *startSector = line->sectorPtr(side);
+    int scanSecSide = side.lineSideId();
+    Sector const *startSector = side.sectorPtr();
     Sector const *scanSector;
-    boolean clockwise = toLeft;
-    boolean stopScan = false;
-    boolean closed;
-    coord_t fCeil, fFloor;
+    bool clockwise = toLeft;
+    bool stopScan = false;
+    bool closed;
 
-    fFloor = startSector->floor().visHeight();
-    fCeil  = startSector->ceiling().visHeight();
+    coord_t fFloor = startSector->floor().visHeight();
+    coord_t fCeil  = startSector->ceiling().visHeight();
 
     // Retrieve the start owner node.
-    own = R_GetVtxLineOwner(&line->vertex(side^!toLeft), line);
+    LineOwner *own = R_GetVtxLineOwner(&side.vertex((int)!toLeft), &side.line());
 
     do
     {
@@ -180,7 +178,7 @@ static void scanNeighbor(boolean scanTop, Line const *line, uint side,
         diff = (clockwise? own->angle() : own->prev().angle());
         iter = &own->_link[clockwise]->line();
 
-        scanSecSide = (iter->hasFrontSector() && iter->frontSectorPtr() == startSector);
+        scanSecSide = (iter->hasFrontSector() && iter->frontSectorPtr() == startSector)? Line::Front : Line::Back;
 
         // Step over selfreferencing lines.
         while((!iter->hasFrontSector() && !iter->hasBackSector()) || // $degenleaf
@@ -224,7 +222,7 @@ static void scanNeighbor(boolean scanTop, Line const *line, uint side,
             edge->sector = const_cast<Sector *>(scanSector);
 
             closed = false;
-            if(side == 0 && iter->hasBackSections())
+            if(side.isFront() && iter->hasBackSections())
             {
                 if(scanTop)
                 {
@@ -243,11 +241,11 @@ static void scanNeighbor(boolean scanTop, Line const *line, uint side,
             if(scanTop)
             {
                 if(iter->hasBackSections() &&
-                   ((side == 0 && iter->backSectorPtr() == line->frontSectorPtr() &&
+                   ((side.isFront() && iter->backSectorPtr() == side.line().frontSectorPtr() &&
                     iFCeil >= fCeil) ||
-                   (side == 1 && iter->backSectorPtr() == line->backSectorPtr() &&
+                   (side.isBack() && iter->backSectorPtr() == side.line().backSectorPtr() &&
                     iFCeil >= fCeil) ||
-                    (side == 0 && closed == false && iter->backSectorPtr() != line->frontSectorPtr() &&
+                    (side.isFront() && closed == false && iter->backSectorPtr() != side.line().frontSectorPtr() &&
                     iBCeil >= fCeil &&
                      isSectorOpen(iter->backSectorPtr()))))
                 {
@@ -262,11 +260,11 @@ static void scanNeighbor(boolean scanTop, Line const *line, uint side,
             else
             {
                 if(iter->hasBackSections() &&
-                   ((side == 0 && iter->backSectorPtr() == line->frontSectorPtr() &&
+                   ((side.isFront() && iter->backSectorPtr() == side.line().frontSectorPtr() &&
                     iFFloor <= fFloor) ||
-                   (side == 1 && iter->backSectorPtr() == line->backSectorPtr() &&
+                   (side.isBack() && iter->backSectorPtr() == side.line().backSectorPtr() &&
                     iFFloor <= fFloor) ||
-                   (side == 0 && closed == false && iter->backSectorPtr() != line->frontSectorPtr() &&
+                   (side.isFront() && closed == false && iter->backSectorPtr() != side.line().frontSectorPtr() &&
                     iBFloor <= fFloor &&
                     isSectorOpen(iter->backSectorPtr()))))
                 {
@@ -281,7 +279,7 @@ static void scanNeighbor(boolean scanTop, Line const *line, uint side,
         }
 
         // Time to stop?
-        if(iter == line)
+        if(iter == &side.line())
         {
             stopScan = true;
         }
@@ -289,7 +287,9 @@ static void scanNeighbor(boolean scanTop, Line const *line, uint side,
         {
             // Is this line coalignable?
             if(!(diff >= BANG_180 - SEP && diff <= BANG_180 + SEP))
+            {
                 stopScan = true; // no.
+            }
             else if(scanSector)
             {
                 // Perhaps its a closed edge?
@@ -329,8 +329,8 @@ static void scanNeighbor(boolean scanTop, Line const *line, uint side,
 
             // Skip into the back neighbor sector of the iter line if
             // heights are within accepted range.
-            if(scanSector && line->hasSections(side^1) &&
-               scanSector != line->sectorPtr(side^1) &&
+            if(scanSector && side.back().hasSections() &&
+               scanSector != side.back().sectorPtr() &&
                 ((scanTop && scanSector->ceiling().visHeight() ==
                                 startSector->ceiling().visHeight()) ||
                  (!scanTop && scanSector->floor().visHeight() ==
@@ -341,7 +341,7 @@ static void scanNeighbor(boolean scanTop, Line const *line, uint side,
                 // the case and a line which SHOULD be two sided isn't, we
                 // need to check whether there is a valid neighbor.
                 Line *backNeighbor =
-                    R_FindLineNeighbor(startSector, iter, own, !toLeft, NULL);
+                    R_FindLineNeighbor(startSector, iter, own, !toLeft);
 
                 if(backNeighbor && backNeighbor != iter)
                 {
@@ -364,28 +364,28 @@ static void scanNeighbor(boolean scanTop, Line const *line, uint side,
         // get the next neighbor (it IS the backneighbor).
         edge->line =
             R_FindLineNeighbor(edge->sector, edge->line,
-                               edge->line->vertexOwner((edge->line->hasBackSections() && edge->line->backSectorPtr() == edge->sector)^!toLeft),
+                               edge->line->vertexOwner(int(edge->line->hasBackSections() && edge->line->backSectorPtr() == edge->sector) ^ (int)!toLeft),
                                !toLeft, &edge->diff);
     }
 }
 
 static void scanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
-    Line const &line, uint side, edgespan_t spans[2], boolean toLeft)
+    Line::Side const &side, edgespan_t spans[2], bool toLeft)
 {
-    if(line.isSelfReferencing()) return;
+    if(side.line().isSelfReferencing()) return;
 
-    coord_t fFloor = line.sector(side).floor().visHeight();
-    coord_t fCeil  = line.sector(side).ceiling().visHeight();
+    coord_t fFloor = side.sector().floor().visHeight();
+    coord_t fCeil  = side.sector().ceiling().visHeight();
 
     edge_t edges[2]; // {bottom, top}
     std::memset(edges, 0, sizeof(edges));
 
-    scanNeighbor(false, &line, side, &edges[0], toLeft);
-    scanNeighbor(true, &line, side, &edges[1], toLeft);
+    scanNeighbor(false, side, &edges[0], toLeft);
+    scanNeighbor(true,  side, &edges[1], toLeft);
 
     for(uint i = 0; i < 2; ++i)
     {
-        shadowcorner_t *corner = (i == 0 ? &bottom[!toLeft] : &top[!toLeft]);
+        shadowcorner_t *corner = (i == 0 ? &bottom[!toLeft] : &top[(int)!toLeft]);
         edge_t *edge = &edges[i];
         edgespan_t *span = &spans[i];
 
@@ -396,7 +396,7 @@ static void scanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
 
         // Compare the relative angle difference of this edge to determine
         // an "open-ness" factor.
-        if(edge->line && edge->line != &line)
+        if(edge->line && edge->line != &side.line())
         {
             if(edge->diff > BANG_180)
             {
@@ -466,20 +466,21 @@ static void scanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
  * rare.
  */
 static void scanEdges(shadowcorner_t topCorners[2], shadowcorner_t bottomCorners[2],
-    shadowcorner_t sideCorners[2], edgespan_t spans[2], Line const &line,
-    int backSide)
+    shadowcorner_t sideCorners[2], edgespan_t spans[2], Line::Side const &side)
 {
-    uint const sid = (backSide? BACK : FRONT);
+    Line const &line = side.line();
+    int const lineSideId = side.lineSideId();
 
     std::memset(sideCorners, 0, sizeof(shadowcorner_t) * 2);
 
     // Find the sidecorners first: left and right neighbour.
-    for(uint i = 0; i < 2; ++i)
+    for(int i = 0; i < 2; ++i)
     {
         binangle_t diff = 0;
-        LineOwner *vo = line.vertexOwner(i ^ sid);
+        LineOwner *vo = line.vertexOwner(i ^ lineSideId);
 
-        Line *other = R_FindSolidLineNeighbor(line.sectorPtr(sid), &line, vo, i, &diff);
+        Line *other = R_FindSolidLineNeighbor(side.sectorPtr(), &line, vo,
+                                              CPP_BOOL(i), &diff);
         if(other && other != &line)
         {
             if(diff > BANG_180)
@@ -511,7 +512,7 @@ static void scanEdges(shadowcorner_t topCorners[2], shadowcorner_t bottomCorners
             sideCorners[i].corner = 0;
         }
 
-        scanNeighbors(topCorners, bottomCorners, line, sid, spans, !i);
+        scanNeighbors(topCorners, bottomCorners, side, spans, !i);
     }
 }
 
@@ -1201,7 +1202,7 @@ static void setRelativeHeights(Sector const *front, Sector const *back, boolean 
 static uint radioEdgeHackType(Line const *line, Sector const *front, Sector const *back,
     int backside, boolean isCeiling, float fz, float bz)
 {
-    Surface const &surface = line->side(backside).surface(isCeiling? SS_TOP:SS_BOTTOM);
+    Surface const &surface = line->side(backside).surface(isCeiling? Line::Side::Top : Line::Side::Bottom);
 
     if(fz < bz && !surface.hasMaterial())
         return 3; // Consider it fully open.
@@ -1303,9 +1304,9 @@ static void addShadowEdge(vec2d_t inner[2], vec2d_t outer[2], coord_t innerLeftZ
 }
 
 static void processEdgeShadow(BspLeaf const &bspLeaf, Line const *line,
-    uint side, uint planeIndex, float shadowDark)
+    int side, uint planeIndex, float shadowDark)
 {
-    DENG_ASSERT(line && (side == FRONT || side == BACK) && line->hasSections(side));
+    DENG_ASSERT(line && line->hasSections(side));
 
     if(!(shadowDark > .0001)) return;
 

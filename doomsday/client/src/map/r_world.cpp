@@ -94,7 +94,7 @@ void R_OrderVertices(Line *line, Sector const *sector, Vertex *verts[2])
     verts[1] = &line->vertex(edge^1);
 }
 
-boolean R_FindBottomTop(SideSection section, int lineFlags,
+boolean R_FindBottomTop(int section, int lineFlags,
     Sector const *frontSec, Sector const *backSec,
     Line::Side const *front, Line::Side const *back,
     coord_t *low, coord_t *hi, pvec2f_t matOffset)
@@ -120,7 +120,7 @@ boolean R_FindBottomTop(SideSection section, int lineFlags,
     }
     else
     {
-        bool const stretchMiddle = (front->flags() & SDF_MIDDLE_STRETCH) != 0;
+        bool const stretchMiddle = front->isFlagged(SDF_MIDDLE_STRETCH);
         Plane const *ffloor = &frontSec->floor();
         Plane const *fceil  = &frontSec->ceiling();
         Plane const *bfloor = &backSec->floor();
@@ -129,7 +129,7 @@ boolean R_FindBottomTop(SideSection section, int lineFlags,
 
         switch(section)
         {
-        case SS_TOP:
+        case Line::Side::Top:
             // Can't go over front ceiling (would induce geometry flaws).
             if(bceil->visHeight() < ffloor->visHeight())
                 *low = ffloor->visHeight();
@@ -148,7 +148,7 @@ boolean R_FindBottomTop(SideSection section, int lineFlags,
             }
             break;
 
-        case SS_BOTTOM: {
+        case Line::Side::Bottom: {
             bool const raiseToBackFloor = (fceil->surface().hasSkyMaskedMaterial() && bceil->surface().hasSkyMaskedMaterial() &&
                                            fceil->visHeight() < bceil->visHeight() &&
                                            bfloor->visHeight() > fceil->visHeight());
@@ -182,7 +182,7 @@ boolean R_FindBottomTop(SideSection section, int lineFlags,
             }
             break; }
 
-        case SS_MIDDLE:
+        case Line::Side::Middle:
             *low = de::max(bfloor->visHeight(), ffloor->visHeight());
             *hi  = de::min(bceil->visHeight(),  fceil->visHeight());
 
@@ -332,7 +332,7 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector const *frontSec,
         coord_t openRange, openBottom, openTop;
 
         // Stretched middles always cover the opening.
-        if(front->flags() & SDF_MIDDLE_STRETCH) return true;
+        if(front->isFlagged(SDF_MIDDLE_STRETCH)) return true;
 
         // Might the material cover the opening?
         openRange = R_VisOpenRange(frontSec, backSec, &openBottom, &openTop);
@@ -340,7 +340,7 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector const *frontSec,
         {
             // Possibly; check the placement.
             coord_t bottom, top;
-            if(R_FindBottomTop(SS_MIDDLE, lineFlags, frontSec, backSec, front, back,
+            if(R_FindBottomTop(Line::Side::Middle, lineFlags, frontSec, backSec, front, back,
                                &bottom, &top))
             {
                 return (top >= openTop && bottom <= openBottom);
@@ -362,13 +362,13 @@ boolean R_MiddleMaterialCoversLineOpening(Line const *line, int side, boolean ig
 }
 
 Line *R_FindLineNeighbor(Sector const *sector, Line const *line,
-    LineOwner const *own, boolean antiClockwise, binangle_t *diff)
+    LineOwner const *own, bool antiClockwise, binangle_t *diff)
 {
     LineOwner const *cown = antiClockwise? &own->prev() : &own->next();
     Line *other = &cown->line();
 
     if(other == line)
-        return NULL;
+        return 0;
 
     if(diff) *diff += (antiClockwise? cown->angle() : own->angle());
 
@@ -391,7 +391,7 @@ Line *R_FindLineNeighbor(Sector const *sector, Line const *line,
 }
 
 Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
-    LineOwner const *own, boolean antiClockwise, binangle_t *diff)
+    LineOwner const *own, bool antiClockwise, binangle_t *diff)
 {
     LineOwner const *cown = antiClockwise? &own->prev() : &own->next();
     Line *other = &cown->line();
@@ -453,7 +453,7 @@ Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
 }
 
 Line *R_FindLineBackNeighbor(Sector const *sector, Line const *line,
-    LineOwner const *own, boolean antiClockwise, binangle_t *diff)
+    LineOwner const *own, bool antiClockwise, binangle_t *diff)
 {
     LineOwner const *cown = antiClockwise? &own->prev() : &own->next();
     Line *other = &cown->line();
@@ -475,7 +475,7 @@ Line *R_FindLineBackNeighbor(Sector const *sector, Line const *line,
 }
 
 Line *R_FindLineAlignNeighbor(Sector const *sec, Line const *line,
-    LineOwner const *own, boolean antiClockwise, int alignment)
+    LineOwner const *own, bool antiClockwise, int alignment)
 {
     int const SEP = 10;
 
@@ -484,7 +484,7 @@ Line *R_FindLineAlignNeighbor(Sector const *sec, Line const *line,
     binangle_t diff;
 
     if(other == line)
-        return NULL;
+        return 0;
 
     if(!other->isSelfReferencing())
     {
@@ -500,7 +500,7 @@ Line *R_FindLineAlignNeighbor(Sector const *sec, Line const *line,
 
     // Can't step over non-twosided lines.
     if(!other->hasFrontSections() || !other->hasBackSections())
-        return NULL;
+        return 0;
 
     // Not suitable, try the next.
     return R_FindLineAlignNeighbor(sec, line, cown, antiClockwise, alignment);
@@ -548,23 +548,24 @@ static void resetAllMapSurfaceVisMaterialOrigins(GameMap &map)
  * Non-animated materials are preferred.
  * Sky materials are ignored.
  */
-static Material *chooseFixMaterial(Line &line, int side, SideSection section)
+static Material *chooseFixMaterial(Line::Side &side, int section)
 {
     Material *choice1 = 0, *choice2 = 0;
-    Sector *frontSec = line.sectorPtr(side);
-    Sector *backSec  = line.hasSections(side ^ 1)? line.sectorPtr(side ^ 1) : 0;
+
+    Sector *frontSec = side.sectorPtr();
+    Sector *backSec  = side.back().hasSections()? side.back().sectorPtr() : 0;
 
     if(backSec)
     {
         // Our first choice is a material in the other sector.
-        if(section == SS_BOTTOM)
+        if(section == Line::Side::Bottom)
         {
             if(frontSec->floor().height() < backSec->floor().height())
             {
                 choice1 = backSec->floorSurface().materialPtr();
             }
         }
-        else if(section == SS_TOP)
+        else if(section == Line::Side::Top)
         {
             if(frontSec->ceiling().height()  > backSec->ceiling().height())
             {
@@ -583,12 +584,12 @@ static Material *chooseFixMaterial(Line &line, int side, SideSection section)
     {
         // Our first choice is a material on an adjacent wall section.
         // Try the left neighbor first.
-        Line *other = R_FindLineNeighbor(frontSec, &line, line.vertexOwner(side),
-                                            false /*next clockwise*/, NULL/*angle delta is irrelevant*/);
+        Line *other = R_FindLineNeighbor(frontSec, &side.line(), side.line().vertexOwner(side.lineSideId()),
+                                         false /*next clockwise*/);
         if(!other)
             // Try the right neighbor.
-            other = R_FindLineNeighbor(frontSec, &line, line.vertexOwner(side^1),
-                                       true /*next anti-clockwise*/, NULL/*angle delta is irrelevant*/);
+            other = R_FindLineNeighbor(frontSec, &side.line(), side.line().vertexOwner(side.lineSideId()^1),
+                                       true /*next anti-clockwise*/);
 
         if(other)
         {
@@ -600,8 +601,8 @@ static Material *chooseFixMaterial(Line &line, int side, SideSection section)
             else
             {
                 // Compare the relative heights to decide.
-                Line::Side &otherSide = other->side(&other->frontSector() == frontSec? FRONT : BACK);
-                Sector &otherSec = other->sector(&other->frontSector() == frontSec? BACK  : FRONT);
+                Line::Side &otherSide = other->side(&other->frontSector() == frontSec? Line::Front : Line::Back);
+                Sector &otherSec = other->sector(&other->frontSector() == frontSec? Line::Back : Line::Front);
 
                 if(otherSec.ceiling().height() <= frontSec->floor().height())
                     choice1 = otherSide.top().materialPtr();
@@ -617,7 +618,7 @@ static Material *chooseFixMaterial(Line &line, int side, SideSection section)
     }
 
     // Our second choice is a material from this sector.
-    choice2 = frontSec->planeSurface(section == SS_BOTTOM? Plane::Floor : Plane::Ceiling).materialPtr();
+    choice2 = frontSec->planeSurface(section == Line::Side::Bottom? Plane::Floor : Plane::Ceiling).materialPtr();
 
     // Prefer a non-animated, non-masked material.
     if(choice1 && !choice1->isAnimated() && !choice1->isSkyMasked())
@@ -639,14 +640,14 @@ static Material *chooseFixMaterial(Line &line, int side, SideSection section)
     return &App_Materials().find(de::Uri("System", Path("missing"))).material();
 }
 
-static void addMissingMaterial(Line &line, int side, SideSection section)
+static void addMissingMaterial(Line::Side &side, int section)
 {
     // A material must be missing for this test to apply.
-    Surface &surface = line.side(side).surface(section);
+    Surface &surface = side.surface(section);
     if(surface.hasMaterial()) return;
 
     // Look for a suitable replacement.
-    surface.setMaterial(chooseFixMaterial(line, side, section), true/* is missing fix */);
+    surface.setMaterial(chooseFixMaterial(side, section), true/* is missing fix */);
 
     // During map load we log missing materials.
     if(ddMapSetup && verbose)
@@ -655,8 +656,8 @@ static void addMissingMaterial(Line &line, int side, SideSection section)
 
         LOG_WARNING("%s of Line #%u is missing a material for the %s section.\n"
                     "  %s was chosen to complete the definition.")
-            << (side? "Back" : "Front") << line.origIndex() - 1
-            << (section == SS_MIDDLE? "middle" : section == SS_TOP? "top" : "bottom")
+            << (side.isBack()? "Back" : "Front") << side.line().origIndex() - 1
+            << (section == Line::Side::Middle? "middle" : section == Line::Side::Top? "top" : "bottom")
             << path;
     }
 }
@@ -685,27 +686,27 @@ void R_UpdateMissingMaterialsForLinesOfSector(Sector const &sec)
             // A potential bottom section fix?
             if(frontSec.floor().height() < backSec.floor().height())
             {
-                addMissingMaterial(*line, FRONT, SS_BOTTOM);
+                addMissingMaterial(line->front(), Line::Side::Bottom);
             }
             else if(frontSec.floor().height() > backSec.floor().height())
             {
-                addMissingMaterial(*line, BACK, SS_BOTTOM);
+                addMissingMaterial(line->back(), Line::Side::Bottom);
             }
 
             // A potential top section fix?
             if(backSec.ceiling().height() < frontSec.ceiling().height())
             {
-                addMissingMaterial(*line, FRONT, SS_TOP);
+                addMissingMaterial(line->front(), Line::Side::Top);
             }
             else if(backSec.ceiling().height() > frontSec.ceiling().height())
             {
-                addMissingMaterial(*line, BACK, SS_TOP);
+                addMissingMaterial(line->back(), Line::Side::Top);
             }
         }
         else
         {
             // A potential middle section fix.
-            addMissingMaterial(*line, FRONT, SS_MIDDLE);
+            addMissingMaterial(line->front(), Line::Side::Middle);
         }
     }
 }
