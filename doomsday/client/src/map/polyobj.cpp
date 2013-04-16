@@ -21,11 +21,12 @@
 #include <QSet>
 #include <QVector>
 
-#include <de/memoryzone.h>
 #include <de/vector1.h>
 
 #include "de_base.h"
-#include "de_play.h"
+
+#include "map/p_maptypes.h"
+#include "map/p_polyobjs.h"
 #include "render/r_main.h" // validCount
 #include "HEdge"
 
@@ -122,8 +123,7 @@ void Polyobj::updateOriginalVertexCoords()
     foreach(Vertex *vertex, uniqueVertexes())
     {
         // The original coordinates are relative to the polyobj origin.
-        Vector2d &origCoords = *origCoordsIt;
-        origCoords = Vector2d(vertex->origin()) - Vector2d(origin);
+        (*origCoordsIt) = Vector2d(vertex->origin()) - Vector2d(origin);
         origCoordsIt++;
     }
 }
