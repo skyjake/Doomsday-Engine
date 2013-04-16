@@ -2480,99 +2480,6 @@ static void Rend_WriteBspLeafSkyFixStripGeometry(BspLeaf *leaf, HEdge *startNode
     R_FreeRendTexCoords(coords);
 }
 
-/**
- * @param leaf      BspLeaf to write geometry for.
- * @param skyFix    @ref skyCapFlags
- */
-static void Rend_WriteBspLeafSkyFixGeometry(BspLeaf *leaf, int skyFix)
-{
-    bool const antiClockwise = false;
-
-    if(!leaf || !leaf->hedgeCount() || !leaf->hasSector()) return;
-    if(!(skyFix & (SKYCAP_LOWER|SKYCAP_UPPER))) return;
-
-    // We may need to break the loop into multiple strips.
-    HEdge *startNode = 0;
-    coord_t startZBottom = 0;
-    coord_t startZTop    = 0;
-    Material *startMaterial = 0;
-
-    HEdge *base = leaf->firstHEdge();
-    HEdge *node = base;
-    forever
-    {
-        HEdge *hedge = (antiClockwise? &node->prev() : node);
-        bool endStrip = false;
-        bool beginNewStrip = false;
-
-        // Is a fix or two necessary for this hedge?
-        if(chooseHEdgeSkyFixes(hedge, skyFix))
-        {
-            coord_t zBottom, zTop;
-            Material *skyMaterial = 0;
-
-            skyFixZCoords(hedge, skyFix, &zBottom, &zTop);
-
-            if(devRendSkyMode)
-            {
-                skyMaterial = hedge->sector().planeSurface(skyFix == SKYCAP_UPPER? Plane::Ceiling : Plane::Floor).materialPtr();
-            }
-
-            if(zBottom >= zTop)
-            {
-                // End the current strip.
-                endStrip = true;
-            }
-            else if(startNode && (!FEQUAL(zBottom, startZBottom) || !FEQUAL(zTop, startZTop) ||
-                                  (devRendSkyMode && skyMaterial != startMaterial)))
-            {
-                // End the current strip and start another.
-                endStrip = true;
-                beginNewStrip = true;
-            }
-            else if(!startNode)
-            {
-                // A new strip begins.
-                startNode = node;
-                startZBottom = zBottom;
-                startZTop = zTop;
-                startMaterial = skyMaterial;
-            }
-        }
-        else
-        {
-            // End the current strip.
-            endStrip = true;
-        }
-
-        if(endStrip && startNode)
-        {
-            // We have complete strip; build and write it.
-            Rend_WriteBspLeafSkyFixStripGeometry(leaf, startNode, node, antiClockwise,
-                                                 skyFix, startMaterial);
-
-            // End the current strip.
-            startNode = 0;
-        }
-
-        // Start a new strip from this node?
-        if(beginNewStrip) continue;
-
-        // On to the next node.
-        node = antiClockwise? &node->prev() : &node->next();
-
-        // Are we done?
-        if(node == base) break;
-    }
-
-    // Have we an unwritten strip? - build it.
-    if(startNode)
-    {
-        Rend_WriteBspLeafSkyFixStripGeometry(leaf, startNode, base, antiClockwise,
-                                             skyFix, startMaterial);
-    }
-}
-
 uint Rend_NumFanVerticesForBspLeaf(BspLeaf *leaf)
 {
     if(!leaf) return 0;
@@ -2633,45 +2540,130 @@ static uint Rend_BuildBspLeafPlaneGeometry(BspLeaf *leaf, boolean antiClockwise,
 }
 
 /// @param skyFix  @ref skyCapFlags.
-static void Rend_RenderSkyFix(int skyFix)
+static void writeLeafSkyMaskStrips(int skyFix)
 {
-    BspLeaf *leaf = currentBspLeaf;
-    if(!leaf || !skyFix) return;
+    BspLeaf *bspLeaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(bspLeaf));
 
-    Rend_WriteBspLeafSkyFixGeometry(leaf, skyFix/*, &verts, &numVerts*/);
+    if(!(skyFix & (SKYCAP_LOWER|SKYCAP_UPPER)))
+        return;
+
+    bool const antiClockwise = false;
+
+    // We may need to break the half-edge loop into multiple strips.
+    HEdge *startNode        = 0;
+    coord_t startZBottom    = 0;
+    coord_t startZTop       = 0;
+    Material *startMaterial = 0;
+
+    HEdge *base = bspLeaf->firstHEdge();
+    HEdge *node = base;
+    forever
+    {
+        HEdge *hedge = (antiClockwise? &node->prev() : node);
+        bool endStrip = false, beginNewStrip = false;
+
+        // Is a fix or two necessary for this edge?
+        if(chooseHEdgeSkyFixes(hedge, skyFix))
+        {
+            coord_t zBottom, zTop;
+            skyFixZCoords(hedge, skyFix, &zBottom, &zTop);
+
+            Material *skyMaterial = 0;
+            if(devRendSkyMode)
+            {
+                int relPlane = skyFix == SKYCAP_UPPER? Plane::Ceiling : Plane::Floor;
+                skyMaterial = hedge->sector().planeSurface(relPlane).materialPtr();
+            }
+
+            if(zBottom >= zTop)
+            {
+                // End the current strip.
+                endStrip = true;
+            }
+            else if(startNode && (!de::fequal(zBottom, startZBottom) || !de::fequal(zTop, startZTop) ||
+                                  (devRendSkyMode && skyMaterial != startMaterial)))
+            {
+                // End the current strip and start another.
+                endStrip = true;
+                beginNewStrip = true;
+            }
+            else if(!startNode)
+            {
+                // A new strip begins.
+                startNode = node;
+                startZBottom = zBottom;
+                startZTop = zTop;
+                startMaterial = skyMaterial;
+            }
+        }
+        else
+        {
+            // End the current strip.
+            endStrip = true;
+        }
+
+        if(endStrip && startNode)
+        {
+            // We have complete strip; build and write it.
+            Rend_WriteBspLeafSkyFixStripGeometry(bspLeaf, startNode, node, antiClockwise,
+                                                 skyFix, startMaterial);
+
+            // End the current strip.
+            startNode = 0;
+        }
+
+        // Start a new strip from this node?
+        if(beginNewStrip) continue;
+
+        // On to the next node.
+        node = antiClockwise? &node->prev() : &node->next();
+
+        // Are we done?
+        if(node == base) break;
+    }
+
+    // Have we an unwritten strip? - build it.
+    if(startNode)
+    {
+        Rend_WriteBspLeafSkyFixStripGeometry(bspLeaf, startNode, base, antiClockwise,
+                                             skyFix, startMaterial);
+    }
 }
 
 /// @param skyCap  @ref skyCapFlags.
-static void Rend_RenderSkyCap(int skyCap)
+static void writeLeafSkyMaskCap(int skyCap)
 {
+    BspLeaf *bspLeaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(bspLeaf));
+
     // Caps are unnecessary in sky debug mode (will be drawn as regular planes).
     if(devRendSkyMode) return;
-
-    BspLeaf *leaf = currentBspLeaf;
-    if(!leaf || !skyCap) return;
+    if(!skyCap) return;
 
     rvertex_t *verts;
     uint numVerts;
-    Rend_BuildBspLeafPlaneGeometry(leaf, !!(skyCap & SKYCAP_UPPER), R_SkyCapZ(leaf, skyCap),
-                                   &verts, &numVerts);
+    Rend_BuildBspLeafPlaneGeometry(bspLeaf, (skyCap & SKYCAP_UPPER) != 0,
+                                   R_SkyCapZ(bspLeaf, skyCap), &verts, &numVerts);
 
     RL_AddPoly(PT_FAN, RPF_DEFAULT | RPF_SKYMASK, numVerts, verts, NULL);
     R_FreeRendVertices(verts);
 }
 
 /// @param skyCap  @ref skyCapFlags
-static void writeLeafSkyMask(int skyCap)
+static void writeLeafSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
 {
-    BspLeaf *leaf = currentBspLeaf;
+    BspLeaf *bspLeaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(bspLeaf));
 
     // Any work to do?
-    if(!leaf || !leaf->hedgeCount()) return;
-    if(!leaf->hasSector() || !R_SectorContainsSkySurfaces(leaf->sectorPtr())) return;
+    if(!R_SectorContainsSkySurfaces(bspLeaf->sectorPtr()))
+        return;
 
     // Sky caps are only necessary in sectors with sky-masked planes.
-    if((skyCap & SKYCAP_LOWER) && !leaf->sector().floorSurface().hasSkyMaskedMaterial())
+    if((skyCap & SKYCAP_LOWER) && !bspLeaf->sector().floorSurface().hasSkyMaskedMaterial())
         skyCap &= ~SKYCAP_LOWER;
-    if((skyCap & SKYCAP_UPPER) && !leaf->sector().ceilingSurface().hasSkyMaskedMaterial())
+    if((skyCap & SKYCAP_UPPER) && !bspLeaf->sector().ceilingSurface().hasSkyMaskedMaterial())
         skyCap &= ~SKYCAP_UPPER;
 
     if(!skyCap) return;
@@ -2685,15 +2677,15 @@ static void writeLeafSkyMask(int skyCap)
     // Lower?
     if(skyCap & SKYCAP_LOWER)
     {
-        Rend_RenderSkyFix(SKYCAP_LOWER);
-        Rend_RenderSkyCap(SKYCAP_LOWER);
+        writeLeafSkyMaskStrips(SKYCAP_LOWER);
+        writeLeafSkyMaskCap(SKYCAP_LOWER);
     }
 
     // Upper?
     if(skyCap & SKYCAP_UPPER)
     {
-        Rend_RenderSkyFix(SKYCAP_UPPER);
-        Rend_RenderSkyCap(SKYCAP_UPPER);
+        writeLeafSkyMaskStrips(SKYCAP_UPPER);
+        writeLeafSkyMaskCap(SKYCAP_UPPER);
     }
 }
 
@@ -2946,7 +2938,7 @@ static void drawCurrentBspLeaf()
      */
     R_AddSprites(bspLeaf);
 
-    writeLeafSkyMask(SKYCAP_LOWER|SKYCAP_UPPER);
+    writeLeafSkyMask();
     writeLeafWallSections();
     writeLeafPolyobjs();
     writeLeafPlanes();
@@ -2986,7 +2978,7 @@ static void traverseBspAndDrawLeafs(MapElement *bspElement)
         return;
 
     // Is this leaf visible?
-    if(!firstBspLeaf && C_CheckBspLeaf(bspLeaf))
+    if(!firstBspLeaf && !C_CheckBspLeaf(bspLeaf))
         return;
 
     // This is now the current leaf.
