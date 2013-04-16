@@ -2903,14 +2903,13 @@ static void occludeBspLeaf(BspLeaf const *bspLeaf, bool forwardFacing)
     } while((hedge = &hedge->next()) != base);
 }
 
+/**
+ * @pre Assumes the leaf is at least partially visible.
+ */
 static void drawCurrentBspLeaf()
 {
     BspLeaf *bspLeaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(bspLeaf));
-
-    // Is this leaf visible?
-    if(!firstBspLeaf && !C_CheckBspLeaf(bspLeaf))
-        return;
 
     uint bspLeafIdx = theMap->bspLeafIndex(bspLeaf);
 
@@ -2984,6 +2983,10 @@ static void traverseBspAndDrawLeafs(MapElement *bspElement)
     // Skip null leafs (those with zero volume). Neighbors handle adding the
     // solid clipper segments.
     if(isNullLeaf(bspLeaf))
+        return;
+
+    // Is this leaf visible?
+    if(!firstBspLeaf && C_CheckBspLeaf(bspLeaf))
         return;
 
     // This is now the current leaf.

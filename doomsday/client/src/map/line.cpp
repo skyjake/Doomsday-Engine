@@ -219,14 +219,14 @@ void Line::Side::setLeftHEdge(HEdge *newLeftHEdge)
     d->leftHEdge = newLeftHEdge;
 }
 
-void Line::Side::setRightHEdge(HEdge *newRightHEdge)
-{
-    d->rightHEdge = newRightHEdge;
-}
-
 HEdge *Line::Side::rightHEdge() const
 {
     return d->rightHEdge;
+}
+
+void Line::Side::setRightHEdge(HEdge *newRightHEdge)
+{
+    d->rightHEdge = newRightHEdge;
 }
 
 void Line::Side::updateMiddleSoundEmitterOrigin()
