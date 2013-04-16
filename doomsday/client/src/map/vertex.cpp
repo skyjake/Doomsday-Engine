@@ -22,7 +22,7 @@
 #include <de/Vector>
 
 #include "dd_share.h"
-#include "map/line.h"
+#include "Line"
 #include "map/lineowner.h"
 
 #include "map/vertex.h"

@@ -25,10 +25,10 @@
 #include "de_base.h"
 #include "m_misc.h" // M_TriangleArea()
 
-#include "map/hedge.h"
-#include "map/polyobj.h"
-#include "map/sector.h"
-#include "map/vertex.h"
+#include "HEdge"
+#include "Polyobj"
+#include "Sector"
+#include "Vertex"
 
 #include "map/bspleaf.h"
 

@@ -24,10 +24,10 @@
 
 #include "de_base.h"
 
-#include "map/line.h"
+#include "Line"
 #include "map/lineowner.h"
 #include "map/r_world.h" /// R_GetVtxLineOwner @todo remove me
-#include "map/vertex.h"
+#include "Vertex"
 
 #include "map/hedge.h"
 

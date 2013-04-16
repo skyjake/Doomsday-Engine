@@ -27,7 +27,7 @@
 #define LIBDENG_BSP_PARTITIONCOST
 
 #include "map/p_mapdata.h"
-#include "map/hedge.h"
+#include "HEdge"
 
 namespace de {
 namespace bsp {

@@ -22,7 +22,7 @@
  */
 
 #include <de/kdtree.h>
-#include "map/hedge.h"
+#include "HEdge"
 
 #include "map/bsp/superblockmap.h"
 

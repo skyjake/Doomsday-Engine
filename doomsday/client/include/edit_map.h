@@ -20,7 +20,7 @@
 #define LIBDENG_MAP_EDITOR_H
 
 #include <QList>
-#include "map/vertex.h"
+#include "Vertex"
 
 class GameMap;
 

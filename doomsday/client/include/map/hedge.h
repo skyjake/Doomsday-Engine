@@ -22,8 +22,8 @@
 #define LIBDENG_MAP_HEDGE
 
 #include "MapElement"
-#include "map/vertex.h"
-#include "map/line.h"
+#include "Vertex"
+#include "Line"
 #include "resource/r_data.h"
 #include "p_dmu.h"
 #include "sector.h"

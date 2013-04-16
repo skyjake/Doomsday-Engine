@@ -26,8 +26,8 @@
 #include <de/Vector>
 
 #include "m_misc.h"
-#include "map/sector.h"
-#include "map/vertex.h"
+#include "Sector"
+#include "Vertex"
 
 #include "map/line.h"
 

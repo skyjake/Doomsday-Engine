@@ -31,7 +31,7 @@
 
 #include "MapElement"
 #include "map/p_dmu.h"
-#include "map/plane.h"
+#include "Plane"
 
 class BspLeaf;
 class GameMap;

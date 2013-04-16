@@ -26,7 +26,7 @@
 #include "de_misc.h"
 
 #include "render/r_main.h" // validCount
-#include "map/hedge.h"
+#include "HEdge"
 
 #include "map/polyobj.h"
 

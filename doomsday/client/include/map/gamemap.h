@@ -29,7 +29,7 @@
 #include "EntityDatabase"
 #include "m_nodepile.h"
 #include "p_particle.h"
-#include "map/polyobj.h"
+#include "Polyobj"
 
 class Vertex;
 class Line;

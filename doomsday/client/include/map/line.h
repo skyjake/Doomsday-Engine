@@ -31,8 +31,8 @@
 #include <de/Vector>
 
 #include "MapElement"
-#include "map/surface.h"
-#include "map/vertex.h"
+#include "Surface"
+#include "Vertex"
 #include "p_dmu.h"
 
 class HEdge;

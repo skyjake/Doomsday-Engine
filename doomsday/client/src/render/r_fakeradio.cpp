@@ -29,7 +29,7 @@
 
 #include "map/lineowner.h"
 #include "map/gamemap.h"
-#include "map/vertex.h"
+#include "Vertex"
 
 #include "render/rend_fakeradio.h"
 

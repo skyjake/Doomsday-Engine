@@ -34,9 +34,9 @@
 #ifndef DENG_RENDER_FAKERADIO
 #define DENG_RENDER_FAKERADIO
 
-#include "map/line.h"
-#include "map/vertex.h"
-#include "map/sector.h"
+#include "Line"
+#include "Vertex"
+#include "Sector"
 #include "render/rendpoly.h"
 #include "render/walldiv.h"
 

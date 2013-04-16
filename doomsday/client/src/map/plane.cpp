@@ -23,7 +23,7 @@
 #include "de_base.h"
 
 #include "audio/s_environ.h"
-#include "map/line.h"
+#include "Line"
 #include "map/gamemap.h" /// @todo remove me.
 #include "map/r_world.h" // ddMapSetup
 #include "render/r_main.h" // frameTimePos

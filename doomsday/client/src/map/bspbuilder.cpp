@@ -25,9 +25,9 @@
 #include <de/Observers>
 #include <de/Vector>
 
-#include "map/bspleaf.h"
-#include "map/hedge.h"
-#include "map/sector.h"
+#include "BspLeaf"
+#include "HEdge"
+#include "Sector"
 #include "map/bsp/partitioner.h"
 
 #include "map/bspbuilder.h"

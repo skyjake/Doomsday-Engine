@@ -23,12 +23,12 @@
 #include <de/aabox.h>
 #include <de/fixedpoint.h>
 
-#include "map/bspleaf.h"
-#include "map/bspnode.h"
-#include "map/hedge.h"
-#include "map/line.h"
-#include "map/polyobj.h"
-#include "map/sector.h"
+#include "BspLeaf"
+#include "BspNode"
+#include "HEdge"
+#include "Line"
+#include "Polyobj"
+#include "Sector"
 
 #include "render/r_main.h" /// For validCount, @todo Remove me.
 

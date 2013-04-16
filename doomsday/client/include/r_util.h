@@ -26,7 +26,7 @@
 
 #include <de/Vector>
 #include <de/vector1.h>
-#include "map/bspnode.h"
+#include "BspNode"
 #include "map/p_mapdata.h"
 
 /**

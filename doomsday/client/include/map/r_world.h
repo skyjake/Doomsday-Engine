@@ -24,10 +24,10 @@
 #include <de/Vector>
 
 #include "resource/r_data.h"
-#include "map/line.h"
-#include "map/plane.h"
-#include "map/sector.h"
-#include "map/vertex.h"
+#include "Line"
+#include "Plane"
+#include "Sector"
+#include "Vertex"
 
 /// @todo The MapChange audience belongs in a class.
 DENG2_DECLARE_AUDIENCE(MapChange, void currentMapChanged())

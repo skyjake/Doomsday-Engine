@@ -32,10 +32,10 @@
 #include <de/Error>
 #include <de/Log>
 
-#include "map/bspleaf.h"
-#include "map/bspnode.h"
-#include "map/hedge.h"
-#include "map/vertex.h"
+#include "BspLeaf"
+#include "BspNode"
+#include "HEdge"
+#include "Vertex"
 
 #include "map/bsp/hedgeinfo.h"
 #include "map/bsp/hedgeintercept.h"

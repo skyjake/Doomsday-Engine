@@ -110,9 +110,18 @@ DENG_API_HEADERS = \
 # Convenience headers.
 DENG_HEADERS += \
     include/BspBuilder \
+    include/BspLeaf \
+    include/BspNode \
     include/EntityDatabase \
     include/Game \
     include/Games \
+    include/HEdge \
+    include/Line \
+    include/Plane \
+    include/Polyobj \
+    include/Sector \
+    include/Surface \
+    include/Vertex
 
 # Private headers.
 DENG_HEADERS += \

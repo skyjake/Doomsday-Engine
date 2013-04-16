@@ -23,8 +23,8 @@
 
 #include <de/Log>
 
-#include "map/bspleaf.h"
-#include "map/line.h"
+#include "BspLeaf"
+#include "Line"
 #include "map/gamemap.h"
 #include "map/p_players.h"
 #include "map/p_maptypes.h"

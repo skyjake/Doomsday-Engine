@@ -33,7 +33,7 @@
 #include "de_misc.h"
 
 #include "map/lineowner.h"
-#include "map/plane.h"
+#include "Plane"
 #ifdef __CLIENT__
 #  include "MaterialSnapshot"
 #  include "MaterialVariantSpec"
