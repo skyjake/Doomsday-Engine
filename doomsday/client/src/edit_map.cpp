@@ -916,15 +916,7 @@ boolean MPE_End()
         }
 
         polyobj->buildUniqueVertexes();
-        uint n = 0;
-        foreach(Vertex *vertex, polyobj->uniqueVertexes())
-        {
-            // The originalPts are relative to the polyobj origin.
-            vec2d_t const &vertexOrigin = vertex->origin();
-            polyobj->originalPts[n].origin[VX] = vertexOrigin[VX] - polyobj->origin[VX];
-            polyobj->originalPts[n].origin[VY] = vertexOrigin[VY] - polyobj->origin[VY];
-            n++;
-        }
+        polyobj->updateOriginalVertexCoords();
     }
 
     map->updateBounds();

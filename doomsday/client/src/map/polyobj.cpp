@@ -1,4 +1,4 @@
-/** @file polyobj.cpp Moveable Polygonal Map-Object (Polyobj).
+/** @file polyobj.cpp World Map Polyobj.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,19 +18,23 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/Vector>
+#include <QSet>
+#include <QVector>
+
+#include <de/memoryzone.h>
+#include <de/vector1.h>
 
 #include "de_base.h"
-#include "de_console.h"
 #include "de_play.h"
-#include "de_misc.h"
-
 #include "render/r_main.h" // validCount
 #include "HEdge"
 
 #include "map/polyobj.h"
 
 using namespace de;
+
+/// Used to store the original/previous vertex coordinates.
+typedef QVector<Vector2d> VertexCoords;
 
 static void notifyGeometryChanged(Polyobj &po)
 {
@@ -64,8 +68,8 @@ polyobj_s::polyobj_s(de::Vector2d const &origin_)
     angleSpeed = 0;
     _lines = new Lines;
     _uniqueVertexes = new Vertexes;
-    originalPts = 0;
-    prevPts = 0;
+    _originalPts = new VertexCoords;
+    _prevPts = new VertexCoords;
     speed = 0;
     crush = false;
     seqType = 0;
@@ -81,6 +85,8 @@ polyobj_s::~polyobj_s()
 
     delete static_cast<Lines *>(_lines);
     delete static_cast<Vertexes *>(_uniqueVertexes);
+    delete static_cast<VertexCoords *>(_originalPts);
+    delete static_cast<VertexCoords *>(_prevPts);
 }
 
 Polyobj::Lines const &Polyobj::lines() const
@@ -95,19 +101,31 @@ Polyobj::Vertexes const &Polyobj::uniqueVertexes() const
 
 void Polyobj::buildUniqueVertexes()
 {
-    Vertexes &uniqueVertexes = *static_cast<Vertexes *>(_uniqueVertexes);
-
-    uniqueVertexes.clear();
-
+    QSet<Vertex *> vertexSet;
     foreach(Line *line, lines())
     {
-        uniqueVertexes.insert(&line->v1());
-        uniqueVertexes.insert(&line->v2());
+        vertexSet.insert(&line->v1());
+        vertexSet.insert(&line->v2());
     }
 
-    // Resize the point arrays as they are implicitly linked to the unique vertexes.
-    originalPts = (povertex_t *) Z_Realloc(originalPts, uniqueVertexes.count() * sizeof(povertex_t), PU_MAP);
-    prevPts     = (povertex_t *) Z_Realloc(prevPts,     uniqueVertexes.count() * sizeof(povertex_t), PU_MAP);
+    Vertexes &uniqueVertexes = *static_cast<Vertexes *>(_uniqueVertexes);
+    uniqueVertexes = vertexSet.toList();
+
+    // Resize the coordinate vectors as they are implicitly linked to the unique vertexes.
+    static_cast<VertexCoords *>(_originalPts)->resize(uniqueVertexes.count());
+    static_cast<VertexCoords *>(_prevPts)->resize(uniqueVertexes.count());
+}
+
+void Polyobj::updateOriginalVertexCoords()
+{
+    VertexCoords::iterator origCoordsIt = static_cast<VertexCoords *>(_originalPts)->begin();
+    foreach(Vertex *vertex, uniqueVertexes())
+    {
+        // The original coordinates are relative to the polyobj origin.
+        Vector2d &origCoords = *origCoordsIt;
+        origCoords = Vector2d(vertex->origin()) - Vector2d(origin);
+        origCoordsIt++;
+    }
 }
 
 void Polyobj::updateAABox()
@@ -155,7 +173,8 @@ static int PTR_CheckMobjBlocking(mobj_t *mo, void *context)
 {
     ptrmobjblockingparams_t *parms = (ptrmobjblockingparams_t *) context;
 
-    if(!mobjCanBlockMovement(mo)) return false;
+    if(!mobjCanBlockMovement(mo))
+        return false;
 
     // Out of range?
     AABoxd moBox(mo->origin[VX] - mo->radius,
@@ -208,20 +227,24 @@ static bool mobjIsBlockingPolyobj(Polyobj &po)
     return false; // All clear.
 }
 
-bool Polyobj::move(const_pvec2d_t delta)
+bool Polyobj::move(Vector2d const &delta)
 {
     LOG_AS("Polyobj::move");
-    //LOG_DEBUG("Applying delta %s to [%p]")
-    //    << Vector2d(delta[VX], delta[VY]).asText() << this;
+    //LOG_DEBUG("Applying delta %s to [%p]") << delta.asText() << this;
 
     P_PolyobjUnlink(this);
     {
-        povertex_t *prevPtIt = prevPts;
+        VertexCoords::iterator prevCoordsIt = static_cast<VertexCoords *>(_prevPts)->begin();
         foreach(Vertex *vertex, uniqueVertexes())
         {
-            V2d_Copy(prevPtIt->origin, vertex->origin());
-            V2d_Sum(vertex->_origin, vertex->_origin, delta);
-            prevPtIt++;
+            // Remember the previous coords in case we need to undo.
+            (*prevCoordsIt) = vertex->origin();
+
+            // Apply translation.
+            Vector2d newVertexOrigin = Vector2d(vertex->origin()) + delta;
+            V2d_Set(vertex->_origin, newVertexOrigin.x, newVertexOrigin.y);
+
+            prevCoordsIt++;
         }
 
         foreach(Line *line, lines())
@@ -229,7 +252,9 @@ bool Polyobj::move(const_pvec2d_t delta)
             line->updateAABox();
         }
 
-        V2d_Sum(origin, origin, delta);
+        Vector2d newOrigin = Vector2d(origin) + delta;
+        V2d_Set(origin, newOrigin.x, newOrigin.y);
+
         updateAABox();
     }
     P_PolyobjLink(this);
@@ -241,11 +266,11 @@ bool Polyobj::move(const_pvec2d_t delta)
 
         P_PolyobjUnlink(this);
         {
-            povertex_t *prevPtIt = prevPts;
+            VertexCoords::const_iterator prevCoordsIt = static_cast<VertexCoords *>(_prevPts)->constBegin();
             foreach(Vertex *vertex, uniqueVertexes())
             {
-                V2d_Copy(vertex->_origin, prevPtIt->origin);
-                prevPtIt++;
+                V2d_Set(vertex->_origin, prevCoordsIt->x, prevCoordsIt->y);
+                prevCoordsIt++;
             }
 
             foreach(Line *line, lines())
@@ -253,7 +278,9 @@ bool Polyobj::move(const_pvec2d_t delta)
                 line->updateAABox();
             }
 
-            V2d_Subtract(origin, origin, delta);
+            Vector2d newOrigin = Vector2d(origin) - delta;
+            V2d_Set(origin, newOrigin.x, newOrigin.y);
+
             updateAABox();
         }
         P_PolyobjLink(this);
@@ -267,20 +294,20 @@ bool Polyobj::move(const_pvec2d_t delta)
     return true;
 }
 
-static void rotatePoint2d(coord_t point[2], coord_t const origin[2], uint fineAngle)
+/**
+ * @param point      Point to be rotated (in-place).
+ * @param about      Origin to rotate @a point relative to.
+ * @param fineAngle  Angle to rotate (theta).
+ */
+static void rotatePoint2d(Vector2d &point, Vector2d const &origin, uint fineAngle)
 {
-    coord_t orig[2], rotated[2];
+    coord_t const c = FIX2DBL(fineCosine[fineAngle]);
+    coord_t const s = FIX2DBL(finesine[fineAngle]);
 
-    orig[VX] = point[VX];
-    orig[VY] = point[VY];
+    Vector2d orig = point;
 
-    rotated[VX] = orig[VX] * FIX2FLT(fineCosine[fineAngle]);
-    rotated[VY] = orig[VY] * FIX2FLT(finesine[fineAngle]);
-    point[VX] = rotated[VX] - rotated[VY] + origin[VX];
-
-    rotated[VX] = orig[VX] * FIX2FLT(finesine[fineAngle]);
-    rotated[VY] = orig[VY] * FIX2FLT(fineCosine[fineAngle]);
-    point[VY] = rotated[VY] + rotated[VX] + origin[VY];
+    point.x = orig.x * c - orig.y * s + origin.x;
+    point.y = orig.y * c + orig.x * s + origin.y;
 }
 
 bool Polyobj::rotate(angle_t delta)
@@ -293,17 +320,21 @@ bool Polyobj::rotate(angle_t delta)
     {
         uint fineAngle = (angle + delta) >> ANGLETOFINESHIFT;
 
-        povertex_t *originalPtIt = originalPts;
-        povertex_t *prevPtIt     = prevPts;
+        VertexCoords::const_iterator origCoordsIt = static_cast<VertexCoords *>(_originalPts)->constBegin();
+        VertexCoords::iterator prevCoordsIt = static_cast<VertexCoords *>(_prevPts)->begin();
         foreach(Vertex *vertex, uniqueVertexes())
         {
-            V2d_Copy(prevPtIt->origin, vertex->origin());
-            V2d_Copy(vertex->_origin, originalPtIt->origin);
+            // Remember the previous coords in case we need to undo.
+            (*prevCoordsIt) = vertex->origin();
 
-            rotatePoint2d(vertex->_origin, origin, fineAngle);
+            // Apply rotation relative to the "original" coords.
+            Vector2d newCoords = (*origCoordsIt);
+            rotatePoint2d(newCoords, origin, fineAngle);
 
-            originalPtIt++;
-            prevPtIt++;
+            V2d_Set(vertex->_origin, newCoords.x, newCoords.y);
+
+            origCoordsIt++;
+            prevCoordsIt++;
         }
 
         foreach(Line *line, lines())
@@ -326,11 +357,11 @@ bool Polyobj::rotate(angle_t delta)
 
         P_PolyobjUnlink(this);
         {
-            povertex_t *prevPtIt = prevPts;
+            VertexCoords::const_iterator prevCoordsIt = static_cast<VertexCoords *>(_prevPts)->constBegin();
             foreach(Vertex *vertex, uniqueVertexes())
             {
-                V2d_Copy(vertex->_origin, prevPtIt->origin);
-                prevPtIt++;
+                V2d_Set(vertex->_origin, prevCoordsIt->x, prevCoordsIt->y);
+                prevCoordsIt++;
             }
 
             foreach(Line *line, lines())

@@ -22,9 +22,6 @@
 #define DENG_WORLD_MAP_POLYOBJ
 
 #include <QList>
-#include <QSet>
-
-#include <de/vector1.h> /// @todo Remove me.
 
 #include <de/Vector>
 
@@ -42,7 +39,7 @@ typedef struct polyobj_s
 {
 public:
     typedef QList<Line *> Lines;
-    typedef QSet<Vertex *> Vertexes;
+    typedef QList<Vertex *> Vertexes;
 
 public:
     DD_BASE_POLYOBJ_ELEMENTS()
@@ -63,38 +60,46 @@ public:
     inline uint lineCount() const { return lines().count(); }
 
     /**
-     * To be called once all Lines have been added in order to compile the set
+     * To be called once all Lines have been added in order to compile the list
      * of unique vertexes for the polyobj. A vertex referenced by multiple lines
-     * is only included once in this set.
+     * is only included once in this list.
      */
     void buildUniqueVertexes();
 
     /**
-     * Provides access to the set of unique vertexes for the polyobj.
+     * Provides access to the list of unique vertexes for the polyobj.
      *
-     * @see buildUniqueVertexSet()
+     * @see buildUniqueVertex()
      */
     Vertexes const &uniqueVertexes() const;
 
     /**
      * Returns the total number of unique Vertexes for the polyobj.
      *
-     * @see buildUniqueVertexSet()
+     * @see buildUniqueVertexes()
      */
     inline uint uniqueVertexCount() const { return uniqueVertexes().count(); }
+
+    /**
+     * Update the original coordinates of all vertexes using the current coordinate
+     * values. To be called once initialization has completed to finalize the polyobj.
+     *
+     * @pre Unique vertex list has already been built.
+     *
+     * @see buildUniqueVertexes()
+     */
+    void updateOriginalVertexCoords();
 
     /**
      * Translate the origin of the polyobj in the map coordinate space.
      *
      * @param delta  Movement delta on the X|Y plane.
      */
-    bool move(const_pvec2d_t delta);
+    bool move(de::Vector2d const &delta);
 
     /// @copydoc move()
-    inline bool move(coord_t x, coord_t y)
-    {
-        coord_t point[2] = { x, y };
-        return move(point);
+    inline bool move(coord_t x, coord_t y) {
+        return move(de::Vector2d(x, y));
     }
 
     /**
@@ -148,4 +153,4 @@ public:
 
 #define POLYOBJ_SIZE        gx.polyobjSize
 
-#endif // DENG_WORLD_MAP_POLYOB
+#endif // DENG_WORLD_MAP_POLYOBJ
