@@ -146,8 +146,11 @@ static DGLuint constructBBox(DGLuint name, float br);
 static uint Rend_BuildBspLeafPlaneGeometry(BspLeaf *leaf, boolean antiClockwise,
                                            coord_t height, rvertex_t **verts, uint *vertsSize);
 
+// Draw state:
+static Vector2d eyeOrigin; // Viewer origin.
 static BspLeaf *currentBspLeaf; // BSP leaf currently being drawn.
-static boolean firstBspLeaf; // No range checking for the first one.
+static bool firstBspLeaf; // No range checking for the first one.
+
 #endif // __CLIENT__
 
 void Rend_Register()
@@ -2900,40 +2903,24 @@ static void occludeBspLeaf(BspLeaf const *bspLeaf, bool forwardFacing)
     } while((hedge = &hedge->next()) != base);
 }
 
-static void Rend_RenderBspLeaf(BspLeaf *bspLeaf)
+static void drawCurrentBspLeaf()
 {
-    DENG_ASSERT(bspLeaf);
+    BspLeaf *bspLeaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(bspLeaf));
 
-    if(isNullLeaf(bspLeaf))
-    {
-        // Skip this, it has no volume.
-        // Neighbors handle adding the solid clipper segments.
+    // Is this leaf visible?
+    if(!firstBspLeaf && !C_CheckBspLeaf(bspLeaf))
         return;
-    }
 
-    // This is now the current leaf.
-    currentBspLeaf = bspLeaf;
-
-    if(!firstBspLeaf)
-    {
-        if(!C_CheckBspLeaf(bspLeaf))
-            return; // This isn't visible.
-    }
-    else
-    {
-        firstBspLeaf = false;
-    }
+    uint bspLeafIdx = theMap->bspLeafIndex(bspLeaf);
 
     // Mark the sector visible for this frame.
-    Sector &sector = bspLeaf->sector();
-    sector._frameFlags |= SIF_VISIBLE;
+    bspLeaf->sector()._frameFlags |= SIF_VISIBLE;
 
     Rend_MarkSegsFacingFront(bspLeaf);
-
     R_InitForBspLeaf(bspLeaf);
     Rend_RadioBspLeafEdges(*bspLeaf);
 
-    uint bspLeafIdx = theMap->bspLeafIndex(bspLeaf);
     occludeBspLeaf(bspLeaf, false);
     LO_ClipInBspLeaf(bspLeafIdx);
     occludeBspLeaf(bspLeaf, true);
@@ -2942,12 +2929,12 @@ static void Rend_RenderBspLeaf(BspLeaf *bspLeaf)
 
     if(bspLeaf->hasPolyobj())
     {
-        // Polyobjs don't obstruct, do clip lights with another algorithm.
+        // Polyobjs don't obstruct - clip lights with another algorithm.
         LO_ClipInBspLeafBySight(bspLeafIdx);
     }
 
-    // Mark the particle generators in the sector visible.
-    Rend_ParticleMarkInSectorVisible(&sector);
+    // Mark particle generators in the sector visible.
+    Rend_ParticleMarkInSectorVisible(bspLeaf->sectorPtr());
 
     /*
      * Sprites for this BSP leaf have to be drawn.
@@ -2966,30 +2953,46 @@ static void Rend_RenderBspLeaf(BspLeaf *bspLeaf)
     writeLeafPlanes();
 }
 
-static void Rend_RenderNode(MapElement *bspPtr)
+static void traverseBspAndDrawLeafs(MapElement *bspElement)
 {
-    // If the clipper is full we're pretty much done. This means no geometry
-    // will be visible in the distance because every direction has already been
-    // fully covered by geometry.
-    if(C_IsFull()) return;
+    DENG_ASSERT(bspElement != 0);
 
-    if(bspPtr->type() == DMU_BSPLEAF)
-    {
-        // We've arrived at a leaf. Render it.
-        Rend_RenderBspLeaf(bspPtr->castTo<BspLeaf>());
-    }
-    else
+    while(bspElement->type() != DMU_BSPLEAF)
     {
         // Descend deeper into the nodes.
-        viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-        BspNode const &node = *bspPtr->castTo<BspNode>();
+        BspNode const *bspNode = bspElement->castTo<BspNode>();
 
         // Decide which side the view point is on.
-        byte side = node.partition().pointOnSide(viewData->current.origin);
+        int eyeSide = bspNode->partition().pointOnSide(eyeOrigin);
 
-        Rend_RenderNode(node.childPtr(side)); // Recursively divide front space.
-        Rend_RenderNode(node.childPtr(side ^ 1)); // ...and back space.
+        // Recursively divide front space.
+        traverseBspAndDrawLeafs(bspNode->childPtr(eyeSide));
+
+        // If the clipper is full we're pretty much done. This means no geometry
+        // will be visible in the distance because every direction has already
+        // been fully covered by geometry.
+        if(!firstBspLeaf && C_IsFull())
+            return;
+
+        // ...and back space.
+        bspElement = bspNode->childPtr(eyeSide ^ 1);
     }
+
+    // We've arrived at a leaf.
+    BspLeaf *bspLeaf = bspElement->castTo<BspLeaf>();
+
+    // Skip null leafs (those with zero volume). Neighbors handle adding the
+    // solid clipper segments.
+    if(isNullLeaf(bspLeaf))
+        return;
+
+    // This is now the current leaf.
+    currentBspLeaf = bspLeaf;
+
+    drawCurrentBspLeaf();
+
+    // This is no longer the first leaf.
+    firstBspLeaf = false;
 }
 
 static void drawVector(Vector3f const &vector, float scalar, const float color[3])
@@ -3521,7 +3524,7 @@ void Rend_RenderMap()
 
     if(!freezeRLs)
     {
-        const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
+        viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
 
         // Prepare for rendering.
         RL_ClearLists(); // Clear the lists for new quads.
@@ -3544,13 +3547,13 @@ void Rend_RenderMap()
             R_InitShadowProjectionListsForNewFrame();
         }
 
+        eyeOrigin = Vector2d(viewData->current.origin);
+
         // Add the backside clipping range (if vpitch allows).
         if(vpitch <= 90 - yfov / 2 && vpitch >= -90 + yfov / 2)
         {
-
             float a = fabs(vpitch) / (90 - yfov / 2);
-            binangle_t startAngle =
-                (binangle_t) (BANG_45 * fieldOfView / 90) * (1 + a);
+            binangle_t startAngle = binangle_t(BANG_45 * fieldOfView / 90) * (1 + a);
             binangle_t angLen = BANG_180 - startAngle;
 
             viewside = (viewData->current.angle >> (32 - BAMS_BITS)) + startAngle;
@@ -3563,17 +3566,10 @@ void Rend_RenderMap()
         viewsidey = viewData->viewCos;
 
         // We don't want BSP clip checking for the first BSP leaf.
-        MapElement *bspRootElement = theMap->bspRoot();
         firstBspLeaf = true;
-        if(bspRootElement->type() == DMU_BSPNODE)
-        {
-            Rend_RenderNode(bspRootElement);
-        }
-        else
-        {
-            // A single leaf is a special case.
-            Rend_RenderBspLeaf(bspRootElement->castTo<BspLeaf>());
-        }
+
+        // Draw the world!
+        traverseBspAndDrawLeafs(theMap->bspRoot());
 
         if(Rend_MobjShadowsEnabled())
         {
