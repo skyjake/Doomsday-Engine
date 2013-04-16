@@ -19,6 +19,7 @@
 
 #include "de/Canvas"
 #include "de/CanvasWindow"
+#include "de/gui/opengl.h"
 
 #include <de/App>
 #include <de/Log>
@@ -30,7 +31,6 @@
 #include <QShowEvent>
 #include <QResizeEvent>
 #include <QPaintEvent>
-#include <QtOpenGL>
 #include <QImage>
 #include <QCursor>
 #include <QTimer>

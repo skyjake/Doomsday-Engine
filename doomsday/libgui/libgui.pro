@@ -78,6 +78,7 @@ HEADERS += \
     include/de/gui/keyeventsource.h \
     include/de/gui/libgui.h \
     include/de/gui/mouseeventsource.h \
+    include/de/gui/opengl.h \
     include/de/gui/persistentcanvaswindow.h
 
 # Sources and private headers.

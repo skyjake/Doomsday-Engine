@@ -21,10 +21,10 @@
 
 #include <de/libdeng2.h>
 #include <de/Vector>
-#include <QtOpenGL>
 #include <vector>
 
 #include "libgui.h"
+#include "opengl.h"
 
 namespace de {
 
