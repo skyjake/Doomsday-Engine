@@ -21,6 +21,7 @@
 
 #include <de/libdeng2.h>
 #include <de/Vector>
+#include <de/Asset>
 #include <vector>
 
 #include "libgui.h"
@@ -47,7 +48,7 @@ namespace internal
  * Vertex format with 2D coordinates, one set of texture coordinates, and an
  * RGBA color.
  */
-struct Vertex2TexRgba
+struct LIBGUI_PUBLIC Vertex2TexRgba
 {
     Vector2f pos;
     Vector2f texCoord;
@@ -70,7 +71,7 @@ private:
  *
  * @ingroup gl
  */
-class LIBGUI_PUBLIC GLBuffer
+class LIBGUI_PUBLIC GLBuffer : public Asset
 {
 public:
     enum Usage

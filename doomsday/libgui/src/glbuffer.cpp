@@ -38,10 +38,11 @@ DENG2_PIMPL(GLBuffer)
     GLuint name;
     GLuint idxName;
     dsize count;
+    dsize idxCount;
     Primitive prim;
     internal::AttribSpecs specs;
 
-    Instance(Public *i) : Base(i), name(0), idxName(0), count(0), prim(Points)
+    Instance(Public *i) : Base(i), name(0), idxName(0), count(0), idxCount(0), prim(Points)
     {
         specs.first = 0;
         specs.second = 0;
@@ -75,6 +76,7 @@ DENG2_PIMPL(GLBuffer)
         {
             glDeleteBuffers(1, &name);
             name = 0;
+            count = 0;
         }
     }
 
@@ -84,6 +86,7 @@ DENG2_PIMPL(GLBuffer)
         {
             glDeleteBuffers(1, &idxName);
             idxName = 0;
+            idxCount = 0;
         }
     }
 
@@ -117,6 +120,8 @@ DENG2_PIMPL(GLBuffer)
 
     void enableArrays(bool enable)
     {
+        DENG2_ASSERT(specs.first != 0); // must have a spec
+
         for(duint i = 0; i < specs.second; ++i)
         {
             internal::AttribSpec const &spec = specs.first[i];
@@ -139,6 +144,7 @@ GLBuffer::GLBuffer() : d(new Instance(this))
 
 void GLBuffer::clear()
 {
+    setState(NotReady);
     d->release();
     d->releaseIndices();
 }
@@ -160,17 +166,21 @@ void GLBuffer::setVertices(Primitive primitive, dsize count, void const *data, d
         glBindBuffer(GL_ARRAY_BUFFER, d->name);
         glBufferData(GL_ARRAY_BUFFER, dataSize, data, Instance::glUsage(usage));
         glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        setState(Ready);
     }
     else
     {
         d->release();
+
+        setState(NotReady);
     }
 }
 
 void GLBuffer::setIndices(Primitive primitive, dsize count, Index const *indices, Usage usage)
 {
-    d->prim  = primitive;
-    d->count = count;
+    d->prim     = primitive;
+    d->idxCount = count;
 
     if(indices && count)
     {
@@ -188,18 +198,18 @@ void GLBuffer::setIndices(Primitive primitive, dsize count, Index const *indices
 
 void GLBuffer::draw(duint first, dint count)
 {
-    if(!count || !d->name) return;
-
-    if(count < 0) count = d->count;
-    if(first + count > d->count) count = d->count - first;
-
-    DENG2_ASSERT(count > 0);
+    if(!isReady()) return;
 
     glBindBuffer(GL_ARRAY_BUFFER, d->name);
     d->enableArrays(true);
 
     if(d->idxName)
     {
+        if(count < 0) count = d->idxCount;
+        if(first + count > d->idxCount) count = d->idxCount - first;
+
+        DENG2_ASSERT(count >= 0);
+
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, d->idxName);
         glDrawElements(Instance::glPrimitive(d->prim), count, GL_UNSIGNED_SHORT,
                        (void const *)(first * 2));
@@ -207,6 +217,11 @@ void GLBuffer::draw(duint first, dint count)
     }
     else
     {
+        if(count < 0) count = d->count;
+        if(first + count > d->count) count = d->count - first;
+
+        DENG2_ASSERT(count >= 0);
+
         glDrawArrays(Instance::glPrimitive(d->prim), first, count);
     }
 
