@@ -98,6 +98,16 @@ public:
         y -= other.y;
         return *this;
     }
+    Vector2 &operator *= (ddouble scalar) {
+        x *= scalar;
+        y *= scalar;
+        return *this;
+    }
+    Vector2 &operator *= (Vector2 const &other) {
+        x *= other.x;
+        y *= other.y;
+        return *this;
+    }
     bool operator > (Vector2 const &other) const {
         return x > other.x && y > other.y;
     }
@@ -237,6 +247,18 @@ public:
         Vector2<Type>::x -= other.x;
         Vector2<Type>::y -= other.y;
         z -= other.z;
+        return *this;
+    }
+    Vector3 &operator *= (ddouble scalar) {
+        Vector2<Type>::x *= scalar;
+        Vector2<Type>::y *= scalar;
+        z *= scalar;
+        return *this;
+    }
+    Vector3 &operator *= (Vector3 const &other) {
+        Vector2<Type>::x *= other.x;
+        Vector2<Type>::y *= other.y;
+        z *= other.z;
         return *this;
     }
     bool operator > (Vector3 const &other) const {
@@ -391,6 +413,20 @@ public:
         Vector3<Type>::y -= other.y;
         Vector3<Type>::z -= other.z;
         w -= other.w;
+        return *this;
+    }
+    Vector4 &operator *= (ddouble scalar) {
+        Vector3<Type>::x *= scalar;
+        Vector3<Type>::y *= scalar;
+        Vector3<Type>::z *= scalar;
+        w *= scalar;
+        return *this;
+    }
+    Vector4 &operator *= (Vector4 const &other) {
+        Vector3<Type>::x *= other.x;
+        Vector3<Type>::y *= other.y;
+        Vector3<Type>::z *= other.z;
+        w *= other.w;
         return *this;
     }
     bool operator > (Vector4 const &other) const {
