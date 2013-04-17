@@ -27,6 +27,8 @@
 #include "map/gamemap.h"
 #include "render/r_main.h" // validCount
 
+using namespace de;
+
 #define ORDER(x,y,a,b)  ( (x)<(y)? ((a)=(x),(b)=(y)) : ((b)=(x),(a)=(y)) )
 
 // Linkstore is list of pointers gathered when iterating stuff.
@@ -75,25 +77,27 @@ DENG_EXTERN_C void P_SetTraceOpening(Line *line)
     theMap->setTraceOpening(*line);
 }
 
-#undef P_BspLeafAtPoint
-DENG_EXTERN_C BspLeaf *P_BspLeafAtPoint(const_pvec2d_t point)
+#undef P_BspLeafAtPoint_FixedPrecision
+DENG_EXTERN_C BspLeaf *P_BspLeafAtPoint_FixedPrecision(const_pvec2d_t point)
 {
-    if(!theMap) return NULL;
-    return theMap->bspLeafAtPoint(point);
+    if(!theMap) return 0;
+    return theMap->bspLeafAtPoint_FixedPrecision(point);
 }
 
-#undef P_BspLeafAtPointXY
-DENG_EXTERN_C BspLeaf *P_BspLeafAtPointXY(coord_t x, coord_t y)
+#undef P_BspLeafAtPoint_FixedPrecisionXY
+DENG_EXTERN_C BspLeaf *P_BspLeafAtPoint_FixedPrecisionXY(coord_t x, coord_t y)
 {
-    if(!theMap) return NULL;
-    return theMap->bspLeafAtPoint(x, y);
+    if(!theMap) return 0;
+    coord_t point[2] = { x, y };
+    return theMap->bspLeafAtPoint_FixedPrecision(point);
 }
 
-boolean P_IsPointXYInBspLeaf(coord_t x, coord_t y, BspLeaf const *bspLeaf)
+bool P_IsPointInBspLeaf(Vector2d const &point, BspLeaf const &bspLeaf)
 {
-    if(!bspLeaf || !bspLeaf->firstHEdge()) return false; // I guess?
+    if(!bspLeaf.firstHEdge())
+        return false; // Obviously not.
 
-    HEdge const *base = bspLeaf->firstHEdge();
+    HEdge const *base = bspLeaf.firstHEdge();
     HEdge const *hedge = base;
     do
     {
@@ -102,8 +106,8 @@ boolean P_IsPointXYInBspLeaf(coord_t x, coord_t y, BspLeaf const *bspLeaf)
         Vertex const &va = hedge->v1();
         Vertex const &vb = next.v1();
 
-        if(((va.origin()[VY] - y) * (vb.origin()[VX] - va.origin()[VX]) -
-            (va.origin()[VX] - x) * (vb.origin()[VY] - va.origin()[VY])) < 0)
+        if(((va.origin()[VY] - point.y) * (vb.origin()[VX] - va.origin()[VX]) -
+            (va.origin()[VX] - point.x) * (vb.origin()[VY] - va.origin()[VY])) < 0)
         {
             // Outside the BSP leaf's edges.
             return false;
@@ -113,26 +117,16 @@ boolean P_IsPointXYInBspLeaf(coord_t x, coord_t y, BspLeaf const *bspLeaf)
     return true;
 }
 
-boolean P_IsPointInBspLeaf(coord_t const point[], BspLeaf const *bspLeaf)
+bool P_IsPointInSector(Vector2d const &point, Sector const &sector)
 {
-    return P_IsPointXYInBspLeaf(point[VX], point[VY], bspLeaf);
-}
-
-boolean P_IsPointXYInSector(coord_t x, coord_t y, Sector const *sector)
-{
-    if(!sector) return false; // I guess?
+    DENG_ASSERT(theMap != 0);
 
     /// @todo Do not assume @a sector is from the current map.
-    DENG_ASSERT(theMap);
-    BspLeaf *bspLeaf = theMap->bspLeafAtPoint(x, y);
-    if(bspLeaf->sectorPtr() != sector) return false;
+    BspLeaf *bspLeaf = theMap->bspLeafAtPoint(point);
+    if(bspLeaf->sectorPtr() != &sector)
+        return false;
 
-    return P_IsPointXYInBspLeaf(x, y, bspLeaf);
-}
-
-boolean P_IsPointInSector(coord_t const point[], Sector const *sector)
-{
-    return P_IsPointXYInSector(point[VX], point[VY], sector);
+    return P_IsPointInBspLeaf(point, *bspLeaf);
 }
 
 /**
@@ -303,7 +297,7 @@ void GameMap_LinkMobjToLines(GameMap* map, mobj_t* mo)
 DENG_EXTERN_C void P_MobjLink(mobj_t *mo, byte flags)
 {
     // Link into the sector.
-    mo->bspLeaf = P_BspLeafAtPoint(mo->origin);
+    mo->bspLeaf = P_BspLeafAtPoint_FixedPrecision(mo->origin);
 
     if(flags & DDLINK_SECTOR)
     {
@@ -346,12 +340,12 @@ DENG_EXTERN_C void P_MobjLink(mobj_t *mo, byte flags)
     if(mo->dPlayer && mo->dPlayer->mo)
     {
         ddplayer_t *player = mo->dPlayer;
-        Sector &sec = player->mo->bspLeaf->sector();
+        Sector &sector = player->mo->bspLeaf->sector();
 
         player->inVoid = true;
-        if(P_IsPointXYInSector(player->mo->origin[VX], player->mo->origin[VY], &sec) &&
-           (player->mo->origin[VZ] <  sec.ceiling().visHeight() + 4 &&
-            player->mo->origin[VZ] >= sec.floor().visHeight()))
+        if(P_IsPointInSector(player->mo->origin, sector) &&
+           (player->mo->origin[VZ] <  sector.ceiling().visHeight() + 4 &&
+            player->mo->origin[VZ] >= sector.floor().visHeight()))
             player->inVoid = false;
     }
 }

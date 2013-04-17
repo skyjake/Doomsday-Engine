@@ -1164,7 +1164,7 @@ void P_RepositionMace(mobj_t *mo)
     {
         mo->origin[VX] = mapSpot->origin[VX];
         mo->origin[VY] = mapSpot->origin[VY];
-        bspLeaf = P_BspLeafAtPoint(mo->origin);
+        bspLeaf = P_BspLeafAtPoint_FixedPrecision(mo->origin);
 
         mo->floorZ = P_GetDoublep(bspLeaf, DMU_CEILING_HEIGHT);
         mo->origin[VZ] = mo->floorZ;

@@ -3144,7 +3144,7 @@ D_CMD(MovePlane)
         coord_t point[2];
         point[VX] = (coord_t)strtol(argv[2], 0, 0);
         point[VY] = (coord_t)strtol(argv[3], 0, 0);
-        sector = P_GetPtrp(P_BspLeafAtPoint(point), DMU_SECTOR);
+        sector = P_GetPtrp(P_BspLeafAtPoint_FixedPrecision(point), DMU_SECTOR);
 
         p = 4;
     }

@@ -702,7 +702,7 @@ static void SBE_DrawLevelGauge(Point2Raw const *origin, int height)
     else
         src = SBE_GetNearest();
 
-    BspLeaf *bspLeaf = P_BspLeafAtPoint(src->origin);
+    BspLeaf *bspLeaf = theMap->bspLeafAtPoint(src->origin);
     if(!bspLeaf) return;
 
     Sector &sector = bspLeaf->sector();

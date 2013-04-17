@@ -390,14 +390,14 @@ static uint generateDecorLights(MaterialSnapshot::Decoration const &decor,
             if(containingSector)
             {
                 // The point must be inside the correct sector.
-                if(!P_IsPointXYInSector(origin.x, origin.y, containingSector))
+                if(!P_IsPointInSector(origin, *containingSector))
                     continue;
             }
 
             if(Surface::DecorSource *source = suf.newDecoration())
             {
-                source->origin  = Vector3d(origin.x, origin.y, origin.z);
-                source->bspLeaf = P_BspLeafAtPointXY(source->origin.x, source->origin.y);
+                source->origin  = origin;
+                source->bspLeaf = theMap->bspLeafAtPoint(origin);
                 source->decor   = &decor;
                 decorCount++;
             }

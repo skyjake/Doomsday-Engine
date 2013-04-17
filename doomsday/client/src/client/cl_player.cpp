@@ -336,7 +336,7 @@ void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, boolean onground)
         P_MobjLink(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
     }
 
-    mo->bspLeaf  = P_BspLeafAtPoint(mo->origin);
+    mo->bspLeaf  = P_BspLeafAtPoint_FixedPrecision(mo->origin);
     mo->floorZ   = mo->bspLeaf->sector().floor().height();
     mo->ceilingZ = mo->bspLeaf->sector().ceiling().height();
 

@@ -306,9 +306,11 @@ void LG_InitForMap(void)
                 sample.origin[VX] = lgOrigin[VX] + off[VX] + samplePoints[0].origin[VX];
                 sample.origin[VY] = lgOrigin[VY] + off[VY] + samplePoints[0].origin[VY];
 
-                ssamples[idx] = P_BspLeafAtPoint(sample.origin)->sectorPtr();
-                if(!P_IsPointInSector(sample.origin, ssamples[idx]))
-                   ssamples[idx] = NULL;
+                BspLeaf *bspLeaf = map->bspLeafAtPoint(sample.origin);
+                if(P_IsPointInBspLeaf(sample.origin, *bspLeaf))
+                    ssamples[idx] = bspLeaf->sectorPtr();
+                else
+                    ssamples[idx] = 0;
 
                 n++; // Offset the index in the samplePoints array bellow.
             }
@@ -356,9 +358,11 @@ void LG_InitForMap(void)
                         sample.origin[VX] = lgOrigin[VX] + off[VX] + samplePoints[n].origin[VX];
                         sample.origin[VY] = lgOrigin[VY] + off[VY] + samplePoints[n].origin[VY];
 
-                        ssamples[idx] = P_BspLeafAtPoint(sample.origin)->sectorPtr();
-                        if(!P_IsPointInSector(sample.origin, ssamples[idx]))
-                           ssamples[idx] = NULL;
+                        BspLeaf *bspLeaf = map->bspLeafAtPoint(sample.origin);
+                        if(P_IsPointInBspLeaf(sample.origin, *bspLeaf))
+                            ssamples[idx] = bspLeaf->sectorPtr();
+                        else
+                            ssamples[idx] = 0;
                     }
                 }
             }

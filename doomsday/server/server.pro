@@ -400,7 +400,6 @@ SOURCES += \
     $$SRC/src/network/net_main.cpp \
     $$SRC/src/network/net_msg.cpp \
     $$SRC/src/network/net_ping.cpp \
-    $$SRC/src/partition.cpp \
     $$SRC/src/r_util.cpp \
     $$SRC/src/render/r_main.cpp \
     $$SRC/src/render/r_things.cpp \

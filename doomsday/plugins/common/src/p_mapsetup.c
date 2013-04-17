@@ -481,7 +481,7 @@ static void loadMapSpots(void)
         // Sound sequence origin?
         if(spot->doomEdNum >= 1400 && spot->doomEdNum < 1410)
         {
-            BspLeaf* bspLeaf = P_BspLeafAtPoint(spot->origin);
+            BspLeaf* bspLeaf = P_BspLeafAtPoint_FixedPrecision(spot->origin);
             xsector_t* xsector = P_ToXSector(P_GetPtrp(bspLeaf, DMU_SECTOR));
 
             xsector->seqType = spot->doomEdNum - 1400;

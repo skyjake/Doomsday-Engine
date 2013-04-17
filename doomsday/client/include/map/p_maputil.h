@@ -1,6 +1,4 @@
-/**
- * @file p_maputil.h
- * Map Utility Routines.
+/** @file p_maputil.h Map Utility Routines.
  *
  * @ingroup map
  *
@@ -22,16 +20,12 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_MAP_UTILITIES_H
-#define LIBDENG_MAP_UTILITIES_H
+#ifndef DENG_MAP_UTILITIES_H
+#define DENG_MAP_UTILITIES_H
 
-#include <de/mathutil.h>
-#include <de/vector1.h>
+#include <de/Vector>
+
 #include "p_object.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Is the point inside the sector, according to the edge lines of the BspLeaf?
@@ -39,20 +33,9 @@ extern "C" {
  * @param point   XY coordinate to test.
  * @param sector  Sector to test.
  *
- * @return  @c true, if the point is inside the sector.
+ * @return  @c true iff the point lies within @a sector.
  */
-boolean P_IsPointInSector(coord_t const point[2], const Sector* sector);
-
-/**
- * Is the point inside the sector, according to the edge lines of the BspLeaf?
- *
- * @param x       X coordinate to test.
- * @param y       Y coordinate to test.
- * @param sector  Sector to test.
- *
- * @return  @c true, if the point is inside the sector.
- */
-boolean P_IsPointXYInSector(coord_t x, coord_t y, const Sector* sector);
+bool P_IsPointInSector(de::Vector2d const &point, Sector const &sector);
 
 /**
  * Is the point inside the BspLeaf (according to the edges)?
@@ -62,22 +45,9 @@ boolean P_IsPointXYInSector(coord_t x, coord_t y, const Sector* sector);
  * @param point    XY coordinate to test.
  * @param bspLeaf  BspLeaf to test.
  *
- * @return  @c true, if the point is inside the BspLeaf.
+ * @return  @c true iff the point lines within @a bspLeaf.
  */
-boolean P_IsPointInBspLeaf(coord_t const point[2], const BspLeaf* bspLeaf);
-
-/**
- * Is the point inside the BspLeaf (according to the edges)?
- *
- * Uses the well-known algorithm described here: http://www.alienryderflex.com/polygon/
- *
- * @param x        X coordinate to test.
- * @param y        Y coordinate to test.
- * @param bspLeaf  BspLeaf to test.
- *
- * @return  @c true, if the point is inside the BspLeaf.
- */
-boolean P_IsPointXYInBspLeaf(coord_t x, coord_t y, const BspLeaf* bspLeaf);
+bool P_IsPointInBspLeaf(de::Vector2d const &point, BspLeaf const &bspLeaf);
 
 /**
  * @note Caller must ensure that the mobj is currently unlinked.
@@ -101,8 +71,4 @@ int PIT_AddLineIntercepts(Line* ld, void* parameters);
 
 int PIT_AddMobjIntercepts(mobj_t* mobj, void* parameters);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif // LIBDENG_MAP_UTILITIES_H
+#endif // DENG_MAP_UTILITIES_H

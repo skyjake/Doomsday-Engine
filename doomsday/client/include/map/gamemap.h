@@ -280,29 +280,26 @@ public:
     inline uint bspLeafCount() const { return bspLeafs().count(); }
 
     /**
-     * Determine the BSP leaf on the back side of the BS partition that lies in front
-     * of the specified point within the map's coordinate space.
+     * Determine the BSP leaf on the back side of the BS partition that lies
+     * in front  of the specified point within the map's coordinate space.
      *
-     * @note Always returns a valid BspLeaf although the point may not actually lay
-     *       within it (however it is on the same side of the space partition)!
+     * @note Always returns a valid BspLeaf although the point may not actually
+     * lay within it (however it is on the same side of the space partition)!
      *
      * @param point  XY coordinates of the point to test.
      *
-     * @return     BspLeaf instance for that BSP node's leaf.
+     * @return  BspLeaf instance for that BSP node's leaf.
      */
-    BspLeaf *bspLeafAtPoint(const_pvec2d_t point) const;
+    BspLeaf *bspLeafAtPoint(de::Vector2d const &point) const;
 
     /**
      * @copydoc bspLeafAtPoint()
      *
-     * @param x  X coordinate of the point to test.
-     * @param y  Y coordinate of the point to test.
-     * @return   BspLeaf instance for that BSP node's leaf.
+     * The test is carried out using fixed-point math for behavior compatible
+     * with vanilla DOOM. Note that this means there is a maximum size for the
+     * point: it cannot exceed the fixed-point 16.16 range (about 65k units).
      */
-    inline BspLeaf *bspLeafAtPoint(coord_t x, coord_t y) const {
-        coord_t point[2] = { x, y };
-        return bspLeafAtPoint(point);
-    }
+    BspLeaf *bspLeafAtPoint_FixedPrecision(de::Vector2d const &point) const;
 
     int mobjsBoxIterator(AABoxd const &box,
         int (*callback) (struct mobj_s *, void *), void *parameters = 0) const;

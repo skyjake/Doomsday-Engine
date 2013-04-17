@@ -307,7 +307,7 @@ boolean P_TeleportMove(mobj_t* thing, coord_t x, coord_t y, boolean alwaysStomp)
     tmBox.maxX = tm[VX] + tmThing->radius;
     tmBox.maxY = tm[VY] + tmThing->radius;
 
-    newSSec = P_BspLeafAtPoint(tm);
+    newSSec = P_BspLeafAtPoint_FixedPrecision(tm);
 
     ceilingLine = floorLine = NULL;
 #if !__JHEXEN__
@@ -1204,7 +1204,7 @@ boolean P_CheckPositionXYZ(mobj_t* thing, coord_t x, coord_t y, coord_t z)
     tmBox.maxX = tm[VX] + tmThing->radius;
     tmBox.maxY = tm[VY] + tmThing->radius;
 
-    newSec = P_GetPtrp(P_BspLeafAtPoint(tm), DMU_SECTOR);
+    newSec = P_GetPtrp(P_BspLeafAtPoint_FixedPrecision(tm), DMU_SECTOR);
 
     ceilingLine = floorLine = NULL;
 #if !__JHEXEN__
@@ -1782,7 +1782,7 @@ int PTR_ShootTraverse(intercept_t const *in, void *parameters)
         lineWasHit = true;
 
         // This is the BSP leaf where the trace originates.
-        originSub = P_BspLeafAtPoint(tracePos);
+        originSub = P_BspLeafAtPoint_FixedPrecision(tracePos);
 
         d[VX] = pos[VX] - tracePos[VX];
         d[VY] = pos[VY] - tracePos[VY];
@@ -1790,7 +1790,7 @@ int PTR_ShootTraverse(intercept_t const *in, void *parameters)
 
         if(!INRANGE_OF(d[VZ], 0, .0001f)) // Epsilon
         {
-            contact = P_BspLeafAtPoint(pos);
+            contact = P_BspLeafAtPoint_FixedPrecision(pos);
             step = M_ApproxDistance3(d[VX], d[VY], d[VZ] * 1.2/*aspect ratio*/);
             stepv[VX] = d[VX] / step;
             stepv[VY] = d[VY] / step;
@@ -1807,7 +1807,7 @@ int PTR_ShootTraverse(intercept_t const *in, void *parameters)
                 pos[VX] = tracePos[VX] + d[VX];
                 pos[VY] = tracePos[VY] + d[VY];
                 pos[VZ] = tracePos[VZ] + d[VZ];
-                contact = P_BspLeafAtPoint(pos);
+                contact = P_BspLeafAtPoint_FixedPrecision(pos);
             }
 
             // Should we backtrack to hit a plane instead?
@@ -3020,7 +3020,7 @@ mobj_t* P_CheckOnMobj(mobj_t* thing)
     tmBox.maxX = pos[VX] + tmThing->radius;
     tmBox.maxY = pos[VY] + tmThing->radius;
 
-    newSSec = P_BspLeafAtPoint(pos);
+    newSSec = P_BspLeafAtPoint_FixedPrecision(pos);
     ceilingLine = floorLine = NULL;
 
     // The base floor/ceiling is from the BSP leaf that contains the point.

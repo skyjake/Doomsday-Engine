@@ -649,7 +649,7 @@ static void P_NewParticle(ptcgen_t *gen)
             float y = sector->aaBox().minY +
                 RNG_RandFloat() * (sector->aaBox().maxY - sector->aaBox().minY);
 
-            subsec = P_BspLeafAtPointXY(x, y);
+            subsec = theMap->bspLeafAtPoint(Vector2d(x, y));
             if(subsec->sectorPtr() == sector) break;
 
             subsec = NULL;
@@ -668,7 +668,7 @@ static void P_NewParticle(ptcgen_t *gen)
             pt->origin[VX] = FLT2FIX(x);
             pt->origin[VY] = FLT2FIX(y);
 
-            if(P_BspLeafAtPointXY(x, y) == subsec)
+            if(theMap->bspLeafAtPoint(Vector2d(x, y)) == subsec)
                 break; // This is a good place.
         }
 
@@ -695,10 +695,14 @@ static void P_NewParticle(ptcgen_t *gen)
     // The other place where this gets updated is after moving over
     // a two-sided line.
     if(gen->plane)
+    {
         pt->sector = &gen->plane->sector();
+    }
     else
-        pt->sector = P_BspLeafAtPointXY(FIX2FLT(pt->origin[VX]),
-                                        FIX2FLT(pt->origin[VY]))->sectorPtr();
+    {
+        Vector2d ptOrigin(FIX2FLT(pt->origin[VX]), FIX2FLT(pt->origin[VY]));
+        pt->sector = theMap->bspLeafAtPoint(ptOrigin)->sectorPtr();
+    }
 
     // Play a stage sound?
     P_ParticleSound(pt->origin, &def->stages[pt->stage].sound);
@@ -1165,7 +1169,10 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
 
     // Should we update the sector pointer?
     if(tmcross)
-        pt->sector = P_BspLeafAtPointXY(FIX2FLT(x), FIX2FLT(y))->sectorPtr();
+    {
+        Vector2d ptOrigin(FIX2FLT(x), FIX2FLT(y));
+        pt->sector = theMap->bspLeafAtPoint(ptOrigin)->sectorPtr();
+    }
 }
 
 /**

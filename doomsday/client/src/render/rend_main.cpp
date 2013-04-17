@@ -2954,7 +2954,7 @@ static void traverseBspAndDrawLeafs(MapElement *bspElement)
         BspNode const *bspNode = bspElement->castTo<BspNode>();
 
         // Decide which side the view point is on.
-        int eyeSide = bspNode->partition().pointOnSide(eyeOrigin);
+        int eyeSide = bspNode->partition().pointOnSide(eyeOrigin) < 0;
 
         // Recursively divide front space.
         traverseBspAndDrawLeafs(bspNode->childPtr(eyeSide));

@@ -2224,8 +2224,8 @@ DENG_EXTERN_C int P_MobjLinesIterator(mobj_t* mo, int (*callback) (Line*, void*)
 DENG_EXTERN_C int P_MobjSectorsIterator(mobj_t* mo, int (*callback) (Sector*, void*), void* parameters);
 DENG_EXTERN_C int P_LineMobjsIterator(Line *line, int (*callback) (mobj_t *, void *), void *parameters);
 DENG_EXTERN_C int P_SectorTouchingMobjsIterator(Sector* sector, int (*callback) (mobj_t*, void*), void *parameters);
-DENG_EXTERN_C BspLeaf* P_BspLeafAtPointXY(coord_t x, coord_t y);
-DENG_EXTERN_C BspLeaf* P_BspLeafAtPoint(coord_t const point[2]);
+DENG_EXTERN_C BspLeaf* P_BspLeafAtPoint_FixedPrecisionXY(coord_t x, coord_t y);
+DENG_EXTERN_C BspLeaf* P_BspLeafAtPoint_FixedPrecision(coord_t const point[2]);
 DENG_EXTERN_C int P_MobjsBoxIterator(const AABoxd* box, int (*callback) (mobj_t*, void*), void* parameters);
 DENG_EXTERN_C int P_LinesBoxIterator(const AABoxd* box, int (*callback) (Line*, void*), void* parameters);
 DENG_EXTERN_C int P_PolyobjsBoxIterator(const AABoxd* box, int (*callback) (Polyobj*, void*), void* parameters);
@@ -2422,8 +2422,8 @@ DENG_DECLARE_API(Map) =
     P_PolyobjByTag,
     P_SetPolyobjCallback,
 
-    P_BspLeafAtPoint,
-    P_BspLeafAtPointXY,
+    P_BspLeafAtPoint_FixedPrecision,
+    P_BspLeafAtPoint_FixedPrecisionXY,
 
     P_MobjsBoxIterator,
     P_LinesBoxIterator,

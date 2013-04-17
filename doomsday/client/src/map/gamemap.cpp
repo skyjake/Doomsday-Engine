@@ -828,15 +828,15 @@ void GameMap::initPolyobjs()
     foreach(Polyobj *po, _polyobjs)
     {
         // Find the center point of the polyobj.
-        vec2d_t avg; V2d_Set(avg, 0, 0);
+        Vector2d avg;
         foreach(Line *line, po->lines())
         {
-            V2d_Sum(avg, avg, line->v1Origin());
+            avg += Vector2d(line->v1Origin());
         }
-        V2d_Scale(avg, 1.f / po->lineCount());
+        avg *=  1.f / po->lineCount();
 
         // Given the center point determine in which BSP leaf the polyobj resides.
-        if(BspLeaf *bspLeaf = P_BspLeafAtPoint(avg))
+        if(BspLeaf *bspLeaf = bspLeafAtPoint(avg))
         {
             if(bspLeaf->hasPolyobj())
             {
@@ -1679,17 +1679,43 @@ int GameMap::pathTraverse(const_pvec2d_t from, const_pvec2d_t to, int flags,
     return P_TraverseIntercepts(callback, parameters);
 }
 
-BspLeaf *GameMap::bspLeafAtPoint(const_pvec2d_t point) const
+BspLeaf *GameMap::bspLeafAtPoint(Vector2d const &point) const
 {
     MapElement *bspElement = d->bspRoot;
     while(bspElement->type() != DMU_BSPLEAF)
     {
-        BspNode const &node = *bspElement->castTo<BspNode>();
-        int side = node.partition().pointOnSide(Vector2d(point));
+        BspNode const *bspNode = bspElement->castTo<BspNode>();
 
-        // Decend to the next child subspace.
-        bspElement = node.childPtr(side);
+        int side = bspNode->partition().pointOnSide(point) < 0;
+
+        // Decend to the child subspace on "this" side.
+        bspElement = bspNode->childPtr(side);
     }
+
+    // We've arrived at a leaf.
+    return bspElement->castTo<BspLeaf>();
+}
+
+BspLeaf *GameMap::bspLeafAtPoint_FixedPrecision(Vector2d const &point) const
+{
+    fixed_t pointX[2] = { DBL2FIX(point.x), DBL2FIX(point.y) };
+
+    MapElement *bspElement = d->bspRoot;
+    while(bspElement->type() != DMU_BSPLEAF)
+    {
+        BspNode const *bspNode = bspElement->castTo<BspNode>();
+        Partition const &partition = bspNode->partition();
+
+        fixed_t lineOriginX[2]    = { DBL2FIX(partition.origin.x),    DBL2FIX(partition.origin.y) };
+        fixed_t lineDirectionX[2] = { DBL2FIX(partition.direction.x), DBL2FIX(partition.direction.y) };
+
+        int side = V2x_PointOnLineSide(pointX, lineOriginX, lineDirectionX);
+
+        // Decend to the child subspace on "this" side.
+        bspElement = bspNode->childPtr(side);
+    }
+
+    // We've arrived at a leaf.
     return bspElement->castTo<BspLeaf>();
 }
 

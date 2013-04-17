@@ -401,22 +401,21 @@ static int listVisibleParticles(void)
 
 static void setupModelParamsForParticle(rendmodelparams_t* params,
     const particle_t* pt, const ptcstage_t* st, const ded_ptcstage_t* dst,
-    float* origin, float dist, float size, float mark, float alpha)
+    const_pvec3f_t origin, float dist, float size, float mark, float alpha)
 {
-    BspLeaf* bspLeaf;
-    int frame;
-
     // Render the particle as a model.
     params->origin[VX] = origin[VX];
     params->origin[VY] = origin[VZ];
     params->origin[VZ] = params->gzt = origin[VY];
     params->distance = dist;
-    bspLeaf = P_BspLeafAtPointXY(origin[VX], origin[VY]);
+
+    BspLeaf *bspLeaf = theMap->bspLeafAtPoint(Vector2d(origin[VX], origin[VY]));
 
     params->extraScale = size; // Extra scaling factor.
     params->mf = &modefs[dst->model];
     params->alwaysInterpolate = true;
 
+    int frame;
     if(dst->endFrame < 0)
     {
         frame = dst->frame;

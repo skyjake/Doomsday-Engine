@@ -38,26 +38,32 @@ public:
     Vector2d direction;
 
 public:
-    Partition(Vector2d const &origin    = Vector2d(0, 0),
-              Vector2d const &direction = Vector2d(0, 0));
-    Partition(Partition const &other);
+    Partition(Vector2d const &origin, Vector2d const &direction)
+        : origin(origin), direction(direction) {}
+
+    Partition(Partition const &other)
+        : origin(other.origin), direction(other.direction) {}
 
     /**
-     * Which side of the partition does the specified @a point lie?
+     * Where does the given @a point lie relative to the partition line?
      *
-     * @param point  Point coordinates to test.
+     * @param point  The point to test.
      *
-     * @return  @c 0 = front, else @c 1 = back.
+     * @return @c <0 Point is to the left of the line.
+     *         @c =0 Point lies directly on/incident with the line.
+     *         @c >0 Point is to the right of the line.
      */
-    int pointOnSide(Vector2d const &point) const;
+    ddouble pointOnSide(Vector2d const &point) const {
+        return (origin.y - point.y) * direction.x - (origin.x - point.x) * direction.y;
+    }
 
     /**
      * @copydoc pointOnSide()
      *
-     * @param x  X coordinate to test.
-     * @param y  Y coordinate to test.
+     * @param x  X coordinate for the point.
+     * @param y  Y coordinate for the point.
      */
-    inline int pointOnSide(ddouble x, ddouble y) const {
+    ddouble pointOnSide(ddouble x, ddouble y) const {
         return pointOnSide(Vector2d(x, y));
     }
 };

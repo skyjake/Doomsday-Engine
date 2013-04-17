@@ -106,7 +106,7 @@
  *
  * Every mobj_t is linked into a single sector
  * based on its origin coordinates.
- * The BspLeaf is found with P_BspLeafAtPointXY(x,y),
+ * The BspLeaf is found with P_BspLeafAtPoint_FixedPrecisionXY(x,y),
  * and the Sector can be found with bspLeaf->sector.
  * The sector links are only used by the rendering code,
  * the play simulation does not care about them at all.

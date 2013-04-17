@@ -4762,7 +4762,7 @@ static void P_ArchiveSounds(void)
 
         if(i == numpolyobjs)
         {   // Sound is attached to a sector, not a polyobj.
-            sec = P_GetPtrp(P_BspLeafAtPoint(node->mobj->origin), DMU_SECTOR);
+            sec = P_GetPtrp(P_BspLeafAtPoint_FixedPrecision(node->mobj->origin), DMU_SECTOR);
             difference = P_ToIndex(sec);
             SV_WriteLong(0); // 0 -- sector sound origin.
         }

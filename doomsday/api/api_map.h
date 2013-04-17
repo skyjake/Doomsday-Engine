@@ -287,7 +287,7 @@ DENG_API_TYPEDEF(Map)
 
     // BSP Leafs
 
-    BspLeaf*        (*BL_AtPoint)(coord_t const point[2]);
+    BspLeaf*        (*BL_AtPoint_FixedPrecision)(coord_t const point[2]);
 
     /**
      * Determine the BSP leaf on the back side of the BS partition that lies in
@@ -301,7 +301,7 @@ DENG_API_TYPEDEF(Map)
      *
      * @return  BspLeaf instance for that BSP node's leaf.
      */
-    BspLeaf*        (*BL_AtPointXY)(coord_t x, coord_t y);
+    BspLeaf*        (*BL_AtPoint_FixedPrecisionXY)(coord_t x, coord_t y);
 
     // Iterators
 
@@ -485,12 +485,12 @@ DENG_API_T(Map);
 #define P_MapSourceFile                     _api_Map.SourceFile
 #define P_LoadMap                           _api_Map.Load
 
-#define Line_BoxOnSide                   _api_Map.LD_BoxOnSide
-#define Line_BoxOnSide_FixedPrecision    _api_Map.LD_BoxOnSide_FixedPrecision
-#define Line_PointDistance               _api_Map.LD_PointDistance
-#define Line_PointXYDistance             _api_Map.LD_PointXYDistance
-#define Line_PointOnSide                 _api_Map.LD_PointOnSide
-#define Line_PointXYOnSide               _api_Map.LD_PointXYOnSide
+#define Line_BoxOnSide                      _api_Map.LD_BoxOnSide
+#define Line_BoxOnSide_FixedPrecision       _api_Map.LD_BoxOnSide_FixedPrecision
+#define Line_PointDistance                  _api_Map.LD_PointDistance
+#define Line_PointXYDistance                _api_Map.LD_PointXYDistance
+#define Line_PointOnSide                    _api_Map.LD_PointOnSide
+#define Line_PointXYOnSide                  _api_Map.LD_PointXYOnSide
 #define P_LineMobjsIterator                 _api_Map.LD_MobjsIterator
 
 #define P_SectorTouchingMobjsIterator       _api_Map.S_TouchingMobjsIterator
@@ -516,8 +516,8 @@ DENG_API_T(Map);
 #define P_PolyobjByTag                      _api_Map.PO_PolyobjByTag
 #define P_SetPolyobjCallback                _api_Map.PO_SetCallback
 
-#define P_BspLeafAtPoint                    _api_Map.BL_AtPoint
-#define P_BspLeafAtPointXY                  _api_Map.BL_AtPointXY
+#define P_BspLeafAtPoint_FixedPrecision     _api_Map.BL_AtPoint_FixedPrecision
+#define P_BspLeafAtPoint_FixedPrecisionXY   _api_Map.BL_AtPoint_FixedPrecisionXY
 
 #define P_MobjsBoxIterator                  _api_Map.Box_MobjsIterator
 #define P_LinesBoxIterator                  _api_Map.Box_LinesIterator

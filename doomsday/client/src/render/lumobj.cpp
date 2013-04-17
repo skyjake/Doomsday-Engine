@@ -753,6 +753,8 @@ static void addLuminous(mobj_t *mo)
     Material *mat;
     pointlight_analysis_t const *pl;
 
+    if(!mo->bspLeaf) return;
+
     if(!(((mo->state && (mo->state->flags & STF_FULLBRIGHT)) &&
          !(mo->ddFlags & DDMF_DONTDRAW)) ||
        (mo->ddFlags & DDMF_ALWAYSLIT)))
@@ -767,7 +769,7 @@ static void addLuminous(mobj_t *mo)
     // If the mobj's origin is outside the BSP leaf it is linked within, then
     // this means it is outside the playable map (and no light should be emitted).
     /// @todo Optimize: P_MobjLink() should do this and flag the mobj accordingly.
-    if(!P_IsPointInBspLeaf(mo->origin, mo->bspLeaf)) return;
+    if(!P_IsPointInBspLeaf(mo->origin, *mo->bspLeaf)) return;
 
     def = (mo->state? stateLights[mo->state - states] : NULL);
 

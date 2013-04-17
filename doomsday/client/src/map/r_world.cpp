@@ -834,7 +834,7 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
             ddpl->inVoid = true;
             if(ddpl->mo)
             {
-                BspLeaf *bspLeaf = P_BspLeafAtPoint(ddpl->mo->origin);
+                BspLeaf *bspLeaf = theMap->bspLeafAtPoint(ddpl->mo->origin);
                 if(bspLeaf)
                 {
                     /// @todo $nplanes

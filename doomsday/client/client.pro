@@ -538,7 +538,6 @@ SOURCES += \
     src/network/serverlink.cpp \
     src/network/sys_network.cpp \
     src/network/ui_mpi.cpp \
-    src/partition.cpp \
     src/r_util.cpp \
     src/render/api_render.cpp \
     src/render/lumobj.cpp \
