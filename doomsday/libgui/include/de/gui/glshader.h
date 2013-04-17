@@ -20,8 +20,12 @@
 #define LIBGUI_GLSHADER_H
 
 #include <de/libdeng2.h>
+#include <de/Error>
+#include <de/Asset>
+#include <de/IByteArray>
 
 #include "libgui.h"
+#include "opengl.h"
 
 namespace de {
 
@@ -30,10 +34,31 @@ namespace de {
  *
  * @ingroup gl
  */
-class LIBGUI_PUBLIC GLShader
+class LIBGUI_PUBLIC GLShader : public Asset
 {
 public:
+    enum Type
+    {
+        Vertex,
+        Fragment
+    };
+
+    /// There was a failure related to OpenGL resource allocation. @ingroup errors
+    DENG2_ERROR(AllocError);
+
+    /// Shader source could not be compiled. @ingroup errors
+    DENG2_ERROR(CompilerError);
+
+public:
     GLShader();
+
+    Type type() const;
+
+    GLuint glName() const;
+
+    void clear();
+
+    void compile(Type shaderType, IByteArray const &source);
 
 private:
     DENG2_PRIVATE(d)
