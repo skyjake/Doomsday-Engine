@@ -22,12 +22,19 @@
 #include "../libdeng2.h"
 #include "../Observers"
 
+#include <map>
+
 namespace de {
 
 /**
  * Information about the state of an asset (e.g., resource). This class
  * provides a uniform way for various resources to declare their state to
  * whoever needs the resources.
+ *
+ * Only use this for assets that may be unavailable at times: for instance, an
+ * OpenGL shader may or may not be compiled and ready to be used, but a native
+ * file in the FileSystem is always considered available (as it can be read via
+ * the native file system at any time).
  */
 class DENG2_PUBLIC Asset
 {
@@ -38,23 +45,19 @@ public:
         Recoverable     ///< Asset is available but not immediately (e.g., needs reloading from disk).
     };
 
-    enum Policy {
-        Ignore,         ///< State of the asset should be ignored.
-        Required,       ///< Dependents cannot operate without the asset.
-        SuspendTime     ///< Time cannot advance without the asset.
-    };
-
     /**
      * Notified whenever the state of the asset changes.
      */
     DENG2_DEFINE_AUDIENCE(StateChange, void assetStateChanged(Asset &))
 
-public:
-    Asset(Policy assetPolicy = Ignore, State initialState = NotReady);
-    virtual ~Asset();
+    /**
+     * Notified when the asset is destroyed.
+     */
+    DENG2_DEFINE_AUDIENCE(Deletion, void assetDeleted(Asset &))
 
-    void setPolicy(Policy p);
-    Policy policy() const;
+public:
+    Asset(State initialState = NotReady);
+    virtual ~Asset();
 
     void setState(State s);
     State state() const;
@@ -62,7 +65,66 @@ public:
     /**
      * Determines if the asset is ready for use (immediately).
      */
-    bool isReady() const;
+    virtual bool isReady() const;
+
+private:
+    State _state;
+};
+
+/**
+ * Set of dependendent assets. An object can use one or more of these to track
+ * pools of dependencies, and quickly check whether all the required
+ * dependencies are currently available.
+ *
+ * DependAssets is derived from Asset so it is possible to group assets
+ * together and depend on the groups as a whole.
+ *
+ * @todo Any better name for this class?
+ */
+class DENG2_PUBLIC DependAssets : public Asset,
+                                  DENG2_OBSERVES(Asset, Deletion),
+                                  DENG2_OBSERVES(Asset, StateChange)
+{
+public:
+    enum Policy {
+        Ignore,         ///< State of the asset should be ignored.
+        Required,       ///< Dependents cannot operate without the asset.
+        SuspendTime     ///< Time cannot advance without the asset.
+    };
+
+    typedef std::map<Asset const *, Policy> Dependencies;
+
+public:
+    DependAssets();
+    virtual ~DependAssets();
+
+    int size() const;
+
+    inline bool isEmpty() const { return !size(); }
+
+    void clear();
+
+    void insert(Asset const &dep, Policy policy = Required);
+
+    DependAssets &operator += (Asset const &dep) {
+        insert(dep, Required);
+        return *this;
+    }
+
+    bool has(Asset const &dep) const;
+
+    void setPolicy(Asset const &asset, Policy policy);
+
+    void remove(Asset const &asset);
+
+    Dependencies const &all() const;
+
+    /// Determines if any of the time-suspending assets are not ready.
+    bool mustSuspendTime() const;
+
+    // Observes contained Assets.
+    void assetDeleted(Asset &);
+    void assetStateChanged(Asset &);
 
 private:
     DENG2_PRIVATE(d)

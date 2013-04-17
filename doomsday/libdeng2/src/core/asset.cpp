@@ -20,36 +20,19 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(Asset)
-{
-    Policy policy;
-    State state;
-
-    Instance(Policy p, State s) : policy(p), state(s) {}
-};
-
-Asset::Asset(Policy assetPolicy, State initialState)
-    : d(new Instance(assetPolicy, initialState))
+Asset::Asset(State initialState) : _state(initialState)
 {}
 
 Asset::~Asset()
-{}
-
-void Asset::setPolicy(Policy p)
 {
-    d->policy = p;
-}
-
-Asset::Policy Asset::policy() const
-{
-    return d->policy;
+    DENG2_FOR_AUDIENCE(Deletion, i) i->assetDeleted(*this);
 }
 
 void Asset::setState(State s)
 {
-    State old = d->state;
-    d->state = s;
-    if(old != d->state)
+    State old = _state;
+    _state = s;
+    if(old != _state)
     {
         DENG2_FOR_AUDIENCE(StateChange, i) i->assetStateChanged(*this);
     }
@@ -57,12 +40,116 @@ void Asset::setState(State s)
 
 Asset::State Asset::state() const
 {
-    return d->state;
+    return _state;
 }
 
 bool Asset::isReady() const
 {
-    return d->state == Ready;
+    return _state == Ready;
+}
+
+//----------------------------------------------------------------------------
+
+DENG2_PIMPL_NOREF(DependAssets)
+{
+    Dependencies deps;
+};
+
+DependAssets::DependAssets() : d(new Instance)
+{}
+
+DependAssets::~DependAssets()
+{
+    clear();
+}
+
+int DependAssets::size() const
+{
+    return d->deps.size();
+}
+
+void DependAssets::clear()
+{
+    DENG2_FOR_EACH(Dependencies, i, d->deps)
+    {
+        i->first->audienceForDeletion -= this;
+    }
+
+    d->deps.clear();
+}
+
+void DependAssets::insert(Asset const &asset, Policy policy)
+{
+    d->deps[&asset] = policy;
+    asset.audienceForDeletion += this;
+}
+
+void DependAssets::remove(Asset const &asset)
+{
+    asset.audienceForDeletion -= this;
+    d->deps.erase(&asset);
+}
+
+bool DependAssets::has(Asset const &asset) const
+{
+    return d->deps.find(&asset) != d->deps.end();
+}
+
+void DependAssets::setPolicy(Asset const &asset, Policy policy)
+{
+    DENG2_ASSERT(d->deps.find(&asset) != d->deps.end());
+
+    d->deps[&asset] = policy;
+}
+
+bool DependAssets::mustSuspendTime() const
+{
+    DENG2_FOR_EACH_CONST(Dependencies, i, d->deps)
+    {
+        if(i->second == SuspendTime && !i->first->isReady())
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+void DependAssets::assetDeleted(Asset &asset)
+{
+    remove(asset);
+}
+
+void DependAssets::assetStateChanged(Asset &asset)
+{
+    bool allReady = false;
+
+    if(asset.state() == Ready)
+    {
+        // Perhaps everything is ready.
+        DENG2_FOR_EACH_CONST(Dependencies, i, d->deps)
+        {
+            switch(i->second)
+            {
+            case Required:
+            case SuspendTime:
+                if(!i->first->isReady())
+                {
+                    goto breakLoop;
+                }
+
+            default:
+                break;
+            }
+        }
+
+        // Yay.
+        allReady = true;
+    }
+
+breakLoop:
+
+    // Update the state of the asset dependency group.
+    setState(allReady? Ready : NotReady);
 }
 
 } // namespace de
