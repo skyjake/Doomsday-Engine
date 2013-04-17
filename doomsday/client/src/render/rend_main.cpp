@@ -1562,13 +1562,13 @@ static bool sideBackClosedForBlend(Line::Side const &side, bool ignoreOpacity = 
 {
     if(!side.hasSections()) return false;
     if(!side.back().hasSections()) return true;
+    if(side.line().isSelfReferencing()) return false; // Never.
 
-    Sector const *frontSec = side.sectorPtr();
-    Sector const *backSec  = side.back().sectorPtr();
-    if(frontSec == backSec) return false; // Never.
-
-    if(frontSec && backSec)
+    if(side.hasSector() && side.back().hasSector())
     {
+        Sector const *frontSec = side.sectorPtr();
+        Sector const *backSec  = side.back().sectorPtr();
+
         if(backSec->floor().visHeight()   >= backSec->ceiling().visHeight())  return true;
         if(backSec->ceiling().visHeight() <= frontSec->floor().visHeight())   return true;
         if(backSec->floor().visHeight()   >= frontSec->ceiling().visHeight()) return true;
@@ -1648,7 +1648,7 @@ static void sideLightLevelDeltas(Line::Side const &side, float *deltaL, float *d
 
             // Average normals.
             otherNormal += sideNormal;
-            otherNormal.x /= 2; otherNormal.y /= 2;
+            otherNormal *= 1.f / 2;
 
             *deltaL = calcLightLevelDelta(otherNormal);
         }
@@ -1669,7 +1669,7 @@ static void sideLightLevelDeltas(Line::Side const &side, float *deltaL, float *d
 
             // Average normals.
             otherNormal += sideNormal;
-            otherNormal.x /= 2; otherNormal.y /= 2;
+            otherNormal *= 1.f / 2;
 
             *deltaR = calcLightLevelDelta(otherNormal);
         }
