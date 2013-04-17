@@ -94,23 +94,23 @@ void R_OrderVertices(Line *line, Sector const *sector, Vertex *verts[2])
     verts[1] = &line->vertex(edge^1);
 }
 
-boolean R_FindBottomTop(int section, int lineFlags,
+bool R_FindBottomTop(Line::Side const &side, int section,
     Sector const *frontSec, Sector const *backSec,
-    Line::Side const *front, Line::Side const *back,
     coord_t *low, coord_t *hi, pvec2f_t matOffset)
 {
-    bool const unpegBottom = (lineFlags & DDLF_DONTPEGBOTTOM) != 0;
-    bool const unpegTop    = (lineFlags & DDLF_DONTPEGTOP) != 0;
+    Line const &line = side.line();
+    bool const unpegBottom = (line.flags() & DDLF_DONTPEGBOTTOM) != 0;
+    bool const unpegTop    = (line.flags() & DDLF_DONTPEGTOP) != 0;
 
     // Single sided?
-    if(!frontSec || !backSec || !back->hasSections()/*front side of a "window"*/)
+    if(!frontSec || !backSec || !side.back().hasSections()/*front side of a "window"*/)
     {
         *low = frontSec->floor().visHeight();
         *hi  = frontSec->ceiling().visHeight();
 
         if(matOffset)
         {
-            Surface const &suf = front->middle();
+            Surface const &suf = side.middle();
             V2f_Set(matOffset, suf.visMaterialOrigin().x, suf.visMaterialOrigin().y);
             if(unpegBottom)
             {
@@ -120,12 +120,12 @@ boolean R_FindBottomTop(int section, int lineFlags,
     }
     else
     {
-        bool const stretchMiddle = front->isFlagged(SDF_MIDDLE_STRETCH);
+        bool const stretchMiddle = side.isFlagged(SDF_MIDDLE_STRETCH);
         Plane const *ffloor = &frontSec->floor();
         Plane const *fceil  = &frontSec->ceiling();
         Plane const *bfloor = &backSec->floor();
         Plane const *bceil  = &backSec->ceiling();
-        Surface const *suf = &front->surface(section);
+        Surface const *suf = &side.surface(section);
 
         switch(section)
         {
@@ -243,9 +243,11 @@ boolean R_FindBottomTop(int section, int lineFlags,
     return /*is_visible=*/ *hi > *low;
 }
 
-coord_t R_OpenRange(Sector const *frontSec, Sector const *backSec, coord_t *retBottom, coord_t *retTop)
+coord_t R_OpenRange(Line::Side const &side, Sector const *frontSec,
+    Sector const *backSec, coord_t *retBottom, coord_t *retTop)
 {
-    DENG_ASSERT(frontSec);
+    DENG_UNUSED(side); // Don't remove (present for API symmetry) -ds
+    DENG_ASSERT(frontSec != 0);
 
     coord_t top;
     if(backSec && backSec->ceiling().height() < frontSec->ceiling().height())
@@ -273,15 +275,11 @@ coord_t R_OpenRange(Sector const *frontSec, Sector const *backSec, coord_t *retB
     return top - bottom;
 }
 
-coord_t R_OpenRange(Line const &line, int side, coord_t *bottom, coord_t *top)
+coord_t R_VisOpenRange(Line::Side const &side, Sector const *frontSec,
+    Sector const *backSec, coord_t *retBottom, coord_t *retTop)
 {
-    return R_OpenRange(line.side(side).sectorPtr(), line.side(side^1).sectorPtr(),
-                       bottom, top);
-}
-
-coord_t R_VisOpenRange(Sector const *frontSec, Sector const *backSec, coord_t *retBottom, coord_t *retTop)
-{
-    DENG_ASSERT(frontSec);
+    DENG_UNUSED(side); // Don't remove (present for API symmetry) -ds
+    DENG_ASSERT(frontSec != 0);
 
     coord_t top;
     if(backSec && backSec->ceiling().visHeight() < frontSec->ceiling().visHeight())
@@ -309,39 +307,33 @@ coord_t R_VisOpenRange(Sector const *frontSec, Sector const *backSec, coord_t *r
     return top - bottom;
 }
 
-coord_t R_VisOpenRange(Line const &line, int side, coord_t *bottom, coord_t *top)
-{
-    return R_VisOpenRange(line.side(side).sectorPtr(), line.side(side^1).sectorPtr(),
-                          bottom, top);
-}
-
 #ifdef __CLIENT__
-bool R_MiddleMaterialCoversOpening(int lineFlags, Sector const *frontSec,
-    Sector const *backSec, Line::Side const *front, Line::Side const *back,
-    bool ignoreOpacity)
+bool R_MiddleMaterialCoversOpening(Line::Side const &side,
+    Sector const *frontSec, Sector const *backSec, bool ignoreOpacity)
 {
-    if(!frontSec || !front || !front->hasSections()) return false; // Never.
+    if(!frontSec) return false; // Never.
 
-    if(!front->middle().hasMaterial()) return false;
+    if(!side.hasSections()) return false;
+    if(!side.middle().hasMaterial()) return false;
 
     // Ensure we have up to date info about the material.
-    MaterialSnapshot const &ms = front->middle().material().prepare(Rend_MapSurfaceMaterialSpec());
+    MaterialSnapshot const &ms = side.middle().material().prepare(Rend_MapSurfaceMaterialSpec());
 
-    if(ignoreOpacity || (ms.isOpaque() && !front->middle().blendMode() && front->middle().opacity() >= 1))
+    if(ignoreOpacity || (ms.isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1))
     {
         coord_t openRange, openBottom, openTop;
 
         // Stretched middles always cover the opening.
-        if(front->isFlagged(SDF_MIDDLE_STRETCH))
+        if(side.isFlagged(SDF_MIDDLE_STRETCH))
             return true;
 
         // Might the material cover the opening?
-        openRange = R_VisOpenRange(frontSec, backSec, &openBottom, &openTop);
+        openRange = R_VisOpenRange(side, frontSec, backSec, &openBottom, &openTop);
         if(ms.height() >= openRange)
         {
             // Possibly; check the placement.
             coord_t bottom, top;
-            if(R_FindBottomTop(Line::Side::Middle, lineFlags, frontSec, backSec, front, back,
+            if(R_FindBottomTop(side, Line::Side::Middle, frontSec, backSec,
                                &bottom, &top))
             {
                 return (top >= openTop && bottom <= openBottom);

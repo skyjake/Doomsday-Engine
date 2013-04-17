@@ -473,8 +473,8 @@ static void plotSourcesForLineSide(Line::Side &side, int section)
     // Is the line section potentially visible?
     coord_t low, hi;
     float matOffset[2] = { 0, 0 };
-    if(!R_FindBottomTop(section, side.line().flags(), side.sectorPtr(), side.back().sectorPtr(),
-                        &side, &side.back(), &low, &hi, matOffset))
+    if(!R_FindBottomTop(side, section, side.sectorPtr(), side.back().sectorPtr(),
+                        &low, &hi, matOffset))
         return;
 
     Vector3d v1(side.from().origin()[VX], side.from().origin()[VY], hi);

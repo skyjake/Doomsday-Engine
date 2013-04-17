@@ -652,7 +652,7 @@ void GameMap::setTraceOpening(Line &line)
     }
 
     coord_t bottom, top;
-    d->traceOpening.range  = float( R_OpenRange(line, Line::Front, &bottom, &top) );
+    d->traceOpening.range  = float( R_OpenRange(line.front(), &bottom, &top) );
     d->traceOpening.bottom = float( bottom );
     d->traceOpening.top    = float( top );
 
