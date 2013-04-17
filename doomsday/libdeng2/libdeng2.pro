@@ -64,6 +64,7 @@ include(widgets.pri)
 # Convenience headers.
 HEADERS += \
     include/de/App \
+    include/de/Asset \
     include/de/Clock \
     include/de/CommandLine \
     include/de/Config \
@@ -95,6 +96,7 @@ HEADERS += \
     include/de/vector.h \
     include/de/version.h \
     include/de/core/app.h \
+    include/de/core/asset.h \
     include/de/core/clock.h \
     include/de/core/commandline.h \
     include/de/core/config.h \
@@ -123,6 +125,7 @@ SOURCES += \
     src/error.cpp \
     src/version.cpp \
     src/core/app.cpp \
+    src/core/asset.cpp \
     src/core/callbacktimer.cpp \
     src/core/clock.cpp \
     src/core/commandline.cpp \
