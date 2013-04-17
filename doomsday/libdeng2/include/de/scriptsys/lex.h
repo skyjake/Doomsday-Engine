@@ -39,8 +39,7 @@ public:
     /// Attempt to read characters when there are non left. @ingroup errors
     DENG2_ERROR(OutOfInputError);
 
-    enum ModeFlag
-    {
+    enum ModeFlag {
         SkipComments = 0x1
     };
     Q_DECLARE_FLAGS(ModeFlags, ModeFlag)

@@ -32,8 +32,7 @@ namespace de {
 class DENG2_PUBLIC LogSink
 {
 public:
-    enum Mode
-    {
+    enum Mode {
         Disabled,
         Enabled,
         OnlyNormalEntries,  ///< Info or lower.
