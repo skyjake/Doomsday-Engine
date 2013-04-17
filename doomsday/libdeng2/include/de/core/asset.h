@@ -40,7 +40,7 @@ public:
 
     enum Policy {
         Ignore,         ///< State of the asset should be ignored.
-        Block,          ///< Dependents cannot operate without the asset.
+        Required,       ///< Dependents cannot operate without the asset.
         SuspendTime     ///< Time cannot advance without the asset.
     };
 
