@@ -323,8 +323,8 @@ void Line::Side::updateSurfaceNormals()
 {
     if(!hasSections()) return;
 
-    Vector3f normal((to().origin()[VY] - from().origin()[VY]) / d->line.length(),
-                    (from().origin()[VX] - to().origin()[VX]) / d->line.length(),
+    Vector3f normal((  to().origin()[VY] - from().origin()[VY]) / d->line.length(),
+                    (from().origin()[VX] -   to().origin()[VX]) / d->line.length(),
                     0);
 
     // All line side surfaces have the same normals.
