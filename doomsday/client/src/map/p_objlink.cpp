@@ -384,8 +384,7 @@ static void processSeg(HEdge *hedge, void *parameters)
 
         if(backSec && !back.hasSections()) return; // One-sided window.
 
-        if(R_MiddleMaterialCoversOpening(line.flags(), frontSec, backSec, &front, &back,
-                                         false /*do not ignore material opacity*/)) return;
+        if(R_MiddleMaterialCoversOpening(line.flags(), frontSec, backSec, &front, &back)) return;
     }
 
     // During next step, obj will continue spreading from there.

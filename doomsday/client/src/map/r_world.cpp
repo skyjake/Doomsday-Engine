@@ -316,9 +316,9 @@ coord_t R_VisOpenRange(Line const &line, int side, coord_t *bottom, coord_t *top
 }
 
 #ifdef __CLIENT__
-boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector const *frontSec,
+bool R_MiddleMaterialCoversOpening(int lineFlags, Sector const *frontSec,
     Sector const *backSec, Line::Side const *front, Line::Side const *back,
-    boolean ignoreOpacity)
+    bool ignoreOpacity)
 {
     if(!frontSec || !front || !front->hasSections()) return false; // Never.
 
@@ -332,7 +332,8 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector const *frontSec,
         coord_t openRange, openBottom, openTop;
 
         // Stretched middles always cover the opening.
-        if(front->isFlagged(SDF_MIDDLE_STRETCH)) return true;
+        if(front->isFlagged(SDF_MIDDLE_STRETCH))
+            return true;
 
         // Might the material cover the opening?
         openRange = R_VisOpenRange(frontSec, backSec, &openBottom, &openTop);
@@ -349,16 +350,6 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector const *frontSec,
     }
 
     return false;
-}
-
-boolean R_MiddleMaterialCoversLineOpening(Line const *line, int side, boolean ignoreOpacity)
-{
-    DENG_ASSERT(line != 0);
-    Sector const *frontSec  = line->sectorPtr(side);
-    Sector const *backSec   = line->sectorPtr(side ^ 1);
-    Line::Side const &front = line->side(side);
-    Line::Side const &back  = line->side(side ^ 1);
-    return R_MiddleMaterialCoversOpening(line->flags(), frontSec, backSec, &front, &back, ignoreOpacity);
 }
 
 Line *R_FindLineNeighbor(Sector const *sector, Line const *line,
@@ -442,7 +433,7 @@ Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
                       oFCeil > sector->floor().visHeight())))  )
             {
 
-                if(!R_MiddleMaterialCoversLineOpening(other, side, false))
+                if(!R_MiddleMaterialCoversLineOpening(other->side(side)))
                     return 0;
             }
         }

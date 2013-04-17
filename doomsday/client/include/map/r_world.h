@@ -160,19 +160,25 @@ coord_t R_VisOpenRange(Line const &line, int side, coord_t *bottom, coord_t *top
  *
  * @return  @c true iff Line::Side @a front has a "middle" Material which completely
  *     covers the open range defined by sectors @a frontSec and @a backSec.
- */
-boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector const *frontSec,
-    Sector const *backSec, Line::Side const *front, Line::Side const *back,
-    boolean ignoreOpacity = true);
-
-/**
- * Same as @ref R_MiddleMaterialCoversOpening except all arguments are derived from
- * the specified line @a line.
  *
  * @note Anything calling this is likely working at the wrong level (should work with
- *       hedges instead).
+ * half-edges instead).
  */
-boolean R_MiddleMaterialCoversLineOpening(Line const *line, int side, boolean ignoreOpacity);
+bool R_MiddleMaterialCoversOpening(int lineFlags, Sector const *frontSec,
+    Sector const *backSec, Line::Side const *front, Line::Side const *back,
+    bool ignoreOpacity = false);
+
+/**
+ * Same as @ref R_MiddleMaterialCoversOpening() except all arguments are derived from
+ * the specified line @a side.
+ */
+inline bool R_MiddleMaterialCoversLineOpening(Line::Side const &side,
+                                              bool ignoreOpacity = false)
+{
+    return R_MiddleMaterialCoversOpening(side.line().flags(), side.sectorPtr(), side.back().sectorPtr(),
+                                         &side, &side.back(), ignoreOpacity);
+}
+
 #endif // __CLIENT__
 
 void R_UpdateSector(Sector &sector, bool forceUpdate = false);

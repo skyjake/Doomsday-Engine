@@ -1545,20 +1545,15 @@ static void writePlane(Plane::Type type, coord_t height,
     }
 }
 
-static float calcLightLevelDelta(Vector3f const &normal)
-{
-    return (1.0f / 255) * (normal.x * 18) * rendLightWallAngle;
-}
-
 /**
  * @param side  Line::Side instance.
  * @param ignoreOpacity  @c true= do not consider Material opacity.
- * @return  @c true if this Line's side is considered "closed" (i.e.,
- *     there is no opening through which the back Sector can be seen).
- *     Tests consider all Planes which interface with this and the "middle"
- *     Material used on the relative front side (if any).
+ *
+ * @return  @c true if this side is considered "closed" (i.e., there is no opening
+ * through which the relative back Sector can be seen). Tests consider all Planes
+ * which interface with this and the "middle" Material used on the "this" side.
  */
-static bool sideBackClosedForBlend(Line::Side const &side, bool ignoreOpacity = true)
+static bool sideBackClosed(Line::Side const &side, bool ignoreOpacity = true)
 {
     if(!side.hasSections()) return false;
     if(!side.back().hasSections()) return true;
@@ -1566,23 +1561,28 @@ static bool sideBackClosedForBlend(Line::Side const &side, bool ignoreOpacity = 
 
     if(side.hasSector() && side.back().hasSector())
     {
-        Sector const *frontSec = side.sectorPtr();
-        Sector const *backSec  = side.back().sectorPtr();
+        Sector const &frontSec = side.sector();
+        Sector const &backSec  = side.back().sector();
 
-        if(backSec->floor().visHeight()   >= backSec->ceiling().visHeight())  return true;
-        if(backSec->ceiling().visHeight() <= frontSec->floor().visHeight())   return true;
-        if(backSec->floor().visHeight()   >= frontSec->ceiling().visHeight()) return true;
+        if(backSec.floor().visHeight()   >= backSec.ceiling().visHeight())  return true;
+        if(backSec.ceiling().visHeight() <= frontSec.floor().visHeight())   return true;
+        if(backSec.floor().visHeight()   >= frontSec.ceiling().visHeight()) return true;
     }
 
-    return R_MiddleMaterialCoversLineOpening(&side.line(), side.lineSideId(), ignoreOpacity);
+    return R_MiddleMaterialCoversLineOpening(side, ignoreOpacity);
+}
+
+static float calcLightLevelDelta(Vector3f const &normal)
+{
+    return (1.0f / 255) * (normal.x * 18) * rendLightWallAngle;
 }
 
 static Line::Side *findSideBlendNeighbor(Line::Side const &side, bool right, binangle_t *diff = 0)
 {
-    LineOwner const *farVertOwner = side.line().vertexOwner((int)right ^ side.lineSideId());
+    LineOwner const *farVertOwner = side.line().vertexOwner(side.lineSideId() ^ (int)right);
 
     Line *neighbor;
-    if(sideBackClosedForBlend(side))
+    if(sideBackClosed(side))
     {
         neighbor = R_FindSolidLineNeighbor(side.sectorPtr(), &side.line(), farVertOwner, right, diff);
     }
@@ -2245,36 +2245,6 @@ static void skyFixZCoords(HEdge *hedge, int skyCap, coord_t *bottom, coord_t *to
 }
 
 /**
- * @return  @c true if this half-edge is considered "closed" (i.e.,
- *     there is no opening through which the back Sector can be seen).
- *     Tests consider all Planes which interface with this and the "middle"
- *     Material used on the relative front side (if any).
- */
-static bool hedgeBackClosedForSkyFix(HEdge const &hedge)
-{
-    Line const &line = hedge.line();
-    Line::Side const &front = line.side(hedge.lineSideId());
-    Line::Side const &back  = line.side(hedge.lineSideId()^1);
-    Sector const *frontSec  = line.sectorPtr(hedge.lineSideId());
-    Sector const *backSec   = line.sectorPtr(hedge.lineSideId()^1);
-
-    if(!front.hasSections()) return false;
-    if(!back.hasSections()) return true;
-
-    if(frontSec == backSec) return false; // Never.
-
-    if(frontSec && backSec)
-    {
-        if(backSec->floor().visHeight()   >= backSec->ceiling().visHeight())  return true;
-        if(backSec->ceiling().visHeight() <= frontSec->floor().visHeight())   return true;
-        if(backSec->floor().visHeight()   >= frontSec->ceiling().visHeight()) return true;
-    }
-
-    return R_MiddleMaterialCoversOpening(line.flags(), frontSec, backSec, &front, &back,
-                                         false/*don't ignore opacity*/);
-}
-
-/**
  * Determine which sky fixes are necessary for the specified @a hedge.
  * @param hedge  HEdge to be evaluated.
  * @param skyCap  The fixes we are interested in. @ref skyCapFlags.
@@ -2296,7 +2266,7 @@ static int chooseHEdgeSkyFixes(HEdge *hedge, int skyCap)
 
             if(hasSkyFloor || hasSkyCeiling)
             {
-                bool const hasClosedBack = hedgeBackClosedForSkyFix(*hedge);
+                bool const hasClosedBack = sideBackClosed(hedge->lineSide());
 
                 // Lower fix?
                 if(hasSkyFloor && (skyCap & SKYCAP_LOWER))
