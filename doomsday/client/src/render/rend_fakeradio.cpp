@@ -176,17 +176,17 @@ static void scanNeighbor(bool scanTop, Line::Side const &side, edge_t *edge,
     {
         // Select the next line.
         diff = (clockwise? own->angle() : own->prev().angle());
-        iter = &own->_link[clockwise]->line();
+        iter = &own->_link[(int)clockwise]->line();
 
-        scanSecSide = (iter->hasFrontSector() && iter->frontSectorPtr() == startSector)? Line::Front : Line::Back;
+        scanSecSide = (iter->hasFrontSector() && iter->frontSectorPtr() == startSector)? Line::Back : Line::Front;
 
         // Step over selfreferencing lines.
         while((!iter->hasFrontSector() && !iter->hasBackSector()) || // $degenleaf
               iter->isSelfReferencing())
         {
-            own = own->_link[clockwise];
+            own = own->_link[(int)clockwise];
             diff += (clockwise? own->angle() : own->prev().angle());
-            iter = &own->_link[clockwise]->line();
+            iter = &own->_link[(int)clockwise]->line();
 
             scanSecSide = (iter->frontSectorPtr() == startSector);
         }
@@ -322,9 +322,9 @@ static void scanNeighbor(bool scanTop, Line::Side const &side, edge_t *edge,
         if(!stopScan)
         {
             // Around the corner.
-            if(own->_link[clockwise] == iter->v2Owner())
+            if(own->_link[(int)clockwise] == iter->v2Owner())
                 own = iter->v1Owner();
-            else if(own->_link[clockwise] == iter->v1Owner())
+            else if(own->_link[(int)clockwise] == iter->v1Owner())
                 own = iter->v2Owner();
 
             // Skip into the back neighbor sector of the iter line if
@@ -346,7 +346,7 @@ static void scanNeighbor(bool scanTop, Line::Side const &side, edge_t *edge,
                 if(backNeighbor && backNeighbor != iter)
                 {
                     // Into the back neighbor sector.
-                    own = own->_link[clockwise];
+                    own = own->_link[(int)clockwise];
                     startSector = scanSector;
                 }
             }
