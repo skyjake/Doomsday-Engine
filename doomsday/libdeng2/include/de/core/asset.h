@@ -76,27 +76,26 @@ private:
  * pools of dependencies, and quickly check whether all the required
  * dependencies are currently available.
  *
- * DependAssets is derived from Asset so it is possible to group assets
+ * AssetGroup is derived from Asset so it is possible to group assets
  * together and depend on the groups as a whole.
  *
  * @todo Any better name for this class?
  */
-class DENG2_PUBLIC DependAssets : public Asset,
-                                  DENG2_OBSERVES(Asset, Deletion),
-                                  DENG2_OBSERVES(Asset, StateChange)
+class DENG2_PUBLIC AssetGroup : public Asset,
+                                DENG2_OBSERVES(Asset, Deletion),
+                                DENG2_OBSERVES(Asset, StateChange)
 {
 public:
     enum Policy {
         Ignore,         ///< State of the asset should be ignored.
-        Required,       ///< Dependents cannot operate without the asset.
-        SuspendTime     ///< Time cannot advance without the asset.
+        Required        ///< Dependents cannot operate without the asset.
     };
 
-    typedef std::map<Asset const *, Policy> Dependencies;
+    typedef std::map<Asset const *, Policy> Members;
 
 public:
-    DependAssets();
-    virtual ~DependAssets();
+    AssetGroup();
+    virtual ~AssetGroup();
 
     int size() const;
 
@@ -106,7 +105,7 @@ public:
 
     void insert(Asset const &dep, Policy policy = Required);
 
-    DependAssets &operator += (Asset const &dep) {
+    AssetGroup &operator += (Asset const &dep) {
         insert(dep, Required);
         return *this;
     }
@@ -118,9 +117,6 @@ public:
     void remove(Asset const &asset);
 
     Dependencies const &all() const;
-
-    /// Determines if any of the time-suspending assets are not ready.
-    bool mustSuspendTime() const;
 
     // Observes contained Assets.
     void assetDeleted(Asset &);

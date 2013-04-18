@@ -50,21 +50,20 @@ bool Asset::isReady() const
 
 //----------------------------------------------------------------------------
 
-DENG2_PIMPL_NOREF(DependAssets)
+DENG2_PIMPL_NOREF(AssetGroup)
 {
-    Dependencies deps;
+    Members deps;
 
     /**
      * Determines if all the assets in the group are ready.
      */
     bool allReady() const
     {
-        DENG2_FOR_EACH_CONST(Dependencies, i, deps)
+        DENG2_FOR_EACH_CONST(Members, i, deps)
         {
             switch(i->second)
             {
             case Required:
-            case SuspendTime:
                 if(!i->first->isReady()) return false;
                 break;
 
@@ -76,19 +75,19 @@ DENG2_PIMPL_NOREF(DependAssets)
         return true;
     }
 
-    void update(DependAssets &self)
+    void update(AssetGroup &self)
     {
         self.setState(allReady()? Ready : NotReady);
     }
 };
 
-DependAssets::DependAssets() : d(new Instance)
+AssetGroup::AssetGroup() : d(new Instance)
 {
-    // An empty set of dependencies means the group is Ready.
+    // An empty set of members means the group is Ready.
     setState(Ready);
 }
 
-DependAssets::~DependAssets()
+AssetGroup::~AssetGroup()
 {
     // We are about to be deleted.
     audienceForStateChange.clear();
@@ -96,14 +95,14 @@ DependAssets::~DependAssets()
     clear();
 }
 
-int DependAssets::size() const
+int AssetGroup::size() const
 {
     return d->deps.size();
 }
 
-void DependAssets::clear()
+void AssetGroup::clear()
 {
-    DENG2_FOR_EACH(Dependencies, i, d->deps)
+    DENG2_FOR_EACH(Members, i, d->deps)
     {
         i->first->audienceForDeletion -= this;
     }
@@ -112,26 +111,26 @@ void DependAssets::clear()
     d->update(*this);
 }
 
-void DependAssets::insert(Asset const &asset, Policy policy)
+void AssetGroup::insert(Asset const &asset, Policy policy)
 {
     d->deps[&asset] = policy;
     asset.audienceForDeletion += this;
     d->update(*this);
 }
 
-void DependAssets::remove(Asset const &asset)
+void AssetGroup::remove(Asset const &asset)
 {
     asset.audienceForDeletion -= this;
     d->deps.erase(&asset);
     d->update(*this);
 }
 
-bool DependAssets::has(Asset const &asset) const
+bool AssetGroup::has(Asset const &asset) const
 {
     return d->deps.find(&asset) != d->deps.end();
 }
 
-void DependAssets::setPolicy(Asset const &asset, Policy policy)
+void AssetGroup::setPolicy(Asset const &asset, Policy policy)
 {
     DENG2_ASSERT(d->deps.find(&asset) != d->deps.end());
 
@@ -139,24 +138,12 @@ void DependAssets::setPolicy(Asset const &asset, Policy policy)
     d->update(*this);
 }
 
-bool DependAssets::mustSuspendTime() const
-{
-    DENG2_FOR_EACH_CONST(Dependencies, i, d->deps)
-    {
-        if(i->second == SuspendTime && !i->first->isReady())
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-void DependAssets::assetDeleted(Asset &asset)
+void AssetGroup::assetDeleted(Asset &asset)
 {
     remove(asset);
 }
 
-void DependAssets::assetStateChanged(Asset &)
+void AssetGroup::assetStateChanged(Asset &)
 {
     d->update(*this);
 }
