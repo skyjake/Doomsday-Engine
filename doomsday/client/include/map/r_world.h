@@ -85,15 +85,26 @@ void R_OrderVertices(Line *line, Sector const *sector, Vertex *verts[2]);
  * @param backSec       Sector behind the wall. Can be @c NULL
  *
  * Return values:
- * @param bottom        Z map space coordinate at the bottom of the wall section.
- * @param top           Z map space coordinate at the top of the wall section.
- * @param matOffset     Surface space material coordinate offset. Can be @c NULL
+ * @param bottom        Z map space coordinate at the bottom of the wall section. Can be @c 0.
+ * @param top           Z map space coordinate at the top of the wall section. Can be @c 0.
+ * @param materialOrigin  Surface space material coordinate offset. Can be @c 0.
  *
  * @return  @c true iff the determined wall section height is @c >0
  */
-bool R_FindBottomTop(Line::Side const &side, int section,
-    Sector const *frontSec, Sector const *backSec,
-    coord_t *bottom, coord_t *top, pvec2f_t matOffset = 0);
+bool R_FindBottomTop(Line::Side const &side, int section, Sector const *frontSec,
+    Sector const *backSec, coord_t *bottom = 0, coord_t *top = 0,
+    de::Vector2f *materialOrigin = 0);
+
+/**
+ * Same as @ref R_FindBottomTop() except that the sector arguments are taken from
+ * the specified line @a side.
+ */
+inline bool R_FindBottomTop(Line::Side const &side, int section, coord_t *bottom = 0,
+                            coord_t *top = 0, de::Vector2f *materialOrigin = 0)
+{
+    return R_FindBottomTop(side, section, side.sectorPtr(), side.back().sectorPtr(),
+                           bottom, top, materialOrigin);
+}
 
 /**
  * Find the "sharp" Z coordinate range of the opening between sectors @a frontSec
@@ -102,20 +113,22 @@ bool R_FindBottomTop(Line::Side const &side, int section,
  *
  * @param side      Line side to find the open range for.
  * @param frontSec  Sector on the front side.
- * @param backSec   Sector on the back side. Can be @c NULL.
- * @param bottom    Bottom Z height is written here. Can be @c NULL.
- * @param top       Top Z height is written here. Can be @c NULL.
+ * @param backSec   Sector on the back side. Can be @c 0.
+ *
+ * Return values:
+ * @param bottom    Bottom Z height is written here. Can be @c 0.
+ * @param top       Top Z height is written here. Can be @c 0.
  *
  * @return Height of the open range.
  */
 coord_t R_OpenRange(Line::Side const &side, Sector const *frontSec, Sector const *backSec,
-    coord_t *bottom, coord_t *top);
+    coord_t *bottom = 0, coord_t *top = 0);
 
 /**
  * Same as @ref R_OpenRange() except that the sector arguments are taken from the
  * specified line @a side.
  */
-inline coord_t R_OpenRange(Line::Side const &side, coord_t *bottom, coord_t *top)
+inline coord_t R_OpenRange(Line::Side const &side, coord_t *bottom = 0, coord_t *top = 0)
 {
     return R_OpenRange(side, side.sectorPtr(), side.back().sectorPtr(), bottom, top);
 }
@@ -126,20 +139,22 @@ inline coord_t R_OpenRange(Line::Side const &side, coord_t *bottom, coord_t *top
  *
  * @param side      Line side to find the open range for.
  * @param frontSec  Sector on the front side.
- * @param backSec   Sector on the back side. Can be @c NULL.
- * @param bottom    Bottom Z height is written here. Can be @c NULL.
- * @param top       Top Z height is written here. Can be @c NULL.
+ * @param backSec   Sector on the back side. Can be @c 0.
+ *
+ * Return values:
+ * @param bottom    Bottom Z height is written here. Can be @c 0.
+ * @param top       Top Z height is written here. Can be @c 0.
  *
  * @return Height of the open range.
  */
 coord_t R_VisOpenRange(Line::Side const &side, Sector const *frontSec, Sector const *backSec,
-    coord_t *bottom, coord_t *top);
+    coord_t *bottom = 0, coord_t *top = 0);
 
 /**
  * Same as @ref R_VisOpenRange() except that the sector arguments are taken from
  * the specified line @a side.
  */
-inline coord_t R_VisOpenRange(Line::Side const &side, coord_t *bottom, coord_t *top)
+inline coord_t R_VisOpenRange(Line::Side const &side, coord_t *bottom = 0, coord_t *top = 0)
 {
     return R_VisOpenRange(side, side.sectorPtr(), side.back().sectorPtr(), bottom, top);
 }
@@ -148,7 +163,7 @@ inline coord_t R_VisOpenRange(Line::Side const &side, coord_t *bottom, coord_t *
 /**
  * @param side          Line side for which to determine covered opening status.
  * @param frontSec      Sector in front of the wall.
- * @param backSec       Sector behind the wall. Can be @c NULL
+ * @param backSec       Sector behind the wall. Can be @c 0.
  * @param ignoreOpacity @c true= material opacity should be ignored.
  *
  * @return  @c true iff Line::Side @a front has a "middle" Material which completely
@@ -164,8 +179,7 @@ bool R_MiddleMaterialCoversOpening(Line::Side const &side, Sector const *frontSe
  * Same as @ref R_MiddleMaterialCoversOpening() except that the sector arguments
  * are taken from the specified line @a side.
  */
-inline bool R_MiddleMaterialCoversLineOpening(Line::Side const &side,
-    bool ignoreOpacity = false)
+inline bool R_MiddleMaterialCoversOpening(Line::Side const &side, bool ignoreOpacity = false)
 {
     return R_MiddleMaterialCoversOpening(side, side.sectorPtr(), side.back().sectorPtr(),
                                          ignoreOpacity);

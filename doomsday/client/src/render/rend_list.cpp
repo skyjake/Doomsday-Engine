@@ -41,6 +41,10 @@
 #include "Texture"
 #include "m_profiler.h"
 
+#include "render/rend_list.h"
+
+using namespace de;
+
 BEGIN_PROF_TIMERS()
   PROF_RL_ADD_POLY,
   PROF_RL_GET_LIST,
@@ -1040,18 +1044,11 @@ void RL_CopyRtu(uint idx, rtexmapunit_t const *rtu)
     rtuMap[idx] = rtuState + idx;
 }
 
-void RL_Rtu_SetScale(uint idx, float s, float t)
+void RL_Rtu_SetScale(uint idx, Vector2f const &st)
 {
     errorIfNotValidRTUIndex(idx, "RL_Rtu_SetScale");
     copyMappedRtuToState(idx);
-    Rtu_SetScale(rtuState + idx, s, t);
-}
-
-void RL_Rtu_SetScalev(uint idx, float const st[2])
-{
-    errorIfNotValidRTUIndex(idx, "RL_Rtu_SetScalev");
-    copyMappedRtuToState(idx);
-    Rtu_SetScalev(rtuState + idx, st);
+    Rtu_SetScale(rtuState + idx, st.x, st.y);
 }
 
 void RL_Rtu_Scale(uint idx, float scalar)
@@ -1061,39 +1058,25 @@ void RL_Rtu_Scale(uint idx, float scalar)
     Rtu_Scale(rtuState + idx, scalar);
 }
 
-void RL_Rtu_ScaleST(uint idx, float const st[2])
+void RL_Rtu_ScaleST(uint idx, Vector2f const &st)
 {
     errorIfNotValidRTUIndex(idx, "RL_Rtu_ScaleST");
     copyMappedRtuToState(idx);
     Rtu_ScaleST(rtuState + idx, st);
 }
 
-void RL_Rtu_SetOffset(uint idx, float x, float y)
+void RL_Rtu_SetOffset(uint idx, Vector2f const &xy)
 {
     errorIfNotValidRTUIndex(idx, "RL_Rtu_SetOffset");
     copyMappedRtuToState(idx);
-    Rtu_SetOffset(rtuState + idx, x, y);
+    Rtu_SetOffset(rtuState + idx, xy);
 }
 
-void RL_Rtu_SetOffsetv(uint idx, float const xy[2])
-{
-    errorIfNotValidRTUIndex(idx, "RL_Rtu_SetOffsetv");
-    copyMappedRtuToState(idx);
-    Rtu_SetOffsetv(rtuState + idx, xy);
-}
-
-void RL_Rtu_TranslateOffset(uint idx, float x, float y)
+void RL_Rtu_TranslateOffset(uint idx, Vector2f const &xy)
 {
     errorIfNotValidRTUIndex(idx, "RL_Rtu_TranslateOffset");
     copyMappedRtuToState(idx);
-    Rtu_TranslateOffset(rtuState + idx, x, y);
-}
-
-void RL_Rtu_TranslateOffsetv(uint idx, float const xy[2])
-{
-    errorIfNotValidRTUIndex(idx, "RL_Rtu_TranslateOffsetv");
-    copyMappedRtuToState(idx);
-    Rtu_TranslateOffsetv(rtuState + idx, xy);
+    Rtu_TranslateOffset(rtuState + idx, xy.x, xy.y);
 }
 
 void RL_Rtu_SetTextureUnmanaged(uint idx, DGLuint glName, int wrapS, int wrapT)

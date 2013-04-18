@@ -19,13 +19,15 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RENDER_RENDPOLY_H
-#define LIBDENG_RENDER_RENDPOLY_H
+#ifndef DENG_RENDER_RENDPOLY_H
+#define DENG_RENDER_RENDPOLY_H
 
 #include "color.h"
 #include "Texture"
 #include "api_gl.h"
-#include <de/vector1.h>
+#include <de/vector1.h> /// @todo remove me.
+
+#include <de/Vector>
 
 struct walldivnode_s;
 
@@ -179,8 +181,11 @@ void Rtu_Init(rtexmapunit_t *rtu);
 boolean Rtu_HasTexture(rtexmapunit_t const *rtu);
 
 /// Change the scale property.
-void Rtu_SetScale(rtexmapunit_t *rtu, float s, float t);
-void Rtu_SetScalev(rtexmapunit_t *rtu, float const st[2]);
+void Rtu_SetScale(rtexmapunit_t *rtu, de::Vector2f const &st);
+
+inline void Rtu_SetScale(rtexmapunit_t *rtu, float s, float t) {
+    Rtu_SetScale(rtu, de::Vector2f(s, t));
+}
 
 /**
  * Multiply the offset and scale properties by @a scalar.
@@ -189,15 +194,23 @@ void Rtu_SetScalev(rtexmapunit_t *rtu, float const st[2]);
  * still considered "unscaled").
  */
 void Rtu_Scale(rtexmapunit_t *rtu, float scalar);
-void Rtu_ScaleST(rtexmapunit_t *rtu, float const scalarST[2]);
+
+void Rtu_ScaleST(rtexmapunit_t *rtu, de::Vector2f const &scaleST);
 
 /// Change the offset property.
-void Rtu_SetOffset(rtexmapunit_t *rtu, float s, float t);
-void Rtu_SetOffsetv(rtexmapunit_t *rtu, float const st[2]);
+void Rtu_SetOffset(rtexmapunit_t *rtu, de::Vector2f const &st);
+
+inline void Rtu_SetOffset(rtexmapunit_t *rtu, float s, float t) {
+    Rtu_SetOffset(rtu, de::Vector2f(s, t));
+}
 
 /// Translate the offset property.
-void Rtu_TranslateOffset(rtexmapunit_t *rtu, float s, float t);
-void Rtu_TranslateOffsetv(rtexmapunit_t *rtu, float const st[2]);
+void Rtu_TranslateOffset(rtexmapunit_t *rtu, de::Vector2f const &st);
+
+inline void Rtu_TranslateOffset(rtexmapunit_t *rtu, float s, float t)
+{
+    Rtu_TranslateOffset(rtu, de::Vector2f(s, t));
+}
 
 void R_DivVerts(rvertex_t *dst, rvertex_t const *src,
     struct walldivnode_s *leftDivFirst, uint leftDivCount,
@@ -215,4 +228,4 @@ void R_DivVertColors(ColorRawf *dst, ColorRawf const *src,
 
 #endif // __CLIENT__
 
-#endif /* LIBDENG_RENDER_RENDPOLY_H */
+#endif // DENG_RENDER_RENDPOLY_H

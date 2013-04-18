@@ -471,17 +471,15 @@ static void plotSourcesForLineSide(Line::Side &side, int section)
     if(!side.surface(section).hasMaterial()) return;
 
     // Is the line section potentially visible?
-    coord_t low, hi;
-    float matOffset[2] = { 0, 0 };
-    if(!R_FindBottomTop(side, section, side.sectorPtr(), side.back().sectorPtr(),
-                        &low, &hi, matOffset))
+    coord_t bottom, top;
+    Vector2f materialOrigin;
+    if(!R_FindBottomTop(side, section, &bottom, &top, &materialOrigin))
         return;
 
-    Vector3d v1(side.from().origin()[VX], side.from().origin()[VY], hi);
-    Vector3d v2(  side.to().origin()[VX],   side.to().origin()[VY], low);
+    Vector3d v1(side.from().origin()[VX], side.from().origin()[VY], top);
+    Vector3d v2(  side.to().origin()[VX],   side.to().origin()[VY], bottom);
 
-    updateSurfaceDecorations(side.surface(section), Vector2f(-matOffset[0], -matOffset[1]),
-                             v1, v2);
+    updateSurfaceDecorations(side.surface(section), -materialOrigin, v1, v2);
 }
 
 void Rend_DecorBeginFrame()

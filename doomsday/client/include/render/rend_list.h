@@ -21,18 +21,14 @@
  * Rendering Lists.
  */
 
-#ifndef LIBDENG_REND_LIST_H
-#define LIBDENG_REND_LIST_H
+#ifndef DENG_RENDER_LIST_H
+#define DENG_RENDER_LIST_H
 
 #ifdef __SERVER__
 #  error "render" not available in a SERVER build
 #endif
 
 #include "render/rendpoly.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 // Multiplicative blending for dynamic lights?
 #define IS_MUL              (dynlightBlend != 1 && !usingFog)
@@ -61,15 +57,15 @@ typedef enum primtype_e {
 #define RPF_DEFAULT                 0
 /**@}*/
 
-extern int renderTextures;
-extern int renderWireframe;
-extern int useMultiTexLights;
-extern int useMultiTexDetails;
+DENG_EXTERN_C int renderTextures;
+DENG_EXTERN_C int renderWireframe;
+DENG_EXTERN_C int useMultiTexLights;
+DENG_EXTERN_C int useMultiTexDetails;
 
-extern int dynlightBlend;
+DENG_EXTERN_C int dynlightBlend;
 
-extern int torchAdditive;
-extern float torchColor[];
+DENG_EXTERN_C int torchAdditive;
+DENG_EXTERN_C float torchColor[];
 
 /// Register the console commands, variables, etc..., of this module.
 void RL_Register(void);
@@ -105,7 +101,7 @@ void RL_LoadDefaultRtus(void);
  * implicitly by customizing the unit configuration through one of the
  * RL_RTU* family of functions (at which point a copy will be performed).
  */
-void RL_MapRtu(uint idx, const rtexmapunit_t* rtu);
+void RL_MapRtu(uint idx, rtexmapunit_t const *rtu);
 
 /**
  * Copy the configuration for the identified @a idx texture unit of
@@ -114,27 +110,36 @@ void RL_MapRtu(uint idx, const rtexmapunit_t* rtu);
  * @param idx  Logical index of the texture unit being configured.
  * @param rtu  Configured RTU state to copy the configuration from.
  */
-void RL_CopyRtu(uint idx, const rtexmapunit_t* rtu);
+void RL_CopyRtu(uint idx, rtexmapunit_t const *rtu);
 
 /// @todo Avoid modifying the RTU write state for the purposes of primitive
 ///       specific translations by implementing these as arguments to the
 ///       RL_Add* family of functions.
 
 /// Change the scale property of the identified @a idx texture unit.
-void RL_Rtu_SetScale(uint idx, float s, float t);
-void RL_Rtu_SetScalev(uint idx, float const st[2]);
+void RL_Rtu_SetScale(uint idx, de::Vector2f const &st);
+
+inline void RL_Rtu_SetScale(uint idx, float s, float t) {
+    RL_Rtu_SetScale(idx, de::Vector2f(s, t));
+}
 
 /// Scale the offset and scale properties of the identified @a idx texture unit.
 void RL_Rtu_Scale(uint idx, float scalar);
-void RL_Rtu_ScaleST(uint idx, float const st[2]);
+void RL_Rtu_ScaleST(uint idx, de::Vector2f const &st);
 
 /// Change the offset property of the identified @a idx texture unit.
-void RL_Rtu_SetOffset(uint idx, float s, float t);
-void RL_Rtu_SetOffsetv(uint idx, float const st[2]);
+void RL_Rtu_SetOffset(uint idx, de::Vector2f const &st);
+
+inline void RL_Rtu_SetOffset(uint idx, float s, float t) {
+    RL_Rtu_SetOffset(idx, de::Vector2f(s, t));
+}
 
 /// Translate the offset property of the identified @a idx texture unit.
-void RL_Rtu_TranslateOffset(uint idx, float s, float t);
-void RL_Rtu_TranslateOffsetv(uint idx, float const st[2]);
+void RL_Rtu_TranslateOffset(uint idx, de::Vector2f const &st);
+
+inline void RL_Rtu_TranslateOffset(uint idx, float s, float t) {
+    RL_Rtu_TranslateOffset(idx, de::Vector2f(s, t));
+}
 
 /// Change the texture assigned to the identified @a idx texture unit.
 void RL_Rtu_SetTextureUnmanaged(uint idx, DGLuint glName, int wrapS, int wrapT);
@@ -199,8 +204,4 @@ void RL_AddPoly(primtype_t primType, int flags, uint numElements,
 
 void RL_RenderAllLists(void);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif /* LIBDENG_REND_LIST_H */
+#endif // DENG_RENDER_LIST_H

@@ -96,54 +96,55 @@ void R_OrderVertices(Line *line, Sector const *sector, Vertex *verts[2])
 
 bool R_FindBottomTop(Line::Side const &side, int section,
     Sector const *frontSec, Sector const *backSec,
-    coord_t *low, coord_t *hi, pvec2f_t matOffset)
+    coord_t *retBottom, coord_t *retTop, Vector2f *retMaterialOrigin)
 {
     Line const &line = side.line();
     bool const unpegBottom = (line.flags() & DDLF_DONTPEGBOTTOM) != 0;
     bool const unpegTop    = (line.flags() & DDLF_DONTPEGTOP) != 0;
 
+    coord_t bottom = 0, top = 0; // Shutup compiler.
+
     // Single sided?
     if(!frontSec || !backSec || !side.back().hasSections()/*front side of a "window"*/)
     {
-        *low = frontSec->floor().visHeight();
-        *hi  = frontSec->ceiling().visHeight();
+        bottom = frontSec->floor().visHeight();
+        top    = frontSec->ceiling().visHeight();
 
-        if(matOffset)
+        if(retMaterialOrigin)
         {
-            Surface const &suf = side.middle();
-            V2f_Set(matOffset, suf.visMaterialOrigin().x, suf.visMaterialOrigin().y);
+            *retMaterialOrigin = side.middle().visMaterialOrigin();
             if(unpegBottom)
             {
-                matOffset[1] -= *hi - *low;
+                retMaterialOrigin->y -= top - bottom;
             }
         }
     }
     else
     {
         bool const stretchMiddle = side.isFlagged(SDF_MIDDLE_STRETCH);
+        Surface const *surface = &side.surface(section);
         Plane const *ffloor = &frontSec->floor();
         Plane const *fceil  = &frontSec->ceiling();
         Plane const *bfloor = &backSec->floor();
         Plane const *bceil  = &backSec->ceiling();
-        Surface const *suf = &side.surface(section);
 
         switch(section)
         {
         case Line::Side::Top:
             // Can't go over front ceiling (would induce geometry flaws).
             if(bceil->visHeight() < ffloor->visHeight())
-                *low = ffloor->visHeight();
+                bottom = ffloor->visHeight();
             else
-                *low = bceil->visHeight();
-            *hi = fceil->visHeight();
+                bottom = bceil->visHeight();
+            top = fceil->visHeight();
 
-            if(matOffset)
+            if(retMaterialOrigin)
             {
-                V2f_Set(matOffset, suf->visMaterialOrigin().x, suf->visMaterialOrigin().y);
+                *retMaterialOrigin = surface->visMaterialOrigin();
                 if(!unpegTop)
                 {
                     // Align with normal middle texture.
-                    matOffset[1] -= fceil->visHeight() - bceil->visHeight();
+                    retMaterialOrigin->y -= fceil->visHeight() - bceil->visHeight();
                 }
             }
             break;
@@ -154,7 +155,7 @@ bool R_FindBottomTop(Line::Side const &side, int section,
                                            bfloor->visHeight() > fceil->visHeight());
             coord_t t = bfloor->visHeight();
 
-            *low = ffloor->visHeight();
+            bottom = ffloor->visHeight();
             // Can't go over the back ceiling, would induce polygon flaws.
             if(bfloor->visHeight() > bceil->visHeight())
                 t = bceil->visHeight();
@@ -164,75 +165,75 @@ bool R_FindBottomTop(Line::Side const &side, int section,
             // section up to the height of the back floor.
             if(t > fceil->visHeight() && !raiseToBackFloor)
                 t = fceil->visHeight();
-            *hi = t;
+            top = t;
 
-            if(matOffset)
+            if(retMaterialOrigin)
             {
-                V2f_Set(matOffset, suf->visMaterialOrigin().x, suf->visMaterialOrigin().y);
+                *retMaterialOrigin = surface->visMaterialOrigin();
                 if(bfloor->visHeight() > fceil->visHeight())
                 {
-                    matOffset[1] -= (raiseToBackFloor? t : fceil->visHeight()) - bfloor->visHeight();
+                    retMaterialOrigin->y -= (raiseToBackFloor? t : fceil->visHeight()) - bfloor->visHeight();
                 }
 
                 if(unpegBottom)
                 {
                     // Align with normal middle texture.
-                    matOffset[1] += (raiseToBackFloor? t : fceil->visHeight()) - bfloor->visHeight();
+                    retMaterialOrigin->y += (raiseToBackFloor? t : fceil->visHeight()) - bfloor->visHeight();
                 }
             }
             break; }
 
         case Line::Side::Middle:
-            *low = de::max(bfloor->visHeight(), ffloor->visHeight());
-            *hi  = de::min(bceil->visHeight(),  fceil->visHeight());
+            bottom = de::max(bfloor->visHeight(), ffloor->visHeight());
+            top    = de::min(bceil->visHeight(),  fceil->visHeight());
 
-            if(matOffset)
+            if(retMaterialOrigin)
             {
-                matOffset[0] = suf->visMaterialOrigin()[0];
-                matOffset[1] = 0;
+                retMaterialOrigin->x = surface->visMaterialOrigin().x;
+                retMaterialOrigin->y = 0;
             }
 
-            if(suf->hasMaterial() && !stretchMiddle)
+            if(surface->hasMaterial() && !stretchMiddle)
             {
                 bool const clipBottom = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && ffloor->surface().hasSkyMaskedMaterial() && bfloor->surface().hasSkyMaskedMaterial());
                 bool const clipTop    = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && fceil->surface().hasSkyMaskedMaterial()  && bceil->surface().hasSkyMaskedMaterial());
 
-                coord_t const openBottom = *low;
-                coord_t const openTop    = *hi;
-                int const matHeight      = suf->material().height();
-                coord_t const matYOffset = suf->visMaterialOrigin()[VY];
+                coord_t const openBottom = bottom;
+                coord_t const openTop    = top;
+                int const matHeight      = surface->material().height();
+                coord_t const matYOffset = surface->visMaterialOrigin()[VY];
 
                 if(openTop > openBottom)
                 {
                     if(unpegBottom)
                     {
-                        *low += matYOffset;
-                        *hi   = *low + matHeight;
+                        bottom += matYOffset;
+                        top = bottom + matHeight;
                     }
                     else
                     {
-                        *hi += matYOffset;
-                        *low = *hi - matHeight;
+                        top += matYOffset;
+                        bottom = top - matHeight;
                     }
 
-                    if(matOffset && *hi > openTop)
+                    if(retMaterialOrigin && top > openTop)
                     {
-                        matOffset[1] = *hi - openTop;
+                        retMaterialOrigin->y = top - openTop;
                     }
 
                     // Clip it?
                     if(clipTop || clipBottom)
                     {
-                        if(clipBottom && *low < openBottom)
-                            *low = openBottom;
+                        if(clipBottom && bottom < openBottom)
+                            bottom = openBottom;
 
-                        if(clipTop && *hi > openTop)
-                            *hi = openTop;
+                        if(clipTop && top > openTop)
+                            top = openTop;
                     }
 
-                    if(matOffset && !clipTop)
+                    if(retMaterialOrigin && !clipTop)
                     {
-                        matOffset[1] = 0;
+                        retMaterialOrigin->y = 0;
                     }
                 }
             }
@@ -240,7 +241,10 @@ bool R_FindBottomTop(Line::Side const &side, int section,
         }
     }
 
-    return /*is_visible=*/ *hi > *low;
+    if(retBottom) *retBottom = bottom;
+    if(retTop)    *retTop    = top;
+
+    return /*is_visible=*/ top > bottom;
 }
 
 coord_t R_OpenRange(Line::Side const &side, Sector const *frontSec,
@@ -424,8 +428,7 @@ Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
                  (oFFloor < sector->ceiling().visHeight() &&
                       oFCeil > sector->floor().visHeight())))  )
             {
-
-                if(!R_MiddleMaterialCoversLineOpening(other->side(side)))
+                if(!R_MiddleMaterialCoversOpening(other->side(side)))
                     return 0;
             }
         }

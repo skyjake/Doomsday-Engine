@@ -511,7 +511,7 @@ static inline MaterialVariantSpec const &mapSurfaceMaterialSpec(int wrapS, int w
  * rendered back-to-front, or there will be alpha artifacts along edges.
  */
 void Rend_AddMaskedPoly(rvertex_t const *rvertices, ColorRawf const *rcolors,
-    coord_t wallLength, MaterialVariant *material, float const texOffset[2],
+    coord_t wallLength, MaterialVariant *material, Vector2f const &materialOrigin,
     blendmode_t blendMode, uint lightListIdx, float glow)
 {
     vissprite_t *vis = R_NewVisSprite();
@@ -523,11 +523,8 @@ void Rend_AddMaskedPoly(rvertex_t const *rvertices, ColorRawf const *rcolors,
     vis->origin[VZ] = (rvertices[0].pos[VZ] + rvertices[3].pos[VZ]) / 2;
     vis->distance = Rend_PointDist2D(vis->origin);
 
-    if(texOffset)
-    {
-        VS_WALL(vis)->texOffset[0] = texOffset[VX];
-        VS_WALL(vis)->texOffset[1] = texOffset[VY];
-    }
+    VS_WALL(vis)->texOffset[0] = materialOrigin[VX];
+    VS_WALL(vis)->texOffset[1] = materialOrigin[VY];
 
     // Masked walls are sometimes used for special effects like arcs,
     // cobwebs and bottoms of sails. In order for them to look right,
@@ -726,8 +723,8 @@ struct rendworldpoly_params_t
     int             flags; /// @ref rendpolyFlags
     blendmode_t     blendMode;
     pvec3d_t        texTL, texBR;
-    float const    *texOffset;
-    float const    *texScale;
+    Vector2f const *materialOrigin;
+    Vector2f const *materialScale;
     Vector3f const *normal; // Surface normal.
     float           alpha;
     float           sectorLightLevel;
@@ -1044,7 +1041,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
          * are masked polys). Otherwise there will be artifacts.
          */
         Rend_AddMaskedPoly(rvertices, rcolors, p.wall.segLength, &ms.materialVariant(),
-                           p.texOffset, p.blendMode, p.lightListIdx, p.glowing);
+                           *p.materialOrigin, p.blendMode, p.lightListIdx, p.glowing);
 
         R_FreeRendTexCoords(primaryCoords);
         R_FreeRendColors(rcolors);
@@ -1112,30 +1109,30 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
 
     if(primaryRTU)
     {
-        if(p.texOffset) RL_Rtu_TranslateOffsetv(RTU_PRIMARY, p.texOffset);
-        if(p.texScale)  RL_Rtu_ScaleST(RTU_PRIMARY, p.texScale);
+        if(p.materialOrigin) RL_Rtu_TranslateOffset(RTU_PRIMARY, *p.materialOrigin);
+        if(p.materialScale)  RL_Rtu_ScaleST(RTU_PRIMARY, *p.materialScale);
     }
 
     if(primaryDetailRTU)
     {
-        if(p.texOffset) RL_Rtu_TranslateOffsetv(RTU_PRIMARY_DETAIL, p.texOffset);
+        if(p.materialOrigin) RL_Rtu_TranslateOffset(RTU_PRIMARY_DETAIL, *p.materialOrigin);
     }
 
     if(interRTU)
     {
-        if(p.texOffset) RL_Rtu_TranslateOffsetv(RTU_INTER, p.texOffset);
-        if(p.texScale)  RL_Rtu_ScaleST(RTU_INTER, p.texScale);
+        if(p.materialOrigin) RL_Rtu_TranslateOffset(RTU_INTER, *p.materialOrigin);
+        if(p.materialScale)  RL_Rtu_ScaleST(RTU_INTER, *p.materialScale);
     }
 
     if(interDetailRTU)
     {
-        if(p.texOffset) RL_Rtu_TranslateOffsetv(RTU_INTER_DETAIL, p.texOffset);
+        if(p.materialOrigin) RL_Rtu_TranslateOffset(RTU_INTER_DETAIL, *p.materialOrigin);
     }
 
     if(shinyMaskRTU)
     {
-        if(p.texOffset) RL_Rtu_TranslateOffsetv(RTU_REFLECTION_MASK, p.texOffset);
-        if(p.texScale)  RL_Rtu_ScaleST(RTU_REFLECTION_MASK, p.texScale);
+        if(p.materialOrigin) RL_Rtu_TranslateOffset(RTU_REFLECTION_MASK, *p.materialOrigin);
+        if(p.materialScale)  RL_Rtu_ScaleST(RTU_REFLECTION_MASK, *p.materialScale);
     }
 
     // Write multiple polys depending on rend params.
@@ -1238,7 +1235,7 @@ static bool writeWallSection2(HEdge &hedge, Vector3f const &normal,
     Vector3f const *lightColor, uint lightListIdx, uint shadowListIdx,
     walldivs_t *leftWallDivs, walldivs_t *rightWallDivs,
     bool skyMask, bool addFakeRadio, vec3d_t texTL, vec3d_t texBR,
-    float const texOffset[2], float const texScale[2],
+    Vector2f const &materialOrigin, Vector2f const &materialScale,
     blendmode_t blendMode, Vector3f const &color, Vector3f const &color2,
     biassurface_t *bsuf, uint elmIdx /*tmp*/,
     MaterialSnapshot const &ms,
@@ -1267,8 +1264,8 @@ static bool writeWallSection2(HEdge &hedge, Vector3f const &normal,
     if(glowFactor > .0001f)
         parm.glowing = ms.glowStrength() * glowFactor; // Global scale factor.
     parm.blendMode = blendMode;
-    parm.texOffset = texOffset;
-    parm.texScale = texScale;
+    parm.materialOrigin = &materialOrigin;
+    parm.materialScale = &materialScale;
     parm.lightListIdx = lightListIdx;
     parm.shadowListIdx = shadowListIdx;
     parm.wall.left.firstDiv  = WallDivNode_Next(WallDivs_First(leftWallDivs)); // Step over first node.
@@ -1394,7 +1391,7 @@ static void writePlane2(BspLeaf &bspLeaf, Plane::Type type, coord_t height,
     Vector3f const &tangent, Vector3f const &bitangent, Vector3f const &normal,
     Material *inMat, Vector3f const &sufColor, float sufAlpha, blendmode_t blendMode,
     vec3d_t texTL, vec3d_t texBR,
-    float const texOffset[2], float const texScale[2],
+    Vector2f const &materialOrigin, Vector2f const &materialScale,
     bool skyMasked, bool addDLights, bool addMobjShadows,
     biassurface_t *bsuf, uint elmIdx /*tmp*/,
     int texMode /*tmp*/)
@@ -1416,8 +1413,8 @@ static void writePlane2(BspLeaf &bspLeaf, Plane::Type type, coord_t height,
     parms.sectorLightColor = &R_GetSectorLightColor(*sec);
     parms.surfaceLightLevelDL = parms.surfaceLightLevelDR = 0;
     parms.surfaceColor = &sufColor;
-    parms.texOffset = texOffset;
-    parms.texScale = texScale;
+    parms.materialOrigin = &materialOrigin;
+    parms.materialScale = &materialScale;
 
     Material *mat = 0;
     if(skyMasked)
@@ -1515,7 +1512,7 @@ static void writePlane2(BspLeaf &bspLeaf, Plane::Type type, coord_t height,
 static void writePlane(Plane::Type type, coord_t height,
     Vector3f const &tangent, Vector3f const &bitangent, Vector3f const &normal,
     Material *material, Vector3f const &tintColor, float opacity, blendmode_t blendMode,
-    float const texOffset[2], float const texScale[2],
+    Vector2f const &materialOrigin, Vector2f const &materialScale,
     bool skyMasked, bool addDLights, bool addMobjShadows,
     biassurface_t *bsuf, uint elmIdx /*tmp*/,
     int texMode /*tmp*/, bool clipBackFacing)
@@ -1540,7 +1537,7 @@ static void writePlane(Plane::Type type, coord_t height,
                        bspLeaf->aaBox().arvec2[type == Plane::Floor? 0 : 1][VY], height);
 
         writePlane2(*bspLeaf, type, height, tangent, bitangent, normal, material,
-                    tintColor, opacity, blendMode, texTL, texBR, texOffset, texScale,
+                    tintColor, opacity, blendMode, texTL, texBR, materialOrigin, materialScale,
                     skyMasked, addDLights, addMobjShadows, bsuf, elmIdx, texMode);
     }
 }
@@ -1569,7 +1566,7 @@ static bool sideBackClosed(Line::Side const &side, bool ignoreOpacity = true)
         if(backSec.floor().visHeight()   >= frontSec.ceiling().visHeight()) return true;
     }
 
-    return R_MiddleMaterialCoversLineOpening(side, ignoreOpacity);
+    return R_MiddleMaterialCoversOpening(side, ignoreOpacity);
 }
 
 static float calcLightLevelDelta(Vector3f const &normal)
@@ -1699,7 +1696,7 @@ static void sideLightLevelDeltas(Line::Side const &side, float *deltaL, float *d
 static bool writeWallSection(HEdge &hedge, int section,
     int flags, float lightLevel, Vector3f const &lightColor,
     walldivs_t *leftWallDivs, walldivs_t *rightWallDivs,
-    float const matOffset[2])
+    Vector2f const &materialOrigin)
 {
     Surface &surface = hedge.lineSide().surface(section);
 
@@ -1757,8 +1754,8 @@ static bool writeWallSection(HEdge &hedge, int section,
     {
         bool const isTwoSided = (hedge.hasLine() && hedge.line().hasFrontSections() && hedge.line().hasBackSections())? true:false;
 
-        float texScale[2] = { ((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1),
-                              ((surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1) };
+        Vector2f materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
+                               (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
         vec3d_t texTL; V2d_Copy(texTL,  hedge.v1Origin());
         texTL[VZ] =  WallDivNode_Height(WallDivs_Last(leftWallDivs));
@@ -1903,8 +1900,8 @@ static bool writeWallSection(HEdge &hedge, int section,
                                    lightLevel, deltaL, deltaR, &lightColor,
                                    lightListIdx, shadowListIdx,
                                    leftWallDivs, rightWallDivs,
-                                   !!(rpFlags & RPF_SKYMASK), !!(flags & WSF_ADD_RADIO),
-                                   texTL, texBR, matOffset, texScale, blendMode,
+                                   (rpFlags & RPF_SKYMASK) != 0, (flags & WSF_ADD_RADIO) != 0,
+                                   texTL, texBR, materialOrigin, materialScale, blendMode,
                                    *color, *color2,
                                    &hedge.biasSurfaceForGeometryGroup(section), (uint) section,
                                    ms,
@@ -1953,11 +1950,11 @@ static bool writeWallSections2(HEdge &hedge, int sections)
     Sector *backSector  = hedge.hasTwin()? hedge.twin().sectorPtr() : 0;
 
     walldivs_t leftWallDivs, rightWallDivs;
-    float materialOrigin[2];
+    Vector2f materialOrigin;
     bool opaque = false;
 
     if(hedge.prepareWallDivs(Line::Side::Middle, frontSector, backSector,
-                             &leftWallDivs, &rightWallDivs, materialOrigin))
+                             &leftWallDivs, &rightWallDivs, &materialOrigin))
     {
         Rend_RadioUpdateForLineSide(hedge.lineSide());
 
@@ -2011,10 +2008,10 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
     if(sections & Line::Side::MiddleFlag)
     {
         walldivs_t leftWallDivs, rightWallDivs;
-        float matOffset[2];
+        Vector2f materialOrigin;
 
         if(hedge.prepareWallDivs(Line::Side::Middle, leaf->sectorPtr(), back.sectorPtr(),
-                                 &leftWallDivs, &rightWallDivs, matOffset))
+                                 &leftWallDivs, &rightWallDivs, &materialOrigin))
         {
             int rhFlags = WSF_ADD_DYNLIGHTS|WSF_ADD_DYNSHADOWS|WSF_ADD_RADIO;
 
@@ -2026,7 +2023,7 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
 
             opaque = writeWallSection(hedge, Line::Side::Middle, rhFlags,
                                       front.sector().lightLevel(), R_GetSectorLightColor(front.sector()),
-                                      &leftWallDivs, &rightWallDivs, matOffset);
+                                      &leftWallDivs, &rightWallDivs, materialOrigin);
             if(opaque)
             {
                 Surface &surface = front.middle();
@@ -2058,16 +2055,16 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
     if(sections & Line::Side::TopFlag)
     {
         walldivs_t leftWallDivs, rightWallDivs;
-        float matOffset[2];
+        Vector2f materialOrigin;
 
         if(hedge.prepareWallDivs(Line::Side::Top, leaf->sectorPtr(), back.sectorPtr(),
-                                 &leftWallDivs, &rightWallDivs, matOffset))
+                                 &leftWallDivs, &rightWallDivs, &materialOrigin))
         {
             Rend_RadioUpdateForLineSide(hedge.lineSide());
 
             writeWallSection(hedge, Line::Side::Top, WSF_ADD_DYNLIGHTS|WSF_ADD_DYNSHADOWS|WSF_ADD_RADIO,
                              front.sector().lightLevel(), R_GetSectorLightColor(front.sector()),
-                             &leftWallDivs, &rightWallDivs, matOffset);
+                             &leftWallDivs, &rightWallDivs, materialOrigin);
         }
     }
 
@@ -2075,16 +2072,16 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
     if(sections & Line::Side::BottomFlag)
     {
         walldivs_t leftWallDivs, rightWallDivs;
-        float matOffset[2];
+        Vector2f materialOrigin;
 
         if(hedge.prepareWallDivs(Line::Side::Bottom, leaf->sectorPtr(), back.sectorPtr(),
-                                 &leftWallDivs, &rightWallDivs, matOffset))
+                                 &leftWallDivs, &rightWallDivs, &materialOrigin))
         {
             Rend_RadioUpdateForLineSide(hedge.lineSide());
 
             writeWallSection(hedge, Line::Side::Bottom, WSF_ADD_DYNLIGHTS|WSF_ADD_DYNSHADOWS|WSF_ADD_RADIO,
                              front.sector().lightLevel(), R_GetSectorLightColor(front.sector()),
-                             &leftWallDivs, &rightWallDivs, matOffset);
+                             &leftWallDivs, &rightWallDivs, materialOrigin);
         }
     }
 
@@ -2750,8 +2747,6 @@ static void writeLeafPlanes()
         bool isSkyMasked = false;
         bool addDynLights = !devRendSkyMode;
         bool clipBackFacing = false;
-        float matOrigin[2];
-        float matScale[2];
         Material *mat;
         int texMode;
 
@@ -2779,24 +2774,24 @@ static void writeLeafPlanes()
             // For lighting debug, render all solid surfaces using the gray texture.
             mat = &App_Materials().find(de::Uri("System", Path("gray"))).material();
 
-        V2f_Set(matOrigin, suf->visMaterialOrigin().x, suf->visMaterialOrigin().y);
+        Vector2f materialOrigin = suf->visMaterialOrigin();
         // Add the Y offset to orient the Y flipped texture.
         if(plane->type() == Plane::Ceiling)
-            matOrigin[VY] -= leaf->aaBox().maxY - leaf->aaBox().minY;
+            materialOrigin.y -= leaf->aaBox().maxY - leaf->aaBox().minY;
         // Add the additional offset to align with the worldwide grid.
-        matOrigin[VX] += float( leaf->worldGridOffset()[VX] );
-        matOrigin[VY] += float( leaf->worldGridOffset()[VY] );
+        materialOrigin.x += float( leaf->worldGridOffset()[VX] );
+        materialOrigin.y += float( leaf->worldGridOffset()[VY] );
         // Inverted.
-        matOrigin[VY] = -matOrigin[VY];
+        materialOrigin.y = -materialOrigin.y;
 
-        matScale[VX] = ((suf->flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1);
-        matScale[VY] = ((suf->flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
+        Vector2f materialScale((suf->flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
+                               (suf->flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
         if(mat && mat->isDrawable())
         {
             writePlane(plane->type(), plane->visHeight(),
                        suf->tangent(), suf->bitangent(), suf->normal(),
-                       mat, suf->tintColor(), suf->opacity(), suf->blendMode(), matOrigin, matScale,
+                       mat, suf->tintColor(), suf->opacity(), suf->blendMode(), materialOrigin, materialScale,
                        isSkyMasked, addDynLights, (!devRendSkyMode && plane->type() == Plane::Floor),
                        &leaf->biasSurfaceForGeometryGroup(plane->inSectorIndex()),
                        plane->inSectorIndex(), texMode, clipBackFacing);

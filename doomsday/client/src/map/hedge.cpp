@@ -363,18 +363,22 @@ static void buildWallDiv(walldivs_t *wallDivs, HEdge const *hedge,
 }
 
 bool HEdge::prepareWallDivs(int section, Sector *frontSec, Sector *backSec,
-    walldivs_t *leftWallDivs, walldivs_t *rightWallDivs, pvec2f_t matOffset) const
+    walldivs_t *leftWallDivs, walldivs_t *rightWallDivs, Vector2f *materialOrigin) const
 {
     DENG_ASSERT(hasLine());
-    coord_t low, hi;
+    coord_t bottom, top;
     bool visible = R_FindBottomTop(lineSide(), section, frontSec, backSec,
-                                   &low, &hi, matOffset);
+                                   &bottom, &top, materialOrigin);
 
-    matOffset[0] += float(_lineOffset);
+    if(materialOrigin)
+    {
+        materialOrigin->x += float(_lineOffset);
+    }
+
     if(!visible) return false;
 
-    buildWallDiv(leftWallDivs,  this, section, low, hi, false/*is-left-edge*/);
-    buildWallDiv(rightWallDivs, this, section, low, hi, true/*is-right-edge*/);
+    buildWallDiv(leftWallDivs,  this, section, bottom, top, false/*is-left-edge*/);
+    buildWallDiv(rightWallDivs, this, section, bottom, top, true/*is-right-edge*/);
 
     return true;
 }

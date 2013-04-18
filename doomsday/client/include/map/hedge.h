@@ -401,13 +401,14 @@ public:
      * @param backSector     Sector to use for the back side.
      * @param leftWallDivs   Division data for the left edge is written here.
      * @param rightWallDivs  Division data for the right edge is written here.
-     * @param matOffset      Material offset data is written here.
+     * @param materialOrigin Material origin offset data is written here. Can be @c 0.
      *
      * @return  @c true if divisions were prepared (the specified @a section has a
      *          non-zero Z axis height).
      */
     bool prepareWallDivs(int section, Sector *frontSector, Sector *backSector,
-        walldivs_t *leftWallDivs, walldivs_t *rightWallDivs, pvec2f_t matOffset) const;
+        walldivs_t *leftWallDivs, walldivs_t *rightWallDivs,
+        de::Vector2f *materialOrigin) const;
 
     /**
      * Retrieve the bias surface for specified geometry @a groupId
