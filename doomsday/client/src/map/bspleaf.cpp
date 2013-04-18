@@ -292,6 +292,17 @@ void BspLeaf::setSector(Sector *newSector)
     d->sector = newSector;
 }
 
+bool BspLeaf::hasWorldVolume(bool useVisualHeights) const
+{
+    if(isDegenerate()) return false;
+    if(!hasSector()) return false;
+
+    coord_t const floorHeight = useVisualHeights? d->sector->floor().visHeight() : d->sector->floor().height();
+    coord_t const ceilHeight  = useVisualHeights? d->sector->ceiling().visHeight() : d->sector->ceiling().height();
+
+    return (ceilHeight - floorHeight > 0);
+}
+
 Polyobj *BspLeaf::firstPolyobj() const
 {
     return d->polyobj;

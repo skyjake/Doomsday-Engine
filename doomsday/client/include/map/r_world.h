@@ -187,6 +187,16 @@ inline bool R_MiddleMaterialCoversOpening(Line::Side const &side, bool ignoreOpa
 
 #endif // __CLIENT__
 
+/**
+ * @param side  Line::Side instance.
+ * @param ignoreOpacity  @c true= do not consider Material opacity.
+ *
+ * @return  @c true if this side is considered "closed" (i.e., there is no opening
+ * through which the relative back Sector can be seen). Tests consider all Planes
+ * which interface with this and the "middle" Material used on the "this" side.
+ */
+bool R_SideBackClosed(Line::Side const &side, bool ignoreOpacity = true);
+
 void R_UpdateSector(Sector &sector, bool forceUpdate = false);
 
 /// @return  Current glow strength for the plane.

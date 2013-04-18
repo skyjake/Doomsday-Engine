@@ -344,6 +344,64 @@ void Line::Side::setFlags(int flagsToChange, bool set)
     else    d->flags &= ~flagsToChange;
 }
 
+void Line::Side::chooseSurfaceTintColors(int sectionId, Vector3f const **topColor,
+                                         Vector3f const **bottomColor) const
+{
+    if(hasSections())
+    {
+        switch(sectionId)
+        {
+        case Middle:
+            if(isFlagged(SDF_BLENDMIDTOTOP))
+            {
+                *topColor    = &top().tintColor();
+                *bottomColor = &middle().tintColor();
+            }
+            else if(isFlagged(SDF_BLENDMIDTOBOTTOM))
+            {
+                *topColor    = &middle().tintColor();
+                *bottomColor = &bottom().tintColor();
+            }
+            else
+            {
+                *topColor    = &middle().tintColor();
+                *bottomColor = 0;
+            }
+            break;
+
+        case Top:
+            if(isFlagged(SDF_BLENDTOPTOMID))
+            {
+                *topColor    = &top().tintColor();
+                *bottomColor = &middle().tintColor();
+            }
+            else
+            {
+                *topColor    = &top().tintColor();
+                *bottomColor = 0;
+            }
+            break;
+
+        case Bottom:
+            if(isFlagged(SDF_BLENDBOTTOMTOMID))
+            {
+                *topColor    = &middle().tintColor();
+                *bottomColor = &bottom().tintColor();
+            }
+            else
+            {
+                *topColor    = &bottom().tintColor();
+                *bottomColor = 0;
+            }
+            break;
+
+        default: DENG_ASSERT(false); // Invalid section.
+        }
+    }
+    /// @throw Line::InvalidSectionIdError The given section identifier is not valid.
+    throw Line::InvalidSectionIdError("Line::Side::chooseSurfaceTintColors", QString("Invalid section id %1").arg(sectionId));
+}
+
 int Line::Side::shadowVisCount() const
 {
     return d->shadowVisCount;

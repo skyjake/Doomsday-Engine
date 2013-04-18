@@ -294,7 +294,7 @@ void SB_InitForMap(char const *uniqueID)
     foreach(Sector *sector, theMap->sectors())
     foreach(BspLeaf *bspLeaf, sector->bspLeafs())
     {
-        numVertIllums += Rend_NumFanVerticesForBspLeaf(bspLeaf) * sector->planeCount();
+        numVertIllums += bspLeaf->numFanVertices() * sector->planeCount();
     }
 
     foreach(Polyobj *polyobj, theMap->polyobjs())
@@ -333,7 +333,7 @@ void SB_InitForMap(char const *uniqueID)
         {
             biassurface_t *bsuf = SB_CreateSurface();
 
-            bsuf->size = Rend_NumFanVerticesForBspLeaf(bspLeaf);
+            bsuf->size = bspLeaf->numFanVertices();
             bsuf->illum = illums;
             illums += bsuf->size;
 

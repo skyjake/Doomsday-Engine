@@ -125,6 +125,12 @@ public:
     uint hedgeCount() const;
 
     /**
+     * Returns @c true iff the BSP leaf is "degenerate", which is to say it is
+     * composed of fewer than @em three half-edges.
+     */
+    inline bool isDegenerate() const { return hedgeCount() < 3; }
+
+    /**
      * Returns @c true iff a sector is attributed to the BSP leaf. The only time
      * a leaf might not be attributed to a sector is if the leaf was @em orphaned
      * by the partitioning algorithm (a bug).
@@ -155,6 +161,20 @@ public:
     void setSector(Sector *newSector);
 
     /**
+     * Determines whether the BSP leaf has a positive world volume. For this to
+     * be true the following criteria must be met:
+     *
+     * - The leaf is @em not degenerate (see @ref isDegenerate()).
+     * - A sector is attributed (see @ref hasSector())
+     * - The height of floor is lower than that of the ceiling plane for the
+     *   attributed sector.
+     *
+     * @param useVisualHeights  @c true= use the visual (i.e., smoothed) plane
+     *                          heights instead of the @em sharp heights.
+     */
+    bool hasWorldVolume(bool useVisualHeights = true) const;
+
+    /**
      * Returns @c true iff there is at least one polyobj linked with the BSP leaf.
      */
     inline bool hasPolyobj() { return firstPolyobj() != 0; }
@@ -170,6 +190,21 @@ public:
      * @param newPolyobj  New polyobj. Can be @c 0.
      */
     void setFirstPolyobj(struct polyobj_s *newPolyobj);
+
+    /**
+     * Update the world grid offset.
+     *
+     * @pre Axis-aligned bounding box must have been initialized.
+     */
+    void updateWorldGridOffset();
+
+    /**
+     * Returns the vector described by the offset from the map coordinate space
+     * origin to the top most, left most point of the geometry of the BSP leaf.
+     *
+     * @see aaBox()
+     */
+    vec2d_t const &worldGridOffset() const;
 
     /**
      * Returns the original index of the BSP leaf.
@@ -189,21 +224,6 @@ public:
     /// @todo Refactor away.
     void setValidCount(int newValidCount);
 
-    /**
-     * Update the world grid offset.
-     *
-     * @pre Axis-aligned bounding box must have been initialized.
-     */
-    void updateWorldGridOffset();
-
-    /**
-     * Returns the vector described by the offset from the map coordinate space
-     * origin to the top most, left most point of the geometry of the BSP leaf.
-     *
-     * @see aaBox()
-     */
-    vec2d_t const &worldGridOffset() const;
-
 #ifdef __CLIENT__
 
     /**
@@ -212,6 +232,18 @@ public:
      * base was determined.
      */
     HEdge *fanBase() const;
+
+    /**
+     * Returns the number of vertices needed for the BSP leaf's triangle fan.
+     * @note May incurr updating the fan base HEdge if not already determined.
+     *
+     * @see fanBase()
+     */
+    inline uint BspLeaf::numFanVertices() const
+    {
+        // Are we to use one of the half-edge vertexes as the fan base?
+        return hedgeCount() + (fanBase()? 0 : 2);
+    }
 
     /**
      * Retrieve the bias surface for specified geometry @a groupId

@@ -83,7 +83,11 @@ void Rend_ModelViewMatrix(boolean use_angles);
 
 #define Rend_PointDist2D(c) (fabs((vOrigin[VZ]-c[VY])*viewsidex - (vOrigin[VX]-c[VX])*viewsidey))
 
+/**
+ * Approximated! The Z axis aspect ratio is corrected.
+ */
 coord_t Rend_PointDist3D(coord_t const point[3]);
+
 void Rend_ApplyTorchLight(float *color, float distance);
 
 /**
@@ -104,11 +108,6 @@ float Rend_LightAdaptationDelta(float lightvalue);
  * during rendering (both positive and negative).
  */
 void Rend_CalcLightModRange();
-
-/**
- * Number of vertices needed for this leaf's trifan.
- */
-uint Rend_NumFanVerticesForBspLeaf(BspLeaf *bspLeaf);
 
 void R_DrawLightRange(void);
 

@@ -444,6 +444,9 @@ public:
          */
         inline bool isFlagged(int flagsToTest) const { return (flags() & flagsToTest) != 0; }
 
+        void chooseSurfaceTintColors(int sectionId, de::Vector3f const **topColor,
+                                     de::Vector3f const **bottomColor) const;
+
         /**
          * Returns the frame number of the last time shadows were drawn for the side.
          */

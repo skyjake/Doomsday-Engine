@@ -348,6 +348,33 @@ bool R_MiddleMaterialCoversOpening(Line::Side const &side,
     return false;
 }
 
+/**
+ * @param side  Line::Side instance.
+ * @param ignoreOpacity  @c true= do not consider Material opacity.
+ *
+ * @return  @c true if this side is considered "closed" (i.e., there is no opening
+ * through which the relative back Sector can be seen). Tests consider all Planes
+ * which interface with this and the "middle" Material used on the "this" side.
+ */
+bool R_SideBackClosed(Line::Side const &side, bool ignoreOpacity)
+{
+    if(!side.hasSections()) return false;
+    if(!side.back().hasSections()) return true;
+    if(side.line().isSelfReferencing()) return false; // Never.
+
+    if(side.hasSector() && side.back().hasSector())
+    {
+        Sector const &frontSec = side.sector();
+        Sector const &backSec  = side.back().sector();
+
+        if(backSec.floor().visHeight()   >= backSec.ceiling().visHeight())  return true;
+        if(backSec.ceiling().visHeight() <= frontSec.floor().visHeight())   return true;
+        if(backSec.floor().visHeight()   >= frontSec.ceiling().visHeight()) return true;
+    }
+
+    return R_MiddleMaterialCoversOpening(side, ignoreOpacity);
+}
+
 Line *R_FindLineNeighbor(Sector const *sector, Line const *line,
     LineOwner const *own, bool antiClockwise, binangle_t *diff)
 {
