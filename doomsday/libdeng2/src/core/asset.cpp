@@ -53,13 +53,46 @@ bool Asset::isReady() const
 DENG2_PIMPL_NOREF(DependAssets)
 {
     Dependencies deps;
+
+    /**
+     * Determines if all the assets in the group are ready.
+     */
+    bool allReady() const
+    {
+        DENG2_FOR_EACH_CONST(Dependencies, i, deps)
+        {
+            switch(i->second)
+            {
+            case Required:
+            case SuspendTime:
+                if(!i->first->isReady()) return false;
+                break;
+
+            default:
+                break;
+            }
+        }
+        // Yay.
+        return true;
+    }
+
+    void update(DependAssets &self)
+    {
+        self.setState(allReady()? Ready : NotReady);
+    }
 };
 
 DependAssets::DependAssets() : d(new Instance)
-{}
+{
+    // An empty set of dependencies means the group is Ready.
+    setState(Ready);
+}
 
 DependAssets::~DependAssets()
 {
+    // We are about to be deleted.
+    audienceForStateChange.clear();
+
     clear();
 }
 
@@ -76,18 +109,21 @@ void DependAssets::clear()
     }
 
     d->deps.clear();
+    d->update(*this);
 }
 
 void DependAssets::insert(Asset const &asset, Policy policy)
 {
     d->deps[&asset] = policy;
     asset.audienceForDeletion += this;
+    d->update(*this);
 }
 
 void DependAssets::remove(Asset const &asset)
 {
     asset.audienceForDeletion -= this;
     d->deps.erase(&asset);
+    d->update(*this);
 }
 
 bool DependAssets::has(Asset const &asset) const
@@ -100,6 +136,7 @@ void DependAssets::setPolicy(Asset const &asset, Policy policy)
     DENG2_ASSERT(d->deps.find(&asset) != d->deps.end());
 
     d->deps[&asset] = policy;
+    d->update(*this);
 }
 
 bool DependAssets::mustSuspendTime() const
@@ -119,37 +156,9 @@ void DependAssets::assetDeleted(Asset &asset)
     remove(asset);
 }
 
-void DependAssets::assetStateChanged(Asset &asset)
+void DependAssets::assetStateChanged(Asset &)
 {
-    bool allReady = false;
-
-    if(asset.state() == Ready)
-    {
-        // Perhaps everything is ready.
-        DENG2_FOR_EACH_CONST(Dependencies, i, d->deps)
-        {
-            switch(i->second)
-            {
-            case Required:
-            case SuspendTime:
-                if(!i->first->isReady())
-                {
-                    goto breakLoop;
-                }
-
-            default:
-                break;
-            }
-        }
-
-        // Yay.
-        allReady = true;
-    }
-
-breakLoop:
-
-    // Update the state of the asset dependency group.
-    setState(allReady? Ready : NotReady);
+    d->update(*this);
 }
 
 } // namespace de
