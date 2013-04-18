@@ -138,6 +138,11 @@ void AssetGroup::setPolicy(Asset const &asset, Policy policy)
     d->update(*this);
 }
 
+AssetGroup::Members const &AssetGroup::all() const
+{
+    return d->deps;
+}
+
 void AssetGroup::assetDeleted(Asset &asset)
 {
     remove(asset);

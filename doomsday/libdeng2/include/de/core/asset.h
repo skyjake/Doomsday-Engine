@@ -116,7 +116,7 @@ public:
 
     void remove(Asset const &asset);
 
-    Dependencies const &all() const;
+    Members const &all() const;
 
     // Observes contained Assets.
     void assetDeleted(Asset &);
