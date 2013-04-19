@@ -142,6 +142,8 @@ int main(int, char **)
 
         qDebug() << "Look at (10,10,10) from (1,1,1)"
                  << Matrix4f::lookAt(Vector3f(10, 10, 10), Vector3f(1, 1, 1), Vector3f(0, 0, 1)).asText();
+
+        qDebug() << "Cross product" << Vector3f(1, 0, 0).cross(Vector3f(0, 1, 0)).asText();
     }
     catch(Error const &err)
     {
