@@ -34,7 +34,7 @@
 namespace de {
 
 #undef PI
-ddouble const PI = 3.14159265358979323846;
+ddouble const PI = 3.1415926535897932384626433832795028841971693993751;
 ddouble const EPSILON = 1.0e-7;
 dfloat const FLOAT_EPSILON = 1.0e-5f;
 
@@ -100,6 +100,16 @@ inline bool fequal(dfloat a, dfloat b) {
 /// with the precision of EPSILON.
 inline bool fequal(ddouble a, ddouble b) {
     return abs(a - b) < EPSILON;
+}
+
+template <typename Type>
+inline Type degreeToRadian(Type const &degree) {
+    return degree / Type(180) * PI;
+}
+
+template <typename Type>
+inline Type radianToDegree(Type const &radian) {
+    return radian / PI * Type(180);
 }
 
 /// General comparison function.
