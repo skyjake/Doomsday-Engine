@@ -66,8 +66,12 @@ public:
         return Vector2<ddouble>(ddouble(x), ddouble(y));
     }
     Type &operator [] (int index) {
-        if(index == 0) return x;
-        if(index == 1) return y;
+        DENG2_ASSERT(index >= 0 && index <= 1);
+        Type *ptrs[] = { &x, &y };
+        if(index >= 0 && index < 2)
+        {
+            return *ptrs[index];
+        }
         throw Error("Vector2::operator []", QString("Illegal index %1").arg(index));
     }
     Type const &operator [] (int index) const {
@@ -98,15 +102,13 @@ public:
         y -= other.y;
         return *this;
     }
-    Vector2 &operator *= (ddouble scalar) {
+    inline Vector2 &operator *= (ddouble scalar) {
         x *= scalar;
         y *= scalar;
         return *this;
     }
-    Vector2 &operator *= (Vector2 const &other) {
-        x *= other.x;
-        y *= other.y;
-        return *this;
+    inline Vector2 &operator /= (ddouble scalar) {
+        return (*this) *= 1.0 / scalar;
     }
     bool operator > (Vector2 const &other) const {
         return x > other.x && y > other.y;
@@ -122,6 +124,13 @@ public:
     }
     ddouble length() const {
         return std::sqrt(ddouble(x*x + y*y));
+    }
+    Vector2 normalize() const {
+        ddouble len = length();
+        if(len != 0) {
+            return *this / len;
+        }
+        return Vector2();
     }
     String asText() const {
         String str;
@@ -202,7 +211,7 @@ class Vector3 : public Vector2<Type>
 {
 public:
     Vector3(Type a = 0, Type b = 0, Type c = 0) : Vector2<Type>(a, b), z(c) {}
-    Vector3(Vector2<Type> const &v2) : Vector2<Type>(v2), z(0) {}
+    Vector3(Vector2<Type> const &v2, Type c = 0) : Vector2<Type>(v2), z(c) {}
     Vector3(Type const *abc) : Vector2<Type>(abc), z(abc[2]) {}
 
     /// Conversion operator to a float vector.
@@ -214,9 +223,15 @@ public:
         return Vector3<ddouble>(Vector2<Type>::x, Vector2<Type>::y, z);
     }
     Type &operator [] (int index) {
-        if(index < 2) return Vector2<Type>::operator [] (index);
-        if(index == 2) return z;
-        throw Error("Vector3::operator[]", QString("Illegal index %1").arg(index));
+        DENG2_ASSERT(index >= 0 && index <= 2);
+        Type *ptrs[] = { &(this->Vector2<Type>::x),
+                         &(this->Vector2<Type>::y),
+                         &z };
+        if(index >= 0 && index < 3)
+        {
+            return *ptrs[index];
+        }
+        throw Error("Vector3::operator []", QString("Illegal index %1").arg(index));
     }
     Type const &operator [] (int index) const {
         return const_cast<Vector3<Type> &>(*this)[index];
@@ -234,6 +249,9 @@ public:
         return Vector3(Type(Vector2<Type>::x * scalar), Type(Vector2<Type>::y * scalar),
             Type(z * scalar));
     }
+    Vector3 operator / (ddouble scalar) const {
+        return *this * (1.0 / scalar);
+    }
     Vector3 operator * (Vector3 const &other) const {
         return Vector3(Vector2<Type>::x * other.x, Vector2<Type>::y * other.y, z * other.z);
     }
@@ -249,17 +267,13 @@ public:
         z -= other.z;
         return *this;
     }
-    Vector3 &operator *= (ddouble scalar) {
-        Vector2<Type>::x *= scalar;
-        Vector2<Type>::y *= scalar;
+    inline Vector3 &operator *= (ddouble scalar) {
+        Vector2<Type>::operator *= (scalar);
         z *= scalar;
         return *this;
     }
-    Vector3 &operator *= (Vector3 const &other) {
-        Vector2<Type>::x *= other.x;
-        Vector2<Type>::y *= other.y;
-        z *= other.z;
-        return *this;
+    inline Vector3 &operator /= (ddouble scalar) {
+        return (*this) *= 1.0 / scalar;
     }
     bool operator > (Vector3 const &other) const {
         return Vector2<Type>::operator > (other) && z > other.z;
@@ -273,8 +287,16 @@ public:
     bool operator <= (Vector3 const &other) const {
         return Vector2<Type>::operator <= (other) && z <= other.z;
     }
-    ddouble length() const { return std::sqrt(Vector2<Type>::x*Vector2<Type>::x +
-        Vector2<Type>::y*Vector2<Type>::y + z*z); }
+    ddouble length() const {
+        return std::sqrt(Vector2<Type>::x*Vector2<Type>::x + Vector2<Type>::y*Vector2<Type>::y + z*z);
+    }
+    Vector3 normalize() const {
+        ddouble const len = length();
+        if(len != 0) {
+            return *this / len;
+        }
+        return Vector3();
+    }
     String asText() const {
         String str;
         QTextStream os(&str);
@@ -286,6 +308,11 @@ public:
     }
     ddouble dot(Vector3 const &other) const {
         return Vector2<Type>::x * other.x + Vector2<Type>::y * other.y + z * other.z;
+    }
+    inline Vector3 cross(Vector3 const &other) const {
+        return Vector3(Vector2<Type>::y * other.z - z * other.y,
+                       z * other.x - Vector2<Type>::x * other.z,
+                       Vector2<Type>::x * other.y - Vector2<Type>::y * other.x);
     }
     Vector3 min(Vector3 const &other) const {
         return Vector3(de::min(Vector2<Type>::x, other.x), de::min(Vector2<Type>::y, other.y),
@@ -356,6 +383,12 @@ QTextStream &operator << (QTextStream &os, Vector3<Type> const &vec3)
  * Template class for 4D vectors.
  * The members are public for convenient access.
  *
+ * Note that when mixing 3D and 4D vectors, by default the automatic conversion
+ * between these simply disregards the @em w component. If the intention is to
+ * treat 4D vectors as homogeneous, one must explicitly convert to/from 3D
+ * vectors using Vector4<Type>::fromEuclidean() and
+ * Vector4<Type>::toEuclidean().
+ *
  * @ingroup math
  */
 template <typename Type>
@@ -363,7 +396,7 @@ class Vector4 : public Vector3<Type>
 {
 public:
     Vector4(Type a = 0, Type b = 0, Type c = 0, Type d = 0) : Vector3<Type>(a, b, c), w(d) {}
-    Vector4(Vector3<Type> const &v3) : Vector3<Type>(v3), w(0) {}
+    Vector4(Vector3<Type> const &v3, Type d = 0) : Vector3<Type>(v3), w(d) {}
     Vector4(Type const *abcd) : Vector3<Type>(abcd), w(abcd[3]) {}
 
     /// Conversion operator to a float vector.
@@ -375,9 +408,16 @@ public:
         return Vector4<ddouble>(Vector3<Type>::x, Vector3<Type>::y, Vector3<Type>::z, w);
     }
     Type &operator [] (int index) {
-        if(index < 3) return Vector3<Type>::operator [] (index);
-        if(index == 3) return w;
-        throw Error("Vector4::operator[]", QString("Illegal index %1").arg(index));
+        DENG2_ASSERT(index >= 0 && index <= 3);
+        Type *ptrs[] = { &(this->Vector2<Type>::x),
+                         &(this->Vector2<Type>::y),
+                         &(this->Vector3<Type>::z),
+                         &w };
+        if(index >= 0 && index < 4)
+        {
+            return *ptrs[index];
+        }
+        throw Error("Vector4::operator []", QString("Illegal index %1").arg(index));
     }
     Type const &operator [] (int index) const {
         return const_cast<Vector4<Type> &>(*this)[index];
@@ -415,19 +455,13 @@ public:
         w -= other.w;
         return *this;
     }
-    Vector4 &operator *= (ddouble scalar) {
-        Vector3<Type>::x *= scalar;
-        Vector3<Type>::y *= scalar;
-        Vector3<Type>::z *= scalar;
+    inline Vector4 &operator *= (ddouble scalar) {
+        Vector3<Type>::operator *= (scalar);
         w *= scalar;
         return *this;
     }
-    Vector4 &operator *= (Vector4 const &other) {
-        Vector3<Type>::x *= other.x;
-        Vector3<Type>::y *= other.y;
-        Vector3<Type>::z *= other.z;
-        w *= other.w;
-        return *this;
+    inline Vector4 &operator /= (ddouble scalar) {
+        return (*this) *= 1.0 / scalar;
     }
     bool operator > (Vector4 const &other) const {
         return Vector3<Type>::operator > (other) && w > other.w;
@@ -492,6 +526,17 @@ public:
     void operator << (Reader &from) {
         Vector3<Type>::operator << (from);
         from >> w;
+    }
+
+    static Vector4 fromEuclidean(Vector3<Type> const &vec3) {
+        return Vector4(vec3, Type(1));
+    }
+    Vector3<Type> toEuclidean() const {
+        if(w != 0)
+        {
+            return Vector3<Type>(Vector2<Type>::x/w, Vector2<Type>::y/w, Vector3<Type>::z/w);
+        }
+        return Vector3<Type>();
     }
 
 public:
@@ -656,7 +701,7 @@ inline bool operator != (Vector4<ddouble> const &a, Vector4<ddouble> const &b)
     return !(a == b);
 }
 
-//@{
+///@{
 /// @ingroup types
 typedef Vector2<dint>    Vector2i;  ///< 2-component vector of integer values.
 typedef Vector2<duint>   Vector2ui; ///< 2-component vector of unsigned integer values.
@@ -671,7 +716,7 @@ typedef Vector4<dint>    Vector4i;  ///< 4-component vector of integer values.
 typedef Vector4<duint>   Vector4ui; ///< 4-component vector of unsigned integer values.
 typedef Vector4<dfloat>  Vector4f;  ///< 4-component vector of floating point values.
 typedef Vector4<ddouble> Vector4d;  ///< 4-component vector of high-precision floating point values.
-//@}
+///@}
 
 } // namespace de
 
