@@ -367,7 +367,7 @@ void Line::Side::chooseSurfaceTintColors(int sectionId, Vector3f const **topColo
                 *topColor    = &middle().tintColor();
                 *bottomColor = 0;
             }
-            break;
+            return;
 
         case Top:
             if(isFlagged(SDF_BLENDTOPTOMID))
@@ -380,7 +380,7 @@ void Line::Side::chooseSurfaceTintColors(int sectionId, Vector3f const **topColo
                 *topColor    = &top().tintColor();
                 *bottomColor = 0;
             }
-            break;
+            return;
 
         case Bottom:
             if(isFlagged(SDF_BLENDBOTTOMTOMID))
@@ -393,7 +393,7 @@ void Line::Side::chooseSurfaceTintColors(int sectionId, Vector3f const **topColo
                 *topColor    = &bottom().tintColor();
                 *bottomColor = 0;
             }
-            break;
+            return;
 
         default: DENG_ASSERT(false); // Invalid section.
         }
