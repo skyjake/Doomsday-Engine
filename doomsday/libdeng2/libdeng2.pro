@@ -78,6 +78,7 @@ HEADERS += \
     include/de/LogBuffer \
     include/de/LogSink \
     include/de/Loop \
+    include/de/Matrix \
     include/de/MonospaceLogSinkFormatter \
     include/de/Rectangle \
     include/de/System \
@@ -92,6 +93,7 @@ HEADERS += \
     include/de/error.h \
     include/de/libdeng2.h \
     include/de/math.h \
+    include/de/matrix.h \
     include/de/rectangle.h \
     include/de/vector.h \
     include/de/version.h \
@@ -123,6 +125,7 @@ HEADERS += \
 SOURCES += \
     src/c_wrapper.cpp \
     src/error.cpp \
+    src/matrix.cpp \
     src/version.cpp \
     src/core/app.cpp \
     src/core/asset.cpp \
