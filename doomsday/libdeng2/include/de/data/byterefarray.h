@@ -52,6 +52,18 @@ public:
      */
     ByteRefArray(void const *base, Size size);
 
+    /**
+     * Sets the contents of the array to zero.
+     */
+    void clear();
+
+    /**
+     * Sets the contents of the array to a specific value.
+     *
+     * @param value  Value to write to all bytes.
+     */
+    void fill(Byte value);
+
     // Implements IByteArray.
     Size size() const;
     void get(Offset at, Byte *values, Size count) const;

@@ -34,6 +34,21 @@ ByteRefArray::ByteRefArray(void const *base, Size size)
       _size(size)
 {}
 
+void ByteRefArray::clear()
+{
+    fill(0);
+}
+
+void ByteRefArray::fill(IByteArray::Byte value)
+{
+    if(!_writeBase)
+    {
+        /// @throw NonModifiableError  The referenced array is read-only.
+        throw NonModifiableError("ByteRefArray::fill", "Array is read-only");
+    }
+    std::memset(_writeBase, value, _size);
+}
+
 ByteRefArray::Size ByteRefArray::size() const
 {
     return _size;
