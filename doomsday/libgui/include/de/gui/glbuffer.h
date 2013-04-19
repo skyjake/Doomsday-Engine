@@ -23,6 +23,7 @@
 #include <de/Vector>
 #include <de/Asset>
 #include <vector>
+#include <utility>
 
 #include "libgui.h"
 #include "opengl.h"
