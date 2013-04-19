@@ -68,7 +68,7 @@ void Sv_GetInfo(serverinfo_t* info)
 
     assert(theMap);
 
-    memset(info, 0, sizeof(*info));
+    de::zapPtr(info);
 
     // Let's figure out what we want to tell about ourselves.
     info->version = DOOMSDAY_VERSION;
@@ -416,7 +416,7 @@ void Sv_Login(void)
     }
     // Check the password.
     passLen = Reader_ReadByte(msgReader);
-    memset(password, 0, sizeof(password));
+    de::zap(password);
     Reader_Read(msgReader, password, passLen);
     if(strcmp(password, netPassword))
     {
@@ -608,7 +608,7 @@ boolean Sv_PlayerArrives(unsigned int nodeID, char const *name)
                 ddpl->fixAcked.mom = -1;
 
             // Clear the view filter.
-            memset(ddpl->filterColor, 0, sizeof(ddpl->filterColor));
+            de::zap(ddpl->filterColor);
             ddpl->flags &= ~DDPF_VIEW_FILTER;
 
             Sv_InitPoolForClient(i);
@@ -781,7 +781,7 @@ void Sv_StartNetGame(void)
         client->lastTransmit = -1;
         client->fov = 90;
         client->viewConsole = -1;
-        memset(client->name, 0, sizeof(client->name));
+        de::zap(client->name);
         client->bandwidthRating = BWR_DEFAULT;
         Smoother_Clear(client->smoother);
     }

@@ -144,7 +144,7 @@ struct Path::Instance
         {
             delete extraSegments.takeFirst();
         }
-        memset(segments, 0, sizeof(segments));
+        zap(segments);
         segmentCount = 0;
     }
 
@@ -164,11 +164,11 @@ struct Path::Instance
         else
         {
             // Allocate an "extra" node.
-            segment = new Path::Segment();
+            segment = new Path::Segment;
             extraSegments.append(segment);
         }
 
-        std::memset(segment, 0, sizeof(*segment));
+        zapPtr(segment);
         segment->range = range;
 
         // There is now one more segment in the map.

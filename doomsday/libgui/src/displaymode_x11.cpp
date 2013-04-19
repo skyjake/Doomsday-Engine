@@ -63,7 +63,7 @@ public:
             for(int k = 0; k < numRates; k++)
             {
                 DisplayMode mode;
-                memset(&mode, 0, sizeof(mode));
+                de::zap(mode);
                 mode.width = _sizes[i].width;
                 mode.height = _sizes[i].height;
                 mode.depth = displayDepth;
@@ -88,7 +88,7 @@ public:
     DisplayMode currentMode() const
     {
         DisplayMode mode;
-        memset(&mode, 0, sizeof(mode));
+        de::zap(mode);
 
         if(!_conf) return mode;
 

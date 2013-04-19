@@ -51,7 +51,7 @@ void DisplayMode_Native_Init(void)
     for(int i = 0; ; i++)
     {
         DEVMODE mode;
-        memset(&mode, 0, sizeof(mode));
+        de::zap(mode);
         mode.dmSize = sizeof(mode);
         if(!EnumDisplaySettings(NULL, i, &mode))
             break; // That's all.
@@ -60,7 +60,7 @@ void DisplayMode_Native_Init(void)
     }
 
     // And which is the current mode?
-    memset(&currentDevMode, 0, sizeof(currentDevMode));
+    de::zap(currentDevMode);
     currentDevMode.dmSize = sizeof(currentDevMode);
     EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &currentDevMode);
 }

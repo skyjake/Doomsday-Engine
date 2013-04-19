@@ -54,7 +54,7 @@ DENG2_PIMPL_NOREF(RuleRectangle), public DelegateRule::ISource
 
     Instance()
     {
-        memset(inputRules, 0, sizeof(inputRules));
+        zap(inputRules);
 
         // Create the output rules.
         for(int i = 0; i < int(MAX_OUTPUT_RULES); ++i)

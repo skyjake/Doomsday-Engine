@@ -155,8 +155,8 @@ void Sv_InitPools(void)
     {
         pools[i].owner = i;
         pools[i].resendDealer = 1;
-        memset(pools[i].hash, 0, sizeof(pools[i].hash));
-        memset(pools[i].misHash, 0, sizeof(pools[i].misHash));
+        de::zap(pools[i].hash);
+        de::zap(pools[i].misHash);
         pools[i].queueSize = 0;
         pools[i].allocatedSize = 0;
         pools[i].queue = NULL;
@@ -938,7 +938,7 @@ void Sv_RegisterWorld(cregister_t* reg, boolean isInitial)
 {
     uint i, numPolyobjs;
 
-    memset(reg, 0, sizeof(*reg));
+    de::zapPtr(reg);
     reg->gametic = SECONDS_TO_TICKS(gameTime);
 
     // Is this the initial state?
@@ -982,7 +982,7 @@ void Sv_UpdateOwnerInfo(pool_t* pool)
     player_t* plr = &ddPlayers[pool->owner];
     ownerinfo_t* info = &pool->ownerInfo;
 
-    memset(info, 0, sizeof(*info));
+    de::zapPtr(info);
 
     // Pointer to the owner's pool.
     info->pool = pool;
@@ -1018,7 +1018,7 @@ void Sv_NewDelta(void* deltaPtr, deltatype_t type, uint id)
     delta_t *delta = (delta_t *) deltaPtr;
 
     // NOTE: This only clears the common delta_t part, not the extra data.
-    memset(delta, 0, sizeof(*delta));
+    de::zapPtr(delta);
 
     delta->id = id;
     delta->type = type;
@@ -1696,8 +1696,8 @@ void Sv_DrainPool(uint clientNumber)
     }
 
     // Clear all the chains.
-    memset(pool->hash, 0, sizeof(pool->hash));
-    memset(pool->misHash, 0, sizeof(pool->misHash));
+    de::zap(pool->hash);
+    de::zap(pool->misHash);
 }
 
 /**
@@ -1987,9 +1987,7 @@ void Sv_MobjRemoved(thid_t id)
  */
 void Sv_PlayerRemoved(uint playerNumber)
 {
-    dt_player_t*        p = &worldRegister.ddPlayers[playerNumber];
-
-    memset(p, 0, sizeof(*p));
+    de::zap(worldRegister.ddPlayers[playerNumber]);
 }
 
 /**
