@@ -31,6 +31,10 @@
 
 #include <de/Log>
 
+#include "render/rend_clip.h"
+
+using namespace de;
+
 struct RoverNode
 {
     RoverNode* prev, *next;
@@ -133,30 +137,27 @@ static int C_CountUsedOranges(void)
 }
 #endif
 
-static void C_RoverInit(Rover* rover)
+static void C_RoverInit(Rover *rover)
 {
-    memset(rover, 0, sizeof(*rover));
+    std::memset(rover, 0, sizeof(*rover));
 }
 
-static void C_RoverRewind(Rover* r)
+static void C_RoverRewind(Rover *r)
 {
     r->rover = r->first;
 }
 
-static void* C_RoverGet(Rover* r)
+static void *C_RoverGet(Rover *r)
 {
-    void* node;
-
-    if(!r->rover)
-        return NULL;
+    if(!r->rover) return 0;
 
     // We'll use this.
-    node = r->rover;
+    void *node = r->rover;
     r->rover = r->rover->next;
     return node;
 }
 
-static void C_RoverAdd(Rover* r, RoverNode* node)
+static void C_RoverAdd(Rover *r, RoverNode *node)
 {
     // Link it to the start of the rover's list.
     if(!r->last)
@@ -165,17 +166,17 @@ static void C_RoverAdd(Rover* r, RoverNode* node)
         r->first->prev = node;
 
     node->next = r->first;
-    node->prev = NULL;
+    node->prev = 0;
     r->first = node;
 }
 
-static void C_RoverRemove(Rover* r, RoverNode* node)
+static void C_RoverRemove(Rover *r, RoverNode *node)
 {
-    assert(r->last);
+    DENG_ASSERT(r->last);
 
     if(node == r->last)
     {
-        assert(!r->rover);
+        DENG_ASSERT(!r->rover);
 
         // We can only remove the last if all nodes are already in use.
         r->rover = node;
@@ -191,13 +192,13 @@ static void C_RoverRemove(Rover* r, RoverNode* node)
         else
         {
             r->first = r->first->next;
-            r->first->prev = NULL;
+            r->first->prev = 0;
         }
 
         // Put it back to the end of the list.
         r->last->next = node;
         node->prev = r->last;
-        node->next = NULL;
+        node->next = 0;
         r->last = node;
 
         // If all were in use, set the rover here. Otherwise the rover
@@ -210,24 +211,24 @@ static void C_RoverRemove(Rover* r, RoverNode* node)
 /**
  * Finds the first unused clip node.
  */
-static ClipNode* C_NewRange(binangle_t stAng, binangle_t endAng)
+static ClipNode *C_NewRange(binangle_t stAng, binangle_t endAng)
 {
-    ClipNode* node = reinterpret_cast<ClipNode*>(C_RoverGet(&clipNodes));
+    ClipNode *node = reinterpret_cast<ClipNode *>(C_RoverGet(&clipNodes));
     if(!node)
     {
         // Allocate a new node and add it to head the list.
-        node = static_cast<ClipNode*>(Z_Malloc(sizeof(ClipNode), PU_APPSTATIC, 0));
-        C_RoverAdd(&clipNodes, reinterpret_cast<RoverNode*>(node));
+        node = static_cast<ClipNode *>(Z_Malloc(sizeof(ClipNode), PU_APPSTATIC, 0));
+        C_RoverAdd(&clipNodes, reinterpret_cast<RoverNode *>(node));
     }
 
     // Initialize the node.
     node->start = stAng;
     node->end = endAng;
-    node->prev = node->next = NULL;
+    node->prev = node->next = 0;
     return node;
 }
 
-static void C_RemoveRange(ClipNode* node)
+static void C_RemoveRange(ClipNode *node)
 {
     // If this is the head, move it.
     if(clipHead == node)
@@ -241,7 +242,7 @@ static void C_RemoveRange(ClipNode* node)
     node->prev = node->next = 0;
 
     // Move this node to the free node rover.
-    C_RoverRemove(&clipNodes, reinterpret_cast<RoverNode*>(node));
+    C_RoverRemove(&clipNodes, reinterpret_cast<RoverNode *>(node));
 }
 
 static void C_AddRange(binangle_t startAngle, binangle_t endAngle)
@@ -265,7 +266,7 @@ static void C_AddRange(binangle_t startAngle, binangle_t endAngle)
 
     // There are previous ranges. Check that the new range isn't contained
     // by any of them.
-    for(ClipNode* ci = clipHead; ci; ci = ci->next)
+    for(ClipNode *ci = clipHead; ci; ci = ci->next)
     {
         /*
         LOG_DEBUG(QString("%1: %2 => %3")
@@ -279,18 +280,18 @@ static void C_AddRange(binangle_t startAngle, binangle_t endAngle)
             return; // The new range already exists.
         }
 
-#if _DEBUG
+#ifdef DENG_DEBUG
         if(ci == ci->next)
-            Con_Error("C_AddRange: loop1 %p linked to itself: %x => %x\n",ci,ci->start,ci->end);
+            Con_Error("C_AddRange: loop1 %p linked to itself: %x => %x\n", ci, ci->start, ci->end);
 #endif
     }
 
     // Now check if any of the old ranges are contained by the new one.
-    for(ClipNode* ci = clipHead; ci;)
+    for(ClipNode *ci = clipHead; ci;)
     {
         if(ci->start >= startAngle && ci->end <= endAngle)
         {
-            ClipNode* crange = ci;
+            ClipNode *crange = ci;
 
             /*
             LOG_DEBUG(QString("Removing contained range %1 => %2")
@@ -311,8 +312,8 @@ static void C_AddRange(binangle_t startAngle, binangle_t endAngle)
     // Now it is possible that the new range overlaps one or two old ranges.
     // If two are overlapped, they are consecutive. First we'll try to find
     // a range that overlaps the beginning.
-    ClipNode* crange = 0;
-    for(ClipNode* ci = clipHead; ci; ci = ci->next)
+    ClipNode *crange = 0;
+    for(ClipNode *ci = clipHead; ci; ci = ci->next)
     {
         // In preparation for the next stage, find a good spot for the range.
         if(ci->start < endAngle)
@@ -406,7 +407,7 @@ static void C_AddRange(binangle_t startAngle, binangle_t endAngle)
     else
     {
         // Add the new range after crange.
-        ClipNode* ci = C_NewRange(startAngle, endAngle);
+        ClipNode *ci = C_NewRange(startAngle, endAngle);
         ci->next = crange->next;
         if(ci->next)
             ci->next->prev = ci;
@@ -415,15 +416,15 @@ static void C_AddRange(binangle_t startAngle, binangle_t endAngle)
     }
 }
 
-static OccNode* C_NewOcclusionRange(binangle_t stAng, binangle_t endAng,
-    float const normal[3], boolean topHalf)
+static OccNode *C_NewOcclusionRange(binangle_t stAng, binangle_t endAng,
+    float const normal[3], bool topHalf)
 {
-    OccNode* node = reinterpret_cast<OccNode*>(C_RoverGet(&occNodes));
+    OccNode *node = reinterpret_cast<OccNode *>(C_RoverGet(&occNodes));
     if(!node)
     {
         // Allocate a new node.
-        node = static_cast<OccNode*>(Z_Malloc(sizeof(OccNode), PU_APPSTATIC, 0));
-        C_RoverAdd(&occNodes, reinterpret_cast<RoverNode*>(node));
+        node = static_cast<OccNode *>(Z_Malloc(sizeof(OccNode), PU_APPSTATIC, 0));
+        C_RoverAdd(&occNodes, reinterpret_cast<RoverNode *>(node));
     }
 
     node->flags = (topHalf ? OCNF_TOPHALF : 0);
@@ -434,7 +435,7 @@ static OccNode* C_NewOcclusionRange(binangle_t stAng, binangle_t endAng,
     return node;
 }
 
-static void C_RemoveOcclusionRange(OccNode* orange)
+static void C_RemoveOcclusionRange(OccNode *orange)
 {
     // If this is the head, move it to the next one.
     if(occHead == orange)
@@ -452,20 +453,20 @@ static void C_RemoveOcclusionRange(OccNode* orange)
  * The given range must be safe.
  */
 static void C_AddOcclusionRange(binangle_t start, binangle_t end, float const normal[3],
-    boolean topHalf)
+    bool topHalf)
 {
     // Is the range valid?
     if(start > end) return;
 
     // A new range will be added.
-    OccNode* newor = C_NewOcclusionRange(start, end, normal, topHalf);
+    OccNode *newor = C_NewOcclusionRange(start, end, normal, topHalf);
 
     // Are there any previous occlusion nodes?
     if(!occHead)
     {
         // No; this is the first.
         occHead = newor;
-        occHead->next = occHead->prev = NULL;
+        occHead->next = occHead->prev = 0;
         return;
     }
 
@@ -473,9 +474,9 @@ static void C_AddOcclusionRange(binangle_t start, binangle_t end, float const no
     /// new orange. But how to do the check efficiently?
 
     // Add the new occlusion range to the appropriate position.
-    OccNode* orange = occHead;
-    OccNode* last = 0;
-    boolean done = false;
+    OccNode *orange = occHead;
+    OccNode *last = 0;
+    bool done = false;
     while(orange && !done)
     {
         // The list of oranges is sorted by the start angle.
@@ -506,7 +507,7 @@ static void C_AddOcclusionRange(binangle_t start, binangle_t end, float const no
     // All right, add the new range to the end of the list.
     last->next = newor;
     newor->prev = last;
-    newor->next = NULL;
+    newor->next = 0;
 }
 
 /**
@@ -516,7 +517,7 @@ static void C_AddOcclusionRange(binangle_t start, binangle_t end, float const no
  *              1: orange was merged into other.
  *              2: other was merged into orange.
  */
-static int C_TryMergeOccludes(OccNode* orange, OccNode* other)
+static int C_TryMergeOccludes(OccNode *orange, OccNode *other)
 {
     // We can't test this steep planes.
     if(!orange->normal[VZ]) return 0;
@@ -569,19 +570,19 @@ static int C_TryMergeOccludes(OccNode* orange, OccNode* other)
  * Try to merge oranges with matching ranges. (Quite a number may be
  * produced as a result of the cuts.)
  */
-static void C_MergeOccludes(void)
+static void C_MergeOccludes()
 {
-    OccNode* orange = occHead;
-    boolean stopScan = false;
+    OccNode *orange = occHead;
+    bool stopScan = false;
     while(!stopScan)
     {
         if(orange && orange->next)
         {
-            OccNode* next = orange->next;
+            OccNode *next = orange->next;
 
             // Find a good one to test with.
-            OccNode* other = orange->next;
-            boolean isDone = false;
+            OccNode *other = orange->next;
+            bool isDone = false;
             while(!isDone)
             {
                 if(other && orange->start == other->start)
@@ -639,7 +640,7 @@ static void C_CutOcclusionRange(binangle_t startAngle, binangle_t endAngle)
     // (Must preserve the ascending order of the start angles.)
     OccNode *after = 0;
     OccNode *orange = occHead;
-    boolean isDone = false;
+    bool isDone = false;
     while(!isDone)
     {
         // We want the orange with the smallest start angle, but one that
@@ -796,18 +797,11 @@ void C_AddRangeFromViewRelPoints(coord_t const from[], coord_t const to[])
                    bamsAtan2(int( fromDir[VY] * 100 ), int( fromDir[VX] * 100 )));
 }
 
-void C_AddRangeFromViewRelPointsXY(coord_t x1, coord_t y1, coord_t x2, coord_t y2)
-{
-    vec2d_t from = { x1, y1 };
-    vec2d_t to   = { x2, y2 };
-    C_AddRangeFromViewRelPoints(from, to);
-}
-
 /**
  * If necessary, cut the given range in two.
  */
 static void C_SafeAddOcclusionRange(binangle_t startAngle, binangle_t endAngle,
-    float *normal, boolean tophalf)
+    float *normal, bool tophalf)
 {
     // Is this range already clipped?
     if(!C_SafeCheckRange(startAngle, endAngle)) return;
@@ -832,15 +826,15 @@ static void C_SafeAddOcclusionRange(binangle_t startAngle, binangle_t endAngle,
     }
 }
 
-void C_AddViewRelOcclusion(coord_t const *v1, coord_t const *v2, coord_t height, boolean topHalf)
+void C_AddViewRelOcclusion(coord_t const from[], coord_t const to[], coord_t height, bool topHalf)
 {
     /// @todo Optimize:: Check if the given line is already occluded?
 
     // Calculate the occlusion plane normal.
     // We'll use the game's coordinate system (left-handed, but Y and Z are swapped).
     vec3d_t viewToV1, viewToV2;
-    V3d_Set(viewToV1, v1[VX] - vOrigin[VX], v1[VY] - vOrigin[VZ], height - vOrigin[VY]);
-    V3d_Set(viewToV2, v2[VX] - vOrigin[VX], v2[VY] - vOrigin[VZ], height - vOrigin[VY]);
+    V3d_Set(viewToV1, from[VX] - vOrigin[VX], from[VY] - vOrigin[VZ], height - vOrigin[VY]);
+    V3d_Set(viewToV2,   to[VX] - vOrigin[VX],   to[VY] - vOrigin[VZ], height - vOrigin[VY]);
 
     // Do not attempt to occlude with a zero-length range.
     binangle_t startAngle = C_PointToAngle(viewToV2);
@@ -853,13 +847,12 @@ void C_AddViewRelOcclusion(coord_t const *v1, coord_t const *v2, coord_t height,
                               topHalf ? viewToV1 : viewToV2);
 
 #ifdef DENG_DEBUG
-    vec3f_t testPos;
-    V3f_Set(testPos, 0, 0, (topHalf ? 1000 : -1000));
+    vec3f_t testPos; V3f_Set(testPos, 0, 0, (topHalf ? 1000 : -1000));
     if(bool Failed_C_AddViewRelOcclusion_SideTest = V3f_DotProduct(testPos, normal) < 0)
     {
         // Uh-oh.
         LOG_WARNING("C_AddViewRelOcclusion: Wrong side v1[x:%f, y:%f] v2[x:%f, y:%f] view[x:%f, y:%f]!")
-                << v1[VX] << v1[VY] << v2[VX] << v2[VY]
+                << from[VX] << from[VY] << to[VX] << to[VY]
                 << vOrigin[VX] << vOrigin[VZ];
         DENG_ASSERT(!Failed_C_AddViewRelOcclusion_SideTest);
     }
@@ -914,205 +907,6 @@ int C_IsPointVisible(coord_t x, coord_t y, coord_t height)
 }
 
 /**
- * @note Unused and untested. Almost certainly doesn't work correctly.
- */
-#if 0
-static boolean C_IsSegOccluded(coord_t relv1[3], coord_t relv2[3], coord_t reltop, coord_t relbottom,
-    binangle_t startAngle, binangle_t endAngle)
-{
-    // The segment is always fully occluded from startAngle to occAngle.
-    float cross[3], testNormal[3];
-    binangle_t occAngle, crossAngle, trueStart, trueEnd;
-    OccNode *orange;
-    ClipNode *ci;
-    boolean side1, side2, isSafe;
-
-    // See if the given actual test range is safe. (startAngle and endAngle
-    // always are.)
-    trueStart = C_PointToAngle(relv2);
-    trueEnd = C_PointToAngle(relv1);
-    isSafe = (trueStart < trueEnd);
-
-    // startAngle and endAngle are the real, safe range. It's first clipped
-    // by any available clipnodes. We already know that no clipnode fully
-    // contains the test range.
-    for(ci = clipHead; ci; ci = ci->next)
-    {
-        // Does this clipnode partially overlap the test range?
-        if(startAngle >= ci->start && startAngle <= ci->end)
-        {
-            // Start of the test range gets clipped.
-            startAngle = ci->end;
-        }
-        if(endAngle >= ci->start && endAngle <= ci->end)
-        {
-            // End of the test range gets clipped.
-            endAngle = ci->start;
-        }
-    }
-
-    // In the beginning we have occluded nothing, i.e. up to the start angle.
-    occAngle = startAngle;
-
-    for(orange = occHead; orange; orange = orange->next)
-    {
-        if(occAngle >= endAngle)
-            return true; // Fully occluded.
-
-        // This is the quickest way out of there: if we come across an
-        // occlusion range that begins AFTER the occAngle, the portion
-        // in between obviously won't be occluded by anybody (since oranges
-        // are sorted by ascending start angles).
-        if(orange->start > occAngle)
-            return false;
-        if(orange->end < occAngle)
-            continue; // Useless...
-
-        /*
-        if(orange->end < startAngle) continue; // Doesn't overlap.
-        if(orange->start > endAngle) break; // The rest are past the end.
-         */
-
-        // This orange overlaps the test range. Let's determine the test
-        // plane we will be using.
-        if(orange->flags & OCNF_TOPHALF)
-        {
-            // Tophalf is occluded, so test with the bottom of the seg.
-            relv1[VZ] = relv2[VZ] = relbottom;
-        }
-        else
-        {
-            // Bottomhalf is occluded, so test with the top of the seg.
-            relv1[VZ] = relv2[VZ] = reltop;
-        }
-
-        // Side=true means 'occluded'. Note that side2's angle is smaller than side1's.
-        side1 = V3d_DotProductf(relv1, orange->normal) > 0;
-        side2 = V3d_DotProductf(relv2, orange->normal) > 0;
-        if(side1 && side2)
-        {
-            // Does the orange fully contain the remaining portion of the seg?
-            if(occAngle >= orange->start && endAngle <= orange->end)
-                return true; // Fully occluded by this orange!
-
-            // Both the start and end vertex of the seg are occluded by this
-            // orange, but the orange doesn't cover the whole seg.
-            if(orange->end > occAngle)
-                occAngle = orange->end;
-
-            // Now we know that the seg has been occluded from the beginning
-            // to occAngle.
-            continue; // Find more oranges.
-        }
-
-        if(!side1 && !side2)
-        {
-            // This orange does not fully overlap the seg. Let's hope that
-            // some other orange will.
-            continue;
-        }
-
-        // The test plane crosses the occlusion plane somewhere inside the
-        // seg (because the endpoints of the test seg were at different sides
-        // of the occlusion plane). Calculate the normal of the test plane.
-        V3f_CrossProductd(testNormal, relv1, relv2);
-
-        // Calculate the angle of the cross line.
-        V3f_CrossProduct(cross, testNormal, orange->normal);
-        crossAngle = C_PointToAngle(cross);
-        if(isSafe)
-        {
-            if(crossAngle < trueStart || crossAngle > trueEnd)
-            {
-                crossAngle += BANG_180; // Flip over.
-                if(crossAngle < trueStart || crossAngle > trueEnd)
-                    Con_Error("Cross line behaves strangely(1) (st=%x end=%x crs=%x).\n", trueStart, trueEnd,
-                              crossAngle);
-            }
-        }
-        else
-        {
-            if(crossAngle < trueStart && crossAngle > trueEnd)
-            {
-                crossAngle += BANG_180;
-                if(crossAngle < trueStart && crossAngle > trueEnd)
-                    Con_Error("Cross line behaves strangely(2) (st=%x end=%x crs=%x).\n", trueStart, trueEnd,
-                              crossAngle);
-            }
-        }
-
-        // Remember, side2 has a smaller angle.
-
-        /// @todo What about trueStart/trueEnd!!! and isSafe! it must have
-        ///        an effect on this...
-
-        if(side2)
-        {
-            // We have an occlusion up to the cross point.
-            if(crossAngle > occAngle)
-                occAngle = crossAngle;
-        }
-        else
-        // We have an occlusion starting from crossAngle.
-        {
-            if(crossAngle <= occAngle)
-            {
-                // The occlusion begins before or at the currently occluded portion.
-                if(orange->end > occAngle)
-                    occAngle = orange->end;
-            }
-        }
-    }
-    // If the occlusion happened up to the end angle, we're OK.
-    return (occAngle >= endAngle);
-}
-
-/**
- * @note Unused and untested. Almost certainly doesn't work correctly.
- * @return  @c =true if the segment is visible according to the current clipnode
- *          and occlusion information.
- */
-static boolean C_CheckSeg(coord_t *v1, coord_t *v2, coord_t top, coord_t bottom)
-{
-    coord_t reltop    = top    - vOrigin[VY];
-    coord_t relbottom = bottom - vOrigin[VY];
-
-    coord_t relv1[3];
-    relv1[VX] = v1[VX] - vOrigin[VX];
-    relv1[VY] = v1[VY] - vOrigin[VZ];
-    relv1[VZ] = 0;
-
-    coord_t relv2[3];
-    relv2[VX] = v2[VX] - vOrigin[VX];
-    relv2[VY] = v2[VY] - vOrigin[VZ];
-    relv2[VZ] = 0;
-
-    // Determine the range.
-    binangle_t start = C_PointToAngle(relv2);
-    binangle_t end   = C_PointToAngle(relv1);
-
-    if(start == end)
-        return true; // Might as well be visible...
-
-    if(!C_SafeCheckRange(start, end))
-        return false; // Entirely clipped.
-
-    // Now the more difficult part... The range may be occluded by a number
-    // of occlusion ranges, but we must determine whether these occlude the
-    // segment fully, in 3D.
-    if(start < end)
-    {
-        // The range doesn't wrap around.
-        return !C_IsSegOccluded(relv1, relv2, reltop, relbottom, start, end);
-    }
-
-    // The range wraps around.
-    return !C_IsSegOccluded(relv1, relv2, reltop, relbottom, start, BANG_MAX)
-        || !C_IsSegOccluded(relv1, relv2, reltop, relbottom, 0, end);
-}
-#endif
-
-/**
  * The specified range must be safe!
  */
 static int C_IsRangeVisible(binangle_t startAngle, binangle_t endAngle)
@@ -1142,23 +936,14 @@ static int C_SafeCheckRange(binangle_t startAngle, binangle_t endAngle)
 
 int C_CheckRangeFromViewRelPoints(coord_t const from[], coord_t const to[])
 {
-    vec2d_t eye, fromDir, toDir;
-
     if(devNoCulling) return true;
 
-    V2d_Set(eye, vOrigin[VX], vOrigin[VZ]);
-    V2d_Subtract(fromDir, from, eye);
-    V2d_Subtract(toDir, to, eye);
+    vec2d_t eye;     V2d_Set(eye, vOrigin[VX], vOrigin[VZ]);
+    vec2d_t fromDir; V2d_Subtract(fromDir, from, eye);
+    vec2d_t toDir;   V2d_Subtract(toDir, to, eye);
 
     return C_SafeCheckRange(bamsAtan2(int(   toDir[VY] * 1000 ), int(   toDir[VX] * 1000 )) - BANG_45/90,
                             bamsAtan2(int( fromDir[VY] * 1000 ), int( fromDir[VX] * 1000 )) + BANG_45/90);
-}
-
-int C_CheckRangeFromViewRelPointsXY(coord_t x1, coord_t y1, coord_t x2, coord_t y2)
-{
-    vec2d_t from = { x1, y1 };
-    vec2d_t to   = { x2, y2 };
-    return C_CheckRangeFromViewRelPoints(from, to);
 }
 
 int C_IsAngleVisible(binangle_t bang)
@@ -1173,19 +958,6 @@ int C_IsAngleVisible(binangle_t bang)
     // No one clipped this angle.
     return true;
 }
-
-#if 0
-static ClipNode *C_AngleClippedBy(binangle_t bang)
-{
-    for(ClipNode *ci = clipHead; ci; ci = ci->next)
-    {
-        if(bang > ci->start && bang < ci->end)
-            return ci;
-    }
-    // No one clipped this angle.
-    return 0;
-}
-#endif
 
 int C_CheckBspLeaf(BspLeaf *leaf)
 {

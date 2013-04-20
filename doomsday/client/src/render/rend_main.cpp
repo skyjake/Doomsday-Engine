@@ -2633,6 +2633,11 @@ static void writeLeafPolyobjs()
         if(hedge->_frameFlags & HEDGEINF_FACINGFRONT)
         {
             writeWallSections(*hedge);
+            // We can occlude the wall range if the opening is filled (when the viewer is not in the void).
+            if(opaque && !P_IsInVoid(viewPlayer))
+            {
+                C_AddRangeFromViewRelPoints(hedge->v1Origin(), hedge->v2Origin());
+            }
         }
     }
 }
