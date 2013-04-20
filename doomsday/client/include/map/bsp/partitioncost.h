@@ -59,14 +59,14 @@ struct PartitionCost
 
     inline PartitionCost &addHEdgeRight(HEdge const &hedge)
     {
-        if(hedge.hasLine()) realRight += 1;
+        if(hedge.hasLineSide()) realRight += 1;
         else                miniRight += 1;
         return *this;
     }
 
     inline PartitionCost &addHEdgeLeft(HEdge const &hedge)
     {
-        if(hedge.hasLine()) realLeft += 1;
+        if(hedge.hasLineSide()) realLeft += 1;
         else                miniLeft += 1;
         return *this;
     }

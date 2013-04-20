@@ -102,12 +102,12 @@ DENG2_PIMPL(GameMap)
             builder.take(hedge);
 
             // Add this HEdge to the LUT.
-            hedge->_origIndex = hedges.count();
+            hedge->setIndex(hedges.count());
             hedges.append(hedge);
 
-            if(hedge->hasLine())
+            if(hedge->hasLineSide())
             {
-                Vertex const &vtx = hedge->line().vertex(hedge->lineSideId());
+                Vertex const &vtx = hedge->lineSide().from();
                 hedge->_lineOffset = V2d_Distance(hedge->v1Origin(), vtx.origin());
             }
 
@@ -791,7 +791,7 @@ int GameMap::bspLeafIndex(BspLeaf const *bspLeaf) const
 int GameMap::hedgeIndex(HEdge const *hedge) const
 {
     if(!hedge) return -1;
-    return hedge->origIndex();
+    return hedge->index();
 }
 
 int GameMap::bspNodeIndex(BspNode const *bspLeaf) const

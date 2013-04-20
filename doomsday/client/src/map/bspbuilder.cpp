@@ -128,7 +128,7 @@ public:
                 HEdge *hedge = it->first;
                 Sector *facingSector = it->second;
 
-                if(hedge->hasLine())
+                if(hedge->hasLineSide())
                     LOG_WARNING("Sector #%u has migrant half-edge facing #%u (line #%u).")
                         << facingSector->origIndex()   - 1
                         << hedge->lineSide().sector().origIndex() - 1

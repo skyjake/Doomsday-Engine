@@ -1247,7 +1247,7 @@ static bool writeWallSection2(HEdge &hedge, Vector3f const &normal,
             RendRadioWallSectionParms radioParms;
             std::memset(&radioParms, 0, sizeof(radioParms));
 
-            radioParms.line      = hedge.linePtr();
+            radioParms.line      = &hedge.line();
 
             LineSideRadioData &frData = Rend_RadioDataForLineSide(hedge.lineSide());
             radioParms.botCn     = frData.bottomCorners;
@@ -1264,7 +1264,7 @@ static bool writeWallSection2(HEdge &hedge, Vector3f const &normal,
             radioParms.wall.right.firstDiv = parm.wall.right.firstDiv;
             radioParms.wall.right.divCount = parm.wall.right.divCount;
 
-            if(!isTwosidedMiddle && !(hedge.hasTwin() && !(hedge.twin().hasLine() && hedge.twin().lineSide().hasSections())))
+            if(!isTwosidedMiddle && !(hedge.hasTwin() && !(hedge.twin().hasLineSide() && hedge.twin().lineSide().hasSections())))
             {
                 if(hedge.hasTwin())
                     radioParms.backSec = hedge.twin().bspLeafSectorPtr();
@@ -1676,7 +1676,7 @@ static bool writeWallSection(HEdge &hedge, int section,
 
     if(opacity > 0)
     {
-        bool const isTwoSided = (hedge.hasLine() && hedge.line().hasFrontSections() && hedge.line().hasBackSections())? true:false;
+        bool const isTwoSided = (hedge.hasLineSide() && hedge.line().hasFrontSections() && hedge.line().hasBackSections())? true:false;
 
         Vector2f materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
                                (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
@@ -1792,21 +1792,20 @@ static bool writeWallSection(HEdge &hedge, int section,
         // Do not apply an angle based lighting delta if this surface's material
         // has been chosen as a HOM fix (lighting must be consistent with that
         // applied to the back plane (on this half-edge's back side)).
-        if(hedge.hasLine() && hedge.lineSide().hasSections() &&
+        if(hedge.hasLineSide() && hedge.lineSide().hasSections() &&
            isTwoSided && section != Line::Side::Middle && surface.hasFixMaterial())
         {
             deltaL = deltaR = 0;
         }
         else
         {
-            Line const &line = hedge.line();
-
             sideLightLevelDeltas(hedge.lineSide(), &deltaL, &deltaR);
 
             // Linear interpolation of the line light deltas to the edges of the hedge.
+            coord_t const &lineLength = hedge.line().length();
             float diff = deltaR - deltaL;
-            deltaR = deltaL + ((hedge.lineOffset() + hedge.length()) / line.length()) * diff;
-            deltaL += (hedge.lineOffset() / line.length()) * diff;
+            deltaR = deltaL + ((hedge.lineOffset() + hedge.length()) / lineLength) * diff;
+            deltaL += (hedge.lineOffset() / lineLength) * diff;
         }
 
         opaque = writeWallSection2(hedge,
@@ -1853,7 +1852,7 @@ static bool writeWallSections2(HEdge &hedge, int sections)
     BspLeaf *leaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(leaf));
 
-    DENG_ASSERT(hedge.hasLine());
+    DENG_ASSERT(hedge.hasLineSide());
     DENG_ASSERT(hedge.lineSide().hasSections());
     DENG_ASSERT(hedge._frameFlags & HEDGEINF_FACINGFRONT);
 
@@ -1905,8 +1904,8 @@ static bool writeWallSections2Polyobj(HEdge &hedge, int sections)
     BspLeaf *leaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(leaf));
 
-    DENG_ASSERT(hedge.hasLine() && hedge.line().isFromPolyobj());
-    DENG_ASSERT(hedge.lineSide().hasSections());
+    DENG_ASSERT(hedge.hasLineSide() && hedge.lineSide().hasSections());
+    DENG_ASSERT(hedge.line().isFromPolyobj());
     DENG_ASSERT(hedge._frameFlags & HEDGEINF_FACINGFRONT);
 
     // Only a "middle" section.
@@ -1943,7 +1942,7 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
     BspLeaf *leaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(leaf));
 
-    DENG_ASSERT(hedge.hasLine() && hedge.hasTwin());
+    DENG_ASSERT(hedge.hasLineSide() && hedge.hasTwin());
     DENG_ASSERT(hedge.lineSide().hasSections());
     DENG_ASSERT(hedge._frameFlags & HEDGEINF_FACINGFRONT);
 
@@ -2094,7 +2093,7 @@ static void markHEdgesFacingFront(BspLeaf *leaf)
         do
         {
             // Occlusions can only happen where two sectors contact.
-            if(hedge->hasLine())
+            if(hedge->hasLineSide())
             {
                 // Which way should it be facing?
                 if(!(viewFacingDot(hedge->v1Origin(), hedge->v2Origin()) < 0))
@@ -2142,7 +2141,7 @@ static void occludeFrontFacingHEdges()
         HEdge *hedge = base;
         do
         {
-            if(hedge->hasLine())
+            if(hedge->hasLineSide())
             {
                 occludeFrontFacingHEdge(*hedge);
             }
@@ -2219,7 +2218,7 @@ static int chooseHEdgeSkyFixes(HEdge *hedge, int skyCap)
         return 0; // Wha?
 
     // "minisegs" have no lines
-    if(!hedge->hasLine()) return 0;
+    if(!hedge->hasLineSide()) return 0;
     if(!hedge->bspLeaf().hasSector()) return 0; // $degenleaf
 
     int fixes = 0;
@@ -2340,7 +2339,7 @@ static void buildSkyFixStrip(BspLeaf *leaf, HEdge *startNode, HEdge *endNode,
     }
 
     HEdge *node = startNode;
-    float texS = float( node->hasLine()? node->lineOffset() : 0 );
+    float texS = float( node->hasLineSide()? node->lineOffset() : 0 );
     uint n = 0;
     do
     {
@@ -2624,7 +2623,7 @@ static void writeWallSections(HEdge &hedge)
     BspLeaf *leaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(leaf));
 
-    DENG_ASSERT(hedge.hasLine());
+    DENG_ASSERT(hedge.hasLineSide());
     DENG_ASSERT(hedge.lineSide().hasSections());
     DENG_ASSERT(hedge._frameFlags & HEDGEINF_FACINGFRONT);
 
@@ -2633,7 +2632,7 @@ static void writeWallSections(HEdge &hedge)
 
     if(!hedge.hasTwin() || !hedge.twin().bspLeafSectorPtr() ||
        /* solid side of a "one-way window"? */
-       !(hedge.twin().hasLine() && hedge.twin().lineSide().hasSections()))
+       !(hedge.twin().hasLineSide() && hedge.twin().lineSide().hasSections()))
     {
         // One-sided.
         opaque = writeWallSections2(hedge, pvisSections);
@@ -2662,7 +2661,7 @@ static void writeLeafWallSections()
     {
         // Ignore back facing walls.
         if(hedge->_frameFlags & HEDGEINF_FACINGFRONT)
-        if(hedge->hasLine() && hedge->lineSide().hasSections()) // "mini-hedges" have no lines and "windows" have no sections.
+        if(hedge->hasLineSide() && hedge->lineSide().hasSections()) // "mini-hedges" have no lines and "windows" have no sections.
         {
             writeWallSections(*hedge);
         }
@@ -2762,7 +2761,7 @@ static void occludeBspLeaf(BspLeaf const *bspLeaf, bool forwardFacing)
     do
     {
         // Occlusions can only happen where two sectors contact.
-        if(hedge->hasLine() && hedge->hasTwin() && hedge->twin().bspLeaf().hasSector() &&
+        if(hedge->hasLineSide() && hedge->hasTwin() && hedge->twin().bspLeaf().hasSector() &&
            (forwardFacing == ((hedge->_frameFlags & HEDGEINF_FACINGFRONT)? true : false)))
         {
             Sector *backSec      = hedge->twin().bspLeafSectorPtr();
@@ -2945,7 +2944,7 @@ void Rend_RenderSurfaceVectors()
     vec3f_t origin;
     foreach(HEdge *hedge, theMap->hedges())
     {
-        if(!hedge->hasLine() || hedge->line().isFromPolyobj())
+        if(!hedge->hasLineSide() || hedge->line().isFromPolyobj())
             continue;
 
         if(!hedge->hasBspLeaf() || !hedge->bspLeaf().hasSector())

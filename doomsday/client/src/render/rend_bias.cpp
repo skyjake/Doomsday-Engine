@@ -285,7 +285,7 @@ void SB_InitForMap(char const *uniqueID)
     // First, determine the total number of vertexillum_ts we need.
     foreach(HEdge *hedge, theMap->hedges())
     {
-        if(hedge->hasLine())
+        if(hedge->hasLineSide())
             numVertIllums++;
     }
 
@@ -312,7 +312,7 @@ void SB_InitForMap(char const *uniqueID)
     // Allocate bias surfaces and attach vertexillum_ts.
     foreach(HEdge *hedge, theMap->hedges())
     {
-        if(!hedge->hasLine()) continue;
+        if(!hedge->hasLineSide()) continue;
 
         for(int i = 0; i < 3; ++i)
         {

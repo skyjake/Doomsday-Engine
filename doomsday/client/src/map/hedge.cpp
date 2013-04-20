@@ -1,4 +1,4 @@
-/** @file hedge.cpp Map Geometry Half-Edge.
+/** @file map/hedge.cpp World Map Geometry Half-Edge.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -22,8 +22,6 @@
 
 #include <de/Log>
 
-#include "de_base.h"
-
 #include "BspLeaf"
 #include "Line"
 #include "Vertex"
@@ -34,41 +32,56 @@
 
 using namespace de;
 
-HEdge::HEdge() : MapElement(DMU_HEDGE)
+DENG2_PIMPL(HEdge)
 {
-    _v[0] = 0;
-    _v[1] = 0;
+    /// Map Line::Side attributed to the half-edge. Can be @c 0 (mini-edge).
+    Line::Side *lineSide;
+
+    /// 1-based index for the half-edge in GameMap's LUT.
+    uint index;
+
+    Instance(Public *i)
+        : Base(i),
+          lineSide(0),
+          index(0) // no-index
+    {}
+};
+
+HEdge::HEdge(Vertex &from, Line::Side *lineSide)
+    : MapElement(DMU_HEDGE), d(new Instance(this))
+{
+    _from = &from;
+    _to = 0;
     _next = 0;
     _prev = 0;
     _twin = 0;
     _bspLeaf = 0;
-    _line = 0;
-    _lineSide = 0;
     _angle = 0;
     _length = 0;
     _lineOffset = 0;
     std::memset(_bsuf, 0, sizeof(_bsuf));
     _frameFlags = 0;
-    _origIndex = 0;
+
+    d->lineSide = lineSide;
 }
 
 HEdge::HEdge(HEdge const &other)
-    : MapElement(DMU_HEDGE)
+    : MapElement(DMU_HEDGE), d(new Instance(this))
 {
-    _v[0] = other._v[0];
-    _v[1] = other._v[1];
+    _from = other._from;
+    _to = other._to;
     _next = other._next;
     _prev = other._prev;
     _twin = other._twin;
     _bspLeaf = other._bspLeaf;
-    _line = other._line;
-    _lineSide = other._lineSide;
     _angle = other._angle;
     _length = other._length;
     _lineOffset = other._lineOffset;
     std::memcpy(_bsuf, other._bsuf, sizeof(_bsuf));
     _frameFlags = other._frameFlags;
-    _origIndex = other._origIndex;
+
+    d->lineSide = other.d->lineSide;
+    d->index = other.d->index;
 }
 
 HEdge::~HEdge()
@@ -86,8 +99,8 @@ HEdge::~HEdge()
 
 Vertex &HEdge::vertex(int to)
 {
-    DENG2_ASSERT(_v[to? TO:FROM]);
-    return *_v[to? TO:FROM];
+    DENG_ASSERT((to? _to : _from) != 0);
+    return to? *_to : *_from;
 }
 
 Vertex const &HEdge::vertex(int to) const
@@ -97,13 +110,13 @@ Vertex const &HEdge::vertex(int to) const
 
 HEdge &HEdge::next() const
 {
-    DENG2_ASSERT(_next);
+    DENG2_ASSERT(_next != 0);
     return *_next;
 }
 
 HEdge &HEdge::prev() const
 {
-    DENG2_ASSERT(_prev);
+    DENG2_ASSERT(_prev != 0);
     return *_prev;
 }
 
@@ -137,39 +150,29 @@ BspLeaf &HEdge::bspLeaf() const
     throw MissingBspLeafError("HEdge::bspLeaf", "No BSP leaf is associated");
 }
 
-bool HEdge::hasLine() const
+bool HEdge::hasLineSide() const
 {
-    return _line != 0;
+    return d->lineSide != 0;
 }
 
-Line &HEdge::line() const
+Line::Side &HEdge::lineSide() const
 {
-    if(_line)
+    if(d->lineSide)
     {
-        return *_line;
+        return *d->lineSide;
     }
     /// @throw MissingLineError Attempted with no line attributed.
-    throw MissingLineError("HEdge::line", "No line is attributed");
-}
-
-int HEdge::lineSideId() const
-{
-    if(_line)
-    {
-        return _lineSide;
-    }
-    /// @throw MissingLineError Attempted with no line attributed.
-    throw MissingLineError("HEdge::lineSide", "No line is attributed");
+    throw MissingLineSideError("HEdge::lineSide", "No line.side is attributed");
 }
 
 coord_t HEdge::lineOffset() const
 {
-    if(_line)
+    if(d->lineSide)
     {
         return _lineOffset;
     }
     /// @throw MissingLineError Attempted with no line attributed.
-    throw MissingLineError("HEdge::lineOffset", "No line is attributed");
+    throw MissingLineSideError("HEdge::lineOffset", "No line.side is attributed");
 }
 
 angle_t HEdge::angle() const
@@ -182,9 +185,14 @@ coord_t HEdge::length() const
     return _length;
 }
 
-uint HEdge::origIndex() const
+uint HEdge::index() const
 {
-    return _origIndex;
+    return d->index;
+}
+
+void HEdge::setIndex(uint newIndex)
+{
+    d->index = newIndex;
 }
 
 static walldivnode_t *findWallDivNodeByZOrigin(walldivs_t *wallDivs, coord_t height)
@@ -205,7 +213,7 @@ static void addWallDivNodesForPlaneIntercepts(HEdge const *hedge, walldivs_t *wa
     bool const clockwise = !doRight;
 
     // Polyobj edges are never split.
-    if(!hedge->hasLine() || hedge->line().isFromPolyobj()) return;
+    if(!hedge->hasLineSide() || hedge->line().isFromPolyobj()) return;
 
     bool const isTwoSided = (hedge->line().hasFrontSections() && hedge->line().hasBackSections())? true:false;
 
@@ -219,11 +227,10 @@ static void addWallDivNodesForPlaneIntercepts(HEdge const *hedge, walldivs_t *wa
 
     if(bottomZ >= topZ) return; // Obviously no division.
 
-    Line const &line = hedge->line();
-    Sector const *frontSec = line.sectorPtr(hedge->lineSideId());
+    Sector const *frontSec = hedge->lineSide().sectorPtr();
 
     // Retrieve the start owner node.
-    LineOwner *base = R_GetVtxLineOwner(&line.vertex(hedge->lineSideId()^doRight), &line);
+    LineOwner *base = R_GetVtxLineOwner(&hedge->lineSide().vertex(doRight), &hedge->line());
     LineOwner *own = base;
     bool stopScan = false;
     do
@@ -353,7 +360,7 @@ static void buildWallDiv(walldivs_t *wallDivs, HEdge const *hedge,
 bool HEdge::prepareWallDivs(int section, walldivs_t *leftWallDivs,
     walldivs_t *rightWallDivs, Vector2f *materialOrigin) const
 {
-    DENG_ASSERT(hasLine());
+    DENG_ASSERT(hasLineSide());
 
     Sector const *frontSec, *backSec;
 
@@ -397,15 +404,15 @@ biassurface_t &HEdge::biasSurfaceForGeometryGroup(uint groupId)
 
 coord_t HEdge::pointDistance(const_pvec2d_t point, coord_t *offset) const
 {
-    coord_t direction[2]; V2d_Subtract(direction, _v[1]->origin(), _v[0]->origin());
-    return V2d_PointLineDistance(point, _v[0]->origin(), direction, offset);
+    coord_t direction[2]; V2d_Subtract(direction, _to->origin(), _from->origin());
+    return V2d_PointLineDistance(point, _from->origin(), direction, offset);
 }
 
 coord_t HEdge::pointOnSide(const_pvec2d_t point) const
 {
     DENG2_ASSERT(point);
-    coord_t direction[2]; V2d_Subtract(direction, _v[1]->origin(), _v[0]->origin());
-    return V2d_PointOnLineSide(point, _v[0]->origin(), direction);
+    coord_t direction[2]; V2d_Subtract(direction, _to->origin(), _from->origin());
+    return V2d_PointOnLineSide(point, _from->origin(), direction);
 }
 
 int HEdge::property(setargs_t &args) const
@@ -413,25 +420,25 @@ int HEdge::property(setargs_t &args) const
     switch(args.prop)
     {
     case DMU_VERTEX0:
-        DMU_GetValue(DMT_HEDGE_V, &_v[0], &args, 0);
+        DMU_GetValue(DMT_HEDGE_V, &_from, &args, 0);
         break;
     case DMU_VERTEX1:
-        DMU_GetValue(DMT_HEDGE_V, &_v[1], &args, 0);
+        DMU_GetValue(DMT_HEDGE_V, &_to, &args, 0);
         break;
     case DMU_LENGTH:
         DMU_GetValue(DMT_HEDGE_LENGTH, &_length, &args, 0);
         break;
     case DMU_OFFSET: {
-        coord_t offset = _line? _lineOffset : 0;
+        coord_t offset = d->lineSide? _lineOffset : 0;
         DMU_GetValue(DMT_HEDGE_OFFSET, &offset, &args, 0);
         break; }
-    case DMU_SIDE: {
-        Line::Side *sideAdr = _line? &_line->side(_lineSide) : 0;
-        DMU_GetValue(DMT_HEDGE_SIDE, &sideAdr, &args, 0);
-        break; }
-    case DMU_LINE:
-        DMU_GetValue(DMT_HEDGE_LINE, &_line, &args, 0);
+    case DMU_SIDE:
+        DMU_GetValue(DMT_HEDGE_SIDE, &d->lineSide, &args, 0);
         break;
+    case DMU_LINE: {
+        Line *lineAdr = d->lineSide? &d->lineSide->line() : 0;
+        DMU_GetValue(DMT_HEDGE_LINE, &lineAdr, &args, 0);
+        break; }
     case DMU_FRONT_SECTOR: {
         Sector *sector = bspLeafSectorPtr();
         DMU_GetValue(DMT_HEDGE_SECTOR, &sector, &args, 0);

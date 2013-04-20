@@ -442,7 +442,7 @@ void Sector::planeHeightChanged(Plane &plane, coord_t oldHeight)
             HEdge *hedge = base;
             do
             {
-                if(hedge->hasLine())
+                if(hedge->hasLineSide())
                 {
                     for(uint i = 0; i < 3; ++i)
                     {

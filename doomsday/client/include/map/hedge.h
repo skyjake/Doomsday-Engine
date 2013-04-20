@@ -83,7 +83,7 @@ public:
     DENG2_ERROR(MissingTwinError);
 
     /// Required line attribution is missing. @ingroup errors
-    DENG2_ERROR(MissingLineError);
+    DENG2_ERROR(MissingLineSideError);
 
     /// The referenced geometry group does not exist. @ingroup errors
     DENG2_ERROR(UnknownGeometryGroupError);
@@ -95,8 +95,8 @@ public:
     DENG2_ERROR(WritePropertyError);
 
 public: /// @todo Make private:
-    /// [Start, End] of the segment.
-    Vertex *_v[2];
+    /// Start and End vertexes of the segment.
+    Vertex *_from, *_to;
 
     /// Next half-edge (clockwise) around the @em face.
     HEdge *_next;
@@ -104,17 +104,11 @@ public: /// @todo Make private:
     /// Previous half-edge (anticlockwise) around the @em face.
     HEdge *_prev;
 
-    /// Linked @em twin half-edge (that on the other side of the half-edge).
+    /// Linked @em twin half-edge (that on the other side of "this" half-edge).
     HEdge *_twin;
 
     /// The @em face of the half-edge (a BSP leaf).
     BspLeaf *_bspLeaf;
-
-    /// Map line attributed to the half-edge.
-    Line *_line;
-
-    /// On which side of the attributed line? (either Line::Front or Line::Back)
-    int _lineSide;
 
     /// Point along the attributed line at which v1 occurs; otherwise @c 0.
     coord_t _lineOffset;
@@ -131,11 +125,8 @@ public: /// @todo Make private:
     /// @ref hedgeFrameFlags
     short _frameFlags;
 
-    /// Unique. Set when saving the BSP.
-    uint _origIndex;
-
 public:
-    HEdge();
+    HEdge(Vertex &from, Line::Side *lineSide = 0);
     HEdge(HEdge const &other);
     ~HEdge();
 
@@ -288,40 +279,38 @@ public:
     inline Sector *bspLeafSectorPtr() const { return bspLeaf().sectorPtr(); }
 
     /**
-     * Returns @c true iff a line is attributed to the half-edge.
+     * Returns @c true iff a Line::Side is attributed to the half-edge.
      */
-    bool hasLine() const;
+    bool hasLineSide() const;
 
     /**
-     * Returns the line attributed to the half-edge.
+     * Returns the Line::Side attributed to the half-edge.
      *
-     * @see hasLine()
+     * @see hasLineSide()
      */
-    Line &line() const;
+    Line::Side &lineSide() const;
 
     /**
-     * Returns a pointer to the line attributed to the half-edge; otherwise @c 0.
+     * Convenient accessor method for returning the line of the Line::Side which
+     * is attributed to the half-edge.
      *
-     * @see hasLine()
+     * @see hasLineSide(), lineSide()
      */
-    inline Line *linePtr() const { return hasLine()? &line() : 0; }
+    inline Line &line() const { return lineSide().line(); }
 
     /**
-     * Convenient accessor method for returning the Side of the line attributed
-     * to the half-edge.
+     * Convenient accessor method for returning the line side identifier of the
+     * Line::Side attributed to the half-edge.
      *
-     * @see hasLine(), line()
+     * @see hasLineSide(), lineSide()
      */
-    inline Line::Side &lineSide() const { return line().side(lineSideId()); }
-
-    /**
-     * Returns the logical side of the line attributed to the half-edge.
-     */
-    int lineSideId() const;
+    inline int lineSideId() const { return lineSide().lineSideId(); }
 
     /**
      * Returns the offset point at which v1 occurs from the attributed line for
      * the half-edge.
+     *
+     * @see hasLineSide()
      */
     coord_t lineOffset() const;
 
@@ -336,10 +325,15 @@ public:
     coord_t length() const;
 
     /**
-     * Returns the original index of the half-edge.
-     * @deprecated No longer needed.
+     * Returns the 1-based index of the half-edge in the GameMap's LUT.
      */
-    uint origIndex() const;
+    uint index() const;
+
+    /**
+     * Change the index of the half-edge (which, should be the position of this
+     * map element in GameMap's LUT plus @c 1).
+     */
+    void setIndex(uint newIndex);
 
     /**
      * Returns the distance from @a point to the nearest point along the HEdge [0..1].
@@ -423,6 +417,9 @@ public:
      * @return  Always @c 0 (can be used as an iterator).
      */
     int setProperty(setargs_t const &args);
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 #endif // DENG_WORLD_MAP_HEDGE

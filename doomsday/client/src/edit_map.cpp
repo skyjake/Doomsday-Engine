@@ -901,14 +901,10 @@ boolean MPE_End()
         // Create a hedge for each line of this polyobj.
         foreach(Line *line, polyobj->lines())
         {
-            HEdge *hedge = new HEdge; // Polyobj has ownership.
+            HEdge *hedge = new HEdge(line->v1(), &line->front()); // Polyobj has ownership.
 
-            hedge->_v[0]    = &line->v1();
-            hedge->_v[1]    = &line->v2();
-            hedge->_line    = line;
+            hedge->_to    = &line->v2();
             hedge->_length  = line->length();
-            hedge->_twin    = 0;
-            hedge->_bspLeaf = 0;
 
             line->front().setLeftHEdge(hedge);
             line->front().setRightHEdge(hedge);

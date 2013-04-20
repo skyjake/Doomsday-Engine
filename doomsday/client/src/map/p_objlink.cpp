@@ -366,7 +366,7 @@ static void processHEdge(HEdge *hedge, void *parameters)
     }
 
     // Don't spread if the middle material covers the opening.
-    if(hedge->hasLine())
+    if(hedge->hasLineSide())
     {
         // On which side of the line are we? (distance is from hedge to origin).
         Line::Side &side = hedge->line().side(hedge->lineSideId() ^ (distance < 0));

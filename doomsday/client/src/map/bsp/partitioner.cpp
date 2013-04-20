@@ -378,23 +378,18 @@ DENG2_PIMPL(Partitioner)
      * @return The right half-edge (from @a start to @a end).
      */
     HEdge *buildHEdgesBetweenVertexes(Vertex &start, Vertex &end,
-        Sector *frontSec, Sector *backSec, Line *line,
+        Sector *frontSec, Sector *backSec, Line::Side *frontSide,
         Line *partitionLine)
     {
-        HEdge *right = newHEdge(start, end, *frontSec, line, partitionLine);
+        HEdge *right = newHEdge(start, end, *frontSec, frontSide, partitionLine);
         if(!backSec)
             return right;
 
-        HEdge *left  = newHEdge(end, start, *backSec, line, partitionLine);
+        HEdge *left  = newHEdge(end, start, *backSec, frontSide? &frontSide->back() : 0, partitionLine);
 
         // Twin the half-edges together.
         right->_twin = left;
         left->_twin  = right;
-
-        if(line)
-        {
-            left->_lineSide = Line::Back;
-        }
 
         return right;
     }
@@ -438,7 +433,7 @@ DENG2_PIMPL(Partitioner)
                 }
 
                 front = buildHEdgesBetweenVertexes(line->v1(), line->v2(),
-                                                   frontSec, backSec, line, line);
+                                                   frontSec, backSec, &line->front(), line);
 
                 linkHEdgeInSuperBlockmap(hedgeList, *front);
                 if(front->hasTwin())
@@ -677,10 +672,10 @@ DENG2_PIMPL(Partitioner)
         newInfo.prevOnSide = &oldHEdge;
         oldInfo.nextOnSide = &newHEdge;
 
-        oldHEdge._v[1] = newVert;
+        oldHEdge._to = newVert;
         oldInfo.initFromHEdge(oldHEdge);
 
-        newHEdge._v[0] = newVert;
+        newHEdge._from = newVert;
         newInfo.initFromHEdge(newHEdge);
 
         // Handle the twin.
@@ -696,10 +691,10 @@ DENG2_PIMPL(Partitioner)
             hedgeInfo(newHEdge.twin()).nextOnSide = oldHEdge.twinPtr();
             hedgeInfo(oldHEdge.twin()).prevOnSide = newHEdge.twinPtr();
 
-            oldHEdge.twin()._v[0] = newVert;
+            oldHEdge.twin()._from = newVert;
             hedgeInfo(oldHEdge.twin()).initFromHEdge(oldHEdge.twin());
 
-            newHEdge.twin()._v[1] = newVert;
+            newHEdge.twin()._to = newVert;
             hedgeInfo(newHEdge.twin()).initFromHEdge(newHEdge.twin());
 
             // Has this already been added to a leaf?
@@ -1144,7 +1139,7 @@ DENG2_PIMPL(Partitioner)
                        HEdge const &hedge, PartitionCost &cost)
     {
         // "Mini-hedges" are never potential candidates.
-        if(!hedge.hasLine()) return false;
+        if(!hedge.hasLineSide()) return false;
 
         if(!evalPartitionCostForSuperBlock(block, best, bestCost, hedge, cost))
         {
@@ -1313,7 +1308,7 @@ DENG2_PIMPL(Partitioner)
         bool isOrphan = true;
         foreach(HEdge *hedge, hedges)
         {
-            if(hedge->hasLine() && hedge->lineSide().hasSector())
+            if(hedge->hasLineSide() && hedge->lineSide().hasSector())
             {
                 isOrphan = false;
                 break;
@@ -1352,7 +1347,7 @@ DENG2_PIMPL(Partitioner)
                  * example, stair building). We should instead flag the line
                  * accordingly. -ds
                  */
-                if(hedge->hasLine())
+                if(hedge->hasLineSide())
                 {
                     Line::Side &side = hedge->lineSide();
 
@@ -1608,15 +1603,14 @@ DENG2_PIMPL(Partitioner)
         LOG_AS("Partitioner::configurePartition");
 
         if(!hedge) return false;
-
         // A "mini hedge" is never suitable.
-        if(!hedge->hasLine()) return false;
+        if(!hedge->hasLineSide()) return false;
 
         // Clear the HEdge intercept data associated with points in the half-plane.
         clearPartitionIntercepts();
 
         // We can now reconfire the half-plane itself.
-        setPartitionInfo(hedgeInfo(*hedge), hedge->linePtr());
+        setPartitionInfo(hedgeInfo(*hedge), &hedge->lineSide().line());
 
         Vector2d from = Vector2d(hedge->line().vertex(hedge->lineSideId()).origin());
         Vector2d to   = Vector2d(hedge->line().vertex(hedge->lineSideId()^1).origin());
@@ -1721,10 +1715,10 @@ DENG2_PIMPL(Partitioner)
         HEdge *hedge = base;
         do
         {
-            if(hedge->hasLine() && hedge->line().hasSector(hedge->lineSideId()))
+            if(hedge->hasLineSide() && hedge->lineSide().hasSector())
             {
-                Line &line = hedge->line();
-                Sector &sector = line.sector(hedge->lineSideId());
+                Line &line = hedge->lineSide().line();
+                Sector &sector = hedge->lineSide().sector();
 
                 // The first sector from a non self-referencing line is our best choice.
                 /// @todo Should the presence of sections really affect this? -ds
@@ -1769,7 +1763,7 @@ DENG2_PIMPL(Partitioner)
             forever
             {
                 /// @todo kludge: This should not be done here!
-                if(hedge->hasLine())
+                if(hedge->hasLineSide())
                 {
                     Line::Side &side = hedge->lineSide();
 
@@ -2072,21 +2066,18 @@ DENG2_PIMPL(Partitioner)
     /**
      * Create a new half-edge.
      */
-    HEdge *newHEdge(Vertex &start, Vertex &end, Sector &sec, Line *line = 0,
+    HEdge *newHEdge(Vertex &from, Vertex &to, Sector &sec, Line::Side *side = 0,
                     Line *sourceLine = 0)
     {
-        HEdge *hedge = new HEdge;
-
-        hedge->_v[0] = &start;
-        hedge->_v[1] = &end;
-        hedge->_line = line;
+        HEdge *hedge = new HEdge(from, side);
+        hedge->_to = &to;
 
         // There is now one more HEdge.
         numHEdges += 1;
         hedgeInfos.insert(hedge, HEdgeInfo());
 
         HEdgeInfo &info = hedgeInfo(*hedge);
-        info.line       = line;
+        info.line       = side? &side->line() : 0;
         info.sourceLine = sourceLine;
         info.sector     = &sec;
         info.initFromHEdge(*hedge);
@@ -2333,7 +2324,7 @@ DENG2_PIMPL(Partitioner)
         HEdge const *hedge = base;
         do
         {
-            if(hedge->hasLine()) return true;
+            if(hedge->hasLineSide()) return true;
         } while((hedge = &hedge->next()) != base);
         return false;
     }
@@ -2346,7 +2337,7 @@ DENG2_PIMPL(Partitioner)
             HEdgeInfo const &info = hedgeInfo(*hedge);
 
             LOG_DEBUG("Build: %s %p sector: %d [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
-                << (hedge->hasLine()? "NORM" : "MINI")
+                << (hedge->hasLineSide()? "NORM" : "MINI")
                 << hedge << (info.sector != 0? info.sector->origIndex() - 1 : -1)
                 << hedge->fromOrigin()[VX] << hedge->fromOrigin()[VY]
                 << hedge->toOrigin()[VX] << hedge->toOrigin()[VY];

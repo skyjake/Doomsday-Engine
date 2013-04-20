@@ -255,7 +255,7 @@ DENG2_PIMPL(LineSightTest)
             HEdge const *hedge = base;
             do
             {
-                if(hedge->hasLine() && hedge->line().validCount() != validCount)
+                if(hedge->hasLineSide() && hedge->line().validCount() != validCount)
                 {
                     hedge->line().setValidCount(validCount);
 
