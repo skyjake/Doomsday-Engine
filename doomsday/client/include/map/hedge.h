@@ -397,8 +397,6 @@ public:
      * Prepare wall division data for a section of the HEdge.
      *
      * @param section        Line::Side section to prepare divisions for.
-     * @param frontSector    Sector to use for the front side.
-     * @param backSector     Sector to use for the back side.
      * @param leftWallDivs   Division data for the left edge is written here.
      * @param rightWallDivs  Division data for the right edge is written here.
      * @param materialOrigin Material origin offset data is written here. Can be @c 0.
@@ -406,8 +404,7 @@ public:
      * @return  @c true if divisions were prepared (the specified @a section has a
      *          non-zero Z axis height).
      */
-    bool prepareWallDivs(int section, Sector *frontSector, Sector *backSector,
-        walldivs_t *leftWallDivs, walldivs_t *rightWallDivs,
+    bool prepareWallDivs(int section, walldivs_t *leftWallDivs, walldivs_t *rightWallDivs,
         de::Vector2f *materialOrigin) const;
 
     /**

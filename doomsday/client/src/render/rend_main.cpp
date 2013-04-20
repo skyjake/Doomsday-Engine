@@ -1856,22 +1856,71 @@ static bool writeWallSections2(HEdge &hedge, int sections)
     // Only a "middle" section.
     if(!(sections & Line::Side::MiddleFlag)) return false;
 
-    Sector *frontSector = leaf->sectorPtr();
-    Sector *backSector  = hedge.hasTwin()? hedge.twin().sectorPtr() : 0;
-
     walldivs_t leftWallDivs, rightWallDivs;
     Vector2f materialOrigin;
     bool opaque = false;
 
-    if(hedge.prepareWallDivs(Line::Side::Middle, frontSector, backSector,
-                             &leftWallDivs, &rightWallDivs, &materialOrigin))
+    if(hedge.prepareWallDivs(Line::Side::Middle, &leftWallDivs, &rightWallDivs, &materialOrigin))
     {
         Rend_RadioUpdateForLineSide(hedge.lineSide());
 
         int wsFlags = WSF_ADD_DYNLIGHTS|WSF_ADD_DYNSHADOWS|WSF_ADD_RADIO;
 
         opaque = writeWallSection(hedge, Line::Side::Middle, wsFlags,
-                                  frontSector->lightLevel(), R_GetSectorLightColor(*frontSector),
+                                  leaf->sector().lightLevel(), R_GetSectorLightColor(leaf->sector()),
+                                  &leftWallDivs, &rightWallDivs, materialOrigin);
+    }
+
+    reportLineDrawn(hedge.line());
+    return opaque;
+}
+
+static bool prepareWallDivsPolyobj(Line::Side const &side, int section,
+    walldivs_t *leftWallDivs, walldivs_t *rightWallDivs, Vector2f *materialOrigin = 0)
+{
+    BspLeaf *leaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(leaf));
+
+    coord_t bottom, top;
+    bool visible = R_SideSectionCoords(side, section, leaf->sectorPtr(), 0,
+                                       &bottom, &top, materialOrigin);
+
+    if(!visible) return false;
+
+    WallDivs_Append(leftWallDivs, bottom); // First node.
+    WallDivs_Append(leftWallDivs, top); // Last node.
+
+    WallDivs_Append(rightWallDivs, bottom); // First node.
+    WallDivs_Append(rightWallDivs, top); // Last node.
+
+    return true;
+}
+
+static bool writeWallSections2Polyobj(HEdge &hedge, int sections)
+{
+    BspLeaf *leaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(leaf));
+
+    DENG_ASSERT(hedge.hasLine() && hedge.line().isFromPolyobj());
+    DENG_ASSERT(hedge.lineSide().hasSections());
+    DENG_ASSERT(hedge._frameFlags & HEDGEINF_FACINGFRONT);
+
+    // Only a "middle" section.
+    if(!(sections & Line::Side::MiddleFlag)) return false;
+
+    walldivs_t leftWallDivs, rightWallDivs;
+    Vector2f materialOrigin;
+    bool opaque = false;
+
+    if(prepareWallDivsPolyobj(hedge.lineSide(), Line::Side::Middle,
+                              &leftWallDivs, &rightWallDivs, &materialOrigin))
+    {
+        Rend_RadioUpdateForLineSide(hedge.lineSide());
+
+        int wsFlags = WSF_ADD_DYNLIGHTS|WSF_ADD_DYNSHADOWS|WSF_ADD_RADIO;
+
+        opaque = writeWallSection(hedge, Line::Side::Middle, wsFlags,
+                                  leaf->sector().lightLevel(), R_GetSectorLightColor(leaf->sector()),
                                   &leftWallDivs, &rightWallDivs, materialOrigin);
     }
 
@@ -1920,8 +1969,7 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
         walldivs_t leftWallDivs, rightWallDivs;
         Vector2f materialOrigin;
 
-        if(hedge.prepareWallDivs(Line::Side::Middle, leaf->sectorPtr(), back.sectorPtr(),
-                                 &leftWallDivs, &rightWallDivs, &materialOrigin))
+        if(hedge.prepareWallDivs(Line::Side::Middle, &leftWallDivs, &rightWallDivs, &materialOrigin))
         {
             int rhFlags = WSF_ADD_DYNLIGHTS|WSF_ADD_DYNSHADOWS|WSF_ADD_RADIO;
 
@@ -1967,8 +2015,7 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
         walldivs_t leftWallDivs, rightWallDivs;
         Vector2f materialOrigin;
 
-        if(hedge.prepareWallDivs(Line::Side::Top, leaf->sectorPtr(), back.sectorPtr(),
-                                 &leftWallDivs, &rightWallDivs, &materialOrigin))
+        if(hedge.prepareWallDivs(Line::Side::Top, &leftWallDivs, &rightWallDivs, &materialOrigin))
         {
             Rend_RadioUpdateForLineSide(hedge.lineSide());
 
@@ -1984,8 +2031,7 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
         walldivs_t leftWallDivs, rightWallDivs;
         Vector2f materialOrigin;
 
-        if(hedge.prepareWallDivs(Line::Side::Bottom, leaf->sectorPtr(), back.sectorPtr(),
-                                 &leftWallDivs, &rightWallDivs, &materialOrigin))
+        if(hedge.prepareWallDivs(Line::Side::Bottom, &leftWallDivs, &rightWallDivs, &materialOrigin))
         {
             Rend_RadioUpdateForLineSide(hedge.lineSide());
 
@@ -2578,8 +2624,7 @@ static void writeWallSections(HEdge &hedge)
     int const pvisSections = pvisibleWallSections(hedge.lineSide()); /// @ref sideSectionFlags
     bool opaque;
 
-    if(hedge.line().isFromPolyobj() ||
-       !hedge.hasTwin() || !hedge.twin().sectorPtr() ||
+    if(!hedge.hasTwin() || !hedge.twin().sectorPtr() ||
        /* solid side of a "one-way window"? */
        !(hedge.twin().hasLine() && hedge.twin().lineSide().hasSections()))
     {
@@ -2632,7 +2677,8 @@ static void writeLeafPolyobjs()
         // Ignore back facing walls.
         if(hedge->_frameFlags & HEDGEINF_FACINGFRONT)
         {
-            writeWallSections(*hedge);
+            bool opaque = writeWallSections2Polyobj(*hedge, Line::Side::MiddleFlag);
+
             // We can occlude the wall range if the opening is filled (when the viewer is not in the void).
             if(opaque && !P_IsInVoid(viewPlayer))
             {

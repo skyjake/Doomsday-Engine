@@ -94,7 +94,7 @@ void R_OrderVertices(Line *line, Sector const *sector, Vertex *verts[2])
     verts[1] = &line->vertex(edge^1);
 }
 
-bool R_FindBottomTop(Line::Side const &side, int section,
+bool R_SideSectionCoords(Line::Side const &side, int section,
     Sector const *frontSec, Sector const *backSec,
     coord_t *retBottom, coord_t *retTop, Vector2f *retMaterialOrigin)
 {
@@ -337,8 +337,8 @@ bool R_MiddleMaterialCoversOpening(Line::Side const &side,
         {
             // Possibly; check the placement.
             coord_t bottom, top;
-            if(R_FindBottomTop(side, Line::Side::Middle, frontSec, backSec,
-                               &bottom, &top))
+            if(R_SideSectionCoords(side, Line::Side::Middle, frontSec, backSec,
+                                   &bottom, &top))
             {
                 return (top >= openTop && bottom <= openBottom);
             }

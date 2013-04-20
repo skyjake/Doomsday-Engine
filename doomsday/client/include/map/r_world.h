@@ -91,19 +91,19 @@ void R_OrderVertices(Line *line, Sector const *sector, Vertex *verts[2]);
  *
  * @return  @c true iff the determined wall section height is @c >0
  */
-bool R_FindBottomTop(Line::Side const &side, int section, Sector const *frontSec,
+bool R_SideSectionCoords(Line::Side const &side, int section, Sector const *frontSec,
     Sector const *backSec, coord_t *bottom = 0, coord_t *top = 0,
     de::Vector2f *materialOrigin = 0);
 
 /**
- * Same as @ref R_FindBottomTop() except that the sector arguments are taken from
+ * Same as @ref R_SideSectionCoords() except that the sector arguments are taken from
  * the specified line @a side.
  */
-inline bool R_FindBottomTop(Line::Side const &side, int section, coord_t *bottom = 0,
-                            coord_t *top = 0, de::Vector2f *materialOrigin = 0)
+inline bool R_SideSectionCoords(Line::Side const &side, int section, coord_t *bottom = 0,
+                                coord_t *top = 0, de::Vector2f *materialOrigin = 0)
 {
-    return R_FindBottomTop(side, section, side.sectorPtr(), side.back().sectorPtr(),
-                           bottom, top, materialOrigin);
+    return R_SideSectionCoords(side, section, side.sectorPtr(), side.back().sectorPtr(),
+                               bottom, top, materialOrigin);
 }
 
 /**

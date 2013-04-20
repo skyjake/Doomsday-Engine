@@ -44,6 +44,11 @@ walldivnode_t* WallDivNode_Prev(walldivnode_t* node);
 typedef struct walldivs_s {
     uint num;
     struct walldivnode_s nodes[WALLDIVS_MAX_NODES];
+
+    walldivs_s() : num(0)
+    {
+        std::memset(nodes, 0, sizeof(nodes));
+    }
 } walldivs_t;
 
 uint WallDivs_Size(const walldivs_t* wallDivs);

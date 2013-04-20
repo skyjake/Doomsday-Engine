@@ -24,10 +24,11 @@
 
 #include "de_base.h"
 
+#include "BspLeaf"
 #include "Line"
+#include "Vertex"
 #include "map/lineowner.h"
 #include "map/r_world.h" /// R_GetVtxLineOwner @todo remove me
-#include "Vertex"
 
 #include "map/hedge.h"
 
@@ -340,7 +341,7 @@ static int sortWallDivNode(void const *e1, void const *e2)
 static void buildWallDiv(walldivs_t *wallDivs, HEdge const *hedge,
    int section, coord_t bottomZ, coord_t topZ, boolean doRight)
 {
-    wallDivs->num = 0;
+    DENG_ASSERT(wallDivs->num == 0);
 
     // Nodes are arranged according to their Z axis height in ascending order.
     // The first node is the bottom.
@@ -362,13 +363,26 @@ static void buildWallDiv(walldivs_t *wallDivs, HEdge const *hedge,
     WallDivs_AssertInRange(wallDivs, bottomZ, topZ);
 }
 
-bool HEdge::prepareWallDivs(int section, Sector *frontSec, Sector *backSec,
-    walldivs_t *leftWallDivs, walldivs_t *rightWallDivs, Vector2f *materialOrigin) const
+bool HEdge::prepareWallDivs(int section, walldivs_t *leftWallDivs,
+    walldivs_t *rightWallDivs, Vector2f *materialOrigin) const
 {
     DENG_ASSERT(hasLine());
+
+    Sector const *frontSec, *backSec;
+
+    if(!line().isSelfReferencing())
+    {
+        frontSec = bspLeaf().sectorPtr();
+        backSec  = hasTwin()? twin().sectorPtr() : 0;
+    }
+    else
+    {
+        frontSec = backSec = lineSide().sectorPtr();
+    }
+
     coord_t bottom, top;
-    bool visible = R_FindBottomTop(lineSide(), section, frontSec, backSec,
-                                   &bottom, &top, materialOrigin);
+    bool visible = R_SideSectionCoords(lineSide(), section, frontSec, backSec,
+                                       &bottom, &top, materialOrigin);
 
     if(materialOrigin)
     {
