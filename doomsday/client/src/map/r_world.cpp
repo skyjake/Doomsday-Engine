@@ -386,7 +386,7 @@ Line *R_FindLineNeighbor(Sector const *sector, Line const *line,
 
     if(diff) *diff += (antiClockwise? cown->angle() : own->angle());
 
-    if(!other->hasBackSections() || other->frontSectorPtr() != other->backSectorPtr())
+    if(!other->hasBackSections() || !other->isSelfReferencing())
     {
         if(sector) // Must one of the sectors match?
         {
@@ -409,16 +409,15 @@ Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
 {
     LineOwner const *cown = antiClockwise? &own->prev() : &own->next();
     Line *other = &cown->line();
-    int side;
 
-    if(other == line) return NULL;
+    if(other == line) return 0;
 
     if(diff) *diff += (antiClockwise? cown->angle() : own->angle());
 
     if(!((other->isBspWindow()) && other->frontSectorPtr() != sector))
     {
-        if(!other->hasFrontSections() || !other->hasBackSections())
-            return other;
+        if(!other->hasFrontSections()) return other;
+        if(!other->hasBackSections()) return other;
 
         if(!other->isSelfReferencing() &&
            (other->frontSector().floor().visHeight() >= sector->ceiling().visHeight() ||
@@ -432,7 +431,7 @@ Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
 
         // Check for mid texture which fills the gap between floor and ceiling.
         // We should not give away the location of false walls (secrets).
-        side = (other->frontSectorPtr() == sector? 0 : 1);
+        int side = (other->frontSectorPtr() == sector? 0 : 1);
         if(other->side(side).middle().hasMaterial())
         {
             float oFCeil  = other->frontSector().ceiling().visHeight();
@@ -475,8 +474,7 @@ Line *R_FindLineBackNeighbor(Sector const *sector, Line const *line,
 
     if(diff) *diff += (antiClockwise? cown->angle() : own->angle());
 
-    if(!other->hasBackSections() || other->frontSectorPtr() != other->backSectorPtr() ||
-       (other->isBspWindow()))
+    if(!other->hasBackSections() || !other->isSelfReferencing() || other->isBspWindow())
     {
         if(!(other->frontSectorPtr() == sector ||
              (other->hasBackSections() && other->backSectorPtr() == sector)))

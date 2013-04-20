@@ -18,25 +18,21 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_RENDER_WALLDIV_H
-#define LIBDENG_RENDER_WALLDIV_H
+#ifndef DENG_RENDER_WALLDIV_H
+#define DENG_RENDER_WALLDIV_H
 
 #include "dd_types.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct walldivs_s;
 
 typedef struct walldivnode_s {
-    struct walldivs_s* divs;
+    struct walldivs_s *divs;
     coord_t height;
 } walldivnode_t;
 
-coord_t WallDivNode_Height(walldivnode_t* node);
-walldivnode_t* WallDivNode_Next(walldivnode_t* node);
-walldivnode_t* WallDivNode_Prev(walldivnode_t* node);
+coord_t WallDivNode_Height(walldivnode_t *node);
+walldivnode_t *WallDivNode_Next(walldivnode_t *node);
+walldivnode_t *WallDivNode_Prev(walldivnode_t *node);
 
 /// Maximum number of walldivnode_ts in a walldivs_t dataset.
 #define WALLDIVS_MAX_NODES          64
@@ -49,11 +45,12 @@ typedef struct walldivs_s {
     {
         std::memset(nodes, 0, sizeof(nodes));
     }
+
 } walldivs_t;
 
-uint WallDivs_Size(const walldivs_t* wallDivs);
-walldivnode_t* WallDivs_First(walldivs_t* wallDivs);
-walldivnode_t* WallDivs_Last(walldivs_t* wallDivs);
+uint WallDivs_Size(walldivs_t const *wallDivs);
+walldivnode_t *WallDivs_First(walldivs_t *wallDivs);
+walldivnode_t *WallDivs_Last(walldivs_t *wallDivs);
 walldivs_t *WallDivs_Append(walldivs_t *wallDivs, coord_t height);
 
 /**
@@ -70,8 +67,4 @@ void WallDivs_AssertInRange(walldivs_t *wallDivs, coord_t low, coord_t hi);
 void WallDivs_DebugPrint(walldivs_t *wallDivs);
 #endif
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif // LIBDENG_RENDER_WALLDIV_H
+#endif // DENG_RENDER_WALLDIV_H
