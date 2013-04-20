@@ -311,8 +311,11 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
     variantspecification_t const &texSpec = TS_GENERAL(ms.texture(MTU_PRIMARY).spec());
 
-    params->pos[VX] = psp->pos[VX] - -tex.origin().x + pspOffset[VX] + -texSpec.border;
-    params->pos[VY] = offScaleY * (psp->pos[VY] - -tex.origin().y) + pspOffset[VY] + -texSpec.border;
+#define WEAPONTOP   32   /// @todo Currently hardcoded here and in the plugins.
+
+    params->pos[VX] = psp->pos[VX] + tex.origin().x + pspOffset[VX] - texSpec.border;
+    params->pos[VY] = WEAPONTOP + offScaleY * (psp->pos[VY] - WEAPONTOP) + tex.origin().y +
+                      pspOffset[VY] - texSpec.border;
     params->width  = ms.width() + texSpec.border*2;
     params->height = ms.height() + texSpec.border*2;
 
