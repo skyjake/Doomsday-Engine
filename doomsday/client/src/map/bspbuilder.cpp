@@ -131,12 +131,12 @@ public:
                 if(hedge->hasLine())
                     LOG_WARNING("Sector #%u has migrant half-edge facing #%u (line #%u).")
                         << facingSector->origIndex()   - 1
-                        << hedge->sector().origIndex() - 1
+                        << hedge->lineSide().sector().origIndex() - 1
                         << hedge->line().origIndex()   - 1;
                 else
                     LOG_WARNING("Sector #%u has migrant half-edge facing #%u.")
                         << facingSector->origIndex()   - 1
-                        << hedge->sector().origIndex() - 1;
+                        << hedge->lineSide().sector().origIndex() - 1;
             }
 
             if(numToLog < _migrantHEdges.size())

@@ -288,20 +288,6 @@ int SuperBlock::traverse(int (*callback)(SuperBlock *, void *), void *parameters
     return false; // Continue iteration.
 }
 
-#ifdef DENG_DEBUG
-void SuperBlock::DebugPrint(SuperBlock const &inst) //static
-{
-    foreach(HEdge const *hedge, inst.hedges())
-    {
-        LOG_DEBUG("Build: %s %p sector: %d [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
-            << (hedge->hasLine()? "NORM" : "MINI")
-            << hedge << hedge->sector().origIndex()
-            << hedge->fromOrigin()[VX] << hedge->fromOrigin()[VY]
-            << hedge->toOrigin()[VX] << hedge->toOrigin()[VY];
-    }
-}
-#endif
-
 struct SuperBlockmap::Instance
 {
     /// The KdTree of SuperBlocks.

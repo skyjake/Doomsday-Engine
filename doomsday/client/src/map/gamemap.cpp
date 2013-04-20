@@ -108,19 +108,16 @@ DENG2_PIMPL(GameMap)
             if(hedge->hasLine())
             {
                 Vertex const &vtx = hedge->line().vertex(hedge->lineSideId());
-
-                hedge->_sector = hedge->line().sectorPtr(hedge->lineSideId());
                 hedge->_lineOffset = V2d_Distance(hedge->v1Origin(), vtx.origin());
             }
 
-            hedge->_angle = bamsAtan2(int( hedge->v2Origin()[VY] - hedge->v1Origin()[VY] ),
-                                      int( hedge->v2Origin()[VX] - hedge->v1Origin()[VX] )) << FRACBITS;
-
             // Calculate the length of the segment.
             hedge->_length = V2d_Distance(hedge->v2Origin(), hedge->v1Origin());
-
             if(hedge->_length == 0)
                 hedge->_length = 0.01f; // Hmm...
+
+            hedge->_angle = bamsAtan2(int( hedge->v2Origin()[VY] - hedge->v1Origin()[VY] ),
+                                      int( hedge->v2Origin()[VX] - hedge->v1Origin()[VX] )) << FRACBITS;
 
         } while((hedge = &hedge->next()) != base);
     }

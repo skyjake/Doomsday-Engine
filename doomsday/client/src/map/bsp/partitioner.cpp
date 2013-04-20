@@ -83,11 +83,8 @@ static LineRelationship lineRelationship(coord_t a, coord_t b,
 
 static Vector2d findBspLeafCenter(BspLeaf const &leaf);
 
-static Sector *findFirstSectorInHEdgeList(BspLeaf const &leaf);
-
 //DENG_DEBUG_ONLY(static bool bspLeafHasRealHEdge(BspLeaf const &leaf));
 //DENG_DEBUG_ONLY(static void printBspLeafHEdges(BspLeaf const &leaf));
-//DENG_DEBUG_ONLY(static int printSuperBlockHEdgesWorker(SuperBlock *block, void * /*parameters*/));
 //DENG_DEBUG_ONLY(static void printPartitionIntercepts(HPlane const &partition));
 
 DENG2_PIMPL(Partitioner)
@@ -638,11 +635,11 @@ DENG2_PIMPL(Partitioner)
                               "\n %p RIGHT sector #%d %s to %s"
                               "\n %p LEFT  sector #%d %s to %s")
                         << de::dintptr(right)
-                        << (right->hasSector()? right->sector()._buildData.index - 1 : -1)
+                        << (right->_sector? right->_sector._buildData.index - 1 : -1)
                         << Vector2d(right->v1Origin()).asText()
                         << Vector2d(right->v2Origin()).asText()
                         << de::dintptr(left)
-                        << (left->hasSector()? left->sector()._buildData.index - 1 : -1)
+                        << (left->_sector? left->_sector._buildData.index - 1 : -1)
                         << Vector2d(left->v1Origin()).asText()
                         << Vector2d(left->v2Origin()).asText()
                     */
@@ -1197,7 +1194,7 @@ DENG2_PIMPL(Partitioner)
         {
             //LOG_DEBUG("%shedge %p sector:%d %s -> %s")
             //    << (hedge->hasLine()? "" : "mini-") << de::dintptr(hedge)
-            //    << (hedge->hasSector()? hedge->sector()._buildData.index - 1 : -1)
+            //    << (hedge->_sector? hedge->_sector->_buildData.index - 1 : -1)
             //    << Vector2d(hedge->v1Origin()).asText()
             //    << Vector2d(hedge->v2Origin()).asText();
 
@@ -1751,9 +1748,9 @@ DENG2_PIMPL(Partitioner)
         hedge = base;
         do
         {
-            if(hedge->hasSector())
+            if(Sector *hedgeSector = hedgeInfo(*hedge).sector)
             {
-                return hedge->sectorPtr();
+                return hedgeSector;
             }
         } while((hedge = &hedge->next()) != base);
 
@@ -1810,6 +1807,20 @@ DENG2_PIMPL(Partitioner)
         }
     }
 
+    Sector *findFirstSectorInHEdgeList(BspLeaf const &leaf)
+    {
+        HEdge const *base = leaf.firstHEdge();
+        HEdge const *hedge = base;
+        do
+        {
+            if(Sector *hedgeSector = hedgeInfo(*hedge).sector)
+            {
+                return hedgeSector;
+            }
+        } while((hedge = &hedge->next()) != base);
+        return 0; // Nothing??
+    }
+
     /**
      * Sort all half-edges in each BSP leaf into a clockwise order.
      *
@@ -1844,7 +1855,8 @@ DENG2_PIMPL(Partitioner)
                 HEdge *hedge = base;
                 do
                 {
-                    if(hedge->hasSector() && hedge->sectorPtr() != sector)
+                    HEdgeInfo const &info = hedgeInfo(*hedge);
+                    if(info.sector && info.sector != sector)
                     {
                         notifyMigrantHEdgeBuilt(*hedge, *sector);
                     }
@@ -2066,7 +2078,6 @@ DENG2_PIMPL(Partitioner)
 
         hedge->_v[0] = &start;
         hedge->_v[1] = &end;
-        hedge->_sector = &sec;
         hedge->_line = line;
 
         // There is now one more HEdge.
@@ -2074,8 +2085,9 @@ DENG2_PIMPL(Partitioner)
         hedgeInfos.insert(hedge, HEdgeInfo());
 
         HEdgeInfo &info = hedgeInfo(*hedge);
-        info.line = line;
+        info.line       = line;
         info.sourceLine = sourceLine;
+        info.sector     = &sec;
         info.initFromHEdge(*hedge);
 
         return hedge;
@@ -2090,9 +2102,7 @@ DENG2_PIMPL(Partitioner)
 
         // There is now one more HEdge.
         numHEdges += 1;
-        hedgeInfos.insert(hedge, HEdgeInfo());
-
-        std::memcpy(&hedgeInfo(*hedge), &hedgeInfo(other), sizeof(HEdgeInfo));
+        hedgeInfos.insert(hedge, HEdgeInfo(hedgeInfo(other)));
 
         return *hedge;
     }
@@ -2186,14 +2196,14 @@ DENG2_PIMPL(Partitioner)
             if(angle + ANG_EPSILON < tip.angle())
             {
                 // Found it.
-                return (tip.hasFront()? tip.front().sectorPtr() : 0);
+                return (tip.hasFront()? hedgeInfo(tip.front()).sector : 0);
             }
         }
 
         // Not found. The open sector will therefore be on the back of the tip
         // at the greatest angle.
         HEdgeTip const &tip = hedgeTips.back();
-        return (tip.hasBack()? tip.back().sectorPtr() : 0);
+        return (tip.hasBack()? hedgeInfo(tip.back()).sector : 0);
     }
 
     /**
@@ -2326,6 +2336,22 @@ DENG2_PIMPL(Partitioner)
         } while((hedge = &hedge->next()) != base);
         return false;
     }
+
+#ifdef DENG_DEBUG
+    int printSuperBlockHEdges(SuperBlock const &block)
+    {
+        foreach(HEdge const *hedge, block.hedges())
+        {
+            HEdgeInfo const &info = hedgeInfo(*hedge);
+
+            LOG_DEBUG("Build: %s %p sector: %d [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
+                << (hedge->hasLine()? "NORM" : "MINI")
+                << hedge << (info.sector != 0? info.sector->origIndex() - 1 : -1)
+                << hedge->fromOrigin()[VX] << hedge->fromOrigin()[VY]
+                << hedge->toOrigin()[VX] << hedge->toOrigin()[VY];
+        }
+    }
+#endif
 };
 
 Partitioner::Partitioner(GameMap const &map, int splitCostFactor)
@@ -2484,13 +2510,6 @@ static void printBspLeafHEdges(BspLeaf const &leaf)
 })
 
 DENG_DEBUG_ONLY(
-static int printSuperBlockHEdgesWorker(SuperBlock *block, void * /*parameters*/)
-{
-    SuperBlock::DebugPrint(*block);
-    return false; // Continue iteration.
-})
-
-DENG_DEBUG_ONLY(
 static void printPartitionIntercepts(HPlane const &partition)
 {
     uint index = 0;
@@ -2501,17 +2520,3 @@ static void printPartitionIntercepts(HPlane const &partition)
     }
 })
 #endif
-
-static Sector *findFirstSectorInHEdgeList(BspLeaf const &leaf)
-{
-    HEdge const *base = leaf.firstHEdge();
-    HEdge const *hedge = base;
-    do
-    {
-        if(hedge->hasSector())
-        {
-            return hedge->sectorPtr();
-        }
-    } while((hedge = &hedge->next()) != base);
-    return 0; // Nothing??
-}

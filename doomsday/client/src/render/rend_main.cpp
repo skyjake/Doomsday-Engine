@@ -1257,7 +1257,7 @@ static bool writeWallSection2(HEdge &hedge, Vector3f const &normal,
 
             radioParms.segOffset = hedge.lineOffset();
             radioParms.segLength = hedge.length();
-            radioParms.frontSec  = hedge.sectorPtr();
+            radioParms.frontSec  = hedge.bspLeafSectorPtr();
 
             radioParms.wall.left.firstDiv  = parm.wall.left.firstDiv;
             radioParms.wall.left.divCount  = parm.wall.left.divCount;
@@ -1267,7 +1267,7 @@ static bool writeWallSection2(HEdge &hedge, Vector3f const &normal,
             if(!isTwosidedMiddle && !(hedge.hasTwin() && !(hedge.twin().hasLine() && hedge.twin().lineSide().hasSections())))
             {
                 if(hedge.hasTwin())
-                    radioParms.backSec = hedge.twin().sectorPtr();
+                    radioParms.backSec = hedge.twin().bspLeafSectorPtr();
             }
 
             /// @todo kludge: Revert the vertex coords as they may have been changed
@@ -1690,14 +1690,17 @@ static bool writeWallSection(HEdge &hedge, int section,
         // Determine which Material to use.
         Material *material = 0;
         int rpFlags = RPF_DEFAULT; /// @ref rendPolyFlags
+        /// @todo Geometry tests here should use the same sectors as used when
+        /// deciding the z-heights for the wall divs. At least in the case of
+        /// selfreferencing lines, this logic is probably incorrect. -ds
         if(devRendSkyMode && hedge.hasTwin() &&
-           ((section == Line::Side::Bottom && hedge.sector().floorSurface().hasSkyMaskedMaterial() &&
-                                              hedge.twin().sector().floorSurface().hasSkyMaskedMaterial()) ||
-            (section == Line::Side::Top    && hedge.sector().ceilingSurface().hasSkyMaskedMaterial() &&
-                                              hedge.twin().sector().ceilingSurface().hasSkyMaskedMaterial())))
+           ((section == Line::Side::Bottom && hedge.bspLeafSector().floorSurface().hasSkyMaskedMaterial() &&
+                                              hedge.twin().bspLeafSector().floorSurface().hasSkyMaskedMaterial()) ||
+            (section == Line::Side::Top    && hedge.bspLeafSector().ceilingSurface().hasSkyMaskedMaterial() &&
+                                              hedge.twin().bspLeafSector().ceilingSurface().hasSkyMaskedMaterial())))
         {
             // Geometry not normally rendered however we do so in dev sky mode.
-            material = hedge.sector().planeSurface(section == Line::Side::Top? Plane::Ceiling : Plane::Floor).materialPtr();
+            material = hedge.bspLeafSector().planeSurface(section == Line::Side::Top? Plane::Ceiling : Plane::Floor).materialPtr();
         }
         else
         {
@@ -1787,7 +1790,7 @@ static bool writeWallSection(HEdge &hedge, int section,
         float deltaL, deltaR;
 
         // Do not apply an angle based lighting delta if this surface's material
-        // has been chosen as a HOM fix (we must remain consistent with the lighting
+        // has been chosen as a HOM fix (lighting must be consistent with that
         // applied to the back plane (on this half-edge's back side)).
         if(hedge.hasLine() && hedge.lineSide().hasSections() &&
            isTwoSided && section != Line::Side::Middle && surface.hasFixMaterial())
@@ -1797,6 +1800,7 @@ static bool writeWallSection(HEdge &hedge, int section,
         else
         {
             Line const &line = hedge.line();
+
             sideLightLevelDeltas(hedge.lineSide(), &deltaL, &deltaR);
 
             // Linear interpolation of the line light deltas to the edges of the hedge.
@@ -2180,8 +2184,8 @@ static coord_t skyFixCeilZ(Plane const *frontCeil, Plane const *backCeil)
  */
 static void skyFixZCoords(HEdge *hedge, int skyCap, coord_t *bottom, coord_t *top)
 {
-    Sector const *frontSec = hedge->sectorPtr();
-    Sector const *backSec  = hedge->hasTwin()? hedge->twin().sectorPtr() : 0;
+    Sector const *frontSec = hedge->bspLeafSectorPtr();
+    Sector const *backSec  = hedge->hasTwin()? hedge->twin().bspLeafSectorPtr() : 0;
     Plane const *ffloor = &frontSec->floor();
     Plane const *fceil  = &frontSec->ceiling();
     Plane const *bceil  = backSec? &backSec->ceiling() : 0;
@@ -2211,54 +2215,57 @@ static void skyFixZCoords(HEdge *hedge, int skyCap, coord_t *bottom, coord_t *to
  */
 static int chooseHEdgeSkyFixes(HEdge *hedge, int skyCap)
 {
+    if(!hedge || !hedge->hasBspLeaf())
+        return 0; // Wha?
+
+    // "minisegs" have no lines
+    if(!hedge->hasLine()) return 0;
+    if(!hedge->bspLeaf().hasSector()) return 0; // $degenleaf
+
     int fixes = 0;
-    if(hedge && hedge->hasLine() && // "minisegs" have no lines.
-       hedge->hasSector()) // $degenleaf
+    Sector const *frontSec = hedge->bspLeafSectorPtr();
+    Sector const *backSec  = hedge->hasTwin()? hedge->twin().bspLeafSectorPtr() : 0;
+
+    if(!backSec || backSec != frontSec)
     {
-        Sector const *frontSec = hedge->sectorPtr();
-        Sector const *backSec  = hedge->hasTwin()? hedge->twin().sectorPtr() : 0;
+        bool const hasSkyFloor   = frontSec->floorSurface().hasSkyMaskedMaterial();
+        bool const hasSkyCeiling = frontSec->ceilingSurface().hasSkyMaskedMaterial();
 
-        if(!backSec || backSec != frontSec)
+        if(hasSkyFloor || hasSkyCeiling)
         {
-            bool const hasSkyFloor   = frontSec->floorSurface().hasSkyMaskedMaterial();
-            bool const hasSkyCeiling = frontSec->ceilingSurface().hasSkyMaskedMaterial();
+            bool const hasClosedBack = R_SideBackClosed(hedge->lineSide());
 
-            if(hasSkyFloor || hasSkyCeiling)
+            // Lower fix?
+            if(hasSkyFloor && (skyCap & SKYCAP_LOWER))
             {
-                bool const hasClosedBack = R_SideBackClosed(hedge->lineSide());
+                Plane const *ffloor = &frontSec->floor();
+                Plane const *bfloor = backSec? &backSec->floor() : NULL;
+                coord_t const skyZ = skyFixFloorZ(ffloor, bfloor);
 
-                // Lower fix?
-                if(hasSkyFloor && (skyCap & SKYCAP_LOWER))
+                if(hasClosedBack ||
+                        (!bfloor->surface().hasSkyMaskedMaterial() ||
+                         devRendSkyMode || P_IsInVoid(viewPlayer)))
                 {
-                    Plane const *ffloor = &frontSec->floor();
-                    Plane const *bfloor = backSec? &backSec->floor() : NULL;
-                    coord_t const skyZ = skyFixFloorZ(ffloor, bfloor);
-
-                    if(hasClosedBack ||
-                            (!bfloor->surface().hasSkyMaskedMaterial() ||
-                             devRendSkyMode || P_IsInVoid(viewPlayer)))
-                    {
-                        Plane const *floor = (bfloor && bfloor->surface().hasSkyMaskedMaterial() && ffloor->visHeight() < bfloor->visHeight()? bfloor : ffloor);
-                        if(floor->visHeight() > skyZ)
-                            fixes |= SKYCAP_LOWER;
-                    }
+                    Plane const *floor = (bfloor && bfloor->surface().hasSkyMaskedMaterial() && ffloor->visHeight() < bfloor->visHeight()? bfloor : ffloor);
+                    if(floor->visHeight() > skyZ)
+                        fixes |= SKYCAP_LOWER;
                 }
+            }
 
-                // Upper fix?
-                if(hasSkyCeiling && (skyCap & SKYCAP_UPPER))
+            // Upper fix?
+            if(hasSkyCeiling && (skyCap & SKYCAP_UPPER))
+            {
+                Plane const *fceil = &frontSec->ceiling();
+                Plane const *bceil = backSec? &backSec->ceiling() : NULL;
+                coord_t const skyZ = skyFixCeilZ(fceil, bceil);
+
+                if(hasClosedBack ||
+                        (!bceil->surface().hasSkyMaskedMaterial() ||
+                         devRendSkyMode || P_IsInVoid(viewPlayer)))
                 {
-                    Plane const *fceil = &frontSec->ceiling();
-                    Plane const *bceil = backSec? &backSec->ceiling() : NULL;
-                    coord_t const skyZ = skyFixCeilZ(fceil, bceil);
-
-                    if(hasClosedBack ||
-                            (!bceil->surface().hasSkyMaskedMaterial() ||
-                             devRendSkyMode || P_IsInVoid(viewPlayer)))
-                    {
-                        Plane const *ceil = (bceil && bceil->surface().hasSkyMaskedMaterial() && fceil->visHeight() > bceil->visHeight()? bceil : fceil);
-                        if(ceil->visHeight() < skyZ)
-                            fixes |= SKYCAP_UPPER;
-                    }
+                    Plane const *ceil = (bceil && bceil->surface().hasSkyMaskedMaterial() && fceil->visHeight() > bceil->visHeight()? bceil : fceil);
+                    if(ceil->visHeight() < skyZ)
+                        fixes |= SKYCAP_UPPER;
                 }
             }
         }
@@ -2496,7 +2503,7 @@ static void writeLeafSkyMaskStrips(int skyFix)
             if(devRendSkyMode)
             {
                 int relPlane = skyFix == SKYCAP_UPPER? Plane::Ceiling : Plane::Floor;
-                skyMaterial = hedge->sector().planeSurface(relPlane).materialPtr();
+                skyMaterial = hedge->bspLeafSector().planeSurface(relPlane).materialPtr();
             }
 
             if(zBottom >= zTop)
@@ -2624,7 +2631,7 @@ static void writeWallSections(HEdge &hedge)
     int const pvisSections = pvisibleWallSections(hedge.lineSide()); /// @ref sideSectionFlags
     bool opaque;
 
-    if(!hedge.hasTwin() || !hedge.twin().sectorPtr() ||
+    if(!hedge.hasTwin() || !hedge.twin().bspLeafSectorPtr() ||
        /* solid side of a "one-way window"? */
        !(hedge.twin().hasLine() && hedge.twin().lineSide().hasSections()))
     {
@@ -2755,10 +2762,10 @@ static void occludeBspLeaf(BspLeaf const *bspLeaf, bool forwardFacing)
     do
     {
         // Occlusions can only happen where two sectors contact.
-        if(hedge->hasLine() && hedge->hasTwin() && hedge->twin().hasSector() &&
+        if(hedge->hasLine() && hedge->hasTwin() && hedge->twin().bspLeaf().hasSector() &&
            (forwardFacing == ((hedge->_frameFlags & HEDGEINF_FACINGFRONT)? true : false)))
         {
-            Sector *backSec      = hedge->twin().sectorPtr();
+            Sector *backSec      = hedge->twin().bspLeafSectorPtr();
             coord_t const bFloor = backSec->floor().height();
             coord_t const bCeil  = backSec->ceiling().height();
 
@@ -2941,16 +2948,16 @@ void Rend_RenderSurfaceVectors()
         if(!hedge->hasLine() || hedge->line().isFromPolyobj())
             continue;
 
-        if(!hedge->hasSector())
+        if(!hedge->hasBspLeaf() || !hedge->bspLeaf().hasSector())
             continue;
 
         float x = hedge->v1Origin()[VX] + (hedge->v2Origin()[VX] - hedge->v1Origin()[VX]) / 2;
         float y = hedge->v1Origin()[VY] + (hedge->v2Origin()[VY] - hedge->v1Origin()[VY]) / 2;
 
-        if(!(hedge->hasTwin() && hedge->twin().hasSector()))
+        if(!(hedge->hasTwin() && hedge->twin().hasBspLeaf() && hedge->twin().bspLeaf().hasSector()))
         {
-            coord_t const bottom = hedge->sector().floor().visHeight();
-            coord_t const top    = hedge->sector().ceiling().visHeight();
+            coord_t const bottom = hedge->bspLeafSector().floor().visHeight();
+            coord_t const top    = hedge->bspLeafSector().ceiling().visHeight();
             Surface *suf = &hedge->lineSide().middle();
 
             V3f_Set(origin, x, y, bottom + (top - bottom) / 2);
@@ -2958,13 +2965,13 @@ void Rend_RenderSurfaceVectors()
         }
         else
         {
-            Sector *backSec  = hedge->twin().sectorPtr();
+            Sector *backSec  = hedge->twin().bspLeafSectorPtr();
             Line::Side &side = hedge->lineSide();
 
             if(side.middle().hasMaterial())
             {
-                coord_t const bottom = hedge->sector().floor().visHeight();
-                coord_t const top    = hedge->sector().ceiling().visHeight();
+                coord_t const bottom = hedge->bspLeafSector().floor().visHeight();
+                coord_t const top    = hedge->bspLeafSector().ceiling().visHeight();
                 Surface *suf = &side.middle();
 
                 V3f_Set(origin, x, y, bottom + (top - bottom) / 2);
@@ -2972,12 +2979,12 @@ void Rend_RenderSurfaceVectors()
             }
 
             if(backSec->ceiling().visHeight() <
-               hedge->sector().ceiling().visHeight() &&
-               !(hedge->sector().ceilingSurface().hasSkyMaskedMaterial() &&
+               hedge->bspLeafSector().ceiling().visHeight() &&
+               !(hedge->bspLeafSector().ceilingSurface().hasSkyMaskedMaterial() &&
                  backSec->ceilingSurface().hasSkyMaskedMaterial()))
             {
                 coord_t const bottom = backSec->ceiling().visHeight();
-                coord_t const top    = hedge->sector().ceiling().visHeight();
+                coord_t const top    = hedge->bspLeafSector().ceiling().visHeight();
                 Surface *suf = &side.top();
 
                 V3f_Set(origin, x, y, bottom + (top - bottom) / 2);
@@ -2985,11 +2992,11 @@ void Rend_RenderSurfaceVectors()
             }
 
             if(backSec->floor().visHeight() >
-               hedge->sector().floor().visHeight() &&
-               !(hedge->sector().floorSurface().hasSkyMaskedMaterial() &&
+               hedge->bspLeafSector().floor().visHeight() &&
+               !(hedge->bspLeafSector().floorSurface().hasSkyMaskedMaterial() &&
                  backSec->floorSurface().hasSkyMaskedMaterial()))
             {
-                coord_t const bottom = hedge->sector().floor().visHeight();
+                coord_t const bottom = hedge->bspLeafSector().floor().visHeight();
                 coord_t const top    = backSec->floor().visHeight();
                 Surface *suf = &side.bottom();
 

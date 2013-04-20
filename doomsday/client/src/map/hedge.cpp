@@ -44,7 +44,6 @@ HEdge::HEdge() : MapElement(DMU_HEDGE)
     _bspLeaf = 0;
     _line = 0;
     _lineSide = 0;
-    _sector = 0;
     _angle = 0;
     _length = 0;
     _lineOffset = 0;
@@ -64,7 +63,6 @@ HEdge::HEdge(HEdge const &other)
     _bspLeaf = other._bspLeaf;
     _line = other._line;
     _lineSide = other._lineSide;
-    _sector = other._sector;
     _angle = other._angle;
     _length = other._length;
     _lineOffset = other._lineOffset;
@@ -131,8 +129,12 @@ bool HEdge::hasBspLeaf() const
 
 BspLeaf &HEdge::bspLeaf() const
 {
-    DENG2_ASSERT(_bspLeaf != 0);
-    return *_bspLeaf;
+    if(_bspLeaf)
+    {
+        return *_bspLeaf;
+    }
+    /// @throw MissingBspLeafError Attempted with no BSP leaf associated.
+    throw MissingBspLeafError("HEdge::bspLeaf", "No BSP leaf if associated");
 }
 
 bool HEdge::hasLine() const
@@ -170,21 +172,6 @@ coord_t HEdge::lineOffset() const
     throw MissingLineError("HEdge::lineOffset", "No line is attributed");
 }
 
-bool HEdge::hasSector() const
-{
-    return _sector != 0;
-}
-
-Sector &HEdge::sector() const
-{
-    if(_sector)
-    {
-        return *_sector;
-    }
-    /// @throw MissingSectorError Attempted with no sector attributed.
-    throw MissingSectorError("HEdge::line", "No sector is attributed");
-}
-
 angle_t HEdge::angle() const
 {
     return _angle;
@@ -202,14 +189,14 @@ uint HEdge::origIndex() const
 
 static walldivnode_t *findWallDivNodeByZOrigin(walldivs_t *wallDivs, coord_t height)
 {
-    DENG2_ASSERT(wallDivs);
+    DENG2_ASSERT(wallDivs != 0);
     for(uint i = 0; i < wallDivs->num; ++i)
     {
         walldivnode_t *node = &wallDivs->nodes[i];
         if(node->height == height)
             return node;
     }
-    return NULL;
+    return 0;
 }
 
 static void addWallDivNodesForPlaneIntercepts(HEdge const *hedge, walldivs_t *wallDivs,
@@ -372,8 +359,8 @@ bool HEdge::prepareWallDivs(int section, walldivs_t *leftWallDivs,
 
     if(!line().isSelfReferencing())
     {
-        frontSec = bspLeaf().sectorPtr();
-        backSec  = hasTwin()? twin().sectorPtr() : 0;
+        frontSec = bspLeafSectorPtr();
+        backSec  = hasTwin()? twin().bspLeafSectorPtr() : 0;
     }
     else
     {
@@ -446,11 +433,12 @@ int HEdge::property(setargs_t &args) const
         DMU_GetValue(DMT_HEDGE_LINE, &_line, &args, 0);
         break;
     case DMU_FRONT_SECTOR: {
-        DMU_GetValue(DMT_HEDGE_SECTOR, &_sector, &args, 0);
+        Sector *sector = bspLeafSectorPtr();
+        DMU_GetValue(DMT_HEDGE_SECTOR, &sector, &args, 0);
         break; }
     case DMU_BACK_SECTOR: {
-        Sector *sec = _twin? _twin->sectorPtr() : 0;
-        DMU_GetValue(DMT_HEDGE_SECTOR, &sec, &args, 0);
+        Sector *sector = _twin? _twin->bspLeafSectorPtr() : 0;
+        DMU_GetValue(DMT_HEDGE_SECTOR, &sector, &args, 0);
         break; }
     case DMU_ANGLE:
         DMU_GetValue(DMT_HEDGE_ANGLE, &_angle, &args, 0);

@@ -285,10 +285,6 @@ public:
      */
     friend struct SuperBlockmap::Instance;
 
-#ifdef DENG_DEBUG
-    static void DebugPrint(SuperBlock const &inst);
-#endif
-
 private:
     struct Instance;
     Instance *d;

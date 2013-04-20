@@ -1,4 +1,4 @@
-/** @file hedge.h Map Geometry Half-Edge.
+/** @file map/hedge.h World Map Geometry Half-Edge.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,18 +18,22 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_MAP_HEDGE
-#define LIBDENG_MAP_HEDGE
+#ifndef DENG_WORLD_MAP_HEDGE
+#define DENG_WORLD_MAP_HEDGE
+
+#include <de/Error>
+
+#include "p_dmu.h"
 
 #include "MapElement"
-#include "Vertex"
+#include "BspLeaf"
 #include "Line"
+#include "Sector"
+#include "Vertex"
+
 #include "resource/r_data.h"
-#include "p_dmu.h"
-#include "sector.h"
 #include "render/walldiv.h"
 #include "render/rend_bias.h"
-#include <de/Error>
 
 // Helper macros for accessing hedge data elements.
 #define FRONT 0
@@ -72,14 +76,14 @@
 class HEdge : public de::MapElement
 {
 public:
+    /// Required BSP leaf is missing. @ingroup errors
+    DENG2_ERROR(MissingBspLeafError);
+
     /// Required twin half-edge is missing. @ingroup errors
     DENG2_ERROR(MissingTwinError);
 
     /// Required line attribution is missing. @ingroup errors
     DENG2_ERROR(MissingLineError);
-
-    /// Required sector attribution is missing. @ingroup errors
-    DENG2_ERROR(MissingSectorError);
 
     /// The referenced geometry group does not exist. @ingroup errors
     DENG2_ERROR(UnknownGeometryGroupError);
@@ -109,14 +113,11 @@ public: /// @todo Make private:
     /// Map line attributed to the half-edge.
     Line *_line;
 
-    /// On which side of the attributed line (0=front, 1=back)?
+    /// On which side of the attributed line (either Line::Front or Line::Back)?
     int _lineSide;
 
     /// Point along the attributed line at which v1 occurs; otherwise @c 0.
     coord_t _lineOffset;
-
-    /// Map sector attributed to the half-edge.
-    Sector *_sector;
 
     /// World angle.
     angle_t _angle;
@@ -275,6 +276,18 @@ public:
     BspLeaf &bspLeaf() const;
 
     /**
+     * Convenient accessor method for returning the sector attributed to the BSP
+     * leaf for the half-edge. One should first determine whether a sector is indeed
+     * attributed to the BSP leaf (e.g., by calling @ref BspLeaf::hasSector()).
+     *
+     * @see bspLeaf(), BspLeaf::sector()
+     */
+    inline Sector &bspLeafSector() const { return bspLeaf().sector(); }
+
+    /// Variant of @ref bspLeafSector() which returns a pointer.
+    inline Sector *bspLeafSectorPtr() const { return bspLeaf().sectorPtr(); }
+
+    /**
      * Returns @c true iff a line is attributed to the half-edge.
      */
     bool hasLine() const;
@@ -311,25 +324,6 @@ public:
      * the half-edge.
      */
     coord_t lineOffset() const;
-
-    /**
-     * Returns @c true iff a sector is attributed to the half-edge.
-     */
-    bool hasSector() const;
-
-    /**
-     * Returns the sector attributed to the half-edge.
-     *
-     * @see hasSector()
-     */
-    Sector &sector() const;
-
-    /**
-     * Returns a pointer to the sector attributed to the half-edge; otherwise @c 0.
-     *
-     * @see hasSector()
-     */
-    inline Sector *sectorPtr() const { return hasSector()? &sector() : 0; }
 
     /**
      * Returns the world angle of the half-edge.
@@ -431,4 +425,4 @@ public:
     int setProperty(setargs_t const &args);
 };
 
-#endif // LIBDENG_MAP_HEDGE
+#endif // DENG_WORLD_MAP_HEDGE

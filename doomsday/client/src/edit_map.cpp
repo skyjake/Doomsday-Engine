@@ -907,7 +907,6 @@ boolean MPE_End()
             hedge->_v[1]    = &line->v2();
             hedge->_line    = line;
             hedge->_length  = line->length();
-            hedge->_sector  = line->frontSectorPtr();
             hedge->_twin    = 0;
             hedge->_bspLeaf = 0;
 

@@ -23,8 +23,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_BSP_HEDGEINFO
-#define LIBDENG_BSP_HEDGEINFO
+#ifndef DENG_WORLD_MAP_BSP_HEDGEINFO
+#define DENG_WORLD_MAP_BSP_HEDGEINFO
 
 #include <de/mathutil.h>
 #include <de/vector1.h>
@@ -59,7 +59,7 @@ struct HEdgeInfo
 
     // The superblock that contains this half-edge, or NULL if the half-edge
     // is no longer in any superblock (e.g. now in a leaf).
-    class SuperBlock *bmapBlock;
+    SuperBlock *bmapBlock;
 
     /// Line this half-edge initially comes from else @c NULL if a "mini-edge".
     Line *line;
@@ -69,16 +69,46 @@ struct HEdgeInfo
     // above. For "miniedges", this is the line of the partition.
     Line *sourceLine;
 
+    /// Map sector attributed to the half-edge. Can be @c 0 for "mini-edges".
+    Sector *sector;
+
     HEdgeInfo()
-        : pLength(0), pAngle(0), pPara(0), pPerp(0), pSlopeType(ST_VERTICAL),
-          nextOnSide(0), prevOnSide(0), bmapBlock(0), sourceLine(0)
+        : pLength(0),
+          pAngle(0),
+          pPara(0),
+          pPerp(0),
+          pSlopeType(ST_VERTICAL),
+          nextOnSide(0),
+          prevOnSide(0),
+          bmapBlock(0),
+          line(0),
+          sourceLine(0),
+          sector(0)
     {
         V2d_Set(start, 0, 0);
         V2d_Set(end, 0, 0);
         V2d_Set(direction, 0, 0);
     }
 
-    HEdgeInfo &initFromHEdge(HEdge const &hedge)
+    HEdgeInfo(HEdgeInfo const &other)
+        : pLength(other.pLength),
+          pAngle(other.pAngle),
+          pPara(other.pPara),
+          pPerp(other.pPerp),
+          pSlopeType(other.pSlopeType),
+          nextOnSide(other.nextOnSide),
+          prevOnSide(other.prevOnSide),
+          bmapBlock(other.bmapBlock),
+          line(other.line),
+          sourceLine(other.sourceLine),
+          sector(other.sector)
+    {
+        V2d_Copy(start, other.start);
+        V2d_Copy(end, other.end);
+        V2d_Copy(direction, other.direction);
+    }
+
+    void initFromHEdge(HEdge const &hedge)
     {
         V2d_Copy(start, hedge.fromOrigin());
         V2d_Copy(end,   hedge.toOrigin());
@@ -91,12 +121,10 @@ struct HEdgeInfo
 
         pPerp =  start[VY] * direction[VX] - start[VX] * direction[VY];
         pPara = -start[VX] * direction[VX] - start[VY] * direction[VY];
-
-        return *this;
     }
 };
 
 } // namespace bsp
 } // namespace de
 
-#endif // LIBDENG_BSP_HEDGEINFO
+#endif // DENG_WORLD_MAP_BSP_HEDGEINFO
