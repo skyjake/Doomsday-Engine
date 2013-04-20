@@ -635,11 +635,11 @@ DENG2_PIMPL(Partitioner)
                               "\n %p RIGHT sector #%d %s to %s"
                               "\n %p LEFT  sector #%d %s to %s")
                         << de::dintptr(right)
-                        << (right->_sector? right->_sector._buildData.index - 1 : -1)
+                        << (hedgeInfo(*right).sector? hedgeInfo(*right).sector->origIndex() - 1 : -1)
                         << Vector2d(right->v1Origin()).asText()
                         << Vector2d(right->v2Origin()).asText()
                         << de::dintptr(left)
-                        << (left->_sector? left->_sector._buildData.index - 1 : -1)
+                        << (hedgeInfo(*left).sector? hedgeInfo(*left).sector->origIndex() - 1 : -1)
                         << Vector2d(left->v1Origin()).asText()
                         << Vector2d(left->v2Origin()).asText()
                     */
@@ -1192,16 +1192,17 @@ DENG2_PIMPL(Partitioner)
         // Test each half-edge as a potential partition.
         foreach(HEdge *hedge, partList.hedges())
         {
+            HEdgeInfo &hInfo = hedgeInfo(*hedge);
+
             //LOG_DEBUG("%shedge %p sector:%d %s -> %s")
             //    << (hedge->hasLine()? "" : "mini-") << de::dintptr(hedge)
-            //    << (hedge->_sector? hedge->_sector->_buildData.index - 1 : -1)
+            //    << (hInfo.sector? hInfo.sector->origIndex() - 1 : -1)
             //    << Vector2d(hedge->v1Origin()).asText()
             //    << Vector2d(hedge->v2Origin()).asText();
 
             // Optimization: Only the first half-edge produced from a given
             // line is tested per round of partition costing (they are all
             // collinear).
-            HEdgeInfo &hInfo = hedgeInfo(*hedge);
             if(hInfo.line)
             {
                 // Can we skip this half-edge?

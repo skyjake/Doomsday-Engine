@@ -113,7 +113,7 @@ public: /// @todo Make private:
     /// Map line attributed to the half-edge.
     Line *_line;
 
-    /// On which side of the attributed line (either Line::Front or Line::Back)?
+    /// On which side of the attributed line? (either Line::Front or Line::Back)
     int _lineSide;
 
     /// Point along the attributed line at which v1 occurs; otherwise @c 0.

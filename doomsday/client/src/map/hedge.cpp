@@ -134,7 +134,7 @@ BspLeaf &HEdge::bspLeaf() const
         return *_bspLeaf;
     }
     /// @throw MissingBspLeafError Attempted with no BSP leaf associated.
-    throw MissingBspLeafError("HEdge::bspLeaf", "No BSP leaf if associated");
+    throw MissingBspLeafError("HEdge::bspLeaf", "No BSP leaf is associated");
 }
 
 bool HEdge::hasLine() const
