@@ -20,20 +20,76 @@
 #define LIBGUI_GLPROGRAM_H
 
 #include <de/libdeng2.h>
+#include <de/Error>
+#include <de/Asset>
+#include <de/Observers>
 
 #include "libgui.h"
+#include "opengl.h"
 
 namespace de {
 
+class GLUniform;
+class GLShader;
+
 /**
- * GL shader program.
+ * GL shader program consisting of a vertex and fragment shaders.
+ *
+ * GLProgram instances work together with GLUniform to manage the program
+ * state. To allow a particular uniform to be used in a program, it first
+ * has to be bound to the program.
+ *
+ * When binding texture uniforms, the order of the binding calls is important
+ * as it determines which texture sampling unit each of the textures is
+ * allocated: the first bound texture uniform gets unit #0, the second one gets
+ * unit #1, etc.
  *
  * @ingroup gl
  */
-class LIBGUI_PUBLIC GLProgram
+class LIBGUI_PUBLIC GLProgram : public Asset
 {
 public:
+    /// Failed to allocate a new GL program object. @ingroup errors
+    DENG2_ERROR(AllocError);
+
+    /// Failed to link the program. @ingroup errors
+    DENG2_ERROR(LinkerError);
+
+public:
     GLProgram();
+
+    /**
+     * Resets the program back to an empty state. All uniform bindings are
+     * removed.
+     */
+    void clear();
+
+    /*GLProgram &build(IByteArray const &vertexShaderSource,
+                     IByteArray const &fragmentShaderSource);*/
+
+    /**
+     * GLProgram retains a reference to both shaders.
+     *
+     * @param vertexShader    Vertex shader.
+     * @param fragmentShader  Fragment shader.
+     *
+     * @return Reference to this program.
+     */
+    GLProgram &build(GLShader const &vertexShader, GLShader const &fragmentShader);
+
+    GLProgram &operator << (GLUniform const &uniform);
+
+    GLProgram &bind(GLUniform const &uniform);
+
+    GLProgram &unbind(GLUniform const &uniform);
+
+    void beginUse();
+
+    void endUse();
+
+    GLuint glName() const;
+
+    int glUniformLocation(char const *uniformName) const;
 
 private:
     DENG2_PRIVATE(d)
