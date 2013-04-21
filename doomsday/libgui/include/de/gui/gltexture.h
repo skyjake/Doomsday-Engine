@@ -35,6 +35,8 @@ class LIBGUI_PUBLIC GLTexture
 public:
     GLTexture();
 
+    void glBindToUnit(int unit);
+
 private:
     DENG2_PRIVATE(d)
 };

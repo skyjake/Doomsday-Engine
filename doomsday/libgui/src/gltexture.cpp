@@ -17,16 +17,47 @@
  */
 
 #include "de/GLTexture"
+#include "de/gui/opengl.h"
 
 namespace de {
 
 DENG2_PIMPL(GLTexture)
 {
-    Instance(Public *i) : Base(i)
+    GLuint name;
+
+    Instance(Public *i) : Base(i), name(0)
     {}
+
+    ~Instance()
+    {
+        release();
+    }
+
+    void alloc()
+    {
+        if(!name)
+        {
+            glGenTextures(1, &name);
+        }
+    }
+
+    void release()
+    {
+        if(name)
+        {
+            glDeleteTextures(1, &name);
+            name = 0;
+        }
+    }
 };
 
 GLTexture::GLTexture() : d(new Instance(this))
 {}
+
+void GLTexture::glBindToUnit(int unit)
+{
+    glActiveTexture(GL_TEXTURE0 + unit);
+    glBindTexture(GL_TEXTURE_2D, d->name);
+}
 
 } // namespace de
