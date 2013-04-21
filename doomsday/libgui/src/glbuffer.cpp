@@ -20,17 +20,18 @@
 
 namespace de {
 
-internal::AttribSpec const Vertex2TexRgba::_spec[3] =
-{
-    { 2, GL_FLOAT, false, sizeof(Vertex2TexRgba), 0 },                 // pos
-    { 2, GL_FLOAT, false, sizeof(Vertex2TexRgba), 2 * sizeof(float) }, // texCoord
-    { 4, GL_FLOAT, false, sizeof(Vertex2TexRgba), 4 * sizeof(float) }  // rgba
+using namespace internal;
+
+AttribSpec const Vertex2TexRgba::_spec[3] = {
+    { AttribSpec::Position,  2, GL_FLOAT, false, sizeof(Vertex2TexRgba), 0 },
+    { AttribSpec::TexCoord0, 2, GL_FLOAT, false, sizeof(Vertex2TexRgba), 2 * sizeof(float) },
+    { AttribSpec::Color,     4, GL_FLOAT, false, sizeof(Vertex2TexRgba), 4 * sizeof(float) }
 };
 
-internal::AttribSpecs Vertex2TexRgba::formatSpec()
+AttribSpecs Vertex2TexRgba::formatSpec()
 {
     DENG2_ASSERT(sizeof(Vertex2TexRgba) == 8 * sizeof(float)); // sanity check
-    return internal::AttribSpecs(_spec, sizeof(_spec)/sizeof(_spec[0]));
+    return AttribSpecs(_spec, sizeof(_spec)/sizeof(_spec[0]));
 }
 
 DENG2_PIMPL(GLBuffer)
@@ -40,7 +41,7 @@ DENG2_PIMPL(GLBuffer)
     dsize count;
     dsize idxCount;
     Primitive prim;
-    internal::AttribSpecs specs;
+    AttribSpecs specs;
 
     Instance(Public *i) : Base(i), name(0), idxName(0), count(0), idxCount(0), prim(Points)
     {
@@ -124,7 +125,7 @@ DENG2_PIMPL(GLBuffer)
 
         for(duint i = 0; i < specs.second; ++i)
         {
-            internal::AttribSpec const &spec = specs.first[i];
+            AttribSpec const &spec = specs.first[i];
             if(enable)
             {
                 glEnableVertexAttribArray(i);
@@ -229,7 +230,7 @@ void GLBuffer::draw(duint first, dint count)
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void GLBuffer::setFormat(internal::AttribSpecs const &format)
+void GLBuffer::setFormat(AttribSpecs const &format)
 {
     d->specs = format;
 }

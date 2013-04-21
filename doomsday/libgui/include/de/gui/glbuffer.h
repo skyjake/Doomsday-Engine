@@ -35,6 +35,19 @@ namespace internal
     /// Describes an attribute array inside a GL buffer.
     struct AttribSpec
     {
+        enum Semantic {
+            Position,
+            TexCoord0,
+            TexCoord1,
+            TexCoord2,
+            TexCoord3,
+            Color,
+            Normal,
+            Tangent,
+            Bitangent
+        };
+
+        Semantic semantic;
         dint size;              ///< Number of components in an element.
         GLenum type;            ///< Data type.
         bool normalized;        ///< Whether to normalize non-floats to [0.f, 1.f].
