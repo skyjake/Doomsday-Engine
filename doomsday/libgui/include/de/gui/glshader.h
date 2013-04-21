@@ -21,6 +21,7 @@
 
 #include <de/libdeng2.h>
 #include <de/Error>
+#include <de/Counted>
 #include <de/Asset>
 #include <de/IByteArray>
 
@@ -32,9 +33,12 @@ namespace de {
 /**
  * GL shader.
  *
+ * Shader instances are reference-counted so that they can be shared by many
+ * programs.
+ *
  * @ingroup gl
  */
-class LIBGUI_PUBLIC GLShader : public Asset
+class LIBGUI_PUBLIC GLShader : public Counted, public Asset
 {
 public:
     enum Type
@@ -51,6 +55,8 @@ public:
 
 public:
     GLShader();
+
+    GLShader(Type shaderType, IByteArray const &source);
 
     Type type() const;
 
