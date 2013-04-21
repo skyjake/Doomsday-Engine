@@ -18,11 +18,9 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/vector1.h>
-#include <de/Log>
+#include <de/vector1.h> /// @todo Remove me
 
-#include "de_base.h"
-#include "partition.h"
+#include <de/Log>
 
 #include "map/bspnode.h"
 
@@ -33,16 +31,27 @@ DENG2_PIMPL(BspNode)
     /// Space partition (half-plane).
     Partition partition;
 
-    /// Bounding box for each child subspace [Right, Left].
-    AABoxd aaBox[2];
+    /// Right and left child elements for each half space.
+    MapElement *rightChild;
+    MapElement *leftChild;
 
-    /// Child map elements [Right, Left].
-    MapElement *children[2];
+    /// Right and left bounding boxes for each half space.
+    AABoxd rightAABox;
+    AABoxd leftAABox;
 
     Instance(Public *i, Partition const &partition_)
-        : Base(i), partition(partition_)
-    {
-        std::memset(children,   0, sizeof(children));
+        : Base(i),
+          partition(partition_),
+          rightChild(0),
+          leftChild(0)
+    {}
+
+    inline MapElement **childAdr(int left) {
+        return left? &leftChild : &rightChild;
+    }
+
+    inline AABoxd &aaBox(int left) {
+        return left? leftAABox : rightAABox;
     }
 };
 
@@ -68,41 +77,46 @@ Partition const &BspNode::partition() const
 
 bool BspNode::hasChild(int left) const
 {
-    return d->children[left? LEFT : RIGHT] != 0;
+    return *d->childAdr(left) != 0;
 }
 
 MapElement &BspNode::child(int left) const
 {
-    if(d->children[left? LEFT:RIGHT])
+    if(MapElement *childElm = *d->childAdr(left))
     {
-        return *d->children[left? LEFT:RIGHT];
+        return *childElm;
     }
-    /// @throw MissingChildError The specified child element is missing.
+    /// @throw MissingChildError  The specified child element is missing.
     throw MissingChildError("BspNode::child", QString("No %1 child is configured").arg(left? "left" : "right"));
 }
 
 void BspNode::setChild(int left, MapElement *newChild)
 {
-    DENG2_ASSERT(newChild != this);
-    d->children[left? LEFT:RIGHT] = newChild;
+    if(!newChild || newChild != this)
+    {
+        *d->childAdr(left) = newChild;
+        return;
+    }
+    /// @throw InvalidChildError  Attempted to set a child element to "this" element.
+    throw InvalidChildError("BspNode::setChild", QString("Cannot set \"this\" element as a child of itself"));
 }
 
 AABoxd const &BspNode::childAABox(int left) const
 {
-    return d->aaBox[left? LEFT:RIGHT];
+    return d->aaBox(left);
 }
 
 void BspNode::setChildAABox(int left, AABoxd const *newAABox)
 {
     if(newAABox)
     {
-        AABoxd &dst = d->aaBox[left? LEFT:RIGHT];
+        AABoxd &dst = d->aaBox(left);
         V2d_CopyBox(dst.arvec2, newAABox->arvec2);
     }
     else
     {
         // Clear.
-        AABoxd &dst = d->aaBox[left? LEFT:RIGHT];
+        AABoxd &dst = d->aaBox(left);
         V2d_Set(dst.min, DDMAXFLOAT, DDMAXFLOAT);
         V2d_Set(dst.max, DDMINFLOAT, DDMINFLOAT);
     }

@@ -22,22 +22,11 @@
 #define DENG_WORLD_MAP_BSPNODE
 
 #include <de/aabox.h>
-#include <de/vector1.h>
 
 #include <de/Error>
 
 #include "MapElement"
-#include "p_dmu.h"
 #include "partition.h"
-
-/*
- * Child node identifiers:
- */
-/// @addtogroup map
-///@{
-#define RIGHT                   0
-#define LEFT                    1
-///@}
 
 /**
  * Node in the BSP tree. Children of a node can be either instances of BspNode
@@ -54,6 +43,16 @@ class BspNode : public de::MapElement
 public:
     /// Required child element is missing. @ingroup errors
     DENG2_ERROR(MissingChildError);
+
+    /// An invalid child element was specified. @ingroup errors
+    DENG2_ERROR(InvalidChildError);
+
+    /// Child element identifiers:
+    enum
+    {
+        Right,
+        Left
+    };
 
 public:
     /**
@@ -94,12 +93,12 @@ public:
     /**
      * Returns @c true iff a Right child element is configured for the BSP node.
      */
-    inline bool hasRight() const { return hasChild(RIGHT); }
+    inline bool hasRight() const { return hasChild(Right); }
 
     /**
      * Returns @c true iff a Left child element is configured for the BSP node.
      */
-    inline bool hasLeft() const { return hasChild(LEFT); }
+    inline bool hasLeft() const { return hasChild(Left); }
 
     /**
      * Returns the specified child of the BSP node.
@@ -125,9 +124,9 @@ public:
 
     void setChild(int left, de::MapElement *newChild);
 
-    inline void setRight(de::MapElement *newChild) { setChild(RIGHT, newChild); }
+    inline void setRight(de::MapElement *newChild) { setChild(Right, newChild); }
 
-    inline void setLeft(de::MapElement *newChild) { setChild(LEFT, newChild); }
+    inline void setLeft(de::MapElement *newChild) { setChild(Left, newChild); }
 
     /**
      * Returns the axis-aligned bounding box for the specified child, which, encompases
@@ -141,20 +140,20 @@ public:
      * the vertexes which define the geometry of that subspace of the BSP, in map
      * coordinate space units.
      */
-    inline AABoxd const &rightAABox() const { return childAABox(RIGHT); }
+    inline AABoxd const &rightAABox() const { return childAABox(Right); }
 
     /**
      * Returns the axis-aligned bounding box for the Left child, which, encompases all
      * the vertexes which define the geometry of that subspace of the BSP, in map
      * coordinate space units.
      */
-    inline AABoxd const &leftAABox() const { return childAABox(LEFT); }
+    inline AABoxd const &leftAABox() const { return childAABox(Left); }
 
     void setChildAABox(int left, AABoxd const *newAABox);
 
-    inline void setRightAABox(AABoxd const *newAABox) { setChildAABox(RIGHT, newAABox); }
+    inline void setRightAABox(AABoxd const *newAABox) { setChildAABox(Right, newAABox); }
 
-    inline void setLeftAABox(AABoxd const *newAABox) { setChildAABox(LEFT, newAABox); }
+    inline void setLeftAABox(AABoxd const *newAABox) { setChildAABox(Left, newAABox); }
 
 private:
     DENG2_PRIVATE(d)
