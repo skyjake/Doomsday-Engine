@@ -382,7 +382,7 @@ static Uri *readTextureUrn(Reader *reader, char const *schemeName)
 
 static void P_v13_UnArchiveWorld(void)
 {
-    uint i, j;
+    int i, j;
     fixed_t offx, offy;
     Sector* sec;
     xsector_t* xsec;
@@ -426,7 +426,7 @@ static void P_v13_UnArchiveWorld(void)
         xline->special = Reader_ReadInt16(svReader);
         /*xline->tag    =*/Reader_ReadInt16(svReader);
 
-        for(j = 0; j < 2; j++)
+        for(j = 0; j < 2; ++j)
         {
             Uri *topTextureUrn, *bottomTextureUrn, *middleTextureUrn;
 

@@ -648,9 +648,9 @@ static void ScriptFinished(int number)
 
 static boolean TagBusy(int tag)
 {
-    uint                k;
-    Sector*             sec;
-    xsector_t*          xsec;
+    int k;
+    Sector *sec;
+    xsector_t *xsec;
 
     // NOTE: We can't use the sector tag lists here as we might already be
     // in an iteration at a higher level.

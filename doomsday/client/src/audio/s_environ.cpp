@@ -43,7 +43,7 @@ typedef struct ownernode_s {
 
 typedef struct {
     ownernode_t *head;
-    uint count;
+    int count;
 } ownerlist_t;
 
 typedef struct {
@@ -186,7 +186,7 @@ static void findBspLeafsAffectingSector(GameMap *map, Sector *sec)
 #endif
 
     ownernode_t *node = bspLeafOwnerList.head;
-    for(uint i = 0; i < bspLeafOwnerList.count; ++i)
+    for(int i = 0; i < bspLeafOwnerList.count; ++i)
     {
         ownernode_t *next = node->next;
 

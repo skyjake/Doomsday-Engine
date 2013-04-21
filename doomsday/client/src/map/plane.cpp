@@ -44,7 +44,7 @@ DENG2_PIMPL(Plane)
     ddmobj_base_t soundEmitter;
 
     /// Index of the plane in the owning sector.
-    uint inSectorIndex;
+    int inSectorIndex;
 
     /// Current @em sharp height relative to @c 0 on the map up axis (positive is up).
     coord_t height;
@@ -73,7 +73,7 @@ DENG2_PIMPL(Plane)
     Instance(Public *i, Sector &sector, coord_t height)
         : Base(i),
           sector(&sector),
-          inSectorIndex(0),
+          inSectorIndex(-1),
           height(height),
           targetHeight(height),
           visHeight(height),
@@ -210,12 +210,12 @@ Sector const &Plane::sector() const
     return *d->sector;
 }
 
-uint Plane::inSectorIndex() const
+int Plane::inSectorIndex() const
 {
     return d->inSectorIndex;
 }
 
-void Plane::setInSectorIndex(uint newIndex)
+void Plane::setInSectorIndex(int newIndex)
 {
     d->inSectorIndex = newIndex;
 }

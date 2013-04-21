@@ -32,17 +32,14 @@
 #include "doomsday.h"
 #include "p_iterlist.h"
 
-#define numvertexes (*(uint*) DD_GetVariable(DD_VERTEX_COUNT))
-#define numhedges   (*(uint*) DD_GetVariable(DD_HEDGE_COUNT))
-#define numsectors  (*(uint*) DD_GetVariable(DD_SECTOR_COUNT))
-#define numbspleafs (*(uint*) DD_GetVariable(DD_BSPLEAF_COUNT))
-#define numbspnodes (*(uint*) DD_GetVariable(DD_BSPNODE_COUNT))
-#define numlines    (*(uint*) DD_GetVariable(DD_LINE_COUNT))
-#define numsides    (*(uint*) DD_GetVariable(DD_SIDE_COUNT))
-
-#if __JHEXEN__
-#define numpolyobjs (*(uint*) DD_GetVariable(DD_POLYOBJ_COUNT))
-#endif
+#define numvertexes             (P_Count(DMU_VERTEX))
+#define numhedges               (P_Count(DMU_HEDGE))
+#define numsectors              (P_Count(DMU_SECTOR))
+#define numbspleafs             (P_Count(DMU_BSPLEAF))
+#define numbspnodes             (P_Count(DMU_BSPNODE))
+#define numlines                (P_Count(DMU_LINE))
+#define numsides                (P_Count(DMU_SIDE))
+#define numpolyobjs             (*(int*) DD_GetVariable(DD_POLYOBJ_COUNT))
 
 // DMU property aliases. For short-hand purposes:
 #define DMU_TOP_MATERIAL        (DMU_TOP_OF_SIDE | DMU_MATERIAL)

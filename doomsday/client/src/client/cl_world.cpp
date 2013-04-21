@@ -52,7 +52,7 @@ typedef struct clplane_s {
 
 typedef struct clpolyobj_s {
     thinker_t   thinker;
-    uint        number;
+    int         number;
     Polyobj*    polyobj;
     boolean     move;
     boolean     rotate;

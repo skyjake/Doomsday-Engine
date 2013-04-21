@@ -325,17 +325,6 @@ public:
     coord_t length() const;
 
     /**
-     * Returns the 1-based index of the half-edge in the GameMap's LUT.
-     */
-    uint index() const;
-
-    /**
-     * Change the index of the half-edge (which, should be the position of this
-     * map element in GameMap's LUT plus @c 1).
-     */
-    void setIndex(uint newIndex);
-
-    /**
      * Returns the distance from @a point to the nearest point along the HEdge [0..1].
      *
      * @param point  Point to measure the distance to in the map coordinate space.

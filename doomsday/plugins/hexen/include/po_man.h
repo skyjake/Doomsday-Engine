@@ -91,7 +91,7 @@ boolean PO_FindAndCreatePolyobj(int tag, boolean crush, float startX, float star
  *             Otherwise this value is interpreted as a tag that *should*
  *             match one polyobj.
  */
-Polyobj* P_GetPolyobj(uint num);
+Polyobj *P_GetPolyobj(int num);
 
 void T_PolyDoor(void *pd);
 void T_RotatePoly(void *pe);

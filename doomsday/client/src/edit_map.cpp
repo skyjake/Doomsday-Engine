@@ -69,33 +69,42 @@ public:
         : entityDatabase(0)
     {}
 
-    Vertex *createVertex(Vector2d const &origin)
+    Vertex *createVertex(Vector2d const &origin,
+                         int archiveIndex = MapElement::NoIndex)
     {
         Vertex *vtx = new Vertex(origin);
 
+        vtx->setIndexInArchive(archiveIndex);
+        vtx->setIndexInMap(vertexes.count());
         vertexes.append(vtx);
-        vtx->setOrigIndex(vertexes.count()); // 1-based index, 0 = NIL.
 
         return vtx;
     }
 
     Line *createLine(Vertex &v1, Vertex &v2, int flags = 0,
-                     Sector *frontSector = 0, Sector *backSector = 0)
+                     Sector *frontSector = 0, Sector *backSector = 0,
+                     int archiveIndex = MapElement::NoIndex)
     {
         Line *line = new Line(v1, v2, flags, frontSector, backSector);
 
+        line->setIndexInArchive(archiveIndex);
+        line->setIndexInMap(lines.count());
         lines.append(line);
-        line->setOrigIndex(lines.count()); // 1-based index, 0 = NIL.
+
+        line->front().setIndexInMap(GameMap::toSideIndex(line->indexInMap(), Line::Front));
+        line->back().setIndexInMap(GameMap::toSideIndex(line->indexInMap(), Line::Back));
 
         return line;
     }
 
-    Sector *createSector(float lightLevel, Vector3f const &lightColor)
+    Sector *createSector(float lightLevel, Vector3f const &lightColor,
+                         int archiveIndex = MapElement::NoIndex)
     {
         Sector *sector = new Sector(lightLevel, lightColor);
 
+        sector->setIndexInArchive(archiveIndex);
+        sector->setIndexInMap(sectors.count());
         sectors.append(sector);
-        sector->setOrigIndex(sectors.count()); // 1-based index, 0 = NIL.
 
         return sector;
     }
@@ -105,8 +114,8 @@ public:
         void *region = M_Calloc(POLYOBJ_SIZE);
         Polyobj *po = new (region) Polyobj(origin);
 
+        po->setIndexInMap(polyobjs.count());
         polyobjs.append(po);
-        po->setOrigIndex(polyobjs.count()); // 1-based index, 0 = NIL.
 
         return po;
     }
@@ -204,31 +213,31 @@ public:
         // Count line -> vertex references.
         foreach(Line *line, lines)
         {
-            vertexInfo[line->from().origIndex() - 1].refCount++;
-            vertexInfo[  line->to().origIndex() - 1].refCount++;
+            vertexInfo[line->from().indexInMap()].refCount++;
+            vertexInfo[  line->to().indexInMap()].refCount++;
         }
 
         // Perform the replacement.
         foreach(Line *line, lines)
         {
-            while(vertexInfo[line->from().origIndex() - 1].equiv)
+            while(vertexInfo[line->from().indexInMap()].equiv)
             {
-                VertexInfo &info = vertexInfo[line->from().origIndex() - 1];
+                VertexInfo &info = vertexInfo[line->from().indexInMap()];
 
                 info.refCount--;
                 line->replaceFrom(*info.equiv);
 
-                vertexInfo[line->from().origIndex() - 1].refCount++;
+                vertexInfo[line->from().indexInMap()].refCount++;
             }
 
-            while(vertexInfo[line->to().origIndex() - 1].equiv)
+            while(vertexInfo[line->to().indexInMap()].equiv)
             {
-                VertexInfo &info = vertexInfo[line->to().origIndex() - 1];
+                VertexInfo &info = vertexInfo[line->to().indexInMap()];
 
                 info.refCount--;
                 line->replaceTo(*info.equiv);
 
-                vertexInfo[line->to().origIndex() - 1].refCount++;
+                vertexInfo[line->to().indexInMap()].refCount++;
             }
         }
 
@@ -255,7 +264,7 @@ public:
             // Re-index with a contiguous range of indices.
             uint idx = 0;
             foreach(Vertex *vertex, vertexes)
-                vertex->setOrigIndex(++idx); // 1-based.
+                vertex->setIndexInMap(idx++);
 
             /// Update lines. @todo Line should handle this itself.
             foreach(Line *line, lines)
@@ -671,8 +680,8 @@ static void buildVertexLineOwnerRings()
         do
         {
             LOG_VERBOSE("  %i: p= #%05i this= #%05i n= #%05i, dANG= %-3.f")
-                << idx << cur->prev().line().origIndex() << cur->line().origIndex()
-                << cur->next().line().origIndex() << BANG2DEG(cur->angle());
+                << idx << cur->prev().line().indexInMap() << cur->line().indexInMap()
+                << cur->next().line().indexInMap() << BANG2DEG(cur->angle());
 
             idx++;
         } while((cur = &cur->next()) != base);
@@ -896,8 +905,6 @@ boolean MPE_End()
         map->_polyobjs.append(editMap.polyobjs.takeFirst());
         Polyobj *polyobj = map->_polyobjs.back();
 
-        polyobj->idx = map->_polyobjs.count(); // 0-based index.
-
         // Create a hedge for each line of this polyobj.
         foreach(Line *line, polyobj->lines())
         {
@@ -975,25 +982,26 @@ boolean MPE_End()
 }
 
 #undef MPE_VertexCreate
-uint MPE_VertexCreate(coord_t x, coord_t y)
+int MPE_VertexCreate(coord_t x, coord_t y, int archiveIndex)
 {
-    if(!editMapInited) return 0;
-    return editMap.createVertex(Vector2d(x, y))->origIndex();
+    if(!editMapInited) return -1;
+    return editMap.createVertex(Vector2d(x, y), archiveIndex)->indexInMap();
 }
 
 #undef MPE_VertexCreatev
-boolean MPE_VertexCreatev(size_t num, coord_t *values, uint *retIndices)
+boolean MPE_VertexCreatev(size_t num, coord_t *values, int *archiveIndices, int *retIndices)
 {
     if(!editMapInited || !num || !values)
         return false;
 
     // Create many vertexes.
-    for(uint n = 0; n < num; ++n)
+    for(size_t n = 0; n < num; ++n)
     {
-        Vertex *vertex = editMap.createVertex(Vector2d(values[n * 2], values[n * 2 + 1]));
+        Vertex *vertex = editMap.createVertex(Vector2d(values[n * 2], values[n * 2 + 1]),
+                                              archiveIndices[n]);
         if(retIndices)
         {
-            retIndices[n] = vertex->origIndex();
+            retIndices[n] = vertex->indexInMap();
         }
     }
 
@@ -1001,45 +1009,47 @@ boolean MPE_VertexCreatev(size_t num, coord_t *values, uint *retIndices)
 }
 
 #undef MPE_LineCreate
-uint MPE_LineCreate(uint v1, uint v2, uint frontSectorIdx, uint backSectorIdx, int flags)
+int MPE_LineCreate(int v1, int v2, int frontSectorIdx, int backSectorIdx, int flags,
+                   int archiveIndex)
 {
-    if(!editMapInited) return 0;
+    if(!editMapInited) return -1;
 
-    if(frontSectorIdx > (uint)editMap.sectors.count()) return 0;
-    if(backSectorIdx  > (uint)editMap.sectors.count()) return 0;
-    if(v1 == 0 || v1 > (uint)editMap.vertexes.count()) return 0;
-    if(v2 == 0 || v2 > (uint)editMap.vertexes.count()) return 0;
-    if(v1 == v2) return 0;
+    if(frontSectorIdx >= editMap.sectors.count()) return -1;
+    if(backSectorIdx  >= editMap.sectors.count()) return -1;
+    if(v1 < 0 || v1 >= editMap.vertexes.count()) return -1;
+    if(v2 < 0 || v2 >= editMap.vertexes.count()) return -1;
+    if(v1 == v2) return -1;
 
     // Next, check the length is not zero.
     /// @todo fixme: We need to allow these... -ds
-    Vertex *vtx1 = editMap.vertexes[v1 - 1];
-    Vertex *vtx2 = editMap.vertexes[v2 - 1];
-    if(!(V2d_Distance(vtx2->origin(), vtx1->origin()) > 0)) return 0;
+    Vertex *vtx1 = editMap.vertexes[v1];
+    Vertex *vtx2 = editMap.vertexes[v2];
+    if(!(V2d_Distance(vtx2->origin(), vtx1->origin()) > 0)) return -1;
 
-    Sector *frontSector = (frontSectorIdx? editMap.sectors[frontSectorIdx - 1] : 0);
-    Sector *backSector  = (backSectorIdx ? editMap.sectors[ backSectorIdx - 1] : 0);
+    Sector *frontSector = (frontSectorIdx >= 0? editMap.sectors[frontSectorIdx] : 0);
+    Sector *backSector  = (backSectorIdx  >= 0? editMap.sectors[ backSectorIdx] : 0);
 
-    return editMap.createLine(*vtx1, *vtx2, flags, frontSector, backSector)->origIndex();
+    return editMap.createLine(*vtx1, *vtx2, flags, frontSector, backSector,
+                              archiveIndex)->indexInMap();
 }
 
 #undef MPE_LineAddSide
-void MPE_LineAddSide(uint lineIdx, int sideId, short flags, ddstring_t const *topMaterialUri,
+void MPE_LineAddSide(int lineIdx, int sideId, short flags, ddstring_t const *topMaterialUri,
     float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue,
     ddstring_t const *middleMaterialUri, float middleOffsetX, float middleOffsetY, float middleRed,
     float middleGreen, float middleBlue, float middleAlpha, ddstring_t const *bottomMaterialUri,
     float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen,
-    float bottomBlue, uint sideDefArchiveIndex)
+    float bottomBlue, int archiveIndex)
 {
     if(!editMapInited) return;
 
-    if(lineIdx == 0 || lineIdx > (uint)editMap.lines.count()) return;
+    if(lineIdx < 0 || lineIdx >= editMap.lines.count()) return;
 
-    Line *line = editMap.lines[lineIdx - 1];
+    Line *line = editMap.lines[lineIdx];
     Line::Side &side = line->side(sideId);
 
     side.setFlags(flags);
-    side.setSideDefArchiveIndex(sideDefArchiveIndex);
+    side.setIndexInArchive(archiveIndex);
 
     // Ensure sections are defined if they aren't already.
     side.addSections();
@@ -1060,66 +1070,73 @@ void MPE_LineAddSide(uint lineIdx, int sideId, short flags, ddstring_t const *to
 }
 
 #undef MPE_PlaneCreate
-uint MPE_PlaneCreate(uint sectorIdx, coord_t height, ddstring_t const *materialUri,
+int MPE_PlaneCreate(int sectorIdx, coord_t height, ddstring_t const *materialUri,
     float matOffsetX, float matOffsetY, float r, float g, float b, float a,
-    float normalX, float normalY, float normalZ)
+    float normalX, float normalY, float normalZ, int archiveIndex)
 {
-    if(!editMapInited) return 0;
-    if(sectorIdx == 0 || sectorIdx > (uint)editMap.sectors.count()) return 0;
+    if(!editMapInited) return -1;
 
-    Sector *sector = editMap.sectors[sectorIdx - 1];
+    if(sectorIdx < 0 || sectorIdx >= editMap.sectors.count()) return -1;
+
+    Sector *sector = editMap.sectors[sectorIdx];
     Plane *plane = sector->addPlane(Vector3f(normalX, normalY, normalZ), height);
+
+    plane->setIndexInArchive(archiveIndex);
 
     plane->surface().setMaterial(findMaterialInDict(materialUri));
     plane->surface().setTintColor(r, g, b);
     plane->surface().setOpacity(a);
     plane->surface().setMaterialOrigin(matOffsetX, matOffsetY);
 
-    return plane->inSectorIndex() + 1; // 1-based index.
+    return plane->inSectorIndex();
 }
 
 #undef MPE_SectorCreate
-uint MPE_SectorCreate(float lightlevel, float red, float green, float blue)
+int MPE_SectorCreate(float lightlevel, float red, float green, float blue,
+                     int archiveIndex)
 {
-    if(!editMapInited) return 0;
-    return editMap.createSector(lightlevel, Vector3f(red, green, blue))->origIndex();
+    if(!editMapInited) return -1;
+    return editMap.createSector(lightlevel, Vector3f(red, green, blue),
+                                archiveIndex)->indexInMap();
 }
 
 #undef MPE_PolyobjCreate
-uint MPE_PolyobjCreate(uint *lines, uint lineCount, int tag, int sequenceType,
-    coord_t originX, coord_t originY)
+int MPE_PolyobjCreate(int *lines, int lineCount, int tag, int sequenceType,
+    coord_t originX, coord_t originY, int archiveIndex)
 {
-    if(!editMapInited || !lineCount || !lines) return 0;
+    DENG_UNUSED(archiveIndex); /// @todo Use this!
+
+    if(!editMapInited) return -1;
+    if(lineCount <= 0 || !lines) return -1;
 
     // First check that all the line indices are valid and that they arn't
     // already part of another polyobj.
-    for(uint i = 0; i < lineCount; ++i)
+    for(int i = 0; i < lineCount; ++i)
     {
-        if(lines[i] == 0 || lines[i] > (uint)editMap.lines.count()) return 0;
+        if(lines[i] < 0 || lines[i] >= editMap.lines.count()) return -1;
 
-        Line *line = editMap.lines[lines[i] - 1];
-        if(line->isFromPolyobj()) return 0;
+        Line *line = editMap.lines[lines[i]];
+        if(line->isFromPolyobj()) return -1;
     }
 
     Polyobj *po = editMap.createPolyobj(Vector2d(originX, originY));
     po->setSequenceType(sequenceType);
     po->setTag(tag);
 
-
-    for(uint i = 0; i < lineCount; ++i)
+    for(int i = 0; i < lineCount; ++i)
     {
-        Line *line = editMap.lines[lines[i] - 1];
+        Line *line = editMap.lines[lines[i]];
 
         // This line belongs to a polyobj.
         line->_inFlags |= LF_POLYOBJ;
         static_cast<Polyobj::Lines *>(po->_lines)->append(line);
     }
 
-    return po->origIndex();
+    return po->indexInMap();
 }
 
 #undef MPE_GameObjProperty
-boolean MPE_GameObjProperty(char const *entityName, uint elementIndex,
+boolean MPE_GameObjProperty(char const *entityName, int elementIndex,
                             char const *propertyName, valuetype_t type, void *valueAdr)
 {
     if(!editMapInited) return false;

@@ -165,7 +165,7 @@ public:
     /**
      * Returns the total number of planes in/owned by the sector.
      */
-    inline uint planeCount() const { return uint(planes().count()); }
+    inline int planeCount() const { return planes().count(); }
 
     /**
      * Convenient accessor method for returning the surface of the specified
@@ -441,18 +441,6 @@ public:
      * Returns the final environmental audio characteristics of the sector.
      */
     AudioEnvironmentFactors const &audioEnvironmentFactors() const;
-
-    /**
-     * Returns the original index of the sector.
-     */
-    uint origIndex() const;
-
-    /**
-     * Change the original index of the sector.
-     *
-     * @param newIndex  New original index.
-     */
-    void setOrigIndex(uint newIndex);
 
     /**
      * Returns the @ref sectorFrameFlags for the sector.

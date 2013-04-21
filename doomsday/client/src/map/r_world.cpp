@@ -665,9 +665,9 @@ static void addMissingMaterial(Line::Side &side, int section)
     {
         String path = surface.hasMaterial()? surface.material().manifest().composeUri().asText() : "<null>";
 
-        LOG_WARNING("%s of Line #%u is missing a material for the %s section.\n"
+        LOG_WARNING("%s of Line #%d is missing a material for the %s section.\n"
                     "  %s was chosen to complete the definition.")
-            << (side.isBack()? "Back" : "Front") << side.line().origIndex() - 1
+            << (side.isBack()? "Back" : "Front") << side.line().indexInMap()
             << (section == Line::Side::Middle? "middle" : section == Line::Side::Top? "top" : "bottom")
             << path;
     }
@@ -920,7 +920,7 @@ boolean R_SectorContainsSkySurfaces(Sector const *sec)
     DENG_ASSERT(sec);
 
     boolean sectorContainsSkySurfaces = false;
-    uint n = 0;
+    int n = 0;
     do
     {
         if(sec->planeSurface(n).hasSkyMaskedMaterial())

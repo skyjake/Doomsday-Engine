@@ -649,8 +649,8 @@ void XL_SetLineType(Line* line, int id)
  */
 void XL_Init(void)
 {
-    uint                i;
-    Line*               line;
+    int i;
+    Line *line;
 
     memset(&dummyThing, 0, sizeof(dummyThing));
 
@@ -780,7 +780,7 @@ int XL_TraversePlanes(Line* line, int refType, int ref, void* data,
     }
     else
     {
-        uint                    i;
+        int i;
 
         for(i = 0; i < numsectors; ++i)
         {
@@ -867,12 +867,12 @@ int XL_TraversePlanes(Line* line, int refType, int ref, void* data,
 int XL_TraverseLines(Line* line, int rtype, int ref, void* data,
                      void* context, mobj_t* activator, int (C_DECL *func)())
 {
-    uint                i;
-    int                 tag;
-    int                 reftype = rtype;
-    char                buff[50];
-    Line*               iter;
-    boolean             findLineTagged;
+    int i;
+    int tag;
+    int reftype = rtype;
+    char buff[50];
+    Line *iter;
+    boolean findLineTagged;
 
     // Binary XG data from DD_XGDATA uses the old flag values.
     // Add one to the ref type.
@@ -2759,8 +2759,8 @@ void XL_Thinker(void *xlThinkerPtr)
  */
 void XL_Update(void)
 {
-    uint                i;
-    xline_t*            xline;
+    int i;
+    xline_t *xline;
 
     // It's all PU_MAP memory, so we can just lose it.
     for(i = 0; i < numlines; ++i)

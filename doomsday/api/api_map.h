@@ -270,7 +270,7 @@ DENG_API_TYPEDEF(Map)
      * @param id  Unique identifier of the Polyobj to be found.
      * @return  Found Polyobj instance else @c NULL.
      */
-    struct polyobj_s* (*PO_PolyobjByID)(uint id);
+    struct polyobj_s* (*PO_PolyobjByID)(int id);
 
     /**
      * Lookup a Polyobj on the current map by tag.
@@ -380,9 +380,16 @@ DENG_API_TYPEDEF(Map)
      */
     int             (*GetType)(MapElementPtrConst ptr);
 
-    unsigned int    (*ToIndex)(MapElementPtrConst ptr);
-    void*           (*ToPtr)(int type, uint index);
-    int             (*Callback)(int type, uint index, void* context, int (*callback)(MapElementPtr p, void* ctx));
+    int             (*ToIndex)(MapElementPtrConst ptr);
+    void*           (*ToPtr)(int type, int index);
+
+    /**
+     * Returns the total number of DMU objects of @a type. For example, if the
+     * type is @c DMU_LINE then the total number of map Lines is returned.
+     */
+    int             (*Count)(int type);
+
+    int             (*Callback)(int type, int index, void* context, int (*callback)(MapElementPtr p, void* ctx));
     int             (*Callbackp)(int type, MapElementPtr ptr, void* context, int (*callback)(MapElementPtr p, void* ctx));
     int             (*Iteratep)(MapElementPtr ptr, uint prop, void* context, int (*callback) (MapElementPtr p, void* ctx));
 
@@ -394,31 +401,31 @@ DENG_API_TYPEDEF(Map)
 
     // Map Entities
     uint            (*CountGameMapObjs)(int entityId);
-    byte            (*GetGMOByte)(int entityId, uint elementIndex, int propertyId);
-    short           (*GetGMOShort)(int entityId, uint elementIndex, int propertyId);
-    int             (*GetGMOInt)(int entityId, uint elementIndex, int propertyId);
-    fixed_t         (*GetGMOFixed)(int entityId, uint elementIndex, int propertyId);
-    angle_t         (*GetGMOAngle)(int entityId, uint elementIndex, int propertyId);
-    float           (*GetGMOFloat)(int entityId, uint elementIndex, int propertyId);
+    byte            (*GetGMOByte)(int entityId, int elementIndex, int propertyId);
+    short           (*GetGMOShort)(int entityId, int elementIndex, int propertyId);
+    int             (*GetGMOInt)(int entityId, int elementIndex, int propertyId);
+    fixed_t         (*GetGMOFixed)(int entityId, int elementIndex, int propertyId);
+    angle_t         (*GetGMOAngle)(int entityId, int elementIndex, int propertyId);
+    float           (*GetGMOFloat)(int entityId, int elementIndex, int propertyId);
 
     /* index-based write functions */
-    void            (*SetBool)(int type, uint index, uint prop, boolean param);
-    void            (*SetByte)(int type, uint index, uint prop, byte param);
-    void            (*SetInt)(int type, uint index, uint prop, int param);
-    void            (*SetFixed)(int type, uint index, uint prop, fixed_t param);
-    void            (*SetAngle)(int type, uint index, uint prop, angle_t param);
-    void            (*SetFloat)(int type, uint index, uint prop, float param);
-    void            (*SetDouble)(int type, uint index, uint prop, double param);
-    void            (*SetPtr)(int type, uint index, uint prop, void* param);
+    void            (*SetBool)(int type, int index, uint prop, boolean param);
+    void            (*SetByte)(int type, int index, uint prop, byte param);
+    void            (*SetInt)(int type, int index, uint prop, int param);
+    void            (*SetFixed)(int type, int index, uint prop, fixed_t param);
+    void            (*SetAngle)(int type, int index, uint prop, angle_t param);
+    void            (*SetFloat)(int type, int index, uint prop, float param);
+    void            (*SetDouble)(int type, int index, uint prop, double param);
+    void            (*SetPtr)(int type, int index, uint prop, void* param);
 
-    void            (*SetBoolv)(int type, uint index, uint prop, boolean* params);
-    void            (*SetBytev)(int type, uint index, uint prop, byte* params);
-    void            (*SetIntv)(int type, uint index, uint prop, int* params);
-    void            (*SetFixedv)(int type, uint index, uint prop, fixed_t* params);
-    void            (*SetAnglev)(int type, uint index, uint prop, angle_t* params);
-    void            (*SetFloatv)(int type, uint index, uint prop, float* params);
-    void            (*SetDoublev)(int type, uint index, uint prop, double* params);
-    void            (*SetPtrv)(int type, uint index, uint prop, void* params);
+    void            (*SetBoolv)(int type, int index, uint prop, boolean* params);
+    void            (*SetBytev)(int type, int index, uint prop, byte* params);
+    void            (*SetIntv)(int type, int index, uint prop, int* params);
+    void            (*SetFixedv)(int type, int index, uint prop, fixed_t* params);
+    void            (*SetAnglev)(int type, int index, uint prop, angle_t* params);
+    void            (*SetFloatv)(int type, int index, uint prop, float* params);
+    void            (*SetDoublev)(int type, int index, uint prop, double* params);
+    void            (*SetPtrv)(int type, int index, uint prop, void* params);
 
     /* pointer-based write functions */
     void            (*SetBoolp)(MapElementPtr ptr, uint prop, boolean param);
@@ -440,23 +447,23 @@ DENG_API_TYPEDEF(Map)
     void            (*SetPtrpv)(MapElementPtr ptr, uint prop, void* params);
 
     /* index-based read functions */
-    boolean         (*GetBool)(int type, uint index, uint prop);
-    byte            (*GetByte)(int type, uint index, uint prop);
-    int             (*GetInt)(int type, uint index, uint prop);
-    fixed_t         (*GetFixed)(int type, uint index, uint prop);
-    angle_t         (*GetAngle)(int type, uint index, uint prop);
-    float           (*GetFloat)(int type, uint index, uint prop);
-    double          (*GetDouble)(int type, uint index, uint prop);
-    void*           (*GetPtr)(int type, uint index, uint prop);
+    boolean         (*GetBool)(int type, int index, uint prop);
+    byte            (*GetByte)(int type, int index, uint prop);
+    int             (*GetInt)(int type, int index, uint prop);
+    fixed_t         (*GetFixed)(int type, int index, uint prop);
+    angle_t         (*GetAngle)(int type, int index, uint prop);
+    float           (*GetFloat)(int type, int index, uint prop);
+    double          (*GetDouble)(int type, int index, uint prop);
+    void*           (*GetPtr)(int type, int index, uint prop);
 
-    void            (*GetBoolv)(int type, uint index, uint prop, boolean* params);
-    void            (*GetBytev)(int type, uint index, uint prop, byte* params);
-    void            (*GetIntv)(int type, uint index, uint prop, int* params);
-    void            (*GetFixedv)(int type, uint index, uint prop, fixed_t* params);
-    void            (*GetAnglev)(int type, uint index, uint prop, angle_t* params);
-    void            (*GetFloatv)(int type, uint index, uint prop, float* params);
-    void            (*GetDoublev)(int type, uint index, uint prop, double* params);
-    void            (*GetPtrv)(int type, uint index, uint prop, void* params);
+    void            (*GetBoolv)(int type, int index, uint prop, boolean* params);
+    void            (*GetBytev)(int type, int index, uint prop, byte* params);
+    void            (*GetIntv)(int type, int index, uint prop, int* params);
+    void            (*GetFixedv)(int type, int index, uint prop, fixed_t* params);
+    void            (*GetAnglev)(int type, int index, uint prop, angle_t* params);
+    void            (*GetFloatv)(int type, int index, uint prop, float* params);
+    void            (*GetDoublev)(int type, int index, uint prop, double* params);
+    void            (*GetPtrv)(int type, int index, uint prop, void* params);
 
     /* pointer-based read functions */
     boolean         (*GetBoolp)(MapElementPtr ptr, uint prop);
@@ -537,6 +544,7 @@ DENG_API_T(Map);
 #define DMU_GetType                         _api_Map.GetType
 #define P_ToIndex                           _api_Map.ToIndex
 #define P_ToPtr                             _api_Map.ToPtr
+#define P_Count                             _api_Map.Count
 #define P_Callback                          _api_Map.Callback
 #define P_Callbackp                         _api_Map.Callbackp
 #define P_Iteratep                          _api_Map.Iteratep

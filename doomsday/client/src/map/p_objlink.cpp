@@ -316,7 +316,7 @@ int RIT_LinkObjToBspLeaf(BspLeaf *bspLeaf, void *parameters)
 
     con->obj = p->obj;
     // Link the contact list for this bspLeaf.
-    linkContactToBspLeaf(con, p->type, theMap->bspLeafIndex(bspLeaf));
+    linkContactToBspLeaf(con, p->type, bspLeaf->indexInMap());
 
     return false; // Continue iteration.
 }
@@ -605,7 +605,7 @@ int R_IterateBspLeafContacts2(BspLeaf *bspLeaf, objtype_t type,
     int (*callback) (void *object, void *parameters), void *parameters)
 {
     DENG_ASSERT(VALID_OBJTYPE(type));
-    objcontactlist_t const &conList = bspLeafContacts[theMap->bspLeafIndex(bspLeaf)];
+    objcontactlist_t const &conList = bspLeafContacts[bspLeaf->indexInMap()];
 
     for(objcontact_t *con = conList.head[type]; con; con = con->next)
     {

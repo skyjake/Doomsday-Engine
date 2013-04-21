@@ -65,9 +65,6 @@ DENG2_PIMPL(BspLeaf)
 
 #endif // __CLIENT__
 
-    /// Original index in the archived map.
-    uint origIndex;
-
     /// Used by legacy algorithms to prevent repeated processing.
     int validCount;
 
@@ -80,7 +77,6 @@ DENG2_PIMPL(BspLeaf)
           needUpdateFanBase(true),
           addSpriteCount(0),
 #endif
-          origIndex(0),
           validCount(0)
     {
         std::memset(center, 0, sizeof(center));
@@ -184,7 +180,7 @@ BspLeaf::~BspLeaf()
 #ifdef __CLIENT__
     if(_bsuf)
     {
-        for(uint i = 0; i < d->sector->planeCount(); ++i)
+        for(int i = 0; i < d->sector->planeCount(); ++i)
         {
             SB_DestroySurface(_bsuf[i]);
         }
@@ -313,16 +309,6 @@ void BspLeaf::setFirstPolyobj(Polyobj *newPolyobj)
     d->polyobj = newPolyobj;
 }
 
-uint BspLeaf::origIndex() const
-{
-    return d->origIndex;
-}
-
-void BspLeaf::setOrigIndex(uint newOrigIndex)
-{
-    d->origIndex = newOrigIndex;
-}
-
 int BspLeaf::validCount() const
 {
     return d->validCount;
@@ -342,10 +328,10 @@ HEdge *BspLeaf::fanBase() const
     return d->fanBase;
 }
 
-biassurface_t &BspLeaf::biasSurfaceForGeometryGroup(uint groupId)
+biassurface_t &BspLeaf::biasSurfaceForGeometryGroup(int groupId)
 {
     DENG2_ASSERT(d->sector != 0);
-    if(groupId <= d->sector->planeCount())
+    if(groupId >= 0 && groupId < d->sector->planeCount())
     {
         DENG2_ASSERT(_bsuf != 0 && _bsuf[groupId] != 0);
         return *_bsuf[groupId];

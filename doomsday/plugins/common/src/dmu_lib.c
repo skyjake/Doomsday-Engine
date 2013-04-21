@@ -225,7 +225,7 @@ void P_CopySector(Sector* dest, Sector* src)
 
 void P_BuildLineTagLists(void)
 {
-    uint i;
+    int i;
 
     P_DestroyLineTagLists();
 
@@ -298,18 +298,18 @@ iterlist_t* P_GetLineIterListForTag(int tag, boolean createNewList)
 
 void P_BuildSectorTagLists(void)
 {
-    uint i;
+    int i;
 
     P_DestroySectorTagLists();
 
     for(i = 0; i < numsectors; ++i)
     {
-        Sector* sec     = P_ToPtr(DMU_SECTOR, i);
-        xsector_t* xsec = P_ToXSector(sec);
+        Sector *sec = P_ToPtr(DMU_SECTOR, i);
+        xsector_t *xsec = P_ToXSector(sec);
 
         if(xsec->tag)
         {
-            iterlist_t* list = P_GetSectorIterListForTag(xsec->tag, true);
+            iterlist_t *list = P_GetSectorIterListForTag(xsec->tag, true);
             IterList_PushBack(list, sec);
         }
     }

@@ -450,7 +450,7 @@ static MapEntityDef *findMapEntityDef(int identifier, char const *entityName,
 #undef P_RegisterMapObj
 DENG_EXTERN_C boolean P_RegisterMapObj(int identifier, char const *name)
 {
-    return !!findMapEntityDef(identifier, name, true /*do create*/);
+    return findMapEntityDef(identifier, name, true /*do create*/) != 0;
 }
 
 #undef P_RegisterMapObjProperty
@@ -492,7 +492,7 @@ DENG_EXTERN_C uint P_CountGameMapObjs(int entityId)
 }
 
 boolean P_SetMapEntityProperty(EntityDatabase *db, MapEntityPropertyDef *propertyDef,
-    uint elementIndex, valuetype_t valueType, void *valueAdr)
+    int elementIndex, valuetype_t valueType, void *valueAdr)
 {
     try
     {
@@ -537,7 +537,7 @@ static void setValue(void *dst, valuetype_t dstType, PropertyValue const *pvalue
 }
 
 #undef P_GetGMOByte
-DENG_EXTERN_C byte P_GetGMOByte(int entityId, uint elementIndex, int propertyId)
+DENG_EXTERN_C byte P_GetGMOByte(int entityId, int elementIndex, int propertyId)
 {
     byte returnVal = 0;
     if(theMap && theMap->entityDatabase)
@@ -558,7 +558,7 @@ DENG_EXTERN_C byte P_GetGMOByte(int entityId, uint elementIndex, int propertyId)
 }
 
 #undef P_GetGMOShort
-DENG_EXTERN_C short P_GetGMOShort(int entityId, uint elementIndex, int propertyId)
+DENG_EXTERN_C short P_GetGMOShort(int entityId, int elementIndex, int propertyId)
 {
     short returnVal = 0;
     if(theMap && theMap->entityDatabase)
@@ -579,7 +579,7 @@ DENG_EXTERN_C short P_GetGMOShort(int entityId, uint elementIndex, int propertyI
 }
 
 #undef P_GetGMOInt
-DENG_EXTERN_C int P_GetGMOInt(int entityId, uint elementIndex, int propertyId)
+DENG_EXTERN_C int P_GetGMOInt(int entityId, int elementIndex, int propertyId)
 {
     int returnVal = 0;
     if(theMap && theMap->entityDatabase)
@@ -600,7 +600,7 @@ DENG_EXTERN_C int P_GetGMOInt(int entityId, uint elementIndex, int propertyId)
 }
 
 #undef P_GetGMOFixed
-DENG_EXTERN_C fixed_t P_GetGMOFixed(int entityId, uint elementIndex, int propertyId)
+DENG_EXTERN_C fixed_t P_GetGMOFixed(int entityId, int elementIndex, int propertyId)
 {
     fixed_t returnVal = 0;
     if(theMap && theMap->entityDatabase)
@@ -621,7 +621,7 @@ DENG_EXTERN_C fixed_t P_GetGMOFixed(int entityId, uint elementIndex, int propert
 }
 
 #undef P_GetGMOAngle
-DENG_EXTERN_C angle_t P_GetGMOAngle(int entityId, uint elementIndex, int propertyId)
+DENG_EXTERN_C angle_t P_GetGMOAngle(int entityId, int elementIndex, int propertyId)
 {
     angle_t returnVal = 0;
     if(theMap && theMap->entityDatabase)
@@ -642,7 +642,7 @@ DENG_EXTERN_C angle_t P_GetGMOAngle(int entityId, uint elementIndex, int propert
 }
 
 #undef P_GetGMOFloat
-DENG_EXTERN_C float P_GetGMOFloat(int entityId, uint elementIndex, int propertyId)
+DENG_EXTERN_C float P_GetGMOFloat(int entityId, int elementIndex, int propertyId)
 {
     float returnVal = 0;
     if(theMap && theMap->entityDatabase)

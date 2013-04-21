@@ -95,45 +95,44 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     }
     else if(type == DT_SECTOR_SOUND) // Plane as emitter
     {        
-        uint index = deltaId;
+        int index = deltaId;
 
-        if(index < theMap->sectorCount())
+        if(index >= 0 && index < theMap->sectorCount())
         {
             sector = theMap->sectors().at(index);
         }
         else
         {
-            LOG_WARNING("Cl_ReadSoundDelta2: DT_SECTOR_SOUND contains invalid sector index %u, skipping") << index;
+            LOG_WARNING("Cl_ReadSoundDelta2: DT_SECTOR_SOUND contains invalid sector index %d, skipping") << index;
             skip = true;
         }
     }
     else if(type == DT_SIDE_SOUND) // Side section as emitter
     {
-        uint index = deltaId;
+        int index = deltaId;
 
         side = theMap->sideByIndex(index);
         if(!side)
         {
-            LOG_WARNING("Cl_ReadSoundDelta2: DT_SIDE_SOUND contains invalid side index %u, skipping") << index;
+            LOG_WARNING("Cl_ReadSoundDelta2: DT_SIDE_SOUND contains invalid side index %d, skipping") << index;
             skip = true;
         }
     }
     else // DT_POLY_SOUND
     {
-        uint index = deltaId;
+        int index = deltaId;
 
-        LOG_DEBUG("DT_POLY_SOUND: poly=%i") << index;
+        LOG_DEBUG("DT_POLY_SOUND: poly=%d") << index;
 
-        if(index < theMap->polyobjCount())
+        if(index >= 0 && index < theMap->polyobjCount())
         {
-            DENG_ASSERT(theMap);
             poly = theMap->polyobjs().at(index);
             emitter = (mobj_t *) poly;
         }
         else
         {
             Con_Message("Cl_ReadSoundDelta2: DT_POLY_SOUND contains "
-                        "invalid polyobj index %u. Skipping.", index);
+                        "invalid polyobj index %d. Skipping.", index);
             skip = true;
         }
     }
@@ -286,7 +285,6 @@ void Cl_Sound(void)
     int sound, volume = 127;
     coord_t pos[3];
     byte flags;
-    uint num;
     mobj_t* mo = NULL;
 
     flags = Reader_ReadByte(msgReader);
@@ -331,7 +329,7 @@ void Cl_Sound(void)
     }
     else if(flags & SNDF_SECTOR)
     {
-        num = Reader_ReadPackedUInt16(msgReader);
+        int num = (int)Reader_ReadPackedUInt16(msgReader);
         if(num >= theMap->sectorCount())
         {
             Con_Message("Cl_Sound: Invalid sector number %i.", num);

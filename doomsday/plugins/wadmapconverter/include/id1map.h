@@ -98,12 +98,12 @@ private:
         return ref;
     }
 
-    bool loadVertexes(Reader* reader, uint numElements);
-    bool loadLineDefs(Reader* reader, uint numElements);
-    bool loadSideDefs(Reader* reader, uint numElements);
-    bool loadSectors(Reader* reader, uint numElements);
-    bool loadThings(Reader* reader, uint numElements);
-    bool loadSurfaceTints(Reader* reader, uint numElements);
+    bool loadVertexes(Reader *reader, int numElements);
+    bool loadLineDefs(Reader *reader, int numElements);
+    bool loadSideDefs(Reader *reader, int numElements);
+    bool loadSectors(Reader *reader, int numElements);
+    bool loadThings(Reader *reader, int numElements);
+    bool loadSurfaceTints(Reader *reader, int numElements);
 
     /**
      * Create a temporary polyobj.
@@ -141,7 +141,7 @@ private:
     MapFormatId mapFormat;
 
     uint numVertexes;
-    coord_t* vertexes; ///< Array of vertex coords [v0:X, vo:Y, v1:X, v1:Y, ..]
+    coord_t *vertexes; ///< Array of vertex coords [v0:X, vo:Y, v1:X, v1:Y, ..]
 
     Lines lines;
     Sides sides;

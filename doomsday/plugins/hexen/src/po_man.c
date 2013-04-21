@@ -37,7 +37,7 @@
 static int getPolyobjMirror(uint polyNum);
 static void thrustMobj(struct mobj_s* mo, void* linep, void* pop);
 
-Polyobj* P_GetPolyobj(uint num)
+Polyobj *P_GetPolyobj(int num)
 {
     // By unique ID?
     if(num & 0x80000000)
@@ -46,7 +46,7 @@ Polyobj* P_GetPolyobj(uint num)
     }
 
     // By tag.
-    return P_PolyobjByTag((int)num);
+    return P_PolyobjByTag(num);
 }
 
 void PO_StartSequence(Polyobj* po, int seqBase)
@@ -540,7 +540,7 @@ boolean EV_OpenPolyDoor(Line* line, byte* args, podoortype_t type)
 
 static int getPolyobjMirror(uint poly)
 {
-    uint i;
+    int i;
 
     for(i = 0; i < numpolyobjs; ++i)
     {
@@ -611,7 +611,7 @@ static void thrustMobj(struct mobj_s *mo, void *linep, void *pop)
  */
 void PO_InitForMap(void)
 {
-    uint i;
+    int i;
 
     Con_Message("PO_InitForMap: Initializing polyobjects.");
 

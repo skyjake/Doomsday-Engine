@@ -134,7 +134,7 @@ void SB_EndFrame(void);
  */
 void SB_RendPoly(struct ColorRawf_s *rcolors, struct biassurface_s *bsuf,
     struct rvertex_s const *rvertices, size_t numVertices, const_pvec3f_t normal,
-    float sectorLightLevel, de::MapElement const *mapElement, uint elmIdx);
+    float sectorLightLevel, de::MapElement const *mapElement, int elmIdx);
 
 /**
  * Creates a new bias light source and sets the appropriate properties to

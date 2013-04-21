@@ -1304,7 +1304,7 @@ static void addShadowEdge(vec2d_t inner[2], vec2d_t outer[2], coord_t innerLeftZ
 }
 
 static void processEdgeShadow(BspLeaf const &bspLeaf, Line const *line,
-    int side, uint planeIndex, float shadowDark)
+    int side, int planeIndex, float shadowDark)
 {
     DENG_ASSERT(line && line->hasSections(side));
 
@@ -1439,7 +1439,7 @@ static void drawLinkedEdgeShadows(BspLeaf const &bspLeaf, ShadowLink &link,
         processEdgeShadow(bspLeaf, link.line, link.side, Plane::Ceiling, shadowDark);
     }
 
-    for(uint pln = Plane::Middle; pln < bspLeaf.sector().planeCount(); ++pln)
+    for(int pln = Plane::Middle; pln < bspLeaf.sector().planeCount(); ++pln)
     {
         processEdgeShadow(bspLeaf, link.line, link.side, pln, shadowDark);
     }
@@ -1456,7 +1456,7 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
 {
     if(!rendFakeRadio || levelFullBright) return;
 
-    static size_t doPlaneSize = 0;
+    static int doPlaneSize = 0;
     static byte *doPlanes = 0;
 
     Sector &sector = bspLeaf.sector();
@@ -1494,7 +1494,7 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
     std::memset(doPlanes, 0, doPlaneSize);
 
     // See if any of this BspLeaf's planes will get shadows.
-    for(uint pln = 0; pln < sector.planeCount(); ++pln)
+    for(int pln = 0; pln < sector.planeCount(); ++pln)
     {
         Plane const &plane = sector.plane(pln);
 

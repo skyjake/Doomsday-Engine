@@ -460,15 +460,6 @@ public:
         void setShadowVisCount(int newCount);
 
         /**
-         * Change the "archive index" of the associated sidedef. The archive
-         * index is the position of the sidedef in the archived map data. Note
-         * that this index is unrelated to the "in map index" used by GameMap.
-         *
-         * @param newIndex  New 1-based index. Can be @c 0 signifying "no-index".
-         */
-        void setSideDefArchiveIndex(uint newIndex);
-
-        /**
          * Get a property value, selected by DMU_* name.
          *
          * @param args  Property arguments.
@@ -837,18 +828,6 @@ public:
      * Change the @em mapped by player state of the line.
      */
     void markMappedByPlayer(int playerNum, bool yes = true);
-
-    /**
-     * Returns the original index of the line.
-     */
-    uint origIndex() const;
-
-    /**
-     * Change the original index of the line.
-     *
-     * @param newIndex  New original index.
-     */
-    void setOrigIndex(uint newIndex);
 
     /**
      * Returns the @em validCount of the line. Used by some legacy iteration

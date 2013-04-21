@@ -37,13 +37,9 @@ DENG2_PIMPL(HEdge)
     /// Map Line::Side attributed to the half-edge. Can be @c 0 (mini-edge).
     Line::Side *lineSide;
 
-    /// 1-based index for the half-edge in GameMap's LUT.
-    uint index;
-
     Instance(Public *i)
         : Base(i),
-          lineSide(0),
-          index(0) // no-index
+          lineSide(0)
     {}
 };
 
@@ -81,7 +77,6 @@ HEdge::HEdge(HEdge const &other)
     _frameFlags = other._frameFlags;
 
     d->lineSide = other.d->lineSide;
-    d->index = other.d->index;
 }
 
 HEdge::~HEdge()
@@ -185,16 +180,6 @@ coord_t HEdge::length() const
     return _length;
 }
 
-uint HEdge::index() const
-{
-    return d->index;
-}
-
-void HEdge::setIndex(uint newIndex)
-{
-    d->index = newIndex;
-}
-
 static walldivnode_t *findWallDivNodeByZOrigin(walldivs_t *wallDivs, coord_t height)
 {
     DENG2_ASSERT(wallDivs != 0);
@@ -261,7 +246,7 @@ static void addWallDivNodesForPlaneIntercepts(HEdge const *hedge, walldivs_t *wa
                 {
                     if(scanSec->ceiling().visHeight() - scanSec->floor().visHeight() > 0)
                     {
-                        for(uint j = 0; j < scanSec->planeCount() && !stopScan; ++j)
+                        for(int j = 0; j < scanSec->planeCount() && !stopScan; ++j)
                         {
                             Plane const &plane = scanSec->plane(j);
 

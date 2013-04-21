@@ -156,13 +156,6 @@ public:
 
     inline void setLeftAABox(AABoxd const *newAABox) { setChildAABox(LEFT, newAABox); }
 
-    /**
-     * Returns the original index of the BSP node.
-     */
-    uint origIndex() const;
-
-    void setOrigIndex(uint newIndex);
-
 private:
     DENG2_PRIVATE(d)
 };

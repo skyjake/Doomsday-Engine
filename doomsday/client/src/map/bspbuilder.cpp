@@ -99,8 +99,8 @@ public:
             UnclosedSectorMap::const_iterator it = _unclosedSectors.begin();
             for(uint i = 0; i < numToLog; ++i, ++it)
             {
-                LOG_WARNING("Sector #%u is unclosed near %s.")
-                    << it->first->origIndex() - 1 << it->second.asText();
+                LOG_WARNING("Sector #%d is unclosed near %s.")
+                    << it->first->indexInMap() << it->second.asText();
             }
 
             if(numToLog < _unclosedSectors.size())
@@ -112,8 +112,8 @@ public:
             OneWayWindowMap::const_iterator it = _oneWayWindows.begin();
             for(uint i = 0; i < numToLog; ++i, ++it)
             {
-                LOG_VERBOSE("Line #%u seems to be a One-Way Window (back faces sector #%u).")
-                    << it->first->origIndex() - 1 << it->second->origIndex() - 1;
+                LOG_VERBOSE("Line #%d seems to be a One-Way Window (back faces sector #%d).")
+                    << it->first->indexInMap() << it->second->indexInMap();
             }
 
             if(numToLog < _oneWayWindows.size())
@@ -129,14 +129,14 @@ public:
                 Sector *facingSector = it->second;
 
                 if(hedge->hasLineSide())
-                    LOG_WARNING("Sector #%u has migrant half-edge facing #%u (line #%u).")
-                        << facingSector->origIndex()   - 1
-                        << hedge->lineSide().sector().origIndex() - 1
-                        << hedge->line().origIndex()   - 1;
+                    LOG_WARNING("Sector #%d has migrant half-edge facing #%d (line #%d).")
+                        << facingSector->indexInMap()
+                        << hedge->lineSide().sector().indexInMap()
+                        << hedge->line().indexInMap();
                 else
-                    LOG_WARNING("Sector #%u has migrant half-edge facing #%u.")
-                        << facingSector->origIndex()   - 1
-                        << hedge->lineSide().sector().origIndex() - 1;
+                    LOG_WARNING("Sector #%d has migrant half-edge facing #%d.")
+                        << facingSector->indexInMap()
+                        << hedge->lineSide().sector().indexInMap();
             }
 
             if(numToLog < _migrantHEdges.size())

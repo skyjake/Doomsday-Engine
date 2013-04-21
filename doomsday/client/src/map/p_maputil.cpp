@@ -218,10 +218,7 @@ void GameMap_LinkMobjToLine(GameMap *map, mobj_t *mo, Line *line)
 {
     DENG_ASSERT(map);
 
-    if(!mo) return;
-
-    int lineIndex = map->lineIndex(line);
-    if(lineIndex < 0) return;
+    if(!mo || !line) return;
 
     // Add a node to the mobj's ring.
     nodeindex_t nodeIndex = NP_New(&map->mobjNodes, line);
@@ -230,7 +227,7 @@ void GameMap_LinkMobjToLine(GameMap *map, mobj_t *mo, Line *line)
     // Add a node to the line's ring. Also store the linenode's index
     // into the mobjring's node, so unlinking is easy.
     nodeIndex = map->mobjNodes.nodes[nodeIndex].data = NP_New(&map->lineNodes, mo);
-    NP_Link(&map->lineNodes, nodeIndex, map->lineLinks[lineIndex]);
+    NP_Link(&map->lineNodes, nodeIndex, map->lineLinks[line->indexInMap()]);
 }
 
 typedef struct {
@@ -440,7 +437,7 @@ int GameMap_LineMobjsIterator(GameMap *map, Line *line,
     void *linkStore[MAXLINKED];
     void **end = linkStore;
 
-    nodeindex_t root = map->lineLinks[map->lineIndex(line)];
+    nodeindex_t root = map->lineLinks[line->indexInMap()];
     linknode_t *ln = map->lineNodes.nodes;
 
     for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
@@ -487,8 +484,7 @@ int GameMap_SectorTouchingMobjsIterator(GameMap *map, Sector *sector,
     linknode_t const *ln = map->lineNodes.nodes;
     foreach(Line *line, sector->lines())
     {
-        int lineIndex = map->lineIndex(line);
-        nodeindex_t root = map->lineLinks[lineIndex];
+        nodeindex_t root = map->lineLinks[line->indexInMap()];
 
         for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
         {

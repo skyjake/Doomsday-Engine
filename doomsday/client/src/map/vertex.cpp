@@ -31,12 +31,7 @@ using namespace de;
 
 DENG2_PIMPL(Vertex)
 {
-    /// Original index in the archived map.
-    uint origIndex;
-
-    Instance(Public *i)
-        : Base(i),
-          origIndex(0)
+    Instance(Public *i) : Base(i)
     {}
 };
 
@@ -88,16 +83,6 @@ void Vertex::countLineOwners(uint *oneSided, uint *twoSided) const
 LineOwner *Vertex::firstLineOwner() const
 {
     return _lineOwners;
-}
-
-uint Vertex::origIndex() const
-{
-    return d->origIndex;
-}
-
-void Vertex::setOrigIndex(uint newIndex)
-{
-    d->origIndex = newIndex;
 }
 
 int Vertex::property(setargs_t &args) const

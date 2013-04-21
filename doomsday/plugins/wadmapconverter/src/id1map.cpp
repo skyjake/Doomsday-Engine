@@ -28,8 +28,8 @@
 #include <de/memory.h>
 #include <de/timer.h>
 
-static Reader* bufferLump(MapLumpInfo* info);
-static void clearReadBuffer(void);
+static Reader *bufferLump(MapLumpInfo *info);
+static void clearReadBuffer();
 
 Id1Map::Id1Map(MapFormatId format)
     : mapFormat(format), numVertexes(0), vertexes(0)
@@ -45,16 +45,16 @@ Id1Map::~Id1Map()
 
     DENG2_FOR_EACH(Polyobjs, i, polyobjs)
     {
-        M_Free((i)->lineIndices);
+        M_Free(i->lineIndices);
     }
 }
 
-MaterialDictId Id1Map::addMaterialToDictionary(char const* name, MaterialDictGroup group)
+MaterialDictId Id1Map::addMaterialToDictionary(char const *name, MaterialDictGroup group)
 {
-    DENG2_ASSERT(name);
+    DENG2_ASSERT(name != 0);
 
     // Prepare the encoded URI for insertion into the dictionary.
-    AutoStr* uriCString;
+    AutoStr *uriCString;
     if(mapFormat == MF_DOOM64)
     {
         // Doom64 maps reference materials with unique ids.
@@ -79,8 +79,8 @@ MaterialDictId Id1Map::addMaterialToDictionary(char const* name, MaterialDictGro
         }
 
         // Material paths must be encoded.
-        AutoStr* path = Str_PercentEncode(AutoStr_FromText(name));
-        Uri* uri = Uri_NewWithPath2(Str_Text(path), RC_NULL);
+        AutoStr *path = Str_PercentEncode(AutoStr_FromText(name));
+        Uri *uri = Uri_NewWithPath2(Str_Text(path), RC_NULL);
         Uri_SetScheme(uri, group == MG_PLANE? "Flats" : "Textures");
         uriCString = Uri_Compose(uri);
         Uri_Delete(uri);
@@ -93,12 +93,12 @@ MaterialDictId Id1Map::addMaterialToDictionary(char const* name, MaterialDictGro
     return internId;
 }
 
-bool Id1Map::loadVertexes(Reader* reader, uint numElements)
+bool Id1Map::loadVertexes(Reader *reader, int numElements)
 {
     DENG2_ASSERT(reader);
 
     LOG_TRACE("Processing vertexes...");
-    for(uint n = 0; n < numElements; ++n)
+    for(int n = 0; n < numElements; ++n)
     {
         switch(mapFormat)
         {
@@ -118,7 +118,7 @@ bool Id1Map::loadVertexes(Reader* reader, uint numElements)
     return true;
 }
 
-bool Id1Map::loadLineDefs(Reader* reader, uint numElements)
+bool Id1Map::loadLineDefs(Reader *reader, int numElements)
 {
     DENG2_ASSERT(reader);
 
@@ -126,24 +126,24 @@ bool Id1Map::loadLineDefs(Reader* reader, uint numElements)
     if(numElements)
     {
         lines.reserve(lines.size() + numElements);
-        for(uint n = 0; n < numElements; ++n)
+        for(int n = 0; n < numElements; ++n)
         {
             switch(mapFormat)
             {
             default:
             case MF_DOOM:
                 lines.push_back(mline_t());
-                MLine_Read(&lines.back(), reader);
+                MLine_Read(&lines.back(), n, reader);
                 break;
 
             case MF_DOOM64:
                 lines.push_back(mline_t());
-                MLine64_Read(&lines.back(), reader);
+                MLine64_Read(&lines.back(), n, reader);
                 break;
 
             case MF_HEXEN:
                 lines.push_back(mline_t());
-                MLineHx_Read(&lines.back(), reader);
+                MLineHx_Read(&lines.back(), n, reader);
                 break;
             }
         }
@@ -152,7 +152,7 @@ bool Id1Map::loadLineDefs(Reader* reader, uint numElements)
     return true;
 }
 
-bool Id1Map::loadSideDefs(Reader* reader, uint numElements)
+bool Id1Map::loadSideDefs(Reader *reader, int numElements)
 {
     DENG2_ASSERT(reader);
 
@@ -160,19 +160,19 @@ bool Id1Map::loadSideDefs(Reader* reader, uint numElements)
     if(numElements)
     {
         sides.reserve(sides.size() + numElements);
-        for(uint n = 0; n < numElements; ++n)
+        for(int n = 0; n < numElements; ++n)
         {
             switch(mapFormat)
             {
             default:
             case MF_DOOM:
                 sides.push_back(mside_t());
-                MSide_Read(&sides.back(), reader);
+                MSide_Read(&sides.back(), n, reader);
                 break;
 
             case MF_DOOM64:
                 sides.push_back(mside_t());
-                MSide64_Read(&sides.back(), reader);
+                MSide64_Read(&sides.back(), n, reader);
                 break;
             }
         }
@@ -181,7 +181,7 @@ bool Id1Map::loadSideDefs(Reader* reader, uint numElements)
     return true;
 }
 
-bool Id1Map::loadSectors(Reader* reader, uint numElements)
+bool Id1Map::loadSectors(Reader *reader, int numElements)
 {
     DENG2_ASSERT(reader);
 
@@ -189,18 +189,18 @@ bool Id1Map::loadSectors(Reader* reader, uint numElements)
     if(numElements)
     {
         sectors.reserve(sectors.size() + numElements);
-        for(uint n = 0; n < numElements; ++n)
+        for(int n = 0; n < numElements; ++n)
         {
             switch(mapFormat)
             {
             default:
                 sectors.push_back(msector_t());
-                MSector_Read(&sectors.back(), reader);
+                MSector_Read(&sectors.back(), n, reader);
                 break;
 
             case MF_DOOM64:
                 sectors.push_back(msector_t());
-                MSector64_Read(&sectors.back(), reader);
+                MSector64_Read(&sectors.back(), n, reader);
                 break;
             }
         }
@@ -209,7 +209,7 @@ bool Id1Map::loadSectors(Reader* reader, uint numElements)
     return true;
 }
 
-bool Id1Map::loadThings(Reader* reader, uint numElements)
+bool Id1Map::loadThings(Reader *reader, int numElements)
 {
     DENG2_ASSERT(reader);
 
@@ -217,24 +217,24 @@ bool Id1Map::loadThings(Reader* reader, uint numElements)
     if(numElements)
     {
         things.reserve(things.size() + numElements);
-        for(uint n = 0; n < numElements; ++n)
+        for(int n = 0; n < numElements; ++n)
         {
             switch(mapFormat)
             {
             default:
             case MF_DOOM:
                 things.push_back(mthing_t());
-                MThing_Read(&things.back(), reader);
+                MThing_Read(&things.back(), n, reader);
                 break;
 
             case MF_DOOM64:
                 things.push_back(mthing_t());
-                MThing64_Read(&things.back(), reader);
+                MThing64_Read(&things.back(), n, reader);
                 break;
 
             case MF_HEXEN:
                 things.push_back(mthing_t());
-                MThingHx_Read(&things.back(), reader);
+                MThingHx_Read(&things.back(), n, reader);
                 break;
             }
         }
@@ -243,7 +243,7 @@ bool Id1Map::loadThings(Reader* reader, uint numElements)
     return true;
 }
 
-bool Id1Map::loadSurfaceTints(Reader* reader, uint numElements)
+bool Id1Map::loadSurfaceTints(Reader *reader, int numElements)
 {
     DENG2_ASSERT(reader);
 
@@ -251,17 +251,17 @@ bool Id1Map::loadSurfaceTints(Reader* reader, uint numElements)
     if(numElements)
     {
         surfaceTints.reserve(surfaceTints.size() + numElements);
-        for(uint n = 0; n < numElements; ++n)
+        for(int n = 0; n < numElements; ++n)
         {
             surfaceTints.push_back(surfacetint_t());
-            SurfaceTint_Read(&surfaceTints.back(), reader);
+            SurfaceTint_Read(&surfaceTints.back(), n, reader);
         }
     }
 
     return true;
 }
 
-void Id1Map::load(MapLumpInfos& lumpInfos)
+void Id1Map::load(MapLumpInfos &lumpInfos)
 {
     /**
      * Allocate the vertices first as a large contiguous array suitable for
@@ -270,11 +270,11 @@ void Id1Map::load(MapLumpInfos& lumpInfos)
     size_t elementSize = ElementSizeForMapLumpType(mapFormat, ML_VERTEXES);
     uint numElements = lumpInfos[ML_VERTEXES]->length / elementSize;
     numVertexes = numElements;
-    vertexes = (coord_t*)M_Malloc(numVertexes * 2 * sizeof(*vertexes));
+    vertexes = (coord_t *)M_Malloc(numVertexes * 2 * sizeof(*vertexes));
 
     DENG2_FOR_EACH_CONST(MapLumpInfos, i, lumpInfos)
     {
-        MapLumpInfo* info = i->second;
+        MapLumpInfo *info = i->second;
 
         if(!info || !info->length) continue;
 
@@ -283,7 +283,7 @@ void Id1Map::load(MapLumpInfos& lumpInfos)
 
         // Process this data lump.
         numElements = info->length / elementSize;
-        Reader* reader = bufferLump(info);
+        Reader *reader = bufferLump(info);
         switch(info->type)
         {
         default: break;
@@ -302,36 +302,40 @@ void Id1Map::load(MapLumpInfos& lumpInfos)
     clearReadBuffer();
 }
 
-void Id1Map::transferVertexes(void)
+void Id1Map::transferVertexes()
 {
     LOG_TRACE("Transfering vertexes...");
-    MPE_VertexCreatev(numVertexes, vertexes, NULL);
+    int *indices = new int[numVertexes];
+    for(uint i = 0; i < numVertexes; ++i)
+        indices[i] = i;
+    MPE_VertexCreatev(numVertexes, vertexes, indices, 0);
+    delete[] indices;
 }
 
-void Id1Map::transferSectors(void)
+void Id1Map::transferSectors()
 {
     LOG_TRACE("Transfering sectors...");
 
     DENG2_FOR_EACH(Sectors, i, sectors)
     {
-        uint idx = MPE_SectorCreate(float((i)->lightLevel) / 255.0f, 1, 1, 1);
+        int idx = MPE_SectorCreate(float(i->lightLevel) / 255.0f, 1, 1, 1, i->index);
 
-        MPE_PlaneCreate(idx, (i)->floorHeight, composeMaterialRef((i)->floorMaterial),
-                        0, 0, 1, 1, 1, 1, 0, 0, 1);
-        MPE_PlaneCreate(idx, (i)->ceilHeight, composeMaterialRef((i)->ceilMaterial),
-                        0, 0, 1, 1, 1, 1, 0, 0, -1);
+        MPE_PlaneCreate(idx, i->floorHeight, composeMaterialRef(i->floorMaterial),
+                        0, 0, 1, 1, 1, 1, 0, 0, 1, -1);
+        MPE_PlaneCreate(idx, i->ceilHeight, composeMaterialRef(i->ceilMaterial),
+                        0, 0, 1, 1, 1, 1, 0, 0, -1, -1);
 
-        MPE_GameObjProperty("XSector", idx-1, "Tag",    DDVT_SHORT, &(i)->tag);
-        MPE_GameObjProperty("XSector", idx-1, "Type",   DDVT_SHORT, &(i)->type);
+        MPE_GameObjProperty("XSector", idx, "Tag",    DDVT_SHORT, &i->tag);
+        MPE_GameObjProperty("XSector", idx, "Type",   DDVT_SHORT, &i->type);
 
         if(mapFormat == MF_DOOM64)
         {
-            MPE_GameObjProperty("XSector", idx-1, "Flags",          DDVT_SHORT, &(i)->d64flags);
-            MPE_GameObjProperty("XSector", idx-1, "CeilingColor",   DDVT_SHORT, &(i)->d64ceilingColor);
-            MPE_GameObjProperty("XSector", idx-1, "FloorColor",     DDVT_SHORT, &(i)->d64floorColor);
-            MPE_GameObjProperty("XSector", idx-1, "UnknownColor",   DDVT_SHORT, &(i)->d64unknownColor);
-            MPE_GameObjProperty("XSector", idx-1, "WallTopColor",   DDVT_SHORT, &(i)->d64wallTopColor);
-            MPE_GameObjProperty("XSector", idx-1, "WallBottomColor", DDVT_SHORT, &(i)->d64wallBottomColor);
+            MPE_GameObjProperty("XSector", idx, "Flags",          DDVT_SHORT, &i->d64flags);
+            MPE_GameObjProperty("XSector", idx, "CeilingColor",   DDVT_SHORT, &i->d64ceilingColor);
+            MPE_GameObjProperty("XSector", idx, "FloorColor",     DDVT_SHORT, &i->d64floorColor);
+            MPE_GameObjProperty("XSector", idx, "UnknownColor",   DDVT_SHORT, &i->d64unknownColor);
+            MPE_GameObjProperty("XSector", idx, "WallTopColor",   DDVT_SHORT, &i->d64wallTopColor);
+            MPE_GameObjProperty("XSector", idx, "WallBottomColor", DDVT_SHORT, &i->d64wallBottomColor);
         }
     }
 }
@@ -341,129 +345,130 @@ void Id1Map::transferLinesAndSides()
     LOG_TRACE("Transfering lines and sides...");
     DENG2_FOR_EACH(Lines, i, lines)
     {
-        mside_t *front = ((i)->sides[RIGHT] != 0? &sides[(i)->sides[RIGHT]-1] : NULL);
-        mside_t *back  = ((i)->sides[LEFT]  != 0? &sides[(i)->sides[LEFT] -1] : NULL);
+        mside_t *front = ((i)->sides[RIGHT] >= 0? &sides[(i)->sides[RIGHT]] : 0);
+        mside_t *back  = ((i)->sides[LEFT]  >= 0? &sides[(i)->sides[LEFT]] : 0);
 
-        uint lineIdx = MPE_LineCreate((i)->v[0], (i)->v[1], front? front->sector : 0,
-                                         back? back->sector : 0, (i)->ddFlags);
+        int lineIdx = MPE_LineCreate(i->v[0], i->v[1], front? front->sector : -1,
+                                     back? back->sector : -1, i->ddFlags, i->index);
         if(front)
         {
             MPE_LineAddSide(lineIdx, RIGHT, (mapFormat == MF_DOOM64? SDF_MIDDLE_STRETCH : 0),
-                               composeMaterialRef(front->topMaterial),
-                               front->offset[VX], front->offset[VY], 1, 1, 1,
-                               composeMaterialRef(front->middleMaterial),
-                               front->offset[VX], front->offset[VY], 1, 1, 1, 1,
-                               composeMaterialRef(front->bottomMaterial),
-                               front->offset[VX], front->offset[VY], 1, 1, 1,
-                               (i)->sides[RIGHT]);
+                            composeMaterialRef(front->topMaterial),
+                            front->offset[VX], front->offset[VY], 1, 1, 1,
+                            composeMaterialRef(front->middleMaterial),
+                            front->offset[VX], front->offset[VY], 1, 1, 1, 1,
+                            composeMaterialRef(front->bottomMaterial),
+                            front->offset[VX], front->offset[VY], 1, 1, 1,
+                            front->index);
         }
         if(back)
         {
             MPE_LineAddSide(lineIdx, LEFT, (mapFormat == MF_DOOM64? SDF_MIDDLE_STRETCH : 0),
-                               composeMaterialRef(back->topMaterial),
-                               back->offset[VX], back->offset[VY], 1, 1, 1,
-                               composeMaterialRef(back->middleMaterial),
-                               back->offset[VX], back->offset[VY], 1, 1, 1, 1,
-                               composeMaterialRef(back->bottomMaterial),
-                               back->offset[VX], back->offset[VY], 1, 1, 1,
-                               (i)->sides[LEFT]);
+                            composeMaterialRef(back->topMaterial),
+                            back->offset[VX], back->offset[VY], 1, 1, 1,
+                            composeMaterialRef(back->middleMaterial),
+                            back->offset[VX], back->offset[VY], 1, 1, 1, 1,
+                            composeMaterialRef(back->bottomMaterial),
+                            back->offset[VX], back->offset[VY], 1, 1, 1,
+                            back->index);
         }
 
-        MPE_GameObjProperty("XLinedef", lineIdx-1, "Flags", DDVT_SHORT, &(i)->flags);
+        MPE_GameObjProperty("XLinedef", lineIdx, "Flags", DDVT_SHORT, &i->flags);
 
         switch(mapFormat)
         {
         default:
         case MF_DOOM:
-            MPE_GameObjProperty("XLinedef", lineIdx-1, "Type",  DDVT_SHORT, &(i)->dType);
-            MPE_GameObjProperty("XLinedef", lineIdx-1, "Tag",   DDVT_SHORT, &(i)->dTag);
+            MPE_GameObjProperty("XLinedef", lineIdx, "Type",  DDVT_SHORT, &i->dType);
+            MPE_GameObjProperty("XLinedef", lineIdx, "Tag",   DDVT_SHORT, &i->dTag);
             break;
 
         case MF_DOOM64:
-            MPE_GameObjProperty("XLinedef", lineIdx-1, "DrawFlags", DDVT_BYTE,  &(i)->d64drawFlags);
-            MPE_GameObjProperty("XLinedef", lineIdx-1, "TexFlags",  DDVT_BYTE,  &(i)->d64texFlags);
-            MPE_GameObjProperty("XLinedef", lineIdx-1, "Type",      DDVT_BYTE,  &(i)->d64type);
-            MPE_GameObjProperty("XLinedef", lineIdx-1, "UseType",   DDVT_BYTE,  &(i)->d64useType);
-            MPE_GameObjProperty("XLinedef", lineIdx-1, "Tag",       DDVT_SHORT, &(i)->d64tag);
+            MPE_GameObjProperty("XLinedef", lineIdx, "DrawFlags", DDVT_BYTE,  &i->d64drawFlags);
+            MPE_GameObjProperty("XLinedef", lineIdx, "TexFlags",  DDVT_BYTE,  &i->d64texFlags);
+            MPE_GameObjProperty("XLinedef", lineIdx, "Type",      DDVT_BYTE,  &i->d64type);
+            MPE_GameObjProperty("XLinedef", lineIdx, "UseType",   DDVT_BYTE,  &i->d64useType);
+            MPE_GameObjProperty("XLinedef", lineIdx, "Tag",       DDVT_SHORT, &i->d64tag);
             break;
 
         case MF_HEXEN:
-            MPE_GameObjProperty("XLinedef", lineIdx-1, "Type", DDVT_BYTE, &(i)->xType);
-            MPE_GameObjProperty("XLinedef", lineIdx-1, "Arg0", DDVT_BYTE, &(i)->xArgs[0]);
-            MPE_GameObjProperty("XLinedef", lineIdx-1, "Arg1", DDVT_BYTE, &(i)->xArgs[1]);
-            MPE_GameObjProperty("XLinedef", lineIdx-1, "Arg2", DDVT_BYTE, &(i)->xArgs[2]);
-            MPE_GameObjProperty("XLinedef", lineIdx-1, "Arg3", DDVT_BYTE, &(i)->xArgs[3]);
-            MPE_GameObjProperty("XLinedef", lineIdx-1, "Arg4", DDVT_BYTE, &(i)->xArgs[4]);
+            MPE_GameObjProperty("XLinedef", lineIdx, "Type", DDVT_BYTE, &i->xType);
+            MPE_GameObjProperty("XLinedef", lineIdx, "Arg0", DDVT_BYTE, &i->xArgs[0]);
+            MPE_GameObjProperty("XLinedef", lineIdx, "Arg1", DDVT_BYTE, &i->xArgs[1]);
+            MPE_GameObjProperty("XLinedef", lineIdx, "Arg2", DDVT_BYTE, &i->xArgs[2]);
+            MPE_GameObjProperty("XLinedef", lineIdx, "Arg3", DDVT_BYTE, &i->xArgs[3]);
+            MPE_GameObjProperty("XLinedef", lineIdx, "Arg4", DDVT_BYTE, &i->xArgs[4]);
             break;
         }
     }
 }
 
-void Id1Map::transferSurfaceTints(void)
+void Id1Map::transferSurfaceTints()
 {
     if(surfaceTints.empty()) return;
 
     LOG_TRACE("Transfering surface tints...");
     DENG2_FOR_EACH(SurfaceTints, i, surfaceTints)
     {
-        uint idx = i - surfaceTints.begin();
+        int idx = i - surfaceTints.begin();
 
-        MPE_GameObjProperty("Light", idx, "ColorR",   DDVT_FLOAT, &(i)->rgb[0]);
-        MPE_GameObjProperty("Light", idx, "ColorG",   DDVT_FLOAT, &(i)->rgb[1]);
-        MPE_GameObjProperty("Light", idx, "ColorB",   DDVT_FLOAT, &(i)->rgb[2]);
-        MPE_GameObjProperty("Light", idx, "XX0",      DDVT_BYTE,  &(i)->xx[0]);
-        MPE_GameObjProperty("Light", idx, "XX1",      DDVT_BYTE,  &(i)->xx[1]);
-        MPE_GameObjProperty("Light", idx, "XX2",      DDVT_BYTE,  &(i)->xx[2]);
+        MPE_GameObjProperty("Light", idx, "ColorR",   DDVT_FLOAT, &i->rgb[0]);
+        MPE_GameObjProperty("Light", idx, "ColorG",   DDVT_FLOAT, &i->rgb[1]);
+        MPE_GameObjProperty("Light", idx, "ColorB",   DDVT_FLOAT, &i->rgb[2]);
+        MPE_GameObjProperty("Light", idx, "XX0",      DDVT_BYTE,  &i->xx[0]);
+        MPE_GameObjProperty("Light", idx, "XX1",      DDVT_BYTE,  &i->xx[1]);
+        MPE_GameObjProperty("Light", idx, "XX2",      DDVT_BYTE,  &i->xx[2]);
     }
 }
 
-void Id1Map::transferPolyobjs(void)
+void Id1Map::transferPolyobjs()
 {
     if(polyobjs.empty()) return;
 
     LOG_TRACE("Transfering polyobjs...");
     DENG2_FOR_EACH(Polyobjs, i, polyobjs)
     {
-        MPE_PolyobjCreate((i)->lineIndices, (i)->lineCount, (i)->tag, (i)->seqType,
-                          coord_t((i)->anchor[VX]), coord_t((i)->anchor[VY]));
+        MPE_PolyobjCreate(i->lineIndices, i->lineCount, i->tag, i->seqType,
+                          coord_t(i->anchor[VX]), coord_t(i->anchor[VY]),
+                          i->index);
     }
 }
 
-void Id1Map::transferThings(void)
+void Id1Map::transferThings()
 {
     if(things.empty()) return;
 
     LOG_TRACE("Transfering things...");
     DENG2_FOR_EACH(Things, i, things)
     {
-        uint idx = i - things.begin();
+        int idx = i - things.begin();
 
-        MPE_GameObjProperty("Thing", idx, "X",            DDVT_SHORT, &(i)->origin[VX]);
-        MPE_GameObjProperty("Thing", idx, "Y",            DDVT_SHORT, &(i)->origin[VY]);
-        MPE_GameObjProperty("Thing", idx, "Z",            DDVT_SHORT, &(i)->origin[VZ]);
-        MPE_GameObjProperty("Thing", idx, "Angle",        DDVT_ANGLE, &(i)->angle);
-        MPE_GameObjProperty("Thing", idx, "DoomEdNum",    DDVT_SHORT, &(i)->doomEdNum);
-        MPE_GameObjProperty("Thing", idx, "SkillModes",   DDVT_INT,   &(i)->skillModes);
-        MPE_GameObjProperty("Thing", idx, "Flags",        DDVT_INT,   &(i)->flags);
+        MPE_GameObjProperty("Thing", idx, "X",            DDVT_SHORT, &i->origin[VX]);
+        MPE_GameObjProperty("Thing", idx, "Y",            DDVT_SHORT, &i->origin[VY]);
+        MPE_GameObjProperty("Thing", idx, "Z",            DDVT_SHORT, &i->origin[VZ]);
+        MPE_GameObjProperty("Thing", idx, "Angle",        DDVT_ANGLE, &i->angle);
+        MPE_GameObjProperty("Thing", idx, "DoomEdNum",    DDVT_SHORT, &i->doomEdNum);
+        MPE_GameObjProperty("Thing", idx, "SkillModes",   DDVT_INT,   &i->skillModes);
+        MPE_GameObjProperty("Thing", idx, "Flags",        DDVT_INT,   &i->flags);
 
         if(mapFormat == MF_DOOM64)
         {
-            MPE_GameObjProperty("Thing", idx, "ID",       DDVT_SHORT, &(i)->d64TID);
+            MPE_GameObjProperty("Thing", idx, "ID",       DDVT_SHORT, &i->d64TID);
         }
         else if(mapFormat == MF_HEXEN)
         {
-            MPE_GameObjProperty("Thing", idx, "Special",  DDVT_BYTE,  &(i)->xSpecial);
-            MPE_GameObjProperty("Thing", idx, "ID",       DDVT_SHORT, &(i)->xTID);
-            MPE_GameObjProperty("Thing", idx, "Arg0",     DDVT_BYTE,  &(i)->xArgs[0]);
-            MPE_GameObjProperty("Thing", idx, "Arg1",     DDVT_BYTE,  &(i)->xArgs[1]);
-            MPE_GameObjProperty("Thing", idx, "Arg2",     DDVT_BYTE,  &(i)->xArgs[2]);
-            MPE_GameObjProperty("Thing", idx, "Arg3",     DDVT_BYTE,  &(i)->xArgs[3]);
-            MPE_GameObjProperty("Thing", idx, "Arg4",     DDVT_BYTE,  &(i)->xArgs[4]);
+            MPE_GameObjProperty("Thing", idx, "Special",  DDVT_BYTE,  &i->xSpecial);
+            MPE_GameObjProperty("Thing", idx, "ID",       DDVT_SHORT, &i->xTID);
+            MPE_GameObjProperty("Thing", idx, "Arg0",     DDVT_BYTE,  &i->xArgs[0]);
+            MPE_GameObjProperty("Thing", idx, "Arg1",     DDVT_BYTE,  &i->xArgs[1]);
+            MPE_GameObjProperty("Thing", idx, "Arg2",     DDVT_BYTE,  &i->xArgs[2]);
+            MPE_GameObjProperty("Thing", idx, "Arg3",     DDVT_BYTE,  &i->xArgs[3]);
+            MPE_GameObjProperty("Thing", idx, "Arg4",     DDVT_BYTE,  &i->xArgs[4]);
         }
     }
 }
 
-int Id1Map::transfer(void)
+int Id1Map::transfer()
 {
     uint startTime = Timer_RealMilliseconds();
 

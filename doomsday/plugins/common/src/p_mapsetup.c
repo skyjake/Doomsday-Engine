@@ -77,13 +77,13 @@ xline_t* P_ToXLine(Line* line)
     }
 }
 
-xline_t* P_GetXLine(uint idx)
+xline_t* P_GetXLine(int idx)
 {
-    if(idx >= numlines) return NULL;
+    if(idx < 0 || idx >= numlines) return 0;
     return &xlines[idx];
 }
 
-void P_SetLineAutomapVisibility(int player, uint lineIdx, boolean visible)
+void P_SetLineAutomapVisibility(int player, int lineIdx, boolean visible)
 {
     Line* line = P_ToPtr(DMU_LINE, lineIdx);
     xline_t* xline;
@@ -132,11 +132,9 @@ xsector_t* P_ToXSectorOfBspLeaf(BspLeaf* bspLeaf)
     }
 }
 
-xsector_t* P_GetXSector(uint index)
+xsector_t* P_GetXSector(int index)
 {
-    if(index >= numsectors)
-        return NULL;
-
+    if(index < 0 || index >= numsectors) return 0;
     return &xsectors[index];
 }
 
@@ -378,7 +376,7 @@ static boolean checkMapSpotAutoSpawn(mapspot_t const *spot)
 
 static void initXLineDefs(void)
 {
-    uint i;
+    int i;
 
     for(i = 0; i < numlines; ++i)
     {
@@ -405,7 +403,7 @@ static void initXLineDefs(void)
 
 static void initXSectors(void)
 {
-    uint i;
+    int i;
 
     for(i = 0; i < numsectors; ++i)
     {
@@ -960,7 +958,7 @@ static void P_FinalizeMap(void)
     // visible due to texture repeating and interpolation.
     if(!(gameModeBits & (GM_DOOM2_HACX|GM_DOOM_CHEX)))
     {
-        uint i, k;
+        int i, k;
         Material* mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString("Textures:NUKE24"));
         Material* bottomMat, *midMat;
         float yoff;
@@ -1071,7 +1069,7 @@ const char* P_GetMapAuthor(boolean supressGameAuthor)
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 void P_FindSecrets(void)
 {
-    uint i;
+    int i;
 
     totalSecret = 0;
 
@@ -1103,7 +1101,7 @@ void P_FindSecrets(void)
 
 void P_SpawnSectorMaterialOriginScrollers(void)
 {
-    uint i;
+    int i;
 
     // Clients do not spawn material origin scrollers on their own.
     if(IS_CLIENT) return;
@@ -1122,7 +1120,7 @@ void P_SpawnSectorMaterialOriginScrollers(void)
 
 void P_SpawnSideMaterialOriginScrollers(void)
 {
-    uint i;
+    int i;
 
     // Clients do not spawn material origin scrollers on their own.
     if(IS_CLIENT) return;

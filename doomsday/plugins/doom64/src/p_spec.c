@@ -945,15 +945,15 @@ void P_ThunderSector(void)
 
 void P_SpawnSectorSpecialThinkers(void)
 {
-    uint i;
+    int i;
 
     // Clients spawn specials only on the server's instruction.
     if(IS_CLIENT) return;
 
     for(i = 0; i < numsectors; ++i)
     {
-        Sector* sec     = P_ToPtr(DMU_SECTOR, i);
-        xsector_t* xsec = P_ToXSector(sec);
+        Sector *sec = P_ToPtr(DMU_SECTOR, i);
+        xsector_t *xsec = P_ToXSector(sec);
 
         // jd64 >
         // DJS - yet more hacks! Why use the tag?

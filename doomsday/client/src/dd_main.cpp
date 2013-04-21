@@ -2455,6 +2455,7 @@ void DD_SetInteger(int ddvalue, int parm)
 #undef DD_GetVariable
 void *DD_GetVariable(int ddvalue)
 {
+    static int value;
     static uint valueU;
     static float valueF;
     static double valueD;
@@ -2464,37 +2465,9 @@ void *DD_GetVariable(int ddvalue)
     case DD_GAME_EXPORTS:
         return &gx;
 
-    case DD_SECTOR_COUNT:
-        valueU = theMap? theMap->sectorCount() : 0;
-        return &valueU;
-
-    case DD_LINE_COUNT:
-        valueU = theMap? theMap->lineCount() : 0;
-        return &valueU;
-
-    case DD_SIDE_COUNT:
-        valueU = theMap? theMap->sideCount() : 0;
-        return &valueU;
-
-    case DD_VERTEX_COUNT:
-        valueU = theMap? theMap->vertexCount() : 0;
-        return &valueU;
-
     case DD_POLYOBJ_COUNT:
-        valueU = theMap? theMap->polyobjCount() : 0;
-        return &valueU;
-
-    case DD_HEDGE_COUNT:
-        valueU = theMap? theMap->hedgeCount() : 0;
-        return &valueU;
-
-    case DD_BSPLEAF_COUNT:
-        valueU = theMap? theMap->bspLeafCount() : 0;
-        return &valueU;
-
-    case DD_BSPNODE_COUNT:
-        valueU = theMap? theMap->bspNodeCount() : 0;
-        return &valueU;
+        value = theMap? theMap->polyobjCount() : 0;
+        return &value;
 
     case DD_TRACE_ADDRESS:
         /// @todo Do not cast away const.

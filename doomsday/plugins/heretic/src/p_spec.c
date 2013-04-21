@@ -912,15 +912,15 @@ void P_PlayerInSpecialSector(player_t* player)
 
 void P_SpawnSectorSpecialThinkers(void)
 {
-    uint i;
+    int i;
 
     // Clients spawn specials only on the server's instruction.
     if(IS_CLIENT) return;
 
     for(i = 0; i < numsectors; ++i)
     {
-        Sector* sec     = P_ToPtr(DMU_SECTOR, i);
-        xsector_t* xsec = P_ToXSector(sec);
+        Sector *sec = P_ToPtr(DMU_SECTOR, i);
+        xsector_t *xsec = P_ToXSector(sec);
 
         switch(xsec->special)
         {

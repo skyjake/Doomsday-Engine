@@ -196,7 +196,7 @@ DENG2_PIMPL(Partitioner)
      */
     VertexInfo &vertexInfo(Vertex const &vertex)
     {
-        return vertexInfos[vertex.origIndex() - 1];
+        return vertexInfos[vertex.indexInMap()];
     }
 
     struct testForWindowEffectParams
@@ -479,7 +479,7 @@ DENG2_PIMPL(Partitioner)
         if(inter) return inter;
 
         HEdgeInfo &hInfo = hedgeInfo(hedge);
-        bool isSelfRefLine = (hInfo.line && lineInfos[hInfo.line->origIndex() - 1].flags.testFlag(LineInfo::SelfRef));
+        bool isSelfRefLine = (hInfo.line && lineInfos[hInfo.line->indexInMap()].flags.testFlag(LineInfo::SelfRef));
 
         HEdgeIntercept *intercept = newHEdgeIntercept(vertex, isSelfRefLine);
 
@@ -607,9 +607,9 @@ DENG2_PIMPL(Partitioner)
                         if(!cur->selfRef && !next->selfRef)
                         {
                             LOG_DEBUG("Sector mismatch (#%d %s != #%d %s.")
-                                << cur->after->origIndex() - 1
+                                << cur->after->indexInMap()
                                 << Vector2d(cur->vertex->origin()).asText()
-                                << next->before->origIndex() - 1
+                                << next->before->indexInMap()
                                 << Vector2d(next->vertex->origin()).asText();
                         }
 
@@ -630,11 +630,11 @@ DENG2_PIMPL(Partitioner)
                               "\n %p RIGHT sector #%d %s to %s"
                               "\n %p LEFT  sector #%d %s to %s")
                         << de::dintptr(right)
-                        << (hedgeInfo(*right).sector? hedgeInfo(*right).sector->origIndex() - 1 : -1)
+                        << (hedgeInfo(*right).sector? hedgeInfo(*right).sector->indexInMap() : -1)
                         << Vector2d(right->v1Origin()).asText()
                         << Vector2d(right->v2Origin()).asText()
                         << de::dintptr(left)
-                        << (hedgeInfo(*left).sector? hedgeInfo(*left).sector->origIndex() - 1 : -1)
+                        << (hedgeInfo(*left).sector? hedgeInfo(*left).sector->indexInMap() : -1)
                         << Vector2d(left->v1Origin()).asText()
                         << Vector2d(left->v2Origin()).asText()
                     */
@@ -1191,7 +1191,7 @@ DENG2_PIMPL(Partitioner)
 
             //LOG_DEBUG("%shedge %p sector:%d %s -> %s")
             //    << (hedge->hasLine()? "" : "mini-") << de::dintptr(hedge)
-            //    << (hInfo.sector? hInfo.sector->origIndex() - 1 : -1)
+            //    << (hInfo.sector? hInfo.sector->indexInMap() : -1)
             //    << Vector2d(hedge->v1Origin()).asText()
             //    << Vector2d(hedge->v2Origin()).asText();
 
@@ -1201,7 +1201,7 @@ DENG2_PIMPL(Partitioner)
             if(hInfo.line)
             {
                 // Can we skip this half-edge?
-                LineInfo &lInfo = lineInfos[hInfo.line->origIndex() - 1];
+                LineInfo &lInfo = lineInfos[hInfo.line->indexInMap()];
                 if(lInfo.validCount == validCount) continue; // Yes.
 
                 lInfo.validCount = validCount;
@@ -1355,7 +1355,7 @@ DENG2_PIMPL(Partitioner)
                     delete side._sections;
                     side._sections = 0;
 
-                    lineInfos[hedge->line().origIndex() - 1].flags &=
+                    lineInfos[hedge->line().indexInMap()].flags &=
                         ~(LineInfo::SelfRef | LineInfo::Twosided);
                 }
 
@@ -2035,7 +2035,7 @@ DENG2_PIMPL(Partitioner)
 
         /// @todo We do not have authorization to specify this index. -ds
         /// (This job should be done post BSP build.)
-        vtx->setOrigIndex(map->vertexCount() + uint(vertexes.size()) + 1); // 1-based index, 0 = NIL.
+        vtx->setIndexInMap(map->vertexCount() + uint(vertexes.size()));
         vertexes.push_back(vtx);
 
         // There is now one more Vertex.
@@ -2164,7 +2164,7 @@ DENG2_PIMPL(Partitioner)
         {
             throw Error("Partitioner::openSectorAtAngle",
                         QString("Vertex #%1 has no hedge tips!")
-                            .arg(vtx.origIndex() - 1));
+                            .arg(vtx.indexInMap()));
         }
 
         // First check whether there's a wall_tip that lies in the exact
@@ -2338,7 +2338,7 @@ DENG2_PIMPL(Partitioner)
 
             LOG_DEBUG("Build: %s %p sector: %d [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
                 << (hedge->hasLineSide()? "NORM" : "MINI")
-                << hedge << (info.sector != 0? info.sector->origIndex() - 1 : -1)
+                << hedge << (info.sector != 0? info.sector->indexInMap() : -1)
                 << hedge->fromOrigin()[VX] << hedge->fromOrigin()[VY]
                 << hedge->toOrigin()[VX] << hedge->toOrigin()[VY];
         }

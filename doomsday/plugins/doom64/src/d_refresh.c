@@ -48,6 +48,7 @@
 #include "p_mapsetup.h"
 #include "p_tick.h"
 #include "p_actor.h"
+#include "dmu_lib.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -395,14 +396,16 @@ void P_SetDoomsdayFlags(mobj_t* mo)
 /**
  * Updates the status flags for all visible things.
  */
-void R_SetAllDoomsdayFlags(void)
+void R_SetAllDoomsdayFlags()
 {
-    int                 i;
-    int                 count = DD_GetInteger(DD_SECTOR_COUNT);
-    mobj_t*             iter;
+    int i;
+    mobj_t *iter;
+
+    if(G_GameState() != GS_MAP)
+        return;
 
     // Only visible things are in the sector thinglists, so this is good.
-    for(i = 0; i < count; ++i)
+    for(i = 0; i < numsectors; ++i)
     {
         for(iter = P_GetPtr(DMU_SECTOR, i, DMT_MOBJS); iter; iter = iter->sNext)
             P_SetDoomsdayFlags(iter);

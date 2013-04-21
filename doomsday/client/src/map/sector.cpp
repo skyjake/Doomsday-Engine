@@ -63,14 +63,10 @@ DENG2_PIMPL(Sector)
     /// if == validCount, already checked.
     int validCount;
 
-    /// Original index in the archived map.
-    int origIndex;
-
     Instance(Public *i)
         : Base(i),
           roughArea(0),
-          validCount(0),
-          origIndex(0)
+          validCount(0)
     {
         std::memset(&soundEmitter, 0, sizeof(soundEmitter));
     }
@@ -80,7 +76,7 @@ DENG2_PIMPL(Sector)
 #ifdef __CLIENT__
         // Destroy the biassurfaces for each plane.
         foreach(BspLeaf *bspLeaf, bspLeafs)
-        for(uint i = 0; i < self.planeCount(); ++i)
+        for(int i = 0; i < self.planeCount(); ++i)
         {
             SB_DestroySurface(bspLeaf->_bsuf[i]);
         }
@@ -201,16 +197,6 @@ ddmobj_base_t const &Sector::soundEmitter() const
 AudioEnvironmentFactors const &Sector::audioEnvironmentFactors() const
 {
     return _reverb;
-}
-
-uint Sector::origIndex() const
-{
-    return d->origIndex;
-}
-
-void Sector::setOrigIndex(uint newIndex)
-{
-    d->origIndex = newIndex;
 }
 
 int Sector::frameFlags() const

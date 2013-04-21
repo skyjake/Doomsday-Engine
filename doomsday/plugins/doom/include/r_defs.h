@@ -105,11 +105,11 @@ xsector_t*      P_ToXSectorOfBspLeaf(BspLeaf* sub);
  * Update the specified player's automap.
  *
  * @param player  Local player number whose map is to change.
- * @param line  Line to change.
+ * @param lineIdx  Line to change.
  * @param visible  @c true= mark the line as visible.
  */
-void P_SetLineAutomapVisibility(int player, uint line, boolean visible);
+void P_SetLineAutomapVisibility(int player, int lineIdx, boolean visible);
 
-xline_t*        P_GetXLine(uint idx);
-xsector_t*      P_GetXSector(uint idx);
+xline_t*        P_GetXLine(int index);
+xsector_t*      P_GetXSector(int index);
 #endif

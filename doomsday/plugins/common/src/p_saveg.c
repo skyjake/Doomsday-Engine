@@ -2748,7 +2748,7 @@ static void SV_ReadLine(Line* li)
     {
         if(flags & ML_MAPPED)
         {
-            uint lineIDX = P_ToIndex(li);
+            int lineIDX = P_ToIndex(li);
 
             // Set line as having been seen by all players..
             memset(xli->mapped, 0, sizeof(xli->mapped));
@@ -2906,7 +2906,7 @@ static int SV_ReadPolyObj(void)
  */
 static void P_ArchiveWorld(void)
 {
-    uint i;
+    int i;
 
     { Writer* svWriter = SV_NewWriter();
     MaterialArchive_Write(materialArchive, svWriter);
@@ -2931,7 +2931,7 @@ static void P_ArchiveWorld(void)
 static void P_UnArchiveWorld(void)
 {
     int matArchiveVer = -1;
-    uint i;
+    int i;
 
 #if __JHEXEN__
     if(mapVersion < 6)
@@ -3547,7 +3547,7 @@ static void SV_WriteScript(const acs_t* th)
     SV_WriteByte(1); // Write a version byte.
 
     SV_WriteLong(SV_ThingArchiveNum(th->activator));
-    SV_WriteLong(th->line ? P_ToIndex(th->line) : -1);
+    SV_WriteLong(P_ToIndex(th->line));
     SV_WriteLong(th->side);
     SV_WriteLong(th->number);
     SV_WriteLong(th->infoIndex);
@@ -4460,7 +4460,7 @@ static void rebuildCorpseQueue(void)
  */
 static void P_UnArchiveThinkers(void)
 {
-    uint        i;
+    int         i;
     byte        tClass = 0;
     thinker_t  *th = 0;
     thinkerinfo_t *thInfo = 0;
@@ -4518,7 +4518,7 @@ static void P_UnArchiveThinkers(void)
             else
                 tClass = TC_MOBJ;
 
-            if(tClass == TC_MOBJ && i == thingArchiveSize)
+            if(tClass == TC_MOBJ && (uint)i == thingArchiveSize)
             {
                 SV_AssertSegment(ASEG_THINKERS);
                 // We have reached the begining of the "specials" block.
@@ -4678,8 +4678,8 @@ static void P_UnArchiveBrain(void)
 #if !__JHEXEN__
 static void P_ArchiveSoundTargets(void)
 {
-    uint                i;
-    xsector_t*          xsec;
+    int i;
+    xsector_t *xsec;
 
     // Write the total number.
     SV_WriteLong(numSoundTargets);
@@ -4699,10 +4699,9 @@ static void P_ArchiveSoundTargets(void)
 
 static void P_UnArchiveSoundTargets(void)
 {
-    uint                i;
-    uint                secid;
-    uint                numsoundtargets;
-    xsector_t*          xsec;
+    int i;
+    int numsoundtargets;
+    xsector_t *xsec;
 
     // Sound Target data was introduced in ver 5
     if(hdr->version < 5)
@@ -4714,12 +4713,10 @@ static void P_UnArchiveSoundTargets(void)
     // Read in the sound targets.
     for(i = 0; i < numsoundtargets; ++i)
     {
-        secid = SV_ReadLong();
-
-        if(secid > numsectors)
+        xsec = P_ToXSector(P_ToPtr(DMU_SECTOR, SV_ReadLong()));
+        if(!xsec)
             Con_Error("P_UnArchiveSoundTargets: bad sector number\n");
 
-        xsec = P_ToXSector(P_ToPtr(DMU_SECTOR, secid));
         xsec->soundTarget = INT2PTR(mobj_t, SV_ReadShort());
         xsec->soundTarget =
             SV_GetArchiveThing(PTR2INT(xsec->soundTarget), &xsec->soundTarget);
@@ -4730,10 +4727,10 @@ static void P_UnArchiveSoundTargets(void)
 #if __JHEXEN__
 static void P_ArchiveSounds(void)
 {
-    uint                i;
-    int                 difference;
-    seqnode_t*          node;
-    Sector*             sec;
+    int i;
+    int difference;
+    seqnode_t *node;
+    Sector *sec;
 
     // Save the sound sequences.
     SV_BeginSegment(ASEG_SOUNDS);
@@ -4761,7 +4758,8 @@ static void P_ArchiveSounds(void)
         }
 
         if(i == numpolyobjs)
-        {   // Sound is attached to a sector, not a polyobj.
+        {
+            // Sound is attached to a sector, not a polyobj.
             sec = P_GetPtrp(P_BspLeafAtPoint_FixedPrecision(node->mobj->origin), DMU_SECTOR);
             difference = P_ToIndex(sec);
             SV_WriteLong(0); // 0 -- sector sound origin.

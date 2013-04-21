@@ -57,13 +57,13 @@ void EntityDatabase_Delete(EntityDatabase* db);
 
 uint EntityDatabase_EntityCount(EntityDatabase* db, struct mapentitydef_s* entityDef);
 
-boolean EntityDatabase_HasEntity(EntityDatabase* db, struct mapentitydef_s* entityDef, uint elementIndex);
+boolean EntityDatabase_HasEntity(EntityDatabase* db, struct mapentitydef_s* entityDef, int elementIndex);
 
 #ifdef __cplusplus
-PropertyValue const* EntityDatabase_Property(EntityDatabase* db, struct mapentitypropertydef_s* propertyDef, uint elementIndex);
+PropertyValue const* EntityDatabase_Property(EntityDatabase* db, struct mapentitypropertydef_s* propertyDef, int elementIndex);
 #endif
 
-boolean EntityDatabase_SetProperty(EntityDatabase* db, struct mapentitypropertydef_s* propertyDef, uint elementIndex, valuetype_t valueType, void* valueAdr);
+boolean EntityDatabase_SetProperty(EntityDatabase* db, struct mapentitypropertydef_s* propertyDef, int elementIndex, valuetype_t valueType, void* valueAdr);
 
 #ifdef __cplusplus
 } // extern "C"

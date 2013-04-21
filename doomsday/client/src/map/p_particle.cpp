@@ -202,7 +202,7 @@ static int linkGeneratorParticles(ptcgen_t *gen, void *parameters)
         if(gen->ptcs[i].stage < 0 || !gen->ptcs[i].sector) continue;
 
         /// @todo Do not assume sector is from the CURRENT map.
-        Generators_LinkToList(gens, gen, theMap->sectorIndex(gen->ptcs[i].sector));
+        Generators_LinkToList(gens, gen, gen->ptcs[i].sector->indexInMap());
     }
     return false; // Continue iteration.
 }

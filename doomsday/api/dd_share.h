@@ -237,13 +237,6 @@ enum {
     DD_WINDOW_HANDLE,
     DD_DYNLIGHT_TEXTURE,
     DD_GAME_EXPORTS,
-    DD_SECTOR_COUNT,
-    DD_LINE_COUNT,
-    DD_SIDE_COUNT,
-    DD_VERTEX_COUNT,
-    DD_HEDGE_COUNT,
-    DD_BSPLEAF_COUNT,
-    DD_BSPNODE_COUNT,
     DD_POLYOBJ_COUNT,
     DD_XGFUNC_LINK, ///< XG line classes
     DD_SHARED_FIXED_TRIGGER_OBSOLETE, ///< obsolete
@@ -707,7 +700,7 @@ enum { MX, MY, MZ };
     DD_BASE_DDMOBJ_ELEMENTS() \
 \
     BspLeaf        *bspLeaf; /* bspLeaf in which this resides */ \
-    unsigned int    idx; /* Idx of polyobject. */ \
+    int             _indexInMap; \
     int             tag; /* Reference tag. */ \
     int             validCount; \
     AABoxd          aaBox; \

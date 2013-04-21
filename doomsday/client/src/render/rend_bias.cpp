@@ -329,7 +329,7 @@ void SB_InitForMap(char const *uniqueID)
     foreach(Sector *sector, theMap->sectors())
     foreach(BspLeaf *bspLeaf, sector->bspLeafs())
     {
-        for(uint i = 0; i < sector->planeCount(); ++i)
+        for(int i = 0; i < sector->planeCount(); ++i)
         {
             biassurface_t *bsuf = SB_CreateSurface();
 
@@ -801,7 +801,7 @@ static boolean SB_CheckColorOverride(biasaffection_t *affected)
 void SB_RendPoly(struct ColorRawf_s *rcolors, biassurface_t *bsuf,
     struct rvertex_s const *rvertices, size_t numVertices,
     const_pvec3f_t normal, float sectorLightLevel,
-    de::MapElement const *mapElement, uint elmIdx)
+    de::MapElement const *mapElement, int elmIdx)
 {
     // Apply sectorlight bias.  Note: Distance darkening is not used
     // with bias lights.

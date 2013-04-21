@@ -146,14 +146,14 @@ public:
     /**
      * Returns the original index of the polyobj.
      */
-    uint origIndex() const;
+    int indexInMap() const;
 
     /**
      * Change the original index of the polyobj.
      *
      * @param newIndex  New original index.
      */
-    void setOrigIndex(uint newIndex);
+    void setIndexInMap(int newIndex);
 
 } Polyobj;
 

@@ -127,7 +127,7 @@ extern "C" {
 #endif
 
 boolean P_SetMapEntityProperty(EntityDatabase *db, MapEntityPropertyDef *propertyDef,
-                               uint elementIndex, valuetype_t valueType, void* valueAdr);
+                               int elementIndex, valuetype_t valueType, void* valueAdr);
 
 /**
  * To be called to initialize the game map object defs.

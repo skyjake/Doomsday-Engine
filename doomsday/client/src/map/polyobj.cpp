@@ -76,7 +76,6 @@ polyobj_s::polyobj_s(de::Vector2d const &origin_)
     origin[VX] = origin_.x;
     origin[VY] = origin_.y;
     bspLeaf = 0;
-    idx = 0;
     tag = 0;
     validCount = 0;
     dest[0] = dest[1] = 0;
@@ -89,7 +88,7 @@ polyobj_s::polyobj_s(de::Vector2d const &origin_)
     speed = 0;
     crush = false;
     seqType = 0;
-    _origIndex = 0;
+    _indexInMap = MapElement::NoIndex;
 }
 
 polyobj_s::~polyobj_s()
@@ -418,12 +417,12 @@ void Polyobj::setSequenceType(int newType)
     seqType = newType;
 }
 
-uint Polyobj::origIndex() const
+int Polyobj::indexInMap() const
 {
-    return _origIndex;
+    return _indexInMap;
 }
 
-void Polyobj::setOrigIndex(uint newIndex)
+void Polyobj::setIndexInMap(int newIndex)
 {
-    _origIndex = newIndex;
+    _indexInMap = newIndex;
 }

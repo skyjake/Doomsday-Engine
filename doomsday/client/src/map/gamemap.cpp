@@ -102,7 +102,7 @@ DENG2_PIMPL(GameMap)
             builder.take(hedge);
 
             // Add this HEdge to the LUT.
-            hedge->setIndex(hedges.count());
+            hedge->setIndexInMap(hedges.count());
             hedges.append(hedge);
 
             if(hedge->hasLineSide())
@@ -132,7 +132,7 @@ DENG2_PIMPL(GameMap)
             builder.take(leaf);
 
             // Add this BspLeaf to the LUT.
-            leaf->setOrigIndex(bspLeafs.count());
+            leaf->setIndexInMap(bspLeafs.count());
             bspLeafs.append(leaf);
 
             collateBspLeafHEdges(builder, *leaf);
@@ -152,7 +152,7 @@ DENG2_PIMPL(GameMap)
         builder.take(node);
 
         // Add this BspNode to the LUT.
-        node->setOrigIndex(bspNodes.count());
+        node->setIndexInMap(bspNodes.count());
         bspNodes.append(node);
     }
 
@@ -227,7 +227,7 @@ DENG2_PIMPL(GameMap)
             // Resize the biassurface lists for the BSP leaf planes.
             foreach(BspLeaf *bspLeaf, sector->bspLeafs())
             {
-                uint n = 0;
+                int n = 0;
 
                 biassurface_t **newList = (biassurface_t **) Z_Calloc(sector->planeCount() * sizeof(biassurface_t *), PU_MAP, 0);
                 // Copy the existing list?
@@ -639,9 +639,6 @@ TraceOpening const &GameMap::traceOpening() const
 
 void GameMap::setTraceOpening(Line &line)
 {
-    // Is the line part of this map?
-    if(lineIndex(&line) < 0) return; // Odd...
-
     if(!line.hasBackSections())
     {
         d->traceOpening.range = 0;
@@ -700,23 +697,11 @@ void GameMap::setSkyFix(bool ceiling, coord_t newHeight)
     d->skyFix[plane] = newHeight;
 }
 
-int GameMap::vertexIndex(Vertex const *vtx) const
+int GameMap::toSideIndex(int lineIndex, int backSide) // static
 {
-    if(!vtx) return -1;
-    return _vertexes.indexOf(const_cast<Vertex *>(vtx)); // Bad performance: O(n)
-}
-
-int GameMap::lineIndex(Line const *line) const
-{
-    if(!line) return -1;
-    return _lines.indexOf(const_cast<Line *>(line)); // Bad performance: O(n)
-}
-
-int GameMap::sideIndex(Line::Side const *side) const
-{
-    if(!side) return -1;
+    DENG_ASSERT(lineIndex >= 0);
     // The high bit is used to mark the back side.
-    return lineIndex(&side->line()) | (side->isBack()? 0x80000000 : 0);
+    return lineIndex | (backSide? 0x80000000 : 0);
 }
 
 Line::Side *GameMap::sideByIndex(int index) const
@@ -724,12 +709,6 @@ Line::Side *GameMap::sideByIndex(int index) const
     if(index < 0) return 0;
     // The high bit is used to mark the back side.
     return &_lines.at(index & ~0xf0000000)->side(index & 0x80000000);
-}
-
-int GameMap::sectorIndex(Sector const *sec) const
-{
-    if(!sec) return -1;
-    return _sectors.indexOf(const_cast<Sector *>(sec)); // Bad performance: O(n)
 }
 
 Sector *GameMap::sectorBySoundEmitter(ddmobj_base_t const &soundEmitter) const
@@ -782,24 +761,6 @@ Surface *GameMap::surfaceBySoundEmitter(ddmobj_base_t const &soundEmitter) const
     return 0; // Not found.
 }
 
-int GameMap::bspLeafIndex(BspLeaf const *bspLeaf) const
-{
-    if(!bspLeaf) return -1;
-    return bspLeaf->origIndex();
-}
-
-int GameMap::hedgeIndex(HEdge const *hedge) const
-{
-    if(!hedge) return -1;
-    return hedge->index();
-}
-
-int GameMap::bspNodeIndex(BspNode const *bspLeaf) const
-{
-    if(!bspLeaf) return -1;
-    return bspLeaf->origIndex();
-}
-
 Polyobj *GameMap::polyobjByTag(int tag) const
 {
     foreach(Polyobj *polyobj, _polyobjs)
@@ -822,6 +783,8 @@ Polyobj *GameMap::polyobjByBase(ddmobj_base_t const &ddMobjBase) const
 
 void GameMap::initPolyobjs()
 {
+    LOG_AS("GameMap::initPolyobjs");
+
     foreach(Polyobj *po, _polyobjs)
     {
         // Find the center point of the polyobj.
@@ -837,10 +800,10 @@ void GameMap::initPolyobjs()
         {
             if(bspLeaf->hasPolyobj())
             {
-                Con_Message("Warning: GameMap::initPolyobjs: Multiple polyobjs in a single BSP leaf\n"
-                            "  (BSP leaf %lu, sector %lu). Previous polyobj overridden.",
-                            ulong( theMap->bspLeafIndex(bspLeaf) ),
-                            ulong( theMap->sectorIndex(bspLeaf->sectorPtr()) ));
+                LOG_WARNING("Multiple polyobjs in a single BSP leaf\n"
+                            "  (BSP leaf %i, sector %i). Previous polyobj overridden.")
+                    << bspLeaf->indexInMap()
+                    << bspLeaf->sector().indexInMap();
             }
             bspLeaf->setFirstPolyobj(po);
             po->bspLeaf = bspLeaf;
@@ -882,7 +845,7 @@ void GameMap::initNodePiles()
     // Allocate the rings.
     lineLinks = (nodeindex_t *) Z_Malloc(sizeof(*lineLinks) * lineCount(), PU_MAPSTATIC, 0);
 
-    for(uint i = 0; i < lineCount(); ++i)
+    for(int i = 0; i < lineCount(); ++i)
     {
         lineLinks[i] = NP_New(&lineNodes, NP_ROOT_NODE);
     }

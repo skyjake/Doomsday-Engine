@@ -105,17 +105,13 @@ DENG2_PIMPL_NOREF(Line::Side)
     /// Framecount of last time shadows were drawn on this side.
     int shadowVisCount;
 
-    /// 1-based index of the associated sidedef in the archived map; otherwise @c 0.
-    uint sideDefArchiveIndex;
-
     Instance(Line &line, Sector *sector)
         : flags(0),
           line(line),
           sector(sector),
           leftHEdge(0),
           rightHEdge(0),
-          shadowVisCount(0),
-          sideDefArchiveIndex(0) // no-index
+          shadowVisCount(0)
     {
 #ifdef __CLIENT__
         line.audienceForFlagsChange += this;
@@ -180,11 +176,6 @@ void Line::Side::addSections()
     if(hasSections()) return;
 
     d->sections.reset(new Instance::Sections(*this));
-}
-
-void Line::Side::setSideDefArchiveIndex(uint newIndex)
-{
-    d->sideDefArchiveIndex = newIndex;
 }
 
 Line::Side::Section &Line::Side::section(int sectionId)
@@ -483,9 +474,6 @@ DENG2_PIMPL(Line)
     Side front;
     Side back;
 
-    /// Original index in the archived map.
-    uint origIndex;
-
     /// Used by legacy algorithms to prevent repeated processing.
     int validCount;
 
@@ -504,7 +492,6 @@ DENG2_PIMPL(Line)
           length(direction.length()),
           front(*i, frontSector),
           back(*i, backSector),
-          origIndex(0),
           validCount(0)
     {
         std::memset(mapped, 0, sizeof(mapped));
@@ -545,16 +532,6 @@ void Line::setFlags(int flagsToChange, bool set)
         // Notify interested parties of the change.
         d->notifyFlagsChanged(oldFlags);
     }
-}
-
-uint Line::origIndex() const
-{
-    return d->origIndex;
-}
-
-void Line::setOrigIndex(uint newIndex)
-{
-    d->origIndex = newIndex;
 }
 
 bool Line::isBspWindow() const

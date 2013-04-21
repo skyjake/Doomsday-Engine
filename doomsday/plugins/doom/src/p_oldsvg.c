@@ -366,12 +366,12 @@ static Uri *readTextureUrn(Reader *reader, char const *schemeName)
 
 static void P_v19_UnArchiveWorld(void)
 {
-    uint i, j;
+    int i, j;
     float matOffset[2];
-    Sector* sec;
-    xsector_t* xsec;
-    Line* line;
-    xline_t* xline;
+    Sector *sec;
+    xsector_t *xsec;
+    Line *line;
+    xline_t *xline;
 
     // Do sectors.
     for(i = 0; i < numsectors; ++i)

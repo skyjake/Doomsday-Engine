@@ -428,7 +428,7 @@ void Sv_RegisterPlayer(dt_player_t* reg, uint number)
  * @param reg           The sector register to be initialized.
  * @param number        The world sector number to be registered.
  */
-void Sv_RegisterSector(dt_sector_t *reg, uint number)
+void Sv_RegisterSector(dt_sector_t *reg, int number)
 {
     Sector *sector = theMap->sectors().at(number);
 
@@ -437,7 +437,7 @@ void Sv_RegisterSector(dt_sector_t *reg, uint number)
         reg->rgb[i] = sector->lightColor()[i];
 
     // @todo $nplanes
-    for(uint i = 0; i < 2; ++i) // number of planes in sector.
+    for(int i = 0; i < 2; ++i) // number of planes in sector.
     {
         Plane const &plane = sector->plane(i);
 
@@ -461,7 +461,7 @@ void Sv_RegisterSector(dt_sector_t *reg, uint number)
  * Store the state of the side into the register-side.
  * Called at register init and after each delta generation.
  */
-void Sv_RegisterSide(dt_side_t *reg, uint number)
+void Sv_RegisterSide(dt_side_t *reg, int number)
 {
     DENG_ASSERT(reg != 0);
 
@@ -631,7 +631,7 @@ boolean Sv_RegisterComparePlayer(cregister_t* reg, uint number,
 /**
  * @return  @c true, if the result is not void.
  */
-boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
+boolean Sv_RegisterCompareSector(cregister_t *reg, int number,
                                  sectordelta_t *d, byte doUpdate)
 {
     dt_sector_t *r = &reg->sectors[number];
@@ -890,7 +890,7 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number,
 /**
  * @return              @c true, if the result is not void.
  */
-boolean Sv_RegisterComparePoly(cregister_t* reg, uint number,
+boolean Sv_RegisterComparePoly(cregister_t* reg, int number,
                                polydelta_t *d)
 {
     const dt_poly_t*    r = &reg->polyObjs[number];
@@ -956,24 +956,24 @@ void Sv_RegisterWorld(cregister_t *reg, boolean isInitial)
 
     // Init sectors.
     reg->sectors = (dt_sector_t *) Z_Calloc(sizeof(*reg->sectors) * theMap->sectorCount(), PU_MAP, 0);
-    for(uint i = 0; i < theMap->sectorCount(); ++i)
+    for(int i = 0; i < theMap->sectorCount(); ++i)
     {
         Sv_RegisterSector(&reg->sectors[i], i);
     }
 
     // Init sides.
     reg->sides = (dt_side_t *) Z_Calloc(sizeof(*reg->sides) * theMap->sideCount(), PU_MAP, 0);
-    for(uint i = 0; i < theMap->sideCount(); ++i)
+    for(int i = 0; i < theMap->sideCount(); ++i)
     {
         Sv_RegisterSide(&reg->sides[i], i);
     }
 
     // Init polyobjs.
-    uint numPolyobjs = theMap->polyobjCount();
+    int numPolyobjs = theMap->polyobjCount();
     if(numPolyobjs)
     {
         reg->polyObjs = (dt_poly_t *) Z_Calloc(sizeof(*reg->polyObjs) * theMap->polyobjCount(), PU_MAP, 0);
-        for(uint i = 0; i < numPolyobjs; ++i)
+        for(int i = 0; i < numPolyobjs; ++i)
         {
             Sv_RegisterPoly(&reg->polyObjs[i], i);
         }
@@ -2243,7 +2243,7 @@ void Sv_NewSectorDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
 {
     sectordelta_t delta;
 
-    for(uint i = 0; i < theMap->sectorCount(); ++i)
+    for(int i = 0; i < theMap->sectorCount(); ++i)
     {
         if(Sv_RegisterCompareSector(reg, i, &delta, doUpdate))
         {
@@ -2296,7 +2296,7 @@ void Sv_NewPolyDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
 {
     polydelta_t delta;
 
-    for(uint i = 0; i < theMap->polyobjCount(); ++i)
+    for(int i = 0; i < theMap->polyobjCount(); ++i)
     {
         if(Sv_RegisterComparePoly(reg, i, &delta))
         {
@@ -2320,7 +2320,7 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
     pool_t* targets[DDMAXPLAYERS + 1];
     sounddelta_t soundDelta;
     int type = DT_SOUND, df = 0;
-    uint id = soundId;
+    int id = soundId;
 
     // Determine the target pools.
     Sv_GetTargetPools(targets, clientsMask);
@@ -2328,13 +2328,13 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
     if(sourceSector)
     {
         type = DT_SECTOR_SOUND;
-        id = theMap->sectorIndex(sourceSector);
+        id = sourceSector->indexInMap();
         // Client assumes the sector's sound origin.
     }
     else if(sourcePoly)
     {
         type = DT_POLY_SOUND;
-        id = sourcePoly->idx;
+        id = sourcePoly->indexInMap();
     }
     else if(sourcePlane)
     {
@@ -2354,7 +2354,7 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
         }
         // else client assumes the sector's sound emitter.
 
-        id = theMap->sectorIndex(&sourcePlane->sector());
+        id = sourcePlane->sector().indexInMap();
     }
     else if(sourceSurface)
     {
@@ -2379,7 +2379,7 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
             df |= SNDDF_SIDE_TOP;
         }
 
-        id = theMap->sideIndex(side);
+        id = side->indexInMap();
     }
     else if(emitter)
     {

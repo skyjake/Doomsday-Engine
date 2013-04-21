@@ -177,7 +177,7 @@ void SV_ReadXGSector(Sector *sec)
 void SV_WriteXGPlaneMover(thinker_t* th)
 {
     xgplanemover_t* mov = (xgplanemover_t*) th;
-    uint i;
+    int i;
 
     SV_WriteByte(3); // Version.
 
@@ -186,7 +186,7 @@ void SV_WriteXGPlaneMover(thinker_t* th)
     SV_WriteLong(mov->flags);
 
     i = P_ToIndex(mov->origin);
-    if(i < numlines) // Is it a real line?
+    if(i >= 0 && i < numlines) // Is it a real line?
         i++;
     else // No.
         i = 0;

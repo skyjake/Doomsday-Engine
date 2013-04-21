@@ -94,14 +94,14 @@ extern xsector_t *xsectors;
  */
 xline_t*    P_ToXLine(Line* line);
 
-xline_t*    P_GetXLine(uint index);
+xline_t*    P_GetXLine(int index);
 
 /**
  * Converts a sector to an xsector.
  */
 xsector_t*  P_ToXSector(Sector* sector);
 
-xsector_t*  P_GetXSector(uint index);
+xsector_t*  P_GetXSector(int index);
 
 /**
  * Given a BSP leaf - find its parent xsector.
@@ -112,8 +112,8 @@ xsector_t*  P_ToXSectorOfBspLeaf(BspLeaf* sub);
  * Update the specified player's automap.
  *
  * @param player  Local player number whose map is to change.
- * @param line  Line to change.
+ * @param lineIdx  Line to change.
  * @param visible  @c true= mark the line as visible.
  */
-void P_SetLineAutomapVisibility(int player, uint line, boolean visible);
+void P_SetLineAutomapVisibility(int player, int lineIdx, boolean visible);
 #endif

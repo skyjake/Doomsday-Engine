@@ -90,10 +90,10 @@ public:
      *
      * @todo Refactor away.
      */
-    uint inSectorIndex() const;
+    int inSectorIndex() const;
 
     /// @todo Refactor away.
-    void setInSectorIndex(uint newIndex);
+    void setInSectorIndex(int newIndex);
 
     /**
      * Returns the Surface of the plane.

@@ -674,7 +674,7 @@ struct rendworldpoly_params_t
 
 // For bias:
     de::MapElement *mapElement;
-    uint            elmIdx;
+    int             elmIdx;
     biassurface_t  *bsuf;
 
 // Wall only:
@@ -1171,7 +1171,7 @@ static bool writeWallSection2(HEdge &hedge, Vector3f const &normal,
     bool skyMask, bool addFakeRadio, vec3d_t texTL, vec3d_t texBR,
     Vector2f const &materialOrigin, Vector2f const &materialScale,
     blendmode_t blendMode, Vector3f const &color, Vector3f const &color2,
-    biassurface_t *bsuf, uint elmIdx /*tmp*/,
+    biassurface_t *bsuf, int elmIdx /*tmp*/,
     MaterialSnapshot const &ms,
     bool isTwosidedMiddle)
 {
@@ -1327,7 +1327,7 @@ static void writePlane2(BspLeaf &bspLeaf, Plane::Type type, coord_t height,
     vec3d_t texTL, vec3d_t texBR,
     Vector2f const &materialOrigin, Vector2f const &materialScale,
     bool skyMasked, bool addDLights, bool addMobjShadows,
-    biassurface_t *bsuf, uint elmIdx /*tmp*/)
+    biassurface_t *bsuf, int elmIdx /*tmp*/)
 {
     Sector *sec = bspLeaf.sectorPtr();
 
@@ -1447,7 +1447,7 @@ static void writePlane(Plane::Type type, coord_t height,
     Material *material, Vector3f const &tintColor, float opacity, blendmode_t blendMode,
     Vector2f const &materialOrigin, Vector2f const &materialScale,
     bool skyMasked, bool addDLights, bool addMobjShadows,
-    biassurface_t *bsuf, uint elmIdx /*tmp*/,
+    biassurface_t *bsuf, int elmIdx /*tmp*/,
     bool clipBackFacing = false /*why not?*/)
 {
     BspLeaf *bspLeaf = currentBspLeaf;
@@ -1816,7 +1816,7 @@ static bool writeWallSection(HEdge &hedge, int section,
                                    (rpFlags & RPF_SKYMASK) != 0, (flags & WSF_ADD_RADIO) != 0,
                                    texTL, texBR, materialOrigin, materialScale, blendMode,
                                    *topColor, *bottomColor,
-                                   &hedge.biasSurfaceForGeometryGroup(section), (uint) section,
+                                   &hedge.biasSurfaceForGeometryGroup(section), section,
                                    ms,
                                    (section == Line::Side::Middle && isTwoSided));
     }
@@ -1836,7 +1836,7 @@ static void reportLineDrawn(Line &line)
     // Send a status report.
     if(gx.HandleMapObjectStatusReport)
     {
-        gx.HandleMapObjectStatusReport(DMUSC_LINE_FIRSTRENDERED, theMap->lineIndex(&line),
+        gx.HandleMapObjectStatusReport(DMUSC_LINE_FIRSTRENDERED, line.indexInMap(),
                                        DMU_LINE, &playerNum);
     }
 }
@@ -2811,8 +2811,6 @@ static void drawCurrentBspLeaf()
     BspLeaf *bspLeaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(bspLeaf));
 
-    uint bspLeafIdx = theMap->bspLeafIndex(bspLeaf);
-
     // Mark the sector visible for this frame.
     bspLeaf->sector()._frameFlags |= SIF_VISIBLE;
 
@@ -2821,7 +2819,7 @@ static void drawCurrentBspLeaf()
     Rend_RadioBspLeafEdges(*bspLeaf);
 
     occludeBspLeaf(bspLeaf, false);
-    LO_ClipInBspLeaf(bspLeafIdx);
+    LO_ClipInBspLeaf(bspLeaf->indexInMap());
     occludeBspLeaf(bspLeaf, true);
 
     occludeFrontFacingHEdges();
@@ -2829,7 +2827,7 @@ static void drawCurrentBspLeaf()
     if(bspLeaf->hasPolyobj())
     {
         // Polyobjs don't obstruct - clip lights with another algorithm.
-        LO_ClipInBspLeafBySight(bspLeafIdx);
+        LO_ClipInBspLeafBySight(bspLeaf->indexInMap());
     }
 
     // Mark particle generators in the sector visible.
@@ -3094,13 +3092,13 @@ void Rend_RenderSoundOrigins()
             Line::Side &side = line->side(i);
             char buf[80];
 
-            dd_snprintf(buf, 80, "Line #%u (%s, middle)", line->origIndex() - 1, (i? "back" : "front"));
+            dd_snprintf(buf, 80, "Line #%d (%s, middle)", line->indexInMap(), (i? "back" : "front"));
             drawSoundOrigin(side.middleSoundEmitter().origin, buf, eye);
 
-            dd_snprintf(buf, 80, "Line #%u (%s, bottom)", line->origIndex() - 1, (i? "back" : "front"));
+            dd_snprintf(buf, 80, "Line #%d (%s, bottom)", line->indexInMap(), (i? "back" : "front"));
             drawSoundOrigin(side.bottomSoundEmitter().origin, buf, eye);
 
-            dd_snprintf(buf, 80, "Line #%u (%s, top)", line->origIndex() - 1, (i? "back" : "front"));
+            dd_snprintf(buf, 80, "Line #%d (%s, top)", line->indexInMap(), (i? "back" : "front"));
             drawSoundOrigin(side.topSoundEmitter().origin, buf, eye);
         }
     }
@@ -3110,22 +3108,21 @@ void Rend_RenderSoundOrigins()
         /// @todo Do not assume current map.
         foreach(Sector *sec, theMap->sectors())
         {
-            uint sectorIndex = theMap->sectorIndex(sec);
             char buf[80];
 
             if(devSoundOrigins & SOF_PLANE)
             {
-                for(uint i = 0; i < sec->planeCount(); ++i)
+                for(int i = 0; i < sec->planeCount(); ++i)
                 {
                     Plane &plane = sec->plane(i);
-                    dd_snprintf(buf, 80, "Sector #%i (pln:%i)", sectorIndex, i);
+                    dd_snprintf(buf, 80, "Sector #%i (pln:%i)", sec->indexInMap(), i);
                     drawSoundOrigin(plane.soundEmitter().origin, buf, eye);
                 }
             }
 
             if(devSoundOrigins & SOF_SECTOR)
             {
-                dd_snprintf(buf, 80, "Sector #%i", sectorIndex);
+                dd_snprintf(buf, 80, "Sector #%i", sec->indexInMap());
                 drawSoundOrigin(sec->soundEmitter().origin, buf, eye);
             }
         }
@@ -3196,6 +3193,7 @@ static void drawVertexBar(Vertex const *vtx, coord_t bottom, coord_t top, float 
 
 static void drawVertexIndex(Vertex const *vtx, coord_t z, float scale, float alpha)
 {
+    DENG_ASSERT(vtx != 0);
     Point2Raw const origin(2, 2);
     char buf[80];
 
@@ -3204,7 +3202,7 @@ static void drawVertexIndex(Vertex const *vtx, coord_t z, float scale, float alp
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
 
-    sprintf(buf, "%i", theMap->vertexIndex(static_cast<Vertex const *>(vtx)));
+    sprintf(buf, "%i", vtx->indexInMap());
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();

@@ -39,9 +39,6 @@ DENG2_PIMPL(BspNode)
     /// Child map elements [Right, Left].
     MapElement *children[2];
 
-    /// Unique index. Set when saving the BSP.
-    uint index;
-
     Instance(Public *i, Partition const &partition_)
         : Base(i), partition(partition_)
     {
@@ -109,14 +106,4 @@ void BspNode::setChildAABox(int left, AABoxd const *newAABox)
         V2d_Set(dst.min, DDMAXFLOAT, DDMAXFLOAT);
         V2d_Set(dst.max, DDMINFLOAT, DDMINFLOAT);
     }
-}
-
-uint BspNode::origIndex() const
-{
-    return d->index;
-}
-
-void BspNode::setOrigIndex(uint newIndex)
-{
-    d->index = newIndex;
 }

@@ -291,51 +291,39 @@ void *P_DummyExtraData(void *dummy)
 }
 
 #undef P_ToIndex
-uint P_ToIndex(void const *ptr)
+int P_ToIndex(void const *ptr)
 {
-    if(!ptr) return 0;
-    if(P_IsDummy(ptr)) return 0;
+    if(!ptr) return -1;
+    if(P_IsDummy(ptr)) return -1;
 
     de::MapElement const *elem = IN_ELEM_CONST(ptr);
 
     switch(elem->type())
     {
     case DMU_VERTEX:
-        return theMap->vertexIndex(elem->castTo<Vertex>());
-
     case DMU_HEDGE:
-        return theMap->hedgeIndex(elem->castTo<HEdge>());
-
     case DMU_LINE:
-        return theMap->lineIndex(elem->castTo<Line>());
-
     case DMU_SIDE:
-        return theMap->sideIndex(elem->castTo<Line::Side>());
-
     case DMU_BSPLEAF:
-        return theMap->bspLeafIndex(elem->castTo<BspLeaf>());
-
     case DMU_SECTOR:
-        return theMap->sectorIndex(elem->castTo<Sector>());
-
     case DMU_BSPNODE:
-        return theMap->bspNodeIndex(elem->castTo<BspNode>());
+        return elem->indexInMap();
 
     case DMU_PLANE:
         return elem->castTo<Plane>()->inSectorIndex();
 
     case DMU_MATERIAL:
-        return elem->castTo<Material>()->manifest().id();
+        return elem->castTo<Material>()->manifest().id(); // 1-based
 
     default:
         /// @todo Throw exception.
         DENG2_ASSERT(false); // Unknown/non-indexable DMU type.
-        return 0;
+        return -1;
     }
 }
 
 #undef P_ToPtr
-void *P_ToPtr(int type, uint index)
+void *P_ToPtr(int type, int index)
 {
     switch(type)
     {
@@ -367,7 +355,7 @@ void *P_ToPtr(int type, uint index)
         return theMap->bspNodes().at(index);
 
     case DMU_MATERIAL:
-        if(index == 0) return 0;
+        /// @note @a index is 1-based.
         return &App_Materials().toManifest(index).material();
 
     default: {
@@ -375,6 +363,26 @@ void *P_ToPtr(int type, uint index)
         QByteArray msg = String("P_ToPtr: unknown type %1.").arg(DMU_Str(type)).toUtf8();
         LegacyCore_FatalError(msg.constData());
         return 0; /* Unreachable. */ }
+    }
+}
+
+#undef P_Count
+int P_Count(int type)
+{
+    switch(type)
+    {
+    case DMU_VERTEX:    return theMap->vertexCount();
+    case DMU_HEDGE:     return theMap->hedgeCount();
+    case DMU_LINE:      return theMap->lineCount();
+    case DMU_SIDE:      return theMap->sideCount();
+    case DMU_BSPNODE:   return theMap->bspNodeCount();
+    case DMU_BSPLEAF:   return theMap->bspLeafCount();
+    case DMU_SECTOR:    return theMap->sectorCount();
+    case DMU_MATERIAL:  return (int)App_Materials().count();
+
+    default:
+        /// @throw Invalid/unknown DMU element type.
+        throw Error("P_Count", String("Unknown type %1").arg(DMU_Str(type)));
     }
 }
 
@@ -457,22 +465,22 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
  *                      returns @c false.
  */
 #undef P_Callback
-int P_Callback(int type, uint index, void *context, int (*callback)(void *p, void *ctx))
+int P_Callback(int type, int index, void *context, int (*callback)(void *p, void *ctx))
 {
     switch(type)
     {
     case DMU_VERTEX:
-        if(index < theMap->vertexCount())
+        if(index >= 0 && index < theMap->vertexCount())
             return callback(theMap->vertexes().at(index), context);
         break;
 
     case DMU_HEDGE:
-        if(index < theMap->hedgeCount())
+        if(index >= 0 && index < theMap->hedgeCount())
             return callback(theMap->hedges().at(index), context);
         break;
 
     case DMU_LINE:
-        if(index < theMap->lineCount())
+        if(index >= 0 && index < theMap->lineCount())
             return callback(theMap->lines().at(index), context);
         break;
 
@@ -483,17 +491,17 @@ int P_Callback(int type, uint index, void *context, int (*callback)(void *p, voi
         break; }
 
     case DMU_BSPNODE:
-        if(index < theMap->bspNodeCount())
+        if(index >= 0 && index < theMap->bspNodeCount())
             return callback(theMap->bspNodes().at(index), context);
         break;
 
     case DMU_BSPLEAF:
-        if(index < theMap->bspLeafCount())
+        if(index >= 0 && index < theMap->bspLeafCount())
             return callback(theMap->bspLeafs().at(index), context);
         break;
 
     case DMU_SECTOR:
-        if(index < theMap->sectorCount())
+        if(index >= 0 && index < theMap->sectorCount())
             return callback(theMap->sectors().at(index), context);
         break;
 
@@ -504,7 +512,7 @@ int P_Callback(int type, uint index, void *context, int (*callback)(void *p, voi
         return 0; /* Unreachable */ }
 
     case DMU_MATERIAL:
-        if(index != 0)
+        if(index > 0)
             return callback(&App_Materials().toManifest(materialid_t(index)).material(), context);
         break;
 
@@ -1464,7 +1472,7 @@ static int getProperty(void *ptr, void *context)
 }
 
 #undef P_SetBool
-void P_SetBool(int type, uint index, uint prop, boolean param)
+void P_SetBool(int type, int index, uint prop, boolean param)
 {
     setargs_t args;
 
@@ -1476,7 +1484,7 @@ void P_SetBool(int type, uint index, uint prop, boolean param)
     P_Callback(type, index, &args, setProperty);
 }
 
-void P_SetByte(int type, uint index, uint prop, byte param)
+void P_SetByte(int type, int index, uint prop, byte param)
 {
     setargs_t args;
 
@@ -1486,7 +1494,7 @@ void P_SetByte(int type, uint index, uint prop, byte param)
     P_Callback(type, index, &args, setProperty);
 }
 
-void P_SetInt(int type, uint index, uint prop, int param)
+void P_SetInt(int type, int index, uint prop, int param)
 {
     setargs_t args;
 
@@ -1496,7 +1504,7 @@ void P_SetInt(int type, uint index, uint prop, int param)
     P_Callback(type, index, &args, setProperty);
 }
 
-void P_SetFixed(int type, uint index, uint prop, fixed_t param)
+void P_SetFixed(int type, int index, uint prop, fixed_t param)
 {
     setargs_t args;
 
@@ -1506,7 +1514,7 @@ void P_SetFixed(int type, uint index, uint prop, fixed_t param)
     P_Callback(type, index, &args, setProperty);
 }
 
-void P_SetAngle(int type, uint index, uint prop, angle_t param)
+void P_SetAngle(int type, int index, uint prop, angle_t param)
 {
     setargs_t args;
 
@@ -1516,7 +1524,7 @@ void P_SetAngle(int type, uint index, uint prop, angle_t param)
     P_Callback(type, index, &args, setProperty);
 }
 
-void P_SetFloat(int type, uint index, uint prop, float param)
+void P_SetFloat(int type, int index, uint prop, float param)
 {
     setargs_t args;
 
@@ -1526,7 +1534,7 @@ void P_SetFloat(int type, uint index, uint prop, float param)
     P_Callback(type, index, &args, setProperty);
 }
 
-void P_SetDouble(int type, uint index, uint prop, double param)
+void P_SetDouble(int type, int index, uint prop, double param)
 {
     setargs_t args;
 
@@ -1536,7 +1544,7 @@ void P_SetDouble(int type, uint index, uint prop, double param)
     P_Callback(type, index, &args, setProperty);
 }
 
-void P_SetPtr(int type, uint index, uint prop, void *param)
+void P_SetPtr(int type, int index, uint prop, void *param)
 {
     setargs_t args;
 
@@ -1546,7 +1554,7 @@ void P_SetPtr(int type, uint index, uint prop, void *param)
     P_Callback(type, index, &args, setProperty);
 }
 
-void P_SetBoolv(int type, uint index, uint prop, boolean *params)
+void P_SetBoolv(int type, int index, uint prop, boolean *params)
 {
     setargs_t args;
 
@@ -1556,7 +1564,7 @@ void P_SetBoolv(int type, uint index, uint prop, boolean *params)
     P_Callback(type, index, &args, setProperty);
 }
 
-void P_SetBytev(int type, uint index, uint prop, byte *params)
+void P_SetBytev(int type, int index, uint prop, byte *params)
 {
     setargs_t args;
 
@@ -1566,7 +1574,7 @@ void P_SetBytev(int type, uint index, uint prop, byte *params)
     P_Callback(type, index, &args, setProperty);
 }
 
-void P_SetIntv(int type, uint index, uint prop, int *params)
+void P_SetIntv(int type, int index, uint prop, int *params)
 {
     setargs_t args;
 
@@ -1576,7 +1584,7 @@ void P_SetIntv(int type, uint index, uint prop, int *params)
     P_Callback(type, index, &args, setProperty);
 }
 
-void P_SetFixedv(int type, uint index, uint prop, fixed_t *params)
+void P_SetFixedv(int type, int index, uint prop, fixed_t *params)
 {
     setargs_t args;
 
@@ -1586,7 +1594,7 @@ void P_SetFixedv(int type, uint index, uint prop, fixed_t *params)
     P_Callback(type, index, &args, setProperty);
 }
 
-void P_SetAnglev(int type, uint index, uint prop, angle_t *params)
+void P_SetAnglev(int type, int index, uint prop, angle_t *params)
 {
     setargs_t args;
 
@@ -1596,7 +1604,7 @@ void P_SetAnglev(int type, uint index, uint prop, angle_t *params)
     P_Callback(type, index, &args, setProperty);
 }
 
-void P_SetFloatv(int type, uint index, uint prop, float *params)
+void P_SetFloatv(int type, int index, uint prop, float *params)
 {
     setargs_t args;
 
@@ -1606,7 +1614,7 @@ void P_SetFloatv(int type, uint index, uint prop, float *params)
     P_Callback(type, index, &args, setProperty);
 }
 
-void P_SetDoublev(int type, uint index, uint prop, double *params)
+void P_SetDoublev(int type, int index, uint prop, double *params)
 {
     setargs_t args;
 
@@ -1616,7 +1624,7 @@ void P_SetDoublev(int type, uint index, uint prop, double *params)
     P_Callback(type, index, &args, setProperty);
 }
 
-void P_SetPtrv(int type, uint index, uint prop, void *params)
+void P_SetPtrv(int type, int index, uint prop, void *params)
 {
     setargs_t args;
 
@@ -1792,7 +1800,7 @@ void P_SetPtrpv(void *ptr, uint prop, void *params)
 
 /* index-based read functions */
 
-boolean P_GetBool(int type, uint index, uint prop)
+boolean P_GetBool(int type, int index, uint prop)
 {
     setargs_t args;
     boolean returnValue = false;
@@ -1804,7 +1812,7 @@ boolean P_GetBool(int type, uint index, uint prop)
     return returnValue;
 }
 
-byte P_GetByte(int type, uint index, uint prop)
+byte P_GetByte(int type, int index, uint prop)
 {
     setargs_t args;
     byte returnValue = 0;
@@ -1816,7 +1824,7 @@ byte P_GetByte(int type, uint index, uint prop)
     return returnValue;
 }
 
-int P_GetInt(int type, uint index, uint prop)
+int P_GetInt(int type, int index, uint prop)
 {
     setargs_t args;
     int returnValue = 0;
@@ -1828,7 +1836,7 @@ int P_GetInt(int type, uint index, uint prop)
     return returnValue;
 }
 
-fixed_t P_GetFixed(int type, uint index, uint prop)
+fixed_t P_GetFixed(int type, int index, uint prop)
 {
     setargs_t args;
     fixed_t returnValue = 0;
@@ -1840,7 +1848,7 @@ fixed_t P_GetFixed(int type, uint index, uint prop)
     return returnValue;
 }
 
-angle_t P_GetAngle(int type, uint index, uint prop)
+angle_t P_GetAngle(int type, int index, uint prop)
 {
     setargs_t args;
     angle_t returnValue = 0;
@@ -1852,7 +1860,7 @@ angle_t P_GetAngle(int type, uint index, uint prop)
     return returnValue;
 }
 
-float P_GetFloat(int type, uint index, uint prop)
+float P_GetFloat(int type, int index, uint prop)
 {
     setargs_t args;
     float returnValue = 0;
@@ -1864,7 +1872,7 @@ float P_GetFloat(int type, uint index, uint prop)
     return returnValue;
 }
 
-double P_GetDouble(int type, uint index, uint prop)
+double P_GetDouble(int type, int index, uint prop)
 {
     setargs_t args;
     double returnValue = 0;
@@ -1876,7 +1884,7 @@ double P_GetDouble(int type, uint index, uint prop)
     return returnValue;
 }
 
-void *P_GetPtr(int type, uint index, uint prop)
+void *P_GetPtr(int type, int index, uint prop)
 {
     setargs_t args;
     void *returnValue = 0;
@@ -1888,7 +1896,7 @@ void *P_GetPtr(int type, uint index, uint prop)
     return returnValue;
 }
 
-void P_GetBoolv(int type, uint index, uint prop, boolean *params)
+void P_GetBoolv(int type, int index, uint prop, boolean *params)
 {
     setargs_t args;
 
@@ -1898,7 +1906,7 @@ void P_GetBoolv(int type, uint index, uint prop, boolean *params)
     P_Callback(type, index, &args, getProperty);
 }
 
-void P_GetBytev(int type, uint index, uint prop, byte *params)
+void P_GetBytev(int type, int index, uint prop, byte *params)
 {
     setargs_t args;
 
@@ -1908,7 +1916,7 @@ void P_GetBytev(int type, uint index, uint prop, byte *params)
     P_Callback(type, index, &args, getProperty);
 }
 
-void P_GetIntv(int type, uint index, uint prop, int *params)
+void P_GetIntv(int type, int index, uint prop, int *params)
 {
     setargs_t args;
 
@@ -1918,7 +1926,7 @@ void P_GetIntv(int type, uint index, uint prop, int *params)
     P_Callback(type, index, &args, getProperty);
 }
 
-void P_GetFixedv(int type, uint index, uint prop, fixed_t *params)
+void P_GetFixedv(int type, int index, uint prop, fixed_t *params)
 {
     setargs_t args;
 
@@ -1928,7 +1936,7 @@ void P_GetFixedv(int type, uint index, uint prop, fixed_t *params)
     P_Callback(type, index, &args, getProperty);
 }
 
-void P_GetAnglev(int type, uint index, uint prop, angle_t *params)
+void P_GetAnglev(int type, int index, uint prop, angle_t *params)
 {
     setargs_t args;
 
@@ -1938,7 +1946,7 @@ void P_GetAnglev(int type, uint index, uint prop, angle_t *params)
     P_Callback(type, index, &args, getProperty);
 }
 
-void P_GetFloatv(int type, uint index, uint prop, float *params)
+void P_GetFloatv(int type, int index, uint prop, float *params)
 {
     setargs_t args;
 
@@ -1948,7 +1956,7 @@ void P_GetFloatv(int type, uint index, uint prop, float *params)
     P_Callback(type, index, &args, getProperty);
 }
 
-void P_GetDoublev(int type, uint index, uint prop, double *params)
+void P_GetDoublev(int type, int index, uint prop, double *params)
 {
     setargs_t args;
 
@@ -1958,7 +1966,7 @@ void P_GetDoublev(int type, uint index, uint prop, double *params)
     P_Callback(type, index, &args, getProperty);
 }
 
-void P_GetPtrv(int type, uint index, uint prop, void *params)
+void P_GetPtrv(int type, int index, uint prop, void *params)
 {
     setargs_t args;
 
@@ -2210,12 +2218,12 @@ DENG_EXTERN_C boolean P_LoadMap(char const* uriCString);
 DENG_EXTERN_C uint P_CountGameMapObjs(int entityId);
 
 // p_mapdata.cpp
-DENG_EXTERN_C byte P_GetGMOByte(int entityId, uint elementIndex, int propertyId);
-DENG_EXTERN_C short P_GetGMOShort(int entityId, uint elementIndex, int propertyId);
-DENG_EXTERN_C int P_GetGMOInt(int entityId, uint elementIndex, int propertyId);
-DENG_EXTERN_C fixed_t P_GetGMOFixed(int entityId, uint elementIndex, int propertyId);
-DENG_EXTERN_C angle_t P_GetGMOAngle(int entityId, uint elementIndex, int propertyId);
-DENG_EXTERN_C float P_GetGMOFloat(int entityId, uint elementIndex, int propertyId);
+DENG_EXTERN_C byte P_GetGMOByte(int entityId, int elementIndex, int propertyId);
+DENG_EXTERN_C short P_GetGMOShort(int entityId, int elementIndex, int propertyId);
+DENG_EXTERN_C int P_GetGMOInt(int entityId, int elementIndex, int propertyId);
+DENG_EXTERN_C fixed_t P_GetGMOFixed(int entityId, int elementIndex, int propertyId);
+DENG_EXTERN_C angle_t P_GetGMOAngle(int entityId, int elementIndex, int propertyId);
+DENG_EXTERN_C float P_GetGMOFloat(int entityId, int elementIndex, int propertyId);
 
 // p_maputil.cpp
 DENG_EXTERN_C void P_MobjLink(mobj_t* mo, byte flags);
@@ -2287,7 +2295,7 @@ DENG_EXTERN_C void P_PolyobjLink(Polyobj *po)
 }
 
 #undef P_PolyobjByID
-DENG_EXTERN_C Polyobj *P_PolyobjByID(uint index)
+DENG_EXTERN_C Polyobj *P_PolyobjByID(int index)
 {
     if(!theMap) return 0;
     return theMap->polyobjs().at(index);
@@ -2443,6 +2451,7 @@ DENG_DECLARE_API(Map) =
     DMU_GetType,
     P_ToIndex,
     P_ToPtr,
+    P_Count,
     P_Callback,
     P_Callbackp,
     P_Iteratep,

@@ -108,18 +108,6 @@ public:
     LineOwner *firstLineOwner() const;
 
     /**
-     * Returns the original index of the vertex.
-     */
-    uint origIndex() const;
-
-    /**
-     * Change the original index of the vertex.
-     *
-     * @param newIndex  New original index.
-     */
-    void setOrigIndex(uint newIndex);
-
-    /**
      * Get a property value, selected by DMU_* name.
      *
      * @param args  Property arguments.

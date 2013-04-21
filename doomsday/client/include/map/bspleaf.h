@@ -207,13 +207,6 @@ public:
     vec2d_t const &worldGridOffset() const;
 
     /**
-     * Returns the original index of the BSP leaf.
-     */
-    uint origIndex() const;
-
-    void setOrigIndex(uint newOrigIndex);
-
-    /**
      * Returns the @em validCount of the BSP leaf. Used by some legacy iteration
      * algorithms for marking leafs as processed/visited.
      *
@@ -250,7 +243,7 @@ public:
      *
      * @param groupId  Geometry group identifier for the bias surface.
      */
-    biassurface_t &biasSurfaceForGeometryGroup(uint groupId);
+    biassurface_t &biasSurfaceForGeometryGroup(int groupId);
 
     /**
      * Returns the first ShadowLink associated with the BSP leaf; otherwise @c 0.

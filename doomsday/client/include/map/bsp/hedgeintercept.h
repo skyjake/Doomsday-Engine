@@ -60,11 +60,11 @@ struct HEdgeIntercept
     static void DebugPrint(HEdgeIntercept const &inst)
     {
         LOG_INFO("Vertex #%i [x:%f, y:%f] beforeSector: #%d afterSector: #%d %s")
-            << (inst.vertex->origIndex() - 1)
+            << inst.vertex->indexInMap()
             << inst.vertex->origin()[VX]
             << inst.vertex->origin()[VY]
-            << (inst.before? inst.before->origIndex() : -1)
-            << (inst.after? inst.after->origIndex() : -1)
+            << (inst.before? inst.before->indexInMap() : -1)
+            << (inst.after? inst.after->indexInMap() : -1)
             << (inst.selfRef? "SELFREF" : "");
     })
 };

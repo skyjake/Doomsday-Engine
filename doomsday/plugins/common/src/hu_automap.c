@@ -694,7 +694,7 @@ static int rendBspLeafHEdges(BspLeaf* bspLeaf, void* context)
 static void renderWalls(uiwidget_t* obj, int objType, boolean addToLists)
 {
     //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    uint i;
+    int i;
     assert(obj && obj->type == GUI_AUTOMAP);
 
     // VALIDCOUNT is used to track which lines have been drawn this frame.
@@ -1332,7 +1332,7 @@ static void renderVertexes(uiwidget_t* obj)
     //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
     float v[2], oldPointSize;
-    uint i;
+    int i;
     assert(obj->type == GUI_AUTOMAP);
 
     DGL_Color4f(.2f, .5f, 1, alpha);

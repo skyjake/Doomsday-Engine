@@ -64,7 +64,7 @@ bool Rend_RadioPlaneCastsShadow(Plane const &plane)
 
 LineSideRadioData &Rend_RadioDataForLineSide(Line::Side &side)
 {
-    return lineSideRadioData[theMap->lineIndex(&side.line()) * 2 + (side.isBack()? 1 : 0)];
+    return lineSideRadioData[side.line().indexInMap() * 2 + (side.isBack()? 1 : 0)];
 }
 
 /**

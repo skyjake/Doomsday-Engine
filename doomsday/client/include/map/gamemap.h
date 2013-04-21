@@ -178,17 +178,17 @@ public:
 
     Vertexes const &vertexes() const { return _vertexes; }
 
-    inline uint vertexCount() const { return vertexes().count(); }
+    inline int vertexCount() const { return vertexes().count(); }
 
     Lines const &lines() const { return _lines; }
 
-    inline uint lineCount() const { return lines().count(); }
+    inline int lineCount() const { return lines().count(); }
 
-    inline uint sideCount() const { return lines().count() * 2; }
+    inline int sideCount() const { return lines().count() * 2; }
 
     Sectors const &sectors() const { return _sectors; }
 
-    inline uint sectorCount() const { return sectors().count(); }
+    inline int sectorCount() const { return sectors().count(); }
 
     /**
      * Locate a sector in the map by sound emitter.
@@ -225,7 +225,7 @@ public:
     /**
      * Returns the total number of Polyobjs in the map.
      */
-    inline uint polyobjCount() const { return polyobjs().count(); }
+    inline int polyobjCount() const { return polyobjs().count(); }
 
     /**
      * Locate a polyobj in the map by unique in-map tag.
@@ -257,7 +257,7 @@ public:
     /**
      * Returns the total number of HEdges in the map.
      */
-    inline uint hedgeCount() const { return hedges().count(); }
+    inline int hedgeCount() const { return hedges().count(); }
 
     /**
      * Provides access to the list of BSP nodes for efficient traversal.
@@ -267,7 +267,7 @@ public:
     /**
      * Returns the total number of BspNodes in the map.
      */
-    inline uint bspNodeCount() const { return bspNodes().count(); }
+    inline int bspNodeCount() const { return bspNodes().count(); }
 
     /**
      * Provides access to the list of BSP leafs for efficient traversal.
@@ -277,7 +277,7 @@ public:
     /**
      * Returns the total number of BspLeafs in the map.
      */
-    inline uint bspLeafCount() const { return bspLeafs().count(); }
+    inline int bspLeafCount() const { return bspLeafs().count(); }
 
     /**
      * Determine the BSP leaf on the back side of the BS partition that lies
@@ -542,68 +542,22 @@ public:
      */
     PlaneSet /*const*/ &trackedPlanes();
 
-public: /// @todo Replace with object level methods:
     /**
-     * Lookup the in-map unique index for @a vertex.
+     * Helper function for returning the relevant line side index for
+     * @a lineIndex and @a backSide.
      *
-     * @param vtx  Vertex to lookup.
-     * @return  Unique index for the Vertex else @c -1 if not present.
-     */
-    int vertexIndex(Vertex const *vtx) const;
-
-    /**
-     * Lookup the in-map unique index for @a line.
+     * @param lineIndex  Index of the Line in the map.
+     * @param backSide   If @c =0 the Line::Front else Line::Back
      *
-     * @param line  Line to lookup.
-     * @return  Unique index for the Line else @c -1 if not present.
+     * @return  Unique index for the line side.
      */
-    int lineIndex(Line const *line) const;
-
-    /**
-     * Lookup the in-map unique index for @a side.
-     *
-     * @param side  Line::Side to lookup.
-     * @return  Unique index for the Line::Side else @c -1 if not present.
-     */
-    int sideIndex(Line::Side const *side) const;
+    static int toSideIndex(int lineIndex, int backSide);
 
     /**
      * Returns a pointer to the Line::Side associated with the specified @a index;
      * otherwise @c 0.
      */
     Line::Side *sideByIndex(int index) const;
-
-    /**
-     * Lookup the in-map unique index for @a sector.
-     *
-     * @param sector  Sector to lookup.
-     * @return  Unique index for the Sector else @c -1 if not present.
-     */
-    int sectorIndex(Sector const *sector) const;
-
-    /**
-     * Lookup the in-map unique index for @a bspLeaf.
-     *
-     * @param bspLeaf  BspLeaf to lookup.
-     * @return  Unique index for the BspLeaf else @c -1 if not present.
-     */
-    int bspLeafIndex(BspLeaf const *bspLeaf) const;
-
-    /**
-     * Lookup the in-map unique index for @a hedge.
-     *
-     * @param hedge  HEdge to lookup.
-     * @return  Unique index for the HEdge else @c -1 if not present.
-     */
-    int hedgeIndex(HEdge const *hedge) const;
-
-    /**
-     * Lookup the in-map unique index for @a node.
-     *
-     * @param bspNode  BspNode to lookup.
-     * @return  Unique index for the BspNode else @c -1 if not present.
-     */
-    int bspNodeIndex(BspNode const *bspNode) const;
 
 public: /// @todo Make private:
 

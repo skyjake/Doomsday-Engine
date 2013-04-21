@@ -410,7 +410,7 @@ void XS_Init(void)
         // Allocate stair builder data.
         Sector* sec;
         xsector_t* xsec;
-        uint i;
+        int i;
 
         for(i = 0; i < numsectors; ++i)
         {
@@ -448,8 +448,7 @@ void XS_MoverStopped(xgplanemover_t *mover, boolean done)
     xline_t    *origin = P_ToXLine(mover->origin);
 
     XG_Dev("XS_MoverStopped: Sector %i (done=%i, origin line=%i)",
-           P_ToIndex(mover->sector), done,
-           mover->origin ? P_ToIndex(mover->origin) : -1);
+           P_ToIndex(mover->sector), done, P_ToIndex(mover->origin));
 
     if(done)
     {
@@ -850,10 +849,10 @@ int XS_TextureHeight(Line* line, int part)
  */
 Sector *XS_FindTagged(int tag)
 {
-    uint        k;
-    uint        foundcount = 0;
-    uint        retsectorid = 0;
-    Sector     *sec, *retsector;
+    int k;
+    int foundcount = 0;
+    int retsectorid = 0;
+    Sector *sec, *retsector;
 
     retsector = NULL;
 
@@ -897,11 +896,11 @@ Sector *XS_FindTagged(int tag)
  */
 Sector *XS_FindActTagged(int tag)
 {
-    uint        k;
-    uint        foundcount = 0;
-    uint        retsectorid = 0;
-    Sector     *sec, *retsector;
-    xsector_t  *xsec;
+    int k;
+    int foundcount = 0;
+    int retsectorid = 0;
+    Sector *sec, *retsector;
+    xsector_t *xsec;
 
     retsector = NULL;
 
@@ -978,7 +977,7 @@ int findSectorExtremalMaterialHeight(void* ptr, void* context)
     return false; // Continue iteration.
 }
 
-boolean XS_GetPlane(Line* actline, Sector* sector, int ref, uint* refdata,
+boolean XS_GetPlane(Line* actline, Sector* sector, int ref, int* refdata,
     coord_t* height, Material** mat, Sector** planeSector)
 {
     Material* otherMat;
@@ -993,7 +992,7 @@ boolean XS_GetPlane(Line* actline, Sector* sector, int ref, uint* refdata,
     if(xgDev)
     {
         XG_Dev("XS_GetPlane: Line %i, sector %i, ref (%s(%i)%s)",
-               actline ? P_ToIndex(actline) : -1, P_ToIndex(sector),
+               P_ToIndex(actline), P_ToIndex(sector),
                SPREFTYPESTR(ref), ref, refdata? buff : "" );
     }
 
@@ -1515,9 +1514,9 @@ int C_DECL XSTrav_MovePlane(Sector *sector, boolean ceiling, void *context,
     return true; // Keep looking...
 }
 
-void XS_InitStairBuilder(Line* line)
+void XS_InitStairBuilder(Line *line)
 {
-    uint i;
+    int i;
     for(i = 0; i < numsectors; ++i)
     {
         P_GetXSector(i)->blFlags = 0;
@@ -1654,12 +1653,12 @@ int spreadBuild(void *ptr, void *context)
 
 static void markBuiltSectors(void)
 {
-    uint                i;
+    int i;
 
     // Mark the sectors of the last step as processed.
     for(i = 0; i < numsectors; ++i)
     {
-        xsector_t*          xsec = P_GetXSector(i);
+        xsector_t *xsec = P_GetXSector(i);
 
         if(xsec->blFlags & BL_WAS_BUILT)
         {
@@ -1669,12 +1668,11 @@ static void markBuiltSectors(void)
     }
 }
 
-static boolean spreadBuildToNeighborAll(Line* origin, linetype_t* info,
-                                        boolean picstop, boolean ceiling,
-                                        Material* myMat, int stepCount)
+static boolean spreadBuildToNeighborAll(Line *origin, linetype_t *info,
+    boolean picstop, boolean ceiling, Material *myMat, int stepCount)
 {
-    uint                i;
-    boolean             result = false;
+    int i;
+    boolean result = false;
     spreadbuildparams_t params;
 
     params.baseMat = myMat;
@@ -1689,8 +1687,8 @@ static boolean spreadBuildToNeighborAll(Line* origin, linetype_t* info,
 
     for(i = 0; i < numsectors; ++i)
     {
-        Sector*             sec;
-        xsector_t*          xsec = P_GetXSector(i);
+        Sector *sec;
+        xsector_t *xsec = P_GetXSector(i);
 
         // Only spread from built sectors (spread only once!).
         if(!(xsec->blFlags & BL_BUILT) || xsec->blFlags & BL_SPREADED)
@@ -1722,7 +1720,7 @@ typedef struct findbuildneighborparams_s {
     Line*               origin;
     linetype_t*         info;
     int                 stepCount;
-    uint                foundIDX;
+    int                 foundIDX;
     Sector*             foundSec;
 } findbuildneighborparams_t;
 
@@ -1732,7 +1730,7 @@ int findBuildNeighbor(void* ptr, void* context)
     findbuildneighborparams_t *params =
         (findbuildneighborparams_t*) context;
     Sector*             frontSec, *backSec;
-    uint                idx;
+    int                 idx;
 
     frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
     if(!frontSec || frontSec != params->baseSec)
@@ -1773,13 +1771,12 @@ int findBuildNeighbor(void* ptr, void* context)
     return false; // Continue iteration.
 }
 
-boolean spreadBuildToNeighborLowestIDX(Line* origin, linetype_t* info,
-                                       boolean picstop, boolean ceiling,
-                                       Material* myMat, int stepcount,
-                                       Sector* foundSec)
+boolean spreadBuildToNeighborLowestIDX(Line *origin, linetype_t *info,
+    boolean picstop, boolean ceiling, Material *myMat, int stepcount,
+    Sector *foundSec)
 {
-    uint                i;
-    boolean             result = false;
+    int i;
+    boolean result = false;
     findbuildneighborparams_t params;
 
     params.baseMat = myMat;
@@ -1794,8 +1791,8 @@ boolean spreadBuildToNeighborLowestIDX(Line* origin, linetype_t* info,
 
     for(i = 0; i < numsectors; ++i)
     {
-        Sector*             sec;
-        xsector_t*          xsec = P_GetXSector(i);
+        Sector *sec;
+        xsector_t *xsec = P_GetXSector(i);
 
         // Only spread from built sectors (spread only once!).
         if(!(xsec->blFlags & BL_BUILT) || xsec->blFlags & BL_SPREADED)
@@ -2099,10 +2096,10 @@ int C_DECL XSTrav_MimicSector(Sector *sector, boolean ceiling,
                               void *context, void *context2,
                               mobj_t *activator)
 {
-    Line       *line = (Line *) context;
+    Line *line = (Line *) context;
     linetype_t *info = context2;
-    Sector     *from = NULL;
-    uint        refdata;
+    Sector *from = NULL;
+    int refdata;
 
     // Set the spref data parameter (tag or index).
     switch(info->iparm[2])
@@ -3058,7 +3055,7 @@ coord_t XS_ThrustMul(Sector *sector)
  */
 void XS_Update(void)
 {
-    uint        i;
+    int i;
     xsector_t  *xsec;
 
     // It's all PU_MAP memory, so we can just lose it.
@@ -3067,7 +3064,7 @@ void XS_Update(void)
         xsec = P_ToXSector(P_ToPtr(DMU_SECTOR, i));
         if(xsec->xg)
         {
-            xsec->xg = NULL;
+            xsec->xg = 0;
             xsec->special = 0;
         }
     }

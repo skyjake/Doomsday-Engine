@@ -33,7 +33,7 @@ private:
     // Key is the unique identifier of said property in the MapEntityPropertyDef it is derived from.
     typedef std::map<int, PropertyValue*> Entity;
     // Entities are stored in a set, each associated with a unique map element index.
-    typedef std::map<uint, Entity> Entities;
+    typedef std::map<int, Entity> Entities;
     // Entities are grouped in sets by their unique identifier.
     typedef std::map<int, Entities> EntitySet;
 
@@ -57,11 +57,11 @@ public:
     }
 
     /// @return @c true= An entity by definition @a entityDef and @a elementIndex is known/present.
-    bool hasEntity(MapEntityDef const* entityDef, uint elementIndex)
+    bool hasEntity(MapEntityDef const* entityDef, int elementIndex)
     {
         DENG2_ASSERT(entityDef);
         Entities* set = entities(entityDef->id);
-        return !!entityByElementIndex(*set, elementIndex, false /*do not create*/);
+        return entityByElementIndex(*set, elementIndex, false /*do not create*/) != 0;
     }
 
     /**
@@ -74,7 +74,7 @@ public:
      *
      * @return The found PropertyValue.
      */
-    PropertyValue const& property(MapEntityPropertyDef const* def, uint elementIndex)
+    PropertyValue const& property(MapEntityPropertyDef const* def, int elementIndex)
     {
         DENG2_ASSERT(def);
         Entities* set = entities(def->entity->id);
@@ -94,7 +94,7 @@ public:
      * @param elementIndex  Unique element index for the value.
      * @param value         The new PropertyValue. Ownership passes to this database.
      */
-    void setProperty(MapEntityPropertyDef const* def, uint elementIndex, PropertyValue* value)
+    void setProperty(MapEntityPropertyDef const* def, int elementIndex, PropertyValue* value)
     {
         DENG2_ASSERT(def);
         Entities* set = entities(def->entity->id);
@@ -125,7 +125,7 @@ private:
     }
 
     /// Lookup an entity in @a set by its unique @a elementIndex.
-    Entity* entityByElementIndex(Entities& set, uint elementIndex, bool canCreate)
+    Entity* entityByElementIndex(Entities& set, int elementIndex, bool canCreate)
     {
         // Do we already have a record for this entity?
         Entities::iterator found = set.find(elementIndex);
@@ -135,7 +135,7 @@ private:
 
         // A new entity.
         std::pair<Entities::iterator, bool> result;
-        result = set.insert(std::pair<uint, Entity>(elementIndex, Entity()));
+        result = set.insert(std::pair<int, Entity>(elementIndex, Entity()));
         return &result.first->second;
     }
 
@@ -161,21 +161,21 @@ uint EntityDatabase_EntityCount(EntityDatabase* db, MapEntityDef* entityDef)
     return db->entityCount(entityDef);
 }
 
-boolean EntityDatabase_HasEntity(EntityDatabase* db, MapEntityDef* entityDef, uint elementIndex)
+boolean EntityDatabase_HasEntity(EntityDatabase* db, MapEntityDef* entityDef, int elementIndex)
 {
     DENG2_ASSERT(db);
     return CPP_BOOL(db->hasEntity(entityDef, elementIndex));
 }
 
 PropertyValue const* EntityDatabase_Property(EntityDatabase* db,
-    struct mapentitypropertydef_s* propertyDef, uint elementIndex)
+    struct mapentitypropertydef_s* propertyDef, int elementIndex)
 {
     DENG2_ASSERT(db);
     return &db->property(propertyDef, elementIndex);
 }
 
 boolean EntityDatabase_SetProperty(EntityDatabase* db, MapEntityPropertyDef* propertyDef,
-    uint elementIndex, valuetype_t valueType, void* valueAdr)
+    int elementIndex, valuetype_t valueType, void* valueAdr)
 {
     DENG2_ASSERT(db);
     db->setProperty(propertyDef, elementIndex, BuildPropertyValue(valueType, valueAdr));

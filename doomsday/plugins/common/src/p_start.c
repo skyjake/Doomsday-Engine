@@ -1354,8 +1354,7 @@ void P_TurnGizmosAwayFromDoors(void)
 
     Sector* sec;
     mobj_t* iter;
-    uint i, l;
-    int k, t;
+    int i, l, k, t;
     Line* closestline = NULL, *li;
     xline_t* xli;
     coord_t closestdist = 0, dist, off, linelen;

@@ -186,7 +186,7 @@ static boolean checkReject(BspLeaf* a, BspLeaf* b)
 {
     if(rejectMatrix != NULL)
     {
-        uint                s1, s2, pnum, bytenum, bitnum;
+        int                 s1, s2, pnum, bytenum, bitnum;
         Sector*             sec1 = P_GetPtrp(a, DMU_SECTOR);
         Sector*             sec2 = P_GetPtrp(b, DMU_SECTOR);
 
