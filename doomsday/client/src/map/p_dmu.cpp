@@ -357,7 +357,9 @@ void *P_ToPtr(int type, int index)
 
     case DMU_MATERIAL:
         /// @note @a index is 1-based.
-        return &App_Materials().toManifest(index).material();
+        if(index > 0)
+            return &App_Materials().toManifest(index).material();
+        return 0;
 
     default: {
         /// @todo Throw exception.
