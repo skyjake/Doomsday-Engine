@@ -1,4 +1,4 @@
-/** @file p_dmu.h Doomsday Map Update API
+/** @file map/p_dmu.h Doomsday Map Update API.
  *
  * The Map Update API is used for accessing and making changes to map data
  * during gameplay. From here, the relevant engine's subsystems will be
@@ -23,16 +23,13 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_MAP_UPDATE_H
-#define LIBDENG_MAP_UPDATE_H
+#ifndef DENG_WORLD_MAP_UPDATE
+#define DENG_WORLD_MAP_UPDATE
 
 #include "api_mapedit.h" // valuetype_t
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef struct setargs_s {
+struct setargs_t
+{
     int type;
     uint prop;
     int modifiers; /// Property modifiers (e.g., line of sector)
@@ -45,22 +42,12 @@ typedef struct setargs_s {
     double *doubleValues;
     angle_t *angleValues;
     void **ptrValues;
-} setargs_t;
+};
 
 /**
  * Initializes the dummy arrays with a fixed number of dummies.
  */
-void P_InitMapUpdate(void);
-
-/**
- * Allocates a new dummy object.
- *
- * @param type          DMU type of the dummy object.
- * @param extraData     Extra data pointer of the dummy. Points to
- *                      caller-allocated memory area of extra data for the
- *                      dummy.
- */
-//void *P_AllocDummy(int type, void *extraData);
+void P_InitMapUpdate();
 
 /**
  * Determines the type of a dummy object. For extra safety (in a debug build)
@@ -70,32 +57,9 @@ void P_InitMapUpdate(void);
 int P_DummyType(void const *dummy);
 
 /**
- * Frees a dummy object.
- */
-//void P_FreeDummy(void *dummy);
-
-/**
- * Determines if a map data object is a dummy.
- */
-//boolean P_IsDummy(void *dummy);
-
-/**
- * Returns the extra data pointer of the dummy, or NULL if the object is not
- * a dummy object.
- */
-//void *P_DummyExtraData(void *dummy);
-
-/**
- * Convert pointer to index.
- */
-//uint P_ToIndex(void const *ptr);
-
-/**
  * Convert DMU enum constant into a string for error/debug messages.
  */
 char const *DMU_Str(uint prop);
-
-//int DMU_GetType(void const *ptr);
 
 /**
  * Sets a value. Does some basic type checking so that incompatible types are
@@ -110,8 +74,4 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args, uint 
  */
 void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint index);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif // LIBDENG_MAP_UPDATE_H
+#endif // DENG_WORLD_MAP_UPDATE
