@@ -62,7 +62,7 @@ DENG2_PIMPL(GLShader)
 GLShader::GLShader() : d(new Instance(this))
 {}
 
-GLShader::GLShader(Type shaderType, IByteArray const &source)
+GLShader::GLShader(Type shaderType, IByteArray const &source) : d(new Instance(this))
 {
     compile(shaderType, source);
 }
