@@ -1,4 +1,4 @@
-/** @file api_map.h Map data.
+/** @file api_map.h Public API to the world (map) data.
  *
  * World data comprises the map and all the objects in it. The public API
  * includes accessing and modifying map data objects via DMU.
@@ -23,8 +23,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef __DOOMSDAY_MAP_H__
-#define __DOOMSDAY_MAP_H__
+#ifndef DOOMSDAY_API_MAP_H
+#define DOOMSDAY_API_MAP_H
 
 #include "apis.h"
 #include <de/aabox.h>
@@ -380,7 +380,14 @@ DENG_API_TYPEDEF(Map)
      */
     int             (*GetType)(MapElementPtrConst ptr);
 
+    /**
+     * Convert a pointer to DMU object to an element index.
+     */
     int             (*ToIndex)(MapElementPtrConst ptr);
+
+    /**
+     * Convert an element index to a DMU object pointer.
+     */
     void*           (*ToPtr)(int type, int index);
 
     /**
@@ -389,14 +396,76 @@ DENG_API_TYPEDEF(Map)
      */
     int             (*Count)(int type);
 
+    /**
+     * Call a callback function on a selecton of DMU objects specified with an
+     * object type and element index.
+     *
+     * @param type          DMU type for selected object(s).
+     * @param index         Index of the selected object(s).
+     * @param context       Data context pointer passed to the callback.
+     * @param callback      Function to be called for each object.
+     *
+     * @return  @c =false if all callbacks return @c false. If a non-zero value
+     * is returned by the callback function, iteration is aborted immediately
+     * and the value returned by the callback is returned.
+     */
     int             (*Callback)(int type, int index, void* context, int (*callback)(MapElementPtr p, void* ctx));
-    int             (*Callbackp)(int type, MapElementPtr ptr, void* context, int (*callback)(MapElementPtr p, void* ctx));
-    int             (*Iteratep)(MapElementPtr ptr, uint prop, void* context, int (*callback) (MapElementPtr p, void* ctx));
 
-    // Dummy Objects
+    /**
+     * @ref Callback() alternative where the set of selected objects is instead
+     * specified with an object type and element @a pointer. Behavior and function
+     * are otherwise identical.
+     *
+     * @param type          DMU type for selected object(s).
+     * @param pointer       DMU element pointer to make callback(s) for.
+     * @param context       Data context pointer passed to the callback.
+     * @param callback      Function to be called for each object.
+     *
+     * @return  @c =false if all callbacks return @c false. If a non-zero value
+     * is returned by the callback function, iteration is aborted immediately
+     * and the value returned by the callback is returned.
+     */
+    int             (*Callbackp)(int type, MapElementPtr pointer, void* context, int (*callback)(MapElementPtr p, void* ctx));
+
+    /**
+     * An efficient alternative mechanism for iterating a selection of sub-objects
+     * and performing a callback on each.
+     *
+     * @param pointer       DMU object to iterate sub-objects of.
+     * @param prop          DMU property type identifying the sub-objects to iterate.
+     * @param context       Data context pointer passsed to the callback.
+     * @param callback      Function to be called for each object.
+     *
+     * @return  @c =false if all callbacks return @c false. If a non-zero value
+     * is returned by the callback function, iteration is aborted immediately
+     * and the value returned by the callback is returned.
+     */
+    int             (*Iteratep)(MapElementPtr pointer, uint prop, void* context, int (*callback) (MapElementPtr p, void* ctx));
+
+    /**
+     * Allocates a new dummy object.
+     *
+     * @param type          DMU type of the dummy object.
+     * @param extraData     Extra data pointer of the dummy. Points to
+     *                      caller-allocated memory area of extra data for the
+     *                      dummy.
+     */
     MapElementPtr   (*AllocDummy)(int type, void* extraData);
+
+    /**
+     * Frees a dummy object.
+     */
     void            (*FreeDummy)(MapElementPtr dummy);
+
+    /**
+     * Determines if a map data object is a dummy.
+     */
     boolean         (*IsDummy)(MapElementPtrConst dummy);
+
+    /**
+     * Returns the extra data pointer of the dummy, or NULL if the object is not
+     * a dummy object.
+     */
     void*           (*DummyExtraData)(MapElementPtr dummy);
 
     // Map Entities
@@ -635,4 +704,4 @@ DENG_USING_API(Map);
 } // extern "C"
 #endif
 
-#endif // __DOOMSDAY_MAP_H__
+#endif // DOOMSDAY_API_MAP_H
