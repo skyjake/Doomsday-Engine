@@ -18,6 +18,8 @@
 
 #include "de/GLUniform"
 #include "de/GLTexture"
+#include "de/GLProgram"
+#include "de/gui/opengl.h"
 #include <de/Block>
 #include <cstring>
 
@@ -67,6 +69,8 @@ DENG2_PIMPL(GLUniform)
 
     ~Instance()
     {
+        DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->uniformDeleted(self);
+
         switch(type)
         {
         case Vector2:
@@ -138,11 +142,6 @@ DENG2_PIMPL(GLUniform)
 GLUniform::GLUniform(QLatin1String const &nameInShader, Type uniformType)
     : d(new Instance(this, nameInShader, uniformType))
 {}
-
-GLUniform::~GLUniform()
-{
-    DENG2_FOR_AUDIENCE(Deletion, i) i->uniformDeleted(*this);
-}
 
 void GLUniform::setName(QLatin1String const &nameInShader)
 {
@@ -331,6 +330,59 @@ Matrix4f const &GLUniform::toMatrix4f() const
 {
     DENG2_ASSERT(d->type == Matrix4x4);
     return *d->value.mat4;
+}
+
+GLTexture *GLUniform::texture() const
+{
+    return d->value.tex;
+}
+
+void GLUniform::applyInProgram(GLProgram &program) const
+{
+    int loc = program.glUniformLocation(d->name.constData());
+    if(loc < 0)
+    {
+        // Uniform not in the program.
+        return;
+    }
+
+    switch(d->type)
+    {
+    case Int:
+        glUniform1i(loc, d->value.int32);
+        break;
+
+    case UInt:
+        glUniform1i(loc, d->value.uint32);
+        break;
+
+    case Float:
+        glUniform1f(loc, d->value.float32);
+        break;
+
+    case Vector2:
+        glUniform2f(loc, d->value.vector->x, d->value.vector->y);
+        break;
+
+    case Vector3:
+        glUniform3f(loc, d->value.vector->x, d->value.vector->y, d->value.vector->z);
+        break;
+
+    case Vector4:
+        glUniform4f(loc, d->value.vector->x, d->value.vector->y, d->value.vector->z, d->value.vector->w);
+        break;
+
+    case Matrix3x3:
+        glUniformMatrix3fv(loc, 1, GL_FALSE, d->value.mat3->values());
+        break;
+
+    case Matrix4x4:
+        glUniformMatrix4fv(loc, 1, GL_FALSE, d->value.mat4->values());
+        break;
+
+    default:
+        break;
+    }
 }
 
 } // namespace de
