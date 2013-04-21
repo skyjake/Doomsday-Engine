@@ -60,6 +60,7 @@ public:
     virtual ~Asset();
 
     void setState(State s);
+    void setState(bool assetReady);
     State state() const;
 
     /**
