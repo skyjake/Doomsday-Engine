@@ -369,14 +369,7 @@ int BspLeaf::property(setargs_t &args) const
         DMU_GetValue(DDVT_INT, &val, &args, 0);
         break; }
     default:
-        /// @throw UnknownPropertyError  The requested property does not exist.
-        throw UnknownPropertyError("BspLeaf::property", QString("Property '%1' is unknown").arg(DMU_Str(args.prop)));
+        return MapElement::property(args);
     }
     return false; // Continue iteration.
-}
-
-int BspLeaf::setProperty(setargs_t const &args)
-{
-    /// @throw WritePropertyError  The requested property is not writable.
-    throw WritePropertyError("Vertex::setProperty", QString("Property '%1' is not writable").arg(DMU_Str(args.prop)));
 }

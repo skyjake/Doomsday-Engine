@@ -662,8 +662,7 @@ int Surface::property(setargs_t &args) const
         break;
 
     default:
-        /// @throw UnknownPropertyError  The requested property does not exist.
-        throw UnknownPropertyError("Surface::property", QString("Property '%1' is unknown").arg(DMU_Str(args.prop)));
+        return MapElement::property(args);
     }
 
     return false; // Continue iteration.
@@ -741,8 +740,7 @@ int Surface::setProperty(setargs_t const &args)
         break; }
 
     default:
-        /// @throw WritePropertyError  The requested property is not writable.
-        throw WritePropertyError("Surface::setProperty", QString("Property '%1' is not writable").arg(DMU_Str(args.prop)));
+        return MapElement::setProperty(args);
     }
 
     return false; // Continue iteration.

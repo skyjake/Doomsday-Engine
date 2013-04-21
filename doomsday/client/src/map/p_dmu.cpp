@@ -991,56 +991,9 @@ static int setProperty(void *ptr, void *context)
         }*/
     }
 
-    switch(args->type)
-    {
-    case DMU_SURFACE:
-        elem->castTo<Surface>()->setProperty(*args);
-        break;
-
-    case DMU_PLANE:
-        elem->castTo<Plane>()->setProperty(*args);
-        break;
-
-    case DMU_VERTEX:
-        elem->castTo<Vertex>()->setProperty(*args);
-        break;
-
-    case DMU_HEDGE:
-        elem->castTo<HEdge>()->setProperty(*args);
-        break;
-
-    case DMU_LINE:
-        elem->castTo<Line>()->setProperty(*args);
-        break;
-
-    case DMU_SIDE:
-        elem->castTo<Line::Side>()->setProperty(*args);
-        break;
-
-    case DMU_BSPLEAF:
-        elem->castTo<BspLeaf>()->setProperty(*args);
-        break;
-
-    case DMU_SECTOR:
-        elem->castTo<Sector>()->setProperty(*args);
-        break;
-
-    case DMU_MATERIAL:
-        elem->castTo<Material>()->setProperty(*args);
-        break;
-
-    case DMU_BSPNODE: {
-        /// @todo Throw exception.
-        QByteArray msg = String("SetProperty: Property %1 is not writable in DMU_BSPNODE.").arg(DMU_Str(args->prop)).toUtf8();
-        LegacyCore_FatalError(msg.constData());
-        break; }
-
-    default: {
-        /// @todo Throw exception.
-        QByteArray msg = String("SetProperty: Type %1 not writable.").arg(DMU_Str(args->type)).toUtf8();
-        LegacyCore_FatalError(msg.constData());
-        return 0; /* Unreachable */ }
-    }
+    // Write the property value(s).
+    /// @throws MapElement::WritePropertyError  If the requested property is not writable.
+    elem->setProperty(*args);
 
     if(updatePlane)
     {
@@ -1423,49 +1376,9 @@ static int getProperty(void *ptr, void *context)
         }
     }
 
-    switch(args->type)
-    {
-    case DMU_VERTEX:
-        elem->castTo<Vertex>()->property(*args);
-        break;
-
-    case DMU_HEDGE:
-        elem->castTo<HEdge>()->property(*args);
-        break;
-
-    case DMU_LINE:
-        elem->castTo<Line>()->property(*args);
-        break;
-
-    case DMU_SURFACE:
-        elem->castTo<Surface>()->property(*args);
-        break;
-
-    case DMU_PLANE:
-        elem->castTo<Plane>()->property(*args);
-        break;
-
-    case DMU_SECTOR:
-        elem->castTo<Sector>()->property(*args);
-        break;
-
-    case DMU_SIDE:
-        elem->castTo<Line::Side>()->property(*args);
-        break;
-
-    case DMU_BSPLEAF:
-        elem->castTo<BspLeaf>()->property(*args);
-        break;
-
-    case DMU_MATERIAL:
-        elem->castTo<Material>()->property(*args);
-        break;
-
-    default: {
-        QByteArray msg = String("GetProperty: Type %1 not readable.").arg(DMU_Str(args->type)).toUtf8();
-        LegacyCore_FatalError(msg.constData());
-        return 0; /* Unreachable */ }
-    }
+    // Read the property value(s).
+    /// @throws MapElement::UnknownPropertyError  If the requested property is not readable.
+    elem->property(*args);
 
     // Currently no aggregate values are collected.
     return false;

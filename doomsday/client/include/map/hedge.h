@@ -88,12 +88,6 @@ public:
     /// The referenced geometry group does not exist. @ingroup errors
     DENG2_ERROR(UnknownGeometryGroupError);
 
-    /// The referenced property does not exist. @ingroup errors
-    DENG2_ERROR(UnknownPropertyError);
-
-    /// The referenced property is not writeable. @ingroup errors
-    DENG2_ERROR(WritePropertyError);
-
 public: /// @todo Make private:
     /// Start and End vertexes of the segment.
     Vertex *_from, *_to;
@@ -391,21 +385,8 @@ public:
      */
     biassurface_t &biasSurfaceForGeometryGroup(uint groupId);
 
-    /**
-     * Get a property value, selected by DMU_* name.
-     *
-     * @param args  Property arguments.
-     * @return  Always @c 0 (can be used as an iterator).
-     */
+protected:
     int property(setargs_t &args) const;
-
-    /**
-     * Update a property value, selected by DMU_* name.
-     *
-     * @param args  Property arguments.
-     * @return  Always @c 0 (can be used as an iterator).
-     */
-    int setProperty(setargs_t const &args);
 
 private:
     DENG2_PRIVATE(d)

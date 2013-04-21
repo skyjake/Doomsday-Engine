@@ -59,12 +59,6 @@ public:
     DENG2_ERROR(UnknownGeometryGroupError);
 #endif
 
-    /// The referenced property does not exist. @ingroup errors
-    DENG2_ERROR(UnknownPropertyError);
-
-    /// The referenced property is not writeable. @ingroup errors
-    DENG2_ERROR(WritePropertyError);
-
 public: /// @todo Make private:
     /// First half-edge in the leaf. Ordered by angle, clockwise starting from
     /// the smallest angle.
@@ -266,21 +260,8 @@ public:
 
 #endif // __CLIENT__
 
-    /**
-     * Get a property value, selected by DMU_* name.
-     *
-     * @param args  Property arguments.
-     * @return  Always @c 0 (can be used as an iterator).
-     */
+protected:
     int property(setargs_t &args) const;
-
-    /**
-     * Update a property value, selected by DMU_* name.
-     *
-     * @param args  Property arguments.
-     * @return  Always @c 0 (can be used as an iterator).
-     */
-    int setProperty(setargs_t const &args);
 
 private:
     DENG2_PRIVATE(d)

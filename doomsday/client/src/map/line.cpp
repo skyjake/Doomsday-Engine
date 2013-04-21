@@ -418,8 +418,7 @@ int Line::Side::property(setargs_t &args) const
         DMU_GetValue(DMT_LINESIDE_FLAGS, &d->flags, &args, 0);
         break;
     default:
-        /// @throw UnknownPropertyError  The requested property does not exist.
-        throw UnknownPropertyError("Line::Side::property", QString("Property '%1' is unknown").arg(DMU_Str(args.prop)));
+        return MapElement::property(args);
     }
     return false; // Continue iteration.
 }
@@ -440,8 +439,7 @@ int Line::Side::setProperty(setargs_t const &args)
         break; }*/
 
     default:
-        /// @throw WritePropertyError  The requested property is not writable.
-        throw WritePropertyError("Line::Side::setProperty", QString("Property '%1' is not writable").arg(DMU_Str(args.prop)));
+        return MapElement::setProperty(args);
     }
     return false; // Continue iteration.
 }
@@ -729,8 +727,7 @@ int Line::property(setargs_t &args) const
         DMU_GetValue(DMT_LINE_VALIDCOUNT, &d->validCount, &args, 0);
         break;
     default:
-        /// @throw UnknownPropertyError  The requested property does not exist.
-        throw UnknownPropertyError("Line::property", QString("Property '%1' is unknown").arg(DMU_Str(args.prop)));
+        return MapElement::property(args);
     }
 
     return false; // Continue iteration.
@@ -778,8 +775,7 @@ int Line::setProperty(setargs_t const &args)
         break; }
 
     default:
-        /// @throw WritePropertyError  The requested property is not writable.
-        throw WritePropertyError("Line::setProperty", QString("Property '%1' is not writable").arg(DMU_Str(args.prop)));
+        return MapElement::setProperty(args);
     }
 
     return false; // Continue iteration.

@@ -100,14 +100,7 @@ int Vertex::property(setargs_t &args) const
         DMU_GetValue(DMT_VERTEX_ORIGIN, &_origin[VY], &args, 1);
         break;
     default:
-        /// @throw UnknownPropertyError  The requested property does not exist.
-        throw UnknownPropertyError("Vertex::property", QString("Property '%1' is unknown").arg(DMU_Str(args.prop)));
+        return MapElement::property(args);
     }
     return false; // Continue iteration.
-}
-
-int Vertex::setProperty(setargs_t const &args)
-{
-    /// @throw WritePropertyError  The requested property is not writable.
-    throw WritePropertyError("Vertex::setProperty", QString("Property '%1' is not writable").arg(DMU_Str(args.prop)));
 }

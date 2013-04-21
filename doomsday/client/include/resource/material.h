@@ -85,12 +85,6 @@ public:
     DENG2_ERROR(UnknownDecorationError);
 #endif
 
-    /// The referenced property does not exist. @ingroup errors
-    DENG2_ERROR(UnknownPropertyError);
-
-    /// The referenced property is not writeable. @ingroup errors
-    DENG2_ERROR(WritePropertyError);
-
     DENG2_DEFINE_AUDIENCE(Deletion, void materialBeingDeleted(Material const &material))
 
     /// @todo Define these values here instead of at API level
@@ -982,28 +976,14 @@ public:
 
 #endif // __CLIENT__
 
-    /**
-     * Get a property value, selected by DMU_* name.
-     *
-     * @param args  Property arguments.
-     * @return  Always @c 0 (can be used as an iterator).
-     */
-    int property(setargs_t &args) const;
-
-    /**
-     * Update a property value, selected by DMU_* name.
-     *
-     * @param args  Property arguments.
-     * @return  Always @c 0 (can be used as an iterator).
-     */
-    int setProperty(setargs_t const &args);
-
 protected:
     // Observes Texture DimensionsChange.
     void textureDimensionsChanged(de::Texture const &texture);
 
     // Observes Texture Deletion.
     void textureBeingDeleted(de::Texture const &texture);
+
+    int property(setargs_t &args) const;
 
 private:
     DENG2_PRIVATE(d)

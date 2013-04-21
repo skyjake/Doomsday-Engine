@@ -62,12 +62,6 @@ public:
     /// Required/referenced plane is missing. @ingroup errors
     DENG2_ERROR(MissingPlaneError);
 
-    /// The referenced property does not exist. @ingroup errors
-    DENG2_ERROR(UnknownPropertyError);
-
-    /// The referenced property is not writeable. @ingroup errors
-    DENG2_ERROR(WritePropertyError);
-
     DENG2_DEFINE_AUDIENCE(LightLevelChange,
         void lightLevelChanged(Sector &sector, float oldLightLevel))
 
@@ -458,23 +452,9 @@ public:
     /// @todo Refactor away.
     void setValidCount(int newValidCount);
 
-    /**
-     * Get a property value, selected by DMU_* name.
-     *
-     * @param args  Property arguments.
-     * @return  Always @c 0 (can be used as an iterator).
-     */
     int property(setargs_t &args) const;
-
-    /**
-     * Update a property value, selected by DMU_* name.
-     *
-     * @param args  Property arguments.
-     * @return  Always @c 0 (can be used as an iterator).
-     */
     int setProperty(setargs_t const &args);
 
-protected:
     // Observes Plane HeightChange.
     void planeHeightChanged(Plane &plane, coord_t oldHeight);
 

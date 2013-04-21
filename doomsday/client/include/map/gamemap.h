@@ -546,6 +546,14 @@ public:
      * Helper function for returning the relevant line side index for
      * @a lineIndex and @a backSide.
      *
+     * @attention The resultant indices are @em not contiguous! (The high bit is
+     * used to mark back-sides.)
+     *
+     * Indices are produced as follows:
+     * @code
+     *  lineIndex | (backSide? 0x80000000 : 0);
+     * @endcode
+     *
      * @param lineIndex  Index of the Line in the map.
      * @param backSide   If @c =0 the Line::Front else Line::Back
      *

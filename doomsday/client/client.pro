@@ -509,6 +509,7 @@ SOURCES += \
     src/map/hedge.cpp \
     src/map/line.cpp \
     src/map/linesighttest.cpp \
+    src/map/mapelement.cpp \
     src/map/p_data.cpp \
     src/map/p_dmu.cpp \
     src/map/p_intercept.cpp \

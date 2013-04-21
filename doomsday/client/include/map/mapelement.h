@@ -20,7 +20,10 @@
 #ifndef DENG_WORLD_MAPELEMENT
 #define DENG_WORLD_MAPELEMENT
 
+#include <de/Error>
+
 #include "dd_share.h"
+#include "map/p_dmu.h"
 
 namespace de {
 
@@ -39,6 +42,13 @@ namespace de {
 class MapElement
 {
 public:
+    /// The referenced property does not exist. @ingroup errors
+    DENG2_ERROR(UnknownPropertyError);
+
+    /// The referenced property is not writeable. @ingroup errors
+    DENG2_ERROR(WritePropertyError);
+
+    /// Special identifier used to mark an invalid index.
     enum { NoIndex = -1 };
 
 public:
@@ -47,10 +57,10 @@ public:
 
     virtual ~MapElement() {}
 
-    int type() const
-    {
-        return _type;
-    }
+    /**
+     * Returns the DMU_* type of the object.
+     */
+    int type() const;
 
     /**
      * Returns the archive index for the map element. The archive index is
@@ -61,30 +71,18 @@ public:
      *
      * @see setIndexInArchive()
      */
-    int indexInArchive() const
-    {
-        return _indexInArchive;
-    }
+    int indexInArchive() const;
 
     /**
      * Change the "archive index" of the map element to @a newIndex.
      *
      * @see indexInArchive()
      */
-    void setIndexInArchive(int newIndex = NoIndex)
-    {
-        _indexInArchive = newIndex;
-    }
+    void setIndexInArchive(int newIndex = NoIndex);
 
-    int indexInMap() const
-    {
-        return _indexInMap;
-    }
+    int indexInMap() const;
 
-    void setIndexInMap(int newIndex = NoIndex)
-    {
-        _indexInMap = newIndex;
-    }
+    void setIndexInMap(int newIndex = NoIndex);
 
     template <typename Type>
     inline Type *castTo()
@@ -102,12 +100,40 @@ public:
         return t;
     }
 
-    MapElement &operator = (MapElement const &other)
-    {
-        _type = other._type;
-        // We retain our current indexes.
-        return *this;
-    }
+    /**
+     * @note The Current index indices are retained.
+     *
+     * @see setIndexInArchive(), setIndexInMap()
+     */
+    MapElement &operator = (MapElement const &other);
+
+    /**
+     * Get a property value, selected by DMU_* name.
+     *
+     * Derived classes can override this to implement read access for additional
+     * DMU properties. MapElement::property() must be called from an overridding
+     * method if the named property is unknown/not handled, returning the result.
+     * If the property is known and the read access is handled the overriding
+     * method should return @c false.
+     *
+     * @param args  Property arguments.
+     * @return  Always @c 0 (can be used as an iterator).
+     */
+    virtual int property(setargs_t &args) const;
+
+    /**
+     * Update a property value, selected by DMU_* name.
+     *
+     * Derived classes can override this to implement write access for additional
+     * DMU properties. MapElement::setProperty() must be called from an overridding
+     * method if the named property is unknown/not handled, returning the result.
+     * If the property is known and the write access is handled the overriding
+     * method should return @c false.
+     *
+     * @param args  Property arguments.
+     * @return  Always @c 0 (can be used as an iterator).
+     */
+    virtual int setProperty(setargs_t const &args);
 
 private:
     int _type;

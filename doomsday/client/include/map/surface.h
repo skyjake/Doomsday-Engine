@@ -47,12 +47,6 @@ public:
     /// Required material is missing. @ingroup errors
     DENG2_ERROR(MissingMaterialError);
 
-    /// The referenced property does not exist. @ingroup errors
-    DENG2_ERROR(UnknownPropertyError);
-
-    /// The referenced property is not writeable. @ingroup errors
-    DENG2_ERROR(WritePropertyError);
-
     /**
      * Observers to be notified when the normal vector changes.
      */
@@ -443,20 +437,7 @@ public:
     /// @deprecated Unnecessary; refactor away.
     bool isAttachedToMap() const;
 
-    /**
-     * Get a property value, selected by DMU_* name.
-     *
-     * @param args  Property arguments.
-     * @return  Always @c 0 (can be used as an iterator).
-     */
     int property(setargs_t &args) const;
-
-    /**
-     * Update a property value, selected by DMU_* name.
-     *
-     * @param args  Property arguments.
-     * @return  Always @c 0 (can be used as an iterator).
-     */
     int setProperty(setargs_t const &args);
 
 private:

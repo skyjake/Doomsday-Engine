@@ -782,16 +782,9 @@ int Material::property(setargs_t &args) const
         break; }
 
     default:
-        /// @throw UnknownPropertyError  The requested property does not exist.
-        throw UnknownPropertyError("Material::property", QString("Property '%1' is unknown").arg(DMU_Str(args.prop)));
+        return MapElement::property(args);
     }
     return false; // Continue iteration.
-}
-
-int Material::setProperty(setargs_t const &args)
-{
-    /// @throw WritePropertyError  The requested property is not writable.
-    throw WritePropertyError("Material::setProperty", QString("Property '%1' is not writable").arg(DMU_Str(args.prop)));
 }
 
 bool Material::isValid() const
