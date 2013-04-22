@@ -328,6 +328,9 @@ enum {
 
     DMU_NONE = 0,
 
+    /*
+     * Element types:
+     */
     DMU_FIRST_ELEMENT_TYPE_ID = 1,
     DMU_VERTEX = DMU_FIRST_ELEMENT_TYPE_ID,
     DMU_HEDGE,
@@ -341,11 +344,19 @@ enum {
     DMU_MATERIAL,
     DMU_LAST_ELEMENT_TYPE_ID = DMU_MATERIAL,
 
+    /*
+     * Selection methods:
+     */
     DMU_LINE_BY_TAG,
     DMU_SECTOR_BY_TAG,
 
     DMU_LINE_BY_ACT_TAG,
     DMU_SECTOR_BY_ACT_TAG,
+
+    /*
+     * Element properties:
+     */
+    DMU_ARCHIVE_INDEX, ///< Relevant data/definition position in the "archived" map.
 
     DMU_X,
     DMU_Y,

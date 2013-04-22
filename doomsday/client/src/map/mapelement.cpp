@@ -56,9 +56,19 @@ MapElement &MapElement::operator = (MapElement const &other)
 
 int MapElement::property(setargs_t &args) const
 {
-    /// @throw UnknownPropertyError  The requested property is not readable.
-    throw UnknownPropertyError(QString("%1::property").arg(DMU_Str(_type)),
-                               QString("Property '%1' is unknown/not readable").arg(DMU_Str(args.prop)));
+    switch(args.prop)
+    {
+    case DMU_ARCHIVE_INDEX:
+        DMU_GetValue(DMT_ARCHIVE_INDEX, &_indexInArchive, &args, 0);
+        break;
+
+    default:
+        /// @throw UnknownPropertyError  The requested property is not readable.
+        throw UnknownPropertyError(QString("%1::property").arg(DMU_Str(_type)),
+                                   QString("Property '%1' is unknown/not readable").arg(DMU_Str(args.prop)));
+    }
+
+    return false; // Continue iteration.
 }
 
 int MapElement::setProperty(setargs_t const &args)

@@ -90,6 +90,7 @@ char const *DMU_Str(uint prop)
         { DMU_SECTOR_BY_TAG, "DMU_SECTOR_BY_TAG" },
         { DMU_LINE_BY_ACT_TAG, "DMU_LINE_BY_ACT_TAG" },
         { DMU_SECTOR_BY_ACT_TAG, "DMU_SECTOR_BY_ACT_TAG" },
+        { DMU_ARCHIVE_INDEX, "DMU_ARCHIVE_INDEX" },
         { DMU_X, "DMU_X" },
         { DMU_Y, "DMU_Y" },
         { DMU_XY, "DMU_XY" },

@@ -30,6 +30,8 @@
 #include <de/aabox.h>
 #include <de/mathutil.h>
 
+#define DMT_ARCHIVE_INDEX DDVT_INT
+
 #define DMT_VERTEX_ORIGIN DDVT_DOUBLE
 
 #define DMT_HEDGE_SIDE DDVT_PTR
