@@ -92,6 +92,9 @@ public:
     Vector2 operator * (Vector2 const &other) const {
         return Vector2(x * other.x, y * other.y);
     }
+    Vector2 operator / (ddouble scalar) const {
+        return *this * (1.0 / scalar);
+    }
     Vector2 &operator += (Vector2 const &other) {
         x += other.x;
         y += other.y;
