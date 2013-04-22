@@ -164,12 +164,10 @@ uint SuperBlock::hedgeCount(bool addReal, bool addMini) const
 
 static void initAABoxFromHEdgeVertexes(AABoxd &aaBox, HEdge const &hedge)
 {
-    const_pvec2d_t &from = hedge.v1Origin();
-    const_pvec2d_t &to   = hedge.v2Origin();
-    aaBox.minX = de::min(from[VX], to[VX]);
-    aaBox.minY = de::min(from[VY], to[VY]);
-    aaBox.maxX = de::max(from[VX], to[VX]);
-    aaBox.maxY = de::max(from[VY], to[VY]);
+    Vector2d min = hedge.v1Origin().min(hedge.v2Origin());
+    Vector2d max = hedge.v1Origin().max(hedge.v2Origin());
+    V2d_Set(aaBox.min, min.x, min.y);
+    V2d_Set(aaBox.max, max.x, max.y);
 }
 
 /// @todo Optimize: Cache this result.

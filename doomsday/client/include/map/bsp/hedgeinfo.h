@@ -110,8 +110,8 @@ struct HEdgeInfo
 
     void initFromHEdge(HEdge const &hedge)
     {
-        V2d_Copy(start, hedge.fromOrigin());
-        V2d_Copy(end,   hedge.toOrigin());
+        V2d_Set(start, hedge.fromOrigin().x, hedge.fromOrigin().y);
+        V2d_Set(end,   hedge.toOrigin().x, hedge.toOrigin().y);
         V2d_Subtract(direction, end, start);
 
         pLength    = V2d_Length(direction);

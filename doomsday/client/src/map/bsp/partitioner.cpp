@@ -1544,7 +1544,8 @@ DENG2_PIMPL(Partitioner)
     inline coord_t vertexDistanceFromPartition(Vertex const &vertex) const
     {
         HEdgeInfo const &info = partitionInfo;
-        return V2d_PointLineParaDistance(vertex.origin(), info.direction,
+        coord_t vertexOriginV1[2] = { vertex.x(), vertex.y() };
+        return V2d_PointLineParaDistance(vertexOriginV1, info.direction,
                                          info.pPara, info.pLength);
     }
 
