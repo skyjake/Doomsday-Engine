@@ -1024,7 +1024,7 @@ int MPE_LineCreate(int v1, int v2, int frontSectorIdx, int backSectorIdx, int fl
     /// @todo fixme: We need to allow these... -ds
     Vertex *vtx1 = editMap.vertexes[v1];
     Vertex *vtx2 = editMap.vertexes[v2];
-    if(!(V2d_Distance(vtx2->origin(), vtx1->origin()) > 0)) return -1;
+    if(Vector2d(vtx1->origin() - vtx2->origin()).length() <= 0) return -1;
 
     Sector *frontSector = (frontSectorIdx >= 0? editMap.sectors[frontSectorIdx] : 0);
     Sector *backSector  = (backSectorIdx  >= 0? editMap.sectors[ backSectorIdx] : 0);
