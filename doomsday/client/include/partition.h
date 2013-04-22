@@ -69,9 +69,8 @@ public:
     }
 
     /**
-     * Returns @c true iff "this" line @a other are parallel. In special
-     * case where either of the two lines having a zero-length direction
-     * then @c true is always returned.
+     * Returns @c true iff "this" line and @a other are parallel. In the special
+     * case of either line having a zero-length direction, @c true is returned.
      */
     bool isParallelTo(Partition const &other, ddouble epsilon = .99999999) const
     {
@@ -89,12 +88,12 @@ public:
     }
 
     /**
-     * Determines how far along the line (relative to the origin) where the
-     * @a other line and "this" intersect.
+     * Determines how far along "this" line (relative to the origin) that the
+     * @a other line and this intersect.
      *
-     * @return Intersection point expressed as a scale factor relative to the
-     * partition origin. In the special case of the two lines being parallel
-     * @c 0 is returned.
+     * @return  Intersection point expressed as a scale factor, relative to the
+     * line origin. In the special case of the two lines being parallel @c 0 is
+     * returned.
      *
      * @see intercept()
      */
@@ -112,7 +111,7 @@ public:
 
     /**
      * Determine the intercept point where "this" line and @a other intersect
-     * and return the point at which the two intercept.
+     * and return the Euclidean point at which the two intercept.
      */
     inline Vector2d intercept(Partition const &other) const {
         return origin + direction * intersection(other);
