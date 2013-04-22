@@ -19,7 +19,8 @@
  */
 
 #include <de/memoryzone.h>
-#include <de/vector1.h>
+#include <de/vector1.h> /// @todo remove me
+#include <de/Vector>
 
 #include <de/Error>
 #include <de/Log>
@@ -69,67 +70,73 @@ LineSideRadioData &Rend_RadioDataForLineSide(Line::Side &side)
 
 /**
  * Given two lines "connected" by shared origin coordinates (0, 0) at a "corner"
- * vertex, calculate the point which lies @a dist1 away from @a line1 and also
- * @a dist2 from @a line2. The point should also be the nearest point to the
+ * vertex, calculate the point which lies @a distA away from @a lineA and also
+ * @a distB from @a lineB. The point should also be the nearest point to the
  * origin (in case of parallel lines).
  *
- * @param line1  Direction vector for the "left" line.
- * @param line2  Direction vector for the "right" line.
- * @param dist1  Distance from @a line1 to offset the corner point.
- * @param dist2  Distance from @a line2 to offset the corner point.
+ * @param lineA  Direction vector for the "left" line.
+ * @param lineB  Direction vector for the "right" line.
+ * @param distA  Distance from @a lineA to offset the corner point.
+ * @param distB  Distance from @a lineB to offset the corner point.
  *
  * Return values:
  * @param point  Coordinates for the corner point are written here. Can be @c 0.
  * @param lp     Coordinates for the "extended" point are written here. Can be @c 0.
  */
-static void cornerNormalPoint(const_pvec2d_t line1, double dist1, const_pvec2d_t line2,
-    double dist2, pvec2d_t point, pvec2d_t lp)
+static void cornerNormalPoint(Vector2d const &lineADirection, double dist1,
+                              Vector2d const &lineBDirection, double dist2,
+                              Vector2d *point, Vector2d *lp)
 {
+    // Any work to be done?
     if(!point && !lp) return;
 
     // Length of both lines.
-    double len1 = V2d_Length(line1);
-    double len2 = V2d_Length(line2);
+    double len1 = lineADirection.length();
+    double len2 = lineBDirection.length();
 
     // Calculate normals for both lines.
-    vec2d_t norm1; V2d_Set(norm1, -line1[VY] / len1 * dist1, line1[VX] / len1 * dist1);
-    vec2d_t norm2; V2d_Set(norm2, line2[VY] / len2 * dist2, -line2[VX] / len2 * dist2);
+    Vector2d norm1(-lineADirection.y / len1 * dist1,  lineADirection.x / len1 * dist1);
+    Vector2d norm2( lineBDirection.y / len2 * dist2, -lineBDirection.x / len2 * dist2);
 
     // Do we need to calculate the extended points, too?  Check that
     // the extension does not bleed too badly outside the legal shadow
     // area.
     if(lp)
     {
-        V2d_Set(lp, line2[VX] / len2 * dist2, line2[VY] / len2 * dist2);
+        *lp = lineBDirection / len2 * dist2;
     }
 
-    // Are the lines parallel?  If so, they won't connect at any
-    // point, and it will be impossible to determine a corner point.
-    if(V2d_IsParallel(line1, line2))
+    // Do we need to determine the intercept point?
+    if(!point) return;
+
+    // Normal shift to produce the lines we need to find the intersection.
+    Partition lineA(norm1, lineADirection);
+    Partition lineB(norm2, lineBDirection);
+
+    if(!lineA.isParallelTo(lineB))
     {
-        // Just use a normal as the point.
-        if(point)
-            V2d_Copy(point, norm1);
+        *point = lineA.intercept(lineB);
         return;
     }
 
-    // Find the intersection of normal-shifted lines.  That'll be our
-    // corner point.
-    if(point)
-        V2d_Intersection(norm1, line1, norm2, line2, point);
+    // Special case: parallel
+    // There will be no intersection at any point therefore it will not be
+    // possible to determine our corner point (so just use a normal as the
+    // point instead).
+    *point = norm1;
 }
 
 /**
  * @return  The width (world units) of the shadow edge. It is scaled depending on
  *          the length of @a edge.
  */
-static double shadowEdgeWidth(pvec2d_t const edge)
+static double shadowEdgeWidth(Vector2d const &edge)
 {
     double const normalWidth = 20; //16;
     double const maxWidth    = 60;
 
     // A long edge?
-    double length = V2d_Length(edge);
+    double length = edge.length();
     if(length > 600)
     {
         double w = length - 600;
@@ -145,7 +152,7 @@ void Rend_RadioUpdateVertexShadowOffsets(Vertex &vtx)
 {
     if(!vtx.lineOwnerCount()) return;
 
-    vec2d_t leftDir, rightDir;
+    Vector2d leftDir, rightDir;
 
     LineOwner *base = vtx.firstLineOwner();
     LineOwner *own = base;
@@ -156,33 +163,29 @@ void Rend_RadioUpdateVertexShadowOffsets(Vertex &vtx)
 
         if(&lineB.v1() == &vtx)
         {
-            rightDir[VX] = lineB.direction().x;
-            rightDir[VY] = lineB.direction().y;
+            rightDir = lineB.direction();
         }
         else
         {
-            rightDir[VX] = -lineB.direction().x;
-            rightDir[VY] = -lineB.direction().y;
+            rightDir = -lineB.direction();
         }
 
         if(&lineA.v1() == &vtx)
         {
-            leftDir[VX] = -lineA.direction().x;
-            leftDir[VY] = -lineA.direction().y;
+            leftDir = -lineA.direction();
         }
         else
         {
-            leftDir[VX] = lineA.direction().x;
-            leftDir[VY] = lineA.direction().y;
+            leftDir = lineA.direction();
         }
 
         // The left side is always flipped.
-        V2d_Scale(leftDir, -1);
+        leftDir *= -1;
 
         cornerNormalPoint(leftDir,  shadowEdgeWidth(leftDir),
                           rightDir, shadowEdgeWidth(rightDir),
-                          own->_shadowOffsets.inner,
-                          own->_shadowOffsets.extended);
+                          &own->_shadowOffsets.inner,
+                          &own->_shadowOffsets.extended);
 
         own = &own->next();
     } while(own != base);
@@ -256,7 +259,6 @@ void Rend_RadioInitForMap()
 
     ShadowLinkerParms parms;
     AABoxd bounds;
-    vec2d_t point;
 
     foreach(Line *line, theMap->lines())
     {
@@ -277,11 +279,11 @@ void Rend_RadioInitForMap()
             V2d_CopyBox(bounds.arvec2, line->aaBox().arvec2);
 
             // Use the extended points, they are wider than inoffsets.
-            V2d_Sum(point, vtx0.origin(), vo0.extendedShadowOffset());
-            V2d_AddToBox(bounds.arvec2, point);
+            Vector2d point = vtx0.origin() + vo0.extendedShadowOffset();
+            V2d_AddToBoxXY(bounds.arvec2, point.x, point.y);
 
-            V2d_Sum(point, vtx1.origin(), vo1.extendedShadowOffset());
-            V2d_AddToBox(bounds.arvec2, point);
+            point = vtx1.origin() + vo1.extendedShadowOffset();
+            V2d_AddToBoxXY(bounds.arvec2, point.x, point.y);
 
             parms.line = line;
             parms.side = i;

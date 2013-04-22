@@ -1233,9 +1233,10 @@ static uint radioEdgeHackType(Line const *line, Sector const *front, Sector cons
 /**
  * Construct and write a new shadow polygon to the rendering lists.
  */
-static void addShadowEdge(vec2d_t inner[2], vec2d_t outer[2], coord_t innerLeftZ,
-    coord_t innerRightZ, coord_t outerLeftZ, coord_t outerRightZ, float const sideOpen[2],
-    float const edgeOpen[2], boolean isFloor, float const shadowRGB[3], float shadowDark)
+static void addShadowEdge(Vector2d const inner[2], Vector2d const outer[2],
+    coord_t innerLeftZ, coord_t innerRightZ, coord_t outerLeftZ, coord_t outerRightZ,
+    float const sideOpen[2], float const edgeOpen[2], boolean isFloor,
+    float const shadowRGB[3], float shadowDark)
 {
     static uint const floorIndices[][4] = {{0, 1, 2, 3}, {1, 2, 3, 0}};
     static uint const ceilIndices[][4]  = {{0, 3, 2, 1}, {1, 0, 3, 2}};
@@ -1247,7 +1248,7 @@ static void addShadowEdge(vec2d_t inner[2], vec2d_t outer[2], coord_t innerLeftZ
 
     // What vertex winding order? (0 = left, 1 = right)
     // (for best results, the cross edge should always be the shortest).
-    uint winding = (V2d_Distance(inner[1], outer[1]) > V2d_Distance(inner[0], outer[0])? 1 : 0);
+    uint winding = (Vector2d(outer[1] - inner[1]).length() > Vector2d(inner[0] - outer[0]).length()? 1 : 0);
     uint const *idx = (isFloor ? floorIndices[winding] : ceilIndices[winding]);
 
     rvertex_t rvertices[4];
@@ -1327,7 +1328,7 @@ static void processEdgeShadow(BspLeaf const &bspLeaf, Line const *line,
     // Determine the openness of the line. If this edge is edgeOpen,
     // there won't be a shadow at all. Open neighbours cause some
     // changes in the polygon corner vertices (placement, colour).
-    vec2d_t inner[2], outer[2];
+    Vector2d inner[2], outer[2];
     vec2f_t edgeOpen, sideOpen;
     Sector const *front = 0;
     Sector const *back = 0;
@@ -1404,19 +1405,19 @@ static void processEdgeShadow(BspLeaf const &bspLeaf, Line const *line,
             vo = line->vertexOwner(i^side);
             if(i) vo = &vo->prev();
 
-            V2d_Sum(inner[i], line->vertexOrigin(i^side), vo->innerShadowOffset());
+            inner[i] = line->vertexOrigin(i^side) + vo->innerShadowOffset();
         }
         else
         {
-            V2d_Sum(inner[i], line->vertexOrigin(i^side), vo->extendedShadowOffset());
+            inner[i] = line->vertexOrigin(i^side) + vo->extendedShadowOffset();
         }
     }
 
-    V2d_Copy(outer[0], line->vertexOrigin(side));
-    V2d_Copy(outer[1], line->vertexOrigin(side^1));
+    outer[0] = line->vertexOrigin(side);
+    outer[1] = line->vertexOrigin(side^1);
+
     // Shadows are black
-    vec3f_t shadowRGB;
-    V3f_Set(shadowRGB, 0, 0, 0);
+    vec3f_t shadowRGB; V3f_Set(shadowRGB, 0, 0, 0);
 
     addShadowEdge(inner, outer, plnHeight, plnHeight, plnHeight, plnHeight, sideOpen, edgeOpen,
                   suf->normal()[VZ] > 0, shadowRGB, shadowDark);
@@ -1522,27 +1523,24 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
 }
 
 #ifdef DENG_DEBUG
-static void drawPoint(coord_t pos[3], int radius, const float color[4])
+static void drawPoint(Vector3d const &point, int radius, float const color[4])
 {
     viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
 
     // viewData->sideVec is to the left.
-    coord_t leftOff[3], rightOff[3], viewToCenter[3];
+    Vector3d leftOff, rightOff, viewToCenter;
     for(int i = 0; i < 3; ++i)
     {
         leftOff[i]  = viewData->upVec[i] + viewData->sideVec[i];
         rightOff[i] = viewData->upVec[i] - viewData->sideVec[i];
 
-        viewToCenter[i] = pos[i] - vOrigin[i];
+        viewToCenter[i] = point[i] - vOrigin[i];
     }
 
     //float scale = float(V3d_DotProductf(viewToCenter, viewData->frontVec)) /
     //                V3f_DotProduct(viewData->frontVec, viewData->frontVec);
 
-    coord_t finalPos[3];
-    finalPos[VX] = pos[VX];
-    finalPos[VY] = pos[VZ];
-    finalPos[VZ] = pos[VY];
+    Vector3d finalPos( point.x, point.z, point.y );
 
     // The final radius.
     float radX = radius * 1;
@@ -1555,21 +1553,21 @@ static void drawPoint(coord_t pos[3], int radius, const float color[4])
 
     glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
-        glVertex3d(finalPos[VX] + radX * leftOff[VX],
-                   finalPos[VY] + radY * leftOff[VY],
-                   finalPos[VZ] + radX * leftOff[VZ]);
+        glVertex3d(finalPos.x + radX * leftOff.x,
+                   finalPos.y + radY * leftOff.y,
+                   finalPos.z + radX * leftOff.z);
         glTexCoord2f(1, 0);
-        glVertex3d(finalPos[VX] + radX * rightOff[VX],
-                   finalPos[VY] + radY * rightOff[VY],
-                   finalPos[VZ] + radX * rightOff[VZ]);
+        glVertex3d(finalPos.x + radX * rightOff.x,
+                   finalPos.y + radY * rightOff.y,
+                   finalPos.z + radX * rightOff.z);
         glTexCoord2f(1, 1);
-        glVertex3d(finalPos[VX] - radX * leftOff[VX],
-                   finalPos[VY] - radY * leftOff[VY],
-                   finalPos[VZ] - radX * leftOff[VZ]);
+        glVertex3d(finalPos.x - radX * leftOff.x,
+                   finalPos.y - radY * leftOff.y,
+                   finalPos.z - radX * leftOff.z);
         glTexCoord2f(0, 1);
-        glVertex3d(finalPos[VX] - radX * rightOff[VX],
-                   finalPos[VY] - radY * rightOff[VY],
-                   finalPos[VZ] - radX * rightOff[VZ]);
+        glVertex3d(finalPos.x - radX * rightOff.x,
+                   finalPos.y - radY * rightOff.y,
+                   finalPos.z - radX * rightOff.z);
     glEnd();
 }
 
@@ -1598,14 +1596,12 @@ void Rend_DrawShadowOffsetVerts()
         LineOwner const *own = base;
         do
         {
-            coord_t pos[3];
-            pos[VZ] = own->line().frontSector().floor().visHeight();
+            Vector2d xy = vtx.origin() + own->extendedShadowOffset();
+            coord_t z = own->line().frontSector().floor().visHeight();
+            drawPoint(Vector3d(xy.x, xy.y, z), 1, yellow);
 
-            V2d_Sum(pos, vtx.origin(), own->extendedShadowOffset());
-            drawPoint(pos, 1, yellow);
-
-            V2d_Sum(pos, vtx.origin(), own->innerShadowOffset());
-            drawPoint(pos, 1, red);
+            xy = vtx.origin() + own->innerShadowOffset();
+            drawPoint(Vector3d(xy.x, xy.y, z), 1, red);
 
             own = &own->next();
         } while(own != base);
