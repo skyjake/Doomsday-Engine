@@ -260,8 +260,7 @@ bool Polyobj::move(Vector2d const &delta)
             (*prevCoordsIt) = vertex->origin();
 
             // Apply translation.
-            Vector2d newVertexOrigin = Vector2d(vertex->origin()) + delta;
-            V2d_Set(vertex->_origin, newVertexOrigin.x, newVertexOrigin.y);
+            vertex->setOrigin(vertex->origin() + delta);
 
             prevCoordsIt++;
         }
@@ -288,7 +287,7 @@ bool Polyobj::move(Vector2d const &delta)
             VertexCoords::const_iterator prevCoordsIt = static_cast<VertexCoords *>(_prevPts)->constBegin();
             foreach(Vertex *vertex, uniqueVertexes())
             {
-                V2d_Set(vertex->_origin, prevCoordsIt->x, prevCoordsIt->y);
+                vertex->setOrigin(*prevCoordsIt);
                 prevCoordsIt++;
             }
 
@@ -349,8 +348,7 @@ bool Polyobj::rotate(angle_t delta)
             // Apply rotation relative to the "original" coords.
             Vector2d newCoords = (*origCoordsIt);
             rotatePoint2d(newCoords, origin, fineAngle);
-
-            V2d_Set(vertex->_origin, newCoords.x, newCoords.y);
+            vertex->setOrigin(newCoords);
 
             origCoordsIt++;
             prevCoordsIt++;
@@ -379,7 +377,7 @@ bool Polyobj::rotate(angle_t delta)
             VertexCoords::const_iterator prevCoordsIt = static_cast<VertexCoords *>(_prevPts)->constBegin();
             foreach(Vertex *vertex, uniqueVertexes())
             {
-                V2d_Set(vertex->_origin, prevCoordsIt->x, prevCoordsIt->y);
+                vertex->setOrigin(*prevCoordsIt);
                 prevCoordsIt++;
             }
 
