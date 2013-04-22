@@ -38,11 +38,6 @@ static int Mouse_Win32_Init()
 
     // We'll need a window handle for this.
     HWND hWnd = (HWND) ClientWindow::main().nativeHandle();
-    if(!hWnd)
-    {
-        Con_Error("Mouse_Init: Main window not available, cannot init mouse.");
-        return false;
-    }
 
     HRESULT hr = -1;
     // Prefer the newer version 8 interface if available.

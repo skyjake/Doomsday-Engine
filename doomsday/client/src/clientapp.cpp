@@ -160,11 +160,6 @@ void ClientApp::initialize()
     }
 #endif
 
-    // Create the input system.
-    d->inputSys = new InputSystem;
-    addSystem(*d->inputSys);
-    d->widgetActions.reset(new WidgetActions);
-
     // Create the window system.
     d->winSys = new WindowSystem;
     addSystem(*d->winSys);
@@ -175,6 +170,11 @@ void ClientApp::initialize()
     char title[256];
     DD_ComposeMainWindowTitle(title);
     d->winSys->createWindow()->setWindowTitle(title);
+
+    // Create the input system.
+    d->inputSys = new InputSystem;
+    addSystem(*d->inputSys);
+    d->widgetActions.reset(new WidgetActions);
 
     App_Timer(1, continueInitWithEventLoopRunning);
 }
