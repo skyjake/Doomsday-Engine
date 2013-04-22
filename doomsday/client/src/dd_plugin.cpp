@@ -203,7 +203,7 @@ DENG_EXTERN_C int Plug_RemoveHook(int hookType, hookfunc_t hook)
     /*
     if(currentPlugin)
     {
-        LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_WARNING,
+        LogBuffer_Printf(DE2_LOG_WARNING,
             "Plug_RemoveHook: Failed to remove hook %p of type %i; currently processing a hook.\n",
             hook, hookType);
         return false;

@@ -20,6 +20,7 @@
 #define LIBSHELL_ACTION_H
 
 #include "KeyEvent"
+#include <de/Action>
 #include <QObject>
 
 namespace de {
@@ -28,7 +29,7 @@ namespace shell {
 /**
  * Maps a key event to a signal.
  */
-class Action : public QObject
+class Action : public QObject, public de::Action
 {
     Q_OBJECT
 

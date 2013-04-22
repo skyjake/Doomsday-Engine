@@ -28,6 +28,9 @@
 #  error "Bindings only exist in the Client"
 #endif
 
+#include <de/types.h>
+#include "dd_input.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

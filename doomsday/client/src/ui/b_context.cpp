@@ -1,4 +1,4 @@
-/** @file b_context.cpp
+/** @file b_context.cpp  Bindings Contexts. @ingroup ui
  *
  * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
@@ -17,12 +17,6 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Bindings Contexts.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #define DENG_NO_API_MACROS_BINDING
 
 #include <de/memory.h>
@@ -37,26 +31,8 @@
 
 #include <string.h>
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static int bindContextCount;
 static bcontext_t** bindContexts;
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Destroy all binding contexts and the bindings within the contexts.
@@ -389,9 +365,7 @@ void B_SetContextFallback(const char* name, int (*responderFunc)(event_t*))
 
 bcontext_t* B_ContextByName(const char* name)
 {
-    int                 i;
-
-    for(i = 0; i < bindContextCount; ++i)
+    for(int i = 0; i < bindContextCount; ++i)
     {
         if(!strcasecmp(name, bindContexts[i]->name))
             return bindContexts[i];
@@ -559,36 +533,56 @@ boolean B_DeleteBinding(bcontext_t* bc, int bid)
     return false;
 }
 
-boolean B_TryEvent(ddevent_t* event)
+de::Action *BindContext_ActionForEvent(bcontext_t *bc, ddevent_t const *event)
 {
-    int                 i;
-    evbinding_t*        eb;
-    event_t             ev;
+    if(!(bc->flags & BCF_ACTIVE))
+        return 0;
 
+    // See if the command bindings will have it.
+    for(evbinding_t *eb = bc->commandBinds.next; eb != &bc->commandBinds; eb = eb->next)
+    {
+        de::Action *act = 0;
+        if((act = EventBinding_ActionForEvent(eb, event, bc)) != 0)
+        {
+            return act;
+        }
+    }
+    return 0;
+}
+
+de::Action *B_ActionForEvent(ddevent_t const *event)
+{
+    event_t ev;
     DD_ConvertEvent(event, &ev);
 
-    for(i = 0; i < bindContextCount; ++i)
+    for(int i = 0; i < bindContextCount; ++i)
     {
-        bcontext_t* bc = bindContexts[i];
-
+        bcontext_t *bc = bindContexts[i];
         if(!(bc->flags & BCF_ACTIVE))
             continue;
 
-        // See if the command bindings will have it.
-        for(eb = bc->commandBinds.next; eb != &bc->commandBinds; eb = eb->next)
+        de::Action *act = BindContext_ActionForEvent(bc, event);
+        if(act)
         {
-            if(B_TryCommandBinding(eb, event, bc))
-                return true;
+            return act;
         }
 
-        // Try the fallbacks.
+        /**
+         * @todo Conceptually the fallback responders don't belong: instead of
+         * "responding" (immediately performing a reaction), we should be
+         * returning an Action instance. -jk
+         */
+
+        // Try the fallback responders.
         if(bc->ddFallbackResponder && bc->ddFallbackResponder(event))
-            return true;
+            return 0; // fallback responder executed something
+
         if(bc->fallbackResponder && bc->fallbackResponder(&ev))
-            return true;
+            return 0; // fallback responder executed something
     }
-    // Nobody used it.
-    return false;
+
+    // Nobody had a binding for this event.
+    return 0;
 }
 
 /**

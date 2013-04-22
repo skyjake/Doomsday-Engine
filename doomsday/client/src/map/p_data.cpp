@@ -40,7 +40,6 @@
 #include <EntityDatabase>
 
 #include <de/Error>
-#include <de/LegacyCore>
 #include <de/Log>
 #include <de/String>
 #include <de/StringPool>
@@ -86,7 +85,10 @@ DENG_EXTERN_C AutoStr *P_MapSourceFile(char const *uriCString)
 #undef P_LoadMap
 DENG_EXTERN_C boolean P_LoadMap(char const *uriCString)
 {
-    DENG_ASSERT(uriCString && uriCString[0]);
+    if(!uriCString || !uriCString[0])
+    {
+        App_FatalError("P_LoadMap: Invalid Uri argument.");
+    }
 
     de::Uri uri(uriCString, RC_NULL);
     LOG_MSG("Loading map \"%s\"...") << uri;

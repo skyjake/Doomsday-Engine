@@ -118,6 +118,14 @@ Block &Block::operator += (Block const &other)
     return *this;
 }
 
+Block &Block::operator += (IByteArray const &byteArray)
+{
+    Offset pos = size();
+    resize(size() + byteArray.size());
+    byteArray.get(0, data() + pos, byteArray.size());
+    return *this;
+}
+
 Block &Block::operator = (Block const &other)
 {
     *static_cast<QByteArray *>(this) = static_cast<QByteArray const &>(other);

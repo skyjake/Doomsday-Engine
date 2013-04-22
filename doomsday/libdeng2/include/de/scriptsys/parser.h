@@ -69,8 +69,7 @@ public:
     DENG2_SUB_ERROR(SyntaxError, MissingColonError);
 
     // Flags for parsing conditional compounds.
-    enum CompoundFlag
-    {
+    enum CompoundFlag {
         HasCondition = 0x1,
         StayAtClosingStatement = 0x2,
         IgnoreExtraBeforeColon = 0x4

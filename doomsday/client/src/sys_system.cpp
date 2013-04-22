@@ -85,15 +85,6 @@ void Sys_Init(void)
 
     startTime = (verbose >= 2? Timer_RealMilliseconds() : 0);
 
-#ifdef __CLIENT__
-    VERBOSE( Con_Message("Initializing Input subsystem...") )
-    if(!I_Init())
-        Con_Error("Failed to initialize Input subsystem.\n");
-
-    // Virtual devices need to be created even in dedicated mode.
-    I_InitVirtualInputDevices();
-#endif
-
     VERBOSE( Con_Message("Initializing Audio subsystem...") )
     S_Init();
 
@@ -141,11 +132,8 @@ void Sys_Shutdown(void)
     // the MUS player (would produce horrible bursts of notes).
     S_Shutdown();
 #ifdef __CLIENT__
-    B_Shutdown();
     GL_Shutdown();
     DD_ClearEvents();
-    I_ShutdownInputDevices();
-    I_Shutdown();
 #endif
 
     DD_DestroyGames();

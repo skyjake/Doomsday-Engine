@@ -45,12 +45,12 @@ struct Mode : public DisplayMode
 {
     Mode()
     {
-        memset(static_cast<DisplayMode*>(this), 0, sizeof(DisplayMode));
+        de::zapPtr(static_cast<DisplayMode *>(this));
     }
 
     Mode(const DisplayMode& dm)
     {
-        memcpy(static_cast<DisplayMode*>(this), &dm, sizeof(dm));
+        memcpy(static_cast<DisplayMode *>(this), &dm, sizeof(dm));
     }
 
     Mode(int i)

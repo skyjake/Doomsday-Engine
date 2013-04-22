@@ -25,7 +25,6 @@
 #include <QMap>
 #include <de/App>
 #include <de/ByteRefArray>
-#include <de/LegacyCore>
 #include <de/Log>
 #include <de/Reader>
 #include <de/String>

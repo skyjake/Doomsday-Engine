@@ -22,6 +22,9 @@
 #include "de/Log"
 #include "de/math.h"
 
+#include "callbacktimer.h"
+
+#include <QCoreApplication>
 #include <QTimer>
 
 namespace de {
@@ -68,6 +71,13 @@ void Loop::pause()
 void Loop::resume()
 {
     d->timer->start();
+}
+
+void Loop::timer(TimeDelta const &delay, void (*func)(void))
+{
+    // The timer will delete itself after it's triggered.
+    internal::CallbackTimer *timer = new internal::CallbackTimer(func, qApp);
+    timer->start(delay.asMilliSeconds());
 }
 
 void Loop::nextLoopIteration()

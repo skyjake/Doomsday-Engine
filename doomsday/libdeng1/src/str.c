@@ -208,7 +208,7 @@ void Str_Delete(Str *str)
 #if 0 // use this is release builds if encountering Str/AutoStr errors
     if(Garbage_IsTrashed(str))
     {
-        LegacyCore_FatalError("Str_Delete: Trying to manually delete an AutoStr!");
+        App_FatalError("Str_Delete: Trying to manually delete an AutoStr!");
     }
 #endif
 

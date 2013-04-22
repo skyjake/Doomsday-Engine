@@ -18,6 +18,7 @@
  */
 
 #include <de/Vector>
+#include <de/Matrix>
 #include <de/Writer>
 #include <de/Reader>
 #include <de/Block>
@@ -32,12 +33,20 @@ int main(int, char **)
         Vector2f a(1, 2.5);
         Vector3f b(3, 5, 6);
 
+        Matrix3f ma;
+        Matrix4f mb;
+        Matrix4d mc;
+
         // Note: Using QDebug because no de::App (and therefore no log message
         // buffer) is available.
 
         qDebug() << "Sizeof Vector2f:" << sizeof(a);
         qDebug() << "Sizeof Vector2f.x:" << sizeof(a.x);
         qDebug() << "Sizeof Vector3f:" << sizeof(b);
+
+        qDebug() << "Sizeof Matrix3f:" << sizeof(ma);
+        qDebug() << "Sizeof Matrix4f:" << sizeof(mb);
+        qDebug() << "Sizeof Matrix4d:" << sizeof(mc);
 
         qDebug() << "Direct access to members:";
         qDebug() << a.x << a.y;
@@ -95,6 +104,46 @@ int main(int, char **)
         reader >> y;
         qDebug() << "w:" << w.asText();
         qDebug() << "y:" << w.asText();
+
+        qDebug() << "Matrix operations:";
+
+        qDebug() << "Identity" << ma.asText();
+        qDebug() << "Identity" << mc.asText();
+
+        qDebug() << "Rotation 45 degrees" << Matrix4f::rotate(45).asText();
+        qDebug() << "Rotation 90 degrees" << Matrix4f::rotate(90).asText();
+        qDebug() << "Rotation 45 degrees, X axis"
+                 << Matrix4f::rotate(45, Vector3f(1, 0, 0)).asText();
+
+        qDebug() << "Translation"
+                 << Matrix4f::translate(Vector3f(1, 2, 3)).asText();
+
+        qDebug() << "Scale"
+                 << Matrix4f::scale(Vector3f(1, 2, 3)).asText();
+
+        t = Vector3f(1, 2, 3);
+        Matrix4f scaleTrans = Matrix4f::scaleThenTranslate(Vector3f(10, 10, 10), Vector3f(-5, -5, -5));
+        qDebug() << "Scale and translate with"
+                 << scaleTrans.asText() << "result:" << (scaleTrans * t).asText();
+
+        qDebug() << "Seperate matrices (translate * scale):"
+                 << (Matrix4f::translate(Vector3f(-5, -5, -5)) * Matrix4f::scale(10) * t).asText();
+
+        qDebug() << "Seperate matrices (scale * translate):"
+                 << (Matrix4f::scale(10) * Matrix4f::translate(Vector3f(-5, -5, -5)) * t).asText();
+
+        qDebug() << "Inverse" << scaleTrans.inverse().asText();
+
+        t = scaleTrans * t;
+        qDebug() << "Result" << (scaleTrans.inverse() * t).asText();
+
+        qDebug() << "X axis rotated to Z" <<
+                    (Matrix4d::rotate(90, Vector3d(0, -1, 0)) * Vector3d(1, 0, 0)).asText();
+
+        qDebug() << "Look at (10,10,10) from (1,1,1)"
+                 << Matrix4f::lookAt(Vector3f(10, 10, 10), Vector3f(1, 1, 1), Vector3f(0, 0, 1)).asText();
+
+        qDebug() << "Cross product" << Vector3f(1, 0, 0).cross(Vector3f(0, 1, 0)).asText();
     }
     catch(Error const &err)
     {

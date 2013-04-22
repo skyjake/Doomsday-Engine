@@ -33,6 +33,7 @@
 #include "con_bar.h"
 
 #ifdef __CLIENT__
+#  include "ui/widgetactions.h"
 #  include "ui/b_main.h"
 #  include "ui/b_context.h"
 #endif

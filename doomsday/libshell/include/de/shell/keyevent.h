@@ -55,9 +55,9 @@ public:
     }
 
 private:
-    String _text;
-    int _code;
-    Modifiers _modifiers;
+    String _text;           ///< Text to be inserted by the event.
+    int _code;              ///< Qt key code.
+    Modifiers _modifiers;   ///< Modifiers in effect.
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(KeyEvent::Modifiers)

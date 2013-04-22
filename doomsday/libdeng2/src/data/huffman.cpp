@@ -142,7 +142,7 @@ struct Huffman
      */
     Huffman() : huffRoot(0)
     {
-        memset(huffCodes, 0, sizeof(huffCodes));
+        zap(huffCodes);
 
         HuffQueue queue;
         HuffNode *node;
@@ -362,7 +362,7 @@ struct Huffman
     void Huff_DestroyBuffer(HuffBuffer *buffer)
     {
         free(buffer->data);
-        memset(buffer, 0, sizeof(*buffer));
+        zapPtr(buffer);
     }
 
     dbyte *encode(dbyte const *data, dsize size, dsize *encodedSize)
@@ -373,7 +373,7 @@ struct Huffman
         int remaining, fits;
         dbyte *out, bit;
 
-        memset(&huffEnc, 0, sizeof(huffEnc));
+        zap(huffEnc);
 
         // The encoded message is never twice the original size
         // (longest codes are currently 11 bits).
@@ -439,7 +439,7 @@ struct Huffman
         dbyte const *lastIn = in + size - 1;
         dbyte bit = 3, lastByteBits;
 
-        memset(&huffDec, 0, sizeof(huffDec));
+        zap(huffDec);
         Huff_ResizeBuffer(&huffDec, 256);
 
         // The first three bits contain the number of valid bits in

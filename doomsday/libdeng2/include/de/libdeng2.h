@@ -67,7 +67,8 @@
 #if defined(__cplusplus) && !defined(DENG2_C_API_ONLY)
 #  define DENG2_USE_QT
 #  include <typeinfo>
-#  include <memory> // auto_ptr
+#  include <memory>  // auto_ptr
+#  include <cstring> // memset
 #endif
 
 #if defined(__x86_64__) || defined(__x86_64) || defined(_LP64)
@@ -257,7 +258,7 @@
     struct Instance; \
     de::PrivateAutoPtr<Instance> Var;
 
-#if defined(__cplusplus)
+#if defined(__cplusplus) && !defined(DENG2_C_API_ONLY)
 namespace de {
 
 /**
@@ -352,6 +353,28 @@ inline ToType function_cast(FromType ptr)
     union { FromType original; ToType target; } forcedCast;
     forcedCast.original = ptr;
     return forcedCast.target;
+}
+
+/**
+ * Clears a region of memory. Size of the region is the size of Type.
+ * @param t  Reference to the memory.
+ */
+template <typename Type>
+inline void zap(Type &t) {
+    std::memset(&t, 0, sizeof(Type));
+}
+
+/**
+ * Clears a region of memory. Size of the region is the size of Type.
+ * @param t  Pointer to the start of the region of memory.
+ *
+ * @note An overloaded zap(Type *) would not work as the size of array
+ * types could not be correctly determined at compile time; thus this
+ * function is not an overload.
+ */
+template <typename Type>
+inline void zapPtr(Type *t) {
+    std::memset(t, 0, sizeof(Type));
 }
 
 } // namespace de

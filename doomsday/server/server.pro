@@ -138,7 +138,6 @@ DENG_HEADERS += \
     $$SRC/include/cbuffer.h \
     $$SRC/include/color.h \
     $$SRC/include/con_bar.h \
-    $$SRC/include/con_bind.h \
     $$SRC/include/con_config.h \
     $$SRC/include/con_main.h \
     $$SRC/include/dd_def.h \

@@ -70,10 +70,10 @@ DENG2_PIMPL(ShellApp)
                 .setInput(Rule::Width,  Const(menuLabel->label().size()))
                 .setInput(Rule::Bottom, status->rule().top());
 
-        menuLabel->addAction(new Action(KeyEvent(Qt::Key_F9), &self, SLOT(openMenu())));
-        menuLabel->addAction(new Action(KeyEvent(Qt::Key_Z, KeyEvent::Control), &self, SLOT(openMenu())));
-        menuLabel->addAction(new Action(KeyEvent(Qt::Key_C, KeyEvent::Control), &self, SLOT(openMenu())));
-        menuLabel->addAction(new Action(KeyEvent(Qt::Key_X, KeyEvent::Control), &self, SLOT(quit())));
+        menuLabel->addAction(new shell::Action(KeyEvent(Qt::Key_F9), &self, SLOT(openMenu())));
+        menuLabel->addAction(new shell::Action(KeyEvent(Qt::Key_Z, KeyEvent::Control), &self, SLOT(openMenu())));
+        menuLabel->addAction(new shell::Action(KeyEvent(Qt::Key_C, KeyEvent::Control), &self, SLOT(openMenu())));
+        menuLabel->addAction(new shell::Action(KeyEvent(Qt::Key_X, KeyEvent::Control), &self, SLOT(quit())));
 
         // Expanding command line widget.
         cli = new CommandLineWidget;
@@ -92,19 +92,19 @@ DENG2_PIMPL(ShellApp)
                 .setInput(Rule::Top,    root.viewTop())
                 .setInput(Rule::Bottom, cli->rule().top());
 
-        log->addAction(new Action(KeyEvent(Qt::Key_F5), log, SLOT(scrollToBottom())));
+        log->addAction(new shell::Action(KeyEvent(Qt::Key_F5), log, SLOT(scrollToBottom())));
 
         // Main menu.
         menu = new MenuWidget(MenuWidget::Popup);
-        menu->appendItem(new Action(tr("Connect to..."),
+        menu->appendItem(new shell::Action(tr("Connect to..."),
                                     &self, SLOT(askToOpenConnection())));
-        menu->appendItem(new Action(tr("Disconnect"), &self, SLOT(closeConnection())));
+        menu->appendItem(new shell::Action(tr("Disconnect"), &self, SLOT(closeConnection())));
         menu->appendSeparator();
-        menu->appendItem(new Action(tr("Start local server"), &self, SLOT(askToStartLocalServer())));
+        menu->appendItem(new shell::Action(tr("Start local server"), &self, SLOT(askToStartLocalServer())));
         menu->appendSeparator();
-        menu->appendItem(new Action(tr("Scroll to bottom"), log, SLOT(scrollToBottom())), "F5");
-        menu->appendItem(new Action(tr("About"), &self, SLOT(showAbout())));
-        menu->appendItem(new Action(tr("Quit Shell"), &self, SLOT(quit())), "Ctrl-X");
+        menu->appendItem(new shell::Action(tr("Scroll to bottom"), log, SLOT(scrollToBottom())), "F5");
+        menu->appendItem(new shell::Action(tr("About"), &self, SLOT(showAbout())));
+        menu->appendItem(new shell::Action(tr("Quit Shell"), &self, SLOT(quit())), "Ctrl-X");
         menu->rule()
                 .setInput(Rule::Bottom, menuLabel->rule().top())
                 .setInput(Rule::Left,   menuLabel->rule().left());
@@ -266,7 +266,7 @@ void ShellApp::updateMenuWithFoundServers()
                 .arg(d->finder.playerCount(sv))
                 .arg(d->finder.maxPlayers(sv));
 
-        d->menu->insertItem(pos++, new Action(label, this, SLOT(connectToFoundServer())));
+        d->menu->insertItem(pos++, new shell::Action(label, this, SLOT(connectToFoundServer())));
     }
 
     // Update cursor position after changing menu items.

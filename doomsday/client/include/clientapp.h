@@ -21,7 +21,9 @@
 
 #include <de/GuiApp>
 #include "network/serverlink.h"
+#include "ui/inputsystem.h"
 #include "ui/windowsystem.h"
+#include "ui/widgetactions.h"
 
 /**
  * The client application.
@@ -43,7 +45,9 @@ public:
 public:
     static ClientApp &app();
     static ServerLink &serverLink();
+    static InputSystem &inputSystem();
     static WindowSystem &windowSystem();
+    static WidgetActions &widgetActions();
 
 private:
     DENG2_PRIVATE(d)

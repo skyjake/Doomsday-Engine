@@ -26,6 +26,8 @@
 
 #include "b_util.h"
 
+#include <de/Action>
+
 typedef struct evbinding_s {
     struct evbinding_s* prev;       // Previous in list of bindings.
     struct evbinding_s* next;       // Next in list of bindings.
@@ -51,8 +53,8 @@ void         B_DestroyCommandBinding(evbinding_t* eb);
 void         B_EventBindingToString(const evbinding_t* eb, ddstring_t* str);
 
 /**
- * Checks if the event matches the binding's conditions, and if so, executes the
- * bound command.
+ * Checks if the event matches the binding's conditions, and if so, returns an
+ * action with the bound command.
  *
  * @param eb          Event binding.
  * @param event       Event to match against.
@@ -60,9 +62,8 @@ void         B_EventBindingToString(const evbinding_t* eb, ddstring_t* str);
  *                    bound state is associated with a higher-priority active
  *                    class, the binding cannot be executed.
  *
- * @return  @c true, if the bound command was executed. @c false otherwise, as the
- *          event didn't match all the conditions.
+ * @return  Action to be triggered, or @c NULL. Caller gets ownership.
  */
-boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bcontext_s* eventClass);
+de::Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event, struct bcontext_s *eventClass);
 
 #endif // __DOOMSDAY_BIND_COMMAND_H__

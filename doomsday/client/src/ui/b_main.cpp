@@ -31,6 +31,7 @@
 #include "dd_main.h"
 #include "dd_def.h"
 
+#include "clientapp.h"
 #include "ui/b_command.h"
 #include "ui/p_control.h"
 #include "ui/ui_main.h"
@@ -214,32 +215,30 @@ void B_Init(void)
     bcontext_t* bc = 0;
 
     // In dedicated mode we have fewer binding contexts available.
-    if(!isDedicated)
-    {
-        // The contexts are defined in reverse order, with the context of lowest
-        // priority defined first.
 
-        B_NewContext(DEFAULT_BINDING_CONTEXT_NAME);
+    // The contexts are defined in reverse order, with the context of lowest
+    // priority defined first.
 
-        // Game contexts.
-        /// @todo Game binding context setup obviously belong to the game plugin, so shouldn't be here.
-        B_NewContext("map");
-        B_NewContext("map-freepan");
-        B_NewContext("finale"); // uses a fallback responder to handle script events
-        B_AcquireAll(B_NewContext("menu"), true);
-        B_NewContext("gameui");
-        B_NewContext("shortcut");
-        B_AcquireKeyboard(B_NewContext("chat"), true);
-        B_AcquireAll(B_NewContext("message"), true);
+    B_NewContext(DEFAULT_BINDING_CONTEXT_NAME);
 
-        // Binding context for the console.
-        bc = B_NewContext(CONSOLE_BINDING_CONTEXT_NAME);
-        bc->flags |= BCF_PROTECTED; // Only we can (de)activate.
-        B_AcquireKeyboard(bc, true); // Console takes over all keyboard events.
+    // Game contexts.
+    /// @todo Game binding context setup obviously belong to the game plugin, so shouldn't be here.
+    B_NewContext("map");
+    B_NewContext("map-freepan");
+    B_NewContext("finale"); // uses a fallback responder to handle script events
+    B_AcquireAll(B_NewContext("menu"), true);
+    B_NewContext("gameui");
+    B_NewContext("shortcut");
+    B_AcquireKeyboard(B_NewContext("chat"), true);
+    B_AcquireAll(B_NewContext("message"), true);
 
-        // UI doesn't let anything past it.
-        B_AcquireAll(bc = B_NewContext(UI_BINDING_CONTEXT_NAME), true);
-    }
+    // Binding context for the console.
+    bc = B_NewContext(CONSOLE_BINDING_CONTEXT_NAME);
+    bc->flags |= BCF_PROTECTED; // Only we can (de)activate.
+    B_AcquireKeyboard(bc, true); // Console takes over all keyboard events.
+
+    // UI doesn't let anything past it.
+    B_AcquireAll(bc = B_NewContext(UI_BINDING_CONTEXT_NAME), true);
 
     // Top-level context that is always active and overrides every other context.
     // To be used only for system-level functionality.
@@ -288,7 +287,7 @@ void B_InitialContextActivations(void)
     for(i = 0; i < B_ContextCount(); ++i)
     {
         B_ActivateContext(B_ContextByPos(i), false);
-   }
+    }
 
     // These are the contexts active by default.
     B_ActivateContext(B_ContextByName(GLOBAL_BINDING_CONTEXT_NAME), true);
@@ -383,9 +382,6 @@ evbinding_t* B_BindCommand(const char* eventDesc, const char* command)
     bcontext_t*         bc;
     evbinding_t*        b;
 
-    if(isDedicated)
-        return NULL;
-
     // The context may be included in the descriptor.
     eventDesc = B_ParseContext(eventDesc, &bc);
     if(!bc)
@@ -416,9 +412,6 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
     const char*         ptr = 0;
     playercontrol_t*    control = 0;
     boolean             justCreated = false;
-
-    if(isDedicated)
-        return NULL;
 
     // The control description may begin with the local player number.
     str = AutoStr_NewStd();
@@ -603,9 +596,6 @@ D_CMD(DeleteBindingById)
 D_CMD(DefaultBindings)
 {
     DENG2_UNUSED3(src, argc, argv);
-
-    if(isDedicated)
-        return false;
 
     B_BindDefaults();
     B_BindGameDefaults();
@@ -858,7 +848,7 @@ boolean B_Responder(ddevent_t* ev)
                (ev->axis.type == EAXIS_RELATIVE && fabs(pos) < .02f))
             {
                 // Not significant enough for an echo.
-                return B_TryEvent(ev);
+                return ClientApp::widgetActions().tryEvent(ev);
             }
         }
 
@@ -875,7 +865,7 @@ boolean B_Responder(ddevent_t* ev)
         return true;
     }
 
-    return B_TryEvent(ev);
+    return ClientApp::widgetActions().tryEvent(ev);
 }
 
 #if 0

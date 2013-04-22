@@ -256,7 +256,7 @@ ResourceClass& DD_ResourceClassById(resourceclassid_t id)
     if(!VALID_RESOURCECLASSID(id))
     {
         QByteArray msg = String("DD_ResourceClassById: Invalid id '%1'").arg(int(id)).toUtf8();
-        LegacyCore_FatalError(msg.constData());
+        App_FatalError(msg.constData());
     }
     return *resourceClasses[uint(id)];
 }
@@ -1854,10 +1854,6 @@ boolean DD_Init(void)
     Fonts_Init();
     FR_Init();
 
-#ifdef __CLIENT__
-    DD_InitInput();
-#endif
-
     // Enter busy mode until startup complete.
     Con_InitProgress2(200, 0, .25f); // First half.
     BusyMode_RunNewTaskWithName(BUSYF_NO_UPLOADS | BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
@@ -2157,12 +2153,6 @@ static int DD_StartupWorker(void* /*parm*/)
     materials = new Materials();
     DD_CreateMaterialSchemes();
     Con_SetProgress(140);
-
-#ifdef __CLIENT__
-    Con_Message("Initializing Binding subsystem...");
-    B_Init();
-    Con_SetProgress(150);
-#endif
 
     R_Init();
     Con_SetProgress(165);

@@ -19,6 +19,7 @@
 
 #include "de/Canvas"
 #include "de/CanvasWindow"
+#include "de/gui/opengl.h"
 
 #include <de/App>
 #include <de/Log>
@@ -30,7 +31,6 @@
 #include <QShowEvent>
 #include <QResizeEvent>
 #include <QPaintEvent>
-#include <QtOpenGL>
 #include <QImage>
 #include <QCursor>
 #include <QTimer>
@@ -107,11 +107,11 @@ DENG2_PIMPL(Canvas)
 
     static int nativeCode(QKeyEvent const *ev)
     {
-    #if defined(UNIX) && !defined(MACOSX)
+#if defined(UNIX) && !defined(MACOSX)
         return ev->nativeScanCode();
-    #else
+#else
         return ev->nativeVirtualKey();
-    #endif
+#endif
     }
 
     void handleKeyEvent(QKeyEvent *ev)
@@ -152,11 +152,12 @@ DENG2_PIMPL(Canvas)
 
         DENG2_FOR_PUBLIC_AUDIENCE(KeyEvent, i)
         {
-            i->keyEvent(ev->type() == QEvent::KeyPress? KeyEventSource::Pressed :
-                                                        KeyEventSource::Released,
-                        ddKeyFromQt(ev->key(), ev->nativeVirtualKey(), ev->nativeScanCode()),
-                        nativeCode(ev),
-                        ev->text());
+            i->keyEvent(KeyEvent(ev->type() == QEvent::KeyPress? KeyEvent::Pressed :
+                                                                 KeyEvent::Released,
+                                 ev->key(),
+                                 KeyEvent::ddKeyFromQt(ev->key(), ev->nativeVirtualKey(), ev->nativeScanCode()),
+                                 nativeCode(ev),
+                                 ev->text()));
         }
     }
 };

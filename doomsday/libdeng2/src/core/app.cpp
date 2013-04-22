@@ -347,13 +347,21 @@ void App::initSubsystems(SubsystemInitFlags flags)
 
     try
     {
-        // Set the log output file.
-        logBuf.setOutputFile(d->config->gets("log.file"));
+        // The -out option can be used to override the configured output file.
+        int pos = 0;
+        if((pos = commandLine().check("-out", 1)) > 0)
+        {
+            logBuf.setOutputFile(String("/home") / commandLine().at(pos + 1));
+        }
+        else
+        {
+            // Set the log output file.
+            logBuf.setOutputFile(d->config->gets("log.file"));
+        }
     }
     catch(Error const &er)
     {
-        LOG_WARNING("Failed to use \"" + d->config->gets("log.file") +
-                    "\" as the log output file:\n" + er.asText());
+        LOG_WARNING("Failed to set log output file:\n" + er.asText());
     }
 
     // The level of enabled messages.

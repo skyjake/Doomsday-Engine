@@ -57,7 +57,6 @@ INCLUDEPATH += include
 
 include(data.pri)
 include(filesys.pri)
-include(legacy.pri)
 include(network.pri)
 include(scriptsys.pri)
 include(widgets.pri)
@@ -65,6 +64,7 @@ include(widgets.pri)
 # Convenience headers.
 HEADERS += \
     include/de/App \
+    include/de/Asset \
     include/de/Clock \
     include/de/CommandLine \
     include/de/Config \
@@ -78,6 +78,7 @@ HEADERS += \
     include/de/LogBuffer \
     include/de/LogSink \
     include/de/Loop \
+    include/de/Matrix \
     include/de/MonospaceLogSinkFormatter \
     include/de/Rectangle \
     include/de/System \
@@ -92,10 +93,12 @@ HEADERS += \
     include/de/error.h \
     include/de/libdeng2.h \
     include/de/math.h \
+    include/de/matrix.h \
     include/de/rectangle.h \
     include/de/vector.h \
     include/de/version.h \
     include/de/core/app.h \
+    include/de/core/asset.h \
     include/de/core/clock.h \
     include/de/core/commandline.h \
     include/de/core/config.h \
@@ -122,8 +125,10 @@ HEADERS += \
 SOURCES += \
     src/c_wrapper.cpp \
     src/error.cpp \
+    src/matrix.cpp \
     src/version.cpp \
     src/core/app.cpp \
+    src/core/asset.cpp \
     src/core/callbacktimer.cpp \
     src/core/clock.cpp \
     src/core/commandline.cpp \

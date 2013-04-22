@@ -69,12 +69,12 @@ static boolean Reader_Check(Reader const *reader, size_t len)
     }
     if(reader->pos > reader->size - len)
     {
-        LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_ERROR,
+        LogBuffer_Printf(DE2_LOG_ERROR,
             "Reader_Check: Position %lu[+%lu] out of bounds, size=%lu.\n",
                 (unsigned long) reader->pos,
                 (unsigned long) len,
                 (unsigned long) reader->size);
-        LegacyCore_FatalError("Reader bounds check failed.");
+        App_FatalError("Reader bounds check failed.");
     }
     return true;
 }

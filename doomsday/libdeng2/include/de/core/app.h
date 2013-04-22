@@ -228,7 +228,7 @@ public:
      *
      * This should not be called directly. From C++ code, one should throw an
      * exception in unrecoverable error situations. From C code, one should
-     * call the LegacyCore_FatalError() function.
+     * call the App_FatalError() function.
      *
      * @param message  Error message to be shown to the user.
      */

@@ -407,7 +407,7 @@ void ZipArchive::readFromSource(Entry const &e, Path const &, IBlock &uncompress
         }
 
         z_stream stream;
-        std::memset(&stream, 0, sizeof(stream));
+        zap(stream);
         stream.next_in = const_cast<IByteArray::Byte *>(entry.dataInArchive->data());
         stream.avail_in = entry.sizeInArchive;
         stream.zalloc = Z_NULL;
@@ -503,7 +503,7 @@ void ZipArchive::operator >> (Writer &to) const
             Block archived(Block::Size(REQUIRED_DEFLATE_PERCENTAGE * entry.data->size()));
 
             z_stream stream;
-            std::memset(&stream, 0, sizeof(stream));
+            zap(stream);
             stream.next_in = const_cast<IByteArray::Byte *>(entry.data->data());
             stream.avail_in = entry.data->size();
             stream.zalloc = Z_NULL;

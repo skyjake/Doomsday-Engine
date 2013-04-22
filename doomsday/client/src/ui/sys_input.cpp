@@ -138,13 +138,6 @@ static void Mouse_Init(void)
 
     // Init was successful.
     useMouse = true;
-
-    // Now that the mouse is initialized, make sure the mouse gets trapped if the
-    // canvas wants it to be.
-    if(ClientWindow::main().canvas().isMouseTrapped())
-    {
-        Mouse_Trap(true);
-    }
 }
 
 boolean I_Init(void)
@@ -224,7 +217,7 @@ size_t Keyboard_GetEvents(keyevent_t *evbuf, size_t bufsize)
 
 boolean Mouse_IsPresent(void)
 {
-    if(!initOk) I_Init();
+    //if(!initOk) I_Init();
     return useMouse;
 }
 

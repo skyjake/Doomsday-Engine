@@ -59,7 +59,6 @@
 #include "updatersettingsdialog.h"
 #include "versioninfo.h"
 #include <de/App>
-#include <de/LegacyCore>
 #include <de/Time>
 #include <de/Date>
 #include <de/Log>
@@ -602,7 +601,7 @@ void Updater_ShowSettings(void)
         /// @todo Improve the mode changes so that this is not needed.
         delay = 500;
     }
-    de::LegacyCore::instance().timer(delay, showSettingsDialog);
+    App_Timer(delay, showSettingsDialog);
 }
 
 void Updater_PrintLastUpdated(void)

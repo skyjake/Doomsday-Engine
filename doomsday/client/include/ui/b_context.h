@@ -24,6 +24,7 @@
 #ifndef LIBDENG_BIND_CONTEXT_H
 #define LIBDENG_BIND_CONTEXT_H
 
+#include "dd_share.h"
 #include "b_command.h"
 #include "b_device.h"
 
@@ -75,7 +76,27 @@ void            B_DestroyControlBinding(controlbinding_t* conBin);
 void            B_InitControlBindingList(controlbinding_t* listRoot);
 void            B_DestroyControlBindingList(controlbinding_t* listRoot);
 boolean         B_DeleteBinding(bcontext_t* bc, int bid);
-boolean         B_TryEvent(ddevent_t* event);
+
+/**
+ * Finds the action bound to a given event, iterating through all enabled
+ * binding contexts.
+ *
+ * @param event  Event to match against.
+ *
+ * @return Action instance (caller gets ownership), or @c NULL if not found.
+ */
+de::Action *B_ActionForEvent(ddevent_t const *event);
+
+/**
+ * Finds the action bound to a given event.
+ *
+ * @param bc     Binding context to look in.
+ * @param event  Event to match against.
+ *
+ * @return Action instance (caller gets ownership), or @c NULL if not found.
+ */
+de::Action *BindContext_ActionForEvent(bcontext_t *bc, ddevent_t const *event);
+
 boolean         B_FindMatchingBinding(bcontext_t* bc, evbinding_t* match1, dbinding_t* match2,
                                       evbinding_t** evResult, dbinding_t** dResult);
 void            B_PrintContexts(void);

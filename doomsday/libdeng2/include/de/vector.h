@@ -129,7 +129,7 @@ public:
         return std::sqrt(ddouble(x*x + y*y));
     }
     Vector2 normalize() const {
-        ddouble len = length();
+        ddouble const len = length();
         if(len != 0) {
             return *this / len;
         }

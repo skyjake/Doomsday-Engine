@@ -25,7 +25,6 @@
 
 #include <cstring>
 
-#include <de/LegacyCore>
 #include <de/memoryzone.h>
 
 #include "de_base.h"
@@ -232,7 +231,7 @@ void *P_AllocDummy(int type, void *extraData)
     default: {
         /// @throw Throw exception.
         QByteArray msg = String("P_AllocDummy: Dummies of type %1 not supported.").arg(DMU_Str(type)).toUtf8();
-        LegacyCore_FatalError(msg.constData());
+        App_FatalError(msg.constData());
         break; }
     }
 
@@ -254,7 +253,7 @@ void P_FreeDummy(void *dummy)
     if(type == DMU_NONE)
     {
         /// @todo Throw exception.
-        LegacyCore_FatalError("P_FreeDummy: Dummy is of unknown type.");
+        App_FatalError("P_FreeDummy: Dummy is of unknown type.");
     }
 
     DENG2_ASSERT(dummies.contains(elem));
@@ -347,7 +346,7 @@ void *P_ToPtr(int type, int index)
     case DMU_PLANE: {
         /// @todo Throw exception.
         QByteArray msg = String("P_ToPtr: Cannot convert %1 to a ptr (sector is unknown).").arg(DMU_Str(type)).toUtf8();
-        LegacyCore_FatalError(msg.constData());
+        App_FatalError(msg.constData());
         return 0; /* Unreachable. */ }
 
     case DMU_BSPLEAF:
@@ -365,7 +364,7 @@ void *P_ToPtr(int type, int index)
     default: {
         /// @todo Throw exception.
         QByteArray msg = String("P_ToPtr: unknown type %1.").arg(DMU_Str(type)).toUtf8();
-        LegacyCore_FatalError(msg.constData());
+        App_FatalError(msg.constData());
         return 0; /* Unreachable. */ }
     }
 }
@@ -499,7 +498,7 @@ int P_Callback(int type, int index, void *context, int (*callback)(void *p, void
     case DMU_PLANE: {
         /// @todo Throw exception.
         QByteArray msg = String("P_Callback: %1 cannot be referenced by id alone (sector is unknown).").arg(DMU_Str(type)).toUtf8();
-        LegacyCore_FatalError(msg.constData());
+        App_FatalError(msg.constData());
         return 0; /* Unreachable */ }
 
     case DMU_MATERIAL:
@@ -513,13 +512,13 @@ int P_Callback(int type, int index, void *context, int (*callback)(void *p, void
     case DMU_SECTOR_BY_ACT_TAG: {
         /// @todo Throw exception.
         QByteArray msg = String("P_Callback: Type %1 not implemented yet.").arg(DMU_Str(type)).toUtf8();
-        LegacyCore_FatalError(msg.constData());
+        App_FatalError(msg.constData());
         return 0; /* Unreachable */ }
 
     default: {
         /// @todo Throw exception.
         QByteArray msg = String("P_Callback: Type %1 unknown (index %2).").arg(DMU_Str(type)).arg(index).toUtf8();
-        LegacyCore_FatalError(msg.constData());
+        App_FatalError(msg.constData());
         return 0; /* Unreachable */ }
     }
 
@@ -561,7 +560,7 @@ int P_Callbackp(int type, void *elPtr, void *context, int (*callback)(void *p, v
     default: {
         /// @todo Throw exception.
         QByteArray msg = String("P_Callbackp: Type %1 unknown.").arg(DMU_Str(elem->type())).toUtf8();
-        LegacyCore_FatalError(msg.constData());
+        App_FatalError(msg.constData());
         return 0; /* Unreachable */ }
     }
     return false; // Continue iteration.
@@ -594,7 +593,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
         default: {
             /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_FIXED incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -622,7 +621,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
         default: {
             /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_FLOAT incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -650,7 +649,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
         default: {
             /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_DOUBLE incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -666,7 +665,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
         default: {
             /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_BOOL incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -694,7 +693,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
         default: {
             /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_BYTE incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -725,7 +724,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
         default: {
             /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_INT incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -756,7 +755,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
         default: {
             /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_SHORT incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -772,7 +771,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
         default: {
             /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_ANGLE incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -786,7 +785,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
             if(args->intValues[index] > DDNUM_BLENDMODES || args->intValues[index] < 0)
             {
                 QByteArray msg = String("SetValue: %1 is not a valid value for DDVT_BLENDMODE.").arg(args->intValues[index]).toUtf8();
-                LegacyCore_FatalError(msg.constData());
+                App_FatalError(msg.constData());
             }
 
             *d = blendmode_t(args->intValues[index]);
@@ -794,7 +793,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
         default: {
             /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_BLENDMODE incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -810,7 +809,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
         default: {
             /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_PTR incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -818,7 +817,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
     {
         /// @todo Throw exception.
         QByteArray msg = String("SetValue: unknown value type %1.").arg(valueType).toUtf8();
-        LegacyCore_FatalError(msg.constData());
+        App_FatalError(msg.constData());
     }
 }
 
@@ -1002,7 +1001,7 @@ void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint 
             break;
         default: {
             QByteArray msg = String("GetValue: DDVT_FIXED incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -1029,7 +1028,7 @@ void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint 
             break;
         default: {
             QByteArray msg = String("GetValue: DDVT_FLOAT incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -1056,7 +1055,7 @@ void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint 
             break;
         default: {
             QByteArray msg = String("GetValue: DDVT_DOUBLE incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -1071,7 +1070,7 @@ void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint 
             break;
         default: {
             QByteArray msg = String("GetValue: DDVT_BOOL incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -1098,7 +1097,7 @@ void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint 
             break;
         default: {
             QByteArray msg = String("GetValue: DDVT_BYTE incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -1128,7 +1127,7 @@ void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint 
             break;
         default: {
             QByteArray msg = String("GetValue: DDVT_INT incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -1158,7 +1157,7 @@ void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint 
             break;
         default: {
             QByteArray msg = String("GetValue: DDVT_SHORT incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -1173,7 +1172,7 @@ void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint 
             break;
         default: {
             QByteArray msg = String("GetValue: DDVT_ANGLE incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -1188,7 +1187,7 @@ void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint 
             break;
         default: {
             QByteArray msg = String("GetValue: DDVT_BLENDMODE incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
@@ -1208,14 +1207,14 @@ void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint 
             break;
         default: {
             QByteArray msg = String("GetValue: DDVT_PTR incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
-            LegacyCore_FatalError(msg.constData());
+            App_FatalError(msg.constData());
             }
         }
     }
     else
     {
         QByteArray msg = String("GetValue: unknown value type %1.").arg(valueType).toUtf8();
-        LegacyCore_FatalError(msg.constData());
+        App_FatalError(msg.constData());
     }
 }
 

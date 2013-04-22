@@ -75,7 +75,7 @@ void *Stack_Pop(ddstack_t *s)
 
     if(!s->height)
     {
-        LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_DEBUG, "Stack::Pop: Underflow.\n");
+        LogBuffer_Printf(DE2_LOG_DEBUG, "Stack::Pop: Underflow.\n");
         return NULL;
     }
 

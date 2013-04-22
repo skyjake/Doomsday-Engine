@@ -20,7 +20,7 @@
 #include "de/c_wrapper.h"
 #include "de/Error"
 #include "de/App"
-#include "de/LegacyCore"
+#include "de/Loop"
 #include "de/Address"
 #include "de/ByteRefArray"
 #include "de/Block"
@@ -31,82 +31,14 @@
 #include <cstring>
 #include <stdarg.h>
 
-#define DENG2_LEGACYCORE()      de::LegacyCore::instance()
-#define DENG2_LEGACYNETWORK()   DENG2_LEGACYCORE().network()
 #define DENG2_COMMANDLINE()     DENG2_APP->commandLine()
 
-LegacyCore *LegacyCore_New()
+void App_Timer(unsigned int milliseconds, void (*callback)(void))
 {
-    return reinterpret_cast<LegacyCore *>(new de::LegacyCore());
+    de::Loop::timer(de::TimeDelta::fromMilliSeconds(milliseconds), callback);
 }
 
-void LegacyCore_Delete(LegacyCore *lc)
-{
-    if(lc)
-    {
-        // It gets stopped automatically.
-        DENG2_SELF(LegacyCore, lc);
-        delete self;
-    }
-}
-
-LegacyCore *LegacyCore_Instance()
-{
-    return reinterpret_cast<LegacyCore *>(&de::LegacyCore::instance());
-}
-
-void LegacyCore_Timer(unsigned int milliseconds, void (*callback)(void))
-{
-    DENG2_LEGACYCORE().timer(milliseconds, callback);
-}
-
-int LegacyCore_SetLogFile(char const *filePath)
-{
-    try
-    {
-        DENG2_LEGACYCORE().setLogFileName(filePath);
-        return true;
-    }
-    catch(de::Error const &er)
-    {
-        LOG_AS("LegacyCore_SetLogFile");
-        LOG_WARNING(er.asText());
-        return false;
-    }
-}
-
-char const *LegacyCore_LogFile()
-{
-    return DENG2_LEGACYCORE().logFileName();
-}
-
-void LegacyCore_PrintLogFragment(char const *text)
-{
-    DENG2_LEGACYCORE().printLogFragment(text);
-}
-
-void LegacyCore_PrintfLogFragmentAtLevel(legacycore_loglevel_t level, char const *format, ...)
-{
-    // Validate the level.
-    de::LogEntry::Level logLevel = de::LogEntry::Level(level);
-    if(level < DE2_LOG_TRACE || level > DE2_LOG_CRITICAL)
-    {
-        logLevel = de::LogEntry::MESSAGE;
-    }
-
-    // If this level is not enabled, just ignore.
-    if(!de::LogBuffer::appBuffer().isEnabled(logLevel)) return;
-
-    char buffer[2048];
-    va_list args;
-    va_start(args, format);
-    vsprintf(buffer, format, args); /// @todo unsafe
-    va_end(args);
-
-    DENG2_LEGACYCORE().printLogFragment(buffer, logLevel);
-}
-
-void LegacyCore_FatalError(char const *msg)
+void App_FatalError(char const *msg)
 {
     DENG2_APP->handleUncaughtException(msg);
 }
@@ -195,6 +127,46 @@ void LogBuffer_Clear(void)
 void LogBuffer_EnableStandardOutput(int enable)
 {
 	de::LogBuffer::appBuffer().enableStandardOutput(enable != 0);
+}
+
+static void logFragmentPrinter(de::LogEntry::Level level, char const *fragment)
+{
+    static std::string currentLogLine;
+
+    currentLogLine += fragment;
+
+    std::string::size_type pos;
+    while((pos = currentLogLine.find('\n')) != std::string::npos)
+    {
+        LOG().enter(level, currentLogLine.substr(0, pos).c_str());
+        currentLogLine.erase(0, pos + 1);
+    }
+}
+
+void LogBuffer_Msg(char const *text)
+{
+    logFragmentPrinter(de::LogEntry::MESSAGE, text);
+}
+
+void LogBuffer_Printf(legacycore_loglevel_t level, char const *format, ...)
+{
+    // Validate the level.
+    de::LogEntry::Level logLevel = de::LogEntry::Level(level);
+    if(level < DE2_LOG_TRACE || level > DE2_LOG_CRITICAL)
+    {
+        logLevel = de::LogEntry::MESSAGE;
+    }
+
+    // If this level is not enabled, just ignore.
+    if(!de::LogBuffer::appBuffer().isEnabled(logLevel)) return;
+
+    char buffer[2048];
+    va_list args;
+    va_start(args, format);
+    vsprintf(buffer, format, args); /// @todo unsafe
+    va_end(args);
+
+    logFragmentPrinter(logLevel, buffer);
 }
 
 Info *Info_NewFromString(char const *utf8text)
