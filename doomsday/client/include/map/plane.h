@@ -28,7 +28,6 @@
 #include <de/Vector>
 
 #include "MapElement"
-#include "map/p_dmu.h"
 
 class Sector;
 class Surface;
@@ -188,6 +187,7 @@ public:
      */
     Type type() const;
 
+protected:
     int property(setargs_t &args) const;
     int setProperty(setargs_t const &args);
 

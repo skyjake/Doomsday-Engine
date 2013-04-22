@@ -389,15 +389,23 @@ biassurface_t &HEdge::biasSurfaceForGeometryGroup(uint groupId)
 
 coord_t HEdge::pointDistance(const_pvec2d_t point, coord_t *offset) const
 {
-    coord_t direction[2]; V2d_Subtract(direction, _to->origin(), _from->origin());
-    return V2d_PointLineDistance(point, _from->origin(), direction, offset);
+    /// @todo Why are we calculating this every time?
+    Vector2d direction = _to->origin() - _from->origin();
+
+    coord_t fromOriginV1[2] = { fromOrigin().x, fromOrigin().y };
+    coord_t directionV1[2]  = { direction.x, direction.y };
+    return V2d_PointLineDistance(point, fromOriginV1, directionV1, offset);
 }
 
 coord_t HEdge::pointOnSide(const_pvec2d_t point) const
 {
-    DENG2_ASSERT(point);
-    coord_t direction[2]; V2d_Subtract(direction, _to->origin(), _from->origin());
-    return V2d_PointOnLineSide(point, _from->origin(), direction);
+    DENG_ASSERT(point != 0);
+    /// @todo Why are we calculating this every time?
+    Vector2d direction = _to->origin() - _from->origin();
+
+    coord_t fromOriginV1[2] = { fromOrigin().x, fromOrigin().y };
+    coord_t directionV1[2]  = { direction.x, direction.y };
+    return V2d_PointOnLineSide(point, fromOriginV1, directionV1);
 }
 
 int HEdge::property(setargs_t &args) const

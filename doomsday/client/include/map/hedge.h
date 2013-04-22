@@ -140,7 +140,7 @@ public:
      *
      * @see vertex()
      */
-    inline const_pvec2d_t &vertexOrigin(int to) const
+    inline de::Vector2d const &vertexOrigin(int to) const
     {
         return vertex(to).origin();
     }
@@ -167,11 +167,11 @@ public:
      *
      * @see v1()
      */
-    inline const_pvec2d_t &v1Origin() const { return v1().origin(); }
+    inline de::Vector2d const &v1Origin() const { return v1().origin(); }
 
     /// @copydoc v1Origin()
     /// An alias of v1Origin()
-    inline const_pvec2d_t &fromOrigin() const { return v1Origin(); }
+    inline de::Vector2d const &fromOrigin() const { return v1Origin(); }
 
     /**
      * Returns the To/End vertex for the half-edge.
@@ -195,11 +195,11 @@ public:
      *
      * @see v2()
      */
-    inline const_pvec2d_t &v2Origin() const { return v2().origin(); }
+    inline de::Vector2d const &v2Origin() const { return v2().origin(); }
 
     /// @copydoc v2Origin()
     /// An alias of v2Origin()
-    inline const_pvec2d_t &toOrigin() const { return v2Origin(); }
+    inline de::Vector2d const &toOrigin() const { return v2Origin(); }
 
     /**
      * Returns the linked @em next half-edge (clockwise) around the face of

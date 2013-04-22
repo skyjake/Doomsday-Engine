@@ -27,7 +27,6 @@
 #include <de/Error>
 
 #include "MapElement"
-#include "p_dmu.h"
 #ifdef __CLIENT__
 #  include "render/rend_bias.h"
 #endif

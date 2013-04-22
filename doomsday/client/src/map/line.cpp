@@ -571,8 +571,8 @@ AABoxd const &Line::aaBox() const
 
 void Line::updateAABox()
 {
-    V2d_InitBox(d->aaBox.arvec2, d->from->origin());
-    V2d_AddToBox(d->aaBox.arvec2, d->to->origin());
+    V2d_InitBoxXY(d->aaBox.arvec2, fromOrigin().x, fromOrigin().y);
+    V2d_AddToBoxXY(d->aaBox.arvec2, toOrigin().x, toOrigin().y);
 }
 
 coord_t Line::length() const
@@ -604,8 +604,9 @@ binangle_t Line::angle() const
 
 int Line::boxOnSide(AABoxd const &box) const
 {
-    coord_t v1Direction[2] = { direction().x, direction().y };
-    return M_BoxOnLineSide(&box, d->from->origin(), v1Direction);
+    coord_t fromOriginV1[2] = { fromOrigin().x, fromOrigin().y };
+    coord_t directionV1[2]  = { direction().x, direction().y };
+    return M_BoxOnLineSide(&box, fromOriginV1, directionV1);
 }
 
 int Line::boxOnSide_FixedPrecision(AABoxd const &box) const

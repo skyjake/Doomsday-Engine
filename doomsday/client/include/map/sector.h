@@ -30,7 +30,6 @@
 #include <de/Vector>
 
 #include "MapElement"
-#include "map/p_dmu.h"
 #include "Plane"
 
 class BspLeaf;
@@ -452,6 +451,7 @@ public:
     /// @todo Refactor away.
     void setValidCount(int newValidCount);
 
+protected:
     int property(setargs_t &args) const;
     int setProperty(setargs_t const &args);
 

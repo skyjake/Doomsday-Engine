@@ -23,7 +23,6 @@
 #include <de/Log>
 
 #include "de_base.h"
-#include "m_misc.h" // M_TriangleArea()
 
 #include "HEdge"
 #include "Polyobj"
@@ -33,6 +32,14 @@
 #include "map/bspleaf.h"
 
 using namespace de;
+
+/// Compute the area of a triangle defined by three 2D point vectors.
+ddouble triangleArea(Vector2d const &v1, Vector2d const &v2, Vector2d const &v3)
+{
+    Vector2d a = v2 - v1;
+    Vector2d b = v3 - v1;
+    return (a.x * b.y - b.x * a.y) / 2;
+}
 
 DENG2_PIMPL(BspLeaf)
 {
@@ -130,7 +137,7 @@ DENG2_PIMPL(BspLeaf)
                         a = &other->from();
                         b = &other->next().from();
 
-                        if(M_TriangleArea(base->origin(), a->origin(), b->origin()) <= MIN_TRIANGLE_EPSILON)
+                        if(de::abs(triangleArea(base->origin(), a->origin(), b->origin())) <= MIN_TRIANGLE_EPSILON)
                         {
                             // No good. We'll move on to the next vertex.
                             base = 0;
@@ -227,11 +234,11 @@ void BspLeaf::updateAABox()
     if(!_hedge) return; // Very odd...
 
     HEdge *hedgeIt = _hedge;
-    V2d_InitBox(d->aaBox.arvec2, hedgeIt->v1Origin());
+    V2d_InitBoxXY(d->aaBox.arvec2, hedgeIt->fromOrigin().x, hedgeIt->fromOrigin().y);
 
     while((hedgeIt = &hedgeIt->next()) != _hedge)
     {
-        V2d_AddToBox(d->aaBox.arvec2, hedgeIt->v1Origin());
+        V2d_AddToBoxXY(d->aaBox.arvec2, hedgeIt->fromOrigin().x, hedgeIt->fromOrigin().y);
     }
 }
 

@@ -21,8 +21,9 @@
 #ifndef DENG_WORLD_MAP_LINEOWNER
 #define DENG_WORLD_MAP_LINEOWNER
 
+#include <de/Vector>
+
 #include <de/binangle.h>
-#include <de/vector1.h> /// @todo remove me
 
 class Line;
 
@@ -54,8 +55,8 @@ public: /// @todo Make private:
     binangle_t _angle;
 
     struct ShadowVert {
-        vec2d_t inner;
-        vec2d_t extended;
+        de::Vector2d inner;
+        de::Vector2d extended;
     } _shadowOffsets;
 
 public:
@@ -63,9 +64,6 @@ public:
     {
         _link[Previous] = 0;
         _link[Next] = 0;
-
-        V2d_Set(_shadowOffsets.inner, 0, 0);
-        V2d_Set(_shadowOffsets.extended, 0, 0);
     }*/
 
     /**
@@ -128,12 +126,12 @@ public:
     /**
      * Returns the inner shadow offset of the line owner.
      */
-    vec2d_t const &innerShadowOffset() const { return _shadowOffsets.inner; }
+    de::Vector2d const &innerShadowOffset() const { return _shadowOffsets.inner; }
 
     /**
      * Returns the extended shadow offset of the line owner.
      */
-    vec2d_t const &extendedShadowOffset() const { return _shadowOffsets.extended; }
+    de::Vector2d const &extendedShadowOffset() const { return _shadowOffsets.extended; }
 };
 
 #endif // DENG_WORLD_MAP_LINEOWNER
