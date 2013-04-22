@@ -21,6 +21,7 @@
 #ifndef DENG_MATH_PARTITION
 #define DENG_MATH_PARTITION
 
+#include <de/math.h>
 #include <de/Vector>
 
 namespace de {
@@ -63,8 +64,58 @@ public:
      * @param x  X coordinate for the point.
      * @param y  Y coordinate for the point.
      */
-    ddouble pointOnSide(ddouble x, ddouble y) const {
+    inline ddouble pointOnSide(ddouble x, ddouble y) const {
         return pointOnSide(Vector2d(x, y));
+    }
+
+    /**
+     * Returns @c true iff "this" line @a other are parallel. In special
+     * case where either of the two lines having a zero-length direction
+     * then @c true is always returned.
+     */
+    bool isParallelTo(Partition const &other, ddouble epsilon = .99999999) const
+    {
+        ddouble len = direction.length();
+        if(len == 0) return true;
+
+        ddouble otherLen = other.direction.length();
+        if(otherLen == 0) return true;
+
+        ddouble dot = direction.dot(other.direction) / len / otherLen;
+
+        // If it's close enough, we'll consider them parallel.
+        epsilon = de::abs(epsilon);
+        return dot > epsilon || dot < -epsilon;
+    }
+
+    /**
+     * Determines how far along the line (relative to the origin) where the
+     * @a other line and "this" intersect.
+     *
+     * @return Intersection point expressed as a scale factor relative to the
+     * partition origin. In the special case of the two lines being parallel
+     * @c 0 is returned.
+     *
+     * @see intercept()
+     */
+    double intersection(Partition const &other) const
+    {
+        ddouble divsor = direction.x * other.direction.y -
+                         direction.y * other.direction.x;
+
+        // Special case: parallel?
+        if(divsor == 0) return 0;
+
+        Vector2d delta = origin - other.origin;
+        return (delta.y * other.direction.x - delta.x * other.direction.y) / divsor;
+    }
+
+    /**
+     * Determine the intercept point where "this" line and @a other intersect
+     * and return the point at which the two intercept.
+     */
+    inline Vector2d intercept(Partition const &other) const {
+        return origin + direction * intersection(other);
     }
 };
 
