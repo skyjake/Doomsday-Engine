@@ -1,4 +1,4 @@
-/** @file vertex.cpp World Map Vertex.
+/** @file map/vertex.cpp World Map Vertex.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,12 +18,10 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/vector1.h> /// @todo Remove me.
 #include <de/Vector>
 
-#include "dd_share.h"
 #include "Line"
-#include "map/lineowner.h"
+#include "map/lineowner.h" /// @todo remove me
 
 #include "map/vertex.h"
 
@@ -31,23 +29,94 @@ using namespace de;
 
 DENG2_PIMPL(Vertex)
 {
-    Instance(Public *i) : Base(i)
+    /// Position in the map coordinate space.
+    Vector2d origin;
+
+    Instance(Public *i, Vector2d const &origin)
+        : Base(i), origin(origin)
     {}
+
+    void notifyOriginChanged(Vector2d const &oldOrigin, int changedComponents)
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE(OriginChange, i)
+        {
+            i->vertexOriginChanged(self, oldOrigin, changedComponents);
+        }
+    }
+
+    void notifyOriginChanged(Vector2d const &oldOrigin)
+    {
+        // Predetermine which axes have changed.
+        int changedAxes = 0;
+        for(int i = 0; i < 2; ++i)
+        {
+            if(!de::fequal(origin[i], oldOrigin[i]))
+                changedAxes |= (1 << i);
+        }
+
+        notifyOriginChanged(oldOrigin, changedAxes);
+    }
 };
 
 Vertex::Vertex(Vector2d const &origin)
-    : MapElement(DMU_VERTEX), d(new Instance(this))
+    : MapElement(DMU_VERTEX), d(new Instance(this, origin))
 {
-    _origin[VX] = origin.x;
-    _origin[VY] = origin.y;
     _lineOwners = 0;
     _numLineOwners = 0;
 }
 
-vec2d_t const &Vertex::origin() const
+Vector2d const &Vertex::origin() const
 {
-    return _origin;
+    return d->origin;
 }
+
+void Vertex::setOrigin(Vector2d const &newOrigin)
+{
+    if(d->origin != newOrigin)
+    {
+        Vector2d oldOrigin = d->origin;
+
+        d->origin = newOrigin;
+
+        // Notify interested parties of the change.
+        d->notifyOriginChanged(oldOrigin);
+    }
+}
+
+void Vertex::setOriginComponent(int component, coord_t newPosition)
+{
+    if(!de::fequal(d->origin[component], newPosition))
+    {
+        Vector2d oldOrigin = d->origin;
+
+        d->origin[component] = newPosition;
+
+        // Notify interested parties of the change.
+        d->notifyOriginChanged(oldOrigin, (1 << component));
+    }
+}
+
+int Vertex::property(setargs_t &args) const
+{
+    switch(args.prop)
+    {
+    case DMU_X:
+        DMU_GetValue(DMT_VERTEX_ORIGIN, &d->origin.x, &args, 0);
+        break;
+    case DMU_Y:
+        DMU_GetValue(DMT_VERTEX_ORIGIN, &d->origin.y, &args, 0);
+        break;
+    case DMU_XY:
+        DMU_GetValue(DMT_VERTEX_ORIGIN, &d->origin.x, &args, 0);
+        DMU_GetValue(DMT_VERTEX_ORIGIN, &d->origin.y, &args, 1);
+        break;
+    default:
+        return MapElement::property(args);
+    }
+    return false; // Continue iteration.
+}
+
+// ---------------------------------------------------------------------------
 
 uint Vertex::lineOwnerCount() const
 {
@@ -83,24 +152,4 @@ void Vertex::countLineOwners(uint *oneSided, uint *twoSided) const
 LineOwner *Vertex::firstLineOwner() const
 {
     return _lineOwners;
-}
-
-int Vertex::property(setargs_t &args) const
-{
-    switch(args.prop)
-    {
-    case DMU_X:
-        DMU_GetValue(DMT_VERTEX_ORIGIN, &_origin[VX], &args, 0);
-        break;
-    case DMU_Y:
-        DMU_GetValue(DMT_VERTEX_ORIGIN, &_origin[VY], &args, 0);
-        break;
-    case DMU_XY:
-        DMU_GetValue(DMT_VERTEX_ORIGIN, &_origin[VX], &args, 0);
-        DMU_GetValue(DMT_VERTEX_ORIGIN, &_origin[VY], &args, 1);
-        break;
-    default:
-        return MapElement::property(args);
-    }
-    return false; // Continue iteration.
 }
