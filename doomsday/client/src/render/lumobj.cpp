@@ -1169,7 +1169,7 @@ boolean LOIT_ClipLumObjBySight(void *data, void *context)
     uint lumIdx = lumToIndex(lum);
     if(!luminousClipped[lumIdx])
     {
-        vec2d_t eye; V2d_Set(eye, vOrigin[VX], vOrigin[VZ]);
+        coord_t eye[2] = { vOrigin[VX], vOrigin[VZ] };
 
         // We need to figure out if any of the polyobj's segments lies
         // between the viewpoint and the lumobj.
@@ -1182,9 +1182,9 @@ boolean LOIT_ClipLumObjBySight(void *data, void *context)
             // Ignore half-edges facing the wrong way.
             if(hedge->_frameFlags & HEDGEINF_FACINGFRONT)
             {
-                vec2d_t origin; V2d_Set(origin, lum->origin[VX], lum->origin[VY]);
-
-                if(V2d_Intercept2(origin, eye, hedge->v1Origin(), hedge->v2Origin(), 0, 0, 0))
+                coord_t fromV1[2] = { hedge->fromOrigin().x, hedge->fromOrigin().y };
+                coord_t toV1[2]   = {   hedge->toOrigin().x,   hedge->toOrigin().y };
+                if(V2d_Intercept2(lum->origin, eye, fromV1, toV1, 0, 0, 0))
                 {
                     luminousClipped[lumIdx] = 1;
                     break;

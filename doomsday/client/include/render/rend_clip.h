@@ -33,6 +33,8 @@
 
 #include <de/binangle.h>
 
+#include <de/Vector>
+
 class BspLeaf;
 
 DENG_EXTERN_C int devNoCulling;
@@ -70,15 +72,38 @@ int C_CheckBspLeaf(BspLeaf *bspLeaf);
  */
 void C_AddRangeFromViewRelPoints(coord_t const from[2], coord_t const to[2]);
 
+inline void C_AddRangeFromViewRelPoints(de::Vector2d const &from, de::Vector2d const &to)
+{
+    coord_t fromV1[2] = { from.x, from.y };
+    coord_t toV1[2]   = {   to.x,   to.y };
+    C_AddRangeFromViewRelPoints(fromV1, toV1);
+}
+
 /**
  * Add an occlusion segment relative to the current viewpoint.
  */
-void C_AddViewRelOcclusion(coord_t const from[2], coord_t const to[2], coord_t height, bool tophalf);
+void C_AddViewRelOcclusion(coord_t const from[2], coord_t const to[2],
+                           coord_t height, bool tophalf);
+
+inline void C_AddViewRelOcclusion(de::Vector2d const &from, de::Vector2d const &to,
+                                  coord_t height, bool tophalf)
+{
+    coord_t fromV1[2] = { from.x, from.y };
+    coord_t toV1[2]   = {   to.x,   to.y };
+    C_AddViewRelOcclusion(fromV1, toV1, height, tophalf);
+}
 
 /**
  * Check a segment relative to the current viewpoint.
  */
 int C_CheckRangeFromViewRelPoints(coord_t const from[2], coord_t const to[2]);
+
+inline int C_CheckRangeFromViewRelPoints(de::Vector2d const &from, de::Vector2d const &to)
+{
+    coord_t fromV1[2] = { from.x, from.y };
+    coord_t toV1[2]   = {   to.x,   to.y };
+    return C_CheckRangeFromViewRelPoints(fromV1, toV1);
+}
 
 #ifdef DENG_DEBUG
 /**

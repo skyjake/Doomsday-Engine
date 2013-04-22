@@ -278,10 +278,10 @@ void Rend_ModelViewMatrix(boolean useAngles)
     glTranslatef(-vOrigin[VX], -vOrigin[VY], -vOrigin[VZ]);
 }
 
-static inline double viewFacingDot(const_pvec2d_t v1, const_pvec2d_t v2)
+static inline double viewFacingDot(Vector2d const &v1, Vector2d const &v2)
 {
     // The dot product.
-    return (v1[VY] - v2[VY]) * (v1[VX] - vOrigin[VX]) + (v2[VX] - v1[VX]) * (v1[VY] - vOrigin[VZ]);
+    return (v1.y - v2.y) * (v1.x - vOrigin[VX]) + (v2.x - v1.x) * (v1.y - vOrigin[VZ]);
 }
 
 static void Rend_VertexColorsGlow(ColorRawf *colors, uint num, float glow)
@@ -844,8 +844,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
             if(useBias && p.bsuf)
             {
                 // Do BIAS lighting for this poly.
-                vec3f_t v1Normal; V3f_Set(v1Normal, p.normal->x, p.normal->y, p.normal->z);
-                SB_RendPoly(rcolors, p.bsuf, rvertices, numVertices, v1Normal,
+                SB_RendPoly(rcolors, p.bsuf, rvertices, numVertices, *p.normal,
                             p.sectorLightLevel, p.mapElement, p.elmIdx);
 
                 if(p.glowing > 0)
@@ -1222,20 +1221,21 @@ static bool writeWallSection2(HEdge &hedge, Vector3f const &normal,
 
     // Vertex coords.
     // Bottom Left.
-    V2f_Copyd(rvertices[0].pos, hedge.v1Origin());
-    rvertices[0].pos[VZ] = float( WallDivNode_Height(WallDivs_First(leftWallDivs)) );
-
+    V3f_Set(rvertices[0].pos, hedge.v1Origin().x,
+                              hedge.v1Origin().y,
+                              WallDivNode_Height(WallDivs_First(leftWallDivs)));
     // Top Left.
-    V2f_Copyd(rvertices[1].pos, hedge.v1Origin());
-    rvertices[1].pos[VZ] = float( WallDivNode_Height(WallDivs_Last(leftWallDivs)) );
-
+    V3f_Set(rvertices[1].pos, hedge.v1Origin().x,
+                              hedge.v1Origin().y,
+                              WallDivNode_Height(WallDivs_Last(leftWallDivs)));
     // Bottom Right.
-    V2f_Copyd(rvertices[2].pos, hedge.v2Origin());
-    rvertices[2].pos[VZ] = float( WallDivNode_Height(WallDivs_First(rightWallDivs)) );
-
+    V3f_Set(rvertices[2].pos, hedge.v2Origin().x,
+                              hedge.v2Origin().y,
+                              WallDivNode_Height(WallDivs_First(rightWallDivs)));
     // Top Right.
-    V2f_Copyd(rvertices[3].pos, hedge.v2Origin());
-    rvertices[3].pos[VZ] = float( WallDivNode_Height(WallDivs_Last(rightWallDivs)) );
+    V3f_Set(rvertices[3].pos, hedge.v2Origin().x,
+                              hedge.v2Origin().y,
+                              WallDivNode_Height(WallDivs_Last(rightWallDivs)));
 
     // Draw this section.
     if(renderWorldPoly(rvertices, 4, parm, ms))
@@ -1274,20 +1274,21 @@ static bool writeWallSection2(HEdge &hedge, Vector3f const &normal,
             ///               due to height divisions.
 
             // Bottom Left.
-            V2f_Copyd(rvertices[0].pos, hedge.v1Origin());
-            rvertices[0].pos[VZ] = float( WallDivNode_Height(WallDivs_First(leftWallDivs)) );
-
+            V3f_Set(rvertices[0].pos, hedge.v1Origin().x,
+                                      hedge.v1Origin().y,
+                                      WallDivNode_Height(WallDivs_First(leftWallDivs)));
             // Top Left.
-            V2f_Copyd(rvertices[1].pos, hedge.v1Origin());
-            rvertices[1].pos[VZ] = float( WallDivNode_Height(WallDivs_Last(leftWallDivs)) );
-
+            V3f_Set(rvertices[1].pos, hedge.v1Origin().x,
+                                      hedge.v1Origin().y,
+                                      WallDivNode_Height(WallDivs_Last(leftWallDivs)));
             // Bottom Right.
-            V2f_Copyd(rvertices[2].pos, hedge.v2Origin());
-            rvertices[2].pos[VZ] = float( WallDivNode_Height(WallDivs_First(rightWallDivs)) );
-
+            V3f_Set(rvertices[2].pos, hedge.v2Origin().x,
+                                      hedge.v2Origin().y,
+                                      WallDivNode_Height(WallDivs_First(rightWallDivs)));
             // Top Right.
-            V2f_Copyd(rvertices[3].pos, hedge.v2Origin());
-            rvertices[3].pos[VZ] = float( WallDivNode_Height(WallDivs_Last(rightWallDivs)) );
+            V3f_Set(rvertices[3].pos, hedge.v2Origin().x,
+                                      hedge.v2Origin().y,
+                                      WallDivNode_Height(WallDivs_Last(rightWallDivs)));
 
             // kludge end.
 
@@ -1650,9 +1651,12 @@ static bool writeWallSection(HEdge &hedge, int section,
            viewData->current.origin[VZ] < WallDivNode_Height(WallDivs_Last(rightWallDivs)))
         {
             Line const &line = hedge.line();
+
+            coord_t linePoint[2]     = { line.v1Origin().x, line.v1Origin().y };
             coord_t lineDirection[2] = { line.direction().x, line.direction().y };
+
             vec2d_t result;
-            double pos = V2d_ProjectOnLine(result, mo->origin, line.v1Origin(), lineDirection);
+            double pos = V2d_ProjectOnLine(result, mo->origin, linePoint, lineDirection);
 
             if(pos > 0 && pos < 1)
             {
@@ -1681,11 +1685,13 @@ static bool writeWallSection(HEdge &hedge, int section,
         Vector2f materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
                                (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
-        vec3d_t texTL; V2d_Copy(texTL,  hedge.v1Origin());
-        texTL[VZ] =  WallDivNode_Height(WallDivs_Last(leftWallDivs));
+        vec3d_t texTL; V3d_Set(texTL, hedge.fromOrigin().x,
+                                      hedge.fromOrigin().y,
+                                      WallDivNode_Height(WallDivs_Last(leftWallDivs)));
 
-        vec3d_t texBR; V2d_Copy(texBR, hedge.v2Origin());
-        texBR[VZ] = WallDivNode_Height(WallDivs_First(rightWallDivs));
+        vec3d_t texBR; V3d_Set(texBR, hedge.toOrigin().x,
+                                      hedge.toOrigin().y,
+                                      WallDivNode_Height(WallDivs_First(rightWallDivs)));
 
         // Determine which Material to use.
         Material *material = 0;
@@ -2272,20 +2278,18 @@ static int chooseHEdgeSkyFixes(HEdge *hedge, int skyCap)
     return fixes;
 }
 
-static inline void buildStripEdge(coord_t const vXY[2],
+static inline void buildStripEdge(Vector2d const &vXY,
     coord_t v1Z, coord_t v2Z, float texS,
     rvertex_t *v1, rvertex_t *v2, rtexcoord_t *t1, rtexcoord_t *t2)
 {
     if(v1)
     {
-        DENG_ASSERT(vXY != 0);
-        V2f_Copyd(v1->pos, vXY);
+        V2f_Set(v1->pos, vXY.x, vXY.y);
         v1->pos[VZ] = v1Z;
     }
     if(v2)
     {
-        DENG_ASSERT(vXY != 0);
-        V2f_Copyd(v2->pos, vXY);
+        V2f_Set(v2->pos, vXY.x, vXY.y);
         v2->pos[VZ] = v2Z;
     }
     if(t1)
@@ -2452,16 +2456,18 @@ static uint buildLeafPlaneGeometry(BspLeaf const &leaf, bool antiClockwise,
     HEdge *node = baseNode;
     do
     {
-        V2f_Copyd((*verts)[n].pos, node->v1Origin());
-        (*verts)[n].pos[VZ] = float( height );
+        V3f_Set((*verts)[n].pos, node->v1Origin().x,
+                                 node->v1Origin().y,
+                                 height);
         n++;
     } while((node = antiClockwise? &node->prev() : &node->next()) != baseNode);
 
     // The last vertex is always equal to the first.
     if(!fanBase)
     {
-        V2f_Copyd((*verts)[n].pos, leaf.firstHEdge()->v1Origin());
-        (*verts)[n].pos[VZ] = float( height );
+        V3f_Set((*verts)[n].pos, leaf.firstHEdge()->v1Origin().x,
+                                 leaf.firstHEdge()->v1Origin().y,
+                                 height);
     }
 
     if(vertsSize) *vertsSize = totalVerts;
