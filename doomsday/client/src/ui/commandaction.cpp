@@ -16,6 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#include "de_platform.h"
 #include "ui/commandaction.h"
 #include "con_main.h"
 

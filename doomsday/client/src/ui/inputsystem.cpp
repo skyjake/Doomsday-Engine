@@ -16,6 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#include "de_platform.h"
 #include "ui/inputsystem.h"
 #include "ui/dd_input.h"
 #include "ui/sys_input.h"
