@@ -74,6 +74,24 @@ private:
     static internal::AttribSpec const _spec[3];
 };
 
+namespace gl
+{
+    enum Usage {
+        Static,
+        Dynamic,
+        Stream
+    };
+    enum Primitive {
+        Points,
+        LineStrip,
+        LineLoop,
+        Lines,
+        TriangleStrip,
+        TriangleFan,
+        Triangles
+    };
+}
+
 /**
  * GL vertex buffer.
  *
@@ -88,24 +106,6 @@ private:
 class LIBGUI_PUBLIC GLBuffer : public Asset
 {
 public:
-    enum Usage
-    {
-        Static,
-        Dynamic,
-        Stream
-    };
-
-    enum Primitive
-    {
-        Points,
-        LineStrip,
-        LineLoop,
-        Lines,
-        TriangleStrip,
-        TriangleFan,
-        Triangles
-    };
-
     typedef duint16 Index;
 
 public:
@@ -113,11 +113,11 @@ public:
 
     void clear();
 
-    void setVertices(dsize count, void const *data, dsize dataSize, Usage usage);
+    void setVertices(dsize count, void const *data, dsize dataSize, gl::Usage usage);
 
-    void setVertices(Primitive primitive, dsize count, void const *data, dsize dataSize, Usage usage);
+    void setVertices(gl::Primitive primitive, dsize count, void const *data, dsize dataSize, gl::Usage usage);
 
-    void setIndices(Primitive primitive, dsize count, Index const *indices, Usage usage);
+    void setIndices(gl::Primitive primitive, dsize count, Index const *indices, gl::Usage usage);
 
     void draw(duint first = 0, dint count = -1);
 
@@ -142,19 +142,19 @@ public:
         setFormat(VertexType::formatSpec());
     }
 
-    void setVertices(VertexType const *vertices, dsize count, Usage usage) {
+    void setVertices(VertexType const *vertices, dsize count, gl::Usage usage) {
         GLBuffer::setVertices(count, vertices, sizeof(VertexType) * count, usage);
     }
 
-    void setVertices(Vertices const &vertices, Usage usage) {
+    void setVertices(Vertices const &vertices, gl::Usage usage) {
         GLBuffer::setVertices(vertices.size(), &vertices[0], sizeof(VertexType) * vertices.size(), usage);
     }
 
-    void setVertices(Primitive primitive, VertexType const *vertices, dsize count, Usage usage) {
+    void setVertices(gl::Primitive primitive, VertexType const *vertices, dsize count, gl::Usage usage) {
         GLBuffer::setVertices(primitive, count, vertices, sizeof(VertexType) * count, usage);
     }
 
-    void setVertices(Primitive primitive, Vertices const &vertices, Usage usage) {
+    void setVertices(gl::Primitive primitive, Vertices const &vertices, gl::Usage usage) {
         GLBuffer::setVertices(primitive, vertices.size(), &vertices[0], sizeof(VertexType) * vertices.size(), usage);
     }
 };

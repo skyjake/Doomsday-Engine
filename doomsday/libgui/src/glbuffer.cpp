@@ -21,6 +21,7 @@
 namespace de {
 
 using namespace internal;
+using namespace gl;
 
 AttribSpec const Vertex2TexRgba::_spec[3] = {
     { AttribSpec::Position,  2, GL_FLOAT, false, sizeof(Vertex2TexRgba), 0 },
