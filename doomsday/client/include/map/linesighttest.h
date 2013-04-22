@@ -54,7 +54,9 @@ public:
      * @param flags         @ref lineSightFlags dictate trace behavior/logic.
      */
     LineSightTest(Vector3d const &from, Vector3d const &to,
-                  dfloat bottomSlope, dfloat topSlope, dint flags);
+                  dfloat bottomSlope = -1,
+                  dfloat topSlope    = +1,
+                  dint flags         = 0);
 
     /**
      * Execute the trace (i.e., cast the ray).
