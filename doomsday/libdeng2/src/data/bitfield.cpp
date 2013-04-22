@@ -29,6 +29,15 @@ DENG2_PIMPL(BitField)
     {
         int numBits;
         int firstBit;
+
+        dbyte mask(int skipBits) const {
+            dbyte mask = 0xff;
+            if(numBits - skipBits < 8) {
+                mask >>= 8 - (numBits - skipBits);
+            }
+            return mask;
+        }
+
     };
     typedef QMap<Id, Element> Elements;
 
@@ -70,9 +79,7 @@ DENG2_PIMPL(BitField)
 
         while(written < f.numBits)
         {
-            dbyte mask = 0xff;
-            if(f.numBits - written < 8) mask >>= 8 - (f.numBits - written);
-            mask <<= shift;
+            dbyte const mask = f.mask(written) << shift;
 
             dbyte pv = packed[packedIdx] & ~mask;
             pv |= mask & ((value >> written) << shift);
@@ -97,9 +104,7 @@ DENG2_PIMPL(BitField)
 
         while(read < f.numBits)
         {
-            dbyte mask = 0xff;
-            if(f.numBits - read < 8) mask >>= 8 - (f.numBits - read);
-            mask <<= shift;
+            dbyte const mask = f.mask(read) << shift;
 
             value |= ((packed[packedIdx] & mask) >> shift) << read;
 
