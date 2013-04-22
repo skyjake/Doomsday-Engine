@@ -19,6 +19,10 @@
 #ifndef LIBGUI_SYSTEM_OPENGL_H
 #define LIBGUI_SYSTEM_OPENGL_H
 
+#ifdef WIN32
+#  include "glentrypoints.h"
+#endif
+
 #include <QtOpenGL>
 
 #ifdef MACOSX

@@ -14,6 +14,7 @@ VERSION  = $$DENG_VERSION
 CONFIG += deng_qtgui deng_qtopengl
 
 include(../dep_deng2.pri)
+include(../dep_opengl.pri)
 
 DEFINES += __LIBGUI__
 INCLUDEPATH += include
@@ -67,6 +68,7 @@ HEADERS += \
     include/de/gui/displaymode.h \
     include/de/gui/displaymode_native.h \
     include/de/gui/glbuffer.h \
+    include/de/gui/glentrypoints.h \
     include/de/gui/glprogram.h \
     include/de/gui/glshader.h \
     include/de/gui/glstate.h \
@@ -95,7 +97,8 @@ SOURCES += \
     src/gluniform.cpp \
     src/guiapp.cpp \
     src/keyevent.cpp \
-    src/persistentcanvaswindow.cpp
+    src/persistentcanvaswindow.cpp \
+    src/glentrypoints.cpp
 
 # DisplayMode
 !deng_nodisplaymode {
