@@ -19,14 +19,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_RENDER_SHADOWBIAS_H
-#define LIBDENG_RENDER_SHADOWBIAS_H
+#ifndef DENG_RENDER_SHADOWBIAS
+#define DENG_RENDER_SHADOWBIAS
 
-#include <de/vector1.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <de/vector1.h> /// @todo Remove me
+#include <de/Vector>
 
 struct rendpoly_s;
 struct rvertex_s;
@@ -133,7 +130,7 @@ void SB_EndFrame(void);
  * @param elmIdx        Used with BspLeafs to select a specific plane.
  */
 void SB_RendPoly(struct ColorRawf_s *rcolors, struct biassurface_s *bsuf,
-    struct rvertex_s const *rvertices, size_t numVertices, const_pvec3f_t normal,
+    struct rvertex_s const *rvertices, size_t numVertices, de::Vector3f const &normal,
     float sectorLightLevel, de::MapElement const *mapElement, int elmIdx);
 
 /**
@@ -184,8 +181,4 @@ int SB_ToIndex(source_t *source);
 
 void SB_SetColor(float *dest, float *src);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif // LIBDENG_RENDER_SHADOWBIAS_H
+#endif // DENG_RENDER_SHADOWBIAS
