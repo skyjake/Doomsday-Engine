@@ -332,8 +332,10 @@ DENG_PUBLIC void V2d_Lerp(pvec2d_t dest, const_pvec2d_t a, const_pvec2d_t b, dou
  * Left/top is the min-point.  Right/bottom is the max-point.
  */
 DENG_PUBLIC void V2d_InitBox(arvec2d_t box, const_pvec2d_t point);
+DENG_PUBLIC void V2d_InitBoxXY(arvec2d_t box, double x, double y);
 
 DENG_PUBLIC void V2d_AddToBox(arvec2d_t box, const_pvec2d_t point);
+DENG_PUBLIC void V2d_AddToBoxXY(arvec2d_t box, double x, double y);
 
 DENG_PUBLIC void V2d_UniteBox(arvec2d_t box, const_arvec2d_t other);
 

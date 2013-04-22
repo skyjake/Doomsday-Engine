@@ -627,6 +627,12 @@ void V2d_InitBox(arvec2d_t box, const_pvec2d_t point)
     V2d_Copy(box[1], point);
 }
 
+void V2d_InitBoxXY(arvec2d_t box, double x, double y)
+{
+    vec2d_t point; V2d_Set(point, x, y);
+    V2d_InitBox(box, point);
+}
+
 void V2d_AddToBox(arvec2d_t box, const_pvec2d_t point)
 {
     if(point[VX] < box[0][VX])
@@ -638,6 +644,12 @@ void V2d_AddToBox(arvec2d_t box, const_pvec2d_t point)
         box[0][VY] = point[VY];
     if(point[VY] > box[1][VY])
         box[1][VY] = point[VY];
+}
+
+void V2d_AddToBoxXY(arvec2d_t box, double x, double y)
+{
+    vec2d_t point; V2d_Set(point, x, y);
+    V2d_AddToBox(box, point);
 }
 
 void V2d_UniteBox(arvec2d_t box, const_arvec2d_t other)
