@@ -131,7 +131,7 @@ DENG2_PIMPL(GLBuffer)
             {
                 glEnableVertexAttribArray(i);
                 glVertexAttribPointer(i, spec.size, spec.type, spec.normalized, spec.stride,
-                                      (void const *) spec.startOffset);
+                                      (void const *) dintptr(spec.startOffset));
             }
             else
             {
@@ -214,7 +214,7 @@ void GLBuffer::draw(duint first, dint count)
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, d->idxName);
         glDrawElements(Instance::glPrimitive(d->prim), count, GL_UNSIGNED_SHORT,
-                       (void const *)(first * 2));
+                       (void const *) dintptr(first * 2));
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
     else

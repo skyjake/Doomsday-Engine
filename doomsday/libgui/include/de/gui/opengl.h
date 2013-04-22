@@ -23,6 +23,12 @@
 #  include "glentrypoints.h"
 #endif
 
+#if defined(UNIX) && !defined(MACOSX)
+#  define GL_GLEXT_PROTOTYPES
+#  include <GL/gl.h>
+#  include <GL/glext.h>
+#endif
+
 #include <QtOpenGL>
 
 #ifdef MACOSX

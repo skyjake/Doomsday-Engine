@@ -67,7 +67,8 @@
 #if defined(__cplusplus) && !defined(DENG2_C_API_ONLY)
 #  define DENG2_USE_QT
 #  include <typeinfo>
-#  include <memory> // auto_ptr
+#  include <memory>  // auto_ptr
+#  include <cstring> // memset
 #endif
 
 #if defined(__x86_64__) || defined(__x86_64) || defined(_LP64)
@@ -257,7 +258,7 @@
     struct Instance; \
     de::PrivateAutoPtr<Instance> Var;
 
-#if defined(__cplusplus)
+#if defined(__cplusplus) && !defined(DENG2_C_API_ONLY)
 namespace de {
 
 /**
@@ -375,7 +376,6 @@ template <typename Type>
 inline void zapPtr(Type *t) {
     std::memset(t, 0, sizeof(Type));
 }
-
 
 } // namespace de
 #endif // __cplusplus
