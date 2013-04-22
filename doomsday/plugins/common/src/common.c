@@ -27,9 +27,6 @@ int Common_GetInteger(int id)
 {
     switch(id)
     {
-    case DD_DMU_VERSION:
-        return DMUAPI_VER;
-
     case DD_GAME_RECOMMENDS_SAVING:
         // The engine will use this as a hint whether to remind the user to
         // manually save the game before, e.g., upgrading to a new version.

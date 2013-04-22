@@ -217,7 +217,6 @@ enum {
     DD_PLUGIN_NICENAME, ///< (e.g., jDoom, MyGame:Episode2 etc..., fancy name)
     DD_PLUGIN_HOMEURL,
     DD_PLUGIN_DOCSURL,
-    DD_DMU_VERSION, ///< Used in the exchange of DMU API versions.
     DD_DEF_ACTION,
 
     // Non-integer/special values for Set/Get
@@ -308,9 +307,6 @@ enum {
  * @ingroup map
  */
 ///@{
-
-/// Public DMU API version number. Requested by the engine during init. @ingroup dmu
-#define DMUAPI_VER          1
 
 /// Map Update constants. @ingroup dmu
 enum {
