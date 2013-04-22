@@ -519,13 +519,16 @@ int PIT_AddLineIntercepts(Line *line, void * /*parameters*/)
     divline_t const &traceLos = theMap->traceLine();
     int s1, s2;
 
+    fixed_t lineFromX[2] = { DBL2FIX(line->fromOrigin().x), DBL2FIX(line->fromOrigin().y) };
+    fixed_t lineToX[2]   = { DBL2FIX(  line->toOrigin().x), DBL2FIX(  line->toOrigin().y) };
+
     // Is this line crossed?
     // Avoid precision problems with two routines.
     if(traceLos.direction[VX] >  FRACUNIT * 16 || traceLos.direction[VY] >  FRACUNIT * 16 ||
        traceLos.direction[VX] < -FRACUNIT * 16 || traceLos.direction[VY] < -FRACUNIT * 16)
     {
-        s1 = Divline_PointOnSide(&traceLos, line->v1Origin());
-        s2 = Divline_PointOnSide(&traceLos, line->v2Origin());
+        s1 = V2x_PointOnLineSide(lineFromX, traceLos.origin, traceLos.direction);
+        s2 = V2x_PointOnLineSide(lineToX,   traceLos.origin, traceLos.direction);
     }
     else
     {
@@ -535,11 +538,10 @@ int PIT_AddLineIntercepts(Line *line, void * /*parameters*/)
     }
     if(s1 == s2) return false;
 
-    // On the correct side of the trace origin?
-    fixed_t linePointX[2]     = { DBL2FIX(line->v1Origin()[VX]), DBL2FIX(line->v1Origin()[VY]) };
     fixed_t lineDirectionX[2] = { DBL2FIX(line->direction().x), DBL2FIX(line->direction().y) };
 
-    float distance = FIX2FLT(V2x_Intersection(linePointX, lineDirectionX,
+    // On the correct side of the trace origin?
+    float distance = FIX2FLT(V2x_Intersection(lineFromX, lineDirectionX,
                                               traceLos.origin, traceLos.direction));
     if(!(distance < 0))
     {
