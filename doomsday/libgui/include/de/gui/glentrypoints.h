@@ -50,7 +50,7 @@ extern PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray;
 extern PFNGLENABLEVERTEXATTRIBARRAYPROC  glEnableVertexAttribArray;
 
 extern PFNGLGENBUFFERSPROC               glGenBuffers;
-extern PFNGLGENERATEMIPMAPPROC           glGenerateMipmap;
+//extern PFNGLGENERATEMIPMAPPROC           glGenerateMipmap;
 extern PFNGLGETATTRIBLOCATIONPROC        glGetAttribLocation;
 extern PFNGLGETPROGRAMINFOLOGPROC        glGetProgramInfoLog;
 extern PFNGLGETPROGRAMIVPROC             glGetProgramiv;
