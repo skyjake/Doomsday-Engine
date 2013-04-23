@@ -70,12 +70,26 @@ namespace gl
 /**
  * GL state.
  *
+ * All manipulation of OpenGL state must occur through this class. If OpenGL
+ * state is changed manually, it will result in GLState not knowing about it,
+ * potentially leading to the incorrect state being in effect later on.
+ *
+ * GLState instances can either be created on demand with GLState::push(), or
+ * one can keep a GLState instance around for repeating use. The stack exists
+ * to aid structured drawing: it is not required to use the stack for all
+ * drawing. GLState::apply() can be called for any GLState instance to use it
+ * as the current GL state.
+ *
  * @ingroup gl
  */
 class LIBGUI_PUBLIC GLState
 {   
 public:
+    /**
+     * Constructs a GL state with the default values for all properties.
+     */
     GLState();
+
     GLState(GLState const &other);
 
     void setCull(gl::Cull mode);
@@ -96,6 +110,13 @@ public:
     gl::Blend destBlendFunc() const;
     gl::BlendFunc blendFunc() const;
     gl::BlendOp blendOp() const;
+
+    /**
+     * Updates the OpenGL state to match this GLState. Until this is called no
+     * changes occur in the OpenGL state. Calling this more than once is
+     * allowed; the subsequent calls do nothing.
+     */
+    void apply() const;
 
 public:
     /**

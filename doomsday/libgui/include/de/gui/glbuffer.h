@@ -101,6 +101,9 @@ namespace gl
  *
  * @note Compatible with OpenGL ES 2.0.
  *
+ * @todo Add a method for replacing a portion of the existing data in the buffer
+ * (using glBufferSubData).
+ *
  * @ingroup gl
  */
 class LIBGUI_PUBLIC GLBuffer : public Asset
