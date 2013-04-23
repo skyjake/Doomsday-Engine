@@ -44,7 +44,9 @@ DENG2_PIMPL(Drawable)
     GLProgram defaultProgram;
 
     Instance(Public *i) : Base(i)
-    {}
+    {
+        self += defaultProgram;
+    }
 
     ~Instance()
     {
@@ -143,15 +145,19 @@ GLState &Drawable::state(Id id) const
 void Drawable::addBuffer(Id id, GLBuffer *buffer)
 {
     removeBuffer(id);
+
     d->buffers[id] = buffer;
     setProgram(id, d->defaultProgram);
+    insert(*buffer, Required);
 }
 
 GLProgram &Drawable::addProgram(Id id)
 {
     removeProgram(id);
+
     GLProgram *p = new GLProgram;
     d->programs[id] = p;
+    insert(*p, Required);
     return *p;
 }
 
@@ -236,8 +242,11 @@ void Drawable::unsetState()
 
 void Drawable::draw() const
 {
+    // Ignore the draw request until everything is ready.
+    if(!isReady()) return;
+
     GLProgram const *currentProgram = 0;
-    GLState const *currentState = 0;
+    GLState   const *currentState   = 0;
 
     DENG2_FOR_EACH_CONST(Instance::Buffers, i, d->buffers)
     {

@@ -22,6 +22,7 @@
 #include <QSet>
 
 #include <de/libdeng2.h>
+#include <de/Asset>
 
 #include "../GLBuffer"
 #include "../GLProgram"
@@ -41,7 +42,8 @@ namespace de {
  * GL states. There can be multiple (named) instances of buffers, programs, and
  * states in a Drawable. While each buffer must have a program, having a state
  * is optional. Each buffer can choose which of the Drawable's programs and
- * states is used with the buffer.
+ * states is used with the buffer. It is also possible to assign external
+ * programs and states for use with buffers.
  *
  * Example use cases:
  * - draw a single buffer with a program using the current GL state
@@ -61,9 +63,14 @@ namespace de {
  * uniforms in the programs. The user is expected to provide the static/dynamic
  * vertex data for the buffers.
  *
+ * Drawable is an AssetGroup: it cannot be drawn until all the contained
+ * buffers and programs are ready. It is allowed to insert further assets into
+ * the group if they should be present before drawing is allowed (e.g.,
+ * textures).
+ *
  * @ingroup gl
  */
-class Drawable
+class Drawable : public AssetGroup
 {
     DENG2_NO_COPY  (Drawable)
     DENG2_NO_ASSIGN(Drawable)
@@ -114,7 +121,7 @@ public:
     GLState const *stateForBuffer(Id bufferId) const;
 
     /**
-     * Creates a buffer or replaces an existing one with a blank buffer.
+     * Adds a new buffer or replaces an existing one.
      *
      * @param id      Identifier of the buffer.
      * @param buffer  GL buffer. Drawable gets ownership.
