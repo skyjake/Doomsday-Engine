@@ -27,6 +27,10 @@
 #include "doomsday.h"
 #include "p_mobj.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define BUTTONTIME              (TICSPERSEC) // 1 second, in ticks.
 
 typedef struct {
@@ -78,5 +82,9 @@ boolean P_ToggleSwitch(Side* side, int sound, boolean silent, int tics);
 boolean P_UseSpecialLine(mobj_t* activator, Line* line, int side);
 
 void T_MaterialChanger(void *materialChangedThinker);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBCOMMON_PLAY_SWITCH_H

@@ -83,8 +83,12 @@ typedef struct xline_s {
     xgline_t*       xg;
 } xline_t;
 
-extern xsector_t* xsectors;
-extern xline_t* xlines;
+DENG_EXTERN_C xsector_t* xsectors;
+DENG_EXTERN_C xline_t* xlines;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Converts a line to an xline.
@@ -112,4 +116,9 @@ void P_SetLineAutomapVisibility(int player, int lineIdx, boolean visible);
 
 xline_t*        P_GetXLine(int index);
 xsector_t*      P_GetXSector(int index);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 #endif

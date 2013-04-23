@@ -66,6 +66,10 @@ typedef struct {
     float           baseValue;
 } phase_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void            T_Phase(phase_t* phase);
 void            P_SpawnPhasedLight(Sector* sec, float base, int index);
 
@@ -73,5 +77,9 @@ void            T_Light(light_t* light);
 void            P_SpawnLightSequence(Sector* sec, int indexStep);
 
 boolean         EV_SpawnLight(Line* line, byte* arg, lighttype_t type);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

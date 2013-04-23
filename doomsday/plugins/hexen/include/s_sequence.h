@@ -34,6 +34,8 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+#include "jhexen.h"
+
 enum {
     SEQ_PLATFORM,
     SEQ_PLATFORM_HEAVY, // same script as a normal platform.
@@ -85,8 +87,12 @@ typedef struct seqnode_s {
     struct seqnode_s* next;
 } seqnode_t;
 
-extern int ActiveSequences;
-extern seqnode_t* SequenceListHead;
+DENG_EXTERN_C int ActiveSequences;
+DENG_EXTERN_C seqnode_t* SequenceListHead;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void            SN_InitSequenceScript(void);
 void            SN_StartSequence(mobj_t* mobj, int sequence);
@@ -99,4 +105,9 @@ void            SN_StopAllSequences(void);
 int             SN_GetSequenceOffset(int sequence, int* sequencePtr);
 void            SN_ChangeNodeData(int nodeNum, int seqOffset, int delayTics,
                                   int volume, int currentSoundID);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 #endif

@@ -30,6 +30,10 @@
 #ifndef LIBCOMMON_THINKER_DOOR_H
 #define LIBCOMMON_THINKER_DOOR_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
     DS_DOWN = -1,
     DS_WAIT,
@@ -95,6 +99,10 @@ void  P_SpawnDoorRaiseIn5Mins(Sector* sec);
 
 #if __JDOOM64__
 int EV_AnimateDoor(Line* li, mobj_t* mo);
+#endif
+
+#ifdef __cplusplus
+} // extern "C"
 #endif
 
 #endif // LIBCOMMON_THINKER_DOOR_H

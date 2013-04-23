@@ -193,7 +193,7 @@ typedef struct classinfo_s{
     textenum_t  skillModeNames[NUM_SKILL_MODES];
 } classinfo_t;
 
-extern classinfo_t classInfo[NUM_PLAYER_CLASSES];
+DENG_EXTERN_C classinfo_t classInfo[NUM_PLAYER_CLASSES];
 
 /**
  * Game state (hi-level).
@@ -363,7 +363,7 @@ enum { CR, CG, CB, CA }; // Color indices.
 #define TIMEBOMB_STARTDATE  (268) // initial date (9/26)
 #define TIMEBOMB_ENDDATE    (301) // end date (10/29)
 
-extern int maulatorSeconds;
+DENG_EXTERN_C int maulatorSeconds;
 
 #define MAULATORTICS        ((unsigned int) maulatorSeconds * TICSPERSEC)
 
@@ -376,19 +376,21 @@ extern int maulatorSeconds;
 
 #define DEFAULT_PLAYER_VIEWHEIGHT (48)
 
-extern fixed_t finesine[5 * FINEANGLES / 4];
-extern fixed_t *finecosine;
+DENG_EXTERN_C fixed_t finesine[5 * FINEANGLES / 4];
+DENG_EXTERN_C fixed_t *finecosine;
 
 // Set if homebrew PWAD stuff has been added.
-extern boolean  modifiedgame;
+DENG_EXTERN_C boolean  modifiedgame;
 
 #define MAX_PLAYER_STARTS   (8)
 
+DENG_EXTERN_C int localQuakeHappening[MAXPLAYERS];
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void            H2_Main(void);
-
-void            P_Init(void);
-
-extern int      localQuakeHappening[MAXPLAYERS];
 
 byte            P_Random(void);
 void            M_ResetRandom(void);
@@ -409,12 +411,16 @@ int             SC_MatchString(char** strings);
 int             SC_MustMatchString(char** strings);
 void            SC_ScriptError(char* message);
 
-extern char* sc_String;
-extern int sc_Number;
-extern int sc_Line;
-extern boolean sc_End;
-extern boolean sc_Crossed;
-extern boolean sc_FileScripts;
-extern const char* sc_ScriptsDir;
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+DENG_EXTERN_C char* sc_String;
+DENG_EXTERN_C int sc_Number;
+DENG_EXTERN_C int sc_Line;
+DENG_EXTERN_C boolean sc_End;
+DENG_EXTERN_C boolean sc_Crossed;
+DENG_EXTERN_C boolean sc_FileScripts;
+DENG_EXTERN_C const char* sc_ScriptsDir;
 
 #endif // __H2DEF_H__

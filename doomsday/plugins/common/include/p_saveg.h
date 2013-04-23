@@ -1,9 +1,7 @@
-/**
- * @file p_saveg.h
- * Common game-save state management.
+/** @file p_saveg.h Common game-save state management.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -24,6 +22,13 @@
 #define LIBCOMMON_SAVESTATE_H
 
 #include "p_saveio.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef void (*WriteThinkerFunc)(thinker_t *);
+typedef int (*ReadThinkerFunc)(thinker_t *);
 
 /// Register the console commands and variables of this module.
 void SV_Register(void);
@@ -208,4 +213,8 @@ Material* SV_GetArchiveMaterial(materialarchive_serialid_t serialId, int group);
  */
 void SV_TranslateLegacyMobjFlags(mobj_t* mo, int ver);
 
-#endif /* LIBCOMMON_SAVESTATE_H */
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#endif // LIBCOMMON_SAVESTATE_H

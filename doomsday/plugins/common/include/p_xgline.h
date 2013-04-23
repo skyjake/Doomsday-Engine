@@ -330,6 +330,10 @@ extern struct xgclass_s xgClasses[];
 // Used as the activator if there is no real activator.
 extern struct mobj_s dummyThing;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Register the XG classnames for XGdev
 void            XG_Register(void);
 
@@ -370,5 +374,9 @@ int             XG_RandomInt(int min, int max);
 
 void            SV_WriteXGLine(Line* li);
 void            SV_ReadXGLine(Line* li);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

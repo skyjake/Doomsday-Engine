@@ -77,6 +77,10 @@ enum {
     PO_SPAWNCRUSH_DOOMEDNUM
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void PO_InitForMap(void);
 boolean PO_Busy(int polyobj);
 
@@ -100,5 +104,9 @@ boolean EV_RotatePoly(Line* line, byte* args, int direction, boolean override);
 void T_MovePoly(void *pe);
 boolean EV_MovePoly(Line* line, byte* args, boolean timesEight, boolean override);
 boolean EV_OpenPolyDoor(Line* line, byte* args, podoortype_t type);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

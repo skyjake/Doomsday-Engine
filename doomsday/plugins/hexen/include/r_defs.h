@@ -33,6 +33,7 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+#include "jhexen.h"
 #include "p_mobj.h"
 #include "s_sequence.h"
 
@@ -58,8 +59,12 @@ typedef struct xline_s {
     int             validCount;
 } xline_t;
 
-extern xline_t* xlines;
-extern xsector_t* xsectors;
+DENG_EXTERN_C xline_t* xlines;
+DENG_EXTERN_C xsector_t* xsectors;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Converts a line to an xline.
@@ -88,4 +93,9 @@ xsector_t*  P_ToXSectorOfBspLeaf(BspLeaf* sub);
  * @param visible  @c true= mark the line as visible.
  */
 void P_SetLineAutomapVisibility(int player, int lineIdx, boolean visible);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 #endif

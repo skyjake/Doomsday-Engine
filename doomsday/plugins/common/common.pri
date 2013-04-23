@@ -101,7 +101,7 @@ SOURCES += \
     $$common_src/p_mapspec.c \
     $$common_src/p_plat.c \
     $$common_src/p_player.c \
-    $$common_src/p_saveg.c \
+    $$common_src/p_saveg.cpp \
     $$common_src/p_saveio.c \
     $$common_src/p_scroll.c \
     $$common_src/p_sound.c \

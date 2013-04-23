@@ -312,6 +312,10 @@ typedef struct polyobj_s {
     // Doom64-specific data:
 } Polyobj;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void P_ExplodeMissile(mobj_t* mo);
 
 coord_t P_MobjGetFriction(mobj_t* mo);
@@ -358,5 +362,9 @@ void P_RipperBlood(mobj_t* mo);
 void P_SetDoomsdayFlags(mobj_t* mo);
 
 void P_HitFloor(mobj_t* mo);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBDOOM64_P_MOBJ_H

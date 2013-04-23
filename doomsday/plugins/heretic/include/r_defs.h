@@ -86,8 +86,12 @@ typedef struct xline_s {
     xgline_t       *xg;
 } xline_t;
 
-extern xline_t *xlines;
-extern xsector_t *xsectors;
+DENG_EXTERN_C xline_t *xlines;
+DENG_EXTERN_C xsector_t *xsectors;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Converts a line to an xline.
@@ -116,4 +120,9 @@ xsector_t*  P_ToXSectorOfBspLeaf(BspLeaf* sub);
  * @param visible  @c true= mark the line as visible.
  */
 void P_SetLineAutomapVisibility(int player, int lineIdx, boolean visible);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 #endif

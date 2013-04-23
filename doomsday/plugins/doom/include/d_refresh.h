@@ -36,8 +36,6 @@ void D_DrawViewPort(int port, const RectRaw* portGeometry, const RectRaw* window
 void D_DrawWindow(const Size2Raw* windowSize);
 void D_EndFrame(void);
 
-void P_SetDoomsdayFlags(mobj_t* mo);
-
 /**
  * Updates the status flags for all visible things.
  */

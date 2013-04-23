@@ -23,6 +23,10 @@
 #ifndef LIBCOMMON_P_ACTOR_H
 #define LIBCOMMON_P_ACTOR_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Removes the given mobj from the world.
  *
@@ -101,5 +105,9 @@ void P_DeferSpawnMobj3f(int minTics, mobjtype_t type, coord_t x, coord_t y, coor
     int spawnFlags, void (*callback) (mobj_t* mo, void* context), void* context);
 void P_DeferSpawnMobj3fv(int minTics, mobjtype_t type, coord_t const pos[3], angle_t angle,
     int spawnFlags, void (*callback) (mobj_t* mo, void* context), void* context);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBCOMMON_P_ACTOR_H

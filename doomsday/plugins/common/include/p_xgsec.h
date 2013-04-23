@@ -31,6 +31,10 @@
 
 #include "g_common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Sector chain event types.
 enum {
     XSCE_FLOOR,
@@ -188,5 +192,9 @@ void            SV_WriteXGPlaneMover(thinker_t *th);
 int             SV_ReadXGPlaneMover(xgplanemover_t* mov);
 
 D_CMD(MovePlane);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

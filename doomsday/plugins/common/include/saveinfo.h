@@ -26,6 +26,10 @@
 #include "doomsday.h"
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct saveheader_s {
     int magic;
     int version;
@@ -99,6 +103,10 @@ void SaveInfo_Read(SaveInfo* info, Reader* reader);
  * legacy version 9 save state info.
  */
 void SaveInfo_Read_Hx_v9(SaveInfo* info, Reader* reader);
+#endif
+
+#ifdef __cplusplus
+} // extern "C"
 #endif
 
 #endif /* LIBCOMMON_SAVEINFO_H */

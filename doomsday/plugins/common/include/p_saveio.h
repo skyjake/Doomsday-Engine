@@ -28,6 +28,10 @@
 #include "lzss.h"
 #include "p_savedef.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum gamearchivesegment_e {
     ASEG_MAP_HEADER = 102, // Hexen only
     ASEG_WORLD,
@@ -113,5 +117,9 @@ float SV_ReadFloat(void);
 
 Writer* SV_NewWriter(void);
 Reader* SV_NewReader(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H */

@@ -30,11 +30,19 @@
 
 #include "saveinfo.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 boolean SV_RecogniseState_Hr_v13(const char* path, SaveInfo* info);
 
 /**
  * @return  @c 0 on success else error code.
  */
 int SV_LoadState_Hr_v13(const char* path, SaveInfo* saveInfo);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBHERETIC_OLD_SAVESTATE

@@ -23,6 +23,7 @@
 
 #include "common.h"
 #include "dmu_lib.h"
+
 #include "p_scroll.h"
 
 void T_Scroll(scroll_t* s)

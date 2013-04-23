@@ -30,11 +30,19 @@
 
 #include "saveinfo.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 boolean SV_RecogniseState_Dm_v19(const char* path, SaveInfo* info);
 
 /**
  * @return  @c 0 on success else error code.
  */
 int SV_LoadState_Dm_v19(const char* path, SaveInfo* saveInfo);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBDOOM_OLD_SAVESTATE

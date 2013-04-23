@@ -77,9 +77,13 @@
 
 #define sentient(mobj)      ((mobj)->health > 0 && P_GetState((mobj)->type, SN_SEE))
 
-extern float turboMul;
-extern int maxAmmo[NUM_AMMO_TYPES];
-extern int clipAmmo[NUM_AMMO_TYPES];
+DENG_EXTERN_C float turboMul;
+DENG_EXTERN_C int maxAmmo[NUM_AMMO_TYPES];
+DENG_EXTERN_C int clipAmmo[NUM_AMMO_TYPES];
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void        P_SetupPsprites(player_t* plr);
 void        P_MovePsprites(player_t* plr);
@@ -98,5 +102,9 @@ int         P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source, int 
 int         P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage, boolean stomping, boolean skipNetworkCheck);
 
 void        P_ExplodeMissile(mobj_t* mo);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

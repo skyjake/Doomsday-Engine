@@ -30,6 +30,10 @@
 #ifndef LIBCOMMON_THINKER_CEILING_H
 #define LIBCOMMON_THINKER_CEILING_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
     CS_DOWN,
     CS_UP
@@ -86,5 +90,9 @@ int EV_DoCeiling(Line* li, ceilingtype_e type);
 int P_CeilingActivate(short tag);
 #endif
 int P_CeilingDeactivate(short tag);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBCOMMON_THINKER_CEILING_H

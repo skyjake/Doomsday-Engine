@@ -29,6 +29,8 @@
 #ifndef LIBCOMMON_PLAYSTART_H
 #define LIBCOMMON_PLAYSTART_H
 
+#include "common.h"
+
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 # include "r_defs.h"
 #else
@@ -128,14 +130,18 @@ typedef struct {
     mapspotid_t spot;
 } playerstart_t;
 
-extern uint numMapSpots;
-extern mapspot_t *mapSpots;
+DENG_EXTERN_C uint numMapSpots;
+DENG_EXTERN_C mapspot_t *mapSpots;
 
 #if __JHERETIC__
-extern mapspotid_t *maceSpots;
-extern uint maceSpotCount;
-extern mapspotid_t* bossSpots;
-extern uint bossSpotCount;
+DENG_EXTERN_C mapspotid_t *maceSpots;
+DENG_EXTERN_C uint maceSpotCount;
+DENG_EXTERN_C mapspotid_t* bossSpots;
+DENG_EXTERN_C uint bossSpotCount;
+#endif
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 /**
@@ -223,5 +229,9 @@ void P_RebornPlayerInMultiplayer(int plrNum);
  *          given location because something is occupying it.
  */
 boolean P_CheckSpot(coord_t x, coord_t y);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBCOMMON_PLAYSTART_H

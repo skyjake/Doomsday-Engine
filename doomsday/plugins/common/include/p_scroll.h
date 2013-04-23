@@ -26,6 +26,10 @@
 
 #include "doomsday.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
   thinker_t thinker;
   void* dmuObject; ///< Affected DMU object (either a sector or a side).
@@ -38,5 +42,9 @@ void T_Scroll(scroll_t* scroll);
 scroll_t* P_SpawnSideMaterialOriginScroller(Side* side, short special);
 
 scroll_t* P_SpawnSectorMaterialOriginScroller(Sector* sector, uint planeId, short special);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBCOMMON_THINKER_SCROLL_H
