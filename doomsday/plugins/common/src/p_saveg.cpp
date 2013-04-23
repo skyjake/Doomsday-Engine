@@ -21,7 +21,6 @@
 #include <lzss.h>
 #include <cstdio>
 #include <cstring>
-//#include <assert.h>
 
 #include "common.h"
 
@@ -59,17 +58,17 @@
 #define FF_FRAMEMASK        0x7fff
 
 typedef struct playerheader_s {
-    int             numPowers;
-    int             numKeys;
-    int             numFrags;
-    int             numWeapons;
-    int             numAmmoTypes;
-    int             numPSprites;
+    int numPowers;
+    int numKeys;
+    int numFrags;
+    int numWeapons;
+    int numAmmoTypes;
+    int numPSprites;
 #if __JDOOM64__ || __JHERETIC__ || __JHEXEN__
-    int             numInvItemTypes;
+    int numInvItemTypes;
 #endif
 #if __JHEXEN__
-    int             numArmorTypes;
+    int numArmorTypes;
 #endif
 } playerheader_t;
 
@@ -77,12 +76,12 @@ typedef struct playerheader_s {
 #define TSF_SERVERONLY      0x01 ///< Only saved by servers.
 
 typedef struct thinkerinfo_s {
-    thinkerclass_t  thinkclass;
-    thinkfunc_t     function;
-    int             flags;
+    thinkerclass_t thinkclass;
+    thinkfunc_t function;
+    int flags;
     WriteThinkerFunc writeFunc;
     ReadThinkerFunc readFunc;
-    size_t          size;
+    size_t size;
 } thinkerinfo_t;
 
 typedef enum sectorclass_e {
@@ -373,14 +372,6 @@ static thinkerinfo_t thinkerInfo[] = {
     { TC_NULL, NULL, 0, NULL, NULL, 0 }
 };
 
-static void errorIfNotInited(char const *callerName)
-{
-    if(inited) return;
-    Con_Error("%s: Saved game module is not presently initialized.", callerName);
-    // Unreachable. Prevents static analysers from getting rather confused, poor things.
-    exit(1);
-}
-
 /**
  * Compose the (possibly relative) path to the game-save associated
  * with the logical save @a slot.
@@ -605,9 +596,8 @@ AutoStr *SV_ComposeSlotIdentifier(int slot)
 
 void SV_ClearSlot(int slot)
 {
-    AutoStr *path;
+    DENG_ASSERT(inited);
 
-    errorIfNotInited("SV_ClearSlot");
     if(!SV_IsValidSlot(slot)) return;
 
     // Announce when clearing save slots (for auto and base slots too if _DEBUG).
@@ -623,6 +613,7 @@ void SV_ClearSlot(int slot)
         Con_Message("Clearing save slot %s", Str_Text(ident));
     }
 
+    AutoStr *path;
     for(int i = 0; i < MAX_HUB_MAPS; ++i)
     {
         path = composeGameSavePathForSlot2(slot, i);
@@ -741,13 +732,13 @@ static boolean SV_RecogniseState(char const *path, SaveInfo *info)
 
 SaveInfo *SV_SaveInfoForSlot(int slot)
 {
-    errorIfNotInited("SV_SaveInfoForSlot");
+    DENG_ASSERT(inited);
     return findSaveInfoForSlot(slot);
 }
 
 void SV_UpdateAllSaveInfo()
 {
-    errorIfNotInited("SV_UpdateAllSaveInfo");
+    DENG_ASSERT(inited);
     buildSaveInfo();
 }
 
@@ -783,7 +774,7 @@ int SV_ParseSlotIdentifier(char const *str)
 
 int SV_SlotForSaveName(char const *name)
 {
-    errorIfNotInited("SV_SlotForSaveName");
+    DENG_ASSERT(inited);
 
     int saveSlot = -1;
     if(name && name[0])
@@ -810,7 +801,7 @@ int SV_SlotForSaveName(char const *name)
 
 boolean SV_IsSlotUsed(int slot)
 {
-    errorIfNotInited("SV_IsSlotUsed");
+    DENG_ASSERT(inited);
     if(SV_ExistingFile(Str_Text(composeGameSavePathForSlot(slot))))
     {
         SaveInfo *info = SV_SaveInfoForSlot(slot);
@@ -830,7 +821,7 @@ boolean SV_HxHaveMapSaveForSlot(int slot, uint map)
 
 void SV_CopySlot(int sourceSlot, int destSlot)
 {
-    errorIfNotInited("SV_CopySlot");
+    DENG_ASSERT(inited);
 
     if(!SV_IsValidSlot(sourceSlot))
     {
@@ -875,7 +866,7 @@ void SV_HxInitBaseSlot()
 #endif
 
 /**
- * @return              Ptr to the thinkerinfo for the given thinker.
+ * @return  Thinker info for the given thinker.
  */
 static thinkerinfo_t *infoForThinker(thinker_t *th)
 {
@@ -890,7 +881,7 @@ static thinkerinfo_t *infoForThinker(thinker_t *th)
         thInfo++;
     }
 
-    return NULL;
+    return 0;
 }
 
 static int removeThinker(thinker_t *th, void *context)
@@ -955,14 +946,14 @@ static void SV_SetArchiveThing(mobj_t *mo, int num)
 #if __JHEXEN__
     if(mapVersion >= 4)
 #endif
+    {
         num -= 1;
+    }
 
-    if(num < 0)
-        return;
+    if(num < 0) return; // Does this ever occur?
 
-    if(!thingArchive)
-        Con_Error("SV_SetArchiveThing: Thing archive uninitialized.");
-
+    DENG_ASSERT(thingArchive != 0);
+    DENG_ASSERT(num >= 0 && (unsigned)num < thingArchiveSize);
     thingArchive[num] = mo;
 }
 
@@ -989,7 +980,7 @@ int SV_ThingArchiveNum(mobj_t *mo)
 unsigned short SV_ThingArchiveNum(mobj_t* mo)
 #endif
 {
-    errorIfNotInited("SV_ThingArchiveNum");
+    DENG_ASSERT(inited);
 
     // We only archive valid mobj thinkers.
     if(!mo || ((thinker_t *) mo)->function != (thinkfunc_t) P_MobjThinker)
@@ -1000,8 +991,7 @@ unsigned short SV_ThingArchiveNum(mobj_t* mo)
         return MOBJ_XX_PLAYER;
 #endif
 
-    if(!thingArchive)
-        Con_Error("SV_ThingArchiveNum: Thing archive uninitialized.");
+    DENG_ASSERT(thingArchive != 0);
 
     uint firstEmpty = 0;
     boolean found = false;
@@ -1030,23 +1020,20 @@ unsigned short SV_ThingArchiveNum(mobj_t* mo)
 
 Material *SV_GetArchiveMaterial(materialarchive_serialid_t serialId, int group)
 {
-    errorIfNotInited("SV_GetArchiveMaterial");
-    assert(materialArchive);
+    DENG_ASSERT(inited);
+    DENG_ASSERT(materialArchive != 0);
     return MaterialArchive_Find(materialArchive, serialId, group);
 }
 
 #if __JHEXEN__
 static void SV_FreeTargetPlayerList()
 {
-    targetplraddress_t *p = targetPlayerAddrs, *np;
-
-    while(p)
+    while(targetPlayerAddrs)
     {
-        np = p->next;
-        M_Free(p);
-        p = np;
+        targetplraddress_t *next = targetPlayerAddrs->next;
+        M_Free(targetPlayerAddrs);
+        targetPlayerAddrs = next;
     }
-    targetPlayerAddrs = 0;
 }
 #endif
 
@@ -1056,7 +1043,7 @@ static void SV_FreeTargetPlayerList()
  */
 mobj_t *SV_GetArchiveThing(int thingid, void *address)
 {
-    errorIfNotInited("SV_GetArchiveThing");
+    DENG_ASSERT(inited);
 
 #if __JHEXEN__
     if(thingid == MOBJ_XX_PLAYER)
@@ -1072,10 +1059,8 @@ mobj_t *SV_GetArchiveThing(int thingid, void *address)
     }
 #endif
 
-    if(!thingArchive)
-        Con_Error("SV_GetArchiveThing: Thing archive uninitialized.");
+    DENG_ASSERT(thingArchive != 0);
 
-    // Check that the thing archive id is valid.
 #if __JHEXEN__
     if(mapVersion < 4)
     {
@@ -1109,10 +1094,7 @@ mobj_t *SV_GetArchiveThing(int thingid, void *address)
 
 static playerheader_t *getPlayerHeader()
 {
-#if _DEBUG
-    if(!playerHeaderOK)
-        Con_Error("getPlayerHeader: Attempted to read before init!");
-#endif
+    DENG_ASSERT(playerHeaderOK);
     return &playerHeader;
 }
 
@@ -2136,7 +2118,7 @@ static int SV_ReadMobj(thinker_t* th)
 /**
  * Prepare and write the player header info.
  */
-static void P_ArchivePlayerHeader(void)
+static void P_ArchivePlayerHeader()
 {
     playerheader_t *ph = &playerHeader;
 
@@ -2175,7 +2157,7 @@ static void P_ArchivePlayerHeader(void)
 /**
  * Read archived player header info.
  */
-static void P_UnArchivePlayerHeader(void)
+static void P_UnArchivePlayerHeader()
 {
 #if __JHEXEN__
     if(hdr->version >= 4)
@@ -2241,7 +2223,7 @@ static void P_UnArchivePlayerHeader(void)
     playerHeaderOK = true;
 }
 
-static void P_ArchivePlayers(void)
+static void P_ArchivePlayers()
 {
     int                 i;
 
@@ -2841,6 +2823,8 @@ static void SV_ReadLine(Line *li)
 #if __JHEXEN__
 static void SV_WritePolyObj(Polyobj *po)
 {
+    DENG_ASSERT(po != 0);
+
     SV_WriteByte(1); // write a version byte.
 
     SV_WriteLong(po->tag);
@@ -2855,14 +2839,13 @@ static int SV_ReadPolyObj()
     DENG_UNUSED(ver);
 
     Polyobj *po = P_PolyobjByTag(SV_ReadLong());
-    if(!po) Con_Error("UnarchivePolyobjs: Invalid polyobj tag");
+    DENG_ASSERT(po != 0);
 
     angle_t angle = angle_t(SV_ReadLong());
     P_PolyobjRotate(po, angle);
     po->destAngle = angle;
-    coord_t deltaX = FIX2FLT(SV_ReadLong()) - po->origin[VX];
-    coord_t deltaY = FIX2FLT(SV_ReadLong()) - po->origin[VY];
-    P_PolyobjMoveXY(po, deltaX, deltaY);
+    P_PolyobjMoveXY(po, FIX2FLT(SV_ReadLong()) - po->origin[VX],
+                        FIX2FLT(SV_ReadLong()) - po->origin[VY]);
 
     /// @todo What about speed? It isn't saved at all?
 
@@ -4412,7 +4395,7 @@ static void rebuildCorpseQueue()
 /**
  * Un-Archives thinkers for both client and server.
  */
-static void P_UnArchiveThinkers(void)
+static void P_UnArchiveThinkers()
 {
     int         i;
     byte        tClass = 0;
@@ -4546,9 +4529,9 @@ static void P_UnArchiveThinkers(void)
         if(tClass == TC_MOBJ)
             i++;
 #endif
+
         if(!found)
-            Con_Error("P_UnarchiveThinkers: Unknown tClass %i in savegame",
-                      tClass);
+            Con_Error("P_UnarchiveThinkers: Unknown tClass %i in savegame", tClass);
 
         if(knownThinker)
             Thinker_Add(th);
@@ -4886,7 +4869,7 @@ static void P_ArchiveMisc()
     }
 }
 
-static void P_UnArchiveMisc(void)
+static void P_UnArchiveMisc()
 {
     int         ix;
 
@@ -4940,7 +4923,7 @@ static void P_ArchiveMap(boolean savePlayers)
     SV_BeginSegment(ASEG_END);
 }
 
-static void P_UnArchiveMap(void)
+static void P_UnArchiveMap()
 {
 #if __JHEXEN__
     int segType = SV_ReadLong();
@@ -4995,13 +4978,13 @@ static void P_UnArchiveMap(void)
 /**
  * @return  Pointer to the (currently in-use) material archive.
  */
-MaterialArchive* SV_MaterialArchive(void)
+MaterialArchive *SV_MaterialArchive()
 {
-    errorIfNotInited("SV_MaterialArchive");
+    DENG_ASSERT(inited);
     return materialArchive;
 }
 
-void SV_Init(void)
+void SV_Init()
 {
     static boolean firstInit = true;
 
@@ -5031,7 +5014,7 @@ void SV_Init(void)
     SV_ConfigureSavePaths();
 }
 
-void SV_Shutdown(void)
+void SV_Shutdown()
 {
     if(!inited) return;
 
@@ -5288,7 +5271,7 @@ static int loadStateWorker(char const *path, SaveInfo *saveInfo)
 
 boolean SV_LoadGame(int slot)
 {
-    errorIfNotInited("SV_LoadGame");
+    DENG_ASSERT(inited);
 
 #if __JHEXEN__
     int const logicalSlot = BASE_SLOT;
@@ -5335,12 +5318,12 @@ boolean SV_LoadGame(int slot)
 void SV_SaveGameClient(uint gameId)
 {
 #if !__JHEXEN__ // unsupported in libhexen
+    DENG_ASSERT(inited);
+
     player_t *pl = &players[CONSOLEPLAYER];
     mobj_t *mo = pl->plr->mo;
     AutoStr *gameSavePath;
     SaveInfo *saveInfo;
-
-    errorIfNotInited("SV_SaveGameClient");
 
     if(!IS_CLIENT || !mo)
         return;
@@ -5394,12 +5377,12 @@ void SV_SaveGameClient(uint gameId)
 void SV_LoadGameClient(uint gameId)
 {
 #if !__JHEXEN__ // unsupported in libhexen
+    DENG_ASSERT(inited);
+
     player_t *cpl = players + CONSOLEPLAYER;
     mobj_t *mo = cpl->plr->mo;
     AutoStr *gameSavePath;
     SaveInfo *saveInfo;
-
-    errorIfNotInited("SV_LoadGameClient");
 
     if(!IS_CLIENT || !mo)
         return;
@@ -5474,22 +5457,20 @@ void SV_LoadGameClient(uint gameId)
 }
 
 #if __JHEXEN__
-static void unarchiveMap(const Str* path)
+static void unarchiveMap(Str const *path)
 #else
-static void unarchiveMap(void)
+static void unarchiveMap()
 #endif
 {
 #if __JHEXEN__
-    size_t bufferSize;
-
-    DENG_ASSERT(path);
+    DENG_ASSERT(path != 0);
 
 #ifdef _DEBUG
     Con_Printf("unarchiveMap: Reading %s\n", Str_Text(path));
 #endif
 
     // Load the file
-    bufferSize = M_ReadFile(Str_Text(path), (char**)&saveBuffer);
+    size_t bufferSize = M_ReadFile(Str_Text(path), (char**)&saveBuffer);
     if(0 == bufferSize)
     {
         Con_Message("Warning: unarchiveMap: Failed opening \"%s\" for reading.", Str_Text(path));
@@ -5508,7 +5489,7 @@ static void unarchiveMap(void)
 #endif
 }
 
-static int saveStateWorker(const char* path, SaveInfo* saveInfo)
+static int saveStateWorker(char const *path, SaveInfo *saveInfo)
 {
 #if _DEBUG
     VERBOSE( Con_Message("SV_SaveGame: Attempting save game to \"%s\".", path) )
@@ -5522,9 +5503,10 @@ static int saveStateWorker(const char* path, SaveInfo* saveInfo)
     playerHeaderOK = false; // Uninitialized.
 
     // Write the game session header.
-    { Writer* svWriter = SV_NewWriter();
-    SaveInfo_Write(saveInfo, svWriter);
-    Writer_Delete(svWriter);
+    {
+        Writer *svWriter = SV_NewWriter();
+        SaveInfo_Write(saveInfo, svWriter);
+        Writer_Delete(svWriter);
     }
 
 #if __JHEXEN__
@@ -5564,20 +5546,19 @@ static int saveStateWorker(const char* path, SaveInfo* saveInfo)
     // Save out the current map.
 #if __JHEXEN__
     {
-    // Compose the full name to the saved map file.
-    AutoStr* mapPath = composeGameSavePathForSlot2(BASE_SLOT, gameMap+1);
+        // Compose the full name to the saved map file.
+        AutoStr *mapPath = composeGameSavePathForSlot2(BASE_SLOT, gameMap+1);
 
-    SV_OpenFile(Str_Text(mapPath), "wp");
-    P_ArchiveMap(true); // true = save player info
-    SV_CloseFile();
+        SV_OpenFile(Str_Text(mapPath), "wp");
+        P_ArchiveMap(true); // true = save player info
+        SV_CloseFile();
     }
 #else
     P_ArchiveMap(true);
 #endif
 
     // We are done with the MaterialArchive.
-    MaterialArchive_Delete(materialArchive);
-    materialArchive = NULL;
+    MaterialArchive_Delete(materialArchive); materialArchive = 0;
 
 #if!__JHEXEN__
     // To be absolutely sure...
@@ -5593,29 +5574,26 @@ static int saveStateWorker(const char* path, SaveInfo* saveInfo)
 /**
  * Construct a new SaveInfo configured for the current game session.
  */
-static SaveInfo* constructNewSaveInfo(const char* name)
+static SaveInfo *constructNewSaveInfo(char const *name)
 {
     ddstring_t nameStr;
-    SaveInfo* info = SaveInfo_New();
+    SaveInfo *info = SaveInfo_New();
     SaveInfo_SetName(info, Str_InitStatic(&nameStr, name));
     SaveInfo_SetGameId(info, SV_GenerateGameId());
     SaveInfo_Configure(info);
     return info;
 }
 
-boolean SV_SaveGame(int slot, const char* name)
+boolean SV_SaveGame(int slot, char const *name)
 {
-#if __JHEXEN__
-    const int logicalSlot = BASE_SLOT;
-#else
-    const int logicalSlot = slot;
-#endif
-    SaveInfo* info;
-    AutoStr* path;
-    int saveError;
-    assert(name);
+    DENG_ASSERT(inited);
+    DENG_ASSERT(name != 0);
 
-    errorIfNotInited("SV_SaveGame");
+#if __JHEXEN__
+    int const logicalSlot = BASE_SLOT;
+#else
+    int const logicalSlot = slot;
+#endif
 
     if(!SV_IsValidSlot(slot))
     {
@@ -5628,16 +5606,16 @@ boolean SV_SaveGame(int slot, const char* name)
         return false;
     }
 
-    path = composeGameSavePathForSlot(logicalSlot);
+    AutoStr *path = composeGameSavePathForSlot(logicalSlot);
     if(Str_IsEmpty(path))
     {
         Con_Message("Warning: Path \"%s\" is unreachable, game not saved.", SV_SavePath());
         return false;
     }
 
-    info = constructNewSaveInfo(name);
-    saveError = saveStateWorker(Str_Text(path), info);
+    SaveInfo *info = constructNewSaveInfo(name);
 
+    int saveError = saveStateWorker(Str_Text(path), info);
     if(!saveError)
     {
         // Swap the save info.
@@ -5666,12 +5644,8 @@ boolean SV_SaveGame(int slot, const char* name)
 }
 
 #if __JHEXEN__
-void SV_HxSaveClusterMap(void)
+void SV_HxSaveClusterMap()
 {
-    AutoStr* mapFilePath;
-
-    errorIfNotInited("SV_HxSaveClusterMap");
-
     playerHeaderOK = false; // Uninitialized.
 
     // Set the mobj archive numbers
@@ -5681,7 +5655,7 @@ void SV_HxSaveClusterMap(void)
     materialArchive = MaterialArchive_New(true);
 
     // Compose the full path name to the saved map file.
-    mapFilePath = composeGameSavePathForSlot2(BASE_SLOT, gameMap+1);
+    AutoStr *mapFilePath = composeGameSavePathForSlot2(BASE_SLOT, gameMap+1);
     SV_OpenFile(Str_Text(mapFilePath), "wp");
     P_ArchiveMap(false);
 
@@ -5693,11 +5667,11 @@ void SV_HxSaveClusterMap(void)
     SV_CloseFile();
 }
 
-void SV_HxLoadClusterMap(void)
+void SV_HxLoadClusterMap()
 {
     // Only unarchiveMap() uses targetPlayerAddrs, so it's NULLed here for the
     // following check (player mobj redirection).
-    targetPlayerAddrs = NULL;
+    targetPlayerAddrs = 0;
 
     playerHeaderOK = false; // Uninitialized.
 
