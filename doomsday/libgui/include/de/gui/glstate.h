@@ -120,6 +120,11 @@ public:
 
 public:
     /**
+     * Returns the current topmost state on the GL state stack.
+     */
+    static GLState &top();
+
+    /**
      * Pushes a copy of the current state onto the current thread's GL state
      * stack.
      *
@@ -137,14 +142,14 @@ public:
      *
      * @param state  State to push. Ownership taken.
      */
-    static void pushState(GLState *state);
+    static void push(GLState *state);
 
     /**
      * Removes the topmost state off of the current thread's stack.
      *
      * @return State instance. Ownership given to caller.
      */
-    static GLState *takeState();
+    static GLState *take();
 
 private:
     DENG2_PRIVATE(d)

@@ -315,27 +315,30 @@ void GLState::apply() const
     }
 }
 
-GLState &GLState::push()
+GLState &GLState::top()
 {
     DENG2_ASSERT(!stack.isEmpty());
+    return *stack.last();
+}
 
+GLState &GLState::push()
+{
     // Duplicate the topmost state.
-    GLState *top = new GLState(*stack.last());
-    pushState(top);
-    return *top;
+    push(new GLState(top()));
+    return top();
 }
 
 void GLState::pop()
 {
-    delete takeState();
+    delete take();
 }
 
-void GLState::pushState(GLState *state)
+void GLState::push(GLState *state)
 {
     stack.append(state);
 }
 
-GLState *GLState::takeState()
+GLState *GLState::take()
 {
     DENG2_ASSERT(stack.size() > 1);
     return stack.takeLast();
