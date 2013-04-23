@@ -48,6 +48,8 @@ public:
     BitField(BitField const &other);
     BitField(Block const &data);
 
+    BitField &operator = (BitField const &other);
+
     /**
      * Removes all the elements and the data contained in the bit field.
      */
@@ -78,6 +80,11 @@ public:
      * Total number of bits in the packed elements.
      */
     int bitCount() const;
+
+    /**
+     * Returns the identifiers of all elements.
+     */
+    Ids elementIds() const;
 
     /**
      * Returns the packed data as an array of bytes. Only bitCount() bits are
