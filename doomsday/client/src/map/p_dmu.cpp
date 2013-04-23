@@ -84,6 +84,7 @@ char const *DMU_Str(uint prop)
         { DMU_BSPLEAF, "DMU_BSPLEAF" },
         { DMU_SECTOR, "DMU_SECTOR" },
         { DMU_PLANE, "DMU_PLANE" },
+        { DMU_SURFACE, "DMU_SURFACE" },
         { DMU_MATERIAL, "DMU_MATERIAL" },
         { DMU_LINE_BY_TAG, "DMU_LINE_BY_TAG" },
         { DMU_SECTOR_BY_TAG, "DMU_SECTOR_BY_TAG" },
