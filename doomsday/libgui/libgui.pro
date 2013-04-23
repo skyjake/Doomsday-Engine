@@ -49,6 +49,7 @@ HEADERS += \
     include/de/Canvas \
     include/de/CanvasWindow \
     include/de/DisplayMode \
+    include/de/Drawable \
     include/de/GLBuffer \
     include/de/GLProgram \
     include/de/GLShader \
@@ -67,6 +68,7 @@ HEADERS += \
     include/de/gui/ddkey.h \
     include/de/gui/displaymode.h \
     include/de/gui/displaymode_native.h \
+    include/de/gui/drawable.h \
     include/de/gui/glbuffer.h \
     include/de/gui/glentrypoints.h \
     include/de/gui/glprogram.h \
@@ -88,6 +90,7 @@ SOURCES += \
     src/canvas.cpp \
     src/canvaswindow.cpp \
     src/displaymode.cpp \
+    src/drawable.cpp \
     src/glbuffer.cpp \
     src/glprogram.cpp \
     src/glshader.cpp \

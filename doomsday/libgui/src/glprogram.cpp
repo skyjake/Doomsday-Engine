@@ -303,7 +303,7 @@ GLProgram &GLProgram::unbind(GLUniform const &uniform)
     return *this;
 }
 
-void GLProgram::beginUse()
+void GLProgram::beginUse() const
 {
     DENG2_ASSERT(isReady());
     DENG2_ASSERT(!d->inUse);
@@ -317,7 +317,7 @@ void GLProgram::beginUse()
     d->bindTextures();
 }
 
-void GLProgram::endUse()
+void GLProgram::endUse() const
 {
     DENG2_ASSERT(d->inUse);
 

@@ -83,9 +83,9 @@ public:
 
     GLProgram &unbind(GLUniform const &uniform);
 
-    void beginUse();
+    void beginUse() const;
 
-    void endUse();
+    void endUse() const;
 
     GLuint glName() const;
 
