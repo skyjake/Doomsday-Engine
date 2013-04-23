@@ -86,6 +86,9 @@ class DENG2_PUBLIC AssetGroup : public Asset,
                                 DENG2_OBSERVES(Asset, Deletion),
                                 DENG2_OBSERVES(Asset, StateChange)
 {
+    DENG2_NO_COPY  (AssetGroup)
+    DENG2_NO_ASSIGN(AssetGroup)
+
 public:
     enum Policy {
         Ignore,         ///< State of the asset should be ignored.

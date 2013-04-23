@@ -187,9 +187,13 @@ DENG2_PIMPL(GLState)
 
 GLState::GLState() : d(new Instance(this))
 {
-    setDepthWrite(true);
+    setCull      (gl::None);
+    setDepthTest (false);
     setDepthFunc (gl::Less);
+    setDepthWrite(true);
+    setBlend     (false);
     setBlendFunc (gl::One, gl::Zero);
+    setBlendOp   (gl::Add);
 }
 
 GLState::GLState(GLState const &other) : d(new Instance(this, *other.d))
