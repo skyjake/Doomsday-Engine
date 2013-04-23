@@ -48,10 +48,10 @@ namespace de {
  * - draw a single buffer with one of many alternative programs
  * - draw multiple buffers with the same program
  * - draw some buffers with a custom GL state and the rest with the
-     current state
+ *   current state
  * - draw a mixture of multiple buffers and programs, each with a
-     custom state (e.g., a set of 3D sub-models representing an object
-     in the game)
+ *   custom state (e.g., a set of 3D sub-models representing an object
+ *   in the game)
  *
  * The buffers are drawn in the order of ascending identifiers. If no state has
  * been defined for a buffer, the topmost state on the GL state stack is used
