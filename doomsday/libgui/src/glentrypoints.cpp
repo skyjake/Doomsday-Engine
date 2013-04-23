@@ -41,7 +41,7 @@ PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray;
 PFNGLENABLEVERTEXATTRIBARRAYPROC  glEnableVertexAttribArray;
 
 PFNGLGENBUFFERSPROC               glGenBuffers;
-//PFNGLGENERATEMIPMAPPROC           glGenerateMipmap;
+PFNGLGENERATEMIPMAPPROC           glGenerateMipmap;
 PFNGLGETATTRIBLOCATIONPROC        glGetAttribLocation;
 PFNGLGETPROGRAMINFOLOGPROC        glGetProgramInfoLog;
 PFNGLGETPROGRAMIVPROC             glGetProgramiv;
@@ -93,7 +93,7 @@ void getAllOpenGLEntryPoints()
     GET_PROC(glDisableVertexAttribArray);
     GET_PROC(glEnableVertexAttribArray);
     GET_PROC(glGenBuffers);
-    //GET_PROC(glGenerateMipmap);
+    GET_PROC(glGenerateMipmap);
     GET_PROC(glGetAttribLocation);
     GET_PROC(glGetProgramInfoLog);
     GET_PROC(glGetProgramiv);
