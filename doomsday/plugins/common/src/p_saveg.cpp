@@ -1,4 +1,4 @@
-/** @file p_saveg.cpp Common game-save state management.
+/** @file p_saveg.cpp Common game-save state management. 
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -822,7 +822,7 @@ boolean SV_IsSlotUsed(int slot)
 }
 
 #if __JHEXEN__
-boolean SV_HxHaveMapSaveForSlot(int slot, uint map)
+boolean SV_HxHaveMapStateForSlot(int slot, uint map)
 {
     AutoStr *path = composeGameSavePathForSlot2(slot, (int)map+1);
     if(!path || Str_IsEmpty(path)) return false;
@@ -936,28 +936,24 @@ static void initThingArchiveForSave(bool excludePlayers = false)
     thingArchiveExcludePlayers = excludePlayers;
 }
 
-/**
- * Used by the read code when mobjs are read.
- */
-static void insertThingInArchive(mobj_t *mo, int num)
+static void insertThingInArchive(mobj_t const *mo, ThingSerialId thingId)
 {
+    DENG_ASSERT(mo != 0);
+
 #if __JHEXEN__
     if(mapVersion >= 4)
 #endif
     {
-        num -= 1;
+        thingId -= 1;
     }
 
-    if(num < 0) return; // Does this ever occur?
+    if(thingId < 0) return; // Does this ever occur?
 
     DENG_ASSERT(thingArchive != 0);
-    DENG_ASSERT(num >= 0 && (unsigned)num < thingArchiveSize);
-    thingArchive[num] = mo;
+    DENG_ASSERT(thingId >= 0 && (unsigned)thingId < thingArchiveSize);
+    thingArchive[thingId] = const_cast<mobj_t *>(mo);
 }
 
-/**
- * Free the thing archive. Called when load is complete.
- */
 static void clearThingArchive()
 {
     if(thingArchive)
@@ -967,37 +963,30 @@ static void clearThingArchive()
     }
 }
 
-/**
- * Called by the write code to get archive numbers.
- * If the mobj is already archived, the existing number is returned.
- * Number zero is not used.
- */
-#if __JHEXEN__
-int SV_ThingArchiveNum(mobj_t *mo)
-#else
-unsigned short SV_ThingArchiveNum(mobj_t* mo)
-#endif
+ThingSerialId SV_ThingArchiveId(mobj_t const *mo)
 {
     DENG_ASSERT(inited);
 
-    // We only archive valid mobj thinkers.
-    if(!mo || ((thinker_t *) mo)->function != (thinkfunc_t) P_MobjThinker)
+    if(!mo) return 0;
+
+    // We only archive mobj thinkers.
+    if(((thinker_t *) mo)->function != (thinkfunc_t) P_MobjThinker)
         return 0;
 
 #if __JHEXEN__
     if(mo->player && thingArchiveExcludePlayers)
-        return MOBJ_XX_PLAYER;
+        return TargetPlayerId;
 #endif
 
     DENG_ASSERT(thingArchive != 0);
 
-    uint firstEmpty = 0;
-    boolean found = false;
+    uint firstUnused = 0;
+    bool found = false;
     for(uint i = 0; i < thingArchiveSize; ++i)
     {
         if(!thingArchive[i] && !found)
         {
-            firstEmpty = i;
+            firstUnused = i;
             found = true;
             continue;
         }
@@ -1007,13 +996,13 @@ unsigned short SV_ThingArchiveNum(mobj_t* mo)
 
     if(!found)
     {
-        Con_Error("SV_ThingArchiveNum: Thing archive exhausted!\n");
+        Con_Error("SV_ThingArchiveId: Thing archive exhausted!\n");
         return 0; // No number available!
     }
 
-    // OK, place it in an empty pos.
-    thingArchive[firstEmpty] = mo;
-    return firstEmpty + 1;
+    // Insert it in the archive.
+    thingArchive[firstUnused] = const_cast<mobj_t *>(mo);
+    return firstUnused + 1;
 }
 
 static void clearMaterialArchive()
@@ -1045,16 +1034,12 @@ static void clearTargetPlayers()
 }
 #endif // __JHEXEN__
 
-/**
- * Called by the read code to resolve mobj ptrs from archived thing ids
- * after all thinkers have been read and spawned into the map.
- */
-mobj_t *SV_GetArchiveThing(int thingid, void *address)
+mobj_t *SV_GetArchiveThing(ThingSerialId thingId, void *address)
 {
     DENG_ASSERT(inited);
 
 #if __JHEXEN__
-    if(thingid == MOBJ_XX_PLAYER)
+    if(thingId == TargetPlayerId)
     {
         targetplraddress_t *tpa = reinterpret_cast<targetplraddress_t *>(M_Malloc(sizeof(targetplraddress_t)));
 
@@ -1075,9 +1060,9 @@ mobj_t *SV_GetArchiveThing(int thingid, void *address)
         // Old format (base 0).
 
         // A NULL reference?
-        if(thingid == -1) return 0;
+        if(thingId == -1) return 0;
 
-        if(thingid < 0 || (uint) thingid > thingArchiveSize - 1)
+        if(thingId < 0 || (unsigned) thingId > thingArchiveSize - 1)
             return 0;
     }
     else
@@ -1086,18 +1071,18 @@ mobj_t *SV_GetArchiveThing(int thingid, void *address)
         // New format (base 1).
 
         // A NULL reference?
-        if(thingid == 0) return 0;
+        if(thingId == 0) return 0;
 
-        if(thingid < 1 || (uint) thingid > thingArchiveSize)
+        if(thingId < 1 || (unsigned) thingId > thingArchiveSize)
         {
-            Con_Message("SV_GetArchiveThing: Invalid NUM %i??", thingid);
+            Con_Message("SV_GetArchiveThing: Invalid thing Id %i??", thingId);
             return 0;
         }
 
-        thingid -= 1;
+        thingId -= 1;
     }
 
-    return thingArchive[thingid];
+    return thingArchive[thingId];
 }
 
 static playerheader_t *getPlayerHeader()
@@ -1133,8 +1118,8 @@ static void SV_WritePlayer(int playernum)
     ddplayer_t ddtemp, *dp = &ddtemp;
 
     // Make a copy of the player.
-    memcpy(p, &players[playernum], sizeof(temp));
-    memcpy(dp, players[playernum].plr, sizeof(ddtemp));
+    std::memcpy(p, &players[playernum], sizeof(temp));
+    std::memcpy(dp, players[playernum].plr, sizeof(ddtemp));
     temp.plr = &ddtemp;
 
     // Convert the psprite states.
@@ -1547,7 +1532,7 @@ static void SV_WriteMobj(mobj_t const *original)
 {
     mobj_t temp, *mo = &temp;
 
-    memcpy(mo, original, sizeof(*mo));
+    std::memcpy(mo, original, sizeof(*mo));
     // Mangle it!
     mo->state = (state_t *) (mo->state - STATES);
     if(mo->player)
@@ -1588,16 +1573,16 @@ static void SV_WriteMobj(mobj_t const *original)
 
 #if !__JHEXEN__
     // A version 2 features: archive number and target.
-    SV_WriteShort(SV_ThingArchiveNum((mobj_t*) original));
-    SV_WriteShort(SV_ThingArchiveNum(mo->target));
+    SV_WriteShort(SV_ThingArchiveId((mobj_t*) original));
+    SV_WriteShort(SV_ThingArchiveId(mo->target));
 
 # if __JDOOM__ || __JDOOM64__
     // Ver 5 features: Save tracer (fixes Archvile, Revenant bug)
-    SV_WriteShort(SV_ThingArchiveNum(mo->tracer));
+    SV_WriteShort(SV_ThingArchiveId(mo->tracer));
 # endif
 #endif
 
-    SV_WriteShort(SV_ThingArchiveNum(mo->onMobj));
+    SV_WriteShort(SV_ThingArchiveId(mo->onMobj));
 
     // Info for drawing: position.
     SV_WriteLong(FLT2FIX(mo->origin[VX]));
@@ -1654,7 +1639,7 @@ static void SV_WriteMobj(mobj_t const *original)
         if(mo->flags & MF_CORPSE)
             SV_WriteLong(0);
         else
-            SV_WriteLong(SV_ThingArchiveNum(INT2PTR(mobj_t, mo->special2)));
+            SV_WriteLong(SV_ThingArchiveId(INT2PTR(mobj_t, mo->special2)));
         break;
 
     default:
@@ -1672,7 +1657,7 @@ static void SV_WriteMobj(mobj_t const *original)
     if(mo->flags & MF_CORPSE)
         SV_WriteLong(0);
     else
-        SV_WriteLong((int) SV_ThingArchiveNum(mo->target));
+        SV_WriteLong((int) SV_ThingArchiveId(mo->target));
 #endif
 
     // Reaction time: if non 0, don't attack yet.
@@ -1716,7 +1701,7 @@ static void SV_WriteMobj(mobj_t const *original)
 
     SV_WriteLong(FLT2FIX(mo->floorClip));
 #if __JHEXEN__
-    SV_WriteLong(SV_ThingArchiveNum((mobj_t*) original));
+    SV_WriteLong(SV_ThingArchiveId((mobj_t*) original));
     SV_WriteLong(mo->tid);
     SV_WriteLong(mo->special);
     SV_Write(mo->args, sizeof(mo->args));
@@ -1738,7 +1723,7 @@ static void SV_WriteMobj(mobj_t const *original)
         if(mo->flags & MF_CORPSE)
             SV_WriteLong(0);
         else
-            SV_WriteLong(SV_ThingArchiveNum(mo->tracer));
+            SV_WriteLong(SV_ThingArchiveId(mo->tracer));
         break;
 
     default:
@@ -1750,7 +1735,7 @@ static void SV_WriteMobj(mobj_t const *original)
     SV_WriteLong(PTR2INT(mo->lastEnemy));
 #elif __JHERETIC__
     // Ver 7 features: generator
-    SV_WriteShort(SV_ThingArchiveNum(mo->generator));
+    SV_WriteShort(SV_ThingArchiveId(mo->generator));
 #endif
 }
 
@@ -3460,7 +3445,7 @@ static void SV_WriteScript(acs_t const *th)
 
     SV_WriteByte(1); // Write a version byte.
 
-    SV_WriteLong(SV_ThingArchiveNum(th->activator));
+    SV_WriteLong(SV_ThingArchiveId(th->activator));
     SV_WriteLong(P_ToIndex(th->line));
     SV_WriteLong(th->side);
     SV_WriteLong(th->number);
@@ -4607,7 +4592,7 @@ static void archiveBrain()
 
     // Write the mobj references using the mobj archive.
     for(int i = 0; i < brain.numTargets; ++i)
-        SV_WriteShort(SV_ThingArchiveNum(brain.targets[i]));
+        SV_WriteShort(SV_ThingArchiveId(brain.targets[i]));
 #endif
 }
 
@@ -4661,7 +4646,7 @@ static void archiveSoundTargets()
         if(xsec->soundTarget)
         {
             SV_WriteLong(i);
-            SV_WriteShort(SV_ThingArchiveNum(xsec->soundTarget));
+            SV_WriteShort(SV_ThingArchiveId(xsec->soundTarget));
         }
     }
 #endif
@@ -4897,7 +4882,7 @@ static void unarchiveGlobalScriptData()
                 ACSStore = reinterpret_cast<acsstore_t *>(Z_Realloc(ACSStore, sizeof(acsstore_t) * ACSStoreSize, PU_GAMESTATIC));
             else
                 ACSStore = reinterpret_cast<acsstore_t *>(Z_Malloc(sizeof(acsstore_t) * ACSStoreSize, PU_GAMESTATIC, 0));
-            memcpy(ACSStore, tempStore, sizeof(acsstore_t) * ACSStoreSize);
+            std::memcpy(ACSStore, tempStore, sizeof(acsstore_t) * ACSStoreSize);
         }
     }
 
@@ -4993,7 +4978,7 @@ static void unarchiveMap()
     SV_AssertSegment(ASEG_END);
 }
 
-void SV_Init()
+void SV_Initialize()
 {
     static bool firstInit = true;
 
@@ -5036,9 +5021,6 @@ void SV_Shutdown()
     inited = false;
 }
 
-/**
- * @return  Pointer to the (currently in-use) material archive.
- */
 MaterialArchive *SV_MaterialArchive()
 {
     DENG_ASSERT(inited);
@@ -5688,7 +5670,7 @@ void SV_HxBackupPlayersInCluster(playerbackup_t playerBackup[MAXPLAYERS])
         playerbackup_t *pb = playerBackup + i;
         player_t *plr = players + i;
 
-        memcpy(&pb->player, plr, sizeof(player_t));
+        std::memcpy(&pb->player, plr, sizeof(player_t));
 
         // Make a copy of the inventory states also.
         for(int k = 0; k < NUM_INVENTORYITEM_TYPES; ++k)
@@ -5717,7 +5699,7 @@ void SV_HxRestorePlayersInCluster(playerbackup_t playerBackup[MAXPLAYERS],
 
         if(!ddplr->inGame) continue;
 
-        memcpy(plr, &pb->player, sizeof(player_t));
+        std::memcpy(plr, &pb->player, sizeof(player_t));
         for(int k = 0; k < NUM_INVENTORYITEM_TYPES; ++k)
         {
             // Don't give back the wings of wrath if reborn.

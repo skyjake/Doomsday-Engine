@@ -54,7 +54,7 @@ void SV_WriteXGLine(Line* li)
     SV_WriteByte(xg->disabled);
     SV_WriteLong(xg->timer);
     SV_WriteLong(xg->tickerTimer);
-    SV_WriteShort(SV_ThingArchiveNum(xg->activator));
+    SV_WriteShort(SV_ThingArchiveId(xg->activator));
     SV_WriteLong(xg->idata);
     SV_WriteFloat(xg->fdata);
     SV_WriteLong(xg->chIdx);

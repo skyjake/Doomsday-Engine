@@ -64,8 +64,6 @@
 #  define SAVEGAMEEXTENSION     "hxs"
 #  define SAVEGAME_DEFAULT_DIR  "hexndata"
 
-#  define MOBJ_XX_PLAYER        -2
-
 #  define BASE_SLOT             6
 #  define AUTO_SLOT             7
 

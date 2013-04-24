@@ -945,7 +945,7 @@ void G_CommonPostInit(void)
     GUI_Init();
 
     // Init the save system and create the game save directory.
-    SV_Init();
+    SV_Initialize();
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     XG_ReadTypes();
@@ -2640,7 +2640,7 @@ void G_DoLeaveMap(void)
      * First, determine whether we've been to this map previously and if so,
      * whether we need to load the archived map state.
      */
-    revisit = SV_HxHaveMapSaveForSlot(BASE_SLOT, nextMap);
+    revisit = SV_HxHaveMapStateForSlot(BASE_SLOT, nextMap);
     if(deathmatch) revisit = false;
 
     // Same cluster?
