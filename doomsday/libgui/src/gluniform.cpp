@@ -135,7 +135,10 @@ DENG2_PIMPL(GLUniform)
 
     void markAsChanged()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE(ValueChange, i) i->uniformValueChanged(self);
+        DENG2_FOR_PUBLIC_AUDIENCE(ValueChange, i)
+        {
+            i->uniformValueChanged(self);
+        }
     }
 };
 

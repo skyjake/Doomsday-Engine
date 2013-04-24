@@ -17,6 +17,7 @@
  */
 
 #include "de/GuiApp"
+#include "de/gui/opengl.h"
 #include <de/Log>
 
 #ifdef DENG2_QT_5_0_OR_NEWER
@@ -34,6 +35,10 @@ DENG2_PIMPL(GuiApp)
     Instance(Public *i) : Base(i)
     {
         loop.audienceForIteration += self;
+
+#ifdef WIN32
+        getAllOpenGLEntryPoints();
+#endif
     }
 };
 

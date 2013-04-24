@@ -21,6 +21,7 @@
  */
 
 #include "de/GLState"
+#include "de/PersistentCanvasWindow"
 #include "de/gui/opengl.h"
 #include <de/BitField>
 
@@ -52,6 +53,7 @@ namespace internal
 
     /// Currently applied GL state properties.
     static BitField currentProps;
+    static GLTarget *currentTarget;
 }
 
 using namespace internal;
@@ -59,8 +61,9 @@ using namespace internal;
 DENG2_PIMPL(GLState)
 {
     BitField props;
+    GLTarget *target;
 
-    Instance(Public *i) : Base(i)
+    Instance(Public *i) : Base(i), target(0)
     {
         static BitField::Spec const propSpecs[MAX_PROPERTIES] = {
             { CullMode,      2 },
@@ -76,7 +79,7 @@ DENG2_PIMPL(GLState)
     }
 
     Instance(Public *i, Instance const &other)
-        : Base(i), props(other.props)
+        : Base(i), props(other.props), target(other.target)
     {}
 
     static GLenum glComp(gl::Comparison comp)
@@ -194,6 +197,8 @@ GLState::GLState() : d(new Instance(this))
     setBlend     (false);
     setBlendFunc (gl::One, gl::Zero);
     setBlendOp   (gl::Add);
+
+    setDefaultTarget();
 }
 
 GLState::GLState(GLState const &other) : d(new Instance(this, *other.d))
@@ -241,6 +246,16 @@ void GLState::setBlendOp(gl::BlendOp op)
     d->props.set(BlendOp, duint(op));
 }
 
+void GLState::setTarget(GLTarget &target)
+{
+    d->target = &target;
+}
+
+void GLState::setDefaultTarget()
+{
+    d->target = 0;
+}
+
 gl::Cull GLState::cull() const
 {
     return d->props.valueAs<gl::Cull>(CullMode);
@@ -286,6 +301,15 @@ gl::BlendOp GLState::blendOp() const
     return d->props.valueAs<gl::BlendOp>(BlendOp);
 }
 
+GLTarget &GLState::target() const
+{
+    if(d->target)
+    {
+        return *d->target;
+    }
+    return PersistentCanvasWindow::main().canvas().renderTarget();
+}
+
 void GLState::apply() const
 {
     BitField::Ids changed;
@@ -316,6 +340,14 @@ void GLState::apply() const
         {
             d->glApply(Property(id));
         }
+    }
+
+    // Update the render target.
+    if(currentTarget != d->target)
+    {
+        if(currentTarget) currentTarget->glRelease();
+        currentTarget = d->target;
+        if(currentTarget) currentTarget->glBind();
     }
 }
 

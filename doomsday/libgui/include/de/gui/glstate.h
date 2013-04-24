@@ -30,6 +30,8 @@
 
 namespace de {
 
+class GLTarget;
+
 namespace gl
 {
     enum Comparison {
@@ -100,6 +102,8 @@ public:
     void setBlendFunc(gl::Blend src, gl::Blend dest);
     void setBlendFunc(gl::BlendFunc func);
     void setBlendOp(gl::BlendOp op);
+    void setTarget(GLTarget &target);
+    void setDefaultTarget();
 
     gl::Cull cull() const;
     bool depthTest() const;
@@ -110,6 +114,7 @@ public:
     gl::Blend destBlendFunc() const;
     gl::BlendFunc blendFunc() const;
     gl::BlendOp blendOp() const;
+    GLTarget &target() const;
 
     /**
      * Updates the OpenGL state to match this GLState. Until this is called no

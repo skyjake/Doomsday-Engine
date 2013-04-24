@@ -20,20 +20,35 @@
 #define LIBGUI_GLTEXTURE_H
 
 #include <de/libdeng2.h>
+#include <de/Asset>
+#include <de/Vector>
 
 #include "libgui.h"
+#include "opengl.h"
 
 namespace de {
 
 /**
- * GL texture atlas.
+ * GL texture.
+ *
+ * @todo Support for cube textures (6 faces instead of one).
  *
  * @ingroup gl
  */
-class LIBGUI_PUBLIC GLTexture
+class LIBGUI_PUBLIC GLTexture : public Asset
 {
 public:
+    typedef Vector2ui Size;
+
+public:
     GLTexture();
+
+    /**
+     * Returns the size of the texture (mipmap level 0).
+     */
+    Size size() const;
+
+    GLuint glName() const;
 
     void glBindToUnit(int unit);
 

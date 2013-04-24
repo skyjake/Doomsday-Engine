@@ -239,6 +239,11 @@ void Canvas::copyAudiencesFrom(Canvas const &other)
     audienceForMouseButtonEvent = other.audienceForMouseButtonEvent;
 }
 
+GLTarget &Canvas::renderTarget() const
+{
+    return d->target;
+}
+
 void Canvas::initializeGL()
 {
     LOG_AS("Canvas");

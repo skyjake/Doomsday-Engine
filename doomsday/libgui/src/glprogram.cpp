@@ -32,8 +32,8 @@ namespace de {
 using namespace internal;
 
 DENG2_PIMPL(GLProgram),
-    DENG2_OBSERVES(GLUniform, ValueChange),
-    DENG2_OBSERVES(GLUniform, Deletion)
+DENG2_OBSERVES(GLUniform, ValueChange),
+DENG2_OBSERVES(GLUniform, Deletion)
 {
     typedef QSet<GLUniform const *> Uniforms;
     typedef QList<GLUniform const *> UniformList;

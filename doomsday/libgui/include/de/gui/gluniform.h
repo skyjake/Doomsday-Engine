@@ -97,16 +97,18 @@ public:
     GLUniform &operator = (Vector4f const &vec);
     GLUniform &operator = (Matrix3f const &vec);
     GLUniform &operator = (Matrix4f const &vec);
+    GLUniform &operator = (GLTexture const *texture);
 
-    operator dint() const             { return toInt(); }
-    operator duint() const            { return toUInt(); }
-    operator dfloat() const           { return toFloat(); }
-    operator ddouble() const          { return ddouble(toFloat()); }
-    operator Vector2f() const         { return toVector2f(); }
-    operator Vector3f() const         { return toVector3f(); }
-    operator Vector4f() const         { return toVector4f(); }
-    operator Matrix3f const &() const { return toMatrix3f(); }
-    operator Matrix4f const &() const { return toMatrix4f(); }
+    operator dint() const              { return toInt(); }
+    operator duint() const             { return toUInt(); }
+    operator dfloat() const            { return toFloat(); }
+    operator ddouble() const           { return ddouble(toFloat()); }
+    operator Vector2f() const          { return toVector2f(); }
+    operator Vector3f() const          { return toVector3f(); }
+    operator Vector4f() const          { return toVector4f(); }
+    operator Matrix3f const &() const  { return toMatrix3f(); }
+    operator Matrix4f const &() const  { return toMatrix4f(); }
+    operator GLTexture const *() const { return texture(); }
 
     dint toInt() const;
     duint toUInt() const;

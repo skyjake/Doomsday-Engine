@@ -248,6 +248,9 @@ void Drawable::draw() const
     GLProgram const *currentProgram = 0;
     GLState   const *currentState   = 0;
 
+    // Make sure the GL state on the top of the stack is in effect.
+    GLState::top().apply();
+
     DENG2_FOR_EACH_CONST(Instance::Buffers, i, d->buffers)
     {
         Id const id = i.key();

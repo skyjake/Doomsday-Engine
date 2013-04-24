@@ -24,6 +24,7 @@ namespace de {
 DENG2_PIMPL(GLTexture)
 {
     GLuint name;
+    Size size;
 
     Instance(Public *i) : Base(i), name(0)
     {}
@@ -53,6 +54,16 @@ DENG2_PIMPL(GLTexture)
 
 GLTexture::GLTexture() : d(new Instance(this))
 {}
+
+GLTexture::Size GLTexture::size() const
+{
+    return d->size;
+}
+
+GLuint GLTexture::glName() const
+{
+    return d->name;
+}
 
 void GLTexture::glBindToUnit(int unit)
 {
