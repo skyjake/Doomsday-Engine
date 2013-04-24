@@ -25,7 +25,7 @@
  * Server protocol version number.
  * @deprecated Will be replaced with the libdeng2 serialization protocol version.
  */
-#define SV_VERSION          22
+#define SV_VERSION          23
 
 // Prefer adding new flags inside the deltas instead of adding new delta types.
 typedef enum {
