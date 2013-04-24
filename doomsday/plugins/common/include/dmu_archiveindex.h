@@ -23,6 +23,8 @@
 #include <vector>
 #include <memory>
 
+#include "common.h"
+
 namespace dmu_lib {
 
 /**
@@ -55,9 +57,7 @@ public:
      *
      * @see at()
      */
-    inline MapElementPtr operator [] (int archiveIndex) const {
-        return at(archiveIndex);
-    }
+    inline MapElementPtr operator [] (int index) const { return at(index); }
 
     /**
      * Returns a pointer to the DMU object associated with the specified @a index.
