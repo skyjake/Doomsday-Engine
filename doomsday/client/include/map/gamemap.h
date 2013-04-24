@@ -543,15 +543,12 @@ public:
     PlaneSet /*const*/ &trackedPlanes();
 
     /**
-     * Helper function for returning the relevant line side index for
-     * @a lineIndex and @a backSide.
-     *
-     * @attention The resultant indices are @em not contiguous! (The high bit is
-     * used to mark back-sides.)
+     * Helper function for returning the relevant line side index for @a lineIndex
+     * and @a backSide.
      *
      * Indices are produced as follows:
      * @code
-     *  lineIndex | (backSide? 0x80000000 : 0);
+     *  lineIndex / 2 + (backSide? 1 : 0);
      * @endcode
      *
      * @param lineIndex  Index of the Line in the map.
