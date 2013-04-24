@@ -32,6 +32,7 @@ namespace dmu_lib {
  *
  * @note Population of the index is deferred until it is first accessed.
  */
+template <int ElementType>
 class ArchiveIndex
 {
 public:
@@ -40,16 +41,13 @@ public:
      *
      * @param elementType  DMU element type of the objects to be indexed.
      */
-    ArchiveIndex(int elementType)
-        : _elementType(elementType),
-          _indexBase(-1),
-          _lut(0)
+    ArchiveIndex() : _indexBase(-1), _lut(0)
     {}
 
     /**
      * Returns the DMU element type which "this" indexes.
      */
-    int type() const { return _elementType; }
+    int type() const { return ElementType; }
 
     /**
      * Returns a pointer to the DMU object associated with the specified @a index.
@@ -92,11 +90,11 @@ private:
         minIdx = DDMAXINT;
         maxIdx = DDMININT;
 
-        int numElements = P_Count(_elementType);
+        int numElements = P_Count(ElementType);
         for(int i = 0; i < numElements; ++i)
         {
-            MapElementPtr element = P_ToPtr(_elementType, i);
-            DENG_ASSERT(DMU_GetType(element) == _elementType);
+            MapElementPtr element = P_ToPtr(ElementType, i);
+            DENG_ASSERT(DMU_GetType(element) == ElementType);
             int index = P_GetIntp(element, DMU_ARCHIVE_INDEX);
 
             // Not indexed?
@@ -143,20 +141,25 @@ private:
         _lut.reset(new ElementLut(lutSize, 0));
 
         // Populate the LUT.
-        int numElements = P_Count(_elementType);
+        int numElements = P_Count(ElementType);
         for(int i = 0; i < numElements; ++i)
         {
-            linkInLut(P_ToPtr(_elementType, i));
+            linkInLut(P_ToPtr(ElementType, i));
         }
     }
 
 private:
     typedef std::vector<MapElementPtr> ElementLut;
 
-    int _elementType;
     int _indexBase;
     std::auto_ptr<ElementLut> _lut;
 };
+
+///@{
+typedef ArchiveIndex<DMU_LINE>    LineArchive;   ///< ArchiveIndex of DMU_LINE
+typedef ArchiveIndex<DMU_SIDE>    SideArchive;   ///< ArchiveIndex of DMU_SIDE
+typedef ArchiveIndex<DMU_SECTOR>  SectorArchive; ///< ArchiveIndex of DMU_SECTOR
+///@}
 
 } // namespace dmu_lib
 

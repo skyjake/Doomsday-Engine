@@ -27,7 +27,6 @@
 #include <de/memory.h>
 
 #include "g_common.h"
-#include "p_saveg.h"
 #include "d_net.h"
 #include "dmu_lib.h"
 #include "fi_lib.h"
@@ -52,6 +51,11 @@
 #include "r_common.h"
 #include "api_materialarchive.h"
 #include "p_savedef.h"
+#include "dmu_archiveindex.h"
+
+#include "p_saveg.h"
+
+using namespace dmu_lib;
 
 #define MAX_HUB_MAPS        99
 
@@ -79,33 +83,36 @@ typedef struct playerheader_s {
 } playerheader_t;
 
 // Thinker Save flags
-#define TSF_SERVERONLY      0x01 ///< Only saved by servers.
+#define TSF_SERVERONLY          0x01 ///< Only saved by servers.
 
-typedef struct thinkerinfo_s {
+struct ThinkerClassInfo
+{
     thinkerclass_t thinkclass;
     thinkfunc_t function;
     int flags;
     WriteThinkerFunc writeFunc;
     ReadThinkerFunc readFunc;
     size_t size;
-} thinkerinfo_t;
+};
 
-typedef enum sectorclass_e {
+typedef enum {
     sc_normal,
-    sc_ploff,                   ///< plane offset
+    sc_ploff, ///< plane offset
 #if !__JHEXEN__
     sc_xg1,
 #endif
     NUM_SECTORCLASSES
 } sectorclass_t;
 
-typedef enum lineclass_e {
+typedef enum {
     lc_normal,
 #if !__JHEXEN__
     lc_xg1,
 #endif
     NUM_LINECLASSES
 } lineclass_t;
+
+SideArchive &SV_SideArchive();
 
 static bool recogniseGameState(Str const *path, SaveInfo *info);
 
@@ -198,8 +205,9 @@ static int numSoundTargets;
 #endif
 
 static MaterialArchive *materialArchive;
+static SideArchive *sideArchive;
 
-static thinkerinfo_t thinkerInfo[] = {
+static ThinkerClassInfo thinkerInfo[] = {
     {
       TC_MOBJ,
       (thinkfunc_t) P_MobjThinker,
@@ -888,22 +896,29 @@ uint SV_GenerateGameId()
 }
 
 /**
- * @return  Thinker info for the given thinker.
+ * Returns the info for the specified thinker @a tClass; otherwise @c 0 if not found.
  */
-static thinkerinfo_t *infoForThinker(thinker_t *th)
+static ThinkerClassInfo *infoForThinkerClass(thinkerclass_t tClass)
 {
-    if(!th) return 0;
-
-    thinkerinfo_t *thInfo = thinkerInfo;
-    while(thInfo->thinkclass != TC_NULL)
+    for(ThinkerClassInfo *info = thinkerInfo; info->thinkclass != TC_NULL; info++)
     {
-        if(thInfo->function == th->function)
-            return thInfo;
-
-        thInfo++;
+        if(info->thinkclass == tClass)
+            return info;
     }
+    return 0; // Not found.
+}
 
-    return 0;
+/**
+ * Returns the info for the specified thinker; otherwise @c 0 if not found.
+ */
+static ThinkerClassInfo *infoForThinker(thinker_t const &thinker)
+{
+    for(ThinkerClassInfo *info = thinkerInfo; info->thinkclass != TC_NULL; info++)
+    {
+        if(info->function == thinker.function)
+            return info;
+    }
+    return 0; // Not found.
 }
 
 static void initThingArchiveForLoad(uint size)
@@ -4133,16 +4148,31 @@ static int SV_ReadMaterialChanger(materialchanger_t *mchanger)
     DENG_ASSERT(mchanger != 0);
 
     /*int ver =*/ SV_ReadByte();
+    // Note: the thinker class byte has already been read.
 
     /*byte type =*/ SV_ReadByte();
 
-    mchanger->timer     = SV_ReadLong();
-    // Note: the thinker class byte has already been read.
-    mchanger->side      = (Side *)P_ToPtr(DMU_SIDE, (int) SV_ReadLong());
+    mchanger->timer = SV_ReadLong();
+
+    int sideIndex = (int) SV_ReadLong();
+#if __JHEXEN__
+    if(mapVersion >= 12)
+
+#else
+    if(hdr->version >= 12)
+#endif
+    {
+        mchanger->side = (Side *)P_ToPtr(DMU_SIDE, sideIndex);
+    }
+    else
+    {
+        // Side index is actually a DMU_ARCHIVE_INDEX.
+        mchanger->side = (Side *)SV_SideArchive().at(sideIndex);
+    }
     DENG_ASSERT(mchanger->side != 0);
 
-    mchanger->section   = (SideSection) SV_ReadByte();
-    mchanger->material  = SV_GetArchiveMaterial(SV_ReadShort(), 0);
+    mchanger->section = (SideSection) SV_ReadByte();
+    mchanger->material = SV_GetArchiveMaterial(SV_ReadShort(), 0);
 
     mchanger->thinker.function = T_MaterialChanger;
 
@@ -4176,7 +4206,23 @@ static int SV_ReadScroll(scroll_t *scroll)
 
     if(SV_ReadByte() == DMU_SIDE) // Type byte.
     {
-        scroll->dmuObject = (Side *)P_ToPtr(DMU_SIDE, (int) SV_ReadLong());
+        int sideIndex = (int) SV_ReadLong();
+
+#if __JHEXEN__
+        if(mapVersion >= 12)
+
+#else
+        if(hdr->version >= 12)
+#endif
+        {
+            scroll->dmuObject = (Side *)P_ToPtr(DMU_SIDE, sideIndex);
+        }
+        else
+        {
+            // Side index is actually a DMU_ARCHIVE_INDEX.
+            scroll->dmuObject = (Side *)SV_SideArchive().at(sideIndex);
+        }
+
         DENG_ASSERT(scroll->dmuObject != 0);
     }
     else // Sector plane-surface.
@@ -4201,10 +4247,11 @@ static int SV_ReadScroll(scroll_t *scroll)
  */
 static int writeThinker(thinker_t *th, void *context)
 {
+    DENG_ASSERT(th != 0);
     DENG_UNUSED(context);
 
     // We are only concerned with thinkers we have save info for.
-    thinkerinfo_t *thInfo = infoForThinker(th);
+    ThinkerClassInfo *thInfo = infoForThinker(*th);
     if(!thInfo) return false;
 
     // Are we excluding players?
@@ -4319,6 +4366,28 @@ static int restoreMobjLinks(thinker_t *th, void *parameters)
     return false; // Continue iteration.
 }
 
+static int removeThinkerWorker(thinker_t *th, void *context)
+{
+    DENG_UNUSED(context);
+
+    if(th->function == (thinkfunc_t) P_MobjThinker)
+        P_MobjRemove((mobj_t *) th, true);
+    else
+        Z_Free(th);
+
+    return false; // Continue iteration.
+}
+
+static void removeLoadSpawnedThinkers()
+{
+#if !__JHEXEN__
+    if(!IS_SERVER) return; // Not for us.
+#endif
+
+    Thinker_Iterate(0 /*all thinkers*/, removeThinkerWorker, 0/*no parameters*/);
+    Thinker_Init();
+}
+
 #if __JHEXEN__
 static bool mobjtypeHasCorpse(mobjtype_t type)
 {
@@ -4383,28 +4452,6 @@ static void rebuildCorpseQueue()
 }
 #endif
 
-static int removeThinkerWorker(thinker_t *th, void *context)
-{
-    DENG_UNUSED(context);
-
-    if(th->function == (thinkfunc_t) P_MobjThinker)
-        P_MobjRemove((mobj_t *) th, true);
-    else
-        Z_Free(th);
-
-    return false; // Continue iteration.
-}
-
-static void removeLoadSpawnedThinkers()
-{
-#if !__JHEXEN__
-    if(!IS_SERVER) return; // Not for us.
-#endif
-
-    Thinker_Iterate(0 /*all thinkers*/, removeThinkerWorker, 0/*no parameters*/);
-    Thinker_Init();
-}
-
 /**
  * Update the references between thinkers. To be called during the load
  * process to finalize the loaded thinkers.
@@ -4413,6 +4460,10 @@ static void relinkThinkers()
 {
 #if __JHEXEN__
     Thinker_Iterate((thinkfunc_t) P_MobjThinker, restoreMobjLinks, 0/*no params*/);
+
+    P_CreateTIDList();
+    rebuildCorpseQueue();
+
 #else
     if(IS_SERVER)
     {
@@ -4435,15 +4486,10 @@ static void relinkThinkers()
  */
 static void readThinkers()
 {
-    byte tClass = 0;
-    thinker_t *th = 0;
-    thinkerinfo_t *thInfo = 0;
-    boolean found, knownThinker;
-    boolean inStasis;
 #if __JHEXEN__
-    boolean doSpecials = (mapVersion >= 4);
+    bool const formatHasStasisInfo = (mapVersion >= 6);
 #else
-    boolean doSpecials = (hdr->version >= 5);
+    bool const formatHasStasisInfo = (hdr->version >= 6);
 #endif
 
     removeLoadSpawnedThinkers();
@@ -4463,18 +4509,22 @@ static void readThinkers()
     // Read in saved thinkers.
 #if __JHEXEN__
     int i = 0;
+    bool reachedSpecialsBlock = (mapVersion >= 4);
+#else
+    bool reachedSpecialsBlock = (hdr->version >= 5);
 #endif
+    byte tClass = 0;
     for(;;)
     {
 #if __JHEXEN__
-        if(doSpecials)
+        if(reachedSpecialsBlock)
 #endif
             tClass = SV_ReadByte();
 
 #if __JHEXEN__
         if(mapVersion < 4)
         {
-            if(doSpecials) // Have we started on the specials yet?
+            if(reachedSpecialsBlock) // Have we started on the specials yet?
             {
                 // Versions prior to 4 used a different value to mark
                 // the end of the specials data and the thinker class ids
@@ -4484,20 +4534,22 @@ static void readThinkers()
                     tClass += 2;
             }
             else
+            {
                 tClass = TC_MOBJ;
+            }
 
             if(tClass == TC_MOBJ && (uint)i == thingArchiveSize)
             {
                 SV_AssertSegment(ASEG_THINKERS);
                 // We have reached the begining of the "specials" block.
-                doSpecials = true;
+                reachedSpecialsBlock = true;
                 continue;
             }
         }
 #else
         if(hdr->version < 5)
         {
-            if(doSpecials) // Have we started on the specials yet?
+            if(reachedSpecialsBlock)
             {
                 // Versions prior to 5 used a different value to mark
                 // the end of the specials data so we need to manipulate
@@ -4510,7 +4562,7 @@ static void readThinkers()
             else if(tClass == TC_END)
             {
                 // We have reached the begining of the "specials" block.
-                doSpecials = true;
+                reachedSpecialsBlock = true;
                 continue;
             }
         }
@@ -4518,64 +4570,42 @@ static void readThinkers()
         if(tClass == TC_END)
             break; // End of the list.
 
-        found = knownThinker = inStasis = false;
-        thInfo = thinkerInfo;
-        while(thInfo->thinkclass != TC_NULL && !found)
+        ThinkerClassInfo *thInfo = infoForThinkerClass(thinkerclass_t(tClass));
+        DENG_ASSERT(thInfo != 0);
+        // Not for us? (it shouldn't be here anyway!).
+        DENG_ASSERT(!((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT));
+
+        // Mobjs use a special engine-side allocator.
+        thinker_t *th = 0;
+        if(thInfo->thinkclass == TC_MOBJ)
         {
-            if(thInfo->thinkclass == tClass)
-            {
-                found = true;
-
-                // Not for us? (it shouldn't be here anyway!).
-                DENG_ASSERT(!((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT));
-
-                {
-                    // Mobjs use a special engine-side allocator.
-                    if(thInfo->thinkclass == TC_MOBJ)
-                    {
-                        th = reinterpret_cast<thinker_t *>(P_MobjCreateXYZ((thinkfunc_t) P_MobjThinker, 0, 0, 0, 0, 64, 64, 0));
-                    }
-                    else
-                    {
-                        th = reinterpret_cast<thinker_t *>(Z_Calloc(thInfo->size, PU_MAP, 0));
-                    }
-
-                    // Is there a thinker header block?
-#if __JHEXEN__
-                    if(mapVersion >= 6)
-#else
-                    if(hdr->version >= 6)
-#endif
-                    {
-                        inStasis = (boolean) SV_ReadByte();
-                    }
-
-                    knownThinker = thInfo->readFunc(th);
-                }
-            }
-            if(!found)
-                thInfo++;
+            th = reinterpret_cast<thinker_t *>(P_MobjCreateXYZ((thinkfunc_t) P_MobjThinker, 0, 0, 0, 0, 64, 64, 0));
         }
+        else
+        {
+            th = reinterpret_cast<thinker_t *>(Z_Calloc(thInfo->size, PU_MAP, 0));
+        }
+
+        bool putThinkerInStasis = (formatHasStasisInfo? CPP_BOOL(SV_ReadByte()) : false);
+
+        if(thInfo->readFunc(th))
+        {
+            Thinker_Add(th);
+        }
+
+        if(putThinkerInStasis)
+        {
+            Thinker_SetStasis(th, true);
+        }
+
 #if __JHEXEN__
         if(tClass == TC_MOBJ)
             i++;
 #endif
-
-        if(!found)
-            Con_Error("P_UnarchiveThinkers: Unknown tClass %i in savegame", tClass);
-
-        if(knownThinker)
-            Thinker_Add(th);
-        if(inStasis)
-            Thinker_SetStasis(th, true);
     }
 
     // Update references between thinkers.
     relinkThinkers();
-#if __JHEXEN__
-    P_CreateTIDList();
-    rebuildCorpseQueue();
-#endif
 }
 
 static void writeBrain()
@@ -4947,6 +4977,8 @@ static void writeMap()
 
 static void readMap()
 {
+    sideArchive = new SideArchive;
+
     savestatesegment_t mapSegmentId;
     SV_AssertMapSegment(&mapSegmentId);
     {
@@ -4976,6 +5008,8 @@ static void readMap()
         readSoundTargets();
     }
     SV_AssertSegment(ASEG_END);
+
+    delete sideArchive; sideArchive = 0;
 }
 
 void SV_Initialize()
@@ -5025,6 +5059,13 @@ MaterialArchive *SV_MaterialArchive()
 {
     DENG_ASSERT(inited);
     return materialArchive;
+}
+
+SideArchive &SV_SideArchive()
+{
+    DENG_ASSERT(inited);
+    DENG_ASSERT(sideArchive != 0);
+    return *sideArchive;
 }
 
 static bool openGameSaveFile(Str const *fileName, bool write)

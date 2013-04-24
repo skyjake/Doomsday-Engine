@@ -21,7 +21,7 @@
 #ifndef LIBCOMMON_SAVEGAME_DEFS_H
 #define LIBCOMMON_SAVEGAME_DEFS_H
 
-#define MY_SAVE_VERSION         11
+#define MY_SAVE_VERSION         12
 
 #if __JDOOM__
 #  define MY_SAVE_MAGIC         0x1DEAD666
