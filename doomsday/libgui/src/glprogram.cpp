@@ -217,9 +217,10 @@ DENG2_OBSERVES(GLUniform, Deletion)
         // Update the sampler uniforms.
         for(int unit = textures.size() - 1; unit >= 0; --unit)
         {
-            if(textures[unit]->texture())
+            GLTexture const *tex = *textures[unit];
+            if(tex)
             {
-                textures[unit]->texture()->glBindToUnit(unit);
+                tex->glBindToUnit(unit);
             }
         }
     }

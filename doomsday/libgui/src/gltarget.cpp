@@ -131,10 +131,10 @@ DENG2_OBSERVES(Asset, Deletion)
         if(fbo)
         {
             glDeleteFramebuffers(1, &fbo);
-            glDeleteRenderbuffers(3, renderBufs);
+            glDeleteRenderbuffers(MAX_BUFFERS, renderBufs);
         }
         texture = 0;
-        size    = Vector2ui(0, 0);
+        size = Vector2ui(0, 0);
     }
 
     void validate()
@@ -220,7 +220,8 @@ QImage GLTarget::toImage() const
         QImage img(QSize(imgSize.x, imgSize.y), QImage::Format_ARGB32);
         glBind();
         glPixelStorei(GL_PACK_ALIGNMENT, 4);
-        glReadPixels(0, 0, imgSize.x, imgSize.y, GL_RGBA, GL_UNSIGNED_BYTE, img.bits());
+        glReadPixels(0, 0, imgSize.x, imgSize.y, GL_RGBA, GL_UNSIGNED_BYTE,
+                     (GLvoid *) img.constBits());
         // Restore the stack's target.
         GLState::top().target().glBind();
         return img;

@@ -103,7 +103,10 @@ Drawable::Ids Drawable::allBuffers() const
 
 Drawable::Ids Drawable::allPrograms() const
 {
-    return d->programs.keys();
+    Ids ids;
+    ids << 0 // default program is always there
+        << d->programs.keys();
+    return ids;
 }
 
 Drawable::Ids Drawable::allStates() const
@@ -153,6 +156,9 @@ void Drawable::addBuffer(Id id, GLBuffer *buffer)
 
 GLProgram &Drawable::addProgram(Id id)
 {
+    // Program 0 is the default program.
+    DENG2_ASSERT(id != 0);
+
     removeProgram(id);
 
     GLProgram *p = new GLProgram;

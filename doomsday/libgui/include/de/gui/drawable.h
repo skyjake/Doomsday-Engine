@@ -43,7 +43,8 @@ namespace de {
  * states in a Drawable. While each buffer must have a program, having a state
  * is optional. Each buffer can choose which of the Drawable's programs and
  * states is used with the buffer. It is also possible to assign external
- * programs and states for use with buffers.
+ * programs and states for use with buffers. A default program (with id 0) is
+ * always present in a Drawable.
  *
  * Example use cases:
  * - draw a single buffer with a program using the current GL state
@@ -130,7 +131,7 @@ public:
 
     /**
      * Creates a program or replaces an existing one with a blank program.
-     * @param id  Identifier of the program.
+     * @param id  Identifier of the program. Cannot be zero.
      * @return GL program.
      */
     GLProgram &addProgram(Id id);

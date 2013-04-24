@@ -49,7 +49,7 @@ public:
     enum Flag {
         Color   = 0x1,  ///< Target has a color attachment.
         Depth   = 0x2,  ///< Target has a depth attachment.
-        Stencil = 0x4,   ///< Target has a stencil attachment.
+        Stencil = 0x4,  ///< Target has a stencil attachment.
 
         DefaultFlags = Color | Depth
     };
@@ -84,7 +84,8 @@ public:
     /**
      * Constructs a render target with a specific size.
      *
-     * @param size  Size of the render target.
+     * @param size   Size of the render target.
+     * @param flags  Attachments to set up.
      */
     GLTarget(Vector2ui const &size, Flags const &flags = DefaultFlags);
 
