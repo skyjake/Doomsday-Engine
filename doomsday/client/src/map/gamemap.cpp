@@ -700,15 +700,13 @@ void GameMap::setSkyFix(bool ceiling, coord_t newHeight)
 int GameMap::toSideIndex(int lineIndex, int backSide) // static
 {
     DENG_ASSERT(lineIndex >= 0);
-    // The high bit is used to mark the back side.
-    return lineIndex | (backSide? 0x80000000 : 0);
+    return lineIndex * 2 + (backSide? 1 : 0);
 }
 
 Line::Side *GameMap::sideByIndex(int index) const
 {
     if(index < 0) return 0;
-    // The high bit is used to mark the back side.
-    return &_lines.at(index & ~0xf0000000)->side(index & 0x80000000);
+    return &_lines.at(index / 2)->side(index % 2);
 }
 
 Sector *GameMap::sectorBySoundEmitter(ddmobj_base_t const &soundEmitter) const
