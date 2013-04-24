@@ -47,7 +47,7 @@ class  LIBGUI_PUBLIC CanvasWindow : public QMainWindow,
     Q_OBJECT
 
 public:
-    typedef Vector2i Size;
+    typedef Vector2ui Size;
 
 public:
     CanvasWindow();
@@ -64,7 +64,7 @@ public:
      */
     inline Vector2i pos() const { return Vector2i(x(), y()); }
 
-    inline Vector2i size() const { return Vector2i(width(), height()); }
+    inline Size size() const { return Size(de::max(0, width()), de::max(0, height())); }
 
     /**
      * Determines the current width of window's Canvas in pixels.

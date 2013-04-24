@@ -81,7 +81,7 @@ DENG2_PIMPL(LineEditWidget)
      */
     void updateWrapsAndHeight()
     {
-        wraps.wrapTextToWidth(text, de::max(1, self.rule().recti().width() - prompt.size() - 1));
+        wraps.wrapTextToWidth(text, de::max(1, int(self.rule().recti().width()) - int(prompt.size()) - 1));
         height->set(wraps.height());
     }
 

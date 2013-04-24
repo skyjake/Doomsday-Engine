@@ -56,6 +56,7 @@ public:
     NumberValue(Number initialValue = 0, SemanticHints semantic = Generic);
     NumberValue(dsize initialSize);
     NumberValue(dint initialInteger);
+    NumberValue(duint initialUnsignedInteger);
     NumberValue(bool initialBoolean);
 
     /**

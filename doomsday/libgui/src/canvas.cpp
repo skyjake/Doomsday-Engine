@@ -43,9 +43,10 @@ static const int MOUSE_WHEEL_CONTINUOUS_THRESHOLD_MS = 100;
 
 DENG2_PIMPL(Canvas)
 {
+    GLTarget target;
     CanvasWindow *parent;
     bool readyNotified;
-    Vector2i currentSize;
+    Size currentSize;
     bool mouseDisabled;
     bool mouseGrabbed;
 #ifdef WIN32
@@ -199,7 +200,7 @@ GLuint Canvas::grabAsTexture(QSize const &outputSize)
                        QGLContext::LinearFilteringBindOption);
 }
 
-Vector2i Canvas::size() const
+Canvas::Size Canvas::size() const
 {
     return d->currentSize;
 }
@@ -248,7 +249,7 @@ void Canvas::initializeGL()
 
 void Canvas::resizeGL(int w, int h)
 {
-    Vector2i newSize(w, h);
+    Size newSize(max(0, w), max(0, h));
 
     // Only react if this is actually a resize.
     if(d->currentSize != newSize)

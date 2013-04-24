@@ -64,9 +64,9 @@ static QByteArray runSystemCommand(char const *cmd)
  *
  * @return Terminal columns and rows.
  */
-static de::Vector2i actualTerminalSize(de::Vector2i const &oldSize)
+static de::Vector2ui actualTerminalSize(de::Vector2ui const &oldSize)
 {
-    de::Vector2i size = oldSize;
+    de::Vector2ui size = oldSize;
     QByteArray result = runSystemCommand("stty size");
     QTextStream is(result);
     is >> size.y >> size.x;
@@ -80,7 +80,7 @@ DENG2_PIMPL(CursesApp)
 
     // Curses state:
     WINDOW *rootWin;
-    de::Vector2i rootSize;
+    de::Vector2ui rootSize;
     int unicodeContinuation;
 
     TextRootWidget *rootWidget;
@@ -160,7 +160,7 @@ DENG2_PIMPL(CursesApp)
     void handleResize()
     {
         // Terminal has been resized.
-        de::Vector2i size = actualTerminalSize(rootSize);
+        de::Vector2ui size = actualTerminalSize(rootSize);
 
         // Curses needs to resize its buffers.
         werase(rootWin);

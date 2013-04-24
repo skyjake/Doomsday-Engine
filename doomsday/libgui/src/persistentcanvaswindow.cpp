@@ -50,7 +50,7 @@ static QRect desktopRect()
     return QApplication::desktop()->screenGeometry();
 }
 
-static QRect centeredQRect(Vector2i size)
+static QRect centeredQRect(Vector2ui const &size)
 {
     QSize screenSize = desktopRect().size();
 
@@ -63,7 +63,7 @@ static QRect centeredQRect(Vector2i size)
                  QSize(size.x, size.y));
 }
 
-static Rectanglei centeredRect(Vector2i size)
+static Rectanglei centeredRect(Vector2ui const &size)
 {
     QRect rect = centeredQRect(size);
     return Rectanglei(rect.left(), rect.top(), rect.width(), rect.height());
@@ -217,7 +217,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
             ArrayValue &fs = config.geta(configName("fullSize"));
             if(fs.size() >= 2)
             {
-                fullSize = Vector2i(fs.at(0).asNumber(), fs.at(1).asNumber());
+                fullSize = Size(fs.at(0).asNumber(), fs.at(1).asNumber());
             }
 
             colorDepthBits =    config.geti(configName("colorDepth"));

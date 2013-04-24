@@ -38,6 +38,10 @@ NumberValue::NumberValue(dint initialInteger)
     : _value(initialInteger), _semantic(Generic)
 {}
 
+NumberValue::NumberValue(duint initialUnsignedInteger)
+    : _value(initialUnsignedInteger), _semantic(Generic)
+{}
+
 NumberValue::NumberValue(bool initialBoolean)
     : _value(initialBoolean? True : False), _semantic(Boolean)
 {}

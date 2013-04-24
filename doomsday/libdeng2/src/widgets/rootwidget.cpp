@@ -41,17 +41,17 @@ DENG2_PIMPL_NOREF(RootWidget)
         delete viewRect;
     }
 
-    Vector2i viewSize() const
+    Size viewSize() const
     {
-        return Vector2i(de::floor(viewRect->right().value()),
-                        de::floor(viewRect->bottom().value()));
+        return Size(de::max(0, de::floor(viewRect->right().value())),
+                    de::max(0, de::floor(viewRect->bottom().value())));
     }
 };
 
 RootWidget::RootWidget() : Widget(), d(new Instance)
 {}
 
-Vector2i RootWidget::viewSize() const
+RootWidget::Size RootWidget::viewSize() const
 {
     return d->viewSize();
 }
@@ -86,7 +86,7 @@ Rule const &RootWidget::viewHeight() const
     return d->viewRect->bottom();
 }
 
-void RootWidget::setViewSize(Vector2i const &size)
+void RootWidget::setViewSize(Size const &size)
 {
     d->viewRect->setInput(Rule::Right,  Const(size.x));
     d->viewRect->setInput(Rule::Bottom, Const(size.y));

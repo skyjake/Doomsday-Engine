@@ -94,7 +94,7 @@ DENG2_PIMPL(LogWidget)
 {
     Sink sink;
     MonospaceLogSinkFormatter formatter;
-    int cacheWidth;
+    unsigned int cacheWidth;
     QList<TextCanvas *> cache; ///< Indices match entry indices in sink.
     int maxEntries;
     int visibleOffset;
@@ -240,7 +240,7 @@ void LogWidget::draw()
         LogEntry const &entry = d->sink.entry(idx);
         QList<String> lines = d->formatter.logEntryToTextLines(entry);
 
-        TextCanvas *buf = new TextCanvas(Vector2i(pos.width(), lines.size()));
+        TextCanvas *buf = new TextCanvas(Vector2ui(pos.width(), lines.size()));
         d->cache.append(buf);
 
         TextCanvas::Char::Attribs attribs = (entry.flags() & LogEntry::Remote?
