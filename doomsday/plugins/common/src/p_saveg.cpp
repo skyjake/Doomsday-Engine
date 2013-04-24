@@ -101,7 +101,7 @@ typedef enum lineclass_e {
     NUM_LINECLASSES
 } lineclass_t;
 
-static bool SV_RecogniseState(Str const *path, SaveInfo *info);
+static bool recogniseGameState(Str const *path, SaveInfo *info);
 
 static void SV_WriteMobj(mobj_t const *mobj);
 static int SV_ReadMobj(thinker_t *th);
@@ -489,7 +489,7 @@ static void updateSaveInfo(Str const *path, SaveInfo *info)
     }
 
     // Is this a recognisable save state?
-    if(!SV_RecogniseState(path, info))
+    if(!recogniseGameState(path, info))
     {
         // Clear the info for this slot.
         SaveInfo_SetName(info, 0);
@@ -596,33 +596,40 @@ AutoStr *SV_ComposeSlotIdentifier(int slot)
     return Str_Appendf(str, "%i", slot);
 }
 
+/**
+ * Determines whether to announce when the specified @a slot is cleared.
+ */
+static bool announceOnClearingSlot(int slot)
+{
+#if _DEBUG
+    return true; // Always.
+#endif
+#if __JHEXEN__
+    return (slot != AUTO_SLOT && slot != BASE_SLOT);
+#else
+    return (slot != AUTO_SLOT);
+#endif
+}
+
 void SV_ClearSlot(int slot)
 {
     DENG_ASSERT(inited);
 
     if(!SV_IsValidSlot(slot)) return;
 
-    // Announce when clearing save slots (for auto and base slots too if _DEBUG).
-#if !_DEBUG
-# if __JHEXEN__
-    if(slot != AUTO_SLOT && slot != BASE_SLOT)
-# else
-    if(slot != AUTO_SLOT)
-# endif
-#endif
+    if(announceOnClearingSlot(slot))
     {
         AutoStr *ident = SV_ComposeSlotIdentifier(slot);
         Con_Message("Clearing save slot %s", Str_Text(ident));
     }
 
-    AutoStr *path;
     for(int i = 0; i < MAX_HUB_MAPS; ++i)
     {
-        path = composeGameSavePathForSlot2(slot, i);
+        AutoStr *path = composeGameSavePathForSlot2(slot, i);
         SV_RemoveFile(path);
     }
 
-    path = composeGameSavePathForSlot(slot);
+    AutoStr *path = composeGameSavePathForSlot(slot);
     SV_RemoveFile(path);
 
     // Update save info for this slot.
@@ -669,7 +676,7 @@ static void SV_SaveInfo_Read(SaveInfo *info)
     Reader_Delete(svReader);
 }
 
-static bool recogniseState(Str const *path, SaveInfo *info)
+static bool recogniseNativeState(Str const *path, SaveInfo *info)
 {
     DENG_ASSERT(path != 0 && info != 0);
 
@@ -714,14 +721,14 @@ static bool recogniseState(Str const *path, SaveInfo *info)
     return true;
 }
 
-static bool SV_RecogniseState(Str const *path, SaveInfo *info)
+static bool recogniseGameState(Str const *path, SaveInfo *info)
 {
     if(path && info)
     {
-        if(recogniseState(path, info))
+        if(recogniseNativeState(path, info))
             return true;
 
-        // Perhaps an original game save?
+        // Perhaps an original game state?
 #if __JDOOM__
         if(SV_RecogniseState_Dm_v19(Str_Text(path), info))
             return true;
@@ -4986,15 +4993,6 @@ static void unarchiveMap()
     SV_AssertSegment(ASEG_END);
 }
 
-/**
- * @return  Pointer to the (currently in-use) material archive.
- */
-MaterialArchive *SV_MaterialArchive()
-{
-    DENG_ASSERT(inited);
-    return materialArchive;
-}
-
 void SV_Init()
 {
     static bool firstInit = true;
@@ -5036,6 +5034,15 @@ void SV_Shutdown()
     cvarQuickSlot = -1;
 
     inited = false;
+}
+
+/**
+ * @return  Pointer to the (currently in-use) material archive.
+ */
+MaterialArchive *SV_MaterialArchive()
+{
+    DENG_ASSERT(inited);
+    return materialArchive;
 }
 
 static bool openGameSaveFile(Str const *fileName, bool write)
@@ -5222,47 +5229,38 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
     return 0;
 }
 
-static void onLoadStateSuccess()
+static int loadStateWorker(Str const *path, SaveInfo &saveInfo)
 {
-    // Let the engine know where the local players are now.
-    for(int i = 0; i < MAXPLAYERS; ++i)
-    {
-        R_UpdateConsoleView(i);
-    }
+    DENG_ASSERT(path != 0);
 
-    // Spawn particle generators, fix HOMS etc, etc...
-    R_SetupMap(DDSMM_AFTER_LOADING, 0);
-}
-
-static int loadStateWorker(Str const *path, SaveInfo *saveInfo)
-{
     int loadError = true; // Failed.
 
-    if(path && saveInfo)
+    if(recogniseNativeState(path, &saveInfo))
     {
-        if(recogniseState(path, saveInfo))
-        {
-            loadError = SV_LoadState(path, saveInfo);
-        }
-        // Perhaps an original game save?
+        loadError = SV_LoadState(path, &saveInfo);
+    }
+    // Perhaps an original game state?
 #if __JDOOM__
-        else if(SV_RecogniseState_Dm_v19(Str_Text(path), saveInfo))
-        {
-            loadError = SV_LoadState_Dm_v19(Str_Text(path), saveInfo);
-        }
+    else if(SV_RecogniseState_Dm_v19(Str_Text(path), &saveInfo))
+    {
+        loadError = SV_LoadState_Dm_v19(Str_Text(path), &saveInfo);
+    }
 #endif
 #if __JHERETIC__
-        else if(SV_RecogniseState_Hr_v13(Str_Text(path), saveInfo))
-        {
-            loadError = SV_LoadState_Hr_v13(Str_Text(path), saveInfo);
-        }
-#endif
+    else if(SV_RecogniseState_Hr_v13(Str_Text(path), &saveInfo))
+    {
+        loadError = SV_LoadState_Hr_v13(Str_Text(path), &saveInfo);
     }
+#endif
 
     if(loadError) return loadError;
 
+    /*
+     * Game state was loaded successfully.
+     */
+
     // Material origin scrollers must be re-spawned for older save state versions.
-    saveheader_t const *hdr = SaveInfo_Header(saveInfo);
+    saveheader_t const *hdr = SaveInfo_Header(&saveInfo);
 
     /// @todo Implement SaveInfo format type identifiers.
     if((hdr->magic != (IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC)) ||
@@ -5271,7 +5269,15 @@ static int loadStateWorker(Str const *path, SaveInfo *saveInfo)
         P_SpawnAllMaterialOriginScrollers();
     }
 
-    onLoadStateSuccess();
+    // Let the engine know where the local players are now.
+    for(int i = 0; i < MAXPLAYERS; ++i)
+    {
+        R_UpdateConsoleView(i);
+    }
+
+    // Spawn particle generators, fix HOMS etc, etc...
+    R_SetupMap(DDSMM_AFTER_LOADING, 0);
+
     return 0; // Success.
 }
 
@@ -5308,8 +5314,9 @@ boolean SV_LoadGame(int slot)
 #endif
 
     SaveInfo *saveInfo = SV_SaveInfoForSlot(logicalSlot);
+    DENG_ASSERT(saveInfo != 0);
 
-    int loadError = loadStateWorker(path, saveInfo);
+    int loadError = loadStateWorker(path, *saveInfo);
     if(!loadError)
     {
         Con_SetInteger2("game-save-last-slot", slot, SVF_WRITE_OVERRIDE);
