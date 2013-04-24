@@ -1,9 +1,7 @@
-/**
- * @file saveinfo.h
- * Save state info.
+/** @file common/saveinfo.h Save state info.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_SAVEINFO_H
-#define LIBCOMMON_SAVEINFO_H
+#ifndef LIBCOMMON_SAVEINFO
+#define LIBCOMMON_SAVEINFO
 
 #include "doomsday.h"
 #include "common.h"
@@ -52,34 +50,35 @@ typedef struct saveheader_s {
  * SaveInfo instance.
  */
 typedef struct saveinfo_s {
-    ddstring_t name;
+    Str name;
     uint gameId;
     saveheader_t header;
 } SaveInfo;
 
-SaveInfo* SaveInfo_New(void);
-SaveInfo* SaveInfo_NewCopy(const SaveInfo* other);
+SaveInfo *SaveInfo_New(void);
+SaveInfo *SaveInfo_NewCopy(SaveInfo const *other);
 
-void SaveInfo_Delete(SaveInfo* info);
+void SaveInfo_Delete(SaveInfo *info);
 
-SaveInfo* SaveInfo_Copy(SaveInfo* self, const SaveInfo* other);
+SaveInfo *SaveInfo_Copy(SaveInfo *info, SaveInfo const *other);
 
-uint SaveInfo_GameId(const SaveInfo* info);
+uint SaveInfo_GameId(SaveInfo const *info);
 
-const saveheader_t* SaveInfo_Header(const SaveInfo* info);
+saveheader_t const *SaveInfo_Header(SaveInfo const *info);
 
-const ddstring_t* SaveInfo_Name(const SaveInfo* info);
+Str const *SaveInfo_Name(SaveInfo const *info);
 
-void SaveInfo_SetGameId(SaveInfo* info, uint newGameId);
+void SaveInfo_SetGameId(SaveInfo *info, uint newGameId);
 
-void SaveInfo_SetName(SaveInfo* info, const ddstring_t* newName);
+void SaveInfo_SetName(SaveInfo *info, Str const *newName);
 
-void SaveInfo_Configure(SaveInfo* info);
+void SaveInfo_Configure(SaveInfo *info);
 
 /**
- * @return  Is this state loadable for the current game session.
+ * Returns @a true if the game state is compatibile with the current game session
+ * and @em should be loadable.
  */
-boolean SaveInfo_IsLoadable(SaveInfo* info);
+boolean SaveInfo_IsLoadable(SaveInfo *info);
 
 /**
  * Serializes the save info using @a writer.
@@ -87,7 +86,7 @@ boolean SaveInfo_IsLoadable(SaveInfo* info);
  * @param info  SaveInfo instance.
  * @param writer  Writer instance.
  */
-void SaveInfo_Write(SaveInfo* info, Writer* writer);
+void SaveInfo_Write(SaveInfo *info, Writer *writer);
 
 /**
  * Deserializes the save info using @a reader.
@@ -95,18 +94,18 @@ void SaveInfo_Write(SaveInfo* info, Writer* writer);
  * @param info  SaveInfo instance.
  * @param reader  Reader instance.
  */
-void SaveInfo_Read(SaveInfo* info, Reader* reader);
+void SaveInfo_Read(SaveInfo *info, Reader *reader);
 
 #if __JHEXEN__
 /**
  * @brief libhexen specific version of @ref SaveInfo_Read() for deserializing
  * legacy version 9 save state info.
  */
-void SaveInfo_Read_Hx_v9(SaveInfo* info, Reader* reader);
+void SaveInfo_Read_Hx_v9(SaveInfo *info, Reader *reader);
 #endif
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif /* LIBCOMMON_SAVEINFO_H */
+#endif // LIBCOMMON_SAVEINFO
