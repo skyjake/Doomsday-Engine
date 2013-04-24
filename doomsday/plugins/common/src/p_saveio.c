@@ -224,7 +224,7 @@ void SV_AssertSegment(int segmentId)
 #endif
 }
 
-void SV_AssertMapSegment(gamearchivesegment_t *retSegmentId)
+void SV_AssertMapSegment(savestatesegment_t *retSegmentId)
 {
 #if __JHEXEN__
     int segmentId = SV_ReadLong();

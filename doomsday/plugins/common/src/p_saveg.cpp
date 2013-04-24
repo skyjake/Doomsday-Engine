@@ -1822,7 +1822,7 @@ static void RestoreMobj(mobj_t *mo, int ver)
         if(pNum < 0)
         {
             // This saved player does not exist in the current game!
-            // This'll make the mobj unarchiver destroy this mobj.
+            // Destroy this mobj.
             Z_Free(mo);
 
             return;  // Don't add this thinker.
@@ -2127,7 +2127,7 @@ static int SV_ReadMobj(thinker_t* th)
 /**
  * Prepare and write the player header info.
  */
-static void archivePlayerHeader()
+static void writePlayerHeader()
 {
     playerheader_t *ph = &playerHeader;
 
@@ -2164,9 +2164,9 @@ static void archivePlayerHeader()
 }
 
 /**
- * Read archived player header info.
+ * Read player header info from the game state.
  */
-static void unarchivePlayerHeader()
+static void readPlayerHeader()
 {
 #if __JHEXEN__
     if(hdr->version >= 4)
@@ -2233,7 +2233,7 @@ static void unarchivePlayerHeader()
     playerHeaderOK = true;
 }
 
-static void archivePlayers()
+static void writePlayers()
 {
     SV_BeginSegment(ASEG_PLAYERS);
     {
@@ -2256,7 +2256,7 @@ static void archivePlayers()
     SV_EndSegment();
 }
 
-static void unarchivePlayers(boolean *infile, boolean *loaded)
+static void readPlayers(boolean *infile, boolean *loaded)
 {
     DENG_ASSERT(infile && loaded);
 
@@ -2304,7 +2304,7 @@ static void unarchivePlayers(boolean *infile, boolean *loaded)
                     // Later references to the player number 'i' must be translated!
                     saveToRealPlayerNum[i] = k;
 #if _DEBUG
-                    Con_Printf("unarchivePlayers: Saved %i is now %i.\n", i, k);
+                    Con_Printf("readPlayers: Saved %i is now %i.\n", i, k);
 #endif
                     break;
                 }
@@ -2862,10 +2862,7 @@ static int SV_ReadPolyObj()
 }
 #endif
 
-/**
- * Only write world in the latest format.
- */
-static void archiveMapElements()
+static void writeMapElements()
 {
     Writer *svWriter = SV_NewWriter();
     MaterialArchive_Write(materialArchive, svWriter);
@@ -2887,7 +2884,7 @@ static void archiveMapElements()
 #endif
 }
 
-static void unarchiveMapElements()
+static void readMapElements()
 {
     SV_AssertSegment(ASEG_MAP_ELEMENTS);
 
@@ -4198,12 +4195,11 @@ static int SV_ReadScroll(scroll_t *scroll)
 }
 
 /**
- * Archives the specified thinker.
+ * Serializes the specified thinker and writes it to save state.
  *
- * @param th          The thinker to be archived.
- * @param parameters  archiveThinkerParams
+ * @param th  The thinker to be serialized.
  */
-static int archiveThinker(thinker_t *th, void *context)
+static int writeThinker(thinker_t *th, void *context)
 {
     DENG_UNUSED(context);
 
@@ -4233,14 +4229,14 @@ static int archiveThinker(thinker_t *th, void *context)
 }
 
 /**
- * Archives thinkers for both client and server.
+ * Serializes thinkers for both client and server.
  *
  * @note Clients do not save data for all thinkers. In some cases the server
  * will send it anyway (so saving it would just bloat client save states).
  *
  * @note Some thinker classes are NEVER saved by clients.
  */
-static void archiveThinkers()
+static void writeThinkers()
 {
     SV_BeginSegment(ASEG_THINKERS);
     {
@@ -4249,7 +4245,7 @@ static void archiveThinkers()
 #endif
 
         // Serialize qualifying thinkers.
-        Thinker_Iterate(0/*all thinkers*/, archiveThinker, 0/*no parameters*/);
+        Thinker_Iterate(0/*all thinkers*/, writeThinker, 0/*no parameters*/);
     }
     SV_WriteByte(TC_END);
 }
@@ -4435,9 +4431,9 @@ static void relinkThinkers()
 }
 
 /**
- * Unarchives thinkers for both client and server.
+ * Deserializes and then spawns thinkers for both client and server.
  */
-static void unarchiveThinkers()
+static void readThinkers()
 {
     byte tClass = 0;
     thinker_t *th = 0;
@@ -4582,7 +4578,7 @@ static void unarchiveThinkers()
 #endif
 }
 
-static void archiveBrain()
+static void writeBrain()
 {
 #if __JDOOM__
     // Not for us?
@@ -4600,7 +4596,7 @@ static void archiveBrain()
 #endif
 }
 
-static void unarchiveBrain()
+static void readBrain()
 {
 #if __JDOOM__
     // Not for us?
@@ -4633,7 +4629,7 @@ static void unarchiveBrain()
 #endif
 }
 
-static void archiveSoundTargets()
+static void writeSoundTargets()
 {
 #if !__JHEXEN__
     // Not for us?
@@ -4656,7 +4652,7 @@ static void archiveSoundTargets()
 #endif
 }
 
-static void unarchiveSoundTargets()
+static void readSoundTargets()
 {
 #if !__JHEXEN__
     // Not for us?
@@ -4681,7 +4677,7 @@ static void unarchiveSoundTargets()
 #endif
 }
 
-static void archiveSoundSequences()
+static void writeSoundSequences()
 {
 #if __JHEXEN__
     SV_BeginSegment(ASEG_SOUNDS);
@@ -4728,7 +4724,7 @@ static void archiveSoundSequences()
 #endif
 }
 
-static void unarchiveSoundSequences()
+static void readSoundSequences()
 {
 #if __JHEXEN__
     SV_AssertSegment(ASEG_SOUNDS);
@@ -4766,7 +4762,7 @@ static void unarchiveSoundSequences()
 #endif
 }
 
-static void archiveScripts()
+static void writeScripts()
 {
 #if __JHEXEN__
     SV_BeginSegment(ASEG_SCRIPTS);
@@ -4784,7 +4780,7 @@ static void archiveScripts()
 #endif
 }
 
-static void unarchiveScripts()
+static void readScripts()
 {
 #if __JHEXEN__
     SV_AssertSegment(ASEG_SCRIPTS);
@@ -4802,7 +4798,7 @@ static void unarchiveScripts()
 #endif
 }
 
-static void archiveGlobalScriptData()
+static void writeGlobalScriptData()
 {
 #if __JHEXEN__
     SV_BeginSegment(ASEG_GLOBALSCRIPTDATA);
@@ -4825,7 +4821,7 @@ static void archiveGlobalScriptData()
 #endif
 }
 
-static void unarchiveGlobalScriptData()
+static void readGlobalScriptData()
 {
 #if __JHEXEN__
 
@@ -4898,7 +4894,7 @@ static void unarchiveGlobalScriptData()
 #endif // __JHEXEN__
 }
 
-static void archiveMisc()
+static void writeMisc()
 {
 #if __JHEXEN__
     SV_BeginSegment(ASEG_MISC);
@@ -4910,7 +4906,7 @@ static void archiveMisc()
 #endif
 }
 
-static void unarchiveMisc()
+static void readMisc()
 {
 #if __JHEXEN__
     SV_AssertSegment(ASEG_MISC);
@@ -4922,7 +4918,7 @@ static void unarchiveMisc()
 #endif
 }
 
-static void archiveMap()
+static void writeMap()
 {
 #if !__JHEXEN__
     // Clear the sound target count (determined while saving sectors).
@@ -4938,20 +4934,20 @@ static void archiveMap()
         SV_WriteLong(mapTime);
 #endif
 
-        archiveMapElements();
-        archiveThinkers();
-        archiveScripts();
-        archiveSoundSequences();
-        archiveMisc();
-        archiveBrain();
-        archiveSoundTargets();
+        writeMapElements();
+        writeThinkers();
+        writeScripts();
+        writeSoundSequences();
+        writeMisc();
+        writeBrain();
+        writeSoundTargets();
     }
     SV_EndSegment();
 }
 
-static void unarchiveMap()
+static void readMap()
 {
-    gamearchivesegment_t mapSegmentId;
+    savestatesegment_t mapSegmentId;
     SV_AssertMapSegment(&mapSegmentId);
     {
 #if __JHEXEN__
@@ -4971,13 +4967,13 @@ static void unarchiveMap()
             Reader_Delete(svReader);
         }
 
-        unarchiveMapElements();
-        unarchiveThinkers();
-        unarchiveScripts();
-        unarchiveSoundSequences();
-        unarchiveMisc();
-        unarchiveBrain();
-        unarchiveSoundTargets();
+        readMapElements();
+        readThinkers();
+        readScripts();
+        readSoundSequences();
+        readMisc();
+        readBrain();
+        readSoundTargets();
     }
     SV_AssertSegment(ASEG_END);
 }
@@ -5088,8 +5084,7 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
     respawnMonsters = hdr->respawnMonsters;
 #endif
 
-    // Read global game state data.
-    unarchiveGlobalScriptData();
+    readGlobalScriptData();
 
     /*
      * Load the map and configure some game settings.
@@ -5108,7 +5103,7 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
     initThingArchiveForLoad(hdr->version >= 5? SV_ReadLong() : 1024 /* num elements */);
 #endif
 
-    unarchivePlayerHeader();
+    readPlayerHeader();
 
     // Read the player structures
     // We don't have the right to say which players are in the game. The
@@ -5117,7 +5112,7 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
     // players who were saved but are not currently in the game will be
     // discarded.
     boolean loaded[MAXPLAYERS], infile[MAXPLAYERS];
-    unarchivePlayers(infile, loaded);
+    readPlayers(infile, loaded);
 
 #if __JHEXEN__
     Z_Free(saveBuffer);
@@ -5357,13 +5352,13 @@ void SV_SaveGameClient(uint gameId)
     SV_WriteLong(FLT2FIX(mo->ceilingZ));
     SV_WriteLong(mo->angle); /* $unifiedangles */
     SV_WriteFloat(pl->plr->lookDir); /* $unifiedangles */
-    archivePlayerHeader();
+    writePlayerHeader();
     SV_WritePlayer(CONSOLEPLAYER);
 
     // Create and populate the MaterialArchive.
     materialArchive = MaterialArchive_New(false);
 
-    archiveMap();
+    writeMap();
     /// @todo No consistency bytes in client saves?
 
     clearMaterialArchive();
@@ -5432,7 +5427,7 @@ void SV_LoadGameClient(uint gameId)
     mo->ceilingZ = FIX2FLT(SV_ReadLong());
     mo->angle = SV_ReadLong(); /* $unifiedangles */
     cpl->plr->lookDir = SV_ReadFloat(); /* $unifiedangles */
-    unarchivePlayerHeader();
+    readPlayerHeader();
     SV_ReadPlayer(cpl);
 
     /**
@@ -5444,7 +5439,7 @@ void SV_LoadGameClient(uint gameId)
      */
     materialArchive = MaterialArchive_New(false);
 
-    unarchiveMap();
+    readMap();
 
     clearMaterialArchive();
 
@@ -5477,7 +5472,7 @@ static void readMapState()
     SV_HxSavePtr()->b = saveBuffer;
 #endif
 
-    unarchiveMap();
+    readMap();
 
 #if __JHEXEN__
     clearThingArchive();
@@ -5510,7 +5505,7 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
     SaveInfo_Write(saveInfo, svWriter);
     Writer_Delete(svWriter); svWriter = 0;
 
-    archiveGlobalScriptData();
+    writeGlobalScriptData();
 
     // Set the mobj archive numbers.
     initThingArchiveForSave();
@@ -5526,8 +5521,8 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
     materialArchive = MaterialArchive_New(false);
 #endif
 
-    archivePlayerHeader();
-    archivePlayers();
+    writePlayerHeader();
+    writePlayers();
 
 #if __JHEXEN__
     // Close the game session file (maps are saved into a seperate file).
@@ -5542,7 +5537,7 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
     SV_OpenFile(composeGameSavePathForSlot2(BASE_SLOT, gameMap+1), "wp");
 #endif
 
-    archiveMap();
+    writeMap();
 
     SV_WriteConsistencyBytes(); // To be absolutely sure...
     SV_CloseFile();
@@ -5640,7 +5635,7 @@ void SV_HxSaveClusterMap()
     // Create and populate the MaterialArchive.
     materialArchive = MaterialArchive_New(true);
 
-    archiveMap();
+    writeMap();
 
     clearMaterialArchive();
 
@@ -5650,7 +5645,7 @@ void SV_HxSaveClusterMap()
 
 void SV_HxLoadClusterMap()
 {
-    // Only unarchiveMap() uses targetPlayerAddrs, so it's NULLed here for the
+    // Only readMap() uses targetPlayerAddrs, so it's NULLed here for the
     // following check (player mobj redirection).
     targetPlayerAddrs = 0;
 

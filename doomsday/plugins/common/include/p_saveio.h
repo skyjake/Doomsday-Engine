@@ -32,7 +32,7 @@
 extern "C" {
 #endif
 
-typedef enum gamearchivesegment_e {
+typedef enum savestatesegment_e {
     ASEG_MAP_HEADER = 102, // Hexen only
     ASEG_MAP_ELEMENTS,
     ASEG_POLYOBJS, // Hexen only
@@ -47,7 +47,7 @@ typedef enum gamearchivesegment_e {
     ASEG_MAP_HEADER2,
     ASEG_PLAYER_HEADER,
     ASEG_GLOBALSCRIPTDATA // Hexen only
-} gamearchivesegment_t;
+} savestatesegment_t;
 
 enum {
     SV_OK = 0,
@@ -92,7 +92,7 @@ void SV_AssertSegment(int segmentId);
  *
  * @todo Refactor away.
  */
-void SV_AssertMapSegment(gamearchivesegment_t *retSegmentId);
+void SV_AssertMapSegment(savestatesegment_t *retSegmentId);
 
 void SV_BeginSegment(int segmentId);
 void SV_EndSegment();
