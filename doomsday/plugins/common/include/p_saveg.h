@@ -200,11 +200,6 @@ typedef int ThingSerialId;
 typedef ushort ThingSerialId;
 #endif
 
-#if __JHEXEN__
-/// Symbolic identifier used to mark references to players in map states.
-ThingSerialId const TargetPlayerId = -2;
-#endif
-
 /**
  * To be called when writing a game state to acquire a unique identifier for
  * the specified @a mobj from the thing archive. If the given mobj is already

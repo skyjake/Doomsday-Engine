@@ -869,21 +869,20 @@ static void P_v13_UnArchiveSpecials(void)
     }
 }
 
-int SV_LoadState_Hr_v13(const char* path, SaveInfo* info)
+int SV_LoadState_Hr_v13(Str const *path, SaveInfo *info)
 {
-    const saveheader_t* hdr;
+    saveheader_t const *hdr;
 
-    DENG_ASSERT(path);
-    DENG_ASSERT(info);
+    DENG_ASSERT(path != 0 && info != 0);
 
-    if(!SV_OpenFile_Hr_v13(path)) return 1;
+    if(!SV_OpenFile_Hr_v13(Str_Text(path))) return 1;
 
     svReader = SV_NewReader_Hr_v13();
 
     // Read the header again.
     /// @todo Seek past the header straight to the game state.
     {
-    SaveInfo* tmp = SaveInfo_New();
+    SaveInfo *tmp = SaveInfo_New();
     SaveInfo_Read_Hr_v13(tmp, svReader);
     SaveInfo_Delete(tmp);
     }
@@ -995,16 +994,15 @@ static Reader* SV_NewReader_Hr_v13(void)
     return Reader_NewWithCallbacks(sri8, sri16, sri32, NULL, srd);
 }
 
-boolean SV_RecogniseState_Hr_v13(const char* path, SaveInfo* info)
+boolean SV_RecogniseState_Hr_v13(Str const *path, SaveInfo *info)
 {
-    DENG_ASSERT(path);
-    DENG_ASSERT(info);
+    DENG_ASSERT(path != 0 && info != 0);
 
     if(!SV_ExistingFile(path)) return false;
 
-    if(SV_OpenFile_Hr_v13(path))
+    if(SV_OpenFile_Hr_v13(Str_Text(path)))
     {
-        Reader* svReader = SV_NewReader_Hr_v13();
+        Reader *svReader = SV_NewReader_Hr_v13();
         boolean result = false;
 
         /// @todo Use the 'version' string as the "magic" identifier.

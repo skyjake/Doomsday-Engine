@@ -58,6 +58,11 @@
 #define FF_FULLBRIGHT       0x8000 ///< Used to be a flag in thing->frame.
 #define FF_FRAMEMASK        0x7fff
 
+#if __JHEXEN__
+/// Symbolic identifier used to mark references to players in map states.
+static ThingSerialId const TargetPlayerId = -2;
+#endif
+
 typedef struct playerheader_s {
     int numPowers;
     int numKeys;
@@ -731,11 +736,11 @@ static bool recogniseGameState(Str const *path, SaveInfo *info)
 
         // Perhaps an original game state?
 #if __JDOOM__
-        if(SV_RecogniseState_Dm_v19(Str_Text(path), info))
+        if(SV_RecogniseState_Dm_v19(path, info))
             return true;
 #endif
 #if __JHERETIC__
-        if(SV_RecogniseState_Hr_v13(Str_Text(path), info))
+        if(SV_RecogniseState_Hr_v13(path, info))
             return true;
 #endif
     }
@@ -5222,15 +5227,15 @@ static int loadStateWorker(Str const *path, SaveInfo &saveInfo)
     }
     // Perhaps an original game state?
 #if __JDOOM__
-    else if(SV_RecogniseState_Dm_v19(Str_Text(path), &saveInfo))
+    else if(SV_RecogniseState_Dm_v19(path, &saveInfo))
     {
-        loadError = SV_LoadState_Dm_v19(Str_Text(path), &saveInfo);
+        loadError = SV_LoadState_Dm_v19(path, &saveInfo);
     }
 #endif
 #if __JHERETIC__
-    else if(SV_RecogniseState_Hr_v13(Str_Text(path), &saveInfo))
+    else if(SV_RecogniseState_Hr_v13(path, &saveInfo))
     {
-        loadError = SV_LoadState_Hr_v13(Str_Text(path), &saveInfo);
+        loadError = SV_LoadState_Hr_v13(path, &saveInfo);
     }
 #endif
 
@@ -5551,9 +5556,9 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
 }
 
 /**
- * Construct a new SaveInfo configured for the current game session.
+ * Create a new SaveInfo for the current game session.
  */
-static SaveInfo *constructNewSaveInfo(char const *name)
+static SaveInfo *createSaveInfo(char const *name)
 {
     ddstring_t nameStr;
     SaveInfo *info = SaveInfo_New();
@@ -5592,7 +5597,7 @@ boolean SV_SaveGame(int slot, char const *name)
         return false;
     }
 
-    SaveInfo *info = constructNewSaveInfo(name);
+    SaveInfo *info = createSaveInfo(name);
 
     int saveError = saveStateWorker(path, info);
     if(!saveError)
