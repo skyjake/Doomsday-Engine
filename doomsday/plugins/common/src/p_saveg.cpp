@@ -34,6 +34,7 @@
 #include "p_map.h"
 #include "p_mapsetup.h"
 #include "p_player.h"
+#include "mobj.h"
 #include "p_inventory.h"
 #include "am_map.h"
 #include "p_tick.h"
@@ -915,8 +916,7 @@ struct countMobjThinkersToArchiveParms
 static int countMobjThinkersToArchive(thinker_t *th, void *context)
 {
     countMobjThinkersToArchiveParms *parms = (countMobjThinkersToArchiveParms *) context;
-    mobj_t *mo = (mobj_t *) th;
-    if(!(mo->player && parms->excludePlayers))
+    if(!(Mobj_IsPlayer((mobj_t *) th) && parms->excludePlayers))
     {
         parms->count++;
     }
@@ -928,7 +928,7 @@ static void initThingArchiveForSave(bool excludePlayers = false)
     // Count the number of things we'll be writing.
     countMobjThinkersToArchiveParms parms;
     parms.count = 0;
-    parms.excludePlayers = !excludePlayers;
+    parms.excludePlayers = excludePlayers;
     Thinker_Iterate((thinkfunc_t) P_MobjThinker, countMobjThinkersToArchive, &parms);
 
     thingArchiveSize = parms.count;
@@ -966,6 +966,7 @@ static void clearThingArchive()
 ThingSerialId SV_ThingArchiveId(mobj_t const *mo)
 {
     DENG_ASSERT(inited);
+    DENG_ASSERT(thingArchive != 0);
 
     if(!mo) return 0;
 
@@ -977,8 +978,6 @@ ThingSerialId SV_ThingArchiveId(mobj_t const *mo)
     if(mo->player && thingArchiveExcludePlayers)
         return TargetPlayerId;
 #endif
-
-    DENG_ASSERT(thingArchive != 0);
 
     uint firstUnused = 0;
     bool found = false;
@@ -996,7 +995,7 @@ ThingSerialId SV_ThingArchiveId(mobj_t const *mo)
 
     if(!found)
     {
-        Con_Error("SV_ThingArchiveId: Thing archive exhausted!\n");
+        Con_Error("SV_ThingArchiveId: Thing archive exhausted!");
         return 0; // No number available!
     }
 
