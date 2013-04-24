@@ -37,6 +37,11 @@ public:
 
 public:
     /**
+     * Constructs a reference array to NULL with zero size.
+     */
+    ByteRefArray();
+
+    /**
      * Constructs a new byte reference array.
      *
      * @param base  Pointer to the start of the array.
@@ -51,6 +56,21 @@ public:
      * @param size  Total size of the array.
      */
     ByteRefArray(void const *base, Size size);
+
+    /**
+     * Returns a pointer to the start of the array.
+     */
+    void *base();
+
+    /**
+     * Returns a non-modifiable pointer to the start of the array.
+     */
+    void const *base() const;
+
+    /**
+     * Returns a non-modifiable pointer to the start of the array.
+     */
+    void const *readBase() const { return base(); }
 
     /**
      * Sets the contents of the array to zero.

@@ -22,6 +22,9 @@
 
 using namespace de;
 
+ByteRefArray::ByteRefArray() : _writeBase(0), _readBase(0), _size(0)
+{}
+
 ByteRefArray::ByteRefArray(void *base, Size size)
     : _writeBase(reinterpret_cast<Byte *>(base)),
       _readBase(reinterpret_cast<Byte const *>(base)),
@@ -33,6 +36,16 @@ ByteRefArray::ByteRefArray(void const *base, Size size)
       _readBase(reinterpret_cast<Byte const *>(base)),
       _size(size)
 {}
+
+void *ByteRefArray::base()
+{
+    return _writeBase;
+}
+
+void const *ByteRefArray::base() const
+{
+    return _readBase;
+}
 
 void ByteRefArray::clear()
 {
@@ -56,6 +69,7 @@ ByteRefArray::Size ByteRefArray::size() const
 
 void ByteRefArray::get(Offset at, Byte *values, Size count) const
 {
+    DENG2_ASSERT(_readBase != 0);
     if(at + count > size())
     {
         /// @throw OffsetError  The accessed region was out of range.
