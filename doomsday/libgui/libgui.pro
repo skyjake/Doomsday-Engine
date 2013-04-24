@@ -58,6 +58,7 @@ HEADERS += \
     include/de/GLTexture \
     include/de/GLUniform \
     include/de/GuiApp \
+    include/de/Image \
     include/de/KeyEvent \
     include/de/KeyEventSource \
     include/de/MouseEventSource \
@@ -78,6 +79,7 @@ HEADERS += \
     include/de/gui/gltexture.h \
     include/de/gui/gluniform.h \
     include/de/gui/guiapp.h \
+    include/de/gui/image.h \
     include/de/gui/keyevent.h \
     include/de/gui/keyeventsource.h \
     include/de/gui/libgui.h \
@@ -99,6 +101,7 @@ SOURCES += \
     src/gltexture.cpp \
     src/gluniform.cpp \
     src/guiapp.cpp \
+    src/image.cpp \
     src/keyevent.cpp \
     src/persistentcanvaswindow.cpp \
     src/glentrypoints.cpp
