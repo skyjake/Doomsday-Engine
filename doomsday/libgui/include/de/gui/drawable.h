@@ -197,6 +197,7 @@ public:
 
     /**
      * Draws all the buffers using the selected program(s) and state(s).
+     * Drawing is only allowed when all assets are ready.
      */
     void draw() const;
 

@@ -1,4 +1,4 @@
-/** @file gltexture.h  GL texture atlas.
+/** @file gltexture.h  GL texture.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
