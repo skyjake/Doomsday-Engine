@@ -34,7 +34,7 @@ extern "C" {
 
 typedef enum gamearchivesegment_e {
     ASEG_MAP_HEADER = 102, // Hexen only
-    ASEG_WORLD,
+    ASEG_MAP_ELEMENTS,
     ASEG_POLYOBJS, // Hexen only
     ASEG_MOBJS, // Hexen < ver 4 only
     ASEG_THINKERS,
@@ -44,7 +44,7 @@ typedef enum gamearchivesegment_e {
     ASEG_MISC, // Hexen only
     ASEG_END,
     ASEG_MATERIAL_ARCHIVE,
-    ASEG_MAP_HEADER2, // Hexen only
+    ASEG_MAP_HEADER2,
     ASEG_PLAYER_HEADER,
     ASEG_GLOBALSCRIPTDATA // Hexen only
 } gamearchivesegment_t;
@@ -66,12 +66,12 @@ const char* SV_ClientSavePath(void);
 /*
  * File management
  */
-LZFILE* SV_OpenFile(const char* filePath, const char* mode);
+LZFILE* SV_OpenFile(Str const *filePath, char const *mode);
 void SV_CloseFile(void);
 LZFILE* SV_File(void);
-boolean SV_ExistingFile(const char* filePath);
-int SV_RemoveFile(const Str* filePath);
-void SV_CopyFile(const Str* srcPath, const Str* destPath);
+boolean SV_ExistingFile(Str const *filePath);
+int SV_RemoveFile(Str const *filePath);
+void SV_CopyFile(Str const *srcPath, Str const *destPath);
 
 #if __JHEXEN__
 saveptr_t* SV_HxSavePtr(void);
@@ -79,13 +79,26 @@ saveptr_t* SV_HxSavePtr(void);
 
 /**
  * Exit with a fatal error if the value at the current location in the
- * game-save file does not match that associated with the segment type.
+ * game-save file does not match that associated with the segment id.
  *
- * @param segType  Segment type identifier to check alignment of.
+ * @param segmentId  Identifier of the segment to check alignment of.
  */
-void SV_AssertSegment(int segType);
+void SV_AssertSegment(int segmentId);
 
-void SV_BeginSegment(int segType);
+/**
+ * Special case segment check for the map state.
+ *
+ * @param retSegmentId  If not @c 0 return the determined segment id.
+ *
+ * @todo Refactor away.
+ */
+void SV_AssertMapSegment(gamearchivesegment_t *retSegmentId);
+
+void SV_BeginSegment(int segmentId);
+void SV_EndSegment();
+
+void SV_WriteConsistencyBytes(void);
+void SV_ReadConsistencyBytes(void);
 
 /**
  * Seek forward @a offset bytes in the save file.

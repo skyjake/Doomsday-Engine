@@ -142,15 +142,15 @@ void SV_ConfigureSavePaths(void)
     }
 }
 
-LZFILE* SV_File(void)
+LZFILE *SV_File(void)
 {
     return savefile;
 }
 
-LZFILE* SV_OpenFile(const char* filePath, const char* mode)
+LZFILE *SV_OpenFile(Str const *filePath, char const *mode)
 {
-    assert(savefile == 0);
-    savefile = lzOpen((char*)filePath, (char*)mode);
+    DENG_ASSERT(savefile == 0);
+    savefile = lzOpen(Str_Text(filePath), (char *)mode);
     return savefile;
 }
 
@@ -163,10 +163,10 @@ void SV_CloseFile(void)
     }
 }
 
-boolean SV_ExistingFile(const char* filePath)
+boolean SV_ExistingFile(Str const *filePath)
 {
-    FILE* fp;
-    if((fp = fopen(filePath, "rb")))
+    FILE *fp;
+    if((fp = fopen(Str_Text(filePath), "rb")))
     {
         fclose(fp);
         return true;
@@ -174,23 +174,24 @@ boolean SV_ExistingFile(const char* filePath)
     return false;
 }
 
-int SV_RemoveFile(const Str* filePath)
+int SV_RemoveFile(Str const *filePath)
 {
     if(!filePath) return 1;
     return remove(Str_Text(filePath));
 }
 
-void SV_CopyFile(const Str* srcPath, const Str* destPath)
+void SV_CopyFile(Str const *srcPath, Str const *destPath)
 {
     size_t length;
-    char* buffer;
-    LZFILE* outf;
+    char *buffer;
+    LZFILE *outf;
 
     if(!srcPath || !destPath) return;
-    if(!SV_ExistingFile(Str_Text(srcPath))) return;
+
+    if(!SV_ExistingFile(srcPath)) return;
 
     length = M_ReadFile(Str_Text(srcPath), &buffer);
-    if(0 == length)
+    if(length == 0)
     {
         Con_Message("Warning: SV_CopyFile: Failed opening \"%s\" for reading.", Str_Text(srcPath));
         return;
@@ -206,20 +207,34 @@ void SV_CopyFile(const Str* srcPath, const Str* destPath)
 }
 
 #ifdef __JHEXEN__
-saveptr_t* SV_HxSavePtr(void)
+saveptr_t *SV_HxSavePtr(void)
 {
     return &saveptr;
 }
 #endif
 
-void SV_AssertSegment(int segType)
+void SV_AssertSegment(int segmentId)
 {
     errorIfNotInited("SV_AssertSegment");
 #if __JHEXEN__
-    if(SV_ReadLong() != segType)
+    if(SV_ReadLong() != segmentId)
     {
-        Con_Error("Corrupt save game: Segment [%d] failed alignment check", segType);
+        Con_Error("Corrupt save game: Segment [%d] failed alignment check", segmentId);
     }
+#endif
+}
+
+void SV_AssertMapSegment(gamearchivesegment_t *retSegmentId)
+{
+#if __JHEXEN__
+    int segmentId = SV_ReadLong();
+    if(segmentId != ASEG_MAP_HEADER2 && segmentId != ASEG_MAP_HEADER)
+        Con_Error("Corrupt save game: Segment [%d] failed alignment check", segmentId);
+
+    if(retSegmentId) *retSegmentId = segmentId;
+#else
+    SV_AssertSegment(ASEG_MAP_HEADER2);
+    if(retSegmentId) *retSegmentId = ASEG_MAP_HEADER2;
 #endif
 }
 
@@ -228,6 +243,28 @@ void SV_BeginSegment(int segType)
     errorIfNotInited("SV_BeginSegment");
 #if __JHEXEN__
     SV_WriteLong(segType);
+#endif
+}
+
+void SV_EndSegment()
+{
+    SV_BeginSegment(ASEG_END);
+}
+
+void SV_WriteConsistencyBytes()
+{
+#if !__JHEXEN__
+    SV_WriteByte(CONSISTENCY);
+#endif
+}
+
+void SV_ReadConsistencyBytes()
+{
+#if !__JHEXEN__
+    if(SV_ReadByte() != CONSISTENCY)
+    {
+        Con_Error("Corrupt save game: Consistency test failed.");
+    }
 #endif
 }
 
