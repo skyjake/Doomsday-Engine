@@ -28,22 +28,23 @@
 
 #include <list>
 
+#include <de/Error>
+#include <de/Log>
+
 namespace de {
 namespace bsp {
 
 /**
  * @ingroup bsp
  */
+template <typename UserData>
 class Intersections
 {
 public:
     class Intercept
     {
     public:
-        Intercept() : _distance(0), _userData(0)
-        {}
-
-        Intercept(double distance, void *userData)
+        Intercept(double distance = 0, UserData *userData = 0)
             : _distance(distance), _userData(userData)
         {}
 
@@ -64,7 +65,7 @@ public:
         /**
          * Retrieve the data pointer associated with this intercept.
          */
-        void *userData() const { return _userData; }
+        UserData *userData() const { return _userData; }
 
     private:
         /**
@@ -73,21 +74,26 @@ public:
         double _distance;
 
         /// User data pointer associated with this intercept.
-        void *_userData;
+        UserData *_userData;
     };
 
     typedef std::list<Intercept> Intercepts;
 
-    typedef bool (*mergepredicate_t)(Intercept &a, Intercept &b, void *userData);
+    typedef bool (*mergepredicate_t)(Intercept &a, Intercept &b, void *context);
 
 public:
-    Intersections();
-    ~Intersections();
+    Intersections() : _intercepts(0)
+    {}
+
+    ~Intersections() { clear(); }
 
     /**
      * Empty all intersections from the specified Intercepts.
      */
-    void clear();
+    void clear()
+    {
+        _intercepts.clear();
+    }
 
     /**
      * Insert a point at the given intersection into the intersection list.
@@ -97,14 +103,63 @@ public:
      * @param userData  User data object to link with the new intercept.
      *                  Ownership remains unchanged.
      */
-    Intercept &insert(double distance, void *userData = 0);
+    Intercept &insert(double distance, UserData *userData = 0)
+    {
+        Intercepts::reverse_iterator after;
 
-    void merge(mergepredicate_t predicate, void *userData);
+        for(after = _intercepts.rbegin();
+            after != _intercepts.rend() && distance < (*after).distance(); after++)
+        {}
 
-    Intercepts const &all() const;
+        return *_intercepts.insert(after.base(), Intercept(distance, userData));
+    }
+
+    void merge(mergepredicate_t predicate, void *context)
+    {
+        Intercepts::iterator node = _intercepts.begin();
+        while(node != _intercepts.end())
+        {
+            Intercepts::iterator np = node; np++;
+            if(np == _intercepts.end()) break;
+
+            // Sanity check.
+            double distance = *np - *node;
+            if(distance < -0.1)
+            {
+                throw Error("Intercepts::merge", QString("Invalid intercept order - %1 > %2")
+                                                     .arg(node->distance(), 0, 'f', 3)
+                                                     .arg(  np->distance(), 0, 'f', 3));
+            }
+
+            // Are we merging this pair?
+            if(predicate(*node, *np, context))
+            {
+                // Yes - Unlink this intercept.
+                _intercepts.erase(np);
+            }
+            else
+            {
+                // No.
+                node++;
+            }
+        }
+    }
+
+    Intercepts const &all() const
+    {
+        return _intercepts;
+    }
 
 #ifdef DENG_DEBUG
-    void debugPrint() const;
+    void debugPrint() const
+    {
+        int index = 0;
+        DENG2_FOR_EACH_CONST(Intersections::Intercepts, i, all())
+        {
+            LOG_DEBUG(" %i: >%f ") << index << i->distance();
+            index++;
+        }
+    }
 #endif
 
 private:

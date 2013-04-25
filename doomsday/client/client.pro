@@ -498,7 +498,6 @@ SOURCES += \
     src/main_client.cpp \
     src/map/blockmap.cpp \
     src/map/blockmapvisual.cpp \
-    src/map/bsp/intersections.cpp \
     src/map/bsp/partitioner.cpp \
     src/map/bsp/superblockmap.cpp \
     src/map/bspbuilder.cpp \

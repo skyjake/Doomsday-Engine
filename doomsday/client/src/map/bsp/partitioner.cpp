@@ -62,6 +62,8 @@ typedef QList<HEdge *> HEdgeSortBuffer;
 /// Used when collecting half-edges from to build a leaf. @todo Refactor away.
 typedef QList<HEdge *> HEdgeList;
 
+typedef Intersections<HEdgeIntercept> HEdgeIntercepts;
+
 /**
  * LineRelationship delineates the possible logical relationships between two
  * line segments in the plane.
@@ -135,7 +137,7 @@ DENG2_PIMPL(Partitioner)
     Partition partition;
 
     /// Intercept points along the partition.
-    Intersections partitionIntercepts;
+    HEdgeIntercepts partitionIntercepts;
 
     /// Extra info about the partition plane.
     HEdgeInfo partitionInfo;
@@ -517,19 +519,19 @@ DENG2_PIMPL(Partitioner)
         delete &other;
     }
 
-    static bool mergeInterceptDecide(Intersections::Intercept &a, Intersections::Intercept &b,
-                                     void *userData)
+    static bool mergeInterceptDecide(HEdgeIntercepts::Intercept &a, HEdgeIntercepts::Intercept &b,
+                                     void *context)
     {
         coord_t const distance = b - a;
 
         // Too great a distance between the two?
         if(distance > DIST_EPSILON) return false;
 
-        HEdgeIntercept *cur  = reinterpret_cast<HEdgeIntercept *>(a.userData());
-        HEdgeIntercept *next = reinterpret_cast<HEdgeIntercept *>(b.userData());
+        HEdgeIntercept *cur  = a.userData();
+        HEdgeIntercept *next = b.userData();
 
         // Merge info for the two intersections into one (next is destroyed).
-        reinterpret_cast<Partitioner::Instance *>(userData)
+        reinterpret_cast<Partitioner::Instance *>(context)
             ->mergeHEdgeIntercepts(*cur, *next);
 
         return true;
@@ -551,22 +553,22 @@ DENG2_PIMPL(Partitioner)
      */
     void mergeIntercepts()
     {
-        Intersections::mergepredicate_t callback = &mergeInterceptDecide;
+        HEdgeIntercepts::mergepredicate_t callback = &mergeInterceptDecide;
         partitionIntercepts.merge(callback, this);
     }
 
     void buildHEdgesAtPartitionGaps(SuperBlock &rightList, SuperBlock &leftList)
     {
-        Intersections::Intercepts::const_iterator node = partitionIntercepts.all().begin();
+        HEdgeIntercepts::Intercepts::const_iterator node = partitionIntercepts.all().begin();
         while(node != partitionIntercepts.all().end())
         {
-            Intersections::Intercepts::const_iterator np = node; np++;
+            HEdgeIntercepts::Intercepts::const_iterator np = node; np++;
 
             if(np == partitionIntercepts.all().end())
                 break;
 
-            HEdgeIntercept const *cur  = reinterpret_cast<HEdgeIntercept *>((*node).userData());
-            HEdgeIntercept const *next = reinterpret_cast<HEdgeIntercept *>(  (*np).userData());
+            HEdgeIntercept const *cur  = node->userData();
+            HEdgeIntercept const *next = np->userData();
 
             if(!(!cur->after && !next->before))
             {
@@ -1580,9 +1582,9 @@ DENG2_PIMPL(Partitioner)
 
     void clearPartitionIntercepts()
     {
-        DENG2_FOR_EACH_CONST(Intersections::Intercepts, it, partitionIntercepts.all())
+        DENG2_FOR_EACH_CONST(HEdgeIntercepts::Intercepts, it, partitionIntercepts.all())
         {
-            HEdgeIntercept *intercept = static_cast<HEdgeIntercept *>((*it).userData());
+            HEdgeIntercept *intercept = it->userData();
             if(intercept) delete intercept;
         }
         partitionIntercepts.clear();
@@ -1918,10 +1920,9 @@ DENG2_PIMPL(Partitioner)
      */
     bool partitionHasInterceptForVertex(Vertex &vertex)
     {
-        DENG2_FOR_EACH_CONST(Intersections::Intercepts, it, partitionIntercepts.all())
+        DENG2_FOR_EACH_CONST(HEdgeIntercepts::Intercepts, it, partitionIntercepts.all())
         {
-            Intersections::Intercept const *inter = &*it;
-            HEdgeIntercept *hedgeInter = reinterpret_cast<HEdgeIntercept *>(inter->userData());
+            HEdgeIntercept *hedgeInter = it->userData();
             if(hedgeInter->vertex == &vertex)
                 return true;
         }
@@ -2468,7 +2469,7 @@ static void printPartitionIntercepts(Intersections const &partition)
     DENG2_FOR_EACH_CONST(Intersections::Intercepts, i, partitionIntercepts.all())
     {
         Con_Printf(" %u: >%1.2f ", index++, i->distance());
-        reinterpret_cast<HEdgeIntercept*>(i->userData())->debugPrint();
+        i->userData()->debugPrint();
     }
 }
 #endif
