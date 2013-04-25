@@ -49,6 +49,10 @@ public:
     Rectangle(Type left, Type top, SizeType width, SizeType height)
         : topLeft(left, top), bottomRight(left + width, top + height) {}
     Rectangle(Corner const &tl, Corner const &br) : topLeft(tl), bottomRight(br) {}
+    static RectangleType fromSize(Corner const &tl, Size const &size) {
+        return RectangleType(tl.x, tl.y, size.x, size.y);
+    }
+
     SizeType width() const { return abs(bottomRight.x - topLeft.x); }
     SizeType height() const { return abs(bottomRight.y - topLeft.y); }
     Size size() const { return Size(width(), height()); }
@@ -65,6 +69,9 @@ public:
         topLeft = topLeft.min(point);
         bottomRight = bottomRight.max(point);
     }
+    RectangleType expanded(Type n) const {
+        return RectangleType(topLeft - Corner(n, n), bottomRight + Corner(n, n));
+    }
     RectangleType adjusted(CornerVectorType const &tl, CornerVectorType const &br) const {
         return RectangleType(topLeft + tl, bottomRight + br);
     }
@@ -73,6 +80,15 @@ public:
     }
     bool operator == (RectangleType const &other) const {
         return topLeft == other.topLeft && bottomRight == other.bottomRight;
+    }
+    RectangleType operator | (RectangleType const &other) const {
+        return RectangleType(topLeft.min(other.topLeft),
+                             bottomRight.max(other.bottomRight));
+    }
+    RectangleType &operator |= (RectangleType const &other) {
+        topLeft     = topLeft.min(other.topLeft);
+        bottomRight = bottomRight.max(other.bottomRight);
+        return *this;
     }
     String asText() const {
         return "[" + topLeft.asText() + "->" + bottomRight.asText() +
