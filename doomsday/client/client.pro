@@ -227,7 +227,6 @@ DENG_HEADERS += \
     include/map/bsp/hedgeinfo.h \
     include/map/bsp/hedgeintercept.h \
     include/map/bsp/hedgetip.h \
-    include/map/bsp/intersections.h \
     include/map/bsp/lineinfo.h \
     include/map/bsp/partitioncost.h \
     include/map/bsp/partitioner.h \

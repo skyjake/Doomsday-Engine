@@ -56,6 +56,20 @@ struct HEdgeIntercept
     Sector *before;
     Sector *after;
 
+    HEdgeIntercept()
+        : vertex(0),
+          selfRef(false),
+          before(0),
+          after(0)
+    {}
+
+    HEdgeIntercept(HEdgeIntercept const &other)
+        : vertex(other.vertex),
+          selfRef(other.selfRef),
+          before(other.before),
+          after(other.after)
+    {}
+
 #ifdef DENG_DEBUG
     void debugPrint() const
     {

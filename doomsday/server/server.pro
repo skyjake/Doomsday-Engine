@@ -190,7 +190,6 @@ DENG_HEADERS += \
     $$SRC/include/map/bsp/hedgeinfo.h \
     $$SRC/include/map/bsp/hedgeintercept.h \
     $$SRC/include/map/bsp/hedgetip.h \
-    $$SRC/include/map/bsp/intersections.h \
     $$SRC/include/map/bsp/lineinfo.h \
     $$SRC/include/map/bsp/partitioncost.h \
     $$SRC/include/map/bsp/partitioner.h \

@@ -23,6 +23,7 @@
  */
 
 #include <cmath>
+#include <list>
 #include <vector>
 #include <algorithm>
 
@@ -40,7 +41,6 @@
 #include "map/bsp/hedgeinfo.h"
 #include "map/bsp/hedgeintercept.h"
 #include "map/bsp/hedgetip.h"
-#include "map/bsp/intersections.h"
 #include "map/bsp/lineinfo.h"
 #include "map/bsp/partitioncost.h"
 #include "map/bsp/superblockmap.h"
@@ -54,6 +54,32 @@
 using namespace de;
 using namespace de::bsp;
 
+/**
+ * Used to model the list of half-plane intersections.
+ */
+class Intercept : public HEdgeIntercept
+{
+public:
+    /**
+     * Distance along the owning Intercepts in the map coordinate space.
+     */
+    double distance;
+
+    Intercept(double distance, HEdgeIntercept const &hedgeIntercept)
+        : HEdgeIntercept(hedgeIntercept), distance(distance)
+    {}
+
+    /**
+     * Determine the distance between two intercepts. It does not matter
+     * if the intercepts are from different half-planes.
+     */
+    double operator - (Intercept const &other) const {
+        return distance - other.distance;
+    }
+};
+
+typedef std::list<Intercept> HEdgeIntercepts;
+
 typedef QHash<MapElement *, BspTreeNode *> BuiltBspElementMap;
 
 /// Used when sorting half-edges by angle around a map point.
@@ -61,8 +87,6 @@ typedef QList<HEdge *> HEdgeSortBuffer;
 
 /// Used when collecting half-edges from to build a leaf. @todo Refactor away.
 typedef QList<HEdge *> HEdgeList;
-
-typedef Intersections<HEdgeIntercept> HEdgeIntercepts;
 
 /**
  * LineRelationship delineates the possible logical relationships between two
@@ -159,6 +183,8 @@ DENG2_PIMPL(Partitioner)
 
     ~Instance()
     {
+        clearPartitionIntercepts(); // Should be empty already.
+
         clearAllHEdgeTips();
 
         if(rootNode)
@@ -481,8 +507,22 @@ DENG2_PIMPL(Partitioner)
         HEdgeInfo &hInfo = hedgeInfo(hedge);
         bool isSelfRefLine = (hInfo.line && lineInfos[hInfo.line->indexInMap()].flags.testFlag(LineInfo::SelfRef));
 
-        partitionIntercepts.insert(vertexDistanceFromPartition(vertex),
-                                   newHEdgeIntercept(vertex, isSelfRefLine));
+        // Find the rightful place for the new intersection.
+        coord_t distance = vertexDistanceFromPartition(vertex);
+        HEdgeIntercepts::reverse_iterator after;
+
+        for(after = partitionIntercepts.rbegin();
+            after != partitionIntercepts.rend() && distance < after->distance; after++)
+        {}
+
+        HEdgeIntercept inter;
+        inter.vertex  = &vertex;
+        inter.selfRef = isSelfRefLine;
+
+        inter.before  = openSectorAtAngle(vertex, M_InverseAngle(partitionInfo.pAngle));
+        inter.after   = openSectorAtAngle(vertex, partitionInfo.pAngle);
+
+        partitionIntercepts.insert(after.base(), Intercept(distance, inter));
     }
 
     void mergeHEdgeIntercepts(HEdgeIntercept &final, HEdgeIntercept &other)
@@ -519,20 +559,15 @@ DENG2_PIMPL(Partitioner)
         delete &other;
     }
 
-    static bool mergeInterceptDecide(HEdgeIntercepts::Intercept &a, HEdgeIntercepts::Intercept &b,
-                                     void *context)
+    bool mergeInterceptDecide(Intercept &a, Intercept &b)
     {
-        coord_t const distance = b - a;
+        coord_t const distance = b.distance - a.distance;
 
         // Too great a distance between the two?
         if(distance > DIST_EPSILON) return false;
 
-        HEdgeIntercept *cur  = a.userData();
-        HEdgeIntercept *next = b.userData();
-
         // Merge info for the two intersections into one (next is destroyed).
-        reinterpret_cast<Partitioner::Instance *>(context)
-            ->mergeHEdgeIntercepts(*cur, *next);
+        mergeHEdgeIntercepts(a, b);
 
         return true;
     }
@@ -553,22 +588,47 @@ DENG2_PIMPL(Partitioner)
      */
     void mergeIntercepts()
     {
-        HEdgeIntercepts::mergepredicate_t callback = &mergeInterceptDecide;
-        partitionIntercepts.merge(callback, this);
+        HEdgeIntercepts::iterator node = partitionIntercepts.begin();
+        while(node != partitionIntercepts.end())
+        {
+            HEdgeIntercepts::iterator np = node; np++;
+            if(np == partitionIntercepts.end()) break;
+
+            // Sanity check.
+            double distance = np->distance - node->distance;
+            if(distance < -0.1)
+            {
+                throw Error("mergeIntercepts", QString("Invalid intercept order - %1 > %2")
+                                                   .arg(node->distance, 0, 'f', 3)
+                                                   .arg(  np->distance, 0, 'f', 3));
+            }
+
+            // Are we merging this pair?
+            if(mergeInterceptDecide(*node, *np))
+            {
+                // Yes - Unlink this intercept.
+                partitionIntercepts.erase(np);
+            }
+            else
+            {
+                // No.
+                node++;
+            }
+        }
     }
 
     void buildHEdgesAtPartitionGaps(SuperBlock &rightList, SuperBlock &leftList)
     {
-        HEdgeIntercepts::Intercepts::const_iterator node = partitionIntercepts.all().begin();
-        while(node != partitionIntercepts.all().end())
+        HEdgeIntercepts::const_iterator node = partitionIntercepts.begin();
+        while(node != partitionIntercepts.end())
         {
-            HEdgeIntercepts::Intercepts::const_iterator np = node; np++;
+            HEdgeIntercepts::const_iterator np = node; np++;
 
-            if(np == partitionIntercepts.all().end())
+            if(np == partitionIntercepts.end())
                 break;
 
-            HEdgeIntercept const *cur  = node->userData();
-            HEdgeIntercept const *next = np->userData();
+            HEdgeIntercept const *cur  = &*node;
+            HEdgeIntercept const *next = &*np;
 
             if(!(!cur->after && !next->before))
             {
@@ -1582,11 +1642,6 @@ DENG2_PIMPL(Partitioner)
 
     void clearPartitionIntercepts()
     {
-        DENG2_FOR_EACH_CONST(HEdgeIntercepts::Intercepts, it, partitionIntercepts.all())
-        {
-            HEdgeIntercept *intercept = it->userData();
-            if(intercept) delete intercept;
-        }
         partitionIntercepts.clear();
     }
 
@@ -1920,29 +1975,12 @@ DENG2_PIMPL(Partitioner)
      */
     bool partitionHasInterceptForVertex(Vertex &vertex)
     {
-        DENG2_FOR_EACH_CONST(HEdgeIntercepts::Intercepts, it, partitionIntercepts.all())
+        DENG2_FOR_EACH_CONST(HEdgeIntercepts, it, partitionIntercepts)
         {
-            HEdgeIntercept *hedgeInter = it->userData();
-            if(hedgeInter->vertex == &vertex)
+            if(it->vertex == &vertex)
                 return true;
         }
         return false;
-    }
-
-    /**
-     * Create a new intersection.
-     */
-    HEdgeIntercept *newHEdgeIntercept(Vertex &vertex, bool lineIsSelfReferencing)
-    {
-        HEdgeIntercept *inter = new HEdgeIntercept;
-
-        inter->vertex  = &vertex;
-        inter->selfRef = lineIsSelfReferencing;
-
-        inter->before  = openSectorAtAngle(vertex, M_InverseAngle(partitionInfo.pAngle));
-        inter->after   = openSectorAtAngle(vertex, partitionInfo.pAngle);
-
-        return inter;
     }
 
     void clearBspElement(BspTreeNode &tree)
@@ -2463,13 +2501,13 @@ static Vector2d findBspLeafCenter(BspLeaf const &leaf)
 }
 
 #if 0
-static void printPartitionIntercepts(Intersections const &partition)
+static void printPartitionIntercepts(HEdgeIntercepts const &intercepts)
 {
     uint index = 0;
-    DENG2_FOR_EACH_CONST(Intersections::Intercepts, i, partitionIntercepts.all())
+    DENG2_FOR_EACH_CONST(HEdgeIntercepts, i, intercepts)
     {
-        Con_Printf(" %u: >%1.2f ", index++, i->distance());
-        i->userData()->debugPrint();
+        Con_Printf(" %u: >%1.2f ", index++, i->distance;
+        i->debugPrint();
     }
 }
 #endif
