@@ -39,11 +39,13 @@ public:
     Vector2d direction;
 
 public:
-    Partition(Vector2d const &origin, Vector2d const &direction)
+    Partition(Vector2d const &origin    = Vector2d(0, 0),
+              Vector2d const &direction = Vector2d(0, 0))
         : origin(origin), direction(direction) {}
 
     Partition(Partition const &other)
         : origin(other.origin), direction(other.direction) {}
+
 
     /**
      * Where does the given @a point lie relative to the partition line?

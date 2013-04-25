@@ -40,7 +40,7 @@
 #include "map/bsp/hedgeinfo.h"
 #include "map/bsp/hedgeintercept.h"
 #include "map/bsp/hedgetip.h"
-#include "map/bsp/hplane.h"
+#include "map/bsp/intersections.h"
 #include "map/bsp/lineinfo.h"
 #include "map/bsp/partitioncost.h"
 #include "map/bsp/superblockmap.h"
@@ -54,7 +54,13 @@
 using namespace de;
 using namespace de::bsp;
 
-// Misc utility routines (most don't belong here...):
+typedef QHash<MapElement *, BspTreeNode *> BuiltBspElementMap;
+
+/// Used when sorting half-edges by angle around a map point.
+typedef QList<HEdge *> HEdgeSortBuffer;
+
+/// Used when collecting half-edges from to build a leaf. @todo Refactor away.
+typedef QList<HEdge *> HEdgeList;
 
 /**
  * LineRelationship delineates the possible logical relationships between two
@@ -83,19 +89,10 @@ static LineRelationship lineRelationship(coord_t a, coord_t b,
 
 static Vector2d findBspLeafCenter(BspLeaf const &leaf);
 
-//static void printPartitionIntercepts(HPlane const &partition);
+//static void printPartitionIntercepts(Intersections const &intercepts);
 
 DENG2_PIMPL(Partitioner)
 {
-    typedef QHash<MapElement *, BspTreeNode *> BuiltBspElementMap;
-
-    /// Used when sorting half-edges by angle around a map point.
-    typedef QList<HEdge *> HEdgeSortBuffer;
-
-    /// Used when collecting half-edges from to build a leaf.
-    /// @todo Refactor me away.
-    typedef QList<HEdge *> HEdgeList;
-
     /// Cost factor attributed to splitting a half-edge.
     int splitCostFactor;
 
@@ -134,11 +131,16 @@ DENG2_PIMPL(Partitioner)
     /// in the internal tree.
     BuiltBspElementMap treeNodeMap;
 
-    /// HPlane used to model the "current" binary space half-plane.
-    HPlane partition;
+    /// Partition used to model the "current" binary space half-plane.
+    Partition partition;
+
+    /// Intercept points along the partition.
+    Intersections intercepts;
 
     /// Extra info about the partition plane.
     HEdgeInfo partitionInfo;
+
+    /// Map line for the partition.
     Line *partitionLine;
 
     /// @c true = a BSP for the current map has been built successfully.
@@ -477,8 +479,8 @@ DENG2_PIMPL(Partitioner)
         HEdgeInfo &hInfo = hedgeInfo(hedge);
         bool isSelfRefLine = (hInfo.line && lineInfos[hInfo.line->indexInMap()].flags.testFlag(LineInfo::SelfRef));
 
-        partition.newIntercept(vertexDistanceFromPartition(vertex),
-                               newHEdgeIntercept(vertex, isSelfRefLine));
+        intercepts.insert(vertexDistanceFromPartition(vertex),
+                          newHEdgeIntercept(vertex, isSelfRefLine));
     }
 
     void mergeHEdgeIntercepts(HEdgeIntercept &final, HEdgeIntercept &other)
@@ -515,7 +517,7 @@ DENG2_PIMPL(Partitioner)
         delete &other;
     }
 
-    static bool mergeInterceptDecide(HPlaneIntercept &a, HPlaneIntercept &b,
+    static bool mergeInterceptDecide(Intersections::Intercept &a, Intersections::Intercept &b,
                                      void *userData)
     {
         coord_t const distance = b - a;
@@ -549,18 +551,18 @@ DENG2_PIMPL(Partitioner)
      */
     void mergeIntercepts()
     {
-        HPlane::mergepredicate_t callback = &mergeInterceptDecide;
-        partition.mergeIntercepts(callback, this);
+        Intersections::mergepredicate_t callback = &mergeInterceptDecide;
+        intercepts.merge(callback, this);
     }
 
     void buildHEdgesAtPartitionGaps(SuperBlock &rightList, SuperBlock &leftList)
     {
-        HPlane::Intercepts::const_iterator node = partition.intercepts().begin();
-        while(node != partition.intercepts().end())
+        Intersections::Intercepts::const_iterator node = intercepts.all().begin();
+        while(node != intercepts.all().end())
         {
-            HPlane::Intercepts::const_iterator np = node; np++;
+            Intersections::Intercepts::const_iterator np = node; np++;
 
-            if(np == partition.intercepts().end())
+            if(np == intercepts.all().end())
                 break;
 
             HEdgeIntercept const *cur  = reinterpret_cast<HEdgeIntercept *>((*node).userData());
@@ -1469,7 +1471,7 @@ DENG2_PIMPL(Partitioner)
             configurePartition(partHEdge);
 
             // Take a copy of the partition - we'll need this later.
-            Partition spacePartition(partition.origin(), partition.direction());
+            Partition oldPartition(partition);
 
             // Create left and right super blockmaps.
             /// @todo There should be no need to use additional independent
@@ -1504,8 +1506,8 @@ DENG2_PIMPL(Partitioner)
             MapElement *rightChildBspElement = reinterpret_cast<MapElement *>(rightTree->userData());
             MapElement *leftChildBspElement  = reinterpret_cast<MapElement *>(leftTree->userData());
 
-            bspElement = newBspNode(spacePartition, rightBounds, leftBounds,
-                                   rightChildBspElement, leftChildBspElement);
+            bspElement = newBspNode(oldPartition, rightBounds, leftBounds,
+                                    rightChildBspElement, leftChildBspElement);
         }
         else
         {
@@ -1578,12 +1580,12 @@ DENG2_PIMPL(Partitioner)
 
     void clearPartitionIntercepts()
     {
-        DENG2_FOR_EACH_CONST(HPlane::Intercepts, it, partition.intercepts())
+        DENG2_FOR_EACH_CONST(Intersections::Intercepts, it, intercepts.all())
         {
             HEdgeIntercept *intercept = static_cast<HEdgeIntercept *>((*it).userData());
             if(intercept) delete intercept;
         }
-        partition.clear();
+        intercepts.clear();
     }
 
     bool configurePartition(HEdge const *hedge)
@@ -1603,8 +1605,8 @@ DENG2_PIMPL(Partitioner)
 
         Vertex const &from = line.vertex(hedge->lineSideId());
         Vertex const &to   = line.vertex(hedge->lineSideId()^1);
-        partition.setOrigin(from.origin());
-        partition.setDirection(to.origin() - from.origin());
+        partition.origin = from.origin();
+        partition.direction = to.origin() - from.origin();
 
         //LOG_DEBUG("hedge %p %s %s.")
         //    << de::dintptr(best) << partition.origin.asText() << partition.direction.asText();
@@ -1629,8 +1631,8 @@ DENG2_PIMPL(Partitioner)
                 HEdge const *hedge1 = hedges.at(i);
                 HEdge const *hedge2 = hedges.at(i+1);
 
-                Vector2d v1Dist = Vector2d(hedge1->fromOrigin()) - point;
-                Vector2d v2Dist = Vector2d(hedge2->fromOrigin()) - point;
+                Vector2d v1Dist = hedge1->fromOrigin() - point;
+                Vector2d v2Dist = hedge2->fromOrigin() - point;
 
                 coord_t v1Angle = M_DirectionToAngleXY(v1Dist.x, v1Dist.y);
                 coord_t v2Angle = M_DirectionToAngleXY(v2Dist.x, v2Dist.y);
@@ -1916,9 +1918,9 @@ DENG2_PIMPL(Partitioner)
      */
     bool partitionHasInterceptForVertex(Vertex &vertex)
     {
-        DENG2_FOR_EACH_CONST(HPlane::Intercepts, it, partition.intercepts())
+        DENG2_FOR_EACH_CONST(Intersections::Intercepts, it, intercepts.all())
         {
-            HPlaneIntercept const *inter = &*it;
+            Intersections::Intercept const *inter = &*it;
             HEdgeIntercept *hedgeInter = reinterpret_cast<HEdgeIntercept *>(inter->userData());
             if(hedgeInter->vertex == &vertex)
                 return true;
@@ -1929,10 +1931,10 @@ DENG2_PIMPL(Partitioner)
     /**
      * Create a new intersection.
      */
-    HEdgeIntercept *newHEdgeIntercept(Vertex &vertex,
-                                      bool lineIsSelfReferencing)
+    HEdgeIntercept *newHEdgeIntercept(Vertex &vertex, bool lineIsSelfReferencing)
     {
         HEdgeIntercept *inter = new HEdgeIntercept;
+
         inter->vertex  = &vertex;
         inter->selfRef = lineIsSelfReferencing;
 
@@ -2460,10 +2462,10 @@ static Vector2d findBspLeafCenter(BspLeaf const &leaf)
 }
 
 #if 0
-static void printPartitionIntercepts(HPlane const &partition)
+static void printPartitionIntercepts(Intersections const &partition)
 {
     uint index = 0;
-    DENG2_FOR_EACH_CONST(HPlane::Intercepts, i, partition.intercepts())
+    DENG2_FOR_EACH_CONST(Intersections::Intercepts, i, intercepts.all())
     {
         Con_Printf(" %u: >%1.2f ", index++, i->distance());
         reinterpret_cast<HEdgeIntercept*>(i->userData())->debugPrint();

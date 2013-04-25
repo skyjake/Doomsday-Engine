@@ -227,7 +227,7 @@ DENG_HEADERS += \
     include/map/bsp/hedgeinfo.h \
     include/map/bsp/hedgeintercept.h \
     include/map/bsp/hedgetip.h \
-    include/map/bsp/hplane.h \
+    include/map/bsp/intersections.h \
     include/map/bsp/lineinfo.h \
     include/map/bsp/partitioncost.h \
     include/map/bsp/partitioner.h \
@@ -498,7 +498,7 @@ SOURCES += \
     src/main_client.cpp \
     src/map/blockmap.cpp \
     src/map/blockmapvisual.cpp \
-    src/map/bsp/hplane.cpp \
+    src/map/bsp/intersections.cpp \
     src/map/bsp/partitioner.cpp \
     src/map/bsp/superblockmap.cpp \
     src/map/bspbuilder.cpp \

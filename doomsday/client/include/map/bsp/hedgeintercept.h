@@ -39,7 +39,7 @@ namespace bsp {
  * half-plane intercept point where the geometry intersects (an incident vertex
  * can be found here (or at there will be upon insertion.)).
  *
- * There is always a corresponding HPlaneIntercept in the owning HPlane.
+ * There is always a corresponding Intercept in the owning Intercepts.
  *
  * @ingroup bsp
  */
