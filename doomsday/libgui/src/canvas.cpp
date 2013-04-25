@@ -298,21 +298,7 @@ void Canvas::notifyReady()
 
 void Canvas::paintGL()
 {
-    if(!audienceForGLDraw.isEmpty())
-    {
-        DENG2_FOR_AUDIENCE(GLDraw, i) i->canvasGLDraw(*this);
-    }
-    else
-    {
-        LOG_AS("Canvas");
-        LOG_TRACE("Drawing with default paint func.");
-
-        // Since we don't know what else to draw, just draw blackness.
-        glClearColor(0, 0, 0, 1);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        swapBuffers();
-    }
+    DENG2_FOR_AUDIENCE(GLDraw, i) i->canvasGLDraw(*this);
 }
 
 void Canvas::focusInEvent(QFocusEvent*)
