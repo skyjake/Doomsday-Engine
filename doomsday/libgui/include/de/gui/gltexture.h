@@ -55,9 +55,12 @@ namespace gl {
 }
 
 /**
- * GL texture.
+ * GL texture object.
  *
- * Supports cube maps: 6 faces instead of one.
+ * Supports cube maps (6 faces/images instead of one). A GLTexture becomes a
+ * cube map automatically when one sets image content to one of the faces.
+ * Similarly a GLTexture reverts back to a 2D texture when setting non-cubeface
+ * image content.
  *
  * @ingroup gl
  */
@@ -176,12 +179,17 @@ public:
     Size size() const;
 
     /**
-     * Returns the number of mipmap levels.
+     * Returns the number of mipmap levels in use by the texture.
+     *
+     * Use levelsForSize() to determine the number of mipmap levels for an
+     * arbitrary texture size.
      */
     int mipLevels() const;
 
     /**
-     * Returns the size of a particular mipmap level.
+     * Returns the size of a particular mipmap level. This can be called after
+     * the level 0 image content has been defined.
+     *
      * @param level  Mip level.
      * @return Size in texels. (0,0) for an invalid level.
      */
