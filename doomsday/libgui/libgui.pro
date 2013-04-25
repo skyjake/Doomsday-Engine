@@ -46,6 +46,8 @@ else:unix {
 
 # Public headers.
 HEADERS += \
+    include/de/Atlas \
+    include/de/AtlasTexture \
     include/de/Canvas \
     include/de/CanvasWindow \
     include/de/DisplayMode \
@@ -63,7 +65,10 @@ HEADERS += \
     include/de/KeyEventSource \
     include/de/MouseEventSource \
     include/de/PersistentCanvasWindow \
+    include/de/RowAtlasAllocator \
     \
+    include/de/gui/atlas.h \
+    include/de/gui/atlastexture.h \
     include/de/gui/canvas.h \
     include/de/gui/canvaswindow.h \
     include/de/gui/ddkey.h \
@@ -85,10 +90,13 @@ HEADERS += \
     include/de/gui/libgui.h \
     include/de/gui/mouseeventsource.h \
     include/de/gui/opengl.h \
-    include/de/gui/persistentcanvaswindow.h
+    include/de/gui/persistentcanvaswindow.h \
+    include/de/gui/rowatlasallocator.h
 
 # Sources and private headers.
-SOURCES += \
+SOURCES +=  \
+    src/atlas.cpp \
+    src/atlastexture.cpp \
     src/canvas.cpp \
     src/canvaswindow.cpp \
     src/displaymode.cpp \
@@ -104,7 +112,8 @@ SOURCES += \
     src/image.cpp \
     src/keyevent.cpp \
     src/persistentcanvaswindow.cpp \
-    src/glentrypoints.cpp
+    src/glentrypoints.cpp \
+    src/rowatlasallocator.cpp
 
 # DisplayMode
 !deng_nodisplaymode {
