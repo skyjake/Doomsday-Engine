@@ -715,6 +715,7 @@ typedef Vector3<dint>    Vector3i;  ///< 3-component vector of integer values.
 typedef Vector3<duint>   Vector3ui; ///< 3-component vector of unsigned integer values.
 typedef Vector3<dfloat>  Vector3f;  ///< 3-component vector of floating point values.
 typedef Vector3<ddouble> Vector3d;  ///< 3-component vector of high-precision floating point values.
+typedef Vector4<dbyte>   Vector4ub; ///< 4-component vector of unsigned byte values.
 typedef Vector4<dint>    Vector4i;  ///< 4-component vector of integer values.
 typedef Vector4<duint>   Vector4ui; ///< 4-component vector of unsigned integer values.
 typedef Vector4<dfloat>  Vector4f;  ///< 4-component vector of floating point values.
