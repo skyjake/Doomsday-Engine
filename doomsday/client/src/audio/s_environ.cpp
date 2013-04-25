@@ -166,10 +166,10 @@ static void findBspLeafsAffectingSector(GameMap *map, Sector *sec)
     {
         // Is this BSP leaf close enough?
         if(bspLeaf->sectorPtr() == sec || // leaf is IN this sector
-           (bspLeaf->center()[VX] > affectionBounds.minX &&
-            bspLeaf->center()[VY] > affectionBounds.minY &&
-            bspLeaf->center()[VX] < affectionBounds.maxX &&
-            bspLeaf->center()[VY] < affectionBounds.maxY))
+           (bspLeaf->center().x > affectionBounds.minX &&
+            bspLeaf->center().y > affectionBounds.minY &&
+            bspLeaf->center().x < affectionBounds.maxX &&
+            bspLeaf->center().y < affectionBounds.maxY))
         {
             // It will contribute to the reverb settings of this sector.
             setBspLeafSectorOwner(&bspLeafOwnerList, bspLeaf);

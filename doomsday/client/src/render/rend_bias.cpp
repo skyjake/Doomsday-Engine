@@ -835,8 +835,7 @@ void SB_RendPoly(struct ColorRawf_s *rcolors, biassurface_t *bsuf,
         else
         {
             BspLeaf const *bspLeaf = mapElement->castTo<BspLeaf>();
-            Vector3d point( bspLeaf->center()[VX],
-                            bspLeaf->center()[VY],
+            Vector3d point( bspLeaf->center(),
                             bspLeaf->sector().plane(elmIdx).height());
 
             updateAffected2(bsuf, rvertices, numVertices, point, surfaceNormal);

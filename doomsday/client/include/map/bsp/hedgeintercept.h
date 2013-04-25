@@ -1,4 +1,4 @@
-/** @file hedgeintercept.h BSP Builder half-edge intercept info.
+/** @file map/hedgeintercept.h BSP Builder half-edge intercept info.
  *
  * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
  * @see http://sourceforge.net/projects/glbsp/
@@ -23,8 +23,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_BSP_HEDGEINTERCEPT
-#define LIBDENG_BSP_HEDGEINTERCEPT
+#ifndef DENG_WORLD_MAP_BSP_HEDGEINTERCEPT
+#define DENG_WORLD_MAP_BSP_HEDGEINTERCEPT
 
 #include "dd_types.h"
 #include "map/p_mapdata.h"
@@ -56,20 +56,20 @@ struct HEdgeIntercept
     Sector *before;
     Sector *after;
 
-    DENG_DEBUG_ONLY(
-    static void DebugPrint(HEdgeIntercept const &inst)
+#ifdef DENG_DEBUG
+    void debugPrint() const
     {
-        LOG_INFO("Vertex #%i [x:%f, y:%f] beforeSector: #%d afterSector: #%d %s")
-            << inst.vertex->indexInMap()
-            << inst.vertex->origin()[VX]
-            << inst.vertex->origin()[VY]
-            << (inst.before? inst.before->indexInMap() : -1)
-            << (inst.after? inst.after->indexInMap() : -1)
-            << (inst.selfRef? "SELFREF" : "");
-    })
+        LOG_INFO("Vertex #%i %s beforeSector: #%d afterSector: #%d %s")
+            << vertex->indexInMap()
+            << vertex->origin().asText()
+            << (before? before->indexInMap() : -1)
+            << (after? after->indexInMap() : -1)
+            << (selfRef? "SELFREF" : "");
+    }
+#endif
 };
 
 } // namespace bsp
 } // namespace de
 
-#endif // LIBDENG_BSP_HEDGEINTERCEPT
+#endif // DENG_WORLD_MAP_BSP_HEDGEINTERCEPT

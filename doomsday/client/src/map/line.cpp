@@ -314,8 +314,8 @@ void Line::Side::updateSurfaceNormals()
 {
     if(!hasSections()) return;
 
-    Vector3f normal((  to().origin()[VY] - from().origin()[VY]) / d->line.length(),
-                    (from().origin()[VX] -   to().origin()[VX]) / d->line.length(),
+    Vector3f normal((  to().origin().y - from().origin().y) / d->line.length(),
+                    (from().origin().x -   to().origin().x) / d->line.length(),
                     0);
 
     // All line side surfaces have the same normals.
@@ -484,7 +484,7 @@ DENG2_PIMPL(Line)
           flags(flags),
           from(&from),
           to(&to),
-          direction(Vector2d(to.origin()) - Vector2d(from.origin())),
+          direction(to.origin() - from.origin()),
           angle(bamsAtan2(int( direction.y ), int( direction.x ))),
           slopeType(M_SlopeTypeXY(direction.x, direction.y)),
           length(direction.length()),
@@ -592,7 +592,7 @@ slopetype_t Line::slopeType() const
 
 void Line::updateSlopeType()
 {
-    d->direction = Vector2d(d->to->origin()) - Vector2d(d->from->origin());
+    d->direction = d->to->origin() - d->from->origin();
     d->angle     = bamsAtan2(int( d->direction.y ), int( d->direction.x ));
     d->slopeType = M_SlopeTypeXY(d->direction.x, d->direction.y);
 }
@@ -619,8 +619,8 @@ int Line::boxOnSide_FixedPrecision(AABoxd const &box) const
      * so we won't change the discretization of the fractional part into 16-bit
      * precision.
      */
-    coord_t offset[2] = { de::floor(d->from->origin()[VX] + d->direction.x/2),
-                          de::floor(d->from->origin()[VY] + d->direction.y/2) };
+    coord_t offset[2] = { de::floor(d->from->origin().x + d->direction.x/2),
+                          de::floor(d->from->origin().y + d->direction.y/2) };
 
     fixed_t boxx[4];
     boxx[BOXLEFT]   = DBL2FIX(box.minX - offset[VX]);
@@ -628,8 +628,8 @@ int Line::boxOnSide_FixedPrecision(AABoxd const &box) const
     boxx[BOXBOTTOM] = DBL2FIX(box.minY - offset[VY]);
     boxx[BOXTOP]    = DBL2FIX(box.maxY - offset[VY]);
 
-    fixed_t pos[2] = { DBL2FIX(d->from->origin()[VX] - offset[VX]),
-                       DBL2FIX(d->from->origin()[VY] - offset[VY]) };
+    fixed_t pos[2] = { DBL2FIX(d->from->origin().x - offset[VX]),
+                       DBL2FIX(d->from->origin().y - offset[VY]) };
 
     fixed_t delta[2] = { DBL2FIX(d->direction.x),
                          DBL2FIX(d->direction.y) };

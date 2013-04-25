@@ -83,9 +83,7 @@ static LineRelationship lineRelationship(coord_t a, coord_t b,
 
 static Vector2d findBspLeafCenter(BspLeaf const &leaf);
 
-//DENG_DEBUG_ONLY(static bool bspLeafHasRealHEdge(BspLeaf const &leaf));
-//DENG_DEBUG_ONLY(static void printBspLeafHEdges(BspLeaf const &leaf));
-//DENG_DEBUG_ONLY(static void printPartitionIntercepts(HPlane const &partition));
+//static void printPartitionIntercepts(HPlane const &partition);
 
 DENG2_PIMPL(Partitioner)
 {
@@ -578,11 +576,7 @@ DENG2_PIMPL(Partitioner)
                 {
                     if(!cur->selfRef)
                     {
-                        Vector2d nearPoint = Vector2d(cur->vertex->origin())
-                                           + Vector2d(next->vertex->origin());
-                        nearPoint.x /= 2;
-                        nearPoint.y /= 2;
-
+                        Vector2d nearPoint = (cur->vertex->origin() + next->vertex->origin()) / 2;
                         notifyUnclosedSectorFound(*cur->after, nearPoint);
                     }
                 }
@@ -590,11 +584,7 @@ DENG2_PIMPL(Partitioner)
                 {
                     if(!next->selfRef)
                     {
-                        Vector2d nearPoint = Vector2d(cur->vertex->origin())
-                                           + Vector2d(next->vertex->origin());
-                        nearPoint.x /= 2;
-                        nearPoint.y /= 2;
-
+                        Vector2d nearPoint = (cur->vertex->origin() + next->vertex->origin()) / 2;
                         notifyUnclosedSectorFound(*next->before, nearPoint);
                     }
                 }
@@ -608,9 +598,9 @@ DENG2_PIMPL(Partitioner)
                         {
                             LOG_DEBUG("Sector mismatch (#%d %s != #%d %s.")
                                 << cur->after->indexInMap()
-                                << Vector2d(cur->vertex->origin()).asText()
+                                << cur->vertex->origin().asText()
                                 << next->before->indexInMap()
-                                << Vector2d(next->vertex->origin()).asText();
+                                << next->vertex->origin().asText();
                         }
 
                         if(cur->selfRef && !next->selfRef)
@@ -631,12 +621,12 @@ DENG2_PIMPL(Partitioner)
                               "\n %p LEFT  sector #%d %s to %s")
                         << de::dintptr(right)
                         << (hedgeInfo(*right).sector? hedgeInfo(*right).sector->indexInMap() : -1)
-                        << Vector2d(right->v1Origin()).asText()
-                        << Vector2d(right->v2Origin()).asText()
+                        << right->v1Origin().asText()
+                        << right->v2Origin().asText()
                         << de::dintptr(left)
                         << (hedgeInfo(*left).sector? hedgeInfo(*left).sector->indexInMap() : -1)
-                        << Vector2d(left->v1Origin()).asText()
-                        << Vector2d(left->v2Origin()).asText()
+                        << left->v1Origin().asText()
+                        << left->v2Origin().asText()
                     */
                 }
             }
@@ -1611,17 +1601,16 @@ DENG2_PIMPL(Partitioner)
         clearPartitionIntercepts();
 
         // We can now reconfire the half-plane itself.
-        setPartitionInfo(hedgeInfo(*hedge), &hedge->lineSide().line());
+        Line &line = hedge->line();
+        setPartitionInfo(hedgeInfo(*hedge), &line);
 
-        Vector2d from = Vector2d(hedge->line().vertex(hedge->lineSideId()).origin());
-        Vector2d to   = Vector2d(hedge->line().vertex(hedge->lineSideId()^1).origin());
-        partition.setOrigin(from);
-
-        Vector2d angle = to - from;
-        partition.setDirection(angle);
+        Vertex const &from = line.vertex(hedge->lineSideId());
+        Vertex const &to   = line.vertex(hedge->lineSideId()^1);
+        partition.setOrigin(from.origin());
+        partition.setDirection(to.origin() - from.origin());
 
         //LOG_DEBUG("hedge %p %s %s.")
-        //    << de::dintptr(best) << from.asText() << angle.asText();
+        //    << de::dintptr(best) << partition.origin.asText() << partition.direction.asText();
 
         return true;
     }
@@ -1701,7 +1690,7 @@ DENG2_PIMPL(Partitioner)
         }
 
         // LOG_DEBUG("Sorted half-edges around %s" << point.asText();
-        // printBspLeafHEdges(leaf);
+        // leaf.printHEdges();
     }
 
     /**
@@ -2476,33 +2465,6 @@ static Vector2d findBspLeafCenter(BspLeaf const &leaf)
 }
 
 #if 0
-DENG_DEBUG_ONLY(
-static bool bspLeafHasRealHEdge(BspLeaf const &leaf)
-{
-    HEdge *hedge = leaf.hedge;
-    do
-    {
-        if(hedge->line) return true;
-    } while((hedge = hedge->next) != leaf.hedge);
-    return false;
-})
-
-DENG_DEBUG_ONLY(
-static void printBspLeafHEdges(BspLeaf const &leaf)
-{
-    for(HEdge *hedge = leaf.hedge; hedge; hedge = hedge->next)
-    {
-        coord_t angle = M_DirectionToAngleXY(hedge->v1Origin[VX] - point[VX],
-                                             hedge->v1Origin[VY] - point[VY]);
-
-        LOG_DEBUG("  half-edge %p: Angle %1.6f (%1.1f, %1.1f) -> (%1.1f, %1.1f)")
-            << de::dintptr(hedge) << angle
-            << hedge->v1Origin[VX] << hedge->v1Origin[VY]
-            << hedge->v2Origin[VX] << hedge->v2Origin[VY];
-    }
-})
-
-DENG_DEBUG_ONLY(
 static void printPartitionIntercepts(HPlane const &partition)
 {
     uint index = 0;
@@ -2511,5 +2473,5 @@ static void printPartitionIntercepts(HPlane const &partition)
         Con_Printf(" %u: >%1.2f ", index++, i->distance());
         HEdgeIntercept::DebugPrint(*reinterpret_cast<HEdgeIntercept*>(i->userData()));
     }
-})
+}
 #endif

@@ -165,11 +165,11 @@ public:
                 if(vertex == other.vertex) return 0;
 
                 // Order is firstly X axis major.
-                if(int(vertex->origin()[VX]) != int(other.vertex->origin()[VX]))
-                    return int(vertex->origin()[VX]) - int(other.vertex->origin()[VX]);
+                if(int(vertex->origin().x) != int(other.vertex->origin().x))
+                    return int(vertex->origin().x) - int(other.vertex->origin().x);
 
                 // Order is secondly Y axis major.
-                return int(vertex->origin()[VY]) - int(other.vertex->origin()[VY]);
+                return int(vertex->origin().y) - int(other.vertex->origin().y);
             }
 
             bool operator < (VertexInfo const &other) const {
@@ -460,8 +460,8 @@ static int lineAngleSorter(void const *a, void const *b)
             Line *line = &own[i]->line();
             Vertex const &otherVtx = line->vertex(&line->v1() == rootVtx? 1:0);
 
-            fixed_t dx = otherVtx.origin()[VX] - rootVtx->origin()[VX];
-            fixed_t dy = otherVtx.origin()[VY] - rootVtx->origin()[VY];
+            fixed_t dx = otherVtx.origin().x - rootVtx->origin().x;
+            fixed_t dy = otherVtx.origin().y - rootVtx->origin().y;
 
             own[i]->_angle = angles[i] = bamsAtan2(-100 *dx, 100 * dy);
 
@@ -1024,7 +1024,7 @@ int MPE_LineCreate(int v1, int v2, int frontSectorIdx, int backSectorIdx, int fl
     /// @todo fixme: We need to allow these... -ds
     Vertex *vtx1 = editMap.vertexes[v1];
     Vertex *vtx2 = editMap.vertexes[v2];
-    if(Vector2d(vtx1->origin() - vtx2->origin()).length() <= 0) return -1;
+    if(de::abs(Vector2d(vtx1->origin() - vtx2->origin()).length()) <= 0.0001) return -1;
 
     Sector *frontSector = (frontSectorIdx >= 0? editMap.sectors[frontSectorIdx] : 0);
     Sector *backSector  = (backSectorIdx  >= 0? editMap.sectors[ backSectorIdx] : 0);

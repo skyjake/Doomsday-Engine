@@ -22,9 +22,9 @@
 #define DENG_WORLD_MAP_BSPLEAF
 
 #include <de/aabox.h>
-#include <de/vector1.h>
 
 #include <de/Error>
+#include <de/Vector>
 
 #include "MapElement"
 #ifdef __CLIENT__
@@ -98,7 +98,7 @@ public:
      * vertexes which define the geometry of the BSP leaf in map coordinate space
      * units.
      */
-    vec2d_t const &center() const;
+    de::Vector2d const &center() const;
 
     /**
      * Update the center point in the map coordinate space.
@@ -197,7 +197,7 @@ public:
      *
      * @see aaBox()
      */
-    vec2d_t const &worldGridOffset() const;
+    de::Vector2d const &worldGridOffset() const;
 
     /**
      * Returns the @em validCount of the BSP leaf. Used by some legacy iteration
@@ -258,6 +258,10 @@ public:
     void setAddSpriteCount(int newFrameCount);
 
 #endif // __CLIENT__
+
+#ifdef DENG_DEBUG
+    void printHEdges() const;
+#endif
 
 protected:
     int property(setargs_t &args) const;

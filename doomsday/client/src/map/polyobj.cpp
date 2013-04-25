@@ -142,7 +142,7 @@ void Polyobj::updateOriginalVertexCoords()
     foreach(Vertex *vertex, uniqueVertexes())
     {
         // The original coordinates are relative to the polyobj origin.
-        (*origCoordsIt) = Vector2d(vertex->origin()) - Vector2d(origin);
+        (*origCoordsIt) = vertex->origin() - Vector2d(origin);
         origCoordsIt++;
     }
 }

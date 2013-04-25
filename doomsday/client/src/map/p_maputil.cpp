@@ -106,8 +106,8 @@ bool P_IsPointInBspLeaf(Vector2d const &point, BspLeaf const &bspLeaf)
         Vertex const &va = hedge->v1();
         Vertex const &vb = next.v1();
 
-        if(((va.origin()[VY] - point.y) * (vb.origin()[VX] - va.origin()[VX]) -
-            (va.origin()[VX] - point.x) * (vb.origin()[VY] - va.origin()[VY])) < 0)
+        if(((va.origin().y - point.y) * (vb.origin().x - va.origin().x) -
+            (va.origin().x - point.x) * (vb.origin().y - va.origin().y)) < 0)
         {
             // Outside the BSP leaf's edges.
             return false;

@@ -1455,8 +1455,8 @@ static void writePlane(Plane::Type type, coord_t height,
     DENG_ASSERT(!isNullLeaf(bspLeaf));
     DENG_ASSERT(material != 0 && material->isDrawable()); // Must have a drawable material.
 
-    Vector3f eyeToSurface(vOrigin[VX] - bspLeaf->center()[VX],
-                          vOrigin[VZ] - bspLeaf->center()[VY],
+    Vector3f eyeToSurface(vOrigin[VX] - bspLeaf->center().x,
+                          vOrigin[VZ] - bspLeaf->center().y,
                           vOrigin[VY] - height);
 
     // Don't bother with planes facing away from the camera.
@@ -2447,8 +2447,7 @@ static uint buildLeafPlaneGeometry(BspLeaf const &leaf, bool antiClockwise,
     uint n = 0;
     if(!fanBase)
     {
-        V2f_Copyd((*verts)[n].pos, leaf.center());
-        (*verts)[n].pos[VZ] = float( height );
+        V3f_Set((*verts)[n].pos, leaf.center().x, leaf.center().y, height);
         n++;
     }
 
@@ -2456,9 +2455,7 @@ static uint buildLeafPlaneGeometry(BspLeaf const &leaf, bool antiClockwise,
     HEdge *node = baseNode;
     do
     {
-        V3f_Set((*verts)[n].pos, node->v1Origin().x,
-                                 node->v1Origin().y,
-                                 height);
+        V3f_Set((*verts)[n].pos, node->v1Origin().x, node->v1Origin().y, height);
         n++;
     } while((node = antiClockwise? &node->prev() : &node->next()) != baseNode);
 
@@ -2723,8 +2720,7 @@ static void writeLeafPlanes()
         if(plane->type() == Plane::Ceiling)
             materialOrigin.y -= leaf->aaBox().maxY - leaf->aaBox().minY;
         // Add the additional offset to align with the worldwide grid.
-        materialOrigin.x += float( leaf->worldGridOffset()[VX] );
-        materialOrigin.y += float( leaf->worldGridOffset()[VY] );
+        materialOrigin += leaf->worldGridOffset();
         // Inverted.
         materialOrigin.y = -materialOrigin.y;
 
@@ -3174,7 +3170,7 @@ static void drawVertexPoint(const Vertex* vtx, coord_t z, float alpha)
 {
     glBegin(GL_POINTS);
         glColor4f(.7f, .7f, .2f, alpha * 2);
-        glVertex3f(vtx->origin()[VX], z, vtx->origin()[VY]);
+        glVertex3f(vtx->origin().x, z, vtx->origin().y);
     glEnd();
 }
 
@@ -3186,14 +3182,14 @@ static void drawVertexBar(Vertex const *vtx, coord_t bottom, coord_t top, float 
 
     glBegin(GL_LINES);
         glColor4fv(black);
-        glVertex3f(vtx->origin()[VX], bottom - EXTEND_DIST, vtx->origin()[VY]);
+        glVertex3f(vtx->origin().x, bottom - EXTEND_DIST, vtx->origin().y);
         glColor4f(1, 1, 1, alpha);
-        glVertex3f(vtx->origin()[VX], bottom, vtx->origin()[VY]);
-        glVertex3f(vtx->origin()[VX], bottom, vtx->origin()[VY]);
-        glVertex3f(vtx->origin()[VX], top, vtx->origin()[VY]);
-        glVertex3f(vtx->origin()[VX], top, vtx->origin()[VY]);
+        glVertex3f(vtx->origin().x, bottom, vtx->origin().y);
+        glVertex3f(vtx->origin().x, bottom, vtx->origin().y);
+        glVertex3f(vtx->origin().x, top, vtx->origin().y);
+        glVertex3f(vtx->origin().x, top, vtx->origin().y);
         glColor4fv(black);
-        glVertex3f(vtx->origin()[VX], top + EXTEND_DIST, vtx->origin()[VY]);
+        glVertex3f(vtx->origin().x, top + EXTEND_DIST, vtx->origin().y);
     glEnd();
 }
 
@@ -3212,7 +3208,7 @@ static void drawVertexIndex(Vertex const *vtx, coord_t z, float scale, float alp
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glTranslatef(vtx->origin()[VX], z, vtx->origin()[VY]);
+    glTranslatef(vtx->origin().x, z, vtx->origin().y);
     glRotatef(-vang + 180, 0, 1, 0);
     glRotatef(vpitch, 1, 0, 0);
     glScalef(-scale, -scale, 1);
@@ -3233,7 +3229,7 @@ static int drawVertex1(Line *li, void *context)
 {
     Vertex *vtx = &li->v1();
     Polyobj *po = (Polyobj *) context;
-    coord_t dist2D = M_ApproxDistance(vOrigin[VX] - vtx->origin()[VX], vOrigin[VZ] - vtx->origin()[VY]);
+    coord_t dist2D = M_ApproxDistance(vOrigin[VX] - vtx->origin().x, vOrigin[VZ] - vtx->origin().y);
 
     if(dist2D < MAX_VERTEX_POINT_DIST)
     {
@@ -3259,8 +3255,8 @@ static int drawVertex1(Line *li, void *context)
         eye[VY] = vOrigin[VZ];
         eye[VZ] = vOrigin[VY];
 
-        pos[VX] = vtx->origin()[VX];
-        pos[VY] = vtx->origin()[VY];
+        pos[VX] = vtx->origin().x;
+        pos[VY] = vtx->origin().y;
         pos[VZ] = po->bspLeaf->sector().floor().visHeight();
 
         dist3D = V3d_Distance(pos, eye);
@@ -3318,8 +3314,8 @@ void Rend_Vertexes()
             // Ignore polyobj vertexes.
             if(own->line().isFromPolyobj()) continue;
 
-            float alpha = 1 - M_ApproxDistance(vOrigin[VX] - vertex->origin()[VX],
-                                               vOrigin[VZ] - vertex->origin()[VY]) / MAX_VERTEX_POINT_DIST;
+            float alpha = 1 - M_ApproxDistance(vOrigin[VX] - vertex->origin().x,
+                                               vOrigin[VZ] - vertex->origin().y) / MAX_VERTEX_POINT_DIST;
             alpha = de::min(alpha, .15f);
 
             if(alpha > 0)
@@ -3348,8 +3344,8 @@ void Rend_Vertexes()
         // Ignore polyobj vertexes.
         if(own->line().isFromPolyobj()) continue;
 
-        coord_t dist = M_ApproxDistance(vOrigin[VX] - vertex->origin()[VX],
-                                       vOrigin[VZ] - vertex->origin()[VY]);
+        coord_t dist = M_ApproxDistance(vOrigin[VX] - vertex->origin().x,
+                                       vOrigin[VZ] - vertex->origin().y);
 
         if(dist < MAX_VERTEX_POINT_DIST)
         {
@@ -3379,8 +3375,8 @@ void Rend_Vertexes()
             // Ignore polyobj vertexes.
             if(own->line().isFromPolyobj()) continue;
 
-            pos[VX] = vertex->origin()[VX];
-            pos[VY] = vertex->origin()[VY];
+            pos[VX] = vertex->origin().x;
+            pos[VY] = vertex->origin().y;
             pos[VZ] = DDMAXFLOAT;
             getVertexPlaneMinMax(vertex, &pos[VZ], NULL);
 

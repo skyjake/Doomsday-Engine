@@ -70,8 +70,7 @@ struct LineInfo
         Vertex const &to   = line->to();
 
         // Check for zero-length line.
-        if((de::abs(from.origin()[VX] - to.origin()[VX]) < distEpsilon) &&
-           (de::abs(from.origin()[VY] - to.origin()[VY]) < distEpsilon))
+        if(de::abs(Vector2d(to.origin() - from.origin()).length()) < distEpsilon)
             flags |= ZeroLength;
 
         if(line->hasFrontSections() && line->hasBackSections())

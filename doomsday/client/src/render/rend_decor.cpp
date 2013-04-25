@@ -476,8 +476,8 @@ static void plotSourcesForLineSide(Line::Side &side, int section)
     if(!R_SideSectionCoords(side, section, &bottom, &top, &materialOrigin))
         return;
 
-    Vector3d v1(side.from().origin()[VX], side.from().origin()[VY], top);
-    Vector3d v2(  side.to().origin()[VX],   side.to().origin()[VY], bottom);
+    Vector3d v1(side.from().origin().x, side.from().origin().y, top);
+    Vector3d v2(  side.to().origin().x,   side.to().origin().y, bottom);
 
     updateSurfaceDecorations(side.surface(section), -materialOrigin, v1, v2);
 }

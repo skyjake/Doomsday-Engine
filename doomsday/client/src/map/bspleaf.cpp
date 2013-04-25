@@ -20,9 +20,10 @@
 
 #include <cmath> // fmod
 
-#include <de/Log>
+#include <de/mathutil.h>
+#include <de/memoryzone.h>
 
-#include "de_base.h"
+#include <de/Log>
 
 #include "HEdge"
 #include "Polyobj"
@@ -47,11 +48,11 @@ DENG2_PIMPL(BspLeaf)
     AABoxd aaBox;
 
     /// Center of vertices.
-    coord_t center[2];
+    Vector2d center;
 
     /// Offset to align the top left of materials in the built geometry to the
     /// map coordinate space grid.
-    coord_t worldGridOffset[2];
+    Vector2d worldGridOffset;
 
     /// Sector attributed to the leaf. @note can be @c 0 (degenerate!).
     Sector *sector;
@@ -85,10 +86,7 @@ DENG2_PIMPL(BspLeaf)
           addSpriteCount(0),
 #endif
           validCount(0)
-    {
-        std::memset(center, 0, sizeof(center));
-        std::memset(worldGridOffset, 0, sizeof(worldGridOffset));
-    }
+    {}
 
 #ifdef __CLIENT__
 
@@ -242,7 +240,7 @@ void BspLeaf::updateAABox()
     }
 }
 
-vec2d_t const &BspLeaf::center() const
+Vector2d const &BspLeaf::center() const
 {
     return d->center;
 }
@@ -250,19 +248,17 @@ vec2d_t const &BspLeaf::center() const
 void BspLeaf::updateCenter()
 {
     // The middle is the center of our AABox.
-    d->center[VX] = d->aaBox.minX + (d->aaBox.maxX - d->aaBox.minX) / 2;
-    d->center[VY] = d->aaBox.minY + (d->aaBox.maxY - d->aaBox.minY) / 2;
+    d->center = Vector2d(d->aaBox.min) + (Vector2d(d->aaBox.max) - Vector2d(d->aaBox.min)) / 2;
 }
 
-vec2d_t const &BspLeaf::worldGridOffset() const
+Vector2d const &BspLeaf::worldGridOffset() const
 {
     return d->worldGridOffset;
 }
 
 void BspLeaf::updateWorldGridOffset()
 {
-    d->worldGridOffset[VX] = fmod(d->aaBox.minX, 64);
-    d->worldGridOffset[VY] = fmod(d->aaBox.maxY, 64);
+    d->worldGridOffset = Vector2d(fmod(d->aaBox.minX, 64), fmod(d->aaBox.maxY, 64));
 }
 
 HEdge *BspLeaf::firstHEdge() const
@@ -363,6 +359,24 @@ void BspLeaf::setAddSpriteCount(int newFrameCount)
 }
 
 #endif // __CLIENT__
+
+#ifdef DENG_DEBUG
+void BspLeaf::printHEdges() const
+{
+    if(!_hedge) return;
+    HEdge const *hedge = _hedge;
+    do
+    {
+        coord_t angle = M_DirectionToAngleXY(hedge->v1Origin().x - d->center.x,
+                                             hedge->v1Origin().y - d->center.y);
+
+        LOG_DEBUG("  half-edge %p: Angle %1.6f %s -> %s")
+            << de::dintptr(hedge) << angle
+            << hedge->v1Origin().asText() << hedge->v2Origin().asText();
+
+    } while((hedge = &hedge->next()) != _hedge);
+}
+#endif
 
 int BspLeaf::property(setargs_t &args) const
 {
