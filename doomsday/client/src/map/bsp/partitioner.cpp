@@ -161,7 +161,7 @@ DENG2_PIMPL(Partitioner)
         {
             // If ownership of the all built BSP map elements has been claimed
             // this should be a no-op.
-            clearAllBspObjects();
+            clearAllBspElements();
 
             // Destroy our private BSP tree.
             delete rootNode;
@@ -298,14 +298,14 @@ DENG2_PIMPL(Partitioner)
 
         // Look for window effects by checking for an odd number of one-sided
         // line owners for a single vertex. Idea courtesy of Graham Jackson.
-        VertexInfo const &v1Info = vertexInfo(line.from());
-        if((v1Info.oneSidedOwnerCount % 2) == 1 &&
-           (v1Info.oneSidedOwnerCount + v1Info.twoSidedOwnerCount) > 1)
+        VertexInfo const &fromInfo = vertexInfo(line.from());
+        if((fromInfo.oneSidedOwnerCount % 2) == 1 &&
+           (fromInfo.oneSidedOwnerCount + fromInfo.twoSidedOwnerCount) > 1)
             return true;
 
-        VertexInfo const &v2Info = vertexInfo(line.to());
-        if((v2Info.oneSidedOwnerCount % 2) == 1 &&
-           (v2Info.oneSidedOwnerCount + v2Info.twoSidedOwnerCount) > 1)
+        VertexInfo const &toInfo = vertexInfo(line.to());
+        if((toInfo.oneSidedOwnerCount % 2) == 1 &&
+           (toInfo.oneSidedOwnerCount + toInfo.twoSidedOwnerCount) > 1)
             return true;
 
         return false;
@@ -315,24 +315,25 @@ DENG2_PIMPL(Partitioner)
     {
         Line *line = lineInfo.line;
         DENG_ASSERT(line != 0);
+
         if(!lineMightHaveWindowEffect(*line)) return;
 
         testForWindowEffectParams p;
         p.frontDist = p.backDist = DDMAXFLOAT;
-        p.testLine = line;
-        p.m = line->center();
+        p.testLine  = line;
+        p.m         = line->center();
         p.castHoriz = (de::abs(line->direction().x) < de::abs(line->direction().y)? true : false);
 
-        AABoxd scanRegion = line->aaBox();
+        AABoxd scanRegion = map->bounds();
         if(p.castHoriz)
         {
-            scanRegion.minY -= DIST_EPSILON;
-            scanRegion.maxY += DIST_EPSILON;
+            scanRegion.minY = line->aaBox().minY - DIST_EPSILON;
+            scanRegion.maxY = line->aaBox().maxY + DIST_EPSILON;
         }
         else
         {
-            scanRegion.minX -= DIST_EPSILON;
-            scanRegion.maxX += DIST_EPSILON;
+            scanRegion.minX = line->aaBox().minX - DIST_EPSILON;
+            scanRegion.maxX = line->aaBox().maxX + DIST_EPSILON;
         }
         validCount++;
         map->linesBoxIterator(scanRegion, testForWindowEffectWorker, &p);
@@ -379,8 +380,7 @@ DENG2_PIMPL(Partitioner)
         Line *partitionLine)
     {
         HEdge *right = newHEdge(start, end, *frontSec, frontSide, partitionLine);
-        if(!backSec)
-            return right;
+        if(!backSec) return right;
 
         HEdge *left  = newHEdge(end, start, *backSec, frontSide? &frontSide->back() : 0, partitionLine);
 
@@ -467,28 +467,26 @@ DENG2_PIMPL(Partitioner)
         }
     }
 
-    HPlaneIntercept const *makePartitionIntersection(HEdge &hedge, bool leftSide)
+    void makePartitionIntersection(HEdge &hedge, bool leftSide)
     {
         Vertex &vertex = hedge.vertex(leftSide);
 
         // Already present for this edge?
-        HPlaneIntercept const *inter = partitionInterceptByVertex(vertex);
-        if(inter) return inter;
+        if(partitionHasInterceptForVertex(vertex)) return;
 
         HEdgeInfo &hInfo = hedgeInfo(hedge);
         bool isSelfRefLine = (hInfo.line && lineInfos[hInfo.line->indexInMap()].flags.testFlag(LineInfo::SelfRef));
 
-        HEdgeIntercept *intercept = newHEdgeIntercept(vertex, isSelfRefLine);
-
-        return &partition.newIntercept(vertexDistanceFromPartition(vertex), intercept);
+        partition.newIntercept(vertexDistanceFromPartition(vertex),
+                               newHEdgeIntercept(vertex, isSelfRefLine));
     }
 
     void mergeHEdgeIntercepts(HEdgeIntercept &final, HEdgeIntercept &other)
     {
         /*
         LOG_TRACE("Merging intersections:");
-        HEdgeIntercept::DebugPrint(final);
-        HEdgeIntercept::DebugPrint(other);
+        final.debugPrint();
+        other.debugPrint();
         */
 
         if(final.selfRef && !other.selfRef)
@@ -510,7 +508,7 @@ DENG2_PIMPL(Partitioner)
 
         /*
         LOG_TRACE("Result:");
-        HEdgeIntercept::DebugPrint(final);
+        final.debugPrint();
         */
 
         // Destroy the redundant other.
@@ -1827,7 +1825,7 @@ DENG2_PIMPL(Partitioner)
             /*
              * Perform some post analysis on the built leaf.
              */
-            if(!sanityCheckHasRealHEdge(leaf))
+            if(!sanityCheckHasRealHEdge(*leaf))
                 throw Error("Partitioner::clockwiseLeaf",
                             QString("BSP Leaf 0x%1 has no line-linked half-edge")
                                 .arg(dintptr(leaf), 0, 16));
@@ -1909,22 +1907,23 @@ DENG2_PIMPL(Partitioner)
     }
 
     /**
-     * Search the given list for an intercept, if found; return it.
+     * Search the list of intercepts for the partition to see if there is one
+     * for the specified vertext.
      *
      * @param vertex  The vertex to look for.
      *
-     * @return  Ptr to the found intercept, else @c 0;
+     * @return  @c true iff an intercept for @a vertex was found.
      */
-    HPlaneIntercept const *partitionInterceptByVertex(Vertex &vertex)
+    bool partitionHasInterceptForVertex(Vertex &vertex)
     {
         DENG2_FOR_EACH_CONST(HPlane::Intercepts, it, partition.intercepts())
         {
             HPlaneIntercept const *inter = &*it;
             HEdgeIntercept *hedgeInter = reinterpret_cast<HEdgeIntercept *>(inter->userData());
             if(hedgeInter->vertex == &vertex)
-                return inter;
+                return true;
         }
-        return 0;
+        return false;
     }
 
     /**
@@ -1943,40 +1942,40 @@ DENG2_PIMPL(Partitioner)
         return inter;
     }
 
-    void clearBspObject(BspTreeNode &tree)
+    void clearBspElement(BspTreeNode &tree)
     {
-        LOG_AS("Partitioner::clearBspObject");
+        LOG_AS("Partitioner::clearBspElement");
 
-        MapElement *dmuOb = tree.userData();
-        if(!dmuOb) return;
+        MapElement *elm = tree.userData();
+        if(!elm) return;
 
         if(builtOk)
         {
             LOG_DEBUG("Clearing unclaimed %s %p.")
-                << (tree.isLeaf()? "leaf" : "node") << de::dintptr(dmuOb);
+                << (tree.isLeaf()? "leaf" : "node") << de::dintptr(elm);
         }
 
         if(tree.isLeaf())
         {
-            DENG2_ASSERT(dmuOb->type() == DMU_BSPLEAF);
+            DENG2_ASSERT(elm->type() == DMU_BSPLEAF);
             // There is now one less BspLeaf.
             numLeafs -= 1;
         }
         else
         {
-            DENG2_ASSERT(dmuOb->type() == DMU_BSPNODE);
+            DENG2_ASSERT(elm->type() == DMU_BSPNODE);
             // There is now one less BspNode.
             numNodes -= 1;
         }
-        delete dmuOb;
+        delete elm;
         tree.setUserData(0);
 
-        BuiltBspElementMap::iterator found = treeNodeMap.find(dmuOb);
+        BuiltBspElementMap::iterator found = treeNodeMap.find(elm);
         DENG2_ASSERT(found != treeNodeMap.end());
         treeNodeMap.erase(found);
     }
 
-    void clearAllBspObjects()
+    void clearAllBspElements()
     {
         DENG2_FOR_EACH(Vertexes, it, vertexes)
         {
@@ -1990,23 +1989,23 @@ DENG2_PIMPL(Partitioner)
 
         foreach(BspTreeNode *node, treeNodeMap)
         {
-            clearBspObject(*node);
+            clearBspElement(*node);
         }
     }
 
-    BspTreeNode *treeNodeForBspObject(MapElement *ob)
+    BspTreeNode *treeNodeForBspElement(MapElement *ob)
     {
-        LOG_AS("Partitioner::treeNodeForBspObject");
+        LOG_AS("Partitioner::treeNodeForBspElement");
 
-        int const dmuType = ob->type();
-        if(dmuType == DMU_BSPLEAF || dmuType == DMU_BSPNODE)
+        int const elemType = ob->type();
+        if(elemType == DMU_BSPLEAF || elemType == DMU_BSPNODE)
         {
             BuiltBspElementMap::const_iterator found = treeNodeMap.find(ob);
             if(found == treeNodeMap.end()) return 0;
             return found.value();
         }
-        LOG_DEBUG("Attempted to locate using an unknown object %p (type: %d).")
-            << de::dintptr(ob) << dmuType;
+        LOG_DEBUG("Attempted to locate using an unknown element %p (type: %d).")
+            << de::dintptr(ob) << elemType;
         return 0;
     }
 
@@ -2195,12 +2194,12 @@ DENG2_PIMPL(Partitioner)
         partitionLine = line;
     }
 
-    bool release(MapElement *dmuOb)
+    bool release(MapElement *elm)
     {
-        switch(dmuOb->type())
+        switch(elm->type())
         {
         case DMU_VERTEX: {
-            Vertex *vtx = dmuOb->castTo<Vertex>();
+            Vertex *vtx = elm->castTo<Vertex>();
             /// @todo optimize: Poor performance O(n).
             for(uint i = 0; i < vertexes.size(); ++i)
             {
@@ -2220,10 +2219,10 @@ DENG2_PIMPL(Partitioner)
 
         case DMU_BSPLEAF:
         case DMU_BSPNODE: {
-            BspTreeNode *treeNode = treeNodeForBspObject(dmuOb);
+            BspTreeNode *treeNode = treeNodeForBspElement(elm);
             if(treeNode)
             {
-                BuiltBspElementMap::iterator found = treeNodeMap.find(dmuOb);
+                BuiltBspElementMap::iterator found = treeNodeMap.find(elm);
                 DENG2_ASSERT(found != treeNodeMap.end());
                 treeNodeMap.erase(found);
 
@@ -2305,10 +2304,9 @@ DENG2_PIMPL(Partitioner)
         }
     }
 
-    bool sanityCheckHasRealHEdge(BspLeaf const *leaf) const
+    bool sanityCheckHasRealHEdge(BspLeaf const &leaf) const
     {
-        DENG_ASSERT(leaf);
-        HEdge const *base = leaf->firstHEdge();
+        HEdge const *base = leaf.firstHEdge();
         HEdge const *hedge = base;
         do
         {
@@ -2468,7 +2466,7 @@ static void printPartitionIntercepts(HPlane const &partition)
     DENG2_FOR_EACH_CONST(HPlane::Intercepts, i, partition.intercepts())
     {
         Con_Printf(" %u: >%1.2f ", index++, i->distance());
-        HEdgeIntercept::DebugPrint(*reinterpret_cast<HEdgeIntercept*>(i->userData()));
+        reinterpret_cast<HEdgeIntercept*>(i->userData())->debugPrint();
     }
 }
 #endif
