@@ -80,6 +80,8 @@ public:
 
 typedef std::list<Intercept> HEdgeIntercepts;
 
+typedef QList<Intercept *> InterceptList;
+
 typedef QHash<MapElement *, BspTreeNode *> BuiltBspElementMap;
 
 /// Used when sorting half-edges by angle around a map point.
@@ -554,22 +556,6 @@ DENG2_PIMPL(Partitioner)
         LOG_TRACE("Result:");
         final.debugPrint();
         */
-
-        // Destroy the redundant other.
-        delete &other;
-    }
-
-    bool mergeInterceptDecide(Intercept &a, Intercept &b)
-    {
-        coord_t const distance = b.distance - a.distance;
-
-        // Too great a distance between the two?
-        if(distance > DIST_EPSILON) return false;
-
-        // Merge info for the two intersections into one (next is destroyed).
-        mergeHEdgeIntercepts(a, b);
-
-        return true;
     }
 
     /**
@@ -586,49 +572,49 @@ DENG2_PIMPL(Partitioner)
      * be done prior to creating hedges along the partition - instead this
      * should happen afterwards. -ds
      */
-    void mergeIntercepts()
+    void mergeIntercepts(InterceptList &sortedIntercepts)
     {
-        HEdgeIntercepts::iterator node = partitionIntercepts.begin();
-        while(node != partitionIntercepts.end())
+        DENG2_FOR_EACH(HEdgeIntercepts, it, partitionIntercepts)
         {
-            HEdgeIntercepts::iterator np = node; np++;
-            if(np == partitionIntercepts.end()) break;
+            sortedIntercepts.append(&*it);
+        }
+
+        for(int i = 0; i < sortedIntercepts.count() - 1; ++i)
+        {
+            Intercept *cur  = sortedIntercepts[i];
+            Intercept *next = sortedIntercepts[i+1];
 
             // Sanity check.
-            double distance = np->distance - node->distance;
+            double distance = next->distance - cur->distance;
             if(distance < -0.1)
             {
                 throw Error("mergeIntercepts", QString("Invalid intercept order - %1 > %2")
-                                                   .arg(node->distance, 0, 'f', 3)
-                                                   .arg(  np->distance, 0, 'f', 3));
+                                                   .arg(cur->distance, 0, 'f', 3)
+                                                   .arg(next->distance, 0, 'f', 3));
             }
 
             // Are we merging this pair?
-            if(mergeInterceptDecide(*node, *np))
+            if(distance <= DIST_EPSILON)
             {
-                // Yes - Unlink this intercept.
-                partitionIntercepts.erase(np);
-            }
-            else
-            {
-                // No.
-                node++;
+                // Yes - merge the two intercepts into one.
+                mergeHEdgeIntercepts(*cur, *next);
+
+                // Destroy the "next" intercept.
+                sortedIntercepts.removeAt(i+1);
+
+                // Process the new "this" and "next" pairing.
+                i -= 1;
             }
         }
     }
 
-    void buildHEdgesAtPartitionGaps(SuperBlock &rightList, SuperBlock &leftList)
+    void buildHEdgesAtPartitionGaps(InterceptList const &sortedIntercepts,
+                                    SuperBlock &rightList, SuperBlock &leftList)
     {
-        HEdgeIntercepts::const_iterator node = partitionIntercepts.begin();
-        while(node != partitionIntercepts.end())
+        for(int i = 0; i < sortedIntercepts.count() - 1; ++i)
         {
-            HEdgeIntercepts::const_iterator np = node; np++;
-
-            if(np == partitionIntercepts.end())
-                break;
-
-            HEdgeIntercept const *cur  = &*node;
-            HEdgeIntercept const *next = &*np;
+            Intercept const *cur  = sortedIntercepts[i];
+            Intercept const *next = sortedIntercepts[i+1];
 
             if(!(!cur->after && !next->before))
             {
@@ -691,8 +677,6 @@ DENG2_PIMPL(Partitioner)
                     */
                 }
             }
-
-            node++;
         }
     }
 
@@ -1961,8 +1945,9 @@ DENG2_PIMPL(Partitioner)
         //printPartitionIntercepts(partition);
 
         // First, fix any near-distance issues with the intercepts.
-        mergeIntercepts();
-        buildHEdgesAtPartitionGaps(rightList, leftList);
+        InterceptList sortedIntercepts;
+        mergeIntercepts(sortedIntercepts);
+        buildHEdgesAtPartitionGaps(sortedIntercepts, rightList, leftList);
     }
 
     /**
