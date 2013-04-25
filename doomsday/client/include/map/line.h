@@ -599,54 +599,34 @@ public:
     /**
      * Returns the From/Start vertex for the line.
      */
-    inline Vertex &v1() const { return vertex(From); }
-
-    /// @copydoc v1()
-    /// An alias of v1().
-    inline Vertex &from() const { return v1(); }
+    inline Vertex &from() const { return vertex(From); }
 
     /**
      * Convenient accessor method for returning the origin of the From/Start
      * vertex for the line.
      *
-     * @see v1()
+     * @see from()
      */
-    inline de::Vector2d const &v1Origin() const { return v1().origin(); }
-
-    /// @copydoc v1Origin()
-    /// An alias of v1Origin()
-    inline de::Vector2d const &fromOrigin() const { return v1Origin(); }
+    inline de::Vector2d const &fromOrigin() const { return from().origin(); }
 
     /**
      * Returns the To/End vertex for the line.
      */
-    inline Vertex &v2() const { return vertex(To); }
-
-    /// @copydoc v2()
-    /// An alias of v2().
-    inline Vertex &to() const { return v2(); }
+    inline Vertex &to() const { return vertex(To); }
 
     /**
      * Convenient accessor method for returning the origin of the To/End
      * vertex for the line.
      *
-     * @see v2()
+     * @see to()
      */
-    inline de::Vector2d const &v2Origin() const { return v2().origin(); }
-
-    /// @copydoc v2Origin()
-    /// An alias of v2Origin()
-    inline de::Vector2d const &toOrigin() const { return v2Origin(); }
+    inline de::Vector2d const &toOrigin() const { return to().origin(); }
 
     /**
      * Returns the point on the line which lies at the exact center of the
      * two vertexes.
      */
-    inline de::Vector2d center() const
-    {
-        return de::Vector2d((v1Origin()[VX] + v2Origin()[VX]) / 2,
-                            (v1Origin()[VY] + v2Origin()[VY]) / 2);
-    }
+    inline de::Vector2d center() const { return fromOrigin() + direction() / 2; }
 
     /**
      * Returns the binary angle of the line (which, is derived from the
@@ -726,7 +706,7 @@ public:
      */
     inline coord_t pointDistance(const_pvec2d_t point, coord_t *offset) const
     {
-        coord_t fromV1[2] = { fromOrigin().x, fromOrigin().y };
+        coord_t fromV1[2]      = { fromOrigin().x, fromOrigin().y };
         coord_t directionV1[2] = { direction().x, direction().y };
         return V2d_PointLineDistance(point, fromV1, directionV1, offset);
     }
@@ -750,7 +730,7 @@ public:
      */
     inline coord_t pointOnSide(const_pvec2d_t point) const
     {
-        coord_t fromV1[2] = { fromOrigin().x, fromOrigin().y };
+        coord_t fromV1[2]      = { fromOrigin().x, fromOrigin().y };
         coord_t directionV1[2] = { direction().x, direction().y };
         return V2d_PointOnLineSide(point, fromV1, directionV1);
     }

@@ -203,12 +203,12 @@ DENG2_PIMPL(Partitioner)
         Sector *frontOpen, *backOpen;
         Line *frontLine, *backLine;
         Line *testLine;
-        coord_t mX, mY;
+        Vector2d m;
         bool castHoriz;
 
         testForWindowEffectParams()
             : frontDist(0), backDist(0), frontOpen(0), backOpen(0),
-              frontLine(0), backLine(0), testLine(0), mX(0), mY(0), castHoriz(false)
+              frontLine(0), backLine(0), testLine(0), castHoriz(false)
         {}
     };
 
@@ -227,11 +227,11 @@ DENG2_PIMPL(Partitioner)
             if(de::abs(line.direction().y) < DIST_EPSILON)
                 return;
 
-            if((de::max(line.v1Origin()[VY], line.v2Origin()[VY]) < p.mY - DIST_EPSILON) ||
-               (de::min(line.v1Origin()[VY], line.v2Origin()[VY]) > p.mY + DIST_EPSILON))
+            if((line.aaBox().maxY < p.m.y - DIST_EPSILON) ||
+               (line.aaBox().minY > p.m.y + DIST_EPSILON))
                 return;
 
-            dist = (line.v1Origin()[VX] + (p.mY - line.v1Origin()[VY]) * line.direction().x / line.direction().y) - p.mX;
+            dist = (line.fromOrigin().x + (p.m.y - line.fromOrigin().y) * line.direction().x / line.direction().y) - p.m.x;
 
             isFront = ((p.testLine->direction().y > 0) != (dist > 0));
             dist = de::abs(dist);
@@ -247,11 +247,11 @@ DENG2_PIMPL(Partitioner)
             if(de::abs(line.direction().x) < DIST_EPSILON)
                 return;
 
-            if((de::max(line.v1Origin()[VX], line.v2Origin()[VX]) < p.mX - DIST_EPSILON) ||
-               (de::min(line.v1Origin()[VX], line.v2Origin()[VX]) > p.mX + DIST_EPSILON))
+            if((line.aaBox().maxX < p.m.x - DIST_EPSILON) ||
+               (line.aaBox().minX > p.m.x + DIST_EPSILON))
                 return;
 
-            dist = (line.v1Origin()[VY] + (p.mX - line.v1Origin()[VX]) * line.direction().y / line.direction().x) - p.mY;
+            dist = (line.fromOrigin().y + (p.m.x - line.fromOrigin().x) * line.direction().y / line.direction().x) - p.m.y;
 
             isFront = ((p.testLine->direction().x > 0) == (dist > 0));
             dist = de::abs(dist);
@@ -289,7 +289,7 @@ DENG2_PIMPL(Partitioner)
         return false; // Continue iteration.
     }
 
-    inline bool lineMightHaveWindowEffect(Line const &line)
+    bool lineMightHaveWindowEffect(Line const &line)
     {
         if(line.isFromPolyobj()) return false;
         if(line.hasFrontSections() && line.hasBackSections()) return false;
@@ -298,12 +298,12 @@ DENG2_PIMPL(Partitioner)
 
         // Look for window effects by checking for an odd number of one-sided
         // line owners for a single vertex. Idea courtesy of Graham Jackson.
-        VertexInfo const &v1Info = vertexInfo(line.v1());
+        VertexInfo const &v1Info = vertexInfo(line.from());
         if((v1Info.oneSidedOwnerCount % 2) == 1 &&
            (v1Info.oneSidedOwnerCount + v1Info.twoSidedOwnerCount) > 1)
             return true;
 
-        VertexInfo const &v2Info = vertexInfo(line.v2());
+        VertexInfo const &v2Info = vertexInfo(line.to());
         if((v2Info.oneSidedOwnerCount % 2) == 1 &&
            (v2Info.oneSidedOwnerCount + v2Info.twoSidedOwnerCount) > 1)
             return true;
@@ -320,20 +320,19 @@ DENG2_PIMPL(Partitioner)
         testForWindowEffectParams p;
         p.frontDist = p.backDist = DDMAXFLOAT;
         p.testLine = line;
-        p.mX = (line->v1Origin()[VX] + line->v2Origin()[VX]) / 2.0;
-        p.mY = (line->v1Origin()[VY] + line->v2Origin()[VY]) / 2.0;
+        p.m = line->center();
         p.castHoriz = (de::abs(line->direction().x) < de::abs(line->direction().y)? true : false);
 
-        AABoxd scanRegion = map->bounds();
+        AABoxd scanRegion = line->aaBox();
         if(p.castHoriz)
         {
-            scanRegion.minY = de::min(line->v1Origin()[VY], line->v2Origin()[VY]) - DIST_EPSILON;
-            scanRegion.maxY = de::max(line->v1Origin()[VY], line->v2Origin()[VY]) + DIST_EPSILON;
+            scanRegion.minY -= DIST_EPSILON;
+            scanRegion.maxY += DIST_EPSILON;
         }
         else
         {
-            scanRegion.minX = de::min(line->v1Origin()[VX], line->v2Origin()[VX]) - DIST_EPSILON;
-            scanRegion.maxX = de::max(line->v1Origin()[VX], line->v2Origin()[VX]) + DIST_EPSILON;
+            scanRegion.minX -= DIST_EPSILON;
+            scanRegion.maxX += DIST_EPSILON;
         }
         validCount++;
         map->linesBoxIterator(scanRegion, testForWindowEffectWorker, &p);
@@ -430,7 +429,7 @@ DENG2_PIMPL(Partitioner)
                     if(windowSec) backSec = windowSec;
                 }
 
-                front = buildHEdgesBetweenVertexes(line->v1(), line->v2(),
+                front = buildHEdgesBetweenVertexes(line->from(), line->to(),
                                                    frontSec, backSec, &line->front(), line);
 
                 linkHEdgeInSuperBlockmap(hedgeList, *front);
@@ -443,8 +442,8 @@ DENG2_PIMPL(Partitioner)
             }
 
             /// @todo edge tips should be created when half-edges are created.
-            addHEdgeTip(line->v1(), angle,                 front, front? front->twinPtr() : 0);
-            addHEdgeTip(line->v2(), M_InverseAngle(angle), front? front->twinPtr() : 0, front);
+            addHEdgeTip(line->from(), angle,                 front, front? front->twinPtr() : 0);
+            addHEdgeTip(  line->to(), M_InverseAngle(angle), front? front->twinPtr() : 0, front);
         }
     }
 
@@ -621,12 +620,12 @@ DENG2_PIMPL(Partitioner)
                               "\n %p LEFT  sector #%d %s to %s")
                         << de::dintptr(right)
                         << (hedgeInfo(*right).sector? hedgeInfo(*right).sector->indexInMap() : -1)
-                        << right->v1Origin().asText()
-                        << right->v2Origin().asText()
+                        << right->fromOrigin().asText()
+                        << right->toOrigin().asText()
                         << de::dintptr(left)
                         << (hedgeInfo(*left).sector? hedgeInfo(*left).sector->indexInMap() : -1)
-                        << left->v1Origin().asText()
-                        << left->v2Origin().asText()
+                        << left->fromOrigin().asText()
+                        << left->toOrigin().asText()
                     */
                 }
             }
@@ -1182,8 +1181,8 @@ DENG2_PIMPL(Partitioner)
             //LOG_DEBUG("%shedge %p sector:%d %s -> %s")
             //    << (hedge->hasLine()? "" : "mini-") << de::dintptr(hedge)
             //    << (hInfo.sector? hInfo.sector->indexInMap() : -1)
-            //    << Vector2d(hedge->v1Origin()).asText()
-            //    << Vector2d(hedge->v2Origin()).asText();
+            //    << hedge->fromOrigin().asText()
+            //    << hedge->toOrigin().asText();
 
             // Optimization: Only the first half-edge produced from a given
             // line is tested per round of partition costing (they are all
@@ -1465,8 +1464,8 @@ DENG2_PIMPL(Partitioner)
         {
             //LOG_TRACE("Partition %p %s -> %s.")
             //    << de::dintptr(hedge)
-            //    << Vector2d(hedge->v1Origin()).asText()
-            //    << Vector2d(hedge->v2Origin()).asText();
+            //    << Vector2d(hedge->fromOrigin()).asText()
+            //    << Vector2d(hedge->toOrigin()).asText();
 
             // Reconfigure the half-plane for the next round of partitioning.
             configurePartition(partHEdge);
@@ -1632,8 +1631,8 @@ DENG2_PIMPL(Partitioner)
                 HEdge const *hedge1 = hedges.at(i);
                 HEdge const *hedge2 = hedges.at(i+1);
 
-                Vector2d v1Dist = Vector2d(hedge1->v1Origin()) - point;
-                Vector2d v2Dist = Vector2d(hedge2->v1Origin()) - point;
+                Vector2d v1Dist = Vector2d(hedge1->fromOrigin()) - point;
+                Vector2d v2Dist = Vector2d(hedge2->fromOrigin()) - point;
 
                 coord_t v1Angle = M_DirectionToAngleXY(v1Dist.x, v1Dist.y);
                 coord_t v2Angle = M_DirectionToAngleXY(v2Dist.x, v2Dist.y);
@@ -1862,8 +1861,7 @@ DENG2_PIMPL(Partitioner)
             do
             {
                 HEdge &next = hedge->next();
-                if(!FEQUAL(hedge->v2Origin()[VX], next.v1Origin()[VX]) ||
-                   !FEQUAL(hedge->v2Origin()[VY], next.v1Origin()[VY]))
+                if(hedge->toOrigin() != next.fromOrigin())
                 {
                     gaps++;
                 }
@@ -1878,8 +1876,8 @@ DENG2_PIMPL(Partitioner)
                 {
                     LOG_DEBUG("  half-edge %p %s -> %s")
                         << de::dintptr(hedge)
-                        << Vector2d(hedge->v1Origin()).asText(),
-                        << Vector2d(hedge->v2Origin()).asText();
+                        << hedge->fromOrigin().asText(),
+                        << hedge->toOrigin().asText();
 
                 } while((hedge = hedge->next) != base);
                 */
@@ -2326,11 +2324,10 @@ DENG2_PIMPL(Partitioner)
         {
             HEdgeInfo const &info = hedgeInfo(*hedge);
 
-            LOG_DEBUG("Build: %s %p sector: %d [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
+            LOG_DEBUG("Build: %s %p sector: %d %s -> %s")
                 << (hedge->hasLineSide()? "NORM" : "MINI")
                 << hedge << (info.sector != 0? info.sector->indexInMap() : -1)
-                << hedge->fromOrigin()[VX] << hedge->fromOrigin()[VY]
-                << hedge->toOrigin()[VX] << hedge->toOrigin()[VY];
+                << hedge->fromOrigin().asText() << hedge->toOrigin().asText();
         }
     }
 #endif
@@ -2450,8 +2447,8 @@ static Vector2d findBspLeafCenter(BspLeaf const &leaf)
 
     for(HEdge const *hedge = leaf.firstHEdge(); hedge; hedge = hedge->_next)
     {
-        center += hedge->v1Origin();
-        center += hedge->v2Origin();
+        center += hedge->fromOrigin();
+        center += hedge->toOrigin();
         numPoints += 2;
     }
 

@@ -59,8 +59,8 @@ static int rendLine(Line *line, void * /*parameters*/)
 {
     if(line->validCount() != validCount)
     {
-        glVertex2f(line->v1Origin()[VX], line->v1Origin()[VY]);
-        glVertex2f(line->v2Origin()[VX], line->v2Origin()[VY]);
+        glVertex2f(line->fromOrigin().x, line->fromOrigin().y);
+        glVertex2f(  line->toOrigin().x,   line->toOrigin().y);
 
         line->setValidCount(validCount);
     }
@@ -81,8 +81,8 @@ static int rendBspLeaf(BspLeaf *bspLeaf, void * /*parameters*/)
             HEdge *hedge = base;
             do
             {
-                V2f_Set(start, hedge->v1Origin()[VX], hedge->v1Origin()[VY]);
-                V2f_Set(end,   hedge->v2Origin()[VX], hedge->v2Origin()[VY]);
+                V2f_Set(start, hedge->fromOrigin().x, hedge->fromOrigin().y);
+                V2f_Set(end,     hedge->toOrigin().x, hedge->toOrigin().y);
 
                 glBegin(GL_LINES);
                     glVertex2fv(start);

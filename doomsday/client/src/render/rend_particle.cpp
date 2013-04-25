@@ -751,7 +751,7 @@ static void renderParticles(int rtype, boolean withBlend)
                 // Calculate a new center point (project onto the wall).
                 V2d_Set(origin, FIX2FLT(pt->origin[VX]), FIX2FLT(pt->origin[VY]));
 
-                coord_t linePoint[2]     = { pt->contact->v1Origin().x, pt->contact->v1Origin().y };
+                coord_t linePoint[2]     = { pt->contact->fromOrigin().x, pt->contact->fromOrigin().y };
                 coord_t lineDirection[2] = { pt->contact->direction().x, pt->contact->direction().y };
                 V2d_ProjectOnLine(projected, origin, linePoint, lineDirection);
 

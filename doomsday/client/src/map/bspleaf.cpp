@@ -126,7 +126,7 @@ DENG2_PIMPL(BspLeaf)
             {
                 HEdge *other = firstNode;
 
-                base = &fanBase->v1();
+                base = &fanBase->from();
                 do
                 {
                     // Test this triangle?
@@ -367,12 +367,12 @@ void BspLeaf::printHEdges() const
     HEdge const *hedge = _hedge;
     do
     {
-        coord_t angle = M_DirectionToAngleXY(hedge->v1Origin().x - d->center.x,
-                                             hedge->v1Origin().y - d->center.y);
+        coord_t angle = M_DirectionToAngleXY(hedge->fromOrigin().x - d->center.x,
+                                             hedge->fromOrigin().y - d->center.y);
 
         LOG_DEBUG("  half-edge %p: Angle %1.6f %s -> %s")
             << de::dintptr(hedge) << angle
-            << hedge->v1Origin().asText() << hedge->v2Origin().asText();
+            << hedge->fromOrigin().asText() << hedge->toOrigin().asText();
 
     } while((hedge = &hedge->next()) != _hedge);
 }

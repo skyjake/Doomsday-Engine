@@ -161,7 +161,7 @@ void Rend_RadioUpdateVertexShadowOffsets(Vertex &vtx)
         Line const &lineB = own->line();
         Line const &lineA = own->next().line();
 
-        if(&lineB.v1() == &vtx)
+        if(&lineB.from() == &vtx)
         {
             rightDir = lineB.direction();
         }
@@ -170,7 +170,7 @@ void Rend_RadioUpdateVertexShadowOffsets(Vertex &vtx)
             rightDir = -lineB.direction();
         }
 
-        if(&lineA.v1() == &vtx)
+        if(&lineA.from() == &vtx)
         {
             leftDir = -lineA.direction();
         }

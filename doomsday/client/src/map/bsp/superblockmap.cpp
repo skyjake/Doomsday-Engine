@@ -164,8 +164,8 @@ uint SuperBlock::hedgeCount(bool addReal, bool addMini) const
 
 static void initAABoxFromHEdgeVertexes(AABoxd &aaBox, HEdge const &hedge)
 {
-    Vector2d min = hedge.v1Origin().min(hedge.v2Origin());
-    Vector2d max = hedge.v1Origin().max(hedge.v2Origin());
+    Vector2d min = hedge.fromOrigin().min(hedge.toOrigin());
+    Vector2d max = hedge.fromOrigin().max(hedge.toOrigin());
     V2d_Set(aaBox.min, min.x, min.y);
     V2d_Set(aaBox.max, max.x, max.y);
 }
@@ -215,16 +215,16 @@ SuperBlock &SuperBlock::push(HEdge &hedge)
         {
             // Wider than tall.
             int midPoint = (sb->bounds().minX + sb->bounds().maxX) / 2;
-            p1 = hedge.v1Origin()[VX] >= midPoint? LEFT : RIGHT;
-            p2 = hedge.v2Origin()[VX] >= midPoint? LEFT : RIGHT;
+            p1 = hedge.fromOrigin().x >= midPoint? LEFT : RIGHT;
+            p2 =   hedge.toOrigin().x >= midPoint? LEFT : RIGHT;
             splitVertical = false;
         }
         else
         {
             // Taller than wide.
             int midPoint = (sb->bounds().minY + sb->bounds().maxY) / 2;
-            p1 = hedge.v1Origin()[VY] >= midPoint? LEFT : RIGHT;
-            p2 = hedge.v2Origin()[VY] >= midPoint? LEFT : RIGHT;
+            p1 = hedge.fromOrigin().y >= midPoint? LEFT : RIGHT;
+            p2 =   hedge.toOrigin().y >= midPoint? LEFT : RIGHT;
             splitVertical = true;
         }
 

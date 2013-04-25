@@ -107,8 +107,8 @@ DENG2_PIMPL(LineSightTest)
            line.aaBox().maxY < ray.aabox.minY)
             return true;
 
-        fixed_t lineV1OriginX[2]  = { DBL2FIX(line.v1Origin()[VX]), DBL2FIX(line.v1Origin()[VY]) };
-        fixed_t lineV2OriginX[2]  = { DBL2FIX(line.v2Origin()[VX]), DBL2FIX(line.v2Origin()[VY]) };
+        fixed_t lineV1OriginX[2]  = { DBL2FIX(line.fromOrigin().x), DBL2FIX(line.fromOrigin().y) };
+        fixed_t lineV2OriginX[2]  = { DBL2FIX(line.toOrigin().x), DBL2FIX(line.toOrigin().y) };
 
         if(V2x_PointOnLineSide(lineV1OriginX, ray.origin, ray.direction) ==
            V2x_PointOnLineSide(lineV2OriginX, ray.origin, ray.direction))

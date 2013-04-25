@@ -60,10 +60,10 @@ MapChangeAudience audienceForMapChange;
  */
 LineOwner *R_GetVtxLineOwner(Vertex const *v, Line const *line)
 {
-    if(v == &line->v1())
+    if(v == &line->from())
         return line->v1Owner();
 
-    if(v == &line->v2())
+    if(v == &line->to())
         return line->v2Owner();
 
     return 0;

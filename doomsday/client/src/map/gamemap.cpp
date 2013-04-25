@@ -108,16 +108,16 @@ DENG2_PIMPL(GameMap)
             if(hedge->hasLineSide())
             {
                 Vertex const &vtx = hedge->lineSide().from();
-                hedge->_lineOffset = Vector2d(vtx.origin() - hedge->v1Origin()).length();
+                hedge->_lineOffset = Vector2d(vtx.origin() - hedge->fromOrigin()).length();
             }
 
             // Calculate the length of the segment.
-            hedge->_length = Vector2d(hedge->v1Origin() - hedge->v2Origin()).length();
+            hedge->_length = Vector2d(hedge->fromOrigin() - hedge->toOrigin()).length();
             if(hedge->_length == 0)
                 hedge->_length = 0.01f; // Hmm...
 
-            hedge->_angle = bamsAtan2(int( hedge->v2Origin().y - hedge->v1Origin().y ),
-                                      int( hedge->v2Origin().x - hedge->v1Origin().x )) << FRACBITS;
+            hedge->_angle = bamsAtan2(int( hedge->toOrigin().y - hedge->fromOrigin().y ),
+                                      int( hedge->toOrigin().x - hedge->fromOrigin().x )) << FRACBITS;
 
         } while((hedge = &hedge->next()) != base);
     }
@@ -789,9 +789,9 @@ void GameMap::initPolyobjs()
         Vector2d avg;
         foreach(Line *line, po->lines())
         {
-            avg += Vector2d(line->v1Origin());
+            avg += line->fromOrigin();
         }
-        avg *=  1.f / po->lineCount();
+        avg /= po->lineCount();
 
         // Given the center point determine in which BSP leaf the polyobj resides.
         if(BspLeaf *bspLeaf = bspLeafAtPoint(avg))

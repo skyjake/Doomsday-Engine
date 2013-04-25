@@ -830,7 +830,7 @@ void SB_RendPoly(struct ColorRawf_s *rcolors, biassurface_t *bsuf,
         {
             HEdge const *hedge = mapElement->castTo<HEdge>();
 
-            updateAffected(bsuf, hedge->v1Origin(), hedge->v2Origin(), surfaceNormal);
+            updateAffected(bsuf, hedge->fromOrigin(), hedge->toOrigin(), surfaceNormal);
         }
         else
         {

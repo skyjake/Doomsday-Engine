@@ -458,7 +458,7 @@ static int lineAngleSorter(void const *a, void const *b)
         else
         {
             Line *line = &own[i]->line();
-            Vertex const &otherVtx = line->vertex(&line->v1() == rootVtx? 1:0);
+            Vertex const &otherVtx = line->vertex(&line->from() == rootVtx? 1:0);
 
             fixed_t dx = otherVtx.origin().x - rootVtx->origin().x;
             fixed_t dy = otherVtx.origin().y - rootVtx->origin().y;
@@ -590,7 +590,7 @@ static void setVertexLineOwner(Vertex *vtx, Line *lineptr, LineOwner **storage)
     vtx->_lineOwners = newOwner;
 
     // Link the line to its respective owner node.
-    if(vtx == &lineptr->v1())
+    if(vtx == &lineptr->from())
         lineptr->_vo1 = newOwner;
     else
         lineptr->_vo2 = newOwner;
@@ -908,9 +908,9 @@ boolean MPE_End()
         // Create a hedge for each line of this polyobj.
         foreach(Line *line, polyobj->lines())
         {
-            HEdge *hedge = new HEdge(line->v1(), &line->front()); // Polyobj has ownership.
+            HEdge *hedge = new HEdge(line->from(), &line->front()); // Polyobj has ownership.
 
-            hedge->_to    = &line->v2();
+            hedge->_to    = &line->to();
             hedge->_length  = line->length();
 
             line->front().setLeftHEdge(hedge);

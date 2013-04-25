@@ -23,8 +23,6 @@
 
 #include <de/Error>
 
-#include "p_dmu.h"
-
 #include "MapElement"
 #include "BspLeaf"
 #include "Line"
@@ -35,27 +33,12 @@
 #include "render/walldiv.h"
 #include "render/rend_bias.h"
 
-// Helper macros for accessing hedge data elements.
-#define FRONT 0
-#define BACK  1
-
 /**
  * @defgroup hedgeFrameFlags  Half-edge Frame Flags
  * @ingroup map
  */
 ///@{
 #define HEDGEINF_FACINGFRONT      0x0001
-///@}
-
-// Logical edge identifiers:
-/// @addtogroup map
-///@{
-#define FROM                    0
-#define TO                      1
-
-/// Aliases:
-#define START                   FROM
-#define END                     TO
 ///@}
 
 /**
@@ -87,6 +70,13 @@ public:
 
     /// The referenced geometry group does not exist. @ingroup errors
     DENG2_ERROR(UnknownGeometryGroupError);
+
+    /// Edge/vertex identifiers:
+    enum
+    {
+        From,
+        To
+    };
 
 public: /// @todo Make private:
     /// Start and End vertexes of the segment.
@@ -140,66 +130,48 @@ public:
      *
      * @see vertex()
      */
-    inline de::Vector2d const &vertexOrigin(int to) const
-    {
+    inline de::Vector2d const &vertexOrigin(int to) const {
         return vertex(to).origin();
     }
 
     /**
      * Returns the From/Start vertex for the half-edge.
      */
-    inline Vertex &v1() { return vertex(FROM); }
-
-    /// @copydoc v1()
-    inline Vertex const &v1() const { return vertex(FROM); }
-
-    /// @copydoc v1()
-    /// An alias of v1().
-    inline Vertex &from() { return v1(); }
+    inline Vertex &from() { return vertex(From); }
 
     /// @copydoc from()
-    /// An alias of v1().
-    inline Vertex const &from() const { return v1(); }
+    inline Vertex const &from() const { return vertex(From); }
 
     /**
      * Convenient accessor method for returning the origin of the From/Start
      * vertex for the half-edge.
      *
-     * @see v1()
+     * @see from()
      */
-    inline de::Vector2d const &v1Origin() const { return v1().origin(); }
-
-    /// @copydoc v1Origin()
-    /// An alias of v1Origin()
-    inline de::Vector2d const &fromOrigin() const { return v1Origin(); }
+    inline de::Vector2d const &fromOrigin() const { return from().origin(); }
 
     /**
      * Returns the To/End vertex for the half-edge.
      */
-    inline Vertex &v2() { return vertex(TO); }
+    inline Vertex &to() { return vertex(To); }
 
-    /// @copydoc v2()
-    inline Vertex const &v2() const { return vertex(TO); }
-
-    /// @copydoc v2()
-    /// An alias of v2().
-    inline Vertex &to() { return v2(); }
-
-    /// @copydoc to()
-    /// An alias of v2().
-    inline Vertex const &to() const { return v2(); }
+    inline Vertex const &to() const { return vertex(To); }
 
     /**
      * Convenient accessor method for returning the origin of the To/End
      * vertex for the half-edge.
      *
-     * @see v2()
+     * @see to()
      */
-    inline de::Vector2d const &v2Origin() const { return v2().origin(); }
+    inline de::Vector2d const &toOrigin() const { return to().origin(); }
 
-    /// @copydoc v2Origin()
-    /// An alias of v2Origin()
-    inline de::Vector2d const &toOrigin() const { return v2Origin(); }
+    /**
+     * Returns the point on the line which lies at the exact center of the
+     * two vertexes.
+     */
+    inline de::Vector2d center() const {
+        return de::Vector2d(fromOrigin() + to().origin()) / 2;
+    }
 
     /**
      * Returns the linked @em next half-edge (clockwise) around the face of

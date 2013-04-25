@@ -1373,7 +1373,7 @@ static void processEdgeShadow(BspLeaf const &bspLeaf, Line const *line,
         }
         else if(!(neighbor == line || !neighbor->hasBackSections()))
         {
-            int otherSide = (&line->vertex(i ^ side) == &neighbor->v1()? i : i ^ 1);
+            int otherSide = (&line->vertex(i ^ side) == &neighbor->from()? i : i ^ 1);
             Sector *othersec = neighbor->sectorPtr(otherSide);
 
             if(R_MiddleMaterialCoversOpening(neighbor->side(otherSide ^ 1)))

@@ -157,8 +157,8 @@ void ShellUser::sendMapOutline()
 
     foreach(Line *line, theMap->lines())
     {
-        packet->addLine(Vector2i(line->v1Origin()[VX], line->v1Origin()[VY]),
-                        Vector2i(line->v2Origin()[VX], line->v2Origin()[VY]),
+        packet->addLine(Vector2i(line->fromOrigin().x, line->fromOrigin().y),
+                        Vector2i(line->toOrigin().x, line->toOrigin().y),
                         (line->hasFrontSector() && line->hasBackSector())?
                                  shell::MapOutlinePacket::TwoSidedLine : shell::MapOutlinePacket::OneSidedLine);
     }

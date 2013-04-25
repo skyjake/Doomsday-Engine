@@ -103,8 +103,8 @@ bool P_IsPointInBspLeaf(Vector2d const &point, BspLeaf const &bspLeaf)
     {
         HEdge const &next = hedge->next();
 
-        Vertex const &va = hedge->v1();
-        Vertex const &vb = next.v1();
+        Vertex const &va = hedge->from();
+        Vertex const &vb = next.from();
 
         if(((va.origin().y - point.y) * (vb.origin().x - va.origin().x) -
             (va.origin().x - point.x) * (vb.origin().y - va.origin().y)) < 0)

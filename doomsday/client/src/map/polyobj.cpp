@@ -124,8 +124,8 @@ void Polyobj::buildUniqueVertexes()
     QSet<Vertex *> vertexSet;
     foreach(Line *line, lines())
     {
-        vertexSet.insert(&line->v1());
-        vertexSet.insert(&line->v2());
+        vertexSet.insert(&line->from());
+        vertexSet.insert(&line->to());
     }
 
     Vertexes &uniqueVertexes = *static_cast<Vertexes *>(_uniqueVertexes);
