@@ -19,7 +19,11 @@
 #include "de/Image"
 #include "de/gui/opengl.h"
 
+#include <QPainter>
+
 namespace de {
+
+#define IMAGE_ASSERT_EDITABLE(d) DENG2_ASSERT(d->format == UseQImageFormat)
 
 DENG2_PIMPL(Image)
 {
@@ -99,6 +103,11 @@ QImage::Format Image::qtFormat() const
 Image::Size Image::size() const
 {
     return d->size;
+}
+
+Rectanglei Image::rect() const
+{
+    return Rectanglei(0, 0, d->size.x, d->size.y);
 }
 
 int Image::depth() const
@@ -264,6 +273,50 @@ Image::GLFormat Image::glFormat() const
         return glFormat(d->image.format());
     }
     return glFormat(d->format);
+}
+
+Image Image::subImage(Rectanglei const &subArea) const
+{
+    IMAGE_ASSERT_EDITABLE(d);
+
+    return Image(d->image.copy(subArea.topLeft.x, subArea.topLeft.y,
+                               subArea.width(), subArea.height()));
+}
+
+void Image::resize(Size const &size)
+{
+    IMAGE_ASSERT_EDITABLE(d);
+
+    QImage resized(QSize(size.x, size.y), d->image.format());
+    QPainter painter(&resized);
+    painter.drawImage(QPoint(0, 0), d->image);
+    d->image = resized;
+    d->size = size;
+}
+
+void Image::fill(Color const &color)
+{
+    IMAGE_ASSERT_EDITABLE(d);
+
+    d->image.fill(QColor(color.x, color.y, color.z, color.w));
+}
+
+void Image::fill(Rectanglei const &rect, Color const &color)
+{
+    IMAGE_ASSERT_EDITABLE(d);
+
+    QPainter painter(&d->image);
+    painter.fillRect(QRect(rect.topLeft.x, rect.topLeft.y, rect.width(), rect.height()),
+                     QColor(color.x, color.y, color.z, color.w));
+}
+
+void Image::draw(Image const &image, Vector2i const &topLeft)
+{
+    IMAGE_ASSERT_EDITABLE(d);
+    IMAGE_ASSERT_EDITABLE(image.d);
+
+    QPainter painter(&d->image);
+    painter.drawImage(QPoint(topLeft.x, topLeft.y), image.d->image);
 }
 
 Image::GLFormat Image::glFormat(Format imageFormat)

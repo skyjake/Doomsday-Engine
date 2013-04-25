@@ -22,6 +22,7 @@
 #include <utility>
 #include <QImage>
 #include <de/Vector>
+#include <de/Rectangle>
 #include <de/ByteRefArray>
 
 #include "libgui.h"
@@ -61,6 +62,7 @@ public:
     };
 
     typedef Vector2ui Size;
+    typedef Vector4ub Color;
 
     /// GL format + type for glTex(Sub)Image.
     struct GLFormat {
@@ -91,10 +93,10 @@ public:
     Image &operator = (QImage const &other);
 
     Format format() const;
-
     QImage::Format qtFormat() const;
 
     Size size() const;
+    Rectanglei rect() const;
 
     /**
      * Number of bits per pixel.
@@ -132,6 +134,13 @@ public:
     QImage toQImage() const;
 
     GLFormat glFormat() const;
+
+    // Drawing/editing methods.
+    Image subImage(Rectanglei const &subArea) const;
+    void resize(Size const &size);
+    void fill(Color const &color);
+    void fill(Rectanglei const &rect, Color const &color);
+    void draw(Image const &image, Vector2i const &topLeft);
 
 public:
     static GLFormat glFormat(Format imageFormat);
