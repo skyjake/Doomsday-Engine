@@ -225,7 +225,7 @@ public:
      *
      * @see fanBase()
      */
-    inline uint BspLeaf::numFanVertices() const
+    inline uint numFanVertices() const
     {
         // Are we to use one of the half-edge vertexes as the fan base?
         return hedgeCount() + (fanBase()? 0 : 2);

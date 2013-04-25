@@ -527,7 +527,7 @@ void WallDivs_AssertInRange(walldivs_t *wd, coord_t low, coord_t hi)
         DENG2_ASSERT(node->height >= low && node->height <= hi);
     }
 #else
-    DENG2_UNUSED3(wd, ow, hi);
+    DENG2_UNUSED3(wd, low, hi);
 #endif
 }
 

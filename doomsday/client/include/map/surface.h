@@ -365,7 +365,7 @@ public:
      *
      * @see setTintColor(), setTintRed(), setTintGreen(), setTintBlue()
      */
-    inline void setTintColorComponent(int component, float newStrength);
+    void setTintColorComponent(int component, float newStrength);
 
     /**
      * Change the strength of the red component of the tint color for the surface.

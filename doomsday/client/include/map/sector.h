@@ -390,7 +390,7 @@ public:
      *
      * @see setLightColor(), setLightRed(), setLightGreen(), setLightBlue()
      */
-    inline void setLightColorComponent(int component, float newStrength);
+    void setLightColorComponent(int component, float newStrength);
 
     /**
      * Change the strength of the red component of the ambient light color in
