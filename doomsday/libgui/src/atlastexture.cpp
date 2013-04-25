@@ -17,6 +17,7 @@
  */
 
 #include "de/AtlasTexture"
+#include "de/RowAtlasAllocator"
 
 namespace de {
 
@@ -27,10 +28,18 @@ AtlasTexture::AtlasTexture(Atlas::Flags const &flags, Atlas::Size const &totalSi
     setState(Ready);
 }
 
+AtlasTexture *AtlasTexture::newWithRowAllocator(Atlas::Flags const &flags, Atlas::Size const &totalSize)
+{
+    AtlasTexture *atlas = new AtlasTexture(flags, totalSize);
+    atlas->setAllocator(new RowAtlasAllocator);
+    return atlas;
+}
+
 void AtlasTexture::clear()
 {
     Atlas::clear();
     GLTexture::clear();
+
     setState(Ready);
 }
 

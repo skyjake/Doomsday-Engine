@@ -102,6 +102,7 @@ SOURCES +=  \
     src/displaymode.cpp \
     src/drawable.cpp \
     src/glbuffer.cpp \
+    src/glentrypoints.cpp \
     src/glprogram.cpp \
     src/glshader.cpp \
     src/glstate.cpp \
@@ -112,7 +113,6 @@ SOURCES +=  \
     src/image.cpp \
     src/keyevent.cpp \
     src/persistentcanvaswindow.cpp \
-    src/glentrypoints.cpp \
     src/rowatlasallocator.cpp
 
 # DisplayMode

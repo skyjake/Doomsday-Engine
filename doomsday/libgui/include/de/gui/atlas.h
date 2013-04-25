@@ -156,6 +156,8 @@ public:
      */
     void release(Id const &id);
 
+    bool contains(Id const &id) const;
+
     /**
      * Returns the number of images in the atlas.
      */
@@ -187,6 +189,15 @@ public:
      * [0,1].
      */
     Rectanglef imageRectf(Id const &id) const;
+
+    /**
+     * Returns the image content allocated earlier. Requires BackingStore.
+     *
+     * @param id  Image identifier.
+     *
+     * @return Image that was provided earlier to alloc().
+     */
+    Image image(Id const &id) const;
 
     /**
      * Request committing the backing store to the physical atlas storage.

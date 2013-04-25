@@ -139,8 +139,11 @@ void Atlas::setAllocator(IAllocator *allocator)
 {
     clear();
     d->allocator.reset(allocator);
-    d->allocator->setMetrics(d->totalSize, d->margin);
-    d->allocator->clear(); // using new metrics
+    if(d->allocator.get())
+    {
+        d->allocator->setMetrics(d->totalSize, d->margin);
+        d->allocator->clear(); // using new metrics
+    }
 }
 
 void Atlas::clear()
@@ -165,6 +168,7 @@ void Atlas::setTotalSize(Size const &totalSize)
     {
         d->allocator->setMetrics(totalSize, d->margin);
     }
+
     if(d->hasBacking())
     {
         d->backing.resize(totalSize);
@@ -185,7 +189,7 @@ Id Atlas::alloc(Image const &image)
     Rectanglei rect;
     Id id = d->allocator->allocate(image.size(), rect);
 
-    if(id.isNone() && d->mayDefrag)
+    if(id.isNone() && d->flags.testFlag(AllowDefragment) && d->mayDefrag)
     {
         // Allocation failed. Maybe we can defragment to get more space?
         d->defragment();
@@ -225,6 +229,15 @@ void Atlas::release(Id const &id)
     d->mayDefrag = true;
 }
 
+bool Atlas::contains(Id const &id) const
+{
+    if(d->allocator.get())
+    {
+        return d->allocator->ids().contains(id);
+    }
+    return false;
+}
+
 int Atlas::imageCount() const
 {
     DENG2_ASSERT(d->allocator.get());
@@ -255,10 +268,20 @@ Rectanglef Atlas::imageRectf(Id const &id) const
     Rectanglei rect;
     d->allocator->rect(id, rect);
 
+    // Normalize within the atlas area.
     return Rectanglef(float(rect.topLeft.x) / float(d->totalSize.x),
                       float(rect.topLeft.y) / float(d->totalSize.y),
                       float(rect.width())   / float(d->totalSize.x),
                       float(rect.height())  / float(d->totalSize.y));
+}
+
+Image Atlas::image(Id const &id) const
+{
+    if(d->hasBacking() && d->allocator.get() && contains(id))
+    {
+        return d->backing.subImage(imageRect(id));
+    }
+    return Image();
 }
 
 void Atlas::commit() const

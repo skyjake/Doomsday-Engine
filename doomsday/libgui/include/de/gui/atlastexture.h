@@ -25,13 +25,24 @@
 namespace de {
 
 /**
- * Atlas stored on a GLTexture.
+ * Atlas stored on a (2D) GLTexture.
  */
 class LIBGUI_PUBLIC AtlasTexture : public Atlas, public GLTexture
 {
 public:
     AtlasTexture(Atlas::Flags const &flags = DefaultFlags,
                  Atlas::Size const &totalSize = Atlas::Size());
+
+    /**
+     * Constructs an AtlasTexture with a RowAtlasAllocator.
+     *
+     * @param flags      Atlas flags.
+     * @param totalSize  Total size for atlas.
+     *
+     * @return AtlasTexture instance.
+     */
+    static AtlasTexture *newWithRowAllocator(Atlas::Flags const &flags = DefaultFlags,
+                                             Atlas::Size const &totalSize = Atlas::Size());
 
     void clear();
 
