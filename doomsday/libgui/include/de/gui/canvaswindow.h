@@ -160,6 +160,11 @@ public:
      */
     void *nativeHandle() const;
 
+public:
+    static bool haveMain();
+    static CanvasWindow &main();
+    static void setMain(CanvasWindow *window);
+
 private:
     DENG2_PRIVATE(d)
 };
