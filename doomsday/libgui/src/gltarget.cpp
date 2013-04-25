@@ -44,6 +44,7 @@ DENG2_OBSERVES(Asset, Deletion)
     Flags flags;
     GLTexture *texture;
     Vector2ui size;
+    Vector4f clearColor;
 
     Instance(Public *i)
         : Base(i), fbo(0), flags(DefaultFlags), texture(0)
@@ -227,6 +228,26 @@ QImage GLTarget::toImage() const
         return img;
     }
     return QImage();
+}
+
+void GLTarget::setClearColor(Vector4f const &color)
+{
+    d->clearColor = color;
+}
+
+void GLTarget::clear(Flags const &attachments)
+{
+    glBind();
+
+    // Only clear what we have.
+    Flags which = attachments & d->flags;
+
+    glClearColor(d->clearColor.x, d->clearColor.y, d->clearColor.z, d->clearColor.w);
+    glClear((which & Color?   GL_COLOR_BUFFER_BIT   : 0) |
+            (which & Depth?   GL_DEPTH_BUFFER_BIT   : 0) |
+            (which & Stencil? GL_STENCIL_BUFFER_BIT : 0));
+
+    GLState::top().target().glBind();
 }
 
 GLuint GLTarget::glName() const

@@ -110,6 +110,20 @@ public:
      */
     QImage toImage() const;
 
+    /**
+     * Sets the color for clearing the target (see clear()).
+     *
+     * @param color  Color for clearing.
+     */
+    void setClearColor(Vector4f const &color);
+
+    /**
+     * Clears the contents of the render target's attached buffers.
+     *
+     * @param attachments  Which ones to clear.
+     */
+    void clear(Flags const &attachments);
+
 private:
     DENG2_PRIVATE(d)
 };
