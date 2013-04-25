@@ -23,12 +23,12 @@
  */
 
 #include <cmath>
-#include <list>
 #include <vector>
 #include <algorithm>
 
 #include <QList>
 #include <QHash>
+#include <QtAlgorithms>
 
 #include <de/Error>
 #include <de/Log>
@@ -69,6 +69,10 @@ public:
         : HEdgeIntercept(hedgeIntercept), distance(distance)
     {}
 
+    bool operator < (Intercept const &other) const {
+        return distance < other.distance;
+    }
+
     /**
      * Determine the distance between two intercepts. It does not matter
      * if the intercepts are from different half-planes.
@@ -78,9 +82,7 @@ public:
     }
 };
 
-typedef std::list<Intercept> HEdgeIntercepts;
-
-typedef QList<Intercept *> InterceptList;
+typedef QList<Intercept> HEdgeIntercepts;
 
 typedef QHash<MapElement *, BspTreeNode *> BuiltBspElementMap;
 
@@ -509,13 +511,7 @@ DENG2_PIMPL(Partitioner)
         HEdgeInfo &hInfo = hedgeInfo(hedge);
         bool isSelfRefLine = (hInfo.line && lineInfos[hInfo.line->indexInMap()].flags.testFlag(LineInfo::SelfRef));
 
-        // Find the rightful place for the new intersection.
         coord_t distance = vertexDistanceFromPartition(vertex);
-        HEdgeIntercepts::reverse_iterator after;
-
-        for(after = partitionIntercepts.rbegin();
-            after != partitionIntercepts.rend() && distance < after->distance; after++)
-        {}
 
         HEdgeIntercept inter;
         inter.vertex  = &vertex;
@@ -524,7 +520,7 @@ DENG2_PIMPL(Partitioner)
         inter.before  = openSectorAtAngle(vertex, M_InverseAngle(partitionInfo.pAngle));
         inter.after   = openSectorAtAngle(vertex, partitionInfo.pAngle);
 
-        partitionIntercepts.insert(after.base(), Intercept(distance, inter));
+        partitionIntercepts.append(Intercept(distance, inter));
     }
 
     void mergeHEdgeIntercepts(HEdgeIntercept &final, HEdgeIntercept &other)
@@ -559,6 +555,8 @@ DENG2_PIMPL(Partitioner)
     }
 
     /**
+     * Sort and then merge near-intercepts from the given list.
+     *
      * @todo fixme: Logically this is very suspect. Implementing this logic by
      * merging near-intercepts at hplane level is wrong because this does
      * nothing about any intercepting half-edge vertices. Consequently, rather
@@ -571,36 +569,35 @@ DENG2_PIMPL(Partitioner)
      * drifting away from the hplane). Logically, therefore, this should not
      * be done prior to creating hedges along the partition - instead this
      * should happen afterwards. -ds
+     *
+     * @param intercepts  The list of intercepts to be sorted (in place).
      */
-    void mergeIntercepts(InterceptList &sortedIntercepts)
+    void sortAndMergeIntercepts(HEdgeIntercepts &intercepts)
     {
-        DENG2_FOR_EACH(HEdgeIntercepts, it, partitionIntercepts)
-        {
-            sortedIntercepts.append(&*it);
-        }
+        qSort(intercepts.begin(), intercepts.end());
 
-        for(int i = 0; i < sortedIntercepts.count() - 1; ++i)
+        for(int i = 0; i < intercepts.count() - 1; ++i)
         {
-            Intercept *cur  = sortedIntercepts[i];
-            Intercept *next = sortedIntercepts[i+1];
+            Intercept &cur  = intercepts[i];
+            Intercept &next = intercepts[i+1];
 
             // Sanity check.
-            double distance = next->distance - cur->distance;
+            double distance = next.distance - cur.distance;
             if(distance < -0.1)
             {
-                throw Error("mergeIntercepts", QString("Invalid intercept order - %1 > %2")
-                                                   .arg(cur->distance, 0, 'f', 3)
-                                                   .arg(next->distance, 0, 'f', 3));
+                throw Error("sortAndMergeIntercepts", QString("Invalid intercept order - %1 > %2")
+                                                   .arg(cur.distance, 0, 'f', 3)
+                                                   .arg(next.distance, 0, 'f', 3));
             }
 
             // Are we merging this pair?
             if(distance <= DIST_EPSILON)
             {
                 // Yes - merge the two intercepts into one.
-                mergeHEdgeIntercepts(*cur, *next);
+                mergeHEdgeIntercepts(cur, next);
 
                 // Destroy the "next" intercept.
-                sortedIntercepts.removeAt(i+1);
+                intercepts.removeAt(i+1);
 
                 // Process the new "this" and "next" pairing.
                 i -= 1;
@@ -608,53 +605,53 @@ DENG2_PIMPL(Partitioner)
         }
     }
 
-    void buildHEdgesAtPartitionGaps(InterceptList const &sortedIntercepts,
+    void buildHEdgesAtPartitionGaps(HEdgeIntercepts const &sortedIntercepts,
                                     SuperBlock &rightList, SuperBlock &leftList)
     {
         for(int i = 0; i < sortedIntercepts.count() - 1; ++i)
         {
-            Intercept const *cur  = sortedIntercepts[i];
-            Intercept const *next = sortedIntercepts[i+1];
+            Intercept const &cur  = sortedIntercepts[i];
+            Intercept const &next = sortedIntercepts[i+1];
 
-            if(!(!cur->after && !next->before))
+            if(!(!cur.after && !next.before))
             {
                 // Check for some nasty open/closed or close/open cases.
-                if(cur->after && !next->before)
+                if(cur.after && !next.before)
                 {
-                    if(!cur->selfRef)
+                    if(!cur.selfRef)
                     {
-                        Vector2d nearPoint = (cur->vertex->origin() + next->vertex->origin()) / 2;
-                        notifyUnclosedSectorFound(*cur->after, nearPoint);
+                        Vector2d nearPoint = (cur.vertex->origin() + next.vertex->origin()) / 2;
+                        notifyUnclosedSectorFound(*cur.after, nearPoint);
                     }
                 }
-                else if(!cur->after && next->before)
+                else if(!cur.after && next.before)
                 {
-                    if(!next->selfRef)
+                    if(!next.selfRef)
                     {
-                        Vector2d nearPoint = (cur->vertex->origin() + next->vertex->origin()) / 2;
-                        notifyUnclosedSectorFound(*next->before, nearPoint);
+                        Vector2d nearPoint = (cur.vertex->origin() + next.vertex->origin()) / 2;
+                        notifyUnclosedSectorFound(*next.before, nearPoint);
                     }
                 }
                 else // This is definitely open space.
                 {
                     // Choose the non-self-referencing sector when we can.
-                    Sector *sector = cur->after;
-                    if(cur->after != next->before)
+                    Sector *sector = cur.after;
+                    if(cur.after != next.before)
                     {
-                        if(!cur->selfRef && !next->selfRef)
+                        if(!cur.selfRef && !next.selfRef)
                         {
                             LOG_DEBUG("Sector mismatch (#%d %s != #%d %s.")
-                                << cur->after->indexInMap()
-                                << cur->vertex->origin().asText()
-                                << next->before->indexInMap()
-                                << next->vertex->origin().asText();
+                                << cur.after->indexInMap()
+                                << cur.vertex->origin().asText()
+                                << next.before->indexInMap()
+                                << next.vertex->origin().asText();
                         }
 
-                        if(cur->selfRef && !next->selfRef)
-                            sector = next->before;
+                        if(cur.selfRef && !next.selfRef)
+                            sector = next.before;
                     }
 
-                    HEdge *right = buildHEdgesBetweenVertexes(*cur->vertex, *next->vertex, sector, sector,
+                    HEdge *right = buildHEdgesBetweenVertexes(*cur.vertex, *next.vertex, sector, sector,
                                                               0 /*no line*/, partitionLine);
 
                     // Add the new half-edges to the appropriate lists.
@@ -1942,12 +1939,11 @@ DENG2_PIMPL(Partitioner)
             << Vector2d(partitionInfo.start).asText()
             << Vector2d(partitionInfo.direction).asText();
 
-        //printPartitionIntercepts(partition);
+        //printIntercepts(partitionIntercepts);
 
         // First, fix any near-distance issues with the intercepts.
-        InterceptList sortedIntercepts;
-        mergeIntercepts(sortedIntercepts);
-        buildHEdgesAtPartitionGaps(sortedIntercepts, rightList, leftList);
+        sortAndMergeIntercepts(partitionIntercepts);
+        buildHEdgesAtPartitionGaps(partitionIntercepts, rightList, leftList);
     }
 
     /**
@@ -1960,9 +1956,9 @@ DENG2_PIMPL(Partitioner)
      */
     bool partitionHasInterceptForVertex(Vertex &vertex)
     {
-        DENG2_FOR_EACH_CONST(HEdgeIntercepts, it, partitionIntercepts)
+        foreach(HEdgeIntercept const &icpt, partitionIntercepts)
         {
-            if(it->vertex == &vertex)
+            if(icpt.vertex == &vertex)
                 return true;
         }
         return false;
@@ -2486,13 +2482,13 @@ static Vector2d findBspLeafCenter(BspLeaf const &leaf)
 }
 
 #if 0
-static void printPartitionIntercepts(HEdgeIntercepts const &intercepts)
+static void printIntercepts(HEdgeIntercepts const &intercepts)
 {
     uint index = 0;
-    DENG2_FOR_EACH_CONST(HEdgeIntercepts, i, intercepts)
+    foreach(HEdgeIntercept const &icpt, intercepts)
     {
-        Con_Printf(" %u: >%1.2f ", index++, i->distance;
-        i->debugPrint();
+        Con_Printf(" %u: >%1.2f ", index++, i.distance;
+        i.debugPrint();
     }
 }
 #endif
