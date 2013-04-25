@@ -199,6 +199,14 @@ public:
 
     void glBindToUnit(int unit) const;
 
+protected:
+    /**
+     * Derived classes can override this to perform additional tasks
+     * immediately before the texture is bound for use. The default
+     * implementation does not need to be called.
+     */
+    virtual void aboutToUse() const;
+
 public:
     /**
      * Calculates how many mipmap levels are produced for a specific size

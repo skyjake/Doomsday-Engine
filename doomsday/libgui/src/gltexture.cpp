@@ -386,12 +386,20 @@ GLuint GLTexture::glName() const
 void GLTexture::glBindToUnit(int unit) const
 {
     glActiveTexture(GL_TEXTURE0 + unit);
+
+    aboutToUse();
+
     d->glBind();
 
     if(d->flags.testFlag(ParamsChanged))
     {
         d->glUpdateParamsOfBoundTexture();
     }
+}
+
+void GLTexture::aboutToUse() const
+{
+    // nothing to do
 }
 
 int GLTexture::levelsForSize(GLTexture::Size const &size)
