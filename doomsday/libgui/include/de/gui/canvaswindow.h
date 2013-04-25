@@ -40,9 +40,9 @@ namespace de {
  *
  * @see Canvas
  */
-class  LIBGUI_PUBLIC CanvasWindow : public QMainWindow,
-                                    DENG2_OBSERVES(Canvas, GLReady),
-                                    DENG2_OBSERVES(Canvas, GLDraw)
+class LIBGUI_PUBLIC CanvasWindow : public QMainWindow,
+                                   DENG2_OBSERVES(Canvas, GLReady),
+                                   DENG2_OBSERVES(Canvas, GLDraw)
 {
     Q_OBJECT
 
