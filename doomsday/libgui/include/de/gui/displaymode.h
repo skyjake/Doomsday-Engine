@@ -5,6 +5,9 @@
  * High-level logic for enumerating, selecting, and changing display modes. See
  * displaymode_native.h for the platform-specific low-level routines.
  *
+ * @todo This is C because it was relocated from the client. It should be
+ * converted to a C++.
+ *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
