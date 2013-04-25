@@ -8,6 +8,7 @@ TEMPLATE = subdirs
 deng_tests: SUBDIRS += \
     archive \
     bitfield \
+    glsandbox \
     log \
     record \
     script \
