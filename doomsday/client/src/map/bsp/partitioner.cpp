@@ -170,8 +170,8 @@ DENG2_PIMPL(Partitioner)
     /// Extra info about the partition plane.
     HEdgeInfo partitionInfo;
 
-    /// Map line for the partition.
-    Line *partitionLine;
+    /// Map line side for the partition.
+    Line::Side *partitionLineSide;
 
     /// @c true = a BSP for the current map has been built successfully.
     bool builtOk;
@@ -181,7 +181,7 @@ DENG2_PIMPL(Partitioner)
         splitCostFactor(_splitCostFactor),
         map(&_map),
         numNodes(0), numLeafs(0), numHEdges(0), numVertexes(0),
-        rootNode(0), partitionLine(0),
+        rootNode(0), partitionLineSide(0),
         builtOk(false)
     {}
 
@@ -411,12 +411,12 @@ DENG2_PIMPL(Partitioner)
      */
     HEdge *buildHEdgesBetweenVertexes(Vertex &start, Vertex &end,
         Sector *frontSec, Sector *backSec, Line::Side *frontSide,
-        Line *partitionLine)
+        Line::Side *partitionLineSide)
     {
-        HEdge *right = newHEdge(start, end, *frontSec, frontSide, partitionLine);
+        HEdge *right = newHEdge(start, end, *frontSec, frontSide, partitionLineSide);
         if(!backSec) return right;
 
-        HEdge *left  = newHEdge(end, start, *backSec, frontSide? &frontSide->back() : 0, partitionLine);
+        HEdge *left  = newHEdge(end, start, *backSec, frontSide? &frontSide->back() : 0, partitionLineSide);
 
         // Twin the half-edges together.
         right->_twin = left;
@@ -464,7 +464,7 @@ DENG2_PIMPL(Partitioner)
                 }
 
                 front = buildHEdgesBetweenVertexes(line->from(), line->to(),
-                                                   frontSec, backSec, &line->front(), line);
+                                                   frontSec, backSec, &line->front(), &line->front());
 
                 linkHEdgeInSuperBlockmap(hedgeList, *front);
                 if(front->hasTwin())
@@ -509,7 +509,7 @@ DENG2_PIMPL(Partitioner)
         if(partitionHasInterceptForVertex(vertex)) return;
 
         HEdgeInfo &hInfo = hedgeInfo(hedge);
-        bool isSelfRefLine = (hInfo.line && lineInfos[hInfo.line->indexInMap()].flags.testFlag(LineInfo::SelfRef));
+        bool isSelfRefLine = (hInfo.lineSide && lineInfos[hInfo.lineSide->line().indexInMap()].flags.testFlag(LineInfo::SelfRef));
 
         coord_t distance = vertexDistanceFromPartition(vertex);
 
@@ -652,7 +652,7 @@ DENG2_PIMPL(Partitioner)
                     }
 
                     HEdge *right = buildHEdgesBetweenVertexes(*cur.vertex, *next.vertex, sector, sector,
-                                                              0 /*no line*/, partitionLine);
+                                                              0 /*no line*/, partitionLineSide);
 
                     // Add the new half-edges to the appropriate lists.
                     linkHEdgeInSuperBlockmap(rightList, *right);
@@ -756,7 +756,7 @@ DENG2_PIMPL(Partitioner)
         /// necessary due to precision inaccuracies when a line is split into
         ///  multiple segments.
         HEdgeInfo const &hInfo = hedgeInfo(hedge);
-        if(hInfo.sourceLine == pInfo.sourceLine)
+        if(&hInfo.sourceLineSide->line() == &pInfo.sourceLineSide->line())
         {
             a = b = 0;
         }
@@ -1230,10 +1230,10 @@ DENG2_PIMPL(Partitioner)
             // Optimization: Only the first half-edge produced from a given
             // line is tested per round of partition costing (they are all
             // collinear).
-            if(hInfo.line)
+            if(hInfo.lineSide)
             {
                 // Can we skip this half-edge?
-                LineInfo &lInfo = lineInfos[hInfo.line->indexInMap()];
+                LineInfo &lInfo = lineInfos[hInfo.lineSide->line().indexInMap()];
                 if(lInfo.validCount == validCount) continue; // Yes.
 
                 lInfo.validCount = validCount;
@@ -1511,7 +1511,7 @@ DENG2_PIMPL(Partitioner)
             //    << Vector2d(hedge->toOrigin()).asText();
 
             // Reconfigure the half-plane for the next round of partitioning.
-            configurePartition(partHEdge);
+            configurePartition(*partHEdge);
 
             // Take a copy of the partition - we'll need this later.
             Partition oldPartition(partition);
@@ -1627,28 +1627,25 @@ DENG2_PIMPL(Partitioner)
         partitionIntercepts.clear();
     }
 
-    bool configurePartition(HEdge const *hedge)
+    bool configurePartition(HEdge const &hedge)
     {
+        // A "mini hedge" is never suitable.
+        DENG_ASSERT(hedge.hasLineSide());
+
         LOG_AS("Partitioner::configurePartition");
 
-        if(!hedge) return false;
-        // A "mini hedge" is never suitable.
-        if(!hedge->hasLineSide()) return false;
-
-        // Clear the HEdge intercept data associated with points in the half-plane.
+        // Clear the list of half-plane intersections.
         clearPartitionIntercepts();
 
-        // We can now reconfire the half-plane itself.
-        Line &line = hedge->line();
-        setPartitionInfo(hedgeInfo(*hedge), &line);
+        // We can now reconfigure the half-plane.
+        Line::Side &side = hedge.lineSide();
+        setPartitionInfo(hedgeInfo(hedge), &side);
 
-        Vertex const &from = line.vertex(hedge->lineSideId());
-        Vertex const &to   = line.vertex(hedge->lineSideId()^1);
-        partition.origin = from.origin();
-        partition.direction = to.origin() - from.origin();
+        partition.origin    = side.from().origin();
+        partition.direction = side.to().origin() - side.from().origin();
 
         //LOG_DEBUG("hedge %p %s %s.")
-        //    << de::dintptr(best) << partition.origin.asText() << partition.direction.asText();
+        //    << de::dintptr(&hedge) << partition.origin.asText() << partition.direction.asText();
 
         return true;
     }
@@ -2077,7 +2074,7 @@ DENG2_PIMPL(Partitioner)
      * Create a new half-edge.
      */
     HEdge *newHEdge(Vertex &from, Vertex &to, Sector &sec, Line::Side *side = 0,
-                    Line *sourceLine = 0)
+                    Line::Side *sourceSide = 0)
     {
         HEdge *hedge = new HEdge(from, side);
         hedge->_to = &to;
@@ -2087,9 +2084,10 @@ DENG2_PIMPL(Partitioner)
         hedgeInfos.insert(hedge, HEdgeInfo());
 
         HEdgeInfo &info = hedgeInfo(*hedge);
-        info.line       = side? &side->line() : 0;
-        info.sourceLine = sourceLine;
-        info.sector     = &sec;
+
+        info.lineSide       = side;
+        info.sourceLineSide = sourceSide;
+        info.sector         = &sec;
         info.initFromHEdge(*hedge);
 
         return hedge;
@@ -2211,10 +2209,10 @@ DENG2_PIMPL(Partitioner)
     /**
      * Update the extra info about the current partition plane.
      */
-    void setPartitionInfo(HEdgeInfo const &info, Line *line)
+    void setPartitionInfo(HEdgeInfo const &info, Line::Side *side)
     {
         std::memcpy(&partitionInfo, &info, sizeof(partitionInfo));
-        partitionLine = line;
+        partitionLineSide = side;
     }
 
     bool release(MapElement *elm)

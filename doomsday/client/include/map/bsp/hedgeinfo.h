@@ -28,7 +28,9 @@
 
 #include <de/mathutil.h>
 #include <de/vector1.h>
-#include "map/p_maptypes.h"
+
+#include "Line"
+#include "Vertex"
 
 namespace de {
 namespace bsp {
@@ -61,13 +63,13 @@ struct HEdgeInfo
     // is no longer in any superblock (e.g. now in a leaf).
     SuperBlock *bmapBlock;
 
-    /// Line this half-edge initially comes from else @c NULL if a "mini-edge".
-    Line *line;
+    /// Line side that this half-edge initially comes (otherwise @c 0 signifying a "mini-edge").
+    Line::Side *lineSide;
 
-    // Line that this half-edge initially comes from.
-    // For "real" half-edges, this is just the same as the 'line' field
-    // above. For "miniedges", this is the line of the partition.
-    Line *sourceLine;
+    // Line side that this half-edge initially comes from. For "real" half-edges,
+    // this is just the same as @var line field. For "mini-edges", this is the
+    // the partition line side.
+    Line::Side *sourceLineSide;
 
     /// Map sector attributed to the half-edge. Can be @c 0 for "mini-edges".
     Sector *sector;
@@ -81,8 +83,8 @@ struct HEdgeInfo
           nextOnSide(0),
           prevOnSide(0),
           bmapBlock(0),
-          line(0),
-          sourceLine(0),
+          lineSide(0),
+          sourceLineSide(0),
           sector(0)
     {
         V2d_Set(start, 0, 0);
@@ -99,8 +101,8 @@ struct HEdgeInfo
           nextOnSide(other.nextOnSide),
           prevOnSide(other.prevOnSide),
           bmapBlock(other.bmapBlock),
-          line(other.line),
-          sourceLine(other.sourceLine),
+          lineSide(other.lineSide),
+          sourceLineSide(other.sourceLineSide),
           sector(other.sector)
     {
         V2d_Copy(start, other.start);
