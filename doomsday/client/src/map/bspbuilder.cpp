@@ -56,11 +56,7 @@ void BspBuilder::setSplitCostFactor(int newFactor)
 
 /// Maximum number of warnings to output (of each type) about any problems
 /// encountered during the build process.
-#ifdef DENG_DEBUG
-static int maxWarningsPerType = -1; // No limit.
-#else
-static int maxWarningsPerType = 10;
-#endif
+static int const maxWarningsPerType = 10;
 
 /**
  * Observes the progress of the build and records any issues/problems encountered
@@ -92,38 +88,52 @@ class Reporter : DENG2_OBSERVES(Partitioner, UnclosedSectorFound),
 
 public:
 
+    static inline int maxWarnings(uint issueCount)
+    {
+#ifdef DENG_DEBUG
+        return issueCount; // No limit.
+#else
+        return de::max(0, de::min(issueCount), maxWarningsPerType));
+#endif
+    }
+
+    inline int unclosedSectorCount() const { return (int)_unclosedSectors.size(); }
+    inline int oneWayWindowCount() const { return (int)_oneWayWindows.size(); }
+    inline int migrantHEdgeCount() const { return (int)_migrantHEdges.size(); }
+    inline int partialBspLeafCount() const { return (int)_partialBspLeafs.size(); }
+
     void writeLog()
     {
-        if(uint numToLog = de::max(0, de::min(int(_unclosedSectors.size()), maxWarningsPerType)))
+        if(int numToLog = maxWarnings(unclosedSectorCount()))
         {
             UnclosedSectorMap::const_iterator it = _unclosedSectors.begin();
-            for(uint i = 0; i < numToLog; ++i, ++it)
+            for(int i = 0; i < numToLog; ++i, ++it)
             {
                 LOG_WARNING("Sector #%d is unclosed near %s.")
                     << it->first->indexInMap() << it->second.asText();
             }
 
-            if(numToLog < _unclosedSectors.size())
-                LOG_INFO("(%u more like this)") << (_unclosedSectors.size() - numToLog);
+            if(numToLog < unclosedSectorCount())
+                LOG_INFO("(%u more like this)") << (unclosedSectorCount() - numToLog);
         }
 
-        if(uint numToLog = de::max(0, de::min(int(_oneWayWindows.size()), maxWarningsPerType)))
+        if(int numToLog = maxWarnings(oneWayWindowCount()))
         {
             OneWayWindowMap::const_iterator it = _oneWayWindows.begin();
-            for(uint i = 0; i < numToLog; ++i, ++it)
+            for(int i = 0; i < numToLog; ++i, ++it)
             {
                 LOG_VERBOSE("Line #%d seems to be a One-Way Window (back faces sector #%d).")
                     << it->first->indexInMap() << it->second->indexInMap();
             }
 
-            if(numToLog < _oneWayWindows.size())
-                LOG_INFO("(%u more like this)") << (_oneWayWindows.size() - numToLog);
+            if(numToLog < oneWayWindowCount())
+                LOG_INFO("(%u more like this)") << (oneWayWindowCount() - numToLog);
         }
 
-        if(uint numToLog = de::max(0, de::min(int(_migrantHEdges.size()), maxWarningsPerType)))
+        if(int numToLog = maxWarnings(migrantHEdgeCount()))
         {
             MigrantHEdgeMap::const_iterator it = _migrantHEdges.begin();
-            for(uint i = 0; i < numToLog; ++i, ++it)
+            for(int i = 0; i < numToLog; ++i, ++it)
             {
                 HEdge *hedge = it->first;
                 Sector *facingSector = it->second;
@@ -134,26 +144,25 @@ public:
                         << hedge->lineSide().sector().indexInMap()
                         << hedge->line().indexInMap();
                 else
-                    LOG_WARNING("Sector #%d has migrant half-edge facing #%d.")
-                        << facingSector->indexInMap()
-                        << hedge->lineSide().sector().indexInMap();
+                    LOG_WARNING("Sector #%d has migrant \"mini\" half-edge.")
+                        << facingSector->indexInMap();
             }
 
-            if(numToLog < _migrantHEdges.size())
-                LOG_INFO("(%u more like this)") << (_migrantHEdges.size() - numToLog);
+            if(numToLog < migrantHEdgeCount())
+                LOG_INFO("(%u more like this)") << (migrantHEdgeCount() - numToLog);
         }
 
-        if(uint numToLog = de::max(0, de::min(int(_partialBspLeafs.size()), maxWarningsPerType)))
+        if(int numToLog = maxWarnings(partialBspLeafCount()))
         {
             PartialBspLeafMap::const_iterator it = _partialBspLeafs.begin();
-            for(uint i = 0; i < numToLog; ++i, ++it)
+            for(int i = 0; i < numToLog; ++i, ++it)
             {
                 LOG_WARNING("Half-edge list for BSP leaf %p has %u gaps (%u hedges).")
                     << de::dintptr(it->first) << it->second << it->first->hedgeCount();
             }
 
-            if(numToLog < _partialBspLeafs.size())
-                LOG_INFO("(%i more like this)") << (_partialBspLeafs.size() - numToLog);
+            if(numToLog < partialBspLeafCount())
+                LOG_INFO("(%i more like this)") << (partialBspLeafCount() - numToLog);
         }
     }
 
