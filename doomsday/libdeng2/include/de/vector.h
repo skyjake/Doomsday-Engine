@@ -54,7 +54,7 @@ public:
     typedef Type ValueType;
 
 public:
-    Vector2(Type a = 0, Type b = 0) : x(a), y(b) {}
+    Vector2(Type a = Type(0), Type b = Type(0)) : x(a), y(b) {}
     Vector2(Type const *ab) : x(ab[0]), y(ab[1]) {}
 
     /// Conversion operator to a float vector.
