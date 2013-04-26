@@ -88,12 +88,12 @@ class Reporter : DENG2_OBSERVES(Partitioner, UnclosedSectorFound),
 
 public:
 
-    static inline int maxWarnings(uint issueCount)
+    static inline int maxWarnings(int issueCount)
     {
 #ifdef DENG_DEBUG
         return issueCount; // No limit.
 #else
-        return de::max(0, de::min(issueCount), maxWarningsPerType));
+        return de::min(issueCount, maxWarningsPerType);
 #endif
     }
 
