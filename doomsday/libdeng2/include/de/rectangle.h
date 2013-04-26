@@ -49,6 +49,9 @@ public:
     Rectangle(Type left, Type top, SizeType width, SizeType height)
         : topLeft(left, top), bottomRight(left + width, top + height) {}
     Rectangle(Corner const &tl, Corner const &br) : topLeft(tl), bottomRight(br) {}
+    static RectangleType fromSize(Size const &size) {
+        return RectangleType(0, 0, size.x, size.y);
+    }
     static RectangleType fromSize(Corner const &tl, Size const &size) {
         return RectangleType(tl.x, tl.y, size.x, size.y);
     }
