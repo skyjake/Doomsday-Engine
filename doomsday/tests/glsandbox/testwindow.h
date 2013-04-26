@@ -27,6 +27,8 @@ class TestWindow : public de::CanvasWindow
 public:
     TestWindow();
 
+    void canvasGLDraw(de::Canvas &canvas);
+
 private:
     DENG2_PRIVATE(d)
 };
