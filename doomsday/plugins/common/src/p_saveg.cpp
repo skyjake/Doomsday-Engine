@@ -2310,7 +2310,7 @@ static void readPlayers(boolean *infile, boolean *loaded)
             player_t *player = 0;
             for(int k = 0; k < MAXPLAYERS; ++k)
             {
-                if((IS_NETGAME && Net_GetPlayerID(k) == pid) ||
+                if((IS_NETGAME && int(Net_GetPlayerID(k)) == pid) ||
                    (!IS_NETGAME && k == 0))
                 {
                     // This is our guy.

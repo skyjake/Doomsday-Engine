@@ -65,7 +65,7 @@ public:
     /// Map entity data (things, line specials, etc...).
     EntityDatabase *entityDatabase;
 
-    EditableMap::EditableMap()
+    EditableMap()
         : entityDatabase(0)
     {}
 
@@ -139,44 +139,44 @@ public:
         polyobjs.clear();
     }
 
+    struct VertexInfo
+    {
+        /// Vertex for this info.
+        Vertex *vertex;
+
+        /// Determined equivalent vertex.
+        Vertex *equiv;
+
+        /// Line -> Vertex reference count.
+        uint refCount;
+
+        VertexInfo()
+            : vertex(0), equiv(0), refCount(0)
+        {}
+
+        /// @todo Math here is not correct (rounding directionality). -ds
+        int compareVertexOrigins(VertexInfo const &other) const
+        {
+            DENG_ASSERT(vertex != 0 && other.vertex != 0);
+
+            if(this == &other) return 0;
+            if(vertex == other.vertex) return 0;
+
+            // Order is firstly X axis major.
+            if(int(vertex->origin().x) != int(other.vertex->origin().x))
+                return int(vertex->origin().x) - int(other.vertex->origin().x);
+
+            // Order is secondly Y axis major.
+            return int(vertex->origin().y) - int(other.vertex->origin().y);
+        }
+
+        bool operator < (VertexInfo const &other) const {
+            return compareVertexOrigins(other) < 0;
+        }
+    };
+
     void pruneVertexes()
     {
-        struct VertexInfo
-        {
-            /// Vertex for this info.
-            Vertex *vertex;
-
-            /// Determined equivalent vertex.
-            Vertex *equiv;
-
-            /// Line -> Vertex reference count.
-            uint refCount;
-
-            VertexInfo()
-                : vertex(0), equiv(0), refCount(0)
-            {}
-
-            /// @todo Math here is not correct (rounding directionality). -ds
-            int compareVertexOrigins(VertexInfo const &other) const
-            {
-                DENG_ASSERT(vertex != 0 && other.vertex != 0);
-
-                if(this == &other) return 0;
-                if(vertex == other.vertex) return 0;
-
-                // Order is firstly X axis major.
-                if(int(vertex->origin().x) != int(other.vertex->origin().x))
-                    return int(vertex->origin().x) - int(other.vertex->origin().x);
-
-                // Order is secondly Y axis major.
-                return int(vertex->origin().y) - int(other.vertex->origin().y);
-            }
-
-            bool operator < (VertexInfo const &other) const {
-                return compareVertexOrigins(other) < 0;
-            }
-        };
-
         /*
          * Step 1 - Find equivalent vertexes:
          */

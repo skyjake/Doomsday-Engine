@@ -452,6 +452,7 @@ static void findContacts(objlink_t *link)
 
     default:
         DENG_ASSERT(false);
+        return;
     }
 
     // Do the BSP leaf spread. Begin from the obj's own BspLeaf.

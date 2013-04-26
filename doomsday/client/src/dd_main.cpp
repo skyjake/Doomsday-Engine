@@ -2446,7 +2446,6 @@ void DD_SetInteger(int ddvalue, int parm)
 void *DD_GetVariable(int ddvalue)
 {
     static int value;
-    static uint valueU;
     static float valueF;
     static double valueD;
 

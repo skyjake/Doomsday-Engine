@@ -1555,7 +1555,8 @@ DENG2_PIMPL(Partitioner)
         else
         {
             // No partition required/possible - already convex (or degenerate).
-            BspLeaf *leaf = buildLeaf(collectHEdges(hedgeBlockmap));
+            HEdgeList collected = collectHEdges(hedgeBlockmap);
+            BspLeaf *leaf = buildLeaf(collected);
 
             hedgeBlockmap.clear();
 
@@ -2338,7 +2339,7 @@ DENG2_PIMPL(Partitioner)
     }
 
 #ifdef DENG_DEBUG
-    int printSuperBlockHEdges(SuperBlock const &block)
+    void printSuperBlockHEdges(SuperBlock const &block)
     {
         foreach(HEdge const *hedge, block.hedges())
         {

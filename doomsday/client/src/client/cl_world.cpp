@@ -524,7 +524,7 @@ clpolyobj_t *GameMap_ClPolyobjByPolyobjIndex(GameMap *map, uint index)
     {
         if(!GameMap_IsValidClPolyobj(map, i)) continue;
 
-        if(map->clActivePolyobjs[i]->number == index)
+        if(map->clActivePolyobjs[i]->number == int(index))
             return map->clActivePolyobjs[i];
     }
 
