@@ -2623,9 +2623,6 @@ static void writeLeafSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
 
 static void writeWallSections(HEdge &hedge)
 {
-    BspLeaf *leaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(leaf));
-
     DENG_ASSERT(hedge.hasLineSide());
     DENG_ASSERT(hedge.lineSide().hasSections());
     DENG_ASSERT(hedge._frameFlags & HEDGEINF_FACINGFRONT);
