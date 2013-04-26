@@ -35,10 +35,6 @@ DENG2_PIMPL(GuiApp)
     Instance(Public *i) : Base(i)
     {
         loop.audienceForIteration += self;
-
-#ifdef WIN32
-        getAllOpenGLEntryPoints();
-#endif
     }
 };
 

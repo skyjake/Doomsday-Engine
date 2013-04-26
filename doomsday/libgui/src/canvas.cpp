@@ -279,6 +279,11 @@ void Canvas::showEvent(QShowEvent* ev)
     {
         LOG_DEBUG("Received first show event, scheduling GL ready notification");
 
+#ifdef WIN32
+        makeCurrent();
+        getAllOpenGLEntryPoints();
+        doneCurrent();
+#endif
         QTimer::singleShot(1, this, SLOT(notifyReady()));
     }
 }

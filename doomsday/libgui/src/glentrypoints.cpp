@@ -26,22 +26,33 @@ PFNGLATTACHSHADERPROC             glAttachShader;
 
 PFNGLBINDATTRIBLOCATIONPROC       glBindAttribLocation;
 PFNGLBINDBUFFERPROC               glBindBuffer;
+PFNGLBINDFRAMEBUFFERPROC          glBindFramebuffer;
+PFNGLBINDRENDERBUFFERPROC         glBindRenderbuffer;
+PFNGLBLENDEQUATIONPROC            glBlendEquation;
 PFNGLBUFFERDATAPROC               glBufferData;
 
+PFNGLCHECKFRAMEBUFFERSTATUSPROC   glCheckFramebufferStatus;
 PFNGLCOMPILESHADERPROC            glCompileShader;
 PFNGLCREATEPROGRAMPROC            glCreateProgram;
 PFNGLCREATESHADERPROC             glCreateShader;
 
 PFNGLDELETEBUFFERSPROC            glDeleteBuffers;
+PFNGLDELETEFRAMEBUFFERSPROC       glDeleteFramebuffers;
 PFNGLDELETEPROGRAMPROC            glDeleteProgram;
+PFNGLDELETERENDERBUFFERSPROC      glDeleteRenderbuffers;
 PFNGLDELETESHADERPROC             glDeleteShader;
 PFNGLDETACHSHADERPROC             glDetachShader;
 PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray;
 
 PFNGLENABLEVERTEXATTRIBARRAYPROC  glEnableVertexAttribArray;
 
+PFNGLFRAMEBUFFERRENDERBUFFERPROC  glFramebufferRenderbuffer;
+PFNGLFRAMEBUFFERTEXTURE2DPROC     glFramebufferTexture2D;
+
 PFNGLGENBUFFERSPROC               glGenBuffers;
+PFNGLGENFRAMEBUFFERSPROC          glGenFramebuffers;
 PFNGLGENERATEMIPMAPPROC           glGenerateMipmap;
+PFNGLGENRENDERBUFFERSPROC         glGenRenderbuffers;
 PFNGLGETATTRIBLOCATIONPROC        glGetAttribLocation;
 PFNGLGETPROGRAMINFOLOGPROC        glGetProgramInfoLog;
 PFNGLGETPROGRAMIVPROC             glGetProgramiv;
@@ -53,6 +64,8 @@ PFNGLGETUNIFORMLOCATIONPROC       glGetUniformLocation;
 PFNGLISBUFFERPROC                 glIsBuffer;
 
 PFNGLLINKPROGRAMPROC              glLinkProgram;
+
+PFNGLRENDERBUFFERSTORAGEPROC      glRenderbufferStorage;
 
 PFNGLSHADERSOURCEPROC             glShaderSource;
 
@@ -69,10 +82,10 @@ PFNGLVERTEXATTRIBPOINTERPROC      glVertexAttribPointer;
 
 void getAllOpenGLEntryPoints()
 {
-#define GET_PROC(name) { \
-    void **assign = (void **) &name; \
-    (*assign) = (void *) wglGetProcAddress(#name); \
-    DENG2_ASSERT(name != 0); }
+    static bool haveProcs = false;
+    if(haveProcs) return;
+
+#define GET_PROC(name) *((void**)&name) = wglGetProcAddress(#name); DENG2_ASSERT(name != 0)
 
     LOG_AS("getAllOpenGLEntryPoints");
 
@@ -82,18 +95,28 @@ void getAllOpenGLEntryPoints()
     GET_PROC(glAttachShader);
     GET_PROC(glBindAttribLocation);
     GET_PROC(glBindBuffer);
+    GET_PROC(glBindFramebuffer);
+    GET_PROC(glBindRenderbuffer);
+    GET_PROC(glBlendEquation);
     GET_PROC(glBufferData);
+    GET_PROC(glCheckFramebufferStatus);
     GET_PROC(glCompileShader);
     GET_PROC(glCreateProgram);
     GET_PROC(glCreateShader);
     GET_PROC(glDeleteBuffers);
+    GET_PROC(glDeleteFramebuffers);
     GET_PROC(glDeleteProgram);
+    GET_PROC(glDeleteRenderbuffers);
     GET_PROC(glDeleteShader);
     GET_PROC(glDetachShader);
     GET_PROC(glDisableVertexAttribArray);
     GET_PROC(glEnableVertexAttribArray);
+    GET_PROC(glFramebufferRenderbuffer);
+    GET_PROC(glFramebufferTexture2D);
     GET_PROC(glGenBuffers);
+    GET_PROC(glGenFramebuffers);
     GET_PROC(glGenerateMipmap);
+    GET_PROC(glGenRenderbuffers);
     GET_PROC(glGetAttribLocation);
     GET_PROC(glGetProgramInfoLog);
     GET_PROC(glGetProgramiv);
@@ -103,6 +126,7 @@ void getAllOpenGLEntryPoints()
     GET_PROC(glGetUniformLocation);
     GET_PROC(glIsBuffer);
     GET_PROC(glLinkProgram);
+    GET_PROC(glRenderbufferStorage);
     GET_PROC(glShaderSource);
     GET_PROC(glUniform1f);
     GET_PROC(glUniform1i);
@@ -114,6 +138,7 @@ void getAllOpenGLEntryPoints()
     GET_PROC(glUseProgram);
     GET_PROC(glVertexAttribPointer);
 
+    haveProcs = true;
 }
 
 #endif // WIN32

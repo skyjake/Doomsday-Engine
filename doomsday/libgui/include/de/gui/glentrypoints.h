@@ -35,22 +35,33 @@ extern PFNGLATTACHSHADERPROC             glAttachShader;
 
 extern PFNGLBINDATTRIBLOCATIONPROC       glBindAttribLocation;
 extern PFNGLBINDBUFFERPROC               glBindBuffer;
+extern PFNGLBINDFRAMEBUFFERPROC          glBindFramebuffer;
+extern PFNGLBINDRENDERBUFFERPROC         glBindRenderbuffer;
+extern PFNGLBLENDEQUATIONPROC            glBlendEquation;
 extern PFNGLBUFFERDATAPROC               glBufferData;
 
+extern PFNGLCHECKFRAMEBUFFERSTATUSPROC   glCheckFramebufferStatus;
 extern PFNGLCOMPILESHADERPROC            glCompileShader;
 extern PFNGLCREATEPROGRAMPROC            glCreateProgram;
 extern PFNGLCREATESHADERPROC             glCreateShader;
 
 extern PFNGLDELETEBUFFERSPROC            glDeleteBuffers;
+extern PFNGLDELETEFRAMEBUFFERSPROC       glDeleteFramebuffers;
 extern PFNGLDELETEPROGRAMPROC            glDeleteProgram;
+extern PFNGLDELETERENDERBUFFERSPROC      glDeleteRenderbuffers;
 extern PFNGLDELETESHADERPROC             glDeleteShader;
 extern PFNGLDETACHSHADERPROC             glDetachShader;
 extern PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray;
 
 extern PFNGLENABLEVERTEXATTRIBARRAYPROC  glEnableVertexAttribArray;
 
+extern PFNGLFRAMEBUFFERRENDERBUFFERPROC  glFramebufferRenderbuffer;
+extern PFNGLFRAMEBUFFERTEXTURE2DPROC     glFramebufferTexture2D;
+
 extern PFNGLGENBUFFERSPROC               glGenBuffers;
+extern PFNGLGENFRAMEBUFFERSPROC          glGenFramebuffers;
 extern PFNGLGENERATEMIPMAPPROC           glGenerateMipmap;
+extern PFNGLGENRENDERBUFFERSPROC         glGenRenderbuffers;
 extern PFNGLGETATTRIBLOCATIONPROC        glGetAttribLocation;
 extern PFNGLGETPROGRAMINFOLOGPROC        glGetProgramInfoLog;
 extern PFNGLGETPROGRAMIVPROC             glGetProgramiv;
@@ -62,6 +73,8 @@ extern PFNGLGETUNIFORMLOCATIONPROC       glGetUniformLocation;
 extern PFNGLISBUFFERPROC                 glIsBuffer;
 
 extern PFNGLLINKPROGRAMPROC              glLinkProgram;
+
+extern PFNGLRENDERBUFFERSTORAGEPROC      glRenderbufferStorage;
 
 extern PFNGLSHADERSOURCEPROC             glShaderSource;
 
