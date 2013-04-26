@@ -38,6 +38,10 @@ namespace internal
         BlendFuncSrc,
         BlendFuncDest,
         BlendOp,
+        ViewportX,
+        ViewportY,
+        ViewportWidth,
+        ViewportHeight,
         MAX_PROPERTIES
     };
 
@@ -66,20 +70,26 @@ DENG2_PIMPL(GLState)
     Instance(Public *i) : Base(i), target(0)
     {
         static BitField::Spec const propSpecs[MAX_PROPERTIES] = {
-            { CullMode,      2 },
-            { DepthTest,     1 },
-            { DepthFunc,     3 },
-            { DepthWrite,    1 },
-            { Blend,         1 },
-            { BlendFuncSrc,  4 },
-            { BlendFuncDest, 4 },
-            { BlendOp,       2 }
+            { CullMode,       2  },
+            { DepthTest,      1  },
+            { DepthFunc,      3  },
+            { DepthWrite,     1  },
+            { Blend,          1  },
+            { BlendFuncSrc,   4  },
+            { BlendFuncDest,  4  },
+            { BlendOp,        2  },
+            { ViewportX,      12 }, // 4096 max
+            { ViewportY,      12 }, // 4096 max
+            { ViewportWidth,  12 }, // 4096 max
+            { ViewportHeight, 12 }  // 4096 max
         };
         props.addElements(propSpecs, MAX_PROPERTIES);
     }
 
     Instance(Public *i, Instance const &other)
-        : Base(i), props(other.props), target(other.target)
+        : Base(i),
+          props(other.props),
+          target(other.target)
     {}
 
     static GLenum glComp(gl::Comparison comp)
@@ -182,8 +192,35 @@ DENG2_PIMPL(GLState)
             }
             break;
 
+        case ViewportX:
+        case ViewportY:
+        case ViewportWidth:
+        case ViewportHeight:
+        {
+            Rectangleui vp = self.viewport();
+            glViewport(vp.left(), vp.top(), vp.width(), vp.height());
+            break;
+        }
+
         default:
             break;
+        }
+    }
+
+    void removeRedundancies(BitField::Ids &changed)
+    {
+        if(changed.contains(BlendFuncSrc) && changed.contains(BlendFuncDest))
+        {
+            changed.remove(BlendFuncDest);
+        }
+
+        if(changed.contains(ViewportX) || changed.contains(ViewportY) ||
+           changed.contains(ViewportWidth) || changed.contains(ViewportHeight))
+        {
+            changed.insert(ViewportX);
+            changed.remove(ViewportY);
+            changed.remove(ViewportWidth);
+            changed.remove(ViewportHeight);
         }
     }
 };
@@ -256,6 +293,14 @@ void GLState::setDefaultTarget()
     d->target = 0;
 }
 
+void GLState::setViewport(Rectangleui const &viewportRect)
+{
+    d->props.set(ViewportX,      viewportRect.left());
+    d->props.set(ViewportY,      viewportRect.top());
+    d->props.set(ViewportWidth,  viewportRect.width());
+    d->props.set(ViewportHeight, viewportRect.height());
+}
+
 gl::Cull GLState::cull() const
 {
     return d->props.valueAs<gl::Cull>(CullMode);
@@ -307,13 +352,29 @@ GLTarget &GLState::target() const
     {
         return *d->target;
     }
-    return PersistentCanvasWindow::main().canvas().renderTarget();
+    return CanvasWindow::main().canvas().renderTarget();
+}
+
+Rectangleui GLState::viewport() const
+{
+    return Rectangleui(d->props[ViewportX],
+                       d->props[ViewportY],
+                       d->props[ViewportWidth],
+                       d->props[ViewportHeight]);
 }
 
 void GLState::apply() const
 {
-    BitField::Ids changed;
+    // Update the render target.
+    if(currentTarget != d->target)
+    {
+        if(currentTarget) currentTarget->glRelease();
+        currentTarget = d->target;
+        if(currentTarget) currentTarget->glBind();
+    }
 
+    // Determine which properties have changed.
+    BitField::Ids changed;
     if(!currentProps.size())
     {
         // Apply everything.
@@ -327,27 +388,14 @@ void GLState::apply() const
 
     if(!changed.isEmpty())
     {
-        currentProps = d->props;
-
-        // The blend func only needs to be set once.
-        if(changed.contains(BlendFuncSrc) && changed.contains(BlendFuncDest))
-        {
-            changed.remove(BlendFuncDest);
-        }
+        d->removeRedundancies(changed);
 
         // Apply the changed properties.
         foreach(BitField::Id id, changed)
         {
             d->glApply(Property(id));
         }
-    }
-
-    // Update the render target.
-    if(currentTarget != d->target)
-    {
-        if(currentTarget) currentTarget->glRelease();
-        currentTarget = d->target;
-        if(currentTarget) currentTarget->glBind();
+        currentProps = d->props;
     }
 }
 

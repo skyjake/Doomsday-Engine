@@ -22,7 +22,7 @@
 #include "de/GLTarget"
 #include "de/GLTexture"
 #include "de/GLState"
-#include "de/PersistentCanvasWindow"
+#include "de/CanvasWindow"
 #include <de/Asset>
 
 namespace de {
@@ -212,7 +212,7 @@ QImage GLTarget::toImage() const
 {
     if(!d->fbo)
     {
-        return PersistentCanvasWindow::main().canvas().grabImage();
+        return CanvasWindow::main().canvas().grabImage();
     }
     else if(d->flags & Color)
     {
@@ -265,7 +265,7 @@ GLTarget::Size GLTarget::size() const
     {
         return d->size;
     }
-    return PersistentCanvasWindow::main().canvas().size();
+    return CanvasWindow::main().canvas().size();
 }
 
 } // namespace de

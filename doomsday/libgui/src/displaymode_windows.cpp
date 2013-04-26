@@ -116,7 +116,7 @@ int DisplayMode_Native_Change(const DisplayMode* mode, int shouldCapture)
 
 void DisplayMode_Native_SetColorTransfer(DisplayColorTransfer const *colors)
 {
-    HWND hWnd = (HWND) de::PersistentCanvasWindow::main().nativeHandle();
+    HWND hWnd = (HWND) de::CanvasWindow::main().nativeHandle();
     DENG2_ASSERT(hWnd != 0);
 
     HDC hDC = GetDC(hWnd);
@@ -129,7 +129,7 @@ void DisplayMode_Native_SetColorTransfer(DisplayColorTransfer const *colors)
 
 void DisplayMode_Native_GetColorTransfer(DisplayColorTransfer *colors)
 {
-    HWND hWnd = (HWND) de::PersistentCanvasWindow::main().nativeHandle();
+    HWND hWnd = (HWND) de::CanvasWindow::main().nativeHandle();
     DENG2_ASSERT(hWnd != 0);
 
     HDC hDC = GetDC(hWnd);

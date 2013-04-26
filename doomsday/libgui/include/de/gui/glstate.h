@@ -24,6 +24,7 @@
 #define LIBGUI_GLSTATE_H
 
 #include <de/libdeng2.h>
+#include <de/Rectangle>
 #include <utility>
 
 #include "libgui.h"
@@ -82,6 +83,9 @@ namespace gl
  * drawing. GLState::apply() can be called for any GLState instance to use it
  * as the current GL state.
  *
+ * @note The default viewport is (0,0)&rarr;(0,0). The viewport has to be set
+ * when the desired size is known (for instance when a Canvas is resized).
+ *
  * @ingroup gl
  */
 class LIBGUI_PUBLIC GLState
@@ -104,6 +108,7 @@ public:
     void setBlendOp(gl::BlendOp op);
     void setTarget(GLTarget &target);
     void setDefaultTarget();
+    void setViewport(Rectangleui const &viewportRect);
 
     gl::Cull cull() const;
     bool depthTest() const;
@@ -115,6 +120,7 @@ public:
     gl::BlendFunc blendFunc() const;
     gl::BlendOp blendOp() const;
     GLTarget &target() const;
+    Rectangleui viewport() const;
 
     /**
      * Updates the OpenGL state to match this GLState. Until this is called no

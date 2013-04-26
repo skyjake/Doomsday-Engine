@@ -19,6 +19,7 @@
 
 #include "de/Canvas"
 #include "de/CanvasWindow"
+#include "de/GLState"
 #include "de/gui/opengl.h"
 
 #include <de/App>
@@ -298,6 +299,9 @@ void Canvas::notifyReady()
 
 void Canvas::paintGL()
 {
+    // Make sure any changes to the state stack become effective.
+    GLState::top().apply();
+
     DENG2_FOR_AUDIENCE(GLDraw, i) i->canvasGLDraw(*this);
 }
 
