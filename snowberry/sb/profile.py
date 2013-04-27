@@ -81,9 +81,9 @@ class Profile:
         for v in self.values:
             p.values.append(v)
         for a in self.addons:
-            p.values.append(a)
+            p.addons.append(a)
         for o in self.loadOrder:
-            p.values.append(o)
+            p.loadOrder.append(o)
         p.story = self.story
         p.hidden = self.hidden
         p.banner = self.banner
