@@ -119,6 +119,8 @@ DENG2_OBSERVES(Canvas, GLResize)
         st.setViewport(Rectangleui::fromSize(cv.size()));
 
         uMvpMatrix = Matrix4f::ortho(0, cv.width(), 0, cv.height());
+
+        LOG_DEBUG("uMvpMatrix: ") << uMvpMatrix.toMatrix4f().asText();
     }
 
     void draw(Canvas &cv)
