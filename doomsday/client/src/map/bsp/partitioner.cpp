@@ -38,6 +38,7 @@
 #include "HEdge"
 #include "Vertex"
 
+#include "map/bsp/hplane.h"
 #include "map/bsp/hedgeintercept.h"
 #include "map/bsp/hedgetip.h"
 #include "map/bsp/lineinfo.h"
@@ -53,36 +54,6 @@
 
 using namespace de;
 using namespace de::bsp;
-
-/**
- * Used to model the list of half-plane intersections.
- */
-class Intercept : public HEdgeIntercept
-{
-public:
-    /**
-     * Distance along the owning Intercepts in the map coordinate space.
-     */
-    double distance;
-
-    Intercept(double distance, HEdgeIntercept const &hedgeIntercept)
-        : HEdgeIntercept(hedgeIntercept), distance(distance)
-    {}
-
-    bool operator < (Intercept const &other) const {
-        return distance < other.distance;
-    }
-
-    /**
-     * Determine the distance between two intercepts. It does not matter
-     * if the intercepts are from different half-planes.
-     */
-    double operator - (Intercept const &other) const {
-        return distance - other.distance;
-    }
-};
-
-typedef QList<Intercept> HEdgeIntercepts;
 
 typedef QHash<MapElement *, BspTreeNode *> BuiltBspElementMap;
 
@@ -159,169 +130,8 @@ DENG2_PIMPL(Partitioner)
     /// in the internal tree.
     BuiltBspElementMap treeNodeMap;
 
-    /**
-     * The "current" binary space half-plane.
-     */
-    struct HPlane
-    {
-        /// The partition line.
-        Partition _partition;
-
-        /// Map line segment which is the basis for the half-plane.
-        LineSegment _lineSegment;
-
-        /// Intercept points along the half-plane.
-        HEdgeIntercepts _intercepts;
-
-        Partition const &partition() const { return _partition; }
-
-        LineSegment const &lineSegment() const { return _lineSegment; }
-
-        HEdgeIntercepts const &intercepts() const { return _intercepts; }
-
-        /**
-         * Reconfigure the half-plane according to the given line segment.
-         *
-         * @param newLineSeg  The "new" line segment to configure using.
-         * @param hedge  Map half-edge for the segment (@todo refactor away).
-         */
-        void configure(LineSegment const &newLineSeg, HEdge const &hedge)
-        {
-            // A "mini segment" is never suitable.
-            DENG_ASSERT(hedge.hasLineSide());
-
-            LOG_AS("HPlane::configure");
-
-            // Clear the list of intersection points.
-            clearIntercepts();
-
-            Line::Side &side = hedge.lineSide();
-            _partition.origin    = side.from().origin();
-            _partition.direction = side.to().origin() - side.from().origin();
-
-            // Update/store a copy of the line segment.
-            _lineSegment = newLineSeg;
-
-            //LOG_DEBUG("line segment %p %s %s.")
-            //    << de::dintptr(&newLineSeg)
-            //    << _partition.origin.asText() << _partition.direction.asText();
-        }
-
-        /**
-         * Determine the distance from @a vertex to the half-plane
-         * origin (along the partition).
-         *
-         * @param vertex  Vertex to test.
-         */
-        coord_t distanceToVertex(Vertex const &vertex) const
-        {
-            coord_t vertexOriginV1[2] = { vertex.x(), vertex.y() };
-            return V2d_PointLineParaDistance(vertexOriginV1, _lineSegment.direction,
-                                             _lineSegment.pPara, _lineSegment.pLength);
-        }
-
-        void clearIntercepts()
-        {
-            _intercepts.clear();
-        }
-
-        /**
-         * Search the list of intercepts for to see if there is one for the
-         * specified @a vertex.
-         *
-         * @param vertex  The vertex to look for.
-         *
-         * @return  @c true iff an intercept for @a vertex was found.
-         */
-        bool haveInterceptForVertex(Vertex const &vertex) const
-        {
-            foreach(HEdgeIntercept const &icpt, _intercepts)
-            {
-                if(icpt.vertex == &vertex)
-                    return true;
-            }
-            return false;
-        }
-
-        void interceptLineSegment(LineSegment const &lineSeg, Vertex const &vertex,
-                                  bool leftSide, Sector *beforeSector = 0, Sector *afterSector = 0)
-        {
-            // Already present for this vertex?
-            if(haveInterceptForVertex(vertex)) return;
-
-            HEdgeIntercept inter;
-            inter.vertex  = const_cast<Vertex *>(&vertex);
-            inter.selfRef = lineSeg.lineSide && lineSeg.lineSide->line().isSelfReferencing();
-
-            inter.before  = beforeSector;
-            inter.after   = afterSector;
-
-            _intercepts.append(Intercept(distanceToVertex(vertex), inter));
-        }
-
-        /**
-         * Sort and then merge near-intercepts from the given list.
-         *
-         * @todo fixme: Logically this is very suspect. Implementing this logic by
-         * merging near-intercepts at hplane level is wrong because this does
-         * nothing about any intercepting half-edge vertices. Consequently, rather
-         * than moving the existing vertices and welding them, this will result in
-         * the creation of new gaps gaps along the partition and result in holes
-         * (which buildHEdgesAtIntersectionGaps() will then warn about).
-         *
-         * This should be redesigned so that near-intercepting vertices are welded
-         * in a stable manner (i.e., not incrementally, which can result in vertices
-         * drifting away from the hplane). Logically, therefore, this should not
-         * be done prior to creating hedges along the partition - instead this
-         * should happen afterwards. -ds
-         *
-         * @param intercepts  The list of intercepts to be sorted (in place).
-         */
-        void sortAndMergeIntercepts()
-        {
-            qSort(_intercepts.begin(), _intercepts.end());
-
-            for(int i = 0; i < _intercepts.count() - 1; ++i)
-            {
-                Intercept &cur  = _intercepts[i];
-                Intercept &next = _intercepts[i+1];
-
-                // Sanity check.
-                double distance = next.distance - cur.distance;
-                if(distance < -0.1)
-                {
-                    throw Error("HPlane::sortAndMergeIntercepts", QString("Invalid intercept order - %1 > %2")
-                                                                      .arg(cur.distance, 0, 'f', 3)
-                                                                      .arg(next.distance, 0, 'f', 3));
-                }
-
-                // Are we merging this pair?
-                if(distance <= DIST_EPSILON)
-                {
-                    // Yes - merge the two intercepts into one.
-                    cur.merge(next);
-
-                    // Destroy the "next" intercept.
-                    _intercepts.removeAt(i+1);
-
-                    // Process the new "this" and "next" pairing.
-                    i -= 1;
-                }
-            }
-        }
-
-#ifdef DENG_DEBUG
-        void printIntercepts() const
-        {
-            uint index = 0;
-            foreach(Intercept const &icpt, _intercepts)
-            {
-                LOG_DEBUG(" %u: >%1.2f ") << (index++) << icpt.distance;
-                icpt.debugPrint();
-            }
-        }
-#endif
-    } hplane;
+    /// The "current" binary space half-plane.
+    HPlane hplane;
 
     /// @c true = a BSP for the current map has been built successfully.
     bool builtOk;
@@ -654,13 +464,13 @@ DENG2_PIMPL(Partitioner)
      * @param rightSet          The set of line segments on the "right" of the half-plane.
      * @param leftList          The set of line segments on the "left" of the half-plane.
      */
-    void buildHEdgesAtPartitionGaps(HEdgeIntercepts const &sortedIntercepts,
+    void buildHEdgesAtPartitionGaps(HPlane::Intercepts const &sortedIntercepts,
                                     SuperBlock &rightSet, SuperBlock &leftSet)
     {
         for(int i = 0; i < sortedIntercepts.count() - 1; ++i)
         {
-            Intercept const &cur  = sortedIntercepts[i];
-            Intercept const &next = sortedIntercepts[i+1];
+            HPlane::Intercept const &cur  = sortedIntercepts[i];
+            HPlane::Intercept const &next = sortedIntercepts[i+1];
 
             if(!(!cur.after && !next.before))
             {

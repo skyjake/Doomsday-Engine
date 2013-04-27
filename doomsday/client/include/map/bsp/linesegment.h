@@ -32,6 +32,8 @@
 #include "Line"
 #include "Vertex"
 
+#include "map/bsp/linesegment.h"
+
 namespace de {
 namespace bsp {
 

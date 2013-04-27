@@ -187,10 +187,11 @@ DENG_HEADERS += \
     $$SRC/include/m_profiler.h \
     $$SRC/include/map/blockmap.h \
     $$SRC/include/map/bsp/bsptreenode.h \
-    $$SRC/include/map/bsp/linesegment.h \
+    $$SRC/include/map/bsp/hplane.h \
     $$SRC/include/map/bsp/hedgeintercept.h \
     $$SRC/include/map/bsp/hedgetip.h \
     $$SRC/include/map/bsp/lineinfo.h \
+    $$SRC/include/map/bsp/linesegment.h \
     $$SRC/include/map/bsp/partitioncost.h \
     $$SRC/include/map/bsp/partitioner.h \
     $$SRC/include/map/bsp/superblockmap.h \
@@ -361,6 +362,7 @@ SOURCES += \
     $$SRC/src/m_misc.cpp \
     $$SRC/src/m_nodepile.cpp \
     $$SRC/src/map/blockmap.cpp \
+    $$SRC/src/map/bsp/hplane.cpp \
     $$SRC/src/map/bsp/partitioner.cpp \
     $$SRC/src/map/bsp/superblockmap.cpp \
     $$SRC/src/map/bspbuilder.cpp \
