@@ -58,15 +58,15 @@ struct PartitionCost
 
     inline PartitionCost &addLineSegmentRight(LineSegment const &lineSeg)
     {
-        if(lineSeg.hasLineSide()) realRight += 1;
-        else                      miniRight += 1;
+        if(lineSeg.hasMapLineSide()) realRight += 1;
+        else                         miniRight += 1;
         return *this;
     }
 
     inline PartitionCost &addLineSegmentLeft(LineSegment const &lineSeg)
     {
-        if(lineSeg.hasLineSide()) realLeft += 1;
-        else                    miniLeft += 1;
+        if(lineSeg.hasMapLineSide()) realLeft += 1;
+        else                         miniLeft += 1;
         return *this;
     }
 

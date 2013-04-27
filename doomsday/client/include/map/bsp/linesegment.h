@@ -54,11 +54,11 @@ public:
     /// Required BSP leaf is missing. @ingroup errors
     DENG2_ERROR(MissingBspLeafError);
 
-    /// Required twin line segment is missing. @ingroup errors
+    /// Required twin segment is missing. @ingroup errors
     DENG2_ERROR(MissingTwinError);
 
-    /// Required line attribution is missing. @ingroup errors
-    DENG2_ERROR(MissingLineSideError);
+    /// Required map line side attribution is missing. @ingroup errors
+    DENG2_ERROR(MissingMapLineSideError);
 
     /// Edge/vertex identifiers:
     enum
@@ -68,8 +68,6 @@ public:
     };
 
 public: /// @todo make private:
-    Vector2d start;
-    Vector2d end;
     coord_t direction[2];
 
     // Precomputed data for faster calculations.
@@ -86,7 +84,7 @@ public: /// @todo make private:
     /// longer in any superblock (e.g., now in or being turned into a leaf edge).
     SuperBlock *bmapBlock;
 
-    /// Line side that this line segment initially comes (otherwise @c 0 signifying
+    /// Map Line side that this line segment initially comes (otherwise @c 0 signifying
     /// a "mini-segment").
     Line::Side *_lineSide;
 
@@ -127,9 +125,7 @@ public:
     }
 
     LineSegment(LineSegment const &other)
-        : start(other.start),
-          end(other.end),
-          pLength(other.pLength),
+        : pLength(other.pLength),
           pAngle(other.pAngle),
           pPara(other.pPara),
           pPerp(other.pPerp),
@@ -150,8 +146,6 @@ public:
 
     LineSegment &operator = (LineSegment const &other)
     {
-        start = other.start;
-        end = other.end;
         V2d_Copy(direction, other.direction);
         pLength = other.pLength;
         pAngle = other.pAngle;
@@ -174,9 +168,7 @@ public:
 
     void configure()
     {
-        start = _from->origin();
-        end   = _to->origin();
-        Vector2d tempDir = end - start;
+        Vector2d tempDir = _to->origin() - _from->origin();
         V2d_Set(direction, tempDir.x, tempDir.y);
 
         pLength    = V2d_Length(direction);
@@ -184,8 +176,8 @@ public:
         pAngle     = M_DirectionToAngle(direction);
         pSlopeType = M_SlopeType(direction);
 
-        pPerp =  start.y * direction[VX] - start.x * direction[VY];
-        pPara = -start.x * direction[VX] - start.y * direction[VY];
+        pPerp =  _from->origin().y * direction[VX] - _from->origin().x * direction[VY];
+        pPara = -_from->origin().x * direction[VX] - _from->origin().y * direction[VY];
     }
 
     /**
@@ -193,10 +185,7 @@ public:
      *
      * @param to  If not @c 0 return the To vertex; otherwise the From vertex.
      */
-    Vertex &vertex(int to);
-
-    /// @copydoc vertex()
-    Vertex const &vertex(int to) const;
+    Vertex &vertex(int to) const;
 
     /**
      * Convenient accessor method for returning the origin of the From point
@@ -204,7 +193,7 @@ public:
      *
      * @see from()
      */
-    de::Vector2d const &fromOrigin() const { return start; }
+    inline de::Vector2d const &fromOrigin() const { return vertex(From).origin(); }
 
     /**
      * Convenient accessor method for returning the origin of the To point
@@ -212,7 +201,7 @@ public:
      *
      * @see to()
      */
-    de::Vector2d const &toOrigin() const { return end; }
+    inline de::Vector2d const &toOrigin() const { return vertex(To).origin(); }
 
     /**
      * Replace the specified edge vertex of the line segment.
@@ -246,21 +235,21 @@ public:
     /**
      * Returns @c true iff a Line::Side is attributed to the line segment.
      */
-    bool hasLineSide() const;
+    bool hasMapLineSide() const;
 
     /**
      * Returns the Line::Side attributed to the line segment.
      *
      * @see hasLineSide()
      */
-    Line::Side &lineSide() const;
+    Line::Side &mapLineSide() const;
 
     /**
      * Returns a pointer to the Line::Side attributed to the line segment.
      *
      * @see hasTwin()
      */
-    inline Line::Side *lineSidePtr() const { return hasLineSide()? &lineSide() : 0; }
+    inline Line::Side *lineSidePtr() const { return hasMapLineSide()? &mapLineSide() : 0; }
 
     /**
      * Convenient accessor method for returning the Line of the Line::Side
@@ -268,7 +257,7 @@ public:
      *
      * @see hasLineSide(), lineSide()
      */
-    inline Line &line() const { return lineSide().line(); }
+    inline Line &line() const { return mapLineSide().line(); }
 
     /**
      * Convenient accessor method for returning the Line side identifier of
@@ -276,7 +265,7 @@ public:
      *
      * @see hasLineSide(), lineSide()
      */
-    inline int lineSideId() const { return lineSide().lineSideId(); }
+    inline int lineSideId() const { return mapLineSide().lineSideId(); }
 
     /**
      * Returns @c true iff a BspLeaf is linked to the line segment.

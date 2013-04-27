@@ -628,8 +628,8 @@ DENG2_PIMPL(Partitioner)
         }
         else
         {
-            coord_t fromV1[2] = { fromSeg.start.x, fromSeg.start.y };
-            coord_t toV1[2]   = { fromSeg.end.x, fromSeg.end.y };
+            coord_t fromV1[2] = { fromSeg.fromOrigin().x, fromSeg.fromOrigin().y };
+            coord_t toV1[2]   = { fromSeg.toOrigin().x, fromSeg.toOrigin().y };
             fromDist = V2d_PointLinePerpDistance(fromV1, toSeg.direction, toSeg.pPerp, toSeg.pLength);
             toDist   = V2d_PointLinePerpDistance(toV1,   toSeg.direction, toSeg.pPerp, toSeg.pLength);
         }
@@ -975,7 +975,7 @@ DENG2_PIMPL(Partitioner)
                       coord_t( blockBounds.maxX ) + SHORT_HEDGE_EPSILON * 1.5,
                       coord_t( blockBounds.maxY ) + SHORT_HEDGE_EPSILON * 1.5);
 
-        coord_t lineSegFromV1[2] = { lineSeg.start.x, lineSeg.start.y };
+        coord_t lineSegFromV1[2] = { lineSeg.fromOrigin().x, lineSeg.fromOrigin().y };
         int side = M_BoxOnLineSide2(&bounds, lineSegFromV1, lineSeg.direction,
                                     lineSeg.pPerp, lineSeg.pLength, DIST_EPSILON);
         if(side > 0)
@@ -1042,7 +1042,7 @@ DENG2_PIMPL(Partitioner)
                        LineSegment const &lineSeg, PartitionCost &cost)
     {
         // "Mini-segments" are never potential candidates.
-        if(!lineSeg.hasLineSide()) return false;
+        if(!lineSeg.hasMapLineSide()) return false;
 
         if(!evalPartitionCostForSuperBlock(block, best, bestCost, lineSeg, cost))
         {
@@ -1090,7 +1090,7 @@ DENG2_PIMPL(Partitioner)
         foreach(LineSegment *lineSeg, partList.lineSegments())
         {
             //LOG_DEBUG("%sline segment %p sector:%d %s -> %s")
-            //    << (lineSeg->hasLine()? "" : "mini-") << de::dintptr(*lineSeg)
+            //    << (lineSeg->hasMapLineSide()? "" : "mini-") << de::dintptr(*lineSeg)
             //    << (lineSeg->sector? lineSeg->sector->indexInMap() : -1)
             //    << lineSeg->fromOrigin().asText()
             //    << lineSeg->toOrigin().asText();
@@ -1098,7 +1098,7 @@ DENG2_PIMPL(Partitioner)
             // Optimization: Only the first line segment produced from a given
             // line is tested per round of partition costing (they are all
             // collinear).
-            if(lineSeg->hasLineSide())
+            if(lineSeg->hasMapLineSide())
             {
                 // Can we skip this line segment?
                 LineInfo &lInfo = lineInfos[lineSeg->line().indexInMap()];
@@ -1450,28 +1450,24 @@ DENG2_PIMPL(Partitioner)
         // Horizontal partition against vertical half-edge.
         if(hplane.lineSegment().pSlopeType == ST_HORIZONTAL && lineSeg.pSlopeType == ST_VERTICAL)
         {
-            return Vector2d(lineSeg.start[VX], hplane.lineSegment().start[VY]);
+            return Vector2d(lineSeg.fromOrigin().x, hplane.lineSegment().fromOrigin().y);
         }
 
         // Vertical partition against horizontal half-edge.
         if(hplane.lineSegment().pSlopeType == ST_VERTICAL && lineSeg.pSlopeType == ST_HORIZONTAL)
         {
-            return Vector2d(hplane.lineSegment().start[VX], lineSeg.start[VY]);
+            return Vector2d(hplane.lineSegment().fromOrigin().x, lineSeg.fromOrigin().y);
         }
 
         // 0 = start, 1 = end.
         coord_t ds = perpC / (perpC - perpD);
 
-        Vector2d point;
-        if(lineSeg.pSlopeType == ST_VERTICAL)
-            point.x = lineSeg.start[VX];
-        else
-            point.x = lineSeg.start[VX] + (lineSeg.direction[VX] * ds);
+        Vector2d point = lineSeg.fromOrigin();
+        if(lineSeg.pSlopeType != ST_VERTICAL)
+            point.x += lineSeg.direction[VX] * ds;
 
-        if(lineSeg.pSlopeType == ST_HORIZONTAL)
-            point.y = lineSeg.start[VY];
-        else
-            point.y = lineSeg.start[VY] + (lineSeg.direction[VY] * ds);
+        if(lineSeg.pSlopeType != ST_HORIZONTAL)
+            point.y += lineSeg.direction[VY] * ds;
 
         return point;
     }
@@ -1759,7 +1755,7 @@ DENG2_PIMPL(Partitioner)
     void addMiniHEdges(SuperBlock &rightList, SuperBlock &leftList)
     {
         LOG_TRACE("Building HEdges along partition %s %s")
-            << Vector2d(hplane.lineSegment().start).asText()
+            << hplane.lineSegment().fromOrigin().asText()
             << Vector2d(hplane.lineSegment().direction).asText();
 
         //hplane.printIntercepts();
@@ -2144,7 +2140,7 @@ DENG2_PIMPL(Partitioner)
         foreach(LineSegment const *lineSeg, block.lineSegments())
         {
             LOG_DEBUG("Build: %s %p sector: %d %s -> %s")
-                << (lineSeg->hasLineSide()? "NORM" : "MINI")
+                << (lineSeg->hasMapLineSide()? "NORM" : "MINI")
                 << de::dintptr(lineSeg)
                 << (lineSeg->sector != 0? lineSeg->sector->indexInMap() : -1)
                 << lineSeg->fromOrigin().asText() << lineSeg->toOrigin().asText();

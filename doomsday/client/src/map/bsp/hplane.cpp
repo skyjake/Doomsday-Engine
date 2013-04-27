@@ -23,6 +23,8 @@
  * 02110-1301 USA</small>
  */
 
+#include <memory>
+
 #include <QtAlgorithms>
 
 #include <de/vector1.h> /// @todo Remove me.
@@ -44,7 +46,7 @@ DENG2_PIMPL(HPlane)
     Partition partition;
 
     /// Map line segment which is the basis for the half-plane.
-    LineSegment lineSegment;
+    std::auto_ptr<LineSegment> lineSegment;
 
     /// Intercept points along the half-plane.
     Intercepts intercepts;
@@ -85,19 +87,19 @@ void HPlane::clearIntercepts()
 void HPlane::configure(LineSegment const &newLineSeg)
 {
     // A "mini segment" is never suitable.
-    DENG_ASSERT(newLineSeg.hasLineSide());
+    DENG_ASSERT(newLineSeg.hasMapLineSide());
 
     LOG_AS("HPlane::configure");
 
     // Clear the list of intersection points.
     clearIntercepts();
 
-    Line::Side &side = newLineSeg.lineSide();
+    Line::Side &side = newLineSeg.mapLineSide();
     d->partition.origin    = side.from().origin();
     d->partition.direction = side.to().origin() - side.from().origin();
 
     // Update/store a copy of the line segment.
-    d->lineSegment = newLineSeg;
+    d->lineSegment.reset(new LineSegment(newLineSeg));
 
     //LOG_DEBUG("line segment %p %s %s.")
     //    << de::dintptr(&newLineSeg)
@@ -112,7 +114,7 @@ void HPlane::interceptLineSegment(LineSegment const &lineSeg, Vertex const &vert
 
     HEdgeIntercept inter;
     inter.vertex  = const_cast<Vertex *>(&vertex);
-    inter.selfRef = (lineSeg.hasLineSide() && lineSeg.line().isSelfReferencing());
+    inter.selfRef = (lineSeg.hasMapLineSide() && lineSeg.line().isSelfReferencing());
 
     inter.before  = beforeSector;
     inter.after   = afterSector;
@@ -157,8 +159,8 @@ void HPlane::sortAndMergeIntercepts()
 coord_t HPlane::distanceToVertex(Vertex const &vertex) const
 {
     coord_t vertexOriginV1[2] = { vertex.x(), vertex.y() };
-    return V2d_PointLineParaDistance(vertexOriginV1, d->lineSegment.direction,
-                                     d->lineSegment.pPara, d->lineSegment.pLength);
+    return V2d_PointLineParaDistance(vertexOriginV1, d->lineSegment->direction,
+                                     d->lineSegment->pPara, d->lineSegment->pLength);
 }
 
 #ifdef DENG_DEBUG
@@ -180,7 +182,8 @@ Partition const &HPlane::partition() const
 
 LineSegment const &HPlane::lineSegment() const
 {
-    return d->lineSegment;
+    DENG_ASSERT(d->lineSegment.get() != 0);
+    return *d->lineSegment.get();
 }
 
 HPlane::Intercepts const &HPlane::intercepts() const

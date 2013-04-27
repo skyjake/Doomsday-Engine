@@ -28,15 +28,10 @@
 namespace de {
 namespace bsp {
 
-Vertex &LineSegment::vertex(int to)
+Vertex &LineSegment::vertex(int to) const
 {
     DENG_ASSERT((to? _to : _from) != 0);
     return to? *_to : *_from;
-}
-
-Vertex const &LineSegment::vertex(int to) const
-{
-    return const_cast<Vertex const &>(const_cast<LineSegment *>(this)->vertex(to));
 }
 
 void LineSegment::replaceVertex(int to, Vertex &newVertex)
@@ -76,19 +71,19 @@ BspLeaf &LineSegment::bspLeaf() const
     throw MissingBspLeafError("LineSegment::bspLeaf", "No BSP leaf is associated");
 }
 
-bool LineSegment::hasLineSide() const
+bool LineSegment::hasMapLineSide() const
 {
     return _lineSide != 0;
 }
 
-Line::Side &LineSegment::lineSide() const
+Line::Side &LineSegment::mapLineSide() const
 {
     if(_lineSide)
     {
         return *_lineSide;
     }
-    /// @throw MissingLineError Attempted with no line attributed.
-    throw MissingLineSideError("LineSegment::lineSide", "No line side is attributed");
+    /// @throw MissingMapLineSideError Attempted with no line side attributed.
+    throw MissingMapLineSideError("LineSegment::mapLineSide", "No map line side is attributed");
 }
 
 } // namespace bsp
