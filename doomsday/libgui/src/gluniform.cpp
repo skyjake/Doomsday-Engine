@@ -142,13 +142,13 @@ DENG2_PIMPL(GLUniform)
     }
 };
 
-GLUniform::GLUniform(QLatin1String const &nameInShader, Type uniformType)
-    : d(new Instance(this, nameInShader, uniformType))
+GLUniform::GLUniform(char const *nameInShader, Type uniformType)
+    : d(new Instance(this, QLatin1String(nameInShader), uniformType))
 {}
 
-void GLUniform::setName(QLatin1String const &nameInShader)
+void GLUniform::setName(char const *nameInShader)
 {
-    d->name = Block(nameInShader.latin1());
+    d->name = Block(nameInShader);
     d->name.append('\0');
 }
 

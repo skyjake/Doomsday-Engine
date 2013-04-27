@@ -84,28 +84,28 @@ DENG2_OBSERVES(GLUniform, Deletion)
         }
     }
 
-    void attach(GLShader const &shader)
+    void attach(GLShader const *shader)
     {
-        DENG2_ASSERT(shader.isReady());
-        glAttachShader(name, shader.glName());
-        shaders.insert(holdRef(&shader));
+        DENG2_ASSERT(shader->isReady());
+        glAttachShader(name, shader->glName());
+        shaders.insert(holdRef(shader));
     }
 
-    void detach(GLShader const &shader)
+    void detach(GLShader const *shader)
     {
-        if(shader.isReady())
+        if(shader->isReady())
         {
-            glDetachShader(name, shader.glName());
+            glDetachShader(name, shader->glName());
         }
-        shaders.remove(&shader);
-        shader.release();
+        shaders.remove(shader);
+        shader->release();
     }
 
     void detachAllShaders()
     {
         foreach(GLShader const *shader, shaders)
         {
-            detach(*shader);
+            detach(shader);
         }
         shaders.clear();
     }
@@ -149,7 +149,7 @@ DENG2_OBSERVES(GLUniform, Deletion)
             { AttribSpec::Bitangent, "aBitangent" }
         };
 
-        for(int i = 0; sizeof(names)/sizeof(names[0]); ++i)
+        for(uint i = 0; i < sizeof(names)/sizeof(names[0]); ++i)
         {
             glBindAttribLocation(name, GLuint(names[i].semantic), names[i].varName);
         }
@@ -244,12 +244,14 @@ void GLProgram::clear()
     d->release();
 }
 
-GLProgram &GLProgram::build(GLShader const &vertexShader, GLShader const &fragmentShader)
+GLProgram &GLProgram::build(GLShader const *vertexShader, GLShader const *fragmentShader)
 {
-    DENG2_ASSERT(vertexShader.isReady());
-    DENG2_ASSERT(vertexShader.type() == GLShader::Vertex);
-    DENG2_ASSERT(fragmentShader.isReady());
-    DENG2_ASSERT(fragmentShader.type() == GLShader::Fragment);
+    DENG2_ASSERT(vertexShader != 0);
+    DENG2_ASSERT(vertexShader->isReady());
+    DENG2_ASSERT(vertexShader->type() == GLShader::Vertex);
+    DENG2_ASSERT(fragmentShader != 0);
+    DENG2_ASSERT(fragmentShader->isReady());
+    DENG2_ASSERT(fragmentShader->type() == GLShader::Fragment);
 
     d->detachAllShaders();
     d->attach(vertexShader);
@@ -259,6 +261,13 @@ GLProgram &GLProgram::build(GLShader const &vertexShader, GLShader const &fragme
     setState(Ready);
 
     return *this;
+}
+
+GLProgram &GLProgram::build(IByteArray const &vertexShaderSource,
+                            IByteArray const &fragmentShaderSource)
+{
+    return build(refless(new GLShader(GLShader::Vertex,   vertexShaderSource)),
+                 refless(new GLShader(GLShader::Fragment, fragmentShaderSource)));
 }
 
 GLProgram &GLProgram::operator << (GLUniform const &uniform)

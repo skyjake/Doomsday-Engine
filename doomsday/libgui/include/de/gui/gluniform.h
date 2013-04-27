@@ -75,9 +75,9 @@ public:
     DENG2_DEFINE_AUDIENCE(Deletion, void uniformDeleted(GLUniform &))
 
 public:
-    GLUniform(QLatin1String const &nameInShader, Type uniformType);
+    GLUniform(char const *nameInShader, Type uniformType);
 
-    void setName(QLatin1String const &nameInShader);
+    void setName(char const *nameInShader);
 
     /**
      * Returns the name of the uniform as it appears in shaders.
