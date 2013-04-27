@@ -72,7 +72,7 @@ DENG2_OBSERVES(Canvas, GLResize)
             { Vector2f(10,  10),  Vector2f(0, 0), Vector4f(1, 1, 1, 1) },
             { Vector2f(100, 10),  Vector2f(1, 0), Vector4f(1, 1, 0, 1) },
             { Vector2f(100, 100), Vector2f(1, 1), Vector4f(1, 0, 0, 1) },
-            { Vector2f(10,  100), Vector2f(0, 1), Vector4f(0, 1, 0, 1) }
+            { Vector2f(10,  100), Vector2f(0, 1), Vector4f(0, 0, 1, 1) }
         };
 #if 1
         buf->setVertices(gl::TriangleFan, verts, 4, gl::Static);
@@ -91,27 +91,27 @@ DENG2_OBSERVES(Canvas, GLResize)
 
                 "attribute highp vec4 aVertex;\n"
                 //"attribute highp vec2 aUV;\n"
-                //"attribute highp vec4 aColor;\n"
+                "attribute highp vec4 aColor;\n"
 
                 //"varying highp vec2 vUV;\n"
-                //"varying highp vec4 vColor;\n"
+                "varying highp vec4 vColor;\n"
 
                 "void main(void) {\n"
                 "   gl_Position = uMvpMatrix * aVertex;\n"
                 //"   vUV = aUV.st;\n"
                 //"   vColor = aColor * uColor;\n"
-                //"   vColor = Color;\n"
+                "   vColor = aColor;\n"
                 "}\n";
 
         Block fragShader =
                 //"uniform sampler2D uSampler;\n"
 
                 //"varying highp vec2 vUV;\n"
-                //"varying highp vec4 vColor;\n"
+                "varying highp vec4 vColor;\n"
 
                 "void main(void) {\n"
-                //"    gl_FragColor = texture2D(uSampler, vUV) * vColor\n";
-                "    gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0);\n"
+                //"    gl_FragColor = texture2D(uSampler, vUV) * vColor;\n"
+                "    gl_FragColor = vColor;\n"
                 "}";
 
         ob.program().build(vertShader, fragShader)

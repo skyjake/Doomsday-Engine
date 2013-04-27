@@ -127,15 +127,16 @@ DENG2_PIMPL(GLBuffer)
         for(duint i = 0; i < specs.second; ++i)
         {
             AttribSpec const &spec = specs.first[i];
+            GLuint index = GLuint(spec.semantic);
             if(enable)
             {
-                glEnableVertexAttribArray(i);
-                glVertexAttribPointer(i, spec.size, spec.type, spec.normalized, spec.stride,
+                glEnableVertexAttribArray(index);
+                glVertexAttribPointer(index, spec.size, spec.type, spec.normalized, spec.stride,
                                       (void const *) dintptr(spec.startOffset));
             }
             else
             {
-                glDisableVertexAttribArray(i);
+                glDisableVertexAttribArray(index);
             }
         }
     }
