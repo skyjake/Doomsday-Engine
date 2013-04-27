@@ -167,6 +167,9 @@ BitField &BitField::addElement(Id id, dsize numBits)
         d->lookup[i].insert(id);
     }
 
+    // Initialize all new elements to zero.
+    set(id, 0u);
+
     return *this;
 }
 
