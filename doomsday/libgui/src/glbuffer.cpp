@@ -198,6 +198,11 @@ void GLBuffer::setIndices(Primitive primitive, dsize count, Index const *indices
     }
 }
 
+void GLBuffer::setIndices(Primitive primitive, Indices const &indices, Usage usage)
+{
+    setIndices(primitive, indices.size(), &indices[0], usage);
+}
+
 void GLBuffer::draw(duint first, dint count)
 {
     if(!isReady()) return;

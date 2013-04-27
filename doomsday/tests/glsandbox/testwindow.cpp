@@ -70,11 +70,19 @@ DENG2_OBSERVES(Canvas, GLResize)
 
         Vertex2TexRgba verts[4] = {
             { Vector2f(10,  10),  Vector2f(0, 0), Vector4f(1, 1, 1, 1) },
-            { Vector2f(100, 10),  Vector2f(1, 0), Vector4f(1, 1, 1, 1) },
-            { Vector2f(100, 100), Vector2f(1, 1), Vector4f(1, 1, 1, 1) },
-            { Vector2f(10,  100), Vector2f(0, 1), Vector4f(1, 1, 1, 1) }
+            { Vector2f(100, 10),  Vector2f(1, 0), Vector4f(1, 1, 0, 1) },
+            { Vector2f(100, 100), Vector2f(1, 1), Vector4f(1, 0, 0, 1) },
+            { Vector2f(10,  100), Vector2f(0, 1), Vector4f(0, 1, 0, 1) }
         };
-        buf->setVertices(gl::TriangleFan, verts, 4, gl::Static);
+        //buf->setVertices(gl::TriangleFan, verts, 4, gl::Static);
+        buf->setVertices(verts, 4, gl::Static);
+
+        GLBuffer::Indices idx;
+        idx.push_back(0);
+        idx.push_back(1);
+        idx.push_back(2);
+        idx.push_back(3);
+        buf->setIndices(gl::TriangleFan, idx, gl::Static);
 
         Block vertShader =
                 "uniform highp mat4 uMvpMatrix;\n"

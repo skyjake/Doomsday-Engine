@@ -110,6 +110,7 @@ class LIBGUI_PUBLIC GLBuffer : public Asset
 {
 public:
     typedef duint16 Index;
+    typedef std::vector<Index> Indices;
 
 public:
     GLBuffer();
@@ -121,6 +122,8 @@ public:
     void setVertices(gl::Primitive primitive, dsize count, void const *data, dsize dataSize, gl::Usage usage);
 
     void setIndices(gl::Primitive primitive, dsize count, Index const *indices, gl::Usage usage);
+
+    void setIndices(gl::Primitive primitive, Indices const &indices, gl::Usage usage);
 
     void draw(duint first = 0, dint count = -1);
 
