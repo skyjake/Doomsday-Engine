@@ -179,8 +179,8 @@ void Drawable::removeBuffer(Id id)
 {
     if(d->buffers.contains(id))
     {
-        delete d->buffers[id];
-        d->buffers.remove(id);
+        remove(*d->buffers[id]);
+        delete d->buffers.take(id);
     }
     d->configs.remove(id);
 }
@@ -191,8 +191,8 @@ void Drawable::removeProgram(Id id)
     {
         GLProgram *prog = d->programs[id];
         d->replaceProgram(prog, &d->defaultProgram);
-        delete prog;
-        d->programs.remove(id);
+        remove(*prog);
+        delete d->programs.take(id);
     }
 }
 
@@ -202,8 +202,7 @@ void Drawable::removeState(Id id)
     {
         GLState *st = d->states[id];
         d->replaceState(st, 0);
-        delete st;
-        d->states.remove(id);
+        delete d->states.take(id);
     }
 }
 
