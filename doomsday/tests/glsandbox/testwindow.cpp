@@ -19,16 +19,28 @@
 
 #include "testwindow.h"
 
+#include <QMessageBox>
+
 #include <de/GLState>
+#include <de/Drawable>
+#include <de/GLBuffer>
+#include <de/GLShader>
+#include <de/GuiApp>
 
 using namespace de;
 
 DENG2_PIMPL(TestWindow),
 DENG2_OBSERVES(Canvas, GLInit),
-DENG2_OBSERVES(Canvas, GLResize),
-DENG2_OBSERVES(Canvas, GLDraw)
+DENG2_OBSERVES(Canvas, GLResize)
 {
-    Instance(Public *i) : Base(i)
+    Drawable ob;
+    GLUniform uMvpMatrix;
+
+    typedef GLBufferT<Vertex2TexRgba> VertexBuf;
+
+    Instance(Public *i)
+        : Base(i),
+          uMvpMatrix("uMvpMatrix", GLUniform::Matrix4x4)
     {
         // Use this as the main window.
         setMain(i);
@@ -39,7 +51,62 @@ DENG2_OBSERVES(Canvas, GLDraw)
 
     void canvasGLInit(Canvas &cv)
     {
-        LOG_DEBUG("GLInit");
+        try
+        {
+            LOG_DEBUG("GLInit");
+            glInit(cv);
+        }
+        catch(Error const &er)
+        {
+            QMessageBox::critical(thisPublic, "GL Init Error", er.asText());
+            exit(1);
+        }
+    }
+
+    void glInit(Canvas &cv)
+    {
+        VertexBuf *buf = new VertexBuf;
+        ob.addBuffer(1, buf);
+
+        Vertex2TexRgba verts[4] = {
+            { Vector2f(10,  10),  Vector2f(0, 0), Vector4f(1, 1, 1, 1) },
+            { Vector2f(100, 10),  Vector2f(1, 0), Vector4f(1, 1, 1, 1) },
+            { Vector2f(100, 100), Vector2f(1, 1), Vector4f(1, 1, 1, 1) },
+            { Vector2f(10,  100), Vector2f(0, 1), Vector4f(1, 1, 1, 1) }
+        };
+        buf->setVertices(gl::TriangleFan, verts, 4, gl::Static);
+
+        Block vertShader =
+                "uniform highp mat4 uMvpMatrix;\n"
+                //"uniform highp vec4 uColor;\n"
+
+                "attribute highp vec4 aVertex;\n"
+                //"attribute highp vec2 aUV;\n"
+                //"attribute highp vec4 aColor;\n"
+
+                //"varying highp vec2 vUV;\n"
+                //"varying highp vec4 vColor;\n"
+
+                "void main(void) {\n"
+                "   gl_Position = uMvpMatrix * aVertex;\n"
+                //"   vUV = aUV.st;\n"
+                //"   vColor = aColor * uColor;\n"
+                //"   vColor = Color;\n"
+                "}\n";
+
+        Block fragShader =
+                //"uniform sampler2D uSampler;\n"
+
+                //"varying highp vec2 vUV;\n"
+                //"varying highp vec4 vColor;\n"
+
+                "void main(void) {\n"
+                //"    gl_FragColor = texture2D(uSampler, vUV) * vColor\n";
+                "    gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0);\n"
+                "}";
+
+        ob.program().build(vertShader, fragShader)
+                << uMvpMatrix;
 
         cv.renderTarget().setClearColor(Vector4f(.2f, .2f, .2f, 0));
     }
@@ -50,14 +117,17 @@ DENG2_OBSERVES(Canvas, GLDraw)
 
         GLState &st = GLState::top();
         st.setViewport(Rectangleui::fromSize(cv.size()));
+
+        uMvpMatrix = Matrix4f::ortho(0, cv.width(), 0, cv.height());
     }
 
-    void canvasGLDraw(Canvas &cv)
+    void draw(Canvas &cv)
     {
         LOG_DEBUG("GLDraw");
 
         cv.renderTarget().clear(GLTarget::Color | GLTarget::Depth);
 
+        ob.draw();
     }
 };
 
@@ -69,7 +139,7 @@ TestWindow::TestWindow() : d(new Instance(this))
 
 void TestWindow::canvasGLDraw(Canvas &canvas)
 {
-    d->canvasGLDraw(canvas);
+    d->draw(canvas);
     canvas.swapBuffers();
 
     CanvasWindow::canvasGLDraw(canvas);
