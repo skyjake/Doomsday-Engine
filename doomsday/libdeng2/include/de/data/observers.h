@@ -144,11 +144,14 @@ namespace de
                 _next = observers.begin();
                 next();
             }
+            ~Loop() {
+                _observers.releaseMembersIfEmpty();
+            }
             bool done() {
                 return _current == _observers.end();
             }
             void next() {
-                _current = _next;
+                _current = _next;                
                 if(_next != _observers.end())
                 {
                     ++_next;
@@ -169,6 +172,8 @@ namespace de
             iterator _current;
             iterator _next;
         };
+
+        friend class Loop;
         
     public:
         Observers() : _members(0) {}
@@ -187,8 +192,6 @@ namespace de
         }
 
         Observers<Type> &operator = (Observers<Type> const &other) {
-            // If _members already exists, the instance is retained
-            // in case someone is using it.
             if(other._members) {
                 checkExists();
                 _members->clear();
@@ -227,10 +230,6 @@ namespace de
         void remove(Type *observer) {
             if(_members) {
                 _members->erase(observer);
-                if(!_members->size()) {
-                    delete _members;
-                    _members = 0;
-                }
             }
         }
         
@@ -290,7 +289,15 @@ namespace de
                 _members = new Members;
             }            
         }
-        
+
+        void releaseMembersIfEmpty() {
+            // This shouldn't be called if the set is being iterated.
+            if(!_members->size()) {
+                delete _members;
+                _members = 0;
+            }
+        }
+
     private:
         Members *_members;
     };
