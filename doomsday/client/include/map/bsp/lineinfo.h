@@ -47,7 +47,6 @@ struct LineInfo
     {
         Twosided   =        0x1, ///< Line is marked two-sided.
         ZeroLength =        0x2, ///< Zero length (line should be totally ignored).
-        SelfRef    =        0x4  ///< Sector is the same on both sides.
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
@@ -76,9 +75,6 @@ struct LineInfo
         if(line->hasFrontSections() && line->hasBackSections())
         {
             flags |= Twosided;
-
-            if(line->isSelfReferencing())
-                flags |= SelfRef;
         }
     }
 };

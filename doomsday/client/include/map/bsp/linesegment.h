@@ -1,4 +1,4 @@
-/** @file hedgeinfo.h BSP Builder half-edge info.
+/** @file map/bsp/linesegment.h BSP Builder Line Segment.
  *
  * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
  * @see http://sourceforge.net/projects/glbsp/
@@ -23,8 +23,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_MAP_BSP_HEDGEINFO
-#define DENG_WORLD_MAP_BSP_HEDGEINFO
+#ifndef DENG_WORLD_MAP_BSP_LINESEGMENT
+#define DENG_WORLD_MAP_BSP_LINESEGMENT
 
 #include <de/mathutil.h>
 #include <de/vector1.h>
@@ -38,12 +38,11 @@ namespace bsp {
 class SuperBlock;
 
 /**
- * Plain old data (POD) structure storing additional information about a
- * half-edge produced by BspBuilder.
+ * Models a finite line segment in the plane.
  *
  * @ingroup bsp
  */
-struct HEdgeInfo
+struct LineSegment
 {
     coord_t start[2];
     coord_t end[2];
@@ -59,22 +58,23 @@ struct HEdgeInfo
     HEdge *nextOnSide;
     HEdge *prevOnSide;
 
-    // The superblock that contains this half-edge, or NULL if the half-edge
-    // is no longer in any superblock (e.g. now in a leaf).
+    /// The superblock that contains this segment, or @c 0 if the segment is no
+    /// longer in any superblock (e.g., now in or being turned into a leaf edge).
     SuperBlock *bmapBlock;
 
-    /// Line side that this half-edge initially comes (otherwise @c 0 signifying a "mini-edge").
+    /// Line side that this line segment initially comes (otherwise @c 0 signifying
+    /// a "mini-segment").
     Line::Side *lineSide;
 
-    // Line side that this half-edge initially comes from. For "real" half-edges,
-    // this is just the same as @var line field. For "mini-edges", this is the
-    // the partition line side.
+    /// Line side that this line segment initially comes from. For "real" segments,
+    /// this is just the same as @var lineSide. For "mini-segments", this is the
+    /// the partition line side.
     Line::Side *sourceLineSide;
 
-    /// Map sector attributed to the half-edge. Can be @c 0 for "mini-edges".
+    /// Map sector attributed to the line segment. Can be @c 0 for "mini-segments".
     Sector *sector;
 
-    HEdgeInfo()
+    LineSegment()
         : pLength(0),
           pAngle(0),
           pPara(0),
@@ -92,7 +92,7 @@ struct HEdgeInfo
         V2d_Set(direction, 0, 0);
     }
 
-    HEdgeInfo(HEdgeInfo const &other)
+    LineSegment(LineSegment const &other)
         : pLength(other.pLength),
           pAngle(other.pAngle),
           pPara(other.pPara),
@@ -108,6 +108,25 @@ struct HEdgeInfo
         V2d_Copy(start, other.start);
         V2d_Copy(end, other.end);
         V2d_Copy(direction, other.direction);
+    }
+
+    LineSegment &operator = (LineSegment const &other)
+    {
+        V2d_Copy(start, other.start);
+        V2d_Copy(end, other.end);
+        V2d_Copy(direction, other.direction);
+        pLength = other.pLength;
+        pAngle = other.pAngle;
+        pPara = other.pPara;
+        pPerp = other.pPerp;
+        pSlopeType = other.pSlopeType;
+        nextOnSide = other.nextOnSide;
+        prevOnSide = other.prevOnSide;
+        bmapBlock = other.bmapBlock;
+        lineSide = other.lineSide;
+        sourceLineSide = other.sourceLineSide;
+        sector = other.sector;
+        return *this;
     }
 
     void initFromHEdge(HEdge const &hedge)
@@ -129,4 +148,4 @@ struct HEdgeInfo
 } // namespace bsp
 } // namespace de
 
-#endif // DENG_WORLD_MAP_BSP_HEDGEINFO
+#endif // DENG_WORLD_MAP_BSP_LINESEGMENT

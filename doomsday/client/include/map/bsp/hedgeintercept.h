@@ -51,8 +51,9 @@ struct HEdgeIntercept
     // True if this intersection was on a self-referencing line.
     bool selfRef;
 
-    // Sector on each side of the vertex (along the partition),
-    // or NULL when that direction isn't OPEN.
+    /// Sector on each side of the vertex (along the partition), or @c 0 if that
+    /// direction is "closed" (i.e., the intercept point is along a map line that
+    /// has no Sector on the relevant side).
     Sector *before;
     Sector *after;
 
@@ -69,6 +70,37 @@ struct HEdgeIntercept
           before(other.before),
           after(other.after)
     {}
+
+    void merge(HEdgeIntercept const &other)
+    {
+        /*
+        LOG_TRACE("Merging intersections:");
+        debugPrint();
+        other.debugPrint();
+        */
+
+        if(selfRef && !other.selfRef)
+        {
+            if(before && other.before)
+                before = other.before;
+
+            if(after && other.after)
+                after = other.after;
+
+            selfRef = false;
+        }
+
+        if(!before && other.before)
+            before = other.before;
+
+        if(!after && other.after)
+            after = other.after;
+
+        /*
+        LOG_TRACE("Result:");
+        debugPrint();
+        */
+    }
 
 #ifdef DENG_DEBUG
     void debugPrint() const

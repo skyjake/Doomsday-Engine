@@ -187,7 +187,7 @@ DENG_HEADERS += \
     $$SRC/include/m_profiler.h \
     $$SRC/include/map/blockmap.h \
     $$SRC/include/map/bsp/bsptreenode.h \
-    $$SRC/include/map/bsp/hedgeinfo.h \
+    $$SRC/include/map/bsp/linesegment.h \
     $$SRC/include/map/bsp/hedgeintercept.h \
     $$SRC/include/map/bsp/hedgetip.h \
     $$SRC/include/map/bsp/lineinfo.h \

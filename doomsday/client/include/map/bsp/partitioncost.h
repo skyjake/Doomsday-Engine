@@ -39,7 +39,7 @@ struct PartitionCost
 {
     enum Side
     {
-        Right = 0,
+        Right,
         Left
     };
 
@@ -67,7 +67,7 @@ struct PartitionCost
     inline PartitionCost &addHEdgeLeft(HEdge const &hedge)
     {
         if(hedge.hasLineSide()) realLeft += 1;
-        else                miniLeft += 1;
+        else                    miniLeft += 1;
         return *this;
     }
 

@@ -224,10 +224,10 @@ DENG_HEADERS += \
     include/map/blockmap.h \
     include/map/blockmapvisual.h \
     include/map/bsp/bsptreenode.h \
-    include/map/bsp/hedgeinfo.h \
     include/map/bsp/hedgeintercept.h \
     include/map/bsp/hedgetip.h \
     include/map/bsp/lineinfo.h \
+    include/map/bsp/linesegment.h \
     include/map/bsp/partitioncost.h \
     include/map/bsp/partitioner.h \
     include/map/bsp/superblockmap.h \
