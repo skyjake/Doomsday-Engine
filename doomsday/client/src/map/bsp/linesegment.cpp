@@ -23,21 +23,156 @@
  * 02110-1301 USA</small>
  */
 
+#include <de/mathutil.h>
+#include <de/vector1.h> /// @todo remove me
+
+#include <de/Observers>
+
+#include "HEdge"
+
 #include "map/bsp/linesegment.h"
 
 namespace de {
 namespace bsp {
 
+DENG2_PIMPL(LineSegment),
+DENG2_OBSERVES(Vertex, OriginChange)
+{
+    /// Vertexes of the line segment.
+    Vertex *from, *to;
+
+    Instance(Public *i, Vertex &from_, Vertex &to_)
+        : Base(i), from(&from_), to(&to_)
+    {
+        from->audienceForOriginChange += this;
+        to->audienceForOriginChange   += this;
+    }
+
+    ~Instance()
+    {
+        from->audienceForOriginChange -= this;
+        to->audienceForOriginChange   -= this;
+    }
+
+    inline Vertex **vertexAdr(int edge) {
+        return edge? &to : &from;
+    }
+
+    void replaceVertex(int edge, Vertex &newVertex)
+    {
+        Vertex **adr = vertexAdr(edge);
+
+        if(*adr && *adr == &newVertex) return;
+
+        if(*adr) (*adr)->audienceForOriginChange -= this;
+        *adr = &newVertex;
+        if(*adr) (*adr)->audienceForOriginChange += this;
+
+        updateCache();
+    }
+
+    /**
+     * To be called to update precalculated vectors, distances, etc...
+     * following a dependent vertex origin change notification.
+     *
+     * @todo Optimize: defer until next accessed. -ds
+     */
+    void updateCache()
+    {
+        Vector2d tempDir = to->origin() - from->origin();
+        V2d_Set(self.direction, tempDir.x, tempDir.y);
+
+        self.pLength    = V2d_Length(self.direction);
+        DENG2_ASSERT(self.pLength > 0);
+        self.pAngle     = M_DirectionToAngle(self.direction);
+        self.pSlopeType = M_SlopeType(self.direction);
+
+        self.pPerp =  from->origin().y * self.direction[VX] - from->origin().x * self.direction[VY];
+        self.pPara = -from->origin().x * self.direction[VX] - from->origin().y * self.direction[VY];
+    }
+
+    void vertexOriginChanged(Vertex &vertex, de::Vector2d const &oldOrigin, int changedAxes)
+    {
+        DENG2_UNUSED3(vertex, oldOrigin, changedAxes);
+        updateCache();
+    }
+};
+
+LineSegment::LineSegment(Vertex &from, Vertex &to, Line::Side *side,
+                         Line::Side *sourceLineSide)
+    : pLength(0),
+      pAngle(0),
+      pPara(0),
+      pPerp(0),
+      pSlopeType(ST_VERTICAL),
+      nextOnSide(0),
+      prevOnSide(0),
+      bmapBlock(0),
+      _lineSide(side),
+      sourceLineSide(sourceLineSide),
+      sector(0),
+      _twin(0),
+      hedge(0),
+      d(new Instance(this, from, to))
+{
+    V2d_Set(direction, 0, 0);
+    d->updateCache();
+}
+
+LineSegment::LineSegment(LineSegment const &other)
+    : pLength(other.pLength),
+      pAngle(other.pAngle),
+      pPara(other.pPara),
+      pPerp(other.pPerp),
+      pSlopeType(other.pSlopeType),
+      nextOnSide(other.nextOnSide),
+      prevOnSide(other.prevOnSide),
+      bmapBlock(other.bmapBlock),
+      _lineSide(other._lineSide),
+      sourceLineSide(other.sourceLineSide),
+      sector(other.sector),
+      _twin(other._twin),
+      hedge(other.hedge),
+      d(new Instance(this, *other.d->from, *other.d->to))
+{
+    V2d_Copy(direction, other.direction);
+    d->updateCache();
+}
+
+LineSegment &LineSegment::operator = (LineSegment const &other)
+{
+    V2d_Copy(direction, other.direction);
+    pLength = other.pLength;
+    pAngle = other.pAngle;
+    pPara = other.pPara;
+    pPerp = other.pPerp;
+    pSlopeType = other.pSlopeType;
+    nextOnSide = other.nextOnSide;
+    prevOnSide = other.prevOnSide;
+    bmapBlock = other.bmapBlock;
+    _lineSide = other._lineSide;
+    sourceLineSide = other.sourceLineSide;
+    sector = other.sector;
+    _twin = other._twin;
+    hedge = other.hedge;
+
+    replaceFrom(*other.d->from);
+    replaceTo(*other.d->to);
+
+    d->updateCache();
+
+    return *this;
+}
+
 Vertex &LineSegment::vertex(int to) const
 {
-    DENG_ASSERT((to? _to : _from) != 0);
-    return to? *_to : *_from;
+    DENG_ASSERT(*d->vertexAdr(to) != 0);
+    return **d->vertexAdr(to);
 }
 
 void LineSegment::replaceVertex(int to, Vertex &newVertex)
 {
-    if(to) _to   = &newVertex;
-    else   _from = &newVertex;
+    d->replaceVertex(to, newVertex);
 }
 
 bool LineSegment::hasTwin() const
@@ -84,6 +219,12 @@ Line::Side &LineSegment::mapLineSide() const
     }
     /// @throw MissingMapLineSideError Attempted with no line side attributed.
     throw MissingMapLineSideError("LineSegment::mapLineSide", "No map line side is attributed");
+}
+
+void LineSegment::ceaseVertexObservation()
+{
+    d->from->audienceForOriginChange -= d.get();
+    d->to->audienceForOriginChange   -= d.get();
 }
 
 } // namespace bsp

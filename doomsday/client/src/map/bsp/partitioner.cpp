@@ -570,9 +570,6 @@ DENG2_PIMPL(Partitioner)
         oldLineSeg.replaceTo(*newVert); oldLineSeg.hedge->_to = newVert;
         newLineSeg.replaceFrom(*newVert); newLineSeg.hedge->_from = newVert;
 
-        oldLineSeg.configure();
-        newLineSeg.configure();
-
         // Handle the twin.
         if(oldLineSeg.hasTwin())
         {
@@ -588,9 +585,6 @@ DENG2_PIMPL(Partitioner)
 
             oldLineSeg.twin().replaceFrom(*newVert); oldLineSeg.twin().hedge->_from = newVert;
             newLineSeg.twin().replaceTo(*newVert); newLineSeg.twin().hedge->_to = newVert;
-
-            oldLineSeg.twin().configure();
-            newLineSeg.twin().configure();
 
             // Has this already been added to a leaf?
             if(oldLineSeg.twin().hasBspLeaf())
@@ -1222,8 +1216,8 @@ DENG2_PIMPL(Partitioner)
         {
             LineSegment *lineSeg = leafSegments.takeFirst();
 
-            //lineSeg->hedge->_from = lineSeg->_from;
-            //lineSeg->hedge->_to   = lineSeg->_to;
+            //lineSeg->hedge->_from = &lineSeg->from();
+            //lineSeg->hedge->_to   = &lineSeg->to();
 
 #ifdef DENG_BSP_COLLAPSE_ORPHANED_LEAFS
             if(isDegenerate || isOrphan)
@@ -1882,7 +1876,6 @@ DENG2_PIMPL(Partitioner)
         lineSegments.append(LineSegment(from, to, side, sourceSide));
         LineSegment &lineSeg = lineSegments.back();
         lineSeg.sector = &sec;
-        lineSeg.configure();
 
         lineSeg.hedge = new HEdge(from, side);
         lineSeg.hedge->_to = &to;

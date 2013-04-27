@@ -84,22 +84,24 @@ void HPlane::clearIntercepts()
     d->intercepts.clear();
 }
 
-void HPlane::configure(LineSegment const &newLineSeg)
+void HPlane::configure(LineSegment const &baseLineSeg)
 {
     // A "mini segment" is never suitable.
-    DENG_ASSERT(newLineSeg.hasMapLineSide());
+    DENG_ASSERT(baseLineSeg.hasMapLineSide());
 
     LOG_AS("HPlane::configure");
 
     // Clear the list of intersection points.
     clearIntercepts();
 
-    Line::Side &side = newLineSeg.mapLineSide();
+    Line::Side &side = baseLineSeg.mapLineSide();
     d->partition.origin    = side.from().origin();
     d->partition.direction = side.to().origin() - side.from().origin();
 
     // Update/store a copy of the line segment.
-    d->lineSegment.reset(new LineSegment(newLineSeg));
+    LineSegment *newLineSeg = new LineSegment(baseLineSeg);
+    newLineSeg->ceaseVertexObservation(); /// @todo refactor away -ds
+    d->lineSegment.reset(newLineSeg);
 
     //LOG_DEBUG("line segment %p %s %s.")
     //    << de::dintptr(&newLineSeg)

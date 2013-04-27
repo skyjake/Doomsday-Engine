@@ -63,13 +63,13 @@ struct SuperBlock::Instance
     inline void incrementLineSegmentCount(LineSegment const &lineSeg)
     {
         if(lineSeg.hasMapLineSide()) realNum++;
-        else                      miniNum++;
+        else                         miniNum++;
     }
 
     inline void decrementLineSegmentCount(LineSegment const &lineSeg)
     {
         if(lineSeg.hasMapLineSide()) realNum--;
-        else                      miniNum--;
+        else                         miniNum--;
     }
 };
 

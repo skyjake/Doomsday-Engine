@@ -26,17 +26,15 @@
 #ifndef DENG_WORLD_MAP_BSP_LINESEGMENT
 #define DENG_WORLD_MAP_BSP_LINESEGMENT
 
-#include <de/mathutil.h>
-#include <de/vector1.h>
-
 #include <de/Error>
 #include <de/Vector>
 
-#include "HEdge"
 #include "Line"
 #include "Vertex"
 
 #include "map/bsp/linesegment.h"
+
+class HEdge;
 
 namespace de {
 namespace bsp {
@@ -103,82 +101,11 @@ public: /// @todo make private:
     HEdge *hedge;
 
 public:
-    LineSegment(Vertex &from, Vertex &to, Line::Side *side = 0,
-                Line::Side *sourceLineSide = 0)
-        : pLength(0),
-          pAngle(0),
-          pPara(0),
-          pPerp(0),
-          pSlopeType(ST_VERTICAL),
-          nextOnSide(0),
-          prevOnSide(0),
-          bmapBlock(0),
-          _lineSide(side),
-          sourceLineSide(sourceLineSide),
-          sector(0),
-          _twin(0),
-          hedge(0),
-          _from(&from),
-          _to(&to)
-    {
-        V2d_Set(direction, 0, 0);
-    }
+    LineSegment(Vertex &from, Vertex &to,
+                Line::Side *side = 0, Line::Side *sourceLineSide = 0);
+    LineSegment(LineSegment const &other);
 
-    LineSegment(LineSegment const &other)
-        : pLength(other.pLength),
-          pAngle(other.pAngle),
-          pPara(other.pPara),
-          pPerp(other.pPerp),
-          pSlopeType(other.pSlopeType),
-          nextOnSide(other.nextOnSide),
-          prevOnSide(other.prevOnSide),
-          bmapBlock(other.bmapBlock),
-          _lineSide(other._lineSide),
-          sourceLineSide(other.sourceLineSide),
-          sector(other.sector),
-          _twin(other._twin),
-          hedge(other.hedge),
-          _from(other._from),
-          _to(other._to)
-    {
-        V2d_Copy(direction, other.direction);
-    }
-
-    LineSegment &operator = (LineSegment const &other)
-    {
-        V2d_Copy(direction, other.direction);
-        pLength = other.pLength;
-        pAngle = other.pAngle;
-        pPara = other.pPara;
-        pPerp = other.pPerp;
-        pSlopeType = other.pSlopeType;
-        nextOnSide = other.nextOnSide;
-        prevOnSide = other.prevOnSide;
-        bmapBlock = other.bmapBlock;
-        _lineSide = other._lineSide;
-        sourceLineSide = other.sourceLineSide;
-        sector = other.sector;
-
-        _from = other._from;
-        _to   = other._to;
-        _twin = other._twin;
-        hedge = other.hedge;
-        return *this;
-    }
-
-    void configure()
-    {
-        Vector2d tempDir = _to->origin() - _from->origin();
-        V2d_Set(direction, tempDir.x, tempDir.y);
-
-        pLength    = V2d_Length(direction);
-        DENG2_ASSERT(pLength > 0);
-        pAngle     = M_DirectionToAngle(direction);
-        pSlopeType = M_SlopeType(direction);
-
-        pPerp =  _from->origin().y * direction[VX] - _from->origin().x * direction[VY];
-        pPara = -_from->origin().x * direction[VX] - _from->origin().y * direction[VY];
-    }
+    LineSegment &operator = (LineSegment const &other);
 
     /**
      * Returns the specified edge vertex for the half-edge.
@@ -188,12 +115,22 @@ public:
     Vertex &vertex(int to) const;
 
     /**
+     * Returns the From/Start vertex for the line segment.
+     */
+    inline Vertex &from() const { return vertex(From); }
+
+    /**
      * Convenient accessor method for returning the origin of the From point
      * for the line segment.
      *
      * @see from()
      */
-    inline de::Vector2d const &fromOrigin() const { return vertex(From).origin(); }
+    inline Vector2d const &fromOrigin() const { return from().origin(); }
+
+    /**
+     * Returns the To/End vertex for the line segment.
+     */
+    inline Vertex &to() const { return vertex(To); }
 
     /**
      * Convenient accessor method for returning the origin of the To point
@@ -201,7 +138,7 @@ public:
      *
      * @see to()
      */
-    inline de::Vector2d const &toOrigin() const { return vertex(To).origin(); }
+    inline Vector2d const &toOrigin() const { return to().origin(); }
 
     /**
      * Replace the specified edge vertex of the line segment.
@@ -277,9 +214,11 @@ public:
      */
     BspLeaf &bspLeaf() const;
 
+    /// @todo refactor away -ds
+    void ceaseVertexObservation();
+
 private:
-    /// Start and end vertexes of the segment.
-    Vertex *_from, *_to;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace bsp
