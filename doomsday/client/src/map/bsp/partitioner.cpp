@@ -567,8 +567,8 @@ DENG2_PIMPL(Partitioner)
         newLineSeg.prevOnSide = &oldLineSeg;
         oldLineSeg.nextOnSide = &newLineSeg;
 
-        oldLineSeg._to = newVert; oldLineSeg.hedge->_to = newVert;
-        newLineSeg._from = newVert; newLineSeg.hedge->_from = newVert;
+        oldLineSeg.replaceTo(*newVert); oldLineSeg.hedge->_to = newVert;
+        newLineSeg.replaceFrom(*newVert); newLineSeg.hedge->_from = newVert;
 
         oldLineSeg.configure();
         newLineSeg.configure();
@@ -586,8 +586,8 @@ DENG2_PIMPL(Partitioner)
             newLineSeg.twin().nextOnSide = oldLineSeg.twinPtr();
             oldLineSeg.twin().prevOnSide = newLineSeg.twinPtr();
 
-            oldLineSeg.twin()._from = newVert; oldLineSeg.twin().hedge->_from = newVert;
-            newLineSeg.twin()._to = newVert; newLineSeg.twin().hedge->_to = newVert;
+            oldLineSeg.twin().replaceFrom(*newVert); oldLineSeg.twin().hedge->_from = newVert;
+            newLineSeg.twin().replaceTo(*newVert); newLineSeg.twin().hedge->_to = newVert;
 
             oldLineSeg.twin().configure();
             newLineSeg.twin().configure();
@@ -1883,20 +1883,15 @@ DENG2_PIMPL(Partitioner)
     LineSegment *newLineSegment(Vertex &from, Vertex &to, Sector &sec, Line::Side *side = 0,
                                 Line::Side *sourceSide = 0)
     {
-        lineSegments.append(LineSegment());
+        lineSegments.append(LineSegment(from, to, side, sourceSide));
         LineSegment &lineSeg = lineSegments.back();
+        lineSeg.sector = &sec;
+        lineSeg.configure();
 
         lineSeg.hedge = new HEdge(from, side);
         lineSeg.hedge->_to = &to;
         // There is now one more HEdge.
         numHEdges += 1;
-
-        lineSeg._from          = &from;
-        lineSeg._to            = &to;
-        lineSeg._lineSide      = side;
-        lineSeg.sourceLineSide = sourceSide;
-        lineSeg.sector         = &sec;
-        lineSeg.configure();
 
         lineSegmentMap.insert(lineSeg.hedge, &lineSeg);
 

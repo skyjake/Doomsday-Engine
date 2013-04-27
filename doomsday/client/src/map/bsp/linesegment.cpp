@@ -39,6 +39,12 @@ Vertex const &LineSegment::vertex(int to) const
     return const_cast<Vertex const &>(const_cast<LineSegment *>(this)->vertex(to));
 }
 
+void LineSegment::replaceVertex(int to, Vertex &newVertex)
+{
+    if(to) _to   = &newVertex;
+    else   _from = &newVertex;
+}
+
 bool LineSegment::hasTwin() const
 {
     return _twin != 0;

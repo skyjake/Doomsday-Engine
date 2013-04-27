@@ -98,9 +98,6 @@ public: /// @todo make private:
     /// Map sector attributed to the line segment. Can be @c 0 for "mini-segments".
     Sector *sector;
 
-    /// Start and end vertexes of the segment (if any).
-    Vertex *_from, *_to;
-
     /// Linked @em twin line segment (that on the other side of "this" line segment).
     LineSegment *_twin;
 
@@ -108,7 +105,8 @@ public: /// @todo make private:
     HEdge *hedge;
 
 public:
-    LineSegment()
+    LineSegment(Vertex &from, Vertex &to, Line::Side *side = 0,
+                Line::Side *sourceLineSide = 0)
         : pLength(0),
           pAngle(0),
           pPara(0),
@@ -117,13 +115,13 @@ public:
           nextOnSide(0),
           prevOnSide(0),
           bmapBlock(0),
-          _lineSide(0),
-          sourceLineSide(0),
+          _lineSide(side),
+          sourceLineSide(sourceLineSide),
           sector(0),
-          _from(0),
-          _to(0),
           _twin(0),
-          hedge(0)
+          hedge(0),
+          _from(&from),
+          _to(&to)
     {
         V2d_Set(direction, 0, 0);
     }
@@ -142,10 +140,10 @@ public:
           _lineSide(other._lineSide),
           sourceLineSide(other.sourceLineSide),
           sector(other.sector),
-          _from(other._from),
-          _to(other._to),
           _twin(other._twin),
-          hedge(other.hedge)
+          hedge(other.hedge),
+          _from(other._from),
+          _to(other._to)
     {
         V2d_Copy(direction, other.direction);
     }
@@ -176,9 +174,6 @@ public:
 
     void configure()
     {
-        DENG_ASSERT(_from != 0);
-        DENG_ASSERT(_to != 0);
-
         start = _from->origin();
         end   = _to->origin();
         Vector2d tempDir = end - start;
@@ -218,6 +213,17 @@ public:
      * @see to()
      */
     de::Vector2d const &toOrigin() const { return end; }
+
+    /**
+     * Replace the specified edge vertex of the line segment.
+     *
+     * @param to  If not @c 0 replace the To vertex; otherwise the From vertex.
+     * @param newVertex  The replacement vertex.
+     */
+    void replaceVertex(int to, Vertex &newVertex);
+
+    inline void replaceFrom(Vertex &newVertex) { replaceVertex(From, newVertex); }
+    inline void replaceTo(Vertex &newVertex)   { replaceVertex(To, newVertex); }
 
     /**
      * Returns @c true iff a @em twin is linked to the line segment.
@@ -281,6 +287,10 @@ public:
      * Returns the BSP leaf for the line segment.
      */
     BspLeaf &bspLeaf() const;
+
+private:
+    /// Start and end vertexes of the segment.
+    Vertex *_from, *_to;
 };
 
 } // namespace bsp
