@@ -19,7 +19,9 @@
  * 02110-1301 USA</small>
  */
 
-#include <math.h>
+#include <cmath>
+
+#include <de/concurrency.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -28,20 +30,21 @@
 #include "de_play.h"
 #include "de_ui.h"
 
-#include <de/concurrency.h>
-#include "map/blockmapvisual.h"
 #include "map/blockmap.h"
+#include "map/gamemap.h"
 
-byte bmapShowDebug = 0; // 1 = mobjs, 2 = linedefs, 3 = BSP leafs, 4 = polyobjs.
+#include "map/blockmapvisual.h"
+
+byte bmapShowDebug = 0; // 1 = mobjs, 2 = lines, 3 = BSP leafs, 4 = polyobjs.
 float bmapDebugSize = 1.5f;
 
-static int rendMobj(mobj_t* mo, void* /*parameters*/)
+static int rendMobj(mobj_t *mo, void * /*parameters*/)
 {
     if(mo->validCount != validCount)
     {
-        vec2f_t start, end;
-        V2f_Set(start, mo->origin[VX] - mo->radius, mo->origin[VY] - mo->radius);
-        V2f_Set(end,   mo->origin[VX] + mo->radius, mo->origin[VY] + mo->radius);
+        vec2f_t start; V2f_Set(start, mo->origin[VX] - mo->radius, mo->origin[VY] - mo->radius);
+        vec2f_t end;   V2f_Set(end,   mo->origin[VX] + mo->radius, mo->origin[VY] + mo->radius);
+
         glVertex2f(start[VX], start[VY]);
         glVertex2f(  end[VX], start[VY]);
         glVertex2f(  end[VX],   end[VY]);
@@ -52,35 +55,34 @@ static int rendMobj(mobj_t* mo, void* /*parameters*/)
     return false; // Continue iteration.
 }
 
-static int rendLineDef(LineDef* line, void* /*parameters*/)
+static int rendLine(Line *line, void * /*parameters*/)
 {
-    if(line->validCount != validCount)
+    if(line->validCount() != validCount)
     {
-        glVertex2f(line->L_v1origin[VX], line->L_v1origin[VY]);
-        glVertex2f(line->L_v2origin[VX], line->L_v2origin[VY]);
+        glVertex2f(line->fromOrigin().x, line->fromOrigin().y);
+        glVertex2f(  line->toOrigin().x,   line->toOrigin().y);
 
-        line->validCount = validCount;
+        line->setValidCount(validCount);
     }
     return false; // Continue iteration.
 }
 
-static int rendBspLeaf(BspLeaf* bspLeaf, void* /*parameters*/)
+static int rendBspLeaf(BspLeaf *bspLeaf, void * /*parameters*/)
 {
-    if(bspLeaf->validCount != validCount)
+    if(bspLeaf->validCount() != validCount)
     {
-        const float scale = MAX_OF(bmapDebugSize, 1);
-        const float width = (DENG_WINDOW->width() / 16) / scale;
+        float const scale = de::max(bmapDebugSize, 1.f);
+        float const width = (DENG_WINDOW->width() / 16) / scale;
         float length, dx, dy, normal[2], unit[2];
-        HEdge* hedge;
         vec2f_t start, end;
 
-        if(bspLeaf->hedge)
+        if(HEdge *base = bspLeaf->firstHEdge())
         {
-            hedge = bspLeaf->hedge;
+            HEdge *hedge = base;
             do
             {
-                V2f_Set(start, hedge->HE_v1origin[VX], hedge->HE_v1origin[VY]);
-                V2f_Set(end,   hedge->HE_v2origin[VX], hedge->HE_v2origin[VY]);
+                V2f_Set(start, hedge->fromOrigin().x, hedge->fromOrigin().y);
+                V2f_Set(end,     hedge->toOrigin().x, hedge->toOrigin().y);
 
                 glBegin(GL_LINES);
                     glVertex2fv(start);
@@ -121,8 +123,8 @@ static int rendBspLeaf(BspLeaf* bspLeaf, void* /*parameters*/)
                 }
 
                 // Draw the bounding box.
-                V2f_Set(start, bspLeaf->aaBox.minX, bspLeaf->aaBox.minY);
-                V2f_Set(end,   bspLeaf->aaBox.maxX, bspLeaf->aaBox.maxY);
+                V2f_Set(start, bspLeaf->aaBox().minX, bspLeaf->aaBox().minY);
+                V2f_Set(end,   bspLeaf->aaBox().maxX, bspLeaf->aaBox().maxY);
 
                 glBegin(GL_LINES);
                     glVertex2f(start[VX], start[VY]);
@@ -134,31 +136,42 @@ static int rendBspLeaf(BspLeaf* bspLeaf, void* /*parameters*/)
                     glVertex2f(start[VX],   end[VY]);
                     glVertex2f(start[VX], start[VY]);
                 glEnd();
-            } while((hedge = hedge->next) != bspLeaf->hedge);
+            } while((hedge = &hedge->next()) != base);
         }
 
-        bspLeaf->validCount = validCount;
+        bspLeaf->setValidCount(validCount);
     }
     return false; // Continue iteration.
 }
 
-int rendCellLineDefs(Blockmap* blockmap, uint const coords[2], void* parameters)
+int rendCellLines(Blockmap* blockmap, uint const coords[2], void* parameters)
 {
     glBegin(GL_LINES);
-        Blockmap_IterateCellObjects(blockmap, coords, (int (*)(void*,void*)) rendLineDef, parameters);
+        Blockmap_IterateCellObjects(blockmap, coords, (int (*)(void*,void*)) rendLine, parameters);
     glEnd();
     return false; // Continue iteration.
 }
 
-int rendCellPolyobjLineDefs(void* object, void* parameters)
+int rendCellPolyobjLines(void *object, void *parameters)
 {
-    return Polyobj_LineIterator((Polyobj*)object, rendLineDef, parameters);
+    Polyobj *po = (Polyobj *)object;
+    DENG_ASSERT(po != 0);
+    foreach(Line *line, po->lines())
+    {
+        if(line->validCount() == validCount)
+            continue;
+
+        line->setValidCount(validCount);
+        int result = rendLine(line, parameters);
+        if(result) return result;
+    }
+    return false; // Continue iteration.
 }
 
 int rendCellPolyobjs(Blockmap* blockmap, uint const coords[2], void* parameters)
 {
     glBegin(GL_LINES);
-        Blockmap_IterateCellObjects(blockmap, coords, (int (*)(void*,void*)) rendCellPolyobjLineDefs, parameters);
+        Blockmap_IterateCellObjects(blockmap, coords, (int (*)(void*,void*)) rendCellPolyobjLines, parameters);
     glEnd();
     return false; // Continue iteration.
 }
@@ -524,12 +537,12 @@ void Rend_BlockmapDebug(void)
         objectTypeName = "Mobj";
         break;
 
-    case 2: // LineDefs.
-        if(!map->lineDefBlockmap) return;
+    case 2: // Lines.
+        if(!map->lineBlockmap) return;
 
-        blockmap = map->lineDefBlockmap;
-        cellDrawer = rendCellLineDefs;
-        objectTypeName = "LineDef";
+        blockmap = map->lineBlockmap;
+        cellDrawer = rendCellLines;
+        objectTypeName = "Line";
         break;
 
     case 3: // BspLeafs.

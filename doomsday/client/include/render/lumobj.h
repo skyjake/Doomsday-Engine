@@ -22,6 +22,8 @@
 #ifndef LIBDENG_RENDER_LUMINOUS_H
 #define LIBDENG_RENDER_LUMINOUS_H
 
+#include <de/Vector>
+
 #include "dd_types.h"
 #include "color.h"
 #include <de/vector1.h>
@@ -214,7 +216,8 @@ int LO_LumobjsRadiusIterator(BspLeaf *bspLeaf, coord_t x, coord_t y, coord_t rad
  * @return  Projection list identifier if surface is lit else @c 0.
  */
 uint LO_ProjectToSurface(int flags, BspLeaf *bspLeaf, float blendFactor,
-    vec3d_t topLeft, vec3d_t bottomRight, vec3f_t tangent, vec3f_t bitangent, vec3f_t normal);
+    pvec3d_t topLeft, pvec3d_t bottomRight,
+    de::Vector3f const &tangent, de::Vector3f const &bitangent, de::Vector3f const &normal);
 
 /**
  * Iterate over projections in the identified surface-projection list, making

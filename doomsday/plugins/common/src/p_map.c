@@ -78,7 +78,7 @@ static void CheckMissileImpact(mobj_t* mobj);
 static void  CheckMissileImpact(mobj_t* mobj);
 #elif __JHEXEN__
 static void  P_FakeZMovement(mobj_t* mo);
-static void  checkForPushSpecial(LineDef* line, int side, mobj_t* mobj);
+static void  checkForPushSpecial(Line* line, int side, mobj_t* mobj);
 #endif
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -99,14 +99,14 @@ Material* tmFloorMaterial;
 
 boolean fellDown; // $dropoff_fix
 
-// The following is used to keep track of the linedefs that clip the open
+// The following is used to keep track of the lines that clip the open
 // height range e.g. PIT_CheckLine. They in turn are used with the &unstuck
 // logic and to prevent missiles from exploding against sky hack walls.
-LineDef* ceilingLine;
-LineDef* floorLine;
+Line* ceilingLine;
+Line* floorLine;
 
 mobj_t* lineTarget; // Who got hit (or NULL).
-LineDef* blockLine; // $unstuck: blocking linedef
+Line* blockLine; // $unstuck: blocking line
 
 coord_t attackRange;
 
@@ -120,11 +120,11 @@ mobj_t* blockingMobj;
 static coord_t tm[3];
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 static coord_t tmHeight;
-static LineDef* tmHitLine;
+static Line* tmHitLine;
 #endif
 static coord_t tmDropoffZ;
 static coord_t bestSlideDistance, secondSlideDistance;
-static LineDef* bestSlideLine, *secondSlideLine;
+static Line* bestSlideLine, *secondSlideLine;
 
 static mobj_t* slideMo;
 
@@ -186,7 +186,7 @@ static boolean checkReject(BspLeaf* a, BspLeaf* b)
 {
     if(rejectMatrix != NULL)
     {
-        uint                s1, s2, pnum, bytenum, bitnum;
+        int                 s1, s2, pnum, bytenum, bitnum;
         Sector*             sec1 = P_GetPtrp(a, DMU_SECTOR);
         Sector*             sec2 = P_GetPtrp(b, DMU_SECTOR);
 
@@ -307,7 +307,7 @@ boolean P_TeleportMove(mobj_t* thing, coord_t x, coord_t y, boolean alwaysStomp)
     tmBox.maxX = tm[VX] + tmThing->radius;
     tmBox.maxY = tm[VY] + tmThing->radius;
 
-    newSSec = P_BspLeafAtPoint(tm);
+    newSSec = P_BspLeafAtPoint_FixedPrecision(tm);
 
     ceilingLine = floorLine = NULL;
 #if !__JHEXEN__
@@ -381,7 +381,7 @@ void P_TelefragMobjsTouchingPlayers(void)
  *
  * @param data          Unused.
  */
-int PIT_CrossLine(LineDef* ld, void* data)
+int PIT_CrossLine(Line* ld, void* data)
 {
     int flags = P_GetIntp(ld, DMU_FLAGS);
 
@@ -396,8 +396,8 @@ int PIT_CrossLine(LineDef* ld, void* data)
              tmBox.maxY < aaBox->minY ||
              tmBox.minY > aaBox->maxY))
         {
-            if(LineDef_PointXYOnSide(ld, startPos[VX], startPos[VY]) < 0 !=
-               LineDef_PointXYOnSide(ld,   endPos[VX],   endPos[VY]) < 0)
+            if(Line_PointXYOnSide(ld, startPos[VX], startPos[VY]) < 0 !=
+               Line_PointXYOnSide(ld,   endPos[VX],   endPos[VY]) < 0)
                 // Line blocks trajectory.
                 return true;
         }
@@ -445,7 +445,7 @@ boolean P_CheckSides(mobj_t* actor, coord_t x, coord_t y)
  * $unstuck: used to test intersection between thing and line assuming NO
  * movement occurs -- used to avoid sticky situations.
  */
-static int untouched(LineDef* ld)
+static int untouched(Line* ld)
 {
     const coord_t x = tmThing->origin[VX];
     const coord_t y = tmThing->origin[VY];
@@ -457,7 +457,7 @@ static int untouched(LineDef* ld)
        ((moBox.minY = y - radius) >= ldBox->maxY) ||
        ((moBox.maxX = x + radius) <= ldBox->minX) ||
        ((moBox.maxY = y + radius) <= ldBox->minY) ||
-       LineDef_BoxOnSide(ld, &moBox))
+       Line_BoxOnSide(ld, &moBox))
         return true;
 
     return false;
@@ -992,7 +992,7 @@ int PIT_CheckThing(mobj_t* thing, void* data)
 /**
  * Adjusts tmFloorZ and tmCeilingZ as lines are contacted.
  */
-int PIT_CheckLine(LineDef* ld, void* data)
+int PIT_CheckLine(Line* ld, void* data)
 {
     AABoxd* aaBox = P_GetPtrp(ld, DMU_BOUNDING_BOX);
     const TraceOpening* opening;
@@ -1011,13 +1011,13 @@ int PIT_CheckLine(LineDef* ld, void* data)
      */
     if(Mobj_IsPlayer(tmThing) && !Mobj_IsVoodooDoll(tmThing))
     {
-        if(LineDef_BoxOnSide(ld, &tmBox)) // double precision floats
+        if(Line_BoxOnSide(ld, &tmBox)) // double precision floats
             return false;
     }
     else
     {
         // Fixed-precision math gives better compatibility with vanilla DOOM.
-        if(LineDef_BoxOnSide_FixedPrecision(ld, &tmBox))
+        if(Line_BoxOnSide_FixedPrecision(ld, &tmBox))
             return false;
     }
 
@@ -1204,7 +1204,7 @@ boolean P_CheckPositionXYZ(mobj_t* thing, coord_t x, coord_t y, coord_t z)
     tmBox.maxX = tm[VX] + tmThing->radius;
     tmBox.maxY = tm[VY] + tmThing->radius;
 
-    newSec = P_GetPtrp(P_BspLeafAtPoint(tm), DMU_SECTOR);
+    newSec = P_GetPtrp(P_BspLeafAtPoint_FixedPrecision(tm), DMU_SECTOR);
 
     ceilingLine = floorLine = NULL;
 #if !__JHEXEN__
@@ -1308,7 +1308,7 @@ static boolean P_TryMove2(mobj_t* thing, coord_t x, coord_t y, boolean dropoff)
     boolean isRemotePlayer = Mobj_IsRemotePlayer(thing);
     int side, oldSide;
     coord_t oldpos[3];
-    LineDef* ld;
+    Line* ld;
 
     // $dropoff_fix: fellDown.
     floatOk = false;
@@ -1560,8 +1560,8 @@ static boolean P_TryMove2(mobj_t* thing, coord_t x, coord_t y, boolean dropoff)
             // See if the line was crossed.
             if(P_ToXLine(ld)->special)
             {
-                side = LineDef_PointXYOnSide(ld, thing->origin[VX], thing->origin[VY]) < 0;
-                oldSide = LineDef_PointXYOnSide(ld, oldpos[VX], oldpos[VY]) < 0;
+                side = Line_PointXYOnSide(ld, thing->origin[VX], thing->origin[VY]) < 0;
+                oldSide = Line_PointXYOnSide(ld, oldpos[VX], oldpos[VY]) < 0;
                 if(side != oldSide)
                 {
 #if __JHEXEN__
@@ -1610,7 +1610,7 @@ static boolean P_TryMove2(mobj_t* thing, coord_t x, coord_t y, boolean dropoff)
         while((ld = IterList_MoveIterator(spechit)) != NULL)
         {
             // See if the line was crossed.
-            side = LineDef_PointXYOnSide(ld, thing->origin[VX], thing->origin[VY]) < 0;
+            side = Line_PointXYOnSide(ld, thing->origin[VX], thing->origin[VY]) < 0;
             checkForPushSpecial(ld, side, thing);
         }
     }
@@ -1634,7 +1634,7 @@ boolean P_TryMoveXY(mobj_t* thing, coord_t x, coord_t y, boolean dropoff, boolea
     {
         // Move not possible, see if the thing hit a line and send a Hit
         // event to it.
-        XL_HitLine(tmHitLine, LineDef_PointXYOnSide(tmHitLine, thing->origin[VX], thing->origin[VY]) < 0,
+        XL_HitLine(tmHitLine, Line_PointXYOnSide(tmHitLine, thing->origin[VX], thing->origin[VY]) < 0,
                    thing);
     }
 
@@ -1684,7 +1684,7 @@ boolean P_TryMoveXYZ(mobj_t* thing, coord_t x, coord_t y, coord_t z)
  * @todo This routine has gotten way too big, split if(in->isaline)
  *        to a seperate routine?
  */
-int PTR_ShootTraverse(const intercept_t* in, void* parameters)
+int PTR_ShootTraverse(intercept_t const *in, void *parameters)
 {
 #if __JHEXEN__
     extern mobj_t lavaInflictor;
@@ -1693,7 +1693,7 @@ int PTR_ShootTraverse(const intercept_t* in, void* parameters)
     int divisor;
     coord_t pos[3], frac, slope, dist, thingTopSlope, thingBottomSlope,
           cTop, cBottom, d[3], step, stepv[3], tracePos[3], cFloor, cCeil;
-    LineDef* li;
+    Line* li;
     mobj_t* th;
     const divline_t* trace = P_TraceLOS();
     const TraceOpening* opening;
@@ -1708,13 +1708,13 @@ int PTR_ShootTraverse(const intercept_t* in, void* parameters)
 
     if(in->type == ICPT_LINE)
     {
-        li = in->d.lineDef;
+        li = in->d.line;
         xline = P_ToXLine(li);
 
         frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
         backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
 
-        if(!backSec && LineDef_PointXYOnSide(li, tracePos[VX], tracePos[VY]) < 0)
+        if(!backSec && Line_PointXYOnSide(li, tracePos[VX], tracePos[VY]) < 0)
             return false; // Continue traversal.
 
         if(xline->special)
@@ -1782,7 +1782,7 @@ int PTR_ShootTraverse(const intercept_t* in, void* parameters)
         lineWasHit = true;
 
         // This is the BSP leaf where the trace originates.
-        originSub = P_BspLeafAtPoint(tracePos);
+        originSub = P_BspLeafAtPoint_FixedPrecision(tracePos);
 
         d[VX] = pos[VX] - tracePos[VX];
         d[VY] = pos[VY] - tracePos[VY];
@@ -1790,7 +1790,7 @@ int PTR_ShootTraverse(const intercept_t* in, void* parameters)
 
         if(!INRANGE_OF(d[VZ], 0, .0001f)) // Epsilon
         {
-            contact = P_BspLeafAtPoint(pos);
+            contact = P_BspLeafAtPoint_FixedPrecision(pos);
             step = M_ApproxDistance3(d[VX], d[VY], d[VZ] * 1.2/*aspect ratio*/);
             stepv[VX] = d[VX] / step;
             stepv[VY] = d[VY] / step;
@@ -1807,7 +1807,7 @@ int PTR_ShootTraverse(const intercept_t* in, void* parameters)
                 pos[VX] = tracePos[VX] + d[VX];
                 pos[VY] = tracePos[VY] + d[VY];
                 pos[VZ] = tracePos[VZ] + d[VZ];
-                contact = P_BspLeafAtPoint(pos);
+                contact = P_BspLeafAtPoint_FixedPrecision(pos);
             }
 
             // Should we backtrack to hit a plane instead?
@@ -1867,7 +1867,7 @@ int PTR_ShootTraverse(const intercept_t* in, void* parameters)
         }
 /*
 if(lineWasHit)
-    Con_Message("Hit line [%i,%i]", P_GetIntp(li, DMU_SIDEDEF0), P_GetIntp(li, DMU_SIDEDEF1));
+    Con_Message("Hit line [%i,%i]", P_GetIntp(li, DMU_FRONT), P_GetIntp(li, DMU_BACK));
 */
 #endif
         // Don't go any farther.
@@ -1991,11 +1991,11 @@ if(lineWasHit)
 /**
  * Sets linetarget and aimSlope when a target is aimed at.
  */
-int PTR_AimTraverse(const intercept_t* in, void* parameters)
+int PTR_AimTraverse(intercept_t const *in, void *parameters)
 {
     coord_t slope, thingTopSlope, thingBottomSlope, dist;
     mobj_t* th;
-    LineDef* li;
+    Line* li;
     Sector* backSec, *frontSec;
 
     if(in->type == ICPT_LINE)
@@ -2004,7 +2004,7 @@ int PTR_AimTraverse(const intercept_t* in, void* parameters)
         coord_t fCeil, bCeil;
         const TraceOpening* opening;
 
-        li = in->d.lineDef;
+        li = in->d.line;
 
         if(!(frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR)) ||
            !(backSec  = P_GetPtrp(li, DMU_BACK_SECTOR)))
@@ -2016,7 +2016,7 @@ int PTR_AimTraverse(const intercept_t* in, void* parameters)
             tracePos[VY] = FIX2FLT(trace->origin[VY]);
             tracePos[VZ] = shootZ;
 
-            return !(LineDef_PointXYOnSide(li, tracePos[VX], tracePos[VY]) < 0);
+            return !(Line_PointXYOnSide(li, tracePos[VX], tracePos[VY]) < 0);
         }
 
         // Crosses a two sided line.
@@ -2336,7 +2336,7 @@ void P_RadiusAttack(mobj_t* spot, mobj_t* source, int damage, int distance)
     P_MobjsBoxIterator(&box, PIT_RadiusAttack, 0);
 }
 
-int PTR_UseTraverse(const intercept_t* in, void* paramaters)
+int PTR_UseTraverse(intercept_t const *in, void *parameters)
 {
     int side;
     xline_t* xline;
@@ -2344,13 +2344,13 @@ int PTR_UseTraverse(const intercept_t* in, void* paramaters)
     if(in->type != ICPT_LINE)
         return false; // Continue iteration.
 
-    xline = P_ToXLine(in->d.lineDef);
+    xline = P_ToXLine(in->d.line);
 
     if(!xline->special)
     {
         const TraceOpening* opening;
 
-        P_SetTraceOpening(in->d.lineDef);
+        P_SetTraceOpening(in->d.line);
         opening = P_TraceOpening();
 
         if(opening->range <= 0)
@@ -2374,13 +2374,13 @@ int PTR_UseTraverse(const intercept_t* in, void* paramaters)
         return false;
     }
 
-    side = LineDef_PointOnSide(in->d.lineDef, useThing->origin) < 0;
+    side = Line_PointOnSide(in->d.line, useThing->origin) < 0;
 
 #if __JHERETIC__ || __JHEXEN__
     if(side == 1) return true; // Don't use back side.
 #endif
 
-    P_ActivateLine(in->d.lineDef, useThing, side, SPAC_USE);
+    P_ActivateLine(in->d.line, useThing, side, SPAC_USE);
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     // Can use multiple line specials in a row with the PassThru flag.
@@ -2493,7 +2493,7 @@ static boolean P_ThingHeightClip(mobj_t* thing)
  *
  * @param ld            The line being slid along.
  */
-static void P_HitSlideLine(LineDef* ld)
+static void P_HitSlideLine(Line* ld)
 {
     int side;
     unsigned int an;
@@ -2512,7 +2512,7 @@ static void P_HitSlideLine(LineDef* ld)
         return;
     }
 
-    side = LineDef_PointXYOnSide(ld, slideMo->origin[VX], slideMo->origin[VY]) < 0;
+    side = Line_PointXYOnSide(ld, slideMo->origin[VX], slideMo->origin[VY]) < 0;
     P_GetDoublepv(ld, DMU_DXY, d1);
     lineAngle = M_PointXYToAngle2(0, 0, d1[0], d1[1]);
     moveAngle = M_PointXYToAngle2(0, 0, tmMove[MX], tmMove[MY]);
@@ -2535,16 +2535,16 @@ static void P_HitSlideLine(LineDef* ld)
 int PTR_SlideTraverse(const intercept_t* in, void* paramaters)
 {
     const TraceOpening* opening;
-    LineDef* li;
+    Line* li;
 
     if(in->type != ICPT_LINE)
         Con_Error("PTR_SlideTraverse: Not a line?");
 
-    li = in->d.lineDef;
+    li = in->d.line;
 
     if(!P_GetPtrp(li, DMU_FRONT_SECTOR) || !P_GetPtrp(li, DMU_BACK_SECTOR))
     {
-        if(LineDef_PointXYOnSide(li, slideMo->origin[VX], slideMo->origin[VY]) < 0)
+        if(Line_PointXYOnSide(li, slideMo->origin[VX], slideMo->origin[VY]) < 0)
             return false; // Don't hit the back side.
 
         goto isblocking;
@@ -2895,7 +2895,7 @@ boolean P_TestMobjLocation(mobj_t* mo)
 #if __JDOOM64__ || __JHERETIC__
 static void CheckMissileImpact(mobj_t* mo)
 {
-    LineDef* ld;
+    Line* ld;
 
     if(IS_CLIENT) return;
     if(!mo || !mo->target || !mo->target->player || !(mo->flags & MF_MISSILE)) return;
@@ -3020,7 +3020,7 @@ mobj_t* P_CheckOnMobj(mobj_t* thing)
     tmBox.maxX = pos[VX] + tmThing->radius;
     tmBox.maxY = pos[VY] + tmThing->radius;
 
-    newSSec = P_BspLeafAtPoint(pos);
+    newSSec = P_BspLeafAtPoint_FixedPrecision(pos);
     ceilingLine = floorLine = NULL;
 
     // The base floor/ceiling is from the BSP leaf that contains the point.
@@ -3132,7 +3132,7 @@ static void P_FakeZMovement(mobj_t* mo)
     }
 }
 
-static void checkForPushSpecial(LineDef* line, int side, mobj_t* mobj)
+static void checkForPushSpecial(Line* line, int side, mobj_t* mobj)
 {
     if(P_ToXLine(line)->special)
     {
@@ -3150,16 +3150,16 @@ static void checkForPushSpecial(LineDef* line, int side, mobj_t* mobj)
 int PTR_BounceTraverse(const intercept_t* in, void* paramaters)
 {
     const TraceOpening* opening;
-    LineDef* li;
+    Line* li;
 
     if(in->type != ICPT_LINE)
         Con_Error("PTR_BounceTraverse: Not a line?");
 
-    li = in->d.lineDef;
+    li = in->d.line;
 
     if(!P_GetPtrp(li, DMU_FRONT_SECTOR) || !P_GetPtrp(li, DMU_BACK_SECTOR))
     {
-        if(LineDef_PointXYOnSide(li, slideMo->origin[VX], slideMo->origin[VY]) < 0)
+        if(Line_PointXYOnSide(li, slideMo->origin[VX], slideMo->origin[VY]) < 0)
             return false; // Don't hit the back side.
 
         goto bounceblocking;
@@ -3222,7 +3222,7 @@ void P_BounceWall(mobj_t* mo)
     if(!bestSlideLine)
         return; // We don't want to crash.
 
-    side = LineDef_PointXYOnSide(bestSlideLine, mo->origin[VX], mo->origin[VY]) < 0;
+    side = Line_PointXYOnSide(bestSlideLine, mo->origin[VX], mo->origin[VY]) < 0;
     P_GetDoublepv(bestSlideLine, DMU_DXY, d1);
     lineAngle = M_PointXYToAngle2(0, 0, d1[0], d1[1]);
     if(side == 1)
@@ -3242,13 +3242,13 @@ void P_BounceWall(mobj_t* mo)
     mo->mom[MY] = moveLen * FIX2FLT(finesine[an]);
 }
 
-int PTR_PuzzleItemTraverse(const intercept_t* in, void* paramaters)
+int PTR_PuzzleItemTraverse(intercept_t const *in, void *parameters)
 {
     switch(in->type)
     {
-    case ICPT_LINE: // Linedef.
+    case ICPT_LINE: // Line.
         {
-        LineDef*            line = in->d.lineDef;
+        Line*               line = in->d.line;
         xline_t*            xline = P_ToXLine(line);
 
         if(xline->special != USE_PUZZLE_ITEM_SPECIAL)
@@ -3291,7 +3291,7 @@ int PTR_PuzzleItemTraverse(const intercept_t* in, void* paramaters)
             return false; // Continue searching...
         }
 
-        if(LineDef_PointXYOnSide(line, puzzleItemUser->origin[VX],
+        if(Line_PointXYOnSide(line, puzzleItemUser->origin[VX],
                                        puzzleItemUser->origin[VY]) < 0)
             return true; // Don't use back sides.
 

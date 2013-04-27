@@ -30,6 +30,10 @@
 #ifndef LIBCOMMON_THINKER_CEILING_H
 #define LIBCOMMON_THINKER_CEILING_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
     CS_DOWN,
     CS_UP
@@ -77,14 +81,18 @@ typedef struct {
 void T_MoveCeiling(void *ceilingThinkerPtr);
 
 #if __JHEXEN__
-int EV_DoCeiling(LineDef* line, byte* args, ceilingtype_e type);
+int EV_DoCeiling(Line* line, byte* args, ceilingtype_e type);
 #else
-int EV_DoCeiling(LineDef* li, ceilingtype_e type);
+int EV_DoCeiling(Line* li, ceilingtype_e type);
 #endif
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 int P_CeilingActivate(short tag);
 #endif
 int P_CeilingDeactivate(short tag);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBCOMMON_THINKER_CEILING_H

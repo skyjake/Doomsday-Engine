@@ -1,4 +1,4 @@
-/** @file api_map.h Map data.
+/** @file api_map.h Public API to the world (map) data.
  *
  * World data comprises the map and all the objects in it. The public API
  * includes accessing and modifying map data objects via DMU.
@@ -23,24 +23,26 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef __DOOMSDAY_MAP_H__
-#define __DOOMSDAY_MAP_H__
+#ifndef DOOMSDAY_API_MAP_H
+#define DOOMSDAY_API_MAP_H
 
 #include "apis.h"
 #include <de/aabox.h>
 #include <de/mathutil.h>
 
+#define DMT_ARCHIVE_INDEX DDVT_INT
+
 #define DMT_VERTEX_ORIGIN DDVT_DOUBLE
 
-#define DMT_HEDGE_SIDEDEF DDVT_PTR
+#define DMT_HEDGE_SIDE DDVT_PTR
 
 #define DMT_HEDGE_V DDVT_PTR             // [Start, End] of the segment.
-#define DMT_HEDGE_LINEDEF DDVT_PTR
+#define DMT_HEDGE_LINE DDVT_PTR
 #define DMT_HEDGE_SECTOR DDVT_PTR
 #define DMT_HEDGE_BSPLEAF DDVT_PTR
 #define DMT_HEDGE_TWIN DDVT_PTR
 #define DMT_HEDGE_ANGLE DDVT_ANGLE
-#define DMT_HEDGE_SIDE DDVT_BYTE         // 0=front, 1=back
+#define DMT_HEDGE_SIDEID DDVT_BYTE         // 0=front, 1=back
 #define DMT_HEDGE_LENGTH DDVT_DOUBLE     // Accurate length of the segment (v1 -> v2).
 #define DMT_HEDGE_OFFSET DDVT_DOUBLE
 #define DMT_HEDGE_NEXT DDVT_PTR
@@ -55,7 +57,6 @@
 #define DMT_MATERIAL_WIDTH DDVT_INT
 #define DMT_MATERIAL_HEIGHT DDVT_INT
 
-#define DMT_SURFACE_BASE DDVT_PTR
 #define DMT_SURFACE_FLAGS DDVT_INT     // SUF_ flags
 #define DMT_SURFACE_MATERIAL DDVT_PTR
 #define DMT_SURFACE_BLENDMODE DDVT_BLENDMODE
@@ -65,6 +66,7 @@
 #define DMT_SURFACE_OFFSET DDVT_FLOAT     // [X, Y] Planar offset to surface material origin.
 #define DMT_SURFACE_RGBA DDVT_FLOAT    // Surface color tint
 
+#define DMT_PLANE_BASE DDVT_PTR
 #define DMT_PLANE_SECTOR DDVT_PTR      // Owner of the plane (temp)
 #define DMT_PLANE_HEIGHT DDVT_DOUBLE   // Current height
 #define DMT_PLANE_GLOW DDVT_FLOAT      // Glow amount
@@ -79,29 +81,28 @@
 #define DMT_SECTOR_LIGHTLEVEL DDVT_FLOAT
 #define DMT_SECTOR_RGB DDVT_FLOAT
 #define DMT_SECTOR_MOBJLIST DDVT_PTR   // List of mobjs in the sector.
-#define DMT_SECTOR_LINEDEFCOUNT DDVT_UINT
-#define DMT_SECTOR_LINEDEFS DDVT_PTR   // [lineDefCount+1] size.
+#define DMT_SECTOR_LINECOUNT DDVT_UINT
+#define DMT_SECTOR_LINES DDVT_PTR
 #define DMT_SECTOR_BSPLEAFCOUNT DDVT_UINT
-#define DMT_SECTOR_BSPLEAFS DDVT_PTR   // [bspLeafCount+1] size.
+#define DMT_SECTOR_BSPLEAFS DDVT_PTR
 #define DMT_SECTOR_BASE DDVT_PTR
 #define DMT_SECTOR_PLANECOUNT DDVT_UINT
 #define DMT_SECTOR_REVERB DDVT_FLOAT
 
-#define DMT_SIDEDEF_SECTOR DDVT_PTR
-#define DMT_SIDEDEF_LINE DDVT_PTR
-#define DMT_SIDEDEF_FLAGS DDVT_SHORT
+#define DMT_LINESIDE_SECTOR DDVT_PTR
+#define DMT_LINESIDE_LINE DDVT_PTR
+#define DMT_LINESIDE_FLAGS DDVT_SHORT
 
-#define DMT_LINEDEF_SECTOR DDVT_PTR
-#define DMT_LINEDEF_SIDEDEF DDVT_PTR
-#define DMT_LINEDEF_AABOX DDVT_DOUBLE
-
-#define DMT_LINEDEF_V DDVT_PTR
-#define DMT_LINEDEF_FLAGS DDVT_INT     // Public DDLF_* flags.
-#define DMT_LINEDEF_SLOPETYPE DDVT_INT
-#define DMT_LINEDEF_VALIDCOUNT DDVT_INT
-#define DMT_LINEDEF_DX DDVT_DOUBLE
-#define DMT_LINEDEF_DY DDVT_DOUBLE
-#define DMT_LINEDEF_LENGTH DDVT_DOUBLE
+#define DMT_LINE_SECTOR DDVT_PTR
+#define DMT_LINE_SIDE DDVT_PTR
+#define DMT_LINE_AABOX DDVT_DOUBLE
+#define DMT_LINE_V DDVT_PTR
+#define DMT_LINE_FLAGS DDVT_INT     // Public DDLF_* flags.
+#define DMT_LINE_SLOPETYPE DDVT_INT
+#define DMT_LINE_VALIDCOUNT DDVT_INT
+#define DMT_LINE_DX DDVT_DOUBLE
+#define DMT_LINE_DY DDVT_DOUBLE
+#define DMT_LINE_LENGTH DDVT_DOUBLE
 
 #define DMT_BSPNODE_AABOX DDVT_DOUBLE
 
@@ -124,21 +125,21 @@ struct intercept_s;
 struct bspleaf_s;
 struct bspnode_s;
 struct hedge_s;
-struct linedef_s;
+struct line_s;
 struct mobj_s;
 struct plane_s;
 struct sector_s;
-struct sidedef_s;
+struct side_s;
 struct vertex_s;
 struct material_s;
 
 typedef struct bspleaf_s    BspLeaf;
 typedef struct bspnode_s    BspNode;
 typedef struct hedge_s      HEdge;
-typedef struct linedef_s    LineDef;
+typedef struct line_s       Line;
 typedef struct plane_s      Plane;
 typedef struct sector_s     Sector;
-typedef struct sidedef_s    SideDef;
+typedef struct side_s       Side;
 typedef struct vertex_s     Vertex;
 typedef struct material_s   Material;
 
@@ -146,7 +147,7 @@ typedef struct material_s   Material;
 
 // Foward declarations.
 class BspLeaf;
-class LineDef;
+class Line;
 class Sector;
 class Material;
 
@@ -196,13 +197,13 @@ DENG_API_TYPEDEF(Map)
 
     // Lines
 
-    int             (*LD_BoxOnSide)(LineDef* line, const AABoxd* box);
-    int             (*LD_BoxOnSide_FixedPrecision)(LineDef* line, const AABoxd* box);
-    coord_t         (*LD_PointDistance)(LineDef* lineDef, coord_t const point[2], coord_t* offset);
-    coord_t         (*LD_PointXYDistance)(LineDef* lineDef, coord_t x, coord_t y, coord_t* offset);
-    coord_t         (*LD_PointOnSide)(LineDef const *lineDef, coord_t const point[2]);
-    coord_t         (*LD_PointXYOnSide)(LineDef const *lineDef, coord_t x, coord_t y);
-    int             (*LD_MobjsIterator)(LineDef* line, int (*callback) (struct mobj_s*, void *), void* parameters);
+    int             (*LD_BoxOnSide)(Line *line, AABoxd const *box);
+    int             (*LD_BoxOnSide_FixedPrecision)(Line *line, AABoxd const *box);
+    coord_t         (*LD_PointDistance)(Line* line, coord_t const point[2], coord_t *offset);
+    coord_t         (*LD_PointXYDistance)(Line* line, coord_t x, coord_t y, coord_t *offset);
+    coord_t         (*LD_PointOnSide)(Line const *line, coord_t const point[2]);
+    coord_t         (*LD_PointXYOnSide)(Line const *line, coord_t x, coord_t y);
+    int             (*LD_MobjsIterator)(Line *line, int (*callback) (struct mobj_s *, void *), void *parameters);
 
     // Sectors
 
@@ -222,7 +223,7 @@ DENG_API_TYPEDEF(Map)
      * The callback function will be called once for each line that crosses
      * trough the object. This means all the lines will be two-sided.
      */
-    int             (*MO_LinesIterator)(struct mobj_s* mo, int (*callback) (LineDef*, void*), void* parameters);
+    int             (*MO_LinesIterator)(struct mobj_s* mo, int (*callback) (Line*, void*), void* parameters);
 
     /**
      * Increment validCount before calling this routine. The callback function
@@ -261,12 +262,17 @@ DENG_API_TYPEDEF(Map)
     void            (*PO_Unlink)(struct polyobj_s* po);
 
     /**
+     * Returns a pointer to the first Line in the polyobj.
+     */
+    Line*           (*PO_FirstLine)(struct polyobj_s* po);
+
+    /**
      * Lookup a Polyobj on the current map by unique ID.
      *
      * @param id  Unique identifier of the Polyobj to be found.
      * @return  Found Polyobj instance else @c NULL.
      */
-    struct polyobj_s* (*PO_PolyobjByID)(uint id);
+    struct polyobj_s* (*PO_PolyobjByID)(int id);
 
     /**
      * Lookup a Polyobj on the current map by tag.
@@ -283,7 +289,7 @@ DENG_API_TYPEDEF(Map)
 
     // BSP Leafs
 
-    BspLeaf*        (*BL_AtPoint)(coord_t const point[2]);
+    BspLeaf*        (*BL_AtPoint_FixedPrecision)(coord_t const point[2]);
 
     /**
      * Determine the BSP leaf on the back side of the BS partition that lies in
@@ -297,28 +303,28 @@ DENG_API_TYPEDEF(Map)
      *
      * @return  BspLeaf instance for that BSP node's leaf.
      */
-    BspLeaf*        (*BL_AtPointXY)(coord_t x, coord_t y);
+    BspLeaf*        (*BL_AtPoint_FixedPrecisionXY)(coord_t x, coord_t y);
 
     // Iterators
 
     int             (*Box_MobjsIterator)(const AABoxd* box, int (*callback) (struct mobj_s*, void*), void* parameters);
-    int             (*Box_LinesIterator)(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters);
+    int             (*Box_LinesIterator)(const AABoxd* box, int (*callback) (Line*, void*), void* parameters);
 
     /**
-     * LineDefs and Polyobj LineDefs (note Polyobj LineDefs are iterated first).
+     * Lines and Polyobj Lines (note Polyobj Lines are iterated first).
      *
      * The validCount flags are used to avoid checking lines that are marked
      * in multiple mapblocks, so increment validCount before the first call
-     * to GameMap_IterateCellLineDefs(), then make one or more calls to it.
+     * to GameMap_IterateCellLines(then make one or more calls to it.
      */
-    int             (*Box_AllLinesIterator)(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters);
+    int             (*Box_AllLinesIterator)(const AABoxd* box, int (*callback) (Line*, void*), void* parameters);
 
     /**
      * The validCount flags are used to avoid checking polys that are marked in
      * multiple mapblocks, so increment validCount before the first call, then
      * make one or more calls to it.
      */
-    int             (*Box_PolyobjLinesIterator)(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters);
+    int             (*Box_PolyobjLinesIterator)(const AABoxd* box, int (*callback) (Line*, void*), void* parameters);
 
     int             (*Box_BspLeafsIterator)(const AABoxd* box, Sector* sector, int (*callback) (BspLeaf*, void*), void* parameters);
     int             (*Box_PolyobjsIterator)(const AABoxd* box, int (*callback) (struct polyobj_s*, void*), void* parameters);
@@ -332,7 +338,20 @@ DENG_API_TYPEDEF(Map)
     int             (*PathXYTraverse2)(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, int (*callback) (const struct intercept_s*, void* paramaters), void* parameters);
     int             (*PathXYTraverse)(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, int (*callback) (const struct intercept_s*, void* paramaters)/*parameters=NULL*/);
 
-    boolean         (*CheckLineSight)(coord_t const from[3], coord_t const to[3], coord_t bottomSlope, coord_t topSlope, int flags);
+    /**
+     * Traces a line of sight.
+     *
+     * @param from          World position, trace origin coordinates.
+     * @param to            World position, trace target coordinates.
+     * @param bottomSlope   Lower limit to the Z axis angle/slope range.
+     * @param topSlope      Upper limit to the Z axis angle/slope range.
+     * @param flags         @ref lineSightFlags dictate trace behavior/logic.
+     *
+     * @return  @c true if the traverser function returns @c true for all
+     *          visited lines.
+     */
+    boolean         (*CheckLineSight)(coord_t const from[3], coord_t const to[3],
+                                      coord_t bottomSlope, coord_t topSlope, int flags);
 
     /**
      * Retrieve an immutable copy of the LOS trace line for the CURRENT map.
@@ -350,9 +369,9 @@ DENG_API_TYPEDEF(Map)
 
     /**
      * Update the TraceOpening state for the CURRENT map according to the opening
-     * defined by the inner-minimal planes heights which intercept @a linedef
+     * defined by the inner-minimal planes heights which intercept @a line.
      */
-    void            (*SetTraceOpening)(LineDef* linedef);
+    void            (*SetTraceOpening)(Line* line);
 
     // Map Updates (DMU)
 
@@ -363,45 +382,121 @@ DENG_API_TYPEDEF(Map)
      */
     int             (*GetType)(MapElementPtrConst ptr);
 
-    unsigned int    (*ToIndex)(MapElementPtrConst ptr);
-    void*           (*ToPtr)(int type, uint index);
-    int             (*Callback)(int type, uint index, void* context, int (*callback)(MapElementPtr p, void* ctx));
-    int             (*Callbackp)(int type, MapElementPtr ptr, void* context, int (*callback)(MapElementPtr p, void* ctx));
-    int             (*Iteratep)(MapElementPtr ptr, uint prop, void* context, int (*callback) (MapElementPtr p, void* ctx));
+    /**
+     * Convert a pointer to DMU object to an element index.
+     */
+    int             (*ToIndex)(MapElementPtrConst ptr);
 
-    // Dummy Objects
+    /**
+     * Convert an element index to a DMU object pointer.
+     */
+    void*           (*ToPtr)(int type, int index);
+
+    /**
+     * Returns the total number of DMU objects of @a type. For example, if the
+     * type is @c DMU_LINE then the total number of map Lines is returned.
+     */
+    int             (*Count)(int type);
+
+    /**
+     * Call a callback function on a selecton of DMU objects specified with an
+     * object type and element index.
+     *
+     * @param type          DMU type for selected object(s).
+     * @param index         Index of the selected object(s).
+     * @param context       Data context pointer passed to the callback.
+     * @param callback      Function to be called for each object.
+     *
+     * @return  @c =false if all callbacks return @c false. If a non-zero value
+     * is returned by the callback function, iteration is aborted immediately
+     * and the value returned by the callback is returned.
+     */
+    int             (*Callback)(int type, int index, void* context, int (*callback)(MapElementPtr p, void* ctx));
+
+    /**
+     * @ref Callback() alternative where the set of selected objects is instead
+     * specified with an object type and element @a pointer. Behavior and function
+     * are otherwise identical.
+     *
+     * @param type          DMU type for selected object(s).
+     * @param pointer       DMU element pointer to make callback(s) for.
+     * @param context       Data context pointer passed to the callback.
+     * @param callback      Function to be called for each object.
+     *
+     * @return  @c =false if all callbacks return @c false. If a non-zero value
+     * is returned by the callback function, iteration is aborted immediately
+     * and the value returned by the callback is returned.
+     */
+    int             (*Callbackp)(int type, MapElementPtr pointer, void* context, int (*callback)(MapElementPtr p, void* ctx));
+
+    /**
+     * An efficient alternative mechanism for iterating a selection of sub-objects
+     * and performing a callback on each.
+     *
+     * @param pointer       DMU object to iterate sub-objects of.
+     * @param prop          DMU property type identifying the sub-objects to iterate.
+     * @param context       Data context pointer passsed to the callback.
+     * @param callback      Function to be called for each object.
+     *
+     * @return  @c =false if all callbacks return @c false. If a non-zero value
+     * is returned by the callback function, iteration is aborted immediately
+     * and the value returned by the callback is returned.
+     */
+    int             (*Iteratep)(MapElementPtr pointer, uint prop, void* context, int (*callback) (MapElementPtr p, void* ctx));
+
+    /**
+     * Allocates a new dummy object.
+     *
+     * @param type          DMU type of the dummy object.
+     * @param extraData     Extra data pointer of the dummy. Points to
+     *                      caller-allocated memory area of extra data for the
+     *                      dummy.
+     */
     MapElementPtr   (*AllocDummy)(int type, void* extraData);
+
+    /**
+     * Frees a dummy object.
+     */
     void            (*FreeDummy)(MapElementPtr dummy);
+
+    /**
+     * Determines if a map data object is a dummy.
+     */
     boolean         (*IsDummy)(MapElementPtrConst dummy);
+
+    /**
+     * Returns the extra data pointer of the dummy, or NULL if the object is not
+     * a dummy object.
+     */
     void*           (*DummyExtraData)(MapElementPtr dummy);
 
     // Map Entities
     uint            (*CountGameMapObjs)(int entityId);
-    byte            (*GetGMOByte)(int entityId, uint elementIndex, int propertyId);
-    short           (*GetGMOShort)(int entityId, uint elementIndex, int propertyId);
-    int             (*GetGMOInt)(int entityId, uint elementIndex, int propertyId);
-    fixed_t         (*GetGMOFixed)(int entityId, uint elementIndex, int propertyId);
-    angle_t         (*GetGMOAngle)(int entityId, uint elementIndex, int propertyId);
-    float           (*GetGMOFloat)(int entityId, uint elementIndex, int propertyId);
+    byte            (*GetGMOByte)(int entityId, int elementIndex, int propertyId);
+    short           (*GetGMOShort)(int entityId, int elementIndex, int propertyId);
+    int             (*GetGMOInt)(int entityId, int elementIndex, int propertyId);
+    fixed_t         (*GetGMOFixed)(int entityId, int elementIndex, int propertyId);
+    angle_t         (*GetGMOAngle)(int entityId, int elementIndex, int propertyId);
+    float           (*GetGMOFloat)(int entityId, int elementIndex, int propertyId);
 
     /* index-based write functions */
-    void            (*SetBool)(int type, uint index, uint prop, boolean param);
-    void            (*SetByte)(int type, uint index, uint prop, byte param);
-    void            (*SetInt)(int type, uint index, uint prop, int param);
-    void            (*SetFixed)(int type, uint index, uint prop, fixed_t param);
-    void            (*SetAngle)(int type, uint index, uint prop, angle_t param);
-    void            (*SetFloat)(int type, uint index, uint prop, float param);
-    void            (*SetDouble)(int type, uint index, uint prop, double param);
-    void            (*SetPtr)(int type, uint index, uint prop, void* param);
+    void            (*SetBool)(int type, int index, uint prop, boolean param);
+    void            (*SetByte)(int type, int index, uint prop, byte param);
+    void            (*SetInt)(int type, int index, uint prop, int param);
+    void            (*SetFixed)(int type, int index, uint prop, fixed_t param);
+    void            (*SetAngle)(int type, int index, uint prop, angle_t param);
+    void            (*SetFloat)(int type, int index, uint prop, float param);
+    void            (*SetDouble)(int type, int index, uint prop, double param);
+    void            (*SetPtr)(int type, int index, uint prop, void* param);
 
-    void            (*SetBoolv)(int type, uint index, uint prop, boolean* params);
-    void            (*SetBytev)(int type, uint index, uint prop, byte* params);
-    void            (*SetIntv)(int type, uint index, uint prop, int* params);
-    void            (*SetFixedv)(int type, uint index, uint prop, fixed_t* params);
-    void            (*SetAnglev)(int type, uint index, uint prop, angle_t* params);
-    void            (*SetFloatv)(int type, uint index, uint prop, float* params);
-    void            (*SetDoublev)(int type, uint index, uint prop, double* params);
-    void            (*SetPtrv)(int type, uint index, uint prop, void* params);
+    void            (*SetBoolv)(int type, int index, uint prop, boolean* params);
+    void            (*SetBytev)(int type, int index, uint prop, byte* params);
+    void            (*SetIntv)(int type, int index, uint prop, int* params);
+    void            (*SetFixedv)(int type, int index, uint prop, fixed_t* params);
+    void            (*SetAnglev)(int type, int index, uint prop, angle_t* params);
+    void            (*SetFloatv)(int type, int index, uint prop, float* params);
+    void            (*SetDoublev)(int type, int index, uint prop, double* params);
+    void            (*SetPtrv)(int type, int index, uint prop, void* params);
 
     /* pointer-based write functions */
     void            (*SetBoolp)(MapElementPtr ptr, uint prop, boolean param);
@@ -423,23 +518,23 @@ DENG_API_TYPEDEF(Map)
     void            (*SetPtrpv)(MapElementPtr ptr, uint prop, void* params);
 
     /* index-based read functions */
-    boolean         (*GetBool)(int type, uint index, uint prop);
-    byte            (*GetByte)(int type, uint index, uint prop);
-    int             (*GetInt)(int type, uint index, uint prop);
-    fixed_t         (*GetFixed)(int type, uint index, uint prop);
-    angle_t         (*GetAngle)(int type, uint index, uint prop);
-    float           (*GetFloat)(int type, uint index, uint prop);
-    double          (*GetDouble)(int type, uint index, uint prop);
-    void*           (*GetPtr)(int type, uint index, uint prop);
+    boolean         (*GetBool)(int type, int index, uint prop);
+    byte            (*GetByte)(int type, int index, uint prop);
+    int             (*GetInt)(int type, int index, uint prop);
+    fixed_t         (*GetFixed)(int type, int index, uint prop);
+    angle_t         (*GetAngle)(int type, int index, uint prop);
+    float           (*GetFloat)(int type, int index, uint prop);
+    double          (*GetDouble)(int type, int index, uint prop);
+    void*           (*GetPtr)(int type, int index, uint prop);
 
-    void            (*GetBoolv)(int type, uint index, uint prop, boolean* params);
-    void            (*GetBytev)(int type, uint index, uint prop, byte* params);
-    void            (*GetIntv)(int type, uint index, uint prop, int* params);
-    void            (*GetFixedv)(int type, uint index, uint prop, fixed_t* params);
-    void            (*GetAnglev)(int type, uint index, uint prop, angle_t* params);
-    void            (*GetFloatv)(int type, uint index, uint prop, float* params);
-    void            (*GetDoublev)(int type, uint index, uint prop, double* params);
-    void            (*GetPtrv)(int type, uint index, uint prop, void* params);
+    void            (*GetBoolv)(int type, int index, uint prop, boolean* params);
+    void            (*GetBytev)(int type, int index, uint prop, byte* params);
+    void            (*GetIntv)(int type, int index, uint prop, int* params);
+    void            (*GetFixedv)(int type, int index, uint prop, fixed_t* params);
+    void            (*GetAnglev)(int type, int index, uint prop, angle_t* params);
+    void            (*GetFloatv)(int type, int index, uint prop, float* params);
+    void            (*GetDoublev)(int type, int index, uint prop, double* params);
+    void            (*GetPtrv)(int type, int index, uint prop, void* params);
 
     /* pointer-based read functions */
     boolean         (*GetBoolp)(MapElementPtr ptr, uint prop);
@@ -468,12 +563,12 @@ DENG_API_T(Map);
 #define P_MapSourceFile                     _api_Map.SourceFile
 #define P_LoadMap                           _api_Map.Load
 
-#define LineDef_BoxOnSide                   _api_Map.LD_BoxOnSide
-#define LineDef_BoxOnSide_FixedPrecision    _api_Map.LD_BoxOnSide_FixedPrecision
-#define LineDef_PointDistance               _api_Map.LD_PointDistance
-#define LineDef_PointXYDistance             _api_Map.LD_PointXYDistance
-#define LineDef_PointOnSide                 _api_Map.LD_PointOnSide
-#define LineDef_PointXYOnSide               _api_Map.LD_PointXYOnSide
+#define Line_BoxOnSide                      _api_Map.LD_BoxOnSide
+#define Line_BoxOnSide_FixedPrecision       _api_Map.LD_BoxOnSide_FixedPrecision
+#define Line_PointDistance                  _api_Map.LD_PointDistance
+#define Line_PointXYDistance                _api_Map.LD_PointXYDistance
+#define Line_PointOnSide                    _api_Map.LD_PointOnSide
+#define Line_PointXYOnSide                  _api_Map.LD_PointXYOnSide
 #define P_LineMobjsIterator                 _api_Map.LD_MobjsIterator
 
 #define P_SectorTouchingMobjsIterator       _api_Map.S_TouchingMobjsIterator
@@ -494,12 +589,13 @@ DENG_API_T(Map);
 #define P_PolyobjRotate                     _api_Map.PO_Rotate
 #define P_PolyobjLink                       _api_Map.PO_Link
 #define P_PolyobjUnlink                     _api_Map.PO_Unlink
+#define P_PolyobjFirstLine                  _api_Map.PO_FirstLine
 #define P_PolyobjByID                       _api_Map.PO_PolyobjByID
 #define P_PolyobjByTag                      _api_Map.PO_PolyobjByTag
 #define P_SetPolyobjCallback                _api_Map.PO_SetCallback
 
-#define P_BspLeafAtPoint                    _api_Map.BL_AtPoint
-#define P_BspLeafAtPointXY                  _api_Map.BL_AtPointXY
+#define P_BspLeafAtPoint_FixedPrecision     _api_Map.BL_AtPoint_FixedPrecision
+#define P_BspLeafAtPoint_FixedPrecisionXY   _api_Map.BL_AtPoint_FixedPrecisionXY
 
 #define P_MobjsBoxIterator                  _api_Map.Box_MobjsIterator
 #define P_LinesBoxIterator                  _api_Map.Box_LinesIterator
@@ -519,6 +615,7 @@ DENG_API_T(Map);
 #define DMU_GetType                         _api_Map.GetType
 #define P_ToIndex                           _api_Map.ToIndex
 #define P_ToPtr                             _api_Map.ToPtr
+#define P_Count                             _api_Map.Count
 #define P_Callback                          _api_Map.Callback
 #define P_Callbackp                         _api_Map.Callbackp
 #define P_Iteratep                          _api_Map.Iteratep
@@ -609,4 +706,4 @@ DENG_USING_API(Map);
 } // extern "C"
 #endif
 
-#endif // __DOOMSDAY_MAP_H__
+#endif // DOOMSDAY_API_MAP_H

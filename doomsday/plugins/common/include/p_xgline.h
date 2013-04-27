@@ -150,7 +150,7 @@
 #define LTF2_GLOBAL_MSG     0x0c000000 // A+D msg to all players.
 #define LTF2_GROUP_ACT      0x10000000 // Act all tag-matching lines
 #define LTF2_GROUP_DEACT    0x20000000 // Deact all tag-matching lines
-#define LTF2_OVERRIDE_ANY   0x40000000 // Override BOOM's "Any Trigger" linedef flag
+#define LTF2_OVERRIDE_ANY   0x40000000 // Override BOOM's "Any Trigger" line flag
 
 #define LTACT_CNT_INFINITE  -1 // Activate infinite number of times.
 
@@ -307,7 +307,7 @@ enum // Line.data references
 
 typedef struct {
     thinker_t       thinker;
-    LineDef*        line;
+    Line*           line;
 } xlthinker_t;
 
 // State data for each line.
@@ -330,6 +330,10 @@ extern struct xgclass_s xgClasses[];
 // Used as the activator if there is no real activator.
 extern struct mobj_s dummyThing;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Register the XG classnames for XGdev
 void            XG_Register(void);
 
@@ -340,35 +344,39 @@ void            XL_Update(void);
 
 void            XL_Thinker(void *xlThinkerPtr);
 
-void            XL_SetLineType(LineDef* line, int id);
+void            XL_SetLineType(Line* line, int id);
 
 linetype_t*     XL_GetType(int id);
-int             XL_LineEvent(int evType, int lineType, LineDef* line,
+int             XL_LineEvent(int evType, int lineType, Line* line,
                              int sideNum, void* data);
 void            XL_ActivateLine(boolean activating, linetype_t* info,
-                                LineDef* line, int sideNum,
+                                Line* line, int sideNum,
                                 struct mobj_s* data, int evType);
-int             XL_TraverseLines(LineDef* line, int reftype, int ref,
+int             XL_TraverseLines(Line* line, int reftype, int ref,
                                  void* context, void* context2, struct mobj_s* activator,
                                  int (C_DECL *func)());
-int             XL_TraversePlanes(LineDef* line, int reftype, int ref,
+int             XL_TraversePlanes(Line* line, int reftype, int ref,
                                   void* context, void* context2, boolean travSectors,
                                   struct mobj_s* activator,
                                   int (C_DECL *func)());
 
 // Return false if the event was processed.
-int             XL_CrossLine(LineDef* line, int sideNum,
+int             XL_CrossLine(Line* line, int sideNum,
                              struct mobj_s* thing);
-int             XL_UseLine(LineDef* line, int sideNum,
+int             XL_UseLine(Line* line, int sideNum,
                            struct mobj_s* thing);
-int             XL_ShootLine(LineDef* line, int sideNum,
+int             XL_ShootLine(Line* line, int sideNum,
                              struct mobj_s* thing);
-int             XL_HitLine(LineDef* line, int sideNum,
+int             XL_HitLine(Line* line, int sideNum,
                            struct mobj_s* thing);
 
 int             XG_RandomInt(int min, int max);
 
-void            SV_WriteXGLine(LineDef* li);
-void            SV_ReadXGLine(LineDef* li);
+void            SV_WriteXGLine(Line* li);
+void            SV_ReadXGLine(Line* li);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

@@ -148,7 +148,6 @@ DENG_HEADERS += \
     $$SRC/include/dd_pinit.h \
     $$SRC/include/de_audio.h \
     $$SRC/include/de_base.h \
-    $$SRC/include/de_bsp.h \
     $$SRC/include/de_console.h \
     $$SRC/include/de_dam.h \
     $$SRC/include/de_defs.h \
@@ -167,7 +166,6 @@ DENG_HEADERS += \
     $$SRC/include/def_data.h \
     $$SRC/include/def_main.h \
     $$SRC/include/dualstring.h \
-    $$SRC/include/edit_bsp.h \
     $$SRC/include/edit_map.h \
     $$SRC/include/filehandle.h \
     $$SRC/include/filesys/file.h \
@@ -192,8 +190,7 @@ DENG_HEADERS += \
     $$SRC/include/map/bsp/hedgeinfo.h \
     $$SRC/include/map/bsp/hedgeintercept.h \
     $$SRC/include/map/bsp/hedgetip.h \
-    $$SRC/include/map/bsp/hplane.h \
-    $$SRC/include/map/bsp/linedefinfo.h \
+    $$SRC/include/map/bsp/lineinfo.h \
     $$SRC/include/map/bsp/partitioncost.h \
     $$SRC/include/map/bsp/partitioner.h \
     $$SRC/include/map/bsp/superblockmap.h \
@@ -201,12 +198,13 @@ DENG_HEADERS += \
     $$SRC/include/map/bspleaf.h \
     $$SRC/include/map/bspnode.h \
     $$SRC/include/map/dam_file.h \
-    $$SRC/include/map/dam_main.h \
     $$SRC/include/map/entitydatabase.h \
     $$SRC/include/map/gamemap.h \
     $$SRC/include/map/generators.h \
     $$SRC/include/map/hedge.h \
-    $$SRC/include/map/linedef.h \
+    $$SRC/include/map/line.h \
+    $$SRC/include/map/lineowner.h \
+    $$SRC/include/map/linesighttest.h \
     $$SRC/include/map/p_dmu.h \
     $$SRC/include/map/p_intercept.h \
     $$SRC/include/map/p_mapdata.h \
@@ -215,15 +213,13 @@ DENG_HEADERS += \
     $$SRC/include/map/p_object.h \
     $$SRC/include/map/p_particle.h \
     $$SRC/include/map/p_players.h \
-    $$SRC/include/map/p_polyobjs.h \
-    $$SRC/include/map/p_sight.h \
     $$SRC/include/map/p_ticker.h \
     $$SRC/include/map/plane.h \
     $$SRC/include/map/polyobj.h \
     $$SRC/include/map/propertyvalue.h \
     $$SRC/include/map/r_world.h \
+    $$SRC/include/map/reject.h \
     $$SRC/include/map/sector.h \
-    $$SRC/include/map/sidedef.h \
     $$SRC/include/map/surface.h \
     $$SRC/include/map/vertex.h \
     $$SRC/include/network/masterserver.h \
@@ -232,6 +228,7 @@ DENG_HEADERS += \
     $$SRC/include/network/net_event.h \
     $$SRC/include/network/net_main.h \
     $$SRC/include/network/net_msg.h \
+    $$SRC/include/partition.h \
     $$SRC/include/r_util.h \
     $$SRC/include/render/r_main.h \
     $$SRC/include/render/r_things.h \
@@ -243,6 +240,7 @@ DENG_HEADERS += \
     $$SRC/include/resource/font.h \
     $$SRC/include/resource/image.h \
     $$SRC/include/resource/lumpcache.h \
+    $$SRC/include/resource/maparchive.h \
     $$SRC/include/resource/material.h \
     $$SRC/include/resource/materialarchive.h \
     $$SRC/include/resource/materialmanifest.h \
@@ -324,7 +322,6 @@ SOURCES += \
     src/server/sv_sound.cpp \
     $$SRC/src/api_uri.cpp \
     $$SRC/src/audio/s_cache.cpp \
-    $$SRC/src/audio/s_environ.cpp \
     $$SRC/src/audio/s_logic.cpp \
     $$SRC/src/audio/s_main.cpp \
     $$SRC/src/audio/s_wav.cpp \
@@ -346,7 +343,6 @@ SOURCES += \
     $$SRC/src/def_main.cpp \
     $$SRC/src/def_read.cpp \
     $$SRC/src/dualstring.cpp \
-    $$SRC/src/edit_bsp.cpp \
     $$SRC/src/edit_map.cpp \
     $$SRC/src/filesys/file.cpp \
     $$SRC/src/filesys/filehandle.cpp \
@@ -365,19 +361,19 @@ SOURCES += \
     $$SRC/src/m_misc.cpp \
     $$SRC/src/m_nodepile.cpp \
     $$SRC/src/map/blockmap.cpp \
-    $$SRC/src/map/bsp/hplane.cpp \
     $$SRC/src/map/bsp/partitioner.cpp \
     $$SRC/src/map/bsp/superblockmap.cpp \
     $$SRC/src/map/bspbuilder.cpp \
     $$SRC/src/map/bspleaf.cpp \
     $$SRC/src/map/bspnode.cpp \
     $$SRC/src/map/dam_file.cpp \
-    $$SRC/src/map/dam_main.cpp \
     $$SRC/src/map/entitydatabase.cpp \
     $$SRC/src/map/gamemap.cpp \
     $$SRC/src/map/generators.cpp \
     $$SRC/src/map/hedge.cpp \
-    $$SRC/src/map/linedef.cpp \
+    $$SRC/src/map/line.cpp \
+    $$SRC/src/map/linesighttest.cpp \
+    $$SRC/src/map/mapelement.cpp \
     $$SRC/src/map/p_data.cpp \
     $$SRC/src/map/p_dmu.cpp \
     $$SRC/src/map/p_intercept.cpp \
@@ -385,16 +381,14 @@ SOURCES += \
     $$SRC/src/map/p_mobj.cpp \
     $$SRC/src/map/p_particle.cpp \
     $$SRC/src/map/p_players.cpp \
-    $$SRC/src/map/p_polyobjs.cpp \
-    $$SRC/src/map/p_sight.cpp \
     $$SRC/src/map/p_think.cpp \
     $$SRC/src/map/p_ticker.cpp \
     $$SRC/src/map/plane.cpp \
     $$SRC/src/map/polyobj.cpp \
     $$SRC/src/map/propertyvalue.cpp \
     $$SRC/src/map/r_world.cpp \
+    $$SRC/src/map/reject.cpp \
     $$SRC/src/map/sector.cpp \
-    $$SRC/src/map/sidedef.cpp \
     $$SRC/src/map/surface.cpp \
     $$SRC/src/map/vertex.cpp \
     $$SRC/src/network/masterserver.cpp \
@@ -416,6 +410,7 @@ SOURCES += \
     $$SRC/src/resource/compositetexture.cpp \
     $$SRC/src/resource/hq2x.cpp \
     $$SRC/src/resource/image.cpp \
+    $$SRC/src/resource/maparchive.cpp \
     $$SRC/src/resource/material.cpp \
     $$SRC/src/resource/materialarchive.cpp \
     $$SRC/src/resource/materialmanifest.cpp \

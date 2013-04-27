@@ -377,30 +377,27 @@ int Gridmap_Iterate(Gridmap* gm, Gridmap_IterateCallback callback)
 int Gridmap_BlockIterate2(Gridmap* gm, const GridmapCellBlock* block_,
     Gridmap_IterateCallback callback, void* parameters)
 {
-    GridmapCellBlock block;
-    TreeCell* tree;
-    GridmapCoord x, y;
-    int result;
-    assert(gm);
+    DENG_ASSERT(gm != 0);
 
     // Clip coordinates to our boundary dimensions (the underlying
     // Quadtree is normally larger than this so we cannot use the
     // dimensions of the root cell here).
-    memcpy(&block, block_, sizeof block);
+    GridmapCellBlock block;
+    std::memcpy(&block, block_, sizeof block);
     Gridmap_ClipBlock(gm, &block);
 
     // Traverse cells in the block.
     /// @todo Optimize: We could avoid repeatedly descending the tree...
-    for(y = block.minY; y <= block.maxY; ++y)
-    for(x = block.minX; x <= block.maxX; ++x)
+    for(GridmapCoord y = block.minY; y <= block.maxY; ++y)
+    for(GridmapCoord x = block.minX; x <= block.maxX; ++x)
     {
-        tree = findLeaf(gm, x, y, false);
+        TreeCell *tree = findLeaf(gm, x, y, false);
         if(!tree || !tree->userData) continue;
 
-        result = callback(tree->userData, parameters);
+        int result = callback(tree->userData, parameters);
         if(result) return result;
     }
-    return false;
+    return false; // Continue iteration.
 }
 
 int Gridmap_BlockIterate(Gridmap* gm, const GridmapCellBlock* block,

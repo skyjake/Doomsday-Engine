@@ -26,17 +26,25 @@
 
 #include "doomsday.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
   thinker_t thinker;
-  void* dmuObject; ///< Affected DMU object (either a sector or a sidedef).
+  void* dmuObject; ///< Affected DMU object (either a sector or a side).
   int elementBits; ///< Identifies which subelements of the dmuObject are affected.
   float offset[2]; ///< [x, y] scroll vector delta.
 } scroll_t;
 
 void T_Scroll(scroll_t* scroll);
 
-scroll_t* P_SpawnSideMaterialOriginScroller(SideDef* side, short special);
+scroll_t* P_SpawnSideMaterialOriginScroller(Side* side, short special);
 
 scroll_t* P_SpawnSectorMaterialOriginScroller(Sector* sector, uint planeId, short special);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBCOMMON_THINKER_SCROLL_H

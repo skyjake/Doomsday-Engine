@@ -62,7 +62,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     thid_t              mobjId = 0;
     Sector             *sector = NULL;
     Polyobj            *poly = NULL;
-    SideDef            *side = NULL;
+    Line::Side         *side = NULL;
     mobj_t             *emitter = NULL;
     float               volume = 1;
 
@@ -95,48 +95,44 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     }
     else if(type == DT_SECTOR_SOUND) // Plane as emitter
     {        
-        uint index = deltaId;
+        int index = deltaId;
 
-        if(index < NUM_SECTORS)
+        if(index >= 0 && index < theMap->sectorCount())
         {
-            sector = SECTOR_PTR(index);
+            sector = theMap->sectors().at(index);
         }
         else
         {
-            LOG_WARNING("Cl_ReadSoundDelta2: DT_SECTOR_SOUND contains invalid sector index %u, skipping") << index;
+            LOG_WARNING("Cl_ReadSoundDelta2: DT_SECTOR_SOUND contains invalid sector index %d, skipping") << index;
             skip = true;
         }
     }
-    else if(type == DT_SIDE_SOUND) // SideDef section as emitter
+    else if(type == DT_SIDE_SOUND) // Side section as emitter
     {
-        uint index = deltaId;
+        int index = deltaId;
 
-        if(index < NUM_SIDEDEFS)
+        side = theMap->sideByIndex(index);
+        if(!side)
         {
-            side = SIDE_PTR(index);
-        }
-        else
-        {
-            LOG_WARNING("Cl_ReadSoundDelta2: DT_SIDE_SOUND contains invalid side index %u, skipping") << index;
+            LOG_WARNING("Cl_ReadSoundDelta2: DT_SIDE_SOUND contains invalid side index %d, skipping") << index;
             skip = true;
         }
     }
     else // DT_POLY_SOUND
     {
-        uint index = deltaId;
+        int index = deltaId;
 
-        LOG_DEBUG("DT_POLY_SOUND: poly=%i") << index;
+        LOG_DEBUG("DT_POLY_SOUND: poly=%d") << index;
 
-        if(index < NUM_POLYOBJS)
+        if(index >= 0 && index < theMap->polyobjCount())
         {
-            DENG_ASSERT(theMap);
-            poly = GameMap_PolyobjByID(theMap, index);
+            poly = theMap->polyobjs().at(index);
             emitter = (mobj_t *) poly;
         }
         else
         {
             Con_Message("Cl_ReadSoundDelta2: DT_POLY_SOUND contains "
-                        "invalid polyobj num %u. Skipping.", index);
+                        "invalid polyobj index %d. Skipping.", index);
             skip = true;
         }
     }
@@ -149,30 +145,30 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 
     if(type == DT_SECTOR_SOUND)
     {
-        // Select the origin for the sound.
+        // Select the emitter for the sound.
         if(flags & SNDDF_PLANE_FLOOR)
         {
-            emitter = (mobj_t*) &sector->SP_floorsurface.base;
+            emitter = (mobj_t *) &sector->floor().soundEmitter();
         }
         else if(flags & SNDDF_PLANE_CEILING)
         {
-            emitter = (mobj_t*) &sector->SP_ceilsurface.base;
+            emitter = (mobj_t *) &sector->ceiling().soundEmitter();
         }
         else
         {
-            // Must be the sector's sound origin, then.
-            emitter = (mobj_t*) &sector->base;
+            // Must be the sector's sound emitter, then.
+            emitter = (mobj_t *) &sector->soundEmitter();
         }
     }
 
     if(type == DT_SIDE_SOUND)
     {
         if(flags & SNDDF_SIDE_MIDDLE)
-            emitter = (mobj_t*) &side->SW_middlesurface.base;
+            emitter = (mobj_t *) &side->middleSoundEmitter();
         else if(flags & SNDDF_SIDE_TOP)
-            emitter = (mobj_t*) &side->SW_topsurface.base;
+            emitter = (mobj_t *) &side->topSoundEmitter();
         else if(flags & SNDDF_SIDE_BOTTOM)
-            emitter = (mobj_t*) &side->SW_bottomsurface.base;
+            emitter = (mobj_t *) &side->bottomSoundEmitter();
     }
 
     if(flags & SNDDF_VOLUME)
@@ -253,7 +249,7 @@ ifdef _DEBUG
 Con_Printf("Cl_ReadSoundDelta2(%i): Start snd=%i [%x] vol=%.2f",
            type, sound, flags, volume);
 if(cmo) Con_Printf(", mo=%i\n", cmo->mo.thinker.id);
-else if(sector) Con_Printf(", sector=%i\n", GET_SECTOR_IDX(sector));
+else if(sector) Con_Printf(", sector=%i\n", theMap->sectorIndex(sector));
 else if(poly) Con_Printf(", poly=%i\n", GET_POLYOBJ_IDX(poly));
 else Con_Printf("\n");
 #endif
@@ -272,7 +268,7 @@ else Con_Printf("\n");
 Con_Printf("Cl_ReadSoundDelta2(%i): Stop sound %i",
            type, sound);
 if(cmo)  Con_Printf(", mo=%i\n", cmo->mo.thinker.id);
-else if(sector) Con_Printf(", sector=%i\n", GET_SECTOR_IDX(sector));
+else if(sector) Con_Printf(", sector=%i\n", theMap->sectorIndex(sector));
 else if(poly) Con_Printf(", poly=%i\n", GET_POLYOBJ_IDX(poly));
 else Con_Printf("\n");
 #endif
@@ -289,7 +285,6 @@ void Cl_Sound(void)
     int sound, volume = 127;
     coord_t pos[3];
     byte flags;
-    uint num;
     mobj_t* mo = NULL;
 
     flags = Reader_ReadByte(msgReader);
@@ -334,13 +329,13 @@ void Cl_Sound(void)
     }
     else if(flags & SNDF_SECTOR)
     {
-        num = Reader_ReadPackedUInt16(msgReader);
-        if(num >= NUM_SECTORS)
+        int num = (int)Reader_ReadPackedUInt16(msgReader);
+        if(num >= theMap->sectorCount())
         {
             Con_Message("Cl_Sound: Invalid sector number %i.", num);
             return;
         }
-        mo = (mobj_t*) &SECTOR_PTR(num)->base;
+        mo = (mobj_t *) &theMap->sectors().at(num)->soundEmitter();
         //S_StopSound(0, mo);
         S_LocalSoundAtVolume(sound, mo, volume / 127.0f);
     }

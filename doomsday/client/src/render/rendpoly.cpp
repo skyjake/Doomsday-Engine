@@ -25,6 +25,8 @@
 
 #include "color.h"
 
+using namespace de;
+
 enum RPolyDataType
 {
     RPT_VERT,
@@ -316,9 +318,9 @@ void R_FreeRendTexCoords(rtexcoord_t *rtexcoords)
     DEBUG_Message(("R_FreeRendPoly: Dangling poly ptr!\n"));
 }
 
-void Rtu_Init(rtexmapunit_t* rtu)
+void Rtu_Init(rtexmapunit_t *rtu)
 {
-    DENG_ASSERT(rtu);
+    DENG_ASSERT(rtu != 0);
     rtu->texture.gl.name    = 0;
     rtu->texture.gl.wrapS   = GL_REPEAT;
     rtu->texture.gl.wrapT   = GL_REPEAT;
@@ -330,61 +332,43 @@ void Rtu_Init(rtexmapunit_t* rtu)
     rtu->offset[0] = rtu->offset[1] = 0;
 }
 
-void Rtu_SetScale(rtexmapunit_t* rtu, float s, float t)
+void Rtu_SetScale(rtexmapunit_t *rtu, Vector2f const &st)
 {
-    DENG_ASSERT(rtu);
-    rtu->scale[0] = s;
-    rtu->scale[1] = t;
+    DENG_ASSERT(rtu != 0);
+    rtu->scale[0] = st.x;
+    rtu->scale[1] = st.y;
 }
 
-void Rtu_SetScalev(rtexmapunit_t* rtu, float const st[2])
+void Rtu_Scale(rtexmapunit_t *rtu, float scalar)
 {
-    DENG_ASSERT(st);
-    Rtu_SetScale(rtu, st[0], st[0]);
-}
-
-void Rtu_Scale(rtexmapunit_t* rtu, float scalar)
-{
-    DENG_ASSERT(rtu);
+    DENG_ASSERT(rtu != 0);
     rtu->scale[0] *= scalar;
     rtu->scale[1] *= scalar;
     rtu->offset[0] *= scalar;
     rtu->offset[1] *= scalar;
 }
 
-void Rtu_ScaleST(rtexmapunit_t* rtu, float const scalarST[2])
+void Rtu_ScaleST(rtexmapunit_t *rtu, Vector2f const &scalarST)
 {
-    DENG_ASSERT(rtu);
-    rtu->scale[0] *= scalarST[0];
-    rtu->scale[1] *= scalarST[1];
-    rtu->offset[0] *= scalarST[0];
-    rtu->offset[1] *= scalarST[1];
+    DENG_ASSERT(rtu != 0);
+    rtu->scale[0] *= scalarST.x;
+    rtu->scale[1] *= scalarST.y;
+    rtu->offset[0] *= scalarST.x;
+    rtu->offset[1] *= scalarST.y;
 }
 
-void Rtu_SetOffset(rtexmapunit_t* rtu, float s, float t)
+void Rtu_SetOffset(rtexmapunit_t *rtu, Vector2f const &st)
 {
-    DENG_ASSERT(rtu);
-    rtu->offset[0] = s;
-    rtu->offset[1] = t;
+    DENG_ASSERT(rtu != 0);
+    rtu->offset[0] = st.x;
+    rtu->offset[1] = st.y;
 }
 
-void Rtu_SetOffsetv(rtexmapunit_t* rtu, float const st[2])
+void Rtu_TranslateOffset(rtexmapunit_t *rtu, Vector2f const &st)
 {
-    DENG_ASSERT(st);
-    Rtu_SetOffset(rtu, st[0], st[1]);
-}
-
-void Rtu_TranslateOffset(rtexmapunit_t* rtu, float s, float t)
-{
-    DENG_ASSERT(rtu);
-    rtu->offset[0] += s;
-    rtu->offset[1] += t;
-}
-
-void Rtu_TranslateOffsetv(rtexmapunit_t* rtu, float const st[2])
-{
-    DENG_ASSERT(st);
-    Rtu_TranslateOffset(rtu, st[0], st[1]);
+    DENG_ASSERT(rtu != 0);
+    rtu->offset[0] += st.x;
+    rtu->offset[1] += st.y;
 }
 
 void R_DivVerts(rvertex_t* dst, rvertex_t const* src, walldivnode_t* leftDivFirst,

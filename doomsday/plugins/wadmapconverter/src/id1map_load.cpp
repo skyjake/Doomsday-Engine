@@ -55,7 +55,7 @@ size_t ElementSizeForMapLumpType(MapFormatId mapFormat, MapLumpType type)
 /**
  * Translate the line definition flags for Doomsday.
  */
-static void interpretLineDefFlags(mline_t* l, MapFormatId mapFormat)
+static void interpretLineDefFlags(mline_t *l, MapFormatId mapFormat)
 {
 #define ML_BLOCKING              1 ///< Solid, is an obstacle.
 #define ML_TWOSIDED              4 ///< Backside will not be present at all if not two sided.
@@ -118,31 +118,33 @@ static void interpretLineDefFlags(mline_t* l, MapFormatId mapFormat)
 #undef ML_BLOCKING
 }
 
-void MLine_Read(mline_t* l, Reader* reader)
+void MLine_Read(mline_t *l, int index, Reader *reader)
 {
     DENG2_ASSERT(l);
     DENG2_ASSERT(reader);
 
+    l->index = index;
+
     int idx;
     idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-    if(idx == 0xFFFF) l->v[0] = 0;
-    else              l->v[0] = idx + 1;
+    if(idx == 0xFFFF) l->v[0] = -1;
+    else              l->v[0] = idx;
 
     idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-    if(idx == 0xFFFF) l->v[1] = 0;
-    else              l->v[1] = idx + 1;
+    if(idx == 0xFFFF) l->v[1] = -1;
+    else              l->v[1] = idx;
 
     l->flags = SHORT( Reader_ReadInt16(reader) );
     l->dType = SHORT( Reader_ReadInt16(reader) );
     l->dTag  = SHORT( Reader_ReadInt16(reader) );
 
     idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-    if(idx == 0xFFFF) l->sides[RIGHT] = 0;
-    else              l->sides[RIGHT] = idx + 1;
+    if(idx == 0xFFFF) l->sides[RIGHT] = -1;
+    else              l->sides[RIGHT] = idx;
 
     idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-    if(idx == 0xFFFF) l->sides[LEFT] = 0;
-    else              l->sides[LEFT] = idx + 1;
+    if(idx == 0xFFFF) l->sides[LEFT] = -1;
+    else              l->sides[LEFT] = idx;
 
     l->aFlags       = 0;
     l->validCount   = 0;
@@ -151,19 +153,21 @@ void MLine_Read(mline_t* l, Reader* reader)
     interpretLineDefFlags(l, map->format());
 }
 
-void MLine64_Read(mline_t* l, Reader* reader)
+void MLine64_Read(mline_t *l, int index, Reader *reader)
 {
     DENG2_ASSERT(l);
     DENG2_ASSERT(reader);
 
+    l->index = index;
+
     int idx;
     idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-    if(idx == 0xFFFF) l->v[0] = 0;
-    else              l->v[0] = idx + 1;
+    if(idx == 0xFFFF) l->v[0] = -1;
+    else              l->v[0] = idx;
 
     idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-    if(idx == 0xFFFF) l->v[1] = 0;
-    else              l->v[1] = idx + 1;
+    if(idx == 0xFFFF) l->v[1] = -1;
+    else              l->v[1] = idx;
 
     l->flags = USHORT( uint16_t(Reader_ReadInt16(reader)) );
     l->d64drawFlags = Reader_ReadByte(reader);
@@ -173,12 +177,12 @@ void MLine64_Read(mline_t* l, Reader* reader)
     l->d64tag       = SHORT( Reader_ReadInt16(reader) );
 
     idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-    if(idx == 0xFFFF) l->sides[RIGHT] = 0;
-    else              l->sides[RIGHT] = idx + 1;
+    if(idx == 0xFFFF) l->sides[RIGHT] = -1;
+    else              l->sides[RIGHT] = idx;
 
     idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-    if(idx == 0xFFFF) l->sides[LEFT] = 0;
-    else              l->sides[LEFT] = idx + 1;
+    if(idx == 0xFFFF) l->sides[LEFT] = -1;
+    else              l->sides[LEFT] = idx;
 
     l->aFlags       = 0;
     l->validCount   = 0;
@@ -187,19 +191,21 @@ void MLine64_Read(mline_t* l, Reader* reader)
     interpretLineDefFlags(l, map->format());
 }
 
-void MLineHx_Read(mline_t* l, Reader* reader)
+void MLineHx_Read(mline_t *l, int index, Reader *reader)
 {
     DENG2_ASSERT(l);
     DENG2_ASSERT(reader);
 
+    l->index = index;
+
     int idx;
     idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-    if(idx == 0xFFFF) l->v[0] = 0;
-    else              l->v[0] = idx + 1;
+    if(idx == 0xFFFF) l->v[0] = -1;
+    else              l->v[0] = idx;
 
     idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-    if(idx == 0xFFFF) l->v[1] = 0;
-    else              l->v[1] = idx + 1;
+    if(idx == 0xFFFF) l->v[1] = -1;
+    else              l->v[1] = idx;
 
     l->flags = SHORT( Reader_ReadInt16(reader) );
     l->xType    = Reader_ReadByte(reader);
@@ -210,12 +216,12 @@ void MLineHx_Read(mline_t* l, Reader* reader)
     l->xArgs[4] = Reader_ReadByte(reader);
 
     idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-    if(idx == 0xFFFF) l->sides[RIGHT] = 0;
-    else              l->sides[RIGHT] = idx + 1;
+    if(idx == 0xFFFF) l->sides[RIGHT] = -1;
+    else              l->sides[RIGHT] = idx;
 
     idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-    if(idx == 0xFFFF) l->sides[LEFT] = 0;
-    else              l->sides[LEFT] = idx + 1;
+    if(idx == 0xFFFF) l->sides[LEFT] = -1;
+    else              l->sides[LEFT] = idx;
 
     l->aFlags       = 0;
     l->validCount   = 0;
@@ -224,10 +230,12 @@ void MLineHx_Read(mline_t* l, Reader* reader)
     interpretLineDefFlags(l, map->format());
 }
 
-void MSide_Read(mside_t* s, Reader* reader)
+void MSide_Read(mside_t *s, int index, Reader *reader)
 {
     DENG2_ASSERT(s);
     DENG2_ASSERT(reader);
+
+    s->index = index;
 
     s->offset[VX] = SHORT( Reader_ReadInt16(reader) );
     s->offset[VY] = SHORT( Reader_ReadInt16(reader) );
@@ -243,14 +251,16 @@ void MSide_Read(mside_t* s, Reader* reader)
     s->middleMaterial = map->addMaterialToDictionary(name, MG_WALL);
 
     int idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-    if(idx == 0xFFFF) s->sector = 0;
-    else              s->sector = idx + 1;
+    if(idx == 0xFFFF) s->sector = -1;
+    else              s->sector = idx;
 }
 
-void MSide64_Read(mside_t* s, Reader* reader)
+void MSide64_Read(mside_t *s, int index, Reader *reader)
 {
     DENG2_ASSERT(s);
     DENG2_ASSERT(reader);
+
+    s->index = index;
 
     s->offset[VX] = SHORT( Reader_ReadInt16(reader) );
     s->offset[VY] = SHORT( Reader_ReadInt16(reader) );
@@ -266,14 +276,16 @@ void MSide64_Read(mside_t* s, Reader* reader)
     s->middleMaterial = map->addMaterialToDictionary((const char*) &idx, MG_WALL);
 
     idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-    if(idx == 0xFFFF) s->sector = 0;
-    else              s->sector = idx + 1;
+    if(idx == 0xFFFF) s->sector = -1;
+    else              s->sector = idx;
 }
 
-void MSector_Read(msector_t* s, Reader* reader)
+void MSector_Read(msector_t *s, int index, Reader *reader)
 {
     DENG2_ASSERT(s);
     DENG2_ASSERT(reader);
+
+    s->index = index;
 
     s->floorHeight  = SHORT( Reader_ReadInt16(reader) );
     s->ceilHeight   = SHORT( Reader_ReadInt16(reader) );
@@ -290,10 +302,12 @@ void MSector_Read(msector_t* s, Reader* reader)
     s->tag          = SHORT( Reader_ReadInt16(reader) );
 }
 
-void MSector64_Read(msector_t* s, Reader* reader)
+void MSector64_Read(msector_t *s, int index, Reader *reader)
 {
     DENG2_ASSERT(s);
     DENG2_ASSERT(reader);
+
+    s->index = index;
 
     s->floorHeight  = SHORT( Reader_ReadInt16(reader));
     s->ceilHeight   = SHORT( Reader_ReadInt16(reader) );
@@ -325,7 +339,7 @@ void MSector64_Read(msector_t* s, Reader* reader)
 
 #define ANG45               0x20000000
 
-void MThing_Read(mthing_t* t, Reader* reader)
+void MThing_Read(mthing_t *t, int index, Reader *reader)
 {
 /**
  * DOOM Thing flags:
@@ -344,6 +358,8 @@ void MThing_Read(mthing_t* t, Reader* reader)
 
     DENG2_ASSERT(t);
     DENG2_ASSERT(reader);
+
+    t->index = index;
 
     t->origin[VX]   = SHORT( Reader_ReadInt16(reader) );
     t->origin[VY]   = SHORT( Reader_ReadInt16(reader) );
@@ -376,7 +392,7 @@ void MThing_Read(mthing_t* t, Reader* reader)
 #undef MTF_EASY
 }
 
-void MThing64_Read(mthing_t* t, Reader* reader)
+void MThing64_Read(mthing_t *t, int index, Reader *reader)
 {
 /**
  * DOOM64 Thing flags:
@@ -399,6 +415,8 @@ void MThing64_Read(mthing_t* t, Reader* reader)
 
     DENG2_ASSERT(t);
     DENG2_ASSERT(reader);
+
+    t->index = index;
 
     t->origin[VX]   = SHORT( Reader_ReadInt16(reader) );
     t->origin[VY]   = SHORT( Reader_ReadInt16(reader) );
@@ -437,7 +455,7 @@ void MThing64_Read(mthing_t* t, Reader* reader)
 #undef MTF_EASY
 }
 
-void MThingHx_Read(mthing_t* t, Reader* reader)
+void MThingHx_Read(mthing_t *t, int index, Reader *reader)
 {
 /**
  * Hexen Thing flags:
@@ -464,6 +482,8 @@ void MThingHx_Read(mthing_t* t, Reader* reader)
 
     DENG2_ASSERT(t);
     DENG2_ASSERT(reader);
+
+    t->index = index;
 
     t->xTID         = SHORT( Reader_ReadInt16(reader) );
     t->origin[VX]   = SHORT( Reader_ReadInt16(reader) );
@@ -528,10 +548,12 @@ void MThingHx_Read(mthing_t* t, Reader* reader)
 #undef MTF_EASY
 }
 
-void SurfaceTint_Read(surfacetint_t* t, Reader* reader)
+void SurfaceTint_Read(surfacetint_t *t, int index, Reader *reader)
 {
     DENG2_ASSERT(t);
     DENG2_ASSERT(reader);
+
+    t->index = index;
 
     t->rgb[0]   = Reader_ReadByte(reader) / 255.f;
     t->rgb[1]   = Reader_ReadByte(reader) / 255.f;

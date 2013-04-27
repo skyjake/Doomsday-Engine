@@ -1,6 +1,4 @@
-/**
- * @file polyobj.h
- * Moveable Polygonal Map Objects (Polyobj). @ingroup map
+/** @file polyobj.h World Map Polyobj.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -20,79 +18,143 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_MAP_POLYOBJ_H
-#define LIBDENG_MAP_POLYOBJ_H
+#ifndef DENG_WORLD_MAP_POLYOBJ
+#define DENG_WORLD_MAP_POLYOBJ
+
+#include <QList>
+
+#include <de/Vector>
 
 #include "dd_share.h"
 
-// We'll use the base polyobj template directly as our polyobj.
-typedef struct polyobj_s {
-    DD_BASE_POLYOBJ_ELEMENTS()
-} Polyobj;
+class Line;
+class Vertex;
 
+/// Storage needed for a polyobj_s instance, plus the user data section (if any).
 #define POLYOBJ_SIZE        gx.polyobjSize
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
- * Translate the origin in the map coordinate space.
+ * World map polyobj. Moveable Polygonal Map-Object (Polyobj).
  *
- * @param po     Polyobj instance.
- * @param delta  Movement delta on the X|Y plane of the map coordinate space.
+ * @ingroup map
  */
-boolean Polyobj_Move(Polyobj* po, coord_t delta[2]);
-boolean Polyobj_MoveXY(Polyobj* po, coord_t x, coord_t y);
+typedef struct polyobj_s
+{
+public:
+    typedef QList<Line *> Lines;
+    typedef QList<Vertex *> Vertexes;
 
-/**
- * Rotate in the map coordinate space.
- *
- * @param po     Polyobj instance.
- * @param angle  World angle delta.
- */
-boolean Polyobj_Rotate(Polyobj* po, angle_t angle);
+public:
+    static void setCollisionCallback(void (*func) (struct mobj_s *mobj, void *line, void *polyobj));
 
-/**
- * Update the Polyobj's map space axis-aligned bounding box to encompass
- * the points defined by it's vertices.
- *
- * @param polyobj  Polyobj instance.
- */
-void Polyobj_UpdateAABox(Polyobj* polyobj);
+public:
+    DD_BASE_POLYOBJ_ELEMENTS()
 
-/**
- * Update the Polyobj's map space surface tangents according to the points
- * defined by the associated LineDef's vertices.
- *
- * @param polyobj  Polyobj instance.
- */
-void Polyobj_UpdateSurfaceTangents(Polyobj* polyobj);
+    polyobj_s(de::Vector2d const &origin = de::Vector2d(0, 0));
 
-/**
- * Iterate over the lines of the Polyobj making a callback for each.
- * Iteration ends when all lines have been visited or @a callback
- * returns non-zero.
- *
- * Caller should increment validCount if necessary before calling this
- * function as it is used to prevent repeated processing of lines.
- *
- * @param po          Polyobj instance.
- * @param callback    Callback function ptr.
- * @param paramaters  Passed to the callback.
- *
- * @return  @c 0 iff iteration completed wholly.
- */
-int Polyobj_LineIterator(Polyobj* polyobj,
-    int (*callback) (LineDef*, void* paramaters), void* paramaters);
+    /// @note: Does nothing about the user data section.
+    ~polyobj_s();
 
-#if 0
-boolean Polyobj_GetProperty(const Polyobj* po, setargs_t* args);
-boolean Polyobj_SetProperty(Polyobj* po, const setargs_t* args);
-#endif
+    /**
+     * Provides access to the list of Lines for the polyobj.
+     */
+    Lines const &lines() const;
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+    /**
+     * Returns the total number of Lines for the polyobj.
+     */
+    inline uint lineCount() const { return lines().count(); }
 
-#endif // LIBDENG_MAP_POLYOB_H
+    /**
+     * To be called once all Lines have been added in order to compile the list
+     * of unique vertexes for the polyobj. A vertex referenced by multiple lines
+     * is only included once in this list.
+     */
+    void buildUniqueVertexes();
+
+    /**
+     * Provides access to the list of unique vertexes for the polyobj.
+     *
+     * @see buildUniqueVertex()
+     */
+    Vertexes const &uniqueVertexes() const;
+
+    /**
+     * Returns the total number of unique Vertexes for the polyobj.
+     *
+     * @see buildUniqueVertexes()
+     */
+    inline uint uniqueVertexCount() const { return uniqueVertexes().count(); }
+
+    /**
+     * Update the original coordinates of all vertexes using the current coordinate
+     * values. To be called once initialization has completed to finalize the polyobj.
+     *
+     * @pre Unique vertex list has already been built.
+     *
+     * @see buildUniqueVertexes()
+     */
+    void updateOriginalVertexCoords();
+
+    /**
+     * Translate the origin of the polyobj in the map coordinate space.
+     *
+     * @param delta  Movement delta on the X|Y plane.
+     */
+    bool move(de::Vector2d const &delta);
+
+    /// @copydoc move()
+    inline bool move(coord_t x, coord_t y) {
+        return move(de::Vector2d(x, y));
+    }
+
+    /**
+     * Rotate the angle of the polyobj in the map coordinate space.
+     *
+     * @param angle  World angle delta.
+     */
+    bool rotate(angle_t angle);
+
+    /**
+     * Update the axis-aligned bounding box for the polyobj (map coordinate
+     * space) to encompass the points defined by it's vertices.
+     *
+     * @todo Should be private.
+     */
+    void updateAABox();
+
+    /**
+     * Update the tangent space vectors for all surfaces of the polyobj,
+     * according to the points defined by the relevant Line's vertices.
+     */
+    void updateSurfaceTangents();
+
+    /**
+     * Change the tag associated with the polyobj.
+     *
+     * @param newTag  New tag.
+     */
+    void setTag(int newTag);
+
+    /**
+     * Change the associated sequence type of the polyobj.
+     *
+     * @param newType  New sequence type.
+     */
+    void setSequenceType(int newType);
+
+    /**
+     * Returns the original index of the polyobj.
+     */
+    int indexInMap() const;
+
+    /**
+     * Change the original index of the polyobj.
+     *
+     * @param newIndex  New original index.
+     */
+    void setIndexInMap(int newIndex);
+
+} Polyobj;
+
+#endif // DENG_WORLD_MAP_POLYOBJ

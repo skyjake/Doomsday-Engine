@@ -62,7 +62,7 @@ xline_t* xlines;
 // If true we are in the process of setting up a map
 boolean mapSetup;
 
-xline_t* P_ToXLine(LineDef* line)
+xline_t* P_ToXLine(Line* line)
 {
     if(!line) return NULL;
 
@@ -77,15 +77,15 @@ xline_t* P_ToXLine(LineDef* line)
     }
 }
 
-xline_t* P_GetXLine(uint idx)
+xline_t* P_GetXLine(int idx)
 {
-    if(idx >= numlines) return NULL;
+    if(idx < 0 || idx >= numlines) return 0;
     return &xlines[idx];
 }
 
-void P_SetLinedefAutomapVisibility(int player, uint lineIdx, boolean visible)
+void P_SetLineAutomapVisibility(int player, int lineIdx, boolean visible)
 {
-    LineDef* line = P_ToPtr(DMU_LINEDEF, lineIdx);
+    Line* line = P_ToPtr(DMU_LINE, lineIdx);
     xline_t* xline;
     if(!line || P_IsDummy(line)) return;
 
@@ -132,11 +132,9 @@ xsector_t* P_ToXSectorOfBspLeaf(BspLeaf* bspLeaf)
     }
 }
 
-xsector_t* P_GetXSector(uint index)
+xsector_t* P_GetXSector(int index)
 {
-    if(index >= numsectors)
-        return NULL;
-
+    if(index < 0 || index >= numsectors) return 0;
     return &xsectors[index];
 }
 
@@ -151,7 +149,7 @@ void P_SetupForMapData(int type, uint num)
             xsectors = NULL;
         break;
 
-    case DMU_LINEDEF:
+    case DMU_LINE:
         if(num > 0)
             xlines = Z_Calloc(num * sizeof(xline_t), PU_MAP, 0);
         else
@@ -193,7 +191,7 @@ int applySurfaceColor(void* obj, void* context)
 
 #define LTF_SWAPCOLORS          4
 
-    LineDef* li = (LineDef*) obj;
+    Line* li = (Line*) obj;
     applysurfacecolorparams_t* params = (applysurfacecolorparams_t*) context;
     byte dFlags = P_GetGMOByte(MO_XLINEDEF, P_ToIndex(li), MO_DRAWFLAGS);
     byte tFlags = P_GetGMOByte(MO_XLINEDEF, P_ToIndex(li), MO_TEXFLAGS);
@@ -201,7 +199,7 @@ int applySurfaceColor(void* obj, void* context)
     if((dFlags & LDF_BLEND) &&
        params->frontSec == P_GetPtrp(li, DMU_FRONT_SECTOR))
     {
-        SideDef* side = P_GetPtrp(li, DMU_SIDEDEF0);
+        Side* side = P_GetPtrp(li, DMU_FRONT);
 
         if(side)
         {
@@ -225,7 +223,7 @@ int applySurfaceColor(void* obj, void* context)
     if((dFlags & LDF_BLEND) &&
        params->frontSec == P_GetPtrp(li, DMU_BACK_SECTOR))
     {
-        SideDef* side = P_GetPtrp(li, DMU_SIDEDEF1);
+        Side* side = P_GetPtrp(li, DMU_BACK);
 
         if(side)
         {
@@ -378,7 +376,7 @@ static boolean checkMapSpotAutoSpawn(mapspot_t const *spot)
 
 static void initXLineDefs(void)
 {
-    uint i;
+    int i;
 
     for(i = 0; i < numlines; ++i)
     {
@@ -405,7 +403,7 @@ static void initXLineDefs(void)
 
 static void initXSectors(void)
 {
-    uint i;
+    int i;
 
     for(i = 0; i < numsectors; ++i)
     {
@@ -431,7 +429,7 @@ static void initXSectors(void)
         getSurfaceColor(TOLIGHTIDX(P_GetGMOShort(MO_XSECTOR, i, MO_WALLTOPCOLOR)), params.topColor);
         getSurfaceColor(TOLIGHTIDX(P_GetGMOShort(MO_XSECTOR, i, MO_WALLBOTTOMCOLOR)), params.bottomColor);
 
-        P_Iteratep(sec, DMU_LINEDEF, &params, applySurfaceColor);
+        P_Iteratep(sec, DMU_LINE, &params, applySurfaceColor);
         }
 #endif
     }
@@ -481,7 +479,7 @@ static void loadMapSpots(void)
         // Sound sequence origin?
         if(spot->doomEdNum >= 1400 && spot->doomEdNum < 1410)
         {
-            BspLeaf* bspLeaf = P_BspLeafAtPoint(spot->origin);
+            BspLeaf* bspLeaf = P_BspLeafAtPoint_FixedPrecision(spot->origin);
             xsector_t* xsector = P_ToXSector(P_GetPtrp(bspLeaf, DMU_SECTOR));
 
             xsector->seqType = spot->doomEdNum - 1400;
@@ -960,29 +958,29 @@ static void P_FinalizeMap(void)
     // visible due to texture repeating and interpolation.
     if(!(gameModeBits & (GM_DOOM2_HACX|GM_DOOM_CHEX)))
     {
-        uint i, k;
+        int i, k;
         Material* mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString("Textures:NUKE24"));
         Material* bottomMat, *midMat;
         float yoff;
-        SideDef* sidedef;
-        LineDef* line;
+        Side* side;
+        Line* line;
 
         for(i = 0; i < numlines; ++i)
         {
-            line = P_ToPtr(DMU_LINEDEF, i);
+            line = P_ToPtr(DMU_LINE, i);
 
             for(k = 0; k < 2; ++k)
             {
-                sidedef = P_GetPtrp(line, k == 0? DMU_SIDEDEF0 : DMU_SIDEDEF1);
-                if(sidedef)
+                side = P_GetPtrp(line, k == 0? DMU_FRONT : DMU_BACK);
+                if(side)
                 {
-                    bottomMat = P_GetPtrp(sidedef, DMU_BOTTOM_MATERIAL);
-                    midMat = P_GetPtrp(sidedef, DMU_MIDDLE_MATERIAL);
+                    bottomMat = P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
+                    midMat = P_GetPtrp(side, DMU_MIDDLE_MATERIAL);
 
                     if(bottomMat == mat && midMat == NULL)
                     {
-                        yoff = P_GetFloatp(sidedef, DMU_BOTTOM_MATERIAL_OFFSET_Y);
-                        P_SetFloatp(sidedef, DMU_BOTTOM_MATERIAL_OFFSET_Y, yoff + 1.0f);
+                        yoff = P_GetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y);
+                        P_SetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y, yoff + 1.0f);
                     }
                 }
             }
@@ -1071,7 +1069,7 @@ const char* P_GetMapAuthor(boolean supressGameAuthor)
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 void P_FindSecrets(void)
 {
-    uint i;
+    int i;
 
     totalSecret = 0;
 
@@ -1090,7 +1088,7 @@ void P_FindSecrets(void)
     // Find secret lines.
     for(i = 0; i < numlines; ++i)
     {
-        LineDef* line  = P_ToPtr(DMU_LINEDEF, i);
+        Line* line  = P_ToPtr(DMU_LINE, i);
         xline_t* xline = P_ToXLine(line);
 
         if(xline->special != 994) continue;
@@ -1103,7 +1101,7 @@ void P_FindSecrets(void)
 
 void P_SpawnSectorMaterialOriginScrollers(void)
 {
-    uint i;
+    int i;
 
     // Clients do not spawn material origin scrollers on their own.
     if(IS_CLIENT) return;
@@ -1122,20 +1120,20 @@ void P_SpawnSectorMaterialOriginScrollers(void)
 
 void P_SpawnSideMaterialOriginScrollers(void)
 {
-    uint i;
+    int i;
 
     // Clients do not spawn material origin scrollers on their own.
     if(IS_CLIENT) return;
 
     for(i = 0; i < numlines; ++i)
     {
-        LineDef* line  = P_ToPtr(DMU_LINEDEF, i);
+        Line* line  = P_ToPtr(DMU_LINE, i);
         xline_t* xline = P_ToXLine(line);
-        SideDef* frontSide;
+        Side* frontSide;
 
         if(!xline->special) continue;
 
-        frontSide = P_GetPtrp(line, DMU_SIDEDEF0);
+        frontSide = P_GetPtrp(line, DMU_FRONT);
         P_SpawnSideMaterialOriginScroller(frontSide, xline->special);
     }
 }

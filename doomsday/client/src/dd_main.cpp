@@ -54,7 +54,6 @@
 #include "de_render.h"
 #include "de_audio.h"
 #include "de_ui.h"
-#include "de_bsp.h"
 #include "de_edit.h"
 #include "de_filesys.h"
 #include "de_resource.h"
@@ -160,14 +159,17 @@ static size_t numSessionResourceFileList;
 extern GETGAMEAPI GetGameAPI;
 #endif
 
-// The Game collection.
-static de::Games *games;
+// The app's Game collection.
+static Games *games;
 
-// The Material collection.
-static de::Materials *materials;
+// The app's MapArchive.
+static MapArchive mapArchive;
 
-// The Texture collection.
-static de::Textures* textures;
+// The app's global Material collection.
+static Materials *materials;
+
+// The app's global Texture collection.
+static Textures* textures;
 
 #ifdef __CLIENT__
 
@@ -541,6 +543,11 @@ void DD_CreateFileSystemSchemes()
     }
 }
 
+MapArchive &App_MapArchive()
+{
+    return mapArchive;
+}
+
 Textures &App_Textures()
 {
     if(!textures) throw Error("App_Textures", "Textures collection not yet initialized");
@@ -651,8 +658,8 @@ void DD_Register(void)
     Materials::consoleRegister();
     Textures::consoleRegister();
     Net_Register();
-    DAM_Register();
-    BspBuilder_Register();
+    MapArchive::consoleRegister();
+    MPE_Register();
     FI_Register();
 }
 
@@ -884,8 +891,6 @@ static int DD_BeginGameChangeWorker(void* parameters)
 
     if(p->initiatedBusyMode)
         Con_SetProgress(100);
-
-    DAM_Init();
 
     if(p->initiatedBusyMode)
     {
@@ -1476,16 +1481,23 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
             ddpl->extraLight = 0;
         }
 
-        // If a map was loaded; unload it.
-        if(theMap)
+#ifdef __CLIENT__
+        if(isClient)
         {
-            GameMap_ClMobjReset(theMap);
+            // If a map was loaded; unload it.
+            if(theMap)
+            {
+                theMap->clMobjReset();
+            }
+            // Clear player data, too, since we just lost all clmobjs.
+            Cl_InitPlayers();
         }
-        // Clear player data, too, since we just lost all clmobjs.
-        Cl_InitPlayers();
+#endif
 
-        P_SetCurrentMap(0);
+        // Most memory is allocated from the zone.
+        //Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
         Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);
+        theMap = 0;
 
         P_ShutdownMapEntityDefs();
 
@@ -2396,7 +2408,8 @@ int DD_GetInteger(int ddvalue)
     case DD_MAP_MUSIC: {
         if(GameMap *map = theMap)
         {
-            if(ded_mapinfo_t *mapInfo = Def_GetMapInfo(GameMap_Uri(map)))
+            de::Uri mapUri = map->uri();
+            if(ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri)))
             {
                 return Def_GetMusicNum(mapInfo->music);
             }
@@ -2429,9 +2442,10 @@ void DD_SetInteger(int ddvalue, int parm)
  * Get a pointer to the value of a variable. Not all variables support
  * this. Added for 64-bit support.
  */
-void* DD_GetVariable(int ddvalue)
+#undef DD_GetVariable
+void *DD_GetVariable(int ddvalue)
 {
-    static uint valueU;
+    static int value;
     static float valueF;
     static double valueD;
 
@@ -2440,37 +2454,9 @@ void* DD_GetVariable(int ddvalue)
     case DD_GAME_EXPORTS:
         return &gx;
 
-    case DD_SECTOR_COUNT:
-        valueU = theMap? GameMap_SectorCount(theMap) : 0;
-        return &valueU;
-
-    case DD_LINE_COUNT:
-        valueU = theMap? GameMap_LineDefCount(theMap) : 0;
-        return &valueU;
-
-    case DD_SIDE_COUNT:
-        valueU = theMap? GameMap_SideDefCount(theMap) : 0;
-        return &valueU;
-
-    case DD_VERTEX_COUNT:
-        valueU = theMap? GameMap_VertexCount(theMap) : 0;
-        return &valueU;
-
     case DD_POLYOBJ_COUNT:
-        valueU = theMap? GameMap_PolyobjCount(theMap) : 0;
-        return &valueU;
-
-    case DD_HEDGE_COUNT:
-        valueU = theMap? GameMap_HEdgeCount(theMap) : 0;
-        return &valueU;
-
-    case DD_BSPLEAF_COUNT:
-        valueU = theMap? GameMap_BspLeafCount(theMap) : 0;
-        return &valueU;
-
-    case DD_BSPNODE_COUNT:
-        valueU = theMap? GameMap_BspNodeCount(theMap) : 0;
-        return &valueU;
+        value = theMap? theMap->polyobjCount() : 0;
+        return &value;
 
     case DD_TRACE_ADDRESS:
         /// @todo Do not cast away const.
@@ -2482,7 +2468,8 @@ void* DD_GetVariable(int ddvalue)
     case DD_MAP_NAME:
         if(theMap)
         {
-            ded_mapinfo_t* mapInfo = Def_GetMapInfo(GameMap_Uri(theMap));
+            de::Uri mapUri = theMap->uri();
+            ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
             if(mapInfo && mapInfo->name[0])
             {
                 int id = Def_Get(DD_DEF_TEXT, mapInfo->name, NULL);
@@ -2498,7 +2485,8 @@ void* DD_GetVariable(int ddvalue)
     case DD_MAP_AUTHOR:
         if(theMap)
         {
-            ded_mapinfo_t* mapInfo = Def_GetMapInfo(GameMap_Uri(theMap));
+            de::Uri mapUri = theMap->uri();
+            ded_mapinfo_t* mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
             if(mapInfo && mapInfo->author[0])
             {
                 return mapInfo->author;
@@ -2507,32 +2495,20 @@ void* DD_GetVariable(int ddvalue)
         return NULL;
 
     case DD_MAP_MIN_X:
-        if(theMap)
-        {
-            return &theMap->aaBox.minX;
-        }
-        return NULL;
+        valueD = theMap? theMap->bounds().minX : 0;
+        return &valueD;
 
     case DD_MAP_MIN_Y:
-        if(theMap)
-        {
-            return &theMap->aaBox.minY;
-        }
-        return NULL;
+        valueD = theMap? theMap->bounds().minY : 0;
+        return &valueD;
 
     case DD_MAP_MAX_X:
-        if(theMap)
-        {
-            return &theMap->aaBox.maxX;
-        }
-        return NULL;
+        valueD = theMap? theMap->bounds().maxX : 0;
+        return &valueD;
 
     case DD_MAP_MAX_Y:
-        if(theMap)
-        {
-            return &theMap->aaBox.maxY;
-        }
-        return NULL;
+        valueD = theMap? theMap->bounds().maxY : 0;
+        return &valueD;
 
     case DD_PSPRITE_OFFSET_X:
         return &pspOffset[VX];
@@ -2547,7 +2523,7 @@ void* DD_GetVariable(int ddvalue)
         return &cplrThrustMul;*/
 
     case DD_GRAVITY:
-        valueD = theMap? GameMap_Gravity(theMap) : 0;
+        valueD = theMap? theMap->gravity() : 0;
         return &valueD;
 
 #ifdef __CLIENT__
@@ -2614,6 +2590,7 @@ void* DD_GetVariable(int ddvalue)
  * Set the value of a variable. The pointer can point to any data, its
  * interpretation depends on the variable. Added for 64-bit support.
  */
+#undef DD_SetVariable
 void DD_SetVariable(int ddvalue, void *parm)
 {
     if(ddvalue <= DD_FIRST_VALUE || ddvalue >= DD_LAST_VALUE)
@@ -2625,19 +2602,20 @@ void DD_SetVariable(int ddvalue, void *parm)
             return;*/
 
         case DD_GRAVITY:
-            if(theMap) GameMap_SetGravity(theMap, *(coord_t*) parm);
+            if(theMap)
+                theMap->setGravity(*(coord_t*) parm);
             return;
 
         case DD_PSPRITE_OFFSET_X:
-            pspOffset[VX] = *(float*) parm;
+            pspOffset[VX] = *(float *) parm;
             return;
 
         case DD_PSPRITE_OFFSET_Y:
-            pspOffset[VY] = *(float*) parm;
+            pspOffset[VY] = *(float *) parm;
             return;
 
         case DD_PSPRITE_LIGHTLEVEL_MULTIPLIER:
-            pspLightLevelMultiplier = *(float*) parm;
+            pspLightLevelMultiplier = *(float *) parm;
             return;
 
 #ifdef __CLIENT__

@@ -36,6 +36,7 @@
 #include "gl/svg.h"
 #include "map/p_players.h"
 #include "map/p_objlink.h"
+#include "map/r_world.h"
 #include "render/vignette.h"
 #include "api_render.h"
 
@@ -510,45 +511,43 @@ static void R_UpdateMap()
 
 #ifdef __CLIENT__
     // Update all world surfaces.
-    for(uint i = 0; i < NUM_SECTORS; ++i)
+    foreach(Sector *sector, theMap->sectors())
+    foreach(Plane *plane, sector->planes())
     {
-        Sector *sec = GameMap_Sector(theMap, i);
-        for(uint j = 0; j < sec->planeCount(); ++j)
-        {
-            sec->SP_planesurface(j).update();
-        }
+        plane->surface().markAsNeedingDecorationUpdate();
     }
 
-    for(uint i = 0; i < NUM_SIDEDEFS; ++i)
+    foreach(Line *line, theMap->lines())
+    for(int i = 0; i < 2; ++i)
     {
-        SideDef *side = GameMap_SideDef(theMap, i);
-        side->SW_topsurface.update();
-        side->SW_middlesurface.update();
-        side->SW_bottomsurface.update();
+        if(!line->hasSections(i))
+            continue;
+
+        Line::Side &side = line->side(i);
+        side.top().markAsNeedingDecorationUpdate();
+        side.middle().markAsNeedingDecorationUpdate();
+        side.bottom().markAsNeedingDecorationUpdate();
     }
 
     /// @todo Is this even necessary?
-    for(uint i = 0; i < NUM_POLYOBJS; ++i)
+    foreach(Polyobj *polyobj, theMap->polyobjs())
+    foreach(Line *line, polyobj->lines())
     {
-        Polyobj *po = GameMap_PolyobjByID(theMap, i);
-        for(LineDef **lineIter = po->lines; *lineIter; lineIter++)
-        {
-            LineDef *line = *lineIter;
-            SideDef *side = line->L_frontsidedef;
-            side->SW_middlesurface.update();
-        }
+        line->front().middle().markAsNeedingDecorationUpdate();
     }
+
+    theMap->buildSurfaceLists();
+
 #endif
 
-    R_MapInitSurfaceLists();
-
     // See what mapinfo says about this map.
-    ded_mapinfo_t *mapInfo = Def_GetMapInfo(GameMap_Uri(theMap));
+    de::Uri mapUri = theMap->uri();
+    ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
     if(!mapInfo)
     {
-        struct uri_s *mapUri = Uri_NewWithPath2("*", RC_NULL);
-        mapInfo = Def_GetMapInfo(mapUri);
-        Uri_Delete(mapUri);
+        // Use the default def instead.
+        de::Uri defaultDefUri = de::Uri(RC_NULL, "*");
+        mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&defaultDefUri));
     }
 
     // Reconfigure the sky
@@ -564,17 +563,17 @@ static void R_UpdateMap()
 
     if(mapInfo)
     {
-        theMap->globalGravity     = mapInfo->gravity;
-        theMap->ambientLightLevel = mapInfo->ambient * 255;
+        theMap->_globalGravity     = mapInfo->gravity;
+        theMap->_ambientLightLevel = mapInfo->ambient * 255;
     }
     else
     {
         // No theMap info found, so set some basic stuff.
-        theMap->globalGravity = 1.0f;
-        theMap->ambientLightLevel = 0;
+        theMap->_globalGravity = 1.0f;
+        theMap->_ambientLightLevel = 0;
     }
 
-    theMap->effectiveGravity = theMap->globalGravity;
+    theMap->_effectiveGravity = theMap->_globalGravity;
 
     // Recalculate the light range mod matrix.
     Rend_CalcLightModRange();
@@ -597,7 +596,7 @@ void R_Update()
     P_UpdateParticleGens(); // Defs might've changed.
 
     // Reset the archived map cache (the available maps may have changed).
-    DAM_Init();
+    App_MapArchive().reset();
 
     for(uint i = 0; i < DDMAXPLAYERS; ++i)
     {
@@ -780,8 +779,11 @@ void R_NewSharpWorld()
         R_CheckViewerLimits(vd->lastSharp, &sharpView);
     }
 
-    R_UpdateTrackedPlanes();
-    R_UpdateSurfaceScroll();
+    if(theMap)
+    {
+        theMap->updateTrackedPlanes();
+        theMap->updateScrollingSurfaces();
+    }
 }
 
 void R_CreateMobjLinks()
@@ -801,13 +803,10 @@ void R_CreateMobjLinks()
 
 BEGIN_PROF( PROF_MOBJ_INIT_ADD );
 
-    for(uint i = 0; i < NUM_SECTORS; ++i)
+    foreach(Sector *sector, theMap->sectors())
+    for(mobj_t *iter = sector->firstMobj(); iter; iter = iter->sNext)
     {
-        Sector *sec = GameMap_Sector(theMap, i);
-        for(mobj_t *iter = sec->mobjList; iter; iter = iter->sNext)
-        {
-            R_ObjlinkCreate(iter, OT_MOBJ); // For spreading purposes.
-        }
+        R_ObjlinkCreate(iter, OT_MOBJ); // For spreading purposes.
     }
 
 END_PROF( PROF_MOBJ_INIT_ADD );
@@ -821,8 +820,8 @@ void R_BeginWorldFrame()
 
     R_ClearSectorFlags();
 
-    R_InterpolateTrackedPlanes(resetNextViewer);
-    R_InterpolateSurfaceScroll(resetNextViewer);
+    theMap->lerpTrackedPlanes(resetNextViewer);
+    theMap->lerpScrollingSurfaces(resetNextViewer);
 
     if(!freezeRLs)
     {
@@ -1371,29 +1370,32 @@ void Rend_CacheForMap()
     {
         MaterialVariantSpec const &spec = Rend_MapSurfaceMaterialSpec();
 
-        for(uint i = 0; i < NUM_SIDEDEFS; ++i)
+        foreach(Line *line, theMap->lines())
+        for(int i = 0; i < 2; ++i)
         {
-            SideDef *side = SIDE_PTR(i);
+            if(!line->hasSections(i))
+                continue;
 
-            if(side->SW_middlematerial)
-                App_Materials().cache(*side->SW_middlematerial, spec);
+            Line::Side &side = line->side(i);
+            if(side.middle().hasMaterial())
+                App_Materials().cache(side.middle().material(), spec);
 
-            if(side->SW_topmaterial)
-                App_Materials().cache(*side->SW_topmaterial, spec);
+            if(side.top().hasMaterial())
+                App_Materials().cache(side.top().material(), spec);
 
-            if(side->SW_bottommaterial)
-                App_Materials().cache(*side->SW_bottommaterial, spec);
+            if(side.bottom().hasMaterial())
+                App_Materials().cache(side.bottom().material(), spec);
         }
 
-        for(uint i = 0; i < NUM_SECTORS; ++i)
+        foreach(Sector *sector, theMap->sectors())
         {
-            Sector *sec = SECTOR_PTR(i);
-            if(!sec->lineDefCount) continue;
+            // Skip sectors with no lines as their planes will never be drawn.
+            if(!sector->lineCount()) continue;
 
-            for(uint k = 0; k < sec->planeCount(); ++k)
+            foreach(Plane *plane, sector->planes())
             {
-                if(sec->SP_planematerial(k))
-                    App_Materials().cache(*sec->SP_planematerial(k), spec);
+                if(plane->surface().hasMaterial())
+                    App_Materials().cache(plane->surface().material(), spec);
             }
         }
     }

@@ -3,7 +3,7 @@
  * Entity property value database. @ingroup map
  *
  * The EntityDatabase is used in the process of transferring mobj spawn spot
- * information and stuff like linedef action specials from the wad map loader
+ * information and stuff like line action specials from the wad map loader
  * plugin via the engine, through to the game plugin.
  *
  * The primary reason for its existence is that the engine does not know about
@@ -33,6 +33,8 @@
 #ifndef LIBDENG_MAP_ENTITYDATABASE_H
 #define LIBDENG_MAP_ENTITYDATABASE_H
 
+#include "api_mapedit.h" // valuetype_t
+
 #ifdef __cplusplus
 class PropertyValue;
 
@@ -55,13 +57,13 @@ void EntityDatabase_Delete(EntityDatabase* db);
 
 uint EntityDatabase_EntityCount(EntityDatabase* db, struct mapentitydef_s* entityDef);
 
-boolean EntityDatabase_HasEntity(EntityDatabase* db, struct mapentitydef_s* entityDef, uint elementIndex);
+boolean EntityDatabase_HasEntity(EntityDatabase* db, struct mapentitydef_s* entityDef, int elementIndex);
 
 #ifdef __cplusplus
-PropertyValue const* EntityDatabase_Property(EntityDatabase* db, struct mapentitypropertydef_s* propertyDef, uint elementIndex);
+PropertyValue const* EntityDatabase_Property(EntityDatabase* db, struct mapentitypropertydef_s* propertyDef, int elementIndex);
 #endif
 
-boolean EntityDatabase_SetProperty(EntityDatabase* db, struct mapentitypropertydef_s* propertyDef, uint elementIndex, valuetype_t valueType, void* valueAdr);
+boolean EntityDatabase_SetProperty(EntityDatabase* db, struct mapentitypropertydef_s* propertyDef, int elementIndex, valuetype_t valueType, void* valueAdr);
 
 #ifdef __cplusplus
 } // extern "C"

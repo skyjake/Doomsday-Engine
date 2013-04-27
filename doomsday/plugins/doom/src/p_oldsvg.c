@@ -366,12 +366,12 @@ static Uri *readTextureUrn(Reader *reader, char const *schemeName)
 
 static void P_v19_UnArchiveWorld(void)
 {
-    uint i, j;
+    int i, j;
     float matOffset[2];
-    Sector* sec;
-    xsector_t* xsec;
-    LineDef* line;
-    xline_t* xline;
+    Sector *sec;
+    xsector_t *xsec;
+    Line *line;
+    xline_t *xline;
 
     // Do sectors.
     for(i = 0; i < numsectors; ++i)
@@ -402,7 +402,7 @@ static void P_v19_UnArchiveWorld(void)
     // Do lines.
     for(i = 0; i < numlines; ++i)
     {
-        line = P_ToPtr(DMU_LINEDEF, i);
+        line = P_ToPtr(DMU_LINE, i);
         xline = P_ToXLine(line);
 
         xline->flags   = Reader_ReadInt16(svReader);
@@ -413,7 +413,7 @@ static void P_v19_UnArchiveWorld(void)
         {
             Uri *topTextureUrn, *bottomTextureUrn, *middleTextureUrn;
 
-            SideDef* sdef = P_GetPtrp(line, (j? DMU_SIDEDEF1:DMU_SIDEDEF0));
+            Side* sdef = P_GetPtrp(line, (j? DMU_BACK:DMU_FRONT));
             if(!sdef) continue;
 
             matOffset[VX] = (float) (Reader_ReadInt16(svReader));
@@ -857,14 +857,13 @@ static void P_v19_UnArchiveSpecials(void)
     }
 }
 
-int SV_LoadState_Dm_v19(const char* path, SaveInfo* info)
+int SV_LoadState_Dm_v19(Str const *path, SaveInfo *info)
 {
-    const saveheader_t* hdr;
+    saveheader_t const *hdr;
 
-    DENG_ASSERT(path);
-    DENG_ASSERT(info);
+    DENG_ASSERT(path != 0 && info != 0);
 
-    if(!SV_OpenFile_Dm_v19(path)) return 1;
+    if(!SV_OpenFile_Dm_v19(Str_Text(path))) return 1;
 
     svReader = SV_NewReader_Dm_v19();
 
@@ -903,7 +902,7 @@ int SV_LoadState_Dm_v19(const char* path, SaveInfo* info)
         svReader = NULL;
         SV_CloseFile_Dm_v19();
 
-        Con_Error("SV_LoadState_Dm_v19: Bad savegame (consistency test failed!)\n");
+        Con_Error("SV_LoadState_Dm_v19: Bad savegame (consistency test failed!)");
         exit(1); // Unreachable.
     }
 
@@ -977,22 +976,21 @@ static void SV_CloseFile_Dm_v19(void)
     saveBuffer = savePtr = NULL;
 }
 
-static Reader* SV_NewReader_Dm_v19(void)
+static Reader *SV_NewReader_Dm_v19(void)
 {
     if(!saveBuffer) return NULL;
     return Reader_NewWithCallbacks(sri8, sri16, sri32, NULL, srd);
 }
 
-boolean SV_RecogniseState_Dm_v19(const char* path, SaveInfo* info)
+boolean SV_RecogniseState_Dm_v19(Str const *path, SaveInfo *info)
 {
-    DENG_ASSERT(path);
-    DENG_ASSERT(info);
+    DENG_ASSERT(path != 0 && info != 0);
 
     if(!SV_ExistingFile(path)) return false;
 
-    if(SV_OpenFile_Dm_v19(path))
+    if(SV_OpenFile_Dm_v19(Str_Text(path)))
     {
-        Reader* svReader = SV_NewReader_Dm_v19();
+        Reader *svReader = SV_NewReader_Dm_v19();
         boolean result = false;
 
         /// @todo Use the 'version' string as the "magic" identifier.

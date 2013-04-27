@@ -23,6 +23,7 @@
 #include "api_map.h"
 #include "audio/s_environ.h"
 #include "map/r_world.h"
+#include "map/gamemap.h" // theMap - Remove me
 #include "r_util.h" // R_NameForBlendMode
 #include <de/math.h>
 #include <QtAlgorithms>
@@ -410,8 +411,11 @@ DENG2_PIMPL(Material)
     /// Notify interested parties of a change in world dimensions.
     void notifyDimensionsChanged()
     {
-        /// @todo Replace with a de::Observers-based mechanism.
-        R_UpdateMapSurfacesOnMaterialChange(&self);
+        if(theMap)
+        {
+            /// @todo Replace with a de::Observers-based mechanism.
+            theMap->updateSurfacesOnMaterialChange(self);
+        }
     }
 
     /// Returns @c true iff both world dimension axes are defined.
@@ -778,16 +782,9 @@ int Material::property(setargs_t &args) const
         break; }
 
     default:
-        /// @throw UnknownPropertyError  The requested property does not exist.
-        throw UnknownPropertyError("Material::property", QString("Property '%1' is unknown").arg(DMU_Str(args.prop)));
+        return MapElement::property(args);
     }
     return false; // Continue iteration.
-}
-
-int Material::setProperty(setargs_t const &args)
-{
-    /// @throw WritePropertyError  The requested property is not writable.
-    throw WritePropertyError("Material::setProperty", QString("Property '%1' is not writable").arg(DMU_Str(args.prop)));
 }
 
 bool Material::isValid() const

@@ -590,10 +590,10 @@ static int rendSeg(void* hedge_, void* data)
     const automapcfg_lineinfo_t* info;
     player_t* plr = rs.plr;
     float v1[2], v2[2];
-    LineDef* line;
+    Line* line;
     xline_t* xLine;
 
-    line = P_GetPtrp(hedge, DMU_LINEDEF);
+    line = P_GetPtrp(hedge, DMU_LINE);
     if(!line) return false;
 
     xLine = P_ToXLine(line);
@@ -606,7 +606,7 @@ static int rendSeg(void* hedge_, void* data)
     // We only want to draw twosided lines once.
     frontSector = P_GetPtrp(line, DMU_FRONT_SECTOR);
     if(frontSector // $degenleaf
-       && frontSector != P_GetPtrp(line, DMU_SIDEDEF0_OF_LINE | DMU_SECTOR)) return false;
+       && frontSector != P_GetPtrp(line, DMU_FRONT_OF_LINE | DMU_SECTOR)) return false;
 
     info = NULL;
     if((am->flags & AMF_REND_ALLLINES) || xLine->mapped[plr - players])
@@ -622,7 +622,7 @@ static int rendSeg(void* hedge_, void* data)
             /// @todo Implement an option which changes the vanilla behavior of always
             ///       coloring non-secret lines with the solid-wall color to instead
             ///       use whichever color it would be if not flagged secret.
-            if(!backSector || !P_GetPtrp(line, DMU_SIDEDEF1) || (xLine->flags & ML_SECRET))
+            if(!backSector || !P_GetPtrp(line, DMU_BACK) || (xLine->flags & ML_SECRET))
             {
                 // solid wall (well probably anyway...)
                 info = AM_GetInfoForLine(UIAutomap_Config(obj), AMO_SINGLESIDEDLINE);
@@ -694,7 +694,7 @@ static int rendBspLeafHEdges(BspLeaf* bspLeaf, void* context)
 static void renderWalls(uiwidget_t* obj, int objType, boolean addToLists)
 {
     //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    uint i;
+    int i;
     assert(obj && obj->type == GUI_AUTOMAP);
 
     // VALIDCOUNT is used to track which lines have been drawn this frame.
@@ -721,7 +721,7 @@ static void renderWalls(uiwidget_t* obj, int objType, boolean addToLists)
     }
 }
 
-static void rendLinedef(LineDef* line, float r, float g, float b, float a,
+static void rendLinedef(Line* line, float r, float g, float b, float a,
     blendmode_t blendMode, boolean drawNormal)
 {
     float length = P_GetFloatp(line, DMU_LENGTH);
@@ -757,7 +757,7 @@ static void rendLinedef(LineDef* line, float r, float g, float b, float a,
             normal[VX] = unit[VY];
             normal[VY] = -unit[VX];
 
-            // The center of the linedef.
+            // The center of the line.
             v1[VX] += (length / 2) * unit[VX];
             v1[VY] += (length / 2) * unit[VY];
 
@@ -780,10 +780,10 @@ static void rendLinedef(LineDef* line, float r, float g, float b, float a,
 }
 
 /**
- * Rather than draw the instead this will draw the linedef of which
+ * Rather than draw the instead this will draw the line of which
  * the hedge is a part.
  */
-int rendPolyobjLine(LineDef* line, void* context)
+int rendPolyobjLine(Line* line, void* context)
 {
     uiwidget_t* ob = (uiwidget_t*)context;
     guidata_automap_t* am = (guidata_automap_t*)ob->typedata;
@@ -846,7 +846,7 @@ static void rendPolyobjs(uiwidget_t* ob)
 }
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-int rendXGLinedef(LineDef* line, void* context)
+int rendXGLinedef(Line* line, void* context)
 {
     assert(line && context && ((uiwidget_t*)context)->type == GUI_AUTOMAP);
     {
@@ -1332,7 +1332,7 @@ static void renderVertexes(uiwidget_t* obj)
     //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
     float v[2], oldPointSize;
-    uint i;
+    int i;
     assert(obj->type == GUI_AUTOMAP);
 
     DGL_Color4f(.2f, .5f, 1, alpha);

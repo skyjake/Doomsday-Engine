@@ -40,6 +40,7 @@
 
 #include "audio/sys_audio.h"
 #include "map/p_players.h"
+#include "BspLeaf"
 
 // MACROS ------------------------------------------------------------------
 
@@ -162,9 +163,9 @@ void S_MapChange(void)
 
 #ifdef __CLIENT__
     Sfx_MapChange();
-#endif
 
     S_ResetReverb();
+#endif
 }
 
 void S_SetupForChangedMap(void)
@@ -181,7 +182,10 @@ void S_Reset(void)
     Sfx_Reset();
 #endif
     _api_S.StopMusic();
+
+#ifdef __CLIENT__
     S_ResetReverb();
+#endif
 }
 
 void S_StartFrame(void)
@@ -446,27 +450,27 @@ int S_ConsoleSound(int soundID, mobj_t* origin, int targetConsole)
  * @param soundID  Unique identifier of the sound to be stopped. If @c 0, ID not checked.
  * @param flags  @ref soundStopFlags
  */
-static void stopSectorSounds(ddmobj_base_t* sectorEmitter, int soundID, int flags)
+static void stopSectorSounds(ddmobj_base_t *sectorEmitter, int soundID, int flags)
 {
-    ddmobj_base_t* base;
+    ddmobj_base_t *base;
 
     if(!sectorEmitter || !flags) return;
 
     // Are we stopping with this sector's emitter?
     if(flags & SSF_SECTOR)
     {
-        _api_S.StopSound(soundID, (mobj_t*)sectorEmitter);
+        _api_S.StopSound(soundID, (mobj_t *)sectorEmitter);
     }
 
     // Are we stopping with linked emitters?
     if(!(flags & SSF_SECTOR_LINKED_SURFACES)) return;
 
     // Process the rest of the emitter chain.
-    base = (ddmobj_base_t*)sectorEmitter;
-    while((base = (ddmobj_base_t*)base->thinker.next))
+    base = sectorEmitter;
+    while((base = (ddmobj_base_t *)base->thinker.next))
     {
         // Stop sounds from this emitter.
-        _api_S.StopSound(soundID, (mobj_t*)base);
+        _api_S.StopSound(soundID, (mobj_t *)base);
     }
 }
 
@@ -492,7 +496,7 @@ void S_StopSound(int soundID, mobj_t* emitter)
 }
 
 #undef S_StopSound2
-void S_StopSound2(int soundID, mobj_t* emitter, int flags)
+void S_StopSound2(int soundID, mobj_t *emitter, int flags)
 {
     // Are we performing any special stop behaviors?
     if(emitter && flags)
@@ -500,17 +504,17 @@ void S_StopSound2(int soundID, mobj_t* emitter, int flags)
         if(emitter->thinker.id)
         {
             // Emitter is a real Mobj.
-            Sector* sector = emitter->bspLeaf->sector;
-            stopSectorSounds((ddmobj_base_t*)&sector->base, soundID, flags);
+            Sector &sector = emitter->bspLeaf->sector();
+            stopSectorSounds(&sector.soundEmitter(), soundID, flags);
             return;
         }
 
         // The head of the chain is the sector. Find it.
         while(emitter->thinker.prev)
         {
-            emitter = (mobj_t*)emitter->thinker.prev;
+            emitter = (mobj_t *)emitter->thinker.prev;
         }
-        stopSectorSounds((ddmobj_base_t*)emitter, soundID, flags);
+        stopSectorSounds((ddmobj_base_t *)emitter, soundID, flags);
         return;
     }
 

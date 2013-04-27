@@ -45,11 +45,12 @@ typedef de::StringPool::Id MaterialDictId;
 #define SIZEOF_LIGHT            (1 * 6)
 
 typedef struct mside_s {
+    int             index;
     int16_t         offset[2];
     MaterialDictId  topMaterial;
     MaterialDictId  bottomMaterial;
     MaterialDictId  middleMaterial;
-    uint            sector;
+    int             sector;
 } mside_t;
 
 /// Line sides.
@@ -69,8 +70,9 @@ typedef struct mside_s {
 #define SEQTYPE_NUMSEQ          (10)
 
 typedef struct mline_s {
-    uint            v[2];
-    uint            sides[2];
+    int             index;
+    int             v[2];
+    int             sides[2];
     int16_t         flags; ///< MF_* flags.
 
     // Analysis data:
@@ -96,6 +98,7 @@ typedef struct mline_s {
 } mline_t;
 
 typedef struct msector_s {
+    int             index;
     int16_t         floorHeight;
     int16_t         ceilHeight;
     int16_t         lightLevel;
@@ -119,6 +122,7 @@ typedef struct msector_s {
 #define PO_SPAWNCRUSH_DOOMEDNUM (3002)
 
 typedef struct mthing_s {
+    int             index;
     int16_t         origin[3];
     angle_t         angle;
     int16_t         doomEdNum;
@@ -135,15 +139,16 @@ typedef struct mthing_s {
 } mthing_t;
 
 typedef struct mpolyobj_s {
-    uint            idx;
-    uint            lineCount;
-    uint*           lineIndices; ///< 1-based.
+    int             index;
+    int             lineCount;
+    int            *lineIndices;
     int             tag;
     int             seqType;
     int16_t         anchor[2];
 } mpolyobj_t;
 
 typedef struct mlight_s {
+    int             index;
     float           rgb[3];
     int8_t          xx[3];
 } surfacetint_t;

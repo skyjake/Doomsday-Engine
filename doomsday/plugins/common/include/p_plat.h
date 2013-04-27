@@ -30,6 +30,10 @@
 #ifndef __COMMON_THINKER_PLAT_H__
 #define __COMMON_THINKER_PLAT_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
     PS_UP, // Moving up.
     PS_DOWN, // Moving down.
@@ -81,13 +85,17 @@ typedef struct plat_s {
 void        T_PlatRaise(void *platThinkerPtr);
 
 #if __JHEXEN__
-int         EV_DoPlat(LineDef* li, byte* args, plattype_e type,
+int         EV_DoPlat(Line* li, byte* args, plattype_e type,
                       int amount);
 int         P_PlatDeactivate(short tag);
 #else
-int         EV_DoPlat(LineDef* li, plattype_e type, int amount);
+int         EV_DoPlat(Line* li, plattype_e type, int amount);
 int         P_PlatActivate(short tag);
 int         P_PlatDeactivate(short tag);
+#endif
+
+#ifdef __cplusplus
+} // extern "C"
 #endif
 
 #endif

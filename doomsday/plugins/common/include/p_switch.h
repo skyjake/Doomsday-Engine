@@ -27,13 +27,17 @@
 #include "doomsday.h"
 #include "p_mobj.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define BUTTONTIME              (TICSPERSEC) // 1 second, in ticks.
 
 typedef struct {
     thinker_t thinker;
     int timer;
-    SideDef* side;
-    SideDefSection section;
+    Side* side;
+    SideSection section;
     Material* material;
 } materialchanger_t;
 
@@ -46,8 +50,8 @@ typedef struct {
 void P_InitSwitchList(void);
 
 /**
- * @param side          Sidedef where the surface to be changed is found.
- * @param ssurfaceID    Id of the sidedef surface to be changed.
+ * @param side          Side where the surface to be changed is found.
+ * @param ssurfaceID    Id of the side surface to be changed.
  * @param sound         If non-zero, play this sound, ELSE the sound to
  *                      play will be taken from the switchinfo. Note that
  *                      a sound will play iff a switch state change occurs
@@ -56,11 +60,11 @@ void P_InitSwitchList(void);
  * @param tics          @c <= 0 = A permanent change.
  *                      @c  > 0 = Change back after this many tics.
  */
-boolean P_ToggleSwitch2(SideDef* side, SideDefSection ssurfaceID, int sound,
+boolean P_ToggleSwitch2(Side* side, SideSection ssurfaceID, int sound,
     boolean silent, int tics);
 
 /**
- * @param side          Sidedef where the switch to be changed is found.
+ * @param side          Side where the switch to be changed is found.
  * @param sound         If non-zero, play this sound, ELSE the sound to
  *                      play will be taken from the switchinfo. Note that
  *                      a sound will play iff a switch state change occurs
@@ -69,14 +73,18 @@ boolean P_ToggleSwitch2(SideDef* side, SideDefSection ssurfaceID, int sound,
  * @param tics          @c <= 0 = A permanent change.
  *                      @c  > 0 = Change back after this many tics.
  */
-boolean P_ToggleSwitch(SideDef* side, int sound, boolean silent, int tics);
+boolean P_ToggleSwitch(Side* side, int sound, boolean silent, int tics);
 
 /**
- * To be called to execute any action(s) assigned to the specified LineDef's
+ * To be called to execute any action(s) assigned to the specified Line's
  * special.
  */
-boolean P_UseSpecialLine(mobj_t* activator, LineDef* line, int side);
+boolean P_UseSpecialLine(mobj_t* activator, Line* line, int side);
 
 void T_MaterialChanger(void *materialChangedThinker);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBCOMMON_PLAY_SWITCH_H

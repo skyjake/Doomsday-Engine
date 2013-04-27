@@ -1,9 +1,7 @@
-/**
- * @file vertex.h
- * Logical map vertex. @ingroup map
+/** @file vertex.h World Map Vertex.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,100 +18,151 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_MAP_VERTEX
-#define LIBDENG_MAP_VERTEX
+#ifndef DENG_WORLD_MAP_VERTEX
+#define DENG_WORLD_MAP_VERTEX
 
-#ifndef __cplusplus
-#  error "map/vertex.h requires C++"
-#endif
+#include <de/Error>
+#include <de/Observers>
+#include <de/Vector>
 
-#include <de/binangle.h>
-#include "resource/r_data.h"
-#include "map/p_dmu.h"
 #include "MapElement"
 
-#define LO_prev     link[0]
-#define LO_next     link[1]
-
-class Vertex;
-class LineDef;
-
-typedef struct lineowner_shadowvert_s {
-    coord_t inner[2];
-    coord_t extended[2];
-} lineowner_shadowvert_t;
-
-typedef struct lineowner_s {
-    LineDef *lineDef;
-    struct lineowner_s *link[2];    ///< {prev, next} (i.e. {anticlk, clk}).
-    binangle_t angle;               ///< between this and next clockwise.
-    lineowner_shadowvert_t shadowOffsets;
-} lineowner_t;
-
-typedef struct mvertex_s {
-    /// Vertex index. Always valid after loading and pruning of unused
-    /// vertices has occurred.
-    int index;
-
-    /// Reference count. When building normal node info, unused vertices
-    /// will be pruned.
-    int refCount;
-
-    /// Usually NULL, unless this vertex occupies the same location as a
-    /// previous vertex. Only used during the pruning phase.
-    Vertex *equiv;
-} mvertex_t;
+class Line;
+class LineOwner;
 
 /**
- * Vertex in the map geometry.
+ * World map geometry vertex.
+ *
+ * An @em owner in this context is any line whose start or end points are
+ * defined as the vertex.
+ *
+ * @ingroup map
  */
 class Vertex : public de::MapElement
 {
 public:
-    coord_t origin[2];
-    unsigned int numLineOwners; ///< Number of line owners.
-    lineowner_t *lineOwners;    ///< Lineowner base ptr [numlineowners] size. A doubly, circularly linked list. The base is the line with the lowest angle and the next-most with the largest angle.
-    mvertex_t buildData;
+    /**
+     * Observers to be notified when the origin changes.
+     */
+    DENG2_DEFINE_AUDIENCE(OriginChange,
+        void vertexOriginChanged(Vertex &vertex, de::Vector2d const &oldOrigin,
+                                 int changedAxes /*bit-field (0x1=X, 0x2=Y)*/))
+
+public: /// @todo Move to the map loader:
+    /// Head of the LineOwner rings (an array of [numLineOwners] size). The
+    /// owner ring is a doubly, circularly linked list. The head is the owner
+    /// with the lowest angle and the next-most being that with greater angle.
+    LineOwner *_lineOwners;
+    uint _numLineOwners; ///< Total number of line owners.
 
 public:
-    Vertex() : de::MapElement(DMU_VERTEX)
-    {
-        memset(origin, 0, sizeof(origin));
-        numLineOwners = 0;
-        lineOwners = 0;
-        memset(&buildData, 0, sizeof(buildData));
-    }
+    Vertex(de::Vector2d const &origin = de::Vector2d(0, 0));
+
+    /**
+     * Returns the origin (i.e., location) of the vertex in the map coordinate space.
+     */
+    de::Vector2d const &origin() const;
+
+    /**
+     * Returns the X axis origin (i.e., location) of the vertex in the map coordinate space.
+     */
+    inline coord_t x() const { return origin().x; }
+
+    /**
+     * Returns the Y axis origin (i.e., location) of the vertex in the map coordinate space.
+     */
+    inline coord_t y() const { return origin().y; }
+
+    /**
+     * Change the origin (i.e., location) of the vertex in the map coordinate
+     * space. The OriginChange audience is notified whenever the origin changes.
+     *
+     * @param newOrigin  New origin in map coordinate space units.
+     */
+    void setOrigin(de::Vector2d const &newOrigin);
+
+    /**
+     * @copydoc setOrigin()
+     *
+     * @param x  New X origin in map coordinate space units.
+     * @param y  New Y origin in map coordinate space units.
+     */
+    inline void setOrigin(float x, float y) { return setOrigin(de::Vector2d(x, y)); }
+
+    /**
+     * Change the specified @a component of the origin for the vertex. The OriginChange
+     * audience is notified whenever the origin changes.
+     *
+     * @param component    Index of the component axis (0=X, 1=Y).
+     * @param newPosition  New position for the origin component axis.
+     *
+     * @see setOrigin(), setX(), setY()
+     */
+    void setOriginComponent(int component, coord_t newPosition);
+
+    /**
+     * Change the position of the X axis component of the origin for the vertex.
+     * surface. The OriginChange audience is notified whenever the origin changes.
+     *
+     * @param newPosition  New X axis position for the map origin.
+     *
+     * @see setOriginComponent(), setY()
+     */
+    inline void setX(coord_t newPosition) { setOriginComponent(0, newPosition); }
+
+    /**
+     * Change the position of the Y axis component of the origin for the vertex.
+     * surface. The OriginChange audience is notified whenever the origin changes.
+     *
+     * @param newPosition  New Y axis position for the map origin.
+     *
+     * @see setOriginComponent(), setX()
+     */
+    inline void setY(coord_t newPosition) { setOriginComponent(1, newPosition); }
+
+protected:
+    int property(setargs_t &args) const;
+
+public:
+    /**
+     * Returns the total number of Line owners for the vertex.
+     *
+     * @see countLineOwners()
+     *
+     * @deprecated Will be replaced with half-edge ring iterator/rover. -ds
+     */
+    uint lineOwnerCount() const;
+
+    /**
+     * Utility function for determining the number of one and two-sided Line
+     * owners for the vertex.
+     *
+     * @note That if only the combined total is desired, it is more efficent to
+     * call lineOwnerCount() instead.
+     *
+     * @pre Line owner rings must have already been calculated.
+     * @pre @a oneSided and/or @a twoSided must have already been initialized.
+     *
+     * @param oneSided  The number of one-sided Line owners will be added to
+     *                  the pointed value if not @a NULL.
+     * @param twoSided  The number of two-sided Line owners will be added to
+     *                  the pointed value if not @c NULL.
+     *
+     * @todo Optimize: Cache this result.
+     *
+     * @deprecated Will be replaced with half-edge ring iterator/rover. -ds
+     */
+    void countLineOwners(uint *oneSided, uint *twoSided) const;
+
+    /**
+     * Returns the first Line owner for the vertex; otherwise @c 0 if unowned.
+     *
+     * @deprecated Will be replaced with half-edge ring iterator/rover. -ds
+     */
+    LineOwner *firstLineOwner() const;
+
+private:
+    DENG2_PRIVATE(d)
 };
 
-/**
- * Count the total number of linedef "owners" of this vertex. An owner in
- * this context is any linedef whose start or end vertex is this.
- *
- * @pre Vertex linedef owner rings must have already been calculated.
- * @pre @a oneSided and/or @a twoSided must have already been initialized.
- *
- * @param vtx       Vertex instance.
- * @param oneSided  Total number of one-sided lines is written here. Can be @a NULL.
- * @param twoSided  Total number of two-sided lines is written here. Can be @a NULL.
- */
-void Vertex_CountLineOwners(Vertex const *vtx, uint* oneSided, uint* twoSided);
-
-/**
- * Get a property value, selected by DMU_* name.
- *
- * @param vertex    Vertex instance.
- * @param args      Property arguments.
- * @return  Always @c 0 (can be used as an iterator).
- */
-int Vertex_GetProperty(const Vertex* vertex, setargs_t* args);
-
-/**
- * Update a property value, selected by DMU_* name.
- *
- * @param vertex    Vertex instance.
- * @param args      Property arguments.
- * @return  Always @c 0 (can be used as an iterator).
- */
-int Vertex_SetProperty(Vertex* vertex, const setargs_t* args);
-
-#endif // LIBDENG_MAP_VERTEX
+#endif // DENG_WORLD_MAP_VERTEX

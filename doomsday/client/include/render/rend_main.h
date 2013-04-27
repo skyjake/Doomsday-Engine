@@ -83,7 +83,11 @@ void Rend_ModelViewMatrix(boolean use_angles);
 
 #define Rend_PointDist2D(c) (fabs((vOrigin[VZ]-c[VY])*viewsidex - (vOrigin[VX]-c[VX])*viewsidey))
 
+/**
+ * Approximated! The Z axis aspect ratio is corrected.
+ */
 coord_t Rend_PointDist3D(coord_t const point[3]);
+
 void Rend_ApplyTorchLight(float *color, float distance);
 
 /**
@@ -95,12 +99,15 @@ void Rend_ApplyLightAdaptation(float *lightValue);
 /// Same as Rend_ApplyLightAdaptation except the delta is returned.
 float Rend_LightAdaptationDelta(float lightvalue);
 
-void Rend_CalcLightModRange(void);
-
 /**
- * Number of vertices needed for this leaf's trifan.
+ * Updates the lightModRange which is used to applify sector light to help
+ * compensate for the differences between the OpenGL lighting equation,
+ * the software Doom lighting model and the light grid (ambient lighting).
+ *
+ * The offsets in the lightRangeModTables are added to the sector->lightLevel
+ * during rendering (both positive and negative).
  */
-uint Rend_NumFanVerticesForBspLeaf(BspLeaf *bspLeaf);
+void Rend_CalcLightModRange();
 
 void R_DrawLightRange(void);
 

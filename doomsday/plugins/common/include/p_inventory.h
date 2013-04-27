@@ -30,6 +30,8 @@
 #ifndef __COMMON_INVENTORY_H__
 #define __COMMON_INVENTORY_H__
 
+#include "common.h"
+
 // Inventory Item Flags:
 #define IIF_USE_PANIC           0x1 // Item is usable when panicked.
 #define IIF_READY_ALWAYS        0x8 // Item is always "ready" (i.e., usable).
@@ -51,7 +53,11 @@ typedef struct {
     patchid_t       patchId;
 } invitem_t;
 
-extern int didUseItem;
+DENG_EXTERN_C int didUseItem;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void            P_InitInventory(void);
 void            P_ShutdownInventory(void);
@@ -72,5 +78,10 @@ inventoryitemtype_t P_InventoryReadyItem(int player);
 
 unsigned int    P_InventoryCount(int player, inventoryitemtype_t type);
 
+#ifdef __cplusplus
+} // extern "C"
 #endif
+
+#endif
+
 #endif

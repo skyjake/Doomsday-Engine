@@ -33,6 +33,7 @@
 #include "resource/image.h"
 #include "gl/texturecontent.h"
 #include "map/generators.h"
+#include "map/gamemap.h"
 
 using namespace de;
 
@@ -234,15 +235,16 @@ void Rend_ParticleInitForNewFrame(void)
     memset(visiblePtcGens, 0, GENERATORS_MAX);
 }
 
-void Rend_ParticleMarkInSectorVisible(Sector* sector)
+void Rend_ParticleMarkInSectorVisible(Sector *sector)
 {
     if(!useParticles || !theMap || !sector) return;
 
     /// @todo Do the assume sector is from the CURRENT map.
-    gens = GameMap_Generators(theMap);
+    gens = theMap->generators();
     if(!gens) return;
 
-    Generators_IterateList(gens, GameMap_SectorIndex(theMap, sector), markPtcGenVisible, NULL/*no parameters*/);
+    Generators_IterateList(gens, sector->indexInMap(),
+                           markPtcGenVisible, 0/*no parameters*/);
 }
 
 /**
@@ -313,7 +315,7 @@ static int populateSortBuffer(ptcgen_t* gen, void* parameters)
             continue;
 
         // Is the particle's sector visible?
-        if(!(pt->sector->frameFlags & SIF_VISIBLE))
+        if(!(pt->sector->frameFlags() & SIF_VISIBLE))
             continue; // No; this particle can't be seen.
 
         // Don't allow zero distance.
@@ -399,22 +401,21 @@ static int listVisibleParticles(void)
 
 static void setupModelParamsForParticle(rendmodelparams_t* params,
     const particle_t* pt, const ptcstage_t* st, const ded_ptcstage_t* dst,
-    float* origin, float dist, float size, float mark, float alpha)
+    const_pvec3f_t origin, float dist, float size, float mark, float alpha)
 {
-    BspLeaf* bspLeaf;
-    int frame;
-
     // Render the particle as a model.
     params->origin[VX] = origin[VX];
     params->origin[VY] = origin[VZ];
     params->origin[VZ] = params->gzt = origin[VY];
     params->distance = dist;
-    bspLeaf = P_BspLeafAtPointXY(origin[VX], origin[VY]);
+
+    BspLeaf *bspLeaf = theMap->bspLeafAtPoint(Vector2d(origin[VX], origin[VY]));
 
     params->extraScale = size; // Extra scaling factor.
     params->mf = &modefs[dst->model];
     params->alwaysInterpolate = true;
 
+    int frame;
     if(dst->endFrame < 0)
     {
         frame = dst->frame;
@@ -463,8 +464,8 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
         }
         else
         {
-            float lightLevel = pt->sector->lightLevel;
-            const float* secColor = R_GetSectorLightColor(pt->sector);
+            float lightLevel = pt->sector->lightLevel();
+            Vector3f const &secColor = R_GetSectorLightColor(*pt->sector);
 
             // Apply distance attenuation.
             lightLevel = R_DistAttenuateLightLevel(params->distance, lightLevel);
@@ -475,9 +476,10 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
             Rend_ApplyLightAdaptation(&lightLevel);
 
             // Determine the final ambientColor in affect.
-            params->ambientColor[CR] = lightLevel * secColor[CR];
-            params->ambientColor[CG] = lightLevel * secColor[CG];
-            params->ambientColor[CB] = lightLevel * secColor[CB];
+            for(int i = 0; i < 3; ++i)
+            {
+                params->ambientColor[i] = lightLevel * secColor[i];
+            }
         }
 
         Rend_ApplyTorchLight(params->ambientColor, params->distance);
@@ -490,6 +492,27 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
         lparams.ambientColor = params->ambientColor;
 
         params->vLightListIdx = R_CollectAffectingLights(&lparams);
+    }
+}
+
+/**
+ * Calculate a unit vector parallel to @a line.
+ *
+ * @todo No longer needed (Surface has tangent space vectors).
+ *
+ * @param unitVect  Unit vector is written here.
+ */
+static void lineUnitVector(Line const &line, pvec2f_t unitVec)
+{
+    coord_t len = M_ApproxDistance(line.direction().x, line.direction().y);
+    if(len)
+    {
+        unitVec[VX] = line.direction().x / len;
+        unitVec[VY] = line.direction().y / len;
+    }
+    else
+    {
+        unitVec[VX] = unitVec[VY] = 0;
     }
 }
 
@@ -633,7 +656,7 @@ static void renderParticles(int rtype, boolean withBlend)
                 // This is a simplified version of sectorlight (no distance
                 // attenuation or range compression).
                 if(pt->sector)
-                    color[c] *= pt->sector->lightLevel;
+                    color[c] *= pt->sector->lightLevel();
             }
         }
 
@@ -661,8 +684,8 @@ static void renderParticles(int rtype, boolean withBlend)
         glColor4fv(color);
 
         nearPlane = (pt->sector &&
-                     (FLT2FIX(pt->sector->SP_floorheight) + 2 * FRACUNIT >= pt->origin[VZ] ||
-                      FLT2FIX(pt->sector->SP_ceilheight)  - 2 * FRACUNIT <= pt->origin[VZ]));
+                     (FLT2FIX(pt->sector->floor().height()) + 2 * FRACUNIT >= pt->origin[VZ] ||
+                      FLT2FIX(pt->sector->ceiling().height())  - 2 * FRACUNIT <= pt->origin[VZ]));
         nearWall = (pt->contact && !pt->mov[VX] && !pt->mov[VY]);
 
         if(stageType == PTC_POINT || (stageType >= PTC_TEXTURE && stageType < PTC_TEXTURE + MAX_PTC_TEXTURES))
@@ -720,7 +743,6 @@ static void renderParticles(int rtype, boolean withBlend)
             else if(flatOnWall)
             {
                 vec2d_t origin, projected;
-                float line[2];
 
                 // There will be a slight approximation on the XY plane since
                 // the particles aren't that accurate when it comes to wall
@@ -728,11 +750,13 @@ static void renderParticles(int rtype, boolean withBlend)
 
                 // Calculate a new center point (project onto the wall).
                 V2d_Set(origin, FIX2FLT(pt->origin[VX]), FIX2FLT(pt->origin[VY]));
-                V2d_ProjectOnLine(projected, origin, pt->contact->L_v1origin, pt->contact->direction);
+
+                coord_t linePoint[2]     = { pt->contact->fromOrigin().x, pt->contact->fromOrigin().y };
+                coord_t lineDirection[2] = { pt->contact->direction().x, pt->contact->direction().y };
+                V2d_ProjectOnLine(projected, origin, linePoint, lineDirection);
 
                 // Move away from the wall to avoid the worst Z-fighting.
-                {
-                const double gap = -1; // 1 map unit.
+                double const gap = -1; // 1 map unit.
                 double diff[2], dist;
                 V2d_Subtract(diff, projected, origin);
                 if((dist = V2d_Length(diff)) != 0)
@@ -740,25 +764,26 @@ static void renderParticles(int rtype, boolean withBlend)
                     projected[VX] += diff[VX] / dist * gap;
                     projected[VY] += diff[VY] / dist * gap;
                 }
-                }
 
-                LineDef_UnitVector(pt->contact, line);
+                DENG_ASSERT(pt->contact != 0);
+                float unitvec[2];
+                lineUnitVector(*pt->contact, unitvec);
 
                 glTexCoord2f(0, 0);
-                glVertex3d(projected[VX] - size * line[VX], center[VY] - size,
-                           projected[VY] - size * line[VY]);
+                glVertex3d(projected[VX] - size * unitvec[VX], center[VY] - size,
+                           projected[VY] - size * unitvec[VY]);
 
                 glTexCoord2f(1, 0);
-                glVertex3d(projected[VX] - size * line[VX], center[VY] + size,
-                           projected[VY] - size * line[VY]);
+                glVertex3d(projected[VX] - size * unitvec[VX], center[VY] + size,
+                           projected[VY] - size * unitvec[VY]);
 
                 glTexCoord2f(1, 1);
-                glVertex3d(projected[VX] + size * line[VX], center[VY] + size,
-                           projected[VY] + size * line[VY]);
+                glVertex3d(projected[VX] + size * unitvec[VX], center[VY] + size,
+                           projected[VY] + size * unitvec[VY]);
 
                 glTexCoord2f(0, 1);
-                glVertex3d(projected[VX] + size * line[VX], center[VY] - size,
-                           projected[VY] + size * line[VY]);
+                glVertex3d(projected[VX] + size * unitvec[VX], center[VY] - size,
+                           projected[VY] + size * unitvec[VY]);
             }
             else
             {
@@ -844,11 +869,11 @@ static void renderPass(boolean useBlending)
     assert(!Sys_GLCheckError());
 }
 
-void Rend_RenderParticles(void)
+void Rend_RenderParticles()
 {
     if(!useParticles || !theMap) return;
 
-    gens = GameMap_Generators(theMap);
+    gens = theMap->generators();
     if(!gens) return;
 
     // No visible particles at all?
@@ -929,15 +954,14 @@ static int drawGeneratorOrigin(ptcgen_t* gen, void* parameters)
 #undef MAX_GENERATOR_DIST
 }
 
-void Rend_RenderGenerators(void)
+void Rend_RenderGenerators()
 {
-    float eye[3];
-
     if(!devDrawGenerators || !theMap) return;
 
-    gens = GameMap_Generators(theMap);
+    gens = theMap->generators();
     if(!gens) return;
 
+    float eye[3];
     eye[VX] = vOrigin[VX];
     eye[VY] = vOrigin[VZ];
     eye[VZ] = vOrigin[VY];

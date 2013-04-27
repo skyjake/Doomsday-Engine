@@ -20,6 +20,8 @@
  * Doomsday Archived Map (DAM), reader/writer.
  */
 
+#if 0
+
 #ifndef LIBDENG_ARCHIVED_MAP_FILE_H
 #define LIBDENG_ARCHIVED_MAP_FILE_H
 
@@ -50,3 +52,5 @@ boolean DAM_MapRead(GameMap* map, const char* path);
 #endif
 
 #endif /* LIBDENG_ARCHIVED_MAP_FILE_H */
+
+#endif

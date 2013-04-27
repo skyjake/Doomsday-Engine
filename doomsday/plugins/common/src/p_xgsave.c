@@ -29,7 +29,7 @@
 #include "p_saveg.h"
 #include "p_xg.h"
 
-void SV_WriteXGLine(LineDef* li)
+void SV_WriteXGLine(Line* li)
 {
     xgline_t* xg;
     linetype_t* info;
@@ -54,14 +54,14 @@ void SV_WriteXGLine(LineDef* li)
     SV_WriteByte(xg->disabled);
     SV_WriteLong(xg->timer);
     SV_WriteLong(xg->tickerTimer);
-    SV_WriteShort(SV_ThingArchiveNum(xg->activator));
+    SV_WriteShort(SV_ThingArchiveId(xg->activator));
     SV_WriteLong(xg->idata);
     SV_WriteFloat(xg->fdata);
     SV_WriteLong(xg->chIdx);
     SV_WriteFloat(xg->chTimer);
 }
 
-void SV_ReadXGLine(LineDef* li)
+void SV_ReadXGLine(Line* li)
 {
     xgline_t* xg;
     xline_t* xline = P_ToXLine(li);
@@ -177,7 +177,7 @@ void SV_ReadXGSector(Sector *sec)
 void SV_WriteXGPlaneMover(thinker_t* th)
 {
     xgplanemover_t* mov = (xgplanemover_t*) th;
-    uint i;
+    int i;
 
     SV_WriteByte(3); // Version.
 
@@ -186,7 +186,7 @@ void SV_WriteXGPlaneMover(thinker_t* th)
     SV_WriteLong(mov->flags);
 
     i = P_ToIndex(mov->origin);
-    if(i < numlines) // Is it a real line?
+    if(i >= 0 && i < numlines) // Is it a real line?
         i++;
     else // No.
         i = 0;
@@ -218,9 +218,9 @@ int SV_ReadXGPlaneMover(xgplanemover_t* mov)
     mov->flags = SV_ReadLong();
 
     {
-    int lineDefIndex = SV_ReadLong();
-    if(lineDefIndex > 0)
-        mov->origin = P_ToPtr(DMU_LINEDEF, lineDefIndex - 1);
+    int lineIndex = SV_ReadLong();
+    if(lineIndex > 0)
+        mov->origin = P_ToPtr(DMU_LINE, lineIndex - 1);
     }
 
     mov->destination = FIX2FLT(SV_ReadLong());

@@ -1,9 +1,7 @@
-/**
- * @file hedgeintercept.h
- * BSP Builder half-edge intercept info. @ingroup bsp
+/** @file map/hedgeintercept.h BSP Builder half-edge intercept info.
  *
- * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
- * SourceForge: http://sourceforge.net/projects/glbsp/
+ * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
+ * @see http://sourceforge.net/projects/glbsp/
  *
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
@@ -25,8 +23,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_BSP_HEDGEINTERCEPT
-#define LIBDENG_BSP_HEDGEINTERCEPT
+#ifndef DENG_WORLD_MAP_BSP_HEDGEINTERCEPT
+#define DENG_WORLD_MAP_BSP_HEDGEINTERCEPT
 
 #include "dd_types.h"
 #include "map/p_mapdata.h"
@@ -41,35 +39,51 @@ namespace bsp {
  * half-plane intercept point where the geometry intersects (an incident vertex
  * can be found here (or at there will be upon insertion.)).
  *
- * There is always a corresponding HPlaneIntercept in the owning HPlane.
+ * There is always a corresponding Intercept in the owning Intercepts.
+ *
+ * @ingroup bsp
  */
 struct HEdgeIntercept
 {
     // Vertex in question.
-    Vertex* vertex;
+    Vertex *vertex;
 
-    // True if this intersection was on a self-referencing linedef.
+    // True if this intersection was on a self-referencing line.
     bool selfRef;
 
     // Sector on each side of the vertex (along the partition),
     // or NULL when that direction isn't OPEN.
-    Sector* before;
-    Sector* after;
+    Sector *before;
+    Sector *after;
 
-    DENG_DEBUG_ONLY(
-    static void DebugPrint(const HEdgeIntercept& inst)
+    HEdgeIntercept()
+        : vertex(0),
+          selfRef(false),
+          before(0),
+          after(0)
+    {}
+
+    HEdgeIntercept(HEdgeIntercept const &other)
+        : vertex(other.vertex),
+          selfRef(other.selfRef),
+          before(other.before),
+          after(other.after)
+    {}
+
+#ifdef DENG_DEBUG
+    void debugPrint() const
     {
-        LOG_INFO("Vertex #%i [x:%f, y:%f] beforeSector: #%d afterSector: #%d %s")
-            << inst.vertex->buildData.index
-            << inst.vertex->origin[VX]
-            << inst.vertex->origin[VY]
-            << (inst.before? inst.before->buildData.index : -1)
-            << (inst.after? inst.after->buildData.index : -1)
-            << (inst.selfRef? "SELFREF" : "");
-    })
+        LOG_INFO("Vertex #%i %s beforeSector: #%d afterSector: #%d %s")
+            << vertex->indexInMap()
+            << vertex->origin().asText()
+            << (before? before->indexInMap() : -1)
+            << (after? after->indexInMap() : -1)
+            << (selfRef? "SELFREF" : "");
+    }
+#endif
 };
 
 } // namespace bsp
 } // namespace de
 
-#endif // LIBDENG_BSP_HEDGEINTERCEPT
+#endif // DENG_WORLD_MAP_BSP_HEDGEINTERCEPT

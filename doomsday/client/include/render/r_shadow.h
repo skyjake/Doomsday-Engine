@@ -1,4 +1,4 @@
-/** @file r_shadow.h
+/** @file r_shadow.h Map Object Shadows.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,20 +17,16 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Map Object Shadows
- */
-
 #ifndef LIBDENG_REFRESH_MOBJ_SHADOW_H
 #define LIBDENG_REFRESH_MOBJ_SHADOW_H
 
 #include "dd_types.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <de/Vector>
+#include <de/vector1.h>
 
 struct mobj_s;
+class BspLeaf;
+class Plane;
 
 /**
  * ShadowProjection. Shadow Projection (POD) stores the results of projection.
@@ -71,8 +67,9 @@ float R_ShadowAttenuationFactor(coord_t distance);
  *
  * @return  Projection list identifier if surface is lit else @c 0.
  */
-uint R_ProjectShadowsToSurface(BspLeaf* bspLeaf, float blendFactor,
-    coord_t topLeft[3], coord_t bottomRight[3], float tangent[3], float bitangent[3], float normal[3]);
+uint R_ProjectShadowsToSurface(BspLeaf *bspLeaf, float blendFactor,
+    pvec3d_t topLeft, pvec3d_t bottomRight,
+    de::Vector3f const &tangent, de::Vector3f const &bitangent, de::Vector3f const &normal);
 
 /**
  * Iterate over projections in the identified shadow-projection list, making
@@ -81,12 +78,12 @@ uint R_ProjectShadowsToSurface(BspLeaf* bspLeaf, float blendFactor,
  *
  * @param listIdx  Unique identifier of the list to process.
  * @param callback  Callback to make for each visited projection.
- * @param paramaters  Passed to the callback.
+ * @param parameters  Passed to the callback.
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int R_IterateShadowProjections2(uint listIdx, int (*callback) (const shadowprojection_t*, void*), void* paramaters);
-int R_IterateShadowProjections(uint listIdx, int (*callback) (const shadowprojection_t*, void*)); /* paramaters = NULL */
+int R_IterateShadowProjections2(uint listIdx, int (*callback) (shadowprojection_t const *, void *), void *parameters);
+int R_IterateShadowProjections(uint listIdx, int (*callback) (shadowprojection_t const *, void *)); /* parameters = NULL */
 
 /**
  * Find the highest plane beneath @a mobj onto which it's shadow should be cast.
@@ -94,10 +91,6 @@ int R_IterateShadowProjections(uint listIdx, int (*callback) (const shadowprojec
  *
  * @return  Found plane else @c NULL if @a mobj is not presently sector-linked.
  */
-Plane* R_FindShadowPlane(struct mobj_s* mobj);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
+Plane *R_FindShadowPlane(struct mobj_s *mobj);
 
 #endif /* LIBDENG_REFRESH_SHADOW_H */

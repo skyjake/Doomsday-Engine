@@ -1,8 +1,7 @@
-/** @file hedge.cpp Map half-edge implementation. 
- * @ingroup map
+/** @file map/hedge.cpp World Map Geometry Half-Edge.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,33 +18,65 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
-#include "de_console.h"
-#include "de_play.h"
+#include <QtAlgorithms>
 
 #include <de/Log>
 
-HEdge::HEdge() : de::MapElement(DMU_HEDGE)
+#include "BspLeaf"
+#include "Line"
+#include "Vertex"
+#include "map/lineowner.h"
+#include "map/r_world.h" /// R_GetVtxLineOwner @todo remove me
+
+#include "map/hedge.h"
+
+using namespace de;
+
+DENG2_PIMPL(HEdge)
 {
-    memset(v, 0, sizeof(v));
-    next = 0;
-    prev = 0;
-    twin = 0;
-    bspLeaf = 0;
-    lineDef = 0;
-    sector = 0;
-    angle = 0;
-    side = 0;
-    length = 0;
-    offset = 0;
-    memset(bsuf, 0, sizeof(bsuf));
-    frameFlags = 0;
-    index = 0;
+    /// Map Line::Side attributed to the half-edge. Can be @c 0 (mini-edge).
+    Line::Side *lineSide;
+
+    Instance(Public *i)
+        : Base(i),
+          lineSide(0)
+    {}
+};
+
+HEdge::HEdge(Vertex &from, Line::Side *lineSide)
+    : MapElement(DMU_HEDGE), d(new Instance(this))
+{
+    _from = &from;
+    _to = 0;
+    _next = 0;
+    _prev = 0;
+    _twin = 0;
+    _bspLeaf = 0;
+    _angle = 0;
+    _length = 0;
+    _lineOffset = 0;
+    std::memset(_bsuf, 0, sizeof(_bsuf));
+    _frameFlags = 0;
+
+    d->lineSide = lineSide;
 }
 
-HEdge::HEdge(HEdge const &other) : de::MapElement(DMU_HEDGE)
+HEdge::HEdge(HEdge const &other)
+    : MapElement(DMU_HEDGE), d(new Instance(this))
 {
-    *this = other;
+    _from = other._from;
+    _to = other._to;
+    _next = other._next;
+    _prev = other._prev;
+    _twin = other._twin;
+    _bspLeaf = other._bspLeaf;
+    _angle = other._angle;
+    _length = other._length;
+    _lineOffset = other._lineOffset;
+    std::memcpy(_bsuf, other._bsuf, sizeof(_bsuf));
+    _frameFlags = other._frameFlags;
+
+    d->lineSide = other.d->lineSide;
 }
 
 HEdge::~HEdge()
@@ -53,155 +84,143 @@ HEdge::~HEdge()
 #ifdef __CLIENT__
     for(uint i = 0; i < 3; ++i)
     {
-        if(bsuf[i])
+        if(_bsuf[i])
         {
-            SB_DestroySurface(bsuf[i]);
+            SB_DestroySurface(_bsuf[i]);
         }
     }
 #endif
 }
 
-coord_t WallDivNode_Height(walldivnode_t* node)
+Vertex &HEdge::vertex(int to)
 {
-    Q_ASSERT(node);
-    return node->height;
+    DENG_ASSERT((to? _to : _from) != 0);
+    return to? *_to : *_from;
 }
 
-walldivnode_t* WallDivNode_Next(walldivnode_t* node)
+Vertex const &HEdge::vertex(int to) const
 {
-    Q_ASSERT(node);
-    uint idx = node - node->divs->nodes;
-    if(idx+1 >= node->divs->num) return 0;
-    return &node->divs->nodes[idx+1];
+    return const_cast<Vertex const &>(const_cast<HEdge *>(this)->vertex(to));
 }
 
-walldivnode_t* WallDivNode_Prev(walldivnode_t* node)
+HEdge &HEdge::next() const
 {
-    Q_ASSERT(node);
-    uint idx = node - node->divs->nodes;
-    if(idx == 0) return 0;
-    return &node->divs->nodes[idx-1];
+    DENG2_ASSERT(_next != 0);
+    return *_next;
 }
 
-uint WallDivs_Size(const walldivs_t* wd)
+HEdge &HEdge::prev() const
 {
-    Q_ASSERT(wd);
-    return wd->num;
+    DENG2_ASSERT(_prev != 0);
+    return *_prev;
 }
 
-walldivnode_t* WallDivs_First(walldivs_t* wd)
+bool HEdge::hasTwin() const
 {
-    Q_ASSERT(wd);
-    return &wd->nodes[0];
+    return _twin != 0;
 }
 
-walldivnode_t* WallDivs_Last(walldivs_t* wd)
+HEdge &HEdge::twin() const
 {
-    Q_ASSERT(wd);
-    return &wd->nodes[wd->num-1];
-}
-
-walldivs_t* WallDivs_Append(walldivs_t* wd, coord_t height)
-{
-    Q_ASSERT(wd);
-    struct walldivnode_s* node = &wd->nodes[wd->num++];
-    node->divs = wd;
-    node->height = height;
-    return wd;
-}
-
-/**
- * Ensure the divisions are sorted (in ascending Z order).
- */
-void WallDivs_AssertSorted(walldivs_t* wd)
-{
-#if _DEBUG
-    walldivnode_t* node = WallDivs_First(wd);
-    coord_t highest = WallDivNode_Height(node);
-    for(uint i = 0; i < wd->num; ++i, node = WallDivNode_Next(node))
+    if(_twin)
     {
-        Q_ASSERT(node->height >= highest);
-        highest = node->height;
+        return *_twin;
     }
-#else
-    DENG_UNUSED(wd);
-#endif
+    /// @throw MissingTwinError Attempted with no twin associated.
+    throw MissingTwinError("HEdge::twin", "No twin half-edge is associated");
 }
 
-/**
- * Ensure the divisions do not exceed the specified range.
- */
-void WallDivs_AssertInRange(walldivs_t* wd, coord_t low, coord_t hi)
+bool HEdge::hasBspLeaf() const
 {
-#if _DEBUG
-    Q_ASSERT(wd);
-    walldivnode_t* node = WallDivs_First(wd);
-    for(uint i = 0; i < wd->num; ++i, node = WallDivNode_Next(node))
+    return _bspLeaf != 0;
+}
+
+BspLeaf &HEdge::bspLeaf() const
+{
+    if(_bspLeaf)
     {
-        Q_ASSERT(node->height >= low && node->height <= hi);
+        return *_bspLeaf;
     }
-#else
-    DENG_UNUSED(wd);
-    DENG_UNUSED(low);
-    DENG_UNUSED(hi);
-#endif
+    /// @throw MissingBspLeafError Attempted with no BSP leaf associated.
+    throw MissingBspLeafError("HEdge::bspLeaf", "No BSP leaf is associated");
 }
 
-#if _DEBUG
-void WallDivs_DebugPrint(walldivs_t* wd)
+bool HEdge::hasLineSide() const
 {
-    Q_ASSERT(wd);
-    LOG_DEBUG("WallDivs [%p]:") << wd;
-    for(uint i = 0; i < wd->num; ++i)
+    return d->lineSide != 0;
+}
+
+Line::Side &HEdge::lineSide() const
+{
+    if(d->lineSide)
     {
-        walldivnode_t* node = &wd->nodes[i];
-        LOG_DEBUG("  %i: %f") << i << node->height;
+        return *d->lineSide;
     }
+    /// @throw MissingLineError Attempted with no line attributed.
+    throw MissingLineSideError("HEdge::lineSide", "No line.side is attributed");
 }
-#endif
 
-static walldivnode_t* findWallDivNodeByZOrigin(walldivs_t* wallDivs, coord_t height)
+coord_t HEdge::lineOffset() const
 {
-    Q_ASSERT(wallDivs);
+    if(d->lineSide)
+    {
+        return _lineOffset;
+    }
+    /// @throw MissingLineError Attempted with no line attributed.
+    throw MissingLineSideError("HEdge::lineOffset", "No line.side is attributed");
+}
+
+angle_t HEdge::angle() const
+{
+    return _angle;
+}
+
+coord_t HEdge::length() const
+{
+    return _length;
+}
+
+static walldivnode_t *findWallDivNodeByZOrigin(walldivs_t *wallDivs, coord_t height)
+{
+    DENG2_ASSERT(wallDivs != 0);
     for(uint i = 0; i < wallDivs->num; ++i)
     {
-        walldivnode_t* node = &wallDivs->nodes[i];
+        walldivnode_t *node = &wallDivs->nodes[i];
         if(node->height == height)
             return node;
     }
-    return NULL;
+    return 0;
 }
 
-static void addWallDivNodesForPlaneIntercepts(HEdge* hedge, walldivs_t* wallDivs,
-    SideDefSection section, coord_t bottomZ, coord_t topZ, boolean doRight)
+static void addWallDivNodesForPlaneIntercepts(HEdge const *hedge, walldivs_t *wallDivs,
+    int section, coord_t bottomZ, coord_t topZ, boolean doRight)
 {
-    const boolean isTwoSided = (hedge->lineDef && hedge->lineDef->L_frontsidedef && hedge->lineDef->L_backsidedef)? true:false;
-    const boolean clockwise = !doRight;
-    const LineDef* line = hedge->lineDef;
-    Sector* frontSec = line->L_sector(hedge->side);
-
-    // Check for neighborhood division?
-    if(section == SS_MIDDLE && isTwoSided) return;
-    if(!hedge->lineDef) return;
-    if(hedge->lineDef->inFlags & LF_POLYOBJ) return;
+    bool const clockwise = !doRight;
 
     // Polyobj edges are never split.
-    if(hedge->lineDef && (hedge->lineDef->inFlags & LF_POLYOBJ)) return;
+    if(!hedge->hasLineSide() || hedge->line().isFromPolyobj()) return;
 
-    // Only edges at sidedef ends can/should be split.
-    if(!((hedge == HEDGE_SIDE(hedge)->hedgeLeft  && !doRight) ||
-         (hedge == HEDGE_SIDE(hedge)->hedgeRight &&  doRight)))
+    bool const isTwoSided = (hedge->line().hasFrontSections() && hedge->line().hasBackSections())? true:false;
+
+    // Check for neighborhood division?
+    if(section == Line::Side::Middle && isTwoSided) return;
+
+    // Only edges at line ends can/should be split.
+    if(!((hedge == hedge->lineSide().leftHEdge()  && !doRight) ||
+         (hedge == hedge->lineSide().rightHEdge() &&  doRight)))
         return;
 
     if(bottomZ >= topZ) return; // Obviously no division.
 
+    Sector const *frontSec = hedge->lineSide().sectorPtr();
+
     // Retrieve the start owner node.
-    lineowner_t* base = R_GetVtxLineOwner(line->L_v(hedge->side^doRight), line);
-    lineowner_t* own = base;
-    boolean stopScan = false;
+    LineOwner *base = R_GetVtxLineOwner(&hedge->lineSide().vertex(doRight), &hedge->line());
+    LineOwner *own = base;
+    bool stopScan = false;
     do
     {
-        own = own->link[clockwise];
+        own = own->_link[clockwise];
 
         if(own == base)
         {
@@ -209,33 +228,33 @@ static void addWallDivNodesForPlaneIntercepts(HEdge* hedge, walldivs_t* wallDivs
         }
         else
         {
-            LineDef* iter = own->lineDef;
+            Line *iter = &own->line();
 
-            if(LINE_SELFREF(iter))
+            if(iter->isSelfReferencing())
                 continue;
 
             uint i = 0;
             do
             {   // First front, then back.
-                Sector* scanSec = NULL;
-                if(!i && iter->L_frontsidedef && iter->L_frontsector != frontSec)
-                    scanSec = iter->L_frontsector;
-                else if(i && iter->L_backsidedef && iter->L_backsector != frontSec)
-                    scanSec = iter->L_backsector;
+                Sector *scanSec = NULL;
+                if(!i && iter->hasFrontSections() && iter->frontSectorPtr() != frontSec)
+                    scanSec = iter->frontSectorPtr();
+                else if(i && iter->hasBackSections() && iter->backSectorPtr() != frontSec)
+                    scanSec = iter->backSectorPtr();
 
                 if(scanSec)
                 {
-                    if(scanSec->SP_ceilvisheight - scanSec->SP_floorvisheight > 0)
+                    if(scanSec->ceiling().visHeight() - scanSec->floor().visHeight() > 0)
                     {
-                        for(uint j = 0; j < scanSec->planeCount() && !stopScan; ++j)
+                        for(int j = 0; j < scanSec->planeCount() && !stopScan; ++j)
                         {
-                            Plane* pln = scanSec->SP_plane(j);
+                            Plane const &plane = scanSec->plane(j);
 
-                            if(pln->visHeight > bottomZ && pln->visHeight < topZ)
+                            if(plane.visHeight() > bottomZ && plane.visHeight() < topZ)
                             {
-                                if(!findWallDivNodeByZOrigin(wallDivs, pln->visHeight))
+                                if(!findWallDivNodeByZOrigin(wallDivs, plane.visHeight()))
                                 {
-                                    WallDivs_Append(wallDivs, pln->visHeight);
+                                    WallDivs_Append(wallDivs, plane.visHeight());
 
                                     // Have we reached the div limit?
                                     if(wallDivs->num == WALLDIVS_MAX_NODES)
@@ -246,10 +265,10 @@ static void addWallDivNodesForPlaneIntercepts(HEdge* hedge, walldivs_t* wallDivs
                             if(!stopScan)
                             {
                                 // Clip a range bound to this height?
-                                if(pln->type == PLN_FLOOR && pln->visHeight > bottomZ)
-                                    bottomZ = pln->visHeight;
-                                else if(pln->type == PLN_CEILING && pln->visHeight < topZ)
-                                    topZ = pln->visHeight;
+                                if(plane.type() == Plane::Floor && plane.visHeight() > bottomZ)
+                                    bottomZ = plane.visHeight();
+                                else if(plane.type() == Plane::Ceiling && plane.visHeight() < topZ)
+                                    topZ = plane.visHeight();
 
                                 // All clipped away?
                                 if(bottomZ >= topZ)
@@ -266,7 +285,7 @@ static void addWallDivNodesForPlaneIntercepts(HEdge* hedge, walldivs_t* wallDivs
                          * we automatically fix the case of a floor above a
                          * ceiling by lowering the floor.
                          */
-                        coord_t z = scanSec->SP_ceilvisheight;
+                        coord_t z = scanSec->ceiling().visHeight();
 
                         if(z > bottomZ && z < topZ)
                         {
@@ -283,25 +302,25 @@ static void addWallDivNodesForPlaneIntercepts(HEdge* hedge, walldivs_t* wallDivs
             } while(!stopScan && ++i < 2);
 
             // Stop the scan when a single sided line is reached.
-            if(!iter->L_frontsidedef || !iter->L_backsidedef)
+            if(!iter->hasFrontSections() || !iter->hasBackSections())
                 stopScan = true;
         }
     } while(!stopScan);
 }
 
-static int C_DECL sortWallDivNode(const void* e1, const void* e2)
+static int sortWallDivNode(void const *e1, void const *e2)
 {
-    const coord_t h1 = ((walldivnode_t*)e1)->height;
-    const coord_t h2 = ((walldivnode_t*)e2)->height;
+    coord_t const h1 = ((walldivnode_t *)e1)->height;
+    coord_t const h2 = ((walldivnode_t *)e2)->height;
     if(h1 > h2) return  1;
     if(h2 > h1) return -1;
     return 0;
 }
 
-static void buildWallDiv(walldivs_t* wallDivs, HEdge* hedge,
-   SideDefSection section, coord_t bottomZ, coord_t topZ, boolean doRight)
+static void buildWallDiv(walldivs_t *wallDivs, HEdge const *hedge,
+   int section, coord_t bottomZ, coord_t topZ, boolean doRight)
 {
-    wallDivs->num = 0;
+    DENG_ASSERT(wallDivs->num == 0);
 
     // Nodes are arranged according to their Z axis height in ascending order.
     // The first node is the bottom.
@@ -323,119 +342,204 @@ static void buildWallDiv(walldivs_t* wallDivs, HEdge* hedge,
     WallDivs_AssertInRange(wallDivs, bottomZ, topZ);
 }
 
-boolean HEdge_PrepareWallDivs(HEdge* hedge, SideDefSection section,
-    Sector* frontSec, Sector* backSec,
-    walldivs_t* leftWallDivs, walldivs_t* rightWallDivs, float matOffset[2])
+bool HEdge::prepareWallDivs(int section, walldivs_t *leftWallDivs,
+    walldivs_t *rightWallDivs, Vector2f *materialOrigin) const
 {
-    DENG_ASSERT(hedge);
+    DENG_ASSERT(hasLineSide());
 
-    int lineFlags = hedge->lineDef? hedge->lineDef->flags : 0;
-    SideDef* frontDef = HEDGE_SIDEDEF(hedge);
-    SideDef* backDef  = hedge->twin? HEDGE_SIDEDEF(hedge->twin) : 0;
-    coord_t low, hi;
-    boolean visible = R_FindBottomTop2(section, lineFlags, frontSec, backSec, frontDef, backDef,
-                                       &low, &hi, matOffset);
-    matOffset[0] += float(hedge->offset);
+    Sector const *frontSec, *backSec;
+
+    if(!line().isSelfReferencing())
+    {
+        frontSec = bspLeafSectorPtr();
+        backSec  = hasTwin()? twin().bspLeafSectorPtr() : 0;
+    }
+    else
+    {
+        frontSec = backSec = lineSide().sectorPtr();
+    }
+
+    coord_t bottom, top;
+    bool visible = R_SideSectionCoords(lineSide(), section, frontSec, backSec,
+                                       &bottom, &top, materialOrigin);
+
+    if(materialOrigin)
+    {
+        materialOrigin->x += float(_lineOffset);
+    }
+
     if(!visible) return false;
 
-    buildWallDiv(leftWallDivs,  hedge, section, low, hi, false/*is-left-edge*/);
-    buildWallDiv(rightWallDivs, hedge, section, low, hi, true/*is-right-edge*/);
+    buildWallDiv(leftWallDivs,  this, section, bottom, top, false/*is-left-edge*/);
+    buildWallDiv(rightWallDivs, this, section, bottom, top, true/*is-right-edge*/);
 
     return true;
 }
 
-HEdge* HEdge_New(void)
+biassurface_t &HEdge::biasSurfaceForGeometryGroup(uint groupId)
 {
-    return new HEdge;
-}
-
-HEdge* HEdge_NewCopy(const HEdge* other)
-{
-    return new HEdge(*other);
-}
-
-void HEdge_Delete(HEdge* hedge)
-{
-    delete hedge;
-}
-
-coord_t HEdge_PointDistance(HEdge* hedge, coord_t const point[2], coord_t* offset)
-{
-    coord_t direction[2];
-    DENG_ASSERT(hedge);
-    V2d_Subtract(direction, hedge->HE_v2origin, hedge->HE_v1origin);
-    return V2d_PointLineDistance(point, hedge->HE_v1origin, direction, offset);
-}
-
-coord_t HEdge_PointXYDistance(HEdge* hedge, coord_t x, coord_t y, coord_t* offset)
-{
-    coord_t point[2] = { x, y };
-    return HEdge_PointDistance(hedge, point, offset);
-}
-
-coord_t HEdge_PointOnSide(const HEdge* hedge, coord_t const point[2])
-{
-    coord_t direction[2];
-    DENG_ASSERT(hedge);
-    if(!point)
+    if(groupId <= Line::Side::Top)
     {
-        DEBUG_Message(("HEdge_PointOnSide: Invalid arguments, returning >0.\n"));
-        return 1;
+        DENG2_ASSERT(_bsuf[groupId]);
+        return *_bsuf[groupId];
     }
-    V2d_Subtract(direction, hedge->HE_v2origin, hedge->HE_v1origin);
-    return V2d_PointOnLineSide(point, hedge->HE_v1origin, direction);
+    /// @throw InvalidGeometryGroupError Attempted with an invalid geometry group id.
+    throw UnknownGeometryGroupError("HEdge::biasSurfaceForGeometryGroup", QString("Invalid group id %1").arg(groupId));
 }
 
-coord_t HEdge_PointXYOnSide(const HEdge* hedge, coord_t x, coord_t y)
+coord_t HEdge::pointDistance(const_pvec2d_t point, coord_t *offset) const
 {
-    coord_t point[2] = { x, y };
-    return HEdge_PointOnSide(hedge, point);
+    /// @todo Why are we calculating this every time?
+    Vector2d direction = _to->origin() - _from->origin();
+
+    coord_t fromOriginV1[2] = { fromOrigin().x, fromOrigin().y };
+    coord_t directionV1[2]  = { direction.x, direction.y };
+    return V2d_PointLineDistance(point, fromOriginV1, directionV1, offset);
 }
 
-int HEdge_SetProperty(HEdge* hedge, const setargs_t* args)
+coord_t HEdge::pointOnSide(const_pvec2d_t point) const
 {
-    DENG_UNUSED(hedge);
-    Con_Error("HEdge_SetProperty: Property %s is not writable.\n", DMU_Str(args->prop));
-    return false; // Continue iteration.
+    DENG_ASSERT(point != 0);
+    /// @todo Why are we calculating this every time?
+    Vector2d direction = _to->origin() - _from->origin();
+
+    coord_t fromOriginV1[2] = { fromOrigin().x, fromOrigin().y };
+    coord_t directionV1[2]  = { direction.x, direction.y };
+    return V2d_PointOnLineSide(point, fromOriginV1, directionV1);
 }
 
-int HEdge_GetProperty(const HEdge* hedge, setargs_t* args)
+int HEdge::property(setargs_t &args) const
 {
-    switch(args->prop)
+    switch(args.prop)
     {
     case DMU_VERTEX0:
-        DMU_GetValue(DMT_HEDGE_V, &hedge->HE_v1, args, 0);
+        DMU_GetValue(DMT_HEDGE_V, &_from, &args, 0);
         break;
     case DMU_VERTEX1:
-        DMU_GetValue(DMT_HEDGE_V, &hedge->HE_v2, args, 0);
+        DMU_GetValue(DMT_HEDGE_V, &_to, &args, 0);
         break;
     case DMU_LENGTH:
-        DMU_GetValue(DMT_HEDGE_LENGTH, &hedge->length, args, 0);
+        DMU_GetValue(DMT_HEDGE_LENGTH, &_length, &args, 0);
         break;
-    case DMU_OFFSET:
-        DMU_GetValue(DMT_HEDGE_OFFSET, &hedge->offset, args, 0);
-        break;
-    case DMU_SIDEDEF: {
-        SideDef* side = HEDGE_SIDEDEF(hedge);
-        DMU_GetValue(DMT_HEDGE_SIDEDEF, &side, args, 0);
+    case DMU_OFFSET: {
+        coord_t offset = d->lineSide? _lineOffset : 0;
+        DMU_GetValue(DMT_HEDGE_OFFSET, &offset, &args, 0);
         break; }
-    case DMU_LINEDEF:
-        DMU_GetValue(DMT_HEDGE_LINEDEF, &hedge->lineDef, args, 0);
+    case DMU_SIDE:
+        DMU_GetValue(DMT_HEDGE_SIDE, &d->lineSide, &args, 0);
         break;
+    case DMU_LINE: {
+        Line *lineAdr = d->lineSide? &d->lineSide->line() : 0;
+        DMU_GetValue(DMT_HEDGE_LINE, &lineAdr, &args, 0);
+        break; }
     case DMU_FRONT_SECTOR: {
-        Sector* sec = hedge->sector;
-        DMU_GetValue(DMT_HEDGE_SECTOR, &sec, args, 0);
+        Sector *sector = bspLeafSectorPtr();
+        DMU_GetValue(DMT_HEDGE_SECTOR, &sector, &args, 0);
         break; }
     case DMU_BACK_SECTOR: {
-        Sector* sec = HEDGE_BACK_SECTOR(hedge);
-        DMU_GetValue(DMT_HEDGE_SECTOR, &sec, args, 0);
+        Sector *sector = _twin? _twin->bspLeafSectorPtr() : 0;
+        DMU_GetValue(DMT_HEDGE_SECTOR, &sector, &args, 0);
         break; }
     case DMU_ANGLE:
-        DMU_GetValue(DMT_HEDGE_ANGLE, &hedge->angle, args, 0);
+        DMU_GetValue(DMT_HEDGE_ANGLE, &_angle, &args, 0);
         break;
     default:
-        Con_Error("HEdge_GetProperty: No property %s.\n", DMU_Str(args->prop));
+        return MapElement::property(args);
     }
 
     return false; // Continue iteration.
 }
+
+// WallDivs ----------------------------------------------------------------
+/// @todo Move the following to another file
+
+coord_t WallDivNode_Height(walldivnode_t *node)
+{
+    DENG2_ASSERT(node);
+    return node->height;
+}
+
+walldivnode_t *WallDivNode_Next(walldivnode_t *node)
+{
+    DENG2_ASSERT(node);
+    uint idx = node - node->divs->nodes;
+    if(idx + 1 >= node->divs->num) return 0;
+    return &node->divs->nodes[idx+1];
+}
+
+walldivnode_t *WallDivNode_Prev(walldivnode_t *node)
+{
+    DENG2_ASSERT(node);
+    uint idx = node - node->divs->nodes;
+    if(idx == 0) return 0;
+    return &node->divs->nodes[idx-1];
+}
+
+uint WallDivs_Size(walldivs_t const *wd)
+{
+    DENG2_ASSERT(wd);
+    return wd->num;
+}
+
+walldivnode_t *WallDivs_First(walldivs_t *wd)
+{
+    DENG2_ASSERT(wd);
+    return &wd->nodes[0];
+}
+
+walldivnode_t *WallDivs_Last(walldivs_t *wd)
+{
+    DENG2_ASSERT(wd);
+    return &wd->nodes[wd->num-1];
+}
+
+walldivs_t *WallDivs_Append(walldivs_t *wd, coord_t height)
+{
+    DENG2_ASSERT(wd);
+    struct walldivnode_s *node = &wd->nodes[wd->num++];
+    node->divs = wd;
+    node->height = height;
+    return wd;
+}
+
+void WallDivs_AssertSorted(walldivs_t *wd)
+{
+#ifdef DENG_DEBUG
+    walldivnode_t *node = WallDivs_First(wd);
+    coord_t highest = WallDivNode_Height(node);
+    for(uint i = 0; i < wd->num; ++i, node = WallDivNode_Next(node))
+    {
+        DENG2_ASSERT(node->height >= highest);
+        highest = node->height;
+    }
+#else
+    DENG_UNUSED(wd);
+#endif
+}
+
+void WallDivs_AssertInRange(walldivs_t *wd, coord_t low, coord_t hi)
+{
+#ifdef DENG_DEBUG
+    DENG2_ASSERT(wd);
+    walldivnode_t *node = WallDivs_First(wd);
+    for(uint i = 0; i < wd->num; ++i, node = WallDivNode_Next(node))
+    {
+        DENG2_ASSERT(node->height >= low && node->height <= hi);
+    }
+#else
+    DENG2_UNUSED3(wd, low, hi);
+#endif
+}
+
+#ifdef DENG_DEBUG
+void WallDivs_DebugPrint(walldivs_t *wd)
+{
+    DENG2_ASSERT(wd);
+    LOG_DEBUG("WallDivs [%p]:") << wd;
+    for(uint i = 0; i < wd->num; ++i)
+    {
+        walldivnode_t *node = &wd->nodes[i];
+        LOG_DEBUG("  %i: %f") << i << node->height;
+    }
+}
+#endif

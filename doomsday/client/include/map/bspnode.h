@@ -1,9 +1,7 @@
-/**
- * @file bspnode.h
- * Map BSP node. @ingroup map
+/** @file bspnode.h World Map BSP Node.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,60 +18,145 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_MAP_BSPNODE
-#define LIBDENG_MAP_BSPNODE
+#ifndef DENG_WORLD_MAP_BSPNODE
+#define DENG_WORLD_MAP_BSPNODE
 
-#ifndef __cplusplus
-#  error "map/bspnode.h requires C++"
-#endif
+#include <de/aabox.h>
+
+#include <de/Error>
 
 #include "MapElement"
-#include "resource/r_data.h"
-#include "p_dmu.h"
-
-#define RIGHT                   0
-#define LEFT                    1
-
-/**
- * An infinite line of the form point + direction vectors.
- */
-typedef struct partition_s {
-    coord_t origin[2];
-    coord_t direction[2];
-} partition_t;
+#include "partition.h"
 
 /**
  * Node in the BSP tree. Children of a node can be either instances of BspNode
  * or BspLeaf.
+ *
+ * @todo There is a missing abstraction here. BSP tree elements should be derived
+ *       from a common base class, thereby enforcing which objects can be linked
+ *       into the tree. -ds
+ *
+ * @ingroup map
  */
 class BspNode : public de::MapElement
 {
 public:
-    partition_t     partition;
-    AABoxd          aaBox[2];   ///< Bounding box for each child.
-    de::MapElement *children[2];
-    uint            index;      ///< Unique. Set when saving the BSP.
+    /// Required child element is missing. @ingroup errors
+    DENG2_ERROR(MissingChildError);
+
+    /// An invalid child element was specified. @ingroup errors
+    DENG2_ERROR(InvalidChildError);
+
+    /// Child element identifiers:
+    enum
+    {
+        Right,
+        Left
+    };
 
 public:
-    BspNode();
-    ~BspNode();
+    /**
+     * @param origin  2D point in the map coordinate space which describes the
+     *                origin of the half-plane.
+     * @param angle   2D vector in the map coordinate space which describes the
+     *                angle of the half-plane.
+     */
+    BspNode(de::Vector2d partitionOrigin, de::Vector2d partitionDirection);
+    BspNode(de::Partition const &partition);
+
+    /**
+     * Returns the Partition for the BSP node.
+     */
+    de::Partition const &partition() const;
+
+    /**
+     * Convenient accessor method for returning the origin of the partition for
+     * the BSP node.
+     *
+     * @see partition()
+     */
+    inline de::Vector2d const &partitionOrigin() const { return partition().origin; }
+
+    /**
+     * Convenient accessor method for returning the direction of the partition
+     * for the BSP node.
+     *
+     * @see partition()
+     */
+    inline de::Vector2d const &partitionDirection() const { return partition().direction; }
+
+    /**
+     * Returns @c true iff the specified child is configured for the BSP node.
+     */
+    bool hasChild(int left) const;
+
+    /**
+     * Returns @c true iff a Right child element is configured for the BSP node.
+     */
+    inline bool hasRight() const { return hasChild(Right); }
+
+    /**
+     * Returns @c true iff a Left child element is configured for the BSP node.
+     */
+    inline bool hasLeft() const { return hasChild(Left); }
+
+    /**
+     * Returns the specified child of the BSP node.
+     *
+     * @param left  If not @c 0 return the Left child; otherwise the Right child.
+     *
+     * @see hasChild()
+     */
+    de::MapElement &child(int left) const;
+
+    /**
+     * Returns a pointer to the specified child of the BSP node, which may be @c 0
+     * if no child is configured.
+     *
+     * @param left  If not @c 0 return the Left child; otherwise the Right child.
+     *
+     * @see hasChild()
+     */
+    inline de::MapElement *childPtr(int left) const
+    {
+        return hasChild(left)? &child(left) : 0;
+    }
+
+    void setChild(int left, de::MapElement *newChild);
+
+    inline void setRight(de::MapElement *newChild) { setChild(Right, newChild); }
+
+    inline void setLeft(de::MapElement *newChild) { setChild(Left, newChild); }
+
+    /**
+     * Returns the axis-aligned bounding box for the specified child, which, encompases
+     * all the vertexes which define the geometry of that subspace of the BSP, in map
+     * coordinate space units.
+     */
+    AABoxd const &childAABox(int left) const;
+
+    /**
+     * Returns the axis-aligned bounding box for the Right child, which, encompases all
+     * the vertexes which define the geometry of that subspace of the BSP, in map
+     * coordinate space units.
+     */
+    inline AABoxd const &rightAABox() const { return childAABox(Right); }
+
+    /**
+     * Returns the axis-aligned bounding box for the Left child, which, encompases all
+     * the vertexes which define the geometry of that subspace of the BSP, in map
+     * coordinate space units.
+     */
+    inline AABoxd const &leftAABox() const { return childAABox(Left); }
+
+    void setChildAABox(int left, AABoxd const *newAABox);
+
+    inline void setRightAABox(AABoxd const *newAABox) { setChildAABox(Right, newAABox); }
+
+    inline void setLeftAABox(AABoxd const *newAABox) { setChildAABox(Left, newAABox); }
+
+private:
+    DENG2_PRIVATE(d)
 };
 
-BspNode* BspNode_New(coord_t const partitionOrigin[2], coord_t const partitionDirection[2]);
-
-/**
- * @note Does nothing about child nodes!
- */
-void BspNode_Delete(BspNode* node);
-
-BspNode* BspNode_SetChild(BspNode* node, int left, de::MapElement* child);
-
-#define BspNode_SetRight(node, child) BspNode_SetChild((node), false, (child))
-#define BspNode_SetLeft(node,  child) BspNode_SetChild((node), true,  (child))
-
-BspNode* BspNode_SetChildBounds(BspNode* node, int left, AABoxd* bounds);
-
-#define BspNode_SetRightBounds(node, bounds) BspNode_SetChildBounds((node), false, (bounds))
-#define BspNode_SetLeftBounds(node,  bounds) BspNode_SetChildBounds((node), true,  (bounds))
-
-#endif // LIBDENG_MAP_BSPNODE
+#endif // DENG_WORLD_MAP_BSPNODE

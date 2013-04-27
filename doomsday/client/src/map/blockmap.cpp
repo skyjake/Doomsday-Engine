@@ -405,11 +405,10 @@ static int cellObjectIterator(void* userData, void* context)
 int Blockmap_IterateCellBlockObjects(Blockmap* bm, const BlockmapCellBlock* cellBlock,
     int (*callback) (void* object, void* context), void* context)
 {
+    DENG_ASSERT(bm != 0);
     cellobjectiterator_params_t args;
-    assert(bm);
-
     args.callback = callback;
-    args.context = context;
+    args.context  = context;
 
     return Gridmap_BlockIterate2(bm->gridmap, cellBlock, cellObjectIterator, (void*)&args);
 }

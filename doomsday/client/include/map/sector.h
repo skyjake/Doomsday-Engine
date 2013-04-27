@@ -1,9 +1,7 @@
-/**
- * @file sector.h
- * Map Sector. @ingroup map
+/** @file sector.h World Map Sector.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,157 +18,448 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_MAP_SECTOR
-#define LIBDENG_MAP_SECTOR
+#ifndef DENG_WORLD_MAP_SECTOR
+#define DENG_WORLD_MAP_SECTOR
 
-#ifndef __cplusplus
-#  error "map/sector.h requires C++"
-#endif
-
-#include "MapElement"
-#include "p_mapdata.h"
-#include "p_dmu.h"
 #include <QList>
 
-// Helper macros for accessing sector floor/ceiling plane data elements.
-#define SP_plane(n)             planes[(n)]
+#include <de/aabox.h>
 
-#define SP_planesurface(n)      SP_plane(n)->surface
-#define SP_planeheight(n)       SP_plane(n)->height
-#define SP_planetangent(n)      SP_plane(n)->surface.tangent
-#define SP_planebitangent(n)    SP_plane(n)->surface.bitangent
-#define SP_planenormal(n)       SP_plane(n)->surface.normal
-#define SP_planematerial(n)     SP_plane(n)->surface.material
-#define SP_planeoffset(n)       SP_plane(n)->surface.offset
-#define SP_planergb(n)          SP_plane(n)->surface.rgba
-#define SP_planetarget(n)       SP_plane(n)->target
-#define SP_planespeed(n)        SP_plane(n)->speed
-#define SP_planeorigin(n)       SP_plane(n)->origin
-#define SP_planevisheight(n)    SP_plane(n)->visHeight
+#include <de/Error>
+#include <de/Observers>
+#include <de/Vector>
 
-#define SP_ceilsurface          SP_planesurface(PLN_CEILING)
-#define SP_ceilheight           SP_planeheight(PLN_CEILING)
-#define SP_ceiltangent          SP_planetangent(PLN_CEILING)
-#define SP_ceilbitangent        SP_planebitangent(PLN_CEILING)
-#define SP_ceilnormal           SP_planenormal(PLN_CEILING)
-#define SP_ceilmaterial         SP_planematerial(PLN_CEILING)
-#define SP_ceiloffset           SP_planeoffset(PLN_CEILING)
-#define SP_ceilrgb              SP_planergb(PLN_CEILING)
-#define SP_ceiltarget           SP_planetarget(PLN_CEILING)
-#define SP_ceilspeed            SP_planespeed(PLN_CEILING)
-#define SP_ceilorigin           SP_planeorigin(PLN_CEILING)
-#define SP_ceilvisheight        SP_planevisheight(PLN_CEILING)
+#include "MapElement"
+#include "Plane"
 
-#define SP_floorsurface         SP_planesurface(PLN_FLOOR)
-#define SP_floorheight          SP_planeheight(PLN_FLOOR)
-#define SP_floortangent         SP_planetangent(PLN_FLOOR)
-#define SP_floorbitangent       SP_planebitangent(PLN_FLOOR)
-#define SP_floornormal          SP_planenormal(PLN_FLOOR)
-#define SP_floormaterial        SP_planematerial(PLN_FLOOR)
-#define SP_flooroffset          SP_planeoffset(PLN_FLOOR)
-#define SP_floorrgb             SP_planergb(PLN_FLOOR)
-#define SP_floortarget          SP_planetarget(PLN_FLOOR)
-#define SP_floorspeed           SP_planespeed(PLN_FLOOR)
-#define SP_floororigin          SP_planeorigin(PLN_FLOOR)
-#define SP_floorvisheight       SP_planevisheight(PLN_FLOOR)
+class BspLeaf;
+class GameMap;
+class Line;
+class Surface;
 
-#define S_skyfix(n)             skyFix[(n)]
-#define S_floorskyfix           S_skyfix(PLN_FLOOR)
-#define S_ceilskyfix            S_skyfix(PLN_CEILING)
+/**
+ * @defgroup sectorFrameFlags Sector frame flags
+ * @ingroup map
+ */
+///@{
+#define SIF_VISIBLE             0x1 ///< Sector is visible on this frame.
+#define SIF_LIGHT_CHANGED       0x2
 
-// Sector frame flags
-#define SIF_VISIBLE         0x1     // Sector is visible on this frame.
-#define SIF_FRAME_CLEAR     0x1     // Flags to clear before each frame.
-#define SIF_LIGHT_CHANGED   0x2
+// Flags to clear before each frame.
+#define SIF_FRAME_CLEAR         SIF_VISIBLE
+///@}
 
-typedef struct msector_s {
-    // Sector index. Always valid after loading & pruning.
-    int index;
-    int	refCount;
-} msector_t;
-
-class Plane;
-
-class Sector : public de::MapElement
+/**
+ * World map sector.
+ *
+ * @ingroup map
+ */
+class Sector : public de::MapElement,
+               DENG2_OBSERVES(Plane, HeightChange)
 {
 public:
-    typedef QList<Plane *> Planes;
+    /// Required/referenced plane is missing. @ingroup errors
+    DENG2_ERROR(MissingPlaneError);
 
-    int                 frameFlags;
-    int                 validCount;    // if == validCount, already checked.
-    AABoxd              aaBox;         // Bounding box for the sector.
-    coord_t             roughArea;    // Rough approximation of sector area.
-    float               lightLevel;
-    float               oldLightLevel;
-    float               rgb[3];
-    float               oldRGB[3];
-    struct mobj_s*      mobjList;      // List of mobjs in the sector.
-    unsigned int        lineDefCount;
-    LineDef**  lineDefs;      // [lineDefCount+1] size.
-    unsigned int        bspLeafCount;
-    BspLeaf**  bspLeafs;     // [bspLeafCount+1] size.
-    unsigned int        numReverbBspLeafAttributors;
-    BspLeaf**  reverbBspLeafs;  // [numReverbBspLeafAttributors] size.
-    ddmobj_base_t       base;
-    Planes              planes;
-    unsigned int        blockCount;    // Number of gridblocks in the sector.
-    unsigned int        changedBlockCount; // Number of blocks to mark changed.
-    unsigned short*     blocks;        // Light grid block indices.
-    float               reverb[NUM_REVERB_DATA];
-    msector_t           buildData;
+    DENG2_DEFINE_AUDIENCE(LightLevelChange,
+        void lightLevelChanged(Sector &sector, float oldLightLevel))
+
+    DENG2_DEFINE_AUDIENCE(LightColorChange,
+        void lightColorChanged(Sector &sector, de::Vector3f const &oldLightColor,
+                               int changedComponents /*bit-field (0x1=Red, 0x2=Green, 0x4=Blue)*/))
+
+    static float const DEFAULT_LIGHT_LEVEL; ///< 1.f
+    static de::Vector3f const DEFAULT_LIGHT_COLOR; ///< red=1.f green=1.f, blue=1.f
+
+    typedef QList<Line *> Lines;
+    typedef QList<Plane *> Planes;
+    typedef QList<BspLeaf *> BspLeafs;
+
+    /**
+     * LightGrid data values for "smoothed sector lighting".
+     */
+    struct LightGridData
+    {
+        /// Number of blocks attributed to the sector.
+        uint blockCount;
+
+        /// Number of attributed blocks to mark changed.
+        uint changedBlockCount;
+
+        /// Block indices.
+        ushort *blocks;
+    };
+
+public: /// @todo Make private:
+    /// @ref sectorFrameFlags
+    int _frameFlags;
+
+    /// Ambient light level in the sector.
+    float _lightLevel;
+
+    /// Old ambient light level in the sector. For smoothing.
+    float _oldLightLevel;
+
+    /// Ambient light color in the sector.
+    de::Vector3f _lightColor;
+
+    /// Old ambient light color in the sector. For smoothing.
+    de::Vector3f _oldLightColor;
+
+    /// Head of the linked list of mobjs "in" the sector (not owned).
+    struct mobj_s *_mobjList;
+
+    /// List of BSP leafs which contribute to the environmental audio
+    /// characteristics of the sector (not owned).
+    BspLeafs _reverbBspLeafs;
+
+    /// LightGrid data values.
+    LightGridData _lightGridData;
+
+    /// Final environmental audio characteristics.
+    AudioEnvironmentFactors _reverb;
 
 public:
-    Sector();    
-    ~Sector();
+    Sector(float lightLevel               = DEFAULT_LIGHT_LEVEL,
+           de::Vector3f const &lightColor = DEFAULT_LIGHT_COLOR);
 
-    uint planeCount() const {
-        return planes.size();
+    /**
+     * Returns the sector plane with the specified @a planeIndex.
+     */
+    Plane &plane(int planeIndex);
+
+    /// @copydoc plane()
+    Plane const &plane(int planeIndex) const;
+
+    /**
+     * Returns the floor plane of the sector.
+     */
+    inline Plane &floor() { return plane(Plane::Floor); }
+
+    /// @copydoc floor()
+    inline Plane const &floor() const { return plane(Plane::Floor); }
+
+    /**
+     * Returns the ceiling plane of the sector.
+     */
+    inline Plane &ceiling() { return plane(Plane::Ceiling); }
+
+    /// @copydoc ceiling()
+    inline Plane const &ceiling() const { return plane(Plane::Ceiling); }
+
+    Plane *addPlane(de::Vector3f const &normal, coord_t height);
+
+    /**
+     * Provides access to the list of planes in/owned by the sector, for efficient
+     * traversal.
+     */
+    Planes const &planes() const;
+
+    /**
+     * Returns the total number of planes in/owned by the sector.
+     */
+    inline int planeCount() const { return planes().count(); }
+
+    /**
+     * Convenient accessor method for returning the surface of the specified
+     * plane of the sector.
+     */
+    inline Surface &planeSurface(int planeIndex) { return plane(planeIndex).surface(); }
+
+    /// @copydoc planeSurface()
+    inline Surface const &planeSurface(int planeIndex) const { return plane(planeIndex).surface(); }
+
+    /**
+     * Convenient accessor method for returning the surface of the floor plane
+     * of the sector.
+     */
+    inline Surface &floorSurface() { return floor().surface(); }
+
+    /// @copydoc floorSurface()
+    inline Surface const &floorSurface() const { return floor().surface(); }
+
+    /**
+     * Convenient accessor method for returning the surface of the ceiling plane
+     * of the sector.
+     */
+    inline Surface &ceilingSurface() { return ceiling().surface(); }
+
+    /// @copydoc ceilingSurface()
+    inline Surface const &ceilingSurface() const { return ceiling().surface(); }
+
+    /**
+     * Provides access to the list of lines which reference the sector,
+     * for efficient traversal.
+     */
+    Lines const &lines() const;
+
+    /**
+     * Returns the total number of lines which reference the sector.
+     */
+    inline uint lineCount() const { return uint(lines().count()); }
+
+    /**
+     * (Re)Build the line list for the sector.
+     *
+     * @attention The behavior of some algorithms used in the DOOM game logic
+     * is dependant upon the order of this list. For example, EV_DoFloor and
+     * EV_BuildStairs. That same order is used here, for compatibility.
+     *
+     * Order: Original line index, ascending.
+     *
+     * @param map  Map to collate lines from. @todo Refactor away.
+     */
+    void buildLines(GameMap const &map);
+
+    /**
+     * Provides access to the list of BSP leafs which reference the sector, for
+     * efficient traversal.
+     */
+    BspLeafs const &bspLeafs() const;
+
+    /**
+     * Returns the total number of BSP leafs which reference the sector.
+     */
+    inline uint bspLeafCount() const { return uint(bspLeafs().count()); }
+
+    /**
+     * (Re)Build the BSP leaf list for the sector.
+     *
+     * @param map  Map to collate BSP leafs from. @todo Refactor away.
+     */
+    void buildBspLeafs(GameMap const &map);
+
+    /**
+     * Provides access to the list of BSP leafs which contribute to the environmental
+     * audio characteristics of the sector, for efficient traversal.
+     */
+    BspLeafs const &reverbBspLeafs() const;
+
+    /**
+     * Returns the total number of BSP leafs which contribute to the environmental
+     * audio characteristics of the sector.
+     */
+    inline uint reverbBspLeafCount() const { return uint(reverbBspLeafs().count()); }
+
+    /**
+     * Returns the axis-aligned bounding box which encompases the geometry of
+     * all BSP leafs attributed to the sector (map units squared). Note that if
+     * no BSP leafs reference the sector the bounding box will be invalid (has
+     * negative dimensions).
+     */
+    AABoxd const &aaBox() const;
+
+    /**
+     * Update the sector's map space axis-aligned bounding box to encompass
+     * the geometry of all BSP leafs attributed to the sector.
+     *
+     * @pre BSP leaf list must have be initialized.
+     *
+     * @see buildBspLeafs()
+     */
+    void updateAABox();
+
+    /**
+     * Returns a rough approximation of the total combined area of the geometry
+     * for all BSP leafs attributed to the sector (map units squared).
+     *
+     * @see updateRoughArea()
+     */
+    coord_t roughArea() const;
+
+    /**
+     * Update the sector's rough area approximation.
+     *
+     * @pre BSP leaf list must have be initialized.
+     *
+     * @see buildBspLeafs(), roughArea()
+     */
+    void updateRoughArea();
+
+    /**
+     * Returns the primary sound emitter for the sector. Other emitters in the
+     * sector are linked to this, forming a chain which can be traversed using
+     * the 'next' pointer of the emitter's thinker_t.
+     */
+    ddmobj_base_t &soundEmitter();
+
+    /// @copydoc soundEmitter()
+    ddmobj_base_t const &soundEmitter() const;
+
+    /**
+     * Update the sound emitter origin of the sector according to the point
+     * defined by the center of the sector's axis-aligned bounding box (which
+     * must be initialized before calling) and the mid point on the map up
+     * axis between floor and ceiling planes.
+     */
+    void updateSoundEmitterOrigin();
+
+    /**
+     * @param newEmitter  Mobj base to link to the sector. Caller must ensure
+     *                    that the object is not linked multiple times into
+     *                    the chain.
+     */
+    void linkSoundEmitter(ddmobj_base_t &newEmitter);
+
+    /**
+     * Returns the ambient light level in the sector. The LightLevelChange
+     * audience is notified whenever the light level changes.
+     *
+     * @see setLightLevel()
+     */
+    float lightLevel() const;
+
+    /**
+     * Change the ambient light level in the sector. The LightLevelChange
+     * audience is notified whenever the light level changes.
+     *
+     * @param newLightLevel  New ambient light level.
+     *
+     * @see lightLevel()
+     */
+    void setLightLevel(float newLightLevel);
+
+    /**
+     * Returns the ambient light color in the sector. The LightColorChange
+     * audience is notified whenever the light color changes.
+     *
+     * @see setLightColor(), lightColorComponent(), lightRed(), lightGreen(), lightBlue()
+     */
+    de::Vector3f const &lightColor() const;
+
+    /**
+     * Returns the strength of the specified @a component of the ambient light
+     * color in the sector. The LightColorChange audience is notified whenever
+     * the light color changes.
+     *
+     * @param component    RGB index of the color component (0=Red, 1=Green, 2=Blue).
+     *
+     * @see lightColor(), lightRed(), lightGreen(), lightBlue()
+     */
+    inline float lightColorComponent(int component) const { return lightColor()[component]; }
+
+    /**
+     * Returns the strength of the @em red component of the ambient light
+     * color in the sector. The LightColorChange audience is notified whenever
+     * the light color changes.
+     *
+     * @see lightColorComponent(), lightGreen(), lightBlue()
+     */
+    inline float lightRed() const   { return lightColorComponent(0); }
+
+    /**
+     * Returns the strength of the @em green component of the ambient light
+     * color in the sector. The LightColorChange audience is notified whenever
+     * the light color changes.
+     *
+     * @see lightColorComponent(), lightRed(), lightBlue()
+     */
+    inline float lightGreen() const { return lightColorComponent(1); }
+
+    /**
+     * Returns the strength of the @em blue component of the ambient light
+     * color in the sector. The LightColorChange audience is notified whenever
+     * the light color changes.
+     *
+     * @see lightColorComponent(), lightRed(), lightGreen()
+     */
+    inline float lightBlue() const  { return lightColorComponent(2); }
+
+    /**
+     * Change the ambient light color in the sector. The LightColorChange
+     * audience is notified whenever the light color changes.
+     *
+     * @param newLightColor  New ambient light color.
+     *
+     * @see lightColor(), setLightColorComponent(), setLightRed(), setLightGreen(), setLightBlue()
+     */
+    void setLightColor(de::Vector3f const &newLightColor);
+
+    /// @copydoc setLightColor()
+    inline void setLightColor(float red, float green, float blue) {
+        setLightColor(de::Vector3f(red, green, blue));
     }
+
+    /**
+     * Change the strength of the specified @a component of the ambient light
+     * color in the sector. The LightColorChange audience is notified whenever
+     * the light color changes.
+     *
+     * @param component    RGB index of the color component (0=Red, 1=Green, 2=Blue).
+     * @param newStrength  New strength factor for the color component.
+     *
+     * @see setLightColor(), setLightRed(), setLightGreen(), setLightBlue()
+     */
+    void setLightColorComponent(int component, float newStrength);
+
+    /**
+     * Change the strength of the red component of the ambient light color in
+     * the sector. The LightColorChange audience is notified whenever the light
+     * color changes.
+     *
+     * @param newStrength  New red strength for the ambient light color.
+     *
+     * @see setLightColorComponent(), setLightGreen(), setLightBlue()
+     */
+    inline void setLightRed(float newStrength)  { setLightColorComponent(0, newStrength); }
+
+    /**
+     * Change the strength of the green component of the ambient light color in
+     * the sector. The LightColorChange audience is notified whenever the light
+     * color changes.
+     *
+     * @param newStrength  New green strength for the ambient light color.
+     *
+     * @see setLightColorComponent(), setLightRed(), setLightBlue()
+     */
+    inline void setLightGreen(float newStrength) { setLightColorComponent(1, newStrength); }
+
+    /**
+     * Change the strength of the blue component of the ambient light color in
+     * the sector. The LightColorChange audience is notified whenever the light
+     * color changes.
+     *
+     * @param newStrength  New blue strength for the ambient light color.
+     *
+     * @see setLightColorComponent(), setLightRed(), setLightGreen()
+     */
+    inline void setLightBlue(float newStrength)  { setLightColorComponent(2, newStrength); }
+
+    /**
+     * Returns the first mobj in the linked list of mobjs "in" the sector.
+     */
+    struct mobj_s *firstMobj() const;
+
+    /**
+     * Returns the final environmental audio characteristics of the sector.
+     */
+    AudioEnvironmentFactors const &audioEnvironmentFactors() const;
+
+    /**
+     * Returns the @ref sectorFrameFlags for the sector.
+     */
+    int frameFlags() const;
+
+    /**
+     * Returns the @em validCount of the sector. Used by some legacy iteration
+     * algorithms for marking sectors as processed/visited.
+     *
+     * @todo Refactor away.
+     */
+    int validCount() const;
+
+    /// @todo Refactor away.
+    void setValidCount(int newValidCount);
+
+protected:
+    int property(setargs_t &args) const;
+    int setProperty(setargs_t const &args);
+
+    // Observes Plane HeightChange.
+    void planeHeightChanged(Plane &plane, coord_t oldHeight);
+
+private:
+    DENG2_PRIVATE(d)
 };
 
-/**
- * Update the Sector's map space axis-aligned bounding box to encompass the points
- * defined by it's LineDefs' vertices.
- *
- * @pre LineDef list must have been initialized.
- *
- * @param sector  Sector instance.
- */
-void Sector_UpdateAABox(Sector* sector);
-
-/**
- * Update the Sector's rough area approximation.
- *
- * @pre Axis-aligned bounding box must have been initialized.
- *
- * @param sector  Sector instance.
- */
-void Sector_UpdateArea(Sector* sector);
-
-/**
- * Update the origin of the sector according to the point defined by the center of
- * the sector's axis-aligned bounding box (which must be initialized before calling).
- *
- * @param sector  Sector instance.
- */
-void Sector_UpdateBaseOrigin(Sector *sector);
-
-/**
- * Get a property value, selected by DMU_* name.
- *
- * @param sector  Sector instance.
- * @param args  Property arguments.
- * @return  Always @c 0 (can be used as an iterator).
- */
-int Sector_GetProperty(const Sector* sector, setargs_t* args);
-
-/**
- * Update a property value, selected by DMU_* name.
- *
- * @param sector  Sector instance.
- * @param args  Property arguments.
- * @return  Always @c 0 (can be used as an iterator).
- */
-int Sector_SetProperty(Sector* sector, const setargs_t* args);
-
-#endif // LIBDENG_MAP_SECTOR
+#endif // DENG_WORLD_MAP_SECTOR

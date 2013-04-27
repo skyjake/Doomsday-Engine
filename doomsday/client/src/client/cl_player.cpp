@@ -306,12 +306,9 @@ void ClPlayer_HandleFix(void)
 
 void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, boolean onground)
 {
-    player_t* plr = &ddPlayers[consolePlayer];
-    ddplayer_t* ddpl = &plr->shared;
-    mobj_t* mo = ddpl->mo;
-    coord_t mom[3];
-    int i;
-
+    player_t *plr = &ddPlayers[consolePlayer];
+    ddplayer_t *ddpl = &plr->shared;
+    mobj_t *mo = ddpl->mo;
     if(!mo) return;
 
     // Place the new momentum in the appropriate place.
@@ -319,8 +316,8 @@ void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, boolean onground)
     cpMom[MY][SECONDS_TO_TICKS(gameTime) % LOCALCAM_WRITE_TICS] = dy;
 
     // Calculate an average.
-    mom[MX] = mom[MY] = 0;
-    for(i = 0; i < LOCALCAM_WRITE_TICS; ++i)
+    coord_t mom[3] = { 0, 0, 0 };
+    for(int i = 0; i < LOCALCAM_WRITE_TICS; ++i)
     {
         mom[MX] += cpMom[MX][i];
         mom[MY] += cpMom[MY][i];
@@ -339,9 +336,9 @@ void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, boolean onground)
         P_MobjLink(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
     }
 
-    mo->bspLeaf = P_BspLeafAtPoint(mo->origin);
-    mo->floorZ = mo->bspLeaf->sector->SP_floorheight;
-    mo->ceilingZ = mo->bspLeaf->sector->SP_ceilheight;
+    mo->bspLeaf  = P_BspLeafAtPoint_FixedPrecision(mo->origin);
+    mo->floorZ   = mo->bspLeaf->sector().floor().height();
+    mo->ceilingZ = mo->bspLeaf->sector().ceiling().height();
 
     if(onground)
     {

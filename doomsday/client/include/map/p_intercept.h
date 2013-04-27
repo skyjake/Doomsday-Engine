@@ -24,8 +24,8 @@
 #ifndef LIBDENG_PLAY_INTERCEPT_H
 #define LIBDENG_PLAY_INTERCEPT_H
 
-struct interceptnode_s; // The interceptnode instance (opaque).
-typedef struct interceptnode_s InterceptNode;
+struct InterceptNode; // The interceptnode instance (opaque).
+typedef struct InterceptNode InterceptNode;
 
 /**
  * Empties the intercepts array and makes sure it has been allocated.
@@ -46,6 +46,6 @@ InterceptNode* P_AddIntercept(intercepttype_t type, float distance, void* object
 /**
  * @return  Zero if the traverser callback returns zero for all processed intercepts.
  */
-int P_TraverseIntercepts(traverser_t callback, void* paramaters);
+int P_TraverseIntercepts(traverser_t callback, void* parameters);
 
 #endif /* LIBDENG_PLAY_INTERCEPT_H */

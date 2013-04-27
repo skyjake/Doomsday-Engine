@@ -1,6 +1,4 @@
-/**
- * @file gamemap.h
- * Gamemap. @ingroup map
+/** @file gamemap.h World Map.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -20,24 +18,29 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_GAMEMAP_H
-#define LIBDENG_GAMEMAP_H
+#ifndef DENG_WORLD_MAP_H
+#define DENG_WORLD_MAP_H
 
-#ifndef __cplusplus
-#  error "map/gamemap.h requires C++"
-#endif
+#include <QList>
+#include <QSet>
 
-#include "p_maptypes.h"
-#include "p_particle.h"
-#include "plane.h"
-#include <EntityDatabase>
 #include <de/mathutil.h>
+
+#include "EntityDatabase"
+#include "m_nodepile.h"
+#include "p_particle.h"
+#include "Polyobj"
+
+class Vertex;
+class Line;
+class Sector;
+class Plane;
+class BspLeaf;
+class BspNode;
 
 struct thinkerlist_s;
 struct clmoinfo_s;
 struct generators_s;
-
-/// @todo Remove me.
 struct blockmap_s;
 
 /**
@@ -45,12 +48,18 @@ struct blockmap_s;
  */
 #define CLIENT_MOBJ_HASH_SIZE       (256)
 
+/**
+ * @ingroup map
+ */
 typedef struct cmhash_s {
     struct clmoinfo_s *first, *last;
 } cmhash_t;
 
 #define CLIENT_MAX_MOVERS          1024 // Definitely enough!
 
+/**
+ * @ingroup map
+ */
 typedef enum {
     CPT_FLOOR,
     CPT_CEILING
@@ -59,454 +68,583 @@ typedef enum {
 struct clplane_s;
 struct clpolyobj_s;
 
-typedef struct skyfix_s {
-    coord_t height;
-} skyfix_t;
-
+/**
+ * World map.
+ *
+ * @ingroup map
+ */
 class GameMap
 {
 public:
-    Uri* uri;
-    char uniqueId[256];
+    typedef QList<Vertex *> Vertexes;
+    typedef QList<Sector *> Sectors;
+    typedef QList<Line *> Lines;
+    typedef QList<Polyobj *> Polyobjs;
 
-    AABoxd aaBox;
+    typedef QList<HEdge *> HEdges;
+    typedef QList<BspNode *> BspNodes;
+    typedef QList<BspLeaf *> BspLeafs;
+
+    typedef QSet<Plane *> PlaneSet;
+    typedef QSet<Surface *> SurfaceSet;
+
+public:
+    de::Uri _uri;
+    char _oldUniqueId[256];
 
     struct thinkers_s {
         int idtable[2048]; // 65536 bits telling which IDs are in use.
-        unsigned short iddealer;
+        ushort iddealer;
 
         size_t numLists;
-        struct thinkerlist_s** lists;
+        struct thinkerlist_s **lists;
         boolean inited;
     } thinkers;
-
-    struct generators_s* generators;
 
     // Client only data:
     cmhash_t clMobjHash[CLIENT_MOBJ_HASH_SIZE];
 
-    struct clplane_s* clActivePlanes[CLIENT_MAX_MOVERS];
-    struct clpolyobj_s* clActivePolyobjs[CLIENT_MAX_MOVERS];
+    struct clplane_s *clActivePlanes[CLIENT_MAX_MOVERS];
+    struct clpolyobj_s *clActivePolyobjs[CLIENT_MAX_MOVERS];
     // End client only data.
 
-    de::MapElementList<Vertex> vertexes;
-    de::MapElementList<Sector> sectors;
-    de::MapElementList<LineDef> lineDefs;
-    de::MapElementList<SideDef> sideDefs;
+    Vertexes _vertexes;
+    Sectors _sectors;
+    Lines _lines;
+    Polyobjs _polyobjs;
 
-    uint numPolyObjs;
-    Polyobj** polyObjs;
+    EntityDatabase *entityDatabase;
 
-    de::MapElement* bsp;
-
-    /// BSP object LUTs:
-    uint numHEdges;
-    HEdge** hedges;
-
-    uint numBspLeafs;
-    BspLeaf** bspLeafs;
-
-    uint numBspNodes;
-    BspNode** bspNodes;
-
-    EntityDatabase* entityDatabase;
-
-    PlaneSet trackedPlanes;
-    SurfaceSet scrollingSurfaces_;
-#ifdef __CLIENT__
-    SurfaceSet decoratedSurfaces_;
-    SurfaceSet glowingSurfaces_;
-#endif
-
-    struct blockmap_s* mobjBlockmap;
-    struct blockmap_s* polyobjBlockmap;
-    struct blockmap_s* lineDefBlockmap;
-    struct blockmap_s* bspLeafBlockmap;
+public:
+    struct blockmap_s *mobjBlockmap;
+    struct blockmap_s *polyobjBlockmap;
+    struct blockmap_s *lineBlockmap;
+    struct blockmap_s *bspLeafBlockmap;
 
     nodepile_t mobjNodes, lineNodes; // All kinds of wacky links.
-    nodeindex_t* lineLinks; // Indices to roots.
+    nodeindex_t *lineLinks; // Indices to roots.
 
-    coord_t globalGravity; // The defined gravity for this map.
-    coord_t effectiveGravity; // The effective gravity for this map.
+    coord_t _globalGravity; // The defined gravity for this map.
+    coord_t _effectiveGravity; // The effective gravity for this map.
 
-    int ambientLightLevel; // Ambient lightlevel for the current map.
-
-    skyfix_t skyFix[2]; // [floor, ceiling]
-
-    /// Current LOS trace state.
-    /// @todo Refactor to support concurrent traces.
-    TraceOpening traceOpening;
-    divline_t traceLOS;
+    int _ambientLightLevel; // Ambient lightlevel for the current map.
 
 public:
     GameMap();
+    ~GameMap();
 
-    virtual ~GameMap();
+    /**
+     * This ID is the name of the lump tag that marks the beginning of map
+     * data, e.g. "MAP03" or "E2M8".
+     */
+    de::Uri uri() const;
 
-    uint vertexCount() const { return vertexes.size(); }
+    /// @return  The old 'unique' identifier of the map.
+    char const *oldUniqueId() const;
 
-    uint sectorCount() const { return sectors.size(); }
+    /**
+     * Returns the minimal and maximal boundary points for the map.
+     */
+    AABoxd const &bounds() const;
 
-    uint sideDefCount() const { return sideDefs.size(); }
+    /**
+     * @copydoc bounds()
+     *
+     * Return values:
+     * @param min  Coordinates for the minimal point are written here.
+     * @param max  Coordinates for the maximal point are written here.
+     */
+    inline void bounds(coord_t *min, coord_t *max) const {
+        if(min) V2d_Copy(min, bounds().min);
+        if(max) V2d_Copy(max, bounds().max);
+    }
 
-    uint lineDefCount() const { return lineDefs.size(); }
+    /**
+     * Returns the currently effective gravity multiplier for the map.
+     */
+    coord_t gravity() const;
+
+    /**
+     * Change the effective gravity multiplier for the map.
+     *
+     * @param gravity  New gravity multiplier.
+     */
+    void setGravity(coord_t gravity);
+
+    /**
+     * Returns the global ambient light level for the map.
+     */
+    int ambientLightLevel() const;
+
+    Vertexes const &vertexes() const { return _vertexes; }
+
+    inline int vertexCount() const { return vertexes().count(); }
+
+    Lines const &lines() const { return _lines; }
+
+    inline int lineCount() const { return lines().count(); }
+
+    inline int sideCount() const { return lines().count() * 2; }
+
+    Sectors const &sectors() const { return _sectors; }
+
+    inline int sectorCount() const { return sectors().count(); }
+
+    /**
+     * Locate a sector in the map by sound emitter.
+     *
+     * @param soundEmitter  ddmobj_base_t to search for.
+     *
+     * @return  Pointer to the referenced Sector instance; otherwise @c 0.
+     */
+    Sector *sectorBySoundEmitter(ddmobj_base_t const &soundEmitter) const;
+
+    /**
+     * Locate a sector plane in the map by sound emitter.
+     *
+     * @param soundEmitter  ddmobj_base_t to search for.
+     *
+     * @return  Pointer to the referenced Plane instance; otherwise @c 0.
+     */
+    Plane *planeBySoundEmitter(ddmobj_base_t const &soundEmitter) const;
+
+    /**
+     * Locate a surface in the map by sound emitter.
+     *
+     * @param soundEmitter  ddmobj_base_t to search for.
+     *
+     * @return  Pointer to the referenced Surface instance; otherwise @c 0.
+     */
+    Surface *surfaceBySoundEmitter(ddmobj_base_t const &soundEmitter) const;
+
+    /**
+     * Provides access to the list of polyobjs for efficient traversal.
+     */
+    Polyobjs const &polyobjs() const { return _polyobjs; }
+
+    /**
+     * Returns the total number of Polyobjs in the map.
+     */
+    inline int polyobjCount() const { return polyobjs().count(); }
+
+    /**
+     * Locate a polyobj in the map by unique in-map tag.
+     *
+     * @param tag  Tag associated with the polyobj to be located.
+     * @return  Pointer to the referenced polyobj instance; otherwise @c 0.
+     */
+    Polyobj *polyobjByTag(int tag) const;
+
+    /**
+     * Locate a polyobj in the map by mobj base.
+     *
+     * @param ddMobjBase  Base mobj to search for.
+     *
+     * @return  Pointer to the referenced polyobj instance; otherwise @c 0.
+     */
+    Polyobj *polyobjByBase(ddmobj_base_t const &ddMobjBase) const;
+
+    /**
+     * Returns the root element for the map's BSP tree.
+     */
+    de::MapElement *bspRoot() const;
+
+    /**
+     * Provides access to the list of half-edges for efficient traversal.
+     */
+    HEdges const &hedges() const;
+
+    /**
+     * Returns the total number of HEdges in the map.
+     */
+    inline int hedgeCount() const { return hedges().count(); }
+
+    /**
+     * Provides access to the list of BSP nodes for efficient traversal.
+     */
+    BspNodes const &bspNodes() const;
+
+    /**
+     * Returns the total number of BspNodes in the map.
+     */
+    inline int bspNodeCount() const { return bspNodes().count(); }
+
+    /**
+     * Provides access to the list of BSP leafs for efficient traversal.
+     */
+    BspLeafs const &bspLeafs() const;
+
+    /**
+     * Returns the total number of BspLeafs in the map.
+     */
+    inline int bspLeafCount() const { return bspLeafs().count(); }
+
+    /**
+     * Determine the BSP leaf on the back side of the BS partition that lies
+     * in front  of the specified point within the map's coordinate space.
+     *
+     * @note Always returns a valid BspLeaf although the point may not actually
+     * lay within it (however it is on the same side of the space partition)!
+     *
+     * @param point  XY coordinates of the point to test.
+     *
+     * @return  BspLeaf instance for that BSP node's leaf.
+     */
+    BspLeaf *bspLeafAtPoint(de::Vector2d const &point) const;
+
+    /**
+     * @copydoc bspLeafAtPoint()
+     *
+     * The test is carried out using fixed-point math for behavior compatible
+     * with vanilla DOOM. Note that this means there is a maximum size for the
+     * point: it cannot exceed the fixed-point 16.16 range (about 65k units).
+     */
+    BspLeaf *bspLeafAtPoint_FixedPrecision(de::Vector2d const &point) const;
+
+    int mobjsBoxIterator(AABoxd const &box,
+        int (*callback) (struct mobj_s *, void *), void *parameters = 0) const;
+
+    int linesBoxIterator(AABoxd const &box,
+        int (*callback) (Line *, void *), void *parameters = 0) const;
+
+    int polyobjLinesBoxIterator(AABoxd const &box,
+        int (*callback) (Line *, void *), void *parameters = 0) const;
+
+    /**
+     * Lines and Polyobj lines (note polyobj lines are iterated first).
+     *
+     * @note validCount should be incremented before calling this to begin
+     * a new logical traversal. Otherwise Lines marked with a validCount
+     * equal to this will be skipped over (can be used to avoid processing
+     * a line multiple times during complex / non-linear traversals.
+     */
+    int allLinesBoxIterator(AABoxd const &box,
+        int (*callback) (Line *, void *), void *parameters = 0) const;
+
+    int bspLeafsBoxIterator(AABoxd const &box, Sector *sector,
+        int (*callback) (BspLeaf *, void *), void *parameters = 0) const;
+
+    /**
+     * @note validCount should be incremented before calling this to begin a
+     * new logical traversal. Otherwise Lines marked with a validCount equal
+     * to this will be skipped over (can be used to avoid processing a line
+     * multiple times during complex / non-linear traversals.
+     */
+    int polyobjsBoxIterator(AABoxd const &box,
+        int (*callback) (struct polyobj_s *, void *), void *parameters = 0) const;
+
+    /**
+     * Retrieve an immutable copy of the LOS trace line state.
+     *
+     * @todo GameMap should not own this data.
+     */
+    divline_t const &traceLine() const;
+
+    /**
+     * Retrieve an immutable copy of the LOS TraceOpening state.
+     *
+     * @todo GameMap should not own this data.
+     */
+    TraceOpening const &traceOpening() const;
+
+    /**
+     * Update the TraceOpening state for according to the opening defined by the
+     * inner-minimal planes heights which intercept @a line
+     *
+     * If @a line is not owned by the map this is a no-op.
+     *
+     * @todo GameMap should not own this data.
+     *
+     * @param line  Map line to configure the opening for.
+     */
+    void setTraceOpening(Line &line);
+
+    /**
+     * Trace a line between @a from and @a to, making a callback for each
+     * interceptable object linked within Blockmap cells which cover the path
+     * this defines.
+     */
+    int pathTraverse(const_pvec2d_t from, const_pvec2d_t to, int flags,
+                     traverser_t callback, void *parameters = 0);
+
+    /**
+     * @copydoc pathTraverse()
+     *
+     * @param fromX         X axis map space coordinate for the path origin.
+     * @param fromY         Y axis map space coordinate for the path origin.
+     * @param toX           X axis map space coordinate for the path destination.
+     * @param toY           Y axis map space coordinate for the path destination.
+     */
+    inline int pathTraverse(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY,
+                            int flags, traverser_t callback, void *parameters = 0)
+    {
+        coord_t from[2] = { fromX, fromY };
+        coord_t to[2]   = { toX, toY };
+        return pathTraverse(from, to, flags, callback, parameters);
+    }
+
+    coord_t skyFix(bool ceiling) const;
+
+    inline coord_t skyFixFloor() const   { return skyFix(false /*the floor*/); }
+    inline coord_t skyFixCeiling() const { return skyFix(true /*the ceiling*/); }
+
+    void setSkyFix(bool ceiling, coord_t newHeight);
+
+    inline void setSkyFixFloor(coord_t newHeight) {
+        setSkyFix(false /*the floor*/, newHeight);
+    }
+    inline void setSkyFixCeiling(coord_t newHeight) {
+        setSkyFix(true /*the ceiling*/, newHeight);
+    }
+
+    /**
+     * Link the specified @a bspLeaf in internal data structures for
+     * bookkeeping purposes.
+     *
+     * @todo Does this really need to be public? -ds
+     *
+     * @param bspLeaf  BspLeaf to be linked.
+     */
+    void linkBspLeaf(BspLeaf &bspLeaf);
+
+    /**
+     * Link the specified @a line in any internal data structures for
+     * bookkeeping purposes.
+     *
+     * @todo Does this really need to be public? -ds
+     *
+     * @param line  Line to be linked.
+     */
+    void linkLine(Line &line);
+
+    /**
+     * Link the specified @a mobj in any internal data structures for
+     * bookkeeping purposes. Should be called AFTER mobj translation to
+     * (re-)insert the mobj.
+     *
+     * @param mobj  Mobj to be linked.
+     */
+    void linkMobj(struct mobj_s &mobj);
+
+    /**
+     * Unlink the specified @a mobj from any internal data structures for
+     * bookkeeping purposes. Should be called BEFORE mobj translation to
+     * extract the mobj.
+     *
+     * @param mobj  Mobj to be unlinked.
+     */
+    bool unlinkMobj(struct mobj_s &mobj);
+
+    /**
+     * Link the specified @a polyobj in any internal data structures for
+     * bookkeeping purposes. Should be called AFTER Polyobj rotation and/or
+     * translation to (re-)insert the polyobj.
+     *
+     * @param polyobj  Polyobj to be linked.
+     */
+    void linkPolyobj(Polyobj &polyobj);
+
+    /**
+     * Unlink the specified @a polyobj from any internal data structures for
+     * bookkeeping purposes. Should be called BEFORE Polyobj rotation and/or
+     * translation to extract the polyobj.
+     *
+     * @param polyobj  Polyobj to be unlinked.
+     */
+    void unlinkPolyobj(Polyobj &polyobj);
+
+    /**
+     * Retrieve a pointer to the Generators collection for the map. If no collection
+     * has yet been constructed a new empty collection will be initialized.
+     *
+     * @return  Generators collection for the map.
+     */
+    struct generators_s *generators();
 
 #ifdef __CLIENT__
+    /// @todo Should be private?
+    void initClMobjs();
+
+    /**
+     * To be called when the client is shut down.
+     * @todo Should be private?
+     */
+    void destroyClMobjs();
+
+    /**
+     * Deletes hidden, unpredictable or nulled mobjs for which we have not received
+     * updates in a while.
+     */
+    void expireClMobjs();
+
+    /**
+     * Reset the client status. To be called when the map changes.
+     */
+    void clMobjReset();
+
+    /**
+     * Iterate the client mobj hash, exec the callback on each. Abort if callback
+     * returns non-zero.
+     *
+     * @param callback  Function to callback for each client mobj.
+     * @param context   Data pointer passed to the callback.
+     *
+     * @return  @c 0 if all callbacks return @c 0; otherwise the result of the last.
+     */
+    int clMobjIterator(int (*callback) (struct mobj_s *, void *), void *context);
+
+    /**
+     * Allocate a new client-side plane mover.
+     *
+     * @return  The new mover or @c NULL if arguments are invalid.
+     */
+    struct clplane_s *newClPlane(uint sectornum, clplanetype_t type, coord_t dest, float speed);
 
     /**
      * Returns the set of decorated surfaces for the map.
      */
-    SurfaceSet &decoratedSurfaces();
+    SurfaceSet /*const*/ &decoratedSurfaces();
 
     /**
      * Returns the set of glowing surfaces for the map.
      */
-    SurfaceSet &glowingSurfaces();
+    SurfaceSet /*const*/ &glowingSurfaces();
 
 #endif // __CLIENT__
 
     /**
+     * $smoothmatoffset: interpolate the visual offset.
+     */
+    void lerpScrollingSurfaces(bool resetNextViewer = false);
+
+    /**
+     * $smoothmatoffset: Roll the surface material offset tracker buffers.
+     */
+    void updateScrollingSurfaces();
+
+    /**
      * Returns the set of scrolling surfaces for the map.
      */
-    SurfaceSet &scrollingSurfaces();
+    SurfaceSet /*const*/ &scrollingSurfaces();
+
+    /**
+     * $smoothplane: interpolate the visual offset.
+     */
+    void lerpTrackedPlanes(bool resetNextViewer = false);
+
+    /**
+     * $smoothplane: Roll the height tracker buffers.
+     */
+    void updateTrackedPlanes();
+
+    /**
+     * Returns the set of tracked planes for the map.
+     */
+    PlaneSet /*const*/ &trackedPlanes();
+
+    /**
+     * Helper function for returning the relevant line side index for @a lineIndex
+     * and @a backSide.
+     *
+     * Indices are produced as follows:
+     * @code
+     *  lineIndex / 2 + (backSide? 1 : 0);
+     * @endcode
+     *
+     * @param lineIndex  Index of the Line in the map.
+     * @param backSide   If @c =0 the Line::Front else Line::Back
+     *
+     * @return  Unique index for the line side.
+     */
+    static int toSideIndex(int lineIndex, int backSide);
+
+    /**
+     * Returns a pointer to the Line::Side associated with the specified @a index;
+     * otherwise @c 0.
+     */
+    Line::Side *sideByIndex(int index) const;
+
+public: /// @todo Make private:
+
+    void finishMapElements();
+
+    /**
+     * @pre Axis-aligned bounding boxes of all Sectors must be initialized.
+     */
+    void updateBounds();
+
+    /**
+     * Construct an initial (empty) Mobj Blockmap for this map.
+     *
+     * @param min  Minimal coordinates for the map.
+     * @param max  Maximal coordinates for the map.
+     */
+    void initMobjBlockmap(const_pvec2d_t min, const_pvec2d_t max);
+
+    /**
+     * Construct an initial (empty) Line Blockmap for this map.
+     *
+     * @param min  Minimal coordinates for the map.
+     * @param max  Maximal coordinates for the map.
+     */
+    void initLineBlockmap(const_pvec2d_t min, const_pvec2d_t max);
+
+    /**
+     * Construct an initial (empty) BspLeaf Blockmap for this map.
+     *
+     * @param min  Minimal coordinates for the map.
+     * @param max  Maximal coordinates for the map.
+     */
+    void initBspLeafBlockmap(const_pvec2d_t min, const_pvec2d_t max);
+
+    /**
+     * Construct an initial (empty) Polyobj Blockmap for this map.
+     *
+     * @param min  Minimal coordinates for the map.
+     * @param max  Maximal coordinates for the map.
+     */
+    void initPolyobjBlockmap(const_pvec2d_t min, const_pvec2d_t max);
+
+    /**
+     * Initialize the node piles and link rings. To be called after map load.
+     */
+    void initNodePiles();
+
+    /**
+     * Initialize all polyobjs in the map. To be called after map load.
+     */
+    void initPolyobjs();
+
+    /**
+     * Fixing the sky means that for adjacent sky sectors the lower sky
+     * ceiling is lifted to match the upper sky. The raising only affects
+     * rendering, it has no bearing on gameplay.
+     */
+    void initSkyFix();
+
+#ifdef __CLIENT__
+    void buildSurfaceLists();
+#endif
+
+    bool buildBsp();
+
+    /**
+     * To be called in response to a Material property changing which may
+     * require updating any map surfaces which are presently using it.
+     *
+     * @todo Replace with a de::Observers-based mechanism.
+     */
+    void updateSurfacesOnMaterialChange(Material &material);
+
+private:
+    DENG2_PRIVATE(d)
 };
-
-/**
- * Change the global "current" map.
- */
-void P_SetCurrentMap(GameMap* map);
-
-/**
- * This ID is the name of the lump tag that marks the beginning of map
- * data, e.g. "MAP03" or "E2M8".
- */
-const Uri* GameMap_Uri(GameMap* map);
-
-/// @return  The old 'unique' identifier of the map.
-const char* GameMap_OldUniqueId(GameMap* map);
-
-void GameMap_Bounds(GameMap* map, coord_t* min, coord_t* max);
-
-/**
- * Retrieve the current effective gravity multiplier for this map.
- *
- * @param map  GameMap instance.
- * @return  Effective gravity multiplier for this map.
- */
-coord_t GameMap_Gravity(GameMap* map);
-
-/**
- * Change the effective gravity multiplier for this map.
- *
- * @param map  GameMap instance.
- * @param gravity  New gravity multiplier.
- * @return  Same as @a map for caller convenience.
- */
-GameMap* GameMap_SetGravity(GameMap* map, coord_t gravity);
-
-/**
- * Return the effective gravity multiplier to that originally defined for this map.
- *
- * @param map  GameMap instance.
- * @return  Same as @a map for caller convenience.
- */
-GameMap* GameMap_RestoreGravity(GameMap* map);
-
-/**
- * Retrieve an immutable copy of the LOS trace line.
- *
- * @param map  GameMap instance.
- */
-const divline_t* GameMap_TraceLOS(GameMap* map);
-
-/**
- * Retrieve an immutable copy of the LOS TraceOpening state.
- *
- * @param map  GameMap instance.
- */
-const TraceOpening* GameMap_TraceOpening(GameMap* map);
-
-/**
- * Update the TraceOpening state for according to the opening defined by the
- * inner-minimal planes heights which intercept @a linedef
- *
- * If @a lineDef is not owned by the map this is a no-op.
- *
- * @param map  GameMap instance.
- * @param lineDef  LineDef to configure the opening for.
- */
-void GameMap_SetTraceOpening(GameMap* map, LineDef* lineDef);
-
-/**
- * Retrieve the map-global ambient light level.
- *
- * @param map  GameMap instance.
- * @return  Ambient light level.
- */
-int GameMap_AmbientLightLevel(GameMap* map);
-
-coord_t GameMap_SkyFix(GameMap* map, boolean ceiling);
-
-#define GameMap_SkyFixCeiling(m)       GameMap_SkyFix((m), true)
-#define GameMap_SkyFixFloor(m)         GameMap_SkyFix((m), false)
-
-GameMap* GameMap_SetSkyFix(GameMap* map, boolean ceiling, coord_t height);
-
-#define GameMap_SetSkyFixCeiling(m, h) GameMap_SetSkyFix((m), true, (h))
-#define GameMap_SetSkyFixFloor(m, h)   GameMap_SetSkyFix((m), false, (h))
-
-/**
- * Fixing the sky means that for adjacent sky sectors the lower sky
- * ceiling is lifted to match the upper sky. The raising only affects
- * rendering, it has no bearing on gameplay.
- */
-void GameMap_InitSkyFix(GameMap* map);
-
-void GameMap_UpdateSkyFixForSector(GameMap* map, Sector* sec);
-
-/**
- * Lookup a Vertex by its unique index.
- *
- * @param map  GameMap instance.
- * @param idx  Unique index of the vertex.
- * @return  Pointer to Vertex with this index else @c NULL if @a idx is not valid.
- */
-Vertex* GameMap_Vertex(GameMap* map, uint idx);
-
-/**
- * Lookup a LineDef by its unique index.
- *
- * @param map  GameMap instance.
- * @param idx  Unique index of the linedef.
- * @return  Pointer to LineDef with this index else @c NULL if @a idx is not valid.
- */
-LineDef* GameMap_LineDef(GameMap* map, uint idx);
-
-/**
- * Lookup a SideDef by its unique index.
- *
- * @param map  GameMap instance.
- * @param idx  Unique index of the sidedef.
- * @return  Pointer to SideDef with this index else @c NULL if @a idx is not valid.
- */
-SideDef* GameMap_SideDef(GameMap* map, uint idx);
-
-/**
- * Lookup a Sector by its unique index.
- *
- * @param map  GameMap instance.
- * @param idx  Unique index of the sector.
- * @return  Pointer to Sector with this index else @c NULL if @a idx is not valid.
- */
-Sector* GameMap_Sector(GameMap* map, uint idx);
-
-/**
- * Lookup a Sector in the map by origin.
- *
- * @param map  GameMap instance.
- * @param ddMobjBase  ddmobj_base_t to search for.
- *
- * @return  Found Sector instance else @c NULL.
- */
-Sector* GameMap_SectorByBase(GameMap* map, const void* ddMobjBase);
-
-/**
- * Lookup a Surface in the map by origin.
- *
- * @param map  GameMap instance.
- * @param ddMobjBase  ddmobj_base_t to search for.
- *
- * @return  Found Surface instance else @c NULL.
- */
-Surface* GameMap_SurfaceByBase(GameMap* map, const void* ddMobjBase);
-
-/**
- * Lookup a BspLeaf by its unique index.
- *
- * @param map  GameMap instance.
- * @param idx  Unique index of the bsp leaf.
- * @return  Pointer to BspLeaf with this index else @c NULL if @a idx is not valid.
- */
-BspLeaf* GameMap_BspLeaf(GameMap* map, uint idx);
-
-/**
- * Lookup a HEdge by its unique index.
- *
- * @param map  GameMap instance.
- * @param idx  Unique index of the hedge.
- * @return  Pointer to HEdge with this index else @c NULL if @a idx is not valid.
- */
-HEdge* GameMap_HEdge(GameMap* map, uint idx);
-
-/**
- * Lookup a BspNode by its unique index.
- *
- * @param map  GameMap instance.
- * @param idx  Unique index of the bsp node.
- * @return  Pointer to BspNode with this index else @c NULL if @a idx is not valid.
- */
-BspNode* GameMap_BspNode(GameMap* map, uint idx);
-
-/**
- * Lookup the unique index for @a vertex.
- *
- * @param map  GameMap instance.
- * @param vtx  Vertex to lookup.
- * @return  Unique index for the Vertex else @c -1 if not present.
- */
-int GameMap_VertexIndex(GameMap* map, Vertex const *vtx);
-
-/**
- * Lookup the unique index for @a lineDef.
- *
- * @param map  GameMap instance.
- * @param line  LineDef to lookup.
- * @return  Unique index for the LineDef else @c -1 if not present.
- */
-int GameMap_LineDefIndex(GameMap* map, LineDef const *line);
-
-/**
- * Lookup the unique index for @a sideDef.
- *
- * @param map  GameMap instance.
- * @param side  SideDef to lookup.
- * @return  Unique index for the SideDef else @c -1 if not present.
- */
-int GameMap_SideDefIndex(GameMap* map, SideDef const *side);
-
-/**
- * Lookup the unique index for @a sector.
- *
- * @param map  GameMap instance.
- * @param sector  Sector to lookup.
- * @return  Unique index for the Sector else @c -1 if not present.
- */
-int GameMap_SectorIndex(GameMap *map, Sector const *sector);
-
-/**
- * Lookup the unique index for @a bspLeaf.
- *
- * @param map  GameMap instance.
- * @param bspLeaf  BspLeaf to lookup.
- * @return  Unique index for the BspLeaf else @c -1 if not present.
- */
-int GameMap_BspLeafIndex(GameMap* map, BspLeaf const *bspLeaf);
-
-/**
- * Lookup the unique index for @a hedge.
- *
- * @param map  GameMap instance.
- * @param hedge  HEdge to lookup.
- * @return  Unique index for the HEdge else @c -1 if not present.
- */
-int GameMap_HEdgeIndex(GameMap* map, HEdge const *hedge);
-
-/**
- * Lookup the unique index for @a node.
- *
- * @param map  GameMap instance.
- * @param bspNode  BspNode to lookup.
- * @return  Unique index for the BspNode else @c -1 if not present.
- */
-int GameMap_BspNodeIndex(GameMap* map, BspNode const *bspNode);
-
-/**
- * Retrieve the number of Vertex instances owned by this.
- *
- * @param map  GameMap instance.
- * @return  Number Vertexes.
- */
-uint GameMap_VertexCount(GameMap* map);
-
-/**
- * Retrieve the number of LineDef instances owned by this.
- *
- * @param map  GameMap instance.
- * @return  Number LineDef.
- */
-uint GameMap_LineDefCount(GameMap* map);
-
-/**
- * Retrieve the number of SideDef instances owned by this.
- *
- * @param map  GameMap instance.
- * @return  Number SideDef.
- */
-uint GameMap_SideDefCount(GameMap* map);
-
-/**
- * Retrieve the number of Sector instances owned by this.
- *
- * @param map  GameMap instance.
- * @return  Number Sector.
- */
-uint GameMap_SectorCount(GameMap* map);
-
-/**
- * Retrieve the number of BspLeaf instances owned by this.
- *
- * @param map  GameMap instance.
- * @return  Number BspLeaf.
- */
-uint GameMap_BspLeafCount(GameMap* map);
-
-/**
- * Retrieve the number of HEdge instances owned by this.
- *
- * @param map  GameMap instance.
- * @return  Number HEdge.
- */
-uint GameMap_HEdgeCount(GameMap* map);
-
-/**
- * Retrieve the number of BspNode instances owned by this.
- *
- * @param map  GameMap instance.
- * @return  Number BspNode.
- */
-uint GameMap_BspNodeCount(GameMap* map);
-
-/**
- * Retrieve the number of Polyobj instances owned by this.
- *
- * @param map  GameMap instance.
- * @return  Number Polyobj.
- */
-uint GameMap_PolyobjCount(GameMap* map);
-
-/**
- * Lookup a Polyobj in the map by unique ID.
- *
- * @param map  GameMap instance.
- * @param id  Unique identifier of the Polyobj to be found.
- * @return  Found Polyobj instance else @c NULL.
- */
-Polyobj* GameMap_PolyobjByID(GameMap* map, uint id);
-
-/**
- * Lookup a Polyobj in the map by tag.
- *
- * @param map  GameMap instance.
- * @param tag  Tag associated with the Polyobj to be found.
- * @return  Found Polyobj instance else @c NULL.
- */
-Polyobj* GameMap_PolyobjByTag(GameMap* map, int tag);
-
-/**
- * Lookup a Polyobj in the map by origin.
- *
- * @param map  GameMap instance.
- * @param ddMobjBase  ddmobj_base_t to search for.
- *
- * @return  Found Polyobj instance else @c NULL.
- */
-Polyobj* GameMap_PolyobjByBase(GameMap* map, void* ddMobjBase);
 
 /**
  * Have the thinker lists been initialized yet?
  * @param map       GameMap instance.
  */
-boolean GameMap_ThinkerListInited(GameMap* map);
+boolean GameMap_ThinkerListInited(GameMap *map);
 
 /**
  * Init the thinker lists.
@@ -515,7 +653,7 @@ boolean GameMap_ThinkerListInited(GameMap* map);
  * @param flags     @c 0x1 = Init public thinkers.
  *                  @c 0x2 = Init private (engine-internal) thinkers.
  */
-void GameMap_InitThinkerLists(GameMap* map, byte flags);
+void GameMap_InitThinkerLists(GameMap *map, byte flags);
 
 /**
  * Iterate the list of thinkers making a callback for each.
@@ -528,8 +666,8 @@ void GameMap_InitThinkerLists(GameMap* map, byte flags);
  *                  until a callback returns a non-zero value.
  * @param context  Passed to the callback function.
  */
-int GameMap_IterateThinkers(GameMap* map, thinkfunc_t thinkFunc, byte flags,
-    int (*callback) (thinker_t* th, void*), void* context);
+int GameMap_IterateThinkers(GameMap *map, thinkfunc_t thinkFunc, byte flags,
+    int (*callback) (thinker_t *th, void *), void *context);
 
 /**
  * @param map  GameMap instance.
@@ -537,7 +675,7 @@ int GameMap_IterateThinkers(GameMap* map, thinkfunc_t thinkFunc, byte flags,
  * @param makePublic  @c true = @a thinker will be visible publically
  *                    via the Doomsday public API thinker interface(s).
  */
-void GameMap_ThinkerAdd(GameMap* map, thinker_t* thinker, boolean makePublic);
+void GameMap_ThinkerAdd(GameMap *map, thinker_t *thinker, boolean makePublic);
 
 /**
  * Deallocation is lazy -- it will not actually be freed until its
@@ -545,7 +683,7 @@ void GameMap_ThinkerAdd(GameMap* map, thinker_t* thinker, boolean makePublic);
  *
  * @param map   GameMap instance.
  */
-void GameMap_ThinkerRemove(GameMap* map, thinker_t* thinker);
+void GameMap_ThinkerRemove(GameMap *map, thinker_t *thinker);
 
 /**
  * Locates a mobj by it's unique identifier in the map.
@@ -553,7 +691,7 @@ void GameMap_ThinkerRemove(GameMap* map, thinker_t* thinker);
  * @param map   GameMap instance.
  * @param id    Unique id of the mobj to lookup.
  */
-struct mobj_s* GameMap_MobjByID(GameMap* map, int id);
+struct mobj_s *GameMap_MobjByID(GameMap *map, int id);
 
 /**
  * @param map   GameMap instance.
@@ -566,262 +704,9 @@ boolean GameMap_IsUsedMobjID(GameMap* map, thid_t id);
  * @param id    New thinker id.
  * @param inUse In-use state of @a id. @c true = the id is in use.
  */
-void GameMap_SetMobjID(GameMap* map, thid_t id, boolean inUse);
-
-/**
- * @param map  GameMap instance.
- */
-void GameMap_InitClMobjs(GameMap* map);
-
-/**
- * To be called when the client is shut down.
- */
-void GameMap_DestroyClMobjs(GameMap* map);
-
-/**
- * Deletes hidden, unpredictable or nulled mobjs for which we have not received
- * updates in a while.
- *
- * @param map  GameMap instance.
- */
-void GameMap_ExpireClMobjs(GameMap* map);
-
-/**
- * Reset the client status. To be called when the map changes.
- *
- * @param map  GameMap instance.
- */
-void GameMap_ClMobjReset(GameMap* map);
-
-/**
- * Iterate the client mobj hash, exec the callback on each. Abort if callback
- * returns @c false.
- *
- * @param map       GameMap instance.
- * @param callback  Function to callback for each client mobj.
- * @param context   Data pointer passed to the callback.
- *
- * @return  If the callback returns @c false.
- */
-boolean GameMap_ClMobjIterator(GameMap* map, boolean (*callback) (struct mobj_s*, void*), void* context);
-
-/**
- * Allocate a new client-side plane mover.
- *
- * @param map  GameMap instance.
- * @return  The new mover or @c NULL if arguments are invalid.
- */
-struct clplane_s* GameMap_NewClPlane(GameMap* map, uint sectornum, clplanetype_t type,
-    coord_t dest, float speed);
-
-/**
- * Retrieve a pointer to the Generators collection for this map.
- * If no collection has yet been constructed a new empty collection will be
- * initialized as a result of this call.
- *
- * @param map  GameMap instance.
- * @return  Generators collection for this map.
- */
-struct generators_s* GameMap_Generators(GameMap* map);
-
-/**
- * Retrieve a pointer to the tracked plane list for this map.
- *
- * @param map  GameMap instance.
- * @return  List of tracked planes.
- */
-PlaneSet* GameMap_TrackedPlanes(GameMap* map);
-
-/**
- * Initialize all Polyobjs in the map. To be called after map load.
- *
- * @param map  GameMap instance.
- */
-void GameMap_InitPolyobjs(GameMap* map);
-
-/**
- * Initialize the node piles and link rings. To be called after map load.
- *
- * @param map  GameMap instance.
- */
-void GameMap_InitNodePiles(GameMap* map);
-
-/**
- * Link the specified @a mobj in any internal data structures for bookkeeping purposes.
- * Should be called AFTER mobj translation to (re-)insert the mobj.
- *
- * @param map  GameMap instance.
- * @param mobj  Mobj to be linked.
- */
-void GameMap_LinkMobj(GameMap* map, struct mobj_s* mobj);
-
-/**
- * Unlink the specified @a mobj from any internal data structures for bookkeeping purposes.
- * Should be called BEFORE mobj translation to extract the mobj.
- *
- * @param map  GameMap instance.
- * @param mobj  Mobj to be unlinked.
- */
-boolean GameMap_UnlinkMobj(GameMap* map, struct mobj_s* mobj);
-
-int GameMap_MobjsBoxIterator(GameMap* map, const AABoxd* box,
-    int (*callback) (struct mobj_s*, void*), void* parameters);
-
-/**
- * Link the specified @a lineDef in any internal data structures for bookkeeping purposes.
- *
- * @param map  GameMap instance.
- * @param lineDef  LineDef to be linked.
- */
-void GameMap_LinkLineDef(GameMap* map, LineDef* lineDef);
-
-int GameMap_LineDefIterator(GameMap* map, int (*callback) (LineDef*, void*), void* parameters);
-
-int GameMap_LineDefsBoxIterator(GameMap* map, const AABoxd* box,
-    int (*callback) (LineDef*, void*), void* parameters);
-
-int GameMap_PolyobjLinesBoxIterator(GameMap* map, const AABoxd* box,
-    int (*callback) (LineDef*, void*), void* parameters);
-
-/**
- * LineDefs and Polyobj LineDefs (note Polyobj LineDefs are iterated first).
- *
- * @note validCount should be incremented before calling this to begin a new logical traversal.
- *       Otherwise LineDefs marked with a validCount equal to this will be skipped over (can
- *       be used to avoid processing a LineDef multiple times during complex / non-linear traversals.
- */
-int GameMap_AllLineDefsBoxIterator(GameMap* map, const AABoxd* box,
-    int (*callback) (LineDef*, void*), void* parameters);
-
-/**
- * Link the specified @a bspLeaf in internal data structures for bookkeeping purposes.
- *
- * @param map  GameMap instance.
- * @param bspLeaf  BspLeaf to be linked.
- */
-void GameMap_LinkBspLeaf(GameMap* map, BspLeaf* bspLeaf);
-
-int GameMap_BspLeafsBoxIterator(GameMap* map, const AABoxd* box, Sector* sector,
-    int (*callback) (BspLeaf*, void*), void* parameters);
-
-int GameMap_BspLeafIterator(GameMap* map, int (*callback) (BspLeaf*, void*), void* parameters);
-
-/**
- * Link the specified @a polyobj in any internal data structures for bookkeeping purposes.
- * Should be called AFTER Polyobj rotation and/or translation to (re-)insert the polyobj.
- *
- * @param map  GameMap instance.
- * @param polyobj  Polyobj to be linked.
- */
-void GameMap_LinkPolyobj(GameMap* map, Polyobj* polyobj);
-
-/**
- * Unlink the specified @a polyobj from any internal data structures for bookkeeping purposes.
- * Should be called BEFORE Polyobj rotation and/or translation to extract the polyobj.
- *
- * @param map  GameMap instance.
- * @param polyobj  Polyobj to be unlinked.
- */
-void  GameMap_UnlinkPolyobj(GameMap* map, Polyobj* polyobj);
-
-/**
- * @note validCount should be incremented before calling this to begin a new logical traversal.
- *       Otherwise LineDefs marked with a validCount equal to this will be skipped over (can
- *       be used to avoid processing a LineDef multiple times during complex / non-linear traversals.
- */
-int GameMap_PolyobjsBoxIterator(GameMap* map, const AABoxd* box,
-    int (*callback) (struct polyobj_s*, void*), void* parameters);
-
-int GameMap_PolyobjIterator(GameMap* map, int (*callback) (Polyobj*, void*), void* parameters);
-
-int GameMap_VertexIterator(GameMap* map, int (*callback) (Vertex*, void*), void* parameters);
-
-int GameMap_SideDefIterator(GameMap* map, int (*callback) (SideDef*, void*), void* parameters);
-
-int GameMap_SectorIterator(GameMap* map, int (*callback)(Sector *, void *), void* parameters);
-
-int GameMap_HEdgeIterator(GameMap* map, int (*callback) (HEdge*, void*), void* parameters);
-
-int GameMap_BspNodeIterator(GameMap* map, int (*callback) (BspNode*, void*), void* parameters);
-
-/**
- * Traces a line between @a from and @a to, making a callback for each
- * interceptable object linked within Blockmap cells which cover the path this
- * defines.
- */
-int GameMap_PathTraverse2(GameMap* map, coord_t const from[2], coord_t const to[2],
-    int flags, traverser_t callback, void* parameters);
-int GameMap_PathTraverse(GameMap* map, coord_t const from[2], coord_t const to[2],
-    int flags, traverser_t callback/* void* parameters=NULL*/);
-
-int GameMap_PathXYTraverse2(GameMap* map, coord_t fromX, coord_t fromY, coord_t toX, coord_t toY,
-    int flags, traverser_t callback, void* parameters);
-int GameMap_PathXYTraverse(GameMap* map, coord_t fromX, coord_t fromY, coord_t toX, coord_t toY,
-    int flags, traverser_t callback);
-
-/**
- * Determine the BSP leaf on the back side of the BS partition that lies in front
- * of the specified point within the map's coordinate space.
- *
- * @note Always returns a valid BspLeaf although the point may not actually lay
- *       within it (however it is on the same side of the space partition)!
- *
- * @param map  GameMap instance.
- * @param x    X coordinate of the point to test.
- * @param y    Y coordinate of the point to test.
- * @return     BspLeaf instance for that BSP node's leaf.
- */
-BspLeaf* GameMap_BspLeafAtPointXY(GameMap* map, coord_t x, coord_t y);
-
-/**
- * @copybrief    GameMap_BspLeafAtPointXY()
- * @param map    GameMap instance.
- * @param point  XY coordinates of the point to test.
- * @return       BspLeaf instance for that BSP node's leaf.
- */
-BspLeaf* GameMap_BspLeafAtPoint(GameMap* map, coord_t const point[2]);
-
-/**
- * Private member functions:
- */
-
-/**
- * Construct an initial (empty) Mobj Blockmap for this map.
- *
- * @param map  GameMap instance.
- * @param min  Minimal coordinates for the map.
- * @param max  Maximal coordinates for the map.
- */
-void GameMap_InitMobjBlockmap(GameMap* map, const_pvec2d_t min, const_pvec2d_t max);
-
-/**
- * Construct an initial (empty) LineDef Blockmap for this map.
- *
- * @param map  GameMap instance.
- * @param min  Minimal coordinates for the map.
- * @param max  Maximal coordinates for the map.
- */
-void GameMap_InitLineDefBlockmap(GameMap* map, const_pvec2d_t min, const_pvec2d_t max);
-
-/**
- * Construct an initial (empty) BspLeaf Blockmap for this map.
- *
- * @param map  GameMap instance.
- * @param min  Minimal coordinates for the map.
- * @param max  Maximal coordinates for the map.
- */
-void GameMap_InitBspLeafBlockmap(GameMap* map, const_pvec2d_t min, const_pvec2d_t max);
-
-/**
- * Construct an initial (empty) Polyobj Blockmap for this map.
- *
- * @param map  GameMap instance.
- * @param min  Minimal coordinates for the map.
- * @param max  Maximal coordinates for the map.
- */
-void GameMap_InitPolyobjBlockmap(GameMap* map, const_pvec2d_t min, const_pvec2d_t max);
+void GameMap_SetMobjID(GameMap *map, thid_t id, boolean inUse);
 
 // The current map.
-DENG_EXTERN_C GameMap* theMap;
+DENG_EXTERN_C GameMap *theMap;
 
-#endif // LIBDENG_GAMEMAP_H
+#endif // DENG_WORLD_MAP_H

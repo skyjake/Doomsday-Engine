@@ -80,12 +80,26 @@
 
 #define sentient(mobj)      ((mobj)->health > 0 && P_GetState((mobj)->type, SN_SEE))
 
-extern int TimerGame; // Tic countdown for deathmatch.
-
 #define thinkerCap          (*gi.thinkerCap)
 
 #define USE_MANA1           1
 #define USE_MANA2           1
+
+// Time interval for item respawning.
+#define SPAWNQUEUE_MAX         128
+
+DENG_EXTERN_C int iquehead;
+DENG_EXTERN_C int iquetail;
+
+DENG_EXTERN_C mobjtype_t PuffType;
+DENG_EXTERN_C mobj_t* MissileMobj;
+DENG_EXTERN_C coord_t* FloatBobOffset;
+DENG_EXTERN_C int clipmana[NUM_AMMO_TYPES];
+DENG_EXTERN_C int TimerGame; // Tic countdown for deathmatch.
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void        P_SetPsprite(player_t* plr, int position, statenum_t stnum);
 void        P_SetPspriteNF(player_t* plr, int position, statenum_t stnum);
@@ -99,16 +113,6 @@ void        P_TeleportOther(mobj_t* victim);
 void        P_ArtiTeleportOther(player_t* plr);
 void        ResetBlasted(mobj_t* mo);
 boolean     P_UndoPlayerMorph(player_t* plr);
-
-// Time interval for item respawning.
-#define SPAWNQUEUE_MAX         128
-
-extern int iquehead;
-extern int iquetail;
-
-extern mobjtype_t PuffType;
-extern mobj_t* MissileMobj;
-extern coord_t* FloatBobOffset;
 
 void        P_ThrustMobj(mobj_t* mo, angle_t angle, coord_t move);
 int         P_FaceMobj(mobj_t* source, mobj_t* target, angle_t* delta);
@@ -144,8 +148,6 @@ mobj_t*     P_RoughMonsterSearch(mobj_t* mo, int distance);
 
 void        P_Validate();
 
-extern int clipmana[NUM_AMMO_TYPES];
-
 void        P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher);
 void        P_PoisonPlayer(player_t* plr, mobj_t* poisoner, int poison);
 
@@ -157,6 +159,7 @@ int         P_PoisonDamage(player_t* plr, mobj_t* source, int damage,
 
 boolean     P_GiveMana(player_t* plr, ammotype_t mana, int count);
 boolean     P_GiveArmor(player_t* plr, armortype_t armortype, int amount);
+boolean     P_GiveArmor2(player_t* plr, armortype_t type, int amount);
 boolean     P_GiveBody(player_t* plr, int num);
 boolean     P_GivePower(player_t* plr, powertype_t power);
 boolean     P_MorphPlayer(player_t* plr);
@@ -166,5 +169,9 @@ void C_DECL A_BridgeRemove(mobj_t* actor);
 boolean     A_RaiseMobj(mobj_t* mo);
 boolean     A_SinkMobj(mobj_t* mo);
 void C_DECL A_NoBlocking(mobj_t* mo);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

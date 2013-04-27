@@ -24,7 +24,7 @@
  */
 
 /**
- * doomdata.h: Thing and linedef attributes
+ * doomdata.h: Thing and line attributes
  */
 
 #ifndef __DOOMDATA_H__
@@ -41,7 +41,7 @@ enum {
 };
 
 //
-// LineDef attributes.
+// Line attributes.
 //
 
 // Blocks monsters only.

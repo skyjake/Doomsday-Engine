@@ -183,7 +183,7 @@ static boolean CheckedLockedDoor(mobj_t* mo, byte lock)
     return true;
 }
 
-boolean EV_LineSearchForPuzzleItem(LineDef* line, byte* args, mobj_t* mo)
+boolean EV_LineSearchForPuzzleItem(Line* line, byte* args, mobj_t* mo)
 {
     inventoryitemtype_t  type;
 
@@ -199,7 +199,7 @@ boolean EV_LineSearchForPuzzleItem(LineDef* line, byte* args, mobj_t* mo)
     return P_InventoryUse(mo->player - players, type, false);
 }
 
-boolean P_ExecuteLineSpecial(int special, byte* args, LineDef* line,
+boolean P_ExecuteLineSpecial(int special, byte* args, Line* line,
                              int side, mobj_t* mo)
 {
     boolean             success;
@@ -609,7 +609,7 @@ boolean P_ExecuteLineSpecial(int special, byte* args, LineDef* line,
     return success;
 }
 
-boolean P_ActivateLine(LineDef *line, mobj_t *mo, int side, int activationType)
+boolean P_ActivateLine(Line *line, mobj_t *mo, int side, int activationType)
 {
     int             lineActivation;
     boolean         repeat;
@@ -650,7 +650,7 @@ boolean P_ActivateLine(LineDef *line, mobj_t *mo, int side, int activationType)
     if((lineActivation == SPAC_USE || lineActivation == SPAC_IMPACT) &&
        buttonSuccess)
     {
-        P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), 0, false,
+        P_ToggleSwitch(P_GetPtrp(line, DMU_FRONT), 0, false,
                        repeat? BUTTONTIME : 0);
     }
 
@@ -786,15 +786,15 @@ void P_PlayerOnSpecialFloor(player_t* player)
 
 void P_SpawnSectorSpecialThinkers(void)
 {
-    uint i;
+    int i;
 
     // Clients do not spawn sector specials.
     if(IS_CLIENT) return;
 
     for(i = 0; i < numsectors; ++i)
     {
-        Sector* sec     = P_ToPtr(DMU_SECTOR, i);
-        xsector_t* xsec = P_ToXSector(sec);
+        Sector *sec = P_ToPtr(DMU_SECTOR, i);
+        xsector_t *xsec = P_ToXSector(sec);
 
         switch(xsec->special)
         {
@@ -844,10 +844,10 @@ static boolean isLightningSector(Sector* sec)
 
 static void P_LightningFlash(void)
 {
-    uint                i;
-    float*              tempLight;
-    boolean             foundSec;
-    float               flashLight;
+    int i;
+    float *tempLight;
+    boolean foundSec;
+    float flashLight;
 
     if(lightningFlash)
     {
@@ -858,12 +858,11 @@ static void P_LightningFlash(void)
         {
             for(i = 0; i < numsectors; ++i)
             {
-                Sector*                 sec = P_ToPtr(DMU_SECTOR, i);
+                Sector *sec = P_ToPtr(DMU_SECTOR, i);
 
                 if(isLightningSector(sec))
                 {
-                    float               lightLevel =
-                        P_GetFloat(DMU_SECTOR, i, DMU_LIGHT_LEVEL);
+                    float lightLevel = P_GetFloat(DMU_SECTOR, i, DMU_LIGHT_LEVEL);
 
                     if(*tempLight < lightLevel - (4.f / 255))
                         P_SetFloat(DMU_SECTOR, i, DMU_LIGHT_LEVEL,
@@ -874,10 +873,11 @@ static void P_LightningFlash(void)
             }
         }
         else
-        {   // Remove the alternate lightning flash special.
+        {
+            // Remove the alternate lightning flash special.
             for(i = 0; i < numsectors; ++i)
             {
-                Sector*                 sec = P_ToPtr(DMU_SECTOR, i);
+                Sector *sec = P_ToPtr(DMU_SECTOR, i);
 
                 if(isLightningSector(sec))
                 {
@@ -902,12 +902,12 @@ static void P_LightningFlash(void)
     foundSec = false;
     for(i = 0; i < numsectors; ++i)
     {
-        Sector*             sec = P_ToPtr(DMU_SECTOR, i);
+        Sector *sec = P_ToPtr(DMU_SECTOR, i);
 
         if(isLightningSector(sec))
         {
-            xsector_t*          xsec = P_ToXSector(sec);
-            float               newLevel = P_GetFloatp(sec, DMU_LIGHT_LEVEL);
+            xsector_t *xsec = P_ToXSector(sec);
+            float newLevel = P_GetFloatp(sec, DMU_LIGHT_LEVEL);
 
             *tempLight = newLevel;
 
@@ -993,7 +993,7 @@ void P_ForceLightning(void)
 
 void P_InitLightning(void)
 {
-    uint                i, secCount;
+    int i, secCount;
 
     if(!P_GetMapLightning(gameMap))
     {
@@ -1006,7 +1006,7 @@ void P_InitLightning(void)
     secCount = 0;
     for(i = 0; i < numsectors; ++i)
     {
-        Sector*             sec = P_ToPtr(DMU_SECTOR, i);
+        Sector *sec = P_ToPtr(DMU_SECTOR, i);
 
         if(isLightningSector(sec))
         {
@@ -1018,8 +1018,7 @@ void P_InitLightning(void)
     {
         mapHasLightning = true;
 
-        lightningLightLevels =
-            Z_Malloc(secCount * sizeof(float), PU_MAP, NULL);
+        lightningLightLevels = Z_Malloc(secCount * sizeof(float), PU_MAP, NULL);
 
         // Don't flash immediately on entering the map.
         nextLightningFlash = ((P_Random() & 15) + 5) * TICSPERSEC;

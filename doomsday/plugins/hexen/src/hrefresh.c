@@ -321,8 +321,11 @@ void X_EndFrame(void)
  */
 void R_SetAllDoomsdayFlags(void)
 {
-    uint                i;
-    mobj_t*             mo;
+    int i;
+    mobj_t *mo;
+
+    if(G_GameState() != GS_MAP)
+        return;
 
     // Only visible things are in the sector thinglists, so this is good.
     for(i = 0; i < numsectors; ++i)

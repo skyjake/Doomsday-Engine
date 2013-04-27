@@ -32,53 +32,50 @@
 #include "doomsday.h"
 #include "p_iterlist.h"
 
-#define numvertexes (*(uint*) DD_GetVariable(DD_VERTEX_COUNT))
-#define numhedges   (*(uint*) DD_GetVariable(DD_HEDGE_COUNT))
-#define numsectors  (*(uint*) DD_GetVariable(DD_SECTOR_COUNT))
-#define numbspleafs (*(uint*) DD_GetVariable(DD_BSPLEAF_COUNT))
-#define numbspnodes (*(uint*) DD_GetVariable(DD_BSPNODE_COUNT))
-#define numlines    (*(uint*) DD_GetVariable(DD_LINE_COUNT))
-#define numsides    (*(uint*) DD_GetVariable(DD_SIDE_COUNT))
-
-#if __JHEXEN__
-#define numpolyobjs (*(uint*) DD_GetVariable(DD_POLYOBJ_COUNT))
-#endif
+#define numvertexes             (P_Count(DMU_VERTEX))
+#define numhedges               (P_Count(DMU_HEDGE))
+#define numsectors              (P_Count(DMU_SECTOR))
+#define numbspleafs             (P_Count(DMU_BSPLEAF))
+#define numbspnodes             (P_Count(DMU_BSPNODE))
+#define numlines                (P_Count(DMU_LINE))
+#define numsides                (P_Count(DMU_SIDE))
+#define numpolyobjs             (*(int*) DD_GetVariable(DD_POLYOBJ_COUNT))
 
 // DMU property aliases. For short-hand purposes:
-#define DMU_TOP_MATERIAL        (DMU_TOP_OF_SIDEDEF | DMU_MATERIAL)
-#define DMU_TOP_MATERIAL_OFFSET_X (DMU_TOP_OF_SIDEDEF | DMU_OFFSET_X)
-#define DMU_TOP_MATERIAL_OFFSET_Y (DMU_TOP_OF_SIDEDEF | DMU_OFFSET_Y)
-#define DMU_TOP_MATERIAL_OFFSET_XY (DMU_TOP_OF_SIDEDEF | DMU_OFFSET_XY)
-#define DMU_TOP_FLAGS           (DMU_TOP_OF_SIDEDEF | DMU_FLAGS)
-#define DMU_TOP_COLOR           (DMU_TOP_OF_SIDEDEF | DMU_COLOR)
-#define DMU_TOP_COLOR_RED       (DMU_TOP_OF_SIDEDEF | DMU_COLOR_RED)
-#define DMU_TOP_COLOR_GREEN     (DMU_TOP_OF_SIDEDEF | DMU_COLOR_GREEN)
-#define DMU_TOP_COLOR_BLUE      (DMU_TOP_OF_SIDEDEF | DMU_COLOR_BLUE)
-#define DMU_TOP_BASE            (DMU_TOP_OF_SIDEDEF | DMU_BASE)
+#define DMU_TOP_MATERIAL        (DMU_TOP_OF_SIDE | DMU_MATERIAL)
+#define DMU_TOP_MATERIAL_OFFSET_X (DMU_TOP_OF_SIDE | DMU_OFFSET_X)
+#define DMU_TOP_MATERIAL_OFFSET_Y (DMU_TOP_OF_SIDE | DMU_OFFSET_Y)
+#define DMU_TOP_MATERIAL_OFFSET_XY (DMU_TOP_OF_SIDE | DMU_OFFSET_XY)
+#define DMU_TOP_FLAGS           (DMU_TOP_OF_SIDE | DMU_FLAGS)
+#define DMU_TOP_COLOR           (DMU_TOP_OF_SIDE | DMU_COLOR)
+#define DMU_TOP_COLOR_RED       (DMU_TOP_OF_SIDE | DMU_COLOR_RED)
+#define DMU_TOP_COLOR_GREEN     (DMU_TOP_OF_SIDE | DMU_COLOR_GREEN)
+#define DMU_TOP_COLOR_BLUE      (DMU_TOP_OF_SIDE | DMU_COLOR_BLUE)
+#define DMU_TOP_BASE            (DMU_TOP_OF_SIDE | DMU_BASE)
 
-#define DMU_MIDDLE_MATERIAL     (DMU_MIDDLE_OF_SIDEDEF | DMU_MATERIAL)
-#define DMU_MIDDLE_MATERIAL_OFFSET_X (DMU_MIDDLE_OF_SIDEDEF | DMU_OFFSET_X)
-#define DMU_MIDDLE_MATERIAL_OFFSET_Y (DMU_MIDDLE_OF_SIDEDEF | DMU_OFFSET_Y)
-#define DMU_MIDDLE_MATERIAL_OFFSET_XY (DMU_MIDDLE_OF_SIDEDEF | DMU_OFFSET_XY)
-#define DMU_MIDDLE_FLAGS        (DMU_MIDDLE_OF_SIDEDEF | DMU_FLAGS)
-#define DMU_MIDDLE_COLOR        (DMU_MIDDLE_OF_SIDEDEF | DMU_COLOR)
-#define DMU_MIDDLE_COLOR_RED    (DMU_MIDDLE_OF_SIDEDEF | DMU_COLOR_RED)
-#define DMU_MIDDLE_COLOR_GREEN  (DMU_MIDDLE_OF_SIDEDEF | DMU_COLOR_GREEN)
-#define DMU_MIDDLE_COLOR_BLUE   (DMU_MIDDLE_OF_SIDEDEF | DMU_COLOR_BLUE)
-#define DMU_MIDDLE_ALPHA        (DMU_MIDDLE_OF_SIDEDEF | DMU_ALPHA)
-#define DMU_MIDDLE_BLENDMODE    (DMU_MIDDLE_OF_SIDEDEF | DMU_BLENDMODE)
-#define DMU_MIDDLE_BASE         (DMU_MIDDLE_OF_SIDEDEF | DMU_BASE)
+#define DMU_MIDDLE_MATERIAL     (DMU_MIDDLE_OF_SIDE | DMU_MATERIAL)
+#define DMU_MIDDLE_MATERIAL_OFFSET_X (DMU_MIDDLE_OF_SIDE | DMU_OFFSET_X)
+#define DMU_MIDDLE_MATERIAL_OFFSET_Y (DMU_MIDDLE_OF_SIDE | DMU_OFFSET_Y)
+#define DMU_MIDDLE_MATERIAL_OFFSET_XY (DMU_MIDDLE_OF_SIDE | DMU_OFFSET_XY)
+#define DMU_MIDDLE_FLAGS        (DMU_MIDDLE_OF_SIDE | DMU_FLAGS)
+#define DMU_MIDDLE_COLOR        (DMU_MIDDLE_OF_SIDE | DMU_COLOR)
+#define DMU_MIDDLE_COLOR_RED    (DMU_MIDDLE_OF_SIDE | DMU_COLOR_RED)
+#define DMU_MIDDLE_COLOR_GREEN  (DMU_MIDDLE_OF_SIDE | DMU_COLOR_GREEN)
+#define DMU_MIDDLE_COLOR_BLUE   (DMU_MIDDLE_OF_SIDE | DMU_COLOR_BLUE)
+#define DMU_MIDDLE_ALPHA        (DMU_MIDDLE_OF_SIDE | DMU_ALPHA)
+#define DMU_MIDDLE_BLENDMODE    (DMU_MIDDLE_OF_SIDE | DMU_BLENDMODE)
+#define DMU_MIDDLE_BASE         (DMU_MIDDLE_OF_SIDE | DMU_BASE)
 
-#define DMU_BOTTOM_MATERIAL     (DMU_BOTTOM_OF_SIDEDEF | DMU_MATERIAL)
-#define DMU_BOTTOM_MATERIAL_OFFSET_X (DMU_BOTTOM_OF_SIDEDEF | DMU_OFFSET_X)
-#define DMU_BOTTOM_MATERIAL_OFFSET_Y (DMU_BOTTOM_OF_SIDEDEF | DMU_OFFSET_Y)
-#define DMU_BOTTOM_MATERIAL_OFFSET_XY (DMU_BOTTOM_OF_SIDEDEF | DMU_OFFSET_XY)
-#define DMU_BOTTOM_FLAGS        (DMU_BOTTOM_OF_SIDEDEF | DMU_FLAGS)
-#define DMU_BOTTOM_COLOR        (DMU_BOTTOM_OF_SIDEDEF | DMU_COLOR)
-#define DMU_BOTTOM_COLOR_RED    (DMU_BOTTOM_OF_SIDEDEF | DMU_COLOR_RED)
-#define DMU_BOTTOM_COLOR_GREEN  (DMU_BOTTOM_OF_SIDEDEF | DMU_COLOR_GREEN)
-#define DMU_BOTTOM_COLOR_BLUE   (DMU_BOTTOM_OF_SIDEDEF | DMU_COLOR_BLUE)
-#define DMU_BOTTOM_BASE         (DMU_BOTTOM_OF_SIDEDEF | DMU_BASE)
+#define DMU_BOTTOM_MATERIAL     (DMU_BOTTOM_OF_SIDE | DMU_MATERIAL)
+#define DMU_BOTTOM_MATERIAL_OFFSET_X (DMU_BOTTOM_OF_SIDE | DMU_OFFSET_X)
+#define DMU_BOTTOM_MATERIAL_OFFSET_Y (DMU_BOTTOM_OF_SIDE | DMU_OFFSET_Y)
+#define DMU_BOTTOM_MATERIAL_OFFSET_XY (DMU_BOTTOM_OF_SIDE | DMU_OFFSET_XY)
+#define DMU_BOTTOM_FLAGS        (DMU_BOTTOM_OF_SIDE | DMU_FLAGS)
+#define DMU_BOTTOM_COLOR        (DMU_BOTTOM_OF_SIDE | DMU_COLOR)
+#define DMU_BOTTOM_COLOR_RED    (DMU_BOTTOM_OF_SIDE | DMU_COLOR_RED)
+#define DMU_BOTTOM_COLOR_GREEN  (DMU_BOTTOM_OF_SIDE | DMU_COLOR_GREEN)
+#define DMU_BOTTOM_COLOR_BLUE   (DMU_BOTTOM_OF_SIDE | DMU_COLOR_BLUE)
+#define DMU_BOTTOM_BASE         (DMU_BOTTOM_OF_SIDE | DMU_BASE)
 
 #define DMU_FLOOR_HEIGHT        (DMU_FLOOR_OF_SECTOR | DMU_HEIGHT)
 #define DMU_FLOOR_TARGET_HEIGHT (DMU_FLOOR_OF_SECTOR | DMU_TARGET_HEIGHT)
@@ -143,11 +140,11 @@ iterlist_t* P_GetSectorIterListForTag(int tag, boolean createNewList);
 void P_BuildAllTagLists(void);
 void P_DestroyAllTagLists(void);
 
-LineDef* P_AllocDummyLine(void);
-void P_FreeDummyLine(LineDef* line);
+Line* P_AllocDummyLine(void);
+void P_FreeDummyLine(Line* line);
 
-SideDef* P_AllocDummySideDef(void);
-void P_FreeDummySideDef(SideDef* sideDef);
+Side* P_AllocDummySide(void);
+void P_FreeDummySide(Side* side);
 
 /**
  * Get the sector on the other side of the line that is NOT the given sector.
@@ -157,7 +154,7 @@ void P_FreeDummySideDef(SideDef* sideDef);
  *
  * @return  Ptr to the other sector or @c NULL if the specified line is NOT twosided.
  */
-Sector* P_GetNextSector(LineDef* line, Sector* sec);
+Sector* P_GetNextSector(Line* line, Sector* sec);
 
 #define FEPHF_MIN           0x1 // Get minium. If not set, get maximum.
 #define FEPHF_FLOOR         0x2 // Get floors. If not set, get ceilings.
@@ -247,7 +244,7 @@ const terraintype_t* P_PlaneMaterialTerrainType(Sector* sec, int plane);
  * Copies all (changeable) properties from one line to another including the
  * extended properties.
  */
-void P_CopyLine(LineDef* dest, LineDef* src);
+void P_CopyLine(Line* dest, Line* src);
 
 /**
  * Copies all (changeable) properties from one sector to another including
@@ -261,8 +258,8 @@ void P_SectorModifyLight(Sector* sector, float value);
 void P_SectorModifyLightx(Sector* sector, fixed_t value);
 void* P_SectorOrigin(Sector* sector);
 
-void P_TranslateSideMaterialOrigin(SideDef* side, SideDefSection section, float deltaXY[2]);
-void P_TranslateSideMaterialOriginXY(SideDef* side, SideDefSection section, float deltaX, float deltaY);
+void P_TranslateSideMaterialOrigin(Side* side, SideSection section, float deltaXY[2]);
+void P_TranslateSideMaterialOriginXY(Side* side, SideSection section, float deltaX, float deltaY);
 
 void P_TranslatePlaneMaterialOrigin(Plane* plane, float deltaXY[2]);
 void P_TranslatePlaneMaterialOriginXY(Plane* plane, float deltaX, float deltaY);

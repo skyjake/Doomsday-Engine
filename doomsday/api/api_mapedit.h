@@ -76,46 +76,52 @@ DENG_API_TYPEDEF(MPE)
     /**
      * Create a new vertex in currently loaded editable map.
      *
-     * @param x  X map space coordinate of the new vertex.
-     * @param y  Y map space coordinate of the new vertex.
+     * @param x             X map space coordinate of the new vertex.
+     * @param y             Y map space coordinate of the new vertex.
+     * @param archiveIndex  Archive index for the vertex. Set to @c -1 if
+     *                      not relevant/known.
      *
-     * @return  Index number of the newly created vertex else @c =0 if the vertex
-     *          could not be created for some reason.
+     * @return  Index number of the newly created vertex; otherwise @c -1 if
+     * the vertex could not be created for some reason.
      */
-    uint            (*VertexCreate)(coord_t x, coord_t y);
+    int             (*VertexCreate)(coord_t x, coord_t y, int archiveIndex);
 
     /**
      * Create many new vertices in the currently loaded editable map.
      *
-     * @param num  Number of vertexes to be created.
-     * @param values  Array containing the coordinates for all vertexes to be
-     *                created [v0:X, vo:Y, v1:X, v1:Y, ..]
-     * @param indices  If not @c =NULL, the indices of the newly created vertexes
-     *                 will be written back here.
+     * @param num           Number of vertexes to be created.
+     * @param values        Array containing the coordinates for all vertexes
+     *                      to be created [v0:X, vo:Y, v1:X, v1:Y, ..]
+     * @param archiveIndices  Array containing the archive indices for each
+     *                      vertex. Can be @c 0.
+     * @param indices       If not @c 0, the indices of the newly created
+     *                      vertexes will be written back here.
      * @return  @c =true iff all vertexes were created successfully.
      */
-    boolean         (*VertexCreatev)(size_t num, coord_t* values, uint* indices);
-
-    uint            (*SidedefCreate)(short flags, const ddstring_t* topMaterial, float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue, const ddstring_t* middleMaterial, float middleOffsetX, float middleOffsetY, float middleRed, float middleGreen, float middleBlue, float middleAlpha, const ddstring_t* bottomMaterial, float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen, float bottomBlue);
+    boolean         (*VertexCreatev)(size_t num, coord_t *values,
+                                     int *archiveIndices, int *indices);
 
     /**
-     * Create a new linedef in the editable map.
+     * Create a new line in the editable map.
      *
      * @param v1            Idx of the start vertex.
      * @param v2            Idx of the end vertex.
      * @param frontSector   Idx of the front sector.
      * @param backSector    Idx of the back sector.
-     * @param frontSide     Idx of the front sidedef.
-     * @param backSide      Idx of the back sidedef.
+     * @param frontSide     Idx of the front side.
+     * @param backSide      Idx of the back side.
      * @param flags         DDLF_* flags.
+     * @param archiveIndex  Archive index for the line. Set to @c -1 if
+     *                      not relevant/known.
      *
-     * @return  Index of the newly created linedef else @c 0 if there was an error.
+     * @return  Index of the newly created line else @c -1 if there was an error.
      */
-    uint            (*LinedefCreate)(uint v1, uint v2, uint frontSector, uint backSector, uint frontSide, uint backSide, int flags);
-    uint            (*SectorCreate)(float lightlevel, float red, float green, float blue);
-    uint            (*PlaneCreate)(uint sector, coord_t height, const ddstring_t* materialUri, float matOffsetX, float matOffsetY, float r, float g, float b, float a, float normalX, float normalY, float normalZ);
-    uint            (*PolyobjCreate)(uint* lines, uint linecount, int tag, int sequenceType, coord_t originX, coord_t originY);
-    boolean         (*GameObjProperty)(const char* objName, uint idx, const char* propName, valuetype_t type, void* data);
+    int             (*LineCreate)(int v1, int v2, int frontSector, int backSector, int flags, int archiveIndex);
+    void            (*LineAddSide)(int line, int side, short flags, const ddstring_t* topMaterial, float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue, const ddstring_t* middleMaterial, float middleOffsetX, float middleOffsetY, float middleRed, float middleGreen, float middleBlue, float middleAlpha, const ddstring_t* bottomMaterial, float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen, float bottomBlue, int archiveIndex);
+    int             (*SectorCreate)(float lightlevel, float red, float green, float blue, int archiveIndex);
+    int             (*PlaneCreate)(int sector, coord_t height, const ddstring_t* materialUri, float matOffsetX, float matOffsetY, float r, float g, float b, float a, float normalX, float normalY, float normalZ, int archiveIndex);
+    int             (*PolyobjCreate)(int* lines, int linecount, int tag, int sequenceType, coord_t originX, coord_t originY, int archiveIndex);
+    boolean         (*GameObjProperty)(const char* objName, int idx, const char* propName, valuetype_t type, void* data);
 }
 DENG_API_T(MPE);
 
@@ -126,8 +132,8 @@ DENG_API_T(MPE);
 #define MPE_End             _api_MPE.End
 #define MPE_VertexCreate    _api_MPE.VertexCreate
 #define MPE_VertexCreatev   _api_MPE.VertexCreatev
-#define MPE_SidedefCreate   _api_MPE.SidedefCreate
-#define MPE_LinedefCreate   _api_MPE.LinedefCreate
+#define MPE_LineCreate      _api_MPE.LineCreate
+#define MPE_LineAddSide     _api_MPE.LineAddSide
 #define MPE_SectorCreate    _api_MPE.SectorCreate
 #define MPE_PlaneCreate     _api_MPE.PlaneCreate
 #define MPE_PolyobjCreate   _api_MPE.PolyobjCreate

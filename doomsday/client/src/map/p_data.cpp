@@ -1,5 +1,4 @@
-/** @file p_data.cpp Playsim Data Structures. 
- * @ingroup play
+/** @file p_data.cpp Playsim Data Structures
  *
  * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -24,6 +23,7 @@
 #define DENG_NO_API_MACROS_MAP
 
 #include "de_base.h"
+#include "de_defs.h"
 #include "de_network.h"
 #include "de_play.h"
 #include "de_render.h"
@@ -31,6 +31,7 @@
 #include "de_filesys.h"
 
 #include "Game"
+#include "map/gamemap.h"
 #include "map/propertyvalue.h"
 #include "render/rend_bias.h"
 #include "render/vlight.h"
@@ -48,44 +49,18 @@
 using namespace de;
 
 // Map entity definitions.
-static StringPool* entityDefs;
+static StringPool *entityDefs;
 typedef std::map<int, StringPool::Id> EntityDefIdMap;
 static EntityDefIdMap entityDefIdMap;
 
 extern "C" boolean mapSetup; // We are currently setting up a map.
 
-struct uri_s* mapUri; // Name by which the game referred to the current map.
-
-GameMap* theMap; // Available globally inside the engine.
-
-void P_SetCurrentMap(GameMap* map)
-{
-    if(!map)
-    {
-        // @todo: Merge in explicit map unload from branch beta6-mapcache.
-
-        // Most memory is allocated from the zone.
-        Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
-
-        if(mapUri)
-        {
-            Uri_Delete(mapUri);
-            mapUri = NULL;
-        }
-
-        theMap = map;
-        return;
-    }
-
-    mapUri = map->uri;
-
-    theMap = map;
-}
+GameMap *theMap; // Available globally inside the engine.
 
 #undef P_MapExists
 DENG_EXTERN_C boolean P_MapExists(char const *uriCString)
 {
-    de::Uri uri = de::Uri(uriCString, RC_NULL);
+    de::Uri uri(uriCString, RC_NULL);
     lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toLatin1(), true/*quiet please*/);
     return (lumpNum >= 0);
 }
@@ -93,7 +68,7 @@ DENG_EXTERN_C boolean P_MapExists(char const *uriCString)
 #undef P_MapIsCustom
 DENG_EXTERN_C boolean P_MapIsCustom(char const *uriCString)
 {
-    de::Uri uri = de::Uri(uriCString, RC_NULL);
+    de::Uri uri(uriCString, RC_NULL);
     lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toLatin1(), true/*quiet please*/);
     return (lumpNum >= 0 && W_LumpIsCustom(lumpNum));
 }
@@ -101,7 +76,7 @@ DENG_EXTERN_C boolean P_MapIsCustom(char const *uriCString)
 #undef P_MapSourceFile
 DENG_EXTERN_C AutoStr *P_MapSourceFile(char const *uriCString)
 {
-    de::Uri uri = de::Uri(uriCString, RC_NULL);
+    de::Uri uri(uriCString, RC_NULL);
     lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toLatin1(), true/*quiet please*/);
     if(lumpNum < 0) return AutoStr_NewStd();
     return W_LumpSourceFile(lumpNum);
@@ -116,17 +91,7 @@ DENG_EXTERN_C boolean P_LoadMap(char const *uriCString)
     }
 
     de::Uri uri(uriCString, RC_NULL);
-    LOG_MSG("Loading Map \"%s\"...") << uri;
-
-    // It would be very cool if map loading happened in another
-    // thread. That way we could be keeping ourselves busy while
-    // the intermission is played...
-
-    // We could even try to divide a HUB up into zones, so that
-    // when a player enters a zone we could begin loading the map(s)
-    // reachable through exits in that zone (providing they have
-    // enough M_Free memory of course) so that transitions are
-    // (potentially) seamless :-)
+    LOG_MSG("Loading map \"%s\"...") << uri;
 
     if(isServer)
     {
@@ -143,18 +108,92 @@ DENG_EXTERN_C boolean P_LoadMap(char const *uriCString)
         }
     }
 
-    if(DAM_AttemptMapLoad(reinterpret_cast<uri_s*>(&uri)))
+    Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
+
+    if((theMap = App_MapArchive().loadMap(uri)))
     {
-        GameMap* map = theMap;
+        LOG_INFO("Map Elements: %d Vertexes, %d Lines, %d Sectors, %d BSP Nodes, %d BSP Leafs")
+            << theMap->vertexCount() << theMap->lineCount() << theMap->sectorCount()
+            << theMap->bspNodeCount() << theMap->bspLeafCount();
 
-        // Init the thinker lists (public and private).
-        GameMap_InitThinkerLists(map, 0x1 | 0x2);
+        // Call the game's setup routines.
+        if(gx.SetupForMapData)
+        {
+            gx.SetupForMapData(DMU_VERTEX,  theMap->vertexCount());
+            gx.SetupForMapData(DMU_LINE,    theMap->lineCount());
+            gx.SetupForMapData(DMU_SIDE,    theMap->sideCount());
+            gx.SetupForMapData(DMU_SECTOR,  theMap->sectorCount());
+        }
 
-        GameMap_ClMobjReset(map);
+        // Do any initialization/error checking work we need to do.
+        // Must be called before we go any further.
+        P_InitUnusedMobjList();
+
+        // Must be called before any mobjs are spawned.
+        theMap->initNodePiles();
 
 #ifdef __CLIENT__
+        // Prepare the client-side data.
+        if(isClient)
+        {
+            theMap->initClMobjs();
+        }
+
+        Rend_DecorInitForMap();
+#endif
+
+        // See what mapinfo says about this map.
+        de::Uri mapUri = theMap->uri();
+        ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
+        if(!mapInfo)
+        {
+            de::Uri defaultMapUri("*", RC_NULL);
+            mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&defaultMapUri));
+        }
+
+#ifdef __CLIENT__
+        ded_sky_t *skyDef = 0;
+        if(mapInfo)
+        {
+            skyDef = Def_GetSky(mapInfo->skyID);
+            if(!skyDef)
+                skyDef = &mapInfo->sky;
+        }
+        Sky_Configure(skyDef);
+#endif
+
+        // Setup accordingly.
+        if(mapInfo)
+        {
+            theMap->_globalGravity = mapInfo->gravity;
+            theMap->_ambientLightLevel = mapInfo->ambient * 255;
+        }
+        else
+        {
+            // No map info found, so set some basic stuff.
+            theMap->_globalGravity = 1.0f;
+            theMap->_ambientLightLevel = 0;
+        }
+
+        theMap->_effectiveGravity = theMap->_globalGravity;
+
+#ifdef __CLIENT__
+        Rend_RadioInitForMap();
+#endif
+
+        theMap->initSkyFix();
+
+        // Init the thinker lists (public and private).
+        GameMap_InitThinkerLists(theMap, 0x1 | 0x2);
+
+#ifdef __CLIENT__
+        if(isClient)
+        {
+            theMap->clMobjReset();
+        }
+
         // Tell shadow bias to initialize the bias light sources.
-        SB_InitForMap(GameMap_OldUniqueId(map));
+        SB_InitForMap(theMap->oldUniqueId());
 
         // Clear player data, too, since we just lost all clmobjs.
         Cl_InitPlayers();
@@ -166,7 +205,7 @@ DENG_EXTERN_C boolean P_LoadMap(char const *uriCString)
         // Invalidate old cmds and init player values.
         for(uint i = 0; i < DDMAXPLAYERS; ++i)
         {
-            player_t* plr = &ddPlayers[i];
+            player_t *plr = &ddPlayers[i];
 
             /*
             if(isServer && plr->shared.inGame)
@@ -194,6 +233,7 @@ DENG_EXTERN_C boolean P_LoadMap(char const *uriCString)
 
         R_InitRendPolyPools();
 #endif
+
         // Init Particle Generator links.
         P_PtcInitForMap();
 
@@ -203,13 +243,13 @@ DENG_EXTERN_C boolean P_LoadMap(char const *uriCString)
     return false;
 }
 
-static int clearEntityDefsWorker(StringPool::Id id, void* /*parameters*/)
+static int clearEntityDefsWorker(StringPool::Id id, void * /*parameters*/)
 {
-    MapEntityDef* def = static_cast<MapEntityDef*>( entityDefs->userPointer(id) );
+    MapEntityDef *def = static_cast<MapEntityDef *>( entityDefs->userPointer(id) );
     DENG2_ASSERT(def);
-    for(uint k = 0; k < def->numProps; ++k)
+    for(uint i = 0; i < def->numProps; ++i)
     {
-        MapEntityPropertyDef* prop = def->props + k;
+        MapEntityPropertyDef *prop = def->props + i;
         M_Free(prop->name);
     }
     M_Free(def->props);
@@ -226,35 +266,35 @@ static void clearEntityDefs(void)
     entityDefIdMap.clear();
 }
 
-MapEntityDef* P_MapEntityDef(int id)
+MapEntityDef *P_MapEntityDef(int id)
 {
     EntityDefIdMap::iterator i = entityDefIdMap.find(id);
     if(i != entityDefIdMap.end())
     {
         StringPool::Id id = i->second;
-        return static_cast<MapEntityDef*>( entityDefs->userPointer(id) );
+        return static_cast<MapEntityDef *>( entityDefs->userPointer(id) );
     }
     return 0; // Not found.
 }
 
-MapEntityDef* P_MapEntityDefByName(char const* name)
+MapEntityDef *P_MapEntityDefByName(char const *name)
 {
     if(name && entityDefs)
     {
         StringPool::Id id = entityDefs->isInterned(String(name));
-        return static_cast<MapEntityDef*>( entityDefs->userPointer(id) );
+        return static_cast<MapEntityDef *>( entityDefs->userPointer(id) );
     }
     return 0; // Not found.
 }
 
-static int P_NameForMapEntityDefWorker(StringPool::Id id, void* parameters)
+static int P_NameForMapEntityDefWorker(StringPool::Id id, void *parameters)
 {
-    MapEntityDef* def = static_cast<MapEntityDef*>( parameters );
+    MapEntityDef *def = static_cast<MapEntityDef *>( parameters );
     if(entityDefs->userPointer(id) == def) return id;
     return 0; // Continue iteration.
 }
 
-AutoStr* P_NameForMapEntityDef(MapEntityDef* def)
+AutoStr *P_NameForMapEntityDef(MapEntityDef *def)
 {
     if(def)
     {
@@ -266,13 +306,14 @@ AutoStr* P_NameForMapEntityDef(MapEntityDef* def)
     return AutoStr_NewStd();
 }
 
-int MapEntityDef_Property2(MapEntityDef* def, int propertyId, MapEntityPropertyDef** retDef)
+int MapEntityDef_Property(MapEntityDef *def, int propertyId,
+                          MapEntityPropertyDef **retDef = 0)
 {
     DENG2_ASSERT(def);
-    MapEntityPropertyDef* found = 0;
+    MapEntityPropertyDef *found = 0;
     for(uint i = 0; i < def->numProps; ++i)
     {
-        MapEntityPropertyDef* prop = def->props + i;
+        MapEntityPropertyDef *prop = def->props + i;
         if(prop->id == propertyId)
         {
             found = prop;
@@ -283,20 +324,16 @@ int MapEntityDef_Property2(MapEntityDef* def, int propertyId, MapEntityPropertyD
     return found? found - def->props : -1/* not found */;
 }
 
-int MapEntityDef_Property(MapEntityDef* def, int propertyId)
-{
-    return MapEntityDef_Property2(def, propertyId, NULL/*do not retrieve the property def*/);
-}
-
-int MapEntityDef_PropertyByName2(MapEntityDef* def, const char* propertyName, MapEntityPropertyDef** retDef)
+int MapEntityDef_PropertyByName(MapEntityDef *def, char const *propertyName,
+                                MapEntityPropertyDef **retDef)
 {
     DENG2_ASSERT(def);
-    MapEntityPropertyDef* found = 0;
+    MapEntityPropertyDef *found = 0;
     if(propertyName && propertyName[0])
     {
         for(uint i = 0; i < def->numProps; ++i)
         {
-            MapEntityPropertyDef* prop = def->props + i;
+            MapEntityPropertyDef *prop = def->props + i;
             if(!stricmp(prop->name, propertyName))
             {
                 found = prop;
@@ -306,11 +343,6 @@ int MapEntityDef_PropertyByName2(MapEntityDef* def, const char* propertyName, Ma
     }
     if(retDef) *retDef = found;
     return found? found - def->props : -1/* not found */;
-}
-
-int MapEntityDef_PropertyByName(MapEntityDef* def, const char* propertyName)
-{
-    return MapEntityDef_PropertyByName2(def, propertyName, NULL/*do not retrieve the property def*/);
 }
 
 void MapEntityDef_AddProperty(MapEntityDef* def, int propertyId, const char* propertyName,
@@ -358,7 +390,7 @@ void MapEntityDef_AddProperty(MapEntityDef* def, int propertyId, const char* pro
     prop->id = propertyId;
 
     int len = (int)strlen(propertyName);
-    prop->name = (char*) M_Malloc(sizeof(*prop->name) * (len + 1));
+    prop->name = (char *) M_Malloc(sizeof(*prop->name) * (len + 1));
     if(!prop->name)
         throw Error("MapEntityDef_AddProperty",
                         QString("Failed on allocation of %1 bytes for property name")
@@ -376,19 +408,20 @@ void MapEntityDef_AddProperty(MapEntityDef* def, int propertyId, const char* pro
  * @param identifer     If objName is @c NULL, compare using this unique identifier.
  * @param objName       If not @c NULL, compare using this unique name.
  */
-static MapEntityDef* findMapEntityDef(int identifier, const char* entityName, boolean canCreate)
+static MapEntityDef *findMapEntityDef(int identifier, char const *entityName,
+                                      bool canCreate)
 {
     if(identifier == 0 && (!entityName || !entityName[0])) return 0;
 
     // Is this an already known entity?
     if(entityName && entityName[0])
     {
-        MapEntityDef* found = P_MapEntityDefByName(entityName);
+        MapEntityDef *found = P_MapEntityDefByName(entityName);
         if(found) return found;
     }
     else
     {
-        MapEntityDef* found = P_MapEntityDef(identifier);
+        MapEntityDef *found = P_MapEntityDef(identifier);
         if(found) return found;
     }
 
@@ -408,7 +441,7 @@ static MapEntityDef* findMapEntityDef(int identifier, const char* entityName, bo
     }
 
     StringPool::Id id = entityDefs->intern(String(entityName));
-    MapEntityDef* def = new MapEntityDef(identifier);
+    MapEntityDef *def = new MapEntityDef(identifier);
     entityDefs->setUserPointer(id, def);
 
     entityDefIdMap.insert(std::pair<int, StringPool::Id>(identifier, id));
@@ -417,71 +450,72 @@ static MapEntityDef* findMapEntityDef(int identifier, const char* entityName, bo
 }
 
 #undef P_RegisterMapObj
-DENG_EXTERN_C boolean P_RegisterMapObj(int identifier, const char* name)
+DENG_EXTERN_C boolean P_RegisterMapObj(int identifier, char const *name)
 {
-    return !!findMapEntityDef(identifier, name, true /*do create*/);
+    return findMapEntityDef(identifier, name, true /*do create*/) != 0;
 }
 
 #undef P_RegisterMapObjProperty
 DENG_EXTERN_C boolean P_RegisterMapObjProperty(int entityId, int propertyId,
-                                               const char* propertyName, valuetype_t type)
+                                               char const *propertyName, valuetype_t type)
 {
     try
     {
-        MapEntityDef* def = findMapEntityDef(entityId, 0, false /*do not create*/);
+        MapEntityDef *def = findMapEntityDef(entityId, 0, false /*do not create*/);
         if(!def) throw Error("P_RegisterMapObjProperty", QString("Unknown entityId %1").arg(entityId));
 
         MapEntityDef_AddProperty(def, propertyId, propertyName, type);
         return true; // Success!
     }
-    catch(Error const& er)
+    catch(Error const &er)
     {
         LOG_WARNING("%s. Ignoring.") << er.asText();
     }
     return false;
 }
 
-void P_InitMapEntityDefs(void)
+void P_InitMapEntityDefs()
 {
     // Allow re-init.
     clearEntityDefs();
 }
 
-void P_ShutdownMapEntityDefs(void)
+void P_ShutdownMapEntityDefs()
 {
     clearEntityDefs();
 }
 
+#undef P_CountGameMapObjs
 DENG_EXTERN_C uint P_CountGameMapObjs(int entityId)
 {
     if(!theMap || !theMap->entityDatabase) return 0;
-    EntityDatabase* db = theMap->entityDatabase;
+    EntityDatabase *db = theMap->entityDatabase;
     return EntityDatabase_EntityCount(db, P_MapEntityDef(entityId));
 }
 
-boolean P_SetMapEntityProperty(EntityDatabase* db, MapEntityPropertyDef* propertyDef,
-    uint elementIndex, valuetype_t valueType, void* valueAdr)
+boolean P_SetMapEntityProperty(EntityDatabase *db, MapEntityPropertyDef *propertyDef,
+    int elementIndex, valuetype_t valueType, void *valueAdr)
 {
     try
     {
         return EntityDatabase_SetProperty(db, propertyDef, elementIndex, valueType, valueAdr);
     }
-    catch(Error const& er)
+    catch(Error const &er)
     {
         LOG_WARNING("%s. Ignoring.") << er.asText();
     }
     return false;
 }
 
-static MapEntityPropertyDef* entityPropertyDef(int entityId, int propertyId)
+static MapEntityPropertyDef *entityPropertyDef(int entityId, int propertyId)
 {
     // Is this a known entity?
-    MapEntityDef* entity = P_MapEntityDef(entityId);
+    MapEntityDef *entity = P_MapEntityDef(entityId);
     if(!entity) throw Error("entityPropertyDef", QString("Unknown entity definition id %1").arg(entityId));
 
     // Is this a known property?
-    MapEntityPropertyDef* property;
-    if(MapEntityDef_Property2(entity, propertyId, &property) < 0)
+    MapEntityPropertyDef *property;
+    if(MapEntityDef_Property(entity, propertyId, &property) < 0)
         throw Error("entityPropertyDef", QString("Entity definition %1 has no property with id %2")
                                                  .arg(Str_Text(P_NameForMapEntityDef(entity)))
                                                  .arg(propertyId));
@@ -489,34 +523,35 @@ static MapEntityPropertyDef* entityPropertyDef(int entityId, int propertyId)
     return property; // Found it.
 }
 
-static void setValue(void* dst, valuetype_t dstType, PropertyValue const* pvalue)
+static void setValue(void *dst, valuetype_t dstType, PropertyValue const *pvalue)
 {
     switch(dstType)
     {
-    case DDVT_FIXED: *((fixed_t*) dst) = pvalue->asFixed(); break;
-    case DDVT_FLOAT: *(  (float*) dst) = pvalue->asFloat(); break;
-    case DDVT_BYTE:  *(   (byte*) dst) = pvalue->asByte();  break;
-    case DDVT_INT:   *(    (int*) dst) = pvalue->asInt32(); break;
-    case DDVT_SHORT: *(  (short*) dst) = pvalue->asInt16(); break;
-    case DDVT_ANGLE: *((angle_t*) dst) = pvalue->asAngle(); break;
+    case DDVT_FIXED: *((fixed_t *) dst) = pvalue->asFixed(); break;
+    case DDVT_FLOAT: *(  (float *) dst) = pvalue->asFloat(); break;
+    case DDVT_BYTE:  *(   (byte *) dst) = pvalue->asByte();  break;
+    case DDVT_INT:   *(    (int *) dst) = pvalue->asInt32(); break;
+    case DDVT_SHORT: *(  (short *) dst) = pvalue->asInt16(); break;
+    case DDVT_ANGLE: *((angle_t *) dst) = pvalue->asAngle(); break;
     default:
         throw Error("setValue", QString("Unknown value type %d").arg(dstType));
     }
 }
 
-DENG_EXTERN_C byte P_GetGMOByte(int entityId, uint elementIndex, int propertyId)
+#undef P_GetGMOByte
+DENG_EXTERN_C byte P_GetGMOByte(int entityId, int elementIndex, int propertyId)
 {
     byte returnVal = 0;
     if(theMap && theMap->entityDatabase)
     {
         try
         {
-            EntityDatabase* db = theMap->entityDatabase;
-            MapEntityPropertyDef* propDef = entityPropertyDef(entityId, propertyId);
+            EntityDatabase *db = theMap->entityDatabase;
+            MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
 
             setValue(&returnVal, DDVT_BYTE, EntityDatabase_Property(db, propDef, elementIndex));
         }
-        catch(Error const& er)
+        catch(Error const &er)
         {
             LOG_WARNING("%s. Returning 0.") << er.asText();
         }
@@ -524,19 +559,20 @@ DENG_EXTERN_C byte P_GetGMOByte(int entityId, uint elementIndex, int propertyId)
     return returnVal;
 }
 
-DENG_EXTERN_C short P_GetGMOShort(int entityId, uint elementIndex, int propertyId)
+#undef P_GetGMOShort
+DENG_EXTERN_C short P_GetGMOShort(int entityId, int elementIndex, int propertyId)
 {
     short returnVal = 0;
     if(theMap && theMap->entityDatabase)
     {
         try
         {
-            EntityDatabase* db = theMap->entityDatabase;
-            MapEntityPropertyDef* propDef = entityPropertyDef(entityId, propertyId);
+            EntityDatabase *db = theMap->entityDatabase;
+            MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
 
             setValue(&returnVal, DDVT_SHORT, EntityDatabase_Property(db, propDef, elementIndex));
         }
-        catch(Error const& er)
+        catch(Error const &er)
         {
             LOG_WARNING("%s. Returning 0.") << er.asText();
         }
@@ -544,19 +580,20 @@ DENG_EXTERN_C short P_GetGMOShort(int entityId, uint elementIndex, int propertyI
     return returnVal;
 }
 
-DENG_EXTERN_C int P_GetGMOInt(int entityId, uint elementIndex, int propertyId)
+#undef P_GetGMOInt
+DENG_EXTERN_C int P_GetGMOInt(int entityId, int elementIndex, int propertyId)
 {
     int returnVal = 0;
     if(theMap && theMap->entityDatabase)
     {
         try
         {
-            EntityDatabase* db = theMap->entityDatabase;
-            MapEntityPropertyDef* propDef = entityPropertyDef(entityId, propertyId);
+            EntityDatabase *db = theMap->entityDatabase;
+            MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
 
             setValue(&returnVal, DDVT_INT, EntityDatabase_Property(db, propDef, elementIndex));
         }
-        catch(Error const& er)
+        catch(Error const &er)
         {
             LOG_WARNING("%s. Returning 0.") << er.asText();
         }
@@ -564,19 +601,20 @@ DENG_EXTERN_C int P_GetGMOInt(int entityId, uint elementIndex, int propertyId)
     return returnVal;
 }
 
-DENG_EXTERN_C fixed_t P_GetGMOFixed(int entityId, uint elementIndex, int propertyId)
+#undef P_GetGMOFixed
+DENG_EXTERN_C fixed_t P_GetGMOFixed(int entityId, int elementIndex, int propertyId)
 {
     fixed_t returnVal = 0;
     if(theMap && theMap->entityDatabase)
     {
         try
         {
-            EntityDatabase* db = theMap->entityDatabase;
-            MapEntityPropertyDef* propDef = entityPropertyDef(entityId, propertyId);
+            EntityDatabase *db = theMap->entityDatabase;
+            MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
 
             setValue(&returnVal, DDVT_FIXED, EntityDatabase_Property(db, propDef, elementIndex));
         }
-        catch(Error const& er)
+        catch(Error const &er)
         {
             LOG_WARNING("%s. Returning 0.") << er.asText();
         }
@@ -584,19 +622,20 @@ DENG_EXTERN_C fixed_t P_GetGMOFixed(int entityId, uint elementIndex, int propert
     return returnVal;
 }
 
-DENG_EXTERN_C angle_t P_GetGMOAngle(int entityId, uint elementIndex, int propertyId)
+#undef P_GetGMOAngle
+DENG_EXTERN_C angle_t P_GetGMOAngle(int entityId, int elementIndex, int propertyId)
 {
     angle_t returnVal = 0;
     if(theMap && theMap->entityDatabase)
     {
         try
         {
-            EntityDatabase* db = theMap->entityDatabase;
-            MapEntityPropertyDef* propDef = entityPropertyDef(entityId, propertyId);
+            EntityDatabase *db = theMap->entityDatabase;
+            MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
 
             setValue(&returnVal, DDVT_ANGLE, EntityDatabase_Property(db, propDef, elementIndex));
         }
-        catch(Error const& er)
+        catch(Error const &er)
         {
             LOG_WARNING("%s. Returning 0.") << er.asText();
         }
@@ -604,19 +643,20 @@ DENG_EXTERN_C angle_t P_GetGMOAngle(int entityId, uint elementIndex, int propert
     return returnVal;
 }
 
-DENG_EXTERN_C float P_GetGMOFloat(int entityId, uint elementIndex, int propertyId)
+#undef P_GetGMOFloat
+DENG_EXTERN_C float P_GetGMOFloat(int entityId, int elementIndex, int propertyId)
 {
     float returnVal = 0;
     if(theMap && theMap->entityDatabase)
     {
         try
         {
-            EntityDatabase* db = theMap->entityDatabase;
-            MapEntityPropertyDef* propDef = entityPropertyDef(entityId, propertyId);
+            EntityDatabase *db = theMap->entityDatabase;
+            MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
 
             setValue(&returnVal, DDVT_FLOAT, EntityDatabase_Property(db, propDef, elementIndex));
         }
-        catch(Error const& er)
+        catch(Error const &er)
         {
             LOG_WARNING("%s. Returning 0.") << er.asText();
         }

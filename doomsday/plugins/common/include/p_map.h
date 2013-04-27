@@ -29,26 +29,32 @@
 #ifndef LIBCOMMON_P_MAP_H
 #define LIBCOMMON_P_MAP_H
 
-extern coord_t attackRange;
+#include "common.h"
+
+DENG_EXTERN_C coord_t attackRange;
 
 // If "floatOk" true, move would be ok if within "tmFloorZ - tmCeilingZ".
-extern boolean floatOk;
-extern coord_t tmFloorZ;
-extern coord_t tmCeilingZ;
-extern Material* tmFloorMaterial;
+DENG_EXTERN_C boolean floatOk;
+DENG_EXTERN_C coord_t tmFloorZ;
+DENG_EXTERN_C coord_t tmCeilingZ;
+DENG_EXTERN_C Material* tmFloorMaterial;
 
-extern LineDef* ceilingLine, *floorLine;
-extern LineDef* blockLine;
-extern mobj_t* lineTarget; // Who got hit (or NULL).
-extern mobj_t* tmThing;
+DENG_EXTERN_C Line* ceilingLine, *floorLine;
+DENG_EXTERN_C Line* blockLine;
+DENG_EXTERN_C mobj_t* lineTarget; // Who got hit (or NULL).
+DENG_EXTERN_C mobj_t* tmThing;
 
 #if __JHEXEN__
-extern mobj_t* puffSpawned;
-extern mobj_t* blockingMobj;
+DENG_EXTERN_C mobj_t* puffSpawned;
+DENG_EXTERN_C mobj_t* blockingMobj;
 #endif
 
-extern AABoxd tmBox;
-extern boolean fellDown;
+DENG_EXTERN_C AABoxd tmBox;
+DENG_EXTERN_C boolean fellDown;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 boolean P_CheckSight(const mobj_t* from, const mobj_t* to);
 
@@ -94,6 +100,10 @@ boolean P_TestMobjLocation(mobj_t* mobj);
 void PIT_ThrustSpike(mobj_t* actor);
 
 boolean P_UsePuzzleItem(player_t* player, int itemType);
+#endif
+
+#ifdef __cplusplus
+} // extern "C"
 #endif
 
 #endif // LIBCOMMON_P_MAP_H

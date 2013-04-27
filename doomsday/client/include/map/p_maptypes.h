@@ -26,8 +26,7 @@
 #  include "vertex.h"
 #endif
 #include "hedge.h"
-#include "sidedef.h"
-#include "linedef.h"
+#include "line.h"
 #include "surface.h"
 #include "plane.h"
 #include "sector.h"

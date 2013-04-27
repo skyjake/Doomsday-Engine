@@ -50,7 +50,6 @@ enum {
     MO_TAG
 };
 
-void            P_Init(void);
 void            P_RegisterMapObjs(void);
 
 int             P_HandleMapDataPropertyValue(uint id, int dtype, int prop, valuetype_t type, void *data);

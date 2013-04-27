@@ -30,6 +30,7 @@
 
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
+#include "map/gamemap.h"
 #include "Texture"
 
 using namespace de;
@@ -343,11 +344,11 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
         }
         else
         {
-            float lightLevel;
-            float const *secColor = R_GetSectorLightColor(spr->data.sprite.bspLeaf->sector);
+            Sector &sector = spr->data.sprite.bspLeaf->sector();
+            Vector3f const &secColor = R_GetSectorLightColor(sector);
 
             // No need for distance attentuation.
-            lightLevel = spr->data.sprite.bspLeaf->sector->lightLevel;
+            float lightLevel = sector.lightLevel();
 
             // Add extra light plus bonus.
             lightLevel += R_ExtraLightDelta();
@@ -356,9 +357,10 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
             Rend_ApplyLightAdaptation(&lightLevel);
 
             // Determine the final ambientColor in affect.
-            params->ambientColor[CR] = lightLevel * secColor[CR];
-            params->ambientColor[CG] = lightLevel * secColor[CG];
-            params->ambientColor[CB] = lightLevel * secColor[CB];
+            for(int i = 0; i < 3; ++i)
+            {
+                params->ambientColor[i] = lightLevel * secColor[i];
+            }
         }
 
         Rend_ApplyTorchLight(params->ambientColor, 0);
@@ -730,11 +732,11 @@ static void setupModelParamsForVisPSprite(rendmodelparams_t *params, vispsprite_
         }
         else
         {
-            float lightLevel;
-            float const *secColor = R_GetSectorLightColor(spr->data.model.bspLeaf->sector);
+            Sector &sector = spr->data.model.bspLeaf->sector();
+            Vector3f const &secColor = R_GetSectorLightColor(sector);
 
             // Diminished light (with compression).
-            lightLevel = spr->data.model.bspLeaf->sector->lightLevel;
+            float lightLevel = sector.lightLevel();
 
             // No need for distance attentuation.
 
@@ -746,9 +748,10 @@ static void setupModelParamsForVisPSprite(rendmodelparams_t *params, vispsprite_
             Rend_ApplyLightAdaptation(&lightLevel);
 
             // Determine the final ambientColor in effect.
-            params->ambientColor[CR] = lightLevel * secColor[CR];
-            params->ambientColor[CG] = lightLevel * secColor[CG];
-            params->ambientColor[CB] = lightLevel * secColor[CB];
+            for(int i = 0; i < 3; ++i)
+            {
+                params->ambientColor[i] = lightLevel * secColor[i];
+            }
         }
 
         Rend_ApplyTorchLight(params->ambientColor, params->distance);

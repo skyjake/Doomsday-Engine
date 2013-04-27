@@ -90,6 +90,14 @@ inline dint64 floor(ddouble const &value) {
     return dint64(std::floor(value));
 }
 
+inline dint32 ceil(dfloat const &value) {
+    return dint32(std::ceil(value));
+}
+
+inline dint64 ceil(ddouble const &value) {
+    return dint64(std::ceil(value));
+}
+
 /// Compare two single-precision floating-point values for equality,
 /// with the precision of FLOAT_EPSILON.
 inline bool fequal(dfloat a, dfloat b) {

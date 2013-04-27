@@ -19,17 +19,16 @@
  * 02110-1301 USA</small>
  */
 
-//#include <cmath>
-
 #include "de_base.h"
 #include "de_console.h"
 #include "de_play.h"
-//#include "de_graphics.h"
 #include "de_render.h"
 
 #include "def_main.h"
 #include "m_profiler.h"
 #include "MaterialVariantSpec"
+#include "map/gamemap.h"
+
 #include <de/math.h>
 #include <de/vector1.h>
 
@@ -69,7 +68,7 @@ static uint sourceCount = 0;
 static decorsource_t *sourceFirst = 0;
 static decorsource_t *sourceCursor = 0;
 
-static void plotSourcesForLineDef(LineDef &lineDef, byte side, SideDefSection section);
+static void plotSourcesForLineSide(Line::Side &side, int section);
 static void plotSourcesForPlane(Plane &pln);
 
 void Rend_DecorRegister()
@@ -96,7 +95,7 @@ static void projectSource(decorsource_t const &src)
     float min = decor->lightLevels[0];
     float max = decor->lightLevels[1];
 
-    float brightness = R_CheckSectorLight(src.bspLeaf->sector->lightLevel, min, max);
+    float brightness = R_CheckSectorLight(src.bspLeaf->sector().lightLevel(), min, max);
     if(!(brightness > 0)) return;
 
     if(src.fadeMul <= 0) return;
@@ -150,9 +149,9 @@ static void projectSource(decorsource_t const &src)
                         src.origin[VZ] - vOrigin[VY]);
         V3f_Normalize(vector);
 
-        float dot = -(src.surface->normal[VX] * vector[VX] +
-                      src.surface->normal[VY] * vector[VY] +
-                      src.surface->normal[VZ] * vector[VZ]);
+        float dot = -(src.surface->normal()[VX] * vector[VX] +
+                      src.surface->normal()[VY] * vector[VY] +
+                      src.surface->normal()[VZ] * vector[VZ]);
 
         if(dot < decorLightFadeAngle / 2)
             vis->data.flare.mul = 0;
@@ -161,7 +160,7 @@ static void projectSource(decorsource_t const &src)
     }
 }
 
-void Rend_DecorInit()
+void Rend_DecorInitForMap()
 {
     recycleSources();
 }
@@ -187,7 +186,7 @@ static void addLuminousDecoration(decorsource_t &src)
     float min = decor->lightLevels[0];
     float max = decor->lightLevels[1];
 
-    float brightness = R_CheckSectorLight(src.bspLeaf->sector->lightLevel, min, max);
+    float brightness = R_CheckSectorLight(src.bspLeaf->sector().lightLevel(), min, max);
     if(!(brightness > 0)) return;
 
     // Apply the brightness factor (was calculated using sector lightlevel).
@@ -297,7 +296,7 @@ static void newSource(Surface const &suf, Surface::DecorSource const &dec)
     decorsource_t *src = allocDecorSource();
 
     // Fill in the data for a new surface decoration.
-    V3d_Copy(src->origin, dec.origin);
+    V3d_Set(src->origin, dec.origin.x, dec.origin.y, dec.origin.z);
     src->maxDistance = MAX_DECOR_DISTANCE;
     src->bspLeaf = dec.bspLeaf;
     src->surface = &suf;
@@ -307,37 +306,36 @@ static void newSource(Surface const &suf, Surface::DecorSource const &dec)
 
 static void plotSourcesForSurface(Surface &suf)
 {
-    if(suf.inFlags & SUIF_UPDATE_DECORATIONS)
+    if(suf._decorationData.needsUpdate)
     {
         suf.clearDecorations();
 
-        switch(suf.owner->type())
+        switch(suf.owner().type())
         {
-        case DMU_SIDEDEF: {
-            SideDef *sideDef = suf.owner->castTo<SideDef>();
-            LineDef *line = sideDef->line;
-            plotSourcesForLineDef(*line, sideDef == line->L_frontsidedef? FRONT : BACK,
-                                  &sideDef->SW_middlesurface == &suf? SS_MIDDLE :
-                                  &sideDef->SW_bottomsurface == &suf? SS_BOTTOM : SS_TOP);
+        case DMU_SIDE: {
+            Line::Side *side = suf.owner().castTo<Line::Side>();
+            plotSourcesForLineSide(*side, &side->middle() == &suf? Line::Side::Middle :
+                                          &side->bottom() == &suf? Line::Side::Bottom : Line::Side::Top);
             break; }
 
         case DMU_PLANE: {
-            Plane *plane = suf.owner->castTo<Plane>();
+            Plane *plane = suf.owner().castTo<Plane>();
             plotSourcesForPlane(*plane);
             break; }
 
         default:
             DENG2_ASSERT(0); // Invalid type.
         }
-        suf.inFlags &= ~SUIF_UPDATE_DECORATIONS;
+
+        suf._decorationData.needsUpdate = false;
     }
 
     if(useLightDecorations)
     {
-        Surface::DecorSource const *decorations = (Surface::DecorSource const *)suf.decorations;
-        for(uint i = 0; i < suf.numDecorations; ++i)
+        Surface::DecorSource const *sources = (Surface::DecorSource const *)suf._decorationData.sources;
+        for(uint i = 0; i < suf.decorationCount(); ++i)
         {
-            newSource(suf, decorations[i]);
+            newSource(suf, sources[i]);
         }
     }
 }
@@ -366,9 +364,9 @@ static uint generateDecorLights(MaterialSnapshot::Decoration const &decor,
 
     if(de::fequal(patternW, 0) && de::fequal(patternH, 0)) return 0;
 
-    Vector3d topLeft = v1 + Vector3d(decor.elevation * suf.normal[VX],
-                                     decor.elevation * suf.normal[VY],
-                                     decor.elevation * suf.normal[VZ]);
+    Vector3d topLeft = v1 + Vector3d(decor.elevation * suf.normal()[VX],
+                                     decor.elevation * suf.normal()[VY],
+                                     decor.elevation * suf.normal()[VZ]);
 
     // Determine the leftmost point.
     float s = de::wrap(decor.pos[0] - material.width() * patternOffset.x + offset.x,
@@ -392,14 +390,14 @@ static uint generateDecorLights(MaterialSnapshot::Decoration const &decor,
             if(containingSector)
             {
                 // The point must be inside the correct sector.
-                if(!P_IsPointXYInSector(origin.x, origin.y, containingSector))
+                if(!P_IsPointInSector(origin, *containingSector))
                     continue;
             }
 
             if(Surface::DecorSource *source = suf.newDecoration())
             {
-                V3d_Set(source->origin, origin.x, origin.y, origin.z);
-                source->bspLeaf = P_BspLeafAtPoint(source->origin);
+                source->origin  = origin;
+                source->bspLeaf = theMap->bspLeafAtPoint(origin);
                 source->decor   = &decor;
                 decorCount++;
             }
@@ -418,75 +416,70 @@ static void updateSurfaceDecorations(Surface &suf, Vector2f const &offset,
     Vector3d delta = v2 - v1;
     if(de::fequal(delta.length(), 0)) return;
 
-    int const axis = V3f_MajorAxis(suf.normal);
+    int const axis = suf.normal().maxAxis();
+
     Vector2d sufDimensions;
-    if(axis == VX || axis == VY)
+    if(axis == 0 || axis == 1)
     {
-        sufDimensions.x = std::sqrt(delta[VX] * delta[VX] + delta[VY] * delta[VY]);
-        sufDimensions.y = delta[VZ];
+        sufDimensions.x = std::sqrt(delta.x * delta.x + delta.y * delta.y);
+        sufDimensions.y = delta.z;
     }
     else
     {
-        sufDimensions.x = std::sqrt(delta[VX] * delta[VX]);
-        sufDimensions.y = delta[VY];
+        sufDimensions.x = std::sqrt(delta.x * delta.x);
+        sufDimensions.y = delta.y;
     }
 
     if(sufDimensions.x < 0) sufDimensions.x = -sufDimensions.x;
     if(sufDimensions.y < 0) sufDimensions.y = -sufDimensions.y;
 
     // Generate a number of lights.
-    MaterialSnapshot const &ms = suf.material->prepare(Rend_MapSurfaceMaterialSpec());
+    MaterialSnapshot const &ms = suf.material().prepare(Rend_MapSurfaceMaterialSpec());
 
-    Material::Decorations const &decorations = suf.material->decorations();
+    Material::Decorations const &decorations = suf.material().decorations();
     for(int i = 0; i < decorations.count(); ++i)
     {
         MaterialSnapshot::Decoration const &decor = ms.decoration(i);
         MaterialDecoration const *def = decorations[i];
 
         generateDecorLights(decor, def->patternOffset(), def->patternSkip(),
-                            suf, *suf.material, v1, v2, sufDimensions,
+                            suf, suf.material(), v1, v2, sufDimensions,
                             delta, axis, offset, sec);
     }
 }
 
 static void plotSourcesForPlane(Plane &pln)
 {
-    Sector &sec  = *pln.sector;
-    Surface &suf = pln.surface;
+    Surface &surface = pln.surface();
+    if(!surface.hasMaterial()) return;
 
-    if(!suf.material) return;
+    Sector &sector = pln.sector();
+    AABoxd const &sectorAABox = sector.aaBox();
 
-    Vector3d v1(sec.aaBox.minX, pln.type == PLN_FLOOR? sec.aaBox.maxY : sec.aaBox.minY, pln.visHeight);
-    Vector3d v2(sec.aaBox.maxX, pln.type == PLN_FLOOR? sec.aaBox.minY : sec.aaBox.maxY, pln.visHeight);
+    Vector3d v1(sectorAABox.minX, pln.type() == Plane::Floor? sectorAABox.maxY : sectorAABox.minY, pln.visHeight());
+    Vector3d v2(sectorAABox.maxX, pln.type() == Plane::Floor? sectorAABox.minY : sectorAABox.maxY, pln.visHeight());
 
-    Vector2f offset(-fmod(sec.aaBox.minX, 64) - suf.visOffset[0],
-                    -fmod(sec.aaBox.minY, 64) - suf.visOffset[1]);
+    Vector2f offset(-fmod(sectorAABox.minX, 64) - surface.visMaterialOrigin()[0],
+                    -fmod(sectorAABox.minY, 64) - surface.visMaterialOrigin()[1]);
 
-    updateSurfaceDecorations(suf, offset, v1, v2, &sec);
+    updateSurfaceDecorations(surface, offset, v1, v2, &sector);
 }
 
-static void plotSourcesForLineDef(LineDef &line, byte side, SideDefSection section)
+static void plotSourcesForLineSide(Line::Side &side, int section)
 {
-    if(!line.L_sidedef(side)) return;
-
-    Sector *frontSec  = line.L_sector(side);
-    Sector *backSec   = line.L_sector(side ^ 1);
-    SideDef *frontDef = line.L_sidedef(side);
-    SideDef *backDef  = line.L_sidedef(side ^ 1);
-    Surface &suf      = line.L_sidedef(side)->SW_surface(section);
-
-    if(!suf.material) return;
+    if(!side.hasSections()) return;
+    if(!side.surface(section).hasMaterial()) return;
 
     // Is the line section potentially visible?
-    coord_t low, hi;
-    float matOffset[2] = { 0, 0 };
-    if(!R_FindBottomTop2(section, line.flags, frontSec, backSec, frontDef, backDef,
-                         &low, &hi, matOffset)) return;
+    coord_t bottom, top;
+    Vector2f materialOrigin;
+    if(!R_SideSectionCoords(side, section, &bottom, &top, &materialOrigin))
+        return;
 
-    Vector3d v1(line.L_vorigin(side  )[VX], line.L_vorigin(side  )[VY], hi);
-    Vector3d v2(line.L_vorigin(side^1)[VX], line.L_vorigin(side^1)[VY], low);
+    Vector3d v1(side.from().origin().x, side.from().origin().y, top);
+    Vector3d v2(  side.to().origin().x,   side.to().origin().y, bottom);
 
-    updateSurfaceDecorations(suf, Vector2f(-matOffset[0], -matOffset[1]), v1, v2);
+    updateSurfaceDecorations(side.surface(section), -materialOrigin, v1, v2);
 }
 
 void Rend_DecorBeginFrame()

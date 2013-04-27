@@ -1,10 +1,8 @@
-/**
- * @file p_oldsvg.h
- * Heretic ver 1.3 save game reader.
+/** @file heretic/p_oldsvg.h Heretic ver 1.3 saved game state reader.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 1999 Activision
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1999 Activision
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -30,11 +28,19 @@
 
 #include "saveinfo.h"
 
-boolean SV_RecogniseState_Hr_v13(const char* path, SaveInfo* info);
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+boolean SV_RecogniseState_Hr_v13(Str const *path, SaveInfo *info);
 
 /**
  * @return  @c 0 on success else error code.
  */
-int SV_LoadState_Hr_v13(const char* path, SaveInfo* saveInfo);
+int SV_LoadState_Hr_v13(Str const *path, SaveInfo *info);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBHERETIC_OLD_SAVESTATE

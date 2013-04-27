@@ -165,7 +165,7 @@ int P_HandleMapObjectStatusReport(int code, uint id, int dtype, void *data)
          * *data is a pointer to int, giving the player id which has seen it.
          * We'll utilize this to mark it as being visible in the automap.
          */
-        P_SetLinedefAutomapVisibility(*(int*)data, id, true);
+        P_SetLineAutomapVisibility(*(int*)data, id, true);
         break;
 
     default:

@@ -40,6 +40,10 @@
 #define NUM_WEAPON_SLOTS        (4)
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if __JHEXEN__
 void            P_InitPlayerClassInfo(void);
 #endif
@@ -112,5 +116,9 @@ int             P_PlayerGiveArmorBonus(player_t* plr, armortype_t type, int poin
 int             P_CameraXYMovement(mobj_t* mo);
 int             P_CameraZMovement(mobj_t* mo);
 void            P_Thrust3D(struct player_s* player, angle_t angle, float lookdir, coord_t forwardMove, coord_t sideMove);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBCOMMON_PLAYER_H */

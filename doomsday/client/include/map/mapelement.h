@@ -1,5 +1,4 @@
 /** @file mapelement.h Base class for all map elements.
- * @ingroup map
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
@@ -18,16 +17,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_MAPELEMENT_H
-#define LIBDENG_MAPELEMENT_H
+#ifndef DENG_WORLD_MAPELEMENT
+#define DENG_WORLD_MAPELEMENT
+
+#include <de/Error>
 
 #include "dd_share.h"
-
-#ifndef __cplusplus
-#  error "map/mapelement.h requires C++"
-#endif
-
-#include <QList>
+#include "map/p_dmu.h"
 
 namespace de {
 
@@ -40,32 +36,53 @@ namespace de {
  * Abstract handling of map elements is particularly helpful in the public Map
  * Update (DMU) API, where objects can be referenced either by type and index
  * or by an opaque pointer.
+ *
+ * @ingroup map
  */
 class MapElement
 {
 public:
+    /// The referenced property does not exist. @ingroup errors
+    DENG2_ERROR(UnknownPropertyError);
+
+    /// The referenced property is not writeable. @ingroup errors
+    DENG2_ERROR(WritePropertyError);
+
+    /// Special identifier used to mark an invalid index.
     enum { NoIndex = -1 };
 
 public:
     MapElement(int t = DMU_NONE)
-        : _type(t), _indexInList(NoIndex) {}
+        : _type(t), _indexInArchive(NoIndex), _indexInMap(NoIndex) {}
 
     virtual ~MapElement() {}
 
-    int type() const
-    {
-        return _type;
-    }
+    /**
+     * Returns the DMU_* type of the object.
+     */
+    int type() const;
 
-    int indexInList() const
-    {
-        return _indexInList;
-    }
+    /**
+     * Returns the archive index for the map element. The archive index is
+     * the position of the relevant data or definition in the archived map.
+     * For example, in the case of a DMU_SIDE element that is produced from
+     * an id tech 1 format map, this should be the index of the definition
+     * in the SIDEDEFS data lump.
+     *
+     * @see setIndexInArchive()
+     */
+    int indexInArchive() const;
 
-    void setIndexInList(int idx = NoIndex)
-    {
-        _indexInList = idx;
-    }
+    /**
+     * Change the "archive index" of the map element to @a newIndex.
+     *
+     * @see indexInArchive()
+     */
+    void setIndexInArchive(int newIndex = NoIndex);
+
+    int indexInMap() const;
+
+    void setIndexInMap(int newIndex = NoIndex);
 
     template <typename Type>
     inline Type *castTo()
@@ -79,98 +96,51 @@ public:
     inline Type const *castTo() const
     {
         Type const *t = dynamic_cast<Type const *>(this);
-        DENG2_ASSERT(t != 0);
+        DENG_ASSERT(t != 0);
         return t;
     }
 
-    MapElement &operator = (MapElement const &other)
-    {
-        _type = other._type;
-        // We retain our current index in the list.
-        return *this;
-    }
+    /**
+     * @note The Current index indices are retained.
+     *
+     * @see setIndexInArchive(), setIndexInMap()
+     */
+    MapElement &operator = (MapElement const &other);
+
+    /**
+     * Get a property value, selected by DMU_* name.
+     *
+     * Derived classes can override this to implement read access for additional
+     * DMU properties. MapElement::property() must be called from an overridding
+     * method if the named property is unknown/not handled, returning the result.
+     * If the property is known and the read access is handled the overriding
+     * method should return @c false.
+     *
+     * @param args  Property arguments.
+     * @return  Always @c 0 (can be used as an iterator).
+     */
+    virtual int property(setargs_t &args) const;
+
+    /**
+     * Update a property value, selected by DMU_* name.
+     *
+     * Derived classes can override this to implement write access for additional
+     * DMU properties. MapElement::setProperty() must be called from an overridding
+     * method if the named property is unknown/not handled, returning the result.
+     * If the property is known and the write access is handled the overriding
+     * method should return @c false.
+     *
+     * @param args  Property arguments.
+     * @return  Always @c 0 (can be used as an iterator).
+     */
+    virtual int setProperty(setargs_t const &args);
 
 private:
     int _type;
-    int _indexInList;
-};
-
-/**
- * Collection of owned map elements with type @a Type. The template argument
- * @a Type must be a class derived from MapElement.
- *
- * The base class is protected because MapElement instances remember their
- * indices: all access to the list must occur through this class's public
- * interface so that the indices can be maintained appropriately.
- */
-template <typename Type>
-class MapElementList : protected QList<MapElement *>
-{
-    typedef QList<MapElement *> Base;
-
-public:
-    MapElementList() {}
-
-    /**
-     * Deletes all the objects in the list.
-     */
-    virtual ~MapElementList()
-    {
-        clear();
-    }
-
-    int size() const
-    {
-        return Base::size();
-    }
-
-    void clear()
-    {
-        // Delete all the objects.
-        for(iterator i = begin(); i != end(); ++i)
-        {
-            delete *i;
-        }
-        Base::clear();
-    }
-
-    void clearAndResize(int count)
-    {
-        clear();
-        while(count-- > 0)
-        {
-            Type *t = new Type;
-            t->setIndexInList(size());
-            append(t);
-        }
-    }
-
-    /**
-     * Looks up the index of an element in the list. Complexity: O(1).
-     *
-     * @param t  Element. Must be in the list.
-     *
-     * @return Index of the element @a t.
-     */
-    int indexOf(Type const *t) const
-    {
-        //DENG2_ASSERT(Base::indexOf(const_cast<Type *>(t)) == t->indexInList());
-        return t->indexInList();
-    }
-
-    Type &operator [] (int index)
-    {
-        DENG_ASSERT(dynamic_cast<Type *>(at(index)) != 0);
-        return *static_cast<Type *>(Base::at(index));
-    }
-
-    Type const &operator [] (int index) const
-    {
-        DENG_ASSERT(dynamic_cast<Type const *>(at(index)) != 0);
-        return *static_cast<Type const *>(Base::at(index));
-    }
+    int _indexInArchive;
+    int _indexInMap;
 };
 
 } // namespace de
 
-#endif // LIBDENG_MAPELEMENT_H
+#endif // DENG_WORLD_MAPELEMENT

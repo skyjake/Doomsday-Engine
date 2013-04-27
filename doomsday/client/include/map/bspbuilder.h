@@ -1,9 +1,4 @@
-/**
- * @file bspbuilder.h
- * BSP Builder (public interface). @ingroup map
- *
- * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
- * SourceForge: http://sourceforge.net/projects/glbsp/
+/** @file bspbuilder.h World Map BSP Builder.
  *
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
@@ -25,18 +20,16 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_BSPBUILDER
-#define LIBDENG_BSPBUILDER
+#ifndef DENG_WORLD_MAP_BSPBUILDER
+#define DENG_WORLD_MAP_BSPBUILDER
 
 #include "map/gamemap.h"
 #include "map/bsp/bsptreenode.h"
 
 namespace de {
 
-namespace bsp { class Partitioner; }
-
 /**
- * BSP node builder.
+ * Map geometry partitioner and BSP tree builder.
  *
  * BspBuilder constructs a BSP object object tree for the specified map.
  *
@@ -45,40 +38,33 @@ namespace bsp { class Partitioner; }
 class BspBuilder
 {
 public:
-    /// Default cost factor attributed to splitting an existing half-edge.
+    /// Default cost factor attributed to splitting a half-edge.
     static const int DEFAULT_PARTITION_COST_HEDGESPLIT = 7;
 
+public:
     /**
-     * Create a new BspBuilder initialized for construction using the specified map.
-     * @param map  GameMap for which to construct a BSP object tree.
-     * @param splitCostFactor  Cost factor attributed to splitting an existing half-edge.
+     * Create and configure a new BSP builder, initializing in preparation
+     * for building a BSP for the specified @a map.
+     *
+     * @param map  Map to construct a BSP for. The caller must ensure that
+     *             the map remains accessible until the build process has
+     *             completed (ownership is unaffected).
+     * @param splitCostFactor  Cost factor attributed to splitting a half-edge.
      */
-    BspBuilder(GameMap& map, uint numEditableVertexes, Vertex const **editableVertexes,
-               int splitCostFactor = DEFAULT_PARTITION_COST_HEDGESPLIT);
-    ~BspBuilder();
+    BspBuilder(GameMap const &map, int splitCostFactor = DEFAULT_PARTITION_COST_HEDGESPLIT);
 
     /**
      * Set the cost factor associated with splitting an existing half-edge.
-     * @param factor  New factor value.
-     * @return  Reference to this BspBuilder.
+     *
+     * @param newFactor  New split cost factor.
      */
-    BspBuilder& setSplitCostFactor(int factor);
+    void setSplitCostFactor(int newFactor);
 
     /**
      * Build the BSP for the given map.
      * @return  @c true= iff completed successfully.
      */
-    bool build();
-
-    /**
-     * Retrieve the number of BspNodes owned by this Partitioner. When the
-     * build completes this number will be the total number of BspNodes that
-     * were produced during that process. Note that as BspNode ownership is
-     * claimed this number will decrease respectively.
-     *
-     * @return  Current number of BspNodes owned by this Partitioner.
-     */
-    uint numNodes();
+    bool buildBsp();
 
     /**
      * Retrieve a pointer to the root BinaryTree node for the constructed BSP.
@@ -87,17 +73,7 @@ public:
      * The only time upon which @c NULL is returned is if called prior to calling
      * BspBuilder::build()
      */
-    BspTreeNode* root() const;
-
-    /**
-     * Retrieve the number of BspLeafs owned by this Partitioner. When the
-     * build completes this number will be the total number of BspLeafs that
-     * were produced during that process. Note that as BspLeaf ownership is
-     * claimed this number will decrease respectively.
-     *
-     * @return  Current number of BspLeafs owned by this Partitioner.
-     */
-    uint numLeafs();
+    BspTreeNode *root() const;
 
     /**
      * Retrieve the number of HEdges owned by this Partitioner. When the build
@@ -110,6 +86,26 @@ public:
     uint numHEdges();
 
     /**
+     * Retrieve the number of BspLeafs owned by this Partitioner. When the
+     * build completes this number will be the total number of BspLeafs that
+     * were produced during that process. Note that as BspLeaf ownership is
+     * claimed this number will decrease respectively.
+     *
+     * @return  Current number of BspLeafs owned by this Partitioner.
+     */
+    uint numLeafs();
+
+    /**
+     * Retrieve the number of BspNodes owned by this Partitioner. When the
+     * build completes this number will be the total number of BspNodes that
+     * were produced during that process. Note that as BspNode ownership is
+     * claimed this number will decrease respectively.
+     *
+     * @return  Current number of BspNodes owned by this Partitioner.
+     */
+    uint numNodes();
+
+    /**
      * Retrieve the total number of Vertexes produced during the build process.
      */
     uint numVertexes();
@@ -119,20 +115,19 @@ public:
      * this will result in fatal error. The caller should ensure the index is
      * within valid range using Partitioner::numVertexes()
      */
-    Vertex& vertex(uint idx);
+    Vertex &vertex(uint idx);
 
     /**
      * Release ownership of the specified object.
      *
-     * @param ob  Map data object to release ownership of.
-     * @return  Reference to this Partitioner.
+     * @param mapElement  Map data object to relinquish ownership of.
      */
-    BspBuilder& take(de::MapElement* ob);
+    void take(MapElement *mapElement);
 
 private:
-    bsp::Partitioner* partitioner;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG_BSPBUILDER
+#endif // DENG_WORLD_MAP_BSPBUILDER

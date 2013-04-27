@@ -32,6 +32,7 @@
 #include "api_audiod.h"
 #include "api_audiod_sfx.h"
 #include "map/gamemap.h"
+#include "map/p_maptypes.h"
 
 #ifdef __cplusplus
 extern "C" {

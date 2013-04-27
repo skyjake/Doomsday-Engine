@@ -1,22 +1,20 @@
-/**
- * @file rend_fakeradio.h Faked Radiosity Lighting
+/** @file rend_fakeradio.h Faked Radiosity Lighting.
  *
- * Perhaps the most distinctive characteristic of radiosity lighting
- * is that the corners of a room are slightly dimmer than the rest of
- * the surfaces.  (It's not the only characteristic, however.)  We
- * will fake these shadowed areas by generating shadow polygons for
- * wall segments and determining, which BSP leaf vertices will be
- * shadowed.
+ * Perhaps the most distinctive characteristic of radiosity lighting is that
+ * the corners of a room are slightly dimmer than the rest of the surfaces.
+ * (It's not the only characteristic, however.)  We will fake these shadowed
+ * areas by generating shadow polygons for wall segments and determining which
+ * BSP leaf vertices will be shadowed.
  *
- * In other words, walls use shadow polygons (over entire hedges), while
- * planes use vertex lighting.  Since planes are usually tesselated
- * into a great deal of BSP leafs (and triangles), they are better
- * suited for vertex lighting.  In some cases we will be forced to
- * split a BSP leaf into smaller pieces than strictly necessary in
- * order to achieve better accuracy in the shadow effect.
+ * In other words, walls use shadow polygons (over entire lines), while planes
+ * use vertex lighting. As sectors are usually partitioned into a great many
+ * BSP leafs (and tesselated into triangles), they are better suited for vertex
+ * lighting. In some cases we will be forced to split a BSP leaf into smaller
+ * pieces than strictly necessary in order to achieve better accuracy in the
+ * shadow effect.
  *
- * @author Copyright &copy; 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -33,30 +31,133 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RENDER_FAKERADIO_H
-#define LIBDENG_RENDER_FAKERADIO_H
+#ifndef DENG_RENDER_FAKERADIO
+#define DENG_RENDER_FAKERADIO
 
-#include "map/linedef.h"
-#include "map/sidedef.h"
-#include "map/vertex.h"
-#include "map/sector.h"
+#include "Line"
+#include "Vertex"
+#include "Sector"
 #include "render/rendpoly.h"
 #include "render/walldiv.h"
 
-typedef struct shadowlink_s {
-    struct shadowlink_s *next;
-    LineDef *lineDef;
+/**
+ * Used to link a line to a BSP leaf for the purposes of FakeRadio shadowing.
+ * @ingroup render
+ */
+struct ShadowLink
+{
+    ShadowLink *next;
+    Line *line;
     byte side;
-} shadowlink_t;
 
-typedef struct {
+    Line::Side &lineSide()
+    {
+        DENG_ASSERT(line);
+        return line->side(side);
+    }
+
+    Line::Side const &lineSide() const
+    {
+        DENG_ASSERT(line);
+        return line->side(side);
+    }
+};
+
+/**
+ * FakeRadio shadow data.
+ * @ingroup render
+ */
+struct shadowcorner_t
+{
+    float corner;
+    Sector *proximity;
+    float pOffset;
+    float pHeight;
+};
+
+/**
+ * FakeRadio connected edge data.
+ * @ingroup render
+ */
+struct edgespan_t
+{
+    float length;
+    float shift;
+};
+
+/**
+ * Stores the FakeRadio properties of a Line::Side.
+ * @ingroup render
+ */
+struct LineSideRadioData
+{
+    /// Frame number of last update
+    int updateCount;
+
+    shadowcorner_t topCorners[2];
+    shadowcorner_t bottomCorners[2];
+    shadowcorner_t sideCorners[2];
+
+    /// [left, right]
+    edgespan_t spans[2];
+};
+
+/**
+ * Register the console commands, variables, etc..., of this module.
+ */
+void Rend_RadioRegister();
+
+/**
+ * To be called after map load to perform necessary initialization within this module.
+ */
+void Rend_RadioInitForMap();
+
+/**
+ * Returns @c true iff @a line qualifies for (edge) shadow casting.
+ */
+bool Rend_RadioLineCastsShadow(Line const &line);
+
+/**
+ * Returns @c true iff @a plane qualifies for (wall) shadow casting.
+ */
+bool Rend_RadioPlaneCastsShadow(Plane const &plane);
+
+/**
+ * Returns the FakeRadio data for the specified line @a side.
+ */
+LineSideRadioData &Rend_RadioDataForLineSide(Line::Side &side);
+
+/**
+ * To be called to update the shadow properties for the specified line @a side.
+ */
+void Rend_RadioUpdateForLineSide(Line::Side &side);
+
+/**
+ * Updates all the shadow offsets for the given vertex.
+ *
+ * @pre Lineowner rings must be set up.
+ *
+ * @param vtx  Vertex to be updated.
+ */
+void Rend_RadioUpdateVertexShadowOffsets(Vertex &vtx);
+
+/**
+ * Returns the global shadow darkness factor, derived from values in Config.
+ */
+float Rend_RadioCalcShadowDarkness(float lightLevel);
+
+/**
+ * Arguments for Rend_RadioWallSection()
+ */
+struct RendRadioWallSectionParms
+{
     float shadowRGB[3], shadowDark;
     float shadowSize;
     shadowcorner_t const *botCn, *topCn, *sideCn;
     edgespan_t const *spans;
-    coord_t const *segOffset;
-    coord_t const *segLength;
-    coord_t const *linedefLength;
+    coord_t segOffset;
+    coord_t segLength;
+    Line const *line;
     Sector const *frontSec, *backSec;
     struct {
         struct {
@@ -68,57 +169,28 @@ typedef struct {
             uint divCount;
         } right;
     } wall;
-} rendsegradio_params_t;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/// Register the console commands, variables, etc..., of this module.
-void Rend_RadioRegister(void);
+};
 
 /**
- * To be called after map load to perform necessary initialization within this module.
- */
-void Rend_RadioInitForMap(void);
-
-/// @return  @c true if @a lineDef qualifies as a (edge) shadow caster.
-boolean Rend_RadioIsShadowingLineDef(LineDef *lineDef);
-
-/**
- * Updates all the shadow offsets for the given vertex.
+ * Render FakeRadio for the specified wall section. Generates and then draws all
+ * shadow geometry for the wall section.
  *
- * @pre Lineowner rings must be set up.
- *
- * @param vtx  Vertex to be updated.
+ * Note that unlike Rend_RadioBspLeafEdges() there is no guard to ensure shadow
+ * geometry is rendered only once per frame.
  */
-void Rend_RadioUpdateVertexShadowOffsets(Vertex *vtx);
-
-float Rend_RadioCalcShadowDarkness(float lightLevel);
+void Rend_RadioWallSection(rvertex_t const *rvertices, RendRadioWallSectionParms const &parms);
 
 /**
- * Called to update the shadow properties used when doing FakeRadio for the
- * given linedef.
+ * Render FakeRadio for the given BSP leaf. Draws all shadow geometry linked to the
+ * BspLeaf, that has not already been rendered.
  */
-void Rend_RadioUpdateLinedef(LineDef *line, boolean backSide);
-
-/**
- * Render FakeRadio for the given hedge section.
- */
-void Rend_RadioSegSection(rvertex_t const *rvertices, rendsegradio_params_t const *params);
-
-/**
- * Render FakeRadio for the given BSP leaf.
- */
-void Rend_RadioBspLeafEdges(BspLeaf *bspLeaf);
+void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf);
 
 /**
  * Render the shadow poly vertices, for debug.
  */
-void Rend_DrawShadowOffsetVerts(void);
-
-#ifdef __cplusplus
-} // extern "C"
+#ifdef DENG_DEBUG
+void Rend_DrawShadowOffsetVerts();
 #endif
 
-#endif // LIBDENG_RENDER_FAKERADIO_H
+#endif // DENG_RENDER_FAKERADIO

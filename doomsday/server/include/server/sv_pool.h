@@ -123,7 +123,7 @@ typedef struct {
 
 typedef struct {
     Material*       material;
-    float           rgba[4]; // Surface color tint
+    float           rgba[4]; // Surface color tint and alpha
     int             blendMode;
 } dt_surface_t;
 
@@ -133,6 +133,11 @@ typedef struct {
     coord_t         target; // Target height.
     coord_t         speed; // Move speed.
 } dt_plane_t;
+
+typedef enum {
+    PLN_FLOOR,
+    PLN_CEILING
+} dt_planetype_t;
 
 typedef struct {
     float           lightLevel;
@@ -155,7 +160,7 @@ typedef struct {
     dt_surface_t    middle;
     dt_surface_t    bottom;
     byte            lineFlags; // note: only a byte!
-    byte            flags; // Sidedef flags.
+    byte            flags; // Side flags.
 } dt_side_t;
 
 typedef struct {
@@ -275,15 +280,16 @@ uint            Sv_CountUnackedDeltas(uint clientNumber);
  * @param emitter        Mobj that is emitting the sound, or @c NULL.
  * @param sourceSector   For sector-emitted sounds, the source sector.
  * @param sourcePoly     For polyobj-emitted sounds, the source object.
+ * @param sourcePlane    For plane-emitted sounds, the source object.
  * @param sourceSurface  For surface-emitted sounds, the source surface.
  * @param volume         Volume at which to play the sound, or zero for stop-sound.
  * @param isRepeating    Is the sound repeating?
  * @param clientsMask    Each bit corresponds a client number;
  *                       -1 if all clients should receive the delta.
  */
-void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
-    Polyobj* sourcePoly, Surface* sourceSurface, float volume, boolean isRepeating,
-    int clientsMask);
+void Sv_NewSoundDelta(int soundId, mobj_t *emitter, Sector *sourceSector,
+    Polyobj *sourcePoly, Plane *sourcePlane, Surface *sourceSurface,
+    float volume, boolean isRepeating, int clientsMask);
 
 #ifdef __cplusplus
 } // extern "C"

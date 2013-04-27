@@ -1,4 +1,4 @@
-/** @file
+/** @file p_players.cpp
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,40 +17,18 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * p_players.c: Players
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #define DENG_NO_API_MACROS_PLAYER
 
 #include "de_base.h"
 #include "de_play.h"
 #include "de_network.h"
 
-// MACROS ------------------------------------------------------------------
+#include "map/gamemap.h"
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-player_t* viewPlayer;
+player_t *viewPlayer;
 player_t ddPlayers[DDMAXPLAYERS];
 int consolePlayer;
 int displayPlayer;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Determine which console is used by the given local player. Local players
@@ -58,13 +36,12 @@ int displayPlayer;
  */
 int P_LocalToConsole(int localPlayer)
 {
-    int                 i, count;
-
-    for(i = 0, count = 0; i < DDMAXPLAYERS; ++i)
+    int count = 0;
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
         int console = (i + consolePlayer) % DDMAXPLAYERS;
-        player_t*           plr = &ddPlayers[console];
-        ddplayer_t*         ddpl = &plr->shared;
+        player_t *plr = &ddPlayers[console];
+        ddplayer_t *ddpl = &plr->shared;
 
         if(ddpl->flags & DDPF_LOCAL)
         {
@@ -83,8 +60,8 @@ int P_LocalToConsole(int localPlayer)
  */
 int P_ConsoleToLocal(int playerNum)
 {
-    int                 i, count = 0;
-    player_t*           plr = &ddPlayers[playerNum];
+    int i, count = 0;
+    player_t *plr = &ddPlayers[playerNum];
 
     if(playerNum < 0 || playerNum >= DDMAXPLAYERS)
     {
@@ -102,7 +79,7 @@ int P_ConsoleToLocal(int playerNum)
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
         int console = (i + consolePlayer) % DDMAXPLAYERS;
-        player_t* plr = &ddPlayers[console];
+        player_t *plr = &ddPlayers[console];
 
         if(console == playerNum)
         {
@@ -118,35 +95,22 @@ int P_ConsoleToLocal(int playerNum)
 /**
  * Given a ptr to ddplayer_t, return it's logical index.
  */
-int P_GetDDPlayerIdx(ddplayer_t* ddpl)
+int P_GetDDPlayerIdx(ddplayer_t *ddpl)
 {
     if(ddpl)
+    for(uint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        uint                i;
-
-        for(i = 0; i < DDMAXPLAYERS; ++i)
-            if(&ddPlayers[i].shared == ddpl)
-                return i;
+        if(&ddPlayers[i].shared == ddpl)
+            return i;
     }
 
     return -1;
 }
 
-/**
- * Do we THINK the given (camera) player is currently in the void.
- * The method used to test this is to compare the position of the mobj
- * each time it is linked into a BSP leaf.
- *
- * @note Cannot be 100% accurate so best not to use it for anything critical...
- *
- * @param player        The player to test.
- *
- * @return              @c true, If the player is thought to be in the void.
- */
-boolean P_IsInVoid(player_t* player)
+boolean P_IsInVoid(player_t *player)
 {
     if(!player) return false;
-    ddplayer_t* ddpl = &player->shared;
+    ddplayer_t *ddpl = &player->shared;
 
     // Cameras are allowed to move completely freely (so check z height
     // above/below ceiling/floor).
@@ -156,26 +120,26 @@ boolean P_IsInVoid(player_t* player)
 
         if(ddpl->mo && ddpl->mo->bspLeaf)
         {
-            Sector *sec = ddpl->mo->bspLeaf->sector;
+            Sector &sec = ddpl->mo->bspLeaf->sector();
 
-            if(sec->SP_ceilsurface.isSkyMasked())
+            if(sec.ceilingSurface().hasSkyMaskedMaterial())
             {
-                coord_t const skyCeil = GameMap_SkyFixCeiling(theMap);
+                coord_t const skyCeil = theMap->skyFixCeiling();
                 if(skyCeil < DDMAXFLOAT && ddpl->mo->origin[VZ] > skyCeil - 4)
                     return true;
             }
-            else if(ddpl->mo->origin[VZ] > sec->SP_ceilvisheight - 4)
+            else if(ddpl->mo->origin[VZ] > sec.ceiling().visHeight() - 4)
             {
                 return true;
             }
 
-            if(sec->SP_floorsurface.isSkyMasked())
+            if(sec.floorSurface().hasSkyMaskedMaterial())
             {
-                coord_t const skyFloor = GameMap_SkyFixFloor(theMap);
+                coord_t const skyFloor = theMap->skyFixFloor();
                 if(skyFloor > DDMINFLOAT && ddpl->mo->origin[VZ] < skyFloor + 4)
                     return true;
             }
-            else if(ddpl->mo->origin[VZ] < sec->SP_floorvisheight + 4)
+            else if(ddpl->mo->origin[VZ] < sec.floor().visHeight() + 4)
             {
                 return true;
             }
@@ -187,7 +151,7 @@ boolean P_IsInVoid(player_t* player)
 
 short P_LookDirToShort(float lookDir)
 {
-    int dir = (int) (lookDir/110.f * DDMAXSHORT);
+    int dir = int( lookDir/110.f * DDMAXSHORT );
 
     if(dir < DDMINSHORT) return DDMINSHORT;
     if(dir > DDMAXSHORT) return DDMAXSHORT;
@@ -196,23 +160,23 @@ short P_LookDirToShort(float lookDir)
 
 float P_ShortToLookDir(short s)
 {
-    return s / (float)DDMAXSHORT * 110.f;
+    return s / float( DDMAXSHORT ) * 110.f;
 }
 
 #undef DD_GetPlayer
-DENG_EXTERN_C ddplayer_t* DD_GetPlayer(int number)
+DENG_EXTERN_C ddplayer_t *DD_GetPlayer(int number)
 {
     return (ddplayer_t *) &ddPlayers[number].shared;
 }
 
 // net_main.c
-DENG_EXTERN_C const char* Net_GetPlayerName(int player);
+DENG_EXTERN_C char const *Net_GetPlayerName(int player);
 DENG_EXTERN_C ident_t Net_GetPlayerID(int player);
-DENG_EXTERN_C Smoother* Net_PlayerSmoother(int player);
+DENG_EXTERN_C Smoother *Net_PlayerSmoother(int player);
 
 // p_control.c
-DENG_EXTERN_C void P_NewPlayerControl(int id, controltype_t type, const char *name, const char* bindContext);
-DENG_EXTERN_C void P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset);
+DENG_EXTERN_C void P_NewPlayerControl(int id, controltype_t type, char const *name, char const *bindContext);
+DENG_EXTERN_C void P_GetControlState(int playerNum, int control, float *pos, float *relativeOffset);
 DENG_EXTERN_C int P_GetImpulseControlState(int playerNum, int control);
 DENG_EXTERN_C void P_Impulse(int playerNum, int control);
 

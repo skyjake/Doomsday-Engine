@@ -433,12 +433,12 @@ void T_MoveFloor(void *floorThinkerPtr)
 typedef struct findlineinsectorsmallestbottommaterialparams_s {
     Sector             *baseSec;
     int                 minSize;
-    LineDef            *foundLine;
+    Line               *foundLine;
 } findlineinsectorsmallestbottommaterialparams_t;
 
 int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
 {
-    LineDef* li = (LineDef*) ptr;
+    Line* li = (Line*) ptr;
     findlineinsectorsmallestbottommaterialparams_t* params =
         (findlineinsectorsmallestbottommaterialparams_t*) context;
     Sector* frontSec, *backSec;
@@ -448,10 +448,10 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
 
     if(frontSec && backSec)
     {
-        SideDef* side;
+        Side* side;
         Material* mat;
 
-        side = P_GetPtrp(li, DMU_SIDEDEF0);
+        side = P_GetPtrp(li, DMU_FRONT);
         mat = P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
 
         /**
@@ -476,7 +476,7 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
             }
         }
 
-        side = P_GetPtrp(li, DMU_SIDEDEF1);
+        side = P_GetPtrp(li, DMU_BACK);
         mat = P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
         if(!mat)
         {
@@ -500,14 +500,14 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
     return false; // Continue iteration.
 }
 
-LineDef* P_FindLineInSectorSmallestBottomMaterial(Sector *sec, int *val)
+Line* P_FindLineInSectorSmallestBottomMaterial(Sector *sec, int *val)
 {
     findlineinsectorsmallestbottommaterialparams_t params;
 
     params.baseSec = sec;
     params.minSize = DDMAXINT;
     params.foundLine = NULL;
-    P_Iteratep(sec, DMU_LINEDEF, &params,
+    P_Iteratep(sec, DMU_LINE, &params,
                findLineInSectorSmallestBottomMaterial);
 
     if(val)
@@ -522,9 +522,9 @@ LineDef* P_FindLineInSectorSmallestBottomMaterial(Sector *sec, int *val)
  * and whose floor height matches that specified.
  *
  * @note Behaviour here is dependant upon the order of the sector-linked
- * LineDefs list. This is necessary to emulate the flawed algorithm used in
- * DOOM.exe In addition, this algorithm was further broken in Heretic as the
- * test which compares floor heights was removed.
+ * Lines list. This is necessary to emulate the flawed algorithm used in
+ * DOOM.exe In addition, this algorithm was further broken in Heretic as
+ * the test which compares floor heights was removed.
  *
  * @warning DO NOT USE THIS ANYWHERE ELSE!
  */
@@ -537,7 +537,7 @@ typedef struct findfirstneighbouratfloorheightparams_s {
 
 static int findFirstNeighbourAtFloorHeight(void* ptr, void* context)
 {
-    LineDef* ln = (LineDef*) ptr;
+    Line* ln = (Line*) ptr;
     findfirstneighbouratfloorheightparams_t* params =
         (findfirstneighbouratfloorheightparams_t*) context;
     Sector* other;
@@ -563,7 +563,7 @@ static Sector* findSectorSurroundingAtFloorHeight(Sector* sec, coord_t height)
     params.baseSec = sec;
     params.foundSec = NULL;
     params.height = height;
-    P_Iteratep(sec, DMU_LINEDEF, &params, findFirstNeighbourAtFloorHeight);
+    P_Iteratep(sec, DMU_LINE, &params, findFirstNeighbourAtFloorHeight);
     return params.foundSec;
 }
 #endif
@@ -572,9 +572,9 @@ static Sector* findSectorSurroundingAtFloorHeight(Sector* sec, coord_t height)
  * Handle moving floors.
  */
 #if __JHEXEN__
-int EV_DoFloor(LineDef* line, byte* args, floortype_e floortype)
+int EV_DoFloor(Line* line, byte* args, floortype_e floortype)
 #else
-int EV_DoFloor(LineDef* line, floortype_e floortype)
+int EV_DoFloor(Line* line, floortype_e floortype)
 #endif
 {
 #if !__JHEXEN__
@@ -594,8 +594,8 @@ int EV_DoFloor(LineDef* line, floortype_e floortype)
 #if __JDOOM64__
     // jd64 > bitmip? wha?
     coord_t bitmipL = 0, bitmipR = 0;
-    SideDef *front = P_GetPtrp(line, DMU_SIDEDEF0);
-    SideDef *back  = P_GetPtrp(line, DMU_SIDEDEF1);
+    Side *front = P_GetPtrp(line, DMU_FRONT);
+    Side *back  = P_GetPtrp(line, DMU_BACK);
 
     bitmipL = P_GetDoublep(front, DMU_MIDDLE_MATERIAL_OFFSET_X);
     if(back)
@@ -956,7 +956,7 @@ typedef struct {
 
 static int findSectorNeighborsForStairBuild(void* ptr, void* context)
 {
-    LineDef* li = (LineDef*) ptr;
+    Line* li = (Line*) ptr;
     findsectorneighborsforstairbuildparams_t* params =
         (findsectorneighborsforstairbuildparams_t*) context;
     Sector* frontSec, *backSec;
@@ -1010,7 +1010,7 @@ typedef struct spreadsectorparams_s {
 
 int findAdjacentSectorForSpread(void* ptr, void* context)
 {
-    LineDef* li = (LineDef*) ptr;
+    Line* li = (Line*) ptr;
     spreadsectorparams_t* params = (spreadsectorparams_t*) context;
     Sector* frontSec, *backSec;
     xsector_t* xsec;
@@ -1047,7 +1047,7 @@ int findAdjacentSectorForSpread(void* ptr, void* context)
 #endif
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-int EV_BuildStairs(LineDef* line, stair_e type)
+int EV_BuildStairs(Line* line, stair_e type)
 {
     int rtn = 0;
     xsector_t* xsec;
@@ -1122,7 +1122,7 @@ int EV_BuildStairs(LineDef* line, stair_e type)
         params.height = height;
         params.stairSize = stairsize;
 
-        while(P_Iteratep(params.baseSec, DMU_LINEDEF, &params,
+        while(P_Iteratep(params.baseSec, DMU_LINE, &params,
                           findAdjacentSectorForSpread))
         {   // We found another sector to spread to.
             floor = Z_Calloc(sizeof(*floor), PU_MAP, 0);
@@ -1231,7 +1231,7 @@ static void processStairSector(Sector* sec, int type, coord_t height,
 
     // Find all neigboring sectors with sector special equal to type and add
     // them to the stairbuild queue.
-    P_Iteratep(sec, DMU_LINEDEF, &params, findSectorNeighborsForStairBuild);
+    P_Iteratep(sec, DMU_LINE, &params, findSectorNeighborsForStairBuild);
 }
 #endif
 
@@ -1239,7 +1239,7 @@ static void processStairSector(Sector* sec, int type, coord_t height,
  * @param direction     Positive = up. Negative = down.
  */
 #if __JHEXEN__
-int EV_BuildStairs(LineDef* line, byte* args, int direction,
+int EV_BuildStairs(Line* line, byte* args, int direction,
                    stairs_e stairsType)
 {
     coord_t height;
@@ -1298,18 +1298,18 @@ int EV_BuildStairs(LineDef* line, byte* args, int direction,
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 typedef struct {
     Sector*         sector;
-    LineDef*        foundLineDef;
+    Line*           foundLine;
 } findfirsttwosidedparams_t;
 
 int findFirstTwosided(void *ptr, void *context)
 {
-    LineDef* li = (LineDef*) ptr;
+    Line* li = (Line*) ptr;
     findfirsttwosidedparams_t* params = (findfirsttwosidedparams_t*) context;
     Sector* backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
 
     if(backSec && !(params->sector && backSec == params->sector))
     {
-        params->foundLineDef = li;
+        params->foundLine = li;
         return true; // Stop iteration, this will do.
     }
 
@@ -1318,7 +1318,7 @@ int findFirstTwosided(void *ptr, void *context)
 #endif
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-int EV_DoDonut(LineDef* line)
+int EV_DoDonut(Line* line)
 {
     int rtn = 0;
     Sector* sec, *outer, *ring;
@@ -1342,17 +1342,17 @@ int EV_DoDonut(LineDef* line)
         outer = ring = NULL;
 
         params.sector = NULL;
-        params.foundLineDef = NULL;
-        if(P_Iteratep(sec, DMU_LINEDEF, &params, findFirstTwosided))
+        params.foundLine = NULL;
+        if(P_Iteratep(sec, DMU_LINE, &params, findFirstTwosided))
         {
-            ring = P_GetPtrp(params.foundLineDef, DMU_BACK_SECTOR);
+            ring = P_GetPtrp(params.foundLine, DMU_BACK_SECTOR);
             if(ring == sec)
-                ring = P_GetPtrp(params.foundLineDef, DMU_FRONT_SECTOR);
+                ring = P_GetPtrp(params.foundLine, DMU_FRONT_SECTOR);
 
             params.sector = sec;
-            params.foundLineDef = NULL;
-            if(P_Iteratep(ring, DMU_LINEDEF, &params, findFirstTwosided))
-                outer = P_GetPtrp(params.foundLineDef, DMU_BACK_SECTOR);
+            params.foundLine = NULL;
+            if(P_Iteratep(ring, DMU_LINE, &params, findFirstTwosided))
+                outer = P_GetPtrp(params.foundLine, DMU_BACK_SECTOR);
         }
 
         if(outer && ring)
@@ -1414,7 +1414,7 @@ static int stopFloorCrush(thinker_t* th, void* context)
     return false; // Continue iteration.
 }
 
-int EV_FloorCrushStop(LineDef* line, byte* args)
+int EV_FloorCrushStop(Line* line, byte* args)
 {
     boolean             found = false;
 
@@ -1426,9 +1426,9 @@ int EV_FloorCrushStop(LineDef* line, byte* args)
 
 #if __JHEXEN__ || __JDOOM64__
 # if __JHEXEN__
-int EV_DoFloorAndCeiling(LineDef *line, byte *args, int ftype, int ctype)
+int EV_DoFloorAndCeiling(Line *line, byte *args, int ftype, int ctype)
 # else
-int EV_DoFloorAndCeiling(LineDef* line, int ftype, int ctype)
+int EV_DoFloorAndCeiling(Line* line, int ftype, int ctype)
 # endif
 {
 # if __JHEXEN__

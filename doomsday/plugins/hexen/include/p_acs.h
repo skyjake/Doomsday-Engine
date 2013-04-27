@@ -34,6 +34,8 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+#include "jhexen.h"
+
 #define MAX_ACS_SCRIPT_VARS     10
 #define MAX_ACS_MAP_VARS        32
 #define MAX_ACS_WORLD_VARS      64
@@ -60,7 +62,7 @@ typedef struct acsinfo_s {
 typedef struct acs_s {
     thinker_t       thinker;
     mobj_t*         activator;
-    LineDef*        line;
+    Line*           line;
     int             side;
     int             number;
     int             infoIndex;
@@ -77,18 +79,22 @@ typedef struct acsstore_s {
     byte            args[4]; // Padded to 4 for alignment.
 } acsstore_t;
 
-extern int ACScriptCount;
-extern const byte* ActionCodeBase;
-extern acsinfo_t* ACSInfo;
-extern int MapVars[MAX_ACS_MAP_VARS];
-extern int WorldVars[MAX_ACS_WORLD_VARS];
-extern int ACSStoreSize;
-extern acsstore_t* ACSStore;
+DENG_EXTERN_C int ACScriptCount;
+DENG_EXTERN_C const byte* ActionCodeBase;
+DENG_EXTERN_C acsinfo_t* ACSInfo;
+DENG_EXTERN_C int MapVars[MAX_ACS_MAP_VARS];
+DENG_EXTERN_C int WorldVars[MAX_ACS_WORLD_VARS];
+DENG_EXTERN_C int ACSStoreSize;
+DENG_EXTERN_C acsstore_t* ACSStore;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void            P_LoadACScripts(int lump);
 boolean         P_StartACS(int number, uint map, byte* args,
-                           mobj_t* activator, LineDef* line, int side);
-boolean         P_StartLockedACS(LineDef* line, byte* args, mobj_t* mo,
+                           mobj_t* activator, Line* line, int side);
+boolean         P_StartLockedACS(Line* line, byte* args, mobj_t* mo,
                                  int side);
 boolean         P_TerminateACS(int number, uint map);
 boolean         P_SuspendACS(int number, uint map);
@@ -97,5 +103,9 @@ void            P_TagFinished(int tag);
 void            P_PolyobjFinished(int po);
 void            P_ACSInitNewGame(void);
 void            P_CheckACSStore(uint map);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

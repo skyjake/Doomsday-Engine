@@ -86,6 +86,10 @@ typedef struct {
     int             direction;
 } glow_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void            T_FireFlicker(fireflicker_t* flick);
 void            P_SpawnFireFlicker(Sector* sector);
 
@@ -101,8 +105,12 @@ void            P_SpawnStrobeFlash(Sector* sector, int fastOrSlow,
 void            T_Glow(glow_t* g);
 void            P_SpawnGlowingLight(Sector* sector);
 
-void            EV_StartLightStrobing(LineDef* line);
-void            EV_TurnTagLightsOff(LineDef* line);
-void            EV_LightTurnOn(LineDef* line, float max);
+void            EV_StartLightStrobing(Line* line);
+void            EV_TurnTagLightsOff(Line* line);
+void            EV_LightTurnOn(Line* line, float max);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

@@ -28,10 +28,14 @@
 #include <de/reader.h>
 #include "common.h"
 
-extern char cyclingMaps, mapCycleNoExit;
-extern int netSvAllowCheats;
-extern char* mapCycle;
-extern char gameConfigString[];
+DENG_EXTERN_C char cyclingMaps, mapCycleNoExit;
+DENG_EXTERN_C int netSvAllowCheats;
+DENG_EXTERN_C char* mapCycle;
+DENG_EXTERN_C char gameConfigString[];
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void            P_Telefrag(mobj_t* thing);
 
@@ -81,5 +85,9 @@ void            NetSv_MaybeChangeWeapon(int plrNum, int weapon, int ammo, int fo
 void            NetSv_SendLocalMobjState(mobj_t* mobj, const char* stateName);
 
 D_CMD(MapCycle);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBCOMMON_NETSV_H */

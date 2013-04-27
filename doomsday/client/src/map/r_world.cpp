@@ -1,7 +1,7 @@
 /** @file r_world.cpp World Setup/Refresh.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -32,19 +32,14 @@
 #include "de_audio.h"
 #include "de_misc.h"
 
-#include "map/plane.h"
+#include "map/lineowner.h"
+#include "Plane"
 #ifdef __CLIENT__
 #  include "MaterialSnapshot"
 #  include "MaterialVariantSpec"
 #endif
 
 #include <de/Observers>
-
-// $smoothplane: Maximum speed for a smoothed plane.
-#define MAX_SMOOTH_PLANE_MOVE   (64)
-
-// $smoothmatoffset: Maximum speed for a smoothed material offset.
-#define MAX_SMOOTH_MATERIAL_MOVE (8)
 
 using namespace de;
 
@@ -61,492 +56,15 @@ boolean ddMapSetup;
 MapChangeAudience audienceForMapChange;
 
 /**
- * $smoothmatoffset: Roll the surface material offset tracker buffers.
- */
-void R_UpdateSurfaceScroll()
-{
-    if(!theMap) return;
-
-    foreach(Surface *surface, theMap->scrollingSurfaces())
-    {
-        // X Offset
-        surface->oldOffset[0][0] = surface->oldOffset[0][1];
-        surface->oldOffset[0][1] = surface->offset[0];
-        if(surface->oldOffset[0][0] != surface->oldOffset[0][1])
-        if(de::abs(surface->oldOffset[0][0] - surface->oldOffset[0][1]) >=
-           MAX_SMOOTH_MATERIAL_MOVE)
-        {
-            // Too fast: make an instantaneous jump.
-            surface->oldOffset[0][0] = surface->oldOffset[0][1];
-        }
-
-        // Y Offset
-        surface->oldOffset[1][0] = surface->oldOffset[1][1];
-        surface->oldOffset[1][1] = surface->offset[1];
-        if(surface->oldOffset[1][0] != surface->oldOffset[1][1])
-        if(de::abs(surface->oldOffset[1][0] - surface->oldOffset[1][1]) >=
-           MAX_SMOOTH_MATERIAL_MOVE)
-        {
-            // Too fast: make an instantaneous jump.
-            surface->oldOffset[1][0] = surface->oldOffset[1][1];
-        }
-    }
-}
-
-/**
- * $smoothmatoffset: interpolate the visual offset.
- */
-void R_InterpolateSurfaceScroll(boolean resetNextViewer)
-{
-    if(!theMap) return;
-    SurfaceSet &surfaces = theMap->scrollingSurfaces();
-    SurfaceSet::iterator it = surfaces.begin();
-    while(it != surfaces.end())
-    {
-        Surface &suf = **it;
-
-        if(resetNextViewer)
-        {
-            // Reset the material offset trackers.
-            // X Offset.
-            suf.visOffsetDelta[0] = 0;
-            suf.oldOffset[0][0] = suf.oldOffset[0][1] = suf.offset[0];
-
-            // Y Offset.
-            suf.visOffsetDelta[1] = 0;
-            suf.oldOffset[1][0] = suf.oldOffset[1][1] = suf.offset[1];
-
-            suf.update();
-            it++;
-        }
-        // While the game is paused there is no need to calculate any
-        // visual material offsets.
-        else //if(!clientPaused)
-        {
-            // Set the visible material offsets.
-            // X Offset.
-            suf.visOffsetDelta[0] =
-                suf.oldOffset[0][0] * (1 - frameTimePos) +
-                        suf.offset[0] * frameTimePos - suf.offset[0];
-
-            // Y Offset.
-            suf.visOffsetDelta[1] =
-                suf.oldOffset[1][0] * (1 - frameTimePos) +
-                        suf.offset[1] * frameTimePos - suf.offset[1];
-
-            // Visible material offset.
-            suf.visOffset[0] = suf.offset[0] + suf.visOffsetDelta[0];
-            suf.visOffset[1] = suf.offset[1] + suf.visOffsetDelta[1];
-
-            suf.update();
-
-            // Has this material reached its destination?
-            if(suf.visOffset[0] == suf.offset[0] && suf.visOffset[1] == suf.offset[1])
-            {
-                it = surfaces.erase(it);
-            }
-            else
-            {
-                it++;
-            }
-        }
-    }
-}
-
-void R_AddTrackedPlane(PlaneSet *plist, Plane *pln)
-{
-    if(!plist || !pln) return;
-
-    plist->insert(pln);
-}
-
-boolean R_RemoveTrackedPlane(PlaneSet *plist, Plane *pln)
-{
-    if(!plist || !pln) return false;
-
-    return plist->remove(pln);
-}
-
-/**
- * $smoothplane: Roll the height tracker buffers.
- */
-void R_UpdateTrackedPlanes()
-{
-    if(!theMap) return;
-
-    PlaneSet* plist = GameMap_TrackedPlanes(theMap);
-    if(!plist) return;
-
-    DENG2_FOR_EACH(PlaneSet, i, *plist)
-    {
-        Plane *pln = *i;
-
-        pln->oldHeight[0] = pln->oldHeight[1];
-        pln->oldHeight[1] = pln->height;
-
-        if(pln->oldHeight[0] != pln->oldHeight[1])
-        {
-            if(fabs(pln->oldHeight[0] - pln->oldHeight[1]) >=
-               MAX_SMOOTH_PLANE_MOVE)
-            {
-                // Too fast: make an instantaneous jump.
-                pln->oldHeight[0] = pln->oldHeight[1];
-            }
-        }
-    }
-}
-
-/**
- * $smoothplane: interpolate the visual offset.
- */
-void R_InterpolateTrackedPlanes(boolean resetNextViewer)
-{
-    if(!theMap) return;
-
-    PlaneSet* plist = GameMap_TrackedPlanes(theMap);
-    if(!plist) return;
-
-    if(resetNextViewer)
-    {
-        // $smoothplane: Reset the plane height trackers.
-        DENG2_FOR_EACH(PlaneSet, i, *plist)
-        {
-            Plane *pln = *i;
-
-            pln->visHeightDelta = 0;
-            pln->visHeight = pln->oldHeight[0] = pln->oldHeight[1] = pln->height;
-
-            if(pln->type == PLN_FLOOR || pln->type == PLN_CEILING)
-            {
-                R_MarkDependantSurfacesForDecorationUpdate(pln);
-            }
-        }
-
-        // Tracked movement is now all done.
-        plist->clear();
-    }
-    // While the game is paused there is no need to calculate any
-    // visual plane offsets $smoothplane.
-    else //if(!clientPaused)
-    {
-        // $smoothplane: Set the visible offsets.
-        QMutableSetIterator<Plane *> iter(*plist);
-        while(iter.hasNext())
-        {
-            Plane *pln = iter.next();
-
-            pln->visHeightDelta = pln->oldHeight[0] * (1 - frameTimePos) +
-                        pln->height * frameTimePos -
-                        pln->height;
-
-            // Visible plane height.
-            pln->visHeight = pln->height + pln->visHeightDelta;
-
-            if(pln->type == PLN_FLOOR || pln->type == PLN_CEILING)
-            {
-                R_MarkDependantSurfacesForDecorationUpdate(pln);
-            }
-
-            // Has this plane reached its destination?
-            if(pln->visHeight == pln->height) /// @todo  Can this fail? (float equality)
-            {
-                iter.remove();
-            }
-        }
-    }
-}
-
-/**
- * To be called when a floor or ceiling height changes to update the plotted
- * decoration origins for surfaces whose material offset is dependant upon
- * the given plane.
- */
-void R_MarkDependantSurfacesForDecorationUpdate(Plane *pln)
-{
-    if(!pln || !pln->sector->lineDefs) return;
-
-    // "Middle" planes have no dependent surfaces.
-    if(pln->type == PLN_MID) return;
-
-    // Mark the decor lights on the sides of this plane as requiring
-    // an update.
-    LineDef **linep = pln->sector->lineDefs;
-    while(*linep)
-    {
-        LineDef *li = *linep;
-
-        li->L_frontsidedef->SW_surface(SS_MIDDLE).update();
-        li->L_frontsidedef->SW_surface(SS_BOTTOM).update();
-        li->L_frontsidedef->SW_surface(SS_TOP).update();
-
-        if(li->L_backsidedef)
-        {
-            li->L_backsidedef->SW_surface(SS_MIDDLE).update();
-            li->L_backsidedef->SW_surface(SS_BOTTOM).update();
-            li->L_backsidedef->SW_surface(SS_TOP).update();
-        }
-
-        linep++;
-    }
-}
-
-void R_UpdateMapSurfacesOnMaterialChange(Material *material)
-{
-    if(!material || ddMapSetup) return;
-    if(!theMap) return;
-
-#ifdef __CLIENT__
-    foreach(Surface *surface, theMap->decoratedSurfaces())
-    {
-        if(material == surface->material)
-        {
-            surface->update();
-        }
-    }
-#endif
-}
-
-/**
- * Create a new plane for the given sector. The plane will be initialized
- * with default values.
- *
- * Post: The sector's plane list will be replaced, the new plane will be
- *       linked to the end of the list.
- *
- * @param sec  Sector for which a new plane will be created.
- *
- * @return  Ptr to the newly created plane.
- */
-Plane *R_NewPlaneForSector(Sector *sec)
-{
-    if(!sec) return NULL; // Do wha?
-
-    // Allocate the new plane.
-    Plane *plane = new Plane(*sec, de::Vector3f(0, 0, 1));
-    plane->type = PLN_MID;
-
-    // Resize this sector's plane list.
-    sec->planes.append(plane);
-
-    plane->planeID = sec->planes.size() - 1;
-
-    // Initialize the surface.
-    Surface *suf = &plane->surface;
-    /// @todo The initial material should be the "unknown" material.
-    suf->updateBaseOrigin();
-
-#ifdef __CLIENT__
-    /**
-     * Resize the biassurface lists for the BSP leaf planes.
-     * If we are in map setup mode, don't create the biassurfaces now,
-     * as planes are created before the bias system is available.
-     */
-    if(sec->bspLeafs && *sec->bspLeafs)
-    {
-        BspLeaf **ssecIter = sec->bspLeafs;
-        do
-        {
-            BspLeaf *bspLeaf = *ssecIter;
-            uint n = 0;
-
-            biassurface_t **newList = (biassurface_t **) Z_Calloc(sec->planeCount() * sizeof(biassurface_t *), PU_MAP, 0);
-            // Copy the existing list?
-            if(bspLeaf->bsuf)
-            {
-                for(; n < sec->planeCount() - 1 /* exclude newly added */; ++n)
-                {
-                    newList[n] = bspLeaf->bsuf[n];
-                }
-                Z_Free(bspLeaf->bsuf);
-                bspLeaf->bsuf = 0;
-            }
-
-            if(!ddMapSetup)
-            {
-                biassurface_t *bsuf = SB_CreateSurface();
-
-                bsuf->size = Rend_NumFanVerticesForBspLeaf(bspLeaf);
-                bsuf->illum = (vertexillum_t *) Z_Calloc(sizeof(vertexillum_t) * bsuf->size, PU_MAP, 0);
-
-                for(uint i = 0; i < bsuf->size; ++i)
-                {
-                    SB_InitVertexIllum(&bsuf->illum[i]);
-                }
-
-                newList[n] = bsuf;
-            }
-
-            bspLeaf->bsuf = newList;
-
-            ssecIter++;
-        } while(*ssecIter);
-    }
-#endif
-
-    return plane;
-}
-
-/**
- * Permanently destroys the specified plane of the given sector.
- * The sector's plane list is updated accordingly.
- *
- * @param id            The sector, plane id to be destroyed.
- * @param sec           Ptr to sector for which a plane will be destroyed.
- */
-void R_DestroyPlaneOfSector(uint id, Sector *sec)
-{
-    if(!sec) return; // Do wha?
-    if(id > sec->planeCount())
-        Con_Error("P_DestroyPlaneOfSector: Plane id #%i is not valid for "
-                  "sector #%u", id, (uint) GET_SECTOR_IDX(sec));
-
-    Plane *plane = sec->planes[id];
-
-    // If this plane is currently being watched, remove it.
-    R_RemoveTrackedPlane(GameMap_TrackedPlanes(theMap), plane);
-
-    // If this plane's surface is in the moving list, remove it.
-    theMap->scrollingSurfaces().remove(&plane->surface);
-
-#ifdef __CLIENT__
-
-    // If this plane's surface is in the glowing list, remove it.
-    theMap->glowingSurfaces().remove(&plane->surface);
-
-    // If this plane's surface is in the decorated list, remove it.
-    theMap->decoratedSurfaces().remove(&plane->surface);
-
-    // Destroy the biassurfaces for this plane.
-    for(BspLeaf **bspLeafIter = sec->bspLeafs; *bspLeafIter; bspLeafIter++)
-    {
-        BspLeaf *bspLeaf = *bspLeafIter;
-        DENG2_ASSERT(bspLeaf->bsuf != 0);
-        SB_DestroySurface(bspLeaf->bsuf[id]);
-        if(id < sec->planeCount())
-        {
-            std::memmove(bspLeaf->bsuf + id, bspLeaf->bsuf + id + 1, sizeof(biassurface_t *));
-        }
-    }
-
-#endif // __CLIENT__
-
-    // Destroy the specified plane.
-    sec->planes.removeOne(plane);
-    delete plane;
-}
-
-void GameMap_UpdateSkyFixForSector(GameMap *map, Sector *sec)
-{
-    DENG_ASSERT(map);
-
-    if(!sec || 0 == sec->lineDefCount) return;
-
-    bool skyFloor = sec->SP_floorsurface.isSkyMasked();
-    bool skyCeil  = sec->SP_ceilsurface.isSkyMasked();
-
-    if(!skyFloor && !skyCeil) return;
-
-    if(skyCeil)
-    {
-        // Adjust for the plane height.
-        if(sec->SP_ceilvisheight > map->skyFix[PLN_CEILING].height)
-        {
-            // Must raise the skyfix ceiling.
-            map->skyFix[PLN_CEILING].height = sec->SP_ceilvisheight;
-        }
-
-        // Check that all the mobjs in the sector fit in.
-        for(mobj_t *mo = sec->mobjList; mo; mo = mo->sNext)
-        {
-            float extent = mo->origin[VZ] + mo->height;
-
-            if(extent > map->skyFix[PLN_CEILING].height)
-            {
-                // Must raise the skyfix ceiling.
-                map->skyFix[PLN_CEILING].height = extent;
-            }
-        }
-    }
-
-    if(skyFloor)
-    {
-        // Adjust for the plane height.
-        if(sec->SP_floorvisheight < map->skyFix[PLN_FLOOR].height)
-        {
-            // Must lower the skyfix floor.
-            map->skyFix[PLN_FLOOR].height = sec->SP_floorvisheight;
-        }
-    }
-
-    // Update for middle textures on two sided linedefs which intersect the
-    // floor and/or ceiling of their front and/or back sectors.
-    if(sec->lineDefs && *sec->lineDefs)
-    {
-        LineDef **linePtr = sec->lineDefs;
-        do
-        {
-            LineDef *li = *linePtr;
-
-            // Must be twosided.
-            if(li->L_frontsidedef && li->L_backsidedef)
-            {
-                SideDef *si = li->L_frontsector == sec? li->L_frontsidedef : li->L_backsidedef;
-
-                if(si->SW_middlematerial)
-                {
-                    if(skyCeil)
-                    {
-                        float top = sec->SP_ceilvisheight + si->SW_middlevisoffset[VY];
-
-                        if(top > map->skyFix[PLN_CEILING].height)
-                        {
-                            // Must raise the skyfix ceiling.
-                            map->skyFix[PLN_CEILING].height = top;
-                        }
-                    }
-
-                    if(skyFloor)
-                    {
-                        float bottom = sec->SP_floorvisheight +
-                                si->SW_middlevisoffset[VY] - si->SW_middlematerial->height();
-
-                        if(bottom < map->skyFix[PLN_FLOOR].height)
-                        {
-                            // Must lower the skyfix floor.
-                            map->skyFix[PLN_FLOOR].height = bottom;
-                        }
-                    }
-                }
-            }
-            linePtr++;
-        } while(*linePtr);
-    }
-}
-
-void GameMap_InitSkyFix(GameMap *map)
-{
-    DENG_ASSERT(map);
-
-    map->skyFix[PLN_FLOOR].height = DDMAXFLOAT;
-    map->skyFix[PLN_CEILING].height = DDMINFLOAT;
-
-    // Update for sector plane heights and mobjs which intersect the ceiling.
-    for(uint i = 0; i < map->sectorCount(); ++i)
-    {
-        GameMap_UpdateSkyFixForSector(map, &map->sectors[i]);
-    }
-}
-
-/**
  * @return  Lineowner for this line for this vertex; otherwise @c 0.
  */
-lineowner_t *R_GetVtxLineOwner(Vertex const *v, LineDef const *line)
+LineOwner *R_GetVtxLineOwner(Vertex const *v, Line const *line)
 {
-    if(v == line->L_v1)
-        return line->L_vo1;
+    if(v == &line->from())
+        return line->v1Owner();
 
-    if(v == line->L_v2)
-        return line->L_vo2;
+    if(v == &line->to())
+        return line->v2Owner();
 
     return 0;
 }
@@ -569,154 +87,153 @@ DENG_EXTERN_C void R_SetupFogDefaults()
     Con_Execute(CMDS_DDAY,"fog off", true, false);
 }
 
-void R_OrderVertices(LineDef const *line, Sector const *sector, Vertex *verts[2])
+void R_OrderVertices(Line *line, Sector const *sector, Vertex *verts[2])
 {
-    byte edge = (sector == line->L_frontsector? 0:1);
-    verts[0] = line->L_v(edge);
-    verts[1] = line->L_v(edge^1);
+    byte edge = (sector == line->frontSectorPtr()? 0:1);
+    verts[0] = &line->vertex(edge);
+    verts[1] = &line->vertex(edge^1);
 }
 
-boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
-    Sector *frontSec, Sector *backSec, SideDef *frontDef, SideDef *backDef,
-    coord_t *low, coord_t *hi, float matOffset[2])
+bool R_SideSectionCoords(Line::Side const &side, int section,
+    Sector const *frontSec, Sector const *backSec,
+    coord_t *retBottom, coord_t *retTop, Vector2f *retMaterialOrigin)
 {
-    bool const unpegBottom = !!(lineFlags & DDLF_DONTPEGBOTTOM);
-    bool const unpegTop    = !!(lineFlags & DDLF_DONTPEGTOP);
+    Line const &line = side.line();
+    bool const unpegBottom = (line.flags() & DDLF_DONTPEGBOTTOM) != 0;
+    bool const unpegTop    = (line.flags() & DDLF_DONTPEGTOP) != 0;
+
+    coord_t bottom = 0, top = 0; // Shutup compiler.
 
     // Single sided?
-    if(!frontSec || !backSec || !backDef/*front side of a "window"*/)
+    if(!frontSec || !backSec || !side.back().hasSections()/*front side of a "window"*/)
     {
-        *low = frontSec->SP_floorvisheight;
-        *hi  = frontSec->SP_ceilvisheight;
+        bottom = frontSec->floor().visHeight();
+        top    = frontSec->ceiling().visHeight();
 
-        if(matOffset)
+        if(retMaterialOrigin)
         {
-            Surface *suf = &frontDef->SW_middlesurface;
-            matOffset[0] = suf->visOffset[0];
-            matOffset[1] = suf->visOffset[1];
+            *retMaterialOrigin = side.middle().visMaterialOrigin();
             if(unpegBottom)
             {
-                matOffset[1] -= *hi - *low;
+                retMaterialOrigin->y -= top - bottom;
             }
         }
     }
     else
     {
-        boolean const stretchMiddle = !!(frontDef->flags & SDF_MIDDLE_STRETCH);
-        Plane *ffloor = frontSec->SP_plane(PLN_FLOOR);
-        Plane *fceil  = frontSec->SP_plane(PLN_CEILING);
-        Plane *bfloor = backSec->SP_plane(PLN_FLOOR);
-        Plane *bceil  = backSec->SP_plane(PLN_CEILING);
-        Surface *suf = &frontDef->SW_surface(section);
+        bool const stretchMiddle = side.isFlagged(SDF_MIDDLE_STRETCH);
+        Surface const *surface = &side.surface(section);
+        Plane const *ffloor = &frontSec->floor();
+        Plane const *fceil  = &frontSec->ceiling();
+        Plane const *bfloor = &backSec->floor();
+        Plane const *bceil  = &backSec->ceiling();
 
         switch(section)
         {
-        case SS_TOP:
+        case Line::Side::Top:
             // Can't go over front ceiling (would induce geometry flaws).
-            if(bceil->visHeight < ffloor->visHeight)
-                *low = ffloor->visHeight;
+            if(bceil->visHeight() < ffloor->visHeight())
+                bottom = ffloor->visHeight();
             else
-                *low = bceil->visHeight;
-            *hi = fceil->visHeight;
+                bottom = bceil->visHeight();
+            top = fceil->visHeight();
 
-            if(matOffset)
+            if(retMaterialOrigin)
             {
-                matOffset[0] = suf->visOffset[0];
-                matOffset[1] = suf->visOffset[1];
+                *retMaterialOrigin = surface->visMaterialOrigin();
                 if(!unpegTop)
                 {
                     // Align with normal middle texture.
-                    matOffset[1] -= fceil->visHeight - bceil->visHeight;
+                    retMaterialOrigin->y -= fceil->visHeight() - bceil->visHeight();
                 }
             }
             break;
 
-        case SS_BOTTOM: {
-            bool const raiseToBackFloor = (fceil->surface.isSkyMasked() && bceil->surface.isSkyMasked() &&
-                                           fceil->visHeight < bceil->visHeight &&
-                                           bfloor->visHeight > fceil->visHeight);
-            coord_t t = bfloor->visHeight;
+        case Line::Side::Bottom: {
+            bool const raiseToBackFloor = (fceil->surface().hasSkyMaskedMaterial() && bceil->surface().hasSkyMaskedMaterial() &&
+                                           fceil->visHeight() < bceil->visHeight() &&
+                                           bfloor->visHeight() > fceil->visHeight());
+            coord_t t = bfloor->visHeight();
 
-            *low = ffloor->visHeight;
+            bottom = ffloor->visHeight();
             // Can't go over the back ceiling, would induce polygon flaws.
-            if(bfloor->visHeight > bceil->visHeight)
-                t = bceil->visHeight;
+            if(bfloor->visHeight() > bceil->visHeight())
+                t = bceil->visHeight();
 
             // Can't go over front ceiling, would induce polygon flaws.
             // In the special case of a sky masked upper we must extend the bottom
             // section up to the height of the back floor.
-            if(t > fceil->visHeight && !raiseToBackFloor)
-                t = fceil->visHeight;
-            *hi = t;
+            if(t > fceil->visHeight() && !raiseToBackFloor)
+                t = fceil->visHeight();
+            top = t;
 
-            if(matOffset)
+            if(retMaterialOrigin)
             {
-                matOffset[0] = suf->visOffset[0];
-                matOffset[1] = suf->visOffset[1];
-                if(bfloor->visHeight > fceil->visHeight)
+                *retMaterialOrigin = surface->visMaterialOrigin();
+                if(bfloor->visHeight() > fceil->visHeight())
                 {
-                    matOffset[1] -= (raiseToBackFloor? t : fceil->visHeight) - bfloor->visHeight;
+                    retMaterialOrigin->y -= (raiseToBackFloor? t : fceil->visHeight()) - bfloor->visHeight();
                 }
 
                 if(unpegBottom)
                 {
                     // Align with normal middle texture.
-                    matOffset[1] += (raiseToBackFloor? t : fceil->visHeight) - bfloor->visHeight;
+                    retMaterialOrigin->y += (raiseToBackFloor? t : fceil->visHeight()) - bfloor->visHeight();
                 }
             }
             break; }
 
-        case SS_MIDDLE:
-            *low = MAX_OF(bfloor->visHeight, ffloor->visHeight);
-            *hi  = MIN_OF(bceil->visHeight,  fceil->visHeight);
+        case Line::Side::Middle:
+            bottom = de::max(bfloor->visHeight(), ffloor->visHeight());
+            top    = de::min(bceil->visHeight(),  fceil->visHeight());
 
-            if(matOffset)
+            if(retMaterialOrigin)
             {
-                matOffset[0] = suf->visOffset[0];
-                matOffset[1] = 0;
+                retMaterialOrigin->x = surface->visMaterialOrigin().x;
+                retMaterialOrigin->y = 0;
             }
 
-            if(suf->material && !stretchMiddle)
+            if(surface->hasMaterial() && !stretchMiddle)
             {
-                bool const clipBottom = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && ffloor->surface.isSkyMasked() && bfloor->surface.isSkyMasked());
-                bool const clipTop    = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && fceil->surface.isSkyMasked()  && bceil->surface.isSkyMasked());
+                bool const clipBottom = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && ffloor->surface().hasSkyMaskedMaterial() && bfloor->surface().hasSkyMaskedMaterial());
+                bool const clipTop    = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && fceil->surface().hasSkyMaskedMaterial()  && bceil->surface().hasSkyMaskedMaterial());
 
-                coord_t const openBottom = *low;
-                coord_t const openTop    = *hi;
-                int const matHeight      = suf->material->height();
-                coord_t const matYOffset = suf->visOffset[VY];
+                coord_t const openBottom = bottom;
+                coord_t const openTop    = top;
+                int const matHeight      = surface->material().height();
+                coord_t const matYOffset = surface->visMaterialOrigin()[VY];
 
                 if(openTop > openBottom)
                 {
                     if(unpegBottom)
                     {
-                        *low += matYOffset;
-                        *hi   = *low + matHeight;
+                        bottom += matYOffset;
+                        top = bottom + matHeight;
                     }
                     else
                     {
-                        *hi += matYOffset;
-                        *low = *hi - matHeight;
+                        top += matYOffset;
+                        bottom = top - matHeight;
                     }
 
-                    if(matOffset && *hi > openTop)
+                    if(retMaterialOrigin && top > openTop)
                     {
-                        matOffset[1] = *hi - openTop;
+                        retMaterialOrigin->y = top - openTop;
                     }
 
                     // Clip it?
                     if(clipTop || clipBottom)
                     {
-                        if(clipBottom && *low < openBottom)
-                            *low = openBottom;
+                        if(clipBottom && bottom < openBottom)
+                            bottom = openBottom;
 
-                        if(clipTop && *hi > openTop)
-                            *hi = openTop;
+                        if(clipTop && top > openTop)
+                            top = openTop;
                     }
 
-                    if(matOffset && !clipTop)
+                    if(retMaterialOrigin && !clipTop)
                     {
-                        matOffset[1] = 0;
+                        retMaterialOrigin->y = 0;
                     }
                 }
             }
@@ -724,39 +241,36 @@ boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
         }
     }
 
-    return /*is_visible=*/ *hi > *low;
+    if(retBottom) *retBottom = bottom;
+    if(retTop)    *retTop    = top;
+
+    return /*is_visible=*/ top > bottom;
 }
 
-boolean R_FindBottomTop(SideDefSection section, int lineFlags,
-    Sector *frontSec, Sector *backSec, SideDef *frontDef, SideDef *backDef,
-    coord_t *low, coord_t *hi)
+coord_t R_OpenRange(Line::Side const &side, Sector const *frontSec,
+    Sector const *backSec, coord_t *retBottom, coord_t *retTop)
 {
-    return R_FindBottomTop2(section, lineFlags, frontSec, backSec, frontDef, backDef,
-                            low, hi, 0/*offset not needed*/);
-}
-
-coord_t R_OpenRange(Sector const *frontSec, Sector const *backSec, coord_t *retBottom, coord_t *retTop)
-{
-    DENG_ASSERT(frontSec);
+    DENG_UNUSED(side); // Don't remove (present for API symmetry) -ds
+    DENG_ASSERT(frontSec != 0);
 
     coord_t top;
-    if(backSec && backSec->SP_ceilheight < frontSec->SP_ceilheight)
+    if(backSec && backSec->ceiling().height() < frontSec->ceiling().height())
     {
-        top = backSec->SP_ceilheight;
+        top = backSec->ceiling().height();
     }
     else
     {
-        top = frontSec->SP_ceilheight;
+        top = frontSec->ceiling().height();
     }
 
     coord_t bottom;
-    if(backSec && backSec->SP_floorheight > frontSec->SP_floorheight)
+    if(backSec && backSec->floor().height() > frontSec->floor().height())
     {
-        bottom = backSec->SP_floorheight;
+        bottom = backSec->floor().height();
     }
     else
     {
-        bottom = frontSec->SP_floorheight;
+        bottom = frontSec->floor().height();
     }
 
     if(retBottom) *retBottom = bottom;
@@ -765,28 +279,30 @@ coord_t R_OpenRange(Sector const *frontSec, Sector const *backSec, coord_t *retB
     return top - bottom;
 }
 
-coord_t R_VisOpenRange(Sector const *frontSec, Sector const *backSec, coord_t *retBottom, coord_t *retTop)
+coord_t R_VisOpenRange(Line::Side const &side, Sector const *frontSec,
+    Sector const *backSec, coord_t *retBottom, coord_t *retTop)
 {
-    DENG_ASSERT(frontSec);
+    DENG_UNUSED(side); // Don't remove (present for API symmetry) -ds
+    DENG_ASSERT(frontSec != 0);
 
     coord_t top;
-    if(backSec && backSec->SP_ceilvisheight < frontSec->SP_ceilvisheight)
+    if(backSec && backSec->ceiling().visHeight() < frontSec->ceiling().visHeight())
     {
-        top = backSec->SP_ceilvisheight;
+        top = backSec->ceiling().visHeight();
     }
     else
     {
-        top = frontSec->SP_ceilvisheight;
+        top = frontSec->ceiling().visHeight();
     }
 
     coord_t bottom;
-    if(backSec && backSec->SP_floorvisheight > frontSec->SP_floorvisheight)
+    if(backSec && backSec->floor().visHeight() > frontSec->floor().visHeight())
     {
-        bottom = backSec->SP_floorvisheight;
+        bottom = backSec->floor().visHeight();
     }
     else
     {
-        bottom = frontSec->SP_floorvisheight;
+        bottom = frontSec->floor().visHeight();
     }
 
     if(retBottom) *retBottom = bottom;
@@ -796,32 +312,33 @@ coord_t R_VisOpenRange(Sector const *frontSec, Sector const *backSec, coord_t *r
 }
 
 #ifdef __CLIENT__
-boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector *frontSec, Sector *backSec,
-    SideDef *frontDef, SideDef *backDef, boolean ignoreOpacity)
+bool R_MiddleMaterialCoversOpening(Line::Side const &side,
+    Sector const *frontSec, Sector const *backSec, bool ignoreOpacity)
 {
-    if(!frontSec || !frontDef) return false; // Never.
+    if(!frontSec) return false; // Never.
 
-    Material *material = frontDef->SW_middlematerial;
-    if(!material) return false;
+    if(!side.hasSections()) return false;
+    if(!side.middle().hasMaterial()) return false;
 
     // Ensure we have up to date info about the material.
-    MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
+    MaterialSnapshot const &ms = side.middle().material().prepare(Rend_MapSurfaceMaterialSpec());
 
-    if(ignoreOpacity || (ms.isOpaque() && !frontDef->SW_middleblendmode && frontDef->SW_middlergba[3] >= 1))
+    if(ignoreOpacity || (ms.isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1))
     {
         coord_t openRange, openBottom, openTop;
 
         // Stretched middles always cover the opening.
-        if(frontDef->flags & SDF_MIDDLE_STRETCH) return true;
+        if(side.isFlagged(SDF_MIDDLE_STRETCH))
+            return true;
 
         // Might the material cover the opening?
-        openRange = R_VisOpenRange(frontSec, backSec, &openBottom, &openTop);
+        openRange = R_VisOpenRange(side, frontSec, backSec, &openBottom, &openTop);
         if(ms.height() >= openRange)
         {
             // Possibly; check the placement.
             coord_t bottom, top;
-            if(R_FindBottomTop(SS_MIDDLE, lineFlags, frontSec, backSec, frontDef, backDef,
-                               &bottom, &top))
+            if(R_SideSectionCoords(side, Line::Side::Middle, frontSec, backSec,
+                                   &bottom, &top))
             {
                 return (top >= openTop && bottom <= openBottom);
             }
@@ -831,33 +348,50 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector *frontSec, Sector *b
     return false;
 }
 
-boolean R_MiddleMaterialCoversLineOpening(LineDef *line, int side, boolean ignoreOpacity)
+/**
+ * @param side  Line::Side instance.
+ * @param ignoreOpacity  @c true= do not consider Material opacity.
+ *
+ * @return  @c true if this side is considered "closed" (i.e., there is no opening
+ * through which the relative back Sector can be seen). Tests consider all Planes
+ * which interface with this and the "middle" Material used on the "this" side.
+ */
+bool R_SideBackClosed(Line::Side const &side, bool ignoreOpacity)
 {
-    DENG_ASSERT(line);
-    Sector *frontSec  = line->L_sector(side);
-    Sector *backSec   = line->L_sector(side ^ 1);
-    SideDef *frontDef = line->L_sidedef(side);
-    SideDef *backDef  = line->L_sidedef(side ^ 1);
-    return R_MiddleMaterialCoversOpening(line->flags, frontSec, backSec, frontDef, backDef, ignoreOpacity);
+    if(!side.hasSections()) return false;
+    if(!side.back().hasSections()) return true;
+    if(side.line().isSelfReferencing()) return false; // Never.
+
+    if(side.hasSector() && side.back().hasSector())
+    {
+        Sector const &frontSec = side.sector();
+        Sector const &backSec  = side.back().sector();
+
+        if(backSec.floor().visHeight()   >= backSec.ceiling().visHeight())  return true;
+        if(backSec.ceiling().visHeight() <= frontSec.floor().visHeight())   return true;
+        if(backSec.floor().visHeight()   >= frontSec.ceiling().visHeight()) return true;
+    }
+
+    return R_MiddleMaterialCoversOpening(side, ignoreOpacity);
 }
 
-LineDef *R_FindLineNeighbor(Sector const *sector, LineDef const *line,
-    lineowner_t const *own, boolean antiClockwise, binangle_t *diff)
+Line *R_FindLineNeighbor(Sector const *sector, Line const *line,
+    LineOwner const *own, bool antiClockwise, binangle_t *diff)
 {
-    lineowner_t *cown = own->link[!antiClockwise];
-    LineDef *other = cown->lineDef;
+    LineOwner const *cown = antiClockwise? &own->prev() : &own->next();
+    Line *other = &cown->line();
 
     if(other == line)
-        return NULL;
+        return 0;
 
-    if(diff) *diff += (antiClockwise? cown->angle : own->angle);
+    if(diff) *diff += (antiClockwise? cown->angle() : own->angle());
 
-    if(!other->L_backsidedef || other->L_frontsector != other->L_backsector)
+    if(!other->hasBackSections() || !other->isSelfReferencing())
     {
         if(sector) // Must one of the sectors match?
         {
-            if(other->L_frontsector == sector ||
-               (other->L_backsidedef && other->L_backsector == sector))
+            if(other->frontSectorPtr() == sector ||
+               (other->hasBackSections() && other->backSectorPtr() == sector))
                 return other;
         }
         else
@@ -870,59 +404,57 @@ LineDef *R_FindLineNeighbor(Sector const *sector, LineDef const *line,
     return R_FindLineNeighbor(sector, line, cown, antiClockwise, diff);
 }
 
-LineDef *R_FindSolidLineNeighbor(Sector const *sector, LineDef const *line,
-    lineowner_t const *own, boolean antiClockwise, binangle_t *diff)
+Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
+    LineOwner const *own, bool antiClockwise, binangle_t *diff)
 {
-    lineowner_t *cown = own->link[!antiClockwise];
-    LineDef *other = cown->lineDef;
-    int side;
+    LineOwner const *cown = antiClockwise? &own->prev() : &own->next();
+    Line *other = &cown->line();
 
-    if(other == line) return NULL;
+    if(other == line) return 0;
 
-    if(diff) *diff += (antiClockwise? cown->angle : own->angle);
+    if(diff) *diff += (antiClockwise? cown->angle() : own->angle());
 
-    if(!((other->inFlags & LF_BSPWINDOW) && other->L_frontsector != sector))
+    if(!((other->isBspWindow()) && other->frontSectorPtr() != sector))
     {
-        if(!other->L_frontsidedef || !other->L_backsidedef)
-            return other;
+        if(!other->hasFrontSections()) return other;
+        if(!other->hasBackSections()) return other;
 
-        if(!LINE_SELFREF(other) &&
-           (other->L_frontsector->SP_floorvisheight >= sector->SP_ceilvisheight ||
-            other->L_frontsector->SP_ceilvisheight <= sector->SP_floorvisheight ||
-            other->L_backsector->SP_floorvisheight >= sector->SP_ceilvisheight ||
-            other->L_backsector->SP_ceilvisheight <= sector->SP_floorvisheight ||
-            other->L_backsector->SP_ceilvisheight <= other->L_backsector->SP_floorvisheight))
+        if(!other->isSelfReferencing() &&
+           (other->frontSector().floor().visHeight() >= sector->ceiling().visHeight() ||
+            other->frontSector().ceiling().visHeight() <= sector->floor().visHeight() ||
+            other->backSector().floor().visHeight() >= sector->ceiling().visHeight() ||
+            other->backSector().ceiling().visHeight() <= sector->floor().visHeight() ||
+            other->backSector().ceiling().visHeight() <= other->backSector().floor().visHeight()))
             return other;
 
         // Both front and back MUST be open by this point.
 
         // Check for mid texture which fills the gap between floor and ceiling.
         // We should not give away the location of false walls (secrets).
-        side = (other->L_frontsector == sector? 0 : 1);
-        if(other->L_sidedef(side)->SW_middlematerial)
+        int side = (other->frontSectorPtr() == sector? 0 : 1);
+        if(other->side(side).middle().hasMaterial())
         {
-            float oFCeil  = other->L_frontsector->SP_ceilvisheight;
-            float oFFloor = other->L_frontsector->SP_floorvisheight;
-            float oBCeil  = other->L_backsector->SP_ceilvisheight;
-            float oBFloor = other->L_backsector->SP_floorvisheight;
+            float oFCeil  = other->frontSector().ceiling().visHeight();
+            float oFFloor = other->frontSector().floor().visHeight();
+            float oBCeil  = other->backSector().ceiling().visHeight();
+            float oBFloor = other->backSector().floor().visHeight();
 
             if((side == 0 &&
-                ((oBCeil > sector->SP_floorvisheight &&
-                      oBFloor <= sector->SP_floorvisheight) ||
-                 (oBFloor < sector->SP_ceilvisheight &&
-                      oBCeil >= sector->SP_ceilvisheight) ||
-                 (oBFloor < sector->SP_ceilvisheight &&
-                      oBCeil > sector->SP_floorvisheight))) ||
+                ((oBCeil > sector->floor().visHeight() &&
+                      oBFloor <= sector->floor().visHeight()) ||
+                 (oBFloor < sector->ceiling().visHeight() &&
+                      oBCeil >= sector->ceiling().visHeight()) ||
+                 (oBFloor < sector->ceiling().visHeight() &&
+                      oBCeil > sector->floor().visHeight()))) ||
                ( /* side must be 1 */
-                ((oFCeil > sector->SP_floorvisheight &&
-                      oFFloor <= sector->SP_floorvisheight) ||
-                 (oFFloor < sector->SP_ceilvisheight &&
-                      oFCeil >= sector->SP_ceilvisheight) ||
-                 (oFFloor < sector->SP_ceilvisheight &&
-                      oFCeil > sector->SP_floorvisheight)))  )
+                ((oFCeil > sector->floor().visHeight() &&
+                      oFFloor <= sector->floor().visHeight()) ||
+                 (oFFloor < sector->ceiling().visHeight() &&
+                      oFCeil >= sector->ceiling().visHeight()) ||
+                 (oFFloor < sector->ceiling().visHeight() &&
+                      oFCeil > sector->floor().visHeight())))  )
             {
-
-                if(!R_MiddleMaterialCoversLineOpening(other, side, false))
+                if(!R_MiddleMaterialCoversOpening(other->side(side)))
                     return 0;
             }
         }
@@ -932,21 +464,20 @@ LineDef *R_FindSolidLineNeighbor(Sector const *sector, LineDef const *line,
     return R_FindSolidLineNeighbor(sector, line, cown, antiClockwise, diff);
 }
 
-LineDef *R_FindLineBackNeighbor(Sector const *sector, LineDef const *line,
-    lineowner_t const *own, boolean antiClockwise, binangle_t *diff)
+Line *R_FindLineBackNeighbor(Sector const *sector, Line const *line,
+    LineOwner const *own, bool antiClockwise, binangle_t *diff)
 {
-    lineowner_t *cown = own->link[!antiClockwise];
-    LineDef *other = cown->lineDef;
+    LineOwner const *cown = antiClockwise? &own->prev() : &own->next();
+    Line *other = &cown->line();
 
     if(other == line) return 0;
 
-    if(diff) *diff += (antiClockwise? cown->angle : own->angle);
+    if(diff) *diff += (antiClockwise? cown->angle() : own->angle());
 
-    if(!other->L_backsidedef || other->L_frontsector != other->L_backsector ||
-       (other->inFlags & LF_BSPWINDOW))
+    if(!other->hasBackSections() || !other->isSelfReferencing() || other->isBspWindow())
     {
-        if(!(other->L_frontsector == sector ||
-             (other->L_backsidedef && other->L_backsector == sector)))
+        if(!(other->frontSectorPtr() == sector ||
+             (other->hasBackSections() && other->backSectorPtr() == sector)))
             return other;
     }
 
@@ -954,124 +485,254 @@ LineDef *R_FindLineBackNeighbor(Sector const *sector, LineDef const *line,
     return R_FindLineBackNeighbor(sector, line, cown, antiClockwise, diff);
 }
 
-LineDef *R_FindLineAlignNeighbor(Sector const *sec, LineDef const *line,
-    lineowner_t const *own, boolean antiClockwise, int alignment)
+Line *R_FindLineAlignNeighbor(Sector const *sec, Line const *line,
+    LineOwner const *own, bool antiClockwise, int alignment)
 {
     int const SEP = 10;
 
-    lineowner_t* cown = own->link[!antiClockwise];
-    LineDef* other = cown->lineDef;
+    LineOwner const *cown = antiClockwise? &own->prev() : &own->next();
+    Line *other = &cown->line();
     binangle_t diff;
 
     if(other == line)
-        return NULL;
+        return 0;
 
-    if(!LINE_SELFREF(other))
+    if(!other->isSelfReferencing())
     {
-        diff = line->angle - other->angle;
+        diff = line->angle() - other->angle();
 
         if(alignment < 0)
             diff -= BANG_180;
-        if(other->L_frontsector != sec)
+        if(other->frontSectorPtr() != sec)
             diff -= BANG_180;
         if(diff < SEP || diff > BANG_360 - SEP)
             return other;
     }
 
     // Can't step over non-twosided lines.
-    if((!other->L_backsidedef || !other->L_frontsidedef))
-        return NULL;
+    if(!other->hasFrontSections() || !other->hasBackSections())
+        return 0;
 
     // Not suitable, try the next.
     return R_FindLineAlignNeighbor(sec, line, cown, antiClockwise, alignment);
 }
 #endif // __CLIENT__
 
-static inline void initSurfaceMaterialOffset(Surface *suf)
+static void resetAllMapPlaneVisHeights(GameMap &map)
 {
-    DENG_ASSERT(suf);
-    suf->visOffset[VX] = suf->oldOffset[0][VX] = suf->oldOffset[1][VX] = suf->offset[VX];
-    suf->visOffset[VY] = suf->oldOffset[0][VY] = suf->oldOffset[1][VY] = suf->offset[VY];
+    foreach(Sector *sector, map.sectors())
+    foreach(Plane *plane, sector->planes())
+    {
+        plane->resetVisHeight();
+    }
 }
+
+static void resetAllMapSurfaceVisMaterialOrigins(GameMap &map)
+{
+    foreach(Sector *sector, map.sectors())
+    foreach(Plane *plane, sector->planes())
+    {
+        plane->surface().resetVisMaterialOrigin();
+    }
+
+    foreach(Line *line, map.lines())
+    for(int i = 0; i < 2; ++i)
+    {
+        if(!line->hasSections(i))
+            continue;
+
+        Line::Side &side = line->side(i);
+        side.top().resetVisMaterialOrigin();
+        side.middle().resetVisMaterialOrigin();
+        side.bottom().resetVisMaterialOrigin();
+    }
+}
+
+#ifdef __CLIENT__
 
 /**
- * Set intial values of various tracked and interpolated properties
- * (lighting, smoothed planes etc).
+ * Given a side section, look at the neighbouring surfaces and pick the
+ * best choice of material used on those surfaces to be applied to "this"
+ * surface.
+ *
+ * Material on back neighbour plane has priority.
+ * Non-animated materials are preferred.
+ * Sky materials are ignored.
  */
-void R_MapInitSurfaces(boolean forceUpdate)
+static Material *chooseFixMaterial(Line::Side &side, int section)
 {
-    if(novideo) return;
+    Material *choice1 = 0, *choice2 = 0;
 
-    for(uint i = 0; i < NUM_SECTORS; ++i)
+    Sector *frontSec = side.sectorPtr();
+    Sector *backSec  = side.back().hasSections()? side.back().sectorPtr() : 0;
+
+    if(backSec)
     {
-        Sector *sec = SECTOR_PTR(i);
-
-        R_UpdateSector(sec, forceUpdate);
-
-        for(uint j = 0; j < sec->planeCount(); ++j)
+        // Our first choice is a material in the other sector.
+        if(section == Line::Side::Bottom)
         {
-            Plane *pln = sec->SP_plane(j);
+            if(frontSec->floor().height() < backSec->floor().height())
+            {
+                choice1 = backSec->floorSurface().materialPtr();
+            }
+        }
+        else if(section == Line::Side::Top)
+        {
+            if(frontSec->ceiling().height()  > backSec->ceiling().height())
+            {
+                choice1 = backSec->ceilingSurface().materialPtr();
+            }
+        }
 
-            pln->visHeight = pln->oldHeight[0] = pln->oldHeight[1] = pln->height;
-            initSurfaceMaterialOffset(&pln->surface);
+        // In the special case of sky mask on the back plane, our best
+        // choice is always this material.
+        if(choice1 && choice1->isSkyMasked())
+        {
+            return choice1;
+        }
+    }
+    else
+    {
+        // Our first choice is a material on an adjacent wall section.
+        // Try the left neighbor first.
+        Line *other = R_FindLineNeighbor(frontSec, &side.line(), side.line().vertexOwner(side.lineSideId()),
+                                         false /*next clockwise*/);
+        if(!other)
+            // Try the right neighbor.
+            other = R_FindLineNeighbor(frontSec, &side.line(), side.line().vertexOwner(side.lineSideId()^1),
+                                       true /*next anti-clockwise*/);
+
+        if(other)
+        {
+            if(!other->hasBackSections())
+            {
+                // Our choice is clear - the middle material.
+                choice1 = other->front().middle().materialPtr();
+            }
+            else
+            {
+                // Compare the relative heights to decide.
+                Line::Side &otherSide = other->side(&other->frontSector() == frontSec? Line::Front : Line::Back);
+                Sector &otherSec = other->sector(&other->frontSector() == frontSec? Line::Back : Line::Front);
+
+                if(otherSec.ceiling().height() <= frontSec->floor().height())
+                    choice1 = otherSide.top().materialPtr();
+                else if(otherSec.floor().height() >= frontSec->ceiling().height())
+                    choice1 = otherSide.bottom().materialPtr();
+                else if(otherSec.ceiling().height() < frontSec->ceiling().height())
+                    choice1 = otherSide.top().materialPtr();
+                else if(otherSec.floor().height() > frontSec->floor().height())
+                    choice1 = otherSide.bottom().materialPtr();
+                // else we'll settle for a plane material.
+            }
         }
     }
 
-    for(uint i = 0; i < NUM_SIDEDEFS; ++i)
-    {
-        SideDef *si = SIDE_PTR(i);
+    // Our second choice is a material from this sector.
+    choice2 = frontSec->planeSurface(section == Line::Side::Bottom? Plane::Floor : Plane::Ceiling).materialPtr();
 
-        initSurfaceMaterialOffset(&si->SW_topsurface);
-        initSurfaceMaterialOffset(&si->SW_middlesurface);
-        initSurfaceMaterialOffset(&si->SW_bottomsurface);
+    // Prefer a non-animated, non-masked material.
+    if(choice1 && !choice1->isAnimated() && !choice1->isSkyMasked())
+        return choice1;
+    if(choice2 && !choice2->isAnimated() && !choice2->isSkyMasked())
+        return choice2;
+
+    // Prefer a non-masked material.
+    if(choice1 && !choice1->isSkyMasked())
+        return choice1;
+    if(choice2 && !choice2->isSkyMasked())
+        return choice2;
+
+    // At this point we'll accept anything if it means avoiding HOM.
+    if(choice1) return choice1;
+    if(choice2) return choice2;
+
+    // We'll assign the special "missing" material...
+    return &App_Materials().find(de::Uri("System", Path("missing"))).material();
+}
+
+static void addMissingMaterial(Line::Side &side, int section)
+{
+    // A material must be missing for this test to apply.
+    Surface &surface = side.surface(section);
+    if(surface.hasMaterial()) return;
+
+    // Look for a suitable replacement.
+    surface.setMaterial(chooseFixMaterial(side, section), true/* is missing fix */);
+
+    // During map load we log missing materials.
+    if(ddMapSetup && verbose)
+    {
+        String path = surface.hasMaterial()? surface.material().manifest().composeUri().asText() : "<null>";
+
+        LOG_WARNING("%s of Line #%d is missing a material for the %s section.\n"
+                    "  %s was chosen to complete the definition.")
+            << (side.isBack()? "Back" : "Front") << side.line().indexInMap()
+            << (section == Line::Side::Middle? "middle" : section == Line::Side::Top? "top" : "bottom")
+            << path;
     }
 }
 
-#ifdef __CLIENT__
-static void addToSurfaceSets(Surface *suf, Material *material)
+void R_UpdateMissingMaterialsForLinesOfSector(Sector const &sec)
 {
-    if(!suf || !material) return;
-
-    if(material->hasGlow())
+    foreach(Line *line, sec.lines())
     {
-        theMap->glowingSurfaces().insert(suf);
-    }
+        // Self-referencing lines don't need fixing.
+        if(line->isSelfReferencing()) continue;
 
-    if(material->isDecorated())
-    {
-        theMap->decoratedSurfaces().insert(suf);
+        // Do not fix BSP "window" lines.
+        if(!line->hasFrontSections() || (!line->hasBackSections() && line->hasBackSector()))
+            continue;
+
+        /**
+         * Do as in the original Doom if the texture has not been defined -
+         * extend the floor/ceiling to fill the space (unless it is skymasked),
+         * or if there is a midtexture use that instead.
+         */
+        if(line->hasBackSector())
+        {
+            Sector const &frontSec = line->frontSector();
+            Sector const &backSec  = line->backSector();
+
+            // A potential bottom section fix?
+            if(frontSec.floor().height() < backSec.floor().height())
+            {
+                addMissingMaterial(line->front(), Line::Side::Bottom);
+            }
+            else if(frontSec.floor().height() > backSec.floor().height())
+            {
+                addMissingMaterial(line->back(), Line::Side::Bottom);
+            }
+
+            // A potential top section fix?
+            if(backSec.ceiling().height() < frontSec.ceiling().height())
+            {
+                addMissingMaterial(line->front(), Line::Side::Top);
+            }
+            else if(backSec.ceiling().height() > frontSec.ceiling().height())
+            {
+                addMissingMaterial(line->back(), Line::Side::Top);
+            }
+        }
+        else
+        {
+            // A potential middle section fix.
+            addMissingMaterial(line->front(), Line::Side::Middle);
+        }
     }
 }
 #endif // __CLIENT__
 
-void R_MapInitSurfaceLists()
+static void updateAllMapSectors(GameMap &map)
 {
+    foreach(Sector *sector, map.sectors())
+    {
+        sector->updateSoundEmitterOrigin();
 #ifdef __CLIENT__
-
-    theMap->decoratedSurfaces().clear();
-    theMap->glowingSurfaces().clear();
-
-    for(uint i = 0; i < NUM_SIDEDEFS; ++i)
-    {
-        SideDef *side = SIDE_PTR(i);
-
-        addToSurfaceSets(&side->SW_middlesurface, side->SW_middlematerial);
-        addToSurfaceSets(&side->SW_topsurface,    side->SW_topmaterial);
-        addToSurfaceSets(&side->SW_bottomsurface, side->SW_bottommaterial);
+        R_UpdateMissingMaterialsForLinesOfSector(*sector);
+        S_MarkSectorReverbDirty(sector);
+#endif
     }
-
-    for(uint i = 0; i < NUM_SECTORS; ++i)
-    {
-        Sector *sec = SECTOR_PTR(i);
-        if(!sec->lineDefCount) continue;
-
-        for(uint j = 0; j < sec->planeCount(); ++j)
-        {
-            addToSurfaceSets(&sec->SP_planesurface(j), sec->SP_planematerial(j));
-        }
-    }
-
-#endif // __CLIENT__
 }
 
 #undef R_SetupMap
@@ -1095,9 +756,13 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
 
         // Update everything again. Its possible that after loading we
         // now have more HOMs to fix, etc..
-        GameMap_InitSkyFix(theMap);
-        R_MapInitSurfaces(true);
-        GameMap_InitPolyobjs(theMap);
+        theMap->initSkyFix();
+
+        updateAllMapSectors(*theMap);
+        resetAllMapPlaneVisHeights(*theMap);
+        resetAllMapSurfaceVisMaterialOrigins(*theMap);
+
+        theMap->initPolyobjs();
         DD_ResetTimer();
         return;
 
@@ -1123,13 +788,16 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
         // Recalculate the light range mod matrix.
         Rend_CalcLightModRange();
 
-        GameMap_InitPolyobjs(theMap);
+        theMap->initPolyobjs();
         P_MapSpawnPlaneParticleGens();
 
-        R_MapInitSurfaces(true);
-        R_MapInitSurfaceLists();
+        updateAllMapSectors(*theMap);
+        resetAllMapPlaneVisHeights(*theMap);
+        resetAllMapSurfaceVisMaterialOrigins(*theMap);
 
 #ifdef __CLIENT__
+        theMap->buildSurfaceLists();
+
         float startTime = Timer_Seconds();
         Rend_CacheForMap();
         App_Materials().processCacheQueue();
@@ -1141,19 +809,18 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
         // Map setup has been completed.
 
         // Run any commands specified in Map Info.
-        ded_mapinfo_t *mapInfo = Def_GetMapInfo(GameMap_Uri(theMap));
+        de::Uri mapUri = theMap->uri();
+        ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
         if(mapInfo && mapInfo->execute)
         {
             Con_Execute(CMDS_SCRIPT, mapInfo->execute, true, false);
         }
 
         // Run the special map setup command, which the user may alias to do something useful.
-        AutoStr *mapPath = Uri_Resolved(GameMap_Uri(theMap));
-        char cmd[80];
-        dd_snprintf(cmd, 80, "init-%s", Str_Text(mapPath));
-        if(Con_IsValidCommand(cmd))
+        String cmd = "init-" + mapUri.resolved();
+        if(Con_IsValidCommand(cmd.toUtf8().constData()))
         {
-            Con_Executef(CMDS_SCRIPT, false, "%s", cmd);
+            Con_Executef(CMDS_SCRIPT, false, "%s", cmd.toUtf8().constData());
         }
 
 #ifdef __CLIENT__
@@ -1178,12 +845,12 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
             ddpl->inVoid = true;
             if(ddpl->mo)
             {
-                BspLeaf *bspLeaf = P_BspLeafAtPoint(ddpl->mo->origin);
+                BspLeaf *bspLeaf = theMap->bspLeafAtPoint(ddpl->mo->origin);
                 if(bspLeaf)
                 {
                     /// @todo $nplanes
-                    if(ddpl->mo->origin[VZ] >= bspLeaf->sector->SP_floorvisheight &&
-                       ddpl->mo->origin[VZ] < bspLeaf->sector->SP_ceilvisheight - 4)
+                    if(ddpl->mo->origin[VZ] >= bspLeaf->sector().floor().visHeight() &&
+                       ddpl->mo->origin[VZ] < bspLeaf->sector().ceiling().visHeight() - 4)
                     {
                         ddpl->inVoid = false;
                     }
@@ -1213,392 +880,79 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
 
 void R_ClearSectorFlags()
 {
-    for(uint i = 0; i < NUM_SECTORS; ++i)
+    if(!theMap) return;
+
+    foreach(Sector *sector, theMap->sectors())
     {
-        Sector *sec = SECTOR_PTR(i);
         // Clear all flags that can be cleared before each frame.
-        sec->frameFlags &= ~SIF_FRAME_CLEAR;
+        sector->_frameFlags &= ~SIF_FRAME_CLEAR;
     }
 }
 
-boolean R_IsGlowingPlane(Plane const *pln)
-{
-    Material *material = pln->surface.material;
-    if(material)
-    {
-        if(!material->isDrawable() || material->hasGlow()) return true;
-    }
-    return pln->surface.isSkyMasked();
-}
-
-float R_GlowStrength(Plane const *pln)
+float R_GlowStrength(Plane const *plane)
 {
 #ifdef __CLIENT__
-    if(glowFactor > .0001f)
+    Surface const &surface = plane->surface();
+    if(surface.hasMaterial() && glowFactor > .0001f)
     {
-        Material *material = pln->surface.material;
-        if(material)
+        if(surface.material().isDrawable() && !surface.hasSkyMaskedMaterial())
         {
-            if(material->isDrawable() && !pln->surface.isSkyMasked())
-            {
-                MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
-                float glowStrength = ms.glowStrength() * glowFactor; // Global scale factor.
-                return glowStrength;
-            }
+            MaterialSnapshot const &ms = surface.material().prepare(Rend_MapSurfaceMaterialSpec());
+
+            float glowStrength = ms.glowStrength() * glowFactor; // Global scale factor.
+            return glowStrength;
         }
     }
 #else
-    DENG_UNUSED(pln);
+    DENG_UNUSED(plane);
 #endif
     return 0;
 }
 
 /**
- * Does the specified sector contain any sky surfaces?
+ * Does the specified sector contain any sky surface planes?
  *
- * @return  @c true, if one or more surfaces in the given sector use the
- * special sky mask material.
+ * @return  @c true, if one or more plane surfaces in the given sector use
+ * a sky-masked material.
  */
 boolean R_SectorContainsSkySurfaces(Sector const *sec)
 {
+    DENG_ASSERT(sec);
+
     boolean sectorContainsSkySurfaces = false;
-    uint n = 0;
+    int n = 0;
     do
     {
-        if(sec->SP_planesurface(n).isSkyMasked())
+        if(sec->planeSurface(n).hasSkyMaskedMaterial())
             sectorContainsSkySurfaces = true;
         else
             n++;
     } while(!sectorContainsSkySurfaces && n < sec->planeCount());
+
     return sectorContainsSkySurfaces;
 }
 
-#ifdef __CLIENT__
-
-/**
- * Given a sidedef section, look at the neighbouring surfaces and pick the
- * best choice of material used on those surfaces to be applied to "this"
- * surface.
- *
- * Material on back neighbour plane has priority.
- * Non-animated materials are preferred.
- * Sky materials are ignored.
- */
-static Material *chooseFixMaterial(SideDef *s, SideDefSection section)
-{
-    Material *choice1 = 0, *choice2 = 0;
-    LineDef *line = s->line;
-    byte side = (line->L_frontsidedef == s? FRONT : BACK);
-    Sector *frontSec = line->L_sector(side);
-    Sector *backSec  = line->L_sidedef(side ^ 1)? line->L_sector(side ^ 1) : 0;
-
-    if(backSec)
-    {
-        // Our first choice is a material in the other sector.
-        if(section == SS_BOTTOM)
-        {
-            if(frontSec->SP_floorheight < backSec->SP_floorheight)
-            {
-                choice1 = backSec->SP_floormaterial;
-            }
-        }
-        else if(section == SS_TOP)
-        {
-            if(frontSec->SP_ceilheight  > backSec->SP_ceilheight)
-            {
-                choice1 = backSec->SP_ceilmaterial;
-            }
-        }
-
-        // In the special case of sky mask on the back plane, our best
-        // choice is always this material.
-        if(choice1 && choice1->isSkyMasked())
-        {
-            return choice1;
-        }
-    }
-    else
-    {
-        // Our first choice is a material on an adjacent wall section.
-        // Try the left neighbor first.
-        LineDef *other = R_FindLineNeighbor(frontSec, line, line->L_vo(side),
-                                            false /*next clockwise*/, NULL/*angle delta is irrelevant*/);
-        if(!other)
-            // Try the right neighbor.
-            other = R_FindLineNeighbor(frontSec, line, line->L_vo(side^1),
-                                       true /*next anti-clockwise*/, NULL/*angle delta is irrelevant*/);
-
-        if(other)
-        {
-            if(!other->L_backsidedef)
-            {
-                // Our choice is clear - the middle material.
-                choice1 = other->L_frontsidedef->SW_middlematerial;
-            }
-            else
-            {
-                // Compare the relative heights to decide.
-                SideDef *otherSide = other->L_sidedef(other->L_frontsector == frontSec? FRONT : BACK);
-                Sector *otherSec = other->L_sector(other->L_frontsector == frontSec? BACK  : FRONT);
-                if(otherSec->SP_ceilheight <= frontSec->SP_floorheight)
-                    choice1 = otherSide->SW_topmaterial;
-                else if(otherSec->SP_floorheight >= frontSec->SP_ceilheight)
-                    choice1 = otherSide->SW_bottommaterial;
-                else if(otherSec->SP_ceilheight < frontSec->SP_ceilheight)
-                    choice1 = otherSide->SW_topmaterial;
-                else if(otherSec->SP_floorheight > frontSec->SP_floorheight)
-                    choice1 = otherSide->SW_bottommaterial;
-                // else we'll settle for a plane material.
-            }
-        }
-    }
-
-    // Our second choice is a material from this sector.
-    choice2 = frontSec->SP_plane(section == SS_BOTTOM? PLN_FLOOR : PLN_CEILING)->PS_material;
-
-    // Prefer a non-animated, non-masked material.
-    if(choice1 && !choice1->isAnimated() && !choice1->isSkyMasked())
-        return choice1;
-    if(choice2 && !choice2->isAnimated() && !choice2->isSkyMasked())
-        return choice2;
-
-    // Prefer a non-masked material.
-    if(choice1 && !choice1->isSkyMasked())
-        return choice1;
-    if(choice2 && !choice2->isSkyMasked())
-        return choice2;
-
-    // At this point we'll accept anything if it means avoiding HOM.
-    if(choice1) return choice1;
-    if(choice2) return choice2;
-
-    // We'll assign the special "missing" material...
-    return &App_Materials().find(de::Uri("System", Path("missing"))).material();
-}
-
-static void addMissingMaterial(SideDef *s, SideDefSection section)
-{
-    // A material must be missing for this test to apply.
-    Surface *suf = &s->sections[section];
-    if(suf->material) return;
-
-    // Look for a suitable replacement.
-    suf->setMaterial(chooseFixMaterial(s, section));
-    suf->inFlags |= SUIF_FIX_MISSING_MATERIAL;
-
-    // During map load we log missing materials.
-    if(ddMapSetup && verbose)
-    {
-        String path = suf->material? suf->material->manifest().composeUri().asText() : "<null>";
-        LOG_WARNING("SideDef #%u is missing a material for the %s section.\n"
-                    "  %s was chosen to complete the definition.")
-            << s->buildData.index - 1
-            << (section == SS_MIDDLE? "middle" : section == SS_TOP? "top" : "bottom")
-            << path;
-    }
-}
-#endif // __CLIENT__
-
-static void R_UpdateLinedefsOfSector(Sector *sec)
+void R_UpdateSector(Sector &sector, bool forceUpdate)
 {
 #ifdef __CLIENT__
-    if(!sec) return;
-
-    for(uint i = 0; i < sec->lineDefCount; ++i)
-    {
-        LineDef *li = sec->lineDefs[i];
-        if(LINE_SELFREF(li)) continue;
-
-        SideDef *front    = li->L_frontsidedef;
-        SideDef *back     = li->L_backsidedef;
-        Sector *frontSec  = li->L_frontsector;
-        Sector *backSec   = li->L_backsector;
-
-        // Do not fix "windows".
-        if(!front || (!back && backSec)) continue;
-
-        /**
-         * Do as in the original Doom if the texture has not been defined -
-         * extend the floor/ceiling to fill the space (unless it is skymasked),
-         * or if there is a midtexture use that instead.
-         */
-        if(backSec)
-        {
-            // Bottom section.
-            if(frontSec->SP_floorheight < backSec->SP_floorheight)
-                addMissingMaterial(front, SS_BOTTOM);
-            else if(frontSec->SP_floorheight > backSec->SP_floorheight)
-                addMissingMaterial(back, SS_BOTTOM);
-
-            // Top section.
-            if(backSec->SP_ceilheight < frontSec->SP_ceilheight)
-                addMissingMaterial(front, SS_TOP);
-            else if(backSec->SP_ceilheight > frontSec->SP_ceilheight)
-                addMissingMaterial(back, SS_TOP);
-        }
-        else
-        {
-            // Middle section.
-            addMissingMaterial(front, SS_MIDDLE);
-        }
-    }
-#else // !__CLIENT__
-    DENG2_UNUSED(sec);
-#endif
-}
-
-boolean R_UpdatePlane(Plane *pln, boolean forceUpdate)
-{
-    Sector *sec = pln->sector;
-    boolean changed = false;
-
-    // Geometry change?
-    if(forceUpdate || pln->height != pln->oldHeight[1])
-    {
-        // Check if there are any camera players in this sector. If their
-        // height is now above the ceiling/below the floor they are now in
-        // the void.
-        for(uint i = 0; i < DDMAXPLAYERS; ++i)
-        {
-            player_t *plr = &ddPlayers[i];
-            ddplayer_t *ddpl = &plr->shared;
-
-            if(!ddpl->inGame || !ddpl->mo || !ddpl->mo->bspLeaf)
-                continue;
-
-            /// @todo $nplanes
-            if((ddpl->flags & DDPF_CAMERA) && ddpl->mo->bspLeaf->sector == sec &&
-               (ddpl->mo->origin[VZ] > sec->SP_ceilheight - 4 || ddpl->mo->origin[VZ] < sec->SP_floorheight))
-            {
-                ddpl->inVoid = true;
-            }
-        }
-
-        // Update the base origins for this plane and all relevant sidedef surfaces.
-        pln->surface.updateBaseOrigin();
-        for(uint i = 0; i < sec->lineDefCount; ++i)
-        {
-            LineDef *line = sec->lineDefs[i];
-            if(line->L_frontsidedef) // $degenleaf
-            {
-                SideDef_UpdateBaseOrigins(line->L_frontsidedef);
-            }
-            if(line->L_backsidedef)
-            {
-                SideDef_UpdateBaseOrigins(line->L_backsidedef);
-            }
-        }
-
-#ifdef __CLIENT__
-        // Inform the shadow bias of changed geometry.
-        if(sec->bspLeafs && *sec->bspLeafs)
-        {
-            BspLeaf **bspLeafIter = sec->bspLeafs;
-            for(; *bspLeafIter; bspLeafIter++)
-            {
-                BspLeaf *bspLeaf = *bspLeafIter;
-                if(bspLeaf->hedge)
-                {
-                    HEdge *hedge = bspLeaf->hedge;
-                    do
-                    {
-                        if(hedge->lineDef)
-                        {
-                            for(uint i = 0; i < 3; ++i)
-                            {
-                                SB_SurfaceMoved(hedge->bsuf[i]);
-                            }
-                        }
-                    } while((hedge = hedge->next) != bspLeaf->hedge);
-                }
-
-                SB_SurfaceMoved(bspLeaf->bsuf[pln->planeID]);
-            }
-        }
-#endif // __CLIENT__
-
-        // We need the decorations updated.
-        pln->surface.update();
-
-        changed = true;
-    }
-
-    return changed;
-}
-
-boolean R_UpdateSector(Sector *sec, boolean forceUpdate)
-{
-    boolean changed = false, planeChanged = false;
-
     // Check if there are any lightlevel or color changes.
     if(forceUpdate ||
-       (sec->lightLevel != sec->oldLightLevel ||
-        sec->rgb[0] != sec->oldRGB[0] ||
-        sec->rgb[1] != sec->oldRGB[1] ||
-        sec->rgb[2] != sec->oldRGB[2]))
+       (sector._lightLevel != sector._oldLightLevel ||
+        sector._lightColor[0] != sector._oldLightColor[0] ||
+        sector._lightColor[1] != sector._oldLightColor[1] ||
+        sector._lightColor[2] != sector._oldLightColor[2]))
     {
-        sec->frameFlags |= SIF_LIGHT_CHANGED;
-        sec->oldLightLevel = sec->lightLevel;
-        std::memcpy(sec->oldRGB, sec->rgb, sizeof(sec->oldRGB));
+        sector._frameFlags |= SIF_LIGHT_CHANGED;
+        sector._oldLightLevel = sector._lightLevel;
+        sector._oldLightColor = sector._lightColor;
 
-        LG_SectorChanged(static_cast<Sector *>(sec));
-        changed = true;
+        LG_SectorChanged(&sector);
     }
     else
     {
-        sec->frameFlags &= ~SIF_LIGHT_CHANGED;
+        sector._frameFlags &= ~SIF_LIGHT_CHANGED;
     }
-
-    // For each plane.
-    for(uint i = 0; i < sec->planeCount(); ++i)
-    {
-        if(R_UpdatePlane(sec->planes[i], forceUpdate))
-        {
-            planeChanged = true;
-        }
-    }
-
-    if(forceUpdate || planeChanged)
-    {
-        Sector_UpdateBaseOrigin(sec);
-        R_UpdateLinedefsOfSector(sec);
-        S_MarkSectorReverbDirty(sec);
-        changed = true;
-    }
-
-    DENG_UNUSED(changed); /// @todo Should it be used? -jk
-
-    return planeChanged;
-}
-
-boolean R_UpdateLinedef(LineDef *line, boolean forceUpdate)
-{
-    // Stub.
-    DENG_UNUSED(line); DENG_UNUSED(forceUpdate);
-    return false; // Not changed.
-}
-
-boolean R_UpdateSidedef(SideDef *side, boolean forceUpdate)
-{
-    // Stub.
-    DENG_UNUSED(side); DENG_UNUSED(forceUpdate);
-    return false; // Not changed.
-}
-
-boolean R_UpdateSurface(Surface* suf, boolean forceUpdate)
-{
-    // Stub.
-    DENG_UNUSED(suf); DENG_UNUSED(forceUpdate);
-    return false; // Not changed.
-}
-
-/**
- * All links will be updated every frame (sectorheights may change at
- * any time without notice).
- */
-void R_UpdatePlanes()
-{
-    // Nothing to do.
+#endif
 }
 
 /**
@@ -1642,42 +996,51 @@ float R_CheckSectorLight(float lightlevel, float min, float max)
 
 #ifdef __CLIENT__
 
-float const *R_GetSectorLightColor(Sector const *sector)
+Vector3f const &R_GetSectorLightColor(Sector const &sector)
 {
-    static vec3f_t skyLightColor, oldSkyAmbientColor = { -1, -1, -1 };
+    static Vector3f skyLightColor;
+    static Vector3f oldSkyAmbientColor(-1.f, -1.f, -1.f);
     static float oldRendSkyLight = -1;
-    if(rendSkyLight > .001f && R_SectorContainsSkySurfaces(sector))
+
+    if(rendSkyLight > .001f && R_SectorContainsSkySurfaces(&sector))
     {
         ColorRawf const *ambientColor = Sky_AmbientColor();
+
         if(rendSkyLight != oldRendSkyLight ||
-           !INRANGE_OF(ambientColor->red,   oldSkyAmbientColor[CR], .001f) ||
-           !INRANGE_OF(ambientColor->green, oldSkyAmbientColor[CG], .001f) ||
-           !INRANGE_OF(ambientColor->blue,  oldSkyAmbientColor[CB], .001f))
+           !INRANGE_OF(ambientColor->red,   oldSkyAmbientColor.x, .001f) ||
+           !INRANGE_OF(ambientColor->green, oldSkyAmbientColor.y, .001f) ||
+           !INRANGE_OF(ambientColor->blue,  oldSkyAmbientColor.z, .001f))
         {
-            vec3f_t white = { 1, 1, 1 };
-            V3f_Copy(skyLightColor, ambientColor->rgb);
+            skyLightColor = Vector3f(ambientColor->rgb);
             R_AmplifyColor(skyLightColor);
 
             // Apply the intensity factor cvar.
-            V3f_Lerp(skyLightColor, skyLightColor, white, 1-rendSkyLight);
+            for(int i = 0; i < 3; ++i)
+            {
+                skyLightColor[i] = skyLightColor[i] + (1 - rendSkyLight) * (1.f - skyLightColor[i]);
+            }
 
             // When the sky light color changes we must update the lightgrid.
             LG_MarkAllForUpdate();
-            V3f_Copy(oldSkyAmbientColor, ambientColor->rgb);
+            oldSkyAmbientColor = Vector3f(ambientColor->rgb);
         }
+
         oldRendSkyLight = rendSkyLight;
         return skyLightColor;
     }
+
     // A non-skylight sector (i.e., everything else!)
-    return sector->rgb; // The sector's ambient light color.
+    // Return the sector's ambient light color.
+    return sector.lightColor();
 }
 
 #endif // __CLIENT__
 
 coord_t R_SkyCapZ(BspLeaf *bspLeaf, int skyCap)
 {
-    planetype_t const plane = (skyCap & SKYCAP_UPPER)? PLN_CEILING : PLN_FLOOR;
-    if(!bspLeaf) Con_Error("R_SkyCapZ: Invalid bspLeaf argument (=NULL).");
-    if(!bspLeaf->sector || !P_IsInVoid(viewPlayer)) return GameMap_SkyFix(theMap, plane == PLN_CEILING);
-    return bspLeaf->sector->SP_planevisheight(plane);
+    DENG_ASSERT(bspLeaf);
+    Plane::Type const plane = (skyCap & SKYCAP_UPPER)? Plane::Ceiling : Plane::Floor;
+    if(!bspLeaf->hasSector() || !P_IsInVoid(viewPlayer))
+        return theMap->skyFix(plane == Plane::Ceiling);
+    return bspLeaf->sector().plane(plane).visHeight();
 }

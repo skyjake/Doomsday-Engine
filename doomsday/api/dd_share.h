@@ -217,7 +217,6 @@ enum {
     DD_PLUGIN_NICENAME, ///< (e.g., jDoom, MyGame:Episode2 etc..., fancy name)
     DD_PLUGIN_HOMEURL,
     DD_PLUGIN_DOCSURL,
-    DD_DMU_VERSION, ///< Used in the exchange of DMU API versions.
     DD_DEF_ACTION,
 
     // Non-integer/special values for Set/Get
@@ -237,13 +236,6 @@ enum {
     DD_WINDOW_HANDLE,
     DD_DYNLIGHT_TEXTURE,
     DD_GAME_EXPORTS,
-    DD_SECTOR_COUNT,
-    DD_LINE_COUNT,
-    DD_SIDE_COUNT,
-    DD_VERTEX_COUNT,
-    DD_HEDGE_COUNT,
-    DD_BSPLEAF_COUNT,
-    DD_BSPNODE_COUNT,
     DD_POLYOBJ_COUNT,
     DD_XGFUNC_LINK, ///< XG line classes
     DD_SHARED_FIXED_TRIGGER_OBSOLETE, ///< obsolete
@@ -316,9 +308,6 @@ enum {
  */
 ///@{
 
-/// Public DMU API version number. Requested by the engine during init. @ingroup dmu
-#define DMUAPI_VER          1
-
 /// Map Update constants. @ingroup dmu
 enum {
     // Do not change the numerical values of the constants!
@@ -327,11 +316,11 @@ enum {
     /// significant byte.
     /// @{
     DMU_FLAG_MASK           = 0xff000000,
-    DMU_SIDEDEF1_OF_LINE    = 0x80000000,
-    DMU_SIDEDEF0_OF_LINE    = 0x40000000,
-    DMU_TOP_OF_SIDEDEF      = 0x20000000,
-    DMU_MIDDLE_OF_SIDEDEF   = 0x10000000,
-    DMU_BOTTOM_OF_SIDEDEF   = 0x08000000,
+    DMU_BACK_OF_LINE        = 0x80000000,
+    DMU_FRONT_OF_LINE       = 0x40000000,
+    DMU_TOP_OF_SIDE         = 0x20000000,
+    DMU_MIDDLE_OF_SIDE      = 0x10000000,
+    DMU_BOTTOM_OF_SIDE      = 0x08000000,
     DMU_FLOOR_OF_SECTOR     = 0x04000000,
     DMU_CEILING_OF_SECTOR   = 0x02000000,
     // (1 bits left)
@@ -339,11 +328,14 @@ enum {
 
     DMU_NONE = 0,
 
+    /*
+     * Element types:
+     */
     DMU_FIRST_ELEMENT_TYPE_ID = 1,
     DMU_VERTEX = DMU_FIRST_ELEMENT_TYPE_ID,
     DMU_HEDGE,
-    DMU_LINEDEF,
-    DMU_SIDEDEF,
+    DMU_LINE,
+    DMU_SIDE,
     DMU_BSPNODE,
     DMU_BSPLEAF,
     DMU_SECTOR,
@@ -352,11 +344,19 @@ enum {
     DMU_MATERIAL,
     DMU_LAST_ELEMENT_TYPE_ID = DMU_MATERIAL,
 
-    DMU_LINEDEF_BY_TAG,
+    /*
+     * Selection methods:
+     */
+    DMU_LINE_BY_TAG,
     DMU_SECTOR_BY_TAG,
 
-    DMU_LINEDEF_BY_ACT_TAG,
+    DMU_LINE_BY_ACT_TAG,
     DMU_SECTOR_BY_ACT_TAG,
+
+    /*
+     * Element properties:
+     */
+    DMU_ARCHIVE_INDEX, ///< Relevant data/definition position in the "archived" map.
 
     DMU_X,
     DMU_Y,
@@ -382,8 +382,8 @@ enum {
 
     DMU_FRONT_SECTOR,
     DMU_BACK_SECTOR,
-    DMU_SIDEDEF0,
-    DMU_SIDEDEF1,
+    DMU_FRONT,
+    DMU_BACK,
     DMU_FLAGS,
     DMU_DX,
     DMU_DY,
@@ -398,7 +398,7 @@ enum {
     DMU_OFFSET_XY,
 
     DMU_VALID_COUNT,
-    DMU_LINEDEF_COUNT,
+    DMU_LINE_COUNT,
     DMU_COLOR, ///< RGB
     DMU_COLOR_RED, ///< red component
     DMU_COLOR_GREEN, ///< green component
@@ -422,9 +422,9 @@ enum {
 #define VALID_DMU_ELEMENT_TYPE_ID(val) ((int)(val) >= (int)DMU_FIRST_ELEMENT_TYPE_ID && (int)(val) <= (int)DMU_LAST_ELEMENT_TYPE_ID)
 
 /**
- * @defgroup ldefFlags Linedef Flags
+ * @defgroup ldefFlags Line Flags
  * @ingroup dmu apiFlags
- * For use with P_Set/Get(DMU_LINEDEF, n, DMU_FLAGS).
+ * For use with P_Set/Get(DMU_LINE, n, DMU_FLAGS).
  */
 
 /// @addtogroup ldefFlags
@@ -435,9 +435,9 @@ enum {
 ///@}
 
 /**
- * @defgroup sdefFlags Sidedef Flags
+ * @defgroup sdefFlags Side Flags
  * @ingroup dmu apiFlags
- * For use with P_Set/Get(DMU_SIDEDEF, n, DMU_FLAGS).
+ * For use with P_Set/Get(DMU_SIDE, n, DMU_FLAGS).
  */
 
 /// @addtogroup sdefFlags
@@ -499,19 +499,22 @@ enum {
     NUM_REVERB_DATA
 };
 
-/// SideDef section indices. @ingroup map
-typedef enum sidedefsection_e {
+/// Environmental audio characteristics. @ingroup map
+typedef float AudioEnvironmentFactors[NUM_REVERB_DATA];
+
+/// Side section indices. @ingroup map
+typedef enum sidesection_e {
     SS_MIDDLE,
     SS_BOTTOM,
     SS_TOP
-} SideDefSection;
+} SideSection;
 
-#define VALID_SIDEDEFSECTION(v) ((v) >= SS_MIDDLE && (v) <= SS_TOP)
+#define VALID_SIDESECTION(v) ((v) >= SS_MIDDLE && (v) <= SS_TOP)
 
-/// Helper macro for converting SideDefSection indices to their associated DMU flag. @ingroup map
-#define DMU_FLAG_FOR_SIDEDEFSECTION(s) (\
-    (s) == SS_MIDDLE? DMU_MIDDLE_OF_SIDEDEF : \
-    (s) == SS_BOTTOM? DMU_BOTTOM_OF_SIDEDEF : DMU_TOP_OF_SIDEDEF)
+/// Helper macro for converting SideSection indices to their associated DMU flag. @ingroup map
+#define DMU_FLAG_FOR_SIDESECTION(s) (\
+    (s) == SS_MIDDLE? DMU_MIDDLE_OF_SIDE : \
+    (s) == SS_BOTTOM? DMU_BOTTOM_OF_SIDE : DMU_TOP_OF_SIDE)
 
 typedef struct {
     float origin[2];
@@ -523,7 +526,7 @@ typedef struct {
  * @ingroup apiFlags map
  */
 ///@{
-#define PT_ADDLINES            1 ///< Intercept with LineDefs.
+#define PT_ADDLINES            1 ///< Intercept with Lines.
 #define PT_ADDMOBJS            2 ///< Intercept with Mobjs.
 ///@}
 
@@ -533,7 +536,7 @@ typedef struct {
  * @ingroup apiFlags map
  */
 ///@{
-#define LS_PASSLEFT            0x1 ///< Ray may cross one-sided linedefs from left to right.
+#define LS_PASSLEFT            0x1 ///< Ray may cross one-sided lines from left to right.
 #define LS_PASSOVER            0x2 ///< Ray may cross over sector ceiling height on ray-entry side.
 #define LS_PASSUNDER           0x4 ///< Ray may cross under sector floor height on ray-entry side.
 ///@}
@@ -549,15 +552,15 @@ typedef enum intercepttype_e {
 } intercepttype_t;
 
 typedef struct intercept_s {
-    float           distance; // Along trace vector as a fraction.
+    float distance; ///< Along trace vector as a fraction.
     intercepttype_t type;
     union {
-        struct mobj_s* mobj;
-        LineDef* lineDef;
+        struct mobj_s *mobj;
+        Line *line;
     } d;
 } intercept_t;
 
-typedef int (*traverser_t) (const intercept_t* intercept, void* paramaters);
+typedef int (*traverser_t) (intercept_t const *intercept, void *parameters);
 
 /**
  * A simple POD data structure for representing line trace openings.
@@ -699,16 +702,12 @@ enum { MX, MY, MZ };
     int             health;\
     mobjinfo_t     *info; /* &mobjinfo[mobj->type] */
 
-typedef struct povertex_s {
-    coord_t         origin[2];
-} povertex_t;
-
 /// Base Polyobj elements. Games MUST use this as the basis for Polyobj. @ingroup map
 #define DD_BASE_POLYOBJ_ELEMENTS() \
     DD_BASE_DDMOBJ_ELEMENTS() \
 \
-    BspLeaf *bspLeaf; /* bspLeaf in which this resides */ \
-    unsigned int    idx; /* Idx of polyobject. */ \
+    BspLeaf        *bspLeaf; /* bspLeaf in which this resides */ \
+    int             _indexInMap; \
     int             tag; /* Reference tag. */ \
     int             validCount; \
     AABoxd          aaBox; \
@@ -716,16 +715,14 @@ typedef struct povertex_s {
     angle_t         angle; \
     angle_t         destAngle; /* Destination angle. */ \
     angle_t         angleSpeed; /* Rotation speed. */ \
-    LineDef** lines; \
-    unsigned int    lineCount; \
-    struct povertex_s* originalPts; /* Used as the base for the rotations. */ \
-    struct povertex_s* prevPts; /* Use to restore the old point values. */ \
+    void           *_lines; \
+    void           *_uniqueVertexes; \
+    void           *_originalPts; /* Used as the base for the rotations. */ \
+    void           *_prevPts; /* Use to restore the old point values. */ \
     double          speed; /* Movement speed. */ \
     boolean         crush; /* Should the polyobj attempt to crush mobjs? */ \
     int             seqType; \
-    struct { \
-        int         index; \
-    } buildData;
+    uint            _origIndex;
 
 //------------------------------------------------------------------------
 //

@@ -88,7 +88,7 @@ static mobj_t* getTeleportDestination(short tag)
     return NULL;
 }
 
-int EV_Teleport(LineDef* line, int side, mobj_t* mo, boolean spawnFog)
+int EV_Teleport(Line* line, int side, mobj_t* mo, boolean spawnFog)
 {
     mobj_t*             dest;
 

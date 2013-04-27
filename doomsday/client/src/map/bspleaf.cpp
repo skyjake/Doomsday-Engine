@@ -1,8 +1,7 @@
-/** @file bspleaf.cpp BspLeaf implementation. 
- * @ingroup map
+/** @file bspleaf.cpp World Map BSP Leaf.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,152 +18,379 @@
  * 02110-1301 USA</small>
  */
 
-#include <math.h>
+#include <cmath> // fmod
 
-#include "de_base.h"
-#include "de_console.h"
-#include "de_play.h"
-#include "m_misc.h"
+#include <de/mathutil.h>
+#include <de/memoryzone.h>
 
-BspLeaf::BspLeaf() : de::MapElement(DMU_BSPLEAF)
+#include <de/Log>
+
+#include "HEdge"
+#include "Polyobj"
+#include "Sector"
+#include "Vertex"
+
+#include "map/bspleaf.h"
+
+using namespace de;
+
+/// Compute the area of a triangle defined by three 2D point vectors.
+ddouble triangleArea(Vector2d const &v1, Vector2d const &v2, Vector2d const &v3)
 {
-    hedge = 0;
-    flags = 0;
-    index = 0;
-    addSpriteCount = 0;
-    validCount = 0;
-    hedgeCount = 0;
-    sector = 0;
-    polyObj = 0;
-    fanBase = 0;
-    shadows = 0;
-    memset(&aaBox, 0, sizeof(aaBox));
-    memset(midPoint, 0, sizeof(midPoint));
-    memset(worldGridOffset, 0, sizeof(worldGridOffset));
-    bsuf = 0;
-    memset(reverb, 0, sizeof(reverb));
+    Vector2d a = v2 - v1;
+    Vector2d b = v3 - v1;
+    return (a.x * b.y - b.x * a.y) / 2;
+}
+
+DENG2_PIMPL(BspLeaf)
+{
+    /// Vertex bounding box in the map coordinate space.
+    AABoxd aaBox;
+
+    /// Center of vertices.
+    Vector2d center;
+
+    /// Offset to align the top left of materials in the built geometry to the
+    /// map coordinate space grid.
+    Vector2d worldGridOffset;
+
+    /// Sector attributed to the leaf. @note can be @c 0 (degenerate!).
+    Sector *sector;
+
+    /// First Polyobj in the leaf. Can be @c 0 (none).
+    Polyobj *polyobj;
+
+#ifdef __CLIENT__
+
+    /// HEdge whose vertex to use as the base for a trifan.
+    /// If @c 0 the center point will be used instead.
+    HEdge *fanBase;
+
+    bool needUpdateFanBase; ///< @c true= need to rechoose a fan base half-edge.
+
+    /// Frame number of last R_AddSprites.
+    int addSpriteCount;
+
+#endif // __CLIENT__
+
+    /// Used by legacy algorithms to prevent repeated processing.
+    int validCount;
+
+    Instance(Public *i)
+        : Base(i),
+          sector(0),
+          polyobj(0),
+#ifdef __CLIENT__
+          fanBase(0),
+          needUpdateFanBase(true),
+          addSpriteCount(0),
+#endif
+          validCount(0)
+    {}
+
+#ifdef __CLIENT__
+
+    /**
+     * Determine the HEdge from whose vertex is suitable for use as the center point
+     * of a trifan primitive.
+     *
+     * Note that we do not want any overlapping or zero-area (degenerate) triangles.
+     *
+     * @par Algorithm
+     * <pre>For each vertex
+     *    For each triangle
+     *        if area is not greater than minimum bound, move to next vertex
+     *    Vertex is suitable
+     * </pre>
+     *
+     * If a vertex exists which results in no zero-area triangles it is suitable for
+     * use as the center of our trifan. If a suitable vertex is not found then the
+     * center of BSP leaf should be selected instead (it will always be valid as
+     * BSP leafs are convex).
+     */
+    void chooseFanBase()
+    {
+#define MIN_TRIANGLE_EPSILON  (0.1) ///< Area
+
+        HEdge *firstNode = self._hedge;
+
+        fanBase = firstNode;
+
+        if(self.hedgeCount() > 3)
+        {
+            // Splines with higher vertex counts demand checking.
+            Vertex const *base, *a, *b;
+
+            // Search for a good base.
+            do
+            {
+                HEdge *other = firstNode;
+
+                base = &fanBase->from();
+                do
+                {
+                    // Test this triangle?
+                    if(!(fanBase != firstNode && (other == fanBase || other == &fanBase->prev())))
+                    {
+                        a = &other->from();
+                        b = &other->next().from();
+
+                        if(de::abs(triangleArea(base->origin(), a->origin(), b->origin())) <= MIN_TRIANGLE_EPSILON)
+                        {
+                            // No good. We'll move on to the next vertex.
+                            base = 0;
+                        }
+                    }
+
+                    // On to the next triangle.
+                } while(base && (other = &other->next()) != firstNode);
+
+                if(!base)
+                {
+                    // No good. Select the next vertex and start over.
+                    fanBase = &fanBase->next();
+                }
+            } while(!base && fanBase != firstNode);
+
+            // Did we find something suitable?
+            if(!base) // No.
+            {
+                fanBase = NULL;
+            }
+        }
+        //else Implicitly suitable (or completely degenerate...).
+
+        needUpdateFanBase = false;
+
+#undef MIN_TRIANGLE_EPSILON
+    }
+
+#endif // __CLIENT__
+};
+
+BspLeaf::BspLeaf()
+    : MapElement(DMU_BSPLEAF), d(new Instance(this))
+{
+    _hedge = 0;
+    _hedgeCount = 0;
+#ifdef __CLIENT__
+    _shadows = 0;
+    _bsuf = 0;
+    std::memset(_reverb, 0, sizeof(_reverb));
+#endif
 }
 
 BspLeaf::~BspLeaf()
 {
-    if(bsuf)
-    {
 #ifdef __CLIENT__
-        for(uint i = 0; i < sector->planeCount(); ++i)
+    if(_bsuf)
+    {
+        for(int i = 0; i < d->sector->planeCount(); ++i)
         {
-            SB_DestroySurface(bsuf[i]);
+            SB_DestroySurface(_bsuf[i]);
         }
-#endif
-        Z_Free(bsuf);
+        Z_Free(_bsuf);
     }
+#endif // __CLIENT__
 
     // Clear the HEdges.
-    if(hedge)
+    if(_hedge)
     {
-        HEdge *he = hedge;
-        if(he->next == he)
+        HEdge *he = _hedge;
+        if(he->_next == he)
         {
-            HEdge_Delete(he);
+            delete he;
         }
         else
         {
             // Break the ring, if linked.
-            if(he->prev)
+            if(he->_prev)
             {
-                he->prev->next = NULL;
+                he->_prev->_next = NULL;
             }
 
             while(he)
             {
-                HEdge *next = he->next;
-                HEdge_Delete(he);
+                HEdge *next = he->_next;
+                delete he;
                 he = next;
             }
         }
     }
 }
 
-BspLeaf* BspLeaf_New(void)
+AABoxd const &BspLeaf::aaBox() const
 {
-    BspLeaf* leaf = new BspLeaf;
-    //leaf->header.type = DMU_BSPLEAF;
-    leaf->flags |= BLF_UPDATE_FANBASE;
-    return leaf;
+    return d->aaBox;
 }
 
-void BspLeaf_Delete(BspLeaf* leaf)
+void BspLeaf::updateAABox()
 {
-    delete leaf;
-}
+    V2d_Set(d->aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
+    V2d_Set(d->aaBox.max, DDMINFLOAT, DDMINFLOAT);
 
-biassurface_t* BspLeaf_BiasSurfaceForGeometryGroup(BspLeaf* leaf, uint groupId)
-{
-    DENG2_ASSERT(leaf);
-    if(!leaf->sector || groupId > leaf->sector->planeCount()) return NULL;
-    DENG2_ASSERT(leaf->bsuf != 0);
-    return leaf->bsuf[groupId];
-}
+    if(!_hedge) return; // Very odd...
 
-BspLeaf* BspLeaf_UpdateAABox(BspLeaf* leaf)
-{
-    DENG2_ASSERT(leaf);
+    HEdge *hedgeIt = _hedge;
+    V2d_InitBoxXY(d->aaBox.arvec2, hedgeIt->fromOrigin().x, hedgeIt->fromOrigin().y);
 
-    V2d_Set(leaf->aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
-    V2d_Set(leaf->aaBox.max, DDMINFLOAT, DDMINFLOAT);
-
-    if(!leaf->hedge) return leaf; // Very odd...
-
-    HEdge* hedge = leaf->hedge;
-    V2d_InitBox(leaf->aaBox.arvec2, hedge->HE_v1origin);
-
-    while((hedge = hedge->next) != leaf->hedge)
+    while((hedgeIt = &hedgeIt->next()) != _hedge)
     {
-        V2d_AddToBox(leaf->aaBox.arvec2, hedge->HE_v1origin);
+        V2d_AddToBoxXY(d->aaBox.arvec2, hedgeIt->fromOrigin().x, hedgeIt->fromOrigin().y);
     }
-
-    return leaf;
 }
 
-BspLeaf* BspLeaf_UpdateMidPoint(BspLeaf* leaf)
+Vector2d const &BspLeaf::center() const
 {
-    DENG2_ASSERT(leaf);
+    return d->center;
+}
+
+void BspLeaf::updateCenter()
+{
     // The middle is the center of our AABox.
-    leaf->midPoint[VX] = leaf->aaBox.minX + (leaf->aaBox.maxX - leaf->aaBox.minX) / 2;
-    leaf->midPoint[VY] = leaf->aaBox.minY + (leaf->aaBox.maxY - leaf->aaBox.minY) / 2;
-    return leaf;
+    d->center = Vector2d(d->aaBox.min) + (Vector2d(d->aaBox.max) - Vector2d(d->aaBox.min)) / 2;
 }
 
-BspLeaf* BspLeaf_UpdateWorldGridOffset(BspLeaf* leaf)
+Vector2d const &BspLeaf::worldGridOffset() const
 {
-    DENG2_ASSERT(leaf);
-    leaf->worldGridOffset[VX] = fmod(leaf->aaBox.minX, 64);
-    leaf->worldGridOffset[VY] = fmod(leaf->aaBox.maxY, 64);
-    return leaf;
+    return d->worldGridOffset;
 }
 
-int BspLeaf_SetProperty(BspLeaf* leaf, const setargs_t* args)
+void BspLeaf::updateWorldGridOffset()
 {
-    DENG2_ASSERT(leaf);
-    DENG_UNUSED(leaf);
-    Con_Error("BspLeaf::SetProperty: Property %s is not writable.\n", DMU_Str(args->prop));
-    exit(1); // Unreachable.
+    d->worldGridOffset = Vector2d(fmod(d->aaBox.minX, 64), fmod(d->aaBox.maxY, 64));
 }
 
-int BspLeaf_GetProperty(const BspLeaf* leaf, setargs_t* args)
+HEdge *BspLeaf::firstHEdge() const
 {
-    DENG2_ASSERT(leaf);
-    switch(args->prop)
+    return _hedge;
+}
+
+uint BspLeaf::hedgeCount() const
+{
+    return _hedgeCount;
+}
+
+bool BspLeaf::hasSector() const
+{
+    return d->sector != 0;
+}
+
+Sector &BspLeaf::sector() const
+{
+    if(d->sector)
+    {
+        return *d->sector;
+    }
+    /// @throw MissingSectorError Attempted with no sector attributed.
+    throw MissingSectorError("BspLeaf::sector", "No sector is attributed");
+}
+
+void BspLeaf::setSector(Sector *newSector)
+{
+    d->sector = newSector;
+}
+
+bool BspLeaf::hasWorldVolume(bool useVisualHeights) const
+{
+    if(isDegenerate()) return false;
+    if(!hasSector()) return false;
+
+    coord_t const floorHeight = useVisualHeights? d->sector->floor().visHeight() : d->sector->floor().height();
+    coord_t const ceilHeight  = useVisualHeights? d->sector->ceiling().visHeight() : d->sector->ceiling().height();
+
+    return (ceilHeight - floorHeight > 0);
+}
+
+Polyobj *BspLeaf::firstPolyobj() const
+{
+    return d->polyobj;
+}
+
+void BspLeaf::setFirstPolyobj(Polyobj *newPolyobj)
+{
+    d->polyobj = newPolyobj;
+}
+
+int BspLeaf::validCount() const
+{
+    return d->validCount;
+}
+
+void BspLeaf::setValidCount(int newValidCount)
+{
+    d->validCount = newValidCount;
+}
+
+#ifdef __CLIENT__
+
+HEdge *BspLeaf::fanBase() const
+{
+    if(d->needUpdateFanBase)
+        d->chooseFanBase();
+    return d->fanBase;
+}
+
+biassurface_t &BspLeaf::biasSurfaceForGeometryGroup(int groupId)
+{
+    DENG2_ASSERT(d->sector != 0);
+    if(groupId >= 0 && groupId < d->sector->planeCount())
+    {
+        DENG2_ASSERT(_bsuf != 0 && _bsuf[groupId] != 0);
+        return *_bsuf[groupId];
+    }
+    /// @throw InvalidGeometryGroupError Attempted with an invalid geometry group id.
+    throw UnknownGeometryGroupError("BspLeaf::biasSurfaceForGeometryGroup", QString("Invalid group id %1").arg(groupId));
+}
+
+ShadowLink *BspLeaf::firstShadowLink() const
+{
+    return _shadows;
+}
+
+int BspLeaf::addSpriteCount() const
+{
+    return d->addSpriteCount;
+}
+
+void BspLeaf::setAddSpriteCount(int newFrameCount)
+{
+    d->addSpriteCount = newFrameCount;
+}
+
+#endif // __CLIENT__
+
+#ifdef DENG_DEBUG
+void BspLeaf::printHEdges() const
+{
+    if(!_hedge) return;
+    HEdge const *hedge = _hedge;
+    do
+    {
+        coord_t angle = M_DirectionToAngleXY(hedge->fromOrigin().x - d->center.x,
+                                             hedge->fromOrigin().y - d->center.y);
+
+        LOG_DEBUG("  half-edge %p: Angle %1.6f %s -> %s")
+            << de::dintptr(hedge) << angle
+            << hedge->fromOrigin().asText() << hedge->toOrigin().asText();
+
+    } while((hedge = &hedge->next()) != _hedge);
+}
+#endif
+
+int BspLeaf::property(setargs_t &args) const
+{
+    switch(args.prop)
     {
     case DMU_SECTOR:
-        DMU_GetValue(DMT_BSPLEAF_SECTOR, &leaf->sector, args, 0);
+        DMU_GetValue(DMT_BSPLEAF_SECTOR, &d->sector, &args, 0);
         break;
     case DMU_HEDGE_COUNT: {
-        int val = (int) leaf->hedgeCount;
-        DMU_GetValue(DDVT_INT, &val, args, 0);
+        int val = int( _hedgeCount );
+        DMU_GetValue(DDVT_INT, &val, &args, 0);
         break; }
     default:
-        Con_Error("BspLeaf::GetProperty: No property %s.\n", DMU_Str(args->prop));
-        exit(1); // Unreachable.
+        return MapElement::property(args);
     }
     return false; // Continue iteration.
 }

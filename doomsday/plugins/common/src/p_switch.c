@@ -295,7 +295,7 @@ void T_MaterialChanger(void *materialChangerThinker)
 
     if(!(--mchanger->timer))
     {
-        const int sectionFlags = DMU_FLAG_FOR_SIDEDEFSECTION(mchanger->section);
+        const int sectionFlags = DMU_FLAG_FOR_SIDESECTION(mchanger->section);
 
         P_SetPtrp(mchanger->side, sectionFlags | DMU_MATERIAL, mchanger->material);
 
@@ -309,7 +309,7 @@ void T_MaterialChanger(void *materialChangerThinker)
     }
 }
 
-static void spawnMaterialChanger(SideDef* side, SideDefSection section,
+static void spawnMaterialChanger(Side* side, SideSection section,
     Material* mat, int tics)
 {
     materialchanger_t* mchanger;
@@ -325,8 +325,8 @@ static void spawnMaterialChanger(SideDef* side, SideDefSection section,
 }
 
 typedef struct {
-    SideDef* side;
-    SideDefSection section;
+    Side* side;
+    SideSection section;
 } findmaterialchangerparams_t;
 
 static int findMaterialChanger(thinker_t* th, void* parameters)
@@ -341,7 +341,7 @@ static int findMaterialChanger(thinker_t* th, void* parameters)
     return false; // Keep looking.
 }
 
-static void startButton(SideDef* side, SideDefSection section,
+static void startButton(Side* side, SideSection section,
     Material* mat, int tics)
 {
     findmaterialchangerparams_t params;
@@ -368,10 +368,10 @@ static int chooseDefaultSound(switchlist_t const* info)
 #endif
 }
 
-boolean P_ToggleSwitch2(SideDef* side, SideDefSection section, int sound,
+boolean P_ToggleSwitch2(Side* side, SideSection section, int sound,
     boolean silent, int tics)
 {
-    const int sectionFlags = DMU_FLAG_FOR_SIDEDEFSECTION(section);
+    const int sectionFlags = DMU_FLAG_FOR_SIDESECTION(section);
     Material* mat, *current;
     const switchlist_t* info;
 
@@ -405,7 +405,7 @@ boolean P_ToggleSwitch2(SideDef* side, SideDefSection section, int sound,
     return false;
 }
 
-boolean P_ToggleSwitch(SideDef* side, int sound, boolean silent, int tics)
+boolean P_ToggleSwitch(Side* side, int sound, boolean silent, int tics)
 {
     if(P_ToggleSwitch2(side, SS_TOP, sound, silent, tics))
         return true;
@@ -420,7 +420,7 @@ boolean P_ToggleSwitch(SideDef* side, int sound, boolean silent, int tics)
 }
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-boolean P_UseSpecialLine(mobj_t* activator, LineDef* line, int side)
+boolean P_UseSpecialLine(mobj_t* activator, Line* line, int side)
 {
     // Extended functionality overrides old.
     if(XL_UseLine(line, side, activator))

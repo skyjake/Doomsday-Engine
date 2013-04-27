@@ -1,4 +1,4 @@
-/** @file p_intercept.cpp
+/** @file p_intercept.cpp Line/Object Interception.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -23,41 +23,41 @@
 
 #define MININTERCEPTS       128
 
-struct interceptnode_s {
-    struct interceptnode_s* next;
-    struct interceptnode_s* prev;
+struct InterceptNode
+{
+    InterceptNode *next;
+    InterceptNode *prev;
     intercept_t intercept;
 };
 
 // Blockset from which intercepts are allocated.
-static zblockset_t* interceptNodeSet = NULL;
+static zblockset_t *interceptNodeSet = NULL;
 // Head of the used intercept list.
-static InterceptNode* interceptFirst;
+static InterceptNode *interceptFirst;
 
 // Trace nodes.
 static InterceptNode head;
 static InterceptNode tail;
-static InterceptNode* mru;
+static InterceptNode *mru;
 
-static __inline boolean isSentinel(const InterceptNode* node)
+static inline bool isSentinel(InterceptNode const &node)
 {
-    assert(node);
-    return node == &tail || node == &head;
+    return &node == &tail || &node == &head;
 }
 
-static InterceptNode* newInterceptNode(void)
+static InterceptNode *newInterceptNode()
 {
     // Can we reuse an existing intercept?
-    if(!isSentinel(interceptFirst))
+    if(!isSentinel(*interceptFirst))
     {
-        InterceptNode* node = interceptFirst;
+        InterceptNode *node = interceptFirst;
         interceptFirst = node->next;
         return node;
     }
     return (InterceptNode *) ZBlockSet_Allocate(interceptNodeSet);
 }
 
-void P_ClearIntercepts(void)
+void P_ClearIntercepts()
 {
     if(!interceptNodeSet)
     {
@@ -81,11 +81,8 @@ void P_ClearIntercepts(void)
     mru = NULL;
 }
 
-InterceptNode* P_AddIntercept(intercepttype_t type, float distance, void* object)
+InterceptNode *P_AddIntercept(intercepttype_t type, float distance, void *object)
 {
-    InterceptNode* newNode, *before;
-    intercept_t* in;
-
     if(!object)
         Con_Error("P_AddIntercept: Invalid arguments (object=NULL).");
 
@@ -94,17 +91,22 @@ InterceptNode* P_AddIntercept(intercepttype_t type, float distance, void* object
     if(distance > tail.intercept.distance) return NULL;
 
     // Find the new intercept's ordered place along the trace.
+    InterceptNode *before;
     if(mru && mru->intercept.distance <= distance)
         before = mru->next;
     else
         before = head.next;
-    while(before->next && distance >= before->intercept.distance) { before = before->next; }
+
+    while(before->next && distance >= before->intercept.distance)
+    {
+        before = before->next;
+    }
 
     // Pull a new intercept from the used queue.
-    newNode = newInterceptNode();
+    InterceptNode *newNode = newInterceptNode();
 
     // Configure the new intercept.
-    in = &newNode->intercept;
+    intercept_t *in = &newNode->intercept;
     in->type = type;
     in->distance = distance;
     switch(in->type)
@@ -113,7 +115,7 @@ InterceptNode* P_AddIntercept(intercepttype_t type, float distance, void* object
         in->d.mobj = (mobj_s *) object;
         break;
     case ICPT_LINE:
-        in->d.lineDef = (LineDef *) object;
+        in->d.line = (Line *) object;
         break;
     default:
         Con_Error("P_AddIntercept: Invalid type %i.", (int)type);
@@ -131,14 +133,12 @@ InterceptNode* P_AddIntercept(intercepttype_t type, float distance, void* object
     return newNode;
 }
 
-int P_TraverseIntercepts(traverser_t callback, void* paramaters)
+int P_TraverseIntercepts(traverser_t callback, void *parameters)
 {
-    int result = false; // Continue iteration.
-    const InterceptNode* node;
-    for(node = head.next; !isSentinel(node); node = node->next)
+    for(InterceptNode *node = head.next; !isSentinel(*node); node = node->next)
     {
-        result = callback(&node->intercept, paramaters);
-        if(result) break; // Stop iteration.
+        int result = callback(&node->intercept, parameters);
+        if(result) return result; // Stop iteration.
     }
-    return result;
+    return false; // Continue iteration.
 }

@@ -106,7 +106,7 @@
  *
  * Every mobj_t is linked into a single sector
  * based on its origin coordinates.
- * The BspLeaf is found with P_BspLeafAtPointXY(x,y),
+ * The BspLeaf is found with P_BspLeafAtPoint_FixedPrecisionXY(x,y),
  * and the Sector can be found with bspLeaf->sector.
  * The sector links are only used by the rendering code,
  * the play simulation does not care about them at all.
@@ -119,7 +119,7 @@
  * but only as the instigator (missiles will run into other
  * things, but nothing can run into a missile).
  * Each block in the grid is 128*128 units, and knows about
- * every LineDef that it contains a piece of, and every
+ * every Line that it contains a piece of, and every
  * interactable mobj_t that has its origin contained.
  *
  * A valid mobj_t is a mobj_t that has the proper BspLeaf
@@ -312,6 +312,10 @@ typedef struct polyobj_s {
     // Doom64-specific data:
 } Polyobj;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void P_ExplodeMissile(mobj_t* mo);
 
 coord_t P_MobjGetFriction(mobj_t* mo);
@@ -358,5 +362,9 @@ void P_RipperBlood(mobj_t* mo);
 void P_SetDoomsdayFlags(mobj_t* mo);
 
 void P_HitFloor(mobj_t* mo);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBDOOM64_P_MOBJ_H

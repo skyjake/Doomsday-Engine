@@ -20,6 +20,8 @@
 
 #include <cstring>
 
+#include <de/vector1.h>
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_render.h"
@@ -28,10 +30,13 @@
 #include "de_play.h"
 
 #include "gl/sys_opengl.h"
-#include <de/vector1.h>
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
+#include "map/gamemap.h"
+#include "map/lineowner.h"
 #include "render/rendpoly.h"
+
+#include "render/rend_fakeradio.h"
 
 using namespace de;
 
@@ -46,14 +51,14 @@ using namespace de;
 
 typedef struct edge_s {
     boolean done;
-    LineDef *line;
+    Line *line;
     Sector *sector;
     float length;
     binangle_t diff;
 } edge_t;
 
 static void scanEdges(shadowcorner_t topCorners[2], shadowcorner_t bottomCorners[2],
-    shadowcorner_t sideCorners[2], edgespan_t spans[2], LineDef const *line, boolean backSide);
+    shadowcorner_t sideCorners[2], edgespan_t spans[2], Line::Side const &side);
 
 int rendFakeRadio = true; ///< cvar
 float rendFakeRadioDarkness = 1.2f; ///< cvar
@@ -73,7 +78,7 @@ float Rend_RadioCalcShadowDarkness(float lightLevel)
     return (0.6f - lightLevel * 0.4f) * 0.65f * rendFakeRadioDarkness;
 }
 
-void Rend_RadioUpdateLinedef(LineDef *line, boolean backSide)
+void Rend_RadioUpdateForLineSide(Line::Side &side)
 {
     // Disabled completely?
     if(!rendFakeRadio || levelFullBright) return;
@@ -82,21 +87,21 @@ void Rend_RadioUpdateLinedef(LineDef *line, boolean backSide)
     if(!devFakeRadioUpdate) return;
 
     // Sides without sectors don't need updating. $degenleaf
-    if(!line || !line->L_sector(backSide)) return;
+    if(!side.hasSector()) return;
 
     // Have already determined the shadow properties on this side?
-    SideDef *s = line->L_sidedef(backSide);
-    if(s->fakeRadioUpdateCount == frameCount) return;
+    LineSideRadioData &frData = Rend_RadioDataForLineSide(side);
+    if(frData.updateCount == frameCount) return;
 
     // Not yet - Calculate now.
     for(uint i = 0; i < 2; ++i)
     {
-        s->spans[i].length = line->length;
-        s->spans[i].shift = 0;
+        frData.spans[i].length = side.line().length();
+        frData.spans[i].shift = 0;
     }
 
-    scanEdges(s->topCorners, s->bottomCorners, s->sideCorners, s->spans, line, backSide);
-    s->fakeRadioUpdateCount = frameCount; // Mark as done.
+    scanEdges(frData.topCorners, frData.bottomCorners, frData.sideCorners, frData.spans, side);
+    frData.updateCount = frameCount; // Mark as done.
 }
 
 /**
@@ -104,7 +109,7 @@ void Rend_RadioUpdateLinedef(LineDef *line, boolean backSide)
  */
 static void setRendpolyColor(ColorRawf *rcolors, uint num, float const shadowRGB[3], float darkness)
 {
-    darkness = MINMAX_OF(0, darkness, 1);
+    darkness = de::clamp(0.f, darkness, 1.f);
 
     for(uint i = 0; i < num; ++i)
     {
@@ -116,9 +121,9 @@ static void setRendpolyColor(ColorRawf *rcolors, uint num, float const shadowRGB
 }
 
 /// @return  @c true, if there is open space in the sector.
-static inline boolean isSectorOpen(Sector *sector)
+static inline bool isSectorOpen(Sector const *sector)
 {
-    return (sector && sector->SP_ceilheight > sector->SP_floorheight);
+    return (sector && sector->ceiling().height() > sector->floor().height());
 }
 
 /**
@@ -144,66 +149,64 @@ static inline float calcTexCoordY(float z, float bottom, float top, float texHei
 }
 
 /// @todo This algorithm should be rewritten to work at HEdge level.
-static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
-    edge_t *edge, boolean toLeft)
+static void scanNeighbor(bool scanTop, Line::Side const &side, edge_t *edge,
+                         bool toLeft)
 {
     int const SEP = 10;
 
-    LineDef *iter;
-    lineowner_t *own;
+    Line *iter;
     binangle_t diff = 0;
     coord_t lengthDelta = 0, gap = 0;
     coord_t iFFloor, iFCeil;
     coord_t iBFloor, iBCeil;
-    int scanSecSide = side;
-    Sector *startSector = line->L_sector(side);
-    Sector *scanSector;
-    boolean clockwise = toLeft;
-    boolean stopScan = false;
-    boolean closed;
-    coord_t fCeil, fFloor;
+    int scanSecSide = side.lineSideId();
+    Sector const *startSector = side.sectorPtr();
+    Sector const *scanSector;
+    bool clockwise = toLeft;
+    bool stopScan = false;
+    bool closed;
 
-    fFloor = line->L_sector(side)->SP_floorvisheight;
-    fCeil  = line->L_sector(side)->SP_ceilvisheight;
+    coord_t fFloor = startSector->floor().visHeight();
+    coord_t fCeil  = startSector->ceiling().visHeight();
 
     // Retrieve the start owner node.
-    own = R_GetVtxLineOwner(line->L_v(side^!toLeft), line);
+    LineOwner *own = R_GetVtxLineOwner(&side.vertex((int)!toLeft), &side.line());
 
     do
     {
         // Select the next line.
-        diff = (clockwise? own->angle : own->LO_prev->angle);
-        iter = own->link[clockwise]->lineDef;
+        diff = (clockwise? own->angle() : own->prev().angle());
+        iter = &own->_link[(int)clockwise]->line();
 
-        scanSecSide = (iter->L_frontsector && iter->L_frontsector == startSector);
+        scanSecSide = (iter->hasFrontSector() && iter->frontSectorPtr() == startSector)? Line::Back : Line::Front;
 
         // Step over selfreferencing lines.
-        while((!iter->L_frontsector && !iter->L_backsector) || // $degenleaf
-              LINE_SELFREF(iter))
+        while((!iter->hasFrontSector() && !iter->hasBackSector()) || // $degenleaf
+              iter->isSelfReferencing())
         {
-            own = own->link[clockwise];
-            diff += (clockwise? own->angle : own->LO_prev->angle);
-            iter = own->link[clockwise]->lineDef;
+            own = own->_link[(int)clockwise];
+            diff += (clockwise? own->angle() : own->prev().angle());
+            iter = &own->_link[(int)clockwise]->line();
 
-            scanSecSide = (iter->L_frontsector == startSector);
+            scanSecSide = (iter->frontSectorPtr() == startSector);
         }
 
         // Determine the relative backsector.
-        if(iter->L_sidedef(scanSecSide))
-            scanSector = iter->L_sector(scanSecSide);
+        if(iter->hasSections(scanSecSide))
+            scanSector = iter->sectorPtr(scanSecSide);
         else
             scanSector = NULL;
 
         // Pick plane heights for relative offset comparison.
         if(!stopScan)
         {
-            iFFloor = iter->L_frontsector->SP_floorvisheight;
-            iFCeil  = iter->L_frontsector->SP_ceilvisheight;
+            iFFloor = iter->frontSector().floor().visHeight();
+            iFCeil  = iter->frontSector().ceiling().visHeight();
 
-            if(iter->L_backsidedef)
+            if(iter->hasBackSections())
             {
-                iBFloor = iter->L_backsector->SP_floorvisheight;
-                iBCeil  = iter->L_backsector->SP_ceilvisheight;
+                iBFloor = iter->backSector().floor().visHeight();
+                iBCeil  = iter->backSector().ceiling().visHeight();
             }
             else
                 iBFloor = iBCeil = 0;
@@ -216,10 +219,10 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
             // Store identity for later use.
             edge->diff = diff;
             edge->line = iter;
-            edge->sector = scanSector;
+            edge->sector = const_cast<Sector *>(scanSector);
 
             closed = false;
-            if(side == 0 && iter->L_backsidedef)
+            if(side.isFront() && iter->hasBackSections())
             {
                 if(scanTop)
                 {
@@ -237,46 +240,46 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
             // texture on the hedge shadow edge being rendered?
             if(scanTop)
             {
-                if(iter->L_backsidedef &&
-                   ((side == 0 && iter->L_backsector == line->L_frontsector &&
+                if(iter->hasBackSections() &&
+                   ((side.isFront() && iter->backSectorPtr() == side.line().frontSectorPtr() &&
                     iFCeil >= fCeil) ||
-                   (side == 1 && iter->L_backsector == line->L_backsector &&
+                   (side.isBack() && iter->backSectorPtr() == side.line().backSectorPtr() &&
                     iFCeil >= fCeil) ||
-                    (side == 0 && closed == false && iter->L_backsector != line->L_frontsector &&
+                    (side.isFront() && closed == false && iter->backSectorPtr() != side.line().frontSectorPtr() &&
                     iBCeil >= fCeil &&
-                    isSectorOpen(iter->L_backsector))))
+                     isSectorOpen(iter->backSectorPtr()))))
                 {
-                    gap += iter->length; // Should we just mark it done instead?
+                    gap += iter->length(); // Should we just mark it done instead?
                 }
                 else
                 {
-                    edge->length += iter->length + gap;
+                    edge->length += iter->length() + gap;
                     gap = 0;
                 }
             }
             else
             {
-                if(iter->L_backsidedef &&
-                   ((side == 0 && iter->L_backsector == line->L_frontsector &&
+                if(iter->hasBackSections() &&
+                   ((side.isFront() && iter->backSectorPtr() == side.line().frontSectorPtr() &&
                     iFFloor <= fFloor) ||
-                   (side == 1 && iter->L_backsector == line->L_backsector &&
+                   (side.isBack() && iter->backSectorPtr() == side.line().backSectorPtr() &&
                     iFFloor <= fFloor) ||
-                   (side == 0 && closed == false && iter->L_backsector != line->L_frontsector &&
+                   (side.isFront() && closed == false && iter->backSectorPtr() != side.line().frontSectorPtr() &&
                     iBFloor <= fFloor &&
-                    isSectorOpen(iter->L_backsector))))
+                    isSectorOpen(iter->backSectorPtr()))))
                 {
-                    gap += iter->length; // Should we just mark it done instead?
+                    gap += iter->length(); // Should we just mark it done instead?
                 }
                 else
                 {
-                    lengthDelta = iter->length + gap;
+                    lengthDelta = iter->length() + gap;
                     gap = 0;
                 }
             }
         }
 
         // Time to stop?
-        if(iter == line)
+        if(iter == &side.line())
         {
             stopScan = true;
         }
@@ -284,7 +287,9 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
         {
             // Is this line coalignable?
             if(!(diff >= BANG_180 - SEP && diff <= BANG_180 + SEP))
+            {
                 stopScan = true; // no.
+            }
             else if(scanSector)
             {
                 // Perhaps its a closed edge?
@@ -297,16 +302,16 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
                     // A height difference from the start sector?
                     if(scanTop)
                     {
-                        if(scanSector->SP_ceilvisheight != fCeil &&
-                           scanSector->SP_floorvisheight <
-                                startSector->SP_ceilvisheight)
+                        if(scanSector->ceiling().visHeight() != fCeil &&
+                           scanSector->floor().visHeight() <
+                                startSector->ceiling().visHeight())
                             stopScan = true;
                     }
                     else
                     {
-                        if(scanSector->SP_floorvisheight != fFloor &&
-                           scanSector->SP_ceilvisheight >
-                                startSector->SP_floorvisheight)
+                        if(scanSector->floor().visHeight() != fFloor &&
+                           scanSector->ceiling().visHeight() >
+                                startSector->floor().visHeight())
                             stopScan = true;
                     }
                 }
@@ -317,31 +322,31 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
         if(!stopScan)
         {
             // Around the corner.
-            if(own->link[clockwise] == iter->L_vo2)
-                own = iter->L_vo1;
-            else if(own->link[clockwise] == iter->L_vo1)
-                own = iter->L_vo2;
+            if(own->_link[(int)clockwise] == iter->v2Owner())
+                own = iter->v1Owner();
+            else if(own->_link[(int)clockwise] == iter->v1Owner())
+                own = iter->v2Owner();
 
             // Skip into the back neighbor sector of the iter line if
             // heights are within accepted range.
-            if(scanSector && line->L_sidedef(side^1) &&
-               scanSector != line->L_sector(side^1) &&
-                ((scanTop && scanSector->SP_ceilvisheight ==
-                                startSector->SP_ceilvisheight) ||
-                 (!scanTop && scanSector->SP_floorvisheight ==
-                                startSector->SP_floorvisheight)))
+            if(scanSector && side.back().hasSections() &&
+               scanSector != side.back().sectorPtr() &&
+                ((scanTop && scanSector->ceiling().visHeight() ==
+                                startSector->ceiling().visHeight()) ||
+                 (!scanTop && scanSector->floor().visHeight() ==
+                                startSector->floor().visHeight())))
             {
                 // If the map is formed correctly, we should find a back
                 // neighbor attached to this line. However, if this is not
                 // the case and a line which SHOULD be two sided isn't, we
                 // need to check whether there is a valid neighbor.
-                LineDef *backNeighbor =
-                    R_FindLineNeighbor(startSector, iter, own, !toLeft, NULL);
+                Line *backNeighbor =
+                    R_FindLineNeighbor(startSector, iter, own, !toLeft);
 
                 if(backNeighbor && backNeighbor != iter)
                 {
                     // Into the back neighbor sector.
-                    own = own->link[clockwise];
+                    own = own->_link[(int)clockwise];
                     startSector = scanSector;
                 }
             }
@@ -359,28 +364,28 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
         // get the next neighbor (it IS the backneighbor).
         edge->line =
             R_FindLineNeighbor(edge->sector, edge->line,
-                               edge->line->vo[(edge->line->L_backsidedef && edge->line->L_backsector == edge->sector)^!toLeft],
+                               edge->line->vertexOwner(int(edge->line->hasBackSections() && edge->line->backSectorPtr() == edge->sector) ^ (int)!toLeft),
                                !toLeft, &edge->diff);
     }
 }
 
 static void scanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
-    LineDef const *line, uint side, edgespan_t spans[2], boolean toLeft)
+    Line::Side const &side, edgespan_t spans[2], bool toLeft)
 {
-    if(LINE_SELFREF(line)) return;
+    if(side.line().isSelfReferencing()) return;
 
-    coord_t fFloor = line->L_sector(side)->SP_floorvisheight;
-    coord_t fCeil  = line->L_sector(side)->SP_ceilvisheight;
+    coord_t fFloor = side.sector().floor().visHeight();
+    coord_t fCeil  = side.sector().ceiling().visHeight();
 
     edge_t edges[2]; // {bottom, top}
     std::memset(edges, 0, sizeof(edges));
 
-    scanNeighbor(false, line, side, &edges[0], toLeft);
-    scanNeighbor(true, line, side, &edges[1], toLeft);
+    scanNeighbor(false, side, &edges[0], toLeft);
+    scanNeighbor(true,  side, &edges[1], toLeft);
 
     for(uint i = 0; i < 2; ++i)
     {
-        shadowcorner_t *corner = (i == 0 ? &bottom[!toLeft] : &top[!toLeft]);
+        shadowcorner_t *corner = (i == 0 ? &bottom[(int)!toLeft] : &top[(int)!toLeft]);
         edge_t *edge = &edges[i];
         edgespan_t *span = &spans[i];
 
@@ -391,7 +396,7 @@ static void scanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
 
         // Compare the relative angle difference of this edge to determine
         // an "open-ness" factor.
-        if(edge->line && edge->line != line)
+        if(edge->line && edge->line != &side.line())
         {
             if(edge->diff > BANG_180)
             {
@@ -430,13 +435,13 @@ static void scanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
             corner->proximity = edge->sector;
             if(i == 0) // Floor.
             {
-                corner->pOffset = corner->proximity->SP_floorvisheight - fFloor;
-                corner->pHeight = corner->proximity->SP_floorvisheight;
+                corner->pOffset = corner->proximity->floor().visHeight() - fFloor;
+                corner->pHeight = corner->proximity->floor().visHeight();
             }
             else // Ceiling.
             {
-                corner->pOffset = corner->proximity->SP_ceilvisheight - fCeil;
-                corner->pHeight = corner->proximity->SP_ceilvisheight;
+                corner->pOffset = corner->proximity->ceiling().visHeight() - fCeil;
+                corner->pHeight = corner->proximity->ceiling().visHeight();
             }
         }
         else
@@ -461,21 +466,22 @@ static void scanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
  * rare.
  */
 static void scanEdges(shadowcorner_t topCorners[2], shadowcorner_t bottomCorners[2],
-    shadowcorner_t sideCorners[2], edgespan_t spans[2], LineDef const *line,
-    boolean backSide)
+    shadowcorner_t sideCorners[2], edgespan_t spans[2], Line::Side const &side)
 {
-    uint const sid = (backSide? BACK : FRONT);
+    Line const &line = side.line();
+    int const lineSideId = side.lineSideId();
 
     std::memset(sideCorners, 0, sizeof(shadowcorner_t) * 2);
 
     // Find the sidecorners first: left and right neighbour.
-    for(uint i = 0; i < 2; ++i)
+    for(int i = 0; i < 2; ++i)
     {
         binangle_t diff = 0;
-        lineowner_t* vo = line->L_vo(i ^ sid);
+        LineOwner *vo = line.vertexOwner(i ^ lineSideId);
 
-        LineDef* other = R_FindSolidLineNeighbor(line->L_sector(sid), line, vo, i, &diff);
-        if(other && other != line)
+        Line *other = R_FindSolidLineNeighbor(side.sectorPtr(), &line, vo,
+                                              CPP_BOOL(i), &diff);
+        if(other && other != &line)
         {
             if(diff > BANG_180)
             {
@@ -506,7 +512,7 @@ static void scanEdges(shadowcorner_t topCorners[2], shadowcorner_t bottomCorners
             sideCorners[i].corner = 0;
         }
 
-        scanNeighbors(topCorners, bottomCorners, line, sid, spans, !i);
+        scanNeighbors(topCorners, bottomCorners, side, spans, !i);
     }
 }
 
@@ -521,15 +527,15 @@ typedef struct {
 } rendershadowseg_params_t;
 
 static void setTopShadowParams(rendershadowseg_params_t *p, float size, coord_t top,
-    coord_t const *xOffset, coord_t const *segLength, coord_t const *fFloor, coord_t const *fCeil,
+    coord_t xOffset, coord_t segLength, coord_t fFloor, coord_t fCeil,
     shadowcorner_t const *botCn, shadowcorner_t const *topCn, shadowcorner_t const *sideCn,
     edgespan_t const *spans)
 {
     p->shadowMul = 1;
     p->horizontal = false;
     p->texHeight = size;
-    p->texOffset[VY] = calcTexCoordY(top, *fFloor, *fCeil, p->texHeight);
-    p->wallLength = *segLength;
+    p->texOffset[VY] = calcTexCoordY(top, fFloor, fCeil, p->texHeight);
+    p->wallLength = segLength;
 
     p->texture = LST_RADIO_OO;
     // Corners without a neighbour backsector
@@ -539,7 +545,7 @@ static void setTopShadowParams(rendershadowseg_params_t *p, float size, coord_t 
         p->texture = LST_RADIO_OO;
         p->texWidth = spans[TOP].length;
         p->texOffset[VX] =
-            calcTexCoordX(spans[TOP].length, spans[TOP].shift + *xOffset);
+            calcTexCoordX(spans[TOP].length, spans[TOP].shift + xOffset);
 
         if((sideCn[0].corner == -1 && sideCn[1].corner == -1) ||
            (topCn[0].corner == -1 && topCn[1].corner == -1))
@@ -550,18 +556,18 @@ static void setTopShadowParams(rendershadowseg_params_t *p, float size, coord_t 
         else if(sideCn[1].corner == -1)
         {
             // right corner faces outwards
-            if(-topCn[0].pOffset < 0 && botCn[0].pHeight < *fCeil)
+            if(-topCn[0].pOffset < 0 && botCn[0].pHeight < fCeil)
             {
                 // Must flip horizontally!
                 p->texWidth = -spans[TOP].length;
                 p->texOffset[VX] =
-                    calcTexCoordX(-spans[TOP].length, spans[TOP].shift + *xOffset);
+                    calcTexCoordX(-spans[TOP].length, spans[TOP].shift + xOffset);
                 p->texture = LST_RADIO_OE;
             }
         }
         else  // left corner faces outwards
         {
-            if(-topCn[1].pOffset < 0 && botCn[1].pHeight < *fCeil)
+            if(-topCn[1].pOffset < 0 && botCn[1].pHeight < fCeil)
             {
                 p->texture = LST_RADIO_OE;
             }
@@ -571,7 +577,7 @@ static void setTopShadowParams(rendershadowseg_params_t *p, float size, coord_t 
     {
         // Corners WITH a neighbour backsector
         p->texWidth = spans[TOP].length;
-        p->texOffset[VX] = calcTexCoordX(spans[TOP].length, spans[TOP].shift + *xOffset);
+        p->texOffset[VX] = calcTexCoordX(spans[TOP].length, spans[TOP].shift + xOffset);
 
         if(topCn[0].corner == -1 && topCn[1].corner == -1)
         {
@@ -608,7 +614,7 @@ static void setTopShadowParams(rendershadowseg_params_t *p, float size, coord_t 
                         else
                         {
                             p->texHeight = -topCn[0].pOffset;
-                            p->texOffset[VY] = calcTexCoordY(top, *fFloor, *fCeil, p->texHeight);
+                            p->texOffset[VY] = calcTexCoordY(top, fFloor, fCeil, p->texHeight);
                         }
                     }
                 }
@@ -617,7 +623,7 @@ static void setTopShadowParams(rendershadowseg_params_t *p, float size, coord_t 
                     // Must flip horizontally!
                     p->texture = LST_RADIO_CO;
                     p->texWidth = -spans[TOP].length;
-                    p->texOffset[VX] = calcTexCoordX(-spans[TOP].length, spans[TOP].shift + *xOffset);
+                    p->texOffset[VX] = calcTexCoordX(-spans[TOP].length, spans[TOP].shift + xOffset);
 
                     // The shadow can't go over the higher edge.
                     if(size > -topCn[1].pOffset)
@@ -629,7 +635,7 @@ static void setTopShadowParams(rendershadowseg_params_t *p, float size, coord_t 
                         else
                         {
                             p->texHeight = -topCn[1].pOffset;
-                            p->texOffset[VY] = calcTexCoordY(top, *fFloor, *fCeil, p->texHeight);
+                            p->texOffset[VY] = calcTexCoordY(top, fFloor, fCeil, p->texHeight);
                         }
                     }
                 }
@@ -641,7 +647,7 @@ static void setTopShadowParams(rendershadowseg_params_t *p, float size, coord_t 
                     // Must flip horizontally!
                     p->texture = LST_RADIO_OE;
                     p->texWidth = -spans[BOTTOM].length;
-                    p->texOffset[VX] = calcTexCoordX(-spans[BOTTOM].length, spans[BOTTOM].shift + *xOffset);
+                    p->texOffset[VX] = calcTexCoordX(-spans[BOTTOM].length, spans[BOTTOM].shift + xOffset);
                 }
                 else if(-topCn[1].pOffset < -MINDIFF)
                 {
@@ -658,7 +664,7 @@ static void setTopShadowParams(rendershadowseg_params_t *p, float size, coord_t 
 
             // Must flip horizontally!
             p->texWidth = -spans[TOP].length;
-            p->texOffset[VX] = calcTexCoordX(-spans[TOP].length, spans[TOP].shift + *xOffset);
+            p->texOffset[VX] = calcTexCoordX(-spans[TOP].length, spans[TOP].shift + xOffset);
         }
         else if(topCn[1].corner <= MIN_OPEN)
         {
@@ -675,15 +681,15 @@ static void setTopShadowParams(rendershadowseg_params_t *p, float size, coord_t 
 }
 
 static void setBottomShadowParams(rendershadowseg_params_t *p, float size, coord_t top,
-    coord_t const *xOffset, coord_t const *segLength, coord_t const *fFloor, coord_t const *fCeil,
+    coord_t xOffset, coord_t segLength, coord_t fFloor, coord_t fCeil,
     shadowcorner_t const *botCn, shadowcorner_t const *topCn, shadowcorner_t const *sideCn,
     edgespan_t const *spans)
 {
     p->shadowMul = 1;
     p->horizontal = false;
     p->texHeight = -size;
-    p->texOffset[VY] = calcTexCoordY(top, *fFloor, *fCeil, p->texHeight);
-    p->wallLength = *segLength;
+    p->texOffset[VY] = calcTexCoordY(top, fFloor, fCeil, p->texHeight);
+    p->wallLength = segLength;
 
     p->texture = LST_RADIO_OO;
     // Corners without a neighbour backsector
@@ -692,7 +698,7 @@ static void setBottomShadowParams(rendershadowseg_params_t *p, float size, coord
         // At least one corner faces outwards
         p->texture = LST_RADIO_OO;
         p->texWidth = spans[BOTTOM].length;
-        p->texOffset[VX] = calcTexCoordX(spans[BOTTOM].length, spans[BOTTOM].shift + *xOffset);
+        p->texOffset[VX] = calcTexCoordX(spans[BOTTOM].length, spans[BOTTOM].shift + xOffset);
 
         if((sideCn[0].corner == -1 && sideCn[1].corner == -1) ||
            (botCn[0].corner == -1 && botCn[1].corner == -1) )
@@ -702,18 +708,18 @@ static void setBottomShadowParams(rendershadowseg_params_t *p, float size, coord
         }
         else if(sideCn[1].corner == -1) // right corner faces outwards
         {
-            if(botCn[0].pOffset < 0 && topCn[0].pHeight > *fFloor)
+            if(botCn[0].pOffset < 0 && topCn[0].pHeight > fFloor)
             {
                 // Must flip horizontally!
                 p->texWidth = -spans[BOTTOM].length;
-                p->texOffset[VX] = calcTexCoordX(-spans[BOTTOM].length, spans[BOTTOM].shift + *xOffset);
+                p->texOffset[VX] = calcTexCoordX(-spans[BOTTOM].length, spans[BOTTOM].shift + xOffset);
                 p->texture = LST_RADIO_OE;
             }
         }
         else
         {
             // left corner faces outwards
-            if(botCn[1].pOffset < 0 && topCn[1].pHeight > *fFloor)
+            if(botCn[1].pOffset < 0 && topCn[1].pHeight > fFloor)
             {
                 p->texture = LST_RADIO_OE;
             }
@@ -722,7 +728,7 @@ static void setBottomShadowParams(rendershadowseg_params_t *p, float size, coord
     else
     {   // Corners WITH a neighbour backsector
         p->texWidth = spans[BOTTOM].length;
-        p->texOffset[VX] = calcTexCoordX(spans[BOTTOM].length, spans[BOTTOM].shift + *xOffset);
+        p->texOffset[VX] = calcTexCoordX(spans[BOTTOM].length, spans[BOTTOM].shift + xOffset);
         if(botCn[0].corner == -1 && botCn[1].corner == -1)
         {
             // Both corners face outwards
@@ -759,7 +765,7 @@ static void setBottomShadowParams(rendershadowseg_params_t *p, float size, coord
                         else
                         {
                             p->texHeight = -botCn[0].pOffset;
-                            p->texOffset[VY] = calcTexCoordY(top, *fFloor, *fCeil, p->texHeight);
+                            p->texOffset[VY] = calcTexCoordY(top, fFloor, fCeil, p->texHeight);
                         }
                     }
                 }
@@ -768,7 +774,7 @@ static void setBottomShadowParams(rendershadowseg_params_t *p, float size, coord
                     // Must flip horizontally!
                     p->texture = LST_RADIO_CO;
                     p->texWidth = -spans[BOTTOM].length;
-                    p->texOffset[VX] = calcTexCoordX(-spans[BOTTOM].length, spans[BOTTOM].shift + *xOffset);
+                    p->texOffset[VX] = calcTexCoordX(-spans[BOTTOM].length, spans[BOTTOM].shift + xOffset);
 
                     if(size > botCn[1].pOffset)
                     {
@@ -779,7 +785,7 @@ static void setBottomShadowParams(rendershadowseg_params_t *p, float size, coord
                         else
                         {
                             p->texHeight = -botCn[1].pOffset;
-                            p->texOffset[VY] = calcTexCoordY(top, *fFloor, *fCeil, p->texHeight);
+                            p->texOffset[VY] = calcTexCoordY(top, fFloor, fCeil, p->texHeight);
                         }
                     }
                 }
@@ -791,7 +797,7 @@ static void setBottomShadowParams(rendershadowseg_params_t *p, float size, coord
                     // Must flip horizontally!
                     p->texture = LST_RADIO_OE;
                     p->texWidth = -spans[BOTTOM].length;
-                    p->texOffset[VX] = calcTexCoordX(-spans[BOTTOM].length, spans[BOTTOM].shift + *xOffset);
+                    p->texOffset[VX] = calcTexCoordX(-spans[BOTTOM].length, spans[BOTTOM].shift + xOffset);
                 }
                 else if(botCn[1].pOffset < -MINDIFF)
                 {
@@ -808,7 +814,7 @@ static void setBottomShadowParams(rendershadowseg_params_t *p, float size, coord
 
             // Must flip horizontally!
             p->texWidth = -spans[BOTTOM].length;
-            p->texOffset[VX] = calcTexCoordX(-spans[BOTTOM].length, spans[BOTTOM].shift + *xOffset);
+            p->texOffset[VX] = calcTexCoordX(-spans[BOTTOM].length, spans[BOTTOM].shift + xOffset);
         }
         else if(botCn[1].corner <= MIN_OPEN)  // Left Corner is closed
         {
@@ -825,22 +831,22 @@ static void setBottomShadowParams(rendershadowseg_params_t *p, float size, coord
 }
 
 static void setSideShadowParams(rendershadowseg_params_t *p, float size, coord_t bottom,
-    coord_t top, boolean rightSide, boolean bottomGlow, boolean topGlow,
-    coord_t const *xOffset, coord_t const *segLength, coord_t const *fFloor,
-    coord_t const *fCeil, coord_t const *bFloor, coord_t const *bCeil, coord_t const *lineLength,
+    coord_t top, int rightSide, bool haveBottomShadower, bool haveTopShadower,
+    coord_t xOffset, coord_t segLength, coord_t fFloor,
+    coord_t fCeil, bool hasBackSector, coord_t bFloor, coord_t bCeil, coord_t const *lineLength,
     shadowcorner_t const *sideCn)
 {
     p->shadowMul = sideCn[rightSide? 1 : 0].corner * .8f;
     p->shadowMul *= p->shadowMul * p->shadowMul;
     p->horizontal = true;
-    p->texOffset[VY] = bottom - *fFloor;
-    p->texHeight = *fCeil - *fFloor;
-    p->wallLength = *segLength;
+    p->texOffset[VY] = bottom - fFloor;
+    p->texHeight = fCeil - fFloor;
+    p->wallLength = segLength;
 
     if(rightSide)
     {
         // Right shadow.
-        p->texOffset[VX] = -(*lineLength) + *xOffset;
+        p->texOffset[VX] = -(*lineLength) + xOffset;
         // Make sure the shadow isn't too big
         if(size > *lineLength)
         {
@@ -857,7 +863,7 @@ static void setSideShadowParams(rendershadowseg_params_t *p, float size, coord_t
     else
     {
         // Left shadow.
-        p->texOffset[VX] = *xOffset;
+        p->texOffset[VX] = xOffset;
         // Make sure the shadow isn't too big
         if(size > *lineLength)
         {
@@ -872,19 +878,19 @@ static void setSideShadowParams(rendershadowseg_params_t *p, float size, coord_t
         }
     }
 
-    if(bFloor)
+    if(hasBackSector)
     {
         // There is a backside.
-        if(*bFloor > *fFloor && *bCeil < *fCeil)
+        if(bFloor > fFloor && bCeil < fCeil)
         {
-            if(!bottomGlow && !topGlow)
+            if(haveBottomShadower && haveTopShadower)
             {
                 p->texture = LST_RADIO_CC;
             }
-            else if(bottomGlow)
+            else if(!haveBottomShadower)
             {
-                p->texOffset[VY] = bottom - *fCeil;
-                p->texHeight = -(*fCeil - *fFloor);
+                p->texOffset[VY] = bottom - fCeil;
+                p->texHeight = -(fCeil - fFloor);
                 p->texture = LST_RADIO_CO;
             }
             else
@@ -892,16 +898,16 @@ static void setSideShadowParams(rendershadowseg_params_t *p, float size, coord_t
                 p->texture = LST_RADIO_CO;
             }
         }
-        else if(*bFloor > *fFloor)
+        else if(bFloor > fFloor)
         {
-            if(!bottomGlow && !topGlow)
+            if(haveBottomShadower && haveTopShadower)
             {
                 p->texture = LST_RADIO_CC;
             }
-            else if(bottomGlow)
+            else if(!haveBottomShadower)
             {
-                p->texOffset[VY] = bottom - *fCeil;
-                p->texHeight = -(*fCeil - *fFloor);
+                p->texOffset[VY] = bottom - fCeil;
+                p->texHeight = -(fCeil - fFloor);
                 p->texture = LST_RADIO_CO;
             }
             else
@@ -909,16 +915,16 @@ static void setSideShadowParams(rendershadowseg_params_t *p, float size, coord_t
                 p->texture = LST_RADIO_CO;
             }
         }
-        else if(*bCeil < *fCeil)
+        else if(bCeil < fCeil)
         {
-            if(!bottomGlow && !topGlow)
+            if(haveBottomShadower && haveTopShadower)
             {
                 p->texture = LST_RADIO_CC;
             }
-            else if(bottomGlow)
+            else if(!haveBottomShadower)
             {
-                p->texOffset[VY] = bottom - *fCeil;
-                p->texHeight = -(*fCeil - *fFloor);
+                p->texOffset[VY] = bottom - fCeil;
+                p->texHeight = -(fCeil - fFloor);
                 p->texture = LST_RADIO_CO;
             }
             else
@@ -929,13 +935,13 @@ static void setSideShadowParams(rendershadowseg_params_t *p, float size, coord_t
     }
     else
     {
-        if(bottomGlow)
+        if(!haveBottomShadower)
         {
-            p->texHeight = -(*fCeil - *fFloor);
-            p->texOffset[VY] = calcTexCoordY(top, *fFloor, *fCeil, p->texHeight);
+            p->texHeight = -(fCeil - fFloor);
+            p->texOffset[VY] = calcTexCoordY(top, fFloor, fCeil, p->texHeight);
             p->texture = LST_RADIO_CO;
         }
-        else if(topGlow)
+        else if(!haveTopShadower)
         {
             p->texture = LST_RADIO_CO;
         }
@@ -971,16 +977,18 @@ static void quadTexCoords(rtexcoord_t *tc, rvertex_t const *rverts, float wallLe
     tc[0].st[1] = tc[3].st[1] + (rverts[3].pos[VZ] - rverts[2].pos[VZ]) / texHeight;
 }
 
-static void renderShadowSeg(rvertex_t const *origVertices, rendershadowseg_params_t const *segp,
-    rendsegradio_params_t const *p)
+static void drawWallSectionShadow(rvertex_t const *origVertices,
+    rendershadowseg_params_t const &wsParms, RendRadioWallSectionParms const &parms)
 {
+    DENG_ASSERT(origVertices);
+
     float texOrigin[2][3];
     ColorRawf *rcolors;
     rtexcoord_t *rtexcoords;
     uint realNumVertices = 4;
 
-    if(p->wall.left.divCount || p->wall.right.divCount)
-        realNumVertices = 3 + p->wall.left.divCount + 3 + p->wall.right.divCount;
+    if(parms.wall.left.divCount || parms.wall.right.divCount)
+        realNumVertices = 3 + parms.wall.left.divCount + 3 + parms.wall.right.divCount;
     else
         realNumVertices = 4;
 
@@ -998,20 +1006,20 @@ static void renderShadowSeg(rvertex_t const *origVertices, rendershadowseg_param
     rtexcoords = R_AllocRendTexCoords(realNumVertices);
     rcolors = R_AllocRendColors(realNumVertices);
 
-    quadTexCoords(rtexcoords, origVertices, segp->wallLength, segp->texWidth,
-                  segp->texHeight, texOrigin, segp->texOffset,
-                  segp->horizontal);
+    quadTexCoords(rtexcoords, origVertices, wsParms.wallLength, wsParms.texWidth,
+                  wsParms.texHeight, texOrigin, wsParms.texOffset,
+                  wsParms.horizontal);
 
-    setRendpolyColor(rcolors, 4, p->shadowRGB, p->shadowDark * segp->shadowMul);
+    setRendpolyColor(rcolors, 4, parms.shadowRGB, parms.shadowDark * wsParms.shadowMul);
 
     if(rendFakeRadio != 2)
     {
         // Write multiple polys depending on rend params.
         RL_LoadDefaultRtus();
-        RL_Rtu_SetTextureUnmanaged(RTU_PRIMARY, GL_PrepareLSTexture(segp->texture),
+        RL_Rtu_SetTextureUnmanaged(RTU_PRIMARY, GL_PrepareLSTexture(wsParms.texture),
                                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
-        if(p->wall.left.divCount || p->wall.right.divCount)
+        if(parms.wall.left.divCount || parms.wall.right.divCount)
         {
             /*
              * Need to swap indices around into fans set the position
@@ -1032,15 +1040,15 @@ static void renderShadowSeg(rvertex_t const *origVertices, rendershadowseg_param
             float const bR = origVertices[2].pos[VZ];
             float const tR = origVertices[3].pos[VZ];
 
-            R_DivVerts(rvertices, origVertices, p->wall.left.firstDiv, p->wall.left.divCount, p->wall.right.firstDiv, p->wall.right.divCount);
-            R_DivTexCoords(rtexcoords, origTexCoords, p->wall.left.firstDiv, p->wall.left.divCount, p->wall.right.firstDiv, p->wall.right.divCount, bL, tL, bR, tR);
-            R_DivVertColors(rcolors, origColors, p->wall.left.firstDiv, p->wall.left.divCount, p->wall.right.firstDiv, p->wall.right.divCount, bL, tL, bR, tR);
+            R_DivVerts(rvertices, origVertices, parms.wall.left.firstDiv, parms.wall.left.divCount, parms.wall.right.firstDiv, parms.wall.right.divCount);
+            R_DivTexCoords(rtexcoords, origTexCoords, parms.wall.left.firstDiv, parms.wall.left.divCount, parms.wall.right.firstDiv, parms.wall.right.divCount, bL, tL, bR, tR);
+            R_DivVertColors(rcolors, origColors, parms.wall.left.firstDiv, parms.wall.left.divCount, parms.wall.right.firstDiv, parms.wall.right.divCount, bL, tL, bR, tR);
 
             RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
-                3 + p->wall.right.divCount, rvertices + 3 + p->wall.left.divCount, rcolors + 3 + p->wall.left.divCount,
-                rtexcoords + 3 + p->wall.left.divCount, NULL);
+                3 + parms.wall.right.divCount, rvertices + 3 + parms.wall.left.divCount, rcolors + 3 + parms.wall.left.divCount,
+                rtexcoords + 3 + parms.wall.left.divCount, NULL);
             RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
-                3 + p->wall.left.divCount, rvertices, rcolors, rtexcoords, NULL);
+                3 + parms.wall.left.divCount, rvertices, rcolors, rtexcoords, NULL);
 
             R_FreeRendVertices(rvertices);
         }
@@ -1055,97 +1063,91 @@ static void renderShadowSeg(rvertex_t const *origVertices, rendershadowseg_param
     R_FreeRendColors(rcolors);
 }
 
-/**
- * Create the appropriate FakeRadio shadow polygons for the wall segment.
- */
-static void rendRadioSegSection(rvertex_t const *rvertices, rendsegradio_params_t const *p)
+void Rend_RadioWallSection(rvertex_t const *rvertices, RendRadioWallSectionParms const &parms)
 {
-    coord_t const *fFloor = &p->frontSec->SP_floorvisheight;
-    coord_t const *fCeil  = &p->frontSec->SP_ceilvisheight;
-    coord_t const *bFloor = (p->backSec? &p->backSec->SP_floorvisheight : 0);
-    coord_t const *bCeil  = (p->backSec? &p->backSec->SP_ceilvisheight  : 0);
+    DENG_ASSERT(rvertices);
 
-    boolean const bottomGlow = R_IsGlowingPlane(p->frontSec->SP_plane(PLN_FLOOR));
-    boolean const topGlow    = R_IsGlowingPlane(p->frontSec->SP_plane(PLN_CEILING));
+    // Disabled?
+    if(!rendFakeRadio || levelFullBright) return;
+
+    coord_t const lineLength = parms.line->length();
+    coord_t const fFloor     = parms.frontSec->floor().visHeight();
+    coord_t const fCeil      = parms.frontSec->ceiling().visHeight();
+    coord_t const bFloor     = (parms.backSec? parms.backSec->floor().visHeight() : 0);
+    coord_t const bCeil      = (parms.backSec? parms.backSec->ceiling().visHeight()  : 0);
+
+    bool const haveBottomShadower = Rend_RadioPlaneCastsShadow(parms.frontSec->floor());
+    bool const haveTopShadower    = Rend_RadioPlaneCastsShadow(parms.frontSec->ceiling());
 
     /*
      * Top Shadow.
      */
-    if(!topGlow)
+    if(haveTopShadower)
     {
-        if(rvertices[3].pos[VZ] > *fCeil - p->shadowSize &&
-           rvertices[0].pos[VZ] < *fCeil)
+        if(rvertices[3].pos[VZ] > fCeil - parms.shadowSize &&
+           rvertices[0].pos[VZ] < fCeil)
         {
-            rendershadowseg_params_t params;
+            rendershadowseg_params_t wsParms;
 
-            setTopShadowParams(&params, p->shadowSize, rvertices[1].pos[VZ],
-                               p->segOffset, p->segLength, fFloor, fCeil,
-                               p->botCn, p->topCn, p->sideCn, p->spans);
-            renderShadowSeg(rvertices, &params, p);
+            setTopShadowParams(&wsParms, parms.shadowSize, rvertices[1].pos[VZ],
+                               parms.segOffset, parms.segLength, fFloor, fCeil,
+                               parms.botCn, parms.topCn, parms.sideCn, parms.spans);
+            drawWallSectionShadow(rvertices, wsParms, parms);
         }
     }
 
     /*
      * Bottom Shadow.
      */
-    if(!bottomGlow)
+    if(haveBottomShadower)
     {
-        if(rvertices[0].pos[VZ] < *fFloor + p->shadowSize &&
-           rvertices[3].pos[VZ] > *fFloor)
+        if(rvertices[0].pos[VZ] < fFloor + parms.shadowSize &&
+           rvertices[3].pos[VZ] > fFloor)
         {
-            rendershadowseg_params_t params;
+            rendershadowseg_params_t wsParms;
 
-            setBottomShadowParams(&params, p->shadowSize, rvertices[1].pos[VZ],
-                                  p->segOffset, p->segLength, fFloor, fCeil,
-                                  p->botCn, p->topCn, p->sideCn, p->spans);
-            renderShadowSeg(rvertices, &params, p);
+            setBottomShadowParams(&wsParms, parms.shadowSize, rvertices[1].pos[VZ],
+                                  parms.segOffset, parms.segLength, fFloor, fCeil,
+                                  parms.botCn, parms.topCn, parms.sideCn, parms.spans);
+            drawWallSectionShadow(rvertices, wsParms, parms);
         }
     }
 
-    // Walls with glowing floor & ceiling get no side shadows.
-    // Is there anything better we can do?
-    if(bottomGlow && topGlow)
+    // Walls unaffected by floor and ceiling shadow casters receive no
+    // side shadows either. We could do better here...
+    if(!haveBottomShadower && !haveTopShadower)
         return;
 
     /*
      * Left Shadow.
      */
-    if(p->sideCn[0].corner > 0 && *p->segOffset < p->shadowSize)
+    if(parms.sideCn[0].corner > 0 && parms.segOffset < parms.shadowSize)
     {
-        rendershadowseg_params_t params;
+        rendershadowseg_params_t wsParms;
 
-        setSideShadowParams(&params, p->shadowSize, rvertices[0].pos[VZ],
+        setSideShadowParams(&wsParms, parms.shadowSize, rvertices[0].pos[VZ],
                             rvertices[1].pos[VZ], false,
-                            bottomGlow, topGlow, p->segOffset, p->segLength,
-                            fFloor, fCeil, bFloor, bCeil, p->linedefLength,
-                            p->sideCn);
-        renderShadowSeg(rvertices, &params, p);
+                            haveBottomShadower, haveTopShadower, parms.segOffset, parms.segLength,
+                            fFloor, fCeil, !!parms.backSec, bFloor, bCeil, &lineLength,
+                            parms.sideCn);
+        drawWallSectionShadow(rvertices, wsParms, parms);
     }
 
     /*
      * Right Shadow.
      */
-    if(p->sideCn[1].corner > 0 &&
-       *p->segOffset + *p->segLength > *p->linedefLength - p->shadowSize)
+    if(parms.sideCn[1].corner > 0 &&
+       parms.segOffset + parms.segLength > lineLength - parms.shadowSize)
     {
-        rendershadowseg_params_t params;
+        rendershadowseg_params_t wsParms;
 
-        setSideShadowParams(&params, p->shadowSize, rvertices[0].pos[VZ],
+        setSideShadowParams(&wsParms, parms.shadowSize, rvertices[0].pos[VZ],
                             rvertices[1].pos[VZ], true,
-                            bottomGlow, topGlow, p->segOffset, p->segLength,
-                            fFloor, fCeil, bFloor, bCeil, p->linedefLength,
-                            p->sideCn);
-        renderShadowSeg(rvertices, &params, p);
+                            haveBottomShadower, haveTopShadower, parms.segOffset, parms.segLength,
+                            fFloor, fCeil, !!parms.backSec, bFloor, bCeil, &lineLength,
+                            parms.sideCn);
+        drawWallSectionShadow(rvertices, wsParms, parms);
     }
-}
-
-void Rend_RadioSegSection(rvertex_t const *rvertices, rendsegradio_params_t const *params)
-{
-    if(!rvertices || !params) return;
-    // Disabled?
-    if(!rendFakeRadio || levelFullBright) return;
-
-    rendRadioSegSection(rvertices, params);
 }
 
 /**
@@ -1179,39 +1181,38 @@ static void setRelativeHeights(Sector const *front, Sector const *back, boolean 
 {
     if(fz)
     {
-        *fz = front->planes[isCeiling? PLN_CEILING:PLN_FLOOR]->visHeight;
+        *fz = front->plane(isCeiling? Plane::Ceiling:Plane::Floor).visHeight();
         if(isCeiling)
             *fz = -(*fz);
     }
     if(bz)
     {
-        *bz = back->planes[isCeiling? PLN_CEILING:PLN_FLOOR]->visHeight;
+        *bz = back->plane(isCeiling? Plane::Ceiling:Plane::Floor).visHeight();
         if(isCeiling)
             *bz = -(*bz);
     }
     if(bhz)
     {
-        *bhz = back->planes[isCeiling? PLN_FLOOR:PLN_CEILING]->visHeight;
+        *bhz = back->plane(isCeiling? Plane::Floor:Plane::Ceiling).visHeight();
         if(isCeiling)
             *bhz = -(*bhz);
     }
 }
 
-static uint radioEdgeHackType(LineDef const *line, Sector const *front, Sector const *back,
+static uint radioEdgeHackType(Line const *line, Sector const *front, Sector const *back,
     int backside, boolean isCeiling, float fz, float bz)
 {
-    Surface *surface = &line->L_sidedef(backside)->sections[isCeiling? SS_TOP:SS_BOTTOM];
+    Surface const &surface = line->side(backside).surface(isCeiling? Line::Side::Top : Line::Side::Bottom);
 
-    if(fz < bz && !surface->material &&
-       !(surface->inFlags & SUIF_FIX_MISSING_MATERIAL))
+    if(fz < bz && !surface.hasMaterial())
         return 3; // Consider it fully open.
 
     // Is the back sector closed?
-    if(front->SP_floorvisheight >= back->SP_ceilvisheight)
+    if(front->floor().visHeight() >= back->ceiling().visHeight())
     {
-        if(front->planes[isCeiling? PLN_FLOOR:PLN_CEILING]->surface.isSkyMasked())
+        if(front->planeSurface(isCeiling? Plane::Floor:Plane::Ceiling).hasSkyMaskedMaterial())
         {
-            if(back->planes[isCeiling? PLN_FLOOR:PLN_CEILING]->surface.isSkyMasked())
+            if(back->planeSurface(isCeiling? Plane::Floor:Plane::Ceiling).hasSkyMaskedMaterial())
                 return 3; // Consider it fully open.
         }
         else
@@ -1223,7 +1224,7 @@ static uint radioEdgeHackType(LineDef const *line, Sector const *front, Sector c
     // Check for unmasked midtextures on twosided lines that completely
     // fill the gap between floor and ceiling (we don't want to give away
     // the location of any secret areas (false walls)).
-    if(R_MiddleMaterialCoversLineOpening(const_cast<LineDef *>(line), backside, false))
+    if(R_MiddleMaterialCoversOpening(line->side(backside)))
         return 1; // Consider it fully closed.
 
     return 0;
@@ -1232,9 +1233,10 @@ static uint radioEdgeHackType(LineDef const *line, Sector const *front, Sector c
 /**
  * Construct and write a new shadow polygon to the rendering lists.
  */
-static void addShadowEdge(vec2d_t inner[2], vec2d_t outer[2], coord_t innerLeftZ,
-    coord_t innerRightZ, coord_t outerLeftZ, coord_t outerRightZ, float const sideOpen[2],
-    float const edgeOpen[2], boolean isFloor, float const shadowRGB[3], float shadowDark)
+static void addShadowEdge(Vector2d const inner[2], Vector2d const outer[2],
+    coord_t innerLeftZ, coord_t innerRightZ, coord_t outerLeftZ, coord_t outerRightZ,
+    float const sideOpen[2], float const edgeOpen[2], boolean isFloor,
+    float const shadowRGB[3], float shadowDark)
 {
     static uint const floorIndices[][4] = {{0, 1, 2, 3}, {1, 2, 3, 0}};
     static uint const ceilIndices[][4]  = {{0, 3, 2, 1}, {1, 0, 3, 2}};
@@ -1246,7 +1248,7 @@ static void addShadowEdge(vec2d_t inner[2], vec2d_t outer[2], coord_t innerLeftZ
 
     // What vertex winding order? (0 = left, 1 = right)
     // (for best results, the cross edge should always be the shortest).
-    uint winding = (V2d_Distance(inner[1], outer[1]) > V2d_Distance(inner[0], outer[0])? 1 : 0);
+    uint winding = (Vector2d(outer[1] - inner[1]).length() > Vector2d(inner[0] - outer[0]).length()? 1 : 0);
     uint const *idx = (isFloor ? floorIndices[winding] : ceilIndices[winding]);
 
     rvertex_t rvertices[4];
@@ -1302,37 +1304,42 @@ static void addShadowEdge(vec2d_t inner[2], vec2d_t outer[2], coord_t innerLeftZ
     RL_AddPoly(PT_FAN, RPF_DEFAULT | (!renderWireframe? RPF_SHADOW : 0), 4, rvertices, rcolors);
 }
 
-static void processEdgeShadow(BspLeaf const *bspLeaf, LineDef const *lineDef,
-    uint side, uint planeId, float shadowDark)
+static void processEdgeShadow(BspLeaf const &bspLeaf, Line const *line,
+    int side, int planeIndex, float shadowDark)
 {
-    DENG_ASSERT(bspLeaf);
-    DENG_ASSERT(lineDef && (side == FRONT || side == BACK) && lineDef->L_sidedef(side));
-    DENG_ASSERT(planeId < lineDef->L_sector(side)->planeCount());
+    DENG_ASSERT(line && line->hasSections(side));
 
     if(!(shadowDark > .0001)) return;
 
-    Plane const *pln   = lineDef->L_sector(side)->SP_plane(planeId);
-    Surface const *suf = &pln->surface;
-    coord_t plnHeight  = pln->visHeight;
+    Plane const &plane = line->sector(side).plane(planeIndex);
+    Surface const *suf = &plane.surface();
+    coord_t plnHeight  = plane.visHeight();
 
-    // Glowing surfaces or missing textures shouldn't have shadows.
-    if((suf->inFlags & SUIF_NO_RADIO) || !suf->material || suf->isSkyMasked()) return;
-    if(pln->PS_material->hasGlow()) return;
+    // Polyobj surfaces never shadow.
+    if(line->isFromPolyobj()) return;
 
-    // Determine the openness of the lineDef. If this edge is edgeOpen,
+    // Surfaces with a missing material don't shadow.
+    if(!suf->hasMaterial()) return;
+
+    // Missing, glowing or sky-masked materials are exempted.
+    Material const &material = suf->material();
+    if(material.isSkyMasked() || material.hasGlow()) return;
+
+    // Determine the openness of the line. If this edge is edgeOpen,
     // there won't be a shadow at all. Open neighbours cause some
     // changes in the polygon corner vertices (placement, colour).
-    vec2d_t inner[2], outer[2];
+    Vector2d inner[2], outer[2];
     vec2f_t edgeOpen, sideOpen;
-    Sector *front = 0, *back = 0;
+    Sector const *front = 0;
+    Sector const *back = 0;
     coord_t fz = 0, bz = 0, bhz = 0;
-    if(lineDef->L_backsidedef)
+    if(line->hasBackSections())
     {
-        front = lineDef->L_sector(side);
-        back  = lineDef->L_sector(side ^ 1);
-        setRelativeHeights(front, back, planeId == PLN_CEILING, &fz, &bz, &bhz);
+        front = line->sectorPtr(side);
+        back  = line->sectorPtr(side ^ 1);
+        setRelativeHeights(front, back, planeIndex == Plane::Ceiling, &fz, &bz, &bhz);
 
-        uint hackType = radioEdgeHackType(lineDef, front, back, side, planeId == PLN_CEILING, fz, bz);
+        uint hackType = radioEdgeHackType(line, front, back, side, planeIndex == Plane::Ceiling, fz, bz);
         if(hackType)
         {
             V2f_Set(edgeOpen, hackType - 1, hackType - 1);
@@ -1354,43 +1361,40 @@ static void processEdgeShadow(BspLeaf const *bspLeaf, LineDef const *lineDef,
     sideOpen[0] = sideOpen[1] = 0;
     for(int i = 0; i < 2; ++i)
     {
-        lineowner_t* vo = lineDef->L_vo(side^i)->link[i^1];
-        LineDef* neighbor = vo->lineDef;
+        LineOwner *vo = line->vertexOwner(side^i)->_link[i^1];
+        Line *neighbor = &vo->line();
 
-        if(neighbor != lineDef && !neighbor->L_backsidedef &&
-           (neighbor->inFlags & LF_BSPWINDOW) &&
-           neighbor->L_frontsector != bspLeaf->sector)
+        if(neighbor != line && !neighbor->hasBackSections() &&
+           (neighbor->isBspWindow()) &&
+           neighbor->frontSectorPtr() != bspLeaf.sectorPtr())
         {
             // A one-way window, edgeOpen side.
             sideOpen[i] = 1;
         }
-        else if(!(neighbor == lineDef || !neighbor->L_backsidedef))
+        else if(!(neighbor == line || !neighbor->hasBackSections()))
         {
-            Sector *othersec;
-            byte otherSide;
+            int otherSide = (&line->vertex(i ^ side) == &neighbor->from()? i : i ^ 1);
+            Sector *othersec = neighbor->sectorPtr(otherSide);
 
-            otherSide = (lineDef->L_v(i^side) == neighbor->L_v1? i : i^1);
-            othersec = neighbor->L_sector(otherSide);
-
-            if(R_MiddleMaterialCoversLineOpening(neighbor, otherSide^1, false))
+            if(R_MiddleMaterialCoversOpening(neighbor->side(otherSide ^ 1)))
             {
                 sideOpen[i] = 0;
             }
-            else if(LINE_SELFREF(neighbor))
+            else if(neighbor->isSelfReferencing())
             {
                 sideOpen[i] = 1;
             }
             else
             {
                 // Its a normal neighbor.
-                if(neighbor->L_sector(otherSide) != lineDef->L_sector(side) &&
-                   !((pln->type == PLN_FLOOR && othersec->SP_ceilvisheight <= pln->visHeight) ||
-                     (pln->type == PLN_CEILING && othersec->SP_floorheight >= pln->visHeight)))
+                if(neighbor->sectorPtr(otherSide) != line->sectorPtr(side) &&
+                   !((plane.type() == Plane::Floor && othersec->ceiling().visHeight() <= plane.visHeight()) ||
+                     (plane.type() == Plane::Ceiling && othersec->floor().height() >= plane.visHeight())))
                 {
-                    front = lineDef->L_sector(side);
-                    back  = neighbor->L_sector(otherSide);
+                    front = line->sectorPtr(side);
+                    back  = neighbor->sectorPtr(otherSide);
 
-                    setRelativeHeights(front, back, planeId == PLN_CEILING, &fz, &bz, &bhz);
+                    setRelativeHeights(front, back, planeIndex == Plane::Ceiling, &fz, &bz, &bhz);
                     sideOpen[i] = radioEdgeOpenness(fz, bz, bhz);
                 }
             }
@@ -1398,66 +1402,66 @@ static void processEdgeShadow(BspLeaf const *bspLeaf, LineDef const *lineDef,
 
         if(sideOpen[i] < 1)
         {
-            vo = lineDef->L_vo(i^side);
-            if(i) vo = vo->LO_prev;
+            vo = line->vertexOwner(i^side);
+            if(i) vo = &vo->prev();
 
-            V2d_Sum(inner[i], lineDef->L_vorigin(i^side), vo->shadowOffsets.inner);
+            inner[i] = line->vertexOrigin(i^side) + vo->innerShadowOffset();
         }
         else
         {
-            V2d_Sum(inner[i], lineDef->L_vorigin(i^side), vo->shadowOffsets.extended);
+            inner[i] = line->vertexOrigin(i^side) + vo->extendedShadowOffset();
         }
     }
 
-    V2d_Copy(outer[0], lineDef->L_vorigin(side));
-    V2d_Copy(outer[1], lineDef->L_vorigin(side^1));
+    outer[0] = line->vertexOrigin(side);
+    outer[1] = line->vertexOrigin(side^1);
+
     // Shadows are black
-    vec3f_t shadowRGB;
-    V3f_Set(shadowRGB, 0, 0, 0);
+    vec3f_t shadowRGB; V3f_Set(shadowRGB, 0, 0, 0);
 
     addShadowEdge(inner, outer, plnHeight, plnHeight, plnHeight, plnHeight, sideOpen, edgeOpen,
-                  suf->normal[VZ] > 0, shadowRGB, shadowDark);
+                  suf->normal()[VZ] > 0, shadowRGB, shadowDark);
 }
 
-static void drawLinkedEdgeShadows(BspLeaf const *bspLeaf, shadowlink_t *link,
+static void drawLinkedEdgeShadows(BspLeaf const &bspLeaf, ShadowLink &link,
     byte const *doPlanes, float shadowDark)
 {
-    DENG_ASSERT(bspLeaf && link && doPlanes);
+    DENG_ASSERT(doPlanes);
 
     if(!(shadowDark > .0001f)) return;
 
-    if(doPlanes[PLN_FLOOR])
+    if(doPlanes[Plane::Floor])
     {
-        processEdgeShadow(bspLeaf, link->lineDef, link->side, PLN_FLOOR, shadowDark);
+        processEdgeShadow(bspLeaf, link.line, link.side, Plane::Floor, shadowDark);
     }
 
-    if(doPlanes[PLN_CEILING])
+    if(doPlanes[Plane::Ceiling])
     {
-        processEdgeShadow(bspLeaf, link->lineDef, link->side, PLN_CEILING, shadowDark);
+        processEdgeShadow(bspLeaf, link.line, link.side, Plane::Ceiling, shadowDark);
     }
 
-    for(uint pln = PLN_MID; pln < bspLeaf->sector->planeCount(); ++pln)
+    for(int pln = Plane::Middle; pln < bspLeaf.sector().planeCount(); ++pln)
     {
-        processEdgeShadow(bspLeaf, link->lineDef, link->side, pln, shadowDark);
+        processEdgeShadow(bspLeaf, link.line, link.side, pln, shadowDark);
     }
 
     // Mark it rendered for this frame.
-    link->lineDef->L_side(link->side).shadowVisFrame = ushort(frameCount);
+    link.lineSide().setShadowVisCount(frameCount);
 }
 
 /**
- * Render the shadowpolygons linked to the BspLeaf, if they haven't
- * already been rendered.
- *
- * Don't use the global radio state in here, the BSP leaf can be part of
- * any sector, not the one chosen for wall rendering.
+ * @attention Do not use the global radio state in here, as @a bspLeaf can be
+ * part of any sector, not the one chosen for wall rendering.
  */
-static void radioBspLeafEdges(BspLeaf const *bspLeaf)
+void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
 {
-    static size_t doPlaneSize = 0;
+    if(!rendFakeRadio || levelFullBright) return;
+
+    static int doPlaneSize = 0;
     static byte *doPlanes = 0;
 
-    float sectorlight = bspLeaf->sector->lightLevel;
+    Sector &sector = bspLeaf.sector();
+    float sectorlight = sector.lightLevel();
     boolean workToDo = false;
 
     Rend_ApplyLightAdaptation(&sectorlight);
@@ -1473,13 +1477,11 @@ static void radioBspLeafEdges(BspLeaf const *bspLeaf)
     // Any need to continue?
     if(!(shadowDark > .0001f)) return;
 
-    float vec[3];
-    vec[VX] = vOrigin[VX] - bspLeaf->midPoint[VX];
-    vec[VY] = vOrigin[VZ] - bspLeaf->midPoint[VY];
-    vec[VZ] = 0;
+    Vector3f eyeToSurface(vOrigin[VX] - bspLeaf.center().x,
+                          vOrigin[VZ] - bspLeaf.center().y);
 
     // Do we need to enlarge the size of the doPlanes array?
-    if(bspLeaf->sector->planeCount() > doPlaneSize)
+    if(sector.planeCount() > doPlaneSize)
     {
         if(!doPlaneSize)
             doPlaneSize = 2;
@@ -1492,14 +1494,14 @@ static void radioBspLeafEdges(BspLeaf const *bspLeaf)
     std::memset(doPlanes, 0, doPlaneSize);
 
     // See if any of this BspLeaf's planes will get shadows.
-    for(uint pln = 0; pln < bspLeaf->sector->planeCount(); ++pln)
+    for(int pln = 0; pln < sector.planeCount(); ++pln)
     {
-        Plane const *plane = bspLeaf->sector->planes[pln];
+        Plane const &plane = sector.plane(pln);
 
-        vec[VZ] = vOrigin[VY] - plane->visHeight;
+        eyeToSurface.z = vOrigin[VY] - plane.visHeight();
 
         // Don't bother with planes facing away from the camera.
-        if(V3f_DotProduct(vec, plane->PS_normal) < 0) continue;
+        if(eyeToSurface.dot(plane.surface().normal()) < 0) continue;
 
         doPlanes[pln] = true;
         workToDo = true;
@@ -1509,45 +1511,35 @@ static void radioBspLeafEdges(BspLeaf const *bspLeaf)
 
     // We need to check all the shadow lines linked to this BspLeaf for
     // the purpose of fakeradio shadowing.
-    for(shadowlink_t *link = bspLeaf->shadows; link != NULL; link = link->next)
+    for(ShadowLink *link = bspLeaf.firstShadowLink(); link != NULL; link = link->next)
     {
         // Already rendered during the current frame? We only want to
         // render each shadow once per frame.
-        if(link->lineDef->L_side(link->side).shadowVisFrame == (ushort) frameCount) continue;
+        if(link->lineSide().shadowVisCount() == frameCount) continue;
 
-        drawLinkedEdgeShadows(bspLeaf, link, doPlanes, shadowDark);
+        drawLinkedEdgeShadows(bspLeaf, *link, doPlanes, shadowDark);
     }
 }
 
-void Rend_RadioBspLeafEdges(BspLeaf *bspLeaf)
-{
-    if(!rendFakeRadio || levelFullBright) return;
-
-    radioBspLeafEdges(bspLeaf);
-}
-
-#if _DEBUG
-static void drawPoint(coord_t pos[3], int radius, const float color[4])
+#ifdef DENG_DEBUG
+static void drawPoint(Vector3d const &point, int radius, float const color[4])
 {
     viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
 
     // viewData->sideVec is to the left.
-    coord_t leftOff[3], rightOff[3], viewToCenter[3];
+    Vector3d leftOff, rightOff, viewToCenter;
     for(int i = 0; i < 3; ++i)
     {
         leftOff[i]  = viewData->upVec[i] + viewData->sideVec[i];
         rightOff[i] = viewData->upVec[i] - viewData->sideVec[i];
 
-        viewToCenter[i] = pos[i] - vOrigin[i];
+        viewToCenter[i] = point[i] - vOrigin[i];
     }
 
     //float scale = float(V3d_DotProductf(viewToCenter, viewData->frontVec)) /
     //                V3f_DotProduct(viewData->frontVec, viewData->frontVec);
 
-    coord_t finalPos[3];
-    finalPos[VX] = pos[VX];
-    finalPos[VY] = pos[VZ];
-    finalPos[VZ] = pos[VY];
+    Vector3d finalPos( point.x, point.z, point.y );
 
     // The final radius.
     float radX = radius * 1;
@@ -1560,21 +1552,21 @@ static void drawPoint(coord_t pos[3], int radius, const float color[4])
 
     glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
-        glVertex3d(finalPos[VX] + radX * leftOff[VX],
-                   finalPos[VY] + radY * leftOff[VY],
-                   finalPos[VZ] + radX * leftOff[VZ]);
+        glVertex3d(finalPos.x + radX * leftOff.x,
+                   finalPos.y + radY * leftOff.y,
+                   finalPos.z + radX * leftOff.z);
         glTexCoord2f(1, 0);
-        glVertex3d(finalPos[VX] + radX * rightOff[VX],
-                   finalPos[VY] + radY * rightOff[VY],
-                   finalPos[VZ] + radX * rightOff[VZ]);
+        glVertex3d(finalPos.x + radX * rightOff.x,
+                   finalPos.y + radY * rightOff.y,
+                   finalPos.z + radX * rightOff.z);
         glTexCoord2f(1, 1);
-        glVertex3d(finalPos[VX] - radX * leftOff[VX],
-                   finalPos[VY] - radY * leftOff[VY],
-                   finalPos[VZ] - radX * leftOff[VZ]);
+        glVertex3d(finalPos.x - radX * leftOff.x,
+                   finalPos.y - radY * leftOff.y,
+                   finalPos.z - radX * leftOff.z);
         glTexCoord2f(0, 1);
-        glVertex3d(finalPos[VX] - radX * rightOff[VX],
-                   finalPos[VY] - radY * rightOff[VY],
-                   finalPos[VZ] - radX * rightOff[VZ]);
+        glVertex3d(finalPos.x - radX * rightOff.x,
+                   finalPos.y - radY * rightOff.y,
+                   finalPos.z - radX * rightOff.z);
     glEnd();
 }
 
@@ -1595,29 +1587,23 @@ void Rend_DrawShadowOffsetVerts()
                             GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
     glEnable(GL_TEXTURE_2D);
 
-    for(uint i = 0; i < NUM_LINEDEFS; ++i)
+    foreach(Line *line, theMap->lines())
+    for(uint k = 0; k < 2; ++k)
     {
-        LineDef *line = GameMap_LineDef(theMap, i);
-
-        for(uint k = 0; k < 2; ++k)
+        Vertex &vtx = line->vertex(k);
+        LineOwner const *base = vtx.firstLineOwner();
+        LineOwner const *own = base;
+        do
         {
-            Vertex *vtx = line->L_v(k);
-            lineowner_t *vo = vtx->lineOwners;
+            Vector2d xy = vtx.origin() + own->extendedShadowOffset();
+            coord_t z = own->line().frontSector().floor().visHeight();
+            drawPoint(Vector3d(xy.x, xy.y, z), 1, yellow);
 
-            for(uint j = 0; j < vtx->numLineOwners; ++j)
-            {
-                coord_t pos[3];
-                pos[VZ] = vo->lineDef->L_frontsector->SP_floorvisheight;
+            xy = vtx.origin() + own->innerShadowOffset();
+            drawPoint(Vector3d(xy.x, xy.y, z), 1, red);
 
-                V2d_Sum(pos, vtx->origin, vo->shadowOffsets.extended);
-                drawPoint(pos, 1, yellow);
-
-                V2d_Sum(pos, vtx->origin, vo->shadowOffsets.inner);
-                drawPoint(pos, 1, red);
-
-                vo = vo->LO_next;
-            }
-        }
+            own = &own->next();
+        } while(own != base);
     }
 
     glDisable(GL_TEXTURE_2D);

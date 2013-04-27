@@ -23,6 +23,10 @@
 #include "de_render.h"
 #include "de_system.h"
 
+#include "map/gamemap.h"
+
+#include "render/rend_shadow.h"
+
 typedef struct {
     rvertex_t vertices[4];
     ColorRawf colors[4];
@@ -120,10 +124,10 @@ static void processMobjShadow(mobj_t* mo)
     if(!plane) return;
 
     // Do not draw shadows above the shadow caster.
-    if(plane->visHeight >= moz + mo->height) return;
+    if(plane->visHeight() >= moz + mo->height) return;
 
     // View height might prevent us from seeing the shadow.
-    if(vOrigin[VY] < plane->visHeight) return;
+    if(vOrigin[VY] < plane->visHeight()) return;
 
     // Glowing planes inversely diminish shadow strength.
     shadowStrength *= (1 - MIN_OF(1, R_GlowStrength(plane)));
@@ -131,7 +135,7 @@ static void processMobjShadow(mobj_t* mo)
     // Would this shadow be seen?
     if(!(shadowStrength >= SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)) return;
 
-    mobjOrigin[VZ] = plane->visHeight;
+    mobjOrigin[VZ] = plane->visHeight();
     drawShadowPrimitive(mobjOrigin, shadowRadius, shadowStrength);
 }
 
@@ -174,17 +178,14 @@ void Rend_RenderMobjShadows()
     // Initialize the invariant parts of our shadow primitive now.
     initShadowPrimitive();
 
-    // Process all sectors:
-    for(uint i = 0; i < NUM_SECTORS; ++i)
+    foreach(Sector *sector, theMap->sectors())
     {
-        Sector const *sec = GameMap_Sector(theMap, i);
-
         // We are only interested in those mobjs within sectors marked as
         // 'visible' for the current render frame (viewer dependent).
-        if(!(sec->frameFlags & SIF_VISIBLE)) continue;
+        if(!(sector->frameFlags() & SIF_VISIBLE)) continue;
 
         // Process all mobjs linked to this sector:
-        for(mobj_t *mo = sec->mobjList; mo; mo = mo->sNext)
+        for(mobj_t *mo = sector->firstMobj(); mo; mo = mo->sNext)
         {
             processMobjShadow(mo);
         }
@@ -192,13 +193,13 @@ void Rend_RenderMobjShadows()
 }
 
 /// Generates a new primitive for each shadow projection.
-int RIT_RenderShadowProjectionIterator(const shadowprojection_t* sp, void* paramaters)
+int RIT_RenderShadowProjectionIterator(shadowprojection_t const *sp, void *parameters)
 {
-    static const float black[3] = { 0, 0, 0 };
-    rendershadowprojectionparams_t* p = (rendershadowprojectionparams_t*)paramaters;
-    rvertex_t* rvertices;
-    rtexcoord_t* rtexcoords;
-    ColorRawf* rcolors;
+    static float const black[3] = { 0, 0, 0 };
+    rendershadowprojectionparams_t *p = (rendershadowprojectionparams_t *)parameters;
+    rvertex_t *rvertices;
+    rtexcoord_t *rtexcoords;
+    ColorRawf *rcolors;
     uint i, c;
 
     // Allocate enough for the divisions too.

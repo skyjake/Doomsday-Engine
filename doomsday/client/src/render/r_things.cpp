@@ -35,6 +35,7 @@
 #include "de_resource.h"
 
 #include "gl/sys_opengl.h" // TODO: get rid of this
+#include "map/gamemap.h"
 
 #include "def_main.h"
 #ifdef __CLIENT__
@@ -543,7 +544,7 @@ float R_ShadowStrength(mobj_t *mo)
     }
     else
     {
-        ambientLightLevel = mo->bspLeaf->sector->lightLevel;
+        ambientLightLevel = mo->bspLeaf->sector().lightLevel();
         Rend_ApplyLightAdaptation(&ambientLightLevel);
     }
 
@@ -703,8 +704,8 @@ void R_ProjectPlayerSprites()
             spr->data.model.flags = 0;
             // 32 is the raised weapon height.
             spr->data.model.gzt = viewData->current.origin[VZ];
-            spr->data.model.secFloor = ddpl->mo->bspLeaf->sector->SP_floorvisheight;
-            spr->data.model.secCeil = ddpl->mo->bspLeaf->sector->SP_ceilvisheight;
+            spr->data.model.secFloor = ddpl->mo->bspLeaf->sector().floor().visHeight();
+            spr->data.model.secCeil  = ddpl->mo->bspLeaf->sector().ceiling().visHeight();
             spr->data.model.pClass = 0;
             spr->data.model.floorClip = 0;
 
@@ -791,14 +792,14 @@ int RIT_VisMobjZ(Sector *sector, void *parameters)
     DENG_ASSERT(parameters);
     vismobjzparams_t *p = (vismobjzparams_t *) parameters;
 
-    if(p->floorAdjust && p->mo->origin[VZ] == sector->SP_floorheight)
+    if(p->floorAdjust && p->mo->origin[VZ] == sector->floor().height())
     {
-        p->vis->origin[VZ] = sector->SP_floorvisheight;
+        p->vis->origin[VZ] = sector->floor().visHeight();
     }
 
-    if(p->mo->origin[VZ] + p->mo->height == sector->SP_ceilheight)
+    if(p->mo->origin[VZ] + p->mo->height == sector->ceiling().height())
     {
-        p->vis->origin[VZ] = sector->SP_ceilvisheight - p->mo->height;
+        p->vis->origin[VZ] = sector->ceiling().visHeight() - p->mo->height;
     }
 
     return false; // Continue iteration.
@@ -900,8 +901,8 @@ void setupModelParamsForVisSprite(rendmodelparams_t *params,
     params->vLightListIdx = vLightListIdx;
 }
 
-void getLightingParams(coord_t x, coord_t y, coord_t z, BspLeaf* bspLeaf,
-    coord_t distance, boolean fullBright, float ambientColor[3], uint* vLightListIdx)
+void getLightingParams(coord_t x, coord_t y, coord_t z, BspLeaf *bspLeaf,
+    coord_t distance, boolean fullBright, float ambientColor[3], uint *vLightListIdx)
 {
     if(fullBright)
     {
@@ -922,13 +923,14 @@ void getLightingParams(coord_t x, coord_t y, coord_t z, BspLeaf* bspLeaf,
         }
         else
         {
-            float lightLevel = bspLeaf->sector->lightLevel;
-            const float* secColor = R_GetSectorLightColor(bspLeaf->sector);
+            Sector &sec = bspLeaf->sector();
+            float lightLevel = sec.lightLevel();
+            Vector3f const &secColor = R_GetSectorLightColor(sec);
 
             /* if(spr->type == VSPR_DECORATION)
             {
                 // Wall decorations receive an additional light delta.
-                lightLevel += R_WallAngleLightLevelDelta(linedef, side);
+                lightLevel += R_WallAngleLightLevelDelta(line, side);
             } */
 
             // Apply distance attenuation.
@@ -940,9 +942,10 @@ void getLightingParams(coord_t x, coord_t y, coord_t z, BspLeaf* bspLeaf,
             Rend_ApplyLightAdaptation(&lightLevel);
 
             // Determine the final ambientColor in affect.
-            ambientColor[CR] = lightLevel * secColor[CR];
-            ambientColor[CG] = lightLevel * secColor[CG];
-            ambientColor[CB] = lightLevel * secColor[CB];
+            for(int i = 0; i < 3; ++i)
+            {
+                ambientColor[i] = lightLevel * secColor[i];
+            }
         }
 
         Rend_ApplyTorchLight(ambientColor, distance);
@@ -983,15 +986,14 @@ static DGLuint prepareFlaremap(de::Uri const &resourceUri)
 
 void R_ProjectSprite(mobj_t *mo)
 {
-    Sector *moSec;
     float thangle = 0, alpha, yaw = 0, pitch = 0;
-    coord_t distance, gzt, floorClip, secFloor, secCeil;
+    coord_t distance, gzt, floorClip;
     vec3d_t visOff;
     spritedef_t *sprDef;
     spriteframe_t *sprFrame = NULL;
     boolean matFlipS, matFlipT;
     vissprite_t *vis;
-    boolean align, fullBright, viewAlign, floorAdjust;
+    boolean align, fullBright, viewAlign;
     modeldef_t *mf = 0, *nextmf = 0;
     float interp = 0;
     vismobjzparams_t params;
@@ -1008,10 +1010,10 @@ void R_ProjectSprite(mobj_t *mo)
     // is in an invalid state.
     if((mo->ddFlags & DDMF_DONTDRAW) || !mo->state || mo->state == states) return;
 
-    moSec       = mo->bspLeaf->sector;
-    secFloor    = moSec->SP_floorvisheight;
-    secCeil     = moSec->SP_ceilvisheight;
-    floorAdjust = (fabs(moSec->SP_floorvisheight - moSec->SP_floorheight) < 8);
+    Sector &moSec       = mo->bspLeaf->sector();
+    coord_t secFloor    = moSec.floor().visHeight();
+    coord_t secCeil     = moSec.ceiling().visHeight();
+    boolean floorAdjust = (fabs(moSec.floor().visHeight() - moSec.floor().height()) < 8);
 
     // Never make a vissprite when the mobj's origin sector is of zero height.
     if(secFloor >= secCeil) return;
@@ -1389,13 +1391,14 @@ typedef struct {
 
 int RIT_AddSprite(void *ptr, void *parameters)
 {
-    mobj_t *mo = (mobj_t*) ptr;
-    addspriteparams_t* params = (addspriteparams_t*)parameters;
-    Sector *sec = params->bspLeaf->sector;
     GameMap *map = theMap; /// @todo Do not assume mobj is from the CURRENT map.
+
+    mobj_t *mo = (mobj_t *) ptr;
+    addspriteparams_t *params = (addspriteparams_t *)parameters;
 
     if(mo->addFrameCount != frameCount)
     {
+        Sector &sec = params->bspLeaf->sector();
         R_ProjectSprite(mo);
 
         // Hack: Sprites have a tendency to extend into the ceiling in
@@ -1403,17 +1406,17 @@ int RIT_AddSprite(void *ptr, void *parameters)
         // that no sprites get clipped by the sky.
         // Only check
         Material *material = R_GetMaterialForSprite(mo->sprite, mo->frame);
-        if(material && sec->SP_ceilsurface.isSkyMasked())
+        if(material && sec.ceilingSurface().hasSkyMaskedMaterial())
         {
             if(!(mo->dPlayer && mo->dPlayer->flags & DDPF_CAMERA) && // Cameramen don't exist!
-               mo->origin[VZ] <= sec->SP_ceilheight &&
-               mo->origin[VZ] >= sec->SP_floorheight)
+               mo->origin[VZ] <= sec.ceiling().height() &&
+               mo->origin[VZ] >= sec.floor().height())
             {
                 coord_t visibleTop = mo->origin[VZ] + material->height();
-                if(visibleTop > GameMap_SkyFixCeiling(map))
+                if(visibleTop > map->skyFixCeiling())
                 {
                     // Raise skyfix ceiling.
-                    GameMap_SetSkyFixCeiling(map, visibleTop + 16/*leeway*/);
+                    map->setSkyFixCeiling(visibleTop + 16/*leeway*/);
                 }
             }
         }
@@ -1422,18 +1425,18 @@ int RIT_AddSprite(void *ptr, void *parameters)
     return false; // Continue iteration.
 }
 
-void R_AddSprites(BspLeaf* bspLeaf)
+void R_AddSprites(BspLeaf *bspLeaf)
 {
     addspriteparams_t params;
 
     // Do not use validCount because other parts of the renderer may change it.
-    if(bspLeaf->addSpriteCount == frameCount)
+    if(bspLeaf->addSpriteCount() == frameCount)
         return; // Already added.
 
     params.bspLeaf = bspLeaf;
     R_IterateBspLeafContacts2(bspLeaf, OT_MOBJ, RIT_AddSprite, &params);
 
-    bspLeaf->addSpriteCount = frameCount;
+    bspLeaf->setAddSpriteCount(frameCount);
 }
 
 void R_SortVisSprites()

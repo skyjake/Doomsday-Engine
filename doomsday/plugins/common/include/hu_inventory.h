@@ -31,6 +31,10 @@
 
 #if __JHERETIC__ || __JHEXEN__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void            Hu_InventoryRegister(void);
 void            Hu_InventoryInit(void);
 void            Hu_InventoryTicker(void);
@@ -46,6 +50,10 @@ void            Hu_InventoryDraw2(int player, int x, int y, float alpha);
 /// \todo refactor this away.
 void            Hu_InventoryMarkDirty(int player);
 
+#ifdef __cplusplus
+} // extern "C"
 #endif
+
+#endif // __JHERETIC__ || __JHEXEN__
 
 #endif

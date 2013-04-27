@@ -1,11 +1,7 @@
-/**
- * @file superblockmap.h
- * BSP Builder SuperBlockmap. @ingroup map
+/** @file superblockmap.h BSP Builder SuperBlockmap.
  *
- * Design is effectively that of a 2-dimensional kd-tree.
- *
- * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
- * SourceForge: http://sourceforge.net/projects/glbsp/
+ * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
+ * @see http://sourceforge.net/projects/glbsp/
  *
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
@@ -30,40 +26,37 @@
 #ifndef LIBDENG_BSP_SUPERBLOCKMAP
 #define LIBDENG_BSP_SUPERBLOCKMAP
 
-#include "dd_def.h"
-#include "dd_types.h"
-#include "map/p_maptypes.h"
-
+#include <QList>
+#include <de/aabox.h>
 #include <de/Log>
-#include <list>
+#include <de/Vector>
+
+class HEdge;
 
 namespace de {
 namespace bsp {
 
 class SuperBlock;
 
-#ifdef RIGHT
-#  undef RIGHT
-#endif
-
-#ifdef LEFT
-#  undef LEFT
-#endif
-
+/**
+ * Design is effectively that of a 2-dimensional kd-tree.
+ *
+ * @ingroup bsp
+ */
 class SuperBlockmap
 {
 public:
     /**
      * @param bounds  Bounding box in map coordinates for the whole blockmap.
      */
-    SuperBlockmap(const AABox& bounds);
+    SuperBlockmap(AABox const &bounds);
     ~SuperBlockmap();
 
     /**
      * Retrieve the root SuperBlock.
      * @return  Root SuperBlock instance.
      */
-    SuperBlock& root();
+    SuperBlock &root();
 
     /**
      * Find the axis-aligned bounding box defined by the vertices of all
@@ -80,14 +73,22 @@ public:
      */
     void clear();
 
-    operator SuperBlock&() { return root(); }
+    operator SuperBlock &() { return root(); }
 
 private:
     struct Instance;
-    Instance* d;
+    Instance *d;
 
     friend class SuperBlock;
 };
+
+#ifdef RIGHT
+#  undef RIGHT
+#endif
+
+#ifdef LEFT
+#  undef LEFT
+#endif
 
 /**
  * Subblocks:
@@ -99,7 +100,7 @@ private:
 class SuperBlock
 {
 public:
-    typedef std::list<HEdge*> HEdges;
+    typedef QList<HEdge *> HEdges;
 
     /// A SuperBlock may be subdivided with two child subblocks which are
     /// uniquely identifiable by these associated ids.
@@ -112,17 +113,39 @@ public:
     /// Assert that the specified value is a valid @a childId.
     static void inline assertValidChildId(ChildId DENG_DEBUG_ONLY(childId))
     {
-        Q_ASSERT(childId == RIGHT || childId == LEFT);
+        DENG_ASSERT(childId == RIGHT || childId == LEFT);
     }
 
+private:
+    /**
+     * SuperBlock objects must be constructed within the context of an
+     * owning SuperBlockmap. Instantiation outside of this context is not
+     * permitted. @ref SuperBlockmap
+     */
+    SuperBlock(SuperBlockmap &blockmap);
+    SuperBlock(SuperBlock &parentPtr, ChildId childId, bool splitVertical);
+    ~SuperBlock();
+
+    /**
+     * Attach a new SuperBlock instance as a child of this.
+     * @param childId  Unique identifier of the child.
+     * @param splitVertical  @c true= Subdivide this block on the y axis
+     *                       rather than the x axis.
+     */
+    SuperBlock *addChild(ChildId childId, bool splitVertical);
+
+    inline SuperBlock *addRight(bool splitVertical) { return addChild(RIGHT, splitVertical); }
+    inline SuperBlock *addLeft(bool splitVertical)  { return addChild(LEFT,  splitVertical); }
+
 public:
-    SuperBlock& clear();
+
+    SuperBlock &clear();
 
     /**
      * Retrieve the SuperBlockmap which owns this block.
      * @return  The owning SuperBlockmap instance.
      */
-    SuperBlockmap& blockmap() const;
+    SuperBlockmap &blockmap() const;
 
     /**
      * Retrieve the axis-aligned bounding box defined for this superblock
@@ -131,31 +154,44 @@ public:
      *
      * @return  Axis-aligned bounding box.
      */
-    const AABox& bounds() const;
+    AABox const &bounds() const;
 
     /**
      * Is this block small enough to be considered a "leaf"? A leaf in this
      * context is a block whose dimensions are <= [256, 256] and thus can
      * not be subdivided any further.
      */
-    bool isLeaf() const;
+    bool isLeaf() const
+    {
+        AABox const &aaBox = bounds();
+        Vector2i dimensions = Vector2i(aaBox.max) - Vector2i(aaBox.min);
+        return (dimensions.x <= 256 && dimensions.y <= 256);
+    }
 
+    /**
+     * Returns @c true iff the block has a parent.
+     */
     bool hasParent() const;
 
-    SuperBlock* parent() const;
-
     /**
-     * Does this block have a child subblock?
+     * Returns a pointer to the parent block; otherwise @c 0.
+     *
+     * @see hasParent()
      */
-    bool hasChild(ChildId childId) const;
+    SuperBlock *parentPtr() const;
 
     /**
-     * Does this block have a Right child subblock?
+     * Returns @c true iff the block has the specified @a child subblock.
+     */
+    bool hasChild(ChildId child) const;
+
+    /**
+     * Returns @c true iff the block has a right child subblock.
      */
     inline bool hasRight() const { return hasChild(RIGHT); }
 
     /**
-     * Does this block have a Left child subblock?
+     * Returns @c true iff the block has a left child subblock.
      */
     inline bool hasLeft() const  { return hasChild(LEFT); }
 
@@ -167,19 +203,19 @@ public:
      * @param childId  Subblock identifier.
      * @return  Selected subblock.
      */
-    SuperBlock* child(ChildId childId) const;
+    SuperBlock *childPtr(ChildId childId) const;
 
     /**
-     * Returns the right sub-block.
-     * @see SuperBlock::child()
+     * Returns the right subblock.
+     * @see SuperBlock::childPtr()
      */
-    inline SuperBlock* right() const { return child(RIGHT); }
+    inline SuperBlock *rightPtr() const { return childPtr(RIGHT); }
 
     /**
-     * Returns the left sub-block.
-     * @see SuperBlock::child()
+     * Returns the left subblock.
+     * @see SuperBlock::childPtr()
      */
-    inline SuperBlock* left()  const { return child(LEFT); }
+    inline SuperBlock *leftPtr()  const { return childPtr(LEFT); }
 
     /**
      * Perform a depth-first traversal over all child superblocks and
@@ -188,11 +224,11 @@ public:
      * been visited or @a callback returns a non-zero value.
      *
      * @param callback       Callback function ptr.
-     * @param parameters     Passed to the callback. Default=NULL.
+     * @param parameters     Passed to the callback.
      *
      * @return  @c 0 iff iteration completed wholly.
      */
-    int traverse(int (C_DECL *callback)(SuperBlock*, void*), void* parameters=NULL);
+    int traverse(int (*callback)(SuperBlock *, void *), void *parameters = 0);
 
     /**
      * Find the axis-aligned bounding box defined by the vertices of all
@@ -202,7 +238,7 @@ public:
      *
      * @param bounds  Determined bounds are written here.
      */
-    void findHEdgeBounds(AABoxd& bounds);
+    void findHEdgeBounds(AABoxd &bounds);
 
     /**
      * Retrieve the total number of HEdges linked in this superblock
@@ -217,7 +253,7 @@ public:
 
     /// Convenience functions for retrieving HEdge totals:
     inline uint miniHEdgeCount() const {  return hedgeCount(false, true); }
-    inline uint realHEdgeCount() const { return hedgeCount(true, false); }
+    inline uint realHEdgeCount() const {  return hedgeCount(true, false); }
     inline uint totalHEdgeCount() const { return hedgeCount(true, true); }
 
     /**
@@ -227,7 +263,7 @@ public:
      * @param hedge  HEdge instance to add.
      * @return  SuperBlock instance the HEdge was actually linked to.
      */
-    SuperBlock& push(HEdge& hedge);
+    SuperBlock &push(HEdge &hedge);
 
     /**
      * Pop (unlink) the next HEdge from the FIFO list of half-edges linked
@@ -235,49 +271,12 @@ public:
      *
      * @return  Previous top-most HEdge instance or @c NULL if empty.
      */
-    HEdge* pop();
-
-    const HEdges& hedges() const;
-
-#ifdef DENG_DEBUG
-    static void DebugPrint(SuperBlock const& inst)
-    {
-        DENG2_FOR_EACH_CONST(SuperBlock::HEdges, it, inst.hedges())
-        {
-            HEdge* hedge = *it;
-            LOG_DEBUG("Build: %s %p sector: %d [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
-                << (hedge->lineDef? "NORM" : "MINI")
-                << hedge << hedge->sector->buildData.index
-                << hedge->v[0]->origin[VX] << hedge->v[0]->origin[VY]
-                << hedge->v[1]->origin[VX] << hedge->v[1]->origin[VY];
-        }
-    }
-#endif
-
-private:
-    /**
-     * SuperBlock objects must be constructed within the context of an
-     * owning SuperBlockmap. Instantiation outside of this context is not
-     * permitted. @ref SuperBlockmap
-     */
-    SuperBlock(SuperBlockmap& blockmap);
-    SuperBlock(SuperBlock& parent, ChildId childId, bool splitVertical);
-    ~SuperBlock();
+    HEdge *pop();
 
     /**
-     * Attach a new SuperBlock instance as a child of this.
-     * @param childId  Unique identifier of the child.
-     * @param splitVertical  @c true= Subdivide this block on the y axis
-     *                       rather than the x axis.
+     * Provides access to the list of half-edges for efficient traversal.
      */
-    SuperBlock* addChild(ChildId childId, bool splitVertical);
-
-    inline SuperBlock* addRight(bool splitVertical) { return addChild(RIGHT, splitVertical); }
-    inline SuperBlock* addLeft(bool splitVertical)  { return addChild(LEFT,  splitVertical); }
-
-private:
-    struct Instance;
-    Instance* d;
+    HEdges const &hedges() const;
 
     /**
      * SuperBlockmap creates instances of SuperBlock so it needs to use
@@ -285,6 +284,10 @@ private:
      * object reference as a parameter.
      */
     friend struct SuperBlockmap::Instance;
+
+private:
+    struct Instance;
+    Instance *d;
 };
 
 } // namespace bsp

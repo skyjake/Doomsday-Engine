@@ -1,4 +1,4 @@
-/** @file
+/** @file edit_map.h: Runtime map editing.
  *
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -16,66 +16,20 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * edit_map.h: Runtime map building.
- */
+#ifndef LIBDENG_MAP_EDITOR_H
+#define LIBDENG_MAP_EDITOR_H
 
-#ifndef __DOOMSDAY_MAP_EDITOR_H__
-#define __DOOMSDAY_MAP_EDITOR_H__
+#include <QList>
+#include "Vertex"
 
-#ifndef __cplusplus
-#  error "edit_map.h requires C++"
-#endif
+class GameMap;
 
-#include <vector>
-#include "map/gamemap.h"
-#include "Materials"
+DENG_EXTERN_C int bspFactor;
 
-// Editable map.
-/// @todo Obviously this shares functionality/data with GameMap; a common base class needed? -jk
-class EditMap
-{
-public:
-    typedef std::vector<Vertex *> Vertices;
-    Vertices vertexes; // really needs to be std::vector? (not a MapElementList?)
+void MPE_Register();
 
-    typedef std::vector<LineDef *> LineDefs;
-    LineDefs lineDefs;
+GameMap *MPE_GetLastBuiltMap();
 
-    typedef std::vector<SideDef *> SideDefs;
-    SideDefs sideDefs;
+bool MPE_GetLastBuiltMapResult();
 
-    typedef std::vector<Sector *> Sectors;
-    Sectors sectors;
-
-    uint numPolyObjs;
-    Polyobj** polyObjs;
-
-    // Game-specific map entity property values.
-    EntityDatabase* entityDatabase;
-
-public:
-    EditMap();
-
-    virtual ~EditMap();
-
-    Vertex const **verticesAsArray() const { return const_cast<Vertex const **>(&(vertexes[0])); }
-
-    uint vertexCount() const { return vertexes.size(); }
-    uint sectorCount() const { return sectors.size(); }
-};
-
-// Non-public (temporary)
-// Flags for MPE_PruneRedundantMapData().
-#define PRUNE_LINEDEFS      0x1
-#define PRUNE_VERTEXES      0x2
-#define PRUNE_SIDEDEFS      0x4
-#define PRUNE_SECTORS       0x8
-#define PRUNE_ALL           (PRUNE_LINEDEFS|PRUNE_VERTEXES|PRUNE_SIDEDEFS|PRUNE_SECTORS)
-
-void            MPE_PruneRedundantMapData(EditMap* map, int flags);
-
-GameMap*        MPE_GetLastBuiltMap(void);
-boolean         MPE_GetLastBuiltMapResult(void);
-
-#endif
+#endif // LIBDENG_MAP_EDITOR_H

@@ -54,12 +54,11 @@ struct mobj_s* ClPlayer_ClMobj(int plrNum)
     DENG_UNUSED(plrNum);
     return 0;
 }
-*/
 
 void GameMap_ClMobjReset(GameMap* map)
 {
     DENG_UNUSED(map);
-}
+}*/
 
 void Con_TransitionRegister()
 {}
@@ -429,11 +428,13 @@ struct font_s* R_CreateFontFromDef(ded_compositefont_t* def)
     return 0;
 }
 
-void Rend_Init(void)
+void Rend_Init()
 {}
 
-void Rend_DecorInit()
+/*
+void Rend_DecorInitForMap()
 {}
+*/
 
 void Rend_CacheForMobjType(int num)
 {
@@ -479,11 +480,6 @@ void Models_Shutdown()
 void Models_CacheForState(int stateIndex)
 {
     DENG_UNUSED(stateIndex);
-}
-
-void LG_SectorChanged(Sector* sector)
-{
-    DENG_UNUSED(sector);
 }
 
 void Cl_InitPlayers(void)
@@ -704,4 +700,16 @@ DENG_EXTERN_C void R_ProjectSprite(struct mobj_s *mo)
 DENG_EXTERN_C void Rend_ApplyLightAdaptation(float* val)
 {
     DENG_UNUSED(val);
+}
+
+char const *S_AudioEnvironmentName(AudioEnvironmentClass env)
+{
+    DENG_UNUSED(env);
+    return "";
+}
+
+AudioEnvironmentClass S_AudioEnvironmentForMaterial(Uri const *uri)
+{
+    DENG_UNUSED(uri);
+    return AEC_UNKNOWN;
 }

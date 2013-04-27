@@ -1,8 +1,4 @@
-/** @file partitioner.cpp BSP Partitioner. Recursive node creation and sorting. 
- * @ingroup map
- *
- * Originally based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted
- * on SourceForge: http://sourceforge.net/projects/glbsp/
+/** @file partitioner.cpp BSP Partitioner.
  *
  * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright &copy; 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
@@ -27,39 +23,74 @@
  */
 
 #include <cmath>
-#include <list>
-#include <map>
 #include <vector>
 #include <algorithm>
 
+#include <QList>
+#include <QHash>
+#include <QtAlgorithms>
+
 #include <de/Error>
 #include <de/Log>
-#include <de/memory.h>
 
-#include "de_base.h"
-
-#include "map/p_mapdata.h"
-#include "map/bspleaf.h"
-#include "map/bspnode.h"
-#include "map/hedge.h"
-#include "map/vertex.h"
+#include "BspLeaf"
+#include "BspNode"
+#include "HEdge"
+#include "Vertex"
 
 #include "map/bsp/hedgeinfo.h"
 #include "map/bsp/hedgeintercept.h"
 #include "map/bsp/hedgetip.h"
-#include "map/bsp/hplane.h"
-#include "map/bsp/linedefinfo.h"
+#include "map/bsp/lineinfo.h"
 #include "map/bsp/partitioncost.h"
 #include "map/bsp/superblockmap.h"
 #include "map/bsp/vertexinfo.h"
-#include "map/bsp/partitioner.h"
 
 #include "render/r_main.h"  // validCount
 #include "m_misc.h"         // M_BoxOnLineSide2
 
+#include "map/bsp/partitioner.h"
+
+using namespace de;
 using namespace de::bsp;
 
-// Misc utility routines (most don't belong here...):
+/**
+ * Used to model the list of half-plane intersections.
+ */
+class Intercept : public HEdgeIntercept
+{
+public:
+    /**
+     * Distance along the owning Intercepts in the map coordinate space.
+     */
+    double distance;
+
+    Intercept(double distance, HEdgeIntercept const &hedgeIntercept)
+        : HEdgeIntercept(hedgeIntercept), distance(distance)
+    {}
+
+    bool operator < (Intercept const &other) const {
+        return distance < other.distance;
+    }
+
+    /**
+     * Determine the distance between two intercepts. It does not matter
+     * if the intercepts are from different half-planes.
+     */
+    double operator - (Intercept const &other) const {
+        return distance - other.distance;
+    }
+};
+
+typedef QList<Intercept> HEdgeIntercepts;
+
+typedef QHash<MapElement *, BspTreeNode *> BuiltBspElementMap;
+
+/// Used when sorting half-edges by angle around a map point.
+typedef QList<HEdge *> HEdgeSortBuffer;
+
+/// Used when collecting half-edges from to build a leaf. @todo Refactor away.
+typedef QList<HEdge *> HEdgeList;
 
 /**
  * LineRelationship delineates the possible logical relationships between two
@@ -75,39 +106,28 @@ enum LineRelationship
     Intersects
 };
 
-static LineRelationship lineRelationship(coord_t a, coord_t b, coord_t distEpsilon);
-static AABoxd findMapBounds(GameMap* map);
-static AABox blockmapBounds(AABoxd const& mapBounds);
-static bool findBspLeafCenter(BspLeaf const& leaf, pvec2d_t midPoint);
-static void initAABoxFromEditableLineDefVertexes(AABoxd* aaBox, const LineDef* line);
-static Sector* findFirstSectorInHEdgeList(const BspLeaf* leaf);
-//DENG_DEBUG_ONLY(static bool bspLeafHasRealHEdge(BspLeaf const& leaf));
-//DENG_DEBUG_ONLY(static void printBspLeafHEdges(BspLeaf const& leaf));
-//DENG_DEBUG_ONLY(static int printSuperBlockHEdgesWorker(SuperBlock* block, void* /*parameters*/));
-//DENG_DEBUG_ONLY(static void printPartitionIntercepts(HPlane const& partition));
+/**
+ * @param a  Perpendicular distance from the start vertex to the partition.
+ * @param b  Perpendicular distance from the end vertex to the partition.
+ * @param distEpsilon  Rounding threshold within which points are considered
+ *                     to intercept of the partition line.
+ *
+ * @return  Logical relationship between the line and the partition.
+ */
+static LineRelationship lineRelationship(coord_t a, coord_t b,
+    coord_t distEpsilon = DIST_EPSILON);
 
-struct Partitioner::Instance
+static Vector2d findBspLeafCenter(BspLeaf const &leaf);
+
+//static void printPartitionIntercepts(Intersections const &intercepts);
+
+DENG2_PIMPL(Partitioner)
 {
-    typedef std::map<de::MapElement*, BspTreeNode*> BspTreeNodeMap;
-
-    /// Used when sorting BSP leaf half-edges by angle around midpoint.
-    typedef std::vector<HEdge*> HEdgeSortBuffer;
-
-    /// Used when collection half-edges from the blockmap to build a leaf.
-    /// @todo Refactor me away.
-    typedef std::list<HEdge*> HEdgeList;
-
-    /// HEdge split cost factor.
+    /// Cost factor attributed to splitting a half-edge.
     int splitCostFactor;
 
-    /// Current map which we are building BSP data for.
-    GameMap* map;
-
-    AABoxd mapBounds;
-
-    /// @todo Refactor me away:
-    uint numEditableVertexes;
-    Vertex const **editableVertexes;
+    /// The map we are building BSP data for.
+    GameMap const *map;
 
     /// Running totals of constructed BSP data objects.
     uint numNodes;
@@ -115,12 +135,12 @@ struct Partitioner::Instance
     uint numHEdges;
     uint numVertexes;
 
-    /// Extended info about LineDefs in the current map.
-    typedef std::vector<LineDefInfo> LineDefInfos;
-    LineDefInfos lineDefInfos;
+    /// Extended info about Lines in the current map.
+    typedef std::vector<LineInfo> LineInfos;
+    LineInfos lineInfos;
 
     /// Extended info about HEdges in the BSP object tree.
-    typedef std::map<HEdge*, HEdgeInfo> HEdgeInfos;
+    typedef QHash<HEdge *, HEdgeInfo> HEdgeInfos;
     HEdgeInfos hedgeInfos;
 
     /// Extended info about Vertexes in the current map (including extras).
@@ -130,89 +150,52 @@ struct Partitioner::Instance
 
     /// Extra vertexes allocated for the current map.
     /// @note May be larger than Instance::numVertexes (deallocation is lazy).
-    typedef std::vector<Vertex*> Vertexes;
+    typedef std::vector<Vertex *> Vertexes;
     Vertexes vertexes;
 
     /// Root node of our internal binary tree around which the final BSP data
     /// objects are constructed.
-    BspTreeNode* rootNode;
+    BspTreeNode *rootNode;
 
-    /// Built BSP object to internal tree node LUT.
-    BspTreeNodeMap treeNodeMap;
+    /// Mapping table which relates built BSP map elements to their counterpart
+    /// in the internal tree.
+    BuiltBspElementMap treeNodeMap;
 
-    /// HPlane used to model the "current" binary space half-plane.
-    HPlane partition;
+    /// Partition used to model the "current" binary space half-plane.
+    Partition partition;
+
+    /// Intercept points along the partition.
+    HEdgeIntercepts partitionIntercepts;
 
     /// Extra info about the partition plane.
     HEdgeInfo partitionInfo;
-    LineDef* partitionLineDef;
 
-    /// Unclosed sectors are recorded here so we don't print too many warnings.
-    struct UnclosedSectorRecord
-    {
-        Sector* sector;
-        vec2d_t nearPoint;
-
-        UnclosedSectorRecord(Sector* _sector, coord_t x, coord_t y)
-            : sector(_sector)
-        {
-            V2d_Set(nearPoint, x, y);
-        }
-    };
-    typedef std::map<Sector*, UnclosedSectorRecord> UnclosedSectors;
-    UnclosedSectors unclosedSectors;
-
-    /// Unclosed BSP leafs are recorded here so we don't print too many warnings.
-    struct UnclosedBspLeafRecord
-    {
-        BspLeaf* leaf;
-        uint gapTotal;
-
-        UnclosedBspLeafRecord(BspLeaf* _leaf, uint _gapTotal)
-            : leaf(_leaf), gapTotal(_gapTotal)
-        {}
-    };
-    typedef std::map<BspLeaf*, UnclosedBspLeafRecord> UnclosedBspLeafs;
-    UnclosedBspLeafs unclosedBspLeafs;
-
-    /// Migrant hedges are recorded here so we don't print too many warnings.
-    struct MigrantHEdgeRecord
-    {
-        HEdge* hedge;
-        Sector* facingSector;
-
-        MigrantHEdgeRecord(HEdge* _hedge, Sector* _facingSector)
-            : hedge(_hedge), facingSector(_facingSector)
-        {}
-    };
-    typedef std::map<HEdge*, MigrantHEdgeRecord> MigrantHEdges;
-    MigrantHEdges migrantHEdges;
+    /// Map line for the partition.
+    Line *partitionLine;
 
     /// @c true = a BSP for the current map has been built successfully.
-    bool builtOK;
+    bool builtOk;
 
-    Instance(GameMap* _map, uint _numEditableVertexes,
-             Vertex const **_editableVertexes, int _splitCostFactor)
-      : splitCostFactor(_splitCostFactor),
-        map(_map),
-        numEditableVertexes(_numEditableVertexes), editableVertexes(_editableVertexes),
+    Instance(Public *i, GameMap const &_map, int _splitCostFactor)
+      : Base(i),
+        splitCostFactor(_splitCostFactor),
+        map(&_map),
         numNodes(0), numLeafs(0), numHEdges(0), numVertexes(0),
-        rootNode(0), treeNodeMap(), partition(), partitionLineDef(0),
-        unclosedSectors(), unclosedBspLeafs(), migrantHEdges(),
-        builtOK(false)
-    {
-        initPartitionInfo();
-    }
+        rootNode(0), partitionLine(0),
+        builtOk(false)
+    {}
 
     ~Instance()
     {
+        clearPartitionIntercepts(); // Should be empty already.
+
         clearAllHEdgeTips();
 
-        // We are finished with the BSP data.
         if(rootNode)
         {
-            // If ownership of the BSP data has been claimed this should be a no-op.
-            clearAllBspObjects();
+            // If ownership of the all built BSP map elements has been claimed
+            // this should be a no-op.
+            clearAllBspElements();
 
             // Destroy our private BSP tree.
             delete rootNode;
@@ -220,109 +203,99 @@ struct Partitioner::Instance
     }
 
     /**
-     * Retrieve the extended build info for the specified @a hedge.
-     * @return  Extended info for that HEdge.
+     * Returns the associated HEdgeInfo for the given @a hedge.
      */
-    HEdgeInfo& hedgeInfo(HEdge& hedge)
+    HEdgeInfo &hedgeInfo(HEdge &hedge)
     {
         HEdgeInfos::iterator found = hedgeInfos.find(&hedge);
-        if(found != hedgeInfos.end()) return found->second;
-        throw de::Error("Partitioner::hedgeInfo", QString("Failed locating HEdgeInfo for 0x%1").arg(de::dintptr(&hedge), 0, 16));
+        if(found != hedgeInfos.end())
+        {
+            return found.value();
+        }
+        throw Error("Partitioner::hedgeInfo", QString("Failed locating HEdgeInfo for 0x%1")
+                                                  .arg(de::dintptr(&hedge), 0, 16));
     }
 
-    const HEdgeInfo& hedgeInfo(const HEdge& hedge) const
+    /// @copydoc hedgeInfo()
+    HEdgeInfo const &hedgeInfo(HEdge const &hedge) const
     {
-        HEdgeInfos::const_iterator found = hedgeInfos.find(const_cast<HEdge*>(&hedge));
-        if(found != hedgeInfos.end()) return found->second;
-        throw de::Error("Partitioner::hedgeInfo", QString("Failed locating HEdgeInfo for 0x%1").arg(de::dintptr(&hedge), 0, 16));
+        return const_cast<HEdgeInfo const &>(
+                    const_cast<Instance *>(this)->hedgeInfo(const_cast<HEdge &>(hedge)));
     }
 
     /**
-     * Retrieve the extended build info for the specified @a vertex.
-     * @return  Extended info for that Vertex.
+     * Returns the associated VertexInfo for the given @a vertex.
      */
-    VertexInfo& vertexInfo(Vertex const &vertex)
+    VertexInfo &vertexInfo(Vertex const &vertex)
     {
-        return vertexInfos[vertex.buildData.index - 1];
-    }
-
-    inline bool lineMightHaveWindowEffect(LineDef const* line)
-    {
-        if(!line) return false;
-        if(line->inFlags & LF_POLYOBJ) return false;
-        if((line->L_frontsidedef && line->L_backsidedef) || !line->L_frontsidedef) return false;
-        //if(line->length <= 0 || line->buildData.overlap) return false;
-
-        // Look for window effects by checking for an odd number of one-sided
-        // linedefs owners for a single vertex. Idea courtesy of Graham Jackson.
-        VertexInfo const& v1Info = vertexInfo(*line->L_v1);
-        if((v1Info.oneSidedOwnerCount % 2) == 1 && (v1Info.oneSidedOwnerCount + v1Info.twoSidedOwnerCount) > 1) return true;
-
-        VertexInfo const& v2Info = vertexInfo(*line->L_v2);
-        if((v2Info.oneSidedOwnerCount % 2) == 1 && (v2Info.oneSidedOwnerCount + v2Info.twoSidedOwnerCount) > 1) return true;
-
-        return false;
+        return vertexInfos[vertex.indexInMap()];
     }
 
     struct testForWindowEffectParams
     {
         double frontDist, backDist;
-        Sector* frontOpen, *backOpen;
-        LineDef* frontLine, *backLine;
-        LineDef* testLine;
-        coord_t mX, mY;
+        Sector *frontOpen, *backOpen;
+        Line *frontLine, *backLine;
+        Line *testLine;
+        Vector2d m;
         bool castHoriz;
 
         testForWindowEffectParams()
             : frontDist(0), backDist(0), frontOpen(0), backOpen(0),
-              frontLine(0), backLine(0), testLine(0), mX(0), mY(0), castHoriz(false)
+              frontLine(0), backLine(0), testLine(0), castHoriz(false)
         {}
     };
 
-    /// @return  Always @c 0 (used as a traverser callback).
-    static int testForWindowEffectWorker(LineDef* line, void* parameters = 0)
+    static void testForWindowEffect2(Line &line, testForWindowEffectParams &p)
     {
-        testForWindowEffectParams& p = *reinterpret_cast<testForWindowEffectParams*>(parameters);
-
-        if(line == p.testLine) return false;
-        if(LINE_SELFREF(line) /*|| line->buildData.overlap || line->length <= 0*/) return false;
+        if(&line == p.testLine) return;
+        /// @todo Should the presence of sections really affect this? -ds
+        if(line.hasFrontSections() && line.hasBackSections() && line.isSelfReferencing()) return;
+        //if(line._buildData.overlap || line.length() <= 0) return;
 
         double dist = 0;
-        Sector* hitSector = 0;
+        Sector *hitSector = 0;
         bool isFront = false;
         if(p.castHoriz)
         {
-            if(fabs(line->direction[VY]) < DIST_EPSILON) return false;
+            if(de::abs(line.direction().y) < DIST_EPSILON)
+                return;
 
-            if((MAX_OF(line->L_v1origin[VY], line->L_v2origin[VY]) < p.mY - DIST_EPSILON) ||
-               (MIN_OF(line->L_v1origin[VY], line->L_v2origin[VY]) > p.mY + DIST_EPSILON)) return false;
+            if((line.aaBox().maxY < p.m.y - DIST_EPSILON) ||
+               (line.aaBox().minY > p.m.y + DIST_EPSILON))
+                return;
 
-            dist = (line->L_v1origin[VX] + (p.mY - line->L_v1origin[VY]) * line->direction[VX] / line->direction[VY]) - p.mX;
+            dist = (line.fromOrigin().x + (p.m.y - line.fromOrigin().y) * line.direction().x / line.direction().y) - p.m.x;
 
-            isFront = ((p.testLine->direction[VY] > 0) != (dist > 0));
+            isFront = ((p.testLine->direction().y > 0) != (dist > 0));
+            dist = de::abs(dist);
 
-            dist = fabs(dist);
-            if(dist < DIST_EPSILON) return false; // Too close (overlapping lines ?)
+            // Too close? (overlapping lines?)
+            if(dist < DIST_EPSILON)
+                return;
 
-            hitSector = line->L_sector((p.testLine->direction[VY] > 0) ^ (line->direction[VY] > 0) ^ !isFront);
+            hitSector = line.sectorPtr((p.testLine->direction().y > 0) ^ (line.direction().y > 0) ^ !isFront);
         }
         else // Cast vertically.
         {
-            if(fabs(line->direction[VX]) < DIST_EPSILON) return false;
+            if(de::abs(line.direction().x) < DIST_EPSILON)
+                return;
 
-            if((MAX_OF(line->L_v1origin[VX], line->L_v2origin[VX]) < p.mX - DIST_EPSILON) ||
-               (MIN_OF(line->L_v1origin[VX], line->L_v2origin[VX]) > p.mX + DIST_EPSILON)) return false;
+            if((line.aaBox().maxX < p.m.x - DIST_EPSILON) ||
+               (line.aaBox().minX > p.m.x + DIST_EPSILON))
+                return;
 
-            dist = (line->L_v1origin[VY] + (p.mX - line->L_v1origin[VX]) * line->direction[VY] / line->direction[VX]) - p.mY;
+            dist = (line.fromOrigin().y + (p.m.x - line.fromOrigin().x) * line.direction().y / line.direction().x) - p.m.y;
 
-            isFront = ((p.testLine->direction[VX] > 0) == (dist > 0));
+            isFront = ((p.testLine->direction().x > 0) == (dist > 0));
+            dist = de::abs(dist);
 
-            dist = fabs(dist);
-
-            hitSector = line->L_sector((p.testLine->direction[VX] > 0) ^ (line->direction[VX] > 0) ^ !isFront);
+            hitSector = line.sectorPtr((p.testLine->direction().x > 0) ^ (line.direction().x > 0) ^ !isFront);
         }
 
-        if(dist < DIST_EPSILON) return false; // Too close (overlapping lines ?)
+        // Too close? (overlapping lines?)
+        if(dist < DIST_EPSILON)
+            return;
 
         if(isFront)
         {
@@ -330,7 +303,7 @@ struct Partitioner::Instance
             {
                 p.frontDist = dist;
                 p.frontOpen = hitSector;
-                p.frontLine = line;
+                p.frontLine = &line;
             }
         }
         else
@@ -339,203 +312,223 @@ struct Partitioner::Instance
             {
                 p.backDist = dist;
                 p.backOpen = hitSector;
-                p.backLine = line;
+                p.backLine = &line;
             }
         }
+    }
+
+    static int testForWindowEffectWorker(Line *line, void *parms)
+    {
+        testForWindowEffect2(*line, *reinterpret_cast<testForWindowEffectParams *>(parms));
+        return false; // Continue iteration.
+    }
+
+    bool lineMightHaveWindowEffect(Line const &line)
+    {
+        if(line.isFromPolyobj()) return false;
+        if(line.hasFrontSections() && line.hasBackSections()) return false;
+        if(!line.hasFrontSections()) return false;
+        //if(line.length() <= 0 || line._buildData.overlap) return false;
+
+        // Look for window effects by checking for an odd number of one-sided
+        // line owners for a single vertex. Idea courtesy of Graham Jackson.
+        VertexInfo const &fromInfo = vertexInfo(line.from());
+        if((fromInfo.oneSidedOwnerCount % 2) == 1 &&
+           (fromInfo.oneSidedOwnerCount + fromInfo.twoSidedOwnerCount) > 1)
+            return true;
+
+        VertexInfo const &toInfo = vertexInfo(line.to());
+        if((toInfo.oneSidedOwnerCount % 2) == 1 &&
+           (toInfo.oneSidedOwnerCount + toInfo.twoSidedOwnerCount) > 1)
+            return true;
 
         return false;
     }
 
-    void testForWindowEffect(LineDefInfo& lineInfo)
+    void testForWindowEffect(LineInfo &lineInfo)
     {
-        LineDef* line = lineInfo.lineDef;
-        if(!lineMightHaveWindowEffect(line)) return;
+        Line *line = lineInfo.line;
+        DENG_ASSERT(line != 0);
+
+        if(!lineMightHaveWindowEffect(*line)) return;
 
         testForWindowEffectParams p;
         p.frontDist = p.backDist = DDMAXFLOAT;
-        p.testLine = line;
-        p.mX = (line->L_v1origin[VX] + line->L_v2origin[VX]) / 2.0;
-        p.mY = (line->L_v1origin[VY] + line->L_v2origin[VY]) / 2.0;
-        p.castHoriz = (fabs(line->direction[VX]) < fabs(line->direction[VY])? true : false);
+        p.testLine  = line;
+        p.m         = line->center();
+        p.castHoriz = (de::abs(line->direction().x) < de::abs(line->direction().y)? true : false);
 
-        AABoxd scanRegion = mapBounds;
+        AABoxd scanRegion = map->bounds();
         if(p.castHoriz)
         {
-            scanRegion.minY = MIN_OF(line->L_v1origin[VY], line->L_v2origin[VY]) - DIST_EPSILON;
-            scanRegion.maxY = MAX_OF(line->L_v1origin[VY], line->L_v2origin[VY]) + DIST_EPSILON;
+            scanRegion.minY = line->aaBox().minY - DIST_EPSILON;
+            scanRegion.maxY = line->aaBox().maxY + DIST_EPSILON;
         }
         else
         {
-            scanRegion.minX = MIN_OF(line->L_v1origin[VX], line->L_v2origin[VX]) - DIST_EPSILON;
-            scanRegion.maxX = MAX_OF(line->L_v1origin[VX], line->L_v2origin[VX]) + DIST_EPSILON;
+            scanRegion.minX = line->aaBox().minX - DIST_EPSILON;
+            scanRegion.maxX = line->aaBox().maxX + DIST_EPSILON;
         }
         validCount++;
-        GameMap_LineDefsBoxIterator(map, &scanRegion, testForWindowEffectWorker, &p);
+        map->linesBoxIterator(scanRegion, testForWindowEffectWorker, &p);
 
-        if(p.backOpen && p.frontOpen && line->L_frontsector == p.backOpen)
+        if(p.backOpen && p.frontOpen && line->frontSectorPtr() == p.backOpen)
         {
-            LOG_VERBOSE("LineDef #%d seems to be a One-Sided Window (back faces sector #%d).")
-                << line->origIndex - 1 << p.backOpen->buildData.index - 1;
+            notifyOneWayWindowFound(*line, *p.frontOpen);
 
             lineInfo.windowEffect = p.frontOpen;
-            line->inFlags |= LF_BSPWINDOW; /// @todo Refactor away.
+            line->_inFlags |= LF_BSPWINDOW; /// @todo Refactor away.
         }
     }
 
     void initForMap()
     {
-        mapBounds = findMapBounds(map);
-
         // Initialize vertex info for the initial set of vertexes.
-        vertexInfos.resize(numEditableVertexes);
+        vertexInfos.resize(map->vertexCount());
 
-        // Count the total number of one and two-sided line owners for each vertex.
-        // (Used in the process of locating window effect lines.)
-        for(uint i = 0; i < numEditableVertexes; ++i)
+        // Count the total number of one and two-sided line owners for each
+        // vertex. (Used in the process of locating window effect lines.)
+        foreach(Vertex *vtx, map->vertexes())
         {
-            Vertex const *vtx = editableVertexes[i];
-            VertexInfo& vtxInfo = vertexInfo(*vtx);
-            Vertex_CountLineOwners(vtx, &vtxInfo.oneSidedOwnerCount, &vtxInfo.twoSidedOwnerCount);
+            VertexInfo &vtxInfo = vertexInfo(*vtx);
+            vtx->countLineOwners(&vtxInfo.oneSidedOwnerCount,
+                                 &vtxInfo.twoSidedOwnerCount);
         }
 
-        // Initialize linedef info.
-        uint numLineDefs = GameMap_LineDefCount(map);
-        lineDefInfos.reserve(numLineDefs);
-        for(uint i = 0; i < numLineDefs; ++i)
+        // Initialize line info.
+        lineInfos.reserve(map->lineCount());
+        foreach(Line *line, map->lines())
         {
-            LineDef* line = GameMap_LineDef(map, i);
-            lineDefInfos.push_back(LineDefInfo(line, DIST_EPSILON));
-            LineDefInfo& lineInfo = lineDefInfos.back();
+            lineInfos.push_back(LineInfo(line, DIST_EPSILON));
+            LineInfo &lineInfo = lineInfos.back();
 
             testForWindowEffect(lineInfo);
         }
     }
 
-    /// @return The right half-edge (from @a start to @a end).
-    HEdge* buildHEdgesBetweenVertexes(Vertex* start, Vertex* end, Sector* frontSec,
-        Sector* backSec, LineDef* lineDef, LineDef* partitionLineDef)
+    /**
+     * @return The right half-edge (from @a start to @a end).
+     */
+    HEdge *buildHEdgesBetweenVertexes(Vertex &start, Vertex &end,
+        Sector *frontSec, Sector *backSec, Line::Side *frontSide,
+        Line *partitionLine)
     {
-        DENG2_ASSERT(start && end);
+        HEdge *right = newHEdge(start, end, *frontSec, frontSide, partitionLine);
+        if(!backSec) return right;
 
-        HEdge* right = newHEdge(start, end, frontSec, lineDef, partitionLineDef);
-        if(backSec)
-        {
-            HEdge* left  = newHEdge(end, start, backSec, lineDef, partitionLineDef);
-            if(lineDef)
-            {
-                left->side = BACK;
-            }
+        HEdge *left  = newHEdge(end, start, *backSec, frontSide? &frontSide->back() : 0, partitionLine);
 
-            // Twin the half-edges together.
-            right->twin = left;
-            left->twin  = right;
-        }
+        // Twin the half-edges together.
+        right->_twin = left;
+        left->_twin  = right;
 
         return right;
     }
 
-    inline HEdge* linkHEdgeInSuperBlockmap(SuperBlock& block, HEdge* hedge)
+    inline void linkHEdgeInSuperBlockmap(SuperBlock &block, HEdge &hedge)
     {
-        DENG2_ASSERT(hedge);
         // Associate this half-edge with the final subblock.
-        hedgeInfo(*hedge).bmapBlock = &block.push(*hedge);
-        return hedge;
+        hedgeInfo(hedge).bmapBlock = &block.push(hedge);
     }
 
     /**
-     * Initially create all half-edges and add them to specified SuperBlock.
+     * Create all initial half-edges and add them to specified SuperBlock.
      */
-    void createInitialHEdges(SuperBlock& hedgeList)
+    void createInitialHEdges(SuperBlock &hedgeList)
     {
-        DENG2_FOR_EACH(LineDefInfos, i, lineDefInfos)
+        DENG2_FOR_EACH(LineInfos, i, lineInfos)
         {
-            LineDefInfo const& lineInfo = *i;
-            LineDef* line = lineInfo.lineDef;
-            // Polyobj lines are completely ignored.
-            if(line->inFlags & LF_POLYOBJ) continue;
+            LineInfo const &lineInfo = *i;
+            Line *line = lineInfo.line;
 
-            HEdge* front  = 0;
+            // Polyobj lines are completely ignored.
+            if(line->isFromPolyobj()) continue;
+
+            HEdge *front  = 0;
             coord_t angle = 0;
 
-            if(!lineInfo.flags.testFlag(LineDefInfo::ZeroLength))
+            if(!lineInfo.flags.testFlag(LineInfo::ZeroLength))
             {
-                Sector* frontSec = line->L_frontsector;
-                Sector* backSec  = 0;
-                if(line->L_backsidedef)
+                Sector *frontSec = line->frontSectorPtr();
+                Sector *backSec  = 0;
+
+                if(line->hasBackSections())
                 {
-                    backSec = line->L_backsector;
+                    backSec = line->backSectorPtr();
                 }
                 else
                 {
-                    // Handle the 'One-Sided Window' trick.
-                    Sector* windowSec = lineInfo.windowEffect;
+                    // Handle the 'One-Way Window' effect.
+                    Sector *windowSec = lineInfo.windowEffect;
                     if(windowSec) backSec = windowSec;
                 }
 
-                front = buildHEdgesBetweenVertexes(line->L_v1, line->L_v2,
-                                                   frontSec, backSec, line, line);
-                angle = hedgeInfo(*front).pAngle;
+                front = buildHEdgesBetweenVertexes(line->from(), line->to(),
+                                                   frontSec, backSec, &line->front(), line);
 
-                linkHEdgeInSuperBlockmap(hedgeList, front);
-                if(front->twin)
+                linkHEdgeInSuperBlockmap(hedgeList, *front);
+                if(front->hasTwin())
                 {
-                    linkHEdgeInSuperBlockmap(hedgeList, front->twin);
+                    linkHEdgeInSuperBlockmap(hedgeList, front->twin());
                 }
+
+                angle = hedgeInfo(*front).pAngle;
             }
 
-            // @todo edge tips should be created when half-edges are created.
-            addHEdgeTip(line->L_v1, angle,                 front, front? front->twin : 0);
-            addHEdgeTip(line->L_v2, M_InverseAngle(angle), front? front->twin : 0, front);
+            /// @todo edge tips should be created when half-edges are created.
+            addHEdgeTip(line->from(), angle,                 front, front? front->twinPtr() : 0);
+            addHEdgeTip(  line->to(), M_InverseAngle(angle), front? front->twinPtr() : 0, front);
         }
     }
 
-    bool buildBsp(SuperBlock& rootBlock)
+    void buildBsp(SuperBlock &rootBlock)
     {
         try
         {
             createInitialHEdges(rootBlock);
 
-            rootNode = buildNodes(rootBlock);
+            rootNode = divideSubspace(rootBlock);
             // At this point we know that something useful was built.
-            builtOK = true;
+            builtOk = true;
 
             windLeafs();
         }
-        catch(de::Error& /*er*/)
+        catch(Error & /*er*/)
         {
             // Don't handle the error here, simply record failure.
-            builtOK = false;
+            builtOk = false;
             throw;
         }
-
-        return builtOK;
     }
 
-    const HPlaneIntercept* makePartitionIntersection(HEdge* hedge, bool leftSide)
+    void makePartitionIntersection(HEdge &hedge, bool leftSide)
     {
-        DENG2_ASSERT(hedge);
+        Vertex &vertex = hedge.vertex(leftSide);
 
-        // Already present on this edge?
-        Vertex* vertex = hedge->HE_v(leftSide);
-        const HPlaneIntercept* inter = partitionInterceptByVertex(vertex);
-        if(inter) return inter;
+        // Already present for this edge?
+        if(partitionHasInterceptForVertex(vertex)) return;
 
-        HEdgeInfo& hInfo = hedgeInfo(*hedge);
-        bool isSelfRefLine = (hInfo.lineDef && lineDefInfos[hInfo.lineDef->origIndex-1].flags.testFlag(LineDefInfo::SelfRef));
-        HEdgeIntercept* intercept = newHEdgeIntercept(vertex, isSelfRefLine);
+        HEdgeInfo &hInfo = hedgeInfo(hedge);
+        bool isSelfRefLine = (hInfo.line && lineInfos[hInfo.line->indexInMap()].flags.testFlag(LineInfo::SelfRef));
 
-        return &partition.newIntercept(vertexDistanceFromPartition(vertex), intercept);
+        coord_t distance = vertexDistanceFromPartition(vertex);
+
+        HEdgeIntercept inter;
+        inter.vertex  = &vertex;
+        inter.selfRef = isSelfRefLine;
+
+        inter.before  = openSectorAtAngle(vertex, M_InverseAngle(partitionInfo.pAngle));
+        inter.after   = openSectorAtAngle(vertex, partitionInfo.pAngle);
+
+        partitionIntercepts.append(Intercept(distance, inter));
     }
 
-    /**
-     * @return  Same as @a final for caller convenience.
-     */
-    HEdgeIntercept& mergeHEdgeIntercepts(HEdgeIntercept& final, HEdgeIntercept& other)
+    void mergeHEdgeIntercepts(HEdgeIntercept &final, HEdgeIntercept &other)
     {
         /*
         LOG_TRACE("Merging intersections:");
-        HEdgeIntercept::DebugPrint(final);
-        HEdgeIntercept::DebugPrint(other);
+        final.debugPrint();
+        other.debugPrint();
         */
 
         if(final.selfRef && !other.selfRef)
@@ -557,209 +550,213 @@ struct Partitioner::Instance
 
         /*
         LOG_TRACE("Result:");
-        HEdgeIntercept::DebugPrint(final);
+        final.debugPrint();
         */
-
-        // Destroy the redundant other.
-        delete &other;
-        return final;
-    }
-
-    static bool mergeInterceptDecide(HPlaneIntercept& a, HPlaneIntercept& b, void* userData)
-    {
-        const coord_t distance = b - a;
-
-        // Too great a distance between the two?
-        if(distance > DIST_EPSILON) return false;
-
-        HEdgeIntercept* cur  = reinterpret_cast<HEdgeIntercept*>(a.userData());
-        HEdgeIntercept* next = reinterpret_cast<HEdgeIntercept*>(b.userData());
-
-        // Merge info for the two intersections into one (next is destroyed).
-        reinterpret_cast<Partitioner::Instance*>(userData)->mergeHEdgeIntercepts(*cur, *next);
-        return true;
     }
 
     /**
-     * @todo fixme: Logically this is very suspect. Implementing this logic by merging
-     *       near-intercepts at hplane level is wrong because this does nothing about
-     *       any intercepting half-edge vertices. Consequently, rather than moving the
-     *       existing vertices and welding them, this will result in the creation of
-     *       new gaps gaps along the partition (which buildHEdgesAtIntersectionGaps()
-     *       will then warn about) and result in holes in the map.
+     * Sort and then merge near-intercepts from the given list.
      *
-     *       This should be redesigned so that near-intercepting vertices are welded
-     *       in a stable manner (i.e., not incrementally, which can result in vertices
-     *       drifting away from the hplane). Logically, therefore, this should not be
-     *       done prior to creating hedges along the partition - instead this should
-     *       happen afterwards. -ds
+     * @todo fixme: Logically this is very suspect. Implementing this logic by
+     * merging near-intercepts at hplane level is wrong because this does
+     * nothing about any intercepting half-edge vertices. Consequently, rather
+     * than moving the existing vertices and welding them, this will result in
+     * the creation of new gaps gaps along the partition and result in holes
+     * (which buildHEdgesAtIntersectionGaps() will then warn about).
+     *
+     * This should be redesigned so that near-intercepting vertices are welded
+     * in a stable manner (i.e., not incrementally, which can result in vertices
+     * drifting away from the hplane). Logically, therefore, this should not
+     * be done prior to creating hedges along the partition - instead this
+     * should happen afterwards. -ds
+     *
+     * @param intercepts  The list of intercepts to be sorted (in place).
      */
-    void mergeIntercepts()
+    void sortAndMergeIntercepts(HEdgeIntercepts &intercepts)
     {
-        HPlane::mergepredicate_t callback = &Partitioner::Instance::mergeInterceptDecide;
-        partition.mergeIntercepts(callback, this);
+        qSort(intercepts.begin(), intercepts.end());
+
+        for(int i = 0; i < intercepts.count() - 1; ++i)
+        {
+            Intercept &cur  = intercepts[i];
+            Intercept &next = intercepts[i+1];
+
+            // Sanity check.
+            double distance = next.distance - cur.distance;
+            if(distance < -0.1)
+            {
+                throw Error("sortAndMergeIntercepts", QString("Invalid intercept order - %1 > %2")
+                                                   .arg(cur.distance, 0, 'f', 3)
+                                                   .arg(next.distance, 0, 'f', 3));
+            }
+
+            // Are we merging this pair?
+            if(distance <= DIST_EPSILON)
+            {
+                // Yes - merge the two intercepts into one.
+                mergeHEdgeIntercepts(cur, next);
+
+                // Destroy the "next" intercept.
+                intercepts.removeAt(i+1);
+
+                // Process the new "this" and "next" pairing.
+                i -= 1;
+            }
+        }
     }
 
-    void buildHEdgesAtPartitionGaps(SuperBlock& rightList, SuperBlock& leftList)
+    void buildHEdgesAtPartitionGaps(HEdgeIntercepts const &sortedIntercepts,
+                                    SuperBlock &rightList, SuperBlock &leftList)
     {
-        HPlane::Intercepts::const_iterator node = partition.intercepts().begin();
-        while(node != partition.intercepts().end())
+        for(int i = 0; i < sortedIntercepts.count() - 1; ++i)
         {
-            HPlane::Intercepts::const_iterator np = node; np++;
-            if(np == partition.intercepts().end()) break;
+            Intercept const &cur  = sortedIntercepts[i];
+            Intercept const &next = sortedIntercepts[i+1];
 
-            HEdgeIntercept const* cur  = reinterpret_cast<HEdgeIntercept*>((*node).userData());
-            HEdgeIntercept const* next = reinterpret_cast<HEdgeIntercept*>(  (*np).userData());
-
-            if(!(!cur->after && !next->before))
+            if(!(!cur.after && !next.before))
             {
                 // Check for some nasty open/closed or close/open cases.
-                if(cur->after && !next->before)
+                if(cur.after && !next.before)
                 {
-                    if(!cur->selfRef)
+                    if(!cur.selfRef)
                     {
-                        coord_t pos[2];
-
-                        pos[VX] = cur->vertex->origin[VX] + next->vertex->origin[VX];
-                        pos[VY] = cur->vertex->origin[VY] + next->vertex->origin[VY];
-                        pos[VX] /= 2;
-                        pos[VY] /= 2;
-
-                        registerUnclosedSector(cur->after, pos[VX], pos[VY]);
+                        Vector2d nearPoint = (cur.vertex->origin() + next.vertex->origin()) / 2;
+                        notifyUnclosedSectorFound(*cur.after, nearPoint);
                     }
                 }
-                else if(!cur->after && next->before)
+                else if(!cur.after && next.before)
                 {
-                    if(!next->selfRef)
+                    if(!next.selfRef)
                     {
-                        coord_t pos[2];
-
-                        pos[VX] = cur->vertex->origin[VX] + next->vertex->origin[VX];
-                        pos[VY] = cur->vertex->origin[VY] + next->vertex->origin[VY];
-                        pos[VX] /= 2;
-                        pos[VY] /= 2;
-
-                        registerUnclosedSector(next->before, pos[VX], pos[VY]);
+                        Vector2d nearPoint = (cur.vertex->origin() + next.vertex->origin()) / 2;
+                        notifyUnclosedSectorFound(*next.before, nearPoint);
                     }
                 }
                 else // This is definitely open space.
                 {
                     // Choose the non-self-referencing sector when we can.
-                    Sector* sector = cur->after;
-                    if(cur->after != next->before)
+                    Sector *sector = cur.after;
+                    if(cur.after != next.before)
                     {
-                        // Do a sanity check on the sectors (just for good measure).
-                        if(!cur->selfRef && !next->selfRef)
+                        if(!cur.selfRef && !next.selfRef)
                         {
-                            LOG_DEBUG("Sector mismatch (#%d [%1.1f, %1.1f] != #%d [%1.1f, %1.1f]).")
-                                <<   cur->after->buildData.index-1 <<  cur->vertex->origin[VX] <<  cur->vertex->origin[VY]
-                                << next->before->buildData.index-1 << next->vertex->origin[VX] << next->vertex->origin[VY];
+                            LOG_DEBUG("Sector mismatch (#%d %s != #%d %s.")
+                                << cur.after->indexInMap()
+                                << cur.vertex->origin().asText()
+                                << next.before->indexInMap()
+                                << next.vertex->origin().asText();
                         }
 
-                        if(cur->selfRef && !next->selfRef)
-                            sector = next->before;
+                        if(cur.selfRef && !next.selfRef)
+                            sector = next.before;
                     }
 
-                    HEdge* right = buildHEdgesBetweenVertexes(cur->vertex, next->vertex, sector, sector,
-                                                              0 /*no linedef*/, partitionLineDef);
+                    HEdge *right = buildHEdgesBetweenVertexes(*cur.vertex, *next.vertex, sector, sector,
+                                                              0 /*no line*/, partitionLine);
 
                     // Add the new half-edges to the appropriate lists.
-                    linkHEdgeInSuperBlockmap(rightList, right);
-                    linkHEdgeInSuperBlockmap(leftList,  right->twin);
+                    linkHEdgeInSuperBlockmap(rightList, *right);
+                    linkHEdgeInSuperBlockmap(leftList,  right->twin());
 
                     /*
-                    HEdge* left = right->twin;
-                    LOG_DEBUG("Capped partition gap:\n"
-                              "  %p RIGHT sector #%d [%1.1f, %1.1f] to [%1.1f, %1.1f]\n"
-                              "  %p LEFT  sector #%d [%1.1f, %1.1f] to [%1.1f, %1.1f]")
-                        << de::dintptr(right) << (right->sector? right->sector->buildData.index - 1 : -1)
-                        << right->HE_v1origin[VX] << right->HE_v1origin[VY]
-                        << right->HE_v2origin[VX] << right->HE_v2origin[VY]
-                        << de::dintptr(left) << (left->sector? left->sector->buildData.index - 1 : -1)
-                        << left->HE_v1origin[VX]  << left->HE_v1origin[VY]
-                        << left->HE_v2origin[VX]  << left->HE_v2origin[VY];
+                    HEdge *left = right->twinPtr();
+                    LOG_DEBUG("Capped partition gap:"
+                              "\n %p RIGHT sector #%d %s to %s"
+                              "\n %p LEFT  sector #%d %s to %s")
+                        << de::dintptr(right)
+                        << (hedgeInfo(*right).sector? hedgeInfo(*right).sector->indexInMap() : -1)
+                        << right->fromOrigin().asText()
+                        << right->toOrigin().asText()
+                        << de::dintptr(left)
+                        << (hedgeInfo(*left).sector? hedgeInfo(*left).sector->indexInMap() : -1)
+                        << left->fromOrigin().asText()
+                        << left->toOrigin().asText()
                     */
                 }
             }
-
-            node++;
         }
     }
 
     /**
-     * Splits the given half-edge at the point (x,y). The new half-edge is returned.
-     * The old half-edge is shortened (the original start vertex is unchanged), the
-     * new half-edge becomes the cut-off tail (keeping the original end vertex).
+     * Splits the given half-edge at the point (x,y). The new half-edge is
+     * returned. The old half-edge is shortened (the original start vertex is
+     * unchanged), the new half-edge becomes the cut-off tail (keeping the
+     * original end vertex).
      *
      * @note If the half-edge has a twin it is also split.
      */
-    HEdge* splitHEdge(HEdge* oldHEdge, const_pvec2d_t point)
+    HEdge &splitHEdge(HEdge &oldHEdge, Vector2d const &point)
     {
-        DENG2_ASSERT(oldHEdge);
+        //LOG_DEBUG("Splitting hedge %p at %s.")
+        //    << de::dintptr(&oldHEdge) << point.asText();
 
-        //LOG_DEBUG("Splitting hedge %p at [%1.1f, %1.1f].")
-        //    << de::dintptr(oldHEdge) << point[VX] << point[VY];
-
-        Vertex* newVert = newVertex(point);
-        { HEdgeInfo& oldInfo = hedgeInfo(*oldHEdge);
-        addHEdgeTip(newVert, M_InverseAngle(oldInfo.pAngle), oldHEdge->twin, oldHEdge);
-        addHEdgeTip(newVert, oldInfo.pAngle, oldHEdge, oldHEdge->twin);
+        Vertex *newVert = newVertex(point);
+        {
+            HEdgeInfo &oldInfo = hedgeInfo(oldHEdge);
+            addHEdgeTip(*newVert, M_InverseAngle(oldInfo.pAngle), oldHEdge.twinPtr(), &oldHEdge);
+            addHEdgeTip(*newVert, oldInfo.pAngle, &oldHEdge, oldHEdge.twinPtr());
         }
 
-        HEdge* newHEdge = cloneHEdge(*oldHEdge);
-        HEdgeInfo& oldInfo = hedgeInfo(*oldHEdge);
-        HEdgeInfo& newInfo = hedgeInfo(*newHEdge);
+        HEdge &newHEdge = cloneHEdge(oldHEdge);
+        HEdgeInfo &oldInfo = hedgeInfo(oldHEdge);
+        HEdgeInfo &newInfo = hedgeInfo(newHEdge);
 
-        newInfo.prevOnSide = oldHEdge;
-        oldInfo.nextOnSide = newHEdge;
+        newInfo.prevOnSide = &oldHEdge;
+        oldInfo.nextOnSide = &newHEdge;
 
-        oldHEdge->HE_v2 = newVert;
-        oldInfo.initFromHEdge(*oldHEdge);
+        oldHEdge._to = newVert;
+        oldInfo.initFromHEdge(oldHEdge);
 
-        newHEdge->HE_v1 = newVert;
-        newInfo.initFromHEdge(*newHEdge);
+        newHEdge._from = newVert;
+        newInfo.initFromHEdge(newHEdge);
 
         // Handle the twin.
-        if(oldHEdge->twin)
+        if(oldHEdge.hasTwin())
         {
-            //LOG_DEBUG("Splitting hedge twin %p.") << de::dintptr(oldHEdge->twin);
+            //LOG_DEBUG("Splitting hedge twin %p.")
+            //    << de::dintptr(oldHEdge.twinPtr());
 
             // Copy the old hedge info.
-            newHEdge->twin = cloneHEdge(*oldHEdge->twin);
-            newHEdge->twin->twin = newHEdge;
+            newHEdge._twin = &cloneHEdge(oldHEdge.twin());
+            newHEdge.twin()._twin = &newHEdge;
 
-            hedgeInfo(*newHEdge->twin).nextOnSide = oldHEdge->twin;
-            hedgeInfo(*oldHEdge->twin).prevOnSide = newHEdge->twin;
+            hedgeInfo(newHEdge.twin()).nextOnSide = oldHEdge.twinPtr();
+            hedgeInfo(oldHEdge.twin()).prevOnSide = newHEdge.twinPtr();
 
-            oldHEdge->twin->HE_v1 = newVert;
-            hedgeInfo(*oldHEdge->twin).initFromHEdge(*oldHEdge->twin);
+            oldHEdge.twin()._from = newVert;
+            hedgeInfo(oldHEdge.twin()).initFromHEdge(oldHEdge.twin());
 
-            newHEdge->twin->HE_v2 = newVert;
-            hedgeInfo(*newHEdge->twin).initFromHEdge(*newHEdge->twin);
+            newHEdge.twin()._to = newVert;
+            hedgeInfo(newHEdge.twin()).initFromHEdge(newHEdge.twin());
 
             // Has this already been added to a leaf?
-            if(oldHEdge->twin->bspLeaf)
+            if(oldHEdge.twin().hasBspLeaf())
             {
                 // Update the in-leaf references.
-                oldHEdge->twin->next = newHEdge->twin;
+                oldHEdge.twin()._next = newHEdge.twinPtr();
 
                 // There is now one more half-edge in this leaf.
-                oldHEdge->twin->bspLeaf->hedgeCount += 1;
+                oldHEdge.twin().bspLeaf()._hedgeCount += 1;
             }
         }
 
         return newHEdge;
     }
 
-    void hedgePartitionDistance(HEdge const* hedge, HEdgeInfo const& pInfo, coord_t& a, coord_t& b)
+    /**
+     * Return values:
+     * @param a  Perpendicular distance from the start vertex to the partition.
+     * @param b  Perpendicular distance from the end vertex to the partition.
+     */
+    void hedgePartitionDistance(HEdge const &hedge, HEdgeInfo const &pInfo,
+                                coord_t &a, coord_t &b)
     {
-        DENG2_ASSERT(hedge);
-        /// @attention Ensure half-edges produced from the partition's source linedef
-        ///            are always handled as collinear. This special case is necessary
-        ///            due to precision inaccuracies when a line is split into multiple
-        ///            segments.
-        HEdgeInfo const& hInfo = hedgeInfo(*hedge);
-        if(hInfo.sourceLineDef == pInfo.sourceLineDef)
+        /// @attention Ensure half-edges produced from the partition's source
+        /// line are always treated as collinear. This special case is
+        /// necessary due to precision inaccuracies when a line is split into
+        ///  multiple segments.
+        HEdgeInfo const &hInfo = hedgeInfo(hedge);
+        if(hInfo.sourceLine == pInfo.sourceLine)
         {
             a = b = 0;
         }
@@ -772,30 +769,31 @@ struct Partitioner::Instance
 
     /**
      * Determine the relationship half-edge @a hedge and the partition @a pInfo.
+     *
      * @return LineRelationship between the half-edge and the partition plane.
      */
-    inline LineRelationship hedgePartitionRelationship(HEdge const* hedge,
-        HEdgeInfo const& pInfo, coord_t& a, coord_t& b)
+    inline LineRelationship hedgePartitionRelationship(HEdge const &hedge,
+        HEdgeInfo const &pInfo, coord_t &a, coord_t &b)
     {
         hedgePartitionDistance(hedge, pInfo, a, b);
-        return lineRelationship(a, b, DIST_EPSILON);
+        return lineRelationship(a, b);
     }
 
     /**
-     * Take the given half-edge @a hedge, compare it with the partition plane and
-     * determine which of the two sets it should be added to. If the half-edge is
-     * found to intersect the partition, the intercept point is calculated and the
-     * half-edge split at this point before then adding each to the relevant set
-     * (any existing twin is handled uniformly, also).
+     * Take the given half-edge @a hedge, compare it with the partition plane
+     * and determine which of the two sets it should be added to. If the
+     * half-edge is found to intersect the partition, the intercept point is
+     * calculated and the half-edge split at this point before then adding
+     * each to the relevant set (any existing twin is handled uniformly, also).
      *
-     * If the half-edge lies on, or crosses the partition then a new intercept is
-     * added to the partition plane.
+     * If the half-edge lies on, or crosses the partition then a new intercept
+     * is added to the partition plane.
      *
-     * @param hedge         Half-edge to be "divided".
-     * @param rights        Set of half-edges on the right side of the partition.
-     * @param lefts         Set of half-edges on the left side of the partition.
+     * @param hedge   Half-edge to be "divided".
+     * @param rights  Set of half-edges on the right side of the partition.
+     * @param lefts   Set of half-edges on the left side of the partition.
      */
-    void divideHEdge(HEdge* hedge, SuperBlock& rights, SuperBlock& lefts)
+    void divideHEdge(HEdge &hedge, SuperBlock &rights, SuperBlock &lefts)
     {
 #define RIGHT false
 #define LEFT  true
@@ -808,9 +806,9 @@ struct Partitioner::Instance
             makePartitionIntersection(hedge, RIGHT);
             makePartitionIntersection(hedge, LEFT);
 
-            // Direction (vs that of the partition plane) determines in which subset
-            // this half-edge belongs.
-            HEdgeInfo const& hInfo = hedgeInfo(*hedge);
+            // Direction (vs that of the partition plane) determines in which
+            // subset this half-edge belongs.
+            HEdgeInfo const &hInfo = hedgeInfo(hedge);
             if(hInfo.direction[VX] * partitionInfo.direction[VX] +
                hInfo.direction[VY] * partitionInfo.direction[VY] < 0)
             {
@@ -826,9 +824,9 @@ struct Partitioner::Instance
         case RightIntercept:
             if(rel == RightIntercept)
             {
-                // Direction determines which side of the half-edge interfaces with
-                // the new partition plane intercept.
-                const bool leftSide = (a < DIST_EPSILON? RIGHT : LEFT);
+                // Direction determines which side of the half-edge interfaces
+                // with the new partition plane intercept.
+                bool const leftSide = (a < DIST_EPSILON? RIGHT : LEFT);
                 makePartitionIntersection(hedge, leftSide);
             }
             linkHEdgeInSuperBlockmap(rights, hedge);
@@ -838,7 +836,7 @@ struct Partitioner::Instance
         case LeftIntercept:
             if(rel == LeftIntercept)
             {
-                const bool leftSide = (a > -DIST_EPSILON? RIGHT : LEFT);
+                bool const leftSide = (a > -DIST_EPSILON? RIGHT : LEFT);
                 makePartitionIntersection(hedge, leftSide);
             }
             linkHEdgeInSuperBlockmap(lefts, hedge);
@@ -846,17 +844,17 @@ struct Partitioner::Instance
 
         case Intersects: {
             // Calculate the intercept point and split this half-edge.
-            vec2d_t point;
-            interceptHEdgePartition(hedge, a, b, point);
-            HEdge* newHEdge = splitHEdge(hedge, point);
+            Vector2d point = interceptHEdgePartition(hedge, a, b);
+            HEdge &newHEdge = splitHEdge(hedge, point);
 
-            // Ensure the new twin half-edge is inserted into the same block as the old twin.
+            // Ensure the new twin half-edge is inserted into the same block
+            // as the old twin.
             /// @todo This logic can now be moved into splitHEdge().
-            if(hedge->twin && !hedge->twin->bspLeaf)
+            if(hedge.hasTwin() && !hedge.twin().hasBspLeaf())
             {
-                SuperBlock* bmapBlock = hedgeInfo(*hedge->twin).bmapBlock;
-                DENG2_ASSERT(bmapBlock);
-                linkHEdgeInSuperBlockmap(*bmapBlock, newHEdge->twin);
+                SuperBlock *bmapBlock = hedgeInfo(hedge.twin()).bmapBlock;
+                DENG2_ASSERT(bmapBlock != 0);
+                linkHEdgeInSuperBlockmap(*bmapBlock, newHEdge.twin());
             }
 
             makePartitionIntersection(hedge, LEFT);
@@ -880,68 +878,70 @@ struct Partitioner::Instance
     }
 
     /**
-     * Remove all the half-edges from the list, partitioning them into the left or
-     * right lists based on the given partition line. Adds any intersections onto the
-     * intersection list as it goes.
+     * Remove all the half-edges from the list, partitioning them into the
+     * left or right lists based on the given partition line. Adds any
+     * intersections onto the intersection list as it goes.
      */
-    void partitionHEdges(SuperBlock& hedgeList, SuperBlock& rights, SuperBlock& lefts)
+    void partitionHEdges(SuperBlock &hedgeList, SuperBlock &rights,
+                         SuperBlock &lefts)
     {
         // Iterative pre-order traversal of SuperBlock.
-        SuperBlock* cur = &hedgeList;
-        SuperBlock* prev = 0;
+        SuperBlock *cur = &hedgeList;
+        SuperBlock *prev = 0;
         while(cur)
         {
             while(cur)
             {
-                HEdge* hedge;
+                HEdge *hedge;
                 while((hedge = cur->pop()))
                 {
                     // Disassociate the half-edge from the blockmap.
                     hedgeInfo(*hedge).bmapBlock = 0;
 
-                    divideHEdge(hedge, rights, lefts);
+                    divideHEdge(*hedge, rights, lefts);
                 }
 
-                if(prev == cur->parent())
+                if(prev == cur->parentPtr())
                 {
                     // Descending - right first, then left.
                     prev = cur;
-                    if(cur->hasRight()) cur = cur->right();
-                    else                cur = cur->left();
+                    if(cur->hasRight()) cur = cur->rightPtr();
+                    else                cur = cur->leftPtr();
                 }
-                else if(prev == cur->right())
+                else if(prev == cur->rightPtr())
                 {
                     // Last moved up the right branch - descend the left.
                     prev = cur;
-                    cur = cur->left();
+                    cur = cur->leftPtr();
                 }
-                else if(prev == cur->left())
+                else if(prev == cur->leftPtr())
                 {
                     // Last moved up the left branch - continue upward.
                     prev = cur;
-                    cur = cur->parent();
+                    cur = cur->parentPtr();
                 }
             }
 
             if(prev)
             {
                 // No left child - back up.
-                cur = prev->parent();
+                cur = prev->parentPtr();
             }
         }
 
         // Sanity checks...
         if(!rights.totalHEdgeCount())
-            throw de::Error("Partitioner::partitionhedges", "Right half-edge set is empty");
+            throw Error("Partitioner::partitionhedges", "Right half-edge set is empty");
 
         if(!lefts.totalHEdgeCount())
-            throw de::Error("Partitioner::partitionhedges", "Left half-edge set is empty");
+            throw Error("Partitioner::partitionhedges", "Left half-edge set is empty");
     }
 
     /**
      * "Near miss" predicate.
      */
-    static bool nearMiss(LineRelationship rel, coord_t a, coord_t b, coord_t* distance)
+    static bool nearMiss(LineRelationship rel, coord_t a, coord_t b,
+                         coord_t *distance)
     {
         if(rel == Right &&
            !((a >= SHORT_HEDGE_EPSILON && b >= SHORT_HEDGE_EPSILON) ||
@@ -981,21 +981,26 @@ struct Partitioner::Instance
     /**
      * "Near edge" predicate. Assumes intersecting line segment relationship.
      */
-    static bool nearEdge(coord_t a, coord_t b, coord_t* distance)
+    static bool nearEdge(coord_t a, coord_t b, coord_t *distance)
     {
-        if(abs(a) < SHORT_HEDGE_EPSILON || abs(b) < SHORT_HEDGE_EPSILON)
+        if(de::abs(a) < SHORT_HEDGE_EPSILON ||
+           de::abs(b) < SHORT_HEDGE_EPSILON)
         {
             // Need to know how close?
-            if(distance) *distance = SHORT_HEDGE_EPSILON / MIN_OF(abs(a), abs(b));
+            if(distance)
+            {
+                *distance = SHORT_HEDGE_EPSILON /
+                    de::min(de::abs(a), de::abs(b));
+            }
             return true;
         }
         return false;
     }
 
-    void evalPartitionCostForHEdge(HEdgeInfo const& partInfo, HEdge const* hedge,
-        PartitionCost& cost)
+    void evalPartitionCostForHEdge(HEdgeInfo const &partInfo,
+                                   HEdge const &hedge, PartitionCost &cost)
     {
-        const int costFactorMultiplier = splitCostFactor;
+        int const costFactorMultiplier = splitCostFactor;
 
         // Determine the relationship between this half-edge and the partition plane.
         coord_t a, b;
@@ -1005,7 +1010,7 @@ struct Partitioner::Instance
         case Collinear: {
             // This half-edge runs along the same line as the partition.
             // Check whether it goes in the same direction or the opposite.
-            const HEdgeInfo& hInfo = hedgeInfo(*hedge);
+            HEdgeInfo const &hInfo = hedgeInfo(hedge);
             if(hInfo.direction[VX] * partInfo.direction[VX] +
                hInfo.direction[VY] * partInfo.direction[VY] < 0)
             {
@@ -1021,9 +1026,9 @@ struct Partitioner::Instance
         case RightIntercept: {
             cost.addHEdgeRight(hedge);
 
-            /**
-             * Near misses are bad, as they have the potential to result in really short
-             * half-hedges being produced further down the line.
+            /*
+             * Near misses are bad, as they have the potential to result in
+             * really short half-hedges being produced later on.
              *
              * The closer the near miss, the higher the cost.
              */
@@ -1031,7 +1036,7 @@ struct Partitioner::Instance
             if(nearMiss(rel, a, b, &nearDist))
             {
                 cost.nearMiss += 1;
-                cost.total += (int) (100 * costFactorMultiplier * (nearDist * nearDist - 1.0));
+                cost.total += int( 100 * costFactorMultiplier * (nearDist * nearDist - 1.0) );
             }
             break; }
 
@@ -1043,10 +1048,10 @@ struct Partitioner::Instance
             coord_t nearDist;
             if(nearMiss(rel, a, b, &nearDist))
             {
-                /// @todo Why the cost multiplier imbalance between the left and right
-                ///       edge near misses?
+                /// @todo Why the cost multiplier imbalance between the left
+                /// and right edge near misses?
                 cost.nearMiss += 1;
-                cost.total += (int) (70 * costFactorMultiplier * (nearDist * nearDist - 1.0));
+                cost.total += int( 70 * costFactorMultiplier * (nearDist * nearDist - 1.0) );
             }
             break; }
 
@@ -1054,9 +1059,10 @@ struct Partitioner::Instance
             cost.splits += 1;
             cost.total  += 100 * costFactorMultiplier;
 
-            /**
-             * If the split point is very close to one end, which is quite an undesirable
-             * situation (producing really short edges), thus a rather hefty surcharge.
+            /*
+             * If the split point is very close to one end, which is quite an
+             * undesirable situation (producing really short edges), thus a
+             * rather hefty surcharge.
              *
              * The closer to the edge, the higher the cost.
              */
@@ -1064,7 +1070,7 @@ struct Partitioner::Instance
             if(nearEdge(a, b, &nearDist))
             {
                 cost.iffy += 1;
-                cost.total += (int) (140 * costFactorMultiplier * (nearDist * nearDist - 1.0));
+                cost.total += int( 140 * costFactorMultiplier * (nearDist * nearDist - 1.0) );
             }
             break; }
         }
@@ -1073,37 +1079,36 @@ struct Partitioner::Instance
     /**
      * @param block
      * @param best      Best half-edge found thus far.
-     * @param bestCost  Running cost total result for the best half-edge thus far.
+     * @param bestCost  Running cost total result for the best half-edge yet.
      * @param hedge     The candidate half-edge to be evaluated.
-     * @param cost      PartitionCost analysis to be completed for this candidate.
+     * @param cost      PartitionCost analysis to be completed for the candidate.
      *                  Must have been initialized prior to calling.
-     * @return  @c true iff this half-edge is suitable for use as a partition.
+     *
+     * @return  @c true iff @a hedge is suitable for use as a partition.
      */
-    int evalPartitionCostForSuperBlock(SuperBlock const& block,
-        HEdge* best, PartitionCost const& bestCost,
-        HEdge* hedge, PartitionCost& cost)
+    bool evalPartitionCostForSuperBlock(SuperBlock const &block,
+        HEdge *best, PartitionCost const &bestCost,
+        HEdge const &hedge, PartitionCost &cost)
     {
-        /**
-         * Test the whole block against the partition line to quickly handle all the
-         * half-edges within it at once. Only when the partition line intercepts the
-         * box do we need to go deeper into it.
+        /*
+         * Test the whole block against the partition line to quickly handle
+         * all the half-edges within it at once. Only when the partition line
+         * intercepts the box do we need to go deeper into it.
          */
-        HEdgeInfo const& hInfo = hedgeInfo(*hedge);
-        AABox const& blockBounds = block.bounds();
-        AABoxd bounds;
+        HEdgeInfo const &hInfo = hedgeInfo(hedge);
 
-        /// @todo Why are we extending the bounding box for this test? Also, there is
-        ///       no need to convert from integer to floating-point each time this is
-        ///       tested. (If we intend to do this with floating-point then we should
-        ///       return that representation in SuperBlock::bounds() ).
-        bounds.minX = (double)blockBounds.minX - SHORT_HEDGE_EPSILON * 1.5;
-        bounds.minY = (double)blockBounds.minY - SHORT_HEDGE_EPSILON * 1.5;
-        bounds.maxX = (double)blockBounds.maxX + SHORT_HEDGE_EPSILON * 1.5;
-        bounds.maxY = (double)blockBounds.maxY + SHORT_HEDGE_EPSILON * 1.5;
+        /// @todo Why are we extending the bounding box for this test? Also,
+        /// there is no need to convert from integer to floating-point each
+        /// time this is tested. (If we intend to do this with floating-point
+        /// then we should return that representation in SuperBlock::bounds() ).
+        AABox const &blockBounds = block.bounds();
+        AABoxd bounds(coord_t( blockBounds.minX ) - SHORT_HEDGE_EPSILON * 1.5,
+                      coord_t( blockBounds.minY ) - SHORT_HEDGE_EPSILON * 1.5,
+                      coord_t( blockBounds.maxX ) + SHORT_HEDGE_EPSILON * 1.5,
+                      coord_t( blockBounds.maxY ) + SHORT_HEDGE_EPSILON * 1.5);
 
-        int side = M_BoxOnLineSide2(&bounds, hInfo.start, hInfo.direction, hInfo.pPerp,
-                                    hInfo.pLength, DIST_EPSILON);
-
+        int side = M_BoxOnLineSide2(&bounds, hInfo.start, hInfo.direction,
+                                    hInfo.pPerp, hInfo.pLength, DIST_EPSILON);
         if(side > 0)
         {
             // Right.
@@ -1120,14 +1125,14 @@ struct Partitioner::Instance
         }
 
         // Check partition against all half-edges.
-        DENG2_FOR_EACH_CONST(SuperBlock::HEdges, it, block.hedges())
+        foreach(HEdge *otherHedge, block.hedges())
         {
             // Do we already have a better choice?
-            if(best && !(cost < bestCost)) return false; // Stop iteration.
+            if(best && !(cost < bestCost)) return false;
 
             // Evaluate the cost delta for this hedge.
             PartitionCost costDelta;
-            evalPartitionCostForHEdge(hInfo, *it, costDelta);
+            evalPartitionCostForHEdge(hInfo, *otherHedge, costDelta);
 
             // Merge cost result into the cummulative total.
             cost += costDelta;
@@ -1136,13 +1141,13 @@ struct Partitioner::Instance
         // Handle sub-blocks recursively.
         if(block.hasRight())
         {
-            bool unsuitable = !evalPartitionCostForSuperBlock(*block.right(), best, bestCost, hedge, cost);
+            bool unsuitable = !evalPartitionCostForSuperBlock(*block.rightPtr(), best, bestCost, hedge, cost);
             if(unsuitable) return false;
         }
 
         if(block.hasLeft())
         {
-            bool unsuitable = !evalPartitionCostForSuperBlock(*block.left(), best, bestCost, hedge, cost);
+            bool unsuitable = !evalPartitionCostForSuperBlock(*block.leftPtr(), best, bestCost, hedge, cost);
             if(unsuitable) return false;
         }
 
@@ -1156,20 +1161,17 @@ struct Partitioner::Instance
      *
      * To be able to divide the nodes down, evalPartition must decide which
      * is the best half-edge to use as a nodeline. It does this by selecting
-     * the line with least splits and has least difference of hald-edges on
+     * the line with least splits and has least difference of half-edges on
      * either side of it.
      *
      * @return  @c true iff this half-edge is suitable for use as a partition.
      */
-    bool evalPartition(SuperBlock const& block,
-        HEdge* best, PartitionCost const& bestCost,
-        HEdge* hedge, PartitionCost& cost)
+    bool evalPartition(SuperBlock const &block,
+                       HEdge *best, PartitionCost const &bestCost,
+                       HEdge const &hedge, PartitionCost &cost)
     {
-        if(!hedge) return false;
-
         // "Mini-hedges" are never potential candidates.
-        LineDef* lineDef = hedge->lineDef;
-        if(!lineDef) return false;
+        if(!hedge.hasLineSide()) return false;
 
         if(!evalPartitionCostForSuperBlock(block, best, bestCost, hedge, cost))
         {
@@ -1181,7 +1183,8 @@ struct Partitioner::Instance
         if(!cost.realLeft || !cost.realRight)
         {
             //LOG_DEBUG("evalPartition: No real half-edges on %s%sside")
-            //    << (cost.realLeft? "" : "left ") << (cost.realRight? "" : "right ");
+            //    << (cost.realLeft? "" : "left ")
+            //    << (cost.realRight? "" : "right ");
             return false;
         }
 
@@ -1193,11 +1196,12 @@ struct Partitioner::Instance
 
         // Another little twist, here we show a slight preference for partition
         // lines that lie either purely horizontally or purely vertically.
-        HEdgeInfo const& hInfo = hedgeInfo(*hedge);
+        HEdgeInfo const &hInfo = hedgeInfo(hedge);
         if(hInfo.pSlopeType != ST_HORIZONTAL && hInfo.pSlopeType != ST_VERTICAL)
             cost.total += 25;
 
-        //LOG_DEBUG("evalPartition: %p: splits=%d iffy=%d near=%d left=%d+%d right=%d+%d cost=%d.%02d")
+        //LOG_DEBUG("evalPartition: %p: splits=%d iffy=%d near=%d"
+        //          " left=%d+%d right=%d+%d cost=%d.%02d")
         //    << de::dintptr(&hInfo) << cost.splits << cost.iffy << cost.nearMiss
         //    << cost.realLeft << cost.miniLeft << cost.realRight << cost.miniRight
         //    << cost.total / 100 << cost.total % 100;
@@ -1205,29 +1209,31 @@ struct Partitioner::Instance
         return true;
     }
 
-    void chooseNextPartitionFromSuperBlock(SuperBlock const& partList,
-        SuperBlock const& hedgeList, HEdge** best, PartitionCost& bestCost)
+    void chooseNextPartitionFromSuperBlock(SuperBlock const &partList,
+        SuperBlock const &hedgeList, HEdge **best, PartitionCost &bestCost)
     {
-        DENG2_ASSERT(best);
+        DENG2_ASSERT(best != 0);
+
+        //LOG_AS("chooseNextPartitionFromSuperBlock");
 
         // Test each half-edge as a potential partition.
-        DENG2_FOR_EACH_CONST(SuperBlock::HEdges, it, partList.hedges())
+        foreach(HEdge *hedge, partList.hedges())
         {
-            HEdge* hedge = *it;
+            HEdgeInfo &hInfo = hedgeInfo(*hedge);
 
-            //LOG_DEBUG("chooseNextPartitionFromSuperBlock: %shedge %p sector:%d [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
-            //    << (hedge->lineDef? "" : "mini-") << de::dintptr(hedge)
-            //    << (hedge->sector? hedge->sector->buildData.index - 1 : -1)
-            //    << hedge->HE_v1origin[VX] << hedge->HE_v1origin[VY]
-            //    << hedge->HE_v2origin[VX] << hedge->HE_v2origin[VY];
+            //LOG_DEBUG("%shedge %p sector:%d %s -> %s")
+            //    << (hedge->hasLine()? "" : "mini-") << de::dintptr(hedge)
+            //    << (hInfo.sector? hInfo.sector->indexInMap() : -1)
+            //    << hedge->fromOrigin().asText()
+            //    << hedge->toOrigin().asText();
 
-            // Optimization: Only the first half-edge produced from a given linedef
-            // is tested per round of partition costing (they are all collinear).
-            HEdgeInfo& hInfo = hedgeInfo(*hedge);
-            if(hInfo.lineDef)
+            // Optimization: Only the first half-edge produced from a given
+            // line is tested per round of partition costing (they are all
+            // collinear).
+            if(hInfo.line)
             {
                 // Can we skip this half-edge?
-                LineDefInfo& lInfo = lineDefInfos[hInfo.lineDef->origIndex-1];
+                LineInfo &lInfo = lineInfos[hInfo.line->indexInMap()];
                 if(lInfo.validCount == validCount) continue; // Yes.
 
                 lInfo.validCount = validCount;
@@ -1235,7 +1241,7 @@ struct Partitioner::Instance
 
             // Calculate the cost metrics for this half-edge.
             PartitionCost cost;
-            if(evalPartition(hedgeList, *best, bestCost, hedge, cost))
+            if(evalPartition(hedgeList, *best, bestCost, *hedge, cost))
             {
                 // Suitable for use as a partition.
                 if(!*best || cost < bestCost)
@@ -1256,51 +1262,52 @@ struct Partitioner::Instance
      * @param hedgeList     List of half-edges to choose from.
      * @return  The chosen half-edge.
      */
-    HEdge* chooseNextPartition(SuperBlock const& hedgeList)
+    HEdge *chooseNextPartition(SuperBlock const &hedgeList)
     {
         LOG_AS("Partitioner::choosePartition");
 
         PartitionCost bestCost;
-        HEdge* best = 0;
+        HEdge *best = 0;
 
-        // Increment valid count so we can avoid testing the half edges produced
-        // from a single linedef more than once per round of partition selection.
+        // Increment valid count so we can avoid testing the half edges
+        // produced from a single line more than once per round of partition
+        // selection.
         validCount++;
 
         // Iterative pre-order traversal of SuperBlock.
-        SuperBlock const* cur = &hedgeList;
-        SuperBlock const* prev = 0;
+        SuperBlock const *cur = &hedgeList;
+        SuperBlock const *prev = 0;
         while(cur)
         {
             while(cur)
             {
                 chooseNextPartitionFromSuperBlock(*cur, hedgeList, &best, bestCost);
 
-                if(prev == cur->parent())
+                if(prev == cur->parentPtr())
                 {
                     // Descending - right first, then left.
                     prev = cur;
-                    if(cur->hasRight()) cur = cur->right();
-                    else                cur = cur->left();
+                    if(cur->hasRight()) cur = cur->rightPtr();
+                    else                cur = cur->leftPtr();
                 }
-                else if(prev == cur->right())
+                else if(prev == cur->rightPtr())
                 {
                     // Last moved up the right branch - descend the left.
                     prev = cur;
-                    cur = cur->left();
+                    cur = cur->leftPtr();
                 }
-                else if(prev == cur->left())
+                else if(prev == cur->leftPtr())
                 {
                     // Last moved up the left branch - continue upward.
                     prev = cur;
-                    cur = cur->parent();
+                    cur = cur->parentPtr();
                 }
             }
 
             if(prev)
             {
                 // No left child - back up.
-                cur = prev->parent();
+                cur = prev->parentPtr();
             }
         }
 
@@ -1314,26 +1321,26 @@ struct Partitioner::Instance
     }
 
     /**
-     * Attempt to construct a new BspLeaf and from the supplied list of
-     * half-edges.
+     * Attempt to construct a new BspLeaf from the list of half-edges.
      *
-     * @param hedges  SuperBlock containing the list of half-edges with which
-     *                to build the leaf using.
+     * @param hedges  List of half-edges from which to build the leaf.
+     *                Ownership of the list and it's contents is given to this
+     *                function. Once emptied, ownership of the list is then
+     *                returned to the caller.
      *
-     * @return  Newly created BspLeaf else @c NULL if degenerate.
+     * @return  Newly created BspLeaf; otherwise @c 0 if degenerate.
      */
-    BspLeaf* buildBspLeaf(HEdgeList const& hedges)
+    BspLeaf *buildLeaf(HEdgeList &hedges)
     {
-        if(!hedges.size()) return 0;
+        if(!hedges.count()) return 0;
 
         // Collapse all degenerate and orphaned leafs.
-#if 0
-        const bool isDegenerate = hedges.size() < 3;
+#ifdef DENG_BSP_COLLAPSE_ORPHANED_LEAFS
+        bool const isDegenerate = hedges.count() < 3;
         bool isOrphan = true;
-        DENG2_FOR_EACH_CONST(HEdgeList, it, hedges)
+        foreach(HEdge *hedge, hedges)
         {
-            const HEdge* hedge = *it;
-            if(hedge->lineDef && hedge->lineDef->L_sector(hedge->side))
+            if(hedge->hasLineSide() && hedge->lineSide().hasSector())
             {
                 isOrphan = false;
                 break;
@@ -1341,13 +1348,13 @@ struct Partitioner::Instance
         }
 #endif
 
-        BspLeaf* leaf = 0;
-        DENG2_FOR_EACH_CONST(HEdgeList, it, hedges)
+        BspLeaf *leaf = 0;
+        while(!hedges.isEmpty())
         {
-            HEdge* hedge = *it;
-#if 0
+            HEdge *hedge = hedges.takeFirst();
+#ifdef DENG_BSP_COLLAPSE_ORPHANED_LEAFS
             HEdgeInfos::iterator hInfoIt = hedgeInfos.find(hedge);
-            HEdgeInfo& hInfo = hInfoIt->second;
+            HEdgeInfo &hInfo = hInfoIt.value();
 
             if(isDegenerate || isOrphan)
             {
@@ -1360,44 +1367,51 @@ struct Partitioner::Instance
                     hedgeInfo(*hInfo.nextOnSide).prevOnSide = hInfo.prevOnSide;
                 }
 
-                if(hedge->twin)
+                if(hedge->hasTwin())
                 {
-                    hedge->twin->twin = 0;
+                    hedge->twin()._twin = 0;
                 }
 
-                /// @todo This is not logically correct from a mod compatibility
-                ///       point of view. We should never clear the line > sector
-                ///       references as these are used by the game(s) playsim in
-                ///       various ways (for example, stair building). We should
-                ///       instead flag the linedef accordingly. -ds
-                if(hedge->lineDef)
+                /**
+                 * @todo This is incorrect from a mod compatibility point of
+                 * view. We should never clear the line > sector references as
+                 * these are used by the game(s) playsim in various ways (for
+                 * example, stair building). We should instead flag the line
+                 * accordingly. -ds
+                 */
+                if(hedge->hasLineSide())
                 {
-                    lineside_t* lside = HEDGE_SIDE(hedge);
-                    lside->sector = 0;
-                    /// @todo We could delete the SideDef also.
-                    lside->sideDef = 0;
+                    Line::Side &side = hedge->lineSide();
 
-                    lineDefInfo(*hedge->lineDef).flags &= ~(LineDefInfo::SelfRef | LineDefInfo::Twosided);
+                    side._sector  = 0;
+                    delete side._sections;
+                    side._sections = 0;
+
+                    lineInfos[hedge->line().indexInMap()].flags &=
+                        ~(LineInfo::SelfRef | LineInfo::Twosided);
                 }
 
                 hedgeInfos.erase(hInfoIt);
-                HEdge_Delete(hedge);
+                delete hedge;
                 numHEdges -= 1;
                 continue;
             }
 #endif
 
-            if(!leaf) leaf = BspLeaf_New();
+            if(!leaf)
+            {
+                leaf = new BspLeaf;
+            }
 
             // Link it into head of the leaf's list.
-            hedge->next = leaf->hedge;
-            leaf->hedge = hedge;
+            hedge->_next = leaf->_hedge;
+            leaf->_hedge = hedge;
 
             // Link hedge to this leaf.
-            hedge->bspLeaf = leaf;
+            hedge->_bspLeaf = leaf;
 
             // There is now one more half-edge in this leaf.
-            leaf->hedgeCount += 1;
+            leaf->_hedgeCount += 1;
         }
 
         if(leaf)
@@ -1409,10 +1423,9 @@ struct Partitioner::Instance
     }
 
     /**
-     * Allocate another BspNode.
+     * Construct a new BspNode.
      *
-     * @param origin       Origin of the half-plane in the map coordinate space.
-     * @param angle        Angle of the half-plane in the map coordinate space.
+     * @param partition    Partition which describes the half-plane.
      * @param rightBounds  Boundary of the right child map coordinate subspace. Can be @c NULL.
      * @param leftBounds   Boundary of the left child map coordinate subspace. Can be @a NULL.
      * @param rightChild   ?
@@ -1420,33 +1433,32 @@ struct Partitioner::Instance
      *
      * @return  Newly created BspNode.
      */
-    BspNode* newBspNode(coord_t const origin[2], coord_t const angle[2],
-        AABoxd& rightBounds, AABoxd& leftBounds,
-        de::MapElement* rightChild = 0,
-        de::MapElement* leftChild = 0)
+    BspNode *newBspNode(Partition const &partition,
+        AABoxd &rightBounds, AABoxd &leftBounds,
+        MapElement *rightChild = 0, MapElement *leftChild = 0)
     {
-        BspNode* node = BspNode_New(origin, angle);
+        BspNode *node = new BspNode(partition);
         if(rightChild)
         {
-            BspNode_SetRight(node, rightChild);
+            node->setRight(rightChild);
         }
         if(leftChild)
         {
-            BspNode_SetLeft(node, leftChild);
+            node->setLeft(leftChild);
         }
 
-        BspNode_SetRightBounds(node, &rightBounds);
-        BspNode_SetLeftBounds(node,  &leftBounds);
+        node->setRightAABox(&rightBounds);
+        node->setLeftAABox(&leftBounds);
 
         // There is now one more BspNode.
         numNodes += 1;
         return node;
     }
 
-    BspTreeNode* newTreeNode(de::MapElement* bspOb,
-        BspTreeNode* rightChild = 0, BspTreeNode* leftChild = 0)
+    BspTreeNode *newTreeNode(MapElement *mapBspElement,
+        BspTreeNode *rightChild = 0, BspTreeNode *leftChild = 0)
     {
-        BspTreeNode* subtree = new BspTreeNode(bspOb);
+        BspTreeNode *subtree = new BspTreeNode(mapBspElement);
         if(rightChild)
         {
             subtree->setRight(rightChild);
@@ -1458,134 +1470,145 @@ struct Partitioner::Instance
             leftChild->setParent(subtree);
         }
 
-        treeNodeMap.insert(std::pair<de::MapElement*, BspTreeNode*>(bspOb, subtree));
+        treeNodeMap.insert(mapBspElement, subtree);
         return subtree;
     }
 
     /**
-     * Takes the half-edge list and determines if it is convex, possibly converting
-     * it into a BSP leaf. Otherwise, the list is divided into two halves and recursion
-     * will continue on the new sub list.
+     * Takes the half-edge list and determines if it is convex, possibly
+     * converting it into a BSP leaf. Otherwise, the list is divided into two
+     * halves and recursion will continue on the new sub list.
      *
-     * This is done by scanning all of the half-edges and finding the one that does
-     * the least splitting and has the least difference in numbers of half-edges on
-     * either side.
+     * This is done by scanning all of the half-edges and finding the one that
+     * does the least splitting and has the least difference in numbers of
+     * half-edges on either side.
      *
-     * If the ones on the left side make a BspLeaf, then create another BspLeaf
+     * If the half-edges on the left side are convex create another leaf
      * else put the half-edges into the left list.
      *
-     * If the ones on the right side make a BspLeaf, then create another BspLeaf
+     * If the half-edges on the right side are convex create another leaf
      * else put the half-edges into the right list.
      *
-     * @param partList  The list of half-edges to be carved into convex subregions.
+     * @param hedgeBlockmap  Blockmap containing the list of half-edges to be
+     *                       carved into convex subspaces.
+     *
      * @return  Newly created subtree else @c NULL if degenerate.
      */
-    BspTreeNode* buildNodes(SuperBlock& partList)
+    BspTreeNode *divideSubspace(SuperBlock &hedgeBlockmap)
     {
-        LOG_AS("Partitioner::buildNodes");
+        LOG_AS("Partitioner::divideSubspace");
 
-        de::MapElement* bspObject = 0; ///< Built BSP object at this node.
-        BspTreeNode* rightTree = 0, *leftTree = 0;
+        MapElement *bspElement = 0; ///< Built BSP map element at this node.
+        BspTreeNode *rightTree = 0, *leftTree = 0;
 
         // Pick a half-edge to use as the next partition plane.
-        HEdge* partHEdge = chooseNextPartition(partList);
+        HEdge *partHEdge = chooseNextPartition(hedgeBlockmap);
         if(partHEdge)
         {
-            //LOG_TRACE("Partition %p [%1.0f, %1.0f] -> [%1.0f, %1.0f].") << de::dintptr(hedge)
-            //    << hedge->HE_v1origin[VX] << hedge->HE_v1origin[VY]
-            //    << hedge->HE_v2origin[VX] << hedge->HE_v2origin[VY];
+            //LOG_TRACE("Partition %p %s -> %s.")
+            //    << de::dintptr(hedge)
+            //    << Vector2d(hedge->fromOrigin()).asText()
+            //    << Vector2d(hedge->toOrigin()).asText();
 
             // Reconfigure the half-plane for the next round of partitioning.
             configurePartition(partHEdge);
-            HPlanePartition origPartition = HPlanePartition(partition.origin(), partition.direction());
+
+            // Take a copy of the partition - we'll need this later.
+            Partition oldPartition(partition);
 
             // Create left and right super blockmaps.
-            /// @todo There should be no need to construct entirely independent
-            ///       data structures to contain these hedge subsets.
+            /// @todo There should be no need to use additional independent
+            ///       structures to contain these half-edge subsets.
             // Copy the bounding box of the edge list to the superblocks.
-            SuperBlockmap rightHEdges = SuperBlockmap(partList.bounds());
-            SuperBlockmap leftHEdges  = SuperBlockmap(partList.bounds());
+            SuperBlockmap rightHEdges = SuperBlockmap(hedgeBlockmap.bounds());
+            SuperBlockmap leftHEdges  = SuperBlockmap(hedgeBlockmap.bounds());
 
-            // Divide the half-edges into two subsets according to their spacial
-            // relationship with the half-plane (splitting any which intersect).
-            partitionHEdges(partList, rightHEdges, leftHEdges);
-            partList.clear();
+            // Divide the half-edges into two subsets according to their
+            // spacial relationship with the half-plane (splitting any which
+            // intersect).
+            partitionHEdges(hedgeBlockmap, rightHEdges, leftHEdges);
+            hedgeBlockmap.clear();
             addMiniHEdges(rightHEdges, leftHEdges);
             clearPartitionIntercepts();
 
-            // Make a copy of the child bounds as we'll need this info to populate
-            // a BspNode should we produce one (after the subtrees are processed).
+            // Make a copy of the child bounds as we'll need this info to
+            // populate a BspNode should we produce one (after the subtrees
+            // are processed).
             AABoxd rightBounds = rightHEdges.findHEdgeBounds();
             AABoxd leftBounds  = leftHEdges.findHEdgeBounds();
 
-            // Recurse on each subset, right then left.
-            rightTree = buildNodes(rightHEdges);
-            leftTree  = buildNodes(leftHEdges);
+            // Recurse on each suspace, first the right space then left.
+            rightTree = divideSubspace(rightHEdges);
+            leftTree  = divideSubspace(leftHEdges);
 
             // Collapse degenerates upward.
             if(!rightTree || !leftTree)
                 return rightTree? rightTree : leftTree;
 
-            // Construct the new node and link up the subtrees.
-            bspObject = newBspNode(origPartition.origin, origPartition.direction, rightBounds, leftBounds,
-                                   rightTree->userData(), leftTree->userData());
+            // Construct the new node and link up the child elements.
+            MapElement *rightChildBspElement = reinterpret_cast<MapElement *>(rightTree->userData());
+            MapElement *leftChildBspElement  = reinterpret_cast<MapElement *>(leftTree->userData());
+
+            bspElement = newBspNode(oldPartition, rightBounds, leftBounds,
+                                    rightChildBspElement, leftChildBspElement);
         }
         else
         {
             // No partition required/possible - already convex (or degenerate).
-            BspLeaf* leaf = buildBspLeaf(collectHEdges(partList));
-            partList.clear();
+            HEdgeList collected = collectHEdges(hedgeBlockmap);
+            BspLeaf *leaf = buildLeaf(collected);
+
+            hedgeBlockmap.clear();
 
             // Not a leaf? (collapse upward).
             if(!leaf) return 0;
 
-            bspObject = leaf;
+            bspElement = leaf;
         }
 
-        return newTreeNode(bspObject, rightTree, leftTree);
+        return newTreeNode(bspElement, rightTree, leftTree);
     }
 
     /**
-     * Determine the distance (euclidean) from @a vertex to the current partition plane.
+     * Determine the distance from @a vertex to the current partition plane.
      *
      * @param vertex  Vertex to test.
      */
-    inline coord_t vertexDistanceFromPartition(Vertex const* vertex) const
+    inline coord_t vertexDistanceFromPartition(Vertex const &vertex) const
     {
-        DENG2_ASSERT(vertex);
-        HEdgeInfo const& info = partitionInfo;
-        return V2d_PointLineParaDistance(vertex->origin, info.direction, info.pPara, info.pLength);
+        HEdgeInfo const &info = partitionInfo;
+        coord_t vertexOriginV1[2] = { vertex.x(), vertex.y() };
+        return V2d_PointLineParaDistance(vertexOriginV1, info.direction,
+                                         info.pPara, info.pLength);
     }
 
     /**
-     * Calculate the intersection point between a half-edge and the current partition
-     * plane. Takes advantage of some common situations like horizontal and vertical
-     * lines to choose a 'nicer' intersection point.
+     * Find the intersection point between a half-edge and the current
+     * partition plane. Takes advantage of some common situations like
+     * horizontal and vertical lines to choose a 'nicer' intersection
+     * point.
      */
-    void interceptHEdgePartition(HEdge const* hedge, coord_t perpC, coord_t perpD,
-        coord_t point[2]) const
+    Vector2d interceptHEdgePartition(HEdge const &hedge, coord_t perpC,
+                                     coord_t perpD) const
     {
-        if(!hedge || !point) return;
-
-        HEdgeInfo const& hInfo = hedgeInfo(*hedge);
+        HEdgeInfo const &hInfo = hedgeInfo(hedge);
 
         // Horizontal partition against vertical half-edge.
         if(partitionInfo.pSlopeType == ST_HORIZONTAL && hInfo.pSlopeType == ST_VERTICAL)
         {
-            V2d_Set(point, hInfo.start[VX], partitionInfo.start[VY]);
-            return;
+            return Vector2d(hInfo.start[VX], partitionInfo.start[VY]);
         }
 
         // Vertical partition against horizontal half-edge.
         if(partitionInfo.pSlopeType == ST_VERTICAL && hInfo.pSlopeType == ST_HORIZONTAL)
         {
-            V2d_Set(point, partitionInfo.start[VX], hInfo.start[VY]);
-            return;
+            return Vector2d(partitionInfo.start[VX], hInfo.start[VY]);
         }
 
         // 0 = start, 1 = end.
         coord_t ds = perpC / (perpC - perpD);
 
+        Vector2d point;
         if(hInfo.pSlopeType == ST_VERTICAL)
             point[VX] = hInfo.start[VX];
         else
@@ -1595,43 +1618,37 @@ struct Partitioner::Instance
             point[VY] = hInfo.start[VY];
         else
             point[VY] = hInfo.start[VY] + (hInfo.direction[VY] * ds);
+
+        return point;
     }
 
     void clearPartitionIntercepts()
     {
-        DENG2_FOR_EACH_CONST(HPlane::Intercepts, it, partition.intercepts())
-        {
-            HEdgeIntercept* intercept = static_cast<HEdgeIntercept*>((*it).userData());
-            if(intercept) delete intercept;
-        }
-        partition.clear();
+        partitionIntercepts.clear();
     }
 
-    bool configurePartition(HEdge const* hedge)
+    bool configurePartition(HEdge const *hedge)
     {
         LOG_AS("Partitioner::configurePartition");
 
         if(!hedge) return false;
-
-        LineDef* lineDef = hedge->lineDef;
-        if(!lineDef) return false; // A "mini hedge" is not suitable.
+        // A "mini hedge" is never suitable.
+        if(!hedge->hasLineSide()) return false;
 
         // Clear the HEdge intercept data associated with points in the half-plane.
         clearPartitionIntercepts();
 
         // We can now reconfire the half-plane itself.
-        setPartitionInfo(hedgeInfo(*hedge), lineDef);
+        Line &line = hedge->line();
+        setPartitionInfo(hedgeInfo(*hedge), &line);
 
-        const Vertex* from = lineDef->L_v(hedge->side);
-        const Vertex* to   = lineDef->L_v(hedge->side^1);
-        partition.setOrigin(from->origin);
+        Vertex const &from = line.vertex(hedge->lineSideId());
+        Vertex const &to   = line.vertex(hedge->lineSideId()^1);
+        partition.origin = from.origin();
+        partition.direction = to.origin() - from.origin();
 
-        vec2d_t angle; V2d_Subtract(angle, to->origin, from->origin);
-        partition.setDirection(angle);
-
-        //LOG_DEBUG("hedge %p [%1.1f, %1.1f] -> [%1.1f, %1.1f].")
-        //    << de::dintptr(best) << from->origin[VX] << from->origin[VY]
-        //    << angle[VX] << angle[VY];
+        //LOG_DEBUG("hedge %p %s %s.")
+        //    << de::dintptr(best) << partition.origin.asText() << partition.direction.asText();
 
         return true;
     }
@@ -1640,345 +1657,378 @@ struct Partitioner::Instance
      * Sort half-edges by angle (from the middle point to the start vertex).
      * The desired order (clockwise) means descending angles.
      */
-    static void sortHEdgesByAngleAroundPoint(HEdgeSortBuffer::iterator begin,
-        HEdgeSortBuffer::iterator end, pvec2d_t point)
+    static void sortHEdgesByAngleAroundPoint(HEdgeSortBuffer &hedges,
+        int lastHEdgeIndex, Vector2d const &point)
     {
-        DENG2_ASSERT(point);
-
         /// @par Algorithm
         /// "double bubble"
-        bool done = false;
-        while(begin != end && !done)
+        for(int pass = 0; pass < lastHEdgeIndex; ++pass)
         {
-            done = true;
-            HEdgeSortBuffer::iterator it(begin);
-            HEdgeSortBuffer::iterator next(begin);
-            ++next;
-            while(next != end)
+            bool swappedAny = false;
+            for(int i = 0; i < lastHEdgeIndex; ++i)
             {
-                HEdge* a = *it;
-                HEdge* b = *next;
-                coord_t angle1 = M_DirectionToAngleXY(a->v[0]->origin[VX] - point[VX],
-                                                      a->v[0]->origin[VY] - point[VY]);
-                coord_t angle2 = M_DirectionToAngleXY(b->v[0]->origin[VX] - point[VX],
-                                                      b->v[0]->origin[VY] - point[VY]);
+                HEdge const *hedge1 = hedges.at(i);
+                HEdge const *hedge2 = hedges.at(i+1);
 
-                if(angle1 + ANG_EPSILON < angle2)
+                Vector2d v1Dist = hedge1->fromOrigin() - point;
+                Vector2d v2Dist = hedge2->fromOrigin() - point;
+
+                coord_t v1Angle = M_DirectionToAngleXY(v1Dist.x, v1Dist.y);
+                coord_t v2Angle = M_DirectionToAngleXY(v2Dist.x, v2Dist.y);
+
+                if(v1Angle + ANG_EPSILON < v2Angle)
                 {
-                    // Swap them.
-                    std::swap(*next, *it);
-                    done = false;
+                    hedges.swap(i, i + 1);
+                    swappedAny = true;
                 }
-
-                // Bubble down.
-                ++it;
-                ++next;
             }
-
-            // Bubble up.
-            --end;
+            if(!swappedAny) break;
         }
     }
 
     /**
      * Sort the half-edges linked within the given BSP leaf into a clockwise
-     * order according to their position/orientation relative to to the
-     * specified point.
+     * order according to their position/orientation relative to the specified
+     * point.
      *
-     * @param leaf  BSP leaf containing the list of hedges to be sorted.
-     * @param point  Map space point around which to order.
+     * @param leaf        BSP leaf containing the list of hedges to be sorted.
+     * @param point       Map space point around which to order.
      * @param sortBuffer  Buffer to use for sorting of the hedges.
+     *
+     * @attention Do NOT move this into BspLeaf. Although this clearly envies
+     * the access rights of the BspLeaf class this algorithm belongs here in
+     * the BSP partitioner. -ds
      */
-    static void clockwiseOrder(BspLeaf& leaf, pvec2d_t point, HEdgeSortBuffer& sortBuffer)
+    static void clockwiseOrder(BspLeaf &leaf, Vector2d const &point,
+                               HEdgeSortBuffer &sortBuffer)
     {
-        if(!leaf.hedge) return;
-
-        // Ensure the sort buffer is large enough.
-        if(leaf.hedgeCount > sortBuffer.size())
-        {
-            sortBuffer.resize(leaf.hedgeCount);
-        }
+        if(!leaf._hedge) return;
 
         // Insert the hedges into the sort buffer.
-        uint i = 0;
-        for(HEdge* hedge = leaf.hedge; hedge; hedge = hedge->next, ++i)
+#ifdef DENG2_QT_4_7_OR_NEWER
+        sortBuffer.reserve(leaf._hedgeCount);
+#endif
+        int i = 0;
+        for(HEdge *hedge = leaf._hedge; hedge; hedge = hedge->_next, ++i)
         {
-            sortBuffer[i] = hedge;
+            sortBuffer.insert(i, hedge);
         }
 
-        HEdgeSortBuffer::iterator begin = sortBuffer.begin();
-        HEdgeSortBuffer::iterator end = begin + leaf.hedgeCount;
-        sortHEdgesByAngleAroundPoint(begin, end, point);
+        sortHEdgesByAngleAroundPoint(sortBuffer, leaf._hedgeCount -1, point);
 
         // Re-link the half-edge list in the order of the sort buffer.
-        leaf.hedge = 0;
-        for(uint i = 0; i < leaf.hedgeCount; ++i)
+        leaf._hedge = 0;
+        for(uint i = 0; i < leaf._hedgeCount; ++i)
         {
-            uint idx = (leaf.hedgeCount - 1) - i;
-            uint j = idx % leaf.hedgeCount;
+            uint idx = (leaf._hedgeCount - 1) - i;
+            uint j = idx % leaf._hedgeCount;
 
-            sortBuffer[j]->next = leaf.hedge;
-            leaf.hedge = sortBuffer[j];
+            sortBuffer[j]->_next = leaf._hedge;
+            leaf._hedge = sortBuffer[j];
         }
 
-        // LOG_DEBUG("Sorted half-edges around [%1.1f, %1.1f]" << point[VX] << point[VY];
-        // printBspLeafHEdges(leaf);
+        // LOG_DEBUG("Sorted half-edges around %s" << point.asText();
+        // leaf.printHEdges();
     }
 
     /**
      * Determine which sector this BSP leaf belongs to.
      */
-    Sector* chooseSectorForBspLeaf(BspLeaf* leaf)
+    Sector *chooseSectorForBspLeaf(BspLeaf const *leaf)
     {
-        if(!leaf || !leaf->hedge) return 0;
+        if(!leaf || !leaf->firstHEdge()) return 0;
 
-        Sector* selfRefChoice = 0;
-        HEdge* hedge = leaf->hedge;
+        Sector *selfRefChoice = 0;
+        HEdge *base = leaf->firstHEdge();
+        HEdge *hedge = base;
         do
         {
-            LineDef* line = hedge->lineDef;
-            Sector* sector = line? line->L_sector(hedge->side) : 0;
-            if(sector)
+            if(hedge->hasLineSide() && hedge->lineSide().hasSector())
             {
+                Line &line = hedge->lineSide().line();
+                Sector &sector = hedge->lineSide().sector();
+
                 // The first sector from a non self-referencing line is our best choice.
-                if(!LINE_SELFREF(line)) return sector;
+                /// @todo Should the presence of sections really affect this? -ds
+                if(!(line.isSelfReferencing() && line.hasFrontSections() && line.hasBackSections()))
+                    return &sector;
 
                 // Remember the self-referencing choice in case we've no better option.
                 if(!selfRefChoice)
-                    selfRefChoice = sector;
+                    selfRefChoice = &sector;
             }
-        } while((hedge = hedge->next) != leaf->hedge);
+        } while((hedge = &hedge->next()) != base);
 
         if(selfRefChoice) return selfRefChoice;
 
-        // Last resort:
-        /// @todo This is only necessary because of other failure cases in the
-        ///       partitioning algorithm and to avoid producing a potentially
-        ///       dangerous BSP - not assigning a sector to each leaf may result
-        ///       in obscure fatal errors when in-game.
-        hedge = leaf->hedge;
+        /*
+         * Last resort:
+         * @todo This is only necessary because of other failure cases in the
+         * partitioning algorithm and to avoid producing a potentially
+         * dangerous BSP - not assigning a sector to each leaf may result in
+         * obscure fatal errors when in-game.
+         */
+        hedge = base;
         do
         {
-            if(hedge->sector)
+            if(Sector *hedgeSector = hedgeInfo(*hedge).sector)
             {
-                return hedge->sector;
+                return hedgeSector;
             }
-        } while((hedge = hedge->next) != leaf->hedge);
+        } while((hedge = &hedge->next()) != base);
 
         return 0; // Not reachable.
     }
 
-    void clockwiseLeaf(BspTreeNode& tree, HEdgeSortBuffer& sortBuffer)
+    void clockwiseLeaf(BspLeaf &leaf, HEdgeSortBuffer &sortBuffer)
     {
-        DENG2_ASSERT(tree.isLeaf());
-
-        BspLeaf* leaf = tree.userData()->castTo<BspLeaf>();
-        vec2d_t center;
-
-        V2d_Set(center, 0, 0);
-        findBspLeafCenter(*leaf, center);
-        clockwiseOrder(*leaf, center, sortBuffer);
+        clockwiseOrder(leaf, findBspLeafCenter(leaf), sortBuffer);
 
         // Construct the leaf's hedge ring.
-        if(leaf->hedge)
+        if(leaf._hedge)
         {
-            HEdge* hedge = leaf->hedge;
+            HEdge *hedge = leaf._hedge;
             forever
             {
-                /// @todo Kludge: This should not be done here!
-                if(hedge->lineDef)
+                /// @todo kludge: This should not be done here!
+                if(hedge->hasLineSide())
                 {
-                    lineside_t* side = HEDGE_SIDE(hedge);
+                    Line::Side &side = hedge->lineSide();
+
                     // Already processed?
-                    if(!side->hedgeLeft)
+                    if(!side.leftHEdge())
                     {
-                        side->hedgeLeft = hedge;
+                        HEdge *leftHEdge = hedge;
                         // Find the left-most hedge.
-                        while(hedgeInfo(*side->hedgeLeft).prevOnSide)
-                            side->hedgeLeft = hedgeInfo(*side->hedgeLeft).prevOnSide;
+                        while(hedgeInfo(*leftHEdge).prevOnSide)
+                            leftHEdge = hedgeInfo(*leftHEdge).prevOnSide;
+                        side.setLeftHEdge(leftHEdge);
 
                         // Find the right-most hedge.
-                        side->hedgeRight = hedge;
-                        while(hedgeInfo(*side->hedgeRight).nextOnSide)
-                            side->hedgeRight = hedgeInfo(*side->hedgeRight).nextOnSide;
+                        HEdge *rightHEdge = hedge;
+                        while(hedgeInfo(*rightHEdge).nextOnSide)
+                            rightHEdge = hedgeInfo(*rightHEdge).nextOnSide;
+                        side.setRightHEdge(rightHEdge);
                     }
                 }
                 /// kludge end
 
-                if(hedge->next)
+                if(hedge->_next)
                 {
                     // Reverse link.
-                    hedge->next->prev = hedge;
-                    hedge = hedge->next;
+                    hedge->_next->_prev = hedge;
+                    hedge = hedge->_next;
                 }
                 else
                 {
                     // Circular link.
-                    hedge->next = leaf->hedge;
-                    hedge->next->prev = hedge;
+                    hedge->_next = leaf._hedge;
+                    hedge->_next->_prev = hedge;
                     break;
                 }
             }
         }
+    }
 
-        leaf->sector = chooseSectorForBspLeaf(leaf);
-        if(!leaf->sector)
+    Sector *findFirstSectorInHEdgeList(BspLeaf const &leaf)
+    {
+        HEdge const *base = leaf.firstHEdge();
+        HEdge const *hedge = base;
+        do
         {
-            leaf->sector = 0;
-            LOG_WARNING("BspLeaf %p is degenerate/orphan (%d HEdges).")
-                << de::dintptr(leaf) << leaf->hedgeCount;
-        }
-
-        logMigrantHEdges(leaf);
-        logUnclosedBspLeaf(leaf);
-
-        if(!sanityCheckHasRealHEdge(leaf))
-        {
-            throw de::Error("Partitioner::clockwiseLeaf",
-                            QString("BSP Leaf 0x%1 has no linedef-linked half-edge").arg(dintptr(leaf), 0, 16));
-        }
+            if(Sector *hedgeSector = hedgeInfo(*hedge).sector)
+            {
+                return hedgeSector;
+            }
+        } while((hedge = &hedge->next()) != base);
+        return 0; // Nothing??
     }
 
     /**
      * Sort all half-edges in each BSP leaf into a clockwise order.
      *
-     * @note This cannot be done during Partitioner::buildNodes() as splitting
-     * a half-edge with a twin will result in another half-edge being inserted
-     * into that twin's leaf (usually in the wrong place order-wise).
+     * @note This cannot be done during Partitioner::divideSubspace() as
+     * splitting a half-edge with a twin will result in another half-edge
+     * being inserted into that twin's leaf (usually in the wrong place
+     * order-wise).
      */
     void windLeafs()
     {
         HEdgeSortBuffer sortBuffer;
-        DENG2_FOR_EACH(BspTreeNodeMap, it, treeNodeMap)
+        foreach(BspTreeNode *node, treeNodeMap)
         {
-            BspTreeNode* node = it->second;
             if(!node->isLeaf()) continue;
-            clockwiseLeaf(*node, sortBuffer);
+            BspLeaf *leaf = node->userData()->castTo<BspLeaf>();
+
+            // Sort the leaf's half-edges.
+            clockwiseLeaf(*leaf, sortBuffer);
+
+            /*
+             * Perform some post analysis on the built leaf.
+             */
+            if(!sanityCheckHasRealHEdge(*leaf))
+                throw Error("Partitioner::clockwiseLeaf",
+                            QString("BSP Leaf 0x%1 has no line-linked half-edge")
+                                .arg(dintptr(leaf), 0, 16));
+
+            // Look for migrant half-edges in the leaf.
+            if(Sector *sector = findFirstSectorInHEdgeList(*leaf))
+            {
+                HEdge *base = leaf->firstHEdge();
+                HEdge *hedge = base;
+                do
+                {
+                    HEdgeInfo const &info = hedgeInfo(*hedge);
+                    if(info.sector && info.sector != sector)
+                    {
+                        notifyMigrantHEdgeBuilt(*hedge, *sector);
+                    }
+                } while((hedge = &hedge->next()) != base);
+            }
+
+            leaf->setSector(chooseSectorForBspLeaf(leaf));
+            if(!leaf->hasSector())
+            {
+                LOG_WARNING("BspLeaf %p is degenerate/orphan (%d HEdges).")
+                    << de::dintptr(leaf) << leaf->hedgeCount();
+            }
+
+            // See if we built a partial leaf...
+            uint gaps = 0;
+            HEdge const *base = leaf->firstHEdge();
+            HEdge const *hedge = base;
+            do
+            {
+                HEdge &next = hedge->next();
+                if(hedge->toOrigin() != next.fromOrigin())
+                {
+                    gaps++;
+                }
+            } while((hedge = &hedge->next()) != base);
+
+            if(gaps > 0)
+            {
+                /*
+                HEdge const *base = leaf.firstHEdge();
+                HEdge const *hedge = base;
+                do
+                {
+                    LOG_DEBUG("  half-edge %p %s -> %s")
+                        << de::dintptr(hedge)
+                        << hedge->fromOrigin().asText(),
+                        << hedge->toOrigin().asText();
+
+                } while((hedge = hedge->next) != base);
+                */
+
+                notifyPartialBspLeafBuilt(*leaf, gaps);
+            }
         }
     }
 
     /**
-     * Analyze the partition intercepts, building new half-edges to cap
-     * any gaps (new hedges are added onto the end of the appropriate list
-     *(rights to @a rightList and lefts to @a leftList)).
+     * Analyze the partition intercepts, building new half-edges to cap any
+     * gaps (new hedges are added onto the end of the appropriate list
+     * (rights to @a rightList and lefts to @a leftList)).
      *
      * @param rightList  List of hedges on the right of the partition.
      * @param leftList   List of hedges on the left of the partition.
      */
-    void addMiniHEdges(SuperBlock& rightList, SuperBlock& leftList)
+    void addMiniHEdges(SuperBlock &rightList, SuperBlock &leftList)
     {
-        LOG_TRACE("Building HEdges along partition [%1.1f, %1.1f] > [%1.1f, %1.1f]")
-            <<     partitionInfo.start[VX] <<     partitionInfo.start[VY]
-            << partitionInfo.direction[VX] << partitionInfo.direction[VY];
+        LOG_TRACE("Building HEdges along partition %s %s")
+            << Vector2d(partitionInfo.start).asText()
+            << Vector2d(partitionInfo.direction).asText();
 
-        //DEND_DEBUG_ONLY(printPartitionIntercepts(partition));
+        //printIntercepts(partitionIntercepts);
 
         // First, fix any near-distance issues with the intercepts.
-        mergeIntercepts();
-        buildHEdgesAtPartitionGaps(rightList, leftList);
+        sortAndMergeIntercepts(partitionIntercepts);
+        buildHEdgesAtPartitionGaps(partitionIntercepts, rightList, leftList);
     }
 
     /**
-     * Search the given list for an intercept, if found; return it.
+     * Search the list of intercepts for the partition to see if there is one
+     * for the specified vertext.
      *
-     * @param vertex  Ptr to the vertex to look for.
+     * @param vertex  The vertex to look for.
      *
-     * @return  Ptr to the found intercept, else @c NULL;
+     * @return  @c true iff an intercept for @a vertex was found.
      */
-    HPlaneIntercept const* partitionInterceptByVertex(Vertex* vertex)
+    bool partitionHasInterceptForVertex(Vertex &vertex)
     {
-        if(!vertex) return NULL; // Hmm...
-
-        DENG2_FOR_EACH_CONST(HPlane::Intercepts, it, partition.intercepts())
+        foreach(HEdgeIntercept const &icpt, partitionIntercepts)
         {
-            HPlaneIntercept const* inter = &*it;
-            HEdgeIntercept* hedgeInter = reinterpret_cast<HEdgeIntercept*>(inter->userData());
-            if(hedgeInter->vertex == vertex) return inter;
+            if(icpt.vertex == &vertex)
+                return true;
         }
-
-        return NULL;
+        return false;
     }
 
-    /**
-     * Create a new intersection.
-     */
-    HEdgeIntercept* newHEdgeIntercept(Vertex* vertex, bool lineDefIsSelfReferencing)
+    void clearBspElement(BspTreeNode &tree)
     {
-        DENG2_ASSERT(vertex);
+        LOG_AS("Partitioner::clearBspElement");
 
-        HEdgeIntercept* inter = new HEdgeIntercept();
-        inter->vertex = vertex;
-        inter->selfRef = lineDefIsSelfReferencing;
+        MapElement *elm = tree.userData();
+        if(!elm) return;
 
-        inter->before = openSectorAtAngle(vertex, M_InverseAngle(partitionInfo.pAngle));
-        inter->after  = openSectorAtAngle(vertex, partitionInfo.pAngle);
-
-        return inter;
-    }
-
-    void clearBspObject(BspTreeNode& tree)
-    {
-        LOG_AS("Partitioner::clearBspObject");
-
-        de::MapElement* dmuOb = tree.userData();
-        if(!dmuOb) return;
-
-        if(builtOK)
+        if(builtOk)
         {
-            LOG_DEBUG("Clearing unclaimed %s %p.") << (tree.isLeaf()? "leaf" : "node") << de::dintptr(dmuOb);
+            LOG_DEBUG("Clearing unclaimed %s %p.")
+                << (tree.isLeaf()? "leaf" : "node") << de::dintptr(elm);
         }
 
         if(tree.isLeaf())
         {
-            DENG2_ASSERT(dmuOb->type() == DMU_BSPLEAF);
+            DENG2_ASSERT(elm->type() == DMU_BSPLEAF);
             // There is now one less BspLeaf.
             numLeafs -= 1;
         }
         else
         {
-            DENG2_ASSERT(dmuOb->type() == DMU_BSPNODE);
+            DENG2_ASSERT(elm->type() == DMU_BSPNODE);
             // There is now one less BspNode.
             numNodes -= 1;
         }
-        delete dmuOb;
+        delete elm;
         tree.setUserData(0);
 
-        BspTreeNodeMap::iterator found = treeNodeMap.find(dmuOb);
+        BuiltBspElementMap::iterator found = treeNodeMap.find(elm);
         DENG2_ASSERT(found != treeNodeMap.end());
         treeNodeMap.erase(found);
     }
 
-    void clearAllBspObjects()
+    void clearAllBspElements()
     {
         DENG2_FOR_EACH(Vertexes, it, vertexes)
         {
-            Vertex* vtx = *it;
+            Vertex *vtx = *it;
             // Has ownership of this vertex been claimed?
             if(!vtx) continue;
 
-            clearHEdgeTipsByVertex(vtx);
-            M_Free(vtx);
+            clearHEdgeTipsByVertex(*vtx);
+            delete vtx;
         }
 
-        DENG2_FOR_EACH(BspTreeNodeMap, it, treeNodeMap)
+        foreach(BspTreeNode *node, treeNodeMap)
         {
-            clearBspObject(*it->second);
+            clearBspElement(*node);
         }
     }
 
-    BspTreeNode* treeNodeForBspObject(de::MapElement* ob)
+    BspTreeNode *treeNodeForBspElement(MapElement *ob)
     {
-        LOG_AS("Partitioner::treeNodeForBspObject");
+        LOG_AS("Partitioner::treeNodeForBspElement");
 
-        const int dmuType = ob->type();
-        if(dmuType == DMU_BSPLEAF || dmuType == DMU_BSPNODE)
+        int const elemType = ob->type();
+        if(elemType == DMU_BSPLEAF || elemType == DMU_BSPNODE)
         {
-            BspTreeNodeMap::const_iterator found = treeNodeMap.find(ob);
+            BuiltBspElementMap::const_iterator found = treeNodeMap.find(ob);
             if(found == treeNodeMap.end()) return 0;
-            return found->second;
+            return found.value();
         }
-        LOG_DEBUG("Attempted to locate using an unknown object %p (type: %d).")
-            << de::dintptr(ob) << dmuType;
+        LOG_DEBUG("Attempted to locate using an unknown element %p (type: %d).")
+            << de::dintptr(ob) << elemType;
         return 0;
     }
 
@@ -1989,64 +2039,57 @@ struct Partitioner::Instance
      *
      * @return  Newly created Vertex.
      */
-    Vertex* newVertex(const_pvec2d_t origin)
+    Vertex *newVertex(Vector2d const &origin)
     {
-        Vertex* vtx = new Vertex;
-        vtx->buildData.index = numEditableVertexes + uint(vertexes.size() + 1); // 1-based index, 0 = NIL.
+        Vertex *vtx = new Vertex(origin);
+
+        /// @todo We do not have authorization to specify this index. -ds
+        /// (This job should be done post BSP build.)
+        vtx->setIndexInMap(map->vertexCount() + uint(vertexes.size()));
         vertexes.push_back(vtx);
 
         // There is now one more Vertex.
         numVertexes += 1;
         vertexInfos.push_back(VertexInfo());
 
-        if(origin)
-        {
-            V2d_Copy(vtx->origin, origin);
-        }
         return vtx;
     }
 
-    inline void addHEdgeTip(Vertex* vtx, coord_t angle, HEdge* front, HEdge* back)
+    inline void addHEdgeTip(Vertex &vtx, coord_t angle, HEdge *front, HEdge *back)
     {
-        DENG2_ASSERT(vtx);
-        vertexInfo(*vtx).addHEdgeTip(angle, front, back);
+        vertexInfo(vtx).addHEdgeTip(angle, front, back);
     }
 
-    inline void clearHEdgeTipsByVertex(Vertex const *vtx)
+    inline void clearHEdgeTipsByVertex(Vertex const &vtx)
     {
-        if(!vtx) return;
-        vertexInfo(*vtx).clearHEdgeTips();
+        vertexInfo(vtx).clearHEdgeTips();
     }
 
     void clearAllHEdgeTips()
     {
-        for(uint i = 0; i < numEditableVertexes; ++i)
+        for(uint i = 0; i < vertexInfos.size(); ++i)
         {
-            clearHEdgeTipsByVertex(editableVertexes[i]);
+            vertexInfos[i].clearHEdgeTips();
         }
     }
 
     /**
      * Create a new half-edge.
      */
-    HEdge* newHEdge(Vertex* start, Vertex* end, Sector* sec, LineDef* lineDef = 0,
-                    LineDef* sourceLineDef = 0)
+    HEdge *newHEdge(Vertex &from, Vertex &to, Sector &sec, Line::Side *side = 0,
+                    Line *sourceLine = 0)
     {
-        DENG2_ASSERT(start && end && sec);
-
-        HEdge* hedge = HEdge_New();
-        hedge->HE_v1 = start;
-        hedge->HE_v2 = end;
-        hedge->sector = sec;
-        hedge->lineDef = lineDef;
+        HEdge *hedge = new HEdge(from, side);
+        hedge->_to = &to;
 
         // There is now one more HEdge.
         numHEdges += 1;
-        hedgeInfos.insert(std::pair<HEdge*, HEdgeInfo>(hedge, HEdgeInfo()));
+        hedgeInfos.insert(hedge, HEdgeInfo());
 
-        HEdgeInfo& info = hedgeInfo(*hedge);
-        info.lineDef = lineDef;
-        info.sourceLineDef = sourceLineDef;
+        HEdgeInfo &info = hedgeInfo(*hedge);
+        info.line       = side? &side->line() : 0;
+        info.sourceLine = sourceLine;
+        info.sector     = &sec;
         info.initFromHEdge(*hedge);
 
         return hedge;
@@ -2055,146 +2098,137 @@ struct Partitioner::Instance
     /**
      * Create a clone of an existing half-edge.
      */
-    HEdge* cloneHEdge(const HEdge& other)
+    HEdge &cloneHEdge(HEdge const &other)
     {
-        HEdge* hedge = HEdge_NewCopy(&other);
+        HEdge *hedge = new HEdge(other);
 
         // There is now one more HEdge.
         numHEdges += 1;
-        hedgeInfos.insert(std::pair<HEdge*, HEdgeInfo>(hedge, HEdgeInfo()));
+        hedgeInfos.insert(hedge, HEdgeInfo(hedgeInfo(other)));
 
-        memcpy(&hedgeInfo(*hedge), &hedgeInfo(other), sizeof(HEdgeInfo));
-
-        return hedge;
+        return *hedge;
     }
 
-    HEdgeList collectHEdges(SuperBlock& partList)
+    HEdgeList collectHEdges(SuperBlock &partList)
     {
         HEdgeList hedges;
 
         // Iterative pre-order traversal of SuperBlock.
-        SuperBlock* cur = &partList;
-        SuperBlock* prev = 0;
+        SuperBlock *cur = &partList;
+        SuperBlock *prev = 0;
         while(cur)
         {
             while(cur)
             {
-                HEdge* hedge;
+                HEdge *hedge;
                 while((hedge = cur->pop()))
                 {
                     // Disassociate the half-edge from the blockmap.
                     hedgeInfo(*hedge).bmapBlock = 0;
 
-                    hedges.push_back(hedge);
+                    hedges.append(hedge);
                 }
 
-                if(prev == cur->parent())
+                if(prev == cur->parentPtr())
                 {
                     // Descending - right first, then left.
                     prev = cur;
-                    if(cur->hasRight()) cur = cur->right();
-                    else                cur = cur->left();
+                    if(cur->hasRight()) cur = cur->rightPtr();
+                    else                cur = cur->leftPtr();
                 }
-                else if(prev == cur->right())
+                else if(prev == cur->rightPtr())
                 {
                     // Last moved up the right branch - descend the left.
                     prev = cur;
-                    cur = cur->left();
+                    cur = cur->leftPtr();
                 }
-                else if(prev == cur->left())
+                else if(prev == cur->leftPtr())
                 {
                     // Last moved up the left branch - continue upward.
                     prev = cur;
-                    cur = cur->parent();
+                    cur = cur->parentPtr();
                 }
             }
 
             if(prev)
             {
                 // No left child - back up.
-                cur = prev->parent();
+                cur = prev->parentPtr();
             }
         }
         return hedges;
     }
 
     /**
-     * Check whether a line with the given delta coordinates and beginning at this
-     * vertex is open. Returns a sector reference if it's open, or NULL if closed
-     * (void space or directly along a linedef).
+     * Check whether a line with the given delta coordinates and beginning at
+     * this vertex, is open.
+     *
+     * Returns a sector reference if it's open, or @c 0 if closed (void space
+     * or directly along a line).
      */
-    Sector* openSectorAtAngle(Vertex* vtx, coord_t angle)
+    Sector *openSectorAtAngle(Vertex &vtx, coord_t angle)
     {
-        DENG2_ASSERT(vtx);
-        const VertexInfo::HEdgeTips& hedgeTips = vertexInfo(*vtx).hedgeTips();
+        VertexInfo::HEdgeTips const &hedgeTips = vertexInfo(vtx).hedgeTips();
 
         if(hedgeTips.empty())
         {
-            throw de::Error("Partitioner::openSectorAtAngle",
-                            QString("Vertex #%1 has no hedge tips!").arg(vtx->buildData.index - 1));
+            throw Error("Partitioner::openSectorAtAngle",
+                        QString("Vertex #%1 has no hedge tips!")
+                            .arg(vtx.indexInMap()));
         }
 
-        // First check whether there's a wall_tip that lies in the exact direction of
-        // the given direction (which is relative to the vtxex).
+        // First check whether there's a wall_tip that lies in the exact
+        // direction of the given direction (which is relative to the vertex).
         DENG2_FOR_EACH_CONST(VertexInfo::HEdgeTips, it, hedgeTips)
         {
-            const HEdgeTip& tip = *it;
+            HEdgeTip const &tip = *it;
             coord_t diff = fabs(tip.angle() - angle);
             if(diff < ANG_EPSILON || diff > (360.0 - ANG_EPSILON))
             {
-                return NULL; // Yes, found one.
+                return 0; // Yes, found one.
             }
         }
 
-        // OK, now just find the first wall_tip whose angle is greater than the angle
-        // we're interested in. Therefore we'll be on the FRONT side of that tip edge.
+        // OK, now just find the first wall_tip whose angle is greater than
+        // the angle we're interested in. Therefore we'll be on the front side
+        // of that tip edge.
         DENG2_FOR_EACH_CONST(VertexInfo::HEdgeTips, it, hedgeTips)
         {
-            const HEdgeTip& tip = *it;
+            HEdgeTip const &tip = *it;
             if(angle + ANG_EPSILON < tip.angle())
             {
                 // Found it.
-                return (tip.hasFront()? tip.front().sector : NULL);
+                return (tip.hasFront()? hedgeInfo(tip.front()).sector : 0);
             }
         }
 
-        // Not found. The open sector will therefore be on the BACK of the tip at the
-        // greatest angle.
-        const HEdgeTip& tip = hedgeTips.back();
-        return (tip.hasBack()? tip.back().sector : NULL);
-    }
-
-    /**
-     * Initialize the extra info about the current partition plane.
-     */
-    void initPartitionInfo()
-    {
-        memset(&partitionInfo, 0, sizeof(partitionInfo));
-        partitionLineDef = 0;
+        // Not found. The open sector will therefore be on the back of the tip
+        // at the greatest angle.
+        HEdgeTip const &tip = hedgeTips.back();
+        return (tip.hasBack()? hedgeInfo(tip.back()).sector : 0);
     }
 
     /**
      * Update the extra info about the current partition plane.
      */
-    void setPartitionInfo(const HEdgeInfo& info, LineDef* lineDef)
+    void setPartitionInfo(HEdgeInfo const &info, Line *line)
     {
-        memcpy(&partitionInfo, &info, sizeof(partitionInfo));
-        partitionLineDef = lineDef;
+        std::memcpy(&partitionInfo, &info, sizeof(partitionInfo));
+        partitionLine = line;
     }
 
-    bool release(de::MapElement* dmuOb)
+    bool release(MapElement *elm)
     {
-        switch(dmuOb->type())
+        switch(elm->type())
         {
         case DMU_VERTEX: {
-            Vertex* vtx = dmuOb->castTo<Vertex>();
-            if(vtx->buildData.index > 0 && uint(vtx->buildData.index) > numEditableVertexes)
+            Vertex *vtx = elm->castTo<Vertex>();
+            /// @todo optimize: Poor performance O(n).
+            for(uint i = 0; i < vertexes.size(); ++i)
             {
-                // Is this object owned?
-                uint idx = uint(vtx->buildData.index) - 1 - numEditableVertexes;
-                if(idx < vertexes.size() && vertexes[idx])
+                if(vertexes[i] == vtx)
                 {
-                    vertexes[idx] = 0;
+                    vertexes[i] = 0;
                     // There is now one fewer Vertex.
                     numVertexes -= 1;
                     return true;
@@ -2208,10 +2242,10 @@ struct Partitioner::Instance
 
         case DMU_BSPLEAF:
         case DMU_BSPNODE: {
-            BspTreeNode* treeNode = treeNodeForBspObject(dmuOb);
+            BspTreeNode *treeNode = treeNodeForBspElement(elm);
             if(treeNode)
             {
-                BspTreeNodeMap::iterator found = treeNodeMap.find(dmuOb);
+                BuiltBspElementMap::iterator found = treeNodeMap.find(elm);
                 DENG2_ASSERT(found != treeNodeMap.end());
                 treeNodeMap.erase(found);
 
@@ -2238,175 +2272,127 @@ struct Partitioner::Instance
     }
 
     /**
-     * Register the specified sector in the list of unclosed sectors.
+     * Notify interested parties of a "one-way window" in the map.
      *
-     * @param sector  Sector to be registered.
-     * @param x  X coordinate near the open point.
-     * @param y  X coordinate near the open point.
-     *
-     * @return @c true iff the sector was newly registered.
+     * @param line    The window line.
+     * @param backFacingSector  Sector that the back of the line is facing.
      */
-    bool registerUnclosedSector(Sector* sector, coord_t x, coord_t y)
+    void notifyOneWayWindowFound(Line &line, Sector &backFacingSector)
     {
-        if(!sector) return false;
-
-        // Has this sector already been registered?
-        if(unclosedSectors.count(sector)) return false;
-
-        // Add a new record.
-        unclosedSectors.insert(std::pair<Sector*, UnclosedSectorRecord>(sector, UnclosedSectorRecord(sector, x, y)));
-
-        // In the absence of a better mechanism, simply log this right away.
-        /// @todo Implement something better!
-        LOG_WARNING("Sector %p (#%d) is unclosed near [%1.1f, %1.1f].")
-            << de::dintptr(sector) << sector->buildData.index - 1 << x << y;
-
-        return true;
-    }
-
-    bool registerUnclosedBspLeaf(BspLeaf* leaf, uint gapTotal)
-    {
-        if(!leaf) return false;
-
-        // Has this leaf already been registered?
-        if(unclosedBspLeafs.count(leaf)) return false;
-
-        // Add a new record.
-        unclosedBspLeafs.insert(std::pair<BspLeaf*, UnclosedBspLeafRecord>(leaf, UnclosedBspLeafRecord(leaf, gapTotal)));
-
-        // In the absence of a better mechanism, simply log this right away.
-        /// @todo Implement something better!
-        LOG_WARNING("HEdge list for BspLeaf %p is not closed (%u gaps, %u hedges).")
-            << de::dintptr(leaf) << gapTotal << leaf->hedgeCount;
-
-        /*
-        HEdge* hedge = leaf->hedge;
-        do
+        DENG2_FOR_PUBLIC_AUDIENCE(OneWayWindowFound, i)
         {
-            LOG_DEBUG("  half-edge %p [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
-                << de::dintptr(hedge)
-                << hedge->HE_v1origin[VX] << hedge->HE_v1origin[VY],
-                << hedge->HE_v2origin[VX] << hedge->HE_v2origin[VY];
-
-        } while((hedge = hedge->next) != leaf->hedge);
-        */
-        return true;
-    }
-
-    void logUnclosedBspLeaf(BspLeaf* leaf)
-    {
-        if(!leaf) return;
-
-        uint gaps = 0;
-        const HEdge* hedge = leaf->hedge;
-        do
-        {
-            HEdge* next = hedge->next;
-            if(!FEQUAL(hedge->HE_v2origin[VX], next->HE_v1origin[VX]) ||
-               !FEQUAL(hedge->HE_v2origin[VY], next->HE_v1origin[VY]))
-            {
-                gaps++;
-            }
-        } while((hedge = hedge->next) != leaf->hedge);
-
-        if(gaps > 0)
-        {
-            registerUnclosedBspLeaf(leaf, gaps);
+            i->oneWayWindowFound(line, backFacingSector);
         }
     }
 
     /**
-     * Register the specified half-edge as as migrant edge of the specified sector.
+     * Notify interested parties of an unclosed sector in the map.
      *
-     * @param migrant  Migrant half-edge to register.
-     * @param sector  Sector containing the @a migrant half-edge.
-     *
-     * @return @c true iff the half-edge was newly registered.
+     * @param sector    The problem sector.
+     * @param nearPoint  Coordinates near to where the problem was found.
      */
-    bool registerMigrantHEdge(HEdge* migrant, Sector* sector)
+    void notifyUnclosedSectorFound(Sector &sector, Vector2d const &nearPoint)
     {
-        if(!migrant || !sector) return false;
-
-        // Has this pair already been registered?
-        if(migrantHEdges.count(migrant)) return false;
-
-        // Add a new record.
-        migrantHEdges.insert(std::pair<HEdge*, MigrantHEdgeRecord>(migrant, MigrantHEdgeRecord(migrant, sector)));
-
-        // In the absence of a better mechanism, simply log this right away.
-        /// @todo Implement something better!
-        if(migrant->lineDef)
-            LOG_WARNING("Sector #%d has migrant HEdge facing #%d (line #%d).")
-                << sector->buildData.index - 1 << migrant->sector->buildData.index - 1
-                << migrant->lineDef->origIndex - 1;
-        else
-            LOG_WARNING("Sector #%d has migrant HEdge facing #%d.")
-                << sector->buildData.index - 1 << migrant->sector->buildData.index - 1;
-
-        return true;
+        DENG2_FOR_PUBLIC_AUDIENCE(UnclosedSectorFound, i)
+        {
+            i->unclosedSectorFound(sector, nearPoint);
+        }
     }
 
     /**
-     * Look for migrant half-edges in the specified leaf and register them to the
-     * list of migrants.
+     * Notify interested parties that a partial BSP leaf was built.
      *
-     * @param leaf  BSP leaf to be searched.
+     * @param leaf      The incomplete BSP leaf.
+     * @param gapTotal  Number of gaps in the leaf.
      */
-    void logMigrantHEdges(const BspLeaf* leaf)
+    void notifyPartialBspLeafBuilt(BspLeaf &leaf, uint gapTotal)
     {
-        if(!leaf) return;
-
-        // Find a suitable half-edge for comparison.
-        Sector* sector = findFirstSectorInHEdgeList(leaf);
-        if(!sector) return;
-
-        // Log migrants.
-        HEdge* hedge = leaf->hedge;
-        do
+        DENG2_FOR_PUBLIC_AUDIENCE(PartialBspLeafBuilt, i)
         {
-            if(hedge->sector && hedge->sector != sector)
-            {
-                registerMigrantHEdge(hedge, sector);
-            }
-        } while((hedge = hedge->next) != leaf->hedge);
+            i->partialBspLeafBuilt(leaf, gapTotal);
+        }
     }
 
-    bool sanityCheckHasRealHEdge(const BspLeaf* leaf) const
+    /**
+     * Notify interested parties that a migrant half-edge was built.
+     *
+     * @param hedge         The migrant half-edge.
+     * @param facingSector  Sector that the half-edge is facing.
+     */
+    void notifyMigrantHEdgeBuilt(HEdge &migrant, Sector &facingSector)
     {
-        DENG_ASSERT(leaf);
-        HEdge* hedge = leaf->hedge;
+        DENG2_FOR_PUBLIC_AUDIENCE(MigrantHEdgeBuilt, i)
+        {
+            i->migrantHEdgeBuilt(migrant, facingSector);
+        }
+    }
+
+    bool sanityCheckHasRealHEdge(BspLeaf const &leaf) const
+    {
+        HEdge const *base = leaf.firstHEdge();
+        HEdge const *hedge = base;
         do
         {
-            if(hedge->lineDef) return true;
-        } while((hedge = hedge->next) != leaf->hedge);
+            if(hedge->hasLineSide()) return true;
+        } while((hedge = &hedge->next()) != base);
         return false;
     }
+
+#ifdef DENG_DEBUG
+    void printSuperBlockHEdges(SuperBlock const &block)
+    {
+        foreach(HEdge const *hedge, block.hedges())
+        {
+            HEdgeInfo const &info = hedgeInfo(*hedge);
+
+            LOG_DEBUG("Build: %s %p sector: %d %s -> %s")
+                << (hedge->hasLineSide()? "NORM" : "MINI")
+                << hedge << (info.sector != 0? info.sector->indexInMap() : -1)
+                << hedge->fromOrigin().asText() << hedge->toOrigin().asText();
+        }
+    }
+#endif
 };
 
-Partitioner::Partitioner(GameMap& map, uint numEditableVertexes,
-    Vertex const **editableVertexes, int splitCostFactor)
+Partitioner::Partitioner(GameMap const &map, int splitCostFactor)
+    : d(new Instance(this, map, splitCostFactor))
 {
-    d = new Instance(&map, numEditableVertexes, editableVertexes, splitCostFactor);
     d->initForMap();
 }
 
-Partitioner::~Partitioner()
+void Partitioner::setSplitCostFactor(int newFactor)
 {
-    delete d;
+    if(d->splitCostFactor != newFactor)
+    {
+        d->splitCostFactor = newFactor;
+    }
 }
 
-Partitioner& Partitioner::setSplitCostFactor(int factor)
+static AABox blockmapBounds(AABoxd const &mapBounds)
 {
-    d->splitCostFactor = factor;
-    return *this;
+    AABox mapBoundsi;
+    mapBoundsi.minX = int( de::floor(mapBounds.minX) );
+    mapBoundsi.minY = int( de::floor(mapBounds.minY) );
+    mapBoundsi.maxX = int(  de::ceil(mapBounds.maxX) );
+    mapBoundsi.maxY = int(  de::ceil(mapBounds.maxY) );
+
+    AABox blockBounds;
+    blockBounds.minX = mapBoundsi.minX - (mapBoundsi.minX & 0x7);
+    blockBounds.minY = mapBoundsi.minY - (mapBoundsi.minY & 0x7);
+    int bw = ((mapBoundsi.maxX - blockBounds.minX) / 128) + 1;
+    int bh = ((mapBoundsi.maxY - blockBounds.minY) / 128) + 1;
+
+    blockBounds.maxX = blockBounds.minX + 128 * M_CeilPow2(bw);
+    blockBounds.maxY = blockBounds.minY + 128 * M_CeilPow2(bh);
+    return blockBounds;
 }
 
-bool Partitioner::build()
+void Partitioner::build()
 {
-    return d->buildBsp(SuperBlockmap(blockmapBounds(d->mapBounds)));
+    d->buildBsp(SuperBlockmap(blockmapBounds(d->map->bounds())));
 }
 
-BspTreeNode* Partitioner::root() const
+BspTreeNode *Partitioner::root() const
 {
     return d->rootNode;
 }
@@ -2431,22 +2417,21 @@ uint Partitioner::numVertexes()
     return d->numVertexes;
 }
 
-Vertex& Partitioner::vertex(uint idx)
+Vertex &Partitioner::vertex(uint idx)
 {
     DENG2_ASSERT(idx < d->vertexes.size());
     DENG2_ASSERT(d->vertexes[idx]);
     return *d->vertexes[idx];
 }
 
-Partitioner& Partitioner::release(de::MapElement* ob)
+void Partitioner::release(MapElement *mapElement)
 {
-    LOG_AS("Partitioner::release");
-
-    if(!d->release(ob))
+    if(!d->release(mapElement))
     {
-        LOG_DEBUG("Attempted to release an unknown/unowned object %p.") << de::dintptr(ob);
+        LOG_AS("Partitioner::release");
+        LOG_DEBUG("Attempted to release an unknown/unowned %s %p.")
+            << DMU_Str(mapElement->type()) << de::dintptr(mapElement);
     }
-    return *this;
 }
 
 static LineRelationship lineRelationship(coord_t a, coord_t b, coord_t distEpsilon)
@@ -2476,161 +2461,35 @@ static LineRelationship lineRelationship(coord_t a, coord_t b, coord_t distEpsil
     return Intersects;
 }
 
-static bool findBspLeafCenter(BspLeaf const& leaf, pvec2d_t center)
+static Vector2d findBspLeafCenter(BspLeaf const &leaf)
 {
-    DENG2_ASSERT(center);
-
-    vec2d_t avg;
-    V2d_Set(avg, 0, 0);
+    Vector2d center;
     size_t numPoints = 0;
 
-    for(HEdge* hedge = leaf.hedge; hedge; hedge = hedge->next)
+    for(HEdge const *hedge = leaf.firstHEdge(); hedge; hedge = hedge->_next)
     {
-        V2d_Sum(avg, avg, hedge->HE_v1origin);
-        V2d_Sum(avg, avg, hedge->HE_v2origin);
+        center += hedge->fromOrigin();
+        center += hedge->toOrigin();
         numPoints += 2;
     }
 
     if(numPoints)
     {
-        V2d_Set(center, avg[VX] / numPoints, avg[VY] / numPoints);
+        center.x /= numPoints;
+        center.y /= numPoints;
     }
 
-    return true;
+    return center;
 }
 
 #if 0
-DENG_DEBUG_ONLY(
-static bool bspLeafHasRealHEdge(BspLeaf const& leaf)
-{
-    HEdge* hedge = leaf.hedge;
-    do
-    {
-        if(hedge->lineDef) return true;
-    } while((hedge = hedge->next) != leaf.hedge);
-    return false;
-})
-
-DENG_DEBUG_ONLY(
-static void printBspLeafHEdges(BspLeaf const& leaf)
-{
-    for(HEdge* hedge = leaf.hedge; hedge; hedge = hedge->next)
-    {
-        coord_t angle = M_DirectionToAngleXY(hedge->HE_v1origin[VX] - point[VX],
-                                             hedge->HE_v1origin[VY] - point[VY]);
-
-        LOG_DEBUG("  half-edge %p: Angle %1.6f [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
-            << de::dintptr(hedge) << angle
-            << hedge->HE_v1origin[VX] << hedge->HE_v1origin[VY]
-            << hedge->HE_v2origin[VX] << hedge->HE_v2origin[VY];
-    }
-})
-
-DENG_DEBUG_ONLY(
-static int printSuperBlockHEdgesWorker(SuperBlock* block, void* /*parameters*/)
-{
-    SuperBlock::DebugPrint(*block);
-    return false; // Continue iteration.
-})
-
-DENG_DEBUG_ONLY(
-static void printPartitionIntercepts(HPlane const& partition)
+static void printIntercepts(HEdgeIntercepts const &intercepts)
 {
     uint index = 0;
-    DENG2_FOR_EACH_CONST(HPlane::Intercepts, i, partition.intercepts())
+    foreach(HEdgeIntercept const &icpt, intercepts)
     {
-        Con_Printf(" %u: >%1.2f ", index++, i->distance());
-        HEdgeIntercept::DebugPrint(*reinterpret_cast<HEdgeIntercept*>(i->userData()));
+        Con_Printf(" %u: >%1.2f ", index++, i.distance;
+        i.debugPrint();
     }
-})
+}
 #endif
-
-static void initAABoxFromEditableLineDefVertexes(AABoxd* aaBox, const LineDef* line)
-{
-    const coord_t* from = line->L_v1origin;
-    const coord_t* to   = line->L_v2origin;
-    aaBox->minX = MIN_OF(from[VX], to[VX]);
-    aaBox->minY = MIN_OF(from[VY], to[VY]);
-    aaBox->maxX = MAX_OF(from[VX], to[VX]);
-    aaBox->maxY = MAX_OF(from[VY], to[VY]);
-}
-
-static AABoxd findMapBounds2(GameMap* map)
-{
-    DENG2_ASSERT(map);
-    AABoxd bounds;
-    bool initialized = false;
-
-    for(uint i = 0; i < GameMap_LineDefCount(map); ++i)
-    {
-        LineDef* line = GameMap_LineDef(map, i);
-
-        // Do not consider zero-length LineDefs (already screened at a higher level).
-        //if(lineDefInfo(*line).flags.testFlag(LineDefInfo::ZEROLENGTH)) continue;
-
-        AABoxd lineAABox;
-        initAABoxFromEditableLineDefVertexes(&lineAABox, line);
-
-        if(initialized)
-        {
-            V2d_AddToBox(bounds.arvec2, lineAABox.min);
-        }
-        else
-        {
-            V2d_InitBox(bounds.arvec2, lineAABox.min);
-            initialized = true;
-        }
-
-        V2d_AddToBox(bounds.arvec2, lineAABox.max);
-    }
-
-    if(!initialized)
-    {
-        // Clear.
-        V2d_Set(bounds.min, DDMAXFLOAT, DDMAXFLOAT);
-        V2d_Set(bounds.max, DDMINFLOAT, DDMINFLOAT);
-    }
-    return bounds;
-}
-
-static AABoxd findMapBounds(GameMap* map)
-{
-    AABoxd mapBounds = findMapBounds2(map);
-    LOG_VERBOSE("Map bounds:")
-        << " min[x:" << mapBounds.minX << ", y:" << mapBounds.minY << "]"
-        << " max[x:" << mapBounds.maxX << ", y:" << mapBounds.maxY << "]";
-    return mapBounds;
-}
-
-static AABox blockmapBounds(AABoxd const& mapBounds)
-{
-    AABox mapBoundsi;
-    mapBoundsi.minX = (int) floor(mapBounds.minX);
-    mapBoundsi.minY = (int) floor(mapBounds.minY);
-    mapBoundsi.maxX = (int)  ceil(mapBounds.maxX);
-    mapBoundsi.maxY = (int)  ceil(mapBounds.maxY);
-
-    AABox blockBounds;
-    blockBounds.minX = mapBoundsi.minX - (mapBoundsi.minX & 0x7);
-    blockBounds.minY = mapBoundsi.minY - (mapBoundsi.minY & 0x7);
-    int bw = ((mapBoundsi.maxX - blockBounds.minX) / 128) + 1;
-    int bh = ((mapBoundsi.maxY - blockBounds.minY) / 128) + 1;
-
-    blockBounds.maxX = blockBounds.minX + 128 * M_CeilPow2(bw);
-    blockBounds.maxY = blockBounds.minY + 128 * M_CeilPow2(bh);
-    return blockBounds;
-}
-
-static Sector* findFirstSectorInHEdgeList(const BspLeaf* leaf)
-{
-    DENG2_ASSERT(leaf);
-    HEdge* hedge = leaf->hedge;
-    do
-    {
-        if(hedge->sector)
-        {
-            return hedge->sector;
-        }
-    } while((hedge = hedge->next) != leaf->hedge);
-    return NULL; // Nothing??
-}

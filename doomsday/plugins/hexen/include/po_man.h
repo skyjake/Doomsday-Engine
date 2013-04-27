@@ -54,7 +54,7 @@ typedef struct {
     int             intSpeed;
     unsigned int    dist;
     int             fangle;
-    float           speed[2]; // for sliding walls
+    coord_t         speed[2]; // for sliding doors
 } polyevent_t;
 
 typedef struct {
@@ -77,6 +77,10 @@ enum {
     PO_SPAWNCRUSH_DOOMEDNUM
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void PO_InitForMap(void);
 boolean PO_Busy(int polyobj);
 
@@ -91,14 +95,18 @@ boolean PO_FindAndCreatePolyobj(int tag, boolean crush, float startX, float star
  *             Otherwise this value is interpreted as a tag that *should*
  *             match one polyobj.
  */
-Polyobj* P_GetPolyobj(uint num);
+Polyobj *P_GetPolyobj(int num);
 
 void T_PolyDoor(void *pd);
 void T_RotatePoly(void *pe);
-boolean EV_RotatePoly(LineDef* line, byte* args, int direction, boolean override);
+boolean EV_RotatePoly(Line* line, byte* args, int direction, boolean override);
 
 void T_MovePoly(void *pe);
-boolean EV_MovePoly(LineDef* line, byte* args, boolean timesEight, boolean override);
-boolean EV_OpenPolyDoor(LineDef* line, byte* args, podoortype_t type);
+boolean EV_MovePoly(Line* line, byte* args, boolean timesEight, boolean override);
+boolean EV_OpenPolyDoor(Line* line, byte* args, podoortype_t type);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

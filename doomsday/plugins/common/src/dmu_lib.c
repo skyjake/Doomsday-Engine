@@ -44,31 +44,31 @@ static uint numLineTagLists = 0;
 static taglist_t* sectorTagLists = 0;
 static uint numSectorTagLists = 0;
 
-LineDef* P_AllocDummyLine(void)
+Line* P_AllocDummyLine(void)
 {
     xline_t* extra = Z_Calloc(sizeof(xline_t), PU_GAMESTATIC, 0);
-    return P_AllocDummy(DMU_LINEDEF, extra);
+    return P_AllocDummy(DMU_LINE, extra);
 }
 
-void P_FreeDummyLine(LineDef* line)
+void P_FreeDummyLine(Line* line)
 {
     Z_Free(P_DummyExtraData(line));
     P_FreeDummy(line);
 }
 
-SideDef* P_AllocDummySideDef(void)
+Side* P_AllocDummySide(void)
 {
-    return P_AllocDummy(DMU_SIDEDEF, 0);
+    return P_AllocDummy(DMU_SIDE, 0);
 }
 
-void P_FreeDummySideDef(SideDef* sideDef)
+void P_FreeDummySide(Side* side)
 {
-    P_FreeDummy(sideDef);
+    P_FreeDummy(side);
 }
 
-void P_CopyLine(LineDef* dest, LineDef* src)
+void P_CopyLine(Line* dest, Line* src)
 {
-    SideDef* sidefrom, *sideto;
+    Side* sidefrom, *sideto;
     xline_t* xsrc = P_ToXLine(src);
     xline_t* xdest = P_ToXLine(dest);
     int i, sidx;
@@ -79,7 +79,7 @@ void P_CopyLine(LineDef* dest, LineDef* src)
     // Copy the built-in properties
     for(i = 0; i < 2; ++i) // For each side
     {
-        sidx = (i==0? DMU_SIDEDEF0 : DMU_SIDEDEF1);
+        sidx = (i==0? DMU_FRONT : DMU_BACK);
 
         sidefrom = P_GetPtrp(src, sidx);
         sideto = P_GetPtrp(dest, sidx);
@@ -225,13 +225,13 @@ void P_CopySector(Sector* dest, Sector* src)
 
 void P_BuildLineTagLists(void)
 {
-    uint i;
+    int i;
 
     P_DestroyLineTagLists();
 
     for(i = 0; i < numlines; ++i)
     {
-        LineDef* line  = P_ToPtr(DMU_LINEDEF, i);
+        Line* line  = P_ToPtr(DMU_LINE, i);
         xline_t* xline = P_ToXLine(line);
 
 #if !__JHEXEN__
@@ -298,18 +298,18 @@ iterlist_t* P_GetLineIterListForTag(int tag, boolean createNewList)
 
 void P_BuildSectorTagLists(void)
 {
-    uint i;
+    int i;
 
     P_DestroySectorTagLists();
 
     for(i = 0; i < numsectors; ++i)
     {
-        Sector* sec     = P_ToPtr(DMU_SECTOR, i);
-        xsector_t* xsec = P_ToXSector(sec);
+        Sector *sec = P_ToPtr(DMU_SECTOR, i);
+        xsector_t *xsec = P_ToXSector(sec);
 
         if(xsec->tag)
         {
-            iterlist_t* list = P_GetSectorIterListForTag(xsec->tag, true);
+            iterlist_t *list = P_GetSectorIterListForTag(xsec->tag, true);
             IterList_PushBack(list, sec);
         }
     }
@@ -366,7 +366,7 @@ void P_DestroyAllTagLists(void)
     P_DestroySectorTagLists();
 }
 
-Sector* P_GetNextSector(LineDef* line, Sector* sec)
+Sector* P_GetNextSector(Line* line, Sector* sec)
 {
     Sector* frontSec;
     if(!sec || !line)
@@ -382,7 +382,7 @@ Sector* P_GetNextSector(LineDef* line, Sector* sec)
 int findExtremalLightLevelInAdjacentSectors(void* ptr, void* context)
 {
     findlightlevelparams_t* params = (findlightlevelparams_t*) context;
-    Sector* other = P_GetNextSector((LineDef*) ptr, params->baseSec);
+    Sector* other = P_GetNextSector((Line*) ptr, params->baseSec);
     float lightLevel;
 
     if(!other)
@@ -416,7 +416,7 @@ Sector* P_FindSectorSurroundingLowestLight(Sector* sec, float* val)
     params.val = DDMAXFLOAT;
     params.baseSec = sec;
     params.foundSec = 0;
-    P_Iteratep(sec, DMU_LINEDEF, &params, findExtremalLightLevelInAdjacentSectors);
+    P_Iteratep(sec, DMU_LINE, &params, findExtremalLightLevelInAdjacentSectors);
     if(*val)
         *val = params.val;
     return params.foundSec;
@@ -430,7 +430,7 @@ Sector* P_FindSectorSurroundingHighestLight(Sector* sec, float* val)
     params.val = DDMINFLOAT;
     params.baseSec = sec;
     params.foundSec = 0;
-    P_Iteratep(sec, DMU_LINEDEF, &params, findExtremalLightLevelInAdjacentSectors);
+    P_Iteratep(sec, DMU_LINE, &params, findExtremalLightLevelInAdjacentSectors);
     if(val)
         *val = params.val;
     return params.foundSec;
@@ -439,7 +439,7 @@ Sector* P_FindSectorSurroundingHighestLight(Sector* sec, float* val)
 int findNextLightLevel(void* ptr, void* context)
 {
     findnextlightlevelparams_t *params = (findnextlightlevelparams_t*) context;
-    LineDef* li = (LineDef*) ptr;
+    Line* li = (Line*) ptr;
     Sector* other = P_GetNextSector(li, params->baseSec);
     float otherLight;
 
@@ -477,7 +477,7 @@ Sector* P_FindSectorSurroundingNextLowestLight(Sector* sec, float baseLight, flo
     params.baseSec = sec;
     params.baseLight = baseLight;
     params.foundSec = 0;
-    P_Iteratep(sec, DMU_LINEDEF, &params, findNextLightLevel);
+    P_Iteratep(sec, DMU_LINE, &params, findNextLightLevel);
     if(*val)
         *val = params.val;
     return params.foundSec;
@@ -491,7 +491,7 @@ Sector* P_FindSectorSurroundingNextHighestLight(Sector* sec, float baseLight, fl
     params.baseSec = sec;
     params.baseLight = baseLight;
     params.foundSec = 0;
-    P_Iteratep(sec, DMU_LINEDEF, &params, findNextLightLevel);
+    P_Iteratep(sec, DMU_LINE, &params, findNextLightLevel);
     if(*val)
         *val = params.val;
     return params.foundSec;
@@ -500,7 +500,7 @@ Sector* P_FindSectorSurroundingNextHighestLight(Sector* sec, float baseLight, fl
 int findExtremalPlaneHeight(void* ptr, void* context)
 {
     findextremalplaneheightparams_t* params = (findextremalplaneheightparams_t*) context;
-    Sector* other = P_GetNextSector((LineDef*) ptr, params->baseSec);
+    Sector* other = P_GetNextSector((Line*) ptr, params->baseSec);
     coord_t height;
 
     if(!other)
@@ -531,7 +531,7 @@ Sector* P_FindSectorSurroundingLowestFloor(Sector* sec, coord_t max, coord_t* va
     params.val = max;
     params.baseSec = sec;
     params.foundSec = 0;
-    P_Iteratep(sec, DMU_LINEDEF, &params, findExtremalPlaneHeight);
+    P_Iteratep(sec, DMU_LINE, &params, findExtremalPlaneHeight);
     if(val)
         *val = params.val;
     return params.foundSec;
@@ -544,7 +544,7 @@ Sector* P_FindSectorSurroundingHighestFloor(Sector* sec, coord_t min, coord_t* v
     params.val = min;
     params.baseSec = sec;
     params.foundSec = 0;
-    P_Iteratep(sec, DMU_LINEDEF, &params, findExtremalPlaneHeight);
+    P_Iteratep(sec, DMU_LINE, &params, findExtremalPlaneHeight);
     if(val)
         *val = params.val;
     return params.foundSec;
@@ -557,7 +557,7 @@ Sector* P_FindSectorSurroundingLowestCeiling(Sector* sec, coord_t max, coord_t* 
     params.val = max;
     params.baseSec = sec;
     params.foundSec = 0;
-    P_Iteratep(sec, DMU_LINEDEF, &params, findExtremalPlaneHeight);
+    P_Iteratep(sec, DMU_LINE, &params, findExtremalPlaneHeight);
     if(val)
         *val = params.val;
     return params.foundSec;
@@ -570,7 +570,7 @@ Sector* P_FindSectorSurroundingHighestCeiling(Sector* sec, coord_t min, coord_t*
     params.val = min;
     params.baseSec = sec;
     params.foundSec = 0;
-    P_Iteratep(sec, DMU_LINEDEF, &params, findExtremalPlaneHeight);
+    P_Iteratep(sec, DMU_LINE, &params, findExtremalPlaneHeight);
     if(val)
         *val = params.val;
     return params.foundSec;
@@ -579,7 +579,7 @@ Sector* P_FindSectorSurroundingHighestCeiling(Sector* sec, coord_t min, coord_t*
 int findNextPlaneHeight(void* ptr, void* context)
 {
     findnextplaneheightparams_t* params = (findnextplaneheightparams_t*) context;
-    Sector* other = P_GetNextSector((LineDef*) ptr, params->baseSec);
+    Sector* other = P_GetNextSector((Line*) ptr, params->baseSec);
     coord_t otherHeight;
 
     if(!other)
@@ -611,7 +611,7 @@ Sector* P_FindSectorSurroundingNextHighestFloor(Sector* sec, coord_t baseHeight,
     params.baseSec = sec;
     params.baseHeight = baseHeight;
     params.foundSec = 0;
-    P_Iteratep(sec, DMU_LINEDEF, &params, findNextPlaneHeight);
+    P_Iteratep(sec, DMU_LINE, &params, findNextPlaneHeight);
     if(val)
         *val = params.val;
     return params.foundSec;
@@ -625,7 +625,7 @@ Sector* P_FindSectorSurroundingNextHighestCeiling(Sector* sec, coord_t baseHeigh
     params.baseSec = sec;
     params.baseHeight = baseHeight;
     params.foundSec = 0;
-    P_Iteratep(sec, DMU_LINEDEF, &params, findNextPlaneHeight);
+    P_Iteratep(sec, DMU_LINE, &params, findNextPlaneHeight);
     if(val)
         *val = params.val;
     return params.foundSec;
@@ -639,7 +639,7 @@ Sector* P_FindSectorSurroundingNextLowestFloor(Sector* sec, coord_t baseHeight, 
     params.baseSec = sec;
     params.baseHeight = baseHeight;
     params.foundSec = 0;
-    P_Iteratep(sec, DMU_LINEDEF, &params, findNextPlaneHeight);
+    P_Iteratep(sec, DMU_LINE, &params, findNextPlaneHeight);
     if(val)
         *val = params.val;
     return params.foundSec;
@@ -653,7 +653,7 @@ Sector* P_FindSectorSurroundingNextLowestCeiling(Sector* sec, coord_t baseHeight
     params.baseSec = sec;
     params.baseHeight = baseHeight;
     params.foundSec = 0;
-    P_Iteratep(sec, DMU_LINEDEF, &params, findNextPlaneHeight);
+    P_Iteratep(sec, DMU_LINE, &params, findNextPlaneHeight);
     if(val)
         *val = params.val;
     return params.foundSec;
@@ -690,12 +690,12 @@ const terraintype_t* P_PlaneMaterialTerrainType(Sector* sec, int plane)
     return P_TerrainTypeForMaterial(P_GetPtrp(sec, (plane? DMU_CEILING_MATERIAL : DMU_FLOOR_MATERIAL)));
 }
 
-void P_TranslateSideMaterialOrigin(SideDef* side, SideDefSection section, float deltaXY[2])
+void P_TranslateSideMaterialOrigin(Side* side, SideSection section, float deltaXY[2])
 {
     DENG_ASSERT(side);
-    DENG_ASSERT(VALID_SIDEDEFSECTION(section));
+    DENG_ASSERT(VALID_SIDESECTION(section));
 {
-    const uint dmuSurfaceOriginFlags = DMU_OFFSET_XY | DMU_FLAG_FOR_SIDEDEFSECTION(section);
+    const uint dmuSurfaceOriginFlags = DMU_OFFSET_XY | DMU_FLAG_FOR_SIDESECTION(section);
     float origin[2];
 
     if(FEQUAL(deltaXY[0], 0) && FEQUAL(deltaXY[1], 0)) return;
@@ -712,7 +712,7 @@ void P_TranslateSideMaterialOrigin(SideDef* side, SideDefSection section, float 
     P_SetFloatpv(side, dmuSurfaceOriginFlags, origin);
 }}
 
-void P_TranslateSideMaterialOriginXY(SideDef* side, SideDefSection section,
+void P_TranslateSideMaterialOriginXY(Side* side, SideSection section,
     float deltaX, float deltaY)
 {
     float delta[2];

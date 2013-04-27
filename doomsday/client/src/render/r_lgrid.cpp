@@ -1,4 +1,4 @@
-/** @file r_lgrid.cpp
+/** @file r_lgrid.cpp Light Grid (Large-Scale FakeRadio).
  *
  * @authors Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -37,6 +37,11 @@
 #include "de_play.h"
 
 #include "gl/sys_opengl.h"
+#include "map/gamemap.h"
+
+#include "render/r_lgrid.h"
+
+using namespace de;
 
 // MACROS ------------------------------------------------------------------
 
@@ -166,7 +171,6 @@ void LG_InitForMap(void)
     gridblock_t *block;
     int        *sampleResults = 0;
     int         n, size, numSamples, center, best;
-    uint        s;
     coord_t     off[2];
     lgsamplepoint_t *samplePoints = 0, sample;
 
@@ -183,7 +187,7 @@ void LG_InitForMap(void)
     lgInited = true;
 
     // Allocate the grid.
-    GameMap_Bounds(map, &lgOrigin[0], &max[0]);
+    map->bounds(&lgOrigin[0], &max[0]);
 
     width  = max[VX] - lgOrigin[VX];
     height = max[VY] - lgOrigin[VY];
@@ -230,9 +234,9 @@ void LG_InitForMap(void)
     size = center = 0;
     if(numSamples > 1)
     {
-        float       f = sqrt(float(numSamples));
+        float f = sqrt(float(numSamples));
 
-        if(ceil(f) != floor(f))
+        if(de::ceil(f) != de::floor(f))
         {
             size = sqrt(float(numSamples -1));
             center = 0;
@@ -302,9 +306,11 @@ void LG_InitForMap(void)
                 sample.origin[VX] = lgOrigin[VX] + off[VX] + samplePoints[0].origin[VX];
                 sample.origin[VY] = lgOrigin[VY] + off[VY] + samplePoints[0].origin[VY];
 
-                ssamples[idx] = P_BspLeafAtPoint(sample.origin)->sector;
-                if(!P_IsPointInSector(sample.origin, ssamples[idx]))
-                   ssamples[idx] = NULL;
+                BspLeaf *bspLeaf = map->bspLeafAtPoint(sample.origin);
+                if(P_IsPointInBspLeaf(sample.origin, *bspLeaf))
+                    ssamples[idx] = bspLeaf->sectorPtr();
+                else
+                    ssamples[idx] = 0;
 
                 n++; // Offset the index in the samplePoints array bellow.
             }
@@ -352,9 +358,11 @@ void LG_InitForMap(void)
                         sample.origin[VX] = lgOrigin[VX] + off[VX] + samplePoints[n].origin[VX];
                         sample.origin[VY] = lgOrigin[VY] + off[VY] + samplePoints[n].origin[VY];
 
-                        ssamples[idx] = P_BspLeafAtPoint(sample.origin)->sector;
-                        if(!P_IsPointInSector(sample.origin, ssamples[idx]))
-                           ssamples[idx] = NULL;
+                        BspLeaf *bspLeaf = map->bspLeafAtPoint(sample.origin);
+                        if(P_IsPointInBspLeaf(sample.origin, *bspLeaf))
+                            ssamples[idx] = bspLeaf->sectorPtr();
+                        else
+                            ssamples[idx] = 0;
                     }
                 }
             }
@@ -445,17 +453,15 @@ void LG_InitForMap(void)
         M_Free(sampleResults);
 
     // Find the blocks of all sectors.
-    for(s = 0; s < NUM_SECTORS; ++s)
+    foreach(Sector *sector, theMap->sectors())
     {
-        Sector* sector = SECTOR_PTR(s);
-
         count = changedCount = 0;
 
-        if(0 != sector->lineDefCount)
+        if(sector->lineCount())
         {
             // Clear the bitfields.
-            memset(indexBitfield, 0, bitfieldSize);
-            memset(contributorBitfield, 0, bitfieldSize);
+            std::memset(indexBitfield, 0, bitfieldSize);
+            std::memset(contributorBitfield, 0, bitfieldSize);
 
             for(block = grid, y = 0; y < lgBlockHeight; ++y)
             {
@@ -514,27 +520,28 @@ void LG_InitForMap(void)
         }
 
 /*if _DEBUG
-Con_Message("  Sector %i: %i / %i", s, changedCount, count);
+Con_Message("  Sector %i: %i / %i", theMap->sectorIndex(s), changedCount, count);
 #endif*/
 
-        sector->changedBlockCount = changedCount;
-        sector->blockCount = changedCount + count;
+        Sector::LightGridData &lgData = sector->_lightGridData;
+        lgData.changedBlockCount = changedCount;
+        lgData.blockCount = changedCount + count;
 
-        if(sector->blockCount > 0)
+        if(lgData.blockCount > 0)
         {
-            sector->blocks = (unsigned short *) Z_Malloc(sizeof(unsigned short) * sector->blockCount,
-                                                         PU_MAPSTATIC, 0);
+            lgData.blocks = (ushort *) Z_Malloc(sizeof(*lgData.blocks) * lgData.blockCount, PU_MAPSTATIC, 0);
+
             for(x = 0, a = 0, b = changedCount; x < lgBlockWidth * lgBlockHeight;
                 ++x)
             {
                 if(HasIndexBit(x, 0, indexBitfield))
-                    sector->blocks[a++] = x;
+                    lgData.blocks[a++] = x;
                 else if(HasIndexBit(x, 0, contributorBitfield))
-                    sector->blocks[b++] = x;
+                    lgData.blocks[b++] = x;
             }
 
-            assert(a == changedCount);
-            //assert(b == info->blockCount);
+            DENG_ASSERT(a == changedCount);
+            //DENG_ASSERT(b == info->blockCount);
         }
     }
 
@@ -550,11 +557,9 @@ Con_Message("  Sector %i: %i / %i", s, changedCount, count);
 /**
  * Apply the sector's lighting to the block.
  */
-static void LG_ApplySector(gridblock_t *block, const float *color, float level,
-                           float factor, int bias)
+static void LG_ApplySector(gridblock_t *block, Vector3f const &color,
+                           float level, float factor, int bias)
 {
-    int                 i;
-
     // Apply a bias to the light level.
     level -= (0.95f - level);
     if(level < 0)
@@ -565,11 +570,11 @@ static void LG_ApplySector(gridblock_t *block, const float *color, float level,
     if(level <= 0)
         return;
 
-    for(i = 0; i < 3; ++i)
+    for(int i = 0; i < 3; ++i)
     {
-        float           c = color[i] * level;
+        float c = color[i] * level;
 
-        c = MINMAX_OF(0, c, 1);
+        c = de::clamp(0.f, c, 1.f);
 
         if(block->rgb[i] + c > 1)
         {
@@ -582,56 +587,59 @@ static void LG_ApplySector(gridblock_t *block, const float *color, float level,
     }
 
     // Influenced by the source bias.
-    i = block->bias * (1 - factor) + bias * factor;
-    i = MINMAX_OF(-0x80, i, 0x7f);
+    int i = block->bias * (1 - factor) + bias * factor;
+    i = de::clamp(-0x80, i, 0x7f);
     block->bias = i;
 }
 
 /**
  * Called when a sector has changed its light level.
  */
-void LG_SectorChanged(Sector* sector)
+void LG_SectorChanged(Sector *sector)
 {
     if(!lgInited) return;
-    if(!sector || (!sector->changedBlockCount && !sector->blockCount)) return;
+    if(!sector) return;
+
+    Sector::LightGridData &lgData = sector->_lightGridData;
+    if(!lgData.changedBlockCount && !lgData.blockCount) return;
 
     // Mark changed blocks and contributors.
-    { uint i;
-    for(i = 0; i < sector->changedBlockCount; ++i)
+    for(uint i = 0; i < lgData.changedBlockCount; ++i)
     {
-        ushort n = sector->blocks[i];
+        ushort n = lgData.blocks[i];
+
         // The color will be recalculated.
         if(!(grid[n].flags & GBF_CHANGED))
-            memcpy(grid[n].oldRGB, grid[n].rgb, sizeof(grid[n].oldRGB));
+        {
+            std::memcpy(grid[n].oldRGB, grid[n].rgb, sizeof(grid[n].oldRGB));
+        }
 
-        { int j;
-        for(j = 0; j < 3; ++j)
+        for(int j = 0; j < 3; ++j)
+        {
             grid[n].rgb[j] = 0;
         }
 
         grid[n].flags |= GBF_CHANGED | GBF_CONTRIBUTOR;
-    }}
+    }
 
-    { uint i;
-    for(i = 0; i < sector->blockCount; ++i)
+    for(uint i = 0; i < lgData.blockCount; ++i)
     {
-        grid[sector->blocks[i]].flags |= GBF_CONTRIBUTOR;
-    }}
+        grid[lgData.blocks[i]].flags |= GBF_CONTRIBUTOR;
+    }
 
     needsUpdate = true;
 }
 
-void LG_MarkAllForUpdate(void)
+void LG_MarkAllForUpdate()
 {
     if(!lgInited || !theMap)
         return;
 
     // Mark all blocks and contributors.
-    { uint i;
-    for(i = 0; i < NUM_SECTORS; ++i)
+    foreach(Sector *sector, theMap->sectors())
     {
-        LG_SectorChanged(GameMap_Sector(theMap, i));
-    }}
+        LG_SectorChanged(sector);
+    }
 }
 
 #if 0
@@ -740,7 +748,6 @@ void LG_Update(void)
     gridblock_t        *block, *lastBlock, *other;
     int                 x, y, a, b;
     Sector             *sector;
-    const float        *color;
     int                 bias;
     int                 height;
 
@@ -804,11 +811,11 @@ BEGIN_PROF( PROF_GRID_UPDATE );
 
             // Determine the color of the ambient light in this sector.
             sector = block->sector;
-            color = R_GetSectorLightColor(sector);
-            height = (int) (sector->SP_ceilheight - sector->SP_floorheight);
+            Vector3f const &color = R_GetSectorLightColor(*sector);
+            height = (int) (sector->ceiling().height() - sector->floor().height());
 
-            bool isSkyFloor = sector->SP_ceilsurface.isSkyMasked();
-            bool isSkyCeil  = sector->SP_floorsurface.isSkyMasked();
+            bool isSkyFloor = sector->ceilingSurface().hasSkyMaskedMaterial();
+            bool isSkyCeil  = sector->floorSurface().hasSkyMaskedMaterial();
 
             if(isSkyFloor && !isSkyCeil)
             {
@@ -839,7 +846,7 @@ BEGIN_PROF( PROF_GRID_UPDATE );
 
                     if(other->flags & GBF_CHANGED)
                     {
-                        LG_ApplySector(other, color, sector->lightLevel,
+                        LG_ApplySector(other, color, sector->lightLevel(),
                                        factors[(b + 2)*5 + a + 2]/8, bias);
                     }
                 }
@@ -893,12 +900,12 @@ void LG_Evaluate(coord_t const point[3], float color[3])
         /*if(block->bias < 0)
         {
             // Calculate Z difference to the ceiling.
-            dz = block->sector->SP_ceilheight - point[VZ];
+            dz = block->sector->ceiling().height() - point[VZ];
         }
         else if(block->bias > 0)
         {
             // Calculate Z difference to the floor.
-            dz = point[VZ] - block->sector->SP_floorheight;
+            dz = point[VZ] - block->sector->floor().height();
         }
 
         dz -= 50;

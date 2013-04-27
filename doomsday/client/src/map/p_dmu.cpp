@@ -1,4 +1,4 @@
-/** @file p_dmu.cpp Doomsday Map Update API
+/** @file map/p_dmu.cpp Doomsday Map Update API.
  *
  * @todo Throw a game-terminating exception if an illegal value is given
  * to a public API function.
@@ -25,20 +25,21 @@
 
 #include <cstring>
 
+#include <de/memoryzone.h>
+
 #include "de_base.h"
 #include "de_play.h"
 #include "de_audio.h"
-
-#include <de/memoryzone.h>
-
 #include "Materials"
-#include "api_map.h"
 
-// Converting a public void* pointer to an internal de::MapElement.
-#define IN_ELEM(p)          reinterpret_cast<de::MapElement *>(p)
-#define IN_ELEM_CONST(p)    reinterpret_cast<de::MapElement const *>(p)
+#include "api_map.h"
+#include "map/p_dmu.h"
 
 using namespace de;
+
+// Converting a public void* pointer to an internal de::MapElement.
+#define IN_ELEM(p)          reinterpret_cast<MapElement *>(p)
+#define IN_ELEM_CONST(p)    reinterpret_cast<MapElement const *>(p)
 
 /**
  * Additional data for all dummy elements.
@@ -51,12 +52,19 @@ struct DummyData
     virtual ~DummyData() {} // polymorphic
 };
 
-class DummySideDef : public SideDef, public DummyData {};
-class DummyLineDef : public LineDef, public DummyData {};
+class DummyVertex  : public Vertex,  public DummyData {};
 class DummySector  : public Sector,  public DummyData {};
 
-typedef QSet<de::MapElement *> Dummies;
+class DummyLine : public Line, public DummyData
+{
+public:
+    DummyLine(DummyVertex &v1, DummyVertex &v2) : Line(v1, v2) {}
+};
+
+typedef QSet<MapElement *> Dummies;
+
 static Dummies dummies;
+static DummyVertex dummyVertex; // The one dummy vertex.
 
 char const *DMU_Str(uint prop)
 {
@@ -70,18 +78,19 @@ char const *DMU_Str(uint prop)
         { DMU_NONE, "(invalid)" },
         { DMU_VERTEX, "DMU_VERTEX" },
         { DMU_HEDGE, "DMU_HEDGE" },
-        { DMU_LINEDEF, "DMU_LINEDEF" },
-        { DMU_SIDEDEF, "DMU_SIDEDEF" },
+        { DMU_LINE, "DMU_LINE" },
+        { DMU_SIDE, "DMU_SIDE" },
         { DMU_BSPNODE, "DMU_BSPNODE" },
         { DMU_BSPLEAF, "DMU_BSPLEAF" },
         { DMU_SECTOR, "DMU_SECTOR" },
         { DMU_PLANE, "DMU_PLANE" },
         { DMU_SURFACE, "DMU_SURFACE" },
         { DMU_MATERIAL, "DMU_MATERIAL" },
-        { DMU_LINEDEF_BY_TAG, "DMU_LINEDEF_BY_TAG" },
+        { DMU_LINE_BY_TAG, "DMU_LINE_BY_TAG" },
         { DMU_SECTOR_BY_TAG, "DMU_SECTOR_BY_TAG" },
-        { DMU_LINEDEF_BY_ACT_TAG, "DMU_LINEDEF_BY_ACT_TAG" },
+        { DMU_LINE_BY_ACT_TAG, "DMU_LINE_BY_ACT_TAG" },
         { DMU_SECTOR_BY_ACT_TAG, "DMU_SECTOR_BY_ACT_TAG" },
+        { DMU_ARCHIVE_INDEX, "DMU_ARCHIVE_INDEX" },
         { DMU_X, "DMU_X" },
         { DMU_Y, "DMU_Y" },
         { DMU_XY, "DMU_XY" },
@@ -101,8 +110,8 @@ char const *DMU_Str(uint prop)
         { DMU_VERTEX1, "DMU_VERTEX1" },
         { DMU_FRONT_SECTOR, "DMU_FRONT_SECTOR" },
         { DMU_BACK_SECTOR, "DMU_BACK_SECTOR" },
-        { DMU_SIDEDEF0, "DMU_SIDEDEF0" },
-        { DMU_SIDEDEF1, "DMU_SIDEDEF1" },
+        { DMU_FRONT, "DMU_FRONT" },
+        { DMU_BACK, "DMU_BACK" },
         { DMU_FLAGS, "DMU_FLAGS" },
         { DMU_DX, "DMU_DX" },
         { DMU_DY, "DMU_DY" },
@@ -116,7 +125,7 @@ char const *DMU_Str(uint prop)
         { DMU_OFFSET_XY, "DMU_OFFSET_XY" },
         { DMU_BLENDMODE, "DMU_BLENDMODE" },
         { DMU_VALID_COUNT, "DMU_VALID_COUNT" },
-        { DMU_LINEDEF_COUNT, "DMU_LINEDEF_COUNT" },
+        { DMU_LINE_COUNT, "DMU_LINE_COUNT" },
         { DMU_COLOR, "DMU_COLOR" },
         { DMU_COLOR_RED, "DMU_COLOR_RED" },
         { DMU_COLOR_GREEN, "DMU_COLOR_GREEN" },
@@ -158,8 +167,8 @@ int DMU_GetType(void const *ptr)
     {
     case DMU_VERTEX:
     case DMU_HEDGE:
-    case DMU_LINEDEF:
-    case DMU_SIDEDEF:
+    case DMU_LINE:
+    case DMU_SIDE:
     case DMU_BSPLEAF:
     case DMU_SECTOR:
     case DMU_PLANE:
@@ -202,14 +211,14 @@ void *P_AllocDummy(int type, void *extraData)
 {
     switch(type)
     {
-    case DMU_SIDEDEF: {
-        DummySideDef *ds = new DummySideDef;
+    /*case DMU_SIDE: {
+        DummySide *ds = new DummySide;
         dummies.insert(ds);
         ds->extraData = extraData;
-        return ds; }
+        return ds; }*/
 
-    case DMU_LINEDEF: {
-        DummyLineDef *dl = new DummyLineDef;
+    case DMU_LINE: {
+        DummyLine *dl = new DummyLine(dummyVertex, dummyVertex);
         dummies.insert(dl);
         dl->extraData = extraData;
         return dl; }
@@ -284,74 +293,56 @@ void *P_DummyExtraData(void *dummy)
 }
 
 #undef P_ToIndex
-uint P_ToIndex(void const *ptr)
+int P_ToIndex(void const *ptr)
 {
-    if(!ptr) return 0;
-    if(P_IsDummy(ptr)) return 0;
+    if(!ptr) return -1;
+    if(P_IsDummy(ptr)) return -1;
 
     de::MapElement const *elem = IN_ELEM_CONST(ptr);
 
     switch(elem->type())
     {
     case DMU_VERTEX:
-        return GET_VERTEX_IDX(elem->castTo<Vertex>());
-
     case DMU_HEDGE:
-        return GET_HEDGE_IDX(elem->castTo<HEdge>());
-
-    case DMU_LINEDEF:
-        return GET_LINE_IDX(elem->castTo<LineDef>());
-
-    case DMU_SIDEDEF:
-        return GET_SIDE_IDX(elem->castTo<SideDef>());
-
+    case DMU_LINE:
+    case DMU_SIDE:
     case DMU_BSPLEAF:
-        return GET_BSPLEAF_IDX(elem->castTo<BspLeaf>());
-
     case DMU_SECTOR:
-        return GET_SECTOR_IDX(elem->castTo<Sector>());
-
     case DMU_BSPNODE:
-        return GET_BSPNODE_IDX(elem->castTo<BspNode>());
+        return elem->indexInMap();
 
     case DMU_PLANE:
-        return GET_PLANE_IDX(elem->castTo<Plane>());
+        return elem->castTo<Plane>()->inSectorIndex();
 
     case DMU_MATERIAL:
-        return elem->castTo<Material>()->manifest().id();
+        return elem->castTo<Material>()->manifest().id(); // 1-based
 
     default:
         /// @todo Throw exception.
         DENG2_ASSERT(false); // Unknown/non-indexable DMU type.
-        return 0;
+        return -1;
     }
 }
 
 #undef P_ToPtr
-void *P_ToPtr(int type, uint index)
+void *P_ToPtr(int type, int index)
 {
     switch(type)
     {
     case DMU_VERTEX:
-        return VERTEX_PTR(index);
+        return theMap->vertexes().at(index);
 
     case DMU_HEDGE:
-        return HEDGE_PTR(index);
+        return theMap->hedges().at(index);
 
-    case DMU_LINEDEF:
-        return LINE_PTR(index);
+    case DMU_LINE:
+        return theMap->lines().at(index);
 
-    case DMU_SIDEDEF:
-        return SIDE_PTR(index);
-
-    case DMU_BSPLEAF:
-        return BSPLEAF_PTR(index);
+    case DMU_SIDE:
+        return theMap->sideByIndex(index);
 
     case DMU_SECTOR:
-        return SECTOR_PTR(index);
-
-    case DMU_BSPNODE:
-        return BSPNODE_PTR(index);
+        return theMap->sectors().at(index);
 
     case DMU_PLANE: {
         /// @todo Throw exception.
@@ -359,9 +350,17 @@ void *P_ToPtr(int type, uint index)
         App_FatalError(msg.constData());
         return 0; /* Unreachable. */ }
 
+    case DMU_BSPLEAF:
+        return theMap->bspLeafs().at(index);
+
+    case DMU_BSPNODE:
+        return theMap->bspNodes().at(index);
+
     case DMU_MATERIAL:
-        if(index == 0) return 0;
-        return &App_Materials().toManifest(index).material();
+        /// @note @a index is 1-based.
+        if(index > 0)
+            return &App_Materials().toManifest(index).material();
+        return 0;
 
     default: {
         /// @todo Throw exception.
@@ -371,146 +370,130 @@ void *P_ToPtr(int type, uint index)
     }
 }
 
+#undef P_Count
+int P_Count(int type)
+{
+    switch(type)
+    {
+    case DMU_VERTEX:    return theMap->vertexCount();
+    case DMU_HEDGE:     return theMap->hedgeCount();
+    case DMU_LINE:      return theMap->lineCount();
+    case DMU_SIDE:      return theMap->sideCount();
+    case DMU_BSPNODE:   return theMap->bspNodeCount();
+    case DMU_BSPLEAF:   return theMap->bspLeafCount();
+    case DMU_SECTOR:    return theMap->sectorCount();
+    case DMU_MATERIAL:  return (int)App_Materials().count();
+
+    default:
+        /// @throw Invalid/unknown DMU element type.
+        throw Error("P_Count", String("Unknown type %1").arg(DMU_Str(type)));
+    }
+}
+
 #undef P_Iteratep
 int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, void *ctx))
 {
-    de::MapElement *elem = IN_ELEM(elPtr);
+    MapElement *elem = IN_ELEM(elPtr);
 
     switch(elem->type())
     {
     case DMU_SECTOR:
         switch(prop)
         {
-        case DMU_LINEDEF: {
-            Sector *sec = elem->castTo<Sector>();
-            int result = false; // Continue iteration.
-
-            if(sec->lineDefs)
+        case DMU_LINE:
+            foreach(Line *line, elem->castTo<Sector>()->lines())
             {
-                LineDef **linePtr = sec->lineDefs;
-                while(*linePtr && !(result = callback(*linePtr, context)))
-                {
-                    linePtr++;
-                }
+                int result = callback(line, context);
+                if(result) return result;
             }
-            return result; }
+            return false; // Continue iteration
 
-        case DMU_PLANE: {
-            Sector *sec = elem->castTo<Sector>();
-            int result = false; // Continue iteration.
-
-            foreach(Plane *plane, sec->planes)
+        case DMU_PLANE:
+            foreach(Plane *plane, elem->castTo<Sector>()->planes())
             {
-                if((result = callback(plane, context)) != 0)
-                    break;
+                int result = callback(plane, context);
+                if(result) return result;
             }
-            return result; }
+            return false; // Continue iteration
 
-        case DMU_BSPLEAF: {
-            Sector *sec = elem->castTo<Sector>();
-            int result = false; // Continue iteration.
-
-            if(sec->bspLeafs)
+        case DMU_BSPLEAF:
+            foreach(BspLeaf *bspLeaf, elem->castTo<Sector>()->bspLeafs())
             {
-                BspLeaf **ssecIter = sec->bspLeafs;
-                while(*ssecIter && !(result = callback(*ssecIter, context)))
-                {
-                    ssecIter++;
-                }
+                int result = callback(bspLeaf, context);
+                if(result) return result;
             }
-            return result; }
+            return false; // Continue iteration.
 
-        default: {
-            /// @todo Throw exception.
-            QByteArray msg = String("P_Iteratep: Property %1 unknown/not vector.").arg(DMU_Str(prop)).toUtf8();
-            App_FatalError(msg.constData());
-            return 0; /* Unreachable */ }
+        default:
+            throw Error("P_Iteratep", QString("Property %1 unknown/not vector").arg(DMU_Str(prop)));
         }
 
     case DMU_BSPLEAF:
         switch(prop)
         {
-        case DMU_HEDGE: {
-            BspLeaf *bspLeaf = elem->castTo<BspLeaf>();
-            int result = false; // Continue iteration.
-            if(bspLeaf->hedge)
+        case DMU_HEDGE:
+            if(HEdge *base = elem->castTo<BspLeaf>()->firstHEdge())
             {
-                HEdge *hedge = bspLeaf->hedge;
+                HEdge *hedge = base;
                 do
                 {
-                    result = callback(hedge, context);
-                    if(result) break;
-                } while((hedge = hedge->next) != bspLeaf->hedge);
-            }
-            return result; }
+                    int result = callback(hedge, context);
+                    if(result) return result;
 
-        default: {
-            /// @todo Throw exception.
-            QByteArray msg = String("P_Iteratep: Property %1 unknown/not vector.").arg(DMU_Str(prop)).toUtf8();
-            App_FatalError(msg.constData());
-            return 0; /* Unreachable */ }
+                } while((hedge = &hedge->next()) != base);
+            }
+            return false; // Continue iteration.
+
+        default:
+            throw Error("P_Iteratep", QString("Property %1 unknown/not vector").arg(DMU_Str(prop)));
         }
 
-    default: {
-        /// @todo Throw exception.
-        QByteArray msg = String("P_Iteratep: Type %1 unknown.").arg(DMU_Str(elem->type())).toUtf8();
-        App_FatalError(msg.constData());
-        return 0; /* Unreachable */ }
+    default:
+        throw Error("P_Iteratep", QString("Type %1 unknown").arg(DMU_Str(elem->type())));
     }
 
     return false;
 }
 
-/**
- * Call a callback function on a selection of map data objects. The
- * selected objects will be specified by 'type' and 'index'.
-
- * @param context       Is passed to the callback function.
- *
- * @return              @c true if all the calls to the callback function
- *                      return @c true.
- *                      @c false is returned when the callback function
- *                      returns @c false; in this case, the iteration is
- *                      aborted immediately when the callback function
- *                      returns @c false.
- */
-int P_Callback(int type, uint index, void *context, int (*callback)(void *p, void *ctx))
+#undef P_Callback
+int P_Callback(int type, int index, void *context, int (*callback)(void *p, void *ctx))
 {
     switch(type)
     {
     case DMU_VERTEX:
-        if(index < NUM_VERTEXES)
-            return callback(VERTEX_PTR(index), context);
+        if(index >= 0 && index < theMap->vertexCount())
+            return callback(theMap->vertexes().at(index), context);
         break;
 
     case DMU_HEDGE:
-        if(index < NUM_HEDGES)
-            return callback(HEDGE_PTR(index), context);
+        if(index >= 0 && index < theMap->hedgeCount())
+            return callback(theMap->hedges().at(index), context);
         break;
 
-    case DMU_LINEDEF:
-        if(index < NUM_LINEDEFS)
-            return callback(LINE_PTR(index), context);
+    case DMU_LINE:
+        if(index >= 0 && index < theMap->lineCount())
+            return callback(theMap->lines().at(index), context);
         break;
 
-    case DMU_SIDEDEF:
-        if(index < NUM_SIDEDEFS)
-            return callback(SIDE_PTR(index), context);
-        break;
+    case DMU_SIDE: {
+        Line::Side *side = theMap->sideByIndex(index);
+        if(side)
+            return callback(side, context);
+        break; }
 
     case DMU_BSPNODE:
-        if(index < NUM_BSPNODES)
-            return callback(BSPNODE_PTR(index), context);
+        if(index >= 0 && index < theMap->bspNodeCount())
+            return callback(theMap->bspNodes().at(index), context);
         break;
 
     case DMU_BSPLEAF:
-        if(index < NUM_BSPLEAFS)
-            return callback(BSPLEAF_PTR(index), context);
+        if(index >= 0 && index < theMap->bspLeafCount())
+            return callback(theMap->bspLeafs().at(index), context);
         break;
 
     case DMU_SECTOR:
-        if(index < NUM_SECTORS)
-            return callback(SECTOR_PTR(index), context);
+        if(index >= 0 && index < theMap->sectorCount())
+            return callback(theMap->sectors().at(index), context);
         break;
 
     case DMU_PLANE: {
@@ -520,13 +503,13 @@ int P_Callback(int type, uint index, void *context, int (*callback)(void *p, voi
         return 0; /* Unreachable */ }
 
     case DMU_MATERIAL:
-        if(index != 0)
+        if(index > 0)
             return callback(&App_Materials().toManifest(materialid_t(index)).material(), context);
         break;
 
-    case DMU_LINEDEF_BY_TAG:
+    case DMU_LINE_BY_TAG:
     case DMU_SECTOR_BY_TAG:
-    case DMU_LINEDEF_BY_ACT_TAG:
+    case DMU_LINE_BY_ACT_TAG:
     case DMU_SECTOR_BY_ACT_TAG: {
         /// @todo Throw exception.
         QByteArray msg = String("P_Callback: Type %1 not implemented yet.").arg(DMU_Str(type)).toUtf8();
@@ -540,17 +523,13 @@ int P_Callback(int type, uint index, void *context, int (*callback)(void *p, voi
         return 0; /* Unreachable */ }
     }
 
-    // Successfully completed.
-    return true;
+    return false; // Continue iteration.
 }
 
-/**
- * Another version of callback iteration. The set of selected objects is
- * determined by 'type' and 'ptr'. Otherwise works like P_Callback.
- */
+#undef P_Callbackp
 int P_Callbackp(int type, void *elPtr, void *context, int (*callback)(void *p, void *ctx))
 {
-    de::MapElement *elem = IN_ELEM(elPtr);
+    MapElement *elem = IN_ELEM(elPtr);
 
     LOG_AS("P_Callbackp");
 
@@ -558,8 +537,8 @@ int P_Callbackp(int type, void *elPtr, void *context, int (*callback)(void *p, v
     {
     case DMU_VERTEX:
     case DMU_HEDGE:
-    case DMU_LINEDEF:
-    case DMU_SIDEDEF:
+    case DMU_LINE:
+    case DMU_SIDE:
     case DMU_BSPNODE:
     case DMU_BSPLEAF:
     case DMU_SECTOR:
@@ -570,7 +549,7 @@ int P_Callbackp(int type, void *elPtr, void *context, int (*callback)(void *p, v
         {
             return callback(elem, context);
         }
-#if _DEBUG
+#ifdef DENG_DEBUG
         else
         {
             LOG_DEBUG("Type mismatch %s != %s\n") << DMU_Str(type) << DMU_Str(elem->type());
@@ -585,7 +564,7 @@ int P_Callbackp(int type, void *elPtr, void *context, int (*callback)(void *p, v
         App_FatalError(msg.constData());
         return 0; /* Unreachable */ }
     }
-    return true;
+    return false; // Continue iteration.
 }
 
 void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
@@ -851,16 +830,12 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
  * When a property changes, the relevant subsystems are notified of the change
  * so that they can update their state accordingly.
  */
-static int setProperty(void *ptr, void *context)
+static void setProperty(MapElement *elem, setargs_t &args)
 {
-    de::MapElement *elem = IN_ELEM(ptr);
-    setargs_t *args = (setargs_t *) context;
-    Sector *updateSector1 = NULL, *updateSector2 = NULL;
-    Plane *updatePlane = NULL;
-    LineDef *updateLinedef = NULL;
-    SideDef *updateSidedef = NULL;
-    Surface *updateSurface = NULL;
-    // BspLeaf *updateBspLeaf = NULL;
+    DENG_ASSERT(elem != 0);
+
+    Sector *updateSector1 = 0, *updateSector2 = 0;
+    Plane *updatePlane = 0;
 
     /**
      * @par Algorithm
@@ -877,88 +852,78 @@ static int setProperty(void *ptr, void *context)
      */
 
     // Dereference where necessary. Note the order, these cascade.
-    if(args->type == DMU_BSPLEAF)
+    if(args.type == DMU_BSPLEAF)
     {
-        if(args->modifiers & DMU_FLOOR_OF_SECTOR)
+        if(args.modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            elem = elem->castTo<BspLeaf>()->sector;
-            args->type = DMU_SECTOR;
+            elem = elem->castTo<BspLeaf>()->sectorPtr();
+            args.type = DMU_SECTOR;
         }
-        else if(args->modifiers & DMU_CEILING_OF_SECTOR)
+        else if(args.modifiers & DMU_CEILING_OF_SECTOR)
         {
-            elem = elem->castTo<BspLeaf>()->sector;
-            args->type = DMU_SECTOR;
+            elem = elem->castTo<BspLeaf>()->sectorPtr();
+            args.type = DMU_SECTOR;
         }
     }
 
-    if(args->type == DMU_SECTOR)
+    if(args.type == DMU_SECTOR)
     {
         updateSector1 = elem->castTo<Sector>();
 
-        if(args->modifiers & DMU_FLOOR_OF_SECTOR)
+        if(args.modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            Sector* sec = elem->castTo<Sector>();
-            elem = sec->SP_plane(PLN_FLOOR);
-            args->type = DMU_PLANE;
+            elem = &elem->castTo<Sector>()->floor();
+            args.type = DMU_PLANE;
         }
-        else if(args->modifiers & DMU_CEILING_OF_SECTOR)
+        else if(args.modifiers & DMU_CEILING_OF_SECTOR)
         {
-            Sector* sec = elem->castTo<Sector>();
-            elem = sec->SP_plane(PLN_CEILING);
-            args->type = DMU_PLANE;
+            elem = &elem->castTo<Sector>()->ceiling();
+            args.type = DMU_PLANE;
         }
     }
 
-    if(args->type == DMU_LINEDEF)
+    if(args.type == DMU_LINE)
     {
-        updateLinedef = elem->castTo<LineDef>();
+        elem->castTo<Line>();
 
-        if(args->modifiers & DMU_SIDEDEF0_OF_LINE)
+        if(args.modifiers & DMU_FRONT_OF_LINE)
         {
-            elem = elem->castTo<LineDef>()->L_frontsidedef;
-            args->type = DMU_SIDEDEF;
+            elem = &elem->castTo<Line>()->front();
+            args.type = DMU_SIDE;
         }
-        else if(args->modifiers & DMU_SIDEDEF1_OF_LINE)
+        else if(args.modifiers & DMU_BACK_OF_LINE)
         {
-            LineDef *li = elem->castTo<LineDef>();
-            if(!li->L_backsidedef)
-            {
-                /// @todo Throw exception.
-                QByteArray msg = String("DMU_setProperty: Linedef %1 has no back side.").arg(P_ToIndex(li)).toUtf8();
-                App_FatalError(msg.constData());
-            }
-
-            elem = li->L_backsidedef;
-            args->type = DMU_SIDEDEF;
+            elem = &elem->castTo<Line>()->back();
+            args.type = DMU_SIDE;
         }
     }
 
-    if(args->type == DMU_SIDEDEF)
+    if(args.type == DMU_SIDE)
     {
-        updateSidedef = elem->castTo<SideDef>();
+        elem->castTo<Line::Side>();
 
-        if(args->modifiers & DMU_TOP_OF_SIDEDEF)
+        if(args.modifiers & DMU_TOP_OF_SIDE)
         {
-            elem = &updateSidedef->SW_topsurface;
-            args->type = DMU_SURFACE;
+            elem = &elem->castTo<Line::Side>()->top();
+            args.type = DMU_SURFACE;
         }
-        else if(args->modifiers & DMU_MIDDLE_OF_SIDEDEF)
+        else if(args.modifiers & DMU_MIDDLE_OF_SIDE)
         {
-            elem = &updateSidedef->SW_middlesurface;
-            args->type = DMU_SURFACE;
+            elem = &elem->castTo<Line::Side>()->middle();
+            args.type = DMU_SURFACE;
         }
-        else if(args->modifiers & DMU_BOTTOM_OF_SIDEDEF)
+        else if(args.modifiers & DMU_BOTTOM_OF_SIDE)
         {
-            elem = &updateSidedef->SW_bottomsurface;
-            args->type = DMU_SURFACE;
+            elem = &elem->castTo<Line::Side>()->bottom();
+            args.type = DMU_SURFACE;
         }
     }
 
-    if(args->type == DMU_PLANE)
+    if(args.type == DMU_PLANE)
     {
         updatePlane = elem->castTo<Plane>();
 
-        switch(args->prop)
+        switch(args.prop)
         {
         case DMU_MATERIAL:
         case DMU_OFFSET_X:
@@ -983,8 +948,8 @@ static int setProperty(void *ptr, void *context)
         case DMU_ALPHA:
         case DMU_BLENDMODE:
         case DMU_FLAGS:
-            elem = &elem->castTo<Plane>()->surface;
-            args->type = DMU_SURFACE;
+            elem = &elem->castTo<Plane>()->surface();
+            args.type = DMU_SURFACE;
             break;
 
         default:
@@ -992,131 +957,24 @@ static int setProperty(void *ptr, void *context)
         }
     }
 
-    if(args->type == DMU_SURFACE)
+    if(args.type == DMU_SURFACE)
     {
-        updateSurface = elem->castTo<Surface>();
-/*
-        // Resolve implicit references to properties of the surface's material.
-        switch(args->prop)
-        {
-        case UNKNOWN1:
-            obj = &((Surface*) obj)->material;
-            args->type = DMU_MATERIAL;
-            break;
-
-        default:
-            break;
-        }*/
+        elem->castTo<Surface>();
     }
 
-    switch(args->type)
-    {
-    case DMU_SURFACE:
-        elem->castTo<Surface>()->setProperty(*args);
-        break;
+    // Write the property value(s).
+    /// @throws MapElement::WritePropertyError  If the requested property is not writable.
+    elem->setProperty(args);
 
-    case DMU_PLANE:
-        Plane_SetProperty(elem->castTo<Plane>(), args);
-        break;
-
-    case DMU_VERTEX:
-        Vertex_SetProperty(elem->castTo<Vertex>(), args);
-        break;
-
-    case DMU_HEDGE:
-        HEdge_SetProperty(elem->castTo<HEdge>(), args);
-        break;
-
-    case DMU_LINEDEF:
-        LineDef_SetProperty(elem->castTo<LineDef>(), args);
-        break;
-
-    case DMU_SIDEDEF:
-        SideDef_SetProperty(elem->castTo<SideDef>(), args);
-        break;
-
-    case DMU_BSPLEAF:
-        BspLeaf_SetProperty(elem->castTo<BspLeaf>(), args);
-        break;
-
-    case DMU_SECTOR:
-        Sector_SetProperty(elem->castTo<Sector>(), args);
-        break;
-
-    case DMU_MATERIAL:
-        elem->castTo<Material>()->setProperty(*args);
-        break;
-
-    case DMU_BSPNODE: {
-        /// @todo Throw exception.
-        QByteArray msg = String("SetProperty: Property %1 is not writable in DMU_BSPNODE.").arg(DMU_Str(args->prop)).toUtf8();
-        App_FatalError(msg.constData());
-        break; }
-
-    default: {
-        /// @todo Throw exception.
-        QByteArray msg = String("SetProperty: Type %1 not writable.").arg(DMU_Str(args->type)).toUtf8();
-        App_FatalError(msg.constData());
-        return 0; /* Unreachable */ }
-    }
-
-    if(updateSurface)
-    {
-        if(R_UpdateSurface(updateSurface, false))
-        {
-            switch(updateSurface->owner->type())
-            {
-            case DMU_SIDEDEF:
-                updateSidedef = updateSurface->owner->castTo<SideDef>();
-                break;
-
-            case DMU_PLANE:
-                updatePlane = updateSurface->owner->castTo<Plane>();
-                break;
-
-            default:
-                DENG2_ASSERT(false); // Unsupported type.
-            }
-        }
-    }
-
-    if(updateSidedef)
-    {
-        if(R_UpdateSidedef(updateSidedef, false))
-            updateLinedef = updateSidedef->line;
-    }
-
-    if(updateLinedef)
-    {
-        if(R_UpdateLinedef(updateLinedef, false))
-        {
-            updateSector1 = updateLinedef->L_frontsector;
-            updateSector2 = updateLinedef->L_backsector;
-        }
-    }
-
+    /// @todo Replace with de::Observers based updates.
     if(updatePlane)
-    {
-        if(R_UpdatePlane(updatePlane, false))
-            updateSector1 = updatePlane->sector;
-    }
+        updateSector1 = &updatePlane->sector();
 
     if(updateSector1)
-    {
-        R_UpdateSector(updateSector1, false);
-    }
+        R_UpdateSector(*updateSector1);
 
     if(updateSector2)
-    {
-        R_UpdateSector(updateSector2, false);
-    }
-
-/*  if(updateBspLeaf)
-    {
-        R_UpdateBspLeaf(updateBspLeaf, false);
-    } */
-
-    return true; // Continue iteration.
+        R_UpdateSector(*updateSector2);
 }
 
 void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint index)
@@ -1361,111 +1219,88 @@ void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint 
     }
 }
 
-static int getProperty(void *ptr, void *context)
+static void getProperty(MapElement const *elem, setargs_t &args)
 {
-    de::MapElement const *elem = IN_ELEM_CONST(ptr);
-    setargs_t *args = (setargs_t *) context;
+    DENG_ASSERT(elem != 0);
 
     // Dereference where necessary. Note the order, these cascade.
-    if(args->type == DMU_BSPLEAF)
+    if(args.type == DMU_BSPLEAF)
     {
-        if(args->modifiers & DMU_FLOOR_OF_SECTOR)
+        if(args.modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            elem = elem->castTo<BspLeaf>()->sector;
-            args->type = DMU_SECTOR;
+            elem = elem->castTo<BspLeaf>()->sectorPtr();
+            args.type = elem->type();
         }
-        else if(args->modifiers & DMU_CEILING_OF_SECTOR)
+        else if(args.modifiers & DMU_CEILING_OF_SECTOR)
         {
-            elem = elem->castTo<BspLeaf>()->sector;
-            args->type = DMU_SECTOR;
+            elem = elem->castTo<BspLeaf>()->sectorPtr();
+            args.type = elem->type();
         }
         else
         {
-            switch(args->prop)
+            switch(args.prop)
             {
             case DMU_LIGHT_LEVEL:
             case DMT_MOBJS:
-                elem = elem->castTo<BspLeaf>()->sector;
-                args->type = DMU_SECTOR;
+                elem = elem->castTo<BspLeaf>()->sectorPtr();
+                args.type = elem->type();
                 break;
+
             default: break;
             }
         }
     }
 
-    if(args->type == DMU_SECTOR)
+    if(args.type == DMU_SECTOR)
     {
-        if(args->modifiers & DMU_FLOOR_OF_SECTOR)
+        if(args.modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            Sector const *sec = elem->castTo<Sector>();
-            elem = sec->SP_plane(PLN_FLOOR);
-            args->type = DMU_PLANE;
+            elem = &elem->castTo<Sector>()->floor();
+            args.type = elem->type();
         }
-        else if(args->modifiers & DMU_CEILING_OF_SECTOR)
+        else if(args.modifiers & DMU_CEILING_OF_SECTOR)
         {
-            Sector const *sec = elem->castTo<Sector>();
-            elem = sec->SP_plane(PLN_CEILING);
-            args->type = DMU_PLANE;
+            elem = &elem->castTo<Sector>()->ceiling();
+            args.type = elem->type();
         }
     }
 
-    if(args->type == DMU_LINEDEF)
+    if(args.type == DMU_LINE)
     {
-        if(args->modifiers & DMU_SIDEDEF0_OF_LINE)
+        if(args.modifiers & DMU_FRONT_OF_LINE)
         {
-            LineDef const *li = elem->castTo<LineDef>();
-            if(!li->L_frontsidedef) // $degenleaf
-            {
-                /// @todo Throw exception.
-                QByteArray msg = String("DMU_setProperty: Linedef %1 has no front side.").arg(P_ToIndex(li)).toUtf8();
-                App_FatalError(msg.constData());
-            }
-
-            elem = li->L_frontsidedef;
-            args->type = DMU_SIDEDEF;
-            DENG2_ASSERT(args->type == elem->type());
+            elem = &elem->castTo<Line>()->front();
+            args.type = elem->type();
         }
-        else if(args->modifiers & DMU_SIDEDEF1_OF_LINE)
+        else if(args.modifiers & DMU_BACK_OF_LINE)
         {
-            LineDef const *li = elem->castTo<LineDef>();
-            if(!li->L_backsidedef)
-            {
-                /// @todo Throw exception.
-                QByteArray msg = String("DMU_setProperty: Linedef %1 has no back side.").arg(P_ToIndex(li)).toUtf8();
-                App_FatalError(msg.constData());
-            }
-
-            elem = li->L_backsidedef;
-            args->type = DMU_SIDEDEF;
-            DENG2_ASSERT(args->type == elem->type());
+            elem = &elem->castTo<Line>()->back();
+            args.type = elem->type();
         }
     }
 
-    if(args->type == DMU_SIDEDEF)
+    if(args.type == DMU_SIDE)
     {
-        if(args->modifiers & DMU_TOP_OF_SIDEDEF)
+        if(args.modifiers & DMU_TOP_OF_SIDE)
         {
-            elem = &elem->castTo<SideDef>()->SW_topsurface;
-            args->type = DMU_SURFACE;
-            DENG2_ASSERT(args->type == elem->type());
+            elem = &elem->castTo<Line::Side>()->top();
+            args.type = elem->type();
         }
-        else if(args->modifiers & DMU_MIDDLE_OF_SIDEDEF)
+        else if(args.modifiers & DMU_MIDDLE_OF_SIDE)
         {
-            elem = &elem->castTo<SideDef>()->SW_middlesurface;
-            args->type = DMU_SURFACE;
-            DENG2_ASSERT(args->type == elem->type());
+            elem = &elem->castTo<Line::Side>()->middle();
+            args.type = elem->type();
         }
-        else if(args->modifiers & DMU_BOTTOM_OF_SIDEDEF)
+        else if(args.modifiers & DMU_BOTTOM_OF_SIDE)
         {
-            elem = &elem->castTo<SideDef>()->SW_bottomsurface;
-            args->type = DMU_SURFACE;
-            DENG2_ASSERT(args->type == elem->type());
+            elem = &elem->castTo<Line::Side>()->bottom();
+            args.type = elem->type();
         }
     }
 
-    if(args->type == DMU_PLANE)
+    if(args.type == DMU_PLANE)
     {
-        switch(args->prop)
+        switch(args.prop)
         {
         case DMU_MATERIAL:
         case DMU_OFFSET_X:
@@ -1490,66 +1325,29 @@ static int getProperty(void *ptr, void *context)
         case DMU_ALPHA:
         case DMU_BLENDMODE:
         case DMU_FLAGS:
-        case DMU_BASE:
-            elem = &elem->castTo<Plane>()->surface;
-            args->type = DMU_SURFACE;
-            DENG2_ASSERT(elem->type() == args->type);
+            elem = &elem->castTo<Plane>()->surface();
+            args.type = elem->type();
             break;
 
-        default:
-            break;
+        default: break;
         }
     }
 
-    switch(args->type)
-    {
-    case DMU_VERTEX:
-        Vertex_GetProperty(elem->castTo<Vertex>(), args);
-        break;
-
-    case DMU_HEDGE:
-        HEdge_GetProperty(elem->castTo<HEdge>(), args);
-        break;
-
-    case DMU_LINEDEF:
-        LineDef_GetProperty(elem->castTo<LineDef>(), args);
-        break;
-
-    case DMU_SURFACE:
-        elem->castTo<Surface>()->property(*args);
-        break;
-
-    case DMU_PLANE:
-        Plane_GetProperty(elem->castTo<Plane>(), args);
-        break;
-
-    case DMU_SECTOR:
-        Sector_GetProperty(elem->castTo<Sector>(), args);
-        break;
-
-    case DMU_SIDEDEF:
-        SideDef_GetProperty(elem->castTo<SideDef>(), args);
-        break;
-
-    case DMU_BSPLEAF:
-        BspLeaf_GetProperty(elem->castTo<BspLeaf>(), args);
-        break;
-
-    case DMU_MATERIAL:
-        elem->castTo<Material>()->property(*args);
-        break;
-
-    default: {
-        QByteArray msg = String("GetProperty: Type %1 not readable.").arg(DMU_Str(args->type)).toUtf8();
-        App_FatalError(msg.constData());
-        return 0; /* Unreachable */ }
-    }
+    // Read the property value(s).
+    /// @throws MapElement::UnknownPropertyError  If the requested property is not readable.
+    elem->property(args);
 
     // Currently no aggregate values are collected.
-    return false;
 }
 
-void P_SetBool(int type, uint index, uint prop, boolean param)
+static int setPropertyWorker(void *elPtr, void *context)
+{
+    setProperty(IN_ELEM(elPtr), *reinterpret_cast<setargs_t *>(context));
+    return false; // Continue iteration.
+}
+
+#undef P_SetBool
+void P_SetBool(int type, int index, uint prop, boolean param)
 {
     setargs_t args;
 
@@ -1558,161 +1356,177 @@ void P_SetBool(int type, uint index, uint prop, boolean param)
     // Make sure invalid values are not allowed.
     param = (param? true : false);
     args.booleanValues = &param;
-    P_Callback(type, index, &args, setProperty);
+    P_Callback(type, index, &args, setPropertyWorker);
 }
 
-void P_SetByte(int type, uint index, uint prop, byte param)
+#undef P_SetByte
+void P_SetByte(int type, int index, uint prop, byte param)
 {
     setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_BYTE;
     args.byteValues = &param;
-    P_Callback(type, index, &args, setProperty);
+    P_Callback(type, index, &args, setPropertyWorker);
 }
 
-void P_SetInt(int type, uint index, uint prop, int param)
+#undef P_SetInt
+void P_SetInt(int type, int index, uint prop, int param)
 {
     setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_INT;
     args.intValues = &param;
-    P_Callback(type, index, &args, setProperty);
+    P_Callback(type, index, &args, setPropertyWorker);
 }
 
-void P_SetFixed(int type, uint index, uint prop, fixed_t param)
+#undef P_SetFixed
+void P_SetFixed(int type, int index, uint prop, fixed_t param)
 {
     setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_FIXED;
     args.fixedValues = &param;
-    P_Callback(type, index, &args, setProperty);
+    P_Callback(type, index, &args, setPropertyWorker);
 }
 
-void P_SetAngle(int type, uint index, uint prop, angle_t param)
+#undef P_SetAngle
+void P_SetAngle(int type, int index, uint prop, angle_t param)
 {
     setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_ANGLE;
     args.angleValues = &param;
-    P_Callback(type, index, &args, setProperty);
+    P_Callback(type, index, &args, setPropertyWorker);
 }
 
-void P_SetFloat(int type, uint index, uint prop, float param)
+#undef P_SetFloat
+void P_SetFloat(int type, int index, uint prop, float param)
 {
     setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_FLOAT;
     args.floatValues = &param;
-    P_Callback(type, index, &args, setProperty);
+    P_Callback(type, index, &args, setPropertyWorker);
 }
 
-void P_SetDouble(int type, uint index, uint prop, double param)
+#undef P_SetDouble
+void P_SetDouble(int type, int index, uint prop, double param)
 {
     setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_DOUBLE;
     args.doubleValues = &param;
-    P_Callback(type, index, &args, setProperty);
+    P_Callback(type, index, &args, setPropertyWorker);
 }
 
-void P_SetPtr(int type, uint index, uint prop, void *param)
+#undef P_SetPtr
+void P_SetPtr(int type, int index, uint prop, void *param)
 {
     setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_PTR;
     args.ptrValues = &param;
-    P_Callback(type, index, &args, setProperty);
+    P_Callback(type, index, &args, setPropertyWorker);
 }
 
-void P_SetBoolv(int type, uint index, uint prop, boolean *params)
+#undef P_SetBoolv
+void P_SetBoolv(int type, int index, uint prop, boolean *params)
 {
     setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_BOOL;
     args.booleanValues = params;
-    P_Callback(type, index, &args, setProperty);
+    P_Callback(type, index, &args, setPropertyWorker);
 }
 
-void P_SetBytev(int type, uint index, uint prop, byte *params)
+#undef P_SetBytev
+void P_SetBytev(int type, int index, uint prop, byte *params)
 {
     setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_BYTE;
     args.byteValues = params;
-    P_Callback(type, index, &args, setProperty);
+    P_Callback(type, index, &args, setPropertyWorker);
 }
 
-void P_SetIntv(int type, uint index, uint prop, int *params)
+#undef P_SetIntv
+void P_SetIntv(int type, int index, uint prop, int *params)
 {
     setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_INT;
     args.intValues = params;
-    P_Callback(type, index, &args, setProperty);
+    P_Callback(type, index, &args, setPropertyWorker);
 }
 
-void P_SetFixedv(int type, uint index, uint prop, fixed_t *params)
+#undef P_SetFixedv
+void P_SetFixedv(int type, int index, uint prop, fixed_t *params)
 {
     setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_FIXED;
     args.fixedValues = params;
-    P_Callback(type, index, &args, setProperty);
+    P_Callback(type, index, &args, setPropertyWorker);
 }
 
-void P_SetAnglev(int type, uint index, uint prop, angle_t *params)
+#undef P_SetAnglev
+void P_SetAnglev(int type, int index, uint prop, angle_t *params)
 {
     setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_ANGLE;
     args.angleValues = params;
-    P_Callback(type, index, &args, setProperty);
+    P_Callback(type, index, &args, setPropertyWorker);
 }
 
-void P_SetFloatv(int type, uint index, uint prop, float *params)
+#undef P_SetFloatv
+void P_SetFloatv(int type, int index, uint prop, float *params)
 {
     setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_FLOAT;
     args.floatValues = params;
-    P_Callback(type, index, &args, setProperty);
+    P_Callback(type, index, &args, setPropertyWorker);
 }
 
-void P_SetDoublev(int type, uint index, uint prop, double *params)
+#undef P_SetDoublev
+void P_SetDoublev(int type, int index, uint prop, double *params)
 {
     setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_DOUBLE;
     args.doubleValues = params;
-    P_Callback(type, index, &args, setProperty);
+    P_Callback(type, index, &args, setPropertyWorker);
 }
 
-void P_SetPtrv(int type, uint index, uint prop, void *params)
+#undef P_SetPtrv
+void P_SetPtrv(int type, int index, uint prop, void *params)
 {
     setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_PTR;
     args.ptrValues = (void **)params;
-    P_Callback(type, index, &args, setProperty);
+    P_Callback(type, index, &args, setPropertyWorker);
 }
 
 /* pointer-based write functions */
 
+#undef P_SetBoolp
 void P_SetBoolp(void *ptr, uint prop, boolean param)
 {
     setargs_t args;
@@ -1722,9 +1536,10 @@ void P_SetBoolp(void *ptr, uint prop, boolean param)
     // Make sure invalid values are not allowed.
     param = (param? true : false);
     args.booleanValues = &param;
-    P_Callbackp(args.type, ptr, &args, setProperty);
+    P_Callbackp(args.type, ptr, &args, setPropertyWorker);
 }
 
+#undef P_SetBytep
 void P_SetBytep(void *ptr, uint prop, byte param)
 {
     setargs_t args;
@@ -1732,9 +1547,10 @@ void P_SetBytep(void *ptr, uint prop, byte param)
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_BYTE;
     args.byteValues = &param;
-    P_Callbackp(args.type, ptr, &args, setProperty);
+    P_Callbackp(args.type, ptr, &args, setPropertyWorker);
 }
 
+#undef P_SetIntp
 void P_SetIntp(void *ptr, uint prop, int param)
 {
     setargs_t args;
@@ -1742,9 +1558,10 @@ void P_SetIntp(void *ptr, uint prop, int param)
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_INT;
     args.intValues = &param;
-    P_Callbackp(args.type, ptr, &args, setProperty);
+    P_Callbackp(args.type, ptr, &args, setPropertyWorker);
 }
 
+#undef P_SetFixedp
 void P_SetFixedp(void *ptr, uint prop, fixed_t param)
 {
     setargs_t args;
@@ -1752,9 +1569,10 @@ void P_SetFixedp(void *ptr, uint prop, fixed_t param)
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_FIXED;
     args.fixedValues = &param;
-    P_Callbackp(args.type, ptr, &args, setProperty);
+    P_Callbackp(args.type, ptr, &args, setPropertyWorker);
 }
 
+#undef P_SetAnglep
 void P_SetAnglep(void *ptr, uint prop, angle_t param)
 {
     setargs_t args;
@@ -1762,9 +1580,10 @@ void P_SetAnglep(void *ptr, uint prop, angle_t param)
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_ANGLE;
     args.angleValues = &param;
-    P_Callbackp(args.type, ptr, &args, setProperty);
+    P_Callbackp(args.type, ptr, &args, setPropertyWorker);
 }
 
+#undef P_SetFloatp
 void P_SetFloatp(void *ptr, uint prop, float param)
 {
     setargs_t args;
@@ -1772,9 +1591,10 @@ void P_SetFloatp(void *ptr, uint prop, float param)
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_FLOAT;
     args.floatValues = &param;
-    P_Callbackp(args.type, ptr, &args, setProperty);
+    P_Callbackp(args.type, ptr, &args, setPropertyWorker);
 }
 
+#undef P_SetDoublep
 void P_SetDoublep(void *ptr, uint prop, double param)
 {
     setargs_t args;
@@ -1782,9 +1602,10 @@ void P_SetDoublep(void *ptr, uint prop, double param)
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_DOUBLE;
     args.doubleValues = &param;
-    P_Callbackp(args.type, ptr, &args, setProperty);
+    P_Callbackp(args.type, ptr, &args, setPropertyWorker);
 }
 
+#undef P_SetPtrp
 void P_SetPtrp(void *ptr, uint prop, void *param)
 {
     setargs_t args;
@@ -1792,9 +1613,10 @@ void P_SetPtrp(void *ptr, uint prop, void *param)
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_PTR;
     args.ptrValues = &param;
-    P_Callbackp(args.type, ptr, &args, setProperty);
+    P_Callbackp(args.type, ptr, &args, setPropertyWorker);
 }
 
+#undef P_SetBoolpv
 void P_SetBoolpv(void *ptr, uint prop, boolean *params)
 {
     setargs_t args;
@@ -1802,9 +1624,10 @@ void P_SetBoolpv(void *ptr, uint prop, boolean *params)
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_BOOL;
     args.booleanValues = params;
-    P_Callbackp(args.type, ptr, &args, setProperty);
+    P_Callbackp(args.type, ptr, &args, setPropertyWorker);
 }
 
+#undef P_SetBytepv
 void P_SetBytepv(void *ptr, uint prop, byte *params)
 {
     setargs_t args;
@@ -1812,9 +1635,10 @@ void P_SetBytepv(void *ptr, uint prop, byte *params)
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_BYTE;
     args.byteValues = params;
-    P_Callbackp(args.type, ptr, &args, setProperty);
+    P_Callbackp(args.type, ptr, &args, setPropertyWorker);
 }
 
+#undef P_SetIntpv
 void P_SetIntpv(void *ptr, uint prop, int *params)
 {
     setargs_t args;
@@ -1822,9 +1646,10 @@ void P_SetIntpv(void *ptr, uint prop, int *params)
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_INT;
     args.intValues = params;
-    P_Callbackp(args.type, ptr, &args, setProperty);
+    P_Callbackp(args.type, ptr, &args, setPropertyWorker);
 }
 
+#undef P_SetFixedpv
 void P_SetFixedpv(void *ptr, uint prop, fixed_t *params)
 {
     setargs_t args;
@@ -1832,9 +1657,10 @@ void P_SetFixedpv(void *ptr, uint prop, fixed_t *params)
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_FIXED;
     args.fixedValues = params;
-    P_Callbackp(args.type, ptr, &args, setProperty);
+    P_Callbackp(args.type, ptr, &args, setPropertyWorker);
 }
 
+#undef P_SetAnglepv
 void P_SetAnglepv(void *ptr, uint prop, angle_t *params)
 {
     setargs_t args;
@@ -1842,9 +1668,10 @@ void P_SetAnglepv(void *ptr, uint prop, angle_t *params)
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_ANGLE;
     args.angleValues = params;
-    P_Callbackp(args.type, ptr, &args, setProperty);
+    P_Callbackp(args.type, ptr, &args, setPropertyWorker);
 }
 
+#undef P_SetFloatpv
 void P_SetFloatpv(void *ptr, uint prop, float *params)
 {
     setargs_t args;
@@ -1852,9 +1679,10 @@ void P_SetFloatpv(void *ptr, uint prop, float *params)
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_FLOAT;
     args.floatValues = params;
-    P_Callbackp(args.type, ptr, &args, setProperty);
+    P_Callbackp(args.type, ptr, &args, setPropertyWorker);
 }
 
+#undef P_SetDoublepv
 void P_SetDoublepv(void *ptr, uint prop, double *params)
 {
     setargs_t args;
@@ -1862,9 +1690,10 @@ void P_SetDoublepv(void *ptr, uint prop, double *params)
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_DOUBLE;
     args.doubleValues = params;
-    P_Callbackp(args.type, ptr, &args, setProperty);
+    P_Callbackp(args.type, ptr, &args, setPropertyWorker);
 }
 
+#undef P_SetPtrpv
 void P_SetPtrpv(void *ptr, uint prop, void *params)
 {
     setargs_t args;
@@ -1872,12 +1701,19 @@ void P_SetPtrpv(void *ptr, uint prop, void *params)
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_PTR;
     args.ptrValues = (void **)params;
-    P_Callbackp(args.type, ptr, &args, setProperty);
+    P_Callbackp(args.type, ptr, &args, setPropertyWorker);
+}
+
+static int getPropertyWorker(void *elPtr, void *context)
+{
+    getProperty(IN_ELEM_CONST(elPtr), *reinterpret_cast<setargs_t *>(context));
+    return false; // Continue iteration.
 }
 
 /* index-based read functions */
 
-boolean P_GetBool(int type, uint index, uint prop)
+#undef P_GetBool
+boolean P_GetBool(int type, int index, uint prop)
 {
     setargs_t args;
     boolean returnValue = false;
@@ -1885,11 +1721,12 @@ boolean P_GetBool(int type, uint index, uint prop)
     initArgs(&args, type, prop);
     args.valueType = DDVT_BOOL;
     args.booleanValues = &returnValue;
-    P_Callback(type, index, &args, getProperty);
+    P_Callback(type, index, &args, getPropertyWorker);
     return returnValue;
 }
 
-byte P_GetByte(int type, uint index, uint prop)
+#undef P_GetByte
+byte P_GetByte(int type, int index, uint prop)
 {
     setargs_t args;
     byte returnValue = 0;
@@ -1897,11 +1734,12 @@ byte P_GetByte(int type, uint index, uint prop)
     initArgs(&args, type, prop);
     args.valueType = DDVT_BYTE;
     args.byteValues = &returnValue;
-    P_Callback(type, index, &args, getProperty);
+    P_Callback(type, index, &args, getPropertyWorker);
     return returnValue;
 }
 
-int P_GetInt(int type, uint index, uint prop)
+#undef P_GetInt
+int P_GetInt(int type, int index, uint prop)
 {
     setargs_t args;
     int returnValue = 0;
@@ -1909,11 +1747,12 @@ int P_GetInt(int type, uint index, uint prop)
     initArgs(&args, type, prop);
     args.valueType = DDVT_INT;
     args.intValues = &returnValue;
-    P_Callback(type, index, &args, getProperty);
+    P_Callback(type, index, &args, getPropertyWorker);
     return returnValue;
 }
 
-fixed_t P_GetFixed(int type, uint index, uint prop)
+#undef P_GetFixed
+fixed_t P_GetFixed(int type, int index, uint prop)
 {
     setargs_t args;
     fixed_t returnValue = 0;
@@ -1921,11 +1760,12 @@ fixed_t P_GetFixed(int type, uint index, uint prop)
     initArgs(&args, type, prop);
     args.valueType = DDVT_FIXED;
     args.fixedValues = &returnValue;
-    P_Callback(type, index, &args, getProperty);
+    P_Callback(type, index, &args, getPropertyWorker);
     return returnValue;
 }
 
-angle_t P_GetAngle(int type, uint index, uint prop)
+#undef P_GetAngle
+angle_t P_GetAngle(int type, int index, uint prop)
 {
     setargs_t args;
     angle_t returnValue = 0;
@@ -1933,11 +1773,12 @@ angle_t P_GetAngle(int type, uint index, uint prop)
     initArgs(&args, type, prop);
     args.valueType = DDVT_ANGLE;
     args.angleValues = &returnValue;
-    P_Callback(type, index, &args, getProperty);
+    P_Callback(type, index, &args, getPropertyWorker);
     return returnValue;
 }
 
-float P_GetFloat(int type, uint index, uint prop)
+#undef P_GetFloat
+float P_GetFloat(int type, int index, uint prop)
 {
     setargs_t args;
     float returnValue = 0;
@@ -1945,11 +1786,12 @@ float P_GetFloat(int type, uint index, uint prop)
     initArgs(&args, type, prop);
     args.valueType = DDVT_FLOAT;
     args.floatValues = &returnValue;
-    P_Callback(type, index, &args, getProperty);
+    P_Callback(type, index, &args, getPropertyWorker);
     return returnValue;
 }
 
-double P_GetDouble(int type, uint index, uint prop)
+#undef P_GetDouble
+double P_GetDouble(int type, int index, uint prop)
 {
     setargs_t args;
     double returnValue = 0;
@@ -1957,11 +1799,12 @@ double P_GetDouble(int type, uint index, uint prop)
     initArgs(&args, type, prop);
     args.valueType = DDVT_DOUBLE;
     args.doubleValues = &returnValue;
-    P_Callback(type, index, &args, getProperty);
+    P_Callback(type, index, &args, getPropertyWorker);
     return returnValue;
 }
 
-void *P_GetPtr(int type, uint index, uint prop)
+#undef P_GetPtr
+void *P_GetPtr(int type, int index, uint prop)
 {
     setargs_t args;
     void *returnValue = 0;
@@ -1969,92 +1812,101 @@ void *P_GetPtr(int type, uint index, uint prop)
     initArgs(&args, type, prop);
     args.valueType = DDVT_PTR;
     args.ptrValues = &returnValue;
-    P_Callback(type, index, &args, getProperty);
+    P_Callback(type, index, &args, getPropertyWorker);
     return returnValue;
 }
 
-void P_GetBoolv(int type, uint index, uint prop, boolean *params)
+#undef P_GetBoolv
+void P_GetBoolv(int type, int index, uint prop, boolean *params)
 {
     setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_BOOL;
     args.booleanValues = params;
-    P_Callback(type, index, &args, getProperty);
+    P_Callback(type, index, &args, getPropertyWorker);
 }
 
-void P_GetBytev(int type, uint index, uint prop, byte *params)
+#undef P_GetBytev
+void P_GetBytev(int type, int index, uint prop, byte *params)
 {
     setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_BYTE;
     args.byteValues = params;
-    P_Callback(type, index, &args, getProperty);
+    P_Callback(type, index, &args, getPropertyWorker);
 }
 
-void P_GetIntv(int type, uint index, uint prop, int *params)
+#undef P_GetIntv
+void P_GetIntv(int type, int index, uint prop, int *params)
 {
     setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_INT;
     args.intValues = params;
-    P_Callback(type, index, &args, getProperty);
+    P_Callback(type, index, &args, getPropertyWorker);
 }
 
-void P_GetFixedv(int type, uint index, uint prop, fixed_t *params)
+#undef P_GetFixedv
+void P_GetFixedv(int type, int index, uint prop, fixed_t *params)
 {
     setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_FIXED;
     args.fixedValues = params;
-    P_Callback(type, index, &args, getProperty);
+    P_Callback(type, index, &args, getPropertyWorker);
 }
 
-void P_GetAnglev(int type, uint index, uint prop, angle_t *params)
+#undef P_GetAnglev
+void P_GetAnglev(int type, int index, uint prop, angle_t *params)
 {
     setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_ANGLE;
     args.angleValues = params;
-    P_Callback(type, index, &args, getProperty);
+    P_Callback(type, index, &args, getPropertyWorker);
 }
 
-void P_GetFloatv(int type, uint index, uint prop, float *params)
+#undef P_GetFloatv
+void P_GetFloatv(int type, int index, uint prop, float *params)
 {
     setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_FLOAT;
     args.floatValues = params;
-    P_Callback(type, index, &args, getProperty);
+    P_Callback(type, index, &args, getPropertyWorker);
 }
 
-void P_GetDoublev(int type, uint index, uint prop, double *params)
+#undef P_GetDoublev
+void P_GetDoublev(int type, int index, uint prop, double *params)
 {
     setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_DOUBLE;
     args.doubleValues = params;
-    P_Callback(type, index, &args, getProperty);
+    P_Callback(type, index, &args, getPropertyWorker);
 }
 
-void P_GetPtrv(int type, uint index, uint prop, void *params)
+#undef P_GetPtrv
+void P_GetPtrv(int type, int index, uint prop, void *params)
 {
     setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_PTR;
     args.ptrValues = (void **)params;
-    P_Callback(type, index, &args, getProperty);
+    P_Callback(type, index, &args, getPropertyWorker);
 }
 
 /* pointer-based read functions */
 
+#undef P_GetBoolp
 boolean P_GetBoolp(void *ptr, uint prop)
 {
     setargs_t args;
@@ -2065,12 +1917,13 @@ boolean P_GetBoolp(void *ptr, uint prop)
         initArgs(&args, DMU_GetType(ptr), prop);
         args.valueType = DDVT_BOOL;
         args.booleanValues = &returnValue;
-        P_Callbackp(args.type, ptr, &args, getProperty);
+        P_Callbackp(args.type, ptr, &args, getPropertyWorker);
     }
 
     return returnValue;
 }
 
+#undef P_GetBytep
 byte P_GetBytep(void *ptr, uint prop)
 {
     setargs_t args;
@@ -2081,12 +1934,13 @@ byte P_GetBytep(void *ptr, uint prop)
         initArgs(&args, DMU_GetType(ptr), prop);
         args.valueType = DDVT_BYTE;
         args.byteValues = &returnValue;
-        P_Callbackp(args.type, ptr, &args, getProperty);
+        P_Callbackp(args.type, ptr, &args, getPropertyWorker);
     }
 
     return returnValue;
 }
 
+#undef P_GetIntp
 int P_GetIntp(void *ptr, uint prop)
 {
     setargs_t args;
@@ -2097,12 +1951,13 @@ int P_GetIntp(void *ptr, uint prop)
         initArgs(&args, DMU_GetType(ptr), prop);
         args.valueType = DDVT_INT;
         args.intValues = &returnValue;
-        P_Callbackp(args.type, ptr, &args, getProperty);
+        P_Callbackp(args.type, ptr, &args, getPropertyWorker);
     }
 
     return returnValue;
 }
 
+#undef P_GetFixedp
 fixed_t P_GetFixedp(void *ptr, uint prop)
 {
     setargs_t args;
@@ -2113,12 +1968,13 @@ fixed_t P_GetFixedp(void *ptr, uint prop)
         initArgs(&args, DMU_GetType(ptr), prop);
         args.valueType = DDVT_FIXED;
         args.fixedValues = &returnValue;
-        P_Callbackp(args.type, ptr, &args, getProperty);
+        P_Callbackp(args.type, ptr, &args, getPropertyWorker);
     }
 
     return returnValue;
 }
 
+#undef P_GetAnglep
 angle_t P_GetAnglep(void *ptr, uint prop)
 {
     setargs_t args;
@@ -2129,12 +1985,13 @@ angle_t P_GetAnglep(void *ptr, uint prop)
         initArgs(&args, DMU_GetType(ptr), prop);
         args.valueType = DDVT_ANGLE;
         args.angleValues = &returnValue;
-        P_Callbackp(args.type, ptr, &args, getProperty);
+        P_Callbackp(args.type, ptr, &args, getPropertyWorker);
     }
 
     return returnValue;
 }
 
+#undef P_GetFloatp
 float P_GetFloatp(void *ptr, uint prop)
 {
     setargs_t args;
@@ -2145,12 +2002,13 @@ float P_GetFloatp(void *ptr, uint prop)
         initArgs(&args, DMU_GetType(ptr), prop);
         args.valueType = DDVT_FLOAT;
         args.floatValues = &returnValue;
-        P_Callbackp(args.type, ptr, &args, getProperty);
+        P_Callbackp(args.type, ptr, &args, getPropertyWorker);
     }
 
     return returnValue;
 }
 
+#undef P_GetDoublep
 double P_GetDoublep(void *ptr, uint prop)
 {
     setargs_t args;
@@ -2161,12 +2019,13 @@ double P_GetDoublep(void *ptr, uint prop)
         initArgs(&args, DMU_GetType(ptr), prop);
         args.valueType = DDVT_DOUBLE;
         args.doubleValues = &returnValue;
-        P_Callbackp(args.type, ptr, &args, getProperty);
+        P_Callbackp(args.type, ptr, &args, getPropertyWorker);
     }
 
     return returnValue;
 }
 
+#undef P_GetPtrp
 void *P_GetPtrp(void *ptr, uint prop)
 {
     setargs_t args;
@@ -2177,12 +2036,13 @@ void *P_GetPtrp(void *ptr, uint prop)
         initArgs(&args, DMU_GetType(ptr), prop);
         args.valueType = DDVT_PTR;
         args.ptrValues = &returnValue;
-        P_Callbackp(args.type, ptr, &args, getProperty);
+        P_Callbackp(args.type, ptr, &args, getPropertyWorker);
     }
 
     return returnValue;
 }
 
+#undef P_GetBoolpv
 void P_GetBoolpv(void *ptr, uint prop, boolean *params)
 {
     setargs_t args;
@@ -2192,10 +2052,11 @@ void P_GetBoolpv(void *ptr, uint prop, boolean *params)
         initArgs(&args, DMU_GetType(ptr), prop);
         args.valueType = DDVT_BOOL;
         args.booleanValues = params;
-        P_Callbackp(args.type, ptr, &args, getProperty);
+        P_Callbackp(args.type, ptr, &args, getPropertyWorker);
     }
 }
 
+#undef P_GetBytepv
 void P_GetBytepv(void *ptr, uint prop, byte *params)
 {
     setargs_t args;
@@ -2205,10 +2066,11 @@ void P_GetBytepv(void *ptr, uint prop, byte *params)
         initArgs(&args, DMU_GetType(ptr), prop);
         args.valueType = DDVT_BYTE;
         args.byteValues = params;
-        P_Callbackp(args.type, ptr, &args, getProperty);
+        P_Callbackp(args.type, ptr, &args, getPropertyWorker);
     }
 }
 
+#undef P_GetIntpv
 void P_GetIntpv(void *ptr, uint prop, int *params)
 {
     setargs_t args;
@@ -2218,10 +2080,11 @@ void P_GetIntpv(void *ptr, uint prop, int *params)
         initArgs(&args, DMU_GetType(ptr), prop);
         args.valueType = DDVT_INT;
         args.intValues = params;
-        P_Callbackp(args.type, ptr, &args, getProperty);
+        P_Callbackp(args.type, ptr, &args, getPropertyWorker);
     }
 }
 
+#undef P_GetFixedpv
 void P_GetFixedpv(void *ptr, uint prop, fixed_t *params)
 {
     setargs_t args;
@@ -2231,10 +2094,11 @@ void P_GetFixedpv(void *ptr, uint prop, fixed_t *params)
         initArgs(&args, DMU_GetType(ptr), prop);
         args.valueType = DDVT_FIXED;
         args.fixedValues = params;
-        P_Callbackp(args.type, ptr, &args, getProperty);
+        P_Callbackp(args.type, ptr, &args, getPropertyWorker);
     }
 }
 
+#undef P_GetAnglepv
 void P_GetAnglepv(void *ptr, uint prop, angle_t *params)
 {
     setargs_t args;
@@ -2244,10 +2108,11 @@ void P_GetAnglepv(void *ptr, uint prop, angle_t *params)
         initArgs(&args, DMU_GetType(ptr), prop);
         args.valueType = DDVT_ANGLE;
         args.angleValues = params;
-        P_Callbackp(args.type, ptr, &args, getProperty);
+        P_Callbackp(args.type, ptr, &args, getPropertyWorker);
     }
 }
 
+#undef P_GetFloatpv
 void P_GetFloatpv(void *ptr, uint prop, float *params)
 {
     setargs_t args;
@@ -2257,10 +2122,11 @@ void P_GetFloatpv(void *ptr, uint prop, float *params)
         initArgs(&args, DMU_GetType(ptr), prop);
         args.valueType = DDVT_FLOAT;
         args.floatValues = params;
-        P_Callbackp(args.type, ptr, &args, getProperty);
+        P_Callbackp(args.type, ptr, &args, getPropertyWorker);
     }
 }
 
+#undef P_GetDoublepv
 void P_GetDoublepv(void *ptr, uint prop, double *params)
 {
     setargs_t args;
@@ -2270,10 +2136,11 @@ void P_GetDoublepv(void *ptr, uint prop, double *params)
         initArgs(&args, DMU_GetType(ptr), prop);
         args.valueType = DDVT_DOUBLE;
         args.doubleValues = params;
-        P_Callbackp(args.type, ptr, &args, getProperty);
+        P_Callbackp(args.type, ptr, &args, getPropertyWorker);
     }
 }
 
+#undef P_GetPtrpv
 void P_GetPtrpv(void *ptr, uint prop, void *params)
 {
     setargs_t args;
@@ -2283,48 +2150,58 @@ void P_GetPtrpv(void *ptr, uint prop, void *params)
         initArgs(&args, DMU_GetType(ptr), prop);
         args.valueType = DDVT_PTR;
         args.ptrValues = (void **)params;
-        P_Callbackp(args.type, ptr, &args, getProperty);
+        P_Callbackp(args.type, ptr, &args, getPropertyWorker);
     }
 }
 
 // p_data.cpp
 DENG_EXTERN_C boolean P_MapExists(char const* uriCString);
+
 DENG_EXTERN_C boolean P_MapIsCustom(char const* uriCString);
 DENG_EXTERN_C AutoStr* P_MapSourceFile(char const* uriCString);
 DENG_EXTERN_C boolean P_LoadMap(char const* uriCString);
 DENG_EXTERN_C uint P_CountGameMapObjs(int entityId);
 
 // p_mapdata.cpp
-DENG_EXTERN_C byte P_GetGMOByte(int entityId, uint elementIndex, int propertyId);
-DENG_EXTERN_C short P_GetGMOShort(int entityId, uint elementIndex, int propertyId);
-DENG_EXTERN_C int P_GetGMOInt(int entityId, uint elementIndex, int propertyId);
-DENG_EXTERN_C fixed_t P_GetGMOFixed(int entityId, uint elementIndex, int propertyId);
-DENG_EXTERN_C angle_t P_GetGMOAngle(int entityId, uint elementIndex, int propertyId);
-DENG_EXTERN_C float P_GetGMOFloat(int entityId, uint elementIndex, int propertyId);
+DENG_EXTERN_C byte P_GetGMOByte(int entityId, int elementIndex, int propertyId);
+DENG_EXTERN_C short P_GetGMOShort(int entityId, int elementIndex, int propertyId);
+DENG_EXTERN_C int P_GetGMOInt(int entityId, int elementIndex, int propertyId);
+DENG_EXTERN_C fixed_t P_GetGMOFixed(int entityId, int elementIndex, int propertyId);
+DENG_EXTERN_C angle_t P_GetGMOAngle(int entityId, int elementIndex, int propertyId);
+DENG_EXTERN_C float P_GetGMOFloat(int entityId, int elementIndex, int propertyId);
 
 // p_maputil.cpp
 DENG_EXTERN_C void P_MobjLink(mobj_t* mo, byte flags);
 DENG_EXTERN_C int P_MobjUnlink(mobj_t* mo);
-DENG_EXTERN_C int P_MobjLinesIterator(mobj_t* mo, int (*callback) (LineDef*, void*), void* parameters);
+DENG_EXTERN_C int P_MobjLinesIterator(mobj_t* mo, int (*callback) (Line*, void*), void* parameters);
 DENG_EXTERN_C int P_MobjSectorsIterator(mobj_t* mo, int (*callback) (Sector*, void*), void* parameters);
-DENG_EXTERN_C int P_LineMobjsIterator(LineDef* lineDef, int (*callback) (mobj_t*, void*), void* parameters);
+DENG_EXTERN_C int P_LineMobjsIterator(Line *line, int (*callback) (mobj_t *, void *), void *parameters);
 DENG_EXTERN_C int P_SectorTouchingMobjsIterator(Sector* sector, int (*callback) (mobj_t*, void*), void *parameters);
-DENG_EXTERN_C BspLeaf* P_BspLeafAtPointXY(coord_t x, coord_t y);
-DENG_EXTERN_C BspLeaf* P_BspLeafAtPoint(coord_t const point[2]);
+DENG_EXTERN_C BspLeaf* P_BspLeafAtPoint_FixedPrecisionXY(coord_t x, coord_t y);
+DENG_EXTERN_C BspLeaf* P_BspLeafAtPoint_FixedPrecision(coord_t const point[2]);
 DENG_EXTERN_C int P_MobjsBoxIterator(const AABoxd* box, int (*callback) (mobj_t*, void*), void* parameters);
-DENG_EXTERN_C int P_LinesBoxIterator(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters);
+DENG_EXTERN_C int P_LinesBoxIterator(const AABoxd* box, int (*callback) (Line*, void*), void* parameters);
 DENG_EXTERN_C int P_PolyobjsBoxIterator(const AABoxd* box, int (*callback) (Polyobj*, void*), void* parameters);
-DENG_EXTERN_C int P_PolyobjLinesBoxIterator(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters);
-DENG_EXTERN_C int P_AllLinesBoxIterator(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters);
+DENG_EXTERN_C int P_PolyobjLinesBoxIterator(const AABoxd* box, int (*callback) (Line*, void*), void* parameters);
+DENG_EXTERN_C int P_AllLinesBoxIterator(const AABoxd* box, int (*callback) (Line*, void*), void* parameters);
 DENG_EXTERN_C int P_BspLeafsBoxIterator(const AABoxd* box, Sector* sector, int (*callback) (BspLeaf*, void*), void* parameters);
 DENG_EXTERN_C int P_PathTraverse2(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback, void* parameters);
 DENG_EXTERN_C int P_PathTraverse(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback/*parameters=NULL*/);
 DENG_EXTERN_C int P_PathXYTraverse2(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, traverser_t callback, void* paramaters);
 DENG_EXTERN_C int P_PathXYTraverse(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, traverser_t callback/*parameters=NULL*/);
-DENG_EXTERN_C boolean P_CheckLineSight(coord_t const from[3], coord_t const to[3], coord_t bottomSlope, coord_t topSlope, int flags);
+
+#undef P_CheckLineSight
+DENG_EXTERN_C boolean P_CheckLineSight(const_pvec3d_t from, const_pvec3d_t to, coord_t bottomSlope,
+    coord_t topSlope, int flags)
+{
+    if(!theMap) return false; // I guess?
+    return LineSightTest(Vector3d(from), Vector3d(to),
+                         dfloat(bottomSlope), dfloat(topSlope), flags).trace(*theMap->bspRoot());
+}
+
 DENG_EXTERN_C const divline_t* P_TraceLOS(void);
 DENG_EXTERN_C TraceOpening const *P_TraceOpening(void);
-DENG_EXTERN_C void P_SetTraceOpening(LineDef* linedef);
+DENG_EXTERN_C void P_SetTraceOpening(Line* line);
 
 // p_mobj.c
 DENG_EXTERN_C mobj_t* P_MobjCreateXYZ(thinkfunc_t function, coord_t x, coord_t y, coord_t z, angle_t angle, coord_t radius, coord_t height, int ddflags);
@@ -2340,22 +2217,124 @@ DENG_EXTERN_C void P_SpawnDamageParticleGen(struct mobj_s* mo, struct mobj_s* in
 // p_think.c
 DENG_EXTERN_C struct mobj_s* P_MobjForID(int id);
 
-// polyobjs.c
-DENG_EXTERN_C boolean P_PolyobjMoveXY(Polyobj* polyobj, coord_t x, coord_t y);
-DENG_EXTERN_C boolean P_PolyobjRotate(Polyobj* polyobj, angle_t angle);
-DENG_EXTERN_C void P_PolyobjLink(Polyobj* polyobj);
-DENG_EXTERN_C void P_PolyobjUnlink(Polyobj* polyobj);
-DENG_EXTERN_C Polyobj* P_PolyobjByID(uint id);
-DENG_EXTERN_C Polyobj* P_PolyobjByTag(int tag);
-DENG_EXTERN_C void P_SetPolyobjCallback(void (*func) (struct mobj_s*, void*, void*));
+#undef P_SetPolyobjCallback
+DENG_EXTERN_C void P_SetPolyobjCallback(void (*func) (struct mobj_s *, void *, void *))
+{
+    Polyobj::setCollisionCallback(func);
+}
 
-// linedef.cpp
-DENG_EXTERN_C int LineDef_BoxOnSide(LineDef* lineDef, const AABoxd* box);
-DENG_EXTERN_C int LineDef_BoxOnSide_FixedPrecision(LineDef* line, const AABoxd* box);
-DENG_EXTERN_C coord_t LineDef_PointDistance(LineDef* lineDef, coord_t const point[2], coord_t* offset);
-DENG_EXTERN_C coord_t LineDef_PointXYDistance(LineDef* lineDef, coord_t x, coord_t y, coord_t* offset);
-DENG_EXTERN_C coord_t LineDef_PointOnSide(const LineDef* lineDef, coord_t const point[2]);
-DENG_EXTERN_C coord_t LineDef_PointXYOnSide(const LineDef* lineDef, coord_t x, coord_t y);
+#undef P_PolyobjUnlink
+DENG_EXTERN_C void P_PolyobjUnlink(Polyobj *po)
+{
+    if(!po) return;
+    /// @todo Do not assume polyobj is from the CURRENT map.
+    theMap->unlinkPolyobj(*po);
+}
+
+#undef P_PolyobjLink
+DENG_EXTERN_C void P_PolyobjLink(Polyobj *po)
+{
+    if(!po) return;
+    /// @todo Do not assume polyobj is from the CURRENT map.
+    theMap->linkPolyobj(*po);
+}
+
+#undef P_PolyobjByID
+DENG_EXTERN_C Polyobj *P_PolyobjByID(int index)
+{
+    if(!theMap) return 0;
+    return theMap->polyobjs().at(index);
+}
+
+#undef P_PolyobjByTag
+DENG_EXTERN_C Polyobj *P_PolyobjByTag(int tag)
+{
+    if(!theMap) return 0;
+    return theMap->polyobjByTag(tag);
+}
+
+#undef P_PolyobjByBase
+DENG_EXTERN_C Polyobj *P_PolyobjByBase(void *ddMobjBase)
+{
+    if(!theMap || !ddMobjBase) return 0;
+    return theMap->polyobjByBase(*reinterpret_cast<ddmobj_base_t *>(ddMobjBase));
+}
+
+#undef P_PolyobjMove
+DENG_EXTERN_C boolean P_PolyobjMove(Polyobj *po, const_pvec3d_t xy)
+{
+    if(!po) return false;
+    return po->move(xy);
+}
+
+#undef P_PolyobjMoveXY
+DENG_EXTERN_C boolean P_PolyobjMoveXY(Polyobj *po, coord_t x, coord_t y)
+{
+    if(!po) return false;
+    return po->move(x, y);
+}
+
+#undef P_PolyobjRotate
+DENG_EXTERN_C boolean P_PolyobjRotate(Polyobj *po, angle_t angle)
+{
+    if(!po) return false;
+    return po->rotate(angle);
+}
+
+#undef P_PolyobjFirstLine
+DENG_EXTERN_C Line *P_PolyobjFirstLine(Polyobj *po)
+{
+    if(!po) return 0;
+    return po->lines()[0];
+}
+
+#undef Line_PointDistance
+DENG_EXTERN_C coord_t Line_PointDistance(Line *line, coord_t const point[2], coord_t *offset)
+{
+    DENG_ASSERT(line);
+    return line->pointDistance(point, offset);
+}
+
+#undef Line_PointXYDistance
+DENG_EXTERN_C coord_t Line_PointXYDistance(Line* line, coord_t x, coord_t y, coord_t* offset)
+{
+    DENG_ASSERT(line);
+    return line->pointDistance(x, y, offset);
+}
+
+#undef Line_PointOnSide
+DENG_EXTERN_C coord_t Line_PointOnSide(Line const *line, coord_t const point[2])
+{
+    DENG_ASSERT(line);
+    if(!point)
+    {
+        LOG_AS("Line_PointOnSide");
+        LOG_DEBUG("Invalid arguments, returning >0.");
+        return 1;
+    }
+    return line->pointOnSide(point);
+}
+
+#undef Line_PointXYOnSide
+DENG_EXTERN_C coord_t Line_PointXYOnSide(Line const *line, coord_t x, coord_t y)
+{
+    DENG_ASSERT(line);
+    return line->pointOnSide(x, y);
+}
+
+#undef Line_BoxOnSide
+DENG_EXTERN_C int Line_BoxOnSide(Line *line, AABoxd const *box)
+{
+    DENG_ASSERT(line && box);
+    return line->boxOnSide(*box);
+}
+
+#undef Line_BoxOnSide_FixedPrecision
+DENG_EXTERN_C int Line_BoxOnSide_FixedPrecision(Line *line, AABoxd const *box)
+{
+    DENG_ASSERT(line && box);
+    return line->boxOnSide_FixedPrecision(*box);
+}
 
 DENG_DECLARE_API(Map) =
 {
@@ -2365,12 +2344,12 @@ DENG_DECLARE_API(Map) =
     P_MapSourceFile,
     P_LoadMap,
 
-    LineDef_BoxOnSide,
-    LineDef_BoxOnSide_FixedPrecision,
-    LineDef_PointDistance,
-    LineDef_PointXYDistance,
-    LineDef_PointOnSide,
-    LineDef_PointXYOnSide,
+    Line_BoxOnSide,
+    Line_BoxOnSide_FixedPrecision,
+    Line_PointDistance,
+    Line_PointXYDistance,
+    Line_PointOnSide,
+    Line_PointXYOnSide,
     P_LineMobjsIterator,
 
     P_SectorTouchingMobjsIterator,
@@ -2391,12 +2370,13 @@ DENG_DECLARE_API(Map) =
     P_PolyobjRotate,
     P_PolyobjLink,
     P_PolyobjUnlink,
+    P_PolyobjFirstLine,
     P_PolyobjByID,
     P_PolyobjByTag,
     P_SetPolyobjCallback,
 
-    P_BspLeafAtPoint,
-    P_BspLeafAtPointXY,
+    P_BspLeafAtPoint_FixedPrecision,
+    P_BspLeafAtPoint_FixedPrecisionXY,
 
     P_MobjsBoxIterator,
     P_LinesBoxIterator,
@@ -2416,6 +2396,7 @@ DENG_DECLARE_API(Map) =
     DMU_GetType,
     P_ToIndex,
     P_ToPtr,
+    P_Count,
     P_Callback,
     P_Callbackp,
     P_Iteratep,

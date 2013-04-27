@@ -30,6 +30,10 @@
 #ifndef __COMMON_THINKER_FLOOR_H__
 #define __COMMON_THINKER_FLOOR_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
     FS_DOWN = -1, // Moving down.
     FS_WAIT, // Currently unused.
@@ -112,15 +116,19 @@ typedef struct {
 
 void        T_MoveFloor(void *floorThinker);
 #if __JHEXEN__
-int         EV_DoFloor(LineDef* li, byte* args, floortype_e type);
+int         EV_DoFloor(Line* li, byte* args, floortype_e type);
 #else
-int         EV_DoFloor(LineDef* li, floortype_e type);
+int         EV_DoFloor(Line* li, floortype_e type);
 #endif
 
 #if __JHEXEN__
-int         EV_DoFloorAndCeiling(LineDef* li, byte* args, int ftype, int ctype);
+int         EV_DoFloorAndCeiling(Line* li, byte* args, int ftype, int ctype);
 #elif __JDOOM64__
-int         EV_DoFloorAndCeiling(LineDef* li, int ftype, int ctype);
+int         EV_DoFloorAndCeiling(Line* li, int ftype, int ctype);
+#endif
+
+#ifdef __cplusplus
+} // extern "C"
 #endif
 
 #endif

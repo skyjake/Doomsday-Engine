@@ -36,8 +36,6 @@
 #  error "Attempted to include server's header in a non-server build"
 #endif
 
-void GameMap_ClMobjReset(GameMap* map);
-
 DENG_EXTERN_C void Con_TransitionRegister();
 DENG_EXTERN_C void Con_TransitionTicker(timespan_t t);
 
@@ -60,7 +58,7 @@ DENG_EXTERN_C void Fonts_ClearDefinitionLinks(void);
 DENG_EXTERN_C void Fonts_ClearRuntime(void);
 
 DENG_EXTERN_C void Rend_Init(void);
-DENG_EXTERN_C void Rend_DecorInit();
+//DENG_EXTERN_C void Rend_DecorInitForMap();
 //DENG_EXTERN_C void Rend_CacheForMap();
 DENG_EXTERN_C void Rend_CacheForMobjType(int num);
 DENG_EXTERN_C void Rend_CalcLightModRange();
@@ -77,7 +75,7 @@ DENG_EXTERN_C void Models_Init();
 DENG_EXTERN_C void Models_Shutdown();
 DENG_EXTERN_C void Models_CacheForState(int stateIndex);
 
-DENG_EXTERN_C void LG_SectorChanged(Sector* sector);
+//DENG_EXTERN_C void LG_SectorChanged(Sector* sector);
 
 DENG_EXTERN_C void Cl_InitPlayers(void);
 

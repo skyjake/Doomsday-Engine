@@ -1,8 +1,7 @@
-/** @file bspnode.cpp BspNode implementation.
- * @ingroup map
+/** @file bspnode.cpp World Map BSP Node.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,65 +18,106 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
-#include "de_console.h"
-#include "de_play.h"
-#include "de_misc.h"
+#include <de/vector1.h> /// @todo Remove me
 
-BspNode::BspNode() : de::MapElement(DMU_BSPNODE)
+#include <de/Log>
+
+#include "map/bspnode.h"
+
+using namespace de;
+
+DENG2_PIMPL(BspNode)
 {
-    memset(&partition, 0, sizeof(partition));
-    memset(aaBox, 0, sizeof(aaBox));
-    memset(children, 0, sizeof(children));
-    index = 0;
+    /// Space partition (half-plane).
+    Partition partition;
+
+    /// Right and left child elements for each half space.
+    MapElement *rightChild;
+    MapElement *leftChild;
+
+    /// Right and left bounding boxes for each half space.
+    AABoxd rightAABox;
+    AABoxd leftAABox;
+
+    Instance(Public *i, Partition const &partition_)
+        : Base(i),
+          partition(partition_),
+          rightChild(0),
+          leftChild(0)
+    {}
+
+    inline MapElement **childAdr(int left) {
+        return left? &leftChild : &rightChild;
+    }
+
+    inline AABoxd &aaBox(int left) {
+        return left? leftAABox : rightAABox;
+    }
+};
+
+BspNode::BspNode(Vector2d partitionOrigin, Vector2d partitionDirection)
+    : MapElement(DMU_BSPNODE),
+      d(new Instance(this, Partition(partitionOrigin, partitionDirection)))
+{
+    setRightAABox(0);
+    setLeftAABox(0);
 }
 
-BspNode::~BspNode()
+BspNode::BspNode(Partition const &partition_)
+    : MapElement(DMU_BSPNODE), d(new Instance(this, partition_))
 {
+    setRightAABox(0);
+    setLeftAABox(0);
 }
 
-BspNode* BspNode_New(coord_t const partitionOrigin[], coord_t const partitionDirection[])
+Partition const &BspNode::partition() const
 {
-    BspNode* node = new BspNode;
-
-    V2d_Copy(node->partition.origin, partitionOrigin);
-    V2d_Copy(node->partition.direction, partitionDirection);
-
-    node->children[RIGHT] = NULL;
-    node->children[LEFT] = NULL;
-
-    BspNode_SetRightBounds(node, NULL);
-    BspNode_SetLeftBounds(node, NULL);
-
-    return node;
+    return d->partition;
 }
 
-void BspNode_Delete(BspNode* node)
+bool BspNode::hasChild(int left) const
 {
-    delete node;
+    return *d->childAdr(left) != 0;
 }
 
-BspNode* BspNode_SetChild(BspNode* node, int left, de::MapElement* child)
+MapElement &BspNode::child(int left) const
 {
-    DENG2_ASSERT(node && child != node);
-    node->children[left? LEFT:RIGHT] = child;
-    return node;
-}
-
-BspNode* BspNode_SetChildBounds(BspNode* node, int left, AABoxd* bounds)
-{
-    DENG2_ASSERT(node);
-    if(bounds)
+    if(MapElement *childElm = *d->childAdr(left))
     {
-        AABoxd* dst = &node->aaBox[left? LEFT:RIGHT];
-        V2d_CopyBox(dst->arvec2, bounds->arvec2);
+        return *childElm;
+    }
+    /// @throw MissingChildError  The specified child element is missing.
+    throw MissingChildError("BspNode::child", QString("No %1 child is configured").arg(left? "left" : "right"));
+}
+
+void BspNode::setChild(int left, MapElement *newChild)
+{
+    if(!newChild || newChild != this)
+    {
+        *d->childAdr(left) = newChild;
+        return;
+    }
+    /// @throw InvalidChildError  Attempted to set a child element to "this" element.
+    throw InvalidChildError("BspNode::setChild", QString("Cannot set \"this\" element as a child of itself"));
+}
+
+AABoxd const &BspNode::childAABox(int left) const
+{
+    return d->aaBox(left);
+}
+
+void BspNode::setChildAABox(int left, AABoxd const *newAABox)
+{
+    if(newAABox)
+    {
+        AABoxd &dst = d->aaBox(left);
+        V2d_CopyBox(dst.arvec2, newAABox->arvec2);
     }
     else
     {
         // Clear.
-        AABoxd* dst = &node->aaBox[left? LEFT:RIGHT];
-        V2d_Set(dst->min, DDMAXFLOAT, DDMAXFLOAT);
-        V2d_Set(dst->max, DDMINFLOAT, DDMINFLOAT);
+        AABoxd &dst = d->aaBox(left);
+        V2d_Set(dst.min, DDMAXFLOAT, DDMAXFLOAT);
+        V2d_Set(dst.max, DDMINFLOAT, DDMINFLOAT);
     }
-    return node;
 }

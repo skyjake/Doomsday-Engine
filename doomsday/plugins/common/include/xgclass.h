@@ -72,7 +72,7 @@ typedef struct xgclass_s{
     int             (C_DECL *doFunc)();
 
     // Init function (called once, before ref iteration)
-    void            (*initFunc)(LineDef *line);
+    void            (*initFunc)(Line *line);
 
     // what the class wants to traverse
     xgtravtype      traverse;

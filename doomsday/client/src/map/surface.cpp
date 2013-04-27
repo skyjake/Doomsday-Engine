@@ -1,4 +1,4 @@
-/** @file surface.cpp Logical map surface.
+/** @file surface.cpp World Map Surface.
  *
  * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,72 +18,280 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
-#include "de_play.h"
-#include "de_defs.h"
-#include "Materials"
+#include <de/memoryzone.h> /// @todo remove me
+
 #include <de/Log>
-#include <de/String>
+
+#include "de_defs.h" // Def_GetGenerator
+
+#include "Materials"
+#include "map/gamemap.h"
+#include "map/r_world.h" /// ddMapSetup @todo remove me
+#include "render/r_main.h" /// frameTimePos
+
+#include "map/surface.h"
 
 using namespace de;
 
-Surface::Surface() : de::MapElement(DMU_SURFACE)
+float const Surface::DEFAULT_OPACITY = 1.f;
+Vector3f const Surface::DEFAULT_TINT_COLOR = Vector3f(1.f, 1.f, 1.f);
+int const Surface::MAX_SMOOTH_MATERIAL_MOVE = 8;
+
+DENG2_PIMPL(Surface)
 {
-    memset(&base, 0, sizeof(base));
-    owner = 0;
-    flags = 0;
-    oldFlags = 0;
-    material = 0;
-    blendMode = BM_NORMAL;
-    memset(tangent, 0, sizeof(tangent));
-    memset(bitangent, 0, sizeof(bitangent));
-    memset(normal, 0, sizeof(normal));
-    memset(offset, 0, sizeof(offset));
-    memset(oldOffset, 0, sizeof(oldOffset));
-    memset(visOffset, 0, sizeof(visOffset));
-    memset(visOffsetDelta, 0, sizeof(visOffsetDelta));
-    memset(rgba, 1, sizeof(rgba));
-    inFlags = 0;
-    numDecorations = 0;
-    decorations = 0;
+    /// Owning map element, either @c DMU_SIDE, or @c DMU_PLANE.
+    de::MapElement &owner;
+
+    /// Tangent space vectors:
+    Vector3f tangent;
+    Vector3f bitangent;
+    Vector3f normal;
+
+    bool needUpdateTangents;
+
+    /// Bound material.
+    Material *material;
+
+    /// @c true= Bound material is a "missing material fix".
+    bool materialIsMissingFix;
+
+    /// @em Sharp origin of the surface material.
+    Vector2f materialOrigin;
+
+    /// Old @em sharp origin of the surface material, for smoothing.
+    Vector2f oldMaterialOrigin[2];
+
+    /// Smoothed origin of the surface material.
+    Vector2f visMaterialOrigin;
+
+    /// Delta between the @sharp and smoothed origin of the surface material.
+    Vector2f visMaterialOriginDelta;
+
+    /// Surface color tint.
+    de::Vector3f tintColor;
+
+    /// Surface opacity.
+    float opacity;
+
+    /// Blending mode.
+    blendmode_t blendMode;
+
+    /// @ref sufFlags
+    int flags;
+
+    Instance(Public *i, MapElement &owner)
+        : Base(i),
+          owner(owner),
+          needUpdateTangents(false),
+          material(0),
+          materialIsMissingFix(false),
+          blendMode(BM_NORMAL),
+          flags(0)
+    {}
+
+    void notifyNormalChanged(Vector3f const &oldNormal)
+    {
+        // Predetermine which axes have changed.
+        int changedAxes = 0;
+        for(int i = 0; i < 3; ++i)
+        {
+            if(!de::fequal(normal[i], oldNormal[i]))
+                changedAxes |= (1 << i);
+        }
+
+        DENG2_FOR_PUBLIC_AUDIENCE(NormalChange, i)
+        {
+            i->normalChanged(self, oldNormal, changedAxes);
+        }
+    }
+
+    void notifyMaterialOriginChanged(Vector2f const &oldMaterialOrigin,
+                                     int changedComponents)
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE(MaterialOriginChange, i)
+        {
+            i->materialOriginChanged(self, oldMaterialOrigin, changedComponents);
+        }
+
+        if(!ddMapSetup && self.isAttachedToMap())
+        {
+#ifdef __CLIENT__
+            /// @todo Replace with a de::Observer-based mechanism.
+            self._decorationData.needsUpdate = true;
+#endif
+            /// @todo Do not assume surface is from the CURRENT map.
+            theMap->scrollingSurfaces().insert(&self);
+        }
+    }
+
+    void notifyMaterialOriginChanged(Vector2f const &oldMaterialOrigin)
+    {
+        // Predetermine which axes have changed.
+        int changedAxes = 0;
+        for(int i = 0; i < 2; ++i)
+        {
+            if(!de::fequal(materialOrigin[i], oldMaterialOrigin[i]))
+                changedAxes |= (1 << i);
+        }
+
+        notifyMaterialOriginChanged(oldMaterialOrigin, changedAxes);
+    }
+
+    void notifyOpacityChanged(float oldOpacity)
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE(OpacityChange, i)
+        {
+            i->opacityChanged(self, oldOpacity);
+        }
+    }
+
+    void notifyTintColorChanged(Vector3f const &oldTintColor,
+                                int changedComponents)
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE(TintColorChange, i)
+        {
+            i->tintColorChanged(self, oldTintColor, changedComponents);
+        }
+    }
+
+    void notifyTintColorChanged(Vector3f const &oldTintColor)
+    {
+        // Predetermine which components have changed.
+        int changedComponents = 0;
+        for(int i = 0; i < 3; ++i)
+        {
+            if(!de::fequal(tintColor[i], oldTintColor[i]))
+                changedComponents |= (1 << i);
+        }
+
+        notifyTintColorChanged(oldTintColor, changedComponents);
+    }
+
+    void updateTangents()
+    {
+        vec3f_t v1Tangent, v1Bitangent;
+        vec3f_t v1Normal; V3f_Set(v1Normal, normal.x, normal.y, normal.z);
+        V3f_BuildTangents(v1Tangent, v1Bitangent, v1Normal);
+        tangent = Vector3f(v1Tangent);
+        bitangent = Vector3f(v1Bitangent);
+        needUpdateTangents = false;
+    }
+};
+
+Surface::Surface(MapElement &owner, float opacity, Vector3f const &tintColor)
+    : MapElement(DMU_SURFACE), d(new Instance(this, owner))
+{
+#ifdef __CLIENT__
+    _decorationData.needsUpdate = true;
+    _decorationData.sources     = 0;
+    _decorationData.numSources  = 0;
+#endif
+
+    d->opacity   = opacity;
+    d->tintColor = tintColor;
 }
 
-Surface::~Surface()
+de::MapElement &Surface::owner() const
 {
+    return d->owner;
 }
 
-bool Surface::isDrawable() const
+de::Vector3f const &Surface::tangent() const
 {
-    return material && material->isDrawable();
+    if(d->needUpdateTangents)
+        d->updateTangents();
+    return d->tangent;
 }
 
-bool Surface::isSkyMasked() const
+de::Vector3f const &Surface::bitangent() const
 {
-    return material && material->isSkyMasked();
+    if(d->needUpdateTangents)
+        d->updateTangents();
+    return d->bitangent;
+}
+
+de::Vector3f const &Surface::normal() const
+{
+    return d->normal;
+}
+
+void Surface::setNormal(Vector3f const &newNormal_)
+{
+    // Normalize
+    Vector3f newNormal = newNormal_;
+    dfloat length = newNormal.length();
+    if(length)
+    {
+        for(int i = 0; i < 3; ++i)
+            newNormal[i] /= length;
+    }
+
+    if(d->normal != newNormal)
+    {
+        Vector3f oldNormal = d->normal;
+        d->normal = newNormal;
+
+        // We'll need to recalculate the tangents when next referenced.
+        d->needUpdateTangents = true;
+
+        // Notify interested parties of the change.
+        d->notifyNormalChanged(oldNormal);
+    }
+}
+
+bool Surface::hasMaterial() const
+{
+    return d->material != 0;
+}
+
+bool Surface::hasFixMaterial() const
+{
+    return d->material != 0 && d->materialIsMissingFix;
+}
+
+Material &Surface::material() const
+{
+    if(d->material)
+    {
+        return *d->material;
+    }
+    /// @throw MissingMaterialError Attempted with no material bound.
+    throw MissingMaterialError("Surface::material", "No material is bound");
+}
+
+int Surface::flags() const
+{
+    return d->flags;
 }
 
 bool Surface::isAttachedToMap() const
 {
-    if(!owner) return false;
-    if(owner->type() == DMU_PLANE)
+    if(d->owner.type() == DMU_PLANE)
     {
-        Sector *sec = owner->castTo<Plane>()->sector;
-        if(0 == sec->bspLeafCount)
+        Sector const &sector = d->owner.castTo<Plane>()->sector();
+        if(!sector.bspLeafCount())
             return false;
     }
     return true;
 }
 
-bool Surface::setMaterial(Material *newMaterial)
+bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
 {
-    if(material != newMaterial)
+    if(d->material != newMaterial)
     {
+        // Update the missing-material-fix state.
+        if(!d->material)
+        {
+            if(newMaterial && isMissingFix)
+               d->materialIsMissingFix = true;
+        }
+        else if(newMaterial && d->materialIsMissingFix)
+        {
+            d->materialIsMissingFix = false;
+        }
+
         if(isAttachedToMap())
         {
-            // No longer a missing texture fix?
-            if(newMaterial && (oldFlags & SUIF_FIX_MISSING_MATERIAL))
-                inFlags &= ~SUIF_FIX_MISSING_MATERIAL;
-
             if(!ddMapSetup)
             {
 #ifdef __CLIENT__
@@ -110,276 +318,355 @@ bool Surface::setMaterial(Material *newMaterial)
                     }
 #endif // __CLIENT__
 
-                    if(owner->type() == DMU_PLANE)
+                    if(d->owner.type() == DMU_PLANE)
                     {
                         de::Uri uri = newMaterial->manifest().composeUri();
                         ded_ptcgen_t const *def = Def_GetGenerator(reinterpret_cast<uri_s *>(&uri));
-                        P_SpawnPlaneParticleGen(def, owner->castTo<Plane>());
+                        P_SpawnPlaneParticleGen(def, d->owner.castTo<Plane>());
                     }
                 }
             }
         }
 
-        material = newMaterial;
-        oldFlags = inFlags;
+        d->material = newMaterial;
+
+#ifdef __CLIENT__
         if(isAttachedToMap())
         {
-            inFlags |= SUIF_UPDATE_DECORATIONS;
+            /// @todo Replace with a de::Observer-based mechanism.
+            _decorationData.needsUpdate = true;
         }
+#endif
     }
     return true;
 }
 
-bool Surface::setMaterialOriginX(float x)
+Vector2f const &Surface::materialOrigin() const
 {
-    if(offset[VX] != x)
+    return d->materialOrigin;
+}
+
+void Surface::setMaterialOrigin(Vector2f const &newOrigin)
+{
+    if(d->materialOrigin != newOrigin)
     {
-        offset[VX] = x;
-        if(isAttachedToMap())
+        Vector2f oldMaterialOrigin = d->materialOrigin;
+
+        d->materialOrigin = newOrigin;
+
+        // Notify interested parties of the change.
+        d->notifyMaterialOriginChanged(oldMaterialOrigin);
+    }
+}
+
+void Surface::setMaterialOriginComponent(int component, float newPosition)
+{
+    if(!de::fequal(d->materialOrigin[component], newPosition))
+    {
+        Vector2f oldMaterialOrigin = d->materialOrigin;
+
+        d->materialOrigin[component] = newPosition;
+
+        // Notify interested parties of the change.
+        d->notifyMaterialOriginChanged(oldMaterialOrigin, (1 << component));
+    }
+}
+
+Vector2f const &Surface::visMaterialOrigin() const
+{
+    return d->visMaterialOrigin;
+}
+
+Vector2f const &Surface::visMaterialOriginDelta() const
+{
+    return d->visMaterialOriginDelta;
+}
+
+void Surface::lerpVisMaterialOrigin()
+{
+    // $smoothmaterialorigin
+
+    d->visMaterialOriginDelta = d->oldMaterialOrigin[0] * (1 - frameTimePos)
+        + d->materialOrigin * frameTimePos - d->materialOrigin;
+
+    // Visible material origin.
+    d->visMaterialOrigin = d->materialOrigin + d->visMaterialOriginDelta;
+
+#ifdef __CLIENT__
+    markAsNeedingDecorationUpdate();
+#endif
+}
+
+void Surface::resetVisMaterialOrigin()
+{
+    // $smoothmaterialorigin
+    d->visMaterialOrigin = d->oldMaterialOrigin[0] = d->oldMaterialOrigin[1] = d->materialOrigin;
+    d->visMaterialOriginDelta.x = d->visMaterialOriginDelta.y = 0;
+
+#ifdef __CLIENT__
+    markAsNeedingDecorationUpdate();
+#endif
+}
+
+void Surface::updateMaterialOriginTracking()
+{
+    // $smoothmaterialorigin
+    d->oldMaterialOrigin[0] = d->oldMaterialOrigin[1];
+    d->oldMaterialOrigin[1] = d->materialOrigin;
+
+    if(d->oldMaterialOrigin[0] != d->oldMaterialOrigin[1])
+    {
+        float moveDistance = de::abs(Vector2f(d->oldMaterialOrigin[1] - d->oldMaterialOrigin[0]).length());
+
+        if(moveDistance >= MAX_SMOOTH_MATERIAL_MOVE)
         {
-            inFlags |= SUIF_UPDATE_DECORATIONS;
-            if(!ddMapSetup)
-            {
-                /// @todo Do not assume surface is from the CURRENT map.
-                theMap->scrollingSurfaces().insert(this);
-            }
+            // Too fast: make an instantaneous jump.
+            d->oldMaterialOrigin[0] = d->oldMaterialOrigin[1];
         }
     }
-    return true;
 }
 
-bool Surface::setMaterialOriginY(float y)
+float Surface::opacity() const
 {
-    if(offset[VY] != y)
+    return d->opacity;
+}
+
+void Surface::setOpacity(float newOpacity)
+{
+    newOpacity = de::clamp(0.f, newOpacity, 1.f);
+    if(!de::fequal(d->opacity, newOpacity))
     {
-        offset[VY] = y;
-        if(isAttachedToMap())
-        {
-            inFlags |= SUIF_UPDATE_DECORATIONS;
-            if(!ddMapSetup)
-            {
-                /// @todo Do not assume surface is from the CURRENT map.
-                theMap->scrollingSurfaces().insert(this);
-            }
-        }
+        float oldOpacity = d->opacity;
+        d->opacity = newOpacity;
+
+        // Notify interested parties of the change.
+        d->notifyOpacityChanged(oldOpacity);
     }
-    return true;
 }
 
-bool Surface::setMaterialOrigin(float x, float y)
+Vector3f const &Surface::tintColor() const
 {
-    if(offset[VX] != x || offset[VY] != y)
+    return d->tintColor;
+}
+
+void Surface::setTintColor(Vector3f const &newTintColor_)
+{
+    Vector3f newTintColor = Vector3f(de::clamp(0.f, newTintColor_.x, 1.f),
+                                     de::clamp(0.f, newTintColor_.y, 1.f),
+                                     de::clamp(0.f, newTintColor_.z, 1.f));
+    if(d->tintColor != newTintColor)
     {
-        offset[VX] = x;
-        offset[VY] = y;
-        if(isAttachedToMap())
-        {
-            inFlags |= SUIF_UPDATE_DECORATIONS;
-            if(!ddMapSetup)
-            {
-                /// @todo Do not assume surface is from the CURRENT map.
-                theMap->scrollingSurfaces().insert(this);
-            }
-        }
+        Vector3f oldTintColor = d->tintColor;
+        d->tintColor = newTintColor;
+
+        // Notify interested parties of the change.
+        d->notifyTintColorChanged(oldTintColor);
     }
-    return true;
 }
 
-bool Surface::setColorRed(float r)
+void Surface::setTintColorComponent(int component, float newStrength)
 {
-    r = de::clamp(0.f, r, 1.f);
-    if(rgba[CR] != r)
+    DENG_ASSERT(component >= 0 && component < 3);
+    newStrength = de::clamp(0.f, newStrength, 1.f);
+    if(!de::fequal(d->tintColor[component], newStrength))
     {
-        /// @todo when surface colours are intergrated with the
-        /// bias lighting model we will need to recalculate the
-        /// vertex colours when they are changed.
-        rgba[CR] = r;
+        Vector3f oldTintColor = d->tintColor;
+        d->tintColor[component] = newStrength;
+
+        // Notify interested parties of the change.
+        d->notifyTintColorChanged(oldTintColor, (1 << component));
     }
-    return true;
 }
 
-bool Surface::setColorGreen(float g)
+blendmode_t Surface::blendMode() const
 {
-    g = de::clamp(0.f, g, 1.f);
-    if(rgba[CG] != g)
-    {
-        /// @todo when surface colours are intergrated with the
-        /// bias lighting model we will need to recalculate the
-        /// vertex colours when they are changed.
-        rgba[CG] = g;
-    }
-    return true;
-}
-
-bool Surface::setColorBlue(float b)
-{
-    b = de::clamp(0.f, b, 1.f);
-    if(rgba[CB] != b)
-    {
-        /// @todo when surface colours are intergrated with the
-        /// bias lighting model we will need to recalculate the
-        /// vertex colours when they are changed.
-        rgba[CB] = b;
-    }
-    return true;
-}
-
-bool Surface::setAlpha(float a)
-{
-    a = de::clamp(0.f, a, 1.f);
-    if(rgba[CA] != a)
-    {
-        /// @todo when surface colours are intergrated with the
-        /// bias lighting model we will need to recalculate the
-        /// vertex colours when they are changed.
-        rgba[CA] = a;
-    }
-    return true;
-}
-
-bool Surface::setColorAndAlpha(float r, float g, float b, float a)
-{
-    r = de::clamp(0.f, r, 1.f);
-    g = de::clamp(0.f, g, 1.f);
-    b = de::clamp(0.f, b, 1.f);
-    a = de::clamp(0.f, a, 1.f);
-
-    if(rgba[CR] == r && rgba[CG] == g && rgba[CB] == b && rgba[CA] == a)
-        return true;
-
-    /// @todo when surface colours are intergrated with the
-    /// bias lighting model we will need to recalculate the
-    /// vertex colours when they are changed.
-    rgba[CR] = r;
-    rgba[CG] = g;
-    rgba[CB] = b;
-    rgba[CA] = a;
-
-    return true;
+    return d->blendMode;
 }
 
 bool Surface::setBlendMode(blendmode_t newBlendMode)
 {
-    if(blendMode != newBlendMode)
+    if(d->blendMode != newBlendMode)
     {
-        blendMode = newBlendMode;
+        d->blendMode = newBlendMode;
     }
     return true;
-}
-
-void Surface::update()
-{
-    if(!isAttachedToMap()) return;
-    inFlags |= SUIF_UPDATE_DECORATIONS;
-}
-
-void Surface::updateBaseOrigin()
-{
-    LOG_AS("Surface::updateBaseOrigin");
-
-    if(!owner) return;
-    switch(owner->type())
-    {
-    case DMU_PLANE: {
-        Plane *pln = owner->castTo<Plane>();
-        Sector *sec = pln->sector;
-        DENG_ASSERT(sec);
-
-        base.origin[VX] = sec->base.origin[VX];
-        base.origin[VY] = sec->base.origin[VY];
-        base.origin[VZ] = pln->height;
-        break; }
-
-    case DMU_SIDEDEF: {
-        SideDef *side = owner->castTo<SideDef>();
-        LineDef *line = side->line;
-        Sector *sec;
-        DENG_ASSERT(line);
-
-        base.origin[VX] = (line->L_v1origin[VX] + line->L_v2origin[VX]) / 2;
-        base.origin[VY] = (line->L_v1origin[VY] + line->L_v2origin[VY]) / 2;
-
-        sec = line->L_sector(side == line->L_frontsidedef? FRONT:BACK);
-        if(sec)
-        {
-            coord_t const ffloor = sec->SP_floorheight;
-            coord_t const fceil  = sec->SP_ceilheight;
-
-            if(this == &side->SW_middlesurface)
-            {
-                if(!line->L_backsidedef || LINE_SELFREF(line))
-                    base.origin[VZ] = (ffloor + fceil) / 2;
-                else
-                    base.origin[VZ] = (MAX_OF(ffloor, line->L_backsector->SP_floorheight) +
-                                       MIN_OF(fceil,  line->L_backsector->SP_ceilheight)) / 2;
-                break;
-            }
-            else if(this == &side->SW_bottomsurface)
-            {
-                if(!line->L_backsidedef || LINE_SELFREF(line) ||
-                   line->L_backsector->SP_floorheight <= ffloor)
-                    base.origin[VZ] = ffloor;
-                else
-                    base.origin[VZ] = (MIN_OF(line->L_backsector->SP_floorheight, fceil) + ffloor) / 2;
-                break;
-            }
-            else if(this == &side->SW_topsurface)
-            {
-                if(!line->L_backsidedef || LINE_SELFREF(line) ||
-                   line->L_backsector->SP_ceilheight >= fceil)
-                    base.origin[VZ] = fceil;
-                else
-                    base.origin[VZ] = (MAX_OF(line->L_backsector->SP_ceilheight, ffloor) + fceil) / 2;
-                break;
-            }
-        }
-
-        // We cannot determine a better Z axis origin - set to 0.
-        base.origin[VZ] = 0;
-        break; }
-
-    default:
-        LOG_DEBUG("Invalid DMU type %s for owner object %p.")
-            << DMU_Str(owner->type()) << de::dintptr(owner);
-        DENG2_ASSERT(false);
-    }
 }
 
 #ifdef __CLIENT__
 Surface::DecorSource *Surface::newDecoration()
 {
-    Surface::DecorSource *newDecorations =
-        (DecorSource *) Z_Malloc(sizeof(*newDecorations) * (++numDecorations), PU_MAP, 0);
+    Surface::DecorSource *newSources =
+        (DecorSource *) Z_Malloc(sizeof(*newSources) * (++_decorationData.numSources), PU_MAP, 0);
 
-    if(numDecorations > 1)
+    if(_decorationData.numSources > 1)
     {
         // Copy the existing decorations.
-        for(uint i = 0; i < numDecorations - 1; ++i)
+        for(uint i = 0; i < _decorationData.numSources - 1; ++i)
         {
-            Surface::DecorSource *d = &newDecorations[i];
-            Surface::DecorSource *s = &((DecorSource *)decorations)[i];
+            Surface::DecorSource *d = &newSources[i];
+            Surface::DecorSource *s = &((DecorSource *)_decorationData.sources)[i];
 
             std::memcpy(d, s, sizeof(*d));
         }
 
-        Z_Free(decorations);
+        Z_Free(_decorationData.sources);
     }
 
-    Surface::DecorSource *d = &newDecorations[numDecorations - 1];
-    decorations = (surfacedecorsource_s *)newDecorations;
+    Surface::DecorSource *d = &newSources[_decorationData.numSources - 1];
+    _decorationData.sources = (surfacedecorsource_s *)newSources;
 
     return d;
 }
 
 void Surface::clearDecorations()
 {
-    if(decorations)
+    if(_decorationData.sources)
     {
-        Z_Free(decorations); decorations = 0;
+        Z_Free(_decorationData.sources); _decorationData.sources = 0;
     }
-    numDecorations = 0;
+    _decorationData.numSources = 0;
+}
+
+uint Surface::decorationCount() const
+{
+    return _decorationData.numSources;
+}
+
+void Surface::markAsNeedingDecorationUpdate()
+{
+    if(ddMapSetup || !isAttachedToMap()) return;
+
+    _decorationData.needsUpdate = true;
 }
 #endif // __CLIENT__
+
+int Surface::property(setargs_t &args) const
+{
+    switch(args.prop)
+    {
+    case DMU_MATERIAL: {
+        Material *mat = d->material;
+        if(d->materialIsMissingFix)
+            mat = 0;
+        DMU_GetValue(DMT_SURFACE_MATERIAL, &mat, &args, 0);
+        break; }
+
+    case DMU_OFFSET_X:
+        DMU_GetValue(DMT_SURFACE_OFFSET, &d->materialOrigin.x, &args, 0);
+        break;
+
+    case DMU_OFFSET_Y:
+        DMU_GetValue(DMT_SURFACE_OFFSET, &d->materialOrigin.y, &args, 0);
+        break;
+
+    case DMU_OFFSET_XY:
+        DMU_GetValue(DMT_SURFACE_OFFSET, &d->materialOrigin.x, &args, 0);
+        DMU_GetValue(DMT_SURFACE_OFFSET, &d->materialOrigin.y, &args, 1);
+        break;
+
+    case DMU_TANGENT_X: {
+        float x = tangent().x;
+        DMU_GetValue(DMT_SURFACE_TANGENT, &x, &args, 0);
+        break; }
+
+    case DMU_TANGENT_Y: {
+        float y = tangent().y;
+        DMU_GetValue(DMT_SURFACE_TANGENT, &y, &args, 0);
+        break; }
+
+    case DMU_TANGENT_Z: {
+        float z = tangent().z;
+        DMU_GetValue(DMT_SURFACE_TANGENT, &z, &args, 0);
+        break; }
+
+    case DMU_TANGENT_XYZ: {
+        Vector3f const &tan = tangent();
+        DMU_GetValue(DMT_SURFACE_TANGENT, &tan.x, &args, 0);
+        DMU_GetValue(DMT_SURFACE_TANGENT, &tan.y, &args, 1);
+        DMU_GetValue(DMT_SURFACE_TANGENT, &tan.z, &args, 2);
+        break; }
+
+    case DMU_BITANGENT_X: {
+        float x = bitangent().x;
+        DMU_GetValue(DMT_SURFACE_BITANGENT, &x, &args, 0);
+        break; }
+
+    case DMU_BITANGENT_Y: {
+        float y = bitangent().y;
+        DMU_GetValue(DMT_SURFACE_BITANGENT, &y, &args, 0);
+        break; }
+
+    case DMU_BITANGENT_Z: {
+        float z = bitangent().z;
+        DMU_GetValue(DMT_SURFACE_BITANGENT, &z, &args, 0);
+        break; }
+
+    case DMU_BITANGENT_XYZ: {
+        Vector3f const &btn = bitangent();
+        DMU_GetValue(DMT_SURFACE_BITANGENT, &btn.x, &args, 0);
+        DMU_GetValue(DMT_SURFACE_BITANGENT, &btn.y, &args, 1);
+        DMU_GetValue(DMT_SURFACE_BITANGENT, &btn.z, &args, 2);
+        break; }
+
+    case DMU_NORMAL_X: {
+        float x = normal().x;
+        DMU_GetValue(DMT_SURFACE_NORMAL, &x, &args, 0);
+        break; }
+
+    case DMU_NORMAL_Y: {
+        float y = normal().y;
+        DMU_GetValue(DMT_SURFACE_NORMAL, &y, &args, 0);
+        break; }
+
+    case DMU_NORMAL_Z: {
+        float z = normal().z;
+        DMU_GetValue(DMT_SURFACE_NORMAL, &z, &args, 0);
+        break; }
+
+    case DMU_NORMAL_XYZ: {
+        Vector3f const &nrm = normal();
+        DMU_GetValue(DMT_SURFACE_NORMAL, &nrm.x, &args, 0);
+        DMU_GetValue(DMT_SURFACE_NORMAL, &nrm.y, &args, 1);
+        DMU_GetValue(DMT_SURFACE_NORMAL, &nrm.z, &args, 2);
+        break; }
+
+    case DMU_COLOR:
+        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor.x, &args, 0);
+        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor.y, &args, 1);
+        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor.z, &args, 2);
+        DMU_GetValue(DMT_SURFACE_RGBA, &d->opacity, &args, 2);
+        break;
+
+    case DMU_COLOR_RED:
+        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor.x, &args, 0);
+        break;
+
+    case DMU_COLOR_GREEN:
+        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor.y, &args, 0);
+        break;
+
+    case DMU_COLOR_BLUE:
+        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor.z, &args, 0);
+        break;
+
+    case DMU_ALPHA:
+        DMU_GetValue(DMT_SURFACE_RGBA, &d->opacity, &args, 0);
+        break;
+
+    case DMU_BLENDMODE:
+        DMU_GetValue(DMT_SURFACE_BLENDMODE, &d->blendMode, &args, 0);
+        break;
+
+    case DMU_FLAGS:
+        DMU_GetValue(DMT_SURFACE_FLAGS, &d->flags, &args, 0);
+        break;
+
+    default:
+        return MapElement::property(args);
+    }
+
+    return false; // Continue iteration.
+}
 
 int Surface::setProperty(setargs_t const &args)
 {
@@ -392,47 +679,45 @@ int Surface::setProperty(setargs_t const &args)
         break; }
 
     case DMU_FLAGS:
-        DMU_SetValue(DMT_SURFACE_FLAGS, &flags, &args, 0);
+        DMU_SetValue(DMT_SURFACE_FLAGS, &d->flags, &args, 0);
         break;
 
     case DMU_COLOR: {
-        float rgb[3];
-        DMU_SetValue(DMT_SURFACE_RGBA, &rgb[CR], &args, 0);
-        DMU_SetValue(DMT_SURFACE_RGBA, &rgb[CG], &args, 1);
-        DMU_SetValue(DMT_SURFACE_RGBA, &rgb[CB], &args, 2);
-        setColorRed(rgb[CR]);
-        setColorGreen(rgb[CG]);
-        setColorBlue(rgb[CB]);
+        float red, green, blue;
+        DMU_SetValue(DMT_SURFACE_RGBA, &red,   &args, 0);
+        DMU_SetValue(DMT_SURFACE_RGBA, &green, &args, 1);
+        DMU_SetValue(DMT_SURFACE_RGBA, &blue,  &args, 2);
+        setTintColor(red, green, blue);
         break; }
 
     case DMU_COLOR_RED: {
         float r;
         DMU_SetValue(DMT_SURFACE_RGBA, &r, &args, 0);
-        setColorRed(r);
+        setTintRed(r);
         break; }
 
     case DMU_COLOR_GREEN: {
         float g;
         DMU_SetValue(DMT_SURFACE_RGBA, &g, &args, 0);
-        setColorGreen(g);
+        setTintGreen(g);
         break; }
 
     case DMU_COLOR_BLUE: {
         float b;
         DMU_SetValue(DMT_SURFACE_RGBA, &b, &args, 0);
-        setColorBlue(b);
+        setTintBlue(b);
         break; }
 
     case DMU_ALPHA: {
         float a;
         DMU_SetValue(DMT_SURFACE_RGBA, &a, &args, 0);
-        setAlpha(a);
+        setOpacity(a);
         break; }
 
     case DMU_MATERIAL: {
-        Material *mat;
-        DMU_SetValue(DMT_SURFACE_MATERIAL, &mat, &args, 0);
-        setMaterial(mat);
+        Material *newMaterial;
+        DMU_SetValue(DMT_SURFACE_MATERIAL, &newMaterial, &args, 0);
+        setMaterial(newMaterial);
         break; }
 
     case DMU_OFFSET_X: {
@@ -448,136 +733,14 @@ int Surface::setProperty(setargs_t const &args)
         break; }
 
     case DMU_OFFSET_XY: {
-        float newOffset[2];
-        DMU_SetValue(DMT_SURFACE_OFFSET, &newOffset[VX], &args, 0);
-        DMU_SetValue(DMT_SURFACE_OFFSET, &newOffset[VY], &args, 1);
-        setMaterialOrigin(newOffset[VX], newOffset[VY]);
+        Vector2f newOrigin = d->materialOrigin;
+        DMU_SetValue(DMT_SURFACE_OFFSET, &newOrigin.x, &args, 0);
+        DMU_SetValue(DMT_SURFACE_OFFSET, &newOrigin.y, &args, 1);
+        setMaterialOrigin(newOrigin);
         break; }
 
     default:
-        String msg = String("Surface::setProperty: Property '%s' is not writable.").arg(DMU_Str(args.prop));
-        App_FatalError(msg.toUtf8().constData());
-    }
-
-    return false; // Continue iteration.
-}
-
-int Surface::property(setargs_t &args) const
-{
-    switch(args.prop)
-    {
-    case DMU_BASE: {
-        DMU_GetValue(DMT_SURFACE_BASE, &base, &args, 0);
-        break; }
-
-    case DMU_MATERIAL: {
-        Material *mat = material;
-        if(inFlags & SUIF_FIX_MISSING_MATERIAL)
-            mat = NULL;
-        DMU_GetValue(DMT_SURFACE_MATERIAL, &mat, &args, 0);
-        break; }
-
-    case DMU_OFFSET_X:
-        DMU_GetValue(DMT_SURFACE_OFFSET, &offset[VX], &args, 0);
-        break;
-
-    case DMU_OFFSET_Y:
-        DMU_GetValue(DMT_SURFACE_OFFSET, &offset[VY], &args, 0);
-        break;
-
-    case DMU_OFFSET_XY:
-        DMU_GetValue(DMT_SURFACE_OFFSET, &offset[VX], &args, 0);
-        DMU_GetValue(DMT_SURFACE_OFFSET, &offset[VY], &args, 1);
-        break;
-
-    case DMU_TANGENT_X:
-        DMU_GetValue(DMT_SURFACE_TANGENT, &tangent[VX], &args, 0);
-        break;
-
-    case DMU_TANGENT_Y:
-        DMU_GetValue(DMT_SURFACE_TANGENT, &tangent[VY], &args, 0);
-        break;
-
-    case DMU_TANGENT_Z:
-        DMU_GetValue(DMT_SURFACE_TANGENT, &tangent[VZ], &args, 0);
-        break;
-
-    case DMU_TANGENT_XYZ:
-        DMU_GetValue(DMT_SURFACE_TANGENT, &tangent[VX], &args, 0);
-        DMU_GetValue(DMT_SURFACE_TANGENT, &tangent[VY], &args, 1);
-        DMU_GetValue(DMT_SURFACE_TANGENT, &tangent[VZ], &args, 2);
-        break;
-
-    case DMU_BITANGENT_X:
-        DMU_GetValue(DMT_SURFACE_BITANGENT, &bitangent[VX], &args, 0);
-        break;
-
-    case DMU_BITANGENT_Y:
-        DMU_GetValue(DMT_SURFACE_BITANGENT, &bitangent[VY], &args, 0);
-        break;
-
-    case DMU_BITANGENT_Z:
-        DMU_GetValue(DMT_SURFACE_BITANGENT, &bitangent[VZ], &args, 0);
-        break;
-
-    case DMU_BITANGENT_XYZ:
-        DMU_GetValue(DMT_SURFACE_BITANGENT, &bitangent[VX], &args, 0);
-        DMU_GetValue(DMT_SURFACE_BITANGENT, &bitangent[VY], &args, 1);
-        DMU_GetValue(DMT_SURFACE_BITANGENT, &bitangent[VZ], &args, 2);
-        break;
-
-    case DMU_NORMAL_X:
-        DMU_GetValue(DMT_SURFACE_NORMAL, &normal[VX], &args, 0);
-        break;
-
-    case DMU_NORMAL_Y:
-        DMU_GetValue(DMT_SURFACE_NORMAL, &normal[VY], &args, 0);
-        break;
-
-    case DMU_NORMAL_Z:
-        DMU_GetValue(DMT_SURFACE_NORMAL, &normal[VZ], &args, 0);
-        break;
-
-    case DMU_NORMAL_XYZ:
-        DMU_GetValue(DMT_SURFACE_NORMAL, &normal[VX], &args, 0);
-        DMU_GetValue(DMT_SURFACE_NORMAL, &normal[VY], &args, 1);
-        DMU_GetValue(DMT_SURFACE_NORMAL, &normal[VZ], &args, 2);
-        break;
-
-    case DMU_COLOR:
-        DMU_GetValue(DMT_SURFACE_RGBA, &rgba[CR], &args, 0);
-        DMU_GetValue(DMT_SURFACE_RGBA, &rgba[CG], &args, 1);
-        DMU_GetValue(DMT_SURFACE_RGBA, &rgba[CB], &args, 2);
-        DMU_GetValue(DMT_SURFACE_RGBA, &rgba[CA], &args, 2);
-        break;
-
-    case DMU_COLOR_RED:
-        DMU_GetValue(DMT_SURFACE_RGBA, &rgba[CR], &args, 0);
-        break;
-
-    case DMU_COLOR_GREEN:
-        DMU_GetValue(DMT_SURFACE_RGBA, &rgba[CG], &args, 0);
-        break;
-
-    case DMU_COLOR_BLUE:
-        DMU_GetValue(DMT_SURFACE_RGBA, &rgba[CB], &args, 0);
-        break;
-
-    case DMU_ALPHA:
-        DMU_GetValue(DMT_SURFACE_RGBA, &rgba[CA], &args, 0);
-        break;
-
-    case DMU_BLENDMODE:
-        DMU_GetValue(DMT_SURFACE_BLENDMODE, &blendMode, &args, 0);
-        break;
-
-    case DMU_FLAGS:
-        DMU_GetValue(DMT_SURFACE_FLAGS, &flags, &args, 0);
-        break;
-
-    default:
-        String msg = String("Surface::getProperty: Surface has no property '%s'.").arg(DMU_Str(args.prop));
-        App_FatalError(msg.toUtf8().constData());
+        return MapElement::setProperty(args);
     }
 
     return false; // Continue iteration.

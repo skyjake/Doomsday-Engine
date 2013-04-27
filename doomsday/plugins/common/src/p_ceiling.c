@@ -265,7 +265,7 @@ void T_MoveCeiling(void *ceilingThinkerPtr)
 }
 
 #if __JDOOM64__
-static int EV_DoCeiling2(LineDef* line, int tag, float basespeed,
+static int EV_DoCeiling2(Line* line, int tag, float basespeed,
                          ceilingtype_e type)
 #elif __JHEXEN__
 static int EV_DoCeiling2(byte* arg, int tag, float basespeed, ceilingtype_e type)
@@ -359,8 +359,8 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
         case CT_CUSTOM: // jd64
             {
             //bitmip? wha?
-            SideDef* front = P_GetPtrp(line, DMU_SIDEDEF0);
-            SideDef* back = P_GetPtrp(line, DMU_SIDEDEF1);
+            Side* front = P_GetPtrp(line, DMU_FRONT);
+            Side* back = P_GetPtrp(line, DMU_BACK);
             coord_t bitmipL = 0, bitmipR = 0;
 
             bitmipL = P_GetDoublep(front, DMU_MIDDLE_MATERIAL_OFFSET_X);
@@ -443,9 +443,9 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
  * Move a ceiling up/down.
  */
 #if __JHEXEN__
-int EV_DoCeiling(LineDef *line, byte *args, ceilingtype_e type)
+int EV_DoCeiling(Line *line, byte *args, ceilingtype_e type)
 #else
-int EV_DoCeiling(LineDef *line, ceilingtype_e type)
+int EV_DoCeiling(Line *line, ceilingtype_e type)
 #endif
 {
 #if __JHEXEN__

@@ -345,9 +345,9 @@ D_CMD(InspectMobj)
     Con_Printf("FloorZ:%f CeilingZ:%f\n", mo->floorZ, mo->ceilingZ);
     if(mo->bspLeaf)
     {
-        Con_Printf("Sector:%i (FloorZ:%f CeilingZ:%f)\n", P_ToIndex(mo->bspLeaf->sector),
-                   mo->bspLeaf->sector->SP_floorheight,
-                   mo->bspLeaf->sector->SP_ceilheight);
+        Sector &sector = mo->bspLeaf->sector();
+        Con_Printf("Sector:%i (FloorZ:%f CeilingZ:%f)\n", P_ToIndex(&sector),
+                   sector.floor().height(), sector.ceiling().height());
     }
     if(mo->onMobj)
     {

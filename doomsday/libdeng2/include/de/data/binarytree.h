@@ -1,5 +1,4 @@
 /** @file binarytree.h Binary tree template.
- * @ingroup data
  *
  * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -23,8 +22,8 @@
 #define LIBDENG2_BINARYTREE_H
 
 #include "../libdeng2.h"
+#include "../error.h"
 #include <algorithm>
-#include <assert.h>
 
 namespace de {
 
@@ -33,20 +32,36 @@ namespace de {
  *
  * BinaryTree owns the child nodes and deletes them when the parent node is
  * deleted. Each node additionally has a templated data payload.
+ *
+ * @ingroup data
  */
 template <typename Type>
 class BinaryTree
 {
 public:
-    enum ChildId { Right, Left };
+    /// The referenced parent is not present. @ingroup errors
+    DENG2_ERROR(MissingParentError);
 
-    static inline void assertValidChildId(ChildId DENG2_DEBUG_ONLY(child))
-    {
-        assert(child == Right || child == Left);
-    }
+    /// The referenced child is not present. @ingroup errors
+    DENG2_ERROR(MissingChildError);
 
     /**
-     * Construct a tree node.
+     * Logical child node identifiers.
+     */
+    enum ChildId
+    {
+        Right, Left
+    };
+
+private:
+    static inline void assertValidChildId(ChildId DENG2_DEBUG_ONLY(child))
+    {
+        DENG2_ASSERT(child == Right || child == Left);
+    }
+
+public:
+    /**
+     * Constructs a new binary subtree.
      *
      * @param userData  User data value for the node.
      * @param parent    Parent node of this node.
@@ -54,13 +69,13 @@ public:
      * @param left      Left child of this node. This node takes ownership.
      */
     BinaryTree(Type const &userData, BinaryTree *parent=0, BinaryTree *right=0, BinaryTree *left=0)
-        : _parent(parent), rightChild(right), leftChild(left), userDataValue(userData)
+        : _parent(parent), _rightChild(right), _leftChild(left), _userDataValue(userData)
     {}
 
     virtual ~BinaryTree()
     {
-        if(rightChild) delete rightChild;
-        if(leftChild)  delete leftChild;
+        if(_rightChild) delete _rightChild;
+        if(_leftChild)  delete _leftChild;
     }
 
     /**
@@ -69,7 +84,7 @@ public:
      */
     inline bool isLeaf() const
     {
-        return !rightChild && !leftChild;
+        return !_rightChild && !_leftChild;
     }
 
     /**
@@ -78,7 +93,7 @@ public:
      */
     Type userData() const
     {
-        return userDataValue;
+        return _userDataValue;
     }
 
     /**
@@ -89,21 +104,41 @@ public:
      */
     BinaryTree &setUserData(Type userData)
     {
-        userDataValue = userData;
+        _userDataValue = userData;
         return *this;
     }
 
     /**
-     * Retrieve the parent tree node (if present).
-     * @return  The parent tree node else @c NULL.
+     * Returns @c true iff subtree node has a parent node.
      */
-    BinaryTree *parent() const
+    inline bool hasParent() const { return _parent != 0; }
+
+    /**
+     * Returns the parent of the subtree.
+     *
+     * @see hasChild()
+     */
+    BinaryTree &parent() const
     {
-        return _parent;
+        if(_parent)
+        {
+            return *_parent;
+        }
+        /// @throw MissingParentError Attempted with no parent linked.
+        throw MissingParentError("BinaryTree::parent", QString("No parent is linked"));
     }
 
-    /// @c true iff this node has a parent node.
-    inline bool hasParent() const { return parent() != 0; }
+    /**
+     * Returns a pointer to the parent of the subtree.
+     *
+     * @return  Pointer to the parent; otherwise @c 0.
+     *
+     * @see hasParent(), parent()
+     */
+    inline BinaryTree *parentPtr() const
+    {
+        return hasParent()? &parent() : 0;
+    }
 
     /**
      * Set the parent node of this node.
@@ -118,30 +153,150 @@ public:
     }
 
     /**
-     * Retrieve the identified child of this node (if present).
-     *
-     * @param child  Identifier of the child to return.
-     * @return  The identified child if present else @c NULL.
+     * Returns @c true iff this node has the specifed @a childId node.
      */
-    BinaryTree *child(ChildId child) const
+    inline bool hasChild(ChildId which) const
     {
-        assertValidChildId(child);
-        if(child) return leftChild;
-        else      return rightChild;
+        assertValidChildId(which);
+        if(which) return _leftChild  != 0;
+        else      return _rightChild != 0;
     }
 
-    /// Convenience methods for accessing the right and left subtrees respectively.
-    inline BinaryTree *right() const { return child(Right); }
-    inline BinaryTree *left()  const { return child(Left);  }
-
-    /// @c true iff this node has the specifed @a childId node.
-    inline bool hasChild(ChildId childId) const { return child(childId) != 0; }
-
-    /// @c true iff this node has a right child node.
+    /**
+     * Returns @c true iff a Right child subtree is linked to the binary tree.
+     */
     inline bool hasRight() const { return hasChild(Right); }
 
-    /// @c true iff this node has a left child node
+    /**
+     * Returns @c true iff a Right child subtree is linked to the binary tree.
+     */
     inline bool hasLeft()  const { return hasChild(Left); }
+
+    /**
+     * Convenient method for determining if a leaf is linked as the specified
+     * child subtree of the binary tree.
+     *
+     * @param which     ChildId identifier of the child to inspect.
+     *
+     * @see hasChild(), isLeaf()
+     */
+    inline bool hasChildLeaf(ChildId which) const
+    {
+        return hasChild(which) && child(which).isLeaf();
+    }
+
+    /**
+     * Convenient method for determining if a leaf is linked as the Right child
+     * of the binary tree.
+     *
+     * @see hasChildLeaf()
+     */
+    inline bool hasRightLeaf() const { return hasChildLeaf(Right); }
+
+    /**
+     * Convenient method for determining if a leaf is linked as the Left child
+     * of the binary tree.
+     *
+     * @see hasChildLeaf()
+     */
+    inline bool hasLeftLeaf() const { return hasChildLeaf(Left); }
+
+    /**
+     * Convenient method for determining if a subtree is linked as the specified
+     * child of the binary tree.
+     *
+     * @param which     ChildId identifier of the child to inspect.
+     *
+     * @see hasChild(), isLeaf()
+     */
+    inline bool hasChildSubtree(ChildId which) const
+    {
+        return hasChild(which) && !child(which).isLeaf();
+    }
+
+    /**
+     * Convenient method for determining if a subtree is linked as the Right
+     * child of the binary tree.
+     *
+     * @see hasChildSubtree()
+     */
+    inline bool hasRightSubtree() const { return hasChildSubtree(Right); }
+
+    /**
+     * Convenient method for determining if a subtree is linked as the Left
+     * child of the binary tree.
+     *
+     * @see hasChildSubtree()
+     */
+    inline bool hasLeftSubtree() const { return hasChildSubtree(Left); }
+
+    /**
+     * Returns the identified child subtree of the binary tree.
+     *
+     * @param which     ChildId identifier of the child to return.
+     *
+     * @return          The identified child subtree.
+     *
+     * @see hasChild()
+     */
+    BinaryTree &child(ChildId which) const
+    {
+        assertValidChildId(which);
+        BinaryTree * const *adr = which? &_leftChild : &_rightChild;
+        if(*adr)
+        {
+            return **adr;
+        }
+        /// @throw MissingChildError Attempted with no child linked.
+        throw MissingChildError("BinaryTree::child", QString("No %1 child is linked")
+                                                        .arg(which? "Left" : "Right"));
+    }
+
+    /**
+     * Returns the Right child subtree of the binary tree.
+     *
+     * @see child()
+     */
+    inline BinaryTree &right() const { return child(Right); }
+
+    /**
+     * Returns the Left child subtree of the binary tree.
+     *
+     * @see child()
+     */
+    inline BinaryTree &left() const { return child(Left); }
+
+    /**
+     * Returns a pointer to the identified child of the node.
+     *
+     * @param which     Identifier of the child to return.
+     *
+     * @return  Pointer to the identified child; otherwise @c 0.
+     *
+     * @see hasChild(), child()
+     */
+    inline BinaryTree *childPtr(ChildId which) const
+    {
+        return hasChild(which)? &child(which) : 0;
+    }
+
+    /**
+     * Returns a pointer to the Right subtree of the binary tree.
+     *
+     * @return  Pointer to the Right subtree; otherwise @c 0.
+     *
+     * @see childPtr()
+     */
+    inline BinaryTree *rightPtr() const { return childPtr(Right); }
+
+    /**
+     * Returns a pointer to the Left subtree of the binary tree.
+     *
+     * @return  Pointer to the Left subtree; otherwise @c 0.
+     *
+     * @see childPtr()
+     */
+    inline BinaryTree *leftPtr()  const { return childPtr(Left);  }
 
     /**
      * Set the specified node as a child of this node.
@@ -154,8 +309,8 @@ public:
     BinaryTree &setChild(ChildId child, BinaryTree *subtree)
     {
         assertValidChildId(child);
-        if(child) leftChild  = subtree;
-        else      rightChild = subtree;
+        if(child) _leftChild  = subtree;
+        else      _rightChild = subtree;
         return *this;
     }
 
@@ -171,8 +326,8 @@ public:
     {
         if(!isLeaf())
         {
-            size_t right = rightChild? rightChild->height() : 0;
-            size_t left  = leftChild ?  leftChild->height() : 0;
+            size_t right = _rightChild? _rightChild->height() : 0;
+            size_t left  = _leftChild ?  _leftChild->height() : 0;
             return (right > left? right : left) + 1;
         }
         return 0;
@@ -200,13 +355,13 @@ public:
 
         if(!isLeaf())
         {
-            int result = right()->traversePreOrder(callback, parameters);
+            int result = right().traversePreOrder(callback, parameters);
             if(result) return result;
         }
 
-        if(left())
+        if(hasLeft())
         {
-            int result = left()->traversePreOrder(callback, parameters);
+            int result = left().traversePreOrder(callback, parameters);
             if(result) return result;
         }
 
@@ -230,18 +385,18 @@ public:
     {
         if(!callback) return false; // Continue iteration.
 
-        if(right())
+        if(hasRight())
         {
-            int result = right()->traverseInOrder(callback, parameters);
+            int result = right().traverseInOrder(callback, parameters);
             if(result) return result;
         }
 
         // Visit this node.
         if(int result = callback(*this, parameters)) return result;
 
-        if(left())
+        if(hasLeft())
         {
-            int result = left()->traverseInOrder(callback, parameters);
+            int result = left().traverseInOrder(callback, parameters);
             if(result) return result;
         }
 
@@ -265,15 +420,15 @@ public:
     {
         if(!callback) return false; // Continue iteration.
 
-        if(right())
+        if(hasRight())
         {
-            int result = right()->traversePostOrder(callback, parameters);
+            int result = right().traversePostOrder(callback, parameters);
             if(result) return result;
         }
 
-        if(left())
+        if(hasLeft())
         {
-            int result = left()->traversePostOrder(callback, parameters);
+            int result = left().traversePostOrder(callback, parameters);
             if(result) return result;
         }
 
@@ -286,10 +441,10 @@ private:
     BinaryTree *_parent;
 
     /// Subtrees (owned).
-    BinaryTree *rightChild, *leftChild;
+    BinaryTree *_rightChild, *_leftChild;
 
     /// User data at this node.
-    Type userDataValue;
+    Type _userDataValue;
 };
 
 } // namespace de

@@ -2807,7 +2807,7 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
     hudstate_t* hud = &hudStates[UIWidget_Player(obj)];
     automapcfg_t* mcfg;
     mobj_t* followMobj;
-    uint i;
+    int i;
 
     UIAutomap_Reset(obj);
 
@@ -2855,10 +2855,10 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
     // Add all immediately visible lines.
     for(i = 0; i < numlines; ++i)
     {
-        xline_t* xline = &xlines[i];
+        xline_t *xline = &xlines[i];
         if(!(xline->flags & ML_MAPPED)) continue;
 
-        P_SetLinedefAutomapVisibility(UIWidget_Player(obj), i, true);
+        P_SetLineAutomapVisibility(UIWidget_Player(obj), i, true);
     }
 }
 

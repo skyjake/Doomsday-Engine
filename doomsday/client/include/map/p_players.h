@@ -45,7 +45,19 @@ int             P_LocalToConsole(int localPlayer);
 int             P_ConsoleToLocal(int playerNum);
 int             P_GetDDPlayerIdx(ddplayer_t *ddpl);
 
-boolean         P_IsInVoid(player_t *p);
+/**
+ * Do we THINK the given (camera) player is currently in the void.
+ * The method used to test this is to compare the position of the mobj
+ * each time it is linked into a BSP leaf.
+ *
+ * @note Cannot be 100% accurate so best not to use it for anything critical...
+ *
+ * @param player  The player to test.
+ *
+ * @return  @c true if the player is thought to be in the void.
+ */
+boolean P_IsInVoid(player_t *p);
+
 short           P_LookDirToShort(float lookDir);
 float           P_ShortToLookDir(short s);
 

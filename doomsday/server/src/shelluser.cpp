@@ -32,6 +32,7 @@
 #include "network/net_main.h"
 #include "map/gamemap.h"
 #include "map/p_players.h"
+#include "map/p_maptypes.h"
 
 using namespace de;
 
@@ -136,7 +137,8 @@ void ShellUser::sendGameState()
     // Check the map's information from definitions.
     if(theMap)
     {
-        ded_mapinfo_t *mapInfo = Def_GetMapInfo(theMap->uri);
+        de::Uri mapUri = theMap->uri();
+        ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
         if(mapInfo)
         {
             mapId = Str_Text(Uri_ToString(mapInfo->uri));
@@ -153,15 +155,12 @@ void ShellUser::sendMapOutline()
 
     QScopedPointer<shell::MapOutlinePacket> packet(new shell::MapOutlinePacket);
 
-    for(uint i = 0; i < theMap->lineDefCount(); ++i)
+    foreach(Line *line, theMap->lines())
     {
-        LineDef const &line = theMap->lineDefs[i];
-        packet->addLine(
-                Vector2i(line.v[0]->origin[VX], line.v[0]->origin[VY]),
-                Vector2i(line.v[1]->origin[VX], line.v[1]->origin[VY]),
-                (line.sides[0].sector && line.sides[1].sector)?
-                    shell::MapOutlinePacket::TwoSidedLine :
-                    shell::MapOutlinePacket::OneSidedLine);
+        packet->addLine(Vector2i(line->fromOrigin().x, line->fromOrigin().y),
+                        Vector2i(line->toOrigin().x, line->toOrigin().y),
+                        (line->hasFrontSector() && line->hasBackSector())?
+                                 shell::MapOutlinePacket::TwoSidedLine : shell::MapOutlinePacket::OneSidedLine);
     }
 
     *this << *packet;

@@ -31,6 +31,7 @@
 #include "api_map.h"
 #include "api_materialarchive.h"
 
+#include "map/gamemap.h"
 #include "client/cl_world.h"
 #include "r_util.h"
 
@@ -51,7 +52,7 @@ typedef struct clplane_s {
 
 typedef struct clpolyobj_s {
     thinker_t   thinker;
-    uint        number;
+    int         number;
     Polyobj*    polyobj;
     boolean     move;
     boolean     rotate;
@@ -172,7 +173,7 @@ int Cl_LocalMobjState(int serverMobjState)
     return xlatMobjState.serverToLocal[serverMobjState];
 }
 
-static boolean GameMap_IsValidClPlane(GameMap* map, int i)
+static boolean GameMap_IsValidClPlane(GameMap *map, int i)
 {
     assert(map);
     if(!map->clActivePlanes[i]) return false;
@@ -387,45 +388,42 @@ void Cl_MoverThinker(clplane_t* mover)
     }
 }
 
-clplane_t* GameMap_NewClPlane(GameMap* map, uint sectorIndex, clplanetype_t type, coord_t dest, float speed)
+clplane_t *GameMap::newClPlane(uint sectorIndex, clplanetype_t type, coord_t dest, float speed)
 {
     int dmuPlane = (type == CPT_FLOOR ? DMU_FLOOR_OF_SECTOR : DMU_CEILING_OF_SECTOR);
-    clplane_t* mov;
-    int i;
-    assert(map);
 
-    DEBUG_Message(("GameMap_NewClPlane: Sector #%i, type:%s, dest:%f, speed:%f\n",
-                   sectorIndex, type==CPT_FLOOR? "floor" : "ceiling", dest, speed));
+    DEBUG_Message(("GameMap::newClPlane: Sector #%i, type:%s, dest:%f, speed:%f",
+                   sectorIndex, type == CPT_FLOOR? "floor" : "ceiling", dest, speed));
 
-    if((int)sectorIndex >= map->sectors.size())
+    if(int( sectorIndex ) >= sectorCount())
     {
-        assert(0); // Invalid Sector index.
-        return NULL;
+        DENG_ASSERT(false); // Invalid Sector index.
+        return 0;
     }
 
     // Remove any existing movers for the same plane.
-    for(i = 0; i < CLIENT_MAX_MOVERS; ++i)
+    for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
-        if(GameMap_IsValidClPlane(map, i) &&
-           map->clActivePlanes[i]->sectorIndex == sectorIndex &&
-           map->clActivePlanes[i]->type == type)
+        if(GameMap_IsValidClPlane(this, i) &&
+           clActivePlanes[i]->sectorIndex == sectorIndex &&
+           clActivePlanes[i]->type == type)
         {
-            DEBUG_Message(("GameMap_NewClPlane: Removing existing mover [%i] in sector #%i, type %s\n",
+            DEBUG_Message(("GameMap::newClPlane: Removing existing mover [%i] in sector #%i, type %s",
                            i, sectorIndex, type == CPT_FLOOR? "floor" : "ceiling"));
 
-            GameMap_DeleteClPlane(map, map->clActivePlanes[i]);
+            GameMap_DeleteClPlane(this, clActivePlanes[i]);
         }
     }
 
     // Add a new mover.
-    for(i = 0; i < CLIENT_MAX_MOVERS; ++i)
+    for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
-        if(map->clActivePlanes[i]) continue;
+        if(clActivePlanes[i]) continue;
 
-        DEBUG_Message(("GameMap_NewClPlane: ...new mover [%i]\n", i));
+        DEBUG_Message(("GameMap::newClPlane: ...new mover [%i]", i));
 
         // Allocate a new clplane_t thinker.
-        mov = map->clActivePlanes[i] = (clplane_t *) Z_Calloc(sizeof(clplane_t), PU_MAP, &map->clActivePlanes[i]);
+        clplane_t *mov = clActivePlanes[i] = (clplane_t *) Z_Calloc(sizeof(clplane_t), PU_MAP, &clActivePlanes[i]);
         mov->thinker.function = reinterpret_cast<thinkfunc_t>(Cl_MoverThinker);
         mov->type = type;
         mov->sectorIndex = sectorIndex;
@@ -442,7 +440,7 @@ clplane_t* GameMap_NewClPlane(GameMap* map, uint sectorIndex, clplanetype_t type
         P_SetDouble(DMU_SECTOR, sectorIndex, dmuPlane | DMU_TARGET_HEIGHT, dest);
         P_SetFloat(DMU_SECTOR, sectorIndex, dmuPlane | DMU_SPEED, speed);
 
-        GameMap_ThinkerAdd(map, &mov->thinker, false /*not public*/);
+        GameMap_ThinkerAdd(this, &mov->thinker, false /*not public*/);
 
         // Immediate move?
         if(FEQUAL(speed, 0))
@@ -453,23 +451,21 @@ clplane_t* GameMap_NewClPlane(GameMap* map, uint sectorIndex, clplanetype_t type
         return mov;
     }
 
-    Con_Error("GameMap_NewClPlane: Exhausted activemovers.");
+    Con_Error("GameMap::newClPlane: Exhausted activemovers.");
     exit(1); // Unreachable.
 }
 
-void Cl_PolyMoverThinker(clpolyobj_t* mover)
+void Cl_PolyMoverThinker(clpolyobj_t *mover)
 {
-    Polyobj* po;
-    float dx, dy, dist;
-    assert(mover);
+    DENG_ASSERT(mover != 0);
 
-    po = mover->polyobj;
+    Polyobj *po = mover->polyobj;
     if(mover->move)
     {
         // How much to go?
-        dx = po->dest[VX] - po->origin[VX];
-        dy = po->dest[VY] - po->origin[VY];
-        dist = M_ApproxDistance(dx, dy);
+        coord_t dx = po->dest[VX] - po->origin[VX];
+        coord_t dy = po->dest[VY] - po->origin[VY];
+        coord_t dist = M_ApproxDistance(dx, dy);
         if(dist <= po->speed || FEQUAL(po->speed, 0))
         {
             // We'll arrive at the destination.
@@ -520,46 +516,45 @@ void Cl_PolyMoverThinker(clpolyobj_t* mover)
     }
 }
 
-clpolyobj_t* GameMap_ClPolyobjByPolyobjIndex(GameMap* map, uint index)
+clpolyobj_t *GameMap_ClPolyobjByPolyobjIndex(GameMap *map, uint index)
 {
-    int i;
-    assert(map);
-    for(i = 0; i < CLIENT_MAX_MOVERS; ++i)
+    DENG_ASSERT(map);
+
+    for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
         if(!GameMap_IsValidClPolyobj(map, i)) continue;
 
-        if(map->clActivePolyobjs[i]->number == index)
+        if(map->clActivePolyobjs[i]->number == int(index))
             return map->clActivePolyobjs[i];
     }
-    return NULL;
+
+    return 0;
 }
 
 /**
  * @note Assumes there is no existing ClPolyobj for Polyobj @a index.
  */
-clpolyobj_t* GameMap_NewClPolyobj(GameMap* map, uint polyobjIndex)
+clpolyobj_t *GameMap_NewClPolyobj(GameMap *map, uint polyobjIndex)
 {
-    clpolyobj_t* mover;
-    int i;
-    assert(map);
+    DENG_ASSERT(map);
 
     // Take the first unused slot.
-    for(i = 0; i < CLIENT_MAX_MOVERS; ++i)
+    for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
         if(map->clActivePolyobjs[i]) continue;
 
         DEBUG_Message(("GameMap_NewClPolyobj: New polymover [%i] for polyobj #%i.\n", i, polyobjIndex));
 
-        map->clActivePolyobjs[i] = mover = (clpolyobj_t *) Z_Calloc(sizeof(clpolyobj_t), PU_MAP, &map->clActivePolyobjs[i]);
+        clpolyobj_t *mover = (clpolyobj_t *) Z_Calloc(sizeof(clpolyobj_t), PU_MAP, &map->clActivePolyobjs[i]);
+        map->clActivePolyobjs[i] = mover;
         mover->thinker.function = reinterpret_cast<thinkfunc_t>(Cl_PolyMoverThinker);
-        mover->polyobj = map->polyObjs[polyobjIndex];
+        mover->polyobj = map->_polyobjs.at(polyobjIndex);
         mover->number = polyobjIndex;
         GameMap_ThinkerAdd(map, &mover->thinker, false /*not public*/);
         return mover;
     }
 
-    // Not successful.
-    return NULL;
+    return 0; // Not successful.
 }
 
 clpolyobj_t* Cl_FindOrMakeActivePoly(uint polyobjIndex)
@@ -613,6 +608,9 @@ void Cl_ReadSectorDelta2(int deltaType, boolean /*skip*/)
     /// @todo Do not assume the CURRENT map.
     GameMap *map = theMap;
 
+#define PLN_FLOOR   0
+#define PLN_CEILING 1
+
     float height[2] = { 0, 0 };
     float target[2] = { 0, 0 };
     float speed[2]  = { 0, 0 };
@@ -620,15 +618,10 @@ void Cl_ReadSectorDelta2(int deltaType, boolean /*skip*/)
     // Sector index number.
     ushort num = Reader_ReadUInt16(msgReader);
 
-    Sector *sec = 0;
 #ifdef _DEBUG
-    if(num >= NUM_SECTORS)
-    {
-        // This is worrisome.
-        Con_Error("Cl_ReadSectorDelta2: Sector %i out of range.\n", num);
-    }
+    DENG_ASSERT(num < theMap->sectorCount());
 #endif
-    sec = SECTOR_PTR(num);
+    Sector *sec = theMap->sectors().at(num);
 
     // Flags.
     int df = Reader_ReadPackedUInt32(msgReader);
@@ -661,46 +654,49 @@ void Cl_ReadSectorDelta2(int deltaType, boolean /*skip*/)
         speed[PLN_CEILING] = FIX2FLT(Reader_ReadByte(msgReader) << (df & SDF_CEILING_SPEED_44 ? 12 : 15));
 
     if(df & SDF_COLOR_RED)
-        sec->rgb[0] = Reader_ReadByte(msgReader) / 255.f;
+        sec->setLightRed(Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_COLOR_GREEN)
-        sec->rgb[1] = Reader_ReadByte(msgReader) / 255.f;
+        sec->setLightGreen(Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_COLOR_BLUE)
-        sec->rgb[2] = Reader_ReadByte(msgReader) / 255.f;
+        sec->setLightBlue(Reader_ReadByte(msgReader) / 255.f);
 
     if(df & SDF_FLOOR_COLOR_RED)
-        sec->SP_floorsurface.setColorRed(Reader_ReadByte(msgReader) / 255.f);
+        sec->floorSurface().setTintRed(Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_FLOOR_COLOR_GREEN)
-        sec->SP_floorsurface.setColorGreen(Reader_ReadByte(msgReader) / 255.f);
+        sec->floorSurface().setTintGreen(Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_FLOOR_COLOR_BLUE)
-        sec->SP_floorsurface.setColorBlue(Reader_ReadByte(msgReader) / 255.f);
+        sec->floorSurface().setTintBlue(Reader_ReadByte(msgReader) / 255.f);
 
     if(df & SDF_CEIL_COLOR_RED)
-        sec->SP_ceilsurface.setColorRed(Reader_ReadByte(msgReader) / 255.f);
+        sec->ceilingSurface().setTintRed(Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_CEIL_COLOR_GREEN)
-        sec->SP_ceilsurface.setColorGreen(Reader_ReadByte(msgReader) / 255.f);
+        sec->ceilingSurface().setTintGreen(Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_CEIL_COLOR_BLUE)
-        sec->SP_ceilsurface.setColorBlue(Reader_ReadByte(msgReader) / 255.f);
+        sec->ceilingSurface().setTintBlue(Reader_ReadByte(msgReader) / 255.f);
 
     // The whole delta has now been read.
 
     // Do we need to start any moving planes?
     if(df & SDF_FLOOR_HEIGHT)
     {
-        GameMap_NewClPlane(map, num, CPT_FLOOR, height[PLN_FLOOR], 0);
+        map->newClPlane(num, CPT_FLOOR, height[PLN_FLOOR], 0);
     }
     else if(df & (SDF_FLOOR_TARGET | SDF_FLOOR_SPEED))
     {
-        GameMap_NewClPlane(map, num, CPT_FLOOR, target[PLN_FLOOR], speed[PLN_FLOOR]);
+        map->newClPlane(num, CPT_FLOOR, target[PLN_FLOOR], speed[PLN_FLOOR]);
     }
 
     if(df & SDF_CEILING_HEIGHT)
     {
-        GameMap_NewClPlane(map, num, CPT_CEILING, height[PLN_CEILING], 0);
+        map->newClPlane(num, CPT_CEILING, height[PLN_CEILING], 0);
     }
     else if(df & (SDF_CEILING_TARGET | SDF_CEILING_SPEED))
     {
-        GameMap_NewClPlane(map, num, CPT_CEILING, target[PLN_CEILING], speed[PLN_CEILING]);
+        map->newClPlane(num, CPT_CEILING, target[PLN_CEILING], speed[PLN_CEILING]);
     }
+
+#undef PLN_CEILING
+#undef PLN_FLOOR
 }
 
 /**
@@ -710,14 +706,13 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
 {
     DENG_UNUSED(deltaType);
 
-    unsigned short num;
+    ushort num;
 
     int df, topMat = 0, midMat = 0, botMat = 0;
     int blendmode = 0;
     byte lineFlags = 0, sideFlags = 0;
     float toprgb[3] = {0,0,0}, midrgba[4] = {0,0,0,0};
     float bottomrgb[3] = {0,0,0};
-    SideDef* side;
 
     // First read all the data.
     num = Reader_ReadUInt16(msgReader);
@@ -767,71 +762,61 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
     if(skip)
         return;
 
-#ifdef _DEBUG
-    if(num >= NUM_SIDEDEFS)
-    {
-        // This is worrisome.
-        Con_Error("Cl_ReadSideDelta2: Side %i out of range.\n", num);
-    }
-#endif
-
-    side = SIDE_PTR(num);
+    Line::Side *side = theMap->sideByIndex(num);
+    DENG_ASSERT(side != 0);
 
     if(df & SIDF_TOP_MATERIAL)
     {
-        side->SW_topsurface.setMaterial(Cl_FindLocalMaterial(topMat));
+        side->top().setMaterial(Cl_FindLocalMaterial(topMat));
     }
     if(df & SIDF_MID_MATERIAL)
     {
-        side->SW_middlesurface.setMaterial(Cl_FindLocalMaterial(midMat));
+        side->middle().setMaterial(Cl_FindLocalMaterial(midMat));
     }
     if(df & SIDF_BOTTOM_MATERIAL)
     {
-        side->SW_bottomsurface.setMaterial(Cl_FindLocalMaterial(botMat));
+        side->bottom().setMaterial(Cl_FindLocalMaterial(botMat));
     }
 
     if(df & SIDF_TOP_COLOR_RED)
-        side->SW_topsurface.setColorRed(toprgb[CR]);
+        side->top().setTintRed(toprgb[CR]);
     if(df & SIDF_TOP_COLOR_GREEN)
-        side->SW_topsurface.setColorGreen(toprgb[CG]);
+        side->top().setTintGreen(toprgb[CG]);
     if(df & SIDF_TOP_COLOR_BLUE)
-        side->SW_topsurface.setColorBlue(toprgb[CB]);
+        side->top().setTintBlue(toprgb[CB]);
 
     if(df & SIDF_MID_COLOR_RED)
-        side->SW_middlesurface.setColorRed(midrgba[CR]);
+        side->middle().setTintRed(midrgba[CR]);
     if(df & SIDF_MID_COLOR_GREEN)
-        side->SW_middlesurface.setColorGreen(midrgba[CG]);
+        side->middle().setTintGreen(midrgba[CG]);
     if(df & SIDF_MID_COLOR_BLUE)
-        side->SW_middlesurface.setColorBlue(midrgba[CB]);
+        side->middle().setTintBlue(midrgba[CB]);
     if(df & SIDF_MID_COLOR_ALPHA)
-        side->SW_middlesurface.setAlpha(midrgba[CA]);
+        side->middle().setOpacity(midrgba[CA]);
 
     if(df & SIDF_BOTTOM_COLOR_RED)
-        side->SW_bottomsurface.setColorRed(bottomrgb[CR]);
+        side->bottom().setTintRed(bottomrgb[CR]);
     if(df & SIDF_BOTTOM_COLOR_GREEN)
-        side->SW_bottomsurface.setColorGreen(bottomrgb[CG]);
+        side->bottom().setTintGreen(bottomrgb[CG]);
     if(df & SIDF_BOTTOM_COLOR_BLUE)
-        side->SW_bottomsurface.setColorBlue(bottomrgb[CB]);
+        side->bottom().setTintBlue(bottomrgb[CB]);
 
     if(df & SIDF_MID_BLENDMODE)
-        side->SW_middlesurface.setBlendMode(blendmode_t(blendmode));
+        side->middle().setBlendMode(blendmode_t(blendmode));
 
     if(df & SIDF_FLAGS)
     {
         // The delta includes the entire lowest byte.
-        side->flags &= ~0xff;
-        side->flags |= sideFlags;
+        side->setFlags(0xff, false);
+        side->setFlags(sideFlags);
     }
 
     if(df & SIDF_LINE_FLAGS)
     {
-        LineDef* line = side->line;
-        if(line)
-        {
-            // The delta includes the entire lowest byte.
-            line->flags &= ~0xff;
-            line->flags |= lineFlags;
-        }
+        Line &line = side->line();
+        // The delta includes the entire lowest byte.
+        line.setFlags(0xff, false);
+        line.setFlags(lineFlags);
     }
 }
 
@@ -871,15 +856,8 @@ void Cl_ReadPolyDelta2(boolean skip)
     if(skip)
         return;
 
-#ifdef _DEBUG
-    if(num >= NUM_POLYOBJS)
-    {
-        // This is worrisome.
-        Con_Error("Cl_ReadPolyDelta2: PO %i out of range.\n", num);
-    }
-#endif
-
-    po = GameMap_PolyobjByID(theMap, num);
+    DENG_ASSERT(num < theMap->polyobjCount());
+    po = theMap->polyobjs().at(num);
 
     if(df & PODF_DEST_X)
         po->dest[VX] = destX;

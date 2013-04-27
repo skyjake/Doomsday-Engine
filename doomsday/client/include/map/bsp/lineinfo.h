@@ -1,9 +1,7 @@
-/**
- * @file linedefinfo.h
- * BSP Builder LineDef info. @ingroup bsp
+/** @file lineinfo.h BSP Builder Line info.
  *
- * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
- * SourceForge: http://sourceforge.net/projects/glbsp/
+ * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
+ * @see http://sourceforge.net/projects/glbsp/
  *
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
@@ -25,8 +23,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_BSP_LINEDEFINFO
-#define LIBDENG_BSP_LINEDEFINFO
+#ifndef LIBDENG_BSP_LINEINFO
+#define LIBDENG_BSP_LINEINFO
 
 #include "map/gamemap.h"
 #include "map/bsp/partitioner.h"
@@ -38,9 +36,11 @@ namespace bsp {
 
 /**
  * Plain old data (POD) structure used to record additional information and
- * precalculated values for a LineDef in the current map.
+ * precalculated values for a line in the current map.
+ *
+ * @ingroup bsp
  */
-struct LineDefInfo
+struct LineInfo
 {
     /// @todo Refactor me away.
     enum Flag
@@ -51,8 +51,8 @@ struct LineDefInfo
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
-    /// The map's definition of this line segment.
-    LineDef* lineDef;
+    /// The map line.
+    Line *line;
 
     Flags flags;
 
@@ -60,33 +60,32 @@ struct LineDefInfo
     int validCount;
 
     /// If the line is used for a window effect, this is the sector on the back side.
-    Sector* windowEffect;
+    Sector *windowEffect;
 
-    explicit LineDefInfo(LineDef* _lineDef, coord_t distEpsilon = 0.0001)
-        : lineDef(_lineDef), flags(0), validCount(0), windowEffect(0)
+    explicit LineInfo(Line *line_, coord_t distEpsilon = 0.0001)
+        : line(line_), flags(0), validCount(0), windowEffect(0)
     {
-        DENG2_ASSERT(_lineDef);
-        const Vertex* start = lineDef->L_v1;
-        const Vertex* end   = lineDef->L_v2;
+        DENG2_ASSERT(line_);
+        Vertex const &from = line->from();
+        Vertex const &to   = line->to();
 
         // Check for zero-length line.
-        if((fabs(start->origin[VX] - end->origin[VX]) < distEpsilon) &&
-           (fabs(start->origin[VY] - end->origin[VY]) < distEpsilon))
+        if(de::abs(Vector2d(to.origin() - from.origin()).length()) < distEpsilon)
             flags |= ZeroLength;
 
-        if(lineDef->L_backsidedef && lineDef->L_frontsidedef)
+        if(line->hasFrontSections() && line->hasBackSections())
         {
             flags |= Twosided;
 
-            if(lineDef->L_backsector == lineDef->L_frontsector)
+            if(line->isSelfReferencing())
                 flags |= SelfRef;
         }
     }
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(LineDefInfo::Flags)
+Q_DECLARE_OPERATORS_FOR_FLAGS(LineInfo::Flags)
 
 } // namespace bsp
 } // namespace de
 
-#endif // LIBDENG_BSPBUILDER_LINEDEFINFO
+#endif // LIBDENG_BSPBUILDER_LINEINFO

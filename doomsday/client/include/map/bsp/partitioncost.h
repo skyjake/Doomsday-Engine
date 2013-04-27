@@ -1,9 +1,7 @@
-/**
- * @file partitioncost.h
- * BSP builder partition cost evaluation. @ingroup bsp
+/** @file partitioncost.h BSP builder partition cost evaluation.
  *
- * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
- * SourceForge: http://sourceforge.net/projects/glbsp/
+ * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
+ * @see http://sourceforge.net/projects/glbsp/
  *
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
@@ -29,10 +27,14 @@
 #define LIBDENG_BSP_PARTITIONCOST
 
 #include "map/p_mapdata.h"
+#include "HEdge"
 
 namespace de {
 namespace bsp {
 
+/**
+ * @ingroup bsp
+ */
 struct PartitionCost
 {
     enum Side
@@ -55,28 +57,21 @@ struct PartitionCost
         realLeft(0), miniRight(0), miniLeft(0)
     {}
 
-    inline PartitionCost& addHEdgeRight(const HEdge* hedge)
+    inline PartitionCost &addHEdgeRight(HEdge const &hedge)
     {
-        DENG2_ASSERT(hedge);
-        if(hedge->lineDef) realRight += 1;
-        else               miniRight += 1;
+        if(hedge.hasLineSide()) realRight += 1;
+        else                miniRight += 1;
         return *this;
     }
 
-    inline PartitionCost& addHEdgeLeft(const HEdge* hedge)
+    inline PartitionCost &addHEdgeLeft(HEdge const &hedge)
     {
-        DENG2_ASSERT(hedge);
-        if(hedge->lineDef)  realLeft += 1;
+        if(hedge.hasLineSide()) realLeft += 1;
         else                miniLeft += 1;
         return *this;
     }
 
-    inline PartitionCost& addHEdgeSide(const HEdge* hedge, Side side)
-    {
-        return side == Right? addHEdgeRight(hedge) : addHEdgeLeft(hedge);
-    }
-
-    PartitionCost& operator += (const PartitionCost& other)
+    PartitionCost &operator += (PartitionCost const &other)
     {
         total     += other.total;
         splits    += other.splits;
@@ -89,7 +84,7 @@ struct PartitionCost
         return *this;
     }
 
-    PartitionCost& operator = (const PartitionCost& other)
+    PartitionCost &operator = (PartitionCost const &other)
     {
         total     = other.total;
         splits    = other.splits;
@@ -102,7 +97,7 @@ struct PartitionCost
         return *this;
     }
 
-    bool operator < (const PartitionCost& rhs) const
+    bool operator < (PartitionCost const &rhs) const
     {
         return total < rhs.total;
     }

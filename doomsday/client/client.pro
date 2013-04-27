@@ -110,9 +110,18 @@ DENG_API_HEADERS = \
 # Convenience headers.
 DENG_HEADERS += \
     include/BspBuilder \
+    include/BspLeaf \
+    include/BspNode \
     include/EntityDatabase \
     include/Game \
     include/Games \
+    include/HEdge \
+    include/Line \
+    include/Plane \
+    include/Polyobj \
+    include/Sector \
+    include/Surface \
+    include/Vertex
 
 # Private headers.
 DENG_HEADERS += \
@@ -164,7 +173,6 @@ DENG_HEADERS += \
     include/dd_pinit.h \
     include/de_audio.h \
     include/de_base.h \
-    include/de_bsp.h \
     include/de_console.h \
     include/de_dam.h \
     include/de_defs.h \
@@ -184,7 +192,6 @@ DENG_HEADERS += \
     include/def_main.h \
     include/dualstring.h \
     include/edit_bias.h \
-    include/edit_bsp.h \
     include/edit_map.h \
     include/filehandle.h \
     include/filesys/file.h \
@@ -220,8 +227,7 @@ DENG_HEADERS += \
     include/map/bsp/hedgeinfo.h \
     include/map/bsp/hedgeintercept.h \
     include/map/bsp/hedgetip.h \
-    include/map/bsp/hplane.h \
-    include/map/bsp/linedefinfo.h \
+    include/map/bsp/lineinfo.h \
     include/map/bsp/partitioncost.h \
     include/map/bsp/partitioner.h \
     include/map/bsp/superblockmap.h \
@@ -229,12 +235,13 @@ DENG_HEADERS += \
     include/map/bspleaf.h \
     include/map/bspnode.h \
     include/map/dam_file.h \
-    include/map/dam_main.h \
     include/map/entitydatabase.h \
     include/map/gamemap.h \
     include/map/generators.h \
     include/map/hedge.h \
-    include/map/linedef.h \
+    include/map/line.h \
+    include/map/lineowner.h \
+    include/map/linesighttest.h \
     include/map/mapelement.h \
     include/map/p_dmu.h \
     include/map/p_intercept.h \
@@ -245,15 +252,13 @@ DENG_HEADERS += \
     include/map/p_objlink.h \
     include/map/p_particle.h \
     include/map/p_players.h \
-    include/map/p_polyobjs.h \
-    include/map/p_sight.h \
     include/map/p_ticker.h \
     include/map/plane.h \
     include/map/polyobj.h \
     include/map/propertyvalue.h \
     include/map/r_world.h \
+    include/map/reject.h \
     include/map/sector.h \
-    include/map/sidedef.h \
     include/map/surface.h \
     include/map/vertex.h \
     include/network/masterserver.h \
@@ -267,6 +272,7 @@ DENG_HEADERS += \
     include/network/serverlink.h \
     include/network/sys_network.h \
     include/network/ui_mpi.h \
+    include/partition.h \
     include/r_util.h \
     include/render/lumobj.h \
     include/render/materialcontext.h \
@@ -304,6 +310,7 @@ DENG_HEADERS += \
     include/resource/hq2x.h \
     include/resource/image.h \
     include/resource/lumpcache.h \
+    include/resource/maparchive.h \
     include/resource/material.h \
     include/resource/materialarchive.h \
     include/resource/materialmanifest.h \
@@ -458,7 +465,6 @@ SOURCES += \
     src/def_read.cpp \
     src/dualstring.cpp \
     src/edit_bias.cpp \
-    src/edit_bsp.cpp \
     src/edit_map.cpp \
     src/filesys/file.cpp \
     src/filesys/filehandle.cpp \
@@ -491,19 +497,19 @@ SOURCES += \
     src/main_client.cpp \
     src/map/blockmap.cpp \
     src/map/blockmapvisual.cpp \
-    src/map/bsp/hplane.cpp \
     src/map/bsp/partitioner.cpp \
     src/map/bsp/superblockmap.cpp \
     src/map/bspbuilder.cpp \
     src/map/bspleaf.cpp \
     src/map/bspnode.cpp \
     src/map/dam_file.cpp \
-    src/map/dam_main.cpp \
     src/map/entitydatabase.cpp \
     src/map/gamemap.cpp \
     src/map/generators.cpp \
     src/map/hedge.cpp \
-    src/map/linedef.cpp \
+    src/map/line.cpp \
+    src/map/linesighttest.cpp \
+    src/map/mapelement.cpp \
     src/map/p_data.cpp \
     src/map/p_dmu.cpp \
     src/map/p_intercept.cpp \
@@ -512,16 +518,14 @@ SOURCES += \
     src/map/p_objlink.cpp \
     src/map/p_particle.cpp \
     src/map/p_players.cpp \
-    src/map/p_polyobjs.cpp \
-    src/map/p_sight.cpp \
     src/map/p_think.cpp \
     src/map/p_ticker.cpp \
     src/map/plane.cpp \
     src/map/polyobj.cpp \
     src/map/propertyvalue.cpp \
     src/map/r_world.cpp \
+    src/map/reject.cpp \
     src/map/sector.cpp \
-    src/map/sidedef.cpp \
     src/map/surface.cpp \
     src/map/vertex.cpp \
     src/network/masterserver.cpp \
@@ -572,6 +576,7 @@ SOURCES += \
     src/resource/fonts.cpp \
     src/resource/hq2x.cpp \
     src/resource/image.cpp \
+    src/resource/maparchive.cpp \
     src/resource/material.cpp \
     src/resource/materialanimation.cpp \
     src/resource/materialarchive.cpp \

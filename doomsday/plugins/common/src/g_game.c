@@ -945,7 +945,7 @@ void G_CommonPostInit(void)
     GUI_Init();
 
     // Init the save system and create the game save directory.
-    SV_Init();
+    SV_Initialize();
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     XG_ReadTypes();
@@ -2640,7 +2640,7 @@ void G_DoLeaveMap(void)
      * First, determine whether we've been to this map previously and if so,
      * whether we need to load the archived map state.
      */
-    revisit = SV_HxHaveMapSaveForSlot(BASE_SLOT, nextMap);
+    revisit = SV_HxHaveMapStateForSlot(BASE_SLOT, nextMap);
     if(deathmatch) revisit = false;
 
     // Same cluster?
@@ -3045,8 +3045,8 @@ void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t* plr = players + i;
-        ddplayer_t* ddplr = plr->plr;
+        player_t *plr = players + i;
+        ddplayer_t *ddplr = plr->plr;
 
         if(!ddplr->inGame) continue;
 
@@ -3078,53 +3078,54 @@ void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
     // Make sure that the episode and map numbers are good.
     G_ValidateMap(&episode, &map);
 
-    gameSkill = skill;
-    gameEpisode = episode;
-    gameMap = map;
-    gameMapEntryPoint = mapEntryPoint;
+    gameSkill           = skill;
+    gameEpisode         = episode;
+    gameMap             = map;
+    gameMapEntryPoint   = mapEntryPoint;
 
     G_ApplyGameRules(skill);
     M_ResetRandom();
 
     NetSv_UpdateGameConfigDescription();
 
-    { loadmap_params_t p;
-    boolean hasBrief;
-
-    p.mapUri     = G_ComposeMapUri(gameEpisode, gameMap);
-    p.episode    = gameEpisode;
-    p.map        = gameMap;
-    p.revisit    = false;
-
-    hasBrief = G_BriefingEnabled(gameEpisode, gameMap, 0);
-    if(!hasBrief)
     {
-        G_QueMapMusic(gameEpisode, gameMap);
-    }
+        loadmap_params_t p;
+        boolean hasBrief;
 
-    // If we're the server, let clients know the map will change.
-    NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
+        p.mapUri        = G_ComposeMapUri(gameEpisode, gameMap);
+        p.episode       = gameEpisode;
+        p.map           = gameMap;
+        p.revisit       = false;
 
-    if(!BusyMode_Active())
-    {
-        /// @todo Use progress bar mode and update progress during the setup.
-        BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                    G_DoLoadMapAndMaybeStartBriefingWorker, &p, "Loading map...");
-    }
-    else
-    {
-        G_DoLoadMapAndMaybeStartBriefing(&p);
-    }
+        hasBrief = G_BriefingEnabled(gameEpisode, gameMap, 0);
+        if(!hasBrief)
+        {
+            G_QueMapMusic(gameEpisode, gameMap);
+        }
 
-    if(!hasBrief)
-    {
-        // No briefing; begin the map.
-        HU_WakeWidgets(-1 /* all players */);
-        G_BeginMap();
-    }
+        // If we're the server, let clients know the map will change.
+        NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
 
-    Z_CheckHeap();
-    Uri_Delete(p.mapUri);
+        if(!BusyMode_Active())
+        {
+            /// @todo Use progress bar mode and update progress during the setup.
+            BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                        G_DoLoadMapAndMaybeStartBriefingWorker, &p, "Loading map...");
+        }
+        else
+        {
+            G_DoLoadMapAndMaybeStartBriefing(&p);
+        }
+
+        if(!hasBrief)
+        {
+            // No briefing; begin the map.
+            HU_WakeWidgets(-1 /* all players */);
+            G_BeginMap();
+        }
+
+        Z_CheckHeap();
+        Uri_Delete(p.mapUri);
     }
 }
 

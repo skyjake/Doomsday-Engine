@@ -44,6 +44,9 @@
 #include "p_xg.h"
 #include "info.h"
 
+#define LOOKDIR2DEG(x) ((x) * 85.0/110.0)
+#define LOOKDIR2RAD(x) (LOOKDIR2DEG(x)/180*PI)
+
 // Palette indices, for damage/bonus red-/gold-shifts.
 #define STARTREDPALS    1
 #define STARTBONUSPALS  9
@@ -93,6 +96,17 @@
 #define USE_MACE_AMMO_1 1
 #define USE_MACE_AMMO_2 5
 
+DENG_EXTERN_C mobjtype_t puffType;
+DENG_EXTERN_C mobj_t* missileMobj;
+DENG_EXTERN_C float turboMul;
+DENG_EXTERN_C int maxAmmo[NUM_AMMO_TYPES];
+DENG_EXTERN_C int clipAmmo[NUM_AMMO_TYPES];
+DENG_EXTERN_C int maxAmmo[NUM_AMMO_TYPES];
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Chooses the next spot to place the mace.
  */
@@ -110,8 +124,7 @@ void            P_FireWeapon(player_t* player);
 
 boolean         P_UndoPlayerMorph(player_t* player);
 
-extern mobjtype_t puffType;
-extern mobj_t* missileMobj;
+
 
 boolean     P_MobjChangeState(mobj_t* mo, statenum_t state);
 boolean     P_SetMobjStateNF(mobj_t* mo, statenum_t state);
@@ -129,11 +142,6 @@ void        P_ExplodeMissile(mobj_t* mo);
 const char*     P_GetMapName(uint episode, uint map);
 const char*     P_GetShortMapName(uint episode, uint map);
 
-extern float turboMul;
-extern int maxAmmo[NUM_AMMO_TYPES];
-extern int clipAmmo[NUM_AMMO_TYPES];
-extern int maxAmmo[NUM_AMMO_TYPES];
-
 void            P_GiveKey(player_t* player, keytype_t key);
 void            P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher);
 int             P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage, boolean stomping);
@@ -146,7 +154,8 @@ boolean         P_MorphPlayer(player_t* player);
 void            Draw_BeginZoom(float s, float originX, float originY);
 void            Draw_EndZoom(void);
 
-#define LOOKDIR2DEG(x) ((x) * 85.0/110.0)
-#define LOOKDIR2RAD(x) (LOOKDIR2DEG(x)/180*PI)
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

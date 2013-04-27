@@ -614,9 +614,6 @@ void GL_TotalReset()
 
 void GL_TotalRestore()
 {
-    ded_mapinfo_t* mapInfo = NULL;
-    GameMap* map;
-
     if(isDedicated) return;
 
     // Getting back up and running.
@@ -627,10 +624,12 @@ void GL_TotalRestore()
     R_LoadSystemFonts();
     Con_Resize();
 
-    map = theMap;
-    if(map)
+    /// @todo fixme: Should this use the default MapInfo def if none found? -ds
+    ded_mapinfo_t *mapInfo = 0;
+    if(theMap)
     {
-        mapInfo = Def_GetMapInfo(GameMap_Uri(map));
+        de::Uri mapUri = theMap->uri();
+        mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
     }
 
     // Restore map's fog settings.
@@ -961,21 +960,20 @@ uint8_t* GL_ConvertBuffer(const uint8_t* in, int width, int height, int informat
     }
 }
 
-void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSize, colorpalette_t* palette,
-    float* retBrightX, float* retBrightY, ColorRawf* retColor, float* retLumSize)
+void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int pixelSize,
+    colorpalette_t *palette, float *retBrightX, float *retBrightY,
+    ColorRawf *retColor, float *retLumSize)
 {
-    const uint8_t sizeLimit = 192, brightLimit = 224, colLimit = 192;
-    const uint8_t* src, *alphaSrc;
+    DENG_ASSERT(buffer && retBrightX && retBrightY && retColor && retLumSize);
+
+    uint8_t const sizeLimit = 192, brightLimit = 224, colLimit = 192;
+    uint8_t const *src, *alphaSrc;
     int avgCnt = 0, lowCnt = 0;
     int cnt = 0, posCnt = 0;
     int i, x, y, c;
     long average[3], lowAvg[3];
     long bright[2];
     uint8_t rgb[3];
-    int region[4];
-    boolean zeroAreaRegion;
-
-    DENG_ASSERT(buffer && retBrightX && retBrightY && retColor && retLumSize);
 
     if(pixelSize == 1 && !palette)
     {
@@ -995,8 +993,9 @@ void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSiz
     // Default to a zero-size light.
     *retLumSize = 0;
 
+    int region[4];
     FindClipRegionNonAlpha(buffer, width, height, pixelSize, region);
-    zeroAreaRegion = (region[0] > region[1] || region[2] > region[3]);
+    boolean zeroAreaRegion = (region[0] > region[1] || region[2] > region[3]);
     if(zeroAreaRegion) return;
 
     /*
@@ -1036,7 +1035,7 @@ void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSiz
         for(x = region[0]; x <= region[1]; ++x, src += pixelSize, alphaSrc++)
         {
             // Alpha pixels don't count. Why? -ds
-            const boolean pixelIsTransparent = (pixelSize == 1? *alphaSrc < 255 :
+            boolean const pixelIsTransparent = (pixelSize == 1? *alphaSrc < 255 :
                                                 pixelSize == 4?    src[3] < 255 : false);
 
             if(pixelIsTransparent) continue;
@@ -1100,14 +1099,12 @@ void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSiz
     }
 
     // Determine rounding (to the nearest pixel center).
-    {
-    int roundXDir = (int) (*retBrightX + .5f) == (int) *retBrightX ? 1 : -1;
-    int roundYDir = (int) (*retBrightY + .5f) == (int) *retBrightY ? 1 : -1;
+    int roundXDir = int( *retBrightX + .5f ) == int( *retBrightX )? 1 : -1;
+    int roundYDir = int( *retBrightY + .5f ) == int( *retBrightY )? 1 : -1;
 
     // Apply all rounding and output as decimal.
-    *retBrightX = (ROUND(*retBrightX) + .5f * roundXDir) / (float) width;
-    *retBrightY = (ROUND(*retBrightY) + .5f * roundYDir) / (float) height;
-    }
+    *retBrightX = (ROUND(*retBrightX) + .5f * roundXDir) / float( width );
+    *retBrightY = (ROUND(*retBrightY) + .5f * roundYDir) / float( height );
 
     if(avgCnt || lowCnt)
     {
@@ -1125,7 +1122,12 @@ void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSiz
                 retColor->rgb[c] = average[c] / avgCnt / 255.f;
         }
 
-        R_AmplifyColor(retColor->rgb);
+        Vector3f color(retColor->rgb);
+        R_AmplifyColor(color);
+        for(int i = 0; i < 3; ++i)
+        {
+            retColor->rgb[i] = color[i];
+        }
 
         // How about the size of the light source?
         /// @todo These factors should be cvars.
