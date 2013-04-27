@@ -41,6 +41,7 @@ public:
     Block(IByteArray const &array);
     Block(Block const &other);
     Block(QByteArray const &byteArray);
+    Block(char const *nullTerminatedCStr);
     Block(void const *data, Size length);
 
     /**
