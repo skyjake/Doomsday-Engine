@@ -114,6 +114,11 @@ public:
         return *this;
     }
 
+    AssetGroup &operator -= (Asset const &dep) {
+        remove(dep);
+        return *this;
+    }
+
     bool has(Asset const &dep) const;
 
     void setPolicy(Asset const &asset, Policy policy);
