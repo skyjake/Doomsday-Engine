@@ -19,10 +19,11 @@
 #ifndef LIBGUI_GLBUFFER_H
 #define LIBGUI_GLBUFFER_H
 
+#include <QVector>
+
 #include <de/libdeng2.h>
 #include <de/Vector>
 #include <de/Asset>
-#include <vector>
 #include <utility>
 
 #include "libgui.h"
@@ -110,7 +111,7 @@ class LIBGUI_PUBLIC GLBuffer : public Asset
 {
 public:
     typedef duint16 Index;
-    typedef std::vector<Index> Indices;
+    typedef QVector<Index> Indices;
 
 public:
     GLBuffer();
@@ -141,7 +142,7 @@ template <typename VertexType>
 class GLBufferT : public GLBuffer
 {
 public:
-    typedef std::vector<VertexType> Vertices;
+    typedef QVector<VertexType> Vertices;
 
 public:
     GLBufferT() {
@@ -153,7 +154,7 @@ public:
     }
 
     void setVertices(Vertices const &vertices, gl::Usage usage) {
-        GLBuffer::setVertices(vertices.size(), &vertices[0], sizeof(VertexType) * vertices.size(), usage);
+        GLBuffer::setVertices(vertices.size(), vertices.constData(), sizeof(VertexType) * vertices.size(), usage);
     }
 
     void setVertices(gl::Primitive primitive, VertexType const *vertices, dsize count, gl::Usage usage) {
@@ -161,7 +162,7 @@ public:
     }
 
     void setVertices(gl::Primitive primitive, Vertices const &vertices, gl::Usage usage) {
-        GLBuffer::setVertices(primitive, vertices.size(), &vertices[0], sizeof(VertexType) * vertices.size(), usage);
+        GLBuffer::setVertices(primitive, vertices.size(), vertices.constData(), sizeof(VertexType) * vertices.size(), usage);
     }
 };
 

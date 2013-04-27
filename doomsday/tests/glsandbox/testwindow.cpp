@@ -74,15 +74,16 @@ DENG2_OBSERVES(Canvas, GLResize)
             { Vector2f(100, 100), Vector2f(1, 1), Vector4f(1, 0, 0, 1) },
             { Vector2f(10,  100), Vector2f(0, 1), Vector4f(0, 1, 0, 1) }
         };
-        //buf->setVertices(gl::TriangleFan, verts, 4, gl::Static);
+#if 1
+        buf->setVertices(gl::TriangleFan, verts, 4, gl::Static);
+#else
+        // Set vertices without primitive type and specify indices instead.
         buf->setVertices(verts, 4, gl::Static);
 
         GLBuffer::Indices idx;
-        idx.push_back(0);
-        idx.push_back(1);
-        idx.push_back(2);
-        idx.push_back(3);
+        idx << 0 << 1 << 2 << 3;
         buf->setIndices(gl::TriangleFan, idx, gl::Static);
+#endif
 
         Block vertShader =
                 "uniform highp mat4 uMvpMatrix;\n"
