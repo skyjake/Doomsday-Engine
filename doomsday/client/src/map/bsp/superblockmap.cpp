@@ -41,13 +41,13 @@ struct SuperBlock::Instance
     /// LineSegments completely contained by this block.
     SuperBlock::LineSegments lineSegments;
 
-    /// Number of "real" and "mini" line segments contained by this block
+    /// Number of map and partition line segments contained by this block
     /// (including all sub-blocks below it).
-    int realNum;
-    int miniNum;
+    int mapNum;
+    int partNum;
 
     Instance(SuperBlockmap &blockmap)
-      : bmap(blockmap), tree(0), realNum(0), miniNum(0)
+      : bmap(blockmap), tree(0), mapNum(0), partNum(0)
     {}
 
     ~Instance()
@@ -62,14 +62,14 @@ struct SuperBlock::Instance
 
     inline void incrementLineSegmentCount(LineSegment const &lineSeg)
     {
-        if(lineSeg.hasMapLineSide()) realNum++;
-        else                         miniNum++;
+        if(lineSeg.hasMapSide()) mapNum++;
+        else                     partNum++;
     }
 
     inline void decrementLineSegmentCount(LineSegment const &lineSeg)
     {
-        if(lineSeg.hasMapLineSide()) realNum--;
-        else                         miniNum--;
+        if(lineSeg.hasMapSide()) mapNum--;
+        else                     partNum--;
     }
 };
 
@@ -155,11 +155,11 @@ SuperBlock::LineSegments const &SuperBlock::lineSegments() const
     return d->lineSegments;
 }
 
-uint SuperBlock::lineSegmentCount(bool addReal, bool addMini) const
+uint SuperBlock::lineSegmentCount(bool addMap, bool addPart) const
 {
     uint total = 0;
-    if(addReal) total += d->realNum;
-    if(addMini) total += d->miniNum;
+    if(addMap)  total += d->mapNum;
+    if(addPart) total += d->partNum;
     return total;
 }
 

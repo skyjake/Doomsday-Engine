@@ -86,15 +86,15 @@ void HPlane::clearIntercepts()
 
 void HPlane::configure(LineSegment const &baseLineSeg)
 {
-    // A "mini segment" is never suitable.
-    DENG_ASSERT(baseLineSeg.hasMapLineSide());
+    // Only map line segments are suitable.
+    DENG_ASSERT(baseLineSeg.hasMapSide());
 
     LOG_AS("HPlane::configure");
 
     // Clear the list of intersection points.
     clearIntercepts();
 
-    Line::Side &side = baseLineSeg.mapLineSide();
+    Line::Side &side = baseLineSeg.mapSide();
     d->partition.origin    = side.from().origin();
     d->partition.direction = side.to().origin() - side.from().origin();
 
@@ -103,9 +103,8 @@ void HPlane::configure(LineSegment const &baseLineSeg)
     newLineSeg->ceaseVertexObservation(); /// @todo refactor away -ds
     d->lineSegment.reset(newLineSeg);
 
-    //LOG_DEBUG("line segment %p %s %s.")
-    //    << de::dintptr(&newLineSeg)
-    //    << d->partition.origin.asText() << d->partition.direction.asText();
+    //LOG_DEBUG("line segment %p %s.")
+    //    << de::dintptr(&newLineSeg) << d->partition.asText();
 }
 
 void HPlane::interceptLineSegment(LineSegment const &lineSeg, Vertex const &vertex,
@@ -116,7 +115,7 @@ void HPlane::interceptLineSegment(LineSegment const &lineSeg, Vertex const &vert
 
     HEdgeIntercept inter;
     inter.vertex  = const_cast<Vertex *>(&vertex);
-    inter.selfRef = (lineSeg.hasMapLineSide() && lineSeg.line().isSelfReferencing());
+    inter.selfRef = (lineSeg.hasMapSide() && lineSeg.line().isSelfReferencing());
 
     inter.before  = beforeSector;
     inter.after   = afterSector;
@@ -161,7 +160,8 @@ void HPlane::sortAndMergeIntercepts()
 coord_t HPlane::distanceToVertex(Vertex const &vertex) const
 {
     coord_t vertexOriginV1[2] = { vertex.x(), vertex.y() };
-    return V2d_PointLineParaDistance(vertexOriginV1, d->lineSegment->direction,
+    coord_t lineSegmentDirectionV1[2] = { d->lineSegment->direction().x, d->lineSegment->direction().y };
+    return V2d_PointLineParaDistance(vertexOriginV1, lineSegmentDirectionV1,
                                      d->lineSegment->pPara, d->lineSegment->pLength);
 }
 

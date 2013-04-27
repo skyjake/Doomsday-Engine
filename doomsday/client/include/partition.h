@@ -22,7 +22,10 @@
 #define DENG_MATH_PARTITION
 
 #include <de/math.h>
+#include <de/String>
 #include <de/Vector>
+
+#include <QTextStream>
 
 namespace de {
 
@@ -45,7 +48,6 @@ public:
 
     Partition(Partition const &other)
         : origin(other.origin), direction(other.direction) {}
-
 
     /**
      * Where does the given @a point lie relative to the partition line?
@@ -117,6 +119,14 @@ public:
      */
     inline Vector2d intercept(Partition const &other) const {
         return origin + direction * intersection(other);
+    }
+
+    String asText() const
+    {
+        String str;
+        QTextStream s(&str);
+        s << origin.asText() << " " << direction.x << "|" << direction.y;
+        return str;
     }
 };
 

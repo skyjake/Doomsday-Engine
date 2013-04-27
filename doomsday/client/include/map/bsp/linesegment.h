@@ -49,14 +49,14 @@ class SuperBlock;
 class LineSegment
 {
 public:
-    /// Required BSP leaf is missing. @ingroup errors
-    DENG2_ERROR(MissingBspLeafError);
+    /// Required half-edge is missing. @ingroup errors
+    DENG2_ERROR(MissingHEdgeError);
 
     /// Required twin segment is missing. @ingroup errors
     DENG2_ERROR(MissingTwinError);
 
     /// Required map line side attribution is missing. @ingroup errors
-    DENG2_ERROR(MissingMapLineSideError);
+    DENG2_ERROR(MissingMapSideError);
 
     /// Edge/vertex identifiers:
     enum
@@ -66,8 +66,6 @@ public:
     };
 
 public: /// @todo make private:
-    coord_t direction[2];
-
     // Precomputed data for faster calculations.
     coord_t pLength;
     coord_t pAngle;
@@ -82,23 +80,8 @@ public: /// @todo make private:
     /// longer in any superblock (e.g., now in or being turned into a leaf edge).
     SuperBlock *bmapBlock;
 
-    /// Map Line side that this line segment initially comes (otherwise @c 0 signifying
-    /// a "mini-segment").
-    Line::Side *_lineSide;
-
-    /// Line side that this line segment initially comes from. For "real" segments,
-    /// this is just the same as @var lineSide. For "mini-segments", this is the
-    /// the partition line side.
-    Line::Side *sourceLineSide;
-
-    /// Map sector attributed to the line segment. Can be @c 0 for "mini-segments".
+    /// Map sector attributed to the line segment. Can be @c 0 for partition lines.
     Sector *sector;
-
-    /// Linked @em twin line segment (that on the other side of "this" line segment).
-    LineSegment *_twin;
-
-    /// Half-edge produced from this line segment (if any).
-    HEdge *hedge;
 
 public:
     LineSegment(Vertex &from, Vertex &to,
@@ -152,67 +135,122 @@ public:
     inline void replaceTo(Vertex &newVertex)   { replaceVertex(To, newVertex); }
 
     /**
+     * Returns a direction vector for the line segment from the From/Start vertex
+     * origin to the To/End vertex origin.
+     */
+    Vector2d const &direction() const;
+
+    /**
      * Returns @c true iff a @em twin is linked to the line segment.
      */
     bool hasTwin() const;
 
     /**
      * Returns the linked @em twin of the line segment.
+     *
+     * @see hasTwin(), setTwin()
      */
     LineSegment &twin() const;
 
     /**
-     * Returns a pointer to the linked @em twin of the line segment;
-     * otherwise @c 0.
+     * Returns a pointer to the linked @em twin of the line segment; otherwise @c 0.
      *
      * @see hasTwin()
      */
     inline LineSegment *twinPtr() const { return hasTwin()? &twin() : 0; }
 
     /**
-     * Returns @c true iff a Line::Side is attributed to the line segment.
-     */
-    bool hasMapLineSide() const;
-
-    /**
-     * Returns the Line::Side attributed to the line segment.
+     * Change the linked @em twin of the line segment.
      *
-     * @see hasLineSide()
-     */
-    Line::Side &mapLineSide() const;
-
-    /**
-     * Returns a pointer to the Line::Side attributed to the line segment.
+     * @param newTwin  New twin for the line segment. Can be @c 0.
      *
-     * @see hasTwin()
+     * @see twin()
      */
-    inline Line::Side *lineSidePtr() const { return hasMapLineSide()? &mapLineSide() : 0; }
+    void setTwin(LineSegment *newTwin);
 
     /**
-     * Convenient accessor method for returning the Line of the Line::Side
-     * which is attributed to the line segment.
+     * Returns @c true iff a map Line::Side is attributed to the line segment.
+     */
+    bool hasMapSide() const;
+
+    /**
+     * Returns the map Line::Side attributed to the line segment.
      *
-     * @see hasLineSide(), lineSide()
+     * @see hasMapSide()
      */
-    inline Line &line() const { return mapLineSide().line(); }
+    Line::Side &mapSide() const;
 
     /**
-     * Convenient accessor method for returning the Line side identifier of
+     * Returns a pointer to the map Line::Side attributed to the line segment.
+     *
+     * @see hasMapSide()
+     */
+    inline Line::Side *mapSidePtr() const { return hasMapSide()? &mapSide() : 0; }
+
+    /**
+     * Returns @c true iff a @em source map Line::Side is attributed to the line segment.
+     */
+    bool hasSourceMapSide() const;
+
+    /**
+     * Returns the @em source map Line::Side attributed to the line segment.
+     *
+     * @see hasSourceMapSide()
+     */
+    Line::Side &sourceMapSide() const;
+
+    /**
+     * Returns a pointer to the @em source map Line::Side attributed to the line segment.
+     *
+     * @see hasSourceMapSide()
+     */
+    inline Line::Side *sourceMapSidePtr() const { return hasSourceMapSide()? &sourceMapSide() : 0; }
+
+    /**
+     * Convenient accessor method for returning the map Line of the Line::Side
+     * is attributed to the line segment.
+     *
+     * @see hasMapSide(), mapSide()
+     */
+    inline Line &line() const { return mapSide().line(); }
+
+    /**
+     * Convenient accessor method for returning the map Line side identifier of
      * the Line::Side attributed to the line segment.
      *
-     * @see hasLineSide(), lineSide()
+     * @see hasMapSide(), mapSide()
      */
-    inline int lineSideId() const { return mapLineSide().lineSideId(); }
+    inline int mapLineSideId() const { return mapSide().lineSideId(); }
 
     /**
-     * Returns @c true iff a BspLeaf is linked to the line segment.
+     * Returns @c true iff a half-edge is linked to the line segment.
+     *
+     * @see hedge()
      */
-    bool hasBspLeaf() const;
+    bool hasHEdge() const;
 
     /**
-     * Returns the BSP leaf for the line segment.
+     * Returns the linked half-edge for the line segment.
+     *
+     * @see hasHEdge()
      */
-    BspLeaf &bspLeaf() const;
+    HEdge &hedge() const;
+
+    /**
+     * Returns a pointer to the linked half-edge of the line segment; otherwise @c 0.
+     *
+     * @see hasHEdge()
+     */
+    inline HEdge *hedgePtr() const { return hasHEdge()? &hedge() : 0; }
+
+    /**
+     * Change the linked half-edge of the line segment.
+     *
+     * @param newHEdge  New half-edge for the line segment. Can be @c 0.
+     *
+     * @see hedge()
+     */
+    void setHEdge(HEdge *newHEdge);
 
     /// @todo refactor away -ds
     void ceaseVertexObservation();

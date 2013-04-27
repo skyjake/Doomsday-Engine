@@ -23,8 +23,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_BSP_SUPERBLOCKMAP
-#define LIBDENG_BSP_SUPERBLOCKMAP
+#ifndef DENG_WORLD_MAP_BSP_SUPERBLOCKMAP
+#define DENG_WORLD_MAP_BSP_SUPERBLOCKMAP
 
 #include <QList>
 
@@ -243,16 +243,16 @@ public:
      * Retrieve the total number of LineSegments linked in this superblock
      * (including any within child superblocks).
      *
-     * @param addReal  Include the "real" line segments in the total.
-     * @param addMini  Include the "mini" line segments in the total.
+     * @param addMap  Include the map line segments in the total.
+     * @param addPart Include the partition line segments in the total.
      *
      * @return  Total line segment count.
      */
-    uint lineSegmentCount(bool addReal, bool addMini) const;
+    uint lineSegmentCount(bool addMap, bool addPart) const;
 
     /// Convenience functions for retrieving line segment totals:
-    inline uint miniLineSegmentCount() const {  return lineSegmentCount(false, true); }
-    inline uint realLineSegmentCount() const {  return lineSegmentCount(true, false); }
+    inline uint partLineSegmentCount() const {  return lineSegmentCount(false, true); }
+    inline uint mapLineSegmentCount() const {  return lineSegmentCount(true, false); }
     inline uint totalLineSegmentCount() const { return lineSegmentCount(true, true); }
 
     /**
@@ -292,4 +292,4 @@ private:
 } // namespace bsp
 } // namespace de
 
-#endif // LIBDENG_BSP_SUPERBLOCKMAP
+#endif // DENG_WORLD_MAP_BSP_SUPERBLOCKMAP
