@@ -499,6 +499,7 @@ SOURCES += \
     src/map/blockmap.cpp \
     src/map/blockmapvisual.cpp \
     src/map/bsp/hplane.cpp \
+    src/map/bsp/linesegment.cpp \
     src/map/bsp/partitioner.cpp \
     src/map/bsp/superblockmap.cpp \
     src/map/bspbuilder.cpp \

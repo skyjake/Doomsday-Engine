@@ -26,8 +26,7 @@
 #ifndef LIBDENG_BSP_PARTITIONCOST
 #define LIBDENG_BSP_PARTITIONCOST
 
-#include "map/p_mapdata.h"
-#include "HEdge"
+#include "map/bsp/linesegment.h"
 
 namespace de {
 namespace bsp {
@@ -57,16 +56,16 @@ struct PartitionCost
         realLeft(0), miniRight(0), miniLeft(0)
     {}
 
-    inline PartitionCost &addHEdgeRight(HEdge const &hedge)
+    inline PartitionCost &addLineSegmentRight(LineSegment const &lineSeg)
     {
-        if(hedge.hasLineSide()) realRight += 1;
-        else                miniRight += 1;
+        if(lineSeg.hasLineSide()) realRight += 1;
+        else                      miniRight += 1;
         return *this;
     }
 
-    inline PartitionCost &addHEdgeLeft(HEdge const &hedge)
+    inline PartitionCost &addLineSegmentLeft(LineSegment const &lineSeg)
     {
-        if(hedge.hasLineSide()) realLeft += 1;
+        if(lineSeg.hasLineSide()) realLeft += 1;
         else                    miniLeft += 1;
         return *this;
     }

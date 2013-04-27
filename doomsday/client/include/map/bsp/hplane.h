@@ -36,14 +36,13 @@
 /// Two intercepts whose distance is inclusive of this bound will be merged.
 #define HPLANE_INTERCEPT_MERGE_DISTANCE_EPSILON     1.0 / 128
 
-class HEdge;
 class Vertex;
 class Sector;
 
 namespace de {
 namespace bsp {
 
-struct LineSegment;
+class LineSegment;
 
 /**
  * Models the partitioning binary space half-plane.
@@ -98,9 +97,8 @@ public:
      * Reconfigure the half-plane according to the given line segment.
      *
      * @param newLineSeg  The "new" line segment to configure using.
-     * @param hedge  Map half-edge for the segment (@todo refactor away).
      */
-    void configure(LineSegment const &newLineSeg, HEdge const &hedge);
+    void configure(LineSegment const &newLineSeg);
 
     /**
      * Determine the distance from @a vertex to the half-plane origin (along

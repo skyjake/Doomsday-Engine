@@ -82,17 +82,17 @@ void HPlane::clearIntercepts()
     d->intercepts.clear();
 }
 
-void HPlane::configure(LineSegment const &newLineSeg, HEdge const &hedge)
+void HPlane::configure(LineSegment const &newLineSeg)
 {
     // A "mini segment" is never suitable.
-    DENG_ASSERT(hedge.hasLineSide());
+    DENG_ASSERT(newLineSeg.hasLineSide());
 
     LOG_AS("HPlane::configure");
 
     // Clear the list of intersection points.
     clearIntercepts();
 
-    Line::Side &side = hedge.lineSide();
+    Line::Side &side = newLineSeg.lineSide();
     d->partition.origin    = side.from().origin();
     d->partition.direction = side.to().origin() - side.from().origin();
 
@@ -112,7 +112,7 @@ void HPlane::interceptLineSegment(LineSegment const &lineSeg, Vertex const &vert
 
     HEdgeIntercept inter;
     inter.vertex  = const_cast<Vertex *>(&vertex);
-    inter.selfRef = (lineSeg.lineSide && lineSeg.lineSide->line().isSelfReferencing());
+    inter.selfRef = (lineSeg.hasLineSide() && lineSeg.line().isSelfReferencing());
 
     inter.before  = beforeSector;
     inter.after   = afterSector;

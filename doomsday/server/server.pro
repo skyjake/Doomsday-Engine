@@ -363,6 +363,7 @@ SOURCES += \
     $$SRC/src/m_nodepile.cpp \
     $$SRC/src/map/blockmap.cpp \
     $$SRC/src/map/bsp/hplane.cpp \
+    $$SRC/src/map/bsp/linesegment.cpp \
     $$SRC/src/map/bsp/partitioner.cpp \
     $$SRC/src/map/bsp/superblockmap.cpp \
     $$SRC/src/map/bspbuilder.cpp \

@@ -42,7 +42,7 @@ namespace bsp {
 class VertexInfo
 {
 public:
-    typedef std::list<HEdgeTip> HEdgeTips;
+    typedef std::list<LineSegmentTip> LineSegmentTips;
 
     VertexInfo() : oneSidedOwnerCount(0), twoSidedOwnerCount(0), tips(0) {}
 
@@ -51,28 +51,28 @@ public:
     uint twoSidedOwnerCount;
 
     /**
-     * Add a new HEdgeTip to the set in it's rightful place according to an
-     * anti-clockwise (increasing angle) order.
+     * Add a new LineSegmentTip to the set in it's rightful place according to
+     * an anti-clockwise (increasing angle) order.
      */
-    HEdgeTip& addHEdgeTip(coord_t angle, HEdge* front = 0, HEdge* back = 0,
-                          coord_t angleEpsilon = ANG_EPSILON)
+    LineSegmentTip &addLineSegmentTip(coord_t angle, LineSegment *front = 0, LineSegment *back = 0,
+                                      coord_t angleEpsilon = ANG_EPSILON)
     {
-        HEdgeTips::reverse_iterator after;
+        LineSegmentTips::reverse_iterator after;
 
         for(after = tips.rbegin();
             after != tips.rend() && angle + angleEpsilon < (*after).angle(); after++)
         {}
 
-        return *tips.insert(after.base(), HEdgeTip(angle, front, back));
+        return *tips.insert(after.base(), LineSegmentTip(angle, front, back));
     }
 
-    /// Clear all HEdgeTips in the set.
-    void clearHEdgeTips() { tips.clear(); }
+    /// Clear all LineSegmentTips in the set.
+    void clearLineSegmentTips() { tips.clear(); }
 
-    const HEdgeTips& hedgeTips() const { return tips; }
+    LineSegmentTips const &lineSegmentTips() const { return tips; }
 
 private:
-    HEdgeTips tips;
+    LineSegmentTips tips;
 };
 
 } // namespace bsp

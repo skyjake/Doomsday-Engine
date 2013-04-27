@@ -22,7 +22,8 @@
  */
 
 #include <de/kdtree.h>
-#include "HEdge"
+
+#include "map/bsp/linesegment.h"
 
 #include "map/bsp/superblockmap.h"
 
@@ -37,10 +38,10 @@ struct SuperBlock::Instance
     /// KdTree node in the owning SuperBlockmap.
     KdTreeNode *tree;
 
-    /// Half-edges completely contained by this block.
-    SuperBlock::HEdges hedges;
+    /// LineSegments completely contained by this block.
+    SuperBlock::LineSegments lineSegments;
 
-    /// Number of real half-edges and minihedges contained by this block
+    /// Number of "real" and "mini" line segments contained by this block
     /// (including all sub-blocks below it).
     int realNum;
     int miniNum;
@@ -54,21 +55,21 @@ struct SuperBlock::Instance
         KdTreeNode_Delete(tree);
     }
 
-    inline void linkHEdge(HEdge &hedge)
+    inline void linkLineSegment(LineSegment &lineSeg)
     {
-        hedges.prepend(&hedge);
+        lineSegments.prepend(&lineSeg);
     }
 
-    inline void incrementHEdgeCount(HEdge const &hedge)
+    inline void incrementLineSegmentCount(LineSegment const &lineSeg)
     {
-        if(hedge.hasLineSide()) realNum++;
-        else                    miniNum++;
+        if(lineSeg.hasLineSide()) realNum++;
+        else                      miniNum++;
     }
 
-    inline void decrementHEdgeCount(HEdge const &hedge)
+    inline void decrementLineSegmentCount(LineSegment const &lineSeg)
     {
-        if(hedge.hasLineSide()) realNum--;
-        else                    miniNum--;
+        if(lineSeg.hasLineSide()) realNum--;
+        else                      miniNum--;
     }
 };
 
@@ -149,12 +150,12 @@ SuperBlock *SuperBlock::addChild(ChildId childId, bool splitVertical)
     return new SuperBlock(*this, childId, splitVertical);
 }
 
-SuperBlock::HEdges const &SuperBlock::hedges() const
+SuperBlock::LineSegments const &SuperBlock::lineSegments() const
 {
-    return d->hedges;
+    return d->lineSegments;
 }
 
-uint SuperBlock::hedgeCount(bool addReal, bool addMini) const
+uint SuperBlock::lineSegmentCount(bool addReal, bool addMini) const
 {
     uint total = 0;
     if(addReal) total += d->realNum;
@@ -162,49 +163,49 @@ uint SuperBlock::hedgeCount(bool addReal, bool addMini) const
     return total;
 }
 
-static void initAABoxFromHEdgeVertexes(AABoxd &aaBox, HEdge const &hedge)
+static void initAABoxFromLineSegmentVertexes(AABoxd &aaBox, LineSegment const &lineSeg)
 {
-    Vector2d min = hedge.fromOrigin().min(hedge.toOrigin());
-    Vector2d max = hedge.fromOrigin().max(hedge.toOrigin());
+    Vector2d min = lineSeg.fromOrigin().min(lineSeg.toOrigin());
+    Vector2d max = lineSeg.fromOrigin().max(lineSeg.toOrigin());
     V2d_Set(aaBox.min, min.x, min.y);
     V2d_Set(aaBox.max, max.x, max.y);
 }
 
 /// @todo Optimize: Cache this result.
-void SuperBlock::findHEdgeBounds(AABoxd &bounds)
+void SuperBlock::findLineSegmentBounds(AABoxd &bounds)
 {
     bool initialized = false;
-    AABoxd hedgeAABox;
+    AABoxd lineSegBounds;
 
-    foreach(HEdge *hedge, d->hedges)
+    foreach(LineSegment *lineSeg, d->lineSegments)
     {
-        initAABoxFromHEdgeVertexes(hedgeAABox, *hedge);
+        initAABoxFromLineSegmentVertexes(lineSegBounds, *lineSeg);
         if(initialized)
         {
-            V2d_UniteBox(bounds.arvec2, hedgeAABox.arvec2);
+            V2d_UniteBox(bounds.arvec2, lineSegBounds.arvec2);
         }
         else
         {
-            V2d_CopyBox(bounds.arvec2, hedgeAABox.arvec2);
+            V2d_CopyBox(bounds.arvec2, lineSegBounds.arvec2);
             initialized = true;
         }
     }
 }
 
-SuperBlock &SuperBlock::push(HEdge &hedge)
+SuperBlock &SuperBlock::push(LineSegment &lineSeg)
 {
     SuperBlock *sb = this;
     forever
     {
         DENG2_ASSERT(sb);
 
-        // Update half-edge counts.
-        sb->d->incrementHEdgeCount(hedge);
+        // Update line segment counts.
+        sb->d->incrementLineSegmentCount(lineSeg);
 
         if(sb->isLeaf())
         {
             // No further subdivision possible.
-            sb->d->linkHEdge(hedge);
+            sb->d->linkLineSegment(lineSeg);
             break;
         }
 
@@ -215,28 +216,28 @@ SuperBlock &SuperBlock::push(HEdge &hedge)
         {
             // Wider than tall.
             int midPoint = (sb->bounds().minX + sb->bounds().maxX) / 2;
-            p1 = hedge.fromOrigin().x >= midPoint? LEFT : RIGHT;
-            p2 =   hedge.toOrigin().x >= midPoint? LEFT : RIGHT;
+            p1 = lineSeg.fromOrigin().x >= midPoint? LEFT : RIGHT;
+            p2 =   lineSeg.toOrigin().x >= midPoint? LEFT : RIGHT;
             splitVertical = false;
         }
         else
         {
             // Taller than wide.
             int midPoint = (sb->bounds().minY + sb->bounds().maxY) / 2;
-            p1 = hedge.fromOrigin().y >= midPoint? LEFT : RIGHT;
-            p2 =   hedge.toOrigin().y >= midPoint? LEFT : RIGHT;
+            p1 = lineSeg.fromOrigin().y >= midPoint? LEFT : RIGHT;
+            p2 =   lineSeg.toOrigin().y >= midPoint? LEFT : RIGHT;
             splitVertical = true;
         }
 
         if(p1 != p2)
         {
             // Line crosses midpoint; link it in and return.
-            sb->d->linkHEdge(hedge);
+            sb->d->linkLineSegment(lineSeg);
             break;
         }
 
-        // The hedge lies in one half of this block. Create the sub-block
-        // if it doesn't already exist, and loop back to add the hedge.
+        // The lineSeg lies in one half of this block. Create the sub-block
+        // if it doesn't already exist, and loop back to add the lineSeg.
         if(!sb->hasChild(p1))
         {
             sb->addChild(p1, (int)splitVertical);
@@ -247,17 +248,17 @@ SuperBlock &SuperBlock::push(HEdge &hedge)
     return *sb;
 }
 
-HEdge *SuperBlock::pop()
+LineSegment *SuperBlock::pop()
 {
-    if(d->hedges.isEmpty())
+    if(d->lineSegments.isEmpty())
         return 0;
 
-    HEdge *hedge = d->hedges.takeFirst();
+    LineSegment *lineSeg = d->lineSegments.takeFirst();
 
-    // Update half-edge counts.
-    d->decrementHEdgeCount(*hedge);
+    // Update line segment counts.
+    d->decrementLineSegmentCount(*lineSeg);
 
-    return hedge;
+    return lineSeg;
 }
 
 int SuperBlock::traverse(int (*callback)(SuperBlock *, void *), void *parameters)
@@ -286,34 +287,29 @@ int SuperBlock::traverse(int (*callback)(SuperBlock *, void *), void *parameters
     return false; // Continue iteration.
 }
 
-struct SuperBlockmap::Instance
+DENG2_PIMPL(SuperBlockmap)
 {
     /// The KdTree of SuperBlocks.
     KdTree *kdTree;
 
-    Instance(SuperBlockmap &bmap, AABox const &bounds)
-        : kdTree(KdTree_New(&bounds))
+    Instance(Public *i, AABox const &bounds)
+        : Base(i), kdTree(KdTree_New(&bounds))
     {
         // Attach the root node.
-        SuperBlock *block = new SuperBlock(bmap);
+        SuperBlock *block = new SuperBlock(self);
         block->d->tree = KdTreeNode_SetUserData(KdTree_Root(kdTree), block);
     }
 
     ~Instance()
     {
+        self.clear();
         KdTree_Delete(kdTree);
     }
 };
 
 SuperBlockmap::SuperBlockmap(AABox const &bounds)
-    : d(new Instance(*this, bounds))
+    : d(new Instance(this, bounds))
 {}
-
-SuperBlockmap::~SuperBlockmap()
-{
-    clear();
-    delete d;
-}
 
 SuperBlock &SuperBlockmap::root()
 {
@@ -325,27 +321,27 @@ void SuperBlockmap::clear()
     root().clear();
 }
 
-static void findHEdgeBoundsWorker(SuperBlock &block, AABoxd &bounds, bool *initialized)
+static void findLineSegmentBoundsWorker(SuperBlock &block, AABoxd &bounds, bool *initialized)
 {
     DENG2_ASSERT(initialized);
-    if(block.hedgeCount(true, true))
+    if(block.lineSegmentCount(true, true))
     {
-        AABoxd blockHEdgeAABox;
-        block.findHEdgeBounds(blockHEdgeAABox);
+        AABoxd lineSegBounds;
+        block.findLineSegmentBounds(lineSegBounds);
         if(*initialized)
         {
-            V2d_AddToBox(bounds.arvec2, blockHEdgeAABox.min);
+            V2d_AddToBox(bounds.arvec2, lineSegBounds.min);
         }
         else
         {
-            V2d_InitBox(bounds.arvec2, blockHEdgeAABox.min);
+            V2d_InitBox(bounds.arvec2, lineSegBounds.min);
             *initialized = true;
         }
-        V2d_AddToBox(bounds.arvec2, blockHEdgeAABox.max);
+        V2d_AddToBox(bounds.arvec2, lineSegBounds.max);
     }
 }
 
-AABoxd SuperBlockmap::findHEdgeBounds()
+AABoxd SuperBlockmap::findLineSegmentBounds()
 {
     bool initialized = false;
     AABoxd bounds;
@@ -357,7 +353,7 @@ AABoxd SuperBlockmap::findHEdgeBounds()
     {
         while(cur)
         {
-            findHEdgeBoundsWorker(*cur, bounds, &initialized);
+            findLineSegmentBoundsWorker(*cur, bounds, &initialized);
 
             if(prev == cur->parentPtr())
             {
