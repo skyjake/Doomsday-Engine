@@ -23,6 +23,7 @@
 #include "de/GLTexture"
 #include "de/gui/opengl.h"
 #include <de/Block>
+#include <de/Log>
 
 #include <QSet>
 #include <QList>
@@ -87,6 +88,7 @@ DENG2_OBSERVES(GLUniform, Deletion)
     void attach(GLShader const *shader)
     {
         DENG2_ASSERT(shader->isReady());
+        alloc();
         glAttachShader(name, shader->glName());
         shaders.insert(holdRef(shader));
     }
@@ -343,7 +345,11 @@ GLuint GLProgram::glName() const
 int GLProgram::glUniformLocation(char const *uniformName) const
 {
     GLint loc = glGetUniformLocation(d->name, uniformName);
-    // Could check loc here for validity.
+    if(loc < 0)
+    {
+        LOG_AS("GLProgram");
+        LOG_DEBUG("Could not find uniform '%s'") << uniformName;
+    }
     return loc;
 }
 
