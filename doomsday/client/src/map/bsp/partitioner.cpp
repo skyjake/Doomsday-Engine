@@ -450,51 +450,54 @@ DENG2_PIMPL(Partitioner)
      *
      * @note If the line segment has a twin it is also split.
      */
-    LineSegment &splitLineSegment(LineSegment &oldLineSeg, Vector2d const &point)
+    LineSegment &splitLineSegment(LineSegment &frontLeft, Vector2d const &point)
     {
         //LOG_DEBUG("Splitting line segment %p at %s.")
-        //    << de::dintptr(&oldLineSeg) << point.asText();
+        //    << de::dintptr(&frontLeft) << point.asText();
 
         Vertex *newVert = newVertex(point);
-        addLineSegmentTip(*newVert, oldLineSeg.inverseAngle(), oldLineSeg.twinPtr(), &oldLineSeg);
-        addLineSegmentTip(*newVert, oldLineSeg.angle(), &oldLineSeg, oldLineSeg.twinPtr());
 
-        LineSegment &newLineSeg = cloneLineSegment(oldLineSeg);
+        // First, create new tips for the resultant new vertex.
+        addLineSegmentTip(*newVert, frontLeft.inverseAngle(), frontLeft.twinPtr(), &frontLeft);
+        addLineSegmentTip(*newVert, frontLeft.angle(), &frontLeft, frontLeft.twinPtr());
 
-        newLineSeg.setLeft(&oldLineSeg);
-        oldLineSeg.setRight(&newLineSeg);
+        // Now perform the split, updating vertex and relative segment links.
+        LineSegment &frontRight = cloneLineSegment(frontLeft);
 
-        oldLineSeg.replaceTo(*newVert); oldLineSeg.hedge()._to = newVert;
-        newLineSeg.replaceFrom(*newVert); newLineSeg.hedge()._from = newVert;
+        frontLeft.replaceTo(*newVert); frontLeft.hedge()._to = newVert;
+        frontRight.replaceFrom(*newVert); frontRight.hedge()._from = newVert;
+
+        frontLeft.setRight(&frontRight);
+        frontRight.setLeft(&frontLeft);
 
         // Handle the twin.
-        if(oldLineSeg.hasTwin())
+        if(frontLeft.hasTwin())
         {
-            //LOG_DEBUG("Splitting line segment twin %p.")
-            //    << de::dintptr(oldLineSeg.twinPtr());
+            LineSegment &backRight = frontLeft.twin();
+            LineSegment &backLeft  = cloneLineSegment(backRight);
 
-            // Copy the old line segment info.
-            newLineSeg.setTwin(&cloneLineSegment(oldLineSeg.twin()));
-            newLineSeg.twin().setTwin(&newLineSeg);
+            backLeft.replaceTo(*newVert); backLeft.hedge()._to = newVert;
+            backRight.replaceFrom(*newVert); backRight.hedge()._from = newVert;
 
-            newLineSeg.twin().setRight(oldLineSeg.twinPtr());
-            oldLineSeg.twin().setLeft(newLineSeg.twinPtr());
-
-            oldLineSeg.twin().replaceFrom(*newVert); oldLineSeg.twin().hedge()._from = newVert;
-            newLineSeg.twin().replaceTo(*newVert); newLineSeg.twin().hedge()._to = newVert;
+            backLeft.setRight(&backRight);
+            backRight.setLeft(&backLeft);
 
             // Has this already been added to a leaf?
-            if(oldLineSeg.twin().hasHEdge() && oldLineSeg.twin().hedge().hasBspLeaf())
+            if(backRight.hasHEdge() && backRight.hedge().hasBspLeaf())
             {
                 // Update the in-leaf references.
-                oldLineSeg.twin().hedge()._next = newLineSeg.twin().hedgePtr();
+                backRight.hedge()._next = backLeft.hedgePtr();
 
                 // There is now one more half-edge in this leaf.
-                oldLineSeg.twin().hedge().bspLeaf()._hedgeCount += 1;
+                backRight.hedge().bspLeaf()._hedgeCount += 1;
             }
+
+            // Twin the new pair with one another.
+            frontRight.setTwin(&backLeft);
+            backLeft.setTwin(&frontRight);
         }
 
-        return newLineSeg;
+        return frontRight;
     }
 
     inline void interceptPartition(LineSegment const &lineSeg, int edge)
