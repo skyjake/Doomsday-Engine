@@ -75,6 +75,22 @@ private:
     static internal::AttribSpec const _spec[3];
 };
 
+/**
+ * Vertex format with 3D coordinates, one set of texture coordinates, and an
+ * RGBA color.
+ */
+struct LIBGUI_PUBLIC Vertex3TexRgba
+{
+    Vector3f pos;
+    Vector2f texCoord;
+    Vector4f rgba;
+
+    static internal::AttribSpecs formatSpec();
+
+private:
+    static internal::AttribSpec const _spec[3];
+};
+
 namespace gl
 {
     enum Usage {
