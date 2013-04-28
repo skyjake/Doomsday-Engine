@@ -31,14 +31,48 @@
 #include <de/Log>
 
 #include "Line"
+#include "Sector"
 #include "Vertex"
 
+#include "map/bsp/partitioner.h"
 #include "map/bsp/linesegment.h"
+#include "map/bsp/vertexinfo.h"
 
 #include "map/bsp/hplane.h"
 
 namespace de {
 namespace bsp {
+
+HPlane::Intercept::Intercept(ddouble distance, LineSegment &lineSeg, int edge)
+    : selfRef(false),
+      before(0),
+      after(0),
+      _distance(distance),
+      _lineSeg(&lineSeg),
+      _edge(edge)
+{}
+
+LineSegment &HPlane::Intercept::lineSegment() const
+{
+    return *_lineSeg;
+}
+
+int HPlane::Intercept::lineSegmentEdge() const
+{
+    return _edge;
+}
+
+#ifdef DENG_DEBUG
+void HPlane::Intercept::debugPrint() const
+{
+    LOG_INFO("Vertex #%i %s beforeSector: #%d afterSector: #%d %s")
+        << vertex().indexInMap()
+        << vertex().origin().asText()
+        << (before? before->indexInMap() : -1)
+        << (after? after->indexInMap() : -1)
+        << (selfRef? "SELFREF" : "");
+}
+#endif
 
 DENG2_PIMPL(HPlane)
 {
@@ -73,7 +107,7 @@ DENG2_PIMPL(HPlane)
     {
         foreach(Intercept const &icpt, intercepts)
         {
-            if(icpt.vertex == &vertex)
+            if(&icpt.vertex() == &vertex)
                 return true;
         }
         return false;
@@ -113,22 +147,101 @@ void HPlane::configure(LineSegment const &newBaseSeg)
     //    << de::dintptr(&newLineSeg) << d->partition.asText();
 }
 
-HPlane::Intercept *HPlane::interceptLineSegment(LineSegment const &lineSeg, int edge)
+/**
+ * Determines whether a conceptual line oriented at @a vtx and "pointing"
+ * at the specified world @a angle enters an "open" sector (which is to say
+ * that said line does not enter void space and does not intercept with any
+ * existing map or partition line segment in the plane, thus "closed").
+ *
+ * @return  The "open" sector at this angle; otherwise @c 0 (closed).
+ */
+static Sector *openSectorAtAngle(LineSegmentTips const &tips, coord_t angle)
+{
+    DENG_ASSERT(!tips.isEmpty());
+
+    // First check whether there's a wall_tip that lies in the exact
+    // direction of the given direction (which is relative to the vertex).
+    DENG2_FOR_EACH_CONST(LineSegmentTips::All, it, tips.all())
+    {
+        LineSegmentTip const &tip = *it;
+        coord_t diff = de::abs(tip.angle() - angle);
+        if(diff < ANG_EPSILON || diff > (360.0 - ANG_EPSILON))
+        {
+            return 0; // Yes, found one.
+        }
+    }
+
+    // OK, now just find the first wall_tip whose angle is greater than
+    // the angle we're interested in. Therefore we'll be on the front side
+    // of that tip edge.
+    DENG2_FOR_EACH_CONST(LineSegmentTips::All, it, tips.all())
+    {
+        LineSegmentTip const &tip = *it;
+        if(angle + ANG_EPSILON < tip.angle())
+        {
+            // Found it.
+            return (tip.hasFront()? tip.front().sectorPtr() : 0);
+        }
+    }
+
+    // Not found. The open sector will therefore be on the back of the tip
+    // at the greatest angle.
+    LineSegmentTip const &tip = tips.all().back();
+    return (tip.hasBack()? tip.back().sectorPtr() : 0);
+}
+
+HPlane::Intercept *HPlane::intercept(LineSegment const &lineSeg, int edge,
+    LineSegmentTips const &edgeTips)
 {
     // Already present for this vertex?
     Vertex &vertex = lineSeg.vertex(edge);
     if(d->haveInterceptForVertex(vertex)) return 0;
 
-    d->intercepts.append(Intercept(d->lineSegment->distance(vertex.origin())));
+    d->intercepts.append(Intercept(d->lineSegment->distance(vertex.origin()),
+                                   const_cast<LineSegment &>(lineSeg), edge));
     Intercept *newIntercept = &d->intercepts.last();
 
-    newIntercept->vertex  = &vertex;
     newIntercept->selfRef = (lineSeg.hasMapSide() && lineSeg.line().isSelfReferencing());
+
+    newIntercept->before = openSectorAtAngle(edgeTips, d->lineSegment->inverseAngle());
+    newIntercept->after  = openSectorAtAngle(edgeTips, d->lineSegment->angle());
 
     // The addition of a new intercept means we'll need to resort.
     d->needSortIntercepts = true;
 
     return newIntercept;
+}
+
+static void mergeIntercepts(HPlane::Intercept &final,
+                            HPlane::Intercept const &other)
+{
+    /*
+    LOG_AS("HPlane::mergeIntercepts");
+    final.debugPrint();
+    other.debugPrint();
+    */
+
+    if(final.selfRef && !other.selfRef)
+    {
+        if(final.before && other.before)
+            final.before = other.before;
+
+        if(final.after && other.after)
+            final.after = other.after;
+
+        final.selfRef = false;
+    }
+
+    if(!final.before && other.before)
+        final.before = other.before;
+
+    if(!final.after && other.after)
+        final.after = other.after;
+
+    /*
+    LOG_TRACE("Result:");
+    final.debugPrint();
+    */
 }
 
 void HPlane::sortAndMergeIntercepts()
@@ -156,8 +269,8 @@ void HPlane::sortAndMergeIntercepts()
         // Are we merging this pair?
         if(distance <= HPLANE_INTERCEPT_MERGE_DISTANCE_EPSILON)
         {
-            // Yes - merge the two intercepts into one.
-            cur.merge(next);
+            // Yes - merge the "next" intercept into "cur".
+            mergeIntercepts(cur, next);
 
             // Destroy the "next" intercept.
             d->intercepts.removeAt(i+1);

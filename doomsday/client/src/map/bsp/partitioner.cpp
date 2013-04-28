@@ -140,9 +140,14 @@ DENG2_PIMPL(Partitioner)
     /**
      * Returns the associated VertexInfo for the given @a vertex.
      */
-    VertexInfo &vertexInfo(Vertex const &vertex)
+    inline VertexInfo &vertexInfo(Vertex const &vertex)
     {
         return vertexInfos[vertex.indexInMap()];
+    }
+
+    inline LineSegmentTips &edgeTips(Vertex const &vertex)
+    {
+        return vertexInfo(vertex).edgeTips();
     }
 
     /**
@@ -416,8 +421,8 @@ DENG2_PIMPL(Partitioner)
             }
 
             /// @todo edge tips should be created when half-edges are created.
-            addLineSegmentTip(line->from(), angle,                 front, front? front->twinPtr() : 0);
-            addLineSegmentTip(  line->to(), M_InverseAngle(angle), front? front->twinPtr() : 0, front);
+            edgeTips(line->from()).add(angle,                 front, front? front->twinPtr() : 0);
+            edgeTips(line->to()  ).add(M_InverseAngle(angle), front? front->twinPtr() : 0, front);
         }
     }
 
@@ -441,17 +446,6 @@ DENG2_PIMPL(Partitioner)
         }
     }
 
-    inline void interceptPartition(LineSegment const &lineSeg, int edge)
-    {
-        HPlane::Intercept *intercept = hplane.interceptLineSegment(lineSeg, edge);
-        if(intercept)
-        {
-            Vertex const &vertex = lineSeg.vertex(edge);
-            intercept->before = openSectorAtAngle(vertex, hplane.lineSegment().inverseAngle());
-            intercept->after  = openSectorAtAngle(vertex, hplane.lineSegment().angle());
-        }
-    }
-
     /**
      * Splits the given line segment at the point (x,y). The new line segment
      * is returned. The old line segment is shortened (the original start vertex
@@ -468,8 +462,8 @@ DENG2_PIMPL(Partitioner)
         Vertex *newVert = newVertex(point);
 
         // First, create new tips for the resultant new vertex.
-        addLineSegmentTip(*newVert, frontLeft.inverseAngle(), frontLeft.twinPtr(), &frontLeft);
-        addLineSegmentTip(*newVert, frontLeft.angle(), &frontLeft, frontLeft.twinPtr());
+        edgeTips(*newVert).add(frontLeft.inverseAngle(), frontLeft.twinPtr(), &frontLeft);
+        edgeTips(*newVert).add(frontLeft.angle(),        &frontLeft, frontLeft.twinPtr());
 
         // Now perform the split, updating vertex and relative segment links.
         LineSegment &frontRight = cloneLineSegment(frontLeft);
@@ -542,6 +536,12 @@ DENG2_PIMPL(Partitioner)
             point.y += lineSeg.direction().y * ds;
 
         return point;
+    }
+
+    /// @todo refactor away -ds
+    inline void interceptPartition(LineSegment &lineSeg, int edge)
+    {
+        hplane.intercept(lineSeg, edge, edgeTips(lineSeg.vertex(edge)));
     }
 
     /**
@@ -1646,7 +1646,7 @@ DENG2_PIMPL(Partitioner)
                 {
                     if(!cur.selfRef)
                     {
-                        Vector2d nearPoint = (cur.vertex->origin() + next.vertex->origin()) / 2;
+                        Vector2d nearPoint = (cur.vertex().origin() + next.vertex().origin()) / 2;
                         notifyUnclosedSectorFound(*cur.after, nearPoint);
                     }
                 }
@@ -1654,7 +1654,7 @@ DENG2_PIMPL(Partitioner)
                 {
                     if(!next.selfRef)
                     {
-                        Vector2d nearPoint = (cur.vertex->origin() + next.vertex->origin()) / 2;
+                        Vector2d nearPoint = (cur.vertex().origin() + next.vertex().origin()) / 2;
                         notifyUnclosedSectorFound(*next.before, nearPoint);
                     }
                 }
@@ -1668,17 +1668,19 @@ DENG2_PIMPL(Partitioner)
                         {
                             LOG_DEBUG("Sector mismatch (#%d %s != #%d %s.")
                                 << cur.after->indexInMap()
-                                << cur.vertex->origin().asText()
+                                << cur.vertex().origin().asText()
                                 << next.before->indexInMap()
-                                << next.vertex->origin().asText();
+                                << next.vertex().origin().asText();
                         }
 
                         if(cur.selfRef && !next.selfRef)
                             sector = next.before;
                     }
 
-                    LineSegment *right = buildLineSegmentsBetweenVertexes(*cur.vertex, *next.vertex, sector, sector,
-                                                                          0 /*no line*/, hplane.lineSegment().mapSidePtr());
+                    LineSegment *right =
+                        buildLineSegmentsBetweenVertexes(cur.vertex(), next.vertex(),
+                                                         sector, sector, 0 /*no line*/,
+                                                         hplane.lineSegment().mapSidePtr());
 
                     // Add the new half-edges to the appropriate lists.
                     linkLineSegmentInSuperBlockmap(rightSet, *right);
@@ -1793,21 +1795,16 @@ DENG2_PIMPL(Partitioner)
         return vtx;
     }
 
-    inline void addLineSegmentTip(Vertex &vtx, coord_t angle, LineSegment *front, LineSegment *back)
-    {
-        vertexInfo(vtx).addLineSegmentTip(angle, front, back);
-    }
-
     inline void clearLineSegmentTipsByVertex(Vertex const &vtx)
     {
-        vertexInfo(vtx).clearLineSegmentTips();
+        edgeTips(vtx).clear();
     }
 
     void clearAllLineSegmentTips()
     {
         for(uint i = 0; i < vertexInfos.size(); ++i)
         {
-            vertexInfos[i].clearLineSegmentTips();
+            vertexInfos[i].edgeTips().clear();
         }
     }
 
@@ -1899,56 +1896,6 @@ DENG2_PIMPL(Partitioner)
             }
         }
         return lineSegs;
-    }
-
-    /**
-     * Determines whether a conceptual line oriented at @a vtx and "pointing"
-     * at the specified world @a angle enters an "open" sector (which is to say
-     * that said line does not enter void space and does not intercept with any
-     * existing map or partition line segment in the plane, thus "closed").
-     *
-     * @return  The "open" sector at this angle; otherwise @c 0 (closed).
-     */
-    Sector *openSectorAtAngle(Vertex const &vtx, coord_t angle)
-    {
-        VertexInfo::LineSegmentTips const &tips = vertexInfo(vtx).lineSegmentTips();
-
-        if(tips.empty())
-        {
-            throw Error("Partitioner::openSectorAtAngle",
-                        QString("Vertex #%1 has no line segment tips!")
-                            .arg(vtx.indexInMap()));
-        }
-
-        // First check whether there's a wall_tip that lies in the exact
-        // direction of the given direction (which is relative to the vertex).
-        DENG2_FOR_EACH_CONST(VertexInfo::LineSegmentTips, it, tips)
-        {
-            LineSegmentTip const &tip = *it;
-            coord_t diff = fabs(tip.angle() - angle);
-            if(diff < ANG_EPSILON || diff > (360.0 - ANG_EPSILON))
-            {
-                return 0; // Yes, found one.
-            }
-        }
-
-        // OK, now just find the first wall_tip whose angle is greater than
-        // the angle we're interested in. Therefore we'll be on the front side
-        // of that tip edge.
-        DENG2_FOR_EACH_CONST(VertexInfo::LineSegmentTips, it, tips)
-        {
-            LineSegmentTip const &tip = *it;
-            if(angle + ANG_EPSILON < tip.angle())
-            {
-                // Found it.
-                return (tip.hasFront()? tip.front().sectorPtr() : 0);
-            }
-        }
-
-        // Not found. The open sector will therefore be on the back of the tip
-        // at the greatest angle.
-        LineSegmentTip const &tip = tips.back();
-        return (tip.hasBack()? tip.back().sectorPtr() : 0);
     }
 
     bool release(MapElement *elm)

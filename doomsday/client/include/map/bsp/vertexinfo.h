@@ -28,8 +28,6 @@
 #ifndef LIBDENG_BSP_VERTEXINFO
 #define LIBDENG_BSP_VERTEXINFO
 
-#include <list>
-#include "map/bsp/partitioner.h"
 #include "map/bsp/hedgetip.h"
 
 namespace de {
@@ -42,34 +40,13 @@ namespace bsp {
 class VertexInfo
 {
 public:
-    typedef std::list<LineSegmentTip> LineSegmentTips;
-
-    VertexInfo() : oneSidedOwnerCount(0), twoSidedOwnerCount(0), tips(0) {}
+    VertexInfo() : oneSidedOwnerCount(0), twoSidedOwnerCount(0) {}
 
     // Total number of one and two-sided line owners.
     uint oneSidedOwnerCount;
     uint twoSidedOwnerCount;
 
-    /**
-     * Add a new LineSegmentTip to the set in it's rightful place according to
-     * an anti-clockwise (increasing angle) order.
-     */
-    LineSegmentTip &addLineSegmentTip(coord_t angle, LineSegment *front = 0, LineSegment *back = 0,
-                                      coord_t angleEpsilon = ANG_EPSILON)
-    {
-        LineSegmentTips::reverse_iterator after;
-
-        for(after = tips.rbegin();
-            after != tips.rend() && angle + angleEpsilon < (*after).angle(); after++)
-        {}
-
-        return *tips.insert(after.base(), LineSegmentTip(angle, front, back));
-    }
-
-    /// Clear all LineSegmentTips in the set.
-    void clearLineSegmentTips() { tips.clear(); }
-
-    LineSegmentTips const &lineSegmentTips() const { return tips; }
+    LineSegmentTips &edgeTips() { return tips; }
 
 private:
     LineSegmentTips tips;

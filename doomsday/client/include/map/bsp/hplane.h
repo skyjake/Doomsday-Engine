@@ -30,17 +30,19 @@
 
 #include <de/Vector>
 
+#include "map/bsp/linesegment.h"
 #include "partition.h"
-#include "Sector"
-#include "Vertex"
 
 /// Two intercepts whose distance is inclusive of this bound will be merged.
 #define HPLANE_INTERCEPT_MERGE_DISTANCE_EPSILON     1.0 / 128
 
+class Sector;
+class Vertex;
+
 namespace de {
 namespace bsp {
 
-class LineSegment;
+class LineSegmentTips;
 
 /**
  * Models the partitioning binary space half-plane.
@@ -54,9 +56,6 @@ public:
     class Intercept
     {
     public: /// @todo make private:
-        // Vertex in question.
-        Vertex *vertex;
-
         // True if this intersection was on a self-referencing line.
         bool selfRef;
 
@@ -67,13 +66,7 @@ public:
         Sector *after;
 
     public:
-        Intercept(ddouble distance)
-            : vertex(0),
-              selfRef(false),
-              before(0),
-              after(0),
-              _distance(distance)
-        {}
+        Intercept(double distance, LineSegment &lineSeg, int edge);
 
         bool operator < (Intercept const &other) const {
             return _distance < other._distance;
@@ -82,61 +75,46 @@ public:
         /**
          * Determine the distance between "this" and the @a other intercept.
          */
-        ddouble operator - (Intercept const &other) const {
+        double operator - (Intercept const &other) const {
             return _distance - other._distance;
         }
 
         /**
          * Returns distance along the half-plane relative to the origin.
          */
-        ddouble distance() const { return _distance; }
+        double distance() const { return _distance; }
 
-        void merge(Intercept const &other)
-        {
-            /*
-            LOG_AS("LineSegmentIntercept::merge");
-            debugPrint();
-            other.debugPrint();
-            */
+        /**
+         * Returns the intercepted line segment.
+         */
+        LineSegment &lineSegment() const;
 
-            if(selfRef && !other.selfRef)
-            {
-                if(before && other.before)
-                    before = other.before;
+        /**
+         * Returns the identifier for the relevant edge of the intercepted
+         * line segment.
+         */
+        int lineSegmentEdge() const;
 
-                if(after && other.after)
-                    after = other.after;
-
-                selfRef = false;
-            }
-
-            if(!before && other.before)
-                before = other.before;
-
-            if(!after && other.after)
-                after = other.after;
-
-            /*
-            LOG_TRACE("Result:");
-            debugPrint();
-            */
+        /**
+         * Returns the relative vertex from the intercepted line segment.
+         *
+         * @see lineSegment(), lineSegmentEdge()
+         */
+        inline Vertex &vertex() const {
+            return lineSegment().vertex(lineSegmentEdge());
         }
 
 #ifdef DENG_DEBUG
-        void debugPrint() const
-        {
-            LOG_INFO("Vertex #%i %s beforeSector: #%d afterSector: #%d %s")
-                << vertex->indexInMap()
-                << vertex->origin().asText()
-                << (before? before->indexInMap() : -1)
-                << (after? after->indexInMap() : -1)
-                << (selfRef? "SELFREF" : "");
-        }
+        void debugPrint() const;
 #endif
 
     private:
         /// Distance along the half-plane relative to the origin.
-        ddouble _distance;
+        double _distance;
+
+        // The intercepted line segment and edge identifier.
+        LineSegment *_lineSeg;
+        int _edge;
     };
 
     typedef QList<Intercept> Intercepts;
@@ -165,13 +143,16 @@ public:
      * @a lineSeg @a edge has already been found then no new intercept will
      * be created and @c 0 is returned.
      *
-     * @param lineSeg  Line segment to perform intersection with.
-     * @param edge     Line segment edge identifier of the vertex to associate
-     *                 with any resulting intercept.
+     * @param lineSeg   Line segment to perform intersection with.
+     * @param edge      Line segment edge identifier of the vertex to associate
+     *                  with any resulting intercept.
+     * @param edgeTips  Set of LineSegmentTips for the identified @a edge of
+     *                  @a lineSeg. (@todo Refactor away -ds)
      *
      * @return  The resultant new intercept; otherwise @a 0.
      */
-    Intercept *interceptLineSegment(LineSegment const &lineSeg, int edge);
+    Intercept *intercept(LineSegment const &lineSeg, int edge,
+                         LineSegmentTips const &edgeTips);
 
     /**
      * Sort and then merge near-intercepts from the given list.

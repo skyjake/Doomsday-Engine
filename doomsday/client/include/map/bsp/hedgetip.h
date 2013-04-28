@@ -26,6 +26,8 @@
 #ifndef DENG_WORLD_BSP_LINESEGMENTTIP
 #define DENG_WORLD_BSP_LINESEGMENTTIP
 
+#include <list>
+
 #include "map/bsp/linesegment.h"
 
 namespace de {
@@ -101,6 +103,43 @@ private:
     /// Line segments on each side of the tip. Front is the side of increasing
     /// angles, back is the side of decreasing angles. Either can be @c 0.
     LineSegment *_front, *_back;
+};
+
+class LineSegmentTips
+{
+public:
+    typedef std::list<LineSegmentTip> All;
+
+    LineSegmentTips() : _tips(0) {}
+
+    bool isEmpty() const { return _tips.empty(); }
+
+    /// Clear all LineSegmentTips in the set.
+    void clear() { _tips.clear(); }
+
+    /**
+     * Add a new LineSegmentTip to the set in it's rightful place according to
+     * an anti-clockwise (increasing angle) order.
+     *
+     * @param angleEpsilon  Smallest difference between two angles before being
+     *                      considered equal (in degrees).
+     */
+    LineSegmentTip &add(coord_t angle, LineSegment *front = 0, LineSegment *back = 0,
+                        coord_t angleEpsilon = 1.0 / 1024.0)
+    {
+        All::reverse_iterator after;
+
+        for(after = _tips.rbegin();
+            after != _tips.rend() && angle + angleEpsilon < (*after).angle(); after++)
+        {}
+
+        return *_tips.insert(after.base(), LineSegmentTip(angle, front, back));
+    }
+
+    All const &all() const { return _tips; }
+
+private:
+    All _tips;
 };
 
 } // namespace bsp
