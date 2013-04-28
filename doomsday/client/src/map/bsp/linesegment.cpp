@@ -166,18 +166,18 @@ LineSegment::LineSegment(LineSegment const &other)
     : d(new Instance(this, *other.d->from, *other.d->to,
                             other.d->mapSide, other.d->sourceMapSide))
 {
-    d->direction  = other.d->direction;
-    d->twin       = other.d->twin;
+    d->direction     = other.d->direction;
+    d->twin          = other.d->twin;
     d->rightNeighbor = other.d->rightNeighbor;
-    d->leftNeighbor = other.d->leftNeighbor;
-    d->bmapBlock  = other.d->bmapBlock;
-    d->sector     = other.d->sector;
-    d->pLength    = other.d->pLength;
-    d->pAngle     = other.d->pAngle;
-    d->pPara      = other.d->pPara;
-    d->pPerp      = other.d->pPerp;
-    d->pSlopeType = other.d->pSlopeType;
-    d->hedge      = other.d->hedge;
+    d->leftNeighbor  = other.d->leftNeighbor;
+    d->bmapBlock     = other.d->bmapBlock;
+    d->sector        = other.d->sector;
+    d->pLength       = other.d->pLength;
+    d->pAngle        = other.d->pAngle;
+    d->pPara         = other.d->pPara;
+    d->pPerp         = other.d->pPerp;
+    d->pSlopeType    = other.d->pSlopeType;
+    d->hedge         = other.d->hedge;
 }
 
 LineSegment &LineSegment::operator = (LineSegment const &other)
@@ -186,8 +186,8 @@ LineSegment &LineSegment::operator = (LineSegment const &other)
     d->twin          = other.d->twin;
     d->mapSide       = other.d->mapSide;
     d->sourceMapSide = other.d->sourceMapSide;
-    d->rightNeighbor    = other.d->rightNeighbor;
-    d->leftNeighbor    = other.d->leftNeighbor;
+    d->rightNeighbor = other.d->rightNeighbor;
+    d->leftNeighbor  = other.d->leftNeighbor;
     d->bmapBlock     = other.d->bmapBlock;
     d->sector        = other.d->sector;
     d->pLength       = other.d->pLength;
@@ -303,7 +303,7 @@ Line::Side &LineSegment::sourceMapSide() const
 
 bool LineSegment::hasNeighbor(int edge) const
 {
-    return *d->neighborAdr(edge) != 0;
+    return (*d->neighborAdr(edge)) != 0;
 }
 
 LineSegment &LineSegment::neighbor(int edge) const
@@ -314,7 +314,7 @@ LineSegment &LineSegment::neighbor(int edge) const
         return **neighborAdr;
     }
     /// @throw MissingNeighborError Attempted with no relevant neighbor attributed.
-    throw MissingNeighborError("LineSegment::neighbor", QString("No neighbor %1 is attributed").arg(edge? "Right" : "Left"));
+    throw MissingNeighborError("LineSegment::neighbor", QString("No %1 neighbor is attributed").arg(edge? "Right" : "Left"));
 }
 
 void LineSegment::setNeighbor(int edge, LineSegment *newNeighbor)

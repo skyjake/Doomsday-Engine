@@ -80,11 +80,18 @@ public:
     /// Required half-edge is missing. @ingroup errors
     DENG2_ERROR(MissingHEdgeError);
 
-    /// Edge/vertex identifiers:
+    /// Vertex identifiers:
     enum
     {
         From,
         To
+    };
+
+    /// Edge identifiers:
+    enum
+    {
+        Left,
+        Right
     };
 
 public:
@@ -244,7 +251,8 @@ public:
     /**
      * Returns the specified @a edge neighbor of the line segment.
      *
-     * @param edge  If non-zero test the @em Right neighbor, otherwise the @em Left.
+     * @param edge  If non-zero retrieve the @em Right neighbor, otherwise the
+     *              @em Left.
      *
      * @see hasNeighbor()
      */
@@ -267,24 +275,24 @@ public:
      *
      * @param edge  If non-zero change the @em Right neighbor, otherwise the @em Left.
      *
-     * @param newNeighbor  New line segment to set as the neighbor.
+     * @param newNeighbor  New line segment to set as the neighbor. Can be @c 0.
      */
     void setNeighbor(int edge, LineSegment *newNeighbor);
 
     /**
-     * Change the @em Left neighbor of the line segment.
+     * Change the @em Left neighbor of the line segment. Can be @c 0.
      * @see setNeighbor()
      */
     inline void setLeft(LineSegment *newLeft) { setNeighbor(Left, newLeft); }
 
     /**
-     * Change the @em Right neighbor of the line segment.
+     * Change the @em Right neighbor of the line segment. Can be @c 0.
      * @see setNeighbor()
      */
     inline void setRight(LineSegment *newRight) { setNeighbor(Right, newRight); }
 
     /**
-     * Returns The superblock that contains the line segment; otherwise @c 0.
+     * Returns the superblock that contains the line segment; otherwise @c 0.
      */
     SuperBlock *bmapBlockPtr() const;
 
