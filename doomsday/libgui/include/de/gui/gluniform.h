@@ -56,12 +56,12 @@ public:
         Int,
         UInt,
         Float,
-        Vector2,
-        Vector3,
-        Vector4,
-        Matrix3x3,
-        Matrix4x4,
-        Texture2D
+        Vec2,
+        Vec3,
+        Vec4,
+        Mat3,
+        Mat4,
+        Sampler2D
     };
 
     /**
@@ -92,6 +92,7 @@ public:
     GLUniform &operator = (dint value);
     GLUniform &operator = (duint value);
     GLUniform &operator = (dfloat value);
+    GLUniform &operator = (ddouble value);
     GLUniform &operator = (Vector2f const &vec);
     GLUniform &operator = (Vector3f const &vec);
     GLUniform &operator = (Vector4f const &vec);

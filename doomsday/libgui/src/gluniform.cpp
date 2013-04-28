@@ -21,6 +21,7 @@
 #include "de/GLProgram"
 #include "de/gui/opengl.h"
 #include <de/Block>
+#include <de/Log>
 #include <cstring>
 
 namespace de {
@@ -48,17 +49,17 @@ DENG2_PIMPL(GLUniform)
         zap(value);
         switch(type)
         {
-        case Vector2:
-        case Vector3:
-        case Vector4:
+        case Vec2:
+        case Vec3:
+        case Vec4:
             value.vector = new Vector4f;
             break;
 
-        case Matrix3x3:
+        case Mat3:
             value.mat3 = new Matrix3f;
             break;
 
-        case Matrix4x4:
+        case Mat4:
             value.mat4 = new Matrix4f;
             break;
 
@@ -73,17 +74,17 @@ DENG2_PIMPL(GLUniform)
 
         switch(type)
         {
-        case Vector2:
-        case Vector3:
-        case Vector4:
+        case Vec2:
+        case Vec3:
+        case Vec4:
             delete value.vector;
             break;
 
-        case Matrix3x3:
+        case Mat3:
             delete value.mat3;
             break;
 
-        case Matrix4x4:
+        case Mat4:
             delete value.mat4;
             break;
 
@@ -189,9 +190,14 @@ GLUniform &GLUniform::operator = (dfloat value)
     return *this;
 }
 
+GLUniform &GLUniform::operator = (ddouble value)
+{
+    return *this = dfloat(value);
+}
+
 GLUniform &GLUniform::operator = (Vector2f const &vec)
 {
-    DENG2_ASSERT(d->type == Vector2);
+    DENG2_ASSERT(d->type == Vec2);
 
     if(Vector2f(*d->value.vector) != vec)
     {
@@ -203,7 +209,7 @@ GLUniform &GLUniform::operator = (Vector2f const &vec)
 
 GLUniform &GLUniform::operator = (Vector3f const &vec)
 {
-    DENG2_ASSERT(d->type == Vector3);
+    DENG2_ASSERT(d->type == Vec3);
 
     if(Vector3f(*d->value.vector) != vec)
     {
@@ -215,7 +221,7 @@ GLUniform &GLUniform::operator = (Vector3f const &vec)
 
 GLUniform &GLUniform::operator = (Vector4f const &vec)
 {
-    DENG2_ASSERT(d->type == Vector4);
+    DENG2_ASSERT(d->type == Vec4);
 
     if(*d->value.vector != vec)
     {
@@ -227,7 +233,7 @@ GLUniform &GLUniform::operator = (Vector4f const &vec)
 
 GLUniform &GLUniform::operator = (Matrix3f const &mat)
 {
-    DENG2_ASSERT(d->type == Matrix3x3);
+    DENG2_ASSERT(d->type == Mat3);
 
     *d->value.mat3 = mat;
     d->markAsChanged();
@@ -237,7 +243,7 @@ GLUniform &GLUniform::operator = (Matrix3f const &mat)
 
 GLUniform &GLUniform::operator = (Matrix4f const &mat)
 {
-    DENG2_ASSERT(d->type == Matrix4x4);
+    DENG2_ASSERT(d->type == Mat4);
 
     *d->value.mat4 = mat;
     d->markAsChanged();
@@ -307,31 +313,31 @@ dfloat GLUniform::toFloat() const
 
 Vector2f const &GLUniform::toVector2f() const
 {
-    DENG2_ASSERT(d->type == Vector2 || d->type == Vector3 || d->type == Vector4);
+    DENG2_ASSERT(d->type == Vec2 || d->type == Vec3 || d->type == Vec4);
     return *d->value.vector;
 }
 
 Vector3f const &GLUniform::toVector3f() const
 {
-    DENG2_ASSERT(d->type == Vector2 || d->type == Vector3 || d->type == Vector4);
+    DENG2_ASSERT(d->type == Vec2 || d->type == Vec3 || d->type == Vec4);
     return *d->value.vector;
 }
 
 Vector4f const &GLUniform::toVector4f() const
 {
-    DENG2_ASSERT(d->type == Vector2 || d->type == Vector3 || d->type == Vector4);
+    DENG2_ASSERT(d->type == Vec2 || d->type == Vec3 || d->type == Vec4);
     return *d->value.vector;
 }
 
 Matrix3f const &GLUniform::toMatrix3f() const
 {
-    DENG2_ASSERT(d->type == Matrix3x3);
+    DENG2_ASSERT(d->type == Mat3);
     return *d->value.mat3;
 }
 
 Matrix4f const &GLUniform::toMatrix4f() const
 {
-    DENG2_ASSERT(d->type == Matrix4x4);
+    DENG2_ASSERT(d->type == Mat4);
     return *d->value.mat4;
 }
 
@@ -346,6 +352,8 @@ void GLUniform::applyInProgram(GLProgram &program) const
     if(loc < 0)
     {
         // Uniform not in the program.
+        LOG_AS("applyInProgram");
+        LOG_DEBUG("'%s' not in the program") << d->name.constData();
         return;
     }
 
@@ -363,23 +371,23 @@ void GLUniform::applyInProgram(GLProgram &program) const
         glUniform1f(loc, d->value.float32);
         break;
 
-    case Vector2:
+    case Vec2:
         glUniform2f(loc, d->value.vector->x, d->value.vector->y);
         break;
 
-    case Vector3:
+    case Vec3:
         glUniform3f(loc, d->value.vector->x, d->value.vector->y, d->value.vector->z);
         break;
 
-    case Vector4:
+    case Vec4:
         glUniform4f(loc, d->value.vector->x, d->value.vector->y, d->value.vector->z, d->value.vector->w);
         break;
 
-    case Matrix3x3:
+    case Mat3:
         glUniformMatrix3fv(loc, 1, GL_FALSE, d->value.mat3->values());
         break;
 
-    case Matrix4x4:
+    case Mat4:
         glUniformMatrix4fv(loc, 1, GL_FALSE, d->value.mat4->values());
         break;
 
