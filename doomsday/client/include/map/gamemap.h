@@ -191,34 +191,6 @@ public:
     inline int sectorCount() const { return sectors().count(); }
 
     /**
-     * Locate a sector in the map by sound emitter.
-     *
-     * @param soundEmitter  ddmobj_base_t to search for.
-     *
-     * @return  Pointer to the referenced Sector instance; otherwise @c 0.
-     */
-    Sector *sectorBySoundEmitter(ddmobj_base_t const &soundEmitter) const;
-
-    /**
-     * Locate a sector plane in the map by sound emitter.
-     *
-     * @param soundEmitter  ddmobj_base_t to search for.
-     *
-     * @return  Pointer to the referenced Plane instance; otherwise @c 0.
-     */
-    Plane *planeBySoundEmitter(ddmobj_base_t const &soundEmitter) const;
-
-    /**
-     * Locate a surface in the map by sound emitter.
-     *
-     * @param soundEmitter  ddmobj_base_t to search for.
-     *
-     * @return  Pointer to the referenced Surface instance; otherwise @c 0.
-     */
-    Surface *surfaceBySoundEmitter(ddmobj_base_t const &soundEmitter) const;
-
-#if defined(__SERVER__) || defined(DENG_DEBUG)
-    /**
      * Given an @a emitter origin, attempt to identify the map element
      * to which it belongs.
      *
@@ -232,7 +204,6 @@ public:
      */
     bool identifySoundEmitter(ddmobj_base_t const &emitter, Sector **sector,
         Polyobj **poly, Plane **plane, Surface **surface) const;
-#endif
 
     /**
      * Provides access to the list of polyobjs for efficient traversal.
@@ -251,15 +222,6 @@ public:
      * @return  Pointer to the referenced polyobj instance; otherwise @c 0.
      */
     Polyobj *polyobjByTag(int tag) const;
-
-    /**
-     * Locate a polyobj in the map by mobj base.
-     *
-     * @param ddMobjBase  Base mobj to search for.
-     *
-     * @return  Pointer to the referenced polyobj instance; otherwise @c 0.
-     */
-    Polyobj *polyobjByBase(ddmobj_base_t const &ddMobjBase) const;
 
     /**
      * Returns the root element for the map's BSP tree.

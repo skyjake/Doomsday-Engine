@@ -735,41 +735,6 @@ static void updateAllMapSectors(GameMap &map)
     }
 }
 
-#ifdef DENG_DEBUG
-static void verifyAllSoundEmitters()
-{
-    DENG_ASSERT(theMap != 0);
-
-    Sector *emSec;
-    Plane *emPln;
-    Polyobj *emPoly;
-    Surface *emSuf;
-    foreach(Sector *sector, theMap->sectors())
-    {
-        DENG_ASSERT(theMap->identifySoundEmitter(sector->soundEmitter(), &emSec, &emPoly, &emPln, &emSuf));
-
-        foreach(Plane *plane, sector->planes())
-        {
-            DENG_ASSERT(theMap->identifySoundEmitter(plane->soundEmitter(), &emSec, &emPoly, &emPln, &emSuf));
-        }
-    }
-    foreach(Polyobj *polyobj, theMap->polyobjs())
-    {
-        DENG_ASSERT(theMap->identifySoundEmitter(polyobj->soundEmitter(), &emSec, &emPoly, &emPln, &emSuf));
-    }
-    foreach(Line *line, theMap->lines())
-    for(int i = 0; i < 2; ++i)
-    {
-        Line::Side &side = line->side(i);
-        if(!side.hasSections()) continue;
-
-        DENG_ASSERT(theMap->identifySoundEmitter(side.middleSoundEmitter(), &emSec, &emPoly, &emPln, &emSuf));
-        DENG_ASSERT(theMap->identifySoundEmitter(side.bottomSoundEmitter(), &emSec, &emPoly, &emPln, &emSuf));
-        DENG_ASSERT(theMap->identifySoundEmitter(side.topSoundEmitter(), &emSec, &emPoly, &emPln, &emSuf));
-    }
-}
-#endif // DENG_DEBUG
-
 #undef R_SetupMap
 DENG_EXTERN_C void R_SetupMap(int mode, int flags)
 {
@@ -842,11 +807,6 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
         S_SetupForChangedMap();
 
         // Map setup has been completed.
-
-#ifdef DENG_DEBUG
-        // Ensure all sound emitters are identifiable.
-        verifyAllSoundEmitters();
-#endif
 
         // Run any commands specified in Map Info.
         de::Uri mapUri = theMap->uri();
