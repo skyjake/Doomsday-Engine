@@ -29,10 +29,13 @@
 
 #include <de/vector1.h> /// @todo Remove me.
 
+#include <de/Error>
 #include <de/Log>
 
-#include "HEdge"
 #include "Line"
+#include "Vertex"
+
+#include "map/bsp/hedgeintercept.h"
 #include "map/bsp/linesegment.h"
 
 #include "map/bsp/hplane.h"
@@ -51,9 +54,14 @@ DENG2_PIMPL(HPlane)
     /// Intercept points along the half-plane.
     Intercepts intercepts;
 
+    /// Set to @a true when @var intercepts requires sorting.
+    bool needSortIntercepts;
+
     Instance(Public *i, Vector2d const &partitionOrigin,
              Vector2d const &partitionDirection)
-        : Base(i), partition(partitionOrigin, partitionDirection)
+        : Base(i),
+          partition(partitionOrigin, partitionDirection),
+          needSortIntercepts(false)
     {}
 
     /**
@@ -66,7 +74,7 @@ DENG2_PIMPL(HPlane)
      */
     bool haveInterceptForVertex(Vertex const &vertex) const
     {
-        foreach(HEdgeIntercept const &icpt, intercepts)
+        foreach(LineSegmentIntercept const &icpt, intercepts)
         {
             if(icpt.vertex == &vertex)
                 return true;
@@ -82,49 +90,56 @@ HPlane::HPlane(Vector2d const &partitionOrigin, Vector2d const &partitionDirecti
 void HPlane::clearIntercepts()
 {
     d->intercepts.clear();
+    // An empty intercept list is logically sorted.
+    d->needSortIntercepts = false;
 }
 
-void HPlane::configure(LineSegment const &baseLineSeg)
+void HPlane::configure(LineSegment const &newBaseSeg)
 {
     // Only map line segments are suitable.
-    DENG_ASSERT(baseLineSeg.hasMapSide());
+    DENG_ASSERT(newBaseSeg.hasMapSide());
 
     LOG_AS("HPlane::configure");
 
     // Clear the list of intersection points.
     clearIntercepts();
 
-    Line::Side &side = baseLineSeg.mapSide();
+    Line::Side &side = newBaseSeg.mapSide();
     d->partition.origin    = side.from().origin();
     d->partition.direction = side.to().origin() - side.from().origin();
 
     // Update/store a copy of the line segment.
-    LineSegment *newLineSeg = new LineSegment(baseLineSeg);
-    newLineSeg->ceaseVertexObservation(); /// @todo refactor away -ds
-    d->lineSegment.reset(newLineSeg);
+    d->lineSegment.reset(new LineSegment(newBaseSeg));
+    d->lineSegment->ceaseVertexObservation(); /// @todo refactor away -ds
 
     //LOG_DEBUG("line segment %p %s.")
     //    << de::dintptr(&newLineSeg) << d->partition.asText();
 }
 
-void HPlane::interceptLineSegment(LineSegment const &lineSeg, Vertex const &vertex,
-    Sector *beforeSector, Sector *afterSector)
+HPlane::Intercept *HPlane::interceptLineSegment(LineSegment const &lineSeg, int edge)
 {
     // Already present for this vertex?
-    if(d->haveInterceptForVertex(vertex)) return;
+    Vertex &vertex = lineSeg.vertex(edge);
+    if(d->haveInterceptForVertex(vertex)) return 0;
 
-    HEdgeIntercept inter;
-    inter.vertex  = const_cast<Vertex *>(&vertex);
+    LineSegmentIntercept inter;
+    inter.vertex  = &vertex;
     inter.selfRef = (lineSeg.hasMapSide() && lineSeg.line().isSelfReferencing());
 
-    inter.before  = beforeSector;
-    inter.after   = afterSector;
-
     d->intercepts.append(Intercept(distanceToVertex(vertex), inter));
+    Intercept *newIntercept = &d->intercepts.last();
+
+    // The addition of a new intercept means we'll need to resort.
+    d->needSortIntercepts = true;
+
+    return newIntercept;
 }
 
 void HPlane::sortAndMergeIntercepts()
 {
+    // Any work to do?
+    if(!d->needSortIntercepts) return;
+
     qSort(d->intercepts.begin(), d->intercepts.end());
 
     for(int i = 0; i < d->intercepts.count() - 1; ++i)
@@ -155,6 +170,8 @@ void HPlane::sortAndMergeIntercepts()
             i -= 1;
         }
     }
+
+    d->needSortIntercepts = false;
 }
 
 coord_t HPlane::distanceToVertex(Vertex const &vertex) const

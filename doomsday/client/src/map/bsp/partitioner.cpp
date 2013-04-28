@@ -47,8 +47,7 @@
 #include "map/bsp/superblockmap.h"
 #include "map/bsp/vertexinfo.h"
 
-#include "render/r_main.h"  // validCount
-#include "m_misc.h"         // M_BoxOnLineSide2
+#include "m_misc.h" // M_BoxOnLineSide2
 
 #include "map/bsp/partitioner.h"
 
@@ -63,32 +62,9 @@ typedef QList<HEdge *> HEdgeSortBuffer;
 /// Used when collecting line segments to build a leaf. @todo Refactor away.
 typedef QList<LineSegment *> LineSegmentList;
 
-/**
- * LineRelationship delineates the possible logical relationships between two
- * line segments in the plane.
- */
-enum LineRelationship
-{
-    Collinear = 0,
-    Right,
-    RightIntercept, ///< Right vertex intercepts.
-    Left,
-    LeftIntercept,  ///< Left vertex intercepts.
-    Intersects
-};
-
-/**
- * @param fromDist     Perpendicular distance from the start vertex to the partition.
- * @param toDist       Perpendicular distance from the end vertex to the partition.
- * @param distEpsilon  Rounding threshold within which points are considered
- *                     to intercept of the partition line.
- *
- * @return  Logical relationship between the line and the partition.
- */
-static LineRelationship lineRelationship(coord_t fromDist, coord_t toDist,
-    coord_t distEpsilon = DIST_EPSILON);
-
-static Vector2d findBspLeafCenter(BspLeaf const &leaf);
+/// Used when choosing a new line segment to avoid repeat testing of collinear
+/// line segments and when searching for "One-way window" map hacks.
+static int validCount;
 
 DENG2_PIMPL(Partitioner)
 {
@@ -523,55 +499,15 @@ DENG2_PIMPL(Partitioner)
         return newLineSeg;
     }
 
-    /**
-     * @param fromSeg  Line segment to determine the distance from.
-     * @param toSeg    Line segment to determine the distance to.
-     *
-     * Return values:
-     * @param fromDist  Perpendicular distance from the "from" vertex of @a fromSeg.
-     * @param toDist    Perpendicular distance from the "to" vertex of @a fromSeg.
-     */
-    inline void lineSegmentDistance(LineSegment const &fromSeg,
-        LineSegment const &toSeg, coord_t &fromDist, coord_t &toDist)
-    {
-        /// @attention Ensure line segments produced from the partition's source
-        /// line are always treated as collinear. This special case is only
-        /// necessary due to precision inaccuracies when a line is split into
-        /// multiple segments.
-        if(fromSeg.hasSourceMapSide() && toSeg.hasSourceMapSide() &&
-           &fromSeg.sourceMapSide().line() == &toSeg.sourceMapSide().line())
-        {
-            fromDist = toDist = 0;
-        }
-        else
-        {
-            coord_t fromV1[2] = { fromSeg.fromOrigin().x, fromSeg.fromOrigin().y };
-            coord_t toV1[2]   = { fromSeg.toOrigin().x, fromSeg.toOrigin().y };
-            coord_t toSegDirectionV1[2] = { toSeg.direction().x, toSeg.direction().y } ;
-            fromDist = V2d_PointLinePerpDistance(fromV1, toSegDirectionV1, toSeg.pPerp, toSeg.pLength);
-            toDist   = V2d_PointLinePerpDistance(toV1,   toSegDirectionV1, toSeg.pPerp, toSeg.pLength);
-        }
-    }
-
-    /**
-     * Determine the relationship between the two line segments @a fromSeg and
-     * @a toSeg.
-     *
-     * @return LineRelationship between the given line segments.
-     */
-    inline LineRelationship lineSegmentRelationship(LineSegment const &fromSeg,
-        LineSegment const &toSeg, coord_t &fromDist, coord_t &toDist)
-    {
-        lineSegmentDistance(fromSeg, toSeg, fromDist, toDist);
-        return lineRelationship(fromDist, toDist);
-    }
-
     inline void interceptPartition(LineSegment const &lineSeg, int edge)
     {
-        Vertex const &vertex = lineSeg.vertex(edge);
-        hplane.interceptLineSegment(lineSeg, vertex,
-                                    openSectorAtAngle(vertex, M_InverseAngle(hplane.lineSegment().pAngle)),
-                                    openSectorAtAngle(vertex, hplane.lineSegment().pAngle));
+        HPlane::Intercept *intercept = hplane.interceptLineSegment(lineSeg, edge);
+        if(intercept)
+        {
+            Vertex const &vertex = lineSeg.vertex(edge);
+            intercept->before = openSectorAtAngle(vertex, M_InverseAngle(hplane.lineSegment().pAngle));
+            intercept->after  = openSectorAtAngle(vertex, hplane.lineSegment().pAngle);
+        }
     }
 
     /**
@@ -591,8 +527,7 @@ DENG2_PIMPL(Partitioner)
     void partitionOneLineSegment(LineSegment &lineSeg, SuperBlock &rights, SuperBlock &lefts)
     {
         coord_t fromDist, toDist;
-        LineRelationship rel = lineSegmentRelationship(lineSeg, hplane.lineSegment(),
-                                                       fromDist, toDist);
+        LineRelationship rel = lineSeg.relationship(hplane.lineSegment(), &fromDist, &toDist);
         switch(rel)
         {
         case Collinear: {
@@ -792,7 +727,7 @@ DENG2_PIMPL(Partitioner)
 
         /// Determine the relationship between @var lineSeg and the partition plane.
         coord_t fromDist, toDist;
-        LineRelationship rel = lineSegmentRelationship(lineSeg, plSeg, fromDist, toDist);
+        LineRelationship rel = lineSeg.relationship(plSeg, &fromDist, &toDist);
         switch(rel)
         {
         case Collinear: {
@@ -1520,6 +1455,23 @@ DENG2_PIMPL(Partitioner)
         return 0; // Not reachable.
     }
 
+    static Vector2d findBspLeafCenter(BspLeaf const &leaf)
+    {
+        Vector2d center;
+        int numPoints = 0;
+        for(HEdge const *hedge = leaf.firstHEdge(); hedge; hedge = hedge->_next)
+        {
+            center += hedge->fromOrigin();
+            center += hedge->toOrigin();
+            numPoints += 2;
+        }
+        if(numPoints)
+        {
+            center /= numPoints;
+        }
+        return center;
+    }
+
     void clockwiseLeaf(BspLeaf &leaf, HEdgeSortBuffer &sortBuffer)
     {
         clockwiseOrder(leaf, findBspLeafCenter(leaf), sortBuffer);
@@ -2213,52 +2165,4 @@ void Partitioner::release(MapElement *mapElement)
         LOG_DEBUG("Attempted to release an unknown/unowned %s %p.")
             << DMU_Str(mapElement->type()) << de::dintptr(mapElement);
     }
-}
-
-static LineRelationship lineRelationship(coord_t fromDist, coord_t toDist, coord_t distEpsilon)
-{
-    // Collinear with "this" line?
-    if(abs(fromDist) <= distEpsilon && abs(toDist) <= distEpsilon)
-    {
-        return Collinear;
-    }
-
-    // To the right of "this" line?.
-    if(fromDist > -distEpsilon && toDist > -distEpsilon)
-    {
-        // Close enough to intercept?
-        if(fromDist < distEpsilon || toDist < distEpsilon) return RightIntercept;
-        return Right;
-    }
-
-    // To the left of "this" line?
-    if(fromDist < distEpsilon && toDist < distEpsilon)
-    {
-        // Close enough to intercept?
-        if(fromDist > -distEpsilon || toDist > -distEpsilon) return LeftIntercept;
-        return Left;
-    }
-
-    return Intersects;
-}
-
-static Vector2d findBspLeafCenter(BspLeaf const &leaf)
-{
-    Vector2d center;
-    size_t numPoints = 0;
-
-    for(HEdge const *hedge = leaf.firstHEdge(); hedge; hedge = hedge->_next)
-    {
-        center += hedge->fromOrigin();
-        center += hedge->toOrigin();
-        numPoints += 2;
-    }
-
-    if(numPoints)
-    {
-        center.x /= numPoints;
-        center.y /= numPoints;
-    }
-
-    return center;
 }

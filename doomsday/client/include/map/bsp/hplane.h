@@ -53,11 +53,11 @@ public:
     /**
      * Used to model an intercept in the list of intersections.
      */
-    class Intercept : public HEdgeIntercept
+    class Intercept : public LineSegmentIntercept
     {
     public:
-        Intercept(ddouble distance, HEdgeIntercept const &hedgeIntercept)
-            : HEdgeIntercept(hedgeIntercept), _distance(distance)
+        Intercept(ddouble distance, LineSegmentIntercept const &hedgeIntercept)
+            : LineSegmentIntercept(hedgeIntercept), _distance(distance)
         {}
 
         bool operator < (Intercept const &other) const {
@@ -111,21 +111,17 @@ public:
     /**
      * Perform intersection of the half-plane with the specified @a lineSeg.
      * If the two are found to intersect -- a new intercept will be added to
-     * the list of intercepts.
+     * the list of intercepts. If a previous intersection for the specified
+     * @a lineSeg @a edge has already been found then no new intercept will
+     * be created and @c 0 is returned.
      *
-     * @param lineSeg       Line segment to perform intersection with.
-     * @param vertex        Vertex to associate with any resulting intercept.
-     *                      @todo Should come from @a lineSeg -ds
-     * @param beforeSector  Sector to attribute "before" the intercept.
-     * @param afterSector   Sector to attribute "after" the intercept.
+     * @param lineSeg  Line segment to perform intersection with.
+     * @param edge     Line segment edge identifier of the vertex to associate
+     *                 with any resulting intercept.
      *
-     * @todo Requiring the sectors to be defined a priori requires the caller
-     * to implement their own intersection test. This logic should either be
-     * encapsulated by HPlane, or the resultant intercept returned in order
-     * that the caller can update it accordingly. -ds
+     * @return  The resultant new intercept; otherwise @a 0.
      */
-    void interceptLineSegment(LineSegment const &lineSeg, Vertex const &vertex,
-                              Sector *beforeSector = 0, Sector *afterSector = 0);
+    Intercept *interceptLineSegment(LineSegment const &lineSeg, int edge);
 
     /**
      * Sort and then merge near-intercepts from the given list.

@@ -1,4 +1,4 @@
-/** @file map/hedgeintercept.h BSP Builder half-edge intercept info.
+/** @file map/bsp/linesegmentintercept.h BSP Builder half-edge intercept info.
  *
  * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
  * @see http://sourceforge.net/projects/glbsp/
@@ -23,27 +23,27 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_MAP_BSP_HEDGEINTERCEPT
-#define DENG_WORLD_MAP_BSP_HEDGEINTERCEPT
-
-#include "dd_types.h"
-#include "map/p_mapdata.h"
+#ifndef DENG_WORLD_MAP_BSP_LINESEGMENTINTERCEPT
+#define DENG_WORLD_MAP_BSP_LINESEGMENTINTERCEPT
 
 #include <de/Log>
+
+#include "Sector"
+#include "Vertex"
 
 namespace de {
 namespace bsp {
 
 /**
- * Plain-old-data structure containing additional information for a half-edge
- * half-plane intercept point where the geometry intersects (an incident vertex
- * can be found here (or at there will be upon insertion.)).
+ * Plain-old-data structure containing additional information for a line segment
+ * half-plane intersection (an incident vertex can be found here (or there will
+ * be upon insertion.)).
  *
  * There is always a corresponding Intercept in the owning Intercepts.
  *
  * @ingroup bsp
  */
-struct HEdgeIntercept
+struct LineSegmentIntercept
 {
     // Vertex in question.
     Vertex *vertex;
@@ -57,24 +57,24 @@ struct HEdgeIntercept
     Sector *before;
     Sector *after;
 
-    HEdgeIntercept()
+    LineSegmentIntercept()
         : vertex(0),
           selfRef(false),
           before(0),
           after(0)
     {}
 
-    HEdgeIntercept(HEdgeIntercept const &other)
+    LineSegmentIntercept(LineSegmentIntercept const &other)
         : vertex(other.vertex),
           selfRef(other.selfRef),
           before(other.before),
           after(other.after)
     {}
 
-    void merge(HEdgeIntercept const &other)
+    void merge(LineSegmentIntercept const &other)
     {
         /*
-        LOG_TRACE("Merging intersections:");
+        LOG_AS("LineSegmentIntercept::merge");
         debugPrint();
         other.debugPrint();
         */
@@ -118,4 +118,4 @@ struct HEdgeIntercept
 } // namespace bsp
 } // namespace de
 
-#endif // DENG_WORLD_MAP_BSP_HEDGEINTERCEPT
+#endif // DENG_WORLD_MAP_BSP_LINESEGMENTINTERCEPT

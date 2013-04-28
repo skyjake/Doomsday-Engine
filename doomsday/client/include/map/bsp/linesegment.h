@@ -34,12 +34,29 @@
 
 #include "map/bsp/linesegment.h"
 
+/// Rounding threshold within which two points are considered as co-incident.
+#define LINESEGMENT_INCIDENT_DISTANCE_EPSILON       1.0 / 128
+
 class HEdge;
 
 namespace de {
 namespace bsp {
 
 class SuperBlock;
+
+/**
+ * LineRelationship delineates the possible logical relationships between two
+ * line (segments) in the plane.
+ */
+enum LineRelationship
+{
+    Collinear = 0,
+    Right,
+    RightIntercept, ///< Right vertex intercepts.
+    Left,
+    LeftIntercept,  ///< Left vertex intercepts.
+    Intersects
+};
 
 /**
  * Models a finite line segment in the plane.
@@ -251,6 +268,40 @@ public:
      * @see hedge()
      */
     void setHEdge(HEdge *newHEdge);
+
+    /**
+     * Calculate perpendicular distances from one or both of the vertexe(s) of
+     * "this" line segment to the @a other line segment. For this operation the
+     * @other line segment is interpreted as an infinite line. The vertexe(s) of
+     * "this" line segment are projected onto the conceptually infinite line
+     * defined by @a other and the length of the resultant vector(s) are then
+     * determined.
+     *
+     * @param other     Other line segment to determine vertex distances to.
+     *
+     * Return values:
+     * @param fromDist  Perpendicular distance from the "from" vertex. Can be @c 0.
+     * @param toDist    Perpendicular distance from the "to" vertex. Can be @c 0.
+     */
+    void distance(LineSegment const &other, coord_t *fromDist = 0, coord_t *toDist = 0) const;
+
+    /**
+     * Determine the logical relationship between "this" line segment and the
+     * @a other. In doing so the perpendicular distance for the vertexes of the
+     * line segment are calculated (and optionally returned).
+     *
+     * @param other     Other line segment to determine relationship to.
+     *
+     * Return values:
+     * @param fromDist  Perpendicular distance from the "from" vertex. Can be @c 0.
+     * @param toDist    Perpendicular distance from the "to" vertex. Can be @c 0.
+     *
+     * @return LineRelationship between the line segments.
+     *
+     * @see distance()
+     */
+    LineRelationship relationship(LineSegment const &other, coord_t *retFromDist,
+                                  coord_t *retToDist) const;
 
     /// @todo refactor away -ds
     void ceaseVertexObservation();

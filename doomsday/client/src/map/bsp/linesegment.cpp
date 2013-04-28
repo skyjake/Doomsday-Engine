@@ -47,8 +47,8 @@ DENG2_OBSERVES(Vertex, OriginChange)
     /// Linked @em twin segment (that on the other side of "this" line segment).
     LineSegment *twin;
 
-    /// Map Line side that "this" segment initially comes or @c 0 signifying a
-    /// partition line segment (not owned).
+    /// Map Line side that "this" segment initially comes from or @c 0 signifying
+    /// a partition line segment (not owned).
     Line::Side *mapSide;
 
     /// Map Line side that "this" segment initially comes from. For map lines,
@@ -266,6 +266,81 @@ Line::Side &LineSegment::sourceMapSide() const
     }
     /// @throw MissingMapSideError Attempted with no source map line side attributed.
     throw MissingMapSideError("LineSegment::sourceMapSide", "No source map line side is attributed");
+}
+
+void LineSegment::distance(LineSegment const &other, coord_t *fromDist, coord_t *toDist) const
+{
+    // Any work to do?
+    if(!fromDist && !toDist) return;
+
+    /// @attention Ensure line segments produced from the partition's source
+    /// line are always treated as collinear. This special case is only
+    /// necessary due to precision inaccuracies when a line is split into
+    /// multiple segments.
+    if(hasSourceMapSide() && other.hasSourceMapSide() &&
+       &sourceMapSide().line() == &other.sourceMapSide().line())
+    {
+        if(fromDist) *fromDist = 0;
+        if(toDist)   *toDist   = 0;
+        return;
+    }
+
+    coord_t toSegDirectionV1[2] = { other.direction().x, other.direction().y } ;
+
+    if(fromDist)
+    {
+        coord_t fromV1[2] = { d->from->origin().x, d->from->origin().y };
+        *fromDist = V2d_PointLinePerpDistance(fromV1, toSegDirectionV1, other.pPerp, other.pLength);
+    }
+    if(toDist)
+    {
+        coord_t toV1[2]   = { d->to->origin().x, d->to->origin().y };
+        *toDist = V2d_PointLinePerpDistance(toV1, toSegDirectionV1, other.pPerp, other.pLength);
+    }
+}
+
+/// @todo Might be a useful global utility function? -ds
+static LineRelationship lineRelationship(coord_t fromDist, coord_t toDist)
+{
+    static coord_t const distEpsilon = LINESEGMENT_INCIDENT_DISTANCE_EPSILON;
+
+    // Collinear with "this" line?
+    if(de::abs(fromDist) <= distEpsilon && de::abs(toDist) <= distEpsilon)
+    {
+        return Collinear;
+    }
+
+    // To the right of "this" line?.
+    if(fromDist > -distEpsilon && toDist > -distEpsilon)
+    {
+        // Close enough to intercept?
+        if(fromDist < distEpsilon || toDist < distEpsilon) return RightIntercept;
+        return Right;
+    }
+
+    // To the left of "this" line?
+    if(fromDist < distEpsilon && toDist < distEpsilon)
+    {
+        // Close enough to intercept?
+        if(fromDist > -distEpsilon || toDist > -distEpsilon) return LeftIntercept;
+        return Left;
+    }
+
+    return Intersects;
+}
+
+LineRelationship LineSegment::relationship(LineSegment const &other,
+    coord_t *retFromDist, coord_t *retToDist) const
+{
+    coord_t fromDist, toDist;
+    distance(other, &fromDist, &toDist);
+
+    LineRelationship rel = lineRelationship(fromDist, toDist);
+
+    if(retFromDist) *retFromDist = fromDist;
+    if(retToDist)   *retToDist   = toDist;
+
+    return rel;
 }
 
 void LineSegment::ceaseVertexObservation()
