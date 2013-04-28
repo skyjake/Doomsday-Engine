@@ -574,7 +574,7 @@ void C_DECL A_RectSpecial(mobj_t* actor)
         Line*               dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4459; // jd64 was 666.
-        EV_DoDoor(dummyLine, FT_LOWERTOLOWEST); // jd64 was open.
+        EV_DoFoor(dummyLine, FT_LOWERTOLOWEST); // jd64 was open.
         P_FreeDummyLine(dummyLine);
     }
 }
@@ -597,7 +597,7 @@ void C_DECL A_PossSpecial(mobj_t* mo)
         Line*               dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4444;
-        EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
+        EV_DoFoor(dummyLine, FT_LOWERTOLOWEST);
         P_FreeDummyLine(dummyLine);
     }
 }
@@ -620,7 +620,7 @@ void C_DECL A_SposSpecial(mobj_t* mo)
         Line*               dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4445;
-        EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
+        EV_DoFoor(dummyLine, FT_LOWERTOLOWEST);
         P_FreeDummyLine(dummyLine);
     }
 }
@@ -643,7 +643,7 @@ void C_DECL A_TrooSpecial(mobj_t* mo)
         Line*               dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = (mo->type == MT_TROOP? 4446 : 4447);
-        EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
+        EV_DoFoor(dummyLine, FT_LOWERTOLOWEST);
         P_FreeDummyLine(dummyLine);
     }
 }
@@ -666,7 +666,7 @@ void C_DECL A_SargSpecial(mobj_t* mo)
         Line*               dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4448;
-        EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
+        EV_DoFoor(dummyLine, FT_LOWERTOLOWEST);
         P_FreeDummyLine(dummyLine);
     }
 }
@@ -689,7 +689,7 @@ void C_DECL A_HeadSpecial(mobj_t* mo)
         Line*               dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4450;
-        EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
+        EV_DoFoor(dummyLine, FT_LOWERTOLOWEST);
         P_FreeDummyLine(dummyLine);
     }
 }
@@ -712,7 +712,7 @@ void C_DECL A_SkulSpecial(mobj_t* mo)
         Line*               dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4452;
-        EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
+        EV_DoFoor(dummyLine, FT_LOWERTOLOWEST);
         P_FreeDummyLine(dummyLine);
     }
 }
@@ -735,7 +735,7 @@ void C_DECL A_Bos2Special(mobj_t* mo)
         Line*               dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4453;
-        EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
+        EV_DoFoor(dummyLine, FT_LOWERTOLOWEST);
         P_FreeDummyLine(dummyLine);
     }
 }
@@ -758,7 +758,7 @@ void C_DECL A_BossSpecial(mobj_t* mo)
         Line*               dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4454;
-        EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
+        EV_DoFoor(dummyLine, FT_LOWERTOLOWEST);
         P_FreeDummyLine(dummyLine);
     }
 }
@@ -781,7 +781,7 @@ void C_DECL A_PainSpecial(mobj_t* mo)
         Line*               dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4455;
-        EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
+        EV_DoFoor(dummyLine, FT_LOWERTOLOWEST);
         P_FreeDummyLine(dummyLine);
     }
 }
@@ -804,7 +804,7 @@ void C_DECL A_FattSpecial(mobj_t* mo)
         Line*               dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4456;
-        EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
+        EV_DoFoor(dummyLine, FT_LOWERTOLOWEST);
         P_FreeDummyLine(dummyLine);
     }
 }
@@ -827,7 +827,7 @@ void C_DECL A_BabySpecial(mobj_t* mo)
         Line*               dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4457;
-        EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
+        EV_DoFoor(dummyLine, FT_LOWERTOLOWEST);
         P_FreeDummyLine(dummyLine);
     }
 }
@@ -850,7 +850,7 @@ void C_DECL A_CybrSpecial(mobj_t* mo)
         Line*               dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4458;
-        EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
+        EV_DoFoor(dummyLine, FT_LOWERTOLOWEST);
         P_FreeDummyLine(dummyLine);
     }
 }
