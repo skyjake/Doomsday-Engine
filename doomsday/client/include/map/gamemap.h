@@ -217,6 +217,12 @@ public:
      */
     Surface *surfaceBySoundEmitter(ddmobj_base_t const &soundEmitter) const;
 
+//#ifdef __SERVER__
+    /// @return  @c true iff @a emitter is an identifiable map element.
+    bool identifySoundEmitter(ddmobj_base_t const &emitter, Sector **sector,
+        Polyobj **poly, Plane **plane, Surface **surface) const;
+//#endif
+
     /**
      * Provides access to the list of polyobjs for efficient traversal.
      */

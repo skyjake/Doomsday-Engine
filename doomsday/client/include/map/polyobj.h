@@ -56,6 +56,14 @@ public:
     ~polyobj_s();
 
     /**
+     * Returns the sound emitter for the polyobj.
+     */
+    ddmobj_base_t &soundEmitter();
+
+    /// @copydoc soundEmitter()
+    ddmobj_base_t const &soundEmitter() const;
+
+    /**
      * Provides access to the list of Lines for the polyobj.
      */
     Lines const &lines() const;

@@ -759,6 +759,39 @@ Surface *GameMap::surfaceBySoundEmitter(ddmobj_base_t const &soundEmitter) const
     return 0; // Not found.
 }
 
+//#ifdef __SERVER__
+bool GameMap::identifySoundEmitter(ddmobj_base_t const &emitter, Sector **sector,
+    Polyobj **poly, Plane **plane, Surface **surface) const
+{
+    *sector  = 0;
+    *poly    = 0;
+    *plane   = 0;
+    *surface = 0;
+
+    /// @todo Optimize: All sound emitters in a sector are linked together forming
+    /// a chain. Make use of the chains instead.
+
+    *poly = polyobjByBase(emitter);
+    if(!*poly)
+    {
+        // Not a polyobj. Try the sectors next.
+        *sector = sectorBySoundEmitter(emitter);
+        if(!*sector)
+        {
+            // Not a sector. Try the planes next.
+            *plane = planeBySoundEmitter(emitter);
+            if(!*plane)
+            {
+                // Not a plane. Try the surfaces next.
+                *surface = surfaceBySoundEmitter(emitter);
+            }
+        }
+    }
+
+    return (!*sector || !*poly || !*plane || !*surface);
+}
+//#endif // __SERVER__
+
 Polyobj *GameMap::polyobjByTag(int tag) const
 {
     foreach(Polyobj *polyobj, _polyobjs)
