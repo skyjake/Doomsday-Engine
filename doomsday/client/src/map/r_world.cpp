@@ -735,7 +735,7 @@ static void updateAllMapSectors(GameMap &map)
     }
 }
 
-#if /*defined(__SERVER__) &&*/ defined(DENG_DEBUG)
+#ifdef DENG_DEBUG
 static void verifyAllSoundEmitters()
 {
     DENG_ASSERT(theMap != 0);
@@ -768,7 +768,7 @@ static void verifyAllSoundEmitters()
         DENG_ASSERT(theMap->identifySoundEmitter(side.topSoundEmitter(), &emSec, &emPoly, &emPln, &emSuf));
     }
 }
-#endif // defined(__SERVER__) && defined(DENG_DEBUG)
+#endif // DENG_DEBUG
 
 #undef R_SetupMap
 DENG_EXTERN_C void R_SetupMap(int mode, int flags)
@@ -843,7 +843,7 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
 
         // Map setup has been completed.
 
-#if /*defined(__SERVER__) &&*/ defined(DENG_DEBUG)
+#ifdef DENG_DEBUG
         // Ensure all sound emitters are identifiable.
         verifyAllSoundEmitters();
 #endif

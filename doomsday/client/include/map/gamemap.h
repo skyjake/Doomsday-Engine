@@ -217,11 +217,22 @@ public:
      */
     Surface *surfaceBySoundEmitter(ddmobj_base_t const &soundEmitter) const;
 
-//#ifdef __SERVER__
-    /// @return  @c true iff @a emitter is an identifiable map element.
+#if defined(__SERVER__) || defined(DENG_DEBUG)
+    /**
+     * Given an @a emitter origin, attempt to identify the map element
+     * to which it belongs.
+     *
+     * @param emitter  The sound emitter to be identified.
+     * @param sector   The identified sector if found is written here.
+     * @param poly     The identified polyobj if found is written here.
+     * @param plane    The identified plane if found is written here.
+     * @param surface  The identified line side surface if found is written here.
+     *
+     * @return  @c true iff @a emitter is an identifiable map element.
+     */
     bool identifySoundEmitter(ddmobj_base_t const &emitter, Sector **sector,
         Polyobj **poly, Plane **plane, Surface **surface) const;
-//#endif
+#endif
 
     /**
      * Provides access to the list of polyobjs for efficient traversal.

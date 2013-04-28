@@ -759,7 +759,7 @@ Surface *GameMap::surfaceBySoundEmitter(ddmobj_base_t const &soundEmitter) const
     return 0; // Not found.
 }
 
-//#ifdef __SERVER__
+#if defined(__SERVER__) || defined(DENG_DEBUG)
 bool GameMap::identifySoundEmitter(ddmobj_base_t const &emitter, Sector **sector,
     Polyobj **poly, Plane **plane, Surface **surface) const
 {
@@ -790,7 +790,7 @@ bool GameMap::identifySoundEmitter(ddmobj_base_t const &emitter, Sector **sector
 
     return (*sector != 0 || *poly != 0|| *plane != 0|| *surface != 0);
 }
-//#endif // __SERVER__
+#endif // defined(__SERVER__) || defined(DENG_DEBUG)
 
 Polyobj *GameMap::polyobjByTag(int tag) const
 {
