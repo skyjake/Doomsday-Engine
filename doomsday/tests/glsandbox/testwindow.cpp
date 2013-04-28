@@ -25,6 +25,7 @@
 #include <de/Drawable>
 #include <de/GLBuffer>
 #include <de/GLShader>
+#include <de/GLTexture>
 #include <de/GuiApp>
 #include <de/Clock>
 
@@ -39,6 +40,8 @@ DENG2_OBSERVES(Clock, TimeChange)
     GLUniform uMvpMatrix;
     GLUniform uColor;
     GLUniform uTime;
+    GLUniform uTex;
+    GLTexture testpic;
     Time startedAt;
 
     typedef GLBufferT<Vertex2TexRgba> VertexBuf;
@@ -46,18 +49,18 @@ DENG2_OBSERVES(Clock, TimeChange)
     Instance(Public *i)
         : Base(i),
           uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
-          uColor("uColor", GLUniform::Vec4),
-          uTime("uTime", GLUniform::Float)
+          uColor    ("uColor",     GLUniform::Vec4),
+          uTime     ("uTime",      GLUniform::Float),
+          uTex      ("uTex",       GLUniform::Sampler2D)
     {
         // Use this as the main window.
         setMain(i);
 
         self.canvas().audienceForGLInit += this;
         self.canvas().audienceForGLResize += this;
+        Clock::appClock().audienceForTimeChange += this;
 
         uColor = Vector4f(.5f, .75f, .5f, 1);
-
-        Clock::appClock().audienceForTimeChange += this;
     }
 
     void canvasGLInit(Canvas &cv)
@@ -76,14 +79,18 @@ DENG2_OBSERVES(Clock, TimeChange)
 
     void glInit(Canvas &cv)
     {
+        testpic.setImage(QImage(":/images/testpic.png"));
+        testpic.generateMipmap();
+        uTex = testpic;
+
         VertexBuf *buf = new VertexBuf;
         ob.addBuffer(1, buf);
 
-        Vertex2TexRgba verts[4] = {
-            { Vector2f(10,  10),  Vector2f(0, 0), Vector4f(1, 1, 1, 1) },
-            { Vector2f(300, 10),  Vector2f(1, 0), Vector4f(1, 1, 0, 1) },
-            { Vector2f(300, 300), Vector2f(1, 1), Vector4f(1, 0, 0, 1) },
-            { Vector2f(10,  300), Vector2f(0, 1), Vector4f(0, 0, 1, 1) }
+        VertexBuf::Type verts[4] = {
+            { Vector2f(0,   0),   Vector2f(0, 0), Vector4f(1, 1, 1, 1) },
+            { Vector2f(400, 0),   Vector2f(1, 0), Vector4f(1, 1, 0, 1) },
+            { Vector2f(400, 400), Vector2f(1, 1), Vector4f(1, 0, 0, 1) },
+            { Vector2f(0,   400), Vector2f(0, 1), Vector4f(0, 0, 1, 1) }
         };
 #if 1
         buf->setVertices(gl::TriangleFan, verts, 4, gl::Static);
@@ -102,33 +109,34 @@ DENG2_OBSERVES(Clock, TimeChange)
                 "uniform highp float uTime;\n"
 
                 "attribute highp vec4 aVertex;\n"
-                //"attribute highp vec2 aUV;\n"
+                "attribute highp vec2 aUV;\n"
                 "attribute highp vec4 aColor;\n"
 
-                //"varying highp vec2 vUV;\n"
+                "varying highp vec2 vUV;\n"
                 "varying highp vec4 vColor;\n"
 
                 "void main(void) {\n"
                 "   gl_Position = uMvpMatrix * aVertex;\n"
-                //"   vUV = aUV.st;\n"
+                "   vUV = aUV;\n"
                 "   vColor = aColor + sin(uTime) * uColor;\n"
                 "}\n";
 
         Block fragShader =
-                //"uniform sampler2D uSampler;\n"
+                "uniform sampler2D uTex;\n"
 
-                //"varying highp vec2 vUV;\n"
+                "varying highp vec2 vUV;\n"
                 "varying highp vec4 vColor;\n"
 
                 "void main(void) {\n"
-                //"    gl_FragColor = texture2D(uSampler, vUV) * vColor;\n"
-                "    gl_FragColor = vColor;\n"
+                "    gl_FragColor = texture2D(uTex, vUV) * vColor;\n"
+                //"    gl_FragColor = vec4(texture2D(uTex, vUV).r, 0.0, 0.0, 1.0);\n"
                 "}";
 
         ob.program().build(vertShader, fragShader)
                 << uMvpMatrix
                 << uColor
-                << uTime;
+                << uTime
+                << uTex;
 
         cv.renderTarget().setClearColor(Vector4f(.2f, .2f, .2f, 0));
     }
@@ -139,8 +147,12 @@ DENG2_OBSERVES(Clock, TimeChange)
 
         GLState &st = GLState::top();
         st.setViewport(Rectangleui::fromSize(cv.size()));
+        st.setBlend(true);
+        st.setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha);
 
-        uMvpMatrix = Matrix4f::ortho(0, cv.width(), 0, cv.height());
+        uMvpMatrix = Matrix4f::ortho(-cv.width()/2, cv.width()/2, -cv.height()/2, cv.height()/2)
+                * Matrix4f::scale(cv.height()/400.f)
+                * Matrix4f::translate(Vector2f(-200, -200));
 
         LOG_DEBUG("uMvpMatrix: ") << uMvpMatrix.toMatrix4f().asText();
     }

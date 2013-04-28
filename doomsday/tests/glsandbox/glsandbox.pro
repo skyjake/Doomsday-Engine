@@ -8,7 +8,10 @@ CONFIG -= console
 TEMPLATE = app
 TARGET = test_glsandbox
 
-SOURCES += main.cpp \
+RESOURCES += glsandbox.qrc
+
+SOURCES += \
+    main.cpp \
     testwindow.cpp
 
 deployTest($$TARGET)
