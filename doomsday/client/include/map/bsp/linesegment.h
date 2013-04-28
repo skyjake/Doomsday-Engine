@@ -26,6 +26,8 @@
 #ifndef DENG_WORLD_MAP_BSP_LINESEGMENT
 #define DENG_WORLD_MAP_BSP_LINESEGMENT
 
+#include <de/mathutil.h> // M_InverseAngle
+
 #include <de/Error>
 #include <de/Vector>
 
@@ -83,13 +85,6 @@ public:
     };
 
 public: /// @todo make private:
-    // Precomputed data for faster calculations.
-    coord_t pLength;
-    coord_t pAngle;
-    coord_t pPara;
-    coord_t pPerp;
-    slopetype_t pSlopeType;
-
     LineSegment *nextOnSide;
     LineSegment *prevOnSide;
 
@@ -150,12 +145,6 @@ public:
 
     inline void replaceFrom(Vertex &newVertex) { replaceVertex(From, newVertex); }
     inline void replaceTo(Vertex &newVertex)   { replaceVertex(To, newVertex); }
-
-    /**
-     * Returns a direction vector for the line segment from the From/Start vertex
-     * origin to the To/End vertex origin.
-     */
-    Vector2d const &direction() const;
 
     /**
      * Returns @c true iff a @em twin is linked to the line segment.
@@ -270,6 +259,42 @@ public:
     void setHEdge(HEdge *newHEdge);
 
     /**
+     * Returns a direction vector for the line segment from the From/Start vertex
+     * origin to the To/End vertex origin.
+     */
+    Vector2d const &direction() const;
+
+    /**
+     * Returns the logical @em slopetype for the line segment (which, is determined
+     * according to the world direction).
+     *
+     * @see direction()
+     * @see M_SlopeType()
+     */
+    slopetype_t slopeType() const;
+
+    /**
+     * Returns the accurate length of the line segment from the From/Start to vertex
+     * origin to the To/End vertex origin.
+     */
+    coord_t length() const;
+
+    /**
+     * Returns the world angle of the line (which, is derived from the direction
+     * vector).
+     *
+     * @see inverseAngle(), direction()
+     */
+    coord_t angle() const;
+
+    /**
+     * Returns the inverted world angle for the line (i.e., rotated 180 degrees).
+     *
+     * @see angle()
+     */
+    inline coord_t inverseAngle() const { return M_InverseAngle(angle()); }
+
+    /**
      * Calculates the @em parallel distance from the line segment to the specified
      * @a point in the plane (i.e., along the direction of the line).
      *
@@ -310,6 +335,9 @@ public:
      */
     LineRelationship relationship(LineSegment const &other, coord_t *retFromDist,
                                   coord_t *retToDist) const;
+
+    /// @see M_BoxOnLineSide2()
+    int boxOnSide(AABoxd const &box) const;
 
     /// @todo refactor away -ds
     void ceaseVertexObservation();

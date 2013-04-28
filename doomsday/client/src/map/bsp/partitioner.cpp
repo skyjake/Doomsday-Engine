@@ -47,8 +47,6 @@
 #include "map/bsp/superblockmap.h"
 #include "map/bsp/vertexinfo.h"
 
-#include "m_misc.h" // M_BoxOnLineSide2
-
 #include "map/bsp/partitioner.h"
 
 using namespace de;
@@ -415,7 +413,7 @@ DENG2_PIMPL(Partitioner)
                     linkLineSegmentInSuperBlockmap(blockmap, front->twin());
                 }
 
-                angle = front->pAngle;
+                angle = front->angle();
             }
 
             /// @todo edge tips should be created when half-edges are created.
@@ -458,8 +456,8 @@ DENG2_PIMPL(Partitioner)
         //    << de::dintptr(&oldLineSeg) << point.asText();
 
         Vertex *newVert = newVertex(point);
-        addLineSegmentTip(*newVert, M_InverseAngle(oldLineSeg.pAngle), oldLineSeg.twinPtr(), &oldLineSeg);
-        addLineSegmentTip(*newVert, oldLineSeg.pAngle, &oldLineSeg, oldLineSeg.twinPtr());
+        addLineSegmentTip(*newVert, oldLineSeg.inverseAngle(), oldLineSeg.twinPtr(), &oldLineSeg);
+        addLineSegmentTip(*newVert, oldLineSeg.angle(), &oldLineSeg, oldLineSeg.twinPtr());
 
         LineSegment &newLineSeg = cloneLineSegment(oldLineSeg);
 
@@ -505,8 +503,8 @@ DENG2_PIMPL(Partitioner)
         if(intercept)
         {
             Vertex const &vertex = lineSeg.vertex(edge);
-            intercept->before = openSectorAtAngle(vertex, M_InverseAngle(hplane.lineSegment().pAngle));
-            intercept->after  = openSectorAtAngle(vertex, hplane.lineSegment().pAngle);
+            intercept->before = openSectorAtAngle(vertex, hplane.lineSegment().inverseAngle());
+            intercept->after  = openSectorAtAngle(vertex, hplane.lineSegment().angle());
         }
     }
 
@@ -826,10 +824,7 @@ DENG2_PIMPL(Partitioner)
                       coord_t( blockBounds.maxX ) + SHORT_HEDGE_EPSILON * 1.5,
                       coord_t( blockBounds.maxY ) + SHORT_HEDGE_EPSILON * 1.5);
 
-        coord_t lineSegFromV1[2] = { lineSeg.fromOrigin().x, lineSeg.fromOrigin().y };
-        coord_t lineSegDirectionV1[2] = { lineSeg.direction().x, lineSeg.direction().y } ;
-        int side = M_BoxOnLineSide2(&bounds, lineSegFromV1, lineSegDirectionV1,
-                                    lineSeg.pPerp, lineSeg.pLength, DIST_EPSILON);
+        int side = lineSeg.boxOnSide(bounds);
         if(side > 0)
         {
             // Right.
@@ -919,7 +914,7 @@ DENG2_PIMPL(Partitioner)
 
         // Another little twist, here we show a slight preference for partition
         // lines that lie either purely horizontally or purely vertically.
-        if(lineSeg.pSlopeType != ST_HORIZONTAL && lineSeg.pSlopeType != ST_VERTICAL)
+        if(lineSeg.slopeType() != ST_HORIZONTAL && lineSeg.slopeType() != ST_VERTICAL)
             cost.total += 25;
 
         //LOG_DEBUG("evalPartition: %p: splits=%d iffy=%d near=%d"
@@ -1304,13 +1299,13 @@ DENG2_PIMPL(Partitioner)
                                 coord_t perpD) const
     {
         // Horizontal partition against vertical half-edge.
-        if(hplane.lineSegment().pSlopeType == ST_HORIZONTAL && lineSeg.pSlopeType == ST_VERTICAL)
+        if(hplane.lineSegment().slopeType() == ST_HORIZONTAL && lineSeg.slopeType() == ST_VERTICAL)
         {
             return Vector2d(lineSeg.fromOrigin().x, hplane.lineSegment().fromOrigin().y);
         }
 
         // Vertical partition against horizontal half-edge.
-        if(hplane.lineSegment().pSlopeType == ST_VERTICAL && lineSeg.pSlopeType == ST_HORIZONTAL)
+        if(hplane.lineSegment().slopeType() == ST_VERTICAL && lineSeg.slopeType() == ST_HORIZONTAL)
         {
             return Vector2d(hplane.lineSegment().fromOrigin().x, lineSeg.fromOrigin().y);
         }
@@ -1319,10 +1314,10 @@ DENG2_PIMPL(Partitioner)
         coord_t ds = perpC / (perpC - perpD);
 
         Vector2d point = lineSeg.fromOrigin();
-        if(lineSeg.pSlopeType != ST_VERTICAL)
+        if(lineSeg.slopeType() != ST_VERTICAL)
             point.x += lineSeg.direction().x * ds;
 
-        if(lineSeg.pSlopeType != ST_HORIZONTAL)
+        if(lineSeg.slopeType() != ST_HORIZONTAL)
             point.y += lineSeg.direction().y * ds;
 
         return point;

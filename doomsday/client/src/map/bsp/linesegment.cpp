@@ -26,6 +26,8 @@
 #include <de/mathutil.h>
 #include <de/vector1.h> /// @todo remove me
 
+#include "m_misc.h" // M_BoxOnLineSide2
+
 #include <de/Observers>
 
 #include "HEdge"
@@ -56,6 +58,13 @@ DENG2_OBSERVES(Vertex, OriginChange)
     /// the partition line's map Line side. (Not owned.)
     Line::Side *sourceMapSide;
 
+    // Precomputed data for faster calculations.
+    coord_t pLength;
+    coord_t pAngle;
+    coord_t pPara;
+    coord_t pPerp;
+    slopetype_t pSlopeType;
+
     /// Half-edge produced from this segment (if any, not owned).
     HEdge *hedge;
 
@@ -67,6 +76,11 @@ DENG2_OBSERVES(Vertex, OriginChange)
           twin(0),
           mapSide(mapSide),
           sourceMapSide(sourceMapSide),
+          pLength(0),
+          pAngle(0),
+          pPara(0),
+          pPerp(0),
+          pSlopeType(ST_VERTICAL),
           hedge(0)
     {
         from->audienceForOriginChange += this;
@@ -104,15 +118,13 @@ DENG2_OBSERVES(Vertex, OriginChange)
      */
     void updateCache()
     {
-        direction = to->origin() - from->origin();
-
-        self.pLength    = direction.length();
-        DENG2_ASSERT(self.pLength > 0);
-        self.pAngle     = M_DirectionToAngleXY(direction.x, direction.y);
-        self.pSlopeType = M_SlopeTypeXY(direction.x, direction.y);
-
-        self.pPerp =  from->origin().y * direction.x - from->origin().x * direction.y;
-        self.pPara = -from->origin().x * direction.x - from->origin().y * direction.y;
+        direction  = to->origin() - from->origin();
+        pLength    = direction.length();
+        DENG2_ASSERT(pLength > 0);
+        pAngle     = M_DirectionToAngleXY(direction.x, direction.y);
+        pSlopeType = M_SlopeTypeXY(direction.x, direction.y);
+        pPerp      =  from->origin().y * direction.x - from->origin().x * direction.y;
+        pPara      = -from->origin().x * direction.x - from->origin().y * direction.y;
     }
 
     void vertexOriginChanged(Vertex &vertex, Vector2d const &oldOrigin, int changedAxes)
@@ -124,12 +136,7 @@ DENG2_OBSERVES(Vertex, OriginChange)
 
 LineSegment::LineSegment(Vertex &from, Vertex &to, Line::Side *mapSide,
                          Line::Side *sourceMapSide)
-    : pLength(0),
-      pAngle(0),
-      pPara(0),
-      pPerp(0),
-      pSlopeType(ST_VERTICAL),
-      nextOnSide(0),
+    : nextOnSide(0),
       prevOnSide(0),
       bmapBlock(0),
       sector(0),
@@ -139,30 +146,25 @@ LineSegment::LineSegment(Vertex &from, Vertex &to, Line::Side *mapSide,
 }
 
 LineSegment::LineSegment(LineSegment const &other)
-    : pLength(other.pLength),
-      pAngle(other.pAngle),
-      pPara(other.pPara),
-      pPerp(other.pPerp),
-      pSlopeType(other.pSlopeType),
-      nextOnSide(other.nextOnSide),
+    : nextOnSide(other.nextOnSide),
       prevOnSide(other.prevOnSide),
       bmapBlock(other.bmapBlock),
       sector(other.sector),
       d(new Instance(this, *other.d->from, *other.d->to,
                             other.d->mapSide, other.d->sourceMapSide))
 {
-    d->direction = other.d->direction;
-    d->twin      = other.d->twin;
-    d->hedge     = other.d->hedge;
+    d->direction  = other.d->direction;
+    d->twin       = other.d->twin;
+    d->pLength    = other.d->pLength;
+    d->pAngle     = other.d->pAngle;
+    d->pPara      = other.d->pPara;
+    d->pPerp      = other.d->pPerp;
+    d->pSlopeType = other.d->pSlopeType;
+    d->hedge      = other.d->hedge;
 }
 
 LineSegment &LineSegment::operator = (LineSegment const &other)
 {
-    pLength    = other.pLength;
-    pAngle     = other.pAngle;
-    pPara      = other.pPara;
-    pPerp      = other.pPerp;
-    pSlopeType = other.pSlopeType;
     nextOnSide = other.nextOnSide;
     prevOnSide = other.prevOnSide;
     bmapBlock  = other.bmapBlock;
@@ -172,6 +174,11 @@ LineSegment &LineSegment::operator = (LineSegment const &other)
     d->mapSide       = other.d->mapSide;
     d->sourceMapSide = other.d->sourceMapSide;
     d->twin          = other.d->twin;
+    d->pLength       = other.d->pLength;
+    d->pAngle        = other.d->pAngle;
+    d->pPara         = other.d->pPara;
+    d->pPerp         = other.d->pPerp;
+    d->pSlopeType    = other.d->pSlopeType;
     d->hedge         = other.d->hedge;
 
     replaceFrom(*other.d->from);
@@ -196,6 +203,16 @@ void LineSegment::replaceVertex(int to, Vertex &newVertex)
 Vector2d const &LineSegment::direction() const
 {
     return d->direction;
+}
+
+slopetype_t LineSegment::slopeType() const
+{
+    return d->pSlopeType;
+}
+
+coord_t LineSegment::angle() const
+{
+    return d->pAngle;
 }
 
 bool LineSegment::hasTwin() const
@@ -268,11 +285,16 @@ Line::Side &LineSegment::sourceMapSide() const
     throw MissingMapSideError("LineSegment::sourceMapSide", "No source map line side is attributed");
 }
 
+coord_t LineSegment::length() const
+{
+    return d->pLength;
+}
+
 coord_t LineSegment::distance(Vector2d point) const
 {
     coord_t pointV1[2] = { point.x, point.y };
     coord_t directionV1[2] = { d->direction.x, d->direction.y };
-    return V2d_PointLineParaDistance(pointV1, directionV1, pPara, pLength);
+    return V2d_PointLineParaDistance(pointV1, directionV1, d->pPara, d->pLength);
 }
 
 void LineSegment::distance(LineSegment const &other, coord_t *fromDist, coord_t *toDist) const
@@ -297,12 +319,12 @@ void LineSegment::distance(LineSegment const &other, coord_t *fromDist, coord_t 
     if(fromDist)
     {
         coord_t fromV1[2] = { d->from->origin().x, d->from->origin().y };
-        *fromDist = V2d_PointLinePerpDistance(fromV1, toSegDirectionV1, other.pPerp, other.pLength);
+        *fromDist = V2d_PointLinePerpDistance(fromV1, toSegDirectionV1, other.d->pPerp, other.d->pLength);
     }
     if(toDist)
     {
         coord_t toV1[2]   = { d->to->origin().x, d->to->origin().y };
-        *toDist = V2d_PointLinePerpDistance(toV1, toSegDirectionV1, other.pPerp, other.pLength);
+        *toDist = V2d_PointLinePerpDistance(toV1, toSegDirectionV1, other.d->pPerp, other.d->pLength);
     }
 }
 
@@ -348,6 +370,14 @@ LineRelationship LineSegment::relationship(LineSegment const &other,
     if(retToDist)   *retToDist   = toDist;
 
     return rel;
+}
+
+int LineSegment::boxOnSide(AABoxd const &box) const
+{
+    coord_t fromV1[2] = { d->from->origin().x, d->from->origin().y };
+    coord_t directionV1[2] = { d->direction.x, d->direction.y } ;
+    return M_BoxOnLineSide2(&box, fromV1, directionV1, d->pPerp, d->pLength,
+                            LINESEGMENT_INCIDENT_DISTANCE_EPSILON);
 }
 
 void LineSegment::ceaseVertexObservation()
