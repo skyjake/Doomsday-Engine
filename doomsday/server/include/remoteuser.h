@@ -77,7 +77,7 @@ public:
     void send(de::IByteArray const &data);
 
 signals:
-    void destroyed();
+    void userDestroyed();
 
 public slots:
     void handleIncomingPackets();

@@ -310,7 +310,7 @@ void ServerSystem::handleIncomingConnection()
         if(!sock) break;
 
         RemoteUser *user = new RemoteUser(sock);
-        connect(user, SIGNAL(destroyed()), this, SLOT(userDestroyed()));
+        connect(user, SIGNAL(userDestroyed()), this, SLOT(userDestroyed()));
         d->users.insert(user->id(), user);
 
         // Immediately handle pending messages, if there are any.

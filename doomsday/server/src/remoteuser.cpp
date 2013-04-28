@@ -216,7 +216,7 @@ RemoteUser::RemoteUser(Socket *socket) : d(new Instance(this, socket))
 
 RemoteUser::~RemoteUser()
 {
-    emit destroyed();
+    emit userDestroyed();
 
     d->disconnect();   
 }
