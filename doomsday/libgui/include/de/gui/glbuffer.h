@@ -142,6 +142,7 @@ template <typename VertexType>
 class GLBufferT : public GLBuffer
 {
 public:
+    typedef VertexType Type;
     typedef QVector<VertexType> Vertices;
 
 public:

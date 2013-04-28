@@ -154,6 +154,7 @@ DENG2_OBSERVES(GLUniform, Deletion)
         for(uint i = 0; i < sizeof(names)/sizeof(names[0]); ++i)
         {
             glBindAttribLocation(name, GLuint(names[i].semantic), names[i].varName);
+            LIBGUI_ASSERT_GL_OK();
         }
 
         if(!shaders.isEmpty())
@@ -191,7 +192,7 @@ DENG2_OBSERVES(GLUniform, Deletion)
         // Apply the uniform values in this program.
         foreach(GLUniform const *u, changed)
         {
-            if(u->type() != GLUniform::Texture2D)
+            if(u->type() != GLUniform::Sampler2D)
             {
                 u->applyInProgram(self);
             }
@@ -206,6 +207,7 @@ DENG2_OBSERVES(GLUniform, Deletion)
                 if(loc >= 0)
                 {
                     glUniform1i(loc, unit);
+                    LIBGUI_ASSERT_GL_OK();
                 }
             }
             texturesChanged = false;
@@ -287,7 +289,7 @@ GLProgram &GLProgram::bind(GLUniform const &uniform)
         uniform.audienceForValueChange += d.get();
         uniform.audienceForDeletion += d.get();
 
-        if(uniform.type() == GLUniform::Texture2D)
+        if(uniform.type() == GLUniform::Sampler2D)
         {
             d->textures << &uniform;
             d->texturesChanged = true;
@@ -306,7 +308,7 @@ GLProgram &GLProgram::unbind(GLUniform const &uniform)
         uniform.audienceForValueChange -= d.get();
         uniform.audienceForDeletion -= d.get();
 
-        if(uniform.type() == GLUniform::Texture2D)
+        if(uniform.type() == GLUniform::Sampler2D)
         {
             d->textures.removeOne(&uniform);
             d->texturesChanged = true;
@@ -325,8 +327,12 @@ void GLProgram::beginUse() const
     // The program is now ready for use.
     glUseProgram(d->name);
 
+    LIBGUI_ASSERT_GL_OK();
+
     d->updateUniforms();
     d->bindTextures();
+
+    LIBGUI_ASSERT_GL_OK();
 }
 
 void GLProgram::endUse() const

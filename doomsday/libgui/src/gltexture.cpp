@@ -138,7 +138,10 @@ DENG2_PIMPL(GLTexture)
 
     void glBind() const
     {
-        glBindTexture(texTarget, self.isReady()? name : 0);
+        DENG2_ASSERT(name != 0);
+
+        glBindTexture(texTarget, name);
+        LIBGUI_ASSERT_GL_OK();
     }
 
     void glUnbind() const
@@ -157,6 +160,8 @@ DENG2_PIMPL(GLTexture)
         glTexParameteri(texTarget, GL_TEXTURE_MAG_FILTER, minFilter == Nearest? GL_NEAREST : GL_LINEAR);
         glTexParameteri(texTarget, GL_TEXTURE_MIN_FILTER, glMinFilter(minFilter, mipFilter));
 
+        LIBGUI_ASSERT_GL_OK();
+
         flags &= ~ParamsChanged;
     }
 
@@ -167,6 +172,8 @@ DENG2_PIMPL(GLTexture)
         glTexImage2D(isCube()? glFace(face) : texTarget,
                      level, glFormat.format, size.x, size.y, 0,
                      glFormat.format, glFormat.type, data);
+
+        LIBGUI_ASSERT_GL_OK();
     }
 
     void glSubImage(int level, Vector2i const &pos, Size const &size,
@@ -176,6 +183,8 @@ DENG2_PIMPL(GLTexture)
         glTexSubImage2D(isCube()? glFace(face) : texTarget,
                         level, pos.x, pos.y, size.x, size.y,
                         glFormat.format, glFormat.type, data);
+
+        LIBGUI_ASSERT_GL_OK();
     }
 };
 
@@ -263,6 +272,7 @@ bool GLTexture::autoGenMips() const
 void GLTexture::setUndefinedImage(GLTexture::Size const &size, Image::Format format, int level)
 {
     d->texTarget = GL_TEXTURE_2D;
+    d->size = size;
 
     d->alloc();
     d->glBind();
@@ -276,6 +286,7 @@ void GLTexture::setUndefinedImage(CubeFace face, GLTexture::Size const &size,
                                   Image::Format format, int level)
 {
     d->texTarget = GL_TEXTURE_CUBE_MAP;
+    d->size = size;
 
     d->alloc();
     d->glBind();
@@ -288,6 +299,7 @@ void GLTexture::setUndefinedImage(CubeFace face, GLTexture::Size const &size,
 void GLTexture::setImage(Image const &image, int level)
 {
     d->texTarget = GL_TEXTURE_2D;
+    d->size = image.size();
 
     d->alloc();
     d->glBind();
@@ -305,6 +317,7 @@ void GLTexture::setImage(Image const &image, int level)
 void GLTexture::setImage(CubeFace face, Image const &image, int level)
 {
     d->texTarget = GL_TEXTURE_CUBE_MAP;
+    d->size = image.size();
 
     d->alloc();
     d->glBind();
@@ -355,6 +368,7 @@ void GLTexture::generateMipmap()
     {
         d->glBind();
         glGenerateMipmap(d->texTarget);
+        LIBGUI_ASSERT_GL_OK();
         d->glUnbind();
 
         d->flags |= MipmapAvailable;

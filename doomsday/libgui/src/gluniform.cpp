@@ -31,13 +31,13 @@ DENG2_PIMPL(GLUniform)
     Block name;
     Type type;
     union Value {
-        dint      int32;
-        duint     uint32;
-        dfloat    float32;
-        Vector4f  *vector;
-        Matrix3f  *mat3;
-        Matrix4f  *mat4;
-        GLTexture *tex;
+        dint     int32;
+        duint    uint32;
+        dfloat   float32;
+        Vector4f *vector;
+        Matrix3f *mat3;
+        Matrix4f *mat4;
+        GLTexture const *tex;
     } value;
 
     Instance(Public *i, QLatin1String const &n, Type t)
@@ -251,6 +251,23 @@ GLUniform &GLUniform::operator = (Matrix4f const &mat)
     return *this;
 }
 
+GLUniform &GLUniform::operator = (GLTexture const &texture)
+{
+    return *this = &texture;
+}
+
+GLUniform &GLUniform::operator = (GLTexture const *texture)
+{
+    DENG2_ASSERT(d->type == Sampler2D);
+
+    if(d->value.tex != texture)
+    {
+        d->value.tex = texture;
+        d->markAsChanged();
+    }
+    return *this;
+}
+
 dint GLUniform::toInt() const
 {
     DENG2_ASSERT(d->type == Int || d->type == UInt || d->type == Float);
@@ -341,7 +358,7 @@ Matrix4f const &GLUniform::toMatrix4f() const
     return *d->value.mat4;
 }
 
-GLTexture *GLUniform::texture() const
+GLTexture const *GLUniform::texture() const
 {
     return d->value.tex;
 }

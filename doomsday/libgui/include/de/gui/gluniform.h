@@ -98,6 +98,7 @@ public:
     GLUniform &operator = (Vector4f const &vec);
     GLUniform &operator = (Matrix3f const &vec);
     GLUniform &operator = (Matrix4f const &vec);
+    GLUniform &operator = (GLTexture const &texture);
     GLUniform &operator = (GLTexture const *texture);
 
     operator dint() const              { return toInt(); }
@@ -120,7 +121,7 @@ public:
     Matrix3f const &toMatrix3f() const;
     Matrix4f const &toMatrix4f() const;
 
-    GLTexture *texture() const;
+    GLTexture const *texture() const;
 
     /**
      * Updates the value of the uniform in a particular GL program.
