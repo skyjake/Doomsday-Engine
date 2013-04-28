@@ -37,6 +37,7 @@ DENG2_OBSERVES(Canvas, GLResize),
 DENG2_OBSERVES(Clock, TimeChange)
 {
     Drawable ob;
+    Matrix4f projMatrix;
     GLUniform uMvpMatrix;
     GLUniform uColor;
     GLUniform uTime;
@@ -44,7 +45,7 @@ DENG2_OBSERVES(Clock, TimeChange)
     GLTexture testpic;
     Time startedAt;
 
-    typedef GLBufferT<Vertex2TexRgba> VertexBuf;
+    typedef GLBufferT<Vertex3TexRgba> VertexBuf;
 
     Instance(Public *i)
         : Base(i),
@@ -79,29 +80,42 @@ DENG2_OBSERVES(Clock, TimeChange)
 
     void glInit(Canvas &cv)
     {
+        // Set up the default state.
+        GLState &st = GLState::top();
+        st.setBlend(true);
+        st.setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha);
+        //st.setCull(gl::Back);
+        st.setDepthTest(true);
+
+        testpic.setAutoGenMips(true);
         testpic.setImage(QImage(":/images/testpic.png"));
-        testpic.generateMipmap();
+        //testpic.generateMipmap();
+        testpic.setMinFilter(gl::Linear, gl::MipLinear);
         uTex = testpic;
 
         VertexBuf *buf = new VertexBuf;
         ob.addBuffer(1, buf);
 
-        VertexBuf::Type verts[4] = {
-            { Vector2f(0,   0),   Vector2f(0, 0), Vector4f(1, 1, 1, 1) },
-            { Vector2f(400, 0),   Vector2f(1, 0), Vector4f(1, 1, 0, 1) },
-            { Vector2f(400, 400), Vector2f(1, 1), Vector4f(1, 0, 0, 1) },
-            { Vector2f(0,   400), Vector2f(0, 1), Vector4f(0, 0, 1, 1) }
+        VertexBuf::Type verts[8] = {
+            { Vector3f(-1, -1, -1), Vector2f(0, 0), Vector4f(1, 1, 1, 1) },
+            { Vector3f( 1, -1, -1), Vector2f(2, 0), Vector4f(1, 1, 0, 1) },
+            { Vector3f( 1,  1, -1), Vector2f(2, 2), Vector4f(1, 0, 0, 1) },
+            { Vector3f(-1,  1, -1), Vector2f(0, 2), Vector4f(0, 0, 1, 1) },
+            { Vector3f(-1, -1,  1), Vector2f(2, 2), Vector4f(1, 1, 1, 1) },
+            { Vector3f( 1, -1,  1), Vector2f(0, 2), Vector4f(1, 1, 0, 1) },
+            { Vector3f( 1,  1,  1), Vector2f(0, 0), Vector4f(1, 0, 0, 1) },
+            { Vector3f(-1,  1,  1), Vector2f(2, 0), Vector4f(0, 0, 1, 1) }
         };
-#if 1
-        buf->setVertices(gl::TriangleFan, verts, 4, gl::Static);
-#else
-        // Set vertices without primitive type and specify indices instead.
-        buf->setVertices(verts, 4, gl::Static);
+
+        buf->setVertices(verts, 8, gl::Static);
 
         GLBuffer::Indices idx;
-        idx << 0 << 1 << 2 << 3;
-        buf->setIndices(gl::TriangleFan, idx, gl::Static);
-#endif
+        idx << 0 << 4 << 3 << 7 << 2 << 6 << 1 << 5 << 0 << 4
+            << 4 << 0
+            << 0 << 3 << 1 << 2
+            << 2 << 7
+            << 7 << 4 << 6 << 5;
+        buf->setIndices(gl::TriangleStrip, idx, gl::Static);
 
         Block vertShader =
                 "uniform highp mat4 uMvpMatrix;\n"
@@ -117,8 +131,8 @@ DENG2_OBSERVES(Clock, TimeChange)
 
                 "void main(void) {\n"
                 "   gl_Position = uMvpMatrix * aVertex;\n"
-                "   vUV = aUV;\n"
-                "   vColor = aColor + sin(uTime) * uColor;\n"
+                "   vUV = aUV + vec2(uTime/5.0, 0.0);\n"
+                "   vColor = aColor + vec4(sin(uTime), cos(uTime), sin(uTime), cos(uTime)*0.5) * uColor;\n"
                 "}\n";
 
         Block fragShader =
@@ -128,14 +142,14 @@ DENG2_OBSERVES(Clock, TimeChange)
                 "varying highp vec4 vColor;\n"
 
                 "void main(void) {\n"
-                "    gl_FragColor = texture2D(uTex, vUV) * vColor;\n"
-                //"    gl_FragColor = vec4(texture2D(uTex, vUV).r, 0.0, 0.0, 1.0);\n"
+                "    highp vec4 color = texture2D(uTex, vUV);\n"
+                "    if(color.a < 0.05) discard;\n"
+                "    gl_FragColor = color * vColor;\n"
                 "}";
 
         ob.program().build(vertShader, fragShader)
                 << uMvpMatrix
-                << uColor
-                << uTime
+                << uColor << uTime
                 << uTex;
 
         cv.renderTarget().setClearColor(Vector4f(.2f, .2f, .2f, 0));
@@ -147,20 +161,18 @@ DENG2_OBSERVES(Clock, TimeChange)
 
         GLState &st = GLState::top();
         st.setViewport(Rectangleui::fromSize(cv.size()));
-        st.setBlend(true);
-        st.setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha);
 
-        uMvpMatrix = Matrix4f::ortho(-cv.width()/2, cv.width()/2, -cv.height()/2, cv.height()/2)
-                * Matrix4f::scale(cv.height()/400.f)
-                * Matrix4f::translate(Vector2f(-200, -200));
+        /*uMvpMatrix = Matrix4f::ortho(-cv.width()/2,  cv.width()/2,
+                                     -cv.height()/2, cv.height()/2)
+                * Matrix4f::scale(cv.height()/450.f)
+                * Matrix4f::translate(Vector2f(-200, -200));*/
 
-        LOG_DEBUG("uMvpMatrix: ") << uMvpMatrix.toMatrix4f().asText();
+        projMatrix = Matrix4f::perspective(40, float(cv.width())/float(cv.height()))
+                * Matrix4f::lookAt(Vector3f(), Vector3f(0, 0, -4), Vector3f(0, -1, 0));
     }
 
     void draw(Canvas &cv)
     {
-        //LOG_DEBUG("GLDraw");
-
         cv.renderTarget().clear(GLTarget::Color | GLTarget::Depth);
 
         ob.draw();
@@ -173,6 +185,11 @@ DENG2_OBSERVES(Clock, TimeChange)
             startedAt = clock.time();
         }
         uTime = startedAt.since();
+
+        uMvpMatrix = projMatrix
+                * Matrix4f::rotate(std::cos(uTime.toFloat()/2) * 45, Vector3f(1, 0, 0))
+                * Matrix4f::rotate(std::sin(uTime.toFloat()/3) * 60, Vector3f(0, 1, 0));
+
         self.update();
     }
 };
