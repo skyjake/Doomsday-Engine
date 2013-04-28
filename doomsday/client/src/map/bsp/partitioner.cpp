@@ -442,6 +442,17 @@ DENG2_PIMPL(Partitioner)
         }
     }
 
+    inline void interceptPartition(LineSegment const &lineSeg, int edge)
+    {
+        HPlane::Intercept *intercept = hplane.interceptLineSegment(lineSeg, edge);
+        if(intercept)
+        {
+            Vertex const &vertex = lineSeg.vertex(edge);
+            intercept->before = openSectorAtAngle(vertex, hplane.lineSegment().inverseAngle());
+            intercept->after  = openSectorAtAngle(vertex, hplane.lineSegment().angle());
+        }
+    }
+
     /**
      * Splits the given line segment at the point (x,y). The new line segment
      * is returned. The old line segment is shortened (the original start vertex
@@ -500,26 +511,51 @@ DENG2_PIMPL(Partitioner)
         return frontRight;
     }
 
-    inline void interceptPartition(LineSegment const &lineSeg, int edge)
+    /**
+     * Find the intersection point between a line segment and the current
+     * partition plane. Takes advantage of some common situations like
+     * horizontal and vertical lines to choose a 'nicer' intersection
+     * point.
+     */
+    Vector2d intersectPartition(LineSegment const &lineSeg, coord_t perpC,
+                                coord_t perpD) const
     {
-        HPlane::Intercept *intercept = hplane.interceptLineSegment(lineSeg, edge);
-        if(intercept)
+        // Horizontal partition against vertical half-edge.
+        if(hplane.lineSegment().slopeType() == ST_HORIZONTAL && lineSeg.slopeType() == ST_VERTICAL)
         {
-            Vertex const &vertex = lineSeg.vertex(edge);
-            intercept->before = openSectorAtAngle(vertex, hplane.lineSegment().inverseAngle());
-            intercept->after  = openSectorAtAngle(vertex, hplane.lineSegment().angle());
+            return Vector2d(lineSeg.fromOrigin().x, hplane.lineSegment().fromOrigin().y);
         }
+
+        // Vertical partition against horizontal half-edge.
+        if(hplane.lineSegment().slopeType() == ST_VERTICAL && lineSeg.slopeType() == ST_HORIZONTAL)
+        {
+            return Vector2d(hplane.lineSegment().fromOrigin().x, lineSeg.fromOrigin().y);
+        }
+
+        // 0 = start, 1 = end.
+        coord_t ds = perpC / (perpC - perpD);
+
+        Vector2d point = lineSeg.fromOrigin();
+        if(lineSeg.slopeType() != ST_VERTICAL)
+            point.x += lineSeg.direction().x * ds;
+
+        if(lineSeg.slopeType() != ST_HORIZONTAL)
+            point.y += lineSeg.direction().y * ds;
+
+        return point;
     }
 
     /**
-     * Take the given half-edge @a hedge, compare it with the partition plane
-     * and determine which of the two sets it should be added to. If the
-     * half-edge is found to intersect the partition, the intercept point is
-     * calculated and the half-edge split at this point before then adding
-     * each to the relevant set (any existing twin is handled uniformly, also).
+     * Take the given line segment @a lineSeg, compare it with the partition
+     * plane and determine into which of the two sets it should be. If the
+     * line segment is found to intersect the partition, the intercept point
+     * is determined and the line segment then split in two at this point.
+     * Each piece of the line segment is then added to the relevant set.
      *
-     * If the half-edge lies on, or crosses the partition then a new intercept
-     * is added to the partition plane.
+     * If the line segment is collinear with, or intersects the partition then
+     * a new intercept is added to the partitioning half-plane.
+     *
+     * @note Any existing @em twin of @a lineSeg is so too handled uniformly.
      *
      * @param lineSeg  Line segment to be "partitioned".
      * @param rights   Set of line segments on the right side of the partition.
@@ -1290,40 +1326,6 @@ DENG2_PIMPL(Partitioner)
         }
 
         return newTreeNode(bspElement, rightTree, leftTree);
-    }
-
-    /**
-     * Find the intersection point between a line segment and the current
-     * partition plane. Takes advantage of some common situations like
-     * horizontal and vertical lines to choose a 'nicer' intersection
-     * point.
-     */
-    Vector2d intersectPartition(LineSegment const &lineSeg, coord_t perpC,
-                                coord_t perpD) const
-    {
-        // Horizontal partition against vertical half-edge.
-        if(hplane.lineSegment().slopeType() == ST_HORIZONTAL && lineSeg.slopeType() == ST_VERTICAL)
-        {
-            return Vector2d(lineSeg.fromOrigin().x, hplane.lineSegment().fromOrigin().y);
-        }
-
-        // Vertical partition against horizontal half-edge.
-        if(hplane.lineSegment().slopeType() == ST_VERTICAL && lineSeg.slopeType() == ST_HORIZONTAL)
-        {
-            return Vector2d(hplane.lineSegment().fromOrigin().x, lineSeg.fromOrigin().y);
-        }
-
-        // 0 = start, 1 = end.
-        coord_t ds = perpC / (perpC - perpD);
-
-        Vector2d point = lineSeg.fromOrigin();
-        if(lineSeg.slopeType() != ST_VERTICAL)
-            point.x += lineSeg.direction().x * ds;
-
-        if(lineSeg.slopeType() != ST_HORIZONTAL)
-            point.y += lineSeg.direction().y * ds;
-
-        return point;
     }
 
     /**
