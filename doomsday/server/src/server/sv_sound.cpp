@@ -35,7 +35,7 @@ static inline boolean isRealMobj(const mobj_t* base)
 /**
  * Find the map object to whom @a base belongs.
  */
-static void Sv_IdentifySoundBase(mobj_t **base, Sector **sector, Polyobj **poly,
+static void identifySoundEmitter(mobj_t **base, Sector **sector, Polyobj **poly,
                                  Plane **plane, Surface **surface)
 {
     *sector  = 0;
@@ -45,31 +45,13 @@ static void Sv_IdentifySoundBase(mobj_t **base, Sector **sector, Polyobj **poly,
 
     if(!*base || isRealMobj(*base)) return;
 
-    /// @todo Optimize: All sound emitters in a sector are linked together forming
-    /// a chain. Make use of the chains instead.
+    theMap->identifySoundEmitter(*reinterpret_cast<ddmobj_base_t*>(*base),
+                                 sector, poly, plane, surface);
 
-    // No mobj ID => it's not a real mobj.
-    *poly = theMap->polyobjByBase(*reinterpret_cast<ddmobj_base_t *>(base));
-    if(!*poly)
-    {
-        // Not a polyobj. Try the sectors next.
-        *sector = theMap->sectorBySoundEmitter(*reinterpret_cast<ddmobj_base_t *>(base));
-        if(!*sector)
-        {
-            // Not a sector. Try the planes next.
-            *plane = theMap->planeBySoundEmitter(*reinterpret_cast<ddmobj_base_t *>(base));
-            if(!*plane)
-            {
-                // Not a plane. Try the surfaces next.
-                *surface = theMap->surfaceBySoundEmitter(*reinterpret_cast<ddmobj_base_t *>(base));
-            }
-        }
-    }
-
-#ifdef _DEBUG
+#ifdef DENG_DEBUG
     if(!*sector && !*poly && !*plane && !*surface)
     {
-        Con_Error("Sv_IdentifySoundBase: Bad sound base.\n");
+        throw de::Error("Sv_IdentifySoundBase", "Bad sound base.");
     }
 #endif
 
@@ -81,7 +63,7 @@ void Sv_Sound(int soundId, mobj_t* origin, int toPlr)
     Sv_SoundAtVolume(soundId, origin, 1, toPlr);
 }
 
-void Sv_SoundAtVolume(int soundIDAndFlags, mobj_t* origin, float volume, int toPlr)
+void Sv_SoundAtVolume(int soundIDAndFlags, mobj_t *origin, float volume, int toPlr)
 {
     if(isClient) return;
 
@@ -92,7 +74,7 @@ void Sv_SoundAtVolume(int soundIDAndFlags, mobj_t* origin, float volume, int toP
     Polyobj *poly;
     Plane *plane;
     Surface *surface;
-    Sv_IdentifySoundBase(&origin, &sector, &poly, &plane, &surface);
+    identifySoundEmitter(&origin, &sector, &poly, &plane, &surface);
 
     int targetPlayers = 0;
     if(toPlr & SVSF_TO_ALL)
@@ -128,7 +110,7 @@ void Sv_StopSound(int soundId, mobj_t *origin)
     Polyobj *poly;
     Plane *plane;
     Surface *surface;
-    Sv_IdentifySoundBase(&origin, &sector, &poly, &plane, &surface);
+    identifySoundEmitter(&origin, &sector, &poly, &plane, &surface);
 
     LOG_TRACE("Sv_StopSound: id: #%i origin: %i(%p) sec: %p poly: %p plane: %p surface: %p")
             << soundId << (origin? origin->thinker.id : 0)

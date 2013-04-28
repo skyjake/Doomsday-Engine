@@ -191,31 +191,19 @@ public:
     inline int sectorCount() const { return sectors().count(); }
 
     /**
-     * Locate a sector in the map by sound emitter.
+     * Given an @a emitter origin, attempt to identify the map element
+     * to which it belongs.
      *
-     * @param soundEmitter  ddmobj_base_t to search for.
+     * @param emitter  The sound emitter to be identified.
+     * @param sector   The identified sector if found is written here.
+     * @param poly     The identified polyobj if found is written here.
+     * @param plane    The identified plane if found is written here.
+     * @param surface  The identified line side surface if found is written here.
      *
-     * @return  Pointer to the referenced Sector instance; otherwise @c 0.
+     * @return  @c true iff @a emitter is an identifiable map element.
      */
-    Sector *sectorBySoundEmitter(ddmobj_base_t const &soundEmitter) const;
-
-    /**
-     * Locate a sector plane in the map by sound emitter.
-     *
-     * @param soundEmitter  ddmobj_base_t to search for.
-     *
-     * @return  Pointer to the referenced Plane instance; otherwise @c 0.
-     */
-    Plane *planeBySoundEmitter(ddmobj_base_t const &soundEmitter) const;
-
-    /**
-     * Locate a surface in the map by sound emitter.
-     *
-     * @param soundEmitter  ddmobj_base_t to search for.
-     *
-     * @return  Pointer to the referenced Surface instance; otherwise @c 0.
-     */
-    Surface *surfaceBySoundEmitter(ddmobj_base_t const &soundEmitter) const;
+    bool identifySoundEmitter(ddmobj_base_t const &emitter, Sector **sector,
+        Polyobj **poly, Plane **plane, Surface **surface) const;
 
     /**
      * Provides access to the list of polyobjs for efficient traversal.
@@ -234,15 +222,6 @@ public:
      * @return  Pointer to the referenced polyobj instance; otherwise @c 0.
      */
     Polyobj *polyobjByTag(int tag) const;
-
-    /**
-     * Locate a polyobj in the map by mobj base.
-     *
-     * @param ddMobjBase  Base mobj to search for.
-     *
-     * @return  Pointer to the referenced polyobj instance; otherwise @c 0.
-     */
-    Polyobj *polyobjByBase(ddmobj_base_t const &ddMobjBase) const;
 
     /**
      * Returns the root element for the map's BSP tree.

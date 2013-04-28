@@ -2253,13 +2253,6 @@ DENG_EXTERN_C Polyobj *P_PolyobjByTag(int tag)
     return theMap->polyobjByTag(tag);
 }
 
-#undef P_PolyobjByBase
-DENG_EXTERN_C Polyobj *P_PolyobjByBase(void *ddMobjBase)
-{
-    if(!theMap || !ddMobjBase) return 0;
-    return theMap->polyobjByBase(*reinterpret_cast<ddmobj_base_t *>(ddMobjBase));
-}
-
 #undef P_PolyobjMove
 DENG_EXTERN_C boolean P_PolyobjMove(Polyobj *po, const_pvec3d_t xy)
 {
