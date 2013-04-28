@@ -26,27 +26,38 @@
 #include <de/GLBuffer>
 #include <de/GLShader>
 #include <de/GuiApp>
+#include <de/Clock>
 
 using namespace de;
 
 DENG2_PIMPL(TestWindow),
 DENG2_OBSERVES(Canvas, GLInit),
-DENG2_OBSERVES(Canvas, GLResize)
+DENG2_OBSERVES(Canvas, GLResize),
+DENG2_OBSERVES(Clock, TimeChange)
 {
     Drawable ob;
     GLUniform uMvpMatrix;
+    GLUniform uColor;
+    GLUniform uTime;
+    Time startedAt;
 
     typedef GLBufferT<Vertex2TexRgba> VertexBuf;
 
     Instance(Public *i)
         : Base(i),
-          uMvpMatrix("uMvpMatrix", GLUniform::Matrix4x4)
+          uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
+          uColor("uColor", GLUniform::Vec4),
+          uTime("uTime", GLUniform::Float)
     {
         // Use this as the main window.
         setMain(i);
 
         self.canvas().audienceForGLInit += this;
         self.canvas().audienceForGLResize += this;
+
+        uColor = Vector4f(.5f, .75f, .5f, 1);
+
+        Clock::appClock().audienceForTimeChange += this;
     }
 
     void canvasGLInit(Canvas &cv)
@@ -70,9 +81,9 @@ DENG2_OBSERVES(Canvas, GLResize)
 
         Vertex2TexRgba verts[4] = {
             { Vector2f(10,  10),  Vector2f(0, 0), Vector4f(1, 1, 1, 1) },
-            { Vector2f(100, 10),  Vector2f(1, 0), Vector4f(1, 1, 0, 1) },
-            { Vector2f(100, 100), Vector2f(1, 1), Vector4f(1, 0, 0, 1) },
-            { Vector2f(10,  100), Vector2f(0, 1), Vector4f(0, 0, 1, 1) }
+            { Vector2f(300, 10),  Vector2f(1, 0), Vector4f(1, 1, 0, 1) },
+            { Vector2f(300, 300), Vector2f(1, 1), Vector4f(1, 0, 0, 1) },
+            { Vector2f(10,  300), Vector2f(0, 1), Vector4f(0, 0, 1, 1) }
         };
 #if 1
         buf->setVertices(gl::TriangleFan, verts, 4, gl::Static);
@@ -87,7 +98,8 @@ DENG2_OBSERVES(Canvas, GLResize)
 
         Block vertShader =
                 "uniform highp mat4 uMvpMatrix;\n"
-                //"uniform highp vec4 uColor;\n"
+                "uniform highp vec4 uColor;\n"
+                "uniform highp float uTime;\n"
 
                 "attribute highp vec4 aVertex;\n"
                 //"attribute highp vec2 aUV;\n"
@@ -99,8 +111,7 @@ DENG2_OBSERVES(Canvas, GLResize)
                 "void main(void) {\n"
                 "   gl_Position = uMvpMatrix * aVertex;\n"
                 //"   vUV = aUV.st;\n"
-                //"   vColor = aColor * uColor;\n"
-                "   vColor = aColor;\n"
+                "   vColor = aColor + sin(uTime) * uColor;\n"
                 "}\n";
 
         Block fragShader =
@@ -115,7 +126,9 @@ DENG2_OBSERVES(Canvas, GLResize)
                 "}";
 
         ob.program().build(vertShader, fragShader)
-                << uMvpMatrix;
+                << uMvpMatrix
+                << uColor
+                << uTime;
 
         cv.renderTarget().setClearColor(Vector4f(.2f, .2f, .2f, 0));
     }
@@ -134,11 +147,21 @@ DENG2_OBSERVES(Canvas, GLResize)
 
     void draw(Canvas &cv)
     {
-        LOG_DEBUG("GLDraw");
+        //LOG_DEBUG("GLDraw");
 
         cv.renderTarget().clear(GLTarget::Color | GLTarget::Depth);
 
         ob.draw();
+    }
+
+    void timeChanged(Clock const &clock)
+    {
+        if(!startedAt.isValid())
+        {
+            startedAt = clock.time();
+        }
+        uTime = startedAt.since();
+        self.update();
     }
 };
 
