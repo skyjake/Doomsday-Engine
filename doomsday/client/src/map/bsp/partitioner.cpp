@@ -1903,11 +1903,12 @@ DENG2_PIMPL(Partitioner)
     }
 
     /**
-     * Check whether a line with the given delta coordinates and beginning at
-     * this vertex, is open.
+     * Determines whether a conceptual line oriented at @a vtx and "pointing"
+     * at the specified world @a angle enters an "open" sector (which is to say
+     * that said line does not enter void space and does not intercept with any
+     * existing map or partition line segment in the plane, thus "closed").
      *
-     * Returns a sector reference if it's open, or @c 0 if closed (void space
-     * or directly along a line).
+     * @return  The "open" sector at this angle; otherwise @c 0 (closed).
      */
     Sector *openSectorAtAngle(Vertex const &vtx, coord_t angle)
     {

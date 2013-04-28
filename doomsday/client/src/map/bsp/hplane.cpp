@@ -52,7 +52,7 @@ DENG2_PIMPL(HPlane)
     /// Intercept points along the half-plane.
     Intercepts intercepts;
 
-    /// Set to @a true when @var intercepts requires sorting.
+    /// Set to @c true when @var intercepts requires sorting.
     bool needSortIntercepts;
 
     Instance(Public *i, Vector2d const &partitionOrigin,
@@ -164,7 +164,7 @@ void HPlane::sortAndMergeIntercepts()
             // Destroy the "next" intercept.
             d->intercepts.removeAt(i+1);
 
-            // Process the new "this" and "next" pairing.
+            // Process the new "cur" and "next" pairing.
             i -= 1;
         }
     }
