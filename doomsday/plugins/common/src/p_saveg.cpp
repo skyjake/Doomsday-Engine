@@ -1056,6 +1056,9 @@ static void clearTargetPlayers()
 mobj_t *SV_GetArchiveThing(ThingSerialId thingId, void *address)
 {
     DENG_ASSERT(inited);
+#if !__JHEXEN__
+    DENG_UNUSED(address);
+#endif
 
 #if __JHEXEN__
     if(thingId == TargetPlayerId)
@@ -1819,6 +1822,10 @@ void SV_TranslateLegacyMobjFlags(mobj_t* mo, int ver)
 
 static void RestoreMobj(mobj_t *mo, int ver)
 {
+#if __JDOOM64__
+    DENG_UNUSED(ver);
+#endif
+
     mo->info = &MOBJINFO[mo->type];
 
     P_MobjSetState(mo, PTR2INT(mo->state));
@@ -5406,6 +5413,8 @@ void SV_SaveGameClient(uint gameId)
 
     SV_CloseFile();
     SaveInfo_Delete(saveInfo);
+#else
+    DENG_UNUSED(gameId);
 #endif
 }
 
@@ -5486,6 +5495,8 @@ void SV_LoadGameClient(uint gameId)
 
     SV_CloseFile();
     SaveInfo_Delete(saveInfo);
+#else
+    DENG_UNUSED(gameId);
 #endif
 }
 
