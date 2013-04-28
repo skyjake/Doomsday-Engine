@@ -788,7 +788,7 @@ bool GameMap::identifySoundEmitter(ddmobj_base_t const &emitter, Sector **sector
         }
     }
 
-    return (!*sector || !*poly || !*plane || !*surface);
+    return (*sector != 0 || *poly != 0|| *plane != 0|| *surface != 0);
 }
 //#endif // __SERVER__
 
