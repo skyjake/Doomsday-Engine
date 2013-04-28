@@ -368,7 +368,7 @@ DENG2_PIMPL(Partitioner)
     inline void linkLineSegmentInSuperBlockmap(SuperBlock &block, LineSegment &lineSeg)
     {
         // Associate this line segment with the subblock.
-        lineSeg.bmapBlock = &block.push(lineSeg);
+        lineSeg.setBMapBlock(&block.push(lineSeg));
     }
 
     /**
@@ -461,8 +461,8 @@ DENG2_PIMPL(Partitioner)
 
         LineSegment &newLineSeg = cloneLineSegment(oldLineSeg);
 
-        newLineSeg.prevOnSide = &oldLineSeg;
-        oldLineSeg.nextOnSide = &newLineSeg;
+        newLineSeg.setLeft(&oldLineSeg);
+        oldLineSeg.setRight(&newLineSeg);
 
         oldLineSeg.replaceTo(*newVert); oldLineSeg.hedge()._to = newVert;
         newLineSeg.replaceFrom(*newVert); newLineSeg.hedge()._from = newVert;
@@ -477,8 +477,8 @@ DENG2_PIMPL(Partitioner)
             newLineSeg.setTwin(&cloneLineSegment(oldLineSeg.twin()));
             newLineSeg.twin().setTwin(&newLineSeg);
 
-            newLineSeg.twin().nextOnSide = oldLineSeg.twinPtr();
-            oldLineSeg.twin().prevOnSide = newLineSeg.twinPtr();
+            newLineSeg.twin().setRight(oldLineSeg.twinPtr());
+            oldLineSeg.twin().setLeft(newLineSeg.twinPtr());
 
             oldLineSeg.twin().replaceFrom(*newVert); oldLineSeg.twin().hedge()._from = newVert;
             newLineSeg.twin().replaceTo(*newVert); newLineSeg.twin().hedge()._to = newVert;
@@ -574,7 +574,7 @@ DENG2_PIMPL(Partitioner)
             /// @todo This logic can now be moved into splitLineSegment().
             if(lineSeg.hasTwin() && !(lineSeg.twin().hasHEdge() && lineSeg.twin().hedge().hasBspLeaf()))
             {
-                SuperBlock *bmapBlock = lineSeg.twin().bmapBlock;
+                SuperBlock *bmapBlock = lineSeg.twin().bmapBlockPtr();
                 DENG2_ASSERT(bmapBlock != 0);
                 linkLineSegmentInSuperBlockmap(*bmapBlock, newLineSeg.twin());
             }
@@ -619,7 +619,7 @@ DENG2_PIMPL(Partitioner)
                 while((lineSeg = cur->pop()))
                 {
                     // Disassociate the line segment from the blockmap.
-                    lineSeg->bmapBlock = 0;
+                    lineSeg->setBMapBlock(0);
 
                     partitionOneLineSegment(*lineSeg, rights, lefts);
                 }
@@ -1441,7 +1441,7 @@ DENG2_PIMPL(Partitioner)
         hedge = base;
         do
         {
-            if(Sector *hedgeSector = lineSegment(*hedge).sector)
+            if(Sector *hedgeSector = lineSegment(*hedge).sectorPtr())
             {
                 return hedgeSector;
             }
@@ -1487,14 +1487,14 @@ DENG2_PIMPL(Partitioner)
                     {
                         HEdge *leftHEdge = hedge;
                         // Find the left-most hedge.
-                        while(lineSegment(*leftHEdge).prevOnSide)
-                            leftHEdge = lineSegment(*leftHEdge).prevOnSide->hedgePtr();
+                        while(lineSegment(*leftHEdge).hasLeft())
+                            leftHEdge = lineSegment(*leftHEdge).left().hedgePtr();
                         side.setLeftHEdge(leftHEdge);
 
                         // Find the right-most hedge.
                         HEdge *rightHEdge = hedge;
-                        while(lineSegment(*rightHEdge).nextOnSide)
-                            rightHEdge = lineSegment(*rightHEdge).nextOnSide->hedgePtr();
+                        while(lineSegment(*rightHEdge).hasRight())
+                            rightHEdge = lineSegment(*rightHEdge).right().hedgePtr();
                         side.setRightHEdge(rightHEdge);
                     }
                 }
@@ -1523,7 +1523,7 @@ DENG2_PIMPL(Partitioner)
         HEdge const *hedge = base;
         do
         {
-            if(Sector *hedgeSector = lineSegment(*hedge).sector)
+            if(Sector *hedgeSector = lineSegment(*hedge).sectorPtr())
             {
                 return hedgeSector;
             }
@@ -1564,8 +1564,8 @@ DENG2_PIMPL(Partitioner)
                 HEdge *hedge = base;
                 do
                 {
-                    LineSegment const &info = lineSegment(*hedge);
-                    if(info.sector && info.sector != sector)
+                    LineSegment const &lineSeg = lineSegment(*hedge);
+                    if(lineSeg.sectorPtr() && lineSeg.sectorPtr() != sector)
                     {
                         notifyMigrantHEdgeBuilt(*hedge, *sector);
                     }
@@ -1815,7 +1815,7 @@ DENG2_PIMPL(Partitioner)
     {
         lineSegments.append(LineSegment(from, to, side, sourceSide));
         LineSegment &lineSeg = lineSegments.back();
-        lineSeg.sector = &sec;
+        lineSeg.setSector(&sec);
 
         lineSeg.setHEdge(new HEdge(from, side));
         lineSeg.hedge()._to = &to;
@@ -1862,7 +1862,7 @@ DENG2_PIMPL(Partitioner)
                 while((lineSeg = cur->pop()))
                 {
                     // Disassociate the half-edge from the blockmap.
-                    lineSeg->bmapBlock = 0;
+                    lineSeg->setBMapBlock(0);
 
                     lineSegs.append(lineSeg);
                 }
@@ -1936,14 +1936,14 @@ DENG2_PIMPL(Partitioner)
             if(angle + ANG_EPSILON < tip.angle())
             {
                 // Found it.
-                return (tip.hasFront()? tip.front().sector : 0);
+                return (tip.hasFront()? tip.front().sectorPtr() : 0);
             }
         }
 
         // Not found. The open sector will therefore be on the back of the tip
         // at the greatest angle.
         LineSegmentTip const &tip = tips.back();
-        return (tip.hasBack()? tip.back().sector : 0);
+        return (tip.hasBack()? tip.back().sectorPtr() : 0);
     }
 
     bool release(MapElement *elm)
@@ -2075,7 +2075,7 @@ DENG2_PIMPL(Partitioner)
             LOG_DEBUG("Build: %s line segment %p sector: %d %s -> %s")
                 << (lineSeg->hasMapSide()? "map" : "part")
                 << de::dintptr(lineSeg)
-                << (lineSeg->sector != 0? lineSeg->sector->indexInMap() : -1)
+                << (lineSeg->sectorPtr() != 0? lineSeg->sectorPtr()->indexInMap() : -1)
                 << lineSeg->fromOrigin().asText() << lineSeg->toOrigin().asText();
         }
     }

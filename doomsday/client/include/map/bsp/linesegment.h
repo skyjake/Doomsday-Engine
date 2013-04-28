@@ -52,7 +52,7 @@ class SuperBlock;
  */
 enum LineRelationship
 {
-    Collinear = 0,
+    Collinear,
     Right,
     RightIntercept, ///< Right vertex intercepts.
     Left,
@@ -68,14 +68,17 @@ enum LineRelationship
 class LineSegment
 {
 public:
-    /// Required half-edge is missing. @ingroup errors
-    DENG2_ERROR(MissingHEdgeError);
-
     /// Required twin segment is missing. @ingroup errors
     DENG2_ERROR(MissingTwinError);
 
+    /// Required neighbor segment is missing. @ingroup errors
+    DENG2_ERROR(MissingNeighborError);
+
     /// Required map line side attribution is missing. @ingroup errors
     DENG2_ERROR(MissingMapSideError);
+
+    /// Required half-edge is missing. @ingroup errors
+    DENG2_ERROR(MissingHEdgeError);
 
     /// Edge/vertex identifiers:
     enum
@@ -83,17 +86,6 @@ public:
         From,
         To
     };
-
-public: /// @todo make private:
-    LineSegment *nextOnSide;
-    LineSegment *prevOnSide;
-
-    /// The superblock that contains this segment, or @c 0 if the segment is no
-    /// longer in any superblock (e.g., now in or being turned into a leaf edge).
-    SuperBlock *bmapBlock;
-
-    /// Map sector attributed to the line segment. Can be @c 0 for partition lines.
-    Sector *sector;
 
 public:
     LineSegment(Vertex &from, Vertex &to,
@@ -206,7 +198,8 @@ public:
     Line::Side &sourceMapSide() const;
 
     /**
-     * Returns a pointer to the @em source map Line::Side attributed to the line segment.
+     * Returns a pointer to the @em source map Line::Side attributed to the
+     * line segment.
      *
      * @see hasSourceMapSide()
      */
@@ -229,34 +222,91 @@ public:
     inline int mapLineSideId() const { return mapSide().lineSideId(); }
 
     /**
-     * Returns @c true iff a half-edge is linked to the line segment.
+     * Returns true iff the line segment has the specified @a edge neighbor
+     * line segment configured.
      *
-     * @see hedge()
+     * @param edge  If non-zero test the Right neighbor, otherwise the Left.
+     *
+     * @see neighbor()
      */
-    bool hasHEdge() const;
+    bool hasNeighbor(int edge) const;
 
     /**
-     * Returns the linked half-edge for the line segment.
-     *
-     * @see hasHEdge()
+     * Returns true iff a @em Left edge neighbor is configured.
      */
-    HEdge &hedge() const;
+    inline bool hasLeft() const { return hasNeighbor(Left); }
 
     /**
-     * Returns a pointer to the linked half-edge of the line segment; otherwise @c 0.
-     *
-     * @see hasHEdge()
+     * Returns true iff a @em Right edge neighbor is configured.
      */
-    inline HEdge *hedgePtr() const { return hasHEdge()? &hedge() : 0; }
+    inline bool hasRight() const { return hasNeighbor(Right); }
 
     /**
-     * Change the linked half-edge of the line segment.
+     * Returns the specified @a edge neighbor of the line segment.
      *
-     * @param newHEdge  New half-edge for the line segment. Can be @c 0.
+     * @param edge  If non-zero test the @em Right neighbor, otherwise the @em Left.
      *
-     * @see hedge()
+     * @see hasNeighbor()
      */
-    void setHEdge(HEdge *newHEdge);
+    LineSegment &neighbor(int edge) const;
+
+    /**
+     * Returns the @em Left neighbor of the line segment.
+     * @see neighbor(), hasLeft()
+     */
+    inline LineSegment &left() const { return neighbor(Left); }
+
+    /**
+     * Returns the @em Right neighbor of the line segment.
+     * @see neighbor(), hasRight()
+     */
+    inline LineSegment &right() const { return neighbor(Right); }
+
+    /**
+     * Change the specified @a edge neighbor of the line segment.
+     *
+     * @param edge  If non-zero change the @em Right neighbor, otherwise the @em Left.
+     *
+     * @param newNeighbor  New line segment to set as the neighbor.
+     */
+    void setNeighbor(int edge, LineSegment *newNeighbor);
+
+    /**
+     * Change the @em Left neighbor of the line segment.
+     * @see setNeighbor()
+     */
+    inline void setLeft(LineSegment *newLeft) { setNeighbor(Left, newLeft); }
+
+    /**
+     * Change the @em Right neighbor of the line segment.
+     * @see setNeighbor()
+     */
+    inline void setRight(LineSegment *newRight) { setNeighbor(Right, newRight); }
+
+    /**
+     * Returns The superblock that contains the line segment; otherwise @c 0.
+     */
+    SuperBlock *bmapBlockPtr() const;
+
+    /**
+     * Change the blockmap block to which the line segment is associated.
+     *
+     * @param newBMapBlock  New blockmap block. Can be @c 0.
+     */
+    void setBMapBlock(SuperBlock *newBMapBlock);
+
+    /**
+     * Returns a pointer to the map sector attributed to the line segment (if any).
+     * @note In the case of partition line segments @c 0 is always returned.
+     */
+    Sector *sectorPtr() const;
+
+    /**
+     * Change the sector attributed to the line segment.
+     *
+     * @param newSector  New sector to attribute to the line segment. Can be @c 0.
+     */
+    void setSector(Sector *newSector);
 
     /**
      * Returns a direction vector for the line segment from the From/Start vertex
@@ -338,6 +388,36 @@ public:
 
     /// @see M_BoxOnLineSide2()
     int boxOnSide(AABoxd const &box) const;
+
+    /**
+     * Returns @c true iff a half-edge is linked to the line segment.
+     *
+     * @see hedge()
+     */
+    bool hasHEdge() const;
+
+    /**
+     * Returns the linked half-edge for the line segment.
+     *
+     * @see hasHEdge()
+     */
+    HEdge &hedge() const;
+
+    /**
+     * Returns a pointer to the linked half-edge of the line segment; otherwise @c 0.
+     *
+     * @see hasHEdge()
+     */
+    inline HEdge *hedgePtr() const { return hasHEdge()? &hedge() : 0; }
+
+    /**
+     * Change the linked half-edge of the line segment.
+     *
+     * @param newHEdge  New half-edge for the line segment. Can be @c 0.
+     *
+     * @see hedge()
+     */
+    void setHEdge(HEdge *newHEdge);
 
     /// @todo refactor away -ds
     void ceaseVertexObservation();

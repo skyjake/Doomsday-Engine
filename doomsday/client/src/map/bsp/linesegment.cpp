@@ -31,6 +31,7 @@
 #include <de/Observers>
 
 #include "HEdge"
+#include "map/bsp/superblockmap.h"
 
 #include "map/bsp/linesegment.h"
 
@@ -58,6 +59,18 @@ DENG2_OBSERVES(Vertex, OriginChange)
     /// the partition line's map Line side. (Not owned.)
     Line::Side *sourceMapSide;
 
+    /// Neighbor line segments relative to "this" segment along the source
+    /// line (both partition and map lines).
+    LineSegment *rightNeighbor;
+    LineSegment *leftNeighbor;
+
+    /// The superblock that contains this segment, or @c 0 if the segment is no
+    /// longer in any superblock (e.g., now in or being turned into a leaf edge).
+    SuperBlock *bmapBlock;
+
+    /// Map sector attributed to the line segment. Can be @c 0 for partition lines.
+    Sector *sector;
+
     // Precomputed data for faster calculations.
     coord_t pLength;
     coord_t pAngle;
@@ -76,6 +89,10 @@ DENG2_OBSERVES(Vertex, OriginChange)
           twin(0),
           mapSide(mapSide),
           sourceMapSide(sourceMapSide),
+          rightNeighbor(0),
+          leftNeighbor(0),
+          bmapBlock(0),
+          sector(0),
           pLength(0),
           pAngle(0),
           pPara(0),
@@ -95,6 +112,10 @@ DENG2_OBSERVES(Vertex, OriginChange)
 
     inline Vertex **vertexAdr(int edge) {
         return edge? &to : &from;
+    }
+
+    inline LineSegment **neighborAdr(int edge) {
+        return edge? &rightNeighbor : &leftNeighbor;
     }
 
     void replaceVertex(int edge, Vertex &newVertex)
@@ -136,25 +157,21 @@ DENG2_OBSERVES(Vertex, OriginChange)
 
 LineSegment::LineSegment(Vertex &from, Vertex &to, Line::Side *mapSide,
                          Line::Side *sourceMapSide)
-    : nextOnSide(0),
-      prevOnSide(0),
-      bmapBlock(0),
-      sector(0),
-      d(new Instance(this, from, to, mapSide, sourceMapSide))
+    : d(new Instance(this, from, to, mapSide, sourceMapSide))
 {
     d->updateCache();
 }
 
 LineSegment::LineSegment(LineSegment const &other)
-    : nextOnSide(other.nextOnSide),
-      prevOnSide(other.prevOnSide),
-      bmapBlock(other.bmapBlock),
-      sector(other.sector),
-      d(new Instance(this, *other.d->from, *other.d->to,
+    : d(new Instance(this, *other.d->from, *other.d->to,
                             other.d->mapSide, other.d->sourceMapSide))
 {
     d->direction  = other.d->direction;
     d->twin       = other.d->twin;
+    d->rightNeighbor = other.d->rightNeighbor;
+    d->leftNeighbor = other.d->leftNeighbor;
+    d->bmapBlock  = other.d->bmapBlock;
+    d->sector     = other.d->sector;
     d->pLength    = other.d->pLength;
     d->pAngle     = other.d->pAngle;
     d->pPara      = other.d->pPara;
@@ -165,15 +182,14 @@ LineSegment::LineSegment(LineSegment const &other)
 
 LineSegment &LineSegment::operator = (LineSegment const &other)
 {
-    nextOnSide = other.nextOnSide;
-    prevOnSide = other.prevOnSide;
-    bmapBlock  = other.bmapBlock;
-    sector     = other.sector;
-
     d->direction     = other.d->direction;
+    d->twin          = other.d->twin;
     d->mapSide       = other.d->mapSide;
     d->sourceMapSide = other.d->sourceMapSide;
-    d->twin          = other.d->twin;
+    d->rightNeighbor    = other.d->rightNeighbor;
+    d->leftNeighbor    = other.d->leftNeighbor;
+    d->bmapBlock     = other.d->bmapBlock;
+    d->sector        = other.d->sector;
     d->pLength       = other.d->pLength;
     d->pAngle        = other.d->pAngle;
     d->pPara         = other.d->pPara;
@@ -283,6 +299,47 @@ Line::Side &LineSegment::sourceMapSide() const
     }
     /// @throw MissingMapSideError Attempted with no source map line side attributed.
     throw MissingMapSideError("LineSegment::sourceMapSide", "No source map line side is attributed");
+}
+
+bool LineSegment::hasNeighbor(int edge) const
+{
+    return *d->neighborAdr(edge) != 0;
+}
+
+LineSegment &LineSegment::neighbor(int edge) const
+{
+    LineSegment **neighborAdr = d->neighborAdr(edge);
+    if(*neighborAdr)
+    {
+        return **neighborAdr;
+    }
+    /// @throw MissingNeighborError Attempted with no relevant neighbor attributed.
+    throw MissingNeighborError("LineSegment::neighbor", QString("No neighbor %1 is attributed").arg(edge? "Right" : "Left"));
+}
+
+void LineSegment::setNeighbor(int edge, LineSegment *newNeighbor)
+{
+    *d->neighborAdr(edge) = newNeighbor;
+}
+
+SuperBlock *LineSegment::bmapBlockPtr() const
+{
+    return d->bmapBlock;
+}
+
+void LineSegment::setBMapBlock(SuperBlock *newBMapBlock)
+{
+    d->bmapBlock = newBMapBlock;
+}
+
+Sector *LineSegment::sectorPtr() const
+{
+    return d->sector;
+}
+
+void LineSegment::setSector(Sector *newSector)
+{
+    d->sector = newSector;
 }
 
 coord_t LineSegment::length() const
