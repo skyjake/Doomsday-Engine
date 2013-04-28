@@ -366,6 +366,94 @@ DENG2_PIMPL(GameMap)
             }
         }
     }
+
+    /**
+     * Locate a polyobj in the map by sound emitter.
+     *
+     * @param soundEmitter  ddmobj_base_t to search for.
+     *
+     * @return  Pointer to the referenced Polyobj instance; otherwise @c 0.
+     */
+    Polyobj *polyobjBySoundEmitter(ddmobj_base_t const &soundEmitter) const
+    {
+        foreach(Polyobj *polyobj, self._polyobjs)
+        {
+            if(&soundEmitter == &polyobj->soundEmitter())
+                return polyobj;
+        }
+        return 0;
+    }
+
+    /**
+     * Locate a sector in the map by sound emitter.
+     *
+     * @param soundEmitter  ddmobj_base_t to search for.
+     *
+     * @return  Pointer to the referenced Sector instance; otherwise @c 0.
+     */
+    Sector *sectorBySoundEmitter(ddmobj_base_t const &soundEmitter) const
+    {
+        foreach(Sector *sector, self._sectors)
+        {
+            if(&soundEmitter == &sector->soundEmitter())
+                return sector;
+        }
+        return 0; // Not found.
+    }
+
+    /**
+     * Locate a sector plane in the map by sound emitter.
+     *
+     * @param soundEmitter  ddmobj_base_t to search for.
+     *
+     * @return  Pointer to the referenced Plane instance; otherwise @c 0.
+     */
+    Plane *planeBySoundEmitter(ddmobj_base_t const &soundEmitter) const
+    {
+        foreach(Sector *sector, self._sectors)
+        foreach(Plane *plane, sector->planes())
+        {
+            if(&soundEmitter == &plane->soundEmitter())
+            {
+                return plane;
+            }
+        }
+        return 0; // Not found.
+    }
+
+    /**
+     * Locate a surface in the map by sound emitter.
+     *
+     * @param soundEmitter  ddmobj_base_t to search for.
+     *
+     * @return  Pointer to the referenced Surface instance; otherwise @c 0.
+     */
+    Surface *surfaceBySoundEmitter(ddmobj_base_t const &soundEmitter) const
+    {
+        // Perhaps a wall surface?
+        foreach(Line *line, self._lines)
+        for(int i = 0; i < 2; ++i)
+        {
+            if(!line->hasSections(i))
+                continue;
+
+            Line::Side &side = line->side(i);
+            if(&soundEmitter == &side.middleSoundEmitter())
+            {
+                return &side.middle();
+            }
+            if(&soundEmitter == &side.bottomSoundEmitter())
+            {
+                return &side.bottom();
+            }
+            if(&soundEmitter == &side.topSoundEmitter())
+            {
+                return &side.top();
+            }
+        }
+
+        return 0; // Not found.
+    }
 };
 
 GameMap::GameMap() : d(new Instance(this))
@@ -709,54 +797,35 @@ Line::Side *GameMap::sideByIndex(int index) const
     return &_lines.at(index / 2)->side(index % 2);
 }
 
-Sector *GameMap::sectorBySoundEmitter(ddmobj_base_t const &soundEmitter) const
+bool GameMap::identifySoundEmitter(ddmobj_base_t const &emitter, Sector **sector,
+    Polyobj **poly, Plane **plane, Surface **surface) const
 {
-    foreach(Sector *sector, _sectors)
-    {
-        if(&soundEmitter == &sector->soundEmitter())
-            return sector;
-    }
-    return 0; // Not found.
-}
+    *sector  = 0;
+    *poly    = 0;
+    *plane   = 0;
+    *surface = 0;
 
-Plane *GameMap::planeBySoundEmitter(ddmobj_base_t const &soundEmitter) const
-{
-    foreach(Sector *sector, _sectors)
-    foreach(Plane *plane, sector->planes())
-    {
-        if(&soundEmitter == &plane->soundEmitter())
-        {
-            return plane;
-        }
-    }
-    return 0; // Not found.
-}
+    /// @todo Optimize: All sound emitters in a sector are linked together forming
+    /// a chain. Make use of the chains instead.
 
-Surface *GameMap::surfaceBySoundEmitter(ddmobj_base_t const &soundEmitter) const
-{
-    // Perhaps a wall surface?
-    foreach(Line *line, _lines)
-    for(int i = 0; i < 2; ++i)
+    *poly = d->polyobjBySoundEmitter(emitter);
+    if(!*poly)
     {
-        if(!line->hasSections(i))
-            continue;
-
-        Line::Side &side = line->side(i);
-        if(&soundEmitter == &side.middleSoundEmitter())
+        // Not a polyobj. Try the sectors next.
+        *sector = d->sectorBySoundEmitter(emitter);
+        if(!*sector)
         {
-            return &side.middle();
-        }
-        if(&soundEmitter == &side.bottomSoundEmitter())
-        {
-            return &side.bottom();
-        }
-        if(&soundEmitter == &side.topSoundEmitter())
-        {
-            return &side.top();
+            // Not a sector. Try the planes next.
+            *plane = d->planeBySoundEmitter(emitter);
+            if(!*plane)
+            {
+                // Not a plane. Try the surfaces next.
+                *surface = d->surfaceBySoundEmitter(emitter);
+            }
         }
     }
 
-    return 0; // Not found.
+    return (*sector != 0 || *poly != 0|| *plane != 0|| *surface != 0);
 }
 
 Polyobj *GameMap::polyobjByTag(int tag) const
@@ -764,16 +833,6 @@ Polyobj *GameMap::polyobjByTag(int tag) const
     foreach(Polyobj *polyobj, _polyobjs)
     {
         if(polyobj->tag == tag)
-            return polyobj;
-    }
-    return 0;
-}
-
-Polyobj *GameMap::polyobjByBase(ddmobj_base_t const &ddMobjBase) const
-{
-    foreach(Polyobj *polyobj, _polyobjs)
-    {
-        if(reinterpret_cast<ddmobj_base_t *>(polyobj) == &ddMobjBase)
             return polyobj;
     }
     return 0;

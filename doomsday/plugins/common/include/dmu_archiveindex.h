@@ -138,7 +138,7 @@ private:
             return;
 
         // Fill the LUT with initial values.
-        _lut.reset(new ElementLut(lutSize, NULL));
+        _lut.reset(new ElementLut(lutSize, MapElementPtr(NULL)));
 
         // Populate the LUT.
         int numElements = P_Count(ElementType);

@@ -109,6 +109,16 @@ void Polyobj::setCollisionCallback(void (*func) (mobj_t *mobj, void *line, void 
     collisionCallback = func;
 }
 
+ddmobj_base_t &Polyobj::soundEmitter()
+{
+    return *reinterpret_cast<ddmobj_base_t *>(this);
+}
+
+ddmobj_base_t const &Polyobj::soundEmitter() const
+{
+    return const_cast<ddmobj_base_t const &>(const_cast<Polyobj &>(*this).soundEmitter());
+}
+
 Polyobj::Lines const &Polyobj::lines() const
 {
     return *static_cast<Lines *>(_lines);
