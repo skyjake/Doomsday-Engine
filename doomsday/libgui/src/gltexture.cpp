@@ -24,9 +24,9 @@ namespace de {
 namespace internal
 {
     enum TextureFlag {
-        AutoMips,
-        MipmapAvailable,
-        ParamsChanged
+        AutoMips        = 0x1,
+        MipmapAvailable = 0x2,
+        ParamsChanged   = 0x4
     };
     Q_DECLARE_FLAGS(TextureFlags, TextureFlag)
 }
