@@ -66,7 +66,7 @@ static int validCount;
 
 DENG2_PIMPL(Partitioner)
 {
-    /// Cost factor attributed to splitting a half-edge.
+    /// Cost factor attributed to splitting a line segment.
     int splitCostFactor;
 
     /// The map we are building BSP data for.
@@ -520,13 +520,13 @@ DENG2_PIMPL(Partitioner)
     Vector2d intersectPartition(LineSegment const &lineSeg, coord_t perpC,
                                 coord_t perpD) const
     {
-        // Horizontal partition against vertical half-edge.
+        // Horizontal partition against vertical line segment.
         if(hplane.lineSegment().slopeType() == ST_HORIZONTAL && lineSeg.slopeType() == ST_VERTICAL)
         {
             return Vector2d(lineSeg.fromOrigin().x, hplane.lineSegment().fromOrigin().y);
         }
 
-        // Vertical partition against horizontal half-edge.
+        // Vertical partition against horizontal line segment.
         if(hplane.lineSegment().slopeType() == ST_VERTICAL && lineSeg.slopeType() == ST_HORIZONTAL)
         {
             return Vector2d(hplane.lineSegment().fromOrigin().x, lineSeg.fromOrigin().y);
@@ -1866,7 +1866,7 @@ DENG2_PIMPL(Partitioner)
                 LineSegment *lineSeg;
                 while((lineSeg = cur->pop()))
                 {
-                    // Disassociate the half-edge from the blockmap.
+                    // Disassociate the line segment from the blockmap.
                     lineSeg->setBMapBlock(0);
 
                     lineSegs.append(lineSeg);
