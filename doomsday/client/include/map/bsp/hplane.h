@@ -31,13 +31,11 @@
 #include <de/Vector>
 
 #include "partition.h"
-#include "map/bsp/hedgeintercept.h"
+#include "Sector"
+#include "Vertex"
 
 /// Two intercepts whose distance is inclusive of this bound will be merged.
 #define HPLANE_INTERCEPT_MERGE_DISTANCE_EPSILON     1.0 / 128
-
-class Vertex;
-class Sector;
 
 namespace de {
 namespace bsp {
@@ -53,11 +51,28 @@ public:
     /**
      * Used to model an intercept in the list of intersections.
      */
-    class Intercept : public LineSegmentIntercept
+    class Intercept
     {
+    public: /// @todo make private:
+        // Vertex in question.
+        Vertex *vertex;
+
+        // True if this intersection was on a self-referencing line.
+        bool selfRef;
+
+        /// Sector on each side of the vertex (along the partition), or @c 0
+        /// if that direction is "closed" (i.e., the intercept point is along
+        /// a map line that has no Sector on the relevant side).
+        Sector *before;
+        Sector *after;
+
     public:
-        Intercept(ddouble distance, LineSegmentIntercept const &hedgeIntercept)
-            : LineSegmentIntercept(hedgeIntercept), _distance(distance)
+        Intercept(ddouble distance)
+            : vertex(0),
+              selfRef(false),
+              before(0),
+              after(0),
+              _distance(distance)
         {}
 
         bool operator < (Intercept const &other) const {
@@ -75,6 +90,49 @@ public:
          * Returns distance along the half-plane relative to the origin.
          */
         ddouble distance() const { return _distance; }
+
+        void merge(Intercept const &other)
+        {
+            /*
+            LOG_AS("LineSegmentIntercept::merge");
+            debugPrint();
+            other.debugPrint();
+            */
+
+            if(selfRef && !other.selfRef)
+            {
+                if(before && other.before)
+                    before = other.before;
+
+                if(after && other.after)
+                    after = other.after;
+
+                selfRef = false;
+            }
+
+            if(!before && other.before)
+                before = other.before;
+
+            if(!after && other.after)
+                after = other.after;
+
+            /*
+            LOG_TRACE("Result:");
+            debugPrint();
+            */
+        }
+
+#ifdef DENG_DEBUG
+        void debugPrint() const
+        {
+            LOG_INFO("Vertex #%i %s beforeSector: #%d afterSector: #%d %s")
+                << vertex->indexInMap()
+                << vertex->origin().asText()
+                << (before? before->indexInMap() : -1)
+                << (after? after->indexInMap() : -1)
+                << (selfRef? "SELFREF" : "");
+        }
+#endif
 
     private:
         /// Distance along the half-plane relative to the origin.

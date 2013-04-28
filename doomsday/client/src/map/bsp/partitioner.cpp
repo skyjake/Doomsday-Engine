@@ -39,7 +39,6 @@
 #include "Vertex"
 
 #include "map/bsp/hplane.h"
-#include "map/bsp/hedgeintercept.h"
 #include "map/bsp/hedgetip.h"
 #include "map/bsp/lineinfo.h"
 #include "map/bsp/linesegment.h"

@@ -225,7 +225,6 @@ DENG_HEADERS += \
     include/map/blockmapvisual.h \
     include/map/bsp/bsptreenode.h \
     include/map/bsp/hplane.h \
-    include/map/bsp/hedgeintercept.h \
     include/map/bsp/hedgetip.h \
     include/map/bsp/lineinfo.h \
     include/map/bsp/linesegment.h \

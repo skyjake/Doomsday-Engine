@@ -33,7 +33,6 @@
 #include "Line"
 #include "Vertex"
 
-#include "map/bsp/hedgeintercept.h"
 #include "map/bsp/linesegment.h"
 
 #include "map/bsp/hplane.h"
@@ -72,7 +71,7 @@ DENG2_PIMPL(HPlane)
      */
     bool haveInterceptForVertex(Vertex const &vertex) const
     {
-        foreach(LineSegmentIntercept const &icpt, intercepts)
+        foreach(Intercept const &icpt, intercepts)
         {
             if(icpt.vertex == &vertex)
                 return true;
@@ -120,12 +119,11 @@ HPlane::Intercept *HPlane::interceptLineSegment(LineSegment const &lineSeg, int 
     Vertex &vertex = lineSeg.vertex(edge);
     if(d->haveInterceptForVertex(vertex)) return 0;
 
-    LineSegmentIntercept inter;
-    inter.vertex  = &vertex;
-    inter.selfRef = (lineSeg.hasMapSide() && lineSeg.line().isSelfReferencing());
-
-    d->intercepts.append(Intercept(d->lineSegment->distance(vertex.origin()), inter));
+    d->intercepts.append(Intercept(d->lineSegment->distance(vertex.origin())));
     Intercept *newIntercept = &d->intercepts.last();
+
+    newIntercept->vertex  = &vertex;
+    newIntercept->selfRef = (lineSeg.hasMapSide() && lineSeg.line().isSelfReferencing());
 
     // The addition of a new intercept means we'll need to resort.
     d->needSortIntercepts = true;
