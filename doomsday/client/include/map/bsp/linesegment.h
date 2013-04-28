@@ -270,10 +270,18 @@ public:
     void setHEdge(HEdge *newHEdge);
 
     /**
-     * Calculate perpendicular distances from one or both of the vertexe(s) of
-     * "this" line segment to the @a other line segment. For this operation the
-     * @other line segment is interpreted as an infinite line. The vertexe(s) of
-     * "this" line segment are projected onto the conceptually infinite line
+     * Calculates the @em parallel distance from the line segment to the specified
+     * @a point in the plane (i.e., along the direction of the line).
+     *
+     * @return  Distance to the point expressed as a fraction/scale factor.
+     */
+    coord_t distance(Vector2d point) const;
+
+    /**
+     * Calculate @em perpendicular distances from one or both of the vertexe(s)
+     * of "this" line segment to the @a other line segment. For this operation
+     * the @a other line segment is interpreted as an infinite line. The vertexe(s)
+     * of "this" line segment are projected onto the conceptually infinite line
      * defined by @a other and the length of the resultant vector(s) are then
      * determined.
      *

@@ -101,14 +101,6 @@ public:
     void configure(LineSegment const &newLineSeg);
 
     /**
-     * Determine the distance from @a vertex to the half-plane origin (along
-     * the partition line).
-     *
-     * @param vertex  Vertex to test.
-     */
-    coord_t distanceToVertex(Vertex const &vertex) const;
-
-    /**
      * Perform intersection of the half-plane with the specified @a lineSeg.
      * If the two are found to intersect -- a new intercept will be added to
      * the list of intercepts. If a previous intersection for the specified

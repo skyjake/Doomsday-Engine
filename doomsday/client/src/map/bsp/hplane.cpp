@@ -27,8 +27,6 @@
 
 #include <QtAlgorithms>
 
-#include <de/vector1.h> /// @todo Remove me.
-
 #include <de/Error>
 #include <de/Log>
 
@@ -126,7 +124,7 @@ HPlane::Intercept *HPlane::interceptLineSegment(LineSegment const &lineSeg, int 
     inter.vertex  = &vertex;
     inter.selfRef = (lineSeg.hasMapSide() && lineSeg.line().isSelfReferencing());
 
-    d->intercepts.append(Intercept(distanceToVertex(vertex), inter));
+    d->intercepts.append(Intercept(d->lineSegment->distance(vertex.origin()), inter));
     Intercept *newIntercept = &d->intercepts.last();
 
     // The addition of a new intercept means we'll need to resort.
@@ -172,14 +170,6 @@ void HPlane::sortAndMergeIntercepts()
     }
 
     d->needSortIntercepts = false;
-}
-
-coord_t HPlane::distanceToVertex(Vertex const &vertex) const
-{
-    coord_t vertexOriginV1[2] = { vertex.x(), vertex.y() };
-    coord_t lineSegmentDirectionV1[2] = { d->lineSegment->direction().x, d->lineSegment->direction().y };
-    return V2d_PointLineParaDistance(vertexOriginV1, lineSegmentDirectionV1,
-                                     d->lineSegment->pPara, d->lineSegment->pLength);
 }
 
 #ifdef DENG_DEBUG

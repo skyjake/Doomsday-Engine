@@ -268,6 +268,13 @@ Line::Side &LineSegment::sourceMapSide() const
     throw MissingMapSideError("LineSegment::sourceMapSide", "No source map line side is attributed");
 }
 
+coord_t LineSegment::distance(Vector2d point) const
+{
+    coord_t pointV1[2] = { point.x, point.y };
+    coord_t directionV1[2] = { d->direction.x, d->direction.y };
+    return V2d_PointLineParaDistance(pointV1, directionV1, pPara, pLength);
+}
+
 void LineSegment::distance(LineSegment const &other, coord_t *fromDist, coord_t *toDist) const
 {
     // Any work to do?
