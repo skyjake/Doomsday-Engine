@@ -1334,8 +1334,8 @@ DENG2_PIMPL(Partitioner)
             /// @todo There should be no need to use additional independent
             ///       structures to contain these subsets.
             // Copy the bounding box of the edge list to the superblocks.
-            SuperBlockmap rightLineSegs = SuperBlockmap(lineSegs.bounds());
-            SuperBlockmap leftLineSegs  = SuperBlockmap(lineSegs.bounds());
+            SuperBlockmap rightLineSegs(lineSegs.bounds());
+            SuperBlockmap leftLineSegs(lineSegs.bounds());
 
             // Partition the line segements into two subsets according to their
             // spacial relationship with the half-plane (splitting any which
