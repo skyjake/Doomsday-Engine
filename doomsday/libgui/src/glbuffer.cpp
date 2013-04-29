@@ -25,6 +25,16 @@ using namespace gl;
 
 // Vertex Formats ------------------------------------------------------------
 
+AttribSpec const Vertex2Tex::_spec[2] = {
+    { AttribSpec::Position,  2, GL_FLOAT, false, sizeof(Vertex2Tex), 0 },
+    { AttribSpec::TexCoord0, 2, GL_FLOAT, false, sizeof(Vertex2Tex), 2 * sizeof(float) }
+};
+
+AttribSpecs Vertex2Tex::formatSpec() {
+    DENG2_ASSERT(sizeof(Vertex2Tex) == 4 * sizeof(float)); // sanity check
+    return AttribSpecs(_spec, sizeof(_spec)/sizeof(_spec[0]));
+}
+
 AttribSpec const Vertex2TexRgba::_spec[3] = {
     { AttribSpec::Position,  2, GL_FLOAT, false, sizeof(Vertex2TexRgba), 0 },
     { AttribSpec::TexCoord0, 2, GL_FLOAT, false, sizeof(Vertex2TexRgba), 2 * sizeof(float) },

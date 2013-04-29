@@ -60,6 +60,20 @@ namespace internal
 }
 
 /**
+ * Vertex format with 2D coordinates and one set of texture coordinates.
+ */
+struct LIBGUI_PUBLIC Vertex2Tex
+{
+    Vector2f pos;
+    Vector2f texCoord;
+
+    static internal::AttribSpecs formatSpec();
+
+private:
+    static internal::AttribSpec const _spec[2];
+};
+
+/**
  * Vertex format with 2D coordinates, one set of texture coordinates, and an
  * RGBA color.
  */
