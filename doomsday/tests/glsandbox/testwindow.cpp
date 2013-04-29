@@ -26,6 +26,7 @@
 #include <de/GLBuffer>
 #include <de/GLShader>
 #include <de/GLTexture>
+#include <de/GLTarget>
 #include <de/GuiApp>
 #include <de/Clock>
 
@@ -37,12 +38,15 @@ DENG2_OBSERVES(Canvas, GLResize),
 DENG2_OBSERVES(Clock, TimeChange)
 {
     Drawable ob;
+    Matrix4f modelMatrix;
     Matrix4f projMatrix;
     GLUniform uMvpMatrix;
     GLUniform uColor;
     GLUniform uTime;
     GLUniform uTex;
+    GLTexture frameTex;
     GLTexture testpic;
+    std::auto_ptr<GLTarget> frameTarget;
     Time startedAt;
 
     typedef GLBufferT<Vertex3TexRgba> VertexBuf;
@@ -87,24 +91,30 @@ DENG2_OBSERVES(Clock, TimeChange)
         //st.setCull(gl::Back);
         st.setDepthTest(true);
 
+        // Textures.
         testpic.setAutoGenMips(true);
         testpic.setImage(QImage(":/images/testpic.png"));
+        testpic.setWrapT(gl::RepeatMirrored);
         //testpic.generateMipmap();
         testpic.setMinFilter(gl::Linear, gl::MipLinear);
         uTex = testpic;
+
+        // Prepare the custom target.
+        frameTex.setUndefinedImage(Vector2ui(512, 256), Image::RGBA_8888);
+        frameTarget.reset(new GLTarget(frameTex));
 
         VertexBuf *buf = new VertexBuf;
         ob.addBuffer(1, buf);
 
         VertexBuf::Type verts[8] = {
             { Vector3f(-1, -1, -1), Vector2f(0, 0), Vector4f(1, 1, 1, 1) },
-            { Vector3f( 1, -1, -1), Vector2f(2, 0), Vector4f(1, 1, 0, 1) },
-            { Vector3f( 1,  1, -1), Vector2f(2, 2), Vector4f(1, 0, 0, 1) },
-            { Vector3f(-1,  1, -1), Vector2f(0, 2), Vector4f(0, 0, 1, 1) },
-            { Vector3f(-1, -1,  1), Vector2f(2, 2), Vector4f(1, 1, 1, 1) },
-            { Vector3f( 1, -1,  1), Vector2f(0, 2), Vector4f(1, 1, 0, 1) },
+            { Vector3f( 1, -1, -1), Vector2f(1, 0), Vector4f(1, 1, 0, 1) },
+            { Vector3f( 1,  1, -1), Vector2f(1, 1), Vector4f(1, 0, 0, 1) },
+            { Vector3f(-1,  1, -1), Vector2f(0, 1), Vector4f(0, 0, 1, 1) },
+            { Vector3f(-1, -1,  1), Vector2f(1, 1), Vector4f(1, 1, 1, 1) },
+            { Vector3f( 1, -1,  1), Vector2f(0, 1), Vector4f(1, 1, 0, 1) },
             { Vector3f( 1,  1,  1), Vector2f(0, 0), Vector4f(1, 0, 0, 1) },
-            { Vector3f(-1,  1,  1), Vector2f(2, 0), Vector4f(0, 0, 1, 1) }
+            { Vector3f(-1,  1,  1), Vector2f(1, 0), Vector4f(0, 0, 1, 1) }
         };
 
         buf->setVertices(verts, 8, gl::Static);
@@ -160,21 +170,47 @@ DENG2_OBSERVES(Clock, TimeChange)
         LOG_DEBUG("GLResized: %i x %i") << cv.width() << cv.height();
 
         GLState &st = GLState::top();
-        st.setViewport(Rectangleui::fromSize(cv.size()));
+        //st.setViewport(Rectangleui::fromSize(cv.size()));
+        st.setViewport(Rectangleui(0, 0, cv.width(), cv.height()));
 
         /*uMvpMatrix = Matrix4f::ortho(-cv.width()/2,  cv.width()/2,
                                      -cv.height()/2, cv.height()/2)
                 * Matrix4f::scale(cv.height()/450.f)
                 * Matrix4f::translate(Vector2f(-200, -200));*/
 
-        projMatrix = Matrix4f::perspective(40, float(cv.width())/float(cv.height()))
-                * Matrix4f::lookAt(Vector3f(), Vector3f(0, 0, -4), Vector3f(0, -1, 0));
+        projMatrix = Matrix4f::perspective(40, float(cv.width())/float(cv.height())) *
+                     Matrix4f::lookAt(Vector3f(), Vector3f(0, 0, -5), Vector3f(0, -1, 0));
     }
 
-    void draw(Canvas &cv)
+    void draw(Canvas &)
     {
-        cv.renderTarget().clear(GLTarget::Color | GLTarget::Depth);
+        // First render the frame to the texture.
+        GLState &frameState = GLState::push();
+        frameState.setTarget(*frameTarget.get());
+        frameState.setViewport(Rectangleui::fromSize(frameTex.size()));
+        drawFrame();
+        GLState::pop();
 
+        // Render normally.
+        drawFrame();
+    }
+
+    void drawFrame()
+    {
+        GLState::top().target().clear(GLTarget::Color | GLTarget::Depth);
+
+        // The left cube.
+        uTex = testpic;
+        uMvpMatrix = projMatrix *
+                     Matrix4f::translate(Vector3f(-1.5f, 0, 0)) *
+                     modelMatrix;
+        ob.draw();
+
+        // The right cube.
+        uTex = frameTex;
+        uMvpMatrix = projMatrix *
+                     Matrix4f::translate(Vector3f(1.5f, 0, 0)) *
+                     modelMatrix;
         ob.draw();
     }
 
@@ -186,9 +222,8 @@ DENG2_OBSERVES(Clock, TimeChange)
         }
         uTime = startedAt.since();
 
-        uMvpMatrix = projMatrix
-                * Matrix4f::rotate(std::cos(uTime.toFloat()/2) * 45, Vector3f(1, 0, 0))
-                * Matrix4f::rotate(std::sin(uTime.toFloat()/3) * 60, Vector3f(0, 1, 0));
+        modelMatrix = Matrix4f::rotate(std::cos(uTime.toFloat()/2) * 45, Vector3f(1, 0, 0)) *
+                      Matrix4f::rotate(std::sin(uTime.toFloat()/3) * 60, Vector3f(0, 1, 0));
 
         self.update();
     }
