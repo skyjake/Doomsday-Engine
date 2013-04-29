@@ -34,9 +34,9 @@
 #include "Sector"
 #include "Vertex"
 
-#include "map/bsp/partitioner.h"
+#include "map/bsp/edgetip.h"
 #include "map/bsp/linesegment.h"
-#include "map/bsp/vertexinfo.h"
+#include "map/bsp/partitioner.h"
 
 #include "map/bsp/hplane.h"
 

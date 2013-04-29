@@ -44,7 +44,6 @@
 #include "map/bsp/linesegment.h"
 #include "map/bsp/partitioncost.h"
 #include "map/bsp/superblockmap.h"
-#include "map/bsp/vertexinfo.h"
 
 #include "map/bsp/partitioner.h"
 
@@ -55,7 +54,7 @@ typedef QList<LineSegment> LineSegments;
 typedef std::vector<Vertex *> Vertexes;
 
 typedef std::vector<LineInfo> LineInfos;
-typedef std::vector<VertexInfo> VertexInfos;
+typedef std::vector<EdgeTips> EdgeTipSets;
 
 typedef QHash<MapElement *, BspTreeNode *> BuiltBspElementMap;
 
@@ -94,12 +93,12 @@ DENG2_PIMPL(Partitioner)
     /// A map from HEdge -> LineSegment @todo refactor away.
     LineSegmentMap lineSegmentMap;
 
-    /// Extended info about Vertexes in the current map (including extras).
-    /// @note May be larger than Instance::numVertexes (deallocation is lazy).
-    VertexInfos vertexInfos;
+    /// A set of EdgeTips for each unique line segment vertex.
+    /// @note May be larger than @var numVertexes (deallocation is lazy).
+    EdgeTipSets edgeTipSets;
 
-    /// Extra vertexes allocated for the current map.
-    /// @note May be larger than Instance::numVertexes (deallocation is lazy).
+    /// Additional vertexes produced when splitting line segments.
+    /// @note May be larger than @var numVertexes (deallocation is lazy).
     Vertexes vertexes;
 
     /// Root node of our internal binary tree around which the final BSP data
@@ -137,14 +136,22 @@ DENG2_PIMPL(Partitioner)
     }
 
     /**
-     * Returns the associated VertexInfo for the given @a vertex.
+     * Returns the associated EdgeTips set for the given @a vertex.
      */
-    inline VertexInfo &vertexInfo(Vertex const &vertex) {
-        return vertexInfos[vertex.indexInMap()];
+    inline EdgeTips &edgeTips(Vertex const &vertex) {
+        return edgeTipSets[vertex.indexInMap()];
     }
 
-    inline EdgeTips &edgeTips(Vertex const &vertex) {
-        return vertexInfo(vertex).edgeTips();
+    inline void clearEdgeTipsByVertex(Vertex const &vtx) {
+        edgeTips(vtx).clear();
+    }
+
+    void clearAllEdgeTips()
+    {
+        DENG2_FOR_EACH(EdgeTipSets, setIt, edgeTipSets)
+        {
+            setIt->clear();
+        }
     }
 
     /**
@@ -261,14 +268,12 @@ DENG2_PIMPL(Partitioner)
 
         // Look for window effects by checking for an odd number of one-sided
         // line owners for a single vertex. Idea courtesy of Graham Jackson.
-        VertexInfo const &fromInfo = vertexInfo(line.from());
-        if((fromInfo.oneSidedOwnerCount % 2) == 1 &&
-           (fromInfo.oneSidedOwnerCount + fromInfo.twoSidedOwnerCount) > 1)
+        if((line.from()._oneSidedOwnerCount % 2) == 1 &&
+           (line.from()._oneSidedOwnerCount + line.from()._twoSidedOwnerCount) > 1)
             return true;
 
-        VertexInfo const &toInfo = vertexInfo(line.to());
-        if((toInfo.oneSidedOwnerCount % 2) == 1 &&
-           (toInfo.oneSidedOwnerCount + toInfo.twoSidedOwnerCount) > 1)
+        if((line.to()._oneSidedOwnerCount % 2) == 1 &&
+           (line.to()._oneSidedOwnerCount + line.to()._twoSidedOwnerCount) > 1)
             return true;
 
         return false;
@@ -313,15 +318,13 @@ DENG2_PIMPL(Partitioner)
     void initForMap()
     {
         // Initialize vertex info for the initial set of vertexes.
-        vertexInfos.resize(map->vertexCount());
+        edgeTipSets.resize(map->vertexCount());
 
         // Count the total number of one and two-sided line owners for each
         // vertex. (Used in the process of locating window effect lines.)
         foreach(Vertex *vtx, map->vertexes())
         {
-            VertexInfo &vtxInfo = vertexInfo(*vtx);
-            vtx->countLineOwners(&vtxInfo.oneSidedOwnerCount,
-                                 &vtxInfo.twoSidedOwnerCount);
+            vtx->countLineOwners();
         }
 
         // Initialize line info.
@@ -409,7 +412,7 @@ DENG2_PIMPL(Partitioner)
                 angle = front->angle();
             }
 
-            /// @todo edge tips should be created when half-edges are created.
+            /// @todo edge tips should be created when line segments are created.
             edgeTips(line->from()).add(angle,                 front, front? front->twinPtr() : 0);
             edgeTips(line->to()  ).add(M_InverseAngle(angle), front? front->twinPtr() : 0, front);
         }
@@ -1068,69 +1071,71 @@ DENG2_PIMPL(Partitioner)
             HPlane::Intercept const &cur  = hplane.intercepts()[i];
             HPlane::Intercept const &next = hplane.intercepts()[i+1];
 
-            if(!(!cur.after && !next.before))
+            if(!cur.after && !next.before)
+                continue;
+
+            // Check for some nasty open/closed or close/open cases.
+            if(cur.after && !next.before)
             {
-                // Check for some nasty open/closed or close/open cases.
-                if(cur.after && !next.before)
+                if(!cur.selfRef)
                 {
-                    if(!cur.selfRef)
-                    {
-                        Vector2d nearPoint = (cur.vertex().origin() + next.vertex().origin()) / 2;
-                        notifyUnclosedSectorFound(*cur.after, nearPoint);
-                    }
+                    Vector2d nearPoint = (cur.vertex().origin() + next.vertex().origin()) / 2;
+                    notifyUnclosedSectorFound(*cur.after, nearPoint);
                 }
-                else if(!cur.after && next.before)
-                {
-                    if(!next.selfRef)
-                    {
-                        Vector2d nearPoint = (cur.vertex().origin() + next.vertex().origin()) / 2;
-                        notifyUnclosedSectorFound(*next.before, nearPoint);
-                    }
-                }
-                else // This is definitely open space.
-                {
-                    // Choose the non-self-referencing sector when we can.
-                    Sector *sector = cur.after;
-                    if(cur.after != next.before)
-                    {
-                        if(!cur.selfRef && !next.selfRef)
-                        {
-                            LOG_DEBUG("Sector mismatch (#%d %s != #%d %s.")
-                                << cur.after->indexInMap()
-                                << cur.vertex().origin().asText()
-                                << next.before->indexInMap()
-                                << next.vertex().origin().asText();
-                        }
-
-                        if(cur.selfRef && !next.selfRef)
-                            sector = next.before;
-                    }
-
-                    LineSegment *right =
-                        buildLineSegmentsBetweenVertexes(cur.vertex(), next.vertex(),
-                                                         sector, sector, 0 /*no line*/,
-                                                         hplane.lineSegment().mapSidePtr());
-
-                    // Add the new half-edges to the appropriate lists.
-                    linkLineSegmentInSuperBlockmap(rightSet, *right);
-                    linkLineSegmentInSuperBlockmap(leftSet,  right->twin());
-
-                    /*
-                    LineSegment *left = right->twinPtr();
-                    LOG_DEBUG("Capped partition gap:"
-                              "\n %p RIGHT sector #%d %s to %s"
-                              "\n %p LEFT  sector #%d %s to %s")
-                        << de::dintptr(right)
-                        << (right->sector? right->sector->indexInMap() : -1)
-                        << right->fromOrigin().asText()
-                        << right->toOrigin().asText()
-                        << de::dintptr(left)
-                        << (left->sector? left->sector->indexInMap() : -1)
-                        << left->fromOrigin().asText()
-                        << left->toOrigin().asText()
-                    */
-                }
+                continue;
             }
+
+            if(!cur.after && next.before)
+            {
+                if(!next.selfRef)
+                {
+                    Vector2d nearPoint = (cur.vertex().origin() + next.vertex().origin()) / 2;
+                    notifyUnclosedSectorFound(*next.before, nearPoint);
+                }
+                continue;
+            }
+
+            // This is definitely open space.
+            // Choose the non-self-referencing sector when we can.
+            Sector *sector = cur.after;
+            if(cur.after != next.before)
+            {
+                if(!cur.selfRef && !next.selfRef)
+                {
+                    LOG_DEBUG("Sector mismatch (#%d %s != #%d %s.")
+                        << cur.after->indexInMap()
+                        << cur.vertex().origin().asText()
+                        << next.before->indexInMap()
+                        << next.vertex().origin().asText();
+                }
+
+                if(cur.selfRef && !next.selfRef)
+                    sector = next.before;
+            }
+
+            LineSegment *right =
+                buildLineSegmentsBetweenVertexes(cur.vertex(), next.vertex(),
+                                                 sector, sector, 0 /*no line*/,
+                                                 hplane.lineSegment().mapSidePtr());
+
+            // Add the new half-edges to the appropriate lists.
+            linkLineSegmentInSuperBlockmap(rightSet, *right);
+            linkLineSegmentInSuperBlockmap(leftSet,  right->twin());
+
+            /*
+            LineSegment *left = right->twinPtr();
+            LOG_DEBUG("Capped partition gap:"
+                      "\n %p RIGHT sector #%d %s to %s"
+                      "\n %p LEFT  sector #%d %s to %s")
+                << de::dintptr(right)
+                << (right->sector? right->sector->indexInMap() : -1)
+                << right->fromOrigin().asText()
+                << right->toOrigin().asText()
+                << de::dintptr(left)
+                << (left->sector? left->sector->indexInMap() : -1)
+                << left->fromOrigin().asText()
+                << left->toOrigin().asText()
+            */
         }
     }
 
@@ -1154,7 +1159,7 @@ DENG2_PIMPL(Partitioner)
         bool isOrphan = true;
         foreach(LineSegment *lineSeg, leafSegments)
         {
-            if(lineSeg->hasLineSide() && lineSeg->lineSide().hasSector())
+            if(lineSeg->hasMapSide() && lineSeg->mapSide().hasSector())
             {
                 isOrphan = false;
                 break;
@@ -1167,45 +1172,39 @@ DENG2_PIMPL(Partitioner)
         {
             LineSegment *lineSeg = leafSegments.takeFirst();
 
-            //lineSeg->hedge->_from = &lineSeg->from();
-            //lineSeg->hedge->_to   = &lineSeg->to();
-
 #ifdef DENG_BSP_COLLAPSE_ORPHANED_LEAFS
             if(isDegenerate || isOrphan)
             {
-                if(lineSeg->prevOnSide)
+                if(lineSeg->hasLeft())
                 {
-                    lineSeg->prevOnSide->nextOnSide = lineSeg->nextOnSide;
+                    lineSeg->left().setRight(&lineSeg->right());
                 }
-                if(lineSeg->nextOnSide)
+                if(lineSeg->hasRight())
                 {
-                    lineSeg->nextOnSide->prevOnSide = lineSeg->prevOnSide;
+                    lineSeg->right().setLeft(&lineSeg->left());
                 }
 
                 if(lineSeg->hasTwin())
                 {
-                    lineSeg->twin()._twin = 0;
+                    lineSeg->twin().setTwin(0);
                 }
 
                 /**
                  * @todo This is incorrect from a mod compatibility point of
-                 * view. We should never clear the line > sector references as
-                 * these are used by the game(s) playsim in various ways (for
-                 * example, stair building). We should instead flag the line
-                 * accordingly. -ds
+                 * view. The map line side sections should never be cleared.
+                 * We should instead flag the Line::Side accordingly. -ds
                  */
-                if(lineSeg->hasLineSide())
+                if(lineSeg->hasMapSide())
                 {
-                    Line::Side &side = lineSeg->lineSide();
+                    Line::Side &side = lineSeg->mapSide();
 
-                    side._sector  = 0;
                     delete side._sections;
                     side._sections = 0;
 
                     lineInfos[lineSeg->line().indexInMap()].flags &= ~(LineInfo::Twosided);
                 }
 
-                delete lineSeg->hedge;
+                delete lineSeg->hedgePtr();
                 numHEdges -= 1;
 
                 lineSegments.removeOne(*lineSeg);
@@ -1222,7 +1221,7 @@ DENG2_PIMPL(Partitioner)
             lineSeg->hedge()._next = leaf->_hedge;
             leaf->_hedge = lineSeg->hedgePtr();
 
-            // Link hedge to this leaf.
+            // Link the half-edge to this leaf.
             lineSeg->hedge()._bspLeaf = leaf;
 
             // There is now one more half-edge in this leaf.
@@ -1760,22 +1759,9 @@ DENG2_PIMPL(Partitioner)
 
         // There is now one more Vertex.
         numVertexes += 1;
-        vertexInfos.push_back(VertexInfo());
+        edgeTipSets.push_back(EdgeTips());
 
         return vtx;
-    }
-
-    inline void clearEdgeTipsByVertex(Vertex const &vtx)
-    {
-        edgeTips(vtx).clear();
-    }
-
-    void clearAllEdgeTips()
-    {
-        for(uint i = 0; i < vertexInfos.size(); ++i)
-        {
-            vertexInfos[i].edgeTips().clear();
-        }
     }
 
     /**

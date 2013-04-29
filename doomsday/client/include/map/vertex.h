@@ -55,6 +55,10 @@ public: /// @todo Move to the map loader:
     LineOwner *_lineOwners;
     uint _numLineOwners; ///< Total number of line owners.
 
+    // Total number of one and two-sided line owners.
+    uint _oneSidedOwnerCount;
+    uint _twoSidedOwnerCount;
+
 public:
     Vertex(de::Vector2d const &origin = de::Vector2d(0, 0));
 
@@ -143,16 +147,11 @@ public:
      * @pre Line owner rings must have already been calculated.
      * @pre @a oneSided and/or @a twoSided must have already been initialized.
      *
-     * @param oneSided  The number of one-sided Line owners will be added to
-     *                  the pointed value if not @a NULL.
-     * @param twoSided  The number of two-sided Line owners will be added to
-     *                  the pointed value if not @c NULL.
-     *
      * @todo Optimize: Cache this result.
      *
      * @deprecated Will be replaced with half-edge ring iterator/rover. -ds
      */
-    void countLineOwners(uint *oneSided, uint *twoSided) const;
+    void countLineOwners();
 
     /**
      * Returns the first Line owner for the vertex; otherwise @c 0 if unowned.

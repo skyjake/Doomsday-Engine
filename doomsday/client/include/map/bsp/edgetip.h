@@ -126,7 +126,7 @@ public:
      *                      considered equal (in degrees).
      */
     EdgeTip &add(coord_t angle, LineSegment *front = 0, LineSegment *back = 0,
-                        coord_t angleEpsilon = 1.0 / 1024.0)
+                 coord_t angleEpsilon = 1.0 / 1024.0)
     {
         All::reverse_iterator after;
 
