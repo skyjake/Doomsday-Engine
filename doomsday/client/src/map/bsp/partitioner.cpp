@@ -50,11 +50,12 @@
 using namespace de;
 using namespace de::bsp;
 
-typedef QList<LineSegment> LineSegments;
 typedef std::vector<Vertex *> Vertexes;
 
+typedef QList<EdgeTips> EdgeTipSets;
+typedef QList<LineSegment> LineSegments;
+
 typedef std::vector<LineInfo> LineInfos;
-typedef std::vector<EdgeTips> EdgeTipSets;
 
 typedef QHash<MapElement *, BspTreeNode *> BuiltBspElementMap;
 
@@ -139,11 +140,13 @@ DENG2_PIMPL(Partitioner)
      * Returns the associated EdgeTips set for the given @a vertex.
      */
     inline EdgeTips &edgeTips(Vertex const &vertex) {
-        return edgeTipSets[vertex.indexInMap()];
+        int idx = vertex.indexInMap();
+        DENG_ASSERT(idx >= 0 && idx < edgeTipSets.count());
+        return edgeTipSets[idx];
     }
 
-    inline void clearEdgeTipsByVertex(Vertex const &vtx) {
-        edgeTips(vtx).clear();
+    inline void clearEdgeTipsByVertex(Vertex const &vertex) {
+        edgeTips(vertex).clear();
     }
 
     void clearAllEdgeTips()
@@ -318,13 +321,17 @@ DENG2_PIMPL(Partitioner)
     void initForMap()
     {
         // Initialize vertex info for the initial set of vertexes.
-        edgeTipSets.resize(map->vertexCount());
-
-        // Count the total number of one and two-sided line owners for each
-        // vertex. (Used in the process of locating window effect lines.)
-        foreach(Vertex *vtx, map->vertexes())
+#ifdef DENG2_QT_4_7_OR_NEWER
+        edgeTipSets.reserve(map->vertexCount());
+#endif
+        foreach(Vertex *vertex, map->vertexes())
         {
-            vtx->countLineOwners();
+            // Count the total number of one and two-sided line owners for each
+            // vertex. (Used in the process of locating window effect lines.)
+            vertex->countLineOwners();
+
+            // Add a new EdgeTips set for this vertex.
+            edgeTipSets.append(EdgeTips());
         }
 
         // Initialize line info.
@@ -1759,7 +1766,7 @@ DENG2_PIMPL(Partitioner)
 
         // There is now one more Vertex.
         numVertexes += 1;
-        edgeTipSets.push_back(EdgeTips());
+        edgeTipSets.append(EdgeTips());
 
         return vtx;
     }
