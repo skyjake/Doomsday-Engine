@@ -198,7 +198,8 @@ DENG2_PIMPL(GLState)
         case ViewportHeight:
         {
             Rectangleui vp = self.viewport();
-            glViewport(vp.left(), vp.top(), vp.width(), vp.height());
+            glViewport(vp.left(), self.target().size().y - vp.bottom(),
+                       vp.width(), vp.height());
             break;
         }
 

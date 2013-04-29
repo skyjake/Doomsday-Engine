@@ -91,6 +91,8 @@ DENG2_OBSERVES(Asset, Deletion)
                                    flags & Depth? GL_DEPTH_ATTACHMENT :
                                                   GL_STENCIL_ATTACHMENT,
                                    GL_TEXTURE_2D, texture->glName(), 0);
+
+            LIBGUI_ASSERT_GL_OK();
         }
         else if(size != nullSize)
         {
@@ -103,6 +105,7 @@ DENG2_OBSERVES(Asset, Deletion)
                 glRenderbufferStorage    (GL_RENDERBUFFER, GL_RGBA8, size.x, size.y);
                 glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                                           GL_RENDERBUFFER, renderBufs[ColorBuffer]);
+                LIBGUI_ASSERT_GL_OK();
             }
             if(flags & Depth)
             {
@@ -111,6 +114,7 @@ DENG2_OBSERVES(Asset, Deletion)
                 glRenderbufferStorage    (GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, size.x, size.y);
                 glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
                                           GL_RENDERBUFFER, renderBufs[DepthBuffer]);
+                LIBGUI_ASSERT_GL_OK();
             }
             if(flags & Stencil)
             {
@@ -119,6 +123,7 @@ DENG2_OBSERVES(Asset, Deletion)
                 glRenderbufferStorage    (GL_RENDERBUFFER, GL_STENCIL_INDEX8, size.x, size.y);
                 glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT,
                                           GL_RENDERBUFFER, renderBufs[StencilBuffer]);
+                LIBGUI_ASSERT_GL_OK();
             }
             glBindRenderbuffer(GL_RENDERBUFFER, 0);
         }
