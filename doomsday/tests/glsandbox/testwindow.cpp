@@ -141,7 +141,7 @@ DENG2_OBSERVES(Clock, TimeChange)
 
                 "void main(void) {\n"
                 "   gl_Position = uMvpMatrix * aVertex;\n"
-                "   vUV = aUV + vec2(uTime/5.0, 0.0);\n"
+                "   vUV = aUV + vec2(uTime/10.0, 0.0);\n"
                 "   vColor = aColor + vec4(sin(uTime), cos(uTime), sin(uTime), cos(uTime)*0.5) * uColor;\n"
                 "}\n";
 
@@ -185,9 +185,9 @@ DENG2_OBSERVES(Clock, TimeChange)
     void draw(Canvas &)
     {
         // First render the frame to the texture.
-        GLState &frameState = GLState::push();
-        frameState.setTarget(*frameTarget.get());
-        frameState.setViewport(Rectangleui::fromSize(frameTex.size()));
+        GLState::push()
+            .setTarget(*frameTarget)
+            .setViewport(Rectangleui::fromSize(frameTex.size()));
         drawFrame();
         GLState::pop();
 
