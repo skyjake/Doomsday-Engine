@@ -110,7 +110,7 @@ public:
      *
      * @return  Current number of HEdges owned by the partitioner.
      */
-    uint numHEdges();
+    int numHEdges();
 
     /**
      * Retrieve the number of BspLeafs owned by the partitioner. When the
@@ -120,7 +120,7 @@ public:
      *
      * @return  Current number of BspLeafs owned by the Partitioner.
      */
-    uint numLeafs();
+    int numLeafs();
 
     /**
      * Retrieve the number of BspNodes owned by the partitioner. When the
@@ -130,19 +130,19 @@ public:
      *
      * @return  Current number of BspNodes owned by the partitioner.
      */
-    uint numNodes();
+    int numNodes();
 
     /**
      * Retrieve the total number of Vertexes produced during the build process.
      */
-    uint numVertexes();
+    int numVertexes();
 
     /**
      * Retrieve the vertex with specified @a index. If the index is not valid
      * this will result in fatal error. The caller should ensure the index is
      * within valid range using numVertexes()
      */
-    Vertex &vertex(uint index);
+    Vertex &vertex(int index);
 
     /**
      * Relinquish ownership of the specified map data element to the caller.

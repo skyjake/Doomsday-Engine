@@ -114,7 +114,7 @@ public:
             }
 
             if(numToLog < unclosedSectorCount())
-                LOG_INFO("(%u more like this)") << (unclosedSectorCount() - numToLog);
+                LOG_INFO("(%d more like this)") << (unclosedSectorCount() - numToLog);
         }
 
         if(int numToLog = maxWarnings(oneWayWindowCount()))
@@ -127,7 +127,7 @@ public:
             }
 
             if(numToLog < oneWayWindowCount())
-                LOG_INFO("(%u more like this)") << (oneWayWindowCount() - numToLog);
+                LOG_INFO("(%d more like this)") << (oneWayWindowCount() - numToLog);
         }
 
         if(int numToLog = maxWarnings(migrantHEdgeCount()))
@@ -149,7 +149,7 @@ public:
             }
 
             if(numToLog < migrantHEdgeCount())
-                LOG_INFO("(%u more like this)") << (migrantHEdgeCount() - numToLog);
+                LOG_INFO("(%d more like this)") << (migrantHEdgeCount() - numToLog);
         }
 
         if(int numToLog = maxWarnings(partialBspLeafCount()))
@@ -162,7 +162,7 @@ public:
             }
 
             if(numToLog < partialBspLeafCount())
-                LOG_INFO("(%i more like this)") << (partialBspLeafCount() - numToLog);
+                LOG_INFO("(%d more like this)") << (partialBspLeafCount() - numToLog);
         }
     }
 
@@ -229,29 +229,28 @@ BspTreeNode *BspBuilder::root() const
     return d->partitioner.root();
 }
 
-uint BspBuilder::numNodes()
+int BspBuilder::numNodes()
 {
     return d->partitioner.numNodes();
 }
 
-uint BspBuilder::numLeafs()
+int BspBuilder::numLeafs()
 {
     return d->partitioner.numLeafs();
 }
 
-uint BspBuilder::numHEdges()
+int BspBuilder::numHEdges()
 {
     return d->partitioner.numHEdges();
 }
 
-uint BspBuilder::numVertexes()
+int BspBuilder::numVertexes()
 {
     return d->partitioner.numVertexes();
 }
 
-Vertex &BspBuilder::vertex(uint idx)
+Vertex &BspBuilder::vertex(int idx)
 {
-    DENG2_ASSERT(d->partitioner.vertex(idx).type() == DMU_VERTEX);
     return d->partitioner.vertex(idx);
 }
 
