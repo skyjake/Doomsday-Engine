@@ -83,6 +83,7 @@ DENG2_PIMPL(GLTexture)
         release();
         size = Size();
         texTarget = GL_TEXTURE_2D;
+        flags |= ParamsChanged;
         self.setState(NotReady);
     }
 
@@ -157,7 +158,7 @@ DENG2_PIMPL(GLTexture)
     {
         glTexParameteri(texTarget, GL_TEXTURE_WRAP_S,     glWrap(wrap.x));
         glTexParameteri(texTarget, GL_TEXTURE_WRAP_T,     glWrap(wrap.y));
-        glTexParameteri(texTarget, GL_TEXTURE_MAG_FILTER, minFilter == Nearest? GL_NEAREST : GL_LINEAR);
+        glTexParameteri(texTarget, GL_TEXTURE_MAG_FILTER, magFilter == Nearest? GL_NEAREST : GL_LINEAR);
         glTexParameteri(texTarget, GL_TEXTURE_MIN_FILTER, glMinFilter(minFilter, mipFilter));
 
         LIBGUI_ASSERT_GL_OK();
