@@ -506,6 +506,7 @@ Line::Line(Vertex &from, Vertex &to, int flags, Sector *frontSector, Sector *bac
       _vo1(0),
       _vo2(0),
       _inFlags(0),
+      _bspWindowSector(0),
       d(new Instance(this, from, to, flags, frontSector, backSector))
 {
     updateAABox();
@@ -534,7 +535,7 @@ void Line::setFlags(int flagsToChange, bool set)
 
 bool Line::isBspWindow() const
 {
-    return (_inFlags & LF_BSPWINDOW) != 0;
+    return _bspWindowSector != 0;
 }
 
 bool Line::isFromPolyobj() const

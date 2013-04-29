@@ -1,4 +1,4 @@
-/** @file partitioner.h BSP space partitioner.
+/** @file map/bsp/partitioner.h Binary Space partitioner.
  *
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
@@ -20,26 +20,31 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_BSP_PARTITIONER
-#define LIBDENG_BSP_PARTITIONER
+#ifndef DENG_WORLD_MAP_BSP_PARTITIONER
+#define DENG_WORLD_MAP_BSP_PARTITIONER
 
 #include <de/Observers>
 #include <de/Vector>
 
-#include "map/p_maptypes.h"
-#include "map/bsp/bsptreenode.h"
+#include "map/bsp/bsptreenode.h" /// @todo remove me
+
+class GameMap;
+class BspLeaf;
+class HEdge;
+class Line;
+class Sector;
 
 namespace de {
 namespace bsp {
 
 /// Minimum length of a half-edge post partitioning. Used in cost evaluation.
-static const coord_t SHORT_HEDGE_EPSILON = 4.0;
+static coord_t const SHORT_HEDGE_EPSILON = 4.0;
 
 /// Smallest distance between two points before being considered equal.
-static const coord_t DIST_EPSILON = (1.0 / 128.0);
+static coord_t const DIST_EPSILON        = 1.0 / 128.0;
 
 /// Smallest difference between two angles before being considered equal (in degrees).
-static const coord_t ANG_EPSILON = (1.0 / 1024.0);
+static coord_t const ANG_EPSILON         = 1.0 / 1024.0;
 
 /**
  * BSP space partitioner.
@@ -92,38 +97,38 @@ public:
      * Retrieve a pointer to the root BinaryTree node for the constructed BSP.
      * Even if construction fails this will return a valid node.
      *
-     * The only time upon which @c NULL is returned is if called prior to calling
-     * BspBuilder::build()
+     * The only time upon which @c 0 is returned is if called prior to calling
+     * build()
      */
     BspTreeNode *root() const;
 
     /**
-     * Retrieve the number of HEdges owned by this Partitioner. When the build
+     * Retrieve the number of HEdges owned by the partitioner. When the build
      * completes this number will be the total number of half-edges that were
      * produced during that process. Note that as BspLeaf ownership is claimed
      * this number will decrease respectively.
      *
-     * @return  Current number of HEdges owned by this Partitioner.
+     * @return  Current number of HEdges owned by the partitioner.
      */
     uint numHEdges();
 
     /**
-     * Retrieve the number of BspLeafs owned by this Partitioner. When the
+     * Retrieve the number of BspLeafs owned by the partitioner. When the
      * build completes this number will be the total number of BspLeafs that
      * were produced during that process. Note that as BspLeaf ownership is
      * claimed this number will decrease respectively.
      *
-     * @return  Current number of BspLeafs owned by this Partitioner.
+     * @return  Current number of BspLeafs owned by the Partitioner.
      */
     uint numLeafs();
 
     /**
-     * Retrieve the number of BspNodes owned by this Partitioner. When the
+     * Retrieve the number of BspNodes owned by the partitioner. When the
      * build completes this number will be the total number of BspNodes that
      * were produced during that process. Note that as BspNode ownership is
      * claimed this number will decrease respectively.
      *
-     * @return  Current number of BspNodes owned by this Partitioner.
+     * @return  Current number of BspNodes owned by the partitioner.
      */
     uint numNodes();
 
@@ -135,7 +140,7 @@ public:
     /**
      * Retrieve the vertex with specified @a index. If the index is not valid
      * this will result in fatal error. The caller should ensure the index is
-     * within valid range using Partitioner::numVertexes()
+     * within valid range using numVertexes()
      */
     Vertex &vertex(uint index);
 
@@ -153,4 +158,4 @@ private:
 } // namespace bsp
 } // namespace de
 
-#endif // LIBDENG_BSP_PARTITIONER
+#endif // DENG_WORLD_MAP_BSP_PARTITIONER

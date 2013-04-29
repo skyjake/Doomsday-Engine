@@ -1,4 +1,4 @@
-/** @file partitioner.cpp BSP Partitioner.
+/** @file map/bsp/partitioner.cpp Binary Space Partitioner.
  *
  * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright &copy; 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
@@ -33,14 +33,16 @@
 #include <de/Error>
 #include <de/Log>
 
+#include "map/gamemap.h"
 #include "BspLeaf"
 #include "BspNode"
 #include "HEdge"
+#include "Line"
+#include "Sector"
 #include "Vertex"
 
 #include "map/bsp/edgetip.h"
 #include "map/bsp/hplane.h"
-#include "map/bsp/lineinfo.h"
 #include "map/bsp/linesegment.h"
 #include "map/bsp/partitioncost.h"
 #include "map/bsp/superblockmap.h"
@@ -54,8 +56,6 @@ typedef std::vector<Vertex *> Vertexes;
 
 typedef QList<EdgeTips> EdgeTipSets;
 typedef QList<LineSegment> LineSegments;
-
-typedef std::vector<LineInfo> LineInfos;
 
 typedef QHash<MapElement *, BspTreeNode *> BuiltBspElementMap;
 
@@ -79,14 +79,11 @@ DENG2_PIMPL(Partitioner)
     /// The map we are building BSP data for.
     GameMap const *map;
 
-    /// Running totals of constructed BSP data objects.
+    /// Running totals of constructed BSP map elements.
     uint numNodes;
     uint numLeafs;
     uint numHEdges;
     uint numVertexes;
-
-    /// Extended info about Lines in the current map.
-    LineInfos lineInfos;
 
     /// Line segments in the plane.
     LineSegments lineSegments;
@@ -102,8 +99,8 @@ DENG2_PIMPL(Partitioner)
     /// @note May be larger than @var numVertexes (deallocation is lazy).
     Vertexes vertexes;
 
-    /// Root node of our internal binary tree around which the final BSP data
-    /// objects are constructed.
+    /// Root node of the internal binary tree used to guide the partitioning
+    /// process and around which the built BSP map elements are constructed.
     BspTreeNode *rootNode;
 
     /// Mapping table which relates built BSP map elements to their counterpart
@@ -282,39 +279,35 @@ DENG2_PIMPL(Partitioner)
         return false;
     }
 
-    void testForWindowEffect(LineInfo &lineInfo)
+    void testForWindowEffect(Line &line)
     {
-        Line *line = lineInfo.line;
-        DENG_ASSERT(line != 0);
-
-        if(!lineMightHaveWindowEffect(*line)) return;
+        if(!lineMightHaveWindowEffect(line)) return;
 
         testForWindowEffectParams p;
         p.frontDist = p.backDist = DDMAXFLOAT;
-        p.testLine  = line;
-        p.m         = line->center();
-        p.castHoriz = (de::abs(line->direction().x) < de::abs(line->direction().y)? true : false);
+        p.testLine  = &line;
+        p.m         = line.center();
+        p.castHoriz = (de::abs(line.direction().x) < de::abs(line.direction().y)? true : false);
 
         AABoxd scanRegion = map->bounds();
         if(p.castHoriz)
         {
-            scanRegion.minY = line->aaBox().minY - DIST_EPSILON;
-            scanRegion.maxY = line->aaBox().maxY + DIST_EPSILON;
+            scanRegion.minY = line.aaBox().minY - DIST_EPSILON;
+            scanRegion.maxY = line.aaBox().maxY + DIST_EPSILON;
         }
         else
         {
-            scanRegion.minX = line->aaBox().minX - DIST_EPSILON;
-            scanRegion.maxX = line->aaBox().maxX + DIST_EPSILON;
+            scanRegion.minX = line.aaBox().minX - DIST_EPSILON;
+            scanRegion.maxX = line.aaBox().maxX + DIST_EPSILON;
         }
         validCount++;
         map->linesBoxIterator(scanRegion, testForWindowEffectWorker, &p);
 
-        if(p.backOpen && p.frontOpen && line->frontSectorPtr() == p.backOpen)
+        if(p.backOpen && p.frontOpen && line.frontSectorPtr() == p.backOpen)
         {
-            notifyOneWayWindowFound(*line, *p.frontOpen);
+            notifyOneWayWindowFound(line, *p.frontOpen);
 
-            lineInfo.windowEffect = p.frontOpen;
-            line->_inFlags |= LF_BSPWINDOW; /// @todo Refactor away.
+            line._bspWindowSector = p.frontOpen; /// @todo Refactor away.
         }
     }
 
@@ -334,14 +327,10 @@ DENG2_PIMPL(Partitioner)
             edgeTipSets.append(EdgeTips());
         }
 
-        // Initialize line info.
-        lineInfos.reserve(map->lineCount());
+        // Search for "one-way window" effects.
         foreach(Line *line, map->lines())
         {
-            lineInfos.push_back(LineInfo(line, DIST_EPSILON));
-            LineInfo &lineInfo = lineInfos.back();
-
-            testForWindowEffect(lineInfo);
+            testForWindowEffect(*line);
         }
     }
 
@@ -379,18 +368,15 @@ DENG2_PIMPL(Partitioner)
      */
     void createInitialLineSegments(SuperBlock &blockmap)
     {
-        DENG2_FOR_EACH(LineInfos, i, lineInfos)
+        foreach(Line *line, map->lines())
         {
-            LineInfo const &lineInfo = *i;
-            Line *line = lineInfo.line;
-
             // Polyobj lines are completely ignored.
             if(line->isFromPolyobj()) continue;
 
-            LineSegment *front  = 0;
+            LineSegment *front = 0;
             coord_t angle = 0;
 
-            if(!lineInfo.flags.testFlag(LineInfo::ZeroLength))
+            //if(!line.hasZeroLength()) Screened at a higher level.
             {
                 Sector *frontSec = line->frontSectorPtr();
                 Sector *backSec  = 0;
@@ -399,11 +385,10 @@ DENG2_PIMPL(Partitioner)
                 {
                     backSec = line->backSectorPtr();
                 }
-                else
+                // Handle the "One-way window" effect.
+                else if(line->_bspWindowSector)
                 {
-                    // Handle the 'One-Way Window' effect.
-                    Sector *windowSec = lineInfo.windowEffect;
-                    if(windowSec) backSec = windowSec;
+                    backSec = line->_bspWindowSector;
                 }
 
                 front = buildLineSegmentsBetweenVertexes(line->from(), line->to(),
@@ -713,10 +698,9 @@ DENG2_PIMPL(Partitioner)
             if(lineSeg->hasMapSide())
             {
                 // Can we skip this line segment?
-                LineInfo &lInfo = lineInfos[lineSeg->line().indexInMap()];
-                if(lInfo.validCount == validCount) continue; // Yes.
+                if(lineSeg->line().validCount() == validCount) continue; // Yes.
 
-                lInfo.validCount = validCount;
+                lineSeg->line().setValidCount(validCount);
             }
 
             // Calculate the cost metrics for this line segment.
@@ -1207,8 +1191,6 @@ DENG2_PIMPL(Partitioner)
 
                     delete side._sections;
                     side._sections = 0;
-
-                    lineInfos[lineSeg->line().indexInMap()].flags &= ~(LineInfo::Twosided);
                 }
 
                 delete lineSeg->hedgePtr();

@@ -189,7 +189,6 @@ DENG_HEADERS += \
     $$SRC/include/map/bsp/bsptreenode.h \
     $$SRC/include/map/bsp/edgetip.h \
     $$SRC/include/map/bsp/hplane.h \
-    $$SRC/include/map/bsp/lineinfo.h \
     $$SRC/include/map/bsp/linesegment.h \
     $$SRC/include/map/bsp/partitioncost.h \
     $$SRC/include/map/bsp/partitioner.h \

@@ -40,7 +40,6 @@ class Sector;
 
 // Internal flags:
 #define LF_POLYOBJ    0x1 ///< Line is part of a polyobject.
-#define LF_BSPWINDOW  0x2 ///< Line produced a BSP window. @todo Refactor away.
 
 /**
  * World map line.
@@ -460,6 +459,10 @@ public: /// @todo make private:
 
     /// Internal LF_* flags.
     byte _inFlags;
+
+    /// Sector of the map which for which this line acts as a "One-way window".
+    /// @todo Now unnecessary, refactor away -ds
+    Sector *_bspWindowSector;
 
 public:
     Line(Vertex &from, Vertex &to,

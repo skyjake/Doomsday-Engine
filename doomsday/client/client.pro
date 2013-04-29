@@ -226,7 +226,6 @@ DENG_HEADERS += \
     include/map/bsp/bsptreenode.h \
     include/map/bsp/edgetip.h \
     include/map/bsp/hplane.h \
-    include/map/bsp/lineinfo.h \
     include/map/bsp/linesegment.h \
     include/map/bsp/partitioncost.h \
     include/map/bsp/partitioner.h \
