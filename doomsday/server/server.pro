@@ -187,8 +187,8 @@ DENG_HEADERS += \
     $$SRC/include/m_profiler.h \
     $$SRC/include/map/blockmap.h \
     $$SRC/include/map/bsp/bsptreenode.h \
+    $$SRC/include/map/bsp/edgetip.h \
     $$SRC/include/map/bsp/hplane.h \
-    $$SRC/include/map/bsp/hedgetip.h \
     $$SRC/include/map/bsp/lineinfo.h \
     $$SRC/include/map/bsp/linesegment.h \
     $$SRC/include/map/bsp/partitioncost.h \

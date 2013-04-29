@@ -1,4 +1,4 @@
-/** @file hedgetip.h BSP builder Line Segment Tip.
+/** @file map/bsp/edgetip.h BSP Builder Edge Tip.
  *
  * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
  * @see http://sourceforge.net/projects/glbsp/
@@ -23,8 +23,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_BSP_LINESEGMENTTIP
-#define DENG_WORLD_BSP_LINESEGMENTTIP
+#ifndef DENG_WORLD_MAP_BSP_EDGETIP
+#define DENG_WORLD_MAP_BSP_EDGETIP
 
 #include <list>
 
@@ -34,11 +34,12 @@ namespace de {
 namespace bsp {
 
 /**
- * A "line segment tip" is where a line segment meets a vertex.
+ * A "edge tip" is where the edge of a line segment and the relevant
+ * vertex meet.
  *
  * @ingroup bsp
  */
-class LineSegmentTip
+class EdgeTip
 {
 public:
     enum Side
@@ -48,14 +49,14 @@ public:
     };
 
 public:
-    explicit LineSegmentTip(coord_t angle = 0, LineSegment *front = 0,
+    explicit EdgeTip(coord_t angle = 0, LineSegment *front = 0,
                             LineSegment *back = 0)
         : _angle(angle), _front(front), _back(back)
     {}
 
     inline coord_t angle() const { return _angle; }
 
-    inline LineSegmentTip &setAngle(coord_t newAngle)
+    inline EdgeTip &setAngle(coord_t newAngle)
     {
         _angle = newAngle;
         return *this;
@@ -79,19 +80,19 @@ public:
         return sid == Front? hasFront() : hasBack();
     }
 
-    inline LineSegmentTip &setFront(LineSegment *lineSeg)
+    inline EdgeTip &setFront(LineSegment *lineSeg)
     {
         _front = lineSeg;
         return *this;
     }
 
-    inline LineSegmentTip &setBack(LineSegment *lineSeg)
+    inline EdgeTip &setBack(LineSegment *lineSeg)
     {
         _back = lineSeg;
         return *this;
     }
 
-    inline LineSegmentTip &setSide(Side sid, LineSegment *lineSeg)
+    inline EdgeTip &setSide(Side sid, LineSegment *lineSeg)
     {
         return sid == Front? setFront(lineSeg) : setBack(lineSeg);
     }
@@ -105,26 +106,26 @@ private:
     LineSegment *_front, *_back;
 };
 
-class LineSegmentTips
+class EdgeTips
 {
 public:
-    typedef std::list<LineSegmentTip> All;
+    typedef std::list<EdgeTip> All;
 
-    LineSegmentTips() : _tips(0) {}
+    EdgeTips() : _tips(0) {}
 
     bool isEmpty() const { return _tips.empty(); }
 
-    /// Clear all LineSegmentTips in the set.
+    /// Clear all tips in the set.
     void clear() { _tips.clear(); }
 
     /**
-     * Add a new LineSegmentTip to the set in it's rightful place according to
+     * Add a new edge tip to the set in it's rightful place according to
      * an anti-clockwise (increasing angle) order.
      *
      * @param angleEpsilon  Smallest difference between two angles before being
      *                      considered equal (in degrees).
      */
-    LineSegmentTip &add(coord_t angle, LineSegment *front = 0, LineSegment *back = 0,
+    EdgeTip &add(coord_t angle, LineSegment *front = 0, LineSegment *back = 0,
                         coord_t angleEpsilon = 1.0 / 1024.0)
     {
         All::reverse_iterator after;
@@ -133,7 +134,7 @@ public:
             after != _tips.rend() && angle + angleEpsilon < (*after).angle(); after++)
         {}
 
-        return *_tips.insert(after.base(), LineSegmentTip(angle, front, back));
+        return *_tips.insert(after.base(), EdgeTip(angle, front, back));
     }
 
     All const &all() const { return _tips; }
@@ -145,4 +146,4 @@ private:
 } // namespace bsp
 } // namespace de
 
-#endif // DENG_WORLD_BSP_LINESEGMENTTIP
+#endif // DENG_WORLD_MAP_BSP_EDGETIP

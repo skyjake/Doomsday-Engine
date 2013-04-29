@@ -38,8 +38,8 @@
 #include "HEdge"
 #include "Vertex"
 
+#include "map/bsp/edgetip.h"
 #include "map/bsp/hplane.h"
-#include "map/bsp/hedgetip.h"
 #include "map/bsp/lineinfo.h"
 #include "map/bsp/linesegment.h"
 #include "map/bsp/partitioncost.h"
@@ -123,7 +123,7 @@ DENG2_PIMPL(Partitioner)
 
     ~Instance()
     {
-        clearAllLineSegmentTips();
+        clearAllEdgeTips();
 
         if(rootNode)
         {
@@ -143,29 +143,22 @@ DENG2_PIMPL(Partitioner)
         return vertexInfos[vertex.indexInMap()];
     }
 
-    inline LineSegmentTips &edgeTips(Vertex const &vertex) {
+    inline EdgeTips &edgeTips(Vertex const &vertex) {
         return vertexInfo(vertex).edgeTips();
     }
 
     /**
      * Returns the associated LineSegment for the given @a hedge.
      */
-    LineSegment &lineSegment(HEdge &hedge)
+    LineSegment &lineSegment(HEdge const &hedge)
     {
-        LineSegmentMap::iterator found = lineSegmentMap.find(&hedge);
+        LineSegmentMap::iterator found = lineSegmentMap.find(const_cast<HEdge *>(&hedge));
         if(found != lineSegmentMap.end())
         {
             return *found.value();
         }
         throw Error("Partitioner::lineSegment", QString("Failed locating a LineSegment for 0x%1")
                                                     .arg(de::dintptr(&hedge), 0, 16));
-    }
-
-    /// @copydoc lineSegment()
-    LineSegment const &lineSegment(HEdge const &hedge) const
-    {
-        return const_cast<LineSegment const &>(
-                    const_cast<Instance *>(this)->lineSegment(const_cast<HEdge &>(hedge)));
     }
 
     struct testForWindowEffectParams
@@ -1723,7 +1716,7 @@ DENG2_PIMPL(Partitioner)
             // Has ownership of this vertex been claimed?
             if(!vtx) continue;
 
-            clearLineSegmentTipsByVertex(*vtx);
+            clearEdgeTipsByVertex(*vtx);
             delete vtx;
         }
 
@@ -1772,12 +1765,12 @@ DENG2_PIMPL(Partitioner)
         return vtx;
     }
 
-    inline void clearLineSegmentTipsByVertex(Vertex const &vtx)
+    inline void clearEdgeTipsByVertex(Vertex const &vtx)
     {
         edgeTips(vtx).clear();
     }
 
-    void clearAllLineSegmentTips()
+    void clearAllEdgeTips()
     {
         for(uint i = 0; i < vertexInfos.size(); ++i)
         {

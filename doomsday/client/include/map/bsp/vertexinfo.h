@@ -1,6 +1,4 @@
-/**
- * @file vertexinfo.h
- * BSP Builder Vertex info. @ingroup bsp
+/** @file map/bsp/vertexinfo.h BSP Builder Vertex info.
  *
  * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
  * SourceForge: http://sourceforge.net/projects/glbsp/
@@ -25,10 +23,10 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_BSP_VERTEXINFO
-#define LIBDENG_BSP_VERTEXINFO
+#ifndef DENG_WORLD_MAP_BSP_VERTEXINFO
+#define DENG_WORLD_MAP_BSP_VERTEXINFO
 
-#include "map/bsp/hedgetip.h"
+#include "map/bsp/edgetip.h"
 
 namespace de {
 namespace bsp {
@@ -36,6 +34,8 @@ namespace bsp {
 /**
  * Data type used to record additional information and precalculated
  * values for a Vertex in the current map.
+ *
+ * @ingroup bsp
  */
 class VertexInfo
 {
@@ -46,13 +46,13 @@ public:
     uint oneSidedOwnerCount;
     uint twoSidedOwnerCount;
 
-    LineSegmentTips &edgeTips() { return tips; }
+    EdgeTips &edgeTips() { return tips; }
 
 private:
-    LineSegmentTips tips;
+    EdgeTips tips;
 };
 
 } // namespace bsp
 } // namespace de
 
-#endif /// LIBDENG_BSP_VERTEXINFO
+#endif /// DENG_WORLD_MAP_BSP_VERTEXINFO

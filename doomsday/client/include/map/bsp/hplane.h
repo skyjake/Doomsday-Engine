@@ -42,7 +42,7 @@ class Vertex;
 namespace de {
 namespace bsp {
 
-class LineSegmentTips;
+class EdgeTips;
 
 /**
  * Models the partitioning binary space half-plane.
@@ -146,13 +146,13 @@ public:
      * @param lineSeg   Line segment to perform intersection with.
      * @param edge      Line segment edge identifier of the vertex to associate
      *                  with any resulting intercept.
-     * @param edgeTips  Set of LineSegmentTips for the identified @a edge of
+     * @param edgeTips  Set of EdgeTips for the identified @a edge of
      *                  @a lineSeg. (@todo Refactor away -ds)
      *
      * @return  The resultant new intercept; otherwise @a 0.
      */
     Intercept *intercept(LineSegment const &lineSeg, int edge,
-                         LineSegmentTips const &edgeTips);
+                         EdgeTips const &edgeTips);
 
     /**
      * Sort and then merge near-intercepts from the given list.

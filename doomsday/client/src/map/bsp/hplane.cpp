@@ -155,15 +155,15 @@ void HPlane::configure(LineSegment const &newBaseSeg)
  *
  * @return  The "open" sector at this angle; otherwise @c 0 (closed).
  */
-static Sector *openSectorAtAngle(LineSegmentTips const &tips, coord_t angle)
+static Sector *openSectorAtAngle(EdgeTips const &tips, coord_t angle)
 {
     DENG_ASSERT(!tips.isEmpty());
 
     // First check whether there's a wall_tip that lies in the exact
     // direction of the given direction (which is relative to the vertex).
-    DENG2_FOR_EACH_CONST(LineSegmentTips::All, it, tips.all())
+    DENG2_FOR_EACH_CONST(EdgeTips::All, it, tips.all())
     {
-        LineSegmentTip const &tip = *it;
+        EdgeTip const &tip = *it;
         coord_t diff = de::abs(tip.angle() - angle);
         if(diff < ANG_EPSILON || diff > (360.0 - ANG_EPSILON))
         {
@@ -174,9 +174,9 @@ static Sector *openSectorAtAngle(LineSegmentTips const &tips, coord_t angle)
     // OK, now just find the first wall_tip whose angle is greater than
     // the angle we're interested in. Therefore we'll be on the front side
     // of that tip edge.
-    DENG2_FOR_EACH_CONST(LineSegmentTips::All, it, tips.all())
+    DENG2_FOR_EACH_CONST(EdgeTips::All, it, tips.all())
     {
-        LineSegmentTip const &tip = *it;
+        EdgeTip const &tip = *it;
         if(angle + ANG_EPSILON < tip.angle())
         {
             // Found it.
@@ -186,12 +186,12 @@ static Sector *openSectorAtAngle(LineSegmentTips const &tips, coord_t angle)
 
     // Not found. The open sector will therefore be on the back of the tip
     // at the greatest angle.
-    LineSegmentTip const &tip = tips.all().back();
+    EdgeTip const &tip = tips.all().back();
     return (tip.hasBack()? tip.back().sectorPtr() : 0);
 }
 
 HPlane::Intercept *HPlane::intercept(LineSegment const &lineSeg, int edge,
-    LineSegmentTips const &edgeTips)
+    EdgeTips const &edgeTips)
 {
     // Already present for this vertex?
     Vertex &vertex = lineSeg.vertex(edge);
