@@ -20,6 +20,7 @@
 #include "testwindow.h"
 
 #include <QMessageBox>
+#include <QPainter>
 
 #include <de/GLState>
 #include <de/Drawable>
@@ -27,6 +28,7 @@
 #include <de/GLShader>
 #include <de/GLTexture>
 #include <de/GLTarget>
+#include <de/AtlasTexture>
 #include <de/GuiApp>
 #include <de/Clock>
 
@@ -37,7 +39,15 @@ DENG2_OBSERVES(Canvas, GLInit),
 DENG2_OBSERVES(Canvas, GLResize),
 DENG2_OBSERVES(Clock, TimeChange)
 {
+    enum Mode
+    {
+        TestRenderToTexture,
+        TestDynamicAtlas
+    };
+
+    Mode mode;
     Drawable ob;
+    Drawable atlasOb;
     Matrix4f modelMatrix;
     Matrix4f projMatrix;
     GLUniform uMvpMatrix;
@@ -46,17 +56,23 @@ DENG2_OBSERVES(Clock, TimeChange)
     GLUniform uTex;
     GLTexture frameTex;
     GLTexture testpic;
+    std::auto_ptr<AtlasTexture> atlas;
     std::auto_ptr<GLTarget> frameTarget;
     Time startedAt;
+    Time lastAtlasAdditionAt;
+    bool eraseAtlas;
 
     typedef GLBufferT<Vertex3TexRgba> VertexBuf;
+    typedef GLBufferT<Vertex2Tex> Vertex2Buf;
 
     Instance(Public *i)
         : Base(i),
+          mode(TestRenderToTexture),
           uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
           uColor    ("uColor",     GLUniform::Vec4),
           uTime     ("uTime",      GLUniform::Float),
-          uTex      ("uTex",       GLUniform::Sampler2D)
+          uTex      ("uTex",       GLUniform::Sampler2D),
+          atlas(AtlasTexture::newWithRowAllocator(Atlas::AllowDefragment | Atlas::BackingStore))
     {
         // Use this as the main window.
         setMain(i);
@@ -66,6 +82,8 @@ DENG2_OBSERVES(Clock, TimeChange)
         Clock::appClock().audienceForTimeChange += this;
 
         uColor = Vector4f(.5f, .75f, .5f, 1);
+        atlas->setTotalSize(Vector2ui(256, 256));
+        atlas->setMagFilter(gl::Nearest);
     }
 
     void canvasGLInit(Canvas &cv)
@@ -103,6 +121,7 @@ DENG2_OBSERVES(Clock, TimeChange)
         frameTex.setUndefinedImage(Vector2ui(512, 256), Image::RGBA_8888);
         frameTarget.reset(new GLTarget(frameTex));
 
+        // 3D cube.
         VertexBuf *buf = new VertexBuf;
         ob.addBuffer(1, buf);
 
@@ -140,9 +159,9 @@ DENG2_OBSERVES(Clock, TimeChange)
                 "varying highp vec4 vColor;\n"
 
                 "void main(void) {\n"
-                "   gl_Position = uMvpMatrix * aVertex;\n"
-                "   vUV = aUV + vec2(uTime/10.0, 0.0);\n"
-                "   vColor = aColor + vec4(sin(uTime), cos(uTime), sin(uTime), cos(uTime)*0.5) * uColor;\n"
+                "  gl_Position = uMvpMatrix * aVertex;\n"
+                "  vUV = aUV + vec2(uTime/10.0, 0.0);\n"
+                "  vColor = aColor + vec4(sin(uTime), cos(uTime), sin(uTime), cos(uTime)*0.5) * uColor;\n"
                 "}\n";
 
         Block fragShader =
@@ -152,14 +171,44 @@ DENG2_OBSERVES(Clock, TimeChange)
                 "varying highp vec4 vColor;\n"
 
                 "void main(void) {\n"
-                "    highp vec4 color = texture2D(uTex, vUV);\n"
-                "    if(color.a < 0.05) discard;\n"
-                "    gl_FragColor = color * vColor;\n"
+                "  highp vec4 color = texture2D(uTex, vUV);\n"
+                "  if(color.a < 0.05) discard;\n"
+                "  gl_FragColor = color * vColor;\n"
                 "}";
 
         ob.program().build(vertShader, fragShader)
                 << uMvpMatrix
                 << uColor << uTime
+                << uTex;
+
+        // The atlas objects.
+        Vertex2Buf *buf2 = new Vertex2Buf;
+        Vertex2Buf::Type verts2[4] = {
+            { Vector2f(0, 0),     Vector2f(0, 0) },
+            { Vector2f(100, 0),   Vector2f(1, 0) },
+            { Vector2f(100, 100), Vector2f(1, 1) },
+            { Vector2f(0, 100),   Vector2f(0, 1) }
+        };
+        buf2->setVertices(gl::TriangleFan, verts2, 4, gl::Static);
+        atlasOb.addBuffer(1, buf2);
+
+        atlasOb.program().build(
+                    Block(
+                        "uniform highp mat4 uMvpMatrix;\n"
+                        "attribute highp vec4 aVertex;\n"
+                        "attribute highp vec2 aUV;\n"
+                        "varying highp vec2 vUV;\n"
+                        "void main(void) {\n"
+                        "  gl_Position = uMvpMatrix * aVertex;\n"
+                        "  vUV = aUV;\n"
+                        "}\n"),
+                    Block(
+                        "uniform sampler2D uTex;\n"
+                        "varying highp vec2 vUV;\n"
+                        "void main(void) {\n"
+                        "  gl_FragColor = texture2D(uTex, vUV);\n"
+                        "}\n"))
+                << uMvpMatrix // note: uniforms shared between programs
                 << uTex;
 
         cv.renderTarget().setClearColor(Vector4f(.2f, .2f, .2f, 0));
@@ -173,31 +222,74 @@ DENG2_OBSERVES(Clock, TimeChange)
         //st.setViewport(Rectangleui::fromSize(cv.size()));
         st.setViewport(Rectangleui(0, 0, cv.width(), cv.height()));
 
-        /*uMvpMatrix = Matrix4f::ortho(-cv.width()/2,  cv.width()/2,
-                                     -cv.height()/2, cv.height()/2)
-                * Matrix4f::scale(cv.height()/450.f)
-                * Matrix4f::translate(Vector2f(-200, -200));*/
+        updateProjection(cv);
+    }
 
-        projMatrix = Matrix4f::perspective(40, float(cv.width())/float(cv.height())) *
-                     Matrix4f::lookAt(Vector3f(), Vector3f(0, 0, -5), Vector3f(0, -1, 0));
+    void updateProjection(Canvas &cv)
+    {
+        switch(mode)
+        {
+        case TestRenderToTexture:
+            // 3D projection.
+            projMatrix = Matrix4f::perspective(40, float(cv.width())/float(cv.height())) *
+                         Matrix4f::lookAt(Vector3f(), Vector3f(0, 0, -5), Vector3f(0, -1, 0));
+            break;
+
+        case TestDynamicAtlas:
+            // 2D projection.
+            uMvpMatrix = projMatrix =
+                    Matrix4f::ortho(-cv.width()/2,  cv.width()/2,
+                                    -cv.height()/2, cv.height()/2) *
+                    Matrix4f::scale(cv.height()/150.f) *
+                    Matrix4f::translate(Vector2f(-50, -50));
+            break;
+        }
+    }
+
+    void setMode(Mode newMode)
+    {
+        mode = newMode;
+        updateProjection(self.canvas());
+
+        switch(mode)
+        {
+        case TestDynamicAtlas:
+            lastAtlasAdditionAt = Time();
+            uMvpMatrix = projMatrix;
+            break;
+
+        default:
+            break;
+        }
     }
 
     void draw(Canvas &)
     {
-        // First render the frame to the texture.
-        GLState::push()
-            .setTarget(*frameTarget)
-            .setViewport(Rectangleui::fromSize(frameTex.size()));
-        drawFrame();
-        GLState::pop();
+        switch(mode)
+        {
+        case TestRenderToTexture:
+            // First render the frame to the texture.
+            GLState::push()
+                .setTarget(*frameTarget)
+                .setViewport(Rectangleui::fromSize(frameTex.size()));
+            drawRttFrame();
+            GLState::pop();
 
-        // Render normally.
-        drawFrame();
+            // Render normally.
+            drawRttFrame();
+            break;
+
+        case TestDynamicAtlas:
+            GLState::push().setBlend(false);
+            drawAtlasFrame();
+            GLState::pop();
+            break;
+        }
     }
 
-    void drawFrame()
+    void drawRttFrame()
     {
-        GLState::top().target().clear(GLTarget::Color | GLTarget::Depth);
+        GLState::top().target().clear(GLTarget::ColorDepth);
 
         // The left cube.
         uTex = testpic;
@@ -214,6 +306,13 @@ DENG2_OBSERVES(Clock, TimeChange)
         ob.draw();
     }
 
+    void drawAtlasFrame()
+    {
+        GLState::top().target().clear(GLTarget::ColorDepth);
+        uTex = *atlas;
+        atlasOb.draw();
+    }
+
     void timeChanged(Clock const &clock)
     {
         if(!startedAt.isValid())
@@ -222,17 +321,75 @@ DENG2_OBSERVES(Clock, TimeChange)
         }
         uTime = startedAt.since();
 
-        modelMatrix = Matrix4f::rotate(std::cos(uTime.toFloat()/2) * 45, Vector3f(1, 0, 0)) *
-                      Matrix4f::rotate(std::sin(uTime.toFloat()/3) * 60, Vector3f(0, 1, 0));
+        switch(mode)
+        {
+        case TestRenderToTexture:
+            modelMatrix = Matrix4f::rotate(std::cos(uTime.toFloat()/2) * 45, Vector3f(1, 0, 0)) *
+                          Matrix4f::rotate(std::sin(uTime.toFloat()/3) * 60, Vector3f(0, 1, 0));
+            break;
+
+        case TestDynamicAtlas:
+            if(lastAtlasAdditionAt.since() > 0.2)
+            {
+                lastAtlasAdditionAt = Time();
+                nextAtlasAlloc();
+            }
+            break;
+        }
 
         self.update();
+    }
+
+    void nextAtlasAlloc()
+    {
+        if(eraseAtlas)
+        {
+            atlas->clear();
+            eraseAtlas = false;
+            return;
+        }
+
+        if(!(qrand() % 3) && !atlas->isEmpty())
+        {
+            // Randomly remove one of the allocations.
+            QList<Id> ids;
+            foreach(Id const &id, atlas->allImages()) ids << id;
+            Id chosen = ids[qrand() % ids.size()];
+            atlas->release(chosen);
+
+            LOG_DEBUG("Removed ") << chosen;
+        }
+
+        // Generate a random image.
+        QSize imgSize(10 + qrand() % 40, 10 + qrand() % 40);
+        QImage img(imgSize, QImage::Format_ARGB32);
+        QPainter painter(&img);
+        painter.fillRect(img.rect(), QColor(qrand() % 256, qrand() % 256, qrand() % 256));
+        painter.setPen(Qt::white);
+        painter.drawRect(img.rect().adjusted(0, 0, -1, -1));
+
+        Id id = atlas->alloc(img);
+        LOG_DEBUG("Allocated ") << id;
+        if(id.isNone())
+        {
+            lastAtlasAdditionAt = Time() + 5.0;
+
+            // Erase the entire atlas.
+            eraseAtlas = true;
+        }
     }
 };
 
 TestWindow::TestWindow() : d(new Instance(this))
 {
+    qsrand(Time().asDateTime().toTime_t());
+
     setWindowTitle("libgui GL Sandbox");
     setMinimumSize(640, 480);
+
+    QToolBar *tools = addToolBar(tr("Tests"));
+    tools->addAction("RTT", this, SLOT(testRenderToTexture()));
+    tools->addAction("Atlas", this, SLOT(testDynamicAtlas()));
 }
 
 void TestWindow::canvasGLDraw(Canvas &canvas)
@@ -241,4 +398,14 @@ void TestWindow::canvasGLDraw(Canvas &canvas)
     canvas.swapBuffers();
 
     CanvasWindow::canvasGLDraw(canvas);
+}
+
+void TestWindow::testRenderToTexture()
+{
+    d->setMode(Instance::TestRenderToTexture);
+}
+
+void TestWindow::testDynamicAtlas()
+{
+    d->setMode(Instance::TestDynamicAtlas);
 }

@@ -24,10 +24,16 @@
 
 class TestWindow : public de::CanvasWindow
 {
+    Q_OBJECT
+
 public:
     TestWindow();
 
     void canvasGLDraw(de::Canvas &canvas);
+
+public slots:
+    void testRenderToTexture();
+    void testDynamicAtlas();
 
 private:
     DENG2_PRIVATE(d)
