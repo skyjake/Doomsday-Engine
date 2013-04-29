@@ -37,13 +37,14 @@ DENG2_PIMPL(Atlas)
     bool mayDefrag;
     Rectanglei changedArea;
 
+    // Minimum backing size is 1x1 pixels.
     Instance(Public *i, Flags const &flg, Size const &size)
-        : Base(i), flags(flg), totalSize(size), margin(1),
+        : Base(i), flags(flg), totalSize(size.max(Size(1, 1))), margin(1),
           needCommit(false), needFullCommit(true), mayDefrag(false)
     {
         if(hasBacking())
         {
-            backing = QImage(QSize(size.x, size.y), QImage::Format_ARGB32);
+            backing = QImage(QSize(totalSize.x, totalSize.y), QImage::Format_ARGB32);
         }
     }
 
@@ -144,6 +145,7 @@ void Atlas::setAllocator(IAllocator *allocator)
         d->allocator->setMetrics(d->totalSize, d->margin);
         d->allocator->clear(); // using new metrics
     }
+    d->markFullyChanged();
 }
 
 void Atlas::clear()
@@ -288,17 +290,25 @@ void Atlas::commit() const
 {
     if(!d->needCommit) return;
 
+    LOG_AS("Atlas");
+
     if(d->mustCommitFull())
     {
+        DENG2_ASSERT(d->backing.size() == d->totalSize);
+        LOG_DEBUG("Full commit ") << d->backing.size().asText();
+
         commitFull(d->backing);
     }
     else
     {
+        LOG_DEBUG("Partial commit ") << d->changedArea.asText();
+
         // An extra copy is done to crop to the changed area.
         commit(d->backing.subImage(d->changedArea), d->changedArea.topLeft);
     }
 
     d->needCommit = false;
+    d->needFullCommit = false;
 }
 
 } // namespace de

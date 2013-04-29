@@ -114,7 +114,7 @@ public:
     /**
      * Constructs a new atlas.
      */
-    Atlas(Flags const &flags = DefaultFlags, Size const &totalSize = Image::Size());
+    Atlas(Flags const &flags = DefaultFlags, Size const &totalSize = Size());
 
     /**
      * Sets the allocator for the atlas. The atlas is cleared automatically.
@@ -219,6 +219,8 @@ protected:
 private:
     DENG2_PRIVATE(d)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(Atlas::Flags)
 
 } // namespace de
 

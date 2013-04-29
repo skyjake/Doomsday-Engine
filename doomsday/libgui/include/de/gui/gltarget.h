@@ -51,7 +51,8 @@ public:
         Depth   = 0x2,  ///< Target has a depth attachment.
         Stencil = 0x4,  ///< Target has a stencil attachment.
 
-        DefaultFlags = Color | Depth
+        ColorDepth = Color | Depth,
+        DefaultFlags = ColorDepth
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 

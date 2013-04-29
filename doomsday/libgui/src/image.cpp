@@ -286,6 +286,7 @@ Image Image::subImage(Rectanglei const &subArea) const
 void Image::resize(Size const &size)
 {
     IMAGE_ASSERT_EDITABLE(d);
+    DENG2_ASSERT(d->image.format() != QImage::Format_Invalid);
 
     QImage resized(QSize(size.x, size.y), d->image.format());
     QPainter painter(&resized);
