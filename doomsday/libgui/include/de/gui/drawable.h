@@ -71,7 +71,7 @@ namespace de {
  *
  * @ingroup gl
  */
-class Drawable : public AssetGroup
+class LIBGUI_PUBLIC Drawable : public AssetGroup
 {
     DENG2_NO_COPY  (Drawable)
     DENG2_NO_ASSIGN(Drawable)

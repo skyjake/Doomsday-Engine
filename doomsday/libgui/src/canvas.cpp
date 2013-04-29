@@ -250,6 +250,10 @@ void Canvas::initializeGL()
     LOG_AS("Canvas");
     LOG_DEBUG("Notifying GL init (during paint)");
 
+#ifdef WIN32
+    getAllOpenGLEntryPoints();
+#endif
+
     DENG2_FOR_AUDIENCE(GLInit, i) i->canvasGLInit(*this);
 }
 

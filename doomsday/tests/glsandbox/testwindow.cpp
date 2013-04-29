@@ -337,7 +337,7 @@ DENG2_OBSERVES(Clock, TimeChange)
             break;
         }
 
-        self.update();
+        self.canvas().update();
     }
 
     void nextAtlasAlloc()
