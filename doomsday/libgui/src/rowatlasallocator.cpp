@@ -61,7 +61,7 @@ DENG2_PIMPL(RowAtlasAllocator)
             }
 
             // Move to the next row.
-            rover.x = 0;
+            rover.x = margin;
             rover.y += rowHeight;
 
             rect = Rectanglei::fromSize(rover, allocSize);
@@ -104,11 +104,11 @@ DENG2_PIMPL(RowAtlasAllocator)
 
         // Sort descending.
         bool operator < (ContentSize const &other) const {
-            if(width == other.width) {
-                // Secondary sorting by descending height.
-                return height > other.height;
+            if(height == other.height) {
+                // Secondary sorting by descending width.
+                return width > other.width;
             }
-            return width > other.width;
+            return height > other.height;
         }
     };
 
