@@ -472,6 +472,9 @@ DENG2_PIMPL(Line)
     Side front;
     Side back;
 
+    /// @c true= the line is owned by some Polyobj.
+    bool polyobjOwned;
+
     /// Used by legacy algorithms to prevent repeated processing.
     int validCount;
 
@@ -490,6 +493,7 @@ DENG2_PIMPL(Line)
           length(direction.length()),
           front(*i, frontSector),
           back(*i, backSector),
+          polyobjOwned(false),
           validCount(0)
     {
         std::memset(mapped, 0, sizeof(mapped));
@@ -505,7 +509,6 @@ Line::Line(Vertex &from, Vertex &to, int flags, Sector *frontSector, Sector *bac
     : MapElement(DMU_LINE),
       _vo1(0),
       _vo2(0),
-      _inFlags(0),
       _bspWindowSector(0),
       d(new Instance(this, from, to, flags, frontSector, backSector))
 {
@@ -540,7 +543,12 @@ bool Line::isBspWindow() const
 
 bool Line::isFromPolyobj() const
 {
-    return (_inFlags & LF_POLYOBJ) != 0;
+    return d->polyobjOwned;
+}
+
+void Line::markPolyobjOwned(bool set)
+{
+    d->polyobjOwned = set;
 }
 
 Line::Side &Line::side(int back)

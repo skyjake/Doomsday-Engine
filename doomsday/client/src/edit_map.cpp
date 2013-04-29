@@ -1128,7 +1128,7 @@ int MPE_PolyobjCreate(int *lines, int lineCount, int tag, int sequenceType,
         Line *line = editMap.lines[lines[i]];
 
         // This line belongs to a polyobj.
-        line->_inFlags |= LF_POLYOBJ;
+        line->markPolyobjOwned();
         static_cast<Polyobj::Lines *>(po->_lines)->append(line);
     }
 
