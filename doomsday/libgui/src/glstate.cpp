@@ -242,64 +242,75 @@ GLState::GLState() : d(new Instance(this))
 GLState::GLState(GLState const &other) : d(new Instance(this, *other.d))
 {}
 
-void GLState::setCull(gl::Cull mode)
+GLState &GLState::setCull(gl::Cull mode)
 {
     d->props.set(CullMode, duint(mode));
+    return *this;
 }
 
-void GLState::setDepthTest(bool enable)
+GLState &GLState::setDepthTest(bool enable)
 {
     d->props.set(DepthTest, enable);
+    return *this;
 }
 
-void GLState::setDepthFunc(gl::Comparison func)
+GLState &GLState::setDepthFunc(gl::Comparison func)
 {
     d->props.set(DepthFunc, duint(func));
+    return *this;
 }
 
-void GLState::setDepthWrite(bool enable)
+GLState &GLState::setDepthWrite(bool enable)
 {
     d->props.set(DepthWrite, enable);
+    return *this;
 }
 
-void GLState::setBlend(bool enable)
+GLState &GLState::setBlend(bool enable)
 {
     d->props.set(Blend, enable);
+    return *this;
 }
 
-void GLState::setBlendFunc(gl::Blend src, gl::Blend dest)
+GLState &GLState::setBlendFunc(gl::Blend src, gl::Blend dest)
 {
     d->props.set(BlendFuncSrc,  duint(src));
     d->props.set(BlendFuncDest, duint(dest));
+    return *this;
 }
 
-void GLState::setBlendFunc(gl::BlendFunc func)
+GLState &GLState::setBlendFunc(gl::BlendFunc func)
 {
     d->props.set(BlendFuncSrc,  duint(func.first));
     d->props.set(BlendFuncDest, duint(func.second));
+    return *this;
 }
 
-void GLState::setBlendOp(gl::BlendOp op)
+GLState &GLState::setBlendOp(gl::BlendOp op)
 {
     d->props.set(BlendOp, duint(op));
+    return *this;
 }
 
-void GLState::setTarget(GLTarget &target)
+GLState &GLState::setTarget(GLTarget &target)
 {
     d->target = &target;
+    return *this;
 }
 
-void GLState::setDefaultTarget()
+GLState &GLState::setDefaultTarget()
 {
     d->target = 0;
+    return *this;
 }
 
-void GLState::setViewport(Rectangleui const &viewportRect)
+GLState &GLState::setViewport(Rectangleui const &viewportRect)
 {
     d->props.set(ViewportX,      viewportRect.left());
     d->props.set(ViewportY,      viewportRect.top());
     d->props.set(ViewportWidth,  viewportRect.width());
     d->props.set(ViewportHeight, viewportRect.height());
+    return *this;
 }
 
 gl::Cull GLState::cull() const

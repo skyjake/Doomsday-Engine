@@ -98,17 +98,17 @@ public:
 
     GLState(GLState const &other);
 
-    void setCull(gl::Cull mode);
-    void setDepthTest(bool enable);
-    void setDepthFunc(gl::Comparison func);
-    void setDepthWrite(bool enable);
-    void setBlend(bool enable);
-    void setBlendFunc(gl::Blend src, gl::Blend dest);
-    void setBlendFunc(gl::BlendFunc func);
-    void setBlendOp(gl::BlendOp op);
-    void setTarget(GLTarget &target);
-    void setDefaultTarget();
-    void setViewport(Rectangleui const &viewportRect);
+    GLState &setCull(gl::Cull mode);
+    GLState &setDepthTest(bool enable);
+    GLState &setDepthFunc(gl::Comparison func);
+    GLState &setDepthWrite(bool enable);
+    GLState &setBlend(bool enable);
+    GLState &setBlendFunc(gl::Blend src, gl::Blend dest);
+    GLState &setBlendFunc(gl::BlendFunc func);
+    GLState &setBlendOp(gl::BlendOp op);
+    GLState &setTarget(GLTarget &target);
+    GLState &setDefaultTarget();
+    GLState &setViewport(Rectangleui const &viewportRect);
 
     gl::Cull cull() const;
     bool depthTest() const;
