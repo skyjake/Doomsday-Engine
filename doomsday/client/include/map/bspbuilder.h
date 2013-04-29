@@ -83,7 +83,7 @@ public:
      *
      * @return  Current number of HEdges owned by this Partitioner.
      */
-    uint numHEdges();
+    int numHEdges();
 
     /**
      * Retrieve the number of BspLeafs owned by this Partitioner. When the
@@ -93,7 +93,7 @@ public:
      *
      * @return  Current number of BspLeafs owned by this Partitioner.
      */
-    uint numLeafs();
+    int numLeafs();
 
     /**
      * Retrieve the number of BspNodes owned by this Partitioner. When the
@@ -103,19 +103,19 @@ public:
      *
      * @return  Current number of BspNodes owned by this Partitioner.
      */
-    uint numNodes();
+    int numNodes();
 
     /**
      * Retrieve the total number of Vertexes produced during the build process.
      */
-    uint numVertexes();
+    int numVertexes();
 
     /**
      * Retrieve the vertex with specified @a index. If the index is not valid
      * this will result in fatal error. The caller should ensure the index is
      * within valid range using Partitioner::numVertexes()
      */
-    Vertex &vertex(uint idx);
+    Vertex &vertex(int idx);
 
     /**
      * Release ownership of the specified object.

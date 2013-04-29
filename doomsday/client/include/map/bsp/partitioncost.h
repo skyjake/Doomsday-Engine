@@ -23,11 +23,10 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_BSP_PARTITIONCOST
-#define LIBDENG_BSP_PARTITIONCOST
+#ifndef DENG_WORLD_MAP_BSP_PARTITIONCOST
+#define DENG_WORLD_MAP_BSP_PARTITIONCOST
 
-#include "map/p_mapdata.h"
-#include "HEdge"
+#include "map/bsp/linesegment.h"
 
 namespace de {
 namespace bsp {
@@ -39,7 +38,7 @@ struct PartitionCost
 {
     enum Side
     {
-        Right = 0,
+        Right,
         Left
     };
 
@@ -47,27 +46,27 @@ struct PartitionCost
     int splits;
     int iffy;
     int nearMiss;
-    int realRight;
-    int realLeft;
-    int miniRight;
-    int miniLeft;
+    int mapRight;
+    int mapLeft;
+    int partRight;
+    int partLeft;
 
     PartitionCost() :
-        total(0), splits(0), iffy(0), nearMiss(0), realRight(0),
-        realLeft(0), miniRight(0), miniLeft(0)
+        total(0), splits(0), iffy(0), nearMiss(0), mapRight(0),
+        mapLeft(0), partRight(0), partLeft(0)
     {}
 
-    inline PartitionCost &addHEdgeRight(HEdge const &hedge)
+    inline PartitionCost &addLineSegmentRight(LineSegment const &lineSeg)
     {
-        if(hedge.hasLineSide()) realRight += 1;
-        else                miniRight += 1;
+        if(lineSeg.hasMapSide()) mapRight += 1;
+        else                     partRight += 1;
         return *this;
     }
 
-    inline PartitionCost &addHEdgeLeft(HEdge const &hedge)
+    inline PartitionCost &addLineSegmentLeft(LineSegment const &lineSeg)
     {
-        if(hedge.hasLineSide()) realLeft += 1;
-        else                miniLeft += 1;
+        if(lineSeg.hasMapSide()) mapLeft += 1;
+        else                     partLeft += 1;
         return *this;
     }
 
@@ -77,10 +76,10 @@ struct PartitionCost
         splits    += other.splits;
         iffy      += other.iffy;
         nearMiss  += other.nearMiss;
-        realLeft  += other.realLeft;
-        realRight += other.realRight;
-        miniLeft  += other.miniLeft;
-        miniRight += other.miniRight;
+        mapLeft   += other.mapLeft;
+        mapRight  += other.mapRight;
+        partLeft  += other.partLeft;
+        partRight += other.partRight;
         return *this;
     }
 
@@ -90,10 +89,10 @@ struct PartitionCost
         splits    = other.splits;
         iffy      = other.iffy;
         nearMiss  = other.nearMiss;
-        realLeft  = other.realLeft;
-        realRight = other.realRight;
-        miniLeft  = other.miniLeft;
-        miniRight = other.miniRight;
+        mapLeft   = other.mapLeft;
+        mapRight  = other.mapRight;
+        partLeft  = other.partLeft;
+        partRight = other.partRight;
         return *this;
     }
 
@@ -106,4 +105,4 @@ struct PartitionCost
 } // namespace bsp
 } // namespace de
 
-#endif // LIBDENG_BSP_PARTITIONCOST
+#endif // DENG_WORLD_MAP_BSP_PARTITIONCOST

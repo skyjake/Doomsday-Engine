@@ -23,19 +23,20 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_BSP_SUPERBLOCKMAP
-#define LIBDENG_BSP_SUPERBLOCKMAP
+#ifndef DENG_WORLD_MAP_BSP_SUPERBLOCKMAP
+#define DENG_WORLD_MAP_BSP_SUPERBLOCKMAP
 
 #include <QList>
+
 #include <de/aabox.h>
+
 #include <de/Log>
 #include <de/Vector>
-
-class HEdge;
 
 namespace de {
 namespace bsp {
 
+class LineSegment;
 class SuperBlock;
 
 /**
@@ -50,7 +51,6 @@ public:
      * @param bounds  Bounding box in map coordinates for the whole blockmap.
      */
     SuperBlockmap(AABox const &bounds);
-    ~SuperBlockmap();
 
     /**
      * Retrieve the root SuperBlock.
@@ -60,26 +60,25 @@ public:
 
     /**
      * Find the axis-aligned bounding box defined by the vertices of all
-     * HEdges within this superblockmap. If there are no HEdges linked to
-     * this then @a bounds will be initialized to the "cleared" state
-     * (i.e., min[x,y] > max[x,y]).
+     * LineSegments within this superblockmap. If there are no LineSegments
+     * linked to this then @a bounds will be initialized to the "cleared"
+     * state (i.e., min[x,y] > max[x,y]).
      *
      * @return bounds  Determined bounds are written here.
      */
-    AABoxd findHEdgeBounds();
+    AABoxd findLineSegmentBounds();
 
     /**
-     * Empty this SuperBlockmap clearing all HEdges and sub-blocks.
+     * Empty this SuperBlockmap clearing all LineSegments and sub-blocks.
      */
     void clear();
 
     operator SuperBlock &() { return root(); }
 
-private:
-    struct Instance;
-    Instance *d;
-
     friend class SuperBlock;
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 #ifdef RIGHT
@@ -100,7 +99,7 @@ private:
 class SuperBlock
 {
 public:
-    typedef QList<HEdge *> HEdges;
+    typedef QList<LineSegment *> LineSegments;
 
     /// A SuperBlock may be subdivided with two child subblocks which are
     /// uniquely identifiable by these associated ids.
@@ -150,7 +149,7 @@ public:
     /**
      * Retrieve the axis-aligned bounding box defined for this superblock
      * during instantiation. Note that this is NOT the bounds defined by
-     * the linked HEdges' vertices (see SuperBlock::findHEdgeBounds()).
+     * the linked LineSegments' vertices (see SuperBlock::findLineSegmentBounds()).
      *
      * @return  Axis-aligned bounding box.
      */
@@ -232,51 +231,51 @@ public:
 
     /**
      * Find the axis-aligned bounding box defined by the vertices of all
-     * HEdges within this superblock. If there are no HEdges linked to
-     * this then @a bounds will be initialized to the "cleared" state
-     * (i.e., min[x,y] > max[x,y]).
+     * LineSegments within this superblock. If there are no LineSegments
+     * linked to this then @a bounds will be initialized to the "cleared"
+     * state (i.e., min[x,y] > max[x,y]).
      *
      * @param bounds  Determined bounds are written here.
      */
-    void findHEdgeBounds(AABoxd &bounds);
+    void findLineSegmentBounds(AABoxd &bounds);
 
     /**
-     * Retrieve the total number of HEdges linked in this superblock
+     * Retrieve the total number of LineSegments linked in this superblock
      * (including any within child superblocks).
      *
-     * @param addReal       Include the "real" half-edges in the total.
-     * @param addMini       Include the "mini" half-edges in the total.
+     * @param addMap  Include the map line segments in the total.
+     * @param addPart Include the partition line segments in the total.
      *
-     * @return  Total HEdge count.
+     * @return  Total line segment count.
      */
-    uint hedgeCount(bool addReal, bool addMini) const;
+    uint lineSegmentCount(bool addMap, bool addPart) const;
 
-    /// Convenience functions for retrieving HEdge totals:
-    inline uint miniHEdgeCount() const {  return hedgeCount(false, true); }
-    inline uint realHEdgeCount() const {  return hedgeCount(true, false); }
-    inline uint totalHEdgeCount() const { return hedgeCount(true, true); }
+    /// Convenience functions for retrieving line segment totals:
+    inline uint partLineSegmentCount() const {  return lineSegmentCount(false, true); }
+    inline uint mapLineSegmentCount() const {  return lineSegmentCount(true, false); }
+    inline uint totalLineSegmentCount() const { return lineSegmentCount(true, true); }
 
     /**
-     * Push (link) the given HEdge onto the FIFO list of half-edges linked
-     * to this superblock.
+     * Push (link) the given LineSegment onto the FIFO list of line segments
+     * linked to this superblock.
      *
-     * @param hedge  HEdge instance to add.
-     * @return  SuperBlock instance the HEdge was actually linked to.
+     * @param lineSeg  LineSegment instance to add.
+     * @return  SuperBlock that @a lineSeg was linked to.
      */
-    SuperBlock &push(HEdge &hedge);
+    SuperBlock &push(LineSegment &lineSeg);
 
     /**
-     * Pop (unlink) the next HEdge from the FIFO list of half-edges linked
-     * to this superblock.
+     * Pop (unlink) the next LineSegment from the FIFO list of line segments
+     * linked to this superblock.
      *
-     * @return  Previous top-most HEdge instance or @c NULL if empty.
+     * @return  Previous top-most line segment; otherwise @c 0 (empty).
      */
-    HEdge *pop();
+    LineSegment *pop();
 
     /**
-     * Provides access to the list of half-edges for efficient traversal.
+     * Provides access to the list of line segments for efficient traversal.
      */
-    HEdges const &hedges() const;
+    LineSegments const &lineSegments() const;
 
     /**
      * SuperBlockmap creates instances of SuperBlock so it needs to use
@@ -293,4 +292,4 @@ private:
 } // namespace bsp
 } // namespace de
 
-#endif // LIBDENG_BSP_SUPERBLOCKMAP
+#endif // DENG_WORLD_MAP_BSP_SUPERBLOCKMAP

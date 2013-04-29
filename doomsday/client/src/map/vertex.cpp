@@ -59,11 +59,13 @@ DENG2_PIMPL(Vertex)
 };
 
 Vertex::Vertex(Vector2d const &origin)
-    : MapElement(DMU_VERTEX), d(new Instance(this, origin))
-{
-    _lineOwners = 0;
-    _numLineOwners = 0;
-}
+    : MapElement(DMU_VERTEX),
+      _lineOwners(0),
+      _numLineOwners(0),
+      _oneSidedOwnerCount(0),
+      _twoSidedOwnerCount(0),
+      d(new Instance(this, origin))
+{}
 
 Vector2d const &Vertex::origin() const
 {
@@ -123,11 +125,9 @@ uint Vertex::lineOwnerCount() const
     return _numLineOwners;
 }
 
-void Vertex::countLineOwners(uint *oneSided, uint *twoSided) const
+void Vertex::countLineOwners()
 {
-    if(!oneSided && !twoSided) return;
-
-    uint ones = 0, twos = 0;
+    _oneSidedOwnerCount = _twoSidedOwnerCount = 0;
 
     if(LineOwner const *firstOwn = firstLineOwner())
     {
@@ -136,17 +136,14 @@ void Vertex::countLineOwners(uint *oneSided, uint *twoSided) const
         {
             if(!own->line().hasFrontSections() || !own->line().hasBackSections())
             {
-                ++ones;
+                _oneSidedOwnerCount += 1;
             }
             else
             {
-                ++twos;
+                _twoSidedOwnerCount += 1;
             }
         } while((own = &own->next()) != firstOwn);
     }
-
-    if(oneSided) *oneSided += ones;
-    if(twoSided) *twoSided += twos;
 }
 
 LineOwner *Vertex::firstLineOwner() const
