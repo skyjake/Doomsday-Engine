@@ -1530,41 +1530,50 @@ static bool shouldSmoothLightLevels(Surface &sufA, Surface &sufB, binangle_t ang
 }
 
 /**
- * The DOOM lighting model applies a sector light level delta when drawing walls
- * based on their 2D world angle.
+ * The DOOM lighting model applies a sector light level delta when drawing
+ * walls based on their 2D world angle.
  *
- * @param side    Line side to calculate light level deltas for.
- * @param deltaL  Light delta for the left edge written here.
- * @param deltaR  Light delta for the right edge written here.
+ * @param side     Line side to calculate light level deltas for.
+ * @param section  Section of the side for which deltas are to be calculated.
+ *
+ * Return values:
+ * @param deltaL   Light delta for the left edge written here.
+ * @param deltaR   Light delta for the right edge written here.
  *
  * @todo: Use the half-edge rings instead of LineOwners.
  */
-static void sideLightLevelDeltas(Line::Side &side, float &deltaL, float &deltaR)
+static void wallSectionLightLevelDeltas(Line::Side &side, int section, float &deltaL, float &deltaR)
 {
     deltaL = 0;
     deltaR = 0;
 
     // Are light level deltas disabled?
-    if(rendLightWallAngle <= 0)
+    if(rendLightWallAngle <= 0) return;
+    // ...always if the surface's material was chosen as a HOM fix (lighting
+    // must be consistent with that applied to the relative back sector plane).
+    if(side.hasSections() && side.back().hasSections() &&
+       side.surface(section).hasFixMaterial())
         return;
 
-    deltaL = deltaR = calcLightLevelDelta(side.middle().normal());
+    deltaL = deltaR = calcLightLevelDelta(side.surface(section).normal());
 
     // Is delta smoothing disabled?
     if(!rendLightWallAngleSmooth) return;
     // ...always for polyobj lines (no owner rings).
     if(side.line().isFromPolyobj()) return;
 
-    /*
+    /**
      * Smoothing is enabled, so find the neighbor sides for each edge which
      * we will use to calculate the averaged lightlevel delta for each.
+     *
+     * @todo Do not assume the neighbor is the middle section of @a otherSide.
      */
     binangle_t angleDiff;
 
     if(Line::Side *otherSide = findSideBlendNeighbor(side, false /*left neighbor*/, &angleDiff))
     {
-        Surface &sufA = side.middle();
-        Surface &sufB = otherSide->middle();
+        Surface &sufA = side.surface(section);
+        Surface &sufB = otherSide->surface(section);
 
         if(shouldSmoothLightLevels(sufA, sufB, angleDiff))
         {
@@ -1577,8 +1586,9 @@ static void sideLightLevelDeltas(Line::Side &side, float &deltaL, float &deltaR)
     // Do the same for the right edge but with the right neighbor side.
     if(Line::Side *otherSide = findSideBlendNeighbor(side, true /*right neighbor*/, &angleDiff))
     {
-        Surface &sufA = side.middle();
-        Surface &sufB = otherSide->middle();
+        Surface &sufA = side.surface(section);
+        Surface &sufB = otherSide->surface(section);
+
         if(shouldSmoothLightLevels(sufA, sufB, angleDiff))
         {
             // Average normals.
@@ -1826,24 +1836,19 @@ static bool writeWallSection(HEdge &hedge, int section,
         }
 
         float deltaL, deltaR;
+        wallSectionLightLevelDeltas(hedge.lineSide(), section, deltaL, deltaR);
 
-        // Do not apply an angle based lighting delta if this surface's material
-        // has been chosen as a HOM fix (lighting must be consistent with that
-        // applied to the back plane (on this half-edge's back side)).
-        if(hedge.hasLineSide() && hedge.lineSide().hasSections() &&
-           isTwoSided && section != Line::Side::Middle && surface.hasFixMaterial())
+        if(!de::fequal(deltaL, deltaR))
         {
-            deltaL = deltaR = 0;
-        }
-        else
-        {
-            sideLightLevelDeltas(hedge.lineSide(), deltaL, deltaR);
+            // Linearly interpolate to find the light level delta values for the
+            // vertical edges of this wall section.
+            coord_t const lineLength = hedge.line().length();
+            coord_t const sectionLength = hedge.length();
+            coord_t const sectionOffset = hedge.lineOffset();
 
-            // Linear interpolation of the line light deltas to the edges of the hedge.
-            coord_t const &lineLength = hedge.line().length();
-            float diff = deltaR - deltaL;
-            deltaR = deltaL + ((hedge.lineOffset() + hedge.length()) / lineLength) * diff;
-            deltaL += (hedge.lineOffset() / lineLength) * diff;
+            float deltaDiff = deltaR - deltaL;
+            deltaR = deltaL + ((sectionOffset + sectionLength) / lineLength) * deltaDiff;
+            deltaL += (sectionOffset / lineLength) * deltaDiff;
         }
 
         if(section == Line::Side::Middle && isTwoSided)
