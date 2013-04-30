@@ -21,12 +21,13 @@
 #include <cstdlib>
 #include <cmath>
 
+#include <de/vector1.h>
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_render.h"
 #include "de_play.h"
 #include "api_map.h"
-#include <de/vector1.h>
 
 #include "render/r_shadow.h"
 
@@ -44,8 +45,8 @@ typedef struct {
 /// Orientation is toward the projectee.
 typedef struct {
     float blendFactor; /// Multiplied with projection alpha.
-    pvec3d_t v1; /// Top left vertex of the surface being projected to.
-    pvec3d_t v2; /// Bottom right vertex of the surface being projected to.
+    vec3d_t v1; /// Top left vertex of the surface being projected to.
+    vec3d_t v2; /// Bottom right vertex of the surface being projected to.
     vec3f_t tangent; /// Normalized tangent of the surface being projected to.
     vec3f_t bitangent; /// Normalized bitangent of the surface being projected to.
     vec3f_t normal; /// Normalized normal of the surface being projected to.
@@ -78,7 +79,7 @@ static uint newList()
     }
 
     list = &projectionLists[cursorList - 1];
-    list->head = NULL;
+    list->head = 0;
 
     return cursorList;
 }
@@ -104,10 +105,9 @@ static listnode_t *newListNode()
     listnode_t *node;
 
     // Do we need to allocate mode nodes?
-    if(cursorNode == NULL)
+    if(cursorNode == 0)
     {
-        node = (listnode_t*)Z_Malloc(sizeof *node, PU_APPSTATIC, NULL);
-        if(!node) Con_Error(__FILE__":newListNode failed on allocation of %lu bytes for new node.", (unsigned long) sizeof *node);
+        node = (listnode_t *)Z_Malloc(sizeof *node, PU_APPSTATIC, 0);
 
         // Link the new node to the list.
         node->nextUsed = firstNode;
@@ -119,13 +119,13 @@ static listnode_t *newListNode()
         cursorNode = cursorNode->nextUsed;
     }
 
-    node->next = NULL;
+    node->next = 0;
     return node;
 }
 
 static listnode_t *newProjection(const_pvec2f_t s, const_pvec2f_t t, float alpha)
 {
-    DENG_ASSERT(s && t);
+    DENG_ASSERT(s != 0 && t != 0);
 
     listnode_t *node = newListNode();
     shadowprojection_t *sp = &node->projection;
@@ -141,7 +141,7 @@ static listnode_t *newProjection(const_pvec2f_t s, const_pvec2f_t t, float alpha
 /// @return  Same as @a node for convenience (chaining).
 static listnode_t *linkProjectionToList(listnode_t *node, shadowprojectionlist_t *list)
 {
-    DENG_ASSERT(node && list);
+    DENG_ASSERT(node != 0 && list != 0);
 
     node->next = list->head;
     list->head = node;
@@ -159,13 +159,14 @@ static listnode_t *linkProjectionToList(listnode_t *node, shadowprojectionlist_t
  * @param t  GL texture coordinates on the T axis [bottom, top] in texture space.
  * @param alpha  Alpha attributed to the new projection.
  */
-static void newShadowProjection(uint *listIdx, const_pvec2f_t s, const_pvec2f_t t, float alpha)
+static inline void newShadowProjection(uint *listIdx, const_pvec2f_t s, const_pvec2f_t t, float alpha)
 {
     linkProjectionToList(newProjection(s, t, alpha), getList(listIdx));
 }
 
-static bool genTexCoords(pvec2f_t s, pvec2f_t t, const_pvec3d_t point, float scale,
-    const_pvec3d_t v1, const_pvec3d_t v2, const_pvec2f_t tangent, const_pvec2f_t bitangent)
+static inline bool genTexCoords(pvec2f_t s, pvec2f_t t,
+    const_pvec3d_t point, float scale, const_pvec3d_t v1, const_pvec3d_t v2,
+    const_pvec2f_t tangent, const_pvec2f_t bitangent)
 {
     // Counteract aspect correction slightly (not too round mind).
     return R_GenerateTexCoords(s, t, point, scale, scale * 1.08f, v1, v2, tangent, bitangent);
@@ -288,12 +289,12 @@ void R_InitShadowProjectionListsForMap()
     static bool firstTime = true;
     if(firstTime)
     {
-        firstNode = NULL;
-        cursorNode = NULL;
+        firstNode = 0;
+        cursorNode = 0;
         firstTime = false;
     }
     // All memory for the lists is allocated from Zone so we can "forget" it.
-    projectionLists = NULL;
+    projectionLists = 0;
     projectionListCount = 0;
     cursorList = 0;
 }
@@ -307,23 +308,27 @@ void R_InitShadowProjectionListsForNewFrame()
     cursorList = 0;
     if(projectionListCount)
     {
-        memset(projectionLists, 0, projectionListCount * sizeof *projectionLists);
+        std::memset(projectionLists, 0, projectionListCount * sizeof *projectionLists);
     }
 }
 
-uint R_ProjectShadowsToSurface(BspLeaf *bspLeaf, float blendFactor, pvec3d_t topLeft,
-    pvec3d_t bottomRight, Vector3f const &tangent, Vector3f const &bitangent, Vector3f const &normal)
+uint R_ProjectShadowsToSurface(BspLeaf *bspLeaf, float blendFactor,
+    Vector3d const &topLeft, Vector3d const &bottomRight,
+    Vector3f const &tangent, Vector3f const &bitangent, Vector3f const &normal)
 {
-    DENG_ASSERT(bspLeaf);
+    DENG_ASSERT(bspLeaf != 0);
 
     // Early test of the external blend factor for quick rejection.
     if(blendFactor < SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN) return 0;
 
     projectshadowonsurfaceiteratorparams_t p;
+
     p.listIdx = 0;
     p.spParams.blendFactor = blendFactor;
-    p.spParams.v1          = topLeft;
-    p.spParams.v2          = bottomRight;
+
+    V3d_Set(p.spParams.v1,     topLeft.x,     topLeft.y,     topLeft.z);
+    V3d_Set(p.spParams.v2, bottomRight.x, bottomRight.y, bottomRight.z);
+
     V3f_Set(p.spParams.tangent,     tangent.x,   tangent.y,   tangent.z);
     V3f_Set(p.spParams.bitangent, bitangent.x, bitangent.y, bitangent.z);
     V3f_Set(p.spParams.normal,       normal.x,    normal.y,    normal.z);
@@ -334,7 +339,7 @@ uint R_ProjectShadowsToSurface(BspLeaf *bspLeaf, float blendFactor, pvec3d_t top
     return p.listIdx;
 }
 
-int R_IterateShadowProjections2(uint listIdx, int (*callback) (shadowprojection_t const *, void *),
+int R_IterateShadowProjections(uint listIdx, int (*callback) (shadowprojection_t const *, void *),
     void *parameters)
 {
     int result = false; // Continue iteration.
@@ -344,20 +349,15 @@ int R_IterateShadowProjections2(uint listIdx, int (*callback) (shadowprojection_
         while(node)
         {
             result = callback(&node->projection, parameters);
-            node = (!result? node->next : NULL /* Early out */);
+            node = (!result? node->next : 0 /* Early out */);
         }
     }
     return result;
 }
 
-int R_IterateShadowProjections(uint listIdx, int (*callback) (shadowprojection_t const *, void *))
-{
-    return R_IterateShadowProjections2(listIdx, callback, NULL);
-}
-
 int RIT_FindShadowPlaneIterator(Sector *sector, void *parameters)
 {
-    DENG_ASSERT(sector);
+    DENG_ASSERT(sector != 0);
     Plane **highest = (Plane **)parameters;
     Plane *compare = &sector->floor();
     if(compare->visHeight() > (*highest)->visHeight())

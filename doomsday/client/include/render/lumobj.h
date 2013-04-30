@@ -1,4 +1,4 @@
-/** @file lumobj.h Luminous Object Management
+/** @file render/lumobj.h Luminous Object Management
  * @ingroup render
  *
  * @author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -19,16 +19,20 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RENDER_LUMINOUS_H
-#define LIBDENG_RENDER_LUMINOUS_H
+#ifndef DENG_RENDER_LUMINOUS_H
+#define DENG_RENDER_LUMINOUS_H
+
+#include <de/vector1.h>
 
 #include <de/Vector>
 
+#include "api_gl.h"
+
 #include "dd_types.h"
 #include "color.h"
-#include <de/vector1.h>
-#include "map/p_mapdata.h"
 #include "resource/r_data.h"
+
+class BspLeaf;
 
 // Luminous object types.
 typedef enum {
@@ -180,8 +184,9 @@ void LO_ClipInBspLeafBySight(uint bspLeafIdx);
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int LO_LumobjsRadiusIterator2(BspLeaf *bspLeaf, coord_t x, coord_t y, coord_t radius, int (*callback) (lumobj_t const *lum, coord_t distance, void *paramaters), void* paramaters);
-int LO_LumobjsRadiusIterator(BspLeaf *bspLeaf, coord_t x, coord_t y, coord_t radius, int (*callback) (lumobj_t const *lum, coord_t distance, void *paramaters)/*, paramaters = 0 */);
+int LO_LumobjsRadiusIterator(BspLeaf *bspLeaf, coord_t x, coord_t y, coord_t radius,
+                             int (*callback) (lumobj_t const *lum, coord_t distance, void *parameters),
+                             void *parameters = 0);
 
 /**
  * @defgroup projectLightFlags  Flags for LO_ProjectToSurface
@@ -216,7 +221,7 @@ int LO_LumobjsRadiusIterator(BspLeaf *bspLeaf, coord_t x, coord_t y, coord_t rad
  * @return  Projection list identifier if surface is lit else @c 0.
  */
 uint LO_ProjectToSurface(int flags, BspLeaf *bspLeaf, float blendFactor,
-    pvec3d_t topLeft, pvec3d_t bottomRight,
+    de::Vector3d const &topLeft, de::Vector3d const &bottomRight,
     de::Vector3f const &tangent, de::Vector3f const &bitangent, de::Vector3f const &normal);
 
 /**
@@ -230,9 +235,9 @@ uint LO_ProjectToSurface(int flags, BspLeaf *bspLeaf, float blendFactor,
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int LO_IterateProjections2(uint listIdx, int (*callback) (dynlight_t const *, void *), void *parameters);
-int LO_IterateProjections(uint listIdx, int (*callback) (dynlight_t const *, void*)/*, parameters = 0*/);
+int LO_IterateProjections(uint listIdx, int (*callback) (dynlight_t const *, void *),
+                          void *parameters = 0);
 
 void LO_DrawLumobjs();
 
-#endif // LIBDENG_RENDER_LUMINOUS_H
+#endif // DENG_RENDER_LUMINOUS_H

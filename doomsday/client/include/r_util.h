@@ -1,4 +1,4 @@
-/** @file r_util.h
+/** @file r_util.h Refresh Utility Routines.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,17 +17,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Refresh Utility Routines
- */
+#ifndef DENG_REFRESH_UTIL_H
+#define DENG_REFRESH_UTIL_H
 
-#ifndef LIBDENG_REFRESH_UTIL_H
-#define LIBDENG_REFRESH_UTIL_H
+#include "api_gl.h"
 
-#include <de/Vector>
 #include <de/vector1.h>
-#include "BspNode"
-#include "map/p_mapdata.h"
+#include <de/Vector>
 
 /**
  * Get a global angle from Cartesian coordinates relative to the viewer.
@@ -57,7 +53,7 @@ void R_ProjectViewRelativeLine2D(coord_t const center[2], boolean alignToViewPla
  */
 void R_AmplifyColor(de::Vector3f &color);
 
-void R_ScaleAmbientRGB(float* out, const float* in, float mul);
+void R_ScaleAmbientRGB(float *out, float const *in, float mul);
 
 /**
  * Generate texcoords on the surface centered on point.
@@ -74,9 +70,10 @@ void R_ScaleAmbientRGB(float* out, const float* in, float mul);
  *
  * @return  @c true if the generated coords are within bounds.
  */
-boolean R_GenerateTexCoords(pvec2f_t s, pvec2f_t t, const_pvec3d_t point, float xScale, float yScale,
-    const_pvec3d_t v1, const_pvec3d_t v2, const_pvec3f_t tangent, const_pvec3f_t bitangent);
+bool R_GenerateTexCoords(pvec2f_t s, pvec2f_t t, const_pvec3d_t point,
+    float xScale, float yScale, const_pvec3d_t v1, const_pvec3d_t v2,
+    const_pvec3f_t tangent, const_pvec3f_t bitangent);
 
 char const *R_NameForBlendMode(blendmode_t mode);
 
-#endif /* LIBDENG_REFRESH_UTIL_H */
+#endif // DENG_REFRESH_UTIL_H

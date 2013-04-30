@@ -17,12 +17,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_RENDER_MOBJ_SHADOW_H
-#define LIBDENG_RENDER_MOBJ_SHADOW_H
+#ifndef DENG_RENDER_MOBJ_SHADOW_H
+#define DENG_RENDER_MOBJ_SHADOW_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <de/Vector>
+
+#include "render/rendpoly.h"
+#include "render/walldiv.h"
 
 /**
  * This value defines the offset from the shadowed surface applied to
@@ -33,28 +34,29 @@ extern "C" {
 #define SHADOW_ZOFFSET              (.8f)
 
 /// @return  @c true if rendering of mobj shadows is currently enabled.
-boolean Rend_MobjShadowsEnabled(void);
+bool Rend_MobjShadowsEnabled();
 
 /**
  * Use the simple, drop-to-highest-floor algorithm for rendering mobj shadows
  * selected for this method. Rendering lists are not used.
  */
-void Rend_RenderMobjShadows(void);
+void Rend_RenderMobjShadows();
 
 /// Parameters for Rend_RenderShadowProjections (POD).
 typedef struct {
     uint lastIdx;
-    const rvertex_t* rvertices;
+    rvertex_t const *rvertices;
     uint numVertices, realNumVertices;
-    const coord_t* texTL, *texBR;
-    boolean isWall;
+    de::Vector3d const *texTL;
+    de::Vector3d const *texBR;
+    bool isWall;
     struct {
         struct {
-            walldivnode_t* firstDiv;
+            walldivnode_t *firstDiv;
             uint divCount;
         } left;
         struct {
-            walldivnode_t* firstDiv;
+            walldivnode_t *firstDiv;
             uint divCount;
         } right;
     } wall;
@@ -64,10 +66,6 @@ typedef struct {
  * Render all shadows in projection list @a listIdx according to @a parameters
  * writing them to the renderering lists for the current frame.
  */
-void Rend_RenderShadowProjections(uint listIdx, rendershadowprojectionparams_t* paramaters);
+void Rend_RenderShadowProjections(uint listIdx, rendershadowprojectionparams_t &parameters);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif /* LIBDENG_RENDER_MOBJ_SHADOW_H */
+#endif // DENG_RENDER_MOBJ_SHADOW_H

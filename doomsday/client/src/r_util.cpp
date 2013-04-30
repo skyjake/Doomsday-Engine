@@ -116,8 +116,9 @@ void R_ScaleAmbientRGB(float *out, const float *in, float mul)
     }
 }
 
-boolean R_GenerateTexCoords(pvec2f_t s, pvec2f_t t, const_pvec3d_t point, float xScale, float yScale,
-    const_pvec3d_t v1, const_pvec3d_t v2, const_pvec3f_t tangent, const_pvec3f_t bitangent)
+bool R_GenerateTexCoords(pvec2f_t s, pvec2f_t t, const_pvec3d_t point,
+    float xScale, float yScale, const_pvec3d_t v1, const_pvec3d_t v2,
+    const_pvec3f_t tangent, const_pvec3f_t bitangent)
 {
     vec3d_t vToPoint;
 

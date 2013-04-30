@@ -353,14 +353,14 @@ uint R_CollectAffectingLights(collectaffectinglights_params_t const *params)
         vars.haveList = true;
         vars.listIdx = vLightListIdx;
 
-        LO_LumobjsRadiusIterator2(params->bspLeaf, params->origin[VX], params->origin[VY],
-                                  float(loMaxRadius), RIT_VisSpriteLightIterator, (void *)&vars);
+        LO_LumobjsRadiusIterator(params->bspLeaf, params->origin[VX], params->origin[VY],
+                                 float(loMaxRadius), RIT_VisSpriteLightIterator, (void *)&vars);
     }
 
     return vLightListIdx + 1;
 }
 
-boolean VL_ListIterator(uint listIdx, void* data, boolean (*func) (vlight_t const *, void *))
+boolean VL_ListIterator(uint listIdx, void *data, boolean (*func) (vlight_t const *, void *))
 {
     if(listIdx == 0 || listIdx > numVLightLinkLists) return true;
     listIdx--;

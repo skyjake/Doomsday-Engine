@@ -75,8 +75,8 @@ typedef struct {
 typedef struct {
     int flags; /// @ref lightProjectFlags
     float blendFactor; /// Multiplied with projection alpha.
-    pvec3d_t v1; /// Top left vertex of the surface being projected to.
-    pvec3d_t v2; /// Bottom right vertex of the surface being projected to.
+    vec3d_t v1; /// Top left vertex of the surface being projected to.
+    vec3d_t v2; /// Bottom right vertex of the surface being projected to.
     vec3f_t tangent; /// Normalized tangent of the surface being projected to.
     vec3f_t bitangent; /// Normalized bitangent of the surface being projected to.
     vec3f_t normal; /// Normalized normal of the surface being projected to.
@@ -346,10 +346,11 @@ static listnode_t *linkProjectionToList(listnode_t *node, lightprojectionlist_t 
  * @param colorRGB  RGB color attributed to the new projection.
  * @param alpha     Alpha attributed to the new projection.
  */
-static void newLightProjection(uint *listIdx, int flags, DGLuint texture,
+static inline void newLightProjection(uint *listIdx, int flags, DGLuint texture,
     float const s[2], float const t[2], float const colorRGB[3], float alpha)
 {
-    linkProjectionToList(newProjection(texture, s, t, colorRGB, alpha), getProjectionList(listIdx, flags));
+    linkProjectionToList(newProjection(texture, s, t, colorRGB, alpha),
+                         getProjectionList(listIdx, flags));
 }
 
 /**
@@ -362,7 +363,7 @@ static void newLightProjection(uint *listIdx, int flags, DGLuint texture,
  */
 static void calcLightColor(float outRGB[3], float const color[3], float light)
 {
-    light = MINMAX_OF(0, light, 1) * dynlightFactor;
+    light = de::clamp(0.f, light, 1.f) * dynlightFactor;
     // In fog additive blending is used; the normal fog color is way too bright.
     if(usingFog) light *= dynlightFogBright;
 
@@ -389,12 +390,12 @@ typedef struct {
  */
 static int projectPlaneLightToSurface(lumobj_t const *lum, void *parameters)
 {
-    DENG_ASSERT(lum && parameters);
+    DENG_ASSERT(lum != 0 && parameters != 0);
 
     projectlighttosurfaceiteratorparams_t *p = (projectlighttosurfaceiteratorparams_t *)parameters;
     lightprojectparams_t *spParams = &p->spParams;
-    coord_t bottom = spParams->v2[VZ], top = spParams->v1[VZ];
-    float glowHeight, s[2], t[2], color[3];
+    coord_t const bottom = spParams->v2[VZ];
+    coord_t const top    = spParams->v1[VZ];
 
     if(spParams->flags & PLF_NO_PLANE) return 0; // Continue iteration.
 
@@ -406,13 +407,14 @@ static int projectPlaneLightToSurface(lumobj_t const *lum, void *parameters)
     if(bottom >= top) return 0; // Continue iteration.
 
     // Do not make too small glows.
-    glowHeight = (GLOW_HEIGHT_MAX * LUM_PLANE(lum)->intensity) * glowHeightFactor;
+    float glowHeight = (GLOW_HEIGHT_MAX * LUM_PLANE(lum)->intensity) * glowHeightFactor;
     if(glowHeight <= 2) return 0; // Continue iteration.
 
     if(glowHeight > glowHeightMax)
         glowHeight = glowHeightMax;
 
     // Calculate texture coords for the light.
+    float t[2];
     if(LUM_PLANE(lum)->normal[VZ] < 0)
     {
         // Light is cast downwards.
@@ -430,10 +432,9 @@ static int projectPlaneLightToSurface(lumobj_t const *lum, void *parameters)
     if(!(t[0] <= 1 || t[1] >= 0)) return 0; // Continue iteration.
 
     // The horizontal direction is easy.
-    s[0] = 0;
-    s[1] = 1;
+    float s[2] = { 0, 1 };
 
-    calcLightColor(color, LUM_PLANE(lum)->color, LUM_PLANE(lum)->intensity);
+    float color[3]; calcLightColor(color, LUM_PLANE(lum)->color, LUM_PLANE(lum)->intensity);
 
     newLightProjection(&p->listIdx, ((spParams->flags & PLF_SORT_LUMINOSITY_DESC)? SPLF_SORT_LUMINOUS_DESC : 0),
                        glTexName, s, t, color, 1 * spParams->blendFactor);
@@ -441,11 +442,13 @@ static int projectPlaneLightToSurface(lumobj_t const *lum, void *parameters)
     return 0; // Continue iteration.
 }
 
-static bool genTexCoords(pvec2f_t s, pvec2f_t t, const_pvec3d_t point, float scale,
-    const_pvec3d_t v1, const_pvec3d_t v2, const_pvec3f_t tangent, const_pvec3f_t bitangent)
+static inline bool genTexCoords(pvec2f_t s, pvec2f_t t,
+    const_pvec3d_t point, float scale, const_pvec3d_t v1, const_pvec3d_t v2,
+    const_pvec3f_t tangent, const_pvec3f_t bitangent)
 {
     // Counteract aspect correction slightly (not too round mind).
-    return R_GenerateTexCoords(s, t, point, scale, scale * 1.08f, v1, v2, tangent, bitangent);
+    return R_GenerateTexCoords(s, t, point, scale, scale * 1.08f, v1, v2,
+                               tangent, bitangent);
 }
 
 static DGLuint chooseOmniLightTexture(lumobj_t *lum, lightprojectparams_t const *spParams)
@@ -469,41 +472,35 @@ static DGLuint chooseOmniLightTexture(lumobj_t *lum, lightprojectparams_t const 
  */
 static int projectOmniLightToSurface(lumobj_t *lum, void *parameters)
 {
-    DENG_ASSERT(lum && parameters);
+    DENG_ASSERT(lum != 0 && parameters != 0);
 
     projectlighttosurfaceiteratorparams_t *p = (projectlighttosurfaceiteratorparams_t *)parameters;
     lightprojectparams_t *spParams = &p->spParams;
-    float luma, scale, color[3];
-    vec3d_t lumCenter, vToLum, point;
-    coord_t dist;
-    uint lumIdx;
-    DGLuint tex;
-    vec2f_t s, t;
 
     // Early test of the external blend factor for quick rejection.
     if(spParams->blendFactor < OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN) return false; // Continue iteration.
 
     // No lightmap texture?
-    tex = chooseOmniLightTexture(lum, spParams);
+    DGLuint tex = chooseOmniLightTexture(lum, spParams);
     if(!tex) return false; // Continue iteration.
 
     // Has this already been occluded?
-    lumIdx = LO_ToIndex(lum);
+    uint lumIdx = LO_ToIndex(lum);
     if(LO_IsHidden(lumIdx, viewPlayer - ddPlayers)) return false; // Continue iteration.
 
-    V3d_Set(lumCenter, lum->origin[VX], lum->origin[VY], lum->origin[VZ] + LUM_OMNI(lum)->zOff);
-    V3d_Subtract(vToLum, spParams->v1, lumCenter);
+    vec3d_t lumCenter; V3d_Set(lumCenter, lum->origin[VX], lum->origin[VY], lum->origin[VZ] + LUM_OMNI(lum)->zOff);
+    vec3d_t vToLum; V3d_Subtract(vToLum, spParams->v1, lumCenter);
 
     // On the right side?
     if(V3d_DotProductf(vToLum, spParams->normal) > 0.f) return false; // Continue iteration.
 
     // Calculate 3D distance between surface and lumobj.
-    V3d_ClosestPointOnPlanef(point, spParams->normal, spParams->v1, lumCenter);
-    dist = V3d_Distance(point, lumCenter);
+    vec3d_t point; V3d_ClosestPointOnPlanef(point, spParams->normal, spParams->v1, lumCenter);
+    coord_t dist = V3d_Distance(point, lumCenter);
     if(dist <= 0 || dist > LUM_OMNI(lum)->radius) return false; // Continue iteration.
 
     // Calculate the final surface light attribution factor.
-    luma = 1.5f - 1.5f * dist / LUM_OMNI(lum)->radius;
+    float luma = 1.5f - 1.5f * dist / LUM_OMNI(lum)->radius;
 
     // If distance limit is set this light will fade out.
     if(lum->maxDistance > 0)
@@ -516,12 +513,15 @@ static int projectOmniLightToSurface(lumobj_t *lum, void *parameters)
     if(luma * spParams->blendFactor < OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN) return false; // Continue iteration.
 
     // Project this light.
-    scale = 1.0f / ((2.f * LUM_OMNI(lum)->radius) - dist);
+    float scale = 1.0f / ((2.f * LUM_OMNI(lum)->radius) - dist);
+    vec2f_t s, t;
     if(!genTexCoords(s, t, point, scale, spParams->v1, spParams->v2,
-                     spParams->tangent, spParams->bitangent)) return false; // Continue iteration.
+                     spParams->tangent, spParams->bitangent))
+        return false; // Continue iteration.
+
+    float color[3]; calcLightColor(color, LUM_OMNI(lum)->color, luma);
 
     // Attach to the projection list.
-    calcLightColor(color, LUM_OMNI(lum)->color, luma);
     newLightProjection(&p->listIdx, ((spParams->flags & PLF_SORT_LUMINOSITY_DESC)? SPLF_SORT_LUMINOUS_DESC : 0),
                        tex, s, t, color, 1 * spParams->blendFactor);
 
@@ -744,17 +744,6 @@ static DGLuint prepareLightmap(de::Uri const *resourceUri)
  */
 static void addLuminous(mobj_t *mo)
 {
-    uint i;
-    float mul, center;
-    int radius;
-    float rgb[3], yOffset, size;
-    lumobj_t *l;
-    ded_light_t *def;
-    spritedef_t *sprDef;
-    spriteframe_t *sprFrame;
-    Material *mat;
-    pointlight_analysis_t const *pl;
-
     if(!mo->bspLeaf) return;
 
     if(!(((mo->state && (mo->state->flags & STF_FULLBRIGHT)) &&
@@ -773,27 +762,28 @@ static void addLuminous(mobj_t *mo)
     /// @todo Optimize: P_MobjLink() should do this and flag the mobj accordingly.
     if(!P_IsPointInBspLeaf(mo->origin, *mo->bspLeaf)) return;
 
-    def = (mo->state? stateLights[mo->state - states] : NULL);
+    ded_light_t *def = (mo->state? stateLights[mo->state - states] : NULL);
 
     // Determine the sprite frame lump of the source.
-    sprDef = &sprites[mo->sprite];
-    sprFrame = &sprDef->spriteFrames[mo->frame];
+    spritedef_t *sprDef = &sprites[mo->sprite];
+    spriteframe_t *sprFrame = &sprDef->spriteFrames[mo->frame];
     // Always use rotation zero.
-    mat = sprFrame->mats[0];
+    Material *mat = sprFrame->mats[0];
 
-#if _DEBUG
-    if(!mat) Con_Error("LO_AddLuminous: Sprite '%i' frame '%i' missing material.", (int) mo->sprite, mo->frame);
+#ifdef DENG_DEBUG
+    if(!mat) throw Error("LO_AddLuminous", QString("Sprite '%1' frame '%2' missing material.")
+                                               .arg((int) mo->sprite).arg(mo->frame));
 #endif
 
     // Ensure we have up-to-date information about the material.
     MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec());
     if(!ms.hasTexture(MTU_PRIMARY)) return; // An invalid sprite texture?
 
-    pl = reinterpret_cast<pointlight_analysis_t const *>(ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::BrightPointAnalysis));
+    pointlight_analysis_t const *pl = reinterpret_cast<pointlight_analysis_t const *>(ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::BrightPointAnalysis));
     if(!pl) throw Error("addLuminous", QString("Texture \"%1\" has no BrightPointAnalysis").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
 
-    size = pl->brightMul;
-    yOffset = ms.height() * pl->originY;
+    float size = pl->brightMul;
+    float yOffset = ms.height() * pl->originY;
     // Does the mobj have an active light definition?
     if(def)
     {
@@ -804,17 +794,17 @@ static void addLuminous(mobj_t *mo)
     }
 
     Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
-    center = -tex.origin().y - mo->floorClip - R_GetBobOffset(mo) - yOffset;
+    float center = -tex.origin().y - mo->floorClip - R_GetBobOffset(mo) - yOffset;
 
     // Will the sprite be allowed to go inside the floor?
-    mul = mo->origin[VZ] + -tex.origin().y - (float) ms.height() - mo->bspLeaf->sector().floor().height();
+    float mul = mo->origin[VZ] + -tex.origin().y - (float) ms.height() - mo->bspLeaf->sector().floor().height();
     if(!(mo->ddFlags & DDMF_NOFITBOTTOM) && mul < 0)
     {
         // Must adjust.
         center -= mul;
     }
 
-    radius = size * 40 * loRadiusFactor;
+    int radius = size * 40 * loRadiusFactor;
 
     // Don't make a too small light.
     if(radius < 32)
@@ -833,15 +823,16 @@ static void addLuminous(mobj_t *mo)
     }
 
     // If any of the color components are != 0, use the def's color.
+    float rgb[3];
     if(def && (def->color[0] || def->color[1] || def->color[2]))
     {
-        for(i = 0; i < 3; ++i)
+        for(uint i = 0; i < 3; ++i)
             rgb[i] = def->color[i];
     }
     else
     {
         // Use the auto-calculated color.
-        for(i = 0; i < 3; ++i)
+        for(uint i = 0; i < 3; ++i)
             rgb[i] = pl->color.rgb[i];
     }
 
@@ -849,7 +840,7 @@ static void addLuminous(mobj_t *mo)
     // view by world geometry, the light pointer will be set to NULL.
     mo->lumIdx = LO_NewLuminous(LT_OMNI, mo->bspLeaf);
 
-    l = LO_GetLuminous(mo->lumIdx);
+    lumobj_t *l = LO_GetLuminous(mo->lumIdx);
     l->maxDistance = 0;
     l->decorSource = NULL;
 
@@ -887,7 +878,7 @@ static void addLuminous(mobj_t *mo)
         radius = loMaxRadius;
 
     LUM_OMNI(l)->radius = radius;
-    for(i = 0; i < 3; ++i)
+    for(uint i = 0; i < 3; ++i)
         LUM_OMNI(l)->color[i] = rgb[i];
     LUM_OMNI(l)->zOff = center;
 
@@ -1073,25 +1064,25 @@ END_PROF( PROF_LUMOBJ_INIT_ADD );
 typedef struct lumobjiterparams_s {
     coord_t origin[2];
     coord_t radius;
-    void *paramaters;
-    int (*callback) (lumobj_t const *, coord_t distance, void *paramaters);
+    void *parameters;
+    int (*callback) (lumobj_t const *, coord_t distance, void *parameters);
 } lumobjiterparams_t;
 
-int LOIT_RadiusLumobjs(void *ptr, void *paramaters)
+int LOIT_RadiusLumobjs(void *ptr, void *parameters)
 {
     lumobj_t const *lum = (lumobj_t const *) ptr;
-    lumobjiterparams_t* p = (lumobjiterparams_t *)paramaters;
+    lumobjiterparams_t* p = (lumobjiterparams_t *)parameters;
     coord_t dist = M_ApproxDistance(lum->origin[VX] - p->origin[VX], lum->origin[VY] - p->origin[VY]);
     int result = false; // Continue iteration.
     if(dist <= p->radius)
     {
-        result = p->callback(lum, dist, p->paramaters);
+        result = p->callback(lum, dist, p->parameters);
     }
     return result;
 }
 
-int LO_LumobjsRadiusIterator2(BspLeaf *bspLeaf, coord_t x, coord_t y, coord_t radius,
-    int (*callback) (lumobj_t const *, coord_t distance, void *paramaters), void *paramaters)
+int LO_LumobjsRadiusIterator(BspLeaf *bspLeaf, coord_t x, coord_t y, coord_t radius,
+    int (*callback) (lumobj_t const *, coord_t distance, void *parameters), void *parameters)
 {
     if(!bspLeaf || !callback) return 0;
 
@@ -1100,15 +1091,9 @@ int LO_LumobjsRadiusIterator2(BspLeaf *bspLeaf, coord_t x, coord_t y, coord_t ra
     parm.origin[VY] = y;
     parm.radius     = radius;
     parm.callback   = callback;
-    parm.paramaters = paramaters;
+    parm.parameters = parameters;
 
     return R_IterateBspLeafContacts2(bspLeaf, OT_LUMOBJ, LOIT_RadiusLumobjs, (void *) &parm);
-}
-
-int LO_LumobjsRadiusIterator(BspLeaf *bspLeaf, coord_t x, coord_t y, coord_t radius,
-    int (*callback) (lumobj_t const *, coord_t distance, void *paramaters))
-{
-    return LO_LumobjsRadiusIterator2(bspLeaf, x, y, radius, callback, 0/* no parameters*/);
 }
 
 boolean LOIT_ClipLumObj(void *data, void * /*context*/)
@@ -1259,15 +1244,18 @@ int RIT_ProjectLightToSurfaceIterator(void *obj, void *paramaters)
 }
 
 uint LO_ProjectToSurface(int flags, BspLeaf *bspLeaf, float blendFactor,
-    pvec3d_t topLeft, pvec3d_t bottomRight,
+    Vector3d const &topLeft, Vector3d const &bottomRight,
     Vector3f const &tangent, Vector3f const &bitangent, Vector3f const &normal)
 {
     projectlighttosurfaceiteratorparams_t parm;
+
     parm.listIdx               = 0;
     parm.spParams.blendFactor  = blendFactor;
     parm.spParams.flags        = flags;
-    parm.spParams.v1           = topLeft;
-    parm.spParams.v2           = bottomRight;
+
+    V3d_Set(parm.spParams.v1,     topLeft.x,     topLeft.y,     topLeft.z);
+    V3d_Set(parm.spParams.v2, bottomRight.x, bottomRight.y, bottomRight.z);
+
     V3f_Set(parm.spParams.tangent,     tangent.x,   tangent.y,   tangent.z);
     V3f_Set(parm.spParams.bitangent, bitangent.x, bitangent.y, bitangent.z);
     V3f_Set(parm.spParams.normal,       normal.x,    normal.y,    normal.z);
@@ -1278,7 +1266,8 @@ uint LO_ProjectToSurface(int flags, BspLeaf *bspLeaf, float blendFactor,
     return parm.listIdx;
 }
 
-int LO_IterateProjections2(uint listIdx, int (*callback) (dynlight_t const *, void *), void *parameters)
+int LO_IterateProjections(uint listIdx, int (*callback) (dynlight_t const *, void *),
+                          void *parameters)
 {
     int result = 0; // Continue iteration.
     if(callback && listIdx != 0 && listIdx <= projectionListCount)
@@ -1287,18 +1276,13 @@ int LO_IterateProjections2(uint listIdx, int (*callback) (dynlight_t const *, vo
         while(node)
         {
             result = callback(&node->projection, parameters);
-            node = (!result? node->next : NULL /* Early out */);
+            node = (!result? node->next : 0 /* Early out */);
         }
     }
     return result;
 }
 
-int LO_IterateProjections(uint listIdx, int (*callback) (dynlight_t const *, void *))
-{
-    return LO_IterateProjections2(listIdx, callback, NULL);
-}
-
-void LO_DrawLumobjs(void)
+void LO_DrawLumobjs()
 {
     static float const black[4] = { 0, 0, 0, 0 };
     float color[4];

@@ -1,4 +1,4 @@
-/** @file r_shadow.h Map Object Shadows.
+/** @file render/r_shadow.h Map Object Shadows.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,12 +17,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_REFRESH_MOBJ_SHADOW_H
-#define LIBDENG_REFRESH_MOBJ_SHADOW_H
+#ifndef DENG_RENDER_SHADOW_H
+#define DENG_RENDER_SHADOW_H
 
-#include "dd_types.h"
 #include <de/Vector>
-#include <de/vector1.h>
 
 struct mobj_s;
 class BspLeaf;
@@ -31,21 +29,22 @@ class Plane;
 /**
  * ShadowProjection. Shadow Projection (POD) stores the results of projection.
  */
-typedef struct {
+struct shadowprojection_t
+{
     float s[2], t[2];
     float alpha;
-} shadowprojection_t;
+};
 
 /**
  * To be called after map load to initialize this module in preparation for
  * rendering view(s) of the game world.
  */
-void R_InitShadowProjectionListsForMap(void);
+void R_InitShadowProjectionListsForMap();
 
 /**
  * To be called when begining a new render frame to perform necessary initialization.
  */
-void R_InitShadowProjectionListsForNewFrame(void);
+void R_InitShadowProjectionListsForNewFrame();
 
 float R_ShadowAttenuationFactor(coord_t distance);
 
@@ -68,7 +67,7 @@ float R_ShadowAttenuationFactor(coord_t distance);
  * @return  Projection list identifier if surface is lit else @c 0.
  */
 uint R_ProjectShadowsToSurface(BspLeaf *bspLeaf, float blendFactor,
-    pvec3d_t topLeft, pvec3d_t bottomRight,
+    de::Vector3d const &topLeft, de::Vector3d const &bottomRight,
     de::Vector3f const &tangent, de::Vector3f const &bitangent, de::Vector3f const &normal);
 
 /**
@@ -82,8 +81,8 @@ uint R_ProjectShadowsToSurface(BspLeaf *bspLeaf, float blendFactor,
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int R_IterateShadowProjections2(uint listIdx, int (*callback) (shadowprojection_t const *, void *), void *parameters);
-int R_IterateShadowProjections(uint listIdx, int (*callback) (shadowprojection_t const *, void *)); /* parameters = NULL */
+int R_IterateShadowProjections(uint listIdx, int (*callback) (shadowprojection_t const *, void *),
+                               void *parameters = 0);
 
 /**
  * Find the highest plane beneath @a mobj onto which it's shadow should be cast.
@@ -93,4 +92,4 @@ int R_IterateShadowProjections(uint listIdx, int (*callback) (shadowprojection_t
  */
 Plane *R_FindShadowPlane(struct mobj_s *mobj);
 
-#endif /* LIBDENG_REFRESH_SHADOW_H */
+#endif // DENG_RENDER_SHADOW_H

@@ -451,7 +451,6 @@ void Rend_AddMaskedPoly(rvertex_t const *rvertices, ColorRawf const *rcolors,
     blendmode_t blendMode, uint lightListIdx, float glow)
 {
     vissprite_t *vis = R_NewVisSprite();
-    int i, c;
 
     vis->type = VSPR_MASKED_WALL;
     vis->origin[VX] = (rvertices[0].pos[VX] + rvertices[3].pos[VX]) / 2;
@@ -503,13 +502,13 @@ void Rend_AddMaskedPoly(rvertex_t const *rvertices, ColorRawf const *rcolors,
     VS_WALL(vis)->material = material;
     VS_WALL(vis)->blendMode = blendMode;
 
-    for(i = 0; i < 4; ++i)
+    for(int i = 0; i < 4; ++i)
     {
         VS_WALL(vis)->vertices[i].pos[VX] = rvertices[i].pos[VX];
         VS_WALL(vis)->vertices[i].pos[VY] = rvertices[i].pos[VY];
         VS_WALL(vis)->vertices[i].pos[VZ] = rvertices[i].pos[VZ];
 
-        for(c = 0; c < 4; ++c)
+        for(int c = 0; c < 4; ++c)
         {
             /// @todo Do not clamp here.
             VS_WALL(vis)->vertices[i].color[c] = MINMAX_OF(0, rcolors[i].rgba[c], 1);
@@ -520,20 +519,20 @@ void Rend_AddMaskedPoly(rvertex_t const *rvertices, ColorRawf const *rcolors,
     if(glow < 1 && lightListIdx && numTexUnits > 1 && envModAdd &&
        !(rcolors[0].rgba[CA] < 1))
     {
-        dynlight_t const *dyn = NULL;
+        dynlight_t const *dyn = 0;
 
         /**
          * The dynlights will have already been sorted so that the brightest
          * and largest of them is first in the list. So grab that one.
          */
-        LO_IterateProjections2(lightListIdx, RIT_FirstDynlightIterator, (void*)&dyn);
+        LO_IterateProjections(lightListIdx, RIT_FirstDynlightIterator, (void *)&dyn);
 
         VS_WALL(vis)->modTex = dyn->texture;
         VS_WALL(vis)->modTexCoord[0][0] = dyn->s[0];
         VS_WALL(vis)->modTexCoord[0][1] = dyn->s[1];
         VS_WALL(vis)->modTexCoord[1][0] = dyn->t[0];
         VS_WALL(vis)->modTexCoord[1][1] = dyn->t[1];
-        for(c = 0; c < 4; ++c)
+        for(int c = 0; c < 4; ++c)
         {
             VS_WALL(vis)->modColor[c] = dyn->color.rgba[c];
         }
@@ -547,10 +546,10 @@ void Rend_AddMaskedPoly(rvertex_t const *rvertices, ColorRawf const *rcolors,
 #endif // __CLIENT__
 
 static void quadTexCoords(rtexcoord_t *tc, rvertex_t const *rverts,
-    coord_t wallLength, coord_t const topLeft[3])
+    coord_t wallLength, Vector3d const &topLeft)
 {
-    tc[0].st[0] = tc[1].st[0] = rverts[0].pos[VX] - topLeft[VX];
-    tc[3].st[1] = tc[1].st[1] = rverts[0].pos[VY] - topLeft[VY];
+    tc[0].st[0] = tc[1].st[0] = rverts[0].pos[VX] - topLeft.x;
+    tc[3].st[1] = tc[1].st[1] = rverts[0].pos[VY] - topLeft.y;
     tc[3].st[0] = tc[2].st[0] = tc[0].st[0] + wallLength;
     tc[2].st[1] = tc[3].st[1] + (rverts[1].pos[VZ] - rverts[0].pos[VZ]);
     tc[0].st[1] = tc[3].st[1] + (rverts[3].pos[VZ] - rverts[2].pos[VZ]);
@@ -655,10 +654,11 @@ static void flatShinyTexCoords(rtexcoord_t *tc, float const xyz[3])
 
 struct rendworldpoly_params_t
 {
-    boolean         isWall;
+    bool            isWall;
     int             flags; /// @ref rendpolyFlags
     blendmode_t     blendMode;
-    pvec3d_t        texTL, texBR;
+    Vector3d const *texTL;
+    Vector3d const *texBR;
     Vector2f const *materialOrigin;
     Vector2f const *materialScale;
     Vector3f const *normal; // Surface normal.
@@ -670,10 +670,10 @@ struct rendworldpoly_params_t
     uint            lightListIdx; // List of lights that affect this poly.
     uint            shadowListIdx; // List of shadows that affect this poly.
     float           glowing;
-    boolean         forceOpaque;
+    bool            forceOpaque;
 
 // For bias:
-    de::MapElement *mapElement;
+    MapElement     *mapElement;
     int             elmIdx;
     biassurface_t  *bsuf;
 
@@ -695,14 +695,14 @@ struct rendworldpoly_params_t
 static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
     rendworldpoly_params_t const &p, MaterialSnapshot const &ms)
 {
-    DENG_ASSERT(rvertices);
+    DENG_ASSERT(rvertices != 0);
 
     uint const realNumVertices = ((p.isWall && (p.wall.left.divCount || p.wall.right.divCount))? 3 + p.wall.left.divCount + 3 + p.wall.right.divCount : numVertices);
 
     bool const skyMaskedMaterial = ((p.flags & RPF_SKYMASK) || (ms.material().isSkyMasked()));
     bool const drawAsVisSprite   = (!p.forceOpaque && !(p.flags & RPF_SKYMASK) && (!ms.isOpaque() || p.alpha < 1 || p.blendMode > 0));
 
-    boolean useLights = false, useShadows = false, hasDynlights = false;
+    bool useLights = false, useShadows = false, hasDynlights = false;
 
     // Map RTU configuration from prepared MaterialSnapshot(s).
     rtexmapunit_t const *primaryRTU       = (!(p.flags & RPF_SKYMASK))? &ms.unit(RTU_PRIMARY) : NULL;
@@ -749,7 +749,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
             if(useLights && RL_IsMTexLights())
             {
                 dynlight_t *dyn = 0;
-                LO_IterateProjections2(p.lightListIdx, RIT_FirstDynlightIterator, (void *)&dyn);
+                LO_IterateProjections(p.lightListIdx, RIT_FirstDynlightIterator, (void *)&dyn);
 
                 modCoords = R_AllocRendTexCoords(realNumVertices);
 
@@ -768,11 +768,11 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
     if(p.isWall)
     {
         // Primary texture coordinates.
-        quadTexCoords(primaryCoords, rvertices, p.wall.segLength, p.texTL);
+        quadTexCoords(primaryCoords, rvertices, p.wall.segLength, *p.texTL);
 
         // Blend texture coordinates.
         if(interRTU && !drawAsVisSprite)
-            quadTexCoords(interCoords, rvertices, p.wall.segLength, p.texTL);
+            quadTexCoords(interCoords, rvertices, p.wall.segLength, *p.texTL);
 
         // Shiny texture coordinates.
         if(shinyRTU && !drawAsVisSprite)
@@ -789,9 +789,9 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
             rvertex_t const &vtx = rvertices[i];
 
             float const xyz[3] = {
-                vtx.pos[VX] - float(p.texTL[VX]),
-                vtx.pos[VY] - float(p.texTL[VY]),
-                vtx.pos[VZ] - float(p.texTL[VZ])
+                vtx.pos[VX] - float(p.texTL->x),
+                vtx.pos[VY] - float(p.texTL->y),
+                vtx.pos[VZ] - float(p.texTL->z)
             };
 
             // Primary texture coordinates.
@@ -820,11 +820,11 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
             if(modTex && RL_IsMTexLights())
             {
                 rtexcoord_t &tc = modCoords[i];
-                float const width  = p.texBR[VX] - p.texTL[VX];
-                float const height = p.texBR[VY] - p.texTL[VY];
+                float const width  = p.texBR->x - p.texTL->x;
+                float const height = p.texBR->y - p.texTL->y;
 
-                tc.st[0] = ((p.texBR[VX] - vtx.pos[VX]) / width  * modTexSt[0][0]) + (xyz[VX] / width  * modTexSt[0][1]);
-                tc.st[1] = ((p.texBR[VY] - vtx.pos[VY]) / height * modTexSt[1][0]) + (xyz[VY] / height * modTexSt[1][1]);
+                tc.st[0] = ((p.texBR->x - vtx.pos[VX]) / width  * modTexSt[0][0]) + (xyz[VX] / width  * modTexSt[0][1]);
+                tc.st[1] = ((p.texBR->y - vtx.pos[VY]) / height * modTexSt[1][0]) + (xyz[VY] / height * modTexSt[1][1]);
             }
         }
     }
@@ -983,46 +983,46 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
     if(useLights)
     {
         // Render all lights projected onto this surface.
-        renderlightprojectionparams_t params;
+        renderlightprojectionparams_t parm;
 
-        params.rvertices = rvertices;
-        params.numVertices = numVertices;
-        params.realNumVertices = realNumVertices;
-        params.lastIdx = 0;
-        params.texTL = p.texTL;
-        params.texBR = p.texBR;
-        params.isWall = p.isWall;
+        parm.rvertices       = rvertices;
+        parm.numVertices     = numVertices;
+        parm.realNumVertices = realNumVertices;
+        parm.lastIdx         = 0;
+        parm.texTL           = p.texTL;
+        parm.texBR           = p.texBR;
+        parm.isWall          = p.isWall;
         if(p.isWall)
         {
-            params.wall.left.firstDiv = p.wall.left.firstDiv;
-            params.wall.left.divCount = p.wall.left.divCount;
-            params.wall.right.firstDiv = p.wall.right.firstDiv;
-            params.wall.right.divCount = p.wall.right.divCount;
+            parm.wall.left.firstDiv  = p.wall.left.firstDiv;
+            parm.wall.left.divCount  = p.wall.left.divCount;
+            parm.wall.right.firstDiv = p.wall.right.firstDiv;
+            parm.wall.right.divCount = p.wall.right.divCount;
         }
 
-        hasDynlights = (0 != Rend_RenderLightProjections(p.lightListIdx, &params));
+        hasDynlights = (0 != Rend_RenderLightProjections(p.lightListIdx, parm));
     }
 
     if(useShadows)
     {
         // Render all shadows projected onto this surface.
-        rendershadowprojectionparams_t params;
+        rendershadowprojectionparams_t parm;
 
-        params.rvertices = rvertices;
-        params.numVertices = numVertices;
-        params.realNumVertices = realNumVertices;
-        params.texTL = p.texTL;
-        params.texBR = p.texBR;
-        params.isWall = p.isWall;
+        parm.rvertices       = rvertices;
+        parm.numVertices     = numVertices;
+        parm.realNumVertices = realNumVertices;
+        parm.texTL           = p.texTL;
+        parm.texBR           = p.texBR;
+        parm.isWall          = p.isWall;
         if(p.isWall)
         {
-            params.wall.left.firstDiv = p.wall.left.firstDiv;
-            params.wall.left.divCount = p.wall.left.divCount;
-            params.wall.right.firstDiv = p.wall.right.firstDiv;
-            params.wall.right.divCount = p.wall.right.divCount;
+            parm.wall.left.firstDiv  = p.wall.left.firstDiv;
+            parm.wall.left.divCount  = p.wall.left.divCount;
+            parm.wall.right.firstDiv = p.wall.right.firstDiv;
+            parm.wall.right.divCount = p.wall.right.divCount;
         }
 
-        Rend_RenderShadowProjections(p.shadowListIdx, &params);
+        Rend_RenderShadowProjections(p.shadowListIdx, parm);
     }
 
     // Map RTU state from the prepared texture units in the MaterialSnapshot.
@@ -1161,7 +1161,7 @@ static bool writeWallSection2(HEdge &hedge, Vector3f const &normal,
     float alpha, float lightLevelDL, float lightLevelDR,
     uint lightListIdx, uint shadowListIdx,
     walldivs_t *leftWallDivs, walldivs_t *rightWallDivs,
-    bool skyMask, bool addFakeRadio, vec3d_t texTL, vec3d_t texBR,
+    bool skyMask, bool addFakeRadio, Vector3d const &texTL, Vector3d const &texBR,
     Vector2f const &materialOrigin, Vector2f const &materialScale,
     blendmode_t blendMode, Vector3f const &color, Vector3f const &color2,
     biassurface_t *bsuf, int elmIdx /*tmp*/,
@@ -1180,8 +1180,8 @@ static bool writeWallSection2(HEdge &hedge, Vector3f const &normal,
     parm.elmIdx = elmIdx;
     parm.bsuf = bsuf;
     parm.normal = &normal;
-    parm.texTL = texTL;
-    parm.texBR = texBR;
+    parm.texTL = &texTL;
+    parm.texBR = &texBR;
     parm.surfaceLightLevelDL = lightLevelDL;
     parm.surfaceLightLevelDR = lightLevelDR;
     parm.surfaceColor = &color;
@@ -1233,7 +1233,7 @@ static bool writeWallSection2(HEdge &hedge, Vector3f const &normal,
     bool opaque = renderWorldPoly(rvertices, 4, parm, ms);
     if(opaque)
     {
-        // Render Fakeradio polys for this hedge?
+        // Render FakeRadio for this section?
         if(!(parm.flags & RPF_SKYMASK) && addFakeRadio)
         {
             RendRadioWallSectionParms radioParms;
@@ -1313,7 +1313,7 @@ static bool writeWallSection2(HEdge &hedge, Vector3f const &normal,
 static void writePlane2(BspLeaf &bspLeaf, Plane::Type type, coord_t height,
     Vector3f const &tangent, Vector3f const &bitangent, Vector3f const &normal,
     Material *inMat, Vector3f const &sufColor, float sufAlpha, blendmode_t blendMode,
-    vec3d_t texTL, vec3d_t texBR,
+    Vector3d const &texTL, Vector3d const &texBR,
     Vector2f const &materialOrigin, Vector2f const &materialScale,
     bool skyMasked, bool addDLights, bool addMobjShadows,
     biassurface_t *bsuf, int elmIdx /*tmp*/)
@@ -1329,8 +1329,8 @@ static void writePlane2(BspLeaf &bspLeaf, Plane::Type type, coord_t height,
     parms.elmIdx = elmIdx;
     parms.bsuf = bsuf;
     parms.normal = &normal;
-    parms.texTL = texTL;
-    parms.texBR = texBR;
+    parms.texTL = &texTL;
+    parms.texBR = &texBR;
     parms.surfaceLightLevelDL = parms.surfaceLightLevelDR = 0;
     parms.surfaceColor = &sufColor;
     parms.materialOrigin = &materialOrigin;
@@ -1408,7 +1408,7 @@ static void writePlane2(BspLeaf &bspLeaf, Plane::Type type, coord_t height,
             int plFlags = (PLF_NO_PLANE | (type == Plane::Floor? PLF_TEX_FLOOR : PLF_TEX_CEILING));
 
             parms.lightListIdx =
-                LO_ProjectToSurface(plFlags, &bspLeaf, 1, parms.texTL, parms.texBR,
+                LO_ProjectToSurface(plFlags, &bspLeaf, 1, *parms.texTL, *parms.texBR,
                                     tangent, bitangent, normal);
         }
 
@@ -1419,7 +1419,7 @@ static void writePlane2(BspLeaf &bspLeaf, Plane::Type type, coord_t height,
             float blendFactor = 1 - parms.glowing;
 
             parms.shadowListIdx =
-                R_ProjectShadowsToSurface(&bspLeaf, blendFactor, parms.texTL, parms.texBR,
+                R_ProjectShadowsToSurface(&bspLeaf, blendFactor, *parms.texTL, *parms.texBR,
                                           tangent, bitangent, normal);
         }
     }
@@ -1448,13 +1448,13 @@ static void writePlane(Plane::Type type, coord_t height,
     // Don't bother with planes facing away from the camera.
     if(!(clipBackFacing && !(eyeToSurface.dot(normal) < 0)))
     {
-        coord_t texTL[3], texBR[3];
-
         // Set the texture origin, Y is flipped for the ceiling.
-        V3d_Set(texTL, bspLeaf->aaBox().minX,
-                       bspLeaf->aaBox().arvec2[type == Plane::Floor? 1 : 0][VY], height);
-        V3d_Set(texBR, bspLeaf->aaBox().maxX,
-                       bspLeaf->aaBox().arvec2[type == Plane::Floor? 0 : 1][VY], height);
+        Vector3d texTL(bspLeaf->aaBox().minX,
+                       bspLeaf->aaBox().arvec2[type == Plane::Floor? 1 : 0][VY],
+                       height);
+        Vector3d texBR(bspLeaf->aaBox().maxX,
+                       bspLeaf->aaBox().arvec2[type == Plane::Floor? 0 : 1][VY],
+                       height);
 
         writePlane2(*bspLeaf, type, height, tangent, bitangent, normal, material,
                     tintColor, opacity, blendMode, texTL, texBR, materialOrigin, materialScale,
@@ -1670,13 +1670,13 @@ static bool writeWallSection(HEdge &hedge, int section,
         Vector2f materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
                                (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
-        vec3d_t texTL; V3d_Set(texTL, hedge.fromOrigin().x,
-                                      hedge.fromOrigin().y,
-                                      WallDivNode_Height(WallDivs_Last(leftWallDivs)));
+        Vector3d texTL(hedge.fromOrigin().x,
+                       hedge.fromOrigin().y,
+                       WallDivNode_Height(WallDivs_Last(leftWallDivs)));
 
-        vec3d_t texBR; V3d_Set(texBR, hedge.toOrigin().x,
-                                      hedge.toOrigin().y,
-                                      WallDivNode_Height(WallDivs_First(rightWallDivs)));
+        Vector3d texBR(hedge.toOrigin().x,
+                       hedge.toOrigin().y,
+                       WallDivNode_Height(WallDivs_First(rightWallDivs)));
 
         // Determine which Material to use.
         Material *material = 0;

@@ -37,17 +37,17 @@ typedef struct {
 /// instantiation in drawShadowPrimitive()
 static shadowprim_t rshadow, *rs = &rshadow;
 
-boolean Rend_MobjShadowsEnabled(void)
+bool Rend_MobjShadowsEnabled()
 {
     return (useShadows && !levelFullBright);
 }
 
 static void drawShadowPrimitive(coord_t const pos[3], coord_t radius, float alpha)
 {
-    alpha = MINMAX_OF(0, alpha, 1);
+    alpha = de::clamp(0.f, alpha, 1.f);
     if(alpha <= 0) return;
 
-    radius = MIN_OF(radius, (coord_t) shadowMaxRadius);
+    radius = de::min(radius, (coord_t) shadowMaxRadius);
     if(radius <= 0) return;
 
     rs->vertices[0].pos[VX] = pos[VX] - radius;
@@ -74,35 +74,35 @@ static void drawShadowPrimitive(coord_t const pos[3], coord_t radius, float alph
         rs->vertices, rs->colors, rs->texCoords, NULL);
 }
 
-static void processMobjShadow(mobj_t* mo)
+static void processMobjShadow(mobj_t *mo)
 {
-    coord_t moz, moh, halfmoh, heightFromSurface, distanceFromViewer = 0;
-    coord_t mobjOrigin[3], shadowRadius;
-    float shadowStrength;
-    Plane* plane;
+    DENG_ASSERT(mo != 0);
 
+    coord_t mobjOrigin[3];
     Mobj_OriginSmoothed(mo, mobjOrigin);
 
     // Is this too far?
+    coord_t distanceFromViewer = 0;
     if(shadowMaxDistance > 0)
     {
         distanceFromViewer = Rend_PointDist2D(mobjOrigin);
         if(distanceFromViewer > shadowMaxDistance) return;
     }
 
-    shadowStrength = R_ShadowStrength(mo) * shadowFactor;
+    float shadowStrength = R_ShadowStrength(mo) * shadowFactor;
     if(usingFog) shadowStrength /= 2;
     if(shadowStrength <= 0) return;
 
-    shadowRadius = R_VisualRadius(mo);
+    coord_t shadowRadius = R_VisualRadius(mo);
     if(shadowRadius <= 0) return;
 
     // Check the height.
-    moz = mo->origin[VZ] - mo->floorClip;
+    coord_t moz = mo->origin[VZ] - mo->floorClip;
     if(mo->ddFlags & DDMF_BOB)
         moz -= R_GetBobOffset(mo);
-    heightFromSurface = moz - mo->floorZ;
-    moh = mo->height;
+
+    coord_t heightFromSurface = moz - mo->floorZ;
+    coord_t moh = mo->height;
     if(!moh) moh = 1;
 
     // Too far above or below the shadow plane?
@@ -110,7 +110,7 @@ static void processMobjShadow(mobj_t* mo)
     if(moz + mo->height < mo->floorZ) return;
 
     // Calculate the final strength of the shadow's attribution to the surface.
-    halfmoh = moh / 2;
+    coord_t halfmoh = moh / 2;
     if(heightFromSurface > halfmoh)
     {
         shadowStrength *= 1 - (heightFromSurface - halfmoh) / (moh - halfmoh);
@@ -120,7 +120,7 @@ static void processMobjShadow(mobj_t* mo)
     shadowStrength *= R_ShadowAttenuationFactor(distanceFromViewer);
 
     // Figure out the visible floor height...
-    plane = R_FindShadowPlane(mo);
+    Plane *plane = R_FindShadowPlane(mo);
     if(!plane) return;
 
     // Do not draw shadows above the shadow caster.
@@ -139,7 +139,7 @@ static void processMobjShadow(mobj_t* mo)
     drawShadowPrimitive(mobjOrigin, shadowRadius, shadowStrength);
 }
 
-static void initShadowPrimitive(void)
+static void initShadowPrimitive()
 {
 #define SETCOLOR_BLACK(c) ((c).rgba[CR] = (c).rgba[CG] = (c).rgba[CB] = 0)
 
@@ -192,111 +192,109 @@ void Rend_RenderMobjShadows()
     }
 }
 
-/// Generates a new primitive for each shadow projection.
-int RIT_RenderShadowProjectionIterator(shadowprojection_t const *sp, void *parameters)
+/**
+ * Generates a new primitive for the shadow projection.
+ */
+static void drawShadow(shadowprojection_t const &sp, rendershadowprojectionparams_t &parm)
 {
     static float const black[3] = { 0, 0, 0 };
-    rendershadowprojectionparams_t *p = (rendershadowprojectionparams_t *)parameters;
-    rvertex_t *rvertices;
-    rtexcoord_t *rtexcoords;
-    ColorRawf *rcolors;
-    uint i, c;
 
     // Allocate enough for the divisions too.
-    rvertices = R_AllocRendVertices(p->realNumVertices);
-    rtexcoords = R_AllocRendTexCoords(p->realNumVertices);
-    rcolors = R_AllocRendColors(p->realNumVertices);
+    rvertex_t *rvertices = R_AllocRendVertices(parm.realNumVertices);
+    rtexcoord_t *rtexcoords = R_AllocRendTexCoords(parm.realNumVertices);
+    ColorRawf *rcolors = R_AllocRendColors(parm.realNumVertices);
 
-    for(i = 0; i < p->numVertices; ++i)
+    for(uint i = 0; i < parm.numVertices; ++i)
     {
-        ColorRawf* col = &rcolors[i];
+        ColorRawf *col = &rcolors[i];
         // Shadows are black.
-        for(c = 0; c < 3; ++c) col->rgba[c] = black[c];
+        for(uint c = 0; c < 3; ++c)
+            col->rgba[c] = black[c];
+
         // Blend factor.
-        col->alpha = sp->alpha;
+        col->alpha = sp.alpha;
     }
 
-    if(p->isWall)
+    if(parm.isWall)
     {
-        rtexcoords[1].st[0] = rtexcoords[0].st[0] = sp->s[0];
-        rtexcoords[1].st[1] = rtexcoords[3].st[1] = sp->t[0];
-        rtexcoords[3].st[0] = rtexcoords[2].st[0] = sp->s[1];
-        rtexcoords[2].st[1] = rtexcoords[0].st[1] = sp->t[1];
+        rtexcoords[1].st[0] = rtexcoords[0].st[0] = sp.s[0];
+        rtexcoords[1].st[1] = rtexcoords[3].st[1] = sp.t[0];
+        rtexcoords[3].st[0] = rtexcoords[2].st[0] = sp.s[1];
+        rtexcoords[2].st[1] = rtexcoords[0].st[1] = sp.t[1];
 
-        if(p->wall.left.divCount || p->wall.right.divCount)
+        if(parm.wall.left.divCount || parm.wall.right.divCount)
         {
             // We need to subdivide the projection quad.
-            float bL, tL, bR, tR;
-            rvertex_t origVerts[4];
-            ColorRawf origColors[4];
-            rtexcoord_t origTexCoords[4];
 
-            /**
+            /*
              * Need to swap indices around into fans set the position
              * of the division vertices, interpolate texcoords and
              * color.
              */
 
-            memcpy(origVerts, p->rvertices, sizeof(rvertex_t) * 4);
-            memcpy(origTexCoords, rtexcoords, sizeof(rtexcoord_t) * 4);
-            memcpy(origColors, rcolors, sizeof(ColorRawf) * 4);
+            rvertex_t origVerts[4]; std::memcpy(origVerts, parm.rvertices, sizeof(rvertex_t) * 4);
+            rtexcoord_t origTexCoords[4]; std::memcpy(origTexCoords, rtexcoords, sizeof(rtexcoord_t) * 4);
+            ColorRawf origColors[4]; std::memcpy(origColors, rcolors, sizeof(ColorRawf) * 4);
 
-            bL = p->rvertices[0].pos[VZ];
-            tL = p->rvertices[1].pos[VZ];
-            bR = p->rvertices[2].pos[VZ];
-            tR = p->rvertices[3].pos[VZ];
+            float bL = parm.rvertices[0].pos[VZ];
+            float tL = parm.rvertices[1].pos[VZ];
+            float bR = parm.rvertices[2].pos[VZ];
+            float tR = parm.rvertices[3].pos[VZ];
 
-            R_DivVerts(rvertices, origVerts, p->wall.left.firstDiv, p->wall.left.divCount, p->wall.right.firstDiv, p->wall.right.divCount);
-            R_DivTexCoords(rtexcoords, origTexCoords, p->wall.left.firstDiv, p->wall.left.divCount, p->wall.right.firstDiv, p->wall.right.divCount, bL, tL, bR, tR);
-            R_DivVertColors(rcolors, origColors, p->wall.left.firstDiv, p->wall.left.divCount, p->wall.right.firstDiv, p->wall.right.divCount, bL, tL, bR, tR);
+            R_DivVerts(rvertices, origVerts, parm.wall.left.firstDiv, parm.wall.left.divCount, parm.wall.right.firstDiv, parm.wall.right.divCount);
+            R_DivTexCoords(rtexcoords, origTexCoords, parm.wall.left.firstDiv, parm.wall.left.divCount, parm.wall.right.firstDiv, parm.wall.right.divCount, bL, tL, bR, tR);
+            R_DivVertColors(rcolors, origColors, parm.wall.left.firstDiv, parm.wall.left.divCount, parm.wall.right.firstDiv, parm.wall.right.divCount, bL, tL, bR, tR);
         }
         else
         {
-            memcpy(rvertices, p->rvertices, sizeof(rvertex_t) * p->numVertices);
+            std::memcpy(rvertices, parm.rvertices, sizeof(rvertex_t) * parm.numVertices);
         }
     }
     else
     {
         // It's a flat.
-        float width, height;
+        float const width  = parm.texBR->x - parm.texTL->x;
+        float const height = parm.texBR->y - parm.texTL->y;
 
-        width  = p->texBR[VX] - p->texTL[VX];
-        height = p->texBR[VY] - p->texTL[VY];
-
-        for(i = 0; i < p->numVertices; ++i)
+        for(uint i = 0; i < parm.numVertices; ++i)
         {
-            rtexcoords[i].st[0] = ((p->texBR[VX] - p->rvertices[i].pos[VX]) / width * sp->s[0]) +
-                ((p->rvertices[i].pos[VX] - p->texTL[VX]) / width * sp->s[1]);
+            rtexcoords[i].st[0] = ((parm.texBR->x - parm.rvertices[i].pos[VX]) / width * sp.s[0]) +
+                ((parm.rvertices[i].pos[VX] - parm.texTL->x) / width * sp.s[1]);
 
-            rtexcoords[i].st[1] = ((p->texBR[VY] - p->rvertices[i].pos[VY]) / height * sp->t[0]) +
-                ((p->rvertices[i].pos[VY] - p->texTL[VY]) / height * sp->t[1]);
+            rtexcoords[i].st[1] = ((parm.texBR->y - parm.rvertices[i].pos[VY]) / height * sp.t[0]) +
+                ((parm.rvertices[i].pos[VY] - parm.texTL->y) / height * sp.t[1]);
         }
 
-        memcpy(rvertices, p->rvertices, sizeof(rvertex_t) * p->numVertices);
+        std::memcpy(rvertices, parm.rvertices, sizeof(rvertex_t) * parm.numVertices);
     }
 
-    if(p->isWall && (p->wall.left.divCount || p->wall.right.divCount))
+    if(parm.isWall && (parm.wall.left.divCount || parm.wall.right.divCount))
     {
         RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
-            3 + p->wall.right.divCount, rvertices + 3 + p->wall.left.divCount,
-            rcolors + 3 + p->wall.left.divCount, rtexcoords + 3 + p->wall.left.divCount, NULL);
+            3 + parm.wall.right.divCount, rvertices + 3 + parm.wall.left.divCount,
+            rcolors + 3 + parm.wall.left.divCount, rtexcoords + 3 + parm.wall.left.divCount, NULL);
         RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
-            3 + p->wall.left.divCount, rvertices, rcolors, rtexcoords, NULL);
+            3 + parm.wall.left.divCount, rvertices, rcolors, rtexcoords, NULL);
     }
     else
     {
-        RL_AddPolyWithCoords(p->isWall? PT_TRIANGLE_STRIP : PT_FAN, RPF_DEFAULT|RPF_SHADOW,
-            p->numVertices, rvertices, rcolors, rtexcoords, NULL);
+        RL_AddPolyWithCoords(parm.isWall? PT_TRIANGLE_STRIP : PT_FAN, RPF_DEFAULT|RPF_SHADOW,
+            parm.numVertices, rvertices, rcolors, rtexcoords, NULL);
     }
 
     R_FreeRendVertices(rvertices);
     R_FreeRendTexCoords(rtexcoords);
     R_FreeRendColors(rcolors);
+}
 
+static int drawShadowWorker(shadowprojection_t const *sp, void *parameters)
+{
+    rendershadowprojectionparams_t *p = (rendershadowprojectionparams_t *)parameters;
+    drawShadow(*sp, *p);
     return 0; // Continue iteration.
 }
 
-void Rend_RenderShadowProjections(uint listIdx, rendershadowprojectionparams_t *p)
+void Rend_RenderShadowProjections(uint listIdx, rendershadowprojectionparams_t &p)
 {
     // Configure the render list primitive writer's texture unit state now.
     RL_LoadDefaultRtus();
@@ -304,5 +302,5 @@ void Rend_RenderShadowProjections(uint listIdx, rendershadowprojectionparams_t *
                                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
     // Write shadows to the render lists.
-    R_IterateShadowProjections2(listIdx, RIT_RenderShadowProjectionIterator, (void *)p);
+    R_IterateShadowProjections(listIdx, drawShadowWorker, (void *)&p);
 }

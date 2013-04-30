@@ -17,16 +17,22 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_RENDER_DYNLIGHT_H
-#define LIBDENG_RENDER_DYNLIGHT_H
+#ifndef DENG_RENDER_DYNLIGHT_H
+#define DENG_RENDER_DYNLIGHT_H
+
+#include <de/Vector>
+
+#include "render/rendpoly.h"
+#include "render/walldiv.h"
 
 /// Paramaters for Rend_RenderLightProjections (POD).
 typedef struct {
     uint lastIdx;
     rvertex_t const *rvertices;
     uint numVertices, realNumVertices;
-    coord_t const *texTL, *texBR;
-    boolean isWall;
+    de::Vector3d const *texTL;
+    de::Vector3d const *texBR;
+    bool isWall;
     struct {
         struct {
             walldivnode_t *firstDiv;
@@ -39,10 +45,6 @@ typedef struct {
     } wall;
 } renderlightprojectionparams_t;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * Render all dynlights in projection list @a listIdx according to @a paramaters
  * writing them to the renderering lists for the current frame.
@@ -51,10 +53,6 @@ extern "C" {
  *
  * @return  Number of lights rendered.
  */
-uint Rend_RenderLightProjections(uint listIdx, renderlightprojectionparams_t *paramaters);
+uint Rend_RenderLightProjections(uint listIdx, renderlightprojectionparams_t &parameters);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif /* LIBDENG_RENDER_DYNLIGHT_H */
+#endif // DENG_RENDER_DYNLIGHT_H
