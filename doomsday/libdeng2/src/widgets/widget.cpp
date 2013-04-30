@@ -140,19 +140,12 @@ bool Widget::isHidden() const
 
 void Widget::show(bool doShow)
 {
-    setBehavior(Hidden, !doShow);
+    setBehavior(Hidden, doShow? UnsetFlags : SetFlags);
 }
 
-void Widget::setBehavior(Behaviors behavior, bool set)
+void Widget::setBehavior(Behaviors behavior, FlagOp operation)
 {
-    if(set)
-    {
-        d->behavior |= behavior;
-    }
-    else
-    {
-        d->behavior &= ~behavior;
-    }
+    applyFlagOperation(d->behavior, behavior, operation);
 }
 
 Widget::Behaviors Widget::behavior() const
