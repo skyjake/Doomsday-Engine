@@ -1489,6 +1489,8 @@ static Line::Side *findSideBlendNeighbor(Line::Side const &side, bool right, bin
 {
     LineOwner const *farVertOwner = side.line().vertexOwner(side.lineSideId() ^ (int)right);
 
+    if(diff) *diff = 0;
+
     Line *neighbor;
     if(R_SideBackClosed(side))
     {
@@ -1510,80 +1512,78 @@ static Line::Side *findSideBlendNeighbor(Line::Side const &side, bool right, bin
 }
 
 /**
+ * Determines whether light level delta smoothing should be performed for
+ * the given pair of map surfaces (which are assumed to share an edge).
+ *
+ * Yes if the angle between the two lines is less than 45 degrees.
+ * @todo Should be user customizable with a Material property. -ds
+ *
+ * @param sufA       The "left"  map surface which shares an edge with @a sufB.
+ * @param sufB       The "right" map surface which shares an edge with @a sufA.
+ * @param angleDiff  Angle difference (i.e., normal delta) between the two surfaces.
+ */
+static bool shouldSmoothLightLevels(Surface &sufA, Surface &sufB, binangle_t angleDiff)
+{
+    DENG_UNUSED(sufA);
+    DENG_UNUSED(sufB);
+    return INRANGE_OF(angleDiff, BANG_180, BANG_45);
+}
+
+/**
  * The DOOM lighting model applies a sector light level delta when drawing walls
  * based on their 2D world angle.
  *
  * @param side    Line side to calculate light level deltas for.
- * @param deltaL  Light delta for the left edge written here. Can be @c 0.
- * @param deltaR  Light delta for the right edge written here. Can be @c 0.
+ * @param deltaL  Light delta for the left edge written here.
+ * @param deltaR  Light delta for the right edge written here.
  *
  * @todo: Use the half-edge rings instead of LineOwners.
  */
-static void sideLightLevelDeltas(Line::Side const &side, float *deltaL, float *deltaR)
+static void sideLightLevelDeltas(Line::Side &side, float &deltaL, float &deltaR)
 {
-    // Disabled?
-    if(!(rendLightWallAngle > 0))
-    {
-        if(deltaL) *deltaL = 0;
-        if(deltaR) *deltaR = 0;
+    deltaL = 0;
+    deltaR = 0;
+
+    // Are light level deltas disabled?
+    if(rendLightWallAngle <= 0)
         return;
-    }
 
-    Vector3f sideNormal = side.middle().normal();
-    float delta = calcLightLevelDelta(sideNormal);
+    deltaL = deltaR = calcLightLevelDelta(side.middle().normal());
 
-    // If smoothing is disabled use this delta for left and right edges.
-    // Must forcibly disable smoothing for polyobj lines as they have
-    // no owner rings.
-    if(!rendLightWallAngleSmooth || side.line().isFromPolyobj())
+    // Is delta smoothing disabled?
+    if(!rendLightWallAngleSmooth) return;
+    // ...always for polyobj lines (no owner rings).
+    if(side.line().isFromPolyobj()) return;
+
+    /*
+     * Smoothing is enabled, so find the neighbor sides for each edge which
+     * we will use to calculate the averaged lightlevel delta for each.
+     */
+    binangle_t angleDiff;
+
+    if(Line::Side *otherSide = findSideBlendNeighbor(side, false /*left neighbor*/, &angleDiff))
     {
-        if(deltaL) *deltaL = delta;
-        if(deltaR) *deltaR = delta;
-        return;
-    }
+        Surface &sufA = side.middle();
+        Surface &sufB = otherSide->middle();
 
-    // Find the left neighbour line for which we will calculate the
-    // lightlevel delta and then blend with this to produce the value for
-    // the left edge. Blend iff the angle between the two lines is less
-    // than 45 degrees.
-    if(deltaL)
-    {
-        binangle_t diff = 0;
-        Line::Side *other = findSideBlendNeighbor(side, false /*left neighbor*/, &diff);
-        if(other && INRANGE_OF(diff, BANG_180, BANG_45))
+        if(shouldSmoothLightLevels(sufA, sufB, angleDiff))
         {
-            Vector3f otherNormal = other->middle().normal();
-
             // Average normals.
-            otherNormal += sideNormal;
-            otherNormal *= 1.f / 2;
-
-            *deltaL = calcLightLevelDelta(otherNormal);
-        }
-        else
-        {
-            *deltaL = delta;
+            Vector3f avgNormal = Vector3f(sufA.normal() + sufB.normal()) / 2;
+            deltaL = calcLightLevelDelta(avgNormal);
         }
     }
 
-    // Do the same for the right edge but with the right neighbor line.
-    if(deltaR)
+    // Do the same for the right edge but with the right neighbor side.
+    if(Line::Side *otherSide = findSideBlendNeighbor(side, true /*right neighbor*/, &angleDiff))
     {
-        binangle_t diff = 0;
-        Line::Side *other = findSideBlendNeighbor(side, true /*right neighbor*/, &diff);
-        if(other && INRANGE_OF(diff, BANG_180, BANG_45))
+        Surface &sufA = side.middle();
+        Surface &sufB = otherSide->middle();
+        if(shouldSmoothLightLevels(sufA, sufB, angleDiff))
         {
-            Vector3f otherNormal = other->middle().normal();
-
             // Average normals.
-            otherNormal += sideNormal;
-            otherNormal *= 1.f / 2;
-
-            *deltaR = calcLightLevelDelta(otherNormal);
-        }
-        else
-        {
-            *deltaR = delta;
+            Vector3f avgNormal = Vector3f(sufA.normal() + sufB.normal()) / 2;
+            deltaR = calcLightLevelDelta(avgNormal);
         }
     }
 }
@@ -1670,12 +1670,10 @@ static bool writeWallSection(HEdge &hedge, int section,
         Vector2f materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
                                (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
-        Vector3d texTL(hedge.fromOrigin().x,
-                       hedge.fromOrigin().y,
+        Vector3d texTL(hedge.fromOrigin(),
                        WallDivNode_Height(WallDivs_Last(leftWallDivs)));
 
-        Vector3d texBR(hedge.toOrigin().x,
-                       hedge.toOrigin().y,
+        Vector3d texBR(hedge.toOrigin(),
                        WallDivNode_Height(WallDivs_First(rightWallDivs)));
 
         // Determine which Material to use.
@@ -1790,7 +1788,7 @@ static bool writeWallSection(HEdge &hedge, int section,
         }
         else
         {
-            sideLightLevelDeltas(hedge.lineSide(), &deltaL, &deltaR);
+            sideLightLevelDeltas(hedge.lineSide(), deltaL, deltaR);
 
             // Linear interpolation of the line light deltas to the edges of the hedge.
             coord_t const &lineLength = hedge.line().length();
