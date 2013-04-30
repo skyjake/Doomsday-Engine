@@ -1589,6 +1589,70 @@ static void sideLightLevelDeltas(Line::Side &side, float &deltaL, float &deltaR)
 }
 
 /**
+ * Project lights for the given map @a surface.
+ *
+ * @pre currentBspLeaf is set to the BSP leaf which "contains" the surface.
+ *
+ * @param surface          Map surface to project lights onto.
+ * @param glowStrength     Surface glow strength (glow scale factor(s) are assumed to
+ *                         have already been applied).
+ * @param topLeft          Top left coordinates for the conceptual quad used for projection.
+ * @param bottomRight      Bottom right coordinates for the conceptual quad used for projection.
+ * @param sortProjections  @c true= instruct the projection algorithm to sort the resultant
+ *                         projections by descending luminosity. Default = @c false.
+ *
+ * @return  Identifier for the resultant light projection list; otherwise @c 0.
+ *
+ * @see LO_ProjectToSurface()
+ */
+static uint projectSurfaceLights(Surface &surface, float glowStrength,
+    Vector3d const &topLeft, Vector3d const &bottomRight, bool sortProjections = false)
+{
+    BspLeaf *leaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(leaf));
+
+    // Is light projection disabled?
+    if(glowStrength >= 1) return 0;
+    if(!useDynLights && !useWallGlow) return 0;
+
+    return LO_ProjectToSurface(0 | (sortProjections? PLF_SORT_LUMINOSITY_DESC : 0), leaf,
+                               1, topLeft, bottomRight,
+                               surface.tangent(), surface.bitangent(), surface.normal());
+}
+
+/**
+ * Project shadows for the given map @a surface.
+ *
+ * @pre currentBspLeaf is set to the BSP leaf which "contains" the surface.
+ *
+ * @param surface       Map surface to project shadows onto.
+ * @param glowStrength  Surface glow strength (glow scale factor(s) are assumed to
+ *                      have already been applied).
+ * @param topLeft       Top left coordinates for the conceptual quad used for projection.
+ * @param bottomRight   Bottom right coordinates for the conceptual quad used for projection.
+ *
+ * @return  Identifier for the resultant shadow projection list; otherwise @c 0.
+ *
+ * @see R_ProjectShadowsToSurface()
+ */
+static uint projectSurfaceShadows(Surface &surface, float glowStrength,
+    Vector3d const &topLeft, Vector3d const &bottomRight)
+{
+    BspLeaf *leaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(leaf));
+
+    // Is shadow projection disabled?
+    if(glowStrength >= 1) return 0;
+    if(!Rend_MobjShadowsEnabled()) return 0;
+
+    // Glow inversely diminishes shadow strength.
+    float const shadowStrength = 1 - glowStrength;
+
+    return R_ProjectShadowsToSurface(leaf, shadowStrength, topLeft, bottomRight,
+                                     surface.tangent(), surface.bitangent(), surface.normal());
+}
+
+/**
  * @defgroup writeWallSectionFlags Write Wall Section Flags
  * Flags for writeWallSection()
  * @ingroup flags
@@ -1743,31 +1807,16 @@ static bool writeWallSection(HEdge &hedge, int section,
                 glowStrength = ms.glowStrength() * glowFactor; // Global scale factor.
 
             // Dynamic Lights?
-            if((flags & WSF_ADD_DYNLIGHTS) &&
-               glowStrength < 1 && !(!useDynLights && !useWallGlow))
+            if(flags & WSF_ADD_DYNLIGHTS)
             {
-                Surface const &middleSurface = hedge.lineSide().middle();
-                int plFlags = ((section == Line::Side::Middle && isTwoSided)? PLF_SORT_LUMINOSITY_DESC : 0);
-
-                lightListIdx = LO_ProjectToSurface(plFlags, currentBspLeaf, 1, texTL, texBR,
-                                                   middleSurface.tangent(),
-                                                   middleSurface.bitangent(),
-                                                   middleSurface.normal());
+                lightListIdx = projectSurfaceLights(hedge.lineSide().middle(), glowStrength, texTL, texBR,
+                                                    (section == Line::Side::Middle && isTwoSided));
             }
 
             // Dynamic shadows?
-            if((flags & WSF_ADD_DYNSHADOWS) &&
-               glowStrength < 1 && Rend_MobjShadowsEnabled())
+            if(flags & WSF_ADD_DYNSHADOWS)
             {
-                Surface const &middleSurface = hedge.lineSide().middle();
-
-                // Glowing planes inversely diminish shadow strength.
-                float const shadowStrength = 1 - glowStrength;
-
-                shadowListIdx = R_ProjectShadowsToSurface(currentBspLeaf, shadowStrength, texTL, texBR,
-                                                          middleSurface.tangent(),
-                                                          middleSurface.bitangent(),
-                                                          middleSurface.normal());
+                shadowListIdx = projectSurfaceShadows(hedge.lineSide().middle(), glowStrength, texTL, texBR);
             }
 
             if(glowStrength > 0)
