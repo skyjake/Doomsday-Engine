@@ -67,7 +67,7 @@ void S_SectorSound(Sector* sec, int id)
     if(!sec) return;
 
     S_SectorStopSounds(sec);
-    S_StartSound(id, (mobj_t*) P_GetPtrp(sec, DMU_BASE));
+    S_StartSound(id, (mobj_t*) P_GetPtrp(sec, DMU_EMITTER));
 }
 
 void S_SectorStopSounds(Sector* sec)
@@ -76,7 +76,7 @@ void S_SectorStopSounds(Sector* sec)
 
     // Stop other sounds playing from origins in this sector.
     /// @todo Add a compatibility option allowing origins to work independently?
-    S_StopSound2(0, (mobj_t*) P_GetPtrp(sec, DMU_BASE), SSF_ALL_SECTOR);
+    S_StopSound2(0, (mobj_t*) P_GetPtrp(sec, DMU_EMITTER), SSF_ALL_SECTOR);
 }
 
 void S_PlaneSound(Plane* pln, int id)
@@ -84,7 +84,7 @@ void S_PlaneSound(Plane* pln, int id)
     if(!pln) return;
 
     S_SectorStopSounds((Sector*) P_GetPtrp(pln, DMU_SECTOR));
-    S_StartSound(id, (mobj_t*) P_GetPtrp(pln, DMU_BASE));
+    S_StartSound(id, (mobj_t*) P_GetPtrp(pln, DMU_EMITTER));
 }
 
 #ifdef __JHEXEN__

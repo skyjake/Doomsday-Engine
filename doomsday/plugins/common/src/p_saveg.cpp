@@ -4785,7 +4785,7 @@ static void readSoundSequences()
         mobj_t *sndMobj = 0;
         if(!polySnd)
         {
-            sndMobj = (mobj_t*)P_GetPtr(DMU_SECTOR, secNum, DMU_BASE);
+            sndMobj = (mobj_t*)P_GetPtr(DMU_SECTOR, secNum, DMU_EMITTER);
         }
         else
         {
