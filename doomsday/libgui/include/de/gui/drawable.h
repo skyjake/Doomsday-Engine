@@ -130,6 +130,17 @@ public:
     void addBuffer(Id id, GLBuffer *buffer);
 
     /**
+     * Adds a new buffer, reserving an unused identifier for it. The chosen
+     * identifier is larger than any of the buffer identifiers currently in
+     * use.
+     *
+     * @param buffer  GL buffer. Drawable gets ownership.
+     *
+     * @return  Identifier chosen for the buffer.
+     */
+    Id addBuffer(GLBuffer *buffer);
+
+    /**
      * Creates a program or replaces an existing one with a blank program.
      * @param id  Identifier of the program. Cannot be zero.
      * @return GL program.

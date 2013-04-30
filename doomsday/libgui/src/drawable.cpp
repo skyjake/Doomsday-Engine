@@ -65,6 +65,16 @@ DENG2_PIMPL(Drawable)
         configs.clear();
     }
 
+    Id nextBufferId() const
+    {
+        Id next = 1;
+        foreach(Id id, buffers.keys())
+        {
+            next = de::max(id + 1, next);
+        }
+        return next;
+    }
+
     void replaceProgram(GLProgram const *src, GLProgram const *dest)
     {
         DENG2_FOR_EACH(BufferConfigs, i, configs)
@@ -152,6 +162,13 @@ void Drawable::addBuffer(Id id, GLBuffer *buffer)
     d->buffers[id] = buffer;
     setProgram(id, d->defaultProgram);
     insert(*buffer, Required);
+}
+
+Drawable::Id Drawable::addBuffer(GLBuffer *buffer)
+{
+    Id id = d->nextBufferId();
+    addBuffer(id, buffer);
+    return id;
 }
 
 GLProgram &Drawable::addProgram(Id id)
