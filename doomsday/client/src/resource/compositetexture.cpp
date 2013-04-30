@@ -113,16 +113,9 @@ CompositeTexture::Flags CompositeTexture::flags() const
     return d->flags;
 }
 
-void CompositeTexture::setFlags(CompositeTexture::Flags flagsToChange, bool set)
+void CompositeTexture::setFlags(CompositeTexture::Flags flagsToChange, FlagOp operation)
 {
-    if(set)
-    {
-        d->flags |= flagsToChange;
-    }
-    else
-    {
-        d->flags &= ~flagsToChange;
-    }
+    applyFlagOperation(d->flags, flagsToChange, operation);
 }
 
 int CompositeTexture::origIndex() const

@@ -114,16 +114,9 @@ MaterialManifest::Flags MaterialManifest::flags() const
     return d->flags;
 }
 
-void MaterialManifest::setFlags(MaterialManifest::Flags flagsToChange, bool set)
+void MaterialManifest::setFlags(MaterialManifest::Flags flagsToChange, FlagOp operation)
 {
-    if(set)
-    {
-        d->flags |= flagsToChange;
-    }
-    else
-    {
-        d->flags &= ~flagsToChange;
-    }
+    applyFlagOperation(d->flags, flagsToChange, operation);
 }
 
 bool MaterialManifest::hasMaterial() const
