@@ -94,6 +94,20 @@ DENG2_PIMPL(Atlas)
         return float(changedPx) / float(totalPx);
     }
 
+    float usedPercentage() const
+    {
+        if(!allocator.get()) return 0;
+
+        duint totalPx = totalSize.x * totalSize.y;
+        duint usedPx = 0;
+
+        foreach(Rectanglei const &alloc, allocator->allocs().values())
+        {
+            usedPx += alloc.width() * alloc.height();
+        }
+        return float(usedPx) / float(totalPx);
+    }
+
     /**
      * Compose a new backing store with an optimal layout.
      */
@@ -219,6 +233,10 @@ Id Atlas::alloc(Image const &image)
         // After a successful alloc we can attempt to defragment
         // later.
         d->mayDefrag = true;
+    }
+    else
+    {
+        LOG_DEBUG("Atlas is full with %.1f%% usage") << d->usedPercentage()*100;
     }
     return id;
 }
