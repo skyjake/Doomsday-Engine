@@ -384,6 +384,15 @@ inline void zapPtr(Type *t) {
 namespace de {
 
 /**
+ * Operation performed on a flag set (e.g., QFlags).
+ */
+enum FlagOp {
+    UnsetFlags   = 0,   ///< Specified flags are unset, leaving others unmodified.
+    SetFlags     = 1,   ///< Specified flags are set, leaving others unmodified.
+    ReplaceFlags = 2    ///< Specified flags become the new set of flags, replacing all previous flags.
+};
+
+/**
  * All serialization in all contexts use a common protocol version number.
  * Whenever anything changes in serialization, the protocol version needs to be
  * incremented. Therefore, deserialization routines shouldn't check for
