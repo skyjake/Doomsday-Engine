@@ -50,7 +50,7 @@ public:
 public:
     System(Flags const &behavior = DefaultBehavior);
 
-    void setBehavior(Flags const &behavior);
+    void setBehavior(Flags const &behavior, FlagOp operation = SetFlags);
 
     Flags behavior() const;
 

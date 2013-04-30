@@ -115,7 +115,7 @@ MenuWidget::MenuWidget(Preset preset, String const &name)
     switch(preset)
     {
     case Popup:
-        setBehavior(HandleEventsOnlyWhenFocused, true);
+        setBehavior(HandleEventsOnlyWhenFocused);
         setClosable(true);
         d->cycleCursor = true;
         hide();

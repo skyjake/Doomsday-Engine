@@ -392,6 +392,15 @@ enum FlagOp {
     ReplaceFlags = 2    ///< Specified flags become the new set of flags, replacing all previous flags.
 };
 
+template <typename FlagsType>
+void applyFlagOperation(FlagsType &flags, FlagsType const &newFlags, FlagOp operation) {
+    switch(operation) {
+    case SetFlags:     flags |= newFlags;  break;
+    case UnsetFlags:   flags &= ~newFlags; break;
+    case ReplaceFlags: flags = newFlags;   break;
+    }
+}
+
 /**
  * All serialization in all contexts use a common protocol version number.
  * Whenever anything changes in serialization, the protocol version needs to be

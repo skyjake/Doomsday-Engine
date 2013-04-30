@@ -77,8 +77,8 @@ public:
 
     void show(bool doShow = true);
     inline void hide() { show(false); }
-    void enable(bool yes = true) { setBehavior(Disabled, !yes); }
-    void disable(bool yes = true) { setBehavior(Disabled, yes); }
+    void enable(bool yes = true) { setBehavior(Disabled, yes? UnsetFlags : SetFlags); }
+    void disable(bool yes = true) { setBehavior(Disabled, yes? SetFlags : UnsetFlags); }
 
     bool isHidden() const;
     inline bool isEnabled() const { return !behavior().testFlag(Disabled); }
@@ -90,7 +90,7 @@ public:
      * @param behavior  Flags.
      * @param set       @c true to set, @c false to clear.
      */
-    void setBehavior(Behaviors behavior, bool set = true);
+    void setBehavior(Behaviors behavior, FlagOp operation = SetFlags);
 
     Behaviors behavior() const;
 

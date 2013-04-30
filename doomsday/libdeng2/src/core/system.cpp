@@ -33,9 +33,9 @@ System::System(Flags const &behavior) : d(new Instance(this))
     d->behavior = behavior;
 }
 
-void System::setBehavior(Flags const &behavior)
+void System::setBehavior(Flags const &behavior, FlagOp operation)
 {
-    d->behavior = behavior;
+    applyFlagOperation(d->behavior, behavior, operation);
 }
 
 System::Flags System::behavior() const
