@@ -123,7 +123,7 @@ DENG2_OBSERVES(Clock, TimeChange)
 
         // 3D cube.
         VertexBuf *buf = new VertexBuf;
-        ob.addBuffer(1, buf);
+        ob.addBuffer(buf);
 
         VertexBuf::Type verts[8] = {
             { Vector3f(-1, -1, -1), Vector2f(0, 0), Vector4f(1, 1, 1, 1) },
@@ -146,37 +146,36 @@ DENG2_OBSERVES(Clock, TimeChange)
             << 7 << 4 << 6 << 5;
         buf->setIndices(gl::TriangleStrip, idx, gl::Static);
 
-        Block vertShader =
-                "uniform highp mat4 uMvpMatrix;\n"
-                "uniform highp vec4 uColor;\n"
-                "uniform highp float uTime;\n"
+        ob.program().build(
+                    ByteRefArray::fromCStr(
+                        "uniform highp mat4 uMvpMatrix;\n"
+                        "uniform highp vec4 uColor;\n"
+                        "uniform highp float uTime;\n"
 
-                "attribute highp vec4 aVertex;\n"
-                "attribute highp vec2 aUV;\n"
-                "attribute highp vec4 aColor;\n"
+                        "attribute highp vec4 aVertex;\n"
+                        "attribute highp vec2 aUV;\n"
+                        "attribute highp vec4 aColor;\n"
 
-                "varying highp vec2 vUV;\n"
-                "varying highp vec4 vColor;\n"
+                        "varying highp vec2 vUV;\n"
+                        "varying highp vec4 vColor;\n"
 
-                "void main(void) {\n"
-                "  gl_Position = uMvpMatrix * aVertex;\n"
-                "  vUV = aUV + vec2(uTime/10.0, 0.0);\n"
-                "  vColor = aColor + vec4(sin(uTime), cos(uTime), sin(uTime), cos(uTime)*0.5) * uColor;\n"
-                "}\n";
+                        "void main(void) {\n"
+                        "  gl_Position = uMvpMatrix * aVertex;\n"
+                        "  vUV = aUV + vec2(uTime/10.0, 0.0);\n"
+                        "  vColor = aColor + vec4(sin(uTime), cos(uTime), "
+                            "sin(uTime), cos(uTime)*0.5) * uColor;\n"
+                        "}\n"),
+                    ByteRefArray::fromCStr(
+                        "uniform sampler2D uTex;\n"
 
-        Block fragShader =
-                "uniform sampler2D uTex;\n"
+                        "varying highp vec2 vUV;\n"
+                        "varying highp vec4 vColor;\n"
 
-                "varying highp vec2 vUV;\n"
-                "varying highp vec4 vColor;\n"
-
-                "void main(void) {\n"
-                "  highp vec4 color = texture2D(uTex, vUV);\n"
-                "  if(color.a < 0.05) discard;\n"
-                "  gl_FragColor = color * vColor;\n"
-                "}";
-
-        ob.program().build(vertShader, fragShader)
+                        "void main(void) {\n"
+                        "  highp vec4 color = texture2D(uTex, vUV);\n"
+                        "  if(color.a < 0.05) discard;\n"
+                        "  gl_FragColor = color * vColor;\n"
+                        "}"))
                 << uMvpMatrix
                 << uColor << uTime
                 << uTex;
@@ -190,10 +189,10 @@ DENG2_OBSERVES(Clock, TimeChange)
             { Vector2f(0, 100),   Vector2f(0, 1) }
         };
         buf2->setVertices(gl::TriangleFan, verts2, 4, gl::Static);
-        atlasOb.addBuffer(1, buf2);
+        atlasOb.addBuffer(buf2);
 
         atlasOb.program().build(
-                    Block(
+                    ByteRefArray::fromCStr(
                         "uniform highp mat4 uMvpMatrix;\n"
                         "attribute highp vec4 aVertex;\n"
                         "attribute highp vec2 aUV;\n"
@@ -202,7 +201,7 @@ DENG2_OBSERVES(Clock, TimeChange)
                         "  gl_Position = uMvpMatrix * aVertex;\n"
                         "  vUV = aUV;\n"
                         "}\n"),
-                    Block(
+                    ByteRefArray::fromCStr(
                         "uniform sampler2D uTex;\n"
                         "varying highp vec2 vUV;\n"
                         "void main(void) {\n"
