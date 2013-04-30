@@ -99,8 +99,11 @@ public:
 
     /**
      * Sets the flags of the expression.
+     *
+     * @param f          Flags to set.
+     * @param operation  Operation to perform on the flags.
      */
-    void setFlags(Flags f);
+    void setFlags(Flags f, FlagOp operation = ReplaceFlags);
 
     /**
      * Subclasses must call this in their serialization method.
