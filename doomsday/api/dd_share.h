@@ -380,8 +380,6 @@ enum {
     DMU_VERTEX0,
     DMU_VERTEX1,
 
-    DMU_FRONT_SECTOR,
-    DMU_BACK_SECTOR,
     DMU_FRONT,
     DMU_BACK,
     DMU_FLAGS,
