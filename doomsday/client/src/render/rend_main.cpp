@@ -23,25 +23,30 @@
 #include <cstdlib>
 #include <cmath>
 
+#include <QtAlgorithms>
+
 #include "de_base.h"
 #include "de_console.h"
-#include "de_edit.h"
 #include "de_render.h"
-#include "de_play.h"
 #include "de_graphics.h"
-#include "de_misc.h"
 #include "de_ui.h"
-#include "de_system.h"
 
-#include "network/net_main.h"
+#include "edit_bias.h" /// @todo remove me
+#include "network/net_main.h" /// @todo remove me
+
 #ifdef __CLIENT__
 #  include "MaterialSnapshot"
 #  include "MaterialVariantSpec"
 #endif
 #include "Texture"
+
 #include "map/blockmapvisual.h"
 #include "map/gamemap.h"
 #include "map/lineowner.h"
+#include "map/p_objlink.h"
+#include "map/p_players.h"
+#include "map/r_world.h"
+
 #include "render/sprite.h"
 #include "gl/sys_opengl.h"
 
@@ -1368,11 +1373,15 @@ static Line::Side *findSideBlendNeighbor(Line::Side const &side, bool right, bin
     // No suitable line neighbor?
     if(!neighbor) return 0;
 
-    // Return the relative side of the neighbor.
+    // Choose the correct side of the neighbor (determined by which vertex is shared).
+    Line::Side *otherSide;
     if(&neighbor->vertex(right ^ 1) == &side.vertex(right))
-        return &neighbor->front();
+        otherSide = &neighbor->front();
+    else
+        otherSide = &neighbor->back();
 
-    return &neighbor->back();
+    // We can only blend neighbors with surface sections.
+    return otherSide->hasSections()? otherSide : 0;
 }
 
 /**
@@ -1888,6 +1897,213 @@ static bool writeWallSection(HEdge &hedge, int section,
     return opaque && !didNearBlend;
 }
 
+static walldivnode_t *findWallDivNodeByZOrigin(walldivs_t *wallDivs, coord_t height)
+{
+    DENG2_ASSERT(wallDivs != 0);
+    for(uint i = 0; i < wallDivs->num; ++i)
+    {
+        walldivnode_t *node = &wallDivs->nodes[i];
+        if(node->height == height)
+            return node;
+    }
+    return 0;
+}
+
+static void addWallDivNodesForPlaneIntercepts(HEdge const &hedge, walldivs_t *wallDivs,
+    int section, coord_t bottomZ, coord_t topZ, boolean doRight)
+{
+    bool const clockwise = !doRight;
+
+    // Polyobj edges are never split.
+    if(!hedge.hasLineSide() || hedge.line().isFromPolyobj()) return;
+
+    bool const isTwoSided = (hedge.line().hasFrontSections() && hedge.line().hasBackSections())? true:false;
+
+    // Check for neighborhood division?
+    if(section == Line::Side::Middle && isTwoSided) return;
+
+    // Only edges at line ends can/should be split.
+    if(!((&hedge == hedge.lineSide().leftHEdge()  && !doRight) ||
+         (&hedge == hedge.lineSide().rightHEdge() &&  doRight)))
+        return;
+
+    if(bottomZ >= topZ) return; // Obviously no division.
+
+    Sector const *frontSec = hedge.lineSide().sectorPtr();
+
+    // Retrieve the start owner node.
+    LineOwner *base = R_GetVtxLineOwner(&hedge.lineSide().vertex(doRight), &hedge.line());
+    LineOwner *own = base;
+    bool stopScan = false;
+    do
+    {
+        own = own->_link[clockwise];
+
+        if(own == base)
+        {
+            stopScan = true;
+        }
+        else
+        {
+            Line *iter = &own->line();
+
+            if(iter->isSelfReferencing())
+                continue;
+
+            uint i = 0;
+            do
+            {   // First front, then back.
+                Sector *scanSec = NULL;
+                if(!i && iter->hasFrontSections() && iter->frontSectorPtr() != frontSec)
+                    scanSec = iter->frontSectorPtr();
+                else if(i && iter->hasBackSections() && iter->backSectorPtr() != frontSec)
+                    scanSec = iter->backSectorPtr();
+
+                if(scanSec)
+                {
+                    if(scanSec->ceiling().visHeight() - scanSec->floor().visHeight() > 0)
+                    {
+                        for(int j = 0; j < scanSec->planeCount() && !stopScan; ++j)
+                        {
+                            Plane const &plane = scanSec->plane(j);
+
+                            if(plane.visHeight() > bottomZ && plane.visHeight() < topZ)
+                            {
+                                if(!findWallDivNodeByZOrigin(wallDivs, plane.visHeight()))
+                                {
+                                    WallDivs_Append(wallDivs, plane.visHeight());
+
+                                    // Have we reached the div limit?
+                                    if(wallDivs->num == WALLDIVS_MAX_NODES)
+                                        stopScan = true;
+                                }
+                            }
+
+                            if(!stopScan)
+                            {
+                                // Clip a range bound to this height?
+                                if(plane.type() == Plane::Floor && plane.visHeight() > bottomZ)
+                                    bottomZ = plane.visHeight();
+                                else if(plane.type() == Plane::Ceiling && plane.visHeight() < topZ)
+                                    topZ = plane.visHeight();
+
+                                // All clipped away?
+                                if(bottomZ >= topZ)
+                                    stopScan = true;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        /**
+                         * A zero height sector is a special case. In this
+                         * instance, the potential division is at the height
+                         * of the back ceiling. This is because elsewhere
+                         * we automatically fix the case of a floor above a
+                         * ceiling by lowering the floor.
+                         */
+                        coord_t z = scanSec->ceiling().visHeight();
+
+                        if(z > bottomZ && z < topZ)
+                        {
+                            if(!findWallDivNodeByZOrigin(wallDivs, z))
+                            {
+                                WallDivs_Append(wallDivs, z);
+
+                                // All clipped away.
+                                stopScan = true;
+                            }
+                        }
+                    }
+                }
+            } while(!stopScan && ++i < 2);
+
+            // Stop the scan when a single sided line is reached.
+            if(!iter->hasFrontSections() || !iter->hasBackSections())
+                stopScan = true;
+        }
+    } while(!stopScan);
+}
+
+static int sortWallDivNode(void const *e1, void const *e2)
+{
+    coord_t const h1 = ((walldivnode_t *)e1)->height;
+    coord_t const h2 = ((walldivnode_t *)e2)->height;
+    if(h1 > h2) return  1;
+    if(h2 > h1) return -1;
+    return 0;
+}
+
+static void buildWallDiv(walldivs_t *wallDivs, HEdge const &hedge,
+   int section, coord_t bottomZ, coord_t topZ, boolean doRight)
+{
+    DENG_ASSERT(wallDivs->num == 0);
+
+    // Nodes are arranged according to their Z axis height in ascending order.
+    // The first node is the bottom.
+    WallDivs_Append(wallDivs, bottomZ);
+
+    // Add nodes for intercepts.
+    addWallDivNodesForPlaneIntercepts(hedge, wallDivs, section, bottomZ, topZ, doRight);
+
+    // The last node is the top.
+    WallDivs_Append(wallDivs, topZ);
+
+    if(!(wallDivs->num > 2)) return;
+
+    // Sorting is required. This shouldn't take too long...
+    // There seldom are more than two or three nodes.
+    qsort(wallDivs->nodes, wallDivs->num, sizeof(*wallDivs->nodes), sortWallDivNode);
+
+    WallDivs_AssertSorted(wallDivs);
+    WallDivs_AssertInRange(wallDivs, bottomZ, topZ);
+}
+
+/**
+ * Prepare wall division data for a section of the HEdge.
+ *
+ * @param section        Line::Side section to prepare divisions for.
+ * @param leftWallDivs   Division data for the left edge is written here.
+ * @param rightWallDivs  Division data for the right edge is written here.
+ * @param materialOrigin Material origin offset data is written here. Can be @c 0.
+ *
+ * @return  @c true if divisions were prepared (the specified @a section has a
+ *          non-zero Z axis height).
+ */
+static bool prepareWallDivs(HEdge &hedge, int section, walldivs_t *leftWallDivs,
+    walldivs_t *rightWallDivs, Vector2f *materialOrigin)
+{
+    DENG_ASSERT(hedge.hasLineSide());
+
+    Sector const *frontSec, *backSec;
+
+    if(!hedge.line().isSelfReferencing())
+    {
+        frontSec = hedge.bspLeafSectorPtr();
+        backSec  = hedge.hasTwin()? hedge.twin().bspLeafSectorPtr() : 0;
+    }
+    else
+    {
+        frontSec = backSec = hedge.lineSide().sectorPtr();
+    }
+
+    coord_t bottom, top;
+    bool visible = R_SideSectionCoords(hedge.lineSide(), section, frontSec, backSec,
+                                       &bottom, &top, materialOrigin);
+
+    if(materialOrigin)
+    {
+        materialOrigin->x += float(hedge.lineOffset());
+    }
+
+    if(!visible) return false;
+
+    buildWallDiv(leftWallDivs,  hedge, section, bottom, top, false /* left-edge */);
+    buildWallDiv(rightWallDivs, hedge, section, bottom, top, true /* right-edge */);
+
+    return true;
+}
+
 /**
  * Prepare and write wall sections for a "one-sided" line to the render lists.
  *
@@ -1910,7 +2126,8 @@ static bool writeWallSections2(HEdge &hedge, int sections)
     Vector2f materialOrigin;
     bool opaque = false;
 
-    if(hedge.prepareWallDivs(Line::Side::Middle, &leftWallDivs, &rightWallDivs, &materialOrigin))
+    if(prepareWallDivs(hedge, Line::Side::Middle, &leftWallDivs, &rightWallDivs,
+                       &materialOrigin))
     {
         Rend_RadioUpdateForLineSide(hedge.lineSide());
 
@@ -2017,7 +2234,8 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
         walldivs_t leftWallDivs, rightWallDivs;
         Vector2f materialOrigin;
 
-        if(hedge.prepareWallDivs(Line::Side::Middle, &leftWallDivs, &rightWallDivs, &materialOrigin))
+        if(prepareWallDivs(hedge, Line::Side::Middle, &leftWallDivs, &rightWallDivs,
+                           &materialOrigin))
         {
             int rhFlags = WSF_ADD_DYNLIGHTS|WSF_ADD_DYNSHADOWS|WSF_ADD_RADIO;
 
@@ -2062,7 +2280,8 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
         walldivs_t leftWallDivs, rightWallDivs;
         Vector2f materialOrigin;
 
-        if(hedge.prepareWallDivs(Line::Side::Top, &leftWallDivs, &rightWallDivs, &materialOrigin))
+        if(prepareWallDivs(hedge, Line::Side::Top, &leftWallDivs, &rightWallDivs,
+                           &materialOrigin))
         {
             Rend_RadioUpdateForLineSide(hedge.lineSide());
 
@@ -2077,7 +2296,8 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
         walldivs_t leftWallDivs, rightWallDivs;
         Vector2f materialOrigin;
 
-        if(hedge.prepareWallDivs(Line::Side::Bottom, &leftWallDivs, &rightWallDivs, &materialOrigin))
+        if(prepareWallDivs(hedge, Line::Side::Bottom, &leftWallDivs, &rightWallDivs,
+                           &materialOrigin))
         {
             Rend_RadioUpdateForLineSide(hedge.lineSide());
 

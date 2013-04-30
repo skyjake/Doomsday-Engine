@@ -26,12 +26,11 @@
 #include "MapElement"
 #include "BspLeaf"
 #include "Line"
-#include "Sector"
 #include "Vertex"
 
-#include "resource/r_data.h"
-#include "render/walldiv.h"
 #include "render/rend_bias.h"
+
+class Sector;
 
 /**
  * @defgroup hedgeFrameFlags  Half-edge Frame Flags
@@ -335,20 +334,6 @@ public:
         coord_t point[2] = { x, y };
         return pointOnSide(point);
     }
-
-    /**
-     * Prepare wall division data for a section of the HEdge.
-     *
-     * @param section        Line::Side section to prepare divisions for.
-     * @param leftWallDivs   Division data for the left edge is written here.
-     * @param rightWallDivs  Division data for the right edge is written here.
-     * @param materialOrigin Material origin offset data is written here. Can be @c 0.
-     *
-     * @return  @c true if divisions were prepared (the specified @a section has a
-     *          non-zero Z axis height).
-     */
-    bool prepareWallDivs(int section, walldivs_t *leftWallDivs, walldivs_t *rightWallDivs,
-        de::Vector2f *materialOrigin) const;
 
     /**
      * Retrieve the bias surface for specified geometry @a groupId

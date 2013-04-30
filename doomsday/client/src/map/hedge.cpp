@@ -18,15 +18,9 @@
  * 02110-1301 USA</small>
  */
 
-#include <QtAlgorithms>
-
 #include <de/Log>
 
-#include "BspLeaf"
-#include "Line"
-#include "Vertex"
-#include "map/lineowner.h"
-#include "map/r_world.h" /// R_GetVtxLineOwner @todo remove me
+#include "Sector"
 
 #include "map/hedge.h"
 
@@ -180,202 +174,6 @@ coord_t HEdge::length() const
     return _length;
 }
 
-static walldivnode_t *findWallDivNodeByZOrigin(walldivs_t *wallDivs, coord_t height)
-{
-    DENG2_ASSERT(wallDivs != 0);
-    for(uint i = 0; i < wallDivs->num; ++i)
-    {
-        walldivnode_t *node = &wallDivs->nodes[i];
-        if(node->height == height)
-            return node;
-    }
-    return 0;
-}
-
-static void addWallDivNodesForPlaneIntercepts(HEdge const *hedge, walldivs_t *wallDivs,
-    int section, coord_t bottomZ, coord_t topZ, boolean doRight)
-{
-    bool const clockwise = !doRight;
-
-    // Polyobj edges are never split.
-    if(!hedge->hasLineSide() || hedge->line().isFromPolyobj()) return;
-
-    bool const isTwoSided = (hedge->line().hasFrontSections() && hedge->line().hasBackSections())? true:false;
-
-    // Check for neighborhood division?
-    if(section == Line::Side::Middle && isTwoSided) return;
-
-    // Only edges at line ends can/should be split.
-    if(!((hedge == hedge->lineSide().leftHEdge()  && !doRight) ||
-         (hedge == hedge->lineSide().rightHEdge() &&  doRight)))
-        return;
-
-    if(bottomZ >= topZ) return; // Obviously no division.
-
-    Sector const *frontSec = hedge->lineSide().sectorPtr();
-
-    // Retrieve the start owner node.
-    LineOwner *base = R_GetVtxLineOwner(&hedge->lineSide().vertex(doRight), &hedge->line());
-    LineOwner *own = base;
-    bool stopScan = false;
-    do
-    {
-        own = own->_link[clockwise];
-
-        if(own == base)
-        {
-            stopScan = true;
-        }
-        else
-        {
-            Line *iter = &own->line();
-
-            if(iter->isSelfReferencing())
-                continue;
-
-            uint i = 0;
-            do
-            {   // First front, then back.
-                Sector *scanSec = NULL;
-                if(!i && iter->hasFrontSections() && iter->frontSectorPtr() != frontSec)
-                    scanSec = iter->frontSectorPtr();
-                else if(i && iter->hasBackSections() && iter->backSectorPtr() != frontSec)
-                    scanSec = iter->backSectorPtr();
-
-                if(scanSec)
-                {
-                    if(scanSec->ceiling().visHeight() - scanSec->floor().visHeight() > 0)
-                    {
-                        for(int j = 0; j < scanSec->planeCount() && !stopScan; ++j)
-                        {
-                            Plane const &plane = scanSec->plane(j);
-
-                            if(plane.visHeight() > bottomZ && plane.visHeight() < topZ)
-                            {
-                                if(!findWallDivNodeByZOrigin(wallDivs, plane.visHeight()))
-                                {
-                                    WallDivs_Append(wallDivs, plane.visHeight());
-
-                                    // Have we reached the div limit?
-                                    if(wallDivs->num == WALLDIVS_MAX_NODES)
-                                        stopScan = true;
-                                }
-                            }
-
-                            if(!stopScan)
-                            {
-                                // Clip a range bound to this height?
-                                if(plane.type() == Plane::Floor && plane.visHeight() > bottomZ)
-                                    bottomZ = plane.visHeight();
-                                else if(plane.type() == Plane::Ceiling && plane.visHeight() < topZ)
-                                    topZ = plane.visHeight();
-
-                                // All clipped away?
-                                if(bottomZ >= topZ)
-                                    stopScan = true;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        /**
-                         * A zero height sector is a special case. In this
-                         * instance, the potential division is at the height
-                         * of the back ceiling. This is because elsewhere
-                         * we automatically fix the case of a floor above a
-                         * ceiling by lowering the floor.
-                         */
-                        coord_t z = scanSec->ceiling().visHeight();
-
-                        if(z > bottomZ && z < topZ)
-                        {
-                            if(!findWallDivNodeByZOrigin(wallDivs, z))
-                            {
-                                WallDivs_Append(wallDivs, z);
-
-                                // All clipped away.
-                                stopScan = true;
-                            }
-                        }
-                    }
-                }
-            } while(!stopScan && ++i < 2);
-
-            // Stop the scan when a single sided line is reached.
-            if(!iter->hasFrontSections() || !iter->hasBackSections())
-                stopScan = true;
-        }
-    } while(!stopScan);
-}
-
-static int sortWallDivNode(void const *e1, void const *e2)
-{
-    coord_t const h1 = ((walldivnode_t *)e1)->height;
-    coord_t const h2 = ((walldivnode_t *)e2)->height;
-    if(h1 > h2) return  1;
-    if(h2 > h1) return -1;
-    return 0;
-}
-
-static void buildWallDiv(walldivs_t *wallDivs, HEdge const *hedge,
-   int section, coord_t bottomZ, coord_t topZ, boolean doRight)
-{
-    DENG_ASSERT(wallDivs->num == 0);
-
-    // Nodes are arranged according to their Z axis height in ascending order.
-    // The first node is the bottom.
-    WallDivs_Append(wallDivs, bottomZ);
-
-    // Add nodes for intercepts.
-    addWallDivNodesForPlaneIntercepts(hedge, wallDivs, section, bottomZ, topZ, doRight);
-
-    // The last node is the top.
-    WallDivs_Append(wallDivs, topZ);
-
-    if(!(wallDivs->num > 2)) return;
-
-    // Sorting is required. This shouldn't take too long...
-    // There seldom are more than two or three nodes.
-    qsort(wallDivs->nodes, wallDivs->num, sizeof(*wallDivs->nodes), sortWallDivNode);
-
-    WallDivs_AssertSorted(wallDivs);
-    WallDivs_AssertInRange(wallDivs, bottomZ, topZ);
-}
-
-bool HEdge::prepareWallDivs(int section, walldivs_t *leftWallDivs,
-    walldivs_t *rightWallDivs, Vector2f *materialOrigin) const
-{
-    DENG_ASSERT(hasLineSide());
-
-    Sector const *frontSec, *backSec;
-
-    if(!line().isSelfReferencing())
-    {
-        frontSec = bspLeafSectorPtr();
-        backSec  = hasTwin()? twin().bspLeafSectorPtr() : 0;
-    }
-    else
-    {
-        frontSec = backSec = lineSide().sectorPtr();
-    }
-
-    coord_t bottom, top;
-    bool visible = R_SideSectionCoords(lineSide(), section, frontSec, backSec,
-                                       &bottom, &top, materialOrigin);
-
-    if(materialOrigin)
-    {
-        materialOrigin->x += float(_lineOffset);
-    }
-
-    if(!visible) return false;
-
-    buildWallDiv(leftWallDivs,  this, section, bottom, top, false/*is-left-edge*/);
-    buildWallDiv(rightWallDivs, this, section, bottom, top, true/*is-right-edge*/);
-
-    return true;
-}
-
 biassurface_t &HEdge::biasSurfaceForGeometryGroup(uint groupId)
 {
     if(groupId <= Line::Side::Top)
@@ -448,6 +246,8 @@ int HEdge::property(setargs_t &args) const
 
 // WallDivs ----------------------------------------------------------------
 /// @todo Move the following to another file
+
+#include "render/walldiv.h"
 
 coord_t WallDivNode_Height(walldivnode_t *node)
 {
