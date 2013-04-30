@@ -149,6 +149,8 @@ static uint buildLeafPlaneGeometry(BspLeaf const &leaf, bool antiClockwise,
 // Draw state:
 static Vector2d eyeOrigin; // Viewer origin.
 static BspLeaf *currentBspLeaf; // BSP leaf currently being drawn.
+static Vector3f currentSectorLightColor;
+static float currentSectorLightLevel;
 static bool firstBspLeaf; // No range checking for the first one.
 
 #endif // __CLIENT__
@@ -661,10 +663,8 @@ struct rendworldpoly_params_t
     Vector2f const *materialScale;
     Vector3f const *normal; // Surface normal.
     float           alpha;
-    float           sectorLightLevel;
     float           surfaceLightLevelDL;
     float           surfaceLightLevelDR;
-    Vector3f const *sectorLightColor;
     Vector3f const *surfaceColor;
 
     uint            lightListIdx; // List of lights that affect this poly.
@@ -835,7 +835,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
         if(levelFullBright || !(p.glowing < 1))
         {
             // Uniform color. Apply to all vertices.
-            float glowStrength = p.sectorLightLevel + (levelFullBright? 1 : p.glowing);
+            float glowStrength = currentSectorLightLevel + (levelFullBright? 1 : p.glowing);
             Rend_VertexColorsGlow(rcolors, numVertices, glowStrength);
         }
         else
@@ -845,7 +845,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
             {
                 // Do BIAS lighting for this poly.
                 SB_RendPoly(rcolors, p.bsuf, rvertices, numVertices, *p.normal,
-                            p.sectorLightLevel, p.mapElement, p.elmIdx);
+                            currentSectorLightLevel, p.mapElement, p.elmIdx);
 
                 if(p.glowing > 0)
                 {
@@ -859,17 +859,14 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
             }
             else
             {
-                float llL = de::clamp(0.f, p.sectorLightLevel + p.surfaceLightLevelDL + p.glowing, 1.f);
-                float llR = de::clamp(0.f, p.sectorLightLevel + p.surfaceLightLevelDR + p.glowing, 1.f);
+                float llL = de::clamp(0.f, currentSectorLightLevel + p.surfaceLightLevelDL + p.glowing, 1.f);
+                float llR = de::clamp(0.f, currentSectorLightLevel + p.surfaceLightLevelDR + p.glowing, 1.f);
 
                 // Calculate the color for each vertex, blended with plane color?
                 if(p.surfaceColor->x < 1 || p.surfaceColor->y < 1 || p.surfaceColor->z < 1)
                 {
                     // Blend sector light+color+surfacecolor
-                    Vector3f vColor;
-
-                    for(int c = 0; c < 3; ++c)
-                        vColor[c] = (*p.surfaceColor)[c] * (*p.sectorLightColor)[c];
+                    Vector3f vColor = (*p.surfaceColor) * currentSectorLightColor;
 
                     if(p.isWall && llL != llR)
                     {
@@ -888,14 +885,14 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
                     // Use sector light+color only.
                     if(p.isWall && llL != llR)
                     {
-                        lightVertex(rcolors[0], rvertices[0], llL, *p.sectorLightColor);
-                        lightVertex(rcolors[1], rvertices[1], llL, *p.sectorLightColor);
-                        lightVertex(rcolors[2], rvertices[2], llR, *p.sectorLightColor);
-                        lightVertex(rcolors[3], rvertices[3], llR, *p.sectorLightColor);
+                        lightVertex(rcolors[0], rvertices[0], llL, currentSectorLightColor);
+                        lightVertex(rcolors[1], rvertices[1], llL, currentSectorLightColor);
+                        lightVertex(rcolors[2], rvertices[2], llR, currentSectorLightColor);
+                        lightVertex(rcolors[3], rvertices[3], llR, currentSectorLightColor);
                     }
                     else
                     {
-                        lightVertices(numVertices, rcolors, rvertices, llL, *p.sectorLightColor);
+                        lightVertices(numVertices, rcolors, rvertices, llL, currentSectorLightColor);
                     }
                 }
 
@@ -903,10 +900,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
                 if(p.isWall && p.wall.surfaceColor2)
                 {
                     // Blend sector light+color+surfacecolor
-                    Vector3f vColor;
-
-                    for(int c = 0; c < 3; ++c)
-                        vColor[c] = (*p.wall.surfaceColor2)[c] * (*p.sectorLightColor)[c];
+                    Vector3f vColor = (*p.wall.surfaceColor2) * currentSectorLightColor;
 
                     lightVertex(rcolors[0], rvertices[0], llL, vColor);
                     lightVertex(rcolors[2], rvertices[2], llR, vColor);
@@ -927,9 +921,9 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
             for(uint i = 0; i < numVertices; ++i)
             {
                 ColorRawf &color = shinyColors[i];
-                color.rgba[CR] = MAX_OF(rcolors[i].rgba[CR], minColor.x);
-                color.rgba[CG] = MAX_OF(rcolors[i].rgba[CG], minColor.y);
-                color.rgba[CB] = MAX_OF(rcolors[i].rgba[CB], minColor.z);
+                color.rgba[CR] = de::max(rcolors[i].rgba[CR], minColor.x);
+                color.rgba[CG] = de::max(rcolors[i].rgba[CG], minColor.y);
+                color.rgba[CB] = de::max(rcolors[i].rgba[CB], minColor.z);
                 color.rgba[CA] = shinyRTU->opacity;
             }
         }
@@ -1164,8 +1158,8 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
 }
 
 static bool writeWallSection2(HEdge &hedge, Vector3f const &normal,
-    float alpha, float lightLevel, float lightLevelDL, float lightLevelDR,
-    Vector3f const *lightColor, uint lightListIdx, uint shadowListIdx,
+    float alpha, float lightLevelDL, float lightLevelDR,
+    uint lightListIdx, uint shadowListIdx,
     walldivs_t *leftWallDivs, walldivs_t *rightWallDivs,
     bool skyMask, bool addFakeRadio, vec3d_t texTL, vec3d_t texBR,
     Vector2f const &materialOrigin, Vector2f const &materialScale,
@@ -1188,10 +1182,8 @@ static bool writeWallSection2(HEdge &hedge, Vector3f const &normal,
     parm.normal = &normal;
     parm.texTL = texTL;
     parm.texBR = texBR;
-    parm.sectorLightLevel = lightLevel;
     parm.surfaceLightLevelDL = lightLevelDL;
     parm.surfaceLightLevelDR = lightLevelDR;
-    parm.sectorLightColor = lightColor;
     parm.surfaceColor = &color;
     parm.wall.surfaceColor2 = &color2;
     if(glowFactor > .0001f)
@@ -1238,9 +1230,9 @@ static bool writeWallSection2(HEdge &hedge, Vector3f const &normal,
                               WallDivNode_Height(WallDivs_Last(rightWallDivs)));
 
     // Draw this section.
-    if(renderWorldPoly(rvertices, 4, parm, ms))
+    bool opaque = renderWorldPoly(rvertices, 4, parm, ms);
+    if(opaque)
     {
-        // Drawn poly was opaque.
         // Render Fakeradio polys for this hedge?
         if(!(parm.flags & RPF_SKYMASK) && addFakeRadio)
         {
@@ -1292,7 +1284,7 @@ static bool writeWallSection2(HEdge &hedge, Vector3f const &normal,
 
             // kludge end.
 
-            float ll = lightLevel;
+            float ll = currentSectorLightLevel;
             Rend_ApplyLightAdaptation(&ll);
             if(ll > 0)
             {
@@ -1312,14 +1304,10 @@ static bool writeWallSection2(HEdge &hedge, Vector3f const &normal,
                 }
             }
         }
-
-        R_FreeRendVertices(rvertices);
-        return true; // Clip with this.
     }
 
     R_FreeRendVertices(rvertices);
-
-    return false; // Do not clip with this.
+    return opaque; // Clip with this if opaque.
 }
 
 static void writePlane2(BspLeaf &bspLeaf, Plane::Type type, coord_t height,
@@ -1343,8 +1331,6 @@ static void writePlane2(BspLeaf &bspLeaf, Plane::Type type, coord_t height,
     parms.normal = &normal;
     parms.texTL = texTL;
     parms.texBR = texBR;
-    parms.sectorLightLevel = sec->lightLevel();
-    parms.sectorLightColor = &R_GetSectorLightColor(*sec);
     parms.surfaceLightLevelDL = parms.surfaceLightLevelDR = 0;
     parms.surfaceColor = &sufColor;
     parms.materialOrigin = &materialOrigin;
@@ -1619,8 +1605,7 @@ static void sideLightLevelDeltas(Line::Side const &side, float *deltaL, float *d
  * @param flags  @ref writeWallSectionFlags
  */
 static bool writeWallSection(HEdge &hedge, int section,
-    int flags, float lightLevel, Vector3f const &lightColor,
-    walldivs_t *leftWallDivs, walldivs_t *rightWallDivs,
+    int flags, walldivs_t *leftWallDivs, walldivs_t *rightWallDivs,
     Vector2f const &materialOrigin)
 {
     Surface &surface = hedge.lineSide().surface(section);
@@ -1814,9 +1799,16 @@ static bool writeWallSection(HEdge &hedge, int section,
             deltaL += (hedge.lineOffset() / lineLength) * diff;
         }
 
+        if(section == Line::Side::Middle && isTwoSided)
+        {
+            // Temporarily modify the draw state.
+            currentSectorLightColor = R_GetSectorLightColor(hedge.lineSide().sector());
+            currentSectorLightLevel = hedge.lineSide().sector().lightLevel();
+        }
+
         opaque = writeWallSection2(hedge,
                                    surface.normal(), ((flags & WSF_FORCE_OPAQUE)? -1 : opacity),
-                                   lightLevel, deltaL, deltaR, &lightColor,
+                                   deltaL, deltaR,
                                    lightListIdx, shadowListIdx,
                                    leftWallDivs, rightWallDivs,
                                    (rpFlags & RPF_SKYMASK) != 0, (flags & WSF_ADD_RADIO) != 0,
@@ -1825,6 +1817,13 @@ static bool writeWallSection(HEdge &hedge, int section,
                                    &hedge.biasSurfaceForGeometryGroup(section), section,
                                    ms,
                                    (section == Line::Side::Middle && isTwoSided));
+
+        if(section == Line::Side::Middle && isTwoSided)
+        {
+            // Undo temporary draw state changes.
+            currentSectorLightColor = R_GetSectorLightColor(currentBspLeaf->sector());
+            currentSectorLightLevel = currentBspLeaf->sector().lightLevel();
+        }
     }
 
     return opaque;
@@ -1876,7 +1875,6 @@ static bool writeWallSections2(HEdge &hedge, int sections)
         int wsFlags = WSF_ADD_DYNLIGHTS|WSF_ADD_DYNSHADOWS|WSF_ADD_RADIO;
 
         opaque = writeWallSection(hedge, Line::Side::Middle, wsFlags,
-                                  leaf->sector().lightLevel(), R_GetSectorLightColor(leaf->sector()),
                                   &leftWallDivs, &rightWallDivs, materialOrigin);
     }
 
@@ -1929,7 +1927,6 @@ static bool writeWallSections2Polyobj(HEdge &hedge, int sections)
         int wsFlags = WSF_ADD_DYNLIGHTS|WSF_ADD_DYNSHADOWS|WSF_ADD_RADIO;
 
         opaque = writeWallSection(hedge, Line::Side::Middle, wsFlags,
-                                  leaf->sector().lightLevel(), R_GetSectorLightColor(leaf->sector()),
                                   &leftWallDivs, &rightWallDivs, materialOrigin);
     }
 
@@ -1989,7 +1986,6 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
             Rend_RadioUpdateForLineSide(hedge.lineSide());
 
             opaque = writeWallSection(hedge, Line::Side::Middle, rhFlags,
-                                      front.sector().lightLevel(), R_GetSectorLightColor(front.sector()),
                                       &leftWallDivs, &rightWallDivs, materialOrigin);
             if(opaque)
             {
@@ -2029,7 +2025,6 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
             Rend_RadioUpdateForLineSide(hedge.lineSide());
 
             writeWallSection(hedge, Line::Side::Top, WSF_ADD_DYNLIGHTS|WSF_ADD_DYNSHADOWS|WSF_ADD_RADIO,
-                             front.sector().lightLevel(), R_GetSectorLightColor(front.sector()),
                              &leftWallDivs, &rightWallDivs, materialOrigin);
         }
     }
@@ -2045,7 +2040,6 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
             Rend_RadioUpdateForLineSide(hedge.lineSide());
 
             writeWallSection(hedge, Line::Side::Bottom, WSF_ADD_DYNLIGHTS|WSF_ADD_DYNSHADOWS|WSF_ADD_RADIO,
-                             front.sector().lightLevel(), R_GetSectorLightColor(front.sector()),
                              &leftWallDivs, &rightWallDivs, materialOrigin);
         }
     }
@@ -2091,9 +2085,12 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
     return opaque;
 }
 
-static void markHEdgesFacingFront(BspLeaf *leaf)
+static void markFrontFacingHEdges()
 {
-    if(HEdge *base = leaf->firstHEdge())
+    BspLeaf *bspLeaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(bspLeaf));
+
+    if(HEdge *base = bspLeaf->firstHEdge())
     {
         HEdge *hedge = base;
         do
@@ -2110,7 +2107,7 @@ static void markHEdgesFacingFront(BspLeaf *leaf)
         } while((hedge = &hedge->next()) != base);
     }
 
-    if(Polyobj *po = leaf->firstPolyobj())
+    if(Polyobj *po = bspLeaf->firstPolyobj())
     {
         foreach(Line *line, po->lines())
         {
@@ -2813,7 +2810,7 @@ static void drawCurrentBspLeaf()
     // Mark the sector visible for this frame.
     bspLeaf->sector()._frameFlags |= SIF_VISIBLE;
 
-    markHEdgesFacingFront(bspLeaf);
+    markFrontFacingHEdges();
     R_InitForBspLeaf(bspLeaf);
     Rend_RadioBspLeafEdges(*bspLeaf);
 
@@ -2847,6 +2844,27 @@ static void drawCurrentBspLeaf()
     writeLeafWallSections();
     writeLeafPolyobjs();
     writeLeafPlanes();
+}
+
+/**
+ * Change the current BspLeaf (updating any relevant draw state properties
+ * accordingly).
+ *
+ * @param bspLeaf  The new BSP leaf to make current. Cannot be @c 0.
+ */
+static void makeCurrent(BspLeaf *bspLeaf)
+{
+    DENG_ASSERT(bspLeaf != 0);
+    bool sectorChanged = (!currentBspLeaf || currentBspLeaf->sectorPtr() != bspLeaf->sectorPtr());
+
+    currentBspLeaf = bspLeaf;
+
+    // Update draw state.
+    if(sectorChanged)
+    {
+        currentSectorLightColor = R_GetSectorLightColor(bspLeaf->sector());
+        currentSectorLightLevel = bspLeaf->sector().lightLevel();
+    }
 }
 
 static void traverseBspAndDrawLeafs(MapElement *bspElement)
@@ -2887,7 +2905,7 @@ static void traverseBspAndDrawLeafs(MapElement *bspElement)
         return;
 
     // This is now the current leaf.
-    currentBspLeaf = bspLeaf;
+    makeCurrent(bspLeaf);
 
     drawCurrentBspLeaf();
 
