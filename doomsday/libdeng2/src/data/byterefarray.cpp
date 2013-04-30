@@ -37,6 +37,11 @@ ByteRefArray::ByteRefArray(void const *base, Size size)
       _size(size)
 {}
 
+ByteRefArray ByteRefArray::fromCStr(char const *nullTerminatedCStr)
+{
+    return ByteRefArray(nullTerminatedCStr, std::strlen(nullTerminatedCStr));
+}
+
 void *ByteRefArray::base()
 {
     return _writeBase;

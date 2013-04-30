@@ -58,6 +58,14 @@ public:
     ByteRefArray(void const *base, Size size);
 
     /**
+     * Constructs a non-modifiable byte reference array from a null terminated C
+     * string.
+     *
+     * @param nullTerminatedCStr  Pointer to the start of the string.
+     */
+    static ByteRefArray fromCStr(char const *nullTerminatedCStr);
+
+    /**
      * Returns a pointer to the start of the array.
      */
     void *base();
@@ -95,6 +103,6 @@ private:
     Size _size;
 };
 
-}
+} // namespace de
 
 #endif // LIBDENG2_BYTEREFARRAY_H
