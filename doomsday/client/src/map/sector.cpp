@@ -469,7 +469,7 @@ int Sector::property(setargs_t &args) const
         break;
     case DMU_EMITTER: {
         ddmobj_base_t const *soundEmitterAdr = &d->soundEmitter;
-        DMU_GetValue(DMT_SECTOR_BASE, &soundEmitterAdr, &args, 0);
+        DMU_GetValue(DMT_SECTOR_EMITTER, &soundEmitterAdr, &args, 0);
         break; }
     case DMT_MOBJS:
         DMU_GetValue(DMT_SECTOR_MOBJLIST, &_mobjList, &args, 0);
