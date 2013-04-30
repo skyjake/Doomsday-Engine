@@ -425,18 +425,37 @@ int Line::Side::property(setargs_t &args) const
 
 int Line::Side::setProperty(setargs_t const &args)
 {
+    /**
+     * @todo fixme: Changing the sector references via the DMU API has been
+     * disabled. In order to effect such changes at run time we need to separate
+     * the two different purposes of sector referencing at this level.
+     *
+     * A) The playsim uses this for stuff like line specials, to determine
+     * which map elements are involved when building stairs or opening doors.
+     *
+     * B) The engine uses this for geometry construction and more.
+     *
+     * At best this will result in strange glitches but more than likely a
+     * fatal error (or worse) would happen should anyone try to use this...
+     */
+
     switch(args.prop)
     {
+    /*case DMU_SECTOR: {
+        Sector *newSector = sectorPtr();
+        DMU_SetValue(DMT_LINESIDE_SECTOR, &d->sector, &args, 0);
+        break; } */
+
+    /*case DMU_LINE: { // Never changeable - throw exception?
+        Line *line = &_line;
+        DMU_SetValue(DMT_LINESIDE_LINE, &line, &args, 0);
+        break; }*/
+
     case DMU_FLAGS: {
         int newFlags = d->flags;
         DMU_SetValue(DMT_LINESIDE_FLAGS, &newFlags, &args, 0);
         setFlags(newFlags);
         break; }
-
-    /*case DMU_LINE: {
-        Line *line = &_line;
-        DMU_SetValue(DMT_LINESIDE_LINE, &line, &args, 0);
-        break; }*/
 
     default:
         return MapElement::setProperty(args);
@@ -698,14 +717,6 @@ int Line::property(setargs_t &args) const
     case DMU_SLOPETYPE:
         DMU_GetValue(DMT_LINE_SLOPETYPE, &d->slopeType, &args, 0);
         break;
-    case DMU_FRONT_SECTOR: {
-        Sector const *frontSector = frontSectorPtr();
-        DMU_GetValue(DMT_LINE_SECTOR, &frontSector, &args, 0);
-        break; }
-    case DMU_BACK_SECTOR: {
-        Sector const *backSector = backSectorPtr();
-        DMU_GetValue(DMT_LINE_SECTOR, &backSector, &args, 0);
-        break; }
     case DMU_FLAGS:
         DMU_GetValue(DMT_LINE_FLAGS, &d->flags, &args, 0);
         break;
@@ -745,26 +756,16 @@ int Line::property(setargs_t &args) const
 
 int Line::setProperty(setargs_t const &args)
 {
-    /// @todo fixme: Changing the sector and/or side references via the DMU
-    /// API should be disabled - it has no concept of what is actually needed
-    /// to effect such changes at run time.
-    ///
-    /// At best this will result in strange glitches but more than likely a
-    /// fatal error (or worse) would happen should anyone try to use this...
+    /**
+     * @todo fixme: Changing the side references via the DMU API has been
+     * disabled. At best this will result in strange glitches but more than
+     * likely a fatal error (or worse) would happen should anyone try to use
+     * this...
+     */
 
     switch(args.prop)
     {
-    /*case DMU_FRONT_SECTOR: {
-        Sector *newFrontSector = frontSectorPtr();
-        DMU_SetValue(DMT_LINE_SECTOR, &newFrontSector, &args, 0);
-        d->front._sector = newFrontSector;
-        break; }
-    case DMU_BACK_SECTOR: {
-        Sector *newBackSector = backSectorPtr();
-        DMU_SetValue(DMT_LINE_SECTOR, &newBackSector, &args, 0);
-        d->back._sector = newBackSector;
-        break; }
-    case DMU_FRONT: {
+    /*case DMU_FRONT: {
         SideDef *newFrontSideDef = frontSideDefPtr();
         DMU_SetValue(DMT_LINE_SIDE, &newFrontSideDef, &args, 0);
         d->front._sideDef = newFrontSideDef;

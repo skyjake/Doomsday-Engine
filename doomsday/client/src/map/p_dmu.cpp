@@ -108,8 +108,6 @@ char const *DMU_Str(uint prop)
         { DMU_NORMAL_XYZ, "DMU_NORMAL_XYZ" },
         { DMU_VERTEX0, "DMU_VERTEX0" },
         { DMU_VERTEX1, "DMU_VERTEX1" },
-        { DMU_FRONT_SECTOR, "DMU_FRONT_SECTOR" },
-        { DMU_BACK_SECTOR, "DMU_BACK_SECTOR" },
         { DMU_FRONT, "DMU_FRONT" },
         { DMU_BACK, "DMU_BACK" },
         { DMU_FLAGS, "DMU_FLAGS" },
@@ -952,14 +950,8 @@ static void setProperty(MapElement *elem, setargs_t &args)
             args.type = DMU_SURFACE;
             break;
 
-        default:
-            break;
+        default: break;
         }
-    }
-
-    if(args.type == DMU_SURFACE)
-    {
-        elem->castTo<Surface>();
     }
 
     // Write the property value(s).

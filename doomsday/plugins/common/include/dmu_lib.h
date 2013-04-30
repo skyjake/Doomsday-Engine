@@ -42,6 +42,9 @@
 #define numpolyobjs             (*(int*) DD_GetVariable(DD_POLYOBJ_COUNT))
 
 // DMU property aliases. For short-hand purposes:
+#define DMU_FRONT_SECTOR        (DMU_FRONT_OF_LINE | DMU_SECTOR)
+#define DMU_BACK_SECTOR         (DMU_BACK_OF_LINE | DMU_SECTOR)
+
 #define DMU_TOP_MATERIAL        (DMU_TOP_OF_SIDE | DMU_MATERIAL)
 #define DMU_TOP_MATERIAL_OFFSET_X (DMU_TOP_OF_SIDE | DMU_OFFSET_X)
 #define DMU_TOP_MATERIAL_OFFSET_Y (DMU_TOP_OF_SIDE | DMU_OFFSET_Y)
