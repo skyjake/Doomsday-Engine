@@ -185,9 +185,9 @@ public:
      * Change the texture flags property of the manifest.
      *
      * @param flagsToChange  Flags to change the value of.
-     * @param set  @c true to set, @c false to clear.
+     * @param operation      Logical operation to perform on the flags.
      */
-    void setFlags(Texture::Flags flagsToChange, bool set = true);
+    void setFlags(Texture::Flags flagsToChange, FlagOp operation = de::SetFlags);
 
     /**
      * Returns @c true if a Texture is presently associated with the manifest.

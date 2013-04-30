@@ -324,9 +324,9 @@ public:
      * Change the texture's flags.
      *
      * @param flagsToChange  Flags to change the value of.
-     * @param set  @c true to set, @c false to clear.
+     * @param operation      Logical operation to perform on the flags.
      */
-    void setFlags(Flags flagsToChange, bool set = true);
+    void setFlags(Flags flagsToChange, de::FlagOp operation = de::SetFlags);
 
 #ifdef __CLIENT__
 

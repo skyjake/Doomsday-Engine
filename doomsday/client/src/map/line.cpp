@@ -329,10 +329,9 @@ int Line::Side::flags() const
     return d->flags;
 }
 
-void Line::Side::setFlags(int flagsToChange, bool set)
+void Line::Side::setFlags(int flagsToChange, FlagOp operation)
 {
-    if(set) d->flags |= flagsToChange;
-    else    d->flags &= ~flagsToChange;
+    applyFlagOperation(d->flags, flagsToChange, operation);
 }
 
 void Line::Side::chooseSurfaceTintColors(int sectionId, Vector3f const **topColor,
@@ -539,11 +538,11 @@ int Line::flags() const
     return d->flags;
 }
 
-void Line::setFlags(int flagsToChange, bool set)
+void Line::setFlags(int flagsToChange, FlagOp operation)
 {
     int newFlags = d->flags;
-    if(set) newFlags |= flagsToChange;
-    else    newFlags &= ~flagsToChange;
+
+    applyFlagOperation(newFlags, flagsToChange, operation);
 
     if(d->flags != newFlags)
     {
