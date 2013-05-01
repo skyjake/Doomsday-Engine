@@ -22,6 +22,7 @@
 #include <QMessageBox>
 #include <QPainter>
 
+#include <de/ImageBank>
 #include <de/GLState>
 #include <de/Drawable>
 #include <de/GLBuffer>
@@ -37,7 +38,8 @@ using namespace de;
 DENG2_PIMPL(TestWindow),
 DENG2_OBSERVES(Canvas, GLInit),
 DENG2_OBSERVES(Canvas, GLResize),
-DENG2_OBSERVES(Clock, TimeChange)
+DENG2_OBSERVES(Clock, TimeChange),
+DENG2_OBSERVES(Bank, Load)
 {
     enum Mode
     {
@@ -46,6 +48,7 @@ DENG2_OBSERVES(Clock, TimeChange)
     };
 
     Mode mode;
+    ImageBank imageBank;
     Drawable ob;
     Drawable atlasOb;
     Matrix4f modelMatrix;
@@ -84,6 +87,10 @@ DENG2_OBSERVES(Clock, TimeChange)
         uColor = Vector4f(.5f, .75f, .5f, 1);
         atlas->setTotalSize(Vector2ui(256, 256));
         atlas->setMagFilter(gl::Nearest);
+
+        imageBank.add("rtt/cube", "/data/graphics/testpic.png");
+        imageBank.loadAll();
+        //imageBank.audienceForLoad += this;
     }
 
     void canvasGLInit(Canvas &cv)
@@ -111,9 +118,10 @@ DENG2_OBSERVES(Clock, TimeChange)
 
         // Textures.
         testpic.setAutoGenMips(true);
-        testpic.setImage(QImage(":/images/testpic.png"));
+        //imageBank.load("rtt/cube");
+        testpic.setImage(imageBank.image("rtt/cube"));
+        //testpic.setImage(QImage(":/images/testpic.png"));
         testpic.setWrapT(gl::RepeatMirrored);
-        //testpic.generateMipmap();
         testpic.setMinFilter(gl::Linear, gl::MipLinear);
         uTex = testpic;
 
@@ -180,6 +188,9 @@ DENG2_OBSERVES(Clock, TimeChange)
                 << uColor << uTime
                 << uTex;
 
+        // Require testpic to be ready before rendering the cube.
+        ob += testpic;
+
         // The atlas objects.
         Vertex2Buf *buf2 = new Vertex2Buf;
         Vertex2Buf::Type verts2[4] = {
@@ -211,6 +222,15 @@ DENG2_OBSERVES(Clock, TimeChange)
                 << uTex;
 
         cv.renderTarget().setClearColor(Vector4f(.2f, .2f, .2f, 0));
+    }
+
+    void bankLoaded(Path const &path)
+    {
+        LOG_INFO("Bank item \"%s\" loaded") << path;
+        if(path == "rtt/cube")
+        {
+            testpic.setImage(imageBank.image(path));
+        }
     }
 
     void canvasGLResized(Canvas &cv)

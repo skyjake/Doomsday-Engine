@@ -16,8 +16,13 @@ SOURCES += \
 
 deployTest($$TARGET)
 
+gfx.files = testpic.png
+
 macx {
     linkBinaryToBundledLibdengGui($${TARGET}.app/Contents/MacOS/$${TARGET})
+
+    gfx.path = Contents/Resources/graphics
+    QMAKE_BUNDLE_DATA += gfx
 }
 
 HEADERS += \
