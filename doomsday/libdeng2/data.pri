@@ -3,6 +3,7 @@ HEADERS += \
     include/de/Archive \
     include/de/ArrayValue \
     include/de/Audience \
+    include/de/Bank \
     include/de/BigEndianByteOrder \
     include/de/BinaryTree \
     include/de/BitField \
@@ -53,6 +54,7 @@ HEADERS += \
     include/de/data/accessorvalue.h \
     include/de/data/archive.h \
     include/de/data/arrayvalue.h \
+    include/de/data/bank.h \
     include/de/data/binarytree.h \
     include/de/data/bitfield.h \
     include/de/data/block.h \
@@ -104,6 +106,7 @@ SOURCES += \
     src/data/accessorvalue.cpp \
     src/data/archive.cpp \
     src/data/arrayvalue.cpp \
+    src/data/bank.cpp \
     src/data/binarytree_wrapper.cpp \
     src/data/bitfield.cpp \
     src/data/block.cpp \
