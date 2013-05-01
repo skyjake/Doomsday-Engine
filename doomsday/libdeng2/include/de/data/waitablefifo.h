@@ -36,8 +36,18 @@ class WaitableFIFO : public FIFO<Type>, public Waitable
 {
 public:
     WaitableFIFO() {}
+
+    void put(Type *object, typename FIFO<Type>::PutMode mode = FIFO<Type>::PutHead) {
+        FIFO<Type>::put(object, mode);
+        post();
+    }
+
+    Type *take() {
+        wait();
+        return FIFO<Type>::take();
+    }
 };
 
 } // namespace de
 
-#endif /* LIBDENG2_WAITABLEFIFO_H */
+#endif // LIBDENG2_WAITABLEFIFO_H

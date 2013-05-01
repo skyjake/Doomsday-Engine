@@ -45,7 +45,10 @@ public:
     Waitable(duint initialValue = 0);
     virtual ~Waitable();
 
-    /// Wait until the resource becomes available.
+    /// Resets the semaphore to zero.
+    void reset();
+
+    /// Wait until the resource becomes available. Waits indefinitely.
     void wait();
 
     /// Wait for the specified period of time to secure the

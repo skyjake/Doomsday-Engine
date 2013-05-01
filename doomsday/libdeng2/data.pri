@@ -14,6 +14,7 @@ HEADERS += \
     include/de/Counted \
     include/de/Date \
     include/de/DictionaryValue \
+    include/de/FIFO \
     include/de/FixedByteArray \
     include/de/Guard \
     include/de/IBlock \
@@ -62,6 +63,7 @@ HEADERS += \
     include/de/data/counted.h \
     include/de/data/date.h \
     include/de/data/dictionaryvalue.h \
+    include/de/data/fifo.h \
     include/de/data/fixedbytearray.h \
     include/de/data/guard.h \
     include/de/data/huffman.h \
