@@ -29,7 +29,7 @@
 
 #include <de/Vector>
 
-#include "render/walldiv.h"
+class SectionEdge;
 
 typedef struct rvertex_s {
     float pos[3];
@@ -211,17 +211,14 @@ inline void Rtu_TranslateOffset(rtexmapunit_t *rtu, float s, float t)
 }
 
 void R_DivVerts(rvertex_t *dst, rvertex_t const *src,
-    de::WallDivs::Intercept *leftDivFirst, uint leftDivCount,
-    de::WallDivs::Intercept *rightDivFirst, uint rightDivCount);
+    SectionEdge const &leftEdge, SectionEdge const &rightEdge);
 
 void R_DivTexCoords(rtexcoord_t *dst, rtexcoord_t const *src,
-    de::WallDivs::Intercept *leftDivFirst, uint leftDivCount,
-    de::WallDivs::Intercept *rightDivFirst, uint rightDivCount,
+    SectionEdge const &leftEdge, SectionEdge const &rightEdge,
     float bL, float tL, float bR, float tR);
 
 void R_DivVertColors(ColorRawf *dst, ColorRawf const *src,
-    de::WallDivs::Intercept *leftDivFirst, uint leftDivCount,
-    de::WallDivs::Intercept *rightDivFirst, uint rightDivCount,
+    SectionEdge const &leftEdge, SectionEdge const &rightEdge,
     float bL, float tL, float bR, float tR);
 
 #endif // DENG_RENDER_RENDPOLY_H

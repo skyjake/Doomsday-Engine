@@ -22,8 +22,9 @@
 
 #include <de/Vector>
 
-#include "render/rendpoly.h"
-#include "render/walldiv.h"
+//#include "render/rendpoly.h"
+
+#include "HEdge"
 
 /// Paramaters for Rend_RenderLightProjections (POD).
 typedef struct {
@@ -34,14 +35,8 @@ typedef struct {
     de::Vector3d const *texBR;
     bool isWall;
     struct {
-        struct {
-            de::WallDivs::Intercept *firstDiv;
-            uint divCount;
-        } left;
-        struct {
-            de::WallDivs::Intercept *firstDiv;
-            uint divCount;
-        } right;
+        SectionEdge const *leftEdge;
+        SectionEdge const *rightEdge;
     } wall;
 } renderlightprojectionparams_t;
 

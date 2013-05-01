@@ -29,6 +29,7 @@
 #include "Vertex"
 
 #include "render/rend_bias.h"
+#include "render/walldiv.h"
 
 class Sector;
 
@@ -39,6 +40,54 @@ class Sector;
 ///@{
 #define HEDGEINF_FACINGFRONT      0x0001
 ///@}
+
+class SectionEdge
+{
+public:
+    de::WallDivs wallDivs;
+
+public:
+    SectionEdge(HEdge &hedge, int section, int right);
+
+    void prepare(coord_t bottom, coord_t top);
+
+    void configure() {
+        _firstIntercept = &wallDivs.first();
+        _lastIntercept = &wallDivs.last();
+        _interceptCount = wallDivs.count();
+    }
+
+    int divisionCount() const { return _interceptCount - 2; }
+
+    de::WallDivs::Intercept &firstDivision() const;
+
+    de::WallDivs::Intercept &lastDivision() const;
+
+    de::WallDivs::Intercept &bottom() const;
+
+    de::WallDivs::Intercept &top() const;
+
+    HEdge &hedge() const;
+
+    int section() const;
+
+    de::Vector2d const &origin() const;
+
+    coord_t offset() const;
+
+private:
+    void assertDivisionsInRange(coord_t low, coord_t hi);
+
+    void addPlaneIntercepts(coord_t bottom, coord_t top);
+
+    HEdge *_hedge;
+    int _section;
+    int _right;
+
+    int _interceptCount;
+    de::WallDivs::Intercept *_firstIntercept;
+    de::WallDivs::Intercept *_lastIntercept;
+};
 
 /**
  * Map geometry half-edge.

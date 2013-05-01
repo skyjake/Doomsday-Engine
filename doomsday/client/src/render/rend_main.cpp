@@ -23,6 +23,8 @@
 #include <cstdlib>
 #include <cmath>
 
+#include <de/libdeng2.h>
+
 #include <QtAlgorithms>
 
 #include "de_base.h"
@@ -701,16 +703,10 @@ struct rendworldpoly_params_t
 
 // Wall only:
     struct {
-        coord_t segLength;
+        coord_t sectionWidth;
         Vector3f const *surfaceColor2; // Secondary color.
-        struct {
-            WallDivs::Intercept *firstDiv;
-            uint divCount;
-        } left;
-        struct {
-            WallDivs::Intercept *firstDiv;
-            uint divCount;
-        } right;
+        SectionEdge const *leftEdge;
+        SectionEdge const *rightEdge;
     } wall;
 };
 
@@ -719,7 +715,8 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
 {
     DENG_ASSERT(rvertices != 0);
 
-    uint const realNumVertices = ((p.isWall && (p.wall.left.divCount || p.wall.right.divCount))? 3 + p.wall.left.divCount + 3 + p.wall.right.divCount : numVertices);
+    uint const realNumVertices = (p.isWall? 3 + p.wall.leftEdge->divisionCount() + 3 + p.wall.rightEdge->divisionCount() : numVertices);
+    bool const mustSubdivide = (p.isWall && (p.wall.leftEdge->divisionCount() || p.wall.rightEdge->divisionCount()));
 
     bool const skyMaskedMaterial = ((p.flags & RPF_SKYMASK) || (ms.material().isSkyMasked()));
     bool const drawAsVisSprite   = (!p.forceOpaque && !(p.flags & RPF_SKYMASK) && (!ms.isOpaque() || p.alpha < 1 || p.blendMode > 0));
@@ -790,15 +787,15 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
     if(p.isWall)
     {
         // Primary texture coordinates.
-        quadTexCoords(primaryCoords, rvertices, p.wall.segLength, *p.texTL);
+        quadTexCoords(primaryCoords, rvertices, p.wall.sectionWidth, *p.texTL);
 
         // Blend texture coordinates.
         if(interRTU && !drawAsVisSprite)
-            quadTexCoords(interCoords, rvertices, p.wall.segLength, *p.texTL);
+            quadTexCoords(interCoords, rvertices, p.wall.sectionWidth, *p.texTL);
 
         // Shiny texture coordinates.
         if(shinyRTU && !drawAsVisSprite)
-            quadShinyTexCoords(shinyTexCoords, &rvertices[1], &rvertices[2], p.wall.segLength);
+            quadShinyTexCoords(shinyTexCoords, &rvertices[1], &rvertices[2], p.wall.sectionWidth);
 
         // First light texture coordinates.
         if(modTex && RL_IsMTexLights())
@@ -989,7 +986,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
          * This is needed because all masked polys must be sorted (sprites
          * are masked polys). Otherwise there will be artifacts.
          */
-        Rend_AddMaskedPoly(rvertices, rcolors, p.wall.segLength, &ms.materialVariant(),
+        Rend_AddMaskedPoly(rvertices, rcolors, p.wall.sectionWidth, &ms.materialVariant(),
                            *p.materialOrigin, p.blendMode, p.lightListIdx, p.glowing);
 
         R_FreeRendTexCoords(primaryCoords);
@@ -1007,6 +1004,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
         // Render all lights projected onto this surface.
         renderlightprojectionparams_t parm;
 
+        zap(parm);
         parm.rvertices       = rvertices;
         parm.numVertices     = numVertices;
         parm.realNumVertices = realNumVertices;
@@ -1016,10 +1014,8 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
         parm.isWall          = p.isWall;
         if(p.isWall)
         {
-            parm.wall.left.firstDiv  = p.wall.left.firstDiv;
-            parm.wall.left.divCount  = p.wall.left.divCount;
-            parm.wall.right.firstDiv = p.wall.right.firstDiv;
-            parm.wall.right.divCount = p.wall.right.divCount;
+            parm.wall.leftEdge  = p.wall.leftEdge;
+            parm.wall.rightEdge = p.wall.rightEdge;
         }
 
         hasDynlights = (0 != Rend_RenderLightProjections(p.lightListIdx, parm));
@@ -1030,6 +1026,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
         // Render all shadows projected onto this surface.
         rendershadowprojectionparams_t parm;
 
+        zap(parm);
         parm.rvertices       = rvertices;
         parm.numVertices     = numVertices;
         parm.realNumVertices = realNumVertices;
@@ -1038,10 +1035,8 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
         parm.isWall          = p.isWall;
         if(p.isWall)
         {
-            parm.wall.left.firstDiv  = p.wall.left.firstDiv;
-            parm.wall.left.divCount  = p.wall.left.divCount;
-            parm.wall.right.firstDiv = p.wall.right.firstDiv;
-            parm.wall.right.divCount = p.wall.right.divCount;
+            parm.wall.leftEdge  = p.wall.leftEdge;
+            parm.wall.rightEdge = p.wall.rightEdge;
         }
 
         Rend_RenderShadowProjections(p.shadowListIdx, parm);
@@ -1085,8 +1080,13 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
     }
 
     // Write multiple polys depending on rend params.
-    if(p.isWall && (p.wall.left.divCount || p.wall.right.divCount))
+    if(mustSubdivide)
     {
+        SectionEdge const &leftEdge = *p.wall.leftEdge;
+        SectionEdge const &rightEdge = *p.wall.rightEdge;
+        int const leftInterceptCount = leftEdge.divisionCount();
+        int const rightInterceptCount = rightEdge.divisionCount();
+
         /*
          * Need to swap indices around into fans set the position
          * of the division vertices, interpolate texcoords and
@@ -1110,62 +1110,74 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
         float const bR = origVerts[2].pos[VZ];
         float const tR = origVerts[3].pos[VZ];
 
-        R_DivVerts(rvertices, origVerts, p.wall.left.firstDiv, p.wall.left.divCount, p.wall.right.firstDiv, p.wall.right.divCount);
-        R_DivTexCoords(primaryCoords, origTexCoords, p.wall.left.firstDiv, p.wall.left.divCount, p.wall.right.firstDiv, p.wall.right.divCount, bL, tL, bR, tR);
+        R_DivVerts(rvertices, origVerts, leftEdge, rightEdge);
+        R_DivTexCoords(primaryCoords, origTexCoords, leftEdge, rightEdge,
+                       bL, tL, bR, tR);
 
         if(rcolors)
         {
-            R_DivVertColors(rcolors, origColors, p.wall.left.firstDiv, p.wall.left.divCount, p.wall.right.firstDiv, p.wall.right.divCount, bL, tL, bR, tR);
+            R_DivVertColors(rcolors, origColors, leftEdge, rightEdge,
+                            bL, tL, bR, tR);
         }
 
         if(interCoords)
         {
             rtexcoord_t origTexCoords2[4];
             std::memcpy(origTexCoords2, interCoords, sizeof(origTexCoords2));
-            R_DivTexCoords(interCoords, origTexCoords2, p.wall.left.firstDiv, p.wall.left.divCount, p.wall.right.firstDiv, p.wall.right.divCount, bL, tL, bR, tR);
+            R_DivTexCoords(interCoords, origTexCoords2, leftEdge, rightEdge,
+                           bL, tL, bR, tR);
         }
 
         if(modCoords)
         {
             rtexcoord_t origTexCoords5[4];
             std::memcpy(origTexCoords5, modCoords, sizeof(origTexCoords5));
-            R_DivTexCoords(modCoords, origTexCoords5, p.wall.left.firstDiv, p.wall.left.divCount, p.wall.right.firstDiv, p.wall.right.divCount, bL, tL, bR, tR);
+            R_DivTexCoords(modCoords, origTexCoords5, leftEdge, rightEdge,
+                           bL, tL, bR, tR);
         }
 
         if(shinyTexCoords)
         {
             rtexcoord_t origShinyTexCoords[4];
             std::memcpy(origShinyTexCoords, shinyTexCoords, sizeof(origShinyTexCoords));
-            R_DivTexCoords(shinyTexCoords, origShinyTexCoords, p.wall.left.firstDiv, p.wall.left.divCount, p.wall.right.firstDiv, p.wall.right.divCount, bL, tL, bR, tR);
+            R_DivTexCoords(shinyTexCoords, origShinyTexCoords, leftEdge, rightEdge,
+                           bL, tL, bR, tR);
         }
 
         if(shinyColors)
         {
             ColorRawf origShinyColors[4];
             std::memcpy(origShinyColors, shinyColors, sizeof(origShinyColors));
-            R_DivVertColors(shinyColors, origShinyColors, p.wall.left.firstDiv, p.wall.left.divCount, p.wall.right.firstDiv, p.wall.right.divCount, bL, tL, bR, tR);
+            R_DivVertColors(shinyColors, origShinyColors, leftEdge, rightEdge,
+                            bL, tL, bR, tR);
         }
 
         RL_AddPolyWithCoordsModulationReflection(PT_FAN, p.flags | (hasDynlights? RPF_HAS_DYNLIGHTS : 0),
-            3 + p.wall.right.divCount, rvertices + 3 + p.wall.left.divCount, rcolors? rcolors + 3 + p.wall.left.divCount : NULL,
-            primaryCoords + 3 + p.wall.left.divCount, interCoords? interCoords + 3 + p.wall.left.divCount : NULL,
-            modTex, &modColor, modCoords? modCoords + 3 + p.wall.left.divCount : NULL,
-            shinyColors + 3 + p.wall.left.divCount, shinyTexCoords? shinyTexCoords + 3 + p.wall.left.divCount : NULL,
-            shinyMaskRTU? primaryCoords + 3 + p.wall.left.divCount : NULL);
+                                                 3 + rightInterceptCount,
+                                                 rvertices + 3 + leftInterceptCount,
+                                                 rcolors? rcolors + 3 + leftInterceptCount : 0,
+                                                 primaryCoords + 3 + leftInterceptCount,
+                                                 interCoords? interCoords + 3 + leftInterceptCount : 0,
+                                                 modTex, &modColor, modCoords? modCoords + 3 + leftInterceptCount : 0,
+                                                 shinyColors + 3 + leftInterceptCount,
+                                                 shinyTexCoords? shinyTexCoords + 3 + leftInterceptCount : 0,
+                                                 shinyMaskRTU? primaryCoords + 3 + leftInterceptCount : 0);
 
         RL_AddPolyWithCoordsModulationReflection(PT_FAN, p.flags | (hasDynlights? RPF_HAS_DYNLIGHTS : 0),
-            3 + p.wall.left.divCount, rvertices, rcolors,
-            primaryCoords, interCoords,
-            modTex, &modColor, modCoords,
-            shinyColors, shinyTexCoords, shinyMaskRTU? primaryCoords : NULL);
+                                                 3 + leftInterceptCount,
+                                                 rvertices, rcolors, primaryCoords, interCoords,
+                                                 modTex, &modColor, modCoords,
+                                                 shinyColors, shinyTexCoords,
+                                                 shinyMaskRTU? primaryCoords : 0);
     }
     else
     {
-        RL_AddPolyWithCoordsModulationReflection(p.isWall? PT_TRIANGLE_STRIP : PT_FAN, p.flags | (hasDynlights? RPF_HAS_DYNLIGHTS : 0),
-            numVertices, rvertices, rcolors,
-            primaryCoords, interCoords,
-            modTex, &modColor, modCoords,
-            shinyColors, shinyTexCoords, shinyMaskRTU? primaryCoords : NULL);
+        RL_AddPolyWithCoordsModulationReflection(p.isWall? PT_TRIANGLE_STRIP : PT_FAN,
+                                                 p.flags | (hasDynlights? RPF_HAS_DYNLIGHTS : 0),
+                                                 numVertices, rvertices, rcolors,
+                                                 primaryCoords, interCoords,
+                                                 modTex, &modColor, modCoords,
+                                                 shinyColors, shinyTexCoords, shinyMaskRTU? primaryCoords : 0);
     }
 
     R_FreeRendTexCoords(primaryCoords);
@@ -1538,6 +1550,7 @@ static uint projectSurfaceShadows(Surface &surface, float glowStrength,
 static inline float wallSectionOpacity(Line::Side &side, int section)
 {
     if(section != Line::Side::Middle) return 1.f;
+    if(!side.hasSections() || !side.back().hasSections()) return 1.f;
     return side.surface(section).opacity();
 }
 
@@ -1552,37 +1565,37 @@ static inline float wallSectionOpacity(Line::Side &side, int section)
 #define WSF_ADD_RADIO           0x04 ///< Write geometry for faked radiosity.
 #define WSF_VIEWER_NEAR_BLEND   0x08 ///< Alpha-blend geometry when viewer is near.
 #define WSF_FORCE_OPAQUE        0x10 ///< Force the geometry to be opaque.
+
+#define DEFAULT_WRITE_WALL_SECTION_FLAGS (WSF_ADD_DYNLIGHTS|WSF_ADD_DYNSHADOWS|WSF_ADD_RADIO)
 ///@}
 
 /**
  * @param flags  @ref writeWallSectionFlags
  */
-static bool writeWallSection(HEdge &hedge, int section,
-    int flags, WallDivs *leftWallDivs, WallDivs *rightWallDivs,
-    Vector2f const &materialOrigin)
+static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rightEdge,
+    Vector2f const &materialOrigin, MapElement &mapElement, biassurface_t &biasSurface,
+    int flags = DEFAULT_WRITE_WALL_SECTION_FLAGS)
 {
-    BspLeaf *leaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(leaf));
+    BspLeaf *bspLeaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(bspLeaf));
 
-    Surface &surface = hedge.lineSide().surface(section);
+    Line::Side &side = leftEdge.hedge().lineSide();
+    int const section = leftEdge.section();
+    Surface &surface = side.surface(section);
 
     // Surfaces without a drawable material are never rendered.
     if(!(surface.hasMaterial() && surface.material().isDrawable()))
         return false;
 
-    if(leftWallDivs->first().distance() >=
-       rightWallDivs->last().distance()) return true;
+    if(leftEdge.bottom().distance() >= rightEdge.top().distance())
+        return true;
 
-    float opacity = wallSectionOpacity(hedge.lineSide(), section);
+    coord_t width = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
+    float opacity = wallSectionOpacity(side, section);
 
     bool didNearBlend = false;
     if(flags & WSF_VIEWER_NEAR_BLEND)
     {
-        DENG_ASSERT(section == Line::Side::Middle);
-
-        mobj_t *mo = viewPlayer->shared.mo;
-        viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-
         /*
          * Can the player walk through this surface?
          * If the player is close enough we should NOT add a solid hedge
@@ -1590,10 +1603,15 @@ static bool writeWallSection(HEdge &hedge, int section,
          * (e.g., passing through an opaque waterfall).
          */
 
-        if(viewData->current.origin[VZ] > leftWallDivs->first().distance() &&
-           viewData->current.origin[VZ] < rightWallDivs->last().distance())
+        DENG_ASSERT(section == Line::Side::Middle);
+
+        mobj_t *mo = viewPlayer->shared.mo;
+        viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+
+        if(viewData->current.origin[VZ] > leftEdge.bottom().distance() &&
+           viewData->current.origin[VZ] < rightEdge.top().distance())
         {
-            Line const &line = hedge.line();
+            Line const &line = side.line();
 
             coord_t linePoint[2]     = { line.fromOrigin().x, line.fromOrigin().y };
             coord_t lineDirection[2] = { line.direction().x, line.direction().y };
@@ -1622,14 +1640,13 @@ static bool writeWallSection(HEdge &hedge, int section,
 
     if(opacity <= 0) return false;
 
-    bool const isTwoSided = (hedge.hasLineSide() && hedge.line().hasFrontSections() && hedge.line().hasBackSections())? true:false;
+    bool const isTwoSided = (side.hasSections() && side.back().hasSections());
 
     Vector2f materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
                            (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
-    Vector3d texTL(hedge.fromOrigin(), leftWallDivs->last().distance());
-
-    Vector3d texBR(hedge.toOrigin(), rightWallDivs->first().distance());
+    Vector3d texTL(leftEdge.origin(), leftEdge.top().distance());
+    Vector3d texBR(rightEdge.origin(), rightEdge.bottom().distance());
 
     // Determine which Material to use.
     Material *material = 0;
@@ -1637,7 +1654,7 @@ static bool writeWallSection(HEdge &hedge, int section,
     /// @todo Geometry tests here should use the same sectors as used when
     /// deciding the z-heights for the wall divs. At least in the case of
     /// selfreferencing lines, this logic is probably incorrect. -ds
-    if(devRendSkyMode && hedge.hasTwin() &&
+    /*if(devRendSkyMode && hedge.hasTwin() &&
        ((section == Line::Side::Bottom && hedge.bspLeafSector().floorSurface().hasSkyMaskedMaterial() &&
                                           hedge.twin().bspLeafSector().floorSurface().hasSkyMaskedMaterial()) ||
         (section == Line::Side::Top    && hedge.bspLeafSector().ceilingSurface().hasSkyMaskedMaterial() &&
@@ -1646,7 +1663,7 @@ static bool writeWallSection(HEdge &hedge, int section,
         // Geometry not normally rendered however we do so in dev sky mode.
         material = currentBspLeaf->sector().planeSurface(section == Line::Side::Top? Plane::Ceiling : Plane::Floor).materialPtr();
     }
-    else
+    else*/
     {
         material = chooseSurfaceMaterialForTexturingMode(surface);
 
@@ -1690,7 +1707,7 @@ static bool writeWallSection(HEdge &hedge, int section,
         }
 
         // Polyobj surfaces never shadow.
-        if(hedge.line().isFromPolyobj())
+        if(side.line().isFromPolyobj())
             flags &= ~WSF_ADD_RADIO;
 
         float glowStrength = 0;
@@ -1700,59 +1717,59 @@ static bool writeWallSection(HEdge &hedge, int section,
         // Dynamic Lights?
         if(flags & WSF_ADD_DYNLIGHTS)
         {
-            lightListIdx = projectSurfaceLights(hedge.lineSide().middle(), glowStrength, texTL, texBR,
+            lightListIdx = projectSurfaceLights(side.middle(), glowStrength, texTL, texBR,
                                                 (section == Line::Side::Middle && isTwoSided));
         }
 
         // Dynamic shadows?
         if(flags & WSF_ADD_DYNSHADOWS)
         {
-            shadowListIdx = projectSurfaceShadows(hedge.lineSide().middle(), glowStrength, texTL, texBR);
+            shadowListIdx = projectSurfaceShadows(side.middle(), glowStrength, texTL, texBR);
         }
 
         if(glowStrength > 0)
             flags &= ~WSF_ADD_RADIO;
 
-        hedge.lineSide().chooseSurfaceTintColors(section, &topColor, &bottomColor);
+       side.chooseSurfaceTintColors(section, &topColor, &bottomColor);
     }
 
     // Calculate the light level deltas for this wall section.
     /// @todo Cache these values somewhere. -ds
     float deltaL, deltaR;
-    wallSectionLightLevelDeltas(hedge.lineSide(), section, deltaL, deltaR);
+    wallSectionLightLevelDeltas(side, section, deltaL, deltaR);
 
     if(!de::fequal(deltaL, deltaR))
     {
         // Linearly interpolate to find the light level delta values for the
         // vertical edges of this wall section.
-        coord_t const lineLength = hedge.line().length();
-        coord_t const sectionLength = hedge.length();
-        coord_t const sectionOffset = hedge.lineOffset();
+        coord_t const lineLength = side.line().length();
+        coord_t const sectionOffset = leftEdge.offset();
 
         float deltaDiff = deltaR - deltaL;
-        deltaR = deltaL + ((sectionOffset + sectionLength) / lineLength) * deltaDiff;
+        deltaR = deltaL + ((sectionOffset + width) / lineLength) * deltaDiff;
         deltaL += (sectionOffset / lineLength) * deltaDiff;
     }
 
     if(section == Line::Side::Middle && isTwoSided)
     {
         // Temporarily modify the draw state.
-        currentSectorLightColor = R_GetSectorLightColor(hedge.lineSide().sector());
-        currentSectorLightLevel = hedge.lineSide().sector().lightLevel();
+        currentSectorLightColor = R_GetSectorLightColor(side.sector());
+        currentSectorLightLevel = side.sector().lightLevel();
     }
 
-    bool const skyMask      = (rpFlags & RPF_SKYMASK) != 0;
-    bool const addFakeRadio = (flags & WSF_ADD_RADIO) != 0;
+    bool const skyMask       = (rpFlags & RPF_SKYMASK) != 0;
+    bool const addFakeRadio  = (flags & WSF_ADD_RADIO) != 0;
+    bool const mustSubdivide = (leftEdge.divisionCount() || rightEdge.divisionCount());
 
     rendworldpoly_params_t parm;
-    std::memset(&parm, 0, sizeof(parm));
 
+    zap(parm);
     parm.flags               = RPF_DEFAULT | (skyMask? RPF_SKYMASK : 0);
     parm.forceOpaque         = (flags & WSF_FORCE_OPAQUE)? true : false;
     parm.alpha               = (flags & WSF_FORCE_OPAQUE)? 1 : opacity;
-    parm.mapElement          = &hedge;
+    parm.mapElement          = &mapElement;
     parm.elmIdx              = section;
-    parm.bsuf                = &hedge.biasSurfaceForGeometryGroup(section);
+    parm.bsuf                = &biasSurface;
     parm.normal              = &surface.normal();
     parm.texTL               = &texTL;
     parm.texBR               = &texBR;
@@ -1768,18 +1785,17 @@ static bool writeWallSection(HEdge &hedge, int section,
 
     parm.isWall = true;
     parm.wall.surfaceColor2  = bottomColor;
-    parm.wall.segLength      = hedge.length();
-    parm.wall.left.firstDiv  = &leftWallDivs->first().next(); // Step over first node.
-    parm.wall.left.divCount  = leftWallDivs->count()-2;
-    parm.wall.right.firstDiv = &rightWallDivs->last().prev(); // Step over last node.
-    parm.wall.right.divCount = rightWallDivs->count()-2;
+    parm.wall.sectionWidth   = width;
+    parm.wall.leftEdge       = &leftEdge;
+    parm.wall.rightEdge      = &rightEdge;
 
     rvertex_t *rvertices;
     // Allocate enough vertices for the divisions too.
-    if(leftWallDivs->count() > 2 || rightWallDivs->count() > 2)
+    if(mustSubdivide)
     {
         // Use two fans.
-        rvertices = R_AllocRendVertices(1 + leftWallDivs->count() + 1 + rightWallDivs->count());
+        rvertices = R_AllocRendVertices(3 + leftEdge.divisionCount() +
+                                        3 + rightEdge.divisionCount());
     }
     else
     {
@@ -1789,21 +1805,21 @@ static bool writeWallSection(HEdge &hedge, int section,
 
     // Vertex coords.
     // Bottom Left.
-    V3f_Set(rvertices[0].pos, hedge.fromOrigin().x,
-                              hedge.fromOrigin().y,
-                              leftWallDivs->first().distance());
+    V3f_Set(rvertices[0].pos, leftEdge.origin().x,
+                              leftEdge.origin().y,
+                              leftEdge.bottom().distance());
     // Top Left.
-    V3f_Set(rvertices[1].pos, hedge.fromOrigin().x,
-                              hedge.fromOrigin().y,
-                              leftWallDivs->last().distance());
+    V3f_Set(rvertices[1].pos, leftEdge.origin().x,
+                              leftEdge.origin().y,
+                              leftEdge.top().distance());
     // Bottom Right.
-    V3f_Set(rvertices[2].pos, hedge.toOrigin().x,
-                              hedge.toOrigin().y,
-                              rightWallDivs->first().distance());
+    V3f_Set(rvertices[2].pos, rightEdge.origin().x,
+                              rightEdge.origin().y,
+                              rightEdge.bottom().distance());
     // Top Right.
-    V3f_Set(rvertices[3].pos, hedge.toOrigin().x,
-                              hedge.toOrigin().y,
-                              rightWallDivs->last().distance());
+    V3f_Set(rvertices[3].pos, rightEdge.origin().x,
+                              rightEdge.origin().y,
+                              rightEdge.top().distance());
 
     // Draw this section.
     bool opaque = renderWorldPoly(rvertices, 4, parm, ms);
@@ -1812,52 +1828,54 @@ static bool writeWallSection(HEdge &hedge, int section,
         // Render FakeRadio for this section?
         if(!(parm.flags & RPF_SKYMASK) && addFakeRadio)
         {
+            Rend_RadioUpdateForLineSide(side);
+            LineSideRadioData &frData = Rend_RadioDataForLineSide(side);
+
             RendRadioWallSectionParms radioParms;
             std::memset(&radioParms, 0, sizeof(radioParms));
 
-            radioParms.line      = &hedge.line();
-
-            LineSideRadioData &frData = Rend_RadioDataForLineSide(hedge.lineSide());
+            radioParms.line      = &side.line();
             radioParms.botCn     = frData.bottomCorners;
             radioParms.topCn     = frData.topCorners;
             radioParms.sideCn    = frData.sideCorners;
             radioParms.spans     = frData.spans;
 
-            radioParms.segOffset = hedge.lineOffset();
-            radioParms.segLength = hedge.length();
-            radioParms.frontSec  = hedge.bspLeafSectorPtr();
+            radioParms.segOffset = leftEdge.offset();
+            radioParms.segLength = width;
+            radioParms.frontSec  = bspLeaf->sectorPtr();
 
-            radioParms.wall.left.firstDiv  = parm.wall.left.firstDiv;
-            radioParms.wall.left.divCount  = parm.wall.left.divCount;
-            radioParms.wall.right.firstDiv = parm.wall.right.firstDiv;
-            radioParms.wall.right.divCount = parm.wall.right.divCount;
+            radioParms.leftEdge  = parm.wall.leftEdge;
+            radioParms.rightEdge = parm.wall.rightEdge;
 
-            if(!(section == Line::Side::Middle && isTwoSided) &&
-               !(hedge.hasTwin() && !(hedge.twin().hasLineSide() && hedge.twin().lineSide().hasSections())))
+            if(!(section == Line::Side::Middle && isTwoSided))
             {
-                if(hedge.hasTwin())
-                    radioParms.backSec = hedge.twin().bspLeafSectorPtr();
+                HEdge &hedge = *mapElement.castTo<HEdge>();
+                if(!(hedge.hasTwin() && !(hedge.twin().hasLineSide() && hedge.twin().lineSide().hasSections())))
+                {
+                    if(hedge.hasTwin())
+                        radioParms.backSec = hedge.twin().bspLeafSectorPtr();
+                }
             }
 
             /// @todo kludge: Revert the vertex coords as they may have been changed
             ///               due to height divisions.
 
             // Bottom Left.
-            V3f_Set(rvertices[0].pos, hedge.fromOrigin().x,
-                                      hedge.fromOrigin().y,
-                                      leftWallDivs->first().distance());
+            V3f_Set(rvertices[0].pos, leftEdge.origin().x,
+                                      leftEdge.origin().y,
+                                      leftEdge.bottom().distance());
             // Top Left.
-            V3f_Set(rvertices[1].pos, hedge.fromOrigin().x,
-                                      hedge.fromOrigin().y,
-                                      leftWallDivs->last().distance());
+            V3f_Set(rvertices[1].pos, leftEdge.origin().x,
+                                      leftEdge.origin().y,
+                                      leftEdge.top().distance());
             // Bottom Right.
-            V3f_Set(rvertices[2].pos, hedge.toOrigin().x,
-                                      hedge.toOrigin().y,
-                                      rightWallDivs->first().distance());
+            V3f_Set(rvertices[2].pos, rightEdge.origin().x,
+                                      rightEdge.origin().y,
+                                      rightEdge.bottom().distance());
             // Top Right.
-            V3f_Set(rvertices[3].pos, hedge.toOrigin().x,
-                                      hedge.toOrigin().y,
-                                      rightWallDivs->last().distance());
+            V3f_Set(rvertices[3].pos, rightEdge.origin().x,
+                                      rightEdge.origin().y,
+                                      rightEdge.top().distance());
 
             // kludge end.
 
@@ -1895,213 +1913,73 @@ static bool writeWallSection(HEdge &hedge, int section,
     return opaque && !didNearBlend;
 }
 
-static void addWallDivNodesForPlaneIntercepts(HEdge const &hedge, WallDivs *wallDivs,
-    int section, coord_t bottomZ, coord_t topZ, bool doRight)
-{
-    bool const clockwise = !doRight;
-
-    if(!hedge.hasLineSide()) return;
-
-    Line::Side const &side = hedge.lineSide();
-    if(side.line().isFromPolyobj()) return;
-
-    // Check for neighborhood division?
-    if(section == Line::Side::Middle && side.hasSections() && side.back().hasSections())
-        return;
-
-    // Only sections at line side edges can/should be split.
-    if(!((&hedge == side.leftHEdge()  && !doRight) ||
-         (&hedge == side.rightHEdge() &&  doRight)))
-        return;
-
-    if(bottomZ >= topZ) return; // Obviously no division.
-
-    Sector const *frontSec = side.sectorPtr();
-
-    // Retrieve the start owner node.
-    LineOwner *base = R_GetVtxLineOwner(&side.line().vertex(doRight), &side.line());
-    LineOwner *own = base;
-    bool stopScan = false;
-    do
-    {
-        own = own->_link[clockwise];
-
-        if(own == base)
-        {
-            stopScan = true;
-        }
-        else
-        {
-            Line *iter = &own->line();
-
-            if(iter->isSelfReferencing())
-                continue;
-
-            uint i = 0;
-            do
-            {
-                // First front, then back.
-                Sector *scanSec = NULL;
-                if(!i && iter->hasFrontSections() && iter->frontSectorPtr() != frontSec)
-                    scanSec = iter->frontSectorPtr();
-                else if(i && iter->hasBackSections() && iter->backSectorPtr() != frontSec)
-                    scanSec = iter->backSectorPtr();
-
-                if(scanSec)
-                {
-                    if(scanSec->ceiling().visHeight() - scanSec->floor().visHeight() > 0)
-                    {
-                        for(int j = 0; j < scanSec->planeCount() && !stopScan; ++j)
-                        {
-                            Plane const &plane = scanSec->plane(j);
-
-                            if(plane.visHeight() > bottomZ && plane.visHeight() < topZ)
-                            {
-                                if(!wallDivs->find(plane.visHeight()))
-                                {
-                                    wallDivs->append(plane.visHeight());
-
-                                    // Have we reached the div limit?
-                                    if(wallDivs->count() == WALLDIVS_MAX_INTERCEPTS)
-                                        stopScan = true;
-                                }
-                            }
-
-                            if(!stopScan)
-                            {
-                                // Clip a range bound to this height?
-                                if(plane.type() == Plane::Floor && plane.visHeight() > bottomZ)
-                                    bottomZ = plane.visHeight();
-                                else if(plane.type() == Plane::Ceiling && plane.visHeight() < topZ)
-                                    topZ = plane.visHeight();
-
-                                // All clipped away?
-                                if(bottomZ >= topZ)
-                                    stopScan = true;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        /**
-                         * A zero height sector is a special case. In this
-                         * instance, the potential division is at the height
-                         * of the back ceiling. This is because elsewhere
-                         * we automatically fix the case of a floor above a
-                         * ceiling by lowering the floor.
-                         */
-                        coord_t z = scanSec->ceiling().visHeight();
-
-                        if(z > bottomZ && z < topZ)
-                        {
-                            if(!wallDivs->find(z))
-                            {
-                                wallDivs->append(z);
-
-                                // All clipped away.
-                                stopScan = true;
-                            }
-                        }
-                    }
-                }
-            } while(!stopScan && ++i < 2);
-
-            // Stop the scan when a single sided line is reached.
-            if(!iter->hasFrontSections() || !iter->hasBackSections())
-                stopScan = true;
-        }
-    } while(!stopScan);
-}
-
 /**
- * Ensure the divisions do not exceed the specified range.
- */
-static void assertWallDivsInRange(WallDivs *wd, coord_t low, coord_t hi)
-{
-#ifdef DENG_DEBUG
-    if(wd->isEmpty()) return;
-
-    WallDivs::Intercept *node = &wd->first();
-    forever
-    {
-        DENG2_ASSERT(node->distance() >= low && node->distance() <= hi);
-
-        if(!node->hasNext()) break;
-        node = &node->next();
-    }
-#else
-    DENG2_UNUSED3(wd, low, hi);
-#endif
-}
-
-static void buildWallDiv(WallDivs *wallDivs, HEdge const &hedge,
-   int section, coord_t bottomZ, coord_t topZ, boolean doRight)
-{
-    DENG_ASSERT(wallDivs->isEmpty());
-
-    // Nodes are arranged according to their Z axis height in ascending order.
-    // The first node is the bottom.
-    wallDivs->append(bottomZ);
-
-    // Add nodes for intercepts.
-    addWallDivNodesForPlaneIntercepts(hedge, wallDivs, section, bottomZ, topZ, doRight);
-
-    // The last node is the top.
-    wallDivs->append(topZ);
-
-    if(!(wallDivs->count() > 2)) return;
-
-    wallDivs->sort();
-    assertWallDivsInRange(wallDivs, bottomZ, topZ);
-}
-
-/**
- * Prepare wall division data for a section of the HEdge.
+ * Determines the side relative sectors for producing wall section geometry.
  *
- * @param section        Line::Side section to prepare divisions for.
- * @param leftWallDivs   Division data for the left edge is written here.
- * @param rightWallDivs  Division data for the right edge is written here.
- * @param materialOrigin Material origin offset data is written here. Can be @c 0.
+ * @pre @a hedge has an attributed map line side.
  *
- * @return  @c true if divisions were prepared (the specified @a section has a
- *          non-zero Z axis height).
+ * @param hedge          Half-edge describing the map line segment.
+ *
+ * Return values:
+ * @param frontSec       Front sector for the wall section is written here. Can be @c 0.
+ * @param backSec        Back sector for the wall section is written here. Can be @c 0.
  */
-static bool prepareWallDivs(HEdge &hedge, int section, WallDivs *leftWallDivs,
-    WallDivs *rightWallDivs, Vector2f *materialOrigin)
+static void wallSectionSectors(HEdge &hedge, Sector **frontSec, Sector **backSec)
 {
     DENG_ASSERT(hedge.hasLineSide());
 
-    Sector const *frontSec, *backSec;
-
     if(!hedge.line().isSelfReferencing())
     {
-        frontSec = hedge.bspLeafSectorPtr();
-        backSec  = hedge.hasTwin()? hedge.twin().bspLeafSectorPtr() : 0;
+        if(frontSec) *frontSec = hedge.bspLeafSectorPtr();
+        if(backSec)  *backSec  = hedge.hasTwin()? hedge.twin().bspLeafSectorPtr() : 0;
+
+        return;
     }
-    else
-    {
-        frontSec = backSec = hedge.lineSide().sectorPtr();
-    }
+
+    // Special case: so called "self-referencing" lines use the sector's of the map line.
+    if(frontSec) *frontSec = hedge.lineSide().sectorPtr();
+    if(backSec)  *backSec  = hedge.lineSide().sectorPtr();
+}
+
+/**
+ * Prepare wall section edge data for a map line segment.
+ *
+ * Return values:
+ * @param leftEdge        Edge data the left of the wall section is written here.
+ * @param rightEdge       Edge data the right of the wall section is written here.
+ * @param materialOrigin  Material origin offset data is written here.
+ *
+ * @return  @c true iff the resultant edges describe a polygon with a positive area.
+ */
+static bool prepareWallSectionEdges(SectionEdge &leftEdge, SectionEdge &rightEdge,
+                                    Vector2f &materialOrigin)
+{
+    HEdge &hedge = leftEdge.hedge();
+    int const section = leftEdge.section();
+
+    Sector *frontSec, *backSec;
+    wallSectionSectors(hedge, &frontSec, &backSec);
 
     coord_t bottom, top;
     bool visible = R_SideSectionCoords(hedge.lineSide(), section, frontSec, backSec,
-                                       &bottom, &top, materialOrigin);
-
-    if(materialOrigin)
-    {
-        materialOrigin->x += float(hedge.lineOffset());
-    }
+                                       &bottom, &top, &materialOrigin);
 
     if(!visible) return false;
 
-    buildWallDiv(leftWallDivs,  hedge, section, bottom, top, false /* left-edge */);
-    buildWallDiv(rightWallDivs, hedge, section, bottom, top, true /* right-edge */);
+    leftEdge.prepare(bottom, top);
+    rightEdge.prepare(bottom, top);
+
+    materialOrigin.x += float(leftEdge.offset());
 
     return true;
 }
 
 /**
  * Prepare and write wall sections for a "one-sided" line to the render lists.
+ *
+ * @pre currentBspLeaf is set to the BSP leaf which "contains" the half-edge.
+ * @pre @a hedge has an attributed map line side with sections.
+ * @pre @a hedge is front facing.
  *
  * @param hedge  HEdge to draw wall sections for.
  * @param sections  @ref sideSectionFlags
@@ -2118,42 +1996,45 @@ static bool writeWallSections2(HEdge &hedge, int sections)
     // Only a "middle" section.
     if(!(sections & Line::Side::MiddleFlag)) return false;
 
-    WallDivs leftWallDivs, rightWallDivs;
+    int const section = Line::Side::Middle;
+    SectionEdge leftEdge(hedge, section, false /* left edge */);
+    SectionEdge rightEdge(hedge, section, true /* right edge */);
     Vector2f materialOrigin;
     bool opaque = false;
 
-    if(prepareWallDivs(hedge, Line::Side::Middle, &leftWallDivs, &rightWallDivs,
-                       &materialOrigin))
+    if(prepareWallSectionEdges(leftEdge, rightEdge, materialOrigin))
     {
-        Rend_RadioUpdateForLineSide(hedge.lineSide());
-
-        int wsFlags = WSF_ADD_DYNLIGHTS|WSF_ADD_DYNSHADOWS|WSF_ADD_RADIO;
-
-        opaque = writeWallSection(hedge, Line::Side::Middle, wsFlags,
-                                  &leftWallDivs, &rightWallDivs, materialOrigin);
+        opaque = writeWallSection(leftEdge, rightEdge, materialOrigin,
+                                  hedge, hedge.biasSurfaceForGeometryGroup(section));
     }
 
     reportWallSectionDrawn(hedge.line());
     return opaque;
 }
 
-static bool prepareWallDivsPolyobj(Line::Side const &side, int section,
-    WallDivs *leftWallDivs, WallDivs *rightWallDivs, Vector2f *materialOrigin = 0)
+static void prepareSectionEdgePolyobj(SectionEdge &edge, HEdge &hedge, int section,
+    coord_t bottom, coord_t top, int right)
+{
+    DENG2_UNUSED3(hedge, section, right);
+    edge.wallDivs.intercept(bottom); // First node.
+    edge.wallDivs.intercept(top); // Last node.
+    edge.configure();
+}
+
+static bool prepareSectionEdgesPolyobj(HEdge &hedge, int section,
+    SectionEdge &leftEdge, SectionEdge &rightEdge, Vector2f &materialOrigin)
 {
     BspLeaf *leaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(leaf));
 
     coord_t bottom, top;
-    bool visible = R_SideSectionCoords(side, section, leaf->sectorPtr(), 0,
-                                       &bottom, &top, materialOrigin);
+    bool visible = R_SideSectionCoords(hedge.lineSide(), section, leaf->sectorPtr(), 0,
+                                       &bottom, &top, &materialOrigin);
 
     if(!visible) return false;
 
-    leftWallDivs->append(bottom); // First node.
-    leftWallDivs->append(top); // Last node.
-
-    rightWallDivs->append(bottom); // First node.
-    rightWallDivs->append(top); // Last node.
+    prepareSectionEdgePolyobj(leftEdge, hedge, section, bottom, top, false /*left edge */);
+    prepareSectionEdgePolyobj(rightEdge, hedge, section, bottom, top, true /*right edge */);
 
     return true;
 }
@@ -2170,19 +2051,16 @@ static bool writeWallSections2Polyobj(HEdge &hedge, int sections)
     // Only a "middle" section.
     if(!(sections & Line::Side::MiddleFlag)) return false;
 
-    WallDivs leftWallDivs, rightWallDivs;
+    int const section = Line::Side::Middle;
+    SectionEdge leftEdge(hedge, section, false /* left edge */);
+    SectionEdge rightEdge(hedge, section, true /* right edge */);
     Vector2f materialOrigin;
     bool opaque = false;
 
-    if(prepareWallDivsPolyobj(hedge.lineSide(), Line::Side::Middle,
-                              &leftWallDivs, &rightWallDivs, &materialOrigin))
+    if(prepareSectionEdgesPolyobj(hedge, section, leftEdge, rightEdge, materialOrigin))
     {
-        Rend_RadioUpdateForLineSide(hedge.lineSide());
-
-        int wsFlags = WSF_ADD_DYNLIGHTS|WSF_ADD_DYNSHADOWS|WSF_ADD_RADIO;
-
-        opaque = writeWallSection(hedge, Line::Side::Middle, wsFlags,
-                                  &leftWallDivs, &rightWallDivs, materialOrigin);
+        opaque = writeWallSection(leftEdge, rightEdge, materialOrigin,
+                                  hedge, hedge.biasSurfaceForGeometryGroup(section));
     }
 
     reportWallSectionDrawn(hedge.line());
@@ -2227,22 +2105,22 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
     // Middle section?
     if(sections & Line::Side::MiddleFlag)
     {
-        WallDivs leftWallDivs, rightWallDivs;
+        int const section = Line::Side::Middle;
+        SectionEdge leftEdge(hedge, section, false /* left edge */);
+        SectionEdge rightEdge(hedge, section, true /* right edge */);
         Vector2f materialOrigin;
 
-        if(prepareWallDivs(hedge, Line::Side::Middle, &leftWallDivs, &rightWallDivs,
-                           &materialOrigin))
+        if(prepareWallSectionEdges(leftEdge, rightEdge, materialOrigin))
         {
-            int rhFlags = WSF_ADD_DYNLIGHTS|WSF_ADD_DYNSHADOWS|WSF_ADD_RADIO;
+            int wsFlags = DEFAULT_WRITE_WALL_SECTION_FLAGS;
 
             if((viewPlayer->shared.flags & (DDPF_NOCLIP|DDPF_CAMERA)) ||
                !(line.isFlagged(DDLF_BLOCKING)))
-                rhFlags |= WSF_VIEWER_NEAR_BLEND;
+                wsFlags |= WSF_VIEWER_NEAR_BLEND;
 
-            Rend_RadioUpdateForLineSide(hedge.lineSide());
-
-            opaque = writeWallSection(hedge, Line::Side::Middle, rhFlags,
-                                      &leftWallDivs, &rightWallDivs, materialOrigin);
+            opaque = writeWallSection(leftEdge, rightEdge, materialOrigin,
+                                      hedge, hedge.biasSurfaceForGeometryGroup(section),
+                                      wsFlags);
             if(opaque)
             {
                 Surface &surface = front.middle();
@@ -2263,8 +2141,8 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
                 xtop    += surface.visMaterialOrigin()[VY];
 
                 // Can we make this a solid segment?
-                if(!(rightWallDivs.last().distance() >= xtop &&
-                     leftWallDivs.first().distance() <= xbottom))
+                if(!(rightEdge.top().distance() >= xtop &&
+                     leftEdge.bottom().distance() <= xbottom))
                      opaque = false;
             }
         }
@@ -2273,32 +2151,30 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
     // Upper section?
     if(sections & Line::Side::TopFlag)
     {
-        WallDivs leftWallDivs, rightWallDivs;
+        int const section = Line::Side::Top;
+        SectionEdge leftEdge(hedge, section, false /* left edge */);
+        SectionEdge rightEdge(hedge, section, true /* right edge */);
         Vector2f materialOrigin;
 
-        if(prepareWallDivs(hedge, Line::Side::Top, &leftWallDivs, &rightWallDivs,
-                           &materialOrigin))
+        if(prepareWallSectionEdges(leftEdge, rightEdge, materialOrigin))
         {
-            Rend_RadioUpdateForLineSide(hedge.lineSide());
-
-            writeWallSection(hedge, Line::Side::Top, WSF_ADD_DYNLIGHTS|WSF_ADD_DYNSHADOWS|WSF_ADD_RADIO,
-                             &leftWallDivs, &rightWallDivs, materialOrigin);
+            writeWallSection(leftEdge, rightEdge, materialOrigin,
+                             hedge, hedge.biasSurfaceForGeometryGroup(section));
         }
     }
 
     // Lower section?
     if(sections & Line::Side::BottomFlag)
     {
-        WallDivs leftWallDivs, rightWallDivs;
+        int const section = Line::Side::Bottom;
+        SectionEdge leftEdge(hedge, section, false /* left edge */);
+        SectionEdge rightEdge(hedge, section, true /* right edge */);
         Vector2f materialOrigin;
 
-        if(prepareWallDivs(hedge, Line::Side::Bottom, &leftWallDivs, &rightWallDivs,
-                           &materialOrigin))
+        if(prepareWallSectionEdges(leftEdge, rightEdge, materialOrigin))
         {
-            Rend_RadioUpdateForLineSide(hedge.lineSide());
-
-            writeWallSection(hedge, Line::Side::Bottom, WSF_ADD_DYNLIGHTS|WSF_ADD_DYNSHADOWS|WSF_ADD_RADIO,
-                             &leftWallDivs, &rightWallDivs, materialOrigin);
+            writeWallSection(leftEdge, rightEdge, materialOrigin,
+                             hedge, hedge.biasSurfaceForGeometryGroup(section));
         }
     }
 

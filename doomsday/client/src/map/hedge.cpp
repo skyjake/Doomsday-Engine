@@ -243,3 +243,294 @@ int HEdge::property(setargs_t &args) const
 
     return false; // Continue iteration.
 }
+
+// ---------------------------------------------------------------------
+
+#include "map/r_world.h" // R_GetVtxLineOwner
+#include "map/lineowner.h"
+
+static int compareIntercepts(void const *e1, void const *e2)
+{
+    ddouble const delta = (*reinterpret_cast<WallDivs::Intercept const *>(e1)) - (*reinterpret_cast<WallDivs::Intercept const *>(e2));
+    if(delta > 0) return 1;
+    if(delta < 0) return -1;
+    return 0;
+}
+
+WallDivs::Intercept *WallDivs::find(ddouble distance) const
+{
+    for(int i = 0; i < _interceptCount; ++i)
+    {
+        Intercept *icpt = const_cast<Intercept *>(&_intercepts[i]);
+        if(icpt->distance() == distance)
+            return icpt;
+    }
+    return 0;
+}
+
+/**
+ * Ensure the intercepts are sorted (in ascending distance order).
+ */
+void WallDivs::assertSorted() const
+{
+#ifdef DENG_DEBUG
+    if(isEmpty()) return;
+
+    WallDivs::Intercept *node = &first();
+    ddouble farthest = node->distance();
+    forever
+    {
+        DENG2_ASSERT(node->distance() >= farthest);
+        farthest = node->distance();
+
+        if(!node->hasNext()) break;
+        node = &node->next();
+    }
+#endif
+}
+
+WallDivs::Intercept::Intercept(ddouble distance)
+    : _distance(distance), _wallDivs(0)
+{}
+
+bool WallDivs::intercept(ddouble distance)
+{
+    if(find(distance))
+        return false;
+
+    Intercept *icpt = &_intercepts[_interceptCount++];
+    icpt->_wallDivs = this;
+    icpt->_distance = distance;
+    return true;
+}
+
+void WallDivs::sort()
+{
+    if(count() < 2) return;
+
+    // Sorting is required. This shouldn't take too long...
+    // There seldom are more than two or three intercepts.
+    qsort(_intercepts, _interceptCount, sizeof(*_intercepts), compareIntercepts);
+    assertSorted();
+}
+
+#ifdef DENG_DEBUG
+void WallDivs::printIntercepts() const
+{
+    // Stub.
+}
+#endif
+
+WallDivs::Intercepts const &WallDivs::intercepts() const
+{
+    return _intercepts;
+}
+
+SectionEdge::SectionEdge(HEdge &hedge, int section, int right)
+    : _hedge(&hedge),
+      _section(section),
+      _right(right),
+      _interceptCount(0),
+      _firstIntercept(0),
+      _lastIntercept(0)
+{
+    DENG_ASSERT(_hedge->hasLineSide() && _hedge->lineSide().hasSections());
+}
+
+WallDivs::Intercept &SectionEdge::firstDivision() const
+{
+    return _firstIntercept->next();
+}
+
+WallDivs::Intercept &SectionEdge::lastDivision() const
+{
+    return _lastIntercept->prev();
+}
+
+WallDivs::Intercept &SectionEdge::bottom() const
+{
+    return *_firstIntercept;
+}
+
+WallDivs::Intercept &SectionEdge::top() const
+{
+    return *_lastIntercept;
+}
+
+HEdge &SectionEdge::hedge() const
+{
+    return *_hedge;
+}
+
+int SectionEdge::section() const
+{
+    return _section;
+}
+
+Vector2d const &SectionEdge::origin() const
+{
+    return _hedge->vertex(_right).origin();
+}
+
+coord_t SectionEdge::offset() const
+{
+    return _hedge->lineOffset() + (_right? _hedge->length() : 0);
+}
+
+void SectionEdge::addPlaneIntercepts(coord_t bottom, coord_t top)
+{
+    if(!_hedge->hasLineSide()) return;
+
+    Line::Side const &side = _hedge->lineSide();
+    if(side.line().isFromPolyobj()) return;
+
+    // Check for neighborhood division?
+    if(_section == Line::Side::Middle && side.hasSections() && side.back().hasSections())
+        return;
+
+    // Only sections at line side edges can/should be split.
+    if(!((_hedge == side.leftHEdge()  && !_right) ||
+         (_hedge == side.rightHEdge() &&  _right)))
+        return;
+
+    if(bottom >= top) return; // Obviously no division.
+
+    Sector const *frontSec = side.sectorPtr();
+
+    LineOwner::Direction direction(_right? LineOwner::Previous : LineOwner::Next);
+    // Retrieve the start owner node.
+    LineOwner *base = R_GetVtxLineOwner(&side.line().vertex(_right), &side.line());
+    LineOwner *own = base;
+    bool stopScan = false;
+    do
+    {
+        own = &own->navigate(direction);
+
+        if(own == base)
+        {
+            stopScan = true;
+        }
+        else
+        {
+            Line *iter = &own->line();
+
+            if(iter->isSelfReferencing())
+                continue;
+
+            uint i = 0;
+            do
+            {
+                // First front, then back.
+                Sector *scanSec = 0;
+                if(!i && iter->hasFrontSections() && iter->frontSectorPtr() != frontSec)
+                    scanSec = iter->frontSectorPtr();
+                else if(i && iter->hasBackSections() && iter->backSectorPtr() != frontSec)
+                    scanSec = iter->backSectorPtr();
+
+                if(scanSec)
+                {
+                    if(scanSec->ceiling().visHeight() - scanSec->floor().visHeight() > 0)
+                    {
+                        for(int j = 0; j < scanSec->planeCount() && !stopScan; ++j)
+                        {
+                            Plane const &plane = scanSec->plane(j);
+
+                            if(plane.visHeight() > bottom && plane.visHeight() < top)
+                            {
+                                if(wallDivs.intercept(plane.visHeight()))
+                                {
+                                    // Have we reached the div limit?
+                                    if(wallDivs.count() == WALLDIVS_MAX_INTERCEPTS)
+                                        stopScan = true;
+                                }
+                            }
+
+                            if(!stopScan)
+                            {
+                                // Clip a range bound to this height?
+                                if(plane.type() == Plane::Floor && plane.visHeight() > bottom)
+                                    bottom = plane.visHeight();
+                                else if(plane.type() == Plane::Ceiling && plane.visHeight() < top)
+                                    top = plane.visHeight();
+
+                                // All clipped away?
+                                if(bottom >= top)
+                                    stopScan = true;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        /**
+                         * A zero height sector is a special case. In this
+                         * instance, the potential division is at the height
+                         * of the back ceiling. This is because elsewhere
+                         * we automatically fix the case of a floor above a
+                         * ceiling by lowering the floor.
+                         */
+                        coord_t z = scanSec->ceiling().visHeight();
+
+                        if(z > bottom && z < top)
+                        {
+                            if(wallDivs.intercept(z))
+                            {
+                                // All clipped away.
+                                stopScan = true;
+                            }
+                        }
+                    }
+                }
+            } while(!stopScan && ++i < 2);
+
+            // Stop the scan when a single sided line is reached.
+            if(!iter->hasFrontSections() || !iter->hasBackSections())
+                stopScan = true;
+        }
+    } while(!stopScan);
+}
+
+/**
+ * Ensure the divisions do not exceed the specified range.
+ */
+void SectionEdge::assertDivisionsInRange(coord_t low, coord_t hi)
+{
+#ifdef DENG_DEBUG
+    if(wallDivs.isEmpty()) return;
+
+    WallDivs::Intercept *node = &wallDivs.first();
+    forever
+    {
+        DENG2_ASSERT(node->distance() >= low && node->distance() <= hi);
+
+        if(!node->hasNext()) break;
+        node = &node->next();
+    }
+#else
+    DENG2_UNUSED2(low, hi);
+#endif
+}
+
+void SectionEdge::prepare(coord_t bottom, coord_t top)
+{
+    DENG_ASSERT(wallDivs.isEmpty());
+
+    // Nodes are arranged according to their Z axis height in ascending order.
+    // The first node is the bottom.
+    wallDivs.intercept(bottom);
+
+    // Add nodes for intercepts.
+    addPlaneIntercepts(bottom, top);
+
+    // The last node is the top.
+    wallDivs.intercept(top);
+
+    if(wallDivs.count() > 2)
+    {
+        wallDivs.sort();
+        assertDivisionsInRange(bottom, top);
+    }
+
+    _firstIntercept = &wallDivs.first();
+    _lastIntercept = &wallDivs.last();
+    _interceptCount = wallDivs.count();
+}

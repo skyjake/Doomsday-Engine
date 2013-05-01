@@ -371,15 +371,15 @@ void Rtu_TranslateOffset(rtexmapunit_t *rtu, Vector2f const &st)
     rtu->offset[1] += st.y;
 }
 
-void R_DivVerts(rvertex_t *dst, rvertex_t const *src, WallDivs::Intercept *leftDivFirst,
-    uint leftDivCount, WallDivs::Intercept *rightDivFirst, uint rightDivCount)
+void R_DivVerts(rvertex_t *dst, rvertex_t const *src,
+    SectionEdge const &leftEdge, SectionEdge const &rightEdge)
 {
 #define COPYVERT(d, s)  (d)->pos[VX] = (s)->pos[VX]; \
     (d)->pos[VY] = (s)->pos[VY]; \
     (d)->pos[VZ] = (s)->pos[VZ];
 
-    uint const numR = 3 + (rightDivFirst && rightDivCount? rightDivCount : 0);
-    uint const numL = 3 +  (leftDivFirst && leftDivCount ? leftDivCount  : 0);
+    int const numR = 3 + rightEdge.divisionCount();
+    int const numL = 3 + leftEdge.divisionCount();
 
     if(numR + numL == 6) return; // Nothing to do.
 
@@ -388,10 +388,10 @@ void R_DivVerts(rvertex_t *dst, rvertex_t const *src, WallDivs::Intercept *leftD
     COPYVERT(&dst[numL + 1], &src[3]);
     COPYVERT(&dst[numL + numR - 1], &src[2]);
 
-    if(numR > 3)
+    if(rightEdge.divisionCount())
     {
-        WallDivs::Intercept *wdn = rightDivFirst;
-        for(uint n = 0; n < numR - 3; ++n, wdn = &wdn->prev())
+        WallDivs::Intercept const *wdn = &rightEdge.lastDivision();
+        for(int n = 0; n < numR - 3; ++n, wdn = &wdn->prev())
         {
             dst[numL + 2 + n].pos[VX] = src[2].pos[VX];
             dst[numL + 2 + n].pos[VY] = src[2].pos[VY];
@@ -404,10 +404,10 @@ void R_DivVerts(rvertex_t *dst, rvertex_t const *src, WallDivs::Intercept *leftD
     COPYVERT(&dst[1], &src[0]);
     COPYVERT(&dst[numL - 1], &src[1]);
 
-    if(numL > 3)
+    if(leftEdge.divisionCount())
     {
-        WallDivs::Intercept *wdn = leftDivFirst;
-        for(uint n = 0; n < numL - 3; ++n, wdn = &wdn->next())
+        WallDivs::Intercept const *wdn = &leftEdge.firstDivision();
+        for(int n = 0; n < numL - 3; ++n, wdn = &wdn->next())
         {
             dst[2 + n].pos[VX] = src[0].pos[VX];
             dst[2 + n].pos[VY] = src[0].pos[VY];
@@ -418,15 +418,15 @@ void R_DivVerts(rvertex_t *dst, rvertex_t const *src, WallDivs::Intercept *leftD
 #undef COPYVERT
 }
 
-void R_DivTexCoords(rtexcoord_t *dst, rtexcoord_t const *src, WallDivs::Intercept *leftDivFirst,
-    uint leftDivCount, WallDivs::Intercept *rightDivFirst, uint rightDivCount,
+void R_DivTexCoords(rtexcoord_t *dst, rtexcoord_t const *src,
+    SectionEdge const &leftEdge, SectionEdge const &rightEdge,
     float bL, float tL, float bR, float tR)
 {
 #define COPYTEXCOORD(d, s)    (d)->st[0] = (s)->st[0]; \
     (d)->st[1] = (s)->st[1];
 
-    uint const numR = 3 + (rightDivFirst && rightDivCount? rightDivCount : 0);
-    uint const numL = 3 +  (leftDivFirst && leftDivCount ? leftDivCount  : 0);
+    int const numR = 3 + rightEdge.divisionCount();
+    int const numL = 3 + leftEdge.divisionCount();
 
     if(numR + numL == 6) return; // Nothing to do.
 
@@ -435,12 +435,12 @@ void R_DivTexCoords(rtexcoord_t *dst, rtexcoord_t const *src, WallDivs::Intercep
     COPYTEXCOORD(&dst[numL + 1], &src[3]);
     COPYTEXCOORD(&dst[numL + numR-1], &src[2]);
 
-    if(numR > 3)
+    if(rightEdge.divisionCount())
     {
-        WallDivs::Intercept *wdn = rightDivFirst;
+        WallDivs::Intercept const *wdn = &rightEdge.lastDivision();
         float const height = tR - bR;
         float inter;
-        for(uint n = 0; n < numR - 3; ++n, wdn = &wdn->prev())
+        for(int n = 0; n < numR - 3; ++n, wdn = &wdn->prev())
         {
             inter = (float( wdn->distance() ) - bR) / height;
             dst[numL + 2 + n].st[0] = src[3].st[0];
@@ -453,12 +453,12 @@ void R_DivTexCoords(rtexcoord_t *dst, rtexcoord_t const *src, WallDivs::Intercep
     COPYTEXCOORD(&dst[1], &src[0]);
     COPYTEXCOORD(&dst[numL - 1], &src[1]);
 
-    if(numL > 3)
+    if(leftEdge.divisionCount())
     {
-        WallDivs::Intercept *wdn = leftDivFirst;
+        WallDivs::Intercept const *wdn = &leftEdge.firstDivision();
         float const height = tL - bL;
         float inter;
-        for(uint n = 0; n < numL - 3; ++n, wdn = &wdn->next())
+        for(int n = 0; n < numL - 3; ++n, wdn = &wdn->next())
         {
             inter = (float( wdn->distance() ) - bL) / height;
             dst[2 + n].st[0] = src[0].st[0];
@@ -468,8 +468,8 @@ void R_DivTexCoords(rtexcoord_t *dst, rtexcoord_t const *src, WallDivs::Intercep
 #undef COPYTEXCOORD
 }
 
-void R_DivVertColors(ColorRawf *dst, ColorRawf const *src, WallDivs::Intercept *leftDivFirst,
-    uint leftDivCount, WallDivs::Intercept *rightDivFirst, uint rightDivCount,
+void R_DivVertColors(ColorRawf *dst, ColorRawf const *src,
+    SectionEdge const &leftEdge, SectionEdge const &rightEdge,
     float bL, float tL, float bR, float tR)
 {
 #define COPYVCOLOR(d, s)    (d)->rgba[CR] = (s)->rgba[CR]; \
@@ -477,8 +477,8 @@ void R_DivVertColors(ColorRawf *dst, ColorRawf const *src, WallDivs::Intercept *
     (d)->rgba[CB] = (s)->rgba[CB]; \
     (d)->rgba[CA] = (s)->rgba[CA];
 
-    uint const numR = 3 + (rightDivFirst && rightDivCount? rightDivCount : 0);
-    uint const numL = 3 +  (leftDivFirst && leftDivCount ? leftDivCount  : 0);
+    int const numR = 3 + rightEdge.divisionCount();
+    int const numL = 3 + leftEdge.divisionCount();
 
     if(numR + numL == 6) return; // Nothing to do.
 
@@ -487,15 +487,15 @@ void R_DivVertColors(ColorRawf *dst, ColorRawf const *src, WallDivs::Intercept *
     COPYVCOLOR(&dst[numL + 1], &src[3]);
     COPYVCOLOR(&dst[numL + numR-1], &src[2]);
 
-    if(numR > 3)
+    if(rightEdge.divisionCount())
     {
-        WallDivs::Intercept *wdn = rightDivFirst;
+        WallDivs::Intercept const *wdn = &rightEdge.lastDivision();
         float const height = tR - bR;
         float inter;
-        for(uint n = 0; n < numR - 3; ++n, wdn = &wdn->prev())
+        for(int n = 0; n < numR - 3; ++n, wdn = &wdn->prev())
         {
             inter = (float( wdn->distance() ) - bR) / height;
-            for(uint c = 0; c < 4; ++c)
+            for(int c = 0; c < 4; ++c)
             {
                 dst[numL + 2 + n].rgba[c] = src[2].rgba[c] + (src[3].rgba[c] - src[2].rgba[c]) * inter;
             }
@@ -507,15 +507,15 @@ void R_DivVertColors(ColorRawf *dst, ColorRawf const *src, WallDivs::Intercept *
     COPYVCOLOR(&dst[1], &src[0]);
     COPYVCOLOR(&dst[numL - 1], &src[1]);
 
-    if(numL > 3)
+    if(leftEdge.divisionCount())
     {
-        WallDivs::Intercept *wdn = leftDivFirst;
+        WallDivs::Intercept const *wdn = &leftEdge.firstDivision();
         float const height = tL - bL;
         float inter;
-        for(uint n = 0; n < numL - 3; ++n, wdn = &wdn->next())
+        for(int n = 0; n < numL - 3; ++n, wdn = &wdn->next())
         {
             inter = (float( wdn->distance() ) - bL) / height;
-            for(uint c = 0; c < 4; ++c)
+            for(int c = 0; c < 4; ++c)
             {
                 dst[2 + n].rgba[c] = src[0].rgba[c] + (src[1].rgba[c] - src[0].rgba[c]) * inter;
             }

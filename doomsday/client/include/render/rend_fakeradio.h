@@ -34,11 +34,11 @@
 #ifndef DENG_RENDER_FAKERADIO
 #define DENG_RENDER_FAKERADIO
 
+#include "HEdge"
 #include "Line"
-#include "Vertex"
 #include "Sector"
-#include "render/rendpoly.h"
-#include "render/walldiv.h"
+#include "Vertex"
+//#include "render/rendpoly.h"
 
 /**
  * Used to link a line to a BSP leaf for the purposes of FakeRadio shadowing.
@@ -159,16 +159,8 @@ struct RendRadioWallSectionParms
     coord_t segLength;
     Line const *line;
     Sector const *frontSec, *backSec;
-    struct {
-        struct {
-            de::WallDivs::Intercept *firstDiv;
-            uint divCount;
-        } left;
-        struct {
-            de::WallDivs::Intercept *firstDiv;
-            uint divCount;
-        } right;
-    } wall;
+    SectionEdge const *leftEdge;
+    SectionEdge const *rightEdge;
 };
 
 /**

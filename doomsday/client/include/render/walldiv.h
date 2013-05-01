@@ -37,19 +37,23 @@ public:
     class Intercept
     {
     protected:
-        Intercept() : _wallDivs(0), _distance(0) {}
+        Intercept(ddouble distance = 0);
 
     public:
-        ddouble operator - (Intercept const &other) const
-        {
-            return distance() - other.distance();
+        bool operator < (Intercept const &other) const {
+            return _distance < other._distance;
         }
 
-        bool operator < (Intercept const &other) const
-        {
-            return distance() < other.distance();
+        /**
+         * Determine the distance between "this" and the @a other intercept.
+         */
+        ddouble operator - (Intercept const &other) const {
+            return _distance - other._distance;
         }
 
+        /**
+         * Returns distance along the half-plane relative to the origin.
+         */
         ddouble distance() const { return _distance; }
 
         bool hasNext() const
@@ -84,11 +88,17 @@ public:
             throw WallDivs::MissingInterceptError("WallDivs::Intercept", "No previous neighbor");
         }
 
+#ifdef DENG_DEBUG
+        void debugPrint() const;
+#endif
+
         friend class WallDivs;
 
     private:
-        WallDivs *_wallDivs;
+        /// Distance along the half-plane relative to the origin.
         ddouble _distance;
+
+        WallDivs *_wallDivs;
     };
 
     typedef Intercept Intercepts[WALLDIVS_MAX_INTERCEPTS];
@@ -121,80 +131,27 @@ public:
         throw MissingInterceptError("WallDivs::last", "Intercepts list is empty");
     }
 
-    void append(ddouble distance)
-    {
-        Intercept *node = &_intercepts[_interceptCount++];
-        node->_wallDivs = this;
-        node->_distance = distance;
-    }
+    bool intercept(ddouble distance);
 
-    Intercept *find(ddouble distance) const
-    {
-        for(int i = 0; i < _interceptCount; ++i)
-        {
-            Intercept *icpt = const_cast<Intercept *>(&_intercepts[i]);
-            if(icpt->distance() == distance)
-                return icpt;
-        }
-        return 0;
-    }
-
-    static int compareIntercepts(void const *e1, void const *e2)
-    {
-        ddouble const delta = (*reinterpret_cast<Intercept const *>(e1)) - (*reinterpret_cast<Intercept const *>(e2));
-        if(delta > 0) return 1;
-        if(delta < 0) return -1;
-        return 0;
-    }
-
-    void sort()
-    {
-        if(count() < 2) return;
-
-        // Sorting is required. This shouldn't take too long...
-        // There seldom are more than two or three intercepts.
-        qsort(_intercepts, _interceptCount, sizeof(*_intercepts), compareIntercepts);
-        assertSorted();
-    }
+    void sort();
 
 #ifdef DENG_DEBUG
-    void debugPrint() const
-    {
-        LOG_DEBUG("WallDivs [%p]:") << de::dintptr(this);
-        for(int i = 0; i < _interceptCount; ++i)
-        {
-            Intercept const *node = &_intercepts[i];
-            LOG_DEBUG("  %i: %f") << i << node->distance();
-        }
-    }
+    void printIntercepts() const;
 #endif
 
-    Intercepts const &intercepts() const
-    {
-        return _intercepts;
-    }
+    /**
+     * Returns the list of intercepts for the half-plane for efficient traversal.
+     *
+     * @note This list may or may not yet be sorted. If a sorted list is desired
+     * then sortAndMergeIntercepts() should first be called.
+     *
+     * @see interceptLineSegment(), intercepts()
+     */
+    Intercepts const &intercepts() const;
 
 private:
-    /**
-     * Ensure the intercepts are sorted (in ascending distance order).
-     */
-    void assertSorted() const
-    {
-#ifdef DENG_DEBUG
-        if(isEmpty()) return;
-
-        WallDivs::Intercept *node = &first();
-        ddouble farthest = node->distance();
-        forever
-        {
-            DENG2_ASSERT(node->distance() >= farthest);
-            farthest = node->distance();
-
-            if(!node->hasNext()) break;
-            node = &node->next();
-        }
-#endif
-    }
+    Intercept *find(ddouble distance) const;
+    void assertSorted() const;
 
     int _interceptCount;
     Intercepts _intercepts;

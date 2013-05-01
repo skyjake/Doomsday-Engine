@@ -203,6 +203,7 @@ static void drawShadow(shadowprojection_t const &sp, rendershadowprojectionparam
     rvertex_t *rvertices = R_AllocRendVertices(parm.realNumVertices);
     rtexcoord_t *rtexcoords = R_AllocRendTexCoords(parm.realNumVertices);
     ColorRawf *rcolors = R_AllocRendColors(parm.realNumVertices);
+    bool const mustSubdivide = (parm.isWall && (parm.wall.leftEdge->divisionCount() || parm.wall.rightEdge->divisionCount() ));
 
     for(uint i = 0; i < parm.numVertices; ++i)
     {
@@ -217,12 +218,15 @@ static void drawShadow(shadowprojection_t const &sp, rendershadowprojectionparam
 
     if(parm.isWall)
     {
+        SectionEdge const &leftEdge = *parm.wall.leftEdge;
+        SectionEdge const &rightEdge = *parm.wall.rightEdge;
+
         rtexcoords[1].st[0] = rtexcoords[0].st[0] = sp.s[0];
         rtexcoords[1].st[1] = rtexcoords[3].st[1] = sp.t[0];
         rtexcoords[3].st[0] = rtexcoords[2].st[0] = sp.s[1];
         rtexcoords[2].st[1] = rtexcoords[0].st[1] = sp.t[1];
 
-        if(parm.wall.left.divCount || parm.wall.right.divCount)
+        if(mustSubdivide)
         {
             // We need to subdivide the projection quad.
 
@@ -241,9 +245,9 @@ static void drawShadow(shadowprojection_t const &sp, rendershadowprojectionparam
             float bR = parm.rvertices[2].pos[VZ];
             float tR = parm.rvertices[3].pos[VZ];
 
-            R_DivVerts(rvertices, origVerts, parm.wall.left.firstDiv, parm.wall.left.divCount, parm.wall.right.firstDiv, parm.wall.right.divCount);
-            R_DivTexCoords(rtexcoords, origTexCoords, parm.wall.left.firstDiv, parm.wall.left.divCount, parm.wall.right.firstDiv, parm.wall.right.divCount, bL, tL, bR, tR);
-            R_DivVertColors(rcolors, origColors, parm.wall.left.firstDiv, parm.wall.left.divCount, parm.wall.right.firstDiv, parm.wall.right.divCount, bL, tL, bR, tR);
+            R_DivVerts(rvertices, origVerts, leftEdge, rightEdge);
+            R_DivTexCoords(rtexcoords, origTexCoords, leftEdge, rightEdge, bL, tL, bR, tR);
+            R_DivVertColors(rcolors, origColors, leftEdge, rightEdge, bL, tL, bR, tR);
         }
         else
         {
@@ -268,18 +272,27 @@ static void drawShadow(shadowprojection_t const &sp, rendershadowprojectionparam
         std::memcpy(rvertices, parm.rvertices, sizeof(rvertex_t) * parm.numVertices);
     }
 
-    if(parm.isWall && (parm.wall.left.divCount || parm.wall.right.divCount))
+    if(mustSubdivide)
     {
+        SectionEdge const &leftEdge = *parm.wall.leftEdge;
+        SectionEdge const &rightEdge = *parm.wall.rightEdge;
+        int const leftInterceptCount = leftEdge.divisionCount();
+        int const rightInterceptCount = rightEdge.divisionCount();
+
         RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
-            3 + parm.wall.right.divCount, rvertices + 3 + parm.wall.left.divCount,
-            rcolors + 3 + parm.wall.left.divCount, rtexcoords + 3 + parm.wall.left.divCount, NULL);
+                             3 + rightInterceptCount,
+                             rvertices + 3 + leftInterceptCount,
+                             rcolors + 3 + leftInterceptCount,
+                             rtexcoords + 3 + leftInterceptCount,
+                             0);
         RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
-            3 + parm.wall.left.divCount, rvertices, rcolors, rtexcoords, NULL);
+                             3 + leftInterceptCount,
+                             rvertices, rcolors, rtexcoords, 0);
     }
     else
     {
         RL_AddPolyWithCoords(parm.isWall? PT_TRIANGLE_STRIP : PT_FAN, RPF_DEFAULT|RPF_SHADOW,
-            parm.numVertices, rvertices, rcolors, rtexcoords, NULL);
+                             parm.numVertices, rvertices, rcolors, rtexcoords, 0);
     }
 
     R_FreeRendVertices(rvertices);

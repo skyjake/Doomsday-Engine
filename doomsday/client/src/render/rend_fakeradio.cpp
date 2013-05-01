@@ -981,18 +981,20 @@ static void drawWallSectionShadow(rvertex_t const *origVertices,
     rendershadowseg_params_t const &wsParms, RendRadioWallSectionParms const &parms)
 {
     DENG_ASSERT(origVertices);
+    SectionEdge const &leftEdge = *parms.leftEdge;
+    SectionEdge const &rightEdge = *parms.rightEdge;
+    int const leftInterceptCount = leftEdge.divisionCount();
+    int const rightInterceptCount = rightEdge.divisionCount();
+    bool const mustSubdivide = (leftEdge.divisionCount() || rightEdge.divisionCount());
 
-    float texOrigin[2][3];
-    ColorRawf *rcolors;
-    rtexcoord_t *rtexcoords;
     uint realNumVertices = 4;
-
-    if(parms.wall.left.divCount || parms.wall.right.divCount)
-        realNumVertices = 3 + parms.wall.left.divCount + 3 + parms.wall.right.divCount;
+    if(mustSubdivide)
+        realNumVertices = 3 + leftInterceptCount + 3 + rightInterceptCount;
     else
         realNumVertices = 4;
 
     // Top left.
+    float texOrigin[2][3];
     texOrigin[0][VX] = origVertices[1].pos[VX];
     texOrigin[0][VY] = origVertices[1].pos[VY];
     texOrigin[0][VZ] = origVertices[1].pos[VZ];
@@ -1003,8 +1005,8 @@ static void drawWallSectionShadow(rvertex_t const *origVertices,
     texOrigin[1][VZ] = origVertices[2].pos[VZ];
 
     // Allocate enough for the divisions too.
-    rtexcoords = R_AllocRendTexCoords(realNumVertices);
-    rcolors = R_AllocRendColors(realNumVertices);
+    rtexcoord_t *rtexcoords = R_AllocRendTexCoords(realNumVertices);
+    ColorRawf *rcolors = R_AllocRendColors(realNumVertices);
 
     quadTexCoords(rtexcoords, origVertices, wsParms.wallLength, wsParms.texWidth,
                   wsParms.texHeight, texOrigin, wsParms.texOffset,
@@ -1019,7 +1021,7 @@ static void drawWallSectionShadow(rvertex_t const *origVertices,
         RL_Rtu_SetTextureUnmanaged(RTU_PRIMARY, GL_PrepareLSTexture(wsParms.texture),
                                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
-        if(parms.wall.left.divCount || parms.wall.right.divCount)
+        if(mustSubdivide)
         {
             /*
              * Need to swap indices around into fans set the position
@@ -1040,22 +1042,26 @@ static void drawWallSectionShadow(rvertex_t const *origVertices,
             float const bR = origVertices[2].pos[VZ];
             float const tR = origVertices[3].pos[VZ];
 
-            R_DivVerts(rvertices, origVertices, parms.wall.left.firstDiv, parms.wall.left.divCount, parms.wall.right.firstDiv, parms.wall.right.divCount);
-            R_DivTexCoords(rtexcoords, origTexCoords, parms.wall.left.firstDiv, parms.wall.left.divCount, parms.wall.right.firstDiv, parms.wall.right.divCount, bL, tL, bR, tR);
-            R_DivVertColors(rcolors, origColors, parms.wall.left.firstDiv, parms.wall.left.divCount, parms.wall.right.firstDiv, parms.wall.right.divCount, bL, tL, bR, tR);
+            R_DivVerts(rvertices, origVertices, leftEdge, rightEdge);
+            R_DivTexCoords(rtexcoords, origTexCoords, leftEdge, rightEdge, bL, tL, bR, tR);
+            R_DivVertColors(rcolors, origColors, leftEdge, rightEdge, bL, tL, bR, tR);
 
             RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
-                3 + parms.wall.right.divCount, rvertices + 3 + parms.wall.left.divCount, rcolors + 3 + parms.wall.left.divCount,
-                rtexcoords + 3 + parms.wall.left.divCount, NULL);
+                                 3 + rightInterceptCount,
+                                 rvertices + 3 + leftInterceptCount,
+                                 rcolors + 3 + leftInterceptCount,
+                                 rtexcoords + 3 + leftInterceptCount,
+                                 0);
             RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
-                3 + parms.wall.left.divCount, rvertices, rcolors, rtexcoords, NULL);
+                                 3 + leftInterceptCount,
+                                 rvertices, rcolors, rtexcoords, 0);
 
             R_FreeRendVertices(rvertices);
         }
         else
         {
             RL_AddPolyWithCoords(PT_TRIANGLE_STRIP, RPF_DEFAULT|RPF_SHADOW,
-                4, origVertices, rcolors, rtexcoords, NULL);
+                                 4, origVertices, rcolors, rtexcoords, 0);
         }
     }
 
