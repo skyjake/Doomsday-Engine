@@ -43,6 +43,8 @@ File::File(String const &fileName)
 
 File::~File()
 {
+    DENG2_GUARD(this);
+
     DENG2_FOR_AUDIENCE(Deletion, i) i->fileBeingDeleted(*this);
 
     flush();
@@ -80,6 +82,8 @@ FileSystem &File::fileSystem()
 
 String File::description() const
 {
+    DENG2_GUARD(this);
+
     String desc = describe();
     if(parent())
     {
@@ -107,11 +111,15 @@ String File::describe() const
 
 void File::setOriginFeed(Feed *feed)
 {
+    DENG2_GUARD(this);
+
     _originFeed = feed;
 }
 
 String const File::path() const
 {
+    DENG2_GUARD(this);
+
     String thePath = name();
     for(Folder *i = _parent; i; i = i->_parent)
     {
@@ -122,6 +130,8 @@ String const File::path() const
         
 void File::setSource(File *source)
 {
+    DENG2_GUARD(this);
+
     if(_source != this)
     {
         // Delete the old source.
@@ -132,6 +142,8 @@ void File::setSource(File *source)
         
 File const *File::source() const
 {
+    DENG2_GUARD(this);
+
     if(_source != this)
     {
         return _source->source();
@@ -141,6 +153,8 @@ File const *File::source() const
 
 File *File::source()
 {
+    DENG2_GUARD(this);
+
     if(_source != this)
     {
         return _source->source();
@@ -150,6 +164,8 @@ File *File::source()
 
 void File::setStatus(Status const &status)
 {
+    DENG2_GUARD(this);
+
     // The source file status is the official one.
     if(this != _source)
     {
@@ -163,6 +179,8 @@ void File::setStatus(Status const &status)
 
 File::Status const &File::status() const 
 {
+    DENG2_GUARD(this);
+
     if(this != _source)
     {
         return _source->status();
@@ -172,6 +190,8 @@ File::Status const &File::status() const
 
 void File::setMode(Flags const &newMode)
 {
+    DENG2_GUARD(this);
+
     if(this != _source)
     {
         _source->setMode(newMode);
@@ -184,6 +204,8 @@ void File::setMode(Flags const &newMode)
 
 File::Flags const &File::mode() const
 {
+    DENG2_GUARD(this);
+
     if(this != _source)
     {
         return _source->mode();

@@ -26,12 +26,14 @@
 #include "de/PackageFolder"
 #include "de/ZipArchive"
 #include "de/Log"
+#include "de/Lockable"
+#include "de/Guard"
 
 namespace de {
 
 static FileSystem::Index const emptyIndex;
 
-DENG2_PIMPL_NOREF(FileSystem)
+DENG2_PIMPL_NOREF(FileSystem), public Lockable
 {
     /// The main index to all files in the file system.
     FileSystem::Index index;
@@ -131,8 +133,12 @@ File *FileSystem::interpret(File *sourceData)
     return sourceData;
 }
 
+#define DENG2_FS_GUARD_INDEX()   DENG2_GUARD_FOR(*d, indexAccessGuard)
+
 FileSystem::Index const &FileSystem::nameIndex() const
 {
+    DENG2_FS_GUARD_INDEX();
+
     return d->index;
 }
 
@@ -148,6 +154,8 @@ int FileSystem::findAll(String const &path, FoundFiles &found) const
         // Always begin with a slash. We don't want to match partial folder names.
         dir = "/" + dir;
     }
+
+    DENG2_FS_GUARD_INDEX();
 
     ConstIndexRange range = d->index.equal_range(baseName);
     for(Index::const_iterator i = range.first; i != range.second; ++i)
@@ -168,6 +176,8 @@ File &FileSystem::find(String const &path) const
 
 void FileSystem::index(File &file)
 {
+    DENG2_FS_GUARD_INDEX();
+
     String const lowercaseName = file.name().lower();
 
     d->index.insert(IndexEntry(lowercaseName, &file));
@@ -200,6 +210,8 @@ static void removeFromIndex(FileSystem::Index &idx, File &file)
 
 void FileSystem::deindex(File &file)
 {
+    DENG2_FS_GUARD_INDEX();
+
     removeFromIndex(d->index, file);
     removeFromIndex(d->typeIndex[DENG2_TYPE_NAME(file)], file);
 }
@@ -211,6 +223,8 @@ void FileSystem::timeChanged(Clock const &)
 
 FileSystem::Index const &FileSystem::indexFor(String const &typeName) const
 {
+    DENG2_FS_GUARD_INDEX();
+
     Instance::TypeIndex::const_iterator found = d->typeIndex.find(typeName);
     if(found != d->typeIndex.end())
     {
@@ -225,6 +239,8 @@ FileSystem::Index const &FileSystem::indexFor(String const &typeName) const
 
 void FileSystem::printIndex()
 {
+    DENG2_FS_GUARD_INDEX();
+
     LOG_DEBUG("Main FS index has %i entries") << d->index.size();
 
     for(Index::iterator i = d->index.begin(); i != d->index.end(); ++i)
