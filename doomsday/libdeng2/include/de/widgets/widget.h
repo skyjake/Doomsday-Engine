@@ -87,8 +87,8 @@ public:
     /**
      * Sets or clears one or more behavior flags.
      *
-     * @param behavior  Flags.
-     * @param set       @c true to set, @c false to clear.
+     * @param behavior   Flags to modify.
+     * @param operation  Operation to perform on the flags.
      */
     void setBehavior(Behaviors behavior, FlagOp operation = SetFlags);
 
