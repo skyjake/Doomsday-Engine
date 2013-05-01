@@ -704,11 +704,11 @@ struct rendworldpoly_params_t
         coord_t segLength;
         Vector3f const *surfaceColor2; // Secondary color.
         struct {
-            walldivnode_t *firstDiv;
+            WallDivs::Intercept *firstDiv;
             uint divCount;
         } left;
         struct {
-            walldivnode_t *firstDiv;
+            WallDivs::Intercept *firstDiv;
             uint divCount;
         } right;
     } wall;
@@ -1558,7 +1558,7 @@ static inline float wallSectionOpacity(Line::Side &side, int section)
  * @param flags  @ref writeWallSectionFlags
  */
 static bool writeWallSection(HEdge &hedge, int section,
-    int flags, walldivs_t *leftWallDivs, walldivs_t *rightWallDivs,
+    int flags, WallDivs *leftWallDivs, WallDivs *rightWallDivs,
     Vector2f const &materialOrigin)
 {
     BspLeaf *leaf = currentBspLeaf;
@@ -1570,8 +1570,8 @@ static bool writeWallSection(HEdge &hedge, int section,
     if(!(surface.hasMaterial() && surface.material().isDrawable()))
         return false;
 
-    if(WallDivNode_Height(WallDivs_First(leftWallDivs)) >=
-       WallDivNode_Height(WallDivs_Last(rightWallDivs))) return true;
+    if(leftWallDivs->first().distance() >=
+       rightWallDivs->last().distance()) return true;
 
     float opacity = wallSectionOpacity(hedge.lineSide(), section);
 
@@ -1590,8 +1590,8 @@ static bool writeWallSection(HEdge &hedge, int section,
          * (e.g., passing through an opaque waterfall).
          */
 
-        if(viewData->current.origin[VZ] >  WallDivNode_Height(WallDivs_First(leftWallDivs)) &&
-           viewData->current.origin[VZ] < WallDivNode_Height(WallDivs_Last(rightWallDivs)))
+        if(viewData->current.origin[VZ] > leftWallDivs->first().distance() &&
+           viewData->current.origin[VZ] < rightWallDivs->last().distance())
         {
             Line const &line = hedge.line();
 
@@ -1627,11 +1627,9 @@ static bool writeWallSection(HEdge &hedge, int section,
     Vector2f materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
                            (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
-    Vector3d texTL(hedge.fromOrigin(),
-                   WallDivNode_Height(WallDivs_Last(leftWallDivs)));
+    Vector3d texTL(hedge.fromOrigin(), leftWallDivs->last().distance());
 
-    Vector3d texBR(hedge.toOrigin(),
-                   WallDivNode_Height(WallDivs_First(rightWallDivs)));
+    Vector3d texBR(hedge.toOrigin(), rightWallDivs->first().distance());
 
     // Determine which Material to use.
     Material *material = 0;
@@ -1771,17 +1769,17 @@ static bool writeWallSection(HEdge &hedge, int section,
     parm.isWall = true;
     parm.wall.surfaceColor2  = bottomColor;
     parm.wall.segLength      = hedge.length();
-    parm.wall.left.firstDiv  = WallDivNode_Next(WallDivs_First(leftWallDivs)); // Step over first node.
-    parm.wall.left.divCount  = WallDivs_Size(leftWallDivs)-2;
-    parm.wall.right.firstDiv = WallDivNode_Prev(WallDivs_Last(rightWallDivs)); // Step over last node.
-    parm.wall.right.divCount = WallDivs_Size(rightWallDivs)-2;
+    parm.wall.left.firstDiv  = &leftWallDivs->first().next(); // Step over first node.
+    parm.wall.left.divCount  = leftWallDivs->count()-2;
+    parm.wall.right.firstDiv = &rightWallDivs->last().prev(); // Step over last node.
+    parm.wall.right.divCount = rightWallDivs->count()-2;
 
     rvertex_t *rvertices;
     // Allocate enough vertices for the divisions too.
-    if(WallDivs_Size(leftWallDivs) > 2 || WallDivs_Size(rightWallDivs) > 2)
+    if(leftWallDivs->count() > 2 || rightWallDivs->count() > 2)
     {
         // Use two fans.
-        rvertices = R_AllocRendVertices(1 + WallDivs_Size(leftWallDivs) + 1 + WallDivs_Size(rightWallDivs));
+        rvertices = R_AllocRendVertices(1 + leftWallDivs->count() + 1 + rightWallDivs->count());
     }
     else
     {
@@ -1793,19 +1791,19 @@ static bool writeWallSection(HEdge &hedge, int section,
     // Bottom Left.
     V3f_Set(rvertices[0].pos, hedge.fromOrigin().x,
                               hedge.fromOrigin().y,
-                              WallDivNode_Height(WallDivs_First(leftWallDivs)));
+                              leftWallDivs->first().distance());
     // Top Left.
     V3f_Set(rvertices[1].pos, hedge.fromOrigin().x,
                               hedge.fromOrigin().y,
-                              WallDivNode_Height(WallDivs_Last(leftWallDivs)));
+                              leftWallDivs->last().distance());
     // Bottom Right.
     V3f_Set(rvertices[2].pos, hedge.toOrigin().x,
                               hedge.toOrigin().y,
-                              WallDivNode_Height(WallDivs_First(rightWallDivs)));
+                              rightWallDivs->first().distance());
     // Top Right.
     V3f_Set(rvertices[3].pos, hedge.toOrigin().x,
                               hedge.toOrigin().y,
-                              WallDivNode_Height(WallDivs_Last(rightWallDivs)));
+                              rightWallDivs->last().distance());
 
     // Draw this section.
     bool opaque = renderWorldPoly(rvertices, 4, parm, ms);
@@ -1847,19 +1845,19 @@ static bool writeWallSection(HEdge &hedge, int section,
             // Bottom Left.
             V3f_Set(rvertices[0].pos, hedge.fromOrigin().x,
                                       hedge.fromOrigin().y,
-                                      WallDivNode_Height(WallDivs_First(leftWallDivs)));
+                                      leftWallDivs->first().distance());
             // Top Left.
             V3f_Set(rvertices[1].pos, hedge.fromOrigin().x,
                                       hedge.fromOrigin().y,
-                                      WallDivNode_Height(WallDivs_Last(leftWallDivs)));
+                                      leftWallDivs->last().distance());
             // Bottom Right.
             V3f_Set(rvertices[2].pos, hedge.toOrigin().x,
                                       hedge.toOrigin().y,
-                                      WallDivNode_Height(WallDivs_First(rightWallDivs)));
+                                      rightWallDivs->first().distance());
             // Top Right.
             V3f_Set(rvertices[3].pos, hedge.toOrigin().x,
                                       hedge.toOrigin().y,
-                                      WallDivNode_Height(WallDivs_Last(rightWallDivs)));
+                                      rightWallDivs->last().distance());
 
             // kludge end.
 
@@ -1897,42 +1895,31 @@ static bool writeWallSection(HEdge &hedge, int section,
     return opaque && !didNearBlend;
 }
 
-static walldivnode_t *findWallDivNodeByZOrigin(walldivs_t *wallDivs, coord_t height)
-{
-    DENG2_ASSERT(wallDivs != 0);
-    for(uint i = 0; i < wallDivs->num; ++i)
-    {
-        walldivnode_t *node = &wallDivs->nodes[i];
-        if(node->height == height)
-            return node;
-    }
-    return 0;
-}
-
-static void addWallDivNodesForPlaneIntercepts(HEdge const &hedge, walldivs_t *wallDivs,
-    int section, coord_t bottomZ, coord_t topZ, boolean doRight)
+static void addWallDivNodesForPlaneIntercepts(HEdge const &hedge, WallDivs *wallDivs,
+    int section, coord_t bottomZ, coord_t topZ, bool doRight)
 {
     bool const clockwise = !doRight;
 
-    // Polyobj edges are never split.
-    if(!hedge.hasLineSide() || hedge.line().isFromPolyobj()) return;
+    if(!hedge.hasLineSide()) return;
 
-    bool const isTwoSided = (hedge.line().hasFrontSections() && hedge.line().hasBackSections())? true:false;
+    Line::Side const &side = hedge.lineSide();
+    if(side.line().isFromPolyobj()) return;
 
     // Check for neighborhood division?
-    if(section == Line::Side::Middle && isTwoSided) return;
+    if(section == Line::Side::Middle && side.hasSections() && side.back().hasSections())
+        return;
 
-    // Only edges at line ends can/should be split.
-    if(!((&hedge == hedge.lineSide().leftHEdge()  && !doRight) ||
-         (&hedge == hedge.lineSide().rightHEdge() &&  doRight)))
+    // Only sections at line side edges can/should be split.
+    if(!((&hedge == side.leftHEdge()  && !doRight) ||
+         (&hedge == side.rightHEdge() &&  doRight)))
         return;
 
     if(bottomZ >= topZ) return; // Obviously no division.
 
-    Sector const *frontSec = hedge.lineSide().sectorPtr();
+    Sector const *frontSec = side.sectorPtr();
 
     // Retrieve the start owner node.
-    LineOwner *base = R_GetVtxLineOwner(&hedge.lineSide().vertex(doRight), &hedge.line());
+    LineOwner *base = R_GetVtxLineOwner(&side.line().vertex(doRight), &side.line());
     LineOwner *own = base;
     bool stopScan = false;
     do
@@ -1952,7 +1939,8 @@ static void addWallDivNodesForPlaneIntercepts(HEdge const &hedge, walldivs_t *wa
 
             uint i = 0;
             do
-            {   // First front, then back.
+            {
+                // First front, then back.
                 Sector *scanSec = NULL;
                 if(!i && iter->hasFrontSections() && iter->frontSectorPtr() != frontSec)
                     scanSec = iter->frontSectorPtr();
@@ -1969,12 +1957,12 @@ static void addWallDivNodesForPlaneIntercepts(HEdge const &hedge, walldivs_t *wa
 
                             if(plane.visHeight() > bottomZ && plane.visHeight() < topZ)
                             {
-                                if(!findWallDivNodeByZOrigin(wallDivs, plane.visHeight()))
+                                if(!wallDivs->find(plane.visHeight()))
                                 {
-                                    WallDivs_Append(wallDivs, plane.visHeight());
+                                    wallDivs->append(plane.visHeight());
 
                                     // Have we reached the div limit?
-                                    if(wallDivs->num == WALLDIVS_MAX_NODES)
+                                    if(wallDivs->count() == WALLDIVS_MAX_INTERCEPTS)
                                         stopScan = true;
                                 }
                             }
@@ -2006,9 +1994,9 @@ static void addWallDivNodesForPlaneIntercepts(HEdge const &hedge, walldivs_t *wa
 
                         if(z > bottomZ && z < topZ)
                         {
-                            if(!findWallDivNodeByZOrigin(wallDivs, z))
+                            if(!wallDivs->find(z))
                             {
-                                WallDivs_Append(wallDivs, z);
+                                wallDivs->append(z);
 
                                 // All clipped away.
                                 stopScan = true;
@@ -2025,38 +2013,46 @@ static void addWallDivNodesForPlaneIntercepts(HEdge const &hedge, walldivs_t *wa
     } while(!stopScan);
 }
 
-static int sortWallDivNode(void const *e1, void const *e2)
+/**
+ * Ensure the divisions do not exceed the specified range.
+ */
+static void assertWallDivsInRange(WallDivs *wd, coord_t low, coord_t hi)
 {
-    coord_t const h1 = ((walldivnode_t *)e1)->height;
-    coord_t const h2 = ((walldivnode_t *)e2)->height;
-    if(h1 > h2) return  1;
-    if(h2 > h1) return -1;
-    return 0;
+#ifdef DENG_DEBUG
+    if(wd->isEmpty()) return;
+
+    WallDivs::Intercept *node = &wd->first();
+    forever
+    {
+        DENG2_ASSERT(node->distance() >= low && node->distance() <= hi);
+
+        if(!node->hasNext()) break;
+        node = &node->next();
+    }
+#else
+    DENG2_UNUSED3(wd, low, hi);
+#endif
 }
 
-static void buildWallDiv(walldivs_t *wallDivs, HEdge const &hedge,
+static void buildWallDiv(WallDivs *wallDivs, HEdge const &hedge,
    int section, coord_t bottomZ, coord_t topZ, boolean doRight)
 {
-    DENG_ASSERT(wallDivs->num == 0);
+    DENG_ASSERT(wallDivs->isEmpty());
 
     // Nodes are arranged according to their Z axis height in ascending order.
     // The first node is the bottom.
-    WallDivs_Append(wallDivs, bottomZ);
+    wallDivs->append(bottomZ);
 
     // Add nodes for intercepts.
     addWallDivNodesForPlaneIntercepts(hedge, wallDivs, section, bottomZ, topZ, doRight);
 
     // The last node is the top.
-    WallDivs_Append(wallDivs, topZ);
+    wallDivs->append(topZ);
 
-    if(!(wallDivs->num > 2)) return;
+    if(!(wallDivs->count() > 2)) return;
 
-    // Sorting is required. This shouldn't take too long...
-    // There seldom are more than two or three nodes.
-    qsort(wallDivs->nodes, wallDivs->num, sizeof(*wallDivs->nodes), sortWallDivNode);
-
-    WallDivs_AssertSorted(wallDivs);
-    WallDivs_AssertInRange(wallDivs, bottomZ, topZ);
+    wallDivs->sort();
+    assertWallDivsInRange(wallDivs, bottomZ, topZ);
 }
 
 /**
@@ -2070,8 +2066,8 @@ static void buildWallDiv(walldivs_t *wallDivs, HEdge const &hedge,
  * @return  @c true if divisions were prepared (the specified @a section has a
  *          non-zero Z axis height).
  */
-static bool prepareWallDivs(HEdge &hedge, int section, walldivs_t *leftWallDivs,
-    walldivs_t *rightWallDivs, Vector2f *materialOrigin)
+static bool prepareWallDivs(HEdge &hedge, int section, WallDivs *leftWallDivs,
+    WallDivs *rightWallDivs, Vector2f *materialOrigin)
 {
     DENG_ASSERT(hedge.hasLineSide());
 
@@ -2122,7 +2118,7 @@ static bool writeWallSections2(HEdge &hedge, int sections)
     // Only a "middle" section.
     if(!(sections & Line::Side::MiddleFlag)) return false;
 
-    walldivs_t leftWallDivs, rightWallDivs;
+    WallDivs leftWallDivs, rightWallDivs;
     Vector2f materialOrigin;
     bool opaque = false;
 
@@ -2142,7 +2138,7 @@ static bool writeWallSections2(HEdge &hedge, int sections)
 }
 
 static bool prepareWallDivsPolyobj(Line::Side const &side, int section,
-    walldivs_t *leftWallDivs, walldivs_t *rightWallDivs, Vector2f *materialOrigin = 0)
+    WallDivs *leftWallDivs, WallDivs *rightWallDivs, Vector2f *materialOrigin = 0)
 {
     BspLeaf *leaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(leaf));
@@ -2153,11 +2149,11 @@ static bool prepareWallDivsPolyobj(Line::Side const &side, int section,
 
     if(!visible) return false;
 
-    WallDivs_Append(leftWallDivs, bottom); // First node.
-    WallDivs_Append(leftWallDivs, top); // Last node.
+    leftWallDivs->append(bottom); // First node.
+    leftWallDivs->append(top); // Last node.
 
-    WallDivs_Append(rightWallDivs, bottom); // First node.
-    WallDivs_Append(rightWallDivs, top); // Last node.
+    rightWallDivs->append(bottom); // First node.
+    rightWallDivs->append(top); // Last node.
 
     return true;
 }
@@ -2174,7 +2170,7 @@ static bool writeWallSections2Polyobj(HEdge &hedge, int sections)
     // Only a "middle" section.
     if(!(sections & Line::Side::MiddleFlag)) return false;
 
-    walldivs_t leftWallDivs, rightWallDivs;
+    WallDivs leftWallDivs, rightWallDivs;
     Vector2f materialOrigin;
     bool opaque = false;
 
@@ -2231,7 +2227,7 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
     // Middle section?
     if(sections & Line::Side::MiddleFlag)
     {
-        walldivs_t leftWallDivs, rightWallDivs;
+        WallDivs leftWallDivs, rightWallDivs;
         Vector2f materialOrigin;
 
         if(prepareWallDivs(hedge, Line::Side::Middle, &leftWallDivs, &rightWallDivs,
@@ -2267,8 +2263,8 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
                 xtop    += surface.visMaterialOrigin()[VY];
 
                 // Can we make this a solid segment?
-                if(!(WallDivNode_Height(WallDivs_Last(&rightWallDivs)) >= xtop &&
-                     WallDivNode_Height(WallDivs_First(&leftWallDivs)) <= xbottom))
+                if(!(rightWallDivs.last().distance() >= xtop &&
+                     leftWallDivs.first().distance() <= xbottom))
                      opaque = false;
             }
         }
@@ -2277,7 +2273,7 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
     // Upper section?
     if(sections & Line::Side::TopFlag)
     {
-        walldivs_t leftWallDivs, rightWallDivs;
+        WallDivs leftWallDivs, rightWallDivs;
         Vector2f materialOrigin;
 
         if(prepareWallDivs(hedge, Line::Side::Top, &leftWallDivs, &rightWallDivs,
@@ -2293,7 +2289,7 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
     // Lower section?
     if(sections & Line::Side::BottomFlag)
     {
-        walldivs_t leftWallDivs, rightWallDivs;
+        WallDivs leftWallDivs, rightWallDivs;
         Vector2f materialOrigin;
 
         if(prepareWallDivs(hedge, Line::Side::Bottom, &leftWallDivs, &rightWallDivs,

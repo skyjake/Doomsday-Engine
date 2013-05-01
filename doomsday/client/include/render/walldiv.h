@@ -21,50 +21,185 @@
 #ifndef DENG_RENDER_WALLDIV_H
 #define DENG_RENDER_WALLDIV_H
 
-#include "dd_types.h"
-
-struct walldivs_s;
-
-typedef struct walldivnode_s {
-    struct walldivs_s *divs;
-    coord_t height;
-} walldivnode_t;
-
-coord_t WallDivNode_Height(walldivnode_t *node);
-walldivnode_t *WallDivNode_Next(walldivnode_t *node);
-walldivnode_t *WallDivNode_Prev(walldivnode_t *node);
+#include <de/Error>
 
 /// Maximum number of walldivnode_ts in a walldivs_t dataset.
-#define WALLDIVS_MAX_NODES          64
+#define WALLDIVS_MAX_INTERCEPTS          64
 
-typedef struct walldivs_s {
-    uint num;
-    struct walldivnode_s nodes[WALLDIVS_MAX_NODES];
+namespace de {
 
-    walldivs_s() : num(0)
+class WallDivs
+{
+public:
+    /// Required intercept is missing. @ingroup errors
+    DENG2_ERROR(MissingInterceptError);
+
+    class Intercept
     {
-        std::memset(nodes, 0, sizeof(nodes));
+    protected:
+        Intercept() : _wallDivs(0), _distance(0) {}
+
+    public:
+        ddouble operator - (Intercept const &other) const
+        {
+            return distance() - other.distance();
+        }
+
+        bool operator < (Intercept const &other) const
+        {
+            return distance() < other.distance();
+        }
+
+        ddouble distance() const { return _distance; }
+
+        bool hasNext() const
+        {
+            int idx = this - _wallDivs->_intercepts;
+            return (idx + 1 < _wallDivs->_interceptCount);
+        }
+
+        bool hasPrev() const
+        {
+            int idx = this - _wallDivs->_intercepts;
+            return (idx > 0);
+        }
+
+        Intercept &next() const
+        {
+            int idx = this - _wallDivs->_intercepts;
+            if(idx + 1 < _wallDivs->_interceptCount)
+            {
+                return _wallDivs->_intercepts[idx+1];
+            }
+            throw WallDivs::MissingInterceptError("WallDivs::Intercept", "No next neighbor");
+        }
+
+        Intercept &prev() const
+        {
+            int idx = this - _wallDivs->_intercepts;
+            if(idx > 0)
+            {
+                return _wallDivs->_intercepts[idx-1];
+            }
+            throw WallDivs::MissingInterceptError("WallDivs::Intercept", "No previous neighbor");
+        }
+
+        friend class WallDivs;
+
+    private:
+        WallDivs *_wallDivs;
+        ddouble _distance;
+    };
+
+    typedef Intercept Intercepts[WALLDIVS_MAX_INTERCEPTS];
+
+public:
+    WallDivs() : _interceptCount(0)
+    {
+        std::memset(_intercepts, 0, sizeof(_intercepts));
     }
 
-} walldivs_t;
+    int count() const { return _interceptCount; }
 
-uint WallDivs_Size(walldivs_t const *wallDivs);
-walldivnode_t *WallDivs_First(walldivs_t *wallDivs);
-walldivnode_t *WallDivs_Last(walldivs_t *wallDivs);
-walldivs_t *WallDivs_Append(walldivs_t *wallDivs, coord_t height);
+    inline bool isEmpty() const { return count() == 0; }
 
-/**
- * Ensure the divisions are sorted (in ascending Z order).
- */
-void WallDivs_AssertSorted(walldivs_t *wallDivs);
+    Intercept &first() const
+    {
+        if(_interceptCount > 0)
+        {
+            return const_cast<Intercept &>(_intercepts[0]);
+        }
+        throw MissingInterceptError("WallDivs::first", "Intercepts list is empty");
+    }
 
-/**
- * Ensure the divisions do not exceed the specified range.
- */
-void WallDivs_AssertInRange(walldivs_t *wallDivs, coord_t low, coord_t hi);
+    Intercept &last() const
+    {
+        if(_interceptCount > 0)
+        {
+            return const_cast<Intercept &>(_intercepts[_interceptCount-1]);
+        }
+        throw MissingInterceptError("WallDivs::last", "Intercepts list is empty");
+    }
+
+    void append(ddouble distance)
+    {
+        Intercept *node = &_intercepts[_interceptCount++];
+        node->_wallDivs = this;
+        node->_distance = distance;
+    }
+
+    Intercept *find(ddouble distance) const
+    {
+        for(int i = 0; i < _interceptCount; ++i)
+        {
+            Intercept *icpt = const_cast<Intercept *>(&_intercepts[i]);
+            if(icpt->distance() == distance)
+                return icpt;
+        }
+        return 0;
+    }
+
+    static int compareIntercepts(void const *e1, void const *e2)
+    {
+        ddouble const delta = (*reinterpret_cast<Intercept const *>(e1)) - (*reinterpret_cast<Intercept const *>(e2));
+        if(delta > 0) return 1;
+        if(delta < 0) return -1;
+        return 0;
+    }
+
+    void sort()
+    {
+        if(count() < 2) return;
+
+        // Sorting is required. This shouldn't take too long...
+        // There seldom are more than two or three intercepts.
+        qsort(_intercepts, _interceptCount, sizeof(*_intercepts), compareIntercepts);
+        assertSorted();
+    }
 
 #ifdef DENG_DEBUG
-void WallDivs_DebugPrint(walldivs_t *wallDivs);
+    void debugPrint() const
+    {
+        LOG_DEBUG("WallDivs [%p]:") << de::dintptr(this);
+        for(int i = 0; i < _interceptCount; ++i)
+        {
+            Intercept const *node = &_intercepts[i];
+            LOG_DEBUG("  %i: %f") << i << node->distance();
+        }
+    }
 #endif
+
+    Intercepts const &intercepts() const
+    {
+        return _intercepts;
+    }
+
+private:
+    /**
+     * Ensure the intercepts are sorted (in ascending distance order).
+     */
+    void assertSorted() const
+    {
+#ifdef DENG_DEBUG
+        if(isEmpty()) return;
+
+        WallDivs::Intercept *node = &first();
+        ddouble farthest = node->distance();
+        forever
+        {
+            DENG2_ASSERT(node->distance() >= farthest);
+            farthest = node->distance();
+
+            if(!node->hasNext()) break;
+            node = &node->next();
+        }
+#endif
+    }
+
+    int _interceptCount;
+    Intercepts _intercepts;
+};
+
+} // namespace de
 
 #endif // DENG_RENDER_WALLDIV_H

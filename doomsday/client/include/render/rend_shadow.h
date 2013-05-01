@@ -52,11 +52,11 @@ typedef struct {
     bool isWall;
     struct {
         struct {
-            walldivnode_t *firstDiv;
+            de::WallDivs::Intercept *firstDiv;
             uint divCount;
         } left;
         struct {
-            walldivnode_t *firstDiv;
+            de::WallDivs::Intercept *firstDiv;
             uint divCount;
         } right;
     } wall;

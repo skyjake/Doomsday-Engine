@@ -29,7 +29,7 @@
 
 #include <de/Vector>
 
-struct walldivnode_s;
+#include "render/walldiv.h"
 
 typedef struct rvertex_s {
     float pos[3];
@@ -109,8 +109,6 @@ typedef struct rtexmapuint_s {
     bool hasTexture() const { return texture.hasTexture(); }
 #endif
 } rtexmapunit_t;
-
-#ifdef __CLIENT__
 
 extern byte rendInfoRPolys;
 
@@ -213,19 +211,17 @@ inline void Rtu_TranslateOffset(rtexmapunit_t *rtu, float s, float t)
 }
 
 void R_DivVerts(rvertex_t *dst, rvertex_t const *src,
-    struct walldivnode_s *leftDivFirst, uint leftDivCount,
-    struct walldivnode_s *rightDivFirst, uint rightDivCount);
+    de::WallDivs::Intercept *leftDivFirst, uint leftDivCount,
+    de::WallDivs::Intercept *rightDivFirst, uint rightDivCount);
 
 void R_DivTexCoords(rtexcoord_t *dst, rtexcoord_t const *src,
-    struct walldivnode_s *leftDivFirst, uint leftDivCount,
-    struct walldivnode_s *rightDivFirst, uint rightDivCount,
+    de::WallDivs::Intercept *leftDivFirst, uint leftDivCount,
+    de::WallDivs::Intercept *rightDivFirst, uint rightDivCount,
     float bL, float tL, float bR, float tR);
 
 void R_DivVertColors(ColorRawf *dst, ColorRawf const *src,
-    struct walldivnode_s *leftDivFirst, uint leftDivCount,
-    struct walldivnode_s *rightDivFirst, uint rightDivCount,
+    de::WallDivs::Intercept *leftDivFirst, uint leftDivCount,
+    de::WallDivs::Intercept *rightDivFirst, uint rightDivCount,
     float bL, float tL, float bR, float tR);
-
-#endif // __CLIENT__
 
 #endif // DENG_RENDER_RENDPOLY_H
