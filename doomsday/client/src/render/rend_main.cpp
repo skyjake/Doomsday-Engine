@@ -41,6 +41,7 @@
 #  include "MaterialVariantSpec"
 #endif
 #include "Texture"
+#include "SectionEdge"
 
 #include "map/blockmapvisual.h"
 #include "map/gamemap.h"
@@ -1571,14 +1572,15 @@ static inline float wallSectionOpacity(Line::Side &side, int section)
  * @param flags  @ref writeWallSectionFlags
  */
 static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rightEdge,
-    Vector2f const &materialOrigin, MapElement &mapElement, biassurface_t &biasSurface,
+    MapElement &mapElement, biassurface_t &biasSurface,
     int flags = DEFAULT_WRITE_WALL_SECTION_FLAGS)
 {
     BspLeaf *bspLeaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(bspLeaf));
 
-    Line::Side &side = leftEdge.lineSide();
-    Surface &surface = side.surface(leftEdge.section());
+    Line::Side &side  = leftEdge.lineSide();
+    int const section = leftEdge.section();
+    Surface &surface  = side.surface(section);
 
     // Surfaces without a drawable material are never rendered.
     if(!(surface.hasMaterial() && surface.material().isDrawable()))
@@ -1587,11 +1589,11 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     if(leftEdge.bottom().distance() >= rightEdge.top().distance())
         return true;
 
-    bool const isTwoSidedMiddle = (leftEdge.section() == Line::Side::Middle &&
+    bool const isTwoSidedMiddle = (section == Line::Side::Middle &&
                                    side.hasSections() && side.back().hasSections());
 
     coord_t width = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
-    float opacity = wallSectionOpacity(side, leftEdge.section());
+    float opacity = wallSectionOpacity(side, section);
 
     // Apply fade out when the viewer is near to this geometry?
     bool didNearFade = false;
@@ -1685,7 +1687,7 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     // Calculate the light level deltas for this wall section.
     /// @todo Cache these values somewhere. -ds
     float deltaL, deltaR;
-    wallSectionLightLevelDeltas(side, leftEdge.section(), deltaL, deltaR);
+    wallSectionLightLevelDeltas(side, section, deltaL, deltaR);
 
     if(!de::fequal(deltaL, deltaR))
     {
@@ -1746,7 +1748,7 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
         if(glowStrength > 0)
             flags &= ~WSF_ADD_RADIO;
 
-        side.chooseSurfaceTintColors(leftEdge.section(), &topColor, &bottomColor);
+        side.chooseSurfaceTintColors(section, &topColor, &bottomColor);
     }
 
     if(isTwoSidedMiddle && side.sectorPtr() != currentBspLeaf->sectorPtr())
@@ -1762,7 +1764,7 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     parm.forceOpaque         = (flags & WSF_FORCE_OPAQUE)? true : false;
     parm.alpha               = (flags & WSF_FORCE_OPAQUE)? 1 : opacity;
     parm.mapElement          = &mapElement;
-    parm.elmIdx              = leftEdge.section();
+    parm.elmIdx              = section;
     parm.bsuf                = &biasSurface;
     parm.normal              = &surface.normal();
     parm.texTL               = &texTL;
@@ -1772,7 +1774,7 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     parm.surfaceColor        = topColor;
     parm.glowing             = (glowFactor > .0001f? ms.glowStrength() * glowFactor : 0); // Global scale factor.
     parm.blendMode           = blendMode;
-    parm.materialOrigin      = &materialOrigin;
+    parm.materialOrigin      = &leftEdge.materialOrigin();
     parm.materialScale       = &materialScale;
     parm.lightListIdx        = lightListIdx;
     parm.shadowListIdx       = shadowListIdx;
@@ -2478,7 +2480,7 @@ static bool prepareEdgesAndWriteWallSection(HEdge &hedge, int section, bool *opa
        rightEdge.top().distance() > leftEdge.bottom().distance())
     {
         bool wroteOpaquePoly =
-            writeWallSection(leftEdge, rightEdge, leftEdge.materialOrigin(),
+            writeWallSection(leftEdge, rightEdge,
                              hedge, hedge.biasSurfaceForGeometryGroup(section));
 
         if(opaque) *opaque = wroteOpaquePoly;
@@ -2592,7 +2594,7 @@ static void writeWallSections(HEdge &hedge)
                rightEdge.top().distance() > leftEdge.bottom().distance())
             {
                 wroteOpaqueMiddle =
-                    writeWallSection(leftEdge, rightEdge, leftEdge.materialOrigin(),
+                    writeWallSection(leftEdge, rightEdge,
                                      hedge, hedge.biasSurfaceForGeometryGroup(Line::Side::Middle));
 
                 if(wroteOpaqueMiddle)

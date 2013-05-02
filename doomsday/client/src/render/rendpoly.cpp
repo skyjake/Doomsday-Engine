@@ -24,6 +24,7 @@
 #include "de_render.h"
 
 #include "color.h"
+#include "SectionEdge"
 
 using namespace de;
 

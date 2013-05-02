@@ -22,6 +22,8 @@
 #include "de_graphics.h"
 #include "de_render.h"
 
+#include "SectionEdge"
+
 #include "render/rend_dynlight.h"
 
 static void drawDynlight(dynlight_t const &dyn, renderlightprojectionparams_t &parm)

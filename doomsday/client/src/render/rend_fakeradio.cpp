@@ -35,6 +35,7 @@
 #include "map/gamemap.h"
 #include "map/lineowner.h"
 #include "render/rendpoly.h"
+#include "SectionEdge"
 
 #include "render/rend_fakeradio.h"
 

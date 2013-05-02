@@ -119,6 +119,7 @@ DENG_HEADERS += \
     include/Line \
     include/Plane \
     include/Polyobj \
+    include/SectionEdge \
     include/Sector \
     include/Surface \
     include/Vertex
@@ -257,6 +258,7 @@ DENG_HEADERS += \
     include/map/propertyvalue.h \
     include/map/r_world.h \
     include/map/reject.h \
+    include/map/sectionedge.h \
     include/map/sector.h \
     include/map/surface.h \
     include/map/vertex.h \
@@ -526,6 +528,7 @@ SOURCES += \
     src/map/propertyvalue.cpp \
     src/map/r_world.cpp \
     src/map/reject.cpp \
+    src/map/sectionedge.cpp \
     src/map/sector.cpp \
     src/map/surface.cpp \
     src/map/vertex.cpp \

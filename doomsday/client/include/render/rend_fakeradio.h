@@ -38,7 +38,10 @@
 #include "Line"
 #include "Sector"
 #include "Vertex"
-//#include "render/rendpoly.h"
+
+#include "render/rendpoly.h" // r_vertex_t
+
+class SectionEdge;
 
 /**
  * Used to link a line to a BSP leaf for the purposes of FakeRadio shadowing.

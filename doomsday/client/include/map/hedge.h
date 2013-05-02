@@ -29,7 +29,6 @@
 #include "Vertex"
 
 #include "render/rend_bias.h"
-#include "render/walldiv.h"
 
 class Sector;
 
@@ -40,59 +39,6 @@ class Sector;
 ///@{
 #define HEDGEINF_FACINGFRONT      0x0001
 ///@}
-
-class SectionEdge
-{
-public:
-    /// Invalid range geometry was found during prepare() @ingroup errors
-    DENG2_ERROR(InvalidError);
-
-public:
-    SectionEdge(HEdge &hedge, int edge, int section);
-
-    void prepare();
-
-    bool isValid() const;
-
-    de::Vector2d const &origin() const;
-
-    coord_t lineOffset() const;
-
-    Line::Side &lineSide() const;
-
-    int section() const;
-
-    int divisionCount() const;
-
-    de::WallDivs::Intercept &bottom() const;
-
-    de::WallDivs::Intercept &top() const;
-
-    de::WallDivs::Intercept &firstDivision() const;
-
-    de::WallDivs::Intercept &lastDivision() const;
-
-    de::Vector2f const &materialOrigin() const;
-
-private:
-    void verifyValid() const;
-
-    void assertDivisionsInRange(coord_t low, coord_t hi) const;
-
-    void addPlaneIntercepts(coord_t bottom, coord_t top);
-
-    de::WallDivs wallDivs; /// @todo does not belong here.
-
-    HEdge *_hedge;
-    int _edge;
-    int _section;
-
-    bool _isValid;
-    de::Vector2f _materialOrigin;
-    int _interceptCount;
-    de::WallDivs::Intercept *_firstIntercept;
-    de::WallDivs::Intercept *_lastIntercept;
-};
 
 /**
  * Map geometry half-edge.

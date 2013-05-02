@@ -22,9 +22,9 @@
 
 #include <de/Vector>
 
-//#include "render/rendpoly.h"
+#include "render/rendpoly.h" // r_vertex_t
 
-#include "HEdge"
+class SectionEdge;
 
 /// Paramaters for Rend_RenderLightProjections (POD).
 typedef struct {

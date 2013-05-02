@@ -22,9 +22,9 @@
 
 #include <de/Vector>
 
-//#include "render/rendpoly.h"
+#include "render/rendpoly.h" // r_vertex_t
 
-#include "HEdge"
+class SectionEdge;
 
 /**
  * This value defines the offset from the shadowed surface applied to

@@ -24,6 +24,7 @@
 #include "de_system.h"
 
 #include "map/gamemap.h"
+#include "SectionEdge"
 
 #include "render/rend_shadow.h"
 
