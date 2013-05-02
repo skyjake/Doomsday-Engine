@@ -784,9 +784,9 @@ public:
      * Change the material's flags.
      *
      * @param flagsToChange  Flags to change the value of.
-     * @param set  @c true to set, @c false to clear.
+     * @param operation      Logical operation to perform on the flags.
      */
-    void setFlags(Flags flagsToChange, bool set = true);
+    void setFlags(Flags flagsToChange, de::FlagOp operation = de::SetFlags);
 
     /**
      * Returns the environment audio class for the material.

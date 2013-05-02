@@ -418,9 +418,9 @@ public:
          * Change the side's flags.
          *
          * @param flagsToChange  Flags to change the value of.
-         * @param set  @c true to set, @c false to clear.
+         * @param operation      Logical operation to perform on the flags.
          */
-        void setFlags(int flagsToChange, bool set = true);
+        void setFlags(int flagsToChange, de::FlagOp operation = de::SetFlags);
 
         /**
          * Returns @c true iff the side is flagged @a flagsToTest.
@@ -770,9 +770,9 @@ public:
      * the flags are changed.
      *
      * @param flagsToChange  Flags to change the value of.
-     * @param set  @c true to set, @c false to clear.
+     * @param operation      Logical operation to perform on the flags.
      */
-    void setFlags(int flagsToChange, bool set = true);
+    void setFlags(int flagsToChange, de::FlagOp operation = de::SetFlags);
 
     /**
      * Returns @c true iff the line is flagged @a flagsToTest.
