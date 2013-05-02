@@ -198,6 +198,9 @@ DENG2_PIMPL(Bank)
         {
             // This runs in a background thread.
             while(doWork()) {}
+
+            // Thread ends; no more log output.
+            de::Log::disposeThreadLog();
         }
 
         Data &item(Path const &path)
