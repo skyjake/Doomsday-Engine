@@ -983,13 +983,11 @@ static void drawWallSectionShadow(rvertex_t const *origVertices,
     DENG_ASSERT(origVertices);
     SectionEdge const &leftEdge = *parms.leftEdge;
     SectionEdge const &rightEdge = *parms.rightEdge;
-    int const leftInterceptCount = leftEdge.divisionCount();
-    int const rightInterceptCount = rightEdge.divisionCount();
     bool const mustSubdivide = (leftEdge.divisionCount() || rightEdge.divisionCount());
 
     uint realNumVertices = 4;
     if(mustSubdivide)
-        realNumVertices = 3 + leftInterceptCount + 3 + rightInterceptCount;
+        realNumVertices = 3 + leftEdge.divisionCount() + 3 + rightEdge.divisionCount();
     else
         realNumVertices = 4;
 
@@ -1047,13 +1045,13 @@ static void drawWallSectionShadow(rvertex_t const *origVertices,
             R_DivVertColors(rcolors, origColors, leftEdge, rightEdge, bL, tL, bR, tR);
 
             RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
-                                 3 + rightInterceptCount,
-                                 rvertices + 3 + leftInterceptCount,
-                                 rcolors + 3 + leftInterceptCount,
-                                 rtexcoords + 3 + leftInterceptCount,
+                                 3 + rightEdge.divisionCount(),
+                                 rvertices  + 3 + leftEdge.divisionCount(),
+                                 rcolors    + 3 + leftEdge.divisionCount(),
+                                 rtexcoords + 3 + leftEdge.divisionCount(),
                                  0);
             RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
-                                 3 + leftInterceptCount,
+                                 3 + leftEdge.divisionCount(),
                                  rvertices, rcolors, rtexcoords, 0);
 
             R_FreeRendVertices(rvertices);

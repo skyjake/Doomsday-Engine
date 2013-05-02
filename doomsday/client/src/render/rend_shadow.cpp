@@ -276,17 +276,15 @@ static void drawShadow(shadowprojection_t const &sp, rendershadowprojectionparam
     {
         SectionEdge const &leftEdge = *parm.wall.leftEdge;
         SectionEdge const &rightEdge = *parm.wall.rightEdge;
-        int const leftInterceptCount = leftEdge.divisionCount();
-        int const rightInterceptCount = rightEdge.divisionCount();
 
         RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
-                             3 + rightInterceptCount,
-                             rvertices + 3 + leftInterceptCount,
-                             rcolors + 3 + leftInterceptCount,
-                             rtexcoords + 3 + leftInterceptCount,
+                             3 + rightEdge.divisionCount(),
+                             rvertices  + 3 + leftEdge.divisionCount(),
+                             rcolors    + 3 + leftEdge.divisionCount(),
+                             rtexcoords + 3 + leftEdge.divisionCount(),
                              0);
         RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
-                             3 + leftInterceptCount,
+                             3 + leftEdge.divisionCount(),
                              rvertices, rcolors, rtexcoords, 0);
     }
     else

@@ -1084,8 +1084,6 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
     {
         SectionEdge const &leftEdge = *p.wall.leftEdge;
         SectionEdge const &rightEdge = *p.wall.rightEdge;
-        int const leftInterceptCount = leftEdge.divisionCount();
-        int const rightInterceptCount = rightEdge.divisionCount();
 
         /*
          * Need to swap indices around into fans set the position
@@ -1153,18 +1151,18 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
         }
 
         RL_AddPolyWithCoordsModulationReflection(PT_FAN, p.flags | (hasDynlights? RPF_HAS_DYNLIGHTS : 0),
-                                                 3 + rightInterceptCount,
-                                                 rvertices + 3 + leftInterceptCount,
-                                                 rcolors? rcolors + 3 + leftInterceptCount : 0,
-                                                 primaryCoords + 3 + leftInterceptCount,
-                                                 interCoords? interCoords + 3 + leftInterceptCount : 0,
-                                                 modTex, &modColor, modCoords? modCoords + 3 + leftInterceptCount : 0,
-                                                 shinyColors + 3 + leftInterceptCount,
-                                                 shinyTexCoords? shinyTexCoords + 3 + leftInterceptCount : 0,
-                                                 shinyMaskRTU? primaryCoords + 3 + leftInterceptCount : 0);
+                                                 3 + rightEdge.divisionCount(),
+                                                 rvertices + 3 + leftEdge.divisionCount(),
+                                                 rcolors? rcolors + 3 + leftEdge.divisionCount() : 0,
+                                                 primaryCoords + 3 + leftEdge.divisionCount(),
+                                                 interCoords? interCoords + 3 + leftEdge.divisionCount() : 0,
+                                                 modTex, &modColor, modCoords? modCoords + 3 + leftEdge.divisionCount() : 0,
+                                                 shinyColors + 3 + leftEdge.divisionCount(),
+                                                 shinyTexCoords? shinyTexCoords + 3 + leftEdge.divisionCount() : 0,
+                                                 shinyMaskRTU? primaryCoords + 3 + leftEdge.divisionCount() : 0);
 
         RL_AddPolyWithCoordsModulationReflection(PT_FAN, p.flags | (hasDynlights? RPF_HAS_DYNLIGHTS : 0),
-                                                 3 + leftInterceptCount,
+                                                 3 + leftEdge.divisionCount(),
                                                  rvertices, rcolors, primaryCoords, interCoords,
                                                  modTex, &modColor, modCoords,
                                                  shinyColors, shinyTexCoords,
@@ -1945,8 +1943,8 @@ static void wallSectionSectors(HEdge &hedge, Sector **frontSec, Sector **backSec
  * Prepare wall section edge data for a map line segment.
  *
  * Return values:
- * @param leftEdge        Edge data the left of the wall section is written here.
- * @param rightEdge       Edge data the right of the wall section is written here.
+ * @param leftEdge        Edge data for the left of the wall section is written here.
+ * @param rightEdge       Edge data for the right of the wall section is written here.
  * @param materialOrigin  Material origin offset data is written here.
  *
  * @return  @c true iff the resultant edges describe a polygon with a positive area.
