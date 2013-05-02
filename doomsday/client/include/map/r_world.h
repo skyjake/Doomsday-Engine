@@ -88,10 +88,8 @@ void R_OrderVertices(Line *line, Sector const *sector, Vertex *verts[2]);
  * @param bottom        Z map space coordinate at the bottom of the wall section. Can be @c 0.
  * @param top           Z map space coordinate at the top of the wall section. Can be @c 0.
  * @param materialOrigin  Surface space material coordinate offset. Can be @c 0.
- *
- * @return  @c true iff the determined wall section height is @c >0
  */
-bool R_SideSectionCoords(Line::Side const &side, int section, Sector const *frontSec,
+void R_SideSectionCoords(Line::Side const &side, int section, Sector const *frontSec,
     Sector const *backSec, coord_t *bottom = 0, coord_t *top = 0,
     de::Vector2f *materialOrigin = 0);
 
@@ -99,11 +97,11 @@ bool R_SideSectionCoords(Line::Side const &side, int section, Sector const *fron
  * Same as @ref R_SideSectionCoords() except that the sector arguments are taken from
  * the specified line @a side.
  */
-inline bool R_SideSectionCoords(Line::Side const &side, int section, coord_t *bottom = 0,
+inline void R_SideSectionCoords(Line::Side const &side, int section, coord_t *bottom = 0,
                                 coord_t *top = 0, de::Vector2f *materialOrigin = 0)
 {
-    return R_SideSectionCoords(side, section, side.sectorPtr(), side.back().sectorPtr(),
-                               bottom, top, materialOrigin);
+    R_SideSectionCoords(side, section, side.sectorPtr(), side.back().sectorPtr(),
+                        bottom, top, materialOrigin);
 }
 
 /**

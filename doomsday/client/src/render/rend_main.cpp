@@ -1921,43 +1921,42 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
  * @param leftEdge        Edge data for the left of the wall section is written here.
  * @param rightEdge       Edge data for the right of the wall section is written here.
  * @param materialOrigin  Material origin offset data is written here.
- *
- * @return  @c true iff the resultant edges describe a polygon with a positive area.
  */
-static bool prepareWallSectionEdges(SectionEdge &leftEdge, SectionEdge &rightEdge,
+static void prepareWallSectionEdges(SectionEdge &leftEdge, SectionEdge &rightEdge,
                                     Vector2f &materialOrigin)
 {
-    HEdge &hedge = leftEdge.hedge();
-    int const section = leftEdge.section();
-
     Sector *frontSec, *backSec;
-    hedge.wallSectionSectors(&frontSec, &backSec);
+    leftEdge.hedge().wallSectionSectors(&frontSec, &backSec);
 
     coord_t bottom, top;
-    bool visible = R_SideSectionCoords(hedge.lineSide(), section, frontSec, backSec,
-                                       &bottom, &top, &materialOrigin);
+    R_SideSectionCoords(leftEdge.hedge().lineSide(), leftEdge.section(), frontSec, backSec,
+                        &bottom, &top, &materialOrigin);
 
-    if(!visible) return false;
+    if(top > bottom)
+    {
+        leftEdge.prepare(bottom, top);
+        rightEdge.prepare(bottom, top);
 
-    leftEdge.prepare(bottom, top);
-    rightEdge.prepare(bottom, top);
-
-    materialOrigin.x += float(leftEdge.offset());
-
-    return true;
+        materialOrigin.x += float(leftEdge.offset());
+    }
 }
 
 /**
- * Prepare and write wall sections for a "one-sided" line to the render lists.
+ * Prepare edges and write the specified wall @a section to the render lists.
  *
  * @pre currentBspLeaf is set to the BSP leaf which "contains" the half-edge.
  * @pre @a hedge has an attributed map line side with sections.
  * @pre @a hedge is front facing.
  *
- * @param hedge  HEdge to draw wall sections for.
- * @param sections  @ref sideSectionFlags
+ * @param hedge    HEdge to write wall a section for.
+ * @param section  Identifier of the wall section to write.
+ *
+ * Return values:
+ * @param opaque   @c true= an opaque polygon was written to the lists. Can be @c 0.
+ *
+ * @return  @c true iff one or more polygons are actually written to the lists.
  */
-static bool writeWallSections2(HEdge &hedge, int sections)
+static bool prepareEdgesAndWriteWallSection(HEdge &hedge, int section, bool *opaque = 0)
 {
     BspLeaf *leaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(leaf));
@@ -1966,23 +1965,27 @@ static bool writeWallSections2(HEdge &hedge, int sections)
     DENG_ASSERT(hedge.lineSide().hasSections());
     DENG_ASSERT(hedge._frameFlags & HEDGEINF_FACINGFRONT);
 
-    // Only a "middle" section.
-    if(!(sections & Line::Side::MiddleFlag)) return false;
+    // Done here because of the logic of doom.exe wrt the automap.
+    reportWallSectionDrawn(hedge.line());
 
-    int const section = Line::Side::Middle;
     SectionEdge leftEdge(hedge, HEdge::From, section);
     SectionEdge rightEdge(hedge, HEdge::To, section);
     Vector2f materialOrigin;
-    bool opaque = false;
 
-    if(prepareWallSectionEdges(leftEdge, rightEdge, materialOrigin))
+    prepareWallSectionEdges(leftEdge, rightEdge, materialOrigin);
+
+    if(rightEdge.top().distance() > leftEdge.bottom().distance())
     {
-        opaque = writeWallSection(leftEdge, rightEdge, materialOrigin,
-                                  hedge, hedge.biasSurfaceForGeometryGroup(section));
+        bool wroteOpaquePoly =
+            writeWallSection(leftEdge, rightEdge, materialOrigin,
+                             hedge, hedge.biasSurfaceForGeometryGroup(section));
+
+        if(opaque) *opaque = wroteOpaquePoly;
+        return wroteOpaquePoly;
     }
 
-    reportWallSectionDrawn(hedge.line());
-    return opaque;
+    if(opaque) *opaque = false;
+    return false;
 }
 
 /**
@@ -2004,19 +2007,15 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
 
     reportWallSectionDrawn(line);
 
-    Line::Side &front  = hedge.lineSide();
-    Line::Side &back   = hedge.twin().lineSide();
-
     /// @todo Is this now redundant? -ds
-    if(back.sectorPtr() == front.sectorPtr() &&
-       !front.top().hasMaterial() && !front.bottom().hasMaterial() &&
-       !front.middle().hasMaterial())
-       return false; // Ugh... an obvious wall hedge hack. Best take no chances...
+    if(hedge.twin().lineSide().sectorPtr() == hedge.lineSide().sectorPtr())
+    {
+        Line::Side const &front = hedge.lineSide();
 
-    Plane &ffloor = leaf->sector().floor();
-    Plane &fceil  = leaf->sector().ceiling();
-    Plane &bfloor = back.sector().floor();
-    Plane &bceil  = back.sector().ceiling();
+        if(!front.top().hasMaterial() && !front.bottom().hasMaterial() &&
+           !front.middle().hasMaterial())
+            return false; // Ugh... an obvious wall hedge hack. Best take no chances...
+    }
 
     bool opaque = false;
 
@@ -2028,7 +2027,8 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
         SectionEdge rightEdge(hedge, HEdge::To, section);
         Vector2f materialOrigin;
 
-        if(prepareWallSectionEdges(leftEdge, rightEdge, materialOrigin))
+        prepareWallSectionEdges(leftEdge, rightEdge, materialOrigin);
+        if(rightEdge.top().distance() > leftEdge.bottom().distance())
         {
             int wsFlags = DEFAULT_WRITE_WALL_SECTION_FLAGS;
 
@@ -2041,7 +2041,13 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
                                       wsFlags);
             if(opaque)
             {
+                Line::Side &front = hedge.lineSide();
+                Line::Side &back  = hedge.twin().lineSide();
                 Surface &surface = front.middle();
+                Plane &ffloor = leaf->sector().floor();
+                Plane &fceil  = leaf->sector().ceiling();
+                Plane &bfloor = back.sector().floor();
+                Plane &bceil  = back.sector().ceiling();
                 coord_t xbottom, xtop;
 
                 if(line.isSelfReferencing())
@@ -2069,31 +2075,13 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
     // Upper section?
     if(sections & Line::Side::TopFlag)
     {
-        int const section = Line::Side::Top;
-        SectionEdge leftEdge(hedge, HEdge::From, section);
-        SectionEdge rightEdge(hedge, HEdge::To, section);
-        Vector2f materialOrigin;
-
-        if(prepareWallSectionEdges(leftEdge, rightEdge, materialOrigin))
-        {
-            writeWallSection(leftEdge, rightEdge, materialOrigin,
-                             hedge, hedge.biasSurfaceForGeometryGroup(section));
-        }
+        prepareEdgesAndWriteWallSection(hedge, Line::Side::Top);
     }
 
     // Lower section?
     if(sections & Line::Side::BottomFlag)
     {
-        int const section = Line::Side::Bottom;
-        SectionEdge leftEdge(hedge, HEdge::From, section);
-        SectionEdge rightEdge(hedge, HEdge::To, section);
-        Vector2f materialOrigin;
-
-        if(prepareWallSectionEdges(leftEdge, rightEdge, materialOrigin))
-        {
-            writeWallSection(leftEdge, rightEdge, materialOrigin,
-                             hedge, hedge.biasSurfaceForGeometryGroup(section));
-        }
+        prepareEdgesAndWriteWallSection(hedge, Line::Side::Bottom);
     }
 
     if(line.isSelfReferencing())
@@ -2101,6 +2089,13 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
 
     if(!opaque) // We'll have to determine whether we can...
     {
+        Line::Side &front = hedge.lineSide();
+        Line::Side &back  = hedge.twin().lineSide();
+        Plane &ffloor = leaf->sector().floor();
+        Plane &fceil  = leaf->sector().ceiling();
+        Plane &bfloor = back.sector().floor();
+        Plane &bceil  = back.sector().ceiling();
+
         if(   (bceil.visHeight() <= ffloor.visHeight() &&
                    (front.top().hasMaterial()    || front.middle().hasMaterial()))
            || (bfloor.visHeight() >= fceil.visHeight() &&
@@ -2677,14 +2672,15 @@ static void writeWallSections(HEdge &hedge)
     DENG_ASSERT(hedge._frameFlags & HEDGEINF_FACINGFRONT);
 
     int const pvisSections = pvisibleWallSections(hedge.lineSide()); /// @ref sideSectionFlags
-    bool opaque;
+    bool opaque = false;
 
     if(!hedge.hasTwin() || !hedge.twin().bspLeafSectorPtr() ||
        /* solid side of a "one-way window"? */
        !(hedge.twin().hasLineSide() && hedge.twin().lineSide().hasSections()))
     {
         // One-sided.
-        opaque = writeWallSections2(hedge, pvisSections);
+        if(pvisSections & Line::Side::MiddleFlag)
+            prepareEdgesAndWriteWallSection(hedge, Line::Side::Middle, &opaque);
     }
     else
     {
@@ -2732,7 +2728,8 @@ static void writeLeafPolyobjs()
         // Ignore back facing walls.
         if(hedge->_frameFlags & HEDGEINF_FACINGFRONT)
         {
-            bool opaque = writeWallSections2(*hedge, Line::Side::MiddleFlag);
+            bool opaque = false;
+            prepareEdgesAndWriteWallSection(*hedge, Line::Side::Middle, &opaque);
 
             // We can occlude the wall range if the opening is filled (when the viewer is not in the void).
             if(opaque && !P_IsInVoid(viewPlayer))
