@@ -124,6 +124,7 @@ DENG2_PIMPL(Bank)
      */
     struct Data : public PathTree::Node, public Waitable, public Lockable
     {
+        Bank *bank;                     ///< Bank that owns the data.
         std::auto_ptr<IData> data;      ///< Non-NULL for in-memory items.
         std::auto_ptr<ISource> source;  ///< Always required.
         CacheLevel level;               ///< Current cache level.
@@ -131,6 +132,7 @@ DENG2_PIMPL(Bank)
 
         Data(PathTree::NodeArgs const &args)
             : Node(args),
+              bank(0),
               level(InColdStorage),
               accessedAt(Time::invalidTime())
         {}
@@ -139,29 +141,35 @@ DENG2_PIMPL(Bank)
         {
             DENG2_GUARD(this);
 
-            if(data.get()) data->aboutToUnload();
+            if(data.get())
+            {
+                LOG_DEBUG("Item \"%s\" data cleared from memory (%i bytes)")
+                        << path() << data->sizeInMemory();
+                data->aboutToUnload();
+            }
             data.reset();
         }
 
-        void setData(IData *newData, Bank::Instance &bank)
+        void setData(IData *newData)
         {
             DENG2_GUARD(this);
             DENG2_ASSERT(newData != 0);
 
             data.reset(newData);
             accessedAt = Time();
-
-            bank.notify(Notification(Notification::Loaded, path()));
+            bank->d->notify(Notification(Notification::Loaded, path()));
         }
 
-        void setLevel(CacheLevel newLevel, Bank::Instance &bank)
+        void setLevel(CacheLevel newLevel)
         {
             DENG2_GUARD(this);
 
             if(level != newLevel)
             {
+                LOG_DEBUG("Item \"%s\" cache level changed to %i") << path() << newLevel;
+
                 level = newLevel;
-                bank.notify(Notification(path(), newLevel));
+                bank->d->notify(Notification(path(), newLevel));
             }
         }
     };
@@ -191,6 +199,8 @@ DENG2_PIMPL(Bank)
          */
         void runTask()
         {
+            LOG_AS("Bank::Job");
+
             switch(_task)
             {
             case Job::Load:
@@ -237,8 +247,8 @@ DENG2_PIMPL(Bank)
                 if(loaded.data())
                 {
                     // Put the loaded data into the memory cache.
-                    it.setData(loaded.take(), *_bank.d);
-                    it.setLevel(InMemory, *_bank.d);
+                    it.setData(loaded.take());
+                    it.setLevel(InMemory);
                     it.post(); // Notify other thread waiting on this load.
 
                     // Now that it is in memory, a copy in hot storage is obsolete.
@@ -273,7 +283,7 @@ DENG2_PIMPL(Bank)
                             << it.source->modifiedAt()
                             << *it.data->asSerializable();
 
-                    it.setLevel(InHotStorage, *_bank.d);
+                    it.setLevel(InHotStorage);
 
                     // Remove from memory.
                     it.clearData();
@@ -318,8 +328,8 @@ DENG2_PIMPL(Bank)
 
                 reader >> *blank->asSerializable();
 
-                it.setData(blank.take(), *_bank.d);
-                it.setLevel(InMemory, *_bank.d);
+                it.setData(blank.take());
+                it.setLevel(InMemory);
                 it.post();
             }
             catch(Error const &er)
@@ -328,7 +338,7 @@ DENG2_PIMPL(Bank)
                         << _path << er.asText();
 
                 // Try loading from source instead.
-                _bank.d->addJob(new Job(_bank, Job::Load, _path), LoadImmediately);
+                _bank.d->addJob(new Job(_bank, Job::Load, _path), Immediately);
             }
         }
 
@@ -393,7 +403,7 @@ DENG2_PIMPL(Bank)
         return flags.testFlag(BackgroundThread);
     }
 
-    void addJob(Job *job, LoadImportance importance)
+    void addJob(Job *job, Importance importance)
     {
         if(!isThreaded())
         {
@@ -403,15 +413,22 @@ DENG2_PIMPL(Bank)
         }
         else
         {
-            jobs.start(job, importance == LoadAfterQueued?
+            jobs.start(job, importance == AfterQueued?
                            TaskPool::LowPriority : TaskPool::HighPriority);
         }
     }
 
     void notify(Notification const &notif)
     {
-        notifications.put(new Notification(notif));
-        notifyTimer->start();
+        if(isThreaded())
+        {
+            notifications.put(new Notification(notif));
+            notifyTimer->start();
+        }
+        else
+        {
+            performNotification(notif);
+        }
     }
 
     void clear()
@@ -426,6 +443,33 @@ DENG2_PIMPL(Bank)
         hotStorage.setLocation(location);
     }
 
+    void restoreFromHotStorage(Data &item)
+    {
+        if(!hotStorage) return;
+
+        try
+        {
+            // Check if this item is available in hot storage; if so, mark its
+            // level appropriately.
+            if(hotStorage->has(item.path()))
+            {
+                Time hotTime;
+                Reader(hotStorage->locate<File const>(item.path())).withHeader() >> hotTime;
+
+                if(!item.source->modifiedAt().isValid() ||
+                   item.source->modifiedAt() == hotTime)
+                {
+                    addJob(new Job(self, Job::Deserialize, item.path()), AfterQueued);
+                }
+            }
+        }
+        catch(Error const &er)
+        {
+            LOG_WARNING("Failed to restore \"%s\" from hot storage:\n")
+                    << item.path() << er.asText();
+        }
+    }
+
     /**
      * Remove the item identified by @a path from memory and hot storage.
      * (Synchronous operation.)
@@ -438,7 +482,7 @@ DENG2_PIMPL(Bank)
         if(item.level != InColdStorage)
         {
             // Change the cache level.
-            item.setLevel(InColdStorage, *this);
+            item.setLevel(InColdStorage);
 
             // Clear the memory and hot storage caches.
             item.clearData();
@@ -446,7 +490,7 @@ DENG2_PIMPL(Bank)
         }
     }
 
-    void load(Path const &path, LoadImportance importance)
+    void load(Path const &path, Importance importance)
     {       
         Data &item = items.find(path, FIND_ITEM);
         DENG2_GUARD(item);
@@ -464,9 +508,14 @@ DENG2_PIMPL(Bank)
     void unload(Path const &path, CacheLevel toLevel)
     {
         // Is this a meaningful request?
-        if(toLevel == InMemory || (toLevel == InHotStorage && !hotStorage))
+        if(toLevel == InHotStorage && !hotStorage)
+        {
+            toLevel = InColdStorage;
+        }
+        if(toLevel == InMemory)
+        {
             return; // Ignore...
-
+        }
         if(toLevel == InColdStorage)
         {
             clearFromCache(path);
@@ -479,7 +528,7 @@ DENG2_PIMPL(Bank)
         if(item.level == InMemory && toLevel == InHotStorage)
         {
             // Serialize the data and remove from memory.
-            addJob(new Job(self, Job::Serialize, path), LoadImmediately);
+            addJob(new Job(self, Job::Serialize, path), Immediately);
         }
     }
 
@@ -490,22 +539,27 @@ DENG2_PIMPL(Bank)
             QScopedPointer<Notification> notif(notifications.take());
             if(!notif.data()) break;
 
-            switch(notif->kind)
-            {
-            case Notification::Loaded:
-                DENG2_FOR_PUBLIC_AUDIENCE(Load, i)
-                {
-                    i->bankLoaded(notif->path);
-                }
-                break;
+            performNotification(*notif);
+        }
+    }
 
-            case Notification::LevelChanged:
-                DENG2_FOR_PUBLIC_AUDIENCE(CacheLevel, i)
-                {
-                    i->bankCacheLevelChanged(notif->path, notif->level);
-                }
-                break;
+    void performNotification(Notification const &nt)
+    {
+        switch(nt.kind)
+        {
+        case Notification::Loaded:
+            DENG2_FOR_PUBLIC_AUDIENCE(Load, i)
+            {
+                i->bankLoaded(nt.path);
             }
+            break;
+
+        case Notification::LevelChanged:
+            DENG2_FOR_PUBLIC_AUDIENCE(CacheLevel, i)
+            {
+                i->bankCacheLevelChanged(nt.path, nt.level);
+            }
+            break;
         }
     }
 };
@@ -565,14 +619,17 @@ void Bank::clear()
 
 void Bank::add(Path const &path, ISource *source)
 {
-    QScopedPointer<ISource> src(source);
-    d->items.insert(path).source.reset(src.take());
+    LOG_AS("Bank");
 
-    if(d->hotStorage)
-    {
-        /// @todo Check if this item is available in hot storage; if so, mark its
-        /// level appropriately.
-    }
+    QScopedPointer<ISource> src(source);
+    Instance::Data &item = d->items.insert(path);
+
+    DENG2_GUARD(item);
+
+    item.bank = this;
+    item.source.reset(src.take());
+
+    d->restoreFromHotStorage(item);
 }
 
 void Bank::remove(Path const &path)
@@ -602,7 +659,7 @@ PathTree const &Bank::index() const
     return d->items;
 }
 
-void Bank::load(Path const &path, LoadImportance importance)
+void Bank::load(Path const &path, Importance importance)
 {
     d->load(path, importance);
 }
@@ -613,7 +670,7 @@ void Bank::loadAll()
     allItems(names);
     DENG2_FOR_EACH(Names, i, names)
     {
-        load(*i, LoadAfterQueued);
+        load(*i, AfterQueued);
     }
 }
 
@@ -640,7 +697,7 @@ Bank::IData &Bank::data(Path const &path) const
     LOG_DEBUG("Loading \"%s\"...") << path;
 
     Time requestedAt;
-    d->load(path, LoadImmediately);
+    d->load(path, Immediately);
     item.wait();
 
     LOG_DEBUG("\"%s\" is available (waited %.2f seconds)") << path << requestedAt.since();

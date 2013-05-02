@@ -127,6 +127,12 @@ public:
         InMemory = 2
     };
 
+    enum Importance
+    {
+        Immediately,    ///< Request handled at the head of the queue.
+        AfterQueued     ///< Request handled at the end of the queue.
+    };
+
     enum { Unlimited = -1 };
 
     /**
@@ -261,11 +267,6 @@ public:
 
     PathTree const &index() const;
 
-    enum LoadImportance {
-        LoadImmediately,    ///< Load request handled at the head of the queue.
-        LoadAfterQueued     ///< Load request handled at the end of the queue.
-    };
-
     /**
      * Requests a data item to be loaded. When using BackgroundThread, this is
      * an asynchronous operation. When the data is available, audienceForLoad
@@ -275,7 +276,7 @@ public:
      * @param path        Identifier of the data.
      * @param importance  When/how to carry out the load request (with BackgroundThread).
      */
-    void load(Path const &path, LoadImportance importance = LoadImmediately);
+    void load(Path const &path, Importance importance = Immediately);
 
     void loadAll();
 
@@ -283,7 +284,7 @@ public:
      * Returns the data of an item.
      *
      * If the item is presently not in memory, it will first be loaded (using
-     * LoadImmediately; blocks until complete). The data is automatically
+     * Immediately; blocks until complete). The data is automatically
      * marked as used at the current time, so it will not leave the memory
      * cache level until sometime in the future.
      *
