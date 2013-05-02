@@ -332,8 +332,8 @@ int Plane::property(setargs_t &args) const
 {
     switch(args.prop)
     {
-    case DMU_BASE:
-        DMU_GetValue(DMT_PLANE_BASE, &d->soundEmitter, &args, 0);
+    case DMU_EMITTER:
+        DMU_GetValue(DMT_PLANE_EMITTER, &d->soundEmitter, &args, 0);
         break;
     case DMU_SECTOR:
         DMU_GetValue(DMT_PLANE_SECTOR, &d->sector, &args, 0);

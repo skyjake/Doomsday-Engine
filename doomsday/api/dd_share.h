@@ -380,8 +380,6 @@ enum {
     DMU_VERTEX0,
     DMU_VERTEX1,
 
-    DMU_FRONT_SECTOR,
-    DMU_BACK_SECTOR,
     DMU_FRONT,
     DMU_BACK,
     DMU_FLAGS,
@@ -398,7 +396,6 @@ enum {
     DMU_OFFSET_XY,
 
     DMU_VALID_COUNT,
-    DMU_LINE_COUNT,
     DMU_COLOR, ///< RGB
     DMU_COLOR_RED, ///< red component
     DMU_COLOR_GREEN, ///< green component
@@ -408,12 +405,11 @@ enum {
     DMU_LIGHT_LEVEL,
     DMT_MOBJS, ///< pointer to start of sector mobjList
     DMU_BOUNDING_BOX, ///< AABoxd
-    DMU_BASE,
+    DMU_EMITTER,
     DMU_WIDTH,
     DMU_HEIGHT,
     DMU_TARGET_HEIGHT,
     DMU_SPEED,
-    DMU_HEDGE_COUNT,
     DMU_FLOOR_PLANE,
     DMU_CEILING_PLANE
 };

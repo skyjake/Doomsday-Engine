@@ -385,10 +385,6 @@ int BspLeaf::property(setargs_t &args) const
     case DMU_SECTOR:
         DMU_GetValue(DMT_BSPLEAF_SECTOR, &d->sector, &args, 0);
         break;
-    case DMU_HEDGE_COUNT: {
-        int val = int( _hedgeCount );
-        DMU_GetValue(DDVT_INT, &val, &args, 0);
-        break; }
     default:
         return MapElement::property(args);
     }

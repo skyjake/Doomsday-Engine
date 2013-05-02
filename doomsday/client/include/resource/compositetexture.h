@@ -160,7 +160,7 @@ public:
     /**
      * Returns @c true if the texture has flagged @a flagsToTest.
      */
-    inline bool isFlagged(Flags flagsToTest) const { return !!(flags() & flagsToTest); }
+    inline bool isFlagged(Flags flagsToTest) const { return (flags() & flagsToTest) != 0; }
 
     /**
      * Returns the flags for the composite texture.
@@ -171,9 +171,9 @@ public:
      * Change the composite texture's flags.
      *
      * @param flagsToChange  Flags to change the value of.
-     * @param set  @c true to set, @c false to clear.
+     * @param operation      Logical operation to perform on the flags.
      */
-    void setFlags(Flags flagsToChange, bool set = true);
+    void setFlags(Flags flagsToChange, de::FlagOp operation = de::SetFlags);
 
 private:
     DENG2_PRIVATE(d)

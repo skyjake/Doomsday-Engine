@@ -606,7 +606,7 @@ static int rendSeg(void* hedge_, void* data)
     // We only want to draw twosided lines once.
     frontSector = P_GetPtrp(line, DMU_FRONT_SECTOR);
     if(frontSector // $degenleaf
-       && frontSector != P_GetPtrp(line, DMU_FRONT_OF_LINE | DMU_SECTOR)) return false;
+       && frontSector != P_GetPtrp(line, DMU_FRONT_SECTOR)) return false;
 
     info = NULL;
     if((am->flags & AMF_REND_ALLLINES) || xLine->mapped[plr - players])

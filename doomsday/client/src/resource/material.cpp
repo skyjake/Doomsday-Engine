@@ -513,16 +513,9 @@ Material::Flags Material::flags() const
     return d->flags;
 }
 
-void Material::setFlags(Material::Flags flagsToChange, bool set)
+void Material::setFlags(Material::Flags flagsToChange, FlagOp operation)
 {
-    if(set)
-    {
-        d->flags |= flagsToChange;
-    }
-    else
-    {
-        d->flags &= ~flagsToChange;
-    }
+    applyFlagOperation(d->flags, flagsToChange, operation);
 }
 
 bool Material::isAnimated() const

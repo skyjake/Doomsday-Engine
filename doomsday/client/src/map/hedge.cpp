@@ -432,12 +432,8 @@ int HEdge::property(setargs_t &args) const
         Line *lineAdr = d->lineSide? &d->lineSide->line() : 0;
         DMU_GetValue(DMT_HEDGE_LINE, &lineAdr, &args, 0);
         break; }
-    case DMU_FRONT_SECTOR: {
+    case DMU_SECTOR: {
         Sector *sector = bspLeafSectorPtr();
-        DMU_GetValue(DMT_HEDGE_SECTOR, &sector, &args, 0);
-        break; }
-    case DMU_BACK_SECTOR: {
-        Sector *sector = _twin? _twin->bspLeafSectorPtr() : 0;
         DMU_GetValue(DMT_HEDGE_SECTOR, &sector, &args, 0);
         break; }
     case DMU_ANGLE:

@@ -137,7 +137,7 @@ int EV_BuildPillar(Line* line, byte* args, boolean crush)
         pillar->ceilingDest = newHeight;
         pillar->direction = 1;
         pillar->crush = crush * (int) args[3];
-        SN_StartSequence(P_GetPtrp(pillar->sector, DMU_BASE),
+        SN_StartSequence(P_GetPtrp(pillar->sector, DMU_EMITTER),
                          SEQ_PLATFORM + P_ToXSector(pillar->sector)->seqType);
     }
     return rtn;
@@ -210,7 +210,7 @@ int EV_OpenPillar(Line* line, byte* args)
         }
 
         pillar->direction = -1; // Open the pillar.
-        SN_StartSequence(P_GetPtrp(pillar->sector, DMU_BASE),
+        SN_StartSequence(P_GetPtrp(pillar->sector, DMU_EMITTER),
                          SEQ_PLATFORM + P_ToXSector(pillar->sector)->seqType);
     }
 

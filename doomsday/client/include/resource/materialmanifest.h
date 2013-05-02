@@ -132,9 +132,9 @@ public:
      * Change the manifest's flags.
      *
      * @param flagsToChange  Flags to change the value of.
-     * @param set  @c true to set, @c false to clear.
+     * @param operation      Logical operation to perform on the flags.
      */
-    void setFlags(Flags flagsToChange, bool set = true);
+    void setFlags(Flags flagsToChange, de::FlagOp operation = de::SetFlags);
 
     /**
      * Returns @c true if a Material is presently associated with the manifest.

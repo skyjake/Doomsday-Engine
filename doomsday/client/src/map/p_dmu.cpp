@@ -108,8 +108,6 @@ char const *DMU_Str(uint prop)
         { DMU_NORMAL_XYZ, "DMU_NORMAL_XYZ" },
         { DMU_VERTEX0, "DMU_VERTEX0" },
         { DMU_VERTEX1, "DMU_VERTEX1" },
-        { DMU_FRONT_SECTOR, "DMU_FRONT_SECTOR" },
-        { DMU_BACK_SECTOR, "DMU_BACK_SECTOR" },
         { DMU_FRONT, "DMU_FRONT" },
         { DMU_BACK, "DMU_BACK" },
         { DMU_FLAGS, "DMU_FLAGS" },
@@ -125,7 +123,6 @@ char const *DMU_Str(uint prop)
         { DMU_OFFSET_XY, "DMU_OFFSET_XY" },
         { DMU_BLENDMODE, "DMU_BLENDMODE" },
         { DMU_VALID_COUNT, "DMU_VALID_COUNT" },
-        { DMU_LINE_COUNT, "DMU_LINE_COUNT" },
         { DMU_COLOR, "DMU_COLOR" },
         { DMU_COLOR_RED, "DMU_COLOR_RED" },
         { DMU_COLOR_GREEN, "DMU_COLOR_GREEN" },
@@ -134,11 +131,10 @@ char const *DMU_Str(uint prop)
         { DMU_LIGHT_LEVEL, "DMU_LIGHT_LEVEL" },
         { DMT_MOBJS, "DMT_MOBJS" },
         { DMU_BOUNDING_BOX, "DMU_BOUNDING_BOX" },
-        { DMU_BASE, "DMU_BASE" },
+        { DMU_EMITTER, "DMU_EMITTER" },
         { DMU_WIDTH, "DMU_WIDTH" },
         { DMU_HEIGHT, "DMU_HEIGHT" },
         { DMU_TARGET_HEIGHT, "DMU_TARGET_HEIGHT" },
-        { DMU_HEDGE_COUNT, "DMU_HEDGE_COUNT" },
         { DMU_SPEED, "DMU_SPEED" },
         { DMU_FLOOR_PLANE, "DMU_FLOOR_PLANE" },
         { DMU_CEILING_PLANE, "DMU_CEILING_PLANE" },
@@ -952,14 +948,8 @@ static void setProperty(MapElement *elem, setargs_t &args)
             args.type = DMU_SURFACE;
             break;
 
-        default:
-            break;
+        default: break;
         }
-    }
-
-    if(args.type == DMU_SURFACE)
-    {
-        elem->castTo<Surface>();
     }
 
     // Write the property value(s).

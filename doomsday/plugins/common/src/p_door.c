@@ -139,7 +139,7 @@ void T_Door(void *doorThinkerPtr)
             case DT_NORMAL:
                 door->state = DS_DOWN; // Time to go back down.
 #if __JHEXEN__
-                SN_StartSequence(P_SectorOrigin(door->sector),
+                SN_StartSequence(P_GetPtrp(door->sector, DMU_EMITTER),
                                  SEQ_DOOR_STONE + xsec->seqType);
 #else
                 S_PlaneSound(P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOORCLOSING);
@@ -187,7 +187,7 @@ void T_Door(void *doorThinkerPtr)
         if(res == pastdest)
         {
 #if __JHEXEN__
-            SN_StopSequence(P_SectorOrigin(door->sector));
+            SN_StopSequence(P_GetPtrp(door->sector, DMU_EMITTER));
 #endif
             switch(door->type)
             {
@@ -267,7 +267,7 @@ void T_Door(void *doorThinkerPtr)
         if(res == pastdest)
         {
 #if __JHEXEN__
-            SN_StopSequence(P_SectorOrigin(door->sector));
+            SN_StopSequence(P_GetPtrp(door->sector, DMU_EMITTER));
 #endif
             switch(door->type)
             {
@@ -304,7 +304,7 @@ void T_Door(void *doorThinkerPtr)
 #endif
                 Thinker_Remove(&door->thinker); // Unlink and free.
 #if __JHERETIC__
-                S_StopSound(0, (mobj_t*) P_GetPtrp(door->sector, DMU_CEILING_BASE));
+                S_StopSound(0, (mobj_t*) P_GetPtrp(door->sector, DMU_CEILING_EMITTER));
 #endif
                 break;
 
@@ -422,7 +422,7 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
 
         // Play a sound?
 #if __JHEXEN__
-        SN_StartSequence(P_SectorOrigin(door->sector), sound);
+        SN_StartSequence(P_GetPtrp(door->sector, DMU_EMITTER), sound);
 #else
         if(sound)
             S_PlaneSound(P_GetPtrp(door->sector, DMU_CEILING_PLANE), sound);
@@ -761,7 +761,7 @@ boolean EV_VerticalDoor(Line* line, mobj_t* mo)
 
     // Play a sound?
 #if __JHEXEN__
-    SN_StartSequence(P_SectorOrigin(door->sector),
+    SN_StartSequence(P_GetPtrp(door->sector, DMU_EMITTER),
                      SEQ_DOOR_STONE + P_ToXSector(door->sector)->seqType);
 #else
     switch(xline->special)

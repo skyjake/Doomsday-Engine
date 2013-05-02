@@ -298,16 +298,9 @@ Texture::Flags Texture::flags() const
     return d->flags;
 }
 
-void Texture::setFlags(Texture::Flags flagsToChange, bool set)
+void Texture::setFlags(Texture::Flags flagsToChange, FlagOp operation)
 {
-    if(set)
-    {
-        d->flags |= flagsToChange;
-    }
-    else
-    {
-        d->flags &= ~flagsToChange;
-    }
+    applyFlagOperation(d->flags, flagsToChange, operation);
 }
 
 String Texture::description() const

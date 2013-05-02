@@ -65,7 +65,7 @@ int MapElement::property(setargs_t &args) const
     default:
         /// @throw UnknownPropertyError  The requested property is not readable.
         throw UnknownPropertyError(QString("%1::property").arg(DMU_Str(_type)),
-                                   QString("Property '%1' is unknown/not readable").arg(DMU_Str(args.prop)));
+                                   QString("'%1' is unknown/not readable").arg(DMU_Str(args.prop)));
     }
 
     return false; // Continue iteration.
@@ -75,5 +75,5 @@ int MapElement::setProperty(setargs_t const &args)
 {
     /// @throw WritePropertyError  The requested property is not writable.
     throw WritePropertyError(QString("%1::setProperty").arg(DMU_Str(_type)),
-                             QString("Property '%1' is unknown/not writable").arg(DMU_Str(args.prop)));
+                             QString("'%1' is unknown/not writable").arg(DMU_Str(args.prop)));
 }
