@@ -51,12 +51,6 @@ public:
 
     void prepare(coord_t bottom, coord_t top);
 
-    void configure() {
-        _firstIntercept = &wallDivs.first();
-        _lastIntercept = &wallDivs.last();
-        _interceptCount = wallDivs.count();
-    }
-
     int divisionCount() const { return _interceptCount - 2; }
 
     de::WallDivs::Intercept &firstDivision() const;

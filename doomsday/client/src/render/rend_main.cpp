@@ -2010,16 +2010,7 @@ static bool writeWallSections2(HEdge &hedge, int sections)
     return opaque;
 }
 
-static void prepareSectionEdgePolyobj(SectionEdge &edge, HEdge &hedge, int section,
-    coord_t bottom, coord_t top, int right)
-{
-    DENG2_UNUSED3(hedge, section, right);
-    edge.wallDivs.intercept(bottom); // First node.
-    edge.wallDivs.intercept(top); // Last node.
-    edge.configure();
-}
-
-static bool prepareSectionEdgesPolyobj(HEdge &hedge, int section,
+static bool preparePolyobjSectionEdges(HEdge &hedge, int section,
     SectionEdge &leftEdge, SectionEdge &rightEdge, Vector2f &materialOrigin)
 {
     BspLeaf *leaf = currentBspLeaf;
@@ -2031,8 +2022,8 @@ static bool prepareSectionEdgesPolyobj(HEdge &hedge, int section,
 
     if(!visible) return false;
 
-    prepareSectionEdgePolyobj(leftEdge, hedge, section, bottom, top, false /*left edge */);
-    prepareSectionEdgePolyobj(rightEdge, hedge, section, bottom, top, true /*right edge */);
+    leftEdge.prepare(bottom, top);
+    rightEdge.prepare(bottom, top);
 
     return true;
 }
@@ -2055,7 +2046,7 @@ static bool writeWallSections2Polyobj(HEdge &hedge, int sections)
     Vector2f materialOrigin;
     bool opaque = false;
 
-    if(prepareSectionEdgesPolyobj(hedge, section, leftEdge, rightEdge, materialOrigin))
+    if(preparePolyobjSectionEdges(hedge, section, leftEdge, rightEdge, materialOrigin))
     {
         opaque = writeWallSection(leftEdge, rightEdge, materialOrigin,
                                   hedge, hedge.biasSurfaceForGeometryGroup(section));
