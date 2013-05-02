@@ -174,6 +174,31 @@ coord_t HEdge::length() const
     return _length;
 }
 
+void HEdge::wallSectionSectors(Sector **frontSec, Sector **backSec) const
+{
+    if(!d->lineSide)
+        /// @throw MissingLineError Attempted with no line attributed.
+        throw MissingLineSideError("HEdge::wallSectionSectors", "No line.side is attributed");
+
+    if(d->lineSide->line().isFromPolyobj())
+    {
+        if(frontSec) *frontSec = bspLeaf().sectorPtr();
+        if(backSec)  *backSec  = 0;
+        return;
+    }
+
+    if(!d->lineSide->line().isSelfReferencing())
+    {
+        if(frontSec) *frontSec = bspLeaf().sectorPtr();
+        if(backSec)  *backSec  = hasTwin()? twin().bspLeaf().sectorPtr() : 0;
+        return;
+    }
+
+    // Special case: so called "self-referencing" lines use the sector's of the map line.
+    if(frontSec) *frontSec = d->lineSide->sectorPtr();
+    if(backSec)  *backSec  = d->lineSide->sectorPtr();
+}
+
 biassurface_t &HEdge::biasSurfaceForGeometryGroup(uint groupId)
 {
     if(groupId <= Line::Side::Top)

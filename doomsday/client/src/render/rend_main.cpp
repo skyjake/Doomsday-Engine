@@ -1715,14 +1715,14 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
         // Dynamic Lights?
         if(flags & WSF_ADD_DYNLIGHTS)
         {
-            lightListIdx = projectSurfaceLights(side.middle(), glowStrength, texTL, texBR,
+            lightListIdx = projectSurfaceLights(surface, glowStrength, texTL, texBR,
                                                 (section == Line::Side::Middle && isTwoSided));
         }
 
         // Dynamic shadows?
         if(flags & WSF_ADD_DYNSHADOWS)
         {
-            shadowListIdx = projectSurfaceShadows(side.middle(), glowStrength, texTL, texBR);
+            shadowListIdx = projectSurfaceShadows(surface, glowStrength, texTL, texBR);
         }
 
         if(glowStrength > 0)
@@ -1748,7 +1748,8 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
         deltaL += (sectionOffset / lineLength) * deltaDiff;
     }
 
-    if(section == Line::Side::Middle && isTwoSided)
+    if(section == Line::Side::Middle && isTwoSided &&
+       side.sectorPtr() != currentBspLeaf->sectorPtr())
     {
         // Temporarily modify the draw state.
         currentSectorLightColor = R_GetSectorLightColor(side.sector());
@@ -1840,7 +1841,8 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
 
             radioParms.segOffset = leftEdge.offset();
             radioParms.segLength = width;
-            radioParms.frontSec  = bspLeaf->sectorPtr();
+
+            leftEdge.hedge().wallSectionSectors(&radioParms.frontSec);
 
             radioParms.leftEdge  = parm.wall.leftEdge;
             radioParms.rightEdge = parm.wall.rightEdge;
@@ -1899,7 +1901,8 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
         }
     }
 
-    if(section == Line::Side::Middle && isTwoSided)
+    if(section == Line::Side::Middle && isTwoSided &&
+       side.sectorPtr() != currentBspLeaf->sectorPtr())
     {
         // Undo temporary draw state changes.
         currentSectorLightColor = R_GetSectorLightColor(currentBspLeaf->sector());
@@ -1909,40 +1912,6 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     R_FreeRendVertices(rvertices);
 
     return opaque && !didNearBlend;
-}
-
-/**
- * Determines the side relative sectors for producing wall section geometry.
- *
- * @pre @a hedge has an attributed map line side.
- *
- * @param hedge          Half-edge describing the map line segment.
- *
- * Return values:
- * @param frontSec       Front sector for the wall section is written here. Can be @c 0.
- * @param backSec        Back sector for the wall section is written here. Can be @c 0.
- */
-static void wallSectionSectors(HEdge &hedge, Sector **frontSec, Sector **backSec)
-{
-    DENG_ASSERT(hedge.hasLineSide());
-
-    if(hedge.line().isFromPolyobj())
-    {
-        if(frontSec) *frontSec = hedge.bspLeaf().sectorPtr();
-        if(backSec)  *backSec  = 0;
-        return;
-    }
-
-    if(!hedge.line().isSelfReferencing())
-    {
-        if(frontSec) *frontSec = hedge.bspLeafSectorPtr();
-        if(backSec)  *backSec  = hedge.hasTwin()? hedge.twin().bspLeafSectorPtr() : 0;
-        return;
-    }
-
-    // Special case: so called "self-referencing" lines use the sector's of the map line.
-    if(frontSec) *frontSec = hedge.lineSide().sectorPtr();
-    if(backSec)  *backSec  = hedge.lineSide().sectorPtr();
 }
 
 /**
@@ -1962,7 +1931,7 @@ static bool prepareWallSectionEdges(SectionEdge &leftEdge, SectionEdge &rightEdg
     int const section = leftEdge.section();
 
     Sector *frontSec, *backSec;
-    wallSectionSectors(hedge, &frontSec, &backSec);
+    hedge.wallSectionSectors(&frontSec, &backSec);
 
     coord_t bottom, top;
     bool visible = R_SideSectionCoords(hedge.lineSide(), section, frontSec, backSec,

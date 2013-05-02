@@ -158,7 +158,7 @@ struct RendRadioWallSectionParms
     coord_t segOffset;
     coord_t segLength;
     Line const *line;
-    Sector const *frontSec, *backSec;
+    Sector *frontSec, *backSec;
     SectionEdge const *leftEdge;
     SectionEdge const *rightEdge;
 };

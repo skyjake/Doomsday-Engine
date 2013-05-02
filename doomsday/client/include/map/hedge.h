@@ -379,6 +379,17 @@ public:
     }
 
     /**
+     * Determines the side relative sectors for producing wall section geometry.
+     *
+     * @pre A map line side is attributed (@ref hasLineSide()).
+     *
+     * Return values:
+     * @param frontSec  Front sector for the wall section is written here. Can be @c 0.
+     * @param backSec   Back sector for the wall section is written here. Can be @c 0.
+     */
+    void wallSectionSectors(Sector **frontSec = 0, Sector **backSec = 0) const;
+
+    /**
      * Retrieve the bias surface for specified geometry @a groupId
      *
      * @param groupId  Geometry group identifier for the bias surface.
