@@ -23,24 +23,27 @@
 
 namespace de {
 
-Guard::Guard(de::Lockable const &target) : _target(&target), _rwTarget(0)
+Guard::Guard(Lockable const &target) : _target(&target), _rwTarget(0)
 {
     _target->lock();
 }
 
-Guard::Guard(de::Lockable const *target) : _target(target), _rwTarget(0)
+Guard::Guard(Lockable const *target) : _target(target), _rwTarget(0)
 {
     DENG2_ASSERT(target != 0);
-
     _target->lock();
 }
 
 Guard::Guard(ReadWriteLockable const &target, LockMode mode) : _target(0), _rwTarget(&target)
 {
     if(mode == Reading)
+    {
         _rwTarget->lockForRead();
+    }
     else
+    {
         _rwTarget->lockForWrite();
+    }
 }
 
 Guard::Guard(ReadWriteLockable const *target, LockMode mode) : _target(0), _rwTarget(target)
@@ -48,15 +51,25 @@ Guard::Guard(ReadWriteLockable const *target, LockMode mode) : _target(0), _rwTa
     DENG2_ASSERT(_rwTarget != 0);
 
     if(mode == Reading)
+    {
         _rwTarget->lockForRead();
+    }
     else
+    {
         _rwTarget->lockForWrite();
+    }
 }
 
 Guard::~Guard()
 {
-    if(_target)   _target->unlock();
-    if(_rwTarget) _rwTarget->unlock();
+    if(_target)
+    {
+        _target->unlock();
+    }
+    if(_rwTarget)
+    {
+        _rwTarget->unlock();
+    }
 }
 
 } // namespace de
