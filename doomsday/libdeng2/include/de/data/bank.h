@@ -32,24 +32,33 @@
 namespace de {
 
 /**
- * Abstract data bank with multi-tiered caching.
+ * Abstract data bank with multi-tiered caching. Bank has the following
+ * characteristics:
+ * - Organises a set of data using a PathTree into a logical structure
+ *  (e.g., a set of images in the UI style).
+ * - Generic caching mechanism applicable to any data objects.
+ * - Supports use of serialization to move objects from memory to persistent
+ *   disk cache (not intended to replicate what the OS virtual memory does,
+ *   but rather as a way to avoid repetitive preprocessing tasks on source
+ *   data, e.g., map format conversion).
+ * - Utilizes concurrency by running tasks in background thread(s).
  *
- * Data items are identified using Paths. All data items are required to be
- * serializable; anything that is serializable can be stored in the Bank as
- * log as it derived from Bank::IData.
+ * Data items are identified using Paths. Serializable data items can be stored
+ * in a persistent cache ("hot storage"), from where they can be deserialized
+ * quickly in the future.
  *
  * Data is kept cached on multiple levels: in memory, in hot storage
  * (serialized in a file), or in cold storage (unprocessed source data). When a
  * cache level's maximum size is reached, the oldest items are moved to a lower
  * level (age determined by latest time of access).
  *
- * Bank supports both synchronous and asynchronous usage: optionally a
- * background thread can be used for moving items between cache levels.
+ * Bank supports both synchronous and asynchronous usage. (The latter requires
+ * use of Bank::BackgroundThread.)
  *
  * @par Thread-safety
  *
- * When using BackgroundThread, the Bank will perform all heavy lifting in a
- * separate worker thread (loading from source and (de)serialization). However,
+ * When using BackgroundThread, the Bank will perform all heavy lifting in
+ * separate worker threads (loading from source and (de)serialization). However,
  * audience notifications always occur in the main thread (where the
  * application event loop is running).
  *

@@ -22,6 +22,8 @@
 #include "de/FS"
 #include "de/PathTree"
 #include "de/WaitableFIFO"
+#include "de/Task"
+#include "de/TaskPool"
 #include "de/Log"
 #include "de/Writer"
 #include "de/Reader"
@@ -169,51 +171,53 @@ DENG2_PIMPL(Bank)
     /**
      * Job description for the worker thread.
      */
-    struct Job
-    {
-        enum Task {
-            Load,
-            Serialize,
-            Deserialize,
-            Quit
-        };
-        Task task;
-        Path path;
-
-        Job(Task t, Path p = "") : task(t), path(p) {}
-    };
-
-    typedef WaitableFIFO<Job> Queue;
-
-    /**
-     * Thread that operates the cache queue jobs. If not running, the queue
-     * jobs are performed immediately in the caller's thread.
-     */
-    class WorkerThread : public QThread
+    class Job : public Task
     {
     public:
-        WorkerThread(Public &i) : bank(i), items(i.d->items) {}
-
-        void run()
+        enum Task
         {
-            // This runs in a background thread.
-            while(doWork()) {}
+            Load,
+            Serialize,
+            Deserialize
+        };
 
-            // Thread ends; no more log output.
-            de::Log::disposeThreadLog();
+    public:
+        Job(Bank &bk, Task t, Path p = "")
+            : _bank(bk), _items(bk.d->items), _task(t), _path(p)
+        {}
+
+        /**
+         * Performs the job. This is run by QThreadPool in a background thread.
+         */
+        void runTask()
+        {
+            switch(_task)
+            {
+            case Job::Load:
+                doLoad();
+                break;
+
+            case Job::Serialize:
+                doSerialize();
+                break;
+
+            case Job::Deserialize:
+                doDeserialize();
+                break;
+            }
         }
 
-        Data &item(Path const &path)
+        Data &item()
         {
-            return bank.d->items.find(path, FIND_ITEM);
+            return _items.find(_path, FIND_ITEM);
         }
 
-        void doLoad(Job *job)
+        void doLoad()
         {
             try
             {
                 // Acquire the source information.
-                Data &it = item(job->path);
+                Data &it = item();
                 DENG2_GUARD(it);
                 if(it.level == InMemory)
                 {
@@ -226,50 +230,50 @@ DENG2_PIMPL(Bank)
 
                 // Ask the concrete bank implementation to load the data for
                 // us. This may take an unspecified amount of time.
-                QScopedPointer<IData> loaded(bank.loadFromSource(*it.source));
+                QScopedPointer<IData> loaded(_bank.loadFromSource(*it.source));
 
-                LOG_DEBUG("Loaded \"%s\" in %.2f seconds") << job->path << startedAt.since();
+                LOG_DEBUG("Loaded \"%s\" in %.2f seconds") << _path << startedAt.since();
 
                 if(loaded.data())
                 {
                     // Put the loaded data into the memory cache.
-                    it.setData(loaded.take(), *bank.d);
-                    it.setLevel(InMemory, *bank.d);
+                    it.setData(loaded.take(), *_bank.d);
+                    it.setLevel(InMemory, *_bank.d);
                     it.post(); // Notify other thread waiting on this load.
 
                     // Now that it is in memory, a copy in hot storage is obsolete.
-                    bank.d->hotStorage.clearPath(job->path);
+                    _bank.d->hotStorage.clearPath(_path);
                 }
             }
             catch(Error const &er)
             {
-                LOG_WARNING("Could not load \"%s\":\n") << job->path << er.asText();
+                LOG_WARNING("Could not load \"%s\":\n") << _path << er.asText();
 
                 // Make sure a blocking load completes anyway.
-                item(job->path).post();
+                item().post();
             }
         }
 
-        void doSerialize(Job *job)
+        void doSerialize()
         {
             try
             {
-                LOG_DEBUG("Serializing \"%s\"") << job->path;
+                LOG_DEBUG("Serializing \"%s\"") << _path;
 
-                Data &it = item(job->path);
+                Data &it = item();
                 DENG2_GUARD(it);
 
                 if(it.level == InMemory && it.data.get() &&
-                   it.data->asSerializable() && bank.d->hotStorage)
+                   it.data->asSerializable() && _bank.d->hotStorage)
                 {
                     // Source timestamp is included in the serialization
                     // to check later whether the data is still fresh.
-                    File &hot = bank.d->hotStorage->newFile(job->path, Folder::ReplaceExisting);
+                    File &hot = _bank.d->hotStorage->newFile(_path, Folder::ReplaceExisting);
                     Writer(hot).withHeader()
                             << it.source->modifiedAt()
                             << *it.data->asSerializable();
 
-                    it.setLevel(InHotStorage, *bank.d);
+                    it.setLevel(InHotStorage, *_bank.d);
 
                     // Remove from memory.
                     it.clearData();
@@ -278,27 +282,27 @@ DENG2_PIMPL(Bank)
             catch(Error const &er)
             {
                 LOG_WARNING("Could not serialize \"%s\" to hot storage:\n")
-                        << job->path << er.asText();
+                        << _path << er.asText();
             }
         }
 
-        void doDeserialize(Job *job)
+        void doDeserialize()
         {
             try
             {
-                LOG_DEBUG("Deserializing \"%s\"") << job->path;
+                LOG_DEBUG("Deserializing \"%s\"") << _path;
 
-                Data &it = item(job->path);
+                Data &it = item();
                 DENG2_GUARD(it);
 
                 // Sanity check.
                 DENG2_ASSERT(it.level == InHotStorage);
-                DENG2_ASSERT(bank.d->hotStorage.get() != 0);
+                DENG2_ASSERT(_bank.d->hotStorage.get() != 0);
 
-                QScopedPointer<IData> blank(bank.newData());
+                QScopedPointer<IData> blank(_bank.newData());
 
                 Time modifiedAt;
-                File const &hot = bank.d->hotStorage->locate<File>(job->path);
+                File const &hot = _bank.d->hotStorage->locate<File>(_path);
                 Reader reader(hot);
                 reader.withHeader() >> modifiedAt;
 
@@ -307,59 +311,32 @@ DENG2_PIMPL(Bank)
                 {
                     throw StaleError("Bank::doWork",
                                      QString("\"$1\" is stale (source:$2 hot:$3)")
-                                     .arg(job->path)
+                                     .arg(_path)
                                      .arg(it.source->modifiedAt().asText())
                                      .arg(modifiedAt.asText()));
                 }
 
                 reader >> *blank->asSerializable();
 
-                it.setData(blank.take(), *bank.d);
-                it.setLevel(InMemory, *bank.d);
+                it.setData(blank.take(), *_bank.d);
+                it.setLevel(InMemory, *_bank.d);
                 it.post();
             }
             catch(Error const &er)
             {
                 LOG_WARNING("Could not deserialize \"%s\" from hot storage:\n")
-                        << job->path << er.asText();
+                        << _path << er.asText();
 
                 // Try loading from source instead.
-                bank.d->addJob(new Job(Job::Load, job->path));
+                _bank.d->addJob(new Job(_bank, Job::Load, _path), LoadImmediately);
             }
-        }
-
-        bool doWork()
-        {
-            LOG_AS("Bank::Worker");
-
-            // Get the next job, waiting until one is available.
-            QScopedPointer<Job> job(bank.d->jobs.take());
-            if(!job || job->task == Job::Quit) return false;
-
-            switch(job->task)
-            {
-            case Job::Load:
-                doLoad(job.data());
-                break;
-
-            case Job::Serialize:
-                doSerialize(job.data());
-                break;
-
-            case Job::Deserialize:
-                doDeserialize(job.data());
-                break;
-
-            default:
-                return false;
-            }
-
-            return true;
         }
 
     private:
-        Public &bank;
-        DataTree &items;
+        Bank &_bank;
+        DataTree &_items;
+        Task _task;
+        Path _path;
     };
 
     struct Notification
@@ -383,18 +360,18 @@ DENG2_PIMPL(Bank)
     dint64 limits[NUM_CACHE_LEVELS];
     HotStorage hotStorage;
     DataTree items;
-    Queue jobs;
-    WorkerThread worker;
+    TaskPool jobs;
     QTimer *notifyTimer;
     NotifyQueue notifications;
 
     Instance(Public *i, Flags const &flg)
-        : Base(i), flags(flg), hotStorage(*i), worker(*i)
+        : Base(i), flags(flg), hotStorage(*i)
     {
         limits[InColdStorage] = 0;
         limits[InHotStorage]  = Unlimited;
         limits[InMemory]      = Unlimited;
 
+        // Timer for triggering main loop notifications from background workers.
         notifyTimer = new QTimer(thisPublic);
         notifyTimer->setSingleShot(true);
         notifyTimer->setInterval(1);
@@ -403,7 +380,7 @@ DENG2_PIMPL(Bank)
 
     ~Instance()
     {
-        stopWorker();
+        jobs.waitForDone();
 
         if(flags.testFlag(ClearHotStorageWhenBankDestroyed))
         {
@@ -416,31 +393,18 @@ DENG2_PIMPL(Bank)
         return flags.testFlag(BackgroundThread);
     }
 
-    void startWorker()
+    void addJob(Job *job, LoadImportance importance)
     {
-        if(isThreaded())
-        {
-            worker.start();
-        }
-    }
-
-    void stopWorker()
-    {
-        if(isThreaded())
-        {
-            jobs.put(new Job(Job::Quit), Queue::PutTail);
-            worker.wait();
-            jobs.clear();
-        }
-    }
-
-    void addJob(Job *job, Queue::PutMode mode = Queue::PutTail)
-    {
-        jobs.put(job, mode);
         if(!isThreaded())
         {
             // Execute the job immediately.
-            worker.doWork();
+            QScopedPointer<Job> j(job);
+            j->runTask();
+        }
+        else
+        {
+            jobs.start(job, importance == LoadAfterQueued?
+                           TaskPool::LowPriority : TaskPool::HighPriority);
         }
     }
 
@@ -452,19 +416,14 @@ DENG2_PIMPL(Bank)
 
     void clear()
     {
-        // First make sure any background operations are done.
-        stopWorker();
-
+        jobs.waitForDone();
         items.clear();
-
-        startWorker();
     }
 
     void setHotStorage(String const &location)
     {
-        stopWorker();
+        jobs.waitForDone();
         hotStorage.setLocation(location);
-        startWorker();
     }
 
     /**
@@ -476,30 +435,29 @@ DENG2_PIMPL(Bank)
         Data &item = items.find(path, FIND_ITEM);
         DENG2_GUARD(item);
 
-        if(item.level == InColdStorage) return;
+        if(item.level != InColdStorage)
+        {
+            // Change the cache level.
+            item.setLevel(InColdStorage, *this);
 
-        // Change the cache level.
-        item.setLevel(InColdStorage, *this);
-
-        // Clear the memory and hot storage caches.
-        item.clearData();
-        hotStorage.clearPath(path);
+            // Clear the memory and hot storage caches.
+            item.clearData();
+            hotStorage.clearPath(path);
+        }
     }
 
     void load(Path const &path, LoadImportance importance)
     {       
-        Queue::PutMode const mode = (importance == LoadImmediately? Queue::PutTail : Queue::PutHead);
-
         Data &item = items.find(path, FIND_ITEM);
         DENG2_GUARD(item);
 
         if(hotStorage && item.level == InHotStorage)
         {
-            addJob(new Job(Job::Deserialize, path), mode);
+            addJob(new Job(self, Job::Deserialize, path), importance);
         }
         else if(item.level == InColdStorage)
         {
-            addJob(new Job(Job::Load, path), mode);
+            addJob(new Job(self, Job::Load, path), importance);
         }
     }
 
@@ -521,7 +479,7 @@ DENG2_PIMPL(Bank)
         if(item.level == InMemory && toLevel == InHotStorage)
         {
             // Serialize the data and remove from memory.
-            addJob(new Job(Job::Serialize, path));
+            addJob(new Job(self, Job::Serialize, path), LoadImmediately);
         }
     }
 
@@ -556,7 +514,6 @@ Bank::Bank(Flags const &flags, String const &hotStorageLocation)
     : d(new Instance(this, flags))
 {
     d->hotStorage.setLocation(hotStorageLocation);
-    d->startWorker();
 }
 
 Bank::~Bank()
@@ -610,6 +567,12 @@ void Bank::add(Path const &path, ISource *source)
 {
     QScopedPointer<ISource> src(source);
     d->items.insert(path).source.reset(src.take());
+
+    if(d->hotStorage)
+    {
+        /// @todo Check if this item is available in hot storage; if so, mark its
+        /// level appropriately.
+    }
 }
 
 void Bank::remove(Path const &path)
