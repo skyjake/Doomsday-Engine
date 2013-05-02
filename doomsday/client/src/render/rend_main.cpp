@@ -1990,13 +1990,7 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
     BspLeaf *leaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(leaf));
 
-    DENG_ASSERT(hedge.hasLineSide() && hedge.hasTwin());
-    DENG_ASSERT(hedge.lineSide().hasSections());
-    DENG_ASSERT(hedge._frameFlags & HEDGEINF_FACINGFRONT);
-
-    Line &line = hedge.line();
-
-    reportWallSectionDrawn(line);
+    DENG_ASSERT(hedge.hasTwin());
 
     /// @todo Is this now redundant? -ds
     if(hedge.twin().lineSide().sectorPtr() == hedge.lineSide().sectorPtr())
@@ -2008,24 +2002,31 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
             return false; // Ugh... an obvious wall hedge hack. Best take no chances...
     }
 
-    bool opaque = false;
+    bool wroteOpaqueMiddle = false;
+    bool middleCoversOpening = false;
 
     // Middle section?
     if(sections & Line::Side::MiddleFlag)
     {
-        int const section = Line::Side::Middle;
-        SectionEdge leftEdge(hedge, HEdge::From, section);
-        SectionEdge rightEdge(hedge, HEdge::To, section);
+        DENG_ASSERT(hedge.hasLineSide() && hedge.hasTwin());
+        DENG_ASSERT(hedge.lineSide().hasSections());
+        DENG_ASSERT(hedge._frameFlags & HEDGEINF_FACINGFRONT);
+
+        reportWallSectionDrawn(hedge.line());
+
+        SectionEdge leftEdge(hedge, HEdge::From, Line::Side::Middle);
+        SectionEdge rightEdge(hedge, HEdge::To, Line::Side::Middle);
         Vector2f materialOrigin;
 
         prepareWallSectionEdges(leftEdge, rightEdge, materialOrigin);
         if(leftEdge.isValid() && rightEdge.isValid() &&
            rightEdge.top().distance() > leftEdge.bottom().distance())
         {
-            opaque = writeWallSection(leftEdge, rightEdge, materialOrigin,
-                                      hedge, hedge.biasSurfaceForGeometryGroup(section));
-            if(opaque)
+            wroteOpaqueMiddle = writeWallSection(leftEdge, rightEdge, materialOrigin,
+                                                 hedge, hedge.biasSurfaceForGeometryGroup(Line::Side::Middle));
+            if(wroteOpaqueMiddle)
             {
+                // Did we completely cover the open range?
                 Sector *frontSec, *backSec;
                 hedge.wallSectionSectors(&frontSec, &backSec);
 
@@ -2036,7 +2037,7 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
                 coord_t const bceil  = backSec->ceiling().visHeight();
 
                 coord_t xbottom, xtop;
-                if(line.isSelfReferencing())
+                if(hedge.line().isSelfReferencing())
                 {
                     xbottom = de::min(bfloor, ffloor);
                     xtop    = de::max(bceil,  fceil);
@@ -2050,10 +2051,8 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
                 xbottom += surface.visMaterialOrigin()[VY];
                 xtop    += surface.visMaterialOrigin()[VY];
 
-                // Can we make this a solid segment?
-                if(!(rightEdge.top().distance() >= xtop &&
-                     leftEdge.bottom().distance() <= xbottom))
-                     opaque = false;
+                middleCoversOpening = (rightEdge.top().distance() >= xtop &&
+                                       leftEdge.bottom().distance() <= xbottom);
             }
         }
     }
@@ -2070,10 +2069,13 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
         prepareEdgesAndWriteWallSection(hedge, Line::Side::Bottom);
     }
 
-    if(line.isSelfReferencing())
-       return false;
+    if(hedge.line().isSelfReferencing())
+       return false; /// @todo Why? -ds
 
-    if(!opaque) // We'll have to determine whether we can...
+    if(wroteOpaqueMiddle && middleCoversOpening)
+        return true;
+
+    // We'll have to determine whether we can...
     {
         Sector *frontSec, *backSec;
         hedge.wallSectionSectors(&frontSec, &backSec);
@@ -2098,32 +2100,32 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
             // A closed gap?
             if(de::fequal(fceil, bfloor))
             {
-                opaque = (bceil <= bfloor) ||
-                           !(fceilSurface.hasSkyMaskedMaterial() &&
-                             bceilSurface.hasSkyMaskedMaterial());
+                return (bceil <= bfloor) ||
+                       !(fceilSurface.hasSkyMaskedMaterial() &&
+                         bceilSurface.hasSkyMaskedMaterial());
             }
-            else if(de::fequal(ffloor, bceil))
+
+            if(de::fequal(ffloor, bceil))
             {
-                opaque = (bfloor >= bceil) ||
-                           !(ffloorSurface.hasSkyMaskedMaterial() &&
-                             bfloorSurface.hasSkyMaskedMaterial());
+                return (bfloor >= bceil) ||
+                       !(ffloorSurface.hasSkyMaskedMaterial() &&
+                         bfloorSurface.hasSkyMaskedMaterial());
             }
-            else
-            {
-                opaque = true;
-            }
+
+            return true;
         }
+
         /// @todo Is this still necessary?
-        else if(bceil <= bfloor ||
-                (!(bceil - bfloor > 0) && bfloor > ffloor && bceil < fceil &&
-                front.top().hasMaterial() && front.bottom().hasMaterial()))
+        if(bceil <= bfloor ||
+           (!(bceil - bfloor > 0) && bfloor > ffloor && bceil < fceil &&
+            front.top().hasMaterial() && front.bottom().hasMaterial()))
         {
             // A zero height back segment
-            opaque = true;
+            return true;
         }
     }
 
-    return opaque;
+    return false;
 }
 
 static void markFrontFacingHEdges()
