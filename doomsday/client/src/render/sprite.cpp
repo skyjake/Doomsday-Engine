@@ -159,9 +159,6 @@ void Rend_Draw3DPlayerSprites(void)
     // Setup the modelview matrix.
     Rend_ModelViewMatrix(false);
 
-    if(usingFog)
-        glEnable(GL_FOG);
-
     // Clear Z buffer. This will prevent the psprites from being clipped
     // by nearby polygons.
     glClear(GL_DEPTH_BUFFER_BIT);
@@ -175,11 +172,6 @@ void Rend_Draw3DPlayerSprites(void)
 
         setupModelParamsForVisPSprite(&parm, spr);
         Rend_RenderModel(&parm);
-    }
-
-    if(usingFog)
-    {
-        glDisable(GL_FOG);
     }
 }
 
