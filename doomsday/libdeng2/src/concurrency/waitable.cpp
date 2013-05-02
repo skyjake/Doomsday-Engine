@@ -33,12 +33,12 @@ void Waitable::reset()
     _semaphore.tryAcquire(_semaphore.available());
 }
 
-void Waitable::wait()
+void Waitable::wait() const
 {
     wait(0.0);
 }
 
-void Waitable::wait(TimeDelta const &timeOut)
+void Waitable::wait(TimeDelta const &timeOut) const
 {
     if(timeOut <= 0.0)
     {
@@ -55,7 +55,7 @@ void Waitable::wait(TimeDelta const &timeOut)
     }
 }
 
-void Waitable::post()
+void Waitable::post() const
 {
     _semaphore.release();
 }
