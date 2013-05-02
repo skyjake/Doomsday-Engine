@@ -70,12 +70,13 @@ DENG2_OBSERVES(Bank, Load)
 
     Instance(Public *i)
         : Base(i),
-          mode(TestRenderToTexture),
+          mode      (TestRenderToTexture),
+          //imageBank (Bank::DisableHotStorage),
           uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
           uColor    ("uColor",     GLUniform::Vec4),
           uTime     ("uTime",      GLUniform::Float),
           uTex      ("uTex",       GLUniform::Sampler2D),
-          atlas(AtlasTexture::newWithRowAllocator(Atlas::AllowDefragment | Atlas::BackingStore))
+          atlas     (AtlasTexture::newWithRowAllocator(Atlas::AllowDefragment | Atlas::BackingStore))
     {
         // Use this as the main window.
         setMain(i);
@@ -88,9 +89,9 @@ DENG2_OBSERVES(Bank, Load)
         atlas->setTotalSize(Vector2ui(256, 256));
         atlas->setMagFilter(gl::Nearest);
 
-        imageBank.add("rtt/cube", "/data/graphics/testpic.png");
-        imageBank.loadAll();
-        //imageBank.audienceForLoad += this;
+        imageBank.add(Path("rtt.cube", '.'), "/data/graphics/testpic.png");
+        //imageBank.loadAll();
+        imageBank.audienceForLoad += this;
     }
 
     void canvasGLInit(Canvas &cv)
@@ -118,8 +119,8 @@ DENG2_OBSERVES(Bank, Load)
 
         // Textures.
         testpic.setAutoGenMips(true);
-        //imageBank.load("rtt/cube");
-        testpic.setImage(imageBank.image("rtt/cube"));
+        imageBank.load(Path("rtt.cube", '.'));
+        //testpic.setImage(imageBank.image("rtt/cube"));
         //testpic.setImage(QImage(":/images/testpic.png"));
         testpic.setWrapT(gl::RepeatMirrored);
         testpic.setMinFilter(gl::Linear, gl::MipLinear);
@@ -230,6 +231,8 @@ DENG2_OBSERVES(Bank, Load)
         if(path == "rtt/cube")
         {
             testpic.setImage(imageBank.image(path));
+
+            imageBank.unload(path);
         }
     }
 
