@@ -44,33 +44,35 @@ class Sector;
 class SectionEdge
 {
 public:
-    /// Invalid range geometry was specified to prepare() @ingroup errors
+    /// Invalid range geometry was found during prepare() @ingroup errors
     DENG2_ERROR(InvalidError);
 
 public:
     SectionEdge(HEdge &hedge, int edge, int section);
 
-    void prepare(coord_t bottom, coord_t top);
+    void prepare();
 
     bool isValid() const;
 
+    de::Vector2d const &origin() const;
+
+    coord_t lineOffset() const;
+
+    Line::Side &lineSide() const;
+
+    int section() const;
+
     int divisionCount() const;
-
-    de::WallDivs::Intercept &firstDivision() const;
-
-    de::WallDivs::Intercept &lastDivision() const;
 
     de::WallDivs::Intercept &bottom() const;
 
     de::WallDivs::Intercept &top() const;
 
-    HEdge &hedge() const;
+    de::WallDivs::Intercept &firstDivision() const;
 
-    int section() const;
+    de::WallDivs::Intercept &lastDivision() const;
 
-    de::Vector2d const &origin() const;
-
-    coord_t offset() const;
+    de::Vector2f const &materialOrigin() const;
 
 private:
     void verifyValid() const;
@@ -86,6 +88,7 @@ private:
     int _section;
 
     bool _isValid;
+    de::Vector2f _materialOrigin;
     int _interceptCount;
     de::WallDivs::Intercept *_firstIntercept;
     de::WallDivs::Intercept *_lastIntercept;

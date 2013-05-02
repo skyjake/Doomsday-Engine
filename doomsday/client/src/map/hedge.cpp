@@ -363,11 +363,6 @@ SectionEdge::SectionEdge(HEdge &hedge, int edge, int section)
     DENG_ASSERT(_hedge->hasLineSide() && _hedge->lineSide().hasSections());
 }
 
-bool SectionEdge::isValid() const
-{
-    return _isValid;
-}
-
 void SectionEdge::verifyValid() const
 {
     if(!isValid())
@@ -377,21 +372,34 @@ void SectionEdge::verifyValid() const
     }
 }
 
+bool SectionEdge::isValid() const
+{
+    return _isValid;
+}
+
+Line::Side &SectionEdge::lineSide() const
+{
+    return _hedge->lineSide();
+}
+
+int SectionEdge::section() const
+{
+    return _section;
+}
+
+Vector2d const &SectionEdge::origin() const
+{
+    return _hedge->vertex(_edge).origin();
+}
+
+coord_t SectionEdge::lineOffset() const
+{
+    return _hedge->lineOffset() + (_edge? _hedge->length() : 0);
+}
+
 int SectionEdge::divisionCount() const
 {
     return isValid()? _interceptCount - 2 : 0;
-}
-
-WallDivs::Intercept &SectionEdge::firstDivision() const
-{
-    verifyValid();
-    return _firstIntercept->next();
-}
-
-WallDivs::Intercept &SectionEdge::lastDivision() const
-{
-    verifyValid();
-    return _lastIntercept->prev();
 }
 
 WallDivs::Intercept &SectionEdge::bottom() const
@@ -406,24 +414,22 @@ WallDivs::Intercept &SectionEdge::top() const
     return *_lastIntercept;
 }
 
-HEdge &SectionEdge::hedge() const
+WallDivs::Intercept &SectionEdge::firstDivision() const
 {
-    return *_hedge;
+    verifyValid();
+    return _firstIntercept->next();
 }
 
-int SectionEdge::section() const
+WallDivs::Intercept &SectionEdge::lastDivision() const
 {
-    return _section;
+    verifyValid();
+    return _lastIntercept->prev();
 }
 
-Vector2d const &SectionEdge::origin() const
+Vector2f const &SectionEdge::materialOrigin() const
 {
-    return _hedge->vertex(_edge).origin();
-}
-
-coord_t SectionEdge::offset() const
-{
-    return _hedge->lineOffset() + (_edge? _hedge->length() : 0);
+    verifyValid();
+    return _materialOrigin;
 }
 
 void SectionEdge::addPlaneIntercepts(coord_t bottom, coord_t top)
@@ -559,12 +565,21 @@ void SectionEdge::assertDivisionsInRange(coord_t low, coord_t hi) const
 #endif
 }
 
-void SectionEdge::prepare(coord_t bottom, coord_t top)
+void SectionEdge::prepare()
 {
     DENG_ASSERT(wallDivs.isEmpty());
 
+    Sector *frontSec, *backSec;
+    _hedge->wallSectionSectors(&frontSec, &backSec);
+
+    coord_t bottom, top;
+    R_SideSectionCoords(_hedge->lineSide(), _section, frontSec, backSec,
+                        &bottom, &top, &_materialOrigin);
+
     _isValid = (top >= bottom);
     if(!_isValid) return;
+
+    _materialOrigin.x += float(_hedge->lineOffset());
 
     // Intercepts are arranged in ascending distance order.
 

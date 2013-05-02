@@ -1577,7 +1577,7 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     BspLeaf *bspLeaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(bspLeaf));
 
-    Line::Side &side = leftEdge.hedge().lineSide();
+    Line::Side &side = leftEdge.lineSide();
     Surface &surface = side.surface(leftEdge.section());
 
     // Surfaces without a drawable material are never rendered.
@@ -1692,7 +1692,7 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
         // Linearly interpolate to find the light level delta values for the
         // vertical edges of this wall section.
         coord_t const lineLength = side.line().length();
-        coord_t const sectionOffset = leftEdge.offset();
+        coord_t const sectionOffset = leftEdge.lineOffset();
 
         float deltaDiff = deltaR - deltaL;
         deltaR = deltaL + ((sectionOffset + width) / lineLength) * deltaDiff;
@@ -1834,10 +1834,10 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
             radioParms.sideCn    = frData.sideCorners;
             radioParms.spans     = frData.spans;
 
-            radioParms.segOffset = leftEdge.offset();
+            radioParms.segOffset = leftEdge.lineOffset();
             radioParms.segLength = width;
 
-            leftEdge.hedge().wallSectionSectors(&radioParms.frontSec);
+            mapElement.castTo<HEdge>()->wallSectionSectors(&radioParms.frontSec);
 
             radioParms.leftEdge  = parm.wall.leftEdge;
             radioParms.rightEdge = parm.wall.rightEdge;
@@ -2442,30 +2442,6 @@ static void writeLeafSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
 }
 
 /**
- * Prepare wall section edge data for a map line segment.
- *
- * Return values:
- * @param leftEdge        Edge data for the left of the wall section is written here.
- * @param rightEdge       Edge data for the right of the wall section is written here.
- * @param materialOrigin  Material origin offset data is written here.
- */
-static void prepareWallSectionEdges(SectionEdge &leftEdge, SectionEdge &rightEdge,
-                                    Vector2f &materialOrigin)
-{
-    Sector *frontSec, *backSec;
-    leftEdge.hedge().wallSectionSectors(&frontSec, &backSec);
-
-    coord_t bottom, top;
-    R_SideSectionCoords(leftEdge.hedge().lineSide(), leftEdge.section(), frontSec, backSec,
-                        &bottom, &top, &materialOrigin);
-
-    leftEdge.prepare(bottom, top);
-    rightEdge.prepare(bottom, top);
-
-    materialOrigin.x += float(leftEdge.offset());
-}
-
-/**
  * Prepare edges and write the specified wall @a section to the render lists.
  *
  * @pre currentBspLeaf is set to the BSP leaf which "contains" the half-edge.
@@ -2494,15 +2470,15 @@ static bool prepareEdgesAndWriteWallSection(HEdge &hedge, int section, bool *opa
 
     SectionEdge leftEdge(hedge, HEdge::From, section);
     SectionEdge rightEdge(hedge, HEdge::To, section);
-    Vector2f materialOrigin;
 
-    prepareWallSectionEdges(leftEdge, rightEdge, materialOrigin);
+    leftEdge.prepare();
+    rightEdge.prepare();
 
     if(leftEdge.isValid() && rightEdge.isValid() &&
        rightEdge.top().distance() > leftEdge.bottom().distance())
     {
         bool wroteOpaquePoly =
-            writeWallSection(leftEdge, rightEdge, materialOrigin,
+            writeWallSection(leftEdge, rightEdge, leftEdge.materialOrigin(),
                              hedge, hedge.biasSurfaceForGeometryGroup(section));
 
         if(opaque) *opaque = wroteOpaquePoly;
@@ -2608,14 +2584,17 @@ static void writeWallSections(HEdge &hedge)
 
             SectionEdge leftEdge(hedge, HEdge::From, Line::Side::Middle);
             SectionEdge rightEdge(hedge, HEdge::To, Line::Side::Middle);
-            Vector2f materialOrigin;
 
-            prepareWallSectionEdges(leftEdge, rightEdge, materialOrigin);
+            leftEdge.prepare();
+            rightEdge.prepare();
+
             if(leftEdge.isValid() && rightEdge.isValid() &&
                rightEdge.top().distance() > leftEdge.bottom().distance())
             {
-                wroteOpaqueMiddle = writeWallSection(leftEdge, rightEdge, materialOrigin,
-                                                     hedge, hedge.biasSurfaceForGeometryGroup(Line::Side::Middle));
+                wroteOpaqueMiddle =
+                    writeWallSection(leftEdge, rightEdge, leftEdge.materialOrigin(),
+                                     hedge, hedge.biasSurfaceForGeometryGroup(Line::Side::Middle));
+
                 if(wroteOpaqueMiddle)
                 {
                     // Did we completely cover the open range?
