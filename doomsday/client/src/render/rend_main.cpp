@@ -1561,8 +1561,7 @@ static inline float wallSectionOpacity(Line::Side &side, int section)
 #define WSF_ADD_DYNLIGHTS       0x01 ///< Write geometry for dynamic lights.
 #define WSF_ADD_DYNSHADOWS      0x02 ///< Write geometry for dynamic (mobj) shadows.
 #define WSF_ADD_RADIO           0x04 ///< Write geometry for faked radiosity.
-#define WSF_VIEWER_NEAR_BLEND   0x08 ///< Alpha-blend geometry when viewer is near.
-#define WSF_FORCE_OPAQUE        0x10 ///< Force the geometry to be opaque.
+#define WSF_FORCE_OPAQUE        0x08 ///< Force the geometry to be opaque.
 
 #define DEFAULT_WRITE_WALL_SECTION_FLAGS (WSF_ADD_DYNLIGHTS|WSF_ADD_DYNSHADOWS|WSF_ADD_RADIO)
 ///@}
@@ -1578,6 +1577,7 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     DENG_ASSERT(!isNullLeaf(bspLeaf));
 
     Line::Side &side = leftEdge.hedge().lineSide();
+    bool const isTwoSided = (side.hasSections() && side.back().hasSections());
     int const section = leftEdge.section();
     Surface &surface = side.surface(section);
 
@@ -1591,17 +1591,17 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     coord_t width = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
     float opacity = wallSectionOpacity(side, section);
 
-    bool didNearBlend = false;
-    if(flags & WSF_VIEWER_NEAR_BLEND)
+    // Apply fade out when the viewer is near to this geometry?
+    bool didNearFade = false;
+    if(section == Line::Side::Middle && isTwoSided &&
+       ((viewPlayer->shared.flags & (DDPF_NOCLIP|DDPF_CAMERA)) ||
+        !(leftEdge.hedge().line().isFlagged(DDLF_BLOCKING))))
     {
         /*
-         * Can the player walk through this surface?
-         * If the player is close enough we should NOT add a solid hedge
-         * otherwise HOM would occur when they are directly on top of the line
-         * (e.g., passing through an opaque waterfall).
+         * If the viewer is close enough we should NOT add a solid range to the
+         * angle clipper otherwise HOM would occur when they are directly on top
+         * of the wall (e.g., passing through an opaque waterfall).
          */
-
-        DENG_ASSERT(section == Line::Side::Middle);
 
         mobj_t *mo = viewPlayer->shared.mo;
         viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
@@ -1631,14 +1631,12 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
                     opacity = de::clamp(0.f, opacity, 1.f);
                 }
 
-                didNearBlend = true;
+                didNearFade = true;
             }
         }
     }
 
     if(opacity <= 0) return false;
-
-    bool const isTwoSided = (side.hasSections() && side.back().hasSections());
 
     Vector2f materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
                            (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
@@ -1911,7 +1909,7 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
 
     R_FreeRendVertices(rvertices);
 
-    return opaque && !didNearBlend;
+    return opaque && !didNearFade;
 }
 
 /**
@@ -2030,35 +2028,29 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
         prepareWallSectionEdges(leftEdge, rightEdge, materialOrigin);
         if(rightEdge.top().distance() > leftEdge.bottom().distance())
         {
-            int wsFlags = DEFAULT_WRITE_WALL_SECTION_FLAGS;
-
-            if((viewPlayer->shared.flags & (DDPF_NOCLIP|DDPF_CAMERA)) ||
-               !(line.isFlagged(DDLF_BLOCKING)))
-                wsFlags |= WSF_VIEWER_NEAR_BLEND;
-
             opaque = writeWallSection(leftEdge, rightEdge, materialOrigin,
-                                      hedge, hedge.biasSurfaceForGeometryGroup(section),
-                                      wsFlags);
+                                      hedge, hedge.biasSurfaceForGeometryGroup(section));
             if(opaque)
             {
-                Line::Side &front = hedge.lineSide();
-                Line::Side &back  = hedge.twin().lineSide();
-                Surface &surface = front.middle();
-                Plane &ffloor = leaf->sector().floor();
-                Plane &fceil  = leaf->sector().ceiling();
-                Plane &bfloor = back.sector().floor();
-                Plane &bceil  = back.sector().ceiling();
-                coord_t xbottom, xtop;
+                Sector *frontSec, *backSec;
+                hedge.wallSectionSectors(&frontSec, &backSec);
 
+                Surface const &surface = hedge.lineSide().middle();
+                coord_t const ffloor = frontSec->floor().visHeight();
+                coord_t const fceil  = frontSec->ceiling().visHeight();
+                coord_t const bfloor = backSec->floor().visHeight();
+                coord_t const bceil  = backSec->ceiling().visHeight();
+
+                coord_t xbottom, xtop;
                 if(line.isSelfReferencing())
                 {
-                    xbottom = de::min(bfloor.visHeight(), ffloor.visHeight());
-                    xtop    = de::max(bceil.visHeight(),  fceil.visHeight());
+                    xbottom = de::min(bfloor, ffloor);
+                    xtop    = de::max(bceil,  fceil);
                 }
                 else
                 {
-                    xbottom = de::max(bfloor.visHeight(), ffloor.visHeight());
-                    xtop    = de::min(bceil.visHeight(),  fceil.visHeight());
+                    xbottom = de::max(bfloor, ffloor);
+                    xtop    = de::min(bceil,  fceil);
                 }
 
                 xbottom += surface.visMaterialOrigin()[VY];
@@ -2089,30 +2081,38 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
 
     if(!opaque) // We'll have to determine whether we can...
     {
-        Line::Side &front = hedge.lineSide();
-        Line::Side &back  = hedge.twin().lineSide();
-        Plane &ffloor = leaf->sector().floor();
-        Plane &fceil  = leaf->sector().ceiling();
-        Plane &bfloor = back.sector().floor();
-        Plane &bceil  = back.sector().ceiling();
+        Sector *frontSec, *backSec;
+        hedge.wallSectionSectors(&frontSec, &backSec);
 
-        if(   (bceil.visHeight() <= ffloor.visHeight() &&
+        Line::Side const &front = hedge.lineSide();
+
+        coord_t const ffloor = frontSec->floor().visHeight();
+        coord_t const fceil  = frontSec->ceiling().visHeight();
+        coord_t const bfloor = backSec->floor().visHeight();
+        coord_t const bceil  = backSec->ceiling().visHeight();
+
+        if(   (bceil <= ffloor &&
                    (front.top().hasMaterial()    || front.middle().hasMaterial()))
-           || (bfloor.visHeight() >= fceil.visHeight() &&
+           || (bfloor >= fceil &&
                    (front.bottom().hasMaterial() || front.middle().hasMaterial())))
         {
+            Surface const &ffloorSurface = frontSec->floor().surface();
+            Surface const &fceilSurface  = frontSec->ceiling().surface();
+            Surface const &bfloorSurface = backSec->floor().surface();
+            Surface const &bceilSurface  = backSec->ceiling().surface();
+
             // A closed gap?
-            if(de::fequal(fceil.visHeight(), bfloor.visHeight()))
+            if(de::fequal(fceil, bfloor))
             {
-                opaque = (bceil.visHeight() <= bfloor.visHeight()) ||
-                           !(fceil.surface().hasSkyMaskedMaterial() &&
-                             bceil.surface().hasSkyMaskedMaterial());
+                opaque = (bceil <= bfloor) ||
+                           !(fceilSurface.hasSkyMaskedMaterial() &&
+                             bceilSurface.hasSkyMaskedMaterial());
             }
-            else if(de::fequal(ffloor.visHeight(), bceil.visHeight()))
+            else if(de::fequal(ffloor, bceil))
             {
-                opaque = (bfloor.visHeight() >= bceil.visHeight()) ||
-                           !(ffloor.surface().hasSkyMaskedMaterial() &&
-                             bfloor.surface().hasSkyMaskedMaterial());
+                opaque = (bfloor >= bceil) ||
+                           !(ffloorSurface.hasSkyMaskedMaterial() &&
+                             bfloorSurface.hasSkyMaskedMaterial());
             }
             else
             {
@@ -2120,8 +2120,8 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
             }
         }
         /// @todo Is this still necessary?
-        else if(bceil.visHeight() <= bfloor.visHeight() ||
-                (!(bceil.visHeight() - bfloor.visHeight() > 0) && bfloor.visHeight() > ffloor.visHeight() && bceil.visHeight() < fceil.visHeight() &&
+        else if(bceil <= bfloor ||
+                (!(bceil - bfloor > 0) && bfloor > ffloor && bceil < fceil &&
                 front.top().hasMaterial() && front.bottom().hasMaterial()))
         {
             // A zero height back segment
