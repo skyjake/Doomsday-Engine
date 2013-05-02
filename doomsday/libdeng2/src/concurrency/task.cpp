@@ -33,7 +33,15 @@ TaskPool &Task::pool() const
 
 void Task::run()
 {
-    runTask();
+    try
+    {
+        runTask();
+    }
+    catch(Error const &er)
+    {
+        LOG_AS("Task");
+        LOG_WARNING("Aborted due to exception: ") << er.asText();
+    }
 
     // Cleanup.
     pool().taskFinished(*this);
