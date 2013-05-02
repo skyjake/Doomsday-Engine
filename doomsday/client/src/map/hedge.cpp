@@ -355,6 +355,7 @@ SectionEdge::SectionEdge(HEdge &hedge, int edge, int section)
     : _hedge(&hedge),
       _edge(edge),
       _section(section),
+      _isValid(false), // Not yet prepared.
       _interceptCount(0),
       _firstIntercept(0),
       _lastIntercept(0)
@@ -362,23 +363,46 @@ SectionEdge::SectionEdge(HEdge &hedge, int edge, int section)
     DENG_ASSERT(_hedge->hasLineSide() && _hedge->lineSide().hasSections());
 }
 
+bool SectionEdge::isValid() const
+{
+    return _isValid;
+}
+
+void SectionEdge::verifyValid() const
+{
+    if(!isValid())
+    {
+        /// @throw InvalidError  Invalid range geometry was specified.
+        throw InvalidError("SectionEdge::verifyValid", "Specified range geometry was not valid (top < bottom)");
+    }
+}
+
+int SectionEdge::divisionCount() const
+{
+    return isValid()? _interceptCount - 2 : 0;
+}
+
 WallDivs::Intercept &SectionEdge::firstDivision() const
 {
+    verifyValid();
     return _firstIntercept->next();
 }
 
 WallDivs::Intercept &SectionEdge::lastDivision() const
 {
+    verifyValid();
     return _lastIntercept->prev();
 }
 
 WallDivs::Intercept &SectionEdge::bottom() const
 {
+    verifyValid();
     return *_firstIntercept;
 }
 
 WallDivs::Intercept &SectionEdge::top() const
 {
+    verifyValid();
     return *_lastIntercept;
 }
 
@@ -517,18 +541,18 @@ void SectionEdge::addPlaneIntercepts(coord_t bottom, coord_t top)
 /**
  * Ensure the divisions do not exceed the specified range.
  */
-void SectionEdge::assertDivisionsInRange(coord_t low, coord_t hi)
+void SectionEdge::assertDivisionsInRange(coord_t low, coord_t hi) const
 {
 #ifdef DENG_DEBUG
     if(wallDivs.isEmpty()) return;
 
-    WallDivs::Intercept *node = &wallDivs.first();
+    WallDivs::Intercept *icpt = &wallDivs.first();
     forever
     {
-        DENG2_ASSERT(node->distance() >= low && node->distance() <= hi);
+        DENG2_ASSERT(icpt->distance() >= low && icpt->distance() <= hi);
 
-        if(!node->hasNext()) break;
-        node = &node->next();
+        if(!icpt->hasNext()) break;
+        icpt = &icpt->next();
     }
 #else
     DENG2_UNUSED2(low, hi);
@@ -539,21 +563,27 @@ void SectionEdge::prepare(coord_t bottom, coord_t top)
 {
     DENG_ASSERT(wallDivs.isEmpty());
 
-    // Nodes are arranged according to their Z axis height in ascending order.
-    // The first node is the bottom.
+    _isValid = (top >= bottom);
+    if(!_isValid) return;
+
+    // Intercepts are arranged in ascending distance order.
+
+    // The first intercept is the bottom.
     wallDivs.intercept(bottom);
 
-    // Add nodes for intercepts.
+    // Add intercepts for neighboring planes (the "divisions").
     addPlaneIntercepts(bottom, top);
 
-    // The last node is the top.
+    // The last intercept is the top.
     wallDivs.intercept(top);
 
     if(wallDivs.count() > 2)
     {
         wallDivs.sort();
-        assertDivisionsInRange(bottom, top);
     }
+
+    // Sanity check.
+    assertDivisionsInRange(bottom, top);
 
     _firstIntercept = &wallDivs.first();
     _lastIntercept = &wallDivs.last();

@@ -1925,13 +1925,10 @@ static void prepareWallSectionEdges(SectionEdge &leftEdge, SectionEdge &rightEdg
     R_SideSectionCoords(leftEdge.hedge().lineSide(), leftEdge.section(), frontSec, backSec,
                         &bottom, &top, &materialOrigin);
 
-    if(top > bottom)
-    {
-        leftEdge.prepare(bottom, top);
-        rightEdge.prepare(bottom, top);
+    leftEdge.prepare(bottom, top);
+    rightEdge.prepare(bottom, top);
 
-        materialOrigin.x += float(leftEdge.offset());
-    }
+    materialOrigin.x += float(leftEdge.offset());
 }
 
 /**
@@ -1967,7 +1964,8 @@ static bool prepareEdgesAndWriteWallSection(HEdge &hedge, int section, bool *opa
 
     prepareWallSectionEdges(leftEdge, rightEdge, materialOrigin);
 
-    if(rightEdge.top().distance() > leftEdge.bottom().distance())
+    if(leftEdge.isValid() && rightEdge.isValid() &&
+       rightEdge.top().distance() > leftEdge.bottom().distance())
     {
         bool wroteOpaquePoly =
             writeWallSection(leftEdge, rightEdge, materialOrigin,
@@ -2021,7 +2019,8 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
         Vector2f materialOrigin;
 
         prepareWallSectionEdges(leftEdge, rightEdge, materialOrigin);
-        if(rightEdge.top().distance() > leftEdge.bottom().distance())
+        if(leftEdge.isValid() && rightEdge.isValid() &&
+           rightEdge.top().distance() > leftEdge.bottom().distance())
         {
             opaque = writeWallSection(leftEdge, rightEdge, materialOrigin,
                                       hedge, hedge.biasSurfaceForGeometryGroup(section));

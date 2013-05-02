@@ -44,14 +44,17 @@ class Sector;
 class SectionEdge
 {
 public:
-    de::WallDivs wallDivs;
+    /// Invalid range geometry was specified to prepare() @ingroup errors
+    DENG2_ERROR(InvalidError);
 
 public:
     SectionEdge(HEdge &hedge, int edge, int section);
 
     void prepare(coord_t bottom, coord_t top);
 
-    int divisionCount() const { return _interceptCount - 2; }
+    bool isValid() const;
+
+    int divisionCount() const;
 
     de::WallDivs::Intercept &firstDivision() const;
 
@@ -70,14 +73,19 @@ public:
     coord_t offset() const;
 
 private:
-    void assertDivisionsInRange(coord_t low, coord_t hi);
+    void verifyValid() const;
+
+    void assertDivisionsInRange(coord_t low, coord_t hi) const;
 
     void addPlaneIntercepts(coord_t bottom, coord_t top);
+
+    de::WallDivs wallDivs; /// @todo does not belong here.
 
     HEdge *_hedge;
     int _edge;
     int _section;
 
+    bool _isValid;
     int _interceptCount;
     de::WallDivs::Intercept *_firstIntercept;
     de::WallDivs::Intercept *_lastIntercept;
