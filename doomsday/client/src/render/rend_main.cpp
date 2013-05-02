@@ -1577,9 +1577,7 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     DENG_ASSERT(!isNullLeaf(bspLeaf));
 
     Line::Side &side = leftEdge.hedge().lineSide();
-    bool const isTwoSided = (side.hasSections() && side.back().hasSections());
-    int const section = leftEdge.section();
-    Surface &surface = side.surface(section);
+    Surface &surface = side.surface(leftEdge.section());
 
     // Surfaces without a drawable material are never rendered.
     if(!(surface.hasMaterial() && surface.material().isDrawable()))
@@ -1588,18 +1586,21 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     if(leftEdge.bottom().distance() >= rightEdge.top().distance())
         return true;
 
+    bool const isTwoSidedMiddle = (leftEdge.section() == Line::Side::Middle &&
+                                   side.hasSections() && side.back().hasSections());
+
     coord_t width = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
-    float opacity = wallSectionOpacity(side, section);
+    float opacity = wallSectionOpacity(side, leftEdge.section());
 
     // Apply fade out when the viewer is near to this geometry?
     bool didNearFade = false;
-    if(section == Line::Side::Middle && isTwoSided &&
+    if(isTwoSidedMiddle &&
        ((viewPlayer->shared.flags & (DDPF_NOCLIP|DDPF_CAMERA)) ||
-        !(leftEdge.hedge().line().isFlagged(DDLF_BLOCKING))))
+        !(side.line().isFlagged(DDLF_BLOCKING))))
     {
         /*
-         * If the viewer is close enough we should NOT add a solid range to the
-         * angle clipper otherwise HOM would occur when they are directly on top
+         * If the viewer is close enough we should NOT add a solid range to
+         * the angle clipper otherwise HOM would occur when directly on top
          * of the wall (e.g., passing through an opaque waterfall).
          */
 
@@ -1646,10 +1647,11 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
 
     // Determine which Material to use.
     Material *material = 0;
-    int rpFlags = RPF_DEFAULT; /// @ref rendPolyFlags
+
     /// @todo Geometry tests here should use the same sectors as used when
     /// deciding the z-heights for the wall divs. At least in the case of
     /// selfreferencing lines, this logic is probably incorrect. -ds
+    bool writeToSkyMask = false;
     /*if(devRendSkyMode && hedge.hasTwin() &&
        ((section == Line::Side::Bottom && hedge.bspLeafSector().floorSurface().hasSkyMaskedMaterial() &&
                                           hedge.twin().bspLeafSector().floorSurface().hasSkyMaskedMaterial()) ||
@@ -1668,7 +1670,7 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
             if(!devRendSkyMode)
             {
                 // We'll mask this.
-                rpFlags |= RPF_SKYMASK;
+                writeToSkyMask = true;
             }
             else
             {
@@ -1679,17 +1681,34 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
         }
     }
 
+    // Calculate the light level deltas for this wall section.
+    /// @todo Cache these values somewhere. -ds
+    float deltaL, deltaR;
+    wallSectionLightLevelDeltas(side, leftEdge.section(), deltaL, deltaR);
+
+    if(!de::fequal(deltaL, deltaR))
+    {
+        // Linearly interpolate to find the light level delta values for the
+        // vertical edges of this wall section.
+        coord_t const lineLength = side.line().length();
+        coord_t const sectionOffset = leftEdge.offset();
+
+        float deltaDiff = deltaR - deltaL;
+        deltaR = deltaL + ((sectionOffset + width) / lineLength) * deltaDiff;
+        deltaL += (sectionOffset / lineLength) * deltaDiff;
+    }
+
     MaterialSnapshot const &ms = material->prepare(mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT));
 
     // Fill in the remaining params data.
     Vector3f const *topColor = 0, *bottomColor = 0;
     blendmode_t blendMode = BM_NORMAL;
     uint lightListIdx = 0, shadowListIdx = 0;
-    if(!(rpFlags & RPF_SKYMASK))
+    if(!writeToSkyMask)
     {
         // Make any necessary adjustments to the draw flags to suit the
         // current texture mode.
-        if(section != Line::Side::Middle || (section == Line::Side::Middle && !isTwoSided))
+        if(!isTwoSidedMiddle)
         {
             flags |= WSF_FORCE_OPAQUE;
             blendMode = BM_NORMAL;
@@ -1714,7 +1733,7 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
         if(flags & WSF_ADD_DYNLIGHTS)
         {
             lightListIdx = projectSurfaceLights(surface, glowStrength, texTL, texBR,
-                                                (section == Line::Side::Middle && isTwoSided));
+                                                isTwoSidedMiddle);
         }
 
         // Dynamic shadows?
@@ -1726,46 +1745,23 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
         if(glowStrength > 0)
             flags &= ~WSF_ADD_RADIO;
 
-       side.chooseSurfaceTintColors(section, &topColor, &bottomColor);
+        side.chooseSurfaceTintColors(leftEdge.section(), &topColor, &bottomColor);
     }
 
-    // Calculate the light level deltas for this wall section.
-    /// @todo Cache these values somewhere. -ds
-    float deltaL, deltaR;
-    wallSectionLightLevelDeltas(side, section, deltaL, deltaR);
-
-    if(!de::fequal(deltaL, deltaR))
-    {
-        // Linearly interpolate to find the light level delta values for the
-        // vertical edges of this wall section.
-        coord_t const lineLength = side.line().length();
-        coord_t const sectionOffset = leftEdge.offset();
-
-        float deltaDiff = deltaR - deltaL;
-        deltaR = deltaL + ((sectionOffset + width) / lineLength) * deltaDiff;
-        deltaL += (sectionOffset / lineLength) * deltaDiff;
-    }
-
-    if(section == Line::Side::Middle && isTwoSided &&
-       side.sectorPtr() != currentBspLeaf->sectorPtr())
+    if(isTwoSidedMiddle && side.sectorPtr() != currentBspLeaf->sectorPtr())
     {
         // Temporarily modify the draw state.
         currentSectorLightColor = R_GetSectorLightColor(side.sector());
         currentSectorLightLevel = side.sector().lightLevel();
     }
 
-    bool const skyMask       = (rpFlags & RPF_SKYMASK) != 0;
-    bool const addFakeRadio  = (flags & WSF_ADD_RADIO) != 0;
-    bool const mustSubdivide = (leftEdge.divisionCount() || rightEdge.divisionCount());
+    rendworldpoly_params_t parm; zap(parm);
 
-    rendworldpoly_params_t parm;
-
-    zap(parm);
-    parm.flags               = RPF_DEFAULT | (skyMask? RPF_SKYMASK : 0);
+    parm.flags               = RPF_DEFAULT | (writeToSkyMask? RPF_SKYMASK : 0);
     parm.forceOpaque         = (flags & WSF_FORCE_OPAQUE)? true : false;
     parm.alpha               = (flags & WSF_FORCE_OPAQUE)? 1 : opacity;
     parm.mapElement          = &mapElement;
-    parm.elmIdx              = section;
+    parm.elmIdx              = leftEdge.section();
     parm.bsuf                = &biasSurface;
     parm.normal              = &surface.normal();
     parm.texTL               = &texTL;
@@ -1788,7 +1784,7 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
 
     rvertex_t *rvertices;
     // Allocate enough vertices for the divisions too.
-    if(mustSubdivide)
+    if(leftEdge.divisionCount() || rightEdge.divisionCount())
     {
         // Use two fans.
         rvertices = R_AllocRendVertices(3 + leftEdge.divisionCount() +
@@ -1823,7 +1819,7 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     if(opaque)
     {
         // Render FakeRadio for this section?
-        if(!(parm.flags & RPF_SKYMASK) && addFakeRadio)
+        if(!writeToSkyMask && (flags & WSF_ADD_RADIO))
         {
             Rend_RadioUpdateForLineSide(side);
             LineSideRadioData &frData = Rend_RadioDataForLineSide(side);
@@ -1845,7 +1841,7 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
             radioParms.leftEdge  = parm.wall.leftEdge;
             radioParms.rightEdge = parm.wall.rightEdge;
 
-            if(!(section == Line::Side::Middle && isTwoSided))
+            if(!isTwoSidedMiddle)
             {
                 HEdge &hedge = *mapElement.castTo<HEdge>();
                 if(!(hedge.hasTwin() && !(hedge.twin().hasLineSide() && hedge.twin().lineSide().hasSections())))
@@ -1899,8 +1895,7 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
         }
     }
 
-    if(section == Line::Side::Middle && isTwoSided &&
-       side.sectorPtr() != currentBspLeaf->sectorPtr())
+    if(isTwoSidedMiddle && side.sectorPtr() != currentBspLeaf->sectorPtr())
     {
         // Undo temporary draw state changes.
         currentSectorLightColor = R_GetSectorLightColor(currentBspLeaf->sector());
