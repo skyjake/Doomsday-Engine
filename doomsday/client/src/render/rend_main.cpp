@@ -1926,11 +1926,17 @@ static void wallSectionSectors(HEdge &hedge, Sector **frontSec, Sector **backSec
 {
     DENG_ASSERT(hedge.hasLineSide());
 
+    if(hedge.line().isFromPolyobj())
+    {
+        if(frontSec) *frontSec = hedge.bspLeaf().sectorPtr();
+        if(backSec)  *backSec  = 0;
+        return;
+    }
+
     if(!hedge.line().isSelfReferencing())
     {
         if(frontSec) *frontSec = hedge.bspLeafSectorPtr();
         if(backSec)  *backSec  = hedge.hasTwin()? hedge.twin().bspLeafSectorPtr() : 0;
-
         return;
     }
 
@@ -2001,52 +2007,6 @@ static bool writeWallSections2(HEdge &hedge, int sections)
     bool opaque = false;
 
     if(prepareWallSectionEdges(leftEdge, rightEdge, materialOrigin))
-    {
-        opaque = writeWallSection(leftEdge, rightEdge, materialOrigin,
-                                  hedge, hedge.biasSurfaceForGeometryGroup(section));
-    }
-
-    reportWallSectionDrawn(hedge.line());
-    return opaque;
-}
-
-static bool preparePolyobjSectionEdges(HEdge &hedge, int section,
-    SectionEdge &leftEdge, SectionEdge &rightEdge, Vector2f &materialOrigin)
-{
-    BspLeaf *leaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(leaf));
-
-    coord_t bottom, top;
-    bool visible = R_SideSectionCoords(hedge.lineSide(), section, leaf->sectorPtr(), 0,
-                                       &bottom, &top, &materialOrigin);
-
-    if(!visible) return false;
-
-    leftEdge.prepare(bottom, top);
-    rightEdge.prepare(bottom, top);
-
-    return true;
-}
-
-static bool writeWallSections2Polyobj(HEdge &hedge, int sections)
-{
-    BspLeaf *leaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(leaf));
-
-    DENG_ASSERT(hedge.hasLineSide() && hedge.lineSide().hasSections());
-    DENG_ASSERT(hedge.line().isFromPolyobj());
-    DENG_ASSERT(hedge._frameFlags & HEDGEINF_FACINGFRONT);
-
-    // Only a "middle" section.
-    if(!(sections & Line::Side::MiddleFlag)) return false;
-
-    int const section = Line::Side::Middle;
-    SectionEdge leftEdge(hedge, section, false /* left edge */);
-    SectionEdge rightEdge(hedge, section, true /* right edge */);
-    Vector2f materialOrigin;
-    bool opaque = false;
-
-    if(preparePolyobjSectionEdges(hedge, section, leftEdge, rightEdge, materialOrigin))
     {
         opaque = writeWallSection(leftEdge, rightEdge, materialOrigin,
                                   hedge, hedge.biasSurfaceForGeometryGroup(section));
@@ -2803,7 +2763,7 @@ static void writeLeafPolyobjs()
         // Ignore back facing walls.
         if(hedge->_frameFlags & HEDGEINF_FACINGFRONT)
         {
-            bool opaque = writeWallSections2Polyobj(*hedge, Line::Side::MiddleFlag);
+            bool opaque = writeWallSections2(*hedge, Line::Side::MiddleFlag);
 
             // We can occlude the wall range if the opening is filled (when the viewer is not in the void).
             if(opaque && !P_IsInVoid(viewPlayer))
