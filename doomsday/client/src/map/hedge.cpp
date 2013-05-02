@@ -326,10 +326,10 @@ WallDivs::Intercepts const &WallDivs::intercepts() const
     return _intercepts;
 }
 
-SectionEdge::SectionEdge(HEdge &hedge, int section, int right)
+SectionEdge::SectionEdge(HEdge &hedge, int edge, int section)
     : _hedge(&hedge),
+      _edge(edge),
       _section(section),
-      _right(right),
       _interceptCount(0),
       _firstIntercept(0),
       _lastIntercept(0)
@@ -369,12 +369,12 @@ int SectionEdge::section() const
 
 Vector2d const &SectionEdge::origin() const
 {
-    return _hedge->vertex(_right).origin();
+    return _hedge->vertex(_edge).origin();
 }
 
 coord_t SectionEdge::offset() const
 {
-    return _hedge->lineOffset() + (_right? _hedge->length() : 0);
+    return _hedge->lineOffset() + (_edge? _hedge->length() : 0);
 }
 
 void SectionEdge::addPlaneIntercepts(coord_t bottom, coord_t top)
@@ -389,17 +389,17 @@ void SectionEdge::addPlaneIntercepts(coord_t bottom, coord_t top)
         return;
 
     // Only sections at line side edges can/should be split.
-    if(!((_hedge == side.leftHEdge()  && !_right) ||
-         (_hedge == side.rightHEdge() &&  _right)))
+    if(!((_hedge == side.leftHEdge()  && _edge == HEdge::From) ||
+         (_hedge == side.rightHEdge() && _edge == HEdge::To)))
         return;
 
     if(bottom >= top) return; // Obviously no division.
 
     Sector const *frontSec = side.sectorPtr();
 
-    LineOwner::Direction direction(_right? LineOwner::Previous : LineOwner::Next);
+    LineOwner::Direction direction(_edge? LineOwner::Previous : LineOwner::Next);
     // Retrieve the start owner node.
-    LineOwner *base = R_GetVtxLineOwner(&side.line().vertex(_right), &side.line());
+    LineOwner *base = R_GetVtxLineOwner(&side.line().vertex(_edge), &side.line());
     LineOwner *own = base;
     bool stopScan = false;
     do

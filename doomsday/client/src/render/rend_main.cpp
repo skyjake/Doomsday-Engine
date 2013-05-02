@@ -2001,8 +2001,8 @@ static bool writeWallSections2(HEdge &hedge, int sections)
     if(!(sections & Line::Side::MiddleFlag)) return false;
 
     int const section = Line::Side::Middle;
-    SectionEdge leftEdge(hedge, section, false /* left edge */);
-    SectionEdge rightEdge(hedge, section, true /* right edge */);
+    SectionEdge leftEdge(hedge, HEdge::From, section);
+    SectionEdge rightEdge(hedge, HEdge::To, section);
     Vector2f materialOrigin;
     bool opaque = false;
 
@@ -2055,8 +2055,8 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
     if(sections & Line::Side::MiddleFlag)
     {
         int const section = Line::Side::Middle;
-        SectionEdge leftEdge(hedge, section, false /* left edge */);
-        SectionEdge rightEdge(hedge, section, true /* right edge */);
+        SectionEdge leftEdge(hedge, HEdge::From, section);
+        SectionEdge rightEdge(hedge, HEdge::To, section);
         Vector2f materialOrigin;
 
         if(prepareWallSectionEdges(leftEdge, rightEdge, materialOrigin))
@@ -2101,8 +2101,8 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
     if(sections & Line::Side::TopFlag)
     {
         int const section = Line::Side::Top;
-        SectionEdge leftEdge(hedge, section, false /* left edge */);
-        SectionEdge rightEdge(hedge, section, true /* right edge */);
+        SectionEdge leftEdge(hedge, HEdge::From, section);
+        SectionEdge rightEdge(hedge, HEdge::To, section);
         Vector2f materialOrigin;
 
         if(prepareWallSectionEdges(leftEdge, rightEdge, materialOrigin))
@@ -2116,8 +2116,8 @@ static bool writeWallSections2Twosided(HEdge &hedge, int sections)
     if(sections & Line::Side::BottomFlag)
     {
         int const section = Line::Side::Bottom;
-        SectionEdge leftEdge(hedge, section, false /* left edge */);
-        SectionEdge rightEdge(hedge, section, true /* right edge */);
+        SectionEdge leftEdge(hedge, HEdge::From, section);
+        SectionEdge rightEdge(hedge, HEdge::To, section);
         Vector2f materialOrigin;
 
         if(prepareWallSectionEdges(leftEdge, rightEdge, materialOrigin))

@@ -47,7 +47,7 @@ public:
     de::WallDivs wallDivs;
 
 public:
-    SectionEdge(HEdge &hedge, int section, int right);
+    SectionEdge(HEdge &hedge, int edge, int section);
 
     void prepare(coord_t bottom, coord_t top);
 
@@ -75,8 +75,8 @@ private:
     void addPlaneIntercepts(coord_t bottom, coord_t top);
 
     HEdge *_hedge;
+    int _edge;
     int _section;
-    int _right;
 
     int _interceptCount;
     de::WallDivs::Intercept *_firstIntercept;
