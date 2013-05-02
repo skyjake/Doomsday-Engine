@@ -74,9 +74,4 @@ bool Lockable::isLocked() const
     return result;
 }
 
-void Lockable::assertLocked() const
-{
-    DENG2_ASSERT(isLocked());
-}
-
 } // namespace de

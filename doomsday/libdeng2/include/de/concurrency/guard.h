@@ -34,6 +34,14 @@ namespace de {
     de::Guard _guarding_##varName(varName); \
     DENG2_UNUSED(_guarding_##varName);
 
+#define DENG2_GUARD_READ(varName) \
+    de::Guard _guarding_##varName(varName, de::Guard::Reading); \
+    DENG2_UNUSED(_guarding_##varName);
+
+#define DENG2_GUARD_WRITE(varName) \
+    de::Guard _guarding_##varName(varName, de::Guard::Writing); \
+    DENG2_UNUSED(_guarding_##varName);
+
 /**
  * Locks the target @a targetName until the end of the current scope.
  *
@@ -45,18 +53,34 @@ namespace de {
     de::Guard varName(targetName); \
     DENG2_UNUSED(varName);
 
+#define DENG2_GUARD_READ_FOR(targetName, varName) \
+    de::Guard varName(targetName, de::Guard::Reading); \
+    DENG2_UNUSED(varName);
+
+#define DENG2_GUARD_WRITE_FOR(targetName, varName) \
+    de::Guard varName(targetName, de::Guard::Writing); \
+    DENG2_UNUSED(varName);
+
 class Lockable;
+class ReadWriteLockable;
 
 /**
- * Utility for locking a Lockable object for the lifetime of the Guard. Note
- * that using this is preferable to manual locking and unlocking: if an
- * exception occurs while the target is locked, unlocking will be taken care of
- * automatically when the Guard goes out of scope.
+ * Utility for locking a Lockable or ReadWriteLockable object for the lifetime
+ * of the Guard. Note that using this is preferable to manual locking and
+ * unlocking: if an exception occurs while the target is locked, unlocking will
+ * be taken care of automatically when the Guard goes out of scope.
  *
  * @ingroup data
  */
 class DENG2_PUBLIC Guard
 {
+public:
+    enum LockMode
+    {
+        Reading,
+        Writing
+    };
+
 public:
     /**
      * The target object is locked.
@@ -68,15 +92,17 @@ public:
      */
     Guard(Lockable const *target);
 
+    Guard(ReadWriteLockable const &target, LockMode mode);
+    Guard(ReadWriteLockable const *target, LockMode mode);
+
     /**
      * The target object is unlocked.
      */
     ~Guard();
 
-    void assertLocked() const;
-
 private:
     Lockable const *_target;
+    ReadWriteLockable const *_rwTarget;
 };
 
 } // namespace de
