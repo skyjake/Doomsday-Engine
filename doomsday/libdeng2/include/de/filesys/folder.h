@@ -142,8 +142,8 @@ public:
     File &replaceFile(String const &name);
 
     /**
-     * Removes a file from a folder. If it has an origin feed, the feed will be
-     * asked to remove the file as well.
+     * Removes a file from a folder. The file will be deleted. If it has an
+     * origin feed, the feed will be asked to remove the file as well.
      *
      * @param name  Name or path of file to remove, relative to this folder.
      */
