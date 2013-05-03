@@ -28,27 +28,20 @@ using namespace de;
 
 DENG2_PIMPL(SectionEdge)
 {
-    WallDivs wallDivs; /// @todo does not belong here.
-
     HEdge *hedge;
     int edge;
     int section;
 
     bool isValid;
     Vector2f materialOrigin;
-    int interceptCount;
-    WallDivs::Intercept *firstIntercept;
-    WallDivs::Intercept *lastIntercept;
+    SectionEdge::Intercepts intercepts;
 
     Instance(Public *i, HEdge &hedge, int edge, int section)
         : Base(i),
           hedge(&hedge),
           edge(edge),
           section(section),
-          isValid(false), // Not yet prepared.
-          interceptCount(0),
-          firstIntercept(0),
-          lastIntercept(0)
+          isValid(false)
     {}
 
     void verifyValid() const
@@ -61,29 +54,43 @@ DENG2_PIMPL(SectionEdge)
     }
 
     /**
-     * Ensure the divisions do not exceed the specified range.
+     * Ensure all intercepts do not exceed the specified range.
      */
-    void assertDivisionsInRange(coord_t low, coord_t hi) const
+    void assertInterceptsInRange(coord_t low, coord_t hi) const
     {
 #ifdef DENG_DEBUG
-        if(wallDivs.isEmpty()) return;
-
-        WallDivs::Intercept *icpt = &wallDivs.first();
-        forever
+        foreach(Intercept const &icpt, intercepts)
         {
-            DENG2_ASSERT(icpt->distance() >= low && icpt->distance() <= hi);
-
-            if(!icpt->hasNext()) break;
-            icpt = &icpt->next();
+            DENG2_ASSERT(icpt.distance >= low && icpt.distance <= hi);
         }
 #else
         DENG2_UNUSED2(low, hi);
 #endif
     }
 
+    SectionEdge::Intercept *find(double distance)
+    {
+        for(int i = 0; i < intercepts.count(); ++i)
+        {
+            SectionEdge::Intercept &icpt = intercepts[i];
+            if(de::fequal(icpt.distance, distance))
+                return &icpt;
+        }
+        return 0;
+    }
+
+    bool intercept(double distance)
+    {
+        if(find(distance))
+            return false;
+
+        intercepts.append(SectionEdge::Intercept(distance));
+        return true;
+    }
+
     void addPlaneIntercepts(coord_t bottom, coord_t top)
     {
-        if(!hedge->hasLineSide()) return;
+        DENG_ASSERT(top > bottom);
 
         Line::Side const &side = hedge->lineSide();
         if(side.line().isFromPolyobj()) return;
@@ -96,8 +103,6 @@ DENG2_PIMPL(SectionEdge)
         if(!((hedge == side.leftHEdge()  && edge == HEdge::From) ||
              (hedge == side.rightHEdge() && edge == HEdge::To)))
             return;
-
-        if(bottom >= top) return; // Obviously no division.
 
         Sector const *frontSec = side.sectorPtr();
 
@@ -141,10 +146,10 @@ DENG2_PIMPL(SectionEdge)
 
                                 if(plane.visHeight() > bottom && plane.visHeight() < top)
                                 {
-                                    if(wallDivs.intercept(plane.visHeight()))
+                                    if(intercept(plane.visHeight()))
                                     {
                                         // Have we reached the div limit?
-                                        if(wallDivs.count() == WALLDIVS_MAX_INTERCEPTS)
+                                        if(intercepts.count() == SECTIONEDGE_MAX_INTERCEPTS)
                                             stopScan = true;
                                     }
                                 }
@@ -176,7 +181,7 @@ DENG2_PIMPL(SectionEdge)
 
                             if(z > bottom && z < top)
                             {
-                                if(wallDivs.intercept(z))
+                                if(intercept(z))
                                 {
                                     // All clipped away.
                                     stopScan = true;
@@ -227,31 +232,31 @@ coord_t SectionEdge::lineOffset() const
 
 int SectionEdge::divisionCount() const
 {
-    return d->isValid? d->interceptCount - 2 : 0;
+    return d->isValid? d->intercepts.count() - 2 : 0;
 }
 
-WallDivs::Intercept &SectionEdge::bottom() const
+SectionEdge::Intercept &SectionEdge::bottom() const
 {
     d->verifyValid();
-    return *d->firstIntercept;
+    return d->intercepts.first();
 }
 
-WallDivs::Intercept &SectionEdge::top() const
+SectionEdge::Intercept &SectionEdge::top() const
 {
     d->verifyValid();
-    return *d->lastIntercept;
+    return d->intercepts.last();
 }
 
-WallDivs::Intercept &SectionEdge::firstDivision() const
+int SectionEdge::firstDivision() const
 {
     d->verifyValid();
-    return d->firstIntercept->next();
+    return 1;
 }
 
-WallDivs::Intercept &SectionEdge::lastDivision() const
+int SectionEdge::lastDivision() const
 {
     d->verifyValid();
-    return d->lastIntercept->prev();
+    return d->intercepts.count()-2;
 }
 
 Vector2f const &SectionEdge::materialOrigin() const
@@ -262,7 +267,7 @@ Vector2f const &SectionEdge::materialOrigin() const
 
 void SectionEdge::prepare()
 {
-    DENG_ASSERT(d->wallDivs.isEmpty());
+    DENG_ASSERT(d->intercepts.isEmpty());
 
     Sector *frontSec, *backSec;
     d->hedge->wallSectionSectors(&frontSec, &backSec);
@@ -276,26 +281,30 @@ void SectionEdge::prepare()
 
     d->materialOrigin.x += float(d->hedge->lineOffset());
 
-    // Intercepts are arranged in ascending distance order.
+    // Intercepts are sorted in ascending distance order.
 
     // The first intercept is the bottom.
-    d->wallDivs.intercept(bottom);
+    d->intercept(bottom);
 
     // Add intercepts for neighboring planes (the "divisions").
     d->addPlaneIntercepts(bottom, top);
 
     // The last intercept is the top.
-    d->wallDivs.intercept(top);
+    d->intercept(top);
 
-    if(d->wallDivs.count() > 2)
+    if(d->intercepts.count() > 2) // First two are always sorted.
     {
-        d->wallDivs.sort();
+        // Sorting is required. This shouldn't take too long...
+        // There seldom are more than two or three intercepts.
+        qSort(d->intercepts.begin(), d->intercepts.end());
     }
 
     // Sanity check.
-    d->assertDivisionsInRange(bottom, top);
+    d->assertInterceptsInRange(bottom, top);
+}
 
-    d->firstIntercept = &d->wallDivs.first();
-    d->lastIntercept  = &d->wallDivs.last();
-    d->interceptCount = d->wallDivs.count();
+SectionEdge::Intercepts const &SectionEdge::intercepts() const
+{
+    d->verifyValid();
+    return d->intercepts;
 }

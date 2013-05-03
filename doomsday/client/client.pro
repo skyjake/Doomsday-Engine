@@ -300,7 +300,6 @@ DENG_HEADERS += \
     include/render/sprite.h \
     include/render/vignette.h \
     include/render/vlight.h \
-    include/render/walldiv.h \
     include/resource/animgroups.h \
     include/resource/bitmapfont.h \
     include/resource/colorpalette.h \

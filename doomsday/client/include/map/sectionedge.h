@@ -20,13 +20,17 @@
 #ifndef DENG_WORLD_MAP_SECTIONEDGE
 #define DENG_WORLD_MAP_SECTIONEDGE
 
+#include <QList>
+#include <QtAlgorithms>
+
 #include <de/Error>
 #include <de/Vector>
 
 #include "Line"
 #include "HEdge"
 
-#include "render/walldiv.h"
+/// Maximum number of intercepts in a SectionEdge.
+#define SECTIONEDGE_MAX_INTERCEPTS          64
 
 /**
  * Helper/utility class intended to simplify the process of generating
@@ -40,8 +44,29 @@ public:
     /// Invalid range geometry was found during prepare() @ingroup errors
     DENG2_ERROR(InvalidError);
 
+    struct Intercept
+    {
+        double distance;
+
+        Intercept(double distance = 0) : distance(distance) {}
+
+        inline bool operator < (Intercept const &other) const {
+            return distance < other.distance;
+        }
+    };
+
+    typedef QList<Intercept> Intercepts;
+
 public:
     SectionEdge(HEdge &hedge, int edge, int section);
+
+    inline Intercept const & operator [] (int index) const {
+        return at(index);
+    }
+
+    Intercept const &at(int index) const {
+        return intercepts()[index];
+    }
 
     void prepare();
 
@@ -57,15 +82,17 @@ public:
 
     int divisionCount() const;
 
-    de::WallDivs::Intercept &bottom() const;
+    Intercept &bottom() const;
 
-    de::WallDivs::Intercept &top() const;
+    Intercept &top() const;
 
-    de::WallDivs::Intercept &firstDivision() const;
+    int firstDivision() const;
 
-    de::WallDivs::Intercept &lastDivision() const;
+    int lastDivision() const;
 
     de::Vector2f const &materialOrigin() const;
+
+    Intercepts const &intercepts() const;
 
 private:
     DENG2_PRIVATE(d)

@@ -1586,7 +1586,7 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     if(!(surface.hasMaterial() && surface.material().isDrawable()))
         return false;
 
-    if(leftEdge.bottom().distance() >= rightEdge.top().distance())
+    if(leftEdge.bottom().distance >= rightEdge.top().distance)
         return true;
 
     bool const isTwoSidedMiddle = (section == Line::Side::Middle &&
@@ -1610,8 +1610,8 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
         mobj_t *mo = viewPlayer->shared.mo;
         viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
 
-        if(viewData->current.origin[VZ] > leftEdge.bottom().distance() &&
-           viewData->current.origin[VZ] < rightEdge.top().distance())
+        if(viewData->current.origin[VZ] > leftEdge.bottom().distance &&
+           viewData->current.origin[VZ] < rightEdge.top().distance)
         {
             Line const &line = side.line();
 
@@ -1645,8 +1645,8 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     Vector2f materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
                            (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
-    Vector3d texTL(leftEdge.origin(), leftEdge.top().distance());
-    Vector3d texBR(rightEdge.origin(), rightEdge.bottom().distance());
+    Vector3d texTL(leftEdge.origin(), leftEdge.top().distance);
+    Vector3d texBR(rightEdge.origin(), rightEdge.bottom().distance);
 
     // Determine which Material to use.
     Material *material = 0;
@@ -1803,19 +1803,19 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     // Bottom Left.
     V3f_Set(rvertices[0].pos, leftEdge.origin().x,
                               leftEdge.origin().y,
-                              leftEdge.bottom().distance());
+                              leftEdge.bottom().distance);
     // Top Left.
     V3f_Set(rvertices[1].pos, leftEdge.origin().x,
                               leftEdge.origin().y,
-                              leftEdge.top().distance());
+                              leftEdge.top().distance);
     // Bottom Right.
     V3f_Set(rvertices[2].pos, rightEdge.origin().x,
                               rightEdge.origin().y,
-                              rightEdge.bottom().distance());
+                              rightEdge.bottom().distance);
     // Top Right.
     V3f_Set(rvertices[3].pos, rightEdge.origin().x,
                               rightEdge.origin().y,
-                              rightEdge.top().distance());
+                              rightEdge.top().distance);
 
     // Draw this section.
     bool opaque = renderWorldPoly(rvertices, 4, parm, ms);
@@ -1860,19 +1860,19 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
             // Bottom Left.
             V3f_Set(rvertices[0].pos, leftEdge.origin().x,
                                       leftEdge.origin().y,
-                                      leftEdge.bottom().distance());
+                                      leftEdge.bottom().distance);
             // Top Left.
             V3f_Set(rvertices[1].pos, leftEdge.origin().x,
                                       leftEdge.origin().y,
-                                      leftEdge.top().distance());
+                                      leftEdge.top().distance);
             // Bottom Right.
             V3f_Set(rvertices[2].pos, rightEdge.origin().x,
                                       rightEdge.origin().y,
-                                      rightEdge.bottom().distance());
+                                      rightEdge.bottom().distance);
             // Top Right.
             V3f_Set(rvertices[3].pos, rightEdge.origin().x,
                                       rightEdge.origin().y,
-                                      rightEdge.top().distance());
+                                      rightEdge.top().distance);
 
             // kludge end.
 
@@ -2477,7 +2477,7 @@ static bool prepareEdgesAndWriteWallSection(HEdge &hedge, int section, bool *opa
     rightEdge.prepare();
 
     if(leftEdge.isValid() && rightEdge.isValid() &&
-       rightEdge.top().distance() > leftEdge.bottom().distance())
+       rightEdge.top().distance > leftEdge.bottom().distance)
     {
         bool wroteOpaquePoly =
             writeWallSection(leftEdge, rightEdge,
@@ -2591,7 +2591,7 @@ static void writeWallSections(HEdge &hedge)
             rightEdge.prepare();
 
             if(leftEdge.isValid() && rightEdge.isValid() &&
-               rightEdge.top().distance() > leftEdge.bottom().distance())
+               rightEdge.top().distance > leftEdge.bottom().distance)
             {
                 wroteOpaqueMiddle =
                     writeWallSection(leftEdge, rightEdge,
@@ -2624,8 +2624,8 @@ static void writeWallSections(HEdge &hedge)
                     xbottom += middle.visMaterialOrigin().y;
                     xtop    += middle.visMaterialOrigin().y;
 
-                    middleCoversOpening = (rightEdge.top().distance() >= xtop &&
-                                           leftEdge.bottom().distance() <= xbottom);
+                    middleCoversOpening = (rightEdge.top().distance >= xtop &&
+                                           leftEdge.bottom().distance <= xbottom);
                 }
             }
         }

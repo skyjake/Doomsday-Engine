@@ -391,12 +391,12 @@ void R_DivVerts(rvertex_t *dst, rvertex_t const *src,
 
     if(rightEdge.divisionCount())
     {
-        WallDivs::Intercept const *wdn = &rightEdge.lastDivision();
-        for(int n = 0; n < numR - 3; ++n, wdn = &wdn->prev())
+        for(int n = 0; n < numR - 3; ++n)
         {
+            SectionEdge::Intercept const &icpt = rightEdge.at(rightEdge.lastDivision() - n);
             dst[numL + 2 + n].pos[VX] = src[2].pos[VX];
             dst[numL + 2 + n].pos[VY] = src[2].pos[VY];
-            dst[numL + 2 + n].pos[VZ] = float( wdn->distance() );
+            dst[numL + 2 + n].pos[VZ] = float( icpt.distance );
         }
     }
 
@@ -407,12 +407,12 @@ void R_DivVerts(rvertex_t *dst, rvertex_t const *src,
 
     if(leftEdge.divisionCount())
     {
-        WallDivs::Intercept const *wdn = &leftEdge.firstDivision();
-        for(int n = 0; n < numL - 3; ++n, wdn = &wdn->next())
+        for(int n = 0; n < numL - 3; ++n)
         {
+            SectionEdge::Intercept const &icpt = leftEdge.at(leftEdge.firstDivision() + n);
             dst[2 + n].pos[VX] = src[0].pos[VX];
             dst[2 + n].pos[VY] = src[0].pos[VY];
-            dst[2 + n].pos[VZ] = float( wdn->distance() );
+            dst[2 + n].pos[VZ] = float( icpt.distance );
         }
     }
 
@@ -438,12 +438,12 @@ void R_DivTexCoords(rtexcoord_t *dst, rtexcoord_t const *src,
 
     if(rightEdge.divisionCount())
     {
-        WallDivs::Intercept const *wdn = &rightEdge.lastDivision();
         float const height = tR - bR;
         float inter;
-        for(int n = 0; n < numR - 3; ++n, wdn = &wdn->prev())
+        for(int n = 0; n < numR - 3; ++n)
         {
-            inter = (float( wdn->distance() ) - bR) / height;
+            SectionEdge::Intercept const &icpt = rightEdge.at(rightEdge.lastDivision() - n);
+            inter = (float( icpt.distance ) - bR) / height;
             dst[numL + 2 + n].st[0] = src[3].st[0];
             dst[numL + 2 + n].st[1] = src[2].st[1] + (src[3].st[1] - src[2].st[1]) * inter;
         }
@@ -456,12 +456,12 @@ void R_DivTexCoords(rtexcoord_t *dst, rtexcoord_t const *src,
 
     if(leftEdge.divisionCount())
     {
-        WallDivs::Intercept const *wdn = &leftEdge.firstDivision();
         float const height = tL - bL;
         float inter;
-        for(int n = 0; n < numL - 3; ++n, wdn = &wdn->next())
+        for(int n = 0; n < numL - 3; ++n)
         {
-            inter = (float( wdn->distance() ) - bL) / height;
+            SectionEdge::Intercept const &icpt = leftEdge.at(leftEdge.firstDivision() + n);
+            inter = (float( icpt.distance ) - bL) / height;
             dst[2 + n].st[0] = src[0].st[0];
             dst[2 + n].st[1] = src[0].st[1] + (src[1].st[1] - src[0].st[1]) * inter;
         }
@@ -490,12 +490,12 @@ void R_DivVertColors(ColorRawf *dst, ColorRawf const *src,
 
     if(rightEdge.divisionCount())
     {
-        WallDivs::Intercept const *wdn = &rightEdge.lastDivision();
         float const height = tR - bR;
         float inter;
-        for(int n = 0; n < numR - 3; ++n, wdn = &wdn->prev())
+        for(int n = 0; n < numR - 3; ++n)
         {
-            inter = (float( wdn->distance() ) - bR) / height;
+            SectionEdge::Intercept const &icpt = rightEdge.at(rightEdge.lastDivision() - n);
+            inter = (float( icpt.distance ) - bR) / height;
             for(int c = 0; c < 4; ++c)
             {
                 dst[numL + 2 + n].rgba[c] = src[2].rgba[c] + (src[3].rgba[c] - src[2].rgba[c]) * inter;
@@ -510,12 +510,12 @@ void R_DivVertColors(ColorRawf *dst, ColorRawf const *src,
 
     if(leftEdge.divisionCount())
     {
-        WallDivs::Intercept const *wdn = &leftEdge.firstDivision();
         float const height = tL - bL;
         float inter;
-        for(int n = 0; n < numL - 3; ++n, wdn = &wdn->next())
+        for(int n = 0; n < numL - 3; ++n)
         {
-            inter = (float( wdn->distance() ) - bL) / height;
+            SectionEdge::Intercept const &icpt = leftEdge.at(leftEdge.firstDivision() + n);
+            inter = (float( icpt.distance ) - bL) / height;
             for(int c = 0; c < 4; ++c)
             {
                 dst[2 + n].rgba[c] = src[0].rgba[c] + (src[1].rgba[c] - src[0].rgba[c]) * inter;
