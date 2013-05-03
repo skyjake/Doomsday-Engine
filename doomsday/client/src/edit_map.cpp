@@ -451,7 +451,7 @@ static int lineAngleSorter(void const *a, void const *b)
     LineOwner *own[2] = { (LineOwner *)a, (LineOwner *)b };
     for(uint i = 0; i < 2; ++i)
     {
-        if(own[i]->_link[LineOwner::Previous]) // We have a cached result.
+        if(own[i]->_link[Anticlockwise]) // We have a cached result.
         {
             angles[i] = own[i]->angle();
         }
@@ -466,7 +466,7 @@ static int lineAngleSorter(void const *a, void const *b)
             own[i]->_angle = angles[i] = bamsAtan2(-100 *dx, 100 * dy);
 
             // Mark as having a cached angle.
-            own[i]->_link[LineOwner::Previous] = (LineOwner *) 1;
+            own[i]->_link[Anticlockwise] = (LineOwner *) 1;
         }
     }
 
@@ -484,19 +484,19 @@ static LineOwner *mergeLineOwners(LineOwner *left, LineOwner *right,
     LineOwner tmp;
     LineOwner *np = &tmp;
 
-    tmp._link[LineOwner::Next] = np;
+    tmp._link[Clockwise] = np;
     while(left && right)
     {
         if(compare(left, right) <= 0)
         {
-            np->_link[LineOwner::Next] = left;
+            np->_link[Clockwise] = left;
             np = left;
 
             left = &left->next();
         }
         else
         {
-            np->_link[LineOwner::Next] = right;
+            np->_link[Clockwise] = right;
             np = right;
 
             right = &right->next();
@@ -506,11 +506,11 @@ static LineOwner *mergeLineOwners(LineOwner *left, LineOwner *right,
     // At least one of these lists is now empty.
     if(left)
     {
-        np->_link[LineOwner::Next] = left;
+        np->_link[Clockwise] = left;
     }
     if(right)
     {
-        np->_link[LineOwner::Next] = right;
+        np->_link[Clockwise] = right;
     }
 
     // Is the list empty?
@@ -539,7 +539,7 @@ static LineOwner *splitLineOwners(LineOwner *list)
         }
     } while(lista);
 
-    listc->_link[LineOwner::Next] = NULL;
+    listc->_link[Clockwise] = NULL;
     return listb;
 }
 
@@ -549,7 +549,7 @@ static LineOwner *splitLineOwners(LineOwner *list)
 static LineOwner *sortLineOwners(LineOwner *list,
     int (*compare) (void const *a, void const *b))
 {
-    if(list && list->_link[LineOwner::Next])
+    if(list && list->_link[Clockwise])
     {
         LineOwner *p = splitLineOwners(list);
 
@@ -579,14 +579,14 @@ static void setVertexLineOwner(Vertex *vtx, Line *lineptr, LineOwner **storage)
     LineOwner *newOwner = (*storage)++;
 
     newOwner->_line = lineptr;
-    newOwner->_link[LineOwner::Previous] = NULL;
+    newOwner->_link[Anticlockwise] = NULL;
 
     // Link it in.
     // NOTE: We don't bother linking everything at this stage since we'll
     // be sorting the lists anyway. After which we'll finish the job by
     // setting the prev and circular links.
     // So, for now this is only linked singlely, forward.
-    newOwner->_link[LineOwner::Next] = vtx->_lineOwners;
+    newOwner->_link[Clockwise] = vtx->_lineOwners;
     vtx->_lineOwners = newOwner;
 
     // Link the line to its respective owner node.
@@ -656,7 +656,7 @@ static void buildVertexLineOwnerRings()
         LineOwner *p = &last->next();
         while(p)
         {
-            p->_link[LineOwner::Previous] = last;
+            p->_link[Anticlockwise] = last;
 
             // Convert to a relative angle between last and this.
             last->_angle = last->angle() - p->angle();
@@ -664,8 +664,8 @@ static void buildVertexLineOwnerRings()
             last = p;
             p = &p->next();
         }
-        last->_link[LineOwner::Next] = v->_lineOwners;
-        v->_lineOwners->_link[LineOwner::Previous] = last;
+        last->_link[Clockwise] = v->_lineOwners;
+        v->_lineOwners->_link[Anticlockwise] = last;
 
         // Set the angle of the last owner.
         last->_angle = last->angle() - firstAngle;

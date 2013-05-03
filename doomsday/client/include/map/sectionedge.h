@@ -46,19 +46,38 @@ public:
 
     struct Intercept
     {
+        SectionEdge *owner;
         double distance;
 
-        Intercept(double distance = 0) : distance(distance) {}
+        Intercept(SectionEdge *owner, double distance = 0);
+        Intercept(Intercept const &other);
 
         inline bool operator < (Intercept const &other) const {
             return distance < other.distance;
         }
+
+        de::Vector3d origin() const;
     };
 
     typedef QList<Intercept> Intercepts;
 
 public:
-    SectionEdge(HEdge &hedge, int edge, int section);
+    SectionEdge(Line::Side &lineSide, int section, coord_t lineOffset,
+                Vertex &lineVertex, ClockDirection neighborScanDirection,
+                Sector *frontSec, Sector *backSec);
+
+    SectionEdge(HEdge &hedge, int section, int edge);
+
+    SectionEdge(SectionEdge const &other);
+
+    inline SectionEdge &operator = (SectionEdge other) {
+        d.swap(other.d);
+        return *this;
+    }
+
+    inline void swap(SectionEdge &other) {
+        d.swap(other.d);
+    }
 
     inline Intercept const & operator [] (int index) const {
         return at(index);
@@ -97,5 +116,13 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
+
+namespace std {
+// std::swap specialization for SectionEdge
+template <>
+inline void swap<SectionEdge>(SectionEdge &a, SectionEdge &b) {
+    a.swap(b);
+}
+}
 
 #endif // DENG_WORLD_MAP_SECTION_EDGE

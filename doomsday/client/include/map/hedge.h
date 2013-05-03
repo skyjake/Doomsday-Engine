@@ -40,6 +40,13 @@ class Sector;
 #define HEDGEINF_FACINGFRONT      0x0001
 ///@}
 
+/// Logical clock-wise direction identifiers:
+enum ClockDirection
+{
+    Anticlockwise,
+    Clockwise
+};
+
 /**
  * Map geometry half-edge.
  *
@@ -75,6 +82,13 @@ public:
     {
         From,
         To
+    };
+
+    /// Logical side identifiers:
+    enum
+    {
+        Front,
+        Back
     };
 
 public: /// @todo Make private:
@@ -232,9 +246,10 @@ public:
     BspLeaf &bspLeaf() const;
 
     /**
-     * Convenient accessor method for returning the sector attributed to the BSP
-     * leaf for the half-edge. One should first determine whether a sector is indeed
-     * attributed to the BSP leaf (e.g., by calling @ref BspLeaf::hasSector()).
+     * Convenient accessor method for returning the sector attributed to
+     * the BSP leaf for the half-edge. One should first determine whether
+     * a sector is indeed attributed to the BSP leaf (e.g., by calling
+     * @ref BspLeaf::hasSector()).
      *
      * @see bspLeaf(), BspLeaf::sector()
      */
@@ -242,6 +257,19 @@ public:
 
     /// Variant of @ref bspLeafSector() which returns a pointer.
     inline Sector *bspLeafSectorPtr() const { return bspLeaf().sectorPtr(); }
+
+    /**
+     * Determines the side relative sector to be used for producing wall
+     * section geometry. Takes into account doom.exe map hack constructs.
+     * Also suitable for Polyobj lines.
+     *
+     * @pre A map line side is attributed (@ref hasLineSide()).
+     *
+     * @param side  If non-zero return the back sector; otherwise the front.
+     *
+     * @return  Map sector for the specified side. Can be @c 0.
+     */
+    Sector *wallSectionSector(int side = Front) const;
 
     /**
      * Returns @c true iff a Line::Side is attributed to the half-edge.
@@ -334,17 +362,6 @@ public:
         coord_t point[2] = { x, y };
         return pointOnSide(point);
     }
-
-    /**
-     * Determines the side relative sectors for producing wall section geometry.
-     *
-     * @pre A map line side is attributed (@ref hasLineSide()).
-     *
-     * Return values:
-     * @param frontSec  Front sector for the wall section is written here. Can be @c 0.
-     * @param backSec   Back sector for the wall section is written here. Can be @c 0.
-     */
-    void wallSectionSectors(Sector **frontSec = 0, Sector **backSec = 0) const;
 
     /**
      * Retrieve the bias surface for specified geometry @a groupId

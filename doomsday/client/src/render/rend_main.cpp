@@ -1645,8 +1645,8 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     Vector2f materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
                            (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
-    Vector3d texTL(leftEdge.origin(), leftEdge.top().distance);
-    Vector3d texBR(rightEdge.origin(), rightEdge.bottom().distance);
+    Vector3d texTL(leftEdge.top().origin());
+    Vector3d texBR(rightEdge.bottom().origin());
 
     // Determine which Material to use.
     Material *material = 0;
@@ -1801,21 +1801,21 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
 
     // Vertex coords.
     // Bottom Left.
-    V3f_Set(rvertices[0].pos, leftEdge.origin().x,
-                              leftEdge.origin().y,
-                              leftEdge.bottom().distance);
+    V3f_Set(rvertices[0].pos, leftEdge.bottom().origin().x,
+                              leftEdge.bottom().origin().y,
+                              leftEdge.bottom().origin().z);
     // Top Left.
-    V3f_Set(rvertices[1].pos, leftEdge.origin().x,
-                              leftEdge.origin().y,
-                              leftEdge.top().distance);
+    V3f_Set(rvertices[1].pos, leftEdge.top().origin().x,
+                              leftEdge.top().origin().y,
+                              leftEdge.top().origin().z);
     // Bottom Right.
-    V3f_Set(rvertices[2].pos, rightEdge.origin().x,
-                              rightEdge.origin().y,
-                              rightEdge.bottom().distance);
+    V3f_Set(rvertices[2].pos, rightEdge.bottom().origin().x,
+                              rightEdge.bottom().origin().y,
+                              rightEdge.bottom().origin().z);
     // Top Right.
-    V3f_Set(rvertices[3].pos, rightEdge.origin().x,
-                              rightEdge.origin().y,
-                              rightEdge.top().distance);
+    V3f_Set(rvertices[3].pos, rightEdge.top().origin().x,
+                              rightEdge.top().origin().y,
+                              rightEdge.top().origin().z);
 
     // Draw this section.
     bool opaque = renderWorldPoly(rvertices, 4, parm, ms);
@@ -1839,7 +1839,7 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
             radioParms.segOffset = leftEdge.lineOffset();
             radioParms.segLength = width;
 
-            mapElement.castTo<HEdge>()->wallSectionSectors(&radioParms.frontSec);
+            radioParms.frontSec  = mapElement.castTo<HEdge>()->wallSectionSector();
 
             radioParms.leftEdge  = parm.wall.leftEdge;
             radioParms.rightEdge = parm.wall.rightEdge;
@@ -1858,21 +1858,21 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
             ///               due to height divisions.
 
             // Bottom Left.
-            V3f_Set(rvertices[0].pos, leftEdge.origin().x,
-                                      leftEdge.origin().y,
-                                      leftEdge.bottom().distance);
+            V3f_Set(rvertices[0].pos, leftEdge.bottom().origin().x,
+                                      leftEdge.bottom().origin().y,
+                                      leftEdge.bottom().origin().z);
             // Top Left.
-            V3f_Set(rvertices[1].pos, leftEdge.origin().x,
-                                      leftEdge.origin().y,
-                                      leftEdge.top().distance);
+            V3f_Set(rvertices[1].pos, leftEdge.top().origin().x,
+                                      leftEdge.top().origin().y,
+                                      leftEdge.top().origin().z);
             // Bottom Right.
-            V3f_Set(rvertices[2].pos, rightEdge.origin().x,
-                                      rightEdge.origin().y,
-                                      rightEdge.bottom().distance);
+            V3f_Set(rvertices[2].pos, rightEdge.bottom().origin().x,
+                                      rightEdge.bottom().origin().y,
+                                      rightEdge.bottom().origin().z);
             // Top Right.
-            V3f_Set(rvertices[3].pos, rightEdge.origin().x,
-                                      rightEdge.origin().y,
-                                      rightEdge.top().distance);
+            V3f_Set(rvertices[3].pos, rightEdge.top().origin().x,
+                                      rightEdge.top().origin().y,
+                                      rightEdge.top().origin().z);
 
             // kludge end.
 
@@ -2470,8 +2470,8 @@ static bool prepareEdgesAndWriteWallSection(HEdge &hedge, int section, bool *opa
     // Done here because of the logic of doom.exe wrt the automap.
     reportWallSectionDrawn(hedge.line());
 
-    SectionEdge leftEdge(hedge, HEdge::From, section);
-    SectionEdge rightEdge(hedge, HEdge::To, section);
+    SectionEdge leftEdge(hedge, section, HEdge::From);
+    SectionEdge rightEdge(hedge, section, HEdge::To);
 
     leftEdge.prepare();
     rightEdge.prepare();
@@ -2501,8 +2501,8 @@ static bool shouldAddSolidSegmentForTwosidedEdge(HEdge &hedge,
         return true;
 
     // We'll have to determine whether we can...
-    Sector *frontSec, *backSec;
-    hedge.wallSectionSectors(&frontSec, &backSec);
+    Sector *frontSec = hedge.wallSectionSector();
+    Sector *backSec  = hedge.wallSectionSector(HEdge::Back);
 
     Line::Side const &front = hedge.lineSide();
 
@@ -2584,8 +2584,8 @@ static void writeWallSections(HEdge &hedge)
         {
             reportWallSectionDrawn(hedge.line());
 
-            SectionEdge leftEdge(hedge, HEdge::From, Line::Side::Middle);
-            SectionEdge rightEdge(hedge, HEdge::To, Line::Side::Middle);
+            SectionEdge leftEdge(hedge, Line::Side::Middle, HEdge::From);
+            SectionEdge rightEdge(hedge, Line::Side::Middle, HEdge::To);
 
             leftEdge.prepare();
             rightEdge.prepare();
@@ -2600,8 +2600,8 @@ static void writeWallSections(HEdge &hedge)
                 if(wroteOpaqueMiddle)
                 {
                     // Did we completely cover the open range?
-                    Sector *frontSec, *backSec;
-                    hedge.wallSectionSectors(&frontSec, &backSec);
+                    Sector *frontSec = hedge.wallSectionSector();
+                    Sector *backSec  = hedge.wallSectionSector(HEdge::Back);
 
                     coord_t const ffloor = frontSec->floor().visHeight();
                     coord_t const fceil  = frontSec->ceiling().visHeight();

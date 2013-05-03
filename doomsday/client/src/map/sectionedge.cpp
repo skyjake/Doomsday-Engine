@@ -26,22 +26,59 @@
 
 using namespace de;
 
+SectionEdge::Intercept::Intercept(SectionEdge *owner, double distance)
+    : owner(owner), distance(distance)
+{}
+
+SectionEdge::Intercept::Intercept(Intercept const &other)
+    : owner(other.owner), distance(other.distance)
+{}
+
+Vector3d SectionEdge::Intercept::origin() const
+{
+    return Vector3d(owner->origin(), distance);
+}
+
 DENG2_PIMPL(SectionEdge)
 {
-    HEdge *hedge;
-    int edge;
+    Line::Side *lineSide;
     int section;
+    ClockDirection neighborScanDirection;
+    coord_t lineOffset;
+    Vertex *lineVertex;
+    Sector *frontSec;
+    Sector *backSec;
 
     bool isValid;
     Vector2f materialOrigin;
     SectionEdge::Intercepts intercepts;
 
-    Instance(Public *i, HEdge &hedge, int edge, int section)
+    Instance(Public *i, Line::Side *lineSide, int section,
+             ClockDirection neighborScanDirection, coord_t lineOffset,
+             Vertex *lineVertex, Sector *frontSec, Sector *backSec)
         : Base(i),
-          hedge(&hedge),
-          edge(edge),
+          lineSide(lineSide),
           section(section),
+          neighborScanDirection(neighborScanDirection),
+          lineOffset(lineOffset),
+          lineVertex(lineVertex),
+          frontSec(frontSec),
+          backSec(backSec),
           isValid(false)
+    {}
+
+    Instance(Public *i, Instance const &other)
+        : Base(i),
+          lineSide             (other.lineSide),
+          section              (other.section),
+          neighborScanDirection(other.neighborScanDirection),
+          lineOffset           (other.lineOffset),
+          lineVertex           (other.lineVertex),
+          frontSec             (other.frontSec),
+          backSec              (other.backSec),
+          isValid              (other.isValid),
+          materialOrigin       (other.materialOrigin),
+          intercepts           (other.intercepts)
     {}
 
     void verifyValid() const
@@ -84,7 +121,7 @@ DENG2_PIMPL(SectionEdge)
         if(find(distance))
             return false;
 
-        intercepts.append(SectionEdge::Intercept(distance));
+        intercepts.append(SectionEdge::Intercept(&self, distance));
         return true;
     }
 
@@ -92,28 +129,20 @@ DENG2_PIMPL(SectionEdge)
     {
         DENG_ASSERT(top > bottom);
 
-        Line::Side const &side = hedge->lineSide();
-        if(side.line().isFromPolyobj()) return;
+        // Retrieve the start owner node.
+        LineOwner *base = R_GetVtxLineOwner(lineVertex, &lineSide->line());
+        if(!base) return;
 
         // Check for neighborhood division?
-        if(section == Line::Side::Middle && side.hasSections() && side.back().hasSections())
+        if(section == Line::Side::Middle && lineSide->back().hasSections())
             return;
 
-        // Only sections at line side edges can/should be split.
-        if(!((hedge == side.leftHEdge()  && edge == HEdge::From) ||
-             (hedge == side.rightHEdge() && edge == HEdge::To)))
-            return;
-
-        Sector const *frontSec = side.sectorPtr();
-
-        LineOwner::Direction direction(edge? LineOwner::Previous : LineOwner::Next);
-        // Retrieve the start owner node.
-        LineOwner *base = R_GetVtxLineOwner(&side.line().vertex(edge), &side.line());
+        Sector const *frontSec = lineSide->sectorPtr();
         LineOwner *own = base;
         bool stopScan = false;
         do
         {
-            own = &own->navigate(direction);
+            own = &own->navigate(neighborScanDirection);
 
             if(own == base)
             {
@@ -197,13 +226,34 @@ DENG2_PIMPL(SectionEdge)
             }
         } while(!stopScan);
     }
+
+private:
+    Instance &operator = (Instance const &); // no assignment
 };
 
-SectionEdge::SectionEdge(HEdge &hedge, int edge, int section)
-    : d(new Instance(this, hedge, edge, section))
+SectionEdge::SectionEdge(Line::Side &lineSide, int section,
+    coord_t lineOffset, Vertex &lineVertex, ClockDirection neighborScanDirection,
+    Sector *frontSec, Sector *backSec)
+    : d(new Instance(this, &lineSide, section, neighborScanDirection,
+                           lineOffset, &lineVertex, frontSec, backSec))
+{
+    DENG_ASSERT(lineSide.hasSections());
+}
+
+SectionEdge::SectionEdge(HEdge &hedge, int section, int edge)
+    : d(new Instance(this, &hedge.lineSide(), section,
+                           edge? Anticlockwise : Clockwise,
+                           hedge.lineOffset() + (edge? hedge.length() : 0),
+                           &hedge.vertex(edge),
+                           hedge.wallSectionSector(),
+                           hedge.wallSectionSector(HEdge::Back)))
 {
     DENG_ASSERT(hedge.hasLineSide() && hedge.lineSide().hasSections());
 }
+
+SectionEdge::SectionEdge(SectionEdge const &other)
+    : d(new Instance(this, *other.d))
+{}
 
 bool SectionEdge::isValid() const
 {
@@ -212,7 +262,7 @@ bool SectionEdge::isValid() const
 
 Line::Side &SectionEdge::lineSide() const
 {
-    return d->hedge->lineSide();
+    return *d->lineSide;
 }
 
 int SectionEdge::section() const
@@ -222,12 +272,12 @@ int SectionEdge::section() const
 
 Vector2d const &SectionEdge::origin() const
 {
-    return d->hedge->vertex(d->edge).origin();
+    return d->lineVertex->origin();
 }
 
 coord_t SectionEdge::lineOffset() const
 {
-    return d->hedge->lineOffset() + (d->edge? d->hedge->length() : 0);
+    return d->lineOffset;
 }
 
 int SectionEdge::divisionCount() const
@@ -269,25 +319,25 @@ void SectionEdge::prepare()
 {
     DENG_ASSERT(d->intercepts.isEmpty());
 
-    Sector *frontSec, *backSec;
-    d->hedge->wallSectionSectors(&frontSec, &backSec);
-
     coord_t bottom, top;
-    R_SideSectionCoords(d->hedge->lineSide(), d->section, frontSec, backSec,
+    R_SideSectionCoords(*d->lineSide, d->section, d->frontSec, d->backSec,
                         &bottom, &top, &d->materialOrigin);
 
     d->isValid = (top >= bottom);
     if(!d->isValid) return;
 
-    d->materialOrigin.x += float(d->hedge->lineOffset());
+    d->materialOrigin.x += d->lineOffset;
 
     // Intercepts are sorted in ascending distance order.
 
     // The first intercept is the bottom.
     d->intercept(bottom);
 
-    // Add intercepts for neighboring planes (the "divisions").
-    d->addPlaneIntercepts(bottom, top);
+    if(top > bottom)
+    {
+        // Add intercepts for neighboring planes (the "divisions").
+        d->addPlaneIntercepts(bottom, top);
+    }
 
     // The last intercept is the top.
     d->intercept(top);

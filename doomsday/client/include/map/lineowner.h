@@ -21,9 +21,11 @@
 #ifndef DENG_WORLD_MAP_LINEOWNER
 #define DENG_WORLD_MAP_LINEOWNER
 
+#include <de/binangle.h>
+
 #include <de/Vector>
 
-#include <de/binangle.h>
+#include "HEdge"
 
 class Line;
 
@@ -34,21 +36,10 @@ class Line;
  */
 class LineOwner
 {
-public:
-    /// Ring navigation direction identifiers:
-    enum Direction
-    {
-        /// Previous (anticlockwise).
-        Previous,
-
-        /// Next (clockwise).
-        Next
-    };
-
 public: /// @todo Make private:
     Line *_line;
 
-    /// {Previous, Next} (i.e. {anticlk, clk}).
+    /// {Anitclockwise, Clockwise}
     LineOwner *_link[2];
 
     /// Angle between this and the next line owner, clockwise.
@@ -86,10 +77,10 @@ public:
      * Navigate to the adjacent line owner in the ring (if any). Note this may
      * be the same LineOwner.
      */
-    LineOwner &navigate(Direction dir = Previous) { return *_link[dir]; }
+    LineOwner &navigate(ClockDirection dir = Anticlockwise) { return *_link[dir]; }
 
     /// @copydoc navigate()
-    LineOwner const &navigate(Direction dir = Previous) const { return *_link[dir]; }
+    LineOwner const &navigate(ClockDirection dir = Anticlockwise) const { return *_link[dir]; }
 
     /**
      * Returns the previous line owner in the ring (anticlockwise). Note that
@@ -97,10 +88,10 @@ public:
      *
      * @see hasPrev()
      */
-    inline LineOwner &prev() { return navigate(Previous); }
+    inline LineOwner &prev() { return navigate(Anticlockwise); }
 
     /// @copydoc prev()
-    inline LineOwner const &prev() const { return navigate(Previous); }
+    inline LineOwner const &prev() const { return navigate(Anticlockwise); }
 
     /**
      * Returns the next line owner in the ring (clockwise). Note that this may
@@ -108,10 +99,10 @@ public:
      *
      * @see hasNext()
      */
-    inline LineOwner &next() { return navigate(Next); }
+    inline LineOwner &next() { return navigate(Clockwise); }
 
     /// @copydoc next()
-    inline LineOwner const &next() const { return navigate(Next); }
+    inline LineOwner const &next() const { return navigate(Clockwise); }
 
     /**
      * Returns the line "owner".
