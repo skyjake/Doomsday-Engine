@@ -129,8 +129,8 @@ public:
 
     enum Importance
     {
-        Immediately,    ///< Request handled at the head of the queue.
-        AfterQueued     ///< Request handled at the end of the queue.
+        Immediately,    ///< Request handled before any queued tasks.
+        AfterQueued     ///< Request handled after any queued tasks.
     };
 
     enum { Unlimited = -1 };
@@ -144,8 +144,8 @@ public:
         virtual ~ISource() {}
 
         /**
-         * Returns the timestamp of the source data, which specifies when the
-         * source data has last been modified. If the source is newer than
+         * Returns the timestamp of the source data, which determines when the
+         * source data has last been modified. If the source is newer/older than
          * cached copies, the cached data is discarded. If the returned time is
          * Time::invalidTime(), no time checks are performed and the source
          * data is considered immutable.
