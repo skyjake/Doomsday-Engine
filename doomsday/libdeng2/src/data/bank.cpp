@@ -215,7 +215,9 @@ DENG2_PIMPL(Bank)
 
             try
             {
-                Time timestamp;
+                Time startedAt;
+
+                Time timestamp(Time::invalidTime());
                 Reader reader(*serial);
                 reader.withHeader() >> timestamp;
 
@@ -224,6 +226,7 @@ DENG2_PIMPL(Bank)
                     QScopedPointer<IData> blank(bank->newData());
                     reader >> *blank->asSerializable();
                     setData(blank.take());
+                    LOG_DEBUG("Deserialized \"%s\" in %.2f seconds") << path() << startedAt.since();
                     return; // Done!
                 }
                 // We cannot use this.
@@ -239,10 +242,15 @@ DENG2_PIMPL(Bank)
 
         void serialize(Folder &folder)
         {
-            DENG2_ASSERT(!serial);
-            DENG2_ASSERT(source.get() != 0);
-
             DENG2_GUARD(this);
+
+            if(serial)
+            {
+                // Already serialized.
+                return;
+            }
+
+            DENG2_ASSERT(source.get() != 0);
 
             if(!data.get())
             {
@@ -254,10 +262,14 @@ DENG2_PIMPL(Bank)
 
             try
             {
+                // Make sure the correct folder exists.
+                Folder &containingFolder = folder.fileSystem()
+                        .makeFolder(folder.path() / path().toString().fileNamePath());
+
                 // Source timestamp is included in the serialization
                 // to check later whether the data is still fresh.
                 serial = dynamic_cast<IByteArray *>(
-                            &folder.newFile(path(), Folder::ReplaceExisting));
+                            &containingFolder.newFile(name(), Folder::ReplaceExisting));
                 DENG2_ASSERT(serial != 0);
 
                 Writer(*serial).withHeader()
@@ -578,6 +590,7 @@ DENG2_PIMPL(Bank)
             // Execute the job immediately.
             QScopedPointer<Job> j(job);
             j->runTask();
+            performNotifications();
         }
         else
         {
@@ -622,21 +635,24 @@ DENG2_PIMPL(Bank)
         if(serialCache)
         {
             // Check if this item is already available in hot storage.
-            if(serialCache->folder().has(item.path()))
+            IByteArray *array = serialCache->folder().tryLocate<IByteArray>(item.path());
+            if(array)
             {
                 Time hotTime;
-                File const &file = serialCache->folder().locate<File const>(item.path());
-                Reader(file).withHeader() >> hotTime;
+                Reader(*array).withHeader() >> hotTime;
 
                 if(item.isValidSerialTime(hotTime))
                 {
+                    LOG_DEBUG("Found valid serialized copy of \"%s\"") << item.path();
+
+                    item.serial = array;
                     best = serialCache;
                 }
             }
         }
 
-        best->add(item);
         item.cache = best;
+        best->add(item);
     }
 
     void load(Path const &path, Importance importance)
@@ -648,21 +664,18 @@ DENG2_PIMPL(Bank)
     {
         if(toLevel < InMemory)
         {
-            Job::Task const task = (toLevel == InHotStorage? Job::Serialize : Job::Unload);
+            Job::Task const task = (toLevel == InHotStorage && serialCache?
+                                    Job::Serialize : Job::Unload);
             beginJob(new Job(self, task, path), Immediately);
         }
     }
 
     void notify(Notification const &notif)
     {
+        notifications.put(new Notification(notif));
         if(isThreaded())
         {
-            notifications.put(new Notification(notif));
             notifyTimer->start();
-        }
-        else
-        {
-            performNotification(notif);
         }
     }
 
