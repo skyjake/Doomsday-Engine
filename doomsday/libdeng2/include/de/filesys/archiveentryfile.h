@@ -46,6 +46,7 @@ public:
     ~ArchiveEntryFile();
 
     String describe() const;
+    String entryPath() const;
 
     void clear();
 

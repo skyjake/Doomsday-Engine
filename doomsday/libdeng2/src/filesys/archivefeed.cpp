@@ -194,10 +194,19 @@ void ArchiveFeed::populate(Folder &folder)
     d->populate(folder);
 }
 
-bool ArchiveFeed::prune(File &/*file*/) const
+bool ArchiveFeed::prune(File &file) const
 {
-    /// @todo  Prune based on entry status.
-    return true;
+    ArchiveEntryFile *entryFile = dynamic_cast<ArchiveEntryFile *>(&file);
+    if(entryFile && &entryFile->archive() == &archive())
+    {
+        if(!archive().hasEntry(entryFile->entryPath()))
+            return true; // It's gone...
+
+        // Prune based on entry status.
+        return archive().entryStatus(entryFile->entryPath()).modifiedAt !=
+               file.status().modifiedAt;
+    }
+    return false;
 }
 
 File *ArchiveFeed::newFile(String const &name)
