@@ -126,13 +126,19 @@ public:
      */
     void refresh();
 
+    enum FolderCreationBehavior {
+        DontInheritFeeds,   ///< Subfolder will not have any feeds created for them.
+        InheritPrimaryFeed, ///< Subfolder will inherit the primary (first) feed of its parent.
+        InheritAllFeeds     ///< Subfolder will inherit all feeds of its parent.
+    };
+
     /**
      * Retrieves a folder in the file system. The folder gets created if it
      * does not exist. Any missing parent folders will also be created.
      *
      * @param path  Path of the folder. Relative to the root folder.
      */
-    Folder &makeFolder(String const &path);
+    Folder &makeFolder(String const &path, FolderCreationBehavior behavior = InheritPrimaryFeed);
 
     /**
      * Finds all files matching a full or partial path. The search is done

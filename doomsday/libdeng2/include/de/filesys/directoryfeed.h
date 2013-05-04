@@ -75,6 +75,7 @@ public:
     bool prune(File &file) const;
     File *newFile(String const &name);
     void removeFile(String const &name);
+    Feed *newSubFeed(String const &name);
 
 public:
     /**

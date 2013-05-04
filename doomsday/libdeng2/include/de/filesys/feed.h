@@ -44,6 +44,8 @@ class String;
  * corresponding native file has been deleted from the hard drive since the
  * latest population was done.
  *
+ * The first Feed attached to a Folder is the primary feed.
+ *
  * @ingroup fs
  */
 class DENG2_PUBLIC Feed
@@ -106,6 +108,16 @@ public:
      * @param name  Name of the removed file.
      */
     virtual void removeFile(String const &name);
+
+    /**
+     * Creates a new feed suitable for attaching to a subfolder of whatever
+     * source this feed is based on.
+     *
+     * @param name  Name of the subfolder.
+     *
+     * @return New feed instance. Caller gets ownership.
+     */
+    virtual Feed *newSubFeed(String const &name);
 };
 
 } // namespace de

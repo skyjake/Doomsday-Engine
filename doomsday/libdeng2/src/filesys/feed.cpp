@@ -19,7 +19,7 @@
 
 #include "de/Feed"
 
-using namespace de;
+namespace de {
 
 Feed::Feed()
 {}
@@ -35,3 +35,11 @@ File *Feed::newFile(String const &/*name*/)
 
 void Feed::removeFile(String const &/*name*/)
 {}
+
+Feed *Feed::newSubFeed(String const &/*name*/)
+{
+    // By default feeds can't create subfeeds.
+    return 0;
+}
+
+} // namespace de

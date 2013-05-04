@@ -64,11 +64,17 @@ public:
     bool prune(File &file) const;
     File *newFile(String const &name);
     void removeFile(String const &name);
+    Feed *newSubFeed(String const &name);
 
     /**
      * Returns the archive that the feed accesses.
      */
     Archive &archive();
+
+    /**
+     * Returns the archive that the feed accesses.
+     */
+    Archive const &archive() const;
 
     /**
      * Returns the base path within the archive.

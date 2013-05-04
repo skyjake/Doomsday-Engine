@@ -62,16 +62,42 @@ void FileSystem::refresh()
     printIndex();
 }
 
-Folder &FileSystem::makeFolder(String const &path)
+Folder &FileSystem::makeFolder(String const &path, FolderCreationBehavior behavior)
 {
+    LOG_AS("FS::makeFolder");
+
     Folder *subFolder = d->root.tryLocate<Folder>(path);
     if(!subFolder)
     {
         // This folder does not exist yet. Let's create it.
         Folder &parentFolder = makeFolder(path.fileNamePath());
         subFolder = new Folder(path.fileName());
+
+        // If parent folder is writable, this will be too.
+        if(parentFolder.mode() & File::Write)
+        {
+            subFolder->setMode(File::Write);
+        }
+
+        // Inherit parent's feeds?
+        if(behavior != DontInheritFeeds)
+        {
+            DENG2_GUARD(parentFolder);
+            DENG2_FOR_EACH_CONST(Folder::Feeds, i, parentFolder.feeds())
+            {
+                LOG_DEV_TRACE("Creating subfeed \"%s\" from %s",
+                              subFolder->name() << (*i)->description());
+
+                subFolder->attach((*i)->newSubFeed(subFolder->name()));
+                if(behavior == InheritPrimaryFeed) break;
+            }
+        }
+
         parentFolder.add(subFolder);
         index(*subFolder);
+
+        // Populate the new folder.
+        subFolder->populate();
     }
     return *subFolder;
 }
