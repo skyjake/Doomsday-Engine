@@ -213,7 +213,7 @@ Writer &Writer::operator << (FixedByteArray const &fixedByteArray)
 Writer &Writer::operator << (Block const &block)
 {
     // First write the length of the block.
-    duint size = block.size();
+    duint32 size = block.size();
     *this << size;
 
     d->write(block.data(), size);

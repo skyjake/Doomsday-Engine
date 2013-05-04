@@ -137,12 +137,17 @@ public:
     /// Write a string to the destination buffer.
     Writer &operator << (String const &text);
 
-    /// Writes a sequence bytes to the destination buffer.
+    /**
+     * Writes a sequence bytes to the destination buffer. The size of the byte
+     * array is included in the written data.
+     *
+     * @param byteArray  Array to write.
+     */
     Writer &operator << (IByteArray const &byteArray);
 
     /**
      * Writes a fixed-size sequence of bytes to the destination buffer.
-     * The size of the sequence is not included in the written data.
+     * The size of the sequence is @em NOT included in the written data.
      * When reading, the reader must know the size beforehand.
      * @see Reader::operator >> (FixedByteArray &fixedByteArray)
      *
