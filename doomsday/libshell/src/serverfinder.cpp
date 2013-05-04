@@ -79,12 +79,19 @@ DENG2_PIMPL_NOREF(ServerFinder)
 
 ServerFinder::ServerFinder() : d(new Instance)
 {
-    qsrand(Time().asDateTime().toTime_t());
+    try
+    {
+        qsrand(Time().asDateTime().toTime_t());
 
-    connect(&d->beacon, SIGNAL(found(de::Address, de::Block)), this, SLOT(found(de::Address, de::Block)));
-    QTimer::singleShot(1000, this, SLOT(expire()));
+        connect(&d->beacon, SIGNAL(found(de::Address, de::Block)), this, SLOT(found(de::Address, de::Block)));
+        QTimer::singleShot(1000, this, SLOT(expire()));
 
-    d->beacon.discover(0 /* no timeout */, 2);
+        d->beacon.discover(0 /* no timeout */, 2);
+    }
+    catch(Beacon::PortError const &er)
+    {
+        LOG_WARNING("Automatic server discovery is not available:\n") << er.asText();
+    }
 }
 
 ServerFinder::~ServerFinder()
