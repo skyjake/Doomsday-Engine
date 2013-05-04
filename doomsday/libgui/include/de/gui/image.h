@@ -24,6 +24,7 @@
 #include <de/Vector>
 #include <de/Rectangle>
 #include <de/ByteRefArray>
+#include <de/ISerializable>
 
 #include "libgui.h"
 
@@ -37,7 +38,7 @@ namespace de {
  *
  * @todo Merge image_s and the related Image_* routines into here.
  */
-class LIBGUI_PUBLIC Image
+class LIBGUI_PUBLIC Image : public ISerializable
 {
 public:
     /**
@@ -46,19 +47,19 @@ public:
      */
     enum Format
     {
-        UseQImageFormat,    ///< May not be GL friendly.
+        UseQImageFormat = 0,    ///< May not be GL friendly.
 
-        Luminance_8,
-        LuminanceAlpha_88,
-        Alpha_8,
-        RGB_555,
-        RGB_565,
-        RGB_444,
-        RGB_888,            ///< 24-bit depth.
-        RGBA_4444,
-        RGBA_5551,
-        RGBA_8888,
-        RGBx_8888           ///< 32-bit depth, alpha data ignored.
+        Luminance_8 = 1,
+        LuminanceAlpha_88 = 2,
+        Alpha_8 = 3,
+        RGB_555 = 4,
+        RGB_565 = 5,
+        RGB_444 = 6,
+        RGB_888 = 7,            ///< 24-bit depth.
+        RGBA_4444 = 8,
+        RGBA_5551 = 9,
+        RGBA_8888 = 10,
+        RGBx_8888 = 11          ///< 32-bit depth, alpha data ignored.
     };
 
     typedef Vector2ui Size;
@@ -141,6 +142,10 @@ public:
     void fill(Color const &color);
     void fill(Rectanglei const &rect, Color const &color);
     void draw(Image const &image, Vector2i const &topLeft);
+
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
 
 public:
     static GLFormat glFormat(Format imageFormat);

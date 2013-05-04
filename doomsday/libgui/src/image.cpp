@@ -18,7 +18,10 @@
 
 #include "de/Image"
 #include "de/gui/opengl.h"
+#include <de/Reader>
+#include <de/Writer>
 
+#include <QDataStream>
 #include <QPainter>
 
 namespace de {
@@ -318,6 +321,48 @@ void Image::draw(Image const &image, Vector2i const &topLeft)
 
     QPainter painter(&d->image);
     painter.drawImage(QPoint(topLeft.x, topLeft.y), image.d->image);
+}
+
+void Image::operator >> (Writer &to) const
+{
+    to << duint8(d->format);
+
+    if(d->format == UseQImageFormat)
+    {
+        Block block;
+        QDataStream os(&block, QIODevice::WriteOnly);
+        os.setVersion(QDataStream::Qt_4_7);
+        os << d->image;
+        to << block;
+    }
+    else
+    {
+        to << d->size << ByteRefArray(bits(), byteCount());
+    }
+}
+
+void Image::operator << (Reader &from)
+{
+    d->pixels.clear();
+    d->refPixels = ByteRefArray();
+
+    from.readAs<duint8>(d->format);
+
+    if(d->format == UseQImageFormat)
+    {
+        Block block;
+        from >> block;
+        QDataStream is(block);
+        is.setVersion(QDataStream::Qt_4_7);
+        is >> d->image;
+
+        d->size.x = d->image.width();
+        d->size.y = d->image.height();
+    }
+    else
+    {
+        from >> d->size >> d->pixels;
+    }
 }
 
 Image::GLFormat Image::glFormat(Format imageFormat)

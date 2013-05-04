@@ -50,6 +50,11 @@ DENG2_PIMPL_NOREF(ImageBank)
         ImageData() {}
         ImageData(Image const &img) : image(img) {}
 
+        ISerializable *asSerializable()
+        {
+            return &image;
+        }
+
         duint sizeInMemory() const
         {
             return image.byteCount();
