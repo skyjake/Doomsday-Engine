@@ -232,7 +232,7 @@ GLState::GLState() : d(new Instance(this))
     setDepthTest (false);
     setDepthFunc (gl::Less);
     setDepthWrite(true);
-    setBlend     (false);
+    setBlend     (true);
     setBlendFunc (gl::One, gl::Zero);
     setBlendOp   (gl::Add);
 
