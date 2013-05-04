@@ -247,6 +247,18 @@ bool Folder::has(String const &name) const
 {
     DENG2_GUARD(this);
 
+    // Check if we were given a path rather than just a name.
+    String path = name.fileNamePath();
+    if(!path.empty())
+    {
+        Folder *folder = tryLocate<Folder>(path);
+        if(folder)
+        {
+            return folder->has(name.fileName());
+        }
+        return false;
+    }
+
     return (_contents.find(name.lower()) != _contents.end());
 }
 
@@ -347,9 +359,11 @@ File *Folder::tryLocateFile(String const &path) const
 
 void Folder::attach(Feed *feed)
 {
-    DENG2_GUARD(this);
-
-    _feeds.push_back(feed);
+    if(feed)
+    {
+        DENG2_GUARD(this);
+        _feeds.push_back(feed);
+    }
 }
 
 Feed *Folder::detach(Feed &feed)
