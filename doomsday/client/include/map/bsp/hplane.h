@@ -205,7 +205,7 @@ public:
      * @note This list may or may not yet be sorted. If a sorted list is desired
      * then sortAndMergeIntercepts() should first be called.
      *
-     * @see interceptLineSegment(), intercepts()
+     * @see interceptLineSegment()
      */
     Intercepts const &intercepts() const;
 

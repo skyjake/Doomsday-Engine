@@ -21,20 +21,20 @@
 #define DENG_WORLD_MAP_SECTIONEDGE
 
 #include <QList>
-#include <QtAlgorithms>
 
 #include <de/Error>
 #include <de/Vector>
 
 #include "Line"
 #include "HEdge"
+#include "IHPlane"
 
 /// Maximum number of intercepts in a SectionEdge.
 #define SECTIONEDGE_MAX_INTERCEPTS          64
 
 /**
  * Helper/utility class intended to simplify the process of generating
- * sections of drawable geometry from a map line segment.
+ * sections of geometry from a map line segment.
  *
  * @ingroup map
  */
@@ -44,19 +44,18 @@ public:
     /// Invalid range geometry was found during prepare() @ingroup errors
     DENG2_ERROR(InvalidError);
 
-    struct Intercept
+    class Intercept : public de::IHPlane::IIntercept
     {
-        SectionEdge *owner;
-        double distance;
-
+    public:
         Intercept(SectionEdge *owner, double distance = 0);
         Intercept(Intercept const &other);
 
-        inline bool operator < (Intercept const &other) const {
-            return distance < other.distance;
-        }
+        SectionEdge &owner() const;
 
         de::Vector3d origin() const;
+
+    private:
+        SectionEdge *_owner;
     };
 
     typedef QList<Intercept> Intercepts;
@@ -79,13 +78,9 @@ public:
         d.swap(other.d);
     }
 
-    inline Intercept const & operator [] (int index) const {
-        return at(index);
-    }
+    inline Intercept const & operator [] (int index) const { return at(index); }
 
-    Intercept const &at(int index) const {
-        return intercepts()[index];
-    }
+    Intercept const &at(int index) const;
 
     void prepare();
 
@@ -101,9 +96,9 @@ public:
 
     int divisionCount() const;
 
-    Intercept &bottom() const;
+    Intercept const &bottom() const;
 
-    Intercept &top() const;
+    Intercept const &top() const;
 
     int firstDivision() const;
 

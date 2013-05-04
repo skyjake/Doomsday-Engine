@@ -17,6 +17,8 @@
  * 02110-1301 USA</small>
  */
 
+#include <QtAlgorithms>
+
 #include "Sector"
 
 #include "map/r_world.h" // R_SideSectionCoords, R_GetVtxLineOwner
@@ -27,19 +29,26 @@
 using namespace de;
 
 SectionEdge::Intercept::Intercept(SectionEdge *owner, double distance)
-    : owner(owner), distance(distance)
+    : IHPlane::IIntercept(distance),
+      _owner(owner)
 {}
 
 SectionEdge::Intercept::Intercept(Intercept const &other)
-    : owner(other.owner), distance(other.distance)
+    : IHPlane::IIntercept(other.distance()),
+      _owner(other._owner) /// @todo Should not copy owner
 {}
+
+SectionEdge &SectionEdge::Intercept::owner() const
+{
+    return *_owner;
+}
 
 Vector3d SectionEdge::Intercept::origin() const
 {
-    return Vector3d(owner->origin(), distance);
+    return Vector3d(owner().origin(), distance());
 }
 
-DENG2_PIMPL(SectionEdge)
+DENG2_PIMPL(SectionEdge), public IHPlane
 {
     Line::Side *lineSide;
     int section;
@@ -51,7 +60,27 @@ DENG2_PIMPL(SectionEdge)
 
     bool isValid;
     Vector2f materialOrigin;
-    SectionEdge::Intercepts intercepts;
+
+    /// Data for the IHPlane model.
+    struct HPlane
+    {
+        /// The partition line.
+        Partition partition;
+
+        /// Intercept points along the half-plane.
+        SectionEdge::Intercepts intercepts;
+
+        /// Set to @c true when @var intercepts requires sorting.
+        bool needSortIntercepts;
+
+        HPlane() : needSortIntercepts(false) {}
+
+        HPlane(HPlane const & other)
+            : partition         (other.partition),
+              intercepts        (other.intercepts),
+              needSortIntercepts(other.needSortIntercepts)
+        {}
+    } hplane;
 
     Instance(Public *i, Line::Side *lineSide, int section,
              ClockDirection neighborScanDirection, coord_t lineOffset,
@@ -78,7 +107,7 @@ DENG2_PIMPL(SectionEdge)
           backSec              (other.backSec),
           isValid              (other.isValid),
           materialOrigin       (other.materialOrigin),
-          intercepts           (other.intercepts)
+          hplane               (other.hplane)
     {}
 
     void verifyValid() const
@@ -90,39 +119,105 @@ DENG2_PIMPL(SectionEdge)
         }
     }
 
+    // Implements IHPlane
+    void configure(Partition const &newPartition)
+    {
+        clearIntercepts();
+        hplane.partition = newPartition;
+    }
+
+    // Implements IHPlane
+    Partition const &partition() const
+    {
+        return hplane.partition;
+    }
+
+    SectionEdge::Intercept *find(double distance)
+    {
+        for(int i = 0; i < hplane.intercepts.count(); ++i)
+        {
+            SectionEdge::Intercept &icpt = hplane.intercepts[i];
+            if(de::fequal(icpt.distance(), distance))
+                return &icpt;
+        }
+        return 0;
+    }
+
+    // Implements IHPlane
+    SectionEdge::Intercept const *intercept(double distance)
+    {
+        if(find(distance))
+            return 0;
+
+        hplane.intercepts.append(SectionEdge::Intercept(&self, distance));
+        SectionEdge::Intercept *newIntercept = &hplane.intercepts.last();
+
+        // The addition of a new intercept means we'll need to resort.
+        hplane.needSortIntercepts = true;
+        return newIntercept;
+    }
+
+    // Implements IHPlane
+    void sortAndMergeIntercepts()
+    {
+        // Any work to do?
+        if(!hplane.needSortIntercepts) return;
+
+        qSort(hplane.intercepts.begin(), hplane.intercepts.end());
+
+        hplane.needSortIntercepts = false;
+    }
+
+    // Implements IHPlane
+    void clearIntercepts()
+    {
+        hplane.intercepts.clear();
+        // An empty intercept list is logically sorted.
+        hplane.needSortIntercepts = false;
+    }
+
+    // Implements IHPlane
+    SectionEdge::Intercept const &at(int index) const
+    {
+        if(index >= 0 && index < interceptCount())
+        {
+            return hplane.intercepts[index];
+        }
+        /// @throw IHPlane::UnknownInterceptError The specified intercept index is not valid.
+        throw IHPlane::UnknownInterceptError("HPlane2::at", QString("Index '%1' does not map to a known intercept (count: %2)")
+                                                                .arg(index).arg(interceptCount()));
+    }
+
+    // Implements IHPlane
+    int interceptCount() const
+    {
+        return hplane.intercepts.count();
+    }
+
+#ifdef DENG_DEBUG
+    void printIntercepts() const
+    {
+        uint index = 0;
+        foreach(SectionEdge::Intercept const &icpt, hplane.intercepts)
+        {
+            LOG_DEBUG(" %u: >%1.2f ") << (index++) << icpt.distance();
+        }
+    }
+#endif
+
     /**
      * Ensure all intercepts do not exceed the specified range.
      */
     void assertInterceptsInRange(coord_t low, coord_t hi) const
     {
 #ifdef DENG_DEBUG
-        foreach(Intercept const &icpt, intercepts)
+        foreach(SectionEdge::Intercept const &icpt, hplane.intercepts)
         {
-            DENG2_ASSERT(icpt.distance >= low && icpt.distance <= hi);
+            DENG2_ASSERT(icpt.distance() >= low && icpt.distance() <= hi);
         }
 #else
         DENG2_UNUSED2(low, hi);
 #endif
-    }
-
-    SectionEdge::Intercept *find(double distance)
-    {
-        for(int i = 0; i < intercepts.count(); ++i)
-        {
-            SectionEdge::Intercept &icpt = intercepts[i];
-            if(de::fequal(icpt.distance, distance))
-                return &icpt;
-        }
-        return 0;
-    }
-
-    bool intercept(double distance)
-    {
-        if(find(distance))
-            return false;
-
-        intercepts.append(SectionEdge::Intercept(&self, distance));
-        return true;
     }
 
     void addPlaneIntercepts(coord_t bottom, coord_t top)
@@ -178,7 +273,7 @@ DENG2_PIMPL(SectionEdge)
                                     if(intercept(plane.visHeight()))
                                     {
                                         // Have we reached the div limit?
-                                        if(intercepts.count() == SECTIONEDGE_MAX_INTERCEPTS)
+                                        if(interceptCount() == SECTIONEDGE_MAX_INTERCEPTS)
                                             stopScan = true;
                                     }
                                 }
@@ -272,7 +367,7 @@ int SectionEdge::section() const
 
 Vector2d const &SectionEdge::origin() const
 {
-    return d->lineVertex->origin();
+    return d->partition().origin;
 }
 
 coord_t SectionEdge::lineOffset() const
@@ -282,19 +377,19 @@ coord_t SectionEdge::lineOffset() const
 
 int SectionEdge::divisionCount() const
 {
-    return d->isValid? d->intercepts.count() - 2 : 0;
+    return d->isValid? d->interceptCount() - 2 : 0;
 }
 
-SectionEdge::Intercept &SectionEdge::bottom() const
+SectionEdge::Intercept const &SectionEdge::bottom() const
 {
     d->verifyValid();
-    return d->intercepts.first();
+    return d->hplane.intercepts[0];
 }
 
-SectionEdge::Intercept &SectionEdge::top() const
+SectionEdge::Intercept const &SectionEdge::top() const
 {
     d->verifyValid();
-    return d->intercepts.last();
+    return d->hplane.intercepts[d->interceptCount()-1];
 }
 
 int SectionEdge::firstDivision() const
@@ -306,7 +401,7 @@ int SectionEdge::firstDivision() const
 int SectionEdge::lastDivision() const
 {
     d->verifyValid();
-    return d->intercepts.count()-2;
+    return d->interceptCount()-2;
 }
 
 Vector2f const &SectionEdge::materialOrigin() const
@@ -317,8 +412,6 @@ Vector2f const &SectionEdge::materialOrigin() const
 
 void SectionEdge::prepare()
 {
-    DENG_ASSERT(d->intercepts.isEmpty());
-
     coord_t bottom, top;
     R_SideSectionCoords(*d->lineSide, d->section, d->frontSec, d->backSec,
                         &bottom, &top, &d->materialOrigin);
@@ -327,6 +420,8 @@ void SectionEdge::prepare()
     if(!d->isValid) return;
 
     d->materialOrigin.x += d->lineOffset;
+
+    d->configure(Partition(d->lineVertex->origin(), Vector2d(0, top - bottom)));
 
     // Intercepts are sorted in ascending distance order.
 
@@ -342,19 +437,25 @@ void SectionEdge::prepare()
     // The last intercept is the top.
     d->intercept(top);
 
-    if(d->intercepts.count() > 2) // First two are always sorted.
+    if(d->interceptCount() > 2) // First two are always sorted.
     {
-        // Sorting is required. This shouldn't take too long...
+        // Sorting may be required. This shouldn't take too long...
         // There seldom are more than two or three intercepts.
-        qSort(d->intercepts.begin(), d->intercepts.end());
+        d->sortAndMergeIntercepts();
     }
 
     // Sanity check.
     d->assertInterceptsInRange(bottom, top);
 }
 
+SectionEdge::Intercept const &SectionEdge::at(int index) const
+{
+    d->verifyValid();
+    return d->hplane.intercepts[index];
+}
+
 SectionEdge::Intercepts const &SectionEdge::intercepts() const
 {
     d->verifyValid();
-    return d->intercepts;
+    return d->hplane.intercepts;
 }

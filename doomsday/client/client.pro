@@ -116,6 +116,7 @@ DENG_HEADERS += \
     include/Game \
     include/Games \
     include/HEdge \
+    include/IHPlane \
     include/Line \
     include/Plane \
     include/Polyobj \
@@ -217,6 +218,7 @@ DENG_HEADERS += \
     include/gl/sys_opengl.h \
     include/gl/texturecontent.h \
     include/gridmap.h \
+    include/ihplane.h \
     include/library.h \
     include/m_decomp64.h \
     include/m_misc.h \

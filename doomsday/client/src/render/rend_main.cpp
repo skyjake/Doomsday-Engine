@@ -1586,7 +1586,7 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     if(!(surface.hasMaterial() && surface.material().isDrawable()))
         return false;
 
-    if(leftEdge.bottom().distance >= rightEdge.top().distance)
+    if(leftEdge.bottom().distance() >= rightEdge.top().distance())
         return true;
 
     bool const isTwoSidedMiddle = (section == Line::Side::Middle &&
@@ -1610,8 +1610,8 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
         mobj_t *mo = viewPlayer->shared.mo;
         viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
 
-        if(viewData->current.origin[VZ] > leftEdge.bottom().distance &&
-           viewData->current.origin[VZ] < rightEdge.top().distance)
+        if(viewData->current.origin[VZ] > leftEdge.bottom().distance() &&
+           viewData->current.origin[VZ] < rightEdge.top().distance())
         {
             Line const &line = side.line();
 
@@ -2477,7 +2477,7 @@ static bool prepareEdgesAndWriteWallSection(HEdge &hedge, int section, bool *opa
     rightEdge.prepare();
 
     if(leftEdge.isValid() && rightEdge.isValid() &&
-       rightEdge.top().distance > leftEdge.bottom().distance)
+       rightEdge.top().distance() > leftEdge.bottom().distance())
     {
         bool wroteOpaquePoly =
             writeWallSection(leftEdge, rightEdge,
@@ -2591,7 +2591,7 @@ static void writeWallSections(HEdge &hedge)
             rightEdge.prepare();
 
             if(leftEdge.isValid() && rightEdge.isValid() &&
-               rightEdge.top().distance > leftEdge.bottom().distance)
+               rightEdge.top().distance() > leftEdge.bottom().distance())
             {
                 wroteOpaqueMiddle =
                     writeWallSection(leftEdge, rightEdge,
@@ -2624,8 +2624,8 @@ static void writeWallSections(HEdge &hedge)
                     xbottom += middle.visMaterialOrigin().y;
                     xtop    += middle.visMaterialOrigin().y;
 
-                    middleCoversOpening = (rightEdge.top().distance >= xtop &&
-                                           leftEdge.bottom().distance <= xbottom);
+                    middleCoversOpening = (rightEdge.top().distance() >= xtop &&
+                                           leftEdge.bottom().distance() <= xbottom);
                 }
             }
         }
@@ -2633,7 +2633,8 @@ static void writeWallSections(HEdge &hedge)
         opaque = shouldAddSolidSegmentForTwosidedEdge(hedge, wroteOpaqueMiddle, middleCoversOpening);
     }
 
-    // We can occlude the wall range if the opening is filled (when the viewer is not in the void).
+    // We can occlude the angle range defined by the wall section
+    // if the opening has been covered (when the viewer is not in the void).
     if(opaque && !P_IsInVoid(viewPlayer))
     {
         C_AddRangeFromViewRelPoints(hedge.fromOrigin(), hedge.toOrigin());
