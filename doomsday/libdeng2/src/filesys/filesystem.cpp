@@ -85,11 +85,11 @@ Folder &FileSystem::makeFolder(String const &path, FolderCreationBehaviors behav
             DENG2_GUARD(parentFolder);
             DENG2_FOR_EACH_CONST(Folder::Feeds, i, parentFolder.feeds())
             {
-                LOG_DEV_TRACE("Creating subfeed \"%s\" from %s",
-                              subFolder->name() << (*i)->description());
-
                 Feed *feed = (*i)->newSubFeed(subFolder->name());
                 if(!feed) continue; // Check next one instead.
+
+                LOG_DEV_TRACE("Creating subfeed \"%s\" from %s",
+                              subFolder->name() << (*i)->description());
 
                 subFolder->attach(feed);
 
