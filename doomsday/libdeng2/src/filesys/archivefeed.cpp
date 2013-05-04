@@ -146,7 +146,7 @@ DENG2_PIMPL(ArchiveFeed)
 
         for(Archive::Names::iterator i = names.begin(); i != names.end(); ++i)
         {
-            folder.fileSystem().makeFolder(folder.path() / *i);
+            folder.fileSystem().makeFolder(folder.path() / *i, FS::InheritPrimaryFeed);
         }
     }
 };

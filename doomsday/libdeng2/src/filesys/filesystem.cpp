@@ -62,7 +62,7 @@ void FileSystem::refresh()
     printIndex();
 }
 
-Folder &FileSystem::makeFolder(String const &path, FolderCreationBehavior behavior)
+Folder &FileSystem::makeFolder(String const &path, FolderCreationBehaviors behavior)
 {
     LOG_AS("FS::makeFolder");
 
@@ -70,7 +70,7 @@ Folder &FileSystem::makeFolder(String const &path, FolderCreationBehavior behavi
     if(!subFolder)
     {
         // This folder does not exist yet. Let's create it.
-        Folder &parentFolder = makeFolder(path.fileNamePath());
+        Folder &parentFolder = makeFolder(path.fileNamePath(), behavior);
         subFolder = new Folder(path.fileName());
 
         // If parent folder is writable, this will be too.
@@ -80,7 +80,7 @@ Folder &FileSystem::makeFolder(String const &path, FolderCreationBehavior behavi
         }
 
         // Inherit parent's feeds?
-        if(behavior != DontInheritFeeds)
+        if(behavior & (InheritPrimaryFeed | InheritAllFeeds))
         {
             DENG2_GUARD(parentFolder);
             DENG2_FOR_EACH_CONST(Folder::Feeds, i, parentFolder.feeds())
@@ -88,16 +88,23 @@ Folder &FileSystem::makeFolder(String const &path, FolderCreationBehavior behavi
                 LOG_DEV_TRACE("Creating subfeed \"%s\" from %s",
                               subFolder->name() << (*i)->description());
 
-                subFolder->attach((*i)->newSubFeed(subFolder->name()));
-                if(behavior == InheritPrimaryFeed) break;
+                Feed *feed = (*i)->newSubFeed(subFolder->name());
+                if(!feed) continue; // Check next one instead.
+
+                subFolder->attach(feed);
+
+                if(!behavior.testFlag(InheritAllFeeds)) break;
             }
         }
 
         parentFolder.add(subFolder);
         index(*subFolder);
 
-        // Populate the new folder.
-        subFolder->populate();
+        if(behavior.testFlag(PopulateNewFolder))
+        {
+            // Populate the new folder.
+            subFolder->populate();
+        }
     }
     return *subFolder;
 }

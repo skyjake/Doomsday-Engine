@@ -24,6 +24,7 @@
 #include "../Folder"
 #include "../System"
 
+#include <QFlags>
 #include <map>
 
 /**
@@ -127,18 +128,25 @@ public:
     void refresh();
 
     enum FolderCreationBehavior {
-        DontInheritFeeds,   ///< Subfolder will not have any feeds created for them.
-        InheritPrimaryFeed, ///< Subfolder will inherit the primary (first) feed of its parent.
-        InheritAllFeeds     ///< Subfolder will inherit all feeds of its parent.
+        DontInheritFeeds   = 0,     ///< Subfolder will not have any feeds created for them.
+        InheritPrimaryFeed = 0x1,   ///< Subfolder will inherit the primary (first) feed of its parent.
+        InheritAllFeeds    = 0x2,   ///< Subfolder will inherit all feeds of its parent.
+        PopulateNewFolder  = 0x4,   ///< Populate new folder automatically.
+
+        InheritPrimaryFeedAndPopulate = InheritPrimaryFeed | PopulateNewFolder
     };
+    Q_DECLARE_FLAGS(FolderCreationBehaviors, FolderCreationBehavior)
 
     /**
      * Retrieves a folder in the file system. The folder gets created if it
      * does not exist. Any missing parent folders will also be created.
      *
-     * @param path  Path of the folder. Relative to the root folder.
+     * @param path      Path of the folder. Relative to the root folder.
+     * @param behavior  What to do with the new folder: automatically attach feeds and
+     *                  maybe also populate it automatically.
      */
-    Folder &makeFolder(String const &path, FolderCreationBehavior behavior = InheritPrimaryFeed);
+    Folder &makeFolder(String const &path,
+                       FolderCreationBehaviors behavior = InheritPrimaryFeedAndPopulate);
 
     /**
      * Finds all files matching a full or partial path. The search is done
@@ -248,6 +256,8 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(FileSystem::FolderCreationBehaviors)
 
 // Alias.
 typedef FileSystem FS;

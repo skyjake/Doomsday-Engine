@@ -256,9 +256,17 @@ public:
      *
      * @param feed  Feed to detach from the folder.
      *
-     * @return  The Feed object. Ownership is returned to the caller.
+     * @return  Feed instance. Ownership is returned to the caller.
      */
     Feed *detach(Feed &feed);
+
+    /**
+     * Makes the specified feed the primary one.
+     *
+     * @param feed  Feed instance to make the primary feed. Must already be
+     *              attached to the Folder.
+     */
+    void setPrimaryFeed(Feed &feed);
 
     /**
      * Provides access to the list of Feeds for this folder. The feeds are responsible

@@ -81,7 +81,8 @@ void DirectoryFeed::populateSubFolder(Folder &folder, String const &entryName)
 
     if(entryName != "." && entryName != "..")
     {
-        Folder &subFolder = folder.fileSystem().makeFolder(folder.path() / entryName);
+        Folder &subFolder = folder.fileSystem()
+                .makeFolder(folder.path() / entryName, FS::InheritPrimaryFeed);
 
         if(_mode & AllowWrite)
         {
@@ -201,7 +202,12 @@ void DirectoryFeed::removeFile(String const &name)
 
 Feed *DirectoryFeed::newSubFeed(String const &name)
 {
-    return new DirectoryFeed(_nativePath / name, _mode);
+    NativePath subPath = _nativePath / name;
+    if(subPath.exists() && subPath.isReadable())
+    {
+        return new DirectoryFeed(subPath, _mode);
+    }
+    return 0;
 }
 
 void DirectoryFeed::changeWorkingDir(NativePath const &nativePath)

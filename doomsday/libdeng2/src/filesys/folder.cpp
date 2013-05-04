@@ -374,6 +374,14 @@ Feed *Folder::detach(Feed &feed)
     return &feed;
 }
 
+void Folder::setPrimaryFeed(Feed &feed)
+{
+    DENG2_GUARD(this);
+
+    _feeds.remove(&feed);
+    _feeds.push_front(&feed);
+}
+
 Folder::Accessor::Accessor(Folder &owner, Property prop) : _owner(owner), _prop(prop)
 {}
 
