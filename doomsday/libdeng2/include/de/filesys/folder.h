@@ -34,6 +34,8 @@ class Feed;
  * A folder contains a set of files. It is used for building a tree of files
  * in the file system (de::FS). This is the base class for all types of folders.
  *
+ * The first Feed attached to a Folder is the primary feed.
+ *
  * @see Feed
  *
  * @ingroup fs
@@ -241,9 +243,11 @@ public:
     }
 
     /**
-     * Attach a feed to the folder. The feed will provide content for the folder.
+     * Attach a feed to the folder. The feed will provide content for the
+     * folder. The first feed attached to a folder is the primary feed.
      *
-     * @param feed  Feed to attach to the folder. The folder gets ownership of the feed.
+     * @param feed  Feed to attach to the folder. The folder gets ownership of
+     *              the feed.
      */
     void attach(Feed *feed);
 

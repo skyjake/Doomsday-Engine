@@ -107,7 +107,7 @@ void Folder::populate(PopulationBehavior behavior)
         // If the file has a designated feed, ask it about pruning.
         if(file->originFeed() && file->originFeed()->prune(*file))
         {
-            LOG_DEBUG("Pruning ") << file->path();
+            LOG_DEBUG("Pruning \"%s\"") << file->path();
             mustPrune = true;
         }
         else if(!file->originFeed())
