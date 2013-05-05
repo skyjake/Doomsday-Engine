@@ -161,12 +161,8 @@ static Vector3f currentSectorLightColor;
 static float currentSectorLightLevel;
 static bool firstBspLeaf; // No range checking for the first one.
 
-#endif // __CLIENT__
-
 void Rend_Register()
 {
-#ifdef __CLIENT__
-
     C_VAR_FLOAT ("rend-camera-fov",                 &fieldOfView,                   0, 1, 179);
 
     C_VAR_FLOAT ("rend-glow",                       &glowFactor,                    0, 0, 2);
@@ -223,11 +219,7 @@ void Rend_Register()
     Rend_SpriteRegister();
     Rend_ConsoleRegister();
     Vignette_Register();
-
-#endif
 }
-
-#ifdef __CLIENT__
 
 static void reportWallSectionDrawn(Line &line)
 {
@@ -396,61 +388,6 @@ static void torchLightVertices(uint num, ColorRawf *colors, rvertex_t const *ver
     }
 }
 
-/**
- * Determine which sections of @a line on @a backSide are potentially visible
- * according to the relative heights of the line's plane interfaces.
- *
- * @param line          Line to determine the potentially visible sections of.
- * @param backSide      If non-zero consider the back side, else the front.
- *
- * @return @ref sideSectionFlags denoting which sections are potentially visible.
- */
-static int pvisibleWallSections(Line::Side &side)
-{
-    if(!side.hasSections()) return 0; // None.
-
-    // One-sided? (therefore only the middle)
-    if(!side.back().hasSector() /*$degenleaf*/ || !side.back().hasSections() ||
-       side.line().isSelfReferencing())
-    {
-        return Line::Side::MiddleFlag;
-    }
-
-    Sector const &frontSec = side.sector();
-    Sector const &backSec  = side.back().sector();
-    Plane const &fceil  = frontSec.ceiling();
-    Plane const &ffloor = frontSec.floor();
-    Plane const &bceil  = backSec.ceiling();
-    Plane const &bfloor = backSec.floor();
-
-    // Default to all pvisible.
-    int sections = Line::Side::AllSectionFlags;
-
-    // Middle?
-    if(!side.middle().hasMaterial() ||
-       !side.middle().material().isDrawable() ||
-        side.middle().opacity() <= 0)
-    {
-        sections &= ~Line::Side::MiddleFlag;
-    }
-
-    // Top?
-    if((!devRendSkyMode && fceil.surface().hasSkyMaskedMaterial() && bceil.surface().hasSkyMaskedMaterial()) ||
-       (fceil.visHeight() <= bceil.visHeight()))
-    {
-        sections &= ~Line::Side::TopFlag;
-    }
-
-    // Bottom?
-    if((!devRendSkyMode && ffloor.surface().hasSkyMaskedMaterial() && bfloor.surface().hasSkyMaskedMaterial()) ||
-       (ffloor.visHeight() >= bfloor.visHeight()))
-    {
-        sections &= ~Line::Side::BottomFlag;
-    }
-
-    return sections;
-}
-
 int RIT_FirstDynlightIterator(dynlight_t const *dyn, void *parameters)
 {
     dynlight_t const **ptr = (dynlight_t const **)parameters;
@@ -463,8 +400,6 @@ static inline MaterialVariantSpec const &mapSurfaceMaterialSpec(int wrapS, int w
     return App_Materials().variantSpec(MapSurfaceContext, 0, 0, 0, 0, wrapS, wrapT,
                                        -1, -1, -1, true, true, false, false);
 }
-
-#ifdef __CLIENT__
 
 /**
  * This doesn't create a rendering primitive but a vissprite! The vissprite
@@ -568,8 +503,6 @@ void Rend_AddMaskedPoly(rvertex_t const *rvertices, ColorRawf const *rcolors,
         VS_WALL(vis)->modTex = 0;
     }
 }
-
-#endif // __CLIENT__
 
 static void quadTexCoords(rtexcoord_t *tc, rvertex_t const *rverts,
     coord_t wallLength, Vector3d const &topLeft)
@@ -1209,149 +1142,6 @@ static Material *chooseSurfaceMaterialForTexturingMode(Surface const &surface)
     return surface.materialPtr();
 }
 
-static void writeLeafPlane(Plane &plane)
-{
-    BspLeaf *leaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(leaf));
-
-    Surface const &surface = plane.surface();
-    Vector3f eyeToSurface(vOrigin[VX] - leaf->center().x,
-                          vOrigin[VZ] - leaf->center().y,
-                          vOrigin[VY] - plane.visHeight());
-
-    // Skip planes facing away from the viewer.
-    if(eyeToSurface.dot(surface.normal()) < 0)
-        return;
-
-    Material *material = chooseSurfaceMaterialForTexturingMode(surface);
-    // We must have a drawable material.
-    if(!material || !material->isDrawable()) return;
-
-    // Skip planes with a sky-masked material?
-    if(!devRendSkyMode)
-    {
-        if(surface.hasSkyMaskedMaterial() && plane.type() != Plane::Middle)
-            return; // Not handled here (drawn with the mask geometry).
-    }
-
-    Vector2f materialOrigin = leaf->worldGridOffset() // Align to the worldwide grid.
-                            + surface.visMaterialOrigin();
-
-    // Add the Y offset to orient the Y flipped material.
-    /// @todo fixme: What is this meant to do? -ds
-    if(plane.type() == Plane::Ceiling)
-        materialOrigin.y -= leaf->aaBox().maxY - leaf->aaBox().minY;
-    materialOrigin.y = -materialOrigin.y;
-
-    Vector2f materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
-                           (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
-
-    // Set the texture origin, Y is flipped for the ceiling.
-    Vector3d texTL(leaf->aaBox().minX,
-                   leaf->aaBox().arvec2[plane.type() == Plane::Floor? 1 : 0][VY],
-                   plane.visHeight());
-    Vector3d texBR(leaf->aaBox().maxX,
-                   leaf->aaBox().arvec2[plane.type() == Plane::Floor? 0 : 1][VY],
-                   plane.visHeight());
-
-    rendworldpoly_params_t parm; zap(parm);
-
-    parm.flags               = RPF_DEFAULT;
-    parm.isWall              = false;
-    parm.mapElement          = leaf;
-    parm.elmIdx              = plane.inSectorIndex();
-    parm.bsuf                = &leaf->biasSurfaceForGeometryGroup(plane.inSectorIndex());
-    parm.normal              = &surface.normal();
-    parm.texTL               = &texTL;
-    parm.texBR               = &texBR;
-    parm.surfaceLightLevelDL = parm.surfaceLightLevelDR = 0;
-    parm.surfaceColor        = &surface.tintColor();
-    parm.materialOrigin      = &materialOrigin;
-    parm.materialScale       = &materialScale;
-
-    if(material->isSkyMasked())
-    {
-        // In devRendSkyMode mode we render all polys destined for the
-        // skymask as regular world polys (with a few obvious properties).
-        if(devRendSkyMode)
-        {
-            parm.blendMode = BM_NORMAL;
-            parm.forceOpaque = true;
-        }
-        else
-        {   // We'll mask this.
-            parm.flags |= RPF_SKYMASK;
-        }
-    }
-    else if(plane.type() != Plane::Middle)
-    {
-        parm.blendMode = BM_NORMAL;
-        parm.forceOpaque = true;
-    }
-    else
-    {
-        parm.blendMode = surface.blendMode();
-        if(parm.blendMode == BM_NORMAL && noSpriteTrans)
-            parm.blendMode = BM_ZEROALPHA; // "no translucency" mode
-
-        parm.alpha = surface.opacity();
-    }
-
-    uint numVertices;
-    rvertex_t *rvertices;
-    buildLeafPlaneGeometry(*leaf, (plane.type() == Plane::Ceiling), plane.visHeight(),
-                           &rvertices, &numVertices);
-
-    MaterialSnapshot const &ms = material->prepare(mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT));
-
-    if(!(parm.flags & RPF_SKYMASK))
-    {
-        if(glowFactor > .0001f)
-        {
-            if(material == surface.materialPtr())
-            {
-                parm.glowing = ms.glowStrength();
-            }
-            else
-            {
-                Material *actualMaterial = surface.hasMaterial()? surface.materialPtr()
-                                                                : &App_Materials().find(de::Uri("System", Path("missing"))).material();
-
-                MaterialSnapshot const &ms = actualMaterial->prepare(Rend_MapSurfaceMaterialSpec());
-                parm.glowing = ms.glowStrength();
-            }
-
-            parm.glowing *= glowFactor; // Global scale factor.
-        }
-
-        // Dynamic lights?
-        if(!devRendSkyMode && parm.glowing < 1 && !(!useDynLights && !useWallGlow))
-        {
-            /// @ref projectLightFlags
-            int plFlags = (PLF_NO_PLANE | (plane.type() == Plane::Floor? PLF_TEX_FLOOR : PLF_TEX_CEILING));
-
-            parm.lightListIdx =
-                LO_ProjectToSurface(plFlags, leaf, 1, *parm.texTL, *parm.texBR,
-                                    surface.tangent(), surface.bitangent(), surface.normal());
-        }
-
-        // Mobj shadows?
-        if(plane.type() == Plane::Floor && parm.glowing < 1 && Rend_MobjShadowsEnabled())
-        {
-            // Glowing planes inversely diminish shadow strength.
-            float blendFactor = 1 - parm.glowing;
-
-            parm.shadowListIdx =
-                R_ProjectShadowsToSurface(leaf, blendFactor, *parm.texTL, *parm.texBR,
-                                          surface.tangent(), surface.bitangent(), surface.normal());
-        }
-    }
-
-    renderWorldPoly(rvertices, numVertices, parm, ms);
-
-    R_FreeRendVertices(rvertices);
-}
-
 static float calcLightLevelDelta(Vector3f const &normal)
 {
     return (1.0f / 255) * (normal.x * 18) * rendLightWallAngle;
@@ -1556,7 +1346,9 @@ static inline float wallSectionOpacity(Line::Side &side, int section)
 #define WSF_ADD_RADIO           0x04 ///< Write geometry for faked radiosity.
 #define WSF_FORCE_OPAQUE        0x08 ///< Force the geometry to be opaque.
 
-#define DEFAULT_WRITE_WALL_SECTION_FLAGS (WSF_ADD_DYNLIGHTS|WSF_ADD_DYNSHADOWS|WSF_ADD_RADIO)
+#define ALL_WRITE_WALL_SECTION_FLAGS        WSF_ADD_DYNLIGHTS | WSF_ADD_DYNSHADOWS | WSF_ADD_RADIO | WSF_FORCE_OPAQUE
+
+#define DEFAULT_WRITE_WALL_SECTION_FLAGS    ALL_WRITE_WALL_SECTION_FLAGS
 ///@}
 
 /**
@@ -1572,10 +1364,6 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     Line::Side &side  = leftEdge.lineSide();
     int const section = leftEdge.section();
     Surface &surface  = side.surface(section);
-
-    // Surfaces without a drawable material are never rendered.
-    if(!(surface.hasMaterial() && surface.material().isDrawable()))
-        return false;
 
     if(leftEdge.bottom().distance() >= rightEdge.top().distance())
         return true;
@@ -1640,40 +1428,11 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     Vector3d texBR(rightEdge.bottom().origin());
 
     // Determine which Material to use.
-    Material *material = 0;
+    Material *material = chooseSurfaceMaterialForTexturingMode(surface);
 
-    /// @todo Geometry tests here should use the same sectors as used when
-    /// deciding the z-heights for the wall divs. At least in the case of
-    /// selfreferencing lines, this logic is probably incorrect. -ds
-    bool writeToSkyMask = false;
-    /*if(devRendSkyMode && hedge.hasTwin() &&
-       ((section == Line::Side::Bottom && hedge.bspLeafSector().floorSurface().hasSkyMaskedMaterial() &&
-                                          hedge.twin().bspLeafSector().floorSurface().hasSkyMaskedMaterial()) ||
-        (section == Line::Side::Top    && hedge.bspLeafSector().ceilingSurface().hasSkyMaskedMaterial() &&
-                                          hedge.twin().bspLeafSector().ceilingSurface().hasSkyMaskedMaterial())))
-    {
-        // Geometry not normally rendered however we do so in dev sky mode.
-        material = currentBspLeaf->sector().planeSurface(section == Line::Side::Top? Plane::Ceiling : Plane::Floor).materialPtr();
-    }
-    else*/
-    {
-        material = chooseSurfaceMaterialForTexturingMode(surface);
-
-        if(material->isSkyMasked())
-        {
-            if(!devRendSkyMode)
-            {
-                // We'll mask this.
-                writeToSkyMask = true;
-            }
-            else
-            {
-                // In dev sky mode we render all would-be skymask geometry
-                // as if it were non-skymask.
-                flags |= WSF_FORCE_OPAQUE;
-            }
-        }
-    }
+    // Surfaces without a drawable material are never rendered.
+    if(!material || !material->isDrawable())
+        return false;
 
     // Calculate the light level deltas for this wall section.
     /// @todo Cache these values somewhere. -ds
@@ -1695,6 +1454,7 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     MaterialSnapshot const &ms = material->prepare(mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT));
 
     // Fill in the remaining params data.
+    bool const writeToSkyMask = (material->isSkyMasked() && !devRendSkyMode);
     Vector3f const *topColor = 0, *bottomColor = 0;
     blendmode_t blendMode = BM_NORMAL;
     uint lightListIdx = 0, shadowListIdx = 0;
@@ -1704,7 +1464,6 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
         // current texture mode.
         if(!isTwoSidedMiddle)
         {
-            flags |= WSF_FORCE_OPAQUE;
             blendMode = BM_NORMAL;
         }
         else
@@ -1899,6 +1658,149 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     R_FreeRendVertices(rvertices);
 
     return opaque && !didNearFade;
+}
+
+static void writeLeafPlane(Plane &plane)
+{
+    BspLeaf *leaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(leaf));
+
+    Surface const &surface = plane.surface();
+    Vector3f eyeToSurface(vOrigin[VX] - leaf->center().x,
+                          vOrigin[VZ] - leaf->center().y,
+                          vOrigin[VY] - plane.visHeight());
+
+    // Skip planes facing away from the viewer.
+    if(eyeToSurface.dot(surface.normal()) < 0)
+        return;
+
+    Material *material = chooseSurfaceMaterialForTexturingMode(surface);
+    // We must have a drawable material.
+    if(!material || !material->isDrawable()) return;
+
+    // Skip planes with a sky-masked material?
+    if(!devRendSkyMode)
+    {
+        if(surface.hasSkyMaskedMaterial() && plane.type() != Plane::Middle)
+            return; // Not handled here (drawn with the mask geometry).
+    }
+
+    Vector2f materialOrigin = leaf->worldGridOffset() // Align to the worldwide grid.
+                            + surface.visMaterialOrigin();
+
+    // Add the Y offset to orient the Y flipped material.
+    /// @todo fixme: What is this meant to do? -ds
+    if(plane.type() == Plane::Ceiling)
+        materialOrigin.y -= leaf->aaBox().maxY - leaf->aaBox().minY;
+    materialOrigin.y = -materialOrigin.y;
+
+    Vector2f materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
+                           (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
+
+    // Set the texture origin, Y is flipped for the ceiling.
+    Vector3d texTL(leaf->aaBox().minX,
+                   leaf->aaBox().arvec2[plane.type() == Plane::Floor? 1 : 0][VY],
+                   plane.visHeight());
+    Vector3d texBR(leaf->aaBox().maxX,
+                   leaf->aaBox().arvec2[plane.type() == Plane::Floor? 0 : 1][VY],
+                   plane.visHeight());
+
+    rendworldpoly_params_t parm; zap(parm);
+
+    parm.flags               = RPF_DEFAULT;
+    parm.isWall              = false;
+    parm.mapElement          = leaf;
+    parm.elmIdx              = plane.inSectorIndex();
+    parm.bsuf                = &leaf->biasSurfaceForGeometryGroup(plane.inSectorIndex());
+    parm.normal              = &surface.normal();
+    parm.texTL               = &texTL;
+    parm.texBR               = &texBR;
+    parm.surfaceLightLevelDL = parm.surfaceLightLevelDR = 0;
+    parm.surfaceColor        = &surface.tintColor();
+    parm.materialOrigin      = &materialOrigin;
+    parm.materialScale       = &materialScale;
+
+    if(material->isSkyMasked())
+    {
+        // In devRendSkyMode mode we render all polys destined for the
+        // skymask as regular world polys (with a few obvious properties).
+        if(devRendSkyMode)
+        {
+            parm.blendMode = BM_NORMAL;
+            parm.forceOpaque = true;
+        }
+        else
+        {   // We'll mask this.
+            parm.flags |= RPF_SKYMASK;
+        }
+    }
+    else if(plane.type() != Plane::Middle)
+    {
+        parm.blendMode = BM_NORMAL;
+        parm.forceOpaque = true;
+    }
+    else
+    {
+        parm.blendMode = surface.blendMode();
+        if(parm.blendMode == BM_NORMAL && noSpriteTrans)
+            parm.blendMode = BM_ZEROALPHA; // "no translucency" mode
+
+        parm.alpha = surface.opacity();
+    }
+
+    uint numVertices;
+    rvertex_t *rvertices;
+    buildLeafPlaneGeometry(*leaf, (plane.type() == Plane::Ceiling), plane.visHeight(),
+                           &rvertices, &numVertices);
+
+    MaterialSnapshot const &ms = material->prepare(mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT));
+
+    if(!(parm.flags & RPF_SKYMASK))
+    {
+        if(glowFactor > .0001f)
+        {
+            if(material == surface.materialPtr())
+            {
+                parm.glowing = ms.glowStrength();
+            }
+            else
+            {
+                Material *actualMaterial = surface.hasMaterial()? surface.materialPtr()
+                                                                : &App_Materials().find(de::Uri("System", Path("missing"))).material();
+
+                MaterialSnapshot const &ms = actualMaterial->prepare(Rend_MapSurfaceMaterialSpec());
+                parm.glowing = ms.glowStrength();
+            }
+
+            parm.glowing *= glowFactor; // Global scale factor.
+        }
+
+        // Dynamic lights?
+        if(!devRendSkyMode && parm.glowing < 1 && !(!useDynLights && !useWallGlow))
+        {
+            /// @ref projectLightFlags
+            int plFlags = (PLF_NO_PLANE | (plane.type() == Plane::Floor? PLF_TEX_FLOOR : PLF_TEX_CEILING));
+
+            parm.lightListIdx =
+                LO_ProjectToSurface(plFlags, leaf, 1, *parm.texTL, *parm.texBR,
+                                    surface.tangent(), surface.bitangent(), surface.normal());
+        }
+
+        // Mobj shadows?
+        if(plane.type() == Plane::Floor && parm.glowing < 1 && Rend_MobjShadowsEnabled())
+        {
+            // Glowing planes inversely diminish shadow strength.
+            float blendFactor = 1 - parm.glowing;
+
+            parm.shadowListIdx =
+                R_ProjectShadowsToSurface(leaf, blendFactor, *parm.texTL, *parm.texBR,
+                                          surface.tangent(), surface.bitangent(), surface.normal());
+        }
+    }
+
+    renderWorldPoly(rvertices, numVertices, parm, ms);
+
+    R_FreeRendVertices(rvertices);
 }
 
 #endif // __CLIENT__
@@ -2467,6 +2369,58 @@ static bool shouldAddSolidSegmentForTwosidedEdge(HEdge &hedge,
     return false;
 }
 
+/**
+ * Determine which sections of the map line on @a side are potentially visible
+ * according to the relative heights of the interfacing planes.
+ *
+ * @param side  Map line side to determine the potentially visible sections of.
+ *
+ * @return @ref sideSectionFlags denoting which sections are potentially visible.
+ */
+static int pvisibleWallSections(Line::Side &side)
+{
+    if(!side.hasSections()) return 0; // None.
+
+    // One-sided? (therefore only the middle)
+    if(!side.back().hasSector() /*$degenleaf*/ || !side.back().hasSections() ||
+       side.line().isSelfReferencing())
+    {
+        return Line::Side::MiddleFlag;
+    }
+
+    Sector const &frontSec = side.sector();
+    Sector const &backSec  = side.back().sector();
+    Plane const &fceil  = frontSec.ceiling();
+    Plane const &ffloor = frontSec.floor();
+    Plane const &bceil  = backSec.ceiling();
+    Plane const &bfloor = backSec.floor();
+
+    // Default to all pvisible.
+    int sections = Line::Side::AllSectionFlags;
+
+    // Middle?
+    if(!side.middle().hasMaterial() ||
+       !side.middle().material().isDrawable() ||
+        side.middle().opacity() <= 0)
+    {
+        sections &= ~Line::Side::MiddleFlag;
+    }
+
+    // Top?
+    if(fceil.visHeight() <= bceil.visHeight())
+    {
+        sections &= ~Line::Side::TopFlag;
+    }
+
+    // Bottom?
+    if(ffloor.visHeight() >= bfloor.visHeight())
+    {
+        sections &= ~Line::Side::BottomFlag;
+    }
+
+    return sections;
+}
+
 static void writeWallSections(HEdge &hedge)
 {
     DENG_ASSERT(hedge.hasLineSide());
@@ -2511,7 +2465,8 @@ static void writeWallSections(HEdge &hedge)
             {
                 wroteOpaqueMiddle =
                     writeWallSection(leftEdge, rightEdge,
-                                     hedge, hedge.biasSurfaceForGeometryGroup(Line::Side::Middle));
+                                     hedge, hedge.biasSurfaceForGeometryGroup(Line::Side::Middle),
+                                     DEFAULT_WRITE_WALL_SECTION_FLAGS & ~WSF_FORCE_OPAQUE);
 
                 if(wroteOpaqueMiddle)
                 {

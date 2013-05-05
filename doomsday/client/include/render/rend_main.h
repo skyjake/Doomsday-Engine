@@ -72,7 +72,11 @@ DENG_EXTERN_C byte freezeRLs;
 extern "C" {
 #endif
 
+#ifdef __CLIENT__
+
 void Rend_Register(void);
+
+#endif
 
 void Rend_Init(void);
 void Rend_Shutdown(void);
