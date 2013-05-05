@@ -208,7 +208,7 @@ File &Folder::newFile(String const &newPath, FileCreationBehavior behavior)
 
     /// @throw NewFileError All feeds of this folder failed to create a file.
     throw NewFileError("Folder::newFile", "Unable to create new file '" + newPath + 
-        "' in folder '" + Folder::path() + "'");
+                       "' in " + description());
 }
 
 File &Folder::replaceFile(String const &newPath)
