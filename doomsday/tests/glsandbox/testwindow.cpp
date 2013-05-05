@@ -230,7 +230,9 @@ DENG2_OBSERVES(Bank, Load)
         LOG_INFO("Bank item \"%s\" loaded") << path;
         if(path == "rtt/cube")
         {
+            self.canvas().makeCurrent();
             testpic.setImage(imageBank.image(path));
+            self.canvas().doneCurrent();
 
             imageBank.unload(path);
         }
