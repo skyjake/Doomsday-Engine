@@ -71,7 +71,7 @@ DENG2_OBSERVES(Bank, Load)
     Instance(Public *i)
         : Base(i),
           mode      (TestRenderToTexture),
-          //imageBank (Bank::DisableHotStorage),
+          //imageBank (0),
           uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
           uColor    ("uColor",     GLUniform::Vec4),
           uTime     ("uTime",      GLUniform::Float),
@@ -91,7 +91,7 @@ DENG2_OBSERVES(Bank, Load)
 
         imageBank.add(Path("rtt.cube", '.'), "/data/graphics/testpic.png");
         //imageBank.loadAll();
-        imageBank.audienceForLoad += this;
+        //imageBank.audienceForLoad += this;
     }
 
     void canvasGLInit(Canvas &cv)
@@ -119,8 +119,8 @@ DENG2_OBSERVES(Bank, Load)
 
         // Textures.
         testpic.setAutoGenMips(true);
-        imageBank.load(Path("rtt.cube", '.'));
-        //testpic.setImage(imageBank.image("rtt/cube"));
+        //imageBank.load(Path("rtt.cube", '.'));
+        testpic.setImage(imageBank.image("rtt/cube"));
         //testpic.setImage(QImage(":/images/testpic.png"));
         testpic.setWrapT(gl::RepeatMirrored);
         testpic.setMinFilter(gl::Linear, gl::MipLinear);
