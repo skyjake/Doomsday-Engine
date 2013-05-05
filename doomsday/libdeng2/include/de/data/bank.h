@@ -69,10 +69,8 @@ namespace de {
  *
  * @ingroup data
  */
-class DENG2_PUBLIC Bank : public QObject
+class DENG2_PUBLIC Bank
 {
-    Q_OBJECT
-
 public:
     /// Failed to load data from the source. @ingroup errors
     DENG2_ERROR(LoadError);
@@ -326,9 +324,6 @@ public:
      * Moves excess items on each cache level to lower level(s).
      */
     void purge();
-
-public slots:
-    void performDeferredNotifications();
 
 protected:
     virtual IData *loadFromSource(ISource &source) = 0;
