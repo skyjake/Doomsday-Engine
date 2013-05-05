@@ -1191,158 +1191,6 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
             !(p.alpha < 1 || !ms.isOpaque() || p.blendMode > 0));
 }
 
-static void writePlane2(BspLeaf &bspLeaf, Plane::Type type, coord_t height,
-    Vector3f const &tangent, Vector3f const &bitangent, Vector3f const &normal,
-    Material *inMat, Vector3f const &sufColor, float sufAlpha, blendmode_t blendMode,
-    Vector3d const &texTL, Vector3d const &texBR,
-    Vector2f const &materialOrigin, Vector2f const &materialScale,
-    bool skyMasked, bool addDLights, bool addMobjShadows,
-    biassurface_t *bsuf, int elmIdx /*tmp*/)
-{
-    Sector *sec = bspLeaf.sectorPtr();
-
-    rendworldpoly_params_t parms;
-    std::memset(&parms, 0, sizeof(parms));
-
-    parms.flags = RPF_DEFAULT;
-    parms.isWall = false;
-    parms.mapElement = &bspLeaf;
-    parms.elmIdx = elmIdx;
-    parms.bsuf = bsuf;
-    parms.normal = &normal;
-    parms.texTL = &texTL;
-    parms.texBR = &texBR;
-    parms.surfaceLightLevelDL = parms.surfaceLightLevelDR = 0;
-    parms.surfaceColor = &sufColor;
-    parms.materialOrigin = &materialOrigin;
-    parms.materialScale = &materialScale;
-
-    Material *mat = 0;
-    if(skyMasked)
-    {
-        // In devRendSkyMode mode we render all polys destined for the
-        // skymask as regular world polys (with a few obvious properties).
-        if(devRendSkyMode)
-        {
-            parms.blendMode = BM_NORMAL;
-            parms.glowing = 1;
-            parms.forceOpaque = true;
-            mat = inMat;
-        }
-        else
-        {   // We'll mask this.
-            parms.flags |= RPF_SKYMASK;
-        }
-    }
-    else
-    {
-        mat = inMat;
-
-        if(type != Plane::Middle)
-        {
-            parms.blendMode = BM_NORMAL;
-            parms.alpha = 1;
-            parms.forceOpaque = true;
-        }
-        else
-        {
-            if(blendMode == BM_NORMAL && noSpriteTrans)
-                parms.blendMode = BM_ZEROALPHA; // "no translucency" mode
-            else
-                parms.blendMode = blendMode;
-            parms.alpha = sufAlpha;
-        }
-    }
-
-    uint numVertices;
-    rvertex_t *rvertices;
-    buildLeafPlaneGeometry(bspLeaf, (type == Plane::Ceiling), height,
-                           &rvertices, &numVertices);
-
-    MaterialSnapshot const &ms = mat->prepare(mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT));
-
-    if(!(parms.flags & RPF_SKYMASK))
-    {
-        if(glowFactor > .0001f)
-        {
-            Surface const &suf = sec->planeSurface(elmIdx);
-            if(mat == suf.materialPtr())
-            {
-                parms.glowing = ms.glowStrength();
-            }
-            else
-            {
-                Material *material = suf.hasMaterial()? suf.materialPtr()
-                                                      : &App_Materials().find(de::Uri("System", Path("missing"))).material();
-
-                MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
-                parms.glowing = ms.glowStrength();
-            }
-
-            parms.glowing *= glowFactor; // Global scale factor.
-        }
-
-        // Dynamic lights?
-        if(addDLights && parms.glowing < 1 && !(!useDynLights && !useWallGlow))
-        {
-            /// @ref projectLightFlags
-            int plFlags = (PLF_NO_PLANE | (type == Plane::Floor? PLF_TEX_FLOOR : PLF_TEX_CEILING));
-
-            parms.lightListIdx =
-                LO_ProjectToSurface(plFlags, &bspLeaf, 1, *parms.texTL, *parms.texBR,
-                                    tangent, bitangent, normal);
-        }
-
-        // Mobj shadows?
-        if(addMobjShadows && parms.glowing < 1 && Rend_MobjShadowsEnabled())
-        {
-            // Glowing planes inversely diminish shadow strength.
-            float blendFactor = 1 - parms.glowing;
-
-            parms.shadowListIdx =
-                R_ProjectShadowsToSurface(&bspLeaf, blendFactor, *parms.texTL, *parms.texBR,
-                                          tangent, bitangent, normal);
-        }
-    }
-
-    renderWorldPoly(rvertices, numVertices, parms, ms);
-
-    R_FreeRendVertices(rvertices);
-}
-
-static void writePlane(Plane::Type type, coord_t height,
-    Vector3f const &tangent, Vector3f const &bitangent, Vector3f const &normal,
-    Material *material, Vector3f const &tintColor, float opacity, blendmode_t blendMode,
-    Vector2f const &materialOrigin, Vector2f const &materialScale,
-    bool skyMasked, bool addDLights, bool addMobjShadows,
-    biassurface_t *bsuf, int elmIdx /*tmp*/,
-    bool clipBackFacing = false /*why not?*/)
-{
-    BspLeaf *bspLeaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(bspLeaf));
-    DENG_ASSERT(material != 0 && material->isDrawable()); // Must have a drawable material.
-
-    Vector3f eyeToSurface(vOrigin[VX] - bspLeaf->center().x,
-                          vOrigin[VZ] - bspLeaf->center().y,
-                          vOrigin[VY] - height);
-
-    // Don't bother with planes facing away from the camera.
-    if(!(clipBackFacing && !(eyeToSurface.dot(normal) < 0)))
-    {
-        // Set the texture origin, Y is flipped for the ceiling.
-        Vector3d texTL(bspLeaf->aaBox().minX,
-                       bspLeaf->aaBox().arvec2[type == Plane::Floor? 1 : 0][VY],
-                       height);
-        Vector3d texBR(bspLeaf->aaBox().maxX,
-                       bspLeaf->aaBox().arvec2[type == Plane::Floor? 0 : 1][VY],
-                       height);
-
-        writePlane2(*bspLeaf, type, height, tangent, bitangent, normal, material,
-                    tintColor, opacity, blendMode, texTL, texBR, materialOrigin, materialScale,
-                    skyMasked, addDLights, addMobjShadows, bsuf, elmIdx);
-    }
-}
-
 static Material *chooseSurfaceMaterialForTexturingMode(Surface const &surface)
 {
     if(renderTextures == 2)
@@ -1359,6 +1207,149 @@ static Material *chooseSurfaceMaterialForTexturingMode(Surface const &surface)
 
     // Normal mode -- use the surface-bound material.
     return surface.materialPtr();
+}
+
+static void writeLeafPlane(Plane &plane)
+{
+    BspLeaf *leaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(leaf));
+
+    Surface const &surface = plane.surface();
+    Vector3f eyeToSurface(vOrigin[VX] - leaf->center().x,
+                          vOrigin[VZ] - leaf->center().y,
+                          vOrigin[VY] - plane.visHeight());
+
+    // Skip planes facing away from the viewer.
+    if(eyeToSurface.dot(surface.normal()) < 0)
+        return;
+
+    Material *material = chooseSurfaceMaterialForTexturingMode(surface);
+    // We must have a drawable material.
+    if(!material || !material->isDrawable()) return;
+
+    // Skip planes with a sky-masked material?
+    if(!devRendSkyMode)
+    {
+        if(surface.hasSkyMaskedMaterial() && plane.type() != Plane::Middle)
+            return; // Not handled here (drawn with the mask geometry).
+    }
+
+    Vector2f materialOrigin = leaf->worldGridOffset() // Align to the worldwide grid.
+                            + surface.visMaterialOrigin();
+
+    // Add the Y offset to orient the Y flipped material.
+    /// @todo fixme: What is this meant to do? -ds
+    if(plane.type() == Plane::Ceiling)
+        materialOrigin.y -= leaf->aaBox().maxY - leaf->aaBox().minY;
+    materialOrigin.y = -materialOrigin.y;
+
+    Vector2f materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
+                           (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
+
+    // Set the texture origin, Y is flipped for the ceiling.
+    Vector3d texTL(leaf->aaBox().minX,
+                   leaf->aaBox().arvec2[plane.type() == Plane::Floor? 1 : 0][VY],
+                   plane.visHeight());
+    Vector3d texBR(leaf->aaBox().maxX,
+                   leaf->aaBox().arvec2[plane.type() == Plane::Floor? 0 : 1][VY],
+                   plane.visHeight());
+
+    rendworldpoly_params_t parm; zap(parm);
+
+    parm.flags               = RPF_DEFAULT;
+    parm.isWall              = false;
+    parm.mapElement          = leaf;
+    parm.elmIdx              = plane.inSectorIndex();
+    parm.bsuf                = &leaf->biasSurfaceForGeometryGroup(plane.inSectorIndex());
+    parm.normal              = &surface.normal();
+    parm.texTL               = &texTL;
+    parm.texBR               = &texBR;
+    parm.surfaceLightLevelDL = parm.surfaceLightLevelDR = 0;
+    parm.surfaceColor        = &surface.tintColor();
+    parm.materialOrigin      = &materialOrigin;
+    parm.materialScale       = &materialScale;
+
+    if(material->isSkyMasked())
+    {
+        // In devRendSkyMode mode we render all polys destined for the
+        // skymask as regular world polys (with a few obvious properties).
+        if(devRendSkyMode)
+        {
+            parm.blendMode = BM_NORMAL;
+            parm.forceOpaque = true;
+        }
+        else
+        {   // We'll mask this.
+            parm.flags |= RPF_SKYMASK;
+        }
+    }
+    else if(plane.type() != Plane::Middle)
+    {
+        parm.blendMode = BM_NORMAL;
+        parm.forceOpaque = true;
+    }
+    else
+    {
+        parm.blendMode = surface.blendMode();
+        if(parm.blendMode == BM_NORMAL && noSpriteTrans)
+            parm.blendMode = BM_ZEROALPHA; // "no translucency" mode
+
+        parm.alpha = surface.opacity();
+    }
+
+    uint numVertices;
+    rvertex_t *rvertices;
+    buildLeafPlaneGeometry(*leaf, (plane.type() == Plane::Ceiling), plane.visHeight(),
+                           &rvertices, &numVertices);
+
+    MaterialSnapshot const &ms = material->prepare(mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT));
+
+    if(!(parm.flags & RPF_SKYMASK))
+    {
+        if(glowFactor > .0001f)
+        {
+            if(material == surface.materialPtr())
+            {
+                parm.glowing = ms.glowStrength();
+            }
+            else
+            {
+                Material *actualMaterial = surface.hasMaterial()? surface.materialPtr()
+                                                                : &App_Materials().find(de::Uri("System", Path("missing"))).material();
+
+                MaterialSnapshot const &ms = actualMaterial->prepare(Rend_MapSurfaceMaterialSpec());
+                parm.glowing = ms.glowStrength();
+            }
+
+            parm.glowing *= glowFactor; // Global scale factor.
+        }
+
+        // Dynamic lights?
+        if(!devRendSkyMode && parm.glowing < 1 && !(!useDynLights && !useWallGlow))
+        {
+            /// @ref projectLightFlags
+            int plFlags = (PLF_NO_PLANE | (plane.type() == Plane::Floor? PLF_TEX_FLOOR : PLF_TEX_CEILING));
+
+            parm.lightListIdx =
+                LO_ProjectToSurface(plFlags, leaf, 1, *parm.texTL, *parm.texBR,
+                                    surface.tangent(), surface.bitangent(), surface.normal());
+        }
+
+        // Mobj shadows?
+        if(plane.type() == Plane::Floor && parm.glowing < 1 && Rend_MobjShadowsEnabled())
+        {
+            // Glowing planes inversely diminish shadow strength.
+            float blendFactor = 1 - parm.glowing;
+
+            parm.shadowListIdx =
+                R_ProjectShadowsToSurface(leaf, blendFactor, *parm.texTL, *parm.texBR,
+                                          surface.tangent(), surface.bitangent(), surface.normal());
+        }
+    }
+
+    renderWorldPoly(rvertices, numVertices, parm, ms);
+
+    R_FreeRendVertices(rvertices);
 }
 
 static float calcLightLevelDelta(Vector3f const &normal)
@@ -1910,81 +1901,6 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     return opaque && !didNearFade;
 }
 
-static void markFrontFacingHEdges()
-{
-    BspLeaf *bspLeaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(bspLeaf));
-
-    if(HEdge *base = bspLeaf->firstHEdge())
-    {
-        HEdge *hedge = base;
-        do
-        {
-            // Occlusions can only happen where two sectors contact.
-            if(hedge->hasLineSide())
-            {
-                // Which way should it be facing?
-                if(!(viewFacingDot(hedge->fromOrigin(), hedge->toOrigin()) < 0))
-                    hedge->_frameFlags |= HEDGEINF_FACINGFRONT;
-                else
-                    hedge->_frameFlags &= ~HEDGEINF_FACINGFRONT;
-            }
-        } while((hedge = &hedge->next()) != base);
-    }
-
-    if(Polyobj *po = bspLeaf->firstPolyobj())
-    {
-        foreach(Line *line, po->lines())
-        {
-            HEdge *hedge = line->front().leftHEdge();
-
-            // Which way should it be facing?
-            if(!(viewFacingDot(hedge->fromOrigin(), hedge->toOrigin()) < 0))
-                hedge->_frameFlags |= HEDGEINF_FACINGFRONT;
-            else
-                hedge->_frameFlags &= ~HEDGEINF_FACINGFRONT;
-        }
-    }
-}
-
-/// If @a hedge is @em not front facing this is no-op.
-static inline void occludeFrontFacingHEdge(HEdge &hedge)
-{
-    if(hedge._frameFlags & HEDGEINF_FACINGFRONT)
-    {
-        if(!C_CheckRangeFromViewRelPoints(hedge.fromOrigin(), hedge.toOrigin()))
-        {
-            hedge._frameFlags &= ~HEDGEINF_FACINGFRONT;
-        }
-    }
-}
-
-static void occludeFrontFacingHEdges()
-{
-    BspLeaf *bspLeaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(bspLeaf));
-
-    if(HEdge *base = bspLeaf->firstHEdge())
-    {
-        HEdge *hedge = base;
-        do
-        {
-            if(hedge->hasLineSide())
-            {
-                occludeFrontFacingHEdge(*hedge);
-            }
-        } while((hedge = &hedge->next()) != base);
-    }
-
-    if(Polyobj *po = bspLeaf->firstPolyobj())
-    {
-        foreach(Line *line, po->lines())
-        {
-            occludeFrontFacingHEdge(*line->front().leftHEdge());
-        }
-    }
-}
-
 #endif // __CLIENT__
 
 static coord_t skyFixFloorZ(Plane const *frontFloor, Plane const *backFloor)
@@ -2465,7 +2381,7 @@ static bool prepareEdgesAndWriteWallSection(HEdge &hedge, int section, bool *opa
 
     DENG_ASSERT(hedge.hasLineSide());
     DENG_ASSERT(hedge.lineSide().hasSections());
-    DENG_ASSERT(hedge._frameFlags & HEDGEINF_FACINGFRONT);
+    DENG_ASSERT(hedge.isFlagged(HEdge::FacingFront));
 
     // Done here because of the logic of doom.exe wrt the automap.
     reportWallSectionDrawn(hedge.line());
@@ -2555,7 +2471,7 @@ static void writeWallSections(HEdge &hedge)
 {
     DENG_ASSERT(hedge.hasLineSide());
     DENG_ASSERT(hedge.lineSide().hasSections());
-    DENG_ASSERT(hedge._frameFlags & HEDGEINF_FACINGFRONT);
+    DENG_ASSERT(hedge.isFlagged(HEdge::FacingFront));
 
     int pvisSections = pvisibleWallSections(hedge.lineSide()); /// @ref sideSectionFlags
     bool opaque = false;
@@ -2651,7 +2567,7 @@ static void writeLeafWallSections()
     do
     {
         // Ignore back facing walls.
-        if(hedge->_frameFlags & HEDGEINF_FACINGFRONT)
+        if(hedge->isFlagged(HEdge::FacingFront))
         if(hedge->hasLineSide() && hedge->lineSide().hasSections()) // "mini-hedges" have no lines and "windows" have no sections.
         {
             writeWallSections(*hedge);
@@ -2672,7 +2588,7 @@ static void writeLeafPolyobjs()
         HEdge *hedge = line->front().leftHEdge();
 
         // Ignore back facing walls.
-        if(hedge->_frameFlags & HEDGEINF_FACINGFRONT)
+        if(hedge->isFlagged(HEdge::FacingFront))
         {
             bool opaque = false;
             prepareEdgesAndWriteWallSection(*hedge, Line::Side::Middle, &opaque);
@@ -2693,136 +2609,186 @@ static void writeLeafPlanes()
 
     foreach(Plane *plane, leaf->sector().planes())
     {
-        Surface const *surface = &plane->surface();
+        writeLeafPlane(*plane);
+    }
+}
 
-        bool isSkyMasked = surface->hasSkyMaskedMaterial();
-        if(isSkyMasked && plane->type() != Plane::Middle)
+static void markFrontFacingHEdges()
+{
+    BspLeaf *bspLeaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(bspLeaf));
+
+    if(HEdge *base = bspLeaf->firstHEdge())
+    {
+        HEdge *hedge = base;
+        do
         {
-            if(!devRendSkyMode) continue; // Not handled here.
-            isSkyMasked = false;
-        }
+            // Occlusions can only happen where two sectors contact.
+            if(hedge->hasLineSide())
+            {
+                // Which way is it facing?
+                double dot = viewFacingDot(hedge->fromOrigin(), hedge->toOrigin());
+                hedge->setFlags(HEdge::FacingFront, dot < 0? UnsetFlags : SetFlags);
+            }
+        } while((hedge = &hedge->next()) != base);
+    }
 
-        Material *mat = chooseSurfaceMaterialForTexturingMode(*surface);
-
-        Vector2f materialOrigin = surface->visMaterialOrigin();
-        // Add the Y offset to orient the Y flipped texture.
-        if(plane->type() == Plane::Ceiling)
-            materialOrigin.y -= leaf->aaBox().maxY - leaf->aaBox().minY;
-        // Add the additional offset to align with the worldwide grid.
-        materialOrigin += leaf->worldGridOffset();
-        // Inverted.
-        materialOrigin.y = -materialOrigin.y;
-
-        Vector2f materialScale((surface->flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
-                               (surface->flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
-
-        if(mat && mat->isDrawable())
+    if(Polyobj *po = bspLeaf->firstPolyobj())
+    {
+        foreach(Line *line, po->lines())
         {
-            writePlane(plane->type(), plane->visHeight(),
-                       surface->tangent(), surface->bitangent(), surface->normal(),
-                       mat, surface->tintColor(), surface->opacity(), surface->blendMode(),
-                       materialOrigin, materialScale,
-                       isSkyMasked, !devRendSkyMode, (!devRendSkyMode && plane->type() == Plane::Floor),
-                       &leaf->biasSurfaceForGeometryGroup(plane->inSectorIndex()),
-                       plane->inSectorIndex());
+            HEdge *hedge = line->front().leftHEdge();
+
+            // Which way is it facing?
+            double dot = viewFacingDot(hedge->fromOrigin(), hedge->toOrigin());
+            hedge->setFlags(HEdge::FacingFront, dot < 0? UnsetFlags : SetFlags);
         }
     }
 }
 
-/**
- * Creates new occlusion planes from the BspLeaf's edges.
- * Before testing, occlude the BspLeaf's backfaces. After testing occlude
- * the remaining faces, i.e. the forward facing edges. This is done before
- * rendering edges, so solid segments cut out all unnecessary oranges.
- */
-static void occludeBspLeaf(BspLeaf const *bspLeaf, bool forwardFacing)
+static inline bool canOccludeSectorPairBoundary(Sector const &frontSec,
+    Sector const &backSec, bool upward)
 {
+    Plane const &frontPlane = frontSec.plane(upward? Plane::Ceiling : Plane::Floor);
+    Plane const &backPlane  =  backSec.plane(upward? Plane::Ceiling : Plane::Floor);
+
+    // Do not create an occlusion between two sky-masked planes.
+    // Only because the open range does not account for the sky plane height? -ds
+    return !(frontPlane.surface().hasSkyMaskedMaterial() &&
+              backPlane.surface().hasSkyMaskedMaterial());
+}
+
+static void occludeHEdge(HEdge const &hedge, bool frontFacing)
+{
+    DENG_ASSERT(hedge.hasBspLeaf() && hedge.bspLeaf().hasSector());
+
+    if(frontFacing != hedge.isFlagged(HEdge::FacingFront)) return;
+
+    // Edges without map line sections can never occlude.
+    if(!hedge.hasLineSide() || !hedge.lineSide().hasSections()) return;
+
+    // Occlusions should only happen where two sectors meet.
+    if(!hedge.hasTwin() || !hedge.twin().bspLeafSectorPtr()) return;
+
+    Sector const &frontSec = hedge.bspLeaf().sector();
+    Sector const &backSec  = hedge.twin().bspLeaf().sector();
+
+    // Choose start and end vertexes so that it's facing forward.
+    Vertex const &from = hedge.vertex(frontFacing^1);
+    Vertex const &to   = hedge.vertex(frontFacing  );
+
+    coord_t openBottom, openTop;
+    R_VisOpenRange(hedge.lineSide(), &frontSec, &backSec, &openBottom, &openTop);
+
+    // Does the floor create an occlusion?
+    if(((openBottom > frontSec.floor().visHeight() && vOrigin[VY] <= openBottom) ||
+        (openBottom >  backSec.floor().visHeight() && vOrigin[VY] >= openBottom))
+       && canOccludeSectorPairBoundary(frontSec, backSec, false))
+    {
+        C_AddViewRelOcclusion(from.origin(), to.origin(), openBottom, false);
+    }
+
+    // Does the ceiling create an occlusion?
+    if(((openTop < frontSec.ceiling().visHeight() && vOrigin[VY] >= openTop) ||
+        (openTop <  backSec.ceiling().visHeight() && vOrigin[VY] <= openTop))
+       && canOccludeSectorPairBoundary(frontSec, backSec, true))
+    {
+        C_AddViewRelOcclusion(from.origin(), to.origin(), openTop, true);
+    }
+}
+
+/**
+ * Add angle clipper occlusion ranges for the edges of the current leaf.
+ */
+static void occludeLeaf(bool frontFacing)
+{
+    BspLeaf *leaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(leaf));
+
     if(devNoCulling) return;
-
-    if(!bspLeaf || !bspLeaf->firstHEdge()) return;
-
     if(P_IsInVoid(viewPlayer)) return;
 
-    Sector *frontSec     = bspLeaf->sectorPtr();
-    coord_t const fFloor = frontSec->floor().height();
-    coord_t const fCeil  = frontSec->ceiling().height();
-
-    HEdge *base = bspLeaf->firstHEdge();
+    HEdge *base = leaf->firstHEdge();
     HEdge *hedge = base;
     do
     {
-        // Occlusions can only happen where two sectors contact.
-        if(hedge->hasLineSide() && hedge->hasTwin() && hedge->twin().bspLeaf().hasSector() &&
-           (forwardFacing == ((hedge->_frameFlags & HEDGEINF_FACINGFRONT)? true : false)))
-        {
-            Sector *backSec      = hedge->twin().bspLeafSectorPtr();
-            coord_t const bFloor = backSec->floor().height();
-            coord_t const bCeil  = backSec->ceiling().height();
-
-            // Choose start and end vertices so that it's facing forward.
-            Vertex const &startv = hedge->vertex(forwardFacing^1);
-            Vertex const &endv   = hedge->vertex(forwardFacing  );
-
-            // Do not create an occlusion for sky floors.
-            if(!backSec->floorSurface().hasSkyMaskedMaterial() ||
-               !frontSec->floorSurface().hasSkyMaskedMaterial())
-            {
-                // Do the floors create an occlusion?
-                if((bFloor > fFloor && vOrigin[VY] <= bFloor) ||
-                   (bFloor < fFloor && vOrigin[VY] >= fFloor))
-                {
-                    // Occlude down.
-                    C_AddViewRelOcclusion(startv.origin(), endv.origin(),
-                                          de::max(fFloor, bFloor), false);
-                }
-            }
-
-            // Do not create an occlusion for sky ceilings.
-            if(!backSec->ceilingSurface().hasSkyMaskedMaterial() ||
-               !frontSec->ceilingSurface().hasSkyMaskedMaterial())
-            {
-                // Do the ceilings create an occlusion?
-                if((bCeil < fCeil && vOrigin[VY] >= bCeil) ||
-                   (bCeil > fCeil && vOrigin[VY] <= fCeil))
-                {
-                    // Occlude up.
-                    C_AddViewRelOcclusion(startv.origin(), endv.origin(),
-                                          de::min(fCeil, bCeil), true);
-                }
-            }
-        }
+        occludeHEdge(*hedge, frontFacing);
     } while((hedge = &hedge->next()) != base);
+}
+
+/// If @a hedge is @em not front facing this is no-op.
+static inline void clipFrontFacingHEdge(HEdge &hedge)
+{
+    if(hedge.isFlagged(HEdge::FacingFront))
+    {
+        if(!C_CheckRangeFromViewRelPoints(hedge.fromOrigin(), hedge.toOrigin()))
+        {
+            hedge.setFlags(HEdge::FacingFront, UnsetFlags);
+        }
+    }
+}
+
+static void clipFrontFacingHEdges()
+{
+    BspLeaf *bspLeaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(bspLeaf));
+
+    if(HEdge *base = bspLeaf->firstHEdge())
+    {
+        HEdge *hedge = base;
+        do
+        {
+            if(hedge->hasLineSide())
+            {
+                clipFrontFacingHEdge(*hedge);
+            }
+        } while((hedge = &hedge->next()) != base);
+    }
+
+    if(Polyobj *po = bspLeaf->firstPolyobj())
+    {
+        foreach(Line *line, po->lines())
+        {
+            clipFrontFacingHEdge(*line->front().leftHEdge());
+        }
+    }
 }
 
 /**
  * @pre Assumes the leaf is at least partially visible.
  */
-static void drawCurrentBspLeaf()
+static void drawCurrentLeaf()
 {
-    BspLeaf *bspLeaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(bspLeaf));
+    BspLeaf *leaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(leaf));
 
     // Mark the sector visible for this frame.
-    bspLeaf->sector()._frameFlags |= SIF_VISIBLE;
+    leaf->sector()._frameFlags |= SIF_VISIBLE;
 
     markFrontFacingHEdges();
-    R_InitForBspLeaf(bspLeaf);
-    Rend_RadioBspLeafEdges(*bspLeaf);
+    R_InitForBspLeaf(leaf);
+    Rend_RadioBspLeafEdges(*leaf);
 
-    occludeBspLeaf(bspLeaf, false);
-    LO_ClipInBspLeaf(bspLeaf->indexInMap());
-    occludeBspLeaf(bspLeaf, true);
+    /*
+     * Before clip testing lumobjs (for halos), range-occlude the back facing edges.
+     * After testing, range-occlude the front facing edges. Done before drawing wall
+     * sections so that opening occlusions cut out unnecessary oranges.
+     */
 
-    occludeFrontFacingHEdges();
+    occludeLeaf(false /* back facing */);
+    LO_ClipInBspLeaf(leaf->indexInMap());
+    occludeLeaf(true /* front facing */);
 
-    if(bspLeaf->hasPolyobj())
+    clipFrontFacingHEdges();
+
+    if(leaf->hasPolyobj())
     {
         // Polyobjs don't obstruct - clip lights with another algorithm.
-        LO_ClipInBspLeafBySight(bspLeaf->indexInMap());
+        LO_ClipInBspLeafBySight(leaf->indexInMap());
     }
 
     // Mark particle generators in the sector visible.
-    Rend_ParticleMarkInSectorVisible(bspLeaf->sectorPtr());
+    Rend_ParticleMarkInSectorVisible(leaf->sectorPtr());
 
     /*
      * Sprites for this BSP leaf have to be drawn.
@@ -2833,7 +2799,7 @@ static void drawCurrentBspLeaf()
      * Must be done AFTER the lumobjs have been clipped as this affects the projection
      * of halos.
      */
-    R_AddSprites(bspLeaf);
+    R_AddSprites(leaf);
 
     writeLeafSkyMask();
     writeLeafWallSections();
@@ -2845,7 +2811,7 @@ static void drawCurrentBspLeaf()
  * Change the current BspLeaf (updating any relevant draw state properties
  * accordingly).
  *
- * @param bspLeaf  The new BSP leaf to make current. Cannot be @c 0.
+ * @param bspLeaf  The new BSP leaf to make current.
  */
 static void makeCurrent(BspLeaf *bspLeaf)
 {
@@ -2902,7 +2868,7 @@ static void traverseBspAndDrawLeafs(MapElement *bspElement)
     // This is now the current leaf.
     makeCurrent(bspLeaf);
 
-    drawCurrentBspLeaf();
+    drawCurrentLeaf();
 
     // This is no longer the first leaf.
     firstBspLeaf = false;

@@ -1165,7 +1165,7 @@ boolean LOIT_ClipLumObjBySight(void *data, void *context)
             HEdge *hedge = line->front().leftHEdge();
 
             // Ignore half-edges facing the wrong way.
-            if(hedge->_frameFlags & HEDGEINF_FACINGFRONT)
+            if(hedge->isFlagged(HEdge::FacingFront))
             {
                 coord_t fromV1[2] = { hedge->fromOrigin().x, hedge->fromOrigin().y };
                 coord_t toV1[2]   = {   hedge->toOrigin().x,   hedge->toOrigin().y };

@@ -32,14 +32,6 @@
 
 class Sector;
 
-/**
- * @defgroup hedgeFrameFlags  Half-edge Frame Flags
- * @ingroup map
- */
-///@{
-#define HEDGEINF_FACINGFRONT      0x0001
-///@}
-
 /// Logical clock-wise direction identifiers:
 enum ClockDirection
 {
@@ -91,6 +83,12 @@ public:
         Back
     };
 
+    enum Flag
+    {
+        FacingFront = 0x1
+    };
+    Q_DECLARE_FLAGS(Flags, Flag)
+
 public: /// @todo Make private:
     /// Start and End vertexes of the segment.
     Vertex *_from, *_to;
@@ -119,8 +117,7 @@ public: /// @todo Make private:
     /// For each section of a Line::Side.
     biassurface_t *_bsuf[3];
 
-    /// @ref hedgeFrameFlags
-    short _frameFlags;
+    Flags _flags;
 
 public:
     HEdge(Vertex &from, Line::Side *lineSide = 0);
@@ -364,6 +361,24 @@ public:
     }
 
     /**
+     * Returns the current value of the flags of the half-edge.
+     */
+    Flags flags() const;
+
+    /**
+     * Returns @c true iff the half-edge is flagged @a flagsToTest.
+     */
+    inline bool isFlagged(int flagsToTest) const { return (flags() & flagsToTest) != 0; }
+
+    /**
+     * Change the half-edge's flags.
+     *
+     * @param flagsToChange  Flags to change the value of.
+     * @param operation      Logical operation to perform on the flags.
+     */
+    void setFlags(Flags flagsToChange, de::FlagOp operation = de::SetFlags);
+
+    /**
      * Retrieve the bias surface for specified geometry @a groupId
      *
      * @param groupId  Geometry group identifier for the bias surface.
@@ -376,5 +391,7 @@ protected:
 private:
     DENG2_PRIVATE(d)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(HEdge::Flags)
 
 #endif // DENG_WORLD_MAP_HEDGE

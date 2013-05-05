@@ -50,7 +50,7 @@ HEdge::HEdge(Vertex &from, Line::Side *lineSide)
     _length = 0;
     _lineOffset = 0;
     std::memset(_bsuf, 0, sizeof(_bsuf));
-    _frameFlags = 0;
+    _flags = 0;
 
     d->lineSide = lineSide;
 }
@@ -68,7 +68,7 @@ HEdge::HEdge(HEdge const &other)
     _length = other._length;
     _lineOffset = other._lineOffset;
     std::memcpy(_bsuf, other._bsuf, sizeof(_bsuf));
-    _frameFlags = other._frameFlags;
+    _flags = other._flags;
 
     d->lineSide = other.d->lineSide;
 }
@@ -196,6 +196,16 @@ Sector *HEdge::wallSectionSector(int side) const
     // Special case: so called "self-referencing" lines should use the
     // sector of the map line side.
     return mapSide.sectorPtr();
+}
+
+HEdge::Flags HEdge::flags() const
+{
+    return _flags;
+}
+
+void HEdge::setFlags(Flags flagsToChange, FlagOp operation)
+{
+    applyFlagOperation(_flags, flagsToChange, operation);
 }
 
 biassurface_t &HEdge::biasSurfaceForGeometryGroup(uint groupId)
