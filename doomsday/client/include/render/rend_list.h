@@ -57,7 +57,7 @@ typedef enum primtype_e {
 #define RPF_DEFAULT                 0
 /**@}*/
 
-DENG_EXTERN_C int renderTextures;
+DENG_EXTERN_C int renderTextures; /// @c 0= no textures, @c 1= normal mode, @c 2= lighting debug
 DENG_EXTERN_C int renderWireframe;
 DENG_EXTERN_C int useMultiTexLights;
 DENG_EXTERN_C int useMultiTexDetails;

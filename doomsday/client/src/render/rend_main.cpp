@@ -1126,20 +1126,35 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
 
 static Material *chooseSurfaceMaterialForTexturingMode(Surface const &surface)
 {
-    if(renderTextures == 2)
+    switch(renderTextures)
     {
-        // Lighting debug mode -- use the special "gray" material.
-        return &App_Materials().find(de::Uri("System", Path("gray"))).material();
+    case 0: // No texture mode.
+    case 1: // Normal mode.
+        if(devNoTexFix && surface.hasFixMaterial())
+        {
+            // Missing material debug mode -- use special "missing" material.
+            return &App_Materials().find(de::Uri("System", Path("missing"))).material();
+        }
+
+        // Use the surface-bound material.
+        return surface.materialPtr();
+
+    case 2: // Lighting debug mode.
+        if(surface.hasMaterial() && !(!devNoTexFix && surface.hasFixMaterial()))
+        {
+            if(!surface.hasSkyMaskedMaterial() || devRendSkyMode)
+            {
+                // Use the special "gray" material.
+                return &App_Materials().find(de::Uri("System", Path("gray"))).material();
+            }
+        }
+        break;
+
+    default: break;
     }
 
-    if(!surface.hasMaterial() || (devNoTexFix && surface.hasFixMaterial()))
-    {
-        // Missing material debug mode -- use special "missing" material.
-        return &App_Materials().find(de::Uri("System", Path("missing"))).material();
-    }
-
-    // Normal mode -- use the surface-bound material.
-    return surface.materialPtr();
+    // No material, then.
+    return 0;
 }
 
 static float calcLightLevelDelta(Vector3f const &normal)
@@ -2035,11 +2050,14 @@ static void Rend_WriteBspLeafSkyFixStripGeometry(BspLeaf *leaf, HEdge *startNode
     }
     else
     {
-        // Map RTU configuration from the prepared MaterialSnapshot.
-        MaterialSnapshot const &ms = material->prepare(mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT));
+        if(renderTextures != 2)
+        {
+            // Map RTU configuration from the sky surface material.
+            MaterialSnapshot const &ms = material->prepare(mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT));
 
-        RL_LoadDefaultRtus();
-        RL_MapRtu(RTU_PRIMARY, &ms.unit(RTU_PRIMARY));
+            RL_LoadDefaultRtus();
+            RL_MapRtu(RTU_PRIMARY, &ms.unit(RTU_PRIMARY));
+        }
         RL_AddPolyWithCoords(PT_TRIANGLE_STRIP, rendPolyFlags, vertsSize, verts, NULL, coords, NULL);
     }
 
@@ -2108,6 +2126,7 @@ static void writeLeafSkyMaskStrips(int skyFix)
         return;
 
     bool const antiClockwise = false;
+    bool const splitForSkyMaterials = (devRendSkyMode && renderTextures != 2);
 
     // We may need to break the half-edge loop into multiple strips.
     HEdge *startNode        = 0;
@@ -2129,7 +2148,7 @@ static void writeLeafSkyMaskStrips(int skyFix)
             skyFixZCoords(hedge, skyFix, &zBottom, &zTop);
 
             Material *skyMaterial = 0;
-            if(devRendSkyMode)
+            if(splitForSkyMaterials)
             {
                 int relPlane = skyFix == SKYCAP_UPPER? Plane::Ceiling : Plane::Floor;
                 skyMaterial = hedge->bspLeafSector().planeSurface(relPlane).materialPtr();
@@ -2141,7 +2160,7 @@ static void writeLeafSkyMaskStrips(int skyFix)
                 endStrip = true;
             }
             else if(startNode && (!de::fequal(zBottom, startZBottom) || !de::fequal(zTop, startZTop) ||
-                                  (devRendSkyMode && skyMaterial != startMaterial)))
+                                  (splitForSkyMaterials && skyMaterial != startMaterial)))
             {
                 // End the current strip and start another.
                 endStrip = true;
@@ -2227,10 +2246,18 @@ static void writeLeafSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
 
     if(!skyCap) return;
 
-    if(!devRendSkyMode)
+    if(!devRendSkyMode || renderTextures == 2)
     {
         // All geometry uses the same RTU write state.
         RL_LoadDefaultRtus();
+        if(renderTextures == 2)
+        {
+            // Map RTU configuration from the special "gray" material.
+            MaterialSnapshot const &ms =
+                App_Materials().find(de::Uri("System", Path("gray")))
+                    .material().prepare(mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT));
+            RL_MapRtu(RTU_PRIMARY, &ms.unit(RTU_PRIMARY));
+        }
     }
 
     // Lower?
@@ -2400,13 +2427,15 @@ static int pvisibleWallSections(Line::Side &side)
     }
 
     // Top?
-    if(fceil.visHeight() <= bceil.visHeight())
+    if((!devRendSkyMode && fceil.surface().hasSkyMaskedMaterial() && bceil.surface().hasSkyMaskedMaterial()) ||
+       fceil.visHeight() <= bceil.visHeight())
     {
         sections &= ~Line::Side::TopFlag;
     }
 
     // Bottom?
-    if(ffloor.visHeight() >= bfloor.visHeight())
+    if((!devRendSkyMode && ffloor.surface().hasSkyMaskedMaterial() && bfloor.surface().hasSkyMaskedMaterial()) ||
+       ffloor.visHeight() >= bfloor.visHeight())
     {
         sections &= ~Line::Side::BottomFlag;
     }

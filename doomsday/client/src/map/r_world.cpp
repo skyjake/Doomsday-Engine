@@ -693,23 +693,31 @@ void R_UpdateMissingMaterialsForLinesOfSector(Sector const &sec)
             Sector const &backSec  = line->backSector();
 
             // A potential bottom section fix?
-            if(frontSec.floor().height() < backSec.floor().height())
+            if(!(frontSec.floorSurface().hasSkyMaskedMaterial() &&
+                  backSec.floorSurface().hasSkyMaskedMaterial()))
             {
-                addMissingMaterial(line->front(), Line::Side::Bottom);
-            }
-            else if(frontSec.floor().height() > backSec.floor().height())
-            {
-                addMissingMaterial(line->back(), Line::Side::Bottom);
+                if(frontSec.floor().height() < backSec.floor().height())
+                {
+                    addMissingMaterial(line->front(), Line::Side::Bottom);
+                }
+                else if(frontSec.floor().height() > backSec.floor().height())
+                {
+                    addMissingMaterial(line->back(), Line::Side::Bottom);
+                }
             }
 
             // A potential top section fix?
-            if(backSec.ceiling().height() < frontSec.ceiling().height())
+            if(!(frontSec.ceilingSurface().hasSkyMaskedMaterial() &&
+                  backSec.ceilingSurface().hasSkyMaskedMaterial()))
             {
-                addMissingMaterial(line->front(), Line::Side::Top);
-            }
-            else if(backSec.ceiling().height() > frontSec.ceiling().height())
-            {
-                addMissingMaterial(line->back(), Line::Side::Top);
+                if(backSec.ceiling().height() < frontSec.ceiling().height())
+                {
+                    addMissingMaterial(line->front(), Line::Side::Top);
+                }
+                else if(backSec.ceiling().height() > frontSec.ceiling().height())
+                {
+                    addMissingMaterial(line->back(), Line::Side::Top);
+                }
             }
         }
         else
