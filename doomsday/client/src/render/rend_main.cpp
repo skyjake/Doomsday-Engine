@@ -555,8 +555,8 @@ void Rend_AddMaskedPoly(rvertex_t const *rvertices, ColorRawf const *rcolors,
 
         VS_WALL(vis)->modTex = dyn->texture;
         VS_WALL(vis)->modTexCoord[0][0] = dyn->s[0];
-        VS_WALL(vis)->modTexCoord[0][1] = dyn->s[1];
-        VS_WALL(vis)->modTexCoord[1][0] = dyn->t[0];
+        VS_WALL(vis)->modTexCoord[0][1] = dyn->t[0];
+        VS_WALL(vis)->modTexCoord[1][0] = dyn->s[1];
         VS_WALL(vis)->modTexCoord[1][1] = dyn->t[1];
         for(int c = 0; c < 4; ++c)
         {
@@ -764,8 +764,8 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
 
             /**
              * If multitexturing is enabled and there is at least one
-             * dynlight affecting this surface, grab the paramaters needed
-             * to draw it.
+             * dynlight affecting this surface, grab the parameters
+             * needed to draw it.
              */
             if(useLights && RL_IsMTexLights())
             {

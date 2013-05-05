@@ -1240,7 +1240,7 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
                 // Use the correct texture and color for the light.
                 glActiveTexture((conditions & DCF_SET_LIGHT_ENV0)? GL_TEXTURE0 : GL_TEXTURE1);
                 GL_BindTextureUnmanaged(!renderTextures? 0 : hdr->modTex,
-                                        GL_CLAMP, GL_CLAMP);
+                                        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
                 glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, hdr->modColor);
             }

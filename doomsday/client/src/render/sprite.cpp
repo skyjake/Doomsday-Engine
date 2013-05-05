@@ -543,10 +543,8 @@ static void selectTexUnits(int count)
 void Rend_RenderMaskedWall(rendmaskedwallparams_t const *p)
 {
     GLenum normalTarget, dynTarget;
-    Texture::Variant *tex = 0;
-    boolean withDyn = false;
-    int normal = 0, dyn = 1;
 
+    Texture::Variant *tex = 0;
     if(renderTextures)
     {
         MaterialSnapshot const &ms =
@@ -556,6 +554,8 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t const *p)
 
     // Do we have a dynamic light to blend with?
     // This only happens when multitexturing is enabled.
+    bool withDyn = false;
+    int normal = 0, dyn = 1;
     if(p->modTex && numTexUnits > 1)
     {
         if(IS_MUL)
@@ -575,7 +575,8 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t const *p)
         // The dynamic light.
         glActiveTexture(IS_MUL ? GL_TEXTURE0 : GL_TEXTURE1);
         /// @todo modTex may be the name of a "managed" texture.
-        GL_BindTextureUnmanaged(renderTextures ? p->modTex : 0);
+        GL_BindTextureUnmanaged(renderTextures ? p->modTex : 0,
+                                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, p->modColor);
 
@@ -596,7 +597,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t const *p)
     GL_BlendMode(p->blendMode);
 
     normalTarget = normal? GL_TEXTURE1 : GL_TEXTURE0;
-    dynTarget = dyn? GL_TEXTURE1 : GL_TEXTURE0;
+    dynTarget    =    dyn? GL_TEXTURE1 : GL_TEXTURE0;
 
     // Draw one quad. This is obviously not a very efficient way to render
     // lots of masked walls, but since 3D models and sprites must be
@@ -617,7 +618,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t const *p)
             glColor4fv(p->vertices[1].color);
             glMultiTexCoord2f(normalTarget, p->texCoord[0][0], p->texCoord[0][1]);
 
-            glMultiTexCoord2f(dynTarget, p->modTexCoord[0][0], p->modTexCoord[1][0]);
+            glMultiTexCoord2f(dynTarget, p->modTexCoord[0][0], p->modTexCoord[0][1]);
 
             glVertex3f(p->vertices[1].pos[VX],
                        p->vertices[1].pos[VZ],
@@ -626,7 +627,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t const *p)
             glColor4fv(p->vertices[3].color);
             glMultiTexCoord2f(normalTarget, p->texCoord[1][0], p->texCoord[0][1]);
 
-            glMultiTexCoord2f(dynTarget, p->modTexCoord[0][1], p->modTexCoord[1][0]);
+            glMultiTexCoord2f(dynTarget, p->modTexCoord[1][0], p->modTexCoord[0][1]);
 
             glVertex3f(p->vertices[3].pos[VX],
                        p->vertices[3].pos[VZ],
@@ -635,7 +636,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t const *p)
             glColor4fv(p->vertices[2].color);
             glMultiTexCoord2f(normalTarget, p->texCoord[1][0], p->texCoord[1][1]);
 
-            glMultiTexCoord2f(dynTarget, p->modTexCoord[0][1], p->modTexCoord[1][1]);
+            glMultiTexCoord2f(dynTarget, p->modTexCoord[1][0], p->modTexCoord[1][1]);
 
             glVertex3f(p->vertices[2].pos[VX],
                        p->vertices[2].pos[VZ],
