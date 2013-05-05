@@ -967,10 +967,14 @@ static void insertThingInArchive(mobj_t const *mo, ThingSerialId thingId)
         thingId -= 1;
     }
 
+#if __JHEXEN__
+    // Only signed in Hexen.
+    DENG2_ASSERT(thingId >= 0);
     if(thingId < 0) return; // Does this ever occur?
+#endif
 
-    DENG_ASSERT(thingArchive != 0);
-    DENG_ASSERT(thingId >= 0 && (unsigned)thingId < thingArchiveSize);
+    DENG_ASSERT(thingArchive != 0);    
+    DENG_ASSERT((unsigned)thingId < thingArchiveSize);
     thingArchive[thingId] = const_cast<mobj_t *>(mo);
 }
 
