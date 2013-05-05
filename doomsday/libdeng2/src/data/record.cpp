@@ -488,10 +488,10 @@ void Record::operator << (Reader &from)
 
     while(count-- > 0)
     {
-        std::auto_ptr<Variable> var(new Variable());
-        from >> *var.get();
+        QScopedPointer<Variable> var(new Variable());
+        from >> *var;
 
-        RecordValue *recVal = dynamic_cast<RecordValue *>(&var.get()->value());
+        RecordValue *recVal = dynamic_cast<RecordValue *>(&var->value());
         if(recVal && recVal->usedToHaveOwnership())
         {
             DENG2_ASSERT(recVal->record());
@@ -502,7 +502,7 @@ void Record::operator << (Reader &from)
             refMap.insert(recVal->record()->d->oldUniqueId, recVal->record());
         }
 
-        add(var.release());
+        add(var.take());
     }
 
     // Find referenced records and relink them to their original targets.

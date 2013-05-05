@@ -123,8 +123,8 @@ void DictionaryExpression::operator << (Reader &from)
     clear();
     while(count--)
     {
-        std::auto_ptr<Expression> key(Expression::constructFrom(from));
-        std::auto_ptr<Expression> value(Expression::constructFrom(from));
-        _arguments.push_back(ExpressionPair(key.release(), value.release()));
+        QScopedPointer<Expression> key(Expression::constructFrom(from));
+        QScopedPointer<Expression> value(Expression::constructFrom(from));
+        _arguments.push_back(ExpressionPair(key.take(), value.take()));
     }
 }

@@ -63,7 +63,7 @@ void AssignStatement::execute(Context &context) const
 
     // The new value that will be assigned to the destination.
     // Ownership of this instance will be given to the variable.
-    std::auto_ptr<Value> value(results.pop()); 
+    QScopedPointer<Value> value(results.pop());
 
     if(_indexCount > 0)
     {
@@ -73,23 +73,23 @@ void AssignStatement::execute(Context &context) const
         for(dint i = 0; i < _indexCount; ++i)
         {   
             // Get the evaluated index.
-            std::auto_ptr<Value> index(results.pop()); // Not released -- will be destroyed.
+            QScopedPointer<Value> index(results.pop()); // Not released -- will be destroyed.
             if(i < _indexCount - 1)
             {
                 // Switch targets to a subelement.
-                target = &target->element(*index.get());
+                target = &target->element(*index.data());
             }
             else
             {
                 // The setting is done with final value. Ownership transferred.
-                target->setElement(*index.get(), value.release());
+                target->setElement(*index.data(), value.take());
             }
         }
     }
     else
     {
         // Extract the value from the results array (no copies).
-        ref->assign(value.release());
+        ref->assign(value.take());
     }
     
     // Should we set the variable to read-only mode?
