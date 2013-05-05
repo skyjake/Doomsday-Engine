@@ -111,8 +111,6 @@ private:
 
 } // namespace internal
 
-static PathTree::ComparisonFlags const FIND_ITEM = PathTree::MatchFull | PathTree::NoBranch;
-
 DENG2_PIMPL(Bank)
 {
     /**
@@ -449,7 +447,7 @@ DENG2_PIMPL(Bank)
 
         Data &item()
         {
-            return _bank.d->items.find(_path, FIND_ITEM);
+            return _bank.d->items.find(_path, PathTree::MatchFull | PathTree::NoBranch);
         }
 
         void doLoad()
@@ -838,7 +836,7 @@ Bank::IData &Bank::data(Path const &path) const
     LOG_AS("Bank");
 
     // First check if the item is already in memory.
-    Instance::Data &item = d->items.find(path, FIND_ITEM);
+    Instance::Data &item = d->items.find(path, PathTree::MatchFull | PathTree::NoBranch);
     DENG2_GUARD(item);
 
     // Mark it used.
