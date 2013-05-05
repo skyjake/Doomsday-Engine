@@ -646,8 +646,8 @@ int Line::boxOnSide_FixedPrecision(AABoxd const &box) const
      * so we won't change the discretization of the fractional part into 16-bit
      * precision.
      */
-    coord_t offset[2] = { de::floor(d->from->origin().x + d->direction.x/2),
-                          de::floor(d->from->origin().y + d->direction.y/2) };
+    coord_t offset[2] = { std::floor(d->from->origin().x + d->direction.x/2.0),
+                          std::floor(d->from->origin().y + d->direction.y/2.0) };
 
     fixed_t boxx[4];
     boxx[BOXLEFT]   = DBL2FIX(box.minX - offset[VX]);
