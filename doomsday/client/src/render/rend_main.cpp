@@ -1360,13 +1360,11 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
 {
     BspLeaf *bspLeaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(bspLeaf));
+    DENG_ASSERT(rightEdge.top().distance() > leftEdge.bottom().distance());
 
     Line::Side &side  = leftEdge.lineSide();
     int const section = leftEdge.section();
     Surface &surface  = side.surface(section);
-
-    if(leftEdge.bottom().distance() >= rightEdge.top().distance())
-        return true;
 
     bool const isTwoSidedMiddle = (section == Line::Side::Middle &&
                                    side.hasSections() && side.back().hasSections());
@@ -1378,42 +1376,40 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     bool didNearFade = false;
     if(isTwoSidedMiddle &&
        ((viewPlayer->shared.flags & (DDPF_NOCLIP|DDPF_CAMERA)) ||
-        !(side.line().isFlagged(DDLF_BLOCKING))))
+            !(side.line().isFlagged(DDLF_BLOCKING))) &&
+       (vOrigin[VY] > leftEdge.bottom().distance() &&
+            vOrigin[VY] < rightEdge.top().distance()))
     {
-        /*
-         * If the viewer is close enough we should NOT add a solid range to
-         * the angle clipper otherwise HOM would occur when directly on top
-         * of the wall (e.g., passing through an opaque waterfall).
-         */
+        mobj_t const *mo = viewPlayer->shared.mo;
+        Line const &line = side.line();
 
-        mobj_t *mo = viewPlayer->shared.mo;
-        viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+        coord_t linePoint[2]     = { line.fromOrigin().x, line.fromOrigin().y };
+        coord_t lineDirection[2] = {  line.direction().x,  line.direction().y };
+        vec2d_t result;
+        double pos = V2d_ProjectOnLine(result, mo->origin, linePoint, lineDirection);
 
-        if(viewData->current.origin[VZ] > leftEdge.bottom().distance() &&
-           viewData->current.origin[VZ] < rightEdge.top().distance())
+        if(pos > 0 && pos < 1)
         {
-            Line const &line = side.line();
+            /**
+             * Fade out the closer the viewPlayer gets and clamp.
+             *
+             * @note When the viewer is close enough we should NOT try to
+             * occlude with this section in the angle clipper, otherwise HOM
+             * would occur when directly on top of the wall (e.g., passing
+             * through an opaque waterfall).
+             */
+            coord_t const minDistance = mo->radius * .8f;
 
-            coord_t linePoint[2]     = { line.fromOrigin().x, line.fromOrigin().y };
-            coord_t lineDirection[2] = { line.direction().x, line.direction().y };
+            Vector2d delta = Vector2d(result) - Vector2d(mo->origin);
+            coord_t distance = delta.length();
 
-            vec2d_t result;
-            double pos = V2d_ProjectOnLine(result, mo->origin, linePoint, lineDirection);
-
-            if(pos > 0 && pos < 1)
+            if(de::abs(distance) < minDistance)
             {
-                coord_t const minDistance = mo->radius * .8f;
-
-                coord_t delta[2]; V2d_Subtract(delta, mo->origin, result);
-                coord_t distance = M_ApproxDistance(delta[VX], delta[VY]);
-
-                if(distance < minDistance)
+                if(distance > 0)
                 {
-                    // Fade it out the closer the viewPlayer gets and clamp.
                     opacity = (opacity / minDistance) * distance;
                     opacity = de::clamp(0.f, opacity, 1.f);
                 }
-
                 didNearFade = true;
             }
         }
@@ -1458,6 +1454,7 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     Vector3f const *topColor = 0, *bottomColor = 0;
     blendmode_t blendMode = BM_NORMAL;
     uint lightListIdx = 0, shadowListIdx = 0;
+    float glowStrength = 0;
     if(!writeToSkyMask)
     {
         // Make any necessary adjustments to the draw flags to suit the
@@ -1478,7 +1475,6 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
         if(side.line().isFromPolyobj())
             flags &= ~WSF_ADD_RADIO;
 
-        float glowStrength = 0;
         if(glowFactor > .0001f)
             glowStrength = ms.glowStrength() * glowFactor; // Global scale factor.
 
@@ -1522,7 +1518,7 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     parm.surfaceLightLevelDL = deltaL;
     parm.surfaceLightLevelDR = deltaR;
     parm.surfaceColor        = topColor;
-    parm.glowing             = (glowFactor > .0001f? ms.glowStrength() * glowFactor : 0); // Global scale factor.
+    parm.glowing             = glowStrength;
     parm.blendMode           = blendMode;
     parm.materialOrigin      = &leftEdge.materialOrigin();
     parm.materialScale       = &materialScale;
@@ -1627,7 +1623,6 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
             // kludge end.
 
             float ll = currentSectorLightLevel;
-            Rend_ApplyLightAdaptation(&ll);
             if(ll > 0)
             {
                 // Determine the shadow properties.
@@ -1635,15 +1630,7 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
                 radioParms.shadowSize = 2 * (8 + 16 - ll * 16);
                 radioParms.shadowDark = Rend_RadioCalcShadowDarkness(ll);
 
-                if(radioParms.shadowSize > 0)
-                {
-                    // Shadows are black.
-                    radioParms.shadowRGB[CR] =
-                            radioParms.shadowRGB[CG] =
-                                radioParms.shadowRGB[CB] = 0;
-
-                    Rend_RadioWallSection(rvertices, radioParms);
-                }
+                Rend_RadioWallSection(rvertices, radioParms);
             }
         }
     }
@@ -2382,10 +2369,16 @@ static int pvisibleWallSections(Line::Side &side)
     if(!side.hasSections()) return 0; // None.
 
     // One-sided? (therefore only the middle)
-    if(!side.back().hasSector() /*$degenleaf*/ || !side.back().hasSections() ||
-       side.line().isSelfReferencing())
+    if(!side.back().hasSector() /*$degenleaf*/ || !side.back().hasSections())
     {
         return Line::Side::MiddleFlag;
+    }
+
+    // Selfreferencing lines only ever get a middle.
+    if(side.line().isSelfReferencing())
+    {
+        DENG_ASSERT(!side.middle().hasFixMaterial());
+        return side.middle().hasMaterial()? Line::Side::MiddleFlag : 0;
     }
 
     Sector const &frontSec = side.sector();
@@ -2430,7 +2423,7 @@ static void writeWallSections(HEdge &hedge)
     int pvisSections = pvisibleWallSections(hedge.lineSide()); /// @ref sideSectionFlags
     bool opaque = false;
 
-    if(!hedge.hasTwin() || !hedge.twin().bspLeafSectorPtr() ||
+    if(!hedge.hasTwin() || !hedge.twin().bspLeaf().hasSector() ||
        /* solid side of a "one-way window"? */
        !(hedge.twin().hasLineSide() && hedge.twin().lineSide().hasSections()))
     {

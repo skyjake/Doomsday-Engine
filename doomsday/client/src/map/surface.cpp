@@ -283,7 +283,12 @@ bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
         if(!d->material)
         {
             if(newMaterial && isMissingFix)
-               d->materialIsMissingFix = true;
+            {
+                d->materialIsMissingFix = true;
+
+                // Sides of selfreferencing map lines should never receive fix materials.
+                DENG_ASSERT(!(d->owner.type() == DMU_SIDE && d->owner.castTo<Line::Side>()->line().isSelfReferencing()));
+            }
         }
         else if(newMaterial && d->materialIsMissingFix)
         {

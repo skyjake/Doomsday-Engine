@@ -146,6 +146,7 @@ void Rend_RadioUpdateVertexShadowOffsets(Vertex &vtx);
 
 /**
  * Returns the global shadow darkness factor, derived from values in Config.
+ * Assumes that light level adaptation has @em NOT yet been applied (it will be).
  */
 float Rend_RadioCalcShadowDarkness(float lightLevel);
 
@@ -154,7 +155,7 @@ float Rend_RadioCalcShadowDarkness(float lightLevel);
  */
 struct RendRadioWallSectionParms
 {
-    float shadowRGB[3], shadowDark;
+    float shadowDark;
     float shadowSize;
     shadowcorner_t const *botCn, *topCn, *sideCn;
     edgespan_t const *spans;

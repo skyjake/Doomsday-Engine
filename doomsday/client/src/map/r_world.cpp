@@ -651,11 +651,18 @@ static Material *chooseFixMaterial(Line::Side &side, int section)
 
 static void addMissingMaterial(Line::Side &side, int section)
 {
-    // A material must be missing for this test to apply.
+    // Sides without sections need no fixing.
+    if(!side.hasSections()) return;
+    // ...nor those of self-referencing lines.
+    if(side.line().isSelfReferencing()) return;
+    // ...nor those of "one-way window" lines.
+    if(!side.back().hasSections() && side.back().hasSector()) return;
+
+    // A material must actually be missing to qualify for fixing.
     Surface &surface = side.surface(section);
     if(surface.hasMaterial()) return;
 
-    // Look for a suitable replacement.
+    // Look for and apply a suitable replacement if found.
     surface.setMaterial(chooseFixMaterial(side, section), true/* is missing fix */);
 
     // During map load we log missing materials.
@@ -675,13 +682,6 @@ void R_UpdateMissingMaterialsForLinesOfSector(Sector const &sec)
 {
     foreach(Line *line, sec.lines())
     {
-        // Self-referencing lines don't need fixing.
-        if(line->isSelfReferencing()) continue;
-
-        // Do not fix BSP "window" lines.
-        if(!line->hasFrontSections() || (!line->hasBackSections() && line->hasBackSector()))
-            continue;
-
         /**
          * Do as in the original Doom if the texture has not been defined -
          * extend the floor/ceiling to fill the space (unless it is skymasked),

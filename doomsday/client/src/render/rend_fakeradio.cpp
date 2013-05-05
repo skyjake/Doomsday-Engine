@@ -76,6 +76,7 @@ void Rend_RadioRegister()
 
 float Rend_RadioCalcShadowDarkness(float lightLevel)
 {
+    lightLevel += Rend_LightAdaptationDelta(lightLevel);
     return (0.6f - lightLevel * 0.4f) * 0.65f * rendFakeRadioDarkness;
 }
 
@@ -108,15 +109,17 @@ void Rend_RadioUpdateForLineSide(Line::Side &side)
 /**
  * Set the vertex colors in the rendpoly.
  */
-static void setRendpolyColor(ColorRawf *rcolors, uint num, float const shadowRGB[3], float darkness)
+static void setRendpolyColor(ColorRawf *rcolors, uint num, float darkness)
 {
+    DENG_ASSERT(rcolors != 0);
     darkness = de::clamp(0.f, darkness, 1.f);
 
     for(uint i = 0; i < num; ++i)
     {
-        rcolors[i].rgba[CR] = shadowRGB[CR];
-        rcolors[i].rgba[CG] = shadowRGB[CG];
-        rcolors[i].rgba[CB] = shadowRGB[CB];
+        // Shadows are black.
+        rcolors[i].rgba[CR] =
+            rcolors[i].rgba[CG] =
+                rcolors[i].rgba[CB] = 0;
         rcolors[i].rgba[CA] = darkness;
     }
 }
@@ -1011,7 +1014,7 @@ static void drawWallSectionShadow(rvertex_t const *origVertices,
                   wsParms.texHeight, texOrigin, wsParms.texOffset,
                   wsParms.horizontal);
 
-    setRendpolyColor(rcolors, 4, parms.shadowRGB, parms.shadowDark * wsParms.shadowMul);
+    setRendpolyColor(rcolors, 4, parms.shadowDark * wsParms.shadowMul);
 
     if(rendFakeRadio != 2)
     {
@@ -1074,6 +1077,8 @@ void Rend_RadioWallSection(rvertex_t const *rvertices, RendRadioWallSectionParms
 
     // Disabled?
     if(!rendFakeRadio || levelFullBright) return;
+
+    if(parms.shadowSize <= 0) return;
 
     coord_t const lineLength = parms.line->length();
     coord_t const fFloor     = parms.frontSec->floor().visHeight();
@@ -1467,12 +1472,6 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
 
     Sector &sector = bspLeaf.sector();
     float sectorlight = sector.lightLevel();
-    boolean workToDo = false;
-
-    Rend_ApplyLightAdaptation(&sectorlight);
-
-    // No point drawing shadows in a PITCH black sector.
-    if(sectorlight == 0) return;
 
     // Determine the shadow properties.
     /// @todo Make cvars out of constants.
@@ -1480,7 +1479,7 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
     float shadowDark = Rend_RadioCalcShadowDarkness(sectorlight);
 
     // Any need to continue?
-    if(!(shadowDark > .0001f)) return;
+    if(shadowDark < .0001f) return;
 
     Vector3f eyeToSurface(vOrigin[VX] - bspLeaf.center().x,
                           vOrigin[VZ] - bspLeaf.center().y);
@@ -1499,6 +1498,7 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
     std::memset(doPlanes, 0, doPlaneSize);
 
     // See if any of this BspLeaf's planes will get shadows.
+    bool workToDo = false;
     for(int pln = 0; pln < sector.planeCount(); ++pln)
     {
         Plane const &plane = sector.plane(pln);
