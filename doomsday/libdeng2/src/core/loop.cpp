@@ -29,6 +29,8 @@
 
 namespace de {
 
+static Loop *loopSingleton = 0;
+
 DENG2_PIMPL(Loop)
 {
     TimeDelta interval;
@@ -37,8 +39,16 @@ DENG2_PIMPL(Loop)
 
     Instance(Public *i) : Base(i), interval(0), running(false)
     {
+        DENG2_ASSERT(!loopSingleton);
+        loopSingleton = i;
+
         timer = new QTimer(thisPublic);
         QObject::connect(timer, SIGNAL(timeout()), thisPublic, SLOT(nextLoopIteration()));
+    }
+
+    ~Instance()
+    {
+        loopSingleton = 0;
     }
 };
 
@@ -78,6 +88,12 @@ void Loop::timer(TimeDelta const &delay, void (*func)(void))
     // The timer will delete itself after it's triggered.
     internal::CallbackTimer *timer = new internal::CallbackTimer(func, qApp);
     timer->start(delay.asMilliSeconds());
+}
+
+Loop &Loop::appLoop()
+{
+    DENG2_ASSERT(loopSingleton != 0);
+    return *loopSingleton;
 }
 
 void Loop::nextLoopIteration()

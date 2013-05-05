@@ -19,6 +19,7 @@
 #include "de/Bank"
 #include "de/Folder"
 #include "de/App"
+#include "de/Loop"
 #include "de/FS"
 #include "de/PathTree"
 #include "de/WaitableFIFO"
@@ -30,7 +31,6 @@
 #include "de/math.h"
 
 #include <QThread>
-#include <QTimer>
 #include <QList>
 
 namespace de {
@@ -111,7 +111,8 @@ private:
 
 } // namespace internal
 
-DENG2_PIMPL(Bank)
+DENG2_PIMPL(Bank),
+DENG2_OBSERVES(Loop, Iteration)
 {
     /**
      * Data item. Has ownership of the in-memory cached data and the source
@@ -342,7 +343,7 @@ DENG2_PIMPL(Bank)
         {
             DENG2_GUARD(this);
 
-            addBytes(-item.serial->size());
+            addBytes(-dint64(item.serial->size()));
             item.clearSerialized();
             DataCache::remove(item);
         }
@@ -400,7 +401,7 @@ DENG2_PIMPL(Bank)
 
             DENG2_GUARD(this);
 
-            addBytes(-item.data->sizeInMemory());
+            addBytes(-dint64(item.data->sizeInMemory()));
             item.clearData();
             DataCache::remove(item);
         }
@@ -528,7 +529,6 @@ DENG2_PIMPL(Bank)
     SerializedCache *serialCache;
     DataTree items;
     TaskPool jobs;
-    QTimer *notifyTimer;
     NotifyQueue notifications;
 
     Instance(Public *i, Flags const &flg)
@@ -540,16 +540,11 @@ DENG2_PIMPL(Bank)
         {
             serialCache = new SerializedCache;
         }
-
-        // Timer for triggering main loop notifications from background workers.
-        notifyTimer = new QTimer(thisPublic);
-        notifyTimer->setSingleShot(true);
-        notifyTimer->setInterval(1);
-        QObject::connect(notifyTimer, SIGNAL(timeout()), i, SLOT(performDeferredNotifications()));
     }
 
     ~Instance()
     {
+        Loop::appLoop().audienceForIteration -= this;
         destroySerialCache();
     }
 
@@ -673,8 +668,14 @@ DENG2_PIMPL(Bank)
         notifications.put(new Notification(notif));
         if(isThreaded())
         {
-            notifyTimer->start();
+            Loop::appLoop().audienceForIteration += this;
         }
+    }
+
+    void loopIteration()
+    {
+        Loop::appLoop().audienceForIteration -= this;
+        performNotifications();
     }
 
     void performNotifications()
@@ -895,11 +896,6 @@ void Bank::purge()
      * @todo Implement cache purging (and different purging strategies?).
      * Purge criteria can be age and cache level maximum limits.
      */
-}
-
-void Bank::performDeferredNotifications()
-{
-    d->performNotifications();
 }
 
 } // namespace de
