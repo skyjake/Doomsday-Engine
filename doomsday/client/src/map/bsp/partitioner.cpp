@@ -41,6 +41,8 @@
 #include "Sector"
 #include "Vertex"
 
+#include "render/r_main.h" /// validCount @todo Remove me
+
 #include "map/bsp/edgetip.h"
 #include "map/bsp/hplane.h"
 #include "map/bsp/linesegment.h"
@@ -66,10 +68,6 @@ typedef QList<HEdge *> HEdgeSortBuffer;
 typedef QList<LineSegment *> LineSegmentList;
 
 typedef QHash<HEdge *, LineSegment *> LineSegmentMap; /// @todo Refactor away.
-
-/// Used when choosing a new line segment to avoid repeat testing of collinear
-/// line segments and when searching for "One-way window" map hacks.
-static int validCount;
 
 DENG2_PIMPL(Partitioner)
 {
