@@ -21,6 +21,7 @@
 #include "de/Guard"
 
 #include <QThreadPool>
+#include <QSet>
 #include <de/Lockable>
 #include <de/Waitable>
 

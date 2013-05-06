@@ -302,7 +302,7 @@ void Image::fill(Color const &color)
 {
     IMAGE_ASSERT_EDITABLE(d);
 
-    d->image.fill(QColor(color.x, color.y, color.z, color.w));
+    d->image.fill(QColor(color.x, color.y, color.z, color.w).rgba());
 }
 
 void Image::fill(Rectanglei const &rect, Color const &color)
