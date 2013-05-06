@@ -28,7 +28,7 @@ namespace de {
 class TaskPool;
 
 /**
- * Concurrent task that will be executed by a TaskPool asynchronously. Override
+ * Concurrent task that will be executed asynchronously by a TaskPool. Override
  * runTask() in a derived class.
  */
 class DENG2_PUBLIC Task : public QRunnable

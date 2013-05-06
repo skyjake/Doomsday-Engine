@@ -29,6 +29,12 @@ class Task;
 
 /**
  * Pool of concurrent tasks.
+ *
+ * While TaskPool allows the user to monitor whether all tasks are done and
+ * block until that time arrives (TaskPool::waitForDone()), no facilities are
+ * provided for interrupting any of the started tasks. If that is required, the
+ * Task instances in question should periodically check for an abort condition
+ * and shut themselves down nicely when requested.
  */
 class DENG2_PUBLIC TaskPool : public QObject
 {
