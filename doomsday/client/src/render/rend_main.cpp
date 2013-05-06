@@ -1462,66 +1462,9 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
         deltaL += (sectionOffset / lineLength) * deltaDiff;
     }
 
-    MaterialSnapshot const &ms = material->prepare(mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT));
-
-    // Fill in the remaining params data.
-    bool const writeToSkyMask = (material->isSkyMasked() && !devRendSkyMode);
-    Vector3f const *topColor = 0, *bottomColor = 0;
-    blendmode_t blendMode = BM_NORMAL;
-    uint lightListIdx = 0, shadowListIdx = 0;
-    float glowStrength = 0;
-    if(!writeToSkyMask)
-    {
-        // Make any necessary adjustments to the draw flags to suit the
-        // current texture mode.
-        if(!isTwoSidedMiddle)
-        {
-            blendMode = BM_NORMAL;
-        }
-        else
-        {
-            if(surface.blendMode() == BM_NORMAL && noSpriteTrans)
-                blendMode = BM_ZEROALPHA; // "no translucency" mode
-            else
-                blendMode = surface.blendMode();
-        }
-
-        // Polyobj surfaces never shadow.
-        if(side.line().isFromPolyobj())
-            flags &= ~WSF_ADD_RADIO;
-
-        if(glowFactor > .0001f)
-            glowStrength = ms.glowStrength() * glowFactor; // Global scale factor.
-
-        // Dynamic Lights?
-        if(flags & WSF_ADD_DYNLIGHTS)
-        {
-            lightListIdx = projectSurfaceLights(surface, glowStrength, texTL, texBR,
-                                                isTwoSidedMiddle);
-        }
-
-        // Dynamic shadows?
-        if(flags & WSF_ADD_DYNSHADOWS)
-        {
-            shadowListIdx = projectSurfaceShadows(surface, glowStrength, texTL, texBR);
-        }
-
-        if(glowStrength > 0)
-            flags &= ~WSF_ADD_RADIO;
-
-        side.chooseSurfaceTintColors(section, &topColor, &bottomColor);
-    }
-
-    if(isTwoSidedMiddle && side.sectorPtr() != currentBspLeaf->sectorPtr())
-    {
-        // Temporarily modify the draw state.
-        currentSectorLightColor = R_GetSectorLightColor(side.sector());
-        currentSectorLightLevel = side.sector().lightLevel();
-    }
-
     rendworldpoly_params_t parm; zap(parm);
 
-    parm.flags               = RPF_DEFAULT | (writeToSkyMask? RPF_SKYMASK : 0);
+    parm.flags               = RPF_DEFAULT;
     parm.forceOpaque         = (flags & WSF_FORCE_OPAQUE)? true : false;
     parm.alpha               = (flags & WSF_FORCE_OPAQUE)? 1 : opacity;
     parm.mapElement          = &mapElement;
@@ -1532,19 +1475,75 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     parm.texBR               = &texBR;
     parm.surfaceLightLevelDL = deltaL;
     parm.surfaceLightLevelDR = deltaR;
-    parm.surfaceColor        = topColor;
-    parm.glowing             = glowStrength;
-    parm.blendMode           = blendMode;
+    parm.blendMode           = BM_NORMAL;
     parm.materialOrigin      = &leftEdge.materialOrigin();
     parm.materialScale       = &materialScale;
-    parm.lightListIdx        = lightListIdx;
-    parm.shadowListIdx       = shadowListIdx;
 
     parm.isWall = true;
-    parm.wall.surfaceColor2  = bottomColor;
     parm.wall.sectionWidth   = width;
     parm.wall.leftEdge       = &leftEdge;
     parm.wall.rightEdge      = &rightEdge;
+
+    MaterialSnapshot const &ms = material->prepare(mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT));
+
+    // Fill in the remaining params data.
+    if(material->isSkyMasked() && !devRendSkyMode)
+    {
+        parm.flags |= RPF_SKYMASK;
+    }
+    else
+    {
+        if(isTwoSidedMiddle)
+        {
+            parm.blendMode = surface.blendMode();
+            if(parm.blendMode == BM_NORMAL && noSpriteTrans)
+                parm.blendMode = BM_ZEROALPHA; // "no translucency" mode
+        }
+
+        if(glowFactor > .0001f)
+        {
+            if(material == surface.materialPtr())
+            {
+                parm.glowing = ms.glowStrength();
+            }
+            else
+            {
+                Material *actualMaterial = surface.hasMaterial()? surface.materialPtr()
+                                                                : &App_Materials().find(de::Uri("System", Path("missing"))).material();
+
+                MaterialSnapshot const &ms = actualMaterial->prepare(Rend_MapSurfaceMaterialSpec());
+                parm.glowing = ms.glowStrength();
+            }
+
+            parm.glowing *= glowFactor; // Global scale factor.
+        }
+
+        side.chooseSurfaceTintColors(section, &parm.surfaceColor, &parm.wall.surfaceColor2);
+    }
+
+    // Project dynamic Lights?
+    if((flags & WSF_ADD_DYNLIGHTS) && !(parm.flags & RPF_SKYMASK))
+    {
+        parm.lightListIdx = projectSurfaceLights(surface, parm.glowing, texTL, texBR,
+                                                 isTwoSidedMiddle);
+    }
+
+    // Project dynamic shadows?
+    if((flags & WSF_ADD_DYNSHADOWS) && !(parm.flags & RPF_SKYMASK))
+    {
+        parm.shadowListIdx = projectSurfaceShadows(surface, parm.glowing, texTL, texBR);
+    }
+
+    /*
+     * Geometry write/drawing begins.
+     */
+
+    if(isTwoSidedMiddle && side.sectorPtr() != currentBspLeaf->sectorPtr())
+    {
+        // Temporarily modify the draw state.
+        currentSectorLightColor = R_GetSectorLightColor(side.sector());
+        currentSectorLightLevel = side.sector().lightLevel();
+    }
 
     rvertex_t *rvertices;
     // Allocate enough vertices for the divisions too.
@@ -1583,7 +1582,8 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     if(opaque)
     {
         // Render FakeRadio for this section?
-        if(!writeToSkyMask && (flags & WSF_ADD_RADIO))
+        if((flags & WSF_ADD_RADIO) &&
+           !((parm.flags & RPF_SKYMASK) || parm.glowing > 0 || side.line().isFromPolyobj()))
         {
             Rend_RadioUpdateForLineSide(side);
             LineSideRadioData &frData = Rend_RadioDataForLineSide(side);
