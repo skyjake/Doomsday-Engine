@@ -1384,10 +1384,9 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     bool const isTwoSidedMiddle = (section == Line::Side::Middle &&
                                    side.hasSections() && side.back().hasSections());
 
-    coord_t width = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
     float opacity = wallSectionOpacity(side, section);
 
-    // Apply fade out when the viewer is near to this geometry?
+    // Apply a fade out when the viewer is near to this geometry?
     bool didNearFade = false;
     if(isTwoSidedMiddle &&
        ((viewPlayer->shared.flags & (DDPF_NOCLIP|DDPF_CAMERA)) ||
@@ -1444,6 +1443,8 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     // Surfaces without a drawable material are never rendered.
     if(!material || !material->isDrawable())
         return false;
+
+    coord_t width = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
 
     // Calculate the light level deltas for this wall section.
     /// @todo Cache these values somewhere. -ds
@@ -1585,67 +1586,30 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
         if((flags & WSF_ADD_RADIO) &&
            !((parm.flags & RPF_SKYMASK) || parm.glowing > 0 || side.line().isFromPolyobj()))
         {
-            Rend_RadioUpdateForLineSide(side);
-            LineSideRadioData &frData = Rend_RadioDataForLineSide(side);
-
-            RendRadioWallSectionParms radioParms;
-            std::memset(&radioParms, 0, sizeof(radioParms));
-
-            radioParms.line      = &side.line();
-            radioParms.botCn     = frData.bottomCorners;
-            radioParms.topCn     = frData.topCorners;
-            radioParms.sideCn    = frData.sideCorners;
-            radioParms.spans     = frData.spans;
-
-            radioParms.segOffset = leftEdge.lineOffset();
-            radioParms.segLength = width;
-
-            radioParms.frontSec  = mapElement.castTo<HEdge>()->wallSectionSector();
-
-            radioParms.leftEdge  = parm.wall.leftEdge;
-            radioParms.rightEdge = parm.wall.rightEdge;
-
-            if(!isTwoSidedMiddle)
+            if(currentSectorLightLevel > 0)
             {
-                HEdge &hedge = *mapElement.castTo<HEdge>();
-                if(!(hedge.hasTwin() && !(hedge.twin().hasLineSide() && hedge.twin().lineSide().hasSections())))
-                {
-                    if(hedge.hasTwin())
-                        radioParms.backSec = hedge.twin().bspLeafSectorPtr();
-                }
-            }
+                Rend_RadioUpdateForLineSide(side);
 
-            /// @todo kludge: Revert the vertex coords as they may have been changed
-            ///               due to height divisions.
-
-            // Bottom Left.
-            V3f_Set(rvertices[0].pos, leftEdge.bottom().origin().x,
-                                      leftEdge.bottom().origin().y,
-                                      leftEdge.bottom().origin().z);
-            // Top Left.
-            V3f_Set(rvertices[1].pos, leftEdge.top().origin().x,
-                                      leftEdge.top().origin().y,
-                                      leftEdge.top().origin().z);
-            // Bottom Right.
-            V3f_Set(rvertices[2].pos, rightEdge.bottom().origin().x,
-                                      rightEdge.bottom().origin().y,
-                                      rightEdge.bottom().origin().z);
-            // Top Right.
-            V3f_Set(rvertices[3].pos, rightEdge.top().origin().x,
-                                      rightEdge.top().origin().y,
-                                      rightEdge.top().origin().z);
-
-            // kludge end.
-
-            float ll = currentSectorLightLevel;
-            if(ll > 0)
-            {
                 // Determine the shadow properties.
                 /// @todo Make cvars out of constants.
-                radioParms.shadowSize = 2 * (8 + 16 - ll * 16);
-                radioParms.shadowDark = Rend_RadioCalcShadowDarkness(ll);
+                float shadowSize = 2 * (8 + 16 - currentSectorLightLevel * 16);
+                float shadowDark = Rend_RadioCalcShadowDarkness(currentSectorLightLevel);
 
-                Rend_RadioWallSection(rvertices, radioParms);
+                Sector *frontSec = 0, *backSec = 0;
+                {
+                    HEdge *hedge = mapElement.castTo<HEdge>();
+                    frontSec = hedge->wallSectionSector();
+                    if(hedge->hasTwin() && !isTwoSidedMiddle)
+                    {
+                        if(hedge->twin().hasLineSide() && hedge->twin().lineSide().hasSections())
+                        {
+                            backSec = hedge->twin().bspLeaf().sectorPtr();
+                        }
+                    }
+                }
+
+                Rend_RadioWallSection(leftEdge, rightEdge, shadowDark, shadowSize,
+                                      frontSec, backSec);
             }
         }
     }

@@ -151,30 +151,21 @@ void Rend_RadioUpdateVertexShadowOffsets(Vertex &vtx);
 float Rend_RadioCalcShadowDarkness(float lightLevel);
 
 /**
- * Arguments for Rend_RadioWallSection()
- */
-struct RendRadioWallSectionParms
-{
-    float shadowDark;
-    float shadowSize;
-    shadowcorner_t const *botCn, *topCn, *sideCn;
-    edgespan_t const *spans;
-    coord_t segOffset;
-    coord_t segLength;
-    Line const *line;
-    Sector *frontSec, *backSec;
-    SectionEdge const *leftEdge;
-    SectionEdge const *rightEdge;
-};
-
-/**
  * Render FakeRadio for the specified wall section. Generates and then draws all
  * shadow geometry for the wall section.
  *
  * Note that unlike Rend_RadioBspLeafEdges() there is no guard to ensure shadow
  * geometry is rendered only once per frame.
+ *
+ * @param leftEdge    Geometry for the left edge of the wall section.
+ * @param rightEdge   Geometry for the right edge of the wall section.
+ * @param shadowDark  Shadow darkness scale factor.
+ * @param shadowSize  Shadow size scale factor.
+ * @param frontSec    @todo refactor away
+ * @param backSec     @todo refactor away
  */
-void Rend_RadioWallSection(rvertex_t const *rvertices, RendRadioWallSectionParms const &parms);
+void Rend_RadioWallSection(SectionEdge const &leftEdge, SectionEdge const &rightEdge,
+    float shadowDark, float shadowSize, Sector *frontSec, Sector *backSec);
 
 /**
  * Render FakeRadio for the given BSP leaf. Draws all shadow geometry linked to the
