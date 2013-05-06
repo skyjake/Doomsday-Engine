@@ -39,7 +39,7 @@ deng_macx8_64bit {
 
     *-clang* {
         # Ignore warnings from Qt headers.
-        QMAKE_CXXFLAGS += -Wno-c++11-long-long -Wno-unused-private-field
+        QMAKE_CXXFLAGS_WARN_ON += -Wno-c++11-long-long -Wno-unused-private-field
     }
 }
 else:deng_macx7_64bit {
