@@ -75,9 +75,6 @@ public:
     /// Failed to load data from the source. @ingroup errors
     DENG2_ERROR(LoadError);
 
-    /// Data in the hot storage has gone stale (older than source). @ingroup errors
-    DENG2_ERROR(StaleError);
-
     enum Flag
     {
         /**
