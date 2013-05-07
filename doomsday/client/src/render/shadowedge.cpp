@@ -46,36 +46,6 @@ DENG2_PIMPL_NOREF(ShadowEdge)
           openness(0),
           sideOpenness(0)
     {}
-
-    uint radioEdgeHackType(Sector const *front, Sector const *back, bool isCeiling, float fz, float bz)
-    {
-        Surface const &surface = side->surface(isCeiling? Line::Side::Top : Line::Side::Bottom);
-
-        if(fz < bz && !surface.hasMaterial())
-            return 3; // Consider it fully open.
-
-        // Is the back sector closed?
-        if(front->floor().visHeight() >= back->ceiling().visHeight())
-        {
-            if(front->planeSurface(isCeiling? Plane::Floor : Plane::Ceiling).hasSkyMaskedMaterial())
-            {
-                if(back->planeSurface(isCeiling? Plane::Floor : Plane::Ceiling).hasSkyMaskedMaterial())
-                    return 3; // Consider it fully open.
-            }
-            else
-            {
-                return 1; // Consider it fully closed.
-            }
-        }
-
-        // Check for unmasked midtextures on twosided lines that completely
-        // fill the gap between floor and ceiling (we don't want to give away
-        // the location of any secret areas (false walls)).
-        if(R_MiddleMaterialCoversOpening(*side))
-            return 1; // Consider it fully closed.
-
-        return 0;
-    }
 };
 
 ShadowEdge::ShadowEdge(BspLeaf &bspLeaf, Line::Side &side, int edge)
@@ -107,14 +77,15 @@ static void setRelativeHeights(Sector const *front, Sector const *back, int plan
 }
 
 /**
- * Returns a value in the range of 0...2, which depicts how open the
- * specified edge is. Zero means that the edge is completely closed: it is
- * facing a wall or is relatively distant from the edge on the other side.
- * Values between zero and one describe how near the other edge is. An
- * openness value of one means that the other edge is at the same height as
- * this one. 2 means that the other edge is past our height ("clearly open").
+ * Returns a value in the range of 0..2, representing how 'open' the edge is.
+ *
+ * @c =0 Completely closed, it is facing a wall or is relatively distant from
+ *       the edge on the other side.
+ * @c >0 && <1 How near the 'other' edge is.
+ * @c =1 At the same height as "this" one.
+ * @c =2 The 'other' edge is past our height (clearly 'open').
  */
-static float radioEdgeOpenness(float fz, float bz, float bhz)
+static float opennessFactor(float fz, float bz, float bhz)
 {
     if(fz <= bz - SHADOWEDGE_OPEN_THRESHOLD || fz >= bhz)
         return 0; // Fully closed.
@@ -134,32 +105,67 @@ static float radioEdgeOpenness(float fz, float bz, float bhz)
 
 void ShadowEdge::prepare(int planeIndex)
 {
-    Line const &line = d->side->line();
-
     Plane const &plane = d->side->sector().plane(planeIndex);
-    coord_t plnHeight = plane.visHeight();
 
-    // Determine the openness of the line. If this edge is open,
-    // there won't be a shadow at all. Open neighbours cause some
-    // changes in the polygon corner vertices (placement, color).
-    Sector const *front = 0;
-    Sector const *back = 0;
+    // Determine the 'openness' of the edge. If the edge is open, there won't be
+    // a shadow at all. Open neighbors cause some changes in the polygon corner
+    // vertices (placement, opacity).
     coord_t fz = 0, bz = 0, bhz = 0;
-    if(line.hasBackSections())
+    if(d->side->back().hasSections())
     {
-        front = d->side->sectorPtr();
-        back  = d->side->back().sectorPtr();
-        setRelativeHeights(front, back, planeIndex, &fz, &bz, &bhz);
+        Sector const *frontSec = d->side->sectorPtr();
+        Sector const *backSec  = d->side->back().sectorPtr();
 
-        uint hackType = d->radioEdgeHackType(front, back, planeIndex == Plane::Ceiling, fz, bz);
-        if(hackType)
+        setRelativeHeights(frontSec, backSec, planeIndex, &fz, &bz, &bhz);
+
+        Surface const &wallEdgeSurface = d->side->surface(planeIndex == Plane::Ceiling? Line::Side::Top : Line::Side::Bottom);
+
+        d->openness = -1; // Init for sanity check.
+
+        if(fz < bz && !wallEdgeSurface.hasMaterial())
         {
-            d->openness = hackType - 1;
+            d->openness = 2; // Consider it fully open.
         }
         else
         {
-            d->openness = radioEdgeOpenness(fz, bz, bhz);
+            // Is the back sector closed?
+            if(frontSec->floor().visHeight() >= backSec->ceiling().visHeight())
+            {
+                int otherPlaneIndex = planeIndex == Plane::Floor? Plane::Ceiling : Plane::Floor;
+                if(frontSec->planeSurface(otherPlaneIndex).hasSkyMaskedMaterial())
+                {
+                    if(backSec->planeSurface(otherPlaneIndex).hasSkyMaskedMaterial())
+                    {
+                        d->openness = 2; // Consider it fully open.
+                    }
+                    else
+                    {
+                        d->openness = opennessFactor(fz, bz, bhz);
+                    }
+                }
+                else
+                {
+                    d->openness = 0; // Consider it fully closed.
+                }
+            }
+            else
+            {
+                // Check for unmasked midtextures on twosided lines that completely
+                // fill the gap between floor and ceiling (we don't want to give away
+                // the location of any secret areas (false walls)).
+                if(R_MiddleMaterialCoversOpening(*d->side))
+                {
+                    d->openness = 0; // Consider it fully closed.
+                }
+                else
+                {
+                    d->openness = opennessFactor(fz, bz, bhz);
+                }
+            }
         }
+
+        // Sanity check.
+        DENG_ASSERT(d->openness >= 0);
     }
 
     // Only calculate the remaining values when the edge is at least partially open.
@@ -167,22 +173,28 @@ void ShadowEdge::prepare(int planeIndex)
 
     // Find the neighbor of this edge and determine its 'openness'.
 
-    LineOwner *vo = line.vertexOwner(d->side->lineSideId() ^ d->edge)->_link[d->edge ^ 1];
+    LineOwner *vo = d->side->line().vertexOwner(d->side->lineSideId() ^ d->edge)->_link[d->edge ^ 1];
     Line *neighbor = &vo->line();
 
-    if(neighbor != &line && !neighbor->hasBackSections() &&
+    if(neighbor != &d->side->line() && !neighbor->hasBackSections() &&
        (neighbor->isBspWindow()) &&
        neighbor->frontSectorPtr() != d->bspLeaf->sectorPtr())
     {
         // A one-way window, open side.
         d->sideOpenness = 1;
     }
-    else if(!(neighbor == &line || !neighbor->hasBackSections()))
+    else if(!(neighbor == &d->side->line() || !neighbor->hasBackSections()))
     {
-        int otherSide = (&d->side->vertex(d->edge) == &neighbor->from()? d->edge : d->edge ^ 1);
-        Sector *othersec = neighbor->sectorPtr(otherSide);
+        // Choose the correct side of the neighbor (determined by which vertex is shared).
+        Line::Side *otherSide;
+        if(&neighbor->vertex(d->edge ^ 1) == &d->side->vertex(d->edge))
+            otherSide = &neighbor->front();
+        else
+            otherSide = &neighbor->back();
 
-        if(R_MiddleMaterialCoversOpening(neighbor->side(otherSide ^ 1)))
+        Sector *othersec = otherSide->sectorPtr();
+
+        if(R_MiddleMaterialCoversOpening(otherSide->back()))
         {
             d->sideOpenness = 0;
         }
@@ -193,34 +205,34 @@ void ShadowEdge::prepare(int planeIndex)
         else
         {
             // Its a normal neighbor.
-            if(neighbor->sectorPtr(otherSide) != d->side->sectorPtr() &&
+            if(otherSide->sectorPtr() != d->side->sectorPtr() &&
                !((plane.type() == Plane::Floor && othersec->ceiling().visHeight() <= plane.visHeight()) ||
                  (plane.type() == Plane::Ceiling && othersec->floor().height() >= plane.visHeight())))
             {
-                front = d->side->sectorPtr();
-                back  = neighbor->sectorPtr(otherSide);
+                Sector const *frontSec = d->side->sectorPtr();
+                Sector const *backSec  = otherSide->sectorPtr();
 
-                setRelativeHeights(front, back, planeIndex, &fz, &bz, &bhz);
-                d->sideOpenness = radioEdgeOpenness(fz, bz, bhz);
+                setRelativeHeights(frontSec, backSec, planeIndex, &fz, &bz, &bhz);
+                d->sideOpenness = opennessFactor(fz, bz, bhz);
             }
         }
     }
 
     if(d->sideOpenness < 1)
     {
-        vo = line.vertexOwner(d->side->lineSideId() ^ d->edge);
+        vo = d->side->line().vertexOwner(d->side->lineSideId() ^ d->edge);
         if(d->edge) vo = &vo->prev();
 
         d->inner = Vector3d(d->side->vertex(d->edge).origin() + vo->innerShadowOffset(),
-                            plnHeight);
+                            plane.visHeight());
     }
     else
     {
         d->inner = Vector3d(d->side->vertex(d->edge).origin() + vo->extendedShadowOffset(),
-                            plnHeight);
+                            plane.visHeight());
     }
 
-    d->outer = Vector3d(d->side->vertex(d->edge).origin(), plnHeight);
+    d->outer = Vector3d(d->side->vertex(d->edge).origin(), plane.visHeight());
 }
 
 Vector3d const &ShadowEdge::inner() const
