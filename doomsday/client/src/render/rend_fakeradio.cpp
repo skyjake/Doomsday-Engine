@@ -1227,10 +1227,10 @@ static void setRelativeHeights(Sector const *front, Sector const *back, boolean 
     }
 }
 
-static uint radioEdgeHackType(Line const *line, Sector const *front, Sector const *back,
-    int backside, boolean isCeiling, float fz, float bz)
+static uint radioEdgeHackType(Line::Side const &side, Sector const *front, Sector const *back,
+    bool isCeiling, float fz, float bz)
 {
-    Surface const &surface = line->side(backside).surface(isCeiling? Line::Side::Top : Line::Side::Bottom);
+    Surface const &surface = side.surface(isCeiling? Line::Side::Top : Line::Side::Bottom);
 
     if(fz < bz && !surface.hasMaterial())
         return 3; // Consider it fully open.
@@ -1252,62 +1252,172 @@ static uint radioEdgeHackType(Line const *line, Sector const *front, Sector cons
     // Check for unmasked midtextures on twosided lines that completely
     // fill the gap between floor and ceiling (we don't want to give away
     // the location of any secret areas (false walls)).
-    if(R_MiddleMaterialCoversOpening(line->side(backside)))
+    if(R_MiddleMaterialCoversOpening(side))
         return 1; // Consider it fully closed.
 
     return 0;
 }
 
+struct ShadowEdge
+{
+    BspLeaf *bspLeaf;
+    Line::Side *side;
+    int edge;
+
+    Vector2d inner; coord_t innerZ;
+    Vector2d outer; coord_t outerZ;
+    float sideOpen;
+    float edgeOpen;
+
+    ShadowEdge(BspLeaf &bspLeaf, Line::Side &side, int edge)
+        : bspLeaf(&bspLeaf),
+          side(&side),
+          edge(edge),
+          innerZ(0),
+          outerZ(0),
+          sideOpen(0),
+          edgeOpen(0)
+    {}
+
+    void prepare(int planeIndex)
+    {
+        Line const &line = side->line();
+
+        Plane const &plane = side->sector().plane(planeIndex);
+        coord_t plnHeight = plane.visHeight();
+
+        // Determine the openness of the line. If this edge is edgeOpen,
+        // there won't be a shadow at all. Open neighbours cause some
+        // changes in the polygon corner vertices (placement, color).
+        Sector const *front = 0;
+        Sector const *back = 0;
+        coord_t fz = 0, bz = 0, bhz = 0;
+        if(line.hasBackSections())
+        {
+            front = side->sectorPtr();
+            back  = side->back().sectorPtr();
+            setRelativeHeights(front, back, planeIndex == Plane::Ceiling, &fz, &bz, &bhz);
+
+            uint hackType = radioEdgeHackType(*side, front, back, planeIndex == Plane::Ceiling, fz, bz);
+            if(hackType)
+            {
+                edgeOpen = hackType - 1;
+            }
+            else
+            {
+                edgeOpen = radioEdgeOpenness(fz, bz, bhz);
+            }
+        }
+
+        // Only calculate the remaining values when the edge is at least partially open.
+        if(edgeOpen >= 1) return;
+
+        // Find the neighbor of this edge and determine its 'openness'.
+
+        LineOwner *vo = line.vertexOwner(side->lineSideId() ^ edge)->_link[edge ^ 1];
+        Line *neighbor = &vo->line();
+
+        if(neighbor != &line && !neighbor->hasBackSections() &&
+           (neighbor->isBspWindow()) &&
+           neighbor->frontSectorPtr() != bspLeaf->sectorPtr())
+        {
+            // A one-way window, edgeOpen side.
+            sideOpen = 1;
+        }
+        else if(!(neighbor == &line || !neighbor->hasBackSections()))
+        {
+            int otherSide = (&side->vertex(edge) == &neighbor->from()? edge : edge ^ 1);
+            Sector *othersec = neighbor->sectorPtr(otherSide);
+
+            if(R_MiddleMaterialCoversOpening(neighbor->side(otherSide ^ 1)))
+            {
+                sideOpen = 0;
+            }
+            else if(neighbor->isSelfReferencing())
+            {
+                sideOpen = 1;
+            }
+            else
+            {
+                // Its a normal neighbor.
+                if(neighbor->sectorPtr(otherSide) != side->sectorPtr() &&
+                   !((plane.type() == Plane::Floor && othersec->ceiling().visHeight() <= plane.visHeight()) ||
+                     (plane.type() == Plane::Ceiling && othersec->floor().height() >= plane.visHeight())))
+                {
+                    front = side->sectorPtr();
+                    back  = neighbor->sectorPtr(otherSide);
+
+                    setRelativeHeights(front, back, planeIndex == Plane::Ceiling, &fz, &bz, &bhz);
+                    sideOpen = radioEdgeOpenness(fz, bz, bhz);
+                }
+            }
+        }
+
+        if(sideOpen < 1)
+        {
+            vo = line.vertexOwner(side->lineSideId() ^ edge);
+            if(edge) vo = &vo->prev();
+
+            inner = side->vertex(edge).origin() + vo->innerShadowOffset();
+        }
+        else
+        {
+            inner = side->vertex(edge).origin() + vo->extendedShadowOffset();
+        }
+
+        outer = side->vertex(edge).origin();
+        innerZ = outerZ = plnHeight;
+    }
+};
+
 /**
  * Construct and write a new shadow polygon to the rendering lists.
  */
-static void addShadowEdge(Vector2d const inner[2], Vector2d const outer[2],
-    coord_t innerLeftZ, coord_t innerRightZ, coord_t outerLeftZ, coord_t outerRightZ,
-    float const sideOpen[2], float const edgeOpen[2], boolean isFloor,
-    float const shadowRGB[3], float shadowDark)
+static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &rightEdge,
+    bool isFloor, float shadowDark)
 {
     static uint const floorIndices[][4] = {{0, 1, 2, 3}, {1, 2, 3, 0}};
     static uint const ceilIndices[][4]  = {{0, 3, 2, 1}, {1, 0, 3, 2}};
 
-    vec2f_t outerAlpha;
-    V2f_Set(outerAlpha, MIN_OF(shadowDark * (1 - edgeOpen[0]), 1), MIN_OF(shadowDark * (1 - edgeOpen[1]), 1));
+    float const outerLeftAlpha  = de::min(shadowDark * (1 - leftEdge.edgeOpen), 1.f);
+    float const outerRightAlpha = de::min(shadowDark * (1 - rightEdge.edgeOpen), 1.f);
 
-    if(!(outerAlpha[0] > .0001 && outerAlpha[1] > .0001)) return;
+    if(!(outerLeftAlpha > .0001 && outerRightAlpha > .0001)) return;
 
     // What vertex winding order? (0 = left, 1 = right)
     // (for best results, the cross edge should always be the shortest).
-    uint winding = (Vector2d(outer[1] - inner[1]).length() > Vector2d(inner[0] - outer[0]).length()? 1 : 0);
+    uint winding = (Vector2d(rightEdge.outer - rightEdge.inner).length() > Vector2d(leftEdge.inner - leftEdge.outer).length()? 1 : 0);
     uint const *idx = (isFloor ? floorIndices[winding] : ceilIndices[winding]);
 
     rvertex_t rvertices[4];
     ColorRawf rcolors[4];
 
     // Left outer corner.
-    rvertices[idx[0]].pos[VX] = outer[0][VX];
-    rvertices[idx[0]].pos[VY] = outer[0][VY];
-    rvertices[idx[0]].pos[VZ] = outerLeftZ;
+    rvertices[idx[0]].pos[VX] = leftEdge.outer.x;
+    rvertices[idx[0]].pos[VY] = leftEdge.outer.y;
+    rvertices[idx[0]].pos[VZ] = leftEdge.outerZ;
 
     // Right outer corner.
-    rvertices[idx[1]].pos[VX] = outer[1][VX];
-    rvertices[idx[1]].pos[VY] = outer[1][VY];
-    rvertices[idx[1]].pos[VZ] = outerRightZ;
+    rvertices[idx[1]].pos[VX] = rightEdge.outer.x;
+    rvertices[idx[1]].pos[VY] = rightEdge.outer.y;
+    rvertices[idx[1]].pos[VZ] = rightEdge.outerZ;
 
     // Right inner corner.
-    rvertices[idx[2]].pos[VX] = inner[1][VX];
-    rvertices[idx[2]].pos[VY] = inner[1][VY];
-    rvertices[idx[2]].pos[VZ] = innerRightZ;
+    rvertices[idx[2]].pos[VX] = rightEdge.inner.x;
+    rvertices[idx[2]].pos[VY] = rightEdge.inner.y;
+    rvertices[idx[2]].pos[VZ] = rightEdge.innerZ;
 
     // Left inner corner.
-    rvertices[idx[3]].pos[VX] = inner[0][VX];
-    rvertices[idx[3]].pos[VY] = inner[0][VY];
-    rvertices[idx[3]].pos[VZ] = innerLeftZ;
+    rvertices[idx[3]].pos[VX] = leftEdge.inner.x;
+    rvertices[idx[3]].pos[VY] = leftEdge.inner.y;
+    rvertices[idx[3]].pos[VZ] = leftEdge.innerZ;
 
     // Light this polygon.
     for(uint i = 0; i < 4; ++i)
     {
-        rcolors[idx[i]].rgba[CR] = (renderWireframe? 1 : shadowRGB[CR]);
-        rcolors[idx[i]].rgba[CG] = (renderWireframe? 1 : shadowRGB[CG]);
-        rcolors[idx[i]].rgba[CB] = (renderWireframe? 1 : shadowRGB[CB]);
+        rcolors[idx[i]].rgba[CR] =
+            rcolors[idx[i]].rgba[CG] =
+                rcolors[idx[i]].rgba[CB] = (renderWireframe? 1 : 0);
     }
 
     // Right inner.
@@ -1317,14 +1427,14 @@ static void addShadowEdge(Vector2d const inner[2], Vector2d const outer[2],
     rcolors[idx[3]].rgba[CA] = 0;
 
     // Left outer.
-    rcolors[idx[0]].rgba[CA] = outerAlpha[0];
-    if(sideOpen[0] < 1)
-        rcolors[idx[0]].rgba[CA] *= 1 - sideOpen[0];
+    rcolors[idx[0]].rgba[CA] = outerLeftAlpha;
+    if(leftEdge.sideOpen < 1)
+        rcolors[idx[0]].rgba[CA] *= 1 - leftEdge.sideOpen;
 
     // Right outer.
-    rcolors[idx[1]].rgba[CA] = outerAlpha[1];
-    if(sideOpen[1] < 1)
-        rcolors[idx[1]].rgba[CA] *= 1 - sideOpen[1];
+    rcolors[idx[1]].rgba[CA] = outerRightAlpha;
+    if(rightEdge.sideOpen < 1)
+        rcolors[idx[1]].rgba[CA] *= 1 - rightEdge.sideOpen;
 
     if(rendFakeRadio == 2) return;
 
@@ -1332,19 +1442,17 @@ static void addShadowEdge(Vector2d const inner[2], Vector2d const outer[2],
     RL_AddPoly(PT_FAN, RPF_DEFAULT | (!renderWireframe? RPF_SHADOW : 0), 4, rvertices, rcolors);
 }
 
-static void processEdgeShadow(BspLeaf const &bspLeaf, Line const *line,
-    int side, int planeIndex, float shadowDark)
+static void writeShadowSection(BspLeaf &bspLeaf, int planeIndex, Line::Side &side, float shadowDark)
 {
-    DENG_ASSERT(line && line->hasSections(side));
+    DENG_ASSERT(side.hasSections());
 
     if(!(shadowDark > .0001)) return;
 
-    Plane const &plane = line->sector(side).plane(planeIndex);
+    Plane const &plane = side.sector().plane(planeIndex);
     Surface const *suf = &plane.surface();
-    coord_t plnHeight  = plane.visHeight();
 
     // Polyobj surfaces never shadow.
-    if(line->isFromPolyobj()) return;
+    if(side.line().isFromPolyobj()) return;
 
     // Surfaces with a missing material don't shadow.
     if(!suf->hasMaterial()) return;
@@ -1353,128 +1461,41 @@ static void processEdgeShadow(BspLeaf const &bspLeaf, Line const *line,
     Material const &material = suf->material();
     if(material.isSkyMasked() || material.hasGlow()) return;
 
-    // Determine the openness of the line. If this edge is edgeOpen,
-    // there won't be a shadow at all. Open neighbours cause some
-    // changes in the polygon corner vertices (placement, colour).
-    Vector2d inner[2], outer[2];
-    vec2f_t edgeOpen, sideOpen;
-    Sector const *front = 0;
-    Sector const *back = 0;
-    coord_t fz = 0, bz = 0, bhz = 0;
-    if(line->hasBackSections())
-    {
-        front = line->sectorPtr(side);
-        back  = line->sectorPtr(side ^ 1);
-        setRelativeHeights(front, back, planeIndex == Plane::Ceiling, &fz, &bz, &bhz);
+    ShadowEdge leftEdge(bspLeaf, side, HEdge::From);
+    ShadowEdge rightEdge(bspLeaf, side, HEdge::To);
 
-        uint hackType = radioEdgeHackType(line, front, back, side, planeIndex == Plane::Ceiling, fz, bz);
-        if(hackType)
-        {
-            V2f_Set(edgeOpen, hackType - 1, hackType - 1);
-        }
-        else
-        {
-            float openness = radioEdgeOpenness(fz, bz, bhz);
-            V2f_Set(edgeOpen, openness, openness);
-        }
-    }
-    else
-    {
-        V2f_Set(edgeOpen, 0, 0);
-    }
+    leftEdge.prepare(planeIndex);
+    rightEdge.prepare(planeIndex);
 
-    if(edgeOpen[0] >= 1 && edgeOpen[1] >= 1) return;
+    if(leftEdge.edgeOpen >= 1 && rightEdge.edgeOpen >= 1) return;
 
-    // Find the neighbors of this edge and determine their 'openness'.
-    sideOpen[0] = sideOpen[1] = 0;
-    for(int i = 0; i < 2; ++i)
-    {
-        LineOwner *vo = line->vertexOwner(side^i)->_link[i^1];
-        Line *neighbor = &vo->line();
-
-        if(neighbor != line && !neighbor->hasBackSections() &&
-           (neighbor->isBspWindow()) &&
-           neighbor->frontSectorPtr() != bspLeaf.sectorPtr())
-        {
-            // A one-way window, edgeOpen side.
-            sideOpen[i] = 1;
-        }
-        else if(!(neighbor == line || !neighbor->hasBackSections()))
-        {
-            int otherSide = (&line->vertex(i ^ side) == &neighbor->from()? i : i ^ 1);
-            Sector *othersec = neighbor->sectorPtr(otherSide);
-
-            if(R_MiddleMaterialCoversOpening(neighbor->side(otherSide ^ 1)))
-            {
-                sideOpen[i] = 0;
-            }
-            else if(neighbor->isSelfReferencing())
-            {
-                sideOpen[i] = 1;
-            }
-            else
-            {
-                // Its a normal neighbor.
-                if(neighbor->sectorPtr(otherSide) != line->sectorPtr(side) &&
-                   !((plane.type() == Plane::Floor && othersec->ceiling().visHeight() <= plane.visHeight()) ||
-                     (plane.type() == Plane::Ceiling && othersec->floor().height() >= plane.visHeight())))
-                {
-                    front = line->sectorPtr(side);
-                    back  = neighbor->sectorPtr(otherSide);
-
-                    setRelativeHeights(front, back, planeIndex == Plane::Ceiling, &fz, &bz, &bhz);
-                    sideOpen[i] = radioEdgeOpenness(fz, bz, bhz);
-                }
-            }
-        }
-
-        if(sideOpen[i] < 1)
-        {
-            vo = line->vertexOwner(i^side);
-            if(i) vo = &vo->prev();
-
-            inner[i] = line->vertexOrigin(i^side) + vo->innerShadowOffset();
-        }
-        else
-        {
-            inner[i] = line->vertexOrigin(i^side) + vo->extendedShadowOffset();
-        }
-    }
-
-    outer[0] = line->vertexOrigin(side);
-    outer[1] = line->vertexOrigin(side^1);
-
-    // Shadows are black
-    vec3f_t shadowRGB; V3f_Set(shadowRGB, 0, 0, 0);
-
-    addShadowEdge(inner, outer, plnHeight, plnHeight, plnHeight, plnHeight, sideOpen, edgeOpen,
-                  suf->normal()[VZ] > 0, shadowRGB, shadowDark);
+    writeShadowSection2(leftEdge, rightEdge, suf->normal()[VZ] > 0, shadowDark);
 }
 
-static void drawLinkedEdgeShadows(BspLeaf const &bspLeaf, ShadowLink &link,
+static void drawLinkedEdgeShadows(BspLeaf &bspLeaf, ShadowLink &link,
     byte const *doPlanes, float shadowDark)
 {
-    DENG_ASSERT(doPlanes);
+    DENG_ASSERT(doPlanes != 0);
 
     if(!(shadowDark > .0001f)) return;
 
     if(doPlanes[Plane::Floor])
     {
-        processEdgeShadow(bspLeaf, link.line, link.side, Plane::Floor, shadowDark);
+        writeShadowSection(bspLeaf, Plane::Floor, *link.side, shadowDark);
     }
 
     if(doPlanes[Plane::Ceiling])
     {
-        processEdgeShadow(bspLeaf, link.line, link.side, Plane::Ceiling, shadowDark);
+        writeShadowSection(bspLeaf, Plane::Ceiling, *link.side, shadowDark);
     }
 
     for(int pln = Plane::Middle; pln < bspLeaf.sector().planeCount(); ++pln)
     {
-        processEdgeShadow(bspLeaf, link.line, link.side, pln, shadowDark);
+        writeShadowSection(bspLeaf, pln, *link.side, shadowDark);
     }
 
     // Mark it rendered for this frame.
-    link.lineSide().setShadowVisCount(frameCount);
+    link.side->setShadowVisCount(frameCount);
 }
 
 /**
@@ -1538,7 +1559,7 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
     {
         // Already rendered during the current frame? We only want to
         // render each shadow once per frame.
-        if(link->lineSide().shadowVisCount() == frameCount) continue;
+        if(link->side->shadowVisCount() == frameCount) continue;
 
         drawLinkedEdgeShadows(bspLeaf, *link, doPlanes, shadowDark);
     }

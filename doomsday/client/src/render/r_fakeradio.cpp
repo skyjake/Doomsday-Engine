@@ -194,15 +194,13 @@ void Rend_RadioUpdateVertexShadowOffsets(Vertex &vtx)
 /**
  * Link @a line to @a bspLeaf for the purposes of shadowing.
  */
-static void linkShadowLineToSSec(Line *line, byte side, BspLeaf *bspLeaf)
+static void linkShadowLineToSSec(Line::Side &side, BspLeaf &bspLeaf)
 {
-    DENG_ASSERT(line && bspLeaf);
-
 #ifdef DENG_DEBUG
     // Check the links for dupes!
-    for(ShadowLink *i = bspLeaf->firstShadowLink(); i; i = i->next)
+    for(ShadowLink *i = bspLeaf.firstShadowLink(); i; i = i->next)
     {
-        if(i->line == line && i->side == side)
+        if(i->side == &side)
             throw Error("R_LinkShadow", "Already here!!");
     }
 #endif
@@ -210,23 +208,15 @@ static void linkShadowLineToSSec(Line *line, byte side, BspLeaf *bspLeaf)
     // We'll need to allocate a new link.
     ShadowLink *link = (ShadowLink *) ZBlockSet_Allocate(shadowLinksBlockSet);
 
-    link->line = line;
-    link->side = side;
+    link->side = &side;
     // The links are stored into a linked list.
-    link->next = bspLeaf->_shadows;
-    bspLeaf->_shadows = link;
+    link->next = bspLeaf._shadows;
+    bspLeaf._shadows = link;
 }
-
-struct ShadowLinkerParms
-{
-    Line *line;
-    byte side;
-};
 
 static int RIT_ShadowBspLeafLinker(BspLeaf *bspLeaf, void *context)
 {
-    ShadowLinkerParms *parms = static_cast<ShadowLinkerParms *>(context);
-    linkShadowLineToSSec(parms->line, parms->side, bspLeaf);
+    linkShadowLineToSSec(*static_cast<Line::Side *>(context), *bspLeaf);
     return false; // Continue iteration.
 }
 
@@ -257,7 +247,6 @@ void Rend_RadioInitForMap()
      */
     shadowLinksBlockSet = ZBlockSet_New(sizeof(ShadowLink), 1024, PU_MAP);
 
-    ShadowLinkerParms parms;
     AABoxd bounds;
 
     foreach(Line *line, theMap->lines())
@@ -285,13 +274,10 @@ void Rend_RadioInitForMap()
             point = vtx1.origin() + vo1.extendedShadowOffset();
             V2d_AddToBoxXY(bounds.arvec2, point.x, point.y);
 
-            parms.line = line;
-            parms.side = i;
-
             // Link the shadowing line to all the BspLeafs whose axis-aligned
             // bounding box intersects 'bounds'.
             theMap->bspLeafsBoxIterator(bounds, side.sectorPtr(),
-                                        RIT_ShadowBspLeafLinker, &parms);
+                                        RIT_ShadowBspLeafLinker, &side);
         }
     }
 

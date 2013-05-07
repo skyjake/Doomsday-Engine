@@ -1071,7 +1071,7 @@ void MPE_LineAddSide(int lineIdx, int sideId, short flags, ddstring_t const *top
 
 #undef MPE_PlaneCreate
 int MPE_PlaneCreate(int sectorIdx, coord_t height, ddstring_t const *materialUri,
-    float matOffsetX, float matOffsetY, float r, float g, float b, float a,
+    float matOffsetX, float matOffsetY, float tintRed, float tintGreen, float tintBlue, float opacity,
     float normalX, float normalY, float normalZ, int archiveIndex)
 {
     if(!editMapInited) return -1;
@@ -1084,9 +1084,13 @@ int MPE_PlaneCreate(int sectorIdx, coord_t height, ddstring_t const *materialUri
     plane->setIndexInArchive(archiveIndex);
 
     plane->surface().setMaterial(findMaterialInDict(materialUri));
-    plane->surface().setTintColor(r, g, b);
-    plane->surface().setOpacity(a);
+    plane->surface().setTintColor(tintRed, tintGreen, tintBlue);
     plane->surface().setMaterialOrigin(matOffsetX, matOffsetY);
+
+    if(!plane->isSectorFloor() && !plane->isSectorCeiling())
+    {
+        plane->surface().setOpacity(opacity);
+    }
 
     return plane->inSectorIndex();
 }

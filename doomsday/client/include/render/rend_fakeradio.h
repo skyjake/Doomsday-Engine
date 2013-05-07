@@ -44,26 +44,13 @@
 class SectionEdge;
 
 /**
- * Used to link a line to a BSP leaf for the purposes of FakeRadio shadowing.
+ * Used to link a line side to a BSP leaf for the purposes of FakeRadio shadowing.
  * @ingroup render
  */
 struct ShadowLink
 {
     ShadowLink *next;
-    Line *line;
-    byte side;
-
-    Line::Side &lineSide()
-    {
-        DENG_ASSERT(line);
-        return line->side(side);
-    }
-
-    Line::Side const &lineSide() const
-    {
-        DENG_ASSERT(line);
-        return line->side(side);
-    }
+    Line::Side *side;
 };
 
 /**
