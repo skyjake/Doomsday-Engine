@@ -29,6 +29,8 @@
 #include "HEdge"
 #include "IHPlane"
 
+class Surface;
+
 /// Maximum number of intercepts in a SectionEdge.
 #define SECTIONEDGE_MAX_INTERCEPTS          64
 
@@ -91,6 +93,8 @@ public:
     coord_t lineOffset() const;
 
     Line::Side &lineSide() const;
+
+    Surface &surface() const;
 
     int section() const;
 

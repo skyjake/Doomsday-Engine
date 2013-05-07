@@ -89,6 +89,16 @@ public:
     void setInSectorIndex(int newIndex);
 
     /**
+     * Returns @c true iff this is the floor plane of the owning sector.
+     */
+    bool isSectorFloor() const;
+
+    /**
+     * Returns @c true iff this is the ceiling plane of the owning sector.
+     */
+    bool isSectorCeiling() const;
+
+    /**
      * Returns the Surface of the plane.
      */
     Surface &surface();

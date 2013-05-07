@@ -360,6 +360,11 @@ Line::Side &SectionEdge::lineSide() const
     return *d->lineSide;
 }
 
+Surface &SectionEdge::surface() const
+{
+    return d->lineSide->surface(d->section);
+}
+
 int SectionEdge::section() const
 {
     return d->section;

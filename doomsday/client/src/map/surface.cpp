@@ -89,6 +89,20 @@ DENG2_PIMPL(Surface)
           flags(0)
     {}
 
+    /// @todo Refactor away -ds
+    inline bool isSideMiddle()
+    {
+        return owner.type() == DMU_SIDE && &self == &owner.castTo<Line::Side>()->middle();
+    }
+
+    /// @todo Refactor away -ds
+    inline bool isSectorExtraPlane()
+    {
+        if(owner.type() != DMU_PLANE) return false;
+        Plane const &plane = *owner.castTo<Plane>();
+        return !(plane.isSectorFloor() || plane.isSectorCeiling());
+    }
+
     void notifyNormalChanged(Vector3f const &oldNormal)
     {
         // Predetermine which axes have changed.
@@ -438,6 +452,8 @@ float Surface::opacity() const
 
 void Surface::setOpacity(float newOpacity)
 {
+    DENG_ASSERT(d->isSideMiddle() || d->isSectorExtraPlane());
+
     newOpacity = de::clamp(0.f, newOpacity, 1.f);
     if(!de::fequal(d->opacity, newOpacity))
     {

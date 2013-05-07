@@ -1162,20 +1162,20 @@ static float calcLightLevelDelta(Vector3f const &normal)
     return (1.0f / 255) * (normal.x * 18) * rendLightWallAngle;
 }
 
-static Line::Side *findSideBlendNeighbor(Line::Side const &side, bool right, binangle_t *diff = 0)
+static Line::Side *findSideBlendNeighbor(Line::Side const &side, int edge, binangle_t *diff = 0)
 {
-    LineOwner const *farVertOwner = side.line().vertexOwner(side.lineSideId() ^ (int)right);
+    LineOwner const *farVertOwner = side.line().vertexOwner(side.lineSideId() ^ edge);
 
     if(diff) *diff = 0;
 
     Line *neighbor;
     if(R_SideBackClosed(side))
     {
-        neighbor = R_FindSolidLineNeighbor(side.sectorPtr(), &side.line(), farVertOwner, right, diff);
+        neighbor = R_FindSolidLineNeighbor(side.sectorPtr(), &side.line(), farVertOwner, edge, diff);
     }
     else
     {
-        neighbor = R_FindLineNeighbor(side.sectorPtr(), &side.line(), farVertOwner, right, diff);
+        neighbor = R_FindLineNeighbor(side.sectorPtr(), &side.line(), farVertOwner, edge, diff);
     }
 
     // No suitable line neighbor?
@@ -1183,7 +1183,7 @@ static Line::Side *findSideBlendNeighbor(Line::Side const &side, bool right, bin
 
     // Choose the correct side of the neighbor (determined by which vertex is shared).
     Line::Side *otherSide;
-    if(&neighbor->vertex(right ^ 1) == &side.vertex(right))
+    if(&neighbor->vertex(edge ^ 1) == &side.vertex(edge))
         otherSide = &neighbor->front();
     else
         otherSide = &neighbor->back();
@@ -1214,44 +1214,40 @@ static bool shouldSmoothLightLevels(Surface &sufA, Surface &sufB, binangle_t ang
  * The DOOM lighting model applies a sector light level delta when drawing
  * walls based on their 2D world angle.
  *
+ * @todo: Use the half-edge rings instead of LineOwners.
+ *
  * @param side     Line side to calculate light level deltas for.
  * @param section  Section of the side for which deltas are to be calculated.
+ * @param edge     Edge of the side for which deltas are to be calculated.
  *
- * Return values:
- * @param deltaL   Light delta for the left edge written here.
- * @param deltaR   Light delta for the right edge written here.
- *
- * @todo: Use the half-edge rings instead of LineOwners.
+ * @return  Light delta for the specified wall section edge.
  */
-static void wallSectionLightLevelDeltas(Line::Side &side, int section, float &deltaL, float &deltaR)
+static float wallSectionEdgeLightLevelDelta(Line::Side &side, int section, int edge)
 {
-    deltaL = 0;
-    deltaR = 0;
-
     // Are light level deltas disabled?
-    if(rendLightWallAngle <= 0) return;
+    if(rendLightWallAngle <= 0) return 0;
+
     // ...always if the surface's material was chosen as a HOM fix (lighting
     // must be consistent with that applied to the relative back sector plane).
     if(side.hasSections() && side.back().hasSections() &&
        side.surface(section).hasFixMaterial())
-        return;
+        return 0;
 
-    deltaL = deltaR = calcLightLevelDelta(side.surface(section).normal());
+    float delta = calcLightLevelDelta(side.surface(section).normal());
 
     // Is delta smoothing disabled?
-    if(!rendLightWallAngleSmooth) return;
+    if(!rendLightWallAngleSmooth) return delta;
     // ...always for polyobj lines (no owner rings).
-    if(side.line().isFromPolyobj()) return;
+    if(side.line().isFromPolyobj()) return delta;
 
     /**
-     * Smoothing is enabled, so find the neighbor sides for each edge which
-     * we will use to calculate the averaged lightlevel delta for each.
+     * Smoothing is enabled, so find the neighbor side for the specified edge
+     * which we will use to calculate the averaged lightlevel delta for each.
      *
      * @todo Do not assume the neighbor is the middle section of @var otherSide.
      */
     binangle_t angleDiff;
-
-    if(Line::Side *otherSide = findSideBlendNeighbor(side, false /*left neighbor*/, &angleDiff))
+    if(Line::Side *otherSide = findSideBlendNeighbor(side, edge, &angleDiff))
     {
         Surface &sufA = side.surface(section);
         Surface &sufB = otherSide->surface(section);
@@ -1260,22 +1256,34 @@ static void wallSectionLightLevelDeltas(Line::Side &side, int section, float &de
         {
             // Average normals.
             Vector3f avgNormal = Vector3f(sufA.normal() + sufB.normal()) / 2;
-            deltaL = calcLightLevelDelta(avgNormal);
+            return calcLightLevelDelta(avgNormal);
         }
     }
 
-    // Do the same for the right edge but with the right neighbor side.
-    if(Line::Side *otherSide = findSideBlendNeighbor(side, true /*right neighbor*/, &angleDiff))
-    {
-        Surface &sufA = side.surface(section);
-        Surface &sufB = otherSide->surface(section);
+    return delta;
+}
 
-        if(shouldSmoothLightLevels(sufA, sufB, angleDiff))
-        {
-            // Average normals.
-            Vector3f avgNormal = Vector3f(sufA.normal() + sufB.normal()) / 2;
-            deltaR = calcLightLevelDelta(avgNormal);
-        }
+/**
+ * Calculate the light level deltas for this wall section.
+ * @todo Cache these values somewhere. -ds
+ */
+static void wallSectionLightLevelDeltas(SectionEdge const &leftEdge, SectionEdge const &rightEdge,
+    float &leftDelta, float &rightDelta)
+{
+    leftDelta  = wallSectionEdgeLightLevelDelta(leftEdge.lineSide(), leftEdge.section(), HEdge::From);
+    rightDelta = wallSectionEdgeLightLevelDelta(rightEdge.lineSide(), rightEdge.section(), HEdge::To);
+
+    if(!de::fequal(leftDelta, rightDelta))
+    {
+        // Linearly interpolate to find the light level delta values for the
+        // vertical edges of this wall section.
+        coord_t const lineLength = leftEdge.lineSide().line().length();
+        coord_t const sectionOffset = leftEdge.lineOffset();
+        coord_t const sectionWidth = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
+
+        float deltaDiff = rightDelta - leftDelta;
+        rightDelta = leftDelta + ((sectionOffset + sectionWidth) / lineLength) * deltaDiff;
+        leftDelta += (sectionOffset / lineLength) * deltaDiff;
     }
 }
 
@@ -1343,13 +1351,6 @@ static uint projectSurfaceShadows(Surface &surface, float glowStrength,
                                      surface.tangent(), surface.bitangent(), surface.normal());
 }
 
-static inline float wallSectionOpacity(Line::Side &side, int section)
-{
-    if(section != Line::Side::Middle) return 1.f;
-    if(!side.hasSections() || !side.back().hasSections()) return 1.f;
-    return side.surface(section).opacity();
-}
-
 /**
  * @defgroup writeWallSectionFlags Write Wall Section Flags
  * Flags for writeWallSection()
@@ -1378,24 +1379,24 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     DENG_ASSERT(rightEdge.top().distance() > leftEdge.bottom().distance());
 
     Line::Side &side  = leftEdge.lineSide();
+    Line &line        = side.line();
     int const section = leftEdge.section();
-    Surface &surface  = side.surface(section);
+    Surface &surface  = leftEdge.surface();
 
     bool const isTwoSidedMiddle = (section == Line::Side::Middle &&
                                    side.hasSections() && side.back().hasSections());
 
-    float opacity = wallSectionOpacity(side, section);
+    float opacity = surface.opacity();
 
     // Apply a fade out when the viewer is near to this geometry?
     bool didNearFade = false;
     if(isTwoSidedMiddle &&
        ((viewPlayer->shared.flags & (DDPF_NOCLIP|DDPF_CAMERA)) ||
-            !(side.line().isFlagged(DDLF_BLOCKING))) &&
+            !(line.isFlagged(DDLF_BLOCKING))) &&
        (vOrigin[VY] > leftEdge.bottom().distance() &&
             vOrigin[VY] < rightEdge.top().distance()))
     {
         mobj_t const *mo = viewPlayer->shared.mo;
-        Line const &line = side.line();
 
         coord_t linePoint[2]     = { line.fromOrigin().x, line.fromOrigin().y };
         coord_t lineDirection[2] = {  line.direction().x,  line.direction().y };
@@ -1444,24 +1445,9 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     if(!material || !material->isDrawable())
         return false;
 
-    coord_t width = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
-
     // Calculate the light level deltas for this wall section.
-    /// @todo Cache these values somewhere. -ds
-    float deltaL, deltaR;
-    wallSectionLightLevelDeltas(side, section, deltaL, deltaR);
-
-    if(!de::fequal(deltaL, deltaR))
-    {
-        // Linearly interpolate to find the light level delta values for the
-        // vertical edges of this wall section.
-        coord_t const lineLength = side.line().length();
-        coord_t const sectionOffset = leftEdge.lineOffset();
-
-        float deltaDiff = deltaR - deltaL;
-        deltaR = deltaL + ((sectionOffset + width) / lineLength) * deltaDiff;
-        deltaL += (sectionOffset / lineLength) * deltaDiff;
-    }
+    float leftLightLevelDelta, rightLightLevelDelta;
+    wallSectionLightLevelDeltas(leftEdge, rightEdge, leftLightLevelDelta, rightLightLevelDelta);
 
     rendworldpoly_params_t parm; zap(parm);
 
@@ -1474,14 +1460,14 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     parm.normal              = &surface.normal();
     parm.texTL               = &texTL;
     parm.texBR               = &texBR;
-    parm.surfaceLightLevelDL = deltaL;
-    parm.surfaceLightLevelDR = deltaR;
+    parm.surfaceLightLevelDL = leftLightLevelDelta;
+    parm.surfaceLightLevelDR = rightLightLevelDelta;
     parm.blendMode           = BM_NORMAL;
     parm.materialOrigin      = &leftEdge.materialOrigin();
     parm.materialScale       = &materialScale;
 
     parm.isWall = true;
-    parm.wall.sectionWidth   = width;
+    parm.wall.sectionWidth   = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
     parm.wall.leftEdge       = &leftEdge;
     parm.wall.rightEdge      = &rightEdge;
 
@@ -1583,34 +1569,32 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     if(opaque)
     {
         // Render FakeRadio for this section?
-        if((flags & WSF_ADD_RADIO) &&
-           !((parm.flags & RPF_SKYMASK) || parm.glowing > 0 || side.line().isFromPolyobj()))
+        if((flags & WSF_ADD_RADIO) && !(parm.flags & RPF_SKYMASK) &&
+           !(parm.glowing > 0) && currentSectorLightLevel > 0 &&
+           !line.isFromPolyobj())
         {
-            if(currentSectorLightLevel > 0)
+            Rend_RadioUpdateForLineSide(side);
+
+            // Determine the shadow properties.
+            /// @todo Make cvars out of constants.
+            float shadowSize = 2 * (8 + 16 - currentSectorLightLevel * 16);
+            float shadowDark = Rend_RadioCalcShadowDarkness(currentSectorLightLevel);
+
+            Sector *frontSec = 0, *backSec = 0;
             {
-                Rend_RadioUpdateForLineSide(side);
-
-                // Determine the shadow properties.
-                /// @todo Make cvars out of constants.
-                float shadowSize = 2 * (8 + 16 - currentSectorLightLevel * 16);
-                float shadowDark = Rend_RadioCalcShadowDarkness(currentSectorLightLevel);
-
-                Sector *frontSec = 0, *backSec = 0;
+                HEdge *hedge = mapElement.castTo<HEdge>();
+                frontSec = hedge->wallSectionSector();
+                if(hedge->hasTwin() && !isTwoSidedMiddle)
                 {
-                    HEdge *hedge = mapElement.castTo<HEdge>();
-                    frontSec = hedge->wallSectionSector();
-                    if(hedge->hasTwin() && !isTwoSidedMiddle)
+                    if(hedge->twin().hasLineSide() && hedge->twin().lineSide().hasSections())
                     {
-                        if(hedge->twin().hasLineSide() && hedge->twin().lineSide().hasSections())
-                        {
-                            backSec = hedge->twin().bspLeaf().sectorPtr();
-                        }
+                        backSec = hedge->twin().bspLeaf().sectorPtr();
                     }
                 }
-
-                Rend_RadioWallSection(leftEdge, rightEdge, shadowDark, shadowSize,
-                                      frontSec, backSec);
             }
+
+            Rend_RadioWallSection(leftEdge, rightEdge, shadowDark, shadowSize,
+                                  frontSec, backSec);
         }
     }
 

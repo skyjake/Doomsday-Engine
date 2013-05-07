@@ -220,6 +220,16 @@ void Plane::setInSectorIndex(int newIndex)
     d->inSectorIndex = newIndex;
 }
 
+bool Plane::isSectorFloor() const
+{
+    return this == &sector().floor();
+}
+
+bool Plane::isSectorCeiling() const
+{
+    return this == &sector().ceiling();
+}
+
 Surface &Plane::surface()
 {
     return d->surface;
