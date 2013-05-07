@@ -34,15 +34,16 @@
 #include "MaterialVariantSpec"
 #include "map/gamemap.h"
 #include "map/lineowner.h"
-#include "render/rendpoly.h"
 #include "SectionEdge"
+
+#include "render/rendpoly.h"
+#include "render/shadowedge.h"
 
 #include "render/rend_fakeradio.h"
 
 using namespace de;
 
 #define MIN_OPEN                (.1f)
-#define EDGE_OPEN_THRESHOLD     (8) // world units (Z axis)
 
 #define MINDIFF                 (8) // min plane height difference (world units)
 #define INDIFF                  (8) // max plane height for indifference offset
@@ -1179,198 +1180,6 @@ void Rend_RadioWallSection(SectionEdge const &leftEdge, SectionEdge const &right
 }
 
 /**
- * Returns a value in the range of 0...2, which depicts how open the
- * specified edge is. Zero means that the edge is completely closed: it is
- * facing a wall or is relatively distant from the edge on the other side.
- * Values between zero and one describe how near the other edge is. An
- * openness value of one means that the other edge is at the same height as
- * this one. 2 means that the other edge is past our height ("clearly open").
- */
-static float radioEdgeOpenness(float fz, float bz, float bhz)
-{
-    if(fz <= bz - EDGE_OPEN_THRESHOLD || fz >= bhz)
-        return 0; // Fully closed.
-
-    if(fz >= bhz - EDGE_OPEN_THRESHOLD)
-        return (bhz - fz) / EDGE_OPEN_THRESHOLD;
-
-    if(fz <= bz)
-        return 1 - (bz - fz) / EDGE_OPEN_THRESHOLD;
-
-    if(fz <= bz + EDGE_OPEN_THRESHOLD)
-        return 1 + (fz - bz) / EDGE_OPEN_THRESHOLD;
-
-    // Fully open!
-    return 2;
-}
-
-static void setRelativeHeights(Sector const *front, Sector const *back, boolean isCeiling,
-    coord_t *fz, coord_t *bz, coord_t *bhz)
-{
-    if(fz)
-    {
-        *fz = front->plane(isCeiling? Plane::Ceiling:Plane::Floor).visHeight();
-        if(isCeiling)
-            *fz = -(*fz);
-    }
-    if(bz)
-    {
-        *bz = back->plane(isCeiling? Plane::Ceiling:Plane::Floor).visHeight();
-        if(isCeiling)
-            *bz = -(*bz);
-    }
-    if(bhz)
-    {
-        *bhz = back->plane(isCeiling? Plane::Floor:Plane::Ceiling).visHeight();
-        if(isCeiling)
-            *bhz = -(*bhz);
-    }
-}
-
-static uint radioEdgeHackType(Line::Side const &side, Sector const *front, Sector const *back,
-    bool isCeiling, float fz, float bz)
-{
-    Surface const &surface = side.surface(isCeiling? Line::Side::Top : Line::Side::Bottom);
-
-    if(fz < bz && !surface.hasMaterial())
-        return 3; // Consider it fully open.
-
-    // Is the back sector closed?
-    if(front->floor().visHeight() >= back->ceiling().visHeight())
-    {
-        if(front->planeSurface(isCeiling? Plane::Floor:Plane::Ceiling).hasSkyMaskedMaterial())
-        {
-            if(back->planeSurface(isCeiling? Plane::Floor:Plane::Ceiling).hasSkyMaskedMaterial())
-                return 3; // Consider it fully open.
-        }
-        else
-        {
-            return 1; // Consider it fully closed.
-        }
-    }
-
-    // Check for unmasked midtextures on twosided lines that completely
-    // fill the gap between floor and ceiling (we don't want to give away
-    // the location of any secret areas (false walls)).
-    if(R_MiddleMaterialCoversOpening(side))
-        return 1; // Consider it fully closed.
-
-    return 0;
-}
-
-struct ShadowEdge
-{
-    BspLeaf *bspLeaf;
-    Line::Side *side;
-    int edge;
-
-    Vector2d inner; coord_t innerZ;
-    Vector2d outer; coord_t outerZ;
-    float sideOpen;
-    float edgeOpen;
-
-    ShadowEdge(BspLeaf &bspLeaf, Line::Side &side, int edge)
-        : bspLeaf(&bspLeaf),
-          side(&side),
-          edge(edge),
-          innerZ(0),
-          outerZ(0),
-          sideOpen(0),
-          edgeOpen(0)
-    {}
-
-    void prepare(int planeIndex)
-    {
-        Line const &line = side->line();
-
-        Plane const &plane = side->sector().plane(planeIndex);
-        coord_t plnHeight = plane.visHeight();
-
-        // Determine the openness of the line. If this edge is edgeOpen,
-        // there won't be a shadow at all. Open neighbours cause some
-        // changes in the polygon corner vertices (placement, color).
-        Sector const *front = 0;
-        Sector const *back = 0;
-        coord_t fz = 0, bz = 0, bhz = 0;
-        if(line.hasBackSections())
-        {
-            front = side->sectorPtr();
-            back  = side->back().sectorPtr();
-            setRelativeHeights(front, back, planeIndex == Plane::Ceiling, &fz, &bz, &bhz);
-
-            uint hackType = radioEdgeHackType(*side, front, back, planeIndex == Plane::Ceiling, fz, bz);
-            if(hackType)
-            {
-                edgeOpen = hackType - 1;
-            }
-            else
-            {
-                edgeOpen = radioEdgeOpenness(fz, bz, bhz);
-            }
-        }
-
-        // Only calculate the remaining values when the edge is at least partially open.
-        if(edgeOpen >= 1) return;
-
-        // Find the neighbor of this edge and determine its 'openness'.
-
-        LineOwner *vo = line.vertexOwner(side->lineSideId() ^ edge)->_link[edge ^ 1];
-        Line *neighbor = &vo->line();
-
-        if(neighbor != &line && !neighbor->hasBackSections() &&
-           (neighbor->isBspWindow()) &&
-           neighbor->frontSectorPtr() != bspLeaf->sectorPtr())
-        {
-            // A one-way window, edgeOpen side.
-            sideOpen = 1;
-        }
-        else if(!(neighbor == &line || !neighbor->hasBackSections()))
-        {
-            int otherSide = (&side->vertex(edge) == &neighbor->from()? edge : edge ^ 1);
-            Sector *othersec = neighbor->sectorPtr(otherSide);
-
-            if(R_MiddleMaterialCoversOpening(neighbor->side(otherSide ^ 1)))
-            {
-                sideOpen = 0;
-            }
-            else if(neighbor->isSelfReferencing())
-            {
-                sideOpen = 1;
-            }
-            else
-            {
-                // Its a normal neighbor.
-                if(neighbor->sectorPtr(otherSide) != side->sectorPtr() &&
-                   !((plane.type() == Plane::Floor && othersec->ceiling().visHeight() <= plane.visHeight()) ||
-                     (plane.type() == Plane::Ceiling && othersec->floor().height() >= plane.visHeight())))
-                {
-                    front = side->sectorPtr();
-                    back  = neighbor->sectorPtr(otherSide);
-
-                    setRelativeHeights(front, back, planeIndex == Plane::Ceiling, &fz, &bz, &bhz);
-                    sideOpen = radioEdgeOpenness(fz, bz, bhz);
-                }
-            }
-        }
-
-        if(sideOpen < 1)
-        {
-            vo = line.vertexOwner(side->lineSideId() ^ edge);
-            if(edge) vo = &vo->prev();
-
-            inner = side->vertex(edge).origin() + vo->innerShadowOffset();
-        }
-        else
-        {
-            inner = side->vertex(edge).origin() + vo->extendedShadowOffset();
-        }
-
-        outer = side->vertex(edge).origin();
-        innerZ = outerZ = plnHeight;
-    }
-};
-
-/**
  * Construct and write a new shadow polygon to the rendering lists.
  */
 static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &rightEdge,
@@ -1379,38 +1188,38 @@ static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &ri
     static uint const floorIndices[][4] = {{0, 1, 2, 3}, {1, 2, 3, 0}};
     static uint const ceilIndices[][4]  = {{0, 3, 2, 1}, {1, 0, 3, 2}};
 
-    float const outerLeftAlpha  = de::min(shadowDark * (1 - leftEdge.edgeOpen), 1.f);
-    float const outerRightAlpha = de::min(shadowDark * (1 - rightEdge.edgeOpen), 1.f);
+    float const outerLeftAlpha  = de::min(shadowDark * (1 - leftEdge.openness()), 1.f);
+    float const outerRightAlpha = de::min(shadowDark * (1 - rightEdge.openness()), 1.f);
 
     if(!(outerLeftAlpha > .0001 && outerRightAlpha > .0001)) return;
 
     // What vertex winding order? (0 = left, 1 = right)
     // (for best results, the cross edge should always be the shortest).
-    uint winding = (Vector2d(rightEdge.outer - rightEdge.inner).length() > Vector2d(leftEdge.inner - leftEdge.outer).length()? 1 : 0);
+    uint winding = (rightEdge.length() > leftEdge.length()? 1 : 0);
     uint const *idx = (isFloor ? floorIndices[winding] : ceilIndices[winding]);
 
     rvertex_t rvertices[4];
     ColorRawf rcolors[4];
 
     // Left outer corner.
-    rvertices[idx[0]].pos[VX] = leftEdge.outer.x;
-    rvertices[idx[0]].pos[VY] = leftEdge.outer.y;
-    rvertices[idx[0]].pos[VZ] = leftEdge.outerZ;
+    rvertices[idx[0]].pos[VX] = leftEdge.outer().x;
+    rvertices[idx[0]].pos[VY] = leftEdge.outer().y;
+    rvertices[idx[0]].pos[VZ] = leftEdge.outer().z;
 
     // Right outer corner.
-    rvertices[idx[1]].pos[VX] = rightEdge.outer.x;
-    rvertices[idx[1]].pos[VY] = rightEdge.outer.y;
-    rvertices[idx[1]].pos[VZ] = rightEdge.outerZ;
+    rvertices[idx[1]].pos[VX] = rightEdge.outer().x;
+    rvertices[idx[1]].pos[VY] = rightEdge.outer().y;
+    rvertices[idx[1]].pos[VZ] = rightEdge.outer().z;
 
     // Right inner corner.
-    rvertices[idx[2]].pos[VX] = rightEdge.inner.x;
-    rvertices[idx[2]].pos[VY] = rightEdge.inner.y;
-    rvertices[idx[2]].pos[VZ] = rightEdge.innerZ;
+    rvertices[idx[2]].pos[VX] = rightEdge.inner().x;
+    rvertices[idx[2]].pos[VY] = rightEdge.inner().y;
+    rvertices[idx[2]].pos[VZ] = rightEdge.inner().z;
 
     // Left inner corner.
-    rvertices[idx[3]].pos[VX] = leftEdge.inner.x;
-    rvertices[idx[3]].pos[VY] = leftEdge.inner.y;
-    rvertices[idx[3]].pos[VZ] = leftEdge.innerZ;
+    rvertices[idx[3]].pos[VX] = leftEdge.inner().x;
+    rvertices[idx[3]].pos[VY] = leftEdge.inner().y;
+    rvertices[idx[3]].pos[VZ] = leftEdge.inner().z;
 
     // Light this polygon.
     for(uint i = 0; i < 4; ++i)
@@ -1428,13 +1237,13 @@ static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &ri
 
     // Left outer.
     rcolors[idx[0]].rgba[CA] = outerLeftAlpha;
-    if(leftEdge.sideOpen < 1)
-        rcolors[idx[0]].rgba[CA] *= 1 - leftEdge.sideOpen;
+    if(leftEdge.sideOpenness() < 1)
+        rcolors[idx[0]].rgba[CA] *= 1 - leftEdge.sideOpenness();
 
     // Right outer.
     rcolors[idx[1]].rgba[CA] = outerRightAlpha;
-    if(rightEdge.sideOpen < 1)
-        rcolors[idx[1]].rgba[CA] *= 1 - rightEdge.sideOpen;
+    if(rightEdge.sideOpenness() < 1)
+        rcolors[idx[1]].rgba[CA] *= 1 - rightEdge.sideOpenness();
 
     if(rendFakeRadio == 2) return;
 
@@ -1467,7 +1276,7 @@ static void writeShadowSection(BspLeaf &bspLeaf, int planeIndex, Line::Side &sid
     leftEdge.prepare(planeIndex);
     rightEdge.prepare(planeIndex);
 
-    if(leftEdge.edgeOpen >= 1 && rightEdge.edgeOpen >= 1) return;
+    if(leftEdge.openness() >= 1 && rightEdge.openness() >= 1) return;
 
     writeShadowSection2(leftEdge, rightEdge, suf->normal()[VZ] > 0, shadowDark);
 }

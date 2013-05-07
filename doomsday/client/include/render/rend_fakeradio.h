@@ -88,7 +88,7 @@ struct LineSideRadioData
     shadowcorner_t bottomCorners[2];
     shadowcorner_t sideCorners[2];
 
-    /// [left, right]
+    /// [bottom, top]
     edgespan_t spans[2];
 };
 
