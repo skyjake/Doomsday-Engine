@@ -1432,18 +1432,18 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
 
     if(opacity <= 0) return false;
 
-    Vector2f materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
-                           (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
-
-    Vector3d texTL(leftEdge.top().origin());
-    Vector3d texBR(rightEdge.bottom().origin());
-
     // Determine which Material to use.
     Material *material = chooseSurfaceMaterialForTexturingMode(surface);
 
     // Surfaces without a drawable material are never rendered.
     if(!material || !material->isDrawable())
         return false;
+
+    Vector2f materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
+                           (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
+
+    Vector3d texTL(leftEdge.top().origin());
+    Vector3d texBR(rightEdge.bottom().origin());
 
     // Calculate the light level deltas for this wall section.
     float leftLightLevelDelta, rightLightLevelDelta;
