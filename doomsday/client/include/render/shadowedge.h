@@ -41,16 +41,48 @@ public:
 
     void prepare(int planeIndex);
 
+    /**
+     * Returns the "side openness" factor for the shadow edge. This factor is
+     * a measure of how open the @em open range is on "this" edge of the
+     * shadowing surface.
+     *
+     * @see sectorOpenness()
+     */
     float openness() const;
 
-    float sideOpenness() const;
+    /**
+     * Returns the "sector openness" factor for the shadow edge. This factor is
+     * a measure of how open the @em open range is on the sector edge of the
+     * shadowing surface.
+     *
+     * @see openness()
+     */
+    float sectorOpenness() const;
 
-    Vector3d const &inner() const;
-
+    /**
+     * Returns the origin of the @em outer vertex (that which is incident with
+     * a map vertex from some line of the sector boundary).
+     *
+     * @see inner()
+     */
     Vector3d const &outer() const;
 
+    /**
+     * Returns the origin of the @em inner vertex (that which extends away from
+     * the "outer" vertex and across the shadowed surface).
+     *
+     * @see outer()
+     */
+    Vector3d const &inner() const;
+
+    /**
+     * Returns the length of the shadow edge, which is measured as the distance
+     * from the outer vertex origin to the inner origin.
+     *
+     * @see outer(), inner()
+     */
     inline coord_t length() const {
-        return Vector3d(outer() - inner()).abs().length();
+        return Vector3d(inner() - outer()).abs().length();
     }
 
 private:

@@ -473,7 +473,6 @@ static void scanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
 static void scanEdges(shadowcorner_t topCorners[2], shadowcorner_t bottomCorners[2],
     shadowcorner_t sideCorners[2], edgespan_t spans[2], Line::Side const &side)
 {
-    Line const &line = side.line();
     int const lineSideId = side.lineSideId();
 
     std::memset(sideCorners, 0, sizeof(shadowcorner_t) * 2);
@@ -482,11 +481,11 @@ static void scanEdges(shadowcorner_t topCorners[2], shadowcorner_t bottomCorners
     for(int i = 0; i < 2; ++i)
     {
         binangle_t diff = 0;
-        LineOwner *vo = line.vertexOwner(i ^ lineSideId);
+        LineOwner *vo = side.line().vertexOwner(i ^ lineSideId);
 
-        Line *other = R_FindSolidLineNeighbor(side.sectorPtr(), &line, vo,
+        Line *other = R_FindSolidLineNeighbor(side.sectorPtr(), &side.line(), vo,
                                               CPP_BOOL(i), &diff);
-        if(other && other != &line)
+        if(other && other != &side.line())
         {
             if(diff > BANG_180)
             {
@@ -1188,8 +1187,8 @@ static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &ri
     static uint const floorIndices[][4] = {{0, 1, 2, 3}, {1, 2, 3, 0}};
     static uint const ceilIndices[][4]  = {{0, 3, 2, 1}, {1, 0, 3, 2}};
 
-    float const outerLeftAlpha  = de::min(shadowDark * (1 - leftEdge.openness()), 1.f);
-    float const outerRightAlpha = de::min(shadowDark * (1 - rightEdge.openness()), 1.f);
+    float const outerLeftAlpha  = de::min(shadowDark * (1 - leftEdge.sectorOpenness()), 1.f);
+    float const outerRightAlpha = de::min(shadowDark * (1 - rightEdge.sectorOpenness()), 1.f);
 
     if(!(outerLeftAlpha > .0001 && outerRightAlpha > .0001)) return;
 
@@ -1237,13 +1236,13 @@ static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &ri
 
     // Left outer.
     rcolors[idx[0]].rgba[CA] = outerLeftAlpha;
-    if(leftEdge.sideOpenness() < 1)
-        rcolors[idx[0]].rgba[CA] *= 1 - leftEdge.sideOpenness();
+    if(leftEdge.openness() < 1)
+        rcolors[idx[0]].rgba[CA] *= 1 - leftEdge.openness();
 
     // Right outer.
     rcolors[idx[1]].rgba[CA] = outerRightAlpha;
-    if(rightEdge.sideOpenness() < 1)
-        rcolors[idx[1]].rgba[CA] *= 1 - rightEdge.sideOpenness();
+    if(rightEdge.openness() < 1)
+        rcolors[idx[1]].rgba[CA] *= 1 - rightEdge.openness();
 
     if(rendFakeRadio == 2) return;
 
@@ -1276,7 +1275,7 @@ static void writeShadowSection(BspLeaf &bspLeaf, int planeIndex, Line::Side &sid
     leftEdge.prepare(planeIndex);
     rightEdge.prepare(planeIndex);
 
-    if(leftEdge.openness() >= 1 && rightEdge.openness() >= 1) return;
+    if(leftEdge.sectorOpenness() >= 1 && rightEdge.sectorOpenness() >= 1) return;
 
     writeShadowSection2(leftEdge, rightEdge, suf->normal()[VZ] > 0, shadowDark);
 }
