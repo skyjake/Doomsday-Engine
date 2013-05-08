@@ -52,6 +52,8 @@ DENG_EXTERN_C int rAmbient;
 DENG_EXTERN_C float rendLightDistanceAttenuation;
 DENG_EXTERN_C int rendLightAttenuateFixedColormap;
 DENG_EXTERN_C float lightModRange[255];
+DENG_EXTERN_C int extraLight;
+DENG_EXTERN_C float extraLightDelta;
 
 DENG_EXTERN_C int devRendSkyMode;
 DENG_EXTERN_C int gameDrawHUD;
@@ -103,6 +105,24 @@ void Rend_ApplyLightAdaptation(float *lightValue);
 float Rend_LightAdaptationDelta(float lightvalue);
 
 /**
+ * The DOOM lighting model applies distance attenuation to sector light
+ * levels.
+ *
+ * @param distToViewer  Distance from the viewer to this object.
+ * @param lightLevel    Sector lightLevel at this object's origin.
+ * @return              The specified lightLevel plus any attentuation.
+ */
+float Rend_AttenuateLightLevel(float distToViewer, float lightLevel);
+
+/**
+ * The DOOM lighting model applies a light level delta to everything when
+ * e.g. the player shoots.
+ *
+ * @return  Calculated delta.
+ */
+float Rend_ExtraLightDelta();
+
+/**
  * Updates the lightModRange which is used to applify sector light to help
  * compensate for the differences between the OpenGL lighting equation,
  * the software Doom lighting model and the light grid (ambient lighting).
@@ -113,6 +133,11 @@ float Rend_LightAdaptationDelta(float lightvalue);
 void Rend_CalcLightModRange();
 
 void R_DrawLightRange();
+
+/**
+ * Sector light color may be affected by the sky light color.
+ */
+de::Vector3f const &Rend_SectorLightColor(Sector const &sector);
 
 de::MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec();
 

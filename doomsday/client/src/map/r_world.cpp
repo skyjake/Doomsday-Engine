@@ -907,86 +907,9 @@ void R_UpdateSector(Sector &sector, bool forceUpdate)
 #endif
 }
 
-#ifdef __CLIENT__
-
-/**
- * The DOOM lighting model applies distance attenuation to sector light
- * levels.
- *
- * @param distToViewer  Distance from the viewer to this object.
- * @param lightLevel    Sector lightLevel at this object's origin.
- * @return              The specified lightLevel plus any attentuation.
- */
-float R_DistAttenuateLightLevel(float distToViewer, float lightLevel)
-{
-    if(distToViewer > 0 && rendLightDistanceAttenuation > 0)
-    {
-        float real = lightLevel -
-            (distToViewer - 32) / rendLightDistanceAttenuation *
-                (1 - lightLevel);
-
-        float minimum = lightLevel * lightLevel + (lightLevel - .63f) * .5f;
-        if(real < minimum)
-            real = minimum; // Clamp it.
-
-        return real;
-    }
-
-    return lightLevel;
-}
-
-float R_ExtraLightDelta()
-{
-    return extraLightDelta;
-}
-
-#endif // __CLIENT__
-
 float R_CheckSectorLight(float lightlevel, float min, float max)
 {
     // Has a limit been set?
     if(min == max) return 1;
-    return MINMAX_OF(0, (lightlevel - min) / (float) (max - min), 1);
+    return de::clamp(0.f, (lightlevel - min) / float(max - min), 1.f);
 }
-
-#ifdef __CLIENT__
-
-Vector3f const &R_GetSectorLightColor(Sector const &sector)
-{
-    static Vector3f skyLightColor;
-    static Vector3f oldSkyAmbientColor(-1.f, -1.f, -1.f);
-    static float oldRendSkyLight = -1;
-
-    if(rendSkyLight > .001f && sector.hasSkyMaskedPlane())
-    {
-        ColorRawf const *ambientColor = Sky_AmbientColor();
-
-        if(rendSkyLight != oldRendSkyLight ||
-           !INRANGE_OF(ambientColor->red,   oldSkyAmbientColor.x, .001f) ||
-           !INRANGE_OF(ambientColor->green, oldSkyAmbientColor.y, .001f) ||
-           !INRANGE_OF(ambientColor->blue,  oldSkyAmbientColor.z, .001f))
-        {
-            skyLightColor = Vector3f(ambientColor->rgb);
-            R_AmplifyColor(skyLightColor);
-
-            // Apply the intensity factor cvar.
-            for(int i = 0; i < 3; ++i)
-            {
-                skyLightColor[i] = skyLightColor[i] + (1 - rendSkyLight) * (1.f - skyLightColor[i]);
-            }
-
-            // When the sky light color changes we must update the lightgrid.
-            LG_MarkAllForUpdate();
-            oldSkyAmbientColor = Vector3f(ambientColor->rgb);
-        }
-
-        oldRendSkyLight = rendSkyLight;
-        return skyLightColor;
-    }
-
-    // A non-skylight sector (i.e., everything else!)
-    // Return the sector's ambient light color.
-    return sector.lightColor();
-}
-
-#endif // __CLIENT__

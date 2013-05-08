@@ -925,7 +925,7 @@ void getLightingParams(coord_t x, coord_t y, coord_t z, BspLeaf *bspLeaf,
         {
             Sector &sec = bspLeaf->sector();
             float lightLevel = sec.lightLevel();
-            Vector3f const &secColor = R_GetSectorLightColor(sec);
+            Vector3f const &secColor = Rend_SectorLightColor(sec);
 
             /* if(spr->type == VSPR_DECORATION)
             {
@@ -934,10 +934,10 @@ void getLightingParams(coord_t x, coord_t y, coord_t z, BspLeaf *bspLeaf,
             } */
 
             // Apply distance attenuation.
-            lightLevel = R_DistAttenuateLightLevel(distance, lightLevel);
+            lightLevel = Rend_AttenuateLightLevel(distance, lightLevel);
 
             // Add extra light.
-            lightLevel += R_ExtraLightDelta();
+            lightLevel += Rend_ExtraLightDelta();
 
             Rend_ApplyLightAdaptation(&lightLevel);
 

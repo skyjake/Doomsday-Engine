@@ -48,26 +48,11 @@ LineOwner *R_GetVtxLineOwner(Vertex const *vtx, Line const *line);
 void R_UpdateSector(Sector &sector, bool forceUpdate = false);
 
 /**
- * Sector light color may be affected by the sky light color.
- */
-de::Vector3f const &R_GetSectorLightColor(Sector const &sector);
-
-/**
  * @return  @c > 0 if @a lightlevel passes the min max limit condition.
  */
 float R_CheckSectorLight(float lightlevel, float min, float max);
 
 #ifdef __CLIENT__
-
-float R_DistAttenuateLightLevel(float distToViewer, float lightLevel);
-
-/**
- * The DOOM lighting model applies a light level delta to everything when
- * e.g. the player shoots.
- *
- * @return  Calculated delta.
- */
-float R_ExtraLightDelta();
 
 void R_UpdateMissingMaterialsForLinesOfSector(Sector const &sec);
 

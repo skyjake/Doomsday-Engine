@@ -65,8 +65,6 @@ DENG_EXTERN_C float    frameTimePos;      // 0...1: fractional part for sharp ga
 DENG_EXTERN_C int      loadInStartupMode;
 DENG_EXTERN_C int      validCount;
 DENG_EXTERN_C int      frameCount;
-DENG_EXTERN_C int      extraLight;
-DENG_EXTERN_C float    extraLightDelta;
 DENG_EXTERN_C int      rendInfoTris;
 
 DENG_EXTERN_C byte     precacheMapMaterials, precacheSprites, precacheSkins;

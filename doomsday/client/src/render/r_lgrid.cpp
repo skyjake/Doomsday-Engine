@@ -811,7 +811,7 @@ BEGIN_PROF( PROF_GRID_UPDATE );
 
             // Determine the color of the ambient light in this sector.
             sector = block->sector;
-            Vector3f const &color = R_GetSectorLightColor(*sector);
+            Vector3f const &color = Rend_SectorLightColor(*sector);
             height = (int) (sector->ceiling().height() - sector->floor().height());
 
             bool isSkyFloor = sector->ceilingSurface().hasSkyMaskedMaterial();

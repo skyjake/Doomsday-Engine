@@ -135,6 +135,9 @@ byte devLightModRange = 0;
 float rendLightDistanceAttenuation = 1024;
 int rendLightAttenuateFixedColormap = 1;
 
+int extraLight; // Bumped light from gun blasts.
+float extraLightDelta;
+
 byte devMobjVLights = 0; // @c 1= Draw mobj vertex lighting vector.
 int devMobjBBox = 0; // 1 = Draw mobj bounding boxes (for debug)
 int devPolyobjBBox = 0; // 1 = Draw polyobj bounding boxes (for debug)
@@ -350,14 +353,75 @@ void Rend_ApplyTorchLight(float color[3], float distance)
     }
 }
 
+float Rend_AttenuateLightLevel(float distToViewer, float lightLevel)
+{
+    if(distToViewer > 0 && rendLightDistanceAttenuation > 0)
+    {
+        float real = lightLevel -
+            (distToViewer - 32) / rendLightDistanceAttenuation *
+                (1 - lightLevel);
+
+        float minimum = lightLevel * lightLevel + (lightLevel - .63f) * .5f;
+        if(real < minimum)
+            real = minimum; // Clamp it.
+
+        return real;
+    }
+
+    return lightLevel;
+}
+
+float Rend_ExtraLightDelta()
+{
+    return extraLightDelta;
+}
+
+Vector3f const &Rend_SectorLightColor(Sector const &sector)
+{
+    static Vector3f skyLightColor;
+    static Vector3f oldSkyAmbientColor(-1.f, -1.f, -1.f);
+    static float oldRendSkyLight = -1;
+
+    if(rendSkyLight > .001f && sector.hasSkyMaskedPlane())
+    {
+        ColorRawf const *ambientColor = Sky_AmbientColor();
+
+        if(rendSkyLight != oldRendSkyLight ||
+           !INRANGE_OF(ambientColor->red,   oldSkyAmbientColor.x, .001f) ||
+           !INRANGE_OF(ambientColor->green, oldSkyAmbientColor.y, .001f) ||
+           !INRANGE_OF(ambientColor->blue,  oldSkyAmbientColor.z, .001f))
+        {
+            skyLightColor = Vector3f(ambientColor->rgb);
+            R_AmplifyColor(skyLightColor);
+
+            // Apply the intensity factor cvar.
+            for(int i = 0; i < 3; ++i)
+            {
+                skyLightColor[i] = skyLightColor[i] + (1 - rendSkyLight) * (1.f - skyLightColor[i]);
+            }
+
+            // When the sky light color changes we must update the lightgrid.
+            LG_MarkAllForUpdate();
+            oldSkyAmbientColor = Vector3f(ambientColor->rgb);
+        }
+
+        oldRendSkyLight = rendSkyLight;
+        return skyLightColor;
+    }
+
+    // A non-skylight sector (i.e., everything else!)
+    // Return the sector's ambient light color.
+    return sector.lightColor();
+}
+
 static void lightVertex(ColorRawf &color, rvertex_t const &vtx, float lightLevel,
                         Vector3f const &ambientColor)
 {
     float const dist = Rend_PointDist2D(vtx.pos);
-    float lightVal = R_DistAttenuateLightLevel(dist, lightLevel);
+    float lightVal = Rend_AttenuateLightLevel(dist, lightLevel);
 
     // Add extra light.
-    lightVal += R_ExtraLightDelta();
+    lightVal += Rend_ExtraLightDelta();
 
     Rend_ApplyLightAdaptation(&lightVal);
 
@@ -1523,7 +1587,7 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     if(isTwoSidedMiddle && side.sectorPtr() != currentBspLeaf->sectorPtr())
     {
         // Temporarily modify the draw state.
-        currentSectorLightColor = R_GetSectorLightColor(side.sector());
+        currentSectorLightColor = Rend_SectorLightColor(side.sector());
         currentSectorLightLevel = side.sector().lightLevel();
     }
 
@@ -1596,7 +1660,7 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     if(isTwoSidedMiddle && side.sectorPtr() != currentBspLeaf->sectorPtr())
     {
         // Undo temporary draw state changes.
-        currentSectorLightColor = R_GetSectorLightColor(currentBspLeaf->sector());
+        currentSectorLightColor = Rend_SectorLightColor(currentBspLeaf->sector());
         currentSectorLightLevel = currentBspLeaf->sector().lightLevel();
     }
 
@@ -2759,7 +2823,7 @@ static void makeCurrent(BspLeaf *bspLeaf)
     // Update draw state.
     if(sectorChanged)
     {
-        currentSectorLightColor = R_GetSectorLightColor(bspLeaf->sector());
+        currentSectorLightColor = Rend_SectorLightColor(bspLeaf->sector());
         currentSectorLightLevel = bspLeaf->sector().lightLevel();
     }
 }

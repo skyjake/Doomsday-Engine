@@ -60,9 +60,6 @@ int rendInfoTris = 0;
 // Precalculated math tables.
 fixed_t *fineCosine = &finesine[FINEANGLES / 4];
 
-int extraLight; // Bumped light from gun blasts.
-float extraLightDelta;
-
 float frameTimePos; // 0...1: fractional part for sharp game tics.
 
 int loadInStartupMode = false;
@@ -1033,13 +1030,14 @@ void R_SetupFrame(player_t *player)
         if(player->extraLightCounter == 0)
             player->extraLight = player->targetExtraLight;
     }
-    extraLight = player->extraLight;
-    extraLightDelta = extraLight / 16.0f;
 
     // Why?
     validCount++;
 
 #ifdef __CLIENT__
+    extraLight = player->extraLight;
+    extraLightDelta = extraLight / 16.0f;
+
     if(!freezeRLs)
 #endif
     {

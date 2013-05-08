@@ -465,13 +465,13 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
         else
         {
             float lightLevel = pt->sector->lightLevel();
-            Vector3f const &secColor = R_GetSectorLightColor(*pt->sector);
+            Vector3f const &secColor = Rend_SectorLightColor(*pt->sector);
 
             // Apply distance attenuation.
-            lightLevel = R_DistAttenuateLightLevel(params->distance, lightLevel);
+            lightLevel = Rend_AttenuateLightLevel(params->distance, lightLevel);
 
             // Add extra light.
-            lightLevel += R_ExtraLightDelta();
+            lightLevel += Rend_ExtraLightDelta();
 
             Rend_ApplyLightAdaptation(&lightLevel);
 
