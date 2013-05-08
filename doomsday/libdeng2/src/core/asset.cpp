@@ -110,6 +110,7 @@ void AssetGroup::clear()
     DENG2_FOR_EACH(Members, i, d->deps)
     {
         i->first->audienceForDeletion -= this;
+        i->first->audienceForStateChange -= this;
     }
 
     d->deps.clear();
@@ -120,12 +121,14 @@ void AssetGroup::insert(Asset const &asset, Policy policy)
 {
     d->deps[&asset] = policy;
     asset.audienceForDeletion += this;
+    asset.audienceForStateChange += this;
     d->update(*this);
 }
 
 void AssetGroup::remove(Asset const &asset)
 {
     asset.audienceForDeletion -= this;
+    asset.audienceForStateChange -= this;
     d->deps.erase(&asset);
     d->update(*this);
 }
@@ -150,7 +153,10 @@ AssetGroup::Members const &AssetGroup::all() const
 
 void AssetGroup::assetDeleted(Asset &asset)
 {
-    remove(asset);
+    if(has(asset))
+    {
+        remove(asset);
+    }
 }
 
 void AssetGroup::assetStateChanged(Asset &)

@@ -58,7 +58,7 @@ public:
      *
      * @param viewSize  New size.
      */
-    void setViewSize(Vector2i const &viewSize);
+    void setViewSize(Size const &viewSize);
 
     TextWidget *focus() const;
 

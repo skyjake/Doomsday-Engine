@@ -52,7 +52,7 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(Alignment)
 class LIBSHELL_PUBLIC TextCanvas
 {
 public:
-    typedef Vector2i Size;
+    typedef Vector2ui Size;
     typedef Vector2i Coord;
 
     struct Char
@@ -164,9 +164,9 @@ public:
 
     void fill(Rectanglei const &rect, Char const &ch);
 
-    void put(Vector2i const &pos, Char const &ch);
+    void put(Coord const &pos, Char const &ch);
 
-    void drawText(Vector2i const &pos, String const &text,
+    void drawText(Coord const &pos, String const &text,
                   Char::Attribs const &attribs = Char::DefaultAttributes,
                   int richOffset = 0);
 
@@ -180,7 +180,7 @@ public:
      * @param attribs        Character attributes.
      * @param lineAlignment  Alignment for lines.
      */
-    void drawWrappedText(Vector2i const &pos, String const &text, LineWrapping const &wraps,
+    void drawWrappedText(Coord const &pos, String const &text, LineWrapping const &wraps,
                          Char::Attribs const &attribs = Char::DefaultAttributes,
                          Alignment lineAlignment = AlignLeft);
 
@@ -212,7 +212,7 @@ public:
      *
      * @param pos  Position.
      */
-    virtual void setCursorPosition(Vector2i const &pos);
+    virtual void setCursorPosition(Coord const &pos);
 
 private:
     DENG2_PRIVATE(d)

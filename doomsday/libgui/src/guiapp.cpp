@@ -17,6 +17,7 @@
  */
 
 #include "de/GuiApp"
+#include "de/gui/opengl.h"
 #include <de/Log>
 
 #ifdef DENG2_QT_5_0_OR_NEWER

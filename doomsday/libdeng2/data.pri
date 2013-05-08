@@ -3,6 +3,7 @@ HEADERS += \
     include/de/Archive \
     include/de/ArrayValue \
     include/de/Audience \
+    include/de/Bank \
     include/de/BigEndianByteOrder \
     include/de/BinaryTree \
     include/de/BitField \
@@ -14,8 +15,8 @@ HEADERS += \
     include/de/Counted \
     include/de/Date \
     include/de/DictionaryValue \
+    include/de/FIFO \
     include/de/FixedByteArray \
-    include/de/Guard \
     include/de/IBlock \
     include/de/IByteArray \
     include/de/IIOStream \
@@ -26,7 +27,6 @@ HEADERS += \
     include/de/IWritable \
     include/de/Info \
     include/de/LittleEndianByteOrder \
-    include/de/Lockable \
     include/de/NoneValue \
     include/de/NumberValue \
     include/de/Path \
@@ -42,7 +42,6 @@ HEADERS += \
     include/de/TimeValue \
     include/de/Value \
     include/de/Variable \
-    include/de/Waitable \
     include/de/WaitableFIFO \
     include/de/Writer \
     include/de/Zeroed \
@@ -52,6 +51,7 @@ HEADERS += \
     include/de/data/accessorvalue.h \
     include/de/data/archive.h \
     include/de/data/arrayvalue.h \
+    include/de/data/bank.h \
     include/de/data/binarytree.h \
     include/de/data/bitfield.h \
     include/de/data/block.h \
@@ -62,8 +62,8 @@ HEADERS += \
     include/de/data/counted.h \
     include/de/data/date.h \
     include/de/data/dictionaryvalue.h \
+    include/de/data/fifo.h \
     include/de/data/fixedbytearray.h \
-    include/de/data/guard.h \
     include/de/data/huffman.h \
     include/de/data/iblock.h \
     include/de/data/ibytearray.h \
@@ -75,7 +75,6 @@ HEADERS += \
     include/de/data/iserializable.h \
     include/de/data/iwritable.h \
     include/de/data/json.h \
-    include/de/data/lockable.h \
     include/de/data/nonevalue.h \
     include/de/data/numbervalue.h \
     include/de/data/observers.h \
@@ -92,7 +91,6 @@ HEADERS += \
     include/de/data/timevalue.h \
     include/de/data/value.h \
     include/de/data/variable.h \
-    include/de/data/waitable.h \
     include/de/data/waitablefifo.h \
     include/de/data/writer.h \
     include/de/data/zeroed.h \
@@ -102,6 +100,7 @@ SOURCES += \
     src/data/accessorvalue.cpp \
     src/data/archive.cpp \
     src/data/arrayvalue.cpp \
+    src/data/bank.cpp \
     src/data/binarytree_wrapper.cpp \
     src/data/bitfield.cpp \
     src/data/block.cpp \
@@ -113,11 +112,9 @@ SOURCES += \
     src/data/date.cpp \
     src/data/dictionaryvalue.cpp \
     src/data/fixedbytearray.cpp \
-    src/data/guard.cpp \
     src/data/huffman.cpp \
     src/data/info.cpp \
     src/data/json.cpp \
-    src/data/lockable.cpp \
     src/data/nonevalue.cpp \
     src/data/numbervalue.cpp \
     src/data/path.cpp \
@@ -134,6 +131,5 @@ SOURCES += \
     src/data/timevalue.cpp \
     src/data/value.cpp \
     src/data/variable.cpp \
-    src/data/waitable.cpp \
     src/data/writer.cpp \
     src/data/ziparchive.cpp

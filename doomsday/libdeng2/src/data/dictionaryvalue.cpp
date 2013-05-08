@@ -257,8 +257,8 @@ void DictionaryValue::operator << (Reader &from)
     clear();
     while(count--)
     {
-        std::auto_ptr<Value> key(Value::constructFrom(from));
-        std::auto_ptr<Value> value(Value::constructFrom(from));
-        add(key.release(), value.release());
+        QScopedPointer<Value> key(Value::constructFrom(from));
+        QScopedPointer<Value> value(Value::constructFrom(from));
+        add(key.take(), value.take());
     }
 }

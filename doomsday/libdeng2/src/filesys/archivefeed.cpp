@@ -146,24 +146,7 @@ DENG2_PIMPL(ArchiveFeed)
 
         for(Archive::Names::iterator i = names.begin(); i != names.end(); ++i)
         {
-            String subBasePath = basePath / *i;
-            Folder &subFolder = folder.fileSystem().makeFolder(folder.path() / *i);
-
-            // Does it already have the appropriate feed?
-            for(Folder::Feeds::const_iterator i = subFolder.feeds().begin();
-                i != subFolder.feeds().end(); ++i)
-            {
-                ArchiveFeed *archFeed = const_cast<ArchiveFeed *>(dynamic_cast<ArchiveFeed const *>(*i));
-                if(archFeed && &archFeed->archive() == &archive() && archFeed->basePath() == subBasePath)
-                {
-                    // It's got it.
-                    LOG_DEBUG("Feed for \"%s\" already there.") << archFeed->basePath();
-                    return;
-                }
-            }
-
-            // Create a new feed.
-            subFolder.attach(new ArchiveFeed(self, subBasePath));
+            folder.fileSystem().makeFolder(folder.path() / *i, FS::InheritPrimaryFeed);
         }
     }
 };
@@ -194,10 +177,19 @@ void ArchiveFeed::populate(Folder &folder)
     d->populate(folder);
 }
 
-bool ArchiveFeed::prune(File &/*file*/) const
+bool ArchiveFeed::prune(File &file) const
 {
-    /// @todo  Prune based on entry status.
-    return true;
+    ArchiveEntryFile *entryFile = dynamic_cast<ArchiveEntryFile *>(&file);
+    if(entryFile && &entryFile->archive() == &archive())
+    {
+        if(!archive().hasEntry(entryFile->entryPath()))
+            return true; // It's gone...
+
+        // Prune based on entry status.
+        return archive().entryStatus(entryFile->entryPath()).modifiedAt !=
+               file.status().modifiedAt;
+    }
+    return false;
 }
 
 File *ArchiveFeed::newFile(String const &name)
@@ -220,7 +212,17 @@ void ArchiveFeed::removeFile(String const &name)
     archive().remove(d->basePath / name);
 }
 
+Feed *ArchiveFeed::newSubFeed(String const &name)
+{
+    return new ArchiveFeed(*this, d->basePath / name);
+}
+
 Archive &ArchiveFeed::archive()
+{
+    return d->archive();
+}
+
+Archive const &ArchiveFeed::archive() const
 {
     return d->archive();
 }

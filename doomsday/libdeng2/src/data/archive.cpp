@@ -107,7 +107,7 @@ bool Archive::hasEntry(Path const &path) const
     return d->index->has(path, PathTree::MatchFull | PathTree::NoBranch);
 }
 
-dint Archive::listFiles(Archive::Names& names, Path const &folder) const
+dint Archive::listFiles(Archive::Names &names, Path const &folder) const
 {
     DENG2_ASSERT(d->index != 0);
 

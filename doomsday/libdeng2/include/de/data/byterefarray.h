@@ -37,6 +37,11 @@ public:
 
 public:
     /**
+     * Constructs a reference array to NULL with zero size.
+     */
+    ByteRefArray();
+
+    /**
      * Constructs a new byte reference array.
      *
      * @param base  Pointer to the start of the array.
@@ -51,6 +56,29 @@ public:
      * @param size  Total size of the array.
      */
     ByteRefArray(void const *base, Size size);
+
+    /**
+     * Constructs a non-modifiable byte reference array from a null terminated C
+     * string.
+     *
+     * @param nullTerminatedCStr  Pointer to the start of the string.
+     */
+    static ByteRefArray fromCStr(char const *nullTerminatedCStr);
+
+    /**
+     * Returns a pointer to the start of the array.
+     */
+    void *base();
+
+    /**
+     * Returns a non-modifiable pointer to the start of the array.
+     */
+    void const *base() const;
+
+    /**
+     * Returns a non-modifiable pointer to the start of the array.
+     */
+    void const *readBase() const { return base(); }
 
     /**
      * Sets the contents of the array to zero.
@@ -75,6 +103,6 @@ private:
     Size _size;
 };
 
-}
+} // namespace de
 
 #endif // LIBDENG2_BYTEREFARRAY_H

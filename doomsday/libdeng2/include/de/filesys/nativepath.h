@@ -143,6 +143,8 @@ public:
 
     bool exists() const;
 
+    bool isReadable() const;
+
     /**
      * Returns the current native working path.
      */

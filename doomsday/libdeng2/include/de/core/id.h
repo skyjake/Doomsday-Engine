@@ -59,6 +59,8 @@ public:
 
     ~Id();
 
+    bool isNone() const { return _id == None; }
+
     bool operator < (Id const &other) const { return _id < other._id; }
 
     bool operator == (Id const &other) const { return _id == other._id; }
@@ -95,6 +97,8 @@ private:
 };
 
 DENG2_PUBLIC QTextStream &operator << (QTextStream &os, Id const &id);
+
+inline uint qHash(Id const &id) { return id; }
 
 } // namespace de
 

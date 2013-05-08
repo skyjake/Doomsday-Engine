@@ -21,6 +21,10 @@
 #define _WIN32_DCOM
 #define STRICT
 
+#ifdef __CLIENT__
+#  include <de/DisplayMode>
+#endif
+
 #include <windows.h>
 #include <windowsx.h>
 #include <objbase.h>
@@ -42,10 +46,6 @@
 
 #include "filesys/fs_util.h"
 #include "dd_winit.h"
-
-#ifdef __CLIENT__
-#  include <de/DisplayMode>
-#endif
 
 application_t app;
 

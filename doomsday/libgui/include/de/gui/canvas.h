@@ -22,10 +22,12 @@
 
 #include <de/Observers>
 #include <de/libdeng2.h>
+#include <de/Vector>
 #include <QGLWidget>
 
 #include "../KeyEventSource"
 #include "../MouseEventSource"
+#include "../GLTarget"
 
 namespace de {
 
@@ -46,6 +48,8 @@ class LIBGUI_PUBLIC Canvas : public QGLWidget, public KeyEventSource, public Mou
     Q_OBJECT
 
 public:
+    typedef Vector2ui Size;
+
     /**
      * Notified when the canvas is ready for GL operations. The OpenGL context
      * and drawing surface are not ready to be used before that. The
@@ -111,7 +115,7 @@ public:
     /**
      * Returns the size of the canvas in pixels.
      */
-    Vector2i size() const;
+    Size size() const;
 
     /**
      * When the mouse is trapped, all mouse input is grabbed, the mouse cursor
@@ -133,6 +137,13 @@ public:
      * @param other  Canvas instance.
      */
     void copyAudiencesFrom(Canvas const &other);
+
+    /**
+     * Returns a render target that renders to this canvas.
+     *
+     * @return GL render target.
+     */
+    GLTarget &renderTarget() const;
 
 protected:
     void initializeGL();

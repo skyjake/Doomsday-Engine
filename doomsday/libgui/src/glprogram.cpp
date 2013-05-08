@@ -23,6 +23,7 @@
 #include "de/GLTexture"
 #include "de/gui/opengl.h"
 #include <de/Block>
+#include <de/Log>
 
 #include <QSet>
 #include <QList>
@@ -32,8 +33,8 @@ namespace de {
 using namespace internal;
 
 DENG2_PIMPL(GLProgram),
-    DENG2_OBSERVES(GLUniform, ValueChange),
-    DENG2_OBSERVES(GLUniform, Deletion)
+DENG2_OBSERVES(GLUniform, ValueChange),
+DENG2_OBSERVES(GLUniform, Deletion)
 {
     typedef QSet<GLUniform const *> Uniforms;
     typedef QList<GLUniform const *> UniformList;
@@ -84,28 +85,29 @@ DENG2_PIMPL(GLProgram),
         }
     }
 
-    void attach(GLShader const &shader)
+    void attach(GLShader const *shader)
     {
-        DENG2_ASSERT(shader.isReady());
-        glAttachShader(name, shader.glName());
-        shaders.insert(holdRef(&shader));
+        DENG2_ASSERT(shader->isReady());
+        alloc();
+        glAttachShader(name, shader->glName());
+        shaders.insert(holdRef(shader));
     }
 
-    void detach(GLShader const &shader)
+    void detach(GLShader const *shader)
     {
-        if(shader.isReady())
+        if(shader->isReady())
         {
-            glDetachShader(name, shader.glName());
+            glDetachShader(name, shader->glName());
         }
-        shaders.remove(&shader);
-        shader.release();
+        shaders.remove(shader);
+        shader->release();
     }
 
     void detachAllShaders()
     {
         foreach(GLShader const *shader, shaders)
         {
-            detach(*shader);
+            detach(shader);
         }
         shaders.clear();
     }
@@ -149,9 +151,10 @@ DENG2_PIMPL(GLProgram),
             { AttribSpec::Bitangent, "aBitangent" }
         };
 
-        for(int i = 0; sizeof(names)/sizeof(names[0]); ++i)
+        for(uint i = 0; i < sizeof(names)/sizeof(names[0]); ++i)
         {
             glBindAttribLocation(name, GLuint(names[i].semantic), names[i].varName);
+            LIBGUI_ASSERT_GL_OK();
         }
 
         if(!shaders.isEmpty())
@@ -189,7 +192,7 @@ DENG2_PIMPL(GLProgram),
         // Apply the uniform values in this program.
         foreach(GLUniform const *u, changed)
         {
-            if(u->type() != GLUniform::Texture2D)
+            if(u->type() != GLUniform::Sampler2D)
             {
                 u->applyInProgram(self);
             }
@@ -204,6 +207,7 @@ DENG2_PIMPL(GLProgram),
                 if(loc >= 0)
                 {
                     glUniform1i(loc, unit);
+                    LIBGUI_ASSERT_GL_OK();
                 }
             }
             texturesChanged = false;
@@ -217,9 +221,10 @@ DENG2_PIMPL(GLProgram),
         // Update the sampler uniforms.
         for(int unit = textures.size() - 1; unit >= 0; --unit)
         {
-            if(textures[unit]->texture())
+            GLTexture const *tex = *textures[unit];
+            if(tex)
             {
-                textures[unit]->texture()->glBindToUnit(unit);
+                tex->glBindToUnit(unit);
             }
         }
     }
@@ -243,12 +248,14 @@ void GLProgram::clear()
     d->release();
 }
 
-GLProgram &GLProgram::build(GLShader const &vertexShader, GLShader const &fragmentShader)
+GLProgram &GLProgram::build(GLShader const *vertexShader, GLShader const *fragmentShader)
 {
-    DENG2_ASSERT(vertexShader.isReady());
-    DENG2_ASSERT(vertexShader.type() == GLShader::Vertex);
-    DENG2_ASSERT(fragmentShader.isReady());
-    DENG2_ASSERT(fragmentShader.type() == GLShader::Fragment);
+    DENG2_ASSERT(vertexShader != 0);
+    DENG2_ASSERT(vertexShader->isReady());
+    DENG2_ASSERT(vertexShader->type() == GLShader::Vertex);
+    DENG2_ASSERT(fragmentShader != 0);
+    DENG2_ASSERT(fragmentShader->isReady());
+    DENG2_ASSERT(fragmentShader->type() == GLShader::Fragment);
 
     d->detachAllShaders();
     d->attach(vertexShader);
@@ -258,6 +265,13 @@ GLProgram &GLProgram::build(GLShader const &vertexShader, GLShader const &fragme
     setState(Ready);
 
     return *this;
+}
+
+GLProgram &GLProgram::build(IByteArray const &vertexShaderSource,
+                            IByteArray const &fragmentShaderSource)
+{
+    return build(refless(new GLShader(GLShader::Vertex,   vertexShaderSource)),
+                 refless(new GLShader(GLShader::Fragment, fragmentShaderSource)));
 }
 
 GLProgram &GLProgram::operator << (GLUniform const &uniform)
@@ -275,7 +289,7 @@ GLProgram &GLProgram::bind(GLUniform const &uniform)
         uniform.audienceForValueChange += d.get();
         uniform.audienceForDeletion += d.get();
 
-        if(uniform.type() == GLUniform::Texture2D)
+        if(uniform.type() == GLUniform::Sampler2D)
         {
             d->textures << &uniform;
             d->texturesChanged = true;
@@ -294,7 +308,7 @@ GLProgram &GLProgram::unbind(GLUniform const &uniform)
         uniform.audienceForValueChange -= d.get();
         uniform.audienceForDeletion -= d.get();
 
-        if(uniform.type() == GLUniform::Texture2D)
+        if(uniform.type() == GLUniform::Sampler2D)
         {
             d->textures.removeOne(&uniform);
             d->texturesChanged = true;
@@ -303,7 +317,7 @@ GLProgram &GLProgram::unbind(GLUniform const &uniform)
     return *this;
 }
 
-void GLProgram::beginUse()
+void GLProgram::beginUse() const
 {
     DENG2_ASSERT(isReady());
     DENG2_ASSERT(!d->inUse);
@@ -313,11 +327,15 @@ void GLProgram::beginUse()
     // The program is now ready for use.
     glUseProgram(d->name);
 
+    LIBGUI_ASSERT_GL_OK();
+
     d->updateUniforms();
     d->bindTextures();
+
+    LIBGUI_ASSERT_GL_OK();
 }
 
-void GLProgram::endUse()
+void GLProgram::endUse() const
 {
     DENG2_ASSERT(d->inUse);
 
@@ -333,7 +351,11 @@ GLuint GLProgram::glName() const
 int GLProgram::glUniformLocation(char const *uniformName) const
 {
     GLint loc = glGetUniformLocation(d->name, uniformName);
-    // Could check loc here for validity.
+    if(loc < 0)
+    {
+        LOG_AS("GLProgram");
+        LOG_DEBUG("Could not find uniform '%s'") << uniformName;
+    }
     return loc;
 }
 

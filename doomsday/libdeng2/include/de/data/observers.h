@@ -21,8 +21,10 @@
 #define LIBDENG2_OBSERVERS_H
 
 #include "../libdeng2.h"
+#include "../ReadWriteLockable"
+#include "../Guard"
 
-#include <set>
+#include <QSet>
 
 /**
  * Macro that forms the name of an observer interface.
@@ -109,191 +111,161 @@
 #define DENG2_FOR_PUBLIC_AUDIENCE(Name, Var) \
     DENG2_FOR_EACH_OBSERVER(Name##Audience, Var, self.audienceFor##Name)
 
-namespace de
+namespace de {
+
+/**
+ * Template for observer sets. The template type should be an interface
+ * implemented by all the observers. @ingroup data
+ *
+ * @par Thread-safety
+ *
+ * Observers and Observers::Loop lock the observer set separately for reading
+ * and writing as appropriate.
+ */
+template <typename Type>
+class Observers : public ReadWriteLockable
 {
+public:
+    typedef QSet<Type *> Members;
+    typedef typename Members::iterator iterator;
+    typedef typename Members::const_iterator const_iterator;
+    typedef typename Members::size_type size_type;
+
     /**
-     * Template for observer sets. The template type should be an interface
-     * implemented by all the observers. @ingroup data
-     *
-     * @todo This could use further improvement, perhaps by utilizing a QSet in
-     * Observers<>. If the observers set is destroyed in the middle of
-     * iterating through a large number of observers, there will likely still
-     * be a crash because the 'next' iterator of the loop will become invalid
-     * (and not just point to the end of the set as in this instance when there
-     * is a single observer). Observers<>::Loop could also observe the set
-     * itself, although in that case it would be necessary to derive a custom
-     * set class that provides the necessary notifications to Loop.
+     * Iteration utility for observers. This (or @c foreach) should be used when
+     * notifying observers, because it is safe against the observer removing
+     * itself from the observer set, or the set itself being destroyed.
      */
-    template <typename Type>
-    class Observers
-    {
+    class Loop {
     public:
-        typedef std::set<Type *> Members;
-        typedef typename Members::iterator iterator;
-        typedef typename Members::const_iterator const_iterator;
-        typedef typename Members::size_type size_type;
-        
-        /**
-         * Iteration utility for observers. This should be used when notifying 
-         * observers, because it is safe against the observer removing itself
-         * from the observer set.
-         */
-        class Loop {
-        public:
-            Loop(Observers &observers) : _observers(observers) {
-                _next = observers.begin();
-                next();
-            }
-            bool done() {
-                return _current == _observers.end();
-            }
-            void next() {
-                _current = _next;
-                if(_next != _observers.end())
-                {
-                    ++_next;
-                }
-            }
-            iterator &get() {
-                return _current;
-            }
-            Type *operator -> () {
-                return *get();
-            }
-            Loop &operator ++ () {
-                next();
-                return *this;
-            }
-        private:
-            Observers &_observers;
-            iterator _current;
-            iterator _next;
-        };
-        
-    public:
-        Observers() : _members(0) {}
-
-        Observers(Observers<Type> const &other) : _members(0) {
-            *this = other;
+        Loop(Observers &observers) {
+            DENG2_GUARD_READ(observers);
+            _observers = observers._members;
+            _next = _observers.begin();
+            next();
         }
-
-        virtual ~Observers() {
-            clear();
+        bool done() {
+            return _current == _observers.end();
         }
-        
-        void clear() {
-            delete _members;
-            _members = 0;
+        void next() {
+            _current = _next;
+            if(_next != _observers.end()) {
+                ++_next;
+            }
         }
-
-        Observers<Type> &operator = (Observers<Type> const &other) {
-            // If _members already exists, the instance is retained
-            // in case someone is using it.
-            if(other._members) {
-                checkExists();
-                _members->clear();
-                DENG2_FOR_EACH_CONST(typename Members, i, *other._members) {
-                    add(*i);
-                }
-            }
-            else {
-                if(_members) _members->clear();
-            }
+        iterator &get() {
+            return _current;
+        }
+        Type *operator -> () {
+            return *get();
+        }
+        Loop &operator ++ () {
+            next();
             return *this;
         }
-
-        /// Add an observer into the set. The set does not receive
-        /// ownership of the observer instance.
-        void add(Type *observer) {
-            checkExists();
-            _members->insert(observer);
-        }            
-
-        Observers<Type> &operator += (Type *observer) {
-            add(observer);
-            return *this;
-        }
-
-        Observers<Type> &operator += (Type &observer) {
-            add(&observer);
-            return *this;
-        }
-
-        Observers<Type> const &operator += (Type *observer) const {
-            const_cast<Observers<Type> *>(this)->add(observer);
-            return *this;
-        }
-        
-        void remove(Type *observer) {
-            if(_members) {
-                _members->erase(observer);
-                if(!_members->size()) {
-                    delete _members;
-                    _members = 0;
-                }
-            }
-        }
-        
-        Observers<Type> &operator -= (Type *observer) {
-            remove(observer);
-            return *this;
-        }
-
-        Observers<Type> &operator -= (Type &observer) {
-            remove(&observer);
-            return *this;
-        }
-
-        Observers<Type> const &operator -= (Type *observer) const {
-            const_cast<Observers<Type> *>(this)->remove(observer);
-            return *this;
-        }
-
-        size_type size() const {
-            if(_members) {
-                return _members->size();
-            }
-            return 0;
-        }
-
-        bool isEmpty() const {
-            return size() == 0;
-        }
-        
-        iterator begin() {
-            checkExists();
-            return _members->begin();
-        }
-
-        iterator end() {
-            checkExists();
-            return _members->end();
-        }
-        
-        const_iterator begin() const {
-            if(!_members) {
-                return 0;
-            }
-            return _members->begin();
-        }
-
-        const_iterator end() const {
-            if(!_members) {
-                return 0;
-            }
-            return _members->end();
-        }
-
-    protected:
-        void checkExists() {
-            if(!_members) {
-                _members = new Members;
-            }            
-        }
-        
     private:
-        Members *_members;
+        Members _observers;
+        iterator _current;
+        iterator _next;
     };
-}
+
+    friend class Loop;
+
+public:
+    Observers() {}
+
+    Observers(Observers<Type> const &other) {
+        *this = other;
+    }
+
+    virtual ~Observers() {
+        clear();
+    }
+
+    void clear() {
+        DENG2_GUARD_WRITE(this);
+        _members.clear();
+    }
+
+    Observers<Type> &operator = (Observers<Type> const &other) {
+        if(this == &other) return *this;
+        DENG2_GUARD_READ(other);
+        DENG2_GUARD_WRITE(this);
+        _members = other._members;
+        return *this;
+    }
+
+    /// Add an observer into the set. The set does not receive
+    /// ownership of the observer instance.
+    void add(Type *observer) {
+        DENG2_GUARD_WRITE(this);
+        _members.insert(observer);
+    }
+
+    Observers<Type> &operator += (Type *observer) {
+        add(observer);
+        return *this;
+    }
+
+    Observers<Type> &operator += (Type &observer) {
+        add(&observer);
+        return *this;
+    }
+
+    Observers<Type> const &operator += (Type *observer) const {
+        const_cast<Observers<Type> *>(this)->add(observer);
+        return *this;
+    }
+
+    void remove(Type *observer) {
+        DENG2_GUARD_WRITE(this);
+        _members.remove(observer);
+    }
+
+    Observers<Type> &operator -= (Type *observer) {
+        remove(observer);
+        return *this;
+    }
+
+    Observers<Type> &operator -= (Type &observer) {
+        remove(&observer);
+        return *this;
+    }
+
+    Observers<Type> const &operator -= (Type *observer) const {
+        const_cast<Observers<Type> *>(this)->remove(observer);
+        return *this;
+    }
+
+    size_type size() const {
+        DENG2_GUARD_READ(this);
+        return _members.size();
+    }
+
+    bool isEmpty() const {
+        return size() == 0;
+    }
+
+    iterator begin() {
+        return _members.begin();
+    }
+
+    iterator end() {
+        return _members.end();
+    }
+
+    const_iterator begin() const {
+        return _members.constBegin();
+    }
+
+    const_iterator end() const {
+        return _members.constEnd();
+    }
+
+private:
+    Members _members;
+};
+
+} // namespace de
 
 #endif /* LIBDENG2_OBSERVERS_H */

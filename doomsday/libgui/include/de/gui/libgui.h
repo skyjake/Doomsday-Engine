@@ -36,6 +36,8 @@
 #  define LIBGUI_PUBLIC
 #endif
 
+#define LIBGUI_ASSERT_GL_OK() DENG2_ASSERT(glGetError() == GL_NO_ERROR)
+
 namespace de {
 
 } // namespace de

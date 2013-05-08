@@ -34,6 +34,8 @@ class Feed;
  * A folder contains a set of files. It is used for building a tree of files
  * in the file system (de::FS). This is the base class for all types of folders.
  *
+ * The first Feed attached to a Folder is the primary feed.
+ *
  * @see Feed
  *
  * @ingroup fs
@@ -142,8 +144,8 @@ public:
     File &replaceFile(String const &name);
 
     /**
-     * Removes a file from a folder. If it has an origin feed, the feed will be
-     * asked to remove the file as well.
+     * Removes a file from a folder. The file will be deleted. If it has an
+     * origin feed, the feed will be asked to remove the file as well.
      *
      * @param name  Name or path of file to remove, relative to this folder.
      */
@@ -241,9 +243,11 @@ public:
     }
 
     /**
-     * Attach a feed to the folder. The feed will provide content for the folder.
+     * Attach a feed to the folder. The feed will provide content for the
+     * folder. The first feed attached to a folder is the primary feed.
      *
-     * @param feed  Feed to attach to the folder. The folder gets ownership of the feed.
+     * @param feed  Feed to attach to the folder. The folder gets ownership of
+     *              the feed.
      */
     void attach(Feed *feed);
 
@@ -252,9 +256,17 @@ public:
      *
      * @param feed  Feed to detach from the folder.
      *
-     * @return  The Feed object. Ownership is returned to the caller.
+     * @return  Feed instance. Ownership is returned to the caller.
      */
     Feed *detach(Feed &feed);
+
+    /**
+     * Makes the specified feed the primary one.
+     *
+     * @param feed  Feed instance to make the primary feed. Must already be
+     *              attached to the Folder.
+     */
+    void setPrimaryFeed(Feed &feed);
 
     /**
      * Provides access to the list of Feeds for this folder. The feeds are responsible

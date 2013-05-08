@@ -38,7 +38,7 @@ DENG2_PIMPL_NOREF(TextCanvas)
     Instance(Size const &initialSize) : size(initialSize)
     {
         // Allocate lines based on supplied initial size.
-        for(int row = 0; row < size.y; ++row)
+        for(duint row = 0; row < size.y; ++row)
         {
             lines.append(makeLine());
         }
@@ -52,6 +52,11 @@ DENG2_PIMPL_NOREF(TextCanvas)
         }
     }
 
+    dsize lineCount() const
+    {
+        return lines.size();
+    }
+
     Char *makeLine()
     {
         return new Char[size.x];
@@ -62,16 +67,16 @@ DENG2_PIMPL_NOREF(TextCanvas)
         if(newSize == size) return;
 
         // Allocate or free lines.
-        while(newSize.y < lines.size())
+        while(newSize.y < lineCount())
         {
             lines.removeLast();
         }
-        while(newSize.y > lines.size())
+        while(newSize.y > lineCount())
         {
             lines.append(makeLine());
         }
 
-        Q_ASSERT(lines.size() == newSize.y);
+        Q_ASSERT(lineCount() == newSize.y);
         size.y = newSize.y;
 
         // Make sure all lines are the correct width.
@@ -91,7 +96,7 @@ DENG2_PIMPL_NOREF(TextCanvas)
         for(int row = 0; row < lines.size(); ++row)
         {
             Char *line = lines[row];
-            for(int col = 0; col < size.x; ++col)
+            for(duint col = 0; col < size.x; ++col)
             {
                 Char &c = line[col];
                 if(markDirty)
@@ -141,7 +146,7 @@ int TextCanvas::height() const
 
 Rectanglei TextCanvas::rect() const
 {
-    return Rectanglei(Vector2i(0, 0), size());
+    return Rectanglei(0, 0, size().x, size().y);
 }
 
 void TextCanvas::resize(Size const &newSize)
@@ -161,9 +166,9 @@ TextCanvas::Char const &TextCanvas::at(Coord const &pos) const
     return d->lines[pos.y][pos.x];
 }
 
-bool TextCanvas::isValid(const Coord &pos) const
+bool TextCanvas::isValid(Coord const &pos) const
 {
-    return (pos.x >= 0 && pos.y >= 0 && pos.x < d->size.x && pos.y < d->size.y);
+    return (pos.x >= 0 && pos.y >= 0 && pos.x < int(d->size.x) && pos.y < int(d->size.y));
 }
 
 void TextCanvas::markDirty()
@@ -173,7 +178,7 @@ void TextCanvas::markDirty()
 
 void TextCanvas::clear(Char const &ch)
 {
-    fill(Rectanglei(Vector2i(0, 0), d->size), ch);
+    fill(Rectanglei(0, 0, d->size.x, d->size.y), ch);
 }
 
 void TextCanvas::fill(Rectanglei const &rect, Char const &ch)
@@ -253,14 +258,14 @@ void TextCanvas::drawLineRect(Rectanglei const &rect, Char::Attribs const &attri
     Char const vEdge ('|', attribs);
 
     // Horizontal edges.
-    for(int x = 1; x < rect.width() - 1; ++x)
+    for(duint x = 1; x < rect.width() - 1; ++x)
     {
         put(rect.topLeft + Vector2i(x, 0), hEdge);
         put(rect.bottomLeft() + Vector2i(x, -1), hEdge);
     }
 
     // Vertical edges.
-    for(int y = 1; y < rect.height() - 1; ++y)
+    for(duint y = 1; y < rect.height() - 1; ++y)
     {
         put(rect.topLeft + Vector2i(0, y), vEdge);
         put(rect.topRight() + Vector2i(-1, y), vEdge);
@@ -274,9 +279,9 @@ void TextCanvas::drawLineRect(Rectanglei const &rect, Char::Attribs const &attri
 
 void TextCanvas::draw(TextCanvas const &canvas, Coord const &topLeft)
 {
-    for(int y = 0; y < canvas.d->size.y; ++y)
+    for(duint y = 0; y < canvas.d->size.y; ++y)
     {
-        for(int x = 0; x < canvas.d->size.x; ++x)
+        for(duint x = 0; x < canvas.d->size.x; ++x)
         {
             Coord const xy(x, y);
             Coord const p = topLeft + xy;

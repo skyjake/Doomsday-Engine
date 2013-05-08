@@ -137,7 +137,7 @@ void Rend_ModelSetFrame(modeldef_t *modef, int frame)
 {
     if(!modef) return;
 
-    for(int i = 0; i < DED_MAX_SUB_MODELS; ++i)
+    for(uint i = 0; i < modef->sub.size(); ++i)
     {
         submodeldef_t *subdef = &modef->sub[i];
         model_t *mdl;
@@ -1339,7 +1339,7 @@ void Rend_RenderModel(rendmodelparams_t const *parm)
     if(!parm || !parm->mf) return;
 
     // Render all the submodels of this model.
-    for(uint i = 0; i < MAX_FRAME_MODELS; ++i)
+    for(uint i = 0; i < parm->mf->sub.size(); ++i)
     {
         if(parm->mf->sub[i].modelId)
         {

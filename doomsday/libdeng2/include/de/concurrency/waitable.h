@@ -45,20 +45,23 @@ public:
     Waitable(duint initialValue = 0);
     virtual ~Waitable();
 
-    /// Wait until the resource becomes available.
-    void wait();
+    /// Resets the semaphore to zero.
+    void reset();
+
+    /// Wait until the resource becomes available. Waits indefinitely.
+    void wait() const;
 
     /// Wait for the specified period of time to secure the
     /// resource.  If timeout occurs, an exception is thrown.
-    void wait(TimeDelta const &timeOut);
+    void wait(TimeDelta const &timeOut) const;
 
     /// Mark the resource as available by incrementing the
     /// semaphore value.
-    void post();
+    void post() const;
 
 private:
     /// Pointer to the internal semaphore data.
-    QSemaphore _semaphore;
+    mutable QSemaphore _semaphore;
 };
 
 }

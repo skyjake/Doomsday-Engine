@@ -49,11 +49,6 @@ public:
     /// Returns true, if the lock is currently locked.
     bool isLocked() const;
 
-    /// Asserts that the lock is currently locked.  Should be used by
-    /// subclasses to assert that a lock has been acquired when it
-    /// must be.
-    void assertLocked() const;
-
 private:
     DENG2_PRIVATE(d)
 };

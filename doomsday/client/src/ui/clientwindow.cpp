@@ -306,7 +306,7 @@ void ClientWindow::canvasGLResized(Canvas &canvas)
 {
     LOG_AS("ClientWindow");
 
-    Vector2i size = canvas.size();
+    Canvas::Size size = canvas.size();
     LOG_DEBUG("Canvas resized to ") << size.asText();
 
     // Tell the widgets.

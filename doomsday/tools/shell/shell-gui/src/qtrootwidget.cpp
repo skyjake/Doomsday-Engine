@@ -54,7 +54,7 @@ DENG2_PIMPL(QtRootWidget)
 
     Instance(Public &inst) : Base(inst),
         margin(4),
-        canvas(new QtTextCanvas(Vector2i(1, 1))),
+        canvas(new QtTextCanvas(Vector2ui(1, 1))),
         root(canvas),
         blinkTimer(0),
         cursorTimer(0),
@@ -82,11 +82,9 @@ DENG2_PIMPL(QtRootWidget)
         if(!charSize.x || !charSize.y) return;
 
         // Determine number of characters that fits in the new size.
-        Vector2i size((widthPx - 2*margin) / charSize.x, (heightPx - 2*margin) / charSize.y);
+        Vector2ui size((widthPx - 2*margin) / charSize.x, (heightPx - 2*margin) / charSize.y);
         root.setViewSize(size);
 
-        //origin = QPoint((widthPx  - canvas->image().width())  / 2,
-        //                (heightPx - canvas->image().height()) / 2);
         origin = QPoint(margin, heightPx - canvas->image().height() - margin);
     }
 };

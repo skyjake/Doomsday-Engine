@@ -1,7 +1,7 @@
 /*
- * The Doomsday Engine Project -- libdeng2
+ * The Doomsday Engine Project
  *
- * Copyright (c) 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,28 +17,31 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "de/Guard"
-#include "de/Lockable"
+#include <de/GuiApp>
+#include <de/LogBuffer>
+#include <QDebug>
+
+#include "testwindow.h"
 
 using namespace de;
 
-Guard::Guard(de::Lockable const &target) : _target(&target)
+int main(int argc, char **argv)
 {
-    _target->lock();
-}
+    try
+    {
+        GuiApp app(argc, argv);
+        app.initSubsystems(App::DisablePlugins);
 
-Guard::Guard(de::Lockable const *target) : _target(target)
-{
-    DENG2_ASSERT(target != 0);
-    _target->lock();
-}
+        TestWindow win;
+        win.show();
 
-Guard::~Guard()
-{
-    _target->unlock();
-}
+        return app.execLoop();
+    }
+    catch(Error const &err)
+    {
+        qWarning() << err.asText();
+    }
 
-void Guard::assertLocked() const
-{
-    _target->assertLocked();
+    qDebug("Exiting main()...");
+    return 0;        
 }

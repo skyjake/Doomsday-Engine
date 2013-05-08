@@ -64,7 +64,16 @@ GLShader::GLShader() : d(new Instance(this))
 
 GLShader::GLShader(Type shaderType, IByteArray const &source) : d(new Instance(this))
 {
-    compile(shaderType, source);
+    try
+    {
+        compile(shaderType, source);
+    }
+    catch(...)
+    {
+        // Construction was aborted.
+        addRef(-1);
+        throw;
+    }
 }
 
 GLShader::Type GLShader::type() const

@@ -46,9 +46,12 @@ else:unix {
 
 # Public headers.
 HEADERS += \
+    include/de/Atlas \
+    include/de/AtlasTexture \
     include/de/Canvas \
     include/de/CanvasWindow \
     include/de/DisplayMode \
+    include/de/Drawable \
     include/de/GLBuffer \
     include/de/GLProgram \
     include/de/GLShader \
@@ -57,16 +60,22 @@ HEADERS += \
     include/de/GLTexture \
     include/de/GLUniform \
     include/de/GuiApp \
+    include/de/Image \
+    include/de/ImageBank \
     include/de/KeyEvent \
     include/de/KeyEventSource \
     include/de/MouseEventSource \
     include/de/PersistentCanvasWindow \
+    include/de/RowAtlasAllocator \
     \
+    include/de/gui/atlas.h \
+    include/de/gui/atlastexture.h \
     include/de/gui/canvas.h \
     include/de/gui/canvaswindow.h \
     include/de/gui/ddkey.h \
     include/de/gui/displaymode.h \
     include/de/gui/displaymode_native.h \
+    include/de/gui/drawable.h \
     include/de/gui/glbuffer.h \
     include/de/gui/glentrypoints.h \
     include/de/gui/glprogram.h \
@@ -76,19 +85,26 @@ HEADERS += \
     include/de/gui/gltexture.h \
     include/de/gui/gluniform.h \
     include/de/gui/guiapp.h \
+    include/de/gui/image.h \
+    include/de/gui/imagebank.h \
     include/de/gui/keyevent.h \
     include/de/gui/keyeventsource.h \
     include/de/gui/libgui.h \
     include/de/gui/mouseeventsource.h \
     include/de/gui/opengl.h \
-    include/de/gui/persistentcanvaswindow.h
+    include/de/gui/persistentcanvaswindow.h \
+    include/de/gui/rowatlasallocator.h
 
 # Sources and private headers.
-SOURCES += \
+SOURCES +=  \
+    src/atlas.cpp \
+    src/atlastexture.cpp \
     src/canvas.cpp \
     src/canvaswindow.cpp \
     src/displaymode.cpp \
+    src/drawable.cpp \
     src/glbuffer.cpp \
+    src/glentrypoints.cpp \
     src/glprogram.cpp \
     src/glshader.cpp \
     src/glstate.cpp \
@@ -96,9 +112,11 @@ SOURCES += \
     src/gltexture.cpp \
     src/gluniform.cpp \
     src/guiapp.cpp \
+    src/image.cpp \
+    src/imagebank.cpp \
     src/keyevent.cpp \
     src/persistentcanvaswindow.cpp \
-    src/glentrypoints.cpp
+    src/rowatlasallocator.cpp
 
 # DisplayMode
 !deng_nodisplaymode {

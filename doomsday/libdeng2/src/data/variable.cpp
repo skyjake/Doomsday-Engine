@@ -63,12 +63,12 @@ Variable &Variable::operator = (Value *v)
 
 void Variable::set(Value *v)
 {
-    std::auto_ptr<Value> val(v);
+    QScopedPointer<Value> val(v);
     // If the value would change, must check if this is allowed.
     verifyWritable(*v);
     verifyValid(*v);
     delete _value;
-    _value = val.release();
+    _value = val.take();
     
     DENG2_FOR_AUDIENCE(Change, i) i->variableValueChanged(*this, *_value);
 }

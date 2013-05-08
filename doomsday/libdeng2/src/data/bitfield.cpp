@@ -128,6 +128,15 @@ BitField::BitField(Block const &data) : d(new Instance(this))
     d->packed = data;
 }
 
+BitField &BitField::operator = (BitField const &other)
+{
+    d->elements  = other.d->elements;
+    d->totalBits = other.d->totalBits;
+    d->lookup    = other.d->lookup;
+    d->packed    = other.d->packed;
+    return *this;
+}
+
 void BitField::clear()
 {
     d->packed.clear();
@@ -157,6 +166,9 @@ BitField &BitField::addElement(Id id, dsize numBits)
     {
         d->lookup[i].insert(id);
     }
+
+    // Initialize all new elements to zero.
+    set(id, 0u);
 
     return *this;
 }
@@ -198,6 +210,16 @@ BitField::Spec BitField::element(int index) const
 int BitField::bitCount() const
 {
     return d->totalBits;
+}
+
+BitField::Ids BitField::elementIds() const
+{
+    Ids ids;
+    foreach(Id id, d->elements.keys())
+    {
+        ids.insert(id);
+    }
+    return ids;
 }
 
 Block BitField::data() const

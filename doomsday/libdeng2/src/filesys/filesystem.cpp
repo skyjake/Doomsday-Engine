@@ -26,12 +26,14 @@
 #include "de/PackageFolder"
 #include "de/ZipArchive"
 #include "de/Log"
+#include "de/ReadWriteLockable"
+#include "de/Guard"
 
 namespace de {
 
 static FileSystem::Index const emptyIndex;
 
-DENG2_PIMPL_NOREF(FileSystem)
+DENG2_PIMPL_NOREF(FileSystem), public ReadWriteLockable
 {
     /// The main index to all files in the file system.
     FileSystem::Index index;
@@ -60,16 +62,49 @@ void FileSystem::refresh()
     printIndex();
 }
 
-Folder &FileSystem::makeFolder(String const &path)
+Folder &FileSystem::makeFolder(String const &path, FolderCreationBehaviors behavior)
 {
+    LOG_AS("FS::makeFolder");
+
     Folder *subFolder = d->root.tryLocate<Folder>(path);
     if(!subFolder)
     {
         // This folder does not exist yet. Let's create it.
-        Folder &parentFolder = makeFolder(path.fileNamePath());
+        Folder &parentFolder = makeFolder(path.fileNamePath(), behavior);
         subFolder = new Folder(path.fileName());
+
+        // If parent folder is writable, this will be too.
+        if(parentFolder.mode() & File::Write)
+        {
+            subFolder->setMode(File::Write);
+        }
+
+        // Inherit parent's feeds?
+        if(behavior & (InheritPrimaryFeed | InheritAllFeeds))
+        {
+            DENG2_GUARD(parentFolder);
+            DENG2_FOR_EACH_CONST(Folder::Feeds, i, parentFolder.feeds())
+            {
+                Feed *feed = (*i)->newSubFeed(subFolder->name());
+                if(!feed) continue; // Check next one instead.
+
+                LOG_DEV_TRACE("Creating subfeed \"%s\" from %s",
+                              subFolder->name() << (*i)->description());
+
+                subFolder->attach(feed);
+
+                if(!behavior.testFlag(InheritAllFeeds)) break;
+            }
+        }
+
         parentFolder.add(subFolder);
         index(*subFolder);
+
+        if(behavior.testFlag(PopulateNewFolder))
+        {
+            // Populate the new folder.
+            subFolder->populate();
+        }
     }
     return *subFolder;
 }
@@ -131,8 +166,13 @@ File *FileSystem::interpret(File *sourceData)
     return sourceData;
 }
 
+#define DENG2_FS_GUARD_INDEX_R()   DENG2_GUARD_READ_FOR(*d, indexAccessGuardRead)
+#define DENG2_FS_GUARD_INDEX_W()   DENG2_GUARD_WRITE_FOR(*d, indexAccessGuardWrite)
+
 FileSystem::Index const &FileSystem::nameIndex() const
 {
+    DENG2_FS_GUARD_INDEX_R();
+
     return d->index;
 }
 
@@ -148,6 +188,8 @@ int FileSystem::findAll(String const &path, FoundFiles &found) const
         // Always begin with a slash. We don't want to match partial folder names.
         dir = "/" + dir;
     }
+
+    DENG2_FS_GUARD_INDEX_R();
 
     ConstIndexRange range = d->index.equal_range(baseName);
     for(Index::const_iterator i = range.first; i != range.second; ++i)
@@ -168,6 +210,8 @@ File &FileSystem::find(String const &path) const
 
 void FileSystem::index(File &file)
 {
+    DENG2_FS_GUARD_INDEX_W();
+
     String const lowercaseName = file.name().lower();
 
     d->index.insert(IndexEntry(lowercaseName, &file));
@@ -182,7 +226,7 @@ static void removeFromIndex(FileSystem::Index &idx, File &file)
     if(idx.empty())
     {
         return;
-    }
+    }       
 
     // Look up the ones that might be this file.
     FileSystem::IndexRange range = idx.equal_range(file.name().lower());
@@ -200,6 +244,8 @@ static void removeFromIndex(FileSystem::Index &idx, File &file)
 
 void FileSystem::deindex(File &file)
 {
+    DENG2_FS_GUARD_INDEX_W();
+
     removeFromIndex(d->index, file);
     removeFromIndex(d->typeIndex[DENG2_TYPE_NAME(file)], file);
 }
@@ -211,6 +257,8 @@ void FileSystem::timeChanged(Clock const &)
 
 FileSystem::Index const &FileSystem::indexFor(String const &typeName) const
 {
+    DENG2_FS_GUARD_INDEX_R();
+
     Instance::TypeIndex::const_iterator found = d->typeIndex.find(typeName);
     if(found != d->typeIndex.end())
     {
@@ -225,6 +273,8 @@ FileSystem::Index const &FileSystem::indexFor(String const &typeName) const
 
 void FileSystem::printIndex()
 {
+    DENG2_FS_GUARD_INDEX_R();
+
     LOG_DEBUG("Main FS index has %i entries") << d->index.size();
 
     for(Index::iterator i = d->index.begin(); i != d->index.end(); ++i)

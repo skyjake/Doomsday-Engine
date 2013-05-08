@@ -19,6 +19,7 @@
 
 #include "de/Canvas"
 #include "de/CanvasWindow"
+#include "de/GLState"
 #include "de/gui/opengl.h"
 
 #include <de/App>
@@ -43,9 +44,10 @@ static const int MOUSE_WHEEL_CONTINUOUS_THRESHOLD_MS = 100;
 
 DENG2_PIMPL(Canvas)
 {
+    GLTarget target;
     CanvasWindow *parent;
     bool readyNotified;
-    Vector2i currentSize;
+    Size currentSize;
     bool mouseDisabled;
     bool mouseGrabbed;
 #ifdef WIN32
@@ -199,7 +201,7 @@ GLuint Canvas::grabAsTexture(QSize const &outputSize)
                        QGLContext::LinearFilteringBindOption);
 }
 
-Vector2i Canvas::size() const
+Canvas::Size Canvas::size() const
 {
     return d->currentSize;
 }
@@ -238,17 +240,26 @@ void Canvas::copyAudiencesFrom(Canvas const &other)
     audienceForMouseButtonEvent = other.audienceForMouseButtonEvent;
 }
 
+GLTarget &Canvas::renderTarget() const
+{
+    return d->target;
+}
+
 void Canvas::initializeGL()
 {
     LOG_AS("Canvas");
     LOG_DEBUG("Notifying GL init (during paint)");
+
+#ifdef WIN32
+    getAllOpenGLEntryPoints();
+#endif
 
     DENG2_FOR_AUDIENCE(GLInit, i) i->canvasGLInit(*this);
 }
 
 void Canvas::resizeGL(int w, int h)
 {
-    Vector2i newSize(w, h);
+    Size newSize(max(0, w), max(0, h));
 
     // Only react if this is actually a resize.
     if(d->currentSize != newSize)
@@ -272,6 +283,11 @@ void Canvas::showEvent(QShowEvent* ev)
     {
         LOG_DEBUG("Received first show event, scheduling GL ready notification");
 
+#ifdef WIN32
+        makeCurrent();
+        getAllOpenGLEntryPoints();
+        doneCurrent();
+#endif
         QTimer::singleShot(1, this, SLOT(notifyReady()));
     }
 }
@@ -292,21 +308,10 @@ void Canvas::notifyReady()
 
 void Canvas::paintGL()
 {
-    if(!audienceForGLDraw.isEmpty())
-    {
-        DENG2_FOR_AUDIENCE(GLDraw, i) i->canvasGLDraw(*this);
-    }
-    else
-    {
-        LOG_AS("Canvas");
-        LOG_TRACE("Drawing with default paint func.");
+    // Make sure any changes to the state stack become effective.
+    GLState::top().apply();
 
-        // Since we don't know what else to draw, just draw blackness.
-        glClearColor(0, 0, 0, 1);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        swapBuffers();
-    }
+    DENG2_FOR_AUDIENCE(GLDraw, i) i->canvasGLDraw(*this);
 }
 
 void Canvas::focusInEvent(QFocusEvent*)

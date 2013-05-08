@@ -20,6 +20,7 @@
 #define LIBGUI_GLPROGRAM_H
 
 #include <de/libdeng2.h>
+#include <de/IByteArray>
 #include <de/Error>
 #include <de/Asset>
 #include <de/Observers>
@@ -68,14 +69,18 @@ public:
                      IByteArray const &fragmentShaderSource);*/
 
     /**
-     * GLProgram retains a reference to both shaders.
+     * Builds a program out of two shaders. GLProgram retains a reference to
+     * both shaders.
      *
      * @param vertexShader    Vertex shader.
      * @param fragmentShader  Fragment shader.
      *
      * @return Reference to this program.
      */
-    GLProgram &build(GLShader const &vertexShader, GLShader const &fragmentShader);
+    GLProgram &build(GLShader const *vertexShader, GLShader const *fragmentShader);
+
+    GLProgram &build(IByteArray const &vertexShaderSource,
+                     IByteArray const &fragmentShaderSource);
 
     GLProgram &operator << (GLUniform const &uniform);
 
@@ -83,9 +88,9 @@ public:
 
     GLProgram &unbind(GLUniform const &uniform);
 
-    void beginUse();
+    void beginUse() const;
 
-    void endUse();
+    void endUse() const;
 
     GLuint glName() const;
 

@@ -35,4 +35,9 @@
 #  include <OpenGL/gl.h>
 #endif
 
+// Defined in GLES2.
+#ifndef GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS
+#  define GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS 0x8CD9
+#endif
+
 #endif // LIBGUI_SYSTEM_OPENGL_H

@@ -320,17 +320,29 @@ public:
     // Specialized constructors.
     inline static Matrix4 zero() { return m(Zero); }
     static Matrix4 ortho(Type left, Type right, Type top, Type bottom,
-                         Type near = -1.f, Type far = 1.f) {
+                         Type nearDistance = -1.f, Type farDistance = 1.f) {
         Matrix4 m;
-        m.at(0, 0) =  2.f / (right - left);
-        m.at(1, 1) =  2.f / (top - bottom);
-        m.at(2, 2) = -2.f / (far - near);
+        m.at(0, 0) =  Type(2) / (right - left);
+        m.at(1, 1) =  Type(2) / (top - bottom);
+        m.at(2, 2) = -Type(2) / (farDistance - nearDistance);
         m[12]      = -(right + left) / (right - left);
         m[13]      = -(top + bottom) / (top - bottom);
-        m[14]      = -(far + near)   / (far - near);
+        m[14]      = -(farDistance + nearDistance)   / (farDistance - nearDistance);
         return m;
     }
-    static Matrix4 perspective(Type width, Type height, Type near = 1.f, Type far = 1000.f, Type zoom = 1.f) {
+    static Matrix4 perspective(Type fov, Type aspectRatio, Type nearDistance = 1.f, Type farDistance = 1000.f) {
+        Type const halfWidth  = std::tan(Type(.5) * degreeToRadian(fov));
+        Type const halfHeight = halfWidth / aspectRatio;
+        Type const depth      = farDistance - nearDistance;
+        Matrix4 m(Zero);
+        m.at(0, 0) = Type(1) / halfWidth;
+        m.at(1, 1) = Type(1) / halfHeight;
+        m.at(2, 2) = -(farDistance + nearDistance) / depth;
+        m.at(2, 3) = -Type(1);
+        m.at(3, 2) = -Type(2) * farDistance * nearDistance / depth;
+        return m;
+    }
+    static Matrix4 perspectiveZoom(Type width, Type height, Type near = 1.f, Type far = 1000.f, Type zoom = 1.f) {
         Type const zoomHalf =  zoom / 2;
         Type const aspect   =  width / height;
         Type const left     = -zoomHalf;
@@ -403,7 +415,7 @@ public:
         m[8]  =  s.z;
         m[9]  =  u.z;
         m[10] = -f.z;
-        m[15] =  1;
+        m[15] = Type(1);
         return m * translate(-eyePos);
     }
 

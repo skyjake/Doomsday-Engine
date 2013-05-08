@@ -77,6 +77,7 @@
 
 #ifdef DENG2_USE_QT
 #  include <QtCore/qglobal.h>
+#  include <QScopedPointer>
 
 // Qt versioning helper. Qt 4.7 is the oldest we support.
 #  if (QT_VERSION <= QT_VERSION_CHECK(4, 6, 0))
@@ -413,7 +414,8 @@ void applyFlagOperation(FlagsType &flags, FlagsType const &newFlags, FlagOp oper
 enum ProtocolVersion {
     DENG2_PROTOCOL_1_9_10 = 0,
     DENG2_PROTOCOL_1_10_0 = 0,
-    DENG2_PROTOCOL_LATEST = DENG2_PROTOCOL_1_10_0
+    DENG2_PROTOCOL_1_11_0 = 0,
+    DENG2_PROTOCOL_LATEST = DENG2_PROTOCOL_1_11_0
 };
 
 //@{

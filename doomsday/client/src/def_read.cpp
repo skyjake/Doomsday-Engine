@@ -1410,13 +1410,12 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
             if(prevModelDefIdx >= 0)
             {
-                prevModel = ded->models + prevModelDefIdx;
+                prevModel = &ded->models[prevModelDefIdx];
                 // Should we copy the previous definition?
                 if(bCopyNext)
                 {
-                    int i;
-                    memcpy(mdl, prevModel, sizeof(*mdl));
-                    for(i = 0; i < DED_MAX_SUB_MODELS; ++i)
+                    *mdl = *prevModel;
+                    for(uint i = 0; i < mdl->sub.size(); ++i)
                     {
                         if(mdl->sub[i].filename)
                             mdl->sub[i].filename = Uri_Dup(mdl->sub[i].filename);
@@ -1457,12 +1456,12 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 RV_FLT("Shadow radius", mdl->shadowRadius)
                 if(ISLABEL("Md2") || ISLABEL("Sub"))
                 {
-                    if(sub >= DED_MAX_SUB_MODELS)
+                    // Add another submodel.
+                    if(sub >= mdl->sub.size())
                     {
-                        SetError("Too many Model submodels.");
-                        retVal = false;
-                        goto ded_end_read;
+                        mdl->sub.push_back(ded_submodel_t());
                     }
+                    DENG_ASSERT(sub < mdl->sub.size());
 
                     FINDBEGIN;
                     for(;;)
@@ -1499,8 +1498,6 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             // the whole reader will be rewritten sooner or later...
             if(prevModel)
             {
-                uint i;
-
                 if(!strcmp(mdl->state, "-"))
                     strcpy(mdl->state, prevModel->state);
                 if(!strcmp(mdl->sprite.id, "-"))
@@ -1508,7 +1505,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 //if(!strcmp(mdl->group, "-"))      strcpy(mdl->group,      prevModel->group);
                 //if(!strcmp(mdl->flags, "-"))      strcpy(mdl->flags,      prevModel->flags);
 
-                for(i = 0; i < DED_MAX_SUB_MODELS; ++i)
+                for(uint i = 0; i < mdl->sub.size(); ++i)
                 {
                     if(mdl->sub[i].filename && !Str_CompareIgnoreCase(Uri_Path(mdl->sub[i].filename), "-"))
                     {

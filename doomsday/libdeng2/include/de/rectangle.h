@@ -34,42 +34,64 @@ namespace de {
  *
  * @ingroup math
  */
-template <typename VectorType>
+template <typename CornerVectorType, typename SizeVectorType>
 class Rectangle
 {
 public:
-    typedef VectorType Corner;
+    typedef Rectangle<CornerVectorType, SizeVectorType> RectangleType;
+    typedef CornerVectorType Corner;
+    typedef SizeVectorType Size;
     typedef typename Corner::ValueType Type;
-    typedef VectorType Size;
+    typedef typename Size::ValueType SizeType;
 
 public:
     Rectangle() {}
-    Rectangle(Type left, Type top, Type width, Type height)
+    Rectangle(Type left, Type top, SizeType width, SizeType height)
         : topLeft(left, top), bottomRight(left + width, top + height) {}
     Rectangle(Corner const &tl, Corner const &br) : topLeft(tl), bottomRight(br) {}
-    Type width() const { return abs(bottomRight.x - topLeft.x); }
-    Type height() const { return abs(bottomRight.y - topLeft.y); }
+    static RectangleType fromSize(Size const &size) {
+        return RectangleType(0, 0, size.x, size.y);
+    }
+    static RectangleType fromSize(Corner const &tl, Size const &size) {
+        return RectangleType(tl.x, tl.y, size.x, size.y);
+    }
+
+    SizeType width() const { return abs(bottomRight.x - topLeft.x); }
+    SizeType height() const { return abs(bottomRight.y - topLeft.y); }
     Size size() const { return Size(width(), height()); }
-    void moveTopLeft(VectorType const &point) {
+    void moveTopLeft(CornerVectorType const &point) {
         Size s = size();
         topLeft = point;
-        bottomRight = point + s;
+        bottomRight.x = point.x + s.x;
+        bottomRight.y = point.y + s.y;
     }
-    void setWidth(Type w) { bottomRight.x = topLeft.x + w; }
-    void setHeight(Type h) { bottomRight.y = topLeft.y + h; }
-    void setSize(Vector2<Type> const &s) { setWidth(s.x); setHeight(s.y); }
+    void setWidth(SizeType w) { bottomRight.x = topLeft.x + w; }
+    void setHeight(SizeType h) { bottomRight.y = topLeft.y + h; }
+    void setSize(SizeVectorType const &s) { setWidth(s.x); setHeight(s.y); }
     void include(Corner const &point) {
         topLeft = topLeft.min(point);
         bottomRight = bottomRight.max(point);
     }
-    Rectangle<VectorType> adjusted(VectorType const &tl, VectorType const &br) const {
-        return Rectangle<VectorType>(topLeft + tl, bottomRight + br);
+    RectangleType expanded(Type n) const {
+        return RectangleType(topLeft - Corner(n, n), bottomRight + Corner(n, n));
+    }
+    RectangleType adjusted(CornerVectorType const &tl, CornerVectorType const &br) const {
+        return RectangleType(topLeft + tl, bottomRight + br);
     }
     bool contains(Corner const &point) const {
         return point >= topLeft && point <= bottomRight;
     }
-    bool operator == (Rectangle<VectorType> const &other) const {
+    bool operator == (RectangleType const &other) const {
         return topLeft == other.topLeft && bottomRight == other.bottomRight;
+    }
+    RectangleType operator | (RectangleType const &other) const {
+        return RectangleType(topLeft.min(other.topLeft),
+                             bottomRight.max(other.bottomRight));
+    }
+    RectangleType &operator |= (RectangleType const &other) {
+        topLeft     = topLeft.min(other.topLeft);
+        bottomRight = bottomRight.max(other.bottomRight);
+        return *this;
     }
     String asText() const {
         return "[" + topLeft.asText() + "->" + bottomRight.asText() +
@@ -107,9 +129,9 @@ public:
 };
 
 // Common types.
-typedef Rectangle<Vector2i>  Rectanglei;
-typedef Rectangle<Vector2ui> Rectangleui;
-typedef Rectangle<Vector2f>  Rectanglef;
+typedef Rectangle<Vector2i,  Vector2ui> Rectanglei;
+typedef Rectangle<Vector2ui, Vector2ui> Rectangleui;
+typedef Rectangle<Vector2f,  Vector2f>  Rectanglef;
 
 } // namespace de
 

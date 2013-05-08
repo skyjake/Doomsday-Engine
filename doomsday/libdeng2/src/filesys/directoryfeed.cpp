@@ -81,29 +81,17 @@ void DirectoryFeed::populateSubFolder(Folder &folder, String const &entryName)
 
     if(entryName != "." && entryName != "..")
     {
-        NativePath subFeedPath = _nativePath / entryName;
-        Folder &subFolder = folder.fileSystem().makeFolder(folder.path() / entryName);
+        Folder &subFolder = folder.fileSystem()
+                .makeFolder(folder.path() / entryName, FS::InheritPrimaryFeed);
 
         if(_mode & AllowWrite)
         {
             subFolder.setMode(File::Write);
         }
-
-        // It may already be fed by a DirectoryFeed.
-        for(Folder::Feeds::const_iterator i = subFolder.feeds().begin();
-            i != subFolder.feeds().end(); ++i)
+        else
         {
-            DirectoryFeed const *dirFeed = dynamic_cast<DirectoryFeed const *>(*i);
-            if(dirFeed && dirFeed->_nativePath == subFeedPath)
-            {
-                // Already got this fed. Nothing else needs done.
-                LOG_DEBUG("Feed for ") << subFeedPath << " already there.";
-                return;
-            }
+            subFolder.setMode(File::ReadOnly);
         }
-
-        // Add a new feed. Mode inherited.
-        subFolder.attach(new DirectoryFeed(subFeedPath, _mode));
     }
 }
 
@@ -210,6 +198,16 @@ void DirectoryFeed::removeFile(String const &name)
         throw RemoveError("DirectoryFeed::removeFile", "Cannot remove \"" + name +
                           "\" in " + description());
     }
+}
+
+Feed *DirectoryFeed::newSubFeed(String const &name)
+{
+    NativePath subPath = _nativePath / name;
+    if(_mode.testFlag(CreateIfMissing) || (subPath.exists() && subPath.isReadable()))
+    {
+        return new DirectoryFeed(subPath, _mode);
+    }
+    return 0;
 }
 
 void DirectoryFeed::changeWorkingDir(NativePath const &nativePath)

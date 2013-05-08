@@ -466,7 +466,9 @@ static void P_NewParticle(ptcgen_t *gen)
 {
 #ifdef __SERVER__
     DENG_UNUSED(gen);
-#else
+#endif
+
+#ifdef __CLIENT__
     ded_ptcgen_t const *def = gen->def;
     particle_t *pt;
     int i;

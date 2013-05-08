@@ -41,9 +41,12 @@ class Rule;
 class DENG2_PUBLIC RootWidget : public Widget
 {
 public:
+    typedef Vector2ui Size;
+
+public:
     RootWidget();
 
-    Vector2i viewSize() const;
+    Size viewSize() const;
 
     Rule const &viewLeft() const;
     Rule const &viewRight() const;
@@ -57,7 +60,7 @@ public:
      *
      * @param viewSize  View size.
      */
-    virtual void setViewSize(Vector2i const &viewSize);
+    virtual void setViewSize(Size const &viewSize);
 
     /**
      * Sets the focus widget. It is the first widget to be offered input

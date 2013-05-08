@@ -50,7 +50,7 @@ static QRect desktopRect()
     return QApplication::desktop()->screenGeometry();
 }
 
-static QRect centeredQRect(Vector2i size)
+static QRect centeredQRect(Vector2ui const &size)
 {
     QSize screenSize = desktopRect().size();
 
@@ -63,13 +63,11 @@ static QRect centeredQRect(Vector2i size)
                  QSize(size.x, size.y));
 }
 
-static Rectanglei centeredRect(Vector2i size)
+static Rectanglei centeredRect(Vector2ui const &size)
 {
     QRect rect = centeredQRect(size);
     return Rectanglei(rect.left(), rect.top(), rect.width(), rect.height());
 }
-
-static PersistentCanvasWindow *mainWindow = 0;
 
 static void notifyAboutModeChange()
 {
@@ -217,7 +215,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
             ArrayValue &fs = config.geta(configName("fullSize"));
             if(fs.size() >= 2)
             {
-                fullSize = Vector2i(fs.at(0).asNumber(), fs.at(1).asNumber());
+                fullSize = Size(fs.at(0).asNumber(), fs.at(1).asNumber());
             }
 
             colorDepthBits =    config.geti(configName("colorDepth"));
@@ -292,8 +290,8 @@ DENG2_PIMPL(PersistentCanvasWindow)
         // Keep a global pointer to the main window.
         if(id == MAIN_WINDOW_ID)
         {
-            DENG2_ASSERT(mainWindow == 0);
-            mainWindow = thisPublic;
+            DENG2_ASSERT(!haveMain());
+            setMain(thisPublic);
         }
 
         self.setMinimumSize(MIN_WIDTH, MIN_HEIGHT);
@@ -302,11 +300,6 @@ DENG2_PIMPL(PersistentCanvasWindow)
     ~Instance()
     {
         self.saveToConfig();
-
-        if(id == MAIN_WINDOW_ID)
-        {
-            mainWindow = 0;
-        }
     }
 
     /**
@@ -870,13 +863,13 @@ void PersistentCanvasWindow::performQueuedTasks()
 
 PersistentCanvasWindow &PersistentCanvasWindow::main()
 {
-    DENG2_ASSERT(mainWindow != 0);
-    if(mainWindow == 0)
+    DENG2_ASSERT(haveMain() != 0);
+    if(!haveMain())
     {
         throw InvalidIdError("PersistentCanvasWindow::main",
                              "No window found with id \"" + MAIN_WINDOW_ID + "\"");
     }
-    return *mainWindow;
+    return static_cast<PersistentCanvasWindow &>(CanvasWindow::main());
 }
 
 void PersistentCanvasWindow::moveEvent(QMoveEvent *)

@@ -55,6 +55,7 @@ INCLUDEPATH += include
 
 # Source Files ---------------------------------------------------------------
 
+include(concurrency.pri)
 include(data.pri)
 include(filesys.pri)
 include(network.pri)

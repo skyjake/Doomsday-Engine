@@ -23,17 +23,41 @@ namespace de {
 using namespace internal;
 using namespace gl;
 
+// Vertex Formats ------------------------------------------------------------
+
+AttribSpec const Vertex2Tex::_spec[2] = {
+    { AttribSpec::Position,  2, GL_FLOAT, false, sizeof(Vertex2Tex), 0 },
+    { AttribSpec::TexCoord0, 2, GL_FLOAT, false, sizeof(Vertex2Tex), 2 * sizeof(float) }
+};
+
+AttribSpecs Vertex2Tex::formatSpec() {
+    DENG2_ASSERT(sizeof(Vertex2Tex) == 4 * sizeof(float)); // sanity check
+    return AttribSpecs(_spec, sizeof(_spec)/sizeof(_spec[0]));
+}
+
 AttribSpec const Vertex2TexRgba::_spec[3] = {
     { AttribSpec::Position,  2, GL_FLOAT, false, sizeof(Vertex2TexRgba), 0 },
     { AttribSpec::TexCoord0, 2, GL_FLOAT, false, sizeof(Vertex2TexRgba), 2 * sizeof(float) },
     { AttribSpec::Color,     4, GL_FLOAT, false, sizeof(Vertex2TexRgba), 4 * sizeof(float) }
 };
 
-AttribSpecs Vertex2TexRgba::formatSpec()
-{
+AttribSpecs Vertex2TexRgba::formatSpec() {
     DENG2_ASSERT(sizeof(Vertex2TexRgba) == 8 * sizeof(float)); // sanity check
     return AttribSpecs(_spec, sizeof(_spec)/sizeof(_spec[0]));
 }
+
+AttribSpec const Vertex3TexRgba::_spec[3] = {
+    { AttribSpec::Position,  3, GL_FLOAT, false, sizeof(Vertex3TexRgba), 0 },
+    { AttribSpec::TexCoord0, 2, GL_FLOAT, false, sizeof(Vertex3TexRgba), 3 * sizeof(float) },
+    { AttribSpec::Color,     4, GL_FLOAT, false, sizeof(Vertex3TexRgba), 5 * sizeof(float) }
+};
+
+AttribSpecs Vertex3TexRgba::formatSpec() {
+    DENG2_ASSERT(sizeof(Vertex3TexRgba) == 9 * sizeof(float)); // sanity check
+    return AttribSpecs(_spec, sizeof(_spec)/sizeof(_spec[0]));
+}
+
+// ---------------------------------------------------------------------------
 
 DENG2_PIMPL(GLBuffer)
 {
@@ -127,15 +151,16 @@ DENG2_PIMPL(GLBuffer)
         for(duint i = 0; i < specs.second; ++i)
         {
             AttribSpec const &spec = specs.first[i];
+            GLuint index = GLuint(spec.semantic);
             if(enable)
             {
-                glEnableVertexAttribArray(i);
-                glVertexAttribPointer(i, spec.size, spec.type, spec.normalized, spec.stride,
+                glEnableVertexAttribArray(index);
+                glVertexAttribPointer(index, spec.size, spec.type, spec.normalized, spec.stride,
                                       (void const *) dintptr(spec.startOffset));
             }
             else
             {
-                glDisableVertexAttribArray(i);
+                glDisableVertexAttribArray(index);
             }
         }
     }
@@ -196,6 +221,11 @@ void GLBuffer::setIndices(Primitive primitive, dsize count, Index const *indices
     {
         d->releaseIndices();
     }
+}
+
+void GLBuffer::setIndices(Primitive primitive, Indices const &indices, Usage usage)
+{
+    setIndices(primitive, indices.size(), indices.constData(), usage);
 }
 
 void GLBuffer::draw(duint first, dint count)

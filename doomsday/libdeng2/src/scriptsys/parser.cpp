@@ -517,13 +517,13 @@ AssignStatement *Parser::parseAssignStatement()
                 "Weak assignment cannot be used with indices");
         }
 
-        auto_ptr<Expression> lValue(parseExpression(_statementRange.endingTo(nameEndPos), flags));
-        auto_ptr<Expression> rValue(parseExpression(_statementRange.startingFrom(pos + 1)));
+        QScopedPointer<Expression> lValue(parseExpression(_statementRange.endingTo(nameEndPos), flags));
+        QScopedPointer<Expression> rValue(parseExpression(_statementRange.startingFrom(pos + 1)));
 
-        AssignStatement *st = new AssignStatement(lValue.get(), indices, rValue.get());
+        AssignStatement *st = new AssignStatement(lValue.data(), indices, rValue.data());
 
-        lValue.release();
-        rValue.release();
+        lValue.take();
+        rValue.take();
         
         return st;
     }
@@ -553,7 +553,7 @@ Expression *Parser::parseConditionalCompound(Compound &compound, CompoundFlags c
     // See if there is a colon on this line.
     dint colon = range.findBracketless(Token::COLON);
     
-    auto_ptr<Expression> condition;
+    QScopedPointer<Expression> condition;
     if(flags.testFlag(HasCondition))
     {
         LOG_AS("parseConditionalCompound");
@@ -565,7 +565,7 @@ Expression *Parser::parseConditionalCompound(Compound &compound, CompoundFlags c
             throw MissingTokenError("Parser::parseConditionalCompound",
                 "A condition expression was expected after " + range.token(0).asText());
         }
-        condition = auto_ptr<Expression>(parseExpression(conditionRange));
+        condition.reset(parseExpression(conditionRange));
     }
     else if(colon > 0 && (colon > 1 && !flags.testFlag(IgnoreExtraBeforeColon)))
     {
@@ -595,13 +595,13 @@ Expression *Parser::parseConditionalCompound(Compound &compound, CompoundFlags c
             nextStatement();
         }
     }
-    return condition.release();
+    return condition.take();
 }
 
 ArrayExpression *Parser::parseList(TokenRange const &range, QChar const *separator,
                                    Expression::Flags const &flags)
 {
-    auto_ptr<ArrayExpression> exp(new ArrayExpression);
+    QScopedPointer<ArrayExpression> exp(new ArrayExpression);
     if(range.size() > 0)
     {
         // The arguments are comma-separated.
@@ -611,7 +611,7 @@ ArrayExpression *Parser::parseList(TokenRange const &range, QChar const *separat
             exp->add(parseExpression(delim, flags));
         }
     }
-    return exp.release();
+    return exp.take();
 }
 
 Expression *Parser::parseExpression(TokenRange const &fullRange, Expression::Flags const &flags)
@@ -702,9 +702,9 @@ DictionaryExpression *Parser::parseDictionaryExpression(TokenRange const &range)
                     delim.firstToken().asText());
             }
             
-            auto_ptr<Expression> key(parseExpression(delim.endingTo(colonPos)));
+            QScopedPointer<Expression> key(parseExpression(delim.endingTo(colonPos)));
             Expression *value = parseExpression(delim.startingFrom(colonPos + 1));
-            exp->add(key.release(), value);
+            exp->add(key.take(), value);
         }
     }
     return exp.release();
@@ -726,7 +726,7 @@ Expression *Parser::parseCallExpression(TokenRange const &nameRange, TokenRange 
     // Parse the arguments, with possible labels included.
     // The named arguments are evaluated by a dictionary which is always
     // included as the first expression in the array.
-    auto_ptr<ArrayExpression> args(new ArrayExpression);
+    QScopedPointer<ArrayExpression> args(new ArrayExpression);
     DictionaryExpression *namedArgs = new DictionaryExpression;
     args->add(namedArgs);
     
@@ -765,11 +765,11 @@ Expression *Parser::parseCallExpression(TokenRange const &nameRange, TokenRange 
         BuiltInExpression::Type builtIn = BuiltInExpression::findType(nameRange.firstToken().str());
         if(builtIn != BuiltInExpression::NONE)
         {
-            return new BuiltInExpression(builtIn, args.release());
+            return new BuiltInExpression(builtIn, args.take());
         }
     }
-    auto_ptr<Expression> identifier(parseExpression(nameRange, Expression::ByReference));
-    return new OperatorExpression(CALL, identifier.release(), args.release());
+    QScopedPointer<Expression> identifier(parseExpression(nameRange, Expression::ByReference));
+    return new OperatorExpression(CALL, identifier.take(), args.take());
 }
 
 OperatorExpression *Parser::parseOperatorExpression(Operator op, TokenRange const &leftSide, 
@@ -780,9 +780,9 @@ OperatorExpression *Parser::parseOperatorExpression(Operator op, TokenRange cons
     if(leftSide.empty())
     {
         // Must be unary.
-        auto_ptr<Expression> operand(parseExpression(rightSide));
-        OperatorExpression *x = new OperatorExpression(op, operand.get());
-        operand.release();
+        QScopedPointer<Expression> operand(parseExpression(rightSide));
+        OperatorExpression *x = new OperatorExpression(op, operand.data());
+        operand.take();
         return x;
     }
     else
@@ -794,13 +794,13 @@ OperatorExpression *Parser::parseOperatorExpression(Operator op, TokenRange cons
         if(op != MEMBER) rightOpFlags &= ~Expression::ByReference;
 
         // Binary operation.
-        auto_ptr<Expression> leftOperand(parseExpression(leftSide, leftOpFlags));
-        auto_ptr<Expression> rightOperand(op == SLICE? parseList(rightSide, Token::COLON) :
+        QScopedPointer<Expression> leftOperand(parseExpression(leftSide, leftOpFlags));
+        QScopedPointer<Expression> rightOperand(op == SLICE? parseList(rightSide, Token::COLON) :
             parseExpression(rightSide, rightOpFlags));
-        OperatorExpression *x = new OperatorExpression(op, leftOperand.get(), rightOperand.get());
+        OperatorExpression *x = new OperatorExpression(op, leftOperand.data(), rightOperand.data());
         x->setFlags(rightFlags); // original flags
-        rightOperand.release();
-        leftOperand.release();
+        rightOperand.take();
+        leftOperand.take();
         return x;
     }
 }

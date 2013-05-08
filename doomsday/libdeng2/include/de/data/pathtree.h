@@ -22,6 +22,7 @@
 #define LIBDENG2_PATHTREE_H
 
 #include <de/Error>
+#include <de/Lockable>
 #include <de/String>
 #include <de/Path>
 
@@ -54,8 +55,14 @@ namespace de {
  * hierarchies is "ambidextrously" recomposing paths with either forward or
  * backward slashes, irrespective of the separator used at path insertion
  * time.
+ *
+ * @par Thread-safety
+ *
+ * The methods of PathTree automatically lock the tree. Access to the data in
+ * the nodes is not automatically protected and is the responsibility of the
+ * user.
  */
-class DENG2_PUBLIC PathTree
+class DENG2_PUBLIC PathTree : public Lockable
 {
     struct Instance; // needs to be friended by Node
 

@@ -177,7 +177,7 @@ typedef struct vispsprite_s {
             coord_t visOff[3]; // Last-minute offset to coords.
             boolean floorAdjust; // Allow moving sprite to match visible floor.
 
-            struct modeldef_s *mf, *nextMF;
+            ModelDef *mf, *nextMF;
             float yaw, pitch;
             float pitchAngleOffset;
             float yawAngleOffset;

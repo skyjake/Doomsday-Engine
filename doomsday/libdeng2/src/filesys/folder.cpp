@@ -22,6 +22,7 @@
 #include "de/FS"
 #include "de/NumberValue"
 #include "de/Log"
+#include "de/Guard"
 
 using namespace de;
 
@@ -30,12 +31,15 @@ Folder::Folder(String const &name) : File(name)
     setStatus(Status::FOLDER);
     
     // Standard info.
-    info().add(new Variable("contentSize", new Accessor(*this, Accessor::CONTENT_SIZE),
-        Accessor::VARIABLE_MODE));
+    info().add(new Variable("contentSize",
+                            new Accessor(*this, Accessor::CONTENT_SIZE),
+                            Accessor::VARIABLE_MODE));
 }
 
 Folder::~Folder()
 {
+    DENG2_GUARD(this);
+
     DENG2_FOR_AUDIENCE(Deletion, i) i->fileBeingDeleted(*this);
     audienceForDeletion.clear();
     
@@ -53,6 +57,8 @@ Folder::~Folder()
 
 String Folder::describe() const
 {
+    DENG2_GUARD(this);
+
     String desc = String("folder \"%1\" (with %2 items from %3 feeds")
             .arg(name()).arg(_contents.size()).arg(_feeds.size());
 
@@ -69,6 +75,8 @@ String Folder::describe() const
 
 void Folder::clear()
 {
+    DENG2_GUARD(this);
+
     if(_contents.empty()) return;
     
     // Destroy all the file objects.
@@ -82,6 +90,8 @@ void Folder::clear()
 
 void Folder::populate(PopulationBehavior behavior)
 {
+    DENG2_GUARD(this);
+
     LOG_AS("Folder");
     
     // Prune the existing files first.
@@ -97,7 +107,7 @@ void Folder::populate(PopulationBehavior behavior)
         // If the file has a designated feed, ask it about pruning.
         if(file->originFeed() && file->originFeed()->prune(*file))
         {
-            LOG_DEBUG("Pruning ") << file->path();
+            LOG_DEBUG("Pruning \"%s\"") << file->path();
             mustPrune = true;
         }
         else if(!file->originFeed())
@@ -150,11 +160,15 @@ void Folder::populate(PopulationBehavior behavior)
 
 Folder::Contents const &Folder::contents() const
 {
+    DENG2_GUARD(this);
+
     return _contents;
 }
 
 File &Folder::newFile(String const &newPath, FileCreationBehavior behavior)
 {
+    DENG2_GUARD(this);
+
     String path = newPath.fileNamePath();
     if(!path.empty())
     {
@@ -194,7 +208,7 @@ File &Folder::newFile(String const &newPath, FileCreationBehavior behavior)
 
     /// @throw NewFileError All feeds of this folder failed to create a file.
     throw NewFileError("Folder::newFile", "Unable to create new file '" + newPath + 
-        "' in folder '" + Folder::path() + "'");
+                       "' in " + description());
 }
 
 File &Folder::replaceFile(String const &newPath)
@@ -204,6 +218,8 @@ File &Folder::replaceFile(String const &newPath)
 
 void Folder::removeFile(String const &removePath)
 {
+    DENG2_GUARD(this);
+
     String path = removePath.fileNamePath();
     if(!path.empty())
     {
@@ -229,12 +245,29 @@ void Folder::removeFile(String const &removePath)
 
 bool Folder::has(String const &name) const
 {
+    DENG2_GUARD(this);
+
+    // Check if we were given a path rather than just a name.
+    String path = name.fileNamePath();
+    if(!path.empty())
+    {
+        Folder *folder = tryLocate<Folder>(path);
+        if(folder)
+        {
+            return folder->has(name.fileName());
+        }
+        return false;
+    }
+
     return (_contents.find(name.lower()) != _contents.end());
 }
 
 File &Folder::add(File *file)
 {
+    DENG2_GUARD(this);
+
     DENG2_ASSERT(file != 0);
+
     if(has(file->name()))
     {
         /// @throw DuplicateNameError All file names in a folder must be unique.
@@ -248,6 +281,8 @@ File &Folder::add(File *file)
 
 File *Folder::remove(File &file)
 {
+    DENG2_GUARD(this);
+
     for(Contents::iterator i = _contents.begin(); i != _contents.end(); ++i)
     {
         if(i->second == &file)
@@ -272,6 +307,8 @@ File *Folder::tryLocateFile(String const &path) const
         // Route back to the root of the file system.
         return fileSystem().root().tryLocateFile(path.substr(1));
     }
+
+    DENG2_GUARD(this);
 
     // Extract the next component.
     String::size_type end = path.indexOf('/');
@@ -322,13 +359,27 @@ File *Folder::tryLocateFile(String const &path) const
 
 void Folder::attach(Feed *feed)
 {
-    _feeds.push_back(feed);
+    if(feed)
+    {
+        DENG2_GUARD(this);
+        _feeds.push_back(feed);
+    }
 }
 
 Feed *Folder::detach(Feed &feed)
 {
+    DENG2_GUARD(this);
+
     _feeds.remove(&feed);
     return &feed;
+}
+
+void Folder::setPrimaryFeed(Feed &feed)
+{
+    DENG2_GUARD(this);
+
+    _feeds.remove(&feed);
+    _feeds.push_front(&feed);
 }
 
 Folder::Accessor::Accessor(Folder &owner, Property prop) : _owner(owner), _prop(prop)
@@ -336,6 +387,8 @@ Folder::Accessor::Accessor(Folder &owner, Property prop) : _owner(owner), _prop(
 
 void Folder::Accessor::update() const
 {
+    DENG2_GUARD(_owner);
+
     // We need to alter the value content.
     Accessor *nonConst = const_cast<Accessor *>(this);
     

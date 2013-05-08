@@ -26,6 +26,11 @@
 #include <de/Vector>
 #include <de/NativePath>
 
+#ifdef WIN32
+#  undef min
+#  undef max
+#endif
+
 namespace de {
 
 /**
@@ -40,14 +45,14 @@ namespace de {
  *
  * @see Canvas
  */
-class  LIBGUI_PUBLIC CanvasWindow : public QMainWindow,
-                                    DENG2_OBSERVES(Canvas, GLReady),
-                                    DENG2_OBSERVES(Canvas, GLDraw)
+class LIBGUI_PUBLIC CanvasWindow : public QMainWindow,
+                                   DENG2_OBSERVES(Canvas, GLReady),
+                                   DENG2_OBSERVES(Canvas, GLDraw)
 {
     Q_OBJECT
 
 public:
-    typedef Vector2i Size;
+    typedef Vector2ui Size;
 
 public:
     CanvasWindow();
@@ -64,7 +69,7 @@ public:
      */
     inline Vector2i pos() const { return Vector2i(x(), y()); }
 
-    inline Vector2i size() const { return Vector2i(width(), height()); }
+    inline Size size() const { return Size(de::max(0, width()), de::max(0, height())); }
 
     /**
      * Determines the current width of window's Canvas in pixels.
@@ -159,6 +164,11 @@ public:
      * Returns a handle to the native window instance. (Platform-specific.)
      */
     void *nativeHandle() const;
+
+public:
+    static bool haveMain();
+    static CanvasWindow &main();
+    static void setMain(CanvasWindow *window);
 
 private:
     DENG2_PRIVATE(d)

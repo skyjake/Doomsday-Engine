@@ -19,10 +19,11 @@
 #ifndef LIBGUI_GLBUFFER_H
 #define LIBGUI_GLBUFFER_H
 
+#include <QVector>
+
 #include <de/libdeng2.h>
 #include <de/Vector>
 #include <de/Asset>
-#include <vector>
 #include <utility>
 
 #include "libgui.h"
@@ -59,12 +60,42 @@ namespace internal
 }
 
 /**
+ * Vertex format with 2D coordinates and one set of texture coordinates.
+ */
+struct LIBGUI_PUBLIC Vertex2Tex
+{
+    Vector2f pos;
+    Vector2f texCoord;
+
+    static internal::AttribSpecs formatSpec();
+
+private:
+    static internal::AttribSpec const _spec[2];
+};
+
+/**
  * Vertex format with 2D coordinates, one set of texture coordinates, and an
  * RGBA color.
  */
 struct LIBGUI_PUBLIC Vertex2TexRgba
 {
     Vector2f pos;
+    Vector2f texCoord;
+    Vector4f rgba;
+
+    static internal::AttribSpecs formatSpec();
+
+private:
+    static internal::AttribSpec const _spec[3];
+};
+
+/**
+ * Vertex format with 3D coordinates, one set of texture coordinates, and an
+ * RGBA color.
+ */
+struct LIBGUI_PUBLIC Vertex3TexRgba
+{
+    Vector3f pos;
     Vector2f texCoord;
     Vector4f rgba;
 
@@ -101,12 +132,16 @@ namespace gl
  *
  * @note Compatible with OpenGL ES 2.0.
  *
+ * @todo Add a method for replacing a portion of the existing data in the buffer
+ * (using glBufferSubData).
+ *
  * @ingroup gl
  */
 class LIBGUI_PUBLIC GLBuffer : public Asset
 {
 public:
     typedef duint16 Index;
+    typedef QVector<Index> Indices;
 
 public:
     GLBuffer();
@@ -118,6 +153,8 @@ public:
     void setVertices(gl::Primitive primitive, dsize count, void const *data, dsize dataSize, gl::Usage usage);
 
     void setIndices(gl::Primitive primitive, dsize count, Index const *indices, gl::Usage usage);
+
+    void setIndices(gl::Primitive primitive, Indices const &indices, gl::Usage usage);
 
     void draw(duint first = 0, dint count = -1);
 
@@ -135,7 +172,8 @@ template <typename VertexType>
 class GLBufferT : public GLBuffer
 {
 public:
-    typedef std::vector<VertexType> Vertices;
+    typedef VertexType Type;
+    typedef QVector<VertexType> Vertices;
 
 public:
     GLBufferT() {
@@ -147,7 +185,7 @@ public:
     }
 
     void setVertices(Vertices const &vertices, gl::Usage usage) {
-        GLBuffer::setVertices(vertices.size(), &vertices[0], sizeof(VertexType) * vertices.size(), usage);
+        GLBuffer::setVertices(vertices.size(), vertices.constData(), sizeof(VertexType) * vertices.size(), usage);
     }
 
     void setVertices(gl::Primitive primitive, VertexType const *vertices, dsize count, gl::Usage usage) {
@@ -155,7 +193,7 @@ public:
     }
 
     void setVertices(gl::Primitive primitive, Vertices const &vertices, gl::Usage usage) {
-        GLBuffer::setVertices(primitive, vertices.size(), &vertices[0], sizeof(VertexType) * vertices.size(), usage);
+        GLBuffer::setVertices(primitive, vertices.size(), vertices.constData(), sizeof(VertexType) * vertices.size(), usage);
     }
 };
 

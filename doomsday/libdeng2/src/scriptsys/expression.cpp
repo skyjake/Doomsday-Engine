@@ -88,9 +88,9 @@ Expression::Flags const &Expression::flags () const
     return _flags;
 }
 
-void Expression::setFlags(Flags f)
+void Expression::setFlags(Flags f, FlagOp operation)
 {
-    _flags = f;
+    applyFlagOperation(_flags, f, operation);
 }
 
 void Expression::operator >> (Writer &to) const

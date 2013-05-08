@@ -22,30 +22,40 @@
 
 using namespace de;
 
-#define WAITABLE_TIMEOUT     10
-
 Waitable::Waitable(duint initialValue) : _semaphore(initialValue)
 {}
     
 Waitable::~Waitable()
 {}
 
-void Waitable::wait()
+void Waitable::reset()
 {
-    wait(WAITABLE_TIMEOUT);
+    _semaphore.tryAcquire(_semaphore.available());
 }
 
-void Waitable::wait(TimeDelta const &timeOut)
+void Waitable::wait() const
 {
-    // Wait until the resource becomes available.
-    if(!_semaphore.tryAcquire(1, int(timeOut.asMilliSeconds())))
+    wait(0.0);
+}
+
+void Waitable::wait(TimeDelta const &timeOut) const
+{
+    if(timeOut <= 0.0)
     {
-        /// @throw WaitError Failed to secure the resource due to an error.
-        throw WaitError("Waitable::wait", "Timed out");
+        _semaphore.acquire();
+    }
+    else
+    {
+        // Wait until the resource becomes available.
+        if(!_semaphore.tryAcquire(1, int(timeOut.asMilliSeconds())))
+        {
+            /// @throw WaitError Failed to secure the resource due to an error.
+            throw WaitError("Waitable::wait", "Timed out");
+        }
     }
 }
 
-void Waitable::post()
+void Waitable::post() const
 {
     _semaphore.release();
 }

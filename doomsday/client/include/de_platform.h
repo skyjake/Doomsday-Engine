@@ -33,7 +33,12 @@
 #if defined(WIN32)
 
 #if __cplusplus
-#  include <QIODevice> // must be included before anything that defines open
+// must be included before anything that defines open:
+/// @todo Windows: Get rid of the open macro.
+#  include <QIODevice>
+#  include <QFile>
+#  include <QTemporaryFile>
+#  include <QAbstractFileEngine>
 #endif
 
 #define WIN32_LEAN_AND_MEAN

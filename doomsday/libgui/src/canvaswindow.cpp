@@ -36,6 +36,8 @@
 
 namespace de {
 
+static CanvasWindow *mainWindow = 0;
+
 DENG2_PIMPL(CanvasWindow)
 {
     Canvas* canvas; ///< Drawing surface for the contents of the window.
@@ -54,6 +56,14 @@ DENG2_PIMPL(CanvasWindow)
           frameCount(0),
           fps(0)
     {}
+
+    ~Instance()
+    {
+        if(thisPublic == mainWindow)
+        {
+            mainWindow = 0;
+        }
+    }
 
     void updateFrameRateStatistics(void)
     {
@@ -231,6 +241,22 @@ void CanvasWindow::glDone()
 void *CanvasWindow::nativeHandle() const
 {
     return reinterpret_cast<void *>(winId());
+}
+
+bool CanvasWindow::haveMain()
+{
+    return mainWindow != 0;
+}
+
+CanvasWindow &CanvasWindow::main()
+{
+    DENG2_ASSERT(mainWindow != 0);
+    return *mainWindow;
+}
+
+void CanvasWindow::setMain(CanvasWindow *window)
+{
+    mainWindow = window;
 }
 
 } // namespace de

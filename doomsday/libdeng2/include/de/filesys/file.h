@@ -70,7 +70,8 @@ public:
     // Mode flags.
     enum Flag
     {
-        Write = 0x1,
+        ReadOnly = 0,
+        Write    = 0x1,
         Truncate = 0x2
     };
     Q_DECLARE_FLAGS(Flags, Flag)
@@ -297,7 +298,7 @@ public:
 
     /**
      * Changes the mode of the file. For example, using
-     * <code>WRITE|TRUNCATE</code> as the mode would empty the contents of
+     * <code>Write|Truncate</code> as the mode would empty the contents of
      * the file and open it in writing mode.
      *
      * @param newMode  Mode.

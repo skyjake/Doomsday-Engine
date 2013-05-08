@@ -218,6 +218,11 @@ bool NativePath::exists() const
     return QFile::exists(toString());
 }
 
+bool NativePath::isReadable() const
+{
+    return QFileInfo(toString()).isReadable();
+}
+
 static NativePath currentNativeWorkPath;
 
 NativePath NativePath::workPath()
