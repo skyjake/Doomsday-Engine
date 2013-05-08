@@ -52,16 +52,13 @@
 
 using namespace de;
 
-modeldef_t* modefs;
-int numModelDefs;
+ModelDefs modefs;
 
 byte useModels = true;
 
 float rModelAspectMod = 1 / 1.2f; //.833334f;
 
 static StringPool* modelRepository; // Owns model_t instances.
-
-static int maxModelDefs;
 static modeldef_t** stateModefs;
 
 static float avertexnormals[NUMVERTEXNORMALS][3] = {
@@ -747,10 +744,10 @@ modeldef_t* Models_Definition(char const* id)
 {
     if(!id || !id[0]) return 0;
 
-    for(int i = 0; i < numModelDefs; ++i)
+    for(uint i = 0; i < modefs.size(); ++i)
     {
         if(!strcmp(modefs[i].id, id))
-            return modefs + i;
+            return &modefs[i];
     }
     return 0;
 }
@@ -943,7 +940,7 @@ static float calcModelVisualRadius(modeldef_t *def)
     // Use the first frame bounds.
     float min[3], max[3];
     float maxRadius = 0;
-    for(int i = 0; i < MAX_FRAME_MODELS; ++i)
+    for(uint i = 0; i < def->sub.size(); ++i)
     {
         if(!def->sub[i].modelId) break;
 
@@ -972,10 +969,8 @@ static modeldef_t* getModelDefWithId(char const* id)
     if(md) return md;
 
     // Get a new entry.
-    md = modefs + numModelDefs++;
-    memset(md, 0, sizeof(*md));
-    strncpy(md->id, id, MODELDEF_ID_MAXLEN);
-    return md;
+    modefs.push_back(ModelDef(id));
+    return &modefs.back();
 }
 
 /**
@@ -988,7 +983,7 @@ static modeldef_t* getModelDef(int state, float interMark, int select)
     if(state < 0 || state >= countStates.num) return NULL;
 
     // First try to find an existing modef.
-    for(int i = 0; i < numModelDefs; ++i)
+    for(uint i = 0; i < modefs.size(); ++i)
     {
         if(modefs[i].state == &states[state] &&
            modefs[i].interMark == interMark && modefs[i].select == select)
@@ -999,13 +994,10 @@ static modeldef_t* getModelDef(int state, float interMark, int select)
         }
     }
 
-    // This is impossible, but checking won't hurt...
-    if(numModelDefs >= maxModelDefs) return NULL;
-
-    modeldef_t* md = modefs + numModelDefs++;
-    memset(md, 0, sizeof(*md));
+    modefs.push_back(ModelDef());
 
     // Set initial data.
+    modeldef_t* md = &modefs.back();
     md->state = &states[state];
     md->interMark = interMark;
     md->select = select;
@@ -1058,10 +1050,12 @@ static void setupModel(ded_model_t& def)
         modef->skinTics = 1;
 
     // Submodels.
-    ded_submodel_t* subdef = def.sub;
-    submodeldef_t*  sub    = modef->sub;
-    for(int i = 0; i < MAX_FRAME_MODELS; ++i, ++subdef, ++sub)
+    modef->clearSubs();
+    for(uint i = 0; i < def.sub.size(); ++i)
     {
+        ded_submodel_t const *subdef = &def.sub[i];
+        submodeldef_t *sub = modef->addSub();
+
         sub->modelId = 0;
 
         if(!subdef->filename || Uri_IsEmpty(subdef->filename)) continue;
@@ -1229,10 +1223,10 @@ static void setupModel(ded_model_t& def)
     }
 
     // Calculate the particle offset for each submodel.
-    sub = modef->sub;
     float min[3], max[3];
-    for(int i = 0; i < MAX_FRAME_MODELS; ++i, ++sub)
+    for(uint i = 0; i < modef->sub.size(); ++i)
     {
+        SubmodelDef *sub = &modef->sub[i];
         if(sub->modelId)
         {
             Models_ToModel(sub->modelId)->frame(sub->frame).getBounds(min, max);
@@ -1246,7 +1240,7 @@ static void setupModel(ded_model_t& def)
         }
         else
         {
-            memset(modef->ptcOffset[i], 0, sizeof(modef->ptcOffset[i]));
+            modef->ptcOffset[i] = de::Vector3f();
         }
     }
 
@@ -1303,16 +1297,13 @@ void Models_Init(void)
     modelRepository = new StringPool();
 
     clearModelList();
-    if(modefs)
-    {
-        M_Free(modefs);
-    }
+    modefs.clear();
 
     // There can't be more modeldefs than there are DED Models.
-    // There can be fewer, though.
-    maxModelDefs = defs.count.models.num;
-    modefs = (modeldef_t*) M_Malloc(sizeof(modeldef_t) * maxModelDefs);
-    numModelDefs = 0;
+    for(uint i = 0; i < defs.models.size(); ++i)
+    {
+        modefs.push_back(ModelDef());
+    }
 
     // Clear the modef pointers of all States.
     stateModefs = (modeldef_t**) M_Realloc(stateModefs, countStates.num * sizeof(*stateModefs));
@@ -1320,12 +1311,12 @@ void Models_Init(void)
 
     // Read in the model files and their data.
     // Use the latest definition available for each sprite ID.
-    for(int i = defs.count.models.num - 1; i >= 0; --i)
+    for(int i = int(defs.models.size()) - 1; i >= 0; --i)
     {
         if(!(i % 100))
         {
             // This may take a while, so keep updating the progress.
-            Con_SetProgress(130 + 70*(defs.count.models.num - i)/defs.count.models.num);
+            Con_SetProgress(130 + 70*(defs.models.size() - i)/defs.models.size());
         }
 
         setupModel(defs.models[i]);
@@ -1335,16 +1326,17 @@ void Models_Init(void)
     // is important. We want to allow "patch" definitions, right?
 
     // For each modeldef we will find the "next" def.
-    modeldef_t* me = modefs + (numModelDefs - 1);
-    for(int i = numModelDefs - 1; i >= 0; --i, --me)
+    for(int i = int(modefs.size()) - 1; i >= 0; --i)
     {
+        modeldef_t* me = &modefs[i];
+
         float minmark = 2; // max = 1, so this is "out of bounds".
 
         modeldef_t* closest = 0;
-
-        modeldef_t* other = modefs + (numModelDefs - 1);
-        for(int k = numModelDefs - 1; k >= 0; --k, --other)
+        for(int k = int(modefs.size()) - 1; k >= 0; --k)
         {
+            modeldef_t* other = &modefs[k];
+
             // Same state and a bigger order are the requirements.
             if(other->state == me->state && other->def > me->def && // Defined after me.
                other->interMark > me->interMark &&
@@ -1359,17 +1351,19 @@ void Models_Init(void)
     }
 
     // Create selectlinks.
-    me = modefs + (numModelDefs - 1);
-    for(int i = numModelDefs - 1; i >= 0; --i, --me)
+    for(int i = int(modefs.size()) - 1; i >= 0; --i)
     {
+        modeldef_t *me = &modefs[i];
+
         int minsel = DDMAXINT;
 
         modeldef_t* closest = 0;
 
         // Start scanning from the next definition.
-        modeldef_t* other = modefs + (numModelDefs - 1);
-        for(int k = numModelDefs - 1; k >= 0; --k, --other)
+        for(int k = int(modefs.size()) - 1; k >= 0; --k)
         {
+            modeldef_t *other = &modefs[k];
+
             // Same state and a bigger order are the requirements.
             if(other->state == me->state && other->def > me->def && // Defined after me.
                other->select > me->select && other->select < minsel &&
@@ -1383,16 +1377,13 @@ void Models_Init(void)
         me->selectNext = closest;
     }
 
-    LOG_INFO(String("Models_Init: Done in %1 seconds.").arg(double((Timer_RealMilliseconds() - usedTime) / 1000.0f), 0, 'g', 2));
+    LOG_INFO("Models_Init: Done in %.2f seconds.") << (Timer_RealMilliseconds() - usedTime) / 1000.0f;
 }
 
 void Models_Shutdown(void)
 {
     /// @todo Why only centralized memory deallocation? Bad design...
-    if(modefs)
-    {
-        M_Free(modefs); modefs = 0;
-    }
+    modefs.clear();
     if(stateModefs)
     {
         M_Free(stateModefs); stateModefs = 0;
@@ -1410,7 +1401,7 @@ void Models_Cache(modeldef_t *modef)
 {
     if(!modef) return;
 
-    for(int sub = 0; sub < MAX_FRAME_MODELS; ++sub)
+    for(uint sub = 0; sub < modef->sub.size(); ++sub)
     {
         submodeldef_t &subdef = modef->sub[sub];
         model_t *mdl = Models_ToModel(subdef.modelId);
@@ -1450,9 +1441,10 @@ int Models_CacheForMobj(thinker_t* th, void* /*context*/)
     mobj_t* mo = (mobj_t*) th;
 
     // Check through all the model definitions.
-    modeldef_t* modef = modefs;
-    for(int i = 0; i < numModelDefs; ++i, ++modef)
+    for(uint i = 0; i < modefs.size(); ++i)
     {
+        modeldef_t* modef = &modefs[i];
+
         if(!modef->state) continue;
         if(mo->type < 0 || mo->type >= defs.count.mobjs.num) continue; // Hmm?
         if(stateOwners[modef->state - states] != &mobjInfo[mo->type]) continue;

@@ -26,6 +26,9 @@
 #ifndef LIBDENG_DEFINITION_FILE_H
 #define LIBDENG_DEFINITION_FILE_H
 
+#include <vector>
+#include <de/libdeng2.h>
+
 #include "def_share.h"
 #include "api_uri.h"
 #include "api_gl.h"
@@ -36,8 +39,6 @@
 #define DED_SPRITEID_LEN            4
 #define DED_STRINGID_LEN            31
 #define DED_FUNC_LEN                255
-
-#define DED_MAX_SUB_MODELS          8
 
 #define DED_MAX_MATERIAL_LAYERS     1   ///< Maximum number of material layers.
 #define DED_MAX_MATERIAL_DECORATIONS 16 ///< Maximum number of material (light) decorations.
@@ -82,8 +83,6 @@ typedef struct ded_ptcstage_s {
     short           frame, endFrame;
     ded_embsound_t  sound, hitSound;
 } ded_ptcstage_t;
-
-//#include "map/p_mapdata.h"
 
 typedef struct ded_count_s {
     int             num, max;
@@ -154,7 +153,8 @@ typedef struct {
     float           haloRadius; // Halo radius (zero = no halo).
 } ded_light_t;
 
-typedef struct {
+struct ded_submodel_t
+{
     Uri*            filename;
     Uri*            skinFilename; // Optional; override model's skin.
     ded_string_t    frame;
@@ -172,9 +172,32 @@ typedef struct {
     float           shinyColor[3];
     float           shinyReact;
     blendmode_t     blendMode; // bm_*
-} ded_submodel_t;
 
-typedef struct {
+    ded_submodel_t()
+        : filename(0),
+          skinFilename(0),
+          frameRange(0),
+          flags(0),
+          skin(0),
+          skinRange(0),
+          alpha(0),
+          parm(0),
+          shinySkin(0),
+          shiny(0),
+          blendMode(BM_NORMAL)
+    {
+        de::zap(frame);
+        de::zap(offset);
+        de::zap(selSkinBits);
+        de::zap(selSkins);
+
+        shinyColor[0] = shinyColor[1] = shinyColor[2] = 1;
+        shinyReact = 1.0f;
+    }
+};
+
+struct ded_model_t
+{
     ded_stringid_t  id; // Optional identifier for the definition.
     ded_stateid_t   state;
     int             off;
@@ -190,8 +213,32 @@ typedef struct {
     float           resize;
     float           offset[3]; // Offset XYZ
     float           shadowRadius; // Radius for shadow (0=auto).
-    ded_submodel_t  sub[DED_MAX_SUB_MODELS];
-} ded_model_t;
+
+    typedef std::vector<ded_submodel_t> Submodels;
+    Submodels sub;
+
+    ded_model_t(char const *spriteId = "")
+        : off(0),
+          spriteFrame(0),
+          group(0),
+          selector(0),
+          flags(0),
+          interMark(0),
+          skinTics(0),
+          resize(0),
+          shadowRadius(0)
+    {
+        de::zap(id);
+        de::zap(state);
+        de::zap(sprite);
+        de::zap(interRange);
+        de::zap(offset);
+
+        strcpy(sprite.id, spriteId);
+        interRange[1] = 1;
+        scale[0] = scale[1] = scale[2] = 1;
+    }
+};
 
 typedef struct {
     ded_soundid_t   id; // ID of this sound, refered to by others.
@@ -558,7 +605,7 @@ typedef struct ded_s {
         ded_count_t     sprites;
         ded_count_t     lights;
         ded_count_t     materials;
-        ded_count_t     models;
+        //ded_count_t     models;
         ded_count_t     skies;
         ded_count_t     sounds;
         ded_count_t     music;
@@ -597,7 +644,9 @@ typedef struct ded_s {
     ded_material_t* materials;
 
     // Models.
-    ded_model_t*    models;
+    //ded_model_t*    models;
+    typedef std::vector<ded_model_t> Models;
+    Models models;
 
     // Skies.
     ded_sky_t*      skies;

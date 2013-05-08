@@ -38,7 +38,7 @@ typedef struct glcommand_vertex_s {
 /// @todo Split this large inflexible structure into logical subcomponent pieces.
 typedef struct rendmodelparams_s {
 // Animation, frame interpolation.
-    struct modeldef_s* mf, *nextMF;
+    ModelDef *mf, *nextMF;
     float           inter;
     boolean         alwaysInterpolate;
     int             id; // For a unique skin offset.

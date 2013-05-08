@@ -26,6 +26,9 @@
 #ifndef LIBDENG_RESOURCE_MODELS_H
 #define LIBDENG_RESOURCE_MODELS_H
 
+#include <vector>
+#include <de/Vector>
+
 #include "def_data.h"
 #include "gl/gl_model.h"
 
@@ -34,8 +37,6 @@ typedef uint modelid_t;
 
 /// Special value used to signify an invalid model id.
 #define NOMODELID               0
-
-#define MAX_FRAME_MODELS        DED_MAX_SUB_MODELS
 
 /**
  * @defgroup modelFrameFlags Model frame flags
@@ -74,7 +75,7 @@ typedef uint modelid_t;
 #define MFF_WORLD_TIME_ANIM     0x20000000
 ///@}
 
-typedef struct
+struct SubmodelDef
 {
     modelid_t modelId;
     short frame;
@@ -86,11 +87,27 @@ typedef struct
     byte alpha;
     struct texture_s* shinySkin;
     blendmode_t blendMode;
-} submodeldef_t;
+
+    SubmodelDef()
+        : modelId(0),
+          frame(0),
+          frameRange(0),
+          flags(0),
+          skin(0),
+          skinRange(0),
+          alpha(0),
+          shinySkin(0),
+          blendMode(BM_NORMAL)
+    {
+        de::zap(offset);
+    }
+};
+
+typedef SubmodelDef submodeldef_t;
 
 #define MODELDEF_ID_MAXLEN      32
 
-typedef struct modeldef_s
+struct ModelDef
 {
     char id[MODELDEF_ID_MAXLEN + 1];
 
@@ -109,36 +126,66 @@ typedef struct modeldef_s
     float resize;
     float scale[3];
 
-    float ptcOffset[MAX_FRAME_MODELS][3];
+    typedef std::vector<de::Vector3f> PtcOffsets;
+    PtcOffsets ptcOffset;
 
     float visualRadius;
 
     ded_model_t* def;
 
     /// Points to next inter-frame, or NULL.
-    struct modeldef_s* interNext;
+    ModelDef *interNext;
 
     /// Points to next selector, or NULL (only for "base" modeldefs).
-    struct modeldef_s* selectNext;
+    ModelDef *selectNext;
 
     /// Submodels.
-    submodeldef_t sub[MAX_FRAME_MODELS];
-} modeldef_t;
+    typedef std::vector<SubmodelDef> Subs;
+    Subs sub;
+
+    ModelDef(char const *modelDefId = "")
+        : state(0),
+          flags(0),
+          group(0),
+          select(0),
+          skinTics(0),
+          interMark(0),
+          resize(0),
+          visualRadius(0),
+          def(0),
+          interNext(0),
+          selectNext(0)
+    {
+        de::zap(id);
+        strncpy(id, modelDefId, MODELDEF_ID_MAXLEN);
+
+        de::zap(interRange);
+        de::zap(offset);
+        de::zap(scale);
+    }
+
+    SubmodelDef *addSub()
+    {
+        sub.push_back(SubmodelDef());
+        ptcOffset.push_back(de::Vector3f());
+        return &sub.back();
+    }
+
+    void clearSubs()
+    {
+        sub.clear();
+        ptcOffset.clear();
+    }
+};
+
+typedef ModelDef modeldef_t;
+typedef std::vector<ModelDef> ModelDefs;
 
 #ifdef __CLIENT__
 
-DENG_EXTERN_C modeldef_t* modefs;
-DENG_EXTERN_C int numModelDefs;
-DENG_EXTERN_C byte useModels;
-DENG_EXTERN_C float rModelAspectMod;
-
-#endif // __CLIENT__
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#ifdef __CLIENT__
+extern ModelDefs modefs;
+extern byte useModels;
+extern float rModelAspectMod;
 
 /**
  * @pre States must be initialized before this.
@@ -176,9 +223,5 @@ void Models_Cache(modeldef_t* modef);
 int Models_CacheForMobj(thinker_t* th, void* context);
 
 #endif // __CLIENT__
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif // LIBDENG_RESOURCE_MODELS_H

@@ -144,23 +144,18 @@ void DED_Clear(ded_t* ded)
         ded->lights = 0;
     }
 
-    if(ded->models)
+    for(uint i = 0; i < ded->models.size(); ++i)
     {
-        int i, j;
-        for(i = 0; i < ded->count.models.num; ++i)
+        ded_model_t* mdl = &ded->models[i];
+        for(uint j = 0; j < mdl->sub.size(); ++j)
         {
-            ded_model_t* mdl = &ded->models[i];
-            for(j = 0; j < DED_MAX_SUB_MODELS; ++j)
-            {
-                ded_submodel_t* sub = &mdl->sub[j];
-                if(sub->filename) Uri_Delete(sub->filename);
-                if(sub->skinFilename) Uri_Delete(sub->skinFilename);
-                if(sub->shinySkin) Uri_Delete(sub->shinySkin);
-            }
+            ded_submodel_t* sub = &mdl->sub[j];
+            if(sub->filename)     Uri_Delete(sub->filename);
+            if(sub->skinFilename) Uri_Delete(sub->skinFilename);
+            if(sub->shinySkin)    Uri_Delete(sub->shinySkin);
         }
-        M_Free(ded->models);
-        ded->models = 0;
     }
+    ded->models.clear();
 
     if(ded->sounds)
     {
@@ -472,26 +467,13 @@ void DED_RemoveFlag(ded_t* ded, int index)
 
 int DED_AddModel(ded_t* ded, char const* spr)
 {
-    int i;
-    ded_model_t* md = (ded_model_t *) DED_NewEntry((void**) &ded->models, &ded->count.models, sizeof(ded_model_t));
-
-    strcpy(md->sprite.id, spr);
-    md->interRange[1] = 1;
-    md->scale[0] = md->scale[1] = md->scale[2] = 1;
-    // Init submodels.
-    for(i = 0; i < DED_MAX_SUB_MODELS; ++i)
-    {
-        md->sub[i].blendMode = BM_NORMAL;
-        md->sub[i].shinyColor[CR] = md->sub[i].shinyColor[CG] =
-            md->sub[i].shinyColor[CB] = 1;
-        md->sub[i].shinyReact = 1.0f;
-    }
-    return md - ded->models;
+    ded->models.push_back(ded_model_t(spr));
+    return ded->models.size() - 1;
 }
 
 void DED_RemoveModel(ded_t* ded, int index)
 {
-    DED_DelEntry(index, (void**) &ded->models, &ded->count.models, sizeof(ded_model_t));
+    ded->models.erase(ded->models.begin() + index);
 }
 
 int DED_AddSky(ded_t* ded, char const* id)
