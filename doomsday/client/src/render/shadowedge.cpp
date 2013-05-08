@@ -18,12 +18,14 @@
  * 02110-1301 USA</small>
  */
 
+#include "HEdge"
 #include "Plane"
 #include "Sector"
-#include "HEdge"
 
 #include "map/r_world.h"
 #include "map/lineowner.h"
+
+#include "render/rend_main.h"
 
 #include "render/shadowedge.h"
 
@@ -102,6 +104,38 @@ static float opennessFactor(float fz, float bz, float bhz)
     return 2;
 }
 
+static bool middleMaterialCoversOpening(Line::Side &side)
+{
+    if(!side.hasSector()) return false; // Never.
+
+    if(!side.hasSections()) return false;
+    if(!side.middle().hasMaterial()) return false;
+
+    // Ensure we have up to date info about the material.
+    MaterialSnapshot const &ms = side.middle().material().prepare(Rend_MapSurfaceMaterialSpec());
+
+    if(ms.isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1)
+    {
+        coord_t openRange, openBottom, openTop;
+
+        // Stretched middles always cover the opening.
+        if(side.isFlagged(SDF_MIDDLE_STRETCH))
+            return true;
+
+        // Might the material cover the opening?
+        openRange = R_VisOpenRange(side, &openBottom, &openTop);
+        if(ms.height() >= openRange)
+        {
+            // Possibly; check the placement.
+            coord_t bottom, top;
+            R_SideSectionCoords(side, Line::Side::Middle, &bottom, &top);
+            return (top > bottom && top >= openTop && bottom <= openBottom);
+        }
+    }
+
+    return false;
+}
+
 void ShadowEdge::prepare(int planeIndex)
 {
     Line::Side &side = d->leftMostHEdge->lineSide();
@@ -141,7 +175,7 @@ void ShadowEdge::prepare(int planeIndex)
         {
             // Does the middle material completely cover the open range (we do
             // not want to give away the location of any secret areas)?
-            if(!R_MiddleMaterialCoversOpening(side))
+            if(!middleMaterialCoversOpening(side))
             {
                 d->sectorOpenness = opennessFactor(fz, bz, bhz);
             }
@@ -177,7 +211,7 @@ void ShadowEdge::prepare(int planeIndex)
             d->openness = 1;
         }
         else if(!otherSide->hasSector() ||
-                (otherSide->back().hasSector() && R_MiddleMaterialCoversOpening(*otherSide)))
+                (otherSide->back().hasSector() && middleMaterialCoversOpening(*otherSide)))
         {
             d->openness = 0;
         }

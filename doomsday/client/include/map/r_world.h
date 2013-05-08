@@ -140,30 +140,6 @@ inline coord_t R_VisOpenRange(Line::Side const &side, coord_t *bottom = 0, coord
 }
 
 #ifdef __CLIENT__
-/**
- * @param side          Line side for which to determine covered opening status.
- * @param frontSec      Sector in front of the wall.
- * @param backSec       Sector behind the wall. Can be @c 0.
- * @param ignoreOpacity @c true= material opacity should be ignored.
- *
- * @return  @c true iff Line::Side @a front has a "middle" Material which completely
- *     covers the open range defined by sectors @a frontSec and @a backSec.
- *
- * @note Anything calling this is likely working at the wrong level (should work with
- * half-edges instead).
- */
-bool R_MiddleMaterialCoversOpening(Line::Side const &side, Sector const *frontSec,
-    Sector const *backSec, bool ignoreOpacity = false);
-
-/**
- * Same as @ref R_MiddleMaterialCoversOpening() except that the sector arguments
- * are taken from the specified line @a side.
- */
-inline bool R_MiddleMaterialCoversOpening(Line::Side const &side, bool ignoreOpacity = false)
-{
-    return R_MiddleMaterialCoversOpening(side, side.sectorPtr(), side.back().sectorPtr(),
-                                         ignoreOpacity);
-}
 
 /**
  * @param side  Line::Side instance.

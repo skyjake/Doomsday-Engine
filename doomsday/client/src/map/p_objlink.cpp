@@ -29,8 +29,11 @@
 
 #include "gridmap.h"
 #include "map/gamemap.h"
+#include "MaterialSnapshot"
 
 #include "map/p_objlink.h"
+
+using namespace de;
 
 #define BLOCK_WIDTH                 (128)
 #define BLOCK_HEIGHT                (128)
@@ -378,8 +381,28 @@ static void processHEdge(HEdge *hedge, void *parameters)
         if(backSec && !side.back().hasSections())
             return;
 
-        if(R_MiddleMaterialCoversOpening(side, frontSec, backSec))
-            return;
+        // Is there an opaque middle material which completely covers the opening?
+        if(side.hasSections() && side.middle().hasMaterial() && frontSec)
+        {
+            // Stretched middles always cover the opening.
+            if(side.isFlagged(SDF_MIDDLE_STRETCH))
+                return;
+
+            // Might the material cover the opening?
+            coord_t openRange, openBottom, openTop;
+            openRange = R_VisOpenRange(side, frontSec, backSec, &openBottom, &openTop);
+
+            // Ensure we have up to date info about the material.
+            MaterialSnapshot const &ms = side.middle().material().prepare(Rend_MapSurfaceMaterialSpec());
+            if(ms.height() >= openRange)
+            {
+                // Possibly; check the placement.
+                coord_t bottom, top;
+                R_SideSectionCoords(side, Line::Side::Middle, frontSec, backSec, &bottom, &top);
+                if(top > bottom && top >= openTop && bottom <= openBottom)
+                    return;
+            }
+        }
     }
 
     // During next step, obj will continue spreading from there.

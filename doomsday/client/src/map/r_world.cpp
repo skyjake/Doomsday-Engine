@@ -308,41 +308,6 @@ coord_t R_VisOpenRange(Line::Side const &side, Sector const *frontSec,
 }
 
 #ifdef __CLIENT__
-bool R_MiddleMaterialCoversOpening(Line::Side const &side,
-    Sector const *frontSec, Sector const *backSec, bool ignoreOpacity)
-{
-    if(!frontSec) return false; // Never.
-
-    if(!side.hasSections()) return false;
-    if(!side.middle().hasMaterial()) return false;
-
-    // Ensure we have up to date info about the material.
-    MaterialSnapshot const &ms = side.middle().material().prepare(Rend_MapSurfaceMaterialSpec());
-
-    if(ignoreOpacity || (ms.isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1))
-    {
-        coord_t openRange, openBottom, openTop;
-
-        // Stretched middles always cover the opening.
-        if(side.isFlagged(SDF_MIDDLE_STRETCH))
-            return true;
-
-        // Might the material cover the opening?
-        openRange = R_VisOpenRange(side, frontSec, backSec, &openBottom, &openTop);
-        if(ms.height() >= openRange)
-        {
-            // Possibly; check the placement.
-            coord_t bottom, top;
-            R_SideSectionCoords(side, Line::Side::Middle, frontSec, backSec, &bottom, &top);
-            if(top > bottom)
-            {
-                return (top >= openTop && bottom <= openBottom);
-            }
-        }
-    }
-
-    return false;
-}
 
 /**
  * @param side  Line::Side instance.
@@ -368,7 +333,31 @@ bool R_SideBackClosed(Line::Side const &side, bool ignoreOpacity)
         if(backSec.floor().visHeight()   >= frontSec.ceiling().visHeight()) return true;
     }
 
-    return R_MiddleMaterialCoversOpening(side, ignoreOpacity);
+    // Perhaps a middle material completely covers the opening?
+    if(side.hasSector() && side.middle().hasMaterial())
+    {
+        // Ensure we have up to date info about the material.
+        MaterialSnapshot const &ms = side.middle().material().prepare(Rend_MapSurfaceMaterialSpec());
+
+        if(ignoreOpacity || (ms.isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1))
+        {
+            // Stretched middles always cover the opening.
+            if(side.isFlagged(SDF_MIDDLE_STRETCH))
+                return true;
+
+            coord_t openRange, openBottom, openTop;
+            openRange = R_VisOpenRange(side, &openBottom, &openTop);
+            if(ms.height() >= openRange)
+            {
+                // Possibly; check the placement.
+                coord_t bottom, top;
+                R_SideSectionCoords(side, Line::Side::Middle, &bottom, &top);
+                return (top > bottom && top >= openTop && bottom <= openBottom);
+            }
+        }
+    }
+
+    return false;
 }
 
 Line *R_FindLineNeighbor(Sector const *sector, Line const *line,
@@ -398,6 +387,47 @@ Line *R_FindLineNeighbor(Sector const *sector, Line const *line,
 
     // Not suitable, try the next.
     return R_FindLineNeighbor(sector, line, cown, antiClockwise, diff);
+}
+
+/**
+ * @param side          Line side for which to determine covered opening status.
+ * @param frontSec      Sector in front of the wall.
+ * @param backSec       Sector behind the wall. Can be @c 0.
+ *
+ * @return  @c true iff Line::Side @a front has a "middle" Material which completely
+ *     covers the open range defined by sectors @a frontSec and @a backSec.
+ *
+ * @note Anything calling this is likely working at the wrong level (should work with
+ * half-edges instead).
+ */
+static bool middleMaterialCoversOpening(Line::Side const &side)
+{
+    if(!side.hasSector()) return false; // Never.
+
+    if(!side.hasSections()) return false;
+    if(!side.middle().hasMaterial()) return false;
+
+    // Ensure we have up to date info about the material.
+    MaterialSnapshot const &ms = side.middle().material().prepare(Rend_MapSurfaceMaterialSpec());
+
+    if(ms.isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1)
+    {
+        // Stretched middles always cover the opening.
+        if(side.isFlagged(SDF_MIDDLE_STRETCH))
+            return true;
+
+        coord_t openRange, openBottom, openTop;
+        openRange = R_VisOpenRange(side, &openBottom, &openTop);
+        if(ms.height() >= openRange)
+        {
+            // Possibly; check the placement.
+            coord_t bottom, top;
+            R_SideSectionCoords(side, Line::Side::Middle, &bottom, &top);
+            return (top > bottom && top >= openTop && bottom <= openBottom);
+        }
+    }
+
+    return false;
 }
 
 Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
@@ -450,7 +480,8 @@ Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
                  (oFFloor < sector->ceiling().visHeight() &&
                       oFCeil > sector->floor().visHeight())))  )
             {
-                if(!R_MiddleMaterialCoversOpening(other->side(side)))
+                // Perhaps a middle material completely covers the opening?
+                if(!middleMaterialCoversOpening(other->side(side)))
                     return 0;
             }
         }
