@@ -37,6 +37,8 @@
  */
 #define DENG2_APP   (&de::App::app())
 
+#define DENG2_ASSERT_IN_MAIN_THREAD()   DENG2_ASSERT(de::App::inMainThread())
+
 namespace de {
 
 class Archive;
@@ -246,6 +248,12 @@ public:
      * automatically called by the application clock when time changes.
      */
     void timeChanged(Clock const &);
+
+    /**
+     * Determines if the currently executing thread is the application's main
+     * (UI) thread.
+     */
+    static bool inMainThread();
 
 protected:
     /**

@@ -37,6 +37,7 @@
 #include "de/math.h"
 
 #include <QDir>
+#include <QThread>
 
 namespace de {
 
@@ -44,6 +45,8 @@ static App *singletonApp;
 
 DENG2_PIMPL(App)
 {
+    QThread *mainThread;
+
     CommandLine cmdLine;
 
     LogBuffer logBuffer;
@@ -79,6 +82,7 @@ DENG2_PIMPL(App)
         : Base(a), cmdLine(args), persistentData(0), config(0), terminateFunc(0)
     {
         singletonApp = &a;
+        mainThread = QThread::currentThread();
 
         Clock::setAppClock(&clock);
 
@@ -228,6 +232,11 @@ void App::timeChanged(Clock const &clock)
             sys->timeChanged(clock);
         }
     }
+}
+
+bool App::inMainThread()
+{
+    return DENG2_APP->d->mainThread == QThread::currentThread();
 }
 
 NativePath App::nativePluginBinaryPath()
