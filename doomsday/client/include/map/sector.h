@@ -161,6 +161,14 @@ public:
     inline int planeCount() const { return planes().count(); }
 
     /**
+     * Returns @c true iff at least one of the surfaces of a plane in/owned
+     * by the sector presently has a sky-masked material bound.
+     *
+     * @see Surface::hasSkyMaskedMaterial()
+     */
+    bool hasSkyMaskedPlane() const;
+
+    /**
      * Convenient accessor method for returning the surface of the specified
      * plane of the sector.
      */

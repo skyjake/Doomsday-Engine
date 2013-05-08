@@ -1,4 +1,4 @@
-/** @file r_world.h World Setup and Refresh.
+/** @file map/r_world.h World Setup.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_MAP_WORLD_H
-#define LIBDENG_MAP_WORLD_H
+#ifndef DENG_WORLD_H
+#define DENG_WORLD_H
 
 #include <de/Observers>
 #include <de/Vector>
@@ -43,16 +43,23 @@ extern boolean firstFrameAfterLoad;
 // Sky flags.
 #define SIF_DRAW_SPHERE     0x1 ///< Always draw the sky sphere.
 
+LineOwner *R_GetVtxLineOwner(Vertex const *vtx, Line const *line);
+
+void R_UpdateSector(Sector &sector, bool forceUpdate = false);
+
 /**
  * Sector light color may be affected by the sky light color.
  */
 de::Vector3f const &R_GetSectorLightColor(Sector const &sector);
 
+/**
+ * @return  @c > 0 if @a lightlevel passes the min max limit condition.
+ */
+float R_CheckSectorLight(float lightlevel, float min, float max);
+
 #ifdef __CLIENT__
 
 float R_DistAttenuateLightLevel(float distToViewer, float lightLevel);
-
-#endif // __CLIENT__
 
 /**
  * The DOOM lighting model applies a light level delta to everything when
@@ -62,16 +69,9 @@ float R_DistAttenuateLightLevel(float distToViewer, float lightLevel);
  */
 float R_ExtraLightDelta();
 
-/**
- * @return  @c > 0 if @a lightlevel passes the min max limit condition.
- */
-float R_CheckSectorLight(float lightlevel, float min, float max);
-
-boolean R_SectorContainsSkySurfaces(Sector const *sec);
-
-void R_ClearSectorFlags();
-
 void R_UpdateMissingMaterialsForLinesOfSector(Sector const &sec);
+
+#endif // __CLIENT__
 
 /**
  * Determine the map space Z coordinates of a wall section.
@@ -180,8 +180,6 @@ inline bool R_MiddleMaterialCoversOpening(Line::Side const &side, bool ignoreOpa
                                          ignoreOpacity);
 }
 
-#endif // __CLIENT__
-
 /**
  * @param side  Line::Side instance.
  * @param ignoreOpacity  @c true= do not consider Material opacity.
@@ -192,14 +190,6 @@ inline bool R_MiddleMaterialCoversOpening(Line::Side const &side, bool ignoreOpa
  */
 bool R_SideBackClosed(Line::Side const &side, bool ignoreOpacity = true);
 
-void R_UpdateSector(Sector &sector, bool forceUpdate = false);
-
-/// @return  Current glow strength for the plane.
-float R_GlowStrength(Plane const *pln);
-
-LineOwner *R_GetVtxLineOwner(Vertex const *vtx, Line const *line);
-
-#ifdef __CLIENT__
 /**
  * A neighbour is a line that shares a vertex with 'line', and faces the
  * specified sector.
@@ -227,4 +217,4 @@ Line *R_FindLineBackNeighbor(Sector const *sector, Line const *line,
     LineOwner const *own, bool antiClockwise, binangle_t *diff = 0);
 #endif // __CLIENT__
 
-#endif /* LIBDENG_MAP_WORLD_H */
+#endif // DENG_WORLD_H

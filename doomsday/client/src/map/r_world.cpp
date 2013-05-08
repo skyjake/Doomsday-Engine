@@ -884,60 +884,6 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
     }
 }
 
-void R_ClearSectorFlags()
-{
-    if(!theMap) return;
-
-    foreach(Sector *sector, theMap->sectors())
-    {
-        // Clear all flags that can be cleared before each frame.
-        sector->_frameFlags &= ~SIF_FRAME_CLEAR;
-    }
-}
-
-float R_GlowStrength(Plane const *plane)
-{
-#ifdef __CLIENT__
-    Surface const &surface = plane->surface();
-    if(surface.hasMaterial() && glowFactor > .0001f)
-    {
-        if(surface.material().isDrawable() && !surface.hasSkyMaskedMaterial())
-        {
-            MaterialSnapshot const &ms = surface.material().prepare(Rend_MapSurfaceMaterialSpec());
-
-            float glowStrength = ms.glowStrength() * glowFactor; // Global scale factor.
-            return glowStrength;
-        }
-    }
-#else
-    DENG_UNUSED(plane);
-#endif
-    return 0;
-}
-
-/**
- * Does the specified sector contain any sky surface planes?
- *
- * @return  @c true, if one or more plane surfaces in the given sector use
- * a sky-masked material.
- */
-boolean R_SectorContainsSkySurfaces(Sector const *sec)
-{
-    DENG_ASSERT(sec);
-
-    boolean sectorContainsSkySurfaces = false;
-    int n = 0;
-    do
-    {
-        if(sec->planeSurface(n).hasSkyMaskedMaterial())
-            sectorContainsSkySurfaces = true;
-        else
-            n++;
-    } while(!sectorContainsSkySurfaces && n < sec->planeCount());
-
-    return sectorContainsSkySurfaces;
-}
-
 void R_UpdateSector(Sector &sector, bool forceUpdate)
 {
 #ifdef __CLIENT__
@@ -989,12 +935,12 @@ float R_DistAttenuateLightLevel(float distToViewer, float lightLevel)
     return lightLevel;
 }
 
-#endif // __CLIENT__
-
 float R_ExtraLightDelta()
 {
     return extraLightDelta;
 }
+
+#endif // __CLIENT__
 
 float R_CheckSectorLight(float lightlevel, float min, float max)
 {
@@ -1011,7 +957,7 @@ Vector3f const &R_GetSectorLightColor(Sector const &sector)
     static Vector3f oldSkyAmbientColor(-1.f, -1.f, -1.f);
     static float oldRendSkyLight = -1;
 
-    if(rendSkyLight > .001f && R_SectorContainsSkySurfaces(&sector))
+    if(rendSkyLight > .001f && sector.hasSkyMaskedPlane())
     {
         ColorRawf const *ambientColor = Sky_AmbientColor();
 

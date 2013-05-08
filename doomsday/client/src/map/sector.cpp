@@ -280,6 +280,16 @@ Sector::Planes const &Sector::planes() const
     return d->planes;
 }
 
+bool Sector::hasSkyMaskedPlane() const
+{
+    foreach(Plane *plane, d->planes)
+    {
+        if(plane->surface().hasSkyMaskedMaterial())
+            return true;
+    }
+    return false;
+}
+
 Sector::BspLeafs const &Sector::bspLeafs() const
 {
     return d->bspLeafs;

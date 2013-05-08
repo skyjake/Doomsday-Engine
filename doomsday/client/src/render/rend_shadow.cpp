@@ -24,9 +24,12 @@
 #include "de_system.h"
 
 #include "map/gamemap.h"
+#include "MaterialSnapshot"
 #include "SectionEdge"
 
 #include "render/rend_shadow.h"
+
+using namespace de;
 
 typedef struct {
     rvertex_t vertices[4];
@@ -73,6 +76,23 @@ static void drawShadowPrimitive(coord_t const pos[3], coord_t radius, float alph
 
     RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW, 4,
         rs->vertices, rs->colors, rs->texCoords, NULL);
+}
+
+/// @return  Current glow strength for the plane.
+static float planeGlowStrength(Plane &plane)
+{
+    Surface const &surface = plane.surface();
+    if(surface.hasMaterial() && glowFactor > .0001f)
+    {
+        if(surface.material().isDrawable() && !surface.hasSkyMaskedMaterial())
+        {
+            MaterialSnapshot const &ms = surface.material().prepare(Rend_MapSurfaceMaterialSpec());
+
+            float glowStrength = ms.glowStrength() * glowFactor; // Global scale factor.
+            return glowStrength;
+        }
+    }
+    return 0;
 }
 
 static void processMobjShadow(mobj_t *mo)
@@ -131,7 +151,7 @@ static void processMobjShadow(mobj_t *mo)
     if(vOrigin[VY] < plane->visHeight()) return;
 
     // Glowing planes inversely diminish shadow strength.
-    shadowStrength *= (1 - MIN_OF(1, R_GlowStrength(plane)));
+    shadowStrength *= (1 - de::min(1.f, planeGlowStrength(*plane)));
 
     // Would this shadow be seen?
     if(!(shadowStrength >= SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)) return;

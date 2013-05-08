@@ -820,7 +820,11 @@ void R_BeginWorldFrame()
 {
 #ifdef __CLIENT__
 
-    R_ClearSectorFlags();
+    // Clear all flags that can be cleared before each frame.
+    foreach(Sector *sector, theMap->sectors())
+    {
+        sector->_frameFlags &= ~SIF_FRAME_CLEAR;
+    }
 
     theMap->lerpTrackedPlanes(resetNextViewer);
     theMap->lerpScrollingSurfaces(resetNextViewer);

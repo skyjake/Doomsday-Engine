@@ -2194,7 +2194,7 @@ static void writeLeafSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
     DENG_ASSERT(!isNullLeaf(bspLeaf));
 
     // Any work to do?
-    if(!R_SectorContainsSkySurfaces(bspLeaf->sectorPtr()))
+    if(!bspLeaf->sector().hasSkyMaskedPlane())
         return;
 
     // Sky caps are only necessary in sectors with sky-masked planes.
