@@ -82,7 +82,7 @@ static void setRelativeHeights(Sector const *front, Sector const *back, int plan
  *       the edge on the other side.
  * @c >0 && <1 How near the 'other' edge is.
  * @c =1 At the same height as "this" one.
- * @c =2 The 'other' edge is past our height (clearly 'open').
+ * @c >1 The 'other' edge is past our height (clearly 'open').
  */
 static float opennessFactor(float fz, float bz, float bhz)
 {
@@ -106,17 +106,18 @@ void ShadowEdge::prepare(int planeIndex)
 {
     Line::Side &side = d->leftMostHEdge->lineSide();
     Plane const &plane = side.sector().plane(planeIndex);
+    int const otherPlaneIndex = planeIndex == Plane::Floor? Plane::Ceiling : Plane::Floor;
+
+    d->sectorOpenness = 0; // Default is fully closed.
+    d->openness = 0; // Default is fully closed.
 
     // Determine the 'openness' of the wall edge sector. If the sector is open,
     // there won't be a shadow at all. Open neighbor sectors cause some changes
     // in the polygon corner vertices (placement, opacity).
 
-    d->sectorOpenness = 0; // Default is fully closed.
-
     if(d->leftMostHEdge->hasTwin() && d->leftMostHEdge->twin().bspLeafSectorPtr() != 0 &&
        d->leftMostHEdge->twin().hasLineSide() && d->leftMostHEdge->twin().lineSide().hasSections())
     {
-        int const otherPlaneIndex = planeIndex == Plane::Floor? Plane::Ceiling : Plane::Floor;
         Surface const &wallEdgeSurface = side.surface(planeIndex == Plane::Ceiling? Line::Side::Top : Line::Side::Bottom);
 
         Sector const *frontSec = d->leftMostHEdge->bspLeafSectorPtr();
@@ -152,8 +153,6 @@ void ShadowEdge::prepare(int planeIndex)
 
     // Find the neighbor of this wall section and determine the relative
     // 'openness' of it's plane heights vs those of "this" wall section.
-
-    d->openness = 0; // Default is fully closed.
 
     LineOwner *vo = side.line().vertexOwner(side.lineSideId() ^ d->edge)->_link[d->edge ^ 1];
     Line *neighbor = &vo->line();

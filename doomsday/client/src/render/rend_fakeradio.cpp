@@ -1267,6 +1267,13 @@ static void writeShadowSection(int planeIndex, Line::Side &side, float shadowDar
     Material const &material = suf->material();
     if(material.isSkyMasked() || material.hasGlow()) return;
 
+    // If the sector containing the shadowing line section is fully closed (i.e., volume
+    // is not positive) then skip shadow drawing entirely.
+    /// @todo Encapsulate this logic in ShadowEdge -ds
+    HEdge *leftMostHEdge = side.leftHEdge();
+    if(!leftMostHEdge || !leftMostHEdge->hasBspLeaf() ||
+       !leftMostHEdge->bspLeaf().hasWorldVolume()) return;
+
     ShadowEdge leftEdge(*side.leftHEdge(), HEdge::From);
     ShadowEdge rightEdge(*side.leftHEdge(), HEdge::To);
 

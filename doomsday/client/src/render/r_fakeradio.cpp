@@ -194,7 +194,7 @@ void Rend_RadioUpdateVertexShadowOffsets(Vertex &vtx)
 /**
  * Link @a line to @a bspLeaf for the purposes of shadowing.
  */
-static void linkShadowLineToSSec(Line::Side &side, BspLeaf &bspLeaf)
+static void linkShadowLineToBspLeaf(Line::Side &side, BspLeaf &bspLeaf)
 {
 #ifdef DENG_DEBUG
     // Check the links for dupes!
@@ -214,9 +214,9 @@ static void linkShadowLineToSSec(Line::Side &side, BspLeaf &bspLeaf)
     bspLeaf._shadows = link;
 }
 
-static int RIT_ShadowBspLeafLinker(BspLeaf *bspLeaf, void *context)
+static int linkShadowLineToBspLeafWorker(BspLeaf *bspLeaf, void *context)
 {
-    linkShadowLineToSSec(*static_cast<Line::Side *>(context), *bspLeaf);
+    linkShadowLineToBspLeaf(*static_cast<Line::Side *>(context), *bspLeaf);
     return false; // Continue iteration.
 }
 
@@ -277,7 +277,7 @@ void Rend_RadioInitForMap()
             // Link the shadowing line to all the BspLeafs whose axis-aligned
             // bounding box intersects 'bounds'.
             theMap->bspLeafsBoxIterator(bounds, side.sectorPtr(),
-                                        RIT_ShadowBspLeafLinker, &side);
+                                        linkShadowLineToBspLeafWorker, &side);
         }
     }
 
