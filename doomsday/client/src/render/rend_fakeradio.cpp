@@ -1250,17 +1250,15 @@ static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &ri
     RL_AddPoly(PT_FAN, RPF_DEFAULT | (!renderWireframe? RPF_SHADOW : 0), 4, rvertices, rcolors);
 }
 
-static void writeShadowSection(BspLeaf &bspLeaf, int planeIndex, Line::Side &side, float shadowDark)
+static void writeShadowSection(int planeIndex, Line::Side &side, float shadowDark)
 {
     DENG_ASSERT(side.hasSections());
+    DENG_ASSERT(!side.line().isFromPolyobj());
 
     if(!(shadowDark > .0001)) return;
 
     Plane const &plane = side.sector().plane(planeIndex);
     Surface const *suf = &plane.surface();
-
-    // Polyobj surfaces never shadow.
-    if(side.line().isFromPolyobj()) return;
 
     // Surfaces with a missing material don't shadow.
     if(!suf->hasMaterial()) return;
@@ -1269,8 +1267,8 @@ static void writeShadowSection(BspLeaf &bspLeaf, int planeIndex, Line::Side &sid
     Material const &material = suf->material();
     if(material.isSkyMasked() || material.hasGlow()) return;
 
-    ShadowEdge leftEdge(bspLeaf, side, HEdge::From);
-    ShadowEdge rightEdge(bspLeaf, side, HEdge::To);
+    ShadowEdge leftEdge(*side.leftHEdge(), HEdge::From);
+    ShadowEdge rightEdge(*side.leftHEdge(), HEdge::To);
 
     leftEdge.prepare(planeIndex);
     rightEdge.prepare(planeIndex);
@@ -1280,7 +1278,7 @@ static void writeShadowSection(BspLeaf &bspLeaf, int planeIndex, Line::Side &sid
     writeShadowSection2(leftEdge, rightEdge, suf->normal()[VZ] > 0, shadowDark);
 }
 
-static void drawLinkedEdgeShadows(BspLeaf &bspLeaf, ShadowLink &link,
+static void drawLinkedEdgeShadows(ShadowLink &link, Sector &sector,
     byte const *doPlanes, float shadowDark)
 {
     DENG_ASSERT(doPlanes != 0);
@@ -1289,17 +1287,17 @@ static void drawLinkedEdgeShadows(BspLeaf &bspLeaf, ShadowLink &link,
 
     if(doPlanes[Plane::Floor])
     {
-        writeShadowSection(bspLeaf, Plane::Floor, *link.side, shadowDark);
+        writeShadowSection(Plane::Floor, *link.side, shadowDark);
     }
 
     if(doPlanes[Plane::Ceiling])
     {
-        writeShadowSection(bspLeaf, Plane::Ceiling, *link.side, shadowDark);
+        writeShadowSection(Plane::Ceiling, *link.side, shadowDark);
     }
 
-    for(int pln = Plane::Middle; pln < bspLeaf.sector().planeCount(); ++pln)
+    for(int pln = Plane::Middle; pln < sector.planeCount(); ++pln)
     {
-        writeShadowSection(bspLeaf, pln, *link.side, shadowDark);
+        writeShadowSection(pln, *link.side, shadowDark);
     }
 
     // Mark it rendered for this frame.
@@ -1369,7 +1367,7 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
         // render each shadow once per frame.
         if(link->side->shadowVisCount() == frameCount) continue;
 
-        drawLinkedEdgeShadows(bspLeaf, *link, doPlanes, shadowDark);
+        drawLinkedEdgeShadows(*link, sector, doPlanes, shadowDark);
     }
 }
 

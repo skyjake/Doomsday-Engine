@@ -20,6 +20,7 @@
 
 #include "Plane"
 #include "Sector"
+#include "HEdge"
 
 #include "map/r_world.h"
 #include "map/lineowner.h"
@@ -30,8 +31,7 @@ namespace de {
 
 DENG2_PIMPL_NOREF(ShadowEdge)
 {
-    BspLeaf *bspLeaf;
-    Line::Side *side;
+    HEdge *leftMostHEdge;
     int edge;
 
     Vector3d inner;
@@ -39,17 +39,16 @@ DENG2_PIMPL_NOREF(ShadowEdge)
     float sectorOpenness;
     float openness;
 
-    Instance(BspLeaf &bspLeaf, Line::Side &side, int edge)
-        : bspLeaf(&bspLeaf),
-          side(&side),
+    Instance(HEdge &leftMostHEdge, int edge)
+        : leftMostHEdge(&leftMostHEdge),
           edge(edge),
           sectorOpenness(0),
           openness(0)
     {}
 };
 
-ShadowEdge::ShadowEdge(BspLeaf &bspLeaf, Line::Side &side, int edge)
-    : d(new Instance(bspLeaf, side, edge))
+ShadowEdge::ShadowEdge(HEdge &leftMostHEdge, int edge)
+    : d(new Instance(leftMostHEdge, edge))
 {}
 
 static void setRelativeHeights(Sector const *front, Sector const *back, int planeIndex,
@@ -105,7 +104,8 @@ static float opennessFactor(float fz, float bz, float bhz)
 
 void ShadowEdge::prepare(int planeIndex)
 {
-    Plane const &plane = d->side->sector().plane(planeIndex);
+    Line::Side &side = d->leftMostHEdge->lineSide();
+    Plane const &plane = side.sector().plane(planeIndex);
 
     // Determine the 'openness' of the wall edge sector. If the sector is open,
     // there won't be a shadow at all. Open neighbor sectors cause some changes
@@ -113,13 +113,14 @@ void ShadowEdge::prepare(int planeIndex)
 
     d->sectorOpenness = 0; // Default is fully closed.
 
-    if(d->side->back().hasSections() && d->side->back().hasSector())
+    if(d->leftMostHEdge->hasTwin() && d->leftMostHEdge->twin().bspLeafSectorPtr() != 0 &&
+       d->leftMostHEdge->twin().hasLineSide() && d->leftMostHEdge->twin().lineSide().hasSections())
     {
         int const otherPlaneIndex = planeIndex == Plane::Floor? Plane::Ceiling : Plane::Floor;
-        Surface const &wallEdgeSurface = d->side->surface(planeIndex == Plane::Ceiling? Line::Side::Top : Line::Side::Bottom);
+        Surface const &wallEdgeSurface = side.surface(planeIndex == Plane::Ceiling? Line::Side::Top : Line::Side::Bottom);
 
-        Sector const *frontSec = d->side->sectorPtr();
-        Sector const *backSec  = d->side->back().sectorPtr();
+        Sector const *frontSec = d->leftMostHEdge->bspLeafSectorPtr();
+        Sector const *backSec  = d->leftMostHEdge->twin().bspLeafSectorPtr();
 
         coord_t fz = 0, bz = 0, bhz = 0;
         setRelativeHeights(frontSec, backSec, planeIndex, &fz, &bz, &bhz);
@@ -139,7 +140,7 @@ void ShadowEdge::prepare(int planeIndex)
         {
             // Does the middle material completely cover the open range (we do
             // not want to give away the location of any secret areas)?
-            if(!R_MiddleMaterialCoversOpening(*d->side))
+            if(!R_MiddleMaterialCoversOpening(side))
             {
                 d->sectorOpenness = opennessFactor(fz, bz, bhz);
             }
@@ -154,10 +155,10 @@ void ShadowEdge::prepare(int planeIndex)
 
     d->openness = 0; // Default is fully closed.
 
-    LineOwner *vo = d->side->line().vertexOwner(d->side->lineSideId() ^ d->edge)->_link[d->edge ^ 1];
+    LineOwner *vo = side.line().vertexOwner(side.lineSideId() ^ d->edge)->_link[d->edge ^ 1];
     Line *neighbor = &vo->line();
 
-    if(neighbor == &d->side->line())
+    if(neighbor == &side.line())
     {
         d->openness = 1; // Fully open.
     }
@@ -168,8 +169,8 @@ void ShadowEdge::prepare(int planeIndex)
     else
     {
         // Choose the correct side of the neighbor (determined by which vertex is shared).
-        int x = d->side->lineSideId() ^ d->edge;
-        Line::Side *otherSide = &neighbor->side(&d->side->line().vertex(x) == &neighbor->from()? d->edge ^ 1 : d->edge);
+        int x = side.lineSideId() ^ d->edge;
+        Line::Side *otherSide = &neighbor->side(&side.line().vertex(x) == &neighbor->from()? d->edge ^ 1 : d->edge);
 
         if(!otherSide->hasSections() && otherSide->back().hasSector())
         {
@@ -185,11 +186,11 @@ void ShadowEdge::prepare(int planeIndex)
         {
             // Its a normal neighbor.
             Sector const *backSec = otherSide->back().sectorPtr();
-            if(backSec != d->side->sectorPtr() &&
+            if(backSec != d->leftMostHEdge->bspLeafSectorPtr() &&
                !((plane.type() == Plane::Floor && backSec->ceiling().visHeight() <= plane.visHeight()) ||
                  (plane.type() == Plane::Ceiling && backSec->floor().height() >= plane.visHeight())))
             {
-                Sector const *frontSec = d->side->sectorPtr();
+                Sector const *frontSec = d->leftMostHEdge->bspLeafSectorPtr();
 
                 coord_t fz = 0, bz = 0, bhz = 0;
                 setRelativeHeights(frontSec, backSec, planeIndex, &fz, &bz, &bhz);
@@ -201,19 +202,19 @@ void ShadowEdge::prepare(int planeIndex)
 
     if(d->openness < 1)
     {
-        vo = d->side->line().vertexOwner(d->side->lineSideId() ^ d->edge);
+        vo = side.line().vertexOwner(side.lineSideId() ^ d->edge);
         if(d->edge) vo = &vo->prev();
 
-        d->inner = Vector3d(d->side->vertex(d->edge).origin() + vo->innerShadowOffset(),
+        d->inner = Vector3d(side.vertex(d->edge).origin() + vo->innerShadowOffset(),
                             plane.visHeight());
     }
     else
     {
-        d->inner = Vector3d(d->side->vertex(d->edge).origin() + vo->extendedShadowOffset(),
+        d->inner = Vector3d(side.vertex(d->edge).origin() + vo->extendedShadowOffset(),
                             plane.visHeight());
     }
 
-    d->outer = Vector3d(d->side->vertex(d->edge).origin(), plane.visHeight());
+    d->outer = Vector3d(side.vertex(d->edge).origin(), plane.visHeight());
 }
 
 Vector3d const &ShadowEdge::inner() const
