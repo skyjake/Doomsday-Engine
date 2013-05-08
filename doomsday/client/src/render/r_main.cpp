@@ -500,8 +500,8 @@ void R_Init()
     R_InitSvgs();
 #ifdef __CLIENT__
     R_InitViewWindow();
-#endif
     Rend_Init();
+#endif
     frameCount = 0;
 }
 
@@ -575,8 +575,10 @@ static void R_UpdateMap()
 
     theMap->_effectiveGravity = theMap->_globalGravity;
 
+#ifdef __CLIENT__
     // Recalculate the light range mod matrix.
     Rend_CalcLightModRange();
+#endif
 }
 
 void R_Update()
@@ -1033,7 +1035,9 @@ void R_SetupFrame(player_t *player)
     // Why?
     validCount++;
 
+#ifdef __CLIENT__
     if(!freezeRLs)
+#endif
     {
         R_ClearVisSprites();
     }

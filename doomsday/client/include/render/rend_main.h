@@ -1,4 +1,4 @@
-/** @file rend_main.h
+/** @file render/rend_main.h Core of the rendering subsystem.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,18 +17,22 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Core of the rendering subsystem.
- */
+#ifndef DENG_RENDER_MAIN_H
+#define DENG_RENDER_MAIN_H
 
-#ifndef LIBDENG_REND_MAIN_H
-#define LIBDENG_REND_MAIN_H
-
-#include <math.h>
-#ifdef __CLIENT__
-#  include "rend_list.h"
+#ifndef __CLIENT__
+#  error "render/rend_main.h only exists in the Client"
 #endif
-#include "r_things.h"
+
+#ifndef __cplusplus
+#  error "render/rend_main.h requires C++"
+#endif
+
+//#include <math.h>
+
+#include "dd_types.h"
+
+#include "MaterialVariantSpec"
 
 #define GLOW_HEIGHT_MAX                     (1024.f) /// Absolute maximum
 
@@ -38,14 +42,17 @@
 
 DENG_EXTERN_C coord_t vOrigin[3];
 DENG_EXTERN_C float vang, vpitch, fieldOfView, yfov;
-DENG_EXTERN_C byte smoothTexAnim, devMobjVLights;
 DENG_EXTERN_C float viewsidex, viewsidey;
-DENG_EXTERN_C boolean usingFog;
 DENG_EXTERN_C float fogColor[4];
+
+DENG_EXTERN_C byte smoothTexAnim, devMobjVLights;
+DENG_EXTERN_C boolean usingFog;
+
 DENG_EXTERN_C int rAmbient;
 DENG_EXTERN_C float rendLightDistanceAttenuation;
 DENG_EXTERN_C int rendLightAttenuateFixedColormap;
 DENG_EXTERN_C float lightModRange[255];
+
 DENG_EXTERN_C int devRendSkyMode;
 DENG_EXTERN_C int gameDrawHUD;
 
@@ -68,21 +75,13 @@ DENG_EXTERN_C float detailFactor, detailScale;
 DENG_EXTERN_C byte devRendSkyAlways;
 DENG_EXTERN_C byte freezeRLs;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+void Rend_Register();
 
-#ifdef __CLIENT__
+void Rend_Init();
+void Rend_Shutdown();
+void Rend_Reset();
+void Rend_RenderMap();
 
-void Rend_Register(void);
-
-#endif
-
-void Rend_Init(void);
-void Rend_Shutdown(void);
-void Rend_Reset(void);
-
-void Rend_RenderMap(void);
 void Rend_ModelViewMatrix(boolean use_angles);
 
 #define Rend_PointDist2D(c) (fabs((vOrigin[VZ]-c[VY])*viewsidex - (vOrigin[VX]-c[VX])*viewsidey))
@@ -113,19 +112,12 @@ float Rend_LightAdaptationDelta(float lightvalue);
  */
 void Rend_CalcLightModRange();
 
-void R_DrawLightRange(void);
+void R_DrawLightRange();
 
-#ifdef __cplusplus
-} // extern "C"
-
-#ifdef __CLIENT__
 de::MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec();
 
 texturevariantspecification_t &Rend_MapSurfaceShinyTextureSpec();
 
 texturevariantspecification_t &Rend_MapSurfaceShinyMaskTextureSpec();
-#endif
 
-#endif // __cplusplus
-
-#endif // LIBDENG_REND_MAIN_H
+#endif // DENG_RENDER_MAIN_H

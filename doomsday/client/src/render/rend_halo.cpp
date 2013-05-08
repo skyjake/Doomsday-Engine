@@ -23,8 +23,11 @@
 #include "de_console.h"
 #include "de_graphics.h"
 #include "de_misc.h"
+
 #include "map/p_players.h"
+
 #include "render/rend_main.h"
+#include "render/rend_list.h"
 
 #include "render/rend_halo.h"
 

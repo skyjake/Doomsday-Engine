@@ -441,8 +441,10 @@ void Rend_CacheForMobjType(int num)
     DENG_UNUSED(num);
 }
 
+/*
 void Rend_CalcLightModRange()
 {}
+*/
 
 void Rend_ConsoleInit()
 {}

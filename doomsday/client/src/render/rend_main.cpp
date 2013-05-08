@@ -36,10 +36,8 @@
 #include "edit_bias.h" /// @todo remove me
 #include "network/net_main.h" /// @todo remove me
 
-#ifdef __CLIENT__
-#  include "MaterialSnapshot"
-#  include "MaterialVariantSpec"
-#endif
+#include "MaterialSnapshot"
+#include "MaterialVariantSpec"
 #include "Texture"
 #include "SectionEdge"
 
@@ -148,7 +146,6 @@ byte devSoundOrigins = 0; ///< cvar @c 1= Draw sound origin debug display.
 byte devSurfaceVectors = 0;
 byte devNoTexFix = 0;
 
-#ifdef __CLIENT__
 static void Rend_RenderBoundingBoxes();
 static DGLuint constructBBox(DGLuint name, float br);
 static uint buildLeafPlaneGeometry(BspLeaf const &leaf, bool antiClockwise,
@@ -608,8 +605,6 @@ static void flatShinyTexCoords(rtexcoord_t *tc, float const xyz[3])
     tc->st[0] = ((shinyVertical(offset, distance) - .5f) * 2) + .5f;
     tc->st[1] = shinyVertical(vOrigin[VY] - xyz[VZ], distance);
 }
-
-#ifdef __CLIENT__
 
 struct rendworldpoly_params_t
 {
@@ -1753,7 +1748,23 @@ static void writeLeafPlane(Plane &plane)
     R_FreeRendVertices(rvertices);
 }
 
-#endif // __CLIENT__
+/**
+ * @defgroup skyCapFlags  Sky Cap Flags
+ * @ingroup flags
+ */
+///@{
+#define SKYCAP_LOWER                0x1
+#define SKYCAP_UPPER                0x2
+///@}
+
+static coord_t skyCapZ(BspLeaf *bspLeaf, int skyCap)
+{
+    DENG_ASSERT(bspLeaf);
+    Plane::Type const plane = (skyCap & SKYCAP_UPPER)? Plane::Ceiling : Plane::Floor;
+    if(!bspLeaf->hasSector() || !P_IsInVoid(viewPlayer))
+        return theMap->skyFix(plane == Plane::Ceiling);
+    return bspLeaf->sector().plane(plane).visHeight();
+}
 
 static coord_t skyFixFloorZ(Plane const *frontFloor, Plane const *backFloor)
 {
@@ -2169,7 +2180,7 @@ static void writeLeafSkyMaskCap(int skyCap)
 
     rvertex_t *verts;
     uint numVerts;
-    buildLeafPlaneGeometry(*bspLeaf, (skyCap & SKYCAP_UPPER) != 0, R_SkyCapZ(bspLeaf, skyCap),
+    buildLeafPlaneGeometry(*bspLeaf, (skyCap & SKYCAP_UPPER) != 0, skyCapZ(bspLeaf, skyCap),
                            &verts, &numVerts);
 
     RL_AddPoly(PT_FAN, RPF_DEFAULT | RPF_SKYMASK, numVerts, verts, NULL);
@@ -3781,5 +3792,3 @@ texturevariantspecification_t &Rend_MapSurfaceShinyMaskTextureSpec()
                                  0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1,
                                  true, false, false, false);
 }
-
-#endif // __CLIENT__

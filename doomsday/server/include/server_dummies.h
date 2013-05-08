@@ -61,7 +61,7 @@ DENG_EXTERN_C void Rend_Init(void);
 //DENG_EXTERN_C void Rend_DecorInitForMap();
 //DENG_EXTERN_C void Rend_CacheForMap();
 DENG_EXTERN_C void Rend_CacheForMobjType(int num);
-DENG_EXTERN_C void Rend_CalcLightModRange();
+//DENG_EXTERN_C void Rend_CalcLightModRange();
 DENG_EXTERN_C void Rend_ConsoleInit();
 DENG_EXTERN_C void Rend_ConsoleResize(int force);
 DENG_EXTERN_C void Rend_ConsoleOpen(int yes);

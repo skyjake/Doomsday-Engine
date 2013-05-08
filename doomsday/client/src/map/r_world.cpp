@@ -87,13 +87,6 @@ DENG_EXTERN_C void R_SetupFogDefaults()
     Con_Execute(CMDS_DDAY,"fog off", true, false);
 }
 
-void R_OrderVertices(Line *line, Sector const *sector, Vertex *verts[2])
-{
-    byte edge = (sector == line->frontSectorPtr()? 0:1);
-    verts[0] = &line->vertex(edge);
-    verts[1] = &line->vertex(edge^1);
-}
-
 void R_SideSectionCoords(Line::Side const &side, int section,
     Sector const *frontSec, Sector const *backSec,
     coord_t *retBottom, coord_t *retTop, Vector2f *retMaterialOrigin)
@@ -195,8 +188,13 @@ void R_SideSectionCoords(Line::Side const &side, int section,
 
             if(surface->hasMaterial() && !stretchMiddle)
             {
+#ifdef __CLIENT__
                 bool const clipBottom = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && ffloor->surface().hasSkyMaskedMaterial() && bfloor->surface().hasSkyMaskedMaterial());
                 bool const clipTop    = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && fceil->surface().hasSkyMaskedMaterial()  && bceil->surface().hasSkyMaskedMaterial());
+#else
+                bool const clipBottom = !(ffloor->surface().hasSkyMaskedMaterial() && bfloor->surface().hasSkyMaskedMaterial());
+                bool const clipTop    = !(fceil->surface().hasSkyMaskedMaterial()  && bceil->surface().hasSkyMaskedMaterial());
+#endif
 
                 coord_t const openBottom = bottom;
                 coord_t const openTop    = top;
@@ -791,8 +789,10 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
         Sv_InitPools();
 #endif
 
+#ifdef __CLIENT__
         // Recalculate the light range mod matrix.
         Rend_CalcLightModRange();
+#endif
 
         theMap->initPolyobjs();
         P_MapSpawnPlaneParticleGens();
@@ -961,6 +961,8 @@ void R_UpdateSector(Sector &sector, bool forceUpdate)
 #endif
 }
 
+#ifdef __CLIENT__
+
 /**
  * The DOOM lighting model applies distance attenuation to sector light
  * levels.
@@ -987,6 +989,8 @@ float R_DistAttenuateLightLevel(float distToViewer, float lightLevel)
     return lightLevel;
 }
 
+#endif // __CLIENT__
+
 float R_ExtraLightDelta()
 {
     return extraLightDelta;
@@ -996,7 +1000,6 @@ float R_CheckSectorLight(float lightlevel, float min, float max)
 {
     // Has a limit been set?
     if(min == max) return 1;
-    Rend_ApplyLightAdaptation(&lightlevel);
     return MINMAX_OF(0, (lightlevel - min) / (float) (max - min), 1);
 }
 
@@ -1041,12 +1044,3 @@ Vector3f const &R_GetSectorLightColor(Sector const &sector)
 }
 
 #endif // __CLIENT__
-
-coord_t R_SkyCapZ(BspLeaf *bspLeaf, int skyCap)
-{
-    DENG_ASSERT(bspLeaf);
-    Plane::Type const plane = (skyCap & SKYCAP_UPPER)? Plane::Ceiling : Plane::Floor;
-    if(!bspLeaf->hasSector() || !P_IsInVoid(viewPlayer))
-        return theMap->skyFix(plane == Plane::Ceiling);
-    return bspLeaf->sector().plane(plane).visHeight();
-}

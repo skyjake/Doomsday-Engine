@@ -48,7 +48,11 @@ extern boolean firstFrameAfterLoad;
  */
 de::Vector3f const &R_GetSectorLightColor(Sector const &sector);
 
+#ifdef __CLIENT__
+
 float R_DistAttenuateLightLevel(float distToViewer, float lightLevel);
+
+#endif // __CLIENT__
 
 /**
  * The DOOM lighting model applies a light level delta to everything when
@@ -68,13 +72,6 @@ boolean R_SectorContainsSkySurfaces(Sector const *sec);
 void R_ClearSectorFlags();
 
 void R_UpdateMissingMaterialsForLinesOfSector(Sector const &sec);
-
-/**
- * Returns pointers to the line's vertices in such a fashion that @c verts[0]
- * is the leftmost vertex and @c verts[1] is the rightmost vertex, when the
- * @a line lies at the edge of @a sector.
- */
-void R_OrderVertices(Line *line, Sector const *sector, Vertex *verts[2]);
 
 /**
  * Determine the map space Z coordinates of a wall section.
@@ -229,16 +226,5 @@ Line *R_FindLineAlignNeighbor(Sector const *sec, Line const *line,
 Line *R_FindLineBackNeighbor(Sector const *sector, Line const *line,
     LineOwner const *own, bool antiClockwise, binangle_t *diff = 0);
 #endif // __CLIENT__
-
-/**
- * @defgroup skyCapFlags  Sky Cap Flags
- * @ingroup flags
- */
-///@{
-#define SKYCAP_LOWER                0x1
-#define SKYCAP_UPPER                0x2
-///@}
-
-coord_t R_SkyCapZ(BspLeaf *bspLeaf, int skyCap);
 
 #endif /* LIBDENG_MAP_WORLD_H */
