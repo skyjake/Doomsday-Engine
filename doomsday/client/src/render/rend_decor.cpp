@@ -84,6 +84,16 @@ static void recycleSources()
     sourceCursor = sourceFirst;
 }
 
+/**
+ * @return  @c > 0 if @a lightlevel passes the min max limit condition.
+ */
+static float checkSectorLightLevel(float lightlevel, float min, float max)
+{
+    // Has a limit been set?
+    if(min == max) return 1;
+    return de::clamp(0.f, (lightlevel - min) / float(max - min), 1.f);
+}
+
 static void projectSource(decorsource_t const &src)
 {
     MaterialSnapshot::Decoration const *decor = src.decor;
@@ -98,7 +108,7 @@ static void projectSource(decorsource_t const &src)
     float lightLevel = src.bspLeaf->sector().lightLevel();
     Rend_ApplyLightAdaptation(&lightLevel);
 
-    float brightness = R_CheckSectorLight(lightLevel, min, max);
+    float brightness = checkSectorLightLevel(lightLevel, min, max);
     if(!(brightness > 0)) return;
 
     if(src.fadeMul <= 0) return;
@@ -192,7 +202,7 @@ static void addLuminousDecoration(decorsource_t &src)
     float lightLevel = src.bspLeaf->sector().lightLevel();
     Rend_ApplyLightAdaptation(&lightLevel);
 
-    float brightness = R_CheckSectorLight(lightLevel, min, max);
+    float brightness = checkSectorLightLevel(lightLevel, min, max);
     if(!(brightness > 0)) return;
 
     // Apply the brightness factor (was calculated using sector lightlevel).

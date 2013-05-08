@@ -33,30 +33,7 @@
 DENG2_DECLARE_AUDIENCE(MapChange, void currentMapChanged())
 DENG2_EXTERN_AUDIENCE(MapChange)
 
-extern float rendSkyLight; // cvar
-extern byte rendSkyLightAuto; // cvar
-extern float rendLightWallAngle;
-extern byte rendLightWallAngleSmooth;
 extern boolean ddMapSetup;
-extern boolean firstFrameAfterLoad;
-
-// Sky flags.
-#define SIF_DRAW_SPHERE     0x1 ///< Always draw the sky sphere.
-
-LineOwner *R_GetVtxLineOwner(Vertex const *vtx, Line const *line);
-
-void R_UpdateSector(Sector &sector, bool forceUpdate = false);
-
-/**
- * @return  @c > 0 if @a lightlevel passes the min max limit condition.
- */
-float R_CheckSectorLight(float lightlevel, float min, float max);
-
-#ifdef __CLIENT__
-
-void R_UpdateMissingMaterialsForLinesOfSector(Sector const &sec);
-
-#endif // __CLIENT__
 
 /**
  * Determine the map space Z coordinates of a wall section.

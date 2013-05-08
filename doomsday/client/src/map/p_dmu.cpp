@@ -30,9 +30,14 @@
 #include "de_base.h"
 #include "de_play.h"
 #include "de_audio.h"
-#include "Materials"
 
+#include "Materials"
 #include "api_map.h"
+
+#ifdef __CLIENT__
+#  include "render/r_lgrid.h"
+#endif
+
 #include "map/p_dmu.h"
 
 using namespace de;
@@ -818,6 +823,29 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
     }
 }
 
+static void updateSector(Sector &sector, bool forceUpdate = false)
+{
+#ifdef __CLIENT__
+    // Check if there are any lightlevel or color changes.
+    if(forceUpdate ||
+       (sector._lightLevel != sector._oldLightLevel ||
+        sector._lightColor[0] != sector._oldLightColor[0] ||
+        sector._lightColor[1] != sector._oldLightColor[1] ||
+        sector._lightColor[2] != sector._oldLightColor[2]))
+    {
+        sector._frameFlags |= SIF_LIGHT_CHANGED;
+        sector._oldLightLevel = sector._lightLevel;
+        sector._oldLightColor = sector._lightColor;
+
+        LG_SectorChanged(&sector);
+    }
+    else
+    {
+        sector._frameFlags &= ~SIF_LIGHT_CHANGED;
+    }
+#endif
+}
+
 /**
  * Only those properties that are writable by outside parties (such as games)
  * are included here. Attempting to set a non-writable property causes a
@@ -961,10 +989,10 @@ static void setProperty(MapElement *elem, setargs_t &args)
         updateSector1 = &updatePlane->sector();
 
     if(updateSector1)
-        R_UpdateSector(*updateSector1);
+        updateSector(*updateSector1);
 
     if(updateSector2)
-        R_UpdateSector(*updateSector2);
+        updateSector(*updateSector2);
 }
 
 void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint index)

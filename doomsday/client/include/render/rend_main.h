@@ -51,6 +51,10 @@ DENG_EXTERN_C boolean usingFog;
 DENG_EXTERN_C int rAmbient;
 DENG_EXTERN_C float rendLightDistanceAttenuation;
 DENG_EXTERN_C int rendLightAttenuateFixedColormap;
+DENG_EXTERN_C float rendLightWallAngle;
+DENG_EXTERN_C byte rendLightWallAngleSmooth;
+DENG_EXTERN_C float rendSkyLight; // cvar
+DENG_EXTERN_C byte rendSkyLightAuto; // cvar
 DENG_EXTERN_C float lightModRange[255];
 DENG_EXTERN_C int extraLight;
 DENG_EXTERN_C float extraLightDelta;

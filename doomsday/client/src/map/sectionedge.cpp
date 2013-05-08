@@ -21,7 +21,7 @@
 
 #include "Sector"
 
-#include "map/r_world.h" // R_SideSectionCoords, R_GetVtxLineOwner
+#include "map/r_world.h" // R_SideSectionCoords
 #include "map/lineowner.h"
 
 #include "map/sectionedge.h"
@@ -225,7 +225,7 @@ DENG2_PIMPL(SectionEdge), public IHPlane
         DENG_ASSERT(top > bottom);
 
         // Retrieve the start owner node.
-        LineOwner *base = R_GetVtxLineOwner(lineVertex, &lineSide->line());
+        LineOwner *base = lineSide->line().vertexOwner(*lineVertex);
         if(!base) return;
 
         // Check for neighborhood division?

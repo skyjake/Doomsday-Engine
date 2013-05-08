@@ -20,6 +20,8 @@
 
 #include <cmath>
 
+#include <de/vector1.h>
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_graphics.h"
@@ -29,11 +31,11 @@
 #include "client/cl_def.h"
 #include "map/r_world.h"
 
-#include <de/vector1.h>
-
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "Texture"
+
+#include "render/rend_main.h"
 
 #include "render/sky.h"
 

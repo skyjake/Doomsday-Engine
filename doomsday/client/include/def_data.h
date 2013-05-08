@@ -283,6 +283,9 @@ typedef struct ded_skymodel_s {
 #define NUM_SKY_LAYERS      2
 #define NUM_SKY_MODELS      32
 
+// Sky flags.
+#define SIF_DRAW_SPHERE     0x1 ///< Always draw the sky sphere.
+
 typedef struct ded_sky_s {
     ded_stringid_t  id;
     ded_flags_t     flags; // Flags.

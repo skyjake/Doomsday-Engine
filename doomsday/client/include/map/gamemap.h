@@ -615,6 +615,15 @@ public: /// @todo Make private:
      */
     void updateSurfacesOnMaterialChange(Material &material);
 
+#ifdef __CLIENT__
+
+    /**
+     * @todo Replace with a de::Observers-based mechanism.
+     */
+    void updateMissingMaterialsForLinesOfSector(Sector const &sec);
+
+#endif // __CLIENT__
+
 private:
     DENG2_PRIVATE(d)
 };

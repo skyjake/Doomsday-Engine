@@ -830,6 +830,17 @@ public:
     LineOwner *vertexOwner(int to) const;
 
     /**
+     * Returns a pointer to the line owner for the specified edge @a vertex
+     * of the line. If the vertex is not an edge vertex for the line then
+     * @c 0 will be returned.
+     */
+    inline LineOwner *vertexOwner(Vertex const &vertex) const {
+        if(&vertex == &from()) return v1Owner();
+        if(&vertex == &to())   return v2Owner();
+        return 0;
+    }
+
+    /**
      * Returns a pointer to the line owner node for the From/Start vertex of the line.
      *
      * @deprecated Will be replaced with half-edge ring iterator/rover. -ds

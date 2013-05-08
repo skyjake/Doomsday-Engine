@@ -67,6 +67,8 @@ DENG_EXTERN_C int      validCount;
 DENG_EXTERN_C int      frameCount;
 DENG_EXTERN_C int      rendInfoTris;
 
+DENG_EXTERN_C boolean  firstFrameAfterLoad;
+
 DENG_EXTERN_C byte     precacheMapMaterials, precacheSprites, precacheSkins;
 
 DENG_EXTERN_C fontid_t fontFixed, fontVariable[FONTSTYLE_COUNT];

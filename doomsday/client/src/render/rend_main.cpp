@@ -135,6 +135,12 @@ byte devLightModRange = 0;
 float rendLightDistanceAttenuation = 1024;
 int rendLightAttenuateFixedColormap = 1;
 
+float rendLightWallAngle = 1.2f; // Intensity of angle-based wall lighting.
+byte rendLightWallAngleSmooth = true;
+
+float rendSkyLight = .2f; // Intensity factor.
+byte rendSkyLightAuto = true;
+
 int extraLight; // Bumped light from gun blasts.
 float extraLightDelta;
 

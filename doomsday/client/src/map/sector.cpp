@@ -400,7 +400,8 @@ void Sector::planeHeightChanged(Plane &plane, coord_t oldHeight)
 
     updateSoundEmitterOrigin();
 #ifdef __CLIENT__
-    R_UpdateMissingMaterialsForLinesOfSector(*this);
+    /// @todo GameMap should observe.
+    theMap->updateMissingMaterialsForLinesOfSector(*this);
     S_MarkSectorReverbDirty(this);
 #endif
 

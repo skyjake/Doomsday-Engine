@@ -175,7 +175,7 @@ static void scanNeighbor(bool scanTop, Line::Side const &side, edge_t *edge,
     coord_t fCeil  = startSector->ceiling().visHeight();
 
     // Retrieve the start owner node.
-    LineOwner *own = R_GetVtxLineOwner(&side.vertex((int)!toLeft), &side.line());
+    LineOwner *own = side.line().vertexOwner(side.vertex((int)!toLeft));
 
     do
     {

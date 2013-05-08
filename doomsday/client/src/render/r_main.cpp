@@ -40,6 +40,8 @@
 #include "render/vignette.h"
 #include "api_render.h"
 
+#include "render/r_main.h"
+
 using namespace de;
 
 #ifdef LIBDENG_CAMERA_MOVEMENT_ANALYSIS
@@ -56,6 +58,8 @@ D_CMD(ViewGrid);
 int validCount = 1; // Increment every time a check is made.
 int frameCount; // Just for profiling purposes.
 int rendInfoTris = 0;
+
+boolean firstFrameAfterLoad;
 
 // Precalculated math tables.
 fixed_t *fineCosine = &finesine[FINEANGLES / 4];
