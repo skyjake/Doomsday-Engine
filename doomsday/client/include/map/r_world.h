@@ -185,21 +185,6 @@ Line *R_FindLineNeighbor(Sector const *sector, Line const *line,
 Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
     LineOwner const *own, bool antiClockwise, binangle_t *diff = 0);
 
-/**
- * A line's align neighbor is a line that shares a vertex with 'line' and
- * whos orientation is aligned with it (thus, making it unnecessary to have
- * a shadow between them. In practice, they would be considered a single,
- * long side by the shadow generator).
- */
-Line *R_FindLineAlignNeighbor(Sector const *sec, Line const *line,
-    LineOwner const *own, bool antiClockwise, int alignment);
-
-/**
- * Find a backneighbour for the given line. They are the neighbouring line
- * in the backsector of the imediate line neighbor.
- */
-Line *R_FindLineBackNeighbor(Sector const *sector, Line const *line,
-    LineOwner const *own, bool antiClockwise, binangle_t *diff = 0);
 #endif // __CLIENT__
 
 #endif // DENG_WORLD_H

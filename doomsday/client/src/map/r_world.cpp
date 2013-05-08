@@ -460,58 +460,6 @@ Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
     return R_FindSolidLineNeighbor(sector, line, cown, antiClockwise, diff);
 }
 
-Line *R_FindLineBackNeighbor(Sector const *sector, Line const *line,
-    LineOwner const *own, bool antiClockwise, binangle_t *diff)
-{
-    LineOwner const *cown = antiClockwise? &own->prev() : &own->next();
-    Line *other = &cown->line();
-
-    if(other == line) return 0;
-
-    if(diff) *diff += (antiClockwise? cown->angle() : own->angle());
-
-    if(!other->hasBackSections() || !other->isSelfReferencing() || other->isBspWindow())
-    {
-        if(!(other->frontSectorPtr() == sector ||
-             (other->hasBackSections() && other->backSectorPtr() == sector)))
-            return other;
-    }
-
-    // Not suitable, try the next.
-    return R_FindLineBackNeighbor(sector, line, cown, antiClockwise, diff);
-}
-
-Line *R_FindLineAlignNeighbor(Sector const *sec, Line const *line,
-    LineOwner const *own, bool antiClockwise, int alignment)
-{
-    int const SEP = 10;
-
-    LineOwner const *cown = antiClockwise? &own->prev() : &own->next();
-    Line *other = &cown->line();
-    binangle_t diff;
-
-    if(other == line)
-        return 0;
-
-    if(!other->isSelfReferencing())
-    {
-        diff = line->angle() - other->angle();
-
-        if(alignment < 0)
-            diff -= BANG_180;
-        if(other->frontSectorPtr() != sec)
-            diff -= BANG_180;
-        if(diff < SEP || diff > BANG_360 - SEP)
-            return other;
-    }
-
-    // Can't step over non-twosided lines.
-    if(!other->hasFrontSections() || !other->hasBackSections())
-        return 0;
-
-    // Not suitable, try the next.
-    return R_FindLineAlignNeighbor(sec, line, cown, antiClockwise, alignment);
-}
 #endif // __CLIENT__
 
 static void resetAllMapPlaneVisHeights(GameMap &map)
