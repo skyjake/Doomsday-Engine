@@ -111,75 +111,48 @@ void ShadowEdge::prepare(int planeIndex)
     // there won't be a shadow at all. Open neighbor sectors cause some changes
     // in the polygon corner vertices (placement, opacity).
 
-    d->sectorOpenness = -1; // Init for sanity check.
+    d->sectorOpenness = 0; // Default is fully closed.
 
     if(d->side->back().hasSections() && d->side->back().hasSector())
     {
+        int const otherPlaneIndex = planeIndex == Plane::Floor? Plane::Ceiling : Plane::Floor;
+        Surface const &wallEdgeSurface = d->side->surface(planeIndex == Plane::Ceiling? Line::Side::Top : Line::Side::Bottom);
+
         Sector const *frontSec = d->side->sectorPtr();
         Sector const *backSec  = d->side->back().sectorPtr();
 
         coord_t fz = 0, bz = 0, bhz = 0;
         setRelativeHeights(frontSec, backSec, planeIndex, &fz, &bz, &bhz);
 
-        Surface const &wallEdgeSurface = d->side->surface(planeIndex == Plane::Ceiling? Line::Side::Top : Line::Side::Bottom);
-
-        d->sectorOpenness = -1;
-
         if(fz < bz && !wallEdgeSurface.hasMaterial())
+        {
+            d->sectorOpenness = 2; // Consider it fully open.
+        }
+        // Is the back sector a closed yet sky-masked surface?
+        else if(frontSec->floor().visHeight() >= backSec->ceiling().visHeight() &&
+                frontSec->planeSurface(otherPlaneIndex).hasSkyMaskedMaterial() &&
+                backSec->planeSurface(otherPlaneIndex).hasSkyMaskedMaterial())
         {
             d->sectorOpenness = 2; // Consider it fully open.
         }
         else
         {
-            // Is the back sector closed?
-            if(frontSec->floor().visHeight() >= backSec->ceiling().visHeight())
+            // Does the middle material completely cover the open range (we do
+            // not want to give away the location of any secret areas)?
+            if(!R_MiddleMaterialCoversOpening(*d->side))
             {
-                int otherPlaneIndex = planeIndex == Plane::Floor? Plane::Ceiling : Plane::Floor;
-                if(frontSec->planeSurface(otherPlaneIndex).hasSkyMaskedMaterial())
-                {
-                    if(backSec->planeSurface(otherPlaneIndex).hasSkyMaskedMaterial())
-                    {
-                        d->sectorOpenness = 2; // Consider it fully open.
-                    }
-                    else
-                    {
-                        d->sectorOpenness = opennessFactor(fz, bz, bhz);
-                    }
-                }
-                else
-                {
-                    d->sectorOpenness = 0; // Consider it fully closed.
-                }
-            }
-            else
-            {
-                // Check for unmasked midtextures on twosided lines that completely
-                // fill the gap between floor and ceiling (we don't want to give away
-                // the location of any secret areas (false walls)).
-                if(R_MiddleMaterialCoversOpening(*d->side))
-                {
-                    d->sectorOpenness = 0; // Consider it fully closed.
-                }
-                else
-                {
-                    d->sectorOpenness = opennessFactor(fz, bz, bhz);
-                }
+                d->sectorOpenness = opennessFactor(fz, bz, bhz);
             }
         }
     }
-    else
-    {
-        d->sectorOpenness = 0;
-    }
-
-    // Sanity check.
-    DENG_ASSERT(d->sectorOpenness >= 0);
 
     // Only calculate the remaining values when the edge is at least partially open.
     if(d->sectorOpenness >= 1) return;
 
     // Find the neighbor of this wall section and determine the relative
     // 'openness' of it's plane heights vs those of "this" wall section.
+
+    d->openness = 0; // Default is fully closed.
 
     LineOwner *vo = d->side->line().vertexOwner(d->side->lineSideId() ^ d->edge)->_link[d->edge ^ 1];
     Line *neighbor = &vo->line();
@@ -197,6 +170,7 @@ void ShadowEdge::prepare(int planeIndex)
         // Choose the correct side of the neighbor (determined by which vertex is shared).
         int x = d->side->lineSideId() ^ d->edge;
         Line::Side *otherSide = &neighbor->side(&d->side->line().vertex(x) == &neighbor->from()? d->edge ^ 1 : d->edge);
+
         if(!otherSide->hasSections() && otherSide->back().hasSector())
         {
             // A one-way window, open side.
