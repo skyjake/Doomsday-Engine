@@ -30,11 +30,11 @@
 #include <de/Vector>
 
 #include "MapElement"
+#include "Line"
 #include "Plane"
 
 class BspLeaf;
 class GameMap;
-class Line;
 class Surface;
 
 /**
@@ -71,7 +71,7 @@ public:
     static float const DEFAULT_LIGHT_LEVEL; ///< 1.f
     static de::Vector3f const DEFAULT_LIGHT_COLOR; ///< red=1.f green=1.f, blue=1.f
 
-    typedef QList<Line *> Lines;
+    typedef QList<Line::Side *> Sides;
     typedef QList<Plane *> Planes;
     typedef QList<BspLeaf *> BspLeafs;
 
@@ -196,28 +196,31 @@ public:
     inline Surface const &ceilingSurface() const { return ceiling().surface(); }
 
     /**
-     * Provides access to the list of lines which reference the sector,
+     * Provides access to the list of line sides which reference the sector,
      * for efficient traversal.
      */
-    Lines const &lines() const;
+    Sides const &sides() const;
 
     /**
-     * Returns the total number of lines which reference the sector.
+     * Returns the total number of line sides which reference the sector.
      */
-    inline uint lineCount() const { return uint(lines().count()); }
+    inline uint sideCount() const { return uint(sides().count()); }
 
     /**
-     * (Re)Build the line list for the sector.
+     * (Re)Build the side list for the sector.
+     *
+     * @note In the special case of self-referencing line, only the front side
+     * reference is added to this list.
      *
      * @attention The behavior of some algorithms used in the DOOM game logic
      * is dependant upon the order of this list. For example, EV_DoFloor and
      * EV_BuildStairs. That same order is used here, for compatibility.
      *
-     * Order: Original line index, ascending.
+     * Order: Original @em line index, ascending.
      *
-     * @param map  Map to collate lines from. @todo Refactor away.
+     * @param map  Map to collate sides from. @todo Refactor away.
      */
-    void buildLines(GameMap const &map);
+    void buildSides(GameMap const &map);
 
     /**
      * Provides access to the list of BSP leafs which reference the sector, for

@@ -1399,8 +1399,8 @@ void Rend_CacheForMap()
 
         foreach(Sector *sector, theMap->sectors())
         {
-            // Skip sectors with no lines as their planes will never be drawn.
-            if(!sector->lineCount()) continue;
+            // Skip sectors with no line sides as their planes will never be drawn.
+            if(!sector->sideCount()) continue;
 
             foreach(Plane *plane, sector->planes())
             {

@@ -402,9 +402,9 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
         switch(prop)
         {
         case DMU_LINE:
-            foreach(Line *line, elem->castTo<Sector>()->lines())
+            foreach(Line::Side *side, elem->castTo<Sector>()->sides())
             {
-                int result = callback(line, context);
+                int result = callback(&side->line(), context);
                 if(result) return result;
             }
             return false; // Continue iteration

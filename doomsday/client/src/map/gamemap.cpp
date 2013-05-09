@@ -171,7 +171,7 @@ DENG2_PIMPL(GameMap)
         foreach(Sector *sector, self._sectors)
         {
             sector->buildBspLeafs(self);
-            sector->buildLines(self);
+            sector->buildSides(self);
             sector->updateAABox();
             sector->updateRoughArea();
 
@@ -193,21 +193,20 @@ DENG2_PIMPL(GameMap)
             }
 
             // Link wall surface emitters:
-            foreach(Line *line, sector->lines())
+            foreach(Line::Side *side, sector->sides())
             {
-                if(line->frontSectorPtr() == sector)
+                if(side->hasSections())
                 {
-                    Line::Side &side = line->front();
-                    sector->linkSoundEmitter(side.middleSoundEmitter());
-                    sector->linkSoundEmitter(side.bottomSoundEmitter());
-                    sector->linkSoundEmitter(side.topSoundEmitter());
+                    sector->linkSoundEmitter(side->middleSoundEmitter());
+                    sector->linkSoundEmitter(side->bottomSoundEmitter());
+                    sector->linkSoundEmitter(side->topSoundEmitter());
                 }
-                if(line->hasBackSections() && line->backSectorPtr() == sector)
+                if(side->line().isSelfReferencing() && side->back().hasSections())
                 {
-                    Line::Side &side = line->back();
-                    sector->linkSoundEmitter(side.middleSoundEmitter());
-                    sector->linkSoundEmitter(side.bottomSoundEmitter());
-                    sector->linkSoundEmitter(side.topSoundEmitter());
+                    Line::Side &back = side->back();
+                    sector->linkSoundEmitter(back.middleSoundEmitter());
+                    sector->linkSoundEmitter(back.bottomSoundEmitter());
+                    sector->linkSoundEmitter(back.topSoundEmitter());
                 }
             }
 
@@ -288,7 +287,7 @@ DENG2_PIMPL(GameMap)
 
     void updateMapSkyFixForSector(Sector const &sector)
     {
-        if(!sector.lineCount()) return;
+        if(!sector.sideCount()) return;
 
         bool const skyFloor = sector.floorSurface().hasSkyMaskedMaterial();
         bool const skyCeil  = sector.ceilingSurface().hasSkyMaskedMaterial();
@@ -329,14 +328,12 @@ DENG2_PIMPL(GameMap)
 
         // Update for middle textures on two sided lines which intersect the
         // floor and/or ceiling of their front and/or back sectors.
-        foreach(Line *line, sector.lines())
+        foreach(Line::Side *side, sector.sides())
         {
-            Line::Side &side = line->frontSectorPtr() == &sector? line->front() : line->back();
+            if(!side->hasSections()) continue;
+            if(!side->middle().hasMaterial()) continue;
 
-            if(!side.hasSections()) continue;
-            if(!side.middle().hasMaterial()) continue;
-
-            HEdge const *hedge     = side.leftHEdge();
+            HEdge const *hedge     = side->leftHEdge();
             Sector const *frontSec = hedge->wallSectionSector(HEdge::Front);
             Sector const *backSec  = hedge->wallSectionSector(HEdge::Back);
 
@@ -345,7 +342,7 @@ DENG2_PIMPL(GameMap)
 
             coord_t bottomZ, topZ;
             Vector2f materialOrigin;
-            R_SideSectionCoords(side, Line::Side::Middle, frontSec, backSec,
+            R_SideSectionCoords(*side, Line::Side::Middle, frontSec, backSec,
                                 &bottomZ, &topZ, &materialOrigin);
             if(skyCeil && topZ + materialOrigin.y > self.skyFixCeiling())
             {
@@ -673,7 +670,7 @@ void GameMap::buildSurfaceLists()
     foreach(Sector *sector, _sectors)
     {
         // Skip sectors with no lines as their planes will never be drawn.
-        if(!sector->lineCount()) continue;
+        if(!sector->sideCount()) continue;
 
         foreach(Plane *plane, sector->planes())
         {
@@ -1973,17 +1970,17 @@ static void addMissingMaterial(Line::Side &side, int section)
 
 void GameMap::updateMissingMaterialsForLinesOfSector(Sector const &sec)
 {
-    foreach(Line *line, sec.lines())
+    foreach(Line::Side *side, sec.sides())
     {
         /**
          * Do as in the original Doom if the texture has not been defined -
          * extend the floor/ceiling to fill the space (unless it is skymasked),
          * or if there is a midtexture use that instead.
          */
-        if(line->hasBackSector())
+        if(side->hasSector() && side->back().hasSector())
         {
-            Sector const &frontSec = line->frontSector();
-            Sector const &backSec  = line->backSector();
+            Sector const &frontSec = side->sector();
+            Sector const &backSec  = side->back().sector();
 
             // A potential bottom section fix?
             if(!(frontSec.floorSurface().hasSkyMaskedMaterial() &&
@@ -1991,11 +1988,11 @@ void GameMap::updateMissingMaterialsForLinesOfSector(Sector const &sec)
             {
                 if(frontSec.floor().height() < backSec.floor().height())
                 {
-                    addMissingMaterial(line->front(), Line::Side::Bottom);
+                    addMissingMaterial(*side, Line::Side::Bottom);
                 }
                 else if(frontSec.floor().height() > backSec.floor().height())
                 {
-                    addMissingMaterial(line->back(), Line::Side::Bottom);
+                    addMissingMaterial(side->back(), Line::Side::Bottom);
                 }
             }
 
@@ -2005,18 +2002,18 @@ void GameMap::updateMissingMaterialsForLinesOfSector(Sector const &sec)
             {
                 if(backSec.ceiling().height() < frontSec.ceiling().height())
                 {
-                    addMissingMaterial(line->front(), Line::Side::Top);
+                    addMissingMaterial(*side, Line::Side::Top);
                 }
                 else if(backSec.ceiling().height() > frontSec.ceiling().height())
                 {
-                    addMissingMaterial(line->back(), Line::Side::Top);
+                    addMissingMaterial(side->back(), Line::Side::Top);
                 }
             }
         }
         else
         {
             // A potential middle section fix.
-            addMissingMaterial(line->front(), Line::Side::Middle);
+            addMissingMaterial(*side, Line::Side::Middle);
         }
     }
 }

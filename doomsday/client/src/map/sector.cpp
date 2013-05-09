@@ -54,8 +54,8 @@ DENG2_PIMPL(Sector)
     /// List of planes (owned).
     Planes planes;
 
-    /// List of lines which reference the sector (not owned).
-    Lines lines;
+    /// List of line sides which reference the sector (not owned).
+    Sides sides;
 
     /// List of BSP leafs which reference the sector (not owned).
     BspLeafs bspLeafs;
@@ -229,36 +229,40 @@ Plane const &Sector::plane(int planeIndex) const
     return const_cast<Plane const &>(const_cast<Sector &>(*this).plane(planeIndex));
 }
 
-Sector::Lines const &Sector::lines() const
+Sector::Sides const &Sector::sides() const
 {
-    return d->lines;
+    return d->sides;
 }
 
-void Sector::buildLines(GameMap const &map)
+void Sector::buildSides(GameMap const &map)
 {
-    d->lines.clear();
+    d->sides.clear();
 
 #ifdef DENG2_QT_4_7_OR_NEWER
     uint count = 0;
     foreach(Line *line, map.lines())
     {
-        if(line->frontSectorPtr() == this ||
-           line->backSectorPtr()  == this)
+        if(line->front().sectorPtr() == this ||
+           line->back().sectorPtr()  == this)
             ++count;
     }
 
     if(0 == count) return;
 
-    d->lines.reserve(count);
+    d->sides.reserve(count);
 #endif
 
     foreach(Line *line, map.lines())
     {
-        if(line->frontSectorPtr() == this ||
-           line->backSectorPtr()  == this)
+        if(line->front().sectorPtr() == this)
         {
-            // Ownership of the line is not given to the sector.
-            d->lines.append(line);
+            // Ownership of the side is not given to the sector.
+            d->sides.append(&line->front());
+        }
+        else if(line->back().sectorPtr()  == this)
+        {
+            // Ownership of the side is not given to the sector.
+            d->sides.append(&line->back());
         }
     }
 }
@@ -424,10 +428,10 @@ void Sector::planeHeightChanged(Plane &plane, coord_t oldHeight)
     }
 
     // Update the sound emitter origins for all dependent wall surfaces.
-    foreach(Line *line, d->lines)
+    foreach(Line::Side *side, d->sides)
     {
-        line->front().updateAllSoundEmitterOrigins();
-        line->back().updateAllSoundEmitterOrigins();
+        side->updateAllSoundEmitterOrigins();
+        side->back().updateAllSoundEmitterOrigins();
     }
 
 #ifdef __CLIENT__

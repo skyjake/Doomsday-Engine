@@ -147,7 +147,7 @@ static void setBspLeafSectorOwner(ownerlist_t *ownerList, BspLeaf *bspLeaf)
 
 static void findBspLeafsAffectingSector(GameMap *map, Sector *sec)
 {
-    if(!sec || !sec->lineCount()) return;
+    if(!sec || !sec->sideCount()) return;
 
     ownerlist_t bspLeafOwnerList;
     std::memset(&bspLeafOwnerList, 0, sizeof(bspLeafOwnerList));
@@ -314,7 +314,7 @@ static boolean calcBspLeafReverb(BspLeaf *bspLeaf)
 
 static void calculateSectorReverb(Sector *sec)
 {
-    if(!sec || !sec->lineCount()) return;
+    if(!sec || !sec->sideCount()) return;
 
     uint spaceVolume = int((sec->ceiling().height() - sec->floor().height()) * sec->roughArea());
 

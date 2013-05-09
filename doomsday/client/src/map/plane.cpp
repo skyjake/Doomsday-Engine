@@ -172,19 +172,18 @@ DENG2_PIMPL(Plane)
 
         // Mark the decor lights on the sides of this plane as requiring
         // an update.
-        foreach(Line *line, sector->lines())
+        foreach(Line::Side *side, sector->sides())
         {
-            if(line->hasFrontSections())
+            if(side->hasSections())
             {
-                Line::Side &front = line->front();
-                front.middle().markAsNeedingDecorationUpdate();
-                front.bottom().markAsNeedingDecorationUpdate();
-                front.top().markAsNeedingDecorationUpdate();
+                side->middle().markAsNeedingDecorationUpdate();
+                side->bottom().markAsNeedingDecorationUpdate();
+                side->top().markAsNeedingDecorationUpdate();
             }
 
-            if(line->hasBackSections())
+            if(side->back().hasSections())
             {
-                Line::Side &back = line->back();
+                Line::Side &back = side->back();
                 back.middle().markAsNeedingDecorationUpdate();
                 back.bottom().markAsNeedingDecorationUpdate();
                 back.top().markAsNeedingDecorationUpdate();

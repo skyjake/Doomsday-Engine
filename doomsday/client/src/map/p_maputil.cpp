@@ -482,9 +482,9 @@ int GameMap_SectorTouchingMobjsIterator(GameMap *map, Sector *sector,
 
     // Collate mobjs linked to the sector's lines.
     linknode_t const *ln = map->lineNodes.nodes;
-    foreach(Line *line, sector->lines())
+    foreach(Line::Side *side, sector->sides())
     {
-        nodeindex_t root = map->lineLinks[line->indexInMap()];
+        nodeindex_t root = map->lineLinks[side->line().indexInMap()];
 
         for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
         {

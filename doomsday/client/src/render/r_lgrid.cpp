@@ -457,7 +457,7 @@ void LG_InitForMap(void)
     {
         count = changedCount = 0;
 
-        if(sector->lineCount())
+        if(sector->sideCount())
         {
             // Clear the bitfields.
             std::memset(indexBitfield, 0, bitfieldSize);
