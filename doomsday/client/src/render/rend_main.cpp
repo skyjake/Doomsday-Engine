@@ -2316,10 +2316,9 @@ static void writeLeafSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
  *
  * Return values:
  * @param opaque   @c true= an opaque polygon was written to the lists. Can be @c 0.
- *
- * @return  @c true iff one or more polygons are actually written to the lists.
  */
-static bool prepareEdgesAndWriteWallSection(HEdge &hedge, int section, bool *opaque = 0)
+static void prepareEdgesAndWriteWallSection(HEdge &hedge, int section,
+    bool *opaque = 0, coord_t *bottomZ = 0, coord_t *topZ = 0)
 {
     BspLeaf *leaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(leaf));
@@ -2327,6 +2326,10 @@ static bool prepareEdgesAndWriteWallSection(HEdge &hedge, int section, bool *opa
     DENG_ASSERT(hedge.hasLineSide());
     DENG_ASSERT(hedge.lineSide().hasSections());
     DENG_ASSERT(hedge.isFlagged(HEdge::FacingFront));
+
+    if(opaque)  *opaque  = false;
+    if(bottomZ) *bottomZ = coord_t(DDMAXFLOAT);
+    if(topZ)    *topZ    = coord_t(DDMINFLOAT);
 
     // Done here because of the logic of doom.exe wrt the automap.
     reportWallSectionDrawn(hedge.line());
@@ -2340,23 +2343,59 @@ static bool prepareEdgesAndWriteWallSection(HEdge &hedge, int section, bool *opa
     if(leftEdge.isValid() && rightEdge.isValid() &&
        rightEdge.top().distance() > leftEdge.bottom().distance())
     {
+        if(bottomZ) *bottomZ = leftEdge.bottom().distance();
+        if(topZ)    *topZ    = rightEdge.top().distance();
+
+        int wsFlags = DEFAULT_WRITE_WALL_SECTION_FLAGS;
+        if(hedge.lineSide().back().hasSections() && section == Line::Side::Middle)
+            wsFlags &= ~WSF_FORCE_OPAQUE;
+
         bool wroteOpaquePoly =
             writeWallSection(leftEdge, rightEdge,
-                             hedge, hedge.biasSurfaceForGeometryGroup(section));
+                             hedge, hedge.biasSurfaceForGeometryGroup(section),
+                             wsFlags);
 
         if(opaque) *opaque = wroteOpaquePoly;
-        return wroteOpaquePoly;
     }
-
-    if(opaque) *opaque = false;
-    return false;
 }
 
 static bool shouldAddSolidSegmentForTwosidedEdge(HEdge &hedge,
-    bool wroteOpaqueMiddle, bool middleCoversOpening)
+    bool wroteOpaqueMiddle, coord_t middleBottomZ, coord_t middleTopZ)
 {
     if(hedge.line().isSelfReferencing())
        return false; /// @todo Why? -ds
+
+    bool middleCoversOpening = false;
+    if(wroteOpaqueMiddle)
+    {
+        // Did we completely cover the open range?
+        Sector *frontSec = hedge.wallSectionSector();
+        Sector *backSec  = hedge.wallSectionSector(HEdge::Back);
+
+        coord_t const ffloor = frontSec->floor().visHeight();
+        coord_t const fceil  = frontSec->ceiling().visHeight();
+        coord_t const bfloor = backSec->floor().visHeight();
+        coord_t const bceil  = backSec->ceiling().visHeight();
+
+        coord_t xbottom, xtop;
+        if(hedge.line().isSelfReferencing())
+        {
+            xbottom = de::min(bfloor, ffloor);
+            xtop    = de::max(bceil,  fceil);
+        }
+        else
+        {
+            xbottom = de::max(bfloor, ffloor);
+            xtop    = de::min(bceil,  fceil);
+        }
+
+        Surface const &middle = hedge.lineSide().middle();
+        xbottom += middle.visMaterialOrigin().y;
+        xtop    += middle.visMaterialOrigin().y;
+
+        middleCoversOpening = (middleTopZ >= xtop &&
+                               middleBottomZ <= xbottom);
+    }
 
     if(wroteOpaqueMiddle && middleCoversOpening)
         return true;
@@ -2413,44 +2452,55 @@ static bool shouldAddSolidSegmentForTwosidedEdge(HEdge &hedge,
 }
 
 /**
- * Determine which sections of the map line on @a side are potentially visible
+ * Determine which wall sections of for the half-edge are potentially visible
  * according to the relative heights of the interfacing planes.
  *
- * @param side  Map line side to determine the potentially visible sections of.
+ * @param hedge  Half-edge to determine the potentially visible sections of.
  *
  * @return @ref sideSectionFlags denoting which sections are potentially visible.
  */
-static int pvisibleWallSections(Line::Side &side)
+static int pvisibleWallSections(HEdge &hedge, bool &twoSided)
 {
-    if(!side.hasSections()) return 0; // None.
+    DENG_ASSERT(hedge.hasLineSide());
+    DENG_ASSERT(hedge.lineSide().hasSections());
+    DENG_ASSERT(hedge.isFlagged(HEdge::FacingFront));
 
-    // One-sided? (therefore only the middle)
-    if(!side.back().hasSector() /*$degenleaf*/ || !side.back().hasSections())
+    // One-sided?
+    if(!hedge.hasTwin() || !hedge.twin().bspLeaf().hasSector() ||
+       /* Solid side of a "one-way window"? */
+       !(hedge.twin().hasLineSide() && hedge.twin().lineSide().hasSections()))
     {
+        twoSided = false;
         return Line::Side::MiddleFlag;
     }
 
-    // Selfreferencing lines only ever get a middle.
-    if(side.line().isSelfReferencing())
+    // Two-sided.
+    twoSided = true;
+
+    // Self-referencing lines only ever get a middle.
+    if(hedge.lineSide().line().isSelfReferencing())
     {
-        DENG_ASSERT(!side.middle().hasFixMaterial());
-        return side.middle().hasMaterial()? Line::Side::MiddleFlag : 0;
+        Surface const &middleSurface = hedge.lineSide().middle();
+        DENG_ASSERT(!middleSurface.hasFixMaterial());
+        return middleSurface.hasMaterial()? Line::Side::MiddleFlag : 0;
     }
 
-    Sector const &frontSec = side.sector();
-    Sector const &backSec  = side.back().sector();
-    Plane const &fceil  = frontSec.ceiling();
-    Plane const &ffloor = frontSec.floor();
-    Plane const &bceil  = backSec.ceiling();
-    Plane const &bfloor = backSec.floor();
+    // Regular two-sided.
+    Sector *frontSec    = hedge.wallSectionSector(HEdge::Front);
+    Sector *backSec     = hedge.wallSectionSector(HEdge::Back);
+    Plane const &fceil  = frontSec->ceiling();
+    Plane const &ffloor = frontSec->floor();
+    Plane const &bceil  = backSec->ceiling();
+    Plane const &bfloor = backSec->floor();
 
     // Default to all pvisible.
     int sections = Line::Side::AllSectionFlags;
 
     // Middle?
-    if(!side.middle().hasMaterial() ||
-       !side.middle().material().isDrawable() ||
-        side.middle().opacity() <= 0)
+    Surface const &middleSurface = hedge.lineSide().middle();
+    if(!middleSurface.hasMaterial() ||
+       !middleSurface.material().isDrawable() ||
+        middleSurface.opacity() <= 0)
     {
         sections &= ~Line::Side::MiddleFlag;
     }
@@ -2478,81 +2528,26 @@ static void writeWallSections(HEdge &hedge)
     DENG_ASSERT(hedge.lineSide().hasSections());
     DENG_ASSERT(hedge.isFlagged(HEdge::FacingFront));
 
-    int pvisSections = pvisibleWallSections(hedge.lineSide()); /// @ref sideSectionFlags
+    bool twoSided;
+    int pvisSections = pvisibleWallSections(hedge, twoSided);
+
     bool opaque = false;
+    coord_t middleBottomZ = 0, middleTopZ = 0;
 
-    if(!hedge.hasTwin() || !hedge.twin().bspLeaf().hasSector() ||
-       /* solid side of a "one-way window"? */
-       !(hedge.twin().hasLineSide() && hedge.twin().lineSide().hasSections()))
+    if(pvisSections & Line::Side::BottomFlag)
+        prepareEdgesAndWriteWallSection(hedge, Line::Side::Bottom);
+
+    if(pvisSections & Line::Side::TopFlag)
+        prepareEdgesAndWriteWallSection(hedge, Line::Side::Top);
+
+    if(pvisSections & Line::Side::MiddleFlag)
+        prepareEdgesAndWriteWallSection(hedge, Line::Side::Middle,
+                                        &opaque, &middleBottomZ, &middleTopZ);
+
+    if(twoSided && opaque)
     {
-        // One-sided. Only a middle section.
-        if(pvisSections & Line::Side::MiddleFlag)
-            prepareEdgesAndWriteWallSection(hedge, Line::Side::Middle, &opaque);
-    }
-    else
-    {
-        // Two-sided.
-        if(pvisSections & Line::Side::BottomFlag)
-            prepareEdgesAndWriteWallSection(hedge, Line::Side::Bottom);
-
-        if(pvisSections & Line::Side::TopFlag)
-            prepareEdgesAndWriteWallSection(hedge, Line::Side::Top);
-
-        bool wroteOpaqueMiddle = false;
-        bool middleCoversOpening = false;
-
-        if(pvisSections & Line::Side::MiddleFlag)
-        {
-            reportWallSectionDrawn(hedge.line());
-
-            SectionEdge leftEdge(hedge, Line::Side::Middle, HEdge::From);
-            SectionEdge rightEdge(hedge, Line::Side::Middle, HEdge::To);
-
-            leftEdge.prepare();
-            rightEdge.prepare();
-
-            if(leftEdge.isValid() && rightEdge.isValid() &&
-               rightEdge.top().distance() > leftEdge.bottom().distance())
-            {
-                wroteOpaqueMiddle =
-                    writeWallSection(leftEdge, rightEdge,
-                                     hedge, hedge.biasSurfaceForGeometryGroup(Line::Side::Middle),
-                                     DEFAULT_WRITE_WALL_SECTION_FLAGS & ~WSF_FORCE_OPAQUE);
-
-                if(wroteOpaqueMiddle)
-                {
-                    // Did we completely cover the open range?
-                    Sector *frontSec = hedge.wallSectionSector();
-                    Sector *backSec  = hedge.wallSectionSector(HEdge::Back);
-
-                    coord_t const ffloor = frontSec->floor().visHeight();
-                    coord_t const fceil  = frontSec->ceiling().visHeight();
-                    coord_t const bfloor = backSec->floor().visHeight();
-                    coord_t const bceil  = backSec->ceiling().visHeight();
-
-                    coord_t xbottom, xtop;
-                    if(hedge.line().isSelfReferencing())
-                    {
-                        xbottom = de::min(bfloor, ffloor);
-                        xtop    = de::max(bceil,  fceil);
-                    }
-                    else
-                    {
-                        xbottom = de::max(bfloor, ffloor);
-                        xtop    = de::min(bceil,  fceil);
-                    }
-
-                    Surface const &middle = hedge.lineSide().middle();
-                    xbottom += middle.visMaterialOrigin().y;
-                    xtop    += middle.visMaterialOrigin().y;
-
-                    middleCoversOpening = (rightEdge.top().distance() >= xtop &&
-                                           leftEdge.bottom().distance() <= xbottom);
-                }
-            }
-        }
-
-        opaque = shouldAddSolidSegmentForTwosidedEdge(hedge, wroteOpaqueMiddle, middleCoversOpening);
+        opaque = shouldAddSolidSegmentForTwosidedEdge(hedge, opaque,
+                                                      middleBottomZ, middleTopZ);
     }
 
     // We can occlude the angle range defined by the wall section
