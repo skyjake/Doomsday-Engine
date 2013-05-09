@@ -2304,7 +2304,7 @@ static void writeLeafSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
     }
 }
 
-static bool shouldAddSolidSegmentForTwosidedEdge(HEdge &hedge,
+static bool coveredOpenRangeTwoSided(HEdge &hedge,
     bool wroteOpaqueMiddle, coord_t middleBottomZ, coord_t middleTopZ)
 {
     if(hedge.line().isSelfReferencing())
@@ -2547,16 +2547,13 @@ static void writeLeafWallSections()
                 }
             }
 
-            if(twoSided)
-            {
-                wroteOpaqueMiddle =
-                    shouldAddSolidSegmentForTwosidedEdge(hedge, wroteOpaqueMiddle,
-                                                         middleBottomZ, middleTopZ);
-            }
+            bool coveredOpenRange =
+                twoSided? coveredOpenRangeTwoSided(hedge, wroteOpaqueMiddle, middleBottomZ, middleTopZ)
+                        : wroteOpaqueMiddle;
 
             // We can occlude the angle range defined by the wall section
             // if the opening has been covered (when the viewer is not in the void).
-            if(wroteOpaqueMiddle && !P_IsInVoid(viewPlayer))
+            if(coveredOpenRange && !P_IsInVoid(viewPlayer))
             {
                 C_AddRangeFromViewRelPoints(hedge.fromOrigin(), hedge.toOrigin());
             }
