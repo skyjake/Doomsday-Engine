@@ -2304,61 +2304,6 @@ static void writeLeafSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
     }
 }
 
-/**
- * Prepare edges and write the specified wall @a section to the render lists.
- *
- * @pre currentBspLeaf is set to the BSP leaf which "contains" the half-edge.
- * @pre @a hedge has an attributed map line side with sections.
- * @pre @a hedge is front facing.
- *
- * @param hedge    HEdge to write wall a section for.
- * @param section  Identifier of the wall section to write.
- *
- * Return values:
- * @param opaque   @c true= an opaque polygon was written to the lists. Can be @c 0.
- */
-static void prepareEdgesAndWriteWallSection(HEdge &hedge, int section,
-    bool *opaque = 0, coord_t *bottomZ = 0, coord_t *topZ = 0)
-{
-    BspLeaf *leaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(leaf));
-
-    DENG_ASSERT(hedge.hasLineSide());
-    DENG_ASSERT(hedge.lineSide().hasSections());
-    DENG_ASSERT(hedge.isFlagged(HEdge::FacingFront));
-
-    if(opaque)  *opaque  = false;
-    if(bottomZ) *bottomZ = coord_t(DDMAXFLOAT);
-    if(topZ)    *topZ    = coord_t(DDMINFLOAT);
-
-    // Done here because of the logic of doom.exe wrt the automap.
-    reportWallSectionDrawn(hedge.line());
-
-    SectionEdge leftEdge(hedge, section, HEdge::From);
-    SectionEdge rightEdge(hedge, section, HEdge::To);
-
-    leftEdge.prepare();
-    rightEdge.prepare();
-
-    if(leftEdge.isValid() && rightEdge.isValid() &&
-       rightEdge.top().distance() > leftEdge.bottom().distance())
-    {
-        if(bottomZ) *bottomZ = leftEdge.bottom().distance();
-        if(topZ)    *topZ    = rightEdge.top().distance();
-
-        int wsFlags = DEFAULT_WRITE_WALL_SECTION_FLAGS;
-        if(hedge.lineSide().back().hasSections() && section == Line::Side::Middle)
-            wsFlags &= ~WSF_FORCE_OPAQUE;
-
-        bool wroteOpaquePoly =
-            writeWallSection(leftEdge, rightEdge,
-                             hedge, hedge.biasSurfaceForGeometryGroup(section),
-                             wsFlags);
-
-        if(opaque) *opaque = wroteOpaquePoly;
-    }
-}
-
 static bool shouldAddSolidSegmentForTwosidedEdge(HEdge &hedge,
     bool wroteOpaqueMiddle, coord_t middleBottomZ, coord_t middleTopZ)
 {
@@ -2522,58 +2467,102 @@ static int pvisibleWallSections(HEdge &hedge, bool &twoSided)
     return sections;
 }
 
-static void writeWallSections(HEdge &hedge)
-{
-    DENG_ASSERT(hedge.hasLineSide());
-    DENG_ASSERT(hedge.lineSide().hasSections());
-    DENG_ASSERT(hedge.isFlagged(HEdge::FacingFront));
-
-    bool twoSided;
-    int pvisSections = pvisibleWallSections(hedge, twoSided);
-
-    bool opaque = false;
-    coord_t middleBottomZ = 0, middleTopZ = 0;
-
-    if(pvisSections & Line::Side::BottomFlag)
-        prepareEdgesAndWriteWallSection(hedge, Line::Side::Bottom);
-
-    if(pvisSections & Line::Side::TopFlag)
-        prepareEdgesAndWriteWallSection(hedge, Line::Side::Top);
-
-    if(pvisSections & Line::Side::MiddleFlag)
-        prepareEdgesAndWriteWallSection(hedge, Line::Side::Middle,
-                                        &opaque, &middleBottomZ, &middleTopZ);
-
-    if(twoSided && opaque)
-    {
-        opaque = shouldAddSolidSegmentForTwosidedEdge(hedge, opaque,
-                                                      middleBottomZ, middleTopZ);
-    }
-
-    // We can occlude the angle range defined by the wall section
-    // if the opening has been covered (when the viewer is not in the void).
-    if(opaque && !P_IsInVoid(viewPlayer))
-    {
-        C_AddRangeFromViewRelPoints(hedge.fromOrigin(), hedge.toOrigin());
-    }
-}
-
 static void writeLeafWallSections()
 {
     BspLeaf *leaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(leaf));
 
-    HEdge *base = leaf->firstHEdge();
-    HEdge *hedge = base;
+    HEdge *hedgeIt = leaf->firstHEdge();
     do
     {
+        HEdge &hedge = *hedgeIt;
+
         // Ignore back facing walls.
-        if(hedge->isFlagged(HEdge::FacingFront))
-        if(hedge->hasLineSide() && hedge->lineSide().hasSections()) // "mini-hedges" have no lines and "windows" have no sections.
+        if(hedge.isFlagged(HEdge::FacingFront))
+        if(hedge.hasLineSide() && hedge.lineSide().hasSections()) // "mini-edges" have no lines and "one-way windows" have no sections.
         {
-            writeWallSections(*hedge);
+            bool twoSided;
+            int pvisSections = pvisibleWallSections(hedge, twoSided);
+
+            // Done here because of the logic of doom.exe wrt the automap.
+            reportWallSectionDrawn(hedge.line());
+
+            if(pvisSections & Line::Side::BottomFlag)
+            {
+                SectionEdge leftEdge(hedge, Line::Side::Bottom, HEdge::From);
+                SectionEdge rightEdge(hedge, Line::Side::Bottom, HEdge::To);
+
+                leftEdge.prepare();
+                rightEdge.prepare();
+
+                if(leftEdge.isValid() && rightEdge.isValid() &&
+                   rightEdge.top().distance() > leftEdge.bottom().distance())
+                {
+                    writeWallSection(leftEdge, rightEdge,
+                                     hedge, hedge.biasSurfaceForGeometryGroup(Line::Side::Bottom));
+                }
+            }
+
+            if(pvisSections & Line::Side::TopFlag)
+            {
+                SectionEdge leftEdge(hedge, Line::Side::Top, HEdge::From);
+                SectionEdge rightEdge(hedge, Line::Side::Top, HEdge::To);
+
+                leftEdge.prepare();
+                rightEdge.prepare();
+
+                if(leftEdge.isValid() && rightEdge.isValid() &&
+                   rightEdge.top().distance() > leftEdge.bottom().distance())
+                {
+                    writeWallSection(leftEdge, rightEdge,
+                                     hedge, hedge.biasSurfaceForGeometryGroup(Line::Side::Top));
+                }
+            }
+
+            bool wroteOpaqueMiddle = false;
+            coord_t middleBottomZ = 0, middleTopZ = 0;
+
+            if(pvisSections & Line::Side::MiddleFlag)
+            {
+                SectionEdge leftEdge(hedge, Line::Side::Middle, HEdge::From);
+                SectionEdge rightEdge(hedge, Line::Side::Middle, HEdge::To);
+
+                leftEdge.prepare();
+                rightEdge.prepare();
+
+                if(leftEdge.isValid() && rightEdge.isValid() &&
+                   rightEdge.top().distance() > leftEdge.bottom().distance())
+                {
+                    middleBottomZ = leftEdge.bottom().distance();
+                    middleTopZ    = rightEdge.top().distance();
+
+                    int wsFlags = DEFAULT_WRITE_WALL_SECTION_FLAGS;
+                    if(twoSided)
+                        wsFlags &= ~WSF_FORCE_OPAQUE;
+
+                    wroteOpaqueMiddle =
+                        writeWallSection(leftEdge, rightEdge,
+                                         hedge, hedge.biasSurfaceForGeometryGroup(Line::Side::Middle),
+                                         wsFlags);
+                }
+            }
+
+            if(twoSided)
+            {
+                wroteOpaqueMiddle =
+                    shouldAddSolidSegmentForTwosidedEdge(hedge, wroteOpaqueMiddle,
+                                                         middleBottomZ, middleTopZ);
+            }
+
+            // We can occlude the angle range defined by the wall section
+            // if the opening has been covered (when the viewer is not in the void).
+            if(wroteOpaqueMiddle && !P_IsInVoid(viewPlayer))
+            {
+                C_AddRangeFromViewRelPoints(hedge.fromOrigin(), hedge.toOrigin());
+            }
         }
-    } while((hedge = &hedge->next()) != base);
+
+    } while((hedgeIt = &hedgeIt->next()) != leaf->firstHEdge());
 }
 
 static void writeLeafPolyobjs()
@@ -2586,18 +2575,33 @@ static void writeLeafPolyobjs()
 
     foreach(Line *line, po->lines())
     {
-        HEdge *hedge = line->front().leftHEdge();
+        HEdge &hedge = *line->front().leftHEdge();
 
         // Ignore back facing walls.
-        if(hedge->isFlagged(HEdge::FacingFront))
+        if(hedge.isFlagged(HEdge::FacingFront))
+        if(hedge.lineSide().hasSections())
         {
-            bool opaque = false;
-            prepareEdgesAndWriteWallSection(*hedge, Line::Side::Middle, &opaque);
+            // Done here because of the logic of doom.exe wrt the automap.
+            reportWallSectionDrawn(hedge.line());
 
-            // We can occlude the wall range if the opening is filled (when the viewer is not in the void).
-            if(opaque && !P_IsInVoid(viewPlayer))
+            SectionEdge leftEdge(hedge, Line::Side::Middle, HEdge::From);
+            SectionEdge rightEdge(hedge, Line::Side::Middle, HEdge::To);
+
+            leftEdge.prepare();
+            rightEdge.prepare();
+
+            if(leftEdge.isValid() && rightEdge.isValid() &&
+               rightEdge.top().distance() > leftEdge.bottom().distance())
             {
-                C_AddRangeFromViewRelPoints(hedge->fromOrigin(), hedge->toOrigin());
+                bool opaque = writeWallSection(leftEdge, rightEdge,
+                                               hedge, hedge.biasSurfaceForGeometryGroup(Line::Side::Middle),
+                                               WSF_ADD_DYNLIGHTS | WSF_ADD_DYNSHADOWS);
+
+                // We can occlude the wall range if the opening is filled (when the viewer is not in the void).
+                if(opaque && !P_IsInVoid(viewPlayer))
+                {
+                    C_AddRangeFromViewRelPoints(hedge.fromOrigin(), hedge.toOrigin());
+                }
             }
         }
     }
