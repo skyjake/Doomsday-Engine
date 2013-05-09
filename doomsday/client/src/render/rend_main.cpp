@@ -1915,12 +1915,11 @@ static int chooseHEdgeSkyFixes(HEdge *hedge, int skyCap)
             if(hasSkyFloor && (skyCap & SKYCAP_LOWER))
             {
                 Plane const *ffloor = &frontSec->floor();
-                Plane const *bfloor = backSec? &backSec->floor() : NULL;
+                Plane const *bfloor = backSec? &backSec->floor() : 0;
                 coord_t const skyZ = skyFixFloorZ(ffloor, bfloor);
 
-                if(hasClosedBack ||
-                        (!bfloor->surface().hasSkyMaskedMaterial() ||
-                         devRendSkyMode || P_IsInVoid(viewPlayer)))
+                if(hasClosedBack || !bfloor->surface().hasSkyMaskedMaterial() ||
+                   (devRendSkyMode? !hedge->lineSide().bottom().hasMaterial() : P_IsInVoid(viewPlayer)))
                 {
                     Plane const *floor = (bfloor && bfloor->surface().hasSkyMaskedMaterial() && ffloor->visHeight() < bfloor->visHeight()? bfloor : ffloor);
                     if(floor->visHeight() > skyZ)
@@ -1932,12 +1931,11 @@ static int chooseHEdgeSkyFixes(HEdge *hedge, int skyCap)
             if(hasSkyCeiling && (skyCap & SKYCAP_UPPER))
             {
                 Plane const *fceil = &frontSec->ceiling();
-                Plane const *bceil = backSec? &backSec->ceiling() : NULL;
+                Plane const *bceil = backSec? &backSec->ceiling() : 0;
                 coord_t const skyZ = skyFixCeilZ(fceil, bceil);
 
-                if(hasClosedBack ||
-                        (!bceil->surface().hasSkyMaskedMaterial() ||
-                         devRendSkyMode || P_IsInVoid(viewPlayer)))
+                if(hasClosedBack || !bceil->surface().hasSkyMaskedMaterial() ||
+                   (devRendSkyMode? !hedge->lineSide().top().hasMaterial() : P_IsInVoid(viewPlayer)))
                 {
                     Plane const *ceil = (bceil && bceil->surface().hasSkyMaskedMaterial() && fceil->visHeight() > bceil->visHeight()? bceil : fceil);
                     if(ceil->visHeight() < skyZ)
@@ -2313,7 +2311,6 @@ static bool coveredOpenRangeTwoSided(HEdge &hedge,
     bool middleCoversOpening = false;
     if(wroteOpaqueMiddle)
     {
-        // Did we completely cover the open range?
         Sector *frontSec = hedge.wallSectionSector();
         Sector *backSec  = hedge.wallSectionSector(HEdge::Back);
 
@@ -2403,6 +2400,8 @@ static bool coveredOpenRangeTwoSided(HEdge &hedge,
  * @param hedge  Half-edge to determine the potentially visible sections of.
  *
  * @return @ref sideSectionFlags denoting which sections are potentially visible.
+ *
+ * @todo Much of this logic belongs in SectionEdge. -ds
  */
 static int pvisibleWallSections(HEdge &hedge, bool &twoSided)
 {
@@ -2438,30 +2437,31 @@ static int pvisibleWallSections(HEdge &hedge, bool &twoSided)
     Plane const &bceil  = backSec->ceiling();
     Plane const &bfloor = backSec->floor();
 
-    // Default to all pvisible.
-    int sections = Line::Side::AllSectionFlags;
+    int sections = 0;
 
     // Middle?
     Surface const &middleSurface = hedge.lineSide().middle();
-    if(!middleSurface.hasMaterial() ||
-       !middleSurface.material().isDrawable() ||
-        middleSurface.opacity() <= 0)
+    if(middleSurface.hasMaterial() && middleSurface.material().isDrawable() && middleSurface.opacity() > 0)
     {
-        sections &= ~Line::Side::MiddleFlag;
+        sections |= Line::Side::MiddleFlag;
     }
 
     // Top?
-    if((!devRendSkyMode && fceil.surface().hasSkyMaskedMaterial() && bceil.surface().hasSkyMaskedMaterial()) ||
-       fceil.visHeight() <= bceil.visHeight())
+    if(fceil.visHeight() > bceil.visHeight())
     {
-        sections &= ~Line::Side::TopFlag;
+        if(!(fceil.surface().hasSkyMaskedMaterial() && bceil.surface().hasSkyMaskedMaterial()) || devRendSkyMode)
+        {
+            sections |= Line::Side::TopFlag;
+        }
     }
 
     // Bottom?
-    if((!devRendSkyMode && ffloor.surface().hasSkyMaskedMaterial() && bfloor.surface().hasSkyMaskedMaterial()) ||
-       ffloor.visHeight() >= bfloor.visHeight())
+    if(ffloor.visHeight() < bfloor.visHeight())
     {
-        sections &= ~Line::Side::BottomFlag;
+        if(!(ffloor.surface().hasSkyMaskedMaterial() && bfloor.surface().hasSkyMaskedMaterial()) || devRendSkyMode)
+        {
+            sections |= Line::Side::BottomFlag;
+        }
     }
 
     return sections;
@@ -2477,9 +2477,9 @@ static void writeLeafWallSections()
     {
         HEdge &hedge = *hedgeIt;
 
-        // Ignore back facing walls.
+        // We are only interested in wall sections for front facing half-edges.
         if(hedge.isFlagged(HEdge::FacingFront))
-        if(hedge.hasLineSide() && hedge.lineSide().hasSections()) // "mini-edges" have no lines and "one-way windows" have no sections.
+        if(hedge.hasLineSide() && hedge.lineSide().hasSections())
         {
             bool twoSided;
             int pvisSections = pvisibleWallSections(hedge, twoSided);
@@ -2551,8 +2551,9 @@ static void writeLeafWallSections()
                 twoSided? coveredOpenRangeTwoSided(hedge, wroteOpaqueMiddle, middleBottomZ, middleTopZ)
                         : wroteOpaqueMiddle;
 
-            // We can occlude the angle range defined by the wall section
-            // if the opening has been covered (when the viewer is not in the void).
+            // We can occlude the angle range defined by the X|Y origins of the
+            // half-edge if the open range has been covered (when the viewer is
+            // not in the void).
             if(coveredOpenRange && !P_IsInVoid(viewPlayer))
             {
                 C_AddRangeFromViewRelPoints(hedge.fromOrigin(), hedge.toOrigin());
@@ -2574,7 +2575,7 @@ static void writeLeafPolyobjs()
     {
         HEdge &hedge = *line->front().leftHEdge();
 
-        // Ignore back facing walls.
+        // We are only interested in wall sections for front facing half-edges.
         if(hedge.isFlagged(HEdge::FacingFront))
         if(hedge.lineSide().hasSections())
         {
