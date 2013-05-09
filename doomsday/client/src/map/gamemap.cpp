@@ -286,12 +286,12 @@ DENG2_PIMPL(GameMap)
 
 #endif // __CLIENT__
 
-    void updateMapSkyFixForSector(Sector &sector)
+    void updateMapSkyFixForSector(Sector const &sector)
     {
         if(!sector.lineCount()) return;
 
-        bool skyFloor = sector.floorSurface().hasSkyMaskedMaterial();
-        bool skyCeil  = sector.ceilingSurface().hasSkyMaskedMaterial();
+        bool const skyFloor = sector.floorSurface().hasSkyMaskedMaterial();
+        bool const skyCeil  = sector.ceilingSurface().hasSkyMaskedMaterial();
 
         if(!skyFloor && !skyCeil) return;
 
@@ -331,38 +331,32 @@ DENG2_PIMPL(GameMap)
         // floor and/or ceiling of their front and/or back sectors.
         foreach(Line *line, sector.lines())
         {
+            Line::Side &side = line->frontSectorPtr() == &sector? line->front() : line->back();
+
+            if(!side.hasSections()) continue;
+            if(!side.middle().hasMaterial()) continue;
+
+            HEdge const *hedge     = side.leftHEdge();
+            Sector const *frontSec = hedge->wallSectionSector(HEdge::Front);
+            Sector const *backSec  = hedge->wallSectionSector(HEdge::Back);
+
             // Must be twosided.
-            if(!line->hasFrontSections() || !line->hasBackSections())
-                continue;
+            if(!frontSec || !backSec) continue;
 
-            Line::Side &side = line->side(line->frontSectorPtr() == &sector? Line::Front : Line::Back);
-
-            if(!side.middle().hasMaterial())
-                continue;
-
-            if(skyCeil)
+            coord_t bottomZ, topZ;
+            Vector2f materialOrigin;
+            R_SideSectionCoords(side, Line::Side::Middle, frontSec, backSec,
+                                &bottomZ, &topZ, &materialOrigin);
+            if(skyCeil && topZ + materialOrigin.y > self.skyFixCeiling())
             {
-                coord_t const top = sector.ceiling().visHeight()
-                    + side.middle().visMaterialOrigin()[VY];
-
-                if(top > self.skyFixCeiling())
-                {
-                    // Must raise the skyfix ceiling.
-                    self.setSkyFixCeiling(top);
-                }
+                // Must raise the skyfix ceiling.
+                self.setSkyFixCeiling(topZ + materialOrigin.y);
             }
 
-            if(skyFloor)
+            if(skyFloor && bottomZ + materialOrigin.y < self.skyFixFloor())
             {
-                coord_t const bottom = sector.floor().visHeight()
-                    + side.middle().visMaterialOrigin()[VY]
-                        - side.middle().material().height();
-
-                if(bottom < self.skyFixFloor())
-                {
-                    // Must lower the skyfix floor.
-                    self.setSkyFixFloor(bottom);
-                }
+                // Must lower the skyfix floor.
+                self.setSkyFixFloor(bottomZ + materialOrigin.y);
             }
         }
     }

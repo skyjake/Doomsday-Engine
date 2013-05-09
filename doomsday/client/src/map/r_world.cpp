@@ -178,7 +178,7 @@ void R_SideSectionCoords(Line::Side const &side, int section,
                 coord_t const openBottom = bottom;
                 coord_t const openTop    = top;
                 int const matHeight      = surface->material().height();
-                coord_t const matYOffset = surface->visMaterialOrigin()[VY];
+                coord_t const matYOffset = surface->visMaterialOrigin().y;
 
                 if(openTop > openBottom)
                 {
@@ -473,27 +473,6 @@ static void resetAllMapPlaneVisHeights(GameMap &map)
     }
 }
 
-static void resetAllMapSurfaceVisMaterialOrigins(GameMap &map)
-{
-    foreach(Sector *sector, map.sectors())
-    foreach(Plane *plane, sector->planes())
-    {
-        plane->surface().resetVisMaterialOrigin();
-    }
-
-    foreach(Line *line, map.lines())
-    for(int i = 0; i < 2; ++i)
-    {
-        if(!line->hasSections(i))
-            continue;
-
-        Line::Side &side = line->side(i);
-        side.top().resetVisMaterialOrigin();
-        side.middle().resetVisMaterialOrigin();
-        side.bottom().resetVisMaterialOrigin();
-    }
-}
-
 static void updateAllMapSectors(GameMap &map)
 {
     foreach(Sector *sector, map.sectors())
@@ -531,7 +510,6 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
 
         updateAllMapSectors(*theMap);
         resetAllMapPlaneVisHeights(*theMap);
-        resetAllMapSurfaceVisMaterialOrigins(*theMap);
 
         theMap->initPolyobjs();
         DD_ResetTimer();
@@ -566,7 +544,6 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
 
         updateAllMapSectors(*theMap);
         resetAllMapPlaneVisHeights(*theMap);
-        resetAllMapSurfaceVisMaterialOrigins(*theMap);
 
 #ifdef __CLIENT__
         theMap->buildSurfaceLists();

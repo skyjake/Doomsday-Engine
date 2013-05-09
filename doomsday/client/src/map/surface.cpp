@@ -373,6 +373,15 @@ void Surface::setMaterialOrigin(Vector2f const &newOrigin)
 
         d->materialOrigin = newOrigin;
 
+        // During map setup we'll apply this immediately to the visual origin also.
+        if(ddMapSetup)
+        {
+            d->visMaterialOrigin = d->materialOrigin;
+            d->visMaterialOriginDelta.x = d->visMaterialOriginDelta.y = 0;
+
+            d->oldMaterialOrigin[0] = d->oldMaterialOrigin[1] = d->materialOrigin;
+        }
+
         // Notify interested parties of the change.
         d->notifyMaterialOriginChanged(oldMaterialOrigin);
     }
@@ -385,6 +394,17 @@ void Surface::setMaterialOriginComponent(int component, float newPosition)
         Vector2f oldMaterialOrigin = d->materialOrigin;
 
         d->materialOrigin[component] = newPosition;
+
+        // During map setup we'll apply this immediately to the visual origin also.
+        if(ddMapSetup)
+        {
+            d->visMaterialOrigin[component] = d->materialOrigin[component];
+            d->visMaterialOriginDelta[component] = 0;
+
+            d->oldMaterialOrigin[0][component] =
+                d->oldMaterialOrigin[1][component] =
+                    d->materialOrigin[component];
+        }
 
         // Notify interested parties of the change.
         d->notifyMaterialOriginChanged(oldMaterialOrigin, (1 << component));
