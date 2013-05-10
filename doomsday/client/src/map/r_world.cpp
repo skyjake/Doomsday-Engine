@@ -67,10 +67,11 @@ DENG_EXTERN_C void R_SetupFogDefaults()
 }
 
 void R_SideSectionCoords(Line::Side const &side, int section,
-    Sector const *frontSec, Sector const *backSec,
     coord_t *retBottom, coord_t *retTop, Vector2f *retMaterialOrigin)
 {
-    Line const &line = side.line();
+    Sector const *frontSec = side.sectorPtr();
+    Sector const *backSec  = side.back().sectorPtr();
+    Line const &line       = side.line();
     bool const unpegBottom = (line.flags() & DDLF_DONTPEGBOTTOM) != 0;
     bool const unpegTop    = (line.flags() & DDLF_DONTPEGTOP) != 0;
 
@@ -156,8 +157,16 @@ void R_SideSectionCoords(Line::Side const &side, int section,
             break; }
 
         case Line::Side::Middle:
-            bottom = de::max(bfloor->visHeight(), ffloor->visHeight());
-            top    = de::min(bceil->visHeight(),  fceil->visHeight());
+            if(!side.line().isSelfReferencing())
+            {
+                bottom = de::max(bfloor->visHeight(), ffloor->visHeight());
+                top    = de::min(bceil->visHeight(),  fceil->visHeight());
+            }
+            else
+            {
+                bottom = ffloor->visHeight();
+                top    = bceil->visHeight();
+            }
 
             if(retMaterialOrigin)
             {
@@ -175,8 +184,20 @@ void R_SideSectionCoords(Line::Side const &side, int section,
                 bool const clipTop    = !(fceil->surface().hasSkyMaskedMaterial()  && bceil->surface().hasSkyMaskedMaterial());
 #endif
 
-                coord_t const openBottom = bottom;
-                coord_t const openTop    = top;
+                HEdge &hedge = *side.leftHEdge();
+
+                coord_t openBottom, openTop;
+                if(!side.line().isSelfReferencing())
+                {
+                    openBottom = bottom;
+                    openTop    = top;
+                }
+                else
+                {
+                    openBottom = hedge.bspLeaf().sector().floor().visHeight();
+                    openTop    = hedge.bspLeaf().sector().ceiling().visHeight();
+                }
+
                 int const matHeight      = surface->material().height();
                 coord_t const matYOffset = surface->visMaterialOrigin().y;
 

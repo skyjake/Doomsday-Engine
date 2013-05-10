@@ -174,30 +174,6 @@ coord_t HEdge::length() const
     return _length;
 }
 
-Sector *HEdge::wallSectionSector(int side) const
-{
-    if(!d->lineSide)
-        /// @throw MissingLineError Attempted with no line attributed.
-        throw MissingLineSideError("HEdge::wallSectionSector", "No line.side is attributed");
-
-    Line::Side const &mapSide = *d->lineSide;
-    if(mapSide.line().isFromPolyobj())
-    {
-        if(side == Front) return bspLeaf().sectorPtr();
-        return 0;
-    }
-
-    if(!mapSide.line().isSelfReferencing())
-    {
-        if(side == Front) return bspLeaf().sectorPtr();
-        return hasTwin()? twin().bspLeaf().sectorPtr() : 0;
-    }
-
-    // Special case: so called "self-referencing" lines should use the
-    // sector of the map line side.
-    return mapSide.sectorPtr();
-}
-
 HEdge::Flags HEdge::flags() const
 {
     return _flags;

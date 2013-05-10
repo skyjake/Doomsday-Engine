@@ -55,8 +55,6 @@ DENG2_PIMPL(SectionEdge), public IHPlane
     ClockDirection neighborScanDirection;
     coord_t lineOffset;
     Vertex *lineVertex;
-    Sector *frontSec;
-    Sector *backSec;
 
     bool isValid;
     Vector2f materialOrigin;
@@ -83,16 +81,14 @@ DENG2_PIMPL(SectionEdge), public IHPlane
     } hplane;
 
     Instance(Public *i, Line::Side *lineSide, int section,
-             ClockDirection neighborScanDirection, coord_t lineOffset,
-             Vertex *lineVertex, Sector *frontSec, Sector *backSec)
+             ClockDirection neighborScanDirection,
+             coord_t lineOffset, Vertex *lineVertex)
         : Base(i),
           lineSide(lineSide),
           section(section),
           neighborScanDirection(neighborScanDirection),
           lineOffset(lineOffset),
           lineVertex(lineVertex),
-          frontSec(frontSec),
-          backSec(backSec),
           isValid(false)
     {}
 
@@ -103,8 +99,6 @@ DENG2_PIMPL(SectionEdge), public IHPlane
           neighborScanDirection(other.neighborScanDirection),
           lineOffset           (other.lineOffset),
           lineVertex           (other.lineVertex),
-          frontSec             (other.frontSec),
-          backSec              (other.backSec),
           isValid              (other.isValid),
           materialOrigin       (other.materialOrigin),
           hplane               (other.hplane)
@@ -327,10 +321,9 @@ private:
 };
 
 SectionEdge::SectionEdge(Line::Side &lineSide, int section,
-    coord_t lineOffset, Vertex &lineVertex, ClockDirection neighborScanDirection,
-    Sector *frontSec, Sector *backSec)
+    coord_t lineOffset, Vertex &lineVertex, ClockDirection neighborScanDirection)
     : d(new Instance(this, &lineSide, section, neighborScanDirection,
-                           lineOffset, &lineVertex, frontSec, backSec))
+                           lineOffset, &lineVertex))
 {
     DENG_ASSERT(lineSide.hasSections());
 }
@@ -339,9 +332,7 @@ SectionEdge::SectionEdge(HEdge &hedge, int section, int edge)
     : d(new Instance(this, &hedge.lineSide(), section,
                            edge? Anticlockwise : Clockwise,
                            hedge.lineOffset() + (edge? hedge.length() : 0),
-                           &hedge.vertex(edge),
-                           hedge.wallSectionSector(),
-                           hedge.wallSectionSector(HEdge::Back)))
+                           &hedge.vertex(edge)))
 {
     DENG_ASSERT(hedge.hasLineSide() && hedge.lineSide().hasSections());
 }
@@ -418,8 +409,7 @@ Vector2f const &SectionEdge::materialOrigin() const
 void SectionEdge::prepare()
 {
     coord_t bottom, top;
-    R_SideSectionCoords(*d->lineSide, d->section, d->frontSec, d->backSec,
-                        &bottom, &top, &d->materialOrigin);
+    R_SideSectionCoords(*d->lineSide, d->section, &bottom, &top, &d->materialOrigin);
 
     d->isValid = (top >= bottom);
     if(!d->isValid) return;

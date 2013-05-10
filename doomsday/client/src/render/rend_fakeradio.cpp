@@ -1074,7 +1074,7 @@ static void drawWallSectionShadow(rvertex_t const *origVertices,
 }
 
 void Rend_RadioWallSection(SectionEdge const &leftEdge, SectionEdge const &rightEdge,
-    float shadowDark, float shadowSize, Sector *frontSec, Sector *backSec)
+    float shadowDark, float shadowSize)
 {
     // Disabled?
     if(!rendFakeRadio || levelFullBright) return;
@@ -1082,6 +1082,10 @@ void Rend_RadioWallSection(SectionEdge const &leftEdge, SectionEdge const &right
     if(shadowSize <= 0) return;
 
     Line::Side &side            = leftEdge.lineSide();
+    HEdge const *hedge          = side.leftHEdge();
+    Sector const *frontSec      = hedge->bspLeafSectorPtr();
+    Sector const *backSec       = hedge->hasTwin() && leftEdge.section() != Line::Side::Middle? hedge->twin().bspLeafSectorPtr() : 0;
+
     coord_t const lineLength    = side.line().length();
     coord_t const sectionOffset = leftEdge.lineOffset();
     coord_t const sectionWidth  = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());

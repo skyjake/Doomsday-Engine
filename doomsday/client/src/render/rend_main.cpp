@@ -1645,21 +1645,7 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
             float shadowSize = 2 * (8 + 16 - currentSectorLightLevel * 16);
             float shadowDark = Rend_RadioCalcShadowDarkness(currentSectorLightLevel);
 
-            Sector *frontSec = 0, *backSec = 0;
-            {
-                HEdge *hedge = mapElement.castTo<HEdge>();
-                frontSec = hedge->wallSectionSector();
-                if(hedge->hasTwin() && !isTwoSidedMiddle)
-                {
-                    if(hedge->twin().hasLineSide() && hedge->twin().lineSide().hasSector())
-                    {
-                        backSec = hedge->twin().bspLeaf().sectorPtr();
-                    }
-                }
-            }
-
-            Rend_RadioWallSection(leftEdge, rightEdge, shadowDark, shadowSize,
-                                  frontSec, backSec);
+            Rend_RadioWallSection(leftEdge, rightEdge, shadowDark, shadowSize);
         }
     }
 
@@ -2308,28 +2294,19 @@ static bool coveredOpenRangeTwoSided(HEdge &hedge,
     if(hedge.line().isSelfReferencing())
        return false; /// @todo Why? -ds
 
+    Sector const &frontSec = hedge.bspLeaf().sector();
+    Sector const &backSec  = hedge.twin().bspLeaf().sector();
+
     bool middleCoversOpening = false;
     if(wroteOpaqueMiddle)
     {
-        Sector *frontSec = hedge.wallSectionSector();
-        Sector *backSec  = hedge.wallSectionSector(HEdge::Back);
+        coord_t const ffloor = frontSec.floor().visHeight();
+        coord_t const fceil  = frontSec.ceiling().visHeight();
+        coord_t const bfloor = backSec.floor().visHeight();
+        coord_t const bceil  = backSec.ceiling().visHeight();
 
-        coord_t const ffloor = frontSec->floor().visHeight();
-        coord_t const fceil  = frontSec->ceiling().visHeight();
-        coord_t const bfloor = backSec->floor().visHeight();
-        coord_t const bceil  = backSec->ceiling().visHeight();
-
-        coord_t xbottom, xtop;
-        if(hedge.line().isSelfReferencing())
-        {
-            xbottom = de::min(bfloor, ffloor);
-            xtop    = de::max(bceil,  fceil);
-        }
-        else
-        {
-            xbottom = de::max(bfloor, ffloor);
-            xtop    = de::min(bceil,  fceil);
-        }
+        coord_t xbottom = de::max(bfloor, ffloor);
+        coord_t xtop    = de::min(bceil,  fceil);
 
         Surface const &middle = hedge.lineSide().middle();
         xbottom += middle.visMaterialOrigin().y;
@@ -2342,26 +2319,22 @@ static bool coveredOpenRangeTwoSided(HEdge &hedge,
     if(wroteOpaqueMiddle && middleCoversOpening)
         return true;
 
-    // We'll have to determine whether we can...
-    Sector *frontSec = hedge.wallSectionSector();
-    Sector *backSec  = hedge.wallSectionSector(HEdge::Back);
-
     Line::Side const &front = hedge.lineSide();
 
-    coord_t const ffloor = frontSec->floor().visHeight();
-    coord_t const fceil  = frontSec->ceiling().visHeight();
-    coord_t const bfloor = backSec->floor().visHeight();
-    coord_t const bceil  = backSec->ceiling().visHeight();
+    coord_t const ffloor = frontSec.floor().visHeight();
+    coord_t const fceil  = frontSec.ceiling().visHeight();
+    coord_t const bfloor = backSec.floor().visHeight();
+    coord_t const bceil  = backSec.ceiling().visHeight();
 
     if(   (bceil <= ffloor &&
                (front.top().hasMaterial()    || front.middle().hasMaterial()))
        || (bfloor >= fceil &&
                (front.bottom().hasMaterial() || front.middle().hasMaterial())))
     {
-        Surface const &ffloorSurface = frontSec->floor().surface();
-        Surface const &fceilSurface  = frontSec->ceiling().surface();
-        Surface const &bfloorSurface = backSec->floor().surface();
-        Surface const &bceilSurface  = backSec->ceiling().surface();
+        Surface const &ffloorSurface = frontSec.floor().surface();
+        Surface const &fceilSurface  = frontSec.ceiling().surface();
+        Surface const &bfloorSurface = backSec.floor().surface();
+        Surface const &bceilSurface  = backSec.ceiling().surface();
 
         // A closed gap?
         if(de::fequal(fceil, bfloor))
@@ -2430,12 +2403,12 @@ static int pvisibleWallSections(HEdge &hedge, bool &twoSided)
     }
 
     // Regular two-sided.
-    Sector *frontSec    = hedge.wallSectionSector(HEdge::Front);
-    Sector *backSec     = hedge.wallSectionSector(HEdge::Back);
-    Plane const &fceil  = frontSec->ceiling();
-    Plane const &ffloor = frontSec->floor();
-    Plane const &bceil  = backSec->ceiling();
-    Plane const &bfloor = backSec->floor();
+    Sector const &frontSec = hedge.bspLeaf().sector();
+    Sector const &backSec  = hedge.twin().bspLeaf().sector();
+    Plane const &fceil  = frontSec.ceiling();
+    Plane const &ffloor = frontSec.floor();
+    Plane const &bceil  = backSec.ceiling();
+    Plane const &bfloor = backSec.floor();
 
     int sections = 0;
 

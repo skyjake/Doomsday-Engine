@@ -333,16 +333,12 @@ DENG2_PIMPL(GameMap)
             if(!side->hasSections()) continue;
             if(!side->middle().hasMaterial()) continue;
 
-            HEdge const *hedge     = side->leftHEdge();
-            Sector const *frontSec = hedge->wallSectionSector(HEdge::Front);
-            Sector const *backSec  = hedge->wallSectionSector(HEdge::Back);
-
             // There must be a sector on both sides.
-            if(!frontSec || !backSec) continue;
+            if(!side->hasSector() || !side->back().hasSector()) continue;
 
             coord_t bottomZ, topZ;
             Vector2f materialOrigin;
-            R_SideSectionCoords(*side, Line::Side::Middle, frontSec, backSec,
+            R_SideSectionCoords(*side, Line::Side::Middle,
                                 &bottomZ, &topZ, &materialOrigin);
             if(skyCeil && topZ + materialOrigin.y > self.skyFixCeiling())
             {

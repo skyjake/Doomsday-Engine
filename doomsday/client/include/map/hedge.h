@@ -256,19 +256,6 @@ public:
     inline Sector *bspLeafSectorPtr() const { return bspLeaf().sectorPtr(); }
 
     /**
-     * Determines the side relative sector to be used for producing wall
-     * section geometry. Takes into account doom.exe map hack constructs.
-     * Also suitable for Polyobj lines.
-     *
-     * @pre A map line side is attributed (@ref hasLineSide()).
-     *
-     * @param side  If non-zero return the back sector; otherwise the front.
-     *
-     * @return  Map sector for the specified side. Can be @c 0.
-     */
-    Sector *wallSectionSector(int side = Front) const;
-
-    /**
      * Returns @c true iff a Line::Side is attributed to the half-edge.
      */
     bool hasLineSide() const;

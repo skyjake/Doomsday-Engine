@@ -148,11 +148,9 @@ float Rend_RadioCalcShadowDarkness(float lightLevel);
  * @param rightEdge   Geometry for the right edge of the wall section.
  * @param shadowDark  Shadow darkness scale factor.
  * @param shadowSize  Shadow size scale factor.
- * @param frontSec    @todo refactor away
- * @param backSec     @todo refactor away
  */
 void Rend_RadioWallSection(SectionEdge const &leftEdge, SectionEdge const &rightEdge,
-    float shadowDark, float shadowSize, Sector *frontSec, Sector *backSec);
+    float shadowDark, float shadowSize);
 
 /**
  * Render FakeRadio for the given BSP leaf. Draws all shadow geometry linked to the
