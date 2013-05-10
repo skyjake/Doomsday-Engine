@@ -21,22 +21,28 @@
 #define LIBDENG2_INFO_H
 
 #include "../String"
+#include "../NativePath"
 #include <QStringList>
 #include <QHash>
 
 namespace de {
 
 /**
- * Key/value tree. Read from the "Snowberry" Info file format.
+ * Key/value tree. The tree is parsed from the "Snowberry" Info file format.
+ *
+ * See the Doomsday Wiki for an example of the syntax:
+ * http://dengine.net/dew/index.php?title=Info
  *
  * This implementation has been ported to C++ based on cfparser.py from
  * Snowberry.
  *
- * @todo Document Info syntax in wiki, with example.
+ * @todo Should use de::Lex internally.
  */
 class Info
 {
 public:
+    class BlockElement;
+
     /**
      * Base class for all elements.
      */
@@ -53,8 +59,13 @@ public:
          * @param t  Type of the element.
          * @param n  Case-independent name of the element.
          */
-        Element(Type t = None, String const &n = "") : _type(t) { setName(n); }
+        Element(Type t = None, String const &n = "") : _type(t), _parent(0) { setName(n); }
         virtual ~Element() {}
+
+        void setParent(BlockElement *parent) { _parent = parent; }
+        BlockElement *parent() const {
+            return _parent;
+        }
 
         Type type() const { return _type; }
         bool isKey() const { return _type == Key; }
@@ -69,6 +80,7 @@ public:
     private:
         Type _type;
         String _name;
+        BlockElement *_parent;
     };
 
     /**
@@ -148,8 +160,9 @@ public:
 
         void add(Element *elem) {
             DENG2_ASSERT(elem != 0);
-            _contentsInOrder.append(elem);
-            _contents.insert(elem->name(), elem);
+            elem->setParent(this);
+            _contentsInOrder.append(elem); // owned
+            _contents.insert(elem->name(), elem); // not owned (name may be empty)
         }
 
         Element *find(String const &name) const {
@@ -202,6 +215,14 @@ public:
     Info(String const &source);
 
     /**
+     * Sets all the block types whose content is parsed using a script parser.
+     * The blocks will contain a single KeyElement named "script".
+     *
+     * @param blocksToParseAsScript  List of block types.
+     */
+    void setScriptBlocks(QStringList const &blocksToParseAsScript);
+
+    /**
      * Parses the Info contents from a text string.
      *
      * @param infoSource  Info text.
@@ -213,7 +234,9 @@ public:
      *
      * @param nativePath  Path of a native file containing the Info source.
      */
-    void parseNativeFile(String const &nativePath);
+    void parseNativeFile(NativePath const &nativePath);
+
+    void clear();
 
     BlockElement const &root() const;
 

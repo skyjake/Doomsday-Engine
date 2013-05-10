@@ -18,6 +18,9 @@
  */
 
 #include "de/Info"
+#include "de/ScriptLex"
+#include "de/Log"
+#include "de/LogBuffer"
 #include <QFile>
 
 using namespace de;
@@ -31,8 +34,19 @@ DENG2_PIMPL_NOREF(Info)
     DENG2_ERROR(OutOfElements);
     DENG2_ERROR(EndOfFile);
 
+    QStringList scriptBlockTypes;
+    String content;
+    int currentLine;
+    int cursor; ///< Index of the next character from the source.
+    QChar currentChar;
+    int tokenStartOffset;
+    String currentToken;
+    BlockElement rootBlock;
+
     Instance() : currentLine(0), cursor(0), tokenStartOffset(0), rootBlock("", "")
-    {}
+    {
+        scriptBlockTypes << "script";
+    }
 
     /**
      * Initialize the parser for reading a block of source content.
@@ -47,6 +61,8 @@ DENG2_PIMPL_NOREF(Info)
         content = source + "\n";
         currentLine = 1;
 
+        currentChar = '\0';
+        cursor = 0;
         nextChar();
         tokenStartOffset = 0;
 
@@ -76,7 +92,10 @@ DENG2_PIMPL_NOREF(Info)
             // No more characters to read.
             throw EndOfFile(QString("EOF on line %1").arg(currentLine));
         }
-        if(currentChar == '\n') currentLine++;
+        if(currentChar == '\n')
+        {
+            currentLine++;
+        }
         currentChar = content[cursor];
         cursor++;
     }
@@ -160,6 +179,8 @@ DENG2_PIMPL_NOREF(Info)
         catch(EndOfFile const &)
         {}
 
+        //LOG_DEBUG("token: '%s' line %i") << currentToken << currentLine;
+
         return currentToken;
     }
 
@@ -236,11 +257,13 @@ DENG2_PIMPL_NOREF(Info)
                 // Double single quotes form a double quote ('' => ").
                 nextChar();
                 if(peekChar() == '\'')
+                {
                     chars.append("\"");
+                }
                 else
                 {
                     chars.append("'");
-                    chars.append(peekChar());
+                    continue;
                 }
             }
             else
@@ -366,17 +389,25 @@ DENG2_PIMPL_NOREF(Info)
      */
     BlockElement *parseBlockElement(String const &blockType)
     {
-        QScopedPointer<BlockElement> block(new BlockElement(blockType, peekToken()));
+        DENG2_ASSERT(blockType != "}");
+        DENG2_ASSERT(blockType != ")");
+
+        String blockName;
+        if(peekToken() != "(" && peekToken() != "{")
+        {
+            blockName = parseValue();
+        }
+
+        QScopedPointer<BlockElement> block(new BlockElement(blockType, blockName));
         int startLine = currentLine;
 
-        // How about some attributes?
-        // Syntax: {token value} '('|'{'
+        String endToken;
 
         try
         {
-            String endToken;
+            // How about some attributes?
+            // Syntax: {token value} '('|'{'
 
-            nextToken();
             while(peekToken() != "(" && peekToken() != "{")
             {
                 String keyName = peekToken();
@@ -389,19 +420,54 @@ DENG2_PIMPL_NOREF(Info)
 
             endToken = (peekToken() == "("? ")" : "}");
 
-            // Move past the opening parentheses.
-            nextToken();
-
-            while(peekToken() != endToken)
+            // Parse the contents of the block.
+            if(scriptBlockTypes.contains(blockType))
             {
-                Element *element = parseElement();
-                if(!element)
+                // Parse as Doomsday Script.
+                int startPos = cursor - 1;
+                String remainder = content.substr(startPos);
+                ScriptLex lex(remainder);
+                try
                 {
+                    TokenBuffer tokens;
+                    while(lex.getStatement(tokens)) {}
+
+                    // We should have gotten a mismatched bracket that ends the script.
                     throw SyntaxError("Info::parseBlockElement",
-                                      QString("Block element was never closed, end of file encountered before '%1' was found (on line %2).")
-                                      .arg(endToken).arg(currentLine));
+                                      QString("Script block at line %1 is not closed").arg(currentLine));
                 }
-                block->add(element);
+                catch(ScriptLex::MismatchedBracketError const &)
+                {
+                    // Continue parsing normally from here.
+                    int endPos = startPos + lex.pos();
+                    do {
+                        nextChar();
+                    } while(cursor < endPos);
+                    currentToken = QString(peekChar());
+                    nextChar();
+
+                    block->add(new KeyElement("script", content.substr(startPos, lex.pos() - 1)));
+
+                    //LOG_DEBUG("Script element:\n\"%s\"") << block->find("script")->values().first();
+                }
+            }
+            else
+            {
+                // Move past the opening parentheses.
+                nextToken();
+
+                // Parse normally as Info.
+                while(peekToken() != endToken)
+                {
+                    Element *element = parseElement();
+                    if(!element)
+                    {
+                        throw SyntaxError("Info::parseBlockElement",
+                                          QString("Block element was never closed, end of file encountered before '%1' was found (on line %2).")
+                                          .arg(endToken).arg(currentLine));
+                    }
+                    block->add(element);
+                }
             }
         }
         catch(EndOfFile const &)
@@ -410,6 +476,9 @@ DENG2_PIMPL_NOREF(Info)
                               QString("End of file encountered unexpectedly while parsing a block element (block started on line %1).")
                               .arg(startLine));
         }
+
+        LogBuffer::appBuffer().flush();
+        DENG2_ASSERT(peekToken() == endToken);
 
         // Move past the closing parentheses.
         nextToken();
@@ -427,14 +496,6 @@ DENG2_PIMPL_NOREF(Info)
             rootBlock.add(e);
         }
     }
-
-    String content;
-    int currentLine;
-    int cursor; ///< Index of the next character from the source.
-    QChar currentChar;
-    int tokenStartOffset;
-    String currentToken;
-    BlockElement rootBlock;
 };
 
 Info::BlockElement::~BlockElement()
@@ -444,9 +505,10 @@ Info::BlockElement::~BlockElement()
 
 void Info::BlockElement::clear()
 {
-    for(Contents::iterator i = _contents.begin(); i != _contents.end(); ++i)
-        delete i.value();
-
+    for(ContentsInOrder::iterator i = _contentsInOrder.begin(); i != _contentsInOrder.end(); ++i)
+    {
+        delete *i;
+    }
     _contents.clear();
     _contentsInOrder.clear();
 }
@@ -489,18 +551,28 @@ Info::Info(String const &source)
     d.reset(inst.take());
 }
 
+void Info::setScriptBlocks(QStringList const &blocksToParseAsScript)
+{
+    d->scriptBlockTypes = blocksToParseAsScript;
+}
+
 void Info::parse(String const &infoSource)
 {
     d->parse(infoSource);
 }
 
-void Info::parseNativeFile(String const &nativePath)
+void Info::parseNativeFile(NativePath const &nativePath)
 {
     QFile file(nativePath);
     if(file.open(QFile::ReadOnly | QFile::Text))
     {
         parse(file.readAll().constData());
     }
+}
+
+void Info::clear()
+{
+    parse("");
 }
 
 Info::BlockElement const &Info::root() const
