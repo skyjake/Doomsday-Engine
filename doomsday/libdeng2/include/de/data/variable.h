@@ -166,7 +166,8 @@ public:
         Type *v = dynamic_cast<Type *>(_value);
         if(!v) {
             /// @throw TypeError Casting to Type failed.
-            throw TypeError("Variable::value<Type>", "Illegal type conversion");
+            throw TypeError("Variable::value",
+                            QString("Illegal type conversion to ") + typeid(Type).name());
         }
         return *v;
     }
@@ -179,7 +180,8 @@ public:
         Type const *v = dynamic_cast<Type const *>(_value);
         if(!v) {
             /// @throw TypeError Casting to Type failed.
-            throw TypeError("Variable::value<Type>", "Illegal type conversion");
+            throw TypeError("Variable::value",
+                            QString("Illegal type conversion to ") + typeid(Type).name());
         }
         return *v;
     }
