@@ -100,9 +100,9 @@ Variable::Flags Variable::mode() const
     return _mode;
 }
 
-void Variable::setMode(Flags const &flags)
+void Variable::setMode(Flags const &flags, FlagOp operation)
 {
-    _mode = flags;
+    applyFlagOperation(_mode, flags, operation);
 }
 
 Variable &Variable::setReadOnly()

@@ -194,7 +194,7 @@ public:
      *
      * @param flags  New mode flags that will replace the current ones.
      */
-    void setMode(Flags const &flags);
+    void setMode(Flags const &flags, FlagOp operation = ReplaceFlags);
 
     /**
      * Makes the variable read-only.
