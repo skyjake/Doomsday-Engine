@@ -26,6 +26,8 @@ namespace de {
 
 DENG2_PIMPL(ScriptedInfo)
 {
+    typedef Info::Element::Value InfoValue;
+
     Info info;                     ///< Original full parsed contents.
     QScopedPointer<Script> script; ///< Current script being executed.
     Process process;               ///< Execution context.
@@ -82,6 +84,7 @@ DENG2_PIMPL(ScriptedInfo)
             }
         }
 
+        // Script blocks are executed now.
         if(block.blockType() == "script")
         {
             DENG2_ASSERT(block.find("script") != 0);
@@ -103,9 +106,9 @@ DENG2_PIMPL(ScriptedInfo)
 
             foreach(Info::Element const *sub, block.contentsInOrder())
             {
+                // Handle special elements.
                 if(sub->name() == "condition")
                 {
-                    // Skip special elements.
                     continue;
                 }
                 if(sub->name() == ":" && !block.name().isEmpty())
@@ -138,11 +141,6 @@ DENG2_PIMPL(ScriptedInfo)
         return varName;
     }
 
-    static bool isEvaluatable(String const &value)
-    {
-        return value.startsWith('$');
-    }
-
     Value *evaluate(String const &source)
     {
         script.reset(new Script(source));
@@ -151,13 +149,13 @@ DENG2_PIMPL(ScriptedInfo)
         return process.context().evaluator().result().duplicate();
     }
 
-    Value *makeValue(String const &rawValue)
+    Value *makeValue(InfoValue const &rawValue)
     {
-        if(isEvaluatable(rawValue))
+        if(rawValue.flags.testFlag(InfoValue::Script))
         {
-            return evaluate(rawValue.substr(1));
+            return evaluate(rawValue.text);
         }
-        return new TextValue(rawValue);
+        return new TextValue(rawValue.text);
     }
 
     void processKey(Info::KeyElement const &key)
@@ -169,7 +167,7 @@ DENG2_PIMPL(ScriptedInfo)
     void processList(Info::ListElement const &list)
     {
         ArrayValue* av = new ArrayValue;
-        foreach(QString v, list.values())
+        foreach(InfoValue const &v, list.values())
         {
             *av << makeValue(v);
         }

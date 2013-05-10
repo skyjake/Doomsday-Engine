@@ -3,8 +3,16 @@
 # - weight: normal bold light
 # - style: normal italic
 
-# Version module is available for embedded scripts.
-script (import Version; print "Imported")
+script {
+    # Version module is available for embedded scripts.
+    import Version
+    
+    def joinArray(a)
+        result = ''
+        for i in a: result += i
+        return result
+    end
+}
 
 script "condition testing" condition "Version.OS == 'macx'" {
     print "Running on %s!" % Version.OS
@@ -13,20 +21,27 @@ script "condition testing" condition "Version.OS == 'macx'" {
     end
 }
 
-script test2 condition False { print "WILL NOT BE RUN" }
-
+# Nameless groups are allowed.
+group {
+    condition: False
+    script test2 condition True { print "WILL NOT BE RUN" }    
+}
+    
 group font {
     condition: Version.OS == 'macx'
     
+    preferences < font.default, $ " 'font'+'.'+'title' " >
+    
     font default {
-        family: $ "Lucida " + 'Grande'
-        size:   16pt
+        family $= "'Lucida ' + ''Grande''"
+        size $: joinArray(['16', 'pt'])
         weight = normal
-        style:  normal
+        style: normal
     }
     
+    # Identifiers are all case insensitive.
     Font "Title" : font.default {
-        size: 24pt
-        weight: bold
+        Size: 24pt
+        Weight: bold
     }
 }
