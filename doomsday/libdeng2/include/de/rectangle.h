@@ -21,6 +21,7 @@
 #define LIBDENG2_RECTANGLE_H
 
 #include "Vector"
+#include <QRect>
 
 #ifdef WIN32
 #  undef min
@@ -54,6 +55,9 @@ public:
     }
     static RectangleType fromSize(Corner const &tl, Size const &size) {
         return RectangleType(tl.x, tl.y, size.x, size.y);
+    }
+    static RectangleType fromQRect(QRect const &qr) {
+        return RectangleType(qr.left(), qr.top(), qr.width(), qr.height());
     }
 
     SizeType width() const { return abs(bottomRight.x - topLeft.x); }
