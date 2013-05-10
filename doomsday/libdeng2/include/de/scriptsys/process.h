@@ -54,12 +54,12 @@ public:
 
     /// A process is always in one of these states.
     enum State {
-        RUNNING,    /**< The process is running normally. */
-        SUSPENDED,  /**< The process has been suspended and will
+        Running,    /**< The process is running normally. */
+        Suspended,  /**< The process has been suspended and will
                      *   not continue running until restored.  A
                      *   process cannot restore itself from a
                      *   suspended state. */
-        STOPPED     /**< The process has reached the end of the
+        Stopped     /**< The process has reached the end of the
                      *   script or has been terminated. */
     };
 

@@ -49,12 +49,12 @@ DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
         ArrayValue *num = new ArrayValue;
         *num << NumberValue(ver.major) << NumberValue(ver.minor)
              << NumberValue(ver.patch) << NumberValue(ver.build);
-        mod.addArray("VERSION", num).setReadOnly();
-        mod.addText("TEXT", ver.asText()).setReadOnly();
-        mod.addNumber("BUILD", ver.build).setReadOnly();
-        mod.addText("OS", Version::operatingSystem()).setReadOnly();
-        mod.addNumber("CPU_BITS", Version::cpuBits()).setReadOnly();
-        mod.addBoolean("DEBUG", Version::isDebugBuild()).setReadOnly();
+        mod.addArray  ("VERSION",  num                       ).setReadOnly();
+        mod.addText   ("TEXT",     ver.asText()              ).setReadOnly();
+        mod.addNumber ("BUILD",    ver.build                 ).setReadOnly();
+        mod.addText   ("OS",       Version::operatingSystem()).setReadOnly();
+        mod.addNumber ("CPU_BITS", Version::cpuBits()        ).setReadOnly();
+        mod.addBoolean("DEBUG",    Version::isDebugBuild()   ).setReadOnly();
 
         addNativeModule("Version", mod);
     }

@@ -33,17 +33,17 @@ using std::auto_ptr;
 /// If execution continues for longer than this, a HangError is thrown.
 static TimeDelta const MAX_EXECUTION_TIME = 10;
 
-Process::Process(Record *externalGlobalNamespace) : _state(STOPPED), _workingPath("/")
+Process::Process(Record *externalGlobalNamespace) : _state(Stopped), _workingPath("/")
 {
     // Push the first context on the stack. This bottommost context
     // is never popped from the stack. Its namespace is the global namespace
     // of the process.
-    _stack.push_back(new Context(Context::PROCESS, this, externalGlobalNamespace));
+    _stack.push_back(new Context(Context::BaseProcess, this, externalGlobalNamespace));
 }
 
-Process::Process(Script const &script) : _state(STOPPED), _workingPath("/")
+Process::Process(Script const &script) : _state(Stopped), _workingPath("/")
 {
-    _stack.push_back(new Context(Context::PROCESS, this));
+    clear();
 
     // If a script is provided, start running it automatically.
     run(script);
@@ -70,12 +70,12 @@ duint Process::depth() const
 
 void Process::run(Script const &script)
 {
-    if(_state != STOPPED)
+    if(_state != Stopped)
     {
         throw NotStoppedError("Process::run", 
             "When a new script is started the process must be stopped first");
     }
-    _state = RUNNING;
+    _state = Running;
     
     // Make sure the stack is clear except for the process context.
     clearStack(1);
@@ -96,18 +96,18 @@ void Process::run(Script const &script)
 
 void Process::suspend(bool suspended)
 {
-    if(_state == STOPPED)
+    if(_state == Stopped)
     {
         throw SuspendError("Process:suspend", 
             "Stopped processes cannot be suspended or resumed");
     }    
     
-    _state = (suspended? SUSPENDED : RUNNING);
+    _state = (suspended? Suspended : Running);
 }
 
 void Process::stop()
 {
-    _state = STOPPED;
+    _state = Stopped;
     
     // Clear the context stack, apart from the bottommost context, which 
     // represents the process itself.
@@ -129,7 +129,7 @@ void Process::stop()
 
 void Process::execute()
 {
-    if(_state == SUSPENDED || _state == STOPPED)
+    if(_state == Suspended || _state == Stopped)
     {
         // The process is not active.
         return;
@@ -144,7 +144,7 @@ void Process::execute()
     }
 
     // Execute the next command(s).
-    while(_state == RUNNING && depth() >= startDepth)
+    while(_state == Running && depth() >= startDepth)
     {
         try
         {
@@ -238,7 +238,7 @@ Context *Process::popContext()
     _stack.pop_back();
 
     // Pop a global namespace as well, if present.
-    if(context().type() == Context::GLOBAL_NAMESPACE)
+    if(context().type() == Context::GlobalNamespace)
     {
         delete _stack.back();
         _stack.pop_back();
@@ -256,7 +256,7 @@ void Process::finish(Value *returnValue)
     {
         // Finish the topmost context.
         std::auto_ptr<Context> topmost(popContext());
-        if(topmost->type() == Context::FUNCTION_CALL)
+        if(topmost->type() == Context::FunctionCall)
         {
             // Return value to the new topmost level.
             context().evaluator().pushResult(returnValue? returnValue : new NoneValue);
@@ -265,10 +265,10 @@ void Process::finish(Value *returnValue)
     }
     else
     {
-        DENG2_ASSERT(_stack.back()->type() == Context::PROCESS);
+        DENG2_ASSERT(_stack.back()->type() == Context::BaseProcess);
         
         // This was the last level.
-        _state = STOPPED;
+        _state = Stopped;
     }   
 }
 
@@ -299,11 +299,11 @@ void Process::call(Function const &function, ArrayValue const &arguments)
         // that namespace on the stack first.
         if(function.globals() && function.globals() != &globals())
         {
-            _stack.push_back(new Context(Context::GLOBAL_NAMESPACE, this, function.globals()));
+            _stack.push_back(new Context(Context::GlobalNamespace, this, function.globals()));
         }
         
         // Create a new context.
-        _stack.push_back(new Context(Context::FUNCTION_CALL, this));
+        _stack.push_back(new Context(Context::FunctionCall, this));
         
         // Create local variables for the arguments in the new context.
         Function::ArgumentValues::const_iterator b = argValues.begin();
@@ -327,7 +327,7 @@ void Process::namespaces(Namespaces &spaces)
     {
         Context &context = **i;
         spaces.push_back(&context.names());
-        if(context.type() == Context::GLOBAL_NAMESPACE)
+        if(context.type() == Context::GlobalNamespace)
         {
             // This shadows everything below.
             break;
