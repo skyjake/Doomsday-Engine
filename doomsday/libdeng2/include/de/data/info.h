@@ -33,8 +33,7 @@ namespace de {
  * See the Doomsday Wiki for an example of the syntax:
  * http://dengine.net/dew/index.php?title=Info
  *
- * This implementation has been ported to C++ based on cfparser.py from
- * Snowberry.
+ * This implementation is based on a C++ port of cfparser.py from Snowberry.
  *
  * @todo Should use de::Lex internally.
  */
@@ -54,6 +53,24 @@ public:
             List,
             Block
         };
+
+        /// Value of a key/list element.
+        struct Value {
+            enum Flag {
+                Script = 0x1,       ///< Assigned with $= (to be parsed as script).
+                DefaultFlags = 0
+            };
+            Q_DECLARE_FLAGS(Flags, Flag)
+
+            String text;
+            Flags flags;
+
+            Value(String const &txt = "", Flags const &f = DefaultFlags)
+                : text(txt), flags(f) {}
+
+            operator String const & () const { return text; }
+        };
+        typedef QList<Value> ValueList;
 
         /**
          * @param t  Type of the element.
@@ -75,7 +92,7 @@ public:
 
         void setName(String const &name) { _name = name.toLower(); }
 
-        virtual QStringList values() const = 0;
+        virtual ValueList values() const = 0;
 
     private:
         Type _type;
@@ -88,19 +105,17 @@ public:
      */
     class KeyElement : public Element {
     public:
-        KeyElement(String const &name, String const &value) : Element(Key, name), _value(value) {}
+        KeyElement(String const &name, Value const &value) : Element(Key, name), _value(value) {}
 
-        void setValue(String const &v) { _value = v; }
-        String const &value() const { return _value; }
+        void setValue(Value const &v) { _value = v; }
+        Value const &value() const { return _value; }
 
-        QStringList values() const {
-            QStringList list;
-            list << _value;
-            return list;
+        ValueList values() const {
+            return ValueList() << _value;
         }
 
     private:
-        String _value;
+        Value _value;
     };
 
     /**
@@ -109,11 +124,11 @@ public:
     class ListElement : public Element {
     public:
         ListElement(String const &name) : Element(List, name) {}
-        void add(String const &v) { _values << v; }
-        QStringList values() const { return _values; }
+        void add(Value const &v) { _values << v; }
+        ValueList values() const { return _values; }
 
     private:
-        QStringList _values;
+        ValueList _values;
     };
 
     /**
@@ -145,7 +160,7 @@ public:
 
         Contents const &contents() const { return _contents; }
 
-        QStringList values() const {
+        ValueList values() const {
             throw ValuesError("Info::BlockElement::values",
                               "Block elements do not contain text values (only other elements)");
         }
@@ -177,9 +192,9 @@ public:
          *
          * @param name  Name of a key element in the block.
          */
-        String keyValue(String const &name) const {
+        Value keyValue(String const &name) const {
             Element *e = find(name);
-            if(!e || !e->isKey()) return "";
+            if(!e || !e->isKey()) return Value();
             return static_cast<KeyElement *>(e)->value();
         }
 
@@ -256,6 +271,8 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(Info::Element::Value::Flags)
 
 } // namespace de
 

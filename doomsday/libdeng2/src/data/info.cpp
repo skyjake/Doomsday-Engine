@@ -27,7 +27,7 @@ using namespace de;
 
 static QString const WHITESPACE = " \t\r\n";
 static QString const WHITESPACE_OR_COMMENT = " \t\r\n#";
-static QString const TOKEN_BREAKING_CHARS = "#:=(){}<>,\"" + WHITESPACE;
+static QString const TOKEN_BREAKING_CHARS = "#:=$(){}<>,\"" + WHITESPACE;
 
 DENG2_PIMPL_NOREF(Info)
 {
@@ -42,6 +42,8 @@ DENG2_PIMPL_NOREF(Info)
     int tokenStartOffset;
     String currentToken;
     BlockElement rootBlock;
+
+    typedef Info::Element::Value InfoValue;
 
     Instance() : currentLine(0), cursor(0), tokenStartOffset(0), rootBlock("", "")
     {
@@ -179,8 +181,6 @@ DENG2_PIMPL_NOREF(Info)
         catch(EndOfFile const &)
         {}
 
-        //LOG_DEBUG("token: '%s' line %i") << currentToken << currentLine;
-
         return currentToken;
     }
 
@@ -219,7 +219,7 @@ DENG2_PIMPL_NOREF(Info)
             return 0;
         }
 
-        if(next == ":" || next == "=")
+        if(next == ":" || next == "=" || next == "$")
         {
             return parseKeyElement(key);
         }
@@ -281,15 +281,21 @@ DENG2_PIMPL_NOREF(Info)
     }
 
     /**
-     * Parse a value from the source file.  The current token
-     * should be on the first token of the value.  Values come in
-     * different flavours:
+     * Parse a value from the source file. The current token should be on the
+     * first token of the value. Values come in different flavours:
      * - single token
      * - string literal (can be split)
      */
-    String parseValue()
+    InfoValue parseValue()
     {
-        String value;
+        InfoValue value;
+
+        if(peekToken() == "$")
+        {
+            // Marks a script value.
+            value.flags |= InfoValue::Script;
+            nextToken();
+        }
 
         // Check if it is the beginning of a string literal.
         if(peekToken() == "\"")
@@ -297,14 +303,14 @@ DENG2_PIMPL_NOREF(Info)
             try
             {
                // The value will be composed of any number of sub-strings.
-               forever { value += parseString(); }
+               forever { value.text += parseString(); }
             }
             catch(de::Error const &)
             {
                 // No more strings to append.
                 return value;
             }
-        }
+        }        
 
         // Then it must be a single token.
         value = peekToken();
@@ -318,16 +324,23 @@ DENG2_PIMPL_NOREF(Info)
      */
     KeyElement *parseKeyElement(String const &name)
     {
-        String value;
+        InfoValue value;
+
+        if(peekToken() == "$")
+        {
+            // This is a script value.
+            value.flags |= InfoValue::Script;
+            nextToken();
+        }
 
         // A colon means that that the rest of the line is the value of
         // the key element.
         if(peekToken() == ":")
         {
-            value = readToEOL().trimmed();
+            value.text = readToEOL().trimmed();
             nextToken();
         }
-        else
+        else if(peekToken() == "=")
         {
             /**
              * Key =
@@ -335,7 +348,13 @@ DENG2_PIMPL_NOREF(Info)
              *   "that spans multiple lines."
              */
             nextToken();
-            value = parseValue();
+            value.text = parseValue();
+        }
+        else
+        {
+            throw SyntaxError("Info::parseKeyElement",
+                              QString("Expected either '=' or ':', but '%1' found instead (on line %2).")
+                              .arg(peekToken()).arg(currentLine));
         }
         return new KeyElement(name, value);
     }
@@ -412,7 +431,7 @@ DENG2_PIMPL_NOREF(Info)
             {
                 String keyName = peekToken();
                 nextToken();
-                String value = parseValue();
+                InfoValue value = parseValue();
 
                 // This becomes a key element inside the block.
                 block->add(new KeyElement(keyName, value));
@@ -446,7 +465,9 @@ DENG2_PIMPL_NOREF(Info)
                     currentToken = QString(peekChar());
                     nextChar();
 
-                    block->add(new KeyElement("script", content.substr(startPos, lex.pos() - 1)));
+                    InfoValue scriptValue(content.substr(startPos, lex.pos() - 1),
+                                          InfoValue::Script);
+                    block->add(new KeyElement("script", scriptValue));
 
                     //LOG_DEBUG("Script element:\n\"%s\"") << block->find("script")->values().first();
                 }
