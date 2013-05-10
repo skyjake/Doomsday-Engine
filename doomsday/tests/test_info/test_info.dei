@@ -1,0 +1,32 @@
+# Fonts for the default UI style
+# - size can be "pt" or "px", defaults to "pt" 
+# - weight: normal bold light
+# - style: normal italic
+
+# Version module is available for embedded scripts.
+script (import Version; print "Imported")
+
+script "condition testing" condition "Version.OS == 'macx'" {
+    print "Running on %s!" % Version.OS
+    for i in [0, 2, 4]
+        print 'i =', i
+    end
+}
+
+script test2 condition False { print "WILL NOT BE RUN" }
+
+group font {
+    condition: Version.OS == 'macx'
+    
+    font default {
+        family: $ "Lucida " + 'Grande'
+        size:   16pt
+        weight = normal
+        style:  normal
+    }
+    
+    Font "Title" : font.default {
+        size: 24pt
+        weight: bold
+    }
+}
