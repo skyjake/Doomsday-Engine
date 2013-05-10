@@ -4,7 +4,7 @@
 # - style: normal italic
 
 script {
-    # Version module is available for embedded scripts.
+    # Version module will be available in embedded scripts here.
     import Version
     
     def joinArray(a)
