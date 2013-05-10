@@ -1904,12 +1904,25 @@ static int chooseHEdgeSkyFixes(HEdge *hedge, int skyCap)
                 Plane const *bfloor = backSec? &backSec->floor() : 0;
                 coord_t const skyZ = skyFixFloorZ(ffloor, bfloor);
 
-                if(hasClosedBack || !bfloor->surface().hasSkyMaskedMaterial() ||
-                   (devRendSkyMode? !hedge->lineSide().bottom().hasMaterial() : P_IsInVoid(viewPlayer)))
+                if(!devRendSkyMode)
                 {
-                    Plane const *floor = (bfloor && bfloor->surface().hasSkyMaskedMaterial() && ffloor->visHeight() < bfloor->visHeight()? bfloor : ffloor);
-                    if(floor->visHeight() > skyZ)
-                        fixes |= SKYCAP_LOWER;
+                    if(P_IsInVoid(viewPlayer) ||
+                       (hasClosedBack || !bfloor->surface().hasSkyMaskedMaterial()))
+                    {
+                        Plane const *floor = (bfloor && bfloor->surface().hasSkyMaskedMaterial() && ffloor->visHeight() < bfloor->visHeight()? bfloor : ffloor);
+                        if(floor->visHeight() > skyZ)
+                            fixes |= SKYCAP_LOWER;
+                    }
+                }
+                else
+                {
+                    if(!hedge->lineSide().bottom().hasMaterial() &&
+                       (hasClosedBack || bfloor->surface().hasSkyMaskedMaterial()))
+                    {
+                        Plane const *floor = (bfloor && bfloor->surface().hasSkyMaskedMaterial() && ffloor->visHeight() < bfloor->visHeight()? bfloor : ffloor);
+                        if(floor->visHeight() > skyZ)
+                            fixes |= SKYCAP_LOWER;
+                    }
                 }
             }
 
@@ -1920,12 +1933,25 @@ static int chooseHEdgeSkyFixes(HEdge *hedge, int skyCap)
                 Plane const *bceil = backSec? &backSec->ceiling() : 0;
                 coord_t const skyZ = skyFixCeilZ(fceil, bceil);
 
-                if(hasClosedBack || !bceil->surface().hasSkyMaskedMaterial() ||
-                   (devRendSkyMode? !hedge->lineSide().top().hasMaterial() : P_IsInVoid(viewPlayer)))
+                if(!devRendSkyMode)
                 {
-                    Plane const *ceil = (bceil && bceil->surface().hasSkyMaskedMaterial() && fceil->visHeight() > bceil->visHeight()? bceil : fceil);
-                    if(ceil->visHeight() < skyZ)
-                        fixes |= SKYCAP_UPPER;
+                    if(P_IsInVoid(viewPlayer) ||
+                       (hasClosedBack || !bceil->surface().hasSkyMaskedMaterial()))
+                    {
+                        Plane const *ceil = (bceil && bceil->surface().hasSkyMaskedMaterial() && fceil->visHeight() > bceil->visHeight()? bceil : fceil);
+                        if(ceil->visHeight() < skyZ)
+                            fixes |= SKYCAP_UPPER;
+                    }
+                }
+                else
+                {
+                    if(!hedge->lineSide().top().hasMaterial() &&
+                       (hasClosedBack || bceil->surface().hasSkyMaskedMaterial()))
+                    {
+                        Plane const *ceil = (bceil && bceil->surface().hasSkyMaskedMaterial() && fceil->visHeight() > bceil->visHeight()? bceil : fceil);
+                        if(ceil->visHeight() < skyZ)
+                            fixes |= SKYCAP_UPPER;
+                    }
                 }
             }
         }
