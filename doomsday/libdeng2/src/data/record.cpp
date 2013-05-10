@@ -264,6 +264,12 @@ Variable *Record::remove(Variable &variable)
     return &variable;
 }
 
+Variable &Record::add(String const &name)
+{
+    return d->parentRecordByPath(name)
+            .add(new Variable(Instance::memberNameFromPath(name)));
+}
+
 Variable &Record::addNumber(String const &name, Value::Number const &number)
 {
     return d->parentRecordByPath(name)

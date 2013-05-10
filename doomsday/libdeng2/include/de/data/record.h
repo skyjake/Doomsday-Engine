@@ -130,6 +130,15 @@ public:
     Variable *remove(Variable &variable);
 
     /**
+     * Adds a new variable to the record with a NoneValue.
+     *
+     * @param variableName  Name of the variable.
+     *
+     * @return  The new variable.
+     */
+    Variable &add(String const &variableName);
+
+    /**
      * Adds a number variable to the record. The variable is set up to only accept
      * number values.
      *
