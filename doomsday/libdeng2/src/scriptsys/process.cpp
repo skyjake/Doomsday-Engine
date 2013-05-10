@@ -54,6 +54,14 @@ Process::~Process()
     clearStack();
 }
 
+void Process::clear()
+{
+    _state = Stopped;
+    clearStack();
+    _stack.push_back(new Context(Context::BaseProcess, this));
+    _workingPath = "/";
+}
+
 void Process::clearStack(duint downToLevel)
 {
     while(depth() > downToLevel)

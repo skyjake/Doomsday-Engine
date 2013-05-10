@@ -95,6 +95,13 @@ public:
     duint depth() const;
 
     /**
+     * Resets the process to an empty state. All existing content in the
+     * process's context stack is removed, leaving the process in a similar
+     * state than after construction.
+     */
+    void clear();
+
+    /**
      * Starts running the given script. Note that the process must be
      * in the FINISHED state for this to be a valid operation.
      *
