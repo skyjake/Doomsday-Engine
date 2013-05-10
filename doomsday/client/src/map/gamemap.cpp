@@ -326,8 +326,8 @@ DENG2_PIMPL(GameMap)
             }
         }
 
-        // Update for middle textures on two sided lines which intersect the
-        // floor and/or ceiling of their front and/or back sectors.
+        // Update for middle materials on lines which intersect the
+        // floor and/or ceiling on the front (i.e., sector) side.
         foreach(Line::Side *side, sector.sides())
         {
             if(!side->hasSections()) continue;
@@ -337,7 +337,7 @@ DENG2_PIMPL(GameMap)
             Sector const *frontSec = hedge->wallSectionSector(HEdge::Front);
             Sector const *backSec  = hedge->wallSectionSector(HEdge::Back);
 
-            // Must be twosided.
+            // There must be a sector on both sides.
             if(!frontSec || !backSec) continue;
 
             coord_t bottomZ, topZ;
@@ -425,10 +425,9 @@ DENG2_PIMPL(GameMap)
         foreach(Line *line, self._lines)
         for(int i = 0; i < 2; ++i)
         {
-            if(!line->hasSections(i))
-                continue;
-
             Line::Side &side = line->side(i);
+            if(!side.hasSections()) continue;
+
             if(&soundEmitter == &side.middleSoundEmitter())
             {
                 return &side.middle();
@@ -658,10 +657,9 @@ void GameMap::buildSurfaceLists()
     foreach(Line *line, _lines)
     for(int i = 0; i < 2; ++i)
     {
-        if(!line->hasSections(i))
-            continue;
-
         Line::Side &side = line->side(i);
+        if(!side.hasSections()) continue;
+
         d->addSurfaceToLists(side.middle());
         d->addSurfaceToLists(side.top());
         d->addSurfaceToLists(side.bottom());
@@ -718,7 +716,7 @@ TraceOpening const &GameMap::traceOpening() const
 
 void GameMap::setTraceOpening(Line &line)
 {
-    if(!line.hasBackSections())
+    if(!line.hasBackSector())
     {
         d->traceOpening.range = 0;
         return;
@@ -1852,7 +1850,7 @@ static Material *chooseFixMaterial(Line::Side &side, int section)
     Material *choice1 = 0, *choice2 = 0;
 
     Sector *frontSec = side.sectorPtr();
-    Sector *backSec  = side.back().hasSections()? side.back().sectorPtr() : 0;
+    Sector *backSec  = side.back().sectorPtr();
 
     if(backSec)
     {
@@ -1892,7 +1890,7 @@ static Material *chooseFixMaterial(Line::Side &side, int section)
 
         if(other)
         {
-            if(!other->hasBackSections())
+            if(!other->hasBackSector())
             {
                 // Our choice is clear - the middle material.
                 choice1 = other->front().middle().materialPtr();
@@ -1901,7 +1899,7 @@ static Material *chooseFixMaterial(Line::Side &side, int section)
             {
                 // Compare the relative heights to decide.
                 Line::Side &otherSide = other->side(&other->frontSector() == frontSec? Line::Front : Line::Back);
-                Sector &otherSec = other->sector(&other->frontSector() == frontSec? Line::Back : Line::Front);
+                Sector &otherSec = other->side(&other->frontSector() == frontSec? Line::Back : Line::Front).sector();
 
                 if(otherSec.ceiling().height() <= frontSec->floor().height())
                     choice1 = otherSide.top().materialPtr();

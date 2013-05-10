@@ -211,7 +211,7 @@ DENG2_PIMPL(Partitioner)
                 return;
 
             bool dir = (p.testLine->direction().y > 0) ^ (line.direction().y > 0);
-            hitSector = line.sectorPtr(dir ^ !isFront);
+            hitSector = line.side(dir ^ !isFront).sectorPtr();
         }
         else // Cast vertically.
         {
@@ -230,7 +230,7 @@ DENG2_PIMPL(Partitioner)
             dist = de::abs(dist);
 
             bool dir = (p.testLine->direction().x > 0) ^ (line.direction().x > 0);
-            hitSector = line.sectorPtr(dir ^ !isFront);
+            hitSector = line.side(dir ^ !isFront).sectorPtr();
         }
 
         // Too close? (overlapping lines?)
@@ -266,18 +266,18 @@ DENG2_PIMPL(Partitioner)
     bool lineMightHaveWindowEffect(Line const &line)
     {
         if(line.isFromPolyobj()) return false;
-        if(line.hasFrontSections() && line.hasBackSections()) return false;
-        if(!line.hasFrontSections()) return false;
+        if(line.hasFrontSector() && line.hasBackSector()) return false;
+        if(!line.hasFrontSector()) return false;
         //if(line.hasZeroLength() || line._buildData.overlap) return false;
 
         // Look for window effects by checking for an odd number of one-sided
         // line owners for a single vertex. Idea courtesy of Graham Jackson.
-        if((line.from()._oneSidedOwnerCount % 2) == 1 &&
-           (line.from()._oneSidedOwnerCount + line.from()._twoSidedOwnerCount) > 1)
+        if((line.from()._onesOwnerCount % 2) == 1 &&
+           (line.from()._onesOwnerCount + line.from()._twosOwnerCount) > 1)
             return true;
 
-        if((line.to()._oneSidedOwnerCount % 2) == 1 &&
-           (line.to()._oneSidedOwnerCount + line.to()._twoSidedOwnerCount) > 1)
+        if((line.to()._onesOwnerCount % 2) == 1 &&
+           (line.to()._onesOwnerCount + line.to()._twosOwnerCount) > 1)
             return true;
 
         return false;
@@ -385,7 +385,7 @@ DENG2_PIMPL(Partitioner)
                 Sector *frontSec = line->frontSectorPtr();
                 Sector *backSec  = 0;
 
-                if(line->hasBackSections())
+                if(line->hasBackSector())
                 {
                     backSec = line->backSectorPtr();
                 }

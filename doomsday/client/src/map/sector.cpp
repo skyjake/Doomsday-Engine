@@ -242,8 +242,8 @@ void Sector::buildSides(GameMap const &map)
     uint count = 0;
     foreach(Line *line, map.lines())
     {
-        if(line->front().sectorPtr() == this ||
-           line->back().sectorPtr()  == this)
+        if(line->frontSectorPtr() == this ||
+           line->backSectorPtr()  == this)
             ++count;
     }
 
@@ -254,12 +254,12 @@ void Sector::buildSides(GameMap const &map)
 
     foreach(Line *line, map.lines())
     {
-        if(line->front().sectorPtr() == this)
+        if(line->frontSectorPtr() == this)
         {
             // Ownership of the side is not given to the sector.
             d->sides.append(&line->front());
         }
-        else if(line->back().sectorPtr()  == this)
+        else if(line->backSectorPtr()  == this)
         {
             // Ownership of the side is not given to the sector.
             d->sides.append(&line->back());

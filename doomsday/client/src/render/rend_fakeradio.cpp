@@ -197,10 +197,10 @@ static void scanNeighbor(bool scanTop, Line::Side const &side, edge_t *edge,
         }
 
         // Determine the relative backsector.
-        if(iter->hasSections(scanSecSide))
-            scanSector = iter->sectorPtr(scanSecSide);
+        if(iter->side(scanSecSide).hasSector())
+            scanSector = iter->side(scanSecSide).sectorPtr();
         else
-            scanSector = NULL;
+            scanSector = 0;
 
         // Pick plane heights for relative offset comparison.
         if(!stopScan)
@@ -208,7 +208,7 @@ static void scanNeighbor(bool scanTop, Line::Side const &side, edge_t *edge,
             iFFloor = iter->frontSector().floor().visHeight();
             iFCeil  = iter->frontSector().ceiling().visHeight();
 
-            if(iter->hasBackSections())
+            if(iter->hasBackSector())
             {
                 iBFloor = iter->backSector().floor().visHeight();
                 iBCeil  = iter->backSector().ceiling().visHeight();
@@ -227,7 +227,7 @@ static void scanNeighbor(bool scanTop, Line::Side const &side, edge_t *edge,
             edge->sector = const_cast<Sector *>(scanSector);
 
             closed = false;
-            if(side.isFront() && iter->hasBackSections())
+            if(side.isFront() && iter->hasBackSector())
             {
                 if(scanTop)
                 {
@@ -245,7 +245,7 @@ static void scanNeighbor(bool scanTop, Line::Side const &side, edge_t *edge,
             // texture on the hedge shadow edge being rendered?
             if(scanTop)
             {
-                if(iter->hasBackSections() &&
+                if(iter->hasBackSector() &&
                    ((side.isFront() && iter->backSectorPtr() == side.line().frontSectorPtr() &&
                     iFCeil >= fCeil) ||
                    (side.isBack() && iter->backSectorPtr() == side.line().backSectorPtr() &&
@@ -264,7 +264,7 @@ static void scanNeighbor(bool scanTop, Line::Side const &side, edge_t *edge,
             }
             else
             {
-                if(iter->hasBackSections() &&
+                if(iter->hasBackSector() &&
                    ((side.isFront() && iter->backSectorPtr() == side.line().frontSectorPtr() &&
                     iFFloor <= fFloor) ||
                    (side.isBack() && iter->backSectorPtr() == side.line().backSectorPtr() &&
@@ -334,7 +334,7 @@ static void scanNeighbor(bool scanTop, Line::Side const &side, edge_t *edge,
 
             // Skip into the back neighbor sector of the iter line if
             // heights are within accepted range.
-            if(scanSector && side.back().hasSections() &&
+            if(scanSector && side.back().hasSector() &&
                scanSector != side.back().sectorPtr() &&
                 ((scanTop && scanSector->ceiling().visHeight() ==
                                 startSector->ceiling().visHeight()) ||
@@ -369,7 +369,7 @@ static void scanNeighbor(bool scanTop, Line::Side const &side, edge_t *edge,
         // get the next neighbor (it IS the backneighbor).
         edge->line =
             R_FindLineNeighbor(edge->sector, edge->line,
-                               edge->line->vertexOwner(int(edge->line->hasBackSections() && edge->line->backSectorPtr() == edge->sector) ^ (int)!toLeft),
+                               edge->line->vertexOwner(int(edge->line->hasBackSector() && edge->line->backSectorPtr() == edge->sector) ^ (int)!toLeft),
                                !toLeft, &edge->diff);
     }
 }

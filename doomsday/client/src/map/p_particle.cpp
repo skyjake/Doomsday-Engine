@@ -779,9 +779,10 @@ int PIT_CheckLinePtc(Line *ld, void *parameters)
      * We are possibly hitting something here.
      */
 
-    // Bounce if we hit a one-sided line.
+    // Bounce if we hit a solid wall.
+    /// @todo fixme: What about "one-way" window lines?
     ptcHitLine = ld;
-    if(!ld->hasBackSections()) return true; // Boing!
+    if(!ld->hasBackSector()) return true; // Boing!
 
     Sector *front = ld->frontSectorPtr();
     Sector *back  = ld->backSectorPtr();
@@ -1072,8 +1073,8 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
         // particle should be killed (if it's moving slowly at max).
         if(pt->contact)
         {
-            Sector *front = (pt->contact->hasFrontSections()? pt->contact->frontSectorPtr() : NULL);
-            Sector *back  = (pt->contact->hasBackSections()?  pt->contact->backSectorPtr()  : NULL);
+            Sector *front = pt->contact->frontSectorPtr();
+            Sector *back  = pt->contact->backSectorPtr();
 
             if(front && back && abs(pt->mov[VZ]) < FRACUNIT / 2)
             {

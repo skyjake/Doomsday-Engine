@@ -342,12 +342,12 @@ Line *R_FindLineNeighbor(Sector const *sector, Line const *line,
 
     if(diff) *diff += (antiClockwise? cown->angle() : own->angle());
 
-    if(!other->hasBackSections() || !other->isSelfReferencing())
+    if(!other->hasBackSector() || !other->isSelfReferencing())
     {
         if(sector) // Must one of the sectors match?
         {
             if(other->frontSectorPtr() == sector ||
-               (other->hasBackSections() && other->backSectorPtr() == sector))
+               (other->hasBackSector() && other->backSectorPtr() == sector))
                 return other;
         }
         else
@@ -378,15 +378,15 @@ static bool middleMaterialCoversOpening(Line::Side const &side)
     if(!side.hasSections()) return false;
     if(!side.middle().hasMaterial()) return false;
 
+    // Stretched middles always cover the opening.
+    if(side.isFlagged(SDF_MIDDLE_STRETCH))
+        return true;
+
     // Ensure we have up to date info about the material.
     MaterialSnapshot const &ms = side.middle().material().prepare(Rend_MapSurfaceMaterialSpec());
 
     if(ms.isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1)
     {
-        // Stretched middles always cover the opening.
-        if(side.isFlagged(SDF_MIDDLE_STRETCH))
-            return true;
-
         coord_t openRange, openBottom, openTop;
         openRange = R_VisOpenRange(side, &openBottom, &openTop);
         if(ms.height() >= openRange)
@@ -411,51 +411,26 @@ Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
 
     if(diff) *diff += (antiClockwise? cown->angle() : own->angle());
 
-    if(!((other->isBspWindow()) && other->frontSectorPtr() != sector))
+    if(!((other->isBspWindow()) && other->frontSectorPtr() != sector) &&
+       !other->isSelfReferencing())
     {
-        if(!other->hasFrontSections()) return other;
-        if(!other->hasBackSections()) return other;
+        if(!other->hasFrontSector()) return other;
+        if(!other->hasBackSector()) return other;
 
-        if(!other->isSelfReferencing() &&
-           (other->frontSector().floor().visHeight() >= sector->ceiling().visHeight() ||
-            other->frontSector().ceiling().visHeight() <= sector->floor().visHeight() ||
-            other->backSector().floor().visHeight() >= sector->ceiling().visHeight() ||
-            other->backSector().ceiling().visHeight() <= sector->floor().visHeight() ||
-            other->backSector().ceiling().visHeight() <= other->backSector().floor().visHeight()))
+        if(other->frontSector().floor().visHeight() >= sector->ceiling().visHeight() ||
+           other->frontSector().ceiling().visHeight() <= sector->floor().visHeight() ||
+           other->backSector().floor().visHeight() >= sector->ceiling().visHeight() ||
+           other->backSector().ceiling().visHeight() <= sector->floor().visHeight() ||
+           other->backSector().ceiling().visHeight() <= other->backSector().floor().visHeight())
             return other;
 
         // Both front and back MUST be open by this point.
 
-        // Check for mid texture which fills the gap between floor and ceiling.
+        // Perhaps a middle material completely covers the opening?
         // We should not give away the location of false walls (secrets).
-        int side = (other->frontSectorPtr() == sector? 0 : 1);
-        if(other->side(side).middle().hasMaterial())
-        {
-            float oFCeil  = other->frontSector().ceiling().visHeight();
-            float oFFloor = other->frontSector().floor().visHeight();
-            float oBCeil  = other->backSector().ceiling().visHeight();
-            float oBFloor = other->backSector().floor().visHeight();
-
-            if((side == 0 &&
-                ((oBCeil > sector->floor().visHeight() &&
-                      oBFloor <= sector->floor().visHeight()) ||
-                 (oBFloor < sector->ceiling().visHeight() &&
-                      oBCeil >= sector->ceiling().visHeight()) ||
-                 (oBFloor < sector->ceiling().visHeight() &&
-                      oBCeil > sector->floor().visHeight()))) ||
-               ( /* side must be 1 */
-                ((oFCeil > sector->floor().visHeight() &&
-                      oFFloor <= sector->floor().visHeight()) ||
-                 (oFFloor < sector->ceiling().visHeight() &&
-                      oFCeil >= sector->ceiling().visHeight()) ||
-                 (oFFloor < sector->ceiling().visHeight() &&
-                      oFCeil > sector->floor().visHeight())))  )
-            {
-                // Perhaps a middle material completely covers the opening?
-                if(!middleMaterialCoversOpening(other->side(side)))
-                    return 0;
-            }
-        }
+        Line::Side &otherSide = other->side(other->frontSectorPtr() == sector? Line::Front : Line::Back);
+        if(middleMaterialCoversOpening(otherSide))
+            return other;
     }
 
     // Not suitable, try the next.

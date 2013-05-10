@@ -150,9 +150,11 @@ void ShadowEdge::prepare(int planeIndex)
     // in the polygon corner vertices (placement, opacity).
 
     if(d->leftMostHEdge->hasTwin() && d->leftMostHEdge->twin().bspLeafSectorPtr() != 0 &&
-       d->leftMostHEdge->twin().hasLineSide() && d->leftMostHEdge->twin().lineSide().hasSections())
+       d->leftMostHEdge->twin().bspLeafSectorPtr() != 0)
     {
-        Surface const &wallEdgeSurface = side.surface(planeIndex == Plane::Ceiling? Line::Side::Top : Line::Side::Bottom);
+        Surface const &wallEdgeSurface =
+            side.back().hasSector()? side.surface(planeIndex == Plane::Ceiling? Line::Side::Top : Line::Side::Bottom)
+                                   : side.middle();
 
         Sector const *frontSec = d->leftMostHEdge->bspLeafSectorPtr();
         Sector const *backSec  = d->leftMostHEdge->twin().bspLeafSectorPtr();

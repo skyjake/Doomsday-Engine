@@ -521,10 +521,9 @@ static void R_UpdateMap()
     foreach(Line *line, theMap->lines())
     for(int i = 0; i < 2; ++i)
     {
-        if(!line->hasSections(i))
-            continue;
-
         Line::Side &side = line->side(i);
+        if(!side.hasSections()) continue;
+
         side.top().markAsNeedingDecorationUpdate();
         side.middle().markAsNeedingDecorationUpdate();
         side.bottom().markAsNeedingDecorationUpdate();
@@ -1383,10 +1382,9 @@ void Rend_CacheForMap()
         foreach(Line *line, theMap->lines())
         for(int i = 0; i < 2; ++i)
         {
-            if(!line->hasSections(i))
-                continue;
-
             Line::Side &side = line->side(i);
+            if(!side.hasSections()) continue;
+
             if(side.middle().hasMaterial())
                 App_Materials().cache(side.middle().material(), spec);
 

@@ -850,10 +850,11 @@ boolean MPE_End()
 
     editMap.pruneVertexes();
 
-    /// Ensure one sided lines are flagged as blocking. @todo Refactor away.
+    /// Ensure lines with only one sector are flagged as blocking.
+    /// @todo Refactor away.
     foreach(Line *line, editMap.lines)
     {
-        if(!line->hasFrontSections() || !line->hasBackSections())
+        if(!line->hasFrontSector() || !line->hasBackSector())
             line->setFlags(DDLF_BLOCKING);
     }
 

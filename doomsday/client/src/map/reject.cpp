@@ -47,7 +47,7 @@ void BuildRejectForMap(GameMap const &map)
     {
         Line *line = &map.lines[i];
 
-        if(!line->hasFrontSections() || !line->hasBackSections())
+        if(!line->hasFrontSector() || !line->hasBackSector())
             continue;
 
         Sector *sec1 = line->frontSectorPtr();

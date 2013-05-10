@@ -131,7 +131,7 @@ DENG2_PIMPL(LineSightTest)
             return false;
 
         Sector const *frontSec = side.sectorPtr();
-        Sector const *backSec  = (side.back().hasSections()? side.back().sectorPtr() : 0);
+        Sector const *backSec  = side.back().sectorPtr();
 
         bool noBack = !side.back().hasSections();
         if(!noBack && !(flags & LS_PASSLEFT))
@@ -149,8 +149,8 @@ DENG2_PIMPL(LineSightTest)
                     return true;
             }
 
-            // No back side is present so if the ray is not allowed to pass over/under the line
-            // then end it right here.
+            // No back side is present so if the ray is not allowed to pass over/under
+            // the line then end it right here.
             if(!(flags & (LS_PASSOVER | LS_PASSUNDER)))
                 return false;
         }

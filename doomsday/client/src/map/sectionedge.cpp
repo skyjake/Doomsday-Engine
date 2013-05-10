@@ -229,7 +229,7 @@ DENG2_PIMPL(SectionEdge), public IHPlane
         if(!base) return;
 
         // Check for neighborhood division?
-        if(section == Line::Side::Middle && lineSide->back().hasSections())
+        if(section == Line::Side::Middle && lineSide->back().hasSector())
             return;
 
         Sector const *frontSec = lineSide->sectorPtr();
@@ -255,9 +255,9 @@ DENG2_PIMPL(SectionEdge), public IHPlane
                 {
                     // First front, then back.
                     Sector *scanSec = 0;
-                    if(!i && iter->hasFrontSections() && iter->frontSectorPtr() != frontSec)
+                    if(!i && iter->hasFrontSector() && iter->frontSectorPtr() != frontSec)
                         scanSec = iter->frontSectorPtr();
-                    else if(i && iter->hasBackSections() && iter->backSectorPtr() != frontSec)
+                    else if(i && iter->hasBackSector() && iter->backSectorPtr() != frontSec)
                         scanSec = iter->backSectorPtr();
 
                     if(scanSec)
@@ -315,8 +315,8 @@ DENG2_PIMPL(SectionEdge), public IHPlane
                     }
                 } while(!stopScan && ++i < 2);
 
-                // Stop the scan when a single sided line is reached.
-                if(!iter->hasFrontSections() || !iter->hasBackSections())
+                // Stop the scan when a side with no back sector is reached.
+                if(!iter->hasFrontSector() || !iter->hasBackSector())
                     stopScan = true;
             }
         } while(!stopScan);

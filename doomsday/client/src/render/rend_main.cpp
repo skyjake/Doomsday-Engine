@@ -1294,7 +1294,7 @@ static float wallSectionEdgeLightLevelDelta(Line::Side &side, int section, int e
 
     // ...always if the surface's material was chosen as a HOM fix (lighting
     // must be consistent with that applied to the relative back sector plane).
-    if(side.hasSections() && side.back().hasSections() &&
+    if(side.hasSector() && side.back().hasSector() &&
        side.surface(section).hasFixMaterial())
         return 0;
 
@@ -1651,7 +1651,7 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
                 frontSec = hedge->wallSectionSector();
                 if(hedge->hasTwin() && !isTwoSidedMiddle)
                 {
-                    if(hedge->twin().hasLineSide() && hedge->twin().lineSide().hasSections())
+                    if(hedge->twin().hasLineSide() && hedge->twin().lineSide().hasSector())
                     {
                         backSec = hedge->twin().bspLeaf().sectorPtr();
                     }
@@ -3055,14 +3055,12 @@ void Rend_RenderSoundOrigins()
 
     if(devSoundOrigins & SOF_SIDE)
     {
-        /// @todo Do not assume current map.
         foreach(Line *line, theMap->lines())
         for(int i = 0; i < 2; ++i)
         {
-            if(!line->hasSections(i))
-                continue;
-
             Line::Side &side = line->side(i);
+            if(!side.hasSections()) continue;
+
             char buf[80];
 
             dd_snprintf(buf, 80, "Line #%d (%s, middle)", line->indexInMap(), (i? "back" : "front"));
@@ -3078,7 +3076,6 @@ void Rend_RenderSoundOrigins()
 
     if(devSoundOrigins & (SOF_SECTOR|SOF_PLANE))
     {
-        /// @todo Do not assume current map.
         foreach(Sector *sec, theMap->sectors())
         {
             char buf[80];
@@ -3115,7 +3112,7 @@ static void getVertexPlaneMinMax(Vertex const *vtx, coord_t *min, coord_t *max)
     {
         Line *li = &own->line();
 
-        if(li->hasFrontSections())
+        if(li->hasFrontSector())
         {
             if(min && li->frontSector().floor().visHeight() < *min)
                 *min = li->frontSector().floor().visHeight();
@@ -3124,7 +3121,7 @@ static void getVertexPlaneMinMax(Vertex const *vtx, coord_t *min, coord_t *max)
                 *max = li->frontSector().ceiling().visHeight();
         }
 
-        if(li->hasBackSections())
+        if(li->hasBackSector())
         {
             if(min && li->backSector().floor().visHeight() < *min)
                 *min = li->backSector().floor().visHeight();

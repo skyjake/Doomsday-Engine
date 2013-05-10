@@ -55,9 +55,9 @@ public: /// @todo Move to the map loader:
     LineOwner *_lineOwners;
     uint _numLineOwners; ///< Total number of line owners.
 
-    // Total number of one and two-sided line owners.
-    uint _oneSidedOwnerCount;
-    uint _twoSidedOwnerCount;
+    // Total numbers of line owners.
+    uint _onesOwnerCount;
+    uint _twosOwnerCount;
 
 public:
     Vertex(de::Vector2d const &origin = de::Vector2d(0, 0));

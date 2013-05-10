@@ -62,8 +62,8 @@ Vertex::Vertex(Vector2d const &origin)
     : MapElement(DMU_VERTEX),
       _lineOwners(0),
       _numLineOwners(0),
-      _oneSidedOwnerCount(0),
-      _twoSidedOwnerCount(0),
+      _onesOwnerCount(0),
+      _twosOwnerCount(0),
       d(new Instance(this, origin))
 {}
 
@@ -127,20 +127,20 @@ uint Vertex::lineOwnerCount() const
 
 void Vertex::countLineOwners()
 {
-    _oneSidedOwnerCount = _twoSidedOwnerCount = 0;
+    _onesOwnerCount = _twosOwnerCount = 0;
 
     if(LineOwner const *firstOwn = firstLineOwner())
     {
         LineOwner const *own = firstOwn;
         do
         {
-            if(!own->line().hasFrontSections() || !own->line().hasBackSections())
+            if(!own->line().hasFrontSector() || !own->line().hasBackSector())
             {
-                _oneSidedOwnerCount += 1;
+                _onesOwnerCount += 1;
             }
             else
             {
-                _twoSidedOwnerCount += 1;
+                _twosOwnerCount += 1;
             }
         } while((own = &own->next()) != firstOwn);
     }
