@@ -72,12 +72,45 @@ DENG2_PIMPL(ScriptedInfo)
         }
     }
 
+    void execute(Info::BlockElement const *context)
+    {
+        Record &ns = process.globals();
+
+        // The global "__this__" will point to the block where the script
+        // is running.
+        bool needRemoveThis = false;
+        if(context)
+        {
+            String varName = variableName(*context);
+            if(!varName.isEmpty())
+            {
+                if(!ns.has(varName))
+                {
+                    // If it doesn't exist yet, make sure it does.
+                    ns.addRecord(varName);
+                }
+                ns.add("__this__") = new RecordValue(&ns.subrecord(varName));
+                needRemoveThis = true;
+            }
+        }
+
+        // Execute the current script.
+        process.execute();
+
+        if(needRemoveThis)
+        {
+            delete &ns["__this__"];
+        }
+    }
+
     void processBlock(Info::BlockElement const &block)
     {
+        Record &ns = process.globals();
+
         if(Info::Element *condition = block.find("condition"))
         {
             // Any block will be ignored if its condition is false.
-            QScopedPointer<Value> result(evaluate(condition->values().first()));
+            QScopedPointer<Value> result(evaluate(condition->values().first(), 0));
             if(result.isNull() || result->isFalse())
             {
                 return;
@@ -93,7 +126,7 @@ DENG2_PIMPL(ScriptedInfo)
             script.reset(new Script(block.find("script")->values().first()));
             script->setPath(sourcePath); // where the source comes from
             process.run(*script);
-            process.execute();
+            execute(block.parent());
         }
         else
         {
@@ -101,7 +134,7 @@ DENG2_PIMPL(ScriptedInfo)
             if(!block.name().isEmpty())
             {
                 String varName = variableName(block).concatenatePath("__type__", '.');
-                process.globals().add(varName) = new TextValue(block.blockType());
+                ns.add(varName) = new TextValue(block.blockType());
             }
 
             foreach(Info::Element const *sub, block.contentsInOrder())
@@ -115,12 +148,12 @@ DENG2_PIMPL(ScriptedInfo)
                 {
                     // Inheritance.
                     String target = sub->values().first();
-                    process.globals().add(variableName(block).concatenatePath("__inherit__", '.')) =
+                    ns.add(variableName(block).concatenatePath("__inherit__", '.')) =
                             new TextValue(target);
 
                     // Copy all present members of the target record.
-                    process.globals().subrecord(variableName(block))
-                            .copyMembersFrom(process.globals()[target].value<RecordValue>().dereference());
+                    ns.subrecord(variableName(block))
+                            .copyMembersFrom(ns[target].value<RecordValue>().dereference());
                     continue;
                 }
                 processElement(sub);
@@ -141,26 +174,26 @@ DENG2_PIMPL(ScriptedInfo)
         return varName;
     }
 
-    Value *evaluate(String const &source)
+    Value *evaluate(String const &source, Info::BlockElement const *context)
     {
         script.reset(new Script(source));
         process.run(*script);
-        process.execute();
+        execute(context);
         return process.context().evaluator().result().duplicate();
     }
 
-    Value *makeValue(InfoValue const &rawValue)
+    Value *makeValue(InfoValue const &rawValue, Info::BlockElement const *context)
     {
         if(rawValue.flags.testFlag(InfoValue::Script))
         {
-            return evaluate(rawValue.text);
+            return evaluate(rawValue.text, context);
         }
         return new TextValue(rawValue.text);
     }
 
     void processKey(Info::KeyElement const &key)
     {
-        QScopedPointer<Value> v(makeValue(key.value()));
+        QScopedPointer<Value> v(makeValue(key.value(), key.parent()));
         process.globals().add(variableName(key)) = v.take();
     }
 
@@ -169,7 +202,7 @@ DENG2_PIMPL(ScriptedInfo)
         ArrayValue* av = new ArrayValue;
         foreach(InfoValue const &v, list.values())
         {
-            *av << makeValue(v);
+            *av << makeValue(v, list.parent());
         }
         process.globals().addArray(variableName(list), av);
     }
@@ -198,7 +231,7 @@ void ScriptedInfo::parse(File const &file)
 
 Value *ScriptedInfo::evaluate(String const &source)
 {
-    return d->evaluate(source);
+    return d->evaluate(source, 0);
 }
 
 } // namespace de

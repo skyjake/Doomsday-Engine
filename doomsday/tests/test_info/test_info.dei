@@ -30,18 +30,23 @@ group {
 group font {
     condition: Version.OS == 'macx'
     
-    preferences < font.default, $ " 'font'+'.'+'title' " >
+    preferences < font.default, $" 'font'+'.'+'title' " >
     
-    font default {
+    font Default {
         family $= "'Lucida ' + ''Grande''"
         size $: joinArray(['16', 'pt'])
         weight = normal
         style: normal
+
+        script {
+            print "Default font:"
+            print __this__
+        }
     }
     
     # Identifiers are all case insensitive.
     Font "Title" : font.default {
         Size: 24pt
-        Weight: bold
+        Weight $: if __this__.weight == "normal": "bold"; else: "normal"
     }
 }
