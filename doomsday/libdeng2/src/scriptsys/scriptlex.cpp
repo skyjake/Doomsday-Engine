@@ -64,7 +64,7 @@ duint ScriptLex::getStatement(TokenBuffer &output)
     // Get rid of the previous contents of the token buffer.
     output.clear();
     
-    duint counter = 0; // How many have we added?
+    duint counter = 0; // How many tokens have we added?
 
     enum BracketType {
         BRACKET_PARENTHESIS,
@@ -86,7 +86,7 @@ duint ScriptLex::getStatement(TokenBuffer &output)
     // parenthesis have been closed.
     try
     {
-        for(;;)
+        forever
         {
             // Tokens are primarily separated by whitespace.
             skipWhiteExceptNewline();
@@ -231,7 +231,7 @@ duint ScriptLex::getStatement(TokenBuffer &output)
         }
     }
         
-    return counter;
+    return counter; // Number of tokens added.
 }
 
 Token::Type
