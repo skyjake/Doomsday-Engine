@@ -442,7 +442,7 @@ void Rend_CacheForMobjType(int num)
 }
 
 /*
-void Rend_CalcLightModRange()
+void Rend_UpdateLightModMatrix()
 {}
 */
 
@@ -699,10 +699,12 @@ DENG_EXTERN_C void R_ProjectSprite(struct mobj_s *mo)
     DENG_UNUSED(mo);
 }
 
+/*
 DENG_EXTERN_C void Rend_ApplyLightAdaptation(float* val)
 {
     DENG_UNUSED(val);
 }
+*/
 
 char const *S_AudioEnvironmentName(AudioEnvironmentClass env)
 {

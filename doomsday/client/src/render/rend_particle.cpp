@@ -473,7 +473,7 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
             // Add extra light.
             lightLevel += Rend_ExtraLightDelta();
 
-            Rend_ApplyLightAdaptation(&lightLevel);
+            Rend_ApplyLightAdaptation(lightLevel);
 
             // Determine the final ambientColor in affect.
             for(int i = 0; i < 3; ++i)

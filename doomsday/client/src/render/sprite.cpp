@@ -154,10 +154,10 @@ void Rend_DrawThinkerIds(void)
     glEnable(GL_DEPTH_TEST);
 }
 
-void Rend_Draw3DPlayerSprites(void)
+void Rend_Draw3DPlayerSprites()
 {
     // Setup the modelview matrix.
-    Rend_ModelViewMatrix(false);
+    Rend_ModelViewMatrix(false /* don't apply view angle rotation */);
 
     // Clear Z buffer. This will prevent the psprites from being clipped
     // by nearby polygons.
@@ -346,7 +346,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
             lightLevel += Rend_ExtraLightDelta();
             lightLevel *= pspLightLevelMultiplier;
 
-            Rend_ApplyLightAdaptation(&lightLevel);
+            Rend_ApplyLightAdaptation(lightLevel);
 
             // Determine the final ambientColor in affect.
             for(int i = 0; i < 3; ++i)
@@ -738,7 +738,7 @@ static void setupModelParamsForVisPSprite(rendmodelparams_t *params, vispsprite_
 
             // The last step is to compress the resultant light value by
             // the global lighting function.
-            Rend_ApplyLightAdaptation(&lightLevel);
+            Rend_ApplyLightAdaptation(lightLevel);
 
             // Determine the final ambientColor in effect.
             for(int i = 0; i < 3; ++i)

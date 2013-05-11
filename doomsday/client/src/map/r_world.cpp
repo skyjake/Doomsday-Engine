@@ -533,7 +533,7 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
 
 #ifdef __CLIENT__
         // Recalculate the light range mod matrix.
-        Rend_CalcLightModRange();
+        Rend_UpdateLightModMatrix();
 #endif
 
         theMap->initPolyobjs();

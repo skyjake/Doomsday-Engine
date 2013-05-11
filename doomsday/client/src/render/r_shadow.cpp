@@ -301,6 +301,9 @@ void R_InitShadowProjectionListsForMap()
 
 void R_InitShadowProjectionListsForNewFrame()
 {
+    // Disabled?
+    if(!Rend_MobjShadowsEnabled()) return;
+
     // Start reusing nodes from the first one in the list.
     cursorNode = firstNode;
 

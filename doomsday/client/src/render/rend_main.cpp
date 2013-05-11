@@ -109,7 +109,7 @@ byte devRendSkyAlways = false;
 
 // Ambient lighting, rAmbient is used within the renderer, ambientLight is
 // used to store the value of the ambient light cvar.
-// The value chosen for rAmbient occurs in Rend_CalcLightModRange
+// The value chosen for rAmbient occurs in Rend_UpdateLightModMatrix
 // for convenience (since we would have to recalculate the matrix anyway).
 int rAmbient = 0, ambientLight = 0;
 
@@ -155,8 +155,11 @@ byte devSoundOrigins = 0; ///< cvar @c 1= Draw sound origin debug display.
 byte devSurfaceVectors = 0;
 byte devNoTexFix = 0;
 
-static void Rend_RenderBoundingBoxes();
-static DGLuint constructBBox(DGLuint name, float br);
+static void Rend_DrawBoundingBoxes();
+static void Rend_DrawSoundOrigins();
+static void Rend_DrawSurfaceVectors();
+static void Rend_DrawVertexIndices();
+
 static uint buildLeafPlaneGeometry(BspLeaf const &leaf, bool antiClockwise,
     coord_t height, rvertex_t **verts, uint *vertsSize);
 
@@ -177,10 +180,10 @@ void Rend_Register()
     C_VAR_INT   ("rend-glow-wall",                  &useWallGlow,                   0, 0, 1);
 
     C_VAR_INT2  ("rend-light",                      &useDynLights,                  0, 0, 1, LO_UnlinkMobjLumobjs);
-    C_VAR_INT2  ("rend-light-ambient",              &ambientLight,                  0, 0, 255, Rend_CalcLightModRange);
+    C_VAR_INT2  ("rend-light-ambient",              &ambientLight,                  0, 0, 255, Rend_UpdateLightModMatrix);
     C_VAR_FLOAT ("rend-light-attenuation",          &rendLightDistanceAttenuation, CVF_NO_MAX, 0, 0);
     C_VAR_FLOAT ("rend-light-bright",               &dynlightFactor,                0, 0, 1);
-    C_VAR_FLOAT2("rend-light-compression",          &lightRangeCompression,         0, -1, 1, Rend_CalcLightModRange);
+    C_VAR_FLOAT2("rend-light-compression",          &lightRangeCompression,         0, -1, 1, Rend_UpdateLightModMatrix);
     C_VAR_FLOAT ("rend-light-fog-bright",           &dynlightFogBright,             0, 0, 1);
     C_VAR_FLOAT2("rend-light-sky",                  &rendSkyLight,                  0, 0, 1, LG_MarkAllForUpdate);
     C_VAR_BYTE2 ("rend-light-sky-auto",             &rendSkyLightAuto,              0, 0, 1, LG_MarkAllForUpdate);
@@ -279,7 +282,7 @@ void Rend_Reset()
     }
 }
 
-void Rend_ModelViewMatrix(boolean useAngles)
+void Rend_ModelViewMatrix(bool useAngles)
 {
     viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
 
@@ -429,7 +432,7 @@ static void lightVertex(ColorRawf &color, rvertex_t const &vtx, float lightLevel
     // Add extra light.
     lightVal += Rend_ExtraLightDelta();
 
-    Rend_ApplyLightAdaptation(&lightVal);
+    Rend_ApplyLightAdaptation(lightVal);
 
     // Mix with the surface color.
     for(int i = 0; i < 3; ++i)
@@ -1777,7 +1780,7 @@ static void writeLeafPlane(Plane &plane)
         }
 
         // Dynamic lights?
-        if(!devRendSkyMode && parm.glowing < 1 && !(!useDynLights && !useWallGlow))
+        if(parm.glowing < 1 && !(!useDynLights && !useWallGlow))
         {
             /// @ref projectLightFlags
             int plFlags = (PLF_NO_PLANE | (plane.type() == Plane::Floor? PLF_TEX_FLOOR : PLF_TEX_CEILING));
@@ -2876,6 +2879,441 @@ static void traverseBspAndDrawLeafs(MapElement *bspElement)
     firstBspLeaf = false;
 }
 
+void Rend_RenderMap()
+{
+    DENG_ASSERT(theMap != 0);
+
+    // Set to true if dynlights are inited for this frame.
+    loInited = false;
+
+    GL_SetMultisample(true);
+
+    // Setup the modelview matrix.
+    Rend_ModelViewMatrix();
+
+    if(!freezeRLs)
+    {
+        // Prepare for rendering.
+        RL_ClearLists(); // Clear the lists for new quads.
+        C_ClearRanges(); // Clear the clipper.
+
+        // Recycle the vlight lists. Currently done here as the lists are
+        // not shared by all viewports.
+        VL_InitForNewFrame();
+
+        // Make vissprites of all the visible decorations.
+        Rend_DecorProject();
+
+        LO_BeginFrame();
+
+        // Clear particle generator visibilty info.
+        Rend_ParticleInitForNewFrame();
+
+        R_InitShadowProjectionListsForNewFrame();
+
+        viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+        eyeOrigin = Vector2d(viewData->current.origin);
+
+        // Add the backside clipping range (if vpitch allows).
+        if(vpitch <= 90 - yfov / 2 && vpitch >= -90 + yfov / 2)
+        {
+            float a = de::abs(vpitch) / (90 - yfov / 2);
+            binangle_t startAngle = binangle_t(BANG_45 * fieldOfView / 90) * (1 + a);
+            binangle_t angLen = BANG_180 - startAngle;
+
+            binangle_t viewside = (viewData->current.angle >> (32 - BAMS_BITS)) + startAngle;
+            C_SafeAddRange(viewside, viewside + angLen);
+            C_SafeAddRange(viewside + angLen, viewside + 2 * angLen);
+        }
+
+        // The viewside line for the depth cue.
+        viewsidex = -viewData->viewSin;
+        viewsidey = viewData->viewCos;
+
+        // We don't want BSP clip checking for the first BSP leaf.
+        firstBspLeaf = true;
+
+        // Draw the world!
+        traverseBspAndDrawLeafs(theMap->bspRoot());
+
+        Rend_RenderMobjShadows();
+    }
+    RL_RenderAllLists();
+
+    // Draw various debugging displays:
+    Rend_DrawSurfaceVectors();
+    LO_DrawLumobjs(); // Lumobjs.
+    Rend_DrawBoundingBoxes(); // Mobj bounding boxes.
+    Rend_DrawVertexIndices();
+    Rend_DrawSoundOrigins();
+    Rend_RenderGenerators();
+
+    // Draw the Source Bias Editor's draw that identifies the current light.
+    SBE_DrawCursor();
+
+    GL_SetMultisample(false);
+}
+
+void Rend_UpdateLightModMatrix()
+{
+    if(novideo) return;
+
+    std::memset(lightModRange, 0, sizeof(float) * 255);
+
+    if(!theMap)
+    {
+        rAmbient = 0;
+        return;
+    }
+
+    int mapAmbient = theMap->ambientLightLevel();
+    if(mapAmbient > ambientLight)
+        rAmbient = mapAmbient;
+    else
+        rAmbient = ambientLight;
+
+    for(int i = 0; i < 255; ++i)
+    {
+        // Adjust the white point/dark point?
+        float lightlevel = 0;
+        if(lightRangeCompression != 0)
+        {
+            if(lightRangeCompression >= 0)
+            {
+                // Brighten dark areas.
+                lightlevel = float(255 - i) * lightRangeCompression;
+            }
+            else
+            {
+                // Darken bright areas.
+                lightlevel = float(-i) * -lightRangeCompression;
+            }
+        }
+
+        // Lower than the ambient limit?
+        if(rAmbient != 0 && i+lightlevel <= rAmbient)
+            lightlevel = rAmbient - i;
+
+        // Clamp the result as a modifier to the light value (j).
+        if((i + lightlevel) >= 255)
+            lightlevel = 255 - i;
+        else if((i + lightlevel) <= 0)
+            lightlevel = -i;
+
+        // Insert it into the matrix
+        lightModRange[i] = lightlevel / 255.0f;
+    }
+}
+
+float Rend_LightAdaptationDelta(float val)
+{
+    int clampedVal = de::clamp(0, ROUND(255.0f * val), 254);
+    return lightModRange[clampedVal];
+}
+
+void Rend_ApplyLightAdaptation(float &val)
+{
+    val += Rend_LightAdaptationDelta(val);
+}
+
+void Rend_DrawLightModMatrix()
+{
+#define BLOCK_WIDTH             (1.0f)
+#define BLOCK_HEIGHT            (BLOCK_WIDTH * 255.0f)
+#define BORDER                  (20)
+
+    // Disabled?
+    if(!devLightModRange) return;
+
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, DENG_WINDOW->width(), DENG_WINDOW->height(), 0, -1, 1);
+
+    glTranslatef(BORDER, BORDER, 0);
+
+    /*
+    color.red = 0.2f;
+    color.green = 0;
+    color.blue = 0.6f;
+    */
+
+    // Draw an outside border.
+    glColor4f(1, 1, 0, 1);
+    glBegin(GL_LINES);
+        glVertex2f(-1, -1);
+        glVertex2f(255 + 1, -1);
+        glVertex2f(255 + 1, -1);
+        glVertex2f(255 + 1, BLOCK_HEIGHT + 1);
+        glVertex2f(255 + 1, BLOCK_HEIGHT + 1);
+        glVertex2f(-1, BLOCK_HEIGHT + 1);
+        glVertex2f(-1, BLOCK_HEIGHT + 1);
+        glVertex2f(-1, -1);
+    glEnd();
+
+    glBegin(GL_QUADS);
+    float c = 0;
+    for(int i = 0; i < 255; ++i, c += (1.0f/255.0f))
+    {
+        // Get the result of the source light level + offset.
+        float off = lightModRange[i];
+
+        glColor4f(c + off, c + off, c + off, 1);
+        glVertex2f(i * BLOCK_WIDTH, 0);
+        glVertex2f(i * BLOCK_WIDTH + BLOCK_WIDTH, 0);
+        glVertex2f(i * BLOCK_WIDTH + BLOCK_WIDTH, BLOCK_HEIGHT);
+        glVertex2f(i * BLOCK_WIDTH, BLOCK_HEIGHT);
+    }
+    glEnd();
+
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+
+#undef BORDER
+#undef BLOCK_HEIGHT
+#undef BLOCK_WIDTH
+}
+
+static DGLuint constructBBox(DGLuint name, float br)
+{
+    if(GL_NewList(name, GL_COMPILE))
+    {
+        glBegin(GL_QUADS);
+        {
+            // Top
+            glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f+br, 1.0f,-1.0f-br);  // TR
+            glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f-br, 1.0f,-1.0f-br);  // TL
+            glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f-br, 1.0f, 1.0f+br);  // BL
+            glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f+br, 1.0f, 1.0f+br);  // BR
+            // Bottom
+            glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f+br,-1.0f, 1.0f+br);  // TR
+            glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f-br,-1.0f, 1.0f+br);  // TL
+            glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f-br,-1.0f,-1.0f-br);  // BL
+            glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f+br,-1.0f,-1.0f-br);  // BR
+            // Front
+            glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f+br, 1.0f+br, 1.0f);  // TR
+            glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f-br, 1.0f+br, 1.0f);  // TL
+            glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f-br,-1.0f-br, 1.0f);  // BL
+            glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f+br,-1.0f-br, 1.0f);  // BR
+            // Back
+            glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f+br,-1.0f-br,-1.0f);  // TR
+            glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f-br,-1.0f-br,-1.0f);  // TL
+            glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f-br, 1.0f+br,-1.0f);  // BL
+            glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f+br, 1.0f+br,-1.0f);  // BR
+            // Left
+            glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, 1.0f+br, 1.0f+br);  // TR
+            glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f+br,-1.0f-br);  // TL
+            glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f,-1.0f-br,-1.0f-br);  // BL
+            glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f,-1.0f-br, 1.0f+br);  // BR
+            // Right
+            glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f, 1.0f+br,-1.0f-br);  // TR
+            glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f, 1.0f+br, 1.0f+br);  // TL
+            glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f,-1.0f-br, 1.0f+br);  // BL
+            glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f,-1.0f-br,-1.0f-br);  // BR
+        }
+        glEnd();
+        return GL_EndList();
+    }
+    return 0;
+}
+
+/**
+ * Draws a textured cube using the currently bound gl texture.
+ * Used to draw mobj bounding boxes.
+ *
+ * @param pos           Coordinates of the center of the box (in map space units).
+ * @param w             Width of the box.
+ * @param l             Length of the box.
+ * @param h             Height of the box.
+ * @param a             Angle of the box.
+ * @param color         Color to make the box (uniform vertex color).
+ * @param alpha         Alpha to make the box (uniform vertex color).
+ * @param br            Border amount to overlap box faces.
+ * @param alignToBase   If @c true, align the base of the box
+ *                      to the Z coordinate.
+ */
+void Rend_DrawBBox(Vector3d const &pos, coord_t w, coord_t l, coord_t h,
+    float a, float const color[3], float alpha, float br, bool alignToBase)
+{
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+
+    if(alignToBase)
+        // The Z coordinate is to the bottom of the object.
+        glTranslated(pos.x, pos.z + h, pos.y);
+    else
+        glTranslated(pos.x, pos.z, pos.y);
+
+    glRotatef(0, 0, 0, 1);
+    glRotatef(0, 1, 0, 0);
+    glRotatef(a, 0, 1, 0);
+
+    glScaled(w - br - br, h - br - br, l - br - br);
+    glColor4f(color[CR], color[CG], color[CB], alpha);
+
+    GL_CallList(dlBBox);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
+/**
+ * Draws a textured triangle using the currently bound gl texture.
+ * Used to draw mobj angle direction arrow.
+ *
+ * @param pos           Coordinates of the center of the base of the
+ *                      triangle (in "world" coordinates [VX, VY, VZ]).
+ * @param a             Angle to point the triangle in.
+ * @param s             Scale of the triangle.
+ * @param color         Color to make the box (uniform vertex color).
+ * @param alpha         Alpha to make the box (uniform vertex color).
+ */
+void Rend_DrawArrow(Vector3d const &pos, float a, float s, float const color[3],
+    float alpha)
+{
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+
+    glTranslated(pos.x, pos.z, pos.y);
+
+    glRotatef(0, 0, 0, 1);
+    glRotatef(0, 1, 0, 0);
+    glRotatef(a, 0, 1, 0);
+
+    glScalef(s, 0, s);
+
+    glBegin(GL_TRIANGLES);
+    {
+        glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
+        glTexCoord2f(1.0f, 1.0f);
+        glVertex3f( 1.0f, 1.0f,-1.0f);  // L
+
+        glColor4f(color[0], color[1], color[2], alpha);
+        glTexCoord2f(0.0f, 1.0f);
+        glVertex3f(-1.0f, 1.0f,-1.0f);  // Point
+
+        glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
+        glTexCoord2f(0.0f, 0.0f);
+        glVertex3f(-1.0f, 1.0f, 1.0f);  // R
+    }
+    glEnd();
+
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
+static int drawMobjBBox(thinker_t *th, void * /*context*/)
+{
+    static float const red[3]    = { 1, 0.2f, 0.2f}; // non-solid objects
+    static float const green[3]  = { 0.2f, 1, 0.2f}; // solid objects
+    static float const yellow[3] = {0.7f, 0.7f, 0.2f}; // missiles
+
+    mobj_t *mo = (mobj_t *) th;
+
+    // We don't want the console player.
+    if(mo == ddPlayers[consolePlayer].shared.mo)
+        return false; // Continue iteration.
+    // Is it vissible?
+    if(!(mo->bspLeaf && mo->bspLeaf->sector().frameFlags() & SIF_VISIBLE))
+        return false; // Continue iteration.
+
+    Vector3d eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
+
+    float alpha = 1 - ((Vector3d(eye - Vector3d(mo->origin)).length() / (DENG_WINDOW->width()/2)) / 4);
+    if(alpha < .25f)
+        alpha = .25f; // Don't make them totally invisible.
+
+    // Draw a bounding box in an appropriate color.
+    coord_t size = mo->radius;
+    Rend_DrawBBox(mo->origin, size, size, mo->height/2, 0,
+                  (mo->ddFlags & DDMF_MISSILE)? yellow :
+                  (mo->ddFlags & DDMF_SOLID)? green : red,
+                  alpha, .08f);
+
+    Rend_DrawArrow(mo->origin, ((mo->angle + ANG45 + ANG90) / (float) ANGLE_MAX *-360), size*1.25,
+                   (mo->ddFlags & DDMF_MISSILE)? yellow :
+                   (mo->ddFlags & DDMF_SOLID)? green : red, alpha);
+    return false; // Continue iteration.
+}
+
+/**
+ * Renders bounding boxes for all mobj's (linked in sec->mobjList, except
+ * the console player) in all sectors that are currently marked as vissible.
+ *
+ * Depth test is disabled to show all mobjs that are being rendered, regardless
+ * if they are actually vissible (hidden by previously drawn map geometry).
+ */
+static void Rend_DrawBoundingBoxes()
+{
+    //static float const red[3]   = { 1, 0.2f, 0.2f}; // non-solid objects
+    static float const green[3]  = { 0.2f, 1, 0.2f}; // solid objects
+    static float const yellow[3] = {0.7f, 0.7f, 0.2f}; // missiles
+
+    if(!devMobjBBox && !devPolyobjBBox) return;
+
+#ifndef _DEBUG
+    // Bounding boxes are not allowed in non-debug netgames.
+    if(netGame) return;
+#endif
+
+    if(!dlBBox)
+        dlBBox = constructBBox(0, .08f);
+
+    Vector3d eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
+
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_TEXTURE_2D);
+    glDisable(GL_CULL_FACE);
+
+    MaterialSnapshot const &ms = App_Materials().
+            find(de::Uri("System", Path("bbox"))).material().prepare(Rend_SpriteMaterialSpec());
+
+    GL_BindTexture(&ms.texture(MTU_PRIMARY));
+    GL_BlendMode(BM_ADD);
+
+    if(devMobjBBox)
+    {
+        GameMap_IterateThinkers(theMap, reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                                0x1, drawMobjBBox, NULL);
+    }
+
+    if(devPolyobjBBox)
+    {
+        foreach(Polyobj const *polyobj, theMap->polyobjs())
+        {
+            Sector const &sec = polyobj->bspLeaf().sector();
+            coord_t width  = (polyobj->aaBox.maxX - polyobj->aaBox.minX)/2;
+            coord_t length = (polyobj->aaBox.maxY - polyobj->aaBox.minY)/2;
+            coord_t height = (sec.ceiling().height() - sec.floor().height())/2;
+
+            Vector3d pos(polyobj->aaBox.minX + width,
+                         polyobj->aaBox.minY + length,
+                         sec.floor().height());
+
+            float alpha = 1 - ((Vector3d(eye - pos).length() / (DENG_WINDOW->width()/2)) / 4);
+            if(alpha < .25f)
+                alpha = .25f; // Don't make them totally invisible.
+
+            Rend_DrawBBox(pos, width, length, height, 0, yellow, alpha, .08f);
+
+            foreach(Line *line, polyobj->lines())
+            {
+                Vector3d pos(line->center(), sec.floor().height());
+
+                Rend_DrawBBox(pos, 0, line->length() / 2, height,
+                              BANG2DEG(BANG_90 - line->angle()),
+                              green, alpha, 0);
+            }
+        }
+    }
+
+    GL_BlendMode(BM_NORMAL);
+
+    glEnable(GL_CULL_FACE);
+    glDisable(GL_TEXTURE_2D);
+    glEnable(GL_DEPTH_TEST);
+}
+
 static void drawVector(Vector3f const &vector, float scalar, const float color[3])
 {
     static const float black[4] = { 0, 0, 0, 0 };
@@ -2913,7 +3351,7 @@ static void drawSurfaceTangentSpaceVectors(Surface *suf, Vector3f const &origin)
 /**
  * Draw the surface tangent space vectors, primarily for debug.
  */
-void Rend_RenderSurfaceVectors()
+static void Rend_DrawSurfaceVectors()
 {
     if(devSurfaceVectors == 0 || !theMap) return;
 
@@ -3043,7 +3481,7 @@ static void drawSoundOrigin(Vector3d const &origin, char const *label, Vector3d 
 /**
  * Debugging aid for visualizing sound origins.
  */
-void Rend_RenderSoundOrigins()
+static void Rend_DrawSoundOrigins()
 {
     if(!devSoundOrigins || !theMap) return;
 
@@ -3256,7 +3694,7 @@ static int drawPolyObjVertexes(Polyobj *po, void * /*context*/)
 /**
  * Draw the various vertex debug aids.
  */
-void Rend_Vertexes()
+static void Rend_DrawVertexIndices()
 {
     float oldLineWidth = -1;
 
@@ -3375,464 +3813,6 @@ void Rend_Vertexes()
     }
     DGL_SetFloat(DGL_POINT_SIZE, oldPointSize);
     glDisable(GL_POINT_SMOOTH);
-    glEnable(GL_DEPTH_TEST);
-}
-
-void Rend_RenderMap()
-{
-    binangle_t viewside;
-
-    if(!theMap) return;
-
-    // Set to true if dynlights are inited for this frame.
-    loInited = false;
-
-    GL_SetMultisample(true);
-
-    // Setup the modelview matrix.
-    Rend_ModelViewMatrix(true);
-
-    if(!freezeRLs)
-    {
-        viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-
-        // Prepare for rendering.
-        RL_ClearLists(); // Clear the lists for new quads.
-        C_ClearRanges(); // Clear the clipper.
-
-        // Recycle the vlight lists. Currently done here as the lists are
-        // not shared by all viewports.
-        VL_InitForNewFrame();
-
-        // Make vissprites of all the visible decorations.
-        Rend_DecorProject();
-
-        LO_BeginFrame();
-
-        // Clear particle generator visibilty info.
-        Rend_ParticleInitForNewFrame();
-
-        if(Rend_MobjShadowsEnabled())
-        {
-            R_InitShadowProjectionListsForNewFrame();
-        }
-
-        eyeOrigin = Vector2d(viewData->current.origin);
-
-        // Add the backside clipping range (if vpitch allows).
-        if(vpitch <= 90 - yfov / 2 && vpitch >= -90 + yfov / 2)
-        {
-            float a = fabs(vpitch) / (90 - yfov / 2);
-            binangle_t startAngle = binangle_t(BANG_45 * fieldOfView / 90) * (1 + a);
-            binangle_t angLen = BANG_180 - startAngle;
-
-            viewside = (viewData->current.angle >> (32 - BAMS_BITS)) + startAngle;
-            C_SafeAddRange(viewside, viewside + angLen);
-            C_SafeAddRange(viewside + angLen, viewside + 2 * angLen);
-        }
-
-        // The viewside line for the depth cue.
-        viewsidex = -viewData->viewSin;
-        viewsidey = viewData->viewCos;
-
-        // We don't want BSP clip checking for the first BSP leaf.
-        firstBspLeaf = true;
-
-        // Draw the world!
-        traverseBspAndDrawLeafs(theMap->bspRoot());
-
-        if(Rend_MobjShadowsEnabled())
-        {
-            Rend_RenderMobjShadows();
-        }
-    }
-    RL_RenderAllLists();
-
-    // Draw various debugging displays:
-    Rend_RenderSurfaceVectors();
-    LO_DrawLumobjs(); // Lumobjs.
-    Rend_RenderBoundingBoxes(); // Mobj bounding boxes.
-    Rend_Vertexes();
-    Rend_RenderSoundOrigins();
-    Rend_RenderGenerators();
-
-    // Draw the Source Bias Editor's draw that identifies the current light.
-    SBE_DrawCursor();
-
-    GL_SetMultisample(false);
-}
-
-void Rend_CalcLightModRange()
-{
-    if(novideo) return;
-
-    std::memset(lightModRange, 0, sizeof(float) * 255);
-
-    if(!theMap)
-    {
-        rAmbient = 0;
-        return;
-    }
-
-    int mapAmbient = theMap->ambientLightLevel();
-    if(mapAmbient > ambientLight)
-        rAmbient = mapAmbient;
-    else
-        rAmbient = ambientLight;
-
-    for(int j = 0; j < 255; ++j)
-    {
-        // Adjust the white point/dark point?
-        float f = 0;
-        if(lightRangeCompression != 0)
-        {
-            if(lightRangeCompression >= 0)
-            {
-                // Brighten dark areas.
-                f = float(255 - j) * lightRangeCompression;
-            }
-            else
-            {
-                // Darken bright areas.
-                f = float(-j) * -lightRangeCompression;
-            }
-        }
-
-        // Lower than the ambient limit?
-        if(rAmbient != 0 && j+f <= rAmbient)
-            f = rAmbient - j;
-
-        // Clamp the result as a modifier to the light value (j).
-        if((j+f) >= 255)
-            f = 255 - j;
-        else if((j+f) <= 0)
-            f = -j;
-
-        // Insert it into the matrix
-        lightModRange[j] = f / 255.0f;
-    }
-}
-
-float Rend_LightAdaptationDelta(float val)
-{
-    int clampedVal;
-
-    clampedVal = ROUND(255.0f * val);
-    if(clampedVal > 254)
-        clampedVal = 254;
-    else if(clampedVal < 0)
-        clampedVal = 0;
-
-    return lightModRange[clampedVal];
-}
-
-void Rend_ApplyLightAdaptation(float* val)
-{
-    if(!val) return;
-    *val += Rend_LightAdaptationDelta(*val);
-}
-
-/**
- * Draws the lightModRange (for debug)
- */
-void R_DrawLightRange()
-{
-#define BLOCK_WIDTH             (1.0f)
-#define BLOCK_HEIGHT            (BLOCK_WIDTH * 255.0f)
-#define BORDER                  (20)
-
-    //ui_color_t color;
-    float c, off;
-    int i;
-
-    // Disabled?
-    if(!devLightModRange) return;
-
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, DENG_WINDOW->width(), DENG_WINDOW->height(), 0, -1, 1);
-
-    glTranslatef(BORDER, BORDER, 0);
-
-    /*
-    color.red = 0.2f;
-    color.green = 0;
-    color.blue = 0.6f;
-    */
-
-    // Draw an outside border.
-    glColor4f(1, 1, 0, 1);
-    glBegin(GL_LINES);
-        glVertex2f(-1, -1);
-        glVertex2f(255 + 1, -1);
-        glVertex2f(255 + 1, -1);
-        glVertex2f(255 + 1, BLOCK_HEIGHT + 1);
-        glVertex2f(255 + 1, BLOCK_HEIGHT + 1);
-        glVertex2f(-1, BLOCK_HEIGHT + 1);
-        glVertex2f(-1, BLOCK_HEIGHT + 1);
-        glVertex2f(-1, -1);
-    glEnd();
-
-    glBegin(GL_QUADS);
-    for(i = 0, c = 0; i < 255; ++i, c += (1.0f/255.0f))
-    {
-        // Get the result of the source light level + offset.
-        off = lightModRange[i];
-
-        glColor4f(c + off, c + off, c + off, 1);
-        glVertex2f(i * BLOCK_WIDTH, 0);
-        glVertex2f(i * BLOCK_WIDTH + BLOCK_WIDTH, 0);
-        glVertex2f(i * BLOCK_WIDTH + BLOCK_WIDTH, BLOCK_HEIGHT);
-        glVertex2f(i * BLOCK_WIDTH, BLOCK_HEIGHT);
-    }
-    glEnd();
-
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-
-#undef BORDER
-#undef BLOCK_HEIGHT
-#undef BLOCK_WIDTH
-}
-
-static DGLuint constructBBox(DGLuint name, float br)
-{
-    if(GL_NewList(name, GL_COMPILE))
-    {
-        glBegin(GL_QUADS);
-        {
-            // Top
-            glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f+br, 1.0f,-1.0f-br);  // TR
-            glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f-br, 1.0f,-1.0f-br);  // TL
-            glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f-br, 1.0f, 1.0f+br);  // BL
-            glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f+br, 1.0f, 1.0f+br);  // BR
-            // Bottom
-            glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f+br,-1.0f, 1.0f+br);  // TR
-            glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f-br,-1.0f, 1.0f+br);  // TL
-            glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f-br,-1.0f,-1.0f-br);  // BL
-            glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f+br,-1.0f,-1.0f-br);  // BR
-            // Front
-            glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f+br, 1.0f+br, 1.0f);  // TR
-            glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f-br, 1.0f+br, 1.0f);  // TL
-            glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f-br,-1.0f-br, 1.0f);  // BL
-            glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f+br,-1.0f-br, 1.0f);  // BR
-            // Back
-            glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f+br,-1.0f-br,-1.0f);  // TR
-            glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f-br,-1.0f-br,-1.0f);  // TL
-            glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f-br, 1.0f+br,-1.0f);  // BL
-            glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f+br, 1.0f+br,-1.0f);  // BR
-            // Left
-            glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, 1.0f+br, 1.0f+br);  // TR
-            glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f+br,-1.0f-br);  // TL
-            glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f,-1.0f-br,-1.0f-br);  // BL
-            glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f,-1.0f-br, 1.0f+br);  // BR
-            // Right
-            glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f, 1.0f+br,-1.0f-br);  // TR
-            glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f, 1.0f+br, 1.0f+br);  // TL
-            glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f,-1.0f-br, 1.0f+br);  // BL
-            glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f,-1.0f-br,-1.0f-br);  // BR
-        }
-        glEnd();
-        return GL_EndList();
-    }
-    return 0;
-}
-
-/**
- * Draws a textured cube using the currently bound gl texture.
- * Used to draw mobj bounding boxes.
- *
- * @param pos           Coordinates of the center of the box (in map space units).
- * @param w             Width of the box.
- * @param l             Length of the box.
- * @param h             Height of the box.
- * @param a             Angle of the box.
- * @param color         Color to make the box (uniform vertex color).
- * @param alpha         Alpha to make the box (uniform vertex color).
- * @param br            Border amount to overlap box faces.
- * @param alignToBase   If @c true, align the base of the box
- *                      to the Z coordinate.
- */
-void Rend_DrawBBox(Vector3d const &pos, coord_t w, coord_t l, coord_t h,
-    float a, float const color[3], float alpha, float br, bool alignToBase)
-{
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-
-    if(alignToBase)
-        // The Z coordinate is to the bottom of the object.
-        glTranslated(pos.x, pos.z + h, pos.y);
-    else
-        glTranslated(pos.x, pos.z, pos.y);
-
-    glRotatef(0, 0, 0, 1);
-    glRotatef(0, 1, 0, 0);
-    glRotatef(a, 0, 1, 0);
-
-    glScaled(w - br - br, h - br - br, l - br - br);
-    glColor4f(color[CR], color[CG], color[CB], alpha);
-
-    GL_CallList(dlBBox);
-
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-}
-
-/**
- * Draws a textured triangle using the currently bound gl texture.
- * Used to draw mobj angle direction arrow.
- *
- * @param pos           Coordinates of the center of the base of the
- *                      triangle (in "world" coordinates [VX, VY, VZ]).
- * @param a             Angle to point the triangle in.
- * @param s             Scale of the triangle.
- * @param color         Color to make the box (uniform vertex color).
- * @param alpha         Alpha to make the box (uniform vertex color).
- */
-void Rend_DrawArrow(Vector3d const &pos, float a, float s, float const color[3],
-    float alpha)
-{
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-
-    glTranslated(pos.x, pos.z, pos.y);
-
-    glRotatef(0, 0, 0, 1);
-    glRotatef(0, 1, 0, 0);
-    glRotatef(a, 0, 1, 0);
-
-    glScalef(s, 0, s);
-
-    glBegin(GL_TRIANGLES);
-    {
-        glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
-        glTexCoord2f(1.0f, 1.0f);
-        glVertex3f( 1.0f, 1.0f,-1.0f);  // L
-
-        glColor4f(color[0], color[1], color[2], alpha);
-        glTexCoord2f(0.0f, 1.0f);
-        glVertex3f(-1.0f, 1.0f,-1.0f);  // Point
-
-        glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
-        glTexCoord2f(0.0f, 0.0f);
-        glVertex3f(-1.0f, 1.0f, 1.0f);  // R
-    }
-    glEnd();
-
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-}
-
-static int drawMobjBBox(thinker_t *th, void * /*context*/)
-{
-    static float const red[3]    = { 1, 0.2f, 0.2f}; // non-solid objects
-    static float const green[3]  = { 0.2f, 1, 0.2f}; // solid objects
-    static float const yellow[3] = {0.7f, 0.7f, 0.2f}; // missiles
-
-    mobj_t *mo = (mobj_t *) th;
-
-    // We don't want the console player.
-    if(mo == ddPlayers[consolePlayer].shared.mo)
-        return false; // Continue iteration.
-    // Is it vissible?
-    if(!(mo->bspLeaf && mo->bspLeaf->sector().frameFlags() & SIF_VISIBLE))
-        return false; // Continue iteration.
-
-    Vector3d eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
-
-    float alpha = 1 - ((Vector3d(eye - Vector3d(mo->origin)).length() / (DENG_WINDOW->width()/2)) / 4);
-    if(alpha < .25f)
-        alpha = .25f; // Don't make them totally invisible.
-
-    // Draw a bounding box in an appropriate color.
-    coord_t size = mo->radius;
-    Rend_DrawBBox(mo->origin, size, size, mo->height/2, 0,
-                  (mo->ddFlags & DDMF_MISSILE)? yellow :
-                  (mo->ddFlags & DDMF_SOLID)? green : red,
-                  alpha, .08f);
-
-    Rend_DrawArrow(mo->origin, ((mo->angle + ANG45 + ANG90) / (float) ANGLE_MAX *-360), size*1.25,
-                   (mo->ddFlags & DDMF_MISSILE)? yellow :
-                   (mo->ddFlags & DDMF_SOLID)? green : red, alpha);
-    return false; // Continue iteration.
-}
-
-/**
- * Renders bounding boxes for all mobj's (linked in sec->mobjList, except
- * the console player) in all sectors that are currently marked as vissible.
- *
- * Depth test is disabled to show all mobjs that are being rendered, regardless
- * if they are actually vissible (hidden by previously drawn map geometry).
- */
-static void Rend_RenderBoundingBoxes()
-{
-    //static float const red[3]   = { 1, 0.2f, 0.2f}; // non-solid objects
-    static float const green[3]  = { 0.2f, 1, 0.2f}; // solid objects
-    static float const yellow[3] = {0.7f, 0.7f, 0.2f}; // missiles
-
-    if(!devMobjBBox && !devPolyobjBBox) return;
-
-#ifndef _DEBUG
-    // Bounding boxes are not allowed in non-debug netgames.
-    if(netGame) return;
-#endif
-
-    if(!dlBBox)
-        dlBBox = constructBBox(0, .08f);
-
-    Vector3d eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
-
-    glDisable(GL_DEPTH_TEST);
-    glEnable(GL_TEXTURE_2D);
-    glDisable(GL_CULL_FACE);
-
-    MaterialSnapshot const &ms = App_Materials().
-            find(de::Uri("System", Path("bbox"))).material().prepare(Rend_SpriteMaterialSpec());
-
-    GL_BindTexture(&ms.texture(MTU_PRIMARY));
-    GL_BlendMode(BM_ADD);
-
-    if(devMobjBBox)
-    {
-        GameMap_IterateThinkers(theMap, reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
-                                0x1, drawMobjBBox, NULL);
-    }
-
-    if(devPolyobjBBox)
-    {
-        foreach(Polyobj const *polyobj, theMap->polyobjs())
-        {
-            Sector const &sec = polyobj->bspLeaf().sector();
-            coord_t width  = (polyobj->aaBox.maxX - polyobj->aaBox.minX)/2;
-            coord_t length = (polyobj->aaBox.maxY - polyobj->aaBox.minY)/2;
-            coord_t height = (sec.ceiling().height() - sec.floor().height())/2;
-
-            Vector3d pos(polyobj->aaBox.minX + width,
-                         polyobj->aaBox.minY + length,
-                         sec.floor().height());
-
-            float alpha = 1 - ((Vector3d(eye - pos).length() / (DENG_WINDOW->width()/2)) / 4);
-            if(alpha < .25f)
-                alpha = .25f; // Don't make them totally invisible.
-
-            Rend_DrawBBox(pos, width, length, height, 0, yellow, alpha, .08f);
-
-            foreach(Line *line, polyobj->lines())
-            {
-                Vector3d pos(line->center(), sec.floor().height());
-
-                Rend_DrawBBox(pos, 0, line->length() / 2, height,
-                              BANG2DEG(BANG_90 - line->angle()),
-                              green, alpha, 0);
-            }
-        }
-    }
-
-    GL_BlendMode(BM_NORMAL);
-
-    glEnable(GL_CULL_FACE);
-    glDisable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
 }
 

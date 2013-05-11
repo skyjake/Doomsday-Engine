@@ -577,7 +577,7 @@ static void R_UpdateMap()
 
 #ifdef __CLIENT__
     // Recalculate the light range mod matrix.
-    Rend_CalcLightModRange();
+    Rend_UpdateLightModMatrix();
 #endif
 }
 
@@ -1127,7 +1127,10 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
     // GL is in 3D transformation state only during the frame.
     GL_SwitchTo3DState(true, currentViewport, vd);
 
-    Rend_RenderMap();
+    if(theMap)
+    {
+        Rend_RenderMap();
+    }
 
     // Orthogonal projection to the view window.
     GL_Restore2DState(1, currentViewport, vd);

@@ -88,7 +88,10 @@ void Rend_Shutdown();
 void Rend_Reset();
 void Rend_RenderMap();
 
-void Rend_ModelViewMatrix(boolean use_angles);
+/**
+ * @param useAngles  @c true= Apply viewer angle rotation.
+ */
+void Rend_ModelViewMatrix(bool useAngles = true);
 
 #define Rend_PointDist2D(c) (fabs((vOrigin[VZ]-c[VY])*viewsidex - (vOrigin[VX]-c[VX])*viewsidey))
 
@@ -101,9 +104,9 @@ void Rend_ApplyTorchLight(float *color, float distance);
 
 /**
  * Apply range compression delta to @a lightValue.
- * @param lightValue  Address of the value for adaptation.
+ * @param lightValue  The light level value to apply adaptation to.
  */
-void Rend_ApplyLightAdaptation(float *lightValue);
+void Rend_ApplyLightAdaptation(float &lightValue);
 
 /// Same as Rend_ApplyLightAdaptation except the delta is returned.
 float Rend_LightAdaptationDelta(float lightvalue);
@@ -134,9 +137,12 @@ float Rend_ExtraLightDelta();
  * The offsets in the lightRangeModTables are added to the sector->lightLevel
  * during rendering (both positive and negative).
  */
-void Rend_CalcLightModRange();
+void Rend_UpdateLightModMatrix();
 
-void R_DrawLightRange();
+/**
+ * Draws the lightModRange (for debug)
+ */
+void Rend_DrawLightModMatrix();
 
 /**
  * Sector light color may be affected by the sky light color.

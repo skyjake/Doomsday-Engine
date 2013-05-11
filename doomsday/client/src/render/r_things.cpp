@@ -545,7 +545,7 @@ float R_ShadowStrength(mobj_t *mo)
     else
     {
         ambientLightLevel = mo->bspLeaf->sector().lightLevel();
-        Rend_ApplyLightAdaptation(&ambientLightLevel);
+        Rend_ApplyLightAdaptation(ambientLightLevel);
     }
 
     // Sprites have their own shadow strength factor.
@@ -939,7 +939,7 @@ void getLightingParams(coord_t x, coord_t y, coord_t z, BspLeaf *bspLeaf,
             // Add extra light.
             lightLevel += Rend_ExtraLightDelta();
 
-            Rend_ApplyLightAdaptation(&lightLevel);
+            Rend_ApplyLightAdaptation(lightLevel);
 
             // Determine the final ambientColor in affect.
             for(int i = 0; i < 3; ++i)

@@ -106,7 +106,7 @@ static void projectSource(decorsource_t const &src)
     float max = decor->lightLevels[1];
 
     float lightLevel = src.bspLeaf->sector().lightLevel();
-    Rend_ApplyLightAdaptation(&lightLevel);
+    Rend_ApplyLightAdaptation(lightLevel);
 
     float brightness = checkSectorLightLevel(lightLevel, min, max);
     if(!(brightness > 0)) return;
@@ -200,7 +200,7 @@ static void addLuminousDecoration(decorsource_t &src)
     float max = decor->lightLevels[1];
 
     float lightLevel = src.bspLeaf->sector().lightLevel();
-    Rend_ApplyLightAdaptation(&lightLevel);
+    Rend_ApplyLightAdaptation(lightLevel);
 
     float brightness = checkSectorLightLevel(lightLevel, min, max);
     if(!(brightness > 0)) return;

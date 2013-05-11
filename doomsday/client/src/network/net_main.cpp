@@ -757,7 +757,7 @@ void Net_Drawer(void)
     Rend_BlockmapDebug();
 
     // Draw the light range debug display.
-    R_DrawLightRange();
+    Rend_DrawLightModMatrix();
 
     // Draw the input device debug display.
     Rend_AllInputDeviceStateVisuals();

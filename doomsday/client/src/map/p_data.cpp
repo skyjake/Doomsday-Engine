@@ -199,7 +199,7 @@ DENG_EXTERN_C boolean P_LoadMap(char const *uriCString)
         Cl_InitPlayers();
 
         RL_DeleteLists();
-        Rend_CalcLightModRange();
+        Rend_UpdateLightModMatrix();
 #endif
 
         // Invalidate old cmds and init player values.

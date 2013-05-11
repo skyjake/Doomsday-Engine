@@ -185,11 +185,14 @@ static void initShadowPrimitive()
 
 void Rend_RenderMobjShadows()
 {
-    if(!theMap) return;
+    DENG_ASSERT(theMap != 0);
 
-    // Disabled for now, awaiting a heuristic analyser to enable it on selective mobjs.
+    // Disabled. (Awaiting a heuristic analyser to enable it on selective mobjs.)
     /// @todo Re-enable mobj shadows.
     return;
+
+    // Disabled?
+    if(!Rend_MobjShadowsEnabled()) return;
 
     // Configure the render list primitive writer's texture unit state now.
     RL_LoadDefaultRtus();
