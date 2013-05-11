@@ -69,8 +69,9 @@ DENG_EXTERN_C void R_SetupFogDefaults()
 void R_SideSectionCoords(Line::Side const &side, int section,
     coord_t *retBottom, coord_t *retTop, Vector2f *retMaterialOrigin)
 {
-    Sector const *frontSec = side.sectorPtr();
+    Sector const *frontSec = side.line().definesPolyobj()? side.line().polyobj().bspLeaf().sectorPtr() : side.sectorPtr();
     Sector const *backSec  = side.back().sectorPtr();
+
     Line const &line       = side.line();
     bool const unpegBottom = (line.flags() & DDLF_DONTPEGBOTTOM) != 0;
     bool const unpegTop    = (line.flags() & DDLF_DONTPEGTOP) != 0;
