@@ -26,6 +26,33 @@ group {
     condition: False
     script test2 condition True { print "WILL NOT BE RUN" }    
 }
+
+thing A { 
+    member: value from A
+}
+
+thing B inherits A {
+    member2: value from B
+    script { print "Contents of B:"; print __this__ }
+}
+
+group {
+    # All members inherit A.
+    inherits = A
+    
+    thing C {
+        member2: value from C
+        script { print "Contents of C:"; print __this__ }
+    }
+    thing D inherits B {
+        # Inherits A from group, then B.
+        member3: value from D
+        script { print "Contents of D:"; print __this__ }
+    }
+}
+    
+type1 first-block { key = value }
+type2 example-block inherits first-block {}    
     
 group font {
     condition: Version.OS == 'macx'
@@ -45,7 +72,7 @@ group font {
     }
     
     # Identifiers are all case insensitive.
-    Font "Title" : font.default {
+    Font "Title" inherits font.default {
         Size: 24pt
         Weight $: if __this__.weight == "normal": "bold"; else: "normal"
     }

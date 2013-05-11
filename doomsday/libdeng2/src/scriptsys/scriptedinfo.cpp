@@ -24,6 +24,9 @@
 
 namespace de {
 
+static String const BLOCK_GROUP = "group";
+static String const KEY_INHERIT = "inherits";
+
 DENG2_PIMPL(ScriptedInfo)
 {
     typedef Info::Element::Value InfoValue;
@@ -72,7 +75,7 @@ DENG2_PIMPL(ScriptedInfo)
         }
     }
 
-    void execute(Info::BlockElement const *context)
+    void executeWithContext(Info::BlockElement const *context)
     {
         Record &ns = process.globals();
 
@@ -103,6 +106,61 @@ DENG2_PIMPL(ScriptedInfo)
         }
     }
 
+    void inherit(Info::BlockElement const &block, InfoValue const &target)
+    {
+        if(block.name().isEmpty())
+        {
+            // Nameless blocks cannot be inherited into.
+            return;
+        }
+
+        String varName = variableName(block);
+        if(!varName.isEmpty())
+        {
+            Record &ns = process.globals();            
+            String targetName = target;
+            if(!ns.has(targetName))
+            {
+                // Assume it's an identifier rather than a regular variable.
+                targetName = targetName.toLower();
+            }
+
+            ns.add(varName.concatenatePath("__inherit__", '.')) =
+                    new TextValue(targetName);
+
+            LOG_DEV_TRACE("setting __inherit__ of %s %s (%p) to %s",
+                          block.blockType() << block.name() << &block << targetName);
+
+            DENG2_ASSERT(!varName.isEmpty());
+            DENG2_ASSERT(!targetName.isEmpty());
+
+            // Copy all present members of the target record.
+            ns.subrecord(varName)
+                    .copyMembersFrom(ns[targetName].value<RecordValue>().dereference(),
+                                     Record::IgnoreDoubleUnderscoreMembers);
+        }
+    }
+
+    void inheritFromAncestors(Info::BlockElement const &block, Info::BlockElement const *from)
+    {
+        if(!from) return;
+
+        // The highest ancestor goes first.
+        if(from->parent())
+        {
+            inheritFromAncestors(block, from->parent());
+        }
+
+        // This only applies to groups.
+        if(from->blockType() == BLOCK_GROUP)
+        {
+            if(Info::KeyElement *key = from->findAs<Info::KeyElement>(KEY_INHERIT))
+            {
+                inherit(block, key->value());
+            }
+        }
+    }
+
     void processBlock(Info::BlockElement const &block)
     {
         Record &ns = process.globals();
@@ -117,6 +175,20 @@ DENG2_PIMPL(ScriptedInfo)
             }
         }
 
+        // Inherit from all nameless parent blocks.
+        inheritFromAncestors(block, block.parent());
+
+        // Direct inheritance.
+        if(Info::KeyElement *key = block.findAs<Info::KeyElement>(KEY_INHERIT))
+        {
+            // Check for special attributes.
+            if(key->flags().testFlag(Info::KeyElement::Attribute))
+            {
+                // Inherit contents of an existing Record.
+                inherit(block, key->value());
+            }
+        }
+
         // Script blocks are executed now.
         if(block.blockType() == "script")
         {
@@ -126,7 +198,7 @@ DENG2_PIMPL(ScriptedInfo)
             script.reset(new Script(block.find("script")->values().first()));
             script->setPath(sourcePath); // where the source comes from
             process.run(*script);
-            execute(block.parent());
+            executeWithContext(block.parent());
         }
         else
         {
@@ -140,20 +212,9 @@ DENG2_PIMPL(ScriptedInfo)
             foreach(Info::Element const *sub, block.contentsInOrder())
             {
                 // Handle special elements.
-                if(sub->name() == "condition")
+                if(sub->name() == "condition" || sub->name() == "inherits")
                 {
-                    continue;
-                }
-                if(sub->name() == ":" && !block.name().isEmpty())
-                {
-                    // Inheritance.
-                    String target = sub->values().first();
-                    ns.add(variableName(block).concatenatePath("__inherit__", '.')) =
-                            new TextValue(target);
-
-                    // Copy all present members of the target record.
-                    ns.subrecord(variableName(block))
-                            .copyMembersFrom(ns[target].value<RecordValue>().dereference());
+                    // Already handled.
                     continue;
                 }
                 processElement(sub);
@@ -161,6 +222,14 @@ DENG2_PIMPL(ScriptedInfo)
         }
     }
 
+    /**
+     * Determines the name of the variable representing an element. All named
+     * containing parent blocks contribute to the variable name.
+     *
+     * @param element  Element whose variable name to determine.
+     *
+     * @return Variable name in the form <tt>ancestor.parent.elementname</tt>.
+     */
     String variableName(Info::Element const &element)
     {
         String varName = element.name();
@@ -168,7 +237,10 @@ DENG2_PIMPL(ScriptedInfo)
         {
             if(!b->name().isEmpty())
             {
-                varName = b->name().concatenatePath(varName, '.');
+                if(varName.isEmpty())
+                    varName = b->name();
+                else
+                    varName = b->name().concatenatePath(varName, '.');
             }
         }
         return varName;
@@ -178,10 +250,21 @@ DENG2_PIMPL(ScriptedInfo)
     {
         script.reset(new Script(source));
         process.run(*script);
-        execute(context);
+        executeWithContext(context);
         return process.context().evaluator().result().duplicate();
     }
 
+    /**
+     * Constructs a Value from the value of an element. If the element value
+     * has been marked with the semantic hint for scripting, it will be
+     * evaluated as a script. The global __this__ will be pointed to the
+     * Record representing the @a context block.
+     *
+     * @param rawValue  Value of an element.
+     * @param context   Containing block element.
+     *
+     * @return Value instance. Caller gets ownership.
+     */
     Value *makeValue(InfoValue const &rawValue, Info::BlockElement const *context)
     {
         if(rawValue.flags.testFlag(InfoValue::Script))
@@ -232,6 +315,16 @@ void ScriptedInfo::parse(File const &file)
 Value *ScriptedInfo::evaluate(String const &source)
 {
     return d->evaluate(source, 0);
+}
+
+Record &ScriptedInfo::names()
+{
+    return d->process.globals();
+}
+
+Record const &ScriptedInfo::names() const
+{
+    return d->process.globals();
 }
 
 } // namespace de

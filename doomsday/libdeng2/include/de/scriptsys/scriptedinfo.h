@@ -28,15 +28,29 @@ namespace de {
  * Info document tree with a script context and built-in support for handling
  * expressions and embedded scripts.
  *
- * Analogous to an HTML document with embedded JavaScript: Info acts as the
- * declarative, structured document and Doomsday Script is the procedural
- * programming language.
+ * Analogous to an XML document with embedded JavaScript: Info acts as the
+ * generic, declarative, structured document and Doomsday Script is the
+ * procedural programming language.
  *
- * An instance of ScriptedInfo represents an Info document. It has its own
+ * An instance of ScriptedInfo contains an Info document. It has its own
  * private script execution context, in which expressions can be evaluated and
  * scripts run. After a ScriptedInfo has been parsed, all the embedded scripts
  * are run and the Info elements become variables and values in the local
- * namespace.
+ * namespace (ScriptedInfo::names()).
+ *
+ * @par Grouping
+ *
+ * The block type "group" is reserved for generic grouping of contained
+ * elements. If the group is named, it will contribute its name to the path
+ * of the produced variable (same as with any named block):
+ * <pre>group test {
+ *     type1 block { key = value }
+ * }</pre>
+ *
+ * In this example, the variable representing @c key would be
+ * <tt>test.block.key</tt> in the ScriptedInfo instance's namespace.
+ *
+ * @par Special elements
  *
  * Each block of a ScriptedInfo document has a couple of special elements
  * that alter how the block is processed:
@@ -48,14 +62,31 @@ namespace de {
  *
  * - The contents of any previously processed block (or any record available in
  *   the namespace) can be copied with the special inheritance element
- *   (named ":"):
- * <pre>type1 first-block { key = value }
- * type2 example-block : first-block {}</pre>
+ *   (named "inherits"):
+ * <pre>type1 firstblock { key = value }
+ * type2 exampleblock inherits firstblock {}</pre>
  *
- *   Here @c first-block would be treated as a variable name in the document's
+ *   Here @c firstblock would be treated as a variable name in the document's
  *   local namespace, referring to the block above, which has already been
  *   added to the local namespace (elements are processed sequentially from
- *   beginning to end).
+ *   beginning to end). The resulting Record is:
+ * <pre>exampleblock. __inherit__: firstblock
+ *                  __type__: type2
+ *                       key: value
+ *   firstblock. __type__: type1
+ *                    key: value</pre>
+ *
+ * @par Group inheritance
+ *
+ * When the "inherits" element is used in a group, it will affect all the
+ * blocks in the group instead of inheriting anything into the group itself.
+ * <pre>thing A { key = value }
+ * group {
+ *     inherits = A
+ *     thing B {}
+ *     thing C {}
+ * }</pre>
+ * Here B and C would both inherit from A.
  */
 class DENG2_PUBLIC ScriptedInfo
 {
@@ -79,6 +110,10 @@ public:
      * @return  Result value. Caller gets ownership.
      */
     Value *evaluate(String const &source);
+
+    Record &names();
+
+    Record const &names() const;
 
 private:
     DENG2_PRIVATE(d)
