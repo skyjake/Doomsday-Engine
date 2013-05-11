@@ -81,14 +81,20 @@ public:
      */
     void clear();
 
+    enum CopyBehavior {
+        AllMembers,
+        IgnoreDoubleUnderscoreMembers
+    };
+
     /**
      * Adds a copy of each member of another record into this record. The
      * previous contents of this record are untouched as long as they have no
      * members with the same names as in @a other.
      *
-     * @param other  Record whose members are to be copied.
+     * @param other     Record whose members are to be copied.
+     * @param behavior  Copy behavior.
      */
-    void copyMembersFrom(Record const &other);
+    void copyMembersFrom(Record const &other, CopyBehavior behavior = AllMembers);
 
     /**
      * Assignment operator.

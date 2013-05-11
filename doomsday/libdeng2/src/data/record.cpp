@@ -202,10 +202,13 @@ void Record::clear()
     }
 }
 
-void Record::copyMembersFrom(Record const &other)
+void Record::copyMembersFrom(Record const &other, CopyBehavior behavior)
 {
     DENG2_FOR_EACH_CONST(Members, i, other.d->members)
     {
+        if(behavior == IgnoreDoubleUnderscoreMembers &&
+           i->first.startsWith("__")) continue;
+
         Variable *var = new Variable(*i->second);
         var->audienceForDeletion += this;
         d->members[i->first] = var;
