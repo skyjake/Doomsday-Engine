@@ -41,6 +41,9 @@ class Vertex;
 typedef struct polyobj_s
 {
 public:
+    /// The polyobj is not presently linked in the BSP. @ingroup errors
+    DENG2_ERROR(NotLinkedError);
+
     typedef QList<Line *> Lines;
     typedef QList<Vertex *> Vertexes;
 
@@ -54,6 +57,37 @@ public:
 
     /// @note: Does nothing about the user data section.
     ~polyobj_s();
+
+    /**
+     * Returns @c true if the polyobj is presently linked in the owning GameMap.
+     */
+    bool isLinked();
+
+    /**
+     * (Re)link the polyobj in the owning GameMap. Ownership is not affected.
+     * To be called @em after rotation and/or translation to re-link the polyobj
+     * and thereby complete the process.
+     *
+     * Linking only occurs if the polyobj is not presently linked (subsequent calls
+     * are ignored).
+     */
+    void link();
+
+    /**
+     * Unlink the polyobj in the owning GameMap. To be called @em before attempting
+     * to rotate and/or translate the polyobj to initiate the process.
+     *
+     * Unlinking only occurs if the polyobj is presently linked (subsequent calls
+     * are ignored).
+     */
+    void unlink();
+
+    /**
+     * Returns the BSP leaf in which the polyobj is presently linked.
+     *
+     * @see isLinked();
+     */
+    BspLeaf &bspLeaf() const;
 
     /**
      * Returns the sound emitter for the polyobj.

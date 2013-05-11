@@ -26,6 +26,7 @@
 #include <de/Vector>
 
 #include "m_misc.h"
+
 #include "Sector"
 #include "Vertex"
 
@@ -490,8 +491,8 @@ DENG2_PIMPL(Line)
     Side front;
     Side back;
 
-    /// @c true= the line is owned by some Polyobj.
-    bool polyobjOwned;
+    /// The polyobj which this line defines a section of, if any.
+    Polyobj *polyobj;
 
     /// Used by legacy algorithms to prevent repeated processing.
     int validCount;
@@ -511,7 +512,7 @@ DENG2_PIMPL(Line)
           length(direction.length()),
           front(*i, frontSector),
           back(*i, backSector),
-          polyobjOwned(false),
+          polyobj(0),
           validCount(0)
     {
         std::memset(mapped, 0, sizeof(mapped));
@@ -559,14 +560,24 @@ bool Line::isBspWindow() const
     return _bspWindowSector != 0;
 }
 
-bool Line::isFromPolyobj() const
+bool Line::definesPolyobj() const
 {
-    return d->polyobjOwned;
+    return d->polyobj != 0;
 }
 
-void Line::markPolyobjOwned(bool set)
+Polyobj &Line::polyobj() const
 {
-    d->polyobjOwned = set;
+    if(d->polyobj)
+    {
+        return *d->polyobj;
+    }
+    /// @throw Line::MissingPolyobjError Attempted with no polyobj attributed.
+    throw Line::MissingPolyobjError("Line::polyobj", "No polyobj is attributed");
+}
+
+void Line::setPolyobj(Polyobj *newOwner)
+{
+    d->polyobj = newOwner;
 }
 
 Line::Side &Line::side(int back)

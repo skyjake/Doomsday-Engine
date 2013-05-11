@@ -2245,16 +2245,14 @@ DENG_EXTERN_C void P_SetPolyobjCallback(void (*func) (struct mobj_s *, void *, v
 DENG_EXTERN_C void P_PolyobjUnlink(Polyobj *po)
 {
     if(!po) return;
-    /// @todo Do not assume polyobj is from the CURRENT map.
-    theMap->unlinkPolyobj(*po);
+    po->unlink();
 }
 
 #undef P_PolyobjLink
 DENG_EXTERN_C void P_PolyobjLink(Polyobj *po)
 {
     if(!po) return;
-    /// @todo Do not assume polyobj is from the CURRENT map.
-    theMap->linkPolyobj(*po);
+    po->link();
 }
 
 #undef P_PolyobjByID

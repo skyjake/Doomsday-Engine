@@ -702,7 +702,7 @@ enum { MX, MY, MZ };
 #define DD_BASE_POLYOBJ_ELEMENTS() \
     DD_BASE_DDMOBJ_ELEMENTS() \
 \
-    BspLeaf        *bspLeaf; /* bspLeaf in which this resides */ \
+    BspLeaf        *_bspLeaf; /* bspLeaf in which this resides */ \
     int             _indexInMap; \
     int             tag; /* Reference tag. */ \
     int             validCount; \

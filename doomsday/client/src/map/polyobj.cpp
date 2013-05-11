@@ -26,8 +26,10 @@
 #include "de_base.h"
 
 #include "map/p_maptypes.h"
-#include "render/r_main.h" // validCount
+#include "map/gamemap.h"
 #include "HEdge"
+
+#include "render/r_main.h" // validCount
 
 #include "map/polyobj.h"
 
@@ -75,7 +77,7 @@ polyobj_s::polyobj_s(de::Vector2d const &origin_)
 {
     origin[VX] = origin_.x;
     origin[VY] = origin_.y;
-    bspLeaf = 0;
+    _bspLeaf = 0;
     tag = 0;
     validCount = 0;
     dest[0] = dest[1] = 0;
@@ -107,6 +109,62 @@ polyobj_s::~polyobj_s()
 void Polyobj::setCollisionCallback(void (*func) (mobj_t *mobj, void *line, void *polyobj)) // static
 {
     collisionCallback = func;
+}
+
+bool Polyobj::isLinked()
+{
+    return _bspLeaf != 0;
+}
+
+void Polyobj::unlink()
+{
+    if(_bspLeaf)
+    {
+        /// @todo Do not assume polyobj is from the CURRENT map.
+        theMap->unlinkPolyobj(*this);
+        _bspLeaf = 0;
+    }
+}
+
+void Polyobj::link()
+{
+    if(!_bspLeaf)
+    {
+        theMap->linkPolyobj(*this);
+
+        // Find the center point of the polyobj.
+        Vector2d avg;
+        foreach(Line *line, lines())
+        {
+            avg += line->fromOrigin();
+        }
+        avg /= lineCount();
+
+        // Given the center point determine in which BSP leaf the polyobj resides.
+        /// @todo Do not assume polyobj is from the CURRENT map.
+        if(BspLeaf *bspLeaf = theMap->bspLeafAtPoint(avg))
+        {
+            if(bspLeaf->hasPolyobj())
+            {
+                LOG_WARNING("Multiple polyobjs in a single BSP leaf\n"
+                            "  (BSP leaf %i, sector %i). Previous polyobj overridden.")
+                    << bspLeaf->indexInMap()
+                    << bspLeaf->sector().indexInMap();
+            }
+            bspLeaf->setFirstPolyobj(this);
+            _bspLeaf = bspLeaf;
+        }
+    }
+}
+
+BspLeaf &Polyobj::bspLeaf() const
+{
+    if(_bspLeaf)
+    {
+        return *_bspLeaf;
+    }
+    /// @throw Polyobj::NotLinkedError Attempted while the polyobj is not linked to the BSP.
+    throw Polyobj::NotLinkedError("Polyobj::bspLeaf", "Polyobj is not presently linked in the BSP");
 }
 
 ddmobj_base_t &Polyobj::soundEmitter()
@@ -261,7 +319,7 @@ bool Polyobj::move(Vector2d const &delta)
     LOG_AS("Polyobj::move");
     //LOG_DEBUG("Applying delta %s to [%p]") << delta.asText() << this;
 
-    P_PolyobjUnlink(this);
+    unlink();
     {
         VertexCoords::iterator prevCoordsIt = static_cast<VertexCoords *>(_prevPts)->begin();
         foreach(Vertex *vertex, uniqueVertexes())
@@ -285,14 +343,14 @@ bool Polyobj::move(Vector2d const &delta)
 
         updateAABox();
     }
-    P_PolyobjLink(this);
+    link();
 
     // With translation applied now determine if we collided with anything.
     if(mobjIsBlockingPolyobj(*this))
     {
         //LOG_DEBUG("Blocked by mobj, undoing...");
 
-        P_PolyobjUnlink(this);
+        unlink();
         {
             VertexCoords::const_iterator prevCoordsIt = static_cast<VertexCoords *>(_prevPts)->constBegin();
             foreach(Vertex *vertex, uniqueVertexes())
@@ -311,7 +369,7 @@ bool Polyobj::move(Vector2d const &delta)
 
             updateAABox();
         }
-        P_PolyobjLink(this);
+        link();
 
         return false;
     }
@@ -344,7 +402,7 @@ bool Polyobj::rotate(angle_t delta)
     //LOG_DEBUG("Applying delta %u (%f) to [%p]")
     //    << delta << (delta / float( ANGLE_MAX ) * 360) << this;
 
-    P_PolyobjUnlink(this);
+    unlink();
     {
         uint fineAngle = (angle + delta) >> ANGLETOFINESHIFT;
 
@@ -375,14 +433,14 @@ bool Polyobj::rotate(angle_t delta)
         updateAABox();
         angle += delta;
     }
-    P_PolyobjLink(this);
+    link();
 
     // With rotation applied now determine if we collided with anything.
     if(mobjIsBlockingPolyobj(*this))
     {
         //LOG_DEBUG("Blocked by mobj, undoing...");
 
-        P_PolyobjUnlink(this);
+        unlink();
         {
             VertexCoords::const_iterator prevCoordsIt = static_cast<VertexCoords *>(_prevPts)->constBegin();
             foreach(Vertex *vertex, uniqueVertexes())
@@ -402,7 +460,7 @@ bool Polyobj::rotate(angle_t delta)
             updateAABox();
             angle -= delta;
         }
-        P_PolyobjLink(this);
+        link();
 
         return false;
     }

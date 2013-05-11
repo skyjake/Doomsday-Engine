@@ -829,35 +829,13 @@ void GameMap::initPolyobjs()
 
     foreach(Polyobj *po, _polyobjs)
     {
-        // Find the center point of the polyobj.
-        Vector2d avg;
-        foreach(Line *line, po->lines())
-        {
-            avg += line->fromOrigin();
-        }
-        avg /= po->lineCount();
-
-        // Given the center point determine in which BSP leaf the polyobj resides.
-        if(BspLeaf *bspLeaf = bspLeafAtPoint(avg))
-        {
-            if(bspLeaf->hasPolyobj())
-            {
-                LOG_WARNING("Multiple polyobjs in a single BSP leaf\n"
-                            "  (BSP leaf %i, sector %i). Previous polyobj overridden.")
-                    << bspLeaf->indexInMap()
-                    << bspLeaf->sector().indexInMap();
-            }
-            bspLeaf->setFirstPolyobj(po);
-            po->bspLeaf = bspLeaf;
-        }
-
         /// @todo Is this still necessary? -ds
         /// (This data is updated automatically when moving/rotating).
         po->updateAABox();
         po->updateSurfaceTangents();
 
-        P_PolyobjUnlink(po);
-        P_PolyobjLink(po);
+        po->unlink();
+        po->link();
     }
 }
 
@@ -1055,7 +1033,7 @@ void GameMap::linkLine(Line &line)
     DENG_ASSERT(lineBlockmap != 0);
 
     // Lines of Polyobjs don't get into the blockmap (presently...).
-    if(line.isFromPolyobj()) return;
+    if(line.definesPolyobj()) return;
 
     vec2d_t origin; V2d_Copy(origin, Blockmap_Origin(lineBlockmap));
     vec2d_t cellSize; V2d_Copy(cellSize, Blockmap_CellSize(lineBlockmap));

@@ -41,7 +41,7 @@ static zblockset_t *shadowLinksBlockSet;
 
 bool Rend_RadioLineCastsShadow(Line const &line)
 {
-    if(line.isFromPolyobj()) return false;
+    if(line.definesPolyobj()) return false;
     if(line.isSelfReferencing()) return false;
 
     // Lines with no other neighbor do not qualify for shadowing.

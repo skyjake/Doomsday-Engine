@@ -1257,7 +1257,7 @@ static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &ri
 static void writeShadowSection(int planeIndex, Line::Side &side, float shadowDark)
 {
     DENG_ASSERT(side.hasSections());
-    DENG_ASSERT(!side.line().isFromPolyobj());
+    DENG_ASSERT(!side.line().definesPolyobj());
 
     if(!(shadowDark > .0001)) return;
 

@@ -265,7 +265,7 @@ DENG2_PIMPL(Partitioner)
 
     bool lineMightHaveWindowEffect(Line const &line)
     {
-        if(line.isFromPolyobj()) return false;
+        if(line.definesPolyobj()) return false;
         if(line.hasFrontSector() && line.hasBackSector()) return false;
         if(!line.hasFrontSector()) return false;
         //if(line.hasZeroLength() || line._buildData.overlap) return false;
@@ -375,7 +375,7 @@ DENG2_PIMPL(Partitioner)
         foreach(Line *line, map->lines())
         {
             // Polyobj lines are completely ignored.
-            if(line->isFromPolyobj()) continue;
+            if(line->definesPolyobj()) continue;
 
             LineSegment *front = 0;
             coord_t angle = 0;

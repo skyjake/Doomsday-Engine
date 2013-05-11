@@ -1303,7 +1303,7 @@ static float wallSectionEdgeLightLevelDelta(Line::Side &side, int section, int e
     // Is delta smoothing disabled?
     if(!rendLightWallAngleSmooth) return delta;
     // ...always for polyobj lines (no owner rings).
-    if(side.line().isFromPolyobj()) return delta;
+    if(side.line().definesPolyobj()) return delta;
 
     /**
      * Smoothing is enabled, so find the neighbor side for the specified edge
@@ -1636,7 +1636,7 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
         // Render FakeRadio for this section?
         if((flags & WSF_ADD_RADIO) && !(parm.flags & RPF_SKYMASK) &&
            !(parm.glowing > 0) && currentSectorLightLevel > 0 &&
-           !line.isFromPolyobj())
+           !line.definesPolyobj())
         {
             Rend_RadioUpdateForLineSide(side);
 
@@ -2922,7 +2922,7 @@ void Rend_RenderSurfaceVectors()
     Vector3f origin;
     foreach(HEdge *hedge, theMap->hedges())
     {
-        if(!hedge->hasLineSide() || hedge->line().isFromPolyobj())
+        if(!hedge->hasLineSide() || hedge->line().definesPolyobj())
             continue;
 
         if(!hedge->hasBspLeaf() || !hedge->bspLeaf().hasSector())
@@ -2998,7 +2998,7 @@ void Rend_RenderSurfaceVectors()
 
     foreach(Polyobj *polyobj, theMap->polyobjs())
     {
-        Sector const &sector = polyobj->bspLeaf->sector();
+        Sector const &sector = polyobj->bspLeaf().sector();
         float zPos = sector.floor().height() + (sector.ceiling().height() - sector.floor().height())/2;
 
         foreach(Line *line, polyobj->lines())
@@ -3204,8 +3204,8 @@ static int drawVertex1(Line *li, void *context)
 
         if(alpha > 0)
         {
-            coord_t bottom = po->bspLeaf->sector().floor().visHeight();
-            coord_t top    = po->bspLeaf->sector().ceiling().visHeight();
+            coord_t bottom = po->bspLeaf().sector().floor().visHeight();
+            coord_t top    = po->bspLeaf().sector().ceiling().visHeight();
 
             if(devVertexBars)
                 drawVertexBar(vtx, bottom, top, MIN_OF(alpha, .15f));
@@ -3224,7 +3224,7 @@ static int drawVertex1(Line *li, void *context)
 
         pos[VX] = vtx->origin().x;
         pos[VY] = vtx->origin().y;
-        pos[VZ] = po->bspLeaf->sector().floor().visHeight();
+        pos[VZ] = po->bspLeaf().sector().floor().visHeight();
 
         dist3D = V3d_Distance(pos, eye);
 
@@ -3279,7 +3279,7 @@ void Rend_Vertexes()
             if(!own) continue;
 
             // Ignore polyobj vertexes.
-            if(own->line().isFromPolyobj()) continue;
+            if(own->line().definesPolyobj()) continue;
 
             float alpha = 1 - M_ApproxDistance(vOrigin[VX] - vertex->origin().x,
                                                vOrigin[VZ] - vertex->origin().y) / MAX_VERTEX_POINT_DIST;
@@ -3309,7 +3309,7 @@ void Rend_Vertexes()
         if(!own) continue;
 
         // Ignore polyobj vertexes.
-        if(own->line().isFromPolyobj()) continue;
+        if(own->line().definesPolyobj()) continue;
 
         coord_t dist = M_ApproxDistance(vOrigin[VX] - vertex->origin().x,
                                        vOrigin[VZ] - vertex->origin().y);
@@ -3340,7 +3340,7 @@ void Rend_Vertexes()
             if(!own) continue;
 
             // Ignore polyobj vertexes.
-            if(own->line().isFromPolyobj()) continue;
+            if(own->line().definesPolyobj()) continue;
 
             pos[VX] = vertex->origin().x;
             pos[VY] = vertex->origin().y;
@@ -3803,7 +3803,7 @@ static void Rend_RenderBoundingBoxes()
     {
         foreach(Polyobj const *polyobj, theMap->polyobjs())
         {
-            Sector const &sec = polyobj->bspLeaf->sector();
+            Sector const &sec = polyobj->bspLeaf().sector();
             coord_t width  = (polyobj->aaBox.maxX - polyobj->aaBox.minX)/2;
             coord_t length = (polyobj->aaBox.maxY - polyobj->aaBox.minY)/2;
             coord_t height = (sec.ceiling().height() - sec.floor().height())/2;

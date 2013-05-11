@@ -1121,7 +1121,7 @@ int MPE_PolyobjCreate(int *lines, int lineCount, int tag, int sequenceType,
         if(lines[i] < 0 || lines[i] >= editMap.lines.count()) return -1;
 
         Line *line = editMap.lines[lines[i]];
-        if(line->isFromPolyobj()) return -1;
+        if(line->definesPolyobj()) return -1;
     }
 
     Polyobj *po = editMap.createPolyobj(Vector2d(originX, originY));
@@ -1133,7 +1133,7 @@ int MPE_PolyobjCreate(int *lines, int lineCount, int tag, int sequenceType,
         Line *line = editMap.lines[lines[i]];
 
         // This line belongs to a polyobj.
-        line->markPolyobjOwned();
+        line->setPolyobj(po);
         static_cast<Polyobj::Lines *>(po->_lines)->append(line);
     }
 

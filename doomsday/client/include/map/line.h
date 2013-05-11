@@ -31,6 +31,7 @@
 #include <de/Vector>
 
 #include "MapElement"
+#include "Polyobj"
 #include "Surface"
 #include "Vertex"
 
@@ -62,6 +63,9 @@ class Line : public de::MapElement
 public:
     /// Required sector attribution is missing. @ingroup errors
     DENG2_ERROR(MissingSectorError);
+
+    /// Required polyobj attribution is missing. @ingroup errors
+    DENG2_ERROR(MissingPolyobjError);
 
     /// The given side section identifier is invalid. @ingroup errors
     DENG2_ERROR(InvalidSectionIdError);
@@ -740,16 +744,27 @@ public:
     }
 
     /**
-     * Returns @c true iff the line is part of some Polyobj.
+     * Returns @c true iff the line defines a section of some Polyobj.
      */
-    bool isFromPolyobj() const;
+    bool definesPolyobj() const;
 
     /**
-     * Mark the line as being owned by/is part of some Polyobj.
+     * Returns the Polyobj for which the line is a defining section.
      *
-     * @param set  @c true to set, @c false to clear.
+     * @see definesPolyobj()
      */
-    void markPolyobjOwned(bool set = true);
+    Polyobj &polyobj() const;
+
+    /**
+     * Change the attributed polyobj which owns the line.
+     *
+     * @param newOwner New polyobj to attribute as the to the line. Can be
+     *                 @c 0, to clear the attribution. (Note that the polyobj
+     *                 may also represent this relationship, so the relevant
+     *                 method(s) of Polyobj will also need to be called to
+     *                 complete the job of removing this relationship.)
+     */
+    void setPolyobj(Polyobj *newOwner);
 
     /**
      * Returns @c true iff the line resulted in the creation of a BSP window
