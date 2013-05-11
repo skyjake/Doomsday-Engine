@@ -184,36 +184,27 @@ public:
     }
 
     /**
-     * Returns the linked @em next half-edge (clockwise) around the face of
-     * the half-edge (which might be *this* half-edge).
+     * Returns the neighbor half-edge in the specified @a direction around the
+     * face of the polygon (which might be *this* half-edge in the case of a
+     * degenerate polygon).
      *
-     * @see nextIsThis()
+     * @param direction  Relative direction for desired neighbor half-edge.
      */
-    HEdge &next() const;
+    HEdge &navigate(ClockDirection direction) const;
 
     /**
-     * Returns @c true iff the @em next half-edge (clockwise) around the face
-     * of the half-edge is *this*.
+     * Returns the @em clockwise neighbor half-edge around the face of the polygon.
      *
-     * @see next()
+     * @see navigate(), nextIsThis()
      */
-    inline bool nextIsThis() const { return &next() == this; }
+    inline HEdge &next() const { return navigate(Clockwise); }
 
     /**
-     * Returns the linked @em previous half-edge (anticlockwise) around the
-     * face of the half-edge (which might be *this* half-edge).
+     * Returns the @em anticlockwise neighbor half-edge around the face of the polygon.
      *
-     * @see prevIsThis()
+     * @see navigate(), prevIsThis()
      */
-    HEdge &prev() const;
-
-    /**
-     * Returns @c true iff the @em previous half-edge (anticlockwise) around
-     * the face of the half-edge is *this*.
-     *
-     * @see prev()
-     */
-    inline bool prevIsThis() const { return &prev() == this; }
+    inline HEdge &prev() const { return navigate(Anticlockwise); }
 
     /**
      * Returns @c true iff a @em twin is linked to the half-edge.

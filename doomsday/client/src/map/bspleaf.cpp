@@ -206,7 +206,7 @@ BspLeaf::~BspLeaf()
             // Break the ring, if linked.
             if(he->_prev)
             {
-                he->_prev->_next = NULL;
+                he->_prev->_next = 0;
             }
 
             while(he)

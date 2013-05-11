@@ -160,7 +160,7 @@ static void Rend_DrawSoundOrigins();
 static void Rend_DrawSurfaceVectors();
 static void Rend_DrawVertexIndices();
 
-static uint buildLeafPlaneGeometry(BspLeaf const &leaf, bool antiClockwise,
+static uint buildLeafPlaneGeometry(BspLeaf const &leaf, ClockDirection direction,
     coord_t height, rvertex_t **verts, uint *vertsSize);
 
 // Draw state:
@@ -1754,7 +1754,8 @@ static void writeLeafPlane(Plane &plane)
 
     uint numVertices;
     rvertex_t *rvertices;
-    buildLeafPlaneGeometry(*leaf, (plane.type() == Plane::Ceiling), plane.visHeight(),
+    buildLeafPlaneGeometry(*leaf, (plane.type() == Plane::Ceiling)? Anticlockwise : Clockwise,
+                           plane.visHeight(),
                            &rvertices, &numVertices);
 
     MaterialSnapshot const &ms = material->prepare(mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT));
@@ -1994,29 +1995,31 @@ static inline void buildStripEdge(Vector2d const &vXY,
  *   |  | or |  | if antiClockwise
  *   0--2    3--1
  */
-static void buildSkyFixStrip(BspLeaf *leaf, HEdge *startNode, HEdge *endNode,
-    bool _antiClockwise, int skyCap, rvertex_t **verts, uint *vertsSize, rtexcoord_t **coords)
+static void buildSkyMaskStrip(HEdge &startNode, HEdge &endNode, ClockDirection direction,
+    int skyCap, rvertex_t **verts, uint *vertsSize, rtexcoord_t **coords)
 {
-    int const antiClockwise = _antiClockwise? 1:0;
+    DENG_ASSERT(startNode.hasBspLeaf());
+    DENG_ASSERT(&startNode.bspLeaf() == &endNode.bspLeaf());
+
     *vertsSize = 0;
     *verts = 0;
 
-    if(!startNode || !endNode || !skyCap) return;
+    if(!skyCap) return;
 
     // Count verts.
-    if(startNode == endNode)
+    if(&startNode == &endNode)
     {
         // Special case: the whole edge loop.
-        *vertsSize += 2 * (leaf->hedgeCount() + 1);
+        *vertsSize += 2 * (startNode.bspLeaf().hedgeCount() + 1);
     }
     else
     {
-        HEdge *afterEndNode = antiClockwise? &endNode->prev() : &endNode->next();
-        HEdge *node = startNode;
+        HEdge *afterEndNode = &endNode.navigate(direction);
+        HEdge *node = &startNode;
         do
         {
             *vertsSize += 2;
-        } while((node = antiClockwise? &node->prev() : &node->next()) != afterEndNode);
+        } while((node = &node->navigate(direction)) != afterEndNode);
     }
 
     // Build geometry.
@@ -2026,12 +2029,13 @@ static void buildSkyFixStrip(BspLeaf *leaf, HEdge *startNode, HEdge *endNode,
         *coords = R_AllocRendTexCoords(*vertsSize);
     }
 
-    HEdge *node = startNode;
+    int const windOffset = direction == Anticlockwise? 1 : 0;
+    HEdge *node = &startNode;
     float texS = float( node->hasLineSide()? node->lineOffset() : 0 );
     uint n = 0;
     do
     {
-        HEdge *hedge = (antiClockwise? &node->prev() : node);
+        HEdge *hedge = (direction == Anticlockwise? &node->prev() : node);
         coord_t zBottom, zTop;
 
         skyFixZCoords(hedge, skyCap, &zBottom, &zTop);
@@ -2040,55 +2044,54 @@ static void buildSkyFixStrip(BspLeaf *leaf, HEdge *startNode, HEdge *endNode,
         if(n == 0)
         {
             // Add the first edge.
-            rvertex_t *v1 = &(*verts)[n + antiClockwise];
-            rvertex_t *v2 = &(*verts)[n + (antiClockwise^1)];
-            rtexcoord_t *t1 = coords? &(*coords)[n + antiClockwise] : NULL;
-            rtexcoord_t *t2 = coords? &(*coords)[n + (antiClockwise^1)] : NULL;
+            rvertex_t *v1 = &(*verts)[n + windOffset];
+            rvertex_t *v2 = &(*verts)[n + (windOffset^1)];
+            rtexcoord_t *t1 = coords? &(*coords)[n + windOffset] : 0;
+            rtexcoord_t *t2 = coords? &(*coords)[n + (windOffset^1)] : 0;
 
             buildStripEdge(node->fromOrigin(), zBottom, zTop, texS, v1, v2, t1, t2);
 
             if(coords)
             {
-                texS += antiClockwise? -node->prev().length() : hedge->length();
+                texS += direction == Anticlockwise? -node->prev().length() : hedge->length();
             }
 
             n += 2;
         }
 
         // Add the next edge.
+        rvertex_t *v1 = &(*verts)[n + windOffset];
+        rvertex_t *v2 = &(*verts)[n + (windOffset^1)];
+        rtexcoord_t *t1 = coords? &(*coords)[n + windOffset] : 0;
+        rtexcoord_t *t2 = coords? &(*coords)[n + (windOffset^1)] : 0;
+
+        buildStripEdge(node->navigate(direction).fromOrigin(),
+                       zBottom, zTop, texS, v1, v2, t1, t2);
+
+        if(coords)
         {
-            rvertex_t *v1 = &(*verts)[n + antiClockwise];
-            rvertex_t *v2 = &(*verts)[n + (antiClockwise^1)];
-            rtexcoord_t *t1 = coords? &(*coords)[n + antiClockwise] : NULL;
-            rtexcoord_t *t2 = coords? &(*coords)[n + (antiClockwise^1)] : NULL;
-
-            buildStripEdge((antiClockwise? &node->prev() : &node->next())->fromOrigin(),
-                           zBottom, zTop, texS, v1, v2, t1, t2);
-
-            if(coords)
-            {
-                texS += antiClockwise? -hedge->length() : hedge->next().length();
-            }
-
-            n += 2;
+            texS += direction == Anticlockwise? -hedge->length() : hedge->next().length();
         }
-    } while((node = antiClockwise? &node->prev() : &node->next()) != endNode);
+
+        n += 2;
+
+    } while((node = &node->navigate(direction)) != &endNode);
 }
 
-static void Rend_WriteBspLeafSkyFixStripGeometry(BspLeaf *leaf, HEdge *startNode,
-    HEdge *endNode, bool antiClockwise, int skyFix, Material *material)
+static void writeSkyMaskStrip(HEdge &startNode, HEdge &endNode, ClockDirection direction,
+    int skyFix, Material *material)
 {
     int const rendPolyFlags = RPF_DEFAULT | (!devRendSkyMode? RPF_SKYMASK : 0);
     rtexcoord_t *coords = 0;
     rvertex_t *verts;
     uint vertsSize;
 
-    buildSkyFixStrip(leaf, startNode, endNode, antiClockwise, skyFix,
-                     &verts, &vertsSize, devRendSkyMode? &coords : NULL);
+    buildSkyMaskStrip(startNode, endNode, direction, skyFix,
+                      &verts, &vertsSize, devRendSkyMode? &coords : 0);
 
     if(!devRendSkyMode)
     {
-        RL_AddPoly(PT_TRIANGLE_STRIP, rendPolyFlags, vertsSize, verts, NULL);
+        RL_AddPoly(PT_TRIANGLE_STRIP, rendPolyFlags, vertsSize, verts, 0);
     }
     else
     {
@@ -2113,14 +2116,14 @@ static void Rend_WriteBspLeafSkyFixStripGeometry(BspLeaf *leaf, HEdge *startNode
  * the trifan, else the mid point of this leaf will be used instead.
  *
  * @param leaf  BspLeaf instance.
- * @param antiClockwise  @c true= wind vertices in anticlockwise order (else clockwise).
+ * @param direction  Vertex winding direction.
  * @param height  Z map space height coordinate to be set for each vertex.
  * @param verts  Built vertices are written here.
  * @param vertsSize  Number of built vertices is written here. Can be @c NULL.
  *
  * @return  Number of built vertices (same as written to @a vertsSize).
  */
-static uint buildLeafPlaneGeometry(BspLeaf const &leaf, bool antiClockwise,
+static uint buildLeafPlaneGeometry(BspLeaf const &leaf, ClockDirection direction,
     coord_t height, rvertex_t **verts, uint *vertsSize)
 {
     DENG_ASSERT(verts != 0);
@@ -2144,7 +2147,7 @@ static uint buildLeafPlaneGeometry(BspLeaf const &leaf, bool antiClockwise,
     {
         V3f_Set((*verts)[n].pos, node->fromOrigin().x, node->fromOrigin().y, height);
         n++;
-    } while((node = antiClockwise? &node->prev() : &node->next()) != baseNode);
+    } while((node = &node->navigate(direction)) != baseNode);
 
     // The last vertex is always equal to the first.
     if(!fanBase)
@@ -2167,7 +2170,7 @@ static void writeLeafSkyMaskStrips(int skyFix)
     if(!(skyFix & (SKYCAP_LOWER|SKYCAP_UPPER)))
         return;
 
-    bool const antiClockwise = false;
+    ClockDirection direction = Clockwise;
     bool const splitForSkyMaterials = (devRendSkyMode && renderTextures != 2);
 
     // We may need to break the half-edge loop into multiple strips.
@@ -2180,7 +2183,7 @@ static void writeLeafSkyMaskStrips(int skyFix)
     HEdge *node = base;
     forever
     {
-        HEdge *hedge = (antiClockwise? &node->prev() : node);
+        HEdge *hedge = (direction == Anticlockwise? &node->prev() : node);
         bool endStrip = false, beginNewStrip = false;
 
         // Is a fix or two necessary for this edge?
@@ -2226,8 +2229,7 @@ static void writeLeafSkyMaskStrips(int skyFix)
         if(endStrip && startNode)
         {
             // We have complete strip; build and write it.
-            Rend_WriteBspLeafSkyFixStripGeometry(bspLeaf, startNode, node, antiClockwise,
-                                                 skyFix, startMaterial);
+            writeSkyMaskStrip(*startNode, *node, direction, skyFix, startMaterial);
 
             // End the current strip.
             startNode = 0;
@@ -2237,7 +2239,7 @@ static void writeLeafSkyMaskStrips(int skyFix)
         if(beginNewStrip) continue;
 
         // On to the next node.
-        node = antiClockwise? &node->prev() : &node->next();
+        node = &node->navigate(direction);
 
         // Are we done?
         if(node == base) break;
@@ -2246,8 +2248,7 @@ static void writeLeafSkyMaskStrips(int skyFix)
     // Have we an unwritten strip? - build it.
     if(startNode)
     {
-        Rend_WriteBspLeafSkyFixStripGeometry(bspLeaf, startNode, base, antiClockwise,
-                                             skyFix, startMaterial);
+        writeSkyMaskStrip(*startNode, *base, direction, skyFix, startMaterial);
     }
 }
 
@@ -2263,10 +2264,11 @@ static void writeLeafSkyMaskCap(int skyCap)
 
     rvertex_t *verts;
     uint numVerts;
-    buildLeafPlaneGeometry(*bspLeaf, (skyCap & SKYCAP_UPPER) != 0, skyCapZ(bspLeaf, skyCap),
+    buildLeafPlaneGeometry(*bspLeaf, (skyCap & SKYCAP_UPPER)? Anticlockwise : Clockwise,
+                           skyCapZ(bspLeaf, skyCap),
                            &verts, &numVerts);
 
-    RL_AddPoly(PT_FAN, RPF_DEFAULT | RPF_SKYMASK, numVerts, verts, NULL);
+    RL_AddPoly(PT_FAN, RPF_DEFAULT | RPF_SKYMASK, numVerts, verts, 0);
     R_FreeRendVertices(verts);
 }
 

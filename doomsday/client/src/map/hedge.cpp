@@ -28,13 +28,17 @@ using namespace de;
 
 DENG2_PIMPL(HEdge)
 {
-    /// Map Line::Side attributed to the half-edge. Can be @c 0 (mini-edge).
+    /// Map Line::Side attributed to the half-edge. Can be @c 0 (partition segment).
     Line::Side *lineSide;
 
     Instance(Public *i)
         : Base(i),
           lineSide(0)
     {}
+
+    inline HEdge **neighborAdr(ClockDirection direction) {
+        return direction == Clockwise? &self._next : &self._prev;
+    }
 };
 
 HEdge::HEdge(Vertex &from, Line::Side *lineSide)
@@ -42,8 +46,8 @@ HEdge::HEdge(Vertex &from, Line::Side *lineSide)
 {
     _from = &from;
     _to = 0;
-    _next = 0;
-    _prev = 0;
+    _next = this;
+    _prev = this;
     _twin = 0;
     _bspLeaf = 0;
     _angle = 0;
@@ -97,16 +101,9 @@ Vertex const &HEdge::vertex(int to) const
     return const_cast<Vertex const &>(const_cast<HEdge *>(this)->vertex(to));
 }
 
-HEdge &HEdge::next() const
+HEdge &HEdge::navigate(ClockDirection direction) const
 {
-    DENG2_ASSERT(_next != 0);
-    return *_next;
-}
-
-HEdge &HEdge::prev() const
-{
-    DENG2_ASSERT(_prev != 0);
-    return *_prev;
+    return **d->neighborAdr(direction);
 }
 
 bool HEdge::hasTwin() const
