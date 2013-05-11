@@ -105,10 +105,20 @@ public:
      */
     class KeyElement : public Element {
     public:
-        KeyElement(String const &name, Value const &value) : Element(Key, name), _value(value) {}
+        enum Flag {
+            Attribute = 0x1,
+            DefaultFlags = 0
+        };
+        Q_DECLARE_FLAGS(Flags, Flag)
+
+    public:
+        KeyElement(String const &name, Value const &value, Flags const &f = DefaultFlags)
+            : Element(Key, name), _value(value), _flags(f) {}
 
         void setValue(Value const &v) { _value = v; }
         Value const &value() const { return _value; }
+
+        Flags flags() const { return _flags; }
 
         ValueList values() const {
             return ValueList() << _value;
@@ -116,6 +126,7 @@ public:
 
     private:
         Value _value;
+        Flags _flags;
     };
 
     /**
@@ -173,17 +184,13 @@ public:
 
         void clear();
 
-        void add(Element *elem) {
-            DENG2_ASSERT(elem != 0);
-            elem->setParent(this);
-            _contentsInOrder.append(elem); // owned
-            _contents.insert(elem->name(), elem); // not owned (name may be empty)
-        }
+        void add(Element *elem);
 
-        Element *find(String const &name) const {
-            Contents::const_iterator found = _contents.find(name);
-            if(found == _contents.end()) return 0;
-            return found.value();
+        Element *find(String const &name) const;
+
+        template <typename T>
+        T *findAs(String const &name) const {
+            return dynamic_cast<T *>(find(name));
         }
 
         /**
@@ -192,11 +199,7 @@ public:
          *
          * @param name  Name of a key element in the block.
          */
-        Value keyValue(String const &name) const {
-            Element *e = find(name);
-            if(!e || !e->isKey()) return Value();
-            return static_cast<KeyElement *>(e)->value();
-        }
+        Value keyValue(String const &name) const;
 
         /**
          * Looks for an element based on a path where a colon ':' is used to
@@ -273,6 +276,7 @@ private:
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Info::Element::Value::Flags)
+Q_DECLARE_OPERATORS_FOR_FLAGS(Info::KeyElement::Flags)
 
 } // namespace de
 

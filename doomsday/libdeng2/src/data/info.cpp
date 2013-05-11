@@ -433,8 +433,9 @@ DENG2_PIMPL_NOREF(Info)
                 nextToken();
                 InfoValue value = parseValue();
 
-                // This becomes a key element inside the block.
-                block->add(new KeyElement(keyName, value));
+                // This becomes a key element inside the block but it's
+                // flagged as Attribute.
+                block->add(new KeyElement(keyName, value, KeyElement::Attribute));
             }
 
             endToken = (peekToken() == "("? ")" : "}");
@@ -498,7 +499,6 @@ DENG2_PIMPL_NOREF(Info)
                               .arg(startLine));
         }
 
-        LogBuffer::appBuffer().flush();
         DENG2_ASSERT(peekToken() == endToken);
 
         // Move past the closing parentheses.
@@ -532,6 +532,39 @@ void Info::BlockElement::clear()
     }
     _contents.clear();
     _contentsInOrder.clear();
+}
+
+void Info::BlockElement::add(Info::Element *elem)
+{
+    DENG2_ASSERT(elem != 0);
+
+    if(elem->name() && _contents.contains(elem->name()))
+    {
+        LOG_AS("Info::BlockElement");
+        LOG_WARNING("Block '%s' already has an element named '%s'")
+                << name() << elem->name();
+    }
+
+    elem->setParent(this);
+    _contentsInOrder.append(elem); // owned
+    if(!elem->name().isEmpty())
+    {
+        _contents.insert(elem->name(), elem); // not owned (name may be empty)
+    }
+}
+
+Info::Element *Info::BlockElement::find(String const &name) const
+{
+    Contents::const_iterator found = _contents.find(name);
+    if(found == _contents.end()) return 0;
+    return found.value();
+}
+
+Info::Element::Value Info::BlockElement::keyValue(String const &name) const
+{
+    Element *e = find(name);
+    if(!e || !e->isKey()) return Value();
+    return static_cast<KeyElement *>(e)->value();
 }
 
 Info::Element *Info::BlockElement::findByPath(String const &path) const
