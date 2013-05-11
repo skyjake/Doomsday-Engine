@@ -756,13 +756,13 @@ public:
     Polyobj &polyobj() const;
 
     /**
-     * Change the attributed polyobj which owns the line.
+     * Change the polyobj attributed to the line.
      *
-     * @param newOwner New polyobj to attribute as the to the line. Can be
-     *                 @c 0, to clear the attribution. (Note that the polyobj
-     *                 may also represent this relationship, so the relevant
+     * @param newOwner New polyobj to attribute as the line to. Can be @c 0,
+     *                 to clear the attribution. (Note that the polyobj may
+     *                 also represent this relationship, so the relevant
      *                 method(s) of Polyobj will also need to be called to
-     *                 complete the job of removing this relationship.)
+     *                 complete the job of clearing this relationship.)
      */
     void setPolyobj(Polyobj *newOwner);
 
