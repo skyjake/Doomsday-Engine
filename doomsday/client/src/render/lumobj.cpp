@@ -1163,8 +1163,8 @@ boolean LOIT_ClipLumObjBySight(void *data, void *context)
             // Ignore half-edges facing the wrong way.
             if(hedge->isFlagged(HEdge::FacingFront))
             {
-                coord_t fromV1[2] = { hedge->fromOrigin().x, hedge->fromOrigin().y };
-                coord_t toV1[2]   = {   hedge->toOrigin().x,   hedge->toOrigin().y };
+                coord_t fromV1[2] = { hedge->origin().x, hedge->origin().y };
+                coord_t toV1[2]   = { hedge->twin().origin().x, hedge->twin().origin().y };
                 if(V2d_Intercept2(lum->origin, eye, fromV1, toV1, 0, 0, 0))
                 {
                     luminousClipped[lumIdx] = 1;

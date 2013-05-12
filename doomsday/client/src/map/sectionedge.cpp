@@ -332,7 +332,7 @@ SectionEdge::SectionEdge(HEdge &hedge, int section, int edge)
     : d(new Instance(this, &hedge.lineSide(), section,
                            edge? Anticlockwise : Clockwise,
                            hedge.lineOffset() + (edge? hedge.length() : 0),
-                           &hedge.vertex(edge)))
+                           edge? &hedge.twin().vertex() : &hedge.vertex()))
 {
     DENG_ASSERT(hedge.hasLineSide() && hedge.lineSide().hasSections());
 }

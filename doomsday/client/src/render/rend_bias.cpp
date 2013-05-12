@@ -71,7 +71,7 @@ static biastracker_t trackApplied;
 static float biasAmount;
 
 // Head of the biassurface list for the current map.
-static biassurface_t *surfaces;
+static BiasSurface *surfaces;
 static zblockset_t *biasSurfaceBlockSet;
 
 void SB_Register()
@@ -92,20 +92,20 @@ void SB_Register()
 /*    C_VAR_INT("rend-dev-bias-solo", &editSelector, CVF_NO_ARCHIVE, -1, 255);*/
 }
 
-static inline biassurface_t *allocBiasSurface()
+static inline BiasSurface *allocBiasSurface()
 {
     if(biasSurfaceBlockSet)
     {
         // Use the block allocator.
-        biassurface_t *bsuf = (biassurface_t *) ZBlockSet_Allocate(biasSurfaceBlockSet);
+        BiasSurface *bsuf = (BiasSurface *) ZBlockSet_Allocate(biasSurfaceBlockSet);
         std::memset(bsuf, 0, sizeof(*bsuf));
         return bsuf;
     }
 
-    return (biassurface_t *) M_Calloc(sizeof(biassurface_t));
+    return (BiasSurface *) M_Calloc(sizeof(BiasSurface));
 }
 
-static inline void freeBiasSurface(biassurface_t *bsuf)
+static inline void freeBiasSurface(BiasSurface *bsuf)
 {
     if(biasSurfaceBlockSet)
     {
@@ -116,9 +116,9 @@ static inline void freeBiasSurface(biassurface_t *bsuf)
     M_Free(bsuf);
 }
 
-biassurface_t *SB_CreateSurface()
+BiasSurface *SB_CreateSurface()
 {
-    biassurface_t *bsuf = allocBiasSurface();
+    BiasSurface *bsuf = allocBiasSurface();
 
     // Link it in to the global list.
     bsuf->next = surfaces;
@@ -127,7 +127,7 @@ biassurface_t *SB_CreateSurface()
     return bsuf;
 }
 
-void SB_DestroySurface(biassurface_t *bsuf)
+void SB_DestroySurface(BiasSurface *bsuf)
 {
     if(!bsuf) return;
 
@@ -140,7 +140,7 @@ void SB_DestroySurface(biassurface_t *bsuf)
         }
         else if(surfaces->next)
         {
-            biassurface_t *p = surfaces->next, *last = surfaces;
+            BiasSurface *p = surfaces->next, *last = surfaces;
 
             do
             {
@@ -263,7 +263,7 @@ void SB_InitForMap(char const *uniqueID)
     if(biasSurfaceBlockSet)
         ZBlockSet_Delete(biasSurfaceBlockSet);
 
-    biasSurfaceBlockSet = ZBlockSet_New(sizeof(biassurface_t), 512, PU_APPSTATIC);
+    biasSurfaceBlockSet = ZBlockSet_New(sizeof(BiasSurface), 512, PU_APPSTATIC);
     surfaces = NULL;
 
     // Check all the loaded Light definitions for any matches.
@@ -317,7 +317,7 @@ void SB_InitForMap(char const *uniqueID)
 
         for(int i = 0; i < 3; ++i)
         {
-            biassurface_t *bsuf = SB_CreateSurface();
+            BiasSurface *bsuf = SB_CreateSurface();
 
             bsuf->size = 4;
             bsuf->illum = illums;
@@ -332,7 +332,7 @@ void SB_InitForMap(char const *uniqueID)
     {
         for(int i = 0; i < sector->planeCount(); ++i)
         {
-            biassurface_t *bsuf = SB_CreateSurface();
+            BiasSurface *bsuf = SB_CreateSurface();
 
             bsuf->size = bspLeaf->numFanVertices();
             bsuf->illum = illums;
@@ -350,7 +350,7 @@ void SB_InitForMap(char const *uniqueID)
 
         for(int i = 0; i < 3; ++i)
         {
-            biassurface_t *bsuf = SB_CreateSurface();
+            BiasSurface *bsuf = SB_CreateSurface();
 
             bsuf->size = 4;
             bsuf->illum = illums;
@@ -423,7 +423,7 @@ void SB_InitVertexIllum(vertexillum_t *villum)
         villum->casted[i].source = -1;
 }
 
-void SB_SurfaceInit(biassurface_t *bsuf)
+void SB_SurfaceInit(BiasSurface *bsuf)
 {
     DENG_ASSERT(bsuf);
 
@@ -433,7 +433,7 @@ void SB_SurfaceInit(biassurface_t *bsuf)
     }
 }
 
-void SB_SurfaceMoved(biassurface_t *bsuf)
+void SB_SurfaceMoved(BiasSurface *bsuf)
 {
     DENG_ASSERT(bsuf);
 
@@ -454,7 +454,7 @@ static float SB_Dot(source_t *src, Vector3d const &point, Vector3f const &normal
     return delta.dot(normal);
 }
 
-static void updateAffected(biassurface_t *bsuf, Vector2d const &from,
+static void updateAffected(BiasSurface *bsuf, Vector2d const &from,
                            Vector2d const &to, Vector3f const &normal)
 {
     DENG_ASSERT(bsuf != 0);
@@ -507,7 +507,7 @@ static void updateAffected(biassurface_t *bsuf, Vector2d const &from,
     }
 }
 
-static void updateAffected2(biassurface_t *bsuf, struct rvertex_s const *rvertices,
+static void updateAffected2(BiasSurface *bsuf, struct rvertex_s const *rvertices,
     size_t numVertices, Vector3d const &point, Vector3f const &normal)
 {
     DENG_ASSERT(bsuf != 0 && rvertices != 0);
@@ -703,7 +703,7 @@ BEGIN_PROF( PROF_BIAS_UPDATE );
     }
 
     // Apply to all surfaces.
-    for(biassurface_t *bsuf = surfaces; bsuf; bsuf = bsuf->next)
+    for(BiasSurface *bsuf = surfaces; bsuf; bsuf = bsuf->next)
     {
         SB_TrackerApply(&bsuf->tracker, &allChanges);
 
@@ -795,7 +795,7 @@ static boolean SB_CheckColorOverride(biasaffection_t *affected)
 }
 #endif
 
-void SB_RendPoly(struct ColorRawf_s *rcolors, biassurface_t *bsuf,
+void SB_RendPoly(struct ColorRawf_s *rcolors, BiasSurface *bsuf,
     struct rvertex_s const *rvertices, size_t numVertices,
     Vector3f const &surfaceNormal, float sectorLightLevel,
     de::MapElement const *mapElement, int elmIdx)
@@ -830,7 +830,7 @@ void SB_RendPoly(struct ColorRawf_s *rcolors, biassurface_t *bsuf,
         {
             HEdge const *hedge = mapElement->castTo<HEdge>();
 
-            updateAffected(bsuf, hedge->fromOrigin(), hedge->toOrigin(), surfaceNormal);
+            updateAffected(bsuf, hedge->origin(), hedge->twin().origin(), surfaceNormal);
         }
         else
         {

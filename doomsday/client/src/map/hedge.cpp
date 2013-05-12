@@ -22,6 +22,10 @@
 
 #include "Sector"
 
+#ifdef __CLIENT__
+#  include "render/rend_bias.h"
+#endif
+
 #include "map/hedge.h"
 
 using namespace de;
@@ -41,19 +45,20 @@ DENG2_PIMPL(HEdge)
     }
 };
 
-HEdge::HEdge(Vertex &from, Line::Side *lineSide)
+HEdge::HEdge(Vertex &vertex, Line::Side *lineSide)
     : MapElement(DMU_HEDGE), d(new Instance(this))
 {
-    _from = &from;
-    _to = 0;
-    _next = this;
-    _prev = this;
+    _vertex = &vertex;
+    _next = 0;
+    _prev = 0;
     _twin = 0;
     _bspLeaf = 0;
     _angle = 0;
     _length = 0;
     _lineOffset = 0;
+#ifdef __CLIENT__
     std::memset(_bsuf, 0, sizeof(_bsuf));
+#endif
     _flags = 0;
 
     d->lineSide = lineSide;
@@ -62,8 +67,7 @@ HEdge::HEdge(Vertex &from, Line::Side *lineSide)
 HEdge::HEdge(HEdge const &other)
     : MapElement(DMU_HEDGE), d(new Instance(this))
 {
-    _from = other._from;
-    _to = other._to;
+    _vertex = other._vertex;
     _next = other._next;
     _prev = other._prev;
     _twin = other._twin;
@@ -71,7 +75,9 @@ HEdge::HEdge(HEdge const &other)
     _angle = other._angle;
     _length = other._length;
     _lineOffset = other._lineOffset;
+#ifdef __CLIENT__
     std::memcpy(_bsuf, other._bsuf, sizeof(_bsuf));
+#endif
     _flags = other._flags;
 
     d->lineSide = other.d->lineSide;
@@ -90,20 +96,25 @@ HEdge::~HEdge()
 #endif
 }
 
-Vertex &HEdge::vertex(int to)
+Vertex &HEdge::vertex() const
 {
-    DENG_ASSERT((to? _to : _from) != 0);
-    return to? *_to : *_from;
+    return *_vertex;
 }
 
-Vertex const &HEdge::vertex(int to) const
+bool HEdge::hasNeighbor(ClockDirection direction) const
 {
-    return const_cast<Vertex const &>(const_cast<HEdge *>(this)->vertex(to));
+    return (*d->neighborAdr(direction)) != 0;
 }
 
-HEdge &HEdge::navigate(ClockDirection direction) const
+HEdge &HEdge::neighbor(ClockDirection direction) const
 {
-    return **d->neighborAdr(direction);
+    HEdge **neighborAdr = d->neighborAdr(direction);
+    if(*neighborAdr)
+    {
+        return **neighborAdr;
+    }
+    /// @throw MissingNeighborError Attempted with no relevant neighbor attributed.
+    throw MissingNeighborError("HEdge::neighbor", QString("No %1 neighbor is attributed").arg(direction == Clockwise? "Clockwise" : "Anticlockwise"));
 }
 
 bool HEdge::hasTwin() const
@@ -181,23 +192,28 @@ void HEdge::setFlags(Flags flagsToChange, FlagOp operation)
     applyFlagOperation(_flags, flagsToChange, operation);
 }
 
-biassurface_t &HEdge::biasSurfaceForGeometryGroup(uint groupId)
+#ifdef __CLIENT__
+
+BiasSurface &HEdge::biasSurfaceForGeometryGroup(uint groupId)
 {
     if(groupId <= Line::Side::Top)
     {
-        DENG2_ASSERT(_bsuf[groupId]);
+        DENG2_ASSERT(_bsuf[groupId] != 0);
         return *_bsuf[groupId];
     }
     /// @throw InvalidGeometryGroupError Attempted with an invalid geometry group id.
     throw UnknownGeometryGroupError("HEdge::biasSurfaceForGeometryGroup", QString("Invalid group id %1").arg(groupId));
 }
 
+#endif // __CLIENT__
+
 coord_t HEdge::pointDistance(const_pvec2d_t point, coord_t *offset) const
 {
+    DENG_ASSERT(point != 0);
     /// @todo Why are we calculating this every time?
-    Vector2d direction = _to->origin() - _from->origin();
+    Vector2d direction = twin().origin() - _vertex->origin();
 
-    coord_t fromOriginV1[2] = { fromOrigin().x, fromOrigin().y };
+    coord_t fromOriginV1[2] = { origin().x, origin().y };
     coord_t directionV1[2]  = { direction.x, direction.y };
     return V2d_PointLineDistance(point, fromOriginV1, directionV1, offset);
 }
@@ -206,9 +222,9 @@ coord_t HEdge::pointOnSide(const_pvec2d_t point) const
 {
     DENG_ASSERT(point != 0);
     /// @todo Why are we calculating this every time?
-    Vector2d direction = _to->origin() - _from->origin();
+    Vector2d direction = twin().origin() - _vertex->origin();
 
-    coord_t fromOriginV1[2] = { fromOrigin().x, fromOrigin().y };
+    coord_t fromOriginV1[2] = { origin().x, origin().y };
     coord_t directionV1[2]  = { direction.x, direction.y };
     return V2d_PointOnLineSide(point, fromOriginV1, directionV1);
 }
@@ -218,11 +234,12 @@ int HEdge::property(setargs_t &args) const
     switch(args.prop)
     {
     case DMU_VERTEX0:
-        DMU_GetValue(DMT_HEDGE_V, &_from, &args, 0);
+        DMU_GetValue(DMT_HEDGE_V, &_vertex, &args, 0);
         break;
-    case DMU_VERTEX1:
-        DMU_GetValue(DMT_HEDGE_V, &_to, &args, 0);
-        break;
+    case DMU_VERTEX1: {
+        Vertex *twinVertex = &twin().vertex();
+        DMU_GetValue(DMT_HEDGE_V, &twinVertex, &args, 0);
+        break; }
     case DMU_LENGTH:
         DMU_GetValue(DMT_HEDGE_LENGTH, &_length, &args, 0);
         break;

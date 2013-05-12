@@ -76,18 +76,20 @@ typedef struct biastracker_s {
 /**
  * Stores the data pertaining to vertex lighting for a worldmap, surface.
  */
-typedef struct biassurface_s {
+struct BiasSurface
+{
     uint updated;
     uint size;
     vertexillum_t *illum; // [size]
     biastracker_t tracker;
     biasaffection_t affected[MAX_BIAS_AFFECTED];
 
-    struct biassurface_s *next;
-} biassurface_t;
+    BiasSurface *next;
+};
 
-extern int useBias; // Bias lighting enabled.
-extern uint currentTimeSB;
+DENG_EXTERN_C int useBias; // Bias lighting enabled.
+DENG_EXTERN_C uint currentTimeSB;
+DENG_EXTERN_C int numSources;
 
 /**
  * Register console variables for Shadow Bias.
@@ -102,11 +104,11 @@ void SB_InitForMap(char const *uniqueId);
 
 void SB_InitVertexIllum(vertexillum_t *villum);
 
-struct biassurface_s *SB_CreateSurface(void);
+BiasSurface *SB_CreateSurface(void);
 
-void SB_DestroySurface(struct biassurface_s *bsuf);
+void SB_DestroySurface(BiasSurface *bsuf);
 
-void SB_SurfaceMoved(struct biassurface_s *bsuf);
+void SB_SurfaceMoved(BiasSurface *bsuf);
 
 /**
  * Do initial processing that needs to be done before rendering a
@@ -129,7 +131,7 @@ void SB_EndFrame(void);
  * @param mapElement    Ptr to either a HEdge or BspLeaf.
  * @param elmIdx        Used with BspLeafs to select a specific plane.
  */
-void SB_RendPoly(struct ColorRawf_s *rcolors, struct biassurface_s *bsuf,
+void SB_RendPoly(struct ColorRawf_s *rcolors, BiasSurface *bsuf,
     struct rvertex_s const *rvertices, size_t numVertices, de::Vector3f const &normal,
     float sectorLightLevel, de::MapElement const *mapElement, int elmIdx);
 

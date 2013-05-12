@@ -30,6 +30,10 @@
 #include "Sector"
 #include "Vertex"
 
+#ifdef __CLIENT__
+#  include "render/rend_bias.h"
+#endif
+
 #include "map/bspleaf.h"
 
 using namespace de;
@@ -126,14 +130,14 @@ DENG2_PIMPL(BspLeaf)
             {
                 HEdge *other = firstNode;
 
-                base = &fanBase->from();
+                base = &fanBase->vertex();
                 do
                 {
                     // Test this triangle?
                     if(!(fanBase != firstNode && (other == fanBase || other == &fanBase->prev())))
                     {
-                        a = &other->from();
-                        b = &other->next().from();
+                        a = &other->vertex();
+                        b = &other->next().vertex();
 
                         if(de::abs(triangleArea(base->origin(), a->origin(), b->origin())) <= MIN_TRIANGLE_EPSILON)
                         {
@@ -232,11 +236,11 @@ void BspLeaf::updateAABox()
     if(!_hedge) return; // Very odd...
 
     HEdge *hedgeIt = _hedge;
-    V2d_InitBoxXY(d->aaBox.arvec2, hedgeIt->fromOrigin().x, hedgeIt->fromOrigin().y);
+    V2d_InitBoxXY(d->aaBox.arvec2, hedgeIt->origin().x, hedgeIt->origin().y);
 
     while((hedgeIt = &hedgeIt->next()) != _hedge)
     {
-        V2d_AddToBoxXY(d->aaBox.arvec2, hedgeIt->fromOrigin().x, hedgeIt->fromOrigin().y);
+        V2d_AddToBoxXY(d->aaBox.arvec2, hedgeIt->origin().x, hedgeIt->origin().y);
     }
 }
 
@@ -331,7 +335,7 @@ HEdge *BspLeaf::fanBase() const
     return d->fanBase;
 }
 
-biassurface_t &BspLeaf::biasSurfaceForGeometryGroup(int groupId)
+BiasSurface &BspLeaf::biasSurfaceForGeometryGroup(int groupId)
 {
     DENG2_ASSERT(d->sector != 0);
     if(groupId >= 0 && groupId < d->sector->planeCount())
@@ -367,12 +371,12 @@ void BspLeaf::printHEdges() const
     HEdge const *hedge = _hedge;
     do
     {
-        coord_t angle = M_DirectionToAngleXY(hedge->fromOrigin().x - d->center.x,
-                                             hedge->fromOrigin().y - d->center.y);
+        coord_t angle = M_DirectionToAngleXY(hedge->origin().x - d->center.x,
+                                             hedge->origin().y - d->center.y);
 
         LOG_DEBUG("  half-edge %p: Angle %1.6f %s -> %s")
             << de::dintptr(hedge) << angle
-            << hedge->fromOrigin().asText() << hedge->toOrigin().asText();
+            << hedge->origin().asText() << hedge->twin().origin().asText();
 
     } while((hedge = &hedge->next()) != _hedge);
 }

@@ -75,7 +75,7 @@ public:
      */
     DENG2_DEFINE_AUDIENCE(FlagsChange, void lineFlagsChanged(Line &line, int oldFlags))
 
-    /// Edge/vertex identifiers:
+    /// Logical edge identifiers:
     enum
     {
         From,

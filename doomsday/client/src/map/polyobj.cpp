@@ -31,6 +31,10 @@
 
 #include "render/r_main.h" // validCount
 
+#ifdef __CLIENT__
+#  include "render/rend_bias.h"
+#endif
+
 #include "map/polyobj.h"
 
 using namespace de;
@@ -97,7 +101,9 @@ polyobj_s::~polyobj_s()
 {
     foreach(Line *line, lines())
     {
-        delete line->front().leftHEdge();
+        HEdge *hedge = line->front().leftHEdge();
+        delete hedge->twinPtr();
+        delete hedge;
     }
 
     delete static_cast<Lines *>(_lines);

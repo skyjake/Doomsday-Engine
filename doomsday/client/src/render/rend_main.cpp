@@ -702,7 +702,7 @@ struct rendworldpoly_params_t
 // For bias:
     MapElement     *mapElement;
     int             elmIdx;
-    biassurface_t  *bsuf;
+    BiasSurface    *bsuf;
 
 // Wall only:
     struct {
@@ -1338,8 +1338,8 @@ static float wallSectionEdgeLightLevelDelta(Line::Side &side, int section, int e
 static void wallSectionLightLevelDeltas(SectionEdge const &leftEdge, SectionEdge const &rightEdge,
     float &leftDelta, float &rightDelta)
 {
-    leftDelta  = wallSectionEdgeLightLevelDelta(leftEdge.lineSide(), leftEdge.section(), HEdge::From);
-    rightDelta = wallSectionEdgeLightLevelDelta(rightEdge.lineSide(), rightEdge.section(), HEdge::To);
+    leftDelta  = wallSectionEdgeLightLevelDelta(leftEdge.lineSide(), leftEdge.section(), Line::From);
+    rightDelta = wallSectionEdgeLightLevelDelta(rightEdge.lineSide(), rightEdge.section(), Line::To);
 
     if(!de::fequal(leftDelta, rightDelta))
     {
@@ -1439,7 +1439,7 @@ static uint projectSurfaceShadows(Surface &surface, float glowStrength,
  * @param flags  @ref writeWallSectionFlags
  */
 static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rightEdge,
-    MapElement &mapElement, biassurface_t &biasSurface,
+    MapElement &mapElement, BiasSurface &biasSurface,
     int flags = DEFAULT_WRITE_WALL_SECTION_FLAGS)
 {
     BspLeaf *bspLeaf = currentBspLeaf;
@@ -1851,7 +1851,7 @@ static coord_t skyFixCeilZ(Plane const *frontCeil, Plane const *backCeil)
 static void skyFixZCoords(HEdge *hedge, int skyCap, coord_t *bottom, coord_t *top)
 {
     Sector const *frontSec = hedge->bspLeafSectorPtr();
-    Sector const *backSec  = hedge->hasTwin()? hedge->twin().bspLeafSectorPtr() : 0;
+    Sector const *backSec  = hedge->twin().hasBspLeaf()? hedge->twin().bspLeafSectorPtr() : 0;
     Plane const *ffloor = &frontSec->floor();
     Plane const *fceil  = &frontSec->ceiling();
     Plane const *bceil  = backSec? &backSec->ceiling() : 0;
@@ -1890,7 +1890,7 @@ static int chooseHEdgeSkyFixes(HEdge *hedge, int skyCap)
 
     int fixes = 0;
     Sector const *frontSec = hedge->bspLeafSectorPtr();
-    Sector const *backSec  = hedge->hasTwin()? hedge->twin().bspLeafSectorPtr() : 0;
+    Sector const *backSec  = hedge->twin().hasBspLeaf()? hedge->twin().bspLeafSectorPtr() : 0;
 
     if(!backSec || backSec != frontSec)
     {
@@ -2014,12 +2014,12 @@ static void buildSkyMaskStrip(HEdge &startNode, HEdge &endNode, ClockDirection d
     }
     else
     {
-        HEdge *afterEndNode = &endNode.navigate(direction);
+        HEdge *afterEndNode = &endNode.neighbor(direction);
         HEdge *node = &startNode;
         do
         {
             *vertsSize += 2;
-        } while((node = &node->navigate(direction)) != afterEndNode);
+        } while((node = &node->neighbor(direction)) != afterEndNode);
     }
 
     // Build geometry.
@@ -2049,7 +2049,7 @@ static void buildSkyMaskStrip(HEdge &startNode, HEdge &endNode, ClockDirection d
             rtexcoord_t *t1 = coords? &(*coords)[n + windOffset] : 0;
             rtexcoord_t *t2 = coords? &(*coords)[n + (windOffset^1)] : 0;
 
-            buildStripEdge(node->fromOrigin(), zBottom, zTop, texS, v1, v2, t1, t2);
+            buildStripEdge(node->origin(), zBottom, zTop, texS, v1, v2, t1, t2);
 
             if(coords)
             {
@@ -2065,7 +2065,7 @@ static void buildSkyMaskStrip(HEdge &startNode, HEdge &endNode, ClockDirection d
         rtexcoord_t *t1 = coords? &(*coords)[n + windOffset] : 0;
         rtexcoord_t *t2 = coords? &(*coords)[n + (windOffset^1)] : 0;
 
-        buildStripEdge(node->navigate(direction).fromOrigin(),
+        buildStripEdge(node->neighbor(direction).origin(),
                        zBottom, zTop, texS, v1, v2, t1, t2);
 
         if(coords)
@@ -2075,7 +2075,7 @@ static void buildSkyMaskStrip(HEdge &startNode, HEdge &endNode, ClockDirection d
 
         n += 2;
 
-    } while((node = &node->navigate(direction)) != &endNode);
+    } while((node = &node->neighbor(direction)) != &endNode);
 }
 
 static void writeSkyMaskStrip(HEdge &startNode, HEdge &endNode, ClockDirection direction,
@@ -2145,15 +2145,15 @@ static uint buildLeafPlaneGeometry(BspLeaf const &leaf, ClockDirection direction
     HEdge *node = baseNode;
     do
     {
-        V3f_Set((*verts)[n].pos, node->fromOrigin().x, node->fromOrigin().y, height);
+        V3f_Set((*verts)[n].pos, node->origin().x, node->origin().y, height);
         n++;
-    } while((node = &node->navigate(direction)) != baseNode);
+    } while((node = &node->neighbor(direction)) != baseNode);
 
     // The last vertex is always equal to the first.
     if(!fanBase)
     {
-        V3f_Set((*verts)[n].pos, leaf.firstHEdge()->fromOrigin().x,
-                                 leaf.firstHEdge()->fromOrigin().y,
+        V3f_Set((*verts)[n].pos, leaf.firstHEdge()->origin().x,
+                                 leaf.firstHEdge()->origin().y,
                                  height);
     }
 
@@ -2239,7 +2239,7 @@ static void writeLeafSkyMaskStrips(int skyFix)
         if(beginNewStrip) continue;
 
         // On to the next node.
-        node = &node->navigate(direction);
+        node = &node->neighbor(direction);
 
         // Are we done?
         if(node == base) break;
@@ -2414,7 +2414,7 @@ static int pvisibleWallSections(HEdge &hedge, bool &twoSided)
     DENG_ASSERT(hedge.isFlagged(HEdge::FacingFront));
 
     // One-sided?
-    if(!hedge.hasTwin() || !hedge.twin().bspLeaf().hasSector() ||
+    if(!hedge.twin().hasBspLeaf() || !hedge.twin().bspLeaf().hasSector() ||
        /* Solid side of a "one-way window"? */
        !(hedge.twin().hasLineSide() && hedge.twin().lineSide().hasSections()))
     {
@@ -2493,8 +2493,8 @@ static void writeLeafWallSections()
 
             if(pvisSections & Line::Side::BottomFlag)
             {
-                SectionEdge leftEdge(hedge, Line::Side::Bottom, HEdge::From);
-                SectionEdge rightEdge(hedge, Line::Side::Bottom, HEdge::To);
+                SectionEdge leftEdge(hedge, Line::Side::Bottom, Line::From);
+                SectionEdge rightEdge(hedge, Line::Side::Bottom, Line::To);
 
                 leftEdge.prepare();
                 rightEdge.prepare();
@@ -2509,8 +2509,8 @@ static void writeLeafWallSections()
 
             if(pvisSections & Line::Side::TopFlag)
             {
-                SectionEdge leftEdge(hedge, Line::Side::Top, HEdge::From);
-                SectionEdge rightEdge(hedge, Line::Side::Top, HEdge::To);
+                SectionEdge leftEdge(hedge, Line::Side::Top, Line::From);
+                SectionEdge rightEdge(hedge, Line::Side::Top, Line::To);
 
                 leftEdge.prepare();
                 rightEdge.prepare();
@@ -2528,8 +2528,8 @@ static void writeLeafWallSections()
 
             if(pvisSections & Line::Side::MiddleFlag)
             {
-                SectionEdge leftEdge(hedge, Line::Side::Middle, HEdge::From);
-                SectionEdge rightEdge(hedge, Line::Side::Middle, HEdge::To);
+                SectionEdge leftEdge(hedge, Line::Side::Middle, Line::From);
+                SectionEdge rightEdge(hedge, Line::Side::Middle, Line::To);
 
                 leftEdge.prepare();
                 rightEdge.prepare();
@@ -2560,7 +2560,7 @@ static void writeLeafWallSections()
             // not in the void).
             if(coveredOpenRange && !P_IsInVoid(viewPlayer))
             {
-                C_AddRangeFromViewRelPoints(hedge.fromOrigin(), hedge.toOrigin());
+                C_AddRangeFromViewRelPoints(hedge.origin(), hedge.twin().origin());
             }
         }
 
@@ -2586,8 +2586,8 @@ static void writeLeafPolyobjs()
             // Done here because of the logic of doom.exe wrt the automap.
             reportWallSectionDrawn(hedge.line());
 
-            SectionEdge leftEdge(hedge, Line::Side::Middle, HEdge::From);
-            SectionEdge rightEdge(hedge, Line::Side::Middle, HEdge::To);
+            SectionEdge leftEdge(hedge, Line::Side::Middle, Line::From);
+            SectionEdge rightEdge(hedge, Line::Side::Middle, Line::To);
 
             leftEdge.prepare();
             rightEdge.prepare();
@@ -2602,7 +2602,7 @@ static void writeLeafPolyobjs()
                 // We can occlude the wall range if the opening is filled (when the viewer is not in the void).
                 if(opaque && !P_IsInVoid(viewPlayer))
                 {
-                    C_AddRangeFromViewRelPoints(hedge.fromOrigin(), hedge.toOrigin());
+                    C_AddRangeFromViewRelPoints(hedge.origin(), hedge.twin().origin());
                 }
             }
         }
@@ -2625,20 +2625,18 @@ static void markFrontFacingHEdges()
     BspLeaf *bspLeaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(bspLeaf));
 
-    if(HEdge *base = bspLeaf->firstHEdge())
+    HEdge *base = bspLeaf->firstHEdge();
+    HEdge *hedge = base;
+    do
     {
-        HEdge *hedge = base;
-        do
+        // Occlusions can only happen where two sectors contact.
+        if(hedge->hasLineSide())
         {
-            // Occlusions can only happen where two sectors contact.
-            if(hedge->hasLineSide())
-            {
-                // Which way is it facing?
-                double dot = viewFacingDot(hedge->fromOrigin(), hedge->toOrigin());
-                hedge->setFlags(HEdge::FacingFront, dot < 0? UnsetFlags : SetFlags);
-            }
-        } while((hedge = &hedge->next()) != base);
-    }
+            // Which way is it facing?
+            double dot = viewFacingDot(hedge->origin(), hedge->twin().origin());
+            hedge->setFlags(HEdge::FacingFront, dot < 0? UnsetFlags : SetFlags);
+        }
+    } while((hedge = &hedge->next()) != base);
 
     if(Polyobj *po = bspLeaf->firstPolyobj())
     {
@@ -2647,7 +2645,7 @@ static void markFrontFacingHEdges()
             HEdge *hedge = line->front().leftHEdge();
 
             // Which way is it facing?
-            double dot = viewFacingDot(hedge->fromOrigin(), hedge->toOrigin());
+            double dot = viewFacingDot(hedge->origin(), hedge->twin().origin());
             hedge->setFlags(HEdge::FacingFront, dot < 0? UnsetFlags : SetFlags);
         }
     }
@@ -2675,14 +2673,14 @@ static void occludeHEdge(HEdge const &hedge, bool frontFacing)
     if(!hedge.hasLineSide() || !hedge.lineSide().hasSections()) return;
 
     // Occlusions should only happen where two sectors meet.
-    if(!hedge.hasTwin() || !hedge.twin().bspLeafSectorPtr()) return;
+    if(!hedge.twin().hasBspLeaf() || !hedge.twin().bspLeafSectorPtr()) return;
 
     Sector const &frontSec = hedge.bspLeaf().sector();
     Sector const &backSec  = hedge.twin().bspLeaf().sector();
 
     // Choose start and end vertexes so that it's facing forward.
-    Vertex const &from = hedge.vertex(frontFacing^1);
-    Vertex const &to   = hedge.vertex(frontFacing  );
+    Vertex const &from = frontFacing? hedge.vertex() : hedge.twin().vertex();
+    Vertex const &to   = frontFacing? hedge.twin().vertex() : hedge.vertex();
 
     coord_t openBottom, openTop;
     R_VisOpenRange(hedge.lineSide(), &frontSec, &backSec, &openBottom, &openTop);
@@ -2728,7 +2726,7 @@ static inline void clipFrontFacingHEdge(HEdge &hedge)
 {
     if(hedge.isFlagged(HEdge::FacingFront))
     {
-        if(!C_CheckRangeFromViewRelPoints(hedge.fromOrigin(), hedge.toOrigin()))
+        if(!C_CheckRangeFromViewRelPoints(hedge.origin(), hedge.twin().origin()))
         {
             hedge.setFlags(HEdge::FacingFront, UnsetFlags);
         }
@@ -2740,17 +2738,15 @@ static void clipFrontFacingHEdges()
     BspLeaf *bspLeaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(bspLeaf));
 
-    if(HEdge *base = bspLeaf->firstHEdge())
+    HEdge *base = bspLeaf->firstHEdge();
+    HEdge *hedge = base;
+    do
     {
-        HEdge *hedge = base;
-        do
+        if(hedge->hasLineSide())
         {
-            if(hedge->hasLineSide())
-            {
-                clipFrontFacingHEdge(*hedge);
-            }
-        } while((hedge = &hedge->next()) != base);
-    }
+            clipFrontFacingHEdge(*hedge);
+        }
+    } while((hedge = &hedge->next()) != base);
 
     if(Polyobj *po = bspLeaf->firstPolyobj())
     {
@@ -3328,7 +3324,7 @@ static void drawVector(Vector3f const &vector, float scalar, const float color[3
     glEnd();
 }
 
-static void drawSurfaceTangentSpaceVectors(Surface *suf, Vector3f const &origin)
+static void drawSurfaceTangentSpaceVectors(Surface *suf, Vector3d const &origin)
 {
     int const VISUAL_LENGTH = 20;
 
@@ -3359,7 +3355,7 @@ static void Rend_DrawSurfaceVectors()
 
     glDisable(GL_CULL_FACE);
 
-    Vector3f origin;
+    Vector3d origin;
     foreach(HEdge *hedge, theMap->hedges())
     {
         if(!hedge->hasLineSide() || hedge->line().definesPolyobj())
@@ -3368,13 +3364,14 @@ static void Rend_DrawSurfaceVectors()
         if(!hedge->hasBspLeaf() || !hedge->bspLeaf().hasSector())
             continue;
 
-        if(!(hedge->hasTwin() && hedge->twin().hasBspLeaf() && hedge->twin().bspLeaf().hasSector()))
+        if(!(hedge->twin().hasBspLeaf() && hedge->twin().hasBspLeaf() && hedge->twin().bspLeaf().hasSector()))
         {
             coord_t const bottom = hedge->bspLeafSector().floor().visHeight();
-            coord_t const top    = hedge->bspLeafSector().ceiling().visHeight();
+            coord_t const top = hedge->bspLeafSector().ceiling().visHeight();
+            Vector2d center = (hedge->twin().origin() + hedge->origin()) / 2;
             Surface *suf = &hedge->lineSide().middle();
 
-            origin = Vector3f(hedge->center(), bottom + (top - bottom) / 2);
+            origin = Vector3d(center, bottom + (top - bottom) / 2);
             drawSurfaceTangentSpaceVectors(suf, origin);
         }
         else
@@ -3385,10 +3382,11 @@ static void Rend_DrawSurfaceVectors()
             if(side.middle().hasMaterial())
             {
                 coord_t const bottom = hedge->bspLeafSector().floor().visHeight();
-                coord_t const top    = hedge->bspLeafSector().ceiling().visHeight();
+                coord_t const top = hedge->bspLeafSector().ceiling().visHeight();
+                Vector2d center = (hedge->twin().origin() + hedge->origin()) / 2;
                 Surface *suf = &side.middle();
 
-                origin = Vector3f(hedge->center(), bottom + (top - bottom) / 2);
+                origin = Vector3d(center, bottom + (top - bottom) / 2);
                 drawSurfaceTangentSpaceVectors(suf, origin);
             }
 
@@ -3398,10 +3396,11 @@ static void Rend_DrawSurfaceVectors()
                  backSec->ceilingSurface().hasSkyMaskedMaterial()))
             {
                 coord_t const bottom = backSec->ceiling().visHeight();
-                coord_t const top    = hedge->bspLeafSector().ceiling().visHeight();
+                coord_t const top = hedge->bspLeafSector().ceiling().visHeight();
+                Vector2d center = (hedge->twin().origin() + hedge->origin()) / 2;
                 Surface *suf = &side.top();
 
-                origin = Vector3f(hedge->center(), bottom + (top - bottom) / 2);
+                origin = Vector3d(center, bottom + (top - bottom) / 2);
                 drawSurfaceTangentSpaceVectors(suf, origin);
             }
 
@@ -3411,10 +3410,11 @@ static void Rend_DrawSurfaceVectors()
                  backSec->floorSurface().hasSkyMaskedMaterial()))
             {
                 coord_t const bottom = hedge->bspLeafSector().floor().visHeight();
-                coord_t const top    = backSec->floor().visHeight();
+                coord_t const top = backSec->floor().visHeight();
+                Vector2d center = (hedge->twin().origin() + hedge->origin()) / 2;
                 Surface *suf = &side.bottom();
 
-                origin = Vector3f(hedge->center(), bottom + (top - bottom) / 2);
+                origin = Vector3d(center, bottom + (top - bottom) / 2);
                 drawSurfaceTangentSpaceVectors(suf, origin);
             }
         }
@@ -3427,7 +3427,7 @@ static void Rend_DrawSurfaceVectors()
 
         foreach(Plane *plane, sector.planes())
         {
-            origin = Vector3f(bspLeaf->center(), plane->visHeight());
+            origin = Vector3d(bspLeaf->center(), plane->visHeight());
 
             if(plane->type() != Plane::Middle && plane->surface().hasSkyMaskedMaterial())
                 origin.z = theMap->skyFix(plane->type() == Plane::Ceiling);
@@ -3443,7 +3443,7 @@ static void Rend_DrawSurfaceVectors()
 
         foreach(Line *line, polyobj->lines())
         {
-            origin = Vector3f(line->center(), zPos);
+            origin = Vector3d(line->center(), zPos);
             drawSurfaceTangentSpaceVectors(&line->front().middle(), origin);
         }
     }

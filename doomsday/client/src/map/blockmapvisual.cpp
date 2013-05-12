@@ -76,68 +76,66 @@ static int rendBspLeaf(BspLeaf *bspLeaf, void * /*parameters*/)
         float length, dx, dy, normal[2], unit[2];
         vec2f_t start, end;
 
-        if(HEdge *base = bspLeaf->firstHEdge())
+        HEdge *base = bspLeaf->firstHEdge();
+        HEdge *hedge = base;
+        do
         {
-            HEdge *hedge = base;
-            do
+            V2f_Set(start, hedge->origin().x, hedge->origin().y);
+            V2f_Set(end,   hedge->twin().origin().x, hedge->twin().origin().y);
+
+            glBegin(GL_LINES);
+                glVertex2fv(start);
+                glVertex2fv(end);
+            glEnd();
+
+            dx = end[VX] - start[VX];
+            dy = end[VY] - start[VY];
+            length = sqrt(dx * dx + dy * dy);
+            if(length > 0)
             {
-                V2f_Set(start, hedge->fromOrigin().x, hedge->fromOrigin().y);
-                V2f_Set(end,     hedge->toOrigin().x, hedge->toOrigin().y);
+                unit[VX] = dx / length;
+                unit[VY] = dy / length;
+                normal[VX] = -unit[VY];
+                normal[VY] = unit[VX];
 
-                glBegin(GL_LINES);
+                GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC));
+                glEnable(GL_TEXTURE_2D);
+
+                GL_BlendOp(GL_FUNC_ADD);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+                glBegin(GL_QUADS);
+                    glTexCoord2f(0.75f, 0.5f);
                     glVertex2fv(start);
+                    glTexCoord2f(0.75f, 0.5f);
                     glVertex2fv(end);
+                    glTexCoord2f(0.75f, 1);
+                    glVertex2f(end[VX] - normal[VX] * width,
+                               end[VY] - normal[VY] * width);
+                    glTexCoord2f(0.75f, 1);
+                    glVertex2f(start[VX] - normal[VX] * width,
+                               start[VY] - normal[VY] * width);
                 glEnd();
 
-                dx = end[VX] - start[VX];
-                dy = end[VY] - start[VY];
-                length = sqrt(dx * dx + dy * dy);
-                if(length > 0)
-                {
-                    unit[VX] = dx / length;
-                    unit[VY] = dy / length;
-                    normal[VX] = -unit[VY];
-                    normal[VY] = unit[VX];
+                glDisable(GL_TEXTURE_2D);
+                GL_BlendMode(BM_NORMAL);
+            }
 
-                    GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC));
-                    glEnable(GL_TEXTURE_2D);
+            // Draw the bounding box.
+            V2f_Set(start, bspLeaf->aaBox().minX, bspLeaf->aaBox().minY);
+            V2f_Set(end,   bspLeaf->aaBox().maxX, bspLeaf->aaBox().maxY);
 
-                    GL_BlendOp(GL_FUNC_ADD);
-                    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-
-                    glBegin(GL_QUADS);
-                        glTexCoord2f(0.75f, 0.5f);
-                        glVertex2fv(start);
-                        glTexCoord2f(0.75f, 0.5f);
-                        glVertex2fv(end);
-                        glTexCoord2f(0.75f, 1);
-                        glVertex2f(end[VX] - normal[VX] * width,
-                                   end[VY] - normal[VY] * width);
-                        glTexCoord2f(0.75f, 1);
-                        glVertex2f(start[VX] - normal[VX] * width,
-                                   start[VY] - normal[VY] * width);
-                    glEnd();
-
-                    glDisable(GL_TEXTURE_2D);
-                    GL_BlendMode(BM_NORMAL);
-                }
-
-                // Draw the bounding box.
-                V2f_Set(start, bspLeaf->aaBox().minX, bspLeaf->aaBox().minY);
-                V2f_Set(end,   bspLeaf->aaBox().maxX, bspLeaf->aaBox().maxY);
-
-                glBegin(GL_LINES);
-                    glVertex2f(start[VX], start[VY]);
-                    glVertex2f(  end[VX], start[VY]);
-                    glVertex2f(  end[VX], start[VY]);
-                    glVertex2f(  end[VX],   end[VY]);
-                    glVertex2f(  end[VX],   end[VY]);
-                    glVertex2f(start[VX],   end[VY]);
-                    glVertex2f(start[VX],   end[VY]);
-                    glVertex2f(start[VX], start[VY]);
-                glEnd();
-            } while((hedge = &hedge->next()) != base);
-        }
+            glBegin(GL_LINES);
+                glVertex2f(start[VX], start[VY]);
+                glVertex2f(  end[VX], start[VY]);
+                glVertex2f(  end[VX], start[VY]);
+                glVertex2f(  end[VX],   end[VY]);
+                glVertex2f(  end[VX],   end[VY]);
+                glVertex2f(start[VX],   end[VY]);
+                glVertex2f(start[VX],   end[VY]);
+                glVertex2f(start[VX], start[VY]);
+            glEnd();
+        } while((hedge = &hedge->next()) != base);
 
         bspLeaf->setValidCount(validCount);
     }

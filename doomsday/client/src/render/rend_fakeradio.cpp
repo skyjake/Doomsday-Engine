@@ -1084,7 +1084,7 @@ void Rend_RadioWallSection(SectionEdge const &leftEdge, SectionEdge const &right
     Line::Side &side            = leftEdge.lineSide();
     HEdge const *hedge          = side.leftHEdge();
     Sector const *frontSec      = hedge->bspLeafSectorPtr();
-    Sector const *backSec       = hedge->hasTwin() && leftEdge.section() != Line::Side::Middle? hedge->twin().bspLeafSectorPtr() : 0;
+    Sector const *backSec       = hedge->twin().hasBspLeaf() && leftEdge.section() != Line::Side::Middle? hedge->twin().bspLeafSectorPtr() : 0;
 
     coord_t const lineLength    = side.line().length();
     coord_t const sectionOffset = leftEdge.lineOffset();
@@ -1278,8 +1278,8 @@ static void writeShadowSection(int planeIndex, Line::Side &side, float shadowDar
     if(!leftMostHEdge || !leftMostHEdge->hasBspLeaf() ||
        !leftMostHEdge->bspLeaf().hasWorldVolume()) return;
 
-    ShadowEdge leftEdge(*side.leftHEdge(), HEdge::From);
-    ShadowEdge rightEdge(*side.leftHEdge(), HEdge::To);
+    ShadowEdge leftEdge(*side.leftHEdge(), Line::From);
+    ShadowEdge rightEdge(*side.leftHEdge(), Line::To);
 
     leftEdge.prepare(planeIndex);
     rightEdge.prepare(planeIndex);

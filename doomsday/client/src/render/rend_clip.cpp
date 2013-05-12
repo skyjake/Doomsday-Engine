@@ -981,8 +981,8 @@ int C_CheckBspLeaf(BspLeaf *leaf)
     do
     {
         // Shift for more accuracy.
-        anglist[n++] = bamsAtan2(int( (hedge->fromOrigin().y - vOrigin[VZ]) * 100 ),
-                                 int( (hedge->fromOrigin().x - vOrigin[VX]) * 100 ));
+        anglist[n++] = bamsAtan2(int( (hedge->origin().y - vOrigin[VZ]) * 100 ),
+                                 int( (hedge->origin().x - vOrigin[VX]) * 100 ));
 
     } while((hedge = &hedge->next()) != base);
 

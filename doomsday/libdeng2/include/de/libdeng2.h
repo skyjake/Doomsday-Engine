@@ -403,6 +403,14 @@ void applyFlagOperation(FlagsType &flags, FlagsType const &newFlags, FlagOp oper
 }
 
 /**
+ * Logical clock-wise direction identifiers.
+ */
+enum ClockDirection {
+    Anticlockwise = 0,
+    Clockwise     = 1
+};
+
+/**
  * All serialization in all contexts use a common protocol version number.
  * Whenever anything changes in serialization, the protocol version needs to be
  * incremented. Therefore, deserialization routines shouldn't check for

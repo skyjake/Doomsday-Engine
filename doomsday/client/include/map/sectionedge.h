@@ -64,7 +64,7 @@ public:
 
 public:
     SectionEdge(Line::Side &lineSide, int section, coord_t lineOffset,
-                Vertex &lineVertex, ClockDirection neighborScanDirection);
+                Vertex &lineVertex, de::ClockDirection neighborScanDirection);
 
     SectionEdge(HEdge &hedge, int section, int edge);
 

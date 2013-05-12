@@ -77,10 +77,10 @@ public:
      * Navigate to the adjacent line owner in the ring (if any). Note this may
      * be the same LineOwner.
      */
-    LineOwner &navigate(ClockDirection dir = Anticlockwise) { return *_link[dir]; }
+    LineOwner &navigate(de::ClockDirection dir = de::Anticlockwise) { return *_link[dir]; }
 
     /// @copydoc navigate()
-    LineOwner const &navigate(ClockDirection dir = Anticlockwise) const { return *_link[dir]; }
+    LineOwner const &navigate(de::ClockDirection dir = de::Anticlockwise) const { return *_link[dir]; }
 
     /**
      * Returns the previous line owner in the ring (anticlockwise). Note that
@@ -88,10 +88,10 @@ public:
      *
      * @see hasPrev()
      */
-    inline LineOwner &prev() { return navigate(Anticlockwise); }
+    inline LineOwner &prev() { return navigate(de::Anticlockwise); }
 
     /// @copydoc prev()
-    inline LineOwner const &prev() const { return navigate(Anticlockwise); }
+    inline LineOwner const &prev() const { return navigate(de::Anticlockwise); }
 
     /**
      * Returns the next line owner in the ring (clockwise). Note that this may
@@ -99,10 +99,10 @@ public:
      *
      * @see hasNext()
      */
-    inline LineOwner &next() { return navigate(Clockwise); }
+    inline LineOwner &next() { return navigate(de::Clockwise); }
 
     /// @copydoc next()
-    inline LineOwner const &next() const { return navigate(Clockwise); }
+    inline LineOwner const &next() const { return navigate(de::Clockwise); }
 
     /**
      * Returns the line "owner".

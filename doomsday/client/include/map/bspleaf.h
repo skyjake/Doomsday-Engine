@@ -27,15 +27,14 @@
 #include <de/Vector>
 
 #include "MapElement"
-#ifdef __CLIENT__
-#  include "render/rend_bias.h"
-#endif
+
 
 class HEdge;
 class Sector;
 struct polyobj_s;
 
 #ifdef __CLIENT__
+struct BiasSurface;
 struct ShadowLink;
 #endif // __CLIENT__
 
@@ -70,8 +69,8 @@ public: /// @todo Make private:
 
     ShadowLink *_shadows;
 
-    /// [sector->planeCount] size.
-    struct biassurface_s **_bsuf;
+    /// Sector::planeCount() size.
+    BiasSurface **_bsuf;
 
     uint _reverb[NUM_REVERB_DATA];
 
@@ -236,7 +235,7 @@ public:
      *
      * @param groupId  Geometry group identifier for the bias surface.
      */
-    biassurface_t &biasSurfaceForGeometryGroup(int groupId);
+    BiasSurface &biasSurfaceForGeometryGroup(int groupId);
 
     /**
      * Returns the first ShadowLink associated with the BSP leaf; otherwise @c 0.

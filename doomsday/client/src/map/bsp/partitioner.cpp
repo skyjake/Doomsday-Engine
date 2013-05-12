@@ -811,8 +811,8 @@ DENG2_PIMPL(Partitioner)
         // Now perform the split, updating vertex and relative segment links.
         LineSegment &frontRight = cloneLineSegment(frontLeft);
 
-        frontLeft.replaceTo(*newVert); frontLeft.hedge()._to = newVert;
-        frontRight.replaceFrom(*newVert); frontRight.hedge()._from = newVert;
+        frontLeft.replaceTo(*newVert);
+        frontRight.replaceFrom(*newVert); frontRight.hedge()._vertex = newVert;
 
         frontLeft.setRight(&frontRight);
         frontRight.setLeft(&frontLeft);
@@ -823,14 +823,14 @@ DENG2_PIMPL(Partitioner)
             LineSegment &backRight = frontLeft.twin();
             LineSegment &backLeft  = cloneLineSegment(backRight);
 
-            backLeft.replaceTo(*newVert); backLeft.hedge()._to = newVert;
-            backRight.replaceFrom(*newVert); backRight.hedge()._from = newVert;
+            backLeft.replaceTo(*newVert);
+            backRight.replaceFrom(*newVert); backRight.hedge()._vertex = newVert;
 
             backLeft.setRight(&backRight);
             backRight.setLeft(&backLeft);
 
             // Has this already been added to a leaf?
-            if(backRight.hasHEdge() && backRight.hedge().hasBspLeaf())
+            if(backRight.hedge().hasBspLeaf())
             {
                 // Update the in-leaf references.
                 backRight.hedge()._next = backLeft.hedgePtr();
@@ -839,9 +839,13 @@ DENG2_PIMPL(Partitioner)
                 backRight.hedge().bspLeaf()._hedgeCount += 1;
             }
 
-            // Twin the new pair with one another.
+            // Twin the new line segment pair with one another.
             frontRight.setTwin(&backLeft);
             backLeft.setTwin(&frontRight);
+
+            // Twin the new half-edge pair with one another.
+            frontRight.hedge()._twin = &backLeft.hedge();
+            backLeft.hedge()._twin = &frontRight.hedge();
         }
 
         return frontRight;
@@ -1398,8 +1402,8 @@ DENG2_PIMPL(Partitioner)
                 HEdge const *hedge1 = hedges.at(i);
                 HEdge const *hedge2 = hedges.at(i+1);
 
-                Vector2d v1Dist = hedge1->fromOrigin() - point;
-                Vector2d v2Dist = hedge2->fromOrigin() - point;
+                Vector2d v1Dist = hedge1->origin() - point;
+                Vector2d v2Dist = hedge2->origin() - point;
 
                 coord_t v1Angle = M_DirectionToAngleXY(v1Dist.x, v1Dist.y);
                 coord_t v2Angle = M_DirectionToAngleXY(v2Dist.x, v2Dist.y);
@@ -1488,7 +1492,7 @@ DENG2_PIMPL(Partitioner)
 
         if(selfRefChoice) return selfRefChoice;
 
-        /*
+        /**
          * Last resort:
          * @todo This is only necessary because of other failure cases in the
          * partitioning algorithm and to avoid producing a potentially
@@ -1511,11 +1515,15 @@ DENG2_PIMPL(Partitioner)
     {
         Vector2d center;
         int numPoints = 0;
-        for(HEdge const *hedge = leaf.firstHEdge(); hedge; hedge = hedge->_next)
+        HEdge const *hedge = leaf.firstHEdge();
+        forever
         {
-            center += hedge->fromOrigin();
-            center += hedge->toOrigin();
-            numPoints += 2;
+            center += hedge->origin();
+            numPoints += 1;
+
+            if(!hedge->hasNext())
+                break;
+            hedge = &hedge->next();
         }
         if(numPoints)
         {
@@ -1557,7 +1565,7 @@ DENG2_PIMPL(Partitioner)
                 }
                 /// kludge end
 
-                if(hedge->_next)
+                if(hedge->hasNext())
                 {
                     // Reverse link.
                     hedge->_next->_prev = hedge;
@@ -1606,6 +1614,24 @@ DENG2_PIMPL(Partitioner)
             // Sort the leaf's half-edges.
             clockwiseLeaf(*leaf, sortBuffer);
 
+            // Add a twin half-edge for any which don't yet have one.
+            {
+                HEdge *base = leaf->firstHEdge();
+                HEdge *hedge = base;
+                do
+                {
+                    if(!hedge->hasTwin())
+                    {
+                        DENG_ASSERT(&hedge->next() != hedge);
+                        DENG_ASSERT(&hedge->next().vertex() != &hedge->vertex());
+                        hedge->_twin = new HEdge(hedge->next().vertex());
+                        hedge->_twin->_twin = hedge;
+                        // There is now one more HEdge.
+                        numHEdges += 1;
+                    }
+                } while((hedge = &hedge->next()) != base);
+            }
+
             /*
              * Perform some post analysis on the built leaf.
              */
@@ -1642,8 +1668,7 @@ DENG2_PIMPL(Partitioner)
             HEdge const *hedge = base;
             do
             {
-                HEdge &next = hedge->next();
-                if(hedge->toOrigin() != next.fromOrigin())
+                if(hedge->next().origin() != hedge->twin().origin())
                 {
                     gaps++;
                 }
@@ -1658,10 +1683,10 @@ DENG2_PIMPL(Partitioner)
                 {
                     LOG_DEBUG("  half-edge %p %s -> %s")
                         << de::dintptr(hedge)
-                        << hedge->fromOrigin().asText(),
-                        << hedge->toOrigin().asText();
+                        << hedge->origin().asText(),
+                        << hedge->twin().origin().asText();
 
-                } while((hedge = hedge->next) != base);
+                } while((hedge = &hedge->next()) != base);
                 */
 
                 notifyPartialBspLeafBuilt(*leaf, gaps);
@@ -1770,7 +1795,6 @@ DENG2_PIMPL(Partitioner)
         lineSeg.setSector(&sec);
 
         lineSeg.setHEdge(new HEdge(from, side));
-        lineSeg.hedge()._to = &to;
         // There is now one more HEdge.
         numHEdges += 1;
 

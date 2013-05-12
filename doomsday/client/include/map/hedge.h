@@ -28,16 +28,11 @@
 #include "Line"
 #include "Vertex"
 
-#include "render/rend_bias.h"
+#ifdef __CLIENT__
+struct BiasSurface;
+#endif
 
 class Sector;
-
-/// Logical clock-wise direction identifiers:
-enum ClockDirection
-{
-    Anticlockwise,
-    Clockwise
-};
 
 /**
  * Map geometry half-edge.
@@ -45,12 +40,6 @@ enum ClockDirection
  * @em The twin of a half-edge is another HEdge, that which is on the other
  * side. If a twin half-edge is linked, they must always be updated as one.
  * (i.e., if one of the half-edges is split, the twin must be split also).
- *
- * @todo The design of this component presently means it cannot yet be rightly
- * considered a half-edge (there are two vertex links and two adjacent edge
- * links (among other discrepancies)). This component should be revised,
- * simplifying it accordingly, as this will in turn lead to dependent logic
- * improvements elsewhere. -ds
  *
  * @ingroup map
  */
@@ -60,28 +49,21 @@ public:
     /// Required BSP leaf is missing. @ingroup errors
     DENG2_ERROR(MissingBspLeafError);
 
+    /// Required neighbor half-edge is missing. @ingroup errors
+    DENG2_ERROR(MissingNeighborError);
+
     /// Required twin half-edge is missing. @ingroup errors
     DENG2_ERROR(MissingTwinError);
 
     /// Required line attribution is missing. @ingroup errors
     DENG2_ERROR(MissingLineSideError);
 
+#ifdef __CLIENT__
+
     /// The referenced geometry group does not exist. @ingroup errors
     DENG2_ERROR(UnknownGeometryGroupError);
 
-    /// Edge/vertex identifiers:
-    enum
-    {
-        From,
-        To
-    };
-
-    /// Logical side identifiers:
-    enum
-    {
-        Front,
-        Back
-    };
+#endif
 
     enum Flag
     {
@@ -90,8 +72,8 @@ public:
     Q_DECLARE_FLAGS(Flags, Flag)
 
 public: /// @todo Make private:
-    /// Start and End vertexes of the segment.
-    Vertex *_from, *_to;
+    /// Vertex of the half-edge.
+    Vertex *_vertex;
 
     /// Next half-edge (clockwise) around the @em face.
     HEdge *_next;
@@ -114,97 +96,76 @@ public: /// @todo Make private:
     /// Accurate length of the segment (v1 -> v2).
     coord_t _length;
 
+#ifdef __CLIENT__
     /// For each section of a Line::Side.
-    biassurface_t *_bsuf[3];
+    BiasSurface *_bsuf[3];
+#endif
 
     Flags _flags;
 
 public:
-    HEdge(Vertex &from, Line::Side *lineSide = 0);
+    HEdge(Vertex &vertex, Line::Side *lineSide = 0);
     HEdge(HEdge const &other);
     ~HEdge();
 
     /**
-     * Returns the specified edge vertex for the half-edge.
-     *
-     * @param to  If not @c 0 return the To vertex; otherwise the From vertex.
+     * Returns the vertex of the half-edge.
      */
-    Vertex &vertex(int to);
-
-    /// @copydoc vertex()
-    Vertex const &vertex(int to) const;
+    Vertex &vertex() const;
 
     /**
-     * Convenient accessor method for returning the origin of the specified
-     * edge vertex for the half-edge.
+     * Convenient accessor method for returning the origin coordinates for
+     * the vertex of the half-edge.
      *
      * @see vertex()
      */
-    inline de::Vector2d const &vertexOrigin(int to) const {
-        return vertex(to).origin();
-    }
+    inline de::Vector2d const &origin() const { return vertex().origin(); }
 
     /**
-     * Returns the From/Start vertex for the half-edge.
+     * Returns @c true iff the half-edge has a neighbor in the specifed direction
+     * around the face of the polyon.
      */
-    inline Vertex &from() { return vertex(From); }
-
-    /// @copydoc from()
-    inline Vertex const &from() const { return vertex(From); }
-
-    /**
-     * Convenient accessor method for returning the origin of the From/Start
-     * vertex for the half-edge.
-     *
-     * @see from()
-     */
-    inline de::Vector2d const &fromOrigin() const { return from().origin(); }
-
-    /**
-     * Returns the To/End vertex for the half-edge.
-     */
-    inline Vertex &to() { return vertex(To); }
-
-    inline Vertex const &to() const { return vertex(To); }
-
-    /**
-     * Convenient accessor method for returning the origin of the To/End
-     * vertex for the half-edge.
-     *
-     * @see to()
-     */
-    inline de::Vector2d const &toOrigin() const { return to().origin(); }
-
-    /**
-     * Returns the point on the line which lies at the exact center of the
-     * two vertexes.
-     */
-    inline de::Vector2d center() const {
-        return de::Vector2d(fromOrigin() + to().origin()) / 2;
-    }
+    bool hasNeighbor(de::ClockDirection direction) const;
 
     /**
      * Returns the neighbor half-edge in the specified @a direction around the
-     * face of the polygon (which might be *this* half-edge in the case of a
-     * degenerate polygon).
+     * face of the polygon.
      *
      * @param direction  Relative direction for desired neighbor half-edge.
      */
-    HEdge &navigate(ClockDirection direction) const;
+    HEdge &neighbor(de::ClockDirection direction) const;
 
     /**
-     * Returns the @em clockwise neighbor half-edge around the face of the polygon.
+     * Returns @c true iff the half-edge has a next (clockwise) neighbor around
+     * the face of the polygon.
      *
-     * @see navigate(), nextIsThis()
+     * @see hasNeighbor()
      */
-    inline HEdge &next() const { return navigate(Clockwise); }
+    inline bool hasNext() const { return hasNeighbor(de::Clockwise); }
 
     /**
-     * Returns the @em anticlockwise neighbor half-edge around the face of the polygon.
+     * Returns @c true iff the half-edge has a previous (anticlockwise) neighbor
+     * around the face of the polygon.
      *
-     * @see navigate(), prevIsThis()
+     * @see hasNeighbor()
      */
-    inline HEdge &prev() const { return navigate(Anticlockwise); }
+    inline bool hasPrev() const { return hasNeighbor(de::Anticlockwise); }
+
+    /**
+     * Returns the @em clockwise neighbor half-edge around the face of the
+     * polygon.
+     *
+     * @see neighbor(), hasNext()
+     */
+    inline HEdge &next() const { return neighbor(de::Clockwise); }
+
+    /**
+     * Returns the @em anticlockwise neighbor half-edge around the face of the
+     * polygon.
+     *
+     * @see neighbor(), hasPrev()
+     */
+    inline HEdge &prev() const { return neighbor(de::Anticlockwise); }
 
     /**
      * Returns @c true iff a @em twin is linked to the half-edge.
@@ -234,10 +195,9 @@ public:
     BspLeaf &bspLeaf() const;
 
     /**
-     * Convenient accessor method for returning the sector attributed to
-     * the BSP leaf for the half-edge. One should first determine whether
-     * a sector is indeed attributed to the BSP leaf (e.g., by calling
-     * @ref BspLeaf::hasSector()).
+     * Convenient accessor method for returning the sector attributed to the
+     * BSP leaf for the half-edge. One should first determine whether a sector
+     * is indeed attributed to the BSP leaf (e.g., by calling @ref BspLeaf::hasSector()).
      *
      * @see bspLeaf(), BspLeaf::sector()
      */
@@ -259,8 +219,8 @@ public:
     Line::Side &lineSide() const;
 
     /**
-     * Convenient accessor method for returning the line of the Line::Side which
-     * is attributed to the half-edge.
+     * Convenient accessor method for returning the line of the Line::Side
+     * attributed to the half-edge.
      *
      * @see hasLineSide(), lineSide()
      */
@@ -293,14 +253,16 @@ public:
     coord_t length() const;
 
     /**
-     * Returns the distance from @a point to the nearest point along the HEdge [0..1].
+     * Returns the distance from @a point to the nearest point along the HEdge
+     * (in the inclussive range 0..1).
      *
      * @param point  Point to measure the distance to in the map coordinate space.
      */
     coord_t pointDistance(const_pvec2d_t point, coord_t *offset) const;
 
     /**
-     * Returns the distance from @a point to the nearest point along the HEdge [0..1].
+     * Returns the distance from @a point to the nearest point along the HEdge
+     * (in the inclussive range 0..1).
      *
      * @param x  X axis point to measure the distance to in the map coordinate space.
      * @param y  Y axis point to measure the distance to in the map coordinate space.
@@ -356,12 +318,16 @@ public:
      */
     void setFlags(Flags flagsToChange, de::FlagOp operation = de::SetFlags);
 
+#ifdef __CLIENT__
+
     /**
      * Retrieve the bias surface for specified geometry @a groupId
      *
      * @param groupId  Geometry group identifier for the bias surface.
      */
-    biassurface_t &biasSurfaceForGeometryGroup(uint groupId);
+    BiasSurface &biasSurfaceForGeometryGroup(uint groupId);
+
+#endif // __CLIENT__
 
 protected:
     int property(setargs_t &args) const;

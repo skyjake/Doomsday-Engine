@@ -336,7 +336,7 @@ static void processHEdge(HEdge *hedge, void *parameters)
     DENG_ASSERT(hedge->hasBspLeaf() && !hedge->bspLeaf().isDegenerate());
 
     // There must be a back leaf to spread to.
-    if(!hedge->hasTwin() || !hedge->twin().hasBspLeaf()) return;
+    if(!hedge->twin().hasBspLeaf()) return;
 
     // Never spread to degenerate BspLeafs.
     if(hedge->twin().bspLeaf().isDegenerate()) return;

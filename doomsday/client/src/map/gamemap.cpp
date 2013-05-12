@@ -108,17 +108,28 @@ DENG2_PIMPL(GameMap)
             if(hedge->hasLineSide())
             {
                 Vertex const &vtx = hedge->lineSide().from();
-                hedge->_lineOffset = Vector2d(vtx.origin() - hedge->fromOrigin()).length();
+                hedge->_lineOffset = Vector2d(vtx.origin() - hedge->origin()).length();
             }
 
             // Calculate the length of the segment.
-            hedge->_length = Vector2d(hedge->fromOrigin() - hedge->toOrigin()).length();
+            //DENG_ASSERT(&hedge->twin().vertex() != &hedge->vertex());
+            hedge->_length = Vector2d(hedge->twin().origin() - hedge->origin()).length();
             if(hedge->_length == 0)
                 hedge->_length = 0.01f; // Hmm...
 
-            hedge->_angle = bamsAtan2(int( hedge->toOrigin().y - hedge->fromOrigin().y ),
-                                      int( hedge->toOrigin().x - hedge->fromOrigin().x )) << FRACBITS;
+            hedge->_angle = bamsAtan2(int( hedge->twin().origin().y - hedge->origin().y ),
+                                      int( hedge->twin().origin().x - hedge->origin().x )) << FRACBITS;
 
+            if(!hedge->twin().hasBspLeaf())
+            {
+                // Take ownership of the twin HEdge also.
+                HEdge *twin = hedge->twinPtr();
+                builder.take(twin);
+
+                // Add this HEdge to the LUT.
+                twin->setIndexInMap(hedges.count());
+                hedges.append(twin);
+            }
         } while((hedge = &hedge->next()) != base);
     }
 
@@ -228,7 +239,7 @@ DENG2_PIMPL(GameMap)
             {
                 int n = 0;
 
-                biassurface_t **newList = (biassurface_t **) Z_Calloc(sector->planeCount() * sizeof(biassurface_t *), PU_MAP, 0);
+                BiasSurface **newList = (BiasSurface **) Z_Calloc(sector->planeCount() * sizeof(BiasSurface *), PU_MAP, 0);
                 // Copy the existing list?
                 if(bspLeaf->_bsuf)
                 {
@@ -247,7 +258,7 @@ DENG2_PIMPL(GameMap)
                  */
                 /*if(!ddMapSetup)
                 {
-                    biassurface_t *bsuf = SB_CreateSurface();
+                    BiasSurface *bsuf = SB_CreateSurface();
 
                     bsuf->size = Rend_NumFanVerticesForBspLeaf(bspLeaf);
                     bsuf->illum = (vertexillum_t *) Z_Calloc(sizeof(vertexillum_t) * bsuf->size, PU_MAP, 0);
