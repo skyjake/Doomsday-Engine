@@ -29,6 +29,7 @@
 #include "de/TimeValue"
 #include "de/Writer"
 #include "de/Reader"
+#include "de/math.h"
 
 using namespace de;
 
@@ -262,6 +263,14 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
             "deserialize() can operate only on block values");
     }
         
+    case FLOOR:
+        if(args->size() != 2)
+        {
+            throw WrongArgumentsError("BuiltInExpression::evaluate",
+                                      "Expected exactly one argument for FLOOR");
+        }
+        return new NumberValue(std::floor(args->at(1).asNumber()));
+
     default:
         DENG2_ASSERT(false);
     }
@@ -317,6 +326,7 @@ BuiltInExpression::Type BuiltInExpression::findType(String const &identifier)
         { "Time",        AS_TIME },
         { "timedelta",   TIME_DELTA },
         { "Record",      AS_RECORD },
+        { "floor",       FLOOR },
         { NULL,          NONE }
     };
     
