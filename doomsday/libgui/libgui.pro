@@ -79,7 +79,7 @@ HEADERS += \
     include/de/gui/displaymode_native.h \
     include/de/gui/drawable.h \
     include/de/gui/font.h \
-    include/de/gui/fontbank.h
+    include/de/gui/fontbank.h \
     include/de/gui/glbuffer.h \
     include/de/gui/glentrypoints.h \
     include/de/gui/glprogram.h \
