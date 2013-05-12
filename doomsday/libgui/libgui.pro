@@ -52,6 +52,8 @@ HEADERS += \
     include/de/CanvasWindow \
     include/de/DisplayMode \
     include/de/Drawable \
+    include/de/Font \
+    include/de/FontBank \
     include/de/GLBuffer \
     include/de/GLProgram \
     include/de/GLShader \
@@ -76,6 +78,8 @@ HEADERS += \
     include/de/gui/displaymode.h \
     include/de/gui/displaymode_native.h \
     include/de/gui/drawable.h \
+    include/de/gui/font.h \
+    include/de/gui/fontbank.h
     include/de/gui/glbuffer.h \
     include/de/gui/glentrypoints.h \
     include/de/gui/glprogram.h \
@@ -103,6 +107,8 @@ SOURCES +=  \
     src/canvaswindow.cpp \
     src/displaymode.cpp \
     src/drawable.cpp \
+    src/font.cpp \
+    src/fontbank.cpp \
     src/glbuffer.cpp \
     src/glentrypoints.cpp \
     src/glprogram.cpp \
