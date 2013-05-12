@@ -122,7 +122,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
             for(Record::Members::const_iterator i = rec->dereference().members().begin();
                 i != rec->dereference().members().end(); ++i)
             {
-                dict->add(new TextValue(i->first), new RefValue(i->second));
+                dict->add(new TextValue(i.key()), new RefValue(i.value()));
             }
         }
         else
@@ -130,7 +130,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
             Record::Subrecords subs = rec->dereference().subrecords();
             DENG2_FOR_EACH(Record::Subrecords, i, subs)
             {
-                dict->add(new TextValue(i->first), new RecordValue(i->second));
+                dict->add(new TextValue(i.key()), new RecordValue(i.value()));
             }
         }
         return dict;

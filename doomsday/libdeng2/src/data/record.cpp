@@ -66,15 +66,16 @@ DENG2_PIMPL(Record)
         Subrecords subs;
         DENG2_FOR_EACH_CONST(Members, i, members)
         {
-            if(isSubrecord(*i->second))
+            if(isSubrecord(*i.value()))
             {
-                subs[i->second->name()] = static_cast<RecordValue &>(i->second->value()).record();
+                qDebug() << i.key();
+                subs.insert(i.key(), static_cast<RecordValue &>(i.value()->value()).record());
             }
         }
         return subs;
     }
 
-    Variable const *findMemberByPath(String const &name)
+    Variable const *findMemberByPath(String const &name) const
     {
         // Path notation allows looking into subrecords.
         int pos = name.indexOf('.');
@@ -86,10 +87,10 @@ DENG2_PIMPL(Record)
             return self[subName].value<RecordValue>().dereference().d->findMemberByPath(remaining);
         }
 
-        Members::const_iterator found = members.find(name);
-        if(found != members.end())
+        Members::const_iterator found = members.constFind(name);
+        if(found != members.constEnd())
         {
-            return found->second;
+            return found.value();
         }
 
         return 0;
@@ -146,7 +147,7 @@ DENG2_PIMPL(Record)
     {
         DENG2_FOR_EACH(Members, i, members)
         {
-            RecordValue *value = dynamic_cast<RecordValue *>(&i->second->value());
+            RecordValue *value = dynamic_cast<RecordValue *>(&i.value()->value());
             if(!value || !value->record()) continue;
 
             // Recurse into subrecords first.
@@ -195,8 +196,8 @@ void Record::clear()
     {
         DENG2_FOR_EACH(Members, i, d->members)
         {
-            i->second->audienceForDeletion -= this;
-            delete i->second;
+            i.value()->audienceForDeletion -= this;
+            delete i.value();
         }
         d->members.clear();
     }
@@ -207,11 +208,11 @@ void Record::copyMembersFrom(Record const &other, CopyBehavior behavior)
     DENG2_FOR_EACH_CONST(Members, i, other.d->members)
     {
         if(behavior == IgnoreDoubleUnderscoreMembers &&
-           i->first.startsWith("__")) continue;
+           i.key().startsWith("__")) continue;
 
-        Variable *var = new Variable(*i->second);
+        Variable *var = new Variable(*i.value());
         var->audienceForDeletion += this;
-        d->members[i->first] = var;
+        d->members[i.key()] = var;
     }
 }
 
@@ -263,7 +264,7 @@ Variable &Record::add(Variable *variable)
 Variable *Record::remove(Variable &variable)
 {
     variable.audienceForDeletion -= this;
-    d->members.erase(variable.name());
+    d->members.remove(variable.name());
     return &variable;
 }
 
@@ -349,10 +350,10 @@ Record &Record::addRecord(String const &name)
 Record *Record::remove(String const &name)
 {
     Members::const_iterator found = d->members.find(name);
-    if(found != d->members.end() && d->isSubrecord(*found->second))
+    if(found != d->members.end() && d->isSubrecord(*found.value()))
     {
-        Record *rec = static_cast<RecordValue *>(&found->second->value())->takeRecord();
-        remove(*found->second);
+        Record *rec = static_cast<RecordValue *>(&found.value()->value())->takeRecord();
+        remove(*found.value());
         return rec;
     }
     throw NotFoundError("Record::remove", "Subrecord '" + name + "' not found");
@@ -389,9 +390,9 @@ Record const &Record::subrecord(String const &name) const
     }
 
     Members::const_iterator found = d->members.find(name);
-    if(found != d->members.end() && d->isSubrecord(*found->second))
+    if(found != d->members.end() && d->isSubrecord(*found.value()))
     {
-        return *static_cast<RecordValue const &>(found->second->value()).record();
+        return *static_cast<RecordValue const &>(found.value()->value()).record();
     }
     throw NotFoundError("Record::subrecord", "Subrecord '" + name + "' not found");
 }
@@ -414,9 +415,9 @@ String Record::asText(String const &prefix, List *lines) const
         // Collect lines from this record.
         for(Members::const_iterator i = d->members.begin(); i != d->members.end(); ++i)
         {
-            String separator = (d->isSubrecord(*i->second)? "." : ":");
+            String separator = (d->isSubrecord(*i.value())? "." : ":");
 
-            KeyValue kv(prefix + i->first + separator, i->second->value().asText());
+            KeyValue kv(prefix + i.key() + separator, i.value()->value().asText());
             lines->push_back(kv);
         }
         return "";
@@ -432,7 +433,7 @@ String Record::asText(String const &prefix, List *lines) const
     asText(prefix, &allLines);
     
     // Sort and find maximum length.
-    allLines.sort();
+    qSort(allLines);
     for(List::iterator i = allLines.begin(); i != allLines.end(); ++i)
     {
         maxLength = maxLength.max(Vector2ui(i->first.size(), i->second.size()));
@@ -478,9 +479,9 @@ Function const *Record::function(String const &name) const
 void Record::operator >> (Writer &to) const
 {
     to << d->uniqueId << duint32(d->members.size());
-    for(Members::const_iterator i = d->members.begin(); i != d->members.end(); ++i)
+    DENG2_FOR_EACH_CONST(Members, i, d->members)
     {
-        to << *i->second;
+        to << *i.value();
     }
 }
     
@@ -520,7 +521,7 @@ void Record::operator << (Reader &from)
     // Observe all members for deletion.
     DENG2_FOR_EACH(Members, i, d->members)
     {
-        i->second->audienceForDeletion += this;
+        i.value()->audienceForDeletion += this;
     }
 }
 
@@ -531,7 +532,7 @@ void Record::variableBeingDeleted(Variable &variable)
     LOG_DEV_TRACE("Variable %p deleted, removing from Record %p", &variable << this);
 
     // Remove from our index.
-    d->members.erase(variable.name());
+    d->members.remove(variable.name());
 }
 
 QTextStream &operator << (QTextStream &os, Record const &record)

@@ -27,8 +27,8 @@
 #include "../Audience"
 #include "../Log"
 
-#include <map>
-#include <list>
+#include <QMap>
+#include <QList>
 
 namespace de {
 
@@ -57,10 +57,10 @@ public:
     /// All variables and subrecords in the record must have a name. @ingroup errors
     DENG2_ERROR(UnnamedError);
 
-    typedef std::map<String, Variable *> Members;
-    typedef std::map<String, Record *> Subrecords;
+    typedef QMap<String, Variable *> Members;
+    typedef QMap<String, Record *> Subrecords;
     typedef std::pair<String, String> KeyValue;
-    typedef std::list<KeyValue> List;
+    typedef QList<KeyValue> List;
 
     DENG2_DEFINE_AUDIENCE(Deletion, void recordBeingDeleted(Record &record))
 
