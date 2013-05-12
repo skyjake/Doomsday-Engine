@@ -655,6 +655,7 @@ data.files = $$OUT_PWD/../doomsday.pk3
 
 mod.files = \
     $$DENG_MODULES_DIR/Config.de \
+    $$DENG_MODULES_DIR/gui.de \
     $$DENG_MODULES_DIR/recutil.de
 
 # These fonts may be needed during the initial startup busy mode.
