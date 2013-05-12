@@ -336,7 +336,7 @@ uint R_ProjectShadowsToSurface(BspLeaf *bspLeaf, float blendFactor,
     V3f_Set(p.spParams.bitangent, bitangent.x, bitangent.y, bitangent.z);
     V3f_Set(p.spParams.normal,       normal.x,    normal.y,    normal.z);
 
-    R_IterateBspLeafContacts2(bspLeaf, OT_MOBJ, RIT_ProjectShadowToSurfaceIterator, (void *)&p);
+    R_IterateBspLeafContacts(*bspLeaf, OT_MOBJ, RIT_ProjectShadowToSurfaceIterator, (void *)&p);
 
     // Did we produce a projection list?
     return p.listIdx;

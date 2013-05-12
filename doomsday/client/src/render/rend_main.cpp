@@ -2773,7 +2773,7 @@ static void drawCurrentLeaf()
     leaf->sector()._frameFlags |= SIF_VISIBLE;
 
     markFrontFacingHEdges();
-    R_InitForBspLeaf(leaf);
+    R_InitForBspLeaf(*leaf);
     Rend_RadioBspLeafEdges(*leaf);
 
     /*

@@ -100,22 +100,22 @@ static objcontactlist_t *bspLeafContacts;
 
 static void spreadInBspLeaf(BspLeaf *bspLeaf, void *parameters);
 
-static inline objlinkblockmap_t *chooseObjlinkBlockmap(objtype_t type)
+static inline objlinkblockmap_t &chooseObjlinkBlockmap(objtype_t type)
 {
     DENG_ASSERT(VALID_OBJTYPE(type));
-    return blockmaps + (int)type;
+    return blockmaps[int( type )];
 }
 
-static inline uint toObjlinkBlockmapX(objlinkblockmap_t *obm, coord_t x)
+static inline uint toObjlinkBlockmapX(objlinkblockmap_t &obm, coord_t x)
 {
-    DENG_ASSERT(obm != 0 && x >= obm->origin[0]);
-    return uint( (x - obm->origin[0]) / coord_t( BLOCK_WIDTH ) );
+    DENG_ASSERT(x >= obm.origin[0]);
+    return uint( (x - obm.origin[0]) / coord_t( BLOCK_WIDTH ) );
 }
 
-static inline uint toObjlinkBlockmapY(objlinkblockmap_t *obm, coord_t y)
+static inline uint toObjlinkBlockmapY(objlinkblockmap_t &obm, coord_t y)
 {
-    DENG_ASSERT(obm != 0 && y >= obm->origin[1]);
-    return uint( (y - obm->origin[1]) / coord_t( BLOCK_HEIGHT ) );
+    DENG_ASSERT(y >= obm.origin[1]);
+    return uint( (y - obm.origin[1]) / coord_t( BLOCK_HEIGHT ) );
 }
 
 /**
@@ -125,19 +125,19 @@ static inline uint toObjlinkBlockmapY(objlinkblockmap_t *obm, coord_t y)
  *
  * @return  @c true if the coordinates specified had to be adjusted.
  */
-static bool toObjlinkBlockmapCell(objlinkblockmap_t *obm, uint coords[2],
+static bool toObjlinkBlockmapCell(objlinkblockmap_t &obm, uint coords[2],
     coord_t x, coord_t y)
 {
-    DENG_ASSERT(obm != 0 && coords != 0);
+    DENG_ASSERT(coords != 0);
 
     uint size[2];
-    Gridmap_Size(obm->gridmap, size);
+    Gridmap_Size(obm.gridmap, size);
 
-    coord_t max[2] = { obm->origin[0] + size[0] * BLOCK_WIDTH,
-                       obm->origin[1] + size[1] * BLOCK_HEIGHT };
+    coord_t max[2] = { obm.origin[0] + size[0] * BLOCK_WIDTH,
+                       obm.origin[1] + size[1] * BLOCK_HEIGHT };
 
     bool adjusted = false;
-    if(x < obm->origin[0])
+    if(x < obm.origin[0])
     {
         coords[VX] = 0;
         adjusted = true;
@@ -152,7 +152,7 @@ static bool toObjlinkBlockmapCell(objlinkblockmap_t *obm, uint coords[2],
         coords[VX] = toObjlinkBlockmapX(obm, x);
     }
 
-    if(y < obm->origin[1])
+    if(y < obm.origin[1])
     {
         coords[VY] = 0;
         adjusted = true;
@@ -242,10 +242,10 @@ void R_InitObjlinkBlockmapForMap()
     // Create the blockmaps.
     for(int i = 0; i < NUM_OBJ_TYPES; ++i)
     {
-        objlinkblockmap_t *obm = chooseObjlinkBlockmap(objtype_t( i ));
-        obm->origin[0] = min[VX];
-        obm->origin[1] = min[VY];
-        obm->gridmap = Gridmap_New(width, height, sizeof(objlinkblock_t), PU_MAPSTATIC);
+        objlinkblockmap_t &obm = chooseObjlinkBlockmap(objtype_t( i ));
+        obm.origin[0] = min[VX];
+        obm.origin[1] = min[VY];
+        obm.gridmap = Gridmap_New(width, height, sizeof(objlinkblock_t), PU_MAPSTATIC);
     }
 
     // Initialize obj => BspLeaf contact lists.
@@ -257,11 +257,11 @@ void R_DestroyObjlinkBlockmap()
 {
     for(int i = 0; i < NUM_OBJ_TYPES; ++i)
     {
-        objlinkblockmap_t *obm = chooseObjlinkBlockmap(objtype_t( i ));
-        if(!obm->gridmap) continue;
+        objlinkblockmap_t &obm = chooseObjlinkBlockmap(objtype_t( i ));
+        if(!obm.gridmap) continue;
 
-        Gridmap_Delete(obm->gridmap);
-        obm->gridmap = 0;
+        Gridmap_Delete(obm.gridmap);
+        obm.gridmap = 0;
     }
 
     if(bspLeafContacts)
@@ -271,7 +271,7 @@ void R_DestroyObjlinkBlockmap()
     }
 }
 
-int clearObjlinkBlock(void *obj, void *parameters)
+static int clearObjlinkBlock(void *obj, void *parameters)
 {
     DENG_UNUSED(parameters);
 
@@ -286,51 +286,60 @@ void R_ClearObjlinkBlockmap(objtype_t type)
 {
     DENG_ASSERT(VALID_OBJTYPE(type));
     // Clear all the contact list heads and spread flags.
-    Gridmap_Iterate(chooseObjlinkBlockmap(type)->gridmap, clearObjlinkBlock);
+    Gridmap_Iterate(chooseObjlinkBlockmap(type).gridmap, clearObjlinkBlock);
 }
 
 void R_ClearObjlinksForFrame()
 {
     for(int i = 0; i < NUM_OBJ_TYPES; ++i)
     {
-        objlinkblockmap_t *obm = chooseObjlinkBlockmap(objtype_t(i));
-        if(!obm->gridmap)
-            continue;
+        objlinkblockmap_t &obm = chooseObjlinkBlockmap(objtype_t(i));
+        if(!obm.gridmap) continue;
 
         R_ClearObjlinkBlockmap(objtype_t(i));
     }
 
     // Start reusing objlinks.
     objlinkCursor = objlinkFirst;
-    objlinks = NULL;
+    objlinks = 0;
 }
 
-void R_ObjlinkCreate(void *obj, objtype_t type)
+static void linkObjToBspLeaf(BspLeaf &bspLeaf, void *object, objtype_t type)
 {
-    objlink_t *link = allocObjlink();
-    link->obj = obj;
-    link->type = type;
-}
+    if(!object) return;
 
-int RIT_LinkObjToBspLeaf(BspLeaf *bspLeaf, void *parameters)
-{
-    linkobjtobspleafparams_t const *p = (linkobjtobspleafparams_t *) parameters;
+    // Never link to degenerate BspLeafs.
+    if(bspLeaf.isDegenerate()) return;
+
     objcontact_t *con = allocObjContact();
-
-    con->obj = p->obj;
+    con->obj = object;
     // Link the contact list for this bspLeaf.
-    linkContactToBspLeaf(con, p->type, bspLeaf->indexInMap());
+    linkContactToBspLeaf(con, type, bspLeaf.indexInMap());
+}
 
-    return false; // Continue iteration.
+static void createObjlink(BspLeaf &bspLeaf, void *object, objtype_t type)
+{
+    if(!object) return;
+
+    // We don't create objlinks for objects in degenerate BSPLeafs.
+    if(bspLeaf.isDegenerate()) return;
+
+    objlink_t *link = allocObjlink();
+    link->obj = object;
+    link->type = type;
 }
 
 static void processHEdge(HEdge *hedge, void *parameters)
 {
     contactfinderparams_t *parms = (contactfinderparams_t *) parameters;
-    DENG2_ASSERT(hedge != 0 && parms != 0);
+    DENG_ASSERT(hedge != 0 && parms != 0);
+    DENG_ASSERT(hedge->hasBspLeaf() && !hedge->bspLeaf().isDegenerate());
 
     // There must be a back leaf to spread to.
-    if(!hedge->hasTwin()) return;
+    if(!hedge->hasTwin() || !hedge->twin().hasBspLeaf()) return;
+
+    // Never spread to degenerate BspLeafs.
+    if(hedge->twin().bspLeaf().isDegenerate()) return;
 
     BspLeaf *leaf     = &hedge->bspLeaf();
     BspLeaf *backLeaf = &hedge->twin().bspLeaf();
@@ -409,10 +418,7 @@ static void processHEdge(HEdge *hedge, void *parameters)
     backLeaf->setValidCount(validCount);
 
     // Link up a new contact with the back BSP leaf.
-    linkobjtobspleafparams_t loParms;
-    loParms.obj  = parms->obj;
-    loParms.type = parms->objType;
-    RIT_LinkObjToBspLeaf(backLeaf, &loParms);
+    linkObjToBspLeaf(*backLeaf, parms->obj, parms->objType);
 
     spreadInBspLeaf(backLeaf, parms);
 }
@@ -428,7 +434,7 @@ static void processHEdge(HEdge *hedge, void *parameters)
  */
 static void spreadInBspLeaf(BspLeaf *bspLeaf, void *parameters)
 {
-    if(!bspLeaf || !bspLeaf->firstHEdge()) return;
+    if(!bspLeaf || bspLeaf->isDegenerate()) return;
 
     HEdge *base = bspLeaf->firstHEdge();
     HEdge *hedge = base;
@@ -450,7 +456,7 @@ static void findContacts(objlink_t *link)
 
     coord_t radius;
     pvec3d_t origin;
-    BspLeaf **bspLeafAdr;
+    BspLeaf *bspLeaf;
 
     switch(link->type)
     {
@@ -462,7 +468,7 @@ static void findContacts(objlink_t *link)
 
         origin = lum->origin;
         radius = LUM_OMNI(lum)->radius;
-        bspLeafAdr = &lum->bspLeaf;
+        bspLeaf = lum->bspLeaf;
         break; }
 #endif
     case OT_MOBJ: {
@@ -470,16 +476,12 @@ static void findContacts(objlink_t *link)
 
         origin = mo->origin;
         radius = R_VisualRadius(mo);
-        bspLeafAdr = &mo->bspLeaf;
+        bspLeaf = mo->bspLeaf;
         break; }
-
-    default:
-        DENG_ASSERT(false);
-        return;
     }
 
     // Do the BSP leaf spread. Begin from the obj's own BspLeaf.
-    (*bspLeafAdr)->setValidCount(++validCount);
+    bspLeaf->setValidCount(++validCount);
 
     contactfinderparams_t cfParms;
     cfParms.obj            = link->obj;
@@ -494,12 +496,9 @@ static void findContacts(objlink_t *link)
     cfParms.box[BOXTOP]    = cfParms.objOrigin[VY] + radius;
 
     // Always contact the obj's own BspLeaf.
-    linkobjtobspleafparams_t loParms;
-    loParms.obj  = link->obj;
-    loParms.type = link->type;
-    RIT_LinkObjToBspLeaf(*bspLeafAdr, &loParms);
+    linkObjToBspLeaf(*bspLeaf, link->obj, link->type);
 
-    spreadInBspLeaf(*bspLeafAdr, &cfParms);
+    spreadInBspLeaf(bspLeaf, &cfParms);
 }
 
 /**
@@ -510,24 +509,21 @@ static void findContacts(objlink_t *link)
  * @param bspLeaf    BspLeaf to spread the contacts of.
  * @param maxRadius  Maximum radius for the spread.
  */
-void R_ObjlinkBlockmapSpreadInBspLeaf(objlinkblockmap_t *obm, BspLeaf const *bspLeaf,
+static void spreadContactsForBspLeaf(objlinkblockmap_t &obm, BspLeaf const &bspLeaf,
     float maxRadius)
 {
-    DENG_ASSERT(obm != 0);
-    if(!bspLeaf) return; // Wha?
-
     uint minBlock[2];
-    toObjlinkBlockmapCell(obm, minBlock, bspLeaf->aaBox().minX - maxRadius,
-                                         bspLeaf->aaBox().minY - maxRadius);
+    toObjlinkBlockmapCell(obm, minBlock, bspLeaf.aaBox().minX - maxRadius,
+                                         bspLeaf.aaBox().minY - maxRadius);
 
     uint maxBlock[2];
-    toObjlinkBlockmapCell(obm, maxBlock, bspLeaf->aaBox().maxX + maxRadius,
-                                         bspLeaf->aaBox().maxY + maxRadius);
+    toObjlinkBlockmapCell(obm, maxBlock, bspLeaf.aaBox().maxX + maxRadius,
+                                         bspLeaf.aaBox().maxY + maxRadius);
 
     for(uint y = minBlock[1]; y <= maxBlock[1]; ++y)
     for(uint x = minBlock[0]; x <= maxBlock[0]; ++x)
     {
-        objlinkblock_t *block = (objlinkblock_t *) Gridmap_CellXY(obm->gridmap, x, y, true/*can allocate a block*/);
+        objlinkblock_t *block = (objlinkblock_t *) Gridmap_CellXY(obm.gridmap, x, y, true/*can allocate a block*/);
         if(block->doneSpread) continue;
 
         objlink_t *iter = block->head;
@@ -550,27 +546,28 @@ static inline float maxRadius(objtype_t type)
     return DDMOBJ_RADIUS_MAX;
 }
 
-void R_InitForBspLeaf(BspLeaf* bspLeaf)
+void R_InitForBspLeaf(BspLeaf &bspLeaf)
 {
+    if(bspLeaf.isDegenerate()) return;
+
 BEGIN_PROF( PROF_OBJLINK_SPREAD );
 
     for(int i = 0; i < NUM_OBJ_TYPES; ++i)
     {
-        objlinkblockmap_t *obm = chooseObjlinkBlockmap(objtype_t(i));
-        R_ObjlinkBlockmapSpreadInBspLeaf(obm, bspLeaf, maxRadius(objtype_t(i)));
+        objlinkblockmap_t &obm = chooseObjlinkBlockmap(objtype_t(i));
+        spreadContactsForBspLeaf(obm, bspLeaf, maxRadius(objtype_t(i)));
     }
 
 END_PROF( PROF_OBJLINK_SPREAD );
 }
 
 /// @pre  Coordinates held by @a blockXY are within valid range.
-static void linkObjlinkInBlockmap(objlinkblockmap_t *obm, objlink_t *link, uint blockXY[2])
+static void linkObjlinkInBlockmap(objlinkblockmap_t &obm, objlink_t &link, uint blockXY[2])
 {
-    if(!obm || !link || !blockXY) return; // Wha?
-
-    objlinkblock_t *block = (objlinkblock_t *) Gridmap_CellXY(obm->gridmap, blockXY[0], blockXY[1], true/*can allocate a block*/);
-    link->nextInBlock = block->head;
-    block->head = link;
+    DENG_ASSERT(blockXY != 0);
+    objlinkblock_t *block = (objlinkblock_t *) Gridmap_CellXY(obm.gridmap, blockXY[0], blockXY[1], true/*can allocate a block*/);
+    link.nextInBlock = block->head;
+    block->head = &link;
 }
 
 void R_LinkObjs()
@@ -587,17 +584,17 @@ BEGIN_PROF( PROF_OBJLINK_LINK );
         switch(link->type)
         {
 #ifdef __CLIENT__
-        case OT_LUMOBJ:     origin = ((lumobj_t *)link->obj)->origin; break;
+        case OT_LUMOBJ:
+            origin = ((lumobj_t *)link->obj)->origin; break;
 #endif
-        case OT_MOBJ:       origin = ((mobj_t *)link->obj)->origin; break;
-
-        default: DENG_ASSERT(false); // Invalid type.
+        case OT_MOBJ:
+            origin = ((mobj_t *)link->obj)->origin; break;
         }
 
-        objlinkblockmap_t *obm = chooseObjlinkBlockmap(link->type);
+        objlinkblockmap_t &obm = chooseObjlinkBlockmap(link->type);
         if(!toObjlinkBlockmapCell(obm, block, origin[VX], origin[VY]))
         {
-            linkObjlinkInBlockmap(obm, link, block);
+            linkObjlinkInBlockmap(obm, *link, block);
         }
         link = link->next;
     }
@@ -625,11 +622,11 @@ void R_InitForNewFrame()
     }
 }
 
-int R_IterateBspLeafContacts2(BspLeaf *bspLeaf, objtype_t type,
+int R_IterateBspLeafContacts(BspLeaf &bspLeaf, objtype_t type,
     int (*callback) (void *object, void *parameters), void *parameters)
 {
     DENG_ASSERT(VALID_OBJTYPE(type));
-    objcontactlist_t const &conList = bspLeafContacts[bspLeaf->indexInMap()];
+    objcontactlist_t const &conList = bspLeafContacts[bspLeaf.indexInMap()];
 
     for(objcontact_t *con = conList.head[type]; con; con = con->next)
     {
@@ -639,8 +636,28 @@ int R_IterateBspLeafContacts2(BspLeaf *bspLeaf, objtype_t type,
     return false; // Continue iteration.
 }
 
-int R_IterateBspLeafContacts(BspLeaf *bspLeaf, objtype_t type,
-    int (*callback) (void *object, void *parameters))
+void R_ObjlinkCreate(mobj_t &mobj)
 {
-    return R_IterateBspLeafContacts2(bspLeaf, type, callback, NULL/*no parameters*/);
+    if(!mobj.bspLeaf) return;
+    createObjlink(*mobj.bspLeaf, (void *)&mobj, OT_MOBJ);
 }
+
+void R_LinkObjToBspLeaf(BspLeaf &bspLeaf, mobj_t &mobj)
+{
+    linkObjToBspLeaf(bspLeaf, (void *)&mobj, OT_MOBJ);
+}
+
+#ifdef __CLIENT__
+
+void R_ObjlinkCreate(lumobj_t &lum)
+{
+    if(!lum.bspLeaf) return;
+    createObjlink(*lum.bspLeaf, (void *)&lum, OT_LUMOBJ);
+}
+
+void R_LinkObjToBspLeaf(BspLeaf &bspLeaf, lumobj_t &lum)
+{
+    linkObjToBspLeaf(bspLeaf, (void *)&lum, OT_LUMOBJ);
+}
+
+#endif // __CLIENT__

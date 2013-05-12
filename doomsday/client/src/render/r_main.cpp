@@ -808,7 +808,7 @@ BEGIN_PROF( PROF_MOBJ_INIT_ADD );
     foreach(Sector *sector, theMap->sectors())
     for(mobj_t *iter = sector->firstMobj(); iter; iter = iter->sNext)
     {
-        R_ObjlinkCreate(iter, OT_MOBJ); // For spreading purposes.
+        R_ObjlinkCreate(*iter); // For spreading purposes.
     }
 
 END_PROF( PROF_MOBJ_INIT_ADD );

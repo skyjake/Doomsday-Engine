@@ -1,4 +1,4 @@
-/** @file p_objlink.h
+/** @file map/p_objlink.h Object => BspLeaf contact blockmap.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,24 +17,17 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * p_objlink.c: Objlink management.
- *
- * Object => BspLeaf contacts and object => BspLeaf spreading.
- */
+#ifndef DENG_OBJLINK_BLOCKMAP_H
+#define DENG_OBJLINK_BLOCKMAP_H
 
-#ifndef LIBDENG_OBJLINK_BLOCKMAP_H
-#define LIBDENG_OBJLINK_BLOCKMAP_H
+class BspLeaf;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef enum {
-    OT_MOBJ,
-    OT_LUMOBJ,
+enum objtype_t
+{
+    OT_MOBJ       = 0,
+    OT_LUMOBJ     = 1,
     NUM_OBJ_TYPES
-} objtype_t;
+};
 
 #define VALID_OBJTYPE(val) ((val) >= OT_MOBJ && (val) < NUM_OBJ_TYPES)
 
@@ -44,71 +37,64 @@ typedef enum {
  * the Zone with a >= PU_MAP purge level and access to them is handled
  * with global pointers.
  *
- * \todo Encapsulate allocation of and access to the objlink blockmaps
+ * @todo Encapsulate allocation of and access to the objlink blockmaps
  *       within de::Map
  */
-void R_DestroyObjlinkBlockmap(void);
+void R_DestroyObjlinkBlockmap();
 
 /**
  * Construct the objlink blockmap for the current map.
  */
-void R_InitObjlinkBlockmapForMap(void);
+void R_InitObjlinkBlockmapForMap();
 
 /**
  * Initialize the object => BspLeaf contact lists, ready for linking to
  * objects. To be called at the beginning of a new world frame.
  */
-void R_InitForNewFrame(void);
+void R_InitForNewFrame();
 
 /**
  * To be called at the begining of a render frame to clear the objlink
  * blockmap prior to linking objects for the new viewer.
  */
-void R_ClearObjlinksForFrame(void);
+void R_ClearObjlinksForFrame();
 
 /**
  * Create a new object link of the specified @a type in the objlink blockmap.
  */
-void R_ObjlinkCreate(void* object, objtype_t type);
+void R_ObjlinkCreate(struct mobj_s &mobj);
+
+#ifdef __CLIENT__
+/// @copydoc R_ObjlinkCreate
+void R_ObjlinkCreate(struct lumobj_s &lumobj);
+#endif
 
 /**
  * To be called at the beginning of a render frame to link all objects
  * into the objlink blockmap.
  */
-void R_LinkObjs(void);
+void R_LinkObjs();
 
 /**
  * Spread object => BspLeaf links for the given @a BspLeaf. Note that
  * all object types will be spread at this time.
  */
-void R_InitForBspLeaf(BspLeaf* bspLeaf);
-
-typedef struct {
-    void* obj;
-    objtype_t type;
-} linkobjtobspleafparams_t;
+void R_InitForBspLeaf(BspLeaf &bspLeaf);
 
 /**
  * Create a new object => BspLeaf contact in the objlink blockmap.
- * Can be used as an iterator.
- *
- * @param paramaters  See: linkobjtobspleafparams_t
- *
- * @return  @c false (always).
  */
-int RIT_LinkObjToBspLeaf(BspLeaf* bspLeaf, void* paramaters);
+void R_LinkObjToBspLeaf(BspLeaf &bspLeaf, struct mobj_s &mobj);
+#ifdef __CLIENT__
+/// @copydoc R_LinkObjToBspLeaf
+void R_LinkObjToBspLeaf(BspLeaf &bspLeaf, struct lumobj_s &lumobj);
+#endif
 
 /**
  * Traverse the list of objects of the specified @a type which have been linked
  * with @a bspLeaf for the current render frame.
  */
-int R_IterateBspLeafContacts2(BspLeaf* bspLeaf, objtype_t type,
-    int (*func) (void* object, void* paramaters), void* paramaters);
-int R_IterateBspLeafContacts(BspLeaf* bspLeaf, objtype_t type,
-    int (*func) (void* object, void* paramaters)); /*paramaters=NULL*/
+int R_IterateBspLeafContacts(BspLeaf &bspLeaf, objtype_t type,
+    int (*func) (void *object, void *parameters), void *parameters = 0);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif /* LIBDENG_OBJLINK_BLOCKMAP_H */
+#endif // DENG_OBJLINK_BLOCKMAP_H

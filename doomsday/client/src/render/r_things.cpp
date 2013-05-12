@@ -1427,14 +1427,15 @@ int RIT_AddSprite(void *ptr, void *parameters)
 
 void R_AddSprites(BspLeaf *bspLeaf)
 {
-    addspriteparams_t params;
+    DENG_ASSERT(bspLeaf != 0);
 
     // Do not use validCount because other parts of the renderer may change it.
     if(bspLeaf->addSpriteCount() == frameCount)
         return; // Already added.
 
-    params.bspLeaf = bspLeaf;
-    R_IterateBspLeafContacts2(bspLeaf, OT_MOBJ, RIT_AddSprite, &params);
+    addspriteparams_t parms;
+    parms.bspLeaf = bspLeaf;
+    R_IterateBspLeafContacts(*bspLeaf, OT_MOBJ, RIT_AddSprite, &parms);
 
     bspLeaf->setAddSpriteCount(frameCount);
 }

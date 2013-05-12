@@ -650,7 +650,7 @@ static lumobj_t *createLuminous(lumtype_t type, BspLeaf *bspLeaf)
     linkLumObjToSSec(lum, bspLeaf);
 
     if(type != LT_PLANE)
-        R_ObjlinkCreate(lum, OT_LUMOBJ); // For spreading purposes.
+        R_ObjlinkCreate(*lum); // For spreading purposes.
 
     return lum;
 }
@@ -1018,17 +1018,13 @@ static void createGlowLightForSurface(Surface &suf)
     lum->maxDistance = 0;
     lum->decorSource = 0;
 
-    linkobjtobspleafparams_t parm;
-    parm.obj = lum;
-    parm.type = OT_LUMOBJ;
-
     QListIterator<BspLeaf *> bspLeafIt(sec->bspLeafs());
-    RIT_LinkObjToBspLeaf(bspLeafIt.next(), (void *)&parm);
+    R_LinkObjToBspLeaf(*bspLeafIt.next(), *lum);
     while(bspLeafIt.hasNext())
     {
         BspLeaf *bspLeaf = bspLeafIt.next();
         linkLumObjToSSec(lum, bspLeaf);
-        RIT_LinkObjToBspLeaf(bspLeaf, (void *)&parm);
+        R_LinkObjToBspLeaf(*bspLeaf, *lum);
     }
 }
 
@@ -1093,7 +1089,7 @@ int LO_LumobjsRadiusIterator(BspLeaf *bspLeaf, coord_t x, coord_t y, coord_t rad
     parm.callback   = callback;
     parm.parameters = parameters;
 
-    return R_IterateBspLeafContacts2(bspLeaf, OT_LUMOBJ, LOIT_RadiusLumobjs, (void *) &parm);
+    return R_IterateBspLeafContacts(*bspLeaf, OT_LUMOBJ, LOIT_RadiusLumobjs, (void *) &parm);
 }
 
 boolean LOIT_ClipLumObj(void *data, void * /*context*/)
@@ -1247,6 +1243,8 @@ uint LO_ProjectToSurface(int flags, BspLeaf *bspLeaf, float blendFactor,
     Vector3d const &topLeft, Vector3d const &bottomRight,
     Vector3f const &tangent, Vector3f const &bitangent, Vector3f const &normal)
 {
+    DENG_ASSERT(bspLeaf != 0);
+
     projectlighttosurfaceiteratorparams_t parm;
 
     parm.listIdx               = 0;
@@ -1260,7 +1258,7 @@ uint LO_ProjectToSurface(int flags, BspLeaf *bspLeaf, float blendFactor,
     V3f_Set(parm.spParams.bitangent, bitangent.x, bitangent.y, bitangent.z);
     V3f_Set(parm.spParams.normal,       normal.x,    normal.y,    normal.z);
 
-    R_IterateBspLeafContacts2(bspLeaf, OT_LUMOBJ, RIT_ProjectLightToSurfaceIterator, (void *)&parm);
+    R_IterateBspLeafContacts(*bspLeaf, OT_LUMOBJ, RIT_ProjectLightToSurfaceIterator, (void *)&parm);
 
     // Did we produce a projection list?
     return parm.listIdx;
