@@ -22,6 +22,8 @@
 #include "../Info"
 #include "../File"
 
+#include <QSet>
+
 namespace de {
 
 /**
@@ -91,6 +93,9 @@ namespace de {
 class DENG2_PUBLIC ScriptedInfo
 {
 public:
+    typedef QSet<String> Paths;
+
+public:
     ScriptedInfo();
 
     void clear();
@@ -114,6 +119,18 @@ public:
     Record &names();
 
     Record const &names() const;
+
+    /**
+     * Finds all the blocks of a given type in the processed namespace.
+     * The block type has been stored as a member called __type__ in each
+     * subrecord that was produced from an Info block.
+     *
+     * @param blockType  Type of Info block to locate.
+     *
+     * @return Set of paths to all the located records of the correct type.
+     * The records can be accessed via names().
+     */
+    Paths allBlocksOfType(String const &blockType) const;
 
 private:
     DENG2_PRIVATE(d)

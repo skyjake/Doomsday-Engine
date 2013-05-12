@@ -24,8 +24,9 @@
 
 namespace de {
 
-static String const BLOCK_GROUP = "group";
-static String const KEY_INHERIT = "inherits";
+static String const BLOCK_GROUP    = "group";
+static String const KEY_BLOCK_TYPE = "__type__";
+static String const KEY_INHERIT    = "inherits";
 
 DENG2_PIMPL(ScriptedInfo)
 {
@@ -125,7 +126,7 @@ DENG2_PIMPL(ScriptedInfo)
                 targetName = targetName.toLower();
             }
 
-            ns.add(varName.concatenatePath("__inherit__", '.')) =
+            ns.add(varName.concatenateMember("__inherit__")) =
                     new TextValue(targetName);
 
             LOG_DEV_TRACE("setting __inherit__ of %s %s (%p) to %s",
@@ -205,7 +206,7 @@ DENG2_PIMPL(ScriptedInfo)
             // Block type placed into a special variable (only with named blocks, though).
             if(!block.name().isEmpty())
             {
-                String varName = variableName(block).concatenatePath("__type__", '.');
+                String varName = variableName(block).concatenateMember(KEY_BLOCK_TYPE);
                 ns.add(varName) = new TextValue(block.blockType());
             }
 
@@ -240,7 +241,7 @@ DENG2_PIMPL(ScriptedInfo)
                 if(varName.isEmpty())
                     varName = b->name();
                 else
-                    varName = b->name().concatenatePath(varName, '.');
+                    varName = b->name().concatenateMember(varName);
             }
         }
         return varName;
@@ -289,6 +290,22 @@ DENG2_PIMPL(ScriptedInfo)
         }
         process.globals().addArray(variableName(list), av);
     }
+
+    void findBlocks(String const &blockType, Paths &paths, Record const &rec, String prefix = "")
+    {
+        if(rec.hasMember(KEY_BLOCK_TYPE) &&
+           !rec[KEY_BLOCK_TYPE].value().asText().compareWithoutCase(blockType))
+        {
+            // Block type matches.
+            paths.insert(prefix);
+        }
+
+        Record::Subrecords const subs = rec.subrecords();
+        DENG2_FOR_EACH_CONST(Record::Subrecords, i, subs)
+        {
+            findBlocks(blockType, paths, *i.value(), prefix.concatenateMember(i.key()));
+        }
+    }
 };
 
 ScriptedInfo::ScriptedInfo() : d(new Instance(this))
@@ -325,6 +342,13 @@ Record &ScriptedInfo::names()
 Record const &ScriptedInfo::names() const
 {
     return d->process.globals();
+}
+
+ScriptedInfo::Paths ScriptedInfo::allBlocksOfType(String const &blockType) const
+{
+    Paths found;
+    d->findBlocks(blockType, found, d->process.globals());
+    return found;
 }
 
 } // namespace de
