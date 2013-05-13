@@ -84,6 +84,9 @@ public:
             return _parent;
         }
 
+        void setLineNumber(int line) { _lineNumber = line; }
+        int lineNumber() const { return _lineNumber; }
+
         Type type() const { return _type; }
         bool isKey() const { return _type == Key; }
         bool isList() const { return _type == List; }
@@ -98,6 +101,7 @@ public:
         Type _type;
         String _name;
         BlockElement *_parent;
+        int _lineNumber;
     };
 
     /**
@@ -155,7 +159,8 @@ public:
         typedef QList<Element *> ContentsInOrder;
 
     public:
-        BlockElement(String const &bType, String const &name) : Element(Block, name) {
+        BlockElement(String const &bType, String const &name, Info &document)
+            : Element(Block, name), _info(document) {
             setBlockType(bType);
         }
         ~BlockElement();
@@ -164,6 +169,8 @@ public:
          * The root block is the only one that does not have a block type.
          */
         bool isRootBlock() const { return _blockType.isEmpty(); }
+
+        Info &info() const { return _info; }
 
         String const &blockType() const { return _blockType; }
 
@@ -213,6 +220,7 @@ public:
         Element *findByPath(String const &path) const;
 
     private:
+        Info &_info;
         String _blockType;
         Contents _contents;
         ContentsInOrder _contentsInOrder;
@@ -239,6 +247,8 @@ public:
      * @param blocksToParseAsScript  List of block types.
      */
     void setScriptBlocks(QStringList const &blocksToParseAsScript);
+
+    void setAllowDuplicateBlocksOfType(QStringList const &duplicatesAllowed);
 
     /**
      * Parses the Info contents from a text string.

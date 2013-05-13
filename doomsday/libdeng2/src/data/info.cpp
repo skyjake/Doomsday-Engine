@@ -29,12 +29,13 @@ static QString const WHITESPACE = " \t\r\n";
 static QString const WHITESPACE_OR_COMMENT = " \t\r\n#";
 static QString const TOKEN_BREAKING_CHARS = "#:=$(){}<>,\"" + WHITESPACE;
 
-DENG2_PIMPL_NOREF(Info)
+DENG2_PIMPL(Info)
 {
     DENG2_ERROR(OutOfElements);
     DENG2_ERROR(EndOfFile);
 
     QStringList scriptBlockTypes;
+    QStringList allowDuplicateBlocksOfType;
     String content;
     int currentLine;
     int cursor; ///< Index of the next character from the source.
@@ -45,7 +46,10 @@ DENG2_PIMPL_NOREF(Info)
 
     typedef Info::Element::Value InfoValue;
 
-    Instance() : currentLine(0), cursor(0), tokenStartOffset(0), rootBlock("", "")
+    Instance(Public *i)
+        : Base(i),
+          currentLine(0), cursor(0), tokenStartOffset(0),
+          rootBlock("", "", *i)
     {
         scriptBlockTypes << "script";
     }
@@ -219,19 +223,27 @@ DENG2_PIMPL_NOREF(Info)
             return 0;
         }
 
+        int const elementLine = currentLine;
+        Element *result = 0;
+
         if(next == ":" || next == "=" || next == "$")
         {
-            return parseKeyElement(key);
+            result = parseKeyElement(key);
         }
         else if(next == "<")
         {
-            return parseListElement(key);
+            result = parseListElement(key);
         }
         else
         {
             // It must be a block element.
-            return parseBlockElement(key);
+            result = parseBlockElement(key);
         }
+
+        DENG2_ASSERT(result != 0);
+
+        result->setLineNumber(elementLine);
+        return result;
     }
 
     /**
@@ -417,7 +429,7 @@ DENG2_PIMPL_NOREF(Info)
             blockName = parseValue();
         }
 
-        QScopedPointer<BlockElement> block(new BlockElement(blockType, blockName));
+        QScopedPointer<BlockElement> block(new BlockElement(blockType, blockName, self));
         int startLine = currentLine;
 
         String endToken;
@@ -538,11 +550,16 @@ void Info::BlockElement::add(Info::Element *elem)
 {
     DENG2_ASSERT(elem != 0);
 
+    // Check for duplicate identifiers in this block.
     if(elem->name() && _contents.contains(elem->name()))
     {
-        LOG_AS("Info::BlockElement");
-        LOG_WARNING("Block '%s' already has an element named '%s'")
-                << name() << elem->name();
+        if(!elem->isBlock() || !info().d->allowDuplicateBlocksOfType.contains(
+                    static_cast<BlockElement *>(elem)->blockType()))
+        {
+            LOG_AS("Info::BlockElement");
+            LOG_WARNING("Block '%s' already has an element named '%s'")
+                    << name() << elem->name();
+        }
     }
 
     elem->setParent(this);
@@ -595,12 +612,12 @@ Info::Element *Info::BlockElement::findByPath(String const &path) const
     return e;
 }
 
-Info::Info() : d(new Instance)
+Info::Info() : d(new Instance(this))
 {}
 
 Info::Info(String const &source)
 {
-    QScopedPointer<Instance> inst(new Instance); // parsing may throw exception
+    QScopedPointer<Instance> inst(new Instance(this)); // parsing may throw exception
     inst->parse(source);
     d.reset(inst.take());
 }
@@ -608,6 +625,11 @@ Info::Info(String const &source)
 void Info::setScriptBlocks(QStringList const &blocksToParseAsScript)
 {
     d->scriptBlockTypes = blocksToParseAsScript;
+}
+
+void Info::setAllowDuplicateBlocksOfType(QStringList const &blockTypesWhereDuplicatesAllowed)
+{
+    d->allowDuplicateBlocksOfType = blockTypesWhereDuplicatesAllowed;
 }
 
 void Info::parse(String const &infoSource)
