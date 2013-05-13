@@ -45,9 +45,9 @@ DENG2_PIMPL(Font)
 
     void createRules()
     {
-        heightRule     = new ConstantRule(0);
-        ascentRule     = new ConstantRule(0);
-        descentRule    = new ConstantRule(0);
+        heightRule      = new ConstantRule(0);
+        ascentRule      = new ConstantRule(0);
+        descentRule     = new ConstantRule(0);
         lineSpacingRule = new ConstantRule(0);
     }
 
