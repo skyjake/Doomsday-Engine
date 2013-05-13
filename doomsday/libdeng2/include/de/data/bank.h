@@ -326,12 +326,13 @@ protected:
     virtual IData *loadFromSource(ISource &source) = 0;
 
     /**
-     * Construct a new concrete instance of the data item.
-     * Called before deserialization.
+     * Construct a new concrete instance of the data item. Called before
+     * deserialization. Default implementation just returns NULL (seriliazation
+     * not supported).
      *
      * @return IData instance. Ownership given to caller.
      */
-    virtual IData *newData() = 0;
+    virtual IData *newData();
 
 private:
     DENG2_PRIVATE(d)

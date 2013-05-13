@@ -17,13 +17,74 @@
  */
 
 #include "de/FontBank"
+#include "de/Font"
 #include <de/ScriptedInfo>
 #include <de/Block>
+#include <de/Time>
 
 namespace de {
 
 DENG2_PIMPL(FontBank)
 {
+    struct FontSource : public ISource
+    {
+        Instance *d;
+        String id;
+
+        FontSource(Instance *inst, String const &fontId) : d(inst), id(fontId)
+        {}
+
+        Time modifiedAt() const
+        {
+            return d->modTime;
+        }
+
+        Font *load() const
+        {
+            Record const &def = d->info[id];
+
+            // Font family.
+            QFont font(def["family"]);
+
+            // Size.
+            String size = def["size"];
+            if(size.endsWith("px"))
+            {
+                font.setPixelSize(size.toInt(0, 10, String::AllowSuffix));
+            }
+            else
+            {
+                font.setPointSize(size.toInt(0, 10, String::AllowSuffix));
+            }
+
+            // Weight.
+            String const weight = def["weight"];
+            font.setWeight(weight == "light"? QFont::Light :
+                           weight == "bold"?  QFont::Bold :
+                                              QFont::Normal);
+
+            // Style.
+            String const style = def["style"];
+            font.setStyle(style == "italic"? QFont::StyleItalic : QFont::StyleNormal);
+
+            return new Font(font);
+        }
+    };
+
+    struct FontData : public IData
+    {
+        Font *font; // owned
+
+        FontData(Font *f = 0) : font(f) {}
+        ~FontData() { delete font; }
+
+        duint sizeInMemory() const
+        {
+            return 0; // we don't count
+        }
+    };
+
+    Time modTime;
     ScriptedInfo info;
 
     Instance(Public *i) : Base(i)
@@ -34,30 +95,17 @@ FontBank::FontBank()
     : Bank(DisableHotStorage), d(new Instance(this))
 {}
 
-FontBank::FontBank(String const &source)
-    : Bank(DisableHotStorage), d(new Instance(this))
-{
-    readInfo(source);
-}
-
-FontBank::FontBank(File const &file)
-    : Bank(DisableHotStorage), d(new Instance(this))
-{
-    readInfo(String::fromUtf8(Block(file)));
-}
-
 void FontBank::readInfo(String const &source)
 {
     LOG_AS("FontBank");
     try
     {
+        d->modTime = Time();
         d->info.parse(source);
 
-        ScriptedInfo::Paths fonts = d->info.allBlocksOfType("font");
-        LOG_DEBUG("Found %i fonts:") << fonts.size();
-        foreach(String fn, fonts)
+        foreach(String fn, d->info.allBlocksOfType("font"))
         {
-            LOG_DEBUG("  %s") << fn;
+            add(fn, new Instance::FontSource(d, fn));
         }
     }
     catch(Error const &er)
@@ -69,16 +117,17 @@ void FontBank::readInfo(String const &source)
 void FontBank::readInfo(File const &file)
 {
     readInfo(String::fromUtf8(Block(file)));
+    d->modTime = file.status().modifiedAt;
 }
 
-Bank::IData *FontBank::loadFromSource(ISource &)
+Font const &FontBank::font(Path const &path) const
 {
-    return 0;
+    return *static_cast<Instance::FontData &>(data(path)).font;
 }
 
-Bank::IData *FontBank::newData()
+Bank::IData *FontBank::loadFromSource(ISource &source)
 {
-    return 0;
+    return new Instance::FontData(static_cast<Instance::FontSource &>(source).load());
 }
 
 } // namespace de

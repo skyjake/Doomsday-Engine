@@ -150,6 +150,8 @@ public:
 
     Record const &names() const;
 
+    Variable const &operator [] (String const &path) const;
+
     /**
      * Finds all the blocks of a given type in the processed namespace.
      * The block type has been stored as a member called __type__ in each

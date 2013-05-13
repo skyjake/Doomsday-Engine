@@ -898,4 +898,9 @@ void Bank::purge()
      */
 }
 
+Bank::IData *Bank::newData()
+{
+    return 0;
+}
+
 } // namespace de

@@ -21,6 +21,7 @@
 
 #include <de/Bank>
 #include <de/File>
+#include "../Font"
 #include "libgui.h"
 
 namespace de {
@@ -34,26 +35,30 @@ public:
     FontBank();
 
     /**
-     * Constructs a bank of fonts based on information in Info source.
+     * Creates a number of fonts based on information in an Info document.
      *
      * @param source  Info source containing font definitions.
      */
-    FontBank(String const &source);
-
-    /**
-     * Constructs a bank of fonts based on information in an Info file.
-     *
-     * @param file  File with Info source.
-     */
-    FontBank(File const &file);
-
     void readInfo(String const &source);
 
+    /**
+     * Creates a number of fonts based on information in an Info document.
+     *
+     * @param source  File with Info source containing font definitions.
+     */
     void readInfo(File const &file);
+
+    /**
+     * Finds a specific font.
+     *
+     * @param path  Identifier of the font.
+     *
+     * @return  Font instance.
+     */
+    Font const &font(Path const &path) const;
 
 protected:
     virtual IData *loadFromSource(ISource &source);
-    virtual IData *newData();
 
 private:
     DENG2_PRIVATE(d)
