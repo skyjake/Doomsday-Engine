@@ -40,18 +40,6 @@ namespace de {
  * are run and the Info elements become variables and values in the local
  * namespace (ScriptedInfo::names()).
  *
- * @par Grouping
- *
- * The block type "group" is reserved for generic grouping of contained
- * elements. If the group is named, it will contribute its name to the path
- * of the produced variable (same as with any named block):
- * <pre>group test {
- *     type1 block { key = value }
- * }</pre>
- *
- * In this example, the variable representing @c key would be
- * <tt>test.block.key</tt> in the ScriptedInfo instance's namespace.
- *
  * @par Special elements
  *
  * Each block of a ScriptedInfo document has a couple of special elements
@@ -77,6 +65,48 @@ namespace de {
  *                       key: value
  *   firstblock. __type__: type1
  *                    key: value</pre>
+ *
+ * @par Grouping
+ *
+ * The block type "group" is reserved for generic grouping of contained
+ * elements. The normal usage of groups is analogous to structs in C.
+ *
+ * If the group is named, it will contribute its name to the path
+ * of the produced variable (same as with any named block):
+ * <pre>group test {
+ *     type1 block { key = value }
+ * }</pre>
+ *
+ * In this example, the variable representing @c key would be
+ * <tt>test.block.key</tt> in the ScriptedInfo instance's namespace.
+ *
+ * @par Namespaces
+ *
+ * The block type "namespace" is reserved for specifying a namespace prefix
+ * that determines where variables are created and looked up when processing an
+ * Info document. The namespace prefix can be any variable path (e.g.,
+ * <tt>test.block</tt>).
+ *
+ * Even though the current namespace has precedence when looking up existing
+ * variables (say, for inheriting members from another record), if an
+ * identifier does not exist in the current namespace but is present in the
+ * global namespace, the global namespace gets still used.
+ * <pre>namespace ns {
+ *     type1 block { key = value }
+ *     type2 another inherits block {}
+ * }</pre>
+ *
+ * In this example, the produced records are <tt>ns.block</tt> and
+ * <tt>ns.another</tt> that inherits <tt>ns.block</tt>. Compare to the case
+ * when not using a namespace:
+ * <pre>type1 ns.block { key = value }
+ * type2 ns.another inherits ns.block {}
+ * </pre>
+ * Or when using a group:
+ * <pre>group ns {
+ *     type1 block { key = value }
+ *     type2 another inherits ns.block {}
+ * }</pre>
  *
  * @par Group inheritance
  *
