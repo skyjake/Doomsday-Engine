@@ -71,7 +71,7 @@ void FontBank::readInfo(File const &file)
     readInfo(String::fromUtf8(Block(file)));
 }
 
-Bank::IData *FontBank::loadFromSource(ISource &source)
+Bank::IData *FontBank::loadFromSource(ISource &)
 {
     return 0;
 }
