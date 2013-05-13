@@ -81,6 +81,7 @@ DENG2_PIMPL(Record)
             String subName = name.substr(0, pos);
             String remaining = name.substr(pos + 1);
             // If it is a subrecord we can descend into it.
+            if(!self.hasSubrecord(subName)) return 0;
             return self[subName].value<RecordValue>().dereference().d->findMemberByPath(remaining);
         }
 
