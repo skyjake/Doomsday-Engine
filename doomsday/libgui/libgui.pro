@@ -50,6 +50,7 @@ HEADERS += \
     include/de/AtlasTexture \
     include/de/Canvas \
     include/de/CanvasWindow \
+    include/de/ColorBank \
     include/de/DisplayMode \
     include/de/Drawable \
     include/de/Font \
@@ -74,6 +75,7 @@ HEADERS += \
     include/de/gui/atlastexture.h \
     include/de/gui/canvas.h \
     include/de/gui/canvaswindow.h \
+    include/de/gui/colorbank.h \
     include/de/gui/ddkey.h \
     include/de/gui/displaymode.h \
     include/de/gui/displaymode_native.h \
@@ -105,6 +107,7 @@ SOURCES +=  \
     src/atlastexture.cpp \
     src/canvas.cpp \
     src/canvaswindow.cpp \
+    src/colorbank.cpp \
     src/displaymode.cpp \
     src/drawable.cpp \
     src/font.cpp \
