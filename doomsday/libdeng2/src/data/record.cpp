@@ -33,8 +33,6 @@
 #include "de/String"
 
 #include <QTextStream>
-#include <QMap>
-#include <QDebug>
 
 namespace de {
 
@@ -68,7 +66,6 @@ DENG2_PIMPL(Record)
         {
             if(isSubrecord(*i.value()))
             {
-                qDebug() << i.key();
                 subs.insert(i.key(), static_cast<RecordValue &>(i.value()->value()).record());
             }
         }
