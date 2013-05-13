@@ -2932,6 +2932,9 @@ void Rend_RenderMap()
         // We don't want BSP clip checking for the first BSP leaf.
         firstBspLeaf = true;
 
+        // No current BSP leaf as of yet.
+        currentBspLeaf = 0;
+
         // Draw the world!
         traverseBspAndDrawLeafs(theMap->bspRoot());
 
