@@ -36,7 +36,7 @@ DENG2_PIMPL(WindowSystem)
 
     Instance(Public *i) : Base(i)
     {
-        fonts.readInfo(App::fileSystem().find("defaultstyle.pack/fonts.dei"));
+        fonts.addFromInfo(App::fileSystem().find("defaultstyle.pack/fonts.dei"));
     }
 
     ~Instance()

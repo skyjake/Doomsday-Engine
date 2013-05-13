@@ -39,14 +39,14 @@ public:
      *
      * @param source  Info source containing font definitions.
      */
-    void readInfo(String const &source);
+    void addFromInfo(String const &source);
 
     /**
      * Creates a number of fonts based on information in an Info document.
      *
      * @param source  File with Info source containing font definitions.
      */
-    void readInfo(File const &file);
+    void addFromInfo(File const &file);
 
     /**
      * Finds a specific font.

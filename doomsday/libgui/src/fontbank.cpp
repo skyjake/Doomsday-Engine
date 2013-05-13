@@ -95,7 +95,7 @@ FontBank::FontBank()
     : Bank(DisableHotStorage), d(new Instance(this))
 {}
 
-void FontBank::readInfo(String const &source)
+void FontBank::addFromInfo(String const &source)
 {
     LOG_AS("FontBank");
     try
@@ -114,9 +114,9 @@ void FontBank::readInfo(String const &source)
     }
 }
 
-void FontBank::readInfo(File const &file)
+void FontBank::addFromInfo(File const &file)
 {
-    readInfo(String::fromUtf8(Block(file)));
+    addFromInfo(String::fromUtf8(Block(file)));
     d->modTime = file.status().modifiedAt;
 }
 
