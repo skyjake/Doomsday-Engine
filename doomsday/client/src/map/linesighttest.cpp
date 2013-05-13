@@ -127,13 +127,17 @@ DENG2_PIMPL(LineSightTest)
         if(!side.hasSections())
             return true;
 
-        if(!side.hasSector()) /*$degenleaf*/
+        if(!side.hasSector())
             return false;
 
         Sector const *frontSec = side.sectorPtr();
         Sector const *backSec  = side.back().sectorPtr();
 
-        bool noBack = !side.back().hasSections();
+        bool noBack = !side.back().hasSections() ||
+                      (!side.line().definesPolyobj() &&
+                          (!side.leftHEdge()->twin().hasBspLeaf() ||
+                           side.leftHEdge()->twin().bspLeaf().isDegenerate()));
+
         if(!noBack && !(flags & LS_PASSLEFT))
         {
             noBack = (!( backSec->floor().height() < frontSec->ceiling().height()) ||

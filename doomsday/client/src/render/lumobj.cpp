@@ -23,6 +23,8 @@
 #include <cmath>
 #include <cstring> // memset
 
+#include <QListIterator>
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_render.h"
@@ -31,12 +33,13 @@
 #include "de_play.h"
 #include "de_defs.h"
 
-#include "gl/sys_opengl.h"
 #include "map/gamemap.h"
+#include "map/linesighttest.h"
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "Texture"
-#include <QListIterator>
+
+#include "gl/sys_opengl.h"
 
 #include "render/lumobj.h"
 
@@ -82,7 +85,8 @@ typedef struct {
     vec3f_t normal; /// Normalized normal of the surface being projected to.
 } lightprojectparams_t;
 
-static boolean iterateBspLeafLumObjs(BspLeaf *bspLeaf, boolean (*func) (void *, void *), void *data);
+static void iterateBspLeafLumObjs(BspLeaf &bspLeaf, boolean (*func) (void *, void *),
+                                  void *context = 0);
 
 extern int useBias;
 
@@ -1092,7 +1096,7 @@ int LO_LumobjsRadiusIterator(BspLeaf *bspLeaf, coord_t x, coord_t y, coord_t rad
     return R_IterateBspLeafContacts(*bspLeaf, OT_LUMOBJ, LOIT_RadiusLumobjs, (void *) &parm);
 }
 
-boolean LOIT_ClipLumObj(void *data, void * /*context*/)
+static boolean LOIT_ClipLumObj(void *data, void * /*context*/)
 {
     lumobj_t *lum = reinterpret_cast<lumobj_t *>(data);
 
@@ -1106,8 +1110,8 @@ boolean LOIT_ClipLumObj(void *data, void * /*context*/)
     luminousClipped[lumIdx] = 0;
 
     /// @todo Determine the exact centerpoint of the light in addLuminous!
-    vec3d_t origin;
-    V3d_Set(origin, lum->origin[VX], lum->origin[VY], lum->origin[VZ] + LUM_OMNI(lum)->zOff);
+    Vector3d origin(lum->origin);
+    origin.z += LUM_OMNI(lum)->zOff;
 
     /**
      * Select clipping strategy:
@@ -1118,16 +1122,16 @@ boolean LOIT_ClipLumObj(void *data, void * /*context*/)
      */
     if(!(devNoCulling || P_IsInVoid(&ddPlayers[displayPlayer])))
     {
-        if(!C_IsPointVisible(origin[VX], origin[VY], origin[VZ]))
+        if(!C_IsPointVisible(origin.x, origin.y, origin.z))
             luminousClipped[lumIdx] = 1; // Won't have a halo.
     }
     else
     {
-        vec3d_t eye;
-        V3d_Set(eye, vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
+        Vector3d eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
 
         luminousClipped[lumIdx] = 1;
-        if(P_CheckLineSight(eye, origin, -1, 1, LS_PASSLEFT | LS_PASSOVER | LS_PASSUNDER))
+
+        if(LineSightTest(eye, origin, -1, 1, LS_PASSLEFT | LS_PASSOVER | LS_PASSUNDER).trace(*theMap->bspRoot()))
         {
             luminousClipped[lumIdx] = 0; // Will have a halo.
         }
@@ -1136,9 +1140,10 @@ boolean LOIT_ClipLumObj(void *data, void * /*context*/)
     return true; // Continue iteration.
 }
 
-void LO_ClipInBspLeaf(uint bspLeafIdx)
+void LO_ClipInBspLeaf(int bspLeafIdx)
 {
-    iterateBspLeafLumObjs(theMap->bspLeafs().at(bspLeafIdx), LOIT_ClipLumObj, NULL);
+    BspLeaf &leaf = *theMap->bspLeafs().at(bspLeafIdx);
+    iterateBspLeafLumObjs(leaf, LOIT_ClipLumObj);
 }
 
 boolean LOIT_ClipLumObjBySight(void *data, void *context)
@@ -1177,25 +1182,21 @@ boolean LOIT_ClipLumObjBySight(void *data, void *context)
     return true; // Continue iteration.
 }
 
-void LO_ClipInBspLeafBySight(uint bspLeafIdx)
+void LO_ClipInBspLeafBySight(int bspLeafIdx)
 {
-    BspLeaf *leaf = theMap->bspLeafs().at(bspLeafIdx);
-    iterateBspLeafLumObjs(leaf, LOIT_ClipLumObjBySight, leaf);
+    BspLeaf &leaf = *theMap->bspLeafs().at(bspLeafIdx);
+    iterateBspLeafLumObjs(leaf, LOIT_ClipLumObjBySight, &leaf);
 }
 
-static boolean iterateBspLeafLumObjs(BspLeaf *bspLeaf,
-    boolean (*func) (void *, void *), void *data)
+static void iterateBspLeafLumObjs(BspLeaf &bspLeaf, boolean (*func) (void *, void *), void *context)
 {
-    lumlistnode_t *ln = bspLeafLumObjList[bspLeaf->indexInMap()];
+    lumlistnode_t *ln = bspLeafLumObjList[bspLeaf.indexInMap()];
     while(ln)
     {
-        if(!func(ln->data, data))
-        {
-            return false;
-        }
+        if(!func(ln->data, context))
+            return;
         ln = ln->next;
     }
-    return true;
 }
 
 void LO_UnlinkMobjLumobj(mobj_t *mo)

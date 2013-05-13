@@ -159,7 +159,7 @@ texturevariantspecification_t &Rend_LightmapTextureSpec();
  *
  * @param bspLeafIdx    BspLeaf index in which lights will be clipped.
  */
-void LO_ClipInBspLeaf(uint bspLeafIdx);
+void LO_ClipInBspLeaf(int bspLeafIdx);
 
 /**
  * In the situation where a BSP leaf contains both lumobjs and a polyobj,
@@ -168,7 +168,7 @@ void LO_ClipInBspLeaf(uint bspLeafIdx);
  *
  * @param bspLeafIdx    BspLeaf index in which lumobjs will be clipped.
  */
-void LO_ClipInBspLeafBySight(uint bspLeafIdx);
+void LO_ClipInBspLeafBySight(int bspLeafIdx);
 
 /**
  * Iterate over all luminous objects within the specified origin range, making
