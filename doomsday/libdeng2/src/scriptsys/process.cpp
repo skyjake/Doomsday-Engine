@@ -327,11 +327,11 @@ void Process::call(Function const &function, ArrayValue const &arguments)
     }
 }
 
-void Process::namespaces(Namespaces &spaces)
+void Process::namespaces(Namespaces &spaces) const
 {
     spaces.clear();
     
-    DENG2_FOR_EACH_REVERSE(ContextStack, i, _stack)
+    DENG2_FOR_EACH_CONST_REVERSE(ContextStack, i, _stack)
     {
         Context &context = **i;
         spaces.push_back(&context.names());

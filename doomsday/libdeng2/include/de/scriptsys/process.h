@@ -182,7 +182,7 @@ public:
      * @param spaces  The namespaces are collected here. The order is important:
      *                earlier namespaces shadow the subsequent ones.
      */
-    void namespaces(Namespaces &spaces);
+    void namespaces(Namespaces &spaces) const;
 
     /**
      * Returns the global namespace of the process. This is always the

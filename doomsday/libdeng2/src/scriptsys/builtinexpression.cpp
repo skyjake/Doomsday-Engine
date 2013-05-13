@@ -29,6 +29,8 @@
 #include "de/TimeValue"
 #include "de/Writer"
 #include "de/Reader"
+#include "de/Script"
+#include "de/Process"
 #include "de/math.h"
 
 using namespace de;
@@ -215,15 +217,12 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
 
     case LOCAL_NAMESPACE:
     {
-        // Collect the namespaces to search.
-        Evaluator::Namespaces spaces;
-        evaluator.namespaces(spaces);
         if(args->size() != 1)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "No arguments expected for LOCAL_NAMESPACE");
         }
-        return new RecordValue(spaces.front());
+        return new RecordValue(evaluator.localNamespace());
     }
     
     case SERIALIZE:
@@ -270,6 +269,23 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
                                       "Expected exactly one argument for FLOOR");
         }
         return new NumberValue(std::floor(args->at(1).asNumber()));
+
+    case EVALUATE:
+    {
+        if(args->size() != 2)
+        {
+            throw WrongArgumentsError("BuiltInExpression::evaluate",
+                                      "Expected exactly one argument for EVALUATE");
+        }
+        // Set up a subprocess in the local namespace.
+        Process subProcess(evaluator.localNamespace());
+        // Parse the argument as a script.
+        Script subScript(args->at(1).asText());
+        subProcess.run(subScript);
+        subProcess.execute();
+        // A copy of the result value is returned.
+        return subProcess.context().evaluator().result().duplicate();
+    }
 
     default:
         DENG2_ASSERT(false);
@@ -327,6 +343,7 @@ BuiltInExpression::Type BuiltInExpression::findType(String const &identifier)
         { "timedelta",   TIME_DELTA },
         { "Record",      AS_RECORD },
         { "floor",       FLOOR },
+        { "eval",        EVALUATE },
         { NULL,          NONE }
     };
     
