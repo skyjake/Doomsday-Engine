@@ -1851,7 +1851,7 @@ static coord_t skyFixCeilZ(Plane const *frontCeil, Plane const *backCeil)
 static void skyFixZCoords(HEdge *hedge, int skyCap, coord_t *bottom, coord_t *top)
 {
     Sector const *frontSec = hedge->bspLeafSectorPtr();
-    Sector const *backSec  = hedge->twin().hasBspLeaf()? hedge->twin().bspLeafSectorPtr() : 0;
+    Sector const *backSec  = hedge->twin().hasBspLeaf() && !hedge->twin().bspLeaf().isDegenerate()? hedge->twin().bspLeafSectorPtr() : 0;
     Plane const *ffloor = &frontSec->floor();
     Plane const *fceil  = &frontSec->ceiling();
     Plane const *bceil  = backSec? &backSec->ceiling() : 0;
@@ -1886,11 +1886,10 @@ static int chooseHEdgeSkyFixes(HEdge *hedge, int skyCap)
 
     // "minisegs" have no lines
     if(!hedge->hasLineSide()) return 0;
-    if(!hedge->bspLeaf().hasSector()) return 0; // $degenleaf
 
     int fixes = 0;
     Sector const *frontSec = hedge->bspLeafSectorPtr();
-    Sector const *backSec  = hedge->twin().hasBspLeaf()? hedge->twin().bspLeafSectorPtr() : 0;
+    Sector const *backSec  = hedge->twin().hasBspLeaf() && !hedge->twin().bspLeaf().isDegenerate()? hedge->twin().bspLeafSectorPtr() : 0;
 
     if(!backSec || backSec != frontSec)
     {
@@ -1911,7 +1910,7 @@ static int chooseHEdgeSkyFixes(HEdge *hedge, int skyCap)
                 if(!devRendSkyMode)
                 {
                     if(P_IsInVoid(viewPlayer) ||
-                       (hasClosedBack || !bfloor->surface().hasSkyMaskedMaterial()))
+                       (hasClosedBack || !(bfloor && bfloor->surface().hasSkyMaskedMaterial())))
                     {
                         Plane const *floor = (bfloor && bfloor->surface().hasSkyMaskedMaterial() && ffloor->visHeight() < bfloor->visHeight()? bfloor : ffloor);
                         if(floor->visHeight() > skyZ)
@@ -1921,7 +1920,7 @@ static int chooseHEdgeSkyFixes(HEdge *hedge, int skyCap)
                 else
                 {
                     if(!hedge->lineSide().bottom().hasMaterial() &&
-                       (hasClosedBack || bfloor->surface().hasSkyMaskedMaterial()))
+                       (hasClosedBack || (bfloor && bfloor->surface().hasSkyMaskedMaterial())))
                     {
                         Plane const *floor = (bfloor && bfloor->surface().hasSkyMaskedMaterial() && ffloor->visHeight() < bfloor->visHeight()? bfloor : ffloor);
                         if(floor->visHeight() > skyZ)
@@ -1940,7 +1939,7 @@ static int chooseHEdgeSkyFixes(HEdge *hedge, int skyCap)
                 if(!devRendSkyMode)
                 {
                     if(P_IsInVoid(viewPlayer) ||
-                       (hasClosedBack || !bceil->surface().hasSkyMaskedMaterial()))
+                       (hasClosedBack || !(bceil && bceil->surface().hasSkyMaskedMaterial())))
                     {
                         Plane const *ceil = (bceil && bceil->surface().hasSkyMaskedMaterial() && fceil->visHeight() > bceil->visHeight()? bceil : fceil);
                         if(ceil->visHeight() < skyZ)
@@ -1950,7 +1949,7 @@ static int chooseHEdgeSkyFixes(HEdge *hedge, int skyCap)
                 else
                 {
                     if(!hedge->lineSide().top().hasMaterial() &&
-                       (hasClosedBack || bceil->surface().hasSkyMaskedMaterial()))
+                       (hasClosedBack || (bceil && bceil->surface().hasSkyMaskedMaterial())))
                     {
                         Plane const *ceil = (bceil && bceil->surface().hasSkyMaskedMaterial() && fceil->visHeight() > bceil->visHeight()? bceil : fceil);
                         if(ceil->visHeight() < skyZ)
@@ -2414,7 +2413,8 @@ static int pvisibleWallSections(HEdge &hedge, bool &twoSided)
     DENG_ASSERT(hedge.isFlagged(HEdge::FacingFront));
 
     // One-sided?
-    if(!hedge.twin().hasBspLeaf() || !hedge.twin().bspLeaf().hasSector() ||
+    if(!hedge.twin().hasBspLeaf() || hedge.twin().bspLeaf().isDegenerate() ||
+       !hedge.twin().bspLeaf().hasSector() ||
        /* Solid side of a "one-way window"? */
        !(hedge.twin().hasLineSide() && hedge.twin().lineSide().hasSections()))
     {
@@ -2673,7 +2673,8 @@ static void occludeHEdge(HEdge const &hedge, bool frontFacing)
     if(!hedge.hasLineSide() || !hedge.lineSide().hasSections()) return;
 
     // Occlusions should only happen where two sectors meet.
-    if(!hedge.twin().hasBspLeaf() || !hedge.twin().bspLeafSectorPtr()) return;
+    if(!hedge.twin().hasBspLeaf() || hedge.twin().bspLeaf().isDegenerate() ||
+       !hedge.twin().bspLeafSectorPtr()) return;
 
     Sector const &frontSec = hedge.bspLeaf().sector();
     Sector const &backSec  = hedge.twin().bspLeaf().sector();
@@ -3364,7 +3365,8 @@ static void Rend_DrawSurfaceVectors()
         if(!hedge->hasBspLeaf() || !hedge->bspLeaf().hasSector())
             continue;
 
-        if(!(hedge->twin().hasBspLeaf() && hedge->twin().hasBspLeaf() && hedge->twin().bspLeaf().hasSector()))
+        if(!hedge->twin().hasBspLeaf() || hedge->twin().bspLeaf().isDegenerate() ||
+           !hedge->twin().bspLeaf().hasSector())
         {
             coord_t const bottom = hedge->bspLeafSector().floor().visHeight();
             coord_t const top = hedge->bspLeafSector().ceiling().visHeight();

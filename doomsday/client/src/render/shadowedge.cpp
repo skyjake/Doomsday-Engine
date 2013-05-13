@@ -149,7 +149,9 @@ void ShadowEdge::prepare(int planeIndex)
     // there won't be a shadow at all. Open neighbor sectors cause some changes
     // in the polygon corner vertices (placement, opacity).
 
-    if(d->leftMostHEdge->twin().hasBspLeaf() && d->leftMostHEdge->twin().bspLeafSectorPtr() != 0)
+    if(d->leftMostHEdge->twin().hasBspLeaf() &&
+       !d->leftMostHEdge->twin().bspLeaf().isDegenerate() &&
+       d->leftMostHEdge->twin().bspLeafSectorPtr() != 0)
     {
         Surface const &wallEdgeSurface =
             side.back().hasSector()? side.surface(planeIndex == Plane::Ceiling? Line::Side::Top : Line::Side::Bottom)

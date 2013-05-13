@@ -1084,7 +1084,7 @@ void Rend_RadioWallSection(SectionEdge const &leftEdge, SectionEdge const &right
     Line::Side &side            = leftEdge.lineSide();
     HEdge const *hedge          = side.leftHEdge();
     Sector const *frontSec      = hedge->bspLeafSectorPtr();
-    Sector const *backSec       = hedge->twin().hasBspLeaf() && leftEdge.section() != Line::Side::Middle? hedge->twin().bspLeafSectorPtr() : 0;
+    Sector const *backSec       = hedge->twin().hasBspLeaf() && !hedge->twin().bspLeaf().isDegenerate() && leftEdge.section() != Line::Side::Middle? hedge->twin().bspLeafSectorPtr() : 0;
 
     coord_t const lineLength    = side.line().length();
     coord_t const sectionOffset = leftEdge.lineOffset();

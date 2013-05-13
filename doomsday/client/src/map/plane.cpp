@@ -88,6 +88,8 @@ DENG2_PIMPL(Plane)
 
     ~Instance()
     {
+        DENG_ASSERT(theMap != 0);
+
         // If this plane is currently being watched, remove it.
         /// @todo GameMap should observe Deletion.
         theMap->trackedPlanes().remove(&self);

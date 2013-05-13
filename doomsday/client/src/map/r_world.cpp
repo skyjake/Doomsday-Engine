@@ -70,7 +70,7 @@ void R_SideSectionCoords(Line::Side const &side, int section,
     coord_t *retBottom, coord_t *retTop, Vector2f *retMaterialOrigin)
 {
     Sector const *frontSec = side.line().definesPolyobj()? side.line().polyobj().bspLeaf().sectorPtr() : side.sectorPtr();
-    Sector const *backSec  = side.back().sectorPtr();
+    Sector const *backSec  = (side.line().definesPolyobj() || (side.leftHEdge()->twin().hasBspLeaf() && !side.leftHEdge()->twin().bspLeaf().isDegenerate()))? side.back().sectorPtr() : 0;
 
     Line const &line       = side.line();
     bool const unpegBottom = (line.flags() & DDLF_DONTPEGBOTTOM) != 0;
@@ -313,21 +313,26 @@ coord_t R_VisOpenRange(Line::Side const &side, Sector const *frontSec,
 bool R_SideBackClosed(Line::Side const &side, bool ignoreOpacity)
 {
     if(!side.hasSections()) return false;
-    if(!side.back().hasSections()) return true;
+    if(!side.hasSector()) return false;
     if(side.line().isSelfReferencing()) return false; // Never.
 
-    if(side.hasSector() && side.back().hasSector())
+    if(!side.line().definesPolyobj())
     {
-        Sector const &frontSec = side.sector();
-        Sector const &backSec  = side.back().sector();
-
-        if(backSec.floor().visHeight()   >= backSec.ceiling().visHeight())  return true;
-        if(backSec.ceiling().visHeight() <= frontSec.floor().visHeight())   return true;
-        if(backSec.floor().visHeight()   >= frontSec.ceiling().visHeight()) return true;
+        HEdge const &hedge = *side.leftHEdge();
+        if(!hedge.twin().hasBspLeaf() || hedge.twin().bspLeaf().isDegenerate()) return true;
     }
 
+    if(!side.back().hasSector()) return true;
+
+    Sector const &frontSec = side.sector();
+    Sector const &backSec  = side.back().sector();
+
+    if(backSec.floor().visHeight()   >= backSec.ceiling().visHeight())  return true;
+    if(backSec.ceiling().visHeight() <= frontSec.floor().visHeight())   return true;
+    if(backSec.floor().visHeight()   >= frontSec.ceiling().visHeight()) return true;
+
     // Perhaps a middle material completely covers the opening?
-    if(side.hasSector() && side.middle().hasMaterial())
+    if(side.middle().hasMaterial())
     {
         // Ensure we have up to date info about the material.
         MaterialSnapshot const &ms = side.middle().material().prepare(Rend_MapSurfaceMaterialSpec());
