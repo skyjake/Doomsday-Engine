@@ -305,23 +305,20 @@ ScriptLex::parseString(QChar startChar, duint startIndentation, TokenBuffer &out
         }
         if(c == startChar)
         {
-            // This will end the string.
+            // This will end the string?
             if(longString)
             {
-                c = get();
-                QChar d = get();
-                if(c != '"') 
+                if(peek() == '"')
                 {
-                    throw UnexpectedCharacterError("ScriptLex::parseString",
-                        "Character '" + String(1, c) + "' was unexpected");
+                    output.appendChar(get());
+                    if(peek() == '"')
+                    {
+                        output.appendChar(get());
+                        break;
+                    }
                 }
-                if(d != '"') 
-                {
-                    throw UnexpectedCharacterError("ScriptLex::parseString",
-                        "Character '" + String(1, d) + "' was unexpected");
-                }
-                output.appendChar(c);
-                output.appendChar(d);
+                // Not actually a terminating """.
+                continue;
             }
             break;
         }
