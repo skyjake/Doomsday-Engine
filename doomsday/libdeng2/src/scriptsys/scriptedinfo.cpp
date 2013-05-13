@@ -24,9 +24,10 @@
 
 namespace de {
 
-static String const BLOCK_GROUP    = "group";
-static String const KEY_BLOCK_TYPE = "__type__";
-static String const KEY_INHERIT    = "inherits";
+static String const BLOCK_GROUP     = "group";
+static String const BLOCK_NAMESPACE = "namespace";
+static String const KEY_BLOCK_TYPE  = "__type__";
+static String const KEY_INHERIT     = "inherits";
 
 DENG2_PIMPL(ScriptedInfo)
 {
@@ -36,9 +37,14 @@ DENG2_PIMPL(ScriptedInfo)
     QScopedPointer<Script> script; ///< Current script being executed.
     Process process;               ///< Execution context.
     String sourcePath;
+    String currentNamespace;
 
     Instance(Public *i) : Base(i)
-    {}
+    {
+        // No limitation on duplicates for the special block types.
+        info.setAllowDuplicateBlocksOfType(
+                    QStringList() << BLOCK_GROUP << BLOCK_NAMESPACE);
+    }
 
     void clear()
     {
@@ -119,18 +125,18 @@ DENG2_PIMPL(ScriptedInfo)
         if(!varName.isEmpty())
         {
             Record &ns = process.globals();            
-            String targetName = target;
+            String targetName = checkNamespaceForVariable(target);
             if(!ns.has(targetName))
             {
                 // Assume it's an identifier rather than a regular variable.
-                targetName = targetName.toLower();
+                targetName = checkNamespaceForVariable(targetName.toLower());
             }
 
             ns.add(varName.concatenateMember("__inherit__")) =
                     new TextValue(targetName);
 
             LOG_DEV_TRACE("setting __inherit__ of %s %s (%p) to %s",
-                          block.blockType() << block.name() << &block << targetName);
+                          block.blockType() << varName << &block << targetName);
 
             DENG2_ASSERT(!varName.isEmpty());
             DENG2_ASSERT(!targetName.isEmpty());
@@ -203,9 +209,25 @@ DENG2_PIMPL(ScriptedInfo)
         }
         else
         {
-            // Block type placed into a special variable (only with named blocks, though).
-            if(!block.name().isEmpty())
+            String oldNamespace = currentNamespace;
+
+            // Namespace blocks alter how variables get placed/looked up in the Record.
+            if(block.blockType() == BLOCK_NAMESPACE)
             {
+                if(!block.name().isEmpty())
+                {
+                    currentNamespace = currentNamespace.concatenateMember(block.name());
+                }
+                else
+                {
+                    // Reset to the global namespace.
+                    currentNamespace = "";
+                }
+                LOG_TRACE("Namespace set to '%s' on line %i") << currentNamespace << block.lineNumber();
+            }
+            else if(!block.name().isEmpty())
+            {
+                // Block type placed into a special variable (only with named blocks, though).
                 String varName = variableName(block).concatenateMember(KEY_BLOCK_TYPE);
                 ns.add(varName) = new TextValue(block.blockType());
             }
@@ -220,6 +242,9 @@ DENG2_PIMPL(ScriptedInfo)
                 }
                 processElement(sub);
             }
+
+            // Continue with the old namespace after the block.
+            currentNamespace = oldNamespace;
         }
     }
 
@@ -236,6 +261,8 @@ DENG2_PIMPL(ScriptedInfo)
         String varName = element.name();
         for(Info::BlockElement *b = element.parent(); b != 0; b = b->parent())
         {
+            if(b->blockType() == BLOCK_NAMESPACE) continue;
+
             if(!b->name().isEmpty())
             {
                 if(varName.isEmpty())
@@ -243,6 +270,45 @@ DENG2_PIMPL(ScriptedInfo)
                 else
                     varName = b->name().concatenateMember(varName);
             }
+        }        
+        return checkNamespaceForVariable(varName);
+    }
+
+    /**
+     * Look up a variable name taking into consideration the current namespace.
+     * Unlike simple grouping, namespaces also allow accessing the global
+     * namespace if nothing shadows the identifier in the namespace. However,
+     * all new variables get created using the current namespace.
+     *
+     * @param varName  Provided variable name without a namespace.
+     *
+     * @return Variable to use after namespace has been applied.
+     */
+    String checkNamespaceForVariable(String varName)
+    {
+        if(varName.isEmpty()) return "";
+
+        if(!currentNamespace.isEmpty())
+        {
+            // First check if this exists in the current namespace.
+            String nsVarName = currentNamespace.concatenateMember(varName);
+            if(process.globals().has(nsVarName))
+            {
+                return nsVarName;
+            }
+        }
+
+        // If it exists as-is, we'll take it.
+        if(process.globals().has(varName))
+        {
+            return varName;
+        }
+
+        // We'll assume it will get created.
+        if(!currentNamespace.isEmpty())
+        {
+            // If namespace defined, create the new variable in it.
+            return currentNamespace.concatenateMember(varName);
         }
         return varName;
     }
