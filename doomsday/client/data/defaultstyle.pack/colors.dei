@@ -1,0 +1,4 @@
+# Colors for the default UI style
+
+color text       ( rgb  <1.0, 1.0, 1.0> )
+color background ( rgba <0.0, 0.0, 0.0, 0.5> )

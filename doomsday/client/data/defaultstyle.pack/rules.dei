@@ -1,0 +1,4 @@
+# Length rules for the default UI style
+
+rule unit ( constant = 4 )
+rule gap  ( constant $= Number(unit.constant) * 3 )
