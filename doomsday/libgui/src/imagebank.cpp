@@ -19,6 +19,8 @@
 #include "de/ImageBank"
 #include "de/App"
 
+#include <de/ScriptedInfo>
+
 namespace de {
 
 DENG2_PIMPL_NOREF(ImageBank)
@@ -27,8 +29,7 @@ DENG2_PIMPL_NOREF(ImageBank)
     {
         String filePath;
 
-        ImageSource(String const &path) : filePath(path)
-        {}
+        ImageSource(String const &path) : filePath(path) {}
 
         Time modifiedAt() const
         {
@@ -60,6 +61,8 @@ DENG2_PIMPL_NOREF(ImageBank)
             return image.byteCount();
         }
     };
+
+    ScriptedInfo info;
 };
 
 ImageBank::ImageBank(Flags const &flags)
@@ -69,6 +72,31 @@ ImageBank::ImageBank(Flags const &flags)
 void ImageBank::add(Path const &path, String const &imageFilePath)
 {
     Bank::add(path, new Instance::ImageSource(imageFilePath));
+}
+
+void ImageBank::addFromInfo(String const &source, String const &relativeToPath)
+{
+    LOG_AS("ImageBank");
+    try
+    {
+        d->info.parse(source);
+
+        foreach(String id, d->info.allBlocksOfType("image"))
+        {
+            Record const &def = d->info[id];
+            add(id, relativeToPath / def["path"]);
+        }
+    }
+    catch(Error const &er)
+    {
+        LOG_WARNING("Failed to read Info source:\n") << er.asText();
+    }
+}
+
+void ImageBank::addFromInfo(File const &file)
+{
+    // Relative paths in the defs are assumed relative to this file.
+    addFromInfo(String::fromUtf8(Block(file)), file.path().fileNamePath());
 }
 
 Image &ImageBank::image(Path const &path) const

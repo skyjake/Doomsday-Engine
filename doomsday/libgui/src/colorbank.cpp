@@ -29,13 +29,8 @@ DENG2_PIMPL(ColorBank)
         Instance *d;
         String id;
 
-        ColorSource(Instance *inst, String const &colorId) : d(inst), id(colorId)
-        {}
-
-        Time modifiedAt() const
-        {
-            return d->modTime;
-        }
+        ColorSource(Instance *inst, String const &colorId) : d(inst), id(colorId) {}
+        Time modifiedAt() const { return d->modTime; }
 
         Vector4d load() const
         {
@@ -60,11 +55,7 @@ DENG2_PIMPL(ColorBank)
         Vector4d color;
 
         ColorData(Vector4d const &c = Vector4d()) : color(c) {}
-
-        duint sizeInMemory() const
-        {
-            return 0; // we don't count
-        }
+        duint sizeInMemory() const { return 0; /* we don't count */ }
     };
 
     Time modTime;

@@ -31,13 +31,8 @@ DENG2_PIMPL(FontBank)
         Instance *d;
         String id;
 
-        FontSource(Instance *inst, String const &fontId) : d(inst), id(fontId)
-        {}
-
-        Time modifiedAt() const
-        {
-            return d->modTime;
-        }
+        FontSource(Instance *inst, String const &fontId) : d(inst), id(fontId) {}
+        Time modifiedAt() const { return d->modTime; }
 
         Font *load() const
         {
@@ -78,10 +73,7 @@ DENG2_PIMPL(FontBank)
         FontData(Font *f = 0) : font(f) {}
         ~FontData() { delete font; }
 
-        duint sizeInMemory() const
-        {
-            return 0; // we don't count
-        }
+        duint sizeInMemory() const { return 0; /* we don't count */ }
     };
 
     Time modTime;

@@ -26,6 +26,8 @@
 
 namespace de {
 
+class File;
+
 /**
  * Bank containing Image instances loaded from files.
  *
@@ -46,6 +48,9 @@ public:
     ImageBank(Flags const &flags = BackgroundThread | DisableHotStorage);
 
     void add(Path const &path, String const &imageFilePath);
+
+    void addFromInfo(String const &source, String const &relativeToPath = "");
+    void addFromInfo(File const &file);
 
     Image &image(Path const &path) const;
 
