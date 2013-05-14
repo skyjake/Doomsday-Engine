@@ -27,6 +27,7 @@
 #include <de/String>
 
 class ClientWindow;
+class Style;
 
 /**
  * Window management subsystem.
@@ -89,6 +90,11 @@ public:
      * Closes all windows, including the main window.
      */
     void closeAll();
+
+    /**
+     * Returns the window system's UI style.
+     */
+    Style &style();
 
     // System.
     bool processEvent(de::Event const &);

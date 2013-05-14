@@ -19,9 +19,8 @@
 #include "de_platform.h"
 #include "ui/windowsystem.h"
 #include "ui/clientwindow.h"
+#include "ui/style.h"
 #include "clientapp.h"
-
-#include <de/FontBank>
 
 #include <QMap>
 
@@ -31,12 +30,11 @@ DENG2_PIMPL(WindowSystem)
 {
     typedef QMap<String, ClientWindow *> Windows;
     Windows windows;
-
-    FontBank fonts;
+    Style style;
 
     Instance(Public *i) : Base(i)
     {
-        fonts.addFromInfo(App::fileSystem().find("defaultstyle.pack/fonts.dei"));
+        style.load(App::fileSystem().find("defaultstyle.pack").path());
     }
 
     ~Instance()
