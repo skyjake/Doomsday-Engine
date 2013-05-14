@@ -18,6 +18,7 @@
 
 #include "ui/guiwidget.h"
 #include "ui/guirootwidget.h"
+#include "clientapp.h"
 #include <de/garbage.h>
 
 using namespace de;
@@ -36,6 +37,11 @@ GuiWidget::GuiWidget(String const &name) : Widget(name), d(new Instance(this))
 GuiRootWidget &GuiWidget::root()
 {
     return static_cast<GuiRootWidget &>(Widget::root());
+}
+
+Style const &GuiWidget::style()
+{
+    return ClientApp::windowSystem().style();
 }
 
 RuleRectangle &GuiWidget::rule()

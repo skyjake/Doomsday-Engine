@@ -16,11 +16,12 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef GUIWIDGET_H
-#define GUIWIDGET_H
+#ifndef DENG_CLIENT_GUIWIDGET_H
+#define DENG_CLIENT_GUIWIDGET_H
 
 #include <de/Widget>
 #include <de/RuleRectangle>
+#include "ui/style.h"
 
 class GuiRootWidget;
 
@@ -34,6 +35,7 @@ public:
     GuiWidget(de::String const &name = "");
 
     GuiRootWidget &root();
+    Style const &style();
 
     /**
      * Returns the rule rectangle that defines the placement of the widget on
@@ -53,4 +55,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif // GUIWIDGET_H
+#endif // DENG_CLIENT_GUIWIDGET_H

@@ -84,6 +84,11 @@ void WindowSystem::closeAll()
     d->windows.clear();
 }
 
+Style &WindowSystem::style()
+{
+    return d->style;
+}
+
 bool WindowSystem::processEvent(Event const &event)
 {
     return main().root().processEvent(event);
