@@ -35,7 +35,7 @@ public:
     /**
      * Loads a style from a resource pack.
      *
-     * @param pack  Path of a resource pack containing the style.
+     * @param pack  Absolute path of a resource pack containing the style.
      */
     void load(de::String const &pack);
 

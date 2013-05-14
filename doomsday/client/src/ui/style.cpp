@@ -18,18 +18,28 @@
 
 #include "ui/style.h"
 
+#include <de/App>
+#include <de/ScriptSystem>
+#include <de/Record>
+#include <de/Variable>
+#include <de/RecordValue>
+
 using namespace de;
 
 DENG2_PIMPL(Style)
 {
     String packPath;
+    Record module;
     RuleBank rules;
     FontBank fonts;
     ColorBank colors;
     ImageBank images;
 
     Instance(Public *i) : Base(i)
-    {}
+    {
+        // The Style is available as a native module.
+        App::scriptSystem().addNativeModule("Style", module);
+    }
 
     void clear()
     {
@@ -37,15 +47,25 @@ DENG2_PIMPL(Style)
         fonts.clear();
         colors.clear();
         images.clear();
+
+        module.clear();
     }
 
     void load(String const &path)
     {
         packPath = path;
-        rules.addFromInfo(path / "rules.dei");
-        fonts.addFromInfo(path / "fonts.dei");
-        colors.addFromInfo(path / "colors.dei");
-        images.addFromInfo(path / "images.dei");
+        Folder const &pack = App::rootFolder().locate<Folder>(path);
+
+        rules.addFromInfo(pack.locate<File>("rules.dei"));
+        fonts.addFromInfo(pack.locate<File>("fonts.dei"));
+        colors.addFromInfo(pack.locate<File>("colors.dei"));
+        images.addFromInfo(pack.locate<File>("images.dei"));
+
+        // Update the subrecords of the native module.
+        module.add(new Variable("rules",  new RecordValue(rules.names()),  Variable::AllowRecord));
+        module.add(new Variable("fonts",  new RecordValue(fonts.names()),  Variable::AllowRecord));
+        module.add(new Variable("colors", new RecordValue(colors.names()), Variable::AllowRecord));
+        module.add(new Variable("images", new RecordValue(images.names()), Variable::AllowRecord));
     }
 };
 
