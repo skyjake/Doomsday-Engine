@@ -32,6 +32,9 @@ class File;
 
 /**
  * Abstract Bank read from Info definitions.
+ *
+ * InfoBank handles the common plumbing of parsing an Info file and iterating
+ * through it for creating bank sources.
  */
 class InfoBank : public Bank
 {
