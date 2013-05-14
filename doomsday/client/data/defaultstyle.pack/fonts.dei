@@ -8,14 +8,14 @@ script { import Version, gui }
 
 namespace font {
 
-font "default" condition "Version.OS == 'macx'" {
+font default condition "Version.OS == 'macx'" {
     family: Lucida Grande
     size: 16pt
     weight: normal
     style: normal
 }
 
-font "title" inherits "default" {
+font title inherits default {
     size $: gui.scale(__this__.size, 1.5)
     weight: bold
 }
