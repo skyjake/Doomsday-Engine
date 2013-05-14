@@ -78,7 +78,7 @@ void ImageBank::addFromInfo(File const &file)
     LOG_AS("ImageBank");
     d->relativeToPath = file.path().fileNamePath();
     parse(file);
-    InfoBank::addFromInfo("image");
+    addFromInfoBlocks("image");
 }
 
 Image &ImageBank::image(Path const &path) const

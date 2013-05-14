@@ -68,7 +68,7 @@ void ColorBank::addFromInfo(File const &file)
 {
     LOG_AS("ColorBank");
     parse(file);
-    InfoBank::addFromInfo("color");
+    addFromInfoBlocks("color");
 }
 
 ColorBank::Color ColorBank::color(Path const &path) const

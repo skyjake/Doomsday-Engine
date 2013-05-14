@@ -87,7 +87,7 @@ void FontBank::addFromInfo(File const &file)
 {
     LOG_AS("FontBank");
     parse(file);
-    InfoBank::addFromInfo("font");
+    addFromInfoBlocks("font");
 }
 
 Font const &FontBank::font(Path const &path) const

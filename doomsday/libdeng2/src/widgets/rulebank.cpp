@@ -58,7 +58,7 @@ void RuleBank::addFromInfo(File const &file)
 {
     LOG_AS("RuleBank");
     parse(file);
-    InfoBank::addFromInfo("rule");
+    addFromInfoBlocks("rule");
 }
 
 Rule const &RuleBank::rule(Path const &path) const

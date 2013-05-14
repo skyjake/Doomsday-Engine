@@ -22,14 +22,14 @@
 
 namespace de {
 
-DENG2_PIMPL(InfoBank)
+DENG2_PIMPL_NOREF(InfoBank)
 {
     ScriptedInfo info;
     Time modTime;
 };
 
 InfoBank::InfoBank(Bank::Flags const &flags, String const &hotStorageLocation)
-    : Bank(flags, hotStorageLocation)
+    : Bank(flags, hotStorageLocation), d(new Instance)
 {}
 
 void InfoBank::parse(String const &source)
@@ -47,8 +47,15 @@ void InfoBank::parse(String const &source)
 
 void InfoBank::parse(File const &file)
 {
-    parse(String::fromUtf8(Block(file)));
-    d->modTime = file.status().modifiedAt;
+    try
+    {
+        d->modTime = file.status().modifiedAt;
+        d->info.parse(file);
+    }
+    catch(Error const &er)
+    {
+        LOG_WARNING("Failed to read Info file:\n") << er.asText();
+    }
 }
 
 ScriptedInfo &InfoBank::info()
@@ -71,7 +78,7 @@ Record const &InfoBank::names() const
     return d->info.names();
 }
 
-void InfoBank::addFromInfo(String const &blockType)
+void InfoBank::addFromInfoBlocks(String const &blockType)
 {
     foreach(String id, d->info.allBlocksOfType(blockType))
     {

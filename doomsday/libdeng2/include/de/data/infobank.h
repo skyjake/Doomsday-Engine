@@ -52,7 +52,7 @@ public:
     Record const &names() const;
     Variable const &operator [] (String const &name) const;
 
-    void addFromInfo(String const &blockType);
+    void addFromInfoBlocks(String const &blockType);
 
     Time sourceModifiedAt() const;
 
