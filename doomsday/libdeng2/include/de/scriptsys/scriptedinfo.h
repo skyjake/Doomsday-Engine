@@ -150,7 +150,7 @@ public:
 
     Record const &names() const;
 
-    Variable const &operator [] (String const &path) const;
+    Variable const &operator [] (String const &name) const;
 
     /**
      * Finds all the blocks of a given type in the processed namespace.

@@ -410,9 +410,9 @@ Record const &ScriptedInfo::names() const
     return d->process.globals();
 }
 
-Variable const &ScriptedInfo::operator [] (String const &path) const
+Variable const &ScriptedInfo::operator [] (String const &name) const
 {
-    return names()[path];
+    return names()[name];
 }
 
 ScriptedInfo::Paths ScriptedInfo::allBlocksOfType(String const &blockType) const
