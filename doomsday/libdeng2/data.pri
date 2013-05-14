@@ -26,6 +26,7 @@ HEADERS += \
     include/de/ISerializable \
     include/de/IWritable \
     include/de/Info \
+    include/de/InfoBank \
     include/de/LittleEndianByteOrder \
     include/de/NoneValue \
     include/de/NumberValue \
@@ -70,6 +71,7 @@ HEADERS += \
     include/de/data/iiostream.h \
     include/de/data/iistream.h \
     include/de/data/info.h \
+    include/de/data/infobank.h \
     include/de/data/iostream.h \
     include/de/data/ireadable.h \
     include/de/data/iserializable.h \
@@ -114,6 +116,7 @@ SOURCES += \
     src/data/fixedbytearray.cpp \
     src/data/huffman.cpp \
     src/data/info.cpp \
+    src/data/infobank.cpp \
     src/data/json.cpp \
     src/data/nonevalue.cpp \
     src/data/numbervalue.cpp \
