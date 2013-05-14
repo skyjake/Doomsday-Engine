@@ -316,6 +316,7 @@ DENG2_PIMPL(ScriptedInfo)
     Value *evaluate(String const &source, Info::BlockElement const *context)
     {
         script.reset(new Script(source));
+        script->setPath(sourcePath); // where the source comes from
         process.run(*script);
         executeWithContext(context);
         return process.context().evaluator().result().duplicate();
