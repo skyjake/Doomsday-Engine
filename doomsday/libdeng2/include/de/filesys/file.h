@@ -327,7 +327,7 @@ protected:
      *
      * @param name  Name of the file.
      */
-    File(String const &name = "");
+    explicit File(String const &name = "");
 
 private:
     /// The parent folder.
