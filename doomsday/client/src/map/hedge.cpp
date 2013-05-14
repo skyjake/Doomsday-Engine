@@ -255,7 +255,7 @@ int HEdge::property(setargs_t &args) const
         DMU_GetValue(DMT_HEDGE_LINE, &lineAdr, &args, 0);
         break; }
     case DMU_SECTOR: {
-        Sector *sector = bspLeafSectorPtr();
+        Sector *sector = bspLeaf().sectorPtr();
         DMU_GetValue(DMT_HEDGE_SECTOR, &sector, &args, 0);
         break; }
     case DMU_ANGLE:

@@ -65,7 +65,7 @@ int C_IsAngleVisible(binangle_t bang);
 /**
  * @return  Non-zero if @a bspLeaf might be visible, else @c 0.
  */
-int C_CheckBspLeaf(BspLeaf *bspLeaf);
+int C_CheckBspLeaf(BspLeaf &bspLeaf);
 
 /**
  * Add a segment relative to the current viewpoint.

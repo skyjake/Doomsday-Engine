@@ -1419,59 +1419,57 @@ DENG2_PIMPL(Partitioner)
     }
 
     /**
-     * Sort the half-edges linked within the given BSP leaf into a clockwise
+     * Sort the half-edges linked within the given geometry face in a clockwise
      * order according to their position/orientation relative to the specified
      * point.
      *
-     * @param leaf        BSP leaf containing the list of hedges to be sorted.
+     * @param face        Map geometry face containing the list of half-edges
+     *                    to be sorted.
      * @param point       Map space point around which to order.
      * @param sortBuffer  Buffer to use for sorting of the hedges.
      *
-     * @attention Do NOT move this into BspLeaf. Although this clearly envies
-     * the access rights of the BspLeaf class this algorithm belongs here in
-     * the BSP partitioner. -ds
+     * @attention Do NOT move this into Face. Although this clearly envies the
+     * access rights of the Face class this algorithm belongs here in the BSP
+     * partitioner. -ds
      */
-    static void clockwiseOrder(BspLeaf &leaf, Vector2d const &point,
+    static void clockwiseOrder(Face &face, Vector2d const &point,
                                HEdgeSortBuffer &sortBuffer)
     {
-        if(!leaf._hedge) return;
+        if(!face._hedge) return;
 
         // Insert the hedges into the sort buffer.
 #ifdef DENG2_QT_4_7_OR_NEWER
-        sortBuffer.reserve(leaf._hedgeCount);
+        sortBuffer.reserve(face._hedgeCount);
 #endif
         int i = 0;
-        for(HEdge *hedge = leaf._hedge; hedge; hedge = hedge->_next, ++i)
+        for(HEdge *hedge = face._hedge; hedge; hedge = hedge->_next, ++i)
         {
             sortBuffer.insert(i, hedge);
         }
 
-        sortHEdgesByAngleAroundPoint(sortBuffer, leaf._hedgeCount -1, point);
+        sortHEdgesByAngleAroundPoint(sortBuffer, face._hedgeCount -1, point);
 
         // Re-link the half-edge list in the order of the sort buffer.
-        leaf._hedge = 0;
-        for(uint i = 0; i < leaf._hedgeCount; ++i)
+        face._hedge = 0;
+        for(int i = 0; i < face._hedgeCount; ++i)
         {
-            uint idx = (leaf._hedgeCount - 1) - i;
-            uint j = idx % leaf._hedgeCount;
+            int idx = (face._hedgeCount - 1) - i;
+            int j = idx % face._hedgeCount;
 
-            sortBuffer[j]->_next = leaf._hedge;
-            leaf._hedge = sortBuffer[j];
+            sortBuffer[j]->_next = face._hedge;
+            face._hedge = sortBuffer[j];
         }
-
-        // LOG_DEBUG("Sorted half-edges around %s" << point.asText();
-        // leaf.printHEdges();
     }
 
     /**
      * Determine which sector this BSP leaf belongs to.
      */
-    Sector *chooseSectorForBspLeaf(BspLeaf const *leaf)
+    Sector *chooseSectorForBspLeaf(BspLeaf const &leaf)
     {
-        if(!leaf || !leaf->firstHEdge()) return 0;
+        if(!leaf.firstHEdge()) return 0;
 
         Sector *selfRefChoice = 0;
-        HEdge *base = leaf->firstHEdge();
+        HEdge *base = leaf.firstHEdge();
         HEdge *hedge = base;
         do
         {
@@ -1511,11 +1509,11 @@ DENG2_PIMPL(Partitioner)
         return 0; // Not reachable.
     }
 
-    static Vector2d findBspLeafCenter(BspLeaf const &leaf)
+    static Vector2d findFaceCenter(Face const &face)
     {
         Vector2d center;
         int numPoints = 0;
-        HEdge const *hedge = leaf.firstHEdge();
+        HEdge const *hedge = face.firstHEdge();
         forever
         {
             center += hedge->origin();
@@ -1534,12 +1532,18 @@ DENG2_PIMPL(Partitioner)
 
     void clockwiseLeaf(BspLeaf &leaf, HEdgeSortBuffer &sortBuffer)
     {
-        clockwiseOrder(leaf, findBspLeafCenter(leaf), sortBuffer);
+        Face &face = leaf;
 
-        // Construct the leaf's hedge ring.
-        if(leaf._hedge)
+        Vector2d center = findFaceCenter(face);
+        clockwiseOrder(face, center, sortBuffer);
+
+        // LOG_DEBUG("Sorted Face half-edges around %s" << center.asText();
+        // leaf.printFaceGeometry();
+
+        // Construct the face's hedge ring.
+        if(face._hedge)
         {
-            HEdge *hedge = leaf._hedge;
+            HEdge *hedge = face._hedge;
             forever
             {
                 /// @todo kludge: This should not be done here!
@@ -1574,7 +1578,7 @@ DENG2_PIMPL(Partitioner)
                 else
                 {
                     // Circular link.
-                    hedge->_next = leaf._hedge;
+                    hedge->_next = face._hedge;
                     hedge->_next->_prev = hedge;
                     break;
                 }
@@ -1582,7 +1586,7 @@ DENG2_PIMPL(Partitioner)
         }
     }
 
-    Sector *findFirstSectorInHEdgeList(BspLeaf const &leaf)
+    Sector *findFirstSectorInBspLeaf(BspLeaf const &leaf)
     {
         HEdge const *base = leaf.firstHEdge();
         HEdge const *hedge = base;
@@ -1641,7 +1645,7 @@ DENG2_PIMPL(Partitioner)
                                 .arg(dintptr(leaf), 0, 16));
 
             // Look for migrant half-edges in the leaf.
-            if(Sector *sector = findFirstSectorInHEdgeList(*leaf))
+            if(Sector *sector = findFirstSectorInBspLeaf(*leaf))
             {
                 HEdge *base = leaf->firstHEdge();
                 HEdge *hedge = base;
@@ -1655,7 +1659,7 @@ DENG2_PIMPL(Partitioner)
                 } while((hedge = &hedge->next()) != base);
             }
 
-            leaf->setSector(chooseSectorForBspLeaf(leaf));
+            leaf->setSector(chooseSectorForBspLeaf(*leaf));
             if(!leaf->hasSector())
             {
                 LOG_WARNING("BspLeaf %p is degenerate/orphan (%d HEdges).")
@@ -1677,7 +1681,7 @@ DENG2_PIMPL(Partitioner)
             if(gaps > 0)
             {
                 /*
-                HEdge const *base = leaf.firstHEdge();
+                HEdge const *base = leaf->firstHEdge();
                 HEdge const *hedge = base;
                 do
                 {

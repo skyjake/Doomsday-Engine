@@ -438,7 +438,7 @@ void Sector::planeHeightChanged(Plane &plane, coord_t oldHeight)
     // Inform the shadow bias of changed geometry.
     foreach(BspLeaf *bspLeaf, d->bspLeafs)
     {
-        if(!bspLeaf->isDegenerate())
+        if(!bspLeaf->hasDegenerateFace())
         {
             HEdge *base = bspLeaf->firstHEdge();
             HEdge *hedge = base;

@@ -195,18 +195,6 @@ public:
     BspLeaf &bspLeaf() const;
 
     /**
-     * Convenient accessor method for returning the sector attributed to the
-     * BSP leaf for the half-edge. One should first determine whether a sector
-     * is indeed attributed to the BSP leaf (e.g., by calling @ref BspLeaf::hasSector()).
-     *
-     * @see bspLeaf(), BspLeaf::sector()
-     */
-    inline Sector &bspLeafSector() const { return bspLeaf().sector(); }
-
-    /// Variant of @ref bspLeafSector() which returns a pointer.
-    inline Sector *bspLeafSectorPtr() const { return bspLeaf().sectorPtr(); }
-
-    /**
      * Returns @c true iff a Line::Side is attributed to the half-edge.
      */
     bool hasLineSide() const;

@@ -94,7 +94,7 @@ DENG_EXTERN_C BspLeaf *P_BspLeafAtPoint_FixedPrecisionXY(coord_t x, coord_t y)
 
 bool P_IsPointInBspLeaf(Vector2d const &point, BspLeaf const &bspLeaf)
 {
-    if(bspLeaf.isDegenerate())
+    if(bspLeaf.hasDegenerateFace())
         return false; // Obviously not.
 
     HEdge const *base = bspLeaf.firstHEdge();

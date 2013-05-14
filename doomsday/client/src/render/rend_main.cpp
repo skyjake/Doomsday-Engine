@@ -1850,8 +1850,8 @@ static coord_t skyFixCeilZ(Plane const *frontCeil, Plane const *backCeil)
  */
 static void skyFixZCoords(HEdge *hedge, int skyCap, coord_t *bottom, coord_t *top)
 {
-    Sector const *frontSec = hedge->bspLeafSectorPtr();
-    Sector const *backSec  = hedge->twin().hasBspLeaf() && !hedge->twin().bspLeaf().isDegenerate()? hedge->twin().bspLeafSectorPtr() : 0;
+    Sector const *frontSec = hedge->bspLeaf().sectorPtr();
+    Sector const *backSec  = hedge->twin().hasBspLeaf() && !hedge->twin().bspLeaf().hasDegenerateFace()? hedge->twin().bspLeaf().sectorPtr() : 0;
     Plane const *ffloor = &frontSec->floor();
     Plane const *fceil  = &frontSec->ceiling();
     Plane const *bceil  = backSec? &backSec->ceiling() : 0;
@@ -1888,8 +1888,8 @@ static int chooseHEdgeSkyFixes(HEdge *hedge, int skyCap)
     if(!hedge->hasLineSide()) return 0;
 
     int fixes = 0;
-    Sector const *frontSec = hedge->bspLeafSectorPtr();
-    Sector const *backSec  = hedge->twin().hasBspLeaf() && !hedge->twin().bspLeaf().isDegenerate()? hedge->twin().bspLeafSectorPtr() : 0;
+    Sector const *frontSec = hedge->bspLeaf().sectorPtr();
+    Sector const *backSec  = hedge->twin().hasBspLeaf() && !hedge->twin().bspLeaf().hasDegenerateFace()? hedge->twin().bspLeaf().sectorPtr() : 0;
 
     if(!backSec || backSec != frontSec)
     {
@@ -2195,7 +2195,7 @@ static void writeLeafSkyMaskStrips(int skyFix)
             if(splitForSkyMaterials)
             {
                 int relPlane = skyFix == SKYCAP_UPPER? Plane::Ceiling : Plane::Floor;
-                skyMaterial = hedge->bspLeafSector().planeSurface(relPlane).materialPtr();
+                skyMaterial = hedge->bspLeaf().sector().planeSurface(relPlane).materialPtr();
             }
 
             if(zBottom >= zTop)
@@ -2413,7 +2413,7 @@ static int pvisibleWallSections(HEdge &hedge, bool &twoSided)
     DENG_ASSERT(hedge.isFlagged(HEdge::FacingFront));
 
     // One-sided?
-    if(!hedge.twin().hasBspLeaf() || hedge.twin().bspLeaf().isDegenerate() ||
+    if(!hedge.twin().hasBspLeaf() || hedge.twin().bspLeaf().hasDegenerateFace() ||
        !hedge.twin().bspLeaf().hasSector() ||
        /* Solid side of a "one-way window"? */
        !(hedge.twin().hasLineSide() && hedge.twin().lineSide().hasSections()))
@@ -2673,8 +2673,8 @@ static void occludeHEdge(HEdge const &hedge, bool frontFacing)
     if(!hedge.hasLineSide() || !hedge.lineSide().hasSections()) return;
 
     // Occlusions should only happen where two sectors meet.
-    if(!hedge.twin().hasBspLeaf() || hedge.twin().bspLeaf().isDegenerate() ||
-       !hedge.twin().bspLeafSectorPtr()) return;
+    if(!hedge.twin().hasBspLeaf() || hedge.twin().bspLeaf().hasDegenerateFace() ||
+       !hedge.twin().bspLeaf().sectorPtr()) return;
 
     Sector const &frontSec = hedge.bspLeaf().sector();
     Sector const &backSec  = hedge.twin().bspLeaf().sector();
@@ -2866,7 +2866,7 @@ static void traverseBspAndDrawLeafs(MapElement *bspElement)
         return;
 
     // Is this leaf visible?
-    if(!firstBspLeaf && !C_CheckBspLeaf(bspLeaf))
+    if(!firstBspLeaf && !C_CheckBspLeaf(*bspLeaf))
         return;
 
     // This is now the current leaf.
@@ -3368,11 +3368,11 @@ static void Rend_DrawSurfaceVectors()
         if(!hedge->hasBspLeaf() || !hedge->bspLeaf().hasSector())
             continue;
 
-        if(!hedge->twin().hasBspLeaf() || hedge->twin().bspLeaf().isDegenerate() ||
+        if(!hedge->twin().hasBspLeaf() || hedge->twin().bspLeaf().hasDegenerateFace() ||
            !hedge->twin().bspLeaf().hasSector())
         {
-            coord_t const bottom = hedge->bspLeafSector().floor().visHeight();
-            coord_t const top = hedge->bspLeafSector().ceiling().visHeight();
+            coord_t const bottom = hedge->bspLeaf().sector().floor().visHeight();
+            coord_t const top = hedge->bspLeaf().sector().ceiling().visHeight();
             Vector2d center = (hedge->twin().origin() + hedge->origin()) / 2;
             Surface *suf = &hedge->lineSide().middle();
 
@@ -3381,13 +3381,13 @@ static void Rend_DrawSurfaceVectors()
         }
         else
         {
-            Sector *backSec  = hedge->twin().bspLeafSectorPtr();
+            Sector *backSec  = hedge->twin().bspLeaf().sectorPtr();
             Line::Side &side = hedge->lineSide();
 
             if(side.middle().hasMaterial())
             {
-                coord_t const bottom = hedge->bspLeafSector().floor().visHeight();
-                coord_t const top = hedge->bspLeafSector().ceiling().visHeight();
+                coord_t const bottom = hedge->bspLeaf().sector().floor().visHeight();
+                coord_t const top = hedge->bspLeaf().sector().ceiling().visHeight();
                 Vector2d center = (hedge->twin().origin() + hedge->origin()) / 2;
                 Surface *suf = &side.middle();
 
@@ -3396,12 +3396,12 @@ static void Rend_DrawSurfaceVectors()
             }
 
             if(backSec->ceiling().visHeight() <
-               hedge->bspLeafSector().ceiling().visHeight() &&
-               !(hedge->bspLeafSector().ceilingSurface().hasSkyMaskedMaterial() &&
+               hedge->bspLeaf().sector().ceiling().visHeight() &&
+               !(hedge->bspLeaf().sector().ceilingSurface().hasSkyMaskedMaterial() &&
                  backSec->ceilingSurface().hasSkyMaskedMaterial()))
             {
                 coord_t const bottom = backSec->ceiling().visHeight();
-                coord_t const top = hedge->bspLeafSector().ceiling().visHeight();
+                coord_t const top = hedge->bspLeaf().sector().ceiling().visHeight();
                 Vector2d center = (hedge->twin().origin() + hedge->origin()) / 2;
                 Surface *suf = &side.top();
 
@@ -3410,11 +3410,11 @@ static void Rend_DrawSurfaceVectors()
             }
 
             if(backSec->floor().visHeight() >
-               hedge->bspLeafSector().floor().visHeight() &&
-               !(hedge->bspLeafSector().floorSurface().hasSkyMaskedMaterial() &&
+               hedge->bspLeaf().sector().floor().visHeight() &&
+               !(hedge->bspLeaf().sector().floorSurface().hasSkyMaskedMaterial() &&
                  backSec->floorSurface().hasSkyMaskedMaterial()))
             {
-                coord_t const bottom = hedge->bspLeafSector().floor().visHeight();
+                coord_t const bottom = hedge->bspLeaf().sector().floor().visHeight();
                 coord_t const top = backSec->floor().visHeight();
                 Vector2d center = (hedge->twin().origin() + hedge->origin()) / 2;
                 Surface *suf = &side.bottom();

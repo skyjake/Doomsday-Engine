@@ -113,6 +113,7 @@ DENG_HEADERS += \
     include/BspLeaf \
     include/BspNode \
     include/EntityDatabase \
+    include/Face \
     include/Game \
     include/Games \
     include/HEdge \
@@ -238,6 +239,7 @@ DENG_HEADERS += \
     include/map/bspnode.h \
     include/map/dam_file.h \
     include/map/entitydatabase.h \
+    include/map/face.h \
     include/map/gamemap.h \
     include/map/generators.h \
     include/map/hedge.h \
@@ -509,6 +511,7 @@ SOURCES += \
     src/map/bspnode.cpp \
     src/map/dam_file.cpp \
     src/map/entitydatabase.cpp \
+    src/map/face.cpp \
     src/map/gamemap.cpp \
     src/map/generators.cpp \
     src/map/hedge.cpp \

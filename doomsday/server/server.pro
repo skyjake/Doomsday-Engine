@@ -198,6 +198,7 @@ DENG_HEADERS += \
     $$SRC/include/map/bspnode.h \
     $$SRC/include/map/dam_file.h \
     $$SRC/include/map/entitydatabase.h \
+    $$SRC/include/map/face.h \
     $$SRC/include/map/gamemap.h \
     $$SRC/include/map/generators.h \
     $$SRC/include/map/hedge.h \
@@ -369,6 +370,7 @@ SOURCES += \
     $$SRC/src/map/bspnode.cpp \
     $$SRC/src/map/dam_file.cpp \
     $$SRC/src/map/entitydatabase.cpp \
+    $$SRC/src/map/face.cpp \
     $$SRC/src/map/gamemap.cpp \
     $$SRC/src/map/generators.cpp \
     $$SRC/src/map/hedge.cpp \

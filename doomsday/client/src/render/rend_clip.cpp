@@ -108,7 +108,7 @@ static Rover occNodes;
 /// Head of the occlusion range list.
 static OccNode* occHead; // The head occlusion node.
 
-static uint anglistSize = 0;
+static int anglistSize = 0;
 static binangle_t *anglist;
 
 /**
@@ -959,14 +959,14 @@ int C_IsAngleVisible(binangle_t bang)
     return true;
 }
 
-int C_CheckBspLeaf(BspLeaf *leaf)
+int C_CheckBspLeaf(BspLeaf &leaf)
 {
-    if(!leaf || leaf->isDegenerate()) return false;
+    if(leaf.hasDegenerateFace()) return false;
 
     if(devNoCulling) return true;
 
     // Do we need to resize the angle list buffer?
-    if(leaf->hedgeCount() > anglistSize)
+    if(leaf.hedgeCount() > anglistSize)
     {
         anglistSize *= 2;
         if(!anglistSize)
@@ -975,8 +975,8 @@ int C_CheckBspLeaf(BspLeaf *leaf)
     }
 
     // Find angles to all corners.
-    uint n = 0;
-    HEdge const *base = leaf->firstHEdge();
+    int n = 0;
+    HEdge const *base = leaf.firstHEdge();
     HEdge const *hedge = base;
     do
     {
@@ -987,12 +987,12 @@ int C_CheckBspLeaf(BspLeaf *leaf)
     } while((hedge = &hedge->next()) != base);
 
     // Check each of the ranges defined by the edges.
-    for(uint i = 0; i < leaf->hedgeCount() - 1; ++i)
+    for(int i = 0; i < leaf.hedgeCount() - 1; ++i)
     {
         // The last edge won't be checked. This is because the edges
         // define a closed, convex polygon and the last edge's range is
         // always already covered by the previous edges. (Right?)
-        uint end = i + 1;
+        int end = i + 1;
 
         // If even one of the edges is not contained by a clipnode,
         // the leaf is at least partially visible.

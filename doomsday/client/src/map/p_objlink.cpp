@@ -309,7 +309,7 @@ static void linkObjToBspLeaf(BspLeaf &bspLeaf, void *object, objtype_t type)
     if(!object) return;
 
     // Never link to degenerate BspLeafs.
-    if(bspLeaf.isDegenerate()) return;
+    if(bspLeaf.hasDegenerateFace()) return;
 
     objcontact_t *con = allocObjContact();
     con->obj = object;
@@ -322,7 +322,7 @@ static void createObjlink(BspLeaf &bspLeaf, void *object, objtype_t type)
     if(!object) return;
 
     // We don't create objlinks for objects in degenerate BSPLeafs.
-    if(bspLeaf.isDegenerate()) return;
+    if(bspLeaf.hasDegenerateFace()) return;
 
     objlink_t *link = allocObjlink();
     link->obj = object;
@@ -333,13 +333,13 @@ static void processHEdge(HEdge *hedge, void *parameters)
 {
     contactfinderparams_t *parms = (contactfinderparams_t *) parameters;
     DENG_ASSERT(hedge != 0 && parms != 0);
-    DENG_ASSERT(hedge->hasBspLeaf() && !hedge->bspLeaf().isDegenerate());
+    DENG_ASSERT(hedge->hasBspLeaf() && !hedge->bspLeaf().hasDegenerateFace());
 
     // There must be a back leaf to spread to.
     if(!hedge->twin().hasBspLeaf()) return;
 
     // Never spread to degenerate BspLeafs.
-    if(hedge->twin().bspLeaf().isDegenerate()) return;
+    if(hedge->twin().bspLeaf().hasDegenerateFace()) return;
 
     BspLeaf *leaf     = &hedge->bspLeaf();
     BspLeaf *backLeaf = &hedge->twin().bspLeaf();
@@ -434,7 +434,7 @@ static void processHEdge(HEdge *hedge, void *parameters)
  */
 static void spreadInBspLeaf(BspLeaf *bspLeaf, void *parameters)
 {
-    if(!bspLeaf || bspLeaf->isDegenerate()) return;
+    if(!bspLeaf || bspLeaf->hasDegenerateFace()) return;
 
     HEdge *base = bspLeaf->firstHEdge();
     HEdge *hedge = base;
@@ -548,7 +548,7 @@ static inline float maxRadius(objtype_t type)
 
 void R_InitForBspLeaf(BspLeaf &bspLeaf)
 {
-    if(bspLeaf.isDegenerate()) return;
+    if(bspLeaf.hasDegenerateFace()) return;
 
 BEGIN_PROF( PROF_OBJLINK_SPREAD );
 

@@ -27,7 +27,7 @@
 #include <de/Vector>
 
 #include "MapElement"
-
+#include "Face"
 
 class HEdge;
 class Sector;
@@ -39,14 +39,14 @@ struct ShadowLink;
 #endif // __CLIENT__
 
 /**
- * Two dimensional convex polygon describing a @em leaf in a binary space
- * partition tree (BSP).
+ * Map data element describing a @em leaf in a binary space partition tree (BSP)
+ * (a two dimensional convex polygon).
  *
  * @see http://en.wikipedia.org/wiki/Binary_space_partitioning
  *
  * @ingroup map
  */
-class BspLeaf : public de::MapElement
+class BspLeaf : public de::MapElement, public de::Face
 {
 public:
     /// Required sector attribution is missing. @ingroup errors
@@ -58,13 +58,6 @@ public:
 #endif
 
 public: /// @todo Make private:
-    /// First half-edge in the leaf. Ordered by angle, clockwise starting from
-    /// the smallest angle.
-    HEdge *_hedge;
-
-    /// Number of HEdge's in the leaf.
-    uint _hedgeCount;
-
 #ifdef __CLIENT__
 
     ShadowLink *_shadows;
@@ -81,20 +74,27 @@ public:
     ~BspLeaf();
 
     /**
+     * Returns @c true iff the map geometry Face for the BSP leaf is "degenerate",
+     * which is to say it is composed of fewer than @em three half-edges.
+     */
+    bool hasDegenerateFace() const;
+
+    /**
      * Returns the axis-aligned bounding box which encompases all the vertexes
-     * which define the geometry of the BSP leaf in map coordinate space units.
+     * which define the geometry of the Face for for BSP leaf in map coordinate
+     * space units.
      */
     AABoxd const &aaBox() const;
 
     /**
      * Update the BSP leaf's map space axis-aligned bounding box to encompass
-     * the points defined by it's vertices.
+     * the points defined by the vertexes of the map geometry Face.
      */
     void updateAABox();
 
     /**
      * Returns the point described by the average origin coordinates of all the
-     * vertexes which define the geometry of the BSP leaf in map coordinate space
+     * vertexes which define the Face of the BSP leaf in map coordinate space
      * units.
      */
     de::Vector2d const &center() const;
@@ -107,25 +107,9 @@ public:
     void updateCenter();
 
     /**
-     * Returns a pointer to the first HEdge of the BSP leaf; otherwise @c 0.
-     */
-    HEdge *firstHEdge() const;
-
-    /**
-     * Returns the total number of half-edges in the BSP leaf.
-     */
-    uint hedgeCount() const;
-
-    /**
-     * Returns @c true iff the BSP leaf is "degenerate", which is to say it is
-     * composed of fewer than @em three half-edges.
-     */
-    inline bool isDegenerate() const { return hedgeCount() < 3; }
-
-    /**
      * Returns @c true iff a sector is attributed to the BSP leaf. The only time
-     * a leaf might not be attributed to a sector is if the leaf was @em orphaned
-     * by the partitioning algorithm (a bug).
+     * a leaf might not be attributed to a sector is if the map geometry was
+     * @em orphaned by the partitioning algorithm (a bug).
      */
     bool hasSector() const;
 
@@ -156,7 +140,7 @@ public:
      * Determines whether the BSP leaf has a positive world volume. For this to
      * be true the following criteria must be met:
      *
-     * - The leaf is @em not degenerate (see @ref isDegenerate()).
+     * - The Face geometry is @em not degenerate (see @ref hasDegenerateFace()).
      * - A sector is attributed (see @ref hasSector())
      * - The height of floor is lower than that of the ceiling plane for the
      *   attributed sector.
@@ -224,11 +208,7 @@ public:
      *
      * @see fanBase()
      */
-    inline uint numFanVertices() const
-    {
-        // Are we to use one of the half-edge vertexes as the fan base?
-        return hedgeCount() + (fanBase()? 0 : 2);
-    }
+    int numFanVertices() const;
 
     /**
      * Retrieve the bias surface for specified geometry @a groupId
@@ -259,7 +239,7 @@ public:
 #endif // __CLIENT__
 
 #ifdef DENG_DEBUG
-    void printHEdges() const;
+    void printFaceGeometry() const;
 #endif
 
 protected:

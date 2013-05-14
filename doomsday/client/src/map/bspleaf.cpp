@@ -25,6 +25,7 @@
 
 #include <de/Log>
 
+#include "Face"
 #include "HEdge"
 #include "Polyobj"
 #include "Sector"
@@ -116,7 +117,7 @@ DENG2_PIMPL(BspLeaf)
     {
 #define MIN_TRIANGLE_EPSILON  (0.1) ///< Area
 
-        HEdge *firstNode = self._hedge;
+        HEdge *firstNode = self.firstHEdge();
 
         fanBase = firstNode;
 
@@ -159,7 +160,7 @@ DENG2_PIMPL(BspLeaf)
             // Did we find something suitable?
             if(!base) // No.
             {
-                fanBase = NULL;
+                fanBase = 0;
             }
         }
         //else Implicitly suitable (or completely degenerate...).
@@ -172,11 +173,8 @@ DENG2_PIMPL(BspLeaf)
 #endif // __CLIENT__
 };
 
-BspLeaf::BspLeaf()
-    : MapElement(DMU_BSPLEAF), d(new Instance(this))
+BspLeaf::BspLeaf() : MapElement(DMU_BSPLEAF), Face(), d(new Instance(this))
 {
-    _hedge = 0;
-    _hedgeCount = 0;
 #ifdef __CLIENT__
     _shadows = 0;
     _bsuf = 0;
@@ -196,31 +194,11 @@ BspLeaf::~BspLeaf()
         Z_Free(_bsuf);
     }
 #endif // __CLIENT__
+}
 
-    // Clear the HEdges.
-    if(_hedge)
-    {
-        HEdge *he = _hedge;
-        if(he->_next == he)
-        {
-            delete he;
-        }
-        else
-        {
-            // Break the ring, if linked.
-            if(he->_prev)
-            {
-                he->_prev->_next = 0;
-            }
-
-            while(he)
-            {
-                HEdge *next = he->_next;
-                delete he;
-                he = next;
-            }
-        }
-    }
+bool BspLeaf::hasDegenerateFace() const
+{
+    return hedgeCount() < 3;
 }
 
 AABoxd const &BspLeaf::aaBox() const
@@ -233,12 +211,13 @@ void BspLeaf::updateAABox()
     V2d_Set(d->aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
     V2d_Set(d->aaBox.max, DDMINFLOAT, DDMINFLOAT);
 
-    if(!_hedge) return; // Very odd...
+    HEdge *base = firstHEdge();
+    if(!base) return; // Very odd...
 
-    HEdge *hedgeIt = _hedge;
+    HEdge *hedgeIt = base;
     V2d_InitBoxXY(d->aaBox.arvec2, hedgeIt->origin().x, hedgeIt->origin().y);
 
-    while((hedgeIt = &hedgeIt->next()) != _hedge)
+    while((hedgeIt = &hedgeIt->next()) != base)
     {
         V2d_AddToBoxXY(d->aaBox.arvec2, hedgeIt->origin().x, hedgeIt->origin().y);
     }
@@ -265,16 +244,6 @@ void BspLeaf::updateWorldGridOffset()
     d->worldGridOffset = Vector2d(fmod(d->aaBox.minX, 64), fmod(d->aaBox.maxY, 64));
 }
 
-HEdge *BspLeaf::firstHEdge() const
-{
-    return _hedge;
-}
-
-uint BspLeaf::hedgeCount() const
-{
-    return _hedgeCount;
-}
-
 bool BspLeaf::hasSector() const
 {
     return d->sector != 0;
@@ -297,7 +266,7 @@ void BspLeaf::setSector(Sector *newSector)
 
 bool BspLeaf::hasWorldVolume(bool useVisualHeights) const
 {
-    if(isDegenerate()) return false;
+    if(hasDegenerateFace()) return false;
     if(!hasSector()) return false;
 
     coord_t const floorHeight = useVisualHeights? d->sector->floor().visHeight() : d->sector->floor().height();
@@ -335,6 +304,12 @@ HEdge *BspLeaf::fanBase() const
     return d->fanBase;
 }
 
+int BspLeaf::numFanVertices() const
+{
+    // Are we to use one of the half-edge vertexes as the fan base?
+    return hedgeCount() + (fanBase()? 0 : 2);
+}
+
 BiasSurface &BspLeaf::biasSurfaceForGeometryGroup(int groupId)
 {
     DENG2_ASSERT(d->sector != 0);
@@ -364,24 +339,6 @@ void BspLeaf::setAddSpriteCount(int newFrameCount)
 
 #endif // __CLIENT__
 
-#ifdef DENG_DEBUG
-void BspLeaf::printHEdges() const
-{
-    if(!_hedge) return;
-    HEdge const *hedge = _hedge;
-    do
-    {
-        coord_t angle = M_DirectionToAngleXY(hedge->origin().x - d->center.x,
-                                             hedge->origin().y - d->center.y);
-
-        LOG_DEBUG("  half-edge %p: Angle %1.6f %s -> %s")
-            << de::dintptr(hedge) << angle
-            << hedge->origin().asText() << hedge->twin().origin().asText();
-
-    } while((hedge = &hedge->next()) != _hedge);
-}
-#endif
-
 int BspLeaf::property(setargs_t &args) const
 {
     switch(args.prop)
@@ -394,3 +351,24 @@ int BspLeaf::property(setargs_t &args) const
     }
     return false; // Continue iteration.
 }
+
+#ifdef DENG_DEBUG
+void BspLeaf::printFaceGeometry() const
+{
+    HEdge const *base = firstHEdge();
+    if(!base) return;
+
+    HEdge const *hedgeIt = base;
+    do
+    {
+        HEdge const &hedge = *hedgeIt;
+        coord_t angle = M_DirectionToAngleXY(hedge.origin().x - d->center.x,
+                                             hedge.origin().y - d->center.y);
+
+        LOG_DEBUG("  half-edge %p: Angle %1.6f %s -> %s")
+            << de::dintptr(&hedge) << angle
+            << hedge.origin().asText() << hedge.twin().origin().asText();
+
+    } while((hedgeIt = &hedgeIt->next()) != base);
+}
+#endif
