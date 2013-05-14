@@ -330,6 +330,54 @@ DENG2_PIMPL(Info)
         return value;
     }
 
+    InfoValue parseScript(int numStatements = 0)
+    {
+        int startPos = cursor - 1;
+        String remainder = content.substr(startPos);
+        ScriptLex lex(remainder);
+        try
+        {
+            TokenBuffer tokens;
+            int count = 0;
+
+            // Read an appropriate number of statements.
+            while(lex.getStatement(tokens))
+            {
+                if(numStatements > 0)
+                {
+                    if(++count == numStatements)
+                        goto success;
+                }
+            }
+            throw SyntaxError("Info::parseScript",
+                              QString("Unexpected end of script starting at line %1").arg(currentLine));
+success:;
+        }
+        catch(ScriptLex::MismatchedBracketError const &)
+        {
+            // A mismatched bracket signals the end of the script block.
+        }
+
+        // Continue parsing normally from here.
+        int endPos = startPos + lex.pos();
+        do { nextChar(); } while(cursor < endPos); // fast-forward
+
+        // Update the current token.
+        currentToken = QString(peekChar());
+        nextChar();
+
+        if(currentToken != ")" && currentToken != "}")
+        {
+            // When parsing just a statement, we might stop at something else
+            // than a bracket; if so, skip to the next valid token.
+            nextToken();
+        }
+
+        //qDebug() << "now at" << content.substr(endPos - 15, endPos) << "^" << content.substr(endPos);
+
+        return InfoValue(content.substr(startPos, lex.pos() - 1), InfoValue::Script);
+    }
+
     /**
      * Parse a key element.
      * @param name Name of the parsed key element.
@@ -354,13 +402,22 @@ DENG2_PIMPL(Info)
         }
         else if(peekToken() == "=")
         {
-            /**
-             * Key =
-             *   "This is a long string "
-             *   "that spans multiple lines."
-             */
-            nextToken();
-            value.text = parseValue();
+            if(value.flags.testFlag(InfoValue::Script))
+            {
+                // Parse one script statement.
+                value = parseScript(1);
+                value.text = value.text.trimmed();
+            }
+            else
+            {
+                /**
+                 * Key =
+                 *   "This is a long string "
+                 *   "that spans multiple lines."
+                 */
+                nextToken();
+                value.text = parseValue();
+            }
         }
         else
         {
@@ -456,34 +513,7 @@ DENG2_PIMPL(Info)
             if(scriptBlockTypes.contains(blockType))
             {
                 // Parse as Doomsday Script.
-                int startPos = cursor - 1;
-                String remainder = content.substr(startPos);
-                ScriptLex lex(remainder);
-                try
-                {
-                    TokenBuffer tokens;
-                    while(lex.getStatement(tokens)) {}
-
-                    // We should have gotten a mismatched bracket that ends the script.
-                    throw SyntaxError("Info::parseBlockElement",
-                                      QString("Script block at line %1 is not closed").arg(currentLine));
-                }
-                catch(ScriptLex::MismatchedBracketError const &)
-                {
-                    // Continue parsing normally from here.
-                    int endPos = startPos + lex.pos();
-                    do {
-                        nextChar();
-                    } while(cursor < endPos);
-                    currentToken = QString(peekChar());
-                    nextChar();
-
-                    InfoValue scriptValue(content.substr(startPos, lex.pos() - 1),
-                                          InfoValue::Script);
-                    block->add(new KeyElement("script", scriptValue));
-
-                    //LOG_DEBUG("Script element:\n\"%s\"") << block->find("script")->values().first();
-                }
+                block->add(new KeyElement("script", parseScript()));
             }
             else
             {
