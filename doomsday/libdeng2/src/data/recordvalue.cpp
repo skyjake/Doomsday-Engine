@@ -40,6 +40,13 @@ RecordValue::RecordValue(Record *record, OwnershipFlags o)
     }
 }
 
+RecordValue::RecordValue(Record &record)
+    : _record(&record), _ownership(0), _oldOwnership(0)
+{
+    // Someone may delete the record.
+    _record->audienceForDeletion += this;
+}
+
 RecordValue::~RecordValue()
 {
     setRecord(0);

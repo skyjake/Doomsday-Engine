@@ -99,7 +99,7 @@ DENG2_PIMPL(ScriptedInfo)
                     // If it doesn't exist yet, make sure it does.
                     ns.addRecord(varName);
                 }
-                ns.add("__this__") = new RecordValue(&ns.subrecord(varName));
+                ns.add("__this__") = new RecordValue(ns.subrecord(varName));
                 needRemoveThis = true;
             }
         }

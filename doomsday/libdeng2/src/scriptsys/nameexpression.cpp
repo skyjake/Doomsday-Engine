@@ -95,7 +95,7 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
         // Replaces existing member with this identifier.
         Record &record = spaces.front()->addRecord(_identifier);
 
-        return new RecordValue(&record);
+        return new RecordValue(record);
     }
 
     // If nothing is found and we are permitted to create new variables, do so.
