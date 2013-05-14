@@ -237,7 +237,8 @@ public:
         if(!found) {
             /// @throw NotFoundError  Path didn't exist, or the located file had
             /// an incompatible type.
-            throw NotFoundError("Folder::locate", path +": path was not found or had incompatible type");
+            throw NotFoundError("Folder::locate", "\"" + path +"\" was not found or had incompatible type "
+                                "(in " + description() + ")");
         }
         return *found;
     }
