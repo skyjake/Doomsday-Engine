@@ -4,5 +4,5 @@ script {
     UNIT = 4.0
 }
 
-rule unit ( constant $= UNIT )
-rule gap  ( constant $= UNIT * 3 )
+rule unit { constant $= UNIT }
+rule gap  { constant $= UNIT * 3 }
