@@ -38,8 +38,8 @@ struct SuperBlock::Instance
     /// KdTree node in the owning SuperBlockmap.
     KdTreeNode *tree;
 
-    /// LineSegments completely contained by this block.
-    SuperBlock::LineSegments lineSegments;
+    /// LineSegmentSides completely contained by this block.
+    SuperBlock::LineSegmentSides lineSegments;
 
     /// Number of map and partition line segments contained by this block
     /// (including all sub-blocks below it).
@@ -55,18 +55,18 @@ struct SuperBlock::Instance
         KdTreeNode_Delete(tree);
     }
 
-    inline void linkLineSegment(LineSegment &lineSeg)
+    inline void linkLineSegmentSide(LineSegment::Side &lineSeg)
     {
         lineSegments.prepend(&lineSeg);
     }
 
-    inline void incrementLineSegmentCount(LineSegment const &lineSeg)
+    inline void incrementLineSegmentSideCount(LineSegment::Side const &lineSeg)
     {
         if(lineSeg.hasMapSide()) mapNum++;
         else                     partNum++;
     }
 
-    inline void decrementLineSegmentCount(LineSegment const &lineSeg)
+    inline void decrementLineSegmentSideCount(LineSegment::Side const &lineSeg)
     {
         if(lineSeg.hasMapSide()) mapNum--;
         else                     partNum--;
@@ -150,7 +150,7 @@ SuperBlock *SuperBlock::addChild(ChildId childId, bool splitVertical)
     return new SuperBlock(*this, childId, splitVertical);
 }
 
-SuperBlock::LineSegments const &SuperBlock::lineSegments() const
+SuperBlock::LineSegmentSides const &SuperBlock::lineSegments() const
 {
     return d->lineSegments;
 }
@@ -163,23 +163,23 @@ uint SuperBlock::lineSegmentCount(bool addMap, bool addPart) const
     return total;
 }
 
-static void initAABoxFromLineSegmentVertexes(AABoxd &aaBox, LineSegment const &lineSeg)
+static void initAABoxFromLineSegmentSideVertexes(AABoxd &aaBox, LineSegment::Side const &lineSeg)
 {
-    Vector2d min = lineSeg.fromOrigin().min(lineSeg.toOrigin());
-    Vector2d max = lineSeg.fromOrigin().max(lineSeg.toOrigin());
+    Vector2d min = lineSeg.from().origin().min(lineSeg.to().origin());
+    Vector2d max = lineSeg.from().origin().max(lineSeg.to().origin());
     V2d_Set(aaBox.min, min.x, min.y);
     V2d_Set(aaBox.max, max.x, max.y);
 }
 
 /// @todo Optimize: Cache this result.
-void SuperBlock::findLineSegmentBounds(AABoxd &bounds)
+void SuperBlock::findLineSegmentSideBounds(AABoxd &bounds)
 {
     bool initialized = false;
     AABoxd lineSegBounds;
 
-    foreach(LineSegment *lineSeg, d->lineSegments)
+    foreach(LineSegment::Side *lineSeg, d->lineSegments)
     {
-        initAABoxFromLineSegmentVertexes(lineSegBounds, *lineSeg);
+        initAABoxFromLineSegmentSideVertexes(lineSegBounds, *lineSeg);
         if(initialized)
         {
             V2d_UniteBox(bounds.arvec2, lineSegBounds.arvec2);
@@ -192,7 +192,7 @@ void SuperBlock::findLineSegmentBounds(AABoxd &bounds)
     }
 }
 
-SuperBlock &SuperBlock::push(LineSegment &lineSeg)
+SuperBlock &SuperBlock::push(LineSegment::Side &lineSeg)
 {
     SuperBlock *sb = this;
     forever
@@ -200,12 +200,12 @@ SuperBlock &SuperBlock::push(LineSegment &lineSeg)
         DENG2_ASSERT(sb);
 
         // Update line segment counts.
-        sb->d->incrementLineSegmentCount(lineSeg);
+        sb->d->incrementLineSegmentSideCount(lineSeg);
 
         if(sb->isLeaf())
         {
             // No further subdivision possible.
-            sb->d->linkLineSegment(lineSeg);
+            sb->d->linkLineSegmentSide(lineSeg);
             break;
         }
 
@@ -216,23 +216,23 @@ SuperBlock &SuperBlock::push(LineSegment &lineSeg)
         {
             // Wider than tall.
             int midPoint = (sb->bounds().minX + sb->bounds().maxX) / 2;
-            p1 = lineSeg.fromOrigin().x >= midPoint? LEFT : RIGHT;
-            p2 =   lineSeg.toOrigin().x >= midPoint? LEFT : RIGHT;
+            p1 = lineSeg.from().origin().x >= midPoint? LEFT : RIGHT;
+            p2 =   lineSeg.to().origin().x >= midPoint? LEFT : RIGHT;
             splitVertical = false;
         }
         else
         {
             // Taller than wide.
             int midPoint = (sb->bounds().minY + sb->bounds().maxY) / 2;
-            p1 = lineSeg.fromOrigin().y >= midPoint? LEFT : RIGHT;
-            p2 =   lineSeg.toOrigin().y >= midPoint? LEFT : RIGHT;
+            p1 = lineSeg.from().origin().y >= midPoint? LEFT : RIGHT;
+            p2 =   lineSeg.to().origin().y >= midPoint? LEFT : RIGHT;
             splitVertical = true;
         }
 
         if(p1 != p2)
         {
             // Line crosses midpoint; link it in and return.
-            sb->d->linkLineSegment(lineSeg);
+            sb->d->linkLineSegmentSide(lineSeg);
             break;
         }
 
@@ -248,15 +248,15 @@ SuperBlock &SuperBlock::push(LineSegment &lineSeg)
     return *sb;
 }
 
-LineSegment *SuperBlock::pop()
+LineSegment::Side *SuperBlock::pop()
 {
     if(d->lineSegments.isEmpty())
         return 0;
 
-    LineSegment *lineSeg = d->lineSegments.takeFirst();
+    LineSegment::Side *lineSeg = d->lineSegments.takeFirst();
 
     // Update line segment counts.
-    d->decrementLineSegmentCount(*lineSeg);
+    d->decrementLineSegmentSideCount(*lineSeg);
 
     return lineSeg;
 }
@@ -321,13 +321,13 @@ void SuperBlockmap::clear()
     root().clear();
 }
 
-static void findLineSegmentBoundsWorker(SuperBlock &block, AABoxd &bounds, bool *initialized)
+static void findLineSegmentSideBoundsWorker(SuperBlock &block, AABoxd &bounds, bool *initialized)
 {
     DENG2_ASSERT(initialized);
     if(block.lineSegmentCount(true, true))
     {
         AABoxd lineSegBounds;
-        block.findLineSegmentBounds(lineSegBounds);
+        block.findLineSegmentSideBounds(lineSegBounds);
         if(*initialized)
         {
             V2d_AddToBox(bounds.arvec2, lineSegBounds.min);
@@ -341,7 +341,7 @@ static void findLineSegmentBoundsWorker(SuperBlock &block, AABoxd &bounds, bool 
     }
 }
 
-AABoxd SuperBlockmap::findLineSegmentBounds()
+AABoxd SuperBlockmap::findLineSegmentSideBounds()
 {
     bool initialized = false;
     AABoxd bounds;
@@ -353,7 +353,7 @@ AABoxd SuperBlockmap::findLineSegmentBounds()
     {
         while(cur)
         {
-            findLineSegmentBoundsWorker(*cur, bounds, &initialized);
+            findLineSegmentSideBoundsWorker(*cur, bounds, &initialized);
 
             if(prev == cur->parentPtr())
             {

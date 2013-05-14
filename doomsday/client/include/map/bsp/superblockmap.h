@@ -33,10 +33,11 @@
 #include <de/Log>
 #include <de/Vector>
 
+#include "map/bsp/linesegment.h"
+
 namespace de {
 namespace bsp {
 
-class LineSegment;
 class SuperBlock;
 
 /**
@@ -60,16 +61,16 @@ public:
 
     /**
      * Find the axis-aligned bounding box defined by the vertices of all
-     * LineSegments within this superblockmap. If there are no LineSegments
+     * LineSegmentSides within this superblockmap. If there are no LineSegmentSides
      * linked to this then @a bounds will be initialized to the "cleared"
      * state (i.e., min[x,y] > max[x,y]).
      *
      * @return bounds  Determined bounds are written here.
      */
-    AABoxd findLineSegmentBounds();
+    AABoxd findLineSegmentSideBounds();
 
     /**
-     * Empty this SuperBlockmap clearing all LineSegments and sub-blocks.
+     * Empty this SuperBlockmap clearing all LineSegmentSides and sub-blocks.
      */
     void clear();
 
@@ -99,7 +100,7 @@ private:
 class SuperBlock
 {
 public:
-    typedef QList<LineSegment *> LineSegments;
+    typedef QList<LineSegment::Side *> LineSegmentSides;
 
     /// A SuperBlock may be subdivided with two child subblocks which are
     /// uniquely identifiable by these associated ids.
@@ -149,7 +150,7 @@ public:
     /**
      * Retrieve the axis-aligned bounding box defined for this superblock
      * during instantiation. Note that this is NOT the bounds defined by
-     * the linked LineSegments' vertices (see SuperBlock::findLineSegmentBounds()).
+     * the linked LineSegmentSides' vertices (see SuperBlock::findLineSegmentSideBounds()).
      *
      * @return  Axis-aligned bounding box.
      */
@@ -231,16 +232,16 @@ public:
 
     /**
      * Find the axis-aligned bounding box defined by the vertices of all
-     * LineSegments within this superblock. If there are no LineSegments
+     * LineSegmentSides within this superblock. If there are no LineSegmentSides
      * linked to this then @a bounds will be initialized to the "cleared"
      * state (i.e., min[x,y] > max[x,y]).
      *
      * @param bounds  Determined bounds are written here.
      */
-    void findLineSegmentBounds(AABoxd &bounds);
+    void findLineSegmentSideBounds(AABoxd &bounds);
 
     /**
-     * Retrieve the total number of LineSegments linked in this superblock
+     * Retrieve the total number of LineSegmentSides linked in this superblock
      * (including any within child superblocks).
      *
      * @param addMap  Include the map line segments in the total.
@@ -251,31 +252,31 @@ public:
     uint lineSegmentCount(bool addMap, bool addPart) const;
 
     /// Convenience functions for retrieving line segment totals:
-    inline uint partLineSegmentCount() const {  return lineSegmentCount(false, true); }
-    inline uint mapLineSegmentCount() const {  return lineSegmentCount(true, false); }
-    inline uint totalLineSegmentCount() const { return lineSegmentCount(true, true); }
+    inline uint partLineSegmentSideCount() const {  return lineSegmentCount(false, true); }
+    inline uint mapLineSegmentSideCount() const {  return lineSegmentCount(true, false); }
+    inline uint totalLineSegmentSideCount() const { return lineSegmentCount(true, true); }
 
     /**
-     * Push (link) the given LineSegment onto the FIFO list of line segments
+     * Push (link) the given LineSegment::Side onto the FIFO list of line segments
      * linked to this superblock.
      *
-     * @param lineSeg  LineSegment instance to add.
+     * @param lineSeg  LineSegment::Side instance to add.
      * @return  SuperBlock that @a lineSeg was linked to.
      */
-    SuperBlock &push(LineSegment &lineSeg);
+    SuperBlock &push(LineSegment::Side &lineSeg);
 
     /**
-     * Pop (unlink) the next LineSegment from the FIFO list of line segments
+     * Pop (unlink) the next LineSegment::Side from the FIFO list of line segments
      * linked to this superblock.
      *
      * @return  Previous top-most line segment; otherwise @c 0 (empty).
      */
-    LineSegment *pop();
+    LineSegment::Side *pop();
 
     /**
      * Provides access to the list of line segments for efficient traversal.
      */
-    LineSegments const &lineSegments() const;
+    LineSegmentSides const &lineSegments() const;
 
     /**
      * SuperBlockmap creates instances of SuperBlock so it needs to use

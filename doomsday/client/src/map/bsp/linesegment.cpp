@@ -38,31 +38,28 @@
 namespace de {
 namespace bsp {
 
-DENG2_PIMPL(LineSegment),
-DENG2_OBSERVES(Vertex, OriginChange)
+DENG2_PIMPL_NOREF(LineSegment::Side)
 {
-    /// Vertexes of the segment (not owned).
-    Vertex *from, *to;
+    /// Owning line segment.
+    LineSegment *line;
+
+    bool hasSector;
 
     /// Direction vector from -> to.
     Vector2d direction;
-
-    /// Linked @em twin segment (that on the other side of "this" line segment).
-    LineSegment *twin;
 
     /// Map Line side that "this" segment initially comes from or @c 0 signifying
     /// a partition line segment (not owned).
     Line::Side *mapSide;
 
-    /// Map Line side that "this" segment initially comes from. For map lines,
-    /// this is just the same as @var mapSide. For partition lines this is the
-    /// the partition line's map Line side. (Not owned.)
-    Line::Side *sourceMapSide;
+    /// Map Line of the partition line which resulted in this segment due to
+    /// splitting (not owned).
+    Line *partitionMapLine;
 
     /// Neighbor line segments relative to "this" segment along the source
     /// line (both partition and map lines).
-    LineSegment *rightNeighbor;
-    LineSegment *leftNeighbor;
+    LineSegment::Side *rightNeighbor;
+    LineSegment::Side *leftNeighbor;
 
     /// The superblock that contains this segment, or @c 0 if the segment is no
     /// longer in any superblock (e.g., now in or being turned into a leaf edge).
@@ -81,14 +78,11 @@ DENG2_OBSERVES(Vertex, OriginChange)
     /// Half-edge produced from this segment (if any, not owned).
     HEdge *hedge;
 
-    Instance(Public *i, Vertex &from_, Vertex &to_, Line::Side *mapSide,
-             Line::Side *sourceMapSide)
-        : Base(i),
-          from(&from_),
-          to(&to_),
-          twin(0),
-          mapSide(mapSide),
-          sourceMapSide(sourceMapSide),
+    Instance(LineSegment &line)
+        : line(&line),
+          hasSector(false),
+          mapSide(0),
+          partitionMapLine(0),
           rightNeighbor(0),
           leftNeighbor(0),
           bmapBlock(0),
@@ -99,262 +93,167 @@ DENG2_OBSERVES(Vertex, OriginChange)
           pPerp(0),
           pSlopeType(ST_VERTICAL),
           hedge(0)
-    {
-        from->audienceForOriginChange += this;
-        to->audienceForOriginChange   += this;
-    }
+    {}
 
-    ~Instance()
-    {
-        from->audienceForOriginChange -= this;
-        to->audienceForOriginChange   -= this;
-    }
-
-    inline Vertex **vertexAdr(int edge) {
-        return edge? &to : &from;
-    }
-
-    inline LineSegment **neighborAdr(int edge) {
+    inline LineSegment::Side **neighborAdr(int edge) {
         return edge? &rightNeighbor : &leftNeighbor;
-    }
-
-    void replaceVertex(int edge, Vertex &newVertex)
-    {
-        Vertex **adr = vertexAdr(edge);
-
-        if(*adr && *adr == &newVertex) return;
-
-        if(*adr) (*adr)->audienceForOriginChange -= this;
-        *adr = &newVertex;
-        if(*adr) (*adr)->audienceForOriginChange += this;
-
-        updateCache();
-    }
-
-    /**
-     * To be called to update precalculated vectors, distances, etc...
-     * following a dependent vertex origin change notification.
-     *
-     * @todo Optimize: defer until next accessed. -ds
-     */
-    void updateCache()
-    {
-        direction  = to->origin() - from->origin();
-        pLength    = direction.length();
-        DENG2_ASSERT(pLength > 0);
-        pAngle     = M_DirectionToAngleXY(direction.x, direction.y);
-        pSlopeType = M_SlopeTypeXY(direction.x, direction.y);
-        pPerp      =  from->origin().y * direction.x - from->origin().x * direction.y;
-        pPara      = -from->origin().x * direction.x - from->origin().y * direction.y;
-    }
-
-    void vertexOriginChanged(Vertex &vertex, Vector2d const &oldOrigin, int changedAxes)
-    {
-        DENG2_UNUSED3(vertex, oldOrigin, changedAxes);
-        updateCache();
     }
 };
 
-LineSegment::LineSegment(Vertex &from, Vertex &to, Line::Side *mapSide,
-                         Line::Side *sourceMapSide)
-    : d(new Instance(this, from, to, mapSide, sourceMapSide))
+LineSegment::Side::Side(LineSegment &line)
+    : d(new Instance(line))
+{}
+
+void LineSegment::Side::updateCache()
 {
-    d->updateCache();
+    d->direction  = to().origin() - from().origin();
+    d->pLength    = d->direction.length();
+    DENG2_ASSERT(d->pLength > 0);
+    d->pAngle     = M_DirectionToAngleXY(d->direction.x, d->direction.y);
+    d->pSlopeType = M_SlopeTypeXY(d->direction.x, d->direction.y);
+    d->pPerp      =  from().origin().y * d->direction.x - from().origin().x * d->direction.y;
+    d->pPara      = -from().origin().x * d->direction.x - from().origin().y * d->direction.y;
 }
 
-LineSegment::LineSegment(LineSegment const &other)
-    : d(new Instance(this, *other.d->from, *other.d->to,
-                            other.d->mapSide, other.d->sourceMapSide))
+bool LineSegment::Side::hasSector() const
 {
-    d->direction     = other.d->direction;
-    d->twin          = other.d->twin;
-    d->rightNeighbor = other.d->rightNeighbor;
-    d->leftNeighbor  = other.d->leftNeighbor;
-    d->bmapBlock     = other.d->bmapBlock;
-    d->sector        = other.d->sector;
-    d->pLength       = other.d->pLength;
-    d->pAngle        = other.d->pAngle;
-    d->pPara         = other.d->pPara;
-    d->pPerp         = other.d->pPerp;
-    d->pSlopeType    = other.d->pSlopeType;
-    d->hedge         = other.d->hedge;
+    return d->hasSector;
 }
 
-LineSegment &LineSegment::operator = (LineSegment const &other)
+void LineSegment::Side::setHasSector(bool yes)
 {
-    d->direction     = other.d->direction;
-    d->twin          = other.d->twin;
-    d->mapSide       = other.d->mapSide;
-    d->sourceMapSide = other.d->sourceMapSide;
-    d->rightNeighbor = other.d->rightNeighbor;
-    d->leftNeighbor  = other.d->leftNeighbor;
-    d->bmapBlock     = other.d->bmapBlock;
-    d->sector        = other.d->sector;
-    d->pLength       = other.d->pLength;
-    d->pAngle        = other.d->pAngle;
-    d->pPara         = other.d->pPara;
-    d->pPerp         = other.d->pPerp;
-    d->pSlopeType    = other.d->pSlopeType;
-    d->hedge         = other.d->hedge;
-
-    replaceFrom(*other.d->from);
-    replaceTo(*other.d->to);
-
-    d->updateCache();
-
-    return *this;
+    d->hasSector = yes;
 }
 
-Vertex &LineSegment::vertex(int to) const
+LineSegment &LineSegment::Side::line() const
 {
-    DENG_ASSERT(*d->vertexAdr(to) != 0);
-    return **d->vertexAdr(to);
+    return *d->line;
 }
 
-void LineSegment::replaceVertex(int to, Vertex &newVertex)
+int LineSegment::Side::lineSideId() const
 {
-    d->replaceVertex(to, newVertex);
+    return &d->line->front() == this? LineSegment::Front : LineSegment::Back;
 }
 
-Vector2d const &LineSegment::direction() const
+Vector2d const &LineSegment::Side::direction() const
 {
     return d->direction;
 }
 
-slopetype_t LineSegment::slopeType() const
+slopetype_t LineSegment::Side::slopeType() const
 {
     return d->pSlopeType;
 }
 
-coord_t LineSegment::angle() const
+coord_t LineSegment::Side::angle() const
 {
     return d->pAngle;
 }
 
-bool LineSegment::hasTwin() const
-{
-    return d->twin != 0;
-}
-
-LineSegment &LineSegment::twin() const
-{
-    if(d->twin)
-    {
-        return *d->twin;
-    }
-    /// @throw MissingTwinError Attempted with no twin associated.
-    throw MissingTwinError("LineSegment::twin", "No twin line segment is associated");
-}
-
-void LineSegment::setTwin(LineSegment *newTwin)
-{
-    d->twin = newTwin;
-}
-
-bool LineSegment::hasHEdge() const
+bool LineSegment::Side::hasHEdge() const
 {
     return d->hedge != 0;
 }
 
-HEdge &LineSegment::hedge() const
+HEdge &LineSegment::Side::hedge() const
 {
     if(d->hedge)
     {
         return *d->hedge;
     }
     /// @throw MissingHEdgeError Attempted with no half-edge associated.
-    throw MissingHEdgeError("LineSegment::hedge", "No half-edge is associated");
+    throw MissingHEdgeError("LineSegment::Side::hedge", "No half-edge is associated");
 }
 
-void LineSegment::setHEdge(HEdge *newHEdge)
+void LineSegment::Side::setHEdge(HEdge *newHEdge)
 {
     d->hedge = newHEdge;
 }
 
-bool LineSegment::hasMapSide() const
+bool LineSegment::Side::hasMapSide() const
 {
     return d->mapSide != 0;
 }
 
-Line::Side &LineSegment::mapSide() const
+Line::Side &LineSegment::Side::mapSide() const
 {
     if(d->mapSide)
     {
         return *d->mapSide;
     }
     /// @throw MissingMapSideError Attempted with no map line side attributed.
-    throw MissingMapSideError("LineSegment::mapSide", "No map line side is attributed");
+    throw MissingMapSideError("LineSegment::Side::mapSide", "No map line side is attributed");
 }
 
-bool LineSegment::hasSourceMapSide() const
+void LineSegment::Side::setMapSide(Line::Side *newMapSide)
 {
-    return d->sourceMapSide != 0;
+    d->mapSide = newMapSide;
 }
 
-Line::Side &LineSegment::sourceMapSide() const
+Line *LineSegment::Side::partitionMapLine() const
 {
-    if(d->sourceMapSide)
-    {
-        return *d->sourceMapSide;
-    }
-    /// @throw MissingMapSideError Attempted with no source map line side attributed.
-    throw MissingMapSideError("LineSegment::sourceMapSide", "No source map line side is attributed");
+    return d->partitionMapLine;
 }
 
-bool LineSegment::hasNeighbor(int edge) const
+void LineSegment::Side::setPartitionMapLine(Line *newMapLine)
+{
+    d->partitionMapLine = newMapLine;
+}
+
+bool LineSegment::Side::hasNeighbor(int edge) const
 {
     return (*d->neighborAdr(edge)) != 0;
 }
 
-LineSegment &LineSegment::neighbor(int edge) const
+LineSegment::Side &LineSegment::Side::neighbor(int edge) const
 {
-    LineSegment **neighborAdr = d->neighborAdr(edge);
+    LineSegment::Side **neighborAdr = d->neighborAdr(edge);
     if(*neighborAdr)
     {
         return **neighborAdr;
     }
     /// @throw MissingNeighborError Attempted with no relevant neighbor attributed.
-    throw MissingNeighborError("LineSegment::neighbor", QString("No %1 neighbor is attributed").arg(edge? "Right" : "Left"));
+    throw MissingNeighborError("LineSegment::Side::neighbor", QString("No %1 neighbor is attributed").arg(edge? "Right" : "Left"));
 }
 
-void LineSegment::setNeighbor(int edge, LineSegment *newNeighbor)
+void LineSegment::Side::setNeighbor(int edge, LineSegment::Side *newNeighbor)
 {
     *d->neighborAdr(edge) = newNeighbor;
 }
 
-SuperBlock *LineSegment::bmapBlockPtr() const
+SuperBlock *LineSegment::Side::bmapBlockPtr() const
 {
     return d->bmapBlock;
 }
 
-void LineSegment::setBMapBlock(SuperBlock *newBMapBlock)
+void LineSegment::Side::setBMapBlock(SuperBlock *newBMapBlock)
 {
     d->bmapBlock = newBMapBlock;
 }
 
-Sector *LineSegment::sectorPtr() const
+Sector *LineSegment::Side::sectorPtr() const
 {
     return d->sector;
 }
 
-void LineSegment::setSector(Sector *newSector)
+void LineSegment::Side::setSector(Sector *newSector)
 {
     d->sector = newSector;
 }
 
-coord_t LineSegment::length() const
+coord_t LineSegment::Side::length() const
 {
     return d->pLength;
 }
 
-coord_t LineSegment::distance(Vector2d point) const
+coord_t LineSegment::Side::distance(Vector2d point) const
 {
     coord_t pointV1[2] = { point.x, point.y };
     coord_t directionV1[2] = { d->direction.x, d->direction.y };
     return V2d_PointLineParaDistance(pointV1, directionV1, d->pPara, d->pLength);
 }
 
-void LineSegment::distance(LineSegment const &other, coord_t *fromDist, coord_t *toDist) const
+void LineSegment::Side::distance(LineSegment::Side const &other, coord_t *fromDist, coord_t *toDist) const
 {
     // Any work to do?
     if(!fromDist && !toDist) return;
@@ -363,8 +262,7 @@ void LineSegment::distance(LineSegment const &other, coord_t *fromDist, coord_t 
     /// line are always treated as collinear. This special case is only
     /// necessary due to precision inaccuracies when a line is split into
     /// multiple segments.
-    if(hasSourceMapSide() && other.hasSourceMapSide() &&
-       &sourceMapSide().line() == &other.sourceMapSide().line())
+    if(d->partitionMapLine != 0 && d->partitionMapLine == other.partitionMapLine())
     {
         if(fromDist) *fromDist = 0;
         if(toDist)   *toDist   = 0;
@@ -375,18 +273,17 @@ void LineSegment::distance(LineSegment const &other, coord_t *fromDist, coord_t 
 
     if(fromDist)
     {
-        coord_t fromV1[2] = { d->from->origin().x, d->from->origin().y };
+        coord_t fromV1[2] = { from().origin().x, from().origin().y };
         *fromDist = V2d_PointLinePerpDistance(fromV1, toSegDirectionV1, other.d->pPerp, other.d->pLength);
     }
     if(toDist)
     {
-        coord_t toV1[2]   = { d->to->origin().x, d->to->origin().y };
+        coord_t toV1[2]   = { to().origin().x, to().origin().y };
         *toDist = V2d_PointLinePerpDistance(toV1, toSegDirectionV1, other.d->pPerp, other.d->pLength);
     }
 }
 
-/// @todo Might be a useful global utility function? -ds
-static LineRelationship lineRelationship(coord_t fromDist, coord_t toDist)
+LineRelationship lineRelationship(coord_t fromDist, coord_t toDist)
 {
     static coord_t const distEpsilon = LINESEGMENT_INCIDENT_DISTANCE_EPSILON;
 
@@ -415,7 +312,7 @@ static LineRelationship lineRelationship(coord_t fromDist, coord_t toDist)
     return Intersects;
 }
 
-LineRelationship LineSegment::relationship(LineSegment const &other,
+LineRelationship LineSegment::Side::relationship(LineSegment::Side const &other,
     coord_t *retFromDist, coord_t *retToDist) const
 {
     coord_t fromDist, toDist;
@@ -429,18 +326,94 @@ LineRelationship LineSegment::relationship(LineSegment const &other,
     return rel;
 }
 
-int LineSegment::boxOnSide(AABoxd const &box) const
+int LineSegment::Side::boxOnSide(AABoxd const &box) const
 {
-    coord_t fromV1[2] = { d->from->origin().x, d->from->origin().y };
+    coord_t fromV1[2] = { from().origin().x, from().origin().y };
     coord_t directionV1[2] = { d->direction.x, d->direction.y } ;
     return M_BoxOnLineSide2(&box, fromV1, directionV1, d->pPerp, d->pLength,
                             LINESEGMENT_INCIDENT_DISTANCE_EPSILON);
 }
 
-void LineSegment::ceaseVertexObservation()
+DENG2_PIMPL(LineSegment),
+DENG2_OBSERVES(Vertex, OriginChange)
 {
-    d->from->audienceForOriginChange -= d.get();
-    d->to->audienceForOriginChange   -= d.get();
+    /// Vertexes of the line segment (not owned).
+    Vertex *from;
+    Vertex *to;
+
+    /// Sides of the line segment (owned).
+    LineSegment::Side front;
+    LineSegment::Side back;
+
+    Instance(Public *i, Vertex &from_, Vertex &to_)
+        : Base(i),
+          from(&from_),
+          to(&to_),
+          front(*i),
+          back(*i)
+    {
+        from->audienceForOriginChange += this;
+        to->audienceForOriginChange   += this;
+    }
+
+    ~Instance()
+    {
+        from->audienceForOriginChange -= this;
+        to->audienceForOriginChange   -= this;
+    }
+
+    inline Vertex **vertexAdr(int edge) {
+        return edge? &to : &from;
+    }
+
+    void replaceVertex(int edge, Vertex &newVertex)
+    {
+        Vertex **adr = vertexAdr(edge);
+
+        if(*adr && *adr == &newVertex) return;
+
+        if(*adr) (*adr)->audienceForOriginChange -= this;
+        *adr = &newVertex;
+        if(*adr) (*adr)->audienceForOriginChange += this;
+
+        front.updateCache();
+        back.updateCache();
+    }
+
+    void vertexOriginChanged(Vertex &vertex, Vector2d const &oldOrigin, int changedAxes)
+    {
+        DENG2_UNUSED3(vertex, oldOrigin, changedAxes);
+        front.updateCache();
+        back.updateCache();
+    }
+};
+
+LineSegment::LineSegment(Vertex &from, Vertex &to)
+    : d(new Instance(this, from, to))
+{
+    d->front.updateCache();
+    d->back.updateCache();
+}
+
+LineSegment::Side &LineSegment::side(int back)
+{
+    return back? d->back : d->front;
+}
+
+LineSegment::Side const &LineSegment::side(int back) const
+{
+    return back? d->back : d->front;
+}
+
+Vertex &LineSegment::vertex(int to) const
+{
+    DENG_ASSERT((to? d->to : d->from) != 0);
+    return to? *d->to : *d->from;
+}
+
+void LineSegment::replaceVertex(int to, Vertex &newVertex)
+{
+    d->replaceVertex(to, newVertex);
 }
 
 } // namespace bsp

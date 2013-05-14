@@ -56,14 +56,14 @@ struct PartitionCost
         mapLeft(0), partRight(0), partLeft(0)
     {}
 
-    inline PartitionCost &addLineSegmentRight(LineSegment const &lineSeg)
+    inline PartitionCost &addLineSegmentSideRight(LineSegment::Side const &lineSeg)
     {
         if(lineSeg.hasMapSide()) mapRight += 1;
         else                     partRight += 1;
         return *this;
     }
 
-    inline PartitionCost &addLineSegmentLeft(LineSegment const &lineSeg)
+    inline PartitionCost &addLineSegmentSideLeft(LineSegment::Side const &lineSeg)
     {
         if(lineSeg.hasMapSide()) mapLeft += 1;
         else                     partLeft += 1;

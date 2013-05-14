@@ -49,8 +49,8 @@ public:
     };
 
 public:
-    explicit EdgeTip(coord_t angle = 0, LineSegment *front = 0,
-                            LineSegment *back = 0)
+    explicit EdgeTip(coord_t angle = 0, LineSegment::Side *front = 0,
+                            LineSegment::Side *back = 0)
         : _angle(angle), _front(front), _back(back)
     {}
 
@@ -62,11 +62,11 @@ public:
         return *this;
     }
 
-    inline LineSegment &front() const { return *_front; }
+    inline LineSegment::Side &front() const { return *_front; }
 
-    inline LineSegment &back() const { return *_back; }
+    inline LineSegment::Side &back() const { return *_back; }
 
-    inline LineSegment &side(Side sid) const
+    inline LineSegment::Side &side(Side sid) const
     {
         return sid == Front? front() : back();
     }
@@ -80,19 +80,19 @@ public:
         return sid == Front? hasFront() : hasBack();
     }
 
-    inline EdgeTip &setFront(LineSegment *lineSeg)
+    inline EdgeTip &setFront(LineSegment::Side *lineSeg)
     {
         _front = lineSeg;
         return *this;
     }
 
-    inline EdgeTip &setBack(LineSegment *lineSeg)
+    inline EdgeTip &setBack(LineSegment::Side *lineSeg)
     {
         _back = lineSeg;
         return *this;
     }
 
-    inline EdgeTip &setSide(Side sid, LineSegment *lineSeg)
+    inline EdgeTip &setSide(Side sid, LineSegment::Side *lineSeg)
     {
         return sid == Front? setFront(lineSeg) : setBack(lineSeg);
     }
@@ -103,7 +103,7 @@ private:
 
     /// Line segments on each side of the tip. Front is the side of increasing
     /// angles, back is the side of decreasing angles. Either can be @c 0.
-    LineSegment *_front, *_back;
+    LineSegment::Side *_front, *_back;
 };
 
 class EdgeTips
@@ -125,7 +125,7 @@ public:
      * @param angleEpsilon  Smallest difference between two angles before being
      *                      considered equal (in degrees).
      */
-    EdgeTip &add(coord_t angle, LineSegment *front = 0, LineSegment *back = 0,
+    EdgeTip &add(coord_t angle, LineSegment::Side *front = 0, LineSegment::Side *back = 0,
                  coord_t angleEpsilon = 1.0 / 1024.0)
     {
         All::reverse_iterator after;

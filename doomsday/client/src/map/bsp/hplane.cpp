@@ -43,7 +43,7 @@
 namespace de {
 namespace bsp {
 
-HPlane::Intercept::Intercept(ddouble distance, LineSegment &lineSeg, int edge)
+HPlane::Intercept::Intercept(ddouble distance, LineSegment::Side &lineSeg, int edge)
     : selfRef(false),
       before(0),
       after(0),
@@ -52,7 +52,7 @@ HPlane::Intercept::Intercept(ddouble distance, LineSegment &lineSeg, int edge)
       _edge(edge)
 {}
 
-LineSegment &HPlane::Intercept::lineSegment() const
+LineSegment::Side &HPlane::Intercept::lineSegment() const
 {
     return *_lineSeg;
 }
@@ -79,8 +79,23 @@ DENG2_PIMPL(HPlane)
     /// The partition line.
     Partition partition;
 
-    /// Map line segment which is the basis for the half-plane.
-    std::auto_ptr<LineSegment> lineSegment;
+    /// Direction vector length.
+    coord_t length;
+
+    /// World angle.
+    coord_t angle;
+
+    /// Logical line slope (i.e., world angle) classification.
+    slopetype_t slopeType;
+
+    /// Perpendicular scale factor.
+    coord_t perp;
+
+    /// Parallel scale factor.
+    coord_t para;
+
+    /// Map line from which the partition line was derived (if any).
+    Line *mapLine;
 
     /// Intercept points along the half-plane.
     Intercepts intercepts;
@@ -92,6 +107,12 @@ DENG2_PIMPL(HPlane)
              Vector2d const &partitionDirection)
         : Base(i),
           partition(partitionOrigin, partitionDirection),
+          length(partition.direction.length()),
+          angle(M_DirectionToAngleXY(partition.direction.x, partition.direction.y)),
+          slopeType(M_SlopeTypeXY(partition.direction.x, partition.direction.y)),
+          perp(partition.origin.y * partition.direction.x - partition.origin.x * partition.direction.y),
+          para(-partition.origin.x * partition.direction.x - partition.origin.y * partition.direction.y),
+          mapLine(0),
           needSortIntercepts(false)
     {}
 
@@ -125,7 +146,7 @@ void HPlane::clearIntercepts()
     d->needSortIntercepts = false;
 }
 
-void HPlane::configure(LineSegment const &newBaseSeg)
+void HPlane::configure(LineSegment::Side const &newBaseSeg)
 {
     // Only map line segments are suitable.
     DENG_ASSERT(newBaseSeg.hasMapSide());
@@ -135,16 +156,25 @@ void HPlane::configure(LineSegment const &newBaseSeg)
     // Clear the list of intersection points.
     clearIntercepts();
 
-    Line::Side &side = newBaseSeg.mapSide();
-    d->partition.origin    = side.from().origin();
-    d->partition.direction = side.to().origin() - side.from().origin();
+    Line::Side &mapSide = newBaseSeg.mapSide();
+    d->mapLine = &mapSide.line();
 
-    // Update/store a copy of the line segment.
-    d->lineSegment.reset(new LineSegment(newBaseSeg));
-    d->lineSegment->ceaseVertexObservation(); /// @todo refactor away -ds
+    // Reconfigure the partition line.
+    d->partition.origin    = mapSide.from().origin();
+    d->partition.direction = mapSide.to().origin() - mapSide.from().origin();
+
+    d->length    = d->partition.direction.length();
+    d->angle     = M_DirectionToAngleXY(d->partition.direction.x, d->partition.direction.y);
+    d->slopeType = M_SlopeTypeXY(d->partition.direction.x, d->partition.direction.y);
+
+    d->perp = d->partition.origin.y * d->partition.direction.x
+            - d->partition.origin.x * d->partition.direction.y;
+
+    d->para = -d->partition.origin.x * d->partition.direction.x
+            -  d->partition.origin.y * d->partition.direction.y;
 
     //LOG_DEBUG("line segment %p %s.")
-    //    << de::dintptr(&newLineSeg) << d->partition.asText();
+    //    << de::dintptr(&newBaseSeg) << d->partition.asText();
 }
 
 /**
@@ -190,21 +220,25 @@ static Sector *openSectorAtAngle(EdgeTips const &tips, coord_t angle)
     return (tip.hasBack()? tip.back().sectorPtr() : 0);
 }
 
-HPlane::Intercept *HPlane::intercept(LineSegment const &lineSeg, int edge,
+HPlane::Intercept *HPlane::intercept(LineSegment::Side const &lineSeg, int edge,
     EdgeTips const &edgeTips)
 {
     // Already present for this vertex?
     Vertex &vertex = lineSeg.vertex(edge);
     if(d->haveInterceptForVertex(vertex)) return 0;
 
-    d->intercepts.append(Intercept(d->lineSegment->distance(vertex.origin()),
-                                   const_cast<LineSegment &>(lineSeg), edge));
+    coord_t pointV1[2] = { vertex.origin().x, vertex.origin().y };
+    coord_t directionV1[2] = { d->partition.direction.x, d->partition.direction.y };
+    coord_t distToVertex = V2d_PointLineParaDistance(pointV1, directionV1,
+                                                     d->para, d->length);
+
+    d->intercepts.append(Intercept(distToVertex, const_cast<LineSegment::Side &>(lineSeg), edge));
     Intercept *newIntercept = &d->intercepts.last();
 
-    newIntercept->selfRef = (lineSeg.hasMapSide() && lineSeg.line().isSelfReferencing());
+    newIntercept->selfRef = (lineSeg.hasMapSide() && lineSeg.mapLine().isSelfReferencing());
 
-    newIntercept->before = openSectorAtAngle(edgeTips, d->lineSegment->inverseAngle());
-    newIntercept->after  = openSectorAtAngle(edgeTips, d->lineSegment->angle());
+    newIntercept->before = openSectorAtAngle(edgeTips, inverseAngle());
+    newIntercept->after  = openSectorAtAngle(edgeTips, angle());
 
     // The addition of a new intercept means we'll need to resort.
     d->needSortIntercepts = true;
@@ -300,10 +334,63 @@ Partition const &HPlane::partition() const
     return d->partition;
 }
 
-LineSegment const &HPlane::lineSegment() const
+coord_t HPlane::angle() const
 {
-    DENG_ASSERT(d->lineSegment.get() != 0);
-    return *d->lineSegment.get();
+    return d->angle;
+}
+
+slopetype_t HPlane::slopeType() const
+{
+    return d->slopeType;
+}
+
+Line *HPlane::mapLine() const
+{
+    return d->mapLine;
+}
+
+void HPlane::distance(LineSegment::Side const &lineSeg, coord_t *fromDist, coord_t *toDist) const
+{
+    // Any work to do?
+    if(!fromDist && !toDist) return;
+
+    /// @attention Ensure line segments produced from the partition's source
+    /// line are always treated as collinear. This special case is only
+    /// necessary due to precision inaccuracies when a line is split into
+    /// multiple segments.
+    if(d->mapLine != 0 && d->mapLine == lineSeg.partitionMapLine())
+    {
+        if(fromDist) *fromDist = 0;
+        if(toDist)   *toDist   = 0;
+        return;
+    }
+
+    coord_t toSegDirectionV1[2] = { d->partition.direction.x, d->partition.direction.y } ;
+
+    if(fromDist)
+    {
+        coord_t fromV1[2] = { lineSeg.from().origin().x, lineSeg.from().origin().y };
+        *fromDist = V2d_PointLinePerpDistance(fromV1, toSegDirectionV1, d->perp, d->length);
+    }
+    if(toDist)
+    {
+        coord_t toV1[2] = { lineSeg.to().origin().x, lineSeg.to().origin().y };
+        *toDist = V2d_PointLinePerpDistance(toV1, toSegDirectionV1, d->perp, d->length);
+    }
+}
+
+LineRelationship HPlane::relationship(LineSegment::Side const &lineSeg,
+    coord_t *retFromDist, coord_t *retToDist) const
+{
+    coord_t fromDist, toDist;
+    distance(lineSeg, &fromDist, &toDist);
+
+    LineRelationship rel = lineRelationship(fromDist, toDist);
+
+    if(retFromDist) *retFromDist = fromDist;
+    if(retToDist)   *retToDist   = toDist;
+
+    return rel;
 }
 
 HPlane::Intercepts const &HPlane::intercepts() const

@@ -28,6 +28,8 @@
 
 #include <QList>
 
+#include <de/mathutil.h> // M_InverseAngle
+
 #include <de/Vector>
 
 #include "map/bsp/linesegment.h"
@@ -66,7 +68,7 @@ public:
         Sector *after;
 
     public:
-        Intercept(double distance, LineSegment &lineSeg, int edge);
+        Intercept(double distance, LineSegment::Side &lineSeg, int edge);
 
         bool operator < (Intercept const &other) const {
             return _distance < other._distance;
@@ -87,7 +89,7 @@ public:
         /**
          * Returns the intercepted line segment.
          */
-        LineSegment &lineSegment() const;
+        LineSegment::Side &lineSegment() const;
 
         /**
          * Returns the identifier for the relevant edge of the intercepted
@@ -113,7 +115,7 @@ public:
         double _distance;
 
         // The intercepted line segment and edge identifier.
-        LineSegment *_lineSeg;
+        LineSegment::Side *_lineSeg;
         int _edge;
     };
 
@@ -134,7 +136,7 @@ public:
      *
      * @param newLineSeg  The "new" line segment to configure using.
      */
-    void configure(LineSegment const &newLineSeg);
+    void configure(LineSegment::Side const &newLineSeg);
 
     /**
      * Perform intersection of the half-plane with the specified @a lineSeg.
@@ -151,7 +153,7 @@ public:
      *
      * @return  The resultant new intercept; otherwise @a 0.
      */
-    Intercept *intercept(LineSegment const &lineSeg, int edge,
+    Intercept *intercept(LineSegment::Side const &lineSeg, int edge,
                          EdgeTips const &edgeTips);
 
     /**
@@ -192,12 +194,68 @@ public:
     Partition const &partition() const;
 
     /**
-     * Returns a copy of the LineSegment (immutable) from which the half-plane
-     * was originally configured.
+     * Returns the world angle of the partition line (which, is derived from the
+     * direction vector).
      *
-     * @see configure()
+     * @see inverseAngle(), Partition::direction
      */
-    LineSegment const &lineSegment() const;
+    coord_t angle() const;
+
+    /**
+     * Returns the inverted world angle for the partition line (i.e., rotated 180 degrees).
+     *
+     * @see angle()
+     */
+    inline coord_t inverseAngle() const { return M_InverseAngle(angle()); }
+
+    /**
+     * Returns the logical @em slopetype for the partition line (which, is determined
+     * according to the world direction).
+     *
+     * @see direction()
+     * @see M_SlopeType()
+     */
+    slopetype_t slopeType() const;
+
+    /**
+     * Returns a pointer to the map Line attributed to the line segment which was
+     * chosen as the half-plane partition. May return @c 0 (if no map line was
+     * attributed).
+     */
+    Line *mapLine() const;
+
+    /**
+     * Calculate @em perpendicular distances from one or both of the vertexe(s)
+     * of "this" line segment to the @a other line segment. For this operation
+     * the @a other line segment is interpreted as an infinite line. The vertexe(s)
+     * of "this" line segment are projected onto the conceptually infinite line
+     * defined by @a other and the length of the resultant vector(s) are then
+     * determined.
+     *
+     * @param other     Other line segment to determine vertex distances to.
+     *
+     * Return values:
+     * @param fromDist  Perpendicular distance from the "from" vertex. Can be @c 0.
+     * @param toDist    Perpendicular distance from the "to" vertex. Can be @c 0.
+     */
+    void distance(LineSegment::Side const &lineSegment, coord_t *fromDist = 0,
+                  coord_t *toDist = 0) const;
+
+    /**
+     * Determine the logical relationship between the partition line and the given
+     * @a lineSegment. In doing so the perpendicular distance for the vertexes of
+     * the line segment are calculated (and optionally returned).
+     *
+     * @param lineSegment  Line segment to determine relationship to.
+     *
+     * Return values:
+     * @param fromDist  Perpendicular distance from the "from" vertex. Can be @c 0.
+     * @param toDist    Perpendicular distance from the "to" vertex. Can be @c 0.
+     *
+     * @return LineRelationship between the partition line and the line segment.
+     */
+    LineRelationship relationship(LineSegment::Side const &lineSegment,
+                                  coord_t *retFromDist, coord_t *retToDist) const;
 
     /**
      * Returns the list of intercepts for the half-plane for efficient traversal.
@@ -205,7 +263,7 @@ public:
      * @note This list may or may not yet be sorted. If a sorted list is desired
      * then sortAndMergeIntercepts() should first be called.
      *
-     * @see interceptLineSegment()
+     * @see interceptLineSegmentSide()
      */
     Intercepts const &intercepts() const;
 
