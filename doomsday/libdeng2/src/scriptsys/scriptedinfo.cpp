@@ -70,15 +70,15 @@ DENG2_PIMPL(ScriptedInfo)
     {
         if(element->isBlock())
         {
-            processBlock(*static_cast<Info::BlockElement const *>(element));
+            processBlock(element->castTo<Info::BlockElement>());
         }
         else if(element->isKey())
         {
-            processKey(*static_cast<Info::KeyElement const *>(element));
+            processKey(element->castTo<Info::KeyElement>());
         }
         else if(element->isList())
         {
-            processList(*static_cast<Info::ListElement const *>(element));
+            processList(element->castTo<Info::ListElement>());
         }
     }
 

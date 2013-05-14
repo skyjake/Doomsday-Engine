@@ -93,6 +93,20 @@ public:
         bool isBlock() const { return _type == Block; }
         String const &name() const { return _name; }
 
+        template <typename T>
+        T &castTo() {
+            T *t = dynamic_cast<T *>(this);
+            DENG2_ASSERT(t != 0);
+            return *t;
+        }
+
+        template <typename T>
+        T const &castTo() const {
+            T const *t = dynamic_cast<T const *>(this);
+            DENG2_ASSERT(t != 0);
+            return *t;
+        }
+
         void setName(String const &name) { _name = name.toLower(); }
 
         virtual ValueList values() const = 0;

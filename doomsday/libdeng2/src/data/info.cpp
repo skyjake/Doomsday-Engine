@@ -343,11 +343,8 @@ DENG2_PIMPL(Info)
             // Read an appropriate number of statements.
             while(lex.getStatement(tokens))
             {
-                if(numStatements > 0)
-                {
-                    if(++count == numStatements)
-                        goto success;
-                }
+                if(numStatements > 0 && ++count == numStatements)
+                    goto success;
             }
             throw SyntaxError("Info::parseScript",
                               QString("Unexpected end of script starting at line %1").arg(currentLine));
@@ -584,7 +581,7 @@ void Info::BlockElement::add(Info::Element *elem)
     if(elem->name() && _contents.contains(elem->name()))
     {
         if(!elem->isBlock() || !info().d->allowDuplicateBlocksOfType.contains(
-                    static_cast<BlockElement *>(elem)->blockType()))
+                    elem->castTo<BlockElement>().blockType()))
         {
             LOG_AS("Info::BlockElement");
             LOG_WARNING("Block '%s' already has an element named '%s'")
@@ -611,7 +608,7 @@ Info::Element::Value Info::BlockElement::keyValue(String const &name) const
 {
     Element *e = find(name);
     if(!e || !e->isKey()) return Value();
-    return static_cast<KeyElement *>(e)->value();
+    return e->castTo<KeyElement>().value();
 }
 
 Info::Element *Info::BlockElement::findByPath(String const &path) const
@@ -637,7 +634,7 @@ Info::Element *Info::BlockElement::findByPath(String const &path) const
     if(e->isBlock())
     {
         // Descend into sub-blocks.
-        return static_cast<BlockElement *>(e)->findByPath(remainder);
+        return e->castTo<BlockElement>().findByPath(remainder);
     }
     return e;
 }
@@ -657,9 +654,9 @@ void Info::setScriptBlocks(QStringList const &blocksToParseAsScript)
     d->scriptBlockTypes = blocksToParseAsScript;
 }
 
-void Info::setAllowDuplicateBlocksOfType(QStringList const &blockTypesWhereDuplicatesAllowed)
+void Info::setAllowDuplicateBlocksOfType(QStringList const &duplicatesAllowed)
 {
-    d->allowDuplicateBlocksOfType = blockTypesWhereDuplicatesAllowed;
+    d->allowDuplicateBlocksOfType = duplicatesAllowed;
 }
 
 void Info::parse(String const &infoSource)
@@ -697,7 +694,7 @@ bool Info::findValueForKey(String const &key, String &value) const
     Element const *element = findByPath(key);
     if(element && element->isKey())
     {
-        value = static_cast<KeyElement const *>(element)->value();
+        value = element->castTo<KeyElement>().value();
         return true;
     }
     return false;
