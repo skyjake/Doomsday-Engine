@@ -33,18 +33,26 @@ DENG2_PIMPL(ColorBank)
 
         Vector4d load() const
         {
-            ArrayValue const &colorDef = bank[id].value<ArrayValue>();
-
-            // Alpha component is optional.
-            ddouble alpha = 1.0;
-            if(colorDef.size() >= 4)
+            Record const &def = bank[id];
+            ArrayValue const *colorDef = 0;
+            if(def.has("rgb"))
             {
-                alpha = colorDef.at(3).asNumber();
+                colorDef = &def["rgb"].value<ArrayValue>();
+            }
+            else
+            {
+                colorDef = &def["rgba"].value<ArrayValue>();
             }
 
-            return Vector4d(colorDef.at(0).asNumber(),
-                            colorDef.at(1).asNumber(),
-                            colorDef.at(2).asNumber(),
+            ddouble alpha = 1.0;
+            if(colorDef->size() >= 4)
+            {
+                alpha = colorDef->at(3).asNumber();
+            }
+
+            return Vector4d(colorDef->at(0).asNumber(),
+                            colorDef->at(1).asNumber(),
+                            colorDef->at(2).asNumber(),
                             alpha);
         }
     };

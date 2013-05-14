@@ -34,7 +34,8 @@ DENG2_PIMPL(RuleBank)
 
         Rule *load() const
         {
-            return refless(new ConstantRule(bank[id].value().asNumber()));
+            Record const &def = bank[id];
+            return refless(new ConstantRule(def["constant"].value().asNumber()));
         }
     };
 
