@@ -18,7 +18,6 @@
 
 #include "de/ColorBank"
 #include <de/ArrayValue>
-#include <de/ScriptedInfo>
 
 namespace de {
 
@@ -26,15 +25,15 @@ DENG2_PIMPL(ColorBank)
 {
     struct ColorSource : public ISource
     {
-        Instance *d;
+        ColorBank &bank;
         String id;
 
-        ColorSource(Instance *inst, String const &colorId) : d(inst), id(colorId) {}
-        Time modifiedAt() const { return d->modTime; }
+        ColorSource(ColorBank &b, String const &colorId) : bank(b), id(colorId) {}
+        Time modifiedAt() const { return bank.sourceModifiedAt(); }
 
         Vector4d load() const
         {
-            ArrayValue const &colorDef = d->info[id].value<ArrayValue>();
+            ArrayValue const &colorDef = bank[id].value<ArrayValue>();
 
             // Alpha component is optional.
             ddouble alpha = 1.0;
@@ -58,40 +57,18 @@ DENG2_PIMPL(ColorBank)
         duint sizeInMemory() const { return 0; /* we don't count */ }
     };
 
-    Time modTime;
-    ScriptedInfo info;
-
     Instance(Public *i) : Base(i)
     {}
 };
 
-ColorBank::ColorBank()
-    : Bank(DisableHotStorage), d(new Instance(this))
+ColorBank::ColorBank() : InfoBank(DisableHotStorage), d(new Instance(this))
 {}
-
-void ColorBank::addFromInfo(String const &source)
-{
-    LOG_AS("ColorBank");
-    try
-    {
-        d->modTime = Time();
-        d->info.parse(source);
-
-        foreach(String fn, d->info.allBlocksOfType("color"))
-        {
-            add(fn, new Instance::ColorSource(d, fn));
-        }
-    }
-    catch(Error const &er)
-    {
-        LOG_WARNING("Failed to read Info source:\n") << er.asText();
-    }
-}
 
 void ColorBank::addFromInfo(File const &file)
 {
-    addFromInfo(String::fromUtf8(Block(file)));
-    d->modTime = file.status().modifiedAt;
+    LOG_AS("ColorBank");
+    parse(file);
+    InfoBank::addFromInfo("color");
 }
 
 ColorBank::Color ColorBank::color(Path const &path) const
@@ -106,6 +83,11 @@ ColorBank::Colorf ColorBank::colorf(Path const &path) const
     Vector4d clamped = static_cast<Instance::ColorData &>(data(path)).color;
     clamped = clamped.max(Vector4d(0, 0, 0, 0)).min(Vector4d(1, 1, 1, 1));
     return Colorf(float(clamped.x), float(clamped.y), float(clamped.z), float(clamped.w));
+}
+
+Bank::ISource *ColorBank::newSourceFromInfo(String const &id)
+{
+    return new Instance::ColorSource(*this, id);
 }
 
 Bank::IData *ColorBank::loadFromSource(ISource &source)

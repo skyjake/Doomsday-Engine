@@ -19,7 +19,7 @@
 #ifndef LIBGUI_FONTBANK_H
 #define LIBGUI_FONTBANK_H
 
-#include <de/Bank>
+#include <de/InfoBank>
 #include <de/File>
 #include "../Font"
 #include "libgui.h"
@@ -29,20 +29,14 @@ namespace de {
 /**
  * Bank containing fonts.
  */
-class LIBGUI_PUBLIC FontBank : public Bank
+class LIBGUI_PUBLIC FontBank : public InfoBank
 {
 public:
     FontBank();
 
     /**
      * Creates a number of fonts based on information in an Info document.
-     *
-     * @param source  Info source containing font definitions.
-     */
-    void addFromInfo(String const &source);
-
-    /**
-     * Creates a number of fonts based on information in an Info document.
+     * The file is parsed first.
      *
      * @param source  File with Info source containing font definitions.
      */
@@ -58,6 +52,7 @@ public:
     Font const &font(Path const &path) const;
 
 protected:
+    virtual ISource *newSourceFromInfo(String const &id);
     virtual IData *loadFromSource(ISource &source);
 
 private:

@@ -62,11 +62,10 @@ DENG2_PIMPL_NOREF(ImageBank)
         }
     };
 
-    ScriptedInfo info;
+    String relativeToPath;
 };
 
-ImageBank::ImageBank(Flags const &flags)
-    : Bank(flags), d(new Instance)
+ImageBank::ImageBank(Flags const &flags) : InfoBank(flags), d(new Instance)
 {}
 
 void ImageBank::add(Path const &path, String const &imageFilePath)
@@ -74,34 +73,23 @@ void ImageBank::add(Path const &path, String const &imageFilePath)
     Bank::add(path, new Instance::ImageSource(imageFilePath));
 }
 
-void ImageBank::addFromInfo(String const &source, String const &relativeToPath)
-{
-    LOG_AS("ImageBank");
-    try
-    {
-        d->info.parse(source);
-
-        foreach(String id, d->info.allBlocksOfType("image"))
-        {
-            Record const &def = d->info[id];
-            add(id, relativeToPath / def["path"]);
-        }
-    }
-    catch(Error const &er)
-    {
-        LOG_WARNING("Failed to read Info source:\n") << er.asText();
-    }
-}
-
 void ImageBank::addFromInfo(File const &file)
 {
-    // Relative paths in the defs are assumed relative to this file.
-    addFromInfo(String::fromUtf8(Block(file)), file.path().fileNamePath());
+    LOG_AS("ImageBank");
+    d->relativeToPath = file.path().fileNamePath();
+    parse(file);
+    InfoBank::addFromInfo("image");
 }
 
 Image &ImageBank::image(Path const &path) const
 {
     return static_cast<Instance::ImageData &>(data(path)).image;
+}
+
+Bank::ISource *ImageBank::newSourceFromInfo(String const &id)
+{
+    Record const &def = info()[id];
+    return new Instance::ImageSource(d->relativeToPath / def["path"]);
 }
 
 Bank::IData *ImageBank::loadFromSource(ISource &source)

@@ -28,15 +28,15 @@ DENG2_PIMPL(FontBank)
 {
     struct FontSource : public ISource
     {
-        Instance *d;
+        FontBank &bank;
         String id;
 
-        FontSource(Instance *inst, String const &fontId) : d(inst), id(fontId) {}
-        Time modifiedAt() const { return d->modTime; }
+        FontSource(FontBank &b, String const &fontId) : bank(b), id(fontId) {}
+        Time modifiedAt() const { return bank.sourceModifiedAt(); }
 
         Font *load() const
         {
-            Record const &def = d->info[id];
+            Record const &def = bank[id];
 
             // Font family.
             QFont font(def["family"]);
@@ -76,45 +76,28 @@ DENG2_PIMPL(FontBank)
         duint sizeInMemory() const { return 0; /* we don't count */ }
     };
 
-    Time modTime;
-    ScriptedInfo info;
-
     Instance(Public *i) : Base(i)
     {}
 };
 
-FontBank::FontBank()
-    : Bank(DisableHotStorage), d(new Instance(this))
+FontBank::FontBank() : InfoBank(DisableHotStorage), d(new Instance(this))
 {}
-
-void FontBank::addFromInfo(String const &source)
-{
-    LOG_AS("FontBank");
-    try
-    {
-        d->modTime = Time();
-        d->info.parse(source);
-
-        foreach(String fn, d->info.allBlocksOfType("font"))
-        {
-            add(fn, new Instance::FontSource(d, fn));
-        }
-    }
-    catch(Error const &er)
-    {
-        LOG_WARNING("Failed to read Info source:\n") << er.asText();
-    }
-}
 
 void FontBank::addFromInfo(File const &file)
 {
-    addFromInfo(String::fromUtf8(Block(file)));
-    d->modTime = file.status().modifiedAt;
+    LOG_AS("FontBank");
+    parse(file);
+    InfoBank::addFromInfo("font");
 }
 
 Font const &FontBank::font(Path const &path) const
 {
     return *static_cast<Instance::FontData &>(data(path)).font;
+}
+
+Bank::ISource *FontBank::newSourceFromInfo(String const &id)
+{
+    return new Instance::FontSource(*this, id);
 }
 
 Bank::IData *FontBank::loadFromSource(ISource &source)

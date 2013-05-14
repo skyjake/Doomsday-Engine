@@ -26,15 +26,15 @@ DENG2_PIMPL(RuleBank)
 {
     struct RuleSource : public ISource
     {
-        Instance *d;
+        InfoBank &bank;
         String id;
 
-        RuleSource(Instance *inst, String const &ruleId) : d(inst), id(ruleId) {}
-        Time modifiedAt() const { return d->modTime; }
+        RuleSource(InfoBank &b, String const &ruleId) : bank(b), id(ruleId) {}
+        Time modifiedAt() const { return bank.sourceModifiedAt(); }
 
         Rule *load() const
         {
-            return refless(new ConstantRule(d->info[id].value().asNumber()));
+            return refless(new ConstantRule(bank[id].value().asNumber()));
         }
     };
 
@@ -45,51 +45,30 @@ DENG2_PIMPL(RuleBank)
         RuleData(Rule *r) : rule(holdRef(r)) {}
         ~RuleData() { releaseRef(rule); }
 
-        duint sizeInMemory() const
-        {
-            return 0; // we don't count
-        }
+        duint sizeInMemory() const { return 0; /* we don't count */ }
     };
 
-    Time modTime;
-    ScriptedInfo info;
-
-    Instance(Public *i) : Base(i)
-    {}
+    Instance(Public *i) : Base(i) {}
 };
 
-RuleBank::RuleBank()
-    : Bank(DisableHotStorage), d(new Instance(this))
+RuleBank::RuleBank() : InfoBank(DisableHotStorage), d(new Instance(this))
 {}
-
-void RuleBank::addFromInfo(String const &source)
-{
-    LOG_AS("RuleBank");
-    try
-    {
-        d->modTime = Time();
-        d->info.parse(source);
-
-        foreach(String fn, d->info.allBlocksOfType("rule"))
-        {
-            add(fn, new Instance::RuleSource(d, fn));
-        }
-    }
-    catch(Error const &er)
-    {
-        LOG_WARNING("Failed to read Info source:\n") << er.asText();
-    }
-}
 
 void RuleBank::addFromInfo(File const &file)
 {
-    addFromInfo(String::fromUtf8(Block(file)));
-    d->modTime = file.status().modifiedAt;
+    LOG_AS("RuleBank");
+    parse(file);
+    InfoBank::addFromInfo("rule");
 }
 
 Rule const &RuleBank::rule(Path const &path) const
 {
     return *static_cast<Instance::RuleData &>(data(path)).rule;
+}
+
+Bank::ISource *RuleBank::newSourceFromInfo(String const &id)
+{
+    return new Instance::RuleSource(*this, id);
 }
 
 Bank::IData *RuleBank::loadFromSource(ISource &source)

@@ -19,7 +19,7 @@
 #ifndef LIBGUI_COLORBANK_H
 #define LIBGUI_COLORBANK_H
 
-#include <de/Bank>
+#include <de/InfoBank>
 #include <de/File>
 #include <de/Vector>
 
@@ -28,7 +28,7 @@ namespace de {
 /**
  * Bank of colors where each color is identified by a Path.
  */
-class ColorBank : public Bank
+class ColorBank : public InfoBank
 {
 public:
     typedef Vector4ub Color;
@@ -39,13 +39,7 @@ public:
 
     /**
      * Creates a number of colors based on information in an Info document.
-     *
-     * @param source  Info source containing color definitions.
-     */
-    void addFromInfo(String const &source);
-
-    /**
-     * Creates a number of colors based on information in an Info document.
+     * The file is parsed first.
      *
      * @param source  File with Info source containing color definitions.
      */
@@ -65,11 +59,12 @@ public:
      *
      * @param path  Identifier of the color.
      *
-     * @return  Vector with the color values (0...1).
+     * @return  Vector with the floating-point color values (0...1).
      */
     Colorf colorf(Path const &path) const;
 
 protected:
+    virtual ISource *newSourceFromInfo(String const &id);
     virtual IData *loadFromSource(ISource &source);
 
 private:

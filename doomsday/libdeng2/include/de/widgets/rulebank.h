@@ -23,30 +23,25 @@
 #ifndef LIBGUI_RULEBANK_H
 #define LIBGUI_RULEBANK_H
 
-#include "../Bank"
+#include "../InfoBank"
 #include "../ConstantRule"
 
 namespace de {
 
 class File;
+class Record;
 
 /**
  * Bank of Rules where each is identified by a Path.
  */
-class RuleBank : public Bank
+class RuleBank : public InfoBank
 {
 public:
     RuleBank();
 
     /**
      * Creates a number of rules based on information in an Info document.
-     *
-     * @param source  Info source containing rule definitions.
-     */
-    void addFromInfo(String const &source);
-
-    /**
-     * Creates a number of rules based on information in an Info document.
+     * The contents of the file are parsed first.
      *
      * @param source  File with Info source containing rule definitions.
      */
@@ -62,6 +57,7 @@ public:
     Rule const &rule(Path const &path) const;
 
 protected:
+    virtual ISource *newSourceFromInfo(String const &id);
     virtual IData *loadFromSource(ISource &source);
 
 private:
