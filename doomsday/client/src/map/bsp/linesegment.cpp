@@ -43,8 +43,6 @@ DENG2_PIMPL_NOREF(LineSegment::Side)
     /// Owning line segment.
     LineSegment *line;
 
-    bool hasSector;
-
     /// Direction vector from -> to.
     Vector2d direction;
 
@@ -80,7 +78,6 @@ DENG2_PIMPL_NOREF(LineSegment::Side)
 
     Instance(LineSegment &line)
         : line(&line),
-          hasSector(false),
           mapSide(0),
           partitionMapLine(0),
           rightNeighbor(0),
@@ -113,16 +110,6 @@ void LineSegment::Side::updateCache()
     d->pSlopeType = M_SlopeTypeXY(d->direction.x, d->direction.y);
     d->pPerp      =  from().origin().y * d->direction.x - from().origin().x * d->direction.y;
     d->pPara      = -from().origin().x * d->direction.x - from().origin().y * d->direction.y;
-}
-
-bool LineSegment::Side::hasSector() const
-{
-    return d->hasSector;
-}
-
-void LineSegment::Side::setHasSector(bool yes)
-{
-    d->hasSector = yes;
 }
 
 LineSegment &LineSegment::Side::line() const
@@ -231,9 +218,19 @@ void LineSegment::Side::setBMapBlock(SuperBlock *newBMapBlock)
     d->bmapBlock = newBMapBlock;
 }
 
-Sector *LineSegment::Side::sectorPtr() const
+bool LineSegment::Side::hasSector() const
 {
-    return d->sector;
+    return d->sector != 0;
+}
+
+Sector &LineSegment::Side::sector() const
+{
+    if(d->sector)
+    {
+        return *d->sector;
+    }
+    /// @throw LineSegment::MissingSectorError Attempted with no sector attributed.
+    throw LineSegment::MissingSectorError("LineSegment::Side::sector", "No sector is attributed");
 }
 
 void LineSegment::Side::setSector(Sector *newSector)

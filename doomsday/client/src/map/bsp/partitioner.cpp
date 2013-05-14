@@ -354,7 +354,6 @@ DENG2_PIMPL(Partitioner)
         front.setMapSide(frontSide);
         front.setPartitionMapLine(partitionLine);
         front.setSector(frontSec);
-        front.setHasSector(true);
 
         front.setHEdge(new HEdge(start, frontSide));
         // There is now one more HEdge.
@@ -369,7 +368,6 @@ DENG2_PIMPL(Partitioner)
             back.setSector(backSec);
             back.setMapSide(frontSide? &frontSide->back() : 0);
             back.setPartitionMapLine(partitionLine);
-            back.setHasSector(true);
 
             back.setHEdge(new HEdge(end, frontSide? &frontSide->back() : 0));
             // There is now one more HEdge.
@@ -828,11 +826,9 @@ DENG2_PIMPL(Partitioner)
 
         LineSegment::Side &front = lineSeg.front();
 
-        front.setHasSector(other.front().hasSector());
         front.setSector(other.front().sectorPtr());
         if(other.front().hasMapSide())
             front.setMapSide(&other.front().mapSide());
-
         front.setPartitionMapLine(other.front().partitionMapLine());
 
         if(other.front().hasHEdge())
@@ -846,11 +842,9 @@ DENG2_PIMPL(Partitioner)
 
         LineSegment::Side &back  = lineSeg.back();
 
-        back.setHasSector(other.back().hasSector());
         back.setSector(other.back().sectorPtr());
         if(other.back().hasMapSide())
             back.setMapSide(&other.back().mapSide());
-
         back.setPartitionMapLine(other.back().partitionMapLine());
 
         if(other.back().hasHEdge())
@@ -1576,9 +1570,10 @@ DENG2_PIMPL(Partitioner)
         hedge = base;
         do
         {
-            if(Sector *hedgeSector = lineSegment(*hedge).sectorPtr())
+            LineSegment::Side &seg = lineSegment(*hedge);
+            if(seg.hasSector())
             {
-                return hedgeSector;
+                return seg.sectorPtr();
             }
         } while((hedge = &hedge->next()) != base);
 
@@ -1668,9 +1663,10 @@ DENG2_PIMPL(Partitioner)
         HEdge const *hedge = base;
         do
         {
-            if(Sector *hedgeSector = lineSegment(*hedge).sectorPtr())
+            LineSegment::Side &seg = lineSegment(*hedge);
+            if(seg.hasSector())
             {
-                return hedgeSector;
+                return seg.sectorPtr();
             }
         } while((hedge = &hedge->next()) != base);
         return 0; // Nothing??
@@ -1728,7 +1724,7 @@ DENG2_PIMPL(Partitioner)
                 do
                 {
                     LineSegment::Side const &lineSeg = lineSegment(*hedge);
-                    if(lineSeg.sectorPtr() && lineSeg.sectorPtr() != sector)
+                    if(lineSeg.hasSector() && lineSeg.sectorPtr() != sector)
                     {
                         notifyMigrantHEdgeBuilt(*hedge, *sector);
                     }
@@ -2043,7 +2039,7 @@ DENG2_PIMPL(Partitioner)
             LOG_DEBUG("Build: %s line segment %p sector: %d %s -> %s")
                 << (lineSeg->hasMapSide()? "map" : "part")
                 << de::dintptr(lineSeg)
-                << (lineSeg->sectorPtr() != 0? lineSeg->sectorPtr()->indexInMap() : -1)
+                << (lineSeg->hasSector()? lineSeg->sector().indexInMap() : -1)
                 << lineSeg->from().origin().asText() << lineSeg->to().origin().asText();
         }
     }

@@ -72,6 +72,9 @@ class LineSegment
     DENG2_NO_ASSIGN(LineSegment)
 
 public:
+    /// Required sector attribution is missing. @ingroup errors
+    DENG2_ERROR(MissingSectorError);
+
     /// Logical side identifiers:
     enum
     {
@@ -110,10 +113,6 @@ public:
 
     public:
         Side(LineSegment &line);
-
-        bool hasSector() const;
-
-        void setHasSector(bool yes = true);
 
         /**
          * Returns the specified relative vertex from the LineSegment owner.
@@ -294,17 +293,31 @@ public:
         void setBMapBlock(SuperBlock *newBMapBlock);
 
         /**
-         * Returns a pointer to the map sector attributed to "this" side of the
-         * line segment (if any).
-         *
-         * @note In the case of partition line segments @c 0 is always returned.
+         * Returns @c true iff a map sector is attributed to "this" side of the
+         * line segment.
          */
-        Sector *sectorPtr() const;
+        bool hasSector() const;
+
+        /**
+         * Returns the map sector attributed to "this" side of the line segment.
+         *
+         * @see hasSector()
+         */
+        Sector &sector() const;
+
+        /**
+         * Returns a pointer to the Sector attributed to "this" side of the line
+         * segment; otherwise @c 0.
+         *
+         * @see hasSector()
+         */
+        inline Sector *sectorPtr() const { return hasSector()? &sector() : 0; }
 
         /**
          * Change the sector attributed to "this" side of the line segment.
          *
-         * @param newSector  New sector to attribute. Can be @c 0.
+         * @param newSector  New sector to attribute. Ownership is unaffected.
+         *                   Can be @c 0.
          */
         void setSector(Sector *newSector);
 
