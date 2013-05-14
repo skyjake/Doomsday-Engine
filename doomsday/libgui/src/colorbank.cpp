@@ -17,6 +17,7 @@
  */
 
 #include "de/ColorBank"
+#include <de/math.h>
 #include <de/ArrayValue>
 
 namespace de {
@@ -82,8 +83,10 @@ void ColorBank::addFromInfo(File const &file)
 ColorBank::Color ColorBank::color(Path const &path) const
 {
     Colorf col = colorf(path);
-    return Color(dbyte(col.x * 255 + .5f), dbyte(col.y * 255 + .5f),
-                 dbyte(col.z * 255 + .5f), dbyte(col.w * 255 + .5f));
+    return Color(round<dbyte>(col.x * 255),
+                 round<dbyte>(col.y * 255),
+                 round<dbyte>(col.z * 255),
+                 round<dbyte>(col.w * 255));
 }
 
 ColorBank::Colorf ColorBank::colorf(Path const &path) const
