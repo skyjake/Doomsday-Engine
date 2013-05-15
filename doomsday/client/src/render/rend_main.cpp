@@ -1664,6 +1664,57 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
     return opaque && !didNearFade;
 }
 
+/**
+ * Prepare the trifan rvertex_t buffer specified according to the edges of this
+ * BSP leaf. If a fan base HEdge has been chosen it will be used as the center of
+ * the trifan, else the mid point of this leaf will be used instead.
+ *
+ * @param leaf  BspLeaf instance.
+ * @param direction  Vertex winding direction.
+ * @param height  Z map space height coordinate to be set for each vertex.
+ * @param verts  Built vertices are written here.
+ * @param vertsSize  Number of built vertices is written here. Can be @c NULL.
+ *
+ * @return  Number of built vertices (same as written to @a vertsSize).
+ */
+static uint buildLeafPlaneGeometry(BspLeaf const &leaf, ClockDirection direction,
+    coord_t height, rvertex_t **verts, uint *vertsSize)
+{
+    DENG_ASSERT(verts != 0);
+
+    HEdge *fanBase = leaf.fanBase();
+    HEdge *baseNode = fanBase? fanBase : leaf.firstHEdge();
+
+    uint totalVerts = leaf.hedgeCount() + (!fanBase? 2 : 0);
+    *verts = R_AllocRendVertices(totalVerts);
+
+    uint n = 0;
+    if(!fanBase)
+    {
+        V3f_Set((*verts)[n].pos, leaf.center().x, leaf.center().y, height);
+        n++;
+    }
+
+    // Add the vertices for each hedge.
+    HEdge *node = baseNode;
+    do
+    {
+        V3f_Set((*verts)[n].pos, node->origin().x, node->origin().y, height);
+        n++;
+    } while((node = &node->neighbor(direction)) != baseNode);
+
+    // The last vertex is always equal to the first.
+    if(!fanBase)
+    {
+        V3f_Set((*verts)[n].pos, leaf.firstHEdge()->origin().x,
+                                 leaf.firstHEdge()->origin().y,
+                                 height);
+    }
+
+    if(vertsSize) *vertsSize = totalVerts;
+    return totalVerts;
+}
+
 static void writeLeafPlane(Plane &plane)
 {
     BspLeaf *leaf = currentBspLeaf;
@@ -2150,6 +2201,15 @@ public:
     }
 
     /**
+     * Returns the total number of vertex elements in the current strip geometry.
+     * If no strip is currently being built @c 0 is returned.
+     */
+    int numElements() const
+    {
+        return _positions.isNull()? 0 : _positions->size();
+    }
+
+    /**
      * Take ownership of the last built strip of geometry.
      *
      * @param positions  The address of the buffer containing the vertex position
@@ -2161,23 +2221,14 @@ public:
      */
     int take(PositionBuffer **positions, TexCoordBuffer **texcoords = 0)
     {
-        int numElements = _positions.isNull()? 0 : _positions->size();
+        int retNumElements = numElements();
 
         *positions = _positions.take();
         if(texcoords)
         {
             *texcoords = _texcoords.take();
         }
-        return numElements;
-    }
-
-    /**
-     * Returns the total number of vertices in the current strip geometry. If no
-     * strip is currently being built @c 0 is returned.
-     */
-    int numVertices() const
-    {
-        return _positions.isNull()? 0 : _positions->size();
+        return retNumElements;
     }
 
 private:
@@ -2217,8 +2268,8 @@ private:
 /**
  * Determines the total number of edges between @a startNode and @a endNode in
  * the specified @a direction (inclussive). In the special case where the end
- * node is also the start node it assumed that the nodes describe a full loop
- * (i.e., a "closed" simple polygon (not necessarily convex, however)).
+ * node is also the start node it is assumed that the nodes describe a complete
+ * loop (i.e., a "closed" simple polygon (not necessarily convex, however)).
  *
  * @pre Both (half-edge) nodes are connected in a contiguous path which can be
  * navigated following the @em neighbor links (in the specified direction).
@@ -2254,16 +2305,14 @@ static int countHEdgeLoopEdges(HEdge const &startNode, HEdge const &endNode,
     return num;
 }
 
-static void writeSkyMaskStrip(HEdge &startNode, HEdge &endNode, ClockDirection direction,
-    int skyFix, Material *material)
+static void buildSkyFixStrip(TriangleStripBuilder &stripBuilder, HEdge &startNode,
+    HEdge &endNode, ClockDirection direction, int skyFix)
 {
-    TriangleStripBuilder stripBuilder;
-
+    /*
+     * Begin a new strip.
+     */
     int numElementsToReserve = countHEdgeLoopEdges(startNode, endNode, direction);
 
-    /*
-     * Begin a new triangle strip.
-     */
     stripBuilder.begin(direction, CPP_BOOL(devRendSkyMode), numElementsToReserve);
 
     /*
@@ -2279,7 +2328,8 @@ static void writeSkyMaskStrip(HEdge &startNode, HEdge &endNode, ClockDirection d
         if(&hedge == &startNode)
         {
             // Add the first edge.
-            SkyFixEdge skyEdge(hedge, skyFix, direction == Anticlockwise? Line::To : Line::From, materialOffsetS);
+            SkyFixEdge skyEdge(hedge, skyFix, direction == Anticlockwise? Line::To : Line::From,
+                               materialOffsetS);
 
             skyEdge.prepare();
 
@@ -2293,7 +2343,8 @@ static void writeSkyMaskStrip(HEdge &startNode, HEdge &endNode, ClockDirection d
 
         {
             // Add the i'th edge.
-            SkyFixEdge skyEdge(hedge, skyFix, Anticlockwise? Line::From : Line::To, materialOffsetS);
+            SkyFixEdge skyEdge(hedge, skyFix, direction == Anticlockwise? Line::From : Line::To,
+                               materialOffsetS);
 
             skyEdge.prepare();
 
@@ -2304,88 +2355,37 @@ static void writeSkyMaskStrip(HEdge &startNode, HEdge &endNode, ClockDirection d
 
             materialOffsetS += direction == Anticlockwise? -hedge.length() : hedge.next().length();
         }
+
     } while((hedgeIt = &hedgeIt->neighbor(direction)) != &endNode);
+}
 
-    // Strip building completed. Take ownership of the geometry.
-    PositionBuffer *positions = 0;
-    TexCoordBuffer *texcoords = 0;
-    int numVerts = stripBuilder.take(&positions, &texcoords);
+static void writeSkyFixStrip(int numElements, rvertex_t const *positions,
+    rtexcoord_t const *texcoords, Material *material)
+{
+    DENG_ASSERT(positions != 0);
 
-    /*
-     * Write the geometry to the render lists.
-     */
     int const rendPolyFlags = RPF_DEFAULT | (!devRendSkyMode? RPF_SKYMASK : 0);
     if(!devRendSkyMode)
     {
-        RL_AddPoly(PT_TRIANGLE_STRIP, rendPolyFlags, numVerts, positions->constData(), 0);
+        RL_AddPoly(PT_TRIANGLE_STRIP, rendPolyFlags, numElements, positions, 0);
     }
     else
     {
+        DENG_ASSERT(texcoords != 0);
+
         if(renderTextures != 2)
         {
-            // Map RTU configuration from the sky surface material.
-            MaterialSnapshot const &ms = material->prepare(mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT));
+            DENG_ASSERT(material != 0);
 
+            // Map RTU configuration from the sky surface material.
+            MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
             RL_LoadDefaultRtus();
             RL_MapRtu(RTU_PRIMARY, &ms.unit(RTU_PRIMARY));
         }
-        RL_AddPolyWithCoords(PT_TRIANGLE_STRIP, rendPolyFlags, numVerts,
-                             positions->constData(), NULL, texcoords->constData(), NULL);
+
+        RL_AddPolyWithCoords(PT_TRIANGLE_STRIP, rendPolyFlags, numElements,
+                             positions, NULL, texcoords, NULL);
     }
-
-    delete positions;
-    delete texcoords;
-}
-
-/**
- * Prepare the trifan rvertex_t buffer specified according to the edges of this
- * BSP leaf. If a fan base HEdge has been chosen it will be used as the center of
- * the trifan, else the mid point of this leaf will be used instead.
- *
- * @param leaf  BspLeaf instance.
- * @param direction  Vertex winding direction.
- * @param height  Z map space height coordinate to be set for each vertex.
- * @param verts  Built vertices are written here.
- * @param vertsSize  Number of built vertices is written here. Can be @c NULL.
- *
- * @return  Number of built vertices (same as written to @a vertsSize).
- */
-static uint buildLeafPlaneGeometry(BspLeaf const &leaf, ClockDirection direction,
-    coord_t height, rvertex_t **verts, uint *vertsSize)
-{
-    DENG_ASSERT(verts != 0);
-
-    HEdge *fanBase = leaf.fanBase();
-    HEdge *baseNode = fanBase? fanBase : leaf.firstHEdge();
-
-    uint totalVerts = leaf.hedgeCount() + (!fanBase? 2 : 0);
-    *verts = R_AllocRendVertices(totalVerts);
-
-    uint n = 0;
-    if(!fanBase)
-    {
-        V3f_Set((*verts)[n].pos, leaf.center().x, leaf.center().y, height);
-        n++;
-    }
-
-    // Add the vertices for each hedge.
-    HEdge *node = baseNode;
-    do
-    {
-        V3f_Set((*verts)[n].pos, node->origin().x, node->origin().y, height);
-        n++;
-    } while((node = &node->neighbor(direction)) != baseNode);
-
-    // The last vertex is always equal to the first.
-    if(!fanBase)
-    {
-        V3f_Set((*verts)[n].pos, leaf.firstHEdge()->origin().x,
-                                 leaf.firstHEdge()->origin().y,
-                                 height);
-    }
-
-    if(vertsSize) *vertsSize = totalVerts;
-    return totalVerts;
 }
 
 /// @param skyFix  @ref skyCapFlags.
@@ -2396,6 +2396,8 @@ static void writeLeafSkyMaskStrips(int skyFix)
 
     if(!(skyFix & (SKYCAP_LOWER|SKYCAP_UPPER)))
         return;
+
+    TriangleStripBuilder stripBuilder;
 
     ClockDirection direction = Clockwise;
     bool const splitForSkyMaterials = (devRendSkyMode && renderTextures != 2);
@@ -2455,8 +2457,19 @@ static void writeLeafSkyMaskStrips(int skyFix)
 
         if(endStrip && startNode)
         {
-            // We have complete strip; build and write it.
-            writeSkyMaskStrip(*startNode, *node, direction, skyFix, startMaterial);
+            // We have found a strip; build and write it.
+            buildSkyFixStrip(stripBuilder, *startNode, *node, direction, skyFix);
+
+            // Take ownership of the built geometry.
+            PositionBuffer *positions = 0;
+            TexCoordBuffer *texcoords = 0;
+            int numVerts = stripBuilder.take(&positions, &texcoords);
+
+            // Write the strip geometry to the render lists.
+            writeSkyFixStrip(numVerts, positions->constData(), texcoords? texcoords->constData() : 0, startMaterial);
+
+            delete positions;
+            delete texcoords;
 
             // End the current strip.
             startNode = 0;
@@ -2472,10 +2485,21 @@ static void writeLeafSkyMaskStrips(int skyFix)
         if(node == base) break;
     }
 
-    // Have we an unwritten strip? - build it.
+    // Have we an unwritten strip? - build and write it.
     if(startNode)
     {
-        writeSkyMaskStrip(*startNode, *base, direction, skyFix, startMaterial);
+        buildSkyFixStrip(stripBuilder, *startNode, *base, direction, skyFix);
+
+        // Take ownership of the built geometry.
+        PositionBuffer *positions = 0;
+        TexCoordBuffer *texcoords = 0;
+        int numVerts = stripBuilder.take(&positions, &texcoords);
+
+        // Write the strip geometry to the render lists.
+        writeSkyFixStrip(numVerts, positions->constData(), texcoords? texcoords->constData() : 0, startMaterial);
+
+        delete positions;
+        delete texcoords;
     }
 }
 
