@@ -93,8 +93,7 @@ void DED_ZCount(ded_count_t* c)
 
 void DED_Init(ded_t* ded)
 {
-    memset(ded, 0, sizeof(*ded));
-    ded->version = DED_VERSION;
+	*ded = ded_t();
 }
 
 void DED_Clear(ded_t* ded)
