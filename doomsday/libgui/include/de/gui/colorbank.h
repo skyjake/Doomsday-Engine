@@ -19,6 +19,7 @@
 #ifndef LIBGUI_COLORBANK_H
 #define LIBGUI_COLORBANK_H
 
+#include "libgui.h"
 #include <de/InfoBank>
 #include <de/File>
 #include <de/Vector>
@@ -28,7 +29,7 @@ namespace de {
 /**
  * Bank of colors where each color is identified by a Path.
  */
-class ColorBank : public InfoBank
+class LIBGUI_PUBLIC ColorBank : public InfoBank
 {
 public:
     typedef Vector4ub Color;

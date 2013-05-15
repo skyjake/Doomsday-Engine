@@ -36,7 +36,7 @@ class File;
  * InfoBank handles the common plumbing of parsing an Info file and iterating
  * through it for creating bank sources.
  */
-class InfoBank : public Bank
+class DENG2_PUBLIC InfoBank : public Bank
 {
 public:
     InfoBank(Bank::Flags const &flags         = Bank::DefaultFlags,

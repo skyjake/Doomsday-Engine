@@ -34,7 +34,7 @@ class Record;
 /**
  * Bank of Rules where each is identified by a Path.
  */
-class RuleBank : public InfoBank
+class DENG2_PUBLIC RuleBank : public InfoBank
 {
 public:
     RuleBank();
