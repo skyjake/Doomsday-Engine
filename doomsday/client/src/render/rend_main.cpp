@@ -49,6 +49,9 @@
 #include "map/r_world.h"
 
 #include "render/sprite.h"
+
+#include "TriangleStripBuilder"
+
 #include "gl/sys_opengl.h"
 
 #include "render/rend_main.h"
@@ -1893,10 +1896,10 @@ static coord_t skyFixCeilZ(Plane const *frontCeil, Plane const *backCeil)
     return theMap->skyFixCeiling();
 }
 
-class SkyFixEdge
+class SkyFixEdge : public IEdge
 {
 public:
-    class Intercept
+    class Intercept : public IEdge::IIntercept
     {
     public:
         Intercept(SkyFixEdge &owner, coord_t distance = 0)
@@ -1968,15 +1971,18 @@ public:
         return _edge? _hedge->twin().origin() : _hedge->origin();
     }
 
-    Intercept const &bottom() const
+    Intercept const &from() const
     {
         return _bottom;
     }
 
-    Intercept const &top() const
+    Intercept const &to() const
     {
         return _top;
     }
+
+    inline Intercept const &bottom() const { return from(); }
+    inline Intercept const &top() const { return top(); }
 
     Vector2f const &materialOrigin() const
     {
@@ -2114,157 +2120,6 @@ static int chooseHEdgeSkyFixes(HEdge *hedge, int skyCap)
     return fixes;
 }
 
-#include <QScopedPointer>
-#include <QVarLengthArray>
-
-typedef QVarLengthArray<rvertex_t, 24> PositionBuffer;
-typedef QVarLengthArray<rtexcoord_t, 24> TexCoordBuffer;
-
-/**
- * @ingroup render
- */
-class TriangleStripBuilder
-{
-public:
-    /**
-     * Construct a new triangle strip builder.
-     */
-    TriangleStripBuilder()
-        : _direction(Clockwise),
-          _buildTexCoords(false),
-          _initialReserveElements(0),
-          _positions(0),
-          _texcoords(0)
-    {}
-
-    /**
-     * Begin construction of a new triangle strip geometry. Any existing unclaimed
-     * geometry is discarded.
-     *
-     * Vertex layout:
-     *   1--3    2--0
-     *   |  | or |  | if @a direction @c =Anticlockwise
-     *   0--2    3--1
-     *
-     * @param direction        Initial vertex winding direction.
-     * @param buildTexCoords   @c true= construct texture coordinates also.
-     *
-     * @param reserveElements  Initial number of vertex elements to reserve. If the
-     *  user knows in advance roughly how many elements are required for the geometry
-     *  this number may be reserved from the outset, thereby improving performance
-     *  by minimizing dynamic memory allocations. If the estimate is off the only
-     *  side effect is reduced performance.
-     */
-    void begin(ClockDirection direction, bool buildTexCoords = false,
-               int reserveElements = 0)
-    {
-        _direction = direction;
-        _buildTexCoords = buildTexCoords;
-        _initialReserveElements = de::max(reserveElements, 0);
-
-        // Destroy any existing unclaimed strip geometry.
-        _positions.reset();
-        _texcoords.reset();
-    }
-
-    /**
-     * Submit an edge geometry to be added to the current triangle strip geometry.
-     *
-     * @param edge  Edge geometry to add.
-     *
-     * @return  Reference to this trangle strip builder.
-     */
-    TriangleStripBuilder &operator << (SkyFixEdge &edge)
-    {
-        // Silently ignore invalid edges.
-        if(!edge.isValid()) return *this;
-
-        SkyFixEdge::Intercept const &bottom = edge.bottom();
-        SkyFixEdge::Intercept const &top    = edge.top();
-
-        reserveElements(2);
-
-        _positions->append(rvertex_t((_direction == Anticlockwise? top : bottom).origin()));
-        _positions->append(rvertex_t((_direction == Anticlockwise? bottom : top).origin()));
-
-        if(_buildTexCoords)
-        {
-            coord_t edgeHeight = top.distance() - bottom.distance();
-
-            _texcoords->append(rtexcoord_s(edge.materialOrigin() +
-                                           Vector2f(0, (_direction == Anticlockwise? 0 : edgeHeight))));
-            _texcoords->append(rtexcoord_s(edge.materialOrigin() +
-                                           Vector2f(0, (_direction == Anticlockwise? edgeHeight : 0))));
-        }
-
-        return *this;
-    }
-
-    /**
-     * Returns the total number of vertex elements in the current strip geometry.
-     * If no strip is currently being built @c 0 is returned.
-     */
-    int numElements() const
-    {
-        return _positions.isNull()? 0 : _positions->size();
-    }
-
-    /**
-     * Take ownership of the last built strip of geometry.
-     *
-     * @param positions  The address of the buffer containing the vertex position
-     *                   values is written here.
-     * @param texcoords  The address of the buffer containing the texture coord
-     *                   values is written here. Can be @c 0.
-     *
-     * @return  Total number of vertex elements in the geometry (for convenience).
-     */
-    int take(PositionBuffer **positions, TexCoordBuffer **texcoords = 0)
-    {
-        int retNumElements = numElements();
-
-        *positions = _positions.take();
-        if(texcoords)
-        {
-            *texcoords = _texcoords.take();
-        }
-        return retNumElements;
-    }
-
-private:
-    /**
-     * Reserve storage for a further @a num elements from the buffer(s).
-     */
-    void reserveElements(int num)
-    {
-        if(num < 0) return; // Huh?
-
-        // Time to allocate the buffers?
-        if(_positions.isNull())
-        {
-            _positions.reset(new PositionBuffer());
-            if(_buildTexCoords)
-                _texcoords.reset(new TexCoordBuffer());
-
-            // The user may already know how many elements they will require.
-            num += _initialReserveElements;
-        }
-
-        // Reserve this many new elements.
-        _positions->reserve(_positions->size() + num);
-        if(_buildTexCoords)
-            _texcoords->reserve(_texcoords->size() + num);
-    }
-
-private:
-    ClockDirection _direction;
-    bool _buildTexCoords;
-    int _initialReserveElements;
-
-    QScopedPointer<PositionBuffer> _positions;
-    QScopedPointer<TexCoordBuffer> _texcoords;
-};
-
 /**
  * Determines the total number of edges between @a startNode and @a endNode in
  * the specified @a direction (inclussive). In the special case where the end
@@ -2313,7 +2168,7 @@ static void buildSkyFixStrip(TriangleStripBuilder &stripBuilder, HEdge &startNod
      */
     int numElementsToReserve = countHEdgeLoopEdges(startNode, endNode, direction);
 
-    stripBuilder.begin(direction, CPP_BOOL(devRendSkyMode), numElementsToReserve);
+    stripBuilder.begin(direction, numElementsToReserve);
 
     /*
      * Add edges to the strip.
@@ -2397,7 +2252,7 @@ static void writeLeafSkyMaskStrips(int skyFix)
     if(!(skyFix & (SKYCAP_LOWER|SKYCAP_UPPER)))
         return;
 
-    TriangleStripBuilder stripBuilder;
+    TriangleStripBuilder stripBuilder(CPP_BOOL(devRendSkyMode));
 
     ClockDirection direction = Clockwise;
     bool const splitForSkyMaterials = (devRendSkyMode && renderTextures != 2);

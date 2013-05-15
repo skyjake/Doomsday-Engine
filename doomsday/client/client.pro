@@ -142,6 +142,7 @@ DENG_HEADERS += \
     include/Textures \
     include/TextureScheme \
     include/TextureVariantSpec \
+    include/TriangleStripBuilder \
     include/audio/audiodriver.h \
     include/audio/audiodriver_music.h \
     include/audio/m_mus2midi.h \
@@ -303,6 +304,7 @@ DENG_HEADERS += \
     include/render/shadowedge.h \
     include/render/sky.h \
     include/render/sprite.h \
+    include/render/trianglestripbuilder.h \
     include/render/vignette.h \
     include/render/vlight.h \
     include/resource/animgroups.h \
@@ -574,6 +576,7 @@ SOURCES += \
     src/render/shadowedge.cpp \
     src/render/sky.cpp \
     src/render/sprite.cpp \
+    src/render/trianglestripbuilder.cpp \
     src/render/vignette.cpp \
     src/render/vlight.cpp \
     src/resource/animgroups.cpp \
