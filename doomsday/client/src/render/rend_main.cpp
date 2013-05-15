@@ -1817,7 +1817,7 @@ static void writeLeafPlane(Plane &plane)
 #define SKYCAP_UPPER                0x2
 ///@}
 
-static coord_t skyCapZ(BspLeaf *bspLeaf, int skyCap)
+static coord_t skyPlaneZ(BspLeaf *bspLeaf, int skyCap)
 {
     DENG_ASSERT(bspLeaf);
     Plane::Type const plane = (skyCap & SKYCAP_UPPER)? Plane::Ceiling : Plane::Floor;
@@ -1841,6 +1841,107 @@ static coord_t skyFixCeilZ(Plane const *frontCeil, Plane const *backCeil)
         return frontCeil->visHeight();
     return theMap->skyFixCeiling();
 }
+
+class SkyFixEdge
+{
+public:
+    class Intercept
+    {
+    public:
+        Intercept(SkyFixEdge &owner, coord_t distance = 0)
+            : _owner(owner), _distance(distance)
+        {}
+
+        bool operator < (Intercept const &other) const {
+            return _distance < other._distance;
+        }
+
+        coord_t distance() const { return _distance; }
+
+        void setDistance(coord_t distance)
+        {
+            _distance = distance;
+        }
+
+        Vector3d origin() const
+        {
+            return Vector3d(_owner.origin(), _distance);
+        }
+
+    private:
+        SkyFixEdge &_owner;
+        coord_t _distance;
+    };
+
+public:
+    /**
+     * @param hedge  HEdge from which to determine sky fix coordinates.
+     * @param skyCap  Either SKYCAP_LOWER or SKYCAP_UPPER (SKYCAP_UPPER has precendence).
+     */
+    SkyFixEdge(HEdge &hedge, int skyCap, int edge, float materialOffsetS = 0)
+        : _hedge(&hedge), _skyCap(skyCap), _edge(edge),
+          _bottom(*this), _top(*this), _materialOrigin(materialOffsetS, 0),
+          _isValid(false)
+    {}
+
+    void prepare()
+    {
+        Sector const *frontSec = _hedge->bspLeaf().sectorPtr();
+        Sector const *backSec  = _hedge->twin().hasBspLeaf() && !_hedge->twin().bspLeaf().hasDegenerateFace()? _hedge->twin().bspLeaf().sectorPtr() : 0;
+        Plane const *ffloor = &frontSec->floor();
+        Plane const *fceil  = &frontSec->ceiling();
+        Plane const *bceil  = backSec? &backSec->ceiling() : 0;
+        Plane const *bfloor = backSec? &backSec->floor()   : 0;
+
+        _bottom.setDistance(0);
+        _top.setDistance(0);
+
+        if(_skyCap & SKYCAP_UPPER)
+        {
+            _top.setDistance(skyFixCeilZ(fceil, bceil));
+            _bottom.setDistance(de::max((backSec && bceil->surface().hasSkyMaskedMaterial() )? bceil->visHeight()  : fceil->visHeight(),  ffloor->visHeight()));
+        }
+        else
+        {
+            _top.setDistance(de::min((backSec && bfloor->surface().hasSkyMaskedMaterial())? bfloor->visHeight() : ffloor->visHeight(), fceil->visHeight()));
+            _bottom.setDistance(skyFixFloorZ(ffloor, bfloor));
+        }
+
+        _isValid = _bottom < _top;
+    }
+
+    bool isValid() const { return _isValid; }
+
+    de::Vector2d const &origin() const
+    {
+        return _edge? _hedge->twin().origin() : _hedge->origin();
+    }
+
+    Intercept const &bottom() const
+    {
+        return _bottom;
+    }
+
+    Intercept const &top() const
+    {
+        return _top;
+    }
+
+    Vector2f const &materialOrigin() const
+    {
+        return _materialOrigin;
+    }
+
+private:
+    HEdge *_hedge;
+    int _skyCap;
+    int _edge;
+
+    Intercept _bottom;
+    Intercept _top;
+    Vector2f _materialOrigin;
+    bool _isValid;
+};
 
 /**
  * @param hedge  HEdge from which to determine sky fix coordinates.
@@ -1962,135 +2063,261 @@ static int chooseHEdgeSkyFixes(HEdge *hedge, int skyCap)
     return fixes;
 }
 
-static inline void buildStripEdge(Vector2d const &vXY,
-    coord_t v1Z, coord_t v2Z, float texS,
-    rvertex_t *v1, rvertex_t *v2, rtexcoord_t *t1, rtexcoord_t *t2)
-{
-    if(v1)
-    {
-        V2f_Set(v1->pos, vXY.x, vXY.y);
-        v1->pos[VZ] = v1Z;
-    }
-    if(v2)
-    {
-        V2f_Set(v2->pos, vXY.x, vXY.y);
-        v2->pos[VZ] = v2Z;
-    }
-    if(t1)
-    {
-        t1->st[0] = texS;
-        t1->st[1] = v2Z - v1Z;
-    }
-    if(t2)
-    {
-        t2->st[0] = texS;
-        t2->st[1] = 0;
-    }
-}
+#include <QScopedPointer>
+#include <QVarLengthArray>
+
+typedef QVarLengthArray<rvertex_t, 24> PositionBuffer;
+typedef QVarLengthArray<rtexcoord_t, 24> TexCoordBuffer;
 
 /**
- * Vertex layout:
- *   1--3    2--0
- *   |  | or |  | if antiClockwise
- *   0--2    3--1
+ * @ingroup render
  */
-static void buildSkyMaskStrip(HEdge &startNode, HEdge &endNode, ClockDirection direction,
-    int skyCap, rvertex_t **verts, uint *vertsSize, rtexcoord_t **coords)
+class TriangleStripBuilder
 {
-    DENG_ASSERT(startNode.hasBspLeaf());
+public:
+    /**
+     * Construct a new triangle strip builder.
+     */
+    TriangleStripBuilder()
+        : _direction(Clockwise),
+          _buildTexCoords(false),
+          _initialReserveElements(0),
+          _positions(0),
+          _texcoords(0)
+    {}
+
+    /**
+     * Begin construction of a new triangle strip geometry. Any existing unclaimed
+     * geometry is discarded.
+     *
+     * Vertex layout:
+     *   1--3    2--0
+     *   |  | or |  | if @a direction @c =Anticlockwise
+     *   0--2    3--1
+     *
+     * @param direction        Initial vertex winding direction.
+     * @param buildTexCoords   @c true= construct texture coordinates also.
+     *
+     * @param reserveElements  Initial number of vertex elements to reserve. If the
+     *  user knows in advance roughly how many elements are required for the geometry
+     *  this number may be reserved from the outset, thereby improving performance
+     *  by minimizing dynamic memory allocations. If the estimate is off the only
+     *  side effect is reduced performance.
+     */
+    void begin(ClockDirection direction, bool buildTexCoords = false,
+               int reserveElements = 0)
+    {
+        _direction = direction;
+        _buildTexCoords = buildTexCoords;
+        _initialReserveElements = de::max(reserveElements, 0);
+
+        // Destroy any existing unclaimed strip geometry.
+        _positions.reset();
+        _texcoords.reset();
+    }
+
+    /**
+     * Submit an edge geometry to be added to the current triangle strip geometry.
+     *
+     * @param edge  Edge geometry to add.
+     *
+     * @return  Reference to this trangle strip builder.
+     */
+    TriangleStripBuilder &operator << (SkyFixEdge &edge)
+    {
+        // Silently ignore invalid edges.
+        if(!edge.isValid()) return *this;
+
+        SkyFixEdge::Intercept const &bottom = edge.bottom();
+        SkyFixEdge::Intercept const &top    = edge.top();
+
+        reserveElements(2);
+
+        _positions->append(rvertex_t((_direction == Anticlockwise? top : bottom).origin()));
+        _positions->append(rvertex_t((_direction == Anticlockwise? bottom : top).origin()));
+
+        if(_buildTexCoords)
+        {
+            coord_t edgeHeight = top.distance() - bottom.distance();
+
+            _texcoords->append(rtexcoord_s(edge.materialOrigin() +
+                                           Vector2f(0, (_direction == Anticlockwise? 0 : edgeHeight))));
+            _texcoords->append(rtexcoord_s(edge.materialOrigin() +
+                                           Vector2f(0, (_direction == Anticlockwise? edgeHeight : 0))));
+        }
+
+        return *this;
+    }
+
+    /**
+     * Take ownership of the last built strip of geometry.
+     *
+     * @param positions  The address of the buffer containing the vertex position
+     *                   values is written here.
+     * @param texcoords  The address of the buffer containing the texture coord
+     *                   values is written here. Can be @c 0.
+     *
+     * @return  Total number of vertex elements in the geometry (for convenience).
+     */
+    int take(PositionBuffer **positions, TexCoordBuffer **texcoords = 0)
+    {
+        int numElements = _positions.isNull()? 0 : _positions->size();
+
+        *positions = _positions.take();
+        if(texcoords)
+        {
+            *texcoords = _texcoords.take();
+        }
+        return numElements;
+    }
+
+    /**
+     * Returns the total number of vertices in the current strip geometry. If no
+     * strip is currently being built @c 0 is returned.
+     */
+    int numVertices() const
+    {
+        return _positions.isNull()? 0 : _positions->size();
+    }
+
+private:
+    /**
+     * Reserve storage for a further @a num elements from the buffer(s).
+     */
+    void reserveElements(int num)
+    {
+        if(num < 0) return; // Huh?
+
+        // Time to allocate the buffers?
+        if(_positions.isNull())
+        {
+            _positions.reset(new PositionBuffer());
+            if(_buildTexCoords)
+                _texcoords.reset(new TexCoordBuffer());
+
+            // The user may already know how many elements they will require.
+            num += _initialReserveElements;
+        }
+
+        // Reserve this many new elements.
+        _positions->reserve(_positions->size() + num);
+        if(_buildTexCoords)
+            _texcoords->reserve(_texcoords->size() + num);
+    }
+
+private:
+    ClockDirection _direction;
+    bool _buildTexCoords;
+    int _initialReserveElements;
+
+    QScopedPointer<PositionBuffer> _positions;
+    QScopedPointer<TexCoordBuffer> _texcoords;
+};
+
+/**
+ * Determines the total number of edges between @a startNode and @a endNode in
+ * the specified @a direction (inclussive). In the special case where the end
+ * node is also the start node it assumed that the nodes describe a full loop
+ * (i.e., a "closed" simple polygon (not necessarily convex, however)).
+ *
+ * @pre Both (half-edge) nodes are connected in a contiguous path which can be
+ * navigated following the @em neighbor links (in the specified direction).
+ *
+ * @param startNode  Half-edge "node" at which to begin counting edges.
+ * @param endNode    Half-edge "node" at which to stop counting edges.
+ * @param direction  Neighbor direction to follow.
+ *
+ * @return  Total number of edges between the two nodes.
+ */
+static int countHEdgeLoopEdges(HEdge const &startNode, HEdge const &endNode,
+                               ClockDirection direction)
+{
+    DENG_ASSERT(startNode.hasBspLeaf() && endNode.hasBspLeaf());
     DENG_ASSERT(&startNode.bspLeaf() == &endNode.bspLeaf());
 
-    *vertsSize = 0;
-    *verts = 0;
-
-    if(!skyCap) return;
-
-    // Count verts.
+    int num = 0;
     if(&startNode == &endNode)
     {
-        // Special case: the whole edge loop.
-        *vertsSize += 2 * (startNode.bspLeaf().hedgeCount() + 1);
+        // Special case: the whole loop.
+        num += 2 * (startNode.bspLeaf().hedgeCount() + 1);
     }
     else
     {
-        HEdge *afterEndNode = &endNode.neighbor(direction);
-        HEdge *node = &startNode;
+        HEdge const *afterEndNode = &endNode.neighbor(direction);
+        HEdge const *node = &startNode;
         do
         {
-            *vertsSize += 2;
+            num += 2;
         } while((node = &node->neighbor(direction)) != afterEndNode);
     }
 
-    // Build geometry.
-    *verts = R_AllocRendVertices(*vertsSize);
-    if(coords)
-    {
-        *coords = R_AllocRendTexCoords(*vertsSize);
-    }
-
-    int const windOffset = direction == Anticlockwise? 1 : 0;
-    HEdge *node = &startNode;
-    float texS = float( node->hasLineSide()? node->lineOffset() : 0 );
-    uint n = 0;
-    do
-    {
-        HEdge *hedge = (direction == Anticlockwise? &node->prev() : node);
-        coord_t zBottom, zTop;
-
-        skyFixZCoords(hedge, skyCap, &zBottom, &zTop);
-        DENG_ASSERT(zBottom < zTop);
-
-        if(n == 0)
-        {
-            // Add the first edge.
-            rvertex_t *v1 = &(*verts)[n + windOffset];
-            rvertex_t *v2 = &(*verts)[n + (windOffset^1)];
-            rtexcoord_t *t1 = coords? &(*coords)[n + windOffset] : 0;
-            rtexcoord_t *t2 = coords? &(*coords)[n + (windOffset^1)] : 0;
-
-            buildStripEdge(node->origin(), zBottom, zTop, texS, v1, v2, t1, t2);
-
-            if(coords)
-            {
-                texS += direction == Anticlockwise? -node->prev().length() : hedge->length();
-            }
-
-            n += 2;
-        }
-
-        // Add the next edge.
-        rvertex_t *v1 = &(*verts)[n + windOffset];
-        rvertex_t *v2 = &(*verts)[n + (windOffset^1)];
-        rtexcoord_t *t1 = coords? &(*coords)[n + windOffset] : 0;
-        rtexcoord_t *t2 = coords? &(*coords)[n + (windOffset^1)] : 0;
-
-        buildStripEdge(node->neighbor(direction).origin(),
-                       zBottom, zTop, texS, v1, v2, t1, t2);
-
-        if(coords)
-        {
-            texS += direction == Anticlockwise? -hedge->length() : hedge->next().length();
-        }
-
-        n += 2;
-
-    } while((node = &node->neighbor(direction)) != &endNode);
+    return num;
 }
 
 static void writeSkyMaskStrip(HEdge &startNode, HEdge &endNode, ClockDirection direction,
     int skyFix, Material *material)
 {
+    TriangleStripBuilder stripBuilder;
+
+    int numElementsToReserve = countHEdgeLoopEdges(startNode, endNode, direction);
+
+    /*
+     * Begin a new triangle strip.
+     */
+    stripBuilder.begin(direction, CPP_BOOL(devRendSkyMode), numElementsToReserve);
+
+    /*
+     * Add edges to the strip.
+     */
+    HEdge *hedgeIt = &startNode;
+    float materialOffsetS = float( hedgeIt->hasLineSide()? hedgeIt->lineOffset() : 0 );
+
+    do
+    {
+        HEdge &hedge = (direction == Anticlockwise? hedgeIt->prev() : *hedgeIt);
+
+        if(&hedge == &startNode)
+        {
+            // Add the first edge.
+            SkyFixEdge skyEdge(hedge, skyFix, direction == Anticlockwise? Line::To : Line::From, materialOffsetS);
+
+            skyEdge.prepare();
+
+            if(skyEdge.isValid() && skyEdge.top().distance() > skyEdge.bottom().distance())
+            {
+                stripBuilder << skyEdge;
+            }
+
+            materialOffsetS += direction == Anticlockwise? -hedgeIt->prev().length() : hedge.length();
+        }
+
+        {
+            // Add the i'th edge.
+            SkyFixEdge skyEdge(hedge, skyFix, Anticlockwise? Line::From : Line::To, materialOffsetS);
+
+            skyEdge.prepare();
+
+            if(skyEdge.isValid() && skyEdge.top().distance() > skyEdge.bottom().distance())
+            {
+                stripBuilder << skyEdge;
+            }
+
+            materialOffsetS += direction == Anticlockwise? -hedge.length() : hedge.next().length();
+        }
+    } while((hedgeIt = &hedgeIt->neighbor(direction)) != &endNode);
+
+    // Strip building completed. Take ownership of the geometry.
+    PositionBuffer *positions = 0;
+    TexCoordBuffer *texcoords = 0;
+    int numVerts = stripBuilder.take(&positions, &texcoords);
+
+    /*
+     * Write the geometry to the render lists.
+     */
     int const rendPolyFlags = RPF_DEFAULT | (!devRendSkyMode? RPF_SKYMASK : 0);
-    rtexcoord_t *coords = 0;
-    rvertex_t *verts;
-    uint vertsSize;
-
-    buildSkyMaskStrip(startNode, endNode, direction, skyFix,
-                      &verts, &vertsSize, devRendSkyMode? &coords : 0);
-
     if(!devRendSkyMode)
     {
-        RL_AddPoly(PT_TRIANGLE_STRIP, rendPolyFlags, vertsSize, verts, 0);
+        RL_AddPoly(PT_TRIANGLE_STRIP, rendPolyFlags, numVerts, positions->constData(), 0);
     }
     else
     {
@@ -2102,11 +2329,12 @@ static void writeSkyMaskStrip(HEdge &startNode, HEdge &endNode, ClockDirection d
             RL_LoadDefaultRtus();
             RL_MapRtu(RTU_PRIMARY, &ms.unit(RTU_PRIMARY));
         }
-        RL_AddPolyWithCoords(PT_TRIANGLE_STRIP, rendPolyFlags, vertsSize, verts, NULL, coords, NULL);
+        RL_AddPolyWithCoords(PT_TRIANGLE_STRIP, rendPolyFlags, numVerts,
+                             positions->constData(), NULL, texcoords->constData(), NULL);
     }
 
-    R_FreeRendVertices(verts);
-    R_FreeRendTexCoords(coords);
+    delete positions;
+    delete texcoords;
 }
 
 /**
@@ -2264,7 +2492,7 @@ static void writeLeafSkyMaskCap(int skyCap)
     rvertex_t *verts;
     uint numVerts;
     buildLeafPlaneGeometry(*bspLeaf, (skyCap & SKYCAP_UPPER)? Anticlockwise : Clockwise,
-                           skyCapZ(bspLeaf, skyCap),
+                           skyPlaneZ(bspLeaf, skyCap),
                            &verts, &numVerts);
 
     RL_AddPoly(PT_FAN, RPF_DEFAULT | RPF_SKYMASK, numVerts, verts, 0);

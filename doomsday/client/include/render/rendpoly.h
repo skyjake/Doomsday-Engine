@@ -33,10 +33,32 @@ class SectionEdge;
 
 typedef struct rvertex_s {
     float pos[3];
+#ifdef __cplusplus
+    rvertex_s(float x = 0, float y = 0, float z = 0) {
+        pos[0] = x; pos[1] = y; pos[2] = z;
+    }
+    rvertex_s(de::Vector3f const &_pos) {
+        pos[0] = _pos.x; pos[1] = _pos.y; pos[2] = _pos.z;
+    }
+    rvertex_s(rvertex_s const &other) {
+        std::memcpy(pos, other.pos, sizeof(pos));
+    }
+#endif
 } rvertex_t;
 
 typedef struct rtexcoord_s {
     float st[2];
+#ifdef __cplusplus
+    rtexcoord_s(float s = 0, float t = 0) {
+        st[0] = s; st[1] = t;
+    }
+    rtexcoord_s(de::Vector2f const &_st) {
+        st[0] = _st.x; st[1] = _st.y;
+    }
+    rtexcoord_s(rtexcoord_s const &other) {
+        std::memcpy(st, other.st, sizeof(st));
+    }
+#endif
 } rtexcoord_t;
 
 /**
