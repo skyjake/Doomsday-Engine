@@ -76,7 +76,8 @@ public:
          * @param t  Type of the element.
          * @param n  Case-independent name of the element.
          */
-        Element(Type t = None, String const &n = "") : _type(t), _parent(0) { setName(n); }
+        Element(Type t = None, String const &n = "")
+            : _type(t), _parent(0), _lineNumber(0) { setName(n); }
         virtual ~Element() {}
 
         void setParent(BlockElement *parent) { _parent = parent; }

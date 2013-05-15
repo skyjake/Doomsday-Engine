@@ -577,6 +577,11 @@ void Info::BlockElement::add(Info::Element *elem)
 {
     DENG2_ASSERT(elem != 0);
 
+	/*
+
+	/// @todo This check is at the wrong level. Conditions may be applied
+	/// to resolve duplicates. Check when processing...
+
     // Check for duplicate identifiers in this block.
     if(elem->name() && _contents.contains(elem->name()))
     {
@@ -588,6 +593,7 @@ void Info::BlockElement::add(Info::Element *elem)
                     << name() << elem->name();
         }
     }
+	*/
 
     elem->setParent(this);
     _contentsInOrder.append(elem); // owned

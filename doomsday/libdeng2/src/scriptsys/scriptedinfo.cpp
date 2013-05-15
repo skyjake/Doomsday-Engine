@@ -129,7 +129,7 @@ DENG2_PIMPL(ScriptedInfo)
             if(!ns.has(targetName))
             {
                 // Assume it's an identifier rather than a regular variable.
-                targetName = checkNamespaceForVariable(targetName.toLower());
+                targetName = checkNamespaceForVariable(target.text.toLower());
             }
 
             ns.add(varName.concatenateMember("__inherit__")) =
