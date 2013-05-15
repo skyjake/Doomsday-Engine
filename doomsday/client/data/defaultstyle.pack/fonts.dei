@@ -8,6 +8,13 @@ script { import Version, gui }
 
 namespace font {
 
+font default condition "Version.OS == 'windows'" {
+    family: Verdana
+    size: 12pt
+    weight: normal
+    style: normal
+}
+
 font default condition "Version.OS == 'macx'" {
     family: Lucida Grande
     size: 16pt
