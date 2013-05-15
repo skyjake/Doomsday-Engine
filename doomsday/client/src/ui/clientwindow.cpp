@@ -33,8 +33,8 @@
 
 #include "gl/sys_opengl.h"
 #include "gl/gl_main.h"
-#include "ui/legacywidget.h"
-#include "ui/busywidget.h"
+#include "ui/widgets/legacywidget.h"
+#include "ui/widgets/busywidget.h"
 #include "ui/mouse_qt.h"
 
 #include "dd_main.h"

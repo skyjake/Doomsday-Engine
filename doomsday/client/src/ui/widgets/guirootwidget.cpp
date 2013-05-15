@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/guirootwidget.h"
+#include "ui/widgets/guirootwidget.h"
 
 using namespace de;
 

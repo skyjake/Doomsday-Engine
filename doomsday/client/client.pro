@@ -340,18 +340,14 @@ DENG_HEADERS += \
     include/ui/b_main.h \
     include/ui/b_util.h \
     include/ui/busyvisual.h \
-    include/ui/busywidget.h \
     include/ui/clientwindow.h \
     include/ui/commandaction.h \
     include/ui/dd_input.h \
     include/ui/dd_ui.h \
     include/ui/fi_main.h \
     include/ui/finaleinterpreter.h \
-    include/ui/guirootwidget.h \
-    include/ui/guiwidget.h \
     include/ui/inputsystem.h \
     include/ui/joystick.h \
-    include/ui/legacywidget.h \
     include/ui/mouse_qt.h \
     include/ui/nativeui.h \
     include/ui/p_control.h \
@@ -360,7 +356,11 @@ DENG_HEADERS += \
     include/ui/ui2_main.h \
     include/ui/ui_main.h \
     include/ui/ui_panel.h \
-    include/ui/widgetactions.h \
+    include/ui/widgets/busywidget.h \
+    include/ui/widgets/guirootwidget.h \
+    include/ui/widgets/guiwidget.h \
+    include/ui/widgets/legacywidget.h \
+    include/ui/widgets/widgetactions.h \
     include/ui/windowsystem.h \
     include/ui/zonedebug.h \
     include/updater.h \
@@ -609,16 +609,12 @@ SOURCES += \
     src/ui/b_main.cpp \
     src/ui/b_util.cpp \
     src/ui/busyvisual.cpp \
-    src/ui/busywidget.cpp \
     src/ui/clientwindow.cpp \
     src/ui/commandaction.cpp \
     src/ui/dd_input.cpp \
     src/ui/fi_main.cpp \
     src/ui/finaleinterpreter.cpp \
-    src/ui/guirootwidget.cpp \
-    src/ui/guiwidget.cpp \
     src/ui/inputsystem.cpp \
-    src/ui/legacywidget.cpp \
     src/ui/mouse_qt.cpp \
     src/ui/nativeui.cpp \
     src/ui/p_control.cpp \
@@ -627,7 +623,11 @@ SOURCES += \
     src/ui/ui2_main.cpp \
     src/ui/ui_main.cpp \
     src/ui/ui_panel.cpp \
-    src/ui/widgetactions.cpp \
+    src/ui/widgets/busywidget.cpp \
+    src/ui/widgets/guirootwidget.cpp \
+    src/ui/widgets/guiwidget.cpp \
+    src/ui/widgets/legacywidget.cpp \
+    src/ui/widgets/widgetactions.cpp \
     src/ui/windowsystem.cpp \
     src/ui/zonedebug.cpp \
     src/updater/downloaddialog.cpp \

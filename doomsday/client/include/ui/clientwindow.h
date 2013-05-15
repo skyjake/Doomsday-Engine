@@ -22,7 +22,7 @@
 #define CLIENT_CLIENTWINDOW_H
 
 #include <de/PersistentCanvasWindow>
-#include "ui/guirootwidget.h"
+#include "ui/widgets/guirootwidget.h"
 #include "resource/image.h"
 
 /**

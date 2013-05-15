@@ -23,7 +23,7 @@
 #include "network/serverlink.h"
 #include "ui/inputsystem.h"
 #include "ui/windowsystem.h"
-#include "ui/widgetactions.h"
+#include "ui/widgets/widgetactions.h"
 
 /**
  * The client application.

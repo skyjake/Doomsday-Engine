@@ -17,7 +17,7 @@
  */
 
 #include "de_platform.h"
-#include "ui/legacywidget.h"
+#include "ui/widgets/legacywidget.h"
 #include "ui/dd_input.h"
 #include "ui/ui_main.h"
 #include "ui/ui2_main.h"
