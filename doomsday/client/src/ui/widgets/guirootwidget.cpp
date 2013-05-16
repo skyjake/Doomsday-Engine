@@ -17,14 +17,23 @@
  */
 
 #include "ui/widgets/guirootwidget.h"
+#include "ui/clientwindow.h"
+#include "clientapp.h"
+
+#include <de/AtlasTexture>
+#include <de/GLTexture>
 
 using namespace de;
 
 DENG2_PIMPL(GuiRootWidget)
 {
     ClientWindow *window;
+    QScopedPointer<AtlasTexture> atlas; ///< Shared atlas for most UI graphics/text.
 
-    Instance(Public *i, ClientWindow *win) : Base(i), window(win)
+    Instance(Public *i, ClientWindow *win)
+        : Base(i),
+          window(win),
+          atlas(0)
     {}
 };
 
@@ -41,4 +50,28 @@ ClientWindow &GuiRootWidget::window()
 {
     DENG2_ASSERT(d->window != 0);
     return *d->window;
+}
+
+AtlasTexture &GuiRootWidget::atlas()
+{
+    if(d->atlas.isNull())
+    {
+        d->atlas.reset(AtlasTexture::newWithRowAllocator(
+                           Atlas::BackingStore | Atlas::AllowDefragment,
+                           GLTexture::maximumSize()));
+    }
+    return *d->atlas;
+}
+
+GLShaderBank &GuiRootWidget::shaders()
+{
+    return ClientApp::glShaderBank();
+}
+
+void GuiRootWidget::update()
+{
+    // Allow GL operations.
+    window().canvas().makeCurrent();
+
+    RootWidget::update();
 }

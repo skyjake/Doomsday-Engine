@@ -51,6 +51,9 @@ public:
 
     void deleteLater();
 
+    // Events.
+    void update();
+
 private:
     DENG2_PRIVATE(d)
 };

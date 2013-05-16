@@ -20,6 +20,8 @@
 #define CLIENT_GUIROOTWIDGET_H
 
 #include <de/RootWidget>
+#include <de/AtlasTexture>
+#include <de/GLShaderBank>
 
 class ClientWindow;
 
@@ -43,6 +45,12 @@ public:
      * Returns the window in which the root widget resides.
      */
     ClientWindow &window();
+
+    de::AtlasTexture &atlas();
+    de::GLShaderBank &shaders();
+
+    // Events.
+    void update();
 
 private:
     DENG2_PRIVATE(d)

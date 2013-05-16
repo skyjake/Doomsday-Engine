@@ -26,9 +26,9 @@ using namespace de;
 DENG2_PIMPL(GuiWidget)
 {
     RuleRectangle rule;
+    bool needInit;
 
-    Instance(Public *i) : Base(i)
-    {}
+    Instance(Public *i) : Base(i), needInit(true) {}
 };
 
 GuiWidget::GuiWidget(String const &name) : Widget(name), d(new Instance(this))
@@ -62,4 +62,13 @@ static void deleteGuiWidget(void *ptr)
 void GuiWidget::deleteLater()
 {
     Garbage_TrashInstance(this, deleteGuiWidget);
+}
+
+void GuiWidget::update()
+{
+    if(d->needInit)
+    {
+        initialize();
+        d->needInit = false;
+    }
 }

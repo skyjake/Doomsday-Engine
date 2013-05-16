@@ -1,0 +1,60 @@
+# Doomsday's core set of shaders
+#
+# In each "shader" block, there can be:
+# - path:          path to both the .vsh and .fsh files (omit extension:
+#                  "shaders/test" => shaders/test.vsh, shaders/test.fsh)
+# - path.vertex:   path to the vertex shader file
+# - path.fragment: path to the fragment shader file
+# - vertex:        source of the vertex shader
+# - fragment:      source of the fragment shader
+
+group generic {
+    # Simple shader with untextured vertices. There is an additional constant
+    # color applied to all vertices. Uses a combined model-view-projection
+    # matrix.
+    shader color {
+        vertex = "
+            uniform highp mat4 uMvpMatrix;
+            uniform highp vec4 uColor;
+            attribute highp vec4 aVertex;
+            attribute highp vec4 aColor;
+            varying highp vec4 vColor;
+            
+            void main(void) {
+                gl_Position = uMvpMatrix * aVertex;
+                vColor = uColor * aColor;
+            }"
+        fragment = "
+            varying highp vec4 vColor;
+            
+            void main(void) {
+                gl_FragColor = vColor;
+            }"
+    }
+    
+    # Simple shader with one texture plus a color per vertex. Uses a
+    # combined model-view-projection matrix.
+    shader tex_color {
+        vertex = "
+            uniform highp mat4 uMvpMatrix;
+            attribute highp vec4 aVertex;
+            attribute highp vec2 aUV;
+            attribute highp vec4 aColor;
+            varying highp vec2 vUV;
+            varying highp vec4 vColor;
+            
+            void main(void) {
+                gl_Position = uMvpMatrix * aVertex;
+                vUV = aUV;
+                vColor = aColor;
+            }"
+        fragment = "
+            uniform sampler2D uTex;
+            varying highp vec2 vUV;
+            varying highp vec4 vColor;
+
+            void main(void) {
+                gl_FragColor = vColor * texture2D(uTex, vUV);
+            }"
+    }
+}

@@ -20,6 +20,7 @@
 #define CLIENTAPP_H
 
 #include <de/GuiApp>
+#include <de/GLShaderBank>
 #include "network/serverlink.h"
 #include "ui/inputsystem.h"
 #include "ui/windowsystem.h"
@@ -48,6 +49,7 @@ public:
     static InputSystem &inputSystem();
     static WindowSystem &windowSystem();
     static WidgetActions &widgetActions();
+    static de::GLShaderBank &glShaderBank();
 
 private:
     DENG2_PRIVATE(d)

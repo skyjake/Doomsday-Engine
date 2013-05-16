@@ -72,6 +72,7 @@ DENG2_PIMPL(ClientApp)
     std::auto_ptr<WidgetActions> widgetActions;
     WindowSystem *winSys;
     ServerLink *svLink;
+    GLShaderBank shaderBank;
 
     Instance(Public *i)
         : Base(i),
@@ -160,6 +161,15 @@ void ClientApp::initialize()
     }
 #endif
 
+    // Load all the shader program definitions.
+    FS::FoundFiles found;
+    fileSystem().findAll("shaders.dei", found);
+    DENG2_FOR_EACH(FS::FoundFiles, i, found)
+    {
+        LOG_MSG("Loading shader definitions from %s") << (*i)->description();
+        d->shaderBank.addFromInfo(**i);
+    }
+
     // Create the window system.
     d->winSys = new WindowSystem;
     addSystem(*d->winSys);
@@ -236,4 +246,9 @@ WindowSystem &ClientApp::windowSystem()
 WidgetActions &ClientApp::widgetActions()
 {
     return *app().d->widgetActions.get();
+}
+
+GLShaderBank &ClientApp::glShaderBank()
+{
+    return app().d->shaderBank;
 }
