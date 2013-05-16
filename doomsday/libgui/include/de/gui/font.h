@@ -53,7 +53,7 @@ public:
      *
      * @return
      */
-    Rectanglei measure(String const &textLine);
+    Rectanglei measure(String const &textLine) const;
 
     Rule const &height() const;
     Rule const &ascent() const;

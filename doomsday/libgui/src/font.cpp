@@ -76,7 +76,7 @@ QFont Font::toQFont() const
     return d->font;
 }
 
-Rectanglei Font::measure(String const &textLine)
+Rectanglei Font::measure(String const &textLine) const
 {
     return Rectanglei::fromQRect(d->metrics->boundingRect(textLine));
 }
