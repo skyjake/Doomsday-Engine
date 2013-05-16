@@ -410,6 +410,13 @@ void GLTexture::glBindToUnit(int unit) const
     }
 }
 
+GLTexture::Size GLTexture::maximumSize()
+{
+    int v = 0;
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &v); LIBGUI_ASSERT_GL_OK();
+    return Size(v, v);
+}
+
 void GLTexture::aboutToUse() const
 {
     // nothing to do
