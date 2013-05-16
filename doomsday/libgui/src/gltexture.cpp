@@ -141,8 +141,7 @@ DENG2_PIMPL(GLTexture)
     {
         DENG2_ASSERT(name != 0);
 
-        glBindTexture(texTarget, name);
-        LIBGUI_ASSERT_GL_OK();
+        glBindTexture(texTarget, name); LIBGUI_ASSERT_GL_OK();
     }
 
     void glUnbind() const
@@ -368,8 +367,7 @@ void GLTexture::generateMipmap()
     if(d->name)
     {
         d->glBind();
-        glGenerateMipmap(d->texTarget);
-        LIBGUI_ASSERT_GL_OK();
+        glGenerateMipmap(d->texTarget); LIBGUI_ASSERT_GL_OK();
         d->glUnbind();
 
         d->flags |= MipmapAvailable;

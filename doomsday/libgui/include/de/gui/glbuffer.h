@@ -59,6 +59,11 @@ namespace internal
     typedef std::pair<AttribSpec const *, duint> AttribSpecs;
 }
 
+#define DENG2_DECLARE_VERTEX_FORMAT(NumElems) \
+    public:  static internal::AttribSpecs formatSpec(); \
+    private: static internal::AttribSpec const _spec[NumElems]; \
+    public:
+
 /**
  * Vertex format with 2D coordinates and one set of texture coordinates.
  */
@@ -67,12 +72,19 @@ struct LIBGUI_PUBLIC Vertex2Tex
     Vector2f pos;
     Vector2f texCoord;
 
-    static internal::AttribSpecs formatSpec();
-
-private:
-    static internal::AttribSpec const _spec[2];
+    DENG2_DECLARE_VERTEX_FORMAT(2)
 };
 
+/**
+ * Vertex format with 2D coordinates and a color.
+ */
+struct LIBGUI_PUBLIC Vertex2Rgba
+{
+    Vector2f pos;
+    Vector4f rgba;
+
+    DENG2_DECLARE_VERTEX_FORMAT(2)
+};
 /**
  * Vertex format with 2D coordinates, one set of texture coordinates, and an
  * RGBA color.
@@ -83,10 +95,7 @@ struct LIBGUI_PUBLIC Vertex2TexRgba
     Vector2f texCoord;
     Vector4f rgba;
 
-    static internal::AttribSpecs formatSpec();
-
-private:
-    static internal::AttribSpec const _spec[3];
+    DENG2_DECLARE_VERTEX_FORMAT(3)
 };
 
 /**
@@ -99,10 +108,7 @@ struct LIBGUI_PUBLIC Vertex3TexRgba
     Vector2f texCoord;
     Vector4f rgba;
 
-    static internal::AttribSpecs formatSpec();
-
-private:
-    static internal::AttribSpec const _spec[3];
+    DENG2_DECLARE_VERTEX_FORMAT(3)
 };
 
 namespace gl

@@ -29,9 +29,17 @@ AttribSpec const Vertex2Tex::_spec[2] = {
     { AttribSpec::Position,  2, GL_FLOAT, false, sizeof(Vertex2Tex), 0 },
     { AttribSpec::TexCoord0, 2, GL_FLOAT, false, sizeof(Vertex2Tex), 2 * sizeof(float) }
 };
-
 AttribSpecs Vertex2Tex::formatSpec() {
     DENG2_ASSERT(sizeof(Vertex2Tex) == 4 * sizeof(float)); // sanity check
+    return AttribSpecs(_spec, sizeof(_spec)/sizeof(_spec[0]));
+}
+
+AttribSpec const Vertex2Rgba::_spec[2] = {
+    { AttribSpec::Position,  2, GL_FLOAT, false, sizeof(Vertex2Rgba), 0 },
+    { AttribSpec::Color,     4, GL_FLOAT, false, sizeof(Vertex2Rgba), 2 * sizeof(float) }
+};
+AttribSpecs Vertex2Rgba::formatSpec() {
+    DENG2_ASSERT(sizeof(Vertex2Rgba) == 6 * sizeof(float)); // sanity check
     return AttribSpecs(_spec, sizeof(_spec)/sizeof(_spec[0]));
 }
 
@@ -40,7 +48,6 @@ AttribSpec const Vertex2TexRgba::_spec[3] = {
     { AttribSpec::TexCoord0, 2, GL_FLOAT, false, sizeof(Vertex2TexRgba), 2 * sizeof(float) },
     { AttribSpec::Color,     4, GL_FLOAT, false, sizeof(Vertex2TexRgba), 4 * sizeof(float) }
 };
-
 AttribSpecs Vertex2TexRgba::formatSpec() {
     DENG2_ASSERT(sizeof(Vertex2TexRgba) == 8 * sizeof(float)); // sanity check
     return AttribSpecs(_spec, sizeof(_spec)/sizeof(_spec[0]));
@@ -51,7 +58,6 @@ AttribSpec const Vertex3TexRgba::_spec[3] = {
     { AttribSpec::TexCoord0, 2, GL_FLOAT, false, sizeof(Vertex3TexRgba), 3 * sizeof(float) },
     { AttribSpec::Color,     4, GL_FLOAT, false, sizeof(Vertex3TexRgba), 5 * sizeof(float) }
 };
-
 AttribSpecs Vertex3TexRgba::formatSpec() {
     DENG2_ASSERT(sizeof(Vertex3TexRgba) == 9 * sizeof(float)); // sanity check
     return AttribSpecs(_spec, sizeof(_spec)/sizeof(_spec[0]));
