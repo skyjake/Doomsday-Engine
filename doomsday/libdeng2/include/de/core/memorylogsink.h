@@ -22,6 +22,8 @@
 #include "../LogSink"
 #include "../Lockable"
 
+#include <QList>
+
 namespace de {
 
 /**
