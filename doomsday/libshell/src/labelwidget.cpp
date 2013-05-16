@@ -110,7 +110,7 @@ void LabelWidget::update()
 {
     if(d->wraps.isEmpty())
     {
-        d->updateWraps(de::floor(rule().width().value()));
+        d->updateWraps(rule().width().valuei());
     }
 }
 

@@ -154,7 +154,7 @@ int LogWidget::scrollPosition() const
 
 int LogWidget::scrollPageSize() const
 {
-    return de::max(1, de::floor(rule().height().value()) - 1);
+    return de::max(1, rule().height().valuei() - 1);
 }
 
 int LogWidget::maximumScroll() const

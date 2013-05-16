@@ -18,6 +18,7 @@
  */
 
 #include "de/Rule"
+#include "de/math.h"
 #include <set>
 
 namespace de {
@@ -68,6 +69,11 @@ float Rule::value() const
     DENG2_ASSERT(d->isValid);
 
     return d->value;
+}
+
+int Rule::valuei() const
+{
+    return de::floor(value());
 }
 
 void Rule::update()

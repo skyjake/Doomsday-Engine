@@ -20,6 +20,7 @@
 #include "de/shell/TextRootWidget"
 #include "de/shell/KeyEvent"
 #include "de/shell/Lexicon"
+#include "de/shell/MonospaceLineWrapping"
 #include <de/Rule>
 #include <de/RuleRectangle>
 #include <de/String>
@@ -32,7 +33,7 @@ namespace shell {
 DENG2_PIMPL(LineEditWidget)
 {
     bool signalOnEnter;
-    ConstantRule *height; ///< In rows.
+    ConstantRule *height; ///< As rows.
 
     Instance(Public &i)
         : Base(i),

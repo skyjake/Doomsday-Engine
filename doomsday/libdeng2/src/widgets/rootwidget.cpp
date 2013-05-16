@@ -43,8 +43,8 @@ DENG2_PIMPL_NOREF(RootWidget)
 
     Size viewSize() const
     {
-        return Size(de::max(0, de::floor(viewRect->right().value())),
-                    de::max(0, de::floor(viewRect->bottom().value())));
+        return Size(de::max(0, viewRect->right().valuei()),
+                    de::max(0, viewRect->bottom().valuei()));
     }
 };
 
