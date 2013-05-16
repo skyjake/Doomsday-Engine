@@ -32,7 +32,7 @@ class Lexicon;
  * Widget for word-wrapped text editing.
  *
  * The widget adjusts its height automatically to fit to the full contents of
- * the edited, wrapped line.
+ * the edited, wrapped lines.
  */
 class LIBSHELL_PUBLIC LineEditWidget : public TextWidget, public AbstractLineEditor
 {

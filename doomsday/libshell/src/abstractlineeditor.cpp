@@ -397,7 +397,7 @@ Vector2i AbstractLineEditor::lineCursorPos() const
     return d->lineCursorPos();
 }
 
-bool shell::AbstractLineEditor::isSuggestingCompletion() const
+bool AbstractLineEditor::isSuggestingCompletion() const
 {
     return d->suggestingCompletion();
 }

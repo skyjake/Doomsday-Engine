@@ -25,9 +25,6 @@
 #include <de/Vector>
 
 namespace de {
-
-class Rule;
-
 namespace shell {
 
 class Lexicon;
