@@ -66,6 +66,51 @@ DENG_EXTERN_C void R_SetupFogDefaults()
     Con_Execute(CMDS_DDAY,"fog off", true, false);
 }
 
+void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeIndex,
+    coord_t *fz, coord_t *bz, coord_t *bhz)
+{
+    if(fz)
+    {
+        if(front)
+        {
+            *fz = front->plane(planeIndex).visHeight();
+            if(planeIndex != Plane::Floor)
+                *fz = -(*fz);
+        }
+        else
+        {
+            *fz = 0;
+        }
+    }
+    if(bz)
+    {
+        if(back)
+        {
+            *bz = back->plane(planeIndex).visHeight();
+            if(planeIndex != Plane::Floor)
+                *bz = -(*bz);
+        }
+        else
+        {
+            *bz = 0;
+        }
+    }
+    if(bhz)
+    {
+        if(back)
+        {
+            int otherPlaneIndex = planeIndex == Plane::Floor? Plane::Ceiling : Plane::Floor;
+            *bhz = back->plane(otherPlaneIndex).visHeight();
+            if(planeIndex != Plane::Floor)
+                *bhz = -(*bhz);
+        }
+        else
+        {
+            *bhz = 0;
+        }
+    }
+}
+
 void R_SideSectionCoords(Line::Side const &side, int section,
     coord_t *retBottom, coord_t *retTop, Vector2f *retMaterialOrigin)
 {

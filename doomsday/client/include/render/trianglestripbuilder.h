@@ -108,13 +108,25 @@ public:
     void begin(ClockDirection direction, int reserveElements = 0);
 
     /**
-     * Submit an edge geometry to be added to the current triangle strip geometry.
+     * Submit an edge geometry to extend the current triangle strip geometry.
      *
-     * @param edge  Edge geometry to add.
+     * @param edge  Edge geometry to extend with.
+     */
+    void extend(IEdge &edge);
+
+    /**
+     * Submit an edge geometry to extend the current triangle strip geometry.
+     *
+     * @param edge  Edge geometry to extend with.
      *
      * @return  Reference to this trangle strip builder.
+     *
+     * @see extend()
      */
-    TriangleStripBuilder &operator << (IEdge &edge);
+    inline TriangleStripBuilder &operator << (IEdge &edge) {
+        extend(edge);
+        return *this;
+    }
 
     /**
      * Returns the total number of vertex elements in the current strip geometry.

@@ -1899,6 +1899,12 @@ static coord_t skyFixCeilZ(Plane const *frontCeil, Plane const *backCeil)
 class SkyFixEdge : public IEdge
 {
 public:
+    enum FixType
+    {
+        Lower,
+        Upper
+    };
+
     class Intercept : public IEdge::IIntercept
     {
     public:
@@ -1929,11 +1935,11 @@ public:
 
 public:
     /**
-     * @param hedge  HEdge from which to determine sky fix coordinates.
-     * @param skyCap  Either SKYCAP_LOWER or SKYCAP_UPPER (SKYCAP_UPPER has precendence).
+     * @param hedge    HEdge from which to determine sky fix coordinates.
+     * @param fixType  Fix type.
      */
-    SkyFixEdge(HEdge &hedge, int skyCap, int edge, float materialOffsetS = 0)
-        : _hedge(&hedge), _skyCap(skyCap), _edge(edge),
+    SkyFixEdge(HEdge &hedge, FixType fixType, int edge, float materialOffsetS = 0)
+        : _hedge(&hedge), _fixType(fixType), _edge(edge),
           _bottom(*this), _top(*this), _materialOrigin(materialOffsetS, 0),
           _isValid(false)
     {}
@@ -1950,7 +1956,7 @@ public:
         _bottom.setDistance(0);
         _top.setDistance(0);
 
-        if(_skyCap & SKYCAP_UPPER)
+        if(_fixType == Upper)
         {
             _top.setDistance(skyFixCeilZ(fceil, bceil));
             _bottom.setDistance(de::max((backSec && bceil->surface().hasSkyMaskedMaterial() )? bceil->visHeight()  : fceil->visHeight(),  ffloor->visHeight()));
@@ -1982,7 +1988,7 @@ public:
     }
 
     inline Intercept const &bottom() const { return from(); }
-    inline Intercept const &top() const { return top(); }
+    inline Intercept const &top() const { return to(); }
 
     Vector2f const &materialOrigin() const
     {
@@ -1991,7 +1997,7 @@ public:
 
 private:
     HEdge *_hedge;
-    int _skyCap;
+    FixType _fixType;
     int _edge;
 
     Intercept _bottom;
@@ -2001,123 +2007,60 @@ private:
 };
 
 /**
- * @param hedge  HEdge from which to determine sky fix coordinates.
- * @param skyCap  Either SKYCAP_LOWER or SKYCAP_UPPER (SKYCAP_UPPER has precendence).
- * @param bottom  Z map space coordinate for the bottom of the skyfix written here.
- * @param top  Z map space coordinate for the top of the skyfix written here.
+ * Determines whether a sky fix is necessary for the specified wall section half-edge.
+ *
+ * @param hedge    HEdge to be evaluated.
+ * @param fixType  Sky fix type we are interested in.
  */
-static void skyFixZCoords(HEdge *hedge, int skyCap, coord_t *bottom, coord_t *top)
+static bool wallSectionNeedsSkyFix(HEdge &hedge, SkyFixEdge::FixType fixType)
 {
-    Sector const *frontSec = hedge->bspLeaf().sectorPtr();
-    Sector const *backSec  = hedge->twin().hasBspLeaf() && !hedge->twin().bspLeaf().hasDegenerateFace()? hedge->twin().bspLeaf().sectorPtr() : 0;
-    Plane const *ffloor = &frontSec->floor();
-    Plane const *fceil  = &frontSec->ceiling();
-    Plane const *bceil  = backSec? &backSec->ceiling() : 0;
-    Plane const *bfloor = backSec? &backSec->floor()   : 0;
+    DENG_ASSERT(hedge.hasBspLeaf());
 
-    if(!bottom && !top) return;
-    if(bottom) *bottom = 0;
-    if(top)    *top    = 0;
+    bool const lower = fixType == SkyFixEdge::Lower;
 
-    if(skyCap & SKYCAP_UPPER)
+    // Partition line segments have no map line sides.
+    if(!hedge.hasLineSide()) return false;
+
+    Sector const *frontSec = hedge.bspLeaf().sectorPtr();
+    Sector const *backSec  = hedge.twin().hasBspLeaf() && !hedge.twin().bspLeaf().hasDegenerateFace()? hedge.twin().bspLeaf().sectorPtr() : 0;
+
+    if(!(!backSec || backSec != frontSec)) return false;
+
+    // Select the relative planes for the fix type.
+    Plane::Type relPlane = lower? Plane::Floor : Plane::Ceiling;
+    Plane const *front   = &frontSec->plane(relPlane);
+    Plane const *back    = backSec? &backSec->plane(relPlane) : 0;
+
+    if(!front->surface().hasSkyMaskedMaterial())
+        return false;
+
+    bool const hasClosedBack = R_SideBackClosed(hedge.lineSide());
+
+    if(!devRendSkyMode)
     {
-        if(top)    *top    = skyFixCeilZ(fceil, bceil);
-        if(bottom) *bottom = de::max((backSec && bceil->surface().hasSkyMaskedMaterial() )? bceil->visHeight()  : fceil->visHeight(),  ffloor->visHeight());
+        if(!P_IsInVoid(viewPlayer) &&
+           !(hasClosedBack || !(back && back->surface().hasSkyMaskedMaterial())))
+            return false;
     }
     else
     {
-        if(top)    *top    = de::min((backSec && bfloor->surface().hasSkyMaskedMaterial())? bfloor->visHeight() : ffloor->visHeight(), fceil->visHeight());
-        if(bottom) *bottom = skyFixFloorZ(ffloor, bfloor);
+        int relSection = lower? Line::Side::Bottom : Line::Side::Top;
+
+        if(hedge.lineSide().surface(relSection).hasMaterial() ||
+           !(hasClosedBack || (back && back->surface().hasSkyMaskedMaterial())))
+            return false;
     }
-}
 
-/**
- * Determine which sky fixes are necessary for the specified @a hedge.
- * @param hedge  HEdge to be evaluated.
- * @param skyCap  The fixes we are interested in. @ref skyCapFlags.
- * @return
- */
-static int chooseHEdgeSkyFixes(HEdge *hedge, int skyCap)
-{
-    if(!hedge || !hedge->hasBspLeaf())
-        return 0; // Wha?
+    coord_t fz, bz;
+    R_SetRelativeHeights(frontSec, backSec, relPlane, &fz, &bz);
 
-    // "minisegs" have no lines
-    if(!hedge->hasLineSide()) return 0;
+    coord_t planeZ = (back && back->surface().hasSkyMaskedMaterial() &&
+                      fz < bz? bz : fz);
 
-    int fixes = 0;
-    Sector const *frontSec = hedge->bspLeaf().sectorPtr();
-    Sector const *backSec  = hedge->twin().hasBspLeaf() && !hedge->twin().bspLeaf().hasDegenerateFace()? hedge->twin().bspLeaf().sectorPtr() : 0;
+    coord_t skyZ = lower? skyFixFloorZ(front, back)
+                        : -skyFixCeilZ(front, back);
 
-    if(!backSec || backSec != frontSec)
-    {
-        bool const hasSkyFloor   = frontSec->floorSurface().hasSkyMaskedMaterial();
-        bool const hasSkyCeiling = frontSec->ceilingSurface().hasSkyMaskedMaterial();
-
-        if(hasSkyFloor || hasSkyCeiling)
-        {
-            bool const hasClosedBack = R_SideBackClosed(hedge->lineSide());
-
-            // Lower fix?
-            if(hasSkyFloor && (skyCap & SKYCAP_LOWER))
-            {
-                Plane const *ffloor = &frontSec->floor();
-                Plane const *bfloor = backSec? &backSec->floor() : 0;
-                coord_t const skyZ = skyFixFloorZ(ffloor, bfloor);
-
-                if(!devRendSkyMode)
-                {
-                    if(P_IsInVoid(viewPlayer) ||
-                       (hasClosedBack || !(bfloor && bfloor->surface().hasSkyMaskedMaterial())))
-                    {
-                        Plane const *floor = (bfloor && bfloor->surface().hasSkyMaskedMaterial() && ffloor->visHeight() < bfloor->visHeight()? bfloor : ffloor);
-                        if(floor->visHeight() > skyZ)
-                            fixes |= SKYCAP_LOWER;
-                    }
-                }
-                else
-                {
-                    if(!hedge->lineSide().bottom().hasMaterial() &&
-                       (hasClosedBack || (bfloor && bfloor->surface().hasSkyMaskedMaterial())))
-                    {
-                        Plane const *floor = (bfloor && bfloor->surface().hasSkyMaskedMaterial() && ffloor->visHeight() < bfloor->visHeight()? bfloor : ffloor);
-                        if(floor->visHeight() > skyZ)
-                            fixes |= SKYCAP_LOWER;
-                    }
-                }
-            }
-
-            // Upper fix?
-            if(hasSkyCeiling && (skyCap & SKYCAP_UPPER))
-            {
-                Plane const *fceil = &frontSec->ceiling();
-                Plane const *bceil = backSec? &backSec->ceiling() : 0;
-                coord_t const skyZ = skyFixCeilZ(fceil, bceil);
-
-                if(!devRendSkyMode)
-                {
-                    if(P_IsInVoid(viewPlayer) ||
-                       (hasClosedBack || !(bceil && bceil->surface().hasSkyMaskedMaterial())))
-                    {
-                        Plane const *ceil = (bceil && bceil->surface().hasSkyMaskedMaterial() && fceil->visHeight() > bceil->visHeight()? bceil : fceil);
-                        if(ceil->visHeight() < skyZ)
-                            fixes |= SKYCAP_UPPER;
-                    }
-                }
-                else
-                {
-                    if(!hedge->lineSide().top().hasMaterial() &&
-                       (hasClosedBack || (bceil && bceil->surface().hasSkyMaskedMaterial())))
-                    {
-                        Plane const *ceil = (bceil && bceil->surface().hasSkyMaskedMaterial() && fceil->visHeight() > bceil->visHeight()? bceil : fceil);
-                        if(ceil->visHeight() < skyZ)
-                            fixes |= SKYCAP_UPPER;
-                    }
-                }
-            }
-        }
-    }
-    return fixes;
+    return (planeZ > skyZ);
 }
 
 /**
@@ -2160,19 +2103,15 @@ static int countHEdgeLoopEdges(HEdge const &startNode, HEdge const &endNode,
     return num;
 }
 
-static void buildSkyFixStrip(TriangleStripBuilder &stripBuilder, HEdge &startNode,
-    HEdge &endNode, ClockDirection direction, int skyFix)
+typedef QList<IEdge *> EdgeList;
+
+static void collateSkyFixEdges(EdgeList &edges, HEdge &startNode, HEdge &endNode,
+    ClockDirection direction, SkyFixEdge::FixType fixType)
 {
-    /*
-     * Begin a new strip.
-     */
-    int numElementsToReserve = countHEdgeLoopEdges(startNode, endNode, direction);
+#ifdef DENG2_QT_4_7_OR_NEWER
+    edges.reserve(edges.size() + countHEdgeLoopEdges(startNode, endNode, direction));
+#endif
 
-    stripBuilder.begin(direction, numElementsToReserve);
-
-    /*
-     * Add edges to the strip.
-     */
     HEdge *hedgeIt = &startNode;
     float materialOffsetS = float( hedgeIt->hasLineSide()? hedgeIt->lineOffset() : 0 );
 
@@ -2183,14 +2122,18 @@ static void buildSkyFixStrip(TriangleStripBuilder &stripBuilder, HEdge &startNod
         if(&hedge == &startNode)
         {
             // Add the first edge.
-            SkyFixEdge skyEdge(hedge, skyFix, direction == Anticlockwise? Line::To : Line::From,
-                               materialOffsetS);
+            SkyFixEdge *skyEdge = new SkyFixEdge(hedge, fixType, direction == Anticlockwise? Line::To : Line::From,
+                                                 materialOffsetS);
 
-            skyEdge.prepare();
+            skyEdge->prepare();
 
-            if(skyEdge.isValid() && skyEdge.top().distance() > skyEdge.bottom().distance())
+            if(skyEdge->isValid() && skyEdge->top().distance() > skyEdge->bottom().distance())
             {
-                stripBuilder << skyEdge;
+                edges << skyEdge;
+            }
+            else
+            {
+                delete skyEdge;
             }
 
             materialOffsetS += direction == Anticlockwise? -hedgeIt->prev().length() : hedge.length();
@@ -2198,14 +2141,14 @@ static void buildSkyFixStrip(TriangleStripBuilder &stripBuilder, HEdge &startNod
 
         {
             // Add the i'th edge.
-            SkyFixEdge skyEdge(hedge, skyFix, direction == Anticlockwise? Line::From : Line::To,
-                               materialOffsetS);
+            SkyFixEdge *skyEdge = new SkyFixEdge(hedge, fixType, direction == Anticlockwise? Line::From : Line::To,
+                                                 materialOffsetS);
 
-            skyEdge.prepare();
+            skyEdge->prepare();
 
-            if(skyEdge.isValid() && skyEdge.top().distance() > skyEdge.bottom().distance())
+            if(skyEdge->isValid() && skyEdge->top().distance() > skyEdge->bottom().distance())
             {
-                stripBuilder << skyEdge;
+                edges << skyEdge;
             }
 
             materialOffsetS += direction == Anticlockwise? -hedge.length() : hedge.next().length();
@@ -2244,20 +2187,20 @@ static void writeSkyFixStrip(int numElements, rvertex_t const *positions,
 }
 
 /// @param skyFix  @ref skyCapFlags.
-static void writeLeafSkyMaskStrips(int skyFix)
+static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
 {
     BspLeaf *bspLeaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(bspLeaf));
 
-    if(!(skyFix & (SKYCAP_LOWER|SKYCAP_UPPER)))
-        return;
-
-    TriangleStripBuilder stripBuilder(CPP_BOOL(devRendSkyMode));
-
-    ClockDirection direction = Clockwise;
+    // Determine strip generation behavior.
+    ClockDirection direction        = Clockwise;
+    bool const buildTexCoords       = CPP_BOOL(devRendSkyMode);
     bool const splitForSkyMaterials = (devRendSkyMode && renderTextures != 2);
 
-    // We may need to break the half-edge loop into multiple strips.
+    // Configure the strip builder wrt vertex attributes.
+    TriangleStripBuilder stripBuilder(buildTexCoords);
+
+    // We may need to break the loop of edges into multiple strips.
     HEdge *startNode        = 0;
     coord_t startZBottom    = 0;
     coord_t startZTop       = 0;
@@ -2267,29 +2210,32 @@ static void writeLeafSkyMaskStrips(int skyFix)
     HEdge *node = base;
     forever
     {
-        HEdge *hedge = (direction == Anticlockwise? &node->prev() : node);
+        HEdge &hedge = (direction == Anticlockwise? node->prev() : *node);
         bool endStrip = false, beginNewStrip = false;
 
-        // Is a fix or two necessary for this edge?
-        if(chooseHEdgeSkyFixes(hedge, skyFix))
+        if(wallSectionNeedsSkyFix(hedge, fixType))
         {
-            coord_t zBottom, zTop;
-            skyFixZCoords(hedge, skyFix, &zBottom, &zTop);
+            int edge = (direction == Anticlockwise) ^ (startNode != 0)? 1 : 0;
+            SkyFixEdge skyEdge(hedge, fixType, edge? Line::To : Line::From);
+
+            skyEdge.prepare();
 
             Material *skyMaterial = 0;
             if(splitForSkyMaterials)
             {
-                int relPlane = skyFix == SKYCAP_UPPER? Plane::Ceiling : Plane::Floor;
-                skyMaterial = hedge->bspLeaf().sector().planeSurface(relPlane).materialPtr();
+                int relPlane = fixType == SkyFixEdge::Upper? Plane::Ceiling : Plane::Floor;
+                skyMaterial = hedge.bspLeaf().sector().planeSurface(relPlane).materialPtr();
             }
 
-            if(zBottom >= zTop)
+            if(!skyEdge.isValid() || skyEdge.top().distance() == skyEdge.bottom().distance())
             {
                 // End the current strip.
                 endStrip = true;
             }
-            else if(startNode && (!de::fequal(zBottom, startZBottom) || !de::fequal(zTop, startZTop) ||
-                                  (splitForSkyMaterials && skyMaterial != startMaterial)))
+            else if(startNode &&
+                    (!de::fequal(skyEdge.bottom().distance(), startZBottom) ||
+                     !de::fequal(skyEdge.top().distance(), startZTop) ||
+                     (splitForSkyMaterials && skyMaterial != startMaterial)))
             {
                 // End the current strip and start another.
                 endStrip = true;
@@ -2298,9 +2244,9 @@ static void writeLeafSkyMaskStrips(int skyFix)
             else if(!startNode)
             {
                 // A new strip begins.
-                startNode = node;
-                startZBottom = zBottom;
-                startZTop = zTop;
+                startNode     = node;
+                startZBottom  = skyEdge.bottom().distance();
+                startZTop     = skyEdge.top().distance();
                 startMaterial = skyMaterial;
             }
         }
@@ -2312,8 +2258,13 @@ static void writeLeafSkyMaskStrips(int skyFix)
 
         if(endStrip && startNode)
         {
-            // We have found a strip; build and write it.
-            buildSkyFixStrip(stripBuilder, *startNode, *node, direction, skyFix);
+            // We have found a strip.
+            EdgeList edges;
+            collateSkyFixEdges(edges, *startNode, *node, direction, fixType);
+
+            // Build the strip.
+            stripBuilder.begin(direction, edges.size() * 2);
+            foreach(IEdge *edge, edges) stripBuilder << *edge;
 
             // Take ownership of the built geometry.
             PositionBuffer *positions = 0;
@@ -2323,11 +2274,14 @@ static void writeLeafSkyMaskStrips(int skyFix)
             // Write the strip geometry to the render lists.
             writeSkyFixStrip(numVerts, positions->constData(), texcoords? texcoords->constData() : 0, startMaterial);
 
-            delete positions;
-            delete texcoords;
-
             // End the current strip.
             startNode = 0;
+
+            // Cleanup.
+            qDeleteAll(edges);
+
+            delete positions;
+            delete texcoords;
         }
 
         // Start a new strip from this node?
@@ -2343,7 +2297,12 @@ static void writeLeafSkyMaskStrips(int skyFix)
     // Have we an unwritten strip? - build and write it.
     if(startNode)
     {
-        buildSkyFixStrip(stripBuilder, *startNode, *base, direction, skyFix);
+        EdgeList edges;
+        collateSkyFixEdges(edges, *startNode, *base, direction, fixType);
+
+        // Build the strip.
+        stripBuilder.begin(direction, edges.size() * 2);
+        foreach(IEdge *edge, edges) stripBuilder << *edge;
 
         // Take ownership of the built geometry.
         PositionBuffer *positions = 0;
@@ -2352,6 +2311,9 @@ static void writeLeafSkyMaskStrips(int skyFix)
 
         // Write the strip geometry to the render lists.
         writeSkyFixStrip(numVerts, positions->constData(), texcoords? texcoords->constData() : 0, startMaterial);
+
+        // Cleanup.
+        qDeleteAll(edges);
 
         delete positions;
         delete texcoords;
@@ -2413,14 +2375,14 @@ static void writeLeafSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
     // Lower?
     if(skyCap & SKYCAP_LOWER)
     {
-        writeLeafSkyMaskStrips(SKYCAP_LOWER);
+        writeLeafSkyMaskStrips(SkyFixEdge::Lower);
         writeLeafSkyMaskCap(SKYCAP_LOWER);
     }
 
     // Upper?
     if(skyCap & SKYCAP_UPPER)
     {
-        writeLeafSkyMaskStrips(SKYCAP_UPPER);
+        writeLeafSkyMaskStrips(SkyFixEdge::Upper);
         writeLeafSkyMaskCap(SKYCAP_UPPER);
     }
 }

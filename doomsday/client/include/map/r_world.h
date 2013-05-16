@@ -35,6 +35,9 @@ DENG2_EXTERN_AUDIENCE(MapChange)
 
 extern boolean ddMapSetup;
 
+void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeIndex,
+    coord_t *fz = 0, coord_t *bz = 0, coord_t *bhz = 0);
+
 /**
  * Determine the map space Z coordinates of a wall section.
  *

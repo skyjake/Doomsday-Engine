@@ -77,30 +77,28 @@ void TriangleStripBuilder::begin(ClockDirection direction, int reserveElements)
     d->texcoords.reset();
 }
 
-TriangleStripBuilder &TriangleStripBuilder::operator << (IEdge &edge)
+void TriangleStripBuilder::extend(IEdge &edge)
 {
     // Silently ignore invalid edges.
-    if(!edge.isValid()) return *this;
+    if(!edge.isValid()) return;
 
-    IEdge::IIntercept const &bottom = edge.from();
-    IEdge::IIntercept const &top    = edge.to();
+    IEdge::IIntercept const &from = edge.from();
+    IEdge::IIntercept const &to   = edge.to();
 
     d->reserveElements(2);
 
-    d->positions->append(rvertex_t((d->direction == Anticlockwise? top : bottom).origin()));
-    d->positions->append(rvertex_t((d->direction == Anticlockwise? bottom : top).origin()));
+    d->positions->append(rvertex_t((d->direction == Anticlockwise? to : from).origin()));
+    d->positions->append(rvertex_t((d->direction == Anticlockwise? from : to).origin()));
 
     if(d->buildTexCoords)
     {
-        coord_t edgeLength = top.distance() - bottom.distance();
+        coord_t edgeLength = to.distance() - from.distance();
 
         d->texcoords->append(rtexcoord_s(edge.materialOrigin() +
                                          Vector2f(0, (d->direction == Anticlockwise? 0 : edgeLength))));
         d->texcoords->append(rtexcoord_s(edge.materialOrigin() +
                                          Vector2f(0, (d->direction == Anticlockwise? edgeLength : 0))));
     }
-
-    return *this;
 }
 
 int TriangleStripBuilder::numElements() const

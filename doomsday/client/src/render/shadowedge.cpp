@@ -53,30 +53,6 @@ ShadowEdge::ShadowEdge(HEdge &leftMostHEdge, int edge)
     : d(new Instance(leftMostHEdge, edge))
 {}
 
-static void setRelativeHeights(Sector const *front, Sector const *back, int planeIndex,
-    coord_t *fz, coord_t *bz, coord_t *bhz)
-{
-    if(fz)
-    {
-        *fz = front->plane(planeIndex).visHeight();
-        if(planeIndex != Plane::Floor)
-            *fz = -(*fz);
-    }
-    if(bz)
-    {
-        *bz = back->plane(planeIndex).visHeight();
-        if(planeIndex != Plane::Floor)
-            *bz = -(*bz);
-    }
-    if(bhz)
-    {
-        int otherPlaneIndex = planeIndex == Plane::Floor? Plane::Ceiling : Plane::Floor;
-        *bhz = back->plane(otherPlaneIndex).visHeight();
-        if(planeIndex != Plane::Floor)
-            *bhz = -(*bhz);
-    }
-}
-
 /**
  * Returns a value in the range of 0..2, representing how 'open' the edge is.
  *
@@ -161,7 +137,7 @@ void ShadowEdge::prepare(int planeIndex)
         Sector const *backSec  = d->leftMostHEdge->twin().bspLeaf().sectorPtr();
 
         coord_t fz = 0, bz = 0, bhz = 0;
-        setRelativeHeights(frontSec, backSec, planeIndex, &fz, &bz, &bhz);
+        R_SetRelativeHeights(frontSec, backSec, planeIndex, &fz, &bz, &bhz);
 
         if(fz < bz && !wallEdgeSurface.hasMaterial())
         {
@@ -229,7 +205,7 @@ void ShadowEdge::prepare(int planeIndex)
                 Sector const *frontSec = d->leftMostHEdge->bspLeaf().sectorPtr();
 
                 coord_t fz = 0, bz = 0, bhz = 0;
-                setRelativeHeights(frontSec, backSec, planeIndex, &fz, &bz, &bhz);
+                R_SetRelativeHeights(frontSec, backSec, planeIndex, &fz, &bz, &bhz);
 
                 d->openness = opennessFactor(fz, bz, bhz);
             }
