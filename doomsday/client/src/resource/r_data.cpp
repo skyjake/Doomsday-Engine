@@ -433,7 +433,7 @@ static CompositeTextures readCompositeTextureDefs(IByteArray &data,
     CompositeTexture::ArchiveFormat format =
             (gameDataFormat == 0? CompositeTexture::DoomFormat : CompositeTexture::StrifeFormat);
 
-    de::Reader reader = de::Reader(data);
+    de::Reader reader(data);
 
     // First is a count of the total number of definitions.
     dint32 definitionCount;
@@ -476,7 +476,7 @@ static CompositeTextures readCompositeTextureDefs(IByteArray &data,
             if(it->lumpNum() >= 0)
             {
                 // Its valid - include in the result.
-                result.push_back(def);
+                result.append(def);
                 def = 0;
                 break;
             }
@@ -560,72 +560,78 @@ static CompositeTextures loadCompositeTextureDefs()
             << NativePath(file.composeUri().asText()).pretty();
     }
 
-    if(customDefs.count())
+    if(!customDefs.isEmpty())
     {
         // Custom definitions were found - we must cross compare them.
+
+        // Map the definitions for O(log n) lookup performance,
+        CompositeTextureMap mappedCustomDefs;
+        foreach(CompositeTexture *custom, customDefs)
+        {
+            mappedCustomDefs.insert(custom->percentEncodedNameRef(), custom);
+        }
+
+        // Perform reclassification of replaced texture definitions.
         for(int i = 0; i < defs.count(); ++i)
         {
             CompositeTexture *orig = defs[i];
-            bool hasReplacement = false;
 
-            for(int k = 0; k < customDefs.count(); ++k)
+            // Does a potential replacement exist for this original definition?
+            CompositeTextureMap::const_iterator found = mappedCustomDefs.constFind(orig->percentEncodedNameRef());
+            if(found == mappedCustomDefs.constEnd())
+                continue;
+
+            // Definition 'custom' is destined to replace 'orig'.
+            CompositeTexture *custom = found.value();
+            bool haveReplacement = false;
+
+            if(custom->isFlagged(CompositeTexture::Custom))
             {
-                CompositeTexture *custom = customDefs[k];
-
-                if(!orig->percentEncodedName().compareWithoutCase(custom->percentEncodedName()))
+                haveReplacement = true; // Uses a custom patch.
+            }
+            else
+            {
+                // Do the definitions differ?
+                if(custom->dimensions()        != orig->dimensions()  ||
+                   custom->logicalDimensions() != orig->logicalDimensions() ||
+                   custom->componentCount()    != orig->componentCount())
                 {
-                    // Definition 'custom' is destined to replace 'orig'.
-                    if(custom->isFlagged(CompositeTexture::Custom))
+                    haveReplacement = true;
+                }
+                else
+                {
+                    // Check the patches.
+                    for(int k = 0; k < orig->componentCount(); ++k)
                     {
-                        hasReplacement = true; // Uses a custom patch.
-                    }
-                    // Do the definitions differ?
-                    else if(custom->dimensions()        != orig->dimensions()  ||
-                            custom->logicalDimensions() != orig->logicalDimensions() ||
-                            custom->componentCount()    != orig->componentCount())
-                    {
-                        custom->setFlags(CompositeTexture::Custom);
-                        hasReplacement = true;
-                    }
-                    else
-                    {
-                        // Check the patches.
-                        int m = 0;
-                        while(m < orig->componentCount() && !custom->isFlagged(CompositeTexture::Custom))
-                        {
-                            CompositeTexture::Component const &origP   = orig->components()[m];
-                            CompositeTexture::Component const &customP = custom->components()[m];
+                        CompositeTexture::Component const &origP   = orig->components()[k];
+                        CompositeTexture::Component const &customP = custom->components()[k];
 
-                            if(origP.lumpNum() != customP.lumpNum() &&
-                               origP.xOrigin() != customP.xOrigin() &&
-                               origP.yOrigin() != customP.yOrigin())
-                            {
-                                custom->setFlags(CompositeTexture::Custom);
-                                hasReplacement = true;
-                            }
-                            else
-                            {
-                                ++m;
-                            }
+                        if(origP.lumpNum() != customP.lumpNum() &&
+                           origP.xOrigin() != customP.xOrigin() &&
+                           origP.yOrigin() != customP.yOrigin())
+                        {
+                            haveReplacement = true;
+                            break;
                         }
                     }
-                    break;
                 }
             }
 
-            if(hasReplacement)
+            if(haveReplacement)
             {
+                custom->setFlags(CompositeTexture::Custom);
+
                 // Let the PWAD "copy" override the IWAD original.
                 defs.takeAt(i);
                 delete orig;
 
-                --i; // Process the current item again.
+                --i; // Process the new next definition item.
             }
         }
 
         /*
-         * List now contains only those definitions which are not superceeded
-         * by those in the custom list.
+         * List 'defs' now contains only those definitions which are not superceeded
+         * by those in the 'customDefs' list.
          */
 
         // Add definitions from the custom list to the end of the main set.
