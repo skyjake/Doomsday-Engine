@@ -56,7 +56,7 @@ public:
 
     /**
      * Returns the maximum scroll position. The scrollMaxChanged() signal
-     * is emitted whenever the maximum changed.
+     * is emitted whenever the maximum changes.
      */
     int maximumScroll() const;
 

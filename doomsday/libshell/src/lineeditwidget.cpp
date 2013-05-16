@@ -20,6 +20,7 @@
 #include "de/shell/TextRootWidget"
 #include "de/shell/KeyEvent"
 #include "de/shell/Lexicon"
+#include <de/Rule>
 #include <de/RuleRectangle>
 #include <de/String>
 #include <de/Log>
@@ -30,341 +31,48 @@ namespace shell {
 
 DENG2_PIMPL(LineEditWidget)
 {
-    ConstantRule *height;
     bool signalOnEnter;
-    String prompt;
-    String text;
-    int cursor; ///< Index in range [0...text.size()]
-    Lexicon lexicon;
-    EchoMode echoMode;
-    struct Completion
-    {
-        int pos;
-        int size;
-        int ordinal; ///< Ordinal within list of possible completions.
-
-        void reset() {
-            pos = size = ordinal = 0;
-        }
-        Range range() const {
-            return Range(pos, pos + size);
-        }
-    };
-    Completion completion;
-    QList<String> suggestions;
-
-    // Word wrapping.
-    LineWrapping wraps;
+    ConstantRule *height; ///< In rows.
 
     Instance(Public &i)
         : Base(i),
-          signalOnEnter(true),
-          cursor(0),
-          echoMode(NormalEchoMode)
+          signalOnEnter(true)
     {
         // Initial height of the command line (1 row).
         height = new ConstantRule(1);
-
-        wraps.append(WrappedLine(Range(), true));
-
-        completion.reset();
     }
 
     ~Instance()
     {
         releaseRef(height);
     }
-
-    /**
-     * Determines where word wrapping needs to occur and updates the height of
-     * the widget to accommodate all the needed lines.
-     */
-    void updateWrapsAndHeight()
-    {
-        wraps.wrapTextToWidth(text, de::max(1, int(self.rule().recti().width()) - int(prompt.size()) - 1));
-        height->set(wraps.height());
-    }
-
-    WrappedLine lineSpan(int line) const
-    {
-        DENG2_ASSERT(line < wraps.size());
-        return wraps[line];
-    }
-
-    /**
-     * Calculates the visual position of the cursor (of the current command),
-     * including the line that it is on.
-     */
-    de::Vector2i lineCursorPos() const
-    {
-        de::Vector2i pos(cursor);
-        for(pos.y = 0; pos.y < wraps.size(); ++pos.y)
-        {
-            WrappedLine span = lineSpan(pos.y);
-            if(!span.isFinal) span.range.end--;
-            if(cursor >= span.range.start && cursor <= span.range.end)
-            {
-                // Stop here. Cursor is on this line.
-                break;
-            }
-            pos.x -= span.range.end - span.range.start + 1;
-        }
-        return pos;
-    }
-
-    /**
-     * Attemps to move the cursor up or down by a line.
-     *
-     * @return @c true, if cursor was moved. @c false, if there were no more
-     * lines available in that direction.
-     */
-    bool moveCursorByLine(int lineOff)
-    {
-        acceptCompletion();
-
-        DENG2_ASSERT(lineOff == 1 || lineOff == -1);
-
-        de::Vector2i const linePos = lineCursorPos();
-
-        // Check for no room.
-        if(!linePos.y && lineOff < 0) return false;
-        if(linePos.y == wraps.size() - 1 && lineOff > 0) return false;
-
-        // Move cursor onto the adjacent line.
-        WrappedLine span = lineSpan(linePos.y + lineOff);
-        cursor = span.range.start + linePos.x;
-        if(!span.isFinal) span.range.end--;
-        if(cursor > span.range.end) cursor = span.range.end;
-        return true;
-    }
-
-    void insert(String const &str)
-    {
-        acceptCompletion();
-
-        text.insert(cursor++, str);
-    }
-
-    void doBackspace()
-    {
-        if(suggestingCompletion())
-        {
-            rejectCompletion();
-            return;
-        }
-
-        if(!text.isEmpty() && cursor > 0)
-        {
-            text.remove(--cursor, 1);
-        }
-    }
-
-    void doDelete()
-    {
-        if(text.size() > cursor)
-        {
-            text.remove(cursor, 1);
-        }
-    }
-
-    void doLeft()
-    {
-        acceptCompletion();
-
-        if(cursor > 0) --cursor;
-    }
-
-    void doRight()
-    {
-        acceptCompletion();
-
-        if(cursor < text.size()) ++cursor;
-    }
-
-    void doHome()
-    {
-        acceptCompletion();
-
-        cursor = lineSpan(lineCursorPos().y).range.start;
-    }
-
-    void doEnd()
-    {
-        acceptCompletion();
-
-        WrappedLine const span = lineSpan(lineCursorPos().y);
-        cursor = span.range.end - (span.isFinal? 0 : 1);
-    }
-
-    void killEndOfLine()
-    {
-        text.remove(cursor, lineSpan(lineCursorPos().y).range.end - cursor);
-    }
-
-    bool suggestingCompletion() const
-    {
-        return completion.size > 0;
-    }
-
-    String wordBehindCursor() const
-    {
-        String word;
-        int i = cursor - 1;
-        while(i >= 0 && lexicon.isWordChar(text[i])) word.prepend(text[i--]);
-        return word;
-    }
-
-    QList<String> completionsForBase(String base, String &commonPrefix) const
-    {
-        bool first = true;
-        QList<String> suggestions;
-        foreach(String term, lexicon.terms())
-        {
-            if(term.startsWith(base, Qt::CaseInsensitive) && term.size() > base.size())
-            {
-                suggestions.append(term);
-
-                // Determine if all the suggestions have a common prefix.
-                if(first)
-                {
-                    commonPrefix = term;
-                    first = false;
-                }
-                else if(!commonPrefix.isEmpty())
-                {
-                    int len = commonPrefix.commonPrefixLength(term, Qt::CaseInsensitive);
-                    commonPrefix = commonPrefix.left(len);
-                }
-            }
-        }
-        qSort(suggestions);
-        return suggestions;
-    }
-
-    bool doCompletion(bool forwardCycle)
-    {        
-        if(!suggestingCompletion())
-        {
-            String const base = wordBehindCursor();
-            if(!base.isEmpty())
-            {
-                // Find all the possible completions and apply the first one.
-                String commonPrefix;
-                suggestions = completionsForBase(base, commonPrefix);
-                if(!commonPrefix.isEmpty() && commonPrefix != base)
-                {
-                    completion.ordinal = -1;
-                    commonPrefix.remove(0, base.size());
-                    completion.pos = cursor;
-                    completion.size = commonPrefix.size();
-                    text.insert(cursor, commonPrefix);
-                    cursor += completion.size;
-                    return true;
-                }
-                if(!suggestions.isEmpty())
-                {
-                    completion.ordinal = (forwardCycle? 0 : suggestions.size() - 1);
-                    String comp = suggestions[completion.ordinal];
-                    comp.remove(0, base.size());
-                    completion.pos = cursor;
-                    completion.size = comp.size();
-                    text.insert(cursor, comp);
-                    cursor += completion.size;
-                    return true;
-                }
-            }
-        }
-        else
-        {
-            // Replace the current completion with another suggestion.
-            cursor = completion.pos;
-            String const base = wordBehindCursor();
-
-            if(completion.ordinal < 0)
-            {
-                // This occurs after a common prefix is inserted rather than
-                // a full suggestion.
-                completion.ordinal = (forwardCycle? 0 : suggestions.size() - 1);
-
-                if(base + text.mid(completion.pos, completion.size) == suggestions[completion.ordinal])
-                {
-                    // We already had this one, skip it.
-                    cycleCompletion(forwardCycle);
-                }
-            }
-            else
-            {
-                cycleCompletion(forwardCycle);
-            }
-
-            String comp = suggestions[completion.ordinal];
-            comp.remove(0, base.size());
-
-            text.remove(completion.pos, completion.size);
-            text.insert(completion.pos, comp);
-            completion.size = comp.size();
-            cursor = completion.pos + completion.size;
-            return true;
-        }
-        return false;
-    }
-
-    void cycleCompletion(bool forwardCycle)
-    {
-        completion.ordinal = de::wrap(completion.ordinal + (forwardCycle? 1 : -1),
-                                      0, suggestions.size());
-    }
-
-    void acceptCompletion()
-    {
-        completion.reset();
-    }
-
-    void rejectCompletion()
-    {
-        text.remove(completion.pos, completion.size);
-        cursor = completion.pos;
-        completion.reset();
-    }
 };
 
 LineEditWidget::LineEditWidget(de::String const &name)
-    : TextWidget(name), d(new Instance(*this))
+    : TextWidget(name),
+      AbstractLineEditor(new MonospaceLineWrapping),
+      d(new Instance(*this))
 {
     setBehavior(HandleEventsOnlyWhenFocused);
 
+    // Widget's height is determined by the number of text lines.
     rule().setInput(Rule::Height, *d->height);
-}
-
-void LineEditWidget::setPrompt(String const &promptText)
-{
-    d->prompt = promptText;
-    d->wraps.clear();
-
-    if(hasRoot())
-    {
-        d->updateWrapsAndHeight();
-        redraw();
-    }
 }
 
 Vector2i LineEditWidget::cursorPosition() const
 {
     de::Rectanglei pos = rule().recti();
-    return pos.topLeft + Vector2i(d->prompt.size(), 0) + d->lineCursorPos();
+    return pos.topLeft + Vector2i(prompt().size(), 0) + lineCursorPos();
 }
 
 void LineEditWidget::viewResized()
 {
-    d->updateWrapsAndHeight();
+    updateLineWraps(RewrapNow);
 }
 
 void LineEditWidget::update()
 {
-    if(d->wraps.isEmpty())
-    {
-        d->updateWrapsAndHeight();
-    }
+    updateLineWraps(WrapUnlessWrappedAlready);
 }
 
 void LineEditWidget::draw()
@@ -378,21 +86,21 @@ void LineEditWidget::draw()
             (hasFocus()? TextCanvas::Char::Reverse : TextCanvas::Char::DefaultAttributes);
     buf.clear(TextCanvas::Char(' ', attr));
 
-    buf.drawText(Vector2i(0, 0), d->prompt, attr | TextCanvas::Char::Bold);
+    buf.drawText(Vector2i(0, 0), prompt(), attr | TextCanvas::Char::Bold);
 
     // Underline the suggestion for completion.
-    if(d->suggestingCompletion())
+    if(isSuggestingCompletion())
     {
-        buf.setRichFormatRange(TextCanvas::Char::Underline, d->completion.range());
+        buf.setRichFormatRange(TextCanvas::Char::Underline, completionRange());
     }
 
     // Echo mode determines what we actually draw.
-    String text = d->text;
-    if(d->echoMode == PasswordEchoMode)
+    String txt = text();
+    if(echoMode() == PasswordEchoMode)
     {
-        text = String(d->text.size(), '*');
+        txt = String(txt.size(), '*');
     }
-    buf.drawWrappedText(Vector2i(d->prompt.size(), 0), text, d->wraps, attr);
+    buf.drawWrappedText(Vector2i(prompt().size(), 0), txt, lineWraps(), attr);
 
     targetCanvas().draw(buf, pos.topLeft);
 }
@@ -408,7 +116,7 @@ bool LineEditWidget::handleEvent(Event const &event)
     // Insert text?
     if(!ev.text().isEmpty())
     {
-        d->insert(ev.text());
+        insert(ev.text());
     }
     else
     {
@@ -416,126 +124,59 @@ bool LineEditWidget::handleEvent(Event const &event)
         eaten = handleControlKey(ev.key());
     }
 
-    if(eaten)
-    {
-        d->updateWrapsAndHeight();
-        redraw();
-        return true;
-    }
+    if(eaten) return true;
 
     return TextWidget::handleEvent(event);
 }
 
-bool LineEditWidget::handleControlKey(int key)
+bool LineEditWidget::handleControlKey(int qtKey)
 {
-    switch(key)
+    if(AbstractLineEditor::handleControlKey(qtKey))
     {
-    case Qt::Key_Backspace:
-        d->doBackspace();
-        return true;
-
-    case Qt::Key_Delete:
-        d->doDelete();
-        return true;
-
-    case Qt::Key_Left:
-        d->doLeft();
-        return true;
-
-    case Qt::Key_Right:
-        d->doRight();
-        return true;
-
-    case Qt::Key_Home:
-        d->doHome();
-        return true;
-
-    case Qt::Key_End:
-        d->doEnd();
-        return true;
-
-    case Qt::Key_Tab:
-    case Qt::Key_Backtab:
-        if(d->doCompletion(key == Qt::Key_Tab))
+        if(qtKey == Qt::Key_Enter)
         {
-            return true;
+            if(d->signalOnEnter)
+            {
+                emit enterPressed(text());
+            }
+            else
+            {
+                // The Enter will fall through to base class event processing.
+                return false;
+            }
         }
-        break;
-
-    case Qt::Key_K: // assuming Control mod
-        d->killEndOfLine();
-        return true;
-
-    case Qt::Key_Up:
-        // First try moving within the current command.
-        if(!d->moveCursorByLine(-1)) return false; // not eaten
-        return true;
-
-    case Qt::Key_Down:
-        // First try moving within the current command.
-        if(!d->moveCursorByLine(+1)) return false; // not eaten
-        return true;
-
-    case Qt::Key_Enter:
-        d->acceptCompletion();
-        if(d->signalOnEnter)
-        {
-            emit enterPressed(d->text);
-            return true;
-        }
-        break;
-
-    default:
-        break;
+        return true; // Handled.
     }
-
     return false;
-}
-
-void LineEditWidget::setText(String const &contents)
-{
-    d->completion.reset();
-    d->text = contents;
-    d->cursor = contents.size();
-    d->wraps.clear();
-
-    if(hasRoot())
-    {
-        d->updateWrapsAndHeight();
-        redraw();
-    }
-}
-
-String LineEditWidget::text() const
-{
-    return d->text;
-}
-
-void LineEditWidget::setCursor(int index)
-{
-    d->completion.reset();
-    d->cursor = index;
-    redraw();
-}
-
-int LineEditWidget::cursor() const
-{
-    return d->cursor;
-}
-
-void LineEditWidget::setLexicon(Lexicon const &lexicon)
-{
-    d->lexicon = lexicon;
-}
-
-void LineEditWidget::setEchoMode(EchoMode mode)
-{
-    d->echoMode = mode;
 }
 
 void LineEditWidget::setSignalOnEnter(int enterSignal)
 {
     d->signalOnEnter = enterSignal;
+}
+
+int LineEditWidget::maximumWidth() const
+{
+    return int(rule().recti().width()) - int(prompt().size()) - 1;
+}
+
+void LineEditWidget::numberOfLinesChanged(int lineCount)
+{
+    d->height->set(lineCount);
+}
+
+void LineEditWidget::contentChanged()
+{
+    if(hasRoot())
+    {
+        updateLineWraps(RewrapNow);
+    }
+    redraw();
+}
+
+void LineEditWidget::cursorMoved()
+{
+    redraw();
 }
 
 } // namespace shell

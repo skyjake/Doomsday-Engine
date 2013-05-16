@@ -180,7 +180,7 @@ public:
      * @param attribs        Character attributes.
      * @param lineAlignment  Alignment for lines.
      */
-    void drawWrappedText(Coord const &pos, String const &text, LineWrapping const &wraps,
+    void drawWrappedText(Coord const &pos, String const &text, ILineWrapping const &wraps,
                          Char::Attribs const &attribs = Char::DefaultAttributes,
                          Alignment lineAlignment = AlignLeft);
 

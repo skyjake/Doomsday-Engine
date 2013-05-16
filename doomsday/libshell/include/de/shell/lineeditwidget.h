@@ -21,6 +21,7 @@
 
 #include "libshell.h"
 #include "TextWidget"
+#include "AbstractLineEditor"
 
 namespace de {
 namespace shell {
@@ -33,7 +34,7 @@ class Lexicon;
  * The widget adjusts its height automatically to fit to the full contents of
  * the edited, wrapped line.
  */
-class LIBSHELL_PUBLIC LineEditWidget : public TextWidget
+class LIBSHELL_PUBLIC LineEditWidget : public TextWidget, public AbstractLineEditor
 {
     Q_OBJECT
 
@@ -46,38 +47,6 @@ public:
     LineEditWidget(String const &name = "");
 
     /**
-     * Sets the prompt that is displayed in front of the edited text.
-     *
-     * @param promptText  Text for the prompt.
-     */
-    void setPrompt(String const &promptText);
-
-    void setText(String const &lineText);
-    String text() const;
-
-    void setCursor(int index);
-    int cursor() const;
-
-    /**
-     * Defines the terms and rules for auto-completion.
-     *
-     * @param lexicon  Lexicon.
-     */
-    void setLexicon(Lexicon const &lexicon);
-
-    enum EchoMode
-    {
-        NormalEchoMode,
-        PasswordEchoMode
-    };
-
-    /**
-     * Determines how the entered text is drawn on screen.
-     * @param mode  Echo mode.
-     */
-    void setEchoMode(EchoMode mode);
-
-    /**
      * Enables or disables the signal emitted when the edit widget receives an
      * Enter key. By default, a signal is emitted.
      *
@@ -87,7 +56,7 @@ public:
 
     Vector2i cursorPosition() const;
 
-    bool handleControlKey(int key);
+    bool handleControlKey(int qtKey);
 
     // Events.
     void viewResized();
@@ -97,6 +66,12 @@ public:
 
 signals:
     void enterPressed(de::String text);
+
+protected:
+    virtual int maximumWidth() const;
+    virtual void numberOfLinesChanged(int lineCount);
+    virtual void cursorMoved();
+    virtual void contentChanged();
 
 private:
     DENG2_PRIVATE(d)

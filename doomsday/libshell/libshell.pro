@@ -24,6 +24,7 @@ INCLUDEPATH += include
 
 # Public headers.
 HEADERS += \
+    include/de/shell/AbstractLineEditor \
     include/de/shell/AbstractLink \
     include/de/shell/Action \
     include/de/shell/ChoiceWidget \
@@ -45,6 +46,7 @@ HEADERS += \
     include/de/shell/TextRootWidget \
     include/de/shell/TextWidget \
     \
+    include/de/shell/abstractlineeditor.h \
     include/de/shell/abstractlink.h \
     include/de/shell/action.h \
     include/de/shell/choicewidget.h \
@@ -69,6 +71,7 @@ HEADERS += \
 
 # Sources and private headers.
 SOURCES += \
+    src/abstractlineeditor.cpp \
     src/abstractlink.cpp \
     src/action.cpp \
     src/choicewidget.cpp \

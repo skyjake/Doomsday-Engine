@@ -42,7 +42,7 @@
 namespace de {
 namespace shell {
 
-struct Range
+struct LIBSHELL_PUBLIC Range
 {
     int start;
     int end;
@@ -53,7 +53,7 @@ struct Range
 };
 
 /// Word wrapping.
-struct WrappedLine
+struct LIBSHELL_PUBLIC WrappedLine
 {
     Range range;
     bool isFinal;
@@ -62,9 +62,28 @@ struct WrappedLine
         : range(range_), isFinal(final) {}
 };
 
-class LineWrapping : public QList<WrappedLine>
+class LIBSHELL_PUBLIC ILineWrapping
 {
 public:
+    virtual ~ILineWrapping() {}
+
+    virtual bool isEmpty() const = 0;
+    virtual void clear() = 0;
+    virtual void wrapTextToWidth(String const &text, int maxWidth) = 0;
+    virtual WrappedLine line(int index) const = 0;
+    virtual int width() const = 0;
+    virtual int height() const = 0;
+};
+
+class LIBSHELL_PUBLIC MonospaceLineWrapping : public ILineWrapping
+{
+public:
+    MonospaceLineWrapping();
+
+    bool isEmpty() const;
+
+    void clear();
+
     /**
      * Determines word wrapping for a line of text given a maximum line width.
      *
@@ -76,8 +95,12 @@ public:
      */
     void wrapTextToWidth(String const &text, int maxWidth);
 
+    WrappedLine line(int index) const { return _lines[index]; }
     int width() const;
     int height() const;
+
+private:
+    QList<WrappedLine> _lines;
 };
 
 } // namespace shell

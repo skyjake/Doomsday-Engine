@@ -22,11 +22,28 @@
 namespace de {
 namespace shell {
 
-void LineWrapping::wrapTextToWidth(String const &text, int maxWidth)
+MonospaceLineWrapping::MonospaceLineWrapping()
+{
+    //_lines.append(WrappedLine(Range(), true));
+}
+
+bool MonospaceLineWrapping::isEmpty() const
+{
+    return _lines.isEmpty();
+}
+
+void MonospaceLineWrapping::clear()
+{
+    _lines.clear();
+}
+
+void MonospaceLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
 {
     QChar const newline('\n');
 
     clear();
+
+    if(maxWidth < 1) return; // No room to wrap.
 
     int const lineWidth = maxWidth;
     int begin = 0;
@@ -40,7 +57,7 @@ void LineWrapping::wrapTextToWidth(String const &text, int maxWidth)
         if(end == text.size())
         {
             // Time to stop.
-            append(WrappedLine(Range(begin, text.size())));
+            _lines.append(WrappedLine(Range(begin, text.size())));
             break;
         }
 
@@ -59,35 +76,35 @@ void LineWrapping::wrapTextToWidth(String const &text, int maxWidth)
         if(text.at(end) == newline)
         {
             // The newline will be omitted from the wrapped lines.
-            append(WrappedLine(Range(begin, end)));
+            _lines.append(WrappedLine(Range(begin, end)));
             begin = end + 1;
         }
         else
         {
             if(text.at(end).isSpace()) ++end;
-            append(WrappedLine(Range(begin, end)));
+            _lines.append(WrappedLine(Range(begin, end)));
             begin = end;
         }
     }
 
     // Mark the final line.
-    last().isFinal = true;
+    _lines.last().isFinal = true;
 }
 
-int LineWrapping::width() const
+int MonospaceLineWrapping::width() const
 {
     int w = 0;
-    for(int i = 0; i < size(); ++i)
+    for(int i = 0; i < _lines.size(); ++i)
     {
-        WrappedLine const &span = at(i);
+        WrappedLine const &span = _lines[i];
         w = de::max(w, span.range.size());
     }
     return w;
 }
 
-int LineWrapping::height() const
+int MonospaceLineWrapping::height() const
 {
-    return size();
+    return _lines.size();
 }
 
 } // namespace shell

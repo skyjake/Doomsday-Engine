@@ -229,14 +229,14 @@ void TextCanvas::drawText(Vector2i const &pos, String const &text,
 }
 
 void TextCanvas::drawWrappedText(Vector2i const &pos, String const &text,
-                                 LineWrapping const &wraps, Char::Attribs const &attribs,
+                                 ILineWrapping const &wraps, Char::Attribs const &attribs,
                                  Alignment lineAlignment)
 {
     int const width = wraps.width();
 
-    for(int y = 0; y < wraps.size(); ++y)
+    for(int y = 0; y < wraps.height(); ++y)
     {
-        WrappedLine const &span = wraps[y];
+        WrappedLine const &span = wraps.line(y);
         String part = text.substr(span.range.start, span.range.size());
         int x = 0;
         if(lineAlignment.testFlag(AlignRight))
