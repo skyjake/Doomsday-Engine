@@ -19,15 +19,18 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_COMPOSITETEXTURE_H
-#define LIBDENG_RESOURCE_COMPOSITETEXTURE_H
+#ifndef DENG_RESOURCE_COMPOSITETEXTURE_H
+#define DENG_RESOURCE_COMPOSITETEXTURE_H
 
-#include "dd_types.h" // For lumpnum_t
-#include "patchname.h"
+#include <QList>
+#include <QMultiMap>
+
 #include <de/Reader>
 #include <de/String>
 #include <de/Vector>
-#include <QList>
+
+#include "dd_types.h" // For lumpnum_t
+#include "patchname.h"
 
 namespace de {
 
@@ -181,6 +184,9 @@ private:
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(CompositeTexture::Flags)
 
+/// A map from String -> CompositeTexture
+typedef QMultiMap<String, CompositeTexture *> CompositeTextureMap;
+
 } // namespace de
 
-#endif // LIBDENG_RESOURCE_COMPOSITETEXTURE_H
+#endif // DENG_RESOURCE_COMPOSITETEXTURE_H
