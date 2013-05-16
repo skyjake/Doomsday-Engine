@@ -1862,100 +1862,6 @@ static void writeLeafPlane(Plane &plane)
     R_FreeRendVertices(rvertices);
 }
 
-/**
- * Determines the total number of edges between @a startNode and @a endNode in
- * the specified @a direction (inclussive). In the special case where the end
- * node is also the start node it is assumed that the nodes describe a complete
- * loop (i.e., a "closed" simple polygon (not necessarily convex, however)).
- *
- * @pre Both (half-edge) nodes are connected in a contiguous path which can be
- * navigated following the @em neighbor links (in the specified direction).
- *
- * @param startNode  Half-edge "node" at which to begin counting edges.
- * @param endNode    Half-edge "node" at which to stop counting edges.
- * @param direction  Neighbor direction to follow.
- *
- * @return  Total number of edges between the two nodes.
- */
-static int countHEdgeLoopEdges(HEdge const &startNode, HEdge const &endNode,
-                               ClockDirection direction)
-{
-    DENG_ASSERT(startNode.hasBspLeaf() && endNode.hasBspLeaf());
-    DENG_ASSERT(&startNode.bspLeaf() == &endNode.bspLeaf());
-
-    int num = 0;
-    if(&startNode == &endNode)
-    {
-        // Special case: the whole loop.
-        num += 2 * (startNode.bspLeaf().hedgeCount() + 1);
-    }
-    else
-    {
-        HEdge const *afterEndNode = &endNode.neighbor(direction);
-        HEdge const *node = &startNode;
-        do
-        {
-            num += 2;
-        } while((node = &node->neighbor(direction)) != afterEndNode);
-    }
-
-    return num;
-}
-
-typedef QList<IEdge *> EdgeList;
-
-static void collateSkyFixEdges(EdgeList &edges, HEdge &startNode, HEdge &endNode,
-    ClockDirection direction, SkyFixEdge::FixType fixType)
-{
-#ifdef DENG2_QT_4_7_OR_NEWER
-    edges.reserve(edges.size() + countHEdgeLoopEdges(startNode, endNode, direction));
-#endif
-
-    HEdge *hedgeIt = &startNode;
-    float materialOffsetS = float( hedgeIt->hasLineSide()? hedgeIt->lineOffset() : 0 );
-
-    do
-    {
-        HEdge &hedge = (direction == Anticlockwise? hedgeIt->prev() : *hedgeIt);
-
-        if(&hedge == &startNode)
-        {
-            // Add the first edge.
-            SkyFixEdge *skyEdge = new SkyFixEdge(hedge, fixType, direction == Anticlockwise? Line::To : Line::From,
-                                                 materialOffsetS);
-
-            skyEdge->prepare();
-
-            if(skyEdge->isValid() && skyEdge->top().distance() > skyEdge->bottom().distance())
-            {
-                edges << skyEdge;
-            }
-            else
-            {
-                delete skyEdge;
-            }
-
-            materialOffsetS += direction == Anticlockwise? -hedgeIt->prev().length() : hedge.length();
-        }
-
-        {
-            // Add the i'th edge.
-            SkyFixEdge *skyEdge = new SkyFixEdge(hedge, fixType, direction == Anticlockwise? Line::From : Line::To,
-                                                 materialOffsetS);
-
-            skyEdge->prepare();
-
-            if(skyEdge->isValid() && skyEdge->top().distance() > skyEdge->bottom().distance())
-            {
-                edges << skyEdge;
-            }
-
-            materialOffsetS += direction == Anticlockwise? -hedge.length() : hedge.next().length();
-        }
-
-    } while((hedgeIt = &hedgeIt->neighbor(direction)) != &endNode);
-}
-
 static void writeSkyFixStrip(int numElements, rvertex_t const *positions,
     rtexcoord_t const *texcoords, Material *material)
 {
@@ -1985,131 +1891,128 @@ static void writeSkyFixStrip(int numElements, rvertex_t const *positions,
     }
 }
 
-/// @param skyFix  @ref skyCapFlags.
 static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
 {
     BspLeaf *bspLeaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(bspLeaf));
 
     // Determine strip generation behavior.
-    ClockDirection direction        = Clockwise;
-    bool const buildTexCoords       = CPP_BOOL(devRendSkyMode);
-    bool const splitForSkyMaterials = (devRendSkyMode && renderTextures != 2);
+    ClockDirection direction         = Clockwise;
+    bool const buildTexCoords        = CPP_BOOL(devRendSkyMode);
+    bool const splitOnMaterialChange = (devRendSkyMode && renderTextures != 2);
 
     // Configure the strip builder wrt vertex attributes.
     TriangleStripBuilder stripBuilder(buildTexCoords);
 
-    // We may need to break the loop of edges into multiple strips.
-    HEdge *startNode        = 0;
-    coord_t startZBottom    = 0;
-    coord_t startZTop       = 0;
-    Material *startMaterial = 0;
+    // Configure the strip build state (we'll most likely need to break
+    // edge loop into multiple strips).
+    HEdge *startNode          = 0;
+    coord_t startZBottom      = 0;
+    coord_t startZTop         = 0;
+    Material *startMaterial   = 0;
+    float startMaterialOffset = 0;
 
+    // Determine the relative sky plane (for monitoring material changes).
+    int relPlane = fixType == SkyFixEdge::Upper? Plane::Ceiling : Plane::Floor;
+
+    // Begin generating geometry.
     HEdge *base = bspLeaf->firstHEdge();
-    HEdge *node = base;
+    HEdge *hedgeIt = base;
     forever
     {
-        HEdge &hedge = (direction == Anticlockwise? node->prev() : *node);
-        bool endStrip = false, beginNewStrip = false;
+        HEdge &hedge = *hedgeIt;
 
-        SkyFixEdge skyEdge(hedge, fixType, (direction == Anticlockwise) ^ (startNode != 0)? Line::To : Line::From);
-
-        skyEdge.prepare();
-
-        if(!skyEdge.isValid() || skyEdge.top().distance() == skyEdge.bottom().distance())
+        // Are we monitoring material changes?
+        Material *skyMaterial = 0;
+        if(splitOnMaterialChange)
         {
-            // End the current strip (if any).
-            endStrip = true;
+            skyMaterial = hedge.bspLeaf().sector().planeSurface(relPlane).materialPtr();
         }
-        else
-        {
-            Material *skyMaterial = 0;
-            if(splitForSkyMaterials)
-            {
-                int relPlane = fixType == SkyFixEdge::Upper? Plane::Ceiling : Plane::Floor;
-                skyMaterial = hedge.bspLeaf().sector().planeSurface(relPlane).materialPtr();
-            }
 
-            if(startNode &&
-               (!de::fequal(skyEdge.bottom().distance(), startZBottom) ||
-                !de::fequal(skyEdge.top().distance(), startZTop) ||
-                (splitForSkyMaterials && skyMaterial != startMaterial)))
-            {
-                // End the current strip and start another.
-                endStrip = true;
-                beginNewStrip = true;
-            }
-            else if(!startNode)
+        // Add a first (left) edge to the current strip?
+        if(startNode == 0)
+        {
+            startMaterialOffset = float( hedge.hasLineSide()? hedge.lineOffset() : 0 );
+
+            // Prepare the edge geometry
+            SkyFixEdge skyEdge(hedge, fixType, (direction == Anticlockwise)? Line::To : Line::From,
+                               startMaterialOffset);
+            skyEdge.prepare();
+
+            if(skyEdge.isValid() && skyEdge.bottom().distance() < skyEdge.top().distance())
             {
                 // A new strip begins.
-                startNode     = node;
+                stripBuilder.begin(direction);
+                stripBuilder << skyEdge;
+
+                // Update the strip build state.
+                startNode     = &hedge;
                 startZBottom  = skyEdge.bottom().distance();
                 startZTop     = skyEdge.top().distance();
                 startMaterial = skyMaterial;
             }
         }
 
-        if(endStrip && startNode)
+        bool beginNewStrip = false;
+
+        // Add the i'th (right) edge to the current strip?
+        if(startNode != 0)
         {
-            // We have found a strip.
-            EdgeList edges;
-            collateSkyFixEdges(edges, *startNode, *node, direction, fixType);
+            startMaterialOffset += hedge.length() * (direction == Anticlockwise? -1 : 1);
 
-            // Build the strip.
-            stripBuilder.begin(direction, edges.size() * 2);
-            foreach(IEdge *edge, edges) stripBuilder << *edge;
+            // Prepare the edge geometry
+            SkyFixEdge skyEdge(hedge, fixType, (direction == Anticlockwise)? Line::From : Line::To,
+                               startMaterialOffset);
+            skyEdge.prepare();
 
-            // Take ownership of the built geometry.
-            PositionBuffer *positions = 0;
-            TexCoordBuffer *texcoords = 0;
-            int numVerts = stripBuilder.take(&positions, &texcoords);
+            // Stop if we've reached a "null" edge.
+            bool endStrip = false;
+            if(!(skyEdge.isValid() && skyEdge.bottom().distance() < skyEdge.top().distance()))
+            {
+                endStrip = true;
+            }
+            // Must we split the strip here?
+            else if(&hedge != startNode &&
+                    (!de::fequal(skyEdge.bottom().distance(), startZBottom) ||
+                     !de::fequal(skyEdge.top().distance(), startZTop) ||
+                     (splitOnMaterialChange && skyMaterial != startMaterial)))
+            {
+                endStrip = true;
+                beginNewStrip = true; // We'll continue from here.
+            }
+            else
+            {
+                // Extend the strip geometry.
+                stripBuilder << skyEdge;
+            }
 
-            // Write the strip geometry to the render lists.
-            writeSkyFixStrip(numVerts, positions->constData(), texcoords? texcoords->constData() : 0, startMaterial);
+            if(endStrip || &hedge.neighbor(direction) == base)
+            {
+                // End the current strip.
+                startNode = 0;
 
-            // End the current strip.
-            startNode = 0;
+                // Take ownership of the built geometry.
+                PositionBuffer *positions = 0;
+                TexCoordBuffer *texcoords = 0;
+                int numVerts = stripBuilder.take(&positions, &texcoords);
 
-            // Cleanup.
-            qDeleteAll(edges);
+                // Write the strip geometry to the render lists.
+                writeSkyFixStrip(numVerts, positions->constData(),
+                                 texcoords? texcoords->constData() : 0, startMaterial);
 
-            delete positions;
-            delete texcoords;
+                delete positions;
+                delete texcoords;
+            }
         }
 
-        // Start a new strip from this node?
+        // Start a new strip from the current node?
         if(beginNewStrip) continue;
 
         // On to the next node.
-        node = &node->neighbor(direction);
+        hedgeIt = &hedgeIt->neighbor(direction);
 
         // Are we done?
-        if(node == base) break;
-    }
-
-    // Have we an unwritten strip? - build and write it.
-    if(startNode)
-    {
-        EdgeList edges;
-        collateSkyFixEdges(edges, *startNode, *base, direction, fixType);
-
-        // Build the strip.
-        stripBuilder.begin(direction, edges.size() * 2);
-        foreach(IEdge *edge, edges) stripBuilder << *edge;
-
-        // Take ownership of the built geometry.
-        PositionBuffer *positions = 0;
-        TexCoordBuffer *texcoords = 0;
-        int numVerts = stripBuilder.take(&positions, &texcoords);
-
-        // Write the strip geometry to the render lists.
-        writeSkyFixStrip(numVerts, positions->constData(), texcoords? texcoords->constData() : 0, startMaterial);
-
-        // Cleanup.
-        qDeleteAll(edges);
-
-        delete positions;
-        delete texcoords;
+        if(hedgeIt == base) break;
     }
 }
 
