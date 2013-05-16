@@ -457,14 +457,13 @@ DENG2_OBSERVES(Loop, Iteration)
             {
                 Data &it = item();
                 it.changeCache(_bank.d->memoryCache);
-
-                // Make sure a blocking load completes.
-                it.post();
             }
             catch(Error const &er)
             {
                 LOG_WARNING("Failed to load \"%s\" from source:\n") << _path << er.asText();
             }
+            // Ensure a blocking load completes.
+            item().post();
         }
 
         void doSerialize()
