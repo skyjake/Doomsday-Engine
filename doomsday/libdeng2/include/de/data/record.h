@@ -27,8 +27,8 @@
 #include "../Audience"
 #include "../Log"
 
-#include <map>
-#include <list>
+#include <QMap>
+#include <QList>
 
 namespace de {
 
@@ -57,10 +57,10 @@ public:
     /// All variables and subrecords in the record must have a name. @ingroup errors
     DENG2_ERROR(UnnamedError);
 
-    typedef std::map<String, Variable *> Members;
-    typedef std::map<String, Record *> Subrecords;
+    typedef QMap<String, Variable *> Members;
+    typedef QMap<String, Record *> Subrecords;
     typedef std::pair<String, String> KeyValue;
-    typedef std::list<KeyValue> List;
+    typedef QList<KeyValue> List;
 
     DENG2_DEFINE_AUDIENCE(Deletion, void recordBeingDeleted(Record &record))
 
@@ -81,14 +81,20 @@ public:
      */
     void clear();
 
+    enum CopyBehavior {
+        AllMembers,
+        IgnoreDoubleUnderscoreMembers
+    };
+
     /**
      * Adds a copy of each member of another record into this record. The
      * previous contents of this record are untouched as long as they have no
      * members with the same names as in @a other.
      *
-     * @param other  Record whose members are to be copied.
+     * @param other     Record whose members are to be copied.
+     * @param behavior  Copy behavior.
      */
-    void copyMembersFrom(Record const &other);
+    void copyMembersFrom(Record const &other, CopyBehavior behavior = AllMembers);
 
     /**
      * Assignment operator.
@@ -128,6 +134,15 @@ public:
      * @return  Caller gets ownership of the removed variable.
      */
     Variable *remove(Variable &variable);
+
+    /**
+     * Adds a new variable to the record with a NoneValue.
+     *
+     * @param variableName  Name of the variable.
+     *
+     * @return  The new variable.
+     */
+    Variable &add(String const &variableName);
 
     /**
      * Adds a number variable to the record. The variable is set up to only accept

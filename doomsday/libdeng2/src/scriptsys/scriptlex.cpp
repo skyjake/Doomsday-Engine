@@ -64,7 +64,7 @@ duint ScriptLex::getStatement(TokenBuffer &output)
     // Get rid of the previous contents of the token buffer.
     output.clear();
     
-    duint counter = 0; // How many have we added?
+    duint counter = 0; // How many tokens have we added?
 
     enum BracketType {
         BRACKET_PARENTHESIS,
@@ -86,7 +86,7 @@ duint ScriptLex::getStatement(TokenBuffer &output)
     // parenthesis have been closed.
     try
     {
-        for(;;)
+        forever
         {
             // Tokens are primarily separated by whitespace.
             skipWhiteExceptNewline();
@@ -231,7 +231,7 @@ duint ScriptLex::getStatement(TokenBuffer &output)
         }
     }
         
-    return counter;
+    return counter; // Number of tokens added.
 }
 
 Token::Type
@@ -305,23 +305,20 @@ ScriptLex::parseString(QChar startChar, duint startIndentation, TokenBuffer &out
         }
         if(c == startChar)
         {
-            // This will end the string.
+            // This will end the string?
             if(longString)
             {
-                c = get();
-                QChar d = get();
-                if(c != '"') 
+                if(peek() == '"')
                 {
-                    throw UnexpectedCharacterError("ScriptLex::parseString",
-                        "Character '" + String(1, c) + "' was unexpected");
+                    output.appendChar(get());
+                    if(peek() == '"')
+                    {
+                        output.appendChar(get());
+                        break;
+                    }
                 }
-                if(d != '"') 
-                {
-                    throw UnexpectedCharacterError("ScriptLex::parseString",
-                        "Character '" + String(1, d) + "' was unexpected");
-                }
-                output.appendChar(c);
-                output.appendChar(d);
+                // Not actually a terminating """.
+                continue;
             }
             break;
         }

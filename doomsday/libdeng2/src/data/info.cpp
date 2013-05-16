@@ -18,21 +18,41 @@
  */
 
 #include "de/Info"
+#include "de/ScriptLex"
+#include "de/Log"
+#include "de/LogBuffer"
 #include <QFile>
 
 using namespace de;
 
 static QString const WHITESPACE = " \t\r\n";
 static QString const WHITESPACE_OR_COMMENT = " \t\r\n#";
-static QString const TOKEN_BREAKING_CHARS = "#:=(){}<>,\"" + WHITESPACE;
+static QString const TOKEN_BREAKING_CHARS = "#:=$(){}<>,\"" + WHITESPACE;
 
-DENG2_PIMPL_NOREF(Info)
+DENG2_PIMPL(Info)
 {
     DENG2_ERROR(OutOfElements);
     DENG2_ERROR(EndOfFile);
 
-    Instance() : currentLine(0), cursor(0), tokenStartOffset(0), rootBlock("", "")
-    {}
+    QStringList scriptBlockTypes;
+    QStringList allowDuplicateBlocksOfType;
+    String content;
+    int currentLine;
+    int cursor; ///< Index of the next character from the source.
+    QChar currentChar;
+    int tokenStartOffset;
+    String currentToken;
+    BlockElement rootBlock;
+
+    typedef Info::Element::Value InfoValue;
+
+    Instance(Public *i)
+        : Base(i),
+          currentLine(0), cursor(0), tokenStartOffset(0),
+          rootBlock("", "", *i)
+    {
+        scriptBlockTypes << "script";
+    }
 
     /**
      * Initialize the parser for reading a block of source content.
@@ -47,6 +67,8 @@ DENG2_PIMPL_NOREF(Info)
         content = source + "\n";
         currentLine = 1;
 
+        currentChar = '\0';
+        cursor = 0;
         nextChar();
         tokenStartOffset = 0;
 
@@ -76,7 +98,10 @@ DENG2_PIMPL_NOREF(Info)
             // No more characters to read.
             throw EndOfFile(QString("EOF on line %1").arg(currentLine));
         }
-        if(currentChar == '\n') currentLine++;
+        if(currentChar == '\n')
+        {
+            currentLine++;
+        }
         currentChar = content[cursor];
         cursor++;
     }
@@ -198,19 +223,27 @@ DENG2_PIMPL_NOREF(Info)
             return 0;
         }
 
-        if(next == ":" || next == "=")
+        int const elementLine = currentLine;
+        Element *result = 0;
+
+        if(next == ":" || next == "=" || next == "$")
         {
-            return parseKeyElement(key);
+            result = parseKeyElement(key);
         }
         else if(next == "<")
         {
-            return parseListElement(key);
+            result = parseListElement(key);
         }
         else
         {
             // It must be a block element.
-            return parseBlockElement(key);
+            result = parseBlockElement(key);
         }
+
+        DENG2_ASSERT(result != 0);
+
+        result->setLineNumber(elementLine);
+        return result;
     }
 
     /**
@@ -236,11 +269,13 @@ DENG2_PIMPL_NOREF(Info)
                 // Double single quotes form a double quote ('' => ").
                 nextChar();
                 if(peekChar() == '\'')
+                {
                     chars.append("\"");
+                }
                 else
                 {
                     chars.append("'");
-                    chars.append(peekChar());
+                    continue;
                 }
             }
             else
@@ -258,15 +293,21 @@ DENG2_PIMPL_NOREF(Info)
     }
 
     /**
-     * Parse a value from the source file.  The current token
-     * should be on the first token of the value.  Values come in
-     * different flavours:
+     * Parse a value from the source file. The current token should be on the
+     * first token of the value. Values come in different flavours:
      * - single token
      * - string literal (can be split)
      */
-    String parseValue()
+    InfoValue parseValue()
     {
-        String value;
+        InfoValue value;
+
+        if(peekToken() == "$")
+        {
+            // Marks a script value.
+            value.flags |= InfoValue::Script;
+            nextToken();
+        }
 
         // Check if it is the beginning of a string literal.
         if(peekToken() == "\"")
@@ -274,19 +315,64 @@ DENG2_PIMPL_NOREF(Info)
             try
             {
                // The value will be composed of any number of sub-strings.
-               forever { value += parseString(); }
+               forever { value.text += parseString(); }
             }
             catch(de::Error const &)
             {
                 // No more strings to append.
                 return value;
             }
-        }
+        }        
 
         // Then it must be a single token.
         value = peekToken();
         nextToken();
         return value;
+    }
+
+    InfoValue parseScript(int numStatements = 0)
+    {
+        int startPos = cursor - 1;
+        String remainder = content.substr(startPos);
+        ScriptLex lex(remainder);
+        try
+        {
+            TokenBuffer tokens;
+            int count = 0;
+
+            // Read an appropriate number of statements.
+            while(lex.getStatement(tokens))
+            {
+                if(numStatements > 0 && ++count == numStatements)
+                    goto success;
+            }
+            throw SyntaxError("Info::parseScript",
+                              QString("Unexpected end of script starting at line %1").arg(currentLine));
+success:;
+        }
+        catch(ScriptLex::MismatchedBracketError const &)
+        {
+            // A mismatched bracket signals the end of the script block.
+        }
+
+        // Continue parsing normally from here.
+        int endPos = startPos + lex.pos();
+        do { nextChar(); } while(cursor < endPos); // fast-forward
+
+        // Update the current token.
+        currentToken = QString(peekChar());
+        nextChar();
+
+        if(currentToken != ")" && currentToken != "}")
+        {
+            // When parsing just a statement, we might stop at something else
+            // than a bracket; if so, skip to the next valid token.
+            nextToken();
+        }
+
+        //qDebug() << "now at" << content.substr(endPos - 15, endPos) << "^" << content.substr(endPos);
+
+        return InfoValue(content.substr(startPos, lex.pos() - 1), InfoValue::Script);
     }
 
     /**
@@ -295,24 +381,46 @@ DENG2_PIMPL_NOREF(Info)
      */
     KeyElement *parseKeyElement(String const &name)
     {
-        String value;
+        InfoValue value;
+
+        if(peekToken() == "$")
+        {
+            // This is a script value.
+            value.flags |= InfoValue::Script;
+            nextToken();
+        }
 
         // A colon means that that the rest of the line is the value of
         // the key element.
         if(peekToken() == ":")
         {
-            value = readToEOL().trimmed();
+            value.text = readToEOL().trimmed();
             nextToken();
+        }
+        else if(peekToken() == "=")
+        {
+            if(value.flags.testFlag(InfoValue::Script))
+            {
+                // Parse one script statement.
+                value = parseScript(1);
+                value.text = value.text.trimmed();
+            }
+            else
+            {
+                /**
+                 * Key =
+                 *   "This is a long string "
+                 *   "that spans multiple lines."
+                 */
+                nextToken();
+                value.text = parseValue();
+            }
         }
         else
         {
-            /**
-             * Key =
-             *   "This is a long string "
-             *   "that spans multiple lines."
-             */
-            nextToken();
-            value = parseValue();
+            throw SyntaxError("Info::parseKeyElement",
+                              QString("Expected either '=' or ':', but '%1' found instead (on line %2).")
+                              .arg(peekToken()).arg(currentLine));
         }
         return new KeyElement(name, value);
     }
@@ -366,42 +474,61 @@ DENG2_PIMPL_NOREF(Info)
      */
     BlockElement *parseBlockElement(String const &blockType)
     {
-        QScopedPointer<BlockElement> block(new BlockElement(blockType, peekToken()));
+        DENG2_ASSERT(blockType != "}");
+        DENG2_ASSERT(blockType != ")");
+
+        String blockName;
+        if(peekToken() != "(" && peekToken() != "{")
+        {
+            blockName = parseValue();
+        }
+
+        QScopedPointer<BlockElement> block(new BlockElement(blockType, blockName, self));
         int startLine = currentLine;
 
-        // How about some attributes?
-        // Syntax: {token value} '('|'{'
+        String endToken;
 
         try
         {
-            String endToken;
+            // How about some attributes?
+            // Syntax: {token value} '('|'{'
 
-            nextToken();
             while(peekToken() != "(" && peekToken() != "{")
             {
                 String keyName = peekToken();
                 nextToken();
-                String value = parseValue();
+                InfoValue value = parseValue();
 
-                // This becomes a key element inside the block.
-                block->add(new KeyElement(keyName, value));
+                // This becomes a key element inside the block but it's
+                // flagged as Attribute.
+                block->add(new KeyElement(keyName, value, KeyElement::Attribute));
             }
 
             endToken = (peekToken() == "("? ")" : "}");
 
-            // Move past the opening parentheses.
-            nextToken();
-
-            while(peekToken() != endToken)
+            // Parse the contents of the block.
+            if(scriptBlockTypes.contains(blockType))
             {
-                Element *element = parseElement();
-                if(!element)
+                // Parse as Doomsday Script.
+                block->add(new KeyElement("script", parseScript()));
+            }
+            else
+            {
+                // Move past the opening parentheses.
+                nextToken();
+
+                // Parse normally as Info.
+                while(peekToken() != endToken)
                 {
-                    throw SyntaxError("Info::parseBlockElement",
-                                      QString("Block element was never closed, end of file encountered before '%1' was found (on line %2).")
-                                      .arg(endToken).arg(currentLine));
+                    Element *element = parseElement();
+                    if(!element)
+                    {
+                        throw SyntaxError("Info::parseBlockElement",
+                                          QString("Block element was never closed, end of file encountered before '%1' was found (on line %2).")
+                                          .arg(endToken).arg(currentLine));
+                    }
+                    block->add(element);
                 }
-                block->add(element);
             }
         }
         catch(EndOfFile const &)
@@ -410,6 +537,8 @@ DENG2_PIMPL_NOREF(Info)
                               QString("End of file encountered unexpectedly while parsing a block element (block started on line %1).")
                               .arg(startLine));
         }
+
+        DENG2_ASSERT(peekToken() == endToken);
 
         // Move past the closing parentheses.
         nextToken();
@@ -427,14 +556,6 @@ DENG2_PIMPL_NOREF(Info)
             rootBlock.add(e);
         }
     }
-
-    String content;
-    int currentLine;
-    int cursor; ///< Index of the next character from the source.
-    QChar currentChar;
-    int tokenStartOffset;
-    String currentToken;
-    BlockElement rootBlock;
 };
 
 Info::BlockElement::~BlockElement()
@@ -444,11 +565,56 @@ Info::BlockElement::~BlockElement()
 
 void Info::BlockElement::clear()
 {
-    for(Contents::iterator i = _contents.begin(); i != _contents.end(); ++i)
-        delete i.value();
-
+    for(ContentsInOrder::iterator i = _contentsInOrder.begin(); i != _contentsInOrder.end(); ++i)
+    {
+        delete *i;
+    }
     _contents.clear();
     _contentsInOrder.clear();
+}
+
+void Info::BlockElement::add(Info::Element *elem)
+{
+    DENG2_ASSERT(elem != 0);
+
+	/*
+
+	/// @todo This check is at the wrong level. Conditions may be applied
+	/// to resolve duplicates. Check when processing...
+
+    // Check for duplicate identifiers in this block.
+    if(elem->name() && _contents.contains(elem->name()))
+    {
+        if(!elem->isBlock() || !info().d->allowDuplicateBlocksOfType.contains(
+                    elem->castTo<BlockElement>().blockType()))
+        {
+            LOG_AS("Info::BlockElement");
+            LOG_WARNING("Block '%s' already has an element named '%s'")
+                    << name() << elem->name();
+        }
+    }
+	*/
+
+    elem->setParent(this);
+    _contentsInOrder.append(elem); // owned
+    if(!elem->name().isEmpty())
+    {
+        _contents.insert(elem->name(), elem); // not owned (name may be empty)
+    }
+}
+
+Info::Element *Info::BlockElement::find(String const &name) const
+{
+    Contents::const_iterator found = _contents.find(name);
+    if(found == _contents.end()) return 0;
+    return found.value();
+}
+
+Info::Element::Value Info::BlockElement::keyValue(String const &name) const
+{
+    Element *e = find(name);
+    if(!e || !e->isKey()) return Value();
+    return e->castTo<KeyElement>().value();
 }
 
 Info::Element *Info::BlockElement::findByPath(String const &path) const
@@ -474,19 +640,29 @@ Info::Element *Info::BlockElement::findByPath(String const &path) const
     if(e->isBlock())
     {
         // Descend into sub-blocks.
-        return static_cast<BlockElement *>(e)->findByPath(remainder);
+        return e->castTo<BlockElement>().findByPath(remainder);
     }
     return e;
 }
 
-Info::Info() : d(new Instance)
+Info::Info() : d(new Instance(this))
 {}
 
 Info::Info(String const &source)
 {
-    QScopedPointer<Instance> inst(new Instance); // parsing may throw exception
+    QScopedPointer<Instance> inst(new Instance(this)); // parsing may throw exception
     inst->parse(source);
     d.reset(inst.take());
+}
+
+void Info::setScriptBlocks(QStringList const &blocksToParseAsScript)
+{
+    d->scriptBlockTypes = blocksToParseAsScript;
+}
+
+void Info::setAllowDuplicateBlocksOfType(QStringList const &duplicatesAllowed)
+{
+    d->allowDuplicateBlocksOfType = duplicatesAllowed;
 }
 
 void Info::parse(String const &infoSource)
@@ -494,13 +670,18 @@ void Info::parse(String const &infoSource)
     d->parse(infoSource);
 }
 
-void Info::parseNativeFile(String const &nativePath)
+void Info::parseNativeFile(NativePath const &nativePath)
 {
     QFile file(nativePath);
     if(file.open(QFile::ReadOnly | QFile::Text))
     {
         parse(file.readAll().constData());
     }
+}
+
+void Info::clear()
+{
+    parse("");
 }
 
 Info::BlockElement const &Info::root() const
@@ -519,7 +700,7 @@ bool Info::findValueForKey(String const &key, String &value) const
     Element const *element = findByPath(key);
     if(element && element->isKey())
     {
-        value = static_cast<KeyElement const *>(element)->value();
+        value = element->castTo<KeyElement>().value();
         return true;
     }
     return false;

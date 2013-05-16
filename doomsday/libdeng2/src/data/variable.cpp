@@ -26,6 +26,7 @@
 #include "de/DictionaryValue"
 #include "de/BlockValue"
 #include "de/TimeValue"
+#include "de/RecordValue"
 #include "de/Reader"
 #include "de/Writer"
 #include "de/Log"
@@ -95,14 +96,39 @@ Value &Variable::value()
     return *_value;
 }
 
+Record const &Variable::valueAsRecord() const
+{
+    return value<RecordValue>().dereference();
+}
+
+Variable::operator Record const & () const
+{
+    return valueAsRecord();
+}
+
+Variable::operator String () const
+{
+    return value().asText();
+}
+
+Variable::operator QString () const
+{
+    return value().asText();
+}
+
+Variable::operator ddouble () const
+{
+    return value().asNumber();
+}
+
 Variable::Flags Variable::mode() const
 {
     return _mode;
 }
 
-void Variable::setMode(Flags const &flags)
+void Variable::setMode(Flags const &flags, FlagOp operation)
 {
-    _mode = flags;
+    applyFlagOperation(_mode, flags, operation);
 }
 
 Variable &Variable::setReadOnly()

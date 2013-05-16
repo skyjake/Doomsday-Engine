@@ -365,6 +365,7 @@ DENG_HEADERS += \
     include/ui/mouse_qt.h \
     include/ui/nativeui.h \
     include/ui/p_control.h \
+    include/ui/style.h \
     include/ui/sys_input.h \
     include/ui/ui2_main.h \
     include/ui/ui_main.h \
@@ -636,6 +637,7 @@ SOURCES += \
     src/ui/mouse_qt.cpp \
     src/ui/nativeui.cpp \
     src/ui/p_control.cpp \
+    src/ui/style.cpp \
     src/ui/sys_input.cpp \
     src/ui/ui2_main.cpp \
     src/ui/ui_main.cpp \
@@ -670,6 +672,7 @@ data.files = $$OUT_PWD/../doomsday.pk3
 
 mod.files = \
     $$DENG_MODULES_DIR/Config.de \
+    $$DENG_MODULES_DIR/gui.de \
     $$DENG_MODULES_DIR/recutil.de
 
 # These fonts may be needed during the initial startup busy mode.

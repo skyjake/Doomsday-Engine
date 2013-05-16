@@ -306,6 +306,9 @@ public:
     InstType *get() const {
         return ptr;
     }
+    operator InstType *() const {
+        return ptr;
+    }
     InstType *release() {
         InstType *p = ptr;
         ptr = 0;

@@ -595,7 +595,7 @@ typedef struct ded_compositefont_s {
 // index numbers are important. The Game DLL must be recompiled with the
 // new constants if the order of the array items changes.
 
-typedef struct ded_s {
+struct ded_s {
     int             version; // DED version number.
     ded_flags_t     modelFlags; // Default values for models.
     float           modelScale;
@@ -698,7 +698,41 @@ typedef struct ded_s {
 
     // Composite fonts.
     ded_compositefont_t* compositeFonts;
-} ded_t;
+
+	/// Constructor initializes everything to zero.
+	ded_s() 
+		: version(DED_VERSION),
+		  modelFlags(0),
+		  modelScale(0),
+		  modelOffset(0),
+		  flags(0),
+		  mobjs(0),
+		  states(0),
+		  sprites(0),
+		  lights(0),
+		  materials(0),
+		  skies(0),
+		  sounds(0),
+		  music(0),
+		  mapInfo(0),
+		  text(0),
+		  textureEnv(0),
+		  values(0),
+		  details(0),
+		  ptcGens(0),
+		  finales(0),
+		  decorations(0),
+		  reflections(0),
+		  groups(0),
+		  lineTypes(0),
+		  sectorTypes(0),
+		  compositeFonts(0)
+	{
+		de::zap(count);
+	}
+};
+
+typedef ded_s ded_t;
 
 #ifdef __cplusplus
 extern "C" {

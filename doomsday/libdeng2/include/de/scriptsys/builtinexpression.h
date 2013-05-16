@@ -53,7 +53,9 @@ public:
         DESERIALIZE = 10,
         AS_TIME = 11,
         TIME_DELTA = 12,
-        AS_RECORD = 13
+        AS_RECORD = 13,
+        FLOOR = 14,
+        EVALUATE = 15
     };
 
 public:

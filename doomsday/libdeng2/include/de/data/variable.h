@@ -29,6 +29,7 @@
 namespace de {
 
 class Value;
+class Record;
     
 /**
  * Stores a value and name identifier. Variables are typically stored in a Record.
@@ -166,10 +167,26 @@ public:
         Type *v = dynamic_cast<Type *>(_value);
         if(!v) {
             /// @throw TypeError Casting to Type failed.
-            throw TypeError("Variable::value<Type>", "Illegal type conversion");
+            throw TypeError("Variable::value",
+                            QString("Illegal type conversion to ") + typeid(Type).name());
         }
         return *v;
     }
+
+    /**
+     * Returns the Record that the variable references. If the variable does
+     * not have a RecordValue, an exception is thrown.
+     *
+     * @return Referenced Record.
+     */
+    Record const &valueAsRecord() const;
+
+    operator Record const & () const;
+
+    // Automatic conversion to native primitive types.
+    operator String () const;
+    operator QString () const;
+    operator ddouble () const;
 
     /**
      * Returns the value of the variable.
@@ -179,7 +196,8 @@ public:
         Type const *v = dynamic_cast<Type const *>(_value);
         if(!v) {
             /// @throw TypeError Casting to Type failed.
-            throw TypeError("Variable::value<Type>", "Illegal type conversion");
+            throw TypeError("Variable::value",
+                            QString("Illegal type conversion to ") + typeid(Type).name());
         }
         return *v;
     }
@@ -194,7 +212,7 @@ public:
      *
      * @param flags  New mode flags that will replace the current ones.
      */
-    void setMode(Flags const &flags);
+    void setMode(Flags const &flags, FlagOp operation = ReplaceFlags);
 
     /**
      * Makes the variable read-only.

@@ -6,13 +6,14 @@ include(../config.pri)
 TEMPLATE = subdirs
 
 deng_tests: SUBDIRS += \
-    archive \
-    bitfield \
-    glsandbox \
-    log \
-    record \
-    script \
-    string \
-    stringpool \
-    vectors
+    test_archive \
+    test_bitfield \
+    test_glsandbox \
+    test_info \
+    test_log \
+    test_record \
+    test_script \
+    test_string \
+    test_stringpool \
+    test_vectors
     #basiclink

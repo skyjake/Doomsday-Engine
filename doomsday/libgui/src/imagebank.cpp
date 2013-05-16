@@ -19,6 +19,8 @@
 #include "de/ImageBank"
 #include "de/App"
 
+#include <de/ScriptedInfo>
+
 namespace de {
 
 DENG2_PIMPL_NOREF(ImageBank)
@@ -27,8 +29,7 @@ DENG2_PIMPL_NOREF(ImageBank)
     {
         String filePath;
 
-        ImageSource(String const &path) : filePath(path)
-        {}
+        ImageSource(String const &path) : filePath(path) {}
 
         Time modifiedAt() const
         {
@@ -60,10 +61,11 @@ DENG2_PIMPL_NOREF(ImageBank)
             return image.byteCount();
         }
     };
+
+    String relativeToPath;
 };
 
-ImageBank::ImageBank(Flags const &flags)
-    : Bank(flags), d(new Instance)
+ImageBank::ImageBank(Flags const &flags) : InfoBank(flags), d(new Instance)
 {}
 
 void ImageBank::add(Path const &path, String const &imageFilePath)
@@ -71,9 +73,23 @@ void ImageBank::add(Path const &path, String const &imageFilePath)
     Bank::add(path, new Instance::ImageSource(imageFilePath));
 }
 
+void ImageBank::addFromInfo(File const &file)
+{
+    LOG_AS("ImageBank");
+    d->relativeToPath = file.path().fileNamePath();
+    parse(file);
+    addFromInfoBlocks("image");
+}
+
 Image &ImageBank::image(Path const &path) const
 {
     return static_cast<Instance::ImageData &>(data(path)).image;
+}
+
+Bank::ISource *ImageBank::newSourceFromInfo(String const &id)
+{
+    Record const &def = info()[id];
+    return new Instance::ImageSource(d->relativeToPath / def["path"]);
 }
 
 Bank::IData *ImageBank::loadFromSource(ISource &source)

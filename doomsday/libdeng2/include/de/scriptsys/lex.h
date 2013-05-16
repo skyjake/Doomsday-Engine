@@ -28,7 +28,7 @@
 namespace de {
 
 /**
- * Base class for lexical analyzers. It provides the basic service of reading
+ * Base class for lexical analyzers. Provides the basic service of reading
  * characters one by one from an input text. It also classifies characters.
  *
  * @ingroup script

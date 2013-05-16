@@ -1,0 +1,30 @@
+# Fonts for the default UI style
+#
+# - size can be "pt" or "px", defaults to "pt" 
+# - weight: normal bold light
+# - style: normal italic
+
+script { import Version, gui }
+
+namespace font {
+
+font default condition "Version.OS == 'windows'" {
+    family: Verdana
+    size: 12pt
+    weight: normal
+    style: normal
+}
+
+font default condition "Version.OS == 'macx'" {
+    family: Lucida Grande
+    size: 16pt
+    weight: normal
+    style: normal
+}
+
+font title inherits default {
+    size $: gui.scale(__this__.size, 1.5)
+    weight: bold
+}
+
+} # namespace font

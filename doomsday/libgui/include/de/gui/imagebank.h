@@ -22,16 +22,18 @@
 #include "libgui.h"
 #include "../Image"
 
-#include <de/Bank>
+#include <de/InfoBank>
 
 namespace de {
+
+class File;
 
 /**
  * Bank containing Image instances loaded from files.
  *
  * @ingroup data
  */
-class LIBGUI_PUBLIC ImageBank : public Bank
+class LIBGUI_PUBLIC ImageBank : public InfoBank
 {
 public:
     /**
@@ -46,10 +48,12 @@ public:
     ImageBank(Flags const &flags = BackgroundThread | DisableHotStorage);
 
     void add(Path const &path, String const &imageFilePath);
+    void addFromInfo(File const &file);
 
     Image &image(Path const &path) const;
 
 protected:
+    ISource *newSourceFromInfo(String const &id);
     IData *loadFromSource(ISource &source);
     IData *newData();
 

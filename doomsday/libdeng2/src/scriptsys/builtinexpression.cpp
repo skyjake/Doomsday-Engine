@@ -29,6 +29,9 @@
 #include "de/TimeValue"
 #include "de/Writer"
 #include "de/Reader"
+#include "de/Script"
+#include "de/Process"
+#include "de/math.h"
 
 using namespace de;
 
@@ -121,7 +124,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
             for(Record::Members::const_iterator i = rec->dereference().members().begin();
                 i != rec->dereference().members().end(); ++i)
             {
-                dict->add(new TextValue(i->first), new RefValue(i->second));
+                dict->add(new TextValue(i.key()), new RefValue(i.value()));
             }
         }
         else
@@ -129,7 +132,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
             Record::Subrecords subs = rec->dereference().subrecords();
             DENG2_FOR_EACH(Record::Subrecords, i, subs)
             {
-                dict->add(new TextValue(i->first), new RecordValue(i->second));
+                dict->add(new TextValue(i.key()), new RecordValue(i.value()));
             }
         }
         return dict;
@@ -214,15 +217,12 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
 
     case LOCAL_NAMESPACE:
     {
-        // Collect the namespaces to search.
-        Evaluator::Namespaces spaces;
-        evaluator.namespaces(spaces);
         if(args->size() != 1)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "No arguments expected for LOCAL_NAMESPACE");
         }
-        return new RecordValue(spaces.front());
+        return new RecordValue(evaluator.localNamespace());
     }
     
     case SERIALIZE:
@@ -262,6 +262,31 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
             "deserialize() can operate only on block values");
     }
         
+    case FLOOR:
+        if(args->size() != 2)
+        {
+            throw WrongArgumentsError("BuiltInExpression::evaluate",
+                                      "Expected exactly one argument for FLOOR");
+        }
+        return new NumberValue(std::floor(args->at(1).asNumber()));
+
+    case EVALUATE:
+    {
+        if(args->size() != 2)
+        {
+            throw WrongArgumentsError("BuiltInExpression::evaluate",
+                                      "Expected exactly one argument for EVALUATE");
+        }
+        // Set up a subprocess in the local namespace.
+        Process subProcess(evaluator.localNamespace());
+        // Parse the argument as a script.
+        Script subScript(args->at(1).asText());
+        subProcess.run(subScript);
+        subProcess.execute();
+        // A copy of the result value is returned.
+        return subProcess.context().evaluator().result().duplicate();
+    }
+
     default:
         DENG2_ASSERT(false);
     }
@@ -317,6 +342,8 @@ BuiltInExpression::Type BuiltInExpression::findType(String const &identifier)
         { "Time",        AS_TIME },
         { "timedelta",   TIME_DELTA },
         { "Record",      AS_RECORD },
+        { "floor",       FLOOR },
+        { "eval",        EVALUATE },
         { NULL,          NONE }
     };
     

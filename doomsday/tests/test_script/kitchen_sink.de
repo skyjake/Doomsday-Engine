@@ -61,6 +61,10 @@ print 'serialize(a) =', b
 print 'deserialize(serialize(a)) =', deserialize(b)
 del a, b
 
+sections.subsection('Built-in function: eval().')
+a = eval(""" 'arg' + 'ument' """)
+eval("""print "Printed from eval(): %s" % a""")
+
 # ---------------------------------------------------------------------------
 sections.begin('OPERATOR EXPRESSIONS')
 

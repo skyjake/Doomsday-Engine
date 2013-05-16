@@ -29,7 +29,7 @@ Context::Context(Type type, Process *owner, Record *globals)
     if(!_names)
     {
         // Create a private empty namespace.
-        DENG2_ASSERT(_type != GLOBAL_NAMESPACE);
+        DENG2_ASSERT(_type != GlobalNamespace);
         _names = new Record();
         _ownsNamespace = true;
     }

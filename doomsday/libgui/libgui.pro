@@ -50,8 +50,11 @@ HEADERS += \
     include/de/AtlasTexture \
     include/de/Canvas \
     include/de/CanvasWindow \
+    include/de/ColorBank \
     include/de/DisplayMode \
     include/de/Drawable \
+    include/de/Font \
+    include/de/FontBank \
     include/de/GLBuffer \
     include/de/GLProgram \
     include/de/GLShader \
@@ -72,10 +75,13 @@ HEADERS += \
     include/de/gui/atlastexture.h \
     include/de/gui/canvas.h \
     include/de/gui/canvaswindow.h \
+    include/de/gui/colorbank.h \
     include/de/gui/ddkey.h \
     include/de/gui/displaymode.h \
     include/de/gui/displaymode_native.h \
     include/de/gui/drawable.h \
+    include/de/gui/font.h \
+    include/de/gui/fontbank.h \
     include/de/gui/glbuffer.h \
     include/de/gui/glentrypoints.h \
     include/de/gui/glprogram.h \
@@ -101,8 +107,11 @@ SOURCES +=  \
     src/atlastexture.cpp \
     src/canvas.cpp \
     src/canvaswindow.cpp \
+    src/colorbank.cpp \
     src/displaymode.cpp \
     src/drawable.cpp \
+    src/font.cpp \
+    src/fontbank.cpp \
     src/glbuffer.cpp \
     src/glentrypoints.cpp \
     src/glprogram.cpp \

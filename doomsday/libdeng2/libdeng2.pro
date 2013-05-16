@@ -150,6 +150,7 @@ SOURCES += \
 
 OTHER_FILES += \
     modules/Config.de \
+    modules/gui.de \
     modules/recutil.de
 
 # Installation ---------------------------------------------------------------

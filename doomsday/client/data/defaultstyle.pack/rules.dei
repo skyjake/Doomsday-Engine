@@ -1,0 +1,8 @@
+# Length rules for the default UI style
+
+script {
+    UNIT = 4.0
+}
+
+rule unit { constant $= UNIT }
+rule gap  { constant $= UNIT * 3 }

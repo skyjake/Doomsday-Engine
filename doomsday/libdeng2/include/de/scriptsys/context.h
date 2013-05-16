@@ -40,9 +40,9 @@ public:
     DENG2_ERROR(JumpError);
 
     enum Type {
-        PROCESS,
-        GLOBAL_NAMESPACE,
-        FUNCTION_CALL
+        BaseProcess,
+        GlobalNamespace,
+        FunctionCall
     };
 
 public:

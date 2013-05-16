@@ -28,7 +28,7 @@ if not os.path.exists(solPath): os.mkdir(solPath)
 
 # Run qmake to generate the solution and vcprojs.
 os.chdir(solPath)
-#os.system(os.path.join(rootPath, 'build', 'win32', 'qmake_tp_vc.bat'))
+os.system(os.path.join(rootPath, 'build', 'win32', 'qmake_tp_vc.bat'))
 
 # Cleanup.
 print "\nDeleting spurious PK3s..."
@@ -53,9 +53,10 @@ def fileRegOff(fn, pattern, startAtPos=0):
     return found.start()
     
 
-fileRegex('libdeng2\deng2.vcxproj', 
-          r'=\\&quot;([A-Za-z0-9_\- ]+)\\&quot;', 
-          r'=&quot;\1&quot;')
+for proj in ['libdeng2\deng2.vcxproj', 'tools\shell\shell-gui\Doomsday-Shell.vcxproj']:
+    fileRegex(proj, 
+              r'=\\&quot;([A-Za-z0-9_\-\. ]+)\\&quot;', 
+              r'=&quot;\1&quot;')
     
 copyScript = 'python &quot;%s\\\\build\win32\copy_to_products.py' % rootPath + '&quot; &quot;' + solPath + '&quot;'
 rcDirs = '&quot;' + rootPath + '\\\\api&quot;;&quot;' + rootPath + '\\\\libdeng1\include' + '&quot;'

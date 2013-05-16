@@ -145,7 +145,7 @@ String String::operator % (PatternArgs args) const
 
 String String::concatenatePath(String const &other, QChar dirChar) const
 {
-    if(QDir::isAbsolutePath(other))
+    if((dirChar == '/' || dirChar == '\\') && QDir::isAbsolutePath(other))
     {
         // The other path is absolute - use as is.
         return other;

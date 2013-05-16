@@ -64,6 +64,13 @@ public:
      */
     RecordValue(Record *record, OwnershipFlags ownership = 0);
 
+    /**
+     * Constructs a new (unowned) reference to a record.
+     *
+     * @param record     Record.
+     */
+    RecordValue(Record &record);
+
     virtual ~RecordValue();
 
     bool hasOwnership() const;

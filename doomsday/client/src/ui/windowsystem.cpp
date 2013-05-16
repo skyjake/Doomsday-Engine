@@ -19,6 +19,7 @@
 #include "de_platform.h"
 #include "ui/windowsystem.h"
 #include "ui/clientwindow.h"
+#include "ui/style.h"
 #include "clientapp.h"
 
 #include <QMap>
@@ -29,9 +30,12 @@ DENG2_PIMPL(WindowSystem)
 {
     typedef QMap<String, ClientWindow *> Windows;
     Windows windows;
+    Style style;
 
     Instance(Public *i) : Base(i)
-    {}
+    {
+        style.load(App::fileSystem().find("defaultstyle.pack").path());
+    }
 
     ~Instance()
     {
@@ -78,6 +82,11 @@ void WindowSystem::closeAll()
 {
     qDeleteAll(d->windows.values());
     d->windows.clear();
+}
+
+Style &WindowSystem::style()
+{
+    return d->style;
 }
 
 bool WindowSystem::processEvent(Event const &event)

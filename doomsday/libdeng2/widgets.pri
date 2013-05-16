@@ -5,6 +5,7 @@ HEADERS += \
     include/de/DelegateRule \
     include/de/ConstantRule \
     include/de/OperatorRule \
+    include/de/RuleBank \
     include/de/RuleRectangle \
     include/de/RootWidget \
     include/de/ScalarRule \
@@ -20,6 +21,7 @@ HEADERS += \
     include/de/widgets/rulerectangle.h \
     include/de/widgets/rootwidget.h \
     include/de/widgets/rule.h \
+    include/de/widgets/rulebank.h \
     include/de/widgets/rules.h \
     include/de/widgets/scalarrule.h \
     include/de/widgets/widget.h
@@ -33,5 +35,6 @@ SOURCES += \
     src/widgets/rulerectangle.cpp \
     src/widgets/rootwidget.cpp \
     src/widgets/rule.cpp \
+    src/widgets/rulebank.cpp \
     src/widgets/scalarrule.cpp \
     src/widgets/widget.cpp

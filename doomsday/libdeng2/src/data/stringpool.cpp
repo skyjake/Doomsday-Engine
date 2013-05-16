@@ -282,7 +282,7 @@ StringPool::StringPool() : d(new Instance)
 {
 }
 
-StringPool::StringPool(String *strings, uint count) : d(new Instance)
+StringPool::StringPool(String const *strings, uint count) : d(new Instance)
 {
     for(uint i = 0; strings && i < count; ++i)
     {

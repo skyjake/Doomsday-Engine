@@ -1,0 +1,79 @@
+# Fonts for the default UI style
+# - size can be "pt" or "px", defaults to "pt" 
+# - weight: normal bold light
+# - style: normal italic
+
+script {
+    # Version module will be available in embedded scripts here.
+    import Version
+    
+    def joinArray(a)
+        result = ''
+        for i in a: result += i
+        return result
+    end
+}
+
+script "condition testing" condition "Version.OS == 'macx'" {
+    print "Running on %s!" % Version.OS
+    for i in [0, 2, 4]
+        print 'i =', i
+    end
+}
+
+# Nameless groups are allowed.
+group {
+    condition: False
+    script test2 condition True { print "WILL NOT BE RUN" }    
+}
+
+thing A { 
+    member: value from A
+}
+
+thing B inherits A {
+    member2: value from B
+    script { print "Contents of B:"; print __this__ }
+}
+
+group {
+    # All members inherit A.
+    inherits = A
+    
+    thing C {
+        member2: value from C
+        script { print "Contents of C:"; print __this__ }
+    }
+    thing D inherits B {
+        # Inherits A from group, then B.
+        member3: value from D
+        script { print "Contents of D:"; print __this__ }
+    }
+}
+    
+type1 first-block { key = value }
+type2 example-block inherits first-block {}    
+    
+group font {
+    condition: Version.OS == 'macx'
+    
+    preferences < font.default, $" 'font'+'.'+'title' " >
+    
+    font Default {
+        family $= "'Lucida ' + ''Grande''"
+        size $: joinArray(['16', 'pt'])
+        weight = normal
+        style: normal
+
+        script {
+            print "Default font:"
+            print __this__
+        }
+    }
+    
+    # Identifiers are all case insensitive.
+    Font "Title" inherits font.default {
+        Size: 24pt
+        Weight $: if __this__.weight == "normal": "bold"; else: "normal"
+    }
+}

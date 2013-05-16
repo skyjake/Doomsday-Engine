@@ -80,7 +80,7 @@ public:
      * @param strings  Array of strings to be interned (must contain at least @a count strings).
      * @param count    Number of strings to be interned.
      */
-    StringPool(String *strings, uint count);
+    StringPool(String const *strings, uint count);
 
     /**
      * Clear the string pool. All strings in the pool will be destroyed.
@@ -92,6 +92,8 @@ public:
      * @return  @c true if there are no strings present in the pool.
      */
     bool empty() const;
+
+    bool isEmpty() const { return empty(); }
 
     /**
      * Determines the number of strings in the pool.

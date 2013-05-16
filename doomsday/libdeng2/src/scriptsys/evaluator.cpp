@@ -39,6 +39,11 @@ Process &Evaluator::process()
     return _context.process(); 
 }
 
+Process const &Evaluator::process() const
+{
+    return _context.process();
+}
+
 void Evaluator::reset()
 {
     _current = NULL;
@@ -82,7 +87,7 @@ Value &Evaluator::evaluate(Expression const *expression)
     return result();
 }
 
-void Evaluator::namespaces(Namespaces &spaces)
+void Evaluator::namespaces(Namespaces &spaces) const
 {
     if(_names)
     {
@@ -95,6 +100,15 @@ void Evaluator::namespaces(Namespaces &spaces)
         // Collect namespaces from the process's call stack.
         process().namespaces(spaces);
     }
+}
+
+Record *Evaluator::localNamespace() const
+{
+    Namespaces spaces;
+    namespaces(spaces);
+    DENG2_ASSERT(!spaces.empty());
+    DENG2_ASSERT(spaces.front() != 0);
+    return spaces.front();
 }
 
 bool Evaluator::hasResult() const

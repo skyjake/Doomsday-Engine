@@ -27,6 +27,7 @@ HEADERS += \
     include/de/PrintStatement \
     include/de/Process \
     include/de/Script \
+    include/de/ScriptedInfo \
     include/de/ScriptLex \
     include/de/ScriptSystem \
     include/de/Statement \
@@ -64,6 +65,7 @@ HEADERS += \
     include/de/scriptsys/printstatement.h \
     include/de/scriptsys/process.h \
     include/de/scriptsys/script.h \
+    include/de/scriptsys/scriptedinfo.h \
     include/de/scriptsys/scriptlex.h \
     include/de/scriptsys/scriptsystem.h \
     include/de/scriptsys/statement.h \
@@ -100,12 +102,11 @@ SOURCES += \
     src/scriptsys/printstatement.cpp \
     src/scriptsys/process.cpp \
     src/scriptsys/script.cpp \
+    src/scriptsys/scriptedinfo.cpp \
     src/scriptsys/scriptlex.cpp \
+    src/scriptsys/scriptsystem.cpp \
     src/scriptsys/statement.cpp \
     src/scriptsys/tokenbuffer.cpp \
     src/scriptsys/tokenrange.cpp \
     src/scriptsys/trystatement.cpp \
     src/scriptsys/whilestatement.cpp
-
-SOURCES += \
-    src/scriptsys/scriptsystem.cpp

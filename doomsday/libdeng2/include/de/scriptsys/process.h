@@ -54,12 +54,12 @@ public:
 
     /// A process is always in one of these states.
     enum State {
-        RUNNING,    /**< The process is running normally. */
-        SUSPENDED,  /**< The process has been suspended and will
+        Running,    /**< The process is running normally. */
+        Suspended,  /**< The process has been suspended and will
                      *   not continue running until restored.  A
                      *   process cannot restore itself from a
                      *   suspended state. */
-        STOPPED     /**< The process has reached the end of the
+        Stopped     /**< The process has reached the end of the
                      *   script or has been terminated. */
     };
 
@@ -93,6 +93,13 @@ public:
 
     /// Determines the current depth of the call stack.
     duint depth() const;
+
+    /**
+     * Resets the process to an empty state. All existing content in the
+     * process's context stack is removed, leaving the process in a similar
+     * state than after construction.
+     */
+    void clear();
 
     /**
      * Starts running the given script. Note that the process must be
@@ -175,7 +182,7 @@ public:
      * @param spaces  The namespaces are collected here. The order is important:
      *                earlier namespaces shadow the subsequent ones.
      */
-    void namespaces(Namespaces &spaces);
+    void namespaces(Namespaces &spaces) const;
 
     /**
      * Returns the global namespace of the process. This is always the

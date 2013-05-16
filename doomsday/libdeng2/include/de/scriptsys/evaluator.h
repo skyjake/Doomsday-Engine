@@ -59,6 +59,11 @@ public:
     Process &process();
 
     /**
+     * Returns the process that owns this evaluator.
+     */
+    Process const &process() const;
+
+    /**
      * Resets the evaluator so it's ready for another expression.
      * Called when the statement changes in the context.
      */
@@ -98,7 +103,12 @@ public:
      * @param spaces  List of namespaces. The order is important: the earlier
      *                namespaces shadow the subsequent ones.
      */
-    void namespaces(Namespaces &spaces);
+    void namespaces(Namespaces &spaces) const;
+
+    /**
+     * Returns the current local namespace (topmost namespace from namespaces()).
+     */
+    Record *localNamespace() const;
 
     /**
      * Insert the given expression to the top of the expression stack.

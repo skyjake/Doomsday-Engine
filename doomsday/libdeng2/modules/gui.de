@@ -1,0 +1,36 @@
+# The Doomsday Engine Project -- libdeng2
+#
+# Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>.
+
+#----------------------------------------------------------------------------
+# Graphical user interface
+
+def scale(value, factor)
+    # Scales a value by 'factor'. If 'value' is a text string, the 
+    # suffixes "pt" and "px" (point, pixel) are retained in the result.
+    # - src:    Value to scale. Number or Text, may have "pt" or "px"
+    #           as suffix.
+    # - factor: Scale factor (Number).
+
+    unit = ''
+    p = Text(value)
+    amount = p
+    if p[-2:] == 'pt' or p[-2:] == 'px'
+        unit = p[-2:]
+        amount = p[:-2]
+    end
+    return Text(floor(Number(amount) * factor)) + unit
+end

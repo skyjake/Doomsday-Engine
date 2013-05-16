@@ -91,7 +91,7 @@ DENG2_OBSERVES(Bank, Load)
 
         imageBank.add(Path("rtt.cube", '.'), "/data/graphics/testpic.png");
         //imageBank.loadAll();
-        //imageBank.audienceForLoad += this;
+        imageBank.audienceForLoad += this;
     }
 
     void canvasGLInit(Canvas &cv)
@@ -119,8 +119,8 @@ DENG2_OBSERVES(Bank, Load)
 
         // Textures.
         testpic.setAutoGenMips(true);
-        //imageBank.load(Path("rtt.cube", '.'));
-        testpic.setImage(imageBank.image("rtt/cube"));
+        imageBank.load(Path("rtt.cube", '.'));
+        //testpic.setImage(imageBank.image("rtt/cube"));
         //testpic.setImage(QImage(":/images/testpic.png"));
         testpic.setWrapT(gl::RepeatMirrored);
         testpic.setMinFilter(gl::Linear, gl::MipLinear);
@@ -230,6 +230,8 @@ DENG2_OBSERVES(Bank, Load)
         LOG_INFO("Bank item \"%s\" loaded") << path;
         if(path == "rtt/cube")
         {
+            DENG2_ASSERT_IN_MAIN_THREAD();
+
             self.canvas().makeCurrent();
             testpic.setImage(imageBank.image(path));
             self.canvas().doneCurrent();

@@ -67,6 +67,14 @@ public:
 
     virtual ~Script();
 
+    /**
+     * Sets the path of the source. Used as the value of __file__ in the
+     * executing process's global namespace.
+     *
+     * @param path  Path.
+     */
+    void setPath(String const &path) { _path = path; }
+
     String const &path() const { return _path; }
 
     /// Returns the statement that begins the script. This is where

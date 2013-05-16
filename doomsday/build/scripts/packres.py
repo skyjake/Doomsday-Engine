@@ -72,6 +72,12 @@ p.add_files(
       ('client/data', 'data') ] )
 p.create('doomsday.pk3')
 
+# defaultstyle.pack
+p = Pack()
+p.add_files(
+    [ ('client/data/defaultstyle.pack', '') ] )
+p.create('defaultstyle.pack')
+
 # libdoom.pk3
 p = Pack()
 p.add_files(

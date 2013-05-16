@@ -21,22 +21,27 @@
 #define LIBDENG2_INFO_H
 
 #include "../String"
+#include "../NativePath"
 #include <QStringList>
 #include <QHash>
 
 namespace de {
 
 /**
- * Key/value tree. Read from the "Snowberry" Info file format.
+ * Key/value tree. The tree is parsed from the "Snowberry" Info file format.
  *
- * This implementation has been ported to C++ based on cfparser.py from
- * Snowberry.
+ * See the Doomsday Wiki for an example of the syntax:
+ * http://dengine.net/dew/index.php?title=Info
  *
- * @todo Document Info syntax in wiki, with example.
+ * This implementation is based on a C++ port of cfparser.py from Snowberry.
+ *
+ * @todo Should use de::Lex internally.
  */
 class Info
 {
 public:
+    class BlockElement;
+
     /**
      * Base class for all elements.
      */
@@ -49,12 +54,39 @@ public:
             Block
         };
 
+        /// Value of a key/list element.
+        struct Value {
+            enum Flag {
+                Script = 0x1,       ///< Assigned with $= (to be parsed as script).
+                DefaultFlags = 0
+            };
+            Q_DECLARE_FLAGS(Flags, Flag)
+
+            String text;
+            Flags flags;
+
+            Value(String const &txt = "", Flags const &f = DefaultFlags)
+                : text(txt), flags(f) {}
+
+            operator String const & () const { return text; }
+        };
+        typedef QList<Value> ValueList;
+
         /**
          * @param t  Type of the element.
          * @param n  Case-independent name of the element.
          */
-        Element(Type t = None, String const &n = "") : _type(t) { setName(n); }
+        Element(Type t = None, String const &n = "")
+            : _type(t), _parent(0), _lineNumber(0) { setName(n); }
         virtual ~Element() {}
+
+        void setParent(BlockElement *parent) { _parent = parent; }
+        BlockElement *parent() const {
+            return _parent;
+        }
+
+        void setLineNumber(int line) { _lineNumber = line; }
+        int lineNumber() const { return _lineNumber; }
 
         Type type() const { return _type; }
         bool isKey() const { return _type == Key; }
@@ -62,13 +94,29 @@ public:
         bool isBlock() const { return _type == Block; }
         String const &name() const { return _name; }
 
+        template <typename T>
+        T &castTo() {
+            T *t = dynamic_cast<T *>(this);
+            DENG2_ASSERT(t != 0);
+            return *t;
+        }
+
+        template <typename T>
+        T const &castTo() const {
+            T const *t = dynamic_cast<T const *>(this);
+            DENG2_ASSERT(t != 0);
+            return *t;
+        }
+
         void setName(String const &name) { _name = name.toLower(); }
 
-        virtual QStringList values() const = 0;
+        virtual ValueList values() const = 0;
 
     private:
         Type _type;
         String _name;
+        BlockElement *_parent;
+        int _lineNumber;
     };
 
     /**
@@ -76,19 +124,28 @@ public:
      */
     class KeyElement : public Element {
     public:
-        KeyElement(String const &name, String const &value) : Element(Key, name), _value(value) {}
+        enum Flag {
+            Attribute = 0x1,
+            DefaultFlags = 0
+        };
+        Q_DECLARE_FLAGS(Flags, Flag)
 
-        void setValue(String const &v) { _value = v; }
-        String const &value() const { return _value; }
+    public:
+        KeyElement(String const &name, Value const &value, Flags const &f = DefaultFlags)
+            : Element(Key, name), _value(value), _flags(f) {}
 
-        QStringList values() const {
-            QStringList list;
-            list << _value;
-            return list;
+        void setValue(Value const &v) { _value = v; }
+        Value const &value() const { return _value; }
+
+        Flags flags() const { return _flags; }
+
+        ValueList values() const {
+            return ValueList() << _value;
         }
 
     private:
-        String _value;
+        Value _value;
+        Flags _flags;
     };
 
     /**
@@ -97,11 +154,11 @@ public:
     class ListElement : public Element {
     public:
         ListElement(String const &name) : Element(List, name) {}
-        void add(String const &v) { _values << v; }
-        QStringList values() const { return _values; }
+        void add(Value const &v) { _values << v; }
+        ValueList values() const { return _values; }
 
     private:
-        QStringList _values;
+        ValueList _values;
     };
 
     /**
@@ -117,7 +174,8 @@ public:
         typedef QList<Element *> ContentsInOrder;
 
     public:
-        BlockElement(String const &bType, String const &name) : Element(Block, name) {
+        BlockElement(String const &bType, String const &name, Info &document)
+            : Element(Block, name), _info(document) {
             setBlockType(bType);
         }
         ~BlockElement();
@@ -127,13 +185,15 @@ public:
          */
         bool isRootBlock() const { return _blockType.isEmpty(); }
 
+        Info &info() const { return _info; }
+
         String const &blockType() const { return _blockType; }
 
         ContentsInOrder const &contentsInOrder() const { return _contentsInOrder; }
 
         Contents const &contents() const { return _contents; }
 
-        QStringList values() const {
+        ValueList values() const {
             throw ValuesError("Info::BlockElement::values",
                               "Block elements do not contain text values (only other elements)");
         }
@@ -146,16 +206,13 @@ public:
 
         void clear();
 
-        void add(Element *elem) {
-            DENG2_ASSERT(elem != 0);
-            _contentsInOrder.append(elem);
-            _contents.insert(elem->name(), elem);
-        }
+        void add(Element *elem);
 
-        Element *find(String const &name) const {
-            Contents::const_iterator found = _contents.find(name);
-            if(found == _contents.end()) return 0;
-            return found.value();
+        Element *find(String const &name) const;
+
+        template <typename T>
+        T *findAs(String const &name) const {
+            return dynamic_cast<T *>(find(name));
         }
 
         /**
@@ -164,11 +221,7 @@ public:
          *
          * @param name  Name of a key element in the block.
          */
-        String keyValue(String const &name) const {
-            Element *e = find(name);
-            if(!e || !e->isKey()) return "";
-            return static_cast<KeyElement *>(e)->value();
-        }
+        Value keyValue(String const &name) const;
 
         /**
          * Looks for an element based on a path where a colon ':' is used to
@@ -182,6 +235,7 @@ public:
         Element *findByPath(String const &path) const;
 
     private:
+        Info &_info;
         String _blockType;
         Contents _contents;
         ContentsInOrder _contentsInOrder;
@@ -202,6 +256,16 @@ public:
     Info(String const &source);
 
     /**
+     * Sets all the block types whose content is parsed using a script parser.
+     * The blocks will contain a single KeyElement named "script".
+     *
+     * @param blocksToParseAsScript  List of block types.
+     */
+    void setScriptBlocks(QStringList const &blocksToParseAsScript);
+
+    void setAllowDuplicateBlocksOfType(QStringList const &duplicatesAllowed);
+
+    /**
      * Parses the Info contents from a text string.
      *
      * @param infoSource  Info text.
@@ -213,7 +277,9 @@ public:
      *
      * @param nativePath  Path of a native file containing the Info source.
      */
-    void parseNativeFile(String const &nativePath);
+    void parseNativeFile(NativePath const &nativePath);
+
+    void clear();
 
     BlockElement const &root() const;
 
@@ -233,6 +299,9 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(Info::Element::Value::Flags)
+Q_DECLARE_OPERATORS_FOR_FLAGS(Info::KeyElement::Flags)
 
 } // namespace de
 
