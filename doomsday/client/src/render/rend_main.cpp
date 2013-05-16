@@ -40,6 +40,8 @@
 #include "MaterialVariantSpec"
 #include "Texture"
 #include "SectionEdge"
+#include "SkyFixEdge"
+#include "TriangleStripBuilder"
 
 #include "map/blockmapvisual.h"
 #include "map/gamemap.h"
@@ -49,8 +51,6 @@
 #include "map/r_world.h"
 
 #include "render/sprite.h"
-
-#include "TriangleStripBuilder"
 
 #include "gl/sys_opengl.h"
 
@@ -1863,207 +1863,6 @@ static void writeLeafPlane(Plane &plane)
 }
 
 /**
- * @defgroup skyCapFlags  Sky Cap Flags
- * @ingroup flags
- */
-///@{
-#define SKYCAP_LOWER                0x1
-#define SKYCAP_UPPER                0x2
-///@}
-
-static coord_t skyPlaneZ(BspLeaf *bspLeaf, int skyCap)
-{
-    DENG_ASSERT(bspLeaf);
-    Plane::Type const plane = (skyCap & SKYCAP_UPPER)? Plane::Ceiling : Plane::Floor;
-    if(!bspLeaf->hasSector() || !P_IsInVoid(viewPlayer))
-        return theMap->skyFix(plane == Plane::Ceiling);
-    return bspLeaf->sector().plane(plane).visHeight();
-}
-
-static coord_t skyFixFloorZ(Plane const *frontFloor, Plane const *backFloor)
-{
-    DENG_UNUSED(backFloor);
-    if(devRendSkyMode || P_IsInVoid(viewPlayer))
-        return frontFloor->visHeight();
-    return theMap->skyFixFloor();
-}
-
-static coord_t skyFixCeilZ(Plane const *frontCeil, Plane const *backCeil)
-{
-    DENG_UNUSED(backCeil);
-    if(devRendSkyMode || P_IsInVoid(viewPlayer))
-        return frontCeil->visHeight();
-    return theMap->skyFixCeiling();
-}
-
-class SkyFixEdge : public IEdge
-{
-public:
-    enum FixType
-    {
-        Lower,
-        Upper
-    };
-
-    class Intercept : public IEdge::IIntercept
-    {
-    public:
-        Intercept(SkyFixEdge &owner, coord_t distance = 0)
-            : _owner(owner), _distance(distance)
-        {}
-
-        bool operator < (Intercept const &other) const {
-            return _distance < other._distance;
-        }
-
-        coord_t distance() const { return _distance; }
-
-        void setDistance(coord_t distance)
-        {
-            _distance = distance;
-        }
-
-        Vector3d origin() const
-        {
-            return Vector3d(_owner.origin(), _distance);
-        }
-
-    private:
-        SkyFixEdge &_owner;
-        coord_t _distance;
-    };
-
-public:
-    /**
-     * @param hedge    HEdge from which to determine sky fix coordinates.
-     * @param fixType  Fix type.
-     */
-    SkyFixEdge(HEdge &hedge, FixType fixType, int edge, float materialOffsetS = 0)
-        : _hedge(&hedge), _fixType(fixType), _edge(edge),
-          _bottom(*this), _top(*this), _materialOrigin(materialOffsetS, 0),
-          _isValid(false)
-    {}
-
-    void prepare()
-    {
-        Sector const *frontSec = _hedge->bspLeaf().sectorPtr();
-        Sector const *backSec  = _hedge->twin().hasBspLeaf() && !_hedge->twin().bspLeaf().hasDegenerateFace()? _hedge->twin().bspLeaf().sectorPtr() : 0;
-        Plane const *ffloor = &frontSec->floor();
-        Plane const *fceil  = &frontSec->ceiling();
-        Plane const *bceil  = backSec? &backSec->ceiling() : 0;
-        Plane const *bfloor = backSec? &backSec->floor()   : 0;
-
-        _bottom.setDistance(0);
-        _top.setDistance(0);
-
-        if(_fixType == Upper)
-        {
-            _top.setDistance(skyFixCeilZ(fceil, bceil));
-            _bottom.setDistance(de::max((backSec && bceil->surface().hasSkyMaskedMaterial() )? bceil->visHeight()  : fceil->visHeight(),  ffloor->visHeight()));
-        }
-        else
-        {
-            _top.setDistance(de::min((backSec && bfloor->surface().hasSkyMaskedMaterial())? bfloor->visHeight() : ffloor->visHeight(), fceil->visHeight()));
-            _bottom.setDistance(skyFixFloorZ(ffloor, bfloor));
-        }
-
-        _isValid = _bottom < _top;
-    }
-
-    bool isValid() const { return _isValid; }
-
-    de::Vector2d const &origin() const
-    {
-        return _edge? _hedge->twin().origin() : _hedge->origin();
-    }
-
-    Intercept const &from() const
-    {
-        return _bottom;
-    }
-
-    Intercept const &to() const
-    {
-        return _top;
-    }
-
-    inline Intercept const &bottom() const { return from(); }
-    inline Intercept const &top() const { return to(); }
-
-    Vector2f const &materialOrigin() const
-    {
-        return _materialOrigin;
-    }
-
-private:
-    HEdge *_hedge;
-    FixType _fixType;
-    int _edge;
-
-    Intercept _bottom;
-    Intercept _top;
-    Vector2f _materialOrigin;
-    bool _isValid;
-};
-
-/**
- * Determines whether a sky fix is necessary for the specified wall section half-edge.
- *
- * @param hedge    HEdge to be evaluated.
- * @param fixType  Sky fix type we are interested in.
- */
-static bool wallSectionNeedsSkyFix(HEdge &hedge, SkyFixEdge::FixType fixType)
-{
-    DENG_ASSERT(hedge.hasBspLeaf());
-
-    bool const lower = fixType == SkyFixEdge::Lower;
-
-    // Partition line segments have no map line sides.
-    if(!hedge.hasLineSide()) return false;
-
-    Sector const *frontSec = hedge.bspLeaf().sectorPtr();
-    Sector const *backSec  = hedge.twin().hasBspLeaf() && !hedge.twin().bspLeaf().hasDegenerateFace()? hedge.twin().bspLeaf().sectorPtr() : 0;
-
-    if(!(!backSec || backSec != frontSec)) return false;
-
-    // Select the relative planes for the fix type.
-    Plane::Type relPlane = lower? Plane::Floor : Plane::Ceiling;
-    Plane const *front   = &frontSec->plane(relPlane);
-    Plane const *back    = backSec? &backSec->plane(relPlane) : 0;
-
-    if(!front->surface().hasSkyMaskedMaterial())
-        return false;
-
-    bool const hasClosedBack = R_SideBackClosed(hedge.lineSide());
-
-    if(!devRendSkyMode)
-    {
-        if(!P_IsInVoid(viewPlayer) &&
-           !(hasClosedBack || !(back && back->surface().hasSkyMaskedMaterial())))
-            return false;
-    }
-    else
-    {
-        int relSection = lower? Line::Side::Bottom : Line::Side::Top;
-
-        if(hedge.lineSide().surface(relSection).hasMaterial() ||
-           !(hasClosedBack || (back && back->surface().hasSkyMaskedMaterial())))
-            return false;
-    }
-
-    coord_t fz, bz;
-    R_SetRelativeHeights(frontSec, backSec, relPlane, &fz, &bz);
-
-    coord_t planeZ = (back && back->surface().hasSkyMaskedMaterial() &&
-                      fz < bz? bz : fz);
-
-    coord_t skyZ = lower? skyFixFloorZ(front, back)
-                        : -skyFixCeilZ(front, back);
-
-    return (planeZ > skyZ);
-}
-
-/**
  * Determines the total number of edges between @a startNode and @a endNode in
  * the specified @a direction (inclussive). In the special case where the end
  * node is also the start node it is assumed that the nodes describe a complete
@@ -2213,13 +2012,17 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
         HEdge &hedge = (direction == Anticlockwise? node->prev() : *node);
         bool endStrip = false, beginNewStrip = false;
 
-        if(wallSectionNeedsSkyFix(hedge, fixType))
+        SkyFixEdge skyEdge(hedge, fixType, (direction == Anticlockwise) ^ (startNode != 0)? Line::To : Line::From);
+
+        skyEdge.prepare();
+
+        if(!skyEdge.isValid() || skyEdge.top().distance() == skyEdge.bottom().distance())
         {
-            int edge = (direction == Anticlockwise) ^ (startNode != 0)? 1 : 0;
-            SkyFixEdge skyEdge(hedge, fixType, edge? Line::To : Line::From);
-
-            skyEdge.prepare();
-
+            // End the current strip (if any).
+            endStrip = true;
+        }
+        else
+        {
             Material *skyMaterial = 0;
             if(splitForSkyMaterials)
             {
@@ -2227,15 +2030,10 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
                 skyMaterial = hedge.bspLeaf().sector().planeSurface(relPlane).materialPtr();
             }
 
-            if(!skyEdge.isValid() || skyEdge.top().distance() == skyEdge.bottom().distance())
-            {
-                // End the current strip.
-                endStrip = true;
-            }
-            else if(startNode &&
-                    (!de::fequal(skyEdge.bottom().distance(), startZBottom) ||
-                     !de::fequal(skyEdge.top().distance(), startZTop) ||
-                     (splitForSkyMaterials && skyMaterial != startMaterial)))
+            if(startNode &&
+               (!de::fequal(skyEdge.bottom().distance(), startZBottom) ||
+                !de::fequal(skyEdge.top().distance(), startZTop) ||
+                (splitForSkyMaterials && skyMaterial != startMaterial)))
             {
                 // End the current strip and start another.
                 endStrip = true;
@@ -2249,11 +2047,6 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
                 startZTop     = skyEdge.top().distance();
                 startMaterial = skyMaterial;
             }
-        }
-        else
-        {
-            // End the current strip.
-            endStrip = true;
         }
 
         if(endStrip && startNode)
@@ -2318,6 +2111,24 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
         delete positions;
         delete texcoords;
     }
+}
+
+/**
+ * @defgroup skyCapFlags  Sky Cap Flags
+ * @ingroup flags
+ */
+///@{
+#define SKYCAP_LOWER                0x1
+#define SKYCAP_UPPER                0x2
+///@}
+
+static coord_t skyPlaneZ(BspLeaf *bspLeaf, int skyCap)
+{
+    DENG_ASSERT(bspLeaf);
+    Plane::Type const plane = (skyCap & SKYCAP_UPPER)? Plane::Ceiling : Plane::Floor;
+    if(!bspLeaf->hasSector() || !P_IsInVoid(viewPlayer))
+        return theMap->skyFix(plane == Plane::Ceiling);
+    return bspLeaf->sector().plane(plane).visHeight();
 }
 
 /// @param skyCap  @ref skyCapFlags.

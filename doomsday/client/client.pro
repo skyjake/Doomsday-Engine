@@ -137,6 +137,7 @@ DENG_HEADERS += \
     include/MaterialScheme \
     include/MaterialSnapshot \
     include/MaterialVariantSpec \
+    include/SkyFixEdge \
     include/Texture \
     include/TextureManifest \
     include/Textures \
@@ -303,6 +304,7 @@ DENG_HEADERS += \
     include/render/rendpoly.h \
     include/render/shadowedge.h \
     include/render/sky.h \
+    include/render/skyfixedge.h \
     include/render/sprite.h \
     include/render/trianglestripbuilder.h \
     include/render/vignette.h \
@@ -575,6 +577,7 @@ SOURCES += \
     src/render/rendpoly.cpp \
     src/render/shadowedge.cpp \
     src/render/sky.cpp \
+    src/render/skyfixedge.cpp \
     src/render/sprite.cpp \
     src/render/trianglestripbuilder.cpp \
     src/render/vignette.cpp \
