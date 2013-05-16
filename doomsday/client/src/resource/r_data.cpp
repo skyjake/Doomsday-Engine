@@ -555,7 +555,8 @@ static CompositeTextures loadCompositeTextureDefs()
 
         // Print a summary.
         LOG_INFO("Loaded %s texture definitions from \"%s:%s\".")
-            << (newDefs.count() == archiveCount? "all" : String("%1 of %1").arg(newDefs.count()).arg(archiveCount))
+            << (newDefs.count() == archiveCount? String("all %1").arg(newDefs.count())
+                                               : String("%1 of %1").arg(newDefs.count()).arg(archiveCount))
             << NativePath(file.container().composeUri().asText()).pretty()
             << NativePath(file.composeUri().asText()).pretty();
     }
@@ -568,9 +569,9 @@ static CompositeTextures loadCompositeTextureDefs()
             CompositeTexture *orig = defs[i];
             bool hasReplacement = false;
 
-            for(int j = 0; j < customDefs.count(); ++j)
+            for(int k = 0; k < customDefs.count(); ++k)
             {
-                CompositeTexture *custom = customDefs[j];
+                CompositeTexture *custom = customDefs[k];
 
                 if(!orig->percentEncodedName().compareWithoutCase(custom->percentEncodedName()))
                 {
@@ -584,28 +585,28 @@ static CompositeTextures loadCompositeTextureDefs()
                             custom->logicalDimensions() != orig->logicalDimensions() ||
                             custom->componentCount()    != orig->componentCount())
                     {
-                        custom->flags() |= CompositeTexture::Custom;
+                        custom->setFlags(CompositeTexture::Custom);
                         hasReplacement = true;
                     }
                     else
                     {
                         // Check the patches.
-                        short k = 0;
-                        while(k < orig->componentCount() && !custom->isFlagged(CompositeTexture::Custom))
+                        int m = 0;
+                        while(m < orig->componentCount() && !custom->isFlagged(CompositeTexture::Custom))
                         {
-                            CompositeTexture::Component const &origP   = orig->components()[k];
-                            CompositeTexture::Component const &customP = custom->components()[k];
+                            CompositeTexture::Component const &origP   = orig->components()[m];
+                            CompositeTexture::Component const &customP = custom->components()[m];
 
                             if(origP.lumpNum() != customP.lumpNum() &&
                                origP.xOrigin() != customP.xOrigin() &&
                                origP.yOrigin() != customP.yOrigin())
                             {
-                                custom->flags() |= CompositeTexture::Custom;
+                                custom->setFlags(CompositeTexture::Custom);
                                 hasReplacement = true;
                             }
                             else
                             {
-                                k++;
+                                ++m;
                             }
                         }
                     }
