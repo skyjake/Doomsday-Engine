@@ -40,6 +40,7 @@ HEADERS += \
     include/de/shell/LocalServer \
     include/de/shell/LogWidget \
     include/de/shell/MenuWidget \
+    include/de/shell/MonospaceLineWrapping \
     include/de/shell/Protocol \
     include/de/shell/ServerFinder \
     include/de/shell/TextCanvas \
@@ -63,6 +64,7 @@ HEADERS += \
     include/de/shell/localserver.h \
     include/de/shell/logwidget.h \
     include/de/shell/menuwidget.h \
+    include/de/shell/monospacelinewrapping.h \
     include/de/shell/protocol.h \
     include/de/shell/serverfinder.h \
     include/de/shell/textcanvas.h \
@@ -87,6 +89,7 @@ SOURCES += \
     src/localserver.cpp \
     src/logwidget.cpp \
     src/menuwidget.cpp \
+    src/monospacelinewrapping.cpp \
     src/protocol.cpp \
     src/serverfinder.cpp \
     src/textcanvas.cpp \

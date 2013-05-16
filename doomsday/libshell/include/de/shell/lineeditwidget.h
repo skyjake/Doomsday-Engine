@@ -26,8 +26,6 @@
 namespace de {
 namespace shell {
 
-class Lexicon;
-
 /**
  * Widget for word-wrapped text editing.
  *

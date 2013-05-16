@@ -104,6 +104,8 @@ public:
     void insert(String const &text);
 
 protected:
+    ILineWrapping &lineWraps();
+
     /// Determines the available maximum width of text lines.
     virtual int maximumWidth() const = 0;
 

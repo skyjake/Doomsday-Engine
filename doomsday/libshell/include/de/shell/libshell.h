@@ -19,7 +19,6 @@
 #ifndef LIBSHELL_MAIN_H
 #define LIBSHELL_MAIN_H
 
-#include <QList>
 #include <de/String>
 
 /*
@@ -73,34 +72,6 @@ public:
     virtual WrappedLine line(int index) const = 0;
     virtual int width() const = 0;
     virtual int height() const = 0;
-};
-
-class LIBSHELL_PUBLIC MonospaceLineWrapping : public ILineWrapping
-{
-public:
-    MonospaceLineWrapping();
-
-    bool isEmpty() const;
-
-    void clear();
-
-    /**
-     * Determines word wrapping for a line of text given a maximum line width.
-     *
-     * @param text      Text to wrap.
-     * @param maxWidth  Maximum width for each text line.
-     *
-     * @return List of positions in @a text where to break the lines. Total number
-     * of word-wrapped lines is equal to the size of the returned list.
-     */
-    void wrapTextToWidth(String const &text, int maxWidth);
-
-    WrappedLine line(int index) const { return _lines[index]; }
-    int width() const;
-    int height() const;
-
-private:
-    QList<WrappedLine> _lines;
 };
 
 } // namespace shell

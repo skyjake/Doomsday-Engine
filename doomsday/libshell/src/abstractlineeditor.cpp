@@ -493,9 +493,14 @@ void AbstractLineEditor::insert(String const &text)
     return d->insert(text);
 }
 
+ILineWrapping &AbstractLineEditor::lineWraps()
+{
+    return *d->wraps;
+}
+
 void AbstractLineEditor::updateLineWraps(LineWrapUpdateBehavior behavior)
 {
-    if(behavior == WrapUnlessWrappedAlready && d->wraps->height())
+    if(behavior == WrapUnlessWrappedAlready && !d->wraps->isEmpty())
         return; // Already wrapped.
 
     d->updateWraps();
