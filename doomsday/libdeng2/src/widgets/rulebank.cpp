@@ -45,8 +45,6 @@ DENG2_PIMPL(RuleBank)
 
         RuleData(Rule *r) : rule(holdRef(r)) {}
         ~RuleData() { releaseRef(rule); }
-
-        duint sizeInMemory() const { return 0; /* we don't count */ }
     };
 
     Instance(Public *i) : Base(i) {}

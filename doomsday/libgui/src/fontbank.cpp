@@ -72,8 +72,6 @@ DENG2_PIMPL(FontBank)
 
         FontData(Font *f = 0) : font(f) {}
         ~FontData() { delete font; }
-
-        duint sizeInMemory() const { return 0; /* we don't count */ }
     };
 
     Instance(Public *i) : Base(i)

@@ -163,7 +163,7 @@ public:
         virtual ISerializable *asSerializable() { return 0; }
 
         /// Returns the size of the data that it occupies in memory.
-        virtual duint sizeInMemory() const = 0;
+        virtual duint sizeInMemory() const { return 0; }
 
         /// Called to notify the data that it is leaving the memory cache.
         virtual void aboutToUnload() {}
