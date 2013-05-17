@@ -53,7 +53,7 @@ $CP tools/texc/texc $APPDIR/Resources
 $CP tools/md2tool/md2tool $APPDIR/Resources
 
 # Tests
-GLTEST=tests/glsandbox/test_glsandbox.app
+GLTEST=tests/test_glsandbox/test_glsandbox.app
 if [ -e $GLTEST ]; then
     $CP libgui/libdeng_gui*dylib $GLTEST/Contents/Frameworks
 fi
