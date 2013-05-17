@@ -881,10 +881,6 @@ DENG2_PIMPL(Partitioner)
 
         Vertex *newVert = newVertex(point);
 
-        // First, create tips for the new vertex.
-        edgeTips(*newVert).add(frontLeft.inverseAngle(), frontLeft.back().hasSector()? &frontLeft.back() : 0, &frontLeft);
-        edgeTips(*newVert).add(frontLeft.angle(),        &frontLeft, frontLeft.back().hasSector()? &frontLeft.back() : 0);
-
         LineSegment &newSegment = cloneLineSegment(frontLeft.line());
 
         // Now perform the split, updating vertex and relative segment links.
@@ -929,6 +925,34 @@ DENG2_PIMPL(Partitioner)
                 linkLineSegmentSideInSuperBlockmap(*bmapBlock, frontRight.back());
             }
         }
+
+        /**
+         * @todo Optimize: Avoid clearing tips by implementing update logic.
+         */
+        LineSegment &left  = frontLeft.line();
+        LineSegment &right = frontRight.line();
+
+        edgeTips(left.from()).clearByLineSegment(left);
+        edgeTips(left.to()  ).clearByLineSegment(left);
+
+        edgeTips(right.from()).clearByLineSegment(right);
+        edgeTips(right.to()  ).clearByLineSegment(right);
+
+        edgeTips(left.from() ).add(left.front().angle(),
+                                   left.front().hasSector()? &left.front() : 0,
+                                   left.back().hasSector()?  &left.back()  : 0);
+
+        edgeTips(left.to()   ).add(left.back().angle(),
+                                   left.back().hasSector()?  &left.back()  : 0,
+                                   left.front().hasSector()? &left.front() : 0);
+
+        edgeTips(right.from()).add(right.front().angle(),
+                                   right.front().hasSector()? &right.front() : 0,
+                                   right.back().hasSector()?  &right.back()  : 0);
+
+        edgeTips(right.to()  ).add(right.back().angle(),
+                                   right.back().hasSector()?  &right.back()  : 0,
+                                   right.front().hasSector()? &right.front() : 0);
 
         return frontRight;
     }
@@ -1062,7 +1086,7 @@ DENG2_PIMPL(Partitioner)
      * @param rights    Set of line segments on the right side of the partition.
      * @param lefts     Set of line segments on the left side of the partition.
      */
-    void partitionLineSegmentSides(SuperBlock &lineSegs, SuperBlock &rights,
+    void partitionLineSegments(SuperBlock &lineSegs, SuperBlock &rights,
                                SuperBlock &lefts)
     {
         // Iterative pre-order traversal of SuperBlock.
@@ -1111,10 +1135,10 @@ DENG2_PIMPL(Partitioner)
 
         // Sanity checks...
         if(!rights.totalLineSegmentSideCount())
-            throw Error("Partitioner::partitionLineSegmentSides", "Right set is empty");
+            throw Error("Partitioner::partitionLineSegments", "Right set is empty");
 
         if(!lefts.totalLineSegmentSideCount())
-            throw Error("Partitioner::partitionLineSegmentSides", "Left set is empty");
+            throw Error("Partitioner::partitionLineSegments", "Left set is empty");
     }
 
     /**
@@ -1125,7 +1149,7 @@ DENG2_PIMPL(Partitioner)
      * @param rights  Set of line segments on the right of the partition.
      * @param lefts   Set of line segments on the left of the partition.
      */
-    void addPartitionLineSegmentSides(SuperBlock &rights, SuperBlock &lefts)
+    void addPartitionLineSegments(SuperBlock &rights, SuperBlock &lefts)
     {
         LOG_TRACE("Building line segments along partition %s")
             << hplane.partition().asText();
@@ -1182,10 +1206,15 @@ DENG2_PIMPL(Partitioner)
                     sector = next.before;
             }
 
+            DENG_ASSERT(sector != 0);
+
             LineSegment *newSeg =
                 buildLineSegmentBetweenVertexes(cur.vertex(), next.vertex(),
-                                                sector, sector, 0 /*no line*/,
+                                                sector, sector, 0 /*no map line*/,
                                                 hplane.mapLine());
+
+            edgeTips(newSeg->from() ).add(newSeg->front().angle(), &newSeg->front(), &newSeg->back());
+            edgeTips(newSeg->to()   ).add(newSeg->back().angle(),  &newSeg->back(),  &newSeg->front());
 
             // Add each new line segment to the appropriate set.
             linkLineSegmentSideInSuperBlockmap(rights, newSeg->front());
@@ -1396,9 +1425,9 @@ DENG2_PIMPL(Partitioner)
             // Partition the line segements into two subsets according to their
             // spacial relationship with the half-plane (splitting any which
             // intersect).
-            partitionLineSegmentSides(lineSegs, rightLineSegs, leftLineSegs);
+            partitionLineSegments(lineSegs, rightLineSegs, leftLineSegs);
             lineSegs.clear();
-            addPartitionLineSegmentSides(rightLineSegs, leftLineSegs);
+            addPartitionLineSegments(rightLineSegs, leftLineSegs);
             hplane.clearIntercepts();
 
             // Take a copy of the geometry bounds for each child/sub space
@@ -1688,8 +1717,8 @@ DENG2_PIMPL(Partitioner)
                     HEdge &hedge = *hedgeIt;
                     if(!hedge.hasTwin())
                     {
-                        //DENG_ASSERT(&hedge.next() != &hedge);
-                        //DENG_ASSERT(&hedge.next().vertex() != &hedge.vertex());
+                        DENG_ASSERT(&hedge.next() != &hedge);
+                        DENG_ASSERT(&hedge.next().vertex() != &hedge.vertex());
 
                         hedge._twin = new HEdge(hedge.next().vertex());
                         hedge._twin->_twin = &hedge;

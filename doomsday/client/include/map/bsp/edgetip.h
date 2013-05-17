@@ -44,58 +44,65 @@ class EdgeTip
 public:
     enum Side
     {
-        Front = 0,
+        Front,
         Back
     };
 
 public:
-    explicit EdgeTip(coord_t angle = 0, LineSegment::Side *front = 0,
-                            LineSegment::Side *back = 0)
+    explicit EdgeTip(coord_t angle = 0, LineSegment::Side *front = 0, LineSegment::Side *back = 0)
         : _angle(angle), _front(front), _back(back)
     {}
 
     inline coord_t angle() const { return _angle; }
 
-    inline EdgeTip &setAngle(coord_t newAngle)
+    inline void setAngle(coord_t newAngle)
     {
         _angle = newAngle;
-        return *this;
     }
 
-    inline LineSegment::Side &front() const { return *_front; }
-
-    inline LineSegment::Side &back() const { return *_back; }
-
-    inline LineSegment::Side &side(Side sid) const
+    bool hasSide(Side sid) const
     {
-        return sid == Front? front() : back();
+        return sid == Front? _front != 0 : _back != 0;
     }
 
-    inline bool hasFront() const { return _front != 0; }
+    inline bool hasFront() const { return hasSide(Front); }
 
-    inline bool hasBack() const { return _back != 0; }
+    inline bool hasBack() const { return hasSide(Back); }
 
-    inline bool hasSide(Side sid) const
+    LineSegment::Side &side(Side sid) const
     {
-        return sid == Front? hasFront() : hasBack();
+        if(sid == Front)
+        {
+            DENG_ASSERT(_front != 0);
+            return *_front;
+        }
+        else
+        {
+            DENG_ASSERT(_back != 0);
+            return *_back;
+        }
     }
 
-    inline EdgeTip &setFront(LineSegment::Side *lineSeg)
+    inline LineSegment::Side &front() const { return side(Front); }
+    inline LineSegment::Side &back() const  { return side(Back); }
+
+    inline LineSegment::Side *frontPtr() const { return hasFront()? &front() : 0; }
+    inline LineSegment::Side *backPtr() const  { return hasBack()? &back() : 0; }
+
+    inline void setSide(Side sid, LineSegment::Side *lineSeg)
     {
-        _front = lineSeg;
-        return *this;
+        if(sid == Front)
+        {
+            _front = lineSeg;
+        }
+        else
+        {
+            _back = lineSeg;
+        }
     }
 
-    inline EdgeTip &setBack(LineSegment::Side *lineSeg)
-    {
-        _back = lineSeg;
-        return *this;
-    }
-
-    inline EdgeTip &setSide(Side sid, LineSegment::Side *lineSeg)
-    {
-        return sid == Front? setFront(lineSeg) : setBack(lineSeg);
-    }
+    inline void setFront(LineSegment::Side *lineSeg) { setSide(Front, lineSeg); }
+    inline void setBack(LineSegment::Side *lineSeg)  { setSide(Back, lineSeg); }
 
 private:
     /// Angle that line makes at vertex (degrees; 0 is E, 90 is N).
@@ -135,6 +142,24 @@ public:
         {}
 
         return *_tips.insert(after.base(), EdgeTip(angle, front, back));
+    }
+
+    void clearByLineSegment(LineSegment &seg)
+    {
+        All::iterator i = _tips.begin();
+        while(i != _tips.end())
+        {
+            EdgeTip &tip = *i;
+            if(tip.hasFront() && &tip.front().line() == &seg ||
+               tip.hasBack()  && &tip.back().line()  == &seg)
+            {
+                i = _tips.erase(i);
+            }
+            else
+            {
+                ++i;
+            }
+        }
     }
 
     All const &all() const { return _tips; }

@@ -144,7 +144,7 @@ public:
                         << hedge->lineSide().sector().indexInMap()
                         << hedge->line().indexInMap();
                 else
-                    LOG_WARNING("Sector #%d has migrant \"mini\" half-edge.")
+                    LOG_WARNING("Sector #%d has migrant partition line half-edge.")
                         << facingSector->indexInMap();
             }
 
@@ -157,7 +157,7 @@ public:
             PartialBspLeafMap::const_iterator it = _partialBspLeafs.begin();
             for(int i = 0; i < numToLog; ++i, ++it)
             {
-                LOG_WARNING("Half-edge list for BSP leaf %p has %u gaps (%u hedges).")
+                LOG_WARNING("Half-edge list for BSP leaf %p has %u gaps (%i half-edges).")
                     << de::dintptr(it->first) << it->second << it->first->hedgeCount();
             }
 

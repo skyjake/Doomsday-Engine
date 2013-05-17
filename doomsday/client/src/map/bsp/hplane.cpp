@@ -235,7 +235,7 @@ HPlane::Intercept *HPlane::intercept(LineSegment::Side const &lineSeg, int edge,
     d->intercepts.append(Intercept(distToVertex, const_cast<LineSegment::Side &>(lineSeg), edge));
     Intercept *newIntercept = &d->intercepts.last();
 
-    newIntercept->selfRef = (lineSeg.hasMapSide() && lineSeg.mapLine().isSelfReferencing());
+    newIntercept->selfRef = lineSeg.sectorPtr() == lineSeg.back().sectorPtr(); //(lineSeg.hasMapSide() && lineSeg.mapLine().isSelfReferencing());
 
     newIntercept->before = openSectorAtAngle(edgeTips, inverseAngle());
     newIntercept->after  = openSectorAtAngle(edgeTips, angle());
