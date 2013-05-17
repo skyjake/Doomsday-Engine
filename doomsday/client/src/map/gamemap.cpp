@@ -92,9 +92,11 @@ DENG2_PIMPL(GameMap)
         }
     }
 
-    void collateBspLeafHEdges(BspBuilder &builder, BspLeaf &leaf)
+    void collatePolyHEdges(BspBuilder &builder, de::Polygon &geom)
     {
-        HEdge *base = leaf.firstHEdge();
+        HEdge *base = geom.firstHEdge();
+        if(!base) return;
+
         HEdge *hedge = base;
         do
         {
@@ -112,7 +114,6 @@ DENG2_PIMPL(GameMap)
             }
 
             // Calculate the length of the segment.
-            //DENG_ASSERT(&hedge->twin().vertex() != &hedge->vertex());
             hedge->_length = Vector2d(hedge->twin().origin() - hedge->origin()).length();
             if(hedge->_length == 0)
                 hedge->_length = 0.01f; // Hmm...
@@ -146,12 +147,21 @@ DENG2_PIMPL(GameMap)
             leaf->setIndexInMap(bspLeafs.count());
             bspLeafs.append(leaf);
 
-            collateBspLeafHEdges(builder, *leaf);
+            if(leaf->hasPoly())
+            {
+                de::Polygon &geom = leaf->poly();
 
-            // The geometry of the leaf is now finalized; update dependent metadata.
-            leaf->poly().updateAABox();
-            leaf->poly().updateCenter();
-            leaf->updateWorldGridOffset();
+                collatePolyHEdges(builder, geom);
+
+                // The geometry is now finalized.
+
+                /// @todo Polygon should encapsulate.
+                geom.updateAABox();
+                geom.updateCenter();
+
+                /// @todo leaf should observe.
+                leaf->updateWorldGridOffset();
+            }
 
             return;
         }

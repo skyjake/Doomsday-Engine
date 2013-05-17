@@ -1233,11 +1233,11 @@ DENG2_PIMPL(Partitioner)
             {
                 if(lineSeg->hasLeft())
                 {
-                    lineSeg->left().setRight(&lineSeg->right());
+                    lineSeg->left().setRight(lineSeg->hasRight()? &lineSeg->right() : 0);
                 }
                 if(lineSeg->hasRight())
                 {
-                    lineSeg->right().setLeft(&lineSeg->left());
+                    lineSeg->right().setLeft(lineSeg->hasLeft()? &lineSeg->left() : 0);
                 }
 
                 // Take ownership of and destroy the half-edge.
@@ -1585,10 +1585,8 @@ DENG2_PIMPL(Partitioner)
         return center;
     }
 
-    void clockwiseLeaf(BspLeaf &leaf, HEdgeSortBuffer &sortBuffer)
+    void clockwisePoly(Polygon &poly, HEdgeSortBuffer &sortBuffer)
     {
-        Polygon &poly = leaf.poly();
-
         Vector2d center = findPolyCenter(poly);
         clockwiseOrder(poly, center, sortBuffer);
 
@@ -1657,11 +1655,11 @@ DENG2_PIMPL(Partitioner)
     }
 
     /**
-     * Sort all half-edges in each BSP leaf into a clockwise order.
+     * Sort the half-edges in each BSP leaf geometry into a clockwise order.
      *
      * @note This cannot be done during partitionSpace() as splitting a line
      * segment with a twin will result in another half-edge being inserted into
-     * that twin's leaf (usually in the wrong place order-wise).
+     * that twin's leaf geometry (usually in the wrong place order-wise).
      */
     void windLeafs()
     {
@@ -1669,87 +1667,86 @@ DENG2_PIMPL(Partitioner)
         foreach(BspTreeNode *node, treeNodeMap)
         {
             if(!node->isLeaf()) continue;
+
             BspLeaf *leaf = node->userData()->castTo<BspLeaf>();
 
-            // Sort the leaf's half-edges.
-            clockwiseLeaf(*leaf, sortBuffer);
-
-            // Add a twin half-edge for any which don't yet have one.
+            if(leaf->hasPoly())
             {
-                HEdge *base = leaf->firstHEdge();
-                HEdge *hedge = base;
+                /*
+                 * Finalize the built geometry.
+                 */
+                Polygon &geom = leaf->poly();
+                HEdge *base = geom.firstHEdge();
+
+                // Sort the half-edges.
+                clockwisePoly(geom, sortBuffer);
+
+                // Add a twin half-edge for any which don't yet have one.
+                HEdge *hedgeIt = base;
                 do
                 {
-                    if(!hedge->hasTwin())
+                    HEdge &hedge = *hedgeIt;
+                    if(!hedge.hasTwin())
                     {
-                        //DENG_ASSERT(&hedge->next() != hedge);
-                        //DENG_ASSERT(&hedge->next().vertex() != &hedge->vertex());
-                        hedge->_twin = new HEdge(hedge->next().vertex());
-                        hedge->_twin->_twin = hedge;
+                        //DENG_ASSERT(&hedge.next() != &hedge);
+                        //DENG_ASSERT(&hedge.next().vertex() != &hedge.vertex());
+
+                        hedge._twin = new HEdge(hedge.next().vertex());
+                        hedge._twin->_twin = &hedge;
+
                         // There is now one more HEdge.
                         numHEdges += 1;
                     }
-                } while((hedge = &hedge->next()) != base);
-            }
 
-            /*
-             * Perform some post analysis on the built leaf.
-             */
-            if(!sanityCheckHasRealHEdge(*leaf))
-                throw Error("Partitioner::clockwiseLeaf",
-                            QString("BSP Leaf 0x%1 has no line-linked half-edge")
-                                .arg(dintptr(leaf), 0, 16));
+                } while((hedgeIt = &hedgeIt->next()) != base);
 
-            // Look for migrant half-edges in the leaf.
-            if(Sector *sector = findFirstSectorInBspLeaf(*leaf))
-            {
-                HEdge *base = leaf->firstHEdge();
-                HEdge *hedge = base;
-                do
+                if(!sanityCheckHasRealHEdge(*leaf))
+                    throw Error("Partitioner::windLeafs",
+                                QString("BSP Leaf 0x%1 has no line-linked half-edge")
+                                    .arg(dintptr(leaf), 0, 16));
+
+                // Look for migrant half-edges in the wrong sector.
+                if(Sector *sector = findFirstSectorInBspLeaf(*leaf))
                 {
-                    LineSegment::Side const &lineSeg = lineSegment(*hedge);
-                    if(lineSeg.hasSector() && lineSeg.sectorPtr() != sector)
+                    HEdge *hedgeIt = base;
+                    do
                     {
-                        notifyMigrantHEdgeBuilt(*hedge, *sector);
+                        HEdge &hedge = *hedgeIt;
+                        LineSegment::Side const &lineSeg = lineSegment(hedge);
+                        if(lineSeg.hasSector() && lineSeg.sectorPtr() != sector)
+                        {
+                            notifyMigrantHEdgeBuilt(hedge, *sector);
+                        }
+
+                    } while((hedgeIt = &hedgeIt->next()) != base);
+                }
+
+                // See if we built a partial leaf...
+                {
+                    uint gaps = 0;
+                    HEdge *hedgeIt = base;
+                    do
+                    {
+                        HEdge &hedge = *hedgeIt;
+
+                        if(hedge.next().origin() != hedge.twin().origin())
+                        {
+                            gaps++;
+                        }
+                    } while((hedgeIt = &hedgeIt->next()) != base);
+
+                    if(gaps > 0)
+                    {
+                        notifyPartialBspLeafBuilt(*leaf, gaps);
                     }
-                } while((hedge = &hedge->next()) != base);
+                }
             }
 
             leaf->setSector(chooseSectorForBspLeaf(*leaf));
             if(!leaf->hasSector())
             {
-                LOG_WARNING("BspLeaf %p is degenerate/orphan (%d HEdges).")
+                LOG_WARNING("BspLeaf %p is degenerate/orphan (%d half-edges).")
                     << de::dintptr(leaf) << leaf->hedgeCount();
-            }
-
-            // See if we built a partial leaf...
-            uint gaps = 0;
-            HEdge const *base = leaf->firstHEdge();
-            HEdge const *hedge = base;
-            do
-            {
-                if(hedge->next().origin() != hedge->twin().origin())
-                {
-                    gaps++;
-                }
-            } while((hedge = &hedge->next()) != base);
-
-            if(gaps > 0)
-            {
-                /*
-                HEdge const *base = leaf->firstHEdge();
-                HEdge const *hedge = base;
-                do
-                {
-                    LOG_DEBUG("  half-edge %p %s -> %s")
-                        << de::dintptr(hedge)
-                        << hedge->origin().asText(),
-                        << hedge->twin().origin().asText();
-
-                } while((hedge = &hedge->next()) != base);
-                */
-
-                notifyPartialBspLeafBuilt(*leaf, gaps);
             }
         }
     }
