@@ -385,9 +385,7 @@ AABoxd SuperBlockmap::findLineSegmentSideBounds()
 
     if(!initialized)
     {
-        // Clear.
-        V2d_Set(bounds.min, DDMAXFLOAT, DDMAXFLOAT);
-        V2d_Set(bounds.max, DDMINFLOAT, DDMINFLOAT);
+        bounds.clear();
     }
 
     return bounds;

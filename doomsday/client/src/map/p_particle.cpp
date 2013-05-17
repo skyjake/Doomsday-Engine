@@ -474,7 +474,7 @@ static void P_NewParticle(ptcgen_t *gen)
     int i;
     fixed_t uncertain, len;
     angle_t ang, ang2;
-    BspLeaf *subsec;
+    BspLeaf *bspLeaf;
     float inter = -1;
     modeldef_t *mf = 0, *nextmf = 0;
 
@@ -651,26 +651,26 @@ static void P_NewParticle(ptcgen_t *gen)
             float y = sector->aaBox().minY +
                 RNG_RandFloat() * (sector->aaBox().maxY - sector->aaBox().minY);
 
-            subsec = theMap->bspLeafAtPoint(Vector2d(x, y));
-            if(subsec->sectorPtr() == sector) break;
+            bspLeaf = theMap->bspLeafAtPoint(Vector2d(x, y));
+            if(bspLeaf->sectorPtr() == sector) break;
 
-            subsec = NULL;
+            bspLeaf = 0;
         }
-        if(!subsec)
+        if(!bspLeaf || bspLeaf->isDegenerate())
             goto spawn_failed;
 
         // Try a couple of times to get a good random spot.
         for(i = 0; i < 10; ++i) // Max this many tries before giving up.
         {
-            float x = subsec->aaBox().minX +
-                RNG_RandFloat() * (subsec->aaBox().maxX - subsec->aaBox().minX);
-            float y = subsec->aaBox().minY +
-                RNG_RandFloat() * (subsec->aaBox().maxY - subsec->aaBox().minY);
+            float x = bspLeaf->poly().aaBox().minX +
+                RNG_RandFloat() * (bspLeaf->poly().aaBox().maxX - bspLeaf->poly().aaBox().minX);
+            float y = bspLeaf->poly().aaBox().minY +
+                RNG_RandFloat() * (bspLeaf->poly().aaBox().maxY - bspLeaf->poly().aaBox().minY);
 
             pt->origin[VX] = FLT2FIX(x);
             pt->origin[VY] = FLT2FIX(y);
 
-            if(theMap->bspLeafAtPoint(Vector2d(x, y)) == subsec)
+            if(theMap->bspLeafAtPoint(Vector2d(x, y)) == bspLeaf)
                 break; // This is a good place.
         }
 

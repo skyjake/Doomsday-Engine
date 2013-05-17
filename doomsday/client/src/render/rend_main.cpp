@@ -1683,6 +1683,7 @@ static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rig
 static uint buildLeafPlaneGeometry(BspLeaf const &leaf, ClockDirection direction,
     coord_t height, rvertex_t **verts, uint *vertsSize)
 {
+    DENG_ASSERT(!leaf.isDegenerate());
     DENG_ASSERT(verts != 0);
 
     HEdge *fanBase = leaf.fanBase();
@@ -1694,7 +1695,7 @@ static uint buildLeafPlaneGeometry(BspLeaf const &leaf, ClockDirection direction
     uint n = 0;
     if(!fanBase)
     {
-        V3f_Set((*verts)[n].pos, leaf.center().x, leaf.center().y, height);
+        V3f_Set((*verts)[n].pos, leaf.poly().center().x, leaf.poly().center().y, height);
         n++;
     }
 
@@ -1724,8 +1725,8 @@ static void writeLeafPlane(Plane &plane)
     DENG_ASSERT(!isNullLeaf(leaf));
 
     Surface const &surface = plane.surface();
-    Vector3f eyeToSurface(vOrigin[VX] - leaf->center().x,
-                          vOrigin[VZ] - leaf->center().y,
+    Vector3f eyeToSurface(vOrigin[VX] - leaf->poly().center().x,
+                          vOrigin[VZ] - leaf->poly().center().y,
                           vOrigin[VY] - plane.visHeight());
 
     // Skip planes facing away from the viewer.
@@ -1749,18 +1750,18 @@ static void writeLeafPlane(Plane &plane)
     // Add the Y offset to orient the Y flipped material.
     /// @todo fixme: What is this meant to do? -ds
     if(plane.type() == Plane::Ceiling)
-        materialOrigin.y -= leaf->aaBox().maxY - leaf->aaBox().minY;
+        materialOrigin.y -= leaf->poly().aaBox().maxY - leaf->poly().aaBox().minY;
     materialOrigin.y = -materialOrigin.y;
 
     Vector2f materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
                            (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
     // Set the texture origin, Y is flipped for the ceiling.
-    Vector3d texTL(leaf->aaBox().minX,
-                   leaf->aaBox().arvec2[plane.type() == Plane::Floor? 1 : 0][VY],
+    Vector3d texTL(leaf->poly().aaBox().minX,
+                   leaf->poly().aaBox().arvec2[plane.type() == Plane::Floor? 1 : 0][VY],
                    plane.visHeight());
-    Vector3d texBR(leaf->aaBox().maxX,
-                   leaf->aaBox().arvec2[plane.type() == Plane::Floor? 0 : 1][VY],
+    Vector3d texBR(leaf->poly().aaBox().maxX,
+                   leaf->poly().aaBox().arvec2[plane.type() == Plane::Floor? 0 : 1][VY],
                    plane.visHeight());
 
     rendworldpoly_params_t parm; zap(parm);
@@ -1926,7 +1927,7 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
         Material *skyMaterial = 0;
         if(splitOnMaterialChange)
         {
-            skyMaterial = hedge.bspLeaf().sector().planeSurface(relPlane).materialPtr();
+            skyMaterial = hedge.sector().planeSurface(relPlane).materialPtr();
         }
 
         // Add a first (left) edge to the current strip?
@@ -2107,8 +2108,8 @@ static bool coveredOpenRangeTwoSided(HEdge &hedge,
     if(hedge.line().isSelfReferencing())
        return false; /// @todo Why? -ds
 
-    Sector const &frontSec = hedge.bspLeaf().sector();
-    Sector const &backSec  = hedge.twin().bspLeaf().sector();
+    Sector const &frontSec = hedge.sector();
+    Sector const &backSec  = hedge.twin().sector();
 
     bool middleCoversOpening = false;
     if(wroteOpaqueMiddle)
@@ -2196,8 +2197,8 @@ static int pvisibleWallSections(HEdge &hedge, bool &twoSided)
     DENG_ASSERT(hedge.isFlagged(HEdge::FacingFront));
 
     // One-sided?
-    if(!hedge.twin().hasBspLeaf() || hedge.twin().bspLeaf().hasDegenerateFace() ||
-       !hedge.twin().bspLeaf().hasSector() ||
+    if(!hedge.twin().hasBspLeaf() || hedge.twin().bspLeaf().isDegenerate() ||
+       !hedge.twin().hasSector() ||
        /* Solid side of a "one-way window"? */
        !(hedge.twin().hasLineSide() && hedge.twin().lineSide().hasSections()))
     {
@@ -2217,8 +2218,8 @@ static int pvisibleWallSections(HEdge &hedge, bool &twoSided)
     }
 
     // Regular two-sided.
-    Sector const &frontSec = hedge.bspLeaf().sector();
-    Sector const &backSec  = hedge.twin().bspLeaf().sector();
+    Sector const &frontSec = hedge.sector();
+    Sector const &backSec  = hedge.twin().sector();
     Plane const &fceil  = frontSec.ceiling();
     Plane const &ffloor = frontSec.floor();
     Plane const &bceil  = backSec.ceiling();
@@ -2448,7 +2449,7 @@ static inline bool canOccludeSectorPairBoundary(Sector const &frontSec,
 
 static void occludeHEdge(HEdge const &hedge, bool frontFacing)
 {
-    DENG_ASSERT(hedge.hasBspLeaf() && hedge.bspLeaf().hasSector());
+    DENG_ASSERT(hedge.hasSector());
 
     if(frontFacing != hedge.isFlagged(HEdge::FacingFront)) return;
 
@@ -2456,11 +2457,11 @@ static void occludeHEdge(HEdge const &hedge, bool frontFacing)
     if(!hedge.hasLineSide() || !hedge.lineSide().hasSections()) return;
 
     // Occlusions should only happen where two sectors meet.
-    if(!hedge.twin().hasBspLeaf() || hedge.twin().bspLeaf().hasDegenerateFace() ||
-       !hedge.twin().bspLeaf().sectorPtr()) return;
+    if(!hedge.twin().hasBspLeaf() || hedge.twin().bspLeaf().isDegenerate() ||
+       !hedge.twin().sectorPtr()) return;
 
-    Sector const &frontSec = hedge.bspLeaf().sector();
-    Sector const &backSec  = hedge.twin().bspLeaf().sector();
+    Sector const &frontSec = hedge.sector();
+    Sector const &backSec  = hedge.twin().sector();
 
     // Choose start and end vertexes so that it's facing forward.
     Vertex const &from = frontFacing? hedge.vertex() : hedge.twin().vertex();
@@ -3148,14 +3149,14 @@ static void Rend_DrawSurfaceVectors()
         if(!hedge->hasLineSide() || hedge->line().definesPolyobj())
             continue;
 
-        if(!hedge->hasBspLeaf() || !hedge->bspLeaf().hasSector())
+        if(!hedge->hasBspLeaf() || !hedge->hasSector())
             continue;
 
-        if(!hedge->twin().hasBspLeaf() || hedge->twin().bspLeaf().hasDegenerateFace() ||
-           !hedge->twin().bspLeaf().hasSector())
+        if(!hedge->twin().hasBspLeaf() || hedge->twin().bspLeaf().isDegenerate() ||
+           !hedge->twin().hasSector())
         {
-            coord_t const bottom = hedge->bspLeaf().sector().floor().visHeight();
-            coord_t const top = hedge->bspLeaf().sector().ceiling().visHeight();
+            coord_t const bottom = hedge->sector().floor().visHeight();
+            coord_t const top = hedge->sector().ceiling().visHeight();
             Vector2d center = (hedge->twin().origin() + hedge->origin()) / 2;
             Surface *suf = &hedge->lineSide().middle();
 
@@ -3164,13 +3165,13 @@ static void Rend_DrawSurfaceVectors()
         }
         else
         {
-            Sector *backSec  = hedge->twin().bspLeaf().sectorPtr();
+            Sector *backSec  = hedge->twin().sectorPtr();
             Line::Side &side = hedge->lineSide();
 
             if(side.middle().hasMaterial())
             {
-                coord_t const bottom = hedge->bspLeaf().sector().floor().visHeight();
-                coord_t const top = hedge->bspLeaf().sector().ceiling().visHeight();
+                coord_t const bottom = hedge->sector().floor().visHeight();
+                coord_t const top = hedge->sector().ceiling().visHeight();
                 Vector2d center = (hedge->twin().origin() + hedge->origin()) / 2;
                 Surface *suf = &side.middle();
 
@@ -3179,12 +3180,12 @@ static void Rend_DrawSurfaceVectors()
             }
 
             if(backSec->ceiling().visHeight() <
-               hedge->bspLeaf().sector().ceiling().visHeight() &&
-               !(hedge->bspLeaf().sector().ceilingSurface().hasSkyMaskedMaterial() &&
+               hedge->sector().ceiling().visHeight() &&
+               !(hedge->sector().ceilingSurface().hasSkyMaskedMaterial() &&
                  backSec->ceilingSurface().hasSkyMaskedMaterial()))
             {
                 coord_t const bottom = backSec->ceiling().visHeight();
-                coord_t const top = hedge->bspLeaf().sector().ceiling().visHeight();
+                coord_t const top = hedge->sector().ceiling().visHeight();
                 Vector2d center = (hedge->twin().origin() + hedge->origin()) / 2;
                 Surface *suf = &side.top();
 
@@ -3193,11 +3194,11 @@ static void Rend_DrawSurfaceVectors()
             }
 
             if(backSec->floor().visHeight() >
-               hedge->bspLeaf().sector().floor().visHeight() &&
-               !(hedge->bspLeaf().sector().floorSurface().hasSkyMaskedMaterial() &&
+               hedge->sector().floor().visHeight() &&
+               !(hedge->sector().floorSurface().hasSkyMaskedMaterial() &&
                  backSec->floorSurface().hasSkyMaskedMaterial()))
             {
-                coord_t const bottom = hedge->bspLeaf().sector().floor().visHeight();
+                coord_t const bottom = hedge->sector().floor().visHeight();
                 coord_t const top = backSec->floor().visHeight();
                 Vector2d center = (hedge->twin().origin() + hedge->origin()) / 2;
                 Surface *suf = &side.bottom();
@@ -3215,7 +3216,7 @@ static void Rend_DrawSurfaceVectors()
 
         foreach(Plane *plane, sector.planes())
         {
-            origin = Vector3d(bspLeaf->center(), plane->visHeight());
+            origin = Vector3d(bspLeaf->poly().center(), plane->visHeight());
 
             if(plane->type() != Plane::Middle && plane->surface().hasSkyMaskedMaterial())
                 origin.z = theMap->skyFix(plane->type() == Plane::Ceiling);

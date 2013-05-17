@@ -190,9 +190,35 @@ public:
     bool hasBspLeaf() const;
 
     /**
-     * Returns the BSP leaf for the half-edge.
+     * Returns the BspLeaf linked to the half-edge.
      */
     BspLeaf &bspLeaf() const;
+
+    /**
+     * Convenience accessor which determines whether a BspLeaf with an attributed
+     * sector is linked to the half-edge.
+     *
+     * @see hasBspLeaf(), BspLeaf::hasSector()
+     */
+    inline bool hasSector() const { return hasBspLeaf() && bspLeaf().hasSector(); }
+
+    /**
+     * Convenience accessor which returns the Sector of the BspLeaf linked to the
+     * half-edge.
+     *
+     * @see bspLeaf(), BspLeaf::sector()
+     */
+    Sector &sector() const { return bspLeaf().sector(); }
+
+    /**
+     * Convenience accessor which returns a pointer to the Sector of the BspLeaf
+     * linked to the half-edge.
+     *
+     * @return  Sector attributed to the linked BspLeaf; otherwise @c 0.
+     *
+     * @see hasBspLeaf(), BspLeaf::sectorPtr()
+     */
+    Sector *sectorPtr() const { return hasBspLeaf()? bspLeaf().sectorPtr() : 0; }
 
     /**
      * Returns @c true iff a Line::Side is attributed to the half-edge.

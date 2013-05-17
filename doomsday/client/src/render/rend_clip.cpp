@@ -961,7 +961,7 @@ int C_IsAngleVisible(binangle_t bang)
 
 int C_CheckBspLeaf(BspLeaf &leaf)
 {
-    if(leaf.hasDegenerateFace()) return false;
+    if(leaf.isDegenerate()) return false;
 
     if(devNoCulling) return true;
 

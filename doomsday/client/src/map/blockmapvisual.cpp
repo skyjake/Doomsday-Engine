@@ -69,7 +69,7 @@ static int rendLine(Line *line, void * /*parameters*/)
 
 static int rendBspLeaf(BspLeaf *bspLeaf, void * /*parameters*/)
 {
-    if(!bspLeaf->hasDegenerateFace() && bspLeaf->validCount() != validCount)
+    if(!bspLeaf->isDegenerate() && bspLeaf->validCount() != validCount)
     {
         float const scale = de::max(bmapDebugSize, 1.f);
         float const width = (DENG_WINDOW->width() / 16) / scale;
@@ -121,9 +121,9 @@ static int rendBspLeaf(BspLeaf *bspLeaf, void * /*parameters*/)
                 GL_BlendMode(BM_NORMAL);
             }
 
-            // Draw the bounding box.
-            V2f_Set(start, bspLeaf->aaBox().minX, bspLeaf->aaBox().minY);
-            V2f_Set(end,   bspLeaf->aaBox().maxX, bspLeaf->aaBox().maxY);
+            // Draw a bounding box for the leaf's geometry.
+            V2f_Set(start, bspLeaf->poly().aaBox().minX, bspLeaf->poly().aaBox().minY);
+            V2f_Set(end,   bspLeaf->poly().aaBox().maxX, bspLeaf->poly().aaBox().maxY);
 
             glBegin(GL_LINES);
                 glVertex2f(start[VX], start[VY]);

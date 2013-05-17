@@ -110,14 +110,10 @@ void BspNode::setChildAABox(int left, AABoxd const *newAABox)
 {
     if(newAABox)
     {
-        AABoxd &dst = d->aaBox(left);
-        V2d_CopyBox(dst.arvec2, newAABox->arvec2);
+        d->aaBox(left) = *newAABox;
     }
     else
     {
-        // Clear.
-        AABoxd &dst = d->aaBox(left);
-        V2d_Set(dst.min, DDMAXFLOAT, DDMAXFLOAT);
-        V2d_Set(dst.max, DDMINFLOAT, DDMINFLOAT);
+        d->aaBox(left).clear();
     }
 }

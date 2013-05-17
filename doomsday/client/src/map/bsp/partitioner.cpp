@@ -914,7 +914,7 @@ DENG2_PIMPL(Partitioner)
                 backRight.hedge()._next = backLeft.hedgePtr();
 
                 // There is now one more half-edge in this leaf.
-                backRight.hedge().bspLeaf()._hedgeCount += 1;
+                backRight.hedge().bspLeaf().poly()._hedgeCount += 1;
             }
         }
 
@@ -1222,27 +1222,14 @@ DENG2_PIMPL(Partitioner)
     {
         if(!leafSegments.count()) return 0;
 
-        // Collapse all degenerate and orphaned leafs.
-#ifdef DENG_BSP_COLLAPSE_ORPHANED_LEAFS
         bool const isDegenerate = leafSegments.count() < 3;
-        bool isOrphan = true;
-        foreach(LineSegment::Side *lineSeg, leafSegments)
-        {
-            if(lineSeg->hasSector())
-            {
-                isOrphan = false;
-                break;
-            }
-        }
-#endif
 
-        BspLeaf *leaf = 0;
+        Polygon *poly = 0;
         while(!leafSegments.isEmpty())
         {
             LineSegment::Side *lineSeg = leafSegments.takeFirst();
 
-#ifdef DENG_BSP_COLLAPSE_ORPHANED_LEAFS
-            if(isDegenerate || isOrphan)
+            if(isDegenerate)
             {
                 if(lineSeg->hasLeft())
                 {
@@ -1253,52 +1240,49 @@ DENG2_PIMPL(Partitioner)
                     lineSeg->right().setLeft(&lineSeg->left());
                 }
 
-                if(lineSeg->twin().hasSector())
-                {
-                    lineSeg->twin().setTwin(0);
-                }
-
-                /**
-                 * @todo This is incorrect from a mod compatibility point of
-                 * view. The map line side sections should never be cleared.
-                 * We should instead flag the Line::Side accordingly. -ds
-                 */
-                if(lineSeg->hasMapSide())
-                {
-                    Line::Side &side = lineSeg->mapSide();
-
-                    delete side._sections;
-                    side._sections = 0;
-                }
-
+                // Take ownership of and destroy the half-edge.
                 delete lineSeg->hedgePtr();
-                numHEdges -= 1;
+                lineSeg->setHEdge(0);
 
-                lineSegments.removeOne(*lineSeg);
+                // There is now one fewer half-edge.
+                numHEdges -= 1;
                 continue;
             }
-#endif
 
-            if(!leaf)
+            // Time to construct the polygon geometry?
+            if(!poly)
             {
-                leaf = new BspLeaf;
+                poly = new Polygon;
             }
 
-            // Link it into head of the leaf's list.
-            lineSeg->hedge()._next = leaf->_hedge;
-            leaf->_hedge = lineSeg->hedgePtr();
+            HEdge &hedge = lineSeg->hedge();
 
-            // Link the half-edge to this leaf.
-            lineSeg->hedge()._bspLeaf = leaf;
+            // Link the half-edge for this line segment to the head of the list
+            // in the new polygon geometry.
+            hedge._next = poly->_hedge;
+            poly->_hedge = &hedge;
 
-            // There is now one more half-edge in this leaf.
-            leaf->_hedgeCount += 1;
+            // There is now one more half-edge in this polygon.
+            poly->_hedgeCount += 1;
         }
 
-        if(leaf)
+        BspLeaf *leaf = new BspLeaf;
+
+        // There is now one more BspLeaf;
+        numLeafs += 1;
+
+        // Assign any built polygon geometry to the BSP leaf (takes ownership).
+        leaf->setPoly(poly);
+
+        if(poly)
         {
-            // There is now one more BspLeaf;
-            numLeafs += 1;
+            // Link the half-edges with the leaf.
+            /// @todo Encapsulate in BspLeaf.
+            HEdge *hedgeIt = poly->firstHEdge();
+            do
+            {
+                hedgeIt->_bspLeaf = leaf;
+            } while((hedgeIt = hedgeIt->_next));
         }
 
         return leaf;
@@ -1493,41 +1477,41 @@ DENG2_PIMPL(Partitioner)
      * order according to their position/orientation relative to the specified
      * point.
      *
-     * @param face        Map geometry face containing the list of half-edges
+     * @param poly        Map geometry polygon containing the list of half-edges
      *                    to be sorted.
      * @param point       Map space point around which to order.
      * @param sortBuffer  Buffer to use for sorting of the hedges.
      *
-     * @attention Do NOT move this into Face. Although this clearly envies the
-     * access rights of the Face class this algorithm belongs here in the BSP
+     * @attention Do NOT move this into Polygon. Although this clearly envies the
+     * access rights of the Polygon class this algorithm belongs here in the BSP
      * partitioner. -ds
      */
-    static void clockwiseOrder(Face &face, Vector2d const &point,
+    static void clockwiseOrder(Polygon &poly, Vector2d const &point,
                                HEdgeSortBuffer &sortBuffer)
     {
-        if(!face._hedge) return;
+        if(!poly._hedge) return;
 
-        // Insert the hedges into the sort buffer.
+        // Insert the half-edges into the sort buffer.
 #ifdef DENG2_QT_4_7_OR_NEWER
-        sortBuffer.reserve(face._hedgeCount);
+        sortBuffer.reserve(poly._hedgeCount);
 #endif
         int i = 0;
-        for(HEdge *hedge = face._hedge; hedge; hedge = hedge->_next, ++i)
+        for(HEdge *hedge = poly._hedge; hedge; hedge = hedge->_next, ++i)
         {
             sortBuffer.insert(i, hedge);
         }
 
-        sortHEdgesByAngleAroundPoint(sortBuffer, face._hedgeCount -1, point);
+        sortHEdgesByAngleAroundPoint(sortBuffer, poly._hedgeCount -1, point);
 
         // Re-link the half-edge list in the order of the sort buffer.
-        face._hedge = 0;
-        for(int i = 0; i < face._hedgeCount; ++i)
+        poly._hedge = 0;
+        for(int i = 0; i < poly._hedgeCount; ++i)
         {
-            int idx = (face._hedgeCount - 1) - i;
-            int j = idx % face._hedgeCount;
+            int idx = (poly._hedgeCount - 1) - i;
+            int j = idx % poly._hedgeCount;
 
-            sortBuffer[j]->_next = face._hedge;
-            face._hedge = sortBuffer[j];
+            sortBuffer[j]->_next = poly._hedge;
+            poly._hedge = sortBuffer[j];
         }
     }
 
@@ -1580,11 +1564,11 @@ DENG2_PIMPL(Partitioner)
         return 0; // Not reachable.
     }
 
-    static Vector2d findFaceCenter(Face const &face)
+    static Vector2d findPolyCenter(Polygon const &poly)
     {
         Vector2d center;
         int numPoints = 0;
-        HEdge const *hedge = face.firstHEdge();
+        HEdge const *hedge = poly.firstHEdge();
         forever
         {
             center += hedge->origin();
@@ -1603,18 +1587,18 @@ DENG2_PIMPL(Partitioner)
 
     void clockwiseLeaf(BspLeaf &leaf, HEdgeSortBuffer &sortBuffer)
     {
-        Face &face = leaf;
+        Polygon &poly = leaf.poly();
 
-        Vector2d center = findFaceCenter(face);
-        clockwiseOrder(face, center, sortBuffer);
+        Vector2d center = findPolyCenter(poly);
+        clockwiseOrder(poly, center, sortBuffer);
 
-        // LOG_DEBUG("Sorted Face half-edges around %s" << center.asText();
-        // leaf.printFaceGeometry();
+        // LOG_DEBUG("Sorted Polygon half-edges around %s" << center.asText();
+        // poly.print();
 
-        // Construct the face's hedge ring.
-        if(face._hedge)
+        // Construct the polygon's half-edge ring.
+        if(poly._hedge)
         {
-            HEdge *hedge = face._hedge;
+            HEdge *hedge = poly._hedge;
             forever
             {
                 /// @todo kludge: This should not be done here!
@@ -1626,12 +1610,12 @@ DENG2_PIMPL(Partitioner)
                     if(!side.leftHEdge())
                     {
                         HEdge *leftHEdge = hedge;
-                        // Find the left-most hedge.
+                        // Find the left-most half-hedge.
                         while(lineSegment(*leftHEdge).hasLeft())
                             leftHEdge = lineSegment(*leftHEdge).left().hedgePtr();
                         side.setLeftHEdge(leftHEdge);
 
-                        // Find the right-most hedge.
+                        // Find the right-most half-edge.
                         HEdge *rightHEdge = hedge;
                         while(lineSegment(*rightHEdge).hasRight())
                             rightHEdge = lineSegment(*rightHEdge).right().hedgePtr();
@@ -1649,7 +1633,7 @@ DENG2_PIMPL(Partitioner)
                 else
                 {
                     // Circular link.
-                    hedge->_next = face._hedge;
+                    hedge->_next = poly._hedge;
                     hedge->_next->_prev = hedge;
                     break;
                 }
@@ -1698,8 +1682,8 @@ DENG2_PIMPL(Partitioner)
                 {
                     if(!hedge->hasTwin())
                     {
-                        DENG_ASSERT(&hedge->next() != hedge);
-                        DENG_ASSERT(&hedge->next().vertex() != &hedge->vertex());
+                        //DENG_ASSERT(&hedge->next() != hedge);
+                        //DENG_ASSERT(&hedge->next().vertex() != &hedge->vertex());
                         hedge->_twin = new HEdge(hedge->next().vertex());
                         hedge->_twin->_twin = hedge;
                         // There is now one more HEdge.

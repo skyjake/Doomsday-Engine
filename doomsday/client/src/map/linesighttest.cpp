@@ -136,7 +136,7 @@ DENG2_PIMPL(LineSightTest)
         bool noBack = !side.back().hasSections() ||
                       (!side.line().definesPolyobj() &&
                           (!side.leftHEdge()->twin().hasBspLeaf() ||
-                           side.leftHEdge()->twin().bspLeaf().hasDegenerateFace()));
+                           side.leftHEdge()->twin().bspLeaf().isDegenerate()));
 
         if(!noBack && !(flags & LS_PASSLEFT))
         {
@@ -238,6 +238,9 @@ DENG2_PIMPL(LineSightTest)
      */
     bool crossBspLeaf(BspLeaf const &bspLeaf)
     {
+        if(bspLeaf.isDegenerate())
+            return false;
+
         if(Polyobj *po = bspLeaf.firstPolyobj())
         {
             // Check polyobj lines.
@@ -253,7 +256,7 @@ DENG2_PIMPL(LineSightTest)
             }
         }
 
-        // Check the edges of the Face geometry.
+        // Check the edges of the Polygon geometry.
         if(HEdge const *base = bspLeaf.firstHEdge())
         {
             HEdge const *hedge = base;

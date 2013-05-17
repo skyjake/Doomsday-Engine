@@ -116,7 +116,7 @@ DENG2_PIMPL(SkyFixEdge)
         if(!hedge->hasLineSide()) return false;
 
         Sector const *frontSec = hedge->bspLeaf().sectorPtr();
-        Sector const *backSec  = hedge->twin().hasBspLeaf() && !hedge->twin().bspLeaf().hasDegenerateFace()? hedge->twin().bspLeaf().sectorPtr() : 0;
+        Sector const *backSec  = hedge->twin().hasBspLeaf() && !hedge->twin().bspLeaf().isDegenerate()? hedge->twin().bspLeaf().sectorPtr() : 0;
 
         if(!(!backSec || backSec != frontSec)) return false;
 
@@ -171,7 +171,7 @@ void SkyFixEdge::prepare()
     }
 
     Sector const *frontSec = d->hedge->bspLeaf().sectorPtr();
-    Sector const *backSec  = d->hedge->twin().hasBspLeaf() && !d->hedge->twin().bspLeaf().hasDegenerateFace()? d->hedge->twin().bspLeaf().sectorPtr() : 0;
+    Sector const *backSec  = d->hedge->twin().hasBspLeaf() && !d->hedge->twin().bspLeaf().isDegenerate()? d->hedge->twin().bspLeaf().sectorPtr() : 0;
     Plane const *ffloor = &frontSec->floor();
     Plane const *fceil  = &frontSec->ceiling();
     Plane const *bceil  = backSec? &backSec->ceiling() : 0;

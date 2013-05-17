@@ -126,7 +126,7 @@ void ShadowEdge::prepare(int planeIndex)
     // in the polygon corner vertices (placement, opacity).
 
     if(d->leftMostHEdge->twin().hasBspLeaf() &&
-       !d->leftMostHEdge->twin().bspLeaf().hasDegenerateFace() &&
+       !d->leftMostHEdge->twin().bspLeaf().isDegenerate() &&
        d->leftMostHEdge->twin().bspLeaf().sectorPtr() != 0)
     {
         Surface const &wallEdgeSurface =

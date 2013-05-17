@@ -223,8 +223,7 @@ void Polyobj::updateOriginalVertexCoords()
 
 void Polyobj::updateAABox()
 {
-    V2d_Set(aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
-    V2d_Set(aaBox.max, DDMINFLOAT, DDMINFLOAT);
+    aaBox.clear();
 
     if(!lineCount()) return;
 

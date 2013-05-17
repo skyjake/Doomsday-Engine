@@ -1,4 +1,4 @@
-/** @file bspleaf.h World Map BSP Leaf.
+/** @file map/bspleaf.h World Map BSP Leaf.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -21,13 +21,11 @@
 #ifndef DENG_WORLD_MAP_BSPLEAF
 #define DENG_WORLD_MAP_BSPLEAF
 
-#include <de/aabox.h>
-
 #include <de/Error>
 #include <de/Vector>
 
 #include "MapElement"
-#include "Face"
+#include "Polygon"
 
 class HEdge;
 class Sector;
@@ -46,9 +44,15 @@ struct ShadowLink;
  *
  * @ingroup map
  */
-class BspLeaf : public de::MapElement, public de::Face
+class BspLeaf : public de::MapElement
 {
 public:
+    /// An invalid polygon was specified @ingroup errors
+    DENG2_ERROR(InvalidPolygonError);
+
+    /// No polygon is assigned. @ingroup errors
+    DENG2_ERROR(MissingPolygonError);
+
     /// Required sector attribution is missing. @ingroup errors
     DENG2_ERROR(MissingSectorError);
 
@@ -71,40 +75,62 @@ public: /// @todo Make private:
 
 public:
     BspLeaf();
-    ~BspLeaf();
 
     /**
-     * Returns @c true iff the map geometry Face for the BSP leaf is "degenerate",
-     * which is to say it is composed of fewer than @em three half-edges.
-     */
-    bool hasDegenerateFace() const;
-
-    /**
-     * Returns the axis-aligned bounding box which encompases all the vertexes
-     * which define the geometry of the Face for for BSP leaf in map coordinate
-     * space units.
-     */
-    AABoxd const &aaBox() const;
-
-    /**
-     * Update the BSP leaf's map space axis-aligned bounding box to encompass
-     * the points defined by the vertexes of the map geometry Face.
-     */
-    void updateAABox();
-
-    /**
-     * Returns the point described by the average origin coordinates of all the
-     * vertexes which define the Face of the BSP leaf in map coordinate space
-     * units.
-     */
-    de::Vector2d const &center() const;
-
-    /**
-     * Update the center point in the map coordinate space.
+     * Returns @c true iff the BSP leaf is "degenerate", which is to say there
+     * is no convex Polygon assigned to it.
      *
-     * @pre Axis-aligned bounding box must have been initialized.
+     * Equivalent to @code !hasPoly() @endcode
      */
-    void updateCenter();
+    inline bool isDegenerate() const { return !hasPoly(); }
+
+    /**
+     * Determines whether a convex Polygon geometry is assigned to the BSP leaf.
+     *
+     * @see poly(), setPoly()
+     */
+    bool hasPoly() const;
+
+    /**
+     * Provides access to the convex Polygon geometry assigned to the BSP leaf.
+     *
+     * @see hasPoly(), setPoly()
+     */
+    de::Polygon &poly();
+
+    /// @copydoc poly()
+    de::Polygon const &poly() const;
+
+    /**
+     * Change the Polygon geometry assigned to the BSP leaf. Before the geometry
+     * is accepted it is first conformance tested to ensure that it represents
+     * a valid, simple convex polygon.
+     *
+     * @param newPolygon  New polygon to be assigned to the BSP leaf. Ownership
+     *                    of the polygon is given to the BspLeaf if it passes
+     *                    all conformance checks.
+     *
+     * @see hasPoly(), poly()
+     */
+    void setPoly(de::Polygon *newPolygon);
+
+    /**
+     * Convenience accessor which returns a pointer to the first HEdge from the
+     * convex Polygon geometry attributed to the BSP leaf. If no geometry is
+     * attributed @c 0 is returned.
+     *
+     * @see hasPoly(), Polygon::firstHEdge()
+     */
+    inline HEdge *firstHEdge() const { return hasPoly()? poly().firstHEdge() : 0; }
+
+    /**
+     * Convenience accessor which returns the total number of half-edges in the
+     * convex Polygon geometry attributed to the BSP leaf. If no geometry is
+     * attributed @c 0 is returned.
+     *
+     * @see hasPoly(), Polygon::hedgeCount()
+     */
+    inline int hedgeCount() const { return hasPoly()? poly().hedgeCount() : 0; }
 
     /**
      * Returns @c true iff a sector is attributed to the BSP leaf. The only time
@@ -130,7 +156,8 @@ public:
     /**
      * Change the sector attributed to the BSP leaf.
      *
-     * @param newSector  New sector to be attributed. Can be @c 0.
+     * @param newSector  New sector to be attributed. Ownership is unaffected.
+     *                   Can be @c 0 (to clear the attribution).
      *
      * @todo Refactor away.
      */
@@ -140,7 +167,7 @@ public:
      * Determines whether the BSP leaf has a positive world volume. For this to
      * be true the following criteria must be met:
      *
-     * - The Face geometry is @em not degenerate (see @ref hasDegenerateFace()).
+     * - The Polygon geometry is @em not degenerate (see @ref isDegenerate()).
      * - A sector is attributed (see @ref hasSector())
      * - The height of floor is lower than that of the ceiling plane for the
      *   attributed sector.
@@ -163,7 +190,8 @@ public:
     /**
      * Change the first polyobj linked to the BSP leaf.
      *
-     * @param newPolyobj  New polyobj. Can be @c 0.
+     * @param newPolyobj  New polyobj to be attributed. Ownership is unaffected.
+     *                    Can be @c 0 (to clear the attribution).
      */
     void setFirstPolyobj(struct polyobj_s *newPolyobj);
 
@@ -237,10 +265,6 @@ public:
     void setAddSpriteCount(int newFrameCount);
 
 #endif // __CLIENT__
-
-#ifdef DENG_DEBUG
-    void printFaceGeometry() const;
-#endif
 
 protected:
     int property(setargs_t &args) const;

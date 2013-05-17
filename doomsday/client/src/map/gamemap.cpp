@@ -149,8 +149,8 @@ DENG2_PIMPL(GameMap)
             collateBspLeafHEdges(builder, *leaf);
 
             // The geometry of the leaf is now finalized; update dependent metadata.
-            leaf->updateAABox();
-            leaf->updateCenter();
+            leaf->poly().updateAABox();
+            leaf->poly().updateCenter();
             leaf->updateWorldGridOffset();
 
             return;
@@ -1147,11 +1147,13 @@ void GameMap::linkBspLeaf(BspLeaf &bspLeaf)
 {
     DENG_ASSERT(bspLeafBlockmap != 0);
 
+    // Degenerate BspLeafs don't get in.
+    if(bspLeaf.isDegenerate()) return;
+
     // BspLeafs without sectors don't get in.
     if(!bspLeaf.hasSector()) return;
 
-    AABoxd aaBox(bspLeaf.aaBox().minX, bspLeaf.aaBox().minY,
-                 bspLeaf.aaBox().maxX, bspLeaf.aaBox().maxY);
+    AABoxd aaBox = bspLeaf.poly().aaBox();
 
     BlockmapCellBlock cellBlock;
     Blockmap_CellBlock(bspLeafBlockmap, &cellBlock, &aaBox);
@@ -1189,10 +1191,10 @@ static int blockmapCellBspLeafsIterator(void *object, void *context)
 
         // Check the bounds.
         if(args->box &&
-           (bspLeaf->aaBox().maxX < args->box->minX ||
-            bspLeaf->aaBox().minX > args->box->maxX ||
-            bspLeaf->aaBox().minY > args->box->maxY ||
-            bspLeaf->aaBox().maxY < args->box->minY))
+           (bspLeaf->poly().aaBox().maxX < args->box->minX ||
+            bspLeaf->poly().aaBox().minX > args->box->maxX ||
+            bspLeaf->poly().aaBox().minY > args->box->maxY ||
+            bspLeaf->poly().aaBox().maxY < args->box->minY))
             ok = false;
 
         if(ok)

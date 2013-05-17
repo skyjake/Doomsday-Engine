@@ -343,20 +343,19 @@ coord_t Sector::roughArea() const
 
 void Sector::updateAABox()
 {
-    V2d_Set(d->aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
-    V2d_Set(d->aaBox.max, DDMINFLOAT, DDMINFLOAT);
+    d->aaBox.clear();
 
     if(!d->bspLeafs.count()) return;
 
     QListIterator<BspLeaf *> leafIt(d->bspLeafs);
 
     BspLeaf *leaf = leafIt.next();
-    V2d_CopyBox(d->aaBox.arvec2, leaf->aaBox().arvec2);
+    V2d_CopyBox(d->aaBox.arvec2, leaf->poly().aaBox().arvec2);
 
     while(leafIt.hasNext())
     {
         leaf = leafIt.next();
-        V2d_UniteBox(d->aaBox.arvec2, leaf->aaBox().arvec2);
+        V2d_UniteBox(d->aaBox.arvec2, leaf->poly().aaBox().arvec2);
     }
 }
 
@@ -368,14 +367,14 @@ void Sector::updateRoughArea()
     QListIterator<BspLeaf *> leafIt(d->bspLeafs);
 
     BspLeaf *leaf = leafIt.next();
-    d->roughArea += (leaf->aaBox().maxX - leaf->aaBox().minX) *
-                    (leaf->aaBox().maxY - leaf->aaBox().minY);
+    d->roughArea += (leaf->poly().aaBox().maxX - leaf->poly().aaBox().minX) *
+                    (leaf->poly().aaBox().maxY - leaf->poly().aaBox().minY);
 
     while(leafIt.hasNext())
     {
         leaf = leafIt.next();
-        d->roughArea += (leaf->aaBox().maxX - leaf->aaBox().minX) *
-                        (leaf->aaBox().maxY - leaf->aaBox().minY);
+        d->roughArea += (leaf->poly().aaBox().maxX - leaf->poly().aaBox().minX) *
+                        (leaf->poly().aaBox().maxY - leaf->poly().aaBox().minY);
     }
 }
 
@@ -438,7 +437,7 @@ void Sector::planeHeightChanged(Plane &plane, coord_t oldHeight)
     // Inform the shadow bias of changed geometry.
     foreach(BspLeaf *bspLeaf, d->bspLeafs)
     {
-        if(!bspLeaf->hasDegenerateFace())
+        if(!bspLeaf->isDegenerate())
         {
             HEdge *base = bspLeaf->firstHEdge();
             HEdge *hedge = base;

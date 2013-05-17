@@ -25,7 +25,6 @@
 
 #include <de/Log>
 
-#include "Face"
 #include "HEdge"
 #include "Polyobj"
 #include "Sector"
@@ -49,11 +48,8 @@ ddouble triangleArea(Vector2d const &v1, Vector2d const &v2, Vector2d const &v3)
 
 DENG2_PIMPL(BspLeaf)
 {
-    /// Vertex bounding box in the map coordinate space.
-    AABoxd aaBox;
-
-    /// Center of vertices.
-    Vector2d center;
+    /// Convex polygon geometry assigned to the BSP leaf (owned).
+    QScopedPointer<Polygon> polygon;
 
     /// Offset to align the top left of materials in the built geometry to the
     /// map coordinate space grid.
@@ -93,6 +89,20 @@ DENG2_PIMPL(BspLeaf)
           validCount(0)
     {}
 
+    ~Instance()
+    {
+#ifdef __CLIENT__
+        if(self._bsuf)
+        {
+            for(int i = 0; i < sector->planeCount(); ++i)
+            {
+                SB_DestroySurface(self._bsuf[i]);
+            }
+            Z_Free(self._bsuf);
+        }
+#endif // __CLIENT__
+    }
+
 #ifdef __CLIENT__
 
     /**
@@ -117,11 +127,11 @@ DENG2_PIMPL(BspLeaf)
     {
 #define MIN_TRIANGLE_EPSILON  (0.1) ///< Area
 
-        HEdge *firstNode = self.firstHEdge();
+        HEdge *firstNode = polygon->firstHEdge();
 
         fanBase = firstNode;
 
-        if(self.hedgeCount() > 3)
+        if(polygon->hedgeCount() > 3)
         {
             // Splines with higher vertex counts demand checking.
             Vertex const *base, *a, *b;
@@ -173,7 +183,7 @@ DENG2_PIMPL(BspLeaf)
 #endif // __CLIENT__
 };
 
-BspLeaf::BspLeaf() : MapElement(DMU_BSPLEAF), Face(), d(new Instance(this))
+BspLeaf::BspLeaf() : MapElement(DMU_BSPLEAF), d(new Instance(this))
 {
 #ifdef __CLIENT__
     _shadows = 0;
@@ -182,56 +192,36 @@ BspLeaf::BspLeaf() : MapElement(DMU_BSPLEAF), Face(), d(new Instance(this))
 #endif
 }
 
-BspLeaf::~BspLeaf()
+bool BspLeaf::hasPoly() const
 {
-#ifdef __CLIENT__
-    if(_bsuf)
+    return !d->polygon.isNull();
+}
+
+Polygon &BspLeaf::poly()
+{
+    if(!d->polygon.isNull())
     {
-        for(int i = 0; i < d->sector->planeCount(); ++i)
-        {
-            SB_DestroySurface(_bsuf[i]);
-        }
-        Z_Free(_bsuf);
+        return *d->polygon;
     }
-#endif // __CLIENT__
+    /// @throw MissingPolygonError Attempted with no polygon assigned.
+    throw MissingPolygonError("BspLeaf::poly", "No polygon is assigned");
 }
 
-bool BspLeaf::hasDegenerateFace() const
+Polygon const &BspLeaf::poly() const
 {
-    return hedgeCount() < 3;
+    return const_cast<Polygon const &>(const_cast<BspLeaf *>(this)->poly());
 }
 
-AABoxd const &BspLeaf::aaBox() const
+void BspLeaf::setPoly(Polygon *newPolygon)
 {
-    return d->aaBox;
-}
-
-void BspLeaf::updateAABox()
-{
-    V2d_Set(d->aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
-    V2d_Set(d->aaBox.max, DDMINFLOAT, DDMINFLOAT);
-
-    HEdge *base = firstHEdge();
-    if(!base) return; // Very odd...
-
-    HEdge *hedgeIt = base;
-    V2d_InitBoxXY(d->aaBox.arvec2, hedgeIt->origin().x, hedgeIt->origin().y);
-
-    while((hedgeIt = &hedgeIt->next()) != base)
+    if(newPolygon && !newPolygon->isConvex())
     {
-        V2d_AddToBoxXY(d->aaBox.arvec2, hedgeIt->origin().x, hedgeIt->origin().y);
+        /// @throw InvalidPolygonError Attempted to assign a non-convex polygon.
+        throw InvalidPolygonError("BspLeaf::setPoly", "Non-convex polygons cannot be assigned");
     }
-}
 
-Vector2d const &BspLeaf::center() const
-{
-    return d->center;
-}
-
-void BspLeaf::updateCenter()
-{
-    // The middle is the center of our AABox.
-    d->center = Vector2d(d->aaBox.min) + (Vector2d(d->aaBox.max) - Vector2d(d->aaBox.min)) / 2;
+    // Assign the new polygon (if any).
+    d->polygon.reset(newPolygon);
 }
 
 Vector2d const &BspLeaf::worldGridOffset() const
@@ -241,7 +231,7 @@ Vector2d const &BspLeaf::worldGridOffset() const
 
 void BspLeaf::updateWorldGridOffset()
 {
-    d->worldGridOffset = Vector2d(fmod(d->aaBox.minX, 64), fmod(d->aaBox.maxY, 64));
+    d->worldGridOffset = Vector2d(fmod(d->polygon->aaBox().minX, 64), fmod(d->polygon->aaBox().maxY, 64));
 }
 
 bool BspLeaf::hasSector() const
@@ -266,7 +256,7 @@ void BspLeaf::setSector(Sector *newSector)
 
 bool BspLeaf::hasWorldVolume(bool useVisualHeights) const
 {
-    if(hasDegenerateFace()) return false;
+    if(isDegenerate()) return false;
     if(!hasSector()) return false;
 
     coord_t const floorHeight = useVisualHeights? d->sector->floor().visHeight() : d->sector->floor().height();
@@ -351,24 +341,3 @@ int BspLeaf::property(setargs_t &args) const
     }
     return false; // Continue iteration.
 }
-
-#ifdef DENG_DEBUG
-void BspLeaf::printFaceGeometry() const
-{
-    HEdge const *base = firstHEdge();
-    if(!base) return;
-
-    HEdge const *hedgeIt = base;
-    do
-    {
-        HEdge const &hedge = *hedgeIt;
-        coord_t angle = M_DirectionToAngleXY(hedge.origin().x - d->center.x,
-                                             hedge.origin().y - d->center.y);
-
-        LOG_DEBUG("  half-edge %p: Angle %1.6f %s -> %s")
-            << de::dintptr(&hedge) << angle
-            << hedge.origin().asText() << hedge.twin().origin().asText();
-
-    } while((hedgeIt = &hedgeIt->next()) != base);
-}
-#endif

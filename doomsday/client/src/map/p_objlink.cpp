@@ -309,7 +309,7 @@ static void linkObjToBspLeaf(BspLeaf &bspLeaf, void *object, objtype_t type)
     if(!object) return;
 
     // Never link to degenerate BspLeafs.
-    if(bspLeaf.hasDegenerateFace()) return;
+    if(bspLeaf.isDegenerate()) return;
 
     objcontact_t *con = allocObjContact();
     con->obj = object;
@@ -322,7 +322,7 @@ static void createObjlink(BspLeaf &bspLeaf, void *object, objtype_t type)
     if(!object) return;
 
     // We don't create objlinks for objects in degenerate BSPLeafs.
-    if(bspLeaf.hasDegenerateFace()) return;
+    if(bspLeaf.isDegenerate()) return;
 
     objlink_t *link = allocObjlink();
     link->obj = object;
@@ -333,13 +333,13 @@ static void processHEdge(HEdge *hedge, void *parameters)
 {
     contactfinderparams_t *parms = (contactfinderparams_t *) parameters;
     DENG_ASSERT(hedge != 0 && parms != 0);
-    DENG_ASSERT(hedge->hasBspLeaf() && !hedge->bspLeaf().hasDegenerateFace());
+    DENG_ASSERT(!hedge->bspLeaf().isDegenerate());
 
-    // There must be a back leaf to spread to.
+    // There must be a back BSP leaf to spread to.
     if(!hedge->twin().hasBspLeaf()) return;
 
     // Never spread to degenerate BspLeafs.
-    if(hedge->twin().bspLeaf().hasDegenerateFace()) return;
+    if(hedge->twin().bspLeaf().isDegenerate()) return;
 
     BspLeaf *leaf     = &hedge->bspLeaf();
     BspLeaf *backLeaf = &hedge->twin().bspLeaf();
@@ -351,10 +351,10 @@ static void processHEdge(HEdge *hedge, void *parameters)
     }
 
     // Is the leaf on the back side outside the origin's AABB?
-    if(backLeaf->aaBox().maxX <= parms->box[BOXLEFT]   ||
-       backLeaf->aaBox().minX >= parms->box[BOXRIGHT]  ||
-       backLeaf->aaBox().maxY <= parms->box[BOXBOTTOM] ||
-       backLeaf->aaBox().minY >= parms->box[BOXTOP])
+    if(backLeaf->poly().aaBox().maxX <= parms->box[BOXLEFT]   ||
+       backLeaf->poly().aaBox().minX >= parms->box[BOXRIGHT]  ||
+       backLeaf->poly().aaBox().maxY <= parms->box[BOXBOTTOM] ||
+       backLeaf->poly().aaBox().minY >= parms->box[BOXTOP])
         return;
 
     // Too far from the object?
@@ -434,7 +434,7 @@ static void processHEdge(HEdge *hedge, void *parameters)
  */
 static void spreadInBspLeaf(BspLeaf *bspLeaf, void *parameters)
 {
-    if(!bspLeaf || bspLeaf->hasDegenerateFace()) return;
+    if(!bspLeaf || bspLeaf->isDegenerate()) return;
 
     HEdge *base = bspLeaf->firstHEdge();
     HEdge *hedge = base;
@@ -513,12 +513,12 @@ static void spreadContactsForBspLeaf(objlinkblockmap_t &obm, BspLeaf const &bspL
     float maxRadius)
 {
     uint minBlock[2];
-    toObjlinkBlockmapCell(obm, minBlock, bspLeaf.aaBox().minX - maxRadius,
-                                         bspLeaf.aaBox().minY - maxRadius);
+    toObjlinkBlockmapCell(obm, minBlock, bspLeaf.poly().aaBox().minX - maxRadius,
+                                         bspLeaf.poly().aaBox().minY - maxRadius);
 
     uint maxBlock[2];
-    toObjlinkBlockmapCell(obm, maxBlock, bspLeaf.aaBox().maxX + maxRadius,
-                                         bspLeaf.aaBox().maxY + maxRadius);
+    toObjlinkBlockmapCell(obm, maxBlock, bspLeaf.poly().aaBox().maxX + maxRadius,
+                                         bspLeaf.poly().aaBox().maxY + maxRadius);
 
     for(uint y = minBlock[1]; y <= maxBlock[1]; ++y)
     for(uint x = minBlock[0]; x <= maxBlock[0]; ++x)
@@ -548,7 +548,7 @@ static inline float maxRadius(objtype_t type)
 
 void R_InitForBspLeaf(BspLeaf &bspLeaf)
 {
-    if(bspLeaf.hasDegenerateFace()) return;
+    if(bspLeaf.isDegenerate()) return;
 
 BEGIN_PROF( PROF_OBJLINK_SPREAD );
 

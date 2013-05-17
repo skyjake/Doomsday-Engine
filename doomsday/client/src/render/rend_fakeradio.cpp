@@ -1083,8 +1083,8 @@ void Rend_RadioWallSection(SectionEdge const &leftEdge, SectionEdge const &right
 
     Line::Side &side            = leftEdge.lineSide();
     HEdge const *hedge          = side.leftHEdge();
-    Sector const *frontSec      = hedge->bspLeaf().sectorPtr();
-    Sector const *backSec       = hedge->twin().hasBspLeaf() && !hedge->twin().bspLeaf().hasDegenerateFace() && leftEdge.section() != Line::Side::Middle? hedge->twin().bspLeaf().sectorPtr() : 0;
+    Sector const *frontSec      = hedge->sectorPtr();
+    Sector const *backSec       = hedge->twin().hasBspLeaf() && !hedge->twin().bspLeaf().isDegenerate() && leftEdge.section() != Line::Side::Middle? hedge->twin().bspLeaf().sectorPtr() : 0;
 
     coord_t const lineLength    = side.line().length();
     coord_t const sectionOffset = leftEdge.lineOffset();
@@ -1321,6 +1321,8 @@ static void drawLinkedEdgeShadows(ShadowLink &link, Sector &sector,
  */
 void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
 {
+    DENG_ASSERT(!bspLeaf.isDegenerate());
+
     if(!rendFakeRadio || levelFullBright) return;
 
     static int doPlaneSize = 0;
@@ -1337,8 +1339,8 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
     // Any need to continue?
     if(shadowDark < .0001f) return;
 
-    Vector3f eyeToSurface(vOrigin[VX] - bspLeaf.center().x,
-                          vOrigin[VZ] - bspLeaf.center().y);
+    Vector3f eyeToSurface(vOrigin[VX] - bspLeaf.poly().center().x,
+                          vOrigin[VZ] - bspLeaf.poly().center().y);
 
     // Do we need to enlarge the size of the doPlanes array?
     if(sector.planeCount() > doPlaneSize)

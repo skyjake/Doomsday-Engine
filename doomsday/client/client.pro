@@ -113,13 +113,13 @@ DENG_HEADERS += \
     include/BspLeaf \
     include/BspNode \
     include/EntityDatabase \
-    include/Face \
     include/Game \
     include/Games \
     include/HEdge \
     include/IHPlane \
     include/Line \
     include/Plane \
+    include/Polygon \
     include/Polyobj \
     include/SectionEdge \
     include/Sector \
@@ -241,7 +241,6 @@ DENG_HEADERS += \
     include/map/bspnode.h \
     include/map/dam_file.h \
     include/map/entitydatabase.h \
-    include/map/face.h \
     include/map/gamemap.h \
     include/map/generators.h \
     include/map/hedge.h \
@@ -260,6 +259,7 @@ DENG_HEADERS += \
     include/map/p_players.h \
     include/map/p_ticker.h \
     include/map/plane.h \
+    include/map/polygon.h \
     include/map/polyobj.h \
     include/map/propertyvalue.h \
     include/map/r_world.h \
@@ -516,7 +516,6 @@ SOURCES += \
     src/map/bspnode.cpp \
     src/map/dam_file.cpp \
     src/map/entitydatabase.cpp \
-    src/map/face.cpp \
     src/map/gamemap.cpp \
     src/map/generators.cpp \
     src/map/hedge.cpp \
@@ -534,6 +533,7 @@ SOURCES += \
     src/map/p_think.cpp \
     src/map/p_ticker.cpp \
     src/map/plane.cpp \
+    src/map/polygon.cpp \
     src/map/polyobj.cpp \
     src/map/propertyvalue.cpp \
     src/map/r_world.cpp \
