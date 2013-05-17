@@ -145,7 +145,7 @@ DENG2_OBSERVES(Loop, Iteration)
             if(data.get())
             {
                 LOG_DEBUG("Item \"%s\" data cleared from memory (%i bytes)")
-                        << path() << data->sizeInMemory();
+                        << path('.') << data->sizeInMemory();
                 data->aboutToUnload();
                 data.reset();
             }
@@ -158,7 +158,7 @@ DENG2_OBSERVES(Loop, Iteration)
 
             data.reset(newData);
             accessedAt = Time();
-            bank->d->notify(Notification(Notification::Loaded, path()));
+            bank->d->notify(Notification(Notification::Loaded, path('.')));
         }
 
         /// Load the item into memory from its current cache.
@@ -193,7 +193,7 @@ DENG2_OBSERVES(Loop, Iteration)
             // us. This may take an unspecified amount of time.
             QScopedPointer<IData> loaded(bank->loadFromSource(*source));
 
-            LOG_DEBUG("Loaded \"%s\" from source in %.2f seconds") << path() << startedAt.since();
+            LOG_DEBUG("Loaded \"%s\" from source in %.2f seconds") << path('.') << startedAt.since();
 
             if(loaded.data())
             {
@@ -225,14 +225,14 @@ DENG2_OBSERVES(Loop, Iteration)
                     QScopedPointer<IData> blank(bank->newData());
                     reader >> *blank->asSerializable();
                     setData(blank.take());
-                    LOG_DEBUG("Deserialized \"%s\" in %.2f seconds") << path() << startedAt.since();
+                    LOG_DEBUG("Deserialized \"%s\" in %.2f seconds") << path('.') << startedAt.since();
                     return; // Done!
                 }
                 // We cannot use this.
             }
             catch(Error const &er)
             {
-                LOG_WARNING("Failed to deserialize \"%s\":\n") << path() << er.asText();
+                LOG_WARNING("Failed to deserialize \"%s\":\n") << path('.') << er.asText();
             }
 
             // Fallback option.
@@ -301,10 +301,13 @@ DENG2_OBSERVES(Loop, Iteration)
                 fromCache.remove(*this);
                 cache = &toCache;
 
-                LOG_DEBUG("Item \"%s\" moved to %s cache")
-                        << path() << Cache::formatAsText(toCache.format());
+                // Externally we use dotted paths.
+                Path const itemPath = path('.');
 
-                bank->d->notify(Notification(path(), toCache));
+                LOG_DEBUG("Item \"%s\" moved to %s cache")
+                        << itemPath << Cache::formatAsText(toCache.format());
+
+                bank->d->notify(Notification(itemPath, toCache));
             }
         }
     };
@@ -422,7 +425,7 @@ DENG2_OBSERVES(Loop, Iteration)
         };
 
     public:
-        Job(Bank &bk, Task t, Path p = "")
+        Job(Bank &bk, Task t, Path const &p = Path())
             : _bank(bk), _task(t), _path(p)
         {}
 
@@ -635,7 +638,7 @@ DENG2_OBSERVES(Loop, Iteration)
 
                 if(item.isValidSerialTime(hotTime))
                 {
-                    LOG_DEBUG("Found valid serialized copy of \"%s\"") << item.path();
+                    LOG_DEBUG("Found valid serialized copy of \"%s\"") << item.path('.');
 
                     item.serial = array;
                     best = serialCache;
@@ -774,7 +777,7 @@ void Bank::clear()
     d->clear();
 }
 
-void Bank::add(Path const &path, ISource *source)
+void Bank::add(DotPath const &path, ISource *source)
 {
     LOG_AS("Bank");
 
@@ -789,12 +792,12 @@ void Bank::add(Path const &path, ISource *source)
     d->putInBestCache(item);
 }
 
-void Bank::remove(Path const &path)
+void Bank::remove(DotPath const &path)
 {
     d->items.remove(path, PathTree::NoBranch);
 }
 
-bool Bank::has(Path const &path) const
+bool Bank::has(DotPath const &path) const
 {
     return d->items.has(path);
 }
@@ -816,7 +819,7 @@ PathTree const &Bank::index() const
     return d->items;
 }
 
-void Bank::load(Path const &path, Importance importance)
+void Bank::load(DotPath const &path, Importance importance)
 {
     d->load(path, importance);
 }
@@ -831,7 +834,7 @@ void Bank::loadAll()
     }
 }
 
-Bank::IData &Bank::data(Path const &path) const
+Bank::IData &Bank::data(DotPath const &path) const
 {
     LOG_AS("Bank");
 
@@ -867,7 +870,7 @@ Bank::IData &Bank::data(Path const &path) const
     return *item.data;
 }
 
-void Bank::unload(Path const &path, CacheLevel toLevel)
+void Bank::unload(DotPath const &path, CacheLevel toLevel)
 {
     d->unload(path, toLevel);
 }
@@ -884,7 +887,7 @@ void Bank::unloadAll(CacheLevel maxLevel)
     }
 }
 
-void Bank::clearFromCache(Path const &path)
+void Bank::clearFromCache(DotPath const &path)
 {
     d->unload(path, InColdStorage);
 }

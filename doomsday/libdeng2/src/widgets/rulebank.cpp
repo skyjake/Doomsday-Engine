@@ -60,7 +60,7 @@ void RuleBank::addFromInfo(File const &file)
     addFromInfoBlocks("rule");
 }
 
-Rule const &RuleBank::rule(Path const &path) const
+Rule const &RuleBank::rule(DotPath const &path) const
 {
     return *static_cast<Instance::RuleData &>(data(path)).rule;
 }

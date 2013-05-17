@@ -50,7 +50,7 @@ public:
      *
      * @return  Rule instance.
      */
-    Rule const &rule(Path const &path) const;
+    Rule const &rule(DotPath const &path) const;
 
 protected:
     virtual ISource *newSourceFromInfo(String const &id);

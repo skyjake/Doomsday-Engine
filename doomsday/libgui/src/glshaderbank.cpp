@@ -147,7 +147,7 @@ void GLShaderBank::addFromInfo(File const &file)
     addFromInfoBlocks("shader");
 }
 
-GLShader &GLShaderBank::shader(Path const &path, GLShader::Type type) const
+GLShader &GLShaderBank::shader(DotPath const &path, GLShader::Type type) const
 {
     Instance::Data &i = static_cast<Instance::Data &>(data(path));
 
@@ -161,7 +161,7 @@ GLShader &GLShaderBank::shader(Path const &path, GLShader::Type type) const
     }
 }
 
-GLProgram &GLShaderBank::build(GLProgram &program, Path const &path) const
+GLProgram &GLShaderBank::build(GLProgram &program, DotPath const &path) const
 {
     Instance::Data &i = static_cast<Instance::Data &>(data(path));
     program.build(i.vertex, i.fragment);

@@ -88,7 +88,7 @@ void FontBank::addFromInfo(File const &file)
     addFromInfoBlocks("font");
 }
 
-Font const &FontBank::font(Path const &path) const
+Font const &FontBank::font(DotPath const &path) const
 {
     return *static_cast<Instance::FontData &>(data(path)).font;
 }

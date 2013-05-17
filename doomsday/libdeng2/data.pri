@@ -15,6 +15,7 @@ HEADERS += \
     include/de/Counted \
     include/de/Date \
     include/de/DictionaryValue \
+    include/de/DotPath \
     include/de/FIFO \
     include/de/FixedByteArray \
     include/de/IBlock \

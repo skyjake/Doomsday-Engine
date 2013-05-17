@@ -41,7 +41,7 @@ public:
 
     void addFromInfo(File const &file);
 
-    GLShader &shader(Path const &path, GLShader::Type type) const;
+    GLShader &shader(DotPath const &path, GLShader::Type type) const;
 
     /**
      * Builds a GL program using the defined shaders.
@@ -51,7 +51,7 @@ public:
      *
      * @return Reference to @a program.
      */
-    GLProgram &build(GLProgram &program, Path const &path) const;
+    GLProgram &build(GLProgram &program, DotPath const &path) const;
 
 protected:
     ISource *newSourceFromInfo(String const &id);
