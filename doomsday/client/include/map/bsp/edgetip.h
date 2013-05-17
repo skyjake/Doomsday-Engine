@@ -150,8 +150,8 @@ public:
         while(i != _tips.end())
         {
             EdgeTip &tip = *i;
-            if(tip.hasFront() && &tip.front().line() == &seg ||
-               tip.hasBack()  && &tip.back().line()  == &seg)
+            if((tip.hasFront() && &tip.front().line() == &seg) ||
+               (tip.hasBack()  && &tip.back().line()  == &seg))
             {
                 i = _tips.erase(i);
             }
