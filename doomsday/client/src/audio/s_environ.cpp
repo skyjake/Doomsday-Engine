@@ -164,6 +164,9 @@ static void findBspLeafsAffectingSector(GameMap *map, Sector *sec)
 
     foreach(BspLeaf *bspLeaf, map->bspLeafs())
     {
+        // Degenerate BspLeafs never contribute.
+        if(bspLeaf->isDegenerate()) continue;
+
         // Is this BSP leaf close enough?
         if(bspLeaf->sectorPtr() == sec || // leaf is IN this sector
            (bspLeaf->poly().center().x > affectionBounds.minX &&
