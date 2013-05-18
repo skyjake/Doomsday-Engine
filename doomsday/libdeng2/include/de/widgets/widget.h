@@ -130,6 +130,7 @@ public:
 
     // Events.
     virtual void initialize();
+    virtual void deinitialize();
     virtual void viewResized();
     virtual void focusGained();
     virtual void focusLost();

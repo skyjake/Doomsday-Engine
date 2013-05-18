@@ -305,6 +305,9 @@ Widget::Children Widget::children() const
 void Widget::initialize()
 {}
 
+void Widget::deinitialize()
+{}
+
 void Widget::viewResized()
 {}
 
