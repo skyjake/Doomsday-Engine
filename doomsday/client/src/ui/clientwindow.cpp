@@ -35,6 +35,8 @@
 #include "gl/gl_main.h"
 #include "ui/widgets/legacywidget.h"
 #include "ui/widgets/busywidget.h"
+#include "ui/widgets/taskbarwidget.h"
+#include "ui/widgets/lineeditwidget.h"
 #include "ui/mouse_qt.h"
 
 #include "dd_main.h"
@@ -76,6 +78,22 @@ DENG2_PIMPL(ClientWindow),
                 .setLeftTop    (root.viewLeft(),  root.viewTop())
                 .setRightBottom(root.viewRight(), root.viewBottom());
         root.add(legacy);
+
+        /*
+        TaskBarWidget *taskBar = new TaskBarWidget;
+        taskBar->rule()
+                .setInput(Rule::Left,   root.viewLeft())
+                .setInput(Rule::Bottom, root.viewBottom())
+                .setInput(Rule::Width,  root.viewWidth());
+        root.add(taskBar);*/
+
+        LineEditWidget *editTest = new LineEditWidget;
+        editTest->setText("Hello World");
+        editTest->rule()
+                .setInput(Rule::Left,   root.viewLeft())
+                .setInput(Rule::Bottom, root.viewBottom())
+                .setInput(Rule::Width,  root.viewWidth());
+        root.add(editTest);
 
         // Initially the widget is disabled. It will be enabled when the window
         // is visible and ready to be drawn.
@@ -144,6 +162,8 @@ DENG2_PIMPL(ClientWindow),
             self.canvas().setFocus();
         }
 #endif
+
+        self.canvas().makeCurrent();
 
         DD_FinishInitializationAfterWindowReady();
     }

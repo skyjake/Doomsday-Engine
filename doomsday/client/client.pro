@@ -357,9 +357,16 @@ DENG_HEADERS += \
     include/ui/ui_main.h \
     include/ui/ui_panel.h \
     include/ui/widgets/busywidget.h \
+    include/ui/widgets/buttonwidget.h \
+    include/ui/widgets/gltextcomposer.h \
     include/ui/widgets/guirootwidget.h \
     include/ui/widgets/guiwidget.h \
+    include/ui/widgets/fontlinewrapping.h \
+    include/ui/widgets/labelwidget.h \
     include/ui/widgets/legacywidget.h \
+    include/ui/widgets/lineeditwidget.h \
+    include/ui/widgets/logwidget.h \
+    include/ui/widgets/taskbarwidget.h \
     include/ui/widgets/widgetactions.h \
     include/ui/windowsystem.h \
     include/ui/zonedebug.h \
@@ -624,9 +631,16 @@ SOURCES += \
     src/ui/ui_main.cpp \
     src/ui/ui_panel.cpp \
     src/ui/widgets/busywidget.cpp \
+    src/ui/widgets/buttonwidget.cpp \
+    src/ui/widgets/gltextcomposer.cpp \
     src/ui/widgets/guirootwidget.cpp \
     src/ui/widgets/guiwidget.cpp \
+    src/ui/widgets/fontlinewrapping.cpp \
+    src/ui/widgets/labelwidget.cpp \
     src/ui/widgets/legacywidget.cpp \
+    src/ui/widgets/lineeditwidget.cpp \
+    src/ui/widgets/logwidget.cpp \
+    src/ui/widgets/taskbarwidget.cpp \
     src/ui/widgets/widgetactions.cpp \
     src/ui/windowsystem.cpp \
     src/ui/zonedebug.cpp \
