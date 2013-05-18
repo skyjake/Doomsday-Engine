@@ -59,9 +59,12 @@ DENG2_PIMPL_NOREF(LineSegment::Side)
     LineSegment::Side *rightNeighbor;
     LineSegment::Side *leftNeighbor;
 
-    /// The superblock that contains this segment, or @c 0 if the segment is no
-    /// longer in any superblock (e.g., now in or being turned into a leaf edge).
+    /// The superblock that contains "this" segment, or @c 0 if the segment is no
+    /// longer in any superblock (e.g., has been attributed to a BSP leaf).
     SuperBlock *bmapBlock;
+
+    /// BSP leaf to which "this" segment is attributed; otherwise @c 0.
+    BspLeaf *bspLeaf;
 
     /// Map sector attributed to the line segment. Can be @c 0 for partition lines.
     Sector *sector;
@@ -83,6 +86,7 @@ DENG2_PIMPL_NOREF(LineSegment::Side)
           rightNeighbor(0),
           leftNeighbor(0),
           bmapBlock(0),
+          bspLeaf(0),
           sector(0),
           pLength(0),
           pAngle(0),
@@ -155,6 +159,16 @@ HEdge &LineSegment::Side::hedge() const
 void LineSegment::Side::setHEdge(HEdge *newHEdge)
 {
     d->hedge = newHEdge;
+}
+
+BspLeaf *LineSegment::Side::bspLeaf() const
+{
+    return d->bspLeaf;
+}
+
+void LineSegment::Side::setBspLeaf(BspLeaf *newBspLeaf)
+{
+    d->bspLeaf = newBspLeaf;
 }
 
 bool LineSegment::Side::hasMapSide() const

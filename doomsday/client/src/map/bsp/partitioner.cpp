@@ -340,49 +340,6 @@ DENG2_PIMPL(Partitioner)
         }
     }
 
-    /**
-     * @return The new line segment (front is from @a start to @a end).
-     */
-    LineSegment *buildLineSegmentBetweenVertexes(Vertex &start, Vertex &end,
-        Sector *frontSec, Sector *backSec, Line::Side *frontSide,
-        Line *partitionLine = 0)
-    {
-        lineSegments.append(new LineSegment(start, end));
-        LineSegment &seg = *lineSegments.back();
-
-        LineSegment::Side &front = seg.front();
-        front.setMapSide(frontSide);
-        front.setPartitionMapLine(partitionLine);
-        front.setSector(frontSec);
-
-        front.setHEdge(new HEdge(start, frontSide));
-        // There is now one more HEdge.
-        numHEdges += 1;
-
-        lineSegmentMap.insert(front.hedgePtr(), &front);
-
-        if(backSec)
-        {
-            LineSegment::Side &back = seg.back();
-
-            back.setSector(backSec);
-            back.setMapSide(frontSide? &frontSide->back() : 0);
-            back.setPartitionMapLine(partitionLine);
-
-            back.setHEdge(new HEdge(end, frontSide? &frontSide->back() : 0));
-            // There is now one more HEdge.
-            numHEdges += 1;
-
-            lineSegmentMap.insert(back.hedgePtr(), &back);
-
-            // Twin the half-edges together.
-            front.hedge()._twin = back.hedgePtr();
-            back.hedge()._twin  = front.hedgePtr();
-        }
-
-        return &seg;
-    }
-
     inline void linkLineSegmentSideInSuperBlockmap(SuperBlock &block, LineSegment::Side &lineSeg)
     {
         // Associate this line segment with the subblock.
@@ -417,9 +374,9 @@ DENG2_PIMPL(Partitioner)
                     backSec = line->_bspWindowSector;
                 }
 
-                seg = buildLineSegmentBetweenVertexes(line->from(), line->to(),
-                                                      frontSec, backSec,
-                                                      &line->front());
+                seg = &buildLineSegmentBetweenVertexes(line->from(), line->to(),
+                                                       frontSec, backSec,
+                                                       &line->front());
 
                 linkLineSegmentSideInSuperBlockmap(blockmap, seg->front());
                 if(seg->back().hasSector())
@@ -817,53 +774,69 @@ DENG2_PIMPL(Partitioner)
     }
 
     /**
+     * @return The new line segment (front is from @a start to @a end).
+     */
+    LineSegment &buildLineSegmentBetweenVertexes(Vertex &start, Vertex &end,
+        Sector *frontSec, Sector *backSec, Line::Side *frontSide,
+        Line *partitionLine = 0)
+    {
+        lineSegments.append(new LineSegment(start, end));
+        LineSegment &seg = *lineSegments.back();
+
+        LineSegment::Side &front = seg.front();
+        front.setMapSide(frontSide);
+        front.setPartitionMapLine(partitionLine);
+        front.setSector(frontSec);
+
+        LineSegment::Side &back = seg.back();
+        back.setMapSide(frontSide? &frontSide->back() : 0);
+        back.setPartitionMapLine(partitionLine);
+        back.setSector(backSec);
+
+        return seg;
+    }
+
+    /**
      * Create a clone of an existing line segment.
      */
     LineSegment &cloneLineSegment(LineSegment const &other)
     {
-        lineSegments.append(new LineSegment(other.from(), other.to()));
-        LineSegment &lineSeg = *lineSegments.last();
+        LineSegment &seg =
+            buildLineSegmentBetweenVertexes(other.from(), other.to(),
+                                            other.front().sectorPtr(),
+                                            other.back().sectorPtr(),
+                                            other.front().mapSidePtr(),
+                                            other.front().partitionMapLine());
 
-        LineSegment::Side &front = lineSeg.front();
-
-        front.setSector(other.front().sectorPtr());
-        if(other.front().hasMapSide())
-            front.setMapSide(&other.front().mapSide());
-        front.setPartitionMapLine(other.front().partitionMapLine());
+        seg.front().setBspLeaf(other.front().bspLeaf());
+        seg.back().setBspLeaf(other.back().bspLeaf());
 
         if(other.front().hasHEdge())
         {
-            front.setHEdge(new HEdge(other.front().hedge()));
+            seg.front().setHEdge(new HEdge(other.front().hedge()));
+            lineSegmentMap.insert(seg.front().hedgePtr(), &seg.front());
+
             // There is now one more HEdge.
             numHEdges += 1;
-
-            lineSegmentMap.insert(front.hedgePtr(), &front);
         }
-
-        LineSegment::Side &back  = lineSeg.back();
-
-        back.setSector(other.back().sectorPtr());
-        if(other.back().hasMapSide())
-            back.setMapSide(&other.back().mapSide());
-        back.setPartitionMapLine(other.back().partitionMapLine());
 
         if(other.back().hasHEdge())
         {
-            back.setHEdge(new HEdge(other.back().hedge()));
+            seg.back().setHEdge(new HEdge(other.back().hedge()));
+            lineSegmentMap.insert(seg.back().hedgePtr(), &seg.back());
+
             // There is now one more HEdge.
             numHEdges += 1;
 
-            lineSegmentMap.insert(back.hedgePtr(), &back);
-
-            if(front.hasHEdge())
+            // Do we need to twin the new half-edge pair?
+            if(seg.front().hasHEdge())
             {
-                // Twin the new half-edge pair with one another.
-                front.hedge()._twin = back.hedgePtr();
-                back.hedge()._twin  = front.hedgePtr();
+                seg.front().hedge()._twin = seg.back().hedgePtr();
+                seg.back().hedge()._twin  = seg.front().hedgePtr();
             }
         }
 
-        return lineSeg;
+        return seg;
     }
 
     /**
@@ -881,78 +854,79 @@ DENG2_PIMPL(Partitioner)
 
         Vertex *newVert = newVertex(point);
 
-        LineSegment &newSegment = cloneLineSegment(frontLeft.line());
+        LineSegment &oldSeg = frontLeft.line();
+        LineSegment &newSeg = cloneLineSegment(oldSeg);
 
         // Now perform the split, updating vertex and relative segment links.
-        LineSegment::Side &frontRight = newSegment.side(frontLeft.lineSideId());
+        LineSegment::Side &frontRight = newSeg.side(frontLeft.lineSideId());
 
-        frontLeft.line().replaceVertex(frontLeft.lineSideId() ^ 1, *newVert);
-        newSegment.replaceVertex(frontLeft.lineSideId(), *newVert); frontRight.hedge()._vertex = newVert;
+        oldSeg.replaceVertex(frontLeft.lineSideId() ^ LineSegment::To, *newVert);
+        newSeg.replaceVertex(frontLeft.lineSideId(),                   *newVert);
+
+        if(frontRight.hasHEdge())
+        {
+            frontRight.hedge()._vertex = newVert;
+        }
 
         frontLeft.setRight(&frontRight);
         frontRight.setLeft(&frontLeft);
 
         // Handle the twin.
-        if(frontLeft.back().hasSector())
+        LineSegment::Side &backRight = frontLeft.back();
+        LineSegment::Side &backLeft  = frontRight.back();
+
+        backLeft.setRight(&backRight);
+        backRight.setLeft(&backLeft);
+
+        //if(frontLeft.back().hasSector())
         {
-            LineSegment::Side &backRight = frontLeft.back();
-            LineSegment::Side &backLeft  = frontRight.back();
-
-            backRight.hedge()._vertex = newVert;
-
-            backLeft.setRight(&backRight);
-            backRight.setLeft(&backLeft);
-
-            // Has this already been added to a leaf?
-            if(backRight.hedge().hasBspLeaf())
+            if(backRight.hasHEdge())
             {
-                // Update the in-leaf references.
-                backRight.hedge()._next = backLeft.hedgePtr();
+                backRight.hedge()._vertex = newVert;
 
-                // There is now one more half-edge in this leaf.
-                backRight.hedge().bspLeaf().poly()._hedgeCount += 1;
+                // Has this already been added to a geometry?
+                if(backRight.bspLeaf() != 0)
+                {
+                    // Update the in-geometry references.
+                    backRight.hedge()._next = backLeft.hedgePtr();
+
+                    // There is now one more half-edge in this leaf geometry.
+                    backRight.bspLeaf()->poly()._hedgeCount += 1;
+                }
             }
-        }
 
-        if(frontRight.back().hasSector())
-        {
             // Ensure the new back left line segment side is inserted into the
             // same block as the old back right line segment side.
-            if(!(frontLeft.back().hasHEdge() && frontLeft.back().hedge().hasBspLeaf()))
+            if(SuperBlock *bmapBlock = backRight.bmapBlockPtr())
             {
-                SuperBlock *bmapBlock = frontLeft.back().bmapBlockPtr();
-                DENG2_ASSERT(bmapBlock != 0);
-                linkLineSegmentSideInSuperBlockmap(*bmapBlock, frontRight.back());
+                linkLineSegmentSideInSuperBlockmap(*bmapBlock, backLeft);
             }
         }
 
         /**
          * @todo Optimize: Avoid clearing tips by implementing update logic.
          */
-        LineSegment &left  = frontLeft.line();
-        LineSegment &right = frontRight.line();
+        edgeTips(oldSeg.from()).clearByLineSegment(oldSeg);
+        edgeTips(oldSeg.to()  ).clearByLineSegment(oldSeg);
 
-        edgeTips(left.from()).clearByLineSegment(left);
-        edgeTips(left.to()  ).clearByLineSegment(left);
+        edgeTips(newSeg.from()).clearByLineSegment(newSeg);
+        edgeTips(newSeg.to()  ).clearByLineSegment(newSeg);
 
-        edgeTips(right.from()).clearByLineSegment(right);
-        edgeTips(right.to()  ).clearByLineSegment(right);
+        edgeTips(oldSeg.from()).add(oldSeg.front().angle(),
+                                    oldSeg.front().hasSector()? &oldSeg.front() : 0,
+                                    oldSeg.back().hasSector()?  &oldSeg.back()  : 0);
 
-        edgeTips(left.from() ).add(left.front().angle(),
-                                   left.front().hasSector()? &left.front() : 0,
-                                   left.back().hasSector()?  &left.back()  : 0);
+        edgeTips(oldSeg.to()  ).add(oldSeg.back().angle(),
+                                    oldSeg.back().hasSector()?  &oldSeg.back()  : 0,
+                                    oldSeg.front().hasSector()? &oldSeg.front() : 0);
 
-        edgeTips(left.to()   ).add(left.back().angle(),
-                                   left.back().hasSector()?  &left.back()  : 0,
-                                   left.front().hasSector()? &left.front() : 0);
+        edgeTips(newSeg.from()).add(newSeg.front().angle(),
+                                    newSeg.front().hasSector()? &newSeg.front() : 0,
+                                    newSeg.back().hasSector()?  &newSeg.back()  : 0);
 
-        edgeTips(right.from()).add(right.front().angle(),
-                                   right.front().hasSector()? &right.front() : 0,
-                                   right.back().hasSector()?  &right.back()  : 0);
-
-        edgeTips(right.to()  ).add(right.back().angle(),
-                                   right.back().hasSector()?  &right.back()  : 0,
-                                   right.front().hasSector()? &right.front() : 0);
+        edgeTips(newSeg.to()  ).add(newSeg.back().angle(),
+                                    newSeg.back().hasSector()?  &newSeg.back()  : 0,
+                                    newSeg.front().hasSector()? &newSeg.front() : 0);
 
         return frontRight;
     }
@@ -1181,8 +1155,7 @@ DENG2_PIMPL(Partitioner)
                 continue;
 
             // Does this range overlap the partition line segment?
-            if(hplane.lineSegment() &&
-               cur.distance() >= nearDist && next.distance() <= farDist)
+            if(partSeg && cur.distance() >= nearDist && next.distance() <= farDist)
                 continue;
 
             // Check for some nasty open/closed or close/open cases.
@@ -1226,110 +1199,216 @@ DENG2_PIMPL(Partitioner)
 
             DENG_ASSERT(sector != 0);
 
-            LineSegment *newSeg =
+            LineSegment &newSeg =
                 buildLineSegmentBetweenVertexes(cur.vertex(), next.vertex(),
                                                 sector, sector, 0 /*no map line*/,
                                                 partSeg? &partSeg->mapLine() : 0);
 
-            edgeTips(newSeg->from() ).add(newSeg->front().angle(), &newSeg->front(), &newSeg->back());
-            edgeTips(newSeg->to()   ).add(newSeg->back().angle(),  &newSeg->back(),  &newSeg->front());
+            edgeTips(newSeg.from()).add(newSeg.front().angle(), &newSeg.front(), &newSeg.back());
+            edgeTips(newSeg.to()  ).add(newSeg.back().angle(),  &newSeg.back(),  &newSeg.front());
 
             // Add each new line segment to the appropriate set.
-            linkLineSegmentSideInSuperBlockmap(rights, newSeg->front());
-            linkLineSegmentSideInSuperBlockmap(lefts,  newSeg->back());
+            linkLineSegmentSideInSuperBlockmap(rights, newSeg.front());
+            linkLineSegmentSideInSuperBlockmap(lefts,  newSeg.back());
 
             /*
             LineSegment::Side *left = right->twinPtr();
-            LOG_DEBUG("Capped partition gap:"
-                      "\n %p RIGHT sector #%d %s to %s"
-                      "\n %p LEFT  sector #%d %s to %s")
-                << de::dintptr(right)
-                << (right->sector? right->sector->indexInMap() : -1)
-                << right->fromOrigin().asText()
-                << right->toOrigin().asText()
-                << de::dintptr(left)
-                << (left->sector? left->sector->indexInMap() : -1)
-                << left->fromOrigin().asText()
-                << left->toOrigin().asText()
+            LOG_DEBUG("Built line segment from %s to %s (sector #%i)")
+                << cur.vertex().origin().asText()
+                << next.vertex().origin().asText()
+                << sector->indexInArchive()
             */
         }
     }
 
     /**
-     * Attempt to construct a new BspLeaf from the list of line segments.
+     * Pick a sector from the list of line segments to attribute to any BSP
+     * leaf we might subsequently produce for them.
      *
-     * @param leafSegments  List of line segments from which to build the leaf.
-     *                      Ownership of the list and it's contents is given to
-     *                      this function. Once emptied, ownership of the list is
-     *                      then returned to the caller.
-     *
-     * @return  Newly created BspLeaf; otherwise @c 0 if degenerate.
+     * This choice is determined with a heuristic accounting of the number of
+     * references to each candidate sector. References are divided according
+     * the "type" of the referencing line segment into groups for rating.
      */
-    BspLeaf *buildBspLeaf(LineSegmentSideList &leafSegments)
+    Sector *chooseSectorForBspLeaf(LineSegmentSideList const &segments)
     {
-        if(!leafSegments.count()) return 0;
-
-        bool const isDegenerate = leafSegments.count() < 3;
-
-        Polygon *poly = 0;
-        while(!leafSegments.isEmpty())
+        struct Choice
         {
-            LineSegment::Side *lineSeg = leafSegments.takeFirst();
+            /// The sector choice.
+            Sector *sector;
 
-            if(isDegenerate)
+            /// Number of referencing line segments of each type:
+            int norm;
+            int part;
+            int self;
+
+            Choice(Sector &sector)
+                : sector(&sector), norm(0), part(0), self(0)
+            {}
+
+            /**
+             * Perform heuristic comparision between two choices to determine
+             * a preference order. The algorithm used weights the two choices
+             * according to the number and "type" of the referencing line
+             * segments.
+             *
+             * @return  @c true if "this" choice is rated better than @a other.
+             */
+            bool operator < (Choice const &other) const
             {
-                if(lineSeg->hasLeft())
+                if(norm == other.norm)
                 {
-                    lineSeg->left().setRight(lineSeg->hasRight()? &lineSeg->right() : 0);
+                    if(part == other.part)
+                    {
+                        return self > other.self;
+                    }
+                    return part > other.part;
                 }
-                if(lineSeg->hasRight())
-                {
-                    lineSeg->right().setLeft(lineSeg->hasLeft()? &lineSeg->left() : 0);
-                }
-
-                // Take ownership of and destroy the half-edge.
-                delete lineSeg->hedgePtr();
-                lineSeg->setHEdge(0);
-
-                // There is now one fewer half-edge.
-                numHEdges -= 1;
-                continue;
+                return norm > other.norm;
             }
 
-            // Time to construct the polygon geometry?
-            if(!poly)
+            /**
+             * Account for a new line segment which references this choice.
+             */
+            void account(LineSegment::Side &seg)
             {
-                poly = new Polygon;
+                // Determine the type of reference and increment the count.
+                if(!seg.hasMapSide())
+                {
+                    part += 1;
+                }
+                else if(seg.mapLine().isSelfReferencing())
+                {
+                    self += 1;
+                }
+                else
+                {
+                    norm += 1;
+                }
+            }
+        };
+        typedef QHash<Sector *, Choice> ChoiceHash;
+
+        ChoiceHash candidates;
+
+        foreach(LineSegment::Side *seg, segments)
+        {
+            // Segments with no sector can help us.
+            if(!seg->hasSector()) continue;
+
+            Sector *sector = seg->sectorPtr();
+
+            // Is this a new choice?
+            ChoiceHash::iterator found = candidates.find(sector);
+            if(found == candidates.end())
+            {
+                // Yes, record it.
+                found = candidates.insert(sector, Choice(*sector));
             }
 
-            HEdge &hedge = lineSeg->hedge();
-
-            // Link the half-edge for this line segment to the head of the list
-            // in the new polygon geometry.
-            hedge._next = poly->_hedge;
-            poly->_hedge = &hedge;
-
-            // There is now one more half-edge in this polygon.
-            poly->_hedgeCount += 1;
+            // Account for a new segment referencing this sector.
+            found.value().account(*seg);
         }
 
+        if(candidates.isEmpty()) return 0; // Eeek!
+
+        // Sort our choices such that our preferred sector appears first. This
+        // shouldn't take too long, typically there is no more than two or three
+        // to choose from.
+        QList<Choice> sortedCandidates = candidates.values();
+        qSort(sortedCandidates.begin(), sortedCandidates.end());
+
+        // We'll choose the highest rated choice.
+        return sortedCandidates.first().sector;
+    }
+
+    /**
+     * Attempt to construct a new BspLeaf with a geometry from the list of
+     * line segments.
+     *
+     * @param segments  List of line segments from which to build the leaf
+     *                  geometry. Ownership of the list and it's contents is
+     *                  given to this function. Once emptied, ownership of the
+     *                  list is then returned to the caller.
+     *
+     * @return  Newly created BspLeaf.
+     */
+    BspLeaf *buildBspLeaf(LineSegmentSideList &segments)
+    {
         BspLeaf *leaf = new BspLeaf;
 
-        // There is now one more BspLeaf;
-        numLeafs += 1;
+        // Determine which sector to attribute the BSP leaf to.
+        leaf->setSector(chooseSectorForBspLeaf(segments));
 
-        // Assign any built polygon geometry to the BSP leaf (takes ownership).
-        leaf->setPoly(poly);
-
-        if(poly)
+        if(!segments.isEmpty())
         {
-            // Link the half-edges with the leaf.
-            /// @todo Encapsulate in BspLeaf.
-            HEdge *hedgeIt = poly->firstHEdge();
-            do
+            // Did we produce degenerate geometry?
+            bool const isDegenerate = segments.count() < 3;
+
+            Polygon *poly = 0;
+            while(!segments.isEmpty())
             {
-                hedgeIt->_bspLeaf = leaf;
-            } while((hedgeIt = hedgeIt->_next));
+                LineSegment::Side *seg = segments.takeFirst();
+
+                // Attribute the line segment to new BSP leaf.
+                seg->setBspLeaf(leaf);
+
+                if(isDegenerate)
+                {
+                    if(seg->hasLeft())
+                    {
+                        seg->left().setRight(seg->hasRight()? &seg->right() : 0);
+                    }
+                    if(seg->hasRight())
+                    {
+                        seg->right().setLeft(seg->hasLeft()? &seg->left() : 0);
+                    }
+                    continue;
+                }
+
+                // Time to construct the polygon geometry?
+                if(!poly)
+                {
+                    poly = new Polygon;
+                }
+
+                HEdge *hedge = new HEdge(seg->from(), seg->mapSidePtr());
+
+                // Is there already a half-edge on the back side we need to twin with?
+                if(seg->back().hasHEdge())
+                {
+                    seg->back().hedge()._twin = hedge;
+                    hedge->_twin = seg->back().hedgePtr();
+                }
+
+                // Link the new half-edge for this line segment to the head of the list
+                // in the new polygon geometry.
+                hedge->_next = poly->_hedge;
+                poly->_hedge = hedge;
+
+                // There is now one more half-edge in this polygon.
+                poly->_hedgeCount += 1;
+
+                // Link the new half-edge with this line segment.
+                seg->setHEdge(hedge);
+
+                // There is now one more HEdge.
+                numHEdges += 1;
+                lineSegmentMap.insert(hedge, seg);
+            }
+
+            // Assign any built polygon geometry to the BSP leaf (takes ownership).
+            leaf->setPoly(poly);
+
+            if(poly)
+            {
+                // Link the half-edges with the leaf.
+                /// @todo Encapsulate in BspLeaf.
+                HEdge *hedgeIt = poly->firstHEdge();
+                do
+                {
+                    hedgeIt->_bspLeaf = leaf;
+                } while((hedgeIt = hedgeIt->_next));
+            }
         }
 
         return leaf;
@@ -1471,14 +1550,17 @@ DENG2_PIMPL(Partitioner)
         else
         {
             // No partition required/possible - already convex (or degenerate).
-            LineSegmentSideList collected = collectLineSegmentSides(lineSegs);
+            LineSegmentSideList collectedSegs = collectLineSegmentSides(lineSegs);
 
-            // Attempt to construct a new BSP leaf.
-            BspLeaf *leaf = buildBspLeaf(collected);
+            // Construct a new BSP leaf.
+            BspLeaf *leaf = buildBspLeaf(collectedSegs);
+
+            DENG_ASSERT(collectedSegs.isEmpty());
+
             lineSegs.clear();
 
-            // Not a leaf? (collapse upward).
-            if(!leaf) return 0;
+            // There is now one more BspLeaf;
+            numLeafs += 1;
 
             bspElement = leaf;
         }
@@ -1562,55 +1644,6 @@ DENG2_PIMPL(Partitioner)
         }
     }
 
-    /**
-     * Determine which sector this BSP leaf belongs to.
-     */
-    Sector *chooseSectorForBspLeaf(BspLeaf const &leaf)
-    {
-        if(!leaf.firstHEdge()) return 0;
-
-        Sector *selfRefChoice = 0;
-        HEdge *base = leaf.firstHEdge();
-        HEdge *hedge = base;
-        do
-        {
-            if(hedge->hasLineSide() && hedge->lineSide().hasSector())
-            {
-                Line &line = hedge->lineSide().line();
-                Sector &sector = hedge->lineSide().sector();
-
-                // The first sector from a non self-referencing line is our best choice.
-                if(!line.isSelfReferencing())
-                    return &sector;
-
-                // Remember the self-referencing choice in case we've no better option.
-                if(!selfRefChoice)
-                    selfRefChoice = &sector;
-            }
-        } while((hedge = &hedge->next()) != base);
-
-        if(selfRefChoice) return selfRefChoice;
-
-        /**
-         * Last resort:
-         * @todo This is only necessary because of other failure cases in the
-         * partitioning algorithm and to avoid producing a potentially
-         * dangerous BSP - not assigning a sector to each leaf may result in
-         * obscure fatal errors when in-game.
-         */
-        hedge = base;
-        do
-        {
-            LineSegment::Side &seg = lineSegment(*hedge);
-            if(seg.hasSector())
-            {
-                return seg.sectorPtr();
-            }
-        } while((hedge = &hedge->next()) != base);
-
-        return 0; // Not reachable.
-    }
-
     static Vector2d findPolyCenter(Polygon const &poly)
     {
         Vector2d center;
@@ -1656,14 +1689,18 @@ DENG2_PIMPL(Partitioner)
                     {
                         HEdge *leftHEdge = hedge;
                         // Find the left-most half-hedge.
-                        while(lineSegment(*leftHEdge).hasLeft())
+                        while(leftHEdge && lineSegment(*leftHEdge).hasLeft())
+                        {
                             leftHEdge = lineSegment(*leftHEdge).left().hedgePtr();
+                        }
                         side.setLeftHEdge(leftHEdge);
 
                         // Find the right-most half-edge.
                         HEdge *rightHEdge = hedge;
-                        while(lineSegment(*rightHEdge).hasRight())
+                        while(rightHEdge && lineSegment(*rightHEdge).hasRight())
+                        {
                             rightHEdge = lineSegment(*rightHEdge).right().hedgePtr();
+                        }
                         side.setRightHEdge(rightHEdge);
                     }
                 }
@@ -1771,44 +1808,40 @@ DENG2_PIMPL(Partitioner)
                 /// @todo Polygon should encapsulate.
                 geom.updateAABox();
                 geom.updateCenter();
+
+#ifdef DENG_DEBUG
+                // See if we built a partial geometry...
+                {
+                    uint gaps = 0;
+                    HEdge *hedgeIt = base;
+                    do
+                    {
+                        HEdge &hedge = *hedgeIt;
+
+                        if(hedge.next().origin() != hedge.twin().origin())
+                        {
+                            gaps++;
+                        }
+                    } while((hedgeIt = &hedgeIt->next()) != base);
+
+                    if(gaps > 0)
+                    {
+                        LOG_WARNING("Polygon geometry for BSP leaf [%p] (at %s) "
+                                    "in sector %i has %i gaps (%i half-edges).")
+                            << de::dintptr(leaf)
+                            << geom.center().asText()
+                            << leaf->sector().indexInArchive()
+                            << gaps << leaf->hedgeCount();
+                        geom.print();
+                    }
+                }
+#endif
             }
 
-            leaf->setSector(chooseSectorForBspLeaf(*leaf));
             if(!leaf->hasSector())
             {
                 LOG_WARNING("BspLeaf %p is degenerate/orphan (%d half-edges).")
                     << de::dintptr(leaf) << leaf->hedgeCount();
-            }
-            else
-            {
-#ifdef DENG_DEBUG
-                // See if we built a partial geometry...
-                Polygon &geom = leaf->poly();
-                HEdge *base = geom.firstHEdge();
-
-                uint gaps = 0;
-                HEdge *hedgeIt = base;
-                do
-                {
-                    HEdge &hedge = *hedgeIt;
-
-                    if(hedge.next().origin() != hedge.twin().origin())
-                    {
-                        gaps++;
-                    }
-                } while((hedgeIt = &hedgeIt->next()) != base);
-
-                if(gaps > 0)
-                {
-                    LOG_WARNING("Polygon geometry for BSP leaf [%p] (at %s) "
-                                "in sector %i has %i gaps (%i half-edges).")
-                        << de::dintptr(leaf)
-                        << geom.center().asText()
-                        << leaf->sector().indexInArchive()
-                        << gaps << leaf->hedgeCount();
-                    geom.print();
-                }
-#endif
             }
         }
     }

@@ -173,12 +173,17 @@ public:
         bool hasMapSide() const;
 
         /**
-         * Returns the map Line::Side attributed to the "this" side of the line
-         * segment.
+         * Returns the map Line::Side attributed to "this" side of the line segment.
          *
          * @see hasMapSide()
          */
         Line::Side &mapSide() const;
+
+        /**
+         * Returns a pointer to the map Line::Side attributed to this side of the
+         * line segment; otherwise @c 0
+         */
+        inline Line::Side *mapSidePtr() const { return hasMapSide()? &mapSide() : 0; }
 
         /**
          * Change the map Line::Side attributed to the "this" side of the line
@@ -434,6 +439,21 @@ public:
          * @see hedge()
          */
         void setHEdge(HEdge *newHEdge);
+
+        /**
+         * Returns a pointer to the BSP leaf to which "this" side of the
+         * line segment is attributed. May return @c 0 if not yet attributed.
+         */
+        BspLeaf *bspLeaf() const;
+
+        /**
+         * Change the BSP leaf to which "this" side of the line segment is
+         * attributed.
+         *
+         * @param newBspLeaf  BSP leaf to attribute. Can be @c 0 (to clear
+         *                    the attribution).
+         */
+        void setBspLeaf(BspLeaf *newBspLeaf);
 
         /**
          * To be called to update precalculated vectors, distances, etc...
