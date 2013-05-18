@@ -22,6 +22,7 @@
 #include <de/RootWidget>
 #include <de/AtlasTexture>
 #include <de/GLShaderBank>
+#include <de/Matrix>
 
 class ClientWindow;
 
@@ -48,6 +49,11 @@ public:
 
     de::AtlasTexture &atlas();
     de::GLShaderBank &shaders();
+
+    /**
+     * Returns the default projection for 2D graphics.
+     */
+    de::Matrix4f projMatrix2D() const;
 
     // Events.
     void update();

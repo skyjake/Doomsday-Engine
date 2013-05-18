@@ -35,6 +35,14 @@ DENG2_PIMPL(GuiRootWidget)
           window(win),
           atlas(0)
     {}
+
+    ~Instance()
+    {
+        // Tell all widgets to release their resource allocations. The base
+        // class destructor will destroy all widgets, but this class governs
+        // shared GL resources, so we'll ask the widgets to do this now.
+        self.notifyTree(&Widget::deinitialize);
+    }
 };
 
 GuiRootWidget::GuiRootWidget(ClientWindow *window)
@@ -58,7 +66,7 @@ AtlasTexture &GuiRootWidget::atlas()
     {
         d->atlas.reset(AtlasTexture::newWithRowAllocator(
                            Atlas::BackingStore | Atlas::AllowDefragment,
-                           GLTexture::maximumSize()));
+                           GLTexture::maximumSize().min(GLTexture::Size(4096, 4096))));
     }
     return *d->atlas;
 }
@@ -66,6 +74,12 @@ AtlasTexture &GuiRootWidget::atlas()
 GLShaderBank &GuiRootWidget::shaders()
 {
     return ClientApp::glShaderBank();
+}
+
+Matrix4f GuiRootWidget::projMatrix2D() const
+{
+    RootWidget::Size const size = viewSize();
+    return Matrix4f::ortho(0, size.x, 0, size.y);
 }
 
 void GuiRootWidget::update()
