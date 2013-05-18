@@ -30,7 +30,8 @@ class GLProgram;
  * Bank containing GL shaders.
  *
  * Shader objects are automatically shared between created programs. Programs
- * can be are created based on definitions from an Info file.
+ * are built based on definitions from an Info file (i.e., which vertex and
+ * fragment shader(s) to use for the program).
  *
  * Shaders and programs cannot be accessed until OpenGL is ready.
  */
