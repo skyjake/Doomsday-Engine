@@ -26,9 +26,16 @@ using namespace de;
 DENG2_PIMPL(GuiWidget)
 {
     RuleRectangle rule;
-    bool needInit;
+    Rectanglei savedPos;
+    bool inited;
 
-    Instance(Public *i) : Base(i), needInit(true) {}
+    Instance(Public *i) : Base(i), inited(false) {}
+
+    ~Instance()
+    {
+        // Deinitialize now if it hasn't been done already.
+        self.deinitialize();
+    }
 };
 
 GuiWidget::GuiWidget(String const &name) : Widget(name), d(new Instance(this))
@@ -64,11 +71,56 @@ void GuiWidget::deleteLater()
     Garbage_TrashInstance(this, deleteGuiWidget);
 }
 
+void GuiWidget::initialize()
+{
+    if(d->inited) return;
+
+    try
+    {
+        d->inited = true;
+        glInit();
+    }
+    catch(Error const &er)
+    {
+        LOG_WARNING("Error when initializing widget '%s':\n")
+                << name() << er.asText();
+    }
+}
+
+void GuiWidget::deinitialize()
+{
+    if(!d->inited) return;
+
+    try
+    {
+        d->inited = false;
+        glDeinit();
+    }
+    catch(Error const &er)
+    {
+        LOG_WARNING("Error when deinitializing widget '%s':\n")
+                << name() << er.asText();
+    }
+}
+
 void GuiWidget::update()
 {
-    if(d->needInit)
+    if(!d->inited)
     {
         initialize();
-        d->needInit = false;
     }
+}
+
+void GuiWidget::glInit()
+{}
+
+void GuiWidget::glDeinit()
+{}
+
+bool GuiWidget::checkPlace(Rectanglei &currentPlace)
+{
+    currentPlace = rule().recti();
+    bool changed = (d->savedPos != currentPlace);
+    d->savedPos = currentPlace;
+    return changed;
 }

@@ -52,7 +52,23 @@ public:
     void deleteLater();
 
     // Events.
+    void initialize();
+    void deinitialize();
     void update();
+
+protected:
+    virtual void glInit();
+    virtual void glDeinit();
+
+    /**
+     * Checks if the widget's rectangle has changed.
+     *
+     * @param currentPlace  The widget's current placement is returned here.
+     *
+     * @return @c true, if the place of the widget has changed since the
+     * last call to checkPlace(); otherwise, @c false.
+     */
+    bool checkPlace(de::Rectanglei &currentPlace);
 
 private:
     DENG2_PRIVATE(d)
