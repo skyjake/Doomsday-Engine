@@ -1154,56 +1154,74 @@ DENG2_PIMPL(Partitioner)
         LOG_TRACE("Building line segments along partition %s")
             << hplane.partition().asText();
 
-        //hplane.printIntercepts();
-
         // First, fix any near-distance issues with the intercepts.
         hplane.sortAndMergeIntercepts();
 
+        //hplane.printIntercepts();
+
+        // We must not create new line segments on top of the source partition
+        // line segment (as this will result in duplicate edges finding their
+        // way into the BSP leaf geometries).
+        LineSegment::Side *partSeg = hplane.lineSegment();
+        double nearDist = 0, farDist = 0;
+
+        if(partSeg)
+        {
+            nearDist = hplane.intersect(*partSeg, LineSegment::From);
+            farDist  = hplane.intersect(*partSeg, LineSegment::To);
+        }
+
+        // Create new line segments.
         for(int i = 0; i < hplane.intercepts().count() - 1; ++i)
         {
             HPlane::Intercept const &cur  = hplane.intercepts()[i];
             HPlane::Intercept const &next = hplane.intercepts()[i+1];
 
-            if(!cur.after && !next.before)
+            if(!cur.front && !next.back)
+                continue;
+
+            // Does this range overlap the partition line segment?
+            if(hplane.lineSegment() &&
+               cur.distance() >= nearDist && next.distance() <= farDist)
                 continue;
 
             // Check for some nasty open/closed or close/open cases.
-            if(cur.after && !next.before)
+            if(cur.front && !next.back)
             {
                 if(!cur.selfRef)
                 {
                     Vector2d nearPoint = (cur.vertex().origin() + next.vertex().origin()) / 2;
-                    notifyUnclosedSectorFound(*cur.after, nearPoint);
+                    notifyUnclosedSectorFound(*cur.front, nearPoint);
                 }
                 continue;
             }
 
-            if(!cur.after && next.before)
+            if(!cur.front && next.back)
             {
                 if(!next.selfRef)
                 {
                     Vector2d nearPoint = (cur.vertex().origin() + next.vertex().origin()) / 2;
-                    notifyUnclosedSectorFound(*next.before, nearPoint);
+                    notifyUnclosedSectorFound(*next.back, nearPoint);
                 }
                 continue;
             }
 
             // This is definitely open space.
             // Choose the non-self-referencing sector when we can.
-            Sector *sector = cur.after;
-            if(cur.after != next.before)
+            Sector *sector = cur.front;
+            if(cur.front != next.back)
             {
                 if(!cur.selfRef && !next.selfRef)
                 {
                     LOG_DEBUG("Sector mismatch (#%d %s != #%d %s.")
-                        << cur.after->indexInMap()
+                        << cur.front->indexInMap()
                         << cur.vertex().origin().asText()
-                        << next.before->indexInMap()
+                        << next.back->indexInMap()
                         << next.vertex().origin().asText();
                 }
 
                 if(cur.selfRef && !next.selfRef)
-                    sector = next.before;
+                    sector = next.back;
             }
 
             DENG_ASSERT(sector != 0);
@@ -1211,7 +1229,7 @@ DENG2_PIMPL(Partitioner)
             LineSegment *newSeg =
                 buildLineSegmentBetweenVertexes(cur.vertex(), next.vertex(),
                                                 sector, sector, 0 /*no map line*/,
-                                                hplane.mapLine());
+                                                partSeg? &partSeg->mapLine() : 0);
 
             edgeTips(newSeg->from() ).add(newSeg->front().angle(), &newSeg->front(), &newSeg->back());
             edgeTips(newSeg->to()   ).add(newSeg->back().angle(),  &newSeg->back(),  &newSeg->front());
@@ -1750,25 +1768,9 @@ DENG2_PIMPL(Partitioner)
                     } while((hedgeIt = &hedgeIt->next()) != base);
                 }
 
-                // See if we built a partial leaf...
-                {
-                    uint gaps = 0;
-                    HEdge *hedgeIt = base;
-                    do
-                    {
-                        HEdge &hedge = *hedgeIt;
-
-                        if(hedge.next().origin() != hedge.twin().origin())
-                        {
-                            gaps++;
-                        }
-                    } while((hedgeIt = &hedgeIt->next()) != base);
-
-                    if(gaps > 0)
-                    {
-                        notifyPartialBspLeafBuilt(*leaf, gaps);
-                    }
-                }
+                /// @todo Polygon should encapsulate.
+                geom.updateAABox();
+                geom.updateCenter();
             }
 
             leaf->setSector(chooseSectorForBspLeaf(*leaf));
@@ -1776,6 +1778,37 @@ DENG2_PIMPL(Partitioner)
             {
                 LOG_WARNING("BspLeaf %p is degenerate/orphan (%d half-edges).")
                     << de::dintptr(leaf) << leaf->hedgeCount();
+            }
+            else
+            {
+#ifdef DENG_DEBUG
+                // See if we built a partial geometry...
+                Polygon &geom = leaf->poly();
+                HEdge *base = geom.firstHEdge();
+
+                uint gaps = 0;
+                HEdge *hedgeIt = base;
+                do
+                {
+                    HEdge &hedge = *hedgeIt;
+
+                    if(hedge.next().origin() != hedge.twin().origin())
+                    {
+                        gaps++;
+                    }
+                } while((hedgeIt = &hedgeIt->next()) != base);
+
+                if(gaps > 0)
+                {
+                    LOG_WARNING("Polygon geometry for BSP leaf [%p] (at %s) "
+                                "in sector %i has %i gaps (%i half-edges).")
+                        << de::dintptr(leaf)
+                        << geom.center().asText()
+                        << leaf->sector().indexInArchive()
+                        << gaps << leaf->hedgeCount();
+                    geom.print();
+                }
+#endif
             }
         }
     }
@@ -1999,20 +2032,6 @@ DENG2_PIMPL(Partitioner)
         DENG2_FOR_PUBLIC_AUDIENCE(UnclosedSectorFound, i)
         {
             i->unclosedSectorFound(sector, nearPoint);
-        }
-    }
-
-    /**
-     * Notify interested parties that a partial BSP leaf was built.
-     *
-     * @param leaf      The incomplete BSP leaf.
-     * @param gapTotal  Number of gaps in the leaf.
-     */
-    void notifyPartialBspLeafBuilt(BspLeaf &leaf, uint gapTotal)
-    {
-        DENG2_FOR_PUBLIC_AUDIENCE(PartialBspLeafBuilt, i)
-        {
-            i->partialBspLeafBuilt(leaf, gapTotal);
         }
     }
 

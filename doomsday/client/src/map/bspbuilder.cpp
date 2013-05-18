@@ -67,8 +67,7 @@ static int const maxWarningsPerType = 10;
  */
 class Reporter : DENG2_OBSERVES(Partitioner, UnclosedSectorFound),
                  DENG2_OBSERVES(Partitioner, OneWayWindowFound),
-                 DENG2_OBSERVES(Partitioner, MigrantHEdgeBuilt),
-                 DENG2_OBSERVES(Partitioner, PartialBspLeafBuilt)
+                 DENG2_OBSERVES(Partitioner, MigrantHEdgeBuilt)
 {
     /// Record "unclosed sectors".
     /// Sector => world point relatively near to the problem area.
@@ -81,10 +80,6 @@ class Reporter : DENG2_OBSERVES(Partitioner, UnclosedSectorFound),
     /// Record "migrant half-edges".
     /// HEdge => Sector the half-edge faces.
     typedef std::map<HEdge *, Sector *> MigrantHEdgeMap;
-
-    /// Record "partial BSP leafs".
-    /// BspLeaf => number of gaps in the leaf.
-    typedef std::map<BspLeaf *, uint> PartialBspLeafMap;
 
 public:
 
@@ -100,7 +95,6 @@ public:
     inline int unclosedSectorCount() const { return (int)_unclosedSectors.size(); }
     inline int oneWayWindowCount() const { return (int)_oneWayWindows.size(); }
     inline int migrantHEdgeCount() const { return (int)_migrantHEdges.size(); }
-    inline int partialBspLeafCount() const { return (int)_partialBspLeafs.size(); }
 
     void writeLog()
     {
@@ -151,19 +145,6 @@ public:
             if(numToLog < migrantHEdgeCount())
                 LOG_INFO("(%d more like this)") << (migrantHEdgeCount() - numToLog);
         }
-
-        if(int numToLog = maxWarnings(partialBspLeafCount()))
-        {
-            PartialBspLeafMap::const_iterator it = _partialBspLeafs.begin();
-            for(int i = 0; i < numToLog; ++i, ++it)
-            {
-                LOG_WARNING("Half-edge list for BSP leaf %p has %u gaps (%i half-edges).")
-                    << de::dintptr(it->first) << it->second << it->first->hedgeCount();
-            }
-
-            if(numToLog < partialBspLeafCount())
-                LOG_INFO("(%d more like this)") << (partialBspLeafCount() - numToLog);
-        }
     }
 
 protected:
@@ -185,17 +166,10 @@ protected:
         _migrantHEdges.insert(std::make_pair(&hedge, &facingSector));
     }
 
-    // Observes Partitioner PartialBspLeafBuilt.
-    void partialBspLeafBuilt(BspLeaf &leaf, uint gapCount)
-    {
-        _partialBspLeafs.insert(std::make_pair(&leaf, gapCount));
-    }
-
 private:
     UnclosedSectorMap _unclosedSectors;
     OneWayWindowMap   _oneWayWindows;
     MigrantHEdgeMap   _migrantHEdges;
-    PartialBspLeafMap _partialBspLeafs;
 };
 
 bool BspBuilder::buildBsp()
@@ -205,7 +179,6 @@ bool BspBuilder::buildBsp()
     d->partitioner.audienceForUnclosedSectorFound += reporter;
     d->partitioner.audienceForOneWayWindowFound   += reporter;
     d->partitioner.audienceForMigrantHEdgeBuilt   += reporter;
-    d->partitioner.audienceForPartialBspLeafBuilt += reporter;
 
     bool builtOk = false;
     try

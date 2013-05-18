@@ -45,8 +45,8 @@ namespace bsp {
 
 HPlane::Intercept::Intercept(ddouble distance, LineSegment::Side &lineSeg, int edge)
     : selfRef(false),
-      before(0),
-      after(0),
+      back(0),
+      front(0),
       _distance(distance),
       _lineSeg(&lineSeg),
       _edge(edge)
@@ -68,8 +68,8 @@ void HPlane::Intercept::debugPrint() const
     LOG_INFO("Vertex #%i %s beforeSector: #%d afterSector: #%d %s")
         << vertex().indexInMap()
         << vertex().origin().asText()
-        << (before? before->indexInMap() : -1)
-        << (after? after->indexInMap() : -1)
+        << (back? back->indexInMap() : -1)
+        << (front? front->indexInMap() : -1)
         << (selfRef? "SELFREF" : "");
 }
 #endif
@@ -94,8 +94,8 @@ DENG2_PIMPL(HPlane)
     /// Parallel scale factor.
     coord_t para;
 
-    /// Map line from which the partition line was derived (if any).
-    Line *mapLine;
+    /// Line segment from which the partition line was derived (if any).
+    LineSegment::Side *lineSegment;
 
     /// Intercept points along the half-plane.
     Intercepts intercepts;
@@ -112,7 +112,7 @@ DENG2_PIMPL(HPlane)
           slopeType(M_SlopeTypeXY(partition.direction.x, partition.direction.y)),
           perp(partition.origin.y * partition.direction.x - partition.origin.x * partition.direction.y),
           para(-partition.origin.x * partition.direction.x - partition.origin.y * partition.direction.y),
-          mapLine(0),
+          lineSegment(0),
           needSortIntercepts(false)
     {}
 
@@ -156,12 +156,13 @@ void HPlane::configure(LineSegment::Side const &newBaseSeg)
     // Clear the list of intersection points.
     clearIntercepts();
 
-    Line::Side &mapSide = newBaseSeg.mapSide();
-    d->mapLine = &mapSide.line();
-
     // Reconfigure the partition line.
+    Line::Side &mapSide = newBaseSeg.mapSide();
+
     d->partition.origin    = mapSide.from().origin();
     d->partition.direction = mapSide.to().origin() - mapSide.from().origin();
+
+    d->lineSegment = const_cast<LineSegment::Side *>(&newBaseSeg);
 
     d->length    = d->partition.direction.length();
     d->angle     = M_DirectionToAngleXY(d->partition.direction.x, d->partition.direction.y);
@@ -220,6 +221,14 @@ static Sector *openSectorAtAngle(EdgeTips const &tips, coord_t angle)
     return (tip.hasBack()? tip.back().sectorPtr() : 0);
 }
 
+double HPlane::intersect(LineSegment::Side const &lineSeg, int edge)
+{
+    Vertex &vertex = lineSeg.vertex(edge);
+    coord_t pointV1[2] = { vertex.origin().x, vertex.origin().y };
+    coord_t directionV1[2] = { d->partition.direction.x, d->partition.direction.y };
+    return V2d_PointLineParaDistance(pointV1, directionV1, d->para, d->length);
+}
+
 HPlane::Intercept *HPlane::intercept(LineSegment::Side const &lineSeg, int edge,
     EdgeTips const &edgeTips)
 {
@@ -227,18 +236,15 @@ HPlane::Intercept *HPlane::intercept(LineSegment::Side const &lineSeg, int edge,
     Vertex &vertex = lineSeg.vertex(edge);
     if(d->haveInterceptForVertex(vertex)) return 0;
 
-    coord_t pointV1[2] = { vertex.origin().x, vertex.origin().y };
-    coord_t directionV1[2] = { d->partition.direction.x, d->partition.direction.y };
-    coord_t distToVertex = V2d_PointLineParaDistance(pointV1, directionV1,
-                                                     d->para, d->length);
+    coord_t distToVertex = intersect(lineSeg, edge);
 
     d->intercepts.append(Intercept(distToVertex, const_cast<LineSegment::Side &>(lineSeg), edge));
     Intercept *newIntercept = &d->intercepts.last();
 
     newIntercept->selfRef = lineSeg.sectorPtr() == lineSeg.back().sectorPtr(); //(lineSeg.hasMapSide() && lineSeg.mapLine().isSelfReferencing());
 
-    newIntercept->before = openSectorAtAngle(edgeTips, inverseAngle());
-    newIntercept->after  = openSectorAtAngle(edgeTips, angle());
+    newIntercept->front = openSectorAtAngle(edgeTips, angle());
+    newIntercept->back  = openSectorAtAngle(edgeTips, inverseAngle());
 
     // The addition of a new intercept means we'll need to resort.
     d->needSortIntercepts = true;
@@ -257,20 +263,20 @@ static void mergeIntercepts(HPlane::Intercept &final,
 
     if(final.selfRef && !other.selfRef)
     {
-        if(final.before && other.before)
-            final.before = other.before;
+        if(final.back && other.back)
+            final.back = other.back;
 
-        if(final.after && other.after)
-            final.after = other.after;
+        if(final.front && other.front)
+            final.front = other.front;
 
         final.selfRef = false;
     }
 
-    if(!final.before && other.before)
-        final.before = other.before;
+    if(!final.back && other.back)
+        final.back = other.back;
 
-    if(!final.after && other.after)
-        final.after = other.after;
+    if(!final.front && other.front)
+        final.front = other.front;
 
     /*
     LOG_TRACE("Result:");
@@ -317,18 +323,6 @@ void HPlane::sortAndMergeIntercepts()
     d->needSortIntercepts = false;
 }
 
-#ifdef DENG_DEBUG
-void HPlane::printIntercepts() const
-{
-    uint index = 0;
-    foreach(Intercept const &icpt, d->intercepts)
-    {
-        LOG_DEBUG(" %u: >%1.2f ") << (index++) << icpt.distance();
-        icpt.debugPrint();
-    }
-}
-#endif
-
 Partition const &HPlane::partition() const
 {
     return d->partition;
@@ -344,9 +338,9 @@ slopetype_t HPlane::slopeType() const
     return d->slopeType;
 }
 
-Line *HPlane::mapLine() const
+LineSegment::Side *HPlane::lineSegment() const
 {
-    return d->mapLine;
+    return d->lineSegment;
 }
 
 void HPlane::distance(LineSegment::Side const &lineSeg, coord_t *fromDist, coord_t *toDist) const
@@ -358,7 +352,8 @@ void HPlane::distance(LineSegment::Side const &lineSeg, coord_t *fromDist, coord
     /// line are always treated as collinear. This special case is only
     /// necessary due to precision inaccuracies when a line is split into
     /// multiple segments.
-    if(d->mapLine != 0 && d->mapLine == lineSeg.partitionMapLine())
+    if(d->lineSegment != 0 &&
+       &d->lineSegment->mapSide().line() == lineSeg.partitionMapLine())
     {
         if(fromDist) *fromDist = 0;
         if(toDist)   *toDist   = 0;
@@ -397,6 +392,18 @@ HPlane::Intercepts const &HPlane::intercepts() const
 {
     return d->intercepts;
 }
+
+#ifdef DENG_DEBUG
+void HPlane::printIntercepts() const
+{
+    uint index = 0;
+    foreach(Intercept const &icpt, d->intercepts)
+    {
+        LOG_DEBUG(" %u: >%1.2f ") << (index++) << icpt.distance();
+        icpt.debugPrint();
+    }
+}
+#endif
 
 } // namespace bsp
 } // namespace de

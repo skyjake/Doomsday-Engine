@@ -125,6 +125,7 @@ void Polygon::print() const
     HEdge const *base = _hedge;
     if(!base) return;
 
+    LOG_INFO("Half-edges:");
     HEdge const *hedgeIt = base;
     do
     {
@@ -132,7 +133,7 @@ void Polygon::print() const
         coord_t angle = M_DirectionToAngleXY(hedge.origin().x - d->center.x,
                                              hedge.origin().y - d->center.y);
 
-        LOG_DEBUG("  half-edge %p: Angle %1.6f %s -> %s")
+        LOG_INFO("  [%p]: Angle %1.6f %s -> %s")
             << de::dintptr(&hedge) << angle
             << hedge.origin().asText() << hedge.twin().origin().asText();
 

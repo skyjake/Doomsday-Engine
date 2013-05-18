@@ -64,8 +64,8 @@ public:
         /// Sector on each side of the vertex (along the partition), or @c 0
         /// if that direction is "closed" (i.e., the intercept point is along
         /// a map line that has no Sector on the relevant side).
-        Sector *before;
-        Sector *after;
+        Sector *front;
+        Sector *back;
 
     public:
         Intercept(double distance, LineSegment::Side &lineSeg, int edge);
@@ -137,6 +137,20 @@ public:
      * @param newLineSeg  The "new" line segment to configure using.
      */
     void configure(LineSegment::Side const &newLineSeg);
+
+    /**
+     * Perform intersection of the half-plane with the specified @a lineSeg
+     * to determine the distance (along the partition line) at which the
+     * @a edge vertex can be found.
+     *
+     * @param lineSeg   Line segment to perform intersection with.
+     * @param edge      Line segment edge identifier of the vertex to use
+     *                  for intersection.
+     *
+     * @return  Distance to intersection point along the half-plane (relative
+     *          to the origin).
+     */
+    double intersect(LineSegment::Side const &lineSeg, int edge);
 
     /**
      * Perform intersection of the half-plane with the specified @a lineSeg.
@@ -222,7 +236,7 @@ public:
      * chosen as the half-plane partition. May return @c 0 (if no map line was
      * attributed).
      */
-    Line *mapLine() const;
+    LineSegment::Side *lineSegment() const;
 
     /**
      * Calculate @em perpendicular distances from one or both of the vertexe(s)

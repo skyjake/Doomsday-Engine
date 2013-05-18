@@ -153,12 +153,6 @@ DENG2_PIMPL(GameMap)
 
                 collatePolyHEdges(builder, geom);
 
-                // The geometry is now finalized.
-
-                /// @todo Polygon should encapsulate.
-                geom.updateAABox();
-                geom.updateCenter();
-
                 /// @todo leaf should observe.
                 leaf->updateWorldGridOffset();
             }

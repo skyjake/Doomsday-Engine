@@ -66,9 +66,6 @@ public:
     DENG2_DEFINE_AUDIENCE(MigrantHEdgeBuilt,
         void migrantHEdgeBuilt(HEdge &hedge, Sector &facingSector))
 
-    DENG2_DEFINE_AUDIENCE(PartialBspLeafBuilt,
-        void partialBspLeafBuilt(BspLeaf &bspLeaf, uint gapCount))
-
 public:
     Partitioner(GameMap const &map, int splitCostFactor = 7);
 
