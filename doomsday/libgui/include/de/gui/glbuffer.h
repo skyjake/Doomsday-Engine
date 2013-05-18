@@ -201,6 +201,15 @@ public:
     void setVertices(gl::Primitive primitive, Vertices const &vertices, gl::Usage usage) {
         GLBuffer::setVertices(primitive, vertices.size(), vertices.constData(), sizeof(VertexType) * vertices.size(), usage);
     }
+
+    static void concatenate(Vertices const &triStripSequence, Vertices &longTriStrip) {
+        if(!triStripSequence.size()) return;
+        if(!longTriStrip.isEmpty()) {
+            longTriStrip << longTriStrip.back();
+            longTriStrip << triStripSequence.front();
+        }
+        longTriStrip << triStripSequence;
+    }
 };
 
 } // namespace de
