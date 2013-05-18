@@ -20,6 +20,8 @@
 
 #include <de/ConstantRule>
 #include <QFontMetrics>
+#include <QImage>
+#include <QPainter>
 
 namespace de {
 
@@ -79,6 +81,25 @@ QFont Font::toQFont() const
 Rectanglei Font::measure(String const &textLine) const
 {
     return Rectanglei::fromQRect(d->metrics->boundingRect(textLine));
+}
+
+QImage Font::rasterize(String const &textLine,
+                       Vector4ub const &foreground,
+                       Vector4ub const &background) const
+{
+    Rectanglei bounds = measure(textLine);
+
+    QImage img(QSize(bounds.width(), bounds.height()), QImage::Format_ARGB32);
+
+    QColor bgColor(background.x, background.y, background.z, background.w);
+    img.fill(bgColor.rgba());
+
+    QPainter painter(&img);
+    painter.setFont(d->font);
+    painter.setPen(QColor(foreground.x, foreground.y, foreground.z, foreground.w));
+    painter.setBrush(bgColor);
+    painter.drawText(0, d->ascentRule->valuei(), textLine);
+    return img;
 }
 
 Rule const &Font::height() const

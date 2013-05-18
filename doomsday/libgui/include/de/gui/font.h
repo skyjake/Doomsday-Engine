@@ -23,8 +23,10 @@
 #include <de/Rule>
 #include <de/Rectangle>
 #include <de/String>
+#include <de/Vector>
 
 #include <QFont>
+#include <QImage>
 
 #include "libgui.h"
 
@@ -54,6 +56,19 @@ public:
      * @return
      */
     Rectanglei measure(String const &textLine) const;
+
+    /**
+     * Rasterizes a line of text onto a 32-bit RGBA image.
+     *
+     * @param textLine    Text to rasterize.
+     * @param foreground  Text foreground color.
+     * @param background  Background color.
+     *
+     * @return
+     */
+    QImage rasterize(String const &textLine,
+                     Vector4ub const &foreground = Vector4ub(255, 255, 255, 255),
+                     Vector4ub const &background = Vector4ub(255, 255, 255, 0)) const;
 
     Rule const &height() const;
     Rule const &ascent() const;
