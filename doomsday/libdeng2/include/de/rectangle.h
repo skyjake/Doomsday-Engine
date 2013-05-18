@@ -79,6 +79,9 @@ public:
     RectangleType expanded(Type n) const {
         return RectangleType(topLeft - Corner(n, n), bottomRight + Corner(n, n));
     }
+    RectangleType shrunk(Type n) const {
+        return RectangleType(topLeft + Corner(n, n), bottomRight - Corner(n, n));
+    }
     RectangleType adjusted(CornerVectorType const &tl, CornerVectorType const &br) const {
         return RectangleType(topLeft + tl, bottomRight + br);
     }
@@ -87,6 +90,9 @@ public:
     }
     bool operator == (RectangleType const &other) const {
         return topLeft == other.topLeft && bottomRight == other.bottomRight;
+    }
+    bool operator != (RectangleType const &other) const {
+        return !(*this == other);
     }
     RectangleType operator | (RectangleType const &other) const {
         return RectangleType(topLeft.min(other.topLeft),
