@@ -6,8 +6,6 @@
 
 script { import Version, gui }
 
-namespace font {
-
 font default condition "Version.OS == 'windows'" {
     family: Verdana
     size: 12pt
@@ -15,11 +13,22 @@ font default condition "Version.OS == 'windows'" {
     style: normal
 }
 
-font default condition "Version.OS == 'macx'" {
-    family: Lucida Grande
-    size: 16pt
-    weight: normal
-    style: normal
+group {
+    condition: Version.OS == 'macx'
+    
+    font default {
+        family: Lucida Grande
+        size: 16pt
+        weight: normal
+        style: normal
+    }
+    
+    font monospace {
+        family: Consolas
+        size: 14pt
+        weight: normal
+        style: normal
+    }
 }
 
 font title inherits default {
@@ -27,4 +36,10 @@ font title inherits default {
     weight: bold
 }
 
-} # namespace font
+group log {
+    font normal inherits monospace {}
+}
+
+group editor {
+    font plaintext inherits default {}
+}
