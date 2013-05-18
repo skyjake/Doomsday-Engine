@@ -411,6 +411,11 @@ void GLState::apply() const
     }
 }
 
+void GLState::considerNativeStateUndefined()
+{
+    currentProps.clear();
+}
+
 GLState &GLState::top()
 {
     DENG2_ASSERT(!stack.isEmpty());

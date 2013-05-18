@@ -131,6 +131,13 @@ public:
 
 public:
     /**
+     * Tells GLState to consider the native OpenGL state undefined, meaning
+     * that when the next GLState is applied, all properties need to be set
+     * rather than just the changed ones.
+     */
+    static void considerNativeStateUndefined();
+
+    /**
      * Returns the current topmost state on the GL state stack.
      */
     static GLState &top();
