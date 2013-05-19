@@ -85,6 +85,7 @@ DENG2_PIMPL(App)
         mainThread = QThread::currentThread();
 
         Clock::setAppClock(&clock);
+        Animation::setClock(&clock);
 
         // Built-in systems.
         systems.append(&fs);
