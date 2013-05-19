@@ -29,6 +29,8 @@
 using namespace de;
 
 static TimeDelta const ANIM_SPAN = .5f;
+static duint const ID_BUF_TEXT   = 1;
+static duint const ID_BUF_CURSOR = 2;
 
 DENG2_PIMPL(LineEditWidget),
 DENG2_OBSERVES(Atlas, Reposition)
@@ -41,11 +43,11 @@ DENG2_OBSERVES(Atlas, Reposition)
     // Style.
     Font const *font;
     int margin;
+    Time blinkTime;
 
     // GL objects.
     bool needGeometry;
     GLTextComposer composer;
-    VertexBuf *buf;
     Id bgTex;
     Drawable drawable;
     GLUniform uMvpMatrix;
@@ -58,12 +60,12 @@ DENG2_OBSERVES(Atlas, Reposition)
           font(0),
           margin(0),
           needGeometry(false),
-          buf(0),
           uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
           uColor    ("uColor",     GLUniform::Vec4),
           uTex      ("uTex",       GLUniform::Sampler2D)
     {
         height = new ScalarRule(0);
+
         updateStyle();
 
         uColor = Vector4f(1, 1, 1, 1);
@@ -88,6 +90,8 @@ DENG2_OBSERVES(Atlas, Reposition)
         wraps.setFont(*font);
         wraps.clear();
 
+        composer.setWrapping(wraps);
+
         contentChanged();
     }
 
@@ -110,22 +114,27 @@ DENG2_OBSERVES(Atlas, Reposition)
     void glInit()
     {
         composer.setAtlas(atlas());
-        composer.setText(self.text(), wraps);
+        composer.setText(self.text());
 
         // We'll be using the shared atlas.
         uTex = atlas();
 
         // Temporary background texture for development...
-        QImage bg(QSize(2, 2), QImage::Format_ARGB32);
-        bg.fill(QColor(0, 0, 255, 255).rgba());
+        QImage bg(QSize(1, 1), QImage::Format_ARGB32);
+        bg.fill(QColor(255, 255, 255, 255).rgba());
         bgTex = atlas().alloc(bg);
 
-        drawable.addBuffer(buf = new VertexBuf);
+        drawable.addBuffer(ID_BUF_TEXT, new VertexBuf);
+        drawable.addBufferWithNewProgram(ID_BUF_CURSOR, new VertexBuf, "cursor");
 
         self.root().shaders().build(drawable.program(), "generic.tex_color")
                 << uMvpMatrix
                 //<< uColor
                 << uTex;
+
+        self.root().shaders().build(drawable.program("cursor"), "generic.color")
+                << uMvpMatrix
+                << uColor;
 
         updateProjection();
     }
@@ -138,7 +147,10 @@ DENG2_OBSERVES(Atlas, Reposition)
 
     void updateGeometry()
     {
-        composer.update();
+        if(composer.update())
+        {
+            needGeometry = true;
+        }
 
         Rectanglei pos;
         if(!self.checkPlace(pos) && !needGeometry)
@@ -152,8 +164,7 @@ DENG2_OBSERVES(Atlas, Reposition)
         VertexBuf::Vertices verts;
         VertexBuf::Type v;
 
-        v.rgba     = Vector4f(1, 1, 1, 1); //bgColor;
-
+        v.rgba     = bgColor;
         v.texCoord = atlas().imageRectf(bgTex).middle();
 
         v.pos = pos.topLeft;      verts << v;
@@ -162,17 +173,35 @@ DENG2_OBSERVES(Atlas, Reposition)
         v.pos = pos.bottomRight;  verts << v;
 
         // Text lines.
-        composer.makeVertices(verts, pos.shrunk(margin),
-                              GLTextComposer::AlignCenter,
+        Rectanglei const contentRect = pos.shrunk(margin);
+        composer.makeVertices(verts, contentRect,
+                              GLTextComposer::AlignLeft,
                               GLTextComposer::AlignLeft);
 
-        buf->setVertices(gl::TriangleStrip, verts, gl::Static);
+        drawable.buffer<VertexBuf>(ID_BUF_TEXT)
+                .setVertices(gl::TriangleStrip, verts, gl::Static);
+
+        // Cursor.
+        verts.clear();
+        v.rgba = Vector4f(1, 1, 1, 1);
+        v.texCoord = atlas().imageRectf(bgTex).middle();
+
+        Vector2i const cursorPos = self.lineCursorPos();
+        Vector2f const cp = wraps.charTopLeftInPixels(cursorPos.y, cursorPos.x) +
+                contentRect.topLeft;
+
+        v.pos = cp; verts << v;
+        v.pos = cp + Vector2f(2, 0); verts << v;
+        v.pos = cp + Vector2f(0, font->height().value()); verts << v;
+        v.pos = cp + Vector2f(2, font->height().value()); verts << v;
+
+        drawable.buffer<VertexBuf>(ID_BUF_CURSOR)
+                .setVertices(gl::TriangleStrip, verts, gl::Static);
     }
 
     void contentChanged()
     {
-        needGeometry = true;
-        composer.setText(self.text(), wraps);
+        composer.setText(self.text());
     }
 
     void atlasContentRepositioned(Atlas &)
@@ -217,6 +246,15 @@ void LineEditWidget::update()
 
 void LineEditWidget::draw()
 {
+    // Blink the cursor.
+    Vector4f col = style().colors().colorf("editor.cursor");
+    col.w *= (int(d->blinkTime.since() * 2) & 1? .25f : 1.f);
+    if(!hasFocus())
+    {
+        col.w = 0;
+    }
+    d->uColor = col;
+
     d->updateGeometry();
     d->drawable.draw();
 }
@@ -253,13 +291,12 @@ void LineEditWidget::numberOfLinesChanged(int /*lineCount*/)
 {
     // Changes in the widget's height are animated.
     d->height->set(d->calculateHeight(), ANIM_SPAN);
-
-    d->contentChanged();
 }
 
 void LineEditWidget::cursorMoved()
 {
     d->needGeometry = true;
+    d->blinkTime = Time();
 }
 
 void LineEditWidget::contentChanged()

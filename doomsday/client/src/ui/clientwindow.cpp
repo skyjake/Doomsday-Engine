@@ -88,12 +88,15 @@ DENG2_PIMPL(ClientWindow),
         root.add(taskBar);*/
 
         LineEditWidget *editTest = new LineEditWidget;
-        editTest->setText("Hello World");
+        editTest->setText("Hello World. Lorum ipsum asd asdlkj iaj sdoiajs doias daklsd s. lasdj askldj.");
+        editTest->setCursor(0);
         editTest->rule()
                 .setInput(Rule::Left,   root.viewLeft())
                 .setInput(Rule::Bottom, root.viewBottom())
                 .setInput(Rule::Width,  root.viewWidth());
         root.add(editTest);
+
+        root.setFocus(editTest);
 
         // Initially the widget is disabled. It will be enabled when the window
         // is visible and ready to be drawn.

@@ -18,7 +18,7 @@ group {
     
     font default {
         family: Lucida Grande
-        size: 16pt
+        size: 24pt
         weight: normal
         style: normal
     }
