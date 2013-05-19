@@ -57,12 +57,18 @@ public:
     GLTextComposer();
 
     void setAtlas(de::Atlas &atlas);
-    void setText(de::String const &text, FontLineWrapping const &wrappedLines);
+    void setWrapping(FontLineWrapping const &wrappedLines);
+
+    void setText(de::String const &text);
 
     /**
-     * Makes sure all the lines are allocated on the atlas.
+     * Makes sure all the lines are allocated on the atlas. After this all the
+     * allocated lines match the ones in the wrapping.
+     *
+     * @return @c true, if any allocations were changed and makeVertices()
+     * should be called again.
      */
-    void update();
+    bool update();
 
     /**
      * Releases all the allocations from the atlas.

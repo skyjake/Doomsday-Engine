@@ -30,7 +30,13 @@ DENG2_PIMPL(GLTextComposer)
     FontLineWrapping const *wraps;
     bool needRaster;
 
-    typedef QList<Id> Lines;
+    struct Line {
+        Id id;
+        shell::Range range;
+
+        Line() : id(Id::None) {}
+    };
+    typedef QList<Line> Lines;
     Lines lines;
 
     Instance(Public *i) : Base(i), font(0), atlas(0), wraps(0), needRaster(false)
@@ -45,30 +51,61 @@ DENG2_PIMPL(GLTextComposer)
     {
         DENG2_ASSERT(atlas != 0);
 
-        foreach(Id const &id, lines)
+        foreach(Line const &line, lines)
         {
-            atlas->release(id);
+            atlas->release(line.id);
         }
         lines.clear();
     }
 
-    void allocLines()
+    bool allocLines()
     {
-        /// @todo Could check which lines have actually changed.
-
-        // Release the old lines.
-        releaseLines();
-
-        qDebug() << "allocLines for" << text << wraps->height();
+        bool changed = false;
 
         for(int i = 0; i < wraps->height(); ++i)
         {
             shell::WrappedLine const span = wraps->line(i);
-            String part = text.substr(span.range.start, span.range.size());
-            lines.append(atlas->alloc(font->rasterize(part)));
 
-            qDebug() << lines.back().asText() << part;
+            if(i < lines.size())
+            {
+                if(lines[i].range == span.range)
+                {
+                    // This can be kept as is.
+                    continue;
+                }
+
+                // Needs to be redone.
+                atlas->release(lines[i].id);
+            }
+
+            changed = true;
+
+            String const part = text.substr(span.range.start, span.range.size());
+
+            if(i >= lines.size())
+            {
+                // Need another line.
+                lines.append(Line());
+            }
+
+            Line &line = lines[i];
+            line.range = span.range;
+            line.id = atlas->alloc(font->rasterize(part));
+
+            //qDebug() << lines.back().asText() << part;
         }
+
+        // Remove the excess lines.
+        while(lines.size() > wraps->height())
+        {
+            atlas->release(lines.back().id);
+            lines.takeLast();
+            changed = true;
+        }
+
+        DENG2_ASSERT(wraps->height() == lines.size());
+
+        return changed;
     }
 };
 
@@ -85,23 +122,26 @@ void GLTextComposer::setAtlas(Atlas &atlas)
     d->atlas = &atlas;
 }
 
-void GLTextComposer::setText(String const &text, FontLineWrapping const &wrappedLines)
+void GLTextComposer::setWrapping(FontLineWrapping const &wrappedLines)
 {
-    d->text = text;
     d->wraps = &wrappedLines;
     d->font = &d->wraps->font();
-    d->needRaster = true;
 }
 
-void GLTextComposer::update()
+void GLTextComposer::setText(String const &text)
+{
+    d->text = text;
+    d->needRaster = true; // Force a redo of everything.
+}
+
+bool GLTextComposer::update()
 {
     if(d->needRaster)
     {
+        d->releaseLines();
         d->needRaster = false;
-        d->allocLines();
     }
-
-    DENG2_ASSERT(d->wraps->height() == d->lines.size());
+    return d->allocLines();
 }
 
 void GLTextComposer::makeVertices(Vertices &triStrip,
@@ -117,19 +157,19 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
     // Apply alignment within the provided rectangle.
     if(alignInRect.testFlag(AlignRight))
     {
-        p.x += rect.width() - contentSize.x;
+        p.x += int(rect.width()) - contentSize.x;
     }
     else if(!alignInRect.testFlag(AlignLeft))
     {
-        p.x += (rect.width() - contentSize.x) / 2;
+        p.x += (int(rect.width()) - contentSize.x) / 2;
     }
     if(alignInRect.testFlag(AlignBottom))
     {
-        p.y += rect.height() - contentSize.y;
+        p.y += int(rect.height()) - contentSize.y;
     }
     else
     {
-        p.y += (rect.height() - contentSize.y) / 2;
+        p.y += (int(rect.height()) - contentSize.y) / 2;
     }
 
     DENG2_ASSERT(d->wraps->height() == d->lines.size());
@@ -137,8 +177,8 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
     // Generate vertices for each line.
     for(int i = 0; i < d->wraps->height(); ++i)
     {
-        Vector2ui const size = d->atlas->imageRect(d->lines[i]).size();
-        Rectanglef const uv  = d->atlas->imageRectf(d->lines[i]);
+        Vector2ui const size = d->atlas->imageRect(d->lines[i].id).size();
+        Rectanglef const uv  = d->atlas->imageRectf(d->lines[i].id);
 
         Vertex v;
         Vertices quad;
@@ -150,11 +190,11 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
         // Align the line.
         if(lineAlign.testFlag(AlignRight))
         {
-            linePos.x += rect.width() - size.x;
+            linePos.x += int(rect.width()) - int(size.x);
         }
         else if(!lineAlign.testFlag(AlignLeft))
         {
-            linePos.x += (rect.width() - size.x) / 2;
+            linePos.x += (int(rect.width()) - int(size.x)) / 2;
         }
 
         v.pos = linePos;                            v.texCoord = uv.topLeft;      quad << v;
