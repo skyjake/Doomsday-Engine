@@ -1813,22 +1813,6 @@ DENG2_PIMPL(Partitioner)
                                 QString("BSP Leaf 0x%1 has no line-linked half-edge")
                                     .arg(dintptr(leaf), 0, 16));
 
-                // Look for migrant half-edges in the wrong sector.
-                if(Sector *sector = findFirstSectorInBspLeaf(*leaf))
-                {
-                    HEdge *hedgeIt = base;
-                    do
-                    {
-                        HEdge &hedge = *hedgeIt;
-                        LineSegment::Side const &lineSeg = lineSegment(hedge);
-                        if(lineSeg.hasSector() && lineSeg.sectorPtr() != sector)
-                        {
-                            notifyMigrantHEdgeBuilt(hedge, *sector);
-                        }
-
-                    } while((hedgeIt = &hedgeIt->next()) != base);
-                }
-
                 /// @todo Polygon should encapsulate.
                 geom.updateAABox();
                 geom.updateCenter();
@@ -1850,8 +1834,8 @@ DENG2_PIMPL(Partitioner)
 
                     if(gaps > 0)
                     {
-                        LOG_WARNING("Polygon geometry for BSP leaf [%p] (at %s) "
-                                    "in sector %i has %i gaps (%i half-edges).")
+                        LOG_WARNING("Polygon geometry for BSP leaf [%p] (at %s) in sector %i "
+                                    "is not contiguous %i gaps/overlaps (%i half-edges).")
                             << de::dintptr(leaf)
                             << geom.center().asText()
                             << leaf->sector().indexInArchive()
@@ -2089,20 +2073,6 @@ DENG2_PIMPL(Partitioner)
         DENG2_FOR_PUBLIC_AUDIENCE(UnclosedSectorFound, i)
         {
             i->unclosedSectorFound(sector, nearPoint);
-        }
-    }
-
-    /**
-     * Notify interested parties that a migrant half-edge was built.
-     *
-     * @param hedge         The migrant half-edge.
-     * @param facingSector  Sector that the half-edge is facing.
-     */
-    void notifyMigrantHEdgeBuilt(HEdge &migrant, Sector &facingSector)
-    {
-        DENG2_FOR_PUBLIC_AUDIENCE(MigrantHEdgeBuilt, i)
-        {
-            i->migrantHEdgeBuilt(migrant, facingSector);
         }
     }
 

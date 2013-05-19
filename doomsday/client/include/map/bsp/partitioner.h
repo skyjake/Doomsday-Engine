@@ -63,9 +63,6 @@ public:
     DENG2_DEFINE_AUDIENCE(OneWayWindowFound,
         void oneWayWindowFound(Line &line, Sector &backFacingSector))
 
-    DENG2_DEFINE_AUDIENCE(MigrantHEdgeBuilt,
-        void migrantHEdgeBuilt(HEdge &hedge, Sector &facingSector))
-
 public:
     Partitioner(GameMap const &map, int splitCostFactor = 7);
 

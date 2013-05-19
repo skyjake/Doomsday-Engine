@@ -66,8 +66,7 @@ static int const maxWarningsPerType = 10;
  * @todo Consolidate with the missing material reporting done elsewhere -ds
  */
 class Reporter : DENG2_OBSERVES(Partitioner, UnclosedSectorFound),
-                 DENG2_OBSERVES(Partitioner, OneWayWindowFound),
-                 DENG2_OBSERVES(Partitioner, MigrantHEdgeBuilt)
+                 DENG2_OBSERVES(Partitioner, OneWayWindowFound)
 {
     /// Record "unclosed sectors".
     /// Sector => world point relatively near to the problem area.
@@ -76,10 +75,6 @@ class Reporter : DENG2_OBSERVES(Partitioner, UnclosedSectorFound),
     /// Record "one-way window lines".
     /// Line => Sector the back side faces.
     typedef std::map<Line *,  Sector *> OneWayWindowMap;
-
-    /// Record "migrant half-edges".
-    /// HEdge => Sector the half-edge faces.
-    typedef std::map<HEdge *, Sector *> MigrantHEdgeMap;
 
 public:
 
@@ -94,7 +89,6 @@ public:
 
     inline int unclosedSectorCount() const { return (int)_unclosedSectors.size(); }
     inline int oneWayWindowCount() const { return (int)_oneWayWindows.size(); }
-    inline int migrantHEdgeCount() const { return (int)_migrantHEdges.size(); }
 
     void writeLog()
     {
@@ -123,28 +117,6 @@ public:
             if(numToLog < oneWayWindowCount())
                 LOG_INFO("(%d more like this)") << (oneWayWindowCount() - numToLog);
         }
-
-        if(int numToLog = maxWarnings(migrantHEdgeCount()))
-        {
-            MigrantHEdgeMap::const_iterator it = _migrantHEdges.begin();
-            for(int i = 0; i < numToLog; ++i, ++it)
-            {
-                HEdge *hedge = it->first;
-                Sector *facingSector = it->second;
-
-                if(hedge->hasLineSide())
-                    LOG_WARNING("Sector #%d has migrant half-edge facing #%d (line #%d).")
-                        << facingSector->indexInMap()
-                        << hedge->lineSide().sector().indexInMap()
-                        << hedge->line().indexInMap();
-                else
-                    LOG_WARNING("Sector #%d has migrant partition line half-edge.")
-                        << facingSector->indexInMap();
-            }
-
-            if(numToLog < migrantHEdgeCount())
-                LOG_INFO("(%d more like this)") << (migrantHEdgeCount() - numToLog);
-        }
     }
 
 protected:
@@ -160,16 +132,9 @@ protected:
         _oneWayWindows.insert(std::make_pair(&line, &backFacingSector));
     }
 
-    // Observes Partitioner MigrantHEdgeBuilt.
-    void migrantHEdgeBuilt(HEdge &hedge, Sector &facingSector)
-    {
-        _migrantHEdges.insert(std::make_pair(&hedge, &facingSector));
-    }
-
 private:
     UnclosedSectorMap _unclosedSectors;
     OneWayWindowMap   _oneWayWindows;
-    MigrantHEdgeMap   _migrantHEdges;
 };
 
 bool BspBuilder::buildBsp()
@@ -178,7 +143,6 @@ bool BspBuilder::buildBsp()
 
     d->partitioner.audienceForUnclosedSectorFound += reporter;
     d->partitioner.audienceForOneWayWindowFound   += reporter;
-    d->partitioner.audienceForMigrantHEdgeBuilt   += reporter;
 
     bool builtOk = false;
     try
