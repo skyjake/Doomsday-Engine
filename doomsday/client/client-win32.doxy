@@ -2,7 +2,7 @@
 @INCLUDE = ../doomsday.doxy
 
 PROJECT_NAME        = "Doomsday Client"
-PROJECT_NUMBER      = 1.10.2
+PROJECT_NUMBER      = 1.10.3
 PROJECT_BRIEF       = "Internal documentation (Windows)"
 OUTPUT_DIRECTORY    = ../apidoc/win32/
 

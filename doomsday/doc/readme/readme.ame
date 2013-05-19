@@ -5,7 +5,7 @@
     @macro{TITLE}{ doomsday }
 }
 @macro{ONELINER}{ Enhanced source port of Doom, Heretic and Hexen }
-@macro{VERSION}{ Version 1.10.2 }
+@macro{VERSION}{ Version 1.10.3 }
 @macro{AUTHOR}{ Deng Team }
 @macro{LINK}{ http://dengine.net/ }
 @require{amestd}
