@@ -67,8 +67,6 @@ typedef QList<HEdge *> HEdgeSortBuffer;
 /// Used when collecting line segments to build a leaf. @todo Refactor away.
 typedef QList<LineSegment::Side *> LineSegmentSideList;
 
-typedef QHash<HEdge *, LineSegment::Side *> LineSegmentSideMap; /// @todo Refactor away.
-
 DENG2_PIMPL(Partitioner)
 {
     /// Cost factor attributed to splitting a line segment.
@@ -85,9 +83,6 @@ DENG2_PIMPL(Partitioner)
 
     /// Line segments in the plane.
     LineSegments lineSegments;
-
-    /// A map from HEdge -> LineSegment::Side @todo refactor away.
-    LineSegmentSideMap lineSegmentMap;
 
     /// A set of EdgeTips for each unique line segment vertex.
     /// @note May be larger than @var numVertexes (deallocation is lazy).
@@ -152,20 +147,6 @@ DENG2_PIMPL(Partitioner)
         {
             setIt->clear();
         }
-    }
-
-    /**
-     * Returns the associated LineSegment::Side for the given @a hedge.
-     */
-    LineSegment::Side &lineSegment(HEdge const &hedge)
-    {
-        LineSegmentSideMap::iterator found = lineSegmentMap.find(const_cast<HEdge *>(&hedge));
-        if(found != lineSegmentMap.end())
-        {
-            return *found.value();
-        }
-        throw Error("Partitioner::lineSegment", QString("Failed locating a LineSegment::Side for 0x%1")
-                                                    .arg(de::dintptr(&hedge), 0, 16));
     }
 
     struct testForWindowEffectParams
@@ -814,7 +795,6 @@ DENG2_PIMPL(Partitioner)
         if(other.front().hasHEdge())
         {
             seg.front().setHEdge(new HEdge(other.front().hedge()));
-            lineSegmentMap.insert(seg.front().hedgePtr(), &seg.front());
 
             // There is now one more HEdge.
             numHEdges += 1;
@@ -823,7 +803,6 @@ DENG2_PIMPL(Partitioner)
         if(other.back().hasHEdge())
         {
             seg.back().setHEdge(new HEdge(other.back().hedge()));
-            lineSegmentMap.insert(seg.back().hedgePtr(), &seg.back());
 
             // There is now one more HEdge.
             numHEdges += 1;
@@ -1417,7 +1396,6 @@ DENG2_PIMPL(Partitioner)
 
                 // There is now one more HEdge.
                 numHEdges += 1;
-                lineSegmentMap.insert(hedge, seg);
             }
 
             // Assign any built polygon geometry to the BSP leaf (takes ownership).
@@ -1703,33 +1681,6 @@ DENG2_PIMPL(Partitioner)
             HEdge *hedge = poly._hedge;
             forever
             {
-                /// @todo kludge: This should not be done here!
-                if(hedge->hasLineSide())
-                {
-                    Line::Side &side = hedge->lineSide();
-
-                    // Already processed?
-                    if(!side.leftHEdge())
-                    {
-                        HEdge *leftHEdge = hedge;
-                        // Find the left-most half-hedge.
-                        while(leftHEdge && lineSegment(*leftHEdge).hasLeft())
-                        {
-                            leftHEdge = lineSegment(*leftHEdge).left().hedgePtr();
-                        }
-                        side.setLeftHEdge(leftHEdge);
-
-                        // Find the right-most half-edge.
-                        HEdge *rightHEdge = hedge;
-                        while(rightHEdge && lineSegment(*rightHEdge).hasRight())
-                        {
-                            rightHEdge = lineSegment(*rightHEdge).right().hedgePtr();
-                        }
-                        side.setRightHEdge(rightHEdge);
-                    }
-                }
-                /// kludge end
-
                 if(hedge->hasNext())
                 {
                     // Reverse link.
@@ -1745,21 +1696,6 @@ DENG2_PIMPL(Partitioner)
                 }
             }
         }
-    }
-
-    Sector *findFirstSectorInBspLeaf(BspLeaf const &leaf)
-    {
-        HEdge const *base = leaf.firstHEdge();
-        HEdge const *hedge = base;
-        do
-        {
-            LineSegment::Side &seg = lineSegment(*hedge);
-            if(seg.hasSector())
-            {
-                return seg.sectorPtr();
-            }
-        } while((hedge = &hedge->next()) != base);
-        return 0; // Nothing??
     }
 
     /**
@@ -2147,6 +2083,31 @@ void Partitioner::build()
 
     // At this point we know that *something* useful was built.
     d->windLeafs();
+
+    // Find the half-edges at the edge of each map line side.
+    /// @todo Optimize: Performing a search for both sides of the same map
+    /// line should be unnecessary provided we produced a complete tree with
+    /// no degenerate leaf geometries...
+    foreach(LineSegment *line, d->lineSegments)
+    for(int i = 0; i < 2; ++i)
+    {
+        LineSegment::Side &side = line->side(i);
+
+        if(!side.hasMapSide()) continue;
+        if(!side.hasHEdge()) continue; // Oh dear...
+
+        // Find the left-most segment.
+        LineSegment::Side *left = &side;
+        while(left->hasLeft()) { left = &left->left(); }
+
+        side.mapSide().setLeftHEdge(left->hedgePtr());
+
+        // Find the right-most segment.
+        LineSegment::Side *right = &side;
+        while(right->hasRight()) { right = &right->right(); }
+
+        side.mapSide().setRightHEdge(right->hedgePtr());
+    }
 }
 
 BspTreeNode *Partitioner::root() const
