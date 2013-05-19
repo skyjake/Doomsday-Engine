@@ -64,8 +64,8 @@ public:
         /// Sector on each side of the vertex (along the partition), or @c 0
         /// if that direction is "closed" (i.e., the intercept point is along
         /// a map line that has no Sector on the relevant side).
-        Sector *front;
-        Sector *back;
+        Sector *before;
+        Sector *after;
 
     public:
         Intercept(double distance, LineSegment::Side &lineSeg, int edge);

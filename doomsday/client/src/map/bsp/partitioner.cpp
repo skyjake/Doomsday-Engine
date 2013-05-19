@@ -1151,7 +1151,7 @@ DENG2_PIMPL(Partitioner)
             HPlane::Intercept const &cur  = hplane.intercepts()[i];
             HPlane::Intercept const &next = hplane.intercepts()[i+1];
 
-            if(!cur.front && !next.back)
+            if(!cur.after && !next.before)
                 continue;
 
             // Does this range overlap the partition line segment?
@@ -1159,42 +1159,42 @@ DENG2_PIMPL(Partitioner)
                 continue;
 
             // Check for some nasty open/closed or close/open cases.
-            if(cur.front && !next.back)
+            if(cur.after && !next.before)
             {
                 if(!cur.selfRef)
                 {
                     Vector2d nearPoint = (cur.vertex().origin() + next.vertex().origin()) / 2;
-                    notifyUnclosedSectorFound(*cur.front, nearPoint);
+                    notifyUnclosedSectorFound(*cur.after, nearPoint);
                 }
                 continue;
             }
 
-            if(!cur.front && next.back)
+            if(!cur.after && next.before)
             {
                 if(!next.selfRef)
                 {
                     Vector2d nearPoint = (cur.vertex().origin() + next.vertex().origin()) / 2;
-                    notifyUnclosedSectorFound(*next.back, nearPoint);
+                    notifyUnclosedSectorFound(*next.before, nearPoint);
                 }
                 continue;
             }
 
             // This is definitely open space.
             // Choose the non-self-referencing sector when we can.
-            Sector *sector = cur.front;
-            if(cur.front != next.back)
+            Sector *sector = cur.after;
+            if(cur.after != next.before)
             {
                 if(!cur.selfRef && !next.selfRef)
                 {
                     LOG_DEBUG("Sector mismatch (#%d %s != #%d %s.")
-                        << cur.front->indexInMap()
+                        << cur.after->indexInMap()
                         << cur.vertex().origin().asText()
-                        << next.back->indexInMap()
+                        << next.before->indexInMap()
                         << next.vertex().origin().asText();
                 }
 
                 if(cur.selfRef && !next.selfRef)
-                    sector = next.back;
+                    sector = next.before;
             }
 
             DENG_ASSERT(sector != 0);
@@ -1221,6 +1221,84 @@ DENG2_PIMPL(Partitioner)
         }
     }
 
+    struct Choice
+    {
+        /// The sector choice.
+        Sector *sector;
+
+        /// Number of referencing line segments of each type:
+        int norm;
+        int part;
+        int self;
+
+        Choice(Sector &sector)
+            : sector(&sector), norm(0), part(0), self(0)
+        {}
+
+        /**
+         * Perform heuristic comparison between two choices to determine
+         * a preference order. The algorithm used weights the two choices
+         * according to the number and "type" of the referencing line
+         * segments.
+         *
+         * @return  @c true if "this" choice is rated better than @a other.
+         */
+        bool operator < (Choice const &other) const
+        {
+            if(norm == other.norm)
+            {
+                if(part == other.part)
+                {
+                    if(self == other.self)
+                    {
+                        // All equal; use the unique indices to stablize.
+                        return sector->indexInMap() < other.sector->indexInMap();
+                    }
+                    return self > other.self;
+                }
+                return part > other.part;
+            }
+            return norm > other.norm;
+        }
+
+        /**
+         * Account for a new line segment which references this choice.
+         * Consider collinear segments only once.
+         */
+        void account(LineSegment::Side &seg)
+        {
+            // Determine the type of reference and increment the count.
+            if(!seg.hasMapSide())
+            {
+                Line *mapLine = seg.partitionMapLine();
+                if(mapLine && mapLine->validCount() == validCount)
+                    return;
+
+                part += 1;
+
+                if(mapLine)
+                    mapLine->setValidCount(validCount);
+            }
+            else
+            {
+                if(seg.mapLine().validCount() == validCount)
+                    return;
+
+                if(seg.mapLine().isSelfReferencing())
+                {
+                    self += 1;
+                }
+                else
+                {
+                    norm += 1;
+                }
+
+                seg.mapLine().setValidCount(validCount);
+            }
+        }
+    };
+    typedef QHash<Sector *, Choice> ChoiceHash;
+
     /**
      * Pick a sector from the list of line segments to attribute to any BSP
      * leaf we might subsequently produce for them.
@@ -1231,68 +1309,14 @@ DENG2_PIMPL(Partitioner)
      */
     Sector *chooseSectorForBspLeaf(LineSegmentSideList const &segments)
     {
-        struct Choice
-        {
-            /// The sector choice.
-            Sector *sector;
-
-            /// Number of referencing line segments of each type:
-            int norm;
-            int part;
-            int self;
-
-            Choice(Sector &sector)
-                : sector(&sector), norm(0), part(0), self(0)
-            {}
-
-            /**
-             * Perform heuristic comparision between two choices to determine
-             * a preference order. The algorithm used weights the two choices
-             * according to the number and "type" of the referencing line
-             * segments.
-             *
-             * @return  @c true if "this" choice is rated better than @a other.
-             */
-            bool operator < (Choice const &other) const
-            {
-                if(norm == other.norm)
-                {
-                    if(part == other.part)
-                    {
-                        return self > other.self;
-                    }
-                    return part > other.part;
-                }
-                return norm > other.norm;
-            }
-
-            /**
-             * Account for a new line segment which references this choice.
-             */
-            void account(LineSegment::Side &seg)
-            {
-                // Determine the type of reference and increment the count.
-                if(!seg.hasMapSide())
-                {
-                    part += 1;
-                }
-                else if(seg.mapLine().isSelfReferencing())
-                {
-                    self += 1;
-                }
-                else
-                {
-                    norm += 1;
-                }
-            }
-        };
-        typedef QHash<Sector *, Choice> ChoiceHash;
-
         ChoiceHash candidates;
+
+        // We will consider collinear segments only once.
+        validCount++;
 
         foreach(LineSegment::Side *seg, segments)
         {
-            // Segments with no sector can help us.
+            // Segments with no sector can't help us.
             if(!seg->hasSector()) continue;
 
             Sector *sector = seg->sectorPtr();

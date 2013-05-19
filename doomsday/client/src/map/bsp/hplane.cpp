@@ -45,8 +45,8 @@ namespace bsp {
 
 HPlane::Intercept::Intercept(ddouble distance, LineSegment::Side &lineSeg, int edge)
     : selfRef(false),
-      back(0),
-      front(0),
+      before(0),
+      after(0),
       _distance(distance),
       _lineSeg(&lineSeg),
       _edge(edge)
@@ -68,8 +68,8 @@ void HPlane::Intercept::debugPrint() const
     LOG_INFO("Vertex #%i %s beforeSector: #%d afterSector: #%d %s")
         << vertex().indexInMap()
         << vertex().origin().asText()
-        << (back? back->indexInMap() : -1)
-        << (front? front->indexInMap() : -1)
+        << (before? before->indexInMap() : -1)
+        << (after? after->indexInMap() : -1)
         << (selfRef? "SELFREF" : "");
 }
 #endif
@@ -241,10 +241,10 @@ HPlane::Intercept *HPlane::intercept(LineSegment::Side const &lineSeg, int edge,
     d->intercepts.append(Intercept(distToVertex, const_cast<LineSegment::Side &>(lineSeg), edge));
     Intercept *newIntercept = &d->intercepts.last();
 
-    newIntercept->selfRef = lineSeg.sectorPtr() == lineSeg.back().sectorPtr(); //(lineSeg.hasMapSide() && lineSeg.mapLine().isSelfReferencing());
+    newIntercept->selfRef = (lineSeg.hasMapSide() && lineSeg.mapLine().isSelfReferencing());
 
-    newIntercept->front = openSectorAtAngle(edgeTips, angle());
-    newIntercept->back  = openSectorAtAngle(edgeTips, inverseAngle());
+    newIntercept->before = openSectorAtAngle(edgeTips, inverseAngle());
+    newIntercept->after  = openSectorAtAngle(edgeTips, angle());
 
     // The addition of a new intercept means we'll need to resort.
     d->needSortIntercepts = true;
@@ -252,35 +252,40 @@ HPlane::Intercept *HPlane::intercept(LineSegment::Side const &lineSeg, int edge,
     return newIntercept;
 }
 
-static void mergeIntercepts(HPlane::Intercept &final,
-                            HPlane::Intercept const &other)
+/**
+ * Merges @a next into @a cur.
+ */
+static void mergeIntercepts(HPlane::Intercept &cur, HPlane::Intercept const &next)
 {
     /*
     LOG_AS("HPlane::mergeIntercepts");
-    final.debugPrint();
-    other.debugPrint();
+    cur.debugPrint();
+    next.debugPrint();
     */
 
-    if(final.selfRef && !other.selfRef)
+    if(&cur.lineSegment().line() == &next.lineSegment().line())
+        return;
+
+    if(cur.selfRef && !next.selfRef)
     {
-        if(final.back && other.back)
-            final.back = other.back;
+        if(cur.before && next.before)
+            cur.before = next.before;
 
-        if(final.front && other.front)
-            final.front = other.front;
+        if(cur.after && next.after)
+            cur.after = next.after;
 
-        final.selfRef = false;
+        cur.selfRef = false;
     }
 
-    if(!final.back && other.back)
-        final.back = other.back;
+    if(!cur.before && next.before)
+        cur.before = next.before;
 
-    if(!final.front && other.front)
-        final.front = other.front;
+    if(!cur.after && next.after)
+        cur.after = next.after;
 
     /*
     LOG_TRACE("Result:");
-    final.debugPrint();
+    cur.debugPrint();
     */
 }
 
