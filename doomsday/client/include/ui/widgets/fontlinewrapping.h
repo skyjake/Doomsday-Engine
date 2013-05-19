@@ -49,6 +49,8 @@ public:
      */
     int totalHeightInPixels() const;
 
+    de::Vector2i charTopLeftInPixels(int line, int charIndex);
+
 private:
     DENG2_PRIVATE(d)
 };
