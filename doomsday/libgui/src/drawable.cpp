@@ -27,6 +27,7 @@ DENG2_PIMPL(Drawable)
     typedef QMap<Id, GLBuffer *> Buffers;
     typedef QMap<Id, GLProgram *> Programs;
     typedef QMap<Id, GLState *> States;
+    typedef QMap<String, Id> Names;
 
     struct BufferConfig {
         GLProgram const *program;
@@ -40,6 +41,9 @@ DENG2_PIMPL(Drawable)
     Buffers buffers;
     Programs programs;
     States states;
+    Names bufferNames;
+    Names programNames;
+    Names stateNames;
     BufferConfigs configs;
     GLProgram defaultProgram;
 
@@ -63,15 +67,33 @@ DENG2_PIMPL(Drawable)
         programs.clear();
         states.clear();
         configs.clear();
+
+        bufferNames.clear();
+        programNames.clear();
+        stateNames.clear();
     }
 
     Id nextBufferId() const
     {
         Id next = 1;
-        foreach(Id id, buffers.keys())
-        {
-            next = de::max(id + 1, next);
-        }
+        // Keys of a QMap are sorted in ascending order.
+        if(!buffers.isEmpty()) next = buffers.keys().back() + 1;
+        return next;
+    }
+
+    Id nextProgramId() const
+    {
+        Id next = 1;
+        // Keys of a QMap are sorted in ascending order.
+        if(!programs.isEmpty()) next = programs.keys().back() + 1;
+        return next;
+    }
+
+    Id nextStateId() const
+    {
+        Id next = 1;
+        // Keys of a QMap are sorted in ascending order.
+        if(!states.isEmpty()) next = states.keys().back() + 1;
         return next;
     }
 
@@ -93,6 +115,19 @@ DENG2_PIMPL(Drawable)
             if(i.value().state == src)
             {
                 i.value().state = dest;
+            }
+        }
+    }
+
+    void removeName(Names &names, Id id)
+    {
+        QMutableMapIterator<String, Id> iter(names);
+        while(iter.hasNext())
+        {
+            iter.next();
+            if(iter.value() == id)
+            {
+                iter.remove();
             }
         }
     }
@@ -130,11 +165,33 @@ GLBuffer &Drawable::buffer(Id id) const
     return *d->buffers[id];
 }
 
+GLBuffer &Drawable::buffer(Name const &bufferName) const
+{
+    return buffer(bufferId(bufferName));
+}
+
+Drawable::Id Drawable::bufferId(Name const &bufferName) const
+{
+    DENG2_ASSERT(d->bufferNames.contains(bufferName));
+    return d->bufferNames[bufferName];
+}
+
 GLProgram &Drawable::program(Id id) const
 {
     if(!id) return d->defaultProgram;
     DENG2_ASSERT(d->programs.contains(id));
     return *d->programs[id];
+}
+
+GLProgram &Drawable::program(Name const &programName) const
+{
+    return program(programId(programName));
+}
+
+Drawable::Id Drawable::programId(Name const &programName) const
+{
+    DENG2_ASSERT(d->programNames.contains(programName));
+    return d->programNames[programName];
 }
 
 GLProgram const &Drawable::programForBuffer(Id bufferId) const
@@ -144,15 +201,36 @@ GLProgram const &Drawable::programForBuffer(Id bufferId) const
     return *d->configs[bufferId].program;
 }
 
+GLProgram const &Drawable::programForBuffer(Name const &bufferName) const
+{
+    return programForBuffer(bufferId(bufferName));
+}
+
 GLState const *Drawable::stateForBuffer(Id bufferId) const
 {
     return d->configs[bufferId].state;
+}
+
+GLState const *Drawable::stateForBuffer(Name const &bufferName) const
+{
+    return stateForBuffer(bufferId(bufferName));
 }
 
 GLState &Drawable::state(Id id) const
 {
     DENG2_ASSERT(d->states.contains(id));
     return *d->states[id];
+}
+
+GLState &Drawable::state(Name const &stateName) const
+{
+    return state(stateId(stateName));
+}
+
+Drawable::Id Drawable::stateId(Name const &stateName) const
+{
+    DENG2_ASSERT(d->stateNames.contains(stateName));
+    return d->stateNames[stateName];
 }
 
 void Drawable::addBuffer(Id id, GLBuffer *buffer)
@@ -164,11 +242,46 @@ void Drawable::addBuffer(Id id, GLBuffer *buffer)
     insert(*buffer, Required);
 }
 
-Drawable::Id Drawable::addBuffer(GLBuffer *buffer)
+Drawable::Id Drawable::addBuffer(Name const &bufferName, GLBuffer *buffer)
 {
     Id id = d->nextBufferId();
+    d->bufferNames.insert(bufferName, id);
     addBuffer(id, buffer);
     return id;
+}
+
+Drawable::Id Drawable::addBuffer(GLBuffer *buffer)
+{
+    Id const id = d->nextBufferId();
+    addBuffer(id, buffer);
+    return id;
+}
+
+Drawable::Id Drawable::addBufferWithNewProgram(GLBuffer *buffer, Name const &programName)
+{
+    // Take ownership of the buffer.
+    Id const bufId = d->nextBufferId();
+    addBuffer(bufId, buffer);
+    // Assign a new program to the buffer.
+    Id const progId = addProgram(programName);
+    setProgram(bufId, program(progId));
+    return bufId;
+}
+
+void Drawable::addBufferWithNewProgram(Id id, GLBuffer *buffer, Name const &programName)
+{
+    addBuffer(id, buffer);
+    addProgram(programName);
+    setProgram(id, programName);
+}
+
+Drawable::Id Drawable::addBufferWithNewProgram(Name const &bufferName, GLBuffer *buffer,
+                                               Name const &programName)
+{
+    Id const progId = addProgram(programName);
+    Id const bufId = addBuffer(bufferName, buffer);
+    setProgram(bufId, program(progId));
+    return bufId;
 }
 
 GLProgram &Drawable::addProgram(Id id)
@@ -184,12 +297,31 @@ GLProgram &Drawable::addProgram(Id id)
     return *p;
 }
 
+Drawable::Id Drawable::addProgram(Name const &programName)
+{
+    Id const id = d->nextProgramId();
+    addProgram(id);
+    if(!programName.isEmpty())
+    {
+        d->programNames.insert(programName, id);
+    }
+    return id;
+}
+
 GLState &Drawable::addState(Id id, GLState const &state)
 {
     removeState(id);
     GLState *s = new GLState(state);
     d->states[id] = s;
     return *s;
+}
+
+Drawable::Id Drawable::addState(Name const &stateName, GLState const &state)
+{
+    Id const id = d->nextStateId();
+    addState(id, state);
+    d->stateNames.insert(stateName, id);
+    return id;
 }
 
 void Drawable::removeBuffer(Id id)
@@ -223,9 +355,45 @@ void Drawable::removeState(Id id)
     }
 }
 
+void Drawable::removeBuffer(Name const &bufferName)
+{
+    Id const id = bufferId(bufferName);
+    removeBuffer(id);
+    d->removeName(d->bufferNames, id);
+}
+
+void Drawable::removeProgram(Name const &programName)
+{
+    Id const id = programId(programName);
+    removeProgram(id);
+    d->removeName(d->programNames, id);
+}
+
+void Drawable::removeState(Name const &stateName)
+{
+    Id const id = stateId(stateName);
+    removeState(id);
+    d->removeName(d->stateNames, id);
+}
+
 void Drawable::setProgram(Id bufferId, GLProgram &program)
 {
     d->configs[bufferId].program = &program;
+}
+
+void Drawable::setProgram(Id bufferId, Name const &programName)
+{
+    setProgram(bufferId, program(programName));
+}
+
+void Drawable::setProgram(Name const &bufferName, GLProgram &program)
+{
+    setProgram(bufferId(bufferName), program);
+}
+
+void Drawable::setProgram(Name const &bufferName, Name const &programName)
+{
+    setProgram(bufferId(bufferName), program(programName));
 }
 
 void Drawable::setProgram(GLProgram &program)
@@ -236,9 +404,29 @@ void Drawable::setProgram(GLProgram &program)
     }
 }
 
+void Drawable::setProgram(Name const &programName)
+{
+    setProgram(program(programName));
+}
+
 void Drawable::setState(Id bufferId, GLState &state)
 {
     d->configs[bufferId].state = &state;
+}
+
+void Drawable::setState(Id bufferId, Name const &stateName)
+{
+    setState(bufferId, state(stateName));
+}
+
+void Drawable::setState(Name const &bufferName, GLState &state)
+{
+    setState(bufferId(bufferName), state);
+}
+
+void Drawable::setState(Name const &bufferName, Name const &stateName)
+{
+    setState(bufferId(bufferName), state(stateName));
 }
 
 void Drawable::setState(GLState &state)
@@ -249,9 +437,19 @@ void Drawable::setState(GLState &state)
     }
 }
 
+void Drawable::setState(Name const &stateName)
+{
+    setState(state(stateName));
+}
+
 void Drawable::unsetState(Id bufferId)
 {
     d->configs[bufferId].state = 0;
+}
+
+void Drawable::unsetState(Name const &bufferName)
+{
+    unsetState(bufferId(bufferName));
 }
 
 void Drawable::unsetState()
