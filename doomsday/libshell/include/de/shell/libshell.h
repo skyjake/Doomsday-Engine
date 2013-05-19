@@ -49,6 +49,9 @@ struct LIBSHELL_PUBLIC Range
     Range(int a = 0, int b = 0) : start(a), end(b) {}
     inline int size() const { return end - start; }
     inline bool contains(int i) const { return i >= start && i < end; }
+    inline bool operator == (Range const &other) const {
+        return start == other.start && end == other.end;
+    }
 };
 
 /// Word wrapping.
