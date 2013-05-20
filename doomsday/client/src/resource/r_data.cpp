@@ -433,7 +433,7 @@ static CompositeTextures readCompositeTextureDefs(IByteArray &data,
     CompositeTexture::ArchiveFormat format =
             (gameDataFormat == 0? CompositeTexture::DoomFormat : CompositeTexture::StrifeFormat);
 
-    de::Reader reader = de::Reader(data);
+    de::Reader reader(data);
 
     // First is a count of the total number of definitions.
     dint32 definitionCount;
@@ -476,7 +476,7 @@ static CompositeTextures readCompositeTextureDefs(IByteArray &data,
             if(it->lumpNum() >= 0)
             {
                 // Its valid - include in the result.
-                result.push_back(def);
+                result.append(def);
                 def = 0;
                 break;
             }
@@ -554,77 +554,84 @@ static CompositeTextures loadCompositeTextureDefs()
 
         // Print a summary.
         LOG_INFO("Loaded %s texture definitions from \"%s:%s\".")
-            << (newDefs.count() == archiveCount? "all" : String("%1 of %1").arg(newDefs.count()).arg(archiveCount))
+            << (newDefs.count() == archiveCount? String("all %1").arg(newDefs.count())
+                                               : String("%1 of %1").arg(newDefs.count()).arg(archiveCount))
             << NativePath(file.container().composeUri().asText()).pretty()
             << NativePath(file.composeUri().asText()).pretty();
     }
 
-    if(customDefs.count())
+    if(!customDefs.isEmpty())
     {
         // Custom definitions were found - we must cross compare them.
+
+        // Map the definitions for O(log n) lookup performance,
+        CompositeTextureMap mappedCustomDefs;
+        foreach(CompositeTexture *custom, customDefs)
+        {
+            mappedCustomDefs.insert(custom->percentEncodedNameRef(), custom);
+        }
+
+        // Perform reclassification of replaced texture definitions.
         for(int i = 0; i < defs.count(); ++i)
         {
             CompositeTexture *orig = defs[i];
-            bool hasReplacement = false;
 
-            for(int j = 0; j < customDefs.count(); ++j)
+            // Does a potential replacement exist for this original definition?
+            CompositeTextureMap::const_iterator found = mappedCustomDefs.constFind(orig->percentEncodedNameRef());
+            if(found == mappedCustomDefs.constEnd())
+                continue;
+
+            // Definition 'custom' is destined to replace 'orig'.
+            CompositeTexture *custom = found.value();
+            bool haveReplacement = false;
+
+            if(custom->isFlagged(CompositeTexture::Custom))
             {
-                CompositeTexture *custom = customDefs[j];
-
-                if(!orig->percentEncodedName().compareWithoutCase(custom->percentEncodedName()))
+                haveReplacement = true; // Uses a custom patch.
+            }
+            else
+            {
+                // Do the definitions differ?
+                if(custom->dimensions()        != orig->dimensions()  ||
+                   custom->logicalDimensions() != orig->logicalDimensions() ||
+                   custom->componentCount()    != orig->componentCount())
                 {
-                    // Definition 'custom' is destined to replace 'orig'.
-                    if(custom->isFlagged(CompositeTexture::Custom))
+                    haveReplacement = true;
+                }
+                else
+                {
+                    // Check the patches.
+                    for(int k = 0; k < orig->componentCount(); ++k)
                     {
-                        hasReplacement = true; // Uses a custom patch.
-                    }
-                    // Do the definitions differ?
-                    else if(custom->dimensions()        != orig->dimensions()  ||
-                            custom->logicalDimensions() != orig->logicalDimensions() ||
-                            custom->componentCount()    != orig->componentCount())
-                    {
-                        custom->flags() |= CompositeTexture::Custom;
-                        hasReplacement = true;
-                    }
-                    else
-                    {
-                        // Check the patches.
-                        short k = 0;
-                        while(k < orig->componentCount() && !custom->isFlagged(CompositeTexture::Custom))
-                        {
-                            CompositeTexture::Component const &origP   = orig->components()[k];
-                            CompositeTexture::Component const &customP = custom->components()[k];
+                        CompositeTexture::Component const &origP   = orig->components()[k];
+                        CompositeTexture::Component const &customP = custom->components()[k];
 
-                            if(origP.lumpNum() != customP.lumpNum() &&
-                               origP.xOrigin() != customP.xOrigin() &&
-                               origP.yOrigin() != customP.yOrigin())
-                            {
-                                custom->flags() |= CompositeTexture::Custom;
-                                hasReplacement = true;
-                            }
-                            else
-                            {
-                                k++;
-                            }
+                        if(origP.lumpNum() != customP.lumpNum() &&
+                           origP.xOrigin() != customP.xOrigin() &&
+                           origP.yOrigin() != customP.yOrigin())
+                        {
+                            haveReplacement = true;
+                            break;
                         }
                     }
-                    break;
                 }
             }
 
-            if(hasReplacement)
+            if(haveReplacement)
             {
+                custom->setFlags(CompositeTexture::Custom);
+
                 // Let the PWAD "copy" override the IWAD original.
                 defs.takeAt(i);
                 delete orig;
 
-                --i; // Process the current item again.
+                --i; // Process the new next definition item.
             }
         }
 
         /*
-         * List now contains only those definitions which are not superceeded
-         * by those in the custom list.
+         * List 'defs' now contains only those definitions which are not superceeded
+         * by those in the 'customDefs' list.
          */
 
         // Add definitions from the custom list to the end of the main set.
