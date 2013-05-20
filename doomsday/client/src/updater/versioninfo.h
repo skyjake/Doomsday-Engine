@@ -25,7 +25,7 @@ struct VersionInfo
 #endif
     }
 
-    VersionInfo(const de::String& version, int buildNumber) : build(buildNumber)
+    VersionInfo(de::String const &version, int buildNumber) : build(buildNumber)
     {
         parseVersionString(version);
     }
@@ -39,12 +39,12 @@ struct VersionInfo
     {
         if(patch > 0)
         {
-            return base() + QString("-%1 Build %2").arg(patch).arg(build);
+            return base() + QString("-%1 (Build %2)").arg(patch).arg(build);
         }
-        return base() + QString(" Build %1").arg(build);
+        return base() + QString(" (Build %1)").arg(build);
     }
 
-    void parseVersionString(const de::String& version)
+    void parseVersionString(de::String const &version)
     {
         QStringList parts = version.split('.');
         major = parts[0].toInt();
@@ -66,7 +66,7 @@ struct VersionInfo
         }
     }
 
-    bool operator < (const VersionInfo& other) const
+    bool operator < (VersionInfo const &other) const
     {
         if(major == other.major)
         {
@@ -83,13 +83,13 @@ struct VersionInfo
         return major < other.major;
     }
 
-    bool operator == (const VersionInfo& other) const
+    bool operator == (VersionInfo const &other) const
     {
         return major == other.major && minor == other.minor &&
-                revision == other.revision && build == other.build;
+               revision == other.revision && build == other.build;
     }
 
-    bool operator > (const VersionInfo& other) const
+    bool operator > (VersionInfo const &other) const
     {
         return !(*this < other || *this == other);
     }
