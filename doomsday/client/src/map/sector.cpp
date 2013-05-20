@@ -18,7 +18,6 @@
  * 02110-1301 USA</small>
  */
 
-#include <QListIterator>
 #include <QtAlgorithms>
 
 #include <de/Log>
@@ -345,34 +344,31 @@ void Sector::updateAABox()
 {
     d->aaBox.clear();
 
-    if(!d->bspLeafs.count()) return;
-
-    QListIterator<BspLeaf *> leafIt(d->bspLeafs);
-
-    BspLeaf *leaf = leafIt.next();
-    V2d_CopyBox(d->aaBox.arvec2, leaf->poly().aaBox().arvec2);
-
-    while(leafIt.hasNext())
+    bool isFirst = false;
+    foreach(BspLeaf *leaf, d->bspLeafs)
     {
-        leaf = leafIt.next();
-        V2d_UniteBox(d->aaBox.arvec2, leaf->poly().aaBox().arvec2);
+        if(leaf->isDegenerate()) continue;
+
+        if(!isFirst)
+        {
+            V2d_UniteBox(d->aaBox.arvec2, leaf->poly().aaBox().arvec2);
+        }
+        else
+        {
+            V2d_CopyBox(d->aaBox.arvec2, leaf->poly().aaBox().arvec2);
+            isFirst = false;
+        }
     }
 }
 
 void Sector::updateRoughArea()
 {
     d->roughArea = 0;
-    if(!d->bspLeafs.count()) return;
 
-    QListIterator<BspLeaf *> leafIt(d->bspLeafs);
-
-    BspLeaf *leaf = leafIt.next();
-    d->roughArea += (leaf->poly().aaBox().maxX - leaf->poly().aaBox().minX) *
-                    (leaf->poly().aaBox().maxY - leaf->poly().aaBox().minY);
-
-    while(leafIt.hasNext())
+    foreach(BspLeaf *leaf, d->bspLeafs)
     {
-        leaf = leafIt.next();
+        if(leaf->isDegenerate()) continue;
+
         d->roughArea += (leaf->poly().aaBox().maxX - leaf->poly().aaBox().minX) *
                         (leaf->poly().aaBox().maxY - leaf->poly().aaBox().minY);
     }
