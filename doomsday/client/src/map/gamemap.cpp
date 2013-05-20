@@ -241,6 +241,8 @@ DENG2_PIMPL(GameMap)
             // Resize the biassurface lists for the BSP leaf planes.
             foreach(BspLeaf *bspLeaf, sector->bspLeafs())
             {
+                if(bspLeaf->isDegenerate()) continue;
+
                 int n = 0;
 
                 BiasSurface **newList = (BiasSurface **) Z_Calloc(sector->planeCount() * sizeof(BiasSurface *), PU_MAP, 0);

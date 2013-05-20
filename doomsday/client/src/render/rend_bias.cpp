@@ -295,6 +295,8 @@ void SB_InitForMap(char const *uniqueID)
     foreach(Sector *sector, theMap->sectors())
     foreach(BspLeaf *bspLeaf, sector->bspLeafs())
     {
+        if(bspLeaf->isDegenerate()) continue;
+
         numVertIllums += bspLeaf->numFanVertices() * sector->planeCount();
     }
 
@@ -330,6 +332,8 @@ void SB_InitForMap(char const *uniqueID)
     foreach(Sector *sector, theMap->sectors())
     foreach(BspLeaf *bspLeaf, sector->bspLeafs())
     {
+        if(bspLeaf->isDegenerate()) continue;
+
         for(int i = 0; i < sector->planeCount(); ++i)
         {
             BiasSurface *bsuf = SB_CreateSurface();
