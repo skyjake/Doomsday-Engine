@@ -512,6 +512,8 @@ static void findContacts(objlink_t *link)
 static void spreadContactsForBspLeaf(objlinkblockmap_t &obm, BspLeaf const &bspLeaf,
     float maxRadius)
 {
+    DENG_ASSERT(!bspLeaf.isDegenerate());
+
     uint minBlock[2];
     toObjlinkBlockmapCell(obm, minBlock, bspLeaf.poly().aaBox().minX - maxRadius,
                                          bspLeaf.poly().aaBox().minY - maxRadius);

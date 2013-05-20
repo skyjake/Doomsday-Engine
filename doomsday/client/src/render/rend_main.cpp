@@ -3211,6 +3211,7 @@ static void Rend_DrawSurfaceVectors()
 
     foreach(BspLeaf *bspLeaf, theMap->bspLeafs())
     {
+        if(bspLeaf->isDegenerate()) continue;
         if(!bspLeaf->hasSector()) continue;
         Sector &sector = bspLeaf->sector();
 

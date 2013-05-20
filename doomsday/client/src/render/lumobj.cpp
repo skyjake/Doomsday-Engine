@@ -1143,6 +1143,9 @@ static boolean LOIT_ClipLumObj(void *data, void * /*context*/)
 void LO_ClipInBspLeaf(int bspLeafIdx)
 {
     BspLeaf &leaf = *theMap->bspLeafs().at(bspLeafIdx);
+
+    if(leaf.isDegenerate()) return;
+
     iterateBspLeafLumObjs(leaf, LOIT_ClipLumObj);
 }
 
@@ -1185,6 +1188,9 @@ boolean LOIT_ClipLumObjBySight(void *data, void *context)
 void LO_ClipInBspLeafBySight(int bspLeafIdx)
 {
     BspLeaf &leaf = *theMap->bspLeafs().at(bspLeafIdx);
+
+    if(leaf.isDegenerate()) return;
+
     iterateBspLeafLumObjs(leaf, LOIT_ClipLumObjBySight, &leaf);
 }
 
