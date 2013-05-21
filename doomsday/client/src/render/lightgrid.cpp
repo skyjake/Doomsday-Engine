@@ -799,7 +799,7 @@ DENG2_OBSERVES(Sector, LightLevelChange)
         self.markAllForUpdate();
 
         // How much time did we spend?
-        LOG_INFO(String("LightGrid::initialize: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+        LOG_INFO(String("Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
     }
 
     /**
@@ -807,6 +807,10 @@ DENG2_OBSERVES(Sector, LightLevelChange)
      */
     void sectorChanged(Sector &sector)
     {
+        // Do not update if not enabled.
+        /// @todo We could dynamically join/leave the relevant audiences.
+        if(!lgEnabled) return;
+
         Sector::LightGridData &lgData = sector._lightGridData;
         if(!lgData.changedBlockCount && !lgData.blockCount)
             return;
@@ -857,6 +861,9 @@ coord_t LightGrid::blockSize() const
 
 Vector3f LightGrid::evaluate(Vector3d const &point)
 {
+    // If not enabled the color is black.
+    if(!lgEnabled) return Vector3f(0, 0, 0);
+
     LightBlock &block = d->lightBlock(point);
     Vector3f color = block.evaluate();
 
@@ -878,6 +885,9 @@ float LightGrid::evaluateLightLevel(Vector3d const &point)
 
 void LightGrid::markAllForUpdate()
 {
+    // Updates are unnecessary if not enabled.
+    if(!lgEnabled) return;
+
     // Mark all blocks and contributors.
     foreach(Sector *sector, d->map.sectors())
     {
@@ -896,8 +906,11 @@ void LightGrid::update()
         .1f,  .2f, .25f, .2f, .1f
     };
 
-    if(!d->needUpdate)
-        return;
+    // Updates are unnecessary if not enabled.
+    if(!lgEnabled) return;
+
+    // Any work to do?
+    if(!d->needUpdate) return;
 
     for(int y = 0; y < d->dimensions.y; ++y)
     for(int x = 0; x < d->dimensions.x; ++x)
