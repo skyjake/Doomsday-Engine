@@ -44,7 +44,7 @@
 #  include "render/rend_bias.h"
 #  include "render/rend_console.h"
 #  include "render/rend_main.h"
-#  include "render/r_lgrid.h"
+#  include "render/lightgrid.h"
 #  include "map/blockmapvisual.h"
 #  include "edit_bias.h"
 #endif

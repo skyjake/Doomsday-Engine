@@ -32,7 +32,7 @@
 #include "Polyobj"
 
 #ifdef __CLIENT__
-#  include "render/r_lgrid.h"
+#  include "render/lightgrid.h"
 #endif
 
 class Vertex;

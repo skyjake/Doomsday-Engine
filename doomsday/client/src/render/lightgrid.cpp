@@ -1,4 +1,4 @@
-/** @file render/r_lgrid.cpp Light Grid (Large-Scale FakeRadio).
+/** @file render/lightgrid.cpp Light Grid (Large-Scale FakeRadio).
  *
  * @authors Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -36,7 +36,7 @@
 
 #include "render/rend_main.h"
 
-#include "render/r_lgrid.h"
+#include "render/lightgrid.h"
 
 using namespace de;
 

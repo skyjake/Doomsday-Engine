@@ -28,7 +28,7 @@
 #ifdef __CLIENT__
 #include "render/rend_main.h"
 #include "render/r_draw.h"
-#include "render/r_lgrid.h"
+#include "render/lightgrid.h"
 #include "render/lumobj.h"
 #include "render/r_shadow.h"
 #include "render/rend_clip.h"

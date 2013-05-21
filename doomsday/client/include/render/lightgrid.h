@@ -1,4 +1,4 @@
-/** @file render/r_lgrid.h Light Grid (Smoothed ambient sector lighting).
+/** @file render/lightgrid.h Light Grid (Smoothed ambient sector lighting).
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>

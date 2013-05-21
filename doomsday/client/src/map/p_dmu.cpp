@@ -35,7 +35,7 @@
 #include "api_map.h"
 
 #ifdef __CLIENT__
-#  include "render/r_lgrid.h"
+#  include "render/lightgrid.h"
 #endif
 
 #include "map/p_dmu.h"

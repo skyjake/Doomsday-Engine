@@ -281,11 +281,11 @@ DENG_HEADERS += \
     include/network/ui_mpi.h \
     include/partition.h \
     include/r_util.h \
+    include/render/lightgrid.h \
     include/render/lumobj.h \
     include/render/materialcontext.h \
     include/render/r_draw.h \
     include/render/r_main.h \
-    include/render/r_lgrid.h \
     include/render/r_shadow.h \
     include/render/r_things.h \
     include/render/rend_bias.h \
@@ -555,11 +555,11 @@ SOURCES += \
     src/network/ui_mpi.cpp \
     src/r_util.cpp \
     src/render/api_render.cpp \
+    src/render/lightgrid.cpp \
     src/render/lumobj.cpp \
     src/render/r_draw.cpp \
     src/render/r_fakeradio.cpp \
     src/render/r_main.cpp \
-    src/render/r_lgrid.cpp \
     src/render/r_shadow.cpp \
     src/render/r_things.cpp \
     src/render/rend_bias.cpp \
