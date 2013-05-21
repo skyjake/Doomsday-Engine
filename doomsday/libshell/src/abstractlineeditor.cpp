@@ -428,7 +428,7 @@ AbstractLineEditor::EchoMode AbstractLineEditor::echoMode() const
     return d->echoMode;
 }
 
-bool AbstractLineEditor::handleControlKey(int qtKey)
+bool AbstractLineEditor::handleControlKey(int qtKey, bool controlMod)
 {
     switch(qtKey)
     {
@@ -464,9 +464,13 @@ bool AbstractLineEditor::handleControlKey(int qtKey)
         }
         break;
 
-    case Qt::Key_K: // assuming Control mod
-        d->killEndOfLine();
-        return true;
+    case Qt::Key_K:
+        if(controlMod)
+        {
+            d->killEndOfLine();
+            return true;
+        }
+        break;
 
     case Qt::Key_Up:
         // First try moving within the current command.

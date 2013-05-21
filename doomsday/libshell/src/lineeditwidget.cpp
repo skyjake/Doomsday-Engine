@@ -130,9 +130,9 @@ bool LineEditWidget::handleEvent(Event const &event)
     return TextWidget::handleEvent(event);
 }
 
-bool LineEditWidget::handleControlKey(int qtKey)
+bool LineEditWidget::handleControlKey(int qtKey, bool controlMod)
 {
-    if(AbstractLineEditor::handleControlKey(qtKey))
+    if(AbstractLineEditor::handleControlKey(qtKey, controlMod))
     {
         if(qtKey == Qt::Key_Enter)
         {

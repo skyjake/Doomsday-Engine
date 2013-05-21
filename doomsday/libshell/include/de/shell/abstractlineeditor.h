@@ -93,7 +93,7 @@ public:
 
     EchoMode echoMode() const;
 
-    virtual bool handleControlKey(int qtKey);
+    virtual bool handleControlKey(int qtKey, bool controlMod = true);
 
     /**
      * Inserts a fragment of text at the cursor position. The cursor moves
