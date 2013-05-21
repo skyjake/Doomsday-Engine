@@ -365,6 +365,15 @@ RuleRectangle &RuleRectangle::setRightBottom(Rule const &right, Rule const &bott
     return *this;
 }
 
+RuleRectangle &RuleRectangle::setRect(RuleRectangle const &rect)
+{
+    setInput(Rule::Left,   rect.left());
+    setInput(Rule::Top,    rect.top());
+    setInput(Rule::Right,  rect.right());
+    setInput(Rule::Bottom, rect.bottom());
+    return *this;
+}
+
 RuleRectangle &RuleRectangle::setSize(Rule const &width, Rule const &height)
 {
     setInput(Rule::Width,  width);
