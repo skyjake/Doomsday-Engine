@@ -178,6 +178,35 @@ DENG2_OBSERVES(Atlas, Reposition)
                               GLTextComposer::AlignLeft,
                               GLTextComposer::AlignLeft);
 
+        // Underline the possible suggested completion.
+        if(self.isSuggestingCompletion())
+        {
+            shell::Range const comp = self.completionRange();
+            Vector2i const startPos = self.linePos(comp.start);
+            Vector2i const endPos   = self.linePos(comp.end);
+
+            Vector2i const offset = contentRect.topLeft + Vector2i(0, font->ascent().valuei() + 2);
+
+            // It may span multiple lines.
+            for(int i = startPos.y; i <= endPos.y; ++i)
+            {
+                shell::Range const span = wraps.line(i).range;
+                Vector2i start = wraps.charTopLeftInPixels(i, i == startPos.y? startPos.x : span.start) + offset;
+                Vector2i end   = wraps.charTopLeftInPixels(i, i == endPos.y?   endPos.x   : span.end)   + offset;
+
+                VertexBuf::Vertices quad;
+                v.rgba = Vector4f(1, 1, 1, 1);
+                v.texCoord = atlas().imageRectf(bgTex).middle();
+
+                v.pos = start; quad << v;
+                v.pos = end; quad << v;
+                v.pos = start + Vector2i(0, 1); quad << v;
+                v.pos = end + Vector2i(0, 1); quad << v;
+
+                VertexBuf::concatenate(quad, verts);
+            }
+        }
+
         drawable.buffer<VertexBuf>(ID_BUF_TEXT)
                 .setVertices(gl::TriangleStrip, verts, gl::Static);
 
@@ -272,7 +301,7 @@ bool LineEditWidget::handleEvent(Event const &event)
         }
 
         // Insert text?
-        if(!key.text().isEmpty())
+        if(!key.text().isEmpty() && key.text()[0].isPrint())
         {
             // Insert some text into the editor.
             insert(key.text());
