@@ -20,6 +20,7 @@
 #define LIBSHELL_ABSTRACTLINEEDITOR_H
 
 #include "libshell.h"
+#include "ITextEditor"
 #include <de/libdeng2.h>
 #include <de/String>
 #include <de/Vector>
@@ -39,7 +40,7 @@ class Lexicon;
  * implementation will provide the current width via
  * AbstractLineEditor::maximumWidth().
  */
-class LIBSHELL_PUBLIC AbstractLineEditor
+class LIBSHELL_PUBLIC AbstractLineEditor : public ITextEditor
 {
 public:
     AbstractLineEditor(ILineWrapping *lineWraps);

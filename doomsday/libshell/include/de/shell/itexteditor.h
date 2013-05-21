@@ -1,6 +1,6 @@
-/** @file commandlinewidget.h  Widget for command line input.
+/** @file itexteditor.h
  *
- * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -13,36 +13,33 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small>
+ * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBSHELL_COMMANDLINEWIDGET_H
-#define LIBSHELL_COMMANDLINEWIDGET_H
+#ifndef LIBSHELL_ITEXTEDITOR_H
+#define LIBSHELL_ITEXTEDITOR_H
 
-#include "LineEditWidget"
+#include "libshell.h"
 
 namespace de {
 namespace shell {
 
 /**
- * Text editor with a history.
+ * Interface for a text editor: text content and a cursor position.
  */
-class LIBSHELL_PUBLIC CommandLineWidget : public LineEditWidget
+class ITextEditor
 {
-    Q_OBJECT
-
 public:
-    CommandLineWidget(String const &name = "");
-    bool handleEvent(Event const &event);
+    virtual ~ITextEditor() {}
 
-signals:
-    void commandEntered(de::String command);
+    virtual void setText(String const &text) = 0;
+    virtual void setCursor(int pos) = 0;
 
-private:
-    DENG2_PRIVATE(d)
+    virtual String text() const = 0;
+    virtual int cursor() const = 0;
 };
 
 } // namespace shell
 } // namespace de
 
-#endif // LIBSHELL_COMMANDLINEWIDGET_H
+#endif // LIBSHELL_ITEXTEDITOR_H
