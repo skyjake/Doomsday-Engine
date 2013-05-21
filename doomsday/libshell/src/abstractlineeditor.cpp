@@ -126,6 +126,7 @@ DENG2_PIMPL(AbstractLineEditor)
         DENG2_ASSERT(lineOff == 1 || lineOff == -1);
 
         de::Vector2i const linePos = lineCursorPos();
+        int const destWidth = wraps->rangeWidth(Range(lineSpan(linePos.y).range.start, cursor));
 
         // Check for no room.
         if(!linePos.y && lineOff < 0) return false;
@@ -133,7 +134,7 @@ DENG2_PIMPL(AbstractLineEditor)
 
         // Move cursor onto the adjacent line.
         WrappedLine span = lineSpan(linePos.y + lineOff);
-        cursor = span.range.start + linePos.x;
+        cursor = wraps->indexAtWidth(span.range, destWidth);
         if(!span.isFinal) span.range.end--;
         if(cursor > span.range.end) cursor = span.range.end;
 
