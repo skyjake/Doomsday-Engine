@@ -136,7 +136,6 @@ public:
     bool isRequiredFile(File1 &file);
 
 public:
-
     /**
      * Construct a new Game instance from the specified definition @a def.
      *

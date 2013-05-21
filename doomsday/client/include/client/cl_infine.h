@@ -20,8 +20,8 @@
  * Client-side InFine.
  */
 
-#ifndef LIBDENG_CLIENT_INFINE
-#define LIBDENG_CLIENT_INFINE
+#ifndef DENG_CLIENT_INFINE
+#define DENG_CLIENT_INFINE
 
 #include <de/reader.h>
 
@@ -45,4 +45,4 @@ void Cl_RequestFinaleSkip(void);
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_CLIENT_INFINE */
+#endif /* DENG_CLIENT_INFINE */
