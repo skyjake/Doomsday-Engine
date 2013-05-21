@@ -73,6 +73,7 @@ DENG2_PIMPL(ClientApp)
     WindowSystem *winSys;
     ServerLink *svLink;
     GLShaderBank shaderBank;
+    Games games;
 
     Instance(Public *i)
         : Base(i),
@@ -216,6 +217,11 @@ void ClientApp::postFrame()
     loop().resume();
 }
 
+bool ClientApp::haveApp()
+{
+    return clientAppSingleton != 0;
+}
+
 ClientApp &ClientApp::app()
 {
     DENG2_ASSERT(clientAppSingleton != 0);
@@ -251,4 +257,9 @@ WidgetActions &ClientApp::widgetActions()
 GLShaderBank &ClientApp::glShaderBank()
 {
     return app().d->shaderBank;
+}
+
+Games &ClientApp::games()
+{
+    return app().d->games;
 }
