@@ -59,15 +59,31 @@ DENG2_PIMPL(Sector)
     /// List of BSP leafs which reference the sector (not owned).
     BspLeafs bspLeafs;
 
+    /// Ambient light level in the sector.
+    float lightLevel;
+
+    /// Ambient light color in the sector.
+    de::Vector3f lightColor;
+
+#ifdef __CLIENT__
+    /// LightGrid data values.
+    LightGridData lightGridData;
+#endif
+
     /// if == validCount, already checked.
     int validCount;
 
-    Instance(Public *i)
+    Instance(Public *i, float lightLevel, Vector3f const &lightColor)
         : Base(i),
           roughArea(0),
+          lightLevel(lightLevel),
+          lightColor(lightColor),
           validCount(0)
     {
-        std::memset(&soundEmitter, 0, sizeof(soundEmitter));
+        zap(soundEmitter);
+#ifdef __CLIENT__
+        zap(lightGridData);
+#endif
     }
 
     ~Instance()
@@ -107,7 +123,7 @@ DENG2_PIMPL(Sector)
         int changedComponents = 0;
         for(int i = 0; i < 3; ++i)
         {
-            if(!de::fequal(self._lightColor[i], oldLightColor[i]))
+            if(!de::fequal(lightColor[i], oldLightColor[i]))
                 changedComponents |= (1 << i);
         }
         notifyLightColorChanged(oldLightColor, changedComponents);
@@ -115,29 +131,26 @@ DENG2_PIMPL(Sector)
 };
 
 Sector::Sector(float lightLevel, Vector3f const &lightColor)
-    : MapElement(DMU_SECTOR),
-      _lightLevel(lightLevel),
-      _lightColor(lightColor),
-      d(new Instance(this))
+    : MapElement(DMU_SECTOR), d(new Instance(this, lightLevel, lightColor))
 {
     _frameFlags = 0;
     _mobjList = 0;
-    std::memset(&_lightGridData, 0, sizeof(_lightGridData));
-    std::memset(_reverb, 0, sizeof(_reverb));
+    zap(_reverb);
 }
 
 float Sector::lightLevel() const
 {
-    return _lightLevel;
+    return d->lightLevel;
 }
 
-void Sector::setLightLevel(float newLightLevel_)
+void Sector::setLightLevel(float newLightLevel)
 {
-    float newLightLevel = de::clamp(0.f, newLightLevel_, 1.f);
-    if(!de::fequal(_lightLevel, newLightLevel))
+    newLightLevel = de::clamp(0.f, newLightLevel, 1.f);
+
+    if(!de::fequal(d->lightLevel, newLightLevel))
     {
-        float oldLightLevel = _lightLevel;
-        _lightLevel = newLightLevel;
+        float oldLightLevel = d->lightLevel;
+        d->lightLevel = newLightLevel;
 
         // Notify interested parties of the change.
         d->notifyLightLevelChanged(oldLightLevel);
@@ -146,7 +159,7 @@ void Sector::setLightLevel(float newLightLevel_)
 
 Vector3f const &Sector::lightColor() const
 {
-    return _lightColor;
+    return d->lightColor;
 }
 
 void Sector::setLightColor(Vector3f const &newLightColor_)
@@ -154,10 +167,11 @@ void Sector::setLightColor(Vector3f const &newLightColor_)
     Vector3f newLightColor = Vector3f(de::clamp(0.f, newLightColor_.x, 1.f),
                                       de::clamp(0.f, newLightColor_.y, 1.f),
                                       de::clamp(0.f, newLightColor_.z, 1.f));
-    if(_lightColor != newLightColor)
+
+    if(d->lightColor != newLightColor)
     {
-        Vector3f oldLightColor = _lightColor;
-        _lightColor = newLightColor;
+        Vector3f oldLightColor = d->lightColor;
+        d->lightColor = newLightColor;
 
         // Notify interested parties of the change.
         d->notifyLightColorChanged(oldLightColor);
@@ -168,10 +182,10 @@ void Sector::setLightColorComponent(int component, float newStrength)
 {
     DENG_ASSERT(component >= 0 && component < 3);
     newStrength = de::clamp(0.f, newStrength, 1.f);
-    if(!de::fequal(_lightColor[component], newStrength))
+    if(!de::fequal(d->lightColor[component], newStrength))
     {
-        Vector3f oldLightColor = _lightColor;
-        _lightColor[component] = newStrength;
+        Vector3f oldLightColor = d->lightColor;
+        d->lightColor[component] = newStrength;
 
         // Notify interested parties of the change.
         d->notifyLightColorChanged(oldLightColor, (1 << component));
@@ -197,6 +211,13 @@ AudioEnvironmentFactors const &Sector::audioEnvironmentFactors() const
 {
     return _reverb;
 }
+
+#ifdef __CLIENT__
+Sector::LightGridData &Sector::lightGridData()
+{
+    return d->lightGridData;
+}
+#endif
 
 int Sector::frameFlags() const
 {
@@ -462,21 +483,21 @@ int Sector::property(setargs_t &args) const
     switch(args.prop)
     {
     case DMU_LIGHT_LEVEL:
-        DMU_GetValue(DMT_SECTOR_LIGHTLEVEL, &_lightLevel, &args, 0);
+        DMU_GetValue(DMT_SECTOR_LIGHTLEVEL, &d->lightLevel, &args, 0);
         break;
     case DMU_COLOR:
-        DMU_GetValue(DMT_SECTOR_RGB, &_lightColor.x, &args, 0);
-        DMU_GetValue(DMT_SECTOR_RGB, &_lightColor.y, &args, 1);
-        DMU_GetValue(DMT_SECTOR_RGB, &_lightColor.z, &args, 2);
+        DMU_GetValue(DMT_SECTOR_RGB, &d->lightColor.x, &args, 0);
+        DMU_GetValue(DMT_SECTOR_RGB, &d->lightColor.y, &args, 1);
+        DMU_GetValue(DMT_SECTOR_RGB, &d->lightColor.z, &args, 2);
         break;
     case DMU_COLOR_RED:
-        DMU_GetValue(DMT_SECTOR_RGB, &_lightColor.x, &args, 0);
+        DMU_GetValue(DMT_SECTOR_RGB, &d->lightColor.x, &args, 0);
         break;
     case DMU_COLOR_GREEN:
-        DMU_GetValue(DMT_SECTOR_RGB, &_lightColor.y, &args, 0);
+        DMU_GetValue(DMT_SECTOR_RGB, &d->lightColor.y, &args, 0);
         break;
     case DMU_COLOR_BLUE:
-        DMU_GetValue(DMT_SECTOR_RGB, &_lightColor.z, &args, 0);
+        DMU_GetValue(DMT_SECTOR_RGB, &d->lightColor.z, &args, 0);
         break;
     case DMU_EMITTER: {
         ddmobj_base_t const *soundEmitterAdr = &d->soundEmitter;

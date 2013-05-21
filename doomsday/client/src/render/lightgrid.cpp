@@ -770,7 +770,7 @@ DENG2_OBSERVES(Sector, LightLevelChange)
 
             // LOG_DEBUG("  Sector %i: %i / %i") << theMap->sectorIndex(s) << changedCount << count;
 
-            Sector::LightGridData &lgData = sector->_lightGridData;
+            Sector::LightGridData &lgData = sector->lightGridData();
             lgData.changedBlockCount = changedCount;
             lgData.blockCount = changedCount + count;
 
@@ -811,7 +811,7 @@ DENG2_OBSERVES(Sector, LightLevelChange)
         /// @todo We could dynamically join/leave the relevant audiences.
         if(!lgEnabled) return;
 
-        Sector::LightGridData &lgData = sector._lightGridData;
+        Sector::LightGridData &lgData = sector.lightGridData();
         if(!lgData.changedBlockCount && !lgData.blockCount)
             return;
 

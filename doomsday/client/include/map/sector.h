@@ -1,4 +1,4 @@
-/** @file sector.h World Map Sector.
+/** @file map/sector.h World Map Sector.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -81,6 +81,8 @@ public:
 #ifdef __CLIENT__
     /**
      * LightGrid data values for "smoothed sector lighting".
+     *
+     * @todo Encapsulate in LightGrid itself?
      */
     struct LightGridData
     {
@@ -99,23 +101,12 @@ public: /// @todo Make private:
     /// @ref sectorFrameFlags
     int _frameFlags;
 
-    /// Ambient light level in the sector.
-    float _lightLevel;
-
-    /// Ambient light color in the sector.
-    de::Vector3f _lightColor;
-
     /// Head of the linked list of mobjs "in" the sector (not owned).
     struct mobj_s *_mobjList;
 
     /// List of BSP leafs which contribute to the environmental audio
     /// characteristics of the sector (not owned).
     BspLeafs _reverbBspLeafs;
-
-#ifdef __CLIENT__
-    /// LightGrid data values.
-    LightGridData _lightGridData;
-#endif
 
     /// Final environmental audio characteristics.
     AudioEnvironmentFactors _reverb;
@@ -446,6 +437,14 @@ public:
      * Returns the final environmental audio characteristics of the sector.
      */
     AudioEnvironmentFactors const &audioEnvironmentFactors() const;
+
+#ifdef __CLIENT__
+    /**
+     * Returns the LightGrid data values (for smoothed ambient lighting) for
+     * the sector.
+     */
+    LightGridData &lightGridData();
+#endif
 
     /**
      * Returns the @ref sectorFrameFlags for the sector.
