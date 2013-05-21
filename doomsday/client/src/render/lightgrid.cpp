@@ -253,7 +253,7 @@ void LightBlock::markChanged(bool isContributor)
     d->flags |= Changed;
     d->flags |= Contributor;
 
-    if(!d->flags & Changed)
+    if(!(d->flags & Changed))
     {
         // Remember the color in case we receive any queries before the update.
         d->oldColor = d->color;
