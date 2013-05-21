@@ -75,8 +75,6 @@ DENG_EXTERN_C void Models_Init();
 DENG_EXTERN_C void Models_Shutdown();
 DENG_EXTERN_C void Models_CacheForState(int stateIndex);
 
-//DENG_EXTERN_C void LG_SectorChanged(Sector* sector);
-
 DENG_EXTERN_C void Cl_InitPlayers(void);
 
 DENG_EXTERN_C void UI_Init();

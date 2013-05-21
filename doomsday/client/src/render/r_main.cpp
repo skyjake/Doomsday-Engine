@@ -831,7 +831,9 @@ void R_BeginWorldFrame()
 
     if(!freezeRLs)
     {
-        LG_Update();
+        // Initialize and/or update the LightGrid.
+        theMap->initLightGrid();
+
         SB_BeginFrame();
         LO_BeginWorldFrame();
         R_ClearObjlinksForFrame(); // Zeroes the links.

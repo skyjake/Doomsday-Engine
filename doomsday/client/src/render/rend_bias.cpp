@@ -736,37 +736,13 @@ void SB_EndFrame()
     SBE_EndFrame();
 }
 
-void SB_AddLight(float dest[4], float const *color, float howMuch)
+static void addLight(float dest[4], Vector3f const &color, float howMuch = 1.0f)
 {
-    float amplified[3];
-
-    if(!color)
-    {
-        float largest = 0;
-
-        for(int i = 0; i < 3; ++i)
-        {
-            amplified[i] = dest[i];
-            if(i == 0 || amplified[i] > largest)
-                largest = amplified[i];
-        }
-
-        if(largest == 0) // Black!
-        {
-            amplified[0] = amplified[1] = amplified[2] = 1;
-        }
-        else
-        {
-            for(int i = 0; i < 3; ++i)
-            {
-                amplified[i] = amplified[i] / largest;
-            }
-        }
-    }
+    DENG_ASSERT(dest != 0);
 
     for(int i = 0; i < 3; ++i)
     {
-        float newval = dest[i] + ((color ? color : amplified)[i] * howMuch);
+        float newval = dest[i] + (color[i] * howMuch);
 
         if(newval > 1)
             newval = 1;
@@ -775,35 +751,13 @@ void SB_AddLight(float dest[4], float const *color, float howMuch)
     }
 }
 
-#if 0
-/**
- * Color override forces the bias light color to override biased
- * sectorlight.
- */
-static boolean SB_CheckColorOverride(biasaffection_t *affected)
-{
-    DENG_ASSERT(affected);
-
-    for(int i = 0; affected[i].source >= 0 && i < MAX_BIAS_AFFECTED; ++i)
-    {
-        // If the color is completely black, it means no light was
-        // reached from this affected source.
-        if(!(affected[i].rgb[0] | affected[i].rgb[1] | affected[i].rgb[2]))
-            continue;
-
-        if(sources[affected[i].source].flags & BLF_COLOR_OVERRIDE)
-            return true;
-    }
-
-    return false;
-}
-#endif
-
 void SB_RendPoly(struct ColorRawf_s *rcolors, BiasSurface *bsuf,
     struct rvertex_s const *rvertices, size_t numVertices,
     Vector3f const &surfaceNormal, float sectorLightLevel,
     de::MapElement const *mapElement, int elmIdx)
 {
+    DENG_ASSERT(bsuf != 0);
+
     // Apply sectorlight bias.  Note: Distance darkening is not used
     // with bias lights.
     if(sectorLightLevel > biasMin && biasMax > biasMin)
@@ -876,9 +830,9 @@ void SB_RendPoly(struct ColorRawf_s *rcolors, BiasSurface *bsuf,
 /**
  * Interpolate between current and destination.
  */
-void SB_LerpIllumination(vertexillum_t *illum, float *result)
+static void lerpIllumination(vertexillum_t *illum, float *result)
 {
-    DENG_ASSERT(illum);
+    DENG_ASSERT(illum != 0);
 
     if(!(illum->flags & VIF_LERP))
     {
@@ -960,17 +914,11 @@ float *SB_GetCasted(vertexillum_t *illum, int sourceIndex,
     return 0;
 }
 
-/**
- * Add ambient light.
- */
-void SB_AmbientLight(Vector3d const &point, float *light)
+static Vector3f ambientLight(Vector3d const &point)
 {
-    // Add grid light (represents ambient lighting).
-    coord_t pointV1[3] = { point.x, point.y, point.z };
-    float color[3];
-
-    LG_Evaluate(pointV1, color);
-    SB_AddLight(light, color, 1.0f);
+    if(theMap->hasLightGrid())
+        return theMap->lightGrid().evaluate(point);
+    return Vector3f(0, 0, 0);
 }
 
 /**
@@ -1053,8 +1001,11 @@ void SB_EvalPoint(float light[4], vertexillum_t *illum,
     if(!illuminationChanged && illum != NULL)
     {
         // Reuse the previous value.
-        SB_LerpIllumination(illum, light);
-        SB_AmbientLight(point, light);
+        lerpIllumination(illum, light);
+
+        // Add ambient lighting.
+        addLight(light, ambientLight(point));
+
         return;
     }
 
@@ -1089,7 +1040,6 @@ void SB_EvalPoint(float light[4], vertexillum_t *illum,
                 // This affecting source does not contribute any light.
                 casted[CR] = casted[CG] = casted[CB] = 0;
             }
-
             continue;
         }
 
@@ -1116,63 +1066,20 @@ void SB_EvalPoint(float light[4], vertexillum_t *illum,
             // The light casted from this source.
             casted[i] =  s->color[i] * level;
         }
-
-        // Are we already fully lit?
-        /*if(!(newColor[CR] < 1 && newColor[CG] < 1 && new.rgba[2] < 1))
-            break;*/
     }
 
     if(illum)
     {
-        // bool willOverride = false;
-
         // Combine the casted light from each source.
         for(aff = affecting; aff->source; aff++)
         {
             float *casted = SB_GetCasted(illum, aff->index, affectedSources);
-
-/*          if(aff->overrider &&
-               (casted[CR] > 0 || casted[CG] > 0 || casted[CB] > 0))
-                willOverride = true;
-*/
-            /*
-            if(!(casted[3] > 0))
-            {
-                int n;
-                Con_Message("affected: ");
-                for(n = 0; n < MAX_BIAS_AFFECTED; ++n)
-                    Con_Message(" - %i", affectedSources[n].source);
-                Con_Error("not updated: s=%i\n", aff->index);
-            }
-            */
-
-            /*if(editSelector >= 0 && aff->index != editSelector)
-              continue;*/
-
-
-            /*{
-                int n;
-                printf("affected: ");
-                for(n = 0; n < MAX_BIAS_AFFECTED; ++n)
-                    printf("%i ", affectedSources[n].source);
-                printf("casted: ");
-                for(n = 0; n < MAX_BIAS_AFFECTED; ++n)
-                    printf("%i ", illum->casted[n].source);
-                printf("%i:(%g %g %g) ",
-                            aff->index, casted[CR], casted[CG], casted[CB]);
-                printf("\n");
-            }*/
 
             for(uint i = 0; i < 3; ++i)
             {
                 newColor[i] = MINMAX_OF(0, newColor[i] + casted[i], 1);
             }
         }
-
-        /*if(biasAmount > 0)
-        {
-            SB_AddLight(&new, willOverride ? NULL : biasColor, biasAmount);
-        }*/
 
         // Is there a new destination?
         if(!(illum->dest[CR] < newColor[CR] + COLOR_CHANGE_THRESHOLD &&
@@ -1185,7 +1092,7 @@ void SB_EvalPoint(float light[4], vertexillum_t *illum,
             if(illum->flags & VIF_LERP)
             {
                 // Must not lose the half-way interpolation.
-                float mid[3]; SB_LerpIllumination(illum, mid);
+                float mid[3]; lerpIllumination(illum, mid);
 
                 // This is current color at this very moment.
                 illum->color[CR] = mid[CR];
@@ -1202,7 +1109,7 @@ void SB_EvalPoint(float light[4], vertexillum_t *illum,
             illum->updatetime = latestSourceUpdate;
         }
 
-        SB_LerpIllumination(illum, light);
+        lerpIllumination(illum, light);
     }
     else
     {
@@ -1211,7 +1118,8 @@ void SB_EvalPoint(float light[4], vertexillum_t *illum,
         light[CB] = newColor[CB];
     }
 
-    SB_AmbientLight(point, light);
+    // Add ambient lighting.
+    addLight(light, ambientLight(point));
 
 #undef COLOR_CHANGE_THRESHOLD
 }

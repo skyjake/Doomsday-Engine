@@ -31,6 +31,10 @@
 #include "p_particle.h"
 #include "Polyobj"
 
+#ifdef __CLIENT__
+#  include "render/r_lgrid.h"
+#endif
+
 class Vertex;
 class Line;
 class Sector;
@@ -76,6 +80,11 @@ struct clpolyobj_s;
 class GameMap
 {
 public:
+#ifdef __CLIENT__
+    /// Required light grid is missing. @ingroup errors
+    DENG2_ERROR(MissingLightGridError);
+#endif
+
     typedef QList<Vertex *> Vertexes;
     typedef QList<Sector *> Sectors;
     typedef QList<Line *> Lines;
@@ -603,6 +612,27 @@ public: /// @todo Make private:
 
 #ifdef __CLIENT__
     void buildSurfaceLists();
+
+    /**
+     * Returns @c true iff a LightGrid has been initialized for the map.
+     *
+     * @see lightGrid()
+     */
+    bool hasLightGrid();
+
+    /**
+     * Provides access to the light grid for the map.
+     *
+     * @see hasLightGrid()
+     */
+    de::LightGrid &lightGrid();
+
+    /**
+     * Initialize the ambient lighting grid (smoothed sector lighting).
+     * If the grid has already been initialized calling this will perform
+     * a full update.
+     */
+    void initLightGrid();
 #endif
 
     bool buildBsp();

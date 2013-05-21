@@ -228,8 +228,7 @@ DENG_EXTERN_C boolean P_LoadMap(char const *uriCString)
         R_InitShadowProjectionListsForMap(); // Projected mobj shadows.
         VL_InitForMap(); // Converted vlights (from lumobjs) management.
 
-        // Initialize the lighting grid.
-        LG_InitForMap();
+        theMap->initLightGrid();
 
         R_InitRendPolyPools();
 #endif

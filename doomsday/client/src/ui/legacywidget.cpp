@@ -28,6 +28,7 @@
 #include "dd_main.h"
 #include "dd_loop.h"
 #include "sys_system.h"
+#include "edit_bias.h"
 #include "map/gamemap.h"
 #include "network/net_main.h"
 #include "render/r_main.h"
@@ -164,7 +165,16 @@ void LegacyWidget::draw()
 
     if(drawGame)
     {
-        // Debug information.
+        // Shadow Bias Editor HUD (if it is active).
+        SBE_DrawHUD();
+
+        /*
+         * Draw debug information.
+         */
+        if(theMap && theMap->hasLightGrid())
+        {
+            theMap->lightGrid().drawDebugVisual();
+        }
         Net_Drawer();
         S_Drawer();
 

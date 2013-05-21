@@ -741,18 +741,9 @@ void Net_DrawDemoOverlay(void)
 
 #endif // __CLIENT__
 
-/**
- * Does drawing for the engine's HUD, not just the net.
- */
-void Net_Drawer(void)
+void Net_Drawer()
 {
 #ifdef __CLIENT__
-    // Draw the Shadow Bias Editor HUD (if it is active).
-    SBE_DrawHUD();
-
-    // Draw lightgrid debug display.
-    LG_Debug();
-
     // Draw the blockmap debug display.
     Rend_BlockmapDebug();
 

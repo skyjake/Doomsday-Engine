@@ -251,7 +251,11 @@ int             Net_TimeDelta(byte now, byte then);
 void            Net_Update(void);
 void            Net_ResetTimer(void);
 void            Net_Ticker(timespan_t time);
-void            Net_Drawer(void);
+
+/**
+ * Does drawing for the engine's HUD, not just the net.
+ */
+void Net_Drawer(void);
 
 boolean         Net_IsLocalPlayer(int pNum);
 

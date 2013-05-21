@@ -833,15 +833,13 @@ static void updateSector(Sector &sector, bool forceUpdate = false)
         sector._lightColor[1] != sector._oldLightColor[1] ||
         sector._lightColor[2] != sector._oldLightColor[2]))
     {
-        sector._frameFlags |= SIF_LIGHT_CHANGED;
         sector._oldLightLevel = sector._lightLevel;
         sector._oldLightColor = sector._lightColor;
 
-        LG_SectorChanged(&sector);
-    }
-    else
-    {
-        sector._frameFlags &= ~SIF_LIGHT_CHANGED;
+        if(theMap->hasLightGrid())
+        {
+            theMap->lightGrid().sectorChanged(sector);
+        }
     }
 #endif
 }

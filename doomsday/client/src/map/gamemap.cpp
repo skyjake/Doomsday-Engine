@@ -20,6 +20,8 @@
 
 #include <cmath>
 
+#include <de/libdeng2.h>
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_play.h"
@@ -59,6 +61,8 @@ DENG2_PIMPL(GameMap)
 #ifdef __CLIENT__
     SurfaceSet decoratedSurfaces;
     SurfaceSet glowingSurfaces;
+
+    QScopedPointer<LightGrid> lightGrid;
 #endif
 
     coord_t skyFix[2]; // [floor, ceiling]
@@ -688,6 +692,36 @@ void GameMap::buildSurfaceLists()
             d->addSurfaceToLists(plane->surface());
         }
     }
+}
+
+bool GameMap::hasLightGrid()
+{
+    return !d->lightGrid.isNull();
+}
+
+LightGrid &GameMap::lightGrid()
+{
+    if(!d->lightGrid.isNull())
+    {
+        return *d->lightGrid;
+    }
+    /// @throw MissingLightGrid Attempted with no LightGrid initialized.
+    throw MissingLightGridError("GameMap::lightGrid", "No light grid is initialized");
+}
+
+void GameMap::initLightGrid()
+{
+    // Disabled?
+    if(!Con_GetInteger("rend-bias-grid"))
+        return;
+
+    // Time to initialize the LightGrid?
+    if(d->lightGrid.isNull())
+    {
+        d->lightGrid.reset(new LightGrid(*this));
+    }
+    // Perform a full update right away.
+    d->lightGrid->update();
 }
 
 #endif // __CLIENT__

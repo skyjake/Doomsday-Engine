@@ -329,10 +329,11 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     {
         collectaffectinglights_params_t lparams;
 
-        if(useBias)
+        if(useBias && theMap->hasLightGrid())
         {
             // Evaluate the position in the light grid.
-            LG_Evaluate(spr->origin, params->ambientColor);
+            Vector3f tmp = theMap->lightGrid().evaluate(spr->origin);
+            V3f_Set(params->ambientColor, tmp.x, tmp.y, tmp.z);
         }
         else
         {
@@ -719,9 +720,10 @@ static void setupModelParamsForVisPSprite(rendmodelparams_t *params, vispsprite_
     {
         collectaffectinglights_params_t lparams;
 
-        if(useBias)
+        if(useBias && theMap->hasLightGrid())
         {
-            LG_Evaluate(params->origin, params->ambientColor);
+            Vector3f tmp = theMap->lightGrid().evaluate(params->origin);
+            V3f_Set(params->ambientColor, tmp.x, tmp.y, tmp.z);
         }
         else
         {

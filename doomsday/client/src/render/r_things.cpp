@@ -536,11 +536,10 @@ float R_ShadowStrength(mobj_t *mo)
         return 0;
 
     // Sample the ambient light level at the mobj's position.
-    if(useBias)
+    if(useBias && theMap->hasLightGrid())
     {
         // Evaluate in the light grid.
-        vec3d_t point; V3d_Set(point, mo->origin[VX], mo->origin[VY], mo->origin[VZ]);
-        ambientLightLevel = LG_EvaluateLightLevel(point);
+        ambientLightLevel = theMap->lightGrid().evaluateLightLevel(mo->origin);
     }
     else
     {
@@ -913,13 +912,11 @@ void getLightingParams(coord_t x, coord_t y, coord_t z, BspLeaf *bspLeaf,
     {
         collectaffectinglights_params_t lparams;
 
-        if(useBias)
+        if(useBias && theMap->hasLightGrid())
         {
-            vec3d_t point;
-
             // Evaluate the position in the light grid.
-            V3d_Set(point, x, y, z);
-            LG_Evaluate(point, ambientColor);
+            Vector3f tmp = theMap->lightGrid().evaluate(Vector3d(x, y, z));
+            V3f_Set(ambientColor, tmp.x, tmp.y, tmp.z);
         }
         else
         {

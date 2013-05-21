@@ -43,7 +43,6 @@ class Surface;
  */
 ///@{
 #define SIF_VISIBLE             0x1 ///< Sector is visible on this frame.
-#define SIF_LIGHT_CHANGED       0x2
 
 // Flags to clear before each frame.
 #define SIF_FRAME_CLEAR         SIF_VISIBLE

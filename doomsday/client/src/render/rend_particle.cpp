@@ -458,9 +458,10 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
     {
         collectaffectinglights_params_t lparams;
 
-        if(useBias)
+        if(useBias && theMap->hasLightGrid())
         {
-            LG_Evaluate(params->origin, params->ambientColor);
+            Vector3f tmp = theMap->lightGrid().evaluate(params->origin);
+            V3f_Set(params->ambientColor, tmp.x, tmp.y, tmp.z);
         }
         else
         {

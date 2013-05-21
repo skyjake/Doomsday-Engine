@@ -1,4 +1,4 @@
-/** @file r_lgrid.cpp Light Grid (Large-Scale FakeRadio).
+/** @file render/r_lgrid.cpp Light Grid (Large-Scale FakeRadio).
  *
  * @authors Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,548 +18,255 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Light Grid (Large-Scale FakeRadio).
- *
- * Very simple global illumination method utilizing a 2D grid of light levels.
- */
+#include <de/memory.h>
+#include <de/memoryzone.h>
 
-// HEADER FILES ------------------------------------------------------------
+#include <QFlags>
+#include <QVector>
 
-#include <math.h>
-#include <assert.h>
+#include <de/math.h>
+#include <de/Log>
 
-#include "de_base.h"
 #include "de_console.h"
-#include "de_render.h"
-#include "de_graphics.h"
-#include "de_misc.h"
-#include "de_play.h"
 
-#include "gl/sys_opengl.h"
+#include "BspLeaf"
 #include "map/gamemap.h"
+#include "map/p_maputil.h" // P_IsPointInBspLeaf
+#include "map/p_players.h" // viewPlayer
+
+#include "render/rend_main.h"
 
 #include "render/r_lgrid.h"
 
 using namespace de;
 
-// MACROS ------------------------------------------------------------------
+static int   lgEnabled   = false;
 
-#define GRID_BLOCK(x, y)        (&grid[(y)*lgBlockWidth + (x)])
+static int   lgShowDebug = false;
+static float lgDebugSize = 1.5f;
 
-#define GBF_CHANGED     0x1     // Grid block sector light has changed.
-#define GBF_CONTRIBUTOR 0x2     // Contributes light to a changed block.
+static int   lgBlockSize = 31;
+static int   lgMXSample  = 1; ///< 5 samples per block
 
-BEGIN_PROF_TIMERS()
-  PROF_GRID_UPDATE
-END_PROF_TIMERS()
+void LightGrid::consoleRegister() // static
+{
+    C_VAR_INT   ("rend-bias-grid",              &lgEnabled,     0,              0, 1);
+    C_VAR_INT   ("rend-bias-grid-debug",        &lgShowDebug,   CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_FLOAT ("rend-bias-grid-debug-size",   &lgDebugSize,   0,              .1f, 100);
+    C_VAR_INT   ("rend-bias-grid-blocksize",    &lgBlockSize,   0,              8, 1024);
+    C_VAR_INT   ("rend-bias-grid-multisample",  &lgMXSample,    0,              0, 7);
+}
 
-// TYPES -------------------------------------------------------------------
+/**
+ * Determines the Z-axis bias scale factor for the given @a sector.
+ */
+static int biasForSector(Sector const &sector)
+{
+    int const height = int(sector.ceiling().height() - sector.floor().height());
+    bool hasSkyFloor = sector.floorSurface().hasSkyMaskedMaterial();
+    bool hasSkyCeil  = sector.ceilingSurface().hasSkyMaskedMaterial();
 
-typedef struct gridblock_s {
+    if(hasSkyFloor && !hasSkyCeil)
+    {
+        return -height / 6;
+    }
+    if(!hasSkyFloor && hasSkyCeil)
+    {
+        return height / 6;
+    }
+    if(height > 100)
+    {
+        return (height - 100) / 2;
+    }
+    return 0;
+}
+
+class LightBlock
+{
+public:
+    enum Flag
+    {
+        /// Grid block sector light has changed.
+        Changed     = 0x1,
+
+        /// Contributes light to some other block.
+        Contributor = 0x2,
+
+        AllFlags = Changed | Contributor
+    };
+    Q_DECLARE_FLAGS(Flags, Flag)
+
+public:
+    /**
+     * Construct a new light block.
+     *
+     * @param  Primary lighting contributor for the block. Can be @c 0
+     *         (to create a "null-block").
+     */
+    LightBlock(Sector *sector = 0);
+
+    /**
+     * Returns the @em primary sector attributed to the light block
+     * (contributing sectors are not linked).
+     */
+    Sector &sector() const;
+
+    /**
+     * Returns a copy of the flags of the light block.
+     */
+    Flags flags() const;
+
+    /**
+     * Change the flags of the light block.
+     *
+     * @param flagsToChange  Flags to change the value of.
+     * @param operation      Logical operation to perform on the flags.
+     */
+    void setFlags(Flags flagsToChange, FlagOp operation = SetFlags);
+
+    /**
+     * Evaluate the ambient color for the light block.
+     */
+    Vector3f evaluate(/*coord_t height*/) const;
+
+    void markChanged(bool isContributor = false);
+
+    /**
+     * Apply the sector's lighting to the block.
+     */
+    void applySector(Vector3f const &color, float level, int bias, float factor);
+
+    /**
+     * Provides immutable access to the "raw" color (i.e., non-biased) for the
+     * block. Primarily intended for debugging.
+     */
+    Vector3f const &rawColorRef() const;
+
+private:
+    DENG2_PRIVATE(d)
+};
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(LightBlock::Flags)
+
+DENG2_PIMPL_NOREF(LightBlock)
+{
     Sector *sector;
 
-    byte        flags;
+    Flags flags;
 
-    // Positive bias means that the light is shining in the floor of
-    // the sector.
-    char        bias;
+    /// Positive bias means that the light is shining in the floor of the sector.
+    char bias;
 
-    // Color of the light:
-    float       rgb[3];
-    float       oldRGB[3];  // Used instead of rgb if the lighting in this
-                            // block has changed and we haven't yet done a
-                            // a full grid update.
-} gridblock_t;
+    /// Color of the light:
+    Vector3f color;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+    /// Used instead of @var rgb if the lighting in this block has changed
+    /// and a full grid update is needed.
+    Vector3f oldColor;
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+    Instance(Sector *sector) : sector(sector), bias(0)
+    {}
+};
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+LightBlock::LightBlock(Sector *sector)
+    : d(new Instance(sector))
+{}
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-int             lgEnabled = false;
-static boolean  lgInited;
-static boolean  needsUpdate = true;
-
-static int      lgShowDebug = false;
-static float    lgDebugSize = 1.5f;
-
-static int      lgBlockSize = 31;
-static coord_t  lgOrigin[3];
-static int      lgBlockWidth;
-static int      lgBlockHeight;
-static gridblock_t *grid;
-
-static int      lgMXSample = 1; // Default is mode 1 (5 samples per block)
-
-// CODE --------------------------------------------------------------------
-
-/**
- * Registers console variables.
- */
-void LG_Register(void)
+Sector &LightBlock::sector() const
 {
-    C_VAR_INT("rend-bias-grid", &lgEnabled, 0, 0, 1);
-
-    C_VAR_INT("rend-bias-grid-debug", &lgShowDebug, CVF_NO_ARCHIVE, 0, 1);
-
-    C_VAR_FLOAT("rend-bias-grid-debug-size", &lgDebugSize, 0, .1f, 100);
-
-    C_VAR_INT("rend-bias-grid-blocksize", &lgBlockSize, 0, 8, 1024);
-
-    C_VAR_INT("rend-bias-grid-multisample", &lgMXSample, 0, 0, 7);
+    DENG_ASSERT(d->sector != 0);
+    return *d->sector;
 }
 
-/**
- * Determines if the index (x, y) is in the bitfield.
- */
-static boolean HasIndexBit(int x, int y, uint *bitfield)
+LightBlock::Flags LightBlock::flags() const
 {
-    uint index = x + y * lgBlockWidth;
-
-    // Assume 32-bit uint.
-    return (bitfield[index >> 5] & (1 << (index & 0x1f))) != 0;
+    return d->flags;
 }
 
-/**
- * Sets the index (x, y) in the bitfield.
- * Count is incremented when a zero bit is changed to one.
- */
-static void AddIndexBit(int x, int y, uint *bitfield, int *count)
+void LightBlock::setFlags(LightBlock::Flags flagsToChange, FlagOp operation)
 {
-    uint index = x + y * lgBlockWidth;
+    if(!d->sector) return;
+    applyFlagOperation(d->flags, flagsToChange, operation);
+}
 
-    // Assume 32-bit uint.
-    if(!HasIndexBit(index, 0, bitfield))
+Vector3f LightBlock::evaluate(/*coord_t height*/) const
+{
+    // If not attributed to a sector, the color is always black.
+    if(!d->sector) return Vector3f(0, 0, 0);
+
+    /**
+     * Biased light dimming disabled because this does not work well enough.
+     * The problem is that two points on a given surface may be determined to
+     * be in different blocks and as the height is taken from the block linked
+     * sector this results in very uneven lighting.
+     *
+     * Biasing is a good idea but the plane heights must come from the sector
+     * at the exact X|Y coordinates of the sample point, not the "quantized"
+     * references in the light grid. -ds
+     */
+
+    /*
+    coord_t dz = 0;
+    if(_bias < 0)
     {
-        (*count)++;
+        // Calculate Z difference to the ceiling.
+        dz = d->sector->ceiling().height() - height;
     }
-    bitfield[index >> 5] |= (1 << (index & 0x1f));
+    else if(_bias > 0)
+    {
+        // Calculate Z difference to the floor.
+        dz = height - d->sector->floor().height();
+    }
+    dz -= 50;
+    if(dz < 0)
+        dz = 0;*/
+
+    // If we are awaiting an updated value use the old color.
+    Vector3f color = d->flags.testFlag(Changed)? d->oldColor : d->color;
+
+    // Biased ambient light causes a dimming on the Z axis.
+    /*if(dz && _bias)
+    {
+        float dimming = 1 - (dz * (float) de::abs(d->bias)) / 35000.0f;
+        if(dimming < .5f)
+            dimming = .5f;
+
+        color *= dimming;
+    }
+    */
+
+    return color;
 }
 
-/**
- * Initialize the light grid for the current map.
- */
-void LG_InitForMap(void)
+void LightBlock::markChanged(bool isContributor)
 {
-    uint        startTime = Timer_RealMilliseconds();
+    if(!d->sector) return;
 
-#define MSFACTORS 7
-    typedef struct lgsamplepoint_s {
-        coord_t origin[3];
-    } lgsamplepoint_t;
-    // Diagonal in maze arrangement of natural numbers.
-    // Up to 65 samples per-block(!)
-    static int  multisample[] = {1, 5, 9, 17, 25, 37, 49, 65};
-
-    coord_t     max[3];
-    coord_t     width, height;
-    int         i = 0;
-    int         a, b, x, y;
-    int         count;
-    int         changedCount;
-    size_t      bitfieldSize;
-    uint       *indexBitfield = 0;
-    uint       *contributorBitfield = 0;
-    gridblock_t *block;
-    int        *sampleResults = 0;
-    int         n, size, numSamples, center, best;
-    coord_t     off[2];
-    lgsamplepoint_t *samplePoints = 0, sample;
-
-    Sector **ssamples;
-    Sector **blkSampleSectors;
-    GameMap *map = theMap;
-
-    if(!lgEnabled || !map)
+    if(isContributor)
     {
-        lgInited = false;
+        // Changes by contributor sectors are simply flagged until an update.
+        d->flags |= Contributor;
         return;
     }
 
-    lgInited = true;
+    // The color will be recalculated.
+    d->flags |= Changed;
+    d->flags |= Contributor;
 
-    // Allocate the grid.
-    map->bounds(&lgOrigin[0], &max[0]);
-
-    width  = max[VX] - lgOrigin[VX];
-    height = max[VY] - lgOrigin[VY];
-
-    lgBlockWidth  = ROUND(width / lgBlockSize) + 1;
-    lgBlockHeight = ROUND(height / lgBlockSize) + 1;
-
-    // Clamp the multisample factor.
-    if(lgMXSample > MSFACTORS)
-        lgMXSample = MSFACTORS;
-    else if(lgMXSample < 0)
-        lgMXSample = 0;
-
-    numSamples = multisample[lgMXSample];
-
-    // Allocate memory for sample points array.
-    samplePoints = (lgsamplepoint_t *) M_Malloc(sizeof(lgsamplepoint_t) * numSamples);
-
-    /**
-     * It would be possible to only allocate memory for the unique
-     * sample results. And then select the appropriate sample in the loop
-     * for initializing the grid instead of copying the previous results in
-     * the loop for acquiring the sample points.
-     *
-     * Calculate with the equation (number of unique sample points):
-     *
-     * ((1 + lgBlockHeight * lgMXSample) * (1 + lgBlockWidth * lgMXSample)) +
-     *     (size % 2 == 0? numBlocks : 0)
-     * OR
-     *
-     * We don't actually need to store the ENTIRE sample points array. It
-     * would be sufficent to only store the results from the start of the
-     * previous row to current col index. This would save a bit of memory.
-     *
-     * However until lightgrid init is finalized it would be rather silly
-     * to optimize this much further.
-     */
-
-    // Allocate memory for all the sample results.
-    ssamples = (Sector **) M_Malloc(sizeof(Sector*) *
-                                    ((lgBlockWidth * lgBlockHeight) * numSamples));
-
-    // Determine the size^2 of the samplePoint array plus its center.
-    size = center = 0;
-    if(numSamples > 1)
+    if(!d->flags & Changed)
     {
-        float f = sqrt(float(numSamples));
-
-        if(de::ceil(f) != de::floor(f))
-        {
-            size = sqrt(float(numSamples -1));
-            center = 0;
-        }
-        else
-        {
-            size = (int) f;
-            center = size+1;
-        }
+        // Remember the color in case we receive any queries before the update.
+        d->oldColor = d->color;
     }
 
-    // Construct the sample point offset array.
-    // This way we can use addition only during calculation of:
-    // (lgBlockHeight*lgBlockWidth)*numSamples
-    if(center == 0)
-    {
-        // Zero is the center so do that first.
-        samplePoints[0].origin[VX] = lgBlockSize / 2;
-        samplePoints[0].origin[VY] = lgBlockSize / 2;
-    }
-
-    if(numSamples > 1)
-    {
-        coord_t bSize = (coord_t) lgBlockSize / (size-1);
-
-        // Is there an offset?
-        if(center == 0)
-            n = 1;
-        else
-            n = 0;
-
-        for(y = 0; y < size; ++y)
-            for(x = 0; x < size; ++x, ++n)
-            {
-                samplePoints[n].origin[VX] = ROUND(x * bSize);
-                samplePoints[n].origin[VY] = ROUND(y * bSize);
-            }
-    }
-
-/*
-#if _DEBUG
-    for(n = 0; n < numSamples; ++n)
-        Con_Message(" %i of %i %i(%f %f)",
-                    n, numSamples, (n == center)? 1 : 0,
-                    samplePoints[n].pos[VX], samplePoints[n].pos[VY]);
-#endif
-*/
-
-    // Acquire the sectors at ALL the sample points.
-    for(y = 0; y < lgBlockHeight; ++y)
-    {
-        off[VY] = y * lgBlockSize;
-        for(x = 0; x < lgBlockWidth; ++x)
-        {
-            int blk = (x + y * lgBlockWidth);
-            int idx;
-
-            off[VX] = x * lgBlockSize;
-
-            n = 0;
-            if(center == 0)
-            {   // Center point is not considered with the term 'size'.
-                // Sample this point and place at index 0 (at the start
-                // of the samples for this block).
-                idx = blk * (numSamples);
-
-                sample.origin[VX] = lgOrigin[VX] + off[VX] + samplePoints[0].origin[VX];
-                sample.origin[VY] = lgOrigin[VY] + off[VY] + samplePoints[0].origin[VY];
-
-                BspLeaf *bspLeaf = map->bspLeafAtPoint(sample.origin);
-                if(P_IsPointInBspLeaf(sample.origin, *bspLeaf))
-                    ssamples[idx] = bspLeaf->sectorPtr();
-                else
-                    ssamples[idx] = 0;
-
-                n++; // Offset the index in the samplePoints array bellow.
-            }
-
-            count = blk * size;
-            for(b = 0; b < size; ++b)
-            {
-                i = (b + count) * size;
-                for(a = 0; a < size; ++a, ++n)
-                {
-                    idx = a + i;
-
-                    if(center == 0)
-                        idx += blk + 1;
-
-                    if(numSamples > 1 && ((x > 0 && a == 0) || (y > 0 && b == 0)))
-                    {
-                        // We have already sampled this point.
-                        // Get the previous result.
-                        int prevX, prevY, prevA, prevB;
-                        int previdx;
-
-                        prevX = x; prevY = y; prevA = a; prevB = b;
-                        if(x > 0 && a == 0)
-                        {
-                            prevA = size -1;
-                            prevX--;
-                        }
-                        if(y > 0 && b == 0)
-                        {
-                            prevB = size -1;
-                            prevY--;
-                        }
-
-                        previdx = prevA + (prevB + (prevX + prevY * lgBlockWidth) * size) * size;
-
-                        if(center == 0)
-                            previdx += (prevX + prevY * lgBlockWidth) + 1;
-
-                        ssamples[idx] = ssamples[previdx];
-                    }
-                    else
-                    {
-                        // We haven't sampled this point yet.
-                        sample.origin[VX] = lgOrigin[VX] + off[VX] + samplePoints[n].origin[VX];
-                        sample.origin[VY] = lgOrigin[VY] + off[VY] + samplePoints[n].origin[VY];
-
-                        BspLeaf *bspLeaf = map->bspLeafAtPoint(sample.origin);
-                        if(P_IsPointInBspLeaf(sample.origin, *bspLeaf))
-                            ssamples[idx] = bspLeaf->sectorPtr();
-                        else
-                            ssamples[idx] = 0;
-                    }
-                }
-            }
-        }
-    }
-    // We're done with the samplePoints block.
-    M_Free(samplePoints);
-
-    // Bitfields for marking affected blocks. Make sure each bit is in a word.
-    bitfieldSize = 4 * (31 + lgBlockWidth * lgBlockHeight) / 32;
-    indexBitfield = (unsigned int *) M_Calloc(bitfieldSize);
-    contributorBitfield = (unsigned int *) M_Calloc(bitfieldSize);
-
-    // \todo It would be possible to only allocate memory for the grid
-    // blocks that are going to be in use.
-
-    // Allocate memory for the entire grid.
-    grid = (gridblock_t* ) Z_Calloc(sizeof(gridblock_t) * lgBlockWidth * lgBlockHeight,
-                                    PU_MAPSTATIC, NULL);
-
-    Con_Message("LG_InitForMap: %i x %i grid (%lu bytes).",
-                lgBlockWidth, lgBlockHeight,
-                (unsigned long) (sizeof(gridblock_t) * lgBlockWidth * lgBlockHeight));
-
-    // Allocate memory used for the collection of the sample results.
-    blkSampleSectors = (Sector **) M_Malloc(sizeof(Sector*) * numSamples);
-    if(numSamples > 1)
-        sampleResults = (int *) M_Calloc(sizeof(int) * numSamples);
-
-    // Initialize the grid.
-    for(block = grid, y = 0; y < lgBlockHeight; ++y)
-    {
-        off[VY] = y * lgBlockSize;
-        for(x = 0; x < lgBlockWidth; ++x, ++block)
-        {
-            off[VX] = x * lgBlockSize;
-
-            /**
-             * Pick the sector at each of the sample points.
-             * \todo We don't actually need the blkSampleSectors array
-             * anymore. Now that ssamples stores the results consecutively
-             * a simple index into ssamples would suffice.
-             * However if the optimization to save memory is implemented as
-             * described in the comments above we WOULD still require it.
-             * Therefore, for now I'm making use of it to clarify the code.
-             */
-            n = (x + y * lgBlockWidth) * numSamples;
-            for(i = 0; i < numSamples; ++i)
-                blkSampleSectors[i] = ssamples[i + n];
-
-            block->sector = NULL;
-
-            if(numSamples == 1)
-            {
-                block->sector = blkSampleSectors[center];
-            }
-            else
-            {   // Pick the sector which had the most hits.
-                best = -1;
-                memset(sampleResults, 0, sizeof(int) * numSamples);
-                for(i = 0; i < numSamples; ++i)
-                    if(blkSampleSectors[i])
-                        for(a = 0; a < numSamples; ++a)
-                            if(blkSampleSectors[a] == blkSampleSectors[i] &&
-                               blkSampleSectors[a])
-                            {
-                                sampleResults[a]++;
-                                if(sampleResults[a] > best)
-                                    best = i;
-                            }
-
-                if(best != -1)
-                {   // Favour the center sample if its a draw.
-                    if(sampleResults[best] == sampleResults[center] &&
-                       blkSampleSectors[center])
-                        block->sector = blkSampleSectors[center];
-                    else
-                        block->sector = blkSampleSectors[best];
-                }
-            }
-        }
-    }
-    // We're done with sector samples completely.
-    M_Free(ssamples);
-    // We're done with the sample results arrays.
-    M_Free(blkSampleSectors);
-    if(numSamples > 1)
-        M_Free(sampleResults);
-
-    // Find the blocks of all sectors.
-    foreach(Sector *sector, theMap->sectors())
-    {
-        count = changedCount = 0;
-
-        if(sector->sideCount())
-        {
-            // Clear the bitfields.
-            std::memset(indexBitfield, 0, bitfieldSize);
-            std::memset(contributorBitfield, 0, bitfieldSize);
-
-            for(block = grid, y = 0; y < lgBlockHeight; ++y)
-            {
-                for(x = 0; x < lgBlockWidth; ++x, ++block)
-                {
-                    if(block->sector == sector)
-                    {
-                        // \todo Determine min/max a/b before going into the loop.
-                        for(b = -2; b <= 2; ++b)
-                        {
-                            if(y + b < 0 || y + b >= lgBlockHeight)
-                                continue;
-
-                            for(a = -2; a <= 2; ++a)
-                            {
-                                if(x + a < 0 || x + a >= lgBlockWidth)
-                                    continue;
-
-                                AddIndexBit(x + a, y + b, indexBitfield,
-                                            &changedCount);
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Determine contributor blocks. Contributors are the blocks that are
-            // close enough to contribute light to affected blocks.
-            for(y = 0; y < lgBlockHeight; ++y)
-            {
-                for(x = 0; x < lgBlockWidth; ++x)
-                {
-                    if(!HasIndexBit(x, y, indexBitfield))
-                        continue;
-
-                    // Add the contributor blocks.
-                    for(b = -2; b <= 2; ++b)
-                    {
-                        if(y + b < 0 || y + b >= lgBlockHeight)
-                            continue;
-
-                        for(a = -2; a <= 2; ++a)
-                        {
-                            if(x + a < 0 || x + a >= lgBlockWidth)
-                                continue;
-
-                            if(!HasIndexBit(x + a, y + b, indexBitfield))
-                            {
-                                AddIndexBit(x + a, y + b, contributorBitfield,
-                                            &count);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-/*if _DEBUG
-Con_Message("  Sector %i: %i / %i", theMap->sectorIndex(s), changedCount, count);
-#endif*/
-
-        Sector::LightGridData &lgData = sector->_lightGridData;
-        lgData.changedBlockCount = changedCount;
-        lgData.blockCount = changedCount + count;
-
-        if(lgData.blockCount > 0)
-        {
-            lgData.blocks = (ushort *) Z_Malloc(sizeof(*lgData.blocks) * lgData.blockCount, PU_MAPSTATIC, 0);
-
-            for(x = 0, a = 0, b = changedCount; x < lgBlockWidth * lgBlockHeight;
-                ++x)
-            {
-                if(HasIndexBit(x, 0, indexBitfield))
-                    lgData.blocks[a++] = x;
-                else if(HasIndexBit(x, 0, contributorBitfield))
-                    lgData.blocks[b++] = x;
-            }
-
-            DENG_ASSERT(a == changedCount);
-            //DENG_ASSERT(b == info->blockCount);
-        }
-    }
-
-    M_Free(indexBitfield);
-    M_Free(contributorBitfield);
-
-    // How much time did we spend?
-    VERBOSE(Con_Message
-            ("LG_InitForMap: Done in %.2f seconds.",
-             (Timer_RealMilliseconds() - startTime) / 1000.0f));
+    // Init to black in preparation for the update.
+    d->color = Vector3f(0, 0, 0);
 }
 
-/**
- * Apply the sector's lighting to the block.
- */
-static void LG_ApplySector(gridblock_t *block, Vector3f const &color,
-                           float level, float factor, int bias)
+void LightBlock::applySector(Vector3f const &color, float level, int bias, float factor)
 {
+    if(!d->sector) return;
+
     // Apply a bias to the light level.
     level -= (0.95f - level);
     if(level < 0)
@@ -572,429 +279,659 @@ static void LG_ApplySector(gridblock_t *block, Vector3f const &color,
 
     for(int i = 0; i < 3; ++i)
     {
-        float c = color[i] * level;
+        float c = de::clamp(0.f, color[i] * level, 1.f);
 
-        c = de::clamp(0.f, c, 1.f);
-
-        if(block->rgb[i] + c > 1)
+        if(d->color[i] + c > 1)
         {
-            block->rgb[i] = 1;
+            d->color[i] = 1;
         }
         else
         {
-            block->rgb[i] += c;
+            d->color[i] += c;
         }
     }
 
     // Influenced by the source bias.
-    int i = block->bias * (1 - factor) + bias * factor;
-    i = de::clamp(-0x80, i, 0x7f);
-    block->bias = i;
+    d->bias = de::clamp(-0x80, int(d->bias * (1 - factor) + bias * factor), 0x7f);
 }
 
 /**
- * Called when a sector has changed its light level.
+ * Provides immutable access to the "raw" color (i.e., non-biased) for the
+ * block. Primarily intended for debugging.
  */
-void LG_SectorChanged(Sector *sector)
+Vector3f const &LightBlock::rawColorRef() const
 {
-    if(!lgInited) return;
-    if(!sector) return;
+    return d->color;
+}
 
-    Sector::LightGridData &lgData = sector->_lightGridData;
+/**
+ * Determines if the index for the specified map point is in the bitfield.
+ */
+static bool hasIndexBit(LightGrid::Ref const &gref, int gridWidth, uint *bitfield)
+{
+    uint index = gref.x + gref.y * gridWidth;
+
+    // Assume 32-bit uint.
+    return (bitfield[index >> 5] & (1 << (index & 0x1f))) != 0;
+}
+
+/**
+ * Sets the index for the specified map point in the bitfield.
+ * Count is incremented when a zero bit is changed to one.
+ */
+static void addIndexBit(LightGrid::Ref const &gref, int gridWidth, uint *bitfield, int *count)
+{
+    uint index = gref.x + gref.y * gridWidth;
+
+    // Assume 32-bit uint.
+    if(!hasIndexBit(LightGrid::Ref(index, 0), gridWidth, bitfield))
+    {
+        (*count)++;
+    }
+    bitfield[index >> 5] |= (1 << (index & 0x1f));
+}
+
+typedef QVector<LightBlock *> Blocks;
+
+/// The special null-block.
+static LightBlock nullBlock;
+
+/// Returns @c true iff @a block is the special "null-block".
+static inline bool isNullBlock(LightBlock const &block) {
+    return &block == &nullBlock;
+}
+
+DENG2_PIMPL(LightGrid)
+{
+    /// Map for which we provide an ambient lighting grid.
+    GameMap &map;
+
+    /// Origin of the grid in the map coordinate space.
+    Vector2d origin;
+
+    /// Size of a block (box axes) in map coordinate space units.
+    int blockSize;
+
+    /// Dimensions of the grid in blocks.
+    Ref dimensions;
+
+    /// The grid of LightBlocks.
+    Blocks grid;
+
+    /// Set to @a true when a full update is needed.
+    bool needUpdate;
+
+    Instance(Public *i, GameMap &map)
+        : Base(i),
+          map(map),
+          needUpdate(false)
+    {}
+
+    ~Instance()
+    {
+        qDeleteAll(grid);
+    }
+
+    /**
+     * Convert a light grid reference to a grid index.
+     */
+    inline Index toIndex(int x, int y) { return y * dimensions.x + x; }
+
+    /// @copydoc toIndex
+    inline Index toIndex(Ref const &gref) { return toIndex(gref.x, gref.y); }
+
+    /**
+     * Convert a point in the map coordinate space to a light grid reference.
+     */
+    Ref toRef(Vector3d const &point)
+    {
+        int x = de::round<int>((point.x - origin.x) / blockSize);
+        int y = de::round<int>((point.y - origin.y) / blockSize);
+
+        return Ref(de::clamp(1, x, dimensions.x - 2),
+                       de::clamp(1, y, dimensions.y - 2));
+    }
+
+    /**
+     * Retrieve the block at the specified light grid index. If no block exists
+     * at this index the special "null-block" is returned.
+     */
+    LightBlock &lightBlock(Index idx)
+    {
+        DENG_ASSERT(idx >= 0 && idx < grid.size());
+        LightBlock *block = grid[idx];
+        if(block) return *block;
+        return nullBlock;
+    }
+
+    /**
+     * Retrieve the block at the specified light grid reference.
+     */
+    LightBlock &lightBlock(Ref const &gref) { return lightBlock(toIndex(gref)); }
+
+    /// @copydoc lightBlock
+    inline LightBlock &lightBlock(int x, int y) { return lightBlock(Ref(x, y)); }
+
+    /**
+     * Same as @ref lightBlock except @a point is in the map coordinate space.
+     */
+    inline LightBlock &lightBlock(Vector3d const &point)
+    {
+        return lightBlock(toRef(point));
+    }
+
+    /**
+     * Fully (re)-initialize the light grid.
+     */
+    void initialize()
+    {
+        // Diagonal in maze arrangement of natural numbers.
+        // Up to 65 samples per-block(!)
+        static int const MSFACTORS = 7;
+        static int multisample[] = {1, 5, 9, 17, 25, 37, 49, 65};
+
+        de::Time begunAt;
+
+        LOG_AS("LightGrid::initialize");
+
+        // Determine the origin of the grid in the map coordinate space.
+        origin = Vector2d(map.bounds().min);
+
+        // Once initialized the blocksize cannot be changed (requires a full grid
+        // update) so remember this value.
+        blockSize = lgBlockSize;
+
+        // Determine the dimensions of the grid (in blocks)
+        Vector2d mapDimensions = Vector2d(map.bounds().max) - Vector2d(map.bounds().min);
+        dimensions = Vector2i(de::round<int>(mapDimensions.x / blockSize) + 1,
+                              de::round<int>(mapDimensions.y / blockSize) + 1);
+
+        // Determine how many sector samples per block.
+        int numSamples = multisample[de::clamp(0, lgMXSample, MSFACTORS)];
+
+        // Allocate memory for sample points data.
+        Vector2d *samplePoints = new Vector2d[numSamples];
+        int *sampleResults     = new int[numSamples];
+
+        /**
+         * It would be possible to only allocate memory for the unique
+         * sample results. And then select the appropriate sample in the loop
+         * for initializing the grid instead of copying the previous results in
+         * the loop for acquiring the sample points.
+         *
+         * Calculate with the equation (number of unique sample points):
+         *
+         * ((1 + lgBlockHeight * lgMXSample) * (1 + lgBlockWidth * lgMXSample)) +
+         *     (size % 2 == 0? numBlocks : 0)
+         * OR
+         *
+         * We don't actually need to store the ENTIRE sample points array. It
+         * would be sufficent to only store the results from the start of the
+         * previous row to current col index. This would save a bit of memory.
+         *
+         * However until lightgrid init is finalized it would be rather silly
+         * to optimize this much further.
+         */
+
+        // Allocate memory for all the sample results.
+        Sector **ssamples = (Sector **) M_Malloc(sizeof(Sector *) * ((dimensions.x * dimensions.y) * numSamples));
+
+        // Determine the size^2 of the samplePoint array plus its center.
+        int size = 0, center = 0;
+        if(numSamples > 1)
+        {
+            float f = sqrt(float(numSamples));
+
+            if(std::ceil(f) != std::floor(f))
+            {
+                size = sqrt(float(numSamples - 1));
+                center = 0;
+            }
+            else
+            {
+                size = (int) f;
+                center = size+1;
+            }
+        }
+
+        // Construct the sample point offset array.
+        // This way we can use addition only during calculation of:
+        // (dimensions.y * dimensions.x) * numSamples
+        if(center == 0)
+        {
+            // Zero is the center so do that first.
+            samplePoints[0] = Vector2d(blockSize / 2, blockSize / 2);
+        }
+
+        if(numSamples > 1)
+        {
+            coord_t bSize = (coord_t) blockSize / (size - 1);
+
+            // Is there an offset?
+            int n = (center == 0? 1 : 0);
+
+            for(int y = 0; y < size; ++y)
+            for(int x = 0; x < size; ++x, ++n)
+            {
+                samplePoints[n] =
+                    Vector2d(de::round<double>(x * bSize), de::round<double>(y * bSize));
+            }
+        }
+
+        Vector2d samplePoint;
+
+        // Acquire the sectors at ALL the sample points.
+        for(int y = 0; y < dimensions.y; ++y)
+        for(int x = 0; x < dimensions.x; ++x)
+        {
+            Index const blk = toIndex(x, y);
+
+            Vector2d off(x * blockSize, y * blockSize);
+
+            int n = 0;
+            if(center == 0)
+            {
+                // Center point is not considered with the term 'size'.
+                // Sample this point and place at index 0 (at the start
+                // of the samples for this block).
+                int idx = blk * (numSamples);
+
+                samplePoint = origin + off + samplePoints[0];
+
+                BspLeaf *bspLeaf = map.bspLeafAtPoint(samplePoint);
+                if(P_IsPointInBspLeaf(samplePoint, *bspLeaf))
+                    ssamples[idx] = bspLeaf->sectorPtr();
+                else
+                    ssamples[idx] = 0;
+
+                n++; // Offset the index in the samplePoints array bellow.
+            }
+
+            int count = blk * size;
+            for(int b = 0; b < size; ++b)
+            {
+                int i = (b + count) * size;
+
+                for(int a = 0; a < size; ++a, ++n)
+                {
+                    int idx = a + i + (center == 0? blk + 1 : 0);
+
+                    if(numSamples > 1 && ((x > 0 && a == 0) || (y > 0 && b == 0)))
+                    {
+                        // We have already sampled this point.
+                        // Get the previous result.
+                        Ref prev(x, y);
+                        Ref prevB(a, b);
+                        int prevIdx;
+
+                        if(x > 0 && a == 0)
+                        {
+                            prevB.x = size -1;
+                            prev.x--;
+                        }
+                        if(y > 0 && b == 0)
+                        {
+                            prevB.y = size -1;
+                            prev.y--;
+                        }
+
+                        prevIdx = prevB.x + (prevB.y + toIndex(prev) * size) * size;
+
+                        if(center == 0)
+                            prevIdx += toIndex(prev) + 1;
+
+                        ssamples[idx] = ssamples[prevIdx];
+                    }
+                    else
+                    {
+                        // We haven't sampled this point yet.
+                        samplePoint = origin + off + samplePoints[n];
+
+                        BspLeaf *bspLeaf = map.bspLeafAtPoint(samplePoint);
+                        if(P_IsPointInBspLeaf(samplePoint, *bspLeaf))
+                            ssamples[idx] = bspLeaf->sectorPtr();
+                        else
+                            ssamples[idx] = 0;
+                    }
+                }
+            }
+        }
+
+        // We're done with the samplePoints block.
+        delete[] samplePoints; samplePoints = 0;
+
+        // Bitfields for marking affected blocks. Make sure each bit is in a word.
+        size_t bitfieldSize = 4 * (31 + dimensions.x * dimensions.y) / 32;
+
+        uint *indexBitfield       = (uint *) M_Calloc(bitfieldSize);
+        uint *contributorBitfield = (uint *) M_Calloc(bitfieldSize);
+
+        // Allocate memory used for the collection of the sample results.
+        Sector **blkSampleSectors = (Sector **) M_Malloc(sizeof(Sector *) * numSamples);
+
+        /*
+         * Initialize the light block grid.
+         */
+        grid.fill(NULL, dimensions.x * dimensions.y);
+        int numBlocks = 0;
+
+        for(int y = 0; y < dimensions.y; ++y)
+        for(int x = 0; x < dimensions.x; ++x)
+        {
+            Vector2d off(x * blockSize, y * blockSize);
+
+            /**
+             * Pick the sector at each of the sample points.
+             * @todo We don't actually need the blkSampleSectors array
+             * anymore. Now that ssamples stores the results consecutively
+             * a simple index into ssamples would suffice.
+             * However if the optimization to save memory is implemented as
+             * described in the comments above we WOULD still require it.
+             * Therefore, for now I'm making use of it to clarify the code.
+             */
+            Index idx = toIndex(x, y) * numSamples;
+            for(int i = 0; i < numSamples; ++i)
+            {
+                blkSampleSectors[i] = ssamples[i + idx];
+            }
+
+            Sector *sector = 0;
+
+            if(numSamples == 1)
+            {
+                sector = blkSampleSectors[center];
+            }
+            else
+            {
+                // Pick the sector which had the most hits.
+                int best = -1;
+                std::memset(sampleResults, 0, sizeof(int) * numSamples);
+
+                for(int i = 0; i < numSamples; ++i)
+                {
+                    if(!blkSampleSectors[i]) continue;
+
+                    for(int k = 0; k < numSamples; ++k)
+                    {
+                        if(blkSampleSectors[k] == blkSampleSectors[i] && blkSampleSectors[k])
+                        {
+                            sampleResults[k]++;
+                            if(sampleResults[k] > best)
+                                best = i;
+                        }
+                    }
+                }
+
+                if(best != -1)
+                {
+                    // Favour the center sample if its a draw.
+                    if(sampleResults[best] == sampleResults[center] &&
+                       blkSampleSectors[center])
+                        sector = blkSampleSectors[center];
+                    else
+                        sector = blkSampleSectors[best];
+                }
+            }
+
+            if(!sector)
+                continue;
+
+            // Insert a new light block in the grid.
+            grid[toIndex(x, y)] = new LightBlock(sector);
+
+            // There is now one more block.
+            numBlocks++;
+        }
+
+        LOG_INFO("%i light blocks (%u bytes).")
+            << numBlocks << (sizeof(LightBlock) * numBlocks);
+
+        // We're done with sector samples completely.
+        M_Free(ssamples);
+        // We're done with the sample results arrays.
+        M_Free(blkSampleSectors);
+
+        delete[] sampleResults;
+
+        // Find the blocks of all sectors.
+        foreach(Sector *sector, theMap->sectors())
+        {
+            int count = 0, changedCount = 0;
+
+            if(sector->sideCount())
+            {
+                // Clear the bitfields.
+                std::memset(indexBitfield, 0, bitfieldSize);
+                std::memset(contributorBitfield, 0, bitfieldSize);
+
+                for(int y = 0; y < dimensions.y; ++y)
+                for(int x = 0; x < dimensions.x; ++x)
+                {
+                    LightBlock &block = lightBlock(x, y);
+                    if(isNullBlock(block) || &block.sector() != sector)
+                        continue;
+
+                    /// @todo Determine min/max a/b before going into the loop.
+                    for(int b = -2; b <= 2; ++b)
+                    {
+                        if(y + b < 0 || y + b >= dimensions.y)
+                            continue;
+
+                        for(int a = -2; a <= 2; ++a)
+                        {
+                            if(x + a < 0 || x + a >= dimensions.x)
+                                continue;
+
+                            addIndexBit(Ref(x + a, y + b), dimensions.x,
+                                        indexBitfield, &changedCount);
+                        }
+                    }
+                }
+
+                // Determine contributor blocks. Contributors are the blocks that are
+                // close enough to contribute light to affected blocks.
+                for(int y = 0; y < dimensions.y; ++y)
+                for(int x = 0; x < dimensions.x; ++x)
+                {
+                    if(!hasIndexBit(Ref(x, y), dimensions.x, indexBitfield))
+                        continue;
+
+                    // Add the contributor blocks.
+                    for(int b = -2; b <= 2; ++b)
+                    {
+                        if(y + b < 0 || y + b >= dimensions.y)
+                            continue;
+
+                        for(int a = -2; a <= 2; ++a)
+                        {
+                            if(x + a < 0 || x + a >= dimensions.x)
+                                continue;
+
+                            if(!hasIndexBit(Ref(x + a, y + b), dimensions.x, indexBitfield))
+                            {
+                                addIndexBit(Ref(x + a, y + b), dimensions.x, contributorBitfield, &count);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // LOG_DEBUG("  Sector %i: %i / %i") << theMap->sectorIndex(s) << changedCount << count;
+
+            Sector::LightGridData &lgData = sector->_lightGridData;
+            lgData.changedBlockCount = changedCount;
+            lgData.blockCount = changedCount + count;
+
+            if(lgData.blockCount > 0)
+            {
+                lgData.blocks = (ushort *) Z_Malloc(sizeof(*lgData.blocks) * lgData.blockCount, PU_MAPSTATIC, 0);
+
+                int a = 0, b = changedCount;
+                for(int x = 0; x < dimensions.x * dimensions.y; ++x)
+                {
+                    if(hasIndexBit(Ref(x, 0), dimensions.x, indexBitfield))
+                        lgData.blocks[a++] = x;
+                    else if(hasIndexBit(Ref(x, 0), dimensions.x, contributorBitfield))
+                        lgData.blocks[b++] = x;
+                }
+
+                DENG_ASSERT(a == changedCount);
+                //DENG_ASSERT(b == blockCount);
+            }
+        }
+
+        M_Free(indexBitfield);
+        M_Free(contributorBitfield);
+
+        self.markAllForUpdate();
+
+        // How much time did we spend?
+        LOG_INFO(String("LightGrid::initialize: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    }
+};
+
+LightGrid::LightGrid(GameMap &map)
+    : d(new Instance(this, map))
+{
+    d->initialize();
+}
+
+Vector2i const &LightGrid::dimensions() const
+{
+    return d->dimensions;
+}
+
+coord_t LightGrid::blockSize() const
+{
+    return d->blockSize;
+}
+
+Vector3f LightGrid::evaluate(Vector3d const &point)
+{
+    LightBlock &block = d->lightBlock(point);
+    Vector3f color = block.evaluate();
+
+    // Apply light range compression.
+    for(int i = 0; i < 3; ++i)
+    {
+        color[i] += Rend_LightAdaptationDelta(color[i]);
+    }
+
+    return color;
+}
+
+float LightGrid::evaluateLightLevel(Vector3d const &point)
+{
+    Vector3f color = evaluate(point);
+    /// @todo Do not do this at evaluation time; store into another grid.
+    return (color.x + color.y + color.z) / 3;
+}
+
+void LightGrid::sectorChanged(Sector &sector)
+{
+    Sector::LightGridData &lgData = sector._lightGridData;
     if(!lgData.changedBlockCount && !lgData.blockCount) return;
 
     // Mark changed blocks and contributors.
     for(uint i = 0; i < lgData.changedBlockCount; ++i)
     {
-        ushort n = lgData.blocks[i];
-
-        // The color will be recalculated.
-        if(!(grid[n].flags & GBF_CHANGED))
-        {
-            std::memcpy(grid[n].oldRGB, grid[n].rgb, sizeof(grid[n].oldRGB));
-        }
-
-        for(int j = 0; j < 3; ++j)
-        {
-            grid[n].rgb[j] = 0;
-        }
-
-        grid[n].flags |= GBF_CHANGED | GBF_CONTRIBUTOR;
+        d->lightBlock(lgData.blocks[i]).markChanged();
     }
 
     for(uint i = 0; i < lgData.blockCount; ++i)
     {
-        grid[lgData.blocks[i]].flags |= GBF_CONTRIBUTOR;
+        d->lightBlock(lgData.blocks[i]).markChanged(true /* is-contributor */);
     }
 
-    needsUpdate = true;
+    d->needUpdate = true;
 }
 
-void LG_MarkAllForUpdate()
+void LightGrid::markAllForUpdate()
 {
-    if(!lgInited || !theMap)
-        return;
-
     // Mark all blocks and contributors.
-    foreach(Sector *sector, theMap->sectors())
+    foreach(Sector *sector, d->map.sectors())
     {
-        LG_SectorChanged(sector);
+        sectorChanged(*sector);
     }
 }
 
-#if 0
-/*
- * Determines whether it is necessary to recalculate the lighting of a
- * grid block.  Updates are needed when there has been a light level
- * or color change in a sector that affects the block.
- */
-static boolean LG_BlockNeedsUpdate(int x, int y)
+void LightGrid::update()
 {
-    // First check the block itself.
-    gridblock_t *block = GRID_BLOCK(x, y);
-    Sector *blockSector;
-    int     a, b;
-    int     limitA[2];
-    int     limitB;
-
-    blockSector = block->sector;
-    if(!blockSector)
+    static float const factors[5 * 5] =
     {
-        // The sector needs to be determined.
-        return true;
-    }
-
-    if(SECT_INFO(blockSector)->flags & SIF_LIGHT_CHANGED)
-    {
-        return true;
-    }
-
-    // Check neighbor blocks as well.
-    // Determine neighbor boundaries.  Y coordinate.
-    if(y >= 2)
-    {
-        b = y - 2;
-    }
-    else
-    {
-        b = 0;
-    }
-    if(y <= lgBlockHeight - 3)
-    {
-        limitB = y + 2;
-    }
-    else
-    {
-        limitB = lgBlockHeight - 1;
-    }
-
-    // X coordinate.
-    if(x >= 2)
-    {
-        limitA[0] = x - 2;
-    }
-    else
-    {
-        limitA[0] = 0;
-    }
-    if(x <= lgBlockWidth - 3)
-    {
-        limitA[1] = x + 2;
-    }
-    else
-    {
-        limitA[1] = lgBlockWidth - 1;
-    }
-
-    // Iterate through neighbors.
-    for(; b <= limitB; ++b)
-    {
-        a = limitA[0];
-        block = GRID_BLOCK(a, b);
-
-        for(; a <= limitA[1]; ++a, ++block)
-        {
-            if(!a && !b) continue;
-
-            if(block->sector == blockSector)
-                continue;
-
-            if(SECT_INFO(block->sector)->flags & SIF_LIGHT_CHANGED)
-            {
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
-#endif
-
-/**
- * Update the grid by finding the strongest light source in each grid
- * block.
- */
-void LG_Update(void)
-{
-    static const float  factors[5 * 5] =
-    {
-        .1f, .2f, .25f, .2f, .1f,
-        .2f, .4f, .5f, .4f, .2f,
-        .25f, .5f, 1.f, .5f, .25f,
-        .2f, .4f, .5f, .4f, .2f,
-        .1f, .2f, .25f, .2f, .1f
+        .1f,  .2f, .25f, .2f, .1f,
+        .2f,  .4f, .5f,  .4f, .2f,
+        .25f, .5f, 1.f,  .5f, .25f,
+        .2f,  .4f, .5f,  .4f, .2f,
+        .1f,  .2f, .25f, .2f, .1f
     };
 
-    gridblock_t        *block, *lastBlock, *other;
-    int                 x, y, a, b;
-    Sector             *sector;
-    int                 bias;
-    int                 height;
-
-#ifdef DD_PROFILE
-    static int          i;
-
-    if(++i > 40)
-    {
-        i = 0;
-        PRINT_PROF( PROF_GRID_UPDATE );
-    }
-#endif
-
-    if(!lgInited || !needsUpdate)
+    if(!d->needUpdate)
         return;
 
-BEGIN_PROF( PROF_GRID_UPDATE );
-
-#if 0
-    for(block = grid, y = 0; y < lgBlockHeight; ++y)
+    for(int y = 0; y < d->dimensions.y; ++y)
+    for(int x = 0; x < d->dimensions.x; ++x)
     {
-        for(x = 0; x < lgBlockWidth; ++x, block++)
+        LightBlock &block = d->lightBlock(x, y);
+
+        // No contribution?
+        if(!block.flags().testFlag(LightBlock::Contributor))
+            continue;
+
+        // Determine the ambient light properties of the sector at this block.
+        Sector &sector = block.sector();
+        Vector3f const &color = Rend_SectorLightColor(sector);
+        float const level     = sector.lightLevel();
+        int const bias        = biasForSector(sector);
+
+        /// @todo Calculate min/max for a and b.
+        for(int a = -2; a <= 2; ++a)
+        for(int b = -2; b <= 2; ++b)
         {
-            if(LG_BlockNeedsUpdate(x, y))
-            {
-                block->flags |= GBF_CHANGED;
-
-                // Clear to zero (will be recalculated).
-                memset(block->rgb, 0, sizeof(float) * 3);
-
-                // Mark contributors.
-                for(b = -2; b <= 2; ++b)
-                {
-                    if(y + b < 0 || y + b >= lgBlockHeight)
-                        continue;
-
-                    for(a = -2; a <= 2; ++a)
-                    {
-                        if(x + a < 0 || x + a >= lgBlockWidth)
-                            continue;
-
-                        GRID_BLOCK(x + a, y + b)->flags |= GBF_CONTRIBUTOR;
-                    }
-                }
-            }
-            else
-            {
-                block->flags &= ~GBF_CHANGED;
-            }
-        }
-    }
-#endif
-
-    for(block = grid, y = 0; y < lgBlockHeight; ++y)
-    {
-        for(x = 0; x < lgBlockWidth; ++x, ++block)
-        {
-            // Unused blocks can't contribute.
-            if(!(block->flags & GBF_CONTRIBUTOR) || !block->sector)
+            if(x + a < 0 || y + b < 0 ||
+               x + a > d->dimensions.x - 1 || y + b > d->dimensions.y - 1)
                 continue;
 
-            // Determine the color of the ambient light in this sector.
-            sector = block->sector;
-            Vector3f const &color = Rend_SectorLightColor(*sector);
-            height = (int) (sector->ceiling().height() - sector->floor().height());
+            LightBlock &other = d->lightBlock(x + a, y + b);
 
-            bool isSkyFloor = sector->ceilingSurface().hasSkyMaskedMaterial();
-            bool isSkyCeil  = sector->floorSurface().hasSkyMaskedMaterial();
+            if(!other.flags().testFlag(LightBlock::Changed))
+                continue;
 
-            if(isSkyFloor && !isSkyCeil)
-            {
-                bias = -height / 6;
-            }
-            else if(!isSkyFloor && isSkyCeil)
-            {
-                bias = height / 6;
-            }
-            else if(height > 100)
-            {
-                bias = (height - 100) / 2;
-            }
-            else
-            {
-                bias = 0;
-            }
-
-            // \todo Calculate min/max for a and b.
-            for(a = -2; a <= 2; ++a)
-            {
-                for(b = -2; b <= 2; ++b)
-                {
-                    if(x + a < 0 || y + b < 0 || x + a > lgBlockWidth - 1 ||
-                       y + b > lgBlockHeight - 1) continue;
-
-                    other = GRID_BLOCK(x + a, y + b);
-
-                    if(other->flags & GBF_CHANGED)
-                    {
-                        LG_ApplySector(other, color, sector->lightLevel(),
-                                       factors[(b + 2)*5 + a + 2]/8, bias);
-                    }
-                }
-            }
+            other.applySector(color, level, bias, factors[(b + 2) * 5 + a + 2] / 8);
         }
     }
 
     // Clear all changed and contribution flags.
-    lastBlock = &grid[lgBlockWidth * lgBlockHeight];
-    for(block = grid; block != lastBlock; ++block)
+    foreach(LightBlock *block, d->grid)
     {
-        block->flags = 0;
+        if(!block) continue;
+        block->setFlags(LightBlock::AllFlags, UnsetFlags);
     }
 
-    needsUpdate = false;
-
-END_PROF( PROF_GRID_UPDATE );
+    d->needUpdate = false;
 }
 
-void LG_Evaluate(coord_t const point[3], float color[3])
+#include "de_graphics.h"
+#include "de_render.h"
+#include "gl/sys_opengl.h"
+
+void LightGrid::drawDebugVisual()
 {
-    int x, y, i;
-    //float dz = 0, dimming;
-    gridblock_t* block;
+    static Vector3f const red(1, 0, 0);
+    static int blink = 0;
 
-    if(!lgInited)
-    {
-        memset(color, 0, sizeof(float) * 3);
-        return;
-    }
-
-    x = ROUND((point[VX] - lgOrigin[VX]) / lgBlockSize);
-    y = ROUND((point[VY] - lgOrigin[VY]) / lgBlockSize);
-    x = MINMAX_OF(1, x, lgBlockWidth - 2);
-    y = MINMAX_OF(1, y, lgBlockHeight - 2);
-
-    block = &grid[y * lgBlockWidth + x];
-
-    /**
-     * danij: Biased light dimming disabled because this does not work
-     * well enough. The problem is that two points on a given surface
-     * may be determined to be in different blocks and as the height is
-     * taken from the block-linked sector this results in very uneven
-     * lighting.
-     *
-     * Biasing the dimming is a good idea but the heights must be taken
-     * from the BSP Leaf which contains the surface and not the block.
-     */
-    if(block->sector)
-    {
-        /*if(block->bias < 0)
-        {
-            // Calculate Z difference to the ceiling.
-            dz = block->sector->ceiling().height() - point[VZ];
-        }
-        else if(block->bias > 0)
-        {
-            // Calculate Z difference to the floor.
-            dz = point[VZ] - block->sector->floor().height();
-        }
-
-        dz -= 50;
-        if(dz < 0)
-            dz = 0;*/
-
-        if(block->flags & GBF_CHANGED)
-        {   // We are waiting for an updated value, for now use the old.
-            color[CR] = block->oldRGB[CR];
-            color[CG] = block->oldRGB[CG];
-            color[CB] = block->oldRGB[CB];
-        }
-        else
-        {
-            color[CR] = block->rgb[CR];
-            color[CG] = block->rgb[CG];
-            color[CB] = block->rgb[CB];
-        }
-    }
-    else
-    {   // The block has no sector!?
-        // Must be an error in the lightgrid covering sector determination.
-        // Init to black.
-        color[CR] = color[CG] = color[CB] = 0;
-    }
-
-    // Biased ambient light causes a dimming in the Z direction.
-    /*if(dz && block->bias)
-    {
-        if(block->bias < 0)
-            dimming = 1 - (dz * (float) -block->bias) / 35000.0f;
-        else
-            dimming = 1 - (dz * (float) block->bias) / 35000.0f;
-
-        if(dimming < .5f)
-            dimming = .5f;
-
-        for(i = 0; i < 3; ++i)
-        {
-            // Apply the dimming
-            color[i] *= dimming;
-
-            // Add the light range compression factor
-            color[i] += Rend_LightAdaptationDelta(color[i]);
-        }
-    }
-    else*/
-    {
-        // Just add the light range compression factor
-        for(i = 0; i < 3; ++i)
-            color[i] += Rend_LightAdaptationDelta(color[i]);
-    }
-}
-
-float LG_EvaluateLightLevel(coord_t const point[3])
-{
-    float color[3];
-    LG_Evaluate(point, color);
-    /// @todo Do not do this at evaluation time; store into another grid.
-    return (color[CR] + color[CG] + color[CB]) / 3;
-}
-
-/**
- * Draw the grid in 2D HUD mode.
- */
-void LG_Debug(void)
-{
-    static int          blink = 0;
-
-    gridblock_t*        block;
-    int                 x, y;
-    int                 vx, vy;
-    size_t              vIdx = 0, blockIdx;
-    ddplayer_t*         ddpl = (viewPlayer? &viewPlayer->shared : NULL);
-
-    if(!lgInited || !lgShowDebug)
-        return;
+    // Disabled?
+    if(!lgShowDebug) return;
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    if(ddpl)
+    // Determine the grid reference of the view player.
+    Ref viewGRef;
+    if(viewPlayer)
     {
         blink++;
-        vx = ROUND((ddpl->mo->origin[VX] - lgOrigin[VX]) / lgBlockSize);
-        vy = ROUND((ddpl->mo->origin[VY] - lgOrigin[VY]) / lgBlockSize);
-        vx = MINMAX_OF(1, vx, lgBlockWidth - 2);
-        vy = MINMAX_OF(1, vy, lgBlockHeight - 2);
-        vIdx = vy * lgBlockWidth + vx;
+        viewGRef = d->toRef(viewPlayer->shared.mo->origin);
     }
 
     // Go into screen projection mode.
@@ -1003,25 +940,29 @@ void LG_Debug(void)
     glLoadIdentity();
     glOrtho(0, DENG_WINDOW->width(), DENG_WINDOW->height(), 0, -1, 1);
 
-    for(y = 0; y < lgBlockHeight; ++y)
+    for(int y = 0; y < d->dimensions.y; ++y)
     {
         glBegin(GL_QUADS);
-        for(x = 0; x < lgBlockWidth; ++x, ++block)
+        for(int x = 0; x < d->dimensions.x; ++x)
         {
-            blockIdx = (lgBlockHeight - 1 - y) * lgBlockWidth + x;
-            block = &grid[blockIdx];
+            Ref gref(x, d->dimensions.y - 1 - y);
+            bool const isViewGRef = (viewPlayer && viewGRef == gref);
 
-            if(ddpl && vIdx == blockIdx && (blink & 16))
+            Vector3f const *color;
+            if(isViewGRef && (blink & 16))
             {
-                glColor3f(1, 0, 0);
+                color = &red;
             }
             else
             {
-                if(!block->sector)
+                LightBlock &block = d->lightBlock(gref);
+                if(isNullBlock(block))
                     continue;
 
-                glColor3fv(block->rgb);
+                color = &block.rawColorRef();
             }
+
+            glColor3f(color->x, color->y, color->z);
 
             glVertex2f(x * lgDebugSize, y * lgDebugSize);
             glVertex2f(x * lgDebugSize + lgDebugSize, y * lgDebugSize);
