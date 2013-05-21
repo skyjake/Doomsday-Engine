@@ -30,6 +30,8 @@
 #include "de_system.h"
 #include "ui/dd_input.h"
 
+#include <de/shell/Lexicon> // known words
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -403,5 +405,10 @@ void Con_PrintCCmdUsage(ccmd_t* ccmd, boolean printInfo);
 #ifdef __cplusplus
 } // extern "C"
 #endif
+
+/**
+ * Collects all the known words of the console into a Lexicon.
+ */
+de::shell::Lexicon Con_Lexicon();
 
 #endif /* LIBDENG_CONSOLE_MAIN_H */

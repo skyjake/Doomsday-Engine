@@ -2140,6 +2140,21 @@ static void Con_Alias(char *aName, char *command)
     Con_AddAlias(aName, command);
 }
 
+static int addToTerms(knownword_t const *word, void *parameters)
+{
+    shell::Lexicon *lexi = reinterpret_cast<shell::Lexicon *>(parameters);
+    lexi->addTerm(Str_Text(Con_KnownWordToString(word)));
+    return 0;
+}
+
+shell::Lexicon Con_Lexicon()
+{
+    shell::Lexicon lexi;
+    Con_IterateKnownWords(0, WT_ANY, addToTerms, &lexi);
+    lexi.setAdditionalWordChars("-_.");
+    return lexi;
+}
+
 D_CMD(Help)
 {
     DENG2_UNUSED3(src, argc, argv);

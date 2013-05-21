@@ -81,20 +81,10 @@ ShellUser::ShellUser(Socket *socket) : shell::Link(socket), d(new Instance(*this
     connect(this, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
 }
 
-static int addToTerms(knownword_t const *word, void *parameters)
-{
-    shell::Lexicon *lexi = reinterpret_cast<shell::Lexicon *>(parameters);
-    lexi->addTerm(Str_Text(Con_KnownWordToString(word)));
-    return 0;
-}
-
 void ShellUser::sendInitialUpdate()
 {
     // Console lexicon.
-    shell::Lexicon lexi;
-    Con_IterateKnownWords(0, WT_ANY, addToTerms, &lexi);
-    lexi.setAdditionalWordChars("-_.");
-    QScopedPointer<RecordPacket> packet(protocol().newConsoleLexicon(lexi));
+    QScopedPointer<RecordPacket> packet(protocol().newConsoleLexicon(Con_Lexicon()));
     *this << *packet;
 
     sendGameState();
