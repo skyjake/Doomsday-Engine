@@ -196,6 +196,8 @@ bool LegacyWidget::handleEvent(Event const &event)
      * submit as Latin1.
      */
 
+    // Note: repeat events are ignored here as the legacy input system does
+    // its own.
     if(event.type() == Event::KeyPress ||
        event.type() == Event::KeyRelease)
     {

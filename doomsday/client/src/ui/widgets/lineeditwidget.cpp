@@ -261,9 +261,15 @@ void LineEditWidget::draw()
 
 bool LineEditWidget::handleEvent(Event const &event)
 {
-    if(event.type() == Event::KeyPress)
+    if(event.isKeyDown())
     {
         KeyEvent const &key = static_cast<KeyEvent const &>(event);
+
+        // Control character.
+        if(handleControlKey(key.qtKey(), key.modifiers().testFlag(KeyEvent::Control)))
+        {
+            return true;
+        }
 
         // Insert text?
         if(!key.text().isEmpty())
@@ -271,12 +277,6 @@ bool LineEditWidget::handleEvent(Event const &event)
             // Insert some text into the editor.
             insert(key.text());
             return true;
-        }
-        else
-        {
-            // Control character.
-            if(handleControlKey(key.qtKey()))
-                return true;
         }
     }
     return GuiWidget::handleEvent(event);
