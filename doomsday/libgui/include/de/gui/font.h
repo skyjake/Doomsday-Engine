@@ -47,15 +47,27 @@ public:
     QFont toQFont() const;
 
     /**
-     * Determines the size of the given line of text. (0,0) is the corner of is
-     * at the baseline, left edge of the line. The rectangle may extend into
-     * negative coordinates.
+     * Determines the size of the given line of text (as in how large an area
+     * is covered by the glyphs). (0,0) is the corner of is at the baseline,
+     * left edge of the line. The rectangle may extend into negative
+     * coordinates.
      *
      * @param textLine  Text to measure.
      *
-     * @return
+     * @return Rectangle covered by the text.
      */
     Rectanglei measure(String const &textLine) const;
+
+    /**
+     * Returns the advance width of a line of text. This is not the same as
+     * the width of the rectangle returned by measure().
+     *
+     * @param textLine  Text to measure.
+     *
+     * @return Width of the line of text (including non-visible parts like
+     * whitespace).
+     */
+    int advanceWidth(String const &textLine) const;
 
     /**
      * Rasterizes a line of text onto a 32-bit RGBA image.

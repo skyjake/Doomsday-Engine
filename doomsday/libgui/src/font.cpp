@@ -83,6 +83,11 @@ Rectanglei Font::measure(String const &textLine) const
     return Rectanglei::fromQRect(d->metrics->boundingRect(textLine));
 }
 
+int Font::advanceWidth(String const &textLine) const
+{
+    return d->metrics->width(textLine);
+}
+
 QImage Font::rasterize(String const &textLine,
                        Vector4ub const &foreground,
                        Vector4ub const &background) const
