@@ -98,14 +98,19 @@ DENG2_PIMPL(AbstractLineEditor)
 
     de::Vector2i lineCursorPos() const
     {
-        de::Vector2i pos(cursor);
+        return linePos(cursor);
+    }
+
+    de::Vector2i linePos(int mark) const
+    {
+        de::Vector2i pos(mark);
         for(pos.y = 0; pos.y < wraps->height(); ++pos.y)
         {
             WrappedLine span = lineSpan(pos.y);
             if(!span.isFinal) span.range.end--;
-            if(cursor >= span.range.start && cursor <= span.range.end)
+            if(mark >= span.range.start && mark <= span.range.end)
             {
-                // Stop here. Cursor is on this line.
+                // Stop here. Mark is on this line.
                 break;
             }
             pos.x -= span.range.end - span.range.start + 1;
@@ -393,9 +398,9 @@ int AbstractLineEditor::cursor() const
     return d->cursor;
 }
 
-Vector2i AbstractLineEditor::lineCursorPos() const
+Vector2i AbstractLineEditor::linePos(int index) const
 {
-    return d->lineCursorPos();
+    return d->linePos(index);
 }
 
 bool AbstractLineEditor::isSuggestingCompletion() const

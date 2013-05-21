@@ -62,11 +62,13 @@ public:
     int cursor() const;
 
     /**
-     * Determines the position of the cursor on the wrapped lines. The Y
-     * component is the wrapped line index and the X component is the character
-     * index on that line.
+     * Determines the position of a specific character on the wrapped lines.
+     * The Y component is the wrapped line index and the X component is the
+     * character index on that line.
      */
-    Vector2i lineCursorPos() const;
+    Vector2i linePos(int index) const;
+
+    Vector2i lineCursorPos() const { return linePos(cursor()); }
 
     bool isSuggestingCompletion() const;
     Range completionRange() const;
