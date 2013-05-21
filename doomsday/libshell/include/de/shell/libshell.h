@@ -54,7 +54,7 @@ struct LIBSHELL_PUBLIC Range
     }
 };
 
-/// Word wrapping.
+/// Line of word-wrapped text.
 struct LIBSHELL_PUBLIC WrappedLine
 {
     Range range;
@@ -73,8 +73,19 @@ public:
     virtual void clear() = 0;
     virtual void wrapTextToWidth(String const &text, int maxWidth) = 0;
     virtual WrappedLine line(int index) const = 0;
+
+    /// Determines the visible maximum width of the wrapped content.
     virtual int width() const = 0;
+
+    /// Determines the number of lines in the wrapped content.
     virtual int height() const = 0;
+
+    /// Returns the advance width of the range.
+    virtual int rangeWidth(Range const &range) const = 0;
+
+    /// Calculates which index in the provided content range occupies a
+    /// character at a given width.
+    virtual int indexAtWidth(Range const &range, int width) const = 0;
 };
 
 } // namespace shell

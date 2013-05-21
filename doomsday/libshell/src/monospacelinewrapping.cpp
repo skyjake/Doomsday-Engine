@@ -107,5 +107,19 @@ int MonospaceLineWrapping::height() const
     return _lines.size();
 }
 
+int MonospaceLineWrapping::rangeWidth(Range const &range) const
+{
+    return range.size();
+}
+
+int MonospaceLineWrapping::indexAtWidth(Range const &range, int width) const
+{
+    if(width <= range.size())
+    {
+        return range.start + width;
+    }
+    return range.end;
+}
+
 } // namespace shell
 } // namespace de

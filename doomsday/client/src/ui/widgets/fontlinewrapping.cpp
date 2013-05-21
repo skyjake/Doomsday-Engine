@@ -34,11 +34,20 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         return text.substr(range.start, range.size());
     }
 
-    int rangeWidth(Range const &range) const
+    int rangeVisibleWidth(Range const &range) const
     {
         if(font)
         {
             return font->measure(rangeText(range)).width();
+        }
+        return 0;
+    }
+
+    int rangeAdvanceWidth(Range const &range) const
+    {
+        if(font)
+        {
+            return font->advanceWidth(rangeText(range));
         }
         return 0;
     }
@@ -89,7 +98,7 @@ void FontLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
     forever
     {
         // Quick check: does the remainder fit?
-        if(d->rangeWidth(Range(begin, text.size())) <= maxWidth)
+        if(d->rangeVisibleWidth(Range(begin, text.size())) <= maxWidth)
         {
             d->lines.append(WrappedLine(Range(begin, text.size())));
             break;
@@ -102,7 +111,7 @@ void FontLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
         {
             ++end;
 
-            if(d->rangeWidth(Range(begin, end)) > maxWidth)
+            if(d->rangeVisibleWidth(Range(begin, end)) > maxWidth)
             {
                 // Went too far.
                 wrapPosMax = --end;
@@ -136,10 +145,10 @@ void FontLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
         }
         else
         {
-            //if(text.at(end).isSpace()) ++end;
+            while(text.at(end).isSpace()) ++end;
             d->lines.append(WrappedLine(Range(begin, end)));
             begin = end;
-            while(text.at(begin).isSpace()) ++begin;
+            //while(text.at(begin).isSpace()) ++begin;
         }
     }
 
@@ -161,7 +170,7 @@ int FontLineWrapping::width() const
     for(int i = 0; i < d->lines.size(); ++i)
     {
         WrappedLine const &span = d->lines[i];
-        w = de::max(w, d->rangeWidth(span.range));
+        w = de::max(w, d->rangeVisibleWidth(span.range));
     }
     return w;
 }
@@ -169,6 +178,33 @@ int FontLineWrapping::width() const
 int FontLineWrapping::height() const
 {
     return d->lines.size();
+}
+
+int FontLineWrapping::rangeWidth(Range const &range) const
+{
+    return d->rangeAdvanceWidth(range);
+}
+
+int FontLineWrapping::indexAtWidth(Range const &range, int width) const
+{
+    int prevWidth = 0;
+
+    for(int i = range.start; i < range.end; ++i)
+    {
+        int const rw = d->rangeAdvanceWidth(Range(range.start, i));
+        if(rw >= width)
+        {
+            // Which is closer, this or the previous char?
+            if(de::abs(rw - width) <= de::abs(prevWidth - width))
+            {
+                qDebug() << "this" << i;
+                return i;
+            }
+            return i - 1;
+        }
+        prevWidth = rw;
+    }
+    return range.end;
 }
 
 int FontLineWrapping::totalHeightInPixels() const
@@ -197,7 +233,8 @@ Vector2i FontLineWrapping::charTopLeftInPixels(int line, int charIndex)
     Range const range(span.range.start, de::min(span.range.end, span.range.start + charIndex));
 
     Vector2i cp;
-    cp.x = d->font->measure(d->rangeText(range)).width();
+    cp.x = d->font->advanceWidth(d->rangeText(range));
     cp.y = line * d->font->lineSpacing().valuei();
+
     return cp;
 }

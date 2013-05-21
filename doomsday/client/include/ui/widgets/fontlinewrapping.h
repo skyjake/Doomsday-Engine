@@ -42,6 +42,8 @@ public:
     de::shell::WrappedLine line(int index) const;
     int width() const;
     int height() const;
+    int rangeWidth(de::shell::Range const &range) const;
+    int indexAtWidth(de::shell::Range const &range, int width) const;
 
     /**
      * Calculates the total height of the wrapped lined in pixels, taking into
