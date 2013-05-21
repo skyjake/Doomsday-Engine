@@ -92,6 +92,11 @@ QImage Font::rasterize(String const &textLine,
                        Vector4ub const &foreground,
                        Vector4ub const &background) const
 {
+    if(textLine.isEmpty())
+    {
+        return QImage();
+    }
+
     Rectanglei bounds = measure(textLine);
 
     QImage img(QSize(bounds.width(), bounds.height()), QImage::Format_ARGB32);

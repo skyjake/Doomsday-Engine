@@ -200,6 +200,11 @@ Atlas::Size Atlas::totalSize() const
 
 Id Atlas::alloc(Image const &image)
 {
+    if(image.size() == Image::Size(0, 0))
+    {
+        return Id::None;
+    }
+
     DENG2_ASSERT(d->allocator.get());
 
     Rectanglei rect;
@@ -243,6 +248,8 @@ Id Atlas::alloc(Image const &image)
 
 void Atlas::release(Id const &id)
 {
+    if(id.isNone()) return;
+
     DENG2_ASSERT(d->allocator.get());
 
     d->allocator->release(id);

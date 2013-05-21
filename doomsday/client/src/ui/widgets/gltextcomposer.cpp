@@ -177,33 +177,36 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
     // Generate vertices for each line.
     for(int i = 0; i < d->wraps->height(); ++i)
     {
-        Vector2ui const size = d->atlas->imageRect(d->lines[i].id).size();
-        Rectanglef const uv  = d->atlas->imageRectf(d->lines[i].id);
-
-        Vertex v;
-        Vertices quad;
-
-        v.rgba = Vector4f(1, 1, 1, 1); // should be a param
-
-        Vector2f linePos = p;
-
-        // Align the line.
-        if(lineAlign.testFlag(AlignRight))
+        // Empty lines are skipped.
+        if(!d->lines[i].id.isNone())
         {
-            linePos.x += int(rect.width()) - int(size.x);
+            Vector2ui const size = d->atlas->imageRect(d->lines[i].id).size();
+            Rectanglef const uv  = d->atlas->imageRectf(d->lines[i].id);
+
+            Vertex v;
+            Vertices quad;
+
+            v.rgba = Vector4f(1, 1, 1, 1); // should be a param
+
+            Vector2f linePos = p;
+
+            // Align the line.
+            if(lineAlign.testFlag(AlignRight))
+            {
+                linePos.x += int(rect.width()) - int(size.x);
+            }
+            else if(!lineAlign.testFlag(AlignLeft))
+            {
+                linePos.x += (int(rect.width()) - int(size.x)) / 2;
+            }
+
+            v.pos = linePos;                            v.texCoord = uv.topLeft;      quad << v;
+            v.pos = linePos + Vector2f(size.x, 0);      v.texCoord = uv.topRight();   quad << v;
+            v.pos = linePos + Vector2f(0, size.y);      v.texCoord = uv.bottomLeft(); quad << v;
+            v.pos = linePos + Vector2f(size.x, size.y); v.texCoord = uv.bottomRight;  quad << v;
+
+            VertexBuf::concatenate(quad, triStrip);
         }
-        else if(!lineAlign.testFlag(AlignLeft))
-        {
-            linePos.x += (int(rect.width()) - int(size.x)) / 2;
-        }
-
-        v.pos = linePos;                            v.texCoord = uv.topLeft;      quad << v;
-        v.pos = linePos + Vector2f(size.x, 0);      v.texCoord = uv.topRight();   quad << v;
-        v.pos = linePos + Vector2f(0, size.y);      v.texCoord = uv.bottomLeft(); quad << v;
-        v.pos = linePos + Vector2f(size.x, size.y); v.texCoord = uv.bottomRight;  quad << v;
-
-        VertexBuf::concatenate(quad, triStrip);
-
         p.y += d->font->lineSpacing().value();
     }
 }
