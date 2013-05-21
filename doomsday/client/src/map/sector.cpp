@@ -88,7 +88,7 @@ DENG2_PIMPL(Sector)
     {
         DENG2_FOR_PUBLIC_AUDIENCE(LightLevelChange, i)
         {
-            i->lightLevelChanged(self, oldLightLevel);
+            i->sectorLightLevelChanged(self, oldLightLevel);
         }
     }
 
@@ -97,7 +97,7 @@ DENG2_PIMPL(Sector)
     {
         DENG2_FOR_PUBLIC_AUDIENCE(LightColorChange, i)
         {
-            i->lightColorChanged(self, oldLightColor, changedComponents);
+            i->sectorLightColorChanged(self, oldLightColor, changedComponents);
         }
     }
 
@@ -116,8 +116,8 @@ DENG2_PIMPL(Sector)
 
 Sector::Sector(float lightLevel, Vector3f const &lightColor)
     : MapElement(DMU_SECTOR),
-      _lightLevel(lightLevel), _oldLightLevel(_lightLevel),
-      _lightColor(lightColor), _oldLightColor(_lightColor),
+      _lightLevel(lightLevel),
+      _lightColor(lightColor),
       d(new Instance(this))
 {
     _frameFlags = 0;

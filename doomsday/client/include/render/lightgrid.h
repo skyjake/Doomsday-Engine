@@ -104,13 +104,6 @@ public:
     float evaluateLightLevel(Vector3d const &point);
 
     /**
-     * To be called when the ambient lighting properties in the sector change.
-     *
-     * @todo Replace with internal de::Observers based mechanism.
-     */
-    void sectorChanged(Sector &sector);
-
-    /**
      * Draw the light grid debug visual.
      */
     void drawDebugVisual();

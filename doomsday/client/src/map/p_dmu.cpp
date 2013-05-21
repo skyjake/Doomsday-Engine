@@ -823,27 +823,6 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
     }
 }
 
-static void updateSector(Sector &sector, bool forceUpdate = false)
-{
-#ifdef __CLIENT__
-    // Check if there are any lightlevel or color changes.
-    if(forceUpdate ||
-       (sector._lightLevel != sector._oldLightLevel ||
-        sector._lightColor[0] != sector._oldLightColor[0] ||
-        sector._lightColor[1] != sector._oldLightColor[1] ||
-        sector._lightColor[2] != sector._oldLightColor[2]))
-    {
-        sector._oldLightLevel = sector._lightLevel;
-        sector._oldLightColor = sector._lightColor;
-
-        if(theMap->hasLightGrid())
-        {
-            theMap->lightGrid().sectorChanged(sector);
-        }
-    }
-#endif
-}
-
 /**
  * Only those properties that are writable by outside parties (such as games)
  * are included here. Attempting to set a non-writable property causes a
@@ -855,9 +834,6 @@ static void updateSector(Sector &sector, bool forceUpdate = false)
 static void setProperty(MapElement *elem, setargs_t &args)
 {
     DENG_ASSERT(elem != 0);
-
-    Sector *updateSector1 = 0, *updateSector2 = 0;
-    Plane *updatePlane = 0;
 
     /**
      * @par Algorithm
@@ -890,8 +866,6 @@ static void setProperty(MapElement *elem, setargs_t &args)
 
     if(args.type == DMU_SECTOR)
     {
-        updateSector1 = elem->castTo<Sector>();
-
         if(args.modifiers & DMU_FLOOR_OF_SECTOR)
         {
             elem = &elem->castTo<Sector>()->floor();
@@ -906,8 +880,6 @@ static void setProperty(MapElement *elem, setargs_t &args)
 
     if(args.type == DMU_LINE)
     {
-        elem->castTo<Line>();
-
         if(args.modifiers & DMU_FRONT_OF_LINE)
         {
             elem = &elem->castTo<Line>()->front();
@@ -922,8 +894,6 @@ static void setProperty(MapElement *elem, setargs_t &args)
 
     if(args.type == DMU_SIDE)
     {
-        elem->castTo<Line::Side>();
-
         if(args.modifiers & DMU_TOP_OF_SIDE)
         {
             elem = &elem->castTo<Line::Side>()->top();
@@ -943,8 +913,6 @@ static void setProperty(MapElement *elem, setargs_t &args)
 
     if(args.type == DMU_PLANE)
     {
-        updatePlane = elem->castTo<Plane>();
-
         switch(args.prop)
         {
         case DMU_MATERIAL:
@@ -981,16 +949,6 @@ static void setProperty(MapElement *elem, setargs_t &args)
     // Write the property value(s).
     /// @throws MapElement::WritePropertyError  If the requested property is not writable.
     elem->setProperty(args);
-
-    /// @todo Replace with de::Observers based updates.
-    if(updatePlane)
-        updateSector1 = &updatePlane->sector();
-
-    if(updateSector1)
-        updateSector(*updateSector1);
-
-    if(updateSector2)
-        updateSector(*updateSector2);
 }
 
 void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint index)

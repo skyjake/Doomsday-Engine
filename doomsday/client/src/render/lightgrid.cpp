@@ -30,6 +30,7 @@
 #include "de_console.h"
 
 #include "BspLeaf"
+#include "Sector"
 #include "map/gamemap.h"
 #include "map/p_maputil.h" // P_IsPointInBspLeaf
 #include "map/p_players.h" // viewPlayer
@@ -341,7 +342,9 @@ static inline bool isNullBlock(LightBlock const &block) {
     return &block == &nullBlock;
 }
 
-DENG2_PIMPL(LightGrid)
+DENG2_PIMPL(LightGrid),
+DENG2_OBSERVES(Sector, LightColorChange),
+DENG2_OBSERVES(Sector, LightLevelChange)
 {
     /// Map for which we provide an ambient lighting grid.
     GameMap &map;
@@ -358,7 +361,7 @@ DENG2_PIMPL(LightGrid)
     /// The grid of LightBlocks.
     Blocks grid;
 
-    /// Set to @a true when a full update is needed.
+    /// Set to @c true when a full update is needed.
     bool needUpdate;
 
     Instance(Public *i, GameMap &map)
@@ -369,6 +372,14 @@ DENG2_PIMPL(LightGrid)
 
     ~Instance()
     {
+        foreach(LightBlock *block, grid)
+        {
+            if(!block) continue;
+            Sector &sector = block->sector();
+            sector.audienceForLightLevelChange -= this;
+            sector.audienceForLightColorChange -= this;
+        }
+
         qDeleteAll(grid);
     }
 
@@ -389,7 +400,7 @@ DENG2_PIMPL(LightGrid)
         int y = de::round<int>((point.y - origin.y) / blockSize);
 
         return Ref(de::clamp(1, x, dimensions.x - 2),
-                       de::clamp(1, y, dimensions.y - 2));
+                   de::clamp(1, y, dimensions.y - 2));
     }
 
     /**
@@ -618,8 +629,6 @@ DENG2_PIMPL(LightGrid)
         for(int y = 0; y < dimensions.y; ++y)
         for(int x = 0; x < dimensions.x; ++x)
         {
-            Vector2d off(x * blockSize, y * blockSize);
-
             /**
              * Pick the sector at each of the sample points.
              * @todo We don't actually need the blkSampleSectors array
@@ -681,6 +690,10 @@ DENG2_PIMPL(LightGrid)
 
             // There is now one more block.
             numBlocks++;
+
+            // We want notification when the sector light properties change.
+            sector->audienceForLightLevelChange += this;
+            sector->audienceForLightColorChange += this;
         }
 
         LOG_INFO("%i light blocks (%u bytes).")
@@ -788,6 +801,42 @@ DENG2_PIMPL(LightGrid)
         // How much time did we spend?
         LOG_INFO(String("LightGrid::initialize: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
     }
+
+    /**
+     * To be called when the ambient lighting properties in the sector change.
+     */
+    void sectorChanged(Sector &sector)
+    {
+        Sector::LightGridData &lgData = sector._lightGridData;
+        if(!lgData.changedBlockCount && !lgData.blockCount)
+            return;
+
+        // Mark changed blocks and contributors.
+        for(uint i = 0; i < lgData.changedBlockCount; ++i)
+        {
+            lightBlock(lgData.blocks[i]).markChanged();
+        }
+
+        for(uint i = 0; i < lgData.blockCount; ++i)
+        {
+            lightBlock(lgData.blocks[i]).markChanged(true /* is-contributor */);
+        }
+
+        needUpdate = true;
+    }
+
+    /// Observes Sector LightLevelChange.
+    void sectorLightLevelChanged(Sector &sector, float /*oldLightLevel*/)
+    {
+        sectorChanged(sector);
+    }
+
+    /// Observes Sector LightColorChange.
+    void sectorLightColorChanged(Sector &sector, Vector3f const & /*oldLightColor*/,
+                                 int /*changedComponents*/)
+    {
+        sectorChanged(sector);
+    }
 };
 
 LightGrid::LightGrid(GameMap &map)
@@ -827,31 +876,12 @@ float LightGrid::evaluateLightLevel(Vector3d const &point)
     return (color.x + color.y + color.z) / 3;
 }
 
-void LightGrid::sectorChanged(Sector &sector)
-{
-    Sector::LightGridData &lgData = sector._lightGridData;
-    if(!lgData.changedBlockCount && !lgData.blockCount) return;
-
-    // Mark changed blocks and contributors.
-    for(uint i = 0; i < lgData.changedBlockCount; ++i)
-    {
-        d->lightBlock(lgData.blocks[i]).markChanged();
-    }
-
-    for(uint i = 0; i < lgData.blockCount; ++i)
-    {
-        d->lightBlock(lgData.blocks[i]).markChanged(true /* is-contributor */);
-    }
-
-    d->needUpdate = true;
-}
-
 void LightGrid::markAllForUpdate()
 {
     // Mark all blocks and contributors.
     foreach(Sector *sector, d->map.sectors())
     {
-        sectorChanged(*sector);
+        d->sectorChanged(*sector);
     }
 }
 

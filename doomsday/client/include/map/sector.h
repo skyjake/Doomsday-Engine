@@ -61,11 +61,11 @@ public:
     DENG2_ERROR(MissingPlaneError);
 
     DENG2_DEFINE_AUDIENCE(LightLevelChange,
-        void lightLevelChanged(Sector &sector, float oldLightLevel))
+        void sectorLightLevelChanged(Sector &sector, float oldLightLevel))
 
     DENG2_DEFINE_AUDIENCE(LightColorChange,
-        void lightColorChanged(Sector &sector, de::Vector3f const &oldLightColor,
-                               int changedComponents /*bit-field (0x1=Red, 0x2=Green, 0x4=Blue)*/))
+        void sectorLightColorChanged(Sector &sector, de::Vector3f const &oldLightColor,
+                                     int changedComponents /*bit-field (0x1=Red, 0x2=Green, 0x4=Blue)*/))
 
     static float const DEFAULT_LIGHT_LEVEL; ///< 1.f
     static de::Vector3f const DEFAULT_LIGHT_COLOR; ///< red=1.f green=1.f, blue=1.f
@@ -96,14 +96,8 @@ public: /// @todo Make private:
     /// Ambient light level in the sector.
     float _lightLevel;
 
-    /// Old ambient light level in the sector. For smoothing.
-    float _oldLightLevel;
-
     /// Ambient light color in the sector.
     de::Vector3f _lightColor;
-
-    /// Old ambient light color in the sector. For smoothing.
-    de::Vector3f _oldLightColor;
 
     /// Head of the linked list of mobjs "in" the sector (not owned).
     struct mobj_s *_mobjList;
