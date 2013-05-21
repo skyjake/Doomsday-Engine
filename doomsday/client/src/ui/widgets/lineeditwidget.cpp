@@ -190,10 +190,10 @@ DENG2_OBSERVES(Atlas, Reposition)
         Vector2f const cp = wraps.charTopLeftInPixels(cursorPos.y, cursorPos.x) +
                 contentRect.topLeft;
 
-        v.pos = cp; verts << v;
-        v.pos = cp + Vector2f(2, 0); verts << v;
-        v.pos = cp + Vector2f(0, font->height().value()); verts << v;
-        v.pos = cp + Vector2f(2, font->height().value()); verts << v;
+        v.pos = cp + Vector2f(-1, 0); verts << v;
+        v.pos = cp + Vector2f(1,  0); verts << v;
+        v.pos = cp + Vector2f(-1, font->height().value()); verts << v;
+        v.pos = cp + Vector2f(1,  font->height().value()); verts << v;
 
         drawable.buffer<VertexBuf>(ID_BUF_CURSOR)
                 .setVertices(gl::TriangleStrip, verts, gl::Static);
