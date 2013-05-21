@@ -33,6 +33,10 @@
 #include "Line"
 #include "Plane"
 
+#ifdef __CLIENT__
+#  include "render/lightgrid.h"
+#endif
+
 class BspLeaf;
 class GameMap;
 class Surface;
@@ -74,6 +78,7 @@ public:
     typedef QList<Plane *> Planes;
     typedef QList<BspLeaf *> BspLeafs;
 
+#ifdef __CLIENT__
     /**
      * LightGrid data values for "smoothed sector lighting".
      */
@@ -86,8 +91,9 @@ public:
         uint changedBlockCount;
 
         /// Block indices.
-        ushort *blocks;
+        de::LightGrid::Index *blocks;
     };
+#endif
 
 public: /// @todo Make private:
     /// @ref sectorFrameFlags
@@ -106,8 +112,10 @@ public: /// @todo Make private:
     /// characteristics of the sector (not owned).
     BspLeafs _reverbBspLeafs;
 
+#ifdef __CLIENT__
     /// LightGrid data values.
     LightGridData _lightGridData;
+#endif
 
     /// Final environmental audio characteristics.
     AudioEnvironmentFactors _reverb;

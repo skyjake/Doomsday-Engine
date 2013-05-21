@@ -151,8 +151,10 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(LightBlock::Flags)
 
 DENG2_PIMPL_NOREF(LightBlock)
 {
+    /// Primary sector attributed to this block.
     Sector *sector;
 
+    /// State flags.
     Flags flags;
 
     /// Positive bias means that the light is shining in the floor of the sector.
@@ -165,7 +167,8 @@ DENG2_PIMPL_NOREF(LightBlock)
     /// and a full grid update is needed.
     Vector3f oldColor;
 
-    Instance(Sector *sector) : sector(sector), bias(0)
+    Instance(Sector *sector)
+        : sector(sector), bias(0)
     {}
 };
 
@@ -296,10 +299,6 @@ void LightBlock::applySector(Vector3f const &color, float level, int bias, float
     d->bias = de::clamp(-0x80, int(d->bias * (1 - factor) + bias * factor), 0x7f);
 }
 
-/**
- * Provides immutable access to the "raw" color (i.e., non-biased) for the
- * block. Primarily intended for debugging.
- */
 Vector3f const &LightBlock::rawColorRef() const
 {
     return d->color;
@@ -777,7 +776,8 @@ DENG2_OBSERVES(Sector, LightLevelChange)
 
             if(lgData.blockCount > 0)
             {
-                lgData.blocks = (ushort *) Z_Malloc(sizeof(*lgData.blocks) * lgData.blockCount, PU_MAPSTATIC, 0);
+                lgData.blocks = (LightGrid::Index *)
+                    Z_Malloc(sizeof(*lgData.blocks) * lgData.blockCount, PU_MAPSTATIC, 0);
 
                 int a = 0, b = changedCount;
                 for(int x = 0; x < dimensions.x * dimensions.y; ++x)
