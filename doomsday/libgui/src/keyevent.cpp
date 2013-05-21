@@ -403,9 +403,13 @@ KeyEvent::KeyEvent()
     : Event(KeyPress), _qtKey(0), _ddKey(0), _nativeCode(0)
 {}
 
-KeyEvent::KeyEvent(State keyState, int qtKeyCode, int ddKeyCode, int nativeKeyCode, String const &keyText)
-    : Event(keyState == Pressed? KeyPress : KeyRelease),
+KeyEvent::KeyEvent(State keyState, int qtKeyCode, int ddKeyCode, int nativeKeyCode, String const &keyText,
+                   Modifiers const &modifiers)
+    : Event(keyState == Pressed? KeyPress :
+            keyState == Repeat?  KeyRepeat :
+                                 KeyRelease),
       _qtKey(qtKeyCode),
+      _mods(modifiers),
       _ddKey(ddKeyCode),
       _nativeCode(nativeKeyCode),
       _text(keyText)
@@ -413,7 +417,12 @@ KeyEvent::KeyEvent(State keyState, int qtKeyCode, int ddKeyCode, int nativeKeyCo
 
 KeyEvent::State KeyEvent::state() const
 {
-    return type() == KeyPress? Pressed : Released;
+    switch(type())
+    {
+    case KeyPress:  return Pressed;
+    case KeyRepeat: return Repeat;
+    default:        return Released;
+    }
 }
 
 } // namespace de

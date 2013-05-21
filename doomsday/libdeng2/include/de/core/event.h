@@ -33,8 +33,9 @@ class DENG2_PUBLIC Event
 public:
     /// Event type codes.
     enum {
-        KeyPress = 1,
-        KeyRelease = 2
+        KeyPress   = 1,
+        KeyRelease = 2,
+        KeyRepeat  = 3
     };
 
 public:
@@ -46,6 +47,8 @@ public:
      * Returns the type code of the event.
      */
     int type() const { return _type; }
+
+    bool isKeyDown() const { return _type == KeyPress || _type == KeyRepeat; }
 
 private:
     int _type;

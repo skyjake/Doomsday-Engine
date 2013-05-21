@@ -121,7 +121,7 @@ DENG2_PIMPL(Canvas)
         //LOG_AS("Canvas");
 
         ev->accept();
-        if(ev->isAutoRepeat()) return; // Ignore repeats, we do our own.
+        //if(ev->isAutoRepeat()) return; // Ignore repeats, we do our own.
 
         /*
         qDebug() << "Canvas: key press" << ev->key() << QString("0x%1").arg(ev->key(), 0, 16)
@@ -154,12 +154,17 @@ DENG2_PIMPL(Canvas)
 
         DENG2_FOR_PUBLIC_AUDIENCE(KeyEvent, i)
         {
-            i->keyEvent(KeyEvent(ev->type() == QEvent::KeyPress? KeyEvent::Pressed :
+            i->keyEvent(KeyEvent(ev->isAutoRepeat()?             KeyEvent::Repeat :
+                                 ev->type() == QEvent::KeyPress? KeyEvent::Pressed :
                                                                  KeyEvent::Released,
                                  ev->key(),
                                  KeyEvent::ddKeyFromQt(ev->key(), ev->nativeVirtualKey(), ev->nativeScanCode()),
                                  nativeCode(ev),
-                                 ev->text()));
+                                 ev->text(),
+                                 (ev->modifiers().testFlag(Qt::ShiftModifier)?   KeyEvent::Shift   : KeyEvent::NoModifiers) |
+                                 (ev->modifiers().testFlag(Qt::ControlModifier)? KeyEvent::Control : KeyEvent::NoModifiers) |
+                                 (ev->modifiers().testFlag(Qt::AltModifier)?     KeyEvent::Alt     : KeyEvent::NoModifiers) |
+                                 (ev->modifiers().testFlag(Qt::MetaModifier)?    KeyEvent::Meta    : KeyEvent::NoModifiers)));
         }
     }
 };

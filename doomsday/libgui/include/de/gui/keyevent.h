@@ -24,6 +24,8 @@
 #include <de/Event>
 #include <de/String>
 
+#include <QFlags>
+
 namespace de {
 
 /**
@@ -35,19 +37,33 @@ public:
     enum State
     {
         Released,   ///< Released key.
-        Pressed     ///< Pressed key.
+        Pressed,    ///< Pressed key.
+        Repeat      ///< Repeat while held pressed.
     };
+
+    enum Modifier
+    {
+        Shift   = 1,
+        Control = 2,
+        Alt     = 4,
+        Meta    = 8,
+
+        NoModifiers = 0
+    };
+    Q_DECLARE_FLAGS(Modifiers, Modifier)
 
 public:
     KeyEvent();
 
-    KeyEvent(State keyState, int qtKeyCode, int ddKeyCode, int nativeKeyCode, de::String const &keyText);
+    KeyEvent(State keyState, int qtKeyCode, int ddKeyCode, int nativeKeyCode, de::String const &keyText,
+             Modifiers const &mods = NoModifiers);
 
     State state() const;
     inline int qtKey() const { return _qtKey; }
     inline int ddKey() const { return _ddKey; }
     inline int nativeCode() const { return _nativeCode; }
     inline de::String const &text() const { return _text; }
+    inline Modifiers modifiers() const { return _mods; }
 
     /**
      * Translates a Qt key code to a Doomsday key code (see ddkey.h).
@@ -62,10 +78,13 @@ public:
 
 private:
     int _qtKey;
+    Modifiers _mods;
     int _ddKey;
     int _nativeCode;
     de::String _text;
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(KeyEvent::Modifiers)
 
 } // namespace de
 
