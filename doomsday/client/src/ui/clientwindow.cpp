@@ -37,6 +37,7 @@
 #include "ui/widgets/busywidget.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/lineeditwidget.h"
+#include "ui/widgets/consolecommandwidget.h"
 #include "ui/mouse_qt.h"
 
 #include "dd_main.h"
@@ -87,16 +88,13 @@ DENG2_PIMPL(ClientWindow),
                 .setInput(Rule::Width,  root.viewWidth());
         root.add(taskBar);*/
 
-        LineEditWidget *editTest = new LineEditWidget;
-        editTest->setText("Hello World. Lorum ipsum asd asdlkj iaj sdoiajs doias daklsd s. lasdj askldj.");
-        editTest->setCursor(0);
-        editTest->rule()
+        ConsoleCommandWidget *test = new ConsoleCommandWidget;
+        test->rule()
                 .setInput(Rule::Left,   root.viewLeft())
                 .setInput(Rule::Bottom, root.viewBottom())
                 .setInput(Rule::Width,  root.viewWidth());
-        root.add(editTest);
-
-        root.setFocus(editTest);
+        root.add(test);
+        root.setFocus(test);
 
         // Initially the widget is disabled. It will be enabled when the window
         // is visible and ready to be drawn.

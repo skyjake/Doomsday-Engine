@@ -227,7 +227,9 @@ int FontLineWrapping::totalHeightInPixels() const
 }
 
 Vector2i FontLineWrapping::charTopLeftInPixels(int line, int charIndex)
-{
+{    
+    if(line >= height()) return Vector2i();
+
     WrappedLine const span = d->lines[line];
     Range const range(span.range.start, de::min(span.range.end, span.range.start + charIndex));
 
