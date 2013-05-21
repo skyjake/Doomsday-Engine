@@ -197,7 +197,6 @@ int FontLineWrapping::indexAtWidth(Range const &range, int width) const
             // Which is closer, this or the previous char?
             if(de::abs(rw - width) <= de::abs(prevWidth - width))
             {
-                qDebug() << "this" << i;
                 return i;
             }
             return i - 1;
