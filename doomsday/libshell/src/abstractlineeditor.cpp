@@ -483,6 +483,7 @@ bool AbstractLineEditor::handleControlKey(int qtKey, bool controlMod)
         return true;
 
     case Qt::Key_Enter:
+    case Qt::Key_Return:
         d->acceptCompletion();
         return true;
 
