@@ -38,6 +38,11 @@ namespace internal
         BlendFuncSrc,
         BlendFuncDest,
         BlendOp,
+        Scissor,
+        ScissorX,
+        ScissorY,
+        ScissorWidth,
+        ScissorHeight,
         ViewportX,
         ViewportY,
         ViewportWidth,
@@ -78,10 +83,15 @@ DENG2_PIMPL(GLState)
             { BlendFuncSrc,   4  },
             { BlendFuncDest,  4  },
             { BlendOp,        2  },
-            { ViewportX,      12 }, // 4096 max
-            { ViewportY,      12 }, // 4096 max
-            { ViewportWidth,  12 }, // 4096 max
-            { ViewportHeight, 12 }  // 4096 max
+            { Scissor,        1  },
+            { ScissorX,       12 }, // 12 bits == 4096 max
+            { ScissorY,       12 },
+            { ScissorWidth,   12 },
+            { ScissorHeight,  12 },
+            { ViewportX,      12 },
+            { ViewportY,      12 },
+            { ViewportWidth,  12 },
+            { ViewportHeight, 12 }
         };
         props.addElements(propSpecs, MAX_PROPERTIES);
     }
@@ -192,6 +202,28 @@ DENG2_PIMPL(GLState)
             }
             break;
 
+        case Scissor:
+        case ScissorX:
+        case ScissorY:
+        case ScissorWidth:
+        case ScissorHeight:
+        {
+            if(self.scissor())
+            {
+                glEnable(GL_SCISSOR_TEST);
+
+                Rectangleui scr = self.scissorRect();
+                glScissor(scr.left(), self.target().size().y - scr.bottom(),
+                          scr.width(), scr.height());
+                //glScissor(scr.left(), scr.top(), scr.width(), scr.height());
+            }
+            else
+            {
+                glDisable(GL_SCISSOR_TEST);
+            }
+            break;
+        }
+
         case ViewportX:
         case ViewportY:
         case ViewportWidth:
@@ -213,6 +245,15 @@ DENG2_PIMPL(GLState)
         if(changed.contains(BlendFuncSrc) && changed.contains(BlendFuncDest))
         {
             changed.remove(BlendFuncDest);
+        }
+
+        if(changed.contains(ScissorX) || changed.contains(ScissorY) ||
+           changed.contains(ScissorWidth) || changed.contains(ScissorHeight))
+        {
+            changed.insert(ScissorX);
+            changed.remove(ScissorY);
+            changed.remove(ScissorWidth);
+            changed.remove(ScissorHeight);
         }
 
         if(changed.contains(ViewportX) || changed.contains(ViewportY) ||
@@ -313,6 +354,31 @@ GLState &GLState::setViewport(Rectangleui const &viewportRect)
     return *this;
 }
 
+GLState &GLState::setScissor(Rectanglei const &scissorRect)
+{
+    return setScissor(scissorRect.toRectangleui());
+}
+
+GLState &GLState::setScissor(Rectangleui const &scissorRect)
+{
+    d->props.set(Scissor,       true);
+    d->props.set(ScissorX,      scissorRect.left());
+    d->props.set(ScissorY,      scissorRect.top());
+    d->props.set(ScissorWidth,  scissorRect.width());
+    d->props.set(ScissorHeight, scissorRect.height());
+    return *this;
+}
+
+GLState &GLState::clearScissor()
+{
+    d->props.set(Scissor,       false);
+    d->props.set(ScissorX,      0u);
+    d->props.set(ScissorY,      0u);
+    d->props.set(ScissorWidth,  0u);
+    d->props.set(ScissorHeight, 0u);
+    return *this;
+}
+
 gl::Cull GLState::cull() const
 {
     return d->props.valueAs<gl::Cull>(CullMode);
@@ -373,6 +439,19 @@ Rectangleui GLState::viewport() const
                        d->props[ViewportY],
                        d->props[ViewportWidth],
                        d->props[ViewportHeight]);
+}
+
+bool GLState::scissor() const
+{
+    return d->props.asBool(Scissor);
+}
+
+Rectangleui GLState::scissorRect() const
+{
+    return Rectangleui(d->props[ScissorX],
+                       d->props[ScissorY],
+                       d->props[ScissorWidth],
+                       d->props[ScissorHeight]);
 }
 
 void GLState::apply() const

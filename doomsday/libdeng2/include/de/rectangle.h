@@ -58,7 +58,7 @@ public:
     }
     static RectangleType fromQRect(QRect const &qr) {
         return RectangleType(qr.left(), qr.top(), qr.width(), qr.height());
-    }
+    }    
 
     SizeType width() const { return abs(bottomRight.x - topLeft.x); }
     SizeType height() const { return abs(bottomRight.y - topLeft.y); }
@@ -84,6 +84,11 @@ public:
     }
     RectangleType adjusted(CornerVectorType const &tl, CornerVectorType const &br) const {
         return RectangleType(topLeft + tl, bottomRight + br);
+    }
+    Rectangle<Vector2ui, Vector2ui> toRectangleui() const {
+        Vector2ui tl(duint(de::max(0, topLeft.x)),     duint(de::max(0, topLeft.y)));
+        Vector2ui br(duint(de::max(0, bottomRight.x)), duint(de::max(0, bottomRight.y)));
+        return Rectangle<Vector2ui, Vector2ui>(tl, br);
     }
     bool contains(Corner const &point) const {
         return point >= topLeft && point <= bottomRight;

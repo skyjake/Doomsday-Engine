@@ -109,6 +109,9 @@ public:
     GLState &setTarget(GLTarget &target);
     GLState &setDefaultTarget();
     GLState &setViewport(Rectangleui const &viewportRect);
+    GLState &setScissor(Rectanglei const &scissorRect);
+    GLState &setScissor(Rectangleui const &scissorRect);
+    GLState &clearScissor();
 
     gl::Cull cull() const;
     bool depthTest() const;
@@ -121,6 +124,8 @@ public:
     gl::BlendOp blendOp() const;
     GLTarget &target() const;
     Rectangleui viewport() const;
+    bool scissor() const;
+    Rectangleui scissorRect() const;
 
     /**
      * Updates the OpenGL state to match this GLState. Until this is called no
