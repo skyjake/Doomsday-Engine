@@ -32,7 +32,7 @@ DENG2_PIMPL(GLTextComposer)
 
     struct Line {
         Id id;
-        shell::Range range;
+        Rangei range;
 
         Line() : id(Id::None) {}
     };

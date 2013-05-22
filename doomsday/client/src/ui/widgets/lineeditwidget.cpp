@@ -179,7 +179,7 @@ DENG2_OBSERVES(Atlas, Reposition)
         // Underline the possible suggested completion.
         if(self.isSuggestingCompletion())
         {
-            shell::Range const comp = self.completionRange();
+            Rangei const   comp     = self.completionRange();
             Vector2i const startPos = self.linePos(comp.start);
             Vector2i const endPos   = self.linePos(comp.end);
 
@@ -188,7 +188,7 @@ DENG2_OBSERVES(Atlas, Reposition)
             // It may span multiple lines.
             for(int i = startPos.y; i <= endPos.y; ++i)
             {
-                shell::Range const span = wraps.line(i).range;
+                Rangei const span = wraps.line(i).range;
                 Vector2i start = wraps.charTopLeftInPixels(i, i == startPos.y? startPos.x : span.start) + offset;
                 Vector2i end   = wraps.charTopLeftInPixels(i, i == endPos.y?   endPos.x   : span.end)   + offset;
 

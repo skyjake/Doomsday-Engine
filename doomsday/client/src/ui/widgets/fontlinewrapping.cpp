@@ -28,19 +28,19 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         WrappedLine line;
         int width;
 
-        Line(WrappedLine const &ln = WrappedLine(Range()), int w = 0) : line(ln), width(w) {}
+        Line(WrappedLine const &ln = WrappedLine(Rangei()), int w = 0) : line(ln), width(w) {}
     };
     QList<Line> lines;
     String text;
 
     Instance() : font(0) {}
 
-    String rangeText(Range const &range) const
+    String rangeText(Rangei const &range) const
     {
         return text.substr(range.start, range.size());
     }
 
-    int rangeVisibleWidth(Range const &range) const
+    int rangeVisibleWidth(Rangei const &range) const
     {
         if(font)
         {
@@ -49,7 +49,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         return 0;
     }
 
-    int rangeAdvanceWidth(Range const &range) const
+    int rangeAdvanceWidth(Rangei const &range) const
     {
         if(font)
         {
@@ -58,7 +58,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         return 0;
     }
 
-    void appendLine(Range const &range)
+    void appendLine(Rangei const &range)
     {
         lines.append(Line(WrappedLine(range), rangeVisibleWidth(range)));
     }
@@ -109,11 +109,11 @@ void FontLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
     forever
     {
         // Quick check: does the remainder fit?
-        Range range(begin, text.size());
+        Rangei range(begin, text.size());
         int visWidth = d->rangeVisibleWidth(range);
         if(visWidth <= maxWidth)
         {
-            d->lines.append(Instance::Line(WrappedLine(Range(begin, text.size())), visWidth));
+            d->lines.append(Instance::Line(WrappedLine(Rangei(begin, text.size())), visWidth));
             break;
         }
 
@@ -124,7 +124,7 @@ void FontLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
         {
             ++end;
 
-            if(d->rangeVisibleWidth(Range(begin, end)) > maxWidth)
+            if(d->rangeVisibleWidth(Rangei(begin, end)) > maxWidth)
             {
                 // Went too far.
                 wrapPosMax = --end;
@@ -156,13 +156,13 @@ void FontLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
         if(text.at(end) == newline)
         {
             // The newline will be omitted from the wrapped lines.
-            d->appendLine(Range(begin, end));
+            d->appendLine(Rangei(begin, end));
             begin = end + 1;
         }
         else
         {
             while(text.at(end).isSpace()) ++end;
-            d->appendLine(Range(begin, end));
+            d->appendLine(Rangei(begin, end));
             begin = end;
         }
     }
@@ -197,18 +197,18 @@ int FontLineWrapping::height() const
     return d->lines.size();
 }
 
-int FontLineWrapping::rangeWidth(Range const &range) const
+int FontLineWrapping::rangeWidth(Rangei const &range) const
 {
     return d->rangeAdvanceWidth(range);
 }
 
-int FontLineWrapping::indexAtWidth(Range const &range, int width) const
+int FontLineWrapping::indexAtWidth(Rangei const &range, int width) const
 {
     int prevWidth = 0;
 
     for(int i = range.start; i < range.end; ++i)
     {
-        int const rw = d->rangeAdvanceWidth(Range(range.start, i));
+        int const rw = d->rangeAdvanceWidth(Rangei(range.start, i));
         if(rw >= width)
         {
             // Which is closer, this or the previous char?
@@ -248,7 +248,8 @@ Vector2i FontLineWrapping::charTopLeftInPixels(int line, int charIndex)
     if(line >= height()) return Vector2i();
 
     WrappedLine const span = d->lines[line].line;
-    Range const range(span.range.start, de::min(span.range.end, span.range.start + charIndex));
+    Rangei const range(span.range.start,
+                       de::min(span.range.end, span.range.start + charIndex));
 
     Vector2i cp;
     cp.x = d->font->advanceWidth(d->rangeText(range));
