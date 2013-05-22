@@ -120,9 +120,7 @@ DENG2_OBSERVES(Atlas, Reposition)
         uTex = atlas();
 
         // Temporary background texture for development...
-        QImage bg(QSize(1, 1), QImage::Format_ARGB32);
-        bg.fill(QColor(255, 255, 255, 255).rgba());
-        bgTex = atlas().alloc(bg);
+        bgTex = atlas().alloc(Image::solidColor(Image::Color(255, 255, 255, 255), Image::Size(1, 1)));
 
         drawable.addBuffer(ID_BUF_TEXT, new VertexBuf);
         drawable.addBufferWithNewProgram(ID_BUF_CURSOR, new VertexBuf, "cursor");
