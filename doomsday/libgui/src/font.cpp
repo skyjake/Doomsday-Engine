@@ -99,16 +99,16 @@ QImage Font::rasterize(String const &textLine,
 
     Rectanglei bounds = measure(textLine);
 
-    QImage img(QSize(bounds.width(), bounds.height()), QImage::Format_ARGB32);
+    QImage img(QSize(bounds.width(), bounds.height() + 1), QImage::Format_ARGB32);
 
     QColor bgColor(background.x, background.y, background.z, background.w);
     img.fill(bgColor.rgba());
 
-    QPainter painter(&img);
+    QPainter painter(&img);    
     painter.setFont(d->font);
     painter.setPen(QColor(foreground.x, foreground.y, foreground.z, foreground.w));
     painter.setBrush(bgColor);
-    painter.drawText(0, d->ascentRule->valuei(), textLine);
+    painter.drawText(img.rect(), Qt::TextDontClip | Qt::TextSingleLine, textLine);
     return img;
 }
 
