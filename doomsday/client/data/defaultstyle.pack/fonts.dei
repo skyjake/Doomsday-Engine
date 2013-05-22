@@ -18,7 +18,7 @@ group {
     
     font default {
         family: Lucida Grande
-        size: 24pt
+        size: 18pt
         weight: normal
         style: normal
     }
@@ -37,7 +37,7 @@ font title inherits default {
 }
 
 group log {
-    font normal inherits monospace {}
+    font normal inherits default {}
 }
 
 group editor {

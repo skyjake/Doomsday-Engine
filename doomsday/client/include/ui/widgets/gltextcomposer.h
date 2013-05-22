@@ -75,6 +75,10 @@ public:
      */
     void release();
 
+    void makeVertices(Vertices &triStrip,
+                      de::Vector2i const &topLeft,
+                      Alignment const &lineAlign);
+
     /**
      * Generates vertices for all the text lines and concatenates them
      * onto the existing triangle strip in @a triStrip.

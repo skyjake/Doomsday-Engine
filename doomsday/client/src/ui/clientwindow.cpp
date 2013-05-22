@@ -38,6 +38,7 @@
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/lineeditwidget.h"
 #include "ui/widgets/consolecommandwidget.h"
+#include "ui/widgets/logwidget.h"
 #include "ui/mouse_qt.h"
 
 #include "dd_main.h"
@@ -95,6 +96,13 @@ DENG2_PIMPL(ClientWindow),
                 .setInput(Rule::Width,  root.viewWidth());
         root.add(test);
         root.setFocus(test);
+
+        LogWidget *log = new LogWidget;
+        log->rule()
+                .setInput(Rule::Left,   root.viewLeft())
+                .setInput(Rule::Bottom, test->rule().top())
+                .setInput(Rule::Top,    root.viewTop() + 200);
+        root.add(log);
 
         // Initially the widget is disabled. It will be enabled when the window
         // is visible and ready to be drawn.

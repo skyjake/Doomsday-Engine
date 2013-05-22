@@ -24,7 +24,13 @@ using namespace de::shell;
 DENG2_PIMPL_NOREF(FontLineWrapping)
 {
     Font const *font;
-    QList<WrappedLine> lines;
+    struct Line {
+        WrappedLine line;
+        int width;
+
+        Line(WrappedLine const &ln = WrappedLine(Range()), int w = 0) : line(ln), width(w) {}
+    };
+    QList<Line> lines;
     String text;
 
     Instance() : font(0) {}
@@ -50,6 +56,11 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
             return font->advanceWidth(rangeText(range));
         }
         return 0;
+    }
+
+    void appendLine(Range const &range)
+    {
+        lines.append(Line(WrappedLine(range), rangeVisibleWidth(range)));
     }
 };
 
@@ -98,9 +109,11 @@ void FontLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
     forever
     {
         // Quick check: does the remainder fit?
-        if(d->rangeVisibleWidth(Range(begin, text.size())) <= maxWidth)
+        Range range(begin, text.size());
+        int visWidth = d->rangeVisibleWidth(range);
+        if(visWidth <= maxWidth)
         {
-            d->lines.append(WrappedLine(Range(begin, text.size())));
+            d->lines.append(Instance::Line(WrappedLine(Range(begin, text.size())), visWidth));
             break;
         }
 
@@ -119,12 +132,15 @@ void FontLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
             }
         }
 
+        DENG2_ASSERT(end != text.size());
+
+        /*
         if(end == text.size())
         {
             // Out of characters; time to stop.
-            d->lines.append(WrappedLine(Range(begin, text.size())));
+            d->appendLine(Range(begin, text.size()));
             break;
-        }
+        }*/
 
         // Find a good (whitespace) break point.
         while(!text.at(end).isSpace())
@@ -140,37 +156,38 @@ void FontLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
         if(text.at(end) == newline)
         {
             // The newline will be omitted from the wrapped lines.
-            d->lines.append(WrappedLine(Range(begin, end)));
+            d->appendLine(Range(begin, end));
             begin = end + 1;
         }
         else
         {
             while(text.at(end).isSpace()) ++end;
-            d->lines.append(WrappedLine(Range(begin, end)));
+            d->appendLine(Range(begin, end));
             begin = end;
-            //while(text.at(begin).isSpace()) ++begin;
         }
     }
 
     // Mark the final line.
-    d->lines.last().isFinal = true;
+    d->lines.last().line.isFinal = true;
+}
+
+String const &FontLineWrapping::text() const
+{
+    return d->text;
 }
 
 WrappedLine FontLineWrapping::line(int index) const
 {
     DENG2_ASSERT(index >= 0 && index < height());
-    return d->lines[index];
+    return d->lines[index].line;
 }
 
 int FontLineWrapping::width() const
 {
-    if(!d->font) return 0;
-
     int w = 0;
     for(int i = 0; i < d->lines.size(); ++i)
     {
-        WrappedLine const &span = d->lines[i];
-        w = de::max(w, d->rangeVisibleWidth(span.range));
+        w = de::max(w, d->lines[i].width);
     }
     return w;
 }
@@ -230,7 +247,7 @@ Vector2i FontLineWrapping::charTopLeftInPixels(int line, int charIndex)
 {    
     if(line >= height()) return Vector2i();
 
-    WrappedLine const span = d->lines[line];
+    WrappedLine const span = d->lines[line].line;
     Range const range(span.range.start, de::min(span.range.end, span.range.start + charIndex));
 
     Vector2i cp;

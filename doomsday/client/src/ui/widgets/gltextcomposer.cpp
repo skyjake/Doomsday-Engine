@@ -91,8 +91,6 @@ DENG2_PIMPL(GLTextComposer)
             Line &line = lines[i];
             line.range = span.range;
             line.id = atlas->alloc(font->rasterize(part));
-
-            //qDebug() << lines.back().asText() << part;
         }
 
         // Remove the excess lines.
@@ -145,6 +143,13 @@ bool GLTextComposer::update()
 }
 
 void GLTextComposer::makeVertices(Vertices &triStrip,
+                                  Vector2i const &topLeft,
+                                  Alignment const &lineAlign)
+{
+    makeVertices(triStrip, Rectanglei(topLeft, topLeft), AlignTop | AlignLeft, lineAlign);
+}
+
+void GLTextComposer::makeVertices(Vertices &triStrip,
                                   Rectanglei const &rect,
                                   Alignment const &alignInRect,
                                   Alignment const &lineAlign)
@@ -167,7 +172,7 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
     {
         p.y += int(rect.height()) - contentSize.y;
     }
-    else
+    else if(!alignInRect.testFlag(AlignTop))
     {
         p.y += (int(rect.height()) - contentSize.y) / 2;
     }

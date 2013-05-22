@@ -367,6 +367,7 @@ DENG_HEADERS += \
     include/ui/widgets/legacywidget.h \
     include/ui/widgets/lineeditwidget.h \
     include/ui/widgets/logwidget.h \
+    include/ui/widgets/styledlogsinkformatter.h \
     include/ui/widgets/taskbarwidget.h \
     include/ui/widgets/widgetactions.h \
     include/ui/windowsystem.h \

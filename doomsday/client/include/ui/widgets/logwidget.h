@@ -70,7 +70,7 @@ public:
     void scroll(int to);
 
     // Events.
-    void initialize();
+    void viewResized();
     void draw();
     bool handleEvent(de::Event const &event);
 
@@ -83,6 +83,10 @@ public slots:
 signals:
     void scrollPositionChanged(int pos);
     void scrollMaxChanged(int maximum);
+
+protected:
+    void glInit();
+    void glDeinit();
 
 private:
     DENG2_PRIVATE(d)

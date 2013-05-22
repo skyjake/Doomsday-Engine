@@ -39,6 +39,8 @@ public:
     bool isEmpty() const;
     void clear();
     void wrapTextToWidth(de::String const &text, int maxWidth);
+
+    de::String const &text() const;
     de::shell::WrappedLine line(int index) const;
     int width() const;
     int height() const;
