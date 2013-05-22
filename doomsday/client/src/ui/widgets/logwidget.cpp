@@ -47,11 +47,10 @@ DENG2_PIMPL(LogWidget)
     /// Cache of drawable entries.
     struct CacheEntry
     {
-        //int y;
         FontLineWrapping wraps;
         GLTextComposer composer;
 
-        CacheEntry(Font const &font, Atlas &atlas) //: y(0)
+        CacheEntry(Font const &font, Atlas &atlas)
         {
             wraps.setFont(font);
             composer.setAtlas(atlas);
@@ -168,7 +167,7 @@ DENG2_PIMPL(LogWidget)
     {
         entryAtlas = AtlasTexture::newWithRowAllocator(
                 Atlas::BackingStore | Atlas::AllowDefragment,
-                GLTexture::maximumSize().min(Atlas::Size(4096, 2048)));
+                GLTexture::maximumSize().min(Atlas::Size(2048, 1024)));
 
         bgTex = self.root().atlas().alloc(Image::solidColor(Image::Color(255, 255, 255, 255),
                                                             Image::Size(1, 1)));
@@ -201,6 +200,8 @@ DENG2_PIMPL(LogWidget)
 
     void prune()
     {
+        int numPruned = 0;
+
         // Remove old entries if there are too many.
         int excess = sink.entryCount() - maxEntries;
         if(excess > 0)
@@ -210,9 +211,15 @@ DENG2_PIMPL(LogWidget)
         while(excess-- > 0 && !cache.isEmpty())
         {
             delete cache.takeFirst();
+            numPruned++;
+        }
 
-            firstVisibleIndex--;
-            lastVisibleIndex--;
+        // Adjust the visible range appropriately.
+        firstVisibleIndex -= numPruned;
+        lastVisibleIndex  -= numPruned;
+        if(lastVisibleIndex >= 0 && firstVisibleIndex < 0)
+        {
+            firstVisibleIndex = 0;
         }
     }
 
@@ -271,12 +278,6 @@ DENG2_PIMPL(LogWidget)
             // No cached entry for this, generate one.
             CacheEntry *cached = new CacheEntry(*font, *entryAtlas);
             cached->wrap(styledTextForEntry(idx), contentWidth());
-            /*
-            if(idx > 0)
-            {
-                CacheEntry *previous = cache[idx - 1];
-                cached->y = previous->y + previous->height();
-            }*/
             cache.append(cached);
 
             // Adjust visible offset so it remains fixed in relation to
@@ -301,8 +302,6 @@ DENG2_PIMPL(LogWidget)
     void releaseExcessComposedEntries()
     {
         if(lastVisibleIndex < 0 || firstVisibleIndex < 0) return;
-
-        // We don't need to keep all entries ready for drawing immediately.
 
         int const visRange = lastVisibleIndex - firstVisibleIndex;
 
@@ -356,10 +355,9 @@ DENG2_PIMPL(LogWidget)
         // Draw in reverse, as much as we need.
         int yBottom = contentSize.y + visibleOffset;
 
-        // Scrolling is done using the matrix.
         maxScroll = maxVisibleOffset(contentSize.y);
-        uMvpMatrix = projMatrix * Matrix4f::translate(
-                    Vector2f(pos.topLeft + Vector2i(margin, 0)));
+        uMvpMatrix = projMatrix *
+                Matrix4f::translate(Vector2f(pos.topLeft + Vector2i(margin, 0)));
 
         firstVisibleIndex = -1;
         lastVisibleIndex = -1;
@@ -435,6 +433,7 @@ DENG2_PIMPL(LogWidget)
 
         GLState::pop();
 
+        // We don't need to keep all entries ready for drawing immediately.
         releaseExcessComposedEntries();
 
         // Notify now that we know what the max scroll is.
