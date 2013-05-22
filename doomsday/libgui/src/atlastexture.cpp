@@ -58,7 +58,15 @@ void AtlasTexture::commitFull(Image const &fullImage) const
 
 void AtlasTexture::commit(Image const &image, Vector2i const &topLeft) const
 {
-    const_cast<AtlasTexture *>(this)->setSubImage(image, topLeft);
+    GLTexture *tex = const_cast<AtlasTexture *>(this);
+
+    if(size() == GLTexture::Size(0, 0))
+    {
+        // Hasn't been full-committed yet.
+        tex->setUndefinedImage(totalSize(), Image::RGBA_8888);
+    }
+
+    tex->setSubImage(image, topLeft);
 }
 
 } // namespace de

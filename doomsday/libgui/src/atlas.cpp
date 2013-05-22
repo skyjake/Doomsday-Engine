@@ -313,20 +313,20 @@ Image Atlas::image(Id const &id) const
 
 void Atlas::commit() const
 {
-    if(!d->needCommit) return;
+    if(!d->needCommit || !d->hasBacking()) return;
 
     LOG_AS("Atlas");
 
     if(d->mustCommitFull())
     {
         DENG2_ASSERT(d->backing.size() == d->totalSize);
-        LOG_DEBUG("Full commit ") << d->backing.size().asText();
+        LOG_TRACE("Full commit ") << d->backing.size().asText();
 
         commitFull(d->backing);
     }
     else
     {
-        LOG_DEBUG("Partial commit ") << d->changedArea.asText();
+        LOG_TRACE("Partial commit ") << d->changedArea.asText();
 
         // An extra copy is done to crop to the changed area.
         commit(d->backing.subImage(d->changedArea), d->changedArea.topLeft);
