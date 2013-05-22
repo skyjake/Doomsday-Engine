@@ -151,6 +151,8 @@ public:
     static GLFormat glFormat(Format imageFormat);
     static GLFormat glFormat(QImage::Format qtImageFormat);
 
+    static Image solidColor(Color const &color, Size const &size);
+
 private:
     DENG2_PRIVATE(d)
 };

@@ -440,4 +440,12 @@ Image::GLFormat Image::glFormat(QImage::Format format)
     }
     return GLFormat(GL_RGBA, GL_UNSIGNED_BYTE, 4);
 }
+
+Image Image::solidColor(Color const &color, Size const &size)
+{
+    QImage img(QSize(size.x, size.y), QImage::Format_ARGB32);
+    img.fill(QColor(color.x, color.y, color.z, color.w).rgba());
+    return img;
+}
+
 } // namespace de
