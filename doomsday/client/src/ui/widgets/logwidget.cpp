@@ -47,11 +47,11 @@ DENG2_PIMPL(LogWidget)
     /// Cache of drawable entries.
     struct CacheEntry
     {
-        int y;
+        //int y;
         FontLineWrapping wraps;
         GLTextComposer composer;
 
-        CacheEntry(Font const &font, Atlas &atlas) : y(0)
+        CacheEntry(Font const &font, Atlas &atlas) //: y(0)
         {
             wraps.setFont(font);
             composer.setAtlas(atlas);
@@ -80,7 +80,7 @@ DENG2_PIMPL(LogWidget)
             composer.setWrapping(wraps);
         }
 
-        void make(GLTextComposer::Vertices &verts)
+        void make(GLTextComposer::Vertices &verts, int y)
         {
             composer.update();
             composer.makeVertices(verts, Vector2i(0, y), GLTextComposer::AlignLeft);
@@ -271,11 +271,12 @@ DENG2_PIMPL(LogWidget)
             // No cached entry for this, generate one.
             CacheEntry *cached = new CacheEntry(*font, *entryAtlas);
             cached->wrap(styledTextForEntry(idx), contentWidth());
+            /*
             if(idx > 0)
             {
                 CacheEntry *previous = cache[idx - 1];
                 cached->y = previous->y + previous->height();
-            }
+            }*/
             cache.append(cached);
 
             // Adjust visible offset so it remains fixed in relation to
@@ -358,7 +359,7 @@ DENG2_PIMPL(LogWidget)
         // Scrolling is done using the matrix.
         maxScroll = maxVisibleOffset(contentSize.y);
         uMvpMatrix = projMatrix * Matrix4f::translate(
-                    Vector2f(pos.topLeft + Vector2i(margin, visibleOffset - maxScroll)));
+                    Vector2f(pos.topLeft + Vector2i(margin, 0)));
 
         firstVisibleIndex = -1;
         lastVisibleIndex = -1;
@@ -374,7 +375,7 @@ DENG2_PIMPL(LogWidget)
             if(yBottom < contentSize.y)
             {
                 // This entry is visible.
-                entry->make(verts);
+                entry->make(verts, yBottom);
 
                 if(lastVisibleIndex == -1) lastVisibleIndex = idx;
                 firstVisibleIndex = idx;
