@@ -82,6 +82,7 @@ HEADERS += \
     include/de/Matrix \
     include/de/MemoryLogSink \
     include/de/MonospaceLogSinkFormatter \
+    include/de/Range \
     include/de/Rectangle \
     include/de/System \
     include/de/TextApp \
@@ -95,10 +96,6 @@ HEADERS += \
     include/de/error.h \
     include/de/libdeng2.h \
     include/de/math.h \
-    include/de/matrix.h \
-    include/de/rectangle.h \
-    include/de/vector.h \
-    include/de/version.h \
     include/de/core/app.h \
     include/de/core/asset.h \
     include/de/core/clock.h \
@@ -113,12 +110,17 @@ HEADERS += \
     include/de/core/logbuffer.h \
     include/de/core/logsink.h \
     include/de/core/loop.h \
+    include/de/core/matrix.h \
     include/de/core/memorylogsink.h \
     include/de/core/monospacelogsinkformatter.h \
+    include/de/core/range.h \
+    include/de/core/rectangle.h \
     include/de/core/system.h \
     include/de/core/textapp.h \
     include/de/core/textstreamlogsink.h \
-    include/de/core/unixinfo.h
+    include/de/core/unixinfo.h \
+    include/de/core/vector.h \
+    include/de/core/version.h
 
 # Private headers.
 HEADERS += \

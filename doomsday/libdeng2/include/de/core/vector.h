@@ -21,12 +21,12 @@
 #ifndef LIBDENG2_VECTOR_H
 #define LIBDENG2_VECTOR_H
 
-#include "math.h"
-#include "Error"
-#include "ISerializable"
-#include "Writer"
-#include "Reader"
-#include "String"
+#include "../math.h"
+#include "../Error"
+#include "../ISerializable"
+#include "../Writer"
+#include "../Reader"
+#include "../String"
 
 #include <QTextStream>
 #include <cmath>

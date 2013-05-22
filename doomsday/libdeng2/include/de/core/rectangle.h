@@ -20,7 +20,7 @@
 #ifndef LIBDENG2_RECTANGLE_H
 #define LIBDENG2_RECTANGLE_H
 
-#include "Vector"
+#include "../Vector"
 #include <QRect>
 
 #ifdef WIN32
