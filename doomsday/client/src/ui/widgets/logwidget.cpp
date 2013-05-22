@@ -282,7 +282,8 @@ DENG2_PIMPL(LogWidget)
             // existing entries.
             if(visibleOffset.target() > 0)
             {
-                setVisibleOffset(visibleOffset.target() + cached->height());
+                visibleOffset.adjustTarget(visibleOffset.target() + cached->height());
+                emit self.scrollPositionChanged(visibleOffset.target());
             }
         }
     }
@@ -351,9 +352,6 @@ DENG2_PIMPL(LogWidget)
 
         clampVisibleOffset(contentSize.y);
 
-        GLState &st = GLState::push();
-        // TODO -- Set up a scissor to limit the drawn entries.
-
         // Draw in reverse, as much as we need.
         int yBottom = contentSize.y + visibleOffset;
 
@@ -403,8 +401,6 @@ DENG2_PIMPL(LogWidget)
         targetCanvas().draw(buf, pos.topLeft);
         */
 
-        GLState::pop();
-
         // We won't keep an unlimited number of entries in memory; delete the
         // oldest ones if limit has been reached.
         prune();
@@ -419,7 +415,7 @@ DENG2_PIMPL(LogWidget)
             VertexBuf::Vertices verts;
 
             VertexBuf::Type v;
-            v.rgba = Vector4f(0, 0, 0, .9f);
+            v.rgba = Vector4f(0, 0, 0, .8f);
             v.texCoord = self.root().atlas().imageRectf(bgTex).middle();
 
             v.pos = pos.topLeft; verts << v;
@@ -430,9 +426,13 @@ DENG2_PIMPL(LogWidget)
             bgBuf->setVertices(gl::TriangleStrip, verts, gl::Static);
         }
 
-        drawEntries();
+        GLState &st = GLState::push();
+        st.setScissor(pos);
 
+        drawEntries();
         drawable.draw();
+
+        GLState::pop();
 
         releaseExcessComposedEntries();
 
@@ -468,7 +468,7 @@ int LogWidget::scrollPosition() const
 
 int LogWidget::scrollPageSize() const
 {
-    return de::max(1, rule().height().valuei() / 2); // - );
+    return de::max(1, rule().height().valuei() / 2);
 }
 
 int LogWidget::maximumScroll() const
