@@ -34,7 +34,7 @@
 #include "MaterialVariantSpec"
 #include "map/gamemap.h"
 #include "map/lineowner.h"
-#include "SectionEdge"
+#include "WallEdge"
 
 #include "render/rendpoly.h"
 #include "render/shadowedge.h"
@@ -996,7 +996,7 @@ static void quadTexCoords(rtexcoord_t *tc, rvertex_t const *rverts, float wallLe
 }
 
 static void drawWallSectionShadow(rvertex_t const *origVertices,
-    SectionEdge const &leftEdge, SectionEdge const &rightEdge,
+    WallEdge const &leftEdge, WallEdge const &rightEdge,
     rendershadowseg_params_t const &wsParms)
 {
     DENG_ASSERT(origVertices);
@@ -1073,7 +1073,7 @@ static void drawWallSectionShadow(rvertex_t const *origVertices,
     R_FreeRendColors(rcolors);
 }
 
-void Rend_RadioWallSection(SectionEdge const &leftEdge, SectionEdge const &rightEdge,
+void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
     float shadowDark, float shadowSize)
 {
     // Disabled?

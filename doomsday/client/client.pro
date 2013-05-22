@@ -121,7 +121,7 @@ DENG_HEADERS += \
     include/Plane \
     include/Polygon \
     include/Polyobj \
-    include/SectionEdge \
+    include/WallEdge \
     include/Sector \
     include/Surface \
     include/Vertex
@@ -264,7 +264,6 @@ DENG_HEADERS += \
     include/map/propertyvalue.h \
     include/map/r_world.h \
     include/map/reject.h \
-    include/map/sectionedge.h \
     include/map/sector.h \
     include/map/surface.h \
     include/map/vertex.h \
@@ -309,6 +308,7 @@ DENG_HEADERS += \
     include/render/trianglestripbuilder.h \
     include/render/vignette.h \
     include/render/vlight.h \
+    include/render/walledge.h \
     include/resource/animgroups.h \
     include/resource/bitmapfont.h \
     include/resource/colorpalette.h \
@@ -538,7 +538,6 @@ SOURCES += \
     src/map/propertyvalue.cpp \
     src/map/r_world.cpp \
     src/map/reject.cpp \
-    src/map/sectionedge.cpp \
     src/map/sector.cpp \
     src/map/surface.cpp \
     src/map/vertex.cpp \
@@ -583,6 +582,7 @@ SOURCES += \
     src/render/trianglestripbuilder.cpp \
     src/render/vignette.cpp \
     src/render/vlight.cpp \
+    src/render/walledge.cpp \
     src/resource/animgroups.cpp \
     src/resource/api_material.cpp \
     src/resource/api_resource.cpp \

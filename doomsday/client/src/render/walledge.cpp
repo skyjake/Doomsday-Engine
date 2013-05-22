@@ -1,4 +1,4 @@
-/** @file map/sectionedge.cpp World Map (Wall) Section Edge.
+/** @file render/walledge.cpp Wall Edge Geometry.
  *
  * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -24,31 +24,31 @@
 #include "map/r_world.h" // R_SideSectionCoords
 #include "map/lineowner.h"
 
-#include "map/sectionedge.h"
+#include "render/walledge.h"
 
 using namespace de;
 
-SectionEdge::Intercept::Intercept(SectionEdge *owner, double distance)
+WallEdge::Intercept::Intercept(WallEdge *owner, double distance)
     : IHPlane::IIntercept(distance),
       _owner(owner)
 {}
 
-SectionEdge::Intercept::Intercept(Intercept const &other)
+WallEdge::Intercept::Intercept(Intercept const &other)
     : IHPlane::IIntercept(other.distance()),
       _owner(other._owner) /// @todo Should not copy owner
 {}
 
-SectionEdge &SectionEdge::Intercept::owner() const
+WallEdge &WallEdge::Intercept::owner() const
 {
     return *_owner;
 }
 
-Vector3d SectionEdge::Intercept::origin() const
+Vector3d WallEdge::Intercept::origin() const
 {
     return Vector3d(owner().origin(), distance());
 }
 
-DENG2_PIMPL(SectionEdge), public IHPlane
+DENG2_PIMPL(WallEdge), public IHPlane
 {
     Line::Side *lineSide;
     int section;
@@ -66,7 +66,7 @@ DENG2_PIMPL(SectionEdge), public IHPlane
         Partition partition;
 
         /// Intercept points along the half-plane.
-        SectionEdge::Intercepts intercepts;
+        WallEdge::Intercepts intercepts;
 
         /// Set to @c true when @var intercepts requires sorting.
         bool needSortIntercepts;
@@ -109,7 +109,7 @@ DENG2_PIMPL(SectionEdge), public IHPlane
         if(!isValid)
         {
             /// @throw InvalidError  Invalid range geometry was specified.
-            throw SectionEdge::InvalidError("SectionEdge::verifyValid", "Range geometry is not valid (top < bottom)");
+            throw WallEdge::InvalidError("WallEdge::verifyValid", "Range geometry is not valid (top < bottom)");
         }
     }
 
@@ -126,11 +126,11 @@ DENG2_PIMPL(SectionEdge), public IHPlane
         return hplane.partition;
     }
 
-    SectionEdge::Intercept *find(double distance)
+    WallEdge::Intercept *find(double distance)
     {
         for(int i = 0; i < hplane.intercepts.count(); ++i)
         {
-            SectionEdge::Intercept &icpt = hplane.intercepts[i];
+            WallEdge::Intercept &icpt = hplane.intercepts[i];
             if(de::fequal(icpt.distance(), distance))
                 return &icpt;
         }
@@ -138,13 +138,13 @@ DENG2_PIMPL(SectionEdge), public IHPlane
     }
 
     // Implements IHPlane
-    SectionEdge::Intercept const *intercept(double distance)
+    WallEdge::Intercept const *intercept(double distance)
     {
         if(find(distance))
             return 0;
 
-        hplane.intercepts.append(SectionEdge::Intercept(&self, distance));
-        SectionEdge::Intercept *newIntercept = &hplane.intercepts.last();
+        hplane.intercepts.append(WallEdge::Intercept(&self, distance));
+        WallEdge::Intercept *newIntercept = &hplane.intercepts.last();
 
         // The addition of a new intercept means we'll need to resort.
         hplane.needSortIntercepts = true;
@@ -171,7 +171,7 @@ DENG2_PIMPL(SectionEdge), public IHPlane
     }
 
     // Implements IHPlane
-    SectionEdge::Intercept const &at(int index) const
+    WallEdge::Intercept const &at(int index) const
     {
         if(index >= 0 && index < interceptCount())
         {
@@ -192,7 +192,7 @@ DENG2_PIMPL(SectionEdge), public IHPlane
     void printIntercepts() const
     {
         uint index = 0;
-        foreach(SectionEdge::Intercept const &icpt, hplane.intercepts)
+        foreach(WallEdge::Intercept const &icpt, hplane.intercepts)
         {
             LOG_DEBUG(" %u: >%1.2f ") << (index++) << icpt.distance();
         }
@@ -205,7 +205,7 @@ DENG2_PIMPL(SectionEdge), public IHPlane
     void assertInterceptsInRange(coord_t low, coord_t hi) const
     {
 #ifdef DENG_DEBUG
-        foreach(SectionEdge::Intercept const &icpt, hplane.intercepts)
+        foreach(WallEdge::Intercept const &icpt, hplane.intercepts)
         {
             DENG2_ASSERT(icpt.distance() >= low && icpt.distance() <= hi);
         }
@@ -267,7 +267,7 @@ DENG2_PIMPL(SectionEdge), public IHPlane
                                     if(intercept(plane.visHeight()))
                                     {
                                         // Have we reached the div limit?
-                                        if(interceptCount() == SECTIONEDGE_MAX_INTERCEPTS)
+                                        if(interceptCount() == WALLEDGE_MAX_INTERCEPTS)
                                             stopScan = true;
                                     }
                                 }
@@ -320,7 +320,7 @@ private:
     Instance &operator = (Instance const &); // no assignment
 };
 
-SectionEdge::SectionEdge(Line::Side &lineSide, int section,
+WallEdge::WallEdge(Line::Side &lineSide, int section,
     coord_t lineOffset, Vertex &lineVertex, ClockDirection neighborScanDirection)
     : d(new Instance(this, &lineSide, section, neighborScanDirection,
                            lineOffset, &lineVertex))
@@ -328,7 +328,7 @@ SectionEdge::SectionEdge(Line::Side &lineSide, int section,
     DENG_ASSERT(lineSide.hasSections());
 }
 
-SectionEdge::SectionEdge(HEdge &hedge, int section, int edge)
+WallEdge::WallEdge(HEdge &hedge, int section, int edge)
     : d(new Instance(this, &hedge.lineSide(), section,
                            edge? Anticlockwise : Clockwise,
                            hedge.lineOffset() + (edge? hedge.length() : 0),
@@ -337,76 +337,76 @@ SectionEdge::SectionEdge(HEdge &hedge, int section, int edge)
     DENG_ASSERT(hedge.hasLineSide() && hedge.lineSide().hasSections());
 }
 
-SectionEdge::SectionEdge(SectionEdge const &other)
+WallEdge::WallEdge(WallEdge const &other)
     : d(new Instance(this, *other.d))
 {}
 
-bool SectionEdge::isValid() const
+bool WallEdge::isValid() const
 {
     return d->isValid;
 }
 
-Line::Side &SectionEdge::lineSide() const
+Line::Side &WallEdge::lineSide() const
 {
     return *d->lineSide;
 }
 
-Surface &SectionEdge::surface() const
+Surface &WallEdge::surface() const
 {
     return d->lineSide->surface(d->section);
 }
 
-int SectionEdge::section() const
+int WallEdge::section() const
 {
     return d->section;
 }
 
-Vector2d const &SectionEdge::origin() const
+Vector2d const &WallEdge::origin() const
 {
     return d->partition().origin;
 }
 
-coord_t SectionEdge::lineOffset() const
+coord_t WallEdge::lineOffset() const
 {
     return d->lineOffset;
 }
 
-int SectionEdge::divisionCount() const
+int WallEdge::divisionCount() const
 {
     return d->isValid? d->interceptCount() - 2 : 0;
 }
 
-SectionEdge::Intercept const &SectionEdge::bottom() const
+WallEdge::Intercept const &WallEdge::bottom() const
 {
     d->verifyValid();
     return d->hplane.intercepts[0];
 }
 
-SectionEdge::Intercept const &SectionEdge::top() const
+WallEdge::Intercept const &WallEdge::top() const
 {
     d->verifyValid();
     return d->hplane.intercepts[d->interceptCount()-1];
 }
 
-int SectionEdge::firstDivision() const
+int WallEdge::firstDivision() const
 {
     d->verifyValid();
     return 1;
 }
 
-int SectionEdge::lastDivision() const
+int WallEdge::lastDivision() const
 {
     d->verifyValid();
     return d->interceptCount()-2;
 }
 
-Vector2f const &SectionEdge::materialOrigin() const
+Vector2f const &WallEdge::materialOrigin() const
 {
     d->verifyValid();
     return d->materialOrigin;
 }
 
-void SectionEdge::prepare()
+void WallEdge::prepare()
 {
     coord_t bottom, top;
     R_SideSectionCoords(*d->lineSide, d->section, &bottom, &top, &d->materialOrigin);
@@ -443,13 +443,13 @@ void SectionEdge::prepare()
     d->assertInterceptsInRange(bottom, top);
 }
 
-SectionEdge::Intercept const &SectionEdge::at(int index) const
+WallEdge::Intercept const &WallEdge::at(int index) const
 {
     d->verifyValid();
     return d->hplane.intercepts[index];
 }
 
-SectionEdge::Intercepts const &SectionEdge::intercepts() const
+WallEdge::Intercepts const &WallEdge::intercepts() const
 {
     d->verifyValid();
     return d->hplane.intercepts;

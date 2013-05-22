@@ -22,9 +22,11 @@
 #include "de_graphics.h"
 #include "de_render.h"
 
-#include "SectionEdge"
+#include "WallEdge"
 
 #include "render/rend_dynlight.h"
+
+using namespace de;
 
 static void drawDynlight(dynlight_t const &dyn, renderlightprojectionparams_t &parm)
 {
@@ -46,8 +48,8 @@ static void drawDynlight(dynlight_t const &dyn, renderlightprojectionparams_t &p
 
         if(parm.isWall)
         {
-            SectionEdge const &leftEdge = *parm.wall.leftEdge;
-            SectionEdge const &rightEdge = *parm.wall.rightEdge;
+            WallEdge const &leftEdge = *parm.wall.leftEdge;
+            WallEdge const &rightEdge = *parm.wall.rightEdge;
 
             rtexcoords[1].st[0] = rtexcoords[0].st[0] = dyn.s[0];
             rtexcoords[1].st[1] = rtexcoords[3].st[1] = dyn.t[0];
@@ -104,8 +106,8 @@ static void drawDynlight(dynlight_t const &dyn, renderlightprojectionparams_t &p
 
         if(mustSubdivide)
         {
-            SectionEdge const &leftEdge = *parm.wall.leftEdge;
-            SectionEdge const &rightEdge = *parm.wall.rightEdge;
+            WallEdge const &leftEdge = *parm.wall.leftEdge;
+            WallEdge const &rightEdge = *parm.wall.rightEdge;
 
             RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_LIGHT,
                                  3 + rightEdge.divisionCount(),

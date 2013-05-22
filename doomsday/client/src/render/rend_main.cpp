@@ -39,7 +39,7 @@
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "Texture"
-#include "SectionEdge"
+#include "WallEdge"
 #include "SkyFixEdge"
 #include "TriangleStripBuilder"
 
@@ -718,8 +718,8 @@ struct rendworldpoly_params_t
     struct {
         coord_t sectionWidth;
         Vector3f const *surfaceColor2; // Secondary color.
-        SectionEdge const *leftEdge;
-        SectionEdge const *rightEdge;
+        WallEdge const *leftEdge;
+        WallEdge const *rightEdge;
     } wall;
 };
 
@@ -1095,8 +1095,8 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
     // Write multiple polys depending on rend params.
     if(mustSubdivide)
     {
-        SectionEdge const &leftEdge = *p.wall.leftEdge;
-        SectionEdge const &rightEdge = *p.wall.rightEdge;
+        WallEdge const &leftEdge = *p.wall.leftEdge;
+        WallEdge const &rightEdge = *p.wall.rightEdge;
 
         /*
          * Need to swap indices around into fans set the position
@@ -1300,7 +1300,7 @@ static bool shouldSmoothLightLevels(Surface &sufA, Surface &sufB, binangle_t ang
  *
  * @return  Light delta for the specified wall section edge.
  */
-static float wallSectionEdgeLightLevelDelta(Line::Side &side, int section, int edge)
+static float wallWallEdgeLightLevelDelta(Line::Side &side, int section, int edge)
 {
     // Are light level deltas disabled?
     if(rendLightWallAngle <= 0) return 0;
@@ -1345,11 +1345,11 @@ static float wallSectionEdgeLightLevelDelta(Line::Side &side, int section, int e
  * Calculate the light level deltas for this wall section.
  * @todo Cache these values somewhere. -ds
  */
-static void wallSectionLightLevelDeltas(SectionEdge const &leftEdge, SectionEdge const &rightEdge,
+static void wallSectionLightLevelDeltas(WallEdge const &leftEdge, WallEdge const &rightEdge,
     float &leftDelta, float &rightDelta)
 {
-    leftDelta  = wallSectionEdgeLightLevelDelta(leftEdge.lineSide(), leftEdge.section(), Line::From);
-    rightDelta = wallSectionEdgeLightLevelDelta(rightEdge.lineSide(), rightEdge.section(), Line::To);
+    leftDelta  = wallWallEdgeLightLevelDelta(leftEdge.lineSide(), leftEdge.section(), Line::From);
+    rightDelta = wallWallEdgeLightLevelDelta(rightEdge.lineSide(), rightEdge.section(), Line::To);
 
     if(!de::fequal(leftDelta, rightDelta))
     {
@@ -1448,7 +1448,7 @@ static uint projectSurfaceShadows(Surface &surface, float glowStrength,
 /**
  * @param flags  @ref writeWallSectionFlags
  */
-static bool writeWallSection(SectionEdge const &leftEdge, SectionEdge const &rightEdge,
+static bool writeWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
     MapElement &mapElement, BiasSurface &biasSurface,
     int flags = DEFAULT_WRITE_WALL_SECTION_FLAGS)
 {
@@ -2195,7 +2195,7 @@ static bool coveredOpenRangeTwoSided(HEdge &hedge,
  *
  * @return @ref sideSectionFlags denoting which sections are potentially visible.
  *
- * @todo Much of this logic belongs in SectionEdge. -ds
+ * @todo Much of this logic belongs in WallEdge. -ds
  */
 static int pvisibleWallSections(HEdge &hedge, bool &twoSided)
 {
@@ -2284,8 +2284,8 @@ static void writeLeafWallSections()
 
             if(pvisSections & Line::Side::BottomFlag)
             {
-                SectionEdge leftEdge(hedge, Line::Side::Bottom, Line::From);
-                SectionEdge rightEdge(hedge, Line::Side::Bottom, Line::To);
+                WallEdge leftEdge(hedge, Line::Side::Bottom, Line::From);
+                WallEdge rightEdge(hedge, Line::Side::Bottom, Line::To);
 
                 leftEdge.prepare();
                 rightEdge.prepare();
@@ -2300,8 +2300,8 @@ static void writeLeafWallSections()
 
             if(pvisSections & Line::Side::TopFlag)
             {
-                SectionEdge leftEdge(hedge, Line::Side::Top, Line::From);
-                SectionEdge rightEdge(hedge, Line::Side::Top, Line::To);
+                WallEdge leftEdge(hedge, Line::Side::Top, Line::From);
+                WallEdge rightEdge(hedge, Line::Side::Top, Line::To);
 
                 leftEdge.prepare();
                 rightEdge.prepare();
@@ -2319,8 +2319,8 @@ static void writeLeafWallSections()
 
             if(pvisSections & Line::Side::MiddleFlag)
             {
-                SectionEdge leftEdge(hedge, Line::Side::Middle, Line::From);
-                SectionEdge rightEdge(hedge, Line::Side::Middle, Line::To);
+                WallEdge leftEdge(hedge, Line::Side::Middle, Line::From);
+                WallEdge rightEdge(hedge, Line::Side::Middle, Line::To);
 
                 leftEdge.prepare();
                 rightEdge.prepare();
@@ -2377,8 +2377,8 @@ static void writeLeafPolyobjs()
             // Done here because of the logic of doom.exe wrt the automap.
             reportWallSectionDrawn(hedge.line());
 
-            SectionEdge leftEdge(hedge, Line::Side::Middle, Line::From);
-            SectionEdge rightEdge(hedge, Line::Side::Middle, Line::To);
+            WallEdge leftEdge(hedge, Line::Side::Middle, Line::From);
+            WallEdge rightEdge(hedge, Line::Side::Middle, Line::To);
 
             leftEdge.prepare();
             rightEdge.prepare();

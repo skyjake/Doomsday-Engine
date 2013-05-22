@@ -22,14 +22,13 @@
 #ifndef DENG_RENDER_RENDPOLY_H
 #define DENG_RENDER_RENDPOLY_H
 
-#include "color.h"
-#include "Texture"
 #include "api_gl.h"
-#include <de/vector1.h> /// @todo remove me.
+#include "color.h"
 
+#include <de/vector1.h> /// @todo remove me.
 #include <de/Vector>
 
-class SectionEdge;
+#include "Texture"
 
 typedef struct rvertex_s {
     float pos[3];
@@ -231,16 +230,5 @@ inline void Rtu_TranslateOffset(rtexmapunit_t *rtu, float s, float t)
 {
     Rtu_TranslateOffset(rtu, de::Vector2f(s, t));
 }
-
-void R_DivVerts(rvertex_t *dst, rvertex_t const *src,
-    SectionEdge const &leftEdge, SectionEdge const &rightEdge);
-
-void R_DivTexCoords(rtexcoord_t *dst, rtexcoord_t const *src,
-    SectionEdge const &leftEdge, SectionEdge const &rightEdge,
-    float bL, float tL, float bR, float tR);
-
-void R_DivVertColors(ColorRawf *dst, ColorRawf const *src,
-    SectionEdge const &leftEdge, SectionEdge const &rightEdge,
-    float bL, float tL, float bR, float tR);
 
 #endif // DENG_RENDER_RENDPOLY_H

@@ -39,9 +39,9 @@
 #include "Sector"
 #include "Vertex"
 
-#include "render/rendpoly.h" // r_vertex_t
+#include "WallEdge"
 
-class SectionEdge;
+#include "render/rendpoly.h" // r_vertex_t
 
 /**
  * Used to link a line side to a BSP leaf for the purposes of FakeRadio shadowing.
@@ -149,7 +149,7 @@ float Rend_RadioCalcShadowDarkness(float lightLevel);
  * @param shadowDark  Shadow darkness scale factor.
  * @param shadowSize  Shadow size scale factor.
  */
-void Rend_RadioWallSection(SectionEdge const &leftEdge, SectionEdge const &rightEdge,
+void Rend_RadioWallSection(de::WallEdge const &leftEdge, de::WallEdge const &rightEdge,
     float shadowDark, float shadowSize);
 
 /**

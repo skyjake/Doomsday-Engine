@@ -22,9 +22,9 @@
 
 #include <de/Vector>
 
-#include "render/rendpoly.h" // r_vertex_t
+#include "WallEdge"
 
-class SectionEdge;
+#include "render/rendpoly.h" // r_vertex_t
 
 /**
  * This value defines the offset from the shadowed surface applied to
@@ -52,8 +52,8 @@ typedef struct {
     de::Vector3d const *texBR;
     bool isWall;
     struct {
-        SectionEdge const *leftEdge;
-        SectionEdge const *rightEdge;
+        de::WallEdge const *leftEdge;
+        de::WallEdge const *rightEdge;
     } wall;
 } rendershadowprojectionparams_t;
 

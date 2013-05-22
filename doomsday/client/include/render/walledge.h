@@ -1,4 +1,4 @@
-/** @file map/sectionedge.h World Map (Wall) Section Edge.
+/** @file render/walledge.h Wall Edge Geometry.
  *
  * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_MAP_SECTIONEDGE
-#define DENG_WORLD_MAP_SECTIONEDGE
+#ifndef DENG_RENDER_WALLEDGE
+#define DENG_RENDER_WALLEDGE
 
 #include <QList>
 
@@ -26,21 +26,23 @@
 #include <de/Vector>
 
 #include "Line"
-#include "HEdge"
 #include "IHPlane"
 
+class HEdge;
 class Surface;
 
-/// Maximum number of intercepts in a SectionEdge.
-#define SECTIONEDGE_MAX_INTERCEPTS          64
+/// Maximum number of intercepts in a WallEdge.
+#define WALLEDGE_MAX_INTERCEPTS          64
+
+namespace de {
 
 /**
  * Helper/utility class intended to simplify the process of generating
- * sections of geometry from a map line segment.
+ * sections of wall geometry from a map line segment.
  *
  * @ingroup map
  */
-class SectionEdge
+class WallEdge
 {
 public:
     /// Invalid range geometry was found during prepare() @ingroup errors
@@ -49,33 +51,33 @@ public:
     class Intercept : public de::IHPlane::IIntercept
     {
     public:
-        Intercept(SectionEdge *owner, double distance = 0);
+        Intercept(WallEdge *owner, double distance = 0);
         Intercept(Intercept const &other);
 
-        SectionEdge &owner() const;
+        WallEdge &owner() const;
 
         de::Vector3d origin() const;
 
     private:
-        SectionEdge *_owner;
+        WallEdge *_owner;
     };
 
     typedef QList<Intercept> Intercepts;
 
 public:
-    SectionEdge(Line::Side &lineSide, int section, coord_t lineOffset,
-                Vertex &lineVertex, de::ClockDirection neighborScanDirection);
+    WallEdge(Line::Side &lineSide, int section, coord_t lineOffset,
+             Vertex &lineVertex, de::ClockDirection neighborScanDirection);
 
-    SectionEdge(HEdge &hedge, int section, int edge);
+    WallEdge(HEdge &hedge, int section, int edge);
 
-    SectionEdge(SectionEdge const &other);
+    WallEdge(WallEdge const &other);
 
-    inline SectionEdge &operator = (SectionEdge other) {
+    inline WallEdge &operator = (WallEdge other) {
         d.swap(other.d);
         return *this;
     }
 
-    inline void swap(SectionEdge &other) {
+    inline void swap(WallEdge &other) {
         d.swap(other.d);
     }
 
@@ -115,12 +117,14 @@ private:
     DENG2_PRIVATE(d)
 };
 
+}
+
 namespace std {
-// std::swap specialization for SectionEdge
+// std::swap specialization for WallEdge
 template <>
-inline void swap<SectionEdge>(SectionEdge &a, SectionEdge &b) {
+inline void swap<de::WallEdge>(de::WallEdge &a, de::WallEdge &b) {
     a.swap(b);
 }
 }
 
-#endif // DENG_WORLD_MAP_SECTION_EDGE
+#endif // DENG_RENDER_WALLEDGE

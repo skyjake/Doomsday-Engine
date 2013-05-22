@@ -33,6 +33,7 @@
 #include "dd_types.h"
 
 #include "MaterialVariantSpec"
+#include "WallEdge"
 
 #define GLOW_HEIGHT_MAX                     (1024.f) /// Absolute maximum
 
@@ -154,5 +155,16 @@ de::MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec();
 texturevariantspecification_t &Rend_MapSurfaceShinyTextureSpec();
 
 texturevariantspecification_t &Rend_MapSurfaceShinyMaskTextureSpec();
+
+void R_DivVerts(rvertex_t *dst, rvertex_t const *src,
+    de::WallEdge const &leftEdge, de::WallEdge const &rightEdge);
+
+void R_DivTexCoords(rtexcoord_t *dst, rtexcoord_t const *src,
+    de::WallEdge const &leftEdge, de::WallEdge const &rightEdge,
+    float bL, float tL, float bR, float tR);
+
+void R_DivVertColors(ColorRawf *dst, ColorRawf const *src,
+    de::WallEdge const &leftEdge, de::WallEdge const &rightEdge,
+    float bL, float tL, float bR, float tR);
 
 #endif // DENG_RENDER_MAIN_H

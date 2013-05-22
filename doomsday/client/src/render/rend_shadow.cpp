@@ -25,7 +25,7 @@
 
 #include "map/gamemap.h"
 #include "MaterialSnapshot"
-#include "SectionEdge"
+#include "WallEdge"
 
 #include "render/rend_shadow.h"
 
@@ -242,8 +242,8 @@ static void drawShadow(shadowprojection_t const &sp, rendershadowprojectionparam
 
     if(parm.isWall)
     {
-        SectionEdge const &leftEdge = *parm.wall.leftEdge;
-        SectionEdge const &rightEdge = *parm.wall.rightEdge;
+        WallEdge const &leftEdge = *parm.wall.leftEdge;
+        WallEdge const &rightEdge = *parm.wall.rightEdge;
 
         rtexcoords[1].st[0] = rtexcoords[0].st[0] = sp.s[0];
         rtexcoords[1].st[1] = rtexcoords[3].st[1] = sp.t[0];
@@ -298,8 +298,8 @@ static void drawShadow(shadowprojection_t const &sp, rendershadowprojectionparam
 
     if(mustSubdivide)
     {
-        SectionEdge const &leftEdge = *parm.wall.leftEdge;
-        SectionEdge const &rightEdge = *parm.wall.rightEdge;
+        WallEdge const &leftEdge = *parm.wall.leftEdge;
+        WallEdge const &rightEdge = *parm.wall.rightEdge;
 
         RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
                              3 + rightEdge.divisionCount(),
