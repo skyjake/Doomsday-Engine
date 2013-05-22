@@ -52,8 +52,8 @@ public:
     WrappedLine line(int index) const { return _lines[index]; }
     int width() const;
     int height() const;
-    int rangeWidth(Range const &range) const;
-    int indexAtWidth(Range const &range, int width) const;
+    int rangeWidth(Rangei const &range) const;
+    int indexAtWidth(Rangei const &range, int width) const;
 
 private:
     QList<WrappedLine> _lines;

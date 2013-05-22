@@ -43,8 +43,8 @@ DENG2_PIMPL(AbstractLineEditor)
         void reset() {
             pos = size = ordinal = 0;
         }
-        Range range() const {
-            return Range(pos, pos + size);
+        Rangei range() const {
+            return Rangei(pos, pos + size);
         }
     };
     Completion completion;
@@ -130,8 +130,8 @@ DENG2_PIMPL(AbstractLineEditor)
 
         DENG2_ASSERT(lineOff == 1 || lineOff == -1);
 
-        de::Vector2i const linePos = lineCursorPos();
-        int const destWidth = wraps->rangeWidth(Range(lineSpan(linePos.y).range.start, cursor));
+        Vector2i const linePos = lineCursorPos();
+        int const destWidth = wraps->rangeWidth(Rangei(lineSpan(linePos.y).range.start, cursor));
 
         // Check for no room.
         if(!linePos.y && lineOff < 0) return false;
@@ -408,7 +408,7 @@ bool AbstractLineEditor::isSuggestingCompletion() const
     return d->suggestingCompletion();
 }
 
-Range AbstractLineEditor::completionRange() const
+Rangei AbstractLineEditor::completionRange() const
 {
     return d->completion.range();
 }

@@ -57,7 +57,7 @@ void MonospaceLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
         if(end == text.size())
         {
             // Time to stop.
-            _lines.append(WrappedLine(Range(begin, text.size())));
+            _lines.append(WrappedLine(Rangei(begin, text.size())));
             break;
         }
 
@@ -76,13 +76,13 @@ void MonospaceLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
         if(text.at(end) == newline)
         {
             // The newline will be omitted from the wrapped lines.
-            _lines.append(WrappedLine(Range(begin, end)));
+            _lines.append(WrappedLine(Rangei(begin, end)));
             begin = end + 1;
         }
         else
         {
             if(text.at(end).isSpace()) ++end;
-            _lines.append(WrappedLine(Range(begin, end)));
+            _lines.append(WrappedLine(Rangei(begin, end)));
             begin = end;
         }
     }
@@ -107,12 +107,12 @@ int MonospaceLineWrapping::height() const
     return _lines.size();
 }
 
-int MonospaceLineWrapping::rangeWidth(Range const &range) const
+int MonospaceLineWrapping::rangeWidth(Rangei const &range) const
 {
     return range.size();
 }
 
-int MonospaceLineWrapping::indexAtWidth(Range const &range, int width) const
+int MonospaceLineWrapping::indexAtWidth(Rangei const &range, int width) const
 {
     if(width <= range.size())
     {

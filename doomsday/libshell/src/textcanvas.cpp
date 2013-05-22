@@ -31,7 +31,7 @@ DENG2_PIMPL_NOREF(TextCanvas)
     struct RichFormat
     {
         Char::Attribs attrib;
-        Range range;
+        Rangei range;
     };
     QList<RichFormat> richFormats;
 
@@ -206,7 +206,7 @@ void TextCanvas::clearRichFormat()
     d->richFormats.clear();
 }
 
-void TextCanvas::setRichFormatRange(Char::Attribs const &attribs, Range const &range)
+void TextCanvas::setRichFormatRange(Char::Attribs const &attribs, Rangei const &range)
 {
     Instance::RichFormat rf;
     rf.attrib = attribs;

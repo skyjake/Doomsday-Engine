@@ -186,7 +186,7 @@ public:
 
     void clearRichFormat();
 
-    void setRichFormatRange(Char::Attribs const &attribs, Range const &range);
+    void setRichFormatRange(Char::Attribs const &attribs, Rangei const &range);
 
     void drawLineRect(Rectanglei const &rect, Char::Attribs const &attribs = Char::DefaultAttributes);
 

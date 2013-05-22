@@ -20,6 +20,7 @@
 #define LIBSHELL_MAIN_H
 
 #include <de/String>
+#include <de/Range>
 
 /*
  * The LIBSHELL_PUBLIC macro is used for declaring exported symbols. It must be
@@ -41,26 +42,13 @@
 namespace de {
 namespace shell {
 
-struct LIBSHELL_PUBLIC Range
-{
-    int start;
-    int end;
-
-    Range(int a = 0, int b = 0) : start(a), end(b) {}
-    inline int size() const { return end - start; }
-    inline bool contains(int i) const { return i >= start && i < end; }
-    inline bool operator == (Range const &other) const {
-        return start == other.start && end == other.end;
-    }
-};
-
 /// Line of word-wrapped text.
 struct LIBSHELL_PUBLIC WrappedLine
 {
-    Range range;
+    Rangei range;
     bool isFinal;
 
-    WrappedLine(Range const &range_, bool final = false)
+    WrappedLine(Rangei const &range_, bool final = false)
         : range(range_), isFinal(final) {}
 };
 
@@ -81,11 +69,11 @@ public:
     virtual int height() const = 0;
 
     /// Returns the advance width of the range.
-    virtual int rangeWidth(Range const &range) const = 0;
+    virtual int rangeWidth(Rangei const &range) const = 0;
 
     /// Calculates which index in the provided content range occupies a
     /// character at a given width.
-    virtual int indexAtWidth(Range const &range, int width) const = 0;
+    virtual int indexAtWidth(Rangei const &range, int width) const = 0;
 };
 
 } // namespace shell

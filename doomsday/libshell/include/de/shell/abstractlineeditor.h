@@ -71,7 +71,7 @@ public:
     Vector2i lineCursorPos() const { return linePos(cursor()); }
 
     bool isSuggestingCompletion() const;
-    Range completionRange() const;
+    Rangei completionRange() const;
 
     /**
      * Defines the terms and rules for auto-completion.
