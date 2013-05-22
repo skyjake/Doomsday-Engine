@@ -193,7 +193,8 @@ void LogWidget::draw()
 
         // No cached entry for this, generate one.
         LogEntry const &entry = d->sink.entry(idx);
-        QList<String> lines = d->formatter.logEntryToTextLines(entry);
+
+        MonospaceLogSinkFormatter::Lines lines = d->formatter.logEntryToTextLines(entry);
 
         TextCanvas *buf = new TextCanvas(Vector2ui(pos.width(), lines.size()));
         d->cache.append(buf);

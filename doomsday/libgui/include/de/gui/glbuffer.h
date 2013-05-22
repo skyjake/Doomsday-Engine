@@ -85,6 +85,7 @@ struct LIBGUI_PUBLIC Vertex2Rgba
 
     DENG2_DECLARE_VERTEX_FORMAT(2)
 };
+
 /**
  * Vertex format with 2D coordinates, one set of texture coordinates, and an
  * RGBA color.
