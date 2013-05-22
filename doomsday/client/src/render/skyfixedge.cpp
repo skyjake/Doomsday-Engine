@@ -115,8 +115,8 @@ DENG2_PIMPL(SkyFixEdge)
         // Partition line segments have no map line sides.
         if(!hedge->hasLineSide()) return false;
 
-        Sector const *frontSec = hedge->bspLeaf().sectorPtr();
-        Sector const *backSec  = hedge->twin().hasBspLeaf() && !hedge->twin().bspLeaf().isDegenerate()? hedge->twin().bspLeaf().sectorPtr() : 0;
+        Sector const *frontSec = hedge->sectorPtr();
+        Sector const *backSec  = hedge->twin().hasBspLeaf() && !hedge->twin().bspLeaf().isDegenerate()? hedge->twin().sectorPtr() : 0;
 
         if(!(!backSec || backSec != frontSec)) return false;
 
@@ -170,8 +170,8 @@ void SkyFixEdge::prepare()
         return;
     }
 
-    Sector const *frontSec = d->hedge->bspLeaf().sectorPtr();
-    Sector const *backSec  = d->hedge->twin().hasBspLeaf() && !d->hedge->twin().bspLeaf().isDegenerate()? d->hedge->twin().bspLeaf().sectorPtr() : 0;
+    Sector const *frontSec = d->hedge->sectorPtr();
+    Sector const *backSec  = d->hedge->twin().hasBspLeaf() && !d->hedge->twin().bspLeaf().isDegenerate()? d->hedge->twin().sectorPtr() : 0;
     Plane const *ffloor = &frontSec->floor();
     Plane const *fceil  = &frontSec->ceiling();
     Plane const *bceil  = backSec? &backSec->ceiling() : 0;

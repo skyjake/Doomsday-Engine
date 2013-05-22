@@ -1,4 +1,4 @@
-/** @file polyobj.cpp World Map Polyobj.
+/** @file map/polyobj.cpp World Map Polyobj.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -161,6 +161,11 @@ void Polyobj::link()
             _bspLeaf = bspLeaf;
         }
     }
+}
+
+bool Polyobj::hasBspLeaf() const
+{
+    return _bspLeaf != 0;
 }
 
 BspLeaf &Polyobj::bspLeaf() const

@@ -127,14 +127,14 @@ void ShadowEdge::prepare(int planeIndex)
 
     if(d->leftMostHEdge->twin().hasBspLeaf() &&
        !d->leftMostHEdge->twin().bspLeaf().isDegenerate() &&
-       d->leftMostHEdge->twin().bspLeaf().sectorPtr() != 0)
+       d->leftMostHEdge->twin().sectorPtr() != 0)
     {
         Surface const &wallEdgeSurface =
             side.back().hasSector()? side.surface(planeIndex == Plane::Ceiling? Line::Side::Top : Line::Side::Bottom)
                                    : side.middle();
 
-        Sector const *frontSec = d->leftMostHEdge->bspLeaf().sectorPtr();
-        Sector const *backSec  = d->leftMostHEdge->twin().bspLeaf().sectorPtr();
+        Sector const *frontSec = d->leftMostHEdge->sectorPtr();
+        Sector const *backSec  = d->leftMostHEdge->twin().sectorPtr();
 
         coord_t fz = 0, bz = 0, bhz = 0;
         R_SetRelativeHeights(frontSec, backSec, planeIndex, &fz, &bz, &bhz);
@@ -198,11 +198,11 @@ void ShadowEdge::prepare(int planeIndex)
         {
             // Its a normal neighbor.
             Sector const *backSec = otherSide->back().sectorPtr();
-            if(backSec != d->leftMostHEdge->bspLeaf().sectorPtr() &&
+            if(backSec != d->leftMostHEdge->sectorPtr() &&
                !((plane.type() == Plane::Floor && backSec->ceiling().visHeight() <= plane.visHeight()) ||
                  (plane.type() == Plane::Ceiling && backSec->floor().height() >= plane.visHeight())))
             {
-                Sector const *frontSec = d->leftMostHEdge->bspLeaf().sectorPtr();
+                Sector const *frontSec = d->leftMostHEdge->sectorPtr();
 
                 coord_t fz = 0, bz = 0, bhz = 0;
                 R_SetRelativeHeights(frontSec, backSec, planeIndex, &fz, &bz, &bhz);

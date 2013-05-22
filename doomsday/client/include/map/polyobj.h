@@ -1,4 +1,4 @@
-/** @file polyobj.h World Map Polyobj.
+/** @file map/polyobj.h World Map Polyobj.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -26,6 +26,8 @@
 #include <de/Vector>
 
 #include "dd_share.h"
+
+#include "BspLeaf"
 
 class Line;
 class Vertex;
@@ -83,11 +85,42 @@ public:
     void unlink();
 
     /**
+     * Returns @c true iff a BspLeaf is linked to the polyobj.
+     */
+    bool hasBspLeaf() const;
+
+    /**
      * Returns the BSP leaf in which the polyobj is presently linked.
      *
      * @see isLinked();
      */
     BspLeaf &bspLeaf() const;
+
+    /**
+     * Convenience accessor which determines whether a BspLeaf with an attributed
+     * sector is linked to the polyobj.
+     *
+     * @see hasBspLeaf(), BspLeaf::hasSector()
+     */
+    inline bool hasSector() const { return hasBspLeaf() && bspLeaf().hasSector(); }
+
+    /**
+     * Convenience accessor which returns the Sector of the BspLeaf linked to the
+     * polyobj.
+     *
+     * @see bspLeaf(), BspLeaf::sector()
+     */
+    inline Sector &sector() const { return bspLeaf().sector(); }
+
+    /**
+     * Convenience accessor which returns a pointer to the Sector of the BspLeaf
+     * linked to the polyobj.
+     *
+     * @return  Sector attributed to the linked BspLeaf; otherwise @c 0.
+     *
+     * @see hasBspLeaf(), BspLeaf::sectorPtr()
+     */
+    inline Sector *sectorPtr() const { return hasBspLeaf()? bspLeaf().sectorPtr() : 0; }
 
     /**
      * Returns the sound emitter for the polyobj.

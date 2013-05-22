@@ -3074,7 +3074,7 @@ static void Rend_DrawBoundingBoxes()
     {
         foreach(Polyobj const *polyobj, theMap->polyobjs())
         {
-            Sector const &sec = polyobj->bspLeaf().sector();
+            Sector const &sec = polyobj->sector();
             coord_t width  = (polyobj->aaBox.maxX - polyobj->aaBox.minX)/2;
             coord_t length = (polyobj->aaBox.maxY - polyobj->aaBox.minY)/2;
             coord_t height = (sec.ceiling().height() - sec.floor().height())/2;
@@ -3235,7 +3235,7 @@ static void Rend_DrawSurfaceVectors()
 
     foreach(Polyobj *polyobj, theMap->polyobjs())
     {
-        Sector const &sector = polyobj->bspLeaf().sector();
+        Sector const &sector = polyobj->sector();
         float zPos = sector.floor().height() + (sector.ceiling().height() - sector.floor().height())/2;
 
         foreach(Line *line, polyobj->lines())
@@ -3441,8 +3441,8 @@ static int drawVertex1(Line *li, void *context)
 
         if(alpha > 0)
         {
-            coord_t bottom = po->bspLeaf().sector().floor().visHeight();
-            coord_t top    = po->bspLeaf().sector().ceiling().visHeight();
+            coord_t bottom = po->sector().floor().visHeight();
+            coord_t top    = po->sector().ceiling().visHeight();
 
             if(devVertexBars)
                 drawVertexBar(vtx, bottom, top, MIN_OF(alpha, .15f));
@@ -3461,7 +3461,7 @@ static int drawVertex1(Line *li, void *context)
 
         pos[VX] = vtx->origin().x;
         pos[VY] = vtx->origin().y;
-        pos[VZ] = po->bspLeaf().sector().floor().visHeight();
+        pos[VZ] = po->sector().floor().visHeight();
 
         dist3D = V3d_Distance(pos, eye);
 

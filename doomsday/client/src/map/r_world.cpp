@@ -114,7 +114,7 @@ void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeInde
 void R_SideSectionCoords(Line::Side const &side, int section,
     coord_t *retBottom, coord_t *retTop, Vector2f *retMaterialOrigin)
 {
-    Sector const *frontSec = side.line().definesPolyobj()? side.line().polyobj().bspLeaf().sectorPtr() : side.sectorPtr();
+    Sector const *frontSec = side.line().definesPolyobj()? side.line().polyobj().sectorPtr() : side.sectorPtr();
     Sector const *backSec  = (side.line().definesPolyobj() || (side.leftHEdge()->twin().hasBspLeaf() && !side.leftHEdge()->twin().bspLeaf().isDegenerate()))? side.back().sectorPtr() : 0;
 
     Line const &line       = side.line();

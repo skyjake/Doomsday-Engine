@@ -208,7 +208,7 @@ public:
      *
      * @see bspLeaf(), BspLeaf::sector()
      */
-    Sector &sector() const { return bspLeaf().sector(); }
+    inline Sector &sector() const { return bspLeaf().sector(); }
 
     /**
      * Convenience accessor which returns a pointer to the Sector of the BspLeaf
@@ -218,7 +218,7 @@ public:
      *
      * @see hasBspLeaf(), BspLeaf::sectorPtr()
      */
-    Sector *sectorPtr() const { return hasBspLeaf()? bspLeaf().sectorPtr() : 0; }
+    inline Sector *sectorPtr() const { return hasBspLeaf()? bspLeaf().sectorPtr() : 0; }
 
     /**
      * Returns @c true iff a Line::Side is attributed to the half-edge.
