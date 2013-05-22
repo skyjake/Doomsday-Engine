@@ -310,6 +310,7 @@ void Image::fill(Rectanglei const &rect, Color const &color)
     IMAGE_ASSERT_EDITABLE(d);
 
     QPainter painter(&d->image);
+    painter.setCompositionMode(QPainter::CompositionMode_Source);
     painter.fillRect(QRect(rect.topLeft.x, rect.topLeft.y, rect.width(), rect.height()),
                      QColor(color.x, color.y, color.z, color.w));
 }
