@@ -1335,9 +1335,12 @@ static uint projectSurfaceShadows(Surface &surface, float glowStrength,
 
 typedef WallEdge WallEdges[2];
 
-static bool writeWallSection(WallEdges const edges, BiasSurface &biasSurface,
+static bool writeWallGeometry(WallEdges const edges, BiasSurface &biasSurface,
     MapElement &mapElement, coord_t *bottomZ = 0, coord_t *topZ = 0)
 {
+    BspLeaf *bspLeaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(bspLeaf));
+
     WallEdge const &leftEdge  = edges[0];
     WallEdge const &rightEdge = edges[1];
     WallSpec const &spec      = leftEdge.spec();
@@ -1349,10 +1352,7 @@ static bool writeWallSection(WallEdges const edges, BiasSurface &biasSurface,
     if(bottomZ) *bottomZ = leftEdge.bottom().distance();
     if(topZ)    *topZ    = rightEdge.top().distance();
 
-    BspLeaf *bspLeaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(bspLeaf));
-    DENG_ASSERT(rightEdge.top().distance() > leftEdge.bottom().distance());
-
+    ///
     Line::Side &side  = leftEdge.mapSide();
     Line &line        = side.line();
     int const section = leftEdge.section();
@@ -1575,6 +1575,23 @@ static bool writeWallSection(WallEdges const edges, BiasSurface &biasSurface,
     R_FreeRendVertices(rvertices);
 
     return opaque && !didNearFade;
+}
+
+static void writeWallSection(HEdge &hedge, int section,
+    coord_t *retBottomZ = 0, coord_t *retTopZ = 0, bool *retWroteOpaque = 0)
+{
+    DENG_ASSERT(hedge.isFlagged(HEdge::FacingFront));
+    DENG_ASSERT(hedge.hasLineSide() && hedge.lineSide().hasSections());
+
+    WallSpec const spec = WallSpec::fromMapSide(hedge.lineSide(), section);
+    BiasSurface &biasSurface = hedge.biasSurfaceForGeometryGroup(section);
+
+    WallEdge edges[] = { WallEdge(spec, hedge, Line::From),
+                         WallEdge(spec, hedge, Line::To) };
+
+    bool wroteOpaque = writeWallGeometry(edges, biasSurface, hedge, retBottomZ, retTopZ);
+
+    if(retWroteOpaque) *retWroteOpaque = wroteOpaque;
 }
 
 /**
@@ -2012,23 +2029,28 @@ static void writeLeafSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
     }
 }
 
-static bool coveredOpenRangeTwoSided(HEdge &hedge, bool wroteOpaqueMiddle,
-                                     coord_t middleBottomZ, coord_t middleTopZ)
+static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middleTopZ,
+    bool wroteOpaqueMiddle)
 {
-    if(hedge.line().isSelfReferencing())
-       return false; /// @todo Why? -ds
+    if(hedge.lineSide().considerOneSided())
+    {
+        return wroteOpaqueMiddle;
+    }
+
+    //if(hedge.line().isSelfReferencing())
+    //   return false; /// @todo Why? -ds
 
     Sector const &frontSec = hedge.sector();
     Sector const &backSec  = hedge.twin().sector();
 
+    coord_t const ffloor   = frontSec.floor().visHeight();
+    coord_t const fceil    = frontSec.ceiling().visHeight();
+    coord_t const bfloor   = backSec.floor().visHeight();
+    coord_t const bceil    = backSec.ceiling().visHeight();
+
     bool middleCoversOpening = false;
     if(wroteOpaqueMiddle)
     {
-        coord_t const ffloor = frontSec.floor().visHeight();
-        coord_t const fceil  = frontSec.ceiling().visHeight();
-        coord_t const bfloor = backSec.floor().visHeight();
-        coord_t const bceil  = backSec.ceiling().visHeight();
-
         coord_t xbottom = de::max(bfloor, ffloor);
         coord_t xtop    = de::min(bceil,  fceil);
 
@@ -2044,11 +2066,6 @@ static bool coveredOpenRangeTwoSided(HEdge &hedge, bool wroteOpaqueMiddle,
         return true;
 
     Line::Side const &front = hedge.lineSide();
-
-    coord_t const ffloor = frontSec.floor().visHeight();
-    coord_t const fceil  = frontSec.ceiling().visHeight();
-    coord_t const bfloor = backSec.floor().visHeight();
-    coord_t const bceil  = backSec.ceiling().visHeight();
 
     if(   (bceil <= ffloor &&
                (front.top().hasMaterial()    || front.middle().hasMaterial()))
@@ -2104,53 +2121,22 @@ static void writeLeafWallSections()
         if(hedge.isFlagged(HEdge::FacingFront))
         if(hedge.hasLineSide() && hedge.lineSide().hasSections())
         {
-            Line::Side &side = hedge.lineSide();
+            // Done here because of the logic of doom.exe wrt the automap.
+            reportWallSectionDrawn(hedge.line());
 
             coord_t middleBottomZ = 0, middleTopZ = 0;
             bool wroteOpaqueMiddle = false;
 
-            // Done here because of the logic of doom.exe wrt the automap.
-            reportWallSectionDrawn(hedge.line());
-
-            {
-                WallSpec const spec = WallSpec::fromMapSide(side, Line::Side::Bottom);
-                BiasSurface &biasSurface = hedge.biasSurfaceForGeometryGroup(Line::Side::Bottom);
-
-                WallEdge edges[] = { WallEdge(spec, hedge, Line::From),
-                                     WallEdge(spec, hedge, Line::To) };
-
-                writeWallSection(edges, biasSurface, hedge);
-            }
-
-            {
-                WallSpec const spec = WallSpec::fromMapSide(side, Line::Side::Top);
-                BiasSurface &biasSurface = hedge.biasSurfaceForGeometryGroup(Line::Side::Top);
-
-                WallEdge edges[] = { WallEdge(spec, hedge, Line::From),
-                                     WallEdge(spec, hedge, Line::To) };
-
-                writeWallSection(edges, biasSurface, hedge);
-            }
-
-            {
-                WallSpec const spec = WallSpec::fromMapSide(side, Line::Side::Middle);
-                BiasSurface &biasSurface = hedge.biasSurfaceForGeometryGroup(Line::Side::Middle);
-
-                WallEdge edges[] = { WallEdge(spec, hedge, Line::From),
-                                     WallEdge(spec, hedge, Line::To) };
-
-                wroteOpaqueMiddle =
-                    writeWallSection(edges, biasSurface, hedge, &middleBottomZ, &middleTopZ);
-            }
-
-            bool coveredOpenRange =
-                side.considerOneSided()? wroteOpaqueMiddle
-                                       : coveredOpenRangeTwoSided(hedge, wroteOpaqueMiddle, middleBottomZ, middleTopZ);
+            writeWallSection(hedge, Line::Side::Bottom);
+            writeWallSection(hedge, Line::Side::Top);
+            writeWallSection(hedge, Line::Side::Middle,
+                             &middleBottomZ, &middleTopZ, &wroteOpaqueMiddle);
 
             // We can occlude the angle range defined by the X|Y origins of the
             // half-edge if the open range has been covered (when the viewer is
             // not in the void).
-            if(coveredOpenRange && !P_IsInVoid(viewPlayer))
+            if(!P_IsInVoid(viewPlayer) &&
+               coveredOpenRange(hedge, middleBottomZ, middleTopZ, wroteOpaqueMiddle))
             {
                 C_AddRangeFromViewRelPoints(hedge.origin(), hedge.twin().origin());
             }
@@ -2178,16 +2164,13 @@ static void writeLeafPolyobjs()
             // Done here because of the logic of doom.exe wrt the automap.
             reportWallSectionDrawn(hedge.line());
 
-            WallSpec const spec  = WallSpec::fromMapSide(hedge.lineSide(), Line::Side::Middle);
-            BiasSurface &biasSurface = hedge.biasSurfaceForGeometryGroup(Line::Side::Middle);
+            bool wroteOpaqueMiddle = false;
 
-            WallEdge edges[] = { WallEdge(spec, hedge, Line::From),
-                                 WallEdge(spec, hedge, Line::To) };
+            writeWallSection(hedge, Line::Side::Middle, 0, 0, &wroteOpaqueMiddle);
 
-            bool opaque = writeWallSection(edges, biasSurface, hedge);
-
-            // We can occlude the wall range if the opening is filled (when the viewer is not in the void).
-            if(opaque && !P_IsInVoid(viewPlayer))
+            // We can occlude the wall range if the opening is filled (when the
+            // viewer is not in the void).
+            if(!P_IsInVoid(viewPlayer) && wroteOpaqueMiddle)
             {
                 C_AddRangeFromViewRelPoints(hedge.origin(), hedge.twin().origin());
             }
