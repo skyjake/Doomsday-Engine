@@ -183,8 +183,8 @@ public:
         /**
          * Determines whether "this" side of the respective line should be
          * considered as though there were no back sector. Primarily for use
-         * with id Tech 1 map format maps (which, supports partial suppresison
-         * of the back sector, for use with special case drawing and playsim
+         * with id Tech 1 format maps (which, supports partial suppression of
+         * the back sector, for use with special case drawing and playsim
          * functionality).
          */
         bool considerOneSided() const;
