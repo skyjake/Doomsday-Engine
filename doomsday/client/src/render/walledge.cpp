@@ -28,6 +28,24 @@
 
 using namespace de;
 
+/**
+ * Determines whether normal smoothing should be performed for the given pair of
+ * map surfaces (which are assumed to share an edge).
+ *
+ * Yes if the angle between the two surfaces is less than 45 degrees.
+ * @todo Should be user customizable with a Material property. -ds
+ *
+ * @param sufA       The "left"  map surface which shares an edge with @a sufB.
+ * @param sufB       The "right" map surface which shares an edge with @a sufA.
+ * @param angleDiff  Angle difference (i.e., normal delta) between the two surfaces.
+ */
+static bool shouldSmoothNormals(Surface &sufA, Surface &sufB, binangle_t angleDiff)
+{
+    DENG_UNUSED(sufA);
+    DENG_UNUSED(sufB);
+    return INRANGE_OF(angleDiff, BANG_180, BANG_45);
+}
+
 WallEdge::Intercept::Intercept(WallEdge *owner, double distance)
     : IHPlane::IIntercept(distance),
       _owner(owner)
@@ -366,6 +384,59 @@ DENG2_PIMPL(WallEdge), public IHPlane
         return &otherSide->middle();
     }
 
+    void prepare()
+    {
+        coord_t bottom, top;
+        R_SideSectionCoords(*mapSide, spec.section, &bottom, &top, &materialOrigin);
+
+        isValid = (top >= bottom);
+        if(!isValid) return;
+
+        materialOrigin.x += lineOffset;
+
+        configure(Partition(lineVertex->origin(), Vector2d(0, top - bottom)));
+
+        // Intercepts are sorted in ascending distance order.
+
+        // The first intercept is the bottom.
+        intercept(bottom);
+
+        if(top > bottom)
+        {
+            // Add intercepts for neighboring planes (the "divisions").
+            addPlaneIntercepts(bottom, top);
+        }
+
+        // The last intercept is the top.
+        intercept(top);
+
+        if(interceptCount() > 2) // First two are always sorted.
+        {
+            // Sorting may be required. This shouldn't take too long...
+            // There seldom are more than two or three intercepts.
+            sortAndMergeIntercepts();
+        }
+
+        // Sanity check.
+        assertInterceptsInRange(bottom, top);
+
+        // Determine the edge normal.
+        /// @todo Cache the smoothed normal value somewhere.
+        Surface &surface = mapSide->surface(spec.section);
+        binangle_t angleDiff;
+        Surface *blendSurface = findBlendNeighbor(angleDiff);
+
+        if(blendSurface && shouldSmoothNormals(surface, *blendSurface, angleDiff))
+        {
+            // Average normals.
+            edgeNormal = Vector3f(surface.normal() + blendSurface->normal()) / 2;
+        }
+        else
+        {
+            edgeNormal = surface.normal();
+        }
+    }
+
 private:
     Instance &operator = (Instance const &); // no assignment
 };
@@ -376,11 +447,17 @@ WallEdge::WallEdge(WallSpec const &spec, HEdge &hedge, int edge)
                            edge? &hedge.twin().vertex() : &hedge.vertex()))
 {
     DENG_ASSERT(hedge.hasLineSide() && hedge.lineSide().hasSections());
+
+    /// @todo Defer until necessary.
+    d->prepare();
 }
 
 WallEdge::WallEdge(WallEdge const &other)
     : d(new Instance(this, *other.d))
-{}
+{
+    /// @todo Defer until necessary.
+    d->prepare();
+}
 
 bool WallEdge::isValid() const
 {
@@ -451,77 +528,6 @@ WallEdge::Intercepts const &WallEdge::intercepts() const
 {
     d->verifyValid();
     return d->hplane.intercepts;
-}
-
-/**
- * Determines whether normal smoothing should be performed for the given pair of
- * map surfaces (which are assumed to share an edge).
- *
- * Yes if the angle between the two lines is less than 45 degrees.
- * @todo Should be user customizable with a Material property. -ds
- *
- * @param sufA       The "left"  map surface which shares an edge with @a sufB.
- * @param sufB       The "right" map surface which shares an edge with @a sufA.
- * @param angleDiff  Angle difference (i.e., normal delta) between the two surfaces.
- */
-static bool shouldSmoothNormals(Surface &sufA, Surface &sufB, binangle_t angleDiff)
-{
-    DENG_UNUSED(sufA);
-    DENG_UNUSED(sufB);
-    return INRANGE_OF(angleDiff, BANG_180, BANG_45);
-}
-
-void WallEdge::prepare()
-{
-    coord_t bottom, top;
-    R_SideSectionCoords(*d->mapSide, d->spec.section, &bottom, &top, &d->materialOrigin);
-
-    d->isValid = (top >= bottom);
-    if(!d->isValid) return;
-
-    d->materialOrigin.x += d->lineOffset;
-
-    d->configure(Partition(d->lineVertex->origin(), Vector2d(0, top - bottom)));
-
-    // Intercepts are sorted in ascending distance order.
-
-    // The first intercept is the bottom.
-    d->intercept(bottom);
-
-    if(top > bottom)
-    {
-        // Add intercepts for neighboring planes (the "divisions").
-        d->addPlaneIntercepts(bottom, top);
-    }
-
-    // The last intercept is the top.
-    d->intercept(top);
-
-    if(d->interceptCount() > 2) // First two are always sorted.
-    {
-        // Sorting may be required. This shouldn't take too long...
-        // There seldom are more than two or three intercepts.
-        d->sortAndMergeIntercepts();
-    }
-
-    // Sanity check.
-    d->assertInterceptsInRange(bottom, top);
-
-    // Determine the edge normal.
-    /// @todo Cache the smoothed normal value somewhere.
-    Surface &surface = d->mapSide->surface(d->spec.section);
-    binangle_t angleDiff;
-    Surface *blendSurface = d->findBlendNeighbor(angleDiff);
-
-    if(blendSurface && shouldSmoothNormals(surface, *blendSurface, angleDiff))
-    {
-        // Average normals.
-        d->edgeNormal = Vector3f(surface.normal() + blendSurface->normal()) / 2;
-    }
-    else
-    {
-        d->edgeNormal = surface.normal();
-    }
 }
 
 WallSpec const &WallEdge::spec() const

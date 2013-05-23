@@ -68,7 +68,7 @@ public:
     /// Wall section identifier.
     int section;
 
-    WallSpec(int section, Flags = DefaultFlags) : flags(flags), section(section)
+    WallSpec(int section, Flags flags = DefaultFlags) : flags(flags), section(section)
     {}
 };
 
@@ -122,8 +122,6 @@ public:
     inline Intercept const & operator [] (int index) const { return at(index); }
 
     Intercept const &at(int index) const;
-
-    void prepare();
 
     WallSpec const &spec() const;
 
