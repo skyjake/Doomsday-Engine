@@ -24,8 +24,6 @@
 #include "map/r_world.h" // R_SideSectionCoords
 #include "map/lineowner.h"
 
-#include "render/rend_main.h" // rendLightWallAngleSmooth
-
 #include "render/walledge.h"
 
 using namespace de;
@@ -55,6 +53,8 @@ DENG2_PIMPL(WallEdge), public IHPlane
     Line::Side *lineSide;
     int section;
     int edge;
+    Flags flags;
+
     coord_t lineOffset;
     Vertex *lineVertex;
 
@@ -84,11 +84,12 @@ DENG2_PIMPL(WallEdge), public IHPlane
     } hplane;
 
     Instance(Public *i, Line::Side *lineSide, int section, int edge,
-             coord_t lineOffset, Vertex *lineVertex)
+             Flags flags, coord_t lineOffset, Vertex *lineVertex)
         : Base(i),
           lineSide(lineSide),
           section(section),
           edge(edge),
+          flags(flags),
           lineOffset(lineOffset),
           lineVertex(lineVertex),
           isValid(false)
@@ -99,6 +100,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
           lineSide      (other.lineSide),
           section       (other.section),
           edge          (other.edge),
+          flags         (other.flags),
           lineOffset    (other.lineOffset),
           lineVertex    (other.lineVertex),
           isValid       (other.isValid),
@@ -319,19 +321,61 @@ DENG2_PIMPL(WallEdge), public IHPlane
         } while(!stopScan);
     }
 
+    /**
+     * Find the neighbor surface for the edge which we will use to calculate the
+     * smoothed normal.
+     *
+     * @todo: Use the half-edge rings instead of LineOwners.
+     */
+    Surface *findBlendNeighbor(binangle_t &diff)
+    {
+        diff = 0;
+
+        // Disabled?
+        if(!(flags & SmoothNormal))
+            return 0;
+
+        // Polyobj lines have no owner rings.
+        if(lineSide->line().definesPolyobj())
+            return 0;
+
+        LineOwner const *farVertOwner = lineSide->line().vertexOwner(lineSide->lineSideId() ^ edge);
+
+        Line *neighbor;
+        if(R_SideBackClosed(*lineSide))
+        {
+            neighbor = R_FindSolidLineNeighbor(lineSide->sectorPtr(), &lineSide->line(),
+                                               farVertOwner, edge, &diff);
+        }
+        else
+        {
+            neighbor = R_FindLineNeighbor(lineSide->sectorPtr(), &lineSide->line(),
+                                          farVertOwner, edge, &diff);
+        }
+
+        // No suitable line neighbor?
+        if(!neighbor) return 0;
+
+        // Choose the correct side of the neighbor (determined by which vertex is shared).
+        Line::Side *otherSide;
+        if(&neighbor->vertex(edge ^ 1) == &lineSide->vertex(edge))
+            otherSide = &neighbor->front();
+        else
+            otherSide = &neighbor->back();
+
+        // We can only smooth if the neighbor has a surface.
+        if(!otherSide->hasSections()) return 0;
+
+        /// @todo Do not assume the neighbor is the middle section of @var otherSide.
+        return &otherSide->middle();
+    }
+
 private:
     Instance &operator = (Instance const &); // no assignment
 };
 
-WallEdge::WallEdge(Line::Side &lineSide, int section, int edge,
-                   coord_t lineOffset, Vertex &lineVertex)
-    : d(new Instance(this, &lineSide, section, edge, lineOffset, &lineVertex))
-{
-    DENG_ASSERT(lineSide.hasSections());
-}
-
-WallEdge::WallEdge(HEdge &hedge, int section, int edge)
-    : d(new Instance(this, &hedge.lineSide(), section, edge,
+WallEdge::WallEdge(HEdge &hedge, int section, int edge, Flags flags)
+    : d(new Instance(this, &hedge.lineSide(), section, edge, flags,
                            hedge.lineOffset() + (edge? hedge.length() : 0),
                            edge? &hedge.twin().vertex() : &hedge.vertex()))
 {
@@ -431,53 +475,6 @@ static bool shouldSmoothNormals(Surface &sufA, Surface &sufB, binangle_t angleDi
     return INRANGE_OF(angleDiff, BANG_180, BANG_45);
 }
 
-/**
- * Find the neighbor surface for the specified edge which we will use to calculate
- * the smoothed edge normal.
- *
- * @todo: Use the half-edge rings instead of LineOwners.
- */
-static Surface *findBlendNeighbor(Line::Side const &side, int section, int edge,
-                                  binangle_t *diff = 0)
-{
-    // Is smoothing disabled?
-    if(!rendLightWallAngleSmooth)
-        return 0;
-
-    // Polyobj lines have no owner rings.
-    if(side.line().definesPolyobj())
-        return 0;
-
-    LineOwner const *farVertOwner = side.line().vertexOwner(side.lineSideId() ^ edge);
-
-    if(diff) *diff = 0;
-
-    Line *neighbor;
-    if(R_SideBackClosed(side))
-    {
-        neighbor = R_FindSolidLineNeighbor(side.sectorPtr(), &side.line(), farVertOwner, edge, diff);
-    }
-    else
-    {
-        neighbor = R_FindLineNeighbor(side.sectorPtr(), &side.line(), farVertOwner, edge, diff);
-    }
-
-    // No suitable line neighbor?
-    if(!neighbor) return 0;
-
-    // Choose the correct side of the neighbor (determined by which vertex is shared).
-    Line::Side *otherSide;
-    if(&neighbor->vertex(edge ^ 1) == &side.vertex(edge))
-        otherSide = &neighbor->front();
-    else
-        otherSide = &neighbor->back();
-
-    // We can only smooth if the neighbor has a surface.
-    if(!otherSide->hasSections()) return 0;
-
-    return &otherSide->surface(section);
-}
-
 void WallEdge::prepare()
 {
     coord_t bottom, top;
@@ -514,14 +511,11 @@ void WallEdge::prepare()
     // Sanity check.
     d->assertInterceptsInRange(bottom, top);
 
-    /**
-     * Determine the edge normal.
-     * @todo Do not assume the neighbor is the middle section of @var otherSide.
-     * @todo Cache the smoothed normal value somewhere.
-     */
+    // Determine the edge normal.
+    /// @todo Cache the smoothed normal value somewhere.
     Surface &surface = d->lineSide->surface(d->section);
     binangle_t angleDiff;
-    Surface *blendSurface = findBlendNeighbor(*d->lineSide, d->section, d->edge, &angleDiff);
+    Surface *blendSurface = d->findBlendNeighbor(angleDiff);
 
     if(blendSurface && shouldSmoothNormals(surface, *blendSurface, angleDiff))
     {

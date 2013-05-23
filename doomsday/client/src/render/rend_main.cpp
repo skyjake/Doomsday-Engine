@@ -1235,35 +1235,18 @@ static Material *chooseSurfaceMaterialForTexturingMode(Surface const &surface)
     return 0;
 }
 
+/**
+ * The DOOM lighting model applies a sector light level delta when drawing
+ * walls based on their 2D world angle.
+ */
 static float calcLightLevelDelta(Vector3f const &normal)
 {
     return (1.0f / 255) * (normal.x * 18) * rendLightWallAngle;
 }
 
-/**
- * The DOOM lighting model applies a sector light level delta when drawing
- * walls based on their 2D world angle.
- */
 static void wallSectionLightLevelDeltas(WallEdge const &leftEdge, WallEdge const &rightEdge,
     float &leftDelta, float &rightDelta)
 {
-    // Are light level deltas disabled?
-    if(rendLightWallAngle <= 0)
-    {
-        leftDelta = rightDelta = 0;
-        return;
-    }
-
-    // ...always if the surface's material was chosen as a HOM fix (lighting
-    // must be consistent with that applied to the relative back sector plane).
-    Line::Side &side = leftEdge.lineSide();
-    if(side.hasSector() && side.back().hasSector() &&
-       side.surface(leftEdge.section()).hasFixMaterial())
-    {
-        leftDelta = rightDelta = 0;
-        return;
-    }
-
     leftDelta = calcLightLevelDelta(leftEdge.normal());
 
     if(leftEdge.normal() == rightEdge.normal())
@@ -1276,7 +1259,7 @@ static void wallSectionLightLevelDeltas(WallEdge const &leftEdge, WallEdge const
 
         // Linearly interpolate to find the light level delta values for the
         // vertical edges of this wall section.
-        coord_t const lineLength = side.line().length();
+        coord_t const lineLength = leftEdge.lineSide().line().length();
         coord_t const sectionOffset = leftEdge.lineOffset();
         coord_t const sectionWidth = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
 
@@ -1360,6 +1343,7 @@ static uint projectSurfaceShadows(Surface &surface, float glowStrength,
 #define WSF_ADD_DYNSHADOWS      0x02 ///< Write geometry for dynamic (mobj) shadows.
 #define WSF_ADD_RADIO           0x04 ///< Write geometry for faked radiosity.
 #define WSF_FORCE_OPAQUE        0x08 ///< Force the geometry to be opaque.
+#define WSF_NO_LIGHTDELTAS      0x10 ///< Do not apply angle based light level deltas.
 
 #define ALL_WRITE_WALL_SECTION_FLAGS        WSF_ADD_DYNLIGHTS | WSF_ADD_DYNSHADOWS | WSF_ADD_RADIO | WSF_FORCE_OPAQUE
 
@@ -1444,9 +1428,12 @@ static bool writeWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge
     Vector3d texTL(leftEdge.top().origin());
     Vector3d texBR(rightEdge.bottom().origin());
 
-    // Calculate the light level deltas for this wall section.
-    float leftLightLevelDelta, rightLightLevelDelta;
-    wallSectionLightLevelDeltas(leftEdge, rightEdge, leftLightLevelDelta, rightLightLevelDelta);
+    // Calculate the light level deltas for this wall section?
+    float leftLightLevelDelta = 0, rightLightLevelDelta = 0;
+    if(!(flags & WSF_NO_LIGHTDELTAS))
+    {
+        wallSectionLightLevelDeltas(leftEdge, rightEdge, leftLightLevelDelta, rightLightLevelDelta);
+    }
 
     rendworldpoly_params_t parm; zap(parm);
 
@@ -2183,6 +2170,34 @@ static int pvisibleWallSections(HEdge &hedge, bool &twoSided)
     return sections;
 }
 
+/**
+ * Should angle based light level deltas be applied?
+ */
+static bool useWallSectionLightLevelDeltas(Line::Side &side, int section)
+{
+    // Disabled?
+    if(rendLightWallAngle <= 0)
+        return false;
+
+    // ...always if the surface's material was chosen as a HOM fix (lighting
+    // must be consistent with that applied to the relative back sector plane).
+    if(side.hasSector() && side.back().hasSector() && side.surface(section).hasFixMaterial())
+        return false;
+
+    return true;
+}
+
+static WallEdge::Flags wallEdgeSpec(bool usingLightLevelDeltas)
+{
+    WallEdge::Flags edgeFlags = WallEdge::DefaultFlags;
+
+    // Can normal smoothing be disabled?
+    if(!usingLightLevelDeltas || !rendLightWallAngleSmooth)
+        edgeFlags &= ~WallEdge::SmoothNormal;
+
+    return edgeFlags;
+}
+
 static void writeLeafWallSections()
 {
     BspLeaf *leaf = currentBspLeaf;
@@ -2205,8 +2220,11 @@ static void writeLeafWallSections()
 
             if(pvisSections & Line::Side::BottomFlag)
             {
-                WallEdge leftEdge(hedge, Line::Side::Bottom, Line::From);
-                WallEdge rightEdge(hedge, Line::Side::Bottom, Line::To);
+                bool useLightLevelDeltas = useWallSectionLightLevelDeltas(hedge.lineSide(), Line::Side::Bottom);
+                WallEdge::Flags edgeFlags = wallEdgeSpec(useLightLevelDeltas);
+
+                WallEdge leftEdge(hedge, Line::Side::Bottom, Line::From, edgeFlags);
+                WallEdge rightEdge(hedge, Line::Side::Bottom, Line::To, edgeFlags);
 
                 leftEdge.prepare();
                 rightEdge.prepare();
@@ -2214,15 +2232,23 @@ static void writeLeafWallSections()
                 if(leftEdge.isValid() && rightEdge.isValid() &&
                    rightEdge.top().distance() > leftEdge.bottom().distance())
                 {
+                    int wsFlags = DEFAULT_WRITE_WALL_SECTION_FLAGS;
+                    if(!useLightLevelDeltas)
+                        wsFlags &= ~WSF_NO_LIGHTDELTAS;
+
                     writeWallSection(leftEdge, rightEdge,
-                                     hedge, hedge.biasSurfaceForGeometryGroup(Line::Side::Bottom));
+                                     hedge, hedge.biasSurfaceForGeometryGroup(Line::Side::Bottom),
+                                     wsFlags);
                 }
             }
 
             if(pvisSections & Line::Side::TopFlag)
             {
-                WallEdge leftEdge(hedge, Line::Side::Top, Line::From);
-                WallEdge rightEdge(hedge, Line::Side::Top, Line::To);
+                bool useLightLevelDeltas = useWallSectionLightLevelDeltas(hedge.lineSide(), Line::Side::Top);
+                WallEdge::Flags edgeFlags = wallEdgeSpec(useLightLevelDeltas);
+
+                WallEdge leftEdge(hedge, Line::Side::Top, Line::From, edgeFlags);
+                WallEdge rightEdge(hedge, Line::Side::Top, Line::To, edgeFlags);
 
                 leftEdge.prepare();
                 rightEdge.prepare();
@@ -2230,8 +2256,13 @@ static void writeLeafWallSections()
                 if(leftEdge.isValid() && rightEdge.isValid() &&
                    rightEdge.top().distance() > leftEdge.bottom().distance())
                 {
+                    int wsFlags = DEFAULT_WRITE_WALL_SECTION_FLAGS;
+                    if(!useLightLevelDeltas)
+                        wsFlags &= ~WSF_NO_LIGHTDELTAS;
+
                     writeWallSection(leftEdge, rightEdge,
-                                     hedge, hedge.biasSurfaceForGeometryGroup(Line::Side::Top));
+                                     hedge, hedge.biasSurfaceForGeometryGroup(Line::Side::Top),
+                                     wsFlags);
                 }
             }
 
@@ -2240,8 +2271,11 @@ static void writeLeafWallSections()
 
             if(pvisSections & Line::Side::MiddleFlag)
             {
-                WallEdge leftEdge(hedge, Line::Side::Middle, Line::From);
-                WallEdge rightEdge(hedge, Line::Side::Middle, Line::To);
+                bool useLightLevelDeltas = useWallSectionLightLevelDeltas(hedge.lineSide(), Line::Side::Middle);
+                WallEdge::Flags edgeFlags = wallEdgeSpec(useLightLevelDeltas);
+
+                WallEdge leftEdge(hedge, Line::Side::Middle, Line::From, edgeFlags);
+                WallEdge rightEdge(hedge, Line::Side::Middle, Line::To, edgeFlags);
 
                 leftEdge.prepare();
                 rightEdge.prepare();
@@ -2255,6 +2289,8 @@ static void writeLeafWallSections()
                     int wsFlags = DEFAULT_WRITE_WALL_SECTION_FLAGS;
                     if(twoSided)
                         wsFlags &= ~WSF_FORCE_OPAQUE;
+                    if(!useLightLevelDeltas)
+                        wsFlags &= ~WSF_NO_LIGHTDELTAS;
 
                     wroteOpaqueMiddle =
                         writeWallSection(leftEdge, rightEdge,

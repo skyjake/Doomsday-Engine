@@ -64,11 +64,16 @@ public:
 
     typedef QList<Intercept> Intercepts;
 
-public:
-    WallEdge(Line::Side &lineSide, int section, int edge,
-             coord_t lineOffset, Vertex &lineVertex);
+    enum Flag
+    {
+        SmoothNormal = 0x1,
 
-    WallEdge(HEdge &hedge, int section, int edge);
+        DefaultFlags = SmoothNormal
+    };
+    Q_DECLARE_FLAGS(Flags, Flag)
+
+public:
+    WallEdge(HEdge &hedge, int section, int edge, Flags flags = DefaultFlags);
 
     WallEdge(WallEdge const &other);
 
@@ -118,6 +123,8 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(WallEdge::Flags)
 
 }
 
