@@ -32,7 +32,7 @@ namespace de {
 class MemoryLogSink : public LogSink, public Lockable
 {
 public:
-    MemoryLogSink();
+    MemoryLogSink(LogEntry::Level minimumLevel = LogEntry::DEBUG);
     ~MemoryLogSink();
 
     LogSink &operator << (LogEntry const &entry);
@@ -50,6 +50,7 @@ protected:
 
 private:
     QList<LogEntry *> _entries;
+    LogEntry::Level _minLevel;
 };
 
 } // namespace de

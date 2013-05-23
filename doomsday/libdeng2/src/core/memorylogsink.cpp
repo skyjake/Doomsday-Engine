@@ -20,7 +20,7 @@
 
 namespace de {
 
-MemoryLogSink::MemoryLogSink()
+MemoryLogSink::MemoryLogSink(LogEntry::Level minimumLevel) : _minLevel(minimumLevel)
 {}
 
 MemoryLogSink::~MemoryLogSink()
@@ -40,10 +40,12 @@ void MemoryLogSink::clear()
 
 LogSink &MemoryLogSink::operator << (LogEntry const &entry)
 {
-    DENG2_GUARD(this);
-
-    _entries.append(new LogEntry(entry));
-    addedNewEntry(*_entries.back());
+    if(entry.level() >= _minLevel)
+    {
+        DENG2_GUARD(this);
+        _entries.append(new LogEntry(entry));
+        addedNewEntry(*_entries.back());
+    }
     return *this;
 }
 
