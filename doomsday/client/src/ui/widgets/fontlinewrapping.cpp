@@ -27,13 +27,17 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
     struct Line {
         WrappedLine line;
         int width;
+        int indent;
 
-        Line(WrappedLine const &ln = WrappedLine(Rangei()), int w = 0) : line(ln), width(w) {}
+        Line(WrappedLine const &ln = WrappedLine(Rangei()), int w = 0, int ind = 0)
+            : line(ln), width(w), indent(ind) {}
     };
     QList<Line> lines;
     String text;
+    Font::RichFormat format;
+    int indent;
 
-    Instance() : font(0) {}
+    Instance() : font(0), indent(0) {}
 
     String rangeText(Rangei const &range) const
     {
@@ -44,7 +48,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
     {
         if(font)
         {
-            return font->measure(rangeText(range)).width();
+            return font->measure(rangeText(range), format.subRange(range)).width();
         }
         return 0;
     }
@@ -53,14 +57,28 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
     {
         if(font)
         {
-            return font->advanceWidth(rangeText(range));
+            return font->advanceWidth(rangeText(range), format.subRange(range));
         }
         return 0;
     }
 
     void appendLine(Rangei const &range)
     {
-        lines.append(Line(WrappedLine(range), rangeVisibleWidth(range)));
+        lines.append(Line(WrappedLine(range), rangeVisibleWidth(range), indent));
+
+        // Check for possible indent for following lines.
+        Font::RichFormat rich = format.subRange(range);
+        Font::RichFormat::Iterator iter(rich);
+        int newIndent = indent;
+        while(iter.hasNext())
+        {
+            iter.next();
+            if(iter.markIndent())
+            {
+                newIndent = indent + rangeAdvanceWidth(Rangei(range.start, iter.range().start));
+            }
+        }
+        indent = newIndent;
     }
 };
 
@@ -91,29 +109,41 @@ void FontLineWrapping::clear()
 
 void FontLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
 {
-    /**
-     * @note This is quite similar to MonospaceLineWrapping::wrapTextToWidth().
-     * Perhaps a generic method could be abstracted from these two.
-     */
+    wrapTextToWidth(text, Font::RichFormat::fromPlainText(text), maxWidth);
+}
 
+void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat const &format, int maxWidth)
+{
     QChar const newline('\n');
 
     clear();
 
+    int const MIN_LINE_WIDTH = 120;
+
     if(maxWidth <= 1 || !d->font) return;
 
     // This is the text that we will be wrapping.
-    d->text = text;
+    d->text   = text;
+    d->format = format;
 
     int begin = 0;
     forever
     {
+        // How much width is available, taking indentation into account?
+        if(maxWidth - d->indent < MIN_LINE_WIDTH)
+        {
+            // There is no room for this indent...
+            d->indent = de::max(0, maxWidth - MIN_LINE_WIDTH);
+        }
+        int availWidth = maxWidth - d->indent;
+
         // Quick check: does the remainder fit?
         Rangei range(begin, text.size());
         int visWidth = d->rangeVisibleWidth(range);
-        if(visWidth <= maxWidth)
+        if(visWidth <= availWidth)
         {
-            d->lines.append(Instance::Line(WrappedLine(Rangei(begin, text.size())), visWidth));
+            d->lines.append(Instance::Line(WrappedLine(Rangei(begin, text.size())),
+                                           visWidth, d->indent));
             break;
         }
 
@@ -124,7 +154,7 @@ void FontLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
         {
             ++end;
 
-            if(d->rangeVisibleWidth(Rangei(begin, end)) > maxWidth)
+            if(d->rangeVisibleWidth(Rangei(begin, end)) > availWidth)
             {
                 // Went too far.
                 wrapPosMax = --end;
@@ -133,14 +163,6 @@ void FontLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
         }
 
         DENG2_ASSERT(end != text.size());
-
-        /*
-        if(end == text.size())
-        {
-            // Out of characters; time to stop.
-            d->appendLine(Range(begin, text.size()));
-            break;
-        }*/
 
         // Find a good (whitespace) break point.
         while(!text.at(end).isSpace())
@@ -161,7 +183,7 @@ void FontLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
         }
         else
         {
-            while(text.at(end).isSpace()) ++end;
+            while(end < text.size() && text.at(end).isSpace()) ++end;
             d->appendLine(Rangei(begin, end));
             begin = end;
         }
@@ -256,4 +278,9 @@ Vector2i FontLineWrapping::charTopLeftInPixels(int line, int charIndex)
     cp.y = line * d->font->lineSpacing().valuei();
 
     return cp;
+}
+
+int FontLineWrapping::lineIndent(int index) const
+{
+    return d->lines[index].indent;
 }

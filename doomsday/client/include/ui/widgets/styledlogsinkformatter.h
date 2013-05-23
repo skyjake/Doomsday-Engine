@@ -32,7 +32,7 @@ public:
     {
         // This will form a single long line. The line wrapper will
         // then determine how to wrap it onto the available width.
-        return Lines() << entry.asText(de::LogEntry::Styled);
+        return Lines() << entry.asText(de::LogEntry::Styled | de::LogEntry::OmitLevel);
     }
 };
 

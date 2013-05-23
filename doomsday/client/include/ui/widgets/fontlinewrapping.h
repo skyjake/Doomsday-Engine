@@ -27,6 +27,8 @@
  * Line wrapper that uses a particular font and calculates widths in pixels.
  * Height is still in lines, though. The wrapper cannot be used before the
  * font has been defined.
+ *
+ * Supports indentation of lines, as marked in the RichFormat.
  */
 class FontLineWrapping : public de::shell::ILineWrapping
 {
@@ -39,6 +41,7 @@ public:
     bool isEmpty() const;
     void clear();
     void wrapTextToWidth(de::String const &text, int maxWidth);
+    void wrapTextToWidth(de::String const &text, de::Font::RichFormat const &format, int maxWidth);
 
     de::String const &text() const;
     de::shell::WrappedLine line(int index) const;
@@ -54,6 +57,8 @@ public:
     int totalHeightInPixels() const;
 
     de::Vector2i charTopLeftInPixels(int line, int charIndex);
+
+    int lineIndent(int index) const;
 
 private:
     DENG2_PRIVATE(d)

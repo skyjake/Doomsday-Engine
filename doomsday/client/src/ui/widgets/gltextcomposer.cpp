@@ -28,6 +28,7 @@ DENG2_PIMPL(GLTextComposer)
     Atlas *atlas;
     String text;
     FontLineWrapping const *wraps;
+    Font::RichFormat format;
     bool needRaster;
 
     struct Line {
@@ -80,7 +81,7 @@ DENG2_PIMPL(GLTextComposer)
 
             changed = true;
 
-            String const part = text.substr(span.range.start, span.range.size());
+            String const part = text.substr(span.range);
 
             if(i >= lines.size())
             {
@@ -90,7 +91,7 @@ DENG2_PIMPL(GLTextComposer)
 
             Line &line = lines[i];
             line.range = span.range;
-            line.id = atlas->alloc(font->rasterize(part));
+            line.id = atlas->alloc(font->rasterize(part, format.subRange(span.range)));
         }
 
         // Remove the excess lines.
@@ -128,7 +129,13 @@ void GLTextComposer::setWrapping(FontLineWrapping const &wrappedLines)
 
 void GLTextComposer::setText(String const &text)
 {
+    setText(text, Font::RichFormat::fromPlainText(text));
+}
+
+void GLTextComposer::setText(String const &text, Font::RichFormat const &format)
+{
     d->text = text;
+    d->format = format;
     d->needRaster = true; // Force a redo of everything.
 }
 
@@ -193,7 +200,7 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
 
             v.rgba = Vector4f(1, 1, 1, 1); // should be a param
 
-            Vector2f linePos = p;
+            Vector2f linePos = p + Vector2f(d->wraps->lineIndent(i), 0);
 
             // Align the line.
             if(lineAlign.testFlag(AlignRight))

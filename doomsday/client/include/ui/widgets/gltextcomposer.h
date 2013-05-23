@@ -60,6 +60,7 @@ public:
     void setWrapping(FontLineWrapping const &wrappedLines);
 
     void setText(de::String const &text);
+    void setText(de::String const &text, de::Font::RichFormat const &format);
 
     /**
      * Makes sure all the lines are allocated on the atlas. After this all the

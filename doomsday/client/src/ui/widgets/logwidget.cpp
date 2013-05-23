@@ -47,6 +47,7 @@ DENG2_PIMPL(LogWidget)
     /// Cache of drawable entries.
     struct CacheEntry
     {
+        Font::RichFormat format;
         FontLineWrapping wraps;
         GLTextComposer composer;
 
@@ -72,10 +73,11 @@ DENG2_PIMPL(LogWidget)
             return wraps.isEmpty();
         }
 
-        void wrap(String const &text, int width)
+        void wrap(String const &richText, int width)
         {
-            wraps.wrapTextToWidth(text, width);
-            composer.setText(wraps.text());
+            String plain = format.initFromStyledText(richText);
+            wraps.wrapTextToWidth(plain, format, width);
+            composer.setText(plain, format);
             composer.setWrapping(wraps);
         }
 
@@ -265,6 +267,10 @@ DENG2_PIMPL(LogWidget)
 
         StyledLogSinkFormatter::Lines lines = formatter.logEntryToTextLines(entry);
         DENG2_ASSERT(lines.size() == 1);
+
+        Font::RichFormat format;
+        format.initFromStyledText(lines[0]);
+
         return lines[0];
     }
 
@@ -447,7 +453,7 @@ DENG2_PIMPL(LogWidget)
 
 LogWidget::LogWidget(String const &name) : GuiWidget(name), d(new Instance(this))
 {
-    rule().setInput(Rule::Width, Const(400)); // TODO -- from rule defs
+    rule().setInput(Rule::Width, Const(600)); // TODO -- from rule defs
     LogBuffer::appBuffer().addSink(d->sink);
 }
 
