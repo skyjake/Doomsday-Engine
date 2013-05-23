@@ -122,6 +122,7 @@ DENG_HEADERS += \
     include/Polygon \
     include/Polyobj \
     include/WallEdge \
+    include/WallSpec \
     include/Sector \
     include/Surface \
     include/Vertex
@@ -309,6 +310,7 @@ DENG_HEADERS += \
     include/render/vignette.h \
     include/render/vlight.h \
     include/render/walledge.h \
+    include/render/wallspec.h \
     include/resource/animgroups.h \
     include/resource/bitmapfont.h \
     include/resource/colorpalette.h \
@@ -583,6 +585,7 @@ SOURCES += \
     src/render/vignette.cpp \
     src/render/vlight.cpp \
     src/render/walledge.cpp \
+    src/render/wallspec.cpp \
     src/resource/animgroups.cpp \
     src/resource/api_material.cpp \
     src/resource/api_resource.cpp \

@@ -26,6 +26,8 @@
 #include <de/Vector>
 
 #include "Line"
+#include "WallSpec"
+
 #include "IHPlane"
 
 class HEdge;
@@ -35,51 +37,6 @@ class Surface;
 #define WALLEDGE_MAX_INTERCEPTS          64
 
 namespace de {
-
-class WallSpec
-{
-public:
-    enum Flag
-    {
-        /// Force the geometry to be opaque, irrespective of material opacity.
-        ForceOpaque           = 0x01,
-
-        /**
-         * Clip the geometry if the neighbor plane surface relevant for the specified
-         * section (i.e., floor if @c Side::Bottom or ceiling if @c Side::Top) has
-         * a sky-masked material bound to it.
-         */
-        SkyClip               = 0x02,
-
-        /// Do not generate geometry for dynamic lights.
-        NoDynLights           = 0x04,
-
-        /// Do not generate geometry for dynamic (mobj) shadows.
-        NoDynShadows          = 0x08,
-
-        /// Do not generate geometry for faked radiosity.
-        NoFakeRadio           = 0x10,
-
-        /// Do not apply angle based light level deltas.
-        NoLightDeltas         = 0x20,
-
-        /// Do not smooth edge normals.
-        NoEdgeNormalSmoothing = 0x40,
-
-        DefaultFlags = ForceOpaque | SkyClip
-    };
-    Q_DECLARE_FLAGS(Flags, Flag)
-
-    Flags flags;
-
-    /// Wall section identifier.
-    int section;
-
-    WallSpec(int section, Flags flags = DefaultFlags) : flags(flags), section(section)
-    {}
-};
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(WallSpec::Flags)
 
 /**
  * Helper/utility class intended to simplify the process of generating
