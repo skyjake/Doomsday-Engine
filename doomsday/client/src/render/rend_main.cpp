@@ -1259,8 +1259,8 @@ static void wallSectionLightLevelDeltas(WallEdge const &leftEdge, WallEdge const
 
         // Linearly interpolate to find the light level delta values for the
         // vertical edges of this wall section.
-        coord_t const lineLength = leftEdge.lineSide().line().length();
-        coord_t const sectionOffset = leftEdge.lineOffset();
+        coord_t const lineLength = leftEdge.mapSide().line().length();
+        coord_t const sectionOffset = leftEdge.mapLineOffset();
         coord_t const sectionWidth = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
 
         float deltaDiff = rightDelta - leftDelta;
@@ -1361,7 +1361,7 @@ static bool writeWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge
     DENG_ASSERT(!isNullLeaf(bspLeaf));
     DENG_ASSERT(rightEdge.top().distance() > leftEdge.bottom().distance());
 
-    Line::Side &side  = leftEdge.lineSide();
+    Line::Side &side  = leftEdge.mapSide();
     Line &line        = side.line();
     int const section = leftEdge.section();
     Surface &surface  = leftEdge.surface();
@@ -2179,8 +2179,8 @@ static bool useWallSectionLightLevelDeltas(Line::Side &side, int section)
     if(rendLightWallAngle <= 0)
         return false;
 
-    // ...always if the surface's material was chosen as a HOM fix (lighting
-    // must be consistent with that applied to the relative back sector plane).
+    // Never if the surface's material was chosen as a HOM fix (lighting must
+    // be consistent with that applied to the relative back sector plane).
     if(side.hasSector() && side.back().hasSector() && side.surface(section).hasFixMaterial())
         return false;
 

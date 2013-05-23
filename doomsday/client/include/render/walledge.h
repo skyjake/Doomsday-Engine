@@ -96,9 +96,9 @@ public:
 
     de::Vector2d const &origin() const;
 
-    coord_t lineOffset() const;
+    coord_t mapLineOffset() const;
 
-    Line::Side &lineSide() const;
+    Line::Side &mapSide() const;
 
     Surface &surface() const;
 

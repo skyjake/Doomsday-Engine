@@ -1081,13 +1081,13 @@ void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
 
     if(shadowSize <= 0) return;
 
-    Line::Side &side            = leftEdge.lineSide();
+    Line::Side &side            = leftEdge.mapSide();
     HEdge const *hedge          = side.leftHEdge();
     Sector const *frontSec      = hedge->sectorPtr();
     Sector const *backSec       = hedge->twin().hasBspLeaf() && !hedge->twin().bspLeaf().isDegenerate() && leftEdge.section() != Line::Side::Middle? hedge->twin().bspLeaf().sectorPtr() : 0;
 
     coord_t const lineLength    = side.line().length();
-    coord_t const sectionOffset = leftEdge.lineOffset();
+    coord_t const sectionOffset = leftEdge.mapLineOffset();
     coord_t const sectionWidth  = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
 
     LineSideRadioData &frData = Rend_RadioDataForLineSide(side);
