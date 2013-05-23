@@ -50,10 +50,9 @@ Vector3d WallEdge::Intercept::origin() const
 
 DENG2_PIMPL(WallEdge), public IHPlane
 {
+    WallSpec spec;
     Line::Side *mapSide;
-    int section;
     int edge;
-    Flags flags;
 
     coord_t lineOffset;
     Vertex *lineVertex;
@@ -83,13 +82,12 @@ DENG2_PIMPL(WallEdge), public IHPlane
         {}
     } hplane;
 
-    Instance(Public *i, Line::Side *mapSide, int section, int edge,
-             Flags flags, coord_t lineOffset, Vertex *lineVertex)
+    Instance(Public *i, WallSpec const &spec, Line::Side *mapSide, int edge,
+             coord_t lineOffset, Vertex *lineVertex)
         : Base(i),
+          spec(spec),
           mapSide(mapSide),
-          section(section),
           edge(edge),
-          flags(flags),
           lineOffset(lineOffset),
           lineVertex(lineVertex),
           isValid(false)
@@ -97,10 +95,9 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
     Instance(Public *i, Instance const &other)
         : Base(i),
+          spec          (other.spec),
           mapSide       (other.mapSide),
-          section       (other.section),
           edge          (other.edge),
-          flags         (other.flags),
           lineOffset    (other.lineOffset),
           lineVertex    (other.lineVertex),
           isValid       (other.isValid),
@@ -228,7 +225,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
         if(!base) return;
 
         // Check for neighborhood division?
-        if(section == Line::Side::Middle && mapSide->back().hasSector())
+        if(spec.section == Line::Side::Middle && mapSide->back().hasSector())
             return;
 
         Sector const *frontSec = mapSide->sectorPtr();
@@ -332,7 +329,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
         diff = 0;
 
         // Are we not blending?
-        if(!(flags & SmoothNormal))
+        if(spec.flags.testFlag(WallSpec::NoEdgeNormalSmoothing))
             return 0;
 
         // Polyobj lines have no owner rings.
@@ -373,8 +370,8 @@ private:
     Instance &operator = (Instance const &); // no assignment
 };
 
-WallEdge::WallEdge(HEdge &hedge, int section, int edge, Flags flags)
-    : d(new Instance(this, &hedge.lineSide(), section, edge, flags,
+WallEdge::WallEdge(WallSpec const &spec, HEdge &hedge, int edge)
+    : d(new Instance(this, spec, &hedge.lineSide(), edge,
                            hedge.lineOffset() + (edge? hedge.length() : 0),
                            edge? &hedge.twin().vertex() : &hedge.vertex()))
 {
@@ -397,12 +394,12 @@ Line::Side &WallEdge::mapSide() const
 
 Surface &WallEdge::surface() const
 {
-    return d->mapSide->surface(d->section);
+    return d->mapSide->surface(d->spec.section);
 }
 
 int WallEdge::section() const
 {
-    return d->section;
+    return d->spec.section;
 }
 
 Vector2d const &WallEdge::origin() const
@@ -477,7 +474,7 @@ static bool shouldSmoothNormals(Surface &sufA, Surface &sufB, binangle_t angleDi
 void WallEdge::prepare()
 {
     coord_t bottom, top;
-    R_SideSectionCoords(*d->mapSide, d->section, &bottom, &top, &d->materialOrigin);
+    R_SideSectionCoords(*d->mapSide, d->spec.section, &bottom, &top, &d->materialOrigin);
 
     d->isValid = (top >= bottom);
     if(!d->isValid) return;
@@ -512,7 +509,7 @@ void WallEdge::prepare()
 
     // Determine the edge normal.
     /// @todo Cache the smoothed normal value somewhere.
-    Surface &surface = d->mapSide->surface(d->section);
+    Surface &surface = d->mapSide->surface(d->spec.section);
     binangle_t angleDiff;
     Surface *blendSurface = d->findBlendNeighbor(angleDiff);
 
@@ -525,6 +522,11 @@ void WallEdge::prepare()
     {
         d->edgeNormal = surface.normal();
     }
+}
+
+WallSpec const &WallEdge::spec() const
+{
+    return d->spec;
 }
 
 Vector2f const &WallEdge::materialOrigin() const

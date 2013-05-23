@@ -1333,30 +1333,22 @@ static uint projectSurfaceShadows(Surface &surface, float glowStrength,
                                      surface.tangent(), surface.bitangent(), surface.normal());
 }
 
-/**
- * @defgroup writeWallSectionFlags Write Wall Section Flags
- * Flags for writeWallSection()
- * @ingroup flags
- */
-///@{
-#define WSF_ADD_DYNLIGHTS       0x01 ///< Write geometry for dynamic lights.
-#define WSF_ADD_DYNSHADOWS      0x02 ///< Write geometry for dynamic (mobj) shadows.
-#define WSF_ADD_RADIO           0x04 ///< Write geometry for faked radiosity.
-#define WSF_FORCE_OPAQUE        0x08 ///< Force the geometry to be opaque.
-#define WSF_NO_LIGHTDELTAS      0x10 ///< Do not apply angle based light level deltas.
+typedef WallEdge WallEdges[2];
 
-#define ALL_WRITE_WALL_SECTION_FLAGS        WSF_ADD_DYNLIGHTS | WSF_ADD_DYNSHADOWS | WSF_ADD_RADIO | WSF_FORCE_OPAQUE
-
-#define DEFAULT_WRITE_WALL_SECTION_FLAGS    ALL_WRITE_WALL_SECTION_FLAGS
-///@}
-
-/**
- * @param flags  @ref writeWallSectionFlags
- */
-static bool writeWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
-    MapElement &mapElement, BiasSurface &biasSurface,
-    int flags = DEFAULT_WRITE_WALL_SECTION_FLAGS)
+static bool writeWallSection(WallEdges const edges, BiasSurface &biasSurface,
+    MapElement &mapElement, coord_t *bottomZ = 0, coord_t *topZ = 0)
 {
+    WallEdge const &leftEdge  = edges[0];
+    WallEdge const &rightEdge = edges[1];
+    WallSpec const &spec      = leftEdge.spec();
+
+    if(!leftEdge.isValid() || !rightEdge.isValid() ||
+       de::fequal(leftEdge.bottom().distance(), rightEdge.top().distance()))
+        return false;
+
+    if(bottomZ) *bottomZ = leftEdge.bottom().distance();
+    if(topZ)    *topZ    = rightEdge.top().distance();
+
     BspLeaf *bspLeaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(bspLeaf));
     DENG_ASSERT(rightEdge.top().distance() > leftEdge.bottom().distance());
@@ -1430,7 +1422,7 @@ static bool writeWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge
 
     // Calculate the light level deltas for this wall section?
     float leftLightLevelDelta = 0, rightLightLevelDelta = 0;
-    if(!(flags & WSF_NO_LIGHTDELTAS))
+    if(!spec.flags.testFlag(WallSpec::NoLightDeltas))
     {
         wallSectionLightLevelDeltas(leftEdge, rightEdge, leftLightLevelDelta, rightLightLevelDelta);
     }
@@ -1438,8 +1430,8 @@ static bool writeWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge
     rendworldpoly_params_t parm; zap(parm);
 
     parm.flags               = RPF_DEFAULT;
-    parm.forceOpaque         = (flags & WSF_FORCE_OPAQUE)? true : false;
-    parm.alpha               = (flags & WSF_FORCE_OPAQUE)? 1 : opacity;
+    parm.forceOpaque         = spec.flags.testFlag(WallSpec::ForceOpaque);
+    parm.alpha               = parm.forceOpaque? 1 : opacity;
     parm.mapElement          = &mapElement;
     parm.elmIdx              = section;
     parm.bsuf                = &biasSurface;
@@ -1495,14 +1487,16 @@ static bool writeWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge
     }
 
     // Project dynamic Lights?
-    if((flags & WSF_ADD_DYNLIGHTS) && !(parm.flags & RPF_SKYMASK))
+    if(!spec.flags.testFlag(WallSpec::NoDynLights) &&
+       !(parm.flags & RPF_SKYMASK))
     {
         parm.lightListIdx = projectSurfaceLights(surface, parm.glowing, texTL, texBR,
                                                  isTwoSidedMiddle);
     }
 
     // Project dynamic shadows?
-    if((flags & WSF_ADD_DYNSHADOWS) && !(parm.flags & RPF_SKYMASK))
+    if(!spec.flags.testFlag(WallSpec::NoDynShadows) &&
+       !(parm.flags & RPF_SKYMASK))
     {
         parm.shadowListIdx = projectSurfaceShadows(surface, parm.glowing, texTL, texBR);
     }
@@ -1555,7 +1549,8 @@ static bool writeWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge
     if(opaque)
     {
         // Render FakeRadio for this section?
-        if((flags & WSF_ADD_RADIO) && !(parm.flags & RPF_SKYMASK) &&
+        if(!spec.flags.testFlag(WallSpec::NoFakeRadio) &&
+           !(parm.flags & RPF_SKYMASK) &&
            !(parm.glowing > 0) && currentSectorLightLevel > 0 &&
            !line.definesPolyobj())
         {
@@ -2187,15 +2182,25 @@ static bool useWallSectionLightLevelDeltas(Line::Side &side, int section)
     return true;
 }
 
-static WallEdge::Flags wallEdgeSpec(bool usingLightLevelDeltas)
+static WallSpec specForWallSection(Line::Side &side, int section, bool twoSidedMiddle = false)
 {
-    WallEdge::Flags edgeFlags = WallEdge::DefaultFlags;
+    WallSpec spec(section);
 
-    // Can normal smoothing be disabled?
-    if(!usingLightLevelDeltas || !rendLightWallAngleSmooth)
-        edgeFlags &= ~WallEdge::SmoothNormal;
+    if(side.line().definesPolyobj() || twoSidedMiddle)
+        spec.flags &= ~WallSpec::ForceOpaque;
 
-    return edgeFlags;
+    if(side.line().definesPolyobj())
+        spec.flags |= WallSpec::NoFakeRadio;
+
+    bool useLightLevelDeltas = useWallSectionLightLevelDeltas(side, section);
+    if(!useLightLevelDeltas)
+        spec.flags |= WallSpec::NoLightDeltas;
+
+    // We disable normal smoothing if no light angle smoothing will be done.
+    if(!useLightLevelDeltas || !rendLightWallAngleSmooth)
+        spec.flags |= WallSpec::NoEdgeNormalSmoothing;
+
+    return spec;
 }
 
 static void writeLeafWallSections()
@@ -2220,48 +2225,24 @@ static void writeLeafWallSections()
 
             if(pvisSections & Line::Side::BottomFlag)
             {
-                bool useLightLevelDeltas = useWallSectionLightLevelDeltas(hedge.lineSide(), Line::Side::Bottom);
-                WallEdge::Flags edgeFlags = wallEdgeSpec(useLightLevelDeltas);
+                WallSpec const spec = specForWallSection(hedge.lineSide(), Line::Side::Bottom);
+                BiasSurface &biasSurface = hedge.biasSurfaceForGeometryGroup(Line::Side::Bottom);
 
-                WallEdge leftEdge(hedge, Line::Side::Bottom, Line::From, edgeFlags);
-                WallEdge rightEdge(hedge, Line::Side::Bottom, Line::To, edgeFlags);
+                WallEdge edges[] = { WallEdge(spec, hedge, Line::From),
+                                     WallEdge(spec, hedge, Line::To) };
 
-                leftEdge.prepare();
-                rightEdge.prepare();
-
-                if(leftEdge.isValid() && rightEdge.isValid() &&
-                   rightEdge.top().distance() > leftEdge.bottom().distance())
-                {
-                    int wsFlags = DEFAULT_WRITE_WALL_SECTION_FLAGS
-                                | (!useLightLevelDeltas? WSF_NO_LIGHTDELTAS : 0);
-
-                    writeWallSection(leftEdge, rightEdge,
-                                     hedge, hedge.biasSurfaceForGeometryGroup(Line::Side::Bottom),
-                                     wsFlags);
-                }
+                writeWallSection(edges, biasSurface, hedge);
             }
 
             if(pvisSections & Line::Side::TopFlag)
             {
-                bool useLightLevelDeltas = useWallSectionLightLevelDeltas(hedge.lineSide(), Line::Side::Top);
-                WallEdge::Flags edgeFlags = wallEdgeSpec(useLightLevelDeltas);
+                WallSpec const spec = specForWallSection(hedge.lineSide(), Line::Side::Top);
+                BiasSurface &biasSurface = hedge.biasSurfaceForGeometryGroup(Line::Side::Top);
 
-                WallEdge leftEdge(hedge, Line::Side::Top, Line::From, edgeFlags);
-                WallEdge rightEdge(hedge, Line::Side::Top, Line::To, edgeFlags);
+                WallEdge edges[] = { WallEdge(spec, hedge, Line::From),
+                                     WallEdge(spec, hedge, Line::To) };
 
-                leftEdge.prepare();
-                rightEdge.prepare();
-
-                if(leftEdge.isValid() && rightEdge.isValid() &&
-                   rightEdge.top().distance() > leftEdge.bottom().distance())
-                {
-                    int wsFlags = DEFAULT_WRITE_WALL_SECTION_FLAGS
-                                | (!useLightLevelDeltas? WSF_NO_LIGHTDELTAS : 0);
-
-                    writeWallSection(leftEdge, rightEdge,
-                                     hedge, hedge.biasSurfaceForGeometryGroup(Line::Side::Top),
-                                     wsFlags);
-                }
+                writeWallSection(edges, biasSurface, hedge);
             }
 
             bool wroteOpaqueMiddle = false;
@@ -2269,32 +2250,14 @@ static void writeLeafWallSections()
 
             if(pvisSections & Line::Side::MiddleFlag)
             {
-                bool useLightLevelDeltas = useWallSectionLightLevelDeltas(hedge.lineSide(), Line::Side::Middle);
-                WallEdge::Flags edgeFlags = wallEdgeSpec(useLightLevelDeltas);
+                WallSpec const spec = specForWallSection(hedge.lineSide(), Line::Side::Middle, twoSided);
+                BiasSurface &biasSurface = hedge.biasSurfaceForGeometryGroup(Line::Side::Middle);
 
-                WallEdge leftEdge(hedge, Line::Side::Middle, Line::From, edgeFlags);
-                WallEdge rightEdge(hedge, Line::Side::Middle, Line::To, edgeFlags);
+                WallEdge edges[] = { WallEdge(spec, hedge, Line::From),
+                                     WallEdge(spec, hedge, Line::To) };
 
-                leftEdge.prepare();
-                rightEdge.prepare();
-
-                if(leftEdge.isValid() && rightEdge.isValid() &&
-                   rightEdge.top().distance() > leftEdge.bottom().distance())
-                {
-                    middleBottomZ = leftEdge.bottom().distance();
-                    middleTopZ    = rightEdge.top().distance();
-
-                    int wsFlags = DEFAULT_WRITE_WALL_SECTION_FLAGS
-                                | (!useLightLevelDeltas? WSF_NO_LIGHTDELTAS : 0);
-
-                    if(twoSided)
-                        wsFlags &= ~WSF_FORCE_OPAQUE;
-
-                    wroteOpaqueMiddle =
-                        writeWallSection(leftEdge, rightEdge,
-                                         hedge, hedge.biasSurfaceForGeometryGroup(Line::Side::Middle),
-                                         wsFlags);
-                }
+                wroteOpaqueMiddle =
+                    writeWallSection(edges, biasSurface, hedge, &middleBottomZ, &middleTopZ);
             }
 
             bool coveredOpenRange =
@@ -2332,24 +2295,18 @@ static void writeLeafPolyobjs()
             // Done here because of the logic of doom.exe wrt the automap.
             reportWallSectionDrawn(hedge.line());
 
-            WallEdge leftEdge(hedge, Line::Side::Middle, Line::From);
-            WallEdge rightEdge(hedge, Line::Side::Middle, Line::To);
+            WallSpec const spec  = specForWallSection(hedge.lineSide(), Line::Side::Middle);
+            BiasSurface &biasSurface = hedge.biasSurfaceForGeometryGroup(Line::Side::Middle);
 
-            leftEdge.prepare();
-            rightEdge.prepare();
+            WallEdge edges[] = { WallEdge(spec, hedge, Line::From),
+                                 WallEdge(spec, hedge, Line::To) };
 
-            if(leftEdge.isValid() && rightEdge.isValid() &&
-               rightEdge.top().distance() > leftEdge.bottom().distance())
+            bool opaque = writeWallSection(edges, biasSurface, hedge);
+
+            // We can occlude the wall range if the opening is filled (when the viewer is not in the void).
+            if(opaque && !P_IsInVoid(viewPlayer))
             {
-                bool opaque = writeWallSection(leftEdge, rightEdge,
-                                               hedge, hedge.biasSurfaceForGeometryGroup(Line::Side::Middle),
-                                               WSF_ADD_DYNLIGHTS | WSF_ADD_DYNSHADOWS);
-
-                // We can occlude the wall range if the opening is filled (when the viewer is not in the void).
-                if(opaque && !P_IsInVoid(viewPlayer))
-                {
-                    C_AddRangeFromViewRelPoints(hedge.origin(), hedge.twin().origin());
-                }
+                C_AddRangeFromViewRelPoints(hedge.origin(), hedge.twin().origin());
             }
         }
     }

@@ -36,6 +36,44 @@ class Surface;
 
 namespace de {
 
+class WallSpec
+{
+public:
+    enum Flag
+    {
+        /// Force the geometry to be opaque, irrespective of material opacity.
+        ForceOpaque           = 0x01,
+
+        /// Do not generate geometry for dynamic lights.
+        NoDynLights           = 0x02,
+
+        /// Do not generate geometry for dynamic (mobj) shadows.
+        NoDynShadows          = 0x04,
+
+        /// Do not generate geometry for faked radiosity.
+        NoFakeRadio           = 0x08,
+
+        /// Do not apply angle based light level deltas.
+        NoLightDeltas         = 0x10,
+
+        /// Do not smooth edge normals.
+        NoEdgeNormalSmoothing = 0x20,
+
+        DefaultFlags = ForceOpaque
+    };
+    Q_DECLARE_FLAGS(Flags, Flag)
+
+    Flags flags;
+
+    /// Wall section identifier.
+    int section;
+
+    WallSpec(int section, Flags = DefaultFlags) : flags(flags), section(section)
+    {}
+};
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(WallSpec::Flags)
+
 /**
  * Helper/utility class intended to simplify the process of generating
  * sections of wall geometry from a map line segment.
@@ -64,16 +102,11 @@ public:
 
     typedef QList<Intercept> Intercepts;
 
-    enum Flag
-    {
-        SmoothNormal = 0x1,
-
-        DefaultFlags = SmoothNormal
-    };
-    Q_DECLARE_FLAGS(Flags, Flag)
-
 public:
-    WallEdge(HEdge &hedge, int section, int edge, Flags flags = DefaultFlags);
+    /**
+     * @param spec  Wall section spec. A copy is made.
+     */
+    WallEdge(WallSpec const &spec, HEdge &hedge, int edge);
 
     WallEdge(WallEdge const &other);
 
@@ -91,6 +124,8 @@ public:
     Intercept const &at(int index) const;
 
     void prepare();
+
+    WallSpec const &spec() const;
 
     bool isValid() const;
 
@@ -124,9 +159,7 @@ private:
     DENG2_PRIVATE(d)
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(WallEdge::Flags)
-
-}
+} // namespace de
 
 namespace std {
 // std::swap specialization for WallEdge
