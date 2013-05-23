@@ -359,7 +359,7 @@ DENG2_PIMPL(GameMap)
 
             coord_t bottomZ, topZ;
             Vector2f materialOrigin;
-            R_SideSectionCoords(*side, Line::Side::Middle,
+            R_SideSectionCoords(*side, Line::Side::Middle, 0,
                                 &bottomZ, &topZ, &materialOrigin);
             if(skyCeil && topZ + materialOrigin.y > self.skyFixCeiling())
             {

@@ -181,6 +181,15 @@ public:
         inline Side &back() const { return line().side(lineSideId() ^ 1); }
 
         /**
+         * Determines whether "this" side of the respective line should be
+         * considered as though there were no back sector. Primarily for use
+         * with id Tech 1 map format maps (which, supports partial suppresison
+         * of the back sector, for use with special case drawing and playsim
+         * functionality).
+         */
+        bool considerOneSided() const;
+
+        /**
          * Returns the specified relative vertex from the Line owner.
          *
          * @see lineSideId(), line(), Line::vertex(),
@@ -361,6 +370,8 @@ public:
 
         /**
          * Returns @c true iff a Sector is attributed to the side.
+         *
+         * @see considerOneSided()
          */
         bool hasSector() const;
 

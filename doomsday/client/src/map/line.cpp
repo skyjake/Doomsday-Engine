@@ -18,15 +18,13 @@
  * 02110-1301 USA</small>
  */
 
-#include <cmath>
-#include <memory>
-
 #include <de/mathutil.h>
 
 #include <de/Vector>
 
 #include "m_misc.h"
 
+#include "HEdge"
 #include "Sector"
 #include "Vertex"
 
@@ -149,6 +147,23 @@ Line &Line::Side::line() const
 int Line::Side::lineSideId() const
 {
     return &d->line.front() == this? Line::Front : Line::Back;
+}
+
+bool Line::Side::considerOneSided() const
+{
+    if(!back().hasSector()) return true;
+    // Front side of a "one-way window"?
+    if(!back().hasSections()) return true;
+
+    if(!d->line.definesPolyobj())
+    {
+        DENG_ASSERT(d->leftHEdge != 0);
+        HEdge &hedge = *d->leftHEdge;
+        if(!hedge.twin().hasBspLeaf() || !hedge.twin().hasSector() || hedge.twin().bspLeaf().isDegenerate())
+            return true;
+    }
+
+    return false;
 }
 
 bool Line::Side::hasSector() const

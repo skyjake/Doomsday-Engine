@@ -387,7 +387,8 @@ DENG2_PIMPL(WallEdge), public IHPlane
     void prepare()
     {
         coord_t bottom, top;
-        R_SideSectionCoords(*mapSide, spec.section, &bottom, &top, &materialOrigin);
+        R_SideSectionCoords(*mapSide, spec.section, spec.flags.testFlag(WallSpec::SkyClip),
+                            &bottom, &top, &materialOrigin);
 
         isValid = (top >= bottom);
         if(!isValid) return;

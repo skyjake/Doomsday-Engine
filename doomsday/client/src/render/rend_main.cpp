@@ -2012,8 +2012,8 @@ static void writeLeafSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
     }
 }
 
-static bool coveredOpenRangeTwoSided(HEdge &hedge,
-    bool wroteOpaqueMiddle, coord_t middleBottomZ, coord_t middleTopZ)
+static bool coveredOpenRangeTwoSided(HEdge &hedge, bool wroteOpaqueMiddle,
+                                     coord_t middleBottomZ, coord_t middleTopZ)
 {
     if(hedge.line().isSelfReferencing())
        return false; /// @todo Why? -ds
@@ -2091,81 +2091,6 @@ static bool coveredOpenRangeTwoSided(HEdge &hedge,
 }
 
 /**
- * Determine which wall sections of for the half-edge are potentially visible
- * according to the relative heights of the interfacing planes.
- *
- * @param hedge  Half-edge to determine the potentially visible sections of.
- *
- * @return @ref sideSectionFlags denoting which sections are potentially visible.
- *
- * @todo Much of this logic belongs in WallEdge. -ds
- */
-static int pvisibleWallSections(HEdge &hedge, bool &twoSided)
-{
-    DENG_ASSERT(hedge.hasLineSide());
-    DENG_ASSERT(hedge.lineSide().hasSections());
-    DENG_ASSERT(hedge.isFlagged(HEdge::FacingFront));
-
-    // One-sided?
-    if(!hedge.twin().hasBspLeaf() || hedge.twin().bspLeaf().isDegenerate() ||
-       !hedge.twin().hasSector() ||
-       /* Solid side of a "one-way window"? */
-       !(hedge.twin().hasLineSide() && hedge.twin().lineSide().hasSections()))
-    {
-        twoSided = false;
-        return Line::Side::MiddleFlag;
-    }
-
-    // Two-sided.
-    twoSided = true;
-
-    // Self-referencing lines only ever get a middle.
-    if(hedge.lineSide().line().isSelfReferencing())
-    {
-        Surface const &middleSurface = hedge.lineSide().middle();
-        DENG_ASSERT(!middleSurface.hasFixMaterial());
-        return middleSurface.hasMaterial()? Line::Side::MiddleFlag : 0;
-    }
-
-    // Regular two-sided.
-    Sector const &frontSec = hedge.sector();
-    Sector const &backSec  = hedge.twin().sector();
-    Plane const &fceil  = frontSec.ceiling();
-    Plane const &ffloor = frontSec.floor();
-    Plane const &bceil  = backSec.ceiling();
-    Plane const &bfloor = backSec.floor();
-
-    int sections = 0;
-
-    // Middle?
-    Surface const &middleSurface = hedge.lineSide().middle();
-    if(middleSurface.hasMaterial() && middleSurface.material().isDrawable() && middleSurface.opacity() > 0)
-    {
-        sections |= Line::Side::MiddleFlag;
-    }
-
-    // Top?
-    if(fceil.visHeight() > bceil.visHeight())
-    {
-        if(!(fceil.surface().hasSkyMaskedMaterial() && bceil.surface().hasSkyMaskedMaterial()) || devRendSkyMode)
-        {
-            sections |= Line::Side::TopFlag;
-        }
-    }
-
-    // Bottom?
-    if(ffloor.visHeight() < bfloor.visHeight())
-    {
-        if(!(ffloor.surface().hasSkyMaskedMaterial() && bfloor.surface().hasSkyMaskedMaterial()) || devRendSkyMode)
-        {
-            sections |= Line::Side::BottomFlag;
-        }
-    }
-
-    return sections;
-}
-
-/**
  * Should angle based light level deltas be applied?
  */
 static bool useWallSectionLightLevelDeltas(Line::Side &side, int section)
@@ -2182,12 +2107,16 @@ static bool useWallSectionLightLevelDeltas(Line::Side &side, int section)
     return true;
 }
 
-static WallSpec specForWallSection(Line::Side &side, int section, bool twoSidedMiddle = false)
+static WallSpec specForWallSection(Line::Side &side, int section)
 {
     WallSpec spec(section);
 
-    if(side.line().definesPolyobj() || twoSidedMiddle)
+    if(side.line().definesPolyobj() || (section == Line::Side::Middle && !side.considerOneSided()))
         spec.flags &= ~WallSpec::ForceOpaque;
+
+    // Suppress the sky clipping in debug mode.
+    if(devRendSkyMode)
+        spec.flags &= ~WallSpec::SkyClip;
 
     if(side.line().definesPolyobj())
         spec.flags |= WallSpec::NoFakeRadio;
@@ -2196,7 +2125,7 @@ static WallSpec specForWallSection(Line::Side &side, int section, bool twoSidedM
     if(!useLightLevelDeltas)
         spec.flags |= WallSpec::NoLightDeltas;
 
-    // We disable normal smoothing if no light angle smoothing will be done.
+    // We can skip normal smoothing if light level delta smoothing won't be done.
     if(!useLightLevelDeltas || !rendLightWallAngleSmooth)
         spec.flags |= WallSpec::NoEdgeNormalSmoothing;
 
@@ -2217,15 +2146,16 @@ static void writeLeafWallSections()
         if(hedge.isFlagged(HEdge::FacingFront))
         if(hedge.hasLineSide() && hedge.lineSide().hasSections())
         {
-            bool twoSided;
-            int pvisSections = pvisibleWallSections(hedge, twoSided);
+            Line::Side &side = hedge.lineSide();
+
+            coord_t middleBottomZ = 0, middleTopZ = 0;
+            bool wroteOpaqueMiddle = false;
 
             // Done here because of the logic of doom.exe wrt the automap.
             reportWallSectionDrawn(hedge.line());
 
-            if(pvisSections & Line::Side::BottomFlag)
             {
-                WallSpec const spec = specForWallSection(hedge.lineSide(), Line::Side::Bottom);
+                WallSpec const spec = specForWallSection(side, Line::Side::Bottom);
                 BiasSurface &biasSurface = hedge.biasSurfaceForGeometryGroup(Line::Side::Bottom);
 
                 WallEdge edges[] = { WallEdge(spec, hedge, Line::From),
@@ -2234,9 +2164,8 @@ static void writeLeafWallSections()
                 writeWallSection(edges, biasSurface, hedge);
             }
 
-            if(pvisSections & Line::Side::TopFlag)
             {
-                WallSpec const spec = specForWallSection(hedge.lineSide(), Line::Side::Top);
+                WallSpec const spec = specForWallSection(side, Line::Side::Top);
                 BiasSurface &biasSurface = hedge.biasSurfaceForGeometryGroup(Line::Side::Top);
 
                 WallEdge edges[] = { WallEdge(spec, hedge, Line::From),
@@ -2245,12 +2174,8 @@ static void writeLeafWallSections()
                 writeWallSection(edges, biasSurface, hedge);
             }
 
-            bool wroteOpaqueMiddle = false;
-            coord_t middleBottomZ = 0, middleTopZ = 0;
-
-            if(pvisSections & Line::Side::MiddleFlag)
             {
-                WallSpec const spec = specForWallSection(hedge.lineSide(), Line::Side::Middle, twoSided);
+                WallSpec const spec = specForWallSection(side, Line::Side::Middle);
                 BiasSurface &biasSurface = hedge.biasSurfaceForGeometryGroup(Line::Side::Middle);
 
                 WallEdge edges[] = { WallEdge(spec, hedge, Line::From),
@@ -2261,8 +2186,8 @@ static void writeLeafWallSections()
             }
 
             bool coveredOpenRange =
-                twoSided? coveredOpenRangeTwoSided(hedge, wroteOpaqueMiddle, middleBottomZ, middleTopZ)
-                        : wroteOpaqueMiddle;
+                side.considerOneSided()? wroteOpaqueMiddle
+                                       : coveredOpenRangeTwoSided(hedge, wroteOpaqueMiddle, middleBottomZ, middleTopZ);
 
             // We can occlude the angle range defined by the X|Y origins of the
             // half-edge if the open range has been covered (when the viewer is

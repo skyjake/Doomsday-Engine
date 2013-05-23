@@ -486,10 +486,10 @@ static void plotSourcesForLineSide(Line::Side &side, int section)
     if(!side.hasSections()) return;
     if(!side.surface(section).hasMaterial()) return;
 
-    // Is the line section potentially visible?
+    // Is the wall section potentially visible?
     coord_t bottom, top;
     Vector2f materialOrigin;
-    R_SideSectionCoords(side, section, &bottom, &top, &materialOrigin);
+    R_SideSectionCoords(side, section, !devRendSkyMode, &bottom, &top, &materialOrigin);
     if(!(top > bottom)) return;
 
     Vector3d v1(side.from().origin().x, side.from().origin().y, top);

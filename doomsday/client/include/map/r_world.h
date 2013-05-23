@@ -41,15 +41,15 @@ void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeInde
 /**
  * Determine the map space Z coordinates of a wall section.
  *
- * @param side          Line side to determine Z heights for.
- * @param section       Line::Side section to determine coordinates for.
+ * @param side            Map line side to determine Z heights for.
+ * @param section         Line::Side section to determine coordinates for.
  *
  * Return values:
- * @param bottom        Z map space coordinate at the bottom of the wall section. Can be @c 0.
- * @param top           Z map space coordinate at the top of the wall section. Can be @c 0.
+ * @param bottom          Z map space coordinate at the bottom of the wall section. Can be @c 0.
+ * @param top             Z map space coordinate at the top of the wall section. Can be @c 0.
  * @param materialOrigin  Surface space material coordinate offset. Can be @c 0.
  */
-void R_SideSectionCoords(Line::Side const &side, int section,
+void R_SideSectionCoords(Line::Side const &side, int section, bool skyClip = true,
     coord_t *bottom = 0, coord_t *top = 0, de::Vector2f *materialOrigin = 0);
 
 /**

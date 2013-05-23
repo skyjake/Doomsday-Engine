@@ -111,40 +111,24 @@ void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeInde
     }
 }
 
-static bool considerOneSided(Line::Side const &side)
-{
-    if(!side.back().hasSector()) return true;
-    // Front side of a "one-way window"?
-    if(!side.back().hasSections()) return true;
-
-    if(!side.line().definesPolyobj())
-    {
-        HEdge &hedge = *side.leftHEdge();
-        if(!hedge.twin().hasBspLeaf() || hedge.twin().bspLeaf().isDegenerate())
-            return true;
-    }
-
-    return false;
-}
-
-void R_SideSectionCoords(Line::Side const &side, int section,
+void R_SideSectionCoords(Line::Side const &side, int section, bool skyClip,
     coord_t *retBottom, coord_t *retTop, Vector2f *retMaterialOrigin)
 {
     DENG_ASSERT(side.hasSector());
+    DENG_ASSERT(side.hasSections());
 
     Line const &line       = side.line();
+
+    Sector const *frontSec = line.definesPolyobj()? line.polyobj().sectorPtr() : side.sectorPtr();
+    Sector const *backSec  = side.back().sectorPtr();
+
     bool const unpegBottom = (line.flags() & DDLF_DONTPEGBOTTOM) != 0;
     bool const unpegTop    = (line.flags() & DDLF_DONTPEGTOP) != 0;
 
     coord_t bottom = 0, top = 0; // Shutup compiler.
 
-    // One sided?
-    if(considerOneSided(side))
+    if(side.considerOneSided())
     {
-        Sector const *frontSec =
-            side.line().definesPolyobj()? side.line().polyobj().sectorPtr()
-                                        : side.sectorPtr();
-
         bottom = frontSec->floor().visHeight();
         top    = frontSec->ceiling().visHeight();
 
@@ -159,9 +143,7 @@ void R_SideSectionCoords(Line::Side const &side, int section,
     }
     else
     {
-        Sector const *frontSec = side.line().definesPolyobj()? side.line().polyobj().sectorPtr() : side.sectorPtr();
-        Sector const *backSec  = (side.line().definesPolyobj() || (side.leftHEdge()->twin().hasBspLeaf() && !side.leftHEdge()->twin().bspLeaf().isDegenerate()))? side.back().sectorPtr() : 0;
-
+        // Two sided.
         bool const stretchMiddle = side.isFlagged(SDF_MIDDLE_STRETCH);
         Surface const *surface = &side.surface(section);
         Plane const *ffloor = &frontSec->floor();
@@ -172,57 +154,75 @@ void R_SideSectionCoords(Line::Side const &side, int section,
         switch(section)
         {
         case Line::Side::Top:
-            // Can't go over front ceiling (would induce geometry flaws).
-            if(bceil->visHeight() < ffloor->visHeight())
-                bottom = ffloor->visHeight();
-            else
-                bottom = bceil->visHeight();
-            top = fceil->visHeight();
-
-            if(retMaterialOrigin)
+            // Self-referencing lines only ever get a middle.
+            if(!side.line().isSelfReferencing())
             {
-                *retMaterialOrigin = surface->visMaterialOrigin();
-                if(!unpegTop)
+                // Can't go over front ceiling (would induce geometry flaws).
+                if(bceil->visHeight() < ffloor->visHeight())
+                    bottom = ffloor->visHeight();
+                else
+                    bottom = bceil->visHeight();
+                top = fceil->visHeight();
+
+                if(skyClip && fceil->surface().hasSkyMaskedMaterial() && bceil->surface().hasSkyMaskedMaterial())
                 {
-                    // Align with normal middle texture.
-                    retMaterialOrigin->y -= fceil->visHeight() - bceil->visHeight();
+                    top = bottom;
+                }
+
+                if(retMaterialOrigin)
+                {
+                    *retMaterialOrigin = surface->visMaterialOrigin();
+                    if(!unpegTop)
+                    {
+                        // Align with normal middle texture.
+                        retMaterialOrigin->y -= fceil->visHeight() - bceil->visHeight();
+                    }
                 }
             }
             break;
 
-        case Line::Side::Bottom: {
-            bool const raiseToBackFloor = (fceil->surface().hasSkyMaskedMaterial() && bceil->surface().hasSkyMaskedMaterial() &&
-                                           fceil->visHeight() < bceil->visHeight() &&
-                                           bfloor->visHeight() > fceil->visHeight());
-            coord_t t = bfloor->visHeight();
-
-            bottom = ffloor->visHeight();
-            // Can't go over the back ceiling, would induce polygon flaws.
-            if(bfloor->visHeight() > bceil->visHeight())
-                t = bceil->visHeight();
-
-            // Can't go over front ceiling, would induce polygon flaws.
-            // In the special case of a sky masked upper we must extend the bottom
-            // section up to the height of the back floor.
-            if(t > fceil->visHeight() && !raiseToBackFloor)
-                t = fceil->visHeight();
-            top = t;
-
-            if(retMaterialOrigin)
+        case Line::Side::Bottom:
+            // Self-referencing lines only ever get a middle.
+            if(!side.line().isSelfReferencing())
             {
-                *retMaterialOrigin = surface->visMaterialOrigin();
-                if(bfloor->visHeight() > fceil->visHeight())
+                bool const raiseToBackFloor = (fceil->surface().hasSkyMaskedMaterial() && bceil->surface().hasSkyMaskedMaterial() &&
+                                               fceil->visHeight() < bceil->visHeight() &&
+                                               bfloor->visHeight() > fceil->visHeight());
+                coord_t t = bfloor->visHeight();
+
+                bottom = ffloor->visHeight();
+                // Can't go over the back ceiling, would induce polygon flaws.
+                if(bfloor->visHeight() > bceil->visHeight())
+                    t = bceil->visHeight();
+
+                // Can't go over front ceiling, would induce polygon flaws.
+                // In the special case of a sky masked upper we must extend the bottom
+                // section up to the height of the back floor.
+                if(t > fceil->visHeight() && !raiseToBackFloor)
+                    t = fceil->visHeight();
+                top = t;
+
+                if(skyClip && ffloor->surface().hasSkyMaskedMaterial() && bfloor->surface().hasSkyMaskedMaterial())
                 {
-                    retMaterialOrigin->y -= (raiseToBackFloor? t : fceil->visHeight()) - bfloor->visHeight();
+                    bottom = top;
                 }
 
-                if(unpegBottom)
+                if(retMaterialOrigin)
                 {
-                    // Align with normal middle texture.
-                    retMaterialOrigin->y += (raiseToBackFloor? t : fceil->visHeight()) - bfloor->visHeight();
+                    *retMaterialOrigin = surface->visMaterialOrigin();
+                    if(bfloor->visHeight() > fceil->visHeight())
+                    {
+                        retMaterialOrigin->y -= (raiseToBackFloor? t : fceil->visHeight()) - bfloor->visHeight();
+                    }
+
+                    if(unpegBottom)
+                    {
+                        // Align with normal middle texture.
+                        retMaterialOrigin->y += (raiseToBackFloor? t : fceil->visHeight()) - bfloor->visHeight();
+                    }
                 }
             }
-            break; }
+            break;
 
         case Line::Side::Middle:
             if(!side.line().isSelfReferencing())
@@ -242,6 +242,7 @@ void R_SideSectionCoords(Line::Side const &side, int section,
                 retMaterialOrigin->y = 0;
             }
 
+            // Perform clipping.
             if(surface->hasMaterial() && !stretchMiddle)
             {
 #ifdef __CLIENT__
@@ -416,7 +417,7 @@ bool R_SideBackClosed(Line::Side const &side, bool ignoreOpacity)
             {
                 // Possibly; check the placement.
                 coord_t bottom, top;
-                R_SideSectionCoords(side, Line::Side::Middle, &bottom, &top);
+                R_SideSectionCoords(side, Line::Side::Middle, 0, &bottom, &top);
                 return (top > bottom && top >= openTop && bottom <= openBottom);
             }
         }
@@ -487,7 +488,7 @@ static bool middleMaterialCoversOpening(Line::Side const &side)
         {
             // Possibly; check the placement.
             coord_t bottom, top;
-            R_SideSectionCoords(side, Line::Side::Middle, &bottom, &top);
+            R_SideSectionCoords(side, Line::Side::Middle, 0, &bottom, &top);
             return (top > bottom && top >= openTop && bottom <= openBottom);
         }
     }

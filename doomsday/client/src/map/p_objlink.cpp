@@ -407,7 +407,7 @@ static void processHEdge(HEdge *hedge, void *parameters)
             {
                 // Possibly; check the placement.
                 coord_t bottom, top;
-                R_SideSectionCoords(side, Line::Side::Middle, &bottom, &top);
+                R_SideSectionCoords(side, Line::Side::Middle, 0, &bottom, &top);
                 if(top > bottom && top >= openTop && bottom <= openBottom)
                     return;
             }

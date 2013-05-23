@@ -104,7 +104,7 @@ static bool middleMaterialCoversOpening(Line::Side &side)
         {
             // Possibly; check the placement.
             coord_t bottom, top;
-            R_SideSectionCoords(side, Line::Side::Middle, &bottom, &top);
+            R_SideSectionCoords(side, Line::Side::Middle, 0, &bottom, &top);
             return (top > bottom && top >= openTop && bottom <= openBottom);
         }
     }
