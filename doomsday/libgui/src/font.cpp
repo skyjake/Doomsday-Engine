@@ -25,12 +25,30 @@
 
 namespace de {
 
-Font::RichFormat::RichFormat()
+Font::RichFormat::RichFormat() : _style(0)
+{}
+
+Font::RichFormat::RichFormat(IStyle const &style) : _style(&style)
 {}
 
 Font::RichFormat::RichFormat(RichFormat const &other)
-    : _ranges(other._ranges)
+    : _style(other._style), _ranges(other._ranges)
 {}
+
+void Font::RichFormat::setStyle(IStyle const &style)
+{
+    _style = &style;
+}
+
+bool Font::RichFormat::haveStyle() const
+{
+    return _style != 0;
+}
+
+Font::RichFormat::IStyle const &Font::RichFormat::style() const
+{
+    return *_style;
+}
 
 Font::RichFormat Font::RichFormat::fromPlainText(String const &plainText)
 {
@@ -174,21 +192,21 @@ String Font::RichFormat::initFromStyledText(String const &styledText)
 
             case '5': // Log section style
                 format->sizeFactor = 1.f;
-                format->weight = OriginalWeight;
+                format->weight = Light;
                 format->style = Italic;
-                format->colorIndex = DimmedColor;
+                format->colorIndex = AccentColor;
                 break;
 
             case '8': // Bad message style
                 format->sizeFactor = 1.f;
                 format->weight = Bold;
                 format->style = Regular;
-                format->colorIndex = AccentColor;
+                format->colorIndex = HighlightColor;
                 break;
 
             case '9': // Debug message style
                 format->sizeFactor = .8f;
-                format->weight = Light;
+                format->weight = Normal;
                 format->style = Regular;
                 format->colorIndex = DimmedColor;
                 break;
@@ -272,10 +290,10 @@ void Font::RichFormat::Iterator::next()
 
 bool Font::RichFormat::Iterator::isOriginal() const
 {
-    return (fequal(sizeFactor(), 1.f)  &&
-            weight() == OriginalWeight &&
-            style()  == OriginalStyle  &&
-            color()  == OriginalColor);
+    return (fequal(sizeFactor(), 1.f)      &&
+            weight()     == OriginalWeight &&
+            style()      == OriginalStyle  &&
+            colorIndex() == OriginalColor);
 }
 
 Rangei Font::RichFormat::Iterator::range() const
@@ -298,9 +316,19 @@ Font::RichFormat::Style Font::RichFormat::Iterator::style() const
     return format._ranges[index].style;
 }
 
-int Font::RichFormat::Iterator::color() const
+int Font::RichFormat::Iterator::colorIndex() const
 {
     return format._ranges[index].colorIndex;
+}
+
+Font::RichFormat::IStyle::Color Font::RichFormat::Iterator::color() const
+{
+    if(format._style)
+    {
+        return format._style->richStyleColor(colorIndex());
+    }
+    // Fall back to white.
+    return Vector4ub(255, 255, 255, 255);
 }
 
 bool Font::RichFormat::Iterator::markIndent() const
@@ -415,6 +443,13 @@ Rectanglei Font::measure(String const &textLine, RichFormat const &format) const
         String const part = textLine.substr(iter.range());
         Rectanglei rect = Rectanglei::fromQRect(metrics.boundingRect(part));
 
+        if(rect.height() == 0)
+        {
+            // It seems measuring the bounds of a Tab character produce
+            // strange results (position 100000?).
+            rect = Rectanglei(0, 0, rect.width(), 0);
+        }
+
         // Combine to the total bounds.
         rect.moveTopLeft(Vector2i(advance, rect.top()));
         bounds |= rect;
@@ -467,39 +502,43 @@ QImage Font::rasterize(String const &textLine,
     QColor bgColor(background.x, background.y, background.z, background.w);
 
     QImage img(QSize(bounds.width(),
-                     de::max(duint(d->metrics->height()), bounds.height()) + 1), QImage::Format_ARGB32);
+                     de::max(duint(d->metrics->height()), bounds.height()) + 1),
+               QImage::Format_ARGB32);
     img.fill(bgColor.rgba());
 
-    QPainter painter(&img);    
-    painter.setBrush(bgColor);
+    QPainter painter(&img);
+    painter.setCompositionMode(QPainter::CompositionMode_Source);
 
     int advance = 0;
     RichFormat::Iterator iter(format);
     while(iter.hasNext())
     {
         iter.next();
-        //painter.drawText(img.rect(), Qt::TextDontClip | Qt::TextSingleLine, textLine);
 
         QFont font = d->font;
 
         if(iter.isOriginal())
         {
             painter.setPen(fgColor);
+            painter.setBrush(bgColor);
         }
         else
         {
             font = d->alteredFont(iter);
 
-            QColor color = fgColor;
-            if(iter.color() == RichFormat::DimmedColor)
+            if(iter.colorIndex() != RichFormat::OriginalColor)
             {
-                color.setAlpha(color.alpha() * 2 / 3);
+                RichFormat::IStyle::Color styleColor = iter.color();
+                QColor const fg(styleColor.x, styleColor.y, styleColor.z, styleColor.w);
+                QColor const bg(styleColor.x, styleColor.y, styleColor.z, 0);
+                painter.setPen(fg);
+                painter.setBrush(bg);
             }
-            else if(iter.color() != RichFormat::OriginalColor)
+            else
             {
-                // where to get the color palette?
+                painter.setPen(fgColor);
+                painter.setBrush(bgColor);
             }
-            painter.setPen(color);
         }
         painter.setFont(font);
 

@@ -39,7 +39,7 @@ namespace de {
  */
 class LIBGUI_PUBLIC Font
 {
-public:
+public:   
     /**
      * Rich formatting instructions for a string of text.
      *
@@ -60,8 +60,33 @@ public:
     class RichFormat
     {
     public:
+        /**
+         * Interface for an object providing style information: fonts and
+         * colors.
+         */
+        class IStyle
+        {
+        public:
+            typedef Vector4ub Color;
+
+            virtual ~IStyle() {}
+
+            /**
+             * Returns a color from the style's palette.
+             * @param index  Color index (see RichFormat::Color).
+             * @return Color values (RGBA 0...255).
+             */
+            virtual Color richStyleColor(int index) const = 0;
+        };
+
+    public:
         RichFormat();
+        RichFormat(IStyle const &style);
         RichFormat(RichFormat const &other);
+
+        bool haveStyle() const;
+        void setStyle(IStyle const &style);
+        IStyle const &style() const;
 
         /**
          * Constructs a RichFormat that specifies no formatting instructions.
@@ -85,17 +110,16 @@ public:
 
         enum Weight {
             OriginalWeight = -1,
-            Normal = 0,
-            Light = 1,
-            Bold = 2
+            Normal         = 0,
+            Light          = 1,
+            Bold           = 2
         };
         enum Style {
-            OriginalStyle = -1,
-            Regular = 0,
-            Italic = 1
+            OriginalStyle  = -1,
+            Regular        = 0,
+            Italic         = 1
         };
-        enum Color
-        {
+        enum Color {
             OriginalColor  = -1,
             NormalColor    = 0,
             HighlightColor = 1,
@@ -133,11 +157,14 @@ public:
             float sizeFactor() const;
             Weight weight() const;
             Style style() const;
-            int color() const;
+            int colorIndex() const;
+            IStyle::Color color() const;
             bool markIndent() const;
         };
 
     private:
+        IStyle const *_style;
+
         struct FormatRange
         {
             Rangei range;
