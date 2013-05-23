@@ -24,6 +24,8 @@
 #include "map/r_world.h" // R_SideSectionCoords
 #include "map/lineowner.h"
 
+#include "render/rend_main.h" // rendLightWallAngleSmooth
+
 #include "render/walledge.h"
 
 using namespace de;
@@ -52,12 +54,13 @@ DENG2_PIMPL(WallEdge), public IHPlane
 {
     Line::Side *lineSide;
     int section;
-    ClockDirection neighborScanDirection;
+    int edge;
     coord_t lineOffset;
     Vertex *lineVertex;
 
     bool isValid;
     Vector2f materialOrigin;
+    Vector3f edgeNormal;
 
     /// Data for the IHPlane model.
     struct HPlane
@@ -80,13 +83,12 @@ DENG2_PIMPL(WallEdge), public IHPlane
         {}
     } hplane;
 
-    Instance(Public *i, Line::Side *lineSide, int section,
-             ClockDirection neighborScanDirection,
+    Instance(Public *i, Line::Side *lineSide, int section, int edge,
              coord_t lineOffset, Vertex *lineVertex)
         : Base(i),
           lineSide(lineSide),
           section(section),
-          neighborScanDirection(neighborScanDirection),
+          edge(edge),
           lineOffset(lineOffset),
           lineVertex(lineVertex),
           isValid(false)
@@ -94,14 +96,14 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
     Instance(Public *i, Instance const &other)
         : Base(i),
-          lineSide             (other.lineSide),
-          section              (other.section),
-          neighborScanDirection(other.neighborScanDirection),
-          lineOffset           (other.lineOffset),
-          lineVertex           (other.lineVertex),
-          isValid              (other.isValid),
-          materialOrigin       (other.materialOrigin),
-          hplane               (other.hplane)
+          lineSide      (other.lineSide),
+          section       (other.section),
+          edge          (other.edge),
+          lineOffset    (other.lineOffset),
+          lineVertex    (other.lineVertex),
+          isValid       (other.isValid),
+          materialOrigin(other.materialOrigin),
+          hplane        (other.hplane)
     {}
 
     void verifyValid() const
@@ -231,7 +233,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
         bool stopScan = false;
         do
         {
-            own = &own->navigate(neighborScanDirection);
+            own = &own->navigate(edge? Anticlockwise : Clockwise);
 
             if(own == base)
             {
@@ -320,17 +322,15 @@ private:
     Instance &operator = (Instance const &); // no assignment
 };
 
-WallEdge::WallEdge(Line::Side &lineSide, int section,
-    coord_t lineOffset, Vertex &lineVertex, ClockDirection neighborScanDirection)
-    : d(new Instance(this, &lineSide, section, neighborScanDirection,
-                           lineOffset, &lineVertex))
+WallEdge::WallEdge(Line::Side &lineSide, int section, coord_t lineOffset,
+    Vertex &lineVertex, int edge)
+    : d(new Instance(this, &lineSide, section, edge, lineOffset, &lineVertex))
 {
     DENG_ASSERT(lineSide.hasSections());
 }
 
 WallEdge::WallEdge(HEdge &hedge, int section, int edge)
-    : d(new Instance(this, &hedge.lineSide(), section,
-                           edge? Anticlockwise : Clockwise,
+    : d(new Instance(this, &hedge.lineSide(), section, edge,
                            hedge.lineOffset() + (edge? hedge.length() : 0),
                            edge? &hedge.twin().vertex() : &hedge.vertex()))
 {
@@ -400,10 +400,78 @@ int WallEdge::lastDivision() const
     return d->interceptCount()-2;
 }
 
-Vector2f const &WallEdge::materialOrigin() const
+WallEdge::Intercept const &WallEdge::at(int index) const
 {
     d->verifyValid();
-    return d->materialOrigin;
+    return d->hplane.intercepts[index];
+}
+
+WallEdge::Intercepts const &WallEdge::intercepts() const
+{
+    d->verifyValid();
+    return d->hplane.intercepts;
+}
+
+/**
+ * Determines whether light level delta smoothing should be performed for
+ * the given pair of map surfaces (which are assumed to share an edge).
+ *
+ * Yes if the angle between the two lines is less than 45 degrees.
+ * @todo Should be user customizable with a Material property. -ds
+ *
+ * @param sufA       The "left"  map surface which shares an edge with @a sufB.
+ * @param sufB       The "right" map surface which shares an edge with @a sufA.
+ * @param angleDiff  Angle difference (i.e., normal delta) between the two surfaces.
+ */
+static bool shouldSmoothLightLevels(Surface &sufA, Surface &sufB, binangle_t angleDiff)
+{
+    DENG_UNUSED(sufA);
+    DENG_UNUSED(sufB);
+    return INRANGE_OF(angleDiff, BANG_180, BANG_45);
+}
+
+/**
+ * Find the neighbor side for the specified edge which we will use to calculate
+ * the edge normal.
+ *
+ * @todo: Use the half-edge rings instead of LineOwners.
+ */
+static Line::Side *findSideBlendNeighbor(Line::Side const &side, int edge, binangle_t *diff = 0)
+{
+    // Is smoothing disabled?
+    if(!rendLightWallAngleSmooth)
+        return 0;
+
+    // Polyobj lines have no owner rings.
+    if(side.line().definesPolyobj())
+        return 0;
+
+    LineOwner const *farVertOwner = side.line().vertexOwner(side.lineSideId() ^ edge);
+
+    if(diff) *diff = 0;
+
+    Line *neighbor;
+    if(R_SideBackClosed(side))
+    {
+        neighbor = R_FindSolidLineNeighbor(side.sectorPtr(), &side.line(), farVertOwner, edge, diff);
+    }
+    else
+    {
+        neighbor = R_FindLineNeighbor(side.sectorPtr(), &side.line(), farVertOwner, edge, diff);
+    }
+
+    // No suitable line neighbor?
+    if(!neighbor) return 0;
+
+    // Choose the correct side of the neighbor (determined by which vertex is shared).
+    Line::Side *otherSide;
+    if(&neighbor->vertex(edge ^ 1) == &side.vertex(edge))
+        otherSide = &neighbor->front();
+    else
+        otherSide = &neighbor->back();
+
+    // We can only blend neighbors with surface sections.
+    return otherSide->hasSections()? otherSide : 0;
 }
 
 void WallEdge::prepare()
@@ -441,16 +509,37 @@ void WallEdge::prepare()
 
     // Sanity check.
     d->assertInterceptsInRange(bottom, top);
+
+    // Determine the edge normal.
+    binangle_t angleDiff;
+    if(Line::Side *otherSide = findSideBlendNeighbor(*d->lineSide, d->edge, &angleDiff))
+    {
+        /// @todo Do not assume the neighbor is the middle section of @var otherSide.
+        /// @todo Cache the smoothed normal value somewhere. -ds
+
+        Surface &sufA = d->lineSide->surface(d->section);
+        Surface &sufB = otherSide->surface(d->section);
+
+        if(shouldSmoothLightLevels(sufA, sufB, angleDiff))
+        {
+            // Average normals.
+            d->edgeNormal = Vector3f(sufA.normal() + sufB.normal()) / 2;
+        }
+    }
+    else
+    {
+        d->edgeNormal = d->lineSide->surface(d->section).normal();
+    }
 }
 
-WallEdge::Intercept const &WallEdge::at(int index) const
+Vector2f const &WallEdge::materialOrigin() const
 {
     d->verifyValid();
-    return d->hplane.intercepts[index];
+    return d->materialOrigin;
 }
 
-WallEdge::Intercepts const &WallEdge::intercepts() const
+Vector3f const &WallEdge::normal() const
 {
     d->verifyValid();
-    return d->hplane.intercepts;
+    return d->edgeNormal;
 }

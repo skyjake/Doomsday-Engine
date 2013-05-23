@@ -66,7 +66,7 @@ public:
 
 public:
     WallEdge(Line::Side &lineSide, int section, coord_t lineOffset,
-             Vertex &lineVertex, de::ClockDirection neighborScanDirection);
+             Vertex &lineVertex, int edge);
 
     WallEdge(HEdge &hedge, int section, int edge);
 
@@ -110,6 +110,8 @@ public:
     int lastDivision() const;
 
     de::Vector2f const &materialOrigin() const;
+
+    de::Vector3f const &normal() const;
 
     Intercepts const &intercepts() const;
 

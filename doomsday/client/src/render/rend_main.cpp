@@ -1240,122 +1240,38 @@ static float calcLightLevelDelta(Vector3f const &normal)
     return (1.0f / 255) * (normal.x * 18) * rendLightWallAngle;
 }
 
-static Line::Side *findSideBlendNeighbor(Line::Side const &side, int edge, binangle_t *diff = 0)
-{
-    LineOwner const *farVertOwner = side.line().vertexOwner(side.lineSideId() ^ edge);
-
-    if(diff) *diff = 0;
-
-    Line *neighbor;
-    if(R_SideBackClosed(side))
-    {
-        neighbor = R_FindSolidLineNeighbor(side.sectorPtr(), &side.line(), farVertOwner, edge, diff);
-    }
-    else
-    {
-        neighbor = R_FindLineNeighbor(side.sectorPtr(), &side.line(), farVertOwner, edge, diff);
-    }
-
-    // No suitable line neighbor?
-    if(!neighbor) return 0;
-
-    // Choose the correct side of the neighbor (determined by which vertex is shared).
-    Line::Side *otherSide;
-    if(&neighbor->vertex(edge ^ 1) == &side.vertex(edge))
-        otherSide = &neighbor->front();
-    else
-        otherSide = &neighbor->back();
-
-    // We can only blend neighbors with surface sections.
-    return otherSide->hasSections()? otherSide : 0;
-}
-
-/**
- * Determines whether light level delta smoothing should be performed for
- * the given pair of map surfaces (which are assumed to share an edge).
- *
- * Yes if the angle between the two lines is less than 45 degrees.
- * @todo Should be user customizable with a Material property. -ds
- *
- * @param sufA       The "left"  map surface which shares an edge with @a sufB.
- * @param sufB       The "right" map surface which shares an edge with @a sufA.
- * @param angleDiff  Angle difference (i.e., normal delta) between the two surfaces.
- */
-static bool shouldSmoothLightLevels(Surface &sufA, Surface &sufB, binangle_t angleDiff)
-{
-    DENG_UNUSED(sufA);
-    DENG_UNUSED(sufB);
-    return INRANGE_OF(angleDiff, BANG_180, BANG_45);
-}
-
 /**
  * The DOOM lighting model applies a sector light level delta when drawing
  * walls based on their 2D world angle.
- *
- * @todo: Use the half-edge rings instead of LineOwners.
- *
- * @param side     Line side to calculate light level deltas for.
- * @param section  Section of the side for which deltas are to be calculated.
- * @param edge     Edge of the side for which deltas are to be calculated.
- *
- * @return  Light delta for the specified wall section edge.
- */
-static float wallWallEdgeLightLevelDelta(Line::Side &side, int section, int edge)
-{
-    // Are light level deltas disabled?
-    if(rendLightWallAngle <= 0) return 0;
-
-    // ...always if the surface's material was chosen as a HOM fix (lighting
-    // must be consistent with that applied to the relative back sector plane).
-    if(side.hasSector() && side.back().hasSector() &&
-       side.surface(section).hasFixMaterial())
-        return 0;
-
-    float delta = calcLightLevelDelta(side.surface(section).normal());
-
-    // Is delta smoothing disabled?
-    if(!rendLightWallAngleSmooth) return delta;
-    // ...always for polyobj lines (no owner rings).
-    if(side.line().definesPolyobj()) return delta;
-
-    /**
-     * Smoothing is enabled, so find the neighbor side for the specified edge
-     * which we will use to calculate the averaged lightlevel delta for each.
-     *
-     * @todo Do not assume the neighbor is the middle section of @var otherSide.
-     */
-    binangle_t angleDiff;
-    if(Line::Side *otherSide = findSideBlendNeighbor(side, edge, &angleDiff))
-    {
-        Surface &sufA = side.surface(section);
-        Surface &sufB = otherSide->surface(section);
-
-        if(shouldSmoothLightLevels(sufA, sufB, angleDiff))
-        {
-            // Average normals.
-            Vector3f avgNormal = Vector3f(sufA.normal() + sufB.normal()) / 2;
-            return calcLightLevelDelta(avgNormal);
-        }
-    }
-
-    return delta;
-}
-
-/**
- * Calculate the light level deltas for this wall section.
- * @todo Cache these values somewhere. -ds
  */
 static void wallSectionLightLevelDeltas(WallEdge const &leftEdge, WallEdge const &rightEdge,
     float &leftDelta, float &rightDelta)
 {
-    leftDelta  = wallWallEdgeLightLevelDelta(leftEdge.lineSide(), leftEdge.section(), Line::From);
-    rightDelta = wallWallEdgeLightLevelDelta(rightEdge.lineSide(), rightEdge.section(), Line::To);
+    // Are light level deltas disabled?
+    if(rendLightWallAngle <= 0)
+    {
+        leftDelta = rightDelta = 0;
+        return;
+    }
+
+    // ...always if the surface's material was chosen as a HOM fix (lighting
+    // must be consistent with that applied to the relative back sector plane).
+    Line::Side &side = leftEdge.lineSide();
+    if(side.hasSector() && side.back().hasSector() &&
+       side.surface(leftEdge.section()).hasFixMaterial())
+    {
+        leftDelta = rightDelta = 0;
+        return;
+    }
+
+    leftDelta  = calcLightLevelDelta(leftEdge.normal());
+    rightDelta = calcLightLevelDelta(rightEdge.normal());
 
     if(!de::fequal(leftDelta, rightDelta))
     {
         // Linearly interpolate to find the light level delta values for the
         // vertical edges of this wall section.
-        coord_t const lineLength = leftEdge.lineSide().line().length();
+        coord_t const lineLength = side.line().length();
         coord_t const sectionOffset = leftEdge.lineOffset();
         coord_t const sectionWidth = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
 
