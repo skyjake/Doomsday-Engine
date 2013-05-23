@@ -413,8 +413,8 @@ WallEdge::Intercepts const &WallEdge::intercepts() const
 }
 
 /**
- * Determines whether light level delta smoothing should be performed for
- * the given pair of map surfaces (which are assumed to share an edge).
+ * Determines whether normal smoothing should be performed for the given pair of
+ * map surfaces (which are assumed to share an edge).
  *
  * Yes if the angle between the two lines is less than 45 degrees.
  * @todo Should be user customizable with a Material property. -ds
@@ -423,7 +423,7 @@ WallEdge::Intercepts const &WallEdge::intercepts() const
  * @param sufB       The "right" map surface which shares an edge with @a sufA.
  * @param angleDiff  Angle difference (i.e., normal delta) between the two surfaces.
  */
-static bool shouldSmoothLightLevels(Surface &sufA, Surface &sufB, binangle_t angleDiff)
+static bool shouldSmoothNormals(Surface &sufA, Surface &sufB, binangle_t angleDiff)
 {
     DENG_UNUSED(sufA);
     DENG_UNUSED(sufB);
@@ -470,7 +470,7 @@ static Line::Side *findSideBlendNeighbor(Line::Side const &side, int edge, binan
     else
         otherSide = &neighbor->back();
 
-    // We can only blend neighbors with surface sections.
+    // We can only smooth if the neighbor has a surface.
     return otherSide->hasSections()? otherSide : 0;
 }
 
@@ -520,7 +520,7 @@ void WallEdge::prepare()
         Surface &sufA = d->lineSide->surface(d->section);
         Surface &sufB = otherSide->surface(d->section);
 
-        if(shouldSmoothLightLevels(sufA, sufB, angleDiff))
+        if(shouldSmoothNormals(sufA, sufB, angleDiff))
         {
             // Average normals.
             d->edgeNormal = Vector3f(sufA.normal() + sufB.normal()) / 2;
