@@ -75,7 +75,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
             iter.next();
             if(iter.markIndent())
             {
-                newIndent = indent + rangeAdvanceWidth(Rangei(range.start, iter.range().start));
+                newIndent = indent + rangeAdvanceWidth(Rangei(0, iter.range().start) + range.start);
             }
         }
         indent = newIndent;
