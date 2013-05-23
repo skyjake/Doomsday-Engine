@@ -91,7 +91,22 @@ DENG2_PIMPL(GLTextComposer)
 
             Line &line = lines[i];
             line.range = span.range;
-            line.id = atlas->alloc(font->rasterize(part, format.subRange(span.range)));
+
+            // The color is white unless a style is defined.
+            Vector4ub fgColor(255, 255, 255, 255);
+
+            if(format.haveStyle())
+            {
+                fgColor = format.style().richStyleColor(Font::RichFormat::NormalColor);
+            }
+
+            // Set up the background color to be transparent with no
+            // change of color in the alphablended smooth edges.
+            Vector4ub bgColor = fgColor;
+            bgColor.w = 0;
+
+            line.id = atlas->alloc(font->rasterize(part, format.subRange(span.range),
+                                                   fgColor, bgColor));
         }
 
         // Remove the excess lines.

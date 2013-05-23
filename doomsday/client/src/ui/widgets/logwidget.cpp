@@ -35,7 +35,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(LogWidget)
+DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
 {
     typedef GLBufferT<Vertex2TexRgba> VertexBuf;
 
@@ -51,7 +51,8 @@ DENG2_PIMPL(LogWidget)
         FontLineWrapping wraps;
         GLTextComposer composer;
 
-        CacheEntry(Font const &font, Atlas &atlas)
+        CacheEntry(Font const &font, Font::RichFormat::IStyle &richStyle, Atlas &atlas)
+            : format(richStyle)
         {
             wraps.setFont(font);
             composer.setAtlas(atlas);
@@ -105,6 +106,10 @@ DENG2_PIMPL(LogWidget)
 
     // Style.
     Font const *font;
+    ColorBank::Color normalColor;
+    ColorBank::Color highlightColor;
+    ColorBank::Color dimmedColor;
+    ColorBank::Color accentColor;
     int margin;
 
     // GL objects.
@@ -161,8 +166,34 @@ DENG2_PIMPL(LogWidget)
 
     void updateStyle()
     {
-        font = &self.style().fonts().font("log.normal");
-        margin = self.style().rules().rule("gap").valuei();
+        Style const &st = self.style();
+
+        font = &st.fonts().font("log.normal");
+        margin = st.rules().rule("gap").valuei();
+
+        normalColor    = st.colors().color("log.normal");
+        highlightColor = st.colors().color("log.highlight");
+        dimmedColor    = st.colors().color("log.dimmed");
+        accentColor    = st.colors().color("log.accent");
+    }
+
+    Font::RichFormat::IStyle::Color richStyleColor(int index) const
+    {
+        switch(index)
+        {
+        default:
+        case Font::RichFormat::NormalColor:
+            return normalColor;
+
+        case Font::RichFormat::HighlightColor:
+            return highlightColor;
+
+        case Font::RichFormat::DimmedColor:
+            return dimmedColor;
+
+        case Font::RichFormat::AccentColor:
+            return accentColor;
+        }
     }
 
     void glInit()
@@ -267,10 +298,6 @@ DENG2_PIMPL(LogWidget)
 
         StyledLogSinkFormatter::Lines lines = formatter.logEntryToTextLines(entry);
         DENG2_ASSERT(lines.size() == 1);
-
-        Font::RichFormat format;
-        format.initFromStyledText(lines[0]);
-
         return lines[0];
     }
 
@@ -282,7 +309,7 @@ DENG2_PIMPL(LogWidget)
             int idx = cache.size();            
 
             // No cached entry for this, generate one.
-            CacheEntry *cached = new CacheEntry(*font, *entryAtlas);
+            CacheEntry *cached = new CacheEntry(*font, *this, *entryAtlas);
             cached->wrap(styledTextForEntry(idx), contentWidth());
             cache.append(cached);
 
