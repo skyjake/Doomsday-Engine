@@ -2090,48 +2090,6 @@ static bool coveredOpenRangeTwoSided(HEdge &hedge, bool wroteOpaqueMiddle,
     return false;
 }
 
-/**
- * Should angle based light level deltas be applied?
- */
-static bool useWallSectionLightLevelDeltas(Line::Side &side, int section)
-{
-    // Disabled?
-    if(rendLightWallAngle <= 0)
-        return false;
-
-    // Never if the surface's material was chosen as a HOM fix (lighting must
-    // be consistent with that applied to the relative back sector plane).
-    if(side.hasSector() && side.back().hasSector() && side.surface(section).hasFixMaterial())
-        return false;
-
-    return true;
-}
-
-static WallSpec specForWallSection(Line::Side &side, int section)
-{
-    WallSpec spec(section);
-
-    if(side.line().definesPolyobj() || (section == Line::Side::Middle && !side.considerOneSided()))
-        spec.flags &= ~WallSpec::ForceOpaque;
-
-    // Suppress the sky clipping in debug mode.
-    if(devRendSkyMode)
-        spec.flags &= ~WallSpec::SkyClip;
-
-    if(side.line().definesPolyobj())
-        spec.flags |= WallSpec::NoFakeRadio;
-
-    bool useLightLevelDeltas = useWallSectionLightLevelDeltas(side, section);
-    if(!useLightLevelDeltas)
-        spec.flags |= WallSpec::NoLightDeltas;
-
-    // We can skip normal smoothing if light level delta smoothing won't be done.
-    if(!useLightLevelDeltas || !rendLightWallAngleSmooth)
-        spec.flags |= WallSpec::NoEdgeNormalSmoothing;
-
-    return spec;
-}
-
 static void writeLeafWallSections()
 {
     BspLeaf *leaf = currentBspLeaf;
@@ -2155,7 +2113,7 @@ static void writeLeafWallSections()
             reportWallSectionDrawn(hedge.line());
 
             {
-                WallSpec const spec = specForWallSection(side, Line::Side::Bottom);
+                WallSpec const spec = WallSpec::fromMapSide(side, Line::Side::Bottom);
                 BiasSurface &biasSurface = hedge.biasSurfaceForGeometryGroup(Line::Side::Bottom);
 
                 WallEdge edges[] = { WallEdge(spec, hedge, Line::From),
@@ -2165,7 +2123,7 @@ static void writeLeafWallSections()
             }
 
             {
-                WallSpec const spec = specForWallSection(side, Line::Side::Top);
+                WallSpec const spec = WallSpec::fromMapSide(side, Line::Side::Top);
                 BiasSurface &biasSurface = hedge.biasSurfaceForGeometryGroup(Line::Side::Top);
 
                 WallEdge edges[] = { WallEdge(spec, hedge, Line::From),
@@ -2175,7 +2133,7 @@ static void writeLeafWallSections()
             }
 
             {
-                WallSpec const spec = specForWallSection(side, Line::Side::Middle);
+                WallSpec const spec = WallSpec::fromMapSide(side, Line::Side::Middle);
                 BiasSurface &biasSurface = hedge.biasSurfaceForGeometryGroup(Line::Side::Middle);
 
                 WallEdge edges[] = { WallEdge(spec, hedge, Line::From),
@@ -2220,7 +2178,7 @@ static void writeLeafPolyobjs()
             // Done here because of the logic of doom.exe wrt the automap.
             reportWallSectionDrawn(hedge.line());
 
-            WallSpec const spec  = specForWallSection(hedge.lineSide(), Line::Side::Middle);
+            WallSpec const spec  = WallSpec::fromMapSide(hedge.lineSide(), Line::Side::Middle);
             BiasSurface &biasSurface = hedge.biasSurfaceForGeometryGroup(Line::Side::Middle);
 
             WallEdge edges[] = { WallEdge(spec, hedge, Line::From),
