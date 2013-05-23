@@ -80,6 +80,15 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         }
         indent = newIndent;
     }
+
+    bool isAllSpace(Rangei const &range) const
+    {
+        for(int i = range.start; i < range.end; ++i)
+        {
+            if(!text.at(i).isSpace()) return false;
+        }
+        return true;
+    }
 };
 
 FontLineWrapping::FontLineWrapping() : d(new Instance)
@@ -173,6 +182,13 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
                 end = wrapPosMax;
                 break;
             }
+        }
+
+        // If there is only whitespace remaining on the line,
+        // just use the max wrap -- blank lines are not pretty.
+        if(d->isAllSpace(Rangei(begin, end)))
+        {
+            end = wrapPosMax;
         }
 
         if(text.at(end) == newline)
