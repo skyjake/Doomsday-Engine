@@ -2232,9 +2232,8 @@ static void writeLeafWallSections()
                 if(leftEdge.isValid() && rightEdge.isValid() &&
                    rightEdge.top().distance() > leftEdge.bottom().distance())
                 {
-                    int wsFlags = DEFAULT_WRITE_WALL_SECTION_FLAGS;
-                    if(!useLightLevelDeltas)
-                        wsFlags &= ~WSF_NO_LIGHTDELTAS;
+                    int wsFlags = DEFAULT_WRITE_WALL_SECTION_FLAGS
+                                | (!useLightLevelDeltas? WSF_NO_LIGHTDELTAS : 0);
 
                     writeWallSection(leftEdge, rightEdge,
                                      hedge, hedge.biasSurfaceForGeometryGroup(Line::Side::Bottom),
@@ -2256,9 +2255,8 @@ static void writeLeafWallSections()
                 if(leftEdge.isValid() && rightEdge.isValid() &&
                    rightEdge.top().distance() > leftEdge.bottom().distance())
                 {
-                    int wsFlags = DEFAULT_WRITE_WALL_SECTION_FLAGS;
-                    if(!useLightLevelDeltas)
-                        wsFlags &= ~WSF_NO_LIGHTDELTAS;
+                    int wsFlags = DEFAULT_WRITE_WALL_SECTION_FLAGS
+                                | (!useLightLevelDeltas? WSF_NO_LIGHTDELTAS : 0);
 
                     writeWallSection(leftEdge, rightEdge,
                                      hedge, hedge.biasSurfaceForGeometryGroup(Line::Side::Top),
@@ -2286,11 +2284,11 @@ static void writeLeafWallSections()
                     middleBottomZ = leftEdge.bottom().distance();
                     middleTopZ    = rightEdge.top().distance();
 
-                    int wsFlags = DEFAULT_WRITE_WALL_SECTION_FLAGS;
+                    int wsFlags = DEFAULT_WRITE_WALL_SECTION_FLAGS
+                                | (!useLightLevelDeltas? WSF_NO_LIGHTDELTAS : 0);
+
                     if(twoSided)
                         wsFlags &= ~WSF_FORCE_OPAQUE;
-                    if(!useLightLevelDeltas)
-                        wsFlags &= ~WSF_NO_LIGHTDELTAS;
 
                     wroteOpaqueMiddle =
                         writeWallSection(leftEdge, rightEdge,
