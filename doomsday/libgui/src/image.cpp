@@ -431,10 +431,12 @@ Image::GLFormat Image::glFormat(QImage::Format format)
         return GLFormat(GL_RGB, GL_UNSIGNED_BYTE, 1);
 
     case QImage::Format_RGB32:
-        return GLFormat(GL_RGB, GL_UNSIGNED_BYTE, 4);
+        /// @todo Is GL_BGR in any GL standard spec? Check for EXT_bgra.
+        return GLFormat(GL_BGR, GL_UNSIGNED_BYTE, 4);
 
     case QImage::Format_ARGB32:
-        return GLFormat(GL_RGBA, GL_UNSIGNED_BYTE, 4);
+        /// @todo Is GL_BGRA in any GL standard spec? Check for EXT_bgra.
+        return GLFormat(GL_BGRA, GL_UNSIGNED_BYTE, 4);
 
     default:
         break;

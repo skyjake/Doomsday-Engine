@@ -168,9 +168,11 @@ DENG2_PIMPL(GLTexture)
     void glImage(int level, Size const &size, Image::GLFormat const &glFormat,
                  void const *data, CubeFace face = PositiveX)
     {
+        /// @todo GLES2: Check for the BGRA extension.
+        GLenum const internalFormat = (glFormat.format == GL_BGRA? GL_RGBA : glFormat.format);
         glPixelStorei(GL_UNPACK_ALIGNMENT, glFormat.rowAlignment);
         glTexImage2D(isCube()? glFace(face) : texTarget,
-                     level, glFormat.format, size.x, size.y, 0,
+                     level, internalFormat, size.x, size.y, 0,
                      glFormat.format, glFormat.type, data);
 
         LIBGUI_ASSERT_GL_OK();
