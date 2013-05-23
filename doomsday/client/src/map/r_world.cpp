@@ -111,11 +111,26 @@ void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeInde
     }
 }
 
+static bool considerOneSided(Line::Side const &side)
+{
+    if(!side.back().hasSector()) return true;
+    // Front side of a "one-way window"?
+    if(!side.back().hasSections()) return true;
+
+    if(!side.line().definesPolyobj())
+    {
+        HEdge &hedge = *side.leftHEdge();
+        if(!hedge.twin().hasBspLeaf() || hedge.twin().bspLeaf().isDegenerate())
+            return true;
+    }
+
+    return false;
+}
+
 void R_SideSectionCoords(Line::Side const &side, int section,
     coord_t *retBottom, coord_t *retTop, Vector2f *retMaterialOrigin)
 {
-    Sector const *frontSec = side.line().definesPolyobj()? side.line().polyobj().sectorPtr() : side.sectorPtr();
-    Sector const *backSec  = (side.line().definesPolyobj() || (side.leftHEdge()->twin().hasBspLeaf() && !side.leftHEdge()->twin().bspLeaf().isDegenerate()))? side.back().sectorPtr() : 0;
+    DENG_ASSERT(side.hasSector());
 
     Line const &line       = side.line();
     bool const unpegBottom = (line.flags() & DDLF_DONTPEGBOTTOM) != 0;
@@ -123,9 +138,13 @@ void R_SideSectionCoords(Line::Side const &side, int section,
 
     coord_t bottom = 0, top = 0; // Shutup compiler.
 
-    // Single sided?
-    if(!frontSec || !backSec || !side.back().hasSections()/*front side of a "window"*/)
+    // One sided?
+    if(considerOneSided(side))
     {
+        Sector const *frontSec =
+            side.line().definesPolyobj()? side.line().polyobj().sectorPtr()
+                                        : side.sectorPtr();
+
         bottom = frontSec->floor().visHeight();
         top    = frontSec->ceiling().visHeight();
 
@@ -140,6 +159,9 @@ void R_SideSectionCoords(Line::Side const &side, int section,
     }
     else
     {
+        Sector const *frontSec = side.line().definesPolyobj()? side.line().polyobj().sectorPtr() : side.sectorPtr();
+        Sector const *backSec  = (side.line().definesPolyobj() || (side.leftHEdge()->twin().hasBspLeaf() && !side.leftHEdge()->twin().bspLeaf().isDegenerate()))? side.back().sectorPtr() : 0;
+
         bool const stretchMiddle = side.isFlagged(SDF_MIDDLE_STRETCH);
         Surface const *surface = &side.surface(section);
         Plane const *ffloor = &frontSec->floor();
