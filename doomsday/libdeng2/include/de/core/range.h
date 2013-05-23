@@ -21,6 +21,8 @@
 
 #include "../libdeng2.h"
 
+#include <QString>
+
 namespace de {
 
 /**
@@ -38,6 +40,25 @@ struct Range
     inline bool contains(Type const &i) const { return i >= start && i < end; }
     inline bool operator == (Range const &other) const {
         return start == other.start && end == other.end;
+    }
+    inline bool operator < (Range const &other) const {
+        return start < other.start;
+    }
+    inline Range<Type> operator + (Type offset) const {
+        return Range<Type>(start + offset, end + offset);
+    }
+    inline Range<Type> operator - (Type offset) const {
+        Range<Type> r(*this);
+        r -= offset;
+        return r;
+    }
+    inline Range<Type> &operator -= (Type offset) {
+        start -= offset;
+        end -= offset;
+        return *this;
+    }
+    QString asText() const {
+        return QString("[%1...%2)").arg(start).arg(end);
     }
 };
 
