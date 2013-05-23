@@ -40,12 +40,15 @@ namespace de {
 
 /**
  * Helper/utility class intended to simplify the process of generating
- * sections of wall geometry from a map line segment.
+ * sections of wall geometry from a map Line segment.
  *
  * @ingroup map
  */
 class WallEdge
 {
+    DENG2_NO_COPY  (WallEdge)
+    DENG2_NO_ASSIGN(WallEdge)
+
 public:
     /// Invalid range geometry was found during prepare() @ingroup errors
     DENG2_ERROR(InvalidError);
@@ -54,7 +57,6 @@ public:
     {
     public:
         Intercept(WallEdge *owner, double distance = 0);
-        Intercept(Intercept const &other);
 
         WallEdge &owner() const;
 
@@ -71,17 +73,6 @@ public:
      * @param spec  Wall section spec. A copy is made.
      */
     WallEdge(WallSpec const &spec, HEdge &hedge, int edge);
-
-    WallEdge(WallEdge const &other);
-
-    inline WallEdge &operator = (WallEdge other) {
-        d.swap(other.d);
-        return *this;
-    }
-
-    inline void swap(WallEdge &other) {
-        d.swap(other.d);
-    }
 
     inline Intercept const & operator [] (int index) const { return at(index); }
 
@@ -122,13 +113,5 @@ private:
 };
 
 } // namespace de
-
-namespace std {
-// std::swap specialization for WallEdge
-template <>
-inline void swap<de::WallEdge>(de::WallEdge &a, de::WallEdge &b) {
-    a.swap(b);
-}
-}
 
 #endif // DENG_RENDER_WALLEDGE

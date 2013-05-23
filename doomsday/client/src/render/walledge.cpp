@@ -41,19 +41,13 @@ using namespace de;
  */
 static bool shouldSmoothNormals(Surface &sufA, Surface &sufB, binangle_t angleDiff)
 {
-    DENG_UNUSED(sufA);
-    DENG_UNUSED(sufB);
+    DENG2_UNUSED2(sufA, sufB);
     return INRANGE_OF(angleDiff, BANG_180, BANG_45);
 }
 
 WallEdge::Intercept::Intercept(WallEdge *owner, double distance)
     : IHPlane::IIntercept(distance),
       _owner(owner)
-{}
-
-WallEdge::Intercept::Intercept(Intercept const &other)
-    : IHPlane::IIntercept(other.distance()),
-      _owner(other._owner) /// @todo Should not copy owner
 {}
 
 WallEdge &WallEdge::Intercept::owner() const
@@ -63,7 +57,7 @@ WallEdge &WallEdge::Intercept::owner() const
 
 Vector3d WallEdge::Intercept::origin() const
 {
-    return Vector3d(owner().origin(), distance());
+    return Vector3d(_owner->origin(), distance());
 }
 
 DENG2_PIMPL(WallEdge), public IHPlane
@@ -109,19 +103,6 @@ DENG2_PIMPL(WallEdge), public IHPlane
           lineOffset(lineOffset),
           lineVertex(lineVertex),
           isValid(false)
-    {}
-
-    Instance(Public *i, Instance const &other)
-        : Base(i),
-          spec          (other.spec),
-          mapSide       (other.mapSide),
-          edge          (other.edge),
-          lineOffset    (other.lineOffset),
-          lineVertex    (other.lineVertex),
-          isValid       (other.isValid),
-          materialOrigin(other.materialOrigin),
-          edgeNormal    (other.edgeNormal),
-          hplane        (other.hplane)
     {}
 
     void verifyValid() const
@@ -220,7 +201,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
 #endif
 
     /**
-     * Ensure all intercepts do not exceed the specified range.
+     * Ensure all intercepts do not exceed the specified closed range.
      */
     void assertInterceptsInRange(coord_t low, coord_t hi) const
     {
@@ -437,9 +418,6 @@ DENG2_PIMPL(WallEdge), public IHPlane
             edgeNormal = surface.normal();
         }
     }
-
-private:
-    Instance &operator = (Instance const &); // no assignment
 };
 
 WallEdge::WallEdge(WallSpec const &spec, HEdge &hedge, int edge)
@@ -449,13 +427,6 @@ WallEdge::WallEdge(WallSpec const &spec, HEdge &hedge, int edge)
 {
     DENG_ASSERT(hedge.hasLineSide() && hedge.lineSide().hasSections());
 
-    /// @todo Defer until necessary.
-    d->prepare();
-}
-
-WallEdge::WallEdge(WallEdge const &other)
-    : d(new Instance(this, *other.d))
-{
     /// @todo Defer until necessary.
     d->prepare();
 }

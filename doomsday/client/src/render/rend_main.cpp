@@ -1333,16 +1333,14 @@ static uint projectSurfaceShadows(Surface &surface, float glowStrength,
                                      surface.tangent(), surface.bitangent(), surface.normal());
 }
 
-typedef WallEdge WallEdges[2];
-
-static bool writeWallGeometry(WallEdges const edges, BiasSurface &biasSurface,
+static bool writeWallGeometry(WallEdge **edges, BiasSurface &biasSurface,
     MapElement &mapElement, coord_t *bottomZ = 0, coord_t *topZ = 0)
 {
     BspLeaf *bspLeaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(bspLeaf));
 
-    WallEdge const &leftEdge  = edges[0];
-    WallEdge const &rightEdge = edges[1];
+    WallEdge const &leftEdge  = *edges[0];
+    WallEdge const &rightEdge = *edges[1];
     WallSpec const &spec      = leftEdge.spec();
 
     if(!leftEdge.isValid() || !rightEdge.isValid() ||
@@ -1586,8 +1584,9 @@ static void writeWallSection(HEdge &hedge, int section,
     WallSpec const spec = WallSpec::fromMapSide(hedge.lineSide(), section);
     BiasSurface &biasSurface = hedge.biasSurfaceForGeometryGroup(section);
 
-    WallEdge edges[] = { WallEdge(spec, hedge, Line::From),
-                         WallEdge(spec, hedge, Line::To) };
+    WallEdge leftEdge(spec, hedge, Line::From);
+    WallEdge rightEdge(spec, hedge, Line::To);
+    WallEdge *edges[] = { &leftEdge, &rightEdge };
 
     bool wroteOpaque = writeWallGeometry(edges, biasSurface, hedge, retBottomZ, retTopZ);
 
